@@ -7,7 +7,7 @@ vi.stubGlobal('localStorage', { getItem: (k: string) => memoire.get(k) ?? null, 
 vi.mock('../data/analytics', async orig => ({ ...(await orig<typeof import('../data/analytics')>()), track: (...a: unknown[]) => track(...a) }));
 
 const xp = await import('./xp');
-const { GAINS, appliquer, cout, seuil, niveauDe, prochaineRecompense, recompenseDuNiveau, gagnerXp, lireXp, envoyerAgregat, abonnerXp, XP_KEY, PLAFOND } = xp;
+const { GAINS, BONUS_PREMIERE, PREMIERES_KEY, lirePremieres, appliquer, cout, seuil, niveauDe, prochaineRecompense, recompenseDuNiveau, gagnerXp, lireXp, envoyerAgregat, abonnerXp, XP_KEY, PLAFOND } = xp;
 
 describe('courbe des niveaux', () => {
   it('le niveau 2 arrive à 100 XP, puis environ +25 % par niveau', () => {
@@ -69,6 +69,7 @@ describe('gagnerXp (appareil)', () => {
 
   it('crédite l’appareil, prévient les écouteurs et envoie niveau_atteint au passage', () => {
     localStorage.setItem(XP_KEY, '95');
+    localStorage.setItem(PREMIERES_KEY, JSON.stringify(['lecon'])); // bonus déjà touché : gain nu
     const vus: number[] = [];
     const fin = abonnerXp(g => vus.push(g.apres));
     gagnerXp('lecon');
@@ -79,6 +80,7 @@ describe('gagnerXp (appareil)', () => {
   });
 
   it('xp_gagne est agrégé : plusieurs gains rapprochés, un seul événement', () => {
+    localStorage.setItem(PREMIERES_KEY, JSON.stringify(['probleme']));
     gagnerXp('probleme');
     gagnerXp('goDuJour');
     expect(track).not.toHaveBeenCalledWith('xp_gagne', expect.anything());
@@ -86,5 +88,66 @@ describe('gagnerXp (appareil)', () => {
     const envois = track.mock.calls.filter(c => c[0] === 'xp_gagne');
     expect(envois).toHaveLength(1);
     expect(envois[0][1]).toMatchObject({ points: 30, gains: 2, sources: 'goDuJour,probleme', xp_total: 30, niveau: 1 });
+  });
+});
+
+// Issue #162 : bonus « première fois » et niveau 2 dans la première session.
+describe('bonus première fois', () => {
+  beforeEach(() => { localStorage.clear(); track.mockClear(); vi.useFakeTimers(); });
+  afterEach(() => { envoyerAgregat(); vi.useRealTimers(); });
+
+  it('appliquer ajoute le bonus de la catégorie seulement pour une première fois', () => {
+    expect(appliquer(0, 'lecon', true)).toMatchObject({ points: 30 + BONUS_PREMIERE.lecon, bonus: BONUS_PREMIERE.lecon });
+    expect(appliquer(0, 'lecon')).toMatchObject({ points: 30, bonus: 0 });
+    // Le Go du jour est un problème, une victoire est une partie.
+    expect(appliquer(0, 'goDuJour', true).bonus).toBe(BONUS_PREMIERE.probleme);
+    expect(appliquer(0, 'victoire', true).bonus).toBe(BONUS_PREMIERE.partie);
+  });
+
+  it('chaque bonus ne se gagne qu’une fois par appareil', () => {
+    expect(gagnerXp('probleme').bonus).toBe(BONUS_PREMIERE.probleme);
+    expect(gagnerXp('goDuJour').bonus).toBe(0);
+    expect(gagnerXp('victoire').bonus).toBe(BONUS_PREMIERE.partie);
+    expect(gagnerXp('partie').bonus).toBe(0);
+    expect([...lirePremieres()].sort()).toEqual(['partie', 'probleme']);
+  });
+
+  it('un stockage illisible ne casse rien : le bonus reste offert', () => {
+    localStorage.setItem(PREMIERES_KEY, '{pas du json');
+    expect(lirePremieres().size).toBe(0);
+    localStorage.setItem(PREMIERES_KEY, JSON.stringify(['partie', 'triche', 3]));
+    expect([...lirePremieres()]).toEqual(['partie']);
+  });
+
+  // Parcours type de l'analyse UX (#154), avec des durées prudentes pour un débutant.
+  const PARCOURS: { source: 'partie' | 'lecon' | 'probleme'; minutes: number }[] = [
+    { source: 'partie', minutes: 5 }, // une partie 9 × 9 contre Pomme, perdue : pas de bonus de victoire
+    { source: 'lecon', minutes: 2.5 },
+    { source: 'probleme', minutes: 1 },
+    { source: 'probleme', minutes: 1 },
+  ];
+
+  it('parcours type (partie perdue, leçon, 2 problèmes) : le niveau 2 arrive avant 10 minutes', () => {
+    let minutes = 0, niveau2: number | null = null;
+    for (const etape of PARCOURS) {
+      minutes += etape.minutes;
+      const g = gagnerXp(etape.source);
+      if (niveau2 === null && g.niveauApres >= 2) niveau2 = minutes;
+    }
+    expect(minutes).toBeLessThanOrEqual(10);
+    expect(niveau2).not.toBeNull();
+    expect(niveau2!).toBeLessThanOrEqual(10);
+    expect(niveauDe(lireXp()).niveau).toBe(2);
+    expect(track).toHaveBeenCalledWith('niveau_atteint', expect.objectContaining({ niveau: 2 }));
+    // Sans les bonus, le même parcours restait sous le niveau 2 (65 XP sur 100) : c'est bien le bonus qui compte.
+    expect(PARCOURS.reduce((s, e) => s + GAINS[e.source], 0)).toBeLessThan(100);
+  });
+
+  it('dans n’importe quel ordre, le parcours type atteint le niveau 2, pas le niveau 3', () => {
+    for (const ordre of [[0, 1, 2, 3], [1, 2, 3, 0], [2, 3, 1, 0], [3, 0, 2, 1]]) {
+      localStorage.clear();
+      for (const i of ordre) gagnerXp(PARCOURS[i].source);
+      expect(niveauDe(lireXp()).niveau).toBe(2);
+    }
   });
 });
