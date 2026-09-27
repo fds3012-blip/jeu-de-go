@@ -89,6 +89,43 @@ export function messageAtari(premiereFois: boolean): string {
   return premiereFois ? `${ALERTE_ATARI} ${EXPLICATION_ATARI}` : ALERTE_ATARI;
 }
 
+// Comment finir la partie (#120) : quand le plateau est presque plein, ou dès que l'ordi passe,
+// Mochi explique une seule fois qu'on passe, et que deux passes lancent le comptage.
+
+/** Vrai une fois que Mochi a expliqué le mot « passer » (comme l'atari, on ne l'explique qu'une fois). */
+export const PASSER_KEY = 'go.passer-explique.v1';
+/** Part du plateau occupée à partir de laquelle on le dit « presque plein ». */
+export const SEUIL_PRESQUE_PLEIN = 0.6;
+export const EXPLICATION_PASSER = "Passer, c'est laisser ton tour sans poser de pierre.";
+
+/** Le plateau est-il presque plein (pierres sur au moins SEUIL_PRESQUE_PLEIN des intersections) ? */
+export function presquePlein(board: Int8Array): boolean {
+  let n = 0;
+  for (let p = 0; p < board.length; p++) if (board[p]) n++;
+  return n >= board.length * SEUIL_PRESQUE_PLEIN;
+}
+
+/** Message de Mochi : l'adversaire `nom` vient de passer (`ilPasse`), ou le plateau est presque plein. Le mot est expliqué. */
+export function messagePasser(nom: string, ilPasse: boolean): string {
+  const conseil = ilPasse
+    ? `${nom} passe. Plus rien à gagner ? Passe aussi, et on compte.`
+    : `Plus rien à gagner ? Passe. Si ${nom} passe aussi, on compte.`;
+  return `${conseil} ${EXPLICATION_PASSER}`;
+}
+
+/**
+ * Conseil « passer », une seule fois pour toujours (mémorisé dans localStorage) : rend le message, ou null
+ * s'il a déjà été donné, si l'aide est coupée, ou si ni l'adversaire ne passe ni le plateau n'est presque plein.
+ */
+export function conseilPasser(nom: string, aide: boolean, ilPasse: boolean, board: Int8Array, stockage: Pick<Storage, 'getItem' | 'setItem'> | null = typeof localStorage === 'undefined' ? null : localStorage): string | null {
+  if (!aide || (!ilPasse && !presquePlein(board))) return null;
+  try {
+    if (stockage?.getItem(PASSER_KEY)) return null;
+    stockage?.setItem(PASSER_KEY, 'true');
+  } catch { /* stockage indisponible : on explique quand même */ }
+  return messagePasser(nom, ilPasse);
+}
+
 // Indices limités contre l'ordi (#35) : 3 par partie, pour que le joueur cherche d'abord seul.
 
 /** Nombre d'indices par partie contre l'ordi. */

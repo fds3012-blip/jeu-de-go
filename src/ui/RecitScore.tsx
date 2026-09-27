@@ -2,7 +2,7 @@
 // puis les prisonniers, puis le komi, puis le résultat. 2,5 s au plus ; un toucher saute au résultat (l'écran de fin).
 // Même fond que FinPartie (plateau sous un voile) : quand le récit cède la place, seul le bas de l'écran change.
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { DUREE_RECIT, EXPLICATION_KOMI, etatRecit, ligneDeuxieme, ligneKomi, ligneResultat, PAUSE_LECTURE, type Recit } from '../app/score';
+import { campsRecit, DUREE_RECIT, EXPLICATION_KOMI, etatRecit, ligneDeuxieme, ligneKomi, ligneResultat, PAUSE_LECTURE, type Recit } from '../app/score';
 import { fr } from './typo';
 import './fin.css';
 
@@ -14,13 +14,16 @@ interface Props {
   immediat: boolean;
   /** Première fois qu'on compte : on explique le mot « komi ». */
   expliquerKomi: boolean;
+  /** Contre l'ordi : son nom (« Pomme »). Les camps deviennent « Toi » et lui ; sans, Noir et Blanc (partie à deux). */
+  adversaire?: string;
   /** Fin du récit (après la pause de lecture) ou toucher : place à l'écran de fin. */
   onFini: () => void;
 }
 
 const virgule = (n: number) => String(n).replace('.', ',');
 
-export function RecitScore({ fond, recit, immediat, expliquerKomi, onFini }: Props) {
+export function RecitScore({ fond, recit, immediat, expliquerKomi, adversaire, onFini }: Props) {
+  const camps = campsRecit(adversaire);
   const [t, setT] = useState(immediat ? DUREE_RECIT : 0);
   const fini = useRef(onFini);
   useEffect(() => { fini.current = onFini; });
@@ -52,28 +55,30 @@ export function RecitScore({ fond, recit, immediat, expliquerKomi, onFini }: Pro
         <div className="fin-voile" aria-hidden="true" />
       </div>
       <div className="recit-feuille">
-        <div className="recit-compteur" aria-hidden="true">
-          <span className={gagnant === 1 ? 'camp gagnant' : 'camp'}>
-            <span className="camp-nom"><span className="recit-pierre b" />Noir</span>
-            <b data-testid="recit-noir">{virgule(e.noir)}</b>
-          </span>
-          <span className="recit-point">·</span>
-          <span className={gagnant === 2 ? 'camp gagnant' : 'camp'}>
-            <span className="camp-nom"><span className="recit-pierre w" />Blanc</span>
-            <b data-testid="recit-blanc">{virgule(e.blanc)}</b>
-          </span>
+        <div className="recit-bloc">
+          <div className="recit-compteur" aria-hidden="true">
+            <span className={gagnant === 1 ? 'camp gagnant' : 'camp'}>
+              <span className="camp-nom"><span className="recit-pierre b" />{camps.noir}</span>
+              <b data-testid="recit-noir">{virgule(e.noir)}</b>
+            </span>
+            <span className="recit-point">·</span>
+            <span className={gagnant === 2 ? 'camp gagnant' : 'camp'}>
+              <span className="camp-nom"><span className="recit-pierre w" />{camps.blanc}</span>
+              <b data-testid="recit-blanc">{virgule(e.blanc)}</b>
+            </span>
+          </div>
+          <p className="sr-only">{fr(`${camps.noir} ${virgule(recit.noir)}, ${camps.blanc} ${virgule(recit.blanc)}.`)}</p>
+          <ol className="recit-etapes">
+            <li className={vu(1)}>{fr(recit.territoire.length ? 'Territoires : les points vides que chaque camp entoure' : 'Aucun territoire')}</li>
+            <li className={vu(2)}>{fr(ligneDeuxieme(recit, camps))}</li>
+            <li className={vu(3)}>
+              {fr(ligneKomi(recit.komi, camps))}
+              {expliquerKomi && recit.komi !== 0 && <span className="recit-explication">{fr(EXPLICATION_KOMI)}</span>}
+            </li>
+            <li className={`${vu(4)} recit-resultat`}>{fr(ligneResultat(recit, camps))}</li>
+          </ol>
         </div>
-        <p className="sr-only">{fr(`Noir ${virgule(recit.noir)}, Blanc ${virgule(recit.blanc)}.`)}</p>
-        <ol className="recit-etapes">
-          <li className={vu(1)}>{fr(recit.territoire.length ? 'Territoires : les points vides que chaque camp entoure' : 'Aucun territoire')}</li>
-          <li className={vu(2)}>{fr(ligneDeuxieme(recit))}</li>
-          <li className={vu(3)}>
-            {fr(ligneKomi(recit.komi))}
-            {expliquerKomi && recit.komi !== 0 && <span className="recit-explication">{fr(EXPLICATION_KOMI)}</span>}
-          </li>
-          <li className={`${vu(4)} recit-resultat`}>{fr(ligneResultat(recit))}</li>
-        </ol>
-        <button type="button" className="lien lien-discret recit-passer" onClick={() => fini.current()}>Continuer</button>
+        <button type="button" className="cta recit-continuer" onClick={() => fini.current()}>Continuer</button>
       </div>
     </section>
   );

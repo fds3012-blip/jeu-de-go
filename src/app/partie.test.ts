@@ -1,6 +1,29 @@
 import { describe, expect, it } from 'vitest';
-import { aideActive, ALERTE_ATARI, arrondiDemi, coupsJoues, descriptionIndices, EXPLICATION_ATARI, groupesEnAtari, indicesRestants, INDICES_PAR_PARTIE, libelleAvantage, libelleCoup, messageAtari, messageIndice, metEnAtari, nouveauxAtari, partNoir, PLUS_D_INDICE } from './partie';
+import { aideActive, ALERTE_ATARI, arrondiDemi, conseilPasser, EXPLICATION_PASSER, PASSER_KEY, presquePlein, coupsJoues, descriptionIndices, EXPLICATION_ATARI, groupesEnAtari, indicesRestants, INDICES_PAR_PARTIE, libelleAvantage, libelleCoup, messageAtari, messageIndice, metEnAtari, nouveauxAtari, partNoir, PLUS_D_INDICE } from './partie';
 import { choisirReplique, GENERIQUES, LONGUEUR_MAX, PERSONNELLES, repliques, type Situation } from './repliques';
+
+describe('conseil « passer » (#120)', () => {
+  const memoire = () => { const m = new Map<string, string>(); return { getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, v: string) => void m.set(k, v) }; };
+  const vide = new Int8Array(81);
+  const plein = new Int8Array(81).map((_, i) => (i < 60 ? 1 + (i % 2) : 0));
+  it('dès que Pomme passe : une seule fois, avec le mot expliqué', () => {
+    const s = memoire();
+    expect(conseilPasser('Pomme', true, true, vide, s)).toBe(`Pomme passe. Plus rien à gagner ? Passe aussi, et on compte. ${EXPLICATION_PASSER}`);
+    expect(s.getItem(PASSER_KEY)).toBe('true');
+    expect(conseilPasser('Pomme', true, true, vide, s)).toBeNull();
+  });
+  it('plateau presque plein : le conseil de fin', () => {
+    expect(presquePlein(vide)).toBe(false);
+    expect(presquePlein(plein)).toBe(true);
+    expect(conseilPasser('Pomme', true, false, vide, memoire())).toBeNull();
+    expect(conseilPasser('Pomme', true, false, plein, memoire())).toBe(`Plus rien à gagner ? Passe. Si Pomme passe aussi, on compte. ${EXPLICATION_PASSER}`);
+  });
+  it("aide coupée : rien, et rien n'est mémorisé", () => {
+    const s = memoire();
+    expect(conseilPasser('Pomme', false, true, plein, s)).toBeNull();
+    expect(s.getItem(PASSER_KEY)).toBeNull();
+  });
+});
 import { newPosition, play, type Position } from '../go/rules';
 import { fromLabel } from '../go/coords';
 import { fromRows } from '../go/position';
