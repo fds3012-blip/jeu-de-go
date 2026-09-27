@@ -55,11 +55,11 @@ test('navigation entre les onglets Jouer, Apprendre, Problèmes et Profil', asyn
 test("« ‹ » ramène à l'accueil depuis une partie en cours (la navigation est masquée en partie)", async ({ page }) => {
   await page.goto('/');
   await lancerADeux(page);
-  await expect(page.getByRole('img', { name: /Plateau de go/ })).toBeVisible();
+  await expect(page.getByRole('grid', { name: /Plateau de go/ })).toBeVisible();
   await expect(page.getByRole('navigation', { name: 'Navigation principale' })).toHaveCount(0);
 
   await page.getByRole('button', { name: "Retour à l'accueil" }).click();
-  await expect(page.getByRole('img', { name: /Plateau de go/ })).toHaveCount(0);
+  await expect(page.getByRole('grid', { name: /Plateau de go/ })).toHaveCount(0);
   await expect(page.locator('.cta')).toBeVisible();
   await expect(page.getByRole('navigation', { name: 'Navigation principale' }).getByRole('button', { name: 'Jouer' })).toHaveAttribute('aria-current', 'page');
 });
