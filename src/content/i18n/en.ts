@@ -12,6 +12,8 @@ export const en = {
   'profil.aria': 'Your profile',
   'profil.invite': 'Guest',
   'profil.inviteDetail': 'No account: everything stays on this phone.',
+  'serie.invitation': 'Create an account to keep your streak.',
+  'serie.creerCompte': 'Create an account',
   'profil.sansPseudo': 'No username',
   'profil.cote': 'Rating {cote}',
   'profil.jours': { one: '{n} day', other: '{n} days' },
