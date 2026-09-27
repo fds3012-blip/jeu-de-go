@@ -1,0 +1,35 @@
+/* Progression (issue #109) : barre de niveau de l'accueil et célébration de niveau franchi. */
+
+.niveau { display: grid; grid-template-columns: auto 1fr; align-items: center; column-gap: 10px; row-gap: 2px; margin: 0 0 6px; }
+.niveau-texte { display: flex; align-items: baseline; gap: 6px; margin: 0; font-size: .82rem; color: var(--muted); white-space: nowrap; }
+.niveau-texte b { color: var(--recompense-texte); font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: .95rem; }
+/* La piste est une ligne du goban ; la pierre noire y avance. */
+.niveau-piste { position: relative; height: 14px; }
+.niveau-piste::before { content: ''; position: absolute; inset: 6px 0; border-radius: 2px; background: color-mix(in srgb, var(--muted) 35%, transparent); }
+.niveau-plein { position: absolute; left: 0; top: 6px; height: 2px; border-radius: 2px; background: var(--recompense); transition: width .5s cubic-bezier(.22, 1, .36, 1); }
+.niveau-pierre { position: absolute; top: 0; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; background: var(--matiere-noire);
+  box-shadow: 0 0 0 1.5px var(--recompense), 0 2px 4px rgba(0, 0, 0, .45); transition: left .5s cubic-bezier(.22, 1, .36, 1); }
+.niveau-suite { grid-column: 1 / -1; margin: 0; font-size: .75rem; color: var(--muted); }
+
+/* ---------- Célébration : carte en haut d'écran, pour ne jamais cacher l'action principale de fin (Partager, Suivant) ---------- */
+.fete-niveau { position: fixed; z-index: 60; left: 50%; top: calc(12px + env(safe-area-inset-top, 0px)); transform: translateX(-50%);
+  width: min(360px, calc(100% - 32px)); }
+.fete-niveau button { display: flex; align-items: center; gap: 14px; width: 100%; min-height: 64px; padding: 12px 16px; border: 1.5px solid var(--recompense);
+  border-radius: 18px; background: var(--surface); color: var(--text); text-align: left; font: inherit; cursor: pointer;
+  box-shadow: 0 12px 32px -12px rgba(0, 0, 0, .6); }
+.fete-pierre { display: grid; place-items: center; flex: none; width: 48px; height: 48px; border-radius: 50%; background: var(--matiere-noire);
+  box-shadow: 0 0 0 2px var(--recompense), 0 4px 10px rgba(0, 0, 0, .45); }
+.fete-pierre b { color: var(--papier); font-family: var(--font-titre); font-size: 1.3rem; }
+.fete-texte { display: grid; gap: 2px; }
+.fete-texte b { font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: 1.15rem; color: var(--recompense-texte); }
+.fete-texte small { font-size: .85rem; color: var(--muted); }
+
+/* Animée seulement avec les célébrations actives et sans mouvements réduits : la carte descend, la pierre se pose. */
+.fete-niveau.anime button { animation: fete-monte .32s cubic-bezier(.22, 1, .36, 1) both; }
+.fete-niveau.anime .fete-pierre { animation: fete-pose .42s cubic-bezier(.34, 1.56, .64, 1) .12s both; }
+@keyframes fete-monte { from { opacity: 0; transform: translateY(-16px); } }
+@keyframes fete-pose { from { opacity: 0; transform: scale(.6); } }
+@media (prefers-reduced-motion: reduce) {
+  .fete-niveau.anime button, .fete-niveau.anime .fete-pierre { animation: none; }
+  .niveau-plein, .niveau-pierre { transition: none; }
+}
