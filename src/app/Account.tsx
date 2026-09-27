@@ -3,6 +3,7 @@ import type { Session } from '@supabase/supabase-js';
 import { supabase, type Db } from '../data/supabase';
 import { fetchProfile, saveUsername, sendMagicLink, type Profile } from '../data/account';
 import { USERNAME_MAX, USERNAME_MIN, isEmail, validateUsername } from '../data/username';
+import { EVENTS, identify, track } from '../data/analytics';
 
 const field: CSSProperties = {
   width: '100%', minHeight: 46, padding: '0 14px', borderRadius: 12, border: '1.5px solid var(--line)',
@@ -37,6 +38,7 @@ function Connected({ db }: { db: Db }) {
   }, [db]);
 
   const userId = session?.user.id;
+  useEffect(() => { if (session !== undefined) identify(userId ?? null); }, [session, userId]);
   useEffect(() => {
     if (!userId) { setProfile(null); return; }
     let alive = true;
@@ -93,7 +95,7 @@ function SignIn({ db }: { db: Db }) {
     setBusy(true); setError('');
     const r = await sendMagicLink(db, email);
     setBusy(false);
-    if (r.ok) setSent(true); else setError(r.error);
+    if (r.ok) { setSent(true); track(EVENTS.lienConnexionEnvoye); } else setError(r.error);
   };
 
   if (sent) {
@@ -134,7 +136,7 @@ function UsernameForm({ db, profile, canCancel, onDone, onCancel, onSignOut }: {
     setBusy(true); setError('');
     const r = await saveUsername(db, profile.id, check.value);
     setBusy(false);
-    if (r.ok) onDone(r.value); else setError(r.error);
+    if (r.ok) { if (!canCancel) track(EVENTS.inscription); onDone(r.value); } else setError(r.error);
   };
 
   return (

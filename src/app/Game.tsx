@@ -4,6 +4,7 @@ import { groupAt, newPosition, play, type Position } from '../go/rules';
 import { score } from '../go/score';
 import { toLabel } from '../go/coords';
 import { bestMove, proposeDead, type Opponent } from '../engine';
+import { EVENTS, secondsSinceOpen, track, trackOnce } from '../data/analytics';
 
 const REFUS = { occupe: '', ko: "Ko : tu ne peux pas reprendre tout de suite, joue d'abord ailleurs.", suicide: 'Coup interdit : cette pierre serait capturée par elle-même.', 'hors-plateau': '' };
 const pierres = (n: number) => `${n} pierre${n > 1 ? 's' : ''}`;
@@ -77,6 +78,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro }: 
     if (typeof r === 'string') { if (REFUS[r]) setMsg(REFUS[r]); return; }
     const cap = r.captures[pos.toPlay] - pos.captures[pos.toPlay];
     setHistory([...history, r]);
+    if (history.length === 1) trackOnce(EVENTS.premierePierre, { secondes: secondsSinceOpen(), mode: ai ? 'ordi' : 'deux', adversaire: ai?.id, taille: size });
     if (ai) setMsg(cap ? `Bravo, tu captures ${pierres(cap)} !` : `Tu joues ${toLabel(p, size)}.`);
     else setMsg(cap ? `${pos.toPlay === 1 ? 'Noir' : 'Blanc'} capture ${pierres(cap)}.` : `${r.toPlay === 1 ? 'Noir' : 'Blanc'} joue. Dernier coup : ${toLabel(p, size)}.`);
   }
@@ -116,6 +118,9 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro }: 
       <span className="caps">{pos.captures[c]} prisonnier{pos.captures[c] > 1 ? 's' : ''}</span>
     </div>
   );
+
+  // Mesure : une partie terminée (score validé ou abandon). Ajout isolé pour faciliter les fusions.
+  useEffect(() => { if (phase === 'end') track(EVENTS.partieTerminee, { mode: ai ? 'ordi' : 'deux', adversaire: ai?.id, taille: size, coups: history.length - 1, fin: resigned ? 'abandon' : 'score', gagnant: (resigned ? 3 - resigned : sc.winner) === 1 ? 'noir' : 'blanc' }); }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (phase === 'end') {
     const winner = resigned ? (3 - resigned) as 1 | 2 : sc.winner;
