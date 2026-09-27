@@ -82,7 +82,7 @@ export function LearnHome({ progress, onOpen, sync = 'local' }: { progress: Prog
       </div>
 
       <section className="a-venir" aria-labelledby="a-venir-titre">
-        <h2 id="a-venir-titre">Bientôt</h2>
+        <h2 id="a-venir-titre" className="titre-pierres">Bientôt</h2>
         <p>Cinq autres chapitres sont en préparation, jusqu’au niveau des joueurs de club.</p>
         <ul>{CHAPITRES_A_VENIR.map(c => <li key={c}>{c}</li>)}</ul>
       </section>

@@ -15,8 +15,8 @@ export default defineConfig({
     environment: 'node',
     // Les tests Playwright (e2e/) ne passent pas par Vitest.
     exclude: [...configDefaults.exclude, 'e2e/**', '.claude/**'],
-    // tokens.test.ts lit le CSS des tokens.
-    css: { include: [/tokens\.css/] },
+    // tokens.test.ts et IconesNav.test.tsx lisent le CSS des tokens et de la barre de navigation.
+    css: { include: [/tokens\.css/, /nav\.css/] },
     // Couverture (npm run test:coverage) : module des règles uniquement.
     coverage: {
       provider: 'v8',

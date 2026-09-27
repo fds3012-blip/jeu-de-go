@@ -57,6 +57,8 @@ const GRAPHIC: [string, string][] = [
   // Le bouton en relief est dessiné par sa tranche (--accent-bord) ; les soulignés et points par --accent-trait.
   ['--accent-bord', '--bg'], ['--accent-trait', '--bg'], ['--accent-trait', '--surface'],
   ['--focus', '--bg'], ['--focus', '--surface'], ['--danger', '--bg'],
+  // Barre du bas (#51) : pièce d'accent de l'icône active et point indicateur, propres à chaque onglet.
+  ['--onglet-jouer', '--barre'], ['--onglet-apprendre', '--barre'], ['--onglet-problemes', '--barre'], ['--onglet-profil', '--barre'],
 ];
 
 describe('tokens Encre & Jade', () => {
@@ -150,6 +152,6 @@ describe('tokens Encre & Jade', () => {
 
   it('coupe les animations quand le système demande moins de mouvement', () => {
     const reduced = block('@media (prefers-reduced-motion: reduce)');
-    expect(reduced).toEqual({ '--duree-rapide': '0ms', '--duree': '0ms', '--duree-recompense': '0ms' });
+    expect(reduced).toEqual({ '--duree-rapide': '0ms', '--duree': '0ms', '--duree-recompense': '0ms', '--duree-pose': '0ms' });
   });
 });
