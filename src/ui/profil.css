@@ -69,7 +69,7 @@ button.ligne:focus-visible { outline-offset: -3px; }
 .accord-conditions { margin: var(--space-2) 0 0 -12px; }
 .accord p.accord-note { margin-top: var(--space-2); font-size: var(--fs-s); }
 /* Deux choix identiques (issue #64, CNIL) : même taille, même forme, même couleur, côte à côte. */
-.accord-actions { align-self: stretch; display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); margin-top: var(--space-4); }
+.accord-actions { align-self: stretch; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); margin-top: var(--space-4); }
 .accord .accord-choix { width: 100%; min-height: var(--cible-cta); padding: 0 var(--space-2); background: var(--surface-2); color: var(--text);
   box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--muted) 70%, transparent); }
 
