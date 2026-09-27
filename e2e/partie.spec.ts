@@ -54,6 +54,9 @@ test("contre l'ordi : barre d'avantage après le premier coup, indice entouré",
   const erreurs: string[] = [];
   page.on('pageerror', (e) => erreurs.push(e.message));
   await page.goto('/');
+  // La barre est cachée pendant la toute première partie (#160) : on joue ici la deuxième.
+  await page.evaluate(() => localStorage.setItem('go.parties.v1', JSON.stringify({ n: 1, ordi: 1 })));
+  await page.reload();
   await page.locator('.cta').click();
   await expect(plateau(page)).toBeVisible();
   await expect(page.getByRole('navigation', { name: 'Navigation principale' })).toHaveCount(0);

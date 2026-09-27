@@ -2,8 +2,8 @@
 import { fr } from '../ui/typo';
 import { battu, type Bilan } from './bilan';
 
-/** Historique minimal des parties, gardé en localStorage. */
-export interface Parties { n: number; dernier?: string }
+/** Historique minimal des parties, gardé en localStorage. `ordi` : parties contre l'ordi lancées (#160, voir equilibrage.ts). */
+export interface Parties { n: number; dernier?: string; ordi?: number }
 export const PARTIES_KEY = 'go.parties.v1';
 /** Bulle « but du jeu » affichée une seule fois, au début de la première partie contre l'ordi. */
 export const INTRO_KEY = 'go.intro-but.v1';

@@ -3,6 +3,7 @@
 // Synchrone et sans DOM, pour tourner dans un Web Worker comme dans les tests.
 import { groupAt, neighbors, play, type Color, type Position } from '../go/rules';
 import { score } from '../go/score';
+import { coupDeFermeture, frontieresOuvertes, partieAvancee } from '../go/frontieres';
 import { deadStones } from './dead';
 import { isEye, now, rng, Sim } from './sim';
 
@@ -31,17 +32,19 @@ export interface Opponent {
   timeMs: number; // budget de temps par coup
   hasard: number; // probabilité de jouer un candidat au hasard au lieu du meilleur
   heuristiques: boolean; // priorité aux captures et aux sauvetages
+  /** Ne passe pas tant qu'une frontière reste ouverte : il la ferme d'abord (#159). */
+  fermeFrontieres?: boolean;
   /** Présent : ce niveau joue avec KataGo (réseau g170-b6c96). */
   katago?: KataGoLevel;
 }
 
 // Repli commun des niveaux KataGo : le moteur simple à pleine force (niveau Caillou).
-const repli = { playouts: 20000, timeMs: 800, hasard: 0, heuristiques: true } as const;
+const repli = { playouts: 20000, timeMs: 800, hasard: 0, heuristiques: true, fermeFrontieres: true } as const;
 
 /** Échelle des défis, du plus facile au plus fort. */
 export const OPPONENTS: Opponent[] = [
-  { id: 'pomme', nom: 'Pomme', rang: '20 kyu', phrase: 'Elle apprend comme toi.', description: 'Joue un peu au hasard. Parfait pour ta première partie.', playouts: 250, timeMs: 150, hasard: 0.3, heuristiques: false },
-  { id: 'caillou', nom: 'Caillou', rang: '16 kyu', phrase: 'Il capture tout ce qui traîne.', description: 'Capture dès que tu le laisses faire. Protège bien tes pierres.', playouts: 20000, timeMs: 600, hasard: 0, heuristiques: true },
+  { id: 'pomme', nom: 'Pomme', rang: '20 kyu', phrase: 'Elle apprend comme toi.', description: 'Joue un peu au hasard. Parfait pour ta première partie.', playouts: 250, timeMs: 150, hasard: 0.3, heuristiques: false, fermeFrontieres: true },
+  { id: 'caillou', nom: 'Caillou', rang: '16 kyu', phrase: 'Il capture tout ce qui traîne.', description: 'Capture dès que tu le laisses faire. Protège bien tes pierres.', playouts: 20000, timeMs: 600, hasard: 0, heuristiques: true, fermeFrontieres: true },
   { id: 'bambou', nom: 'Bambou', rang: '13 kyu', phrase: 'Il plie, mais ne rompt jamais.', description: 'Joue solide et relie ses pierres. Cherche ses points faibles.', ...repli, katago: { visits: 4, tolerance: 12, style: 'solide' } },
   { id: 'renard', nom: 'Renard', rang: '10 kyu', phrase: "Il coupe dès que tu t'étires trop.", description: 'Aime couper et attaquer. Garde tes groupes bien reliés.', ...repli, katago: { visits: 8, tolerance: 8, style: 'agressif' } },
   { id: 'riviere', nom: 'Rivière', rang: '7 kyu', phrase: 'Elle se faufile le long des bords.', description: 'Prend les coins et les bords. Ne la laisse pas tout entourer.', ...repli, katago: { visits: 16, tolerance: 5, style: 'territorial' } },
@@ -116,13 +119,21 @@ function settled(pos: Position, own: Int32Array, playouts: number): boolean {
 export function chooseMove(pos: Position, niveau: OpponentId | Opponent, opts: EngineOptions = {}): number {
   const lvl = typeof niveau === 'string' ? opponent(niveau) : niveau;
   const komi = opts.komi ?? 6.5, rand = rng(opts.seed), c = pos.toPlay;
+  // Avant de passer, un niveau qui ferme ses frontières joue un coup de fermeture s'il en reste un (#159).
+  // `prefer` : coups du moteur, du meilleur au moins bon. Pierres mortes calculées seulement s'il y a une frontière.
+  let morts: number[] | null = null;
+  const mortes = () => (morts ??= deadStones(pos, { seed: opts.seed, timeMs: Math.min(150, opts.timeMs ?? 150) }));
+  const passer = (prefer: number[] = []): number => {
+    if (!lvl.fermeFrontieres || !partieAvancee(pos.board) || !frontieresOuvertes(pos.board, pos.size).length) return -1;
+    return coupDeFermeture(pos, mortes(), prefer);
+  };
   const cands = candidates(pos, lvl.heuristiques);
-  if (!cands.length) return -1;
+  if (!cands.length) return passer();
 
   // L'adversaire vient de passer : si le compte, pierres mortes estimées retirées, nous donne gagnant, on passe aussi.
   if (pos.lastMove === -1) {
-    const sc = score(pos, komi, 'chinese', new Set(deadStones(pos, { seed: opts.seed, timeMs: Math.min(150, opts.timeMs ?? 150) })));
-    if (sc.winner === c) return -1;
+    const sc = score(pos, komi, 'chinese', new Set(mortes()));
+    if (sc.winner === c) return passer();
   }
 
   const size = pos.size, sim = new Sim(size), empties = new Int32Array(size * size);
@@ -150,7 +161,7 @@ export function chooseMove(pos: Position, niveau: OpponentId | Opponent, opts: E
   cands.sort((a, b) => b.visits - a.visits || rate(b) - rate(a));
   const top = cands[0];
   // Partie terminée : plus rien d'utile à jouer, on passe.
-  if (done >= 20 && settled(pos, own, done)) return -1;
+  if (done >= 20 && settled(pos, own, done)) return passer(cands.map(a => a.move));
   // Part de hasard des niveaux faibles.
   if (lvl.hasard > 0 && rand() < lvl.hasard) return cands[Math.floor(rand() * cands.length)].move;
   // Coups urgents (capture, sauvetage) : joués sauf si les simulations les jugent nettement moins bons.
