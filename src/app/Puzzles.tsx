@@ -16,8 +16,8 @@ import { Retour, Verdict } from '../ui/Lecteur';
 import { Bubble } from '../ui/Mochi';
 import { Reflexion } from '../ui/Reflexion';
 import { fr } from '../ui/typo';
-import { playFail, playIllegal, playStone, playSuccess } from '../ui/sound';
-import { hapticIllegal, hapticStone } from '../ui/haptics';
+import { playBadge, playFail, playIllegal, playStone, playSuccess } from '../ui/sound';
+import { hapticBadge, hapticFail, hapticIllegal, hapticStone, hapticSuccess } from '../ui/haptics';
 import { EVENTS, track } from '../data/analytics';
 import { gagnerXp } from './xp';
 import { prefersReducedMotion, readLocal, useOnline, writeLocal } from './hooks';
@@ -129,6 +129,8 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
     const nouveaux = aFeter(tiers, deja);
     if (!nouveaux.length) return;
     writeLocal(FETES_KEY, [...(Array.isArray(deja) ? deja : []), ...nouveaux]);
+    // Sceau de palier obtenu (#165) : « toc » du sceau et cloche, même avec les mouvements réduits (ce n'est pas un mouvement).
+    if (celebrer) { playBadge(); hapticBadge(); }
     if (celebrer && !prefersReducedMotion()) setFetes(nouveaux);
   }, [tiers, openId, celebrer]);
   const ordre = useMemo(() => ordrePaliers(tiers), [tiers]);
@@ -389,7 +391,7 @@ function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating, onAtt
     }
     const ok = r.kind === 'ok';
     playStone(p, puzzle.size); hapticStone();
-    if (ok) playSuccess(); else playFail();
+    if (ok) { playSuccess(); hapticSuccess(); } else { playFail(); hapticFail(); }
     setTries(tries + 1);
     setAnswer({ kind: r.kind, p, text: ok ? (puzzle.explanation ?? 'Bravo, c’est le bon coup !') : (puzzle.refutation ?? 'Pas tout à fait. Essaie encore.'), n });
     setBoard(ok ? r.after.board : start.pos.board);

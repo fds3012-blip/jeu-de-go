@@ -62,12 +62,31 @@ export const niveauRequis = (id: string) => RECOMPENSES.find(r => r.id === id)?.
 export const themeDebloque = (id: string, niveau: number) => niveau >= niveauRequis(id);
 export const recompensesDebloquees = (niveau: number) => RECOMPENSES.filter(r => r.niveau <= niveau);
 
-export interface Gain { source: SourceXp; points: number; avant: number; apres: number; niveauAvant: number; niveauApres: number }
+/**
+ * Bonus « première fois » (issue #162) : progrès offert (Nunes et Drèze, 2006). Sans lui, un parcours type de
+ * 10 minutes (une partie perdue, une leçon, 2 problèmes) donnait 65 XP sur 100. Avec lui : 115, le niveau 2 tombe
+ * pendant la première session. Chaque bonus ne se gagne qu'une fois par appareil.
+ */
+export type Premiere = 'partie' | 'lecon' | 'probleme';
+export const BONUS_PREMIERE: Record<Premiere, number> = { partie: 20, lecon: 20, probleme: 10 };
+/** Le Go du jour est un problème ; une victoire est une partie. */
+export const premiereDe = (source: SourceXp): Premiere =>
+  source === 'goDuJour' ? 'probleme' : source === 'victoire' ? 'partie' : source;
 
-/** Calcul pur d'un gain : jamais négatif. */
-export function appliquer(xp: number, source: SourceXp): Gain {
-  const avant = Math.max(0, Math.floor(xp) || 0), points = GAINS[source], apres = avant + points;
-  return { source, points, avant, apres, niveauAvant: niveauDe(avant).niveau, niveauApres: niveauDe(apres).niveau };
+export interface Gain {
+  source: SourceXp;
+  /** XP gagnés au total, bonus compris. */
+  points: number;
+  /** Part du bonus « première fois » dans `points` (0 sinon). */
+  bonus: number;
+  avant: number; apres: number; niveauAvant: number; niveauApres: number;
+}
+
+/** Calcul pur d'un gain : jamais négatif. `premiere` : c'est la première fois pour cette catégorie. */
+export function appliquer(xp: number, source: SourceXp, premiere = false): Gain {
+  const avant = Math.max(0, Math.floor(xp) || 0), bonus = premiere ? BONUS_PREMIERE[premiereDe(source)] : 0;
+  const points = GAINS[source] + bonus, apres = avant + points;
+  return { source, points, bonus, avant, apres, niveauAvant: niveauDe(avant).niveau, niveauApres: niveauDe(apres).niveau };
 }
 
 // --- Stockage sur l'appareil et diffusion aux écrans ---
@@ -79,6 +98,15 @@ export function lireXp(): number {
     const v = Number(JSON.parse(localStorage.getItem(XP_KEY) || '0'));
     return Number.isFinite(v) && v > 0 ? Math.floor(v) : 0;
   } catch { return 0; }
+}
+
+export const PREMIERES_KEY = 'go.xp.premieres.v1';
+
+export function lirePremieres(): Set<Premiere> {
+  try {
+    const v: unknown = JSON.parse(localStorage.getItem(PREMIERES_KEY) || '[]');
+    return new Set(Array.isArray(v) ? v.filter((p): p is Premiere => typeof p === 'string' && p in BONUS_PREMIERE) : []);
+  } catch { return new Set(); }
 }
 
 type Ecouteur = (g: Gain) => void;
@@ -110,8 +138,12 @@ if (typeof window !== 'undefined') window.addEventListener('pagehide', envoyerAg
  * Envoie `niveau_atteint` à chaque niveau franchi et prévient les écouteurs.
  */
 export function gagnerXp(source: SourceXp): Gain {
-  const g = appliquer(lireXp(), source);
-  try { localStorage.setItem(XP_KEY, JSON.stringify(g.apres)); } catch { /* stockage indisponible : le gain reste affiché pour la session */ }
+  const premieres = lirePremieres(), cat = premiereDe(source);
+  const g = appliquer(lireXp(), source, !premieres.has(cat));
+  try {
+    localStorage.setItem(XP_KEY, JSON.stringify(g.apres));
+    if (g.bonus) localStorage.setItem(PREMIERES_KEY, JSON.stringify([...premieres, cat]));
+  } catch { /* stockage indisponible : le gain reste affiché pour la session */ }
   agregat ??= { points: 0, gains: 0, sources: new Set() };
   agregat.points += g.points; agregat.gains++; agregat.sources.add(source);
   if (minuterie) clearTimeout(minuterie);

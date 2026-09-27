@@ -1,0 +1,22 @@
+/* Issue #162 : pastille or « +N XP ». Discrète (une ligne, en haut), mais sur l'or de la récompense. */
+
+.pastille-xp { display: inline-flex; align-items: baseline; gap: 6px; padding: 5px 12px; border-radius: 999px;
+  background: var(--or); color: var(--encre-jade); box-shadow: 0 6px 18px -8px rgba(0, 0, 0, .55);
+  font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pastille-xp b { font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: .95rem; line-height: 1.2; }
+.pastille-xp small { font-size: .75rem; font-weight: 600; }
+
+/* Conteneur global : en haut, centré, sous l'encoche. Ne capte aucun toucher. */
+.annonce-xp { position: fixed; z-index: 59; left: 0; right: 0; top: calc(12px + env(safe-area-inset-top, 0px));
+  display: flex; justify-content: center; padding: 0 16px; pointer-events: none; }
+/* Un niveau franchi : la carte de célébration (≈ 72 px) prend le haut, la pastille se range dessous. */
+.annonce-xp.sous-fete { top: calc(96px + env(safe-area-inset-top, 0px)); }
+
+/* Entrée : glisse de 6 px vers le bas et fondu, 220 ms, sortie rapide (160 ms), transform et opacité seulement. */
+.pastille-xp.anime { animation: pastille-xp-entre .22s cubic-bezier(.23, 1, .32, 1) both; }
+.annonce-xp.sortie .pastille-xp { animation: pastille-xp-sort .16s cubic-bezier(.4, 0, 1, 1) both; }
+@keyframes pastille-xp-entre { from { opacity: 0; transform: translateY(-6px); } }
+@keyframes pastille-xp-sort { to { opacity: 0; transform: translateY(-4px); } }
+@media (prefers-reduced-motion: reduce) {
+  .pastille-xp.anime, .annonce-xp.sortie .pastille-xp { animation: none; }
+}

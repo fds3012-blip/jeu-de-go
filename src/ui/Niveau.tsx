@@ -3,6 +3,8 @@ import { useEffect, useRef, useState } from 'react';
 import { abonnerXp, libelleRecompense, lireXp, niveauDe, prochaineRecompense, recompenseDuNiveau } from '../app/xp';
 import { mouvementsReduits } from './defilement';
 import { fr } from './typo';
+import { playLevel } from './sound';
+import { hapticLevel } from './haptics';
 import './niveau.css';
 
 /** XP de l'appareil, mis à jour à chaque gain. */
@@ -44,9 +46,13 @@ const DUREE_MS = 3200;
 export function FeteNiveau({ celebrer }: { celebrer: boolean }) {
   const [niveau, setNiveau] = useState<number | null>(null);
   const minuterie = useRef<number | undefined>(undefined);
+  const avecSon = useRef(celebrer);
+  avecSon.current = celebrer;
   useEffect(() => abonnerXp(g => {
     if (g.niveauApres <= g.niveauAvant) return;
     setNiveau(g.niveauApres);
+    // #165 : lames de bois montantes, après le son de la réussite qui a fait gagner l'XP (pas par-dessus).
+    if (avecSon.current) window.setTimeout(() => { playLevel(); hapticLevel(); }, 350);
     window.clearTimeout(minuterie.current);
     minuterie.current = window.setTimeout(() => setNiveau(null), DUREE_MS);
   }), []);
