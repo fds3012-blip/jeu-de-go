@@ -37,6 +37,8 @@
 .pas-bouton { display: flex; align-items: center; gap: 12px; max-width: 100%; background: none; border: 0; padding: 0; color: inherit; text-align: left; border-radius: calc(var(--pierre) / 2); }
 .a-droite .pas-bouton { flex-direction: row-reverse; text-align: right; }
 .pas-texte { display: flex; align-items: flex-start; gap: 10px; min-width: 0; }
+/* #121 : au zoom 200 %, les mots longs passent à la ligne au lieu de sortir de l’écran. */
+.pas-texte > * { min-width: 0; overflow-wrap: anywhere; }
 .a-droite .pas-texte { flex-direction: row-reverse; }
 .pas-texte .sceau { margin-top: 1px; }
 .sceau-pale > svg { opacity: .42; filter: saturate(.55); }
@@ -75,7 +77,8 @@
   border: 2px dashed color-mix(in srgb, var(--text) 34%, transparent); }
 
 /* Le bouton en relief de la leçon en cours, sous son titre. */
-.apprendre .cta-chemin { position: static; transform: none; width: auto; min-width: 148px; margin-top: var(--space-3); padding: 0 var(--space-6); }
+.apprendre .cta-chemin { position: static; transform: none; width: auto; min-width: min(148px, 100%); /* #121 */ margin-top: var(--space-3); padding: 0 var(--space-6); }
+.a-gauche .cta-chemin, .a-droite .cta-chemin { max-width: calc(100% - var(--pierre) - 12px); padding-inline: clamp(8px, 8%, var(--space-6)); overflow-wrap: anywhere; } /* #121 : reste dans l’écran au zoom 200 % */
 .a-gauche .cta-chemin { margin-left: calc(var(--pierre) + 12px); }
 .a-droite .cta-chemin { margin-right: calc(var(--pierre) + 12px); }
 .chemin-fini { margin: 0 0 var(--space-6); }
@@ -249,7 +252,7 @@
 .legende { color: var(--muted); font-size: var(--fs-s); margin-top: 4px; }
 .palmares-serie { align-items: flex-end; }
 .palmares-serie .chiffre { color: var(--recompense-texte); }
-.invitation { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); margin: 0 0 var(--space-2); }
+.invitation { display: flex; flex-wrap: wrap; /* #121 */ align-items: center; justify-content: space-between; gap: var(--space-2); margin: 0 0 var(--space-2); }
 .invitation p { margin: 0; font-size: var(--fs-corps-s); line-height: 1.4; }
 .invitation .lien { flex: none; margin-right: -12px; }
 
@@ -281,7 +284,7 @@
 
 /* ---------- Grille des problèmes de base : la position est l'image ---------- */
 .bases-aide { margin: 0 0 var(--space-4); }
-.grille-pb { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 20px 14px; }
+.grille-pb { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr)); /* #121 */ gap: 20px 14px; }
 .grille-pb button { display: flex; flex-direction: column; align-items: stretch; gap: 4px; width: 100%; background: none; border: 0; padding: 0; text-align: left; border-radius: 14px; }
 .grille-goban { position: relative; display: block; margin-bottom: 6px; }
 .mini-goban { display: block; width: 100%; height: auto; aspect-ratio: 1; border-radius: 12px; box-shadow: 0 3px 0 #7A4A1C, 0 12px 20px -12px rgba(0, 0, 0, .65); }
