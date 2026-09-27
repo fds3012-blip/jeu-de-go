@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+@font-face { font-family: "Bricolage"; src: url(https://cdn.jsdelivr.net/npm/@fontsource-variable/bricolage-grotesque/files/bricolage-grotesque-latin-wght-normal.woff2) format("woff2"); font-weight: 200 800; }
+@font-face { font-family: "Zen"; src: url(https://cdn.jsdelivr.net/npm/@fontsource/zen-kaku-gothic-new/files/zen-kaku-gothic-new-latin-400-normal.woff2); font-weight: 400; }
+@font-face { font-family: "Zen"; src: url(https://cdn.jsdelivr.net/npm/@fontsource/zen-kaku-gothic-new/files/zen-kaku-gothic-new-latin-500-normal.woff2); font-weight: 500; }
+@font-face { font-family: "Zen"; src: url(https://cdn.jsdelivr.net/npm/@fontsource/zen-kaku-gothic-new/files/zen-kaku-gothic-new-latin-700-normal.woff2); font-weight: 700; }
+:root {
+  --sumi: #1C1916; --surface: #27221E; --surface-2: #332D28; --line: #3E3731;
+  --papier: #F3EDE3; --muted: #A99F92; --jade: #3CC48E; --jade-bord: #1E8A5F; --or: #EFB84A; --hanko: #D2432C;
+  --titre: "Bricolage", system-ui, sans-serif; --ui: "Zen", system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: #0f0d0b; display: flex; gap: 28px; padding: 28px; font-family: var(--ui); color: var(--papier); }
+.phone { width: 390px; height: 844px; background: var(--sumi); border-radius: 44px; overflow: hidden; position: relative; flex: none;
+  background-image: radial-gradient(120% 60% at 50% -10%, rgba(239,184,74,.10), transparent 60%); }
+.status { height: 50px; display: flex; justify-content: space-between; align-items: center; padding: 0 30px; font: 600 15px system-ui; }
+.pad { padding: 0 16px; }
+/* Barre du haut */
+.top { display: flex; align-items: center; justify-content: space-between; padding: 6px 16px 10px; }
+.marque { font: 800 26px/1 var(--titre); letter-spacing: -.02em; display: flex; align-items: center; gap: 8px; }
+.marque i { width: 22px; height: 22px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #676b69, #151716 55%, #050606); box-shadow: 8px 0 0 -2px var(--papier); margin-right: 8px; }
+.serie { display: flex; align-items: center; gap: 6px; font: 800 17px var(--titre); color: var(--or); background: rgba(239,184,74,.12); padding: 6px 12px 6px 9px; border-radius: 999px; }
+/* Carte adversaire (accueil) */
+.scene { margin: 4px 16px 0; position: relative; }
+.scene .cadre { height: 318px; overflow: hidden; border-radius: 10px; position: relative; }
+.scene .cadre > div { margin-top: -30px; }
+.scene .cadre::after { content: ''; position: absolute; inset: auto 0 0 0; height: 70px; background: linear-gradient(to bottom, rgba(28,25,22,0), var(--sumi)); }
+.scene .badge { position: absolute; left: 10px; top: 206px; z-index: 2; display: flex; align-items: flex-end; gap: 8px; }
+.bulle { background: var(--papier); color: #2a211a; font: 500 15px/1.35 var(--ui); padding: 10px 14px; border-radius: 16px 16px 16px 4px; max-width: 220px; box-shadow: 0 8px 20px -10px rgba(0,0,0,.6); margin-bottom: 14px; }
+.qui { margin: 14px 16px 0; display: flex; align-items: baseline; gap: 10px; }
+.qui b { font: 800 34px/1 var(--titre); letter-spacing: -.02em; }
+.qui span { color: var(--muted); font-size: 15px; }
+.desc { margin: 6px 16px 0; color: var(--muted); font-size: 15px; line-height: 1.45; }
+.reglage { margin: 14px 16px 0; display: flex; justify-content: space-between; align-items: center; font-size: 15px; color: var(--papier); }
+.reglage a { color: var(--papier); font-weight: 700; text-decoration: underline; text-decoration-color: var(--jade); text-decoration-thickness: 2px; text-underline-offset: 5px; }
+/* Bouton principal en relief : le seul élément en relief de l'écran */
+.jouer { display: block; margin: 16px 16px 0; height: 58px; border: 0; border-radius: 16px; background: var(--jade); color: #07231A; font: 800 20px var(--titre); letter-spacing: -.01em; box-shadow: 0 5px 0 var(--jade-bord), 0 14px 28px -12px rgba(60,196,142,.55); width: calc(100% - 32px); }
+.duo { display: grid; grid-template-columns: 1.25fr 1fr; gap: 10px; margin: 14px 16px 0; }
+.tuile { background: var(--surface); border-radius: 18px; padding: 10px 12px; display: flex; gap: 10px; align-items: center; min-height: 68px; }
+.tuile small { display: block; color: var(--muted); font-size: 13px; }
+.tuile strong { font: 700 16px/1.2 var(--titre); }
+.tuile.lecon { background: none; border: 1.5px dashed var(--line); }
+nav.onglets { position: absolute; bottom: 0; left: 0; right: 0; height: 84px; background: #171411; display: flex; justify-content: space-around; padding-top: 10px; border-top: 1px solid #2a2520; }
+nav.onglets div { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 12px; color: var(--muted); width: 70px; }
+nav.onglets div.on { color: var(--papier); font-weight: 700; }
+nav.onglets svg { width: 26px; height: 26px; }
+/* Partie */
+.joueur { display: flex; align-items: center; gap: 10px; padding: 8px 16px; }
+.joueur .nom { font: 800 19px/1.1 var(--titre); }
+.joueur .rang { color: var(--muted); font-size: 13px; }
+.joueur .grow { flex: 1; }
+.couvercle { display: flex; align-items: center; gap: 6px; background: #3a2a18; background: radial-gradient(ellipse at 50% 30%, #6b4a28, #3a2714); border-radius: 999px; padding: 4px 10px 4px 6px; font: 700 14px var(--titre); color: #F3E3C8; box-shadow: inset 0 2px 3px rgba(0,0,0,.45); }
+.mini { width: 14px; height: 14px; border-radius: 50%; }
+.mini.n { background: radial-gradient(circle at 35% 30%, #676b69, #151716 55%, #050606); }
+.mini.b { background: radial-gradient(circle at 38% 32%, #fff, #e9e3d6 60%, #bdb3a0); }
+.mini + .mini { margin-left: -9px; }
+.avantage { margin: 0 16px 10px; display: flex; align-items: center; gap: 10px; font: 700 13px var(--ui); color: var(--papier); }
+.avantage div { flex: 1; height: 8px; border-radius: 4px; background: #F3EDE3; overflow: hidden; box-shadow: inset 0 0 0 1px #5a5048; }
+.avantage i { display: block; height: 100%; width: 60%; background: #0b0b0b; }
+.plateau { padding: 0 4px; }
+.plateau svg, .plateau img { width: 100%; display: block; }
+.dit { display: inline-block; vertical-align: middle; margin-left: 8px; background: var(--papier); color: #2a211a; font: 500 13px var(--ui); padding: 4px 10px; border-radius: 4px 12px 12px 12px; }
+.coups { display: flex; gap: 14px; padding: 4px 16px 12px; color: var(--muted); font: 600 14px var(--ui); white-space: nowrap; overflow: hidden; }
+.coups .cur { color: var(--papier); background: var(--surface-2); border-radius: 6px; padding: 0 6px; }
+.moi { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--surface-2); font: 800 18px var(--titre); }
+.coach { display: flex; gap: 10px; align-items: center; margin: 14px 16px 0; background: var(--surface); border-radius: 16px; padding: 10px 12px; }
+.coach p { margin: 0; font-size: 15px; line-height: 1.35; }
+.actions { position: absolute; bottom: 0; left: 0; right: 0; height: 88px; background: #171411; border-top: 1px solid #2a2520; display: grid; grid-template-columns: repeat(4, 1fr); padding: 10px 6px 0; }
+.actions div { display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 13px; color: var(--papier); }
+.actions svg { width: 26px; height: 26px; }
+.actions .off { color: #6d655c; }
+/* Fin de partie */
+.voile { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(28,25,22,.35), rgba(28,25,22,.92) 50%); }
+.feuille { position: absolute; left: 0; right: 0; bottom: 0; padding: 0 20px 28px; text-align: center; }
+.feuille .sceau-grand { margin: 0 auto; position: relative; width: 108px; }
+.tampon { position: absolute; left: 88px; top: 60px; white-space: nowrap; transform: rotate(-12deg); border: 3px solid var(--hanko); color: var(--hanko); font: 800 17px var(--titre); letter-spacing: .04em; padding: 4px 10px; border-radius: 6px; background: rgba(210,67,44,.08); }
+.victoire { font: 800 56px/1 var(--titre); letter-spacing: -.035em; margin: 18px 0 6px; }
+.marge { font-size: 17px; color: var(--muted); }
+.ligne { margin: 14px 0 0; color: var(--papier); font-size: 15px; }
+.ligne b { color: var(--or); }
+.bilan { display: flex; justify-content: center; gap: 10px; margin: 20px 0 6px; }
+.bilan div { background: var(--surface); border-radius: 14px; padding: 10px 14px; min-width: 104px; }
+.bilan b { display: block; font: 800 24px var(--titre); }
+.bilan small { color: var(--muted); font-size: 13px; }
+.mochi { display: flex; gap: 10px; align-items: center; text-align: left; margin: 16px 0 4px; font-size: 15px; }
+.secondaire { margin-top: 12px; color: var(--papier); font: 700 16px var(--ui); text-decoration: underline; text-decoration-color: var(--jade); text-decoration-thickness: 2px; text-underline-offset: 5px; }
+.confetti { position: absolute; inset: 0; pointer-events: none; }
+</style></head>
+<body>
+
+<!-- ÉCRAN 1 : ACCUEIL (nouveau joueur) -->
+<section class="phone" id="accueil">
+  <div class="status"><span>9:41</span><span>●●● 5G</span></div>
+  <div class="top"><div class="marque"><i></i>Go</div><div class="serie"><svg width="16" height="18" viewBox="0 0 16 18"><path d="M8 0C9 4 14 6 14 11a6 6 0 0 1-12 0c0-2 1-4 2.5-5C4.5 8 6 9 7 9 6 6 7 3 8 0Z" fill="#EFB84A"/></svg>3</div></div>
+  <div class="scene">
+    <div class="cadre"><div data-goban='{"n":9,"B":[],"W":[],"ghost":"ee"}'></div></div>
+    <div class="badge"><div data-sceau="pomme" data-taille="64"></div><div class="bulle">Touche le centre pour poser ta première pierre&nbsp;!</div></div>
+  </div>
+  <div class="qui"><b>Pomme</b><span>20 kyu, débutante</span></div>
+  <p class="desc">Elle apprend comme toi. Le kyu est un niveau&nbsp;: plus il est petit, plus on est fort.</p>
+  <div class="reglage"><span>Plateau 9 × 9, tu as Noir</span><a>Changer</a></div>
+  <button class="jouer">Jouer contre Pomme</button>
+  <div class="duo">
+    <div class="tuile"><div data-mini='{"B":["cc","dd"],"W":["cd","dc"]}'></div><div><small>Problème du jour</small><strong>L'échelle</strong></div></div>
+    <div class="tuile lecon"><div><small>Leçon 1 sur 6</small><strong>Libertés et capture</strong></div></div>
+  </div>
+  <nav class="onglets">
+    <div class="on"><svg viewBox="0 0 26 26"><circle cx="9" cy="10" r="6" fill="currentColor"/><circle cx="17" cy="16" r="6" fill="none" stroke="currentColor" stroke-width="2"/></svg>Jouer</div>
+    <div><svg viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 20c4-6 8 2 12-4s6-8 8-10"/><circle cx="5" cy="18" r="2.2" fill="currentColor"/><circle cx="14" cy="15" r="2.2" fill="currentColor"/><circle cx="21" cy="7" r="2.2"/></svg>Apprendre</div>
+    <div><svg viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="20" height="20" rx="3"/><path d="M3 13h20M13 3v20"/><circle cx="13" cy="13" r="3.4" fill="currentColor"/></svg>Problèmes</div>
+    <div><svg viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="2"><circle cx="13" cy="9" r="5"/><path d="M4 23c1-5 5-7 9-7s8 2 9 7"/></svg>Profil</div>
+  </nav>
+</section>
+
+<!-- ÉCRAN 2 : PARTIE -->
+<section class="phone" id="partie">
+  <div class="status"><span>9:43</span><span>●●● 5G</span></div><div style="height:6px"></div>
+  <div class="joueur"><div data-sceau="pomme" data-taille="44"></div><div class="grow"><div class="nom">Pomme <span class="dit">Oh&nbsp;! Bien vu.</span></div><div class="rang">20 kyu</div></div><div class="couvercle"><span class="mini n"></span><span class="mini n"></span>2</div></div>
+  <div class="coups"><span>8. D6</span><span>9. G6</span><span>10. H7</span><span class="cur">11. F7</span></div>
+  <div class="avantage"><span>Noir +3,5</span><div><i></i></div></div>
+  <div class="plateau"><div data-goban='{"n":9,"B":["cc","dc","ec","cd","ce","cf","dg","eg","fe","gd","ff","fc"],"W":["dd","ed","de","fd","gc","ee","ge","gf","hd","ef","hc"],"last":"fc","capture":["fc"]}'></div></div>
+  <div class="joueur"><div class="moi">F</div><div class="grow"><div class="nom">Toi</div><div class="rang">Noir, 800</div></div><div class="couvercle"><span class="mini b"></span><span class="mini b"></span><span class="mini b"></span>3</div></div>
+  <div class="coach"><div data-sceau="mochi" data-taille="36"></div><p>Tu captures <b>1 pierre</b> en F7&nbsp;! Pomme réfléchit…</p></div>
+  <div class="actions">
+    <div><svg viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 3a7 7 0 0 0-4 12.7V19h8v-3.3A7 7 0 0 0 13 3ZM10 23h6"/></svg>Indice</div>
+    <div><svg viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 7 4 12l5 5"/><path d="M4 12h11a7 7 0 0 1 0 14h-3" transform="translate(0 -4)"/></svg>Annuler</div>
+    <div><svg viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="2"><circle cx="13" cy="13" r="9" stroke-dasharray="3 3"/></svg>Passer</div>
+    <div><svg viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 23V4M6 4h13l-3 5 3 5H6"/></svg>Abandonner</div>
+  </div>
+</section>
+
+<!-- ÉCRAN 3 : FIN DE PARTIE -->
+<section class="phone" id="fin">
+  <div class="status"><span>9:58</span><span>●●● 5G</span></div>
+  <div class="plateau" style="margin-top:30px"><div data-goban='{"n":9,"B":["cc","dc","ec","cd","ce","cf","dg","eg","fe","gd","ff","fc","gg","fg","hg","bd","be"],"W":["dd","ed","de","fd","gc","ee","ge","gf","hd","ef","hc","hf","if","id","ie"],"territoire":1}'></div></div>
+  <div class="voile"></div>
+  <svg class="confetti" viewBox="0 0 390 844"></svg>
+  <div class="feuille">
+    <div class="sceau-grand"><div data-sceau="pomme" data-taille="108"></div><div class="tampon">BATTUE</div></div>
+    <div class="victoire">Victoire</div>
+    <div class="marge">de 12,5 points sur 9 × 9</div>
+    <p class="ligne">34 coups, 3 pierres capturées. Ton bilan contre Pomme&nbsp;: <b>1 victoire</b>.</p>
+    <div class="mochi"><div data-sceau="mochi" data-taille="44"></div><span>Ton mur au centre a tout décidé. Caillou joue plus solide : prêt&nbsp;?</span></div>
+    <button class="jouer" style="margin:14px 0 0;width:100%;display:flex;align-items:center;justify-content:center;gap:10px"><span data-sceau="caillou" data-taille="30" style="display:inline-block"></span>Défier Caillou</button>
+    <div class="secondaire">Revoir ma partie</div>
+  </div>
+</section>
+
+<script>
+// ---------- Plateau ----------
+function goban(el, cfg) {
+  const N = cfg.n || 9, S = 400, M = 30, C = (S - 2 * M) / (N - 1), X = i => M + i * C, R = C * 0.485;
+  const id = 'g' + Math.random().toString(36).slice(2, 7);
+  let s = `<svg viewBox="0 0 ${S} ${S}"><defs>
+  <filter id="${id}grain" x="0" y="0" width="100%" height="100%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.004 0.22" numOctaves="3" seed="7" result="fin"/>
+    <feColorMatrix in="fin" type="matrix" result="finA" values="0 0 0 0 0.52  0 0 0 0 0.30  0 0 0 0 0.10  0 0 0 1.1 -0.42"/>
+    <feTurbulence type="fractalNoise" baseFrequency="0.002 0.018" numOctaves="2" seed="11" result="large"/>
+    <feColorMatrix in="large" type="matrix" result="largeA" values="0 0 0 0 0.62  0 0 0 0 0.38  0 0 0 0 0.14  0 0 0 0.9 -0.35"/>
+    <feMerge><feMergeNode in="largeA"/><feMergeNode in="finA"/></feMerge></filter>
+  <radialGradient id="${id}bois" cx="42%" cy="35%" r="85%"><stop offset="0" stop-color="#EDC27A"/><stop offset=".6" stop-color="#DDA95C"/><stop offset="1" stop-color="#C58D42"/></radialGradient>
+  <radialGradient id="${id}n" cx="36%" cy="30%" r="72%"><stop offset="0" stop-color="#5b5f5d"/><stop offset=".18" stop-color="#2e3130"/><stop offset=".55" stop-color="#151716"/><stop offset="1" stop-color="#050606"/></radialGradient>
+  <radialGradient id="${id}nr" cx="34%" cy="26%" r="22%"><stop offset="0" stop-color="rgba(255,255,255,.5)"/><stop offset="1" stop-color="rgba(255,255,255,0)"/></radialGradient>
+  <radialGradient id="${id}b" cx="38%" cy="32%" r="78%"><stop offset="0" stop-color="#fff"/><stop offset=".55" stop-color="#F3EEE3"/><stop offset=".85" stop-color="#DDD5C4"/><stop offset="1" stop-color="#BDB3A0"/></radialGradient>
+  <filter id="${id}coq" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency="0.9 0.04" numOctaves="2" seed="3"/><feColorMatrix type="matrix" values="0 0 0 0 0.6  0 0 0 0 0.55  0 0 0 0 0.45  0 0 0 0.35 -0.1"/><feComposite in2="SourceGraphic" operator="in"/></filter>
+  <filter id="${id}om" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="2.2"/></filter>
+  <radialGradient id="${id}v" cx="50%" cy="50%" r="72%"><stop offset=".7" stop-color="rgba(60,30,5,0)"/><stop offset="1" stop-color="rgba(60,30,5,.28)"/></radialGradient>
+  </defs>`;
+  s += `<rect x="3" y="7" width="394" height="393" rx="8" fill="rgba(0,0,0,.55)" filter="url(#${id}om)"/><rect width="400" height="400" rx="6" fill="url(#${id}bois)"/><rect width="400" height="400" rx="6" filter="url(#${id}grain)"/><rect width="400" height="400" rx="6" fill="url(#${id}v)"/><rect x=".75" y=".75" width="398.5" height="398.5" rx="5.5" fill="none" stroke="rgba(255,236,200,.35)" stroke-width="1.5"/>`;
+  for (let i = 0; i < N; i++) { const w = (i === 0 || i === N - 1) ? 1.6 : 1;
+    s += `<line x1="${M}" y1="${X(i)}" x2="${S - M}" y2="${X(i)}" stroke="#2b1a08" stroke-opacity=".78" stroke-width="${w}"/><line x1="${X(i)}" y1="${M}" x2="${X(i)}" y2="${S - M}" stroke="#2b1a08" stroke-opacity=".78" stroke-width="${w}"/>`; }
+  for (const [a, b] of [[2,2],[6,2],[2,6],[6,6],[4,4]]) s += `<circle cx="${X(a)}" cy="${X(b)}" r="3.3" fill="#2b1a08" fill-opacity=".85"/>`;
+  const L = 'ABCDEFGHJ';
+  for (let i = 0; i < N; i++) s += `<text x="${X(i)}" y="${M * .45}" font-size="9.5" font-family="system-ui" font-weight="600" fill="#5a3a16" fill-opacity=".55" text-anchor="middle" dominant-baseline="central">${L[i]}</text><text x="${M * .45}" y="${X(i)}" font-size="9.5" font-family="system-ui" font-weight="600" fill="#5a3a16" fill-opacity=".55" text-anchor="middle" dominant-baseline="central">${N - i}</text>`;
+  const jit = k => { let h = 0; for (const ch of k) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return [((h % 7) - 3) * .35, (((h >> 3) % 7) - 3) * .35, h % 360]; };
+  const P = k => [X(k.charCodeAt(0) - 97) + jit(k)[0], X(k.charCodeAt(1) - 97) + jit(k)[1]];
+  if (cfg.territoire) {
+    const occ = new Set([...cfg.B, ...cfg.W]);
+    for (let a = 0; a < N; a++) for (let b = 0; b < N; b++) { const k = String.fromCharCode(97 + a) + String.fromCharCode(97 + b); if (occ.has(k)) continue;
+      const own = a < 5 || (b > 5 && a < 8) ? 'B' : 'W'; s += `<rect x="${X(a) - 6}" y="${X(b) - 6}" width="12" height="12" rx="2" fill="${own === 'B' ? '#161616' : '#fbf8f1'}" fill-opacity=".85"/>`; }
+  }
+  const stone = (k, c) => { const [x, y] = P(k), rot = jit(k)[2];
+    let g = `<ellipse cx="${x + 1.8}" cy="${y + 3}" rx="${R}" ry="${R * .96}" fill="rgba(35,18,4,.45)" filter="url(#${id}om)"/>`;
+    g += c === 'B' ? `<circle cx="${x}" cy="${y}" r="${R * 1.007}" fill="url(#${id}n)"/><circle cx="${x}" cy="${y}" r="${R}" fill="url(#${id}nr)"/>`
+      : `<circle cx="${x}" cy="${y}" r="${R}" fill="url(#${id}b)"/><g transform="rotate(${rot} ${x} ${y})"><circle cx="${x}" cy="${y}" r="${R}" fill="#fff" filter="url(#${id}coq)" opacity=".7"/></g><circle cx="${x}" cy="${y}" r="${R - .4}" fill="none" stroke="rgba(120,100,70,.35)" stroke-width=".8"/>`;
+    return g; };
+  for (const k of cfg.B) s += stone(k, 'B');
+  for (const k of cfg.W) s += stone(k, 'W');
+  if (cfg.last) { const [x, y] = P(cfg.last); const onBlack = cfg.B.includes(cfg.last);
+    s += `<circle cx="${x}" cy="${y}" r="${R * .3}" fill="none" stroke="${onBlack ? '#F3EDE3' : '#1a1a1a'}" stroke-width="2.4"/>`; }
+  if (cfg.ghost) { const [x, y] = P(cfg.ghost);
+    s += `<circle cx="${x}" cy="${y}" r="${R * 1.45}" fill="none" stroke="#3CC48E" stroke-width="3" opacity=".55"/><circle cx="${x}" cy="${y}" r="${R * 1.9}" fill="none" stroke="#3CC48E" stroke-width="2" opacity=".25"/>`;
+    s += `<g opacity=".5"><circle cx="${x}" cy="${y}" r="${R}" fill="url(#${id}n)"/></g>`; }
+  el.innerHTML = s + '</svg>';
+}
+// Mini plateau (tuile)
+function mini(el, cfg) {
+  const n = 5, S = 52, M = 6, C = (S - 2 * M) / (n - 1);
+  let s = `<svg width="52" height="52" viewBox="0 0 52 52"><rect width="52" height="52" rx="8" fill="#DDA95C"/>`;
+  for (let i = 0; i < n; i++) s += `<path d="M${M} ${M + i * C}H${S - M}M${M + i * C} ${M}V${S - M}" stroke="#2b1a08" stroke-opacity=".6" stroke-width=".8"/>`;
+  const st = (k, c) => `<circle cx="${M + (k.charCodeAt(0) - 97) * C}" cy="${M + (k.charCodeAt(1) - 97) * C}" r="4.6" fill="${c}" ${c === '#f4efe6' ? 'stroke="#b8ab93" stroke-width=".6"' : ''}/>`;
+  cfg.B.forEach(k => s += st(k, '#141414')); cfg.W.forEach(k => s += st(k, '#f4efe6'));
+  el.innerHTML = s + '</svg>';
+}
+// ---------- Sceaux des adversaires (hanko) ----------
+const PICTO = {
+  pomme: `<path d="M50 34c-6-6-22-5-24 10s8 30 16 30c4 0 5-2 8-2s4 2 8 2c8 0 18-15 16-30s-18-16-24-10Z"/><path d="M50 34c0-6 2-10 7-13" fill="none" stroke="#F7E9DA" stroke-width="4" stroke-linecap="round"/><path d="M53 27c6-6 13-4 15-2-4 5-10 6-15 2Z"/>`,
+  caillou: `<path d="M24 62c-2-12 8-24 22-26s30 6 30 18-10 16-26 16-24-2-26-8Z"/><path d="M40 46c6-3 13-3 18 0" fill="none" stroke="#D2432C" stroke-width="3" stroke-linecap="round"/>`,
+  mochi: `<ellipse cx="50" cy="56" rx="26" ry="20"/><path d="M28 44 32 28l10 12M72 44l-4-16-10 12"/><circle cx="41" cy="54" r="3" fill="#D2432C"/><circle cx="59" cy="54" r="3" fill="#D2432C"/><path d="M46 62q4 3 8 0" fill="none" stroke="#D2432C" stroke-width="2.5" stroke-linecap="round"/>`,
+};
+function sceau(el, nom, t) {
+  const col = nom === 'mochi' ? '#3CC48E' : '#D2432C';
+  el.innerHTML = `<svg width="${t}" height="${t}" viewBox="0 0 100 100">
+    <defs><filter id="enc${nom}${t}"><feTurbulence type="fractalNoise" baseFrequency="1.4" numOctaves="2" seed="4"/><feDisplacementMap in="SourceGraphic" scale="3.2"/></filter></defs>
+    <g filter="url(#enc${nom}${t})">
+      <rect x="6" y="6" width="88" height="88" rx="22" fill="${col}"/>
+      <rect x="12" y="12" width="76" height="76" rx="17" fill="none" stroke="#F7E9DA" stroke-width="2.2" opacity=".85"/>
+      <g fill="#F7E9DA">${PICTO[nom]}</g>
+    </g></svg>`;
+}
+document.querySelectorAll('[data-goban]').forEach(el => goban(el, JSON.parse(el.dataset.goban)));
+document.querySelectorAll('[data-mini]').forEach(el => mini(el, JSON.parse(el.dataset.mini)));
+document.querySelectorAll('[data-sceau]').forEach(el => sceau(el, el.dataset.sceau, +el.dataset.taille));
+// Confettis figés (pierres, éclats d'or et de jade)
+const cf = document.querySelector('.confetti'); let c = '';
+const cols = ['#3CC48E', '#EFB84A', '#D2432C', '#F3EDE3'];
+for (let i = 0; i < 38; i++) { const x = (i * 97) % 390, y = 40 + ((i * 53) % 300), col = cols[i % 4], r = (i * 37) % 180;
+  c += i % 3 ? `<rect x="${x}" y="${y}" width="7" height="12" rx="2" fill="${col}" transform="rotate(${r} ${x} ${y})" opacity=".9"/>` : `<circle cx="${x}" cy="${y}" r="5" fill="${col}" opacity=".9"/>`; }
+cf.innerHTML = c;
+// Accueil : cadrage plein écran du plateau
+document.querySelectorAll('.goban-accueil').forEach(el => {});
+</script>
+</body></html>
