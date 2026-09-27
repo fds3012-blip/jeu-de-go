@@ -5,7 +5,15 @@ import type { PuzzleRow } from '../../data/puzzles';
 
 const LOT_F: PuzzleRow[] = [
   {
-    id: 'f01', size: 9, difficulty: 900, answers: ['B5'],
+    id: 'f01', size: 9, difficulty: 700, answers: ['D4', 'B5'],
+    setup: { rows: ['.........', '.........', '..OX.....', '.OSOX....', '..SOX....', '..O.X....', '.........', '.........', '.........'], toPlay: 'B',
+      refutation: "Pas tout à fait. Tes pierres marquées n'ont qu'une liberté, B5 : Blanc y joue et les capture. Regarde aussi les pierres blanches qui les touchent : elles sont en atari, elles aussi." },
+    title: 'Sauve tes pierres de coupe',
+    prompt: 'Tes deux pierres marquées coupent Blanc, mais elles sont en atari. Sauve-les.',
+    explanation: "Bravo ! Tes pierres marquées sont des pierres de coupe : elles séparent les pierres blanches. Elles sont en atari (une seule liberté, B5), mais les deux pierres blanches D6-D5 aussi : leur seule liberté est D4. En D4, tu les captures, et tes pierres retrouvent des libertés. B5 marche aussi : tes pierres ont alors deux libertés, et si Blanc les attaque, tu prends D6-D5 en D4."
+  },
+  {
+    id: 'f02', size: 9, difficulty: 900, answers: ['B5'],
     setup: { rows: ['.XO......', 'XXO......', '.XO......', 'XXO......', 'X.OO.....', 'XTX.O....', '.OX......', '.OX......', '.OX......'], toPlay: 'B',
       refutation: "Pas tout à fait. Blanc joue B5 et relie son groupe au mur blanc C5 : il sort de la course et ne peut plus être capturé. Bloque d'abord la sortie." },
     title: 'Bloque la sortie',

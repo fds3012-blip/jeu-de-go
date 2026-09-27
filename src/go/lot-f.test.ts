@@ -22,7 +22,7 @@ const rowsOf = (setup: unknown) => (setup as { rows: string[] }).rows;
 
 /** Objectif de chaque problème : capturer les pierres blanches marquées, ou sauver les pierres noires marquées. */
 const GOAL: Record<string, 'capture' | 'sauve'> = {
-  f01: 'capture'
+  f01: 'sauve', f02: 'capture'
 };
 
 describe('lot F : courses aux libertés, coupes et connexions', () => {
@@ -87,8 +87,8 @@ describe('lot F : courses aux libertés, coupes et connexions', () => {
 });
 
 describe('chaque problème, coup par coup', () => {
-  it('f01 : B5 bloque la sortie ; sinon Blanc se relie au mur en B5', () => {
-    const p = pz('f01'), [t] = startOf(p).marked, { pos } = startOf(p), k = at('C1');
+  it('f02 : B5 bloque la sortie ; sinon Blanc se relie au mur en B5', () => {
+    const p = pz('f02'), [t] = startOf(p).marked, { pos } = startOf(p), k = at('C1');
     expect(libs(pos, t)).toBe(4);
     expect(libs(pos, k)).toBe(4);
     const b5 = ok(play(pos, at('B5')));
@@ -97,5 +97,15 @@ describe('chaque problème, coup par coup', () => {
     const a3 = seq(pos, 'A3', 'B5');
     expect(groupAt(a3.board, 9, t).stones).toContain(at('C5'));
     expect(captureWorks(a3, t)).toBe(false);
+  });
+
+  it('f01 : D4 capture les deux pierres qui touchent tes pierres de coupe ; sinon Blanc prend en B5', () => {
+    const p = pz('f01'), [s] = startOf(p).marked, { pos } = startOf(p);
+    expect(libs(pos, s)).toBe(1);
+    const d4 = ok(play(pos, at('D4')));
+    expect(d4.captures[1]).toBe(2);
+    expect(libs(d4, s)).toBeGreaterThanOrEqual(2);
+    expect(libs(ok(play(pos, at('B5'))), s)).toBe(2);
+    expect(seq(pos, 'passe', 'B5').board[s]).toBe(0);
   });
 });
