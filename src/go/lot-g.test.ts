@@ -22,7 +22,7 @@ const rowsOf = (setup: unknown) => (setup as { rows: string[] }).rows;
 
 describe('lot G : relier deux groupes', () => {
   it('lisibles, en 9 × 9, Noir au trait, difficultés croissantes', () => {
-    expect(all.map(p => p.id)).toEqual(['g01', 'g02', 'g03']);
+    expect(all.map(p => p.id)).toEqual(['g01', 'g02', 'g03', 'g04', 'g05']);
     expect(all).toHaveLength(LOT_G.length);
     let prev = 0;
     for (const p of all) {
@@ -117,5 +117,24 @@ describe('chaque problème, coup par coup', () => {
     expect(play(d1, at('D2'))).toBe('suicide');
     // Refutation : E1, par exemple, laisse Blanc capturer en C1.
     expect(seq(pos, 'E1', 'C1').board[b2]).toBe(0);
+  });
+
+  it('g04 : D3 relie ; sinon Blanc coupe en D3 et met E3-E2 en atari', () => {
+    const p = pz('g04'), { pos } = startOf(p), e3 = at('E3');
+    expect(groupAt(ok(play(pos, at('D3'))).board, 9, e3).stones).toContain(at('B3'));
+    const cut = seq(pos, 'A2', 'D3');
+    expect(libs(cut, e3)).toBe(1);
+    expect(saveAllAfter(pos, at('A2'), startOf(p).marked)).toBe(false);
+  });
+
+  it('g05 : C3 relie ; E2 ne laisse qu’une liberté ; sinon Blanc coupe en C3', () => {
+    const p = pz('g05'), { pos } = startOf(p), e3 = at('E3');
+    expect(libs(pos, at('F2'))).toBe(1);
+    expect(groupAt(ok(play(pos, at('C3'))).board, 9, e3).stones).toContain(at('B3'));
+    const e2 = ok(play(pos, at('E2')));
+    expect(libs(e2, e3)).toBe(1);
+    expect(seq(e2, 'C3').board[e3]).toBe(0);
+    const cut = seq(pos, 'A2', 'C3');
+    expect(libs(cut, e3)).toBe(1);
   });
 });
