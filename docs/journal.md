@@ -239,3 +239,21 @@ Chaque livraison : issue traitée, agent, pull request, résultat des vérificat
 - À faire valider par un avocat : que PostHog relève bien de l'exemption. Analyse et sources : `docs/juridique/consentement.md`.
 - Action pour Florian dans PostHog : activer « Discard client IP data » et régler la conservation à 25 mois maximum.
 - Vérifications : 397 tests unitaires et 46 tests e2e verts.
+
+## #34 Revue de partie (moteur-go) : première version
+
+- À la fin de la partie, « Revoir ma partie » ouvre :
+  - le goban coup par coup, avec un curseur ;
+  - la courbe d'avantage ;
+  - les 3 erreurs de plus d'un point, chacune avec une phrase de Mochi ;
+  - « Rejouer d'ici ».
+- La partie est gardée en SGF sur le téléphone. L'événement `revue_ouverte` est mesuré.
+- Règle posée après ma revue : on ne montre jamais un conseil faux. Le premier jet proposait A9, dans le coin.
+  - Le meilleur coup (pierre verte) vient seulement de KataGo, et seulement s'il est déjà chargé ou en cache.
+  - Il n'apparaît que s'il est légal, s'il n'est pas sur la première ligne quand le plateau est encore ouvert, et s'il gagne au moins un point.
+  - Sinon, Mochi décrit seulement l'erreur.
+- Reste :
+  - l'enregistrement dans Supabase ;
+  - la revue des anciennes parties depuis le Profil ;
+  - la vérification du contraste de la courbe en clair.
+- Vérifications : 419 tests unitaires et 48 tests e2e verts.

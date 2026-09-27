@@ -21,6 +21,8 @@ export const EVENTS = {
   inscription: 'inscription',
   // L'écran des problèmes n'existe pas encore : constante prête pour lui.
   problemeResolu: 'probleme_resolu',
+  // Écran de revue d'une partie terminée (issue #34).
+  revueOuverte: 'revue_ouverte',
 } as const;
 export type AnalyticsEvent = (typeof EVENTS)[keyof typeof EVENTS];
 export type Props = Record<string, string | number | boolean | null | undefined>;

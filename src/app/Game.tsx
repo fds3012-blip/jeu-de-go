@@ -18,6 +18,8 @@ import { FinPartie } from '../ui/FinPartie';
 import { Sceau } from '../ui/Sceau';
 import { battuAccorde } from '../ui/sceaux';
 import type { StatsPartie } from './bilan';
+import { Revue } from './Revue';
+import { REVUE_KEY, sgfDepuisHistorique, type PartieGardee } from './revue';
 
 const REFUS = { occupe: '', ko: "Ko : tu ne peux pas reprendre tout de suite, joue d'abord ailleurs.", suicide: 'Coup interdit : cette pierre serait capturée par elle-même.', 'hors-plateau': '' };
 const pierres = (n: number) => `${n} pierre${n > 1 ? 's' : ''}`;
@@ -65,8 +67,9 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   const token = useRef(0); // invalide les réponses de l'ordi devenues caduques (annulation, sortie)
   const scoreToken = useRef(0); // idem pour les pierres mortes proposées
   const atarisSubis = useRef(0); // tes groupes mis en atari par l'ordi (leçon de Mochi en fin de partie)
-  // Relecture simple de la partie terminée : index de la position affichée dans l'historique.
+  // Revue de la partie terminée (issue #34) : ouverte ou non (le nombre est gardé pour compatibilité), et SGF de la partie.
   const [relecture, setRelecture] = useState<number | null>(null);
+  const [sgf, setSgf] = useState<string | null>(null);
   const pos = history[history.length - 1];
   const sc = useMemo(() => score(pos, komi, 'japanese', dead), [pos, komi, dead]);
   const aiTurn = !!ai && phase === 'play' && pos.toPlay === 2;
@@ -218,6 +221,10 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   function finish(winner: 1 | 2, abandon: boolean) {
     const egalite = !abandon && sc.margin === 0;
     setPhase('end'); setRelecture(null);
+    // La partie est gardée en SGF sur ce téléphone, pour la revue (Supabase viendra plus tard).
+    const texte = sgfDepuisHistorique(history, komi, { noir: ai ? 'Toi' : 'Noir', blanc: ai?.nom ?? 'Blanc' });
+    setSgf(texte);
+    try { localStorage.setItem(REVUE_KEY, JSON.stringify({ sgf: texte, adversaire: ai?.id, date: new Date().toISOString() } satisfies PartieGardee)); } catch { /* stockage indisponible */ }
     onResult?.(egalite ? 0 : winner, {
       coups: history.length - 1, capturesMoi: pos.captures[1], capturesAdv: pos.captures[2], atarisSubis: atarisSubis.current,
       abandon, marge: abandon ? 0 : sc.margin, komi,
@@ -230,6 +237,12 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     token.current++;
     const loser = ai ? 1 : pos.toPlay;
     setResigned(loser); finish((3 - loser) as 1 | 2, true);
+  }
+  /** « Rejouer d'ici » (revue) : la partie reprend, contre le même adversaire, depuis la position choisie. */
+  function rejouer(h: Position[]) {
+    token.current++; atarisSubis.current = 0;
+    setHistory(h); resume(); setResigned(0); setThinking(false); setRelecture(null); setSgf(null);
+    setMsg(h.length > 1 ? (ai ? 'On reprend ici. À toi de trouver mieux !' : 'On reprend ici.') : ai ? 'Nouvelle partie : tu as Noir, à toi.' : 'Nouvelle partie : Noir commence.');
   }
   function restart() {
     token.current++; atarisSubis.current = 0;
@@ -255,46 +268,9 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   // Mesure : une partie terminée (score validé ou abandon). Ajout isolé pour faciliter les fusions.
   useEffect(() => { if (phase === 'end') track(EVENTS.partieTerminee, { mode: ai ? 'ordi' : 'deux', adversaire: ai?.id, taille: size, coups: history.length - 1, fin: resigned ? 'abandon' : 'score', gagnant: (resigned ? 3 - resigned : sc.winner) === 1 ? 'noir' : 'blanc' }); }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Relecture au clavier : flèches gauche et droite.
-  useEffect(() => {
-    if (relecture === null) return;
-    const n = history.length - 1;
-    const touche = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowLeft') setRelecture(r => (r === null ? r : Math.max(0, r - 1)));
-      else if (e.key === 'ArrowRight') setRelecture(r => (r === null ? r : Math.min(n, r + 1)));
-    };
-    window.addEventListener('keydown', touche);
-    return () => window.removeEventListener('keydown', touche);
-  }, [relecture === null, history.length]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  if (phase === 'end' && relecture !== null) {
-    // Relecture simple, coup par coup (sans analyse : c'est l'issue #34).
-    const n = history.length - 1, i = Math.min(relecture, n), q = history[i];
-    let phrase = 'Début de la partie. Touche « Suivant » pour avancer.';
-    if (i > 0) {
-      const avant = history[i - 1], c = avant.toPlay, m = q.lastMove ?? -1, cap = q.captures[c] - avant.captures[c];
-      const toi = !!ai && c === 1;
-      const geste = m < 0 ? (toi ? 'Tu passes' : `${name(c)} passe`) : `${toi ? 'Tu joues' : `${name(c)} joue`} ${toLabel(m, size)}`;
-      phrase = `${geste}${cap ? ` et ${toi ? 'captures' : 'capture'} ${pierres(cap)}` : ''}.`;
-    }
-    const versBilan = <button type="button" className="retour" onClick={() => setRelecture(null)} aria-label="Retour au bilan">‹</button>;
-    return (
-      <div className="partie relecture">
-        {bandeau(2, q, versBilan, false)}
-        <ListeCoups coups={coups} courant={i - 1} />
-        <p className="relecture-titre"><b>Revoir ma partie</b><span>Coup {i} sur {n}</span></p>
-        <div className="partie-plateau">
-          <Board size={size} board={q.board} marks={{ last: q.lastMove }} />
-        </div>
-        {bandeau(1, q, undefined, false)}
-        <div className="partie-souffle" aria-hidden="true" />
-        <Coach cle={i}>{fr(phrase)}</Coach>
-        <BarreActions label="Relecture de la partie" actions={[
-          { label: 'Précédent', icone: <Icone nom="precedent" />, onClick: () => setRelecture(Math.max(0, i - 1)), disabled: i <= 0 },
-          { label: 'Suivant', icone: <Icone nom="suivant" />, onClick: () => setRelecture(Math.min(n, i + 1)), disabled: i >= n },
-        ]} />
-      </div>
-    );
+  if (phase === 'end' && relecture !== null && sgf) {
+    // Revue de la partie (issue #34) : erreurs, courbe d'avantage, « Rejouer d'ici ».
+    return <Revue sgf={sgf} joueur={ai ? 1 : null} adversaire={ai?.nom} onRetour={() => setRelecture(null)} onRejouer={rejouer} />;
   }
 
   if (phase === 'end') {

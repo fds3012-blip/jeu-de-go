@@ -95,41 +95,7 @@ test.describe('mouvements réduits', () => {
   });
 });
 
-test('revoir ma partie : précédent et suivant, puis retour au bilan', async ({ page }) => {
-  await page.goto('/?komi=-100');
-  await page.locator('.cta').click();
-  const plateau = page.getByRole('img', { name: /Plateau de go 9 × 9/ });
-  await expect(plateau).toBeVisible();
-  // Un coup au centre, pour avoir une pierre à revoir.
-  const box = (await plateau.boundingBox())!;
-  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
-  await expect(page.locator('g[data-point="E5"][data-pierre="noir"]')).toHaveCount(1);
-  await passerJusquAuComptage(page);
-  await expect(page.getByRole('heading', { level: 2, name: 'Victoire' })).toBeVisible();
-
-  await page.getByRole('button', { name: 'Revoir ma partie' }).click();
-  const precedent = page.getByRole('button', { name: 'Précédent' });
-  const suivant = page.getByRole('button', { name: 'Suivant' });
-  await expect(page.getByText('Revoir ma partie')).toBeVisible();
-  // On commence au premier coup : ta pierre en E5.
-  await expect(page.getByText(/Coup 1 sur \d+/)).toBeVisible();
-  await expect(page.locator('.coach p')).toHaveText('Tu joues E5.');
-  await expect(plateau.locator('g[data-pierre]')).toHaveCount(1);
-  // Précédent : plateau vide.
-  await precedent.click();
-  await expect(page.getByText(/Coup 0 sur \d+/)).toBeVisible();
-  await expect(plateau.locator('g[data-pierre]')).toHaveCount(0);
-  await expect(precedent).toBeDisabled();
-  // Suivant : la pierre revient.
-  await suivant.click();
-  await expect(plateau.locator('g[data-point="E5"][data-pierre="noir"]')).toHaveCount(1);
-  // Jusqu'au bout, puis retour au bilan.
-  while (await suivant.isEnabled()) await suivant.click();
-  await expect(suivant).toBeDisabled();
-  await page.getByRole('button', { name: 'Retour au bilan' }).click();
-  await expect(page.getByRole('heading', { level: 2, name: 'Victoire' })).toBeVisible();
-  await expect(page.locator('.cta')).toHaveText('Défier Caillou');
-});
+// La revue de la partie (« Revoir ma partie ») est testée dans e2e/revue.spec.ts (issue #34).
 
 test('défaite par abandon : pas de tampon ni de fête, Mochi encourage et propose de rejouer', async ({ page }) => {
   const erreurs: string[] = [];
