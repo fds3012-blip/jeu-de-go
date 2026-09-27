@@ -541,6 +541,10 @@ export type Database = {
         }
         Returns: string
       }
+      importer_serie_appareil: {
+        Args: { p_dernier_jour: string; p_jours: number }
+        Returns: number
+      }
       join_game: { Args: { p_code: string }; Returns: string }
       play_move: { Args: { p_game: string; p_move: string }; Returns: string }
       record_puzzle_attempt: {
