@@ -42,9 +42,13 @@ test('victoire contre Pomme : Mochi félicite, Caillou en un geste, bilan gardé
   // Le bilan survit à la fermeture de l'appli ; l'accueil marque Pomme comme battu.
   await page.goto('/');
   expect(await bilan(page)).toEqual({ pomme: { v: 1, d: 0 } });
+  // Caillou était le dernier adversaire choisi : l'accueil le propose.
+  await expect(page.getByRole('heading', { level: 2, name: 'Caillou' })).toBeVisible();
   await page.getByRole('button', { name: 'Changer' }).click();
-  await expect(page.getByRole('button', { name: 'Pomme, battu' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Caillou', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Pomme, 20 kyu, battue', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Caillou, 16 kyu', exact: true })).toBeVisible();
+  // Caillou n'est pas encore battu : Bambou reste verrouillé.
+  await expect(page.getByRole('button', { name: 'Bambou, 13 kyu, verrouillé', exact: true })).toBeVisible();
   // Pas de défilement horizontal à 390 px.
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   expect(erreurs).toEqual([]);
@@ -69,9 +73,9 @@ test('défaite par abandon : Mochi encourage et propose de rejouer', async ({ pa
   await expect(page.getByText(/Pomme a Blanc/)).toBeVisible();
   await expect(page.getByRole('button', { name: 'Abandonner' })).toBeVisible();
 
-  // Pas encore battu : aucun ✓ sur l'accueil.
+  // Pas encore battue : aucune marque dans le carrousel.
   await page.goto('/');
   await page.getByRole('button', { name: 'Changer' }).click();
-  await expect(page.getByRole('button', { name: 'Pomme', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Pomme, 20 kyu', exact: true })).toBeVisible();
   expect(erreurs).toEqual([]);
 });

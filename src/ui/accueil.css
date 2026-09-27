@@ -1,0 +1,116 @@
+/*
+ * Accueil v2 et sceaux (issue #40, phase 4). Maquette : docs/design/v2/maquettes-v2.png (écran de gauche).
+ * Le goban recadré est l'image d'accueil et absorbe la hauteur libre : tout tient sur 390 × 844 sans défilement.
+ */
+
+/* ---------- Sceaux (src/ui/Sceau.tsx) ---------- */
+.sceau { position: relative; display: inline-block; flex: none; line-height: 0; }
+.sceau > svg { display: block; overflow: visible; }
+/* Verrouillé : sceau grisé à 35 %, cadenas net par-dessus. */
+.sceau-verrou > svg:first-child { filter: grayscale(1); opacity: .35; }
+.sceau-cadenas, .sceau-coche { position: absolute; right: -5px; bottom: -5px; width: 42%; height: 42%; max-width: 26px; max-height: 26px; min-width: 18px; min-height: 18px;
+  padding: 3px; border-radius: 50%; box-shadow: 0 0 0 2px var(--sceau-socle, var(--bg)); }
+.sceau-cadenas { background: var(--surface-2); color: var(--text); }
+.sceau-coche { background: var(--accent); color: var(--on-accent); }
+/* Tampon « BATTU » : le seul texte en capitales de l'app, parce que c'est un tampon. */
+.sceau-tampon { position: absolute; right: -12px; bottom: 4px; transform: rotate(-12deg); line-height: 1;
+  font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: 10px; letter-spacing: .06em;
+  color: #B23520; background: #F7E9DA; border: 1.5px solid #B23520; border-radius: 3px; padding: 3px 4px 2px; }
+
+/* ---------- Mise en page : une colonne qui remplit l'écran au-dessus de la barre de navigation ---------- */
+.app.app-home { display: flex; flex-direction: column; min-height: calc(100dvh - env(safe-area-inset-top, 0px));
+  padding-bottom: calc(var(--nav-h) + var(--space-3) + env(safe-area-inset-bottom, 0px)); }
+.app-home .top { margin-bottom: var(--space-3); }
+.accueil { flex: 1; display: flex; flex-direction: column; container-type: inline-size; }
+
+/* ---------- Le goban d'accueil ---------- */
+/* Hauteur libre, jusqu'au plateau entier la bulle mordant sur le bas comme sur la maquette (le plateau est carré : 100cqw de haut). */
+.scene { position: relative; flex: 1 1 0; min-height: 200px; max-height: calc(100cqw + 28px); }
+.scene-plateau { position: absolute; inset: 0; overflow: hidden; border-radius: var(--radius-plateau); cursor: pointer;
+  -webkit-mask-image: linear-gradient(#000 60%, transparent 98%); mask-image: linear-gradient(#000 60%, transparent 98%); }
+/* Plateau calé en haut ; s'il manque de la place, son centre (la pierre fantôme) reste au 47 % de la hauteur et le haut est recadré. */
+.scene-cadre { position: absolute; left: 0; right: 0; top: min(0px, calc(47% - 50cqw)); }
+.scene-cadre .board-wrap { box-shadow: none; margin-bottom: 0; }
+/* Repère carré posé sur l'image du goban : la pierre fantôme s'y place au centre du plateau (calculé dans Accueil.tsx). */
+.fantome-repere { position: absolute; left: 0; top: 0; width: 100%; aspect-ratio: 1; pointer-events: none; }
+.fantome { position: absolute; left: 50%; top: 50%; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle at 36% 30%, rgba(106, 111, 108, .6), rgba(21, 23, 22, .6) 60%, rgba(5, 6, 6, .6)); }
+.fantome::before, .fantome::after { content: ""; position: absolute; inset: -5px; border-radius: 50%; border: 2px solid var(--jade); }
+.fantome::after { inset: -13px; opacity: .45; }
+@media (prefers-reduced-motion: no-preference) {
+  /* Seul mouvement spontané de l'écran : deux ondes qui disent « touche ici ». */
+  .fantome::before, .fantome::after { inset: -5px; animation: onde 2.6s cubic-bezier(.2, .6, .3, 1) infinite; }
+  .fantome::after { animation-delay: 1.3s; opacity: 1; }
+}
+@keyframes onde { from { transform: scale(1); opacity: .95; } to { transform: scale(2.2); opacity: 0; } }
+
+/* Réplique de l'adversaire, posée sur le bas du goban. Laisse passer le toucher vers le plateau. */
+.scene-bulle { position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: flex-end; gap: 10px; pointer-events: none; padding-right: 8px; }
+.scene-bulle .sceau { --sceau-socle: var(--papier); filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .35)); }
+.scene-bulle p { margin: 0 0 6px; max-width: 250px; background: var(--papier); color: var(--sumi); border-radius: var(--radius) var(--radius) var(--radius) var(--radius-xs);
+  padding: 9px 14px; font-size: .95rem; line-height: 1.35; font-weight: var(--fw-medium); box-shadow: 0 8px 18px -10px rgba(0, 0, 0, .6); }
+
+/* ---------- Adversaire ---------- */
+.identite { display: flex; align-items: baseline; gap: 10px; margin-top: var(--space-4); }
+.identite h2 { margin: 0; font-size: 2.125rem; font-weight: var(--fw-titre); line-height: 1; }
+.identite span { color: var(--muted); }
+.phrase { margin: 6px 0 0; color: var(--muted); font-size: .95rem; line-height: 1.4; max-width: 34em; }
+
+.reglage { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); min-height: var(--cible-min); margin: 6px -12px var(--space-2) 0; }
+.reglage .lien { padding: 0 12px; }
+
+/* Bouton principal dans le flux (plus fixé en bas) : le goban, lui, prend la hauteur libre. */
+.accueil .cta { position: static; transform: none; width: 100%; font-size: var(--fs-l); padding: 0 var(--space-3); text-wrap: balance; }
+.accueil .cta.court { font-size: var(--fs-cta); }
+@media (prefers-reduced-motion: no-preference) {
+  .accueil .cta:active { transform: translateY(var(--relief)); }
+}
+
+/* ---------- Deux tuiles de nature différente ---------- */
+.tuiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: calc(var(--space-3) + var(--relief)); }
+.tuile { display: flex; align-items: center; gap: 10px; min-height: 68px; padding: 10px 12px; border: 0; border-radius: var(--radius); background: var(--surface); text-align: left; }
+.tuile span { min-width: 0; }
+.tuile small { display: block; color: var(--muted); font-size: .8rem; line-height: 1.3; }
+.tuile b { display: block; font-family: var(--font-titre); font-weight: var(--fw-bold); letter-spacing: -0.01em; font-size: 1rem; line-height: 1.2; }
+/* Leçon suivante : « à faire plus tard », en pointillés. */
+.tuile-lecon { background: transparent; border: 1.5px dashed color-mix(in srgb, var(--text) 26%, transparent); }
+.tuile:active { background: var(--surface-2); }
+.mini-plateau { width: 44px; height: 44px; flex: none; border-radius: 6px; box-shadow: 0 3px 8px -4px rgba(0, 0, 0, .5); }
+
+/* ---------- Série de jours (en haut à droite) ---------- */
+.top .serie { display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px 6px 10px; border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--or) 16%, transparent); color: var(--recompense-texte);
+  font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: 1.05rem; line-height: 1; }
+
+/* ---------- Feuille « Changer » : boîte de dialogue en bas d'écran ---------- */
+.feuille { margin: auto auto 0; width: min(var(--largeur-max), 100%); max-width: 100%; max-height: 92dvh; padding: 0; border: 0; overflow: auto;
+  border-radius: 22px 22px 0 0; background: var(--surface); color: var(--text); padding-bottom: env(safe-area-inset-bottom, 0px); --sceau-socle: var(--surface); }
+.feuille::backdrop { background: rgba(12, 10, 8, .62); }
+@media (prefers-reduced-motion: no-preference) {
+  .feuille[open] { animation: monte var(--duree) var(--ease); }
+}
+@keyframes monte { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+.feuille-corps { padding: var(--space-2) var(--gouttiere) var(--space-5); display: flex; flex-direction: column; gap: var(--space-2); }
+.feuille-tete { display: flex; align-items: center; justify-content: space-between; margin-right: -12px; }
+.feuille h2 { margin: var(--space-2) 0 0; font-size: var(--fs-xl); font-weight: var(--fw-titre); }
+.feuille-tete h2 { margin: 0; }
+.feuille .seg { background: var(--bg); }
+.feuille .muted { margin: 0; }
+.feuille .btn.primary { margin-top: var(--space-3); }
+.feuille .deux { align-self: center; margin-top: calc(var(--relief) + 2px); }
+
+/* Carrousel : défilement horizontal à accroche, qui déborde jusqu'aux bords de la feuille. */
+.carrousel { display: flex; gap: 2px; list-style: none; margin: 0 calc(-1 * var(--gouttiere)); padding: 6px var(--gouttiere) 8px;
+  overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scroll-padding-inline: var(--gouttiere); scrollbar-width: none; }
+.carrousel::-webkit-scrollbar { display: none; }
+.carrousel li { flex: none; scroll-snap-align: center; }
+/* 82 px : à 390 px, quatre cartes et le bord de la cinquième, qui dit que la liste continue. */
+.carte { width: 82px; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 2px 8px; border: 0; border-radius: var(--radius); background: transparent; }
+.carte .sceau { margin-bottom: 6px; }
+.carte b { font-family: var(--font-titre); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre); font-size: .95rem; line-height: 1.2; }
+.carte small { color: var(--muted); font-size: .8rem; }
+.carte[aria-pressed="true"] { background: var(--surface-2); box-shadow: inset 0 0 0 2px var(--accent-trait); --sceau-socle: var(--surface-2); }
+.carte.verrou b { color: var(--muted); }
+.carte.verrou { cursor: not-allowed; }
+.carrousel-legende { margin: 0; min-height: 2.8em; color: var(--muted); line-height: 1.4; }
+.carrousel-legende.alerte { color: var(--danger-texte); font-weight: var(--fw-bold); }

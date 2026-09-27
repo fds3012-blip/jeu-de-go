@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { attendrePierre, bandeau, fantome, jouer, jouerSuite, message, partieADeux, pierres, toucher } from './plateau';
+import { attendrePierre, bandeau, fantome, jouer, jouerSuite, lancerADeux, message, partieADeux, pierres, toucher } from './plateau';
 
 // Issue #7 : règles de base en partie à deux sur le même téléphone (les deux couleurs sont contrôlées).
 
@@ -100,7 +100,7 @@ test('au doigt, sans confirmation dans le Profil, une touche suffit', async ({ p
   await page.getByRole('navigation').getByRole('button', { name: 'Profil' }).click();
   await page.getByRole('button', { name: 'Non' }).click();
   await page.getByRole('navigation').getByRole('button', { name: 'Jouer' }).click();
-  await page.getByRole('button', { name: 'Jouer à deux', exact: true }).click();
+  await lancerADeux(page);
 
   await toucher(page, 'E5');
   await attendrePierre(page, 'E5', 'noir');

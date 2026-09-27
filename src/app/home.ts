@@ -1,5 +1,6 @@
-// Accueil (issue #23) : un message de Mochi et une action principale qui disent la même chose.
+// Accueil (issues #23 et #40, phase 4) : la réplique de l'adversaire, l'action principale, et l'échelle des adversaires.
 import { fr } from '../ui/typo';
+import { battu, type Bilan } from './bilan';
 
 /** Historique minimal des parties, gardé en localStorage. */
 export interface Parties { n: number; dernier?: string }
@@ -10,25 +11,72 @@ export const INTRO_KEY = 'go.intro-but.v1';
 export const introBut = (nom: string) =>
   fr(`Le but : entourer plus de territoire que ${nom}, et capturer ses pierres en leur retirant leurs libertés (les cases vides qui les touchent).`);
 
-export interface Accueil { mochi: string; cta: string; nouveau: boolean }
+export interface Accueil {
+  /** Réplique de l'adversaire, dans sa bulle sur le plateau d'accueil. */
+  bulle: string;
+  /** Libellé de l'action principale. */
+  cta: string;
+  /** Nouveau joueur : ni partie ni leçon. */
+  nouveau: boolean;
+}
 
 /**
- * Textes de l'accueil (espaces fines insécables avant ? ! : grâce à `fr`).
- * - Nouveau joueur (aucune partie, aucune leçon) : première partie contre l'adversaire choisi (Pomme par défaut).
+ * Textes de l'accueil (espaces fines insécables avant ? ! : grâce à `fr`). L'adversaire parle, et sa réplique
+ * dit la même chose que le bouton principal : toucher le plateau lance la partie.
+ * - Nouveau joueur (aucune partie, aucune leçon) : première pierre au centre.
  * - Leçons faites mais aucune partie : on l'invite à sa première partie.
  * - Joueur qui revient : « Rejouer contre X » si c'est son dernier adversaire, sinon « Jouer contre X ».
  */
 export function accueil(parties: Parties, lecons: number, adv: { id: string; nom: string }, taille: number): Accueil {
-  const plateau = `${taille} × ${taille}`;
+  const plateau = `${taille}\u00A0×\u00A0${taille}`; // insécables : « 9 × 9 » ne se coupe pas
   if (parties.n === 0) {
     const cta = `Joue ta première partie contre ${adv.nom}`;
-    if (lecons === 0) return { nouveau: true, cta, mochi: fr(`Nouveau au go ? Pose ta première pierre contre ${adv.nom}, je t'explique en jouant.`) };
-    return { nouveau: false, cta, mochi: fr(`Bravo pour ${lecons > 1 ? `tes ${lecons} leçons` : 'ta première leçon'} ! Place à ta première partie contre ${adv.nom}.`) };
+    if (lecons === 0) return { nouveau: true, cta, bulle: fr('Touche le centre pour poser ta première pierre !') };
+    return { nouveau: false, cta, bulle: fr(`Bravo pour ${lecons > 1 ? `tes ${lecons} leçons` : 'ta première leçon'} ! Touche le plateau pour jouer.`) };
   }
   const rejouer = parties.dernier === adv.id;
   return {
     nouveau: false,
     cta: `${rejouer ? 'Rejouer' : 'Jouer'} contre ${adv.nom}`,
-    mochi: fr(rejouer ? `Content de te revoir ! ${adv.nom} t'attend sur le ${plateau}.` : `Une partie contre ${adv.nom} sur le ${plateau} ? Je suis prêt.`),
+    bulle: fr(rejouer ? `Te revoilà ! On rejoue sur le ${plateau} ?` : `Une partie sur le ${plateau} ? Touche le plateau.`),
   };
+}
+
+export interface Echelon<T> {
+  adv: T;
+  battu: boolean;
+  /** On peut le choisir. Pomme et Caillou le sont toujours ; ensuite, il faut avoir battu le précédent. */
+  ouvert: boolean;
+  /** Verrouillé : l'adversaire à battre d'abord (le premier ouvert et pas encore battu en dessous). */
+  requis?: T;
+}
+
+/** Nombre d'adversaires ouverts d'office, quel que soit le bilan. */
+export const OUVERTS_D_OFFICE = 2;
+
+/** Échelle des adversaires, dans l'ordre, avec leur verrou calculé à partir du bilan (`go.bilan.v1`). */
+export function echelle<T extends { id: string }>(liste: readonly T[], bilan: Bilan): Echelon<T>[] {
+  const out: Echelon<T>[] = [];
+  liste.forEach((adv, i) => {
+    const b = battu(bilan, adv.id);
+    const ouvert = i < OUVERTS_D_OFFICE || battu(bilan, liste[i - 1].id);
+    let requis: T | undefined;
+    if (!ouvert) {
+      // Le premier adversaire ouvert et pas encore battu, en remontant vers le bas de l'échelle.
+      for (let j = i - 1; j >= 0 && !requis; j--) if (out[j].ouvert && !out[j].battu) requis = out[j].adv;
+      requis ??= liste[i - 1];
+    }
+    out.push({ adv, battu: b, ouvert, requis });
+  });
+  return out;
+}
+
+/**
+ * Adversaire réellement proposé : celui choisi s'il est ouvert, sinon celui qu'il faut battre d'abord.
+ * (Un choix fait avant l'arrivée des verrous peut désigner un adversaire verrouillé.)
+ */
+export function adversaireOuvert<T extends { id: string }>(liste: readonly T[], bilan: Bilan, id: string): T {
+  const e = echelle(liste, bilan).find(x => x.adv.id === id);
+  if (!e) return liste[0];
+  return e.ouvert ? e.adv : (e.requis ?? liste[0]);
 }

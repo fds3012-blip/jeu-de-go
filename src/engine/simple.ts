@@ -24,6 +24,8 @@ export interface Opponent {
   nom: string;
   rang: string;
   description: string;
+  /** Phrase de personnage, courte et au tutoiement, affichée sous le nom à l'accueil. */
+  phrase: string;
   // Moteur simple (Pomme, Caillou, et repli des niveaux KataGo si le réseau ne se charge pas).
   playouts: number; // plafond de simulations par coup
   timeMs: number; // budget de temps par coup
@@ -38,15 +40,15 @@ const repli = { playouts: 20000, timeMs: 800, hasard: 0, heuristiques: true } as
 
 /** Échelle des défis, du plus facile au plus fort. */
 export const OPPONENTS: Opponent[] = [
-  { id: 'pomme', nom: 'Pomme', rang: '20 kyu', description: 'Joue un peu au hasard. Parfait pour ta première partie.', playouts: 250, timeMs: 150, hasard: 0.3, heuristiques: false },
-  { id: 'caillou', nom: 'Caillou', rang: '16 kyu', description: 'Capture dès que tu le laisses faire. Protège bien tes pierres.', playouts: 20000, timeMs: 600, hasard: 0, heuristiques: true },
-  { id: 'bambou', nom: 'Bambou', rang: '13 kyu', description: 'Joue solide et relie ses pierres. Cherche ses points faibles.', ...repli, katago: { visits: 4, tolerance: 12, style: 'solide' } },
-  { id: 'renard', nom: 'Renard', rang: '10 kyu', description: 'Aime couper et attaquer. Garde tes groupes bien reliés.', ...repli, katago: { visits: 8, tolerance: 8, style: 'agressif' } },
-  { id: 'riviere', nom: 'Rivière', rang: '7 kyu', description: 'Prend les coins et les bords. Ne le laisse pas tout entourer.', ...repli, katago: { visits: 16, tolerance: 5, style: 'territorial' } },
-  { id: 'tigre', nom: 'Tigre', rang: '5 kyu', description: 'Attaque sans relâche. Fais vivre tes groupes tôt.', ...repli, katago: { visits: 32, tolerance: 3, style: 'agressif' } },
-  { id: 'montagne', nom: 'Montagne', rang: '3 kyu', description: 'Très solide, presque sans faute. Il faut le battre aux points.', ...repli, katago: { visits: 64, tolerance: 1.5, style: 'solide' } },
-  { id: 'dragon', nom: 'Dragon', rang: '1 kyu', description: 'Compte très bien son territoire. Chaque point compte.', ...repli, katago: { visits: 128, tolerance: 0.8, style: 'territorial' } },
-  { id: 'sensei', nom: 'Sensei', rang: '1 dan', description: 'Le dernier défi. Joue son meilleur coup à chaque fois.', ...repli, katago: { visits: 200, tolerance: 0, style: 'solide' } },
+  { id: 'pomme', nom: 'Pomme', rang: '20 kyu', phrase: 'Elle apprend comme toi.', description: 'Joue un peu au hasard. Parfait pour ta première partie.', playouts: 250, timeMs: 150, hasard: 0.3, heuristiques: false },
+  { id: 'caillou', nom: 'Caillou', rang: '16 kyu', phrase: 'Il capture tout ce qui traîne.', description: 'Capture dès que tu le laisses faire. Protège bien tes pierres.', playouts: 20000, timeMs: 600, hasard: 0, heuristiques: true },
+  { id: 'bambou', nom: 'Bambou', rang: '13 kyu', phrase: 'Il plie, mais ne rompt jamais.', description: 'Joue solide et relie ses pierres. Cherche ses points faibles.', ...repli, katago: { visits: 4, tolerance: 12, style: 'solide' } },
+  { id: 'renard', nom: 'Renard', rang: '10 kyu', phrase: "Il coupe dès que tu t'étires trop.", description: 'Aime couper et attaquer. Garde tes groupes bien reliés.', ...repli, katago: { visits: 8, tolerance: 8, style: 'agressif' } },
+  { id: 'riviere', nom: 'Rivière', rang: '7 kyu', phrase: 'Elle se faufile le long des bords.', description: 'Prend les coins et les bords. Ne la laisse pas tout entourer.', ...repli, katago: { visits: 16, tolerance: 5, style: 'territorial' } },
+  { id: 'tigre', nom: 'Tigre', rang: '5 kyu', phrase: 'Il attaque sans jamais lâcher.', description: 'Attaque sans relâche. Fais vivre tes groupes tôt.', ...repli, katago: { visits: 32, tolerance: 3, style: 'agressif' } },
+  { id: 'montagne', nom: 'Montagne', rang: '3 kyu', phrase: 'Elle ne bouge pas, et ne cède rien.', description: 'Très solide, presque sans faute. Il faut la battre aux points.', ...repli, katago: { visits: 64, tolerance: 1.5, style: 'solide' } },
+  { id: 'dragon', nom: 'Dragon', rang: '1 kyu', phrase: 'Il compte chaque point, même les tiens.', description: 'Compte très bien son territoire. Chaque point compte.', ...repli, katago: { visits: 128, tolerance: 0.8, style: 'territorial' } },
+  { id: 'sensei', nom: 'Sensei', rang: '1 dan', phrase: 'Il a tout vu. Montre-lui ton go.', description: 'Le dernier défi. Joue son meilleur coup à chaque fois.', ...repli, katago: { visits: 200, tolerance: 0, style: 'solide' } },
 ];
 
 export function opponent(id: OpponentId): Opponent {

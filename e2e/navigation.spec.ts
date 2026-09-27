@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { lancerADeux } from './plateau';
 
 // Issue #7 : première ouverture et navigation entre les onglets (viewport iPhone 390 × 844).
 
@@ -15,7 +16,9 @@ test("première ouverture : l'accueil s'affiche en moins de 3 secondes", async (
   expect(Date.now() - t0).toBeLessThan(3000);
 
   await expect(page.getByRole('heading', { level: 1, name: 'Go' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Jouer à deux', exact: true })).toBeVisible();
+  // Les deux tuiles : problème du jour et leçon suivante.
+  await expect(page.getByRole('button', { name: /^Problème du jour/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Leçon 1 sur 6/ })).toBeVisible();
   // Pas de défilement horizontal sur un écran de téléphone.
   const debord = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(debord).toBeLessThanOrEqual(0);
@@ -51,7 +54,7 @@ test('navigation entre les onglets Jouer, Apprendre, Problèmes et Profil', asyn
 
 test("« ‹ » ramène à l'accueil depuis une partie en cours (la navigation est masquée en partie)", async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Jouer à deux', exact: true }).click();
+  await lancerADeux(page);
   await expect(page.getByRole('img', { name: /Plateau de go/ })).toBeVisible();
   await expect(page.getByRole('navigation', { name: 'Navigation principale' })).toHaveCount(0);
 
