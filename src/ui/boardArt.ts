@@ -93,31 +93,102 @@ export function shellStriae(variant: number): Strie[] {
 }
 
 /**
- * Bois de kaya : deux couches de bruit fractal (veinage fin et veinage large), couleur chaude et vignettage.
- * Rendu une seule fois en image SVG `data:` (le navigateur la rastérise et la garde en cache) :
+ * Thèmes du goban (issue #109) : le kaya par défaut, puis les récompenses cosmétiques débloquées par niveau
+ * (src/app/xp.ts, RECOMPENSES). Un thème règle la teinte du bois, l'encre des lignes et la nacre des pierres blanches.
+ * Le goban ne change pas avec le mode sombre ou clair de l'interface : un thème a les mêmes couleurs dans les deux.
+ */
+export type IdThemeGoban = 'kaya' | 'kaya-clair' | 'ardoise' | 'coquillage-dore';
+export interface ThemeGoban {
+  id: IdThemeGoban;
+  nom: string;
+  /** Dégradé de fond du bois (centre, milieu, bord). */
+  fond: [string, string, string];
+  /** Couleur (r, g, b entre 0 et 1) et opacité (a, b de feColorMatrix) du veinage fin puis du veinage large. */
+  fin: [number, number, number, number, number];
+  large: [number, number, number, number, number];
+  vignette: string;
+  /** Encre des lignes, des hoshi et des coordonnées. */
+  ligne: string;
+  coord: string;
+  /** Dégradé des pierres blanches (4 arrêts) et couleur des stries sombres. */
+  blanche: [string, string, string, string];
+  strie: string;
+}
+
+export const THEMES_GOBAN: Record<IdThemeGoban, ThemeGoban> = {
+  kaya: {
+    id: 'kaya', nom: 'Kaya', fond: ['#EDC27A', '#DDA95C', '#C58D42'],
+    fin: [0.52, 0.30, 0.10, 0.8, -0.34], large: [0.62, 0.38, 0.14, 0.55, -0.24], vignette: '#3C1E05',
+    ligne: '#2b1a08', coord: '#4a2f10', blanche: ['#fff', '#F3EEE3', '#DDD5C4', '#BDB3A0'], strie: '#8C7B5E',
+  },
+  // Bois plus pâle, veinage discret : les pierres blanches ressortent par leur ombre et leur liseré.
+  'kaya-clair': {
+    id: 'kaya-clair', nom: 'Kaya clair', fond: ['#F6DDAA', '#EDCB8C', '#DDB272'],
+    fin: [0.62, 0.42, 0.18, 0.55, -0.26], large: [0.70, 0.50, 0.24, 0.4, -0.18], vignette: '#4A2A0A',
+    ligne: '#2b1a08', coord: '#3f280c', blanche: ['#fff', '#F3EEE3', '#DDD5C4', '#BDB3A0'], strie: '#8C7B5E',
+  },
+  // Ardoise gris-bleu de luminance moyenne : lignes sombres, et les deux couleurs de pierres gardent 3:1 avec le fond.
+  ardoise: {
+    id: 'ardoise', nom: 'Ardoise', fond: ['#8B96A0', '#7C8792', '#66717C'],
+    fin: [0.30, 0.34, 0.38, 0.5, -0.2], large: [0.40, 0.45, 0.50, 0.45, -0.18], vignette: '#10161C',
+    ligne: '#0e1318', coord: '#0e1318', blanche: ['#fff', '#F4F4F1', '#DCDDDA', '#B4B8BA'], strie: '#6E7A84',
+  },
+  // Pierres blanches nacrées et dorées, sur le kaya habituel.
+  'coquillage-dore': {
+    id: 'coquillage-dore', nom: 'Coquillage doré', fond: ['#EDC27A', '#DDA95C', '#C58D42'],
+    fin: [0.52, 0.30, 0.10, 0.8, -0.34], large: [0.62, 0.38, 0.14, 0.55, -0.24], vignette: '#3C1E05',
+    ligne: '#2b1a08', coord: '#4a2f10', blanche: ['#FFFBEF', '#F7EBCB', '#E6CF97', '#C4A462'], strie: '#9A7A35',
+  },
+};
+
+export const ORDRE_THEMES: readonly IdThemeGoban[] = ['kaya', 'kaya-clair', 'ardoise', 'coquillage-dore'];
+
+export function themeGoban(id: string | null | undefined): ThemeGoban {
+  return THEMES_GOBAN[id as IdThemeGoban] ?? THEMES_GOBAN.kaya;
+}
+
+const matrice = ([r, g, b, a, d]: ThemeGoban['fin']) => `0 0 0 0 ${r.toFixed(2)}  0 0 0 0 ${g.toFixed(2)}  0 0 0 0 ${b.toFixed(2)}  0 0 0 ${a} ${d}`;
+
+/**
+ * Bois du goban : deux couches de bruit fractal (veinage fin et veinage large), couleur du thème et vignettage.
+ * Rendu une seule fois par thème en image SVG `data:` (le navigateur la rastérise et la garde en cache) :
  * les filtres feTurbulence ne sont jamais recalculés quand une pierre est posée.
  */
-let woodCache: string | null = null;
-export function woodDataUrl(): string {
-  if (woodCache) return woodCache;
+const woodCache = new Map<IdThemeGoban, string>();
+export function woodDataUrl(id: IdThemeGoban = 'kaya'): string {
+  const t = themeGoban(id);
+  const deja = woodCache.get(t.id);
+  if (deja) return deja;
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
 <defs>
 <filter id="g" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
 <feTurbulence type="fractalNoise" baseFrequency="0.004 0.22" numOctaves="3" seed="7" result="fin"/>
-<feColorMatrix in="fin" type="matrix" result="finA" values="0 0 0 0 0.52  0 0 0 0 0.30  0 0 0 0 0.10  0 0 0 0.8 -0.34"/>
+<feColorMatrix in="fin" type="matrix" result="finA" values="${matrice(t.fin)}"/>
 <feTurbulence type="fractalNoise" baseFrequency="0.002 0.018" numOctaves="2" seed="11" result="large"/>
-<feColorMatrix in="large" type="matrix" result="largeA" values="0 0 0 0 0.62  0 0 0 0 0.38  0 0 0 0 0.14  0 0 0 0.55 -0.24"/>
+<feColorMatrix in="large" type="matrix" result="largeA" values="${matrice(t.large)}"/>
 <feMerge><feMergeNode in="largeA"/><feMergeNode in="finA"/></feMerge>
 </filter>
-<radialGradient id="b" cx="42%" cy="35%" r="85%"><stop offset="0" stop-color="#EDC27A"/><stop offset=".6" stop-color="#DDA95C"/><stop offset="1" stop-color="#C58D42"/></radialGradient>
-<radialGradient id="v" cx="50%" cy="50%" r="72%"><stop offset=".7" stop-color="#3C1E05" stop-opacity="0"/><stop offset="1" stop-color="#3C1E05" stop-opacity=".28"/></radialGradient>
+<radialGradient id="b" cx="42%" cy="35%" r="85%"><stop offset="0" stop-color="${t.fond[0]}"/><stop offset=".6" stop-color="${t.fond[1]}"/><stop offset="1" stop-color="${t.fond[2]}"/></radialGradient>
+<radialGradient id="v" cx="50%" cy="50%" r="72%"><stop offset=".7" stop-color="${t.vignette}" stop-opacity="0"/><stop offset="1" stop-color="${t.vignette}" stop-opacity=".28"/></radialGradient>
 </defs>
 <rect width="400" height="400" fill="url(#b)"/>
 <rect width="400" height="400" filter="url(#g)"/>
 <rect width="400" height="400" fill="url(#v)"/>
 </svg>`;
-  woodCache = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
-  return woodCache;
+  const url = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+  woodCache.set(t.id, url);
+  return url;
+}
+
+/** Luminance relative et rapport de contraste WCAG entre deux couleurs #rgb ou #rrggbb. */
+export function luminance(hex: string): number {
+  const h = hex.replace('#', ''), full = h.length === 3 ? [...h].map(c => c + c).join('') : h;
+  const [r, g, b] = [0, 2, 4].map(i => parseInt(full.slice(i, i + 2), 16) / 255).map(c => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+export function contraste(a: string, b: string): number {
+  const [x, y] = [luminance(a), luminance(b)].sort((m, n) => n - m);
+  return (x + 0.05) / (y + 0.05);
 }
 
 /** Points étoiles (hoshi). */
