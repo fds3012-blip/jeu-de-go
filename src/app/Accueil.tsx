@@ -63,7 +63,7 @@ export function Accueil(p: Props) {
         </div>
       </div>
 
-      <div className="identite">
+      <div className="adversaire-identite">
         <h2>{adv.nom}</h2>
         <span>{adv.rang}</span>
       </div>
