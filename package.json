@@ -19,9 +19,11 @@
     "sync:functions": "node scripts/sync-functions.mjs"
   },
   "dependencies": {
+    "@sentry/react": "^11.0.0",
     "@supabase/supabase-js": "^2.117.2",
     "@tensorflow/tfjs": "^4.22.0",
     "@tensorflow/tfjs-backend-webgpu": "^4.22.0",
+    "posthog-js": "^1.434.15",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },
