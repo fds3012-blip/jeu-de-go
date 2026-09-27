@@ -23,6 +23,8 @@ import { prefersReducedMotion, readLocal, useOnline, writeLocal } from './hooks'
 import { legendeSerie, niveau } from './problemes';
 import { ordrePaliers, palierRecommande, paliers, prochain, suivantPalier, type Palier } from './paliers';
 import { SceauLecon } from '../ui/SceauLecon';
+import { Montagne } from '../ui/Montagne';
+import { aFeter, FETES_KEY } from './fetesPaliers';
 import { MesErreurs } from '../ui/MesErreurs';
 import { SERIE_KEY, numeroDuJour, problemeDuNumero, serieVivante, textePartage, type Serie } from './goDuJour';
 import '../ui/apprendre.css';
@@ -118,6 +120,16 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   }, []);
 
   const tiers = useMemo(() => paliers(list, solved), [list, solved]);
+  // Palier complet : une micro-fête en or, une seule fois par palier (réglage Célébrations et mouvements réduits respectés).
+  const [fetes, setFetes] = useState<string[]>([]);
+  useEffect(() => {
+    if (openId) return;
+    const deja = readLocal<unknown>(FETES_KEY, []);
+    const nouveaux = aFeter(tiers, deja);
+    if (!nouveaux.length) return;
+    writeLocal(FETES_KEY, [...(Array.isArray(deja) ? deja : []), ...nouveaux]);
+    if (celebrer && !prefersReducedMotion()) setFetes(nouveaux);
+  }, [tiers, openId, celebrer]);
   const ordre = useMemo(() => ordrePaliers(tiers), [tiers]);
   const open = list.find(p => p.id === openId) ?? (daily && openId === daily.id ? daily : undefined);
   const duJourOuvert = !!open && open.id === daily?.id;
@@ -170,6 +182,8 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   // Une seule action en relief : le Go du jour tant qu'il n'est pas fait, « Continuer » ensuite.
   const duJourFait = !daily || serieDuJour?.dernier === numero;
   const recommande = connecte && stats ? palierRecommande(tiers, stats.rating) : undefined;
+  // Ta position sur la montagne : le palier du prochain problème, sinon le dernier palier ouvert.
+  const ici = prochainPz ? tiers.findIndex(t => t.problemes.includes(prochainPz)) : Math.max(0, tiers.map(t => t.ouvert && t.total > 0).lastIndexOf(true));
   return (
     <div className={`problemes${prochainPz && duJourFait ? ' avec-continuer' : ''}`}>
       {load.error === 'offline' && <p className="notice" role="status">Tu es hors ligne. Les problèmes restent jouables, mais ta cote ne bouge pas.</p>}
@@ -218,7 +232,8 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
           </button>
         )}
         {tiers.filter(t => t.total > 0).map(t => (
-          <PalierVue key={t.id} t={t} ordre={ordre} solved={solved} recommande={t.id === recommande} onOpen={setOpenId} />
+          <PalierVue key={t.id} t={t} ordre={ordre} solved={solved} recommande={t.id === recommande} onOpen={setOpenId}
+            ici={ici} fete={fetes.includes(t.id)} />
         ))}
       </section>
     </div>
@@ -226,12 +241,13 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
 }
 
 /** Un palier : nom, rang en kyu, progression, sceau quand il est complet, et sa grille de miniatures. */
-function PalierVue({ t, ordre, solved, recommande, onOpen }: {
-  t: Palier<Puzzle>; ordre: Puzzle[]; solved: Set<string>; recommande: boolean; onOpen: (id: string) => void;
+function PalierVue({ t, ordre, solved, recommande, onOpen, ici, fete }: {
+  t: Palier<Puzzle>; ordre: Puzzle[]; solved: Set<string>; recommande: boolean; onOpen: (id: string) => void; ici: number; fete: boolean;
 }) {
   const titre = `palier-${t.id}`;
   return (
-    <div className={`palier${t.ouvert ? '' : ' verrouille'}`} data-palier={t.id} aria-labelledby={titre} role="group">
+    <div className={`palier${t.ouvert ? '' : ' verrouille'}${t.complet ? ' complet' : ''}${fete ? ' fete' : ''}`} data-palier={t.id} aria-labelledby={titre} role="group">
+      <Montagne rang={t.rang} ici={ici} complet={t.complet} />
       <div className="palier-tete">
         <div className="palier-nom">
           <h3 id={titre}>
@@ -241,7 +257,7 @@ function PalierVue({ t, ordre, solved, recommande, onOpen }: {
           </h3>
           <small>{t.kyu}{recommande && <span className="palier-reco"> · Pour ta cote</span>}</small>
         </div>
-        {t.complet && <SceauLecon id={`p${t.rang}`} taille={34} className="palier-sceau" />}
+        {t.complet && <span className="palier-sceau" role="img" aria-label="Palier complet"><SceauLecon id={`p${t.rang}`} taille={34} /></span>}
       </div>
       <div className="palier-progres">
         <div className="palier-barre" role="progressbar" aria-label={`Progression ${t.nom}`} aria-valuemin={0} aria-valuemax={t.total} aria-valuenow={t.reussis}>
@@ -260,7 +276,7 @@ function PalierVue({ t, ordre, solved, recommande, onOpen }: {
                 aria-label={`Problème ${i + 1} : ${p.title}${ok ? ', réussi' : ''}${t.ouvert ? '' : ', verrouillé'}`}>
                 <span className="grille-goban">
                   <MiniGoban rows={p.rows} />
-                  {ok && <span className="pastille-ok" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M4 8.4 6.8 11 12 5.4" /></svg></span>}
+                  {ok && <span className="pastille-ok" aria-hidden="true"><svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="15" className="sceau-fond" /><circle cx="16" cy="16" r="11.5" className="sceau-anneau" /><path d="M10.5 16.6 14.3 20.2 21.5 12.4" className="sceau-coche" /></svg></span>}
                 </span>
                 <b aria-hidden="true">{p.title}</b>
                 <span aria-hidden="true"><Difficulte d={p.difficulty} /></span>
