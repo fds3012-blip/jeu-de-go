@@ -1,6 +1,7 @@
 // Composants de l'écran de partie (grammaire de chess.com) : bandeaux des joueurs avec leur couvercle,
 // liste des coups, barre d'avantage, coach Mochi et barre d'actions. Styles : partie.css.
 import { useLayoutEffect, useRef, type ReactNode } from 'react';
+import { IconeAction, type NomAction } from './IconesActions';
 import { Mochi } from './Mochi';
 import { Reflexion } from './Reflexion';
 import { fr } from './typo';
@@ -122,16 +123,14 @@ export function BarreActions({ actions, label }: { actions: Action[]; label: str
   );
 }
 
-// Icônes de la barre d'actions (trait 2 px, 26 px), dessinées pour l'app.
-const ICONES = {
-  indice: <path d="M13 3a7 7 0 0 0-4 12.7V19h8v-3.3A7 7 0 0 0 13 3ZM10 23h6" />,
-  annuler: <><path d="M9 5 4 10l5 5" /><path d="M4 10h11a6 6 0 0 1 0 12h-4" /></>,
-  passer: <circle cx="13" cy="13" r="9" strokeDasharray="3 3" />,
-  abandonner: <path d="M6 23V4M6 4h13l-3 5 3 5H6" />,
+// Icônes de la barre d'actions. Les quatre actions de la partie sont dessinées avec des pierres (IconesActions.tsx,
+// issue #65), comme la barre de navigation. Précédent et suivant (relecture) restent des chevrons au trait, 26 px.
+const CHEVRONS = {
   precedent: <path d="M16 5 8 13l8 8" />,
   suivant: <path d="M10 5l8 8-8 8" />,
 };
 
-export function Icone({ nom }: { nom: keyof typeof ICONES }) {
-  return <svg viewBox="0 0 26 26" aria-hidden="true">{ICONES[nom]}</svg>;
+export function Icone({ nom }: { nom: NomAction | keyof typeof CHEVRONS }) {
+  if (nom in CHEVRONS) return <svg className="icone-trait" viewBox="0 0 26 26" aria-hidden="true">{CHEVRONS[nom as keyof typeof CHEVRONS]}</svg>;
+  return <IconeAction nom={nom as NomAction} />;
 }

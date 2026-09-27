@@ -217,6 +217,15 @@ Chaque livraison : issue traitée, agent, pull request, résultat des vérificat
 - **Vérifications** : 392 tests unitaires et 45 tests e2e verts.
 - **Reste à vérifier sur un vrai téléphone** : la courbe des pierres prises qui partent vers les couvercles.
 
+## #65 Barre d'actions de la partie dans l'identité aux deux pierres (designer)
+
+- Florian trouvait les icônes du bas en partie « pas ouf ». Elles sont redessinées avec des pierres :
+  - **Indice** : la pierre fantôme dans son halo jade ;
+  - **Annuler** : la pierre qui remonte par un chemin de points ;
+  - **Passer** : deux pierres restées hors du plateau ;
+  - **Abandonner** : une pierre sur le couvercle retourné, le geste traditionnel de l'abandon au go. Le couvercle devient un sceau hanko au moment de « Confirmer ? ».
+- Une action désactivée passe à l'encre brume, comme un onglet inactif.
+- Vérifications : 405 tests unitaires et 45 tests e2e verts.
 ## #64 Consentement : un maximum d'accords, dans le respect de la CNIL (juridique)
 
 - Florian a peur que les joueurs refusent. La règle : refuser doit rester aussi simple qu'accepter (CNIL). On ne joue donc pas sur la difficulté de refuser.
@@ -241,3 +250,20 @@ Chaque livraison : issue traitée, agent, pull request, résultat des vérificat
 - Reste :
   - limiter l'indice à 3 par partie ;
   - mesurer dans PostHog le taux de premières parties terminées.
+## #34 Revue de partie (moteur-go) : première version
+
+- À la fin de la partie, « Revoir ma partie » ouvre :
+  - le goban coup par coup, avec un curseur ;
+  - la courbe d'avantage ;
+  - les 3 erreurs de plus d'un point, chacune avec une phrase de Mochi ;
+  - « Rejouer d'ici ».
+- La partie est gardée en SGF sur le téléphone. L'événement `revue_ouverte` est mesuré.
+- Règle posée après ma revue : on ne montre jamais un conseil faux. Le premier jet proposait A9, dans le coin.
+  - Le meilleur coup (pierre verte) vient seulement de KataGo, et seulement s'il est déjà chargé ou en cache.
+  - Il n'apparaît que s'il est légal, s'il n'est pas sur la première ligne quand le plateau est encore ouvert, et s'il gagne au moins un point.
+  - Sinon, Mochi décrit seulement l'erreur.
+- Reste :
+  - l'enregistrement dans Supabase ;
+  - la revue des anciennes parties depuis le Profil ;
+  - la vérification du contraste de la courbe en clair.
+- Vérifications : 419 tests unitaires et 48 tests e2e verts.

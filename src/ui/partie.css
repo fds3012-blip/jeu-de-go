@@ -93,10 +93,52 @@
   padding: 4px 4px env(safe-area-inset-bottom, 0px); }
 .actions button { flex: 1; max-width: 140px; min-height: 64px; border: 0; background: none; color: var(--text); border-radius: 12px;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 13px; font-weight: var(--fw-medium); }
-.actions svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.actions button:disabled { color: var(--muted); opacity: .55; cursor: default; }
-.actions button:not(:disabled):active { background: var(--surface); }
+.actions .icone-trait { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+/* Désactivé : encre brume sans voile d'opacité (contraste AA sur la barre, 7:1 en sombre, 6:1 en clair). */
+.actions button:disabled { color: var(--muted); cursor: default; }
 .actions button.danger { color: var(--danger-texte); font-weight: var(--fw-bold); }
+
+/* ---------- Icônes des actions (IconesActions.tsx, issue #65) : la famille « deux pierres » de la barre de navigation ---------- */
+.icone-action { width: var(--icone-nav); height: var(--icone-nav); display: block; overflow: visible; flex: none; }
+.icone-action .grille { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; opacity: .7; }
+.icone-action .grille-fine { stroke-width: 1; opacity: .55; }
+.icone-action .trait { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.icone-action .trait-pointille { fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-dasharray: 0 3.4; }
+.icone-action .detache { fill: var(--barre); }
+/* Pierres : matière du goban, comme un onglet actif. */
+.icone-action .pierre-n { stroke: var(--pierre-n-bord); stroke-width: .7; }
+.icone-action .pierre-b { stroke: rgba(60, 40, 15, .42); stroke-width: .8; }
+.icone-action .ombre { fill: #000; opacity: .32; }
+/* Indice : la pierre fantôme de l'accueil, dans son halo jade (seule couleur de la barre au repos). */
+.icone-action .lueur { fill: var(--onglet-jouer); opacity: .16; }
+.icone-action .lueur-anneau { fill: none; stroke: var(--onglet-jouer); stroke-width: 1.2; opacity: .6; }
+.icone-action .lueur-pierre { fill: color-mix(in srgb, var(--onglet-jouer) 38%, var(--barre)); stroke: var(--onglet-jouer); stroke-width: 1.6; }
+.icone-action .lueur-reflet { fill: #fff; opacity: .5; }
+/* Abandonner : couvercle retourné en bois ; le cadre du sceau n'apparaît qu'à l'étape « Confirmer ? ». */
+.icone-action .couvercle-dessus { fill: #9a7045; stroke: #3a2714; stroke-width: .6; }
+.icone-action .couvercle-cadre { fill: none; stroke: #F7E9DA; stroke-width: 1.1; opacity: 0; }
+.actions .danger .icone-action .couvercle-bois { fill: #9E2F1E; }
+.actions .danger .icone-action .couvercle-dessus { fill: var(--hanko); stroke: #7a2415; }
+.actions .danger .icone-action .couvercle-cadre { opacity: .9; }
+
+/* Désactivé : l'icône repasse à l'encre brume, comme un onglet inactif (noire pleine, blanche en contour, sans couleur). */
+.actions button:disabled .icone-action .pierre-n { fill: currentColor; stroke: none; }
+.actions button:disabled .icone-action .pierre-b { fill: var(--barre); stroke: currentColor; stroke-width: 1.5; }
+.actions button:disabled .icone-action :is(.ombre, .reflet, .lueur, .lueur-reflet) { display: none; }
+.actions button:disabled .icone-action .lueur-anneau { stroke: currentColor; stroke-dasharray: 0 3.2; stroke-linecap: round; stroke-width: 1.5; opacity: .8; }
+.actions button:disabled .icone-action .lueur-pierre { fill: none; stroke: currentColor; stroke-width: 1.5; }
+.actions button:disabled .icone-action .couvercle-bois { fill: currentColor; }
+.actions button:disabled .icone-action .couvercle-dessus { fill: var(--barre); stroke: currentColor; stroke-width: 1.5; }
+
+/* Appui : la pierre s'enfonce dans le goban (transform seulement, sans décaler la mise en page). */
+.icone-action .pose { transform-box: fill-box; transform-origin: center; }
+@media (prefers-reduced-motion: no-preference) {
+  .actions .icone-action .pose { transition: transform var(--duree-rapide) var(--ease); }
+  .actions button:not(:disabled):active .icone-action .pose { transform: translateY(1.2px) scale(.9); }
+  /* « Confirmer ? » : la pierre se pose sur le couvercle devenu sceau (même chute que sur le goban). */
+  .actions .danger .icone-abandonner .pose { animation: action-pose var(--duree-pose) var(--ease-pose) backwards; }
+}
+@keyframes action-pose { from { transform: translateY(-2px) scale(1.15); } to { transform: none; } }
 /* Comptage : deux boutons côte à côte, dont l'action principale en relief. */
 .barre-comptage { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; display: flex; justify-content: center; gap: var(--space-2); background: var(--barre); border-top: 1px solid var(--line);
   padding: 12px var(--gouttiere) calc(12px + var(--relief) + env(safe-area-inset-bottom, 0px)); }

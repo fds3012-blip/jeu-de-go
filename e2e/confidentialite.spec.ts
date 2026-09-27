@@ -38,7 +38,13 @@ test('les deux choix de la fenêtre ont la même taille et le même style', asyn
   await page.goto('/');
   const oui = fenetre(page).getByRole('button', { name: 'Oui, j’aide' });
   const non = fenetre(page).getByRole('button', { name: 'Non merci' });
-  const [a, b] = [(await oui.boundingBox())!, (await non.boundingBox())!];
+  // La fenêtre entre par un léger zoom : on attend sa fin, puis on mesure les deux boutons dans la même image.
+  await fenetre(page).evaluate(el => Promise.all(el.getAnimations({ subtree: true }).map(a => a.finished)));
+  await expect(non).toBeVisible();
+  const [a, b] = await page.evaluate(() => {
+    const [x, y] = [...document.querySelectorAll<HTMLElement>('.accord-choix')].map(e => e.getBoundingClientRect());
+    return [x, y].map(r => ({ width: r.width, height: r.height }));
+  });
   expect(Math.abs(a.width - b.width)).toBeLessThan(1);
   expect(Math.abs(a.height - b.height)).toBeLessThan(1);
   expect(a.height).toBeGreaterThanOrEqual(44);

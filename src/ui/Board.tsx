@@ -13,6 +13,8 @@ export interface BoardMarks {
   dead?: Set<number>;
   /** Indice : une zone entourée autour de ce point (le bon coup est dedans, sans être désigné). */
   zone?: number;
+  /** Revue (issue #34) : meilleur coup du moteur, montré par une pierre fantôme jade. */
+  meilleur?: number;
 }
 
 interface Props {
@@ -226,6 +228,9 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
         ); })() : null}
         {marks.mistake != null && marks.mistake >= 0 ? (() => { const x = X(marks.mistake), y = Y(marks.mistake), d = `M${x - 8} ${y - 8}L${x + 8} ${y + 8}M${x + 8} ${y - 8}L${x - 8} ${y + 8}`; return (
           <g fill="none" strokeLinecap="round"><path d={d} stroke={PAPIER} strokeOpacity={0.85} strokeWidth={7} /><path d={d} stroke={HANKO} strokeWidth={4} /></g>
+        ); })() : null}
+        {marks.meilleur != null && marks.meilleur >= 0 && !board[marks.meilleur] ? (() => { const [x, y] = at(marks.meilleur); return (
+          <circle cx={x} cy={y} r={R * 0.92} fill={JADE} fillOpacity={0.55} stroke={JADE_FONCE} strokeWidth={2.4} data-meilleur="" />
         ); })() : null}
         {ghostP >= 0 ? <g {...fantome(ghostP)} opacity={0.5} data-fantome="" aria-hidden="true">{corps(toPlay, ghostP, size)}</g> : null}
         {shaking >= 0 && !board[shaking] ? (

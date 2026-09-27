@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { estimateLead, setKataGo, type Analysis, type KataGoBackend } from './index';
+import { estimateLead, meilleurCoup, setKataGo, type Analysis, type KataGoBackend } from './index';
 import { newPosition, play, type Position } from '../go/rules';
 
 function faux(lead: number, state: 'pret' | 'chargement'): KataGoBackend & { appels: number } {
@@ -33,5 +33,23 @@ describe("estimation d'avantage (barre de l'écran de partie)", () => {
     setKataGo(charge);
     expect(await estimateLead(newPosition(9), 6.5)).toBeNull();
     expect(pret.appels + charge.appels).toBe(0);
+  });
+});
+
+describe('meilleurCoup (revue, issue #34)', () => {
+  afterEach(() => setKataGo(undefined));
+
+  it('sans KataGo chargé ni réseau en cache : aucun conseil (jamais le moteur simple)', async () => {
+    setKataGo(faux(3, 'chargement'));
+    expect(await meilleurCoup(newPosition(9), 6.5)).toEqual({ katago: false });
+    setKataGo(null);
+    expect(await meilleurCoup(newPosition(9), 6.5)).toEqual({ katago: false });
+  });
+
+  it('KataGo prêt : son premier coup et son avance', async () => {
+    const k = faux(3, 'pret');
+    k.analyze = async () => ({ moves: [{ move: 40, visits: 40, prior: 0.5, winrate: 0.6, lead: 4, scoreLoss: 0 }], winrate: 0.6, lead: 4, ownership: new Float32Array(81), visits: 48, ms: 1, engine: 'faux' });
+    setKataGo(k);
+    expect(await meilleurCoup(newPosition(9), 6.5)).toEqual({ katago: true, move: 40, lead: 4 });
   });
 });

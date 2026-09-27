@@ -1,0 +1,50 @@
+/* Revue d'une partie (issue #34) : src/app/Revue.tsx. Design v2 (docs/design/v2/direction.md) :
+   sumi, jade, Bricolage ; une seule action en relief (« Rejouer d'ici »), cibles de 44 px. */
+.revue { display: flex; flex-direction: column; gap: var(--space-3); padding-bottom: calc(var(--cible-cta) + var(--relief) + var(--space-4) * 2 + env(safe-area-inset-bottom, 0px)); }
+
+.revue-tete { display: flex; align-items: center; gap: var(--space-2); min-height: var(--cible-min); }
+.revue-tete .retour { flex: none; width: var(--cible-min); height: var(--cible-min); margin-left: -10px; display: grid; place-items: center;
+  border: 0; border-radius: 50%; background: none; color: var(--text); font-size: 28px; line-height: 1; }
+.revue-tete .retour:active { background: var(--surface); }
+.revue-tete h2 { flex: 1; margin: 0; font-family: var(--font-titre); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre); font-size: 20px; }
+.revue-compteur { color: var(--muted); font-size: 14px; font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; }
+
+.revue-plateau { width: min(100%, 460px); margin: 0 auto; }
+
+/* Courbe d'avantage : Blanc en haut (papier), Noir en bas (sumi), ligne jade, erreurs en hanko. */
+.revue-courbe { margin: 0; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); cursor: pointer; }
+.revue-courbe svg { display: block; width: 100%; height: 64px; }
+.revue-courbe-blanc { fill: var(--papier); }
+.revue-courbe-noir { fill: #221E1A; }
+.revue-courbe-milieu { stroke: var(--brume); stroke-opacity: .5; stroke-dasharray: 3 3; }
+.revue-courbe-ligne { fill: none; stroke: var(--jade); stroke-width: 2; }
+.revue-courbe-erreur { stroke: var(--hanko); stroke-width: 2; }
+.revue-courbe-curseur { stroke: var(--or); stroke-width: 2.5; }
+
+.revue-nav { display: flex; align-items: center; gap: var(--space-2); }
+.revue-nav input[type="range"] { flex: 1; min-width: 0; height: var(--cible-min); accent-color: var(--accent); }
+.revue-pas { flex: none; width: var(--cible-bouton); min-height: var(--cible-bouton); padding: 0; display: grid; place-items: center; }
+.revue-pas svg { width: 22px; height: 22px; }
+.revue-pas:disabled { opacity: .4; }
+
+.revue-analyse { display: flex; align-items: center; gap: var(--space-2); min-height: var(--cible-min); margin: 0; color: var(--muted); font-size: 15px; }
+
+.revue-erreurs { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); }
+.revue-erreur { min-height: var(--cible-bouton); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+  border: 1.5px solid var(--line); border-radius: var(--radius-bouton); background: var(--surface); color: var(--text); font-size: 14px; }
+.revue-erreur b { font-weight: var(--fw-bold); }
+.revue-erreur span { color: var(--danger-texte); font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; }
+.revue-erreur.actif { border-color: var(--accent); background: var(--surface-2); }
+
+.revue-mochi { display: flex; align-items: flex-start; gap: var(--space-3); padding: var(--space-3); border-radius: 14px; background: var(--surface); }
+.revue-mochi p { margin: 0; font-size: 15px; line-height: 1.4; }
+
+.app-partie .revue-dock { bottom: calc(var(--space-4) + env(safe-area-inset-bottom, 0px)); }
+.revue-dock .cta { min-height: var(--cible-cta); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .revue-erreur { transition: border-color var(--duree-rapide) var(--ease), background-color var(--duree-rapide) var(--ease); }
+}
+
+.revue-aucune { display: flex; align-items: center; min-height: var(--cible-min); margin: 0; font-weight: var(--fw-bold); color: var(--accent-texte); }
+.revue-note { margin: calc(var(--space-1) * -1) 2px 0; color: var(--muted); font-size: 14px; line-height: 1.35; }
