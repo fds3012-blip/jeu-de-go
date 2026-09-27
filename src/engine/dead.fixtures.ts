@@ -1,0 +1,85 @@
+// Positions finales de référence. X noir, O blanc ; S (noire) et T (blanche) marquent les pierres mortes attendues.
+export const CAS: { nom: string; rows: string[] }[] = [
+  {
+    nom: '9 × 9 : une pierre isolée de chaque côté',
+    rows: ['....XO...', '....XO...', '..T.XO...', '....XO...', '....XO...', '....XO.S.', '....XO...', '....XO...', '....XO...'],
+  },
+  {
+    nom: '9 × 9 : frontière en escalier, rien de mort',
+    rows: ['...XO....', '...XOO...', '...XXO...', '....XO...', '....XO...', '...XXO...', '...XOO...', '...XO....', '...XO....'],
+  },
+  {
+    nom: '9 × 9 : seki sans œil, rien de mort',
+    rows: ['..XOOXO..', '..XOOXO..', '..XOOXO..', '..XOOXO..', '..XO.XO..', '..XO.XO..', '..XOXXO..', '..XOXXO..', '..XOXXO..'],
+  },
+  {
+    nom: '9 × 9 : seki plus une pierre morte de chaque côté',
+    rows: ['..XOOXO..', '..XOOXO.S', '..XOOXO..', '..XOOXO..', 'T.XO.XO..', '..XO.XO..', '..XOXXO..', '..XOXXO..', '..XOXXO..'],
+  },
+  {
+    nom: '9 × 9 : groupe blanc vivant à deux yeux dans le coin noir',
+    rows: ['.O.OXXO..', 'OOOOXXO..', 'XXXXXXO..', '.....XO..', '.....XO..', '.....XO..', '.....XO.S', '.....XO..', '.....XO..'],
+  },
+  {
+    nom: '9 × 9 : trois pierres blanches sans espace, groupe noir à œil de deux points',
+    rows: ['...XO....', '...XO.SSS', '...XO.S..', '...XO.SSS', '...XO....', '...XO....', 'TTTXO....', '...XO....', '...XO....'],
+  },
+  {
+    nom: '9 × 9 : groupe blanc à un seul œil, noir vivant à deux yeux chez Blanc',
+    rows: ['.....XO..', '.TTT.XO..', '.T.T.XO..', '.TTT.XO..', '.....XO..', '.....XOXX', '.....XOX.', '.....XOXX', '.....XOX.'],
+  },
+  {
+    nom: '13 × 13 : pierres mortes dans les deux camps',
+    rows: [
+      '......XO.....',
+      '......XO.....',
+      '..T...XO.....',
+      '......XO..S..',
+      '......XO.....',
+      '......XO.....',
+      '.....XXO.....',
+      '.....XOO.....',
+      '.....XO......',
+      '..TT.XO...SS.',
+      '.....XO......',
+      '.....XO......',
+      '.....XO......',
+    ],
+  },
+  {
+    nom: '13 × 13 : seki au centre, rien de mort',
+    rows: [
+      '....XOOXO....',
+      '....XOOXO....',
+      '....XOOXO....',
+      '....XOOXO....',
+      '....XOOXO....',
+      '....XOOXO....',
+      '....XO.XO....',
+      '....XO.XO....',
+      '....XOXXO....',
+      '....XOXXO....',
+      '....XOXXO....',
+      '....XOXXO....',
+      '....XOXXO....',
+    ],
+  },
+  {
+    nom: '13 × 13 : groupe blanc vivant chez Noir, groupe noir mort à un œil chez Blanc',
+    rows: [
+      '.O.O..XO.....',
+      'OOOO..XO.....',
+      '......XO.....',
+      '......XO.....',
+      '......XO.....',
+      '......XO.....',
+      '......XO.SSS.',
+      '......XO.S.S.',
+      '......XO.SSS.',
+      '......XO.....',
+      '......XO.....',
+      '......XO.....',
+      '......XO.....',
+    ],
+  },
+];
