@@ -8,55 +8,75 @@
 .chapitre h2 { margin: 4px 0 2px; font-size: var(--fs-3xl); font-weight: var(--fw-titre); line-height: 1; }
 .chapitre p { margin: 6px 0 0; color: var(--muted); }
 
-/* ---------- Chemin de pierres de gué ---------- */
-.gue { position: relative; margin: var(--space-3) 0 var(--space-5); }
+/* ---------- Chemin de pierres sur les lignes d'un goban (issue #54) ---------- */
+/*
+ * Chaque leçon est une pierre posée sur une intersection ; le chemin suit les lignes, à angle droit, comme un groupe relié.
+ * Faite : ardoise pleine, la même matière que sur le goban (Board.tsx). En cours : la pierre tenue au-dessus du goban,
+ * qui respire, avec le seul bouton en relief de l'écran. À venir : une pierre fantôme en pointillés.
+ */
+.gue { --pierre: 58px; position: relative; margin: var(--space-2) 0 var(--space-6); }
 .gue ol { list-style: none; margin: 0; padding: 0; }
-.gue-trace { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
-.gue-trace path { fill: none; vector-effect: non-scaling-stroke; stroke-linecap: round; }
-/* Le ruisseau que les pierres traversent : une bande douce, puis un filet pointillé au milieu. */
-.gue-eau { stroke: color-mix(in srgb, var(--text) 6%, transparent); stroke-width: 26px; }
-.gue-pointille { stroke: color-mix(in srgb, var(--text) 24%, transparent); stroke-width: 2px; stroke-dasharray: 1 9; }
-/* Le chemin déjà parcouru, en or (couleur des récompenses). */
-.gue-parcouru { stroke: color-mix(in srgb, var(--or) 80%, transparent); stroke-width: 3px; }
+/* Les deux calques dessinés (lignes, chemin) : repère centré sur le milieu de l'écran, x en px depuis le milieu. */
+.gue > svg, .gue-goban > svg { position: absolute; left: 50%; top: 0; overflow: visible; pointer-events: none; }
+.gue > svg path, .gue-goban path { fill: none; }
 
-.pas { position: absolute; height: 72px; transform: translateY(-50%); display: flex; align-items: center; gap: 14px;
-  background: none; border: 0; padding: 0; text-align: left; border-radius: 36px; }
-.pas.a-gauche { left: calc(var(--x) - 36px); right: 0; }
-.pas.a-droite { left: 0; right: calc(100% - var(--x) - 36px); flex-direction: row-reverse; text-align: right; }
-.pas-texte { min-width: 0; }
+/* Lignes à l'encre, jusqu'aux bords de l'écran, qui s'effacent vers les côtés, le haut et le bas. */
+.gue-goban { position: absolute; inset: 0 calc(-1 * var(--gouttiere)); overflow: hidden; pointer-events: none;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 16%, #000 84%, transparent), linear-gradient(transparent, #000 56px, #000 calc(100% - 84px), transparent);
+  -webkit-mask-composite: source-in; mask-image: linear-gradient(to right, transparent, #000 16%, #000 84%, transparent), linear-gradient(transparent, #000 56px, #000 calc(100% - 84px), transparent);
+  mask-composite: intersect; }
+.gue-goban path { stroke: color-mix(in srgb, var(--text) 11%, transparent); stroke-width: 1px; }
+/* Le chemin : les mêmes lignes, repassées plus fort ; la partie parcourue en or, la couleur des récompenses. */
+.gue-route { stroke: color-mix(in srgb, var(--text) 26%, transparent); stroke-width: 2.5px; stroke-linejoin: round; }
+.gue-parcouru { stroke: var(--or); stroke-width: 3.5px; stroke-linejoin: round; stroke-linecap: round; }
+
+/* Une rangée par leçon : la pierre sur son intersection, le texte en face, du côté libre. */
+.pas { position: absolute; top: 0; display: flex; flex-direction: column; align-items: flex-start; transform: translateY(calc(var(--pierre) / -2)); }
+.pas.a-gauche { left: calc(50% + var(--x) - var(--pierre) / 2); right: 0; }
+.pas.a-droite { left: 0; right: calc(50% - var(--x) - var(--pierre) / 2); align-items: flex-end; }
+.pas-bouton { display: flex; align-items: center; gap: 12px; max-width: 100%; background: none; border: 0; padding: 0; color: inherit; text-align: left; border-radius: calc(var(--pierre) / 2); }
+.a-droite .pas-bouton { flex-direction: row-reverse; text-align: right; }
+.pas-texte { display: flex; align-items: flex-start; gap: 10px; min-width: 0; }
+.a-droite .pas-texte { flex-direction: row-reverse; }
+.pas-texte .sceau { margin-top: 1px; }
+.sceau-pale > svg { opacity: .42; filter: saturate(.55); }
 .pas-texte b { display: block; font-family: var(--font-titre); font-weight: var(--fw-bold); letter-spacing: -0.01em; font-size: var(--fs-l); line-height: 1.2; text-wrap: balance; }
 .pas-texte small { display: block; text-wrap: balance; color: var(--muted); font-size: var(--fs-s); line-height: 1.3; margin-top: 2px; }
-.pas-avenir .pas-texte b { color: color-mix(in srgb, var(--text) 72%, var(--bg)); }
+.pas-avenir .pas-texte b { color: color-mix(in srgb, var(--text) 70%, var(--bg)); }
 
-/* Les pierres : ardoise cochée (faite), coquillage qui pulse (en cours), galet gris (à venir). */
-.pierre-gue { position: relative; flex: none; width: 64px; height: 64px; margin: 4px; border-radius: 50%; display: grid; place-items: center;
-  font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: 1.35rem; }
-.pas-faite .pierre-gue { color: var(--jade); background: radial-gradient(circle at 36% 30%, #5b5f5d, #2e3130 22%, #151716 58%, #050606);
-  box-shadow: 0 10px 16px -8px rgba(0, 0, 0, .7), 0 2px 3px rgba(0, 0, 0, .35); }
-.pas-encours .pierre-gue { color: var(--sumi); background: radial-gradient(circle at 38% 32%, #fff, #F3EEE3 55%, #DDD5C4 85%, #BDB3A0);
-  box-shadow: 0 10px 16px -8px rgba(0, 0, 0, .6), 0 2px 3px rgba(0, 0, 0, .3); }
-.pas-encours .pierre-gue::after { content: ""; position: absolute; inset: -7px; border-radius: 50%; border: 3px solid var(--jade); }
-.pas-avenir .pierre-gue { width: 56px; height: 56px; margin: 8px; color: var(--muted); background: var(--surface-2);
-  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, .12); }
-.pas:active .pierre-gue { transform: scale(.96); }
+/* Les pierres. Le dégradé et le reflet reprennent l'ardoise du goban (Board.tsx, go-n et go-nr). */
+.pierre-gue { position: relative; flex: none; width: var(--pierre); height: var(--pierre); border-radius: 50%; }
+.pas-faite .pierre-gue, .pas-encours .pierre-gue::before {
+  background: radial-gradient(circle at 34% 26%, rgba(255, 255, 255, .34), rgba(255, 255, 255, 0) 24%),
+    radial-gradient(72% 72% at 36% 30%, #5b5f5d, #2e3130 18%, #151716 55%, #050606); }
+.pas-faite .pierre-gue { box-shadow: 0 7px 10px -5px rgba(0, 0, 0, .6), 0 1px 2px rgba(0, 0, 0, .35); }
+/*
+ * En cours : la pierre n'est pas encore posée. Comme la pierre fantôme qui suit le doigt sur le goban,
+ * elle est translucide, cerclée de jade, et respire. Elle devient pleine à la fin de la leçon.
+ */
+.pas-encours .pierre-gue { background: var(--bg); }
+.pas-encours .pierre-gue::before { content: ""; position: absolute; inset: 0; border-radius: 50%; opacity: var(--fantome, .5); }
+.pas-encours .pierre-gue::after { content: ""; position: absolute; inset: -7px; border-radius: 50%; border: 3px solid var(--accent-trait); }
+/* À venir : pierre fantôme en pointillés ; son fond cache les lignes pour qu'on lise « une place », pas « un trou ». */
+.pas-avenir .pierre-gue { background: color-mix(in srgb, var(--bg) 78%, transparent);
+  border: 2px dashed color-mix(in srgb, var(--text) 34%, transparent); }
+
+/* Le bouton en relief de la leçon en cours, sous son titre. */
+.apprendre .cta-chemin { position: static; transform: none; width: auto; min-width: 148px; margin-top: var(--space-3); padding: 0 var(--space-6); }
+.a-gauche .cta-chemin { margin-left: calc(var(--pierre) + 12px); }
+.a-droite .cta-chemin { margin-right: calc(var(--pierre) + 12px); }
+.chemin-fini { margin: 0 0 var(--space-6); }
+.chemin-fini .cta-chemin { width: 100%; margin: 0; }
+
 @media (prefers-reduced-motion: no-preference) {
-  .pierre-gue { transition: transform var(--duree-rapide) var(--ease); }
-  /* Seul mouvement spontané de l'écran : la pierre en cours respire, lentement. */
-  .pas-encours .pierre-gue::after { animation: respire 2.8s ease-in-out infinite; }
+  /* Appui : la pierre s'enfonce un peu (transition, donc interruptible), le bouton de toute sa tranche. */
+  .pierre-gue { transition: transform 160ms var(--ease); }
+  .pas-bouton:active .pierre-gue { transform: scale(.96); }
+  .apprendre .cta-chemin:active { transform: translateY(var(--relief)); box-shadow: none; }
+  /* Seul mouvement spontané de l'écran : la pierre en cours respire (skill motion-design, « waiting/idle » : ±2 %, 3 s, sinus). */
+  .pas-encours .pierre-gue::before { animation: respire 3s cubic-bezier(.37, 0, .63, 1) infinite; }
 }
-@keyframes respire { 0%, 100% { transform: scale(1); opacity: .95; } 50% { transform: scale(1.1); opacity: .45; } }
-
-/* Mochi et sa réplique, posés au-dessus de la pierre en cours. */
-.gue-mochi { position: absolute; display: flex; align-items: flex-end; gap: 8px; transform: translateY(calc(-100% - 42px)); pointer-events: none; }
-.gue-mochi.a-gauche { left: calc(var(--x) - 34px); }
-.gue-mochi.a-droite { right: calc(100% - var(--x) - 34px); flex-direction: row-reverse; }
-.gue-mochi .sceau { --sceau-socle: var(--bg); filter: drop-shadow(0 4px 8px rgba(0, 0, 0, .3)); }
-.gue-mochi p { margin: 0 0 4px; background: var(--papier); color: var(--sumi); border-radius: 14px 14px 14px 4px; padding: 6px 12px;
-  font-size: .92rem; font-weight: var(--fw-bold); line-height: 1.3; white-space: nowrap; box-shadow: 0 6px 14px -8px rgba(0, 0, 0, .55); }
-.gue-mochi.a-droite p { border-radius: 14px 14px 4px 14px; }
-
-/* Libellé long (« Continuer : Territoire et ouverture ») : un cran plus petit, sur une ligne. */
-.apprendre .cta.long { font-size: var(--fs-l); padding: 0 var(--space-3); }
+@keyframes respire { 0%, 100% { transform: scale(.98); opacity: .42; } 50% { transform: scale(1.02); opacity: .62; } }
 
 /* ---------- Chapitres à venir : discrets, sans promesse de date ---------- */
 .a-venir { margin-top: var(--space-2); color: var(--muted); }
@@ -86,7 +106,7 @@
 .etapes span { flex: 1; height: 12px; border-radius: var(--radius-pill); background: var(--surface-2); }
 .etapes span.faite { background: var(--accent); }
 @media (prefers-reduced-motion: no-preference) { .etapes span { transition: background-color 300ms var(--ease); } }
-.lecteur-titre { margin: 0 0 10px; font-size: var(--fs-m); font-weight: var(--fw-bold); color: var(--muted); letter-spacing: -0.01em; }
+.lecteur-titre { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; font-size: var(--fs-m); font-weight: var(--fw-bold); color: var(--muted); letter-spacing: -0.01em; }
 .lecteur-nom { flex: 1; min-width: 0; }
 .lecteur-nom small { display: block; color: var(--muted); font-size: .8rem; line-height: 1.2; }
 .lecteur-nom h2 { margin: 0; font-size: var(--fs-xl); font-weight: var(--fw-titre); line-height: 1.15; }
@@ -142,31 +162,51 @@
   min-height: calc(100dvh - var(--nav-h) - var(--space-4) - var(--space-2) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); padding-bottom: var(--space-6); }
 .fin-sceau { filter: drop-shadow(0 12px 18px rgba(0, 0, 0, .35)); }
 .fin-sceau .sceau { --sceau-socle: var(--bg); }
-.fin-gue { position: relative; list-style: none; display: flex; gap: 12px; margin: 26px 0 22px; padding: 0; }
-.fin-gue::before { content: ""; position: absolute; left: 13px; right: 13px; top: 50%; border-top: 2px dotted color-mix(in srgb, var(--text) 24%, transparent); }
-.fin-gue li { position: relative; }
-.fin-gue li { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: var(--surface-2); }
-.fin-gue li.faite { color: var(--jade); background: radial-gradient(circle at 36% 30%, #5b5f5d, #151716 58%, #050606); }
-.fin-gue li svg { width: 16px; height: 16px; }
-.fin-gue li.juste-faite { box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--or); }
-.fin-titre { margin: 0; font-size: 2.75rem; font-weight: var(--fw-titre); line-height: 1; letter-spacing: -0.03em; }
+.fin-titre:focus { outline: none; }
+
+/* La rangée du chemin, dessinée comme un bout de goban : trois lignes, une intersection par leçon. */
+.fin-gue { --pas: 38px; position: relative; list-style: none; display: flex; margin: 28px 0 24px; padding: 0; }
+.fin-gue::before { content: ""; position: absolute; left: -12px; right: -12px; top: 50%; border-top: 1.5px solid color-mix(in srgb, var(--text) 22%, transparent); }
+.fin-gue li { position: relative; width: var(--pas); height: 44px; display: grid; place-items: center; }
+.fin-gue li::before { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; border-left: 1.5px solid color-mix(in srgb, var(--text) 22%, transparent); }
+.fin-gue i { position: relative; width: 32px; height: 32px; border-radius: 50%; }
+.fin-gue .faite i { background: radial-gradient(circle at 34% 26%, rgba(255, 255, 255, .34), rgba(255, 255, 255, 0) 24%),
+  radial-gradient(72% 72% at 36% 30%, #5b5f5d, #2e3130 18%, #151716 55%, #050606);
+  box-shadow: 0 4px 6px -2px rgba(0, 0, 0, .5); }
+/* La pierre qu'on vient de poser : cerclée d'or, la couleur des récompenses. */
+.fin-gue .juste-posee i::after { content: ""; position: absolute; inset: -6px; border-radius: 50%; border: 2.5px solid var(--or); }
+
+.fin-titre { margin: 0; font-size: clamp(2.25rem, 11vw, 2.75rem); font-weight: var(--fw-titre); line-height: 1; letter-spacing: -0.03em; text-wrap: balance; }
 .fin-acquis { margin: 14px 0 28px; font-size: var(--fs-l); line-height: 1.4; max-width: 21em; text-wrap: balance; }
 .fin-lecon .cta { position: static; transform: none; width: 100%; }
 .fin-lecon .lien { margin-top: calc(var(--space-2) + var(--relief)); }
+
+/*
+ * Un seul moment orchestré, plus modeste qu'une victoire (moins de 600 ms au total, jamais bloquant) :
+ * 1. le sceau s'imprime : 0,9 → 1 avec un léger dépassement (skill motion-design, « bounce settle », succès 5-10 %) ;
+ * 2. la pierre se pose : 1,12 → 1 en 140 ms (direction.md, section 5), le claquement part à l'impact (POSE_MS) ;
+ * 3. le titre et la phrase arrivent, 60 ms d'écart (ease-out fort des skills animate et emil-design-eng).
+ * Le bouton est là dès le début : on peut passer à la suite sans attendre.
+ */
 @media (prefers-reduced-motion: no-preference) {
-  .fin-lecon .cta:active { transform: translateY(var(--relief)); }
-  .fin-sceau { animation: sceau-pose 520ms cubic-bezier(.2, .8, .3, 1.25) both; }
-  .fin-gue li.juste-faite { animation: tampon 420ms 380ms cubic-bezier(.2, .8, .3, 1.3) both; }
-  .fin-titre, .fin-acquis { animation: apparait 360ms 200ms var(--ease) both; }
+  .fin-lecon .cta:active { transform: translateY(var(--relief)); box-shadow: none; }
+  .fin-sceau { animation: sceau-pose 360ms cubic-bezier(.175, .885, .32, 1.275) both; }
+  .fin-gue .juste-posee i { animation: pose 140ms 320ms cubic-bezier(.2, .8, .3, 1.2) both; }
+  .fin-gue .juste-posee i::after { animation: apparait-marque 160ms 460ms cubic-bezier(.23, 1, .32, 1) both; }
+  .fin-titre { animation: apparait 300ms 120ms cubic-bezier(.23, 1, .32, 1) both; }
+  .fin-acquis { animation: apparait 300ms 180ms cubic-bezier(.23, 1, .32, 1) both; }
 }
-@keyframes sceau-pose { from { transform: scale(.55) rotate(-10deg); opacity: 0; } to { transform: none; opacity: 1; } }
-@keyframes tampon { from { transform: scale(1.7); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes sceau-pose { from { transform: scale(.9) rotate(-6deg); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes pose {
+  from { transform: scale(1.12); opacity: 0; box-shadow: 0 12px 14px -4px rgba(0, 0, 0, .25); }
+  to { transform: none; opacity: 1; box-shadow: 0 4px 6px -2px rgba(0, 0, 0, .5); }
+}
+@keyframes apparait-marque { from { opacity: 0; transform: scale(.9); } to { opacity: 1; transform: none; } }
 @keyframes apparait { from { transform: translateY(8px); opacity: 0; } to { transform: none; opacity: 1; } }
 
-.confettis { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 30; }
-.confettis span { position: absolute; top: -16px; width: 8px; height: 14px; border-radius: 2px; animation: confetti 1.5s cubic-bezier(.25, .6, .45, 1) both; }
-@keyframes confetti { from { transform: translate(0, 0) rotate(0); opacity: 1; } 80% { opacity: 1; } to { transform: translate(var(--dx), 72vh) rotate(calc(var(--r) + 540deg)); opacity: 0; } }
-@media (prefers-reduced-motion: reduce) { .confettis { display: none; } }
+/* Confettis (dernière leçon seulement) : le canevas de src/ui/Confettis.tsx, au-dessus de tout, sans prendre de toucher. */
+.fin-lecon .confettis { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 40; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .fin-lecon .confettis { display: none; } }
 
 /* ---------- Problèmes : cote et série ---------- */
 .palmares { display: grid; grid-template-columns: 1fr auto; align-items: end; gap: var(--space-4); margin: 2px 0 var(--space-2); }
