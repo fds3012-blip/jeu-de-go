@@ -1,0 +1,88 @@
+// Carte « Installe l'app » (issue #178). Montée seulement à un bon moment (première victoire contre l'ordi,
+// Go du jour réussi), jamais pendant une partie ; elle décide seule, avec src/app/installation.ts, si elle se montre.
+// Une seule fois par appareil : montrée, elle ne revient plus, même sans réponse. « Plus tard » est mémorisé.
+// Les écrans qui l'accueillent (fin de partie, Go du jour) n'utilisent pas encore l'i18n : textes en français.
+import { useEffect, useId, useRef, useState } from 'react';
+import { EVENTS, track } from '../data/analytics';
+import {
+  doitProposer, etatInstallation, noterInstallation, ouvrirInvite, plateformeCourante, type Moment, type Plateforme
+} from '../app/installation';
+import { fr } from './typo';
+import './installation.css';
+
+/** Icône « Partager » de Safari : un carré ouvert et une flèche vers le haut. */
+function IconePartager() {
+  return (
+    <svg className="installer-icone" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false">
+      <path d="M12 3v11M8 7l4-4 4 4M8 10H6.5A1.5 1.5 0 0 0 5 11.5v8A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5v-8a1.5 1.5 0 0 0-1.5-1.5H16" />
+    </svg>
+  );
+}
+
+/** Icône « Sur l'écran d'accueil » : un carré arrondi et un plus. */
+function IconeAjouter() {
+  return (
+    <svg className="installer-icone" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false">
+      <rect x="4" y="4" width="16" height="16" rx="4" />
+      <path d="M12 8.5v7M8.5 12h7" />
+    </svg>
+  );
+}
+
+export function ProposerInstallation({ moment }: { moment: Moment }) {
+  const [plateforme] = useState<Plateforme>(plateformeCourante);
+  const [visible, setVisible] = useState(() => doitProposer({ plateforme, etat: etatInstallation(), moment, enPartie: false }));
+  const [attente, setAttente] = useState(false);
+  const annoncee = useRef(false);
+  const titre = useId();
+
+  useEffect(() => {
+    if (!visible || annoncee.current) return;
+    annoncee.current = true;
+    noterInstallation('proposee');
+    track(EVENTS.installationProposee, { plateforme, moment });
+  }, [visible, plateforme, moment]);
+
+  if (!visible) return null;
+
+  function plusTard() {
+    noterInstallation('refusee');
+    setVisible(false);
+  }
+
+  async function installer() {
+    setAttente(true);
+    const choix = await ouvrirInvite();
+    if (choix === 'accepted') {
+      noterInstallation('acceptee');
+      track(EVENTS.installationAcceptee, { plateforme, moment });
+    } else {
+      noterInstallation('refusee');
+    }
+    setVisible(false);
+  }
+
+  return (
+    <aside className="installer" aria-labelledby={titre} data-plateforme={plateforme}>
+      <div className="installer-tete">
+        <img className="installer-app" src="/icon-192.png" alt="" width="44" height="44" />
+        <div>
+          <h3 id={titre}>Garde le go sous la main</h3>
+          <p>{fr('Ajoute l’app à ton écran d’accueil : elle s’ouvre en un geste, en plein écran.')}</p>
+        </div>
+      </div>
+      {plateforme === 'ios' ? (
+        <ol className="installer-etapes">
+          <li><span className="installer-num" aria-hidden="true">1</span>Touche <IconePartager /><b>Partager</b></li>
+          <li><span className="installer-num" aria-hidden="true">2</span>{fr('Choisis ')}<IconeAjouter /><b>{fr('Sur l’écran d’accueil')}</b></li>
+        </ol>
+      ) : null}
+      <div className="installer-actions">
+        {plateforme === 'chrome' && (
+          <button type="button" className="btn installer-oui" onClick={installer} disabled={attente}>Installer</button>
+        )}
+        <button type="button" className="lien lien-discret" onClick={plusTard} disabled={attente}>Plus tard</button>
+      </div>
+    </aside>
+  );
+}

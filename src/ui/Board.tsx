@@ -23,6 +23,8 @@ export interface BoardMarks {
   ownerDelai?: Map<number, number>;
   /** « Qui mène ? » (#94) : les carrés de territoire apparaissent en fondu (150 ms, rien si les mouvements sont réduits). */
   ownerFondu?: boolean;
+  /** Frontières ouvertes (#159) : petits points rouges sur les points vides qui ne sont encore à personne. */
+  ouverts?: number[];
 }
 
 interface Props {
@@ -344,6 +346,9 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
         {stones}
         {leaving}
         {marks.ownerFondu ? <g className="territoire-fondu" data-qui-mene="">{owner}</g> : owner}
+        {marks.ouverts?.length ? <g className="frontieres" data-frontieres="">{marks.ouverts.filter(p => !board[p]).map(p => (
+          <g key={`fo${p}`} data-frontiere={toLabel(p, size)}><circle cx={X(p)} cy={Y(p)} r={C * 0.11} fill={HANKO} stroke={PAPIER} strokeOpacity={0.85} strokeWidth={2} /></g>
+        ))}</g> : null}
         {marks.libs?.filter(p => !board[p]).map(p => <circle key={`lb${p}`} className="liberte" cx={X(p)} cy={Y(p)} r={C * 0.15} fill={JADE} stroke={JADE_FONCE} strokeWidth={1.6} />)}
         {marks.targets?.filter(p => board[p]).map(p => { const [x, y] = at(p); return <circle key={`tg${p}`} data-cible="" cx={x} cy={y} r={C * 0.3} fill="none" stroke={HANKO} strokeWidth={2.6} strokeDasharray="5 3" />; })}
         {last >= 0 ? (() => { const [x, y] = at(last); return <circle cx={x} cy={y} r={R * 0.3} fill="none" stroke={board[last] === 1 ? PAPIER : '#1a1a1a'} strokeWidth={2.4} data-dernier="" />; })() : null}

@@ -14,6 +14,9 @@ export const fr = {
   'profil.aria': 'Ton profil',
   'profil.invite': 'Invité',
   'profil.inviteDetail': 'Sans compte, tout reste sur ce téléphone.',
+  // Série sans compte (#161) : invitation au 3e jour de série.
+  'serie.invitation': 'Crée un compte pour garder ta série.',
+  'serie.creerCompte': 'Créer un compte',
   'profil.sansPseudo': 'Sans pseudo',
   'profil.cote': 'Cote {cote}',
   'profil.jours': { one: '{n} jour', other: '{n} jours' },
@@ -103,6 +106,7 @@ export const fr = {
   'pb.invitation.avant': 'Connecte-toi pour avoir ta ',
   'pb.invitation.mot': 'cote',
   'pb.invitation.apres': ' : elle mesure ton niveau et monte quand tu réussis.',
+  'pb.invitationCourte.apres': ' : elle mesure ton niveau.',
   'pb.meConnecter': 'Me connecter',
   'pb.numero': 'n° {numero}',
   'pb.duJourAide': 'Le même défi pour tout le monde, aujourd’hui.',

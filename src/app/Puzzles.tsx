@@ -26,10 +26,12 @@ import { aContinuer, aSuivre, ordrePaliers, palierRecommande, paliers, type Pali
 import { SceauLecon } from '../ui/SceauLecon';
 import { aFeter, FETES_KEY } from './fetesPaliers';
 import { MesErreurs } from '../ui/MesErreurs';
+import { ProposerInstallation } from '../ui/ProposerInstallation';
 import { SERIE_KEY, numeroDuJour, problemeDuNumero, serieVivante, textePartage, type Serie } from './goDuJour';
 import '../ui/apprendre.css';
 import { Glacon, PierreGivree } from '../ui/Glacon';
 import { lireReserveAppareil, reussirAppareil } from './gelAppareil';
+import { inviterCompte, serieAffichee } from './serieLocale';
 // `t` désigne déjà un palier dans ce fichier : la traduction s'appelle `tr` (#167).
 import { t as tr } from '../content/i18n';
 
@@ -192,6 +194,8 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   // Une seule action en relief : le Go du jour tant qu'il n'est pas fait, « Continuer » ensuite.
   const duJourFait = !daily || serieDuJour?.dernier === numero;
   const recommande = connecte && stats ? palierRecommande(tiers, stats.rating) : undefined;
+  // Série (issue #161) : celle de l'appareil sans compte, la plus longue des deux avec un compte.
+  const serie = serieAffichee(connecte && stats ? stats.streak : null, serieDuJour, numero);
   return (
     <div className={`problemes${prochainPz && duJourFait ? ' avec-continuer' : ''}`}>
       {load.error === 'offline' && <p className="notice" role="status">{tr('pb.horsLigne')}</p>}
@@ -206,14 +210,28 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
             <span className="legende">{tr('pb.coteLegende')}</span>
           </div>
           <div className="palmares-serie">
-            <span className="chiffre"><Flamme taille={30} />{stats.streak}</span>
-            <span className="legende">{tr('pb.serieLegende', { n: stats.streak })}</span>
+            <span className="chiffre"><Flamme taille={30} />{serie}</span>
+            <span className="legende">{tr('pb.serieLegende', { n: serie })}</span>
           </div>
         </div>
       ) : connecte && statsError ? (
         <p className="notice" role="alert">{statsError} <button className="lien" onClick={() => setRetry(n => n + 1)}>{tr('pb.reessayer')}</button></p>
       ) : connecte && online ? (
         <div className="palmares" aria-busy="true"><span className="sr-only">{tr('pb.chargementCote')}</span><div><span className="chiffre attente" /><span className="legende">{tr('pb.coteLegende')}</span></div></div>
+      ) : !connecte && serie > 0 ? (
+        // Sans compte, la série de l'appareil s'affiche comme pour un joueur connecté (issue #161).
+        <div className="palmares palmares-invite">
+          <div className="invitation">
+            {inviterCompte(false, serie)
+              ? <p>{fr(tr('serie.invitation'))}</p>
+              : <p>{fr(tr('pb.invitation.avant'))}<b>{tr('pb.invitation.mot')}</b>{fr(tr('pb.invitationCourte.apres'))}</p>}
+            {onCompte && <button className="lien" onClick={onCompte}>{inviterCompte(false, serie) ? tr('serie.creerCompte') : tr('pb.meConnecter')}</button>}
+          </div>
+          <div className="palmares-serie">
+            <span className="chiffre"><Flamme taille={30} />{serie}</span>
+            <span className="legende">{tr('pb.serieLegende', { n: serie })}</span>
+          </div>
+        </div>
       ) : !connecte ? (
         <div className="invitation">
           <p>{fr(tr('pb.invitation.avant'))}<b>{tr('pb.invitation.mot')}</b>{fr(tr('pb.invitation.apres'))}</p>
@@ -462,6 +480,7 @@ function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating, onAtt
               <button className="lien" onClick={showLine}>{tr('pb.voirSuite')}</button>
               <button className="lien" onClick={onNext ?? onExit}>{tr(onNext ? 'pb.suivant' : 'pb.retour')}</button>
             </div>
+            <ProposerInstallation moment="go_du_jour" />
           </>
         : <>{suivantBtn}<button className="lien" onClick={showLine}>{tr('pb.voirSuite')}</button></>}>
         <p>{fr(answer.text)}</p>{ligneCote}
