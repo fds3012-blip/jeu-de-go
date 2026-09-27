@@ -23,15 +23,15 @@ test('poser une pierre', async ({ page }) => {
 
 test('capturer une pierre met à jour le compteur de prisonniers', async ({ page }) => {
   await partieADeux(page);
-  await expect(bandeau(page, 'Noir')).toContainText('0 prisonnier');
+  await expect(bandeau(page, 'Noir')).toContainText('0 pierre capturée');
 
   // Blanc E5 est entouré par D5, F5, E6 puis E4.
   await jouerSuite(page, ['D5', 'E5', 'F5', 'A1', 'E6', 'A2', 'E4']);
 
   await attendrePierre(page, 'E5', null);
   await expect(message(page)).toHaveText('Noir capture 1 pierre.');
-  await expect(bandeau(page, 'Noir')).toContainText('1 prisonnier');
-  await expect(bandeau(page, 'Blanc')).toContainText('0 prisonnier');
+  await expect(bandeau(page, 'Noir')).toContainText('1 pierre capturée');
+  await expect(bandeau(page, 'Blanc')).toContainText('0 pierre capturée');
   await expect(pierres(page, 'noir')).toHaveCount(4);
   await expect(pierres(page, 'blanc')).toHaveCount(2);
 });
@@ -70,7 +70,7 @@ test('le ko : reprise immédiate refusée, permise après un coup ailleurs', asy
   await attendrePierre(page, 'D5', 'blanc');
   await attendrePierre(page, 'E5', null);
   await expect(message(page)).toHaveText('Blanc capture 1 pierre.');
-  await expect(bandeau(page, 'Blanc')).toContainText('1 prisonnier');
+  await expect(bandeau(page, 'Blanc')).toContainText('1 pierre capturée');
 });
 
 test('au doigt, il faut toucher deux fois pour confirmer un coup', async ({ page }) => {

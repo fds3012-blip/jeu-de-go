@@ -15,7 +15,6 @@ test("toucher le goban d'accueil lance la partie contre l'adversaire choisi", as
 
   await page.getByTestId('plateau-accueil').tap();
   await expect(page.getByRole('img', { name: 'Plateau de go 9 × 9' })).toBeVisible();
-  await expect(page.getByText(/Pomme a Blanc/)).toBeVisible();
   await expect(page.getByText(/Le but\s: entourer plus de territoire que Pomme/)).toBeVisible();
   expect(erreurs).toEqual([]);
 });

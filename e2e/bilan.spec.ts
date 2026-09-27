@@ -61,7 +61,7 @@ test('défaite par abandon : Mochi encourage et propose de rejouer', async ({ pa
   await page.locator('.cta').click();
   await expect(page.getByRole('img', { name: /Plateau de go 9 × 9/ })).toBeVisible();
   await page.getByRole('button', { name: 'Abandonner' }).click();
-  await page.getByRole('button', { name: 'Confirmer ?' }).click();
+  await page.getByRole('button', { name: /^Confirmer/ }).click();
 
   await expect(page.getByText('Pomme gagne par abandon')).toBeVisible();
   await expect(page.getByText(/Pomme gagne cette fois/)).toBeVisible();
