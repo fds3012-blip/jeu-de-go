@@ -11,3 +11,5 @@ Tes responsabilités :
 - Temps réel pour les parties en ligne (abonnement aux changements de la table `games`).
 
 Chaque écran doit fonctionner sur un iPhone de 390 px de large, sans défilement horizontal.
+
+Avant de livrer un écran : applique la skill `frontend-design` (qualité visuelle, mouvement utile, mouvements réduits respectés) et fais une critique `design-critique` sur une capture 390 × 844 en mode sombre et clair.
