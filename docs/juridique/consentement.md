@@ -43,7 +43,7 @@ Les guides de configuration publiés par la CNIL pour d'autres outils (par exemp
 |---|---|
 | Pas de traceur persistant | `persistence: 'memory'` : rien n'est écrit sur l'appareil ; l'identifiant change à chaque ouverture. Mieux que la limite de 13 mois. |
 | Statistiques anonymes, pas de profil | `person_profiles: 'never'` ; `identify()` n'est jamais appelé sans accord ; le repère « première pierre déjà comptée » reste en mémoire. |
-| IP non conservée | `ip: false` côté client **et** réglage projet « Discard client IP data » à vérifier dans PostHog (activé par défaut pour les organisations UE, selon PostHog). |
+| IP non conservée | `ip: false` côté client **et** réglage projet « Discard client IP data » : **activé** (vérifié le 27/09 via l'API PostHog, `anonymize_ips: true`). |
 | Pas de croisement, pas d'enregistrement | `autocapture`, pages vues, enregistrement de session, sondages, feature flags et scripts externes désactivés. Seuls 7 événements nommés partent. |
 | Droit d'opposition | Interrupteur « Comptage anonyme des parties » dans Conditions ; le choix est gardé dans `go.mesure.opposition.v1` (mémoriser un refus est lui-même exempté). |
 | Hébergement | PostHog Cloud UE (Francfort). |
@@ -97,9 +97,9 @@ La recommandation CNIL (2020-092) demande que refuser soit aussi simple qu'accep
 **À valider par un avocat avant production :**
 - PostHog dans l'exemption (outil non examiné par la CNIL, société américaine, contrat).
 - Toute exemption de Sentry (non retenue ici).
-- La politique de confidentialité complète (durées de conservation : 25 mois maximum pour la mesure exemptée, à régler dans PostHog).
+- La politique de confidentialité complète (durées de conservation : 25 mois maximum pour la mesure exemptée). PostHog Cloud gratuit garde les événements **1 an**, sans réglage possible : la limite est respectée.
 
-**Action de configuration pour Florian :** dans PostHog, vérifier « Discard client IP data » et régler la conservation des données à 25 mois au plus.
+**Configuration PostHog vérifiée le 27/09 :** « Discard client IP data » est activé (projet 285580). Les événements sont gardés 1 an, la durée fixée par l'offre gratuite. Les enregistrements de session sont désactivés (conservation 30 jours s'ils étaient activés). Si l'offre passe en payant, la conservation passe à 7 ans : il faudra alors purger les données à 25 mois.
 
 ## 7. Fichiers
 
