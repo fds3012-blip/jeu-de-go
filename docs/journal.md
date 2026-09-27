@@ -216,3 +216,13 @@ Chaque livraison : issue traitée, agent, pull request, résultat des vérificat
 - **Point de l'onglet** : il part de `scale(.8)`.
 - **Vérifications** : 392 tests unitaires et 45 tests e2e verts.
 - **Reste à vérifier sur un vrai téléphone** : la courbe des pierres prises qui partent vers les couvercles.
+
+## #65 Barre d'actions de la partie dans l'identité aux deux pierres (designer)
+
+- Florian trouvait les icônes du bas en partie « pas ouf ». Elles sont redessinées avec des pierres :
+  - **Indice** : la pierre fantôme dans son halo jade ;
+  - **Annuler** : la pierre qui remonte par un chemin de points ;
+  - **Passer** : deux pierres restées hors du plateau ;
+  - **Abandonner** : une pierre sur le couvercle retourné, le geste traditionnel de l'abandon au go. Le couvercle devient un sceau hanko au moment de « Confirmer ? ».
+- Une action désactivée passe à l'encre brume, comme un onglet inactif.
+- Vérifications : 405 tests unitaires et 45 tests e2e verts.
