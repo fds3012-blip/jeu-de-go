@@ -108,14 +108,17 @@ export function Coach({ children, cle, attente = false, humeur = attente ? 'pens
   );
 }
 
-export interface Action { label: string; icone: ReactNode; onClick: () => void; disabled?: boolean; danger?: boolean; description?: string; action?: string }
+export interface Action { label: string; icone: ReactNode; onClick: () => void; disabled?: boolean; danger?: boolean; description?: string; action?: string;
+  /** Mis en évidence (#120) : style primaire jade ; `pulse` ajoute une pulsation douce (mouvements non réduits). */
+  evidence?: boolean; pulse?: boolean }
 
 /** Barre d'actions fixe en bas de l'écran, à la place de la barre de navigation. */
 export function BarreActions({ actions, label }: { actions: Action[]; label: string }) {
   return (
     <div className="actions" role="toolbar" aria-label={label}>
       {actions.map(a => (
-        <button key={a.label} type="button" onClick={a.onClick} disabled={a.disabled} className={a.danger ? 'danger' : undefined} aria-description={a.description} data-action={a.action}>
+        <button key={a.label} type="button" onClick={a.onClick} disabled={a.disabled} className={[a.danger && 'danger', a.evidence && !a.disabled && 'evidence', a.evidence && a.pulse && !a.disabled && 'pulse'].filter(Boolean).join(' ') || undefined}
+          aria-description={a.description} data-action={a.action}>
           {a.icone}<span>{a.label}</span>
         </button>
       ))}
