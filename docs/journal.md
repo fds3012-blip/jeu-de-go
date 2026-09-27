@@ -367,3 +367,21 @@ Chaque livraison : issue traitée, agent, pull request, résultat des vérificat
 - Deux positions fausses ont été corrigées en chemin.
 - La migration d'insertion ne modifie aucun problème existant. Elle est appliquée en production après la fusion.
 - Reste : une vérification par KataGo.
+
+## 27/09, 18 h 45 à 20 h : vague « 100 problèmes et profondeur de jeu »
+
+**#91 Problèmes**
+- On passe de 18 à 74 problèmes. Tous sont prouvés par des tests : position légale, objectif atteint contre toute défense, réponses acceptées égales aux coups gagnants.
+- Lots :
+  - A, capture et atari, difficulté 300 à 650 : 20 ;
+  - B, techniques de capture, 600 à 1050 : 10 ;
+  - C, vie et mort, 500 à 1250 : 13 ;
+  - D, connexions et courses aux libertés, 600 à 1300 : 13.
+- L'objectif de 100 n'est pas atteint. Les agents ont écarté tout problème qu'ils ne pouvaient pas prouver : snapback, pierre jetée, quatre en carré, ko, seki.
+
+**Profondeur de jeu et rétention**
+- #93 Paliers de problèmes.
+- #94 « Qui mène ? ».
+- #77 Rejoue tes erreurs.
+- #76 Série protégée.
+- #75 Go du jour stable quand un lot s'ajoute.
