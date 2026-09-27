@@ -22,12 +22,12 @@ test("première ouverture : l'accueil s'affiche en moins de 3 secondes", async (
   expect(erreurs).toEqual([]);
 });
 
-test('navigation entre les onglets Jouer, Apprendre et Profil', async ({ page }) => {
+test('navigation entre les onglets Jouer, Apprendre, Problèmes et Profil', async ({ page }) => {
   await page.goto('/');
   const nav = page.getByRole('navigation', { name: 'Navigation principale' });
   const onglet = (nom: string) => nav.getByRole('button', { name: nom });
 
-  await expect(nav.getByRole('button')).toHaveCount(3);
+  await expect(nav.getByRole('button')).toHaveCount(4);
   await expect(onglet('Jouer')).toHaveAttribute('aria-current', 'page');
 
   await onglet('Apprendre').click();
@@ -35,6 +35,10 @@ test('navigation entre les onglets Jouer, Apprendre et Profil', async ({ page })
   await expect(onglet('Jouer')).not.toHaveAttribute('aria-current', 'page');
   await expect(page.getByText('Le chemin des leçons')).toBeVisible();
   await expect(page.getByRole('button', { name: /^Leçon 1 :/ })).toBeVisible();
+
+  await onglet('Problèmes').click();
+  await expect(onglet('Problèmes')).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByRole('heading', { name: 'Problème du jour' })).toBeVisible();
 
   await onglet('Profil').click();
   await expect(onglet('Profil')).toHaveAttribute('aria-current', 'page');
