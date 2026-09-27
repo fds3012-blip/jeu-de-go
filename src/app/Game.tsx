@@ -6,13 +6,13 @@ import { playAtari, playCapture, playIllegal, playStone, playVictory } from '../
 import { hapticCapture, hapticIllegal, hapticStone, hapticVictory } from '../ui/haptics';
 import { score } from '../go/score';
 import { toLabel } from '../go/coords';
-import { bestMove, estimateLead, proposeDead, type Opponent } from '../engine';
+import { bestMove, estimateLead, estimateTerritoire, proposeDead, type Opponent } from '../engine';
 import { EVENTS, secondsSinceOpen, track, trackOnce } from '../data/analytics';
 import { supabase } from '../data/supabase';
 import { fr } from '../ui/typo';
 import { useProfil } from './hooks';
 import { useStored } from './settings';
-import { coupsJoues, descriptionIndices, indicesRestants, INDICES_PAR_PARTIE, libelleAvantage, libelleCoup, messageAtari, messageIndice, metEnAtari, nouveauxAtari, partNoir } from './partie';
+import { carteTerritoire, coupsJoues, descriptionIndices, descriptionQuiMene, DUREE_QUI_MENE, indicesRestants, INDICES_PAR_PARTIE, libelleAvantage, libelleCoup, messageAtari, messageIndice, metEnAtari, nouveauxAtari, partNoir, phraseQuiMene, QUI_MENE_PAR_PARTIE, quiMeneDisponible, quiMeneRestants } from './partie';
 import { choisirReplique, DUREE_REPLIQUE, type Situation } from './repliques';
 import { FinPartie } from '../ui/FinPartie';
 import { RecitScore } from '../ui/RecitScore';
@@ -71,6 +71,10 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   const [cherche, setCherche] = useState(false);
   // Indices donnés dans cette partie : limités à 3 contre l'ordi (#35), illimités à deux.
   const [indicesUtilises, setIndicesUtilises] = useState(0);
+  // « Qui mène ? » (#94) : carte des territoires et phrase, valables pour un seul état de l'historique, 3 s au plus.
+  const [quiMene, setQuiMene] = useState<{ len: number; owner: Int8Array; phrase: string; n: number } | null>(null);
+  const [quiMeneCalcul, setQuiMeneCalcul] = useState(false);
+  const [quiMeneUtilises, setQuiMeneUtilises] = useState(0);
   const [atariExplique, setAtariExplique] = useStored<boolean>(ATARI_KEY, false);
   const [komiExplique, setKomiExplique] = useStored<boolean>(KOMI_KEY, false);
   // Récit du score (#78) : raconté une fois après « Valider le score », avant l'écran de fin.
@@ -224,6 +228,36 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
       setMsg(ai ? messageIndice(indicesRestants(indicesUtilises + 1)) : messageIndice(1));
     }, () => { setCherche(false); setMsg("Pas d'indice pour l'instant. Réessaie dans un instant."); });
   }
+  // « Qui mène ? » (#94) : l'estimation tourne dans un Worker (KataGo s'il est prêt, sinon le moteur simple).
+  // Contre l'ordi : 3 fois par partie et seulement si l'aide de Mochi est active. À deux : illimité.
+  const avecQuiMene = quiMeneDisponible(!!ai, aide);
+  const quiMeneReste = ai ? quiMeneRestants(quiMeneUtilises) : QUI_MENE_PAR_PARTIE;
+  const quiMeneVisible = quiMene && quiMene.len === history.length && phase === 'play' ? quiMene : null;
+  function quiMeneToucher() {
+    // Un nouveau toucher masque la carte (sans rien décompter).
+    if (quiMeneVisible) { setQuiMene(null); return; }
+    if (quiMeneCalcul || quiMeneReste <= 0) return;
+    const len = history.length;
+    setQuiMeneCalcul(true);
+    // KataGo cherche peut-être le coup de l'ordi : on ne le ralentit pas pendant son tour.
+    estimateTerritoire(pos, komi, { kataGo: !thinking }).then(e => {
+      setQuiMeneCalcul(false);
+      if (len !== history.length) return;
+      if (!e) { setMsg("Je n'arrive pas à estimer pour l'instant. Réessaie dans un instant."); return; }
+      setQuiMene(q => ({ len, owner: carteTerritoire(e.own), phrase: phraseQuiMene(e.lead, e.engine), n: (q?.n ?? 0) + 1 }));
+      if (ai) setQuiMeneUtilises(u => u + 1);
+    }, () => { setQuiMeneCalcul(false); setMsg("Je n'arrive pas à estimer pour l'instant. Réessaie dans un instant."); });
+  }
+  // La carte s'efface au bout de 3 s, ou au prochain toucher n'importe où (sauf sur le bouton, qui la masque lui-même).
+  const quiMeneN = quiMeneVisible?.n;
+  useEffect(() => {
+    if (quiMeneN == null) return;
+    const masquer = () => setQuiMene(q => (q?.n === quiMeneN ? null : q));
+    const t = window.setTimeout(masquer, DUREE_QUI_MENE);
+    const toucher = (e: PointerEvent) => { if (!(e.target instanceof Element && e.target.closest('[data-action="qui-mene"]'))) masquer(); };
+    document.addEventListener('pointerdown', toucher, true);
+    return () => { window.clearTimeout(t); document.removeEventListener('pointerdown', toucher, true); };
+  }, [quiMeneN]);
   // Contre l'ordi, on revient juste avant ton dernier coup : ton coup et la réponse de l'ordi sont repris.
   let undoTo = history.length - 1;
   if (ai) { undoTo = -1; for (let i = history.length - 1; i > 0; i--) if (history[i].toPlay === 2) { undoTo = i; break; } }
@@ -265,12 +299,12 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   }
   /** « Rejouer d'ici » (revue) : la partie reprend, contre le même adversaire, depuis la position choisie. */
   function rejouer(h: Position[]) {
-    token.current++; atarisSubis.current = 0; setIndicesUtilises(0);
+    token.current++; atarisSubis.current = 0; setIndicesUtilises(0); setQuiMeneUtilises(0); setQuiMene(null);
     setHistory(h); resume(); setResigned(0); setThinking(false); setRelecture(null); setSgf(null);
     setMsg(h.length > 1 ? (ai ? 'On reprend ici. À toi de trouver mieux !' : 'On reprend ici.') : ai ? 'Nouvelle partie : tu as Noir, à toi.' : 'Nouvelle partie : Noir commence.');
   }
   function restart() {
-    token.current++; atarisSubis.current = 0; setIndicesUtilises(0);
+    token.current++; atarisSubis.current = 0; setIndicesUtilises(0); setQuiMeneUtilises(0); setQuiMene(null);
     setHistory([newPosition(size)]); resume(); setResigned(0); setThinking(false); setRelecture(null);
     setMsg(ai ? `Nouvelle partie : tu as Noir, à toi.` : 'Nouvelle partie : Noir commence.');
   }
@@ -350,7 +384,8 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
       {ai && !estimationKo && <BarreAvantage libelle={lead === null ? '' : libelleAvantage(lead)} part={lead === null ? 0.5 : partNoir(lead, size)} />}
       <div className="partie-plateau">
         <Board size={size} board={pos.board} toPlay={pos.toPlay} interactive={phase === 'score' || myTurn} stonesTappable={phase === 'score'} confirmTouch={confirmTouch}
-          marks={{ last: pos.lastMove, owner: phase === 'score' ? sc.owner : undefined, dead, libs, zone }} onPlay={onPlay} shake={shake} versCouvercles />
+          marks={{ last: pos.lastMove, owner: phase === 'score' ? sc.owner : quiMeneVisible?.owner, ownerFondu: !!quiMeneVisible, dead, libs, zone }} onPlay={onPlay} shake={shake} versCouvercles />
+        {quiMeneVisible && <p key={quiMeneVisible.n} className="qui-mene-phrase" role="status">{fr(quiMeneVisible.phrase)}</p>}
       </div>
       {bandeau(1)}
       <div className="partie-souffle" aria-hidden="true" />
@@ -359,6 +394,10 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
         <BarreActions label="Actions de la partie" actions={[
           { label: cherche ? 'Indice…' : 'Indice', icone: ai ? <CompteurIndices restants={restants}><Icone nom="indice" /></CompteurIndices> : <Icone nom="indice" />,
             onClick: hint, disabled: !myTurn || cherche || restants <= 0, description: ai ? descriptionIndices(restants) : undefined },
+          ...(avecQuiMene ? [{ label: fr('Qui mène ?'), action: 'qui-mene',
+            icone: ai ? <CompteurIndices restants={quiMeneReste}><Icone nom="quimene" /></CompteurIndices> : <Icone nom="quimene" />,
+            onClick: quiMeneToucher, disabled: !quiMeneVisible && (quiMeneCalcul || quiMeneReste <= 0),
+            description: ai ? descriptionQuiMene(quiMeneReste) : undefined }] : []),
           { label: 'Annuler', icone: <Icone nom="annuler" />, onClick: undo, disabled: undoTo < 1 },
           { label: 'Passer', icone: <Icone nom="passer" />, onClick: pass, disabled: !myTurn },
           { label: resignArm ? fr('Confirmer ?') : 'Abandonner', icone: <Icone nom="abandonner" />, onClick: resign, danger: resignArm },

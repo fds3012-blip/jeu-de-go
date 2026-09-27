@@ -20,10 +20,14 @@ import { playFail, playIllegal, playStone, playSuccess } from '../ui/sound';
 import { hapticIllegal, hapticStone } from '../ui/haptics';
 import { EVENTS, track } from '../data/analytics';
 import { prefersReducedMotion, readLocal, useOnline, writeLocal } from './hooks';
-import { legendeSerie, niveau, suivant } from './problemes';
-import { SERIE_KEY, numeroDuJour, problemeDuNumero, serieApres, serieVivante, textePartage, type Serie } from './goDuJour';
+import { legendeSerie, niveau } from './problemes';
+import { ordrePaliers, palierRecommande, paliers, prochain, suivantPalier, type Palier } from './paliers';
+import { SceauLecon } from '../ui/SceauLecon';
 import { MesErreurs } from '../ui/MesErreurs';
+import { SERIE_KEY, numeroDuJour, problemeDuNumero, serieVivante, textePartage, type Serie } from './goDuJour';
 import '../ui/apprendre.css';
+import { Glacon, PierreGivree } from '../ui/Glacon';
+import { lireReserveAppareil, reussirAppareil } from './gelAppareil';
 
 const LOCAL_PUZZLES = parsePuzzles(ALL_PUZZLES);
 const SOLVED_KEY = 'go.problemes.v1';
@@ -38,6 +42,8 @@ interface Props {
   lien?: number | null;
   /** Prévient quand le Go du jour est ouvert : la fenêtre de consentement attend, comme pendant une partie. */
   onDuJour?: (ouvert: boolean) => void;
+  /** Réglage « Célébrations » : la pierre givrée se pose avec un rebond quand un gel est gagné. */
+  celebrer?: boolean;
 }
 
 /** Flamme de la série de jours, en or. */
@@ -61,11 +67,14 @@ function Difficulte({ d }: { d: number }) {
 }
 
 /** Onglet Problèmes : problème du jour, problèmes de base, cote problèmes et série de jours. */
-export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, lien = null, onDuJour }: Props) {
+export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, lien = null, onDuJour, celebrer = true }: Props) {
   // Go du jour (issue #75) : le même pour tous, choisi dans la liste publique des problèmes de base, en heure de Paris.
   const [numero] = useState(() => numeroDuJour(new Date()));
   const daily = problemeDuNumero(LOCAL_PUZZLES, numero);
   const [serieDuJour, setSerieDuJour] = useState<Serie | null>(() => readLocal<Serie | null>(SERIE_KEY, null));
+  // Série protégée (issue #76) : gels en réserve, et gel gagné à l'instant (micro-célébration).
+  const [gels, setGels] = useState(() => lireReserveAppareil().gels);
+  const [gelGagne, setGelGagne] = useState(false);
   const online = useOnline();
   const [list, setList] = useState<Puzzle[]>(LOCAL_PUZZLES);
   const [load, setLoad] = useState<Load>({ status: 'loading' });
@@ -108,6 +117,8 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
     setLocalSolved(prev => { const next = { ...prev, [id]: true as const }; writeLocal(SOLVED_KEY, next); return next; });
   }, []);
 
+  const tiers = useMemo(() => paliers(list, solved), [list, solved]);
+  const ordre = useMemo(() => ordrePaliers(tiers), [tiers]);
   const open = list.find(p => p.id === openId) ?? (daily && openId === daily.id ? daily : undefined);
   const duJourOuvert = !!open && open.id === daily?.id;
   useEffect(() => {
@@ -116,11 +127,11 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   useEffect(() => () => onDuJour?.(false), [onDuJour]);
 
   if (open) {
-    const nextPz = suivant(list, open, solved);
+    const nextPz = suivantPalier(tiers, open, solved);
     const estDuJour = open.id === daily?.id;
     return (
-      <PuzzlePlayer key={open.id} puzzle={open} rang={list.indexOf(open) + 1} confirmTouch={confirmTouch}
-        duJour={estDuJour ? { numero, serie: serieVivante(serieDuJour, numero), defiChange } : undefined}
+      <PuzzlePlayer key={open.id} puzzle={open} rang={ordre.indexOf(open) + 1} confirmTouch={confirmTouch}
+        duJour={estDuJour ? { numero, serie: serieVivante(serieDuJour, numero), defiChange, gelGagne, celebrer } : undefined}
         rated={!!db && !!userId && online && !!stats && !stats.attempted.includes(open.id) && !solved.has(open.id)}
         rating={stats?.rating}
         onAttempt={async ok => {
@@ -133,8 +144,9 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
         onSolved={essais => {
           if (!solved.has(open.id)) track(EVENTS.problemeResolu, { probleme: open.id, du_jour: estDuJour });
           if (estDuJour && serieDuJour?.dernier !== numero) {
-            const s = serieApres(serieDuJour, numero);
-            writeLocal(SERIE_KEY, s); setSerieDuJour(s);
+            const { serie: s, gagne } = reussirAppareil(serieDuJour, numero);
+            setSerieDuJour(s);
+            if (gagne) { setGelGagne(true); setGels(lireReserveAppareil().gels); }
             track(EVENTS.goDuJourResolu, { numero, essais, serie: s.jours, arrivee_par_lien: lien !== null });
           }
           markSolved(open.id);
@@ -154,8 +166,12 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   }
 
   const connecte = !!db && !!userId;
+  const prochainPz = prochain(tiers, solved);
+  // Une seule action en relief : le Go du jour tant qu'il n'est pas fait, « Continuer » ensuite.
+  const duJourFait = !daily || serieDuJour?.dernier === numero;
+  const recommande = connecte && stats ? palierRecommande(tiers, stats.rating) : undefined;
   return (
-    <div className="problemes">
+    <div className={`problemes${prochainPz && duJourFait ? ' avec-continuer' : ''}`}>
       {load.error === 'offline' && <p className="notice" role="status">Tu es hors ligne. Les problèmes restent jouables, mais ta cote ne bouge pas.</p>}
       {load.error && load.error !== 'offline' && (
         <p className="notice" role="alert">{load.error} On t’affiche ceux de ce téléphone. <button className="lien" onClick={() => setRetry(n => n + 1)}>Réessayer</button></p>
@@ -185,35 +201,84 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
 
       {daily && (
         <section aria-labelledby="jour-titre">
-          <h2 id="jour-titre" className="titre-pierres">Go du jour <span className="numero-du-jour">n°&nbsp;{numero}</span></h2>
+          <h2 id="jour-titre" className="titre-pierres">Go du jour <span className="numero-du-jour">n°&nbsp;{numero}</span><Glacon gels={gels} /></h2>
           <p className="muted small bases-aide">Le même défi pour tout le monde, aujourd’hui.</p>
           <DuJour pz={daily} reussi={serieDuJour?.dernier === numero} onOpen={() => setOpenId(daily.id)} />
         </section>
       )}
 
       <MesErreurs confirmTouch={confirmTouch} Lecteur={PuzzlePlayer} />
-      <section aria-labelledby="bases-titre">
-        <h2 id="bases-titre" className="titre-pierres">Les bases</h2>
-        <p className="muted small bases-aide">{fr('Une pierre est en ')}<b>atari</b>{fr(' quand il ne lui reste qu’une liberté : elle peut être prise au prochain coup.')}</p>
-        <ul className="grille-pb">
-          {list.map((p, i) => {
-            const ok = solved.has(p.id);
-            return (
-              <li key={p.id}>
-                <button className={ok ? 'reussi' : undefined} onClick={() => setOpenId(p.id)} aria-label={`Problème ${i + 1} : ${p.title}${ok ? ', réussi' : ''}`}>
-                  <span className="grille-goban">
-                    <MiniGoban rows={p.rows} />
-                    {ok && <span className="pastille-ok" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M4 8.4 6.8 11 12 5.4" /></svg></span>}
-                  </span>
-                  <b aria-hidden="true">{p.title}</b>
-                  <span aria-hidden="true"><Difficulte d={p.difficulty} /></span>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
+      <section aria-labelledby="paliers-titre">
+        <h2 id="paliers-titre" className="titre-pierres">Ta progression</h2>
+        <p className="muted small bases-aide">{fr('Du plus facile au plus dur. Une pierre est en ')}<b>atari</b>{fr(' quand il ne lui reste qu’une liberté.')}</p>
+        {prochainPz && (
+          <button className={duJourFait ? 'cta continuer' : 'btn continuer'} onClick={() => setOpenId(prochainPz.id)}
+            aria-label={`Continuer : ${prochainPz.title}`}>
+            Continuer <span className="continuer-titre">{prochainPz.title}</span>
+          </button>
+        )}
+        {tiers.filter(t => t.total > 0).map(t => (
+          <PalierVue key={t.id} t={t} ordre={ordre} solved={solved} recommande={t.id === recommande} onOpen={setOpenId} />
+        ))}
       </section>
     </div>
+  );
+}
+
+/** Un palier : nom, rang en kyu, progression, sceau quand il est complet, et sa grille de miniatures. */
+function PalierVue({ t, ordre, solved, recommande, onOpen }: {
+  t: Palier<Puzzle>; ordre: Puzzle[]; solved: Set<string>; recommande: boolean; onOpen: (id: string) => void;
+}) {
+  const titre = `palier-${t.id}`;
+  return (
+    <div className={`palier${t.ouvert ? '' : ' verrouille'}`} data-palier={t.id} aria-labelledby={titre} role="group">
+      <div className="palier-tete">
+        <div className="palier-nom">
+          <h3 id={titre}>
+            {!t.ouvert && <Cadenas />}
+            {t.nom}
+            {!t.ouvert && <span className="sr-only"> (verrouillé)</span>}
+          </h3>
+          <small>{t.kyu}{recommande && <span className="palier-reco"> · Pour ta cote</span>}</small>
+        </div>
+        {t.complet && <SceauLecon id={`p${t.rang}`} taille={34} className="palier-sceau" />}
+      </div>
+      <div className="palier-progres">
+        <div className="palier-barre" role="progressbar" aria-label={`Progression ${t.nom}`} aria-valuemin={0} aria-valuemax={t.total} aria-valuenow={t.reussis}>
+          <span style={{ width: `${(100 * t.reussis) / t.total}%` }} />
+        </div>
+        <span className="palier-compte">{t.reussis}&nbsp;/&nbsp;{t.total}</span>
+      </div>
+      {!t.ouvert && <p className="palier-verrou">{fr('Réussis 60 % du palier précédent pour l’ouvrir.')}</p>}
+      <ul className="grille-pb">
+        {t.problemes.map(p => {
+          const ok = solved.has(p.id);
+          const i = ordre.indexOf(p);
+          return (
+            <li key={p.id}>
+              <button className={ok ? 'reussi' : undefined} disabled={!t.ouvert} onClick={() => onOpen(p.id)}
+                aria-label={`Problème ${i + 1} : ${p.title}${ok ? ', réussi' : ''}${t.ouvert ? '' : ', verrouillé'}`}>
+                <span className="grille-goban">
+                  <MiniGoban rows={p.rows} />
+                  {ok && <span className="pastille-ok" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M4 8.4 6.8 11 12 5.4" /></svg></span>}
+                </span>
+                <b aria-hidden="true">{p.title}</b>
+                <span aria-hidden="true"><Difficulte d={p.difficulty} /></span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
+function Cadenas() {
+  return (
+    <svg className="cadenas" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false">
+      <rect x="3" y="7" width="10" height="7.5" rx="2" fill="currentColor" />
+      <path d="M5.2 7V5.2a2.8 2.8 0 0 1 5.6 0V7" fill="none" stroke="currentColor" strokeWidth="1.8" />
+    </svg>
   );
 }
 
@@ -232,7 +297,7 @@ function DuJour({ pz, reussi, onOpen }: { pz: Puzzle; reussi: boolean; onOpen: (
       <div className="du-jour-corps">
         <h3>{pz.title}</h3>
         <p><Difficulte d={pz.difficulty} /> <span className="muted">{pz.toPlay === 1 ? 'Noir joue' : 'Blanc joue'}</span></p>
-        <button className="cta" aria-label={reussi ? 'Refaire le Go du jour' : 'Résoudre le Go du jour'} onClick={onOpen}>{reussi ? 'Refaire' : 'Résoudre'}</button>
+        <button className={reussi ? 'btn du-jour-refaire' : 'cta'} aria-label={reussi ? 'Refaire le Go du jour' : 'Résoudre le Go du jour'} onClick={onOpen}>{reussi ? 'Refaire' : 'Résoudre'}</button>
       </div>
     </div>
   );
@@ -275,7 +340,7 @@ function Partager({ numero, essais, serie }: { numero: number; essais: number; s
   );
 }
 
-interface DuJourInfo { numero: number; serie: number; defiChange: boolean }
+interface DuJourInfo { numero: number; serie: number; defiChange: boolean; gelGagne: boolean; celebrer: boolean }
 
 function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating, onAttempt, onSolved, onNext, onExit }: {
   puzzle: Puzzle; rang: number; duJour?: DuJourInfo; confirmTouch: boolean; rated: boolean; rating?: number;
@@ -369,6 +434,9 @@ function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating, onAtt
         // Go du jour réussi : « Partager » est l'action principale, en relief ; la suite reste à portée, en lien.
         ? <>
             <Partager numero={duJour.numero} essais={tries} serie={duJour.serie} />
+            {duJour.gelGagne && (
+              <p className={`gel-gagne${duJour.celebrer ? ' fete' : ''}`} role="status"><PierreGivree taille={18} />{fr('Tu gagnes un gel : il protégera ta série si tu oublies un jour.')}</p>
+            )}
             <div className="row liens-du-jour">
               <button className="lien" onClick={showLine}>Voir la suite</button>
               <button className="lien" onClick={onNext ?? onExit}>{onNext ? 'Problème suivant' : 'Retour aux problèmes'}</button>

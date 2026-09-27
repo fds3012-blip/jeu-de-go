@@ -7,7 +7,7 @@
 // Appui : la pierre `.pose` s'enfonce (transform seulement). Styles et mouvement : partie.css.
 import { useId, type ReactElement } from 'react';
 
-export type NomAction = 'indice' | 'annuler' | 'passer' | 'abandonner';
+export type NomAction = 'indice' | 'quimene' | 'annuler' | 'passer' | 'abandonner';
 
 interface Pierre { x: number; y: number; r: number; c: 'n' | 'b' }
 
@@ -49,6 +49,15 @@ function dessin(nom: NomAction, id: string): ReactElement {
       <g className="pose">
         <circle className="lueur-pierre" cx="14" cy="14" r="7.4" />
         <ellipse className="lueur-reflet" cx="11.4" cy="11.2" rx="2.5" ry="1.6" transform="rotate(-30 11.4 11.2)" />
+      </g>
+    </>);
+    // Qui mène ? (#94) : une balance. Le fléau penche vers la pierre noire, plus basse que la blanche.
+    case 'quimene': return (<>
+      <path className="trait" d="M14 6V25M9 25H19" />
+      <path className="trait" d="M4 10.5 24 5.5" />
+      <g className="pose">
+        <Caillou p={{ x: 6.4, y: 15.6, r: 4.6, c: 'n' }} id={id} />
+        <Caillou p={{ x: 21.6, y: 11.2, r: 4.6, c: 'b' }} id={id} />
       </g>
     </>);
     // Annuler : tu reprends ta dernière pierre. Elle remonte par un chemin de petites pierres (le pointillé du chemin

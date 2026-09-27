@@ -15,8 +15,8 @@ test('problèmes sans compte : erreur, bonne réponse, suite et problème suivan
   const debord = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(debord).toBeLessThanOrEqual(0);
 
-  // Problème 1 des bases : la pierre blanche D5 n'a plus qu'une liberté, en E5.
-  await page.getByRole('button', { name: /^Problème 1 : Capture la pierre/ }).click();
+  // Le problème b1 (par son titre, les lots de #91 s'intercalent par difficulté) : la pierre blanche D5 n'a plus qu'une liberté, en E5.
+  await page.getByRole('button', { name: /^Problème \d+ : Capture la pierre/ }).click();
   await expect(plateau(page)).toBeVisible();
 
   await jouer(page, 'A1');
@@ -39,5 +39,37 @@ test('problèmes sans compte : erreur, bonne réponse, suite et problème suivan
   // Le problème réussi reste coché après rechargement.
   await page.reload();
   await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
-  await expect(page.getByRole('button', { name: 'Problème 1 : Capture la pierre, réussi' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Problème \d+ : Capture la pierre, réussi/ })).toBeVisible();
+});
+
+// Issue #93 : paliers. Novice est verrouillé tant que 60 % des Débutant ne sont pas réussis.
+test('paliers : Novice verrouillé, puis ouvert après les réussites', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.addInitScript(() => { if (!sessionStorage.getItem('init')) { localStorage.setItem('go.problemes.v1', JSON.stringify({ b1: true })); sessionStorage.setItem('init', '1'); } });
+  await page.goto('/');
+  await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
+
+  const debutant = page.getByRole('group', { name: /^Débutant/ });
+  const novice = page.getByRole('group', { name: /^Novice/ });
+  await expect(debutant.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '1');
+  await expect(novice).toHaveAccessibleName(/verrouillé/);
+  await expect(novice.getByText('Réussis 60 % du palier précédent pour l’ouvrir.')).toBeVisible();
+  const verrouilles = novice.getByRole('button', { name: /, verrouillé$/ });
+  expect(await verrouilles.count()).toBeGreaterThan(0);
+  await expect(verrouilles.first()).toBeDisabled();
+
+  // « Continuer » ouvre le prochain problème non réussi du palier ouvert le plus avancé : Sauve ta pierre (b4).
+  await page.getByRole('button', { name: /^Continuer : / }).click();
+  await expect(page.getByRole('heading', { name: 'Sauve ta pierre' })).toBeVisible();
+  await jouer(page, 'D4');
+  await expect(page.getByRole('button', { name: 'Problème suivant' })).toBeVisible();
+  await page.getByRole('button', { name: 'Retour aux problèmes' }).first().click();
+
+  // 2 sur 3 réussis : Novice s'ouvre.
+  await expect(debutant.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '2');
+  await expect(novice).not.toHaveAccessibleName(/verrouillé/);
+  await expect(novice.getByText('Réussis 60 % du palier précédent pour l’ouvrir.')).toHaveCount(0);
+  await expect(novice.getByRole('button').first()).toBeEnabled();
+  const debord = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  expect(debord).toBeLessThanOrEqual(0);
 });
