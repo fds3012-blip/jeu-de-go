@@ -26,6 +26,7 @@ import { Mochi } from '../ui/Mochi';
 import { lireReserveAppareil, reconcilierAppareil } from './gelAppareil';
 import { messageGel } from './gel';
 import { BarreNav, type Onglet } from '../ui/IconesNav';
+import { BarreNiveau, FeteNiveau } from '../ui/Niveau';
 
 const PROBLEMES_LOCAUX = parsePuzzles(ALL_PUZZLES);
 
@@ -200,8 +201,10 @@ export function App() {
         {annonceGel !== null && !enPartie && (tab === 'jouer' || tab === 'problemes') && (
           <p className="gel-annonce" role="status"><Mochi size={30} />{fr(messageGel(annonceGel))}</p>
         )}
+        {accueilVisible && <BarreNiveau />}
         {screen}
       </main>
+      <FeteNiveau celebrer={settings.celebrations} />
       {/* Pendant une partie, comme chez chess.com : pas de barre de navigation, « ‹ » ramène à l'accueil. */}
       {!enPartie && <BarreNav actif={tab} onChoisir={go} />}
       <ConsentModal visible={fenetreVisible({ consent, ignoree: accordIgnore, enPartie: enPartie || (tab === 'problemes' && duJourOuvert), surConditions: tab === 'profil' && vueProfil === 'conditions' })}

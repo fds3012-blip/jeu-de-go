@@ -34,6 +34,9 @@ export const EVENTS = {
   // Série protégée (issue #76) : gel gagné tous les 7 jours de série, gel consommé par un jour manqué.
   gelGagne: 'gel_gagne',
   gelUtilise: 'gel_utilise',
+  // Progression (issue #109) : XP gagnés (agrégés sur quelques secondes) et niveau franchi.
+  xpGagne: 'xp_gagne',
+  niveauAtteint: 'niveau_atteint',
 } as const;
 export type AnalyticsEvent = (typeof EVENTS)[keyof typeof EVENTS];
 export type Props = Record<string, string | number | boolean | null | undefined>;

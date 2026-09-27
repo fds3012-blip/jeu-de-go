@@ -19,6 +19,7 @@ import { fr } from '../ui/typo';
 import { playFail, playIllegal, playStone, playSuccess } from '../ui/sound';
 import { hapticIllegal, hapticStone } from '../ui/haptics';
 import { EVENTS, track } from '../data/analytics';
+import { gagnerXp } from './xp';
 import { prefersReducedMotion, readLocal, useOnline, writeLocal } from './hooks';
 import { legendeSerie, niveau } from './problemes';
 import { ordrePaliers, palierRecommande, paliers, prochain, suivantPalier, type Palier } from './paliers';
@@ -154,7 +155,7 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
           return r;
         }}
         onSolved={essais => {
-          if (!solved.has(open.id)) track(EVENTS.problemeResolu, { probleme: open.id, du_jour: estDuJour });
+          if (!solved.has(open.id)) { track(EVENTS.problemeResolu, { probleme: open.id, du_jour: estDuJour }); gagnerXp(estDuJour ? 'goDuJour' : 'probleme'); }
           if (estDuJour && serieDuJour?.dernier !== numero) {
             const { serie: s, gagne } = reussirAppareil(serieDuJour, numero);
             setSerieDuJour(s);
