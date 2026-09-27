@@ -82,8 +82,9 @@ export function App() {
 
   const go = (t: Tab) => { setTab(t); setPlaying(false); setLessonId(null); window.scrollTo({ top: 0 }); };
 
+  const enPartie = tab === 'jouer' && !!playing;
   let screen;
-  if (tab === 'jouer' && playing) {
+  if (enPartie) {
     screen = (
       <>
         <Game key={`${playing === 'ordi' ? adv.id : 'deux'}-${partie}`} size={settings.size} komi={KOMI} aiKomi={KOMI_ORDI} confirmTouch={settings.confirmTouch} opponent={playing === 'ordi' ? adv : undefined}
@@ -163,15 +164,16 @@ export function App() {
 
   return (
     <>
-      <main className={`app${tab === 'jouer' && !playing ? ' app-home' : ''}`}>
-        <header className="top">
+      <main className={`app${tab === 'jouer' && !playing ? ' app-home' : ''}${enPartie ? ' app-partie' : ''}`}>
+        {!enPartie && <header className="top">
           <h1>Go</h1>
           <p>{tab === 'jouer' ? 'Jouer' : tab === 'apprendre' ? 'Le chemin des leçons' : tab === 'problemes' ? 'Problèmes' : 'Profil'}</p>
-        </header>
+        </header>}
         {!playing && !lesson && <ConsentBanner onMore={() => go('profil')} />}
         {screen}
       </main>
-      <nav className="nav" aria-label="Navigation principale">
+      {/* Pendant une partie, comme chez chess.com : pas de barre de navigation, « ‹ » ramène à l'accueil. */}
+      {!enPartie && <nav className="nav" aria-label="Navigation principale">
         <button aria-current={tab === 'jouer' ? 'page' : undefined} onClick={() => go('jouer')}>
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="9" r="4.5" fill="currentColor" /><circle cx="16" cy="15" r="4.5" /></svg>Jouer
         </button>
@@ -184,7 +186,7 @@ export function App() {
         <button aria-current={tab === 'profil' ? 'page' : undefined} onClick={() => go('profil')}>
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M4 21c1-4 4-6 8-6s7 2 8 6" /></svg>Profil
         </button>
-      </nav>
+      </nav>}
     </>
   );
 }

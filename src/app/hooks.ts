@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import type { Db } from '../data/supabase';
+import { fetchProfile } from '../data/account';
 import { cleanProgress, mergeProgress, supabaseProgressStore, syncProgress, type Progress } from '../data/progress';
 
 /** Session Supabase : undefined pendant le chargement, null sans connexion. */
@@ -76,4 +77,18 @@ export function useLessonProgress(db: Db | null, userId: string | undefined): { 
 /** Vrai si l'utilisateur demande moins d'animations. */
 export function prefersReducedMotion(): boolean {
   return typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+}
+
+/** Pseudo et cote du joueur connecté (null sans compte, hors ligne ou pendant le chargement). */
+export function useProfil(db: Db | null): { pseudo: string | null; cote: number } | null {
+  const session = useSession(db);
+  const userId = session?.user.id;
+  const [profil, setProfil] = useState<{ id: string; pseudo: string | null; cote: number } | null>(null);
+  useEffect(() => {
+    if (!db || !userId) return;
+    let alive = true;
+    fetchProfile(db, userId).then(r => { if (alive && r.ok && r.value) setProfil({ id: userId, pseudo: r.value.username, cote: r.value.rating }); });
+    return () => { alive = false; };
+  }, [db, userId]);
+  return profil && profil.id === userId ? { pseudo: profil.pseudo, cote: profil.cote } : null;
 }

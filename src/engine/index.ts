@@ -19,31 +19,36 @@ export { OPPONENTS, opponent, chooseMove, deadStones, ownershipSimple };
 export type { Opponent, OpponentId, EngineOptions, DeadOptions, KataGoLevel, Style, Analysis, AnalyzeOptions, MoveInfo, KataGoInfo };
 
 // ---------- Moteur simple dans son Worker ----------
-let worker: Worker | null = null, broken = false, nextId = 1;
-const pending = new Map<number, (r: Reponse) => void>();
-
-function getWorker(): Worker | null {
-  if (broken || typeof Worker === 'undefined') return null;
-  if (!worker) {
-    try {
-      worker = new Worker(new URL('./simple.worker.ts', import.meta.url), { type: 'module' });
-      worker.onmessage = (e: MessageEvent<Reponse>) => { pending.get(e.data.id)?.(e.data); pending.delete(e.data.id); };
-      worker.onerror = () => { broken = true; worker?.terminate(); worker = null; for (const [id, cb] of pending) cb({ id, move: Number.NaN, error: 'worker' }); pending.clear(); };
-    } catch { broken = true; return null; }
+// Deux Workers indépendants : l'un pour les coups et les pierres mortes, l'autre pour l'estimation d'avantage
+// affichée pendant la partie, pour que l'estimation ne retarde jamais la réponse de l'adversaire.
+let nextId = 1;
+function canal() {
+  let worker: Worker | null = null, broken = false;
+  const pending = new Map<number, (r: Reponse) => void>();
+  function getWorker(): Worker | null {
+    if (broken || typeof Worker === 'undefined') return null;
+    if (!worker) {
+      try {
+        worker = new Worker(new URL('./simple.worker.ts', import.meta.url), { type: 'module' });
+        worker.onmessage = (e: MessageEvent<Reponse>) => { pending.get(e.data.id)?.(e.data); pending.delete(e.data.id); };
+        worker.onerror = () => { broken = true; worker?.terminate(); worker = null; for (const [id, cb] of pending) cb({ id, move: Number.NaN, error: 'worker' }); pending.clear(); };
+      } catch { broken = true; return null; }
+    }
+    return worker;
   }
-  return worker;
+  /** Envoie une demande au Worker ; `null` s'il est indisponible. */
+  return (d: Tache): Promise<Reponse> | null => {
+    const w = getWorker();
+    if (!w) return null;
+    const id = nextId++;
+    return new Promise<Reponse>(resolve => { pending.set(id, resolve); w.postMessage({ ...d, id } satisfies Demande); });
+  };
 }
+const ask = canal();
+const askEstimation = canal();
 
 function later<T>(f: () => T): Promise<T> {
   return new Promise(resolve => setTimeout(() => resolve(f()), 0));
-}
-
-/** Envoie une demande au Worker ; `null` s'il est indisponible. */
-function ask(d: Tache): Promise<Reponse> | null {
-  const w = getWorker();
-  if (!w) return null;
-  const id = nextId++;
-  return new Promise<Reponse>(resolve => { pending.set(id, resolve); w.postMessage({ ...d, id } satisfies Demande); });
 }
 
 async function simpleMove(pos: Position, lvl: Opponent, opts: EngineOptions): Promise<number> {
@@ -137,4 +142,26 @@ export async function bestMove(pos: Position, niveau: OpponentId | Opponent, opt
   if (move === null) move = await simpleMove(pos, lvl, opts);
   // Garde-fou : un coup illégal devient une passe.
   return isLegalMove(pos, move) ? move : -1;
+}
+
+/**
+ * Avance estimée de Noir, en points (komi compris), pour la barre d'avantage de l'écran de partie.
+ * KataGo s'il est déjà chargé (on ne télécharge pas le réseau pour ça), sinon la propriété du moteur simple,
+ * calculée dans un Worker dédié. `null` si aucune estimation n'est possible sans bloquer l'interface.
+ */
+export async function estimateLead(pos: Position, komi: number, opts: { kataGo?: boolean } = {}): Promise<{ lead: number; engine: 'katago' | 'simple' } | null> {
+  // `kataGo: false` : KataGo est occupé à chercher le coup de l'adversaire, on ne le ralentit pas.
+  const k = opts.kataGo === false ? null : katago ?? null;
+  if (k && k.info.state === 'pret') {
+    try {
+      const a = await k.analyze(pos, { komi, visits: 16, timeMs: 600 });
+      return { lead: pos.toPlay === 1 ? a.lead : -a.lead, engine: 'katago' };
+    } catch { /* repli ci-dessous */ }
+  }
+  const q = askEstimation({ kind: 'own', pos, timeMs: pos.size <= 9 ? 150 : 400 });
+  const r = q && (await q);
+  if (!r?.own) return null;
+  let black = -komi;
+  for (const v of r.own) black += v;
+  return { lead: black, engine: 'simple' };
 }

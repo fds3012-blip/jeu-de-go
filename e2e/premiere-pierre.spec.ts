@@ -38,7 +38,7 @@ test('première pierre en deux touches, accueil sans défilement', async ({ page
   await expect(page.getByText(/Tu joues |Pomme réfléchit|Pomme (joue|capture|passe)/)).toBeVisible();
 
   // Au retour, Mochi et le bouton restent cohérents, et la bulle du but ne revient plus.
-  await page.getByRole('button', { name: '‹ Accueil' }).click();
+  await page.getByRole('button', { name: "Retour à l'accueil" }).click();
   await expect(page.locator('.cta')).toHaveText('Rejouer contre Pomme');
   await expect(page.getByText(/Pomme t'attend/)).toBeVisible();
   await page.locator('.cta').click();
