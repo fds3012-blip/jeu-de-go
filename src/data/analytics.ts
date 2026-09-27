@@ -1,14 +1,15 @@
-// Mesure d'audience (PostHog) et suivi des erreurs (Sentry), soumis au consentement.
+// Mesure d'audience (PostHog) et suivi des erreurs (Sentry). Issues #12 (RGPD) et #64 (mesure exemptée).
 //
-// Règles (issue #12, RGPD) :
-// - rien n'est chargé ni envoyé tant que le joueur n'a pas accepté ;
-// - rien n'est chargé ni envoyé sans variables d'environnement (VITE_POSTHOG_KEY, VITE_SENTRY_DSN) ;
-// - hors navigateur (tests, rendu serveur), tout est sans effet ;
-// - les SDK sont importés dynamiquement : ils ne pèsent pas sur le premier chargement.
-//
-// Avant le choix du joueur, les événements attendent en mémoire (jamais envoyés, jamais stockés) :
-// s'il accepte pendant la session, ils partent avec leur heure d'origine ; s'il refuse, ils sont effacés.
-// Cela permet de mesurer la première pierre, posée avant de répondre si le joueur a fermé la fenêtre de consentement.
+// Trois niveaux (analyse et sources : docs/juridique/consentement.md) :
+// - « anonyme » (par défaut, sans consentement) : mesure d'audience réglée pour entrer dans l'exemption
+//   de la CNIL (lignes directrices du 17 septembre 2020, art. 5) : rien n'est écrit sur l'appareil
+//   (`persistence: 'memory'`), aucun profil (`person_profiles: 'never'`), jamais d'identifiant de compte,
+//   IP non conservée, pas d'enregistrement de session. Le joueur peut s'y opposer (page Conditions).
+// - « complet » (seulement après « Oui ») : identifiant persistant (rétention J1, lien avec le compte)
+//   et rapports d'erreur Sentry. Rien de cela ne part avant l'accord.
+// - « aucun » : le joueur s'est opposé à la mesure anonyme ; rien n'est chargé ni envoyé.
+// Sans variables d'environnement (VITE_POSTHOG_KEY, VITE_SENTRY_DSN) ou hors navigateur, tout est sans effet.
+// Les SDK sont importés dynamiquement : ils ne pèsent pas sur le premier chargement.
 
 /** Événements suivis. Noms stables : ils servent aux entonnoirs et à la rétention dans PostHog. */
 export const EVENTS = {
@@ -25,17 +26,18 @@ export type AnalyticsEvent = (typeof EVENTS)[keyof typeof EVENTS];
 export type Props = Record<string, string | number | boolean | null | undefined>;
 
 export type Consent = 'accepte' | 'refuse';
+export type Niveau = 'aucun' | 'anonyme' | 'complet';
 export const CONSENT_KEY = 'go.consentement.v1';
+/** Opposition à la mesure anonyme (exemptée). Mémoriser ce choix est lui-même exempté. */
+export const OPPOSITION_KEY = 'go.mesure.opposition.v1';
 const ONCE_PREFIX = 'go.evenement.';
-const QUEUE_MAX = 50;
 
 interface PostHogLike {
   init: (key: string, config: Record<string, unknown>) => unknown;
+  set_config: (config: Record<string, unknown>) => unknown;
   capture: (event: string, props?: Props, options?: { timestamp?: Date }) => unknown;
   identify: (id: string) => unknown;
   reset: () => unknown;
-  opt_in_capturing: () => unknown;
-  opt_out_capturing: () => unknown;
 }
 interface SentryLike {
   init: (options: Record<string, unknown>) => unknown;
@@ -43,11 +45,12 @@ interface SentryLike {
   setUser: (u: { id: string } | null) => unknown;
   close: () => unknown;
 }
-interface Clients { posthog: PostHogLike | null; sentry: SentryLike | null }
 
-let loading: Promise<Clients> | null = null;
-let queue: { event: string; props?: Props; at: Date }[] = [];
+let phLoading: Promise<PostHogLike | null> | null = null;
+let seLoading: Promise<SentryLike | null> | null = null;
+let niveauPostHog: Niveau = 'aucun';
 let userId: string | null = null;
+const onceMemoire = new Set<string>();
 const listeners = new Set<() => void>();
 
 function browser(): boolean {
@@ -70,136 +73,198 @@ export function analyticsConfig() {
   };
 }
 
-/** Vrai si au moins un service est configuré : sinon, rien n'est chargé ni envoyé, même avec l'accord du joueur. */
+/** Vrai si au moins un service est configuré : sinon, rien n'est chargé ni envoyé. */
 export function analyticsAvailable(): boolean {
   const c = analyticsConfig();
   return browser() && (!!c.posthogKey || !!c.sentryDsn);
 }
 
-export function getConsent(): Consent | null {
-  if (!browser()) return null;
-  try {
-    const v = localStorage.getItem(CONSENT_KEY);
-    return v === 'accepte' || v === 'refuse' ? v : memoryConsent;
-  } catch { return memoryConsent; }
+/** Réglages PostHog de la mesure exemptée : rien sur l'appareil, aucun profil, rien de superflu. */
+export const POSTHOG_ANONYME: Readonly<Record<string, unknown>> = {
+  persistence: 'memory',
+  person_profiles: 'never',
+  ip: false,
+  autocapture: false,
+  capture_pageview: false,
+  capture_pageleave: false,
+  capture_dead_clicks: false,
+  capture_exceptions: false,
+  disable_session_recording: true,
+  disable_surveys: true,
+  advanced_disable_feature_flags: true,
+  disable_external_dependency_loading: true,
+  save_referrer: false,
+  mask_personal_data_properties: true,
+};
+/** Après accord seulement : identifiant persistant (rétention J1) et lien avec le compte. */
+export const POSTHOG_COMPLET: Readonly<Record<string, unknown>> = {
+  ...POSTHOG_ANONYME,
+  persistence: 'localStorage',
+  person_profiles: 'always',
+};
+
+// Replis si localStorage est indisponible (navigation privée stricte) : choix valables pour la session.
+let memoryConsent: Consent | null = null;
+let memoryOpposition = false;
+
+function lire(k: string): string | null {
+  try { return localStorage.getItem(k); } catch { return null; }
+}
+function ecrire(k: string, v: string | null) {
+  try { if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch { /* repli mémoire */ }
 }
 
-/** Abonnement aux changements de consentement (pour useSyncExternalStore). */
+export function getConsent(): Consent | null {
+  if (!browser()) return null;
+  const v = lire(CONSENT_KEY);
+  return v === 'accepte' || v === 'refuse' ? v : memoryConsent;
+}
+
+/** Vrai si le joueur s'est opposé à la mesure anonyme (page Conditions). */
+export function getOpposition(): boolean {
+  if (!browser()) return false;
+  return lire(OPPOSITION_KEY) === '1' || memoryOpposition;
+}
+
+/** Niveau de suivi en vigueur, d'après les deux choix du joueur. */
+export function niveau(): Niveau {
+  if (!browser()) return 'aucun';
+  if (getConsent() === 'accepte') return 'complet';
+  return getOpposition() ? 'aucun' : 'anonyme';
+}
+
+/** Abonnement aux changements de choix (pour useSyncExternalStore). */
 export function subscribeConsent(fn: () => void): () => void {
   listeners.add(fn);
   return () => { listeners.delete(fn); };
 }
 
+/** Réponse à la fenêtre : « Oui » active les rapports d'erreur et la mesure détaillée ; « Non merci » les coupe. */
 export function setConsent(c: Consent): void {
   if (!browser()) return;
-  try { localStorage.setItem(CONSENT_KEY, c); } catch { /* stockage indisponible : choix valable pour la session */ }
+  ecrire(CONSENT_KEY, c);
   memoryConsent = c;
+  if (c === 'accepte') { ecrire(OPPOSITION_KEY, null); memoryOpposition = false; }
   listeners.forEach(fn => fn());
-  if (c === 'accepte') {
-    void load().then(({ posthog }) => {
-      posthog?.opt_in_capturing();
-      flush();
+  appliquer();
+}
+
+/** Droit d'opposition à la mesure anonyme. S'opposer retire aussi l'accord donné dans la fenêtre. */
+export function setOpposition(oppose: boolean): void {
+  if (!browser()) return;
+  ecrire(OPPOSITION_KEY, oppose ? '1' : null);
+  memoryOpposition = oppose;
+  if (oppose && getConsent() === 'accepte') { ecrire(CONSENT_KEY, 'refuse'); memoryConsent = 'refuse'; }
+  listeners.forEach(fn => fn());
+  appliquer();
+}
+
+/** Met les SDK en accord avec le niveau courant : chargement, passage anonyme ↔ complet, arrêt. */
+function appliquer() {
+  if (!analyticsAvailable()) return;
+  const n = niveau();
+  if (n === 'complet') {
+    void loadSentry();
+    void loadPostHog().then(ph => {
+      if (!ph || niveauPostHog === 'complet') return;
+      ph.set_config({ ...POSTHOG_COMPLET });
+      niveauPostHog = 'complet';
+      if (userId) ph.identify(userId);
     });
-  } else {
-    queue = [];
-    if (loading) void loading.then(({ posthog, sentry }) => { posthog?.opt_out_capturing(); posthog?.reset(); void sentry?.close(); });
-    loading = null;
+    return;
+  }
+  // Sentry n'est jamais actif sans accord.
+  if (seLoading) { void seLoading.then(s => { void s?.close(); }); seLoading = null; }
+  if (n === 'anonyme') {
+    void loadPostHog().then(ph => {
+      if (!ph || niveauPostHog === 'anonyme') return;
+      ph.reset(); // oublie l'identifiant persistant et le lien avec le compte
+      ph.set_config({ ...POSTHOG_ANONYME });
+      niveauPostHog = 'anonyme';
+    });
+  } else if (phLoading) {
+    void phLoading.then(ph => {
+      if (!ph || niveauPostHog === 'aucun') return;
+      ph.reset();
+      ph.set_config({ ...POSTHOG_ANONYME });
+      niveauPostHog = 'aucun';
+    });
   }
 }
 
-// Repli si localStorage est indisponible (navigation privée stricte).
-let memoryConsent: Consent | null = null;
-function consent(): Consent | null { return getConsent() ?? memoryConsent; }
-
-function load(): Promise<Clients> {
-  if (loading) return loading;
+function loadPostHog(): Promise<PostHogLike | null> {
+  if (phLoading) return phLoading;
   const c = analyticsConfig();
-  const ph = c.posthogKey
-    ? import('posthog-js').then(m => {
-        const posthog = m.default as unknown as PostHogLike;
-        posthog.init(c.posthogKey, {
-          api_host: c.posthogHost,
-          person_profiles: 'always', // la rétention J1 compte aussi les joueurs sans compte
-          autocapture: false,
-          capture_pageview: false,
-          capture_pageleave: false,
-          disable_session_recording: true,
-          persistence: 'localStorage',
-        });
-        if (userId) posthog.identify(userId);
-        return posthog;
-      }).catch(() => null)
-    : Promise.resolve(null);
-  const se = c.sentryDsn
-    ? import('@sentry/react').then(m => {
-        const sentry = m as unknown as SentryLike;
-        sentry.init({ dsn: c.sentryDsn, release: c.release, environment: c.environment, sendDefaultPii: false });
-        if (userId) sentry.setUser({ id: userId });
-        return sentry;
-      }).catch(() => null)
-    : Promise.resolve(null);
-  loading = Promise.all([ph, se]).then(([posthog, sentry]) => ({ posthog, sentry }));
-  return loading;
+  if (!c.posthogKey) return Promise.resolve(null);
+  phLoading = import('posthog-js').then(m => {
+    const posthog = m.default as unknown as PostHogLike;
+    // Niveau relu au moment du chargement : le joueur a pu répondre pendant l'import.
+    const complet = niveau() === 'complet';
+    posthog.init(c.posthogKey, { api_host: c.posthogHost, ...(complet ? POSTHOG_COMPLET : POSTHOG_ANONYME) });
+    niveauPostHog = complet ? 'complet' : 'anonyme';
+    if (complet && userId) posthog.identify(userId);
+    return posthog;
+  }).catch(() => null);
+  return phLoading;
 }
 
-function flush() {
-  const pending = queue;
-  queue = [];
-  for (const e of pending) send(e.event, e.props, e.at);
+function loadSentry(): Promise<SentryLike | null> {
+  if (seLoading) return seLoading;
+  const c = analyticsConfig();
+  if (!c.sentryDsn) return Promise.resolve(null);
+  seLoading = import('@sentry/react').then(m => {
+    const sentry = m as unknown as SentryLike;
+    sentry.init({ dsn: c.sentryDsn, release: c.release, environment: c.environment, sendDefaultPii: false });
+    if (userId) sentry.setUser({ id: userId });
+    return sentry;
+  }).catch(() => null);
+  return seLoading;
 }
 
-function send(event: string, props: Props | undefined, at: Date) {
-  void load().then(({ posthog }) => {
+/** À appeler une fois au démarrage : charge ce que les choix du joueur permettent. */
+export function initAnalytics(): void {
+  if (niveau() === 'aucun') return;
+  appliquer();
+}
+
+/** Envoie un événement, sauf opposition. Sans accord, il part sans identifiant persistant ni compte. */
+export function track(event: AnalyticsEvent, props?: Props): void {
+  if (!browser() || !analyticsConfig().posthogKey || niveau() === 'aucun') return;
+  const at = new Date();
+  void loadPostHog().then(ph => {
+    if (!ph || niveau() === 'aucun') return;
     const c = analyticsConfig();
-    posthog?.capture(event, { ...props, version: c.release, environnement: c.environment }, { timestamp: at });
+    ph.capture(event, { ...props, version: c.release, environnement: c.environment }, { timestamp: at });
   });
 }
 
-/** À appeler une fois au démarrage : charge les SDK si le joueur a déjà accepté. */
-export function initAnalytics(): void {
-  if (!analyticsAvailable() || consent() !== 'accepte') return;
-  void load();
-}
-
-/** Envoie un événement si le joueur a accepté ; le garde en mémoire tant qu'il n'a pas choisi. */
-export function track(event: AnalyticsEvent, props?: Props): void {
-  if (!browser() || !analyticsConfig().posthogKey) return;
-  const c = consent();
-  if (c === 'refuse') return;
-  if (c === null) {
-    if (queue.length < QUEUE_MAX) queue.push({ event, props, at: new Date() });
-    return;
-  }
-  send(event, props, new Date());
-}
-
-/** Comme `track`, mais une seule fois par appareil (ex. première pierre). */
+/**
+ * Comme `track`, mais une seule fois. Avec accord : une fois par appareil (repère en localStorage).
+ * Sans accord : une fois par session, sans rien écrire sur l'appareil.
+ */
 export function trackOnce(event: AnalyticsEvent, props?: Props): void {
-  if (!browser()) return;
+  if (!browser() || niveau() === 'aucun') return;
   const key = ONCE_PREFIX + event;
-  try {
-    if (localStorage.getItem(key)) return;
-    localStorage.setItem(key, '1');
-  } catch { /* stockage indisponible : on envoie quand même */ }
+  if (onceMemoire.has(key) || lire(key)) return;
+  onceMemoire.add(key);
+  if (niveau() === 'complet') ecrire(key, '1');
   track(event, props);
 }
 
-/** Relie les événements au compte (identifiant Supabase, jamais l'e-mail). `null` à la déconnexion. */
+/** Relie les événements au compte (identifiant Supabase, jamais l'e-mail), seulement avec accord. `null` à la déconnexion. */
 export function identify(id: string | null): void {
   if (!browser() || id === userId) return;
   const previous = userId;
   userId = id;
-  if (consent() !== 'accepte' || !loading) return;
-  void loading.then(({ posthog, sentry }) => {
-    if (id) posthog?.identify(id); else if (previous) posthog?.reset();
-    sentry?.setUser(id ? { id } : null);
-  });
+  if (niveau() !== 'complet') return;
+  if (phLoading) void phLoading.then(ph => { if (id) ph?.identify(id); else if (previous) ph?.reset(); });
+  if (seLoading) void seLoading.then(s => { s?.setUser(id ? { id } : null); });
 }
 
-/** Signale une erreur à Sentry si le joueur a accepté. */
+/** Signale une erreur à Sentry, seulement si le joueur a accepté. */
 export function captureError(error: unknown): void {
-  if (!browser() || !analyticsConfig().sentryDsn || consent() !== 'accepte') return;
-  void load().then(({ sentry }) => { sentry?.captureException(error); });
+  if (!browser() || !analyticsConfig().sentryDsn || niveau() !== 'complet') return;
+  void loadSentry().then(s => { s?.captureException(error); });
 }
 
 /** Secondes écoulées depuis l'ouverture de la page (mesure « première pierre dans la minute »). */
@@ -209,6 +274,6 @@ export function secondsSinceOpen(): number {
 
 /** Réservé aux tests. */
 export function _resetForTests(): void {
-  loading = null; queue = []; userId = null; memoryConsent = null; listeners.clear();
+  phLoading = null; seLoading = null; niveauPostHog = 'aucun'; userId = null;
+  memoryConsent = null; memoryOpposition = false; onceMemoire.clear(); listeners.clear();
 }
-export function _queueLength(): number { return queue.length; }

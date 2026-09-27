@@ -216,3 +216,17 @@ Chaque livraison : issue traitée, agent, pull request, résultat des vérificat
 - **Point de l'onglet** : il part de `scale(.8)`.
 - **Vérifications** : 392 tests unitaires et 45 tests e2e verts.
 - **Reste à vérifier sur un vrai téléphone** : la courbe des pierres prises qui partent vers les couvercles.
+
+## #64 Consentement : un maximum d'accords, dans le respect de la CNIL (juridique)
+
+- Florian a peur que les joueurs refusent. La règle : refuser doit rester aussi simple qu'accepter (CNIL). On ne joue donc pas sur la difficulté de refuser.
+- Le vrai levier est l'exemption de la CNIL pour la mesure d'audience. PostHog tourne désormais sans consentement, en mode anonyme :
+  - rien n'est écrit sur l'appareil ;
+  - aucun profil de joueur ;
+  - l'adresse IP n'est pas conservée ;
+  - le joueur peut s'y opposer depuis la page Conditions.
+- Conséquence : un « Non merci » ne nous rend plus aveugles, on compte toujours les parties.
+- La fenêtre ne demande plus que les rapports de bugs (Sentry) et le suivi dans le temps. Le texte est à la voix de Mochi (« Tu m'aides à chasser les bugs ? »), avec deux boutons strictement égaux.
+- À faire valider par un avocat : que PostHog relève bien de l'exemption. Analyse et sources : `docs/juridique/consentement.md`.
+- Action pour Florian dans PostHog : activer « Discard client IP data » et régler la conservation à 25 mois maximum.
+- Vérifications : 397 tests unitaires et 46 tests e2e verts.
