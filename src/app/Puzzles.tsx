@@ -1,7 +1,7 @@
 // Onglet Problèmes (issue #40, phase 6) : cote et série, problème du jour mis en scène, grille des problèmes de base.
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import type { Db } from '../data/supabase';
-import { BASE_PUZZLES } from '../content/puzzles';
+import { ALL_PUZZLES } from '../content/puzzles';
 import {
   ILLEGAL_TEXT, checkAnswer, fetchPuzzleStats, fetchPuzzles, parsePuzzles, recordPuzzleAttempt, solutionFrames, startOf,
   type Puzzle, type PuzzleStats
@@ -24,7 +24,7 @@ import { legendeSerie, niveau, suivant } from './problemes';
 import { SERIE_KEY, numeroDuJour, problemeDuNumero, serieApres, serieVivante, textePartage, type Serie } from './goDuJour';
 import '../ui/apprendre.css';
 
-const LOCAL_PUZZLES = parsePuzzles(BASE_PUZZLES);
+const LOCAL_PUZZLES = parsePuzzles(ALL_PUZZLES);
 const SOLVED_KEY = 'go.problemes.v1';
 
 type Load = { status: 'loading' } | { status: 'ready'; source: 'base' | 'copie'; error?: string };
@@ -306,7 +306,7 @@ function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating, onAtt
     playStone(p, puzzle.size); hapticStone();
     if (ok) playSuccess(); else playFail();
     setTries(tries + 1);
-    setAnswer({ kind: r.kind, p, text: ok ? (puzzle.explanation ?? 'Bravo, c’est le bon coup !') : 'Pas tout à fait. Essaie encore.', n });
+    setAnswer({ kind: r.kind, p, text: ok ? (puzzle.explanation ?? 'Bravo, c’est le bon coup !') : (puzzle.refutation ?? 'Pas tout à fait. Essaie encore.'), n });
     setBoard(ok ? r.after.board : start.pos.board);
     if (ok) onSolved(tries + 1);
     // Seul le premier essai compte pour la cote.

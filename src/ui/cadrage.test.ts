@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { cadrage, centreVertical } from './cadrage';
-import { BASE_PUZZLES } from '../content/puzzles';
+import { ALL_PUZZLES } from '../content/puzzles';
 
 const vide: string[] = Array(9).fill('.........');
 const avec = (pts: [number, number][]) => vide.map((r, y) => [...r].map((c, x) => (pts.some(([a, b]) => a === x && b === y) ? 'X' : c)).join(''));
@@ -21,8 +21,8 @@ describe('cadrage', () => {
     expect(f.y + f.k).toBeLessThanOrEqual(9);
     expect(f.x).toBeGreaterThanOrEqual(0);
   });
-  it('toutes les pierres des problèmes de base sont dans leur miniature', () => {
-    for (const pz of BASE_PUZZLES) {
+  it('toutes les pierres des problèmes communs sont dans leur miniature', () => {
+    for (const pz of ALL_PUZZLES) {
       const rows = (pz.setup as { rows: string[] }).rows, f = cadrage(rows);
       rows.forEach((r, y) => [...r].forEach((c, x) => {
         if (c === '.') return;

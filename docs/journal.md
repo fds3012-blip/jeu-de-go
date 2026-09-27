@@ -356,3 +356,14 @@ Chaque livraison : issue traitée, agent, pull request, résultat des vérificat
 - « Brillant » demande une confirmation par une analyse longue. Il faut éviter tout faux positif.
 - Correction après ma revue : « Rejouer d'ici » recouvrait la liste des coups. Le Résumé s'affiche maintenant à la place du goban.
 - Reste : régler les seuils sur de vraies parties analysées par KataGo.
+## #16 12 nouveaux problèmes, prouvés (pedagogie)
+
+- 12 nouveaux problèmes, soit 18 au total :
+  - capture : double atari, échelle cassée, filet, snapback ;
+  - sauvetage : sortir de l'atari, relier, prendre la pierre qui coupe, relier sur le bord ;
+  - vie et mort : faire deux yeux, tuer.
+- Chaque problème a une position légale, et sa réponse atteint l'objectif quelle que soit la défense de Blanc.
+- Chaque réponse acceptée est la seule qui marche, et ça a été testé sur tous les coups légaux. Seule exception : le filet (c3) accepte 3 coups, tous justes.
+- Deux positions fausses ont été corrigées en chemin.
+- La migration d'insertion ne modifie aucun problème existant. Elle est appliquée en production après la fusion.
+- Reste : une vérification par KataGo.
