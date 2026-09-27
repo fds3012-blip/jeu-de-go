@@ -7,8 +7,9 @@ export function toLabel(p: number, size: number): string {
 }
 
 export function fromLabel(label: string, size: number): number {
-  const x = LETTERS.indexOf(label[0].toUpperCase()), y = size - Number(label.slice(1));
-  if (x < 0 || x >= size || !(y >= 0 && y < size)) throw new Error(`Coordonnée invalide : ${label}`);
+  if (label.toLowerCase() === 'passe') return -1;
+  const x = label ? LETTERS.indexOf(label[0].toUpperCase()) : -1, y = size - Number(label.slice(1));
+  if (x < 0 || x >= size || !Number.isInteger(y) || y < 0 || y >= size || label.length < 2) throw new Error(`Coordonnée invalide : ${label}`);
   return y * size + x;
 }
 
