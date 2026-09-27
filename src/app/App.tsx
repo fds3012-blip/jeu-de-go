@@ -5,6 +5,7 @@ import { LESSONS } from '../content/lessons';
 import { useSettings, useStored } from './settings';
 import { Bubble } from '../ui/Mochi';
 import { OPPONENTS, opponent, type OpponentId } from '../engine';
+import { accueil, introBut, INTRO_KEY, PARTIES_KEY, type Parties } from './home';
 
 type Tab = 'jouer' | 'apprendre' | 'profil';
 
@@ -18,12 +19,33 @@ export function App() {
   const [progress, setProgress] = useStored<Record<string, number>>('go.lecons.v1', {});
   const done = LESSONS.filter(l => (progress[l.id] ?? 0) >= l.steps.length).length;
   const lesson = LESSONS.find(l => l.id === lessonId);
+  const [parties, setParties] = useStored<Parties>(PARTIES_KEY, { n: 0 });
+  const [introVue, setIntroVue] = useStored<boolean>(INTRO_KEY, false);
+  const [intro, setIntro] = useState(false); // bulle « but du jeu » au-dessus du plateau
+  const [reglages, setReglages] = useState(false);
+  const home = accueil(parties, done, adv, settings.size);
+
+  function lancer(mode: 'ordi' | 'deux') {
+    // Première partie contre l'ordi : Mochi explique le but, une seule fois.
+    const montrer = mode === 'ordi' && !introVue;
+    setIntro(montrer);
+    if (montrer) setIntroVue(true);
+    setParties({ n: parties.n + 1, dernier: mode === 'ordi' ? adv.id : parties.dernier });
+    setReglages(false);
+    setPlaying(mode);
+    window.scrollTo({ top: 0 });
+  }
 
   const go = (t: Tab) => { setTab(t); setPlaying(false); setLessonId(null); window.scrollTo({ top: 0 }); };
 
   let screen;
   if (tab === 'jouer' && playing) {
-    screen = <Game key={playing === 'ordi' ? adv.id : 'deux'} size={settings.size} komi={6.5} confirmTouch={settings.confirmTouch} opponent={playing === 'ordi' ? adv : undefined} onExit={() => setPlaying(false)} />;
+    screen = (
+      <>
+        {intro && playing === 'ordi' && <div className="intro"><Bubble>{introBut(adv.nom)}</Bubble></div>}
+        <Game key={playing === 'ordi' ? adv.id : 'deux'} size={settings.size} komi={6.5} confirmTouch={settings.confirmTouch} opponent={playing === 'ordi' ? adv : undefined} onExit={() => { setIntro(false); setPlaying(false); }} />
+      </>
+    );
   } else if (tab === 'apprendre' && lesson) {
     screen = <LessonPlayer lesson={lesson} start={(progress[lesson.id] ?? 0) % lesson.steps.length} confirmTouch={settings.confirmTouch}
       onProgress={n => setProgress({ ...progress, [lesson.id]: Math.max(progress[lesson.id] ?? 0, n) })} onExit={() => setLessonId(null)} />;
@@ -50,34 +72,41 @@ export function App() {
     );
   } else {
     screen = (
-      <div>
-        <Bubble>{done === 0 ? 'Nouveau au go ? Commence par le chemin des leçons : en dix minutes, tu sauras jouer.' : `Tu as terminé ${done} leçon${done > 1 ? 's' : ''} sur ${LESSONS.length}. Prêt pour une partie ?`}</Bubble>
-        <h2>Nouvelle partie</h2>
-        <p className="muted small" style={{ marginTop: 0 }}>Ton adversaire</p>
-        <div className="seg">
-          {OPPONENTS.map(o => <button key={o.id} aria-pressed={adv.id === o.id} onClick={() => setAdversaire(o.id)}>{o.nom}</button>)}
+      <div className="home">
+        <Bubble>{home.mochi}</Bubble>
+        <div className="choix">
+          <span><b>{adv.nom}</b> · {settings.size} × {settings.size}</span>
+          <button className="lien" aria-expanded={reglages} aria-controls="reglages" onClick={() => setReglages(!reglages)}>{reglages ? 'Fermer' : 'Changer'}</button>
         </div>
-        <p className="muted small"><b>{adv.nom}, {adv.rang}.</b> {adv.description} Tu as Noir.</p>
-        <p className="muted small" style={{ marginTop: -6 }}>Le kyu est un niveau : plus le nombre est petit, plus on est fort.</p>
-        <p className="muted small">Taille du plateau</p>
-        <div className="seg">
-          {([9, 13, 19] as const).map(n => <button key={n} aria-pressed={settings.size === n} onClick={() => set({ size: n })}>{n} × {n}</button>)}
+        {reglages && (
+          <div id="reglages">
+            <p className="muted small">Ton adversaire</p>
+            <div className="seg">
+              {OPPONENTS.map(o => <button key={o.id} aria-pressed={adv.id === o.id} onClick={() => setAdversaire(o.id)}>{o.nom}</button>)}
+            </div>
+            <p className="muted small"><b>{adv.nom}, {adv.rang}.</b> {adv.description} Tu as Noir.</p>
+            <p className="muted small" style={{ marginTop: -6 }}>Le kyu est un niveau : plus le nombre est petit, plus on est fort.</p>
+            <p className="muted small">Taille du plateau</p>
+            <div className="seg">
+              {([9, 13, 19] as const).map(n => <button key={n} aria-pressed={settings.size === n} onClick={() => set({ size: n })}>{n} × {n}</button>)}
+            </div>
+            <p className="muted small">{settings.size === 9 ? 'Parties courtes, idéal pour apprendre.' : settings.size === 13 ? 'Une partie de taille moyenne.' : 'Le plateau classique des joueurs confirmés.'}</p>
+          </div>
+        )}
+        <div className="dock">
+          <button className="cta" onClick={() => lancer('ordi')}>{home.cta}</button>
+          <div className="row">
+            <button className="btn" onClick={() => lancer('deux')}>Jouer à deux</button>
+            <button className="btn" onClick={() => go('apprendre')}>Apprendre</button>
+          </div>
         </div>
-        <p className="muted small">{settings.size === 9 ? 'Parties courtes, idéal pour apprendre.' : settings.size === 13 ? 'Une partie de taille moyenne.' : 'Le plateau classique des joueurs confirmés.'}</p>
-        <div className="card" style={{ marginTop: 16 }}>
-          <b>Apprendre</b>
-          <p className="muted small" style={{ margin: '4px 0 10px' }}>{done} leçon{done > 1 ? 's' : ''} terminée{done > 1 ? 's' : ''} sur {LESSONS.length}</p>
-          <button className="btn" style={{ width: '100%' }} onClick={() => go('apprendre')}>Continuer le chemin</button>
-        </div>
-        <button className="btn" style={{ width: '100%', marginTop: 10 }} onClick={() => setPlaying('deux')}>Jouer à deux sur ce téléphone</button>
-        <button className="cta" onClick={() => setPlaying('ordi')}>Jouer contre l'ordi</button>
       </div>
     );
   }
 
   return (
     <>
-      <main className="app">
+      <main className={`app${tab === 'jouer' && !playing ? ' app-home' : ''}`}>
         <header className="top">
           <h1>Go</h1>
           <p>{tab === 'jouer' ? 'Jouer' : tab === 'apprendre' ? 'Le chemin des leçons' : 'Profil'}</p>
