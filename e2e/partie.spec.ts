@@ -71,5 +71,7 @@ test("contre l'ordi : barre d'avantage après le premier coup, indice entouré",
   await indice.click();
   await expect(plateau(page).locator('[data-indice]')).toHaveCount(1, { timeout: 10_000 });
   await expect(message(page)).toHaveText(/Regarde dans le cercle vert/);
+  // 3 indices par partie contre l'ordi (#35) : le libellé reste « Indice », le reste est dans la description.
+  await expect(indice).toHaveAttribute('aria-description', '2 indices restants');
   expect(erreurs).toEqual([]);
 });

@@ -1,9 +1,29 @@
 import { describe, expect, it } from 'vitest';
-import { aideActive, ALERTE_ATARI, arrondiDemi, coupsJoues, EXPLICATION_ATARI, groupesEnAtari, libelleAvantage, libelleCoup, messageAtari, metEnAtari, nouveauxAtari, partNoir } from './partie';
+import { aideActive, ALERTE_ATARI, arrondiDemi, coupsJoues, descriptionIndices, EXPLICATION_ATARI, groupesEnAtari, indicesRestants, INDICES_PAR_PARTIE, libelleAvantage, libelleCoup, messageAtari, messageIndice, metEnAtari, nouveauxAtari, partNoir, PLUS_D_INDICE } from './partie';
 import { choisirReplique, GENERIQUES, LONGUEUR_MAX, PERSONNELLES, repliques, type Situation } from './repliques';
 import { newPosition, play, type Position } from '../go/rules';
 import { fromLabel } from '../go/coords';
 import { fromRows } from '../go/position';
+
+describe("indices limités contre l'ordi (#35)", () => {
+  it('donne 3 indices par partie, puis plus aucun', () => {
+    expect(INDICES_PAR_PARTIE).toBe(3);
+    expect([0, 1, 2, 3].map(indicesRestants)).toEqual([3, 2, 1, 0]);
+    expect(indicesRestants(7)).toBe(0);
+    expect(indicesRestants(-1)).toBe(3);
+  });
+  it('annonce la fin des indices seulement avec le dernier', () => {
+    expect(messageIndice(2)).not.toContain(PLUS_D_INDICE);
+    expect(messageIndice(1)).not.toContain(PLUS_D_INDICE);
+    expect(messageIndice(0)).toMatch(/^Regarde dans le cercle vert/);
+    expect(messageIndice(0)).toContain("Plus d'indice pour cette partie. À toi de jouer !");
+  });
+  it("décrit le nombre restant pour les lecteurs d'écran", () => {
+    expect(descriptionIndices(3)).toBe('3 indices restants');
+    expect(descriptionIndices(1)).toBe('1 indice restant');
+    expect(descriptionIndices(0)).toBe("Plus d'indice pour cette partie");
+  });
+});
 
 describe("aide de Mochi : alerte d'atari (#35)", () => {
   // Plateaux 5 × 5, y depuis le haut : l'index d'un point est y * 5 + x.

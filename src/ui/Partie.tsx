@@ -123,6 +123,21 @@ export function BarreActions({ actions, label }: { actions: Action[]; label: str
   );
 }
 
+/**
+ * Indices restants (#35) : trois petites pierres collées à l'icône, pleines tant qu'il en reste.
+ * Purement visuel : le nombre est dit par la description accessible du bouton.
+ */
+export function CompteurIndices({ restants, total = 3, children }: { restants: number; total?: number; children: ReactNode }) {
+  return (
+    <span className="compteur-indices" data-restants={restants}>
+      {children}
+      <span className="compteur-pierres" aria-hidden="true">
+        {Array.from({ length: total }, (_, i) => <i key={i} className={i < restants ? 'pleine' : undefined} />)}
+      </span>
+    </span>
+  );
+}
+
 // Icônes de la barre d'actions. Les quatre actions de la partie sont dessinées avec des pierres (IconesActions.tsx,
 // issue #65), comme la barre de navigation. Précédent et suivant (relecture) restent des chevrons au trait, 26 px.
 const CHEVRONS = {
