@@ -53,6 +53,11 @@ Chaque livraison : issue traitée, agent, pull request, résultat des vérificat
 - Vérifications : lint, typecheck, 57 tests, build, e2e : vert.
 - Reste : validation des maquettes par Florian. L'issue reste ouverte avec le label « bloqué ».
 
+## #21 L'ordi propose les pierres mortes (moteur-go)
+
+- Livré : `deadStones` et `ownership` (`src/engine/dead.ts`), calculés par simulations avec décision par groupe entier (un groupe à deux vrais yeux est toujours vivant, un seki reste un seki). Pré-marquage à l'entrée du comptage, contre l'ordi comme à deux, avec la phrase de l'issue. Le moteur passe maintenant en comptant sans les pierres mortes estimées.
+- Vérifications : 10 positions de référence (9 × 9 et 13 × 13) justes dans Vitest, moins de 300 ms en 9 × 9 ; test e2e qui va jusqu'au résultat en appuyant seulement sur « Valider le score ». Lint, typecheck, 113 tests, build, 15 tests e2e : vert.
+- Limite : positions de référence construites à la main ; KataGo (#8) donnera une estimation plus fiable.
 ## #23 Accueil en 3 secondes : un message, une action (frontend)
 
 - Livré : pour un nouveau joueur, Mochi et le bouton principal disent la même chose (« Joue ta première partie contre Pomme ») ; adversaire et plateau repliés en « Pomme · 9 × 9 · Changer » ; « Jouer à deux » et « Apprendre » en actions secondaires ; bulle de Mochi qui explique le but au premier coup, une seule fois.
