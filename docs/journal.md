@@ -321,3 +321,14 @@ Chaque livraison : issue traitée, agent, pull request, résultat des vérificat
   - les deux sortes d'apostrophes mélangées ;
   - le bouton principal de l'accueil sur deux lignes ;
   - des états pas encore capturés.
+
+## #78 Score raconté (frontend)
+
+- En fin de partie, le goban raconte le score en trois temps (territoires, prisonniers, komi), puis donne le résultat.
+- L'animation dure 2,5 s. Un toucher passe directement au résultat, et tout s'affiche d'emblée si les mouvements sont réduits.
+- Le komi est expliqué la première fois.
+- Les totaux viennent de `score()`, sans aucune règle recalculée.
+- Le carillon de victoire attend la fin du récit, pour ne pas dévoiler le résultat trop tôt.
+- Reste :
+  - le bouton « Qui mène ? » en partie ;
+  - la mise en valeur des pierres mortes pendant le récit.
