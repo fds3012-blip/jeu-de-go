@@ -1,62 +1,99 @@
-import { useSyncExternalStore } from 'react';
-import { analyticsAvailable, getConsent, setConsent, subscribeConsent, type Consent } from '../data/analytics';
+import { useEffect, useRef, type KeyboardEvent } from 'react';
+import { setConsent } from '../data/analytics';
+import { useConsentement } from './consentement';
+import { Sceau } from '../ui/Sceau';
+import { LigneInterrupteur } from '../ui/Reglage';
 
-function useConsent(): Consent | null {
-  return useSyncExternalStore(subscribeConsent, getConsent, () => null);
-}
+/**
+ * Fenêtre de consentement (issue #50) : posée une seule fois, au premier lancement.
+ * Boîte de dialogue modale native : le reste de la page est inerte ; Tab tourne dans la fenêtre.
+ * Échap ferme sans choix (`onIgnorer`) : elle reviendra au prochain lancement.
+ */
+export function ConsentModal({ visible, onConditions, onIgnorer }: { visible: boolean; onConditions: () => void; onIgnorer: () => void }) {
+  const ref = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    const d = ref.current;
+    if (!d) return;
+    if (visible && !d.open) {
+      d.showModal?.();
+      // Focus sur le titre : lu en premier par les lecteurs d'écran, sans mettre en avant un des deux choix.
+      d.querySelector<HTMLElement>('#accord-titre')?.focus();
+    }
+    if (!visible && d.open) d.close();
+  }, [visible]);
 
-/** Bandeau court, affiché tant que le joueur n'a pas choisi. Placé dans le flux : il ne recouvre rien. */
-export function ConsentBanner({ onMore }: { onMore?: () => void }) {
-  const consent = useConsent();
-  if (consent !== null || !analyticsAvailable()) return null;
+  // Focus piégé : Tab et Maj+Tab tournent entre le premier et le dernier bouton de la fenêtre.
+  const piege = (e: KeyboardEvent<HTMLDialogElement>) => {
+    if (e.key !== 'Tab' || !ref.current) return;
+    const cibles = [...ref.current.querySelectorAll<HTMLElement>('button, a[href]')];
+    if (!cibles.length) return;
+    const premier = cibles[0], dernier = cibles[cibles.length - 1];
+    const actif = document.activeElement as HTMLElement | null;
+    const dedans = !!actif && cibles.includes(actif);
+    // Depuis le titre (focus d'ouverture) ou hors des boutons : on repart du premier ou du dernier.
+    if (e.shiftKey && (actif === premier || !dedans)) { e.preventDefault(); dernier.focus(); }
+    else if (!e.shiftKey && (actif === dernier || !dedans)) { e.preventDefault(); premier.focus(); }
+  };
+
   return (
-    <section className="card consent" aria-label="Mesure d'audience">
-      <p className="small" style={{ margin: 0 }}>
-        On aimerait mesurer l’usage de l’app et ses erreurs pour l’améliorer. Rien n’est envoyé sans ton accord.
-      </p>
-      {onMore && <button className="link small" onClick={onMore}>En savoir plus</button>}
-      <div className="row" style={{ marginTop: 4 }}>
-        <button className="btn" onClick={() => setConsent('refuse')}>Refuser</button>
-        <button className="btn" onClick={() => setConsent('accepte')}>Accepter</button>
-      </div>
-    </section>
+    <dialog ref={ref} className="accord" aria-modal="true" aria-labelledby="accord-titre" aria-describedby="accord-texte"
+      // Échap : `cancel`, ou directement `close` quand le navigateur saute `cancel` (aucun geste avant).
+      // Une fermeture que l'app n'a pas demandée (visible encore vrai) vaut « pas de choix ».
+      onCancel={e => { e.preventDefault(); onIgnorer(); }} onClose={() => { if (visible) onIgnorer(); }} onKeyDown={piege}>
+      {/* Contenu toujours rendu : la sortie en fondu garde le texte visible jusqu'au bout. */}
+      <div className="accord-corps">
+        <Sceau id="mochi" taille={48} />
+        <h2 id="accord-titre" tabIndex={-1}>Aide-nous à améliorer le jeu</h2>
+        <p id="accord-texte">On aimerait compter les parties et repérer les bugs, sans jamais voir ton e-mail ni tes coups.</p>
+        <button type="button" className="lien accord-conditions" onClick={onConditions}>Lire les conditions</button>
+        <div className="accord-actions">
+          <button type="button" className="btn primary" onClick={() => setConsent('accepte')}>Accepter</button>
+          <button type="button" className="btn accord-refuser" onClick={() => setConsent('refuse')}>Refuser</button>
+        </div>
+        </div>
+    </dialog>
   );
 }
 
-/** Section « Confidentialité » du Profil : réglage du consentement et données collectées. */
-export function Confidentialite() {
-  const consent = useConsent();
+/** Page « Conditions et confidentialité » : l'interrupteur pour changer d'avis, puis les données collectées. */
+export function Conditions({ onRetour }: { onRetour: () => void }) {
+  const consent = useConsentement();
   return (
-    <div>
-      {analyticsAvailable() && (
-        <>
-          <p className="muted small">Mesure d’audience et rapports d’erreur</p>
-          <div className="seg">
-            <button aria-pressed={consent === 'accepte'} onClick={() => setConsent('accepte')}>Oui</button>
-            <button aria-pressed={consent === 'refuse'} onClick={() => setConsent('refuse')}>Non</button>
-          </div>
-          <p className="muted small">Refuser ne t’enlève aucune fonction. Tu peux changer d’avis à tout moment.</p>
-        </>
-      )}
-      <div className="card small">
-        <b>Ce qui reste sur ton téléphone</b>
-        <p style={{ margin: '4px 0 0' }}>Tes réglages et ta progression dans les leçons. L’ordi calcule ses coups sur ton téléphone : tes parties contre lui ne sont pas envoyées.</p>
+    <section className="sous-vue" aria-labelledby="conditions-titre">
+      <button type="button" className="back retour" onClick={onRetour}>
+        <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M10 3.5 5.5 8 10 12.5" /></svg>Retour
+      </button>
+      <h2 id="conditions-titre">Conditions et confidentialité</h2>
+      <div className="lignes">
+        <LigneInterrupteur libelle="Mesure d’audience et erreurs" aide="Refuser ne t’enlève aucune fonction."
+          actif={consent === 'accepte'} onChange={v => setConsent(v ? 'accepte' : 'refuse')} />
       </div>
-      <div className="card small">
-        <b>Si tu crées un compte</b>
-        <p style={{ margin: '4px 0 0' }}>Ton adresse e-mail, ton pseudo et ta cote sont enregistrés chez Supabase, sur des serveurs à Paris. Ils servent à te connecter et à jouer en ligne.</p>
+      <div className="conditions-texte">
+        <div className="card small">
+          <h3>Ce qui reste sur ton téléphone</h3>
+          <p>Tes réglages et ta progression dans les leçons. L’ordi calcule ses coups sur ton téléphone : tes parties contre lui ne sont pas envoyées.</p>
+        </div>
+        <div className="card small">
+          <h3>Si tu crées un compte</h3>
+          <p>Ton adresse e-mail, ton pseudo et ta cote sont enregistrés chez Supabase, sur des serveurs à Paris. Ils servent à te connecter et à jouer en ligne.</p>
+        </div>
+        <div className="card small">
+          <h3>Seulement si tu acceptes la mesure d’audience</h3>
+          <p>
+            PostHog (serveurs dans l’Union européenne) reçoit quelques événements : ouverture de l’app, première pierre, partie terminée
+            (taille, adversaire, résultat), leçon terminée, création de compte. Avec un identifiant tiré au hasard, et l’identifiant de ton compte si tu es connecté.
+            Jamais ton e-mail ni tes coups. Ton adresse IP n’est pas conservée.
+          </p>
+          <p>Sentry (serveurs en Allemagne) reçoit les rapports d’erreur : message d’erreur, version de l’app, navigateur.</p>
+        </div>
+        <div className="card small">
+          <h3>Tes droits</h3>
+          <p>
+            Tu peux retirer ton accord à tout moment avec l’interrupteur en haut de cette page. Tu peux aussi demander à voir,
+            corriger ou effacer tes données. Sans compte, effacer les données du site dans ton navigateur supprime tout ce qui est sur ce téléphone.
+          </p>
+        </div>
       </div>
-      <div className="card small">
-        <b>Seulement si tu acceptes la mesure d’audience</b>
-        <p style={{ margin: '4px 0 0' }}>
-          PostHog (serveurs dans l’Union européenne) reçoit quelques événements : ouverture de l’app, première pierre, partie terminée
-          (taille, adversaire, résultat), leçon terminée, création de compte. Avec un identifiant tiré au hasard, et l’identifiant de ton compte si tu es connecté.
-          Jamais ton e-mail ni tes coups. Ton adresse IP n’est pas conservée.
-        </p>
-        <p style={{ margin: '6px 0 0' }}>
-          Sentry (serveurs en Allemagne) reçoit les rapports d’erreur : message d’erreur, version de l’app, navigateur.
-        </p>
-      </div>
-    </div>
+    </section>
   );
 }
