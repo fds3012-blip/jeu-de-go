@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { LESSONS } from '../content/lessons';
 import { ACQUIS, acquis } from '../content/acquis';
-import { CHAPITRES_A_VENIR, LIGNE, boutonChemin, etapes, finDeLecon, titreCourt, trace, traceJusqua, type Progression } from './apprendre';
+import { CHAPITRES_A_VENIR, LIGNE, MARGE_RANGEE, boutonChemin, etapes, finDeLecon, titreCourt, trace, traceJusqua, type Progression } from './apprendre';
 
 const plein = (id: string) => LESSONS.find(l => l.id === id)!.steps.length;
 
@@ -93,11 +93,54 @@ describe('trace : chemin de pierres sur les lignes du goban', () => {
   });
   it('partie parcourue : jusqu’à la pierre donnée', () => {
     const t = trace(6, { encours: 3 });
-    expect(traceJusqua(t, 0, 3)).toBe('');
-    expect(traceJusqua(t, 2, 3).match(/H/g)).toHaveLength(2);
-    expect(traceJusqua(t, 99, 3)).toBe(t.d);
-    expect(t.d.startsWith(traceJusqua(t, 3, 3))).toBe(true);
-    expect(trace(0)).toEqual({ pierres: [], hauteur: 0, d: '' });
+    expect(traceJusqua(t, 0)).toBe('');
+    expect(traceJusqua(t, 2).match(/H/g)).toHaveLength(2);
+    expect(traceJusqua(t, 99)).toBe(t.d);
+    expect(t.d.startsWith(traceJusqua(t, 3))).toBe(true);
+    expect(trace(0)).toEqual({ pierres: [], hauteur: 0, virages: [], d: '' });
+  });
+});
+
+describe('trace : rangées plus hautes que l’écart (#169, zoom 200 %)', () => {
+  const pierre = 29; // moitié de la pierre : une rangée occupe au moins ça sous son centre
+  it('sans mesure, ou si chaque rangée tient dans son écart, rien ne change (390 px)', () => {
+    for (const encours of [-1, 0, 2, 5]) {
+      const ref = trace(6, { encours });
+      expect(trace(6, { encours, bas: [] })).toEqual(ref);
+      // Tient : rangée ordinaire jusqu’à une ligne moins la marge ; rangée en cours jusqu’à trois lignes moins la marge.
+      const bas = Array.from({ length: 6 }, (_, i) => (i === encours ? 3 : 1) * LIGNE - MARGE_RANGEE);
+      expect(trace(6, { encours, bas })).toEqual(ref);
+    }
+  });
+  it('une rangée haute repousse la suivante : pas de chevauchement, virage sous la rangée', () => {
+    const bas = [pierre, 200, pierre, 150, 320, pierre];
+    const t = trace(6, { encours: 0, bas });
+    for (let i = 1; i < 6; i++) {
+      const finRangee = t.pierres[i - 1].y + bas[i - 1];
+      // Le virage passe sous la rangée du dessus, et la rangée suivante (qui commence une demi-pierre au-dessus
+      // de sa pierre) commence sous le virage.
+      expect(t.virages[i - 1]).toBeGreaterThanOrEqual(finRangee + MARGE_RANGEE);
+      expect(t.pierres[i].y - pierre).toBeGreaterThan(t.virages[i - 1]);
+    }
+    expect(t.hauteur).toBeGreaterThanOrEqual(t.pierres[5].y + bas[5]);
+  });
+  it('les pierres et les virages restent sur les lignes du goban', () => {
+    const t = trace(6, { encours: 3, bas: [97, 211, 45, 400, 61, 133] });
+    for (const p of t.pierres) expect(p.y % LIGNE).toBe(0);
+    for (const v of t.virages) expect(v % LIGNE).toBe(0);
+    expect(t.hauteur % LIGNE).toBe(0);
+    expect(t.d).toMatch(/^M-?\d+ \d+([VH]-?\d+)+$/);
+  });
+  it('la dernière rangée haute agrandit le goban', () => {
+    expect(trace(2, { bas: [pierre, 300] }).hauteur).toBeGreaterThanOrEqual(trace(2).pierres[1].y + 300);
+  });
+});
+
+describe('trace : suite', () => {
+  it('le tracé partiel suit les mêmes virages', () => {
+    const t = trace(4, { bas: [200, 200, 200, 200] });
+    expect(traceJusqua(t, 3)).toBe(t.d);
+    expect(t.d).toContain(`V${t.virages[0]}H`);
   });
 });
 
