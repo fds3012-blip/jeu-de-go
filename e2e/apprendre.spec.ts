@@ -34,6 +34,8 @@ test('terminer la leçon 1 affiche la fin de leçon, puis la pierre 1 est coché
   await page.getByRole('button', { name: 'Terminer la leçon' }).click();
 
   await expect(page.getByRole('heading', { name: 'Leçon terminée' })).toBeVisible();
+  // Célébration modeste : pas de confettis avant la dernière leçon.
+  await expect(page.getByTestId('confettis')).toHaveCount(0);
   await expect(page.getByText(/Tu sais compter les libertés/)).toBeVisible();
   await expect(page.getByRole('button', { name: 'Leçon suivante' })).toBeVisible();
   await page.getByRole('button', { name: 'Retour au chemin' }).click();
@@ -43,6 +45,29 @@ test('terminer la leçon 1 affiche la fin de leçon, puis la pierre 1 est coché
   await expect(pierre1).toHaveAttribute('data-etat', 'faite');
   await expect(page.getByRole('button', { name: /^Leçon 2 : .*, prochaine étape$/ })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Continuer : Atari' })).toBeVisible();
+  // Un seul bouton en relief : sous la leçon en cours, il n'affiche que le verbe.
+  await expect(page.locator('.cta')).toHaveCount(1);
+  await expect(page.getByRole('button', { name: 'Continuer : Atari' })).toHaveText('Continuer');
+  await expect(page.getByRole('button', { name: /^Leçon 3 : / })).toHaveAttribute('data-etat', 'avenir');
+});
+
+test('dernière leçon : « Chapitre terminé », confettis, sauf si les célébrations sont coupées', async ({ page }) => {
+  const presque = { l1: 3, l2: 3, l3: 3, l4: 2, l5: 3, l6: 2 };
+  for (const celebrations of [true, false]) {
+    await page.addInitScript(([p, c]) => {
+      localStorage.setItem('go.lecons.v1', JSON.stringify(p));
+      localStorage.setItem('go.settings.v1', JSON.stringify({ celebrations: c }));
+    }, [presque, celebrations] as const);
+    await page.goto('/');
+    await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
+    await page.getByRole('button', { name: 'Continuer : Territoire et ouverture' }).click();
+    await jouer(page, 'E5');
+    await page.getByRole('button', { name: 'Terminer la leçon' }).click();
+    await expect(page.getByRole('heading', { name: 'Chapitre terminé' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Retour au chemin' })).toBeVisible();
+    if (celebrations) await expect(page.getByTestId('confettis')).toBeAttached();
+    else { await page.waitForTimeout(800); await expect(page.getByTestId('confettis')).toHaveCount(0); }
+  }
 });
 
 test('« Leçon suivante » ouvre la leçon 2', async ({ page }) => {

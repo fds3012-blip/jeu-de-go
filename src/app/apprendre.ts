@@ -28,66 +28,76 @@ export function titreCourt(titre: string): string {
   return titre.split(/\s*:\s*/)[0];
 }
 
-/** Libellé du bouton principal du chemin, et la leçon qu'il ouvre. */
-export function boutonChemin(lecons: Lesson[], progression: Progression): { texte: string; id: string } | null {
+/**
+ * Bouton principal du chemin : la leçon qu'il ouvre, son nom complet pour les lecteurs d'écran (`texte`)
+ * et le seul verbe affiché (`verbe`), puisque le titre de la leçon est écrit juste au-dessus.
+ */
+export function boutonChemin(lecons: Lesson[], progression: Progression): { texte: string; verbe: string; id: string } | null {
   if (!lecons.length) return null;
   const suivante = lecons.find(l => (progression[l.id] ?? 0) < l.steps.length);
-  if (!suivante) return { texte: `Revoir : ${titreCourt(lecons[0].title)}`, id: lecons[0].id };
+  if (!suivante) return { texte: `Revoir : ${titreCourt(lecons[0].title)}`, verbe: 'Revoir', id: lecons[0].id };
   const commence = lecons.some(l => (progression[l.id] ?? 0) > 0);
-  return { texte: commence ? `Continuer : ${titreCourt(suivante.title)}` : 'Commencer', id: suivante.id };
+  return commence
+    ? { texte: `Continuer : ${titreCourt(suivante.title)}`, verbe: 'Continuer', id: suivante.id }
+    : { texte: 'Commencer', verbe: 'Commencer', id: suivante.id };
 }
 
-/** Réplique courte de Mochi posée à côté de la pierre en cours. */
-export function repliqueMochi(e: Etape | undefined): string {
-  if (!e) return 'Tout le chemin est fait. Bravo !';
-  if (e.faites > 0) return 'On reprend ici ?';
-  return e.rang === 1 ? 'On commence ici !' : 'À toi, deux minutes !';
+/** Titre et phrase de l'écran de fin : plus modestes qu'une victoire, sauf pour la dernière leçon du chapitre. */
+export function finDeLecon(lecons: Lesson[], id: string): { titre: string; derniere: boolean } {
+  const derniere = lecons.length > 0 && lecons[lecons.length - 1].id === id;
+  return { titre: derniere ? 'Chapitre terminé' : 'Leçon terminée', derniere };
 }
 
-/** Géométrie du chemin de pierres de gué, en pixels verticaux et en pourcentage de largeur. */
+/** Écart entre deux lignes du goban dessiné sous le chemin, en px : une pierre tient pile sur une intersection. */
+export const LIGNE = 56;
+
+/** Géométrie du chemin de pierres posé sur les lignes d'un goban. Repère en px ; x compté depuis le milieu de l'écran. */
 export interface Trace {
-  /** Centre de chaque pierre : x en % de la largeur, y en px depuis le haut du chemin. */
-  pierres: { x: number; y: number }[];
+  /** Chaque pierre est sur une intersection : `col` en lignes depuis le milieu (négatif à gauche), x = col × LIGNE, y depuis le haut. */
+  pierres: { col: number; x: number; y: number }[];
   hauteur: number;
-  /** Tracé SVG dans un repère « x en %, y en px » (viewBox 0 0 100 hauteur, étiré sans conserver le rapport). */
+  /** Tracé SVG (x relatif au milieu) qui suit les lignes du goban : descendre, tourner à angle droit, descendre. */
   d: string;
 }
 
-/** Positions horizontales des pierres, en % : le chemin serpente de gauche à droite, jamais deux fois au même endroit. */
-const XS = [24, 74, 30, 78, 22, 70];
+/** Colonne de chaque pierre : le chemin passe d'un côté à l'autre, jamais deux fois au même endroit, et laisse la place d'un titre en face. */
+const COLS = [-2, 2, -1, 2, -2, 1];
 
-/**
- * Chemin qui serpente verticalement. Chaque courbe part verticalement d'une pierre et arrive verticalement sur la suivante :
- * à la hauteur d'une pierre, le tracé reste sous elle, et le titre posé de l'autre côté ne le croise pas.
- * `avant` : place réservée au-dessus de la pierre d'indice `bulle` (la bulle de Mochi).
- */
-export function trace(n: number, { pas = 112, marge = 44, bulle = -1, avant = 56 } = {}): Trace {
-  const pierres: { x: number; y: number }[] = [];
-  let y = marge;
-  for (let i = 0; i < n; i++) {
-    if (i === bulle) y += avant;
-    pierres.push({ x: XS[i % XS.length], y });
-    y += pas;
-  }
-  const hauteur = n ? pierres[n - 1].y + marge : 0;
-  let d = n ? `M${pierres[0].x} ${pierres[0].y}` : '';
-  for (let i = 1; i < n; i++) {
-    const a = pierres[i - 1], b = pierres[i], m = (a.y + b.y) / 2;
-    d += `C${a.x} ${m} ${b.x} ${m} ${b.x} ${b.y}`;
-  }
-  return { pierres, hauteur, d };
+/** Morceau de tracé d'une pierre à la suivante, sur les lignes : descendre jusqu'à la ligne `tourne`, traverser, descendre. */
+function morceau(a: { x: number; y: number }, b: { x: number; y: number }, tourne: number): string {
+  return a.x === b.x ? `V${b.y}` : `V${tourne}H${b.x}V${b.y}`;
 }
 
-/** Tracé partiel : du début du chemin jusqu'à la pierre d'indice `jusqua` (incluse). Vide si `jusqua` < 1. */
-export function traceJusqua(t: Trace, jusqua: number): string {
-  const k = Math.min(jusqua, t.pierres.length - 1);
-  if (k < 1) return '';
-  const p = t.pierres;
-  let d = `M${p[0].x} ${p[0].y}`;
-  for (let i = 1; i <= k; i++) {
-    const a = p[i - 1], b = p[i], m = (a.y + b.y) / 2;
-    d += `C${a.x} ${m} ${b.x} ${m} ${b.x} ${b.y}`;
+/**
+ * Ligne du virage entre les pierres i − 1 et i : la première ligne libre sous la pierre du haut.
+ * Sous la leçon en cours, on tourne juste au-dessus de la suivante : son bouton en relief a la place.
+ */
+function virage(p: Trace['pierres'], i: number, encours: number): number {
+  return i - 1 === encours ? p[i].y - LIGNE : p[i - 1].y + LIGNE;
+}
+
+/**
+ * Chemin de pierres sur les lignes du goban : une pierre toutes les deux lignes, en alternant les côtés.
+ * `encours` : indice de la leçon en cours ; elle a `apres` lignes de plus au-dessous, pour son bouton en relief.
+ */
+export function trace(n: number, { encours = -1, apres = 2 } = {}): Trace {
+  const pierres: Trace['pierres'] = [];
+  let y = LIGNE;
+  for (let i = 0; i < n; i++) {
+    const col = COLS[i % COLS.length];
+    pierres.push({ col, x: col * LIGNE, y });
+    y += 2 * LIGNE + (i === encours ? apres * LIGNE : 0);
   }
+  const hauteur = n ? pierres[n - 1].y + LIGNE : 0;
+  return { pierres, hauteur, d: traceJusqua({ pierres, hauteur, d: '' }, n - 1, encours, true) };
+}
+
+/** Tracé partiel : du début du chemin jusqu'à la pierre d'indice `jusqua` (incluse). Vide si `jusqua` < 1, sauf `seul` (une pierre seule). */
+export function traceJusqua(t: Trace, jusqua: number, encours = -1, seul = false): string {
+  const p = t.pierres, k = Math.min(jusqua, p.length - 1);
+  if (k < 0 || (k < 1 && !seul)) return '';
+  let d = `M${p[0].x} ${p[0].y}`;
+  for (let i = 1; i <= k; i++) d += morceau(p[i - 1], p[i], virage(p, i, encours));
   return d;
 }
 
