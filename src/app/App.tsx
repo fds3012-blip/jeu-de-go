@@ -15,13 +15,13 @@ import { Profil, type VueProfil } from './Profil';
 import { fenetreVisible, useConsentement } from './consentement';
 import { accueil, adversaireOuvert, echelle, introBut, INTRO_KEY, PARTIES_KEY, type Parties } from './home';
 import { Accueil } from './Accueil';
-import { BASE_PUZZLES } from '../content/puzzles';
+import { ALL_PUZZLES } from '../content/puzzles';
 import { parsePuzzles, puzzleOfDay } from '../data/puzzles';
 import { battu, BILAN_KEY, enregistrer, fin, komiDepuisUrl, lireBilan, type Bilan, type Issue, type StatsPartie } from './bilan';
 import { fr } from '../ui/typo';
 import { BarreNav, type Onglet } from '../ui/IconesNav';
 
-const PROBLEMES_LOCAUX = parsePuzzles(BASE_PUZZLES);
+const PROBLEMES_LOCAUX = parsePuzzles(ALL_PUZZLES);
 /** Problèmes réussis sur ce téléphone (même clé que l'onglet Problèmes). */
 const PROBLEMES_RESOLUS_KEY = 'go.problemes.v1';
 
