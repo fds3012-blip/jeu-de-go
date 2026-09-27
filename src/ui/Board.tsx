@@ -1,5 +1,6 @@
 import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent, type ReactElement } from 'react';
 import { LETTERS, toLabel } from '../go/coords';
+import { groupAt, neighbors } from '../go/rules';
 import { C, M, R, R_NOIR, VARIANTES_COQUILLAGE, coordCenter, diffBoards, hoshi, jitter, shellStriae, shellVariant, viewBoxOf, woodDataUrl, type ThemeGoban } from './boardArt';
 import { useThemeGoban } from '../app/settings';
 import './board.css';
@@ -37,7 +38,12 @@ interface Props {
   shake?: { p: number; n: number } | null;
   /** Les pierres prises partent vers leur couvercle : les noires vers le haut, les blanches vers le bas (écran de partie). */
   versCouvercles?: boolean;
+  /** Noms lus dans les annonces (issue #116) : { 2: 'Pomme' } fait dire « Pomme a joué C3 » au lieu de « Blanc joue C3 ». */
+  noms?: NomsCamps;
 }
+
+/** Nom de chaque camp pour le lecteur d'écran : 1 noir, 2 blanc. Un camp absent garde « Noir » ou « Blanc ». */
+export type NomsCamps = { 1?: string; 2?: string };
 
 // Couleurs posées sur le bois : indépendantes du mode Encre ou Papier (le goban est le même dans les deux).
 // L'encre des lignes et la nacre des pierres blanches viennent du thème du goban (#109, boardArt.ts).
@@ -113,9 +119,34 @@ export function nomIntersection(p: number, board: Int8Array, size: number, last 
 }
 
 /** Annonce polie d'un coup : « Noir joue D4 » ou « Blanc joue C3 et prend 2 pierres ». */
-export function annonceCoup(c: number, p: number, prises: number, size: number): string {
-  const qui = c === 1 ? 'Noir' : 'Blanc';
-  return `${qui} joue ${toLabel(p, size)}${prises ? ` et prend ${prises} pierre${prises > 1 ? 's' : ''}` : ''}`;
+export function annonceCoup(c: number, p: number, prises: number, size: number, noms: NomsCamps = {}): string {
+  // Un camp nommé dit « Pomme a joué C3 » : ne répète pas mot pour mot le message visible « Pomme joue C3. À toi. ».
+  const nom = c === 1 ? noms[1] : noms[2];
+  return `${nom ? `${nom} a joué` : `${c === 1 ? 'Noir' : 'Blanc'} joue`} ${toLabel(p, size)}${prises ? ` et prend ${prises} pierre${prises > 1 ? 's' : ''}` : ''}`;
+}
+
+/**
+ * Atari après un coup en `p` : les groupes adverses voisins réduits à une seule liberté.
+ * « Atari : ta pierre D4 n'a plus qu'une liberté, en D5. » (le mot est expliqué dans la phrase). Chaîne vide sinon.
+ * Si le camp menacé a un nom (l'adversaire), la phrase le cite : « la pierre D4 de Pomme ».
+ */
+export function annonceAtari(board: Int8Array, p: number, size: number, noms: NomsCamps = {}): string {
+  const c = board[p];
+  if (!c) return '';
+  const vus = new Set<number>(), phrases: string[] = [];
+  for (const q of neighbors(size)[p]) {
+    if (board[q] !== 3 - c || vus.has(q)) continue;
+    const g = groupAt(board, size, q);
+    g.stones.forEach(s => vus.add(s));
+    if (g.liberties.size !== 1) continue;
+    const lib = toLabel([...g.liberties][0], size);
+    const pts = g.stones.map(s => toLabel(s, size)).sort().join(', ');
+    const autre = c === 1 ? noms[2] : noms[1], de = autre ? ` de ${autre}` : '';
+    phrases.push(g.stones.length > 1
+      ? `Atari : ${autre ? 'les' : 'tes'} pierres ${pts}${de} n'ont plus qu'une liberté, en ${lib}.`
+      : `Atari : ${autre ? 'la' : 'ta'} pierre ${pts}${de} n'a plus qu'une liberté, en ${lib}.`);
+  }
+  return phrases.join(' ');
 }
 
 /** Corps d'une pierre (sans ombre), centré sur (0, 0). */
@@ -123,7 +154,7 @@ function corps(c: number, p: number, size: number): ReactElement {
   return <use href={c === 1 ? '#go-noire' : `#go-blanche-${shellVariant(p, size)}`} />;
 }
 
-export function Board({ size, board, toPlay = 1, marks = {}, interactive = false, stonesTappable = false, confirmTouch = true, onPlay, shake, versCouvercles = false }: Props) {
+export function Board({ size, board, toPlay = 1, marks = {}, interactive = false, stonesTappable = false, confirmTouch = true, onPlay, shake, versCouvercles = false, noms }: Props) {
   const ref = useRef<SVGSVGElement>(null);
   const theme = useThemeGoban();
   const [ghost, setGhost] = useState(-1);
@@ -149,7 +180,10 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
     setPrev(board);
     const d = diffBoards(prev, board);
     setFx({ n: fx.n + 1, placed: d ? d.placed : -1, leaving: d ? d.captured.map(p => ({ p, c: prev[p] })) : [] });
-    if (jouable && d && d.placed >= 0 && board[d.placed]) setAnnonce(annonceCoup(board[d.placed], d.placed, d.captured.length, size));
+    if (jouable && d && d.placed >= 0 && board[d.placed]) {
+      const atari = annonceAtari(board, d.placed, size, noms);
+      setAnnonce(`${annonceCoup(board[d.placed], d.placed, d.captured.length, size, noms)}${atari ? `. ${atari}` : ''}`);
+    }
   }
   useEffect(() => {
     if (!fx.leaving.length) return;

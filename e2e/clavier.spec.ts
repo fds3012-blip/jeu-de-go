@@ -64,8 +64,8 @@ test('partie contre Pomme jouée entièrement au clavier', async ({ page }) => {
     await expect(pierres(page, 'noir')).toHaveCount(n + 1);
     // Pomme répond, et la région polie annonce son coup.
     await expect(pierres(page, 'blanc')).toHaveCount(n + 1, { timeout: 10_000 });
-    await expect(annonce(page)).toHaveText(/^Blanc joue [A-J][1-9]/);
-    const reponse = (await annonce(page).textContent())!.match(/joue ([A-J][1-9])/)![1];
+    await expect(annonce(page)).toHaveText(/^Pomme a joué [A-J][1-9]/);
+    const reponse = (await annonce(page).textContent())!.match(/a joué ([A-J][1-9])/)![1];
     expect(toLabel(fromLabel(reponse, 9), 9)).toBe(reponse);
     await expect(grille(page)).toBeFocused();
   }
