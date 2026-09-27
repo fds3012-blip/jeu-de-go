@@ -76,3 +76,9 @@ Chaque livraison : issue traitée, agent, pull request, résultat des vérificat
 - Production : migration `validation_serveur_et_comptage` (colonnes de comptage sur `games`, `finish_game_by_score` réservée au service), sans suppression de données. Advisors : 4 alertes au lieu de 5.
 - Essai réel : fait en SQL dans une transaction annulée (droits refusés au client, score W+7,5 et cotes mises à jour). L'appel HTTP n'a pas pu être fait : le réseau du conteneur bloque `*.supabase.co`.
 - Suite : brancher `src/data/games.ts` dans l'écran de partie en ligne (#10) ; issue de sécurité créée pour les parties classées déséquilibrées.
+
+## #11 Leçons et problèmes branchés sur Supabase (frontend)
+
+- Livré : 4 onglets (Jouer, Apprendre, Problèmes, Profil) comme dans les maquettes ; progression des leçons en localStorage et dans `lesson_progress` une fois connecté, avec fusion à la connexion ; problème du jour et 6 problèmes de base, réponses vérifiées par `src/go`, `record_puzzle_attempt` au premier essai, « Voir la suite » animé (sans animation si mouvements réduits) ; copie locale des problèmes pour jouer sans compte ni réseau ; états chargement, erreur et hors ligne.
+- Vérifications : lint, typecheck, 203 tests, build, 18 tests e2e (dont un parcours problèmes complet sans compte) : vert.
+- Reste : le critère avec un vrai compte connecté n'est pas testable depuis ce conteneur (réseau vers Supabase bloqué, Vercel non relié) ; besoins côté base (suite des problèmes, lecture sans compte, cote et progression protégées) : issue #29 et commentaire sur #11.
