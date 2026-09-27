@@ -16,6 +16,8 @@ export const EVENTS = {
   appOuverte: 'app_ouverte',
   premierePierre: 'premiere_pierre',
   partieTerminee: 'partie_terminee',
+  // Première partie contre l'ordi menée jusqu'au score ou à l'abandon (une fois par appareil, via trackOnce ; #35).
+  premierePartieTerminee: 'premiere_partie_terminee',
   leconTerminee: 'lecon_terminee',
   lienConnexionEnvoye: 'lien_connexion_envoye',
   inscription: 'inscription',

@@ -109,6 +109,11 @@
 .icone-action .pierre-n { stroke: var(--pierre-n-bord); stroke-width: .7; }
 .icone-action .pierre-b { stroke: rgba(60, 40, 15, .42); stroke-width: .8; }
 .icone-action .ombre { fill: #000; opacity: .32; }
+/* Indices restants (#35) : trois mini-pierres en colonne à droite de l'icône ; la hauteur du bouton ne bouge pas. */
+.compteur-indices { position: relative; display: inline-flex; }
+.compteur-pierres { position: absolute; left: 100%; top: 50%; transform: translateY(-50%); margin-left: 3px; display: flex; flex-direction: column; gap: 2px; }
+.compteur-pierres i { width: 5px; height: 5px; border-radius: 50%; border: 1px solid currentColor; opacity: .55; box-sizing: border-box; }
+.compteur-pierres i.pleine { background: var(--onglet-jouer); border-color: var(--onglet-jouer); opacity: 1; }
 /* Indice : la pierre fantôme de l'accueil, dans son halo jade (seule couleur de la barre au repos). */
 .icone-action .lueur { fill: var(--onglet-jouer); opacity: .16; }
 .icone-action .lueur-anneau { fill: none; stroke: var(--onglet-jouer); stroke-width: 1.2; opacity: .6; }

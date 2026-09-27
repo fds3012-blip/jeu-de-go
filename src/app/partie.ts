@@ -88,3 +88,26 @@ export const EXPLICATION_ATARI = "Atari : il ne reste qu'une liberté, la pierre
 export function messageAtari(premiereFois: boolean): string {
   return premiereFois ? `${ALERTE_ATARI} ${EXPLICATION_ATARI}` : ALERTE_ATARI;
 }
+
+// Indices limités contre l'ordi (#35) : 3 par partie, pour que le joueur cherche d'abord seul.
+
+/** Nombre d'indices par partie contre l'ordi. */
+export const INDICES_PAR_PARTIE = 3;
+export const PLUS_D_INDICE = "Plus d'indice pour cette partie. À toi de jouer !";
+const REGARDE = 'Regarde dans le cercle vert : il y a un bon coup.';
+
+/** Indices restants après `utilises` indices (jamais négatif). */
+export function indicesRestants(utilises: number): number {
+  return Math.max(0, INDICES_PAR_PARTIE - Math.max(0, utilises));
+}
+
+/** Message du coach après un indice réussi ; le dernier annonce, une seule fois, qu'il n'y en a plus. */
+export function messageIndice(restantsApres: number): string {
+  return restantsApres > 0 ? REGARDE : `${REGARDE} ${PLUS_D_INDICE}`;
+}
+
+/** Description accessible du bouton « Indice » (le libellé reste « Indice »). */
+export function descriptionIndices(restants: number): string {
+  if (restants <= 0) return "Plus d'indice pour cette partie";
+  return `${restants} indice${restants > 1 ? 's' : ''} restant${restants > 1 ? 's' : ''}`;
+}

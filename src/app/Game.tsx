@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Board } from '../ui/Board';
-import { Avatar, Bandeau, BarreActions, BarreAvantage, Coach, Icone, ListeCoups } from '../ui/Partie';
+import { Avatar, Bandeau, BarreActions, BarreAvantage, Coach, CompteurIndices, Icone, ListeCoups } from '../ui/Partie';
 import { groupAt, newPosition, play, type Position } from '../go/rules';
 import { playAtari, playCapture, playIllegal, playStone, playVictory } from '../ui/sound';
 import { hapticCapture, hapticIllegal, hapticStone, hapticVictory } from '../ui/haptics';
@@ -12,7 +12,7 @@ import { supabase } from '../data/supabase';
 import { fr } from '../ui/typo';
 import { useProfil } from './hooks';
 import { useStored } from './settings';
-import { coupsJoues, libelleAvantage, libelleCoup, messageAtari, metEnAtari, nouveauxAtari, partNoir } from './partie';
+import { coupsJoues, descriptionIndices, indicesRestants, INDICES_PAR_PARTIE, libelleAvantage, libelleCoup, messageAtari, messageIndice, metEnAtari, nouveauxAtari, partNoir } from './partie';
 import { choisirReplique, DUREE_REPLIQUE, type Situation } from './repliques';
 import { FinPartie } from '../ui/FinPartie';
 import { Sceau } from '../ui/Sceau';
@@ -64,6 +64,8 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   const [atari, setAtari] = useState<{ len: number; libs: number[] } | null>(null);
   const [indice, setIndice] = useState<{ len: number; p: number } | null>(null);
   const [cherche, setCherche] = useState(false);
+  // Indices donnés dans cette partie : limités à 3 contre l'ordi (#35), illimités à deux.
+  const [indicesUtilises, setIndicesUtilises] = useState(0);
   const [atariExplique, setAtariExplique] = useStored<boolean>(ATARI_KEY, false);
   const profil = useProfil(ai ? supabase : null);
   const token = useRef(0); // invalide les réponses de l'ordi devenues caduques (annulation, sortie)
@@ -198,8 +200,9 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     else setMsg(`${pos.toPlay === 1 ? 'Noir' : 'Blanc'} passe. Si ${r.toPlay === 1 ? 'Noir' : 'Blanc'} passe aussi, on compte les points.`);
   }
   // Indice : le moteur cherche un bon coup (niveau Caillou, dans son Worker) et on entoure la zone où il se trouve.
+  const restants = ai ? indicesRestants(indicesUtilises) : INDICES_PAR_PARTIE;
   function hint() {
-    if (!myTurn || cherche) return;
+    if (!myTurn || cherche || restants <= 0) return;
     const len = history.length;
     setCherche(true);
     setMsg('Je cherche un bon coup…');
@@ -208,7 +211,9 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
       if (len !== history.length) return;
       if (m < 0) { setMsg("Je ne vois plus de bon coup : tu peux passer."); return; }
       setIndice({ len, p: m });
-      setMsg('Regarde dans le cercle vert : il y a un bon coup.');
+      // Seul un indice montré compte ; le dernier, Mochi annonce qu'il n'y en a plus.
+      if (ai) setIndicesUtilises(u => u + 1);
+      setMsg(ai ? messageIndice(indicesRestants(indicesUtilises + 1)) : messageIndice(1));
     }, () => { setCherche(false); setMsg("Pas d'indice pour l'instant. Réessaie dans un instant."); });
   }
   // Contre l'ordi, on revient juste avant ton dernier coup : ton coup et la réponse de l'ordi sont repris.
@@ -242,12 +247,12 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   }
   /** « Rejouer d'ici » (revue) : la partie reprend, contre le même adversaire, depuis la position choisie. */
   function rejouer(h: Position[]) {
-    token.current++; atarisSubis.current = 0;
+    token.current++; atarisSubis.current = 0; setIndicesUtilises(0);
     setHistory(h); resume(); setResigned(0); setThinking(false); setRelecture(null); setSgf(null);
     setMsg(h.length > 1 ? (ai ? 'On reprend ici. À toi de trouver mieux !' : 'On reprend ici.') : ai ? 'Nouvelle partie : tu as Noir, à toi.' : 'Nouvelle partie : Noir commence.');
   }
   function restart() {
-    token.current++; atarisSubis.current = 0;
+    token.current++; atarisSubis.current = 0; setIndicesUtilises(0);
     setHistory([newPosition(size)]); resume(); setResigned(0); setThinking(false); setRelecture(null);
     setMsg(ai ? `Nouvelle partie : tu as Noir, à toi.` : 'Nouvelle partie : Noir commence.');
   }
@@ -269,6 +274,8 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
 
   // Mesure : une partie terminée (score validé ou abandon). Ajout isolé pour faciliter les fusions.
   useEffect(() => { if (phase === 'end') track(EVENTS.partieTerminee, { mode: ai ? 'ordi' : 'deux', adversaire: ai?.id, taille: size, coups: history.length - 1, fin: resigned ? 'abandon' : 'score', gagnant: (resigned ? 3 - resigned : sc.winner) === 1 ? 'noir' : 'blanc' }); }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Première partie contre l'ordi menée jusqu'au score ou à l'abandon : une seule fois par appareil (trackOnce, #35).
+  useEffect(() => { if (phase === 'end' && ai) trackOnce(EVENTS.premierePartieTerminee, { adversaire: ai.id, taille: size, coups: history.length - 1, fin: resigned ? 'abandon' : 'score', indices: indicesUtilises, secondes: secondsSinceOpen() }); }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (phase === 'end' && relecture !== null && sgf) {
     // Revue de la partie (issue #34) : erreurs, courbe d'avantage, « Rejouer d'ici ».
@@ -323,7 +330,8 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
       {montrerIntro ? <div className="coach-intro">{intro}</div> : <Coach cle={messageCoach} attente={phase === 'play' && thinking && !!ai}>{fr(messageCoach)}</Coach>}
       {phase === 'play' ? (
         <BarreActions label="Actions de la partie" actions={[
-          { label: cherche ? 'Indice…' : 'Indice', icone: <Icone nom="indice" />, onClick: hint, disabled: !myTurn || cherche },
+          { label: cherche ? 'Indice…' : 'Indice', icone: ai ? <CompteurIndices restants={restants}><Icone nom="indice" /></CompteurIndices> : <Icone nom="indice" />,
+            onClick: hint, disabled: !myTurn || cherche || restants <= 0, description: ai ? descriptionIndices(restants) : undefined },
           { label: 'Annuler', icone: <Icone nom="annuler" />, onClick: undo, disabled: undoTo < 1 },
           { label: 'Passer', icone: <Icone nom="passer" />, onClick: pass, disabled: !myTurn },
           { label: resignArm ? fr('Confirmer ?') : 'Abandonner', icone: <Icone nom="abandonner" />, onClick: resign, danger: resignArm },

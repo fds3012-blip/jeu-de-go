@@ -267,3 +267,22 @@ Chaque livraison : issue traitée, agent, pull request, résultat des vérificat
   - la revue des anciennes parties depuis le Profil ;
   - la vérification du contraste de la courbe en clair.
 - Vérifications : 419 tests unitaires et 48 tests e2e verts.
+
+## #35, suite : indices limités et première partie terminée (frontend)
+
+- Contre l'ordi, 3 indices par partie :
+  - trois mini-pierres jade à côté de l'icône montrent ce qui reste ;
+  - à zéro, le bouton est désactivé et Mochi le dit une fois ;
+  - « Rejouer » remet le compteur à 3.
+- Nouvel événement `premiere_partie_terminee`, envoyé une seule fois. Il permet de suivre le taux de premières parties terminées.
+- À revoir par le designer : les trois points en colonne peuvent se lire comme un menu « plus d'options ».
+- Vérifications : 442 tests unitaires et 47 tests e2e verts.
+
+## 27/09, 17 h 40 : bilan de la deuxième boucle
+
+- Fusionné : #64 (consentement exempté par la CNIL), #65 (icônes de la barre d'actions), #34 (revue de partie, première version), #35 (alerte d'atari, indices limités).
+- Correction de CI : le test d'égalité des deux boutons de consentement mesurait pendant le zoom d'entrée et échouait parfois. Il est corrigé dans #68.
+- Pour Florian :
+  - faire valider l'exemption de PostHog par un avocat ;
+  - activer « Discard client IP data » dans PostHog ;
+  - essayer la revue de partie et l'alerte d'atari sur iPhone.
