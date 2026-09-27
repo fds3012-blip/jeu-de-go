@@ -27,6 +27,7 @@ import { lireReserveAppareil, reconcilierAppareil } from './gelAppareil';
 import { messageGel } from './gel';
 import { BarreNav, type Onglet } from '../ui/IconesNav';
 import { BarreNiveau, FeteNiveau } from '../ui/Niveau';
+import { annonceKomi, equilibrage, KOMI_NORMAL, partiesOrdi, type Equilibrage } from './equilibrage';
 
 const PROBLEMES_LOCAUX = parsePuzzles(ALL_PUZZLES);
 
@@ -39,10 +40,11 @@ function Flamme() {
   );
 }
 
-const KOMI_ORDI = 6.5;
-// Komi du comptage : 6,5, sauf paramètre de test `?komi=` (l'ordi, lui, joue toujours avec 6,5).
-// `?komi=` ne sert qu'aux tests de bout en bout : il n'est lu que dans un build de test (VITE_E2E, voir playwright.config.ts).
-const KOMI = import.meta.env.VITE_E2E && typeof location !== 'undefined' ? komiDepuisUrl(location.search, KOMI_ORDI) : KOMI_ORDI;
+// Komi : 6,5 (à deux), ou celui de l'équilibrage contre l'ordi (#160 : 0,5 pour les 3 premières parties).
+// Paramètre de test `?komi=` : il remplace le komi du comptage (l'ordi, lui, garde celui de l'équilibrage). Il ne sert
+// qu'aux tests de bout en bout et n'est lu que dans un build de test (VITE_E2E, voir playwright.config.ts).
+const KOMI_TEST = import.meta.env.VITE_E2E && typeof location !== 'undefined' ? komiDepuisUrl(location.search, NaN) : NaN;
+const komiCompte = (k: number) => (Number.isNaN(KOMI_TEST) ? k : KOMI_TEST);
 
 type Tab = Onglet;
 
@@ -77,6 +79,8 @@ export function App() {
   const [parties, setParties] = useStored<Parties>(PARTIES_KEY, { n: 0 });
   const [introVue, setIntroVue] = useStored<boolean>(INTRO_KEY, false);
   const [intro, setIntro] = useState(false); // bulle « but du jeu » au-dessus du plateau
+  // Équilibrage de la partie contre l'ordi en cours (#160) et son annonce du komi par Mochi.
+  const [reglage, setReglage] = useState<Equilibrage & { annonce: string | null }>({ komi: KOMI_NORMAL, avantage: true, annonce: null });
   const [reglages, setReglages] = useState(false);
   const [bilanBrut, setBilan] = useStored<Bilan>(BILAN_KEY, {});
   const bilan = lireBilan(bilanBrut);
@@ -105,7 +109,10 @@ export function App() {
     setIntro(montrer);
     if (montrer) setIntroVue(true);
     if (mode === 'ordi') setAdversaire(contre);
-    setParties({ n: parties.n + 1, dernier: mode === 'ordi' ? contre : parties.dernier });
+    const rang = partiesOrdi(parties);
+    const e = mode === 'ordi' ? equilibrage(rang) : { komi: KOMI_NORMAL, avantage: true };
+    setReglage({ ...e, annonce: mode === 'ordi' ? annonceKomi(rang, komiCompte(e.komi)) : null });
+    setParties({ n: parties.n + 1, dernier: mode === 'ordi' ? contre : parties.dernier, ordi: rang + (mode === 'ordi' ? 1 : 0) });
     setReglages(false);
     setResultat(null);
     setPartie(partie + 1);
@@ -150,8 +157,9 @@ export function App() {
   if (enPartie) {
     screen = (
       <>
-        <Game key={`${playing === 'ordi' ? adv.id : 'deux'}-${partie}`} size={settings.size} komi={KOMI} aiKomi={KOMI_ORDI} confirmTouch={settings.confirmTouch} opponent={playing === 'ordi' ? adv : undefined}
-          intro={intro && playing === 'ordi' ? <Bubble>{introBut(adv.nom)}</Bubble> : undefined} onExit={() => { setIntro(false); setPlaying(false); setResultat(null); }}
+        <Game key={`${playing === 'ordi' ? adv.id : 'deux'}-${partie}`} size={settings.size} komi={komiCompte(reglage.komi)} aiKomi={reglage.komi} avantage={reglage.avantage} confirmTouch={settings.confirmTouch} opponent={playing === 'ordi' ? adv : undefined}
+          intro={playing === 'ordi' && (intro || reglage.annonce) ? <Bubble>{intro ? introBut(adv.nom) : `Tu as Noir, ${adv.nom} a Blanc.`}{reglage.annonce && <><br /><span className="annonce-komi">{reglage.annonce}</span></>}</Bubble> : undefined}
+          onExit={() => { setIntro(false); setPlaying(false); setResultat(null); }}
           onResult={onResult} fin={finEcran} celebrer={settings.celebrations} aide={aideActive(settings.aide, adv.id)} portrait={playing === 'ordi' ? <Sceau id={adv.id} taille={44} /> : undefined} />
       </>
     );
