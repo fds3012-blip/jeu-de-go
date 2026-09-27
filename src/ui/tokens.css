@@ -1,0 +1,16 @@
+/* Thème Encre & Jade (docs/design/encre-et-jade.md) */
+:root {
+  --encre: #16202B; --encre-2: #1F2C3A; --ardoise: #2E3D4E;
+  --papier: #F4EFE6; --brume: #9FB0BF;
+  --jade: #2EBD85; --jade-fonce: #1E9A6A; --or: #F2B84B; --vermillon: #E4572E;
+  --kaya: #DBAE62; --kaya-2: #C99550; --grille: #3A2912;
+  --bg: var(--encre); --surface: var(--encre-2); --line: var(--ardoise); --text: var(--papier); --muted: var(--brume);
+  --radius: 16px; --radius-s: 12px;
+  --font-ui: "Zen Kaku Gothic New", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-titre: "Shippori Mincho", "Hiragino Mincho ProN", Georgia, serif;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) { --bg: #F4EFE6; --surface: #FFFFFF; --line: #DDD5C7; --text: #16202B; --muted: #5B6B7A; color-scheme: light; }
+}
+:root[data-theme="light"] { --bg: #F4EFE6; --surface: #FFFFFF; --line: #DDD5C7; --text: #16202B; --muted: #5B6B7A; color-scheme: light; }
