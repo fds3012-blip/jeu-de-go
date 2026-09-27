@@ -87,8 +87,26 @@ export function isLegal(pos: Position, p: number): boolean {
   return typeof play(pos, p) !== 'string';
 }
 
-/** Points de handicap habituels (2 à 4 pierres). */
+/** Points de handicap habituels, de 2 à 9 pierres (coins, puis centre ou côtés, dans l'ordre classique). */
 export function handicapPoints(size: number, count: number): number[] {
-  const a = size === 9 ? 2 : 3, z = size - 1 - a;
-  return [[z, a], [a, z], [z, z], [a, a]].slice(0, count).map(([x, y]) => y * size + x);
+  const a = size === 9 ? 2 : 3, z = size - 1 - a, m = (size - 1) >> 1;
+  const corners = [[z, a], [a, z], [z, z], [a, a]], sides = [[a, m], [z, m]], tb = [[m, a], [m, z]], c = [[m, m]];
+  const order = count <= 4 ? corners : count === 5 ? [...corners, ...c] : count === 6 ? [...corners, ...sides]
+    : count === 7 ? [...corners, ...sides, ...c] : count === 8 ? [...corners, ...sides, ...tb] : [...corners, ...sides, ...tb, ...c];
+  return order.slice(0, count).map(([x, y]) => y * size + x);
+}
+
+// Superko positionnel (option) : une même disposition des pierres ne doit jamais revenir.
+export type SuperkoError = MoveError | 'superko';
+
+/** Clé d'une disposition des pierres (sans le trait ni les prisonniers). */
+export function boardKey(board: Int8Array): string {
+  return board.join('');
+}
+
+/** Comme `play`, mais refuse aussi un coup qui recrée une disposition déjà vue (`seen` contient des `boardKey`). La passe reste permise. */
+export function playSuperko(pos: Position, p: number, seen: ReadonlySet<string>): Position | SuperkoError {
+  const r = play(pos, p);
+  if (typeof r === 'string' || p === -1) return r;
+  return seen.has(boardKey(r.board)) ? 'superko' : r;
 }
