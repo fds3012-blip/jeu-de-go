@@ -106,3 +106,17 @@ Chaque livraison : issue traitée, agent, pull request, résultat des vérificat
 - Supabase Auth : Site URL `https://jeu-de-go.vercel.app`, Redirect URLs de production, des aperçus (`https://*-florians-projects-100ae27d.vercel.app/**`) et de `localhost:5173`.
 - Cette PR déclenche le premier déploiement de production.
 - Correctif : les 5 variables avaient été créées en type « Secret ». Vercel refuse ce type pour un préfixe public `VITE_`, et l'app déployée n'appelait pas Supabase (aucun compte ni aucune requête dans les journaux). Florian les a recréées en type « Config » ; cette PR relance le déploiement. `.env.example` le précise.
+
+## #50 Consentement en une seule fenêtre et Profil court (frontend)
+
+- Consentement : le bandeau est remplacé par une fenêtre unique au premier lancement.
+  - Elle contient « Lire les conditions », puis Accepter (bouton en relief) ou Refuser.
+  - Le choix est retenu ; la fenêtre ne revient qu'après Échap, sans choix, au lancement suivant.
+  - Elle attend la fin d'une partie en cours avant de s'afficher.
+- Nouvelle page « Conditions et confidentialité », avec un interrupteur pour changer d'avis.
+- Profil : une carte d'identité, 4 réglages en lignes de 48 px, puis « Mon compte » et « Conditions ». Il tient en 390 × 844 sans défiler, en sombre comme en clair (vérifié par un test e2e).
+- Skills appliquées : onboard, animate, mobile-pro-rules.
+- Vérifications : 360 tests unitaires et 42 tests e2e verts, lint, types et build OK.
+- Suites :
+  - ajouter une adresse de contact RGPD dans « Tes droits » (juridique) ;
+  - rafraîchir le pseudo de la carte d'identité sans recharger l'app.
