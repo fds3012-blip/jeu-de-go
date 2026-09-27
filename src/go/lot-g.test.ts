@@ -22,7 +22,7 @@ const rowsOf = (setup: unknown) => (setup as { rows: string[] }).rows;
 
 describe('lot G : relier deux groupes', () => {
   it('lisibles, en 9 × 9, Noir au trait, difficultés croissantes', () => {
-    expect(all.map(p => p.id)).toEqual(['g01', 'g02']);
+    expect(all.map(p => p.id)).toEqual(['g01', 'g02', 'g03']);
     expect(all).toHaveLength(LOT_G.length);
     let prev = 0;
     for (const p of all) {
@@ -104,5 +104,18 @@ describe('chaque problème, coup par coup', () => {
     expect(libs(ext, d2)).toBe(2);
     expect(seq(ext, 'passe', 'C1', 'passe', 'B1').board[at('B2')]).toBe(0);
     expect(captureWorks(seq(ext, 'passe'), at('B2'))).toBe(true);
+  });
+
+  it('g03 : le groupe de gauche est en atari ; D1 capture D2 et sauve les deux groupes ; sinon Blanc prend en C1', () => {
+    const p = pz('g03'), { pos } = startOf(p), b2 = at('B2'), f2 = at('F2');
+    expect(libs(pos, b2)).toBe(1);
+    expect(libs(pos, f2)).toBe(2);
+    expect(libs(pos, at('D2'))).toBe(1);
+    const d1 = ok(play(pos, at('D1')));
+    expect(d1.captures[1]).toBe(1);
+    expect(libs(d1, b2)).toBe(2);
+    expect(play(d1, at('D2'))).toBe('suicide');
+    // Refutation : E1, par exemple, laisse Blanc capturer en C1.
+    expect(seq(pos, 'E1', 'C1').board[b2]).toBe(0);
   });
 });

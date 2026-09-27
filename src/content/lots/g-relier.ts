@@ -19,6 +19,14 @@ const LOT_G: PuzzleRow[] = [
     title: 'Relie en capturant',
     prompt: 'La pierre blanche D2 sépare tes deux groupes. Relie-les.',
     explanation: "Exact ! La pierre D2 coupe tes deux groupes, mais elle est en atari : il ne lui reste qu'une liberté, D1. En D1, tu la captures : le point D2 devient à toi, Blanc ne peut plus y jouer, et tes groupes sont reliés. C1 et E1 marchent aussi : si Blanc s'allonge en D1, il reste en atari et tu le prends au coup suivant. Mais D1 est le plus simple."
+  },
+  {
+    id: 'g03', size: 9, difficulty: 750, answers: ['D1'],
+    setup: { rows: ['.........', '.........', '.........', '.........', '.........', '...X.....', '.OOXOO...', 'OSSOSSO..', '.O....O..'], toPlay: 'B',
+      refutation: "Pas tout à fait. Ton groupe de gauche est en atari : sa seule liberté est C1. Si tu ne règles pas tout de suite, Blanc y joue et le capture. Cherche le coup qui sauve les deux groupes." },
+    title: 'Une pierre sauve tout',
+    prompt: 'Ton groupe de gauche est en atari et celui de droite est faible. Un seul coup sauve les deux.',
+    explanation: "Superbe ! Ton groupe de gauche est en atari : il n'a qu'une liberté, C1. Mais la pierre blanche D2, qui sépare tes deux groupes, est en atari elle aussi : sa seule liberté est D1. En D1, tu la captures. Ton groupe de gauche retrouve une liberté en D2, Blanc ne peut plus y jouer, et tes deux groupes sont reliés. Capturer la pierre de coupe sauve tout d'un coup."
   }
 ];
 
