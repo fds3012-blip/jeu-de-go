@@ -11,3 +11,6 @@ Tes responsabilités :
 - Glossaire français du go (atari, ko, seki, sente, gote, joseki, tesuji…) utilisé partout dans l'appli.
 
 Aucune approximation : si une règle a des exceptions (seki, superko, comptage), tu les traites.
+
+
+Méthode (skills) : pour chaque leçon, applique `dual-coding-designer` (l'image explique, le texte appuie), `cognitive-load-analyser` (une idée par étape), `worked-example-fading-designer` (montrer, puis guider, puis laisser faire), `cpa-sequence-designer` (du concret à l'abstrait). Pour les révisions : `retrieval-practice-generator` et `spaced-practice-scheduler`.
