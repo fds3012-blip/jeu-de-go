@@ -47,7 +47,7 @@ export function niveauDe(xp: number): Niveau {
 }
 
 export interface Recompense { niveau: number; id: 'kaya-clair' | 'ardoise' | 'coquillage-dore'; nom: string; genre: 'goban' | 'pierres' }
-/** Récompenses cosmétiques, débloquées par niveau (premier incrément : annoncées, pas encore appliquées au goban). */
+/** Récompenses cosmétiques, débloquées par niveau. Elles se choisissent dans le Profil (thème du goban, src/ui/boardArt.ts). */
 export const RECOMPENSES: readonly Recompense[] = [
   { niveau: 3, id: 'kaya-clair', nom: 'Kaya clair', genre: 'goban' },
   { niveau: 5, id: 'ardoise', nom: 'Ardoise', genre: 'goban' },
@@ -57,6 +57,9 @@ export const RECOMPENSES: readonly Recompense[] = [
 export const libelleRecompense = (r: Recompense) => `${r.genre === 'goban' ? 'le goban' : 'les pierres'} « ${r.nom} »`;
 export const recompenseDuNiveau = (niveau: number) => RECOMPENSES.find(r => r.niveau === niveau);
 export const prochaineRecompense = (niveau: number) => RECOMPENSES.find(r => r.niveau > niveau);
+/** Niveau requis pour un thème du goban : 1 pour le kaya par défaut. */
+export const niveauRequis = (id: string) => RECOMPENSES.find(r => r.id === id)?.niveau ?? 1;
+export const themeDebloque = (id: string, niveau: number) => niveau >= niveauRequis(id);
 export const recompensesDebloquees = (niveau: number) => RECOMPENSES.filter(r => r.niveau <= niveau);
 
 export interface Gain { source: SourceXp; points: number; avant: number; apres: number; niveauAvant: number; niveauApres: number }

@@ -24,7 +24,8 @@ export interface Accueil {
 
 /**
  * Textes de l'accueil (espaces fines insécables avant ? ! : grâce à `fr`). L'adversaire parle, et sa réplique
- * dit la même chose que le bouton principal : toucher le plateau lance la partie.
+ * invite à la même action que le bouton principal. Issue #119 : elle ne dit plus de toucher le plateau,
+ * pour qu'il n'y ait qu'une seule action principale.
  * - Nouveau joueur (aucune partie, aucune leçon) : première pierre au centre.
  * - Leçons faites mais aucune partie : on l'invite à sa première partie.
  * - Joueur qui revient : « Rejouer contre X » si c'est son dernier adversaire, sinon « Jouer contre X ».
@@ -35,8 +36,8 @@ export function accueil(parties: Parties, lecons: number, adv: { id: string; nom
     // Le nom de l'adversaire est déjà juste au-dessus, en grand, et son sceau est dans le bouton.
     const cta = 'Joue ta première partie';
     const ctaNom = `${cta} contre ${adv.nom}`;
-    if (lecons === 0) return { nouveau: true, cta, ctaNom, bulle: fr('Touche le centre pour poser ta première pierre !') };
-    return { nouveau: false, cta, ctaNom, bulle: fr(`Bravo pour ${lecons > 1 ? `tes ${lecons} leçons` : 'ta première leçon'} ! Touche le plateau pour jouer.`) };
+    if (lecons === 0) return { nouveau: true, cta, ctaNom, bulle: fr('On joue ensemble ? Je t’explique tout.') };
+    return { nouveau: false, cta, ctaNom, bulle: fr(`Bravo pour ${lecons > 1 ? `tes ${lecons} leçons` : 'ta première leçon'} ! On passe à une vraie partie ?`) };
   }
   const rejouer = parties.dernier === adv.id;
   const cta = `${rejouer ? 'Rejouer' : 'Jouer'} contre ${adv.nom}`;
@@ -44,7 +45,7 @@ export function accueil(parties: Parties, lecons: number, adv: { id: string; nom
     nouveau: false,
     cta,
     ctaNom: cta,
-    bulle: fr(rejouer ? `Te revoilà ! On rejoue sur le ${plateau} ?` : `Une partie sur le ${plateau} ? Touche le plateau.`),
+    bulle: fr(rejouer ? `Te revoilà ! On rejoue sur le ${plateau} ?` : `Une partie sur le ${plateau} ? Je t’attends.`),
   };
 }
 

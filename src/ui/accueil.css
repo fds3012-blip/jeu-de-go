@@ -23,37 +23,23 @@
 .app-home .top { margin-bottom: var(--space-3); }
 .accueil { flex: 1; display: flex; flex-direction: column; container-type: inline-size; }
 
-/* ---------- Le goban d'accueil ---------- */
-/* Hauteur libre, jusqu'au plateau entier la bulle mordant sur le bas comme sur la maquette (le plateau est carré : 100cqw de haut). */
-.scene { position: relative; flex: 1 1 0; min-height: 200px; max-height: calc(100cqw + 28px); }
-.scene-plateau { position: absolute; inset: 0; overflow: hidden; border-radius: var(--radius-plateau); cursor: pointer;
-  -webkit-mask-image: linear-gradient(#000 60%, transparent 98%); mask-image: linear-gradient(#000 60%, transparent 98%); }
-/* Plateau calé en haut ; s'il manque de la place, son centre (la pierre fantôme) reste au 47 % de la hauteur et le haut est recadré. */
-.scene-cadre { position: absolute; left: 0; right: 0; top: min(0px, calc(47% - 50cqw)); }
+/* ---------- Le goban d'accueil (issue #119 : une illustration, plus une seconde action) ---------- */
+/* Hauteur libre, jusqu'au plateau entier (carré : 100cqw). Aucun masque ni bulle par-dessus : les 9 lignes restent visibles.
+   S'il manque de la place, le plateau est centré et recadré en haut et en bas à parts égales. */
+.scene { position: relative; flex: 1 1 0; min-height: 200px; max-height: 100cqw; }
+.scene-plateau { position: absolute; inset: 0; overflow: hidden; border-radius: var(--radius-plateau); cursor: pointer; }
+.scene-cadre { position: absolute; left: 0; right: 0; top: min(0px, calc(50% - 50cqw)); }
 .scene-cadre .board-wrap { box-shadow: none; margin-bottom: 0; }
-/* Repère carré posé sur l'image du goban : la pierre fantôme s'y place au centre du plateau (calculé dans Accueil.tsx). */
-.fantome-repere { position: absolute; left: 0; top: 0; width: 100%; aspect-ratio: 1; pointer-events: none; }
-.fantome { position: absolute; left: 50%; top: 50%; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none;
-  background: radial-gradient(circle at 36% 30%, rgba(106, 111, 108, .6), rgba(21, 23, 22, .6) 60%, rgba(5, 6, 6, .6)); }
-.fantome::before, .fantome::after { content: ""; position: absolute; inset: -5px; border-radius: 50%; border: 2px solid var(--jade); }
-.fantome::after { inset: -13px; opacity: .45; }
-@media (prefers-reduced-motion: no-preference) {
-  /* Seul mouvement spontané de l'écran : deux ondes qui disent « touche ici ». */
-  .fantome::before, .fantome::after { inset: -5px; animation: onde 2.6s cubic-bezier(.2, .6, .3, 1) infinite; }
-  .fantome::after { animation-delay: 1.3s; opacity: 1; }
-}
-@keyframes onde { from { transform: scale(1); opacity: .95; } to { transform: scale(2.2); opacity: 0; } }
 
-/* Réplique de l'adversaire, posée sur le bas du goban. Laisse passer le toucher vers le plateau. */
-.scene-bulle { position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: flex-end; gap: 10px; pointer-events: none; padding-right: 8px; }
-.scene-bulle .sceau { --sceau-socle: var(--papier); filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .35)); }
-.scene-bulle p { margin: 0 0 6px; max-width: 250px; background: var(--papier); color: var(--sumi); border-radius: var(--radius) var(--radius) var(--radius) var(--radius-xs);
-  padding: 9px 14px; font-size: var(--fs-corps-s); line-height: 1.35; font-weight: var(--fw-medium); box-shadow: 0 8px 18px -10px rgba(0, 0, 0, .6); }
-
-/* ---------- Adversaire ---------- */
-.adversaire-identite { display: flex; align-items: baseline; gap: 10px; margin-top: var(--space-4); }
-.adversaire-identite h2 { margin: 0; font-size: 2.125rem; font-weight: var(--fw-titre); line-height: 1; }
+/* ---------- Adversaire : portrait, nom et réplique, sous le plateau ---------- */
+.adversaire { display: flex; align-items: center; gap: 12px; margin-top: var(--space-2); }
+.adversaire .portrait { filter: drop-shadow(0 4px 8px rgba(0, 0, 0, .25)); }
+.adversaire-texte { min-width: 0; flex: 1; }
+.adversaire-identite { display: flex; align-items: baseline; gap: 10px; }
+.adversaire-identite h2 { margin: 0; font-size: 1.75rem; font-weight: var(--fw-titre); line-height: 1.1; }
 .adversaire-identite span { color: var(--muted); }
+/* La réplique, texte simple : elle accompagne le bouton, elle n'en est pas un second. */
+.scene-bulle { margin: 2px 0 0; font-size: var(--fs-corps-s); line-height: 1.35; font-weight: var(--fw-medium); color: var(--text); }
 .phrase { margin: 6px 0 0; color: var(--muted); font-size: var(--fs-corps-s); line-height: 1.4; max-width: 34em; }
 
 .reglage { display: flex; flex-wrap: wrap; align-items: center; /* #121 */ justify-content: space-between; gap: var(--space-3); min-height: var(--cible-min); margin: 6px -12px var(--space-2) 0; }
@@ -173,7 +159,6 @@
 .vignette-tampon { position: absolute; right: -16px; bottom: 0; transform: rotate(-12deg); padding: 1px 4px; border: 1.5px solid #D2432C; border-radius: 4px;
   color: #D2432C; background: var(--tampon-papier); font: 800 9px/1.2 var(--font-titre); letter-spacing: .04em; }
 .carte[aria-pressed="true"] .vignette .portrait { box-shadow: 0 0 0 3px var(--accent); border-radius: 50%; }
-.scene-bulle .portrait { filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .35)); }
 /* L'action principale reste visible en bas de la feuille, même quand la liste des adversaires défile (issue #102). */
 .feuille-corps > .btn.primary { position: sticky; bottom: var(--space-2); z-index: 1; box-shadow: 0 0 0 8px var(--surface), 0 -12px 16px 4px var(--surface); }
 .palier .carte small { line-height: 1.2; }

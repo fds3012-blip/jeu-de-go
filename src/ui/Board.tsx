@@ -1,6 +1,7 @@
 import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent, type ReactElement } from 'react';
 import { LETTERS, toLabel } from '../go/coords';
-import { C, M, R, R_NOIR, VARIANTES_COQUILLAGE, coordCenter, diffBoards, hoshi, jitter, shellStriae, shellVariant, viewBoxOf, woodDataUrl } from './boardArt';
+import { C, M, R, R_NOIR, VARIANTES_COQUILLAGE, coordCenter, diffBoards, hoshi, jitter, shellStriae, shellVariant, viewBoxOf, woodDataUrl, type ThemeGoban } from './boardArt';
+import { useThemeGoban } from '../app/settings';
 import './board.css';
 
 export interface BoardMarks {
@@ -38,13 +39,17 @@ interface Props {
   versCouvercles?: boolean;
 }
 
-// Couleurs posées sur le bois : fixes, indépendantes du thème (le goban est le même en mode Encre et Papier).
-const LIGNE = '#2b1a08';
+// Couleurs posées sur le bois : indépendantes du mode Encre ou Papier (le goban est le même dans les deux).
+// L'encre des lignes et la nacre des pierres blanches viennent du thème du goban (#109, boardArt.ts).
 const JADE = '#3CC48E', JADE_FONCE = '#155E40', HANKO = '#D2432C', PAPIER = '#F3EDE3';
 
 // Définitions partagées, créées une seule fois pour toute l'app : dégradés et symboles des pierres.
 // Les pierres sont ensuite de simples <use>, sans aucun filtre.
-const DEFS = (
+const defsCache = new Map<string, ReactElement>();
+function defsDe(t: ThemeGoban): ReactElement {
+  const deja = defsCache.get(t.id);
+  if (deja) return deja;
+  const d = (
   <defs>
     <radialGradient id="go-n" cx="36%" cy="30%" r="72%">
       <stop offset="0" stopColor="#5b5f5d" /><stop offset=".18" stopColor="#2e3130" /><stop offset=".55" stopColor="#151716" /><stop offset="1" stopColor="#050606" />
@@ -53,7 +58,7 @@ const DEFS = (
       <stop offset="0" stopColor="#fff" stopOpacity=".42" /><stop offset="1" stopColor="#fff" stopOpacity="0" />
     </radialGradient>
     <radialGradient id="go-bl" cx="38%" cy="32%" r="78%">
-      <stop offset="0" stopColor="#fff" /><stop offset=".55" stopColor="#F3EEE3" /><stop offset=".85" stopColor="#DDD5C4" /><stop offset="1" stopColor="#BDB3A0" />
+      <stop offset="0" stopColor={t.blanche[0]} /><stop offset=".55" stopColor={t.blanche[1]} /><stop offset=".85" stopColor={t.blanche[2]} /><stop offset="1" stopColor={t.blanche[3]} />
     </radialGradient>
     {/* Ombre portée floue, obtenue par un dégradé plutôt que par un filtre (rien à recalculer). */}
     <radialGradient id="go-om">
@@ -70,14 +75,17 @@ const DEFS = (
         <circle r={R} fill="url(#go-bl)" />
         <g clipPath="url(#go-clip)" fill="none">
           {shellStriae(v).map((s, i) => (
-            <circle key={i} cx={s.cx} cy={s.cy} r={s.r} stroke={s.clair ? '#fff' : '#8C7B5E'} strokeOpacity={s.clair ? s.o * 1.8 : s.o * 0.6} strokeWidth={s.w} />
+            <circle key={i} cx={s.cx} cy={s.cy} r={s.r} stroke={s.clair ? '#fff' : t.strie} strokeOpacity={s.clair ? s.o * 1.8 : s.o * 0.6} strokeWidth={s.w} />
           ))}
         </g>
         <circle r={R - 0.4} fill="none" stroke="rgba(120,100,70,.38)" strokeWidth={0.8} />
       </g>
     ))}
   </defs>
-);
+  );
+  defsCache.set(t.id, d);
+  return d;
+}
 
 // Clavier et lecteur d'écran (issue #116) : fonctions pures, testées sans DOM.
 
@@ -117,6 +125,7 @@ function corps(c: number, p: number, size: number): ReactElement {
 
 export function Board({ size, board, toPlay = 1, marks = {}, interactive = false, stonesTappable = false, confirmTouch = true, onPlay, shake, versCouvercles = false }: Props) {
   const ref = useRef<SVGSVGElement>(null);
+  const theme = useThemeGoban();
   const [ghost, setGhost] = useState(-1);
   // Un plateau jouable (onPlay fourni) est une grille : un seul arrêt de tabulation, curseur aux flèches.
   // Le rôle reste stable pendant le tour de l'adversaire (interactive passe à false) pour ne pas perdre le focus.
@@ -203,7 +212,7 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
     if (e.pointerType === 'mouse') setGhost(-1);
   }
 
-  // Grille, hoshi et coordonnées : ne dépendent que de la taille.
+  // Grille, hoshi et coordonnées : ne dépendent que de la taille et du thème du goban.
   const grid = useMemo(() => {
     const k = viewBoxOf(size).span / 358, lc = coordCenter(size); // unités du viewBox par pixel CSS pour un plateau de 358 px (iPhone 390)
     const fin = 0.85 * k, bord = 1.5 * k, fs = 11 * k, e = M + (size - 1) * C;
@@ -212,10 +221,10 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
     for (let i = 1; i < size - 1; i++) { const q = M + i * C; d += `M${M} ${q}H${e}M${q} ${M}V${e}`; }
     return (
       <g aria-hidden="true">
-        <path d={d} stroke={LIGNE} strokeOpacity={0.78} strokeWidth={fin} fill="none" />
-        <path d={dBord} stroke={LIGNE} strokeOpacity={0.78} strokeWidth={bord} fill="none" strokeLinejoin="miter" />
-        {hoshi(size).map(p => <circle key={p} cx={M + (p % size) * C} cy={M + Math.floor(p / size) * C} r={(size === 19 ? 2.3 : 3) * k} fill={LIGNE} fillOpacity={0.85} />)}
-        <g className="coord" fontSize={fs} fill="#4a2f10" fillOpacity={0.7} textAnchor="middle" dominantBaseline="central">
+        <path d={d} stroke={theme.ligne} strokeOpacity={0.78} strokeWidth={fin} fill="none" />
+        <path d={dBord} stroke={theme.ligne} strokeOpacity={0.78} strokeWidth={bord} fill="none" strokeLinejoin="miter" />
+        {hoshi(size).map(p => <circle key={p} cx={M + (p % size) * C} cy={M + Math.floor(p / size) * C} r={(size === 19 ? 2.3 : 3) * k} fill={theme.ligne} fillOpacity={0.85} />)}
+        <g className="coord" fontSize={fs} fill={theme.coord} fillOpacity={0.7} textAnchor="middle" dominantBaseline="central">
           {Array.from({ length: size }, (_, i) => (
             <g key={i}>
               <text x={M + i * C} y={lc}>{LETTERS[i]}</text>
@@ -225,7 +234,7 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
         </g>
       </g>
     );
-  }, [size]);
+  }, [size, theme]);
 
   const stones: ReactElement[] = [];
   for (let p = 0; p < board.length; p++) {
@@ -287,9 +296,9 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
         onKeyDown={jouable ? onKey : undefined} onFocus={jouable ? () => setFocus(true) : undefined} onBlur={jouable ? () => setFocus(false) : undefined}
         onPointerDown={jouable ? () => setClavier(false) : undefined}
         onPointerUp={onUp} onPointerMove={onMove} onPointerLeave={onLeave}>
-        {DEFS}
+        {defsDe(theme)}
         {cases}
-        <image href={woodDataUrl()} x={vb.min} y={vb.min} width={vb.span} height={vb.span} preserveAspectRatio="none" />
+        <image href={woodDataUrl(theme.id)} x={vb.min} y={vb.min} width={vb.span} height={vb.span} preserveAspectRatio="none" />
         {grid}
         {stones}
         {leaving}
