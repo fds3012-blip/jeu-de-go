@@ -59,6 +59,14 @@ const LOT_F: PuzzleRow[] = [
     title: 'La sortie et la liberté commune',
     prompt: 'Course aux libertés : ton groupe contre le groupe blanc marqué. Compte bien : sortie, libertés extérieures, liberté commune.',
     explanation: "Superbe ! Dans une course aux libertés (semeai), le premier qui prend toutes les libertés de l'autre gagne. Blanc a 4 libertés : A2 et A1, ses libertés extérieures (elles n'appartiennent qu'à lui), C1, la liberté commune aux deux groupes, et B5, une sortie vers le mur blanc C5. Tu en as 4 aussi : D3, E2, E1 et C1. Bloque d'abord la sortie en B5. Ensuite, remplis A2 et A1 et garde C1 pour la fin : tu captures Blanc un coup avant lui."
+  },
+  {
+    id: 'f08', size: 9, difficulty: 1250, answers: ['B5'],
+    setup: { rows: ['.O.X.XOO.', '.OXXXX.O.', 'XOXOOOO..', 'XTXOO....', 'X.OOO....', 'XXO......', '.XO......', 'XXO......', '.XO......'], toPlay: 'B',
+      refutation: "Pas tout à fait. Blanc joue B5 et relie son groupe au mur blanc C5 : il sort de la course aux libertés. Bloque d'abord la sortie." },
+    title: "L'œil et la sortie",
+    prompt: 'Course aux libertés : ton groupe a un œil en E9, le groupe blanc marqué a une liberté de plus. Gagne la course.',
+    explanation: "Magnifique ! Ton groupe a un œil en E9 : un point vide entouré par tes pierres, où Blanc ne peut jouer qu'en dernier. Dans cette course aux libertés (semeai), Blanc a 4 libertés : A9, A8, C9 (commune aux deux groupes) et B5, une sortie vers le mur blanc C5. Tu en as 3 : l'œil E9, C9 et G8. Bloque d'abord la sortie en B5. Ensuite, Blanc ne peut pas jouer dans ton œil (ce serait un suicide), et s'il remplit C9, il s'enlève aussi une liberté. Tu remplis A8 et A9, puis tu le captures."
   }
 ];
 
