@@ -286,3 +286,15 @@ Chaque livraison : issue traitée, agent, pull request, résultat des vérificat
   - faire valider l'exemption de PostHog par un avocat ;
   - activer « Discard client IP data » dans PostHog ;
   - essayer la revue de partie et l'alerte d'atari sur iPhone.
+
+## #73 Veille concurrentielle et innovations (produit)
+
+- L'app est comparée à chess.com, BadukPop, OGS, KaTrain, AI Sensei, Tsumego Pro, SmartGo, Fox et Tygem, 101weiqi et Duolingo, sur quatre axes : accueil, rétention, profondeur et social. Document : `docs/produit/veille-2026-09-27.md`.
+- Issues créées :
+  - #75 : Go du jour partagé, façon Wordle ;
+  - #76 : série protégée (gel) ;
+  - #77 : rejouer ses erreurs sous forme de problèmes ;
+  - #78 : carte de territoire animée ;
+  - #79 : partie guidée ;
+  - #80 : Mochi coach ;
+  - #81 : défier un ami par lien.
