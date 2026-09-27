@@ -22,7 +22,7 @@ const rowsOf = (setup: unknown) => (setup as { rows: string[] }).rows;
 
 /** Objectif de chaque problème : capturer les pierres blanches marquées, ou sauver les pierres noires marquées. */
 const GOAL: Record<string, 'capture' | 'sauve'> = {
-  f01: 'sauve', f02: 'capture', f03: 'capture', f04: 'capture', f05: 'capture', f06: 'capture'
+  f01: 'sauve', f02: 'capture', f03: 'capture', f04: 'capture', f05: 'capture', f06: 'capture', f07: 'capture'
 };
 
 describe('lot F : courses aux libertés, coupes et connexions', () => {
@@ -152,5 +152,18 @@ describe('chaque problème, coup par coup', () => {
     const j9 = seq(pos, 'J9', 'H5');
     expect(groupAt(j9.board, 9, t).stones).toContain(at('G5'));
     expect(captureWorks(j9, t)).toBe(false);
+  });
+
+  it('f07 : sortie B5 puis libertés extérieures, la commune C1 en dernier', () => {
+    const p = pz('f07'), [t] = startOf(p).marked, { pos } = startOf(p), k = at('C2');
+    expect(libs(pos, t)).toBe(4);
+    expect(libs(pos, k)).toBe(4);
+    expect(groupAt(pos.board, 9, k).liberties.has(at('C1'))).toBe(true);
+    const b5 = ok(play(pos, at('B5')));
+    expect(libs(b5, t)).toBe(3);
+    expect(seq(b5, 'D3', 'A2', 'E2', 'A1', 'E1', 'C1').board[t]).toBe(0);
+    const a2 = seq(pos, 'A2', 'B5');
+    expect(groupAt(a2.board, 9, t).stones).toContain(at('C5'));
+    expect(captureWorks(a2, t)).toBe(false);
   });
 });

@@ -51,6 +51,14 @@ const LOT_F: PuzzleRow[] = [
     title: 'Bloque la sortie',
     prompt: 'Course aux libertés : ton groupe C1-C4 contre le groupe blanc marqué. Attention, Blanc peut rejoindre son mur.',
     explanation: "Bravo ! Le groupe blanc a 4 libertés : A3, A2, A1 et B5. Mais B5 n'est pas une liberté comme les autres : en y jouant, Blanc se relierait au mur blanc C5. Dans une course aux libertés (semeai), où deux groupes s'entourent et où le premier qui prend toutes les libertés de l'autre gagne, on bloque d'abord la sortie. Après B5, Blanc a 3 libertés et toi 4 (D4, D3, D2, D1) : tu gagnes la course."
+  },
+  {
+    id: 'f07', size: 9, difficulty: 1000, answers: ['B5'],
+    setup: { rows: ['.XO......', 'XXO......', '.XO......', 'XXO......', 'X.OOO....', 'XTXOO....', 'XOX.OO...', '.OXX.O...', '.O.X.O...'], toPlay: 'B',
+      refutation: "Pas tout à fait. Blanc joue B5 et relie son groupe au mur blanc C5 : il sort de la course aux libertés. Bloque d'abord la sortie." },
+    title: 'La sortie et la liberté commune',
+    prompt: 'Course aux libertés : ton groupe contre le groupe blanc marqué. Compte bien : sortie, libertés extérieures, liberté commune.',
+    explanation: "Superbe ! Dans une course aux libertés (semeai), le premier qui prend toutes les libertés de l'autre gagne. Blanc a 4 libertés : A2 et A1, ses libertés extérieures (elles n'appartiennent qu'à lui), C1, la liberté commune aux deux groupes, et B5, une sortie vers le mur blanc C5. Tu en as 4 aussi : D3, E2, E1 et C1. Bloque d'abord la sortie en B5. Ensuite, remplis A2 et A1 et garde C1 pour la fin : tu captures Blanc un coup avant lui."
   }
 ];
 
