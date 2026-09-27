@@ -17,7 +17,9 @@
     "icons": "node scripts/generate-icons.mjs"
   },
   "dependencies": {
+    "@sentry/react": "^11.0.0",
     "@supabase/supabase-js": "^2.117.2",
+    "posthog-js": "^1.434.15",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },
