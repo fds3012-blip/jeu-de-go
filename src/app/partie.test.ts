@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { aideActive, ALERTE_ATARI, arrondiDemi, conseilPasser, EXPLICATION_PASSER, PASSER_KEY, presquePlein, coupsJoues, descriptionIndices, EXPLICATION_ATARI, groupesEnAtari, indicesRestants, INDICES_PAR_PARTIE, libelleAvantage, libelleCoup, messageAtari, messageIndice, metEnAtari, nouveauxAtari, partNoir, PLUS_D_INDICE } from './partie';
+import { aideActive, ALERTE_ATARI, arrondiDemi, conseilPasser, passerEnEvidence, EXPLICATION_PASSER, PASSER_KEY, presquePlein, coupsJoues, descriptionIndices, EXPLICATION_ATARI, groupesEnAtari, indicesRestants, INDICES_PAR_PARTIE, libelleAvantage, libelleCoup, messageAtari, messageIndice, metEnAtari, nouveauxAtari, partNoir, PLUS_D_INDICE } from './partie';
 import { choisirReplique, GENERIQUES, LONGUEUR_MAX, PERSONNELLES, repliques, type Situation } from './repliques';
 
 describe('conseil « passer » (#120)', () => {
@@ -196,5 +196,20 @@ describe('répliques des adversaires', () => {
     } finally {
       delete PERSONNELLES.renard;
     }
+  });
+});
+
+describe('passerEnEvidence (#120)', () => {
+  it("met « Passer » en évidence juste après le conseil de Mochi, puis plus dès qu'un coup est joué", () => {
+    expect(passerEnEvidence(true, true, false, 12, 12)).toBe(true);
+    expect(passerEnEvidence(true, true, false, 12, 13)).toBe(false);
+    expect(passerEnEvidence(true, true, false, null, 12)).toBe(false);
+  });
+  it("quand l'adversaire vient de passer", () => {
+    expect(passerEnEvidence(true, true, true, null, 5)).toBe(true);
+  });
+  it("jamais si l'aide est coupée ou si ce n'est pas ton tour", () => {
+    expect(passerEnEvidence(false, true, true, 12, 12)).toBe(false);
+    expect(passerEnEvidence(true, false, true, 12, 12)).toBe(false);
   });
 });

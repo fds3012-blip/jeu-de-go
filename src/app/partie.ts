@@ -126,6 +126,16 @@ export function conseilPasser(nom: string, aide: boolean, ilPasse: boolean, boar
   return messagePasser(nom, ilPasse);
 }
 
+/**
+ * Bouton « Passer » mis en évidence (#120) : vrai tant que Mochi vient de conseiller de passer (`conseilA` = nombre de
+ * positions de l'historique au moment du conseil) et qu'aucun coup n'a été joué depuis (`longueur` inchangée),
+ * ou si l'adversaire vient de passer. Seulement quand c'est ton tour et que l'aide est active.
+ */
+export function passerEnEvidence(aide: boolean, monTour: boolean, adversairePasse: boolean, conseilA: number | null, longueur: number): boolean {
+  if (!aide || !monTour) return false;
+  return adversairePasse || conseilA === longueur;
+}
+
 // Indices limités contre l'ordi (#35) : 3 par partie, pour que le joueur cherche d'abord seul.
 
 /** Nombre d'indices par partie contre l'ordi. */
