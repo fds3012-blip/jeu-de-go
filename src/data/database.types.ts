@@ -103,8 +103,11 @@ export type Database = {
           analysis: Json | null
           black_id: string | null
           bot_id: string | null
+          counting: boolean
           created_at: string
           created_by: string
+          dead_proposed_by: string | null
+          dead_stones: string | null
           handicap: number
           id: string
           invite_code: string | null
@@ -112,7 +115,10 @@ export type Database = {
           moves: string
           rated: boolean
           result: string | null
+          resumed_at: number
           rules: string
+          score_black: number | null
+          score_white: number | null
           size: number
           status: Database["public"]["Enums"]["game_status"]
           updated_at: string
@@ -122,8 +128,11 @@ export type Database = {
           analysis?: Json | null
           black_id?: string | null
           bot_id?: string | null
+          counting?: boolean
           created_at?: string
           created_by?: string
+          dead_proposed_by?: string | null
+          dead_stones?: string | null
           handicap?: number
           id?: string
           invite_code?: string | null
@@ -131,7 +140,10 @@ export type Database = {
           moves?: string
           rated?: boolean
           result?: string | null
+          resumed_at?: number
           rules?: string
+          score_black?: number | null
+          score_white?: number | null
           size: number
           status?: Database["public"]["Enums"]["game_status"]
           updated_at?: string
@@ -141,8 +153,11 @@ export type Database = {
           analysis?: Json | null
           black_id?: string | null
           bot_id?: string | null
+          counting?: boolean
           created_at?: string
           created_by?: string
+          dead_proposed_by?: string | null
+          dead_stones?: string | null
           handicap?: number
           id?: string
           invite_code?: string | null
@@ -150,7 +165,10 @@ export type Database = {
           moves?: string
           rated?: boolean
           result?: string | null
+          resumed_at?: number
           rules?: string
+          score_black?: number | null
+          score_white?: number | null
           size?: number
           status?: Database["public"]["Enums"]["game_status"]
           updated_at?: string
@@ -181,6 +199,20 @@ export type Database = {
           {
             foreignKeyName: "games_created_by_fkey"
             columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "games_dead_proposed_by_fkey"
+            columns: ["dead_proposed_by"]
+            isOneToOne: false
+            referencedRelation: "leaderboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "games_dead_proposed_by_fkey"
+            columns: ["dead_proposed_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -485,7 +517,23 @@ export type Database = {
       }
     }
     Functions: {
+      apply_game_rating: {
+        Args: { p_game: string; p_loser: string; p_winner: string }
+        Returns: undefined
+      }
       find_match: { Args: { p_size: number }; Returns: string }
+      finish_game_by_score: {
+        Args: {
+          p_black: number
+          p_dead: string
+          p_game: string
+          p_moves: string
+          p_result: string
+          p_user: string
+          p_white: number
+        }
+        Returns: string
+      }
       join_game: { Args: { p_code: string }; Returns: string }
       play_move: { Args: { p_game: string; p_move: string }; Returns: string }
       record_puzzle_attempt: {
