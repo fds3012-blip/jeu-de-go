@@ -86,10 +86,31 @@
 .feuille { margin: auto auto 0; width: min(var(--largeur-max), 100%); max-width: 100%; max-height: 92dvh; padding: 0; border: 0; overflow: auto;
   border-radius: 22px 22px 0 0; background: var(--surface); color: var(--text); padding-bottom: env(safe-area-inset-bottom, 0px); --sceau-socle: var(--surface); }
 .feuille::backdrop { background: rgba(12, 10, 8, .62); }
+/* Entrée par transition (interruptible) et sortie courte : la transition appliquée est celle de l'état d'arrivée. */
 @media (prefers-reduced-motion: no-preference) {
-  .feuille[open] { animation: monte var(--duree) var(--ease); }
+  .feuille, .feuille::backdrop {
+    transition: opacity 160ms cubic-bezier(.2, .8, .2, 1), transform 160ms cubic-bezier(.2, .8, .2, 1),
+      overlay 160ms allow-discrete, display 160ms allow-discrete;
+  }
+  .feuille[open], .feuille[open]::backdrop {
+    transition: opacity var(--duree) var(--ease), transform var(--duree) var(--ease),
+      overlay var(--duree) allow-discrete, display var(--duree) allow-discrete;
+  }
+  .feuille:not([open]) { opacity: 0; transform: translateY(40px); }
+  .feuille:not([open])::backdrop { opacity: 0; }
+  @starting-style {
+    .feuille[open] { opacity: 0; transform: translateY(40px); }
+    .feuille[open]::backdrop { opacity: 0; }
+  }
 }
-@keyframes monte { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+/* Mouvements réduits : un simple fondu, sans glissement. */
+@media (prefers-reduced-motion: reduce) {
+  .feuille, .feuille::backdrop { transition: opacity 150ms linear, overlay 150ms allow-discrete, display 150ms allow-discrete; }
+  .feuille:not([open]), .feuille:not([open])::backdrop { opacity: 0; }
+  @starting-style {
+    .feuille[open], .feuille[open]::backdrop { opacity: 0; }
+  }
+}
 .feuille-corps { padding: var(--space-2) var(--gouttiere) var(--space-5); display: flex; flex-direction: column; gap: var(--space-2); }
 .feuille-tete { display: flex; align-items: center; justify-content: space-between; margin-right: -12px; }
 .feuille h2 { margin: var(--space-2) 0 0; font-size: var(--fs-xl); font-weight: var(--fw-titre); }

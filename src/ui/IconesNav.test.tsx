@@ -102,6 +102,10 @@ describe('mouvements (nav.css)', () => {
     expect(navCss.match(/animation: nav-pose/g)).toHaveLength(1);
   });
 
+  it('fait partir le point de l\'onglet actif de 0,8 et non de plus bas (#62)', () => {
+    expect(navCss).toMatch(/@keyframes nav-point \{ from \{ transform: scale\(\.8\); \} to \{ transform: scale\(1\); \} \}/);
+  });
+
   it('remplace la rotation par un fondu en mouvements réduits', () => {
     const reduit = navCss.slice(navCss.indexOf('@media (prefers-reduced-motion: reduce)'));
     expect(reduit.slice(0, reduit.indexOf('}\n}'))).not.toContain('orbite');
