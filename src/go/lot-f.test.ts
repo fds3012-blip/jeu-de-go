@@ -22,7 +22,7 @@ const rowsOf = (setup: unknown) => (setup as { rows: string[] }).rows;
 
 /** Objectif de chaque problème : capturer les pierres blanches marquées, ou sauver les pierres noires marquées. */
 const GOAL: Record<string, 'capture' | 'sauve'> = {
-  f01: 'sauve', f02: 'capture', f03: 'capture', f04: 'capture', f05: 'capture', f06: 'capture', f07: 'capture', f08: 'capture', f09: 'capture', f10: 'capture'
+  f01: 'sauve', f02: 'capture', f03: 'capture', f04: 'capture', f05: 'capture', f06: 'capture', f07: 'capture', f08: 'capture', f09: 'capture', f10: 'capture', f11: 'capture'
 };
 
 describe('lot F : courses aux libertés, coupes et connexions', () => {
@@ -87,8 +87,8 @@ describe('lot F : courses aux libertés, coupes et connexions', () => {
 });
 
 describe('chaque problème, coup par coup', () => {
-  it('f07 : B5 bloque la sortie ; sinon Blanc se relie au mur en B5', () => {
-    const p = pz('f07'), [t] = startOf(p).marked, { pos } = startOf(p), k = at('C1');
+  it('f08 : B5 bloque la sortie ; sinon Blanc se relie au mur en B5', () => {
+    const p = pz('f08'), [t] = startOf(p).marked, { pos } = startOf(p), k = at('C1');
     expect(libs(pos, t)).toBe(4);
     expect(libs(pos, k)).toBe(4);
     const b5 = ok(play(pos, at('B5')));
@@ -109,8 +109,8 @@ describe('chaque problème, coup par coup', () => {
     expect(seq(pos, 'passe', 'B5').board[s]).toBe(0);
   });
 
-  it('f06 : trois contre trois avec une sortie en B5 ; la bloquer gagne', () => {
-    const p = pz('f06'), [t] = startOf(p).marked, { pos } = startOf(p), k = at('C1');
+  it('f07 : trois contre trois avec une sortie en B5 ; la bloquer gagne', () => {
+    const p = pz('f07'), [t] = startOf(p).marked, { pos } = startOf(p), k = at('C1');
     expect(libs(pos, t)).toBe(3);
     expect(libs(pos, k)).toBe(3);
     const b5 = ok(play(pos, at('B5')));
@@ -132,8 +132,8 @@ describe('chaque problème, coup par coup', () => {
     expect(libs(e2, at('B1'))).toBe(1);
   });
 
-  it('f05 : E9 coupe au bord, la dernière liberté D7 est interdite à Blanc ; D7 laisse Blanc se relier', () => {
-    const p = pz('f05'), [t] = startOf(p).marked, { pos } = startOf(p);
+  it('f06 : E9 coupe au bord, la dernière liberté D7 est interdite à Blanc ; D7 laisse Blanc se relier', () => {
+    const p = pz('f06'), [t] = startOf(p).marked, { pos } = startOf(p);
     const e9 = ok(play(pos, at('E9')));
     expect(libs(e9, t)).toBe(1);
     expect(play(e9, at('D7'))).toBe('suicide');
@@ -154,8 +154,8 @@ describe('chaque problème, coup par coup', () => {
     expect(captureWorks(j9, t)).toBe(false);
   });
 
-  it('f09 : sortie B5 puis libertés extérieures, la commune C1 en dernier', () => {
-    const p = pz('f09'), [t] = startOf(p).marked, { pos } = startOf(p), k = at('C2');
+  it('f10 : sortie B5 puis libertés extérieures, la commune C1 en dernier', () => {
+    const p = pz('f10'), [t] = startOf(p).marked, { pos } = startOf(p), k = at('C2');
     expect(libs(pos, t)).toBe(4);
     expect(libs(pos, k)).toBe(4);
     expect(groupAt(pos.board, 9, k).liberties.has(at('C1'))).toBe(true);
@@ -167,8 +167,8 @@ describe('chaque problème, coup par coup', () => {
     expect(captureWorks(a2, t)).toBe(false);
   });
 
-  it('f10 : l’œil E9 et la sortie B5 ; bloquer d’abord, puis A8 et A9', () => {
-    const p = pz('f10'), [t] = startOf(p).marked, { pos } = startOf(p), k = at('C8');
+  it('f11 : l’œil E9 et la sortie B5 ; bloquer d’abord, puis A8 et A9', () => {
+    const p = pz('f11'), [t] = startOf(p).marked, { pos } = startOf(p), k = at('C8');
     expect(libs(pos, t)).toBe(4);
     expect(libs(pos, k)).toBe(3);
     const b5 = ok(play(pos, at('B5')));
@@ -183,8 +183,8 @@ describe('chaque problème, coup par coup', () => {
     expect(captureWorks(a8, t)).toBe(false);
   });
 
-  it('f08 : trois contre trois avec sortie H5 et liberté commune G1', () => {
-    const p = pz('f08'), [t] = startOf(p).marked, { pos } = startOf(p), k = at('G2');
+  it('f09 : trois contre trois avec sortie H5 et liberté commune G1', () => {
+    const p = pz('f09'), [t] = startOf(p).marked, { pos } = startOf(p), k = at('G2');
     expect(libs(pos, t)).toBe(3);
     expect(libs(pos, k)).toBe(3);
     const h5 = ok(play(pos, at('H5')));
@@ -204,5 +204,15 @@ describe('chaque problème, coup par coup', () => {
     const j2 = seq(pos, 'J2', 'J6');
     expect(groupAt(j2.board, 9, t).stones).toContain(at('J7'));
     expect(captureWorks(j2, t)).toBe(false);
+  });
+
+  it('f05 : E5 coupe au centre, la dernière liberté B5 est interdite à Blanc ; B5 laisse Blanc se relier', () => {
+    const p = pz('f05'), [t] = startOf(p).marked, { pos } = startOf(p);
+    const e5 = ok(play(pos, at('E5')));
+    expect(libs(e5, t)).toBe(1);
+    expect(play(e5, at('B5'))).toBe('suicide');
+    const b5 = seq(pos, 'B5', 'E5');
+    expect(groupAt(b5.board, 9, t).stones).toContain(at('F5'));
+    expect(captureWorks(b5, t)).toBe(false);
   });
 });
