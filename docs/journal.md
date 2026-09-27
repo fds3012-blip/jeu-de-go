@@ -52,3 +52,9 @@ Chaque livraison : issue traitée, agent, pull request, résultat des vérificat
 - Constat : le vermillon pur n'atteint pas 4,5:1 comme texte, d'où `--danger-texte`.
 - Vérifications : lint, typecheck, 57 tests, build, e2e : vert.
 - Reste : validation des maquettes par Florian. L'issue reste ouverte avec le label « bloqué ».
+
+## #23 Accueil en 3 secondes : un message, une action (frontend)
+
+- Livré : pour un nouveau joueur, Mochi et le bouton principal disent la même chose (« Joue ta première partie contre Pomme ») ; adversaire et plateau repliés en « Pomme · 9 × 9 · Changer » ; « Jouer à deux » et « Apprendre » en actions secondaires ; bulle de Mochi qui explique le but au premier coup, une seule fois.
+- Retouches du dirigeant : la bulle du but passe dans `Game` (prop `intro`) et disparaît au premier coup, sinon elle poussait les boutons Passer, Annuler et Abandonner hors de l'écran ; test e2e rendu robuste (le message « Tu joues » est vite remplacé par « Pomme réfléchit… »).
+- Vérifications : lint, typecheck, 104 tests, build, 6 tests e2e (3 passages) : vert.

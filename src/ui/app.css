@@ -63,9 +63,18 @@ td:first-child, th:first-child { text-align: left; }
 .back { background: none; border: 0; color: var(--muted); padding: 6px 0; min-height: 40px; }
 .choices { display: flex; gap: var(--space-2); margin-top: 10px; }
 .choices button { flex: 1; min-height: 52px; font-weight: var(--fw-bold); font-size: var(--fs-l); background: var(--surface); border: 1.5px solid var(--line); border-radius: var(--radius-s); }
-@media (prefers-reduced-motion: no-preference) { .cta, .btn { transition: transform var(--duree-rapide); } .cta:active, .btn:active { transform: translateX(-50%) scale(.98); } .btn:active { transform: scale(.98); } }
+/* Accueil (issue #23) : une ligne de réglages repliée, l'action principale et deux actions secondaires collées au-dessus de la navigation. */
+.app-home { padding-bottom: calc(210px + env(safe-area-inset-bottom, 0px)); }
+.choix { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: var(--surface); border-radius: var(--radius); padding: 0 6px 0 16px; min-height: 56px; }
+.lien { background: none; border: 0; color: var(--text); font-weight: 700; min-height: 44px; min-width: 44px; padding: 0 12px; border-radius: 10px;
+  text-decoration: underline; text-decoration-color: var(--jade); text-decoration-thickness: 2px; text-underline-offset: 5px; }
+.dock { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(74px + env(safe-area-inset-bottom, 0px)); width: min(528px, calc(100% - 32px)); display: grid; gap: 8px; z-index: 10; }
+.dock .cta { position: static; transform: none; width: 100%; font-size: .95rem; padding: 0 8px; line-height: 1.25; }
+.intro .bubble { margin-bottom: 4px; }
+.intro .bubble svg { width: 36px; height: 36px; }
+.intro .bubble p { font-size: .9rem; padding: 8px 12px; line-height: 1.4; }
+@media (prefers-reduced-motion: no-preference) { .cta, .btn { transition: transform var(--duree-rapide); } .cta:active, .btn:active { transform: translateX(-50%) scale(.98); } .btn:active, .dock .cta:active { transform: scale(.98); } }
 .notice { background: var(--surface); border-left: 4px solid var(--recompense); border-radius: var(--radius-s); padding: 10px 14px; margin: 0 0 12px; font-size: var(--fs-s); }
-.link { background: none; border: 0; padding: 0 4px; min-height: var(--cible-min); color: var(--text); font: inherit; font-weight: var(--fw-bold); text-decoration: underline; }
 .stats { display: flex; gap: var(--space-3); }
 .stats > div { flex: 1; display: flex; flex-direction: column; }
 .stats .big { margin: 0; }

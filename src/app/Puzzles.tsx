@@ -91,7 +91,7 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch }: Props) {
 
       {load.error === 'offline' && <p className="notice" role="status">Tu es hors ligne. Les problèmes restent jouables, mais ta cote ne bouge pas.</p>}
       {load.error && load.error !== 'offline' && (
-        <p className="notice" role="alert">{load.error} On t’affiche ceux de ce téléphone. <button className="link" onClick={() => setRetry(n => n + 1)}>Réessayer</button></p>
+        <p className="notice" role="alert">{load.error} On t’affiche ceux de ce téléphone. <button className="lien" onClick={() => setRetry(n => n + 1)}>Réessayer</button></p>
       )}
 
       {db && userId && stats ? (
