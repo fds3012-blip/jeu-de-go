@@ -1,5 +1,5 @@
 // Socle i18n (issue #167) : couverture des clés, textes non vides, variables, pluriels, choix de la langue.
-import { CATALOGUES, LANGUES, choisirLangue, detecterLangue, langue, t, traduire, type Cle } from './index';
+import { CATALOGUES, DETECTION_APPAREIL, LANGUES, choisirLangue, detecterLangue, langue, t, traduire, type Cle } from './index';
 import { fr } from './fr';
 import type { Catalogue } from './types';
 
@@ -64,13 +64,17 @@ describe('detecterLangue', () => {
     expect(detecterLangue('?lang=en', ['fr-FR'])).toBe('en');
     expect(detecterLangue('?x=1&lang=FR', ['en-US'])).toBe('fr');
   });
-  it('suit la première langue connue de l\'appareil', () => {
-    expect(detecterLangue('', ['en-GB', 'fr'])).toBe('en');
-    expect(detecterLangue('', ['de-DE', 'fr-CA'])).toBe('fr');
-    expect(detecterLangue('', ['es', 'en_US'])).toBe('en');
+  it('détection de l\'appareil désactivée tant que tous les écrans ne sont pas traduits', () => {
+    expect(DETECTION_APPAREIL).toBe(false);
+    expect(detecterLangue('', ['en-US'])).toBe('fr');
+  });
+  it('détection forcée : suit la première langue connue de l\'appareil', () => {
+    expect(detecterLangue('', ['en-GB', 'fr'], true)).toBe('en');
+    expect(detecterLangue('', ['de-DE', 'fr-CA'], true)).toBe('fr');
+    expect(detecterLangue('', ['es', 'en_US'], true)).toBe('en');
   });
   it('se replie sur le français (langue inconnue ou paramètre invalide)', () => {
-    expect(detecterLangue('?lang=xx', ['de'])).toBe('fr');
-    expect(detecterLangue('', [])).toBe('fr');
+    expect(detecterLangue('?lang=xx', ['de'], true)).toBe('fr');
+    expect(detecterLangue('', [], true)).toBe('fr');
   });
 });

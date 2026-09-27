@@ -57,8 +57,10 @@ test('sans paramètre, une interface française reste en français', async ({ pa
 
 test.describe('appareil réglé en anglais', () => {
   test.use({ locale: 'en-US' });
-  test('la langue de l\'appareil choisit l\'anglais', async ({ page }) => {
+  // DETECTION_APPAREIL = false : pas d'interface à moitié traduite tant que tous les écrans ne sont pas traduits.
+  test('reste en français tant que la détection de l\'appareil est désactivée', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: 'Profile' })).toBeVisible();
+    await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
+    await expect(page.getByRole('navigation', { name: 'Navigation principale' }).getByRole('button', { name: 'Profil' })).toBeVisible();
   });
 });
