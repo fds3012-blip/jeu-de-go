@@ -15,8 +15,8 @@ test('problèmes sans compte : erreur, bonne réponse, suite et problème suivan
   const debord = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(debord).toBeLessThanOrEqual(0);
 
-  // Problème 1 des bases : la pierre blanche D5 n'a plus qu'une liberté, en E5.
-  await page.getByRole('button', { name: /^Problème 1 : Capture la pierre/ }).click();
+  // Le problème b1 (par son titre, les lots de #91 s'intercalent par difficulté) : la pierre blanche D5 n'a plus qu'une liberté, en E5.
+  await page.getByRole('button', { name: /^Problème \d+ : Capture la pierre/ }).click();
   await expect(plateau(page)).toBeVisible();
 
   await jouer(page, 'A1');
@@ -39,5 +39,5 @@ test('problèmes sans compte : erreur, bonne réponse, suite et problème suivan
   // Le problème réussi reste coché après rechargement.
   await page.reload();
   await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
-  await expect(page.getByRole('button', { name: 'Problème 1 : Capture la pierre, réussi' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Problème \d+ : Capture la pierre, réussi/ })).toBeVisible();
 });

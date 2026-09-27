@@ -154,6 +154,12 @@ export const LOT_PUZZLES: PuzzleRow[] = Object.keys(LOTS)
   .sort()
   .flatMap(k => LOTS[k].default);
 
+/**
+ * Ordre du Go du jour (#75) : ordre d'arrivée, en ajout seulement. Un nouveau lot s'ajoute à la fin
+ * et ne change donc pas les problèmes des jours déjà prévus (contrairement à un tri par id ou par difficulté).
+ */
+export const CALENDRIER_GO_DU_JOUR: readonly string[] = [...BASE_PUZZLES, ...PUZZLES_16, ...LOT_PUZZLES].map(p => p.id);
+
 /** Tous les problèmes, du plus facile au plus difficile (à difficulté égale, ordre d'identifiant). */
 export const ALL_PUZZLES: PuzzleRow[] = [...BASE_PUZZLES, ...PUZZLES_16, ...LOT_PUZZLES]
   .sort((a, b) => a.difficulty - b.difficulty || a.id.localeCompare(b.id));
