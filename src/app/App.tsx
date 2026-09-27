@@ -3,6 +3,9 @@ import { Game } from './Game';
 import { Account } from './Account';
 import { LearnHome, LessonPlayer } from './Learn';
 import { LESSONS } from '../content/lessons';
+import { Puzzles } from './Puzzles';
+import { useLessonProgress, useSession } from './hooks';
+import { supabase } from '../data/supabase';
 import { useSettings, useStored } from './settings';
 import { Bubble } from '../ui/Mochi';
 import { OPPONENTS, opponent, type OpponentId } from '../engine';
@@ -15,7 +18,7 @@ const KOMI_ORDI = 6.5;
 // `?komi=` ne sert qu'aux tests de bout en bout : il n'est lu que dans un build de test (VITE_E2E, voir playwright.config.ts).
 const KOMI = import.meta.env.VITE_E2E && typeof location !== 'undefined' ? komiDepuisUrl(location.search, KOMI_ORDI) : KOMI_ORDI;
 
-type Tab = 'jouer' | 'apprendre' | 'profil';
+type Tab = 'jouer' | 'apprendre' | 'problemes' | 'profil';
 
 export function App() {
   const [tab, setTab] = useState<Tab>('jouer');
@@ -24,7 +27,8 @@ export function App() {
   const [adversaire, setAdversaire] = useStored<OpponentId>('go.adversaire.v1', 'pomme');
   const adv = opponent(adversaire);
   const [lessonId, setLessonId] = useState<string | null>(null);
-  const [progress, setProgress] = useStored<Record<string, number>>('go.lecons.v1', {});
+  const session = useSession(supabase);
+  const { progress, state: syncState, record } = useLessonProgress(supabase, session?.user.id);
   const done = LESSONS.filter(l => (progress[l.id] ?? 0) >= l.steps.length).length;
   const lesson = LESSONS.find(l => l.id === lessonId);
   const [parties, setParties] = useStored<Parties>(PARTIES_KEY, { n: 0 });
@@ -89,9 +93,11 @@ export function App() {
     );
   } else if (tab === 'apprendre' && lesson) {
     screen = <LessonPlayer lesson={lesson} start={(progress[lesson.id] ?? 0) % lesson.steps.length} confirmTouch={settings.confirmTouch}
-      onProgress={n => setProgress({ ...progress, [lesson.id]: Math.max(progress[lesson.id] ?? 0, n) })} onExit={() => setLessonId(null)} />;
+      onProgress={n => record(lesson.id, n)} onExit={() => setLessonId(null)} />;
   } else if (tab === 'apprendre') {
-    screen = <LearnHome progress={progress} onOpen={setLessonId} />;
+    screen = <LearnHome progress={progress} onOpen={setLessonId} sync={syncState} />;
+  } else if (tab === 'problemes') {
+    screen = <Puzzles db={supabase} userId={session?.user.id} sessionLoading={session === undefined} confirmTouch={settings.confirmTouch} />;
   } else if (tab === 'profil') {
     screen = (
       <div>
@@ -156,7 +162,7 @@ export function App() {
       <main className={`app${tab === 'jouer' && !playing ? ' app-home' : ''}`}>
         <header className="top">
           <h1>Go</h1>
-          <p>{tab === 'jouer' ? 'Jouer' : tab === 'apprendre' ? 'Le chemin des leçons' : 'Profil'}</p>
+          <p>{tab === 'jouer' ? 'Jouer' : tab === 'apprendre' ? 'Le chemin des leçons' : tab === 'problemes' ? 'Problèmes' : 'Profil'}</p>
         </header>
         {!playing && !lesson && <ConsentBanner onMore={() => go('profil')} />}
         {screen}
@@ -167,6 +173,9 @@ export function App() {
         </button>
         <button aria-current={tab === 'apprendre' ? 'page' : undefined} onClick={() => go('apprendre')}>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18c3-1 5-4 9-4s6 3 9 4M6 10a2 2 0 1 0 0-.1M12 7a2 2 0 1 0 0-.1M18 10a2 2 0 1 0 0-.1" /></svg>Apprendre
+        </button>
+        <button aria-current={tab === 'problemes' ? 'page' : undefined} onClick={() => go('problemes')}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4zM4 12h16M12 4v16" /><circle cx="12" cy="12" r="3" fill="currentColor" /></svg>Problèmes
         </button>
         <button aria-current={tab === 'profil' ? 'page' : undefined} onClick={() => go('profil')}>
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M4 21c1-4 4-6 8-6s7 2 8 6" /></svg>Profil
