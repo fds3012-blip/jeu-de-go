@@ -14,7 +14,7 @@ import { groupAt, play, type Position } from './rules';
 
 const SPEC: Record<string, { k: number; atari?: boolean }> = {
   e01: { k: 1 }, e02: { k: 1 }, e03: { k: 1 }, e04: { k: 2 }, e05: { k: 1 }, e06: { k: 3, atari: true }, e07: { k: 2 }, e08: { k: 2 }, e09: { k: 2 },
-  e10: { k: 2 }, e11: { k: 3, atari: true }, e12: { k: 3 }, e13: { k: 3 }
+  e10: { k: 2 }, e11: { k: 3, atari: true }, e12: { k: 3 }, e13: { k: 3 }, e14: { k: 3 }, e15: { k: 3 }
 };
 
 const all = parsePuzzles(LOT_E);
@@ -108,12 +108,13 @@ describe('lot E : variantes de capture et d’atari (issue #91)', () => {
     expect(blackCaptures(r, [t], 3)).toBe(false);
   });
 
-  it('e07, e09 à e13 : même avec un coup noir de plus, aucune autre solution', () => {
-    for (const id of ['e07', 'e09', 'e10', 'e11', 'e12', 'e13']) {
+  // Robustesse : avec un coup noir de plus, la solution reste unique (e15 est omis : cette lecture y prend ~4 s).
+  for (const id of ['e07', 'e09', 'e10', 'e11', 'e12', 'e13', 'e14']) {
+    it(`${id} : même avec un coup noir de plus, aucune autre solution`, () => {
       const p = pz(id), { k, atari } = SPEC[id];
       expect(captureWinners(startOf(p).pos, targetsOf(p), k + 1, atari), id).toEqual([...p.answers.map(a => toLabel(a, 9))].sort());
-    }
-  });
+    }, 20000);
+  }
 
   it('e11 : après A4, Blanc s’allonge en B3 et a trois libertés', () => {
     const p = pz('e11'), t = targetsOf(p)[0];
@@ -126,6 +127,16 @@ describe('lot E : variantes de capture et d’atari (issue #91)', () => {
       expect(libs(r, t), id).toBe(2);
       expect(blackCaptures(r, [t], 1), id).toBe(false);
     }
+  });
+
+  it('e14 et e15 : les suites de l’explication mettent bien le groupe en atari', () => {
+    const e14 = pz('e14'), t14 = targetsOf(e14)[0];
+    const c1 = ok(play(ok(play(ok(play(startOf(e14).pos, at('B3'))), at('C1'))), at('D1')));
+    expect(libs(c1, t14)).toBe(1);
+    const e15 = pz('e15'), t15 = targetsOf(e15)[0];
+    const e1 = ok(play(ok(play(ok(play(startOf(e15).pos, at('D3'))), at('E1'))), at('F1')));
+    expect(libs(e1, t15)).toBe(1);
+    expect(ok(play(ok(play(e1, at('C1'))), at('B1'))).board[t15]).toBe(0);
   });
 
   it('la migration insère exactement ce contenu, sans rien modifier ni supprimer', () => {

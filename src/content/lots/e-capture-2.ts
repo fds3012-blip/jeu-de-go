@@ -109,6 +109,22 @@ const LOT_E: PuzzleRow[] = [
     title: 'Enferme vers le coin',
     prompt: 'Capture les deux pierres blanches en trois coups au plus.',
     explanation: "Superbe ! Le groupe avait trois libertés (points vides à côté de lui) : B2, C2 et D3. D3 ferme la seule sortie vers le large. Il ne lui reste que B2 et C2, vers le coin, où tes pierres A2, B1 et C1 l'attendent. S'il s'allonge, tu le remets en atari (une seule liberté), puis tu le captures."
+  },
+  {
+    id: 'e14', size: 9, difficulty: 740, answers: ['B3'],
+    setup: { rows: [E, E, E, E, E, E, E, 'XOX......', '.T.......'], toPlay: 'B',
+      refutation: "Pas encore. Le groupe blanc a trois libertés : A1, C1 et B3. Sur la première ligne, il ne va nulle part ; une seule liberté mène vers le haut. Ferme-la d'abord." },
+    title: 'Le couvercle',
+    prompt: 'Capture les deux pierres blanches du bord en trois coups au plus.',
+    explanation: "Bravo ! Le groupe avait trois libertés (points vides à côté de lui) : A1, C1 et B3. B3 pose un couvercle : il ne lui reste que A1 et C1, sur la première ligne. S'il s'allonge en C1, tu joues D1 et il est en atari (une seule liberté) ; s'il joue A1, tu le captures en C1."
+  },
+  {
+    id: 'e15', size: 9, difficulty: 750, answers: ['D3'],
+    setup: { rows: [E, E, E, E, E, E, '..X......', '.XXOX....', '...T.....'], toPlay: 'B',
+      refutation: "Pas encore. Le groupe blanc a trois libertés : C1, E1 et D3. Sur la première ligne, il ne peut pas vivre bien loin ; la seule sortie vers le centre est D3. Ferme-la d'abord." },
+    title: 'Pas de sortie',
+    prompt: 'Capture les deux pierres blanches du bord en trois coups au plus.',
+    explanation: "Superbe ! Le groupe avait trois libertés (points vides à côté de lui) : C1, E1 et D3. D3 ferme la sortie vers le centre. S'il s'allonge en E1, tu joues F1 : il est en atari (une seule liberté), et tu le captures en B1 s'il continue en C1. Il faut le pousser vers tes pierres, pas vers le large."
   }
 ];
 
