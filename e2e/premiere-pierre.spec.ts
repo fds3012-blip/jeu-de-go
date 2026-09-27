@@ -10,7 +10,7 @@ test('première pierre en deux touches, accueil sans défilement', async ({ page
   const cta = page.locator('.cta');
   await expect(cta).toHaveCount(1);
   await expect(cta).toHaveText('Joue ta première partie contre Pomme');
-  await expect(page.getByText(/Nouveau au go \? Pose ta première pierre contre Pomme/)).toBeVisible();
+  await expect(page.getByText(/Nouveau au go\s\? Pose ta première pierre contre Pomme/)).toBeVisible();
   await expect(page.getByText('Pomme · 9 × 9')).toBeVisible();
 
   // L'accueil tient dans l'écran (390 × 844) : pas de défilement.
@@ -29,7 +29,7 @@ test('première pierre en deux touches, accueil sans défilement', async ({ page
   const plateau = page.getByRole('img', { name: /Plateau de go 9 × 9/ });
   await expect(plateau).toBeVisible();
   // Mochi explique le but, une seule fois.
-  await expect(page.getByText(/Le but : entourer plus de territoire que Pomme/)).toBeVisible();
+  await expect(page.getByText(/Le but\s: entourer plus de territoire que Pomme/)).toBeVisible();
 
   // Touche 2 : clic souris au centre du plateau (pas de confirmation à la souris).
   const box = (await plateau.boundingBox())!;
@@ -43,7 +43,7 @@ test('première pierre en deux touches, accueil sans défilement', async ({ page
   await expect(page.getByText(/Pomme t'attend/)).toBeVisible();
   await page.locator('.cta').click();
   await expect(plateau).toBeVisible();
-  await expect(page.getByText(/Le but : entourer/)).toHaveCount(0);
+  await expect(page.getByText(/Le but\s: entourer/)).toHaveCount(0);
   expect(erreurs).toEqual([]);
 });
 

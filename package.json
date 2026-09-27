@@ -19,6 +19,8 @@
     "sync:functions": "node scripts/sync-functions.mjs"
   },
   "dependencies": {
+    "@fontsource-variable/bricolage-grotesque": "^5.3.0",
+    "@fontsource/zen-kaku-gothic-new": "^5.3.0",
     "@sentry/react": "^11.0.0",
     "@supabase/supabase-js": "^2.117.2",
     "@tensorflow/tfjs": "^4.22.0",

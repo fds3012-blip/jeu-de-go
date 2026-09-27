@@ -41,14 +41,22 @@ export function contrast(a: string, b: string): number {
 
 /** Paires texte / fond utilisées par l'interface. */
 const PAIRS: [string, string][] = [
-  ['--text', '--bg'], ['--text', '--surface'],
-  ['--muted', '--bg'], ['--muted', '--surface'],
+  ['--text', '--bg'], ['--text', '--surface'], ['--text', '--surface-2'], ['--text', '--barre'],
+  ['--muted', '--bg'], ['--muted', '--surface'], ['--muted', '--surface-2'], ['--muted', '--barre'],
   ['--accent-texte', '--bg'], ['--accent-texte', '--surface'],
   ['--danger-texte', '--bg'], ['--danger-texte', '--surface'],
+  ['--vermillon', '--bg'], ['--vermillon', '--surface'],
   ['--recompense-texte', '--bg'], ['--recompense-texte', '--surface'],
   ['--on-accent', '--accent'], ['--on-accent', '--accent-press'],
-  ['--on-accent', '--recompense'], ['--on-accent', '--danger'],
+  ['--on-accent', '--recompense'], ['--on-danger', '--danger'],
   ['--grille', '--kaya'], ['--grille', '--kaya-2'],
+];
+
+/** Éléments graphiques qui doivent se détacher de leur fond (WCAG 1.4.11 : 3:1). */
+const GRAPHIC: [string, string][] = [
+  // Le bouton en relief est dessiné par sa tranche (--accent-bord) ; les soulignés et points par --accent-trait.
+  ['--accent-bord', '--bg'], ['--accent-trait', '--bg'], ['--accent-trait', '--surface'],
+  ['--focus', '--bg'], ['--focus', '--surface'], ['--danger', '--bg'],
 ];
 
 describe('tokens Encre & Jade', () => {
@@ -65,20 +73,51 @@ describe('tokens Encre & Jade', () => {
     }
   }
 
-  it('garde les couleurs de la doc Encre & Jade', () => {
-    expect(dark['--encre']).toBe('#16202B');
-    expect(dark['--encre-2']).toBe('#1F2C3A');
-    expect(dark['--ardoise']).toBe('#2E3D4E');
-    expect(dark['--papier']).toBe('#F4EFE6');
-    expect(dark['--brume']).toBe('#9FB0BF');
-    expect(dark['--jade']).toBe('#2EBD85');
-    expect(dark['--or']).toBe('#F2B84B');
-    expect(dark['--vermillon']).toBe('#E4572E');
-    expect(dark['--kaya']).toBe('#DBAE62');
-    expect(dark['--kaya-2']).toBe('#C99550');
-    expect(resolve(light, '--bg')).toBe('#F4EFE6');
-    expect(resolve(light, '--surface')).toBe('#FFFFFF');
-    expect(resolve(light, '--text')).toBe('#16202B');
+  for (const [mode, theme] of [['sombre', dark], ['clair', light]] as const) {
+    for (const [fg, bg] of GRAPHIC) {
+      it(`mode ${mode} : ${fg} se détache de ${bg} (3:1)`, () => {
+        const ratio = contrast(resolve(theme, fg), resolve(theme, bg));
+        expect(ratio, `${fg} sur ${bg} = ${ratio.toFixed(2)}`).toBeGreaterThanOrEqual(3);
+      });
+    }
+  }
+
+  it('garde les couleurs de la direction v2 (docs/design/v2/direction.md)', () => {
+    expect(resolve(dark, '--bg')).toBe('#1C1916');
+    expect(resolve(dark, '--surface')).toBe('#27221E');
+    expect(resolve(dark, '--surface-2')).toBe('#332D28');
+    expect(resolve(dark, '--line')).toBe('#3E3731');
+    expect(resolve(dark, '--text')).toBe('#F3EDE3');
+    expect(resolve(dark, '--muted')).toBe('#A99F92');
+    expect(resolve(dark, '--accent')).toBe('#3CC48E');
+    expect(resolve(dark, '--accent-bord')).toBe('#1E8A5F');
+    expect(resolve(dark, '--on-accent')).toBe('#07231A');
+    expect(resolve(dark, '--recompense')).toBe('#EFB84A');
+    expect(resolve(dark, '--danger')).toBe('#D2432C');
+    expect(dark['--hanko']).toBe('#D2432C');
+    expect(dark['--or']).toBe('#EFB84A');
+    expect(dark['--kaya']).toBe('#EDC27A');
+    expect(dark['--kaya-2']).toBe('#C58D42');
+    expect(resolve(light, '--bg')).toBe('#EFE8DC');
+    expect(resolve(light, '--text')).toBe('#1C1916');
+    expect(resolve(light, '--accent')).toBe('#3CC48E');
+  });
+
+  it('garde les alias v1 pour les styles en ligne des écrans', () => {
+    for (const t of ['--encre', '--encre-2', '--ardoise', '--nuit', '--jade-fonce', '--vermillon']) {
+      expect(() => resolve(dark, t), t).not.toThrow();
+    }
+  });
+
+  it('décrit le bouton principal en relief : ombre dure de la couleur du bord', () => {
+    expect(dark['--relief']).toBe('5px');
+    for (const theme of [dark, light]) expect(theme['--ombre-relief']).toMatch(/^0 var\(--relief\) 0 var\(--accent-bord\)/);
+    expect(parseFloat(dark['--cible-cta'])).toBeGreaterThanOrEqual(56);
+    expect(dark['--radius-bouton']).toBe('16px');
+  });
+
+  it('allume un halo de lampe doré dans les deux modes', () => {
+    for (const theme of [dark, light]) expect(theme['--halo']).toMatch(/^radial-gradient\(.*rgba\(239, 184, 74/);
   });
 
   it('définit le mode clair de la même façon (préférence système et choix manuel)', () => {
@@ -103,7 +142,10 @@ describe('tokens Encre & Jade', () => {
       expect(dark[t], t).toBeTruthy();
     }
     expect(dark['--font-ui']).toMatch(/^"Zen Kaku Gothic New"/);
-    expect(dark['--font-titre']).toMatch(/^"Shippori Mincho"/);
+    expect(dark['--font-titre']).toMatch(/^"Bricolage Grotesque"/);
+    expect(dark['--font-titre']).not.toMatch(/(^|[\s,"])serif|Mincho|Georgia/);
+    expect(dark['--fw-titre']).toBe('800');
+    expect(dark['--tracking-titre']).toBe('-0.02em');
   });
 
   it('coupe les animations quand le système demande moins de mouvement', () => {

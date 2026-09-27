@@ -1,60 +1,84 @@
 /*
- * Thème Encre & Jade : design tokens.
- * Source : docs/design/encre-et-jade.md et fichier Figma « Jeu de go : Encre & Jade »
- * (https://www.figma.com/design/9Ft0rUVY3lB7cY7pIyjNti).
- * Les noms ci-dessous correspondent aux variables Figma (collection « Couleurs »,
- * modes « Sombre » et « Clair » ; collections « Espacements », « Rayons », « Tailles »).
- * Contraste AA vérifié par src/ui/tokens.test.ts.
+ * Thème Encre & Jade v2 : « le goban sous la lampe ». Design tokens.
+ * Source : docs/design/v2/direction.md (section 3), docs/design/encre-et-jade.md et fichier Figma
+ * « Jeu de go : Encre & Jade » (https://www.figma.com/design/9Ft0rUVY3lB7cY7pIyjNti).
+ * Les écrans n'utilisent que les rôles (--bg, --surface, --text…) : changer une primitive suffit.
+ * Contraste AA vérifié par src/ui/tokens.test.ts, dans les deux modes.
  */
 :root {
   /* ---------- Palette (primitives, identiques dans les deux modes) ---------- */
-  --encre: #16202B;        /* fond sombre */
-  --encre-2: #1F2C3A;      /* cartes, barres (sombre) */
-  --ardoise: #2E3D4E;      /* séparateurs (sombre) */
-  --papier: #F4EFE6;       /* texte sombre, fond clair */
-  --brume: #9FB0BF;        /* texte secondaire (sombre) */
-  --jade: #2EBD85;         /* action principale */
-  --jade-fonce: #1E9A6A;   /* action principale pressée */
-  --or: #F2B84B;           /* récompenses, séries */
-  --vermillon: #E4572E;    /* alertes, pastilles */
-  --kaya: #DBAE62;         /* plateau, haut du dégradé */
-  --kaya-2: #C99550;       /* plateau, bas du dégradé */
+  --sumi: #1C1916;         /* encre chaude : fond sombre */
+  --sumi-2: #27221E;       /* tuiles, barres (sombre) */
+  --sumi-3: #332D28;       /* coup courant, avatar, segment choisi (sombre) */
+  --trait: #3E3731;        /* séparateurs (sombre) */
+  --nuit-chaude: #171411;  /* barre de navigation (sombre) */
+  --papier: #F3EDE3;       /* texte sombre, bulles */
+  --washi: #EFE8DC;        /* fond clair (mode Papier) */
+  --brume: #A99F92;        /* texte secondaire (sombre) */
+  --jade: #3CC48E;         /* action principale */
+  --jade-bord: #1E8A5F;    /* tranche du bouton en relief */
+  --or: #EFB84A;           /* séries, récompenses, bilan */
+  --hanko: #D2432C;        /* sceaux des adversaires, tampon, alertes */
+  --kaya: #EDC27A;         /* plateau, zone éclairée */
+  --kaya-2: #C58D42;       /* plateau, bords */
   --grille: #3A2912;       /* lignes et hoshi du plateau */
   --blanc: #FFFFFF;
-  --nuit: #0B1117;         /* texte posé sur jade, or ou vermillon */
+  --encre-jade: #07231A;   /* texte posé sur jade ou sur or */
+
+  /* Alias v1, gardés pour les styles en ligne des écrans (phases suivantes : à remplacer par les rôles). */
+  --encre: var(--sumi);
+  --encre-2: var(--sumi-2);
+  --ardoise: var(--sumi-3);
+  --nuit: var(--encre-jade);
+  --jade-fonce: var(--jade-bord);
+  --vermillon: var(--danger-texte); /* utilisé comme couleur de texte d'erreur : lisible dans les deux modes */
 
   /* ---------- Rôles (mode sombre, par défaut) ---------- */
-  --bg: var(--encre);
-  --surface: var(--encre-2);
-  --line: var(--ardoise);
+  --bg: var(--sumi);
+  --surface: var(--sumi-2);
+  --surface-2: var(--sumi-3);
+  --line: var(--trait);
+  --barre: var(--nuit-chaude);    /* barre de navigation, barre d'actions */
   --text: var(--papier);
   --muted: var(--brume);
   --accent: var(--jade);
-  --accent-press: var(--jade-fonce);
-  --on-accent: var(--nuit);
-  --accent-texte: #2EBD85;     /* jade utilisé comme texte ou lien */
-  --danger: var(--vermillon);  /* bordures, pastilles */
-  --danger-texte: #F07650;     /* vermillon lisible sur fond sombre */
+  --accent-bord: var(--jade-bord);
+  --accent-press: #34B07F;        /* jade pressé (mouvements réduits : pas d'enfoncement) */
+  --on-accent: var(--encre-jade);
+  --accent-texte: #3CC48E;        /* jade utilisé comme texte ou lien */
+  --danger: var(--hanko);         /* sceaux, pastilles, bordures d'alerte */
+  --on-danger: var(--blanc);      /* texte posé sur hanko */
+  --danger-texte: #EC735A;        /* hanko lisible sur fond sombre */
   --recompense: var(--or);
-  --recompense-texte: #F2B84B;
+  --recompense-texte: #EFB84A;
+  --accent-trait: var(--jade);   /* jade en trait fin : soulignés, point « à toi de jouer » */
   --focus: var(--jade);
+  /* Halo de lampe : un cône doré discret tout en haut de l'écran. */
+  --halo: radial-gradient(120% 420px at 50% -120px, rgba(239, 184, 74, .11), rgba(239, 184, 74, 0) 70%);
+  /* Relief du bouton principal : tranche dure de 5 px + halo jade doux. Seul élément en relief de l'app. */
+  --relief: 5px;
+  --ombre-relief: 0 var(--relief) 0 var(--accent-bord), 0 14px 28px -12px rgba(60, 196, 142, .55);
+  --ombre-plateau: 0 14px 28px -16px rgba(0, 0, 0, .7);
 
   /* ---------- Typographie ---------- */
   --font-ui: "Zen Kaku Gothic New", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-titre: "Shippori Mincho", "Hiragino Mincho ProN", Georgia, serif;
+  --font-titre: "Bricolage Grotesque", "Zen Kaku Gothic New", system-ui, -apple-system, "Segoe UI", sans-serif;
   --fw-regular: 400;
   --fw-medium: 500;
   --fw-bold: 700;
+  --fw-titre: 800;              /* titres, chiffres, bouton principal (Bricolage) */
+  --tracking-titre: -0.02em;    /* interlettrage des titres en Bricolage */
   --fs-base: 16px;     /* corps de texte */
   --fs-xs: .78rem;     /* 12,5 px : libellés de la barre de navigation */
   --fs-s: .88rem;      /* 14 px : texte secondaire */
   --fs-m: 1rem;        /* 16 px : texte courant */
-  --fs-l: 1.1rem;      /* 17,6 px : bouton principal, choix */
-  --fs-xl: 1.25rem;    /* 20 px : titres de section */
+  --fs-l: 1.1rem;      /* 17,6 px : choix, titres de tuile */
+  --fs-xl: 1.25rem;    /* 20 px : titres de section, bouton principal */
   --fs-2xl: 1.8rem;    /* 28,8 px : chiffres forts (cote, score) */
-  --fs-3xl: 1.9rem;    /* 30,4 px : titre d'écran */
+  --fs-3xl: 2rem;      /* 32 px : titre d'écran */
+  --fs-cta: 1.25rem;   /* 20 px : bouton principal (Bricolage 800) */
   --lh-base: 1.5;
-  --lh-titre: 1.2;
+  --lh-titre: 1.15;
 
   /* ---------- Espacements (grille de 4 px) ---------- */
   --space-1: 4px;
@@ -68,17 +92,17 @@
   --gouttiere: 16px;   /* marge latérale des écrans */
 
   /* ---------- Rayons ---------- */
-  --radius-xs: 4px;       /* coin de la bulle de Mochi côté chat */
-  --radius-plateau: 8px;
-  --radius-s: 12px;       /* boutons secondaires, bandeaux, champs */
-  --radius-bouton: 14px;  /* bouton principal */
-  --radius: 16px;         /* cartes */
+  --radius-xs: 4px;       /* coin de la bulle côté personnage */
+  --radius-plateau: 10px;
+  --radius-s: 12px;       /* segments, champs, retours */
+  --radius-bouton: 16px;  /* boutons */
+  --radius: 16px;         /* tuiles */
   --radius-pill: 999px;   /* pastilles, badges */
 
   /* ---------- Tailles ---------- */
   --cible-min: 44px;      /* cible tactile minimale (WCAG 2.5.5) */
-  --cible-bouton: 46px;   /* bouton secondaire */
-  --cible-cta: 54px;      /* bouton principal */
+  --cible-bouton: 48px;   /* bouton secondaire */
+  --cible-cta: 56px;      /* bouton principal */
   --nav-h: 60px;          /* barre de navigation */
   --largeur-max: 560px;   /* colonne de contenu */
   --maquette-l: 390px;    /* largeur des maquettes mobiles */
@@ -93,17 +117,27 @@
   color-scheme: dark;
 }
 
-/* Mode clair : fond papier, cartes blanches, texte encre, mêmes accents. */
+/* Mode clair « Papier » : fond washi, tuiles plus claires, texte sumi, mêmes accents. */
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) {
-    --bg: #F4EFE6; --surface: #FFFFFF; --line: #DDD5C7; --text: #16202B; --muted: #5B6B7A;
-    --accent-texte: #177A53; --danger-texte: #A83A18; --recompense-texte: #8A5A00;
+    --bg: #EFE8DC; --surface: #FBF8F2; --surface-2: #E6DDCF; --line: #D8CDBC; --barre: #F7F2E9;
+    --text: #1C1916; --muted: #675D53;
+    --accent-texte: #17744D; --danger-texte: #B23520; --recompense-texte: #8A5A00;
+    --accent-trait: var(--jade-bord); --focus: var(--jade-bord);
+    --halo: radial-gradient(120% 420px at 50% -120px, rgba(239, 184, 74, .22), rgba(239, 184, 74, 0) 70%);
+    --ombre-relief: 0 var(--relief) 0 var(--accent-bord), 0 14px 24px -14px rgba(30, 138, 95, .5);
+    --ombre-plateau: 0 14px 28px -16px rgba(60, 40, 15, .45);
     color-scheme: light;
   }
 }
 :root[data-theme="light"] {
-  --bg: #F4EFE6; --surface: #FFFFFF; --line: #DDD5C7; --text: #16202B; --muted: #5B6B7A;
-  --accent-texte: #177A53; --danger-texte: #A83A18; --recompense-texte: #8A5A00;
+  --bg: #EFE8DC; --surface: #FBF8F2; --surface-2: #E6DDCF; --line: #D8CDBC; --barre: #F7F2E9;
+  --text: #1C1916; --muted: #675D53;
+  --accent-texte: #17744D; --danger-texte: #B23520; --recompense-texte: #8A5A00;
+    --accent-trait: var(--jade-bord); --focus: var(--jade-bord);
+  --halo: radial-gradient(120% 420px at 50% -120px, rgba(239, 184, 74, .22), rgba(239, 184, 74, 0) 70%);
+  --ombre-relief: 0 var(--relief) 0 var(--accent-bord), 0 14px 24px -14px rgba(30, 138, 95, .5);
+  --ombre-plateau: 0 14px 28px -16px rgba(60, 40, 15, .45);
   color-scheme: light;
 }
 
