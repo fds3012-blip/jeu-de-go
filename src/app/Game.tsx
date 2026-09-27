@@ -190,6 +190,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
       if (t !== scoreToken.current) return;
       setFinding(false); setDead(new Set(d));
       if (modeComptage(!!ai, incertains) === 'auto') setAutoCompte('calcule');
+      if (modeComptage(!!ai, incertains) !== 'auto') track(EVENTS.comptageManuel, { mode: ai ? 'ordi' : 'deux', adversaire: ai?.id, taille: size, mortes: d.length, incertains: incertains.length });
       else setMsg(messageComptage(fin, d.length, incertains.length > 0));
     });
   }
@@ -221,6 +222,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     const enAtari = metEnAtari(r, p);
     if (!ai && enAtari) playAtari();
     setHistory([...history, r]);
+    if (history.length === 1) track(EVENTS.partieCommencee, { mode: ai ? 'ordi' : 'deux', adversaire: ai?.id, taille: size });
     if (history.length === 1) trackOnce(EVENTS.premierePierre, { secondes: secondsSinceOpen(), mode: ai ? 'ordi' : 'deux', adversaire: ai?.id, taille: size });
     if (ai) {
       if (cap) { repliquer('captureSubie'); reagir('surpris'); }
