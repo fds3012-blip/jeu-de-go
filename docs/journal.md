@@ -53,8 +53,20 @@ Chaque livraison : issue traitée, agent, pull request, résultat des vérificat
 - Vérifications : lint, typecheck, 57 tests, build, e2e : vert.
 - Reste : validation des maquettes par Florian. L'issue reste ouverte avec le label « bloqué ».
 
+## #21 L'ordi propose les pierres mortes (moteur-go)
+
+- Livré : `deadStones` et `ownership` (`src/engine/dead.ts`), calculés par simulations avec décision par groupe entier (un groupe à deux vrais yeux est toujours vivant, un seki reste un seki). Pré-marquage à l'entrée du comptage, contre l'ordi comme à deux, avec la phrase de l'issue. Le moteur passe maintenant en comptant sans les pierres mortes estimées.
+- Vérifications : 10 positions de référence (9 × 9 et 13 × 13) justes dans Vitest, moins de 300 ms en 9 × 9 ; test e2e qui va jusqu'au résultat en appuyant seulement sur « Valider le score ». Lint, typecheck, 113 tests, build, 15 tests e2e : vert.
+- Limite : positions de référence construites à la main ; KataGo (#8) donnera une estimation plus fiable.
 ## #23 Accueil en 3 secondes : un message, une action (frontend)
 
 - Livré : pour un nouveau joueur, Mochi et le bouton principal disent la même chose (« Joue ta première partie contre Pomme ») ; adversaire et plateau repliés en « Pomme · 9 × 9 · Changer » ; « Jouer à deux » et « Apprendre » en actions secondaires ; bulle de Mochi qui explique le but au premier coup, une seule fois.
 - Retouches du dirigeant : la bulle du but passe dans `Game` (prop `intro`) et disparaît au premier coup, sinon elle poussait les boutons Passer, Annuler et Abandonner hors de l'écran ; test e2e rendu robuste (le message « Tu joues » est vite remplacé par « Pomme réfléchit… »).
 - Vérifications : lint, typecheck, 104 tests, build, 6 tests e2e (3 passages) : vert.
+
+## #9 Validation des coups côté serveur et fin aux points (backend)
+
+- Livré : Edge Function `game-action` (déployée en production, JWT exigé) qui rejoue la partie avec les règles de `src/go` et refuse case occupée, suicide, ko (422) et coup hors tour (409) ; fin aux points avec proposition des pierres mortes, acceptation ou reprise, score calculé côté serveur et cotes mises à jour. `play_move` n'est plus appelable par les clients.
+- Production : migration `validation_serveur_et_comptage` (colonnes de comptage sur `games`, `finish_game_by_score` réservée au service), sans suppression de données. Advisors : 4 alertes au lieu de 5.
+- Essai réel : fait en SQL dans une transaction annulée (droits refusés au client, score W+7,5 et cotes mises à jour). L'appel HTTP n'a pas pu être fait : le réseau du conteneur bloque `*.supabase.co`.
+- Suite : brancher `src/data/games.ts` dans l'écran de partie en ligne (#10) ; issue de sécurité créée pour les parties classées déséquilibrées.
