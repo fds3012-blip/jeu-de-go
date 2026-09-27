@@ -89,3 +89,39 @@
 }
 /* Le sceau encaisse le coup. */
 @keyframes fin-coup { 0% { transform: none; } 40% { transform: translateY(2px) scale(.98); } 100% { transform: none; } }
+
+/* ---------- Récit du score (#78) : même plateau que la fin, sans voile (tout le goban se lit), le comptage dessous ---------- */
+.app.app-partie:has(> .recit) { padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom, 0px)); }
+.recit { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.recit .fin-voile { opacity: 0; animation: none !important; }
+.recit-feuille { position: relative; flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; margin-top: var(--space-4); }
+
+/* Compteur : deux camps, chiffres en Bricolage à chasse fixe (ils montent sans bouger la ligne). */
+.recit-compteur { display: flex; align-items: flex-end; justify-content: center; gap: var(--space-4); }
+.recit-compteur .camp { display: flex; flex-direction: column; align-items: center; min-width: 4.6ch; }
+.recit-compteur .camp-nom { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 15px; font-weight: var(--fw-bold); }
+.recit-compteur b { font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: 52px; line-height: 1.05; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.recit-point { color: var(--muted); font-size: 32px; line-height: 1; padding-bottom: 12px; }
+.recit-pierre { width: 14px; height: 14px; border-radius: 50%; }
+.recit-pierre.b { background: radial-gradient(circle at 35% 30%, #676b69, #151716 55%, #050606); box-shadow: 0 0 0 1px var(--line); }
+.recit-pierre.w { background: radial-gradient(circle at 38% 32%, #fff, #e9e3d6 60%, #bdb3a0); box-shadow: 0 0 0 1px var(--line); }
+/* Le camp gagnant garde sa pleine couleur, l'autre s'efface un peu. */
+.recit-compteur:has(.gagnant) .camp:not(.gagnant) b { color: var(--muted); }
+
+/* Étapes : toujours en place (la mise en page ne saute pas), elles se montrent quand le récit les atteint. */
+.recit-etapes { list-style: none; margin: var(--space-3) 0 0; padding: 0; display: grid; gap: 8px; font-size: 16px; line-height: 1.35; max-width: 30em; }
+.recit-etape { opacity: 0; }
+.recit-etape.vu { opacity: 1; }
+.recit-etape:first-child { color: var(--muted); font-size: 15px; }
+.recit-explication { display: block; margin-top: 2px; color: var(--muted); font-size: 15px; text-wrap: balance; }
+.recit-resultat { margin-top: var(--space-2); font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: 28px; letter-spacing: -.02em; }
+.recit-passer { margin-top: auto; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .recit:not(.immediat) .recit-feuille { animation: fin-entree 240ms var(--ease) both; }
+  .recit:not(.immediat) .recit-etape { transform: translateY(6px); transition: opacity 200ms var(--ease), transform 200ms var(--ease); }
+  .recit:not(.immediat) .recit-etape.vu { transform: none; }
+  /* Après le récit, le voile de l'écran de fin se pose au lieu de tomber d'un coup. */
+  .fin-voile { animation: fin-voile 300ms var(--ease) both; }
+}
+@keyframes fin-voile { from { opacity: 0; } to { opacity: 1; } }

@@ -15,6 +15,8 @@ export interface BoardMarks {
   zone?: number;
   /** Revue (issue #34) : meilleur coup du moteur, montré par une pierre fantôme jade. */
   meilleur?: number;
+  /** Récit du score (#78) : délai d'apparition (ms) de chaque carré de territoire. Sans délai, le carré est là d'emblée. */
+  ownerDelai?: Map<number, number>;
 }
 
 interface Props {
@@ -195,7 +197,9 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
     const o = marks.owner[p];
     if (!o || (board[p] && !marks.dead?.has(p))) continue;
     const s = C * 0.28;
+    const delai = marks.ownerDelai?.get(p);
     owner.push(<rect key={`o${p}`} x={X(p) - s / 2} y={Y(p) - s / 2} width={s} height={s} rx={1.6} fill={o === 1 ? '#161616' : '#FBF8F1'}
+      className={delai != null ? 'territoire-recit' : undefined} style={delai != null ? { animationDelay: `${delai}ms` } : undefined}
       stroke={o === 1 ? 'rgba(255,240,210,.25)' : 'rgba(40,25,8,.45)'} strokeWidth={0.8} data-territoire={o === 1 ? 'noir' : 'blanc'} />);
   }
 
