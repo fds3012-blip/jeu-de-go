@@ -427,3 +427,24 @@ Chaque livraison : issue traitée, agent, pull request, résultat des vérificat
 - Fin de #120 : bouton Passer mis en évidence.
 - Thèmes de goban.
 - Retrait des droits TRUNCATE sur `profiles`.
+
+## 27/09, 22 h à 23 h : dernière vague
+
+**Retour de Florian sur les problèmes** (#137) : la montagne, la barre et les « 0 / 33 » montraient une fin. Ils sont retirés. Chaque palier dit seulement « N réussis » : les problèmes doivent sembler sans fin.
+
+**Livré**
+- #119 Accueil à une seule action principale. Le goban devient une illustration, et Pomme parle sous le plateau.
+- #109 Thèmes de goban appliqués (Kaya clair, Ardoise, Coquillage doré), choisis dans le Profil selon le niveau.
+- #120 Le bouton Passer passe en jade quand Mochi conseille de passer.
+- #116 Au lecteur d'écran : « Pomme a joué C3 » et l'atari annoncé. Problèmes et leçons testés au clavier.
+- #121 Zoom 200 % et 320 px sans défilement horizontal, avec un test dédié.
+- #135 Les droits TRUNCATE, REFERENCES et TRIGGER sont retirés à `anon` et `authenticated`, en production.
+- #136 Lot G, 5 problèmes « relier ». **106 problèmes** en production, empreintes vérifiées.
+
+**Appris** : l'assemblage des branches avant fusion a encore repéré une cassure. L'annonce « Pomme joue C3 » doublait le message visible, et 7 tests e2e cassaient. La formulation est devenue « Pomme a joué ».
+
+**Reste**
+- #121 : le chemin de pierres d'Apprendre et l'en-tête du Profil à 195 px, la bulle de Pomme.
+- #136 : « relier sous une pierre » et la vie et mort de haut de courbe.
+- Droit MAINTAIN des privilèges par défaut.
+- Champs légaux (#111).
