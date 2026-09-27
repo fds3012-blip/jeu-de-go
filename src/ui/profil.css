@@ -33,7 +33,11 @@ button.ligne:focus-visible { outline-offset: -3px; }
 .chevron { width: 16px; height: 16px; flex: none; fill: none; stroke: var(--muted); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
 /* Choix segmenté dans une ligne : la ligne fait 48 px, chaque segment 44 px (cible tactile). */
-.ligne-choix { padding-right: 6px; }
+.ligne-choix { padding-right: 6px; flex-wrap: wrap; row-gap: 0; }
+/* Le libellé garde au moins 6 em : si les segments ne tiennent pas à côté (« Aide de Mochi en partie » sur
+   iPhone SE), ils passent dessous, alignés à droite, au lieu d'écraser le libellé sur trois lignes. */
+.ligne-choix > .ligne-libelle { min-width: 6em; padding-block: var(--space-2); }
+.ligne-choix .seg { margin-left: auto; margin-bottom: 2px; }
 /* Les segments gardent leur largeur de texte (« Sombre » en gras ne se coupe plus) : c'est le libellé « Thème » qui cède. */
 .ligne-choix .seg { flex: none; padding: 2px; background: var(--bg); }
 .ligne-choix .seg button { flex: none; min-height: var(--cible-min); min-width: var(--cible-min); padding: 0 12px; font-size: var(--fs-s); white-space: nowrap; }
@@ -61,7 +65,7 @@ button.ligne:focus-visible { outline-offset: -3px; }
 /* ---------- Fenêtre de consentement : carte centrée sur un voile d'encre ---------- */
 .accord { width: min(358px, calc(100% - 2 * var(--gouttiere))); max-width: none; max-height: calc(100dvh - 32px); margin: auto; padding: 0; border: 0; overflow: auto;
   border-radius: 22px; background: var(--surface); color: var(--text); --sceau-socle: var(--surface); box-shadow: 0 24px 48px -20px rgba(0, 0, 0, .6); }
-.accord::backdrop { background: rgba(12, 10, 8, .78); }
+.accord::backdrop { background: var(--voile-fort); }
 .accord-corps { padding: var(--space-6) var(--space-5) var(--space-5); display: flex; flex-direction: column; align-items: flex-start; }
 .accord h2:focus { outline: none; }
 .accord h2 { margin: var(--space-4) 0 var(--space-2); font-size: 1.6rem; font-weight: var(--fw-titre); line-height: var(--lh-titre); text-wrap: balance; }

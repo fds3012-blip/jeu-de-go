@@ -25,6 +25,16 @@
   --blanc: #FFFFFF;
   --encre-jade: #07231A;   /* texte posé sur jade ou sur or */
   --indigo: #2F4B8A;       /* deuxième encre des sceaux (Renard, Rivière, Tigre) et sceau du joueur */
+  --tampon-encre: #B23520; /* encre du tampon « BATTUE » et de la pastille de série */
+  --tampon-papier: #F7E9DA;/* papier du tampon, cadre des sceaux dessinés */
+
+  /* Matière des pierres hors goban (avatar, couvercle, fin de partie, barre) : mêmes dégradés que Board.tsx,
+     reflet en haut à gauche (docs/design/v2/identite.md, règle 3). */
+  --matiere-noire: radial-gradient(circle at 35% 30%, #676B69, #151716 55%, #050606);
+  --matiere-blanche: radial-gradient(circle at 38% 32%, #FFFFFF, #E9E3D6 60%, #BDB3A0);
+  /* Voile derrière une feuille (--voile) ou une fenêtre qui demande une réponse (--voile-fort). */
+  --voile: rgba(12, 10, 8, .62);
+  --voile-fort: rgba(12, 10, 8, .78);
 
   /* Alias v1, gardés pour les styles en ligne des écrans (phases suivantes : à remplacer par les rôles). */
   --encre: var(--sumi);
@@ -78,7 +88,9 @@
   --tracking-titre: -0.02em;    /* interlettrage des titres en Bricolage */
   --fs-base: 16px;     /* corps de texte */
   --fs-xs: .78rem;     /* 12,5 px : libellés de la barre de navigation */
+  --fs-legende: .8125rem; /* 13 px : légendes (rang, sous-titre de tuile, bulle de réplique) */
   --fs-s: .88rem;      /* 14 px : texte secondaire */
+  --fs-corps-s: .9375rem; /* 15 px : texte des bulles et du coach, bilan */
   --fs-m: 1rem;        /* 16 px : texte courant */
   --fs-l: 1.1rem;      /* 17,6 px : choix, titres de tuile */
   --fs-xl: 1.25rem;    /* 20 px : titres de section, bouton principal */

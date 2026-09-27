@@ -305,3 +305,19 @@ Chaque livraison : issue traitée, agent, pull request, résultat des vérificat
   - #79 : partie guidée ;
   - #80 : Mochi coach ;
   - #81 : défier un ami par lien.
+
+## #72 Audit « impeccable partout » (designer)
+
+- Captures : 13 écrans, sombre et clair, en 390 × 844 et sur iPhone SE, soit 104 captures. Rapport : `docs/design/v2/audit-coherence.md`, avec une planche avant/après.
+- Corrigé :
+  - la tuile grise parasite sous le nom de l'adversaire ;
+  - la fin de partie coupée sur iPhone SE ;
+  - le choix de la taille du plateau, porté à 44 px ;
+  - le Profil écrasé sur SE ;
+  - les espaces insécables ;
+  - 8 nouveaux jetons et 47 valeurs en dur remplacées.
+- Reste, pour une prochaine issue :
+  - le plateau des leçons caché sur SE ;
+  - les deux sortes d'apostrophes mélangées ;
+  - le bouton principal de l'accueil sur deux lignes ;
+  - des états pas encore capturés.
