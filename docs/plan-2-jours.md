@@ -31,4 +31,4 @@ Analyse coup par coup avec KataGo, badges, mascotte animée, publication sur les
 ## Suivi (tenu par l'architecte)
 
 - [x] Jour 1, architecte : socle Vite + React + TS, alias `@/`, ESLint + Prettier, Vitest, Playwright (viewport 390 x 844), CI GitHub Actions (lint, types, tests, build, e2e), PWA installable (manifeste, icônes, service worker). Issue #1, branche `issue-1-socle`.
-- [ ] Jour 1, architecte : déploiement Vercel de chaque PR. Glisse : projet Vercel à relier au dépôt (hors issue #1).
+- [x] Jour 1, architecte : déploiement Vercel de chaque PR (#2) : production sur https://jeu-de-go.vercel.app, aperçu par PR.
