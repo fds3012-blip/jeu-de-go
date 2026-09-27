@@ -3,7 +3,7 @@
 // avec ou sans compte : le joueur ne voit jamais « 0 jour » après avoir réussi le Go du jour.
 import { serieVivante, type Serie } from './goDuJour';
 
-/** Jour de série à partir duquel on propose le compte, sans insister. */
+/** Jour de série à partir duquel on propose le compte, sans insister. Textes : clés `serie.invitation` et `serie.creerCompte`. */
 export const JOUR_INVITATION = 3;
 
 /**
@@ -25,5 +25,3 @@ export function serieAffichee(serveur: number | null, local: Serie | null, numer
 export function inviterCompte(connecte: boolean, serie: number): boolean {
   return !connecte && serie >= JOUR_INVITATION;
 }
-
-export const TEXTE_INVITATION = 'Crée un compte pour garder ta série.';

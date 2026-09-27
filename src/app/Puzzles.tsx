@@ -30,7 +30,8 @@ import { SERIE_KEY, numeroDuJour, problemeDuNumero, serieVivante, textePartage, 
 import '../ui/apprendre.css';
 import { Glacon, PierreGivree } from '../ui/Glacon';
 import { lireReserveAppareil, reussirAppareil } from './gelAppareil';
-import { TEXTE_INVITATION, inviterCompte, serieAffichee } from './serieLocale';
+import { inviterCompte, serieAffichee } from './serieLocale';
+import { t } from '../content/i18n';
 
 const LOCAL_PUZZLES = parsePuzzles(ALL_PUZZLES);
 const SOLVED_KEY = 'go.problemes.v1';
@@ -218,9 +219,9 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
         <div className="palmares palmares-invite">
           <div className="invitation">
             {inviterCompte(false, serie)
-              ? <p>{fr(TEXTE_INVITATION)}</p>
+              ? <p>{fr(t('serie.invitation'))}</p>
               : <p>{fr('Connecte-toi pour avoir ta ')}<b>cote</b>{fr(' : elle mesure ton niveau.')}</p>}
-            {onCompte && <button className="lien" onClick={onCompte}>{inviterCompte(false, serie) ? 'Créer un compte' : 'Me connecter'}</button>}
+            {onCompte && <button className="lien" onClick={onCompte}>{inviterCompte(false, serie) ? t('serie.creerCompte') : 'Me connecter'}</button>}
           </div>
           <div className="palmares-serie">
             <span className="chiffre"><Flamme taille={30} />{serie}</span>

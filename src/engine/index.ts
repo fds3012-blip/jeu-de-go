@@ -9,6 +9,9 @@
 import { chooseMove, isLegalMove, OPPONENTS, opponent, type EngineOptions, type KataGoLevel, type Opponent, type OpponentId, type Style } from './simple';
 import { comptageAuto, deadStones, groupesIncertains, ownership as ownershipSimple, type ComptageAuto, type DeadOptions } from './dead';
 import type { Position } from '../go/rules';
+import type { Rules } from '../go/score';
+import { avanceEstimee, mortesSelonPropriete } from '../go/estimation';
+import { coupDeFermeture, frontieresOuvertes, partieAvancee } from '../go/frontieres';
 import type { Demande, Reponse, Tache } from './simple.worker';
 import { KataGoClient, type KataGoInfo } from './katago/client';
 import { chooseFromAnalysis } from './katago/choose';
@@ -16,6 +19,8 @@ import { CACHE_NAME, DEFAULT_MODEL_URL } from './katago/loader';
 import type { Analysis, AnalyzeOptions, MoveInfo } from './katago/search';
 
 export { OPPONENTS, opponent, chooseMove, deadStones, ownershipSimple };
+// Fin de partie (#159) : points encore à fermer, coup qui en ferme un, avance comptée comme au comptage.
+export { avanceEstimee, coupDeFermeture, frontieresOuvertes, mortesSelonPropriete, partieAvancee };
 export type { ComptageAuto, Opponent, OpponentId, EngineOptions, DeadOptions, KataGoLevel, Style, Analysis, AnalyzeOptions, MoveInfo, KataGoInfo };
 
 // ---------- Moteur simple dans son Worker ----------
@@ -151,6 +156,11 @@ export async function bestMove(pos: Position, niveau: OpponentId | Opponent, opt
       // Plafond de 1,8 s par coup : l'objectif est une réponse en moins de 2 s.
       const a = await k.analyze(pos, { komi: opts.komi ?? 6.5, visits: lvl.katago.visits, timeMs: opts.timeMs ?? 1800 });
       move = chooseFromAnalysis(a, pos, lvl.katago);
+      // Pas de passe tant qu'une frontière reste ouverte (#159) : on la ferme, de préférence avec un coup de KataGo.
+      if (move === -1 && lvl.fermeFrontieres && partieAvancee(pos.board)) {
+        const f = coupDeFermeture(pos, mortesSelonPropriete(pos, a.ownership), a.moves.map(m => m.move));
+        if (f >= 0) move = f;
+      }
     } catch (e) {
       move = null;
       if (!warned) { warned = true; console.warn('KataGo indisponible, repli sur le moteur simple :', e instanceof Error ? e.message : e); }
@@ -162,47 +172,51 @@ export async function bestMove(pos: Position, niveau: OpponentId | Opponent, opt
 }
 
 /**
- * Avance estimée de Noir, en points (komi compris), pour la barre d'avantage de l'écran de partie.
- * KataGo s'il est déjà chargé (on ne télécharge pas le réseau pour ça), sinon la propriété du moteur simple,
- * calculée dans un Worker dédié. `null` si aucune estimation n'est possible sans bloquer l'interface.
+ * Options de l'estimation d'avantage. `rules` : règle de comptage de la partie (japonais par défaut, comme l'écran
+ * de partie). `fin` : compter comme si la partie s'arrêtait là (frontières ouvertes neutres) ; par défaut, dès
+ * qu'un joueur vient de passer, puisque la passe suivante déclenche le comptage.
  */
-export async function estimateLead(pos: Position, komi: number, opts: { kataGo?: boolean } = {}): Promise<{ lead: number; engine: 'katago' | 'simple' } | null> {
+export interface OptionsEstimation { kataGo?: boolean; rules?: Rules; fin?: boolean }
+
+/** Propriété de chaque intersection pour l'estimation : KataGo s'il est prêt (et libre), sinon le Worker simple. */
+async function proprieteEstimee(pos: Position, komi: number, opts: OptionsEstimation): Promise<{ own: Float32Array; engine: 'katago' | 'simple' } | null> {
   // `kataGo: false` : KataGo est occupé à chercher le coup de l'adversaire, on ne le ralentit pas.
   const k = opts.kataGo === false ? null : katago ?? null;
   if (k && k.info.state === 'pret') {
     try {
-      const a = await k.analyze(pos, { komi, visits: 16, timeMs: 600 });
-      return { lead: pos.toPlay === 1 ? a.lead : -a.lead, engine: 'katago' };
+      const a = await k.analyze(pos, { komi, visits: 16, timeMs: 600, regles: opts.rules ?? 'japanese' });
+      return { own: a.ownership, engine: 'katago' };
     } catch { /* repli ci-dessous */ }
   }
   const q = askEstimation({ kind: 'own', pos, timeMs: pos.size <= 9 ? 150 : 400 });
   const r = q && (await q);
-  if (!r?.own) return null;
-  let black = -komi;
-  for (const v of r.own) black += v;
-  return { lead: black, engine: 'simple' };
+  return r?.own ? { own: Float32Array.from(r.own), engine: 'simple' } : null;
+}
+
+/** Avance de Noir comptée avec la règle de la partie (voir `avanceEstimee`, #159). */
+function avance(pos: Position, own: Float32Array, komi: number, opts: OptionsEstimation): number {
+  return avanceEstimee(pos, own, komi, { rules: opts.rules ?? 'japanese', fin: opts.fin ?? pos.lastMove === -1 });
+}
+
+/**
+ * Avance estimée de Noir, en points (komi compris), pour la barre d'avantage de l'écran de partie.
+ * KataGo s'il est déjà chargé (on ne télécharge pas le réseau pour ça), sinon la propriété du moteur simple,
+ * calculée dans un Worker dédié. `null` si aucune estimation n'est possible sans bloquer l'interface.
+ * Le compte suit la règle du comptage final (#159) : sur une position finie, c'est le score réel.
+ */
+export async function estimateLead(pos: Position, komi: number, opts: OptionsEstimation = {}): Promise<{ lead: number; engine: 'katago' | 'simple' } | null> {
+  const e = await proprieteEstimee(pos, komi, opts);
+  return e && { lead: avance(pos, e.own, komi, opts), engine: e.engine };
 }
 
 /**
  * Territoires estimés pour « Qui mène ? » (#94) : avance de Noir (komi compris) et propriété de chaque
  * intersection, de -1 (Blanc) à +1 (Noir). KataGo s'il est déjà prêt, sinon le moteur simple dans son Worker.
- * `null` si aucune estimation n'est possible sans bloquer l'interface.
+ * `null` si aucune estimation n'est possible sans bloquer l'interface. Même compte que `estimateLead`.
  */
-export async function estimateTerritoire(pos: Position, komi: number, opts: { kataGo?: boolean } = {}): Promise<{ lead: number; own: Float32Array; engine: 'katago' | 'simple' } | null> {
-  const k = opts.kataGo === false ? null : katago ?? null;
-  if (k && k.info.state === 'pret') {
-    try {
-      const a = await k.analyze(pos, { komi, visits: 16, timeMs: 600 });
-      return { lead: pos.toPlay === 1 ? a.lead : -a.lead, own: a.ownership, engine: 'katago' };
-    } catch { /* repli ci-dessous */ }
-  }
-  const q = askEstimation({ kind: 'own', pos, timeMs: pos.size <= 9 ? 150 : 400 });
-  const r = q && (await q);
-  if (!r?.own) return null;
-  const own = Float32Array.from(r.own);
-  let black = -komi;
-  for (const v of own) black += v;
-  return { lead: black, own, engine: 'simple' };
+export async function estimateTerritoire(pos: Position, komi: number, opts: OptionsEstimation = {}): Promise<{ lead: number; own: Float32Array; engine: 'katago' | 'simple' } | null> {
+  const e = await proprieteEstimee(pos, komi, opts);
+  return e && { lead: avance(pos, e.own, komi, opts), own: e.own, engine: e.engine };
 }
 
 /**
