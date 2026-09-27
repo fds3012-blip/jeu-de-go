@@ -4,14 +4,30 @@ import { Account } from './Account';
 import { LearnHome, LessonPlayer } from './Learn';
 import { LESSONS } from '../content/lessons';
 import { Puzzles } from './Puzzles';
-import { useLessonProgress, useSession } from './hooks';
+import { readLocal, useLessonProgress, useSerie, useSession } from './hooks';
 import { supabase } from '../data/supabase';
 import { useSettings, useStored } from './settings';
 import { Bubble } from '../ui/Mochi';
-import { OPPONENTS, opponent, type OpponentId } from '../engine';
+import { OPPONENTS, type OpponentId } from '../engine';
 import { ConsentBanner, Confidentialite } from './Confidentialite';
-import { accueil, introBut, INTRO_KEY, PARTIES_KEY, type Parties } from './home';
+import { accueil, adversaireOuvert, echelle, introBut, INTRO_KEY, PARTIES_KEY, type Parties } from './home';
+import { Accueil } from './Accueil';
+import { BASE_PUZZLES } from '../content/puzzles';
+import { parsePuzzles, puzzleOfDay } from '../data/puzzles';
 import { battu, BILAN_KEY, enregistrer, fin, komiDepuisUrl, lireBilan, type Bilan } from './bilan';
+
+const PROBLEMES_LOCAUX = parsePuzzles(BASE_PUZZLES);
+/** Problèmes réussis sur ce téléphone (même clé que l'onglet Problèmes). */
+const PROBLEMES_RESOLUS_KEY = 'go.problemes.v1';
+
+/** Flamme de la série de jours, en or. */
+function Flamme() {
+  return (
+    <svg viewBox="0 0 16 16" width="18" height="18" aria-hidden="true" focusable="false">
+      <path d="M8.6 1.2c.4 2.3 3.9 3.9 3.9 7.9A4.5 4.5 0 0 1 8 13.8a4.5 4.5 0 0 1-4.5-4.6c0-2 1-3.2 2-4 0 1.4.6 2.4 1.5 2.7C6.6 5.6 7.4 3 8.6 1.2Z" fill="currentColor" />
+    </svg>
+  );
+}
 
 const KOMI_ORDI = 6.5;
 // Komi du comptage : 6,5, sauf paramètre de test `?komi=` (l'ordi, lui, joue toujours avec 6,5).
@@ -25,7 +41,6 @@ export function App() {
   const [settings, set] = useSettings();
   const [playing, setPlaying] = useState<false | 'ordi' | 'deux'>(false);
   const [adversaire, setAdversaire] = useStored<OpponentId>('go.adversaire.v1', 'pomme');
-  const adv = opponent(adversaire);
   const [lessonId, setLessonId] = useState<string | null>(null);
   const session = useSession(supabase);
   const { progress, state: syncState, record } = useLessonProgress(supabase, session?.user.id);
@@ -37,6 +52,10 @@ export function App() {
   const [reglages, setReglages] = useState(false);
   const [bilanBrut, setBilan] = useStored<Bilan>(BILAN_KEY, {});
   const bilan = lireBilan(bilanBrut);
+  // Un adversaire verrouillé (choisi avant l'arrivée des verrous) laisse place à celui qu'il faut battre d'abord.
+  const adv = adversaireOuvert(OPPONENTS, bilan, adversaire);
+  const cartes = echelle(OPPONENTS, bilan).map(e => ({ id: e.adv.id, nom: e.adv.nom, rang: e.adv.rang, battu: e.battu, ouvert: e.ouvert, requis: e.requis?.nom }));
+  const serie = useSerie(supabase, session?.user.id);
   const [resultat, setResultat] = useState<null | { gagne: boolean }>(null); // fin de la partie en cours contre l'ordi
   const [partie, setPartie] = useState(0); // change à chaque partie pour repartir d'un plateau vide
   const home = accueil(parties, done, adv, settings.size);
@@ -125,48 +144,28 @@ export function App() {
       </div>
     );
   } else {
+    const daily = puzzleOfDay(PROBLEMES_LOCAUX, new Date());
+    const rangLecon = leconConseillee ? LESSONS.indexOf(leconConseillee) + 1 : 0;
     screen = (
-      <div className="home">
-        <Bubble>{home.mochi}</Bubble>
-        <div className="choix">
-          <span><b>{adv.nom}</b>{battu(bilan, adv.id) && <span className="battu"> ✓<span className="sr-only"> battu</span></span>} · {settings.size} × {settings.size}</span>
-          <button className="lien" aria-expanded={reglages} aria-controls="reglages" onClick={() => setReglages(!reglages)}>{reglages ? 'Fermer' : 'Changer'}</button>
-        </div>
-        {reglages && (
-          <div id="reglages">
-            <p className="muted small">Ton adversaire</p>
-            <div className="seg">
-              {OPPONENTS.map(o => {
-                const b = battu(bilan, o.id);
-                return <button key={o.id} aria-pressed={adv.id === o.id} aria-label={b ? `${o.nom}, battu` : undefined} onClick={() => setAdversaire(o.id)}>{b && <span aria-hidden="true">✓ </span>}{o.nom}</button>;
-              })}
-            </div>
-            <p className="muted small"><b>{adv.nom}, {adv.rang}.</b> {adv.description} Tu as Noir.</p>
-            <p className="muted small" style={{ marginTop: -6 }}>Le kyu est un niveau : plus le nombre est petit, plus on est fort.</p>
-            <p className="muted small">Taille du plateau</p>
-            <div className="seg">
-              {([9, 13, 19] as const).map(n => <button key={n} aria-pressed={settings.size === n} onClick={() => set({ size: n })}>{n} × {n}</button>)}
-            </div>
-            <p className="muted small">{settings.size === 9 ? 'Parties courtes, idéal pour apprendre.' : settings.size === 13 ? 'Une partie de taille moyenne.' : 'Le plateau classique des joueurs confirmés.'}</p>
-          </div>
-        )}
-        <div className="dock">
-          <button className="cta" onClick={() => lancer('ordi')}>{home.cta}</button>
-          <div className="row">
-            <button className="btn" onClick={() => lancer('deux')}>Jouer à deux</button>
-            <button className="btn" onClick={() => go('apprendre')}>Apprendre</button>
-          </div>
-        </div>
-      </div>
+      <Accueil adv={adv} battu={battu(bilan, adv.id)} textes={home} taille={settings.size} cartes={cartes}
+        reglages={reglages} setReglages={setReglages} onTaille={n => set({ size: n })} onChoisir={setAdversaire}
+        onJouer={() => lancer('ordi')} onDeux={() => lancer('deux')}
+        probleme={daily && { titre: daily.title, rows: daily.rows, reussi: !!readLocal<Record<string, true>>(PROBLEMES_RESOLUS_KEY, {})[daily.id] }}
+        onProbleme={() => go('problemes')}
+        lecon={leconConseillee && { rang: rangLecon, total: LESSONS.length, titre: leconConseillee.title }}
+        onLecon={() => { go('apprendre'); if (leconConseillee) setLessonId(leconConseillee.id); }} />
     );
   }
 
+  const accueilVisible = tab === 'jouer' && !playing;
   return (
     <>
-      <main className={`app${tab === 'jouer' && !playing ? ' app-home' : ''}`}>
+      <main className={`app${accueilVisible ? ' app-home' : ''}`}>
         <header className="top">
           <h1>Go</h1>
-          <p>{tab === 'jouer' ? 'Jouer' : tab === 'apprendre' ? 'Le chemin des leçons' : tab === 'problemes' ? 'Problèmes' : 'Profil'}</p>
+          {accueilVisible
+            ? serie > 0 && <p className="serie" role="img" aria-label={`Série de ${serie} jour${serie > 1 ? 's' : ''}`}><Flamme />{serie}</p>
+            : <p>{tab === 'jouer' ? 'Jouer' : tab === 'apprendre' ? 'Le chemin des leçons' : tab === 'problemes' ? 'Problèmes' : 'Profil'}</p>}
         </header>
         {!playing && !lesson && <ConsentBanner onMore={() => go('profil')} />}
         {screen}

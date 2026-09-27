@@ -1,6 +1,7 @@
 import type { Tables } from './database.types';
 import type { Db } from './supabase';
 import { usernameErrorFromDb, validateUsername } from './username';
+import { liveStreak } from './puzzles';
 
 export type Profile = Tables<'profiles'>;
 export type Result<T> = { ok: true; value: T } | { ok: false; error: string };
@@ -19,6 +20,17 @@ export async function fetchProfile(db: Db, userId: string): Promise<Result<Profi
   const { data, error } = await db.from('profiles').select('*').eq('id', userId).maybeSingle();
   if (error) return { ok: false, error: 'Impossible de charger ton profil.' };
   return { ok: true, value: data };
+}
+
+/**
+ * Série de jours du joueur connecté (profil `streak_days`, `streak_last`), telle qu'affichée :
+ * 0 si le dernier jour joué date d'avant-hier ou plus (même règle que l'onglet Problèmes).
+ */
+export async function fetchStreak(db: Db, userId: string, now = new Date()): Promise<Result<number>> {
+  const { data, error } = await db.from('profiles').select('streak_days, streak_last').eq('id', userId).maybeSingle();
+  if (error) return { ok: false, error: 'Impossible de charger ta série.' };
+  if (!data) return { ok: true, value: 0 };
+  return { ok: true, value: liveStreak(data.streak_days, data.streak_last, now) };
 }
 
 /** Enregistre le pseudo. La base vérifie à nouveau le format et l'unicité. */

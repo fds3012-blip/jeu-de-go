@@ -65,10 +65,16 @@ export async function attendrePierre(page: Page, label: string, couleur: 'noir' 
   else await expect(ici.and(page.locator(`[data-pierre="${couleur}"]`))).toHaveCount(1);
 }
 
+/** Depuis l'accueil déjà affiché : « Changer », puis « Jouer à deux sur ce téléphone » (issue #40, phase 4). */
+export async function lancerADeux(page: Page): Promise<void> {
+  await page.getByRole('button', { name: 'Changer' }).click();
+  await page.getByRole('dialog', { name: 'Ton adversaire' }).getByRole('button', { name: 'Jouer à deux sur ce téléphone' }).click();
+}
+
 /** Ouvre une partie à deux sur le même téléphone depuis l'accueil. */
 export async function partieADeux(page: Page): Promise<void> {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Jouer à deux', exact: true }).click();
+  await lancerADeux(page);
   await expect(plateau(page)).toBeVisible();
 }
 

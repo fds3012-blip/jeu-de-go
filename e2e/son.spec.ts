@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { attendrePierre, jouer, jouerSuite, message, partieADeux, pierres } from './plateau';
+import { attendrePierre, jouer, jouerSuite, lancerADeux, message, partieADeux, pierres } from './plateau';
 
 // Issue #40 (goban v2) : sons synthétisés en Web Audio. Poser, capturer et tenter un coup interdit
 // avec le son activé ne doit provoquer aucune erreur JS.
@@ -52,7 +52,7 @@ test('sons coupés dans le Profil : aucun contexte audio créé', async ({ page 
   await page.getByRole('navigation').getByRole('button', { name: 'Profil' }).click();
   await expect(page.getByRole('button', { name: 'Coupés' })).toHaveAttribute('aria-pressed', 'true');
   await page.getByRole('navigation').getByRole('button', { name: 'Jouer' }).click();
-  await page.getByRole('button', { name: 'Jouer à deux', exact: true }).click();
+  await lancerADeux(page);
   await jouer(page, 'E5');
   await attendrePierre(page, 'E5', 'noir');
   expect(await page.evaluate(() => (window as unknown as { __audio: AudioContext[] }).__audio.length)).toBe(0);
