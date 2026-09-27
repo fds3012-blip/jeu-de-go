@@ -15,7 +15,7 @@
 /* Tampon « BATTU » : le seul texte en capitales de l'app, parce que c'est un tampon. */
 .sceau-tampon { position: absolute; right: -12px; bottom: 4px; transform: rotate(-12deg); line-height: 1;
   font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: 10px; letter-spacing: .06em;
-  color: #B23520; background: #F7E9DA; border: 1.5px solid #B23520; border-radius: 3px; padding: 3px 4px 2px; }
+  color: var(--tampon-encre); background: var(--tampon-papier); border: 1.5px solid var(--tampon-encre); border-radius: 3px; padding: 3px 4px 2px; }
 
 /* ---------- Mise en page : une colonne qui remplit l'écran au-dessus de la barre de navigation ---------- */
 .app.app-home { display: flex; flex-direction: column; min-height: calc(100dvh - env(safe-area-inset-top, 0px));
@@ -48,13 +48,13 @@
 .scene-bulle { position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: flex-end; gap: 10px; pointer-events: none; padding-right: 8px; }
 .scene-bulle .sceau { --sceau-socle: var(--papier); filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .35)); }
 .scene-bulle p { margin: 0 0 6px; max-width: 250px; background: var(--papier); color: var(--sumi); border-radius: var(--radius) var(--radius) var(--radius) var(--radius-xs);
-  padding: 9px 14px; font-size: .95rem; line-height: 1.35; font-weight: var(--fw-medium); box-shadow: 0 8px 18px -10px rgba(0, 0, 0, .6); }
+  padding: 9px 14px; font-size: var(--fs-corps-s); line-height: 1.35; font-weight: var(--fw-medium); box-shadow: 0 8px 18px -10px rgba(0, 0, 0, .6); }
 
 /* ---------- Adversaire ---------- */
-.identite { display: flex; align-items: baseline; gap: 10px; margin-top: var(--space-4); }
-.identite h2 { margin: 0; font-size: 2.125rem; font-weight: var(--fw-titre); line-height: 1; }
-.identite span { color: var(--muted); }
-.phrase { margin: 6px 0 0; color: var(--muted); font-size: .95rem; line-height: 1.4; max-width: 34em; }
+.adversaire-identite { display: flex; align-items: baseline; gap: 10px; margin-top: var(--space-4); }
+.adversaire-identite h2 { margin: 0; font-size: 2.125rem; font-weight: var(--fw-titre); line-height: 1; }
+.adversaire-identite span { color: var(--muted); }
+.phrase { margin: 6px 0 0; color: var(--muted); font-size: var(--fs-corps-s); line-height: 1.4; max-width: 34em; }
 
 .reglage { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); min-height: var(--cible-min); margin: 6px -12px var(--space-2) 0; }
 .reglage .lien { padding: 0 12px; }
@@ -70,8 +70,8 @@
 .tuiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: calc(var(--space-3) + var(--relief)); }
 .tuile { display: flex; align-items: center; gap: 10px; min-height: 68px; padding: 10px 12px; border: 0; border-radius: var(--radius); background: var(--surface); text-align: left; }
 .tuile span { min-width: 0; }
-.tuile small { display: block; color: var(--muted); font-size: .8rem; line-height: 1.3; }
-.tuile b { display: block; font-family: var(--font-titre); font-weight: var(--fw-bold); letter-spacing: -0.01em; font-size: 1rem; line-height: 1.2; }
+.tuile small { display: block; color: var(--muted); font-size: var(--fs-legende); line-height: 1.3; }
+.tuile b { display: block; font-family: var(--font-titre); font-weight: var(--fw-bold); letter-spacing: -0.01em; font-size: var(--fs-m); line-height: 1.2; }
 /* Leçon suivante : « à faire plus tard », en pointillés. */
 .tuile-lecon { background: transparent; border: 1.5px dashed color-mix(in srgb, var(--text) 26%, transparent); }
 .tuile:active { background: var(--surface-2); }
@@ -85,7 +85,7 @@
 /* ---------- Feuille « Changer » : boîte de dialogue en bas d'écran ---------- */
 .feuille { margin: auto auto 0; width: min(var(--largeur-max), 100%); max-width: 100%; max-height: 92dvh; padding: 0; border: 0; overflow: auto;
   border-radius: 22px 22px 0 0; background: var(--surface); color: var(--text); padding-bottom: env(safe-area-inset-bottom, 0px); --sceau-socle: var(--surface); }
-.feuille::backdrop { background: rgba(12, 10, 8, .62); }
+.feuille::backdrop { background: var(--voile); }
 /* Entrée par transition (interruptible) et sortie courte : la transition appliquée est celle de l'état d'arrivée. */
 @media (prefers-reduced-motion: no-preference) {
   .feuille, .feuille::backdrop {
@@ -128,8 +128,8 @@
 /* 82 px : à 390 px, quatre cartes et le bord de la cinquième, qui dit que la liste continue. */
 .carte { width: 82px; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 2px 8px; border: 0; border-radius: var(--radius); background: transparent; }
 .carte .sceau { margin-bottom: 6px; }
-.carte b { font-family: var(--font-titre); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre); font-size: .95rem; line-height: 1.2; }
-.carte small { color: var(--muted); font-size: .8rem; }
+.carte b { font-family: var(--font-titre); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre); font-size: var(--fs-corps-s); line-height: 1.2; }
+.carte small { color: var(--muted); font-size: var(--fs-legende); }
 .carte[aria-pressed="true"] { background: var(--surface-2); box-shadow: inset 0 0 0 2px var(--accent-trait); --sceau-socle: var(--surface-2); }
 .carte.verrou b { color: var(--muted); }
 .carte.verrou { cursor: not-allowed; }
