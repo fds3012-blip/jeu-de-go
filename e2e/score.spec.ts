@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { jouer, partieADeux } from './plateau';
+import { jouer, partieADeux, passerJusquAuScore } from './plateau';
 
 // Issue #78 : le score est raconté en trois temps sur le goban final (territoires, prisonniers, komi), puis le résultat,
 // avant l'écran de fin. Partie à deux déterministe : Noir tient les colonnes A à E, Blanc F à J,
@@ -62,14 +62,7 @@ test('fin de partie : le récit du score, puis le résultat, sans toucher', asyn
 test("contre Pomme : « Toi » et « Pomme », « Tu gagnes… ! » et un vrai bouton Continuer", async ({ page }) => {
   await page.goto('/?komi=-100');
   await page.locator('.cta').click();
-  const passer = page.getByRole('button', { name: 'Passer' });
-  const valider = page.getByRole('button', { name: 'Valider le score' });
-  for (let i = 0; i < 6 && !(await valider.isVisible()); i++) {
-    await expect(passer).toBeEnabled({ timeout: 10_000 });
-    await passer.click();
-    await expect(valider.or(page.getByText(/Pomme (joue|capture)/))).toBeVisible({ timeout: 10_000 });
-  }
-  await valider.click({ timeout: 10_000 });
+  await passerJusquAuScore(page);
   const recit = page.locator('.recit');
   await expect(recit).toBeVisible();
   await expect(recit.locator('.camp-nom')).toHaveText(['Toi', 'Pomme']);

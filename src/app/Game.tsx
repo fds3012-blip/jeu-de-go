@@ -6,7 +6,7 @@ import { playAtari, playCapture, playIllegal, playStone, playVictory } from '../
 import { hapticCapture, hapticIllegal, hapticStone, hapticVictory } from '../ui/haptics';
 import { score } from '../go/score';
 import { toLabel } from '../go/coords';
-import { bestMove, estimateLead, estimateTerritoire, proposeDead, type Opponent } from '../engine';
+import { bestMove, estimateLead, estimateTerritoire, proposeComptage, type Opponent } from '../engine';
 import { EVENTS, secondsSinceOpen, track, trackOnce } from '../data/analytics';
 import { gagnerXp } from './xp';
 import { supabase } from '../data/supabase';
@@ -14,6 +14,8 @@ import { fr } from '../ui/typo';
 import { useProfil } from './hooks';
 import { useStored } from './settings';
 import { carteTerritoire, conseilPasser, coupsJoues, descriptionIndices, descriptionQuiMene, DUREE_QUI_MENE, indicesRestants, INDICES_PAR_PARTIE, libelleAvantage, libelleCoup, messageAtari, messageIndice, metEnAtari, nouveauxAtari, partNoir, phraseQuiMene, QUI_MENE_PAR_PARTIE, quiMeneDisponible, quiMeneRestants } from './partie';
+import { CORRIGER_MORTES, EXPLICATION_MORTES, messageComptage, modeComptage } from './partie';
+import '../ui/comptage.css';
 import { choisirReplique, DUREE_REPLIQUE, type Situation } from './repliques';
 import { FinPartie } from '../ui/FinPartie';
 import { RecitScore } from '../ui/RecitScore';
@@ -30,7 +32,6 @@ import { REVUE_KEY, sgfDepuisHistorique, type PartieGardee } from './revue';
 
 const REFUS = { occupe: '', ko: "Ko : tu ne peux pas reprendre tout de suite, joue d'abord ailleurs.", suicide: 'Coup interdit : cette pierre serait capturée par elle-même.', 'hors-plateau': '' };
 const pierres = (n: number) => `${n} pierre${n > 1 ? 's' : ''}`;
-const PALES = "Les pierres pâles sont prisonnières : elles ne peuvent plus s'échapper. Touche un groupe pour corriger.";
 const virgule = (n: number) => String(n).replace('.', ',');
 /** Vrai une fois que Mochi a expliqué le mot « atari » (on ne l'explique qu'une fois). */
 const ATARI_KEY = 'go.atari-explique.v1';
@@ -85,6 +86,10 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   const [komiExplique, setKomiExplique] = useStored<boolean>(KOMI_KEY, false);
   // Récit du score (#78) : raconté une fois après « Valider le score », avant l'écran de fin.
   const [recitFini, setRecitFini] = useState(true);
+  // Comptage automatique contre l'ordi (#117) : score validé sans passer par la phase manuelle, résultat différé
+  // jusqu'à la fin du récit pour que « Corriger les pierres mortes » reste possible.
+  const [autoCompte, setAutoCompte] = useState<'non' | 'calcule' | 'oui'>('non');
+  const resultatDiffere = useRef<(() => void) | null>(null);
   const profil = useProfil(ai ? supabase : null);
   const token = useRef(0); // invalide les réponses de l'ordi devenues caduques (annulation, sortie)
   const scoreToken = useRef(0); // idem pour les pierres mortes proposées
@@ -173,17 +178,25 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     return () => { alive = false; };
   }, [ai, pos, komi, phase]);
 
-  // Deux passes : on passe au comptage et le moteur propose les pierres mortes (pâles), que le joueur corrige d'une touche.
+  // Deux passes : le moteur marque les pierres mortes (grisées). Contre l'ordi, si rien n'est incertain, on va droit
+  // au récit du score (#117) ; sinon, et toujours à deux, le joueur corrige d'une touche avant « Valider le score ».
   function enterScore(p: Position, fin: string) {
     const t = ++scoreToken.current;
-    setPhase('score'); setDead(new Set()); setFinding(true); setMsg(`${fin} Je cherche les pierres prisonnières…`);
-    proposeDead(p).then(d => {
+    setPhase('score'); setDead(new Set()); setFinding(true); setMsg(`${fin} Je cherche les pierres mortes…`);
+    proposeComptage(p, komi).then(({ dead: d, incertains }) => {
       if (t !== scoreToken.current) return;
       setFinding(false); setDead(new Set(d));
-      setMsg(d.length ? PALES : `${fin} Aucune pierre prisonnière. Si un groupe est mort, touche-le pour le retirer.`);
+      if (modeComptage(!!ai, incertains) === 'auto') setAutoCompte('calcule');
+      else setMsg(messageComptage(fin, d.length, incertains.length > 0));
     });
   }
-  function resume() { scoreToken.current++; setFinding(false); setPhase('play'); setDead(new Set()); }
+  // Validation automatique au rendu suivant, quand `dead`, le score et l'historique sont à jour.
+  useEffect(() => { if (autoCompte === 'calcule' && phase === 'score') { setAutoCompte('oui'); finish(sc.winner, false, true); } }, [autoCompte]); // eslint-disable-line react-hooks/exhaustive-deps
+  function corriger() {
+    resultatDiffere.current = null;
+    setAutoCompte('non'); setRecitFini(true); setPhase('score'); setMsg(`${EXPLICATION_MORTES} Touche un groupe pour corriger.`);
+  }
+  function resume() { scoreToken.current++; setFinding(false); setPhase('play'); setDead(new Set()); setAutoCompte('non'); resultatDiffere.current = null; }
 
   function onPlay(p: number) {
     if (phase === 'score') {
@@ -279,17 +292,19 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     setThinking(false);
     setHistory(history.slice(0, undoTo)); resume(); setMsg(ai ? 'Coup annulé. À toi de rejouer.' : 'Coup annulé.');
   }
-  function finish(winner: 1 | 2, abandon: boolean) {
+  function finish(winner: 1 | 2, abandon: boolean, differe = false) {
     const egalite = !abandon && sc.margin === 0;
     setPhase('end'); setRelecture(null); setRecitFini(abandon);
     // La partie est gardée en SGF sur ce téléphone, pour la revue (Supabase viendra plus tard).
     const texte = sgfDepuisHistorique(history, komi, { noir: ai ? 'Toi' : 'Noir', blanc: ai?.nom ?? 'Blanc' });
     setSgf(texte);
     try { localStorage.setItem(REVUE_KEY, JSON.stringify({ sgf: texte, adversaire: ai?.id, date: new Date().toISOString() } satisfies PartieGardee)); } catch { /* stockage indisponible */ }
-    onResult?.(egalite ? 0 : winner, {
+    const resultat = () => onResult?.(egalite ? 0 : winner, {
       coups: history.length - 1, capturesMoi: pos.captures[1], capturesAdv: pos.captures[2], atarisSubis: atarisSubis.current,
       abandon, marge: abandon ? 0 : sc.margin, komi,
     });
+    resultatDiffere.current = differe ? resultat : null;
+    if (!differe) resultat();
     // Célébration (réglage « Célébrations ») : carillon et vibration ; les confettis sont sur l'écran de fin.
     // Après un comptage, elle attend la fin du récit du score (le résultat n'est pas gâché d'avance).
     if (abandon) celebrerVictoire(winner, egalite);
@@ -300,6 +315,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   function finRecit() {
     if (recitFini) return;
     setRecitFini(true);
+    resultatDiffere.current?.(); resultatDiffere.current = null;
     if (!komiExplique) setKomiExplique(true);
     celebrerVictoire(sc.winner, sc.margin === 0);
   }
@@ -362,9 +378,20 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
       const recit = recitScore(pos, komi, 'japanese', dead);
       const immediat = !celebrer || mouvementsReduits();
       const ownerDelai = immediat ? undefined : new Map(recit.territoire.map(q => [q.p, q.delai]));
-      return (
+      const recitEl = (
         <RecitScore recit={recit} immediat={immediat} expliquerKomi={!komiExplique} adversaire={ai?.nom} onFini={finRecit}
           fond={<Board size={size} board={pos.board} marks={{ owner: sc.owner, ownerDelai, dead, last: pos.lastMove }} />} />
+      );
+      if (autoCompte !== 'oui') return recitEl;
+      // Comptage automatique (#117) : Mochi explique les pierres grisées, la correction reste possible.
+      return (
+        <div className="recit-auto">
+          {recitEl}
+          <aside className="comptage-auto" aria-label="Pierres mortes">
+            {dead.size > 0 && <p>{fr(EXPLICATION_MORTES)}</p>}
+            <button type="button" className="lien lien-discret" onClick={corriger}>{CORRIGER_MORTES}</button>
+          </aside>
+        </div>
       );
     }
     const bilanDeux = fr(`${n} coup${n > 1 ? 's' : ''} sur ${plateau}. Captures : Noir ${pos.captures[1]}, Blanc ${pos.captures[2]}.`);
@@ -421,7 +448,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
         ]} />
       ) : (
         <>
-          <p className="comptage">{fr(`${name(1)} ${virgule(sc.black)}, ${name(2)} ${virgule(sc.white)} (komi compris). Les pierres pâles sont comptées comme mortes.`)}</p>
+          <p className="comptage">{fr(`${name(1)} ${virgule(sc.black)}, ${name(2)} ${virgule(sc.white)} (komi compris). Les pierres grisées sont comptées comme mortes.`)}</p>
           <div className="barre-comptage" role="toolbar" aria-label="Comptage des points">
             <button className="btn" onClick={() => { resume(); setMsg('La partie reprend.'); }}>Reprendre</button>
             <button className="btn primary" onClick={() => finish(sc.winner, false)} disabled={finding}>Valider le score</button>

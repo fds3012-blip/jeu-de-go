@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { passerJusquAuScore } from './plateau';
 
 // Issue #22 puis #40 (phase 5) : écran de fin contre l'ordi, bilan gardé en localStorage (go.bilan.v1), adversaire suivant,
 // tampon « BATTUE », célébration et relecture. Pour une victoire déterministe, on ouvre l'appli avec `?komi=-100`
@@ -6,17 +7,8 @@ import { expect, test, type Page } from '@playwright/test';
 
 const bilan = (page: Page) => page.evaluate(() => JSON.parse(localStorage.getItem('go.bilan.v1') || '{}'));
 
-async function passerJusquAuComptage(page: Page) {
-  const passer = page.getByRole('button', { name: 'Passer' });
-  const valider = page.getByRole('button', { name: 'Valider le score' });
-  for (let i = 0; i < 6 && !(await valider.isVisible()); i++) {
-    await expect(passer).toBeEnabled({ timeout: 10_000 });
-    await passer.click();
-    await expect(valider.or(page.getByText(/Pomme (joue|capture)/))).toBeVisible({ timeout: 10_000 });
-  }
-  await expect(valider).toBeEnabled({ timeout: 10_000 });
-  await valider.click();
-}
+// Depuis #117, le comptage contre l'ordi peut être automatique (récit direct) : voir passerJusquAuScore.
+const passerJusquAuComptage = passerJusquAuScore;
 
 test('victoire contre Pomme : tampon, confettis, Caillou en un geste, bilan gardé', async ({ page }) => {
   const erreurs: string[] = [];

@@ -1,20 +1,11 @@
 import { expect, test, type Page } from '@playwright/test';
-import { jouer, plateau } from './plateau';
+import { jouer, passerJusquAuScore, plateau } from './plateau';
 
 // Issue #34 : revue d'une partie terminée. `?komi=-100` (paramètre de test, voir src/app/bilan.ts) donne une fin
 // de partie déterministe : Noir gagne en passant. On joue quelques coups, on passe, puis on revoit la partie.
 
-async function passerJusquAuComptage(page: Page) {
-  const passer = page.getByRole('button', { name: 'Passer' });
-  const valider = page.getByRole('button', { name: 'Valider le score' });
-  for (let i = 0; i < 6 && !(await valider.isVisible()); i++) {
-    await expect(passer).toBeEnabled({ timeout: 10_000 });
-    await passer.click();
-    await expect(valider.or(page.getByText(/Pomme (joue|capture)/))).toBeVisible({ timeout: 10_000 });
-  }
-  await expect(valider).toBeEnabled({ timeout: 10_000 });
-  await valider.click();
-}
+// Depuis #117, le comptage contre l'ordi peut être automatique (récit direct) : voir passerJusquAuScore.
+const passerJusquAuComptage = passerJusquAuScore;
 
 /** Partie courte contre Pomme : quelques coups, puis deux passes. */
 async function partieCourte(page: Page, coups: string[]) {

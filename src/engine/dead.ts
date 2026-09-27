@@ -89,21 +89,68 @@ export function ownership(pos: Position, opts: DeadOptions = {}): Float32Array {
 
 /** Pierres mortes (index y * N + x), groupe par groupe. */
 export function deadStones(pos: Position, opts: DeadOptions = {}): number[] {
-  const { board, size } = pos, seen = new Uint8Array(board.length), dead: number[] = [];
-  if (!board.some(v => v)) return dead;
-  const own = ownership(pos, opts), seuil = opts.seuil ?? 0.4;
+  if (!pos.board.some(v => v)) return [];
+  return mortsDepuis(pos, ownership(pos, opts), opts.seuil ?? 0.4);
+}
+
+/** Groupes de la position, sans ceux qui ont deux vrais yeux (vivants sans discussion). */
+function groupesDiscutables(pos: Position): { c: Color; stones: number[] }[] {
+  const { board, size } = pos, seen = new Uint8Array(board.length), out: { c: Color; stones: number[] }[] = [];
   for (let p = 0; p < board.length; p++) {
     if (!board[p] || seen[p]) continue;
     const c = board[p] as Color, g = groupAt(board, size, p);
     for (const s of g.stones) seen[s] = 1;
-    // Deux vrais yeux : vivant sans discussion.
     let eyes = 0;
     for (const l of g.liberties) if (isEye(board, size, l, c)) eyes++;
-    if (eyes >= 2) continue;
-    // Moyenne de propriété du groupe, vue de sa couleur : -1 = toujours chez l'adversaire.
-    let m = 0;
-    for (const s of g.stones) m += c === 1 ? own[s] : -own[s];
-    if (m / g.stones.length < -seuil) dead.push(...g.stones);
+    if (eyes < 2) out.push({ c, stones: g.stones });
   }
+  return out;
+}
+
+/** Moyenne de propriété d'un groupe, vue de sa couleur : -1 = toujours chez l'adversaire. */
+function moyenne(own: ArrayLike<number>, c: Color, stones: number[]): number {
+  let m = 0;
+  for (const s of stones) m += c === 1 ? own[s] : -own[s];
+  return m / stones.length;
+}
+
+function mortsDepuis(pos: Position, own: ArrayLike<number>, seuil: number): number[] {
+  const dead: number[] = [];
+  for (const g of groupesDiscutables(pos)) if (moyenne(own, g.c, g.stones) < -seuil) dead.push(...g.stones);
   return dead.sort((a, b) => a - b);
+}
+
+// Comptage automatique (#117) : on ne marque les pierres mortes à la place du joueur que si l'estimation est nette.
+/**
+ * Zone de doute sur la moyenne de propriété d'un groupe (vue de sa couleur). KataGo donne une propriété proche de 0
+ * à un seki : au-dessus de -0,2, vivant. Dans les simulations, un seki survit (proche de +1) : un groupe vivant
+ * moins d'une fois sur quatre (sous +0,5) reste discutable.
+ */
+export const DOUTE = { mort: -0.6, vivant: -0.2, vivantSimulation: 0.5 } as const;
+
+/**
+ * Pierres des groupes incertains : une carte de propriété (`avis`, de -1 Blanc à +1 Noir) les place entre vie
+ * et mort, ou contredit la liste `dead`. Un seki (propriété proche de 0 chez KataGo) compte comme vivant.
+ */
+export function groupesIncertains(pos: Position, dead: readonly number[], avis: ArrayLike<number>[], vivant: number = DOUTE.vivant): number[] {
+  const mort = new Set(dead), out: number[] = [];
+  for (const g of groupesDiscutables(pos)) {
+    const estMort = mort.has(g.stones[0]);
+    const doute = avis.some(own => {
+      const m = moyenne(own, g.c, g.stones);
+      return (m > DOUTE.mort && m < vivant) || (estMort && m >= vivant) || (!estMort && m <= DOUTE.mort);
+    });
+    if (doute) out.push(...g.stones);
+  }
+  return out.sort((a, b) => a - b);
+}
+
+export interface ComptageAuto { dead: number[]; incertains: number[] }
+
+/** Pierres mortes et groupes incertains, d'après les simulations (et `avis` en plus, par exemple KataGo). */
+export function comptageAuto(pos: Position, opts: DeadOptions = {}, avis: ArrayLike<number>[] = []): ComptageAuto {
+  if (!pos.board.some(v => v)) return { dead: [], incertains: [] };
+  const own = ownership(pos, opts), dead = mortsDepuis(pos, own, opts.seuil ?? 0.4);
+  const incertains = new Set([...groupesIncertains(pos, dead, [own], DOUTE.vivantSimulation), ...groupesIncertains(pos, dead, avis)]);
+  return { dead, incertains: [...incertains].sort((a, b) => a - b) };
 }

@@ -1,0 +1,7 @@
+/* Comptage automatique (#117) : sous le récit du score, l'explication des pierres grisées et le lien de correction. */
+.recit-auto { display: flex; flex-direction: column;
+  min-height: calc(100dvh - var(--space-1) - var(--space-4) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); }
+.recit-auto > .fin { min-height: 0; flex: 1; }
+.comptage-auto { display: flex; flex-direction: column; align-items: center; text-align: center; gap: var(--space-1); padding-bottom: var(--space-2); }
+.comptage-auto p { margin: 0; color: var(--muted); max-width: 34ch; }
+.comptage-auto .lien-discret { color: var(--muted); text-decoration-color: var(--line); }
