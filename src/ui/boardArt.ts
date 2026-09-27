@@ -104,9 +104,9 @@ export function woodDataUrl(): string {
 <defs>
 <filter id="g" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
 <feTurbulence type="fractalNoise" baseFrequency="0.004 0.22" numOctaves="3" seed="7" result="fin"/>
-<feColorMatrix in="fin" type="matrix" result="finA" values="0 0 0 0 0.52  0 0 0 0 0.30  0 0 0 0 0.10  0 0 0 0.95 -0.38"/>
+<feColorMatrix in="fin" type="matrix" result="finA" values="0 0 0 0 0.52  0 0 0 0 0.30  0 0 0 0 0.10  0 0 0 0.8 -0.34"/>
 <feTurbulence type="fractalNoise" baseFrequency="0.002 0.018" numOctaves="2" seed="11" result="large"/>
-<feColorMatrix in="large" type="matrix" result="largeA" values="0 0 0 0 0.62  0 0 0 0 0.38  0 0 0 0 0.14  0 0 0 0.9 -0.35"/>
+<feColorMatrix in="large" type="matrix" result="largeA" values="0 0 0 0 0.62  0 0 0 0 0.38  0 0 0 0 0.14  0 0 0 0.55 -0.24"/>
 <feMerge><feMergeNode in="largeA"/><feMergeNode in="finA"/></feMerge>
 </filter>
 <radialGradient id="b" cx="42%" cy="35%" r="85%"><stop offset="0" stop-color="#EDC27A"/><stop offset=".6" stop-color="#DDA95C"/><stop offset="1" stop-color="#C58D42"/></radialGradient>

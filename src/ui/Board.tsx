@@ -135,7 +135,7 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
   // Grille, hoshi et coordonnées : ne dépendent que de la taille.
   const grid = useMemo(() => {
     const k = viewBoxOf(size).span / 358, lc = coordCenter(size); // unités du viewBox par pixel CSS pour un plateau de 358 px (iPhone 390)
-    const fin = 0.85 * k, bord = 1.5 * k, fs = 9.2 * k, e = M + (size - 1) * C;
+    const fin = 0.85 * k, bord = 1.5 * k, fs = 11 * k, e = M + (size - 1) * C;
     let d = '';
     const dBord = `M${M} ${M}H${e}V${e}H${M}Z`;
     for (let i = 1; i < size - 1; i++) { const q = M + i * C; d += `M${M} ${q}H${e}M${q} ${M}V${e}`; }
@@ -144,7 +144,7 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
         <path d={d} stroke={LIGNE} strokeOpacity={0.78} strokeWidth={fin} fill="none" />
         <path d={dBord} stroke={LIGNE} strokeOpacity={0.78} strokeWidth={bord} fill="none" strokeLinejoin="miter" />
         {hoshi(size).map(p => <circle key={p} cx={M + (p % size) * C} cy={M + Math.floor(p / size) * C} r={(size === 19 ? 2.3 : 3) * k} fill={LIGNE} fillOpacity={0.85} />)}
-        <g className="coord" fontSize={fs} fill="#5a3a16" fillOpacity={0.6} textAnchor="middle" dominantBaseline="central">
+        <g className="coord" fontSize={fs} fill="#4a2f10" fillOpacity={0.7} textAnchor="middle" dominantBaseline="central">
           {Array.from({ length: size }, (_, i) => (
             <g key={i}>
               <text x={M + i * C} y={lc}>{LETTERS[i]}</text>

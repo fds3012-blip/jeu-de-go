@@ -6,7 +6,7 @@
   overflow: hidden; /* coins arrondis du bois ; les ombres ci-dessous restent visibles */
   background: #C58D42;
   /* tranche foncée du plateau, puis ombre portée sur la table */
-  box-shadow: 0 3px 0 #A0692C, 0 5px 0 #5E3812, 0 20px 32px -10px rgba(0, 0, 0, .72), 0 2px 6px rgba(0, 0, 0, .35);
+  box-shadow: 0 4px 0 #6B3F16, 0 20px 32px -10px rgba(0, 0, 0, .72), 0 2px 6px rgba(0, 0, 0, .35);
   margin-bottom: 5px;
 }
 /* Chanfrein : arête claire du bois, avec un léger assombrissement du bas. */

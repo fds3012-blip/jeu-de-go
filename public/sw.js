@@ -2,7 +2,9 @@
  * - App shell mis en cache à l'installation.
  * - Navigation : réseau d'abord, repli sur le shell en cache (hors ligne).
  * - Fichiers statiques de même origine (/assets/* hachés, icônes) : cache d'abord.
- * - Jamais mis en cache ici : autres origines (Supabase, polices, PostHog, Sentry),
+ *   Les polices (Bricolage Grotesque, Zen Kaku Gothic New) sont servies par l'app dans /assets/*.woff2 :
+ *   elles entrent dans ce cache au premier affichage et marchent ensuite hors ligne.
+ * - Jamais mis en cache ici : autres origines (Supabase, PostHog, Sentry),
  *   requêtes non GET, et le réseau KataGo (*.bin.gz), géré à part par le moteur.
  * Changer VERSION invalide les anciens caches.
  */

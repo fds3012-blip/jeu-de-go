@@ -1,6 +1,8 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './app/App';
+// Polices auto-hébergées (@fontsource, sous-ensemble latin) : avant les styles qui les utilisent.
+import './ui/fonts.css';
 import './ui/app.css';
 import { registerSW } from './registerSW';
 import { EVENTS, initAnalytics, track } from './data/analytics';
