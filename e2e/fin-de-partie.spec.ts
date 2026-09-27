@@ -44,6 +44,8 @@ test('victoire forcée (?komi=-100) : sceau de Pomme tamponné « BATTUE », « 
   await valider.click();
   await expect(page.getByRole('heading', { level: 2, name: 'Victoire' })).toBeVisible();
   await expect(page.locator('.fin-sceau .fin-tampon')).toHaveText('BATTUE');
+  // Issue #102 : le portrait de Pomme, surprise d'avoir perdu.
+  await expect(page.locator('.fin-sceau [data-portrait="pomme"]')).toHaveAttribute('data-humeur', 'surpris');
   const cta = page.getByRole('button', { name: 'Défier Caillou' });
   await expect(cta).toBeVisible();
   await expect(cta.locator('.sceau')).toHaveCount(1);

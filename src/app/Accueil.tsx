@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { Board } from '../ui/Board';
 import { R, boardWidth, viewBoxOf } from '../ui/boardArt';
 import { Sceau } from '../ui/Sceau';
+import { Portrait } from '../ui/Portrait';
 import { CarrouselAdversaires, type CarteAdversaire } from '../ui/Carrousel';
 import type { Opponent } from '../engine';
 import type { Accueil as TextesAccueil } from './home';
@@ -58,7 +59,7 @@ export function Accueil(p: Props) {
           </div>
         </div>
         <div className="scene-bulle">
-          <Sceau id={adv.id} taille={56} battu={p.battu} />
+          <Portrait id={adv.id} taille={64} decoratif signature={false} />
           <p>{textes.bulle}</p>
         </div>
       </div>

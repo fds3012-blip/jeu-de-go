@@ -78,7 +78,7 @@
   .fin .cta:active { transform: translateY(var(--relief)); box-shadow: none; }
   .fin-feuille { animation: fin-entree 240ms var(--ease) both; }
   .fin-tampon { animation: fin-tampon 280ms cubic-bezier(.3, 1.4, .5, 1) 360ms both; }
-  .fin-sceau:has(.fin-tampon) > .sceau { animation: fin-coup 180ms ease-out 560ms both; }
+  .fin-sceau:has(.fin-tampon) > .sceau, .fin-sceau:has(.fin-tampon) > .portrait { animation: fin-coup 180ms ease-out 560ms both; }
 }
 @keyframes fin-entree { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 /* Le tampon arrive de haut, grand et flou de mouvement, s'écrase un peu, puis se pose. */
