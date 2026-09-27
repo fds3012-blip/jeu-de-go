@@ -28,6 +28,7 @@ Issue #166. Source unique : `src/data/analytics.ts` (constante `EVENTS`). Un tes
 | `inscription` | aucune | Premier pseudo enregistré (`src/app/Account.tsx`) | Entonnoir de création de compte (étape 2), base de la future conversion |
 | `probleme_resolu` | `probleme`, `du_jour` | Problème réussi pour la première fois sur l'appareil (`src/app/Puzzles.tsx`) | Engagement (problèmes), future limite Premium « problèmes illimités » |
 | `revue_ouverte` | `coups`, `taille`, `mode` | Ouverture de la revue d'une partie (#34, `src/app/Revue.tsx`) | Usage de l'analyse (future limite « une analyse par jour ») |
+| `revue_rejouer` | `coup` (position reprise, 0 = plateau vide), `cle` (depuis le moment clé ou non), `perte` (points perdus au moment clé, arrondis), `taille`, `mode` | « Rejouer d'ici » touché dans la revue (#186, `src/app/Revue.tsx`). **Nouveau (#186)** | Revue utile : `revue_rejouer` / `revue_ouverte`, cible 30 % (analyse UX du 28/09, C11-C12) |
 | `go_du_jour_resolu` | `numero`, `essais`, `serie`, `arrivee_par_lien` | Go du jour réussi, une fois par jour (#75, `src/app/Puzzles.tsx`) | Habitude quotidienne, rétention |
 | `go_du_jour_partage` | `numero`, `essais`, `methode` (`partage`/`copie`) | Partage du Go du jour (`src/app/Puzzles.tsx`) | Acquisition par partage (coefficient viral) |
 | `arrivee_par_partage` | `numero_demande`, `numero_du_jour` | Ouverture de l'app par un lien partagé, une fois par session (`src/app/App.tsx`) | Nouveaux joueurs venus par partage |
