@@ -53,6 +53,30 @@ const LOT_E: PuzzleRow[] = [
     title: 'Deux libertés sur le bord',
     prompt: 'Capture les deux pierres blanches du bord en deux coups.',
     explanation: "Exact ! Le groupe avait deux libertés (points vides à côté de lui), E2 et F1. Tu en prends une : il est en atari. S'il s'allonge, tes pierres D2 et F2 lui bouchent la route : il reste en atari et tu le captures. Les deux mises en atari marchent."
+  },
+  {
+    id: 'e07', size: 9, difficulty: 600, answers: ['D6'],
+    setup: { rows: [E, E, '.XX.X....', '.XT.TX...', E, E, E, E, E], toPlay: 'B',
+      refutation: "Pas tout à fait. Si tu ne menaces qu'une pierre, Blanc joue D6 : il relie ses deux pierres et leur donne assez de libertés. Joue ce point avant lui." },
+    title: 'Double atari au centre',
+    prompt: 'Un seul coup met les deux pierres marquées en atari. Joue-le, puis capture.',
+    explanation: "Bravo ! Chaque pierre blanche avait deux libertés (points vides à côté d'elle), dont D6 en commun. En D6, il ne leur en reste qu'une chacune, C5 et E5 : c'est un double atari. Blanc en sauve une, tu prends l'autre."
+  },
+  {
+    id: 'e08', size: 9, difficulty: 630, answers: ['B3'],
+    setup: { rows: [E, E, E, E, '.X.......', '.TX......', E, E, E], toPlay: 'B',
+      refutation: "Pas celle-là. Après A4, Blanc s'allonge en B3, vers l'intérieur : il a trois libertés et s'échappe. Pousse-le plutôt contre le bord." },
+    title: 'Contre le bord gauche',
+    prompt: 'Mets la pierre marquée en atari du bon côté, puis capture-la.',
+    explanation: "Exact ! Après B3, la pierre n'a plus qu'une liberté (un point vide à côté), A4 : elle est en atari. Si Blanc s'allonge en A4, son groupe n'a que deux libertés sur le bord, A3 et A5. Tu en prends une, il s'allonge, et tu le captures au coup suivant. Le bord ne laisse pas de place pour fuir."
+  },
+  {
+    id: 'e09', size: 9, difficulty: 680, answers: ['F2'],
+    setup: { rows: [E, E, E, E, E, E, '...XX....', '..XTO....', E], toPlay: 'B',
+      refutation: "Pas encore. Le groupe blanc a trois libertés : D1, E1 et F2. Seule F2 mène vers le centre : ferme-la d'abord, le bord fera le reste." },
+    title: 'Ferme la sortie',
+    prompt: 'Capture les deux pierres blanches en trois coups au plus.',
+    explanation: "Superbe ! Le groupe avait trois libertés (points vides à côté de lui), D1, E1 et F2. En F2, tu fermes la seule sortie vers le centre. Il ne lui reste que D1 et E1, sur le bord : s'il s'allonge, chaque fois tu le remets en atari (une seule liberté), jusqu'à le capturer."
   }
 ];
 

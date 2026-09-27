@@ -13,7 +13,8 @@ import { captureWinners, plainKey, symmetries } from './lecteurs-lot-e';
 import { groupAt, play, type Position } from './rules';
 
 const SPEC: Record<string, { k: number; atari?: boolean }> = {
-  e01: { k: 1 }, e02: { k: 1 }, e03: { k: 1 }, e04: { k: 1 }, e05: { k: 3, atari: true }, e06: { k: 2 }
+  e01: { k: 1 }, e02: { k: 1 }, e03: { k: 1 }, e04: { k: 1 }, e05: { k: 3, atari: true }, e06: { k: 2 },
+  e07: { k: 2 }, e08: { k: 3, atari: true }, e09: { k: 3 }
 };
 
 const all = parsePuzzles(LOT_E);
@@ -105,6 +106,18 @@ describe('lot E : variantes de capture et d’atari (issue #91)', () => {
     const p = pz('e05'), t = targetsOf(p)[0], r = ok(play(ok(play(startOf(p).pos, at('F4'))), at('E3')));
     expect(libs(r, t)).toBe(2);
     expect(blackCaptures(r, [t], 3)).toBe(false);
+  });
+
+  it('e07, e08, e09 : même avec un coup noir de plus, aucune autre solution', () => {
+    for (const id of ['e07', 'e08', 'e09']) {
+      const p = pz(id), { k, atari } = SPEC[id];
+      expect(captureWinners(startOf(p).pos, targetsOf(p), k + 1, atari), id).toEqual([...p.answers.map(a => toLabel(a, 9))].sort());
+    }
+  });
+
+  it('e08 : après A4, Blanc s’allonge en B3 et a trois libertés', () => {
+    const p = pz('e08'), t = targetsOf(p)[0];
+    expect(libs(ok(play(ok(play(startOf(p).pos, at('A4'))), at('B3'))), t)).toBe(3);
   });
 
   it('la migration insère exactement ce contenu, sans rien modifier ni supprimer', () => {
