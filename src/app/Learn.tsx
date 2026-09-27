@@ -6,13 +6,21 @@ import { fromRows } from '../go/position';
 import { play, type Position } from '../go/rules';
 import { fromLabel } from '../go/coords';
 import { score } from '../go/score';
+import type { SyncState } from './hooks';
 import { EVENTS, track } from '../data/analytics';
 
 type Progress = Record<string, number>;
 
 function lineOf(p: number, n: number) { const x = p % n, y = Math.floor(p / n); return Math.min(x, y, n - 1 - x, n - 1 - y); }
 
-export function LearnHome({ progress, onOpen }: { progress: Progress; onOpen: (id: string) => void }) {
+const SYNC_TEXT: Record<SyncState, string> = {
+  local: 'Ta progression reste sur ce téléphone. Connecte-toi dans Profil pour la garder partout.',
+  sync: 'Synchronisation de ta progression…',
+  ok: 'Progression enregistrée sur ton compte.',
+  error: 'Hors ligne : ta progression est gardée sur ce téléphone et sera envoyée plus tard.'
+};
+
+export function LearnHome({ progress, onOpen, sync = 'local' }: { progress: Progress; onOpen: (id: string) => void; sync?: SyncState }) {
   const next = LESSONS.find(l => (progress[l.id] ?? 0) < l.steps.length);
   return (
     <div>
@@ -30,6 +38,7 @@ export function LearnHome({ progress, onOpen }: { progress: Progress; onOpen: (i
           );
         })}
       </ol>
+      <p className="muted small" role="status" aria-busy={sync === 'sync'}>{SYNC_TEXT[sync]}</p>
     </div>
   );
 }
