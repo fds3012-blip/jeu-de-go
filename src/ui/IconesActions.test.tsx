@@ -90,3 +90,21 @@ describe('états (partie.css)', () => {
     expect(partieCss).toContain('.actions .danger .icone-action .couvercle-dessus { fill: var(--hanko);');
   });
 });
+
+describe('BarreActions : bouton mis en évidence (#120)', () => {
+  const rendu = (disabled = false) => renderToStaticMarkup(
+    <BarreActions label="Actions" actions={[{ label: 'Passer', icone: null, onClick: () => {}, evidence: true, pulse: true, disabled }]} />);
+  it('ajoute evidence et pulse, libellé inchangé', () => {
+    expect(rendu()).toContain('class="evidence pulse"');
+    expect(rendu()).toContain('<span>Passer</span>');
+  });
+  it('pas de mise en évidence sur un bouton désactivé', () => {
+    expect(rendu(true)).not.toContain('evidence');
+  });
+  it('la pulsation ne tourne que si les mouvements ne sont pas réduits', () => {
+    const i = partieCss.indexOf('.actions button.pulse::after');
+    const media = partieCss.lastIndexOf('@media (prefers-reduced-motion: no-preference)', i);
+    expect(i).toBeGreaterThan(0);
+    expect(partieCss.slice(media, i)).not.toMatch(/\n\}/);
+  });
+});
