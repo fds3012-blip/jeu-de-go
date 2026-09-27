@@ -12,7 +12,8 @@ export interface Identite {
 
 /** Données de la carte, pour un joueur connecté (profil chargé) ou non. */
 export function identite(profil: { pseudo: string | null; cote: number } | null, serie: number): Identite {
-  if (!profil) return { initiale: null, nom: 'Invité', detail: 'Sans compte, tout reste sur ce téléphone.', serie: 0 };
+  // Sans compte, la série de l'appareil s'affiche aussi (issue #161).
+  if (!profil) return { initiale: null, nom: 'Invité', detail: 'Sans compte, tout reste sur ce téléphone.', serie: Math.max(0, Math.floor(serie)) };
   const nom = profil.pseudo?.trim() || 'Sans pseudo';
   const initiale = profil.pseudo?.trim() ? [...profil.pseudo.trim()][0].toUpperCase() : null;
   return { initiale, nom, detail: `Cote ${profil.cote}`, serie: Math.max(0, Math.floor(serie)) };

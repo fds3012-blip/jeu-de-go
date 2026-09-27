@@ -24,8 +24,8 @@ describe('fenêtre de consentement', () => {
 });
 
 describe('carte d’identité du Profil', () => {
-  it('sans compte : invité, sans cote ni série', () => {
-    expect(identite(null, 4)).toEqual({ initiale: null, nom: 'Invité', detail: 'Sans compte, tout reste sur ce téléphone.', serie: 0 });
+  it('sans compte : invité, sans cote, avec la série de l’appareil (#161)', () => {
+    expect(identite(null, 4)).toEqual({ initiale: null, nom: 'Invité', detail: 'Sans compte, tout reste sur ce téléphone.', serie: 4 });
   });
   it('avec un compte : initiale, pseudo, cote et série', () => {
     expect(identite({ pseudo: 'élodie_go', cote: 1520 }, 3)).toEqual({ initiale: 'É', nom: 'élodie_go', detail: 'Cote 1520', serie: 3 });

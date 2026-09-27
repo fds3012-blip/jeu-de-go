@@ -24,6 +24,7 @@ import { fr } from '../ui/typo';
 import { Glacon } from '../ui/Glacon';
 import { Mochi } from '../ui/Mochi';
 import { lireReserveAppareil, reconcilierAppareil } from './gelAppareil';
+import { serieAffichee } from './serieLocale';
 import { messageGel } from './gel';
 import { BarreNav, type Onglet } from '../ui/IconesNav';
 import { BarreNiveau, FeteNiveau } from '../ui/Niveau';
@@ -83,12 +84,14 @@ export function App() {
   // Un adversaire verrouillé (choisi avant l'arrivée des verrous) laisse place à celui qu'il faut battre d'abord.
   const adv = adversaireOuvert(OPPONENTS, bilan, adversaire);
   const cartes = echelle(OPPONENTS, bilan).map(e => ({ id: e.adv.id, nom: e.adv.nom, rang: e.adv.rang, battu: e.battu, ouvert: e.ouvert, requis: e.requis?.nom }));
-  const serie = useSerie(supabase, session?.user.id);
+  const serieServeur = useSerie(supabase, session?.user.id);
   // Série protégée (issue #76) : les jours manqués consomment un gel dès l'ouverture, avant que Problèmes lise la série.
   const [annonceGel, setAnnonceGel] = useState(() => reconcilierAppareil(new Date()));
   // Joueur connecté : les gels du serveur ; sinon ceux de l'appareil (issue #76).
   const gelsServeur = useGelsServeur(supabase, session?.user.id);
   const gels = gelsServeur ?? lireReserveAppareil().gels;
+  // Série dès le jour 1, avec ou sans compte (issue #161) : l'appareil sans compte, la plus longue des deux sinon.
+  const serie = serieAffichee(session?.user.id ? serieServeur : null, readLocal<Serie | null>(SERIE_KEY, null), numeroDuJour(new Date()));
   const [resultat, setResultat] = useState<null | { issue: Issue; stats: StatsPartie }>(null); // fin de la partie en cours contre l'ordi
   const [partie, setPartie] = useState(0); // change à chaque partie pour repartir d'un plateau vide
   const home = accueil(parties, done, adv, settings.size);

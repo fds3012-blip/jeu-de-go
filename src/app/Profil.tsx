@@ -5,6 +5,7 @@ import { choisirThemeGoban, useIdThemeGoban, type Settings } from './settings';
 import { lireXp, niveauDe, niveauRequis, themeDebloque } from './xp';
 import { ORDRE_THEMES, THEMES_GOBAN } from '../ui/boardArt';
 import { identite, texteSerie } from './identite';
+import { TEXTE_INVITATION, inviterCompte } from './serieLocale';
 import { LigneChoix, LigneInterrupteur, LigneLien } from '../ui/Reglage';
 import { useMemo } from 'react';
 import { readLocal } from './hooks';
@@ -81,7 +82,8 @@ function Menu({ onVue, settings, set, profil, serie }: Omit<Props, 'vue'>) {
         {id.initiale ? <span className="avatar" aria-hidden="true">{id.initiale}</span> : <span className="stone b" aria-hidden="true" />}
         <div className="identite-texte">
           <b>{id.nom}</b>
-          <span>{id.detail}</span>
+          {/* #161 : au 3e jour de série sans compte, la ligne sous « Invité » propose le compte ; l'action reste « Mon compte ». */}
+          <span>{inviterCompte(!!profil, id.serie) ? TEXTE_INVITATION : id.detail}</span>
         </div>
         {id.serie > 0 && <span className="identite-serie" role="img" aria-label={`Série de ${texteSerie(id.serie)}`}>
           <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false"><path d="M8.6 1.2c.4 2.3 3.9 3.9 3.9 7.9A4.5 4.5 0 0 1 8 13.8a4.5 4.5 0 0 1-4.5-4.6c0-2 1-3.2 2-4 0 1.4.6 2.4 1.5 2.7C6.6 5.6 7.4 3 8.6 1.2Z" fill="currentColor" /></svg>{id.serie}

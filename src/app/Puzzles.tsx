@@ -30,6 +30,7 @@ import { SERIE_KEY, numeroDuJour, problemeDuNumero, serieVivante, textePartage, 
 import '../ui/apprendre.css';
 import { Glacon, PierreGivree } from '../ui/Glacon';
 import { lireReserveAppareil, reussirAppareil } from './gelAppareil';
+import { TEXTE_INVITATION, inviterCompte, serieAffichee } from './serieLocale';
 
 const LOCAL_PUZZLES = parsePuzzles(ALL_PUZZLES);
 const SOLVED_KEY = 'go.problemes.v1';
@@ -188,6 +189,8 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   // Une seule action en relief : le Go du jour tant qu'il n'est pas fait, « Continuer » ensuite.
   const duJourFait = !daily || serieDuJour?.dernier === numero;
   const recommande = connecte && stats ? palierRecommande(tiers, stats.rating) : undefined;
+  // Série (issue #161) : celle de l'appareil sans compte, la plus longue des deux avec un compte.
+  const serie = serieAffichee(connecte && stats ? stats.streak : null, serieDuJour, numero);
   return (
     <div className={`problemes${prochainPz && duJourFait ? ' avec-continuer' : ''}`}>
       {load.error === 'offline' && <p className="notice" role="status">Tu es hors ligne. Les problèmes restent jouables, mais ta cote ne bouge pas.</p>}
@@ -202,14 +205,28 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
             <span className="legende">ta cote problèmes</span>
           </div>
           <div className="palmares-serie">
-            <span className="chiffre"><Flamme taille={30} />{stats.streak}</span>
-            <span className="legende">{legendeSerie(stats.streak)}</span>
+            <span className="chiffre"><Flamme taille={30} />{serie}</span>
+            <span className="legende">{legendeSerie(serie)}</span>
           </div>
         </div>
       ) : connecte && statsError ? (
         <p className="notice" role="alert">{statsError} <button className="lien" onClick={() => setRetry(n => n + 1)}>Réessayer</button></p>
       ) : connecte && online ? (
         <div className="palmares" aria-busy="true"><span className="sr-only">Chargement de ta cote…</span><div><span className="chiffre attente" /><span className="legende">ta cote problèmes</span></div></div>
+      ) : !connecte && serie > 0 ? (
+        // Sans compte, la série de l'appareil s'affiche comme pour un joueur connecté (issue #161).
+        <div className="palmares palmares-invite">
+          <div className="invitation">
+            {inviterCompte(false, serie)
+              ? <p>{fr(TEXTE_INVITATION)}</p>
+              : <p>{fr('Connecte-toi pour avoir ta ')}<b>cote</b>{fr(' : elle mesure ton niveau.')}</p>}
+            {onCompte && <button className="lien" onClick={onCompte}>{inviterCompte(false, serie) ? 'Créer un compte' : 'Me connecter'}</button>}
+          </div>
+          <div className="palmares-serie">
+            <span className="chiffre"><Flamme taille={30} />{serie}</span>
+            <span className="legende">{legendeSerie(serie)}</span>
+          </div>
+        </div>
       ) : !connecte ? (
         <div className="invitation">
           <p>{fr('Connecte-toi pour avoir ta ')}<b>cote</b>{fr(' : elle mesure ton niveau et monte quand tu réussis.')}</p>
