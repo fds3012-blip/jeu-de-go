@@ -1,7 +1,8 @@
 import { existsSync } from 'node:fs';
 import { chromium, defineConfig, devices } from '@playwright/test';
 
-const PORT = 4173;
+// PW_PORT permet de lancer plusieurs suites e2e en parallèle sur la même machine.
+const PORT = Number(process.env.PW_PORT ?? 4173);
 
 // Chromium à utiliser :
 // - PW_CHROMIUM_PATH s'il est défini ;
