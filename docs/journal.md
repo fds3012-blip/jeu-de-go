@@ -77,6 +77,11 @@ Chaque livraison : issue traitée, agent, pull request, résultat des vérificat
 - Essai réel : fait en SQL dans une transaction annulée (droits refusés au client, score W+7,5 et cotes mises à jour). L'appel HTTP n'a pas pu être fait : le réseau du conteneur bloque `*.supabase.co`.
 - Suite : brancher `src/data/games.ts` dans l'écran de partie en ligne (#10) ; issue de sécurité créée pour les parties classées déséquilibrées.
 
+## #22 Fin de partie contre l'ordi : bilan et adversaire suivant (frontend)
+
+- Livré : Mochi réagit au résultat ; bilan par adversaire en localStorage (`go.bilan.v1`) ; une seule action principale (« Défier Caillou » après une victoire, « Rejouer contre Pomme » après une défaite), leçon conseillée et Accueil en actions secondaires ; adversaires battus marqués d'un ✓ sur l'accueil.
+- Retouche du dirigeant : le paramètre de test `?komi=` n'est lu que dans un build de test (`VITE_E2E`), pour qu'il ne puisse pas fausser un bilan en production.
+- Vérifications : lint, typecheck, 191 tests, build, 19 tests e2e (victoire et défaite) : vert.
 ## #11 Leçons et problèmes branchés sur Supabase (frontend)
 
 - Livré : 4 onglets (Jouer, Apprendre, Problèmes, Profil) comme dans les maquettes ; progression des leçons en localStorage et dans `lesson_progress` une fois connecté, avec fusion à la connexion ; problème du jour et 6 problèmes de base, réponses vérifiées par `src/go`, `record_puzzle_attempt` au premier essai, « Voir la suite » animé (sans animation si mouvements réduits) ; copie locale des problèmes pour jouer sans compte ni réseau ; états chargement, erreur et hors ligne.
