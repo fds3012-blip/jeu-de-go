@@ -1,7 +1,19 @@
-import { defineConfig } from 'vitest/config';
+import { fileURLToPath } from 'node:url';
+import { configDefaults, defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
-  test: { globals: true, environment: 'node', css: { include: [/tokens\.css/] } }
+  resolve: {
+    // `@/go/rules` -> `src/go/rules`
+    alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
+  },
+  test: {
+    globals: true,
+    environment: 'node',
+    // Les tests Playwright (e2e/) ne passent pas par Vitest.
+    exclude: [...configDefaults.exclude, 'e2e/**'],
+    // tokens.test.ts lit le CSS des tokens.
+    css: { include: [/tokens\.css/] },
+  },
 });
