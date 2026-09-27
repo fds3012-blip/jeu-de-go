@@ -71,7 +71,15 @@ const LOT_E: PuzzleRow[] = [
     explanation: "Exact ! Le groupe avait deux libertés (points vides à côté de lui), E2 et F1. Tu en prends une : il est en atari. S'il s'allonge, tes pierres D2 et F2 lui bouchent la route : il reste en atari et tu le captures. Les deux mises en atari marchent."
   },
   {
-    id: 'e09', size: 9, difficulty: 600, answers: ['D6'],
+    id: 'e09', size: 9, difficulty: 580, answers: ['G9'],
+    setup: { rows: ['...XTO...', '....X....', '.....X...', E, E, E, E, E, E], toPlay: 'B',
+      refutation: "Pas celle-là. Après F8, Blanc s'allonge en G9, le long du bord : il a de nouveau deux libertés, G8 et H9, et tu ne le prends plus en deux coups. Pousse-le vers ta pierre F7." },
+    title: 'Sur le bord du haut',
+    prompt: 'Capture les deux pierres blanches du bord en deux coups.',
+    explanation: "Bravo ! Le groupe avait deux libertés (points vides à côté de lui), F8 et G9. Après G9, il est en atari : il ne lui reste que F8. S'il s'y allonge, ta pierre F7 lui barre la route : une seule liberté, G8, et tu le captures."
+  },
+  {
+    id: 'e10', size: 9, difficulty: 600, answers: ['D6'],
     setup: { rows: [E, E, '.XX.X....', '.XT.TX...', E, E, E, E, E], toPlay: 'B',
       refutation: "Pas tout à fait. Si tu ne menaces qu'une pierre, Blanc joue D6 : il relie ses deux pierres et leur donne assez de libertés. Joue ce point avant lui." },
     title: 'Double atari au centre',
@@ -79,7 +87,7 @@ const LOT_E: PuzzleRow[] = [
     explanation: "Bravo ! Chaque pierre blanche avait deux libertés (points vides à côté d'elle), dont D6 en commun. En D6, il ne leur en reste qu'une chacune, C5 et E5 : c'est un double atari. Blanc en sauve une, tu prends l'autre."
   },
   {
-    id: 'e10', size: 9, difficulty: 630, answers: ['B3'],
+    id: 'e11', size: 9, difficulty: 630, answers: ['B3'],
     setup: { rows: [E, E, E, E, '.X.......', '.TX......', E, E, E], toPlay: 'B',
       refutation: "Pas celle-là. Après A4, Blanc s'allonge en B3, vers l'intérieur : il a trois libertés et s'échappe. Pousse-le plutôt contre le bord." },
     title: 'Contre le bord gauche',
@@ -87,12 +95,20 @@ const LOT_E: PuzzleRow[] = [
     explanation: "Exact ! Après B3, la pierre n'a plus qu'une liberté (un point vide à côté), A4 : elle est en atari. Si Blanc s'allonge en A4, son groupe n'a que deux libertés sur le bord, A3 et A5. Tu en prends une, il s'allonge, et tu le captures au coup suivant. Le bord ne laisse pas de place pour fuir."
   },
   {
-    id: 'e11', size: 9, difficulty: 680, answers: ['F2'],
+    id: 'e12', size: 9, difficulty: 680, answers: ['F2'],
     setup: { rows: [E, E, E, E, E, E, '...XX....', '..XTO....', E], toPlay: 'B',
       refutation: "Pas encore. Le groupe blanc a trois libertés : D1, E1 et F2. Seule F2 mène vers le centre : ferme-la d'abord, le bord fera le reste." },
     title: 'Ferme la sortie',
     prompt: 'Capture les deux pierres blanches en trois coups au plus.',
     explanation: "Superbe ! Le groupe avait trois libertés (points vides à côté de lui), D1, E1 et F2. En F2, tu fermes la seule sortie vers le centre. Il ne lui reste que D1 et E1, sur le bord : s'il s'allonge, chaque fois tu le remets en atari (une seule liberté), jusqu'à le capturer."
+  },
+  {
+    id: 'e13', size: 9, difficulty: 720, answers: ['D3'],
+    setup: { rows: [E, E, E, E, E, '.XX......', 'XOT......', 'X........', '.XX......'], toPlay: 'B',
+      refutation: "Pas encore. Le groupe blanc a trois libertés : B2, C2 et D3. Vers le coin, tes pierres l'attendent déjà ; une seule liberté mène vers le large. Ferme-la d'abord." },
+    title: 'Enferme vers le coin',
+    prompt: 'Capture les deux pierres blanches en trois coups au plus.',
+    explanation: "Superbe ! Le groupe avait trois libertés (points vides à côté de lui) : B2, C2 et D3. D3 ferme la seule sortie vers le large. Il ne lui reste que B2 et C2, vers le coin, où tes pierres A2, B1 et C1 l'attendent. S'il s'allonge, tu le remets en atari (une seule liberté), puis tu le captures."
   }
 ];
 

@@ -13,8 +13,8 @@ import { captureWinners, plainKey, symmetries } from './lecteurs-lot-e';
 import { groupAt, play, type Position } from './rules';
 
 const SPEC: Record<string, { k: number; atari?: boolean }> = {
-  e01: { k: 1 }, e02: { k: 1 }, e03: { k: 1 }, e04: { k: 2 }, e05: { k: 1 }, e06: { k: 3, atari: true }, e07: { k: 2 }, e08: { k: 2 },
-  e09: { k: 2 }, e10: { k: 3, atari: true }, e11: { k: 3 }
+  e01: { k: 1 }, e02: { k: 1 }, e03: { k: 1 }, e04: { k: 2 }, e05: { k: 1 }, e06: { k: 3, atari: true }, e07: { k: 2 }, e08: { k: 2 }, e09: { k: 2 },
+  e10: { k: 2 }, e11: { k: 3, atari: true }, e12: { k: 3 }, e13: { k: 3 }
 };
 
 const all = parsePuzzles(LOT_E);
@@ -108,20 +108,20 @@ describe('lot E : variantes de capture et d’atari (issue #91)', () => {
     expect(blackCaptures(r, [t], 3)).toBe(false);
   });
 
-  it('e07, e09, e10, e11 : même avec un coup noir de plus, aucune autre solution', () => {
-    for (const id of ['e07', 'e09', 'e10', 'e11']) {
+  it('e07, e09 à e13 : même avec un coup noir de plus, aucune autre solution', () => {
+    for (const id of ['e07', 'e09', 'e10', 'e11', 'e12', 'e13']) {
       const p = pz(id), { k, atari } = SPEC[id];
       expect(captureWinners(startOf(p).pos, targetsOf(p), k + 1, atari), id).toEqual([...p.answers.map(a => toLabel(a, 9))].sort());
     }
   });
 
-  it('e10 : après A4, Blanc s’allonge en B3 et a trois libertés', () => {
-    const p = pz('e10'), t = targetsOf(p)[0];
+  it('e11 : après A4, Blanc s’allonge en B3 et a trois libertés', () => {
+    const p = pz('e11'), t = targetsOf(p)[0];
     expect(libs(ok(play(ok(play(startOf(p).pos, at('A4'))), at('B3'))), t)).toBe(3);
   });
 
-  it('e04 et e07 : après le mauvais atari, Blanc s’allonge, a deux libertés et Noir ne le prend plus en un coup', () => {
-    for (const [id, wrong, ext] of [['e04', 'B1', 'A3'], ['e07', 'E2', 'F1']]) {
+  it('e04, e07, e09 : après le mauvais atari, Blanc s’allonge, a deux libertés et Noir ne le prend plus en un coup', () => {
+    for (const [id, wrong, ext] of [['e04', 'B1', 'A3'], ['e07', 'E2', 'F1'], ['e09', 'F8', 'G9']]) {
       const p = pz(id), t = targetsOf(p)[0], r = ok(play(ok(play(startOf(p).pos, at(wrong))), at(ext)));
       expect(libs(r, t), id).toBe(2);
       expect(blackCaptures(r, [t], 1), id).toBe(false);
