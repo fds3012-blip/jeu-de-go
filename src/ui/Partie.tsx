@@ -89,7 +89,7 @@ export function BarreAvantage({ libelle, part }: { libelle: string; part: number
     <div className="avantage" style={libelle ? undefined : { visibility: 'hidden' }}>
       <span className="avantage-libelle" aria-hidden="true">{libelle || 'Noir +0'}</span>
       <div className="avantage-barre" role="img" aria-label={`Avantage estimé : ${libelle}`}>
-        <i style={{ width: `${part * 100}%` }} />
+        <i style={{ transform: `translateX(${((part - 1) * 100).toFixed(2)}%)` }} />
       </div>
     </div>
   );

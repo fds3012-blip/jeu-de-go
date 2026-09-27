@@ -66,9 +66,10 @@
 .avantage-libelle { flex: none; min-width: 84px; }
 .avantage-barre { flex: 1; height: 8px; border-radius: 4px; background: #F3EDE3; overflow: hidden;
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--muted) 75%, transparent); }
-.avantage-barre i { display: block; height: 100%; background: #0f0e0d; border-right: 1px solid color-mix(in srgb, var(--muted) 75%, transparent); }
+/* La portion noire fait toute la largeur et glisse (transform, pas width : pas de recalcul de mise en page, audit #60). */
+.avantage-barre i { display: block; width: 100%; height: 100%; background: #0f0e0d; border-right: 1px solid color-mix(in srgb, var(--muted) 75%, transparent); }
 @media (prefers-reduced-motion: no-preference) {
-  .avantage-barre i { transition: width 500ms var(--ease); }
+  .avantage-barre i { transition: transform 300ms var(--ease); }
 }
 
 /* ---------- Plateau : toute la largeur, 4 px de marge ---------- */
@@ -105,7 +106,7 @@
 
 /* ---------- Mouvement : seulement en réponse à un coup ---------- */
 @media (prefers-reduced-motion: no-preference) {
-  .couvercle.plein { animation: couvercle-pulse 360ms var(--ease) both; }
+  .couvercle.plein { animation: couvercle-pulse 240ms var(--ease) both; }
   .replique { animation: replique-entree 180ms var(--ease) both; }
   .coach p { animation: coach-phrase 200ms var(--ease) both; }
 }
