@@ -42,9 +42,9 @@
 .fin-bilan b.or { color: var(--recompense-texte); }
 
 /* Mochi tire la leçon : son sceau jade et une phrase, sans bulle (la barre du coach n'est plus là). */
-.fin-mochi { display: flex; align-items: center; gap: var(--space-3); width: 100%; margin-top: var(--space-4); text-align: left; font-size: 15px; line-height: 1.4; }
+.fin-mochi { display: flex; align-items: flex-start; gap: var(--space-3); width: 100%; margin-top: var(--space-4); text-align: left; font-size: 15px; line-height: 1.4; }
 .fin-mochi p { margin: 0; }
-.fin-mochi .lien { margin-left: -12px; min-height: 40px; }
+.fin-mochi .lien { margin-left: -12px; min-height: var(--cible-min); }
 
 /* Un seul bouton en relief, avec le sceau de l'adversaire proposé. */
 /* Le bouton reste près de la leçon de Mochi ; la hauteur libre va au-dessus du sceau, qui laisse voir plus de plateau. */
