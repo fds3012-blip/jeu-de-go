@@ -1,7 +1,8 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { fromLabel } from '../go/coords';
-import { Board, annonceCoup, deplacerCurseur, nomIntersection } from './Board';
+import { fromRows } from '../go/position';
+import { Board, annonceAtari, annonceCoup, deplacerCurseur, nomIntersection } from './Board';
 
 // Issue #116 : le goban se joue au clavier et se lit au lecteur d'écran.
 const N = 9;
@@ -48,6 +49,23 @@ describe('noms lus', () => {
     expect(annonceCoup(1, at('D4'), 0, N)).toBe('Noir joue D4');
     expect(annonceCoup(2, at('C3'), 1, N)).toBe('Blanc joue C3 et prend 1 pierre');
     expect(annonceCoup(2, at('C3'), 3, N)).toBe('Blanc joue C3 et prend 3 pierres');
+  });
+
+  it("l'annonce cite le nom de l'adversaire", () => {
+    expect(annonceCoup(2, at('C3'), 0, N, { 2: 'Pomme' })).toBe('Pomme joue C3');
+    expect(annonceCoup(1, at('D4'), 0, N, { 2: 'Pomme' })).toBe('Noir joue D4');
+  });
+
+  it("annonce l'atari des pierres voisines du coup", () => {
+    // Blanc joue D5 : la pierre noire D4 n'a plus qu'une liberté, en D3.
+    const b1 = fromRows(['.........', '.........', '.........', '.........', '...O.....', '..OXO....', '.........', '.........', '.........']).pos.board;
+    expect(annonceAtari(b1, at('D5'), N)).toBe("Atari : ta pierre D4 n'a plus qu'une liberté, en D3.");
+    // Noir met en atari deux pierres de Pomme.
+    const b3 = fromRows(['.........', '.........', '.........', '...X.....', '..XOOX...', '...XX....', '.........', '.........', '.........']).pos.board;
+    expect(annonceAtari(b3, at('F5'), N, { 2: 'Pomme' })).toBe("Atari : les pierres D5, E5 de Pomme n'ont plus qu'une liberté, en E6.");
+    // Intersection vide, ou groupe voisin avec deux libertés : chaîne vide.
+    expect(annonceAtari(b1, at('A1'), N)).toBe('');
+    expect(annonceAtari(b3, at('C6'), N)).toBe('');
   });
 
   it('un plateau jouable est une grille à un seul arrêt de tabulation', () => {
