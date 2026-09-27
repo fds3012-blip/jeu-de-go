@@ -14,8 +14,10 @@ export const introBut = (nom: string) =>
 export interface Accueil {
   /** Réplique de l'adversaire, dans sa bulle sur le plateau d'accueil. */
   bulle: string;
-  /** Libellé de l'action principale. */
+  /** Libellé visible de l'action principale : une seule ligne, même sur iPhone SE (issue #85). */
   cta: string;
+  /** Nom accessible du bouton : le libellé visible, complété par l'adversaire quand le sceau le porte (WCAG 2.5.3). */
+  ctaNom: string;
   /** Nouveau joueur : ni partie ni leçon. */
   nouveau: boolean;
 }
@@ -30,14 +32,18 @@ export interface Accueil {
 export function accueil(parties: Parties, lecons: number, adv: { id: string; nom: string }, taille: number): Accueil {
   const plateau = `${taille}\u00A0×\u00A0${taille}`; // insécables : « 9 × 9 » ne se coupe pas
   if (parties.n === 0) {
-    const cta = `Joue ta première partie contre ${adv.nom}`;
-    if (lecons === 0) return { nouveau: true, cta, bulle: fr('Touche le centre pour poser ta première pierre !') };
-    return { nouveau: false, cta, bulle: fr(`Bravo pour ${lecons > 1 ? `tes ${lecons} leçons` : 'ta première leçon'} ! Touche le plateau pour jouer.`) };
+    // Le nom de l'adversaire est déjà juste au-dessus, en grand, et son sceau est dans le bouton.
+    const cta = 'Joue ta première partie';
+    const ctaNom = `${cta} contre ${adv.nom}`;
+    if (lecons === 0) return { nouveau: true, cta, ctaNom, bulle: fr('Touche le centre pour poser ta première pierre !') };
+    return { nouveau: false, cta, ctaNom, bulle: fr(`Bravo pour ${lecons > 1 ? `tes ${lecons} leçons` : 'ta première leçon'} ! Touche le plateau pour jouer.`) };
   }
   const rejouer = parties.dernier === adv.id;
+  const cta = `${rejouer ? 'Rejouer' : 'Jouer'} contre ${adv.nom}`;
   return {
     nouveau: false,
-    cta: `${rejouer ? 'Rejouer' : 'Jouer'} contre ${adv.nom}`,
+    cta,
+    ctaNom: cta,
     bulle: fr(rejouer ? `Te revoilà ! On rejoue sur le ${plateau} ?` : `Une partie sur le ${plateau} ? Touche le plateau.`),
   };
 }

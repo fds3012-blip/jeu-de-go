@@ -11,14 +11,16 @@ describe('accueil', () => {
   it('nouveau joueur : la bulle et le bouton proposent la première partie contre Pomme', () => {
     const a = accueil({ n: 0 }, 0, pomme, 9);
     expect(a.nouveau).toBe(true);
-    expect(a.cta).toBe('Joue ta première partie contre Pomme');
+    expect(a.cta).toBe('Joue ta première partie');
+    expect(a.ctaNom).toBe('Joue ta première partie contre Pomme');
     expect(a.bulle).toBe('Touche le centre pour poser ta première pierre !');
   });
 
   it('leçons faites, aucune partie : toujours la première partie', () => {
     const a = accueil({ n: 0 }, 2, pomme, 9);
     expect(a.nouveau).toBe(false);
-    expect(a.cta).toBe('Joue ta première partie contre Pomme');
+    expect(a.cta).toBe('Joue ta première partie');
+    expect(a.ctaNom).toBe('Joue ta première partie contre Pomme');
     expect(a.bulle).toContain('tes 2 leçons');
     expect(accueil({ n: 0 }, 1, pomme, 9).bulle).toContain('ta première leçon');
   });
