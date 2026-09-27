@@ -236,7 +236,9 @@
 
 .problemes h2 { margin: var(--space-6) 0 10px; }
 .problemes section:first-of-type h2 { margin-top: var(--space-4); }
-.problemes-chargement { height: 420px; border-radius: 20px; background: var(--surface); opacity: .6; }
+/* Chargement : l'emplacement du problème du jour, avec les deux pierres qui tournent (nav.css). */
+.problemes-chargement { height: 420px; border-radius: 20px; background: color-mix(in srgb, var(--surface) 60%, var(--bg));
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-3); color: var(--muted); font-size: var(--fs-s); }
 
 /* ---------- Problème du jour mis en scène ---------- */
 .du-jour { background: var(--surface); border-radius: 20px; overflow: hidden; }

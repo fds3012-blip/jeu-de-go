@@ -18,6 +18,7 @@ import { BASE_PUZZLES } from '../content/puzzles';
 import { parsePuzzles, puzzleOfDay } from '../data/puzzles';
 import { battu, BILAN_KEY, enregistrer, fin, komiDepuisUrl, lireBilan, type Bilan, type Issue, type StatsPartie } from './bilan';
 import { fr } from '../ui/typo';
+import { BarreNav, type Onglet } from '../ui/IconesNav';
 
 const PROBLEMES_LOCAUX = parsePuzzles(BASE_PUZZLES);
 /** Problèmes réussis sur ce téléphone (même clé que l'onglet Problèmes). */
@@ -37,7 +38,7 @@ const KOMI_ORDI = 6.5;
 // `?komi=` ne sert qu'aux tests de bout en bout : il n'est lu que dans un build de test (VITE_E2E, voir playwright.config.ts).
 const KOMI = import.meta.env.VITE_E2E && typeof location !== 'undefined' ? komiDepuisUrl(location.search, KOMI_ORDI) : KOMI_ORDI;
 
-type Tab = 'jouer' | 'apprendre' | 'problemes' | 'profil';
+type Tab = Onglet;
 
 export function App() {
   const [tab, setTab] = useState<Tab>('jouer');
@@ -162,22 +163,10 @@ export function App() {
         {screen}
       </main>
       {/* Pendant une partie, comme chez chess.com : pas de barre de navigation, « ‹ » ramène à l'accueil. */}
-      {!enPartie && <nav className="nav" aria-label="Navigation principale">
-        <button aria-current={tab === 'jouer' ? 'page' : undefined} onClick={() => go('jouer')}>
-          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="9" r="4.5" fill="currentColor" /><circle cx="16" cy="15" r="4.5" /></svg>Jouer
-        </button>
-        <button aria-current={tab === 'apprendre' ? 'page' : undefined} onClick={() => go('apprendre')}>
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18c3-1 5-4 9-4s6 3 9 4M6 10a2 2 0 1 0 0-.1M12 7a2 2 0 1 0 0-.1M18 10a2 2 0 1 0 0-.1" /></svg>Apprendre
-        </button>
-        <button aria-current={tab === 'problemes' ? 'page' : undefined} onClick={() => go('problemes')}>
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4zM4 12h16M12 4v16" /><circle cx="12" cy="12" r="3" fill="currentColor" /></svg>Problèmes
-        </button>
-        <button aria-current={tab === 'profil' ? 'page' : undefined} onClick={() => go('profil')}>
-          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M4 21c1-4 4-6 8-6s7 2 8 6" /></svg>Profil
-        </button>
-      </nav>}
+      {!enPartie && <BarreNav actif={tab} onChoisir={go} />}
       <ConsentModal visible={fenetreVisible({ consent, ignoree: accordIgnore, enPartie, surConditions: tab === 'profil' && vueProfil === 'conditions' })}
         onConditions={() => { go('profil'); setVueProfil('conditions'); }} onIgnorer={() => setAccordIgnore(true)} />
+
     </>
   );
 }

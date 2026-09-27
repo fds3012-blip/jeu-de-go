@@ -146,3 +146,21 @@ Chaque livraison : issue traitée, agent, pull request, résultat des vérificat
 - #50 : consentement en fenêtre unique et Profil court (frontend).
 - #51 : identité reliée à partir du logo, avec des icônes de navigation en pierres (designer).
 - #54 : un chemin Apprendre qui donne envie (designer).
+
+## #51 Identité reliée : tout part du logo aux deux pierres (designer)
+
+- Nouvelles icônes de la barre du bas, dessinées à partir du logo aux deux pierres :
+  - Jouer : les deux pierres, avec une onde jade ;
+  - Apprendre : un chemin de pierres, en or ;
+  - Problèmes : une atari sur un coin de goban, en hanko ;
+  - Profil : une pierre et son sceau, en indigo.
+- Onglet inactif : encre brume. Onglet actif : la matière des pierres du goban et une seule couleur d'accent.
+- La pierre de l'onglet choisi tombe en 160 ms, et rien ne bouge si les mouvements sont réduits.
+- Le motif est décliné partout :
+  - chargement : le logo qui tourne, pour « l'ordi réfléchit » et le chargement des problèmes ;
+  - nouvelle icône d'app, sur fond encre sous la lampe ;
+  - ornement devant les titres de section.
+- La grammaire est documentée dans `docs/design/v2/identite.md`, avec une planche `identite.png`.
+- Skills appliquées : icon-system, animate, mobile-pro-rules.
+- Vérifications : 385 tests unitaires et 44 tests e2e verts.
+- Suite : le mot « Sombre » est coupé dans le choix du thème du Profil. C'est à corriger dans la boucle d'amélioration.

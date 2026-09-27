@@ -1,5 +1,6 @@
 @import './tokens.css';
 @import './accueil.css';
+@import './nav.css';
 @import './profil.css';
 *, *::before, *::after { box-sizing: border-box; }
 html { background: var(--bg); }
@@ -57,13 +58,7 @@ h2 { font-size: var(--fs-xl); font-weight: var(--fw-bold); line-height: var(--lh
 /* Choix actif : pastille inversée (texte sur fond), l'état se lit sans dépendre d'une nuance de gris. */
 .seg button[aria-pressed="true"] { background: var(--text); color: var(--bg); font-weight: var(--fw-bold); }
 
-/* ---------- Barre de navigation ---------- */
-.nav { position: fixed; left: 0; right: 0; bottom: 0; display: flex; justify-content: center; background: var(--barre); border-top: 1px solid var(--line);
-  padding-bottom: env(safe-area-inset-bottom, 0px); z-index: 20; }
-.nav button { flex: 1; max-width: 180px; border: 0; background: none; color: var(--muted); min-height: var(--nav-h); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: var(--fs-xs); font-weight: var(--fw-medium); }
-.nav button[aria-current="page"] { color: var(--text); font-weight: var(--fw-bold); }
-.nav button[aria-current="page"] svg { stroke-width: 2.2; }
-.nav svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+/* ---------- Barre de navigation : voir src/ui/nav.css (identité « deux pierres », #51) ---------- */
 /* ---------- Plateau : voir src/ui/board.css (goban v2) ---------- */
 
 

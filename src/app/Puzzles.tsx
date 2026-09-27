@@ -14,6 +14,7 @@ import { centreVertical } from '../ui/cadrage';
 import { C, M, viewBoxOf } from '../ui/boardArt';
 import { Retour, Verdict } from '../ui/Lecteur';
 import { Bubble } from '../ui/Mochi';
+import { Reflexion } from '../ui/Reflexion';
 import { fr } from '../ui/typo';
 import { playFail, playIllegal, playStone, playSuccess } from '../ui/sound';
 import { hapticIllegal, hapticStone } from '../ui/haptics';
@@ -117,7 +118,12 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte }: 
   }
 
   if (load.status === 'loading') {
-    return <div className="problemes-chargement" aria-busy="true" role="status"><span className="sr-only">Chargement des problèmes…</span></div>;
+    return (
+      <div className="problemes-chargement" aria-busy="true" role="status">
+        <Reflexion taille={32} />
+        <span>Chargement des problèmes…</span>
+      </div>
+    );
   }
 
   const connecte = !!db && !!userId;
@@ -152,13 +158,13 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte }: 
 
       {daily && (
         <section aria-labelledby="jour-titre">
-          <h2 id="jour-titre">Problème du jour</h2>
+          <h2 id="jour-titre" className="titre-pierres">Problème du jour</h2>
           <DuJour pz={daily} reussi={solved.has(daily.id)} onOpen={() => setOpenId(daily.id)} />
         </section>
       )}
 
       <section aria-labelledby="bases-titre">
-        <h2 id="bases-titre">Les bases</h2>
+        <h2 id="bases-titre" className="titre-pierres">Les bases</h2>
         <p className="muted small bases-aide">{fr('Une pierre est en ')}<b>atari</b>{fr(' quand il ne lui reste qu’une liberté : elle peut être prise au prochain coup.')}</p>
         <ul className="grille-pb">
           {list.map((p, i) => {
