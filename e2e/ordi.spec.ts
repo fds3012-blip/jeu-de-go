@@ -6,7 +6,7 @@ test("jouer contre l'ordi : Pomme répond en moins d'une seconde", async ({ page
   page.on('pageerror', (e) => erreurs.push(e.message));
   await page.goto('/');
 
-  const cta = page.getByRole('button', { name: "Jouer contre l'ordi" });
+  const cta = page.locator('.cta', { hasText: /contre Pomme/ }); // « Joue ta première partie contre Pomme » (issue #23)
   await expect(cta).toBeVisible();
   await cta.click();
 
