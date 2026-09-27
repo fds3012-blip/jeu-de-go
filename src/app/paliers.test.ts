@@ -1,15 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { ALL_PUZZLES } from '../content/puzzles';
-import { BASE_PUZZLES, PUZZLES_16 } from '../content/puzzles';
+import { ALL_PUZZLES, BASE_PUZZLES, PUZZLES_16 } from '../content/puzzles';
 import { PALIERS, indexPalier, ordrePaliers, palierRecommande, paliers, prochain, suivantPalier } from './paliers';
 
 const pb = (id: string, difficulty: number) => ({ id, difficulty });
 const LISTE = [
   pb('a1', 400), pb('a2', 420), pb('a3', 440),
-  pb('b1', 450), pb('b2', 500), pb('b3', 550), pb('b4', 590),
-  pb('c1', 600), pb('c2', 650),
-  pb('d1', 700), pb('d2', 799),
-  pb('e1', 800), pb('e2', 1200)
+  pb('b1', 450), pb('b2', 500), pb('b3', 550), pb('b4', 640),
+  pb('c1', 650), pb('c2', 800),
+  pb('d1', 850), pb('d2', 1049),
+  pb('e1', 1050), pb('e2', 1300)
 ];
 
 describe('paliers', () => {
@@ -17,23 +16,27 @@ describe('paliers', () => {
     expect(indexPalier(0)).toBe(0);
     expect(indexPalier(449)).toBe(0);
     expect(indexPalier(450)).toBe(1);
-    expect(indexPalier(599)).toBe(1);
-    expect(indexPalier(600)).toBe(2);
-    expect(indexPalier(700)).toBe(3);
-    expect(indexPalier(800)).toBe(4);
+    expect(indexPalier(649)).toBe(1);
+    expect(indexPalier(650)).toBe(2);
+    expect(indexPalier(849)).toBe(2);
+    expect(indexPalier(850)).toBe(3);
+    expect(indexPalier(1049)).toBe(3);
+    expect(indexPalier(1050)).toBe(4);
     expect(indexPalier(3000)).toBe(4);
   });
 
-  it('chaque palier contient des problèmes avec les 18 problèmes de base', () => {
+  it('avec les 18 problèmes de base, les 4 premiers paliers ne sont pas vides', () => {
     const ps = paliers([...BASE_PUZZLES, ...PUZZLES_16], new Set());
-    expect(ps.map(p => p.total)).toEqual([3, 4, 4, 3, 4]);
+    expect(ps.slice(0, 4).every(p => p.total > 0)).toBe(true);
+    expect(ps.reduce((n, p) => n + p.total, 0)).toBe(18);
     expect(ps.map(p => p.nom)).toEqual(['Débutant', 'Novice', 'Apprenti', 'Joueur de club', 'Confirmé']);
   });
 
   it('tous les problèmes, lots compris, sont dans un palier et un seul', () => {
     const ps = paliers(ALL_PUZZLES, new Set());
     expect(ordrePaliers(ps).length).toBe(ALL_PUZZLES.length);
-    expect(ps.every(p => p.total > 0)).toBe(true);
+    expect(new Set(ordrePaliers(ps).map(p => p.id)).size).toBe(ALL_PUZZLES.length);
+    expect(ps.slice(0, 4).every(p => p.total > 0)).toBe(true);
   });
 
   it('compte les réussis et ouvre un palier à 60 % du précédent', () => {
@@ -55,7 +58,7 @@ describe('paliers', () => {
   });
 
   it('un palier vide ne bloque pas le suivant', () => {
-    const ps = paliers([pb('a', 400), pb('e', 900)], new Set(['a']));
+    const ps = paliers([pb('a', 400), pb('e', 1100)], new Set(['a']));
     expect(ps.map(p => p.total)).toEqual([1, 0, 0, 0, 1]);
     expect(ps[4].ouvert).toBe(true);
     expect(ps[1].complet).toBe(false);
@@ -87,7 +90,7 @@ describe('paliers', () => {
 
   it('recommande le palier de la cote, sans dépasser le dernier ouvert', () => {
     const tout = new Set(LISTE.map(p => p.id));
-    expect(palierRecommande(paliers(LISTE, tout), 650)).toBe('apprenti');
+    expect(palierRecommande(paliers(LISTE, tout), 700)).toBe('apprenti');
     expect(palierRecommande(paliers(LISTE, tout), 1500)).toBe('confirme');
     expect(palierRecommande(paliers(LISTE, new Set()), 1500)).toBe('debutant');
     expect(palierRecommande(paliers(LISTE, tout), undefined)).toBeUndefined();

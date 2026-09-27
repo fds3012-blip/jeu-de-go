@@ -1,13 +1,14 @@
 // Problèmes par paliers (issue #93) : logique pure, sans React.
 //
-// Bornes retenues (difficulté = cote Elo du problème), ajustées pour que chacun des 5 paliers
-// contienne des problèmes avec les 18 actuels (#11 et #16) :
-//   Débutant        < 450          (3 problèmes aujourd'hui : b1, b4, s1)
-//   Novice          450 à 599      (4 : c1, b3, s2, v1)
-//   Apprenti        600 à 699      (4 : v3, s4, b2, s3)
-//   Joueur de club  700 à 799      (3 : v2, b5, c4)
-//   Confirmé        ≥ 800          (4 : c3, v4, b6, c2)
-// Les bornes de l'issue (500, 700, 900, 1100) laissaient les deux derniers paliers vides.
+// Bornes retenues (difficulté = cote Elo du problème) :
+//   Débutant        < 450
+//   Novice          450 à 649
+//   Apprenti        650 à 849
+//   Joueur de club  850 à 1049
+//   Confirmé        ≥ 1050
+// Bornes réparties pour les lots de #91 (difficultés de 300 à 1300). Avec les 18 problèmes de #11 et #16
+// seuls, les 4 premiers paliers en ont (3, 6, 7 et 2) et Confirmé est vide, ce qui est voulu.
+// Un palier vide ne bloque pas le suivant et n'est pas affiché.
 // Les lots de #91 viennent se ranger dans ces paliers sans rien changer ici.
 
 export type PalierId = 'debutant' | 'novice' | 'apprenti' | 'club' | 'confirme';
@@ -24,9 +25,9 @@ export interface DefPalier {
 export const PALIERS: readonly DefPalier[] = [
   { id: 'debutant', nom: 'Débutant', kyu: '30 à 25 kyu', min: -Infinity },
   { id: 'novice', nom: 'Novice', kyu: '24 à 20 kyu', min: 450 },
-  { id: 'apprenti', nom: 'Apprenti', kyu: '19 à 15 kyu', min: 600 },
-  { id: 'club', nom: 'Joueur de club', kyu: '14 à 10 kyu', min: 700 },
-  { id: 'confirme', nom: 'Confirmé', kyu: '9 kyu et plus', min: 800 }
+  { id: 'apprenti', nom: 'Apprenti', kyu: '19 à 15 kyu', min: 650 },
+  { id: 'club', nom: 'Joueur de club', kyu: '14 à 10 kyu', min: 850 },
+  { id: 'confirme', nom: 'Confirmé', kyu: '9 kyu et plus', min: 1050 }
 ];
 
 /** Part du palier précédent à réussir pour ouvrir le suivant. */
