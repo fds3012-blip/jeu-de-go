@@ -1,4 +1,4 @@
--- Issue #136, lot I : vie et mort de haut niveau (cinq en bloc, lapin, bord, placement), 9 × 9, Noir au trait.
+-- Issue #136, lot I : vie et mort de haut niveau (cinq en bloc, lapin, deux yeux sur le bord) et captures en trois coups (échelle, filet), 9 × 9, Noir au trait.
 -- Problèmes communs (owner_id null), tous prouvés par src/go/lot-i.test.ts. Aucun seki, aucun ko.
 -- Insertion seule : aucun problème existant n'est modifié ni supprimé.
 -- setup.refutation : texte affiché après une erreur.
