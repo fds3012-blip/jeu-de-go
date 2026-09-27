@@ -165,3 +165,19 @@ export async function estimateLead(pos: Position, komi: number, opts: { kataGo?:
   for (const v of r.own) black += v;
   return { lead: black, engine: 'simple' };
 }
+
+/**
+ * Meilleur coup pour la revue d'une partie (issue #34) : KataGo s'il est déjà chargé (visites basses, 9 × 9 rapide),
+ * sinon le moteur simple (niveau Caillou, dans son Worker). -1 : passer.
+ */
+export async function meilleurCoup(pos: Position, komi: number): Promise<number> {
+  const k = katago ?? null;
+  if (k && k.info.state === 'pret') {
+    try {
+      const a = await k.analyze(pos, { komi, visits: 48, timeMs: 1200 });
+      const m = a.moves[0]?.move;
+      if (m != null && isLegalMove(pos, m)) return m;
+    } catch { /* repli ci-dessous */ }
+  }
+  return bestMove(pos, 'caillou', { komi });
+}
