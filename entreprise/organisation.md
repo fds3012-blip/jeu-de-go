@@ -12,6 +12,8 @@ Le dirigeant (Claude, sous la supervision de Florian) fixe les priorités, répa
 | moteur-go | Règles, comptage, SGF, KataGo, niveaux des adversaires |
 | backend | Supabase, sécurité, parties en ligne, anti-triche |
 | qa | Tests, accessibilité, recette |
+| game-designer | Boucle de jeu, équilibrage (komi, adversaires, XP), première victoire, game feel |
+| son-et-haptique | Sons, vibrations, préférences audio |
 | ux-jeux-mobiles | Analyse de l'expérience joueur, comparaison avec les meilleurs jeux mobiles, base de connaissances UX (`docs/ux/`) |
 
 ## Contenu et joueurs
@@ -19,11 +21,13 @@ Le dirigeant (Claude, sous la supervision de Florian) fixe les priorités, répa
 |---|---|
 | pedagogie | Programme d'apprentissage du débutant au dan, leçons, problèmes, relecture experte |
 | communaute | Support, modération, retours joueurs, clubs et fédérations |
+| localisation | Internationalisation, anglais puis autres langues, glossaire du go |
 
 ## Croissance et entreprise
 | Agent | Périmètre |
 |---|---|
 | growth | Mesure, onboarding, rétention, notifications |
+| data | Plan de marquage PostHog, tableaux de bord des indicateurs, tests A/B |
 | marketing | Marque, contenus, réseaux sociaux, SEO, fiches des stores, partenariats |
 | juridique | RGPD, CGU, mentions légales, licences open source, règles des stores |
 | finance | Modèle économique, prix, coûts, abonnement Stripe et achats intégrés |
