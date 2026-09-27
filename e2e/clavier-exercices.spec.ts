@@ -14,7 +14,7 @@ async function tabulerVersPlateau(page: Page): Promise<void> {
 }
 
 /** Amène le curseur sur `label` aux flèches, puis pose la pierre (deux appuis : « Confirmer au doigt » est actif par défaut). */
-async function poser(page: Page, label: string): Promise<void> {
+async function poser(page: Page, label: string, verbe = 'poser'): Promise<void> {
   const curseur = grille(page).locator('[data-curseur]');
   const depart = fromLabel((await curseur.getAttribute('data-curseur'))!, 9), cible = fromLabel(label, 9);
   const dx = (cible % 9) - (depart % 9), dy = Math.floor(cible / 9) - Math.floor(depart / 9);
@@ -22,7 +22,7 @@ async function poser(page: Page, label: string): Promise<void> {
   for (let i = 0; i < Math.abs(dy); i++) await page.keyboard.press(dy > 0 ? 'ArrowDown' : 'ArrowUp');
   await expect(curseur).toHaveAttribute('data-curseur', label);
   await page.keyboard.press('Enter');
-  await expect(annonce(page)).toHaveText(`${label} : appuie encore pour poser`);
+  await expect(annonce(page)).toHaveText(`${label} : appuie encore pour ${verbe}`);
   await page.keyboard.press('Enter');
 }
 
@@ -62,11 +62,11 @@ test('leçon du ko : la question « touche le point » se répond au clavier', a
   await expect(page.getByText('Touche le point où Blanc ne peut pas reprendre.')).toBeVisible();
 
   await tabulerVersPlateau(page);
-  await poser(page, 'D4');
+  await poser(page, 'D4', 'choisir ce point');
   await expect(page.getByText(/Essaie encore\./)).toBeVisible();
   await appuyer(page, 'Réessayer');
   await tabulerVersPlateau(page);
-  await poser(page, 'E5');
+  await poser(page, 'E5', 'choisir ce point');
   await expect(page.getByText(/^Oui, E5/)).toBeVisible();
 });
 
