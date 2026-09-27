@@ -254,7 +254,7 @@ function PalierVue({ t, ordre, solved, recommande, onOpen }: {
           const i = ordre.indexOf(p);
           return (
             <li key={p.id}>
-              <button className={ok ? 'reussi' : undefined} disabled={!t.ouvert} onClick={() => onOpen(p.id)}
+              <button className={ok ? 'reussi' : undefined} disabled={!t.ouvert} onClick={() => onOpen(p.id)} data-probleme={p.id}
                 aria-label={`Problème ${i + 1} : ${p.title}${ok ? ', réussi' : ''}${t.ouvert ? '' : ', verrouillé'}`}>
                 <span className="grille-goban">
                   <MiniGoban rows={p.rows} />
