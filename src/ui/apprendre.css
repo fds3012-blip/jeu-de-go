@@ -269,3 +269,14 @@
 .grille-pb button:active .mini-goban { transform: scale(.98); }
 .pastille-ok { position: absolute; right: -6px; top: -6px; width: 30px; height: 30px; padding: 5px; border-radius: 50%; background: var(--accent); color: var(--on-accent); box-shadow: 0 0 0 3px var(--bg); }
 .pastille-ok svg { display: block; width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ---------- Go du jour (issue #75) : numéro en Bricolage, « Partager » en relief ---------- */
+.numero-du-jour { font-family: var(--font-titre); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre); color: var(--text); font-variant-numeric: tabular-nums; }
+.entete-du-jour { font-size: .9rem; }
+.entete-du-jour .numero-du-jour { font-size: 1rem; }
+.verdict .cta.partager { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); }
+.partager svg { fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.partage-etat { margin: 0; min-height: 1.3em; text-align: center; font-weight: var(--fw-bold); font-size: var(--fs-s); }
+.partage-etat:empty { min-height: 0; margin-top: calc(-1 * var(--space-2)); }
+.partage-lien { user-select: all; overflow-wrap: anywhere; font-weight: normal; }
+.liens-du-jour { justify-content: center; gap: var(--space-2); flex-wrap: wrap; }

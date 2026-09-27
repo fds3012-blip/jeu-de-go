@@ -78,7 +78,7 @@ test('pas de défilement horizontal à 390 px, carrousel ouvert compris', async 
 
 test('les tuiles mènent au problème du jour et à la leçon suivante', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: /^Problème du jour/ }).click();
+  await page.getByRole('button', { name: /^Go du jour n°\s\d+/ }).click();
   await expect(page.getByRole('navigation').getByRole('button', { name: 'Problèmes' })).toHaveAttribute('aria-current', 'page');
 
   await page.getByRole('navigation').getByRole('button', { name: 'Jouer' }).click();
