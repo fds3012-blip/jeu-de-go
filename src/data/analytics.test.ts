@@ -215,3 +215,39 @@ describe('avec consentement', () => {
 it('prépare la constante probleme_resolu', () => {
   expect(A.EVENTS.problemeResolu).toBe('probleme_resolu');
 });
+
+describe('plan de marquage (issue #166)', () => {
+  it('chaque événement porte le niveau de mesure : « anonyme » sans accord, « complet » avec', async () => {
+    asBrowser(); withKeys();
+    A.track(A.EVENTS.comptageManuel, { mode: 'ordi', mortes: 2, incertains: 1 });
+    await vi.waitFor(() => expect(posthog.capture).toHaveBeenCalledTimes(1));
+    expect(posthog.capture.mock.calls[0][0]).toBe('comptage_manuel');
+    expect(posthog.capture.mock.calls[0][1]).toMatchObject({ mode: 'ordi', mortes: 2, incertains: 1, mesure: 'anonyme' });
+    A.setConsent('accepte');
+    A.track(A.EVENTS.partieCommencee, { mode: 'deux', taille: 9 });
+    await vi.waitFor(() => expect(posthog.capture).toHaveBeenCalledTimes(2));
+    expect(posthog.capture.mock.calls[1][0]).toBe('partie_commencee');
+    expect(posthog.capture.mock.calls[1][1]).toMatchObject({ mode: 'deux', taille: 9, mesure: 'complet' });
+  });
+
+  it('après opposition, les nouveaux événements ne partent pas', async () => {
+    asBrowser(); withKeys();
+    A.setOpposition(true);
+    A.track(A.EVENTS.comptageManuel);
+    A.track(A.EVENTS.partieCommencee);
+    await flush();
+    expect(posthog.capture).not.toHaveBeenCalled();
+  });
+
+  it('noms stables : minuscules et tirets bas, sans doublon', () => {
+    const noms = Object.values(A.EVENTS);
+    expect(new Set(noms).size).toBe(noms.length);
+    for (const n of noms) expect(n).toMatch(/^[a-z]+(_[a-z0-9]+)*$/);
+  });
+
+  it('aucun événement sans ligne dans docs/data/plan-de-marquage.md', async () => {
+    const { readFileSync } = await import('node:fs');
+    const plan = readFileSync(new URL('../../docs/data/plan-de-marquage.md', import.meta.url), 'utf8');
+    expect(Object.values(A.EVENTS).filter(n => !plan.includes('`' + n + '`'))).toEqual([]);
+  });
+});
