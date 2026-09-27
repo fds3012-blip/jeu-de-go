@@ -3,7 +3,7 @@ import { Game } from './Game';
 import { LearnHome, LessonPlayer } from './Learn';
 import { LESSONS } from '../content/lessons';
 import { Puzzles } from './Puzzles';
-import { readLocal, useLessonProgress, useProfil, useSerie, useSession } from './hooks';
+import { readLocal, useGelsServeur, useLessonProgress, useProfil, useSerie, useSession } from './hooks';
 import { supabase } from '../data/supabase';
 import { useSettings, useStored } from './settings';
 import { aideActive } from './partie';
@@ -85,7 +85,9 @@ export function App() {
   const serie = useSerie(supabase, session?.user.id);
   // Série protégée (issue #76) : les jours manqués consomment un gel dès l'ouverture, avant que Problèmes lise la série.
   const [annonceGel, setAnnonceGel] = useState(() => reconcilierAppareil(new Date()));
-  const gels = lireReserveAppareil().gels;
+  // Joueur connecté : les gels du serveur ; sinon ceux de l'appareil (issue #76).
+  const gelsServeur = useGelsServeur(supabase, session?.user.id);
+  const gels = gelsServeur ?? lireReserveAppareil().gels;
   const [resultat, setResultat] = useState<null | { issue: Issue; stats: StatsPartie }>(null); // fin de la partie en cours contre l'ordi
   const [partie, setPartie] = useState(0); // change à chaque partie pour repartir d'un plateau vide
   const home = accueil(parties, done, adv, settings.size);

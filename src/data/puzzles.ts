@@ -115,12 +115,13 @@ export async function fetchPuzzles(db: Db): Promise<Result<Puzzle[]>> {
   return { ok: true, value: parsePuzzles(data) };
 }
 
-export interface PuzzleStats { rating: number; streak: number; solved: string[]; attempted: string[] }
+/** `freezes` : gels de série en réserve côté serveur (issue #76), 0 à 2. */
+export interface PuzzleStats { rating: number; streak: number; freezes: number; solved: string[]; attempted: string[] }
 
 /** Cote problèmes, série de jours et problèmes déjà tentés du joueur connecté. */
 export async function fetchPuzzleStats(db: Db, userId: string): Promise<Result<PuzzleStats>> {
   const [profile, attempts] = await Promise.all([
-    db.from('profiles').select('puzzle_rating, streak_days, streak_last').eq('id', userId).maybeSingle(),
+    db.from('profiles').select('puzzle_rating, streak_days, streak_last, streak_freezes').eq('id', userId).maybeSingle(),
     db.from('puzzle_attempts').select('puzzle_id, solved').eq('user_id', userId)
   ]);
   if (profile.error || attempts.error || !profile.data) return { ok: false, error: 'Impossible de charger ta cote.' };
@@ -129,19 +130,25 @@ export async function fetchPuzzleStats(db: Db, userId: string): Promise<Result<P
     ok: true,
     value: {
       rating: profile.data.puzzle_rating,
-      streak: liveStreak(profile.data.streak_days, profile.data.streak_last, new Date()),
+      streak: liveStreak(profile.data.streak_days, profile.data.streak_last, new Date(), profile.data.streak_freezes),
+      freezes: profile.data.streak_freezes ?? 0,
       solved: [...new Set(rows.filter(r => r.solved).map(r => r.puzzle_id))],
       attempted: [...new Set(rows.map(r => r.puzzle_id))]
     }
   };
 }
 
-/** La série affichée retombe à 0 si le dernier problème réussi date d'avant-hier ou plus. */
-export function liveStreak(days: number, last: string | null, now: Date): number {
+/**
+ * La série affichée retombe à 0 si le dernier problème réussi date d'avant-hier ou plus,
+ * sauf si les gels en réserve couvrent tous les jours manqués : le serveur les consommera à la prochaine réussite
+ * (même règle que gel.ts, issue #76).
+ */
+export function liveStreak(days: number, last: string | null, now: Date, freezes = 0): number {
   if (!last || days <= 0) return 0;
   const [y, m, d] = last.split('-').map(Number);
   const lastDay = Date.UTC(y, m - 1, d), today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
-  return (today - lastDay) / 86_400_000 <= 1 ? days : 0;
+  const manques = Math.round((today - lastDay) / 86_400_000) - 1;
+  return manques <= Math.max(0, freezes) ? days : 0;
 }
 
 /** Enregistre un essai et renvoie la nouvelle cote problèmes. */
