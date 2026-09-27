@@ -64,12 +64,12 @@ export const PUZZLES_16: PuzzleRow[] = [
     explanation: "Exact ! Blanc s'allonge en F5, et tu le remets en atari (une seule liberté) à chaque coup, en zigzag vers le haut à droite : c'est une échelle. Aucune pierre blanche ne l'attend sur ce chemin, il finit capturé contre le bord."
   },
   {
-    id: 'c3', size: 9, difficulty: 800, answers: ['F4'],
+    id: 'c3', size: 9, difficulty: 800, answers: ['F4', 'G4', 'F3'],
     setup: { rows: ['.........', '.........', '.........', '....XX...', '...XT....', '...X.....', '.........', '......O..', '.........'], toPlay: 'B',
       refutation: "Pas tout à fait. Si tu mets en atari tout de suite, Blanc s'allonge et l'échelle qui suit bute sur la pierre blanche G2 : Blanc s'y relie et s'échappe. Joue un pas plus loin, en diagonale, pour l'enfermer." },
     title: 'Le filet',
     prompt: 'Noir joue et capture. Mettre en atari tout de suite ne suffit pas.',
-    explanation: "Bien vu ! F4 ne touche pas la pierre, mais lui ferme la route : c'est un filet (geta en japonais). Si Blanc sort en F5, tu joues G5 ; s'il sort en E4, tu joues E3. Chaque fois, il est en atari (une seule liberté) et tu le captures."
+    explanation: "Bien vu ! Ton coup ne touche pas la pierre, mais lui ferme la route : c'est un filet (geta en japonais). Le filet le plus serré est F4 ; G4 et F3, un peu plus larges, marchent aussi. Après F4, si Blanc sort en F5, tu joues G5 ; s'il sort en E4, tu joues E3. Chaque fois, il est en atari (une seule liberté) et tu le captures."
   },
   {
     id: 'c4', size: 9, difficulty: 750, answers: ['C1'],

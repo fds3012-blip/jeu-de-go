@@ -286,3 +286,52 @@ Chaque livraison : issue traitée, agent, pull request, résultat des vérificat
   - faire valider l'exemption de PostHog par un avocat ;
   - activer « Discard client IP data » dans PostHog ;
   - essayer la revue de partie et l'alerte d'atari sur iPhone.
+
+## #29 Sécurité côté serveur (backend)
+
+- Deux migrations appliquées en production, après des tests SQL joués dans des transactions annulées :
+  - **Parties classées** : komi 6,5 et handicap 0 imposés, avec la contrainte `games_rated_standard`.
+  - **Problèmes** : seul le premier essai compte pour la cote, et deux essais simultanés ne comptent qu'une fois. Un essai répété et réussi fait quand même avancer la série de jours. Correctif demandé après ma revue : sinon, le Go du jour aurait cassé la série.
+  - **Leçons** : la progression ne recule jamais, grâce au trigger `lesson_progress_keep_max`.
+- Aucune donnée supprimée, aucune branche Supabase payante créée. Advisors : aucune nouvelle alerte.
+## #73 Veille concurrentielle et innovations (produit)
+
+- L'app est comparée à chess.com, BadukPop, OGS, KaTrain, AI Sensei, Tsumego Pro, SmartGo, Fox et Tygem, 101weiqi et Duolingo, sur quatre axes : accueil, rétention, profondeur et social. Document : `docs/produit/veille-2026-09-27.md`.
+- Issues créées :
+  - #75 : Go du jour partagé, façon Wordle ;
+  - #76 : série protégée (gel) ;
+  - #77 : rejouer ses erreurs sous forme de problèmes ;
+  - #78 : carte de territoire animée ;
+  - #79 : partie guidée ;
+  - #80 : Mochi coach ;
+  - #81 : défier un ami par lien.
+
+## #72 Audit « impeccable partout » (designer)
+
+- Captures : 13 écrans, sombre et clair, en 390 × 844 et sur iPhone SE, soit 104 captures. Rapport : `docs/design/v2/audit-coherence.md`, avec une planche avant/après.
+- Corrigé :
+  - la tuile grise parasite sous le nom de l'adversaire ;
+  - la fin de partie coupée sur iPhone SE ;
+  - le choix de la taille du plateau, porté à 44 px ;
+  - le Profil écrasé sur SE ;
+  - les espaces insécables ;
+  - 8 nouveaux jetons et 47 valeurs en dur remplacées.
+- Reste, pour une prochaine issue :
+  - le plateau des leçons caché sur SE ;
+  - les deux sortes d'apostrophes mélangées ;
+  - le bouton principal de l'accueil sur deux lignes ;
+  - des états pas encore capturés.
+
+## #75 Go du jour partageable, premier incrément (growth)
+
+- Un défi commun à tous, numéroté en heure de Paris. Le 27/09 est le n° 1.
+- Il remplace le « problème du jour », qui variait d'un joueur à l'autre.
+- Bouton « Partager » en relief : il ouvre le partage du téléphone, ou copie le texte sinon. Exemple : `Go du jour n° 1 · résolu en 2 essais · série 1 🔥` suivi du lien. La réponse n'est jamais dévoilée.
+- Le lien `?go-du-jour=N` ouvre directement le problème, sans compte. La fenêtre de consentement attend la fin du problème.
+- Événements suivis : `go_du_jour_resolu`, `go_du_jour_partage` et `arrivee_par_partage`.
+- Reste :
+  - les trois paliers de difficulté ;
+  - une table du défi côté serveur ;
+  - la série liée au compte ;
+  - l'indicateur dans PostHog.
+- Aujourd'hui, le même problème revient tous les 6 jours. Les nouveaux problèmes (#16) allongeront ce cycle.

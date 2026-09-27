@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Game } from './Game';
 import { LearnHome, LessonPlayer } from './Learn';
 import { LESSONS } from '../content/lessons';
@@ -16,14 +16,14 @@ import { fenetreVisible, useConsentement } from './consentement';
 import { accueil, adversaireOuvert, echelle, introBut, INTRO_KEY, PARTIES_KEY, type Parties } from './home';
 import { Accueil } from './Accueil';
 import { ALL_PUZZLES } from '../content/puzzles';
-import { parsePuzzles, puzzleOfDay } from '../data/puzzles';
+import { parsePuzzles } from '../data/puzzles';
+import { EVENTS, track } from '../data/analytics';
+import { PARAM, SERIE_KEY, numeroDuJour, numeroDuLien, problemeDuNumero, type Serie } from './goDuJour';
 import { battu, BILAN_KEY, enregistrer, fin, komiDepuisUrl, lireBilan, type Bilan, type Issue, type StatsPartie } from './bilan';
 import { fr } from '../ui/typo';
 import { BarreNav, type Onglet } from '../ui/IconesNav';
 
 const PROBLEMES_LOCAUX = parsePuzzles(ALL_PUZZLES);
-/** Problèmes réussis sur ce téléphone (même clé que l'onglet Problèmes). */
-const PROBLEMES_RESOLUS_KEY = 'go.problemes.v1';
 
 /** Flamme de la série de jours, en or. */
 function Flamme() {
@@ -41,8 +41,26 @@ const KOMI = import.meta.env.VITE_E2E && typeof location !== 'undefined' ? komiD
 
 type Tab = Onglet;
 
+// Go du jour (issue #75) : un lien partagé `?go-du-jour=N` ouvre directement le défi, sans compte.
+// Lu une fois au chargement ; le paramètre est ensuite retiré de l'adresse, pour qu'un rechargement ne compte pas
+// une deuxième arrivée : `arrivee_par_partage` part donc une seule fois par session.
+const LIEN_DU_JOUR = typeof location !== 'undefined' ? numeroDuLien(location.search) : null;
+let arriveeEnvoyee = false;
+function noterArrivee() {
+  if (LIEN_DU_JOUR === null || arriveeEnvoyee) return;
+  arriveeEnvoyee = true;
+  track(EVENTS.arriveeParPartage, { numero_demande: LIEN_DU_JOUR, numero_du_jour: numeroDuJour(new Date()) });
+  try {
+    const url = new URL(location.href);
+    url.searchParams.delete(PARAM);
+    history.replaceState(history.state, '', url.pathname + url.search + url.hash);
+  } catch { /* adresse inchangée : sans conséquence */ }
+}
+
 export function App() {
-  const [tab, setTab] = useState<Tab>('jouer');
+  const [tab, setTab] = useState<Tab>(LIEN_DU_JOUR !== null ? 'problemes' : 'jouer');
+  const [duJourOuvert, setDuJourOuvert] = useState(false);
+  useEffect(noterArrivee, []);
   const [settings, set] = useSettings();
   const [playing, setPlaying] = useState<false | 'ordi' | 'deux'>(false);
   const [adversaire, setAdversaire] = useStored<OpponentId>('go.adversaire.v1', 'pomme');
@@ -136,17 +154,19 @@ export function App() {
   } else if (tab === 'apprendre') {
     screen = <LearnHome progress={progress} onOpen={setLessonId} sync={syncState} />;
   } else if (tab === 'problemes') {
-    screen = <Puzzles db={supabase} userId={session?.user.id} sessionLoading={session === undefined} confirmTouch={settings.confirmTouch} onCompte={() => go('profil')} />;
+    screen = <Puzzles db={supabase} userId={session?.user.id} sessionLoading={session === undefined} confirmTouch={settings.confirmTouch} onCompte={() => go('profil')}
+      lien={LIEN_DU_JOUR} onDuJour={setDuJourOuvert} />;
   } else if (tab === 'profil') {
     screen = <Profil vue={vueProfil} onVue={setVueProfil} settings={settings} set={set} profil={profil} serie={serie} />;
   } else {
-    const daily = puzzleOfDay(PROBLEMES_LOCAUX, new Date());
+    const numero = numeroDuJour(new Date());
+    const daily = problemeDuNumero(PROBLEMES_LOCAUX, numero);
     const rangLecon = leconConseillee ? LESSONS.indexOf(leconConseillee) + 1 : 0;
     screen = (
       <Accueil adv={adv} battu={battu(bilan, adv.id)} textes={home} taille={settings.size} cartes={cartes}
         reglages={reglages} setReglages={setReglages} onTaille={n => set({ size: n })} onChoisir={setAdversaire}
         onJouer={() => lancer('ordi')} onDeux={() => lancer('deux')}
-        probleme={daily && { titre: daily.title, rows: daily.rows, reussi: !!readLocal<Record<string, true>>(PROBLEMES_RESOLUS_KEY, {})[daily.id] }}
+        probleme={daily && { numero, titre: daily.title, rows: daily.rows, reussi: readLocal<Serie | null>(SERIE_KEY, null)?.dernier === numero }}
         onProbleme={() => go('problemes')}
         lecon={leconConseillee && { rang: rangLecon, total: LESSONS.length, titre: leconConseillee.title }}
         onLecon={() => { go('apprendre'); if (leconConseillee) setLessonId(leconConseillee.id); }} />
@@ -167,7 +187,7 @@ export function App() {
       </main>
       {/* Pendant une partie, comme chez chess.com : pas de barre de navigation, « ‹ » ramène à l'accueil. */}
       {!enPartie && <BarreNav actif={tab} onChoisir={go} />}
-      <ConsentModal visible={fenetreVisible({ consent, ignoree: accordIgnore, enPartie, surConditions: tab === 'profil' && vueProfil === 'conditions' })}
+      <ConsentModal visible={fenetreVisible({ consent, ignoree: accordIgnore, enPartie: enPartie || (tab === 'problemes' && duJourOuvert), surConditions: tab === 'profil' && vueProfil === 'conditions' })}
         onConditions={() => { go('profil'); setVueProfil('conditions'); }} onIgnorer={() => setAccordIgnore(true)} />
 
     </>

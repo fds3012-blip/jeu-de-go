@@ -11,7 +11,8 @@ import { fr } from '../ui/typo';
 
 type Taille = 9 | 13 | 19;
 
-export interface TuileProbleme { titre: string; reussi: boolean; rows: string[] }
+/** Tuile du Go du jour (issue #75) : le défi commun, numéroté. */
+export interface TuileProbleme { titre: string; reussi: boolean; rows: string[]; numero: number }
 export interface TuileLecon { rang: number; total: number; titre: string }
 
 interface Props {
@@ -62,7 +63,7 @@ export function Accueil(p: Props) {
         </div>
       </div>
 
-      <div className="identite">
+      <div className="adversaire-identite">
         <h2>{adv.nom}</h2>
         <span>{adv.rang}</span>
       </div>
@@ -80,7 +81,7 @@ export function Accueil(p: Props) {
         <button className="tuile tuile-probleme" onClick={p.onProbleme}>
           {p.probleme && <MiniPlateau rows={p.probleme.rows} />}
           <span>
-            <small>{p.probleme?.reussi ? 'Problème du jour réussi' : 'Problème du jour'}</small>
+            <small>{p.probleme ? `Go du jour n°\u00A0${p.probleme.numero}${p.probleme.reussi ? ' réussi' : ''}` : 'Go du jour'}</small>
             <b>{p.probleme?.titre ?? 'Problèmes'}</b>
           </span>
         </button>

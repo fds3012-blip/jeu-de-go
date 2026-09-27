@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { PUZZLES_16 } from '../content/puzzles';
 import { checkAnswer, parsePuzzles, startOf, type Puzzle } from '../data/puzzles';
-import { fromLabel } from './coords';
+import { fromLabel, toLabel } from './coords';
 import { groupAt, play, type Position } from './rules';
 import { canEscape, captureWorks, defenceFails, hasTwoEyes, isDead, ladderWorks } from './tactics';
 
@@ -220,6 +220,52 @@ describe('vie et mort', () => {
     expect(isDead(r, t, area('H9', 'J9', 'J8'))).toBe(true);
     const { pos } = startOf(p);
     for (const m of legalMoves(pos).filter(m => m !== at('J9'))) expect(hasTwoEyes(ok(play(ok(play(pos, m)), at('J9'))), t), `coup ${m}`).toBe(true);
+  });
+});
+
+describe('ensemble exact des bonnes réponses (tous les coups légaux de Noir)', () => {
+  /** Capture garantie : quelle que soit la réponse de Blanc (tous ses coups légaux et la passe), Noir capture une cible. */
+  // Tous les coups blancs sont essayés ; les coups près des cibles d'abord, pour trouver vite une défense qui marche.
+  const nearFirst = (r: Position, targets: number[]) => {
+    const near = new Set<number>();
+    for (const t of targets) for (const s of groupAt(r.board, 9, t).stones) {
+      const x = s % 9, y = Math.floor(s / 9);
+      for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) {
+        const xx = x + dx, yy = y + dy;
+        if (xx >= 0 && xx < 9 && yy >= 0 && yy < 9) near.add(yy * 9 + xx);
+      }
+    }
+    const all = legalMoves(r);
+    return [...all.filter(m => near.has(m)), ...all.filter(m => !near.has(m))];
+  };
+  const captureGuaranteed = (r: Position, targets: number[], depth = 12) => nearFirst(r, targets).every(w => {
+    const x = ok(play(r, w));
+    // Deux lecteurs : l'échelle (sans limite pratique de longueur) et le lecteur de capture général.
+    return targets.some(t => x.board[t] === 0 || ladderWorks(x, t) || captureWorks(x, t, depth));
+  });
+  /** Groupe sauvé : Blanc au trait ne trouve aucune capture de la pierre marquée. */
+  const saved = (r: Position, s: number) => r.board[s] !== 0 && !captureWorks(r, s) && !ladderWorks(r, s);
+  const winners = (id: string, goal: (r: Position, marked: number[]) => boolean) => {
+    const p = pz(id), { pos, marked } = startOf(p);
+    return legalMoves(pos).filter(m => m !== -1 && goal(ok(play(pos, m)), marked)).map(m => toLabel(m, 9)).sort();
+  };
+  const accepted = (id: string) => pz(id).answers.map(a => toLabel(a, 9)).sort();
+
+  it('c1 : seul E5 garantit une capture', { timeout: 60_000 }, () => {
+    expect(accepted('c1')).toEqual(['E5']);
+    expect(winners('c1', captureGuaranteed)).toEqual(accepted('c1'));
+  });
+  it('c2 : seul E4 garantit la capture', { timeout: 60_000 }, () => {
+    expect(accepted('c2')).toEqual(['E4']);
+    expect(winners('c2', captureGuaranteed)).toEqual(accepted('c2'));
+  });
+  it('c3 : seuls les coups acceptés (F4, G4, F3) garantissent la capture', { timeout: 180_000 }, () => {
+    expect(accepted('c3')).toEqual(['F3', 'F4', 'G4']);
+    expect(winners('c3', captureGuaranteed)).toEqual(accepted('c3'));
+  });
+  it('s3 : seul E6 sauve la pierre marquée', () => {
+    expect(accepted('s3')).toEqual(['E6']);
+    expect(winners('s3', (r, [s]) => saved(r, s))).toEqual(accepted('s3'));
   });
 });
 

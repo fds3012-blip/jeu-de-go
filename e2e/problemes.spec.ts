@@ -8,10 +8,10 @@ test('problèmes sans compte : erreur, bonne réponse, suite et problème suivan
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
 
-  await expect(page.getByRole('heading', { name: 'Problème du jour' })).toBeVisible();
-  // Le problème du jour mis en scène, puis la grille des 18 problèmes (6 de base et 12 de l'issue #16).
+  await expect(page.getByRole('heading', { name: /^Go du jour n°\s\d+$/ })).toBeVisible();
+  // Le Go du jour mis en scène, puis la grille des 18 problèmes (6 de base et 12 de l'issue #16).
   await expect(page.getByRole('button', { name: /^Problème \d+ : / })).toHaveCount(18);
-  await expect(page.getByRole('button', { name: 'Résoudre le problème du jour' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Résoudre le Go du jour' })).toBeVisible();
   const debord = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(debord).toBeLessThanOrEqual(0);
 

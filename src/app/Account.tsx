@@ -4,6 +4,7 @@ import { supabase, type Db } from '../data/supabase';
 import { fetchProfile, saveUsername, sendMagicLink, type Profile } from '../data/account';
 import { USERNAME_MAX, USERNAME_MIN, isEmail, validateUsername } from '../data/username';
 import { EVENTS, identify, track } from '../data/analytics';
+import { FINE } from '../ui/typo';
 
 const field: CSSProperties = {
   width: '100%', minHeight: 46, padding: '0 14px', borderRadius: 12, border: '1.5px solid var(--line)',
@@ -17,7 +18,7 @@ export function Account({ db = supabase }: { db?: Db | null }) {
     return (
       <div className="card">
         <b>Ton compte</b>
-        <p className="muted small" style={{ margin: '4px 0 0' }}>La connexion n’est pas disponible pour le moment. Tu peux jouer et apprendre sans compte : ta progression reste sur ce téléphone.</p>
+        <p className="muted small" style={{ margin: '4px 0 0' }}>La connexion n’est pas disponible pour le moment. Tu peux jouer et apprendre sans compte{FINE}: ta progression reste sur ce téléphone.</p>
       </div>
     );
   }
@@ -111,7 +112,7 @@ function SignIn({ db }: { db: Db }) {
   return (
     <form className="card" onSubmit={submit} noValidate>
       <b>Crée ton compte</b>
-      <p className="muted small" style={{ margin: '4px 0 10px' }}>Garde ta cote et joue en ligne. Pas de mot de passe : on t’envoie un lien par e-mail.</p>
+      <p className="muted small" style={{ margin: '4px 0 10px' }}>Garde ta cote et joue en ligne. Pas de mot de passe{FINE}: on t’envoie un lien par e-mail.</p>
       <label className="small" htmlFor="account-email">Ton adresse e-mail</label>
       <input id="account-email" type="email" inputMode="email" autoComplete="email" required style={{ ...field, marginTop: 4 }}
         value={email} onChange={e => { setEmail(e.target.value); setError(''); }} aria-invalid={!!error} aria-describedby="account-email-error" />
@@ -142,7 +143,7 @@ function UsernameForm({ db, profile, canCancel, onDone, onCancel, onSignOut }: {
   return (
     <form className="card" onSubmit={submit} noValidate>
       <b>{canCancel ? 'Ton nouveau pseudo' : 'Choisis ton pseudo'}</b>
-      <p className="muted small" style={{ margin: '4px 0 10px' }}>C’est le nom que verront les autres joueurs. De {USERNAME_MIN} à {USERNAME_MAX} caractères : lettres, chiffres, _ et -.</p>
+      <p className="muted small" style={{ margin: '4px 0 10px' }}>C’est le nom que verront les autres joueurs. De {USERNAME_MIN} à {USERNAME_MAX} caractères{FINE}: lettres, chiffres, _ et -.</p>
       <label className="small" htmlFor="account-username">Pseudo</label>
       <input id="account-username" autoComplete="username" autoCapitalize="none" spellCheck={false} maxLength={USERNAME_MAX} style={{ ...field, marginTop: 4 }}
         value={name} onChange={e => { setName(e.target.value); setError(''); }} aria-invalid={!!error} aria-describedby="account-username-error" />
