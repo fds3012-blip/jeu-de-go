@@ -29,6 +29,9 @@ export const EVENTS = {
   goDuJourResolu: 'go_du_jour_resolu',
   goDuJourPartage: 'go_du_jour_partage',
   arriveeParPartage: 'arrivee_par_partage',
+  // Série protégée (issue #76) : gel gagné tous les 7 jours de série, gel consommé par un jour manqué.
+  gelGagne: 'gel_gagne',
+  gelUtilise: 'gel_utilise',
 } as const;
 export type AnalyticsEvent = (typeof EVENTS)[keyof typeof EVENTS];
 export type Props = Record<string, string | number | boolean | null | undefined>;

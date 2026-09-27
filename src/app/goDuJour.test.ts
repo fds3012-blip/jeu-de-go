@@ -47,6 +47,17 @@ describe('problème du Go du jour', () => {
     expect(problemeDuNumero(liste, 7)?.id).toBe('b1');
   });
 
+  it('un nouveau lot (id qui trie avant, difficulté basse) ne change pas les jours déjà prévus (#91)', () => {
+    const calendrier = ['b1', 'b2', 'b3', 'b4', 'b5', 'b6'];
+    const avant = calendrier.map(id => ({ id }));
+    const lot = [{ id: 'a01' }, { id: 'a02' }];
+    for (let n = 1; n <= 6; n++) {
+      expect(problemeDuNumero([...lot, ...avant], n, [...calendrier, 'a01', 'a02'])?.id).toBe(problemeDuNumero(avant, n, calendrier)?.id);
+    }
+    // Les jours suivants passent aux nouveaux problèmes, dans leur ordre d'arrivée.
+    expect(problemeDuNumero([...lot, ...avant], 7, [...calendrier, 'a01', 'a02'])?.id).toBe('a01');
+  });
+
   it('même jour à Paris, même problème ; le lendemain, un autre', () => {
     const matin = problemeDuNumero(liste, numeroDuJour(new Date('2026-09-27T06:00:00+02:00')));
     const soir = problemeDuNumero(liste, numeroDuJour(new Date('2026-09-27T23:30:00+02:00')));
