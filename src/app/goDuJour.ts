@@ -1,3 +1,4 @@
+import { CALENDRIER_GO_DU_JOUR } from '../content/puzzles';
 // Go du jour (issue #75) : un défi quotidien commun et partageable, façon Wordle. Logique pure, sans React.
 // Tout le monde voit le même problème le même jour, en heure de Paris, quel que soit le fuseau de l'appareil.
 
@@ -30,12 +31,18 @@ export function numeroDuJour(instant: Date): number {
 }
 
 /**
- * Problème d'un numéro donné : la liste est triée par id (stable), puis parcourue dans l'ordre, un par jour.
- * Deux appareils avec la même liste voient donc le même problème sous le même numéro.
+ * Problème d'un numéro donné : la liste est rangée dans l'ordre du calendrier (ordre d'arrivée des problèmes,
+ * en ajout seulement), puis parcourue un problème par jour. Deux appareils voient donc le même problème sous
+ * le même numéro, et l'ajout d'un lot de problèmes ne change pas les jours déjà prévus.
+ * Un id absent du calendrier passe après, trié par id.
  */
-export function problemeDuNumero<T extends { id: string }>(liste: readonly T[], numero: number): T | undefined {
+export function problemeDuNumero<T extends { id: string }>(
+  liste: readonly T[], numero: number, calendrier: readonly string[] = CALENDRIER_GO_DU_JOUR
+): T | undefined {
   if (!liste.length) return undefined;
-  const tries = [...liste].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  const rang = new Map(calendrier.map((id, i) => [id, i]));
+  const cle = (id: string) => rang.get(id) ?? Number.MAX_SAFE_INTEGER;
+  const tries = [...liste].sort((a, b) => cle(a.id) - cle(b.id) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
   const i = numero - 1;
   return tries[((i % tries.length) + tries.length) % tries.length];
 }
