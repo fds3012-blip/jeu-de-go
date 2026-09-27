@@ -64,6 +64,31 @@ test("« ‹ » ramène à l'accueil depuis une partie en cours (la navigation e
   await expect(page.getByRole('navigation', { name: 'Navigation principale' }).getByRole('button', { name: 'Jouer' })).toHaveAttribute('aria-current', 'page');
 });
 
+test('identité « deux pierres » (#51) : un seul onglet actif, icône de 28 px, pierre qui tombe', async ({ page }) => {
+  await page.goto('/');
+  const nav = page.getByRole('navigation', { name: 'Navigation principale' });
+  for (const nom of ['Jouer', 'Apprendre', 'Problèmes', 'Profil']) {
+    await nav.getByRole('button', { name: nom }).click();
+    await expect(nav.locator('[aria-current="page"]')).toHaveCount(1);
+    await expect(nav.getByRole('button', { name: nom })).toHaveAttribute('aria-current', 'page');
+    const icone = nav.getByRole('button', { name: nom }).locator('svg.icone-nav');
+    await expect(icone).toHaveClass(/active/);
+    const box = (await icone.boundingBox())!;
+    expect(Math.round(box.width)).toBe(28);
+    // À l'activation, la pierre « tombe » (animation nav-pose), comme sur le goban.
+    expect(await icone.locator('.pose').evaluate(e => getComputedStyle(e).animationName)).toBe('nav-pose');
+  }
+});
+
+test('mouvements réduits : la pierre ne tombe pas dans l\'onglet activé', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/');
+  const nav = page.getByRole('navigation', { name: 'Navigation principale' });
+  await nav.getByRole('button', { name: 'Apprendre' }).click();
+  const pose = nav.getByRole('button', { name: 'Apprendre' }).locator('.pose');
+  expect(await pose.evaluate(e => getComputedStyle(e).animationName)).toBe('none');
+});
+
 test('les onglets sont des cibles tactiles de 44 px minimum', async ({ page }) => {
   await page.goto('/');
   for (const b of await page.getByRole('navigation').getByRole('button').all()) {

@@ -1,0 +1,76 @@
+/*
+ * Identité « deux pierres » (issue #51) : barre de navigation, indicateur d'attente, ornement de titre.
+ * Charte : docs/design/v2/identite.md. Composants : IconesNav.tsx, Reflexion.tsx.
+ */
+
+/* ---------- Barre de navigation ---------- */
+.nav { position: fixed; left: 0; right: 0; bottom: 0; display: flex; justify-content: center; background: var(--barre); border-top: 1px solid var(--line);
+  padding-bottom: env(safe-area-inset-bottom, 0px); z-index: 20; }
+.nav .onglet { flex: 1; max-width: 180px; min-width: var(--cible-min); min-height: var(--nav-h); border: 0; background: none; color: var(--muted);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 6px 0 4px;
+  font-size: var(--fs-xs); font-weight: var(--fw-medium); line-height: 1.2; }
+.nav .onglet[aria-current="page"] { color: var(--text); font-weight: var(--fw-bold); }
+/* Point indicateur : une petite pierre de la couleur de l'onglet, sous le libellé. Place réservée : rien ne bouge d'un onglet à l'autre. */
+.onglet-point { width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: 0; flex: none; }
+.onglet-jouer { --onglet: var(--onglet-jouer); }
+.onglet-apprendre { --onglet: var(--onglet-apprendre); }
+.onglet-problemes { --onglet: var(--onglet-problemes); }
+.onglet-profil { --onglet: var(--onglet-profil); }
+.onglet[aria-current="page"] .onglet-point { opacity: 1; background: var(--onglet); }
+
+/* ---------- Icônes (28 × 28) ---------- */
+.icone-nav { width: var(--icone-nav); height: var(--icone-nav); display: block; overflow: visible; flex: none; }
+.icone-nav .encre-plein { fill: currentColor; }
+.icone-nav .encre-trait { fill: none; stroke: currentColor; stroke-width: 1.5; }
+.icone-nav .encre-pointille { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-dasharray: 0 3.2; opacity: .8; }
+/* Découpe : un liseré de la couleur de la barre sépare deux formes qui se touchent. */
+.icone-nav .detache, .icone-nav .vide { fill: var(--barre); }
+.icone-nav .grille { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; }
+.icone-nav .grille-fine { stroke-width: 1; opacity: .55; }
+/* Pierres actives : matière du goban. La noire reçoit un liseré de lune sur fond sombre ; la blanche, un fil d'ombre. */
+.icone-nav .pierre-n { stroke: var(--pierre-n-bord); stroke-width: .7; }
+.icone-nav .pierre-b { stroke: rgba(60, 40, 15, .42); stroke-width: .8; }
+.icone-nav .ombre { fill: #000; opacity: .32; }
+.icone-nav .accent-trait { fill: none; stroke: var(--onglet); stroke-width: 1.8; }
+.icone-nav .accent-pointille { fill: none; stroke: var(--onglet); stroke-width: 2.2; stroke-linecap: round; stroke-dasharray: 0 3.4; }
+.icone-nav .accent-plein { fill: var(--onglet); }
+.icone-nav .sceau-fond { fill: var(--indigo); }
+.icone-nav .sceau-cadre { fill: none; stroke: #F7E9DA; stroke-width: 1.3; opacity: .9; }
+.icone-nav.active .grille { stroke: var(--text); opacity: .7; }
+.icone-nav .pose { transform-box: fill-box; transform-origin: center; }
+
+@media (prefers-reduced-motion: no-preference) {
+  /* À l'appui, l'icône s'enfonce un peu : retour immédiat, sans décaler la mise en page. */
+  .nav .onglet .icone-nav { transition: transform var(--duree-rapide) var(--ease); }
+  .nav .onglet:active .icone-nav { transform: scale(.92); }
+  /* À l'activation, la pierre « tombe », comme sur le goban (go-chute, board.css). */
+  .nav .onglet[aria-current="page"] .pose { animation: nav-pose var(--duree-pose) var(--ease-pose) both; }
+  .nav .onglet[aria-current="page"] .onglet-point { animation: nav-point var(--duree-pose) var(--ease) both; }
+}
+@keyframes nav-pose { from { transform: scale(1.15); } to { transform: scale(1); } }
+@keyframes nav-point { from { transform: scale(.4); } to { transform: scale(1); } }
+
+/* ---------- Indicateur d'attente : deux pierres qui tournent ---------- */
+.reflexion { display: inline-block; flex: none; vertical-align: middle; }
+.reflexion svg { display: block; overflow: visible; }
+.reflexion .pierre-n { stroke: var(--pierre-n-bord); stroke-width: .7; }
+.reflexion .pierre-b { stroke: rgba(60, 40, 15, .28); stroke-width: .5; }
+.reflexion-orbite, .reflexion-n, .reflexion-b { transform-box: fill-box; transform-origin: center; }
+@media (prefers-reduced-motion: no-preference) {
+  /* Le couple tourne ; chaque pierre tourne en sens inverse sur elle-même, pour garder son reflet en haut à gauche. */
+  .reflexion-orbite { animation: orbite var(--duree-orbite) linear infinite; }
+  .reflexion-n, .reflexion-b { animation: orbite var(--duree-orbite) linear infinite reverse; }
+}
+@media (prefers-reduced-motion: reduce) {
+  /* Pas de rotation : les pierres s'allument l'une après l'autre. */
+  .reflexion-n { animation: allume 1.6s ease-in-out infinite; }
+  .reflexion-b { animation: allume 1.6s ease-in-out -.8s infinite; }
+}
+@keyframes orbite { to { transform: rotate(360deg); } }
+@keyframes allume { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+
+/* ---------- Ornement de titre de section : le logo en petit, devant le titre ---------- */
+.titre-pierres { display: flex; align-items: center; gap: 8px; }
+.titre-pierres::before { content: ""; flex: none; width: 11px; height: 11px; border-radius: 50%; margin-right: 5px;
+  background: radial-gradient(circle at 35% 30%, #676b69, #151716 55%, #050606);
+  box-shadow: 0 0 0 1px var(--pierre-n-bord), 5px 0 0 -1px var(--papier), 5px 0 0 0 rgba(60, 40, 15, .28); }

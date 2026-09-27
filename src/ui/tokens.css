@@ -24,6 +24,7 @@
   --grille: #3A2912;       /* lignes et hoshi du plateau */
   --blanc: #FFFFFF;
   --encre-jade: #07231A;   /* texte posé sur jade ou sur or */
+  --indigo: #2F4B8A;       /* deuxième encre des sceaux (Renard, Rivière, Tigre) et sceau du joueur */
 
   /* Alias v1, gardés pour les styles en ligne des écrans (phases suivantes : à remplacer par les rôles). */
   --encre: var(--sumi);
@@ -53,6 +54,13 @@
   --recompense-texte: #EFB84A;
   --accent-trait: var(--jade);   /* jade en trait fin : soulignés, point « à toi de jouer » */
   --focus: var(--jade);
+  /* Accent propre à chaque onglet de la barre du bas (docs/design/v2/identite.md) : pièce d'accent de l'icône
+     active et point indicateur. Contraste 3:1 minimum sur --barre (tokens.test.ts). */
+  --onglet-jouer: var(--jade);        /* agir : l'anneau « à toi de jouer » */
+  --onglet-apprendre: var(--or);      /* progresser : le chemin des leçons */
+  --onglet-problemes: var(--hanko);   /* le point vital */
+  --onglet-profil: #8FA6E6;           /* indigo éclairé : l'indigo pur (#2F4B8A) ne ressort pas sur la barre sombre */
+  --pierre-n-bord: rgba(243, 237, 227, .28); /* liseré de lune d'une pierre noire posée sur un fond sombre */
   /* Halo de lampe : un cône doré discret tout en haut de l'écran. */
   --halo: radial-gradient(120% 420px at 50% -120px, rgba(239, 184, 74, .11), rgba(239, 184, 74, 0) 70%);
   /* Relief du bouton principal : tranche dure de 5 px + halo jade doux. Seul élément en relief de l'app. */
@@ -104,6 +112,8 @@
   --cible-bouton: 48px;   /* bouton secondaire */
   --cible-cta: 56px;      /* bouton principal */
   --nav-h: 60px;          /* barre de navigation */
+  --icone-nav: 28px;      /* icônes de la barre de navigation */
+  --icone-attente: 22px;  /* indicateur « deux pierres qui tournent » */
   --largeur-max: 560px;   /* colonne de contenu */
   --maquette-l: 390px;    /* largeur des maquettes mobiles */
   --maquette-h: 844px;
@@ -113,6 +123,9 @@
   --duree: 200ms;             /* transitions d'interface */
   --duree-recompense: 600ms;  /* obtention d'un badge ou d'une série */
   --ease: cubic-bezier(.2, .8, .2, 1);
+  --ease-pose: cubic-bezier(.2, .8, .3, 1.2); /* pose d'une pierre : goban (board.css) et onglet activé */
+  --duree-pose: 160ms;        /* la pierre « tombe » dans l'onglet activé (1,15 → 1) */
+  --duree-orbite: 1100ms;     /* un tour des deux pierres de l'indicateur d'attente */
 
   color-scheme: dark;
 }
@@ -124,6 +137,8 @@
     --text: #1C1916; --muted: #675D53;
     --accent-texte: #17744D; --danger-texte: #B23520; --recompense-texte: #8A5A00;
     --accent-trait: var(--jade-bord); --focus: var(--jade-bord);
+    --onglet-jouer: var(--jade-bord); --onglet-apprendre: #A0680A; --onglet-problemes: var(--hanko); --onglet-profil: var(--indigo);
+    --pierre-n-bord: rgba(28, 25, 22, 0);
     --halo: radial-gradient(120% 420px at 50% -120px, rgba(239, 184, 74, .22), rgba(239, 184, 74, 0) 70%);
     --ombre-relief: 0 var(--relief) 0 var(--accent-bord), 0 14px 24px -14px rgba(30, 138, 95, .5);
     --ombre-plateau: 0 14px 28px -16px rgba(60, 40, 15, .45);
@@ -135,6 +150,8 @@
   --text: #1C1916; --muted: #675D53;
   --accent-texte: #17744D; --danger-texte: #B23520; --recompense-texte: #8A5A00;
     --accent-trait: var(--jade-bord); --focus: var(--jade-bord);
+    --onglet-jouer: var(--jade-bord); --onglet-apprendre: #A0680A; --onglet-problemes: var(--hanko); --onglet-profil: var(--indigo);
+    --pierre-n-bord: rgba(28, 25, 22, 0);
   --halo: radial-gradient(120% 420px at 50% -120px, rgba(239, 184, 74, .22), rgba(239, 184, 74, 0) 70%);
   --ombre-relief: 0 var(--relief) 0 var(--accent-bord), 0 14px 24px -14px rgba(30, 138, 95, .5);
   --ombre-plateau: 0 14px 28px -16px rgba(60, 40, 15, .45);
@@ -143,5 +160,5 @@
 
 /* Mouvements réduits : pas d'animation, les changements d'état restent instantanés. */
 @media (prefers-reduced-motion: reduce) {
-  :root { --duree-rapide: 0ms; --duree: 0ms; --duree-recompense: 0ms; }
+  :root { --duree-rapide: 0ms; --duree: 0ms; --duree-recompense: 0ms; --duree-pose: 0ms; }
 }

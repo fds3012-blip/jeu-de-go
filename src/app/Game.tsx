@@ -342,7 +342,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
       </div>
       {bandeau(1)}
       <div className="partie-souffle" aria-hidden="true" />
-      {montrerIntro ? <div className="coach-intro">{intro}</div> : <Coach cle={messageCoach}>{fr(messageCoach)}</Coach>}
+      {montrerIntro ? <div className="coach-intro">{intro}</div> : <Coach cle={messageCoach} attente={phase === 'play' && thinking && !!ai}>{fr(messageCoach)}</Coach>}
       {phase === 'play' ? (
         <BarreActions label="Actions de la partie" actions={[
           { label: cherche ? 'Indice…' : 'Indice', icone: <Icone nom="indice" />, onClick: hint, disabled: !myTurn || cherche },
