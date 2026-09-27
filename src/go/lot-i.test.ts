@@ -11,6 +11,7 @@ import { fromLabel, toLabel } from './coords';
 import { solve, winningMoves, zoneOf } from './lecteurs-lot-c';
 import { plainKey, symmetries } from './lecteurs-lot-e';
 import { groupAt, play, type Position } from './rules';
+import { hasTwoEyes } from './tactics';
 
 const all = parsePuzzles(LOT_I);
 const at = (l: string) => fromLabel(l, 9);
@@ -20,7 +21,7 @@ const goalOf = (prompt: string): 'vivre' | 'tuer' => (prompt.startsWith('Noir jo
 const rowsOf = (setup: unknown) => (setup as { rows: string[] }).rows;
 
 /** Réplique de Blanc annoncée par `setup.refutation` après une erreur. */
-const REPLY: Record<string, string> = { i01: 'E2', i02: 'B1', i03: 'B1', i04: 'B1', i05: 'E2' };
+const REPLY: Record<string, string> = { i01: 'E2', i02: 'B1', i03: 'B1', i04: 'E1', i05: 'B1', i06: 'E1', i07: 'B1', i08: 'E2' };
 
 describe('lot I : vie et mort de haut niveau (issue #136)', () => {
   it('problèmes i01, i02… sans trou, 9 × 9, Noir au trait, difficulté croissante de 1100 à 1500', () => {
@@ -111,6 +112,63 @@ describe('lot I : vie et mort de haut niveau (issue #136)', () => {
       });
     });
   }
+
+  describe('les suites des explications', () => {
+    const pz = (id: string) => all.find(p => p.id === id)!;
+    const seq = (pos: Position, ...moves: string[]) => moves.reduce((q, m) => ok(play(q, m === 'passe' ? -1 : at(m))), pos);
+    const libs = (pos: Position, l: string) => groupAt(pos.board, 9, at(l)).liberties.size;
+    /** Coups noirs qui gagnent encore après la suite `moves` (Noir au trait). */
+    const replies = (id: string, ...moves: string[]) => {
+      const p = pz(id), { pos, marked } = startOf(p), { cells } = zoneOf(pos, marked[0]), r = seq(pos, ...moves);
+      const target = goalOf(p.prompt) === 'vivre' ? 1 : -1;
+      return [...cells.filter(c => r.board[c] === 0), -1].filter(m => {
+        const x = play(r, m);
+        return typeof x !== 'string' && solve(x, marked[0], cells) === target;
+      }).map(label).sort();
+    };
+
+    it('i02 : B1 fait deux yeux d’un coup, A1 et C1', () => {
+      const p = pz('i02'), { pos, marked } = startOf(p);
+      expect(hasTwoEyes(seq(pos, 'B1'), marked[0])).toBe(true);
+    });
+
+    it('i03 : B1 met C1 en atari ; si Blanc s’allonge en D1, E1 capture les deux pierres', () => {
+      const { pos } = startOf(pz('i03')), b1 = seq(pos, 'B1');
+      expect(libs(b1, 'C1')).toBe(1);
+      const d1 = seq(b1, 'D1');
+      expect(libs(d1, 'C1')).toBe(1);
+      const e1 = seq(d1, 'E1');
+      expect(e1.board[at('C1')]).toBe(0);
+      expect(e1.board[at('D1')]).toBe(0);
+    });
+
+    it('i04 : E1 met D1 en atari ; si Blanc s’allonge en C1, B1 capture les deux pierres ; sinon C1 capture D1', () => {
+      const { pos } = startOf(pz('i04')), e1 = seq(pos, 'E1');
+      expect(libs(e1, 'D1')).toBe(1);
+      const b1 = seq(e1, 'C1', 'B1');
+      expect(b1.board[at('C1')]).toBe(0);
+      expect(b1.board[at('D1')]).toBe(0);
+      expect(seq(e1, 'passe', 'C1').board[at('D1')]).toBe(0);
+    });
+
+    it('i05 : après B1, F1 et G1 sont deux points équivalents à droite', () => {
+      expect(replies('i05', 'B1', 'F1')).toEqual(['G1']);
+      expect(replies('i05', 'B1', 'G1')).toEqual(['F1']);
+    });
+
+    it('i06 : E1 garde deux libertés, D1 et F1 ; en D1, la pierre n’en a qu’une et Blanc la prend en E1', () => {
+      const { pos } = startOf(pz('i06'));
+      expect([...groupAt(seq(pos, 'E1').board, 9, at('E1')).liberties].map(label).sort()).toEqual(['D1', 'F1']);
+      const d1 = seq(pos, 'D1');
+      expect(libs(d1, 'D1')).toBe(1);
+      expect(seq(d1, 'E1').board[at('D1')]).toBe(0);
+    });
+
+    it('i07 : après B1, si Blanc joue F1, Noir joue H1, et inversement', () => {
+      expect(replies('i07', 'B1', 'F1')).toEqual(['H1']);
+      expect(replies('i07', 'B1', 'H1')).toEqual(['F1']);
+    });
+  });
 
   it('la migration insère exactement ces problèmes, sans rien modifier', () => {
     const sql = readFileSync(resolve(__dirname, '../../supabase/migrations/20260928000100_lot_i.sql'), 'utf8');
