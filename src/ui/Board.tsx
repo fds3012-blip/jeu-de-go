@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type PointerEvent, type ReactElement } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent, type ReactElement } from 'react';
 import { LETTERS, toLabel } from '../go/coords';
 import { C, M, R, R_NOIR, VARIANTES_COQUILLAGE, coordCenter, diffBoards, hoshi, jitter, shellStriae, shellVariant, viewBoxOf, woodDataUrl } from './boardArt';
 import './board.css';
@@ -11,6 +11,8 @@ export interface BoardMarks {
   mistake?: number;
   owner?: Int8Array;
   dead?: Set<number>;
+  /** Indice : une zone entourée autour de ce point (le bon coup est dedans, sans être désigné). */
+  zone?: number;
 }
 
 interface Props {
@@ -24,6 +26,8 @@ interface Props {
   onPlay?: (p: number) => void;
   /** Coup interdit : la pierre fantôme tremble en `p`. Change `n` pour relancer l'effet. */
   shake?: { p: number; n: number } | null;
+  /** Les pierres prises partent vers leur couvercle : les noires vers le haut, les blanches vers le bas (écran de partie). */
+  versCouvercles?: boolean;
 }
 
 // Couleurs posées sur le bois : fixes, indépendantes du thème (le goban est le même en mode Encre et Papier).
@@ -72,7 +76,7 @@ function corps(c: number, p: number, size: number): ReactElement {
   return <use href={c === 1 ? '#go-noire' : `#go-blanche-${shellVariant(p, size)}`} />;
 }
 
-export function Board({ size, board, toPlay = 1, marks = {}, interactive = false, stonesTappable = false, confirmTouch = true, onPlay, shake }: Props) {
+export function Board({ size, board, toPlay = 1, marks = {}, interactive = false, stonesTappable = false, confirmTouch = true, onPlay, shake, versCouvercles = false }: Props) {
   const ref = useRef<SVGSVGElement>(null);
   const [ghost, setGhost] = useState(-1);
   const vb = viewBoxOf(size);
@@ -91,7 +95,7 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
   }
   useEffect(() => {
     if (!fx.leaving.length) return;
-    const t = window.setTimeout(() => setFx(f => (f.n === fx.n ? { ...f, leaving: [] } : f)), 260 + fx.leaving.length * 30);
+    const t = window.setTimeout(() => setFx(f => (f.n === fx.n ? { ...f, leaving: [] } : f)), 380 + fx.leaving.length * 30);
     return () => window.clearTimeout(t);
   }, [fx]);
 
@@ -171,9 +175,12 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
   }
   const leaving = fx.leaving.filter(l => !board[l.p]).map((l, i) => {
     const [x, y] = at(l.p);
+    // Vers le couvercle : jusqu'au bord du plateau (au-delà, le bois coupe la pierre), en s'effaçant.
+    const dy = l.c === 1 ? vb.min - y : vb.min + vb.span - y;
+    const style = versCouvercles ? { animationDelay: `${i * 30}ms`, '--dy': `${dy.toFixed(1)}px` } as CSSProperties : { animationDelay: `${i * 30}ms` };
     return (
       <g key={`x${fx.n}-${l.p}`} transform={`translate(${x.toFixed(2)} ${y.toFixed(2)})`} aria-hidden="true">
-        <g className="partante" style={{ animationDelay: `${i * 30}ms` }}>
+        <g className={versCouvercles ? 'partante vers-couvercle' : 'partante'} style={style}>
           <use href="#go-ombre" />
           {corps(l.c, l.p, size)}
         </g>
@@ -207,6 +214,13 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
         {marks.libs?.filter(p => !board[p]).map(p => <circle key={`lb${p}`} cx={X(p)} cy={Y(p)} r={C * 0.15} fill={JADE} stroke={JADE_FONCE} strokeWidth={1.6} />)}
         {marks.targets?.filter(p => board[p]).map(p => { const [x, y] = at(p); return <circle key={`tg${p}`} cx={x} cy={y} r={C * 0.3} fill="none" stroke={HANKO} strokeWidth={2.6} strokeDasharray="5 3" />; })}
         {last >= 0 ? (() => { const [x, y] = at(last); return <circle cx={x} cy={y} r={R * 0.3} fill="none" stroke={board[last] === 1 ? PAPIER : '#1a1a1a'} strokeWidth={2.4} data-dernier="" />; })() : null}
+        {marks.zone != null && marks.zone >= 0 ? (() => {
+          // Le cercle est décalé d'une demi-case selon le point : il entoure le coup sans le centrer.
+          // Il reste à l'intérieur de la grille pour ne pas être coupé par le bord du plateau.
+          const lim = (v: number) => Math.min(M + (size - 1) * C - C * 0.9, Math.max(M + C * 0.9, v));
+          const x = lim(X(marks.zone) + (marks.zone % 2 ? 0.5 : -0.5) * C), y = lim(Y(marks.zone) + (Math.floor(marks.zone / size) % 2 ? -0.5 : 0.5) * C);
+          return <g fill="none" data-indice=""><circle cx={x} cy={y} r={C * 1.35} stroke={JADE_FONCE} strokeWidth={5} strokeOpacity={0.5} /><circle cx={x} cy={y} r={C * 1.35} stroke={JADE} strokeWidth={3} strokeDasharray="7 5" /></g>;
+        })() : null}
         {marks.ok != null && marks.ok >= 0 ? (() => { const [x, y] = at(marks.ok); return (
           <g fill="none"><circle cx={x} cy={y} r={C * 0.52} stroke={JADE_FONCE} strokeWidth={5.4} /><circle cx={x} cy={y} r={C * 0.52} stroke={JADE} strokeWidth={3} /></g>
         ); })() : null}

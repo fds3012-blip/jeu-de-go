@@ -78,12 +78,17 @@ export async function partieADeux(page: Page): Promise<void> {
   await expect(plateau(page)).toBeVisible();
 }
 
-/** Bandeau d'un joueur, avec son compteur de prisonniers. */
-export function bandeau(page: Page, nom: 'Noir' | 'Blanc'): Locator {
-  return page.locator('.strip').filter({ has: page.locator('b', { hasText: new RegExp(`^${nom}$`) }) });
+/** Bandeau d'un joueur (« Noir », « Blanc », « Toi » ou le nom de l'adversaire), avec son couvercle. */
+export function bandeau(page: Page, nom: string): Locator {
+  return page.locator(`.joueur[data-joueur="${nom}"]`);
 }
 
-/** Message d'état sous le plateau (zone aria-live). */
+/** Couvercle d'un joueur : pierres qu'il a capturées (texte accessible « 1 pierre capturée »). */
+export function couvercle(page: Page, nom: string): Locator {
+  return bandeau(page, nom).locator('.couvercle');
+}
+
+/** Phrase du coach Mochi sous le plateau (zone aria-live). */
 export function message(page: Page): Locator {
-  return page.locator('p.hint[aria-live="polite"]');
+  return page.locator('.coach p[aria-live="polite"]');
 }

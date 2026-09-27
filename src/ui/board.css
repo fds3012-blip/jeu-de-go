@@ -29,6 +29,8 @@
   .board .drop .ombre { animation: go-ombre 140ms cubic-bezier(.2, .8, .3, 1.2) both; }
   /* Pierres prises : elles rétrécissent et s'effacent, 30 ms de décalage entre elles (animation-delay en ligne). */
   .board .partante { animation: go-prise 220ms cubic-bezier(.4, 0, .7, .2) both; }
+  /* Écran de partie : elles glissent vers le couvercle (bord haut ou bas du plateau) en s'effaçant. */
+  .board .partante.vers-couvercle { animation: go-vers-couvercle 340ms cubic-bezier(.5, 0, .75, .4) both; }
   /* Coup interdit : la pierre fantôme tremble (3 allers-retours de 4 px). */
   .board .tremble { animation: go-tremble 300ms ease-in-out both; }
 }
@@ -39,6 +41,7 @@
 
 @keyframes go-chute { from { transform: scale(1.12); } to { transform: scale(1); } }
 @keyframes go-ombre { from { transform: translate(-1.6px, -2.6px) scale(.86); opacity: .3; } to { transform: none; opacity: 1; } }
+@keyframes go-vers-couvercle { from { transform: none; opacity: 1; } 70% { opacity: .8; } to { transform: translateY(var(--dy, -40px)) scale(.7); opacity: 0; } }
 @keyframes go-prise { from { transform: scale(1); opacity: 1; } to { transform: scale(.8); opacity: 0; } }
 @keyframes go-tremble {
   0%, 100% { transform: translateX(0); }

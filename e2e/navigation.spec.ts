@@ -52,14 +52,16 @@ test('navigation entre les onglets Jouer, Apprendre, Problèmes et Profil', asyn
   await expect(page.locator('.cta')).toBeVisible();
 });
 
-test("l'onglet Jouer ramène à l'accueil depuis une partie en cours", async ({ page }) => {
+test("« ‹ » ramène à l'accueil depuis une partie en cours (la navigation est masquée en partie)", async ({ page }) => {
   await page.goto('/');
   await lancerADeux(page);
   await expect(page.getByRole('img', { name: /Plateau de go/ })).toBeVisible();
+  await expect(page.getByRole('navigation', { name: 'Navigation principale' })).toHaveCount(0);
 
-  await page.getByRole('navigation').getByRole('button', { name: 'Jouer' }).click();
+  await page.getByRole('button', { name: "Retour à l'accueil" }).click();
   await expect(page.getByRole('img', { name: /Plateau de go/ })).toHaveCount(0);
   await expect(page.locator('.cta')).toBeVisible();
+  await expect(page.getByRole('navigation', { name: 'Navigation principale' }).getByRole('button', { name: 'Jouer' })).toHaveAttribute('aria-current', 'page');
 });
 
 test('les onglets sont des cibles tactiles de 44 px minimum', async ({ page }) => {
