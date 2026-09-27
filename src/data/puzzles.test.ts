@@ -103,4 +103,13 @@ describe('suite et problème du jour', () => {
     expect(liveStreak(3, '2026-09-25', now)).toBe(0);
     expect(liveStreak(0, null, now)).toBe(0);
   });
+  it('les gels du serveur tiennent la série s’ils couvrent tous les jours manqués (#76)', () => {
+    const now = new Date(2026, 8, 27, 12);
+    expect(liveStreak(9, '2026-09-25', now, 1)).toBe(9); // 1 jour manqué, 1 gel
+    expect(liveStreak(9, '2026-09-24', now, 1)).toBe(0); // 2 jours manqués, 1 gel : série perdue
+    expect(liveStreak(9, '2026-09-24', now, 2)).toBe(9);
+    expect(liveStreak(9, '2026-09-23', now, 2)).toBe(0);
+    expect(liveStreak(9, '2026-09-27', now, 2)).toBe(9);
+    expect(liveStreak(0, '2026-09-26', now, 2)).toBe(0);
+  });
 });

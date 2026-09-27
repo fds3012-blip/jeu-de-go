@@ -215,7 +215,7 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
 
       {daily && (
         <section aria-labelledby="jour-titre">
-          <h2 id="jour-titre" className="titre-pierres">Go du jour <span className="numero-du-jour">n°&nbsp;{numero}</span><Glacon gels={gels} /></h2>
+          <h2 id="jour-titre" className="titre-pierres">Go du jour <span className="numero-du-jour">n°&nbsp;{numero}</span><Glacon gels={stats ? stats.freezes : gels} /></h2>
           <p className="muted small bases-aide">Le même défi pour tout le monde, aujourd’hui.</p>
           <DuJour pz={daily} reussi={serieDuJour?.dernier === numero} onOpen={() => setOpenId(daily.id)} />
         </section>

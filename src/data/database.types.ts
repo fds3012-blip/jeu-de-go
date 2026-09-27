@@ -314,6 +314,8 @@ export type Database = {
           puzzle_rating: number
           rating: number
           streak_days: number
+          streak_freezes: number
+          streak_frozen_days: string[]
           streak_last: string | null
           username: string | null
         }
@@ -325,6 +327,8 @@ export type Database = {
           puzzle_rating?: number
           rating?: number
           streak_days?: number
+          streak_freezes?: number
+          streak_frozen_days?: string[]
           streak_last?: string | null
           username?: string | null
         }
@@ -336,6 +340,8 @@ export type Database = {
           puzzle_rating?: number
           rating?: number
           streak_days?: number
+          streak_freezes?: number
+          streak_frozen_days?: string[]
           streak_last?: string | null
           username?: string | null
         }
