@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent, type ReactElement } from 'react';
+import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent, type ReactElement } from 'react';
 import { LETTERS, toLabel } from '../go/coords';
 import { C, M, R, R_NOIR, VARIANTES_COQUILLAGE, coordCenter, diffBoards, hoshi, jitter, shellStriae, shellVariant, viewBoxOf, woodDataUrl } from './boardArt';
 import './board.css';
@@ -79,6 +79,37 @@ const DEFS = (
   </defs>
 );
 
+// Clavier et lecteur d'écran (issue #116) : fonctions pures, testées sans DOM.
+
+/** Nouvelle position du curseur après une touche, ou null si la touche ne déplace pas le curseur. */
+export function deplacerCurseur(p: number, touche: string, size: number): number | null {
+  const x = p % size, y = Math.floor(p / size), fin = size - 1;
+  const en = (nx: number, ny: number) => Math.max(0, Math.min(fin, ny)) * size + Math.max(0, Math.min(fin, nx));
+  switch (touche) {
+    case 'ArrowLeft': return en(x - 1, y);
+    case 'ArrowRight': return en(x + 1, y);
+    case 'ArrowUp': return en(x, y - 1);
+    case 'ArrowDown': return en(x, y + 1);
+    case 'Home': return en(0, y);
+    case 'End': return en(fin, y);
+    case 'PageUp': return en(x, 0);
+    case 'PageDown': return en(x, fin);
+    default: return null;
+  }
+}
+
+/** Nom lu d'une intersection : « D4, vide », « D4, pierre noire » ou « D4, pierre blanche, dernier coup ». */
+export function nomIntersection(p: number, board: Int8Array, size: number, last = -1): string {
+  const c = board[p], pierre = c === 1 ? 'pierre noire' : c === 2 ? 'pierre blanche' : 'vide';
+  return `${toLabel(p, size)}, ${pierre}${c && p === last ? ', dernier coup' : ''}`;
+}
+
+/** Annonce polie d'un coup : « Noir joue D4 » ou « Blanc joue C3 et prend 2 pierres ». */
+export function annonceCoup(c: number, p: number, prises: number, size: number): string {
+  const qui = c === 1 ? 'Noir' : 'Blanc';
+  return `${qui} joue ${toLabel(p, size)}${prises ? ` et prend ${prises} pierre${prises > 1 ? 's' : ''}` : ''}`;
+}
+
 /** Corps d'une pierre (sans ombre), centré sur (0, 0). */
 function corps(c: number, p: number, size: number): ReactElement {
   return <use href={c === 1 ? '#go-noire' : `#go-blanche-${shellVariant(p, size)}`} />;
@@ -87,6 +118,15 @@ function corps(c: number, p: number, size: number): ReactElement {
 export function Board({ size, board, toPlay = 1, marks = {}, interactive = false, stonesTappable = false, confirmTouch = true, onPlay, shake, versCouvercles = false }: Props) {
   const ref = useRef<SVGSVGElement>(null);
   const [ghost, setGhost] = useState(-1);
+  // Un plateau jouable (onPlay fourni) est une grille : un seul arrêt de tabulation, curseur aux flèches.
+  // Le rôle reste stable pendant le tour de l'adversaire (interactive passe à false) pour ne pas perdre le focus.
+  const jouable = !!onPlay;
+  const uid = useId();
+  const [curseur, setCurseur] = useState(() => (size >> 1) * size + (size >> 1));
+  const [focus, setFocus] = useState(false);
+  const [clavier, setClavier] = useState(true);
+  const [annonce, setAnnonce] = useState('');
+  const cur = curseur < size * size ? curseur : (size >> 1) * size + (size >> 1);
   const vb = viewBoxOf(size);
   const X = (p: number) => M + (p % size) * C, Y = (p: number) => M + Math.floor(p / size) * C;
   // Position affichée d'une pierre : intersection + micro-décalage déterministe.
@@ -100,6 +140,7 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
     setPrev(board);
     const d = diffBoards(prev, board);
     setFx({ n: fx.n + 1, placed: d ? d.placed : -1, leaving: d ? d.captured.map(p => ({ p, c: prev[p] })) : [] });
+    if (jouable && d && d.placed >= 0 && board[d.placed]) setAnnonce(annonceCoup(board[d.placed], d.placed, d.captured.length, size));
   }
   useEffect(() => {
     if (!fx.leaving.length) return;
@@ -132,6 +173,24 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
     if (!board[p] && confirmTouch && e.pointerType !== 'mouse' && ghost !== p) { setGhost(p); return; }
     setGhost(-1);
     onPlay(p);
+  }
+  function onKey(e: KeyboardEvent) {
+    if (!jouable) return;
+    setClavier(true);
+    const n = deplacerCurseur(cur, e.key, size);
+    if (n != null) {
+      e.preventDefault();
+      if (n !== cur) { setCurseur(n); setGhost(-1); }
+      return;
+    }
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    e.preventDefault();
+    if (!interactive || !onPlay) return;
+    if (board[cur] && !stonesTappable) { setAnnonce(`${toLabel(cur, size)} est occupé`); return; }
+    // « Confirmer au doigt » : le premier appui montre la pierre fantôme, le second la pose.
+    if (!board[cur] && confirmTouch && ghost !== cur) { setGhost(cur); setAnnonce(`${toLabel(cur, size)} : appuie encore pour poser`); return; }
+    setGhost(-1);
+    onPlay(cur);
   }
   function onMove(e: PointerEvent) {
     if (!interactive || e.pointerType !== 'mouse') return;
@@ -208,14 +267,28 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
   }
 
   const last = marks.last != null && marks.last >= 0 && board[marks.last] ? marks.last : -1;
+  const idCase = (p: number) => `${uid}-c${p}`;
+  const cases = jouable ? Array.from({ length: size }, (_, y) => (
+    <g key={`r${y}`} role="row">
+      {Array.from({ length: size }, (_, x) => {
+        const p = y * size + x;
+        return <rect key={p} id={idCase(p)} role="gridcell" aria-label={nomIntersection(p, board, size, last)} aria-selected={p === cur}
+          x={X(p) - C / 2} y={Y(p) - C / 2} width={C} height={C} fill="none" pointerEvents="none" />;
+      })}
+    </g>
+  )) : null;
   const ghostP = ghost >= 0 && !board[ghost] && ghost !== shaking ? ghost : -1;
   const fantome = (p: number) => { const [x, y] = at(p); return { transform: `translate(${x.toFixed(2)} ${y.toFixed(2)})` }; };
 
   return (
     <div className="board-wrap">
-      <svg ref={ref} className="board" viewBox={`${vb.min} ${vb.min} ${vb.span} ${vb.span}`} role="img" aria-label={`Plateau de go ${size} × ${size}`}
+      <svg ref={ref} className="board" viewBox={`${vb.min} ${vb.min} ${vb.span} ${vb.span}`} role={jouable ? 'grid' : 'img'} aria-label={`Plateau de go ${size} × ${size}`}
+        tabIndex={jouable ? 0 : undefined} aria-activedescendant={jouable ? idCase(cur) : undefined} aria-rowcount={jouable ? size : undefined} aria-colcount={jouable ? size : undefined}
+        onKeyDown={jouable ? onKey : undefined} onFocus={jouable ? () => setFocus(true) : undefined} onBlur={jouable ? () => setFocus(false) : undefined}
+        onPointerDown={jouable ? () => setClavier(false) : undefined}
         onPointerUp={onUp} onPointerMove={onMove} onPointerLeave={onLeave}>
         {DEFS}
+        {cases}
         <image href={woodDataUrl()} x={vb.min} y={vb.min} width={vb.span} height={vb.span} preserveAspectRatio="none" />
         {grid}
         {stones}
@@ -254,11 +327,19 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
             </g>
           );
         })() : null}
+        {jouable && focus && clavier ? (
+          // Curseur clavier : anneau jade doublé de jade foncé, lisible (3:1 au moins) sur le bois clair comme sur les pierres.
+          <g fill="none" data-curseur={toLabel(cur, size)} aria-hidden="true">
+            <circle cx={X(cur)} cy={Y(cur)} r={C * 0.5} stroke={JADE_FONCE} strokeWidth={5.4} />
+            <circle cx={X(cur)} cy={Y(cur)} r={C * 0.5} stroke={JADE} strokeWidth={3} />
+          </g>
+        ) : null}
         {ghostP >= 0 ? <g {...fantome(ghostP)} opacity={0.5} data-fantome="" aria-hidden="true">{corps(toPlay, ghostP, size)}</g> : null}
         {shaking >= 0 && !board[shaking] ? (
           <g key={`tr${shakeSeen}`} {...fantome(shaking)} opacity={0.5} aria-hidden="true"><g className="tremble">{corps(toPlay, shaking, size)}</g></g>
         ) : null}
       </svg>
+      {jouable ? <p className="sr-only" aria-live="polite" data-annonce-plateau="">{annonce}</p> : null}
     </div>
   );
 }

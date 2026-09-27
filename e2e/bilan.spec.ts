@@ -23,7 +23,7 @@ test('victoire contre Pomme : tampon, confettis, Caillou en un geste, bilan gard
   page.on('pageerror', (e) => erreurs.push(e.message));
   await page.goto('/?komi=-100');
   await page.locator('.cta').click();
-  await expect(page.getByRole('img', { name: /Plateau de go 9 × 9/ })).toBeVisible();
+  await expect(page.locator('svg.board[aria-label="Plateau de go 9 × 9"]')).toBeVisible();
   await passerJusquAuComptage(page);
 
   await expect(page.getByRole('heading', { level: 2, name: 'Victoire' })).toBeVisible();
@@ -102,7 +102,7 @@ test('défaite par abandon : pas de tampon ni de fête, Mochi encourage et propo
   page.on('pageerror', (e) => erreurs.push(e.message));
   await page.goto('/');
   await page.locator('.cta').click();
-  await expect(page.getByRole('img', { name: /Plateau de go 9 × 9/ })).toBeVisible();
+  await expect(page.locator('svg.board[aria-label="Plateau de go 9 × 9"]')).toBeVisible();
   await page.getByRole('button', { name: 'Abandonner' }).click();
   await page.getByRole('button', { name: /^Confirmer/ }).click();
 

@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { plateau } from './plateau';
 
 // Issue #40, phase 4 : accueil v2 (goban d'accueil qui se touche) et carrousel des adversaires.
 
@@ -14,7 +15,7 @@ test("toucher le goban d'accueil lance la partie contre l'adversaire choisi", as
   await expect(page.getByRole('img', { name: /Plateau de go/ })).toHaveCount(0);
 
   await page.getByTestId('plateau-accueil').tap();
-  await expect(page.getByRole('img', { name: 'Plateau de go 9 × 9' })).toBeVisible();
+  await expect(plateau(page)).toBeVisible();
   await expect(page.getByText(/Le but\s: entourer plus de territoire que Pomme/)).toBeVisible();
   expect(erreurs).toEqual([]);
 });

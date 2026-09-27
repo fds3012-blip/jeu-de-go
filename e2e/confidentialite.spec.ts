@@ -100,7 +100,7 @@ test('aucune requête de suivi sans consentement, conditions accessibles depuis 
   await page.keyboard.press('Escape'); // pas de choix
   await expect(fenetre(page)).toBeHidden();
   await page.locator('.cta').click();
-  const plateau = page.getByRole('img', { name: /Plateau de go 9 × 9/ });
+  const plateau = page.locator('svg.board[aria-label="Plateau de go 9 × 9"]');
   const box = (await plateau.boundingBox())!;
   await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
   await expect(page.getByText(/Pomme (joue|capture|passe)/)).toBeVisible({ timeout: 5000 });

@@ -29,7 +29,7 @@ test('première pierre en deux touches, accueil sans défilement', async ({ page
 
   // Touche 1 : le bouton principal.
   await cta.tap();
-  const plateau = page.getByRole('img', { name: /Plateau de go 9 × 9/ });
+  const plateau = page.locator('svg.board[aria-label="Plateau de go 9 × 9"]');
   await expect(plateau).toBeVisible();
   // Mochi explique le but, une seule fois.
   await expect(page.getByText(/Le but\s: entourer plus de territoire que Pomme/)).toBeVisible();

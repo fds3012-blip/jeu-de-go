@@ -7,7 +7,7 @@ test('fin de partie contre Pomme : valider le score affiche le résultat', async
   page.on('pageerror', (e) => erreurs.push(e.message));
   await page.goto('/');
   await page.locator('.cta').click();
-  await expect(page.getByRole('img', { name: /Plateau de go 9 × 9/ })).toBeVisible();
+  await expect(page.locator('svg.board[aria-label="Plateau de go 9 × 9"]')).toBeVisible();
 
   const passer = page.getByRole('button', { name: 'Passer' });
   const valider = page.getByRole('button', { name: 'Valider le score' });

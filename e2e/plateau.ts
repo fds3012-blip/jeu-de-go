@@ -5,9 +5,10 @@ import { fromLabel } from '../src/go/coords';
 const C = 40;
 const M = 34;
 
-/** Le plateau de go (SVG accessible). */
+/** Le plateau de go (SVG accessible) : une grille s'il est jouable (issue #116), une image sinon. */
 export function plateau(page: Page, taille = 9): Locator {
-  return page.getByRole('img', { name: `Plateau de go ${taille} × ${taille}` });
+  const name = `Plateau de go ${taille} × ${taille}`;
+  return page.getByRole('grid', { name }).or(page.getByRole('img', { name }));
 }
 
 /** Coordonnées dans le viewBox d'une intersection affichée (« D5 » : lettres A à J sans I, lignes depuis le bas). */
