@@ -3,6 +3,7 @@ import { setConsent, setOpposition } from '../data/analytics';
 import { useConsentement, useOpposition } from './consentement';
 import { Sceau } from '../ui/Sceau';
 import { LigneInterrupteur } from '../ui/Reglage';
+import { FINE } from '../ui/typo';
 
 /**
  * Fenêtre de consentement (issue #50) : posée une seule fois, au premier lancement.
@@ -43,7 +44,7 @@ export function ConsentModal({ visible, onConditions, onIgnorer }: { visible: bo
       {/* Contenu toujours rendu : la sortie en fondu garde le texte visible jusqu'au bout. */}
       <div className="accord-corps">
         <Sceau id="mochi" taille={48} />
-        <h2 id="accord-titre" tabIndex={-1}>Tu m’aides à chasser les bugs ?</h2>
+        <h2 id="accord-titre" tabIndex={-1}>Tu m’aides à chasser les bugs{FINE}?</h2>
         <p id="accord-texte">
           Si le jeu plante chez toi, l’équipe reçoit un rapport et répare plus vite. Elle voit aussi si tu reviens jouer,
           pour garder ce qui te plaît. Jamais ton e-mail ni tes coups.
@@ -79,7 +80,7 @@ export function Conditions({ onRetour }: { onRetour: () => void }) {
       <div className="conditions-texte">
         <div className="card small">
           <h3>Ce qui reste sur ton téléphone</h3>
-          <p>Tes réglages et ta progression dans les leçons. L’ordi calcule ses coups sur ton téléphone : tes parties contre lui ne sont pas envoyées.</p>
+          <p>Tes réglages et ta progression dans les leçons. L’ordi calcule ses coups sur ton téléphone{FINE}: tes parties contre lui ne sont pas envoyées.</p>
         </div>
         <div className="card small">
           <h3>Si tu crées un compte</h3>
@@ -88,17 +89,17 @@ export function Conditions({ onRetour }: { onRetour: () => void }) {
         <div className="card small">
           <h3>Comptage anonyme, sans ton accord</h3>
           <p>
-            Pour savoir combien de parties se jouent, PostHog (serveurs dans l’Union européenne) reçoit quelques événements :
+            Pour savoir combien de parties se jouent, PostHog (serveurs dans l’Union européenne) reçoit quelques événements{FINE}:
             ouverture de l’app, première pierre, partie terminée (taille, adversaire, résultat), leçon terminée, création de compte.
             Rien n’est écrit sur ton téléphone, aucun identifiant ne te suit d’une visite à l’autre, ton adresse IP n’est pas conservée,
             et ces chiffres ne sont jamais reliés à ton compte ni croisés avec d’autres données. Ils servent seulement à nos statistiques.
           </p>
-          <p>Tu peux t’y opposer à tout moment avec l’interrupteur « Comptage anonyme des parties » en haut de cette page.</p>
+          <p>Tu peux t’y opposer à tout moment avec l’interrupteur «{FINE}Comptage anonyme des parties{FINE}» en haut de cette page.</p>
         </div>
         <div className="card small">
           <h3>Seulement si tu dis oui</h3>
           <p>
-            Sentry (serveurs en Allemagne) reçoit les rapports de bug : message d’erreur, version de l’app, navigateur.
+            Sentry (serveurs en Allemagne) reçoit les rapports de bug{FINE}: message d’erreur, version de l’app, navigateur.
             PostHog garde un identifiant tiré au hasard sur ton téléphone, et celui de ton compte si tu es connecté, pour voir si tu reviens jouer.
             Jamais ton e-mail ni tes coups.
           </p>
