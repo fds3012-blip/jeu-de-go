@@ -5,6 +5,7 @@ import { groupAt, isLegal, neighbors, play, type Position } from './rules';
 import { fromLabel, toLabel } from './coords';
 import { score } from './score';
 import { canEscape, isDead, ladderWorks } from './tactics';
+import { imagesDemo } from '../content/demo';
 
 const N = 9;
 const at = (l: string) => fromLabel(l, N);
@@ -66,6 +67,15 @@ describe('leçons : bonnes et mauvaises réponses', () => {
         for (const p of good) expect(isLegal(pos, p)).toBe(true);
         return;
       }
+      if (m.accept === 'terrB') {
+        // Question sur le goban (#101) : les points acceptés sont exactement le territoire noir du moteur.
+        const owner = score(pos, 0, 'japanese').owner;
+        const good = [...Array(N * N).keys()].filter(p => owner[p] === 1 && !pos.board[p]);
+        expect(good).toHaveLength(27);
+        for (const p of good) expect(isLegal(pos, p)).toBe(true);
+        expect([...Array(N * N).keys()].filter(p => owner[p] === 2 && !pos.board[p])).toHaveLength(36);
+        return;
+      }
       const targets = marked.filter(p => pos.board[p] === 2), saved = marked.filter(p => pos.board[p] === 1);
       expect(marked.length).toBeGreaterThan(0);
       for (const a of m.accept) {
@@ -88,15 +98,15 @@ describe('leçons : bonnes et mauvaises réponses', () => {
 
 describe('leçons : cas particuliers', () => {
   it('l1 : la pierre marquée est capturée, puis les deux pierres du groupe', () => {
-    const s1 = fromRows(step('l1', 1).rows);
+    const s1 = fromRows(step('l1', 3).rows);
     expect(ok(play(s1.pos, at('E5'))).board[s1.marked[0]]).toBe(0);
-    const r = ok(play(fromRows(step('l1', 2).rows).pos, at('E4')));
+    const r = ok(play(fromRows(step('l1', 5).rows).pos, at('E4')));
     expect(r.captures[1]).toBe(2);
   });
   it('l1 : dans le coin, deux libertés seulement ; au centre, quatre', () => {
-    const { pos } = fromRows(step('l1', 0).rows);
-    expect(libs(pos, at('E5')).size).toBe(4);
-    expect(libs(pos, at('A1')).size).toBe(2);
+    const fin = (i: number) => { const s = step('l1', i) as Extract<LessonStep, { kind: 'info' }>; return imagesDemo(s.rows, s.demo!).at(-1)!; };
+    expect(fin(0).libs.map(p => toLabel(p, N)).sort()).toEqual(['D5', 'E4', 'E6', 'F5']);
+    expect(fin(1).libs.map(p => toLabel(p, N)).sort()).toEqual(['A2', 'B1']);
   });
   it('l2 : la pierre blanche est en atari en F5', () => {
     const { pos } = fromRows(step('l2', 0).rows);
@@ -129,27 +139,42 @@ describe('leçons : cas particuliers', () => {
   });
   const corner = [...Array(N * N).keys()].filter(p => p % N <= 4 && Math.floor(p / N) >= 6);
   it('l5 : un groupe à deux yeux ne peut pas être tué', () => {
-    expect(isDead(fromRows(step('l5', 0).rows, 2).pos, at('B2'), corner)).toBe(false);
+    for (const i of [0, 1, 2]) expect(isDead(fromRows(step('l5', i).rows, 2).pos, at('B2'), corner)).toBe(false);
+  });
+  it('l5 : A1 et C1 sont des yeux : vides, entourés seulement de pierres noires du même groupe', () => {
+    const { pos } = fromRows(step('l5', 0).rows);
+    const groupe = new Set(groupAt(pos.board, N, at('B2')).stones);
+    for (const e of ['A1', 'C1']) {
+      expect(pos.board[at(e)]).toBe(0);
+      for (const q of neighbors(N)[at(e)]) expect(groupe.has(q), `${e} → ${toLabel(q, N)}`).toBe(true);
+    }
   });
   it('l5 : deux yeux, Blanc ne peut jouer ni en A1 ni en C1', () => {
-    const { pos } = fromRows(step('l5', 0).rows, 2);
+    const { pos } = fromRows(step('l5', 1).rows, 2);
     expect(play(pos, at('A1'))).toBe('suicide');
     expect(play(pos, at('C1'))).toBe('suicide');
   });
   it('l5 : B1 fait vivre le groupe noir ; ailleurs, Blanc le tue', () => {
-    const { pos, marked } = fromRows(step('l5', 1).rows);
+    const { pos, marked } = fromRows(step('l5', 3).rows);
     expect(isDead(ok(play(pos, at('B1'))), marked[0], corner)).toBe(false);
     for (const l of ['A1', 'C1']) expect(isDead(ok(play(pos, at(l))), marked[0], corner), l).toBe(true);
   });
   it('l5 : B1 tue le groupe blanc ; sinon Blanc vit', () => {
-    const { pos, marked } = fromRows(step('l5', 2).rows);
+    const { pos, marked } = fromRows(step('l5', 4).rows);
     expect(isDead(ok(play(pos, at('B1'))), marked[0], corner)).toBe(true);
     for (const l of ['A1', 'C1']) expect(isDead(ok(play(pos, at(l))), marked[0], corner), l).toBe(false);
   });
-  it('l6 : la réponse du quiz est le territoire noir compté par le moteur', () => {
-    const q = step('l6', 0) as Extract<LessonStep, { kind: 'quiz' }>;
+  it('l6 : « trois colonnes de neuf » pour Noir, 36 pour Blanc, comptés par le moteur ; la démo colore les mêmes points', () => {
+    const q = step('l6', 0);
     const s = score(fromRows(q.rows).pos, 0, 'japanese');
-    expect(q.choices[q.answer]).toBe(String(s.territory[1]));
-    expect(q.ok).toContain(`Blanc en a ${s.territory[2]},`);
+    expect(s.territory[1]).toBe(27);
+    expect(s.territory[2]).toBe(36);
+    expect(step('l6', 1).text).toContain('trois colonnes de neuf');
+    for (const [i, c] of [[1, 1], [2, 2]] as const) {
+      const info = step('l6', i) as Extract<LessonStep, { kind: 'info' }>;
+      const t = imagesDemo(info.rows, info.demo!).at(-1)!.terr!;
+      expect(t.couleur).toBe(c);
+      expect(t.points).toHaveLength(s.territory[c]);
+    }
   });
 });

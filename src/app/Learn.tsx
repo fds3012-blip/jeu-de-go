@@ -2,7 +2,11 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { LESSONS, type Lesson } from '../content/lessons';
 import { acquis } from '../content/acquis';
-import { Board } from '../ui/Board';
+import { Board, type BoardMarks } from '../ui/Board';
+import { CASE_MS, TEMPS_MS, imagesDemo, type DemoImage } from '../content/demo';
+
+/** Fond du compteur de libertés, posé sur le bois comme les autres marques jade. */
+const JADE_COMPTEUR = '#3CC48E';
 import { Bubble } from '../ui/Mochi';
 import { SceauLecon } from '../ui/SceauLecon';
 import { Confettis } from '../ui/Confettis';
@@ -129,6 +133,20 @@ export function LessonPlayer({ lesson, start, confirmTouch, progress = {}, celeb
   const { pos, marked } = useMemo(() => fromRows(step.rows), [step]);
   const owner = useMemo(() => (step.kind === 'quiz' && step.terr ? score(pos, 0, 'japanese').owner : undefined), [step, pos]);
   const derniere = idx === lesson.steps.length - 1;
+  // Démonstration (#101) : un temps toutes les 600 ms ; mouvements réduits : l'état final d'emblée.
+  const images = useMemo(() => (step.kind === 'info' && step.demo ? imagesDemo(step.rows, step.demo) : null), [step]);
+  const [reduit] = useState(prefersReducedMotion);
+  const [temps, setTemps] = useState(() => (reduit && images ? images.length - 1 : 0));
+  useEffect(() => { setTemps(reduit && images ? images.length - 1 : 0); }, [images, reduit]);
+  useEffect(() => {
+    if (!images || temps >= images.length - 1) return;
+    const m = window.setTimeout(() => {
+      const suivant = images[temps + 1];
+      if (suivant.derniere != null && suivant.derniere !== images[temps].derniere) { playStone(suivant.derniere, 9); }
+      setTemps(temps + 1);
+    }, TEMPS_MS);
+    return () => window.clearTimeout(m);
+  }, [images, temps]);
 
   function next() {
     onProgress(idx + 1);
@@ -146,7 +164,9 @@ export function LessonPlayer({ lesson, start, confirmTouch, progress = {}, celeb
     if (step.kind !== 'move' || answer?.ok) return;
     const r = play(pos, p);
     if (typeof r === 'string') return;
-    const ok = step.accept === 'line3' ? lineOf(p, 9) >= 2 : step.accept.map(a => fromLabel(a, 9)).includes(p);
+    const ok = step.accept === 'line3' ? lineOf(p, 9) >= 2
+      : step.accept === 'terrB' ? score(pos, 0, 'japanese').owner[p] === 1
+      : step.accept.map(a => fromLabel(a, 9)).includes(p);
     playStone(p, 9); hapticStone();
     repondre(ok, { p, after: ok ? r : undefined });
   }
@@ -155,9 +175,16 @@ export function LessonPlayer({ lesson, start, confirmTouch, progress = {}, celeb
     return <FinLecon lesson={lesson} progress={{ ...progress, [lesson.id]: lesson.steps.length }} celebrer={celebrer} onNext={onNext} onExit={onExit} />;
   }
 
-  const board = answer?.ok && answer.after ? answer.after.board : pos.board;
+  const img = images ? images[Math.min(temps, images.length - 1)] : null;
+  const demoFinie = !images || temps >= images.length - 1;
+  const board = img ? img.board : answer?.ok && answer.after ? answer.after.board : pos.board;
   const faites = idx + (answer?.ok ? 1 : 0);
   const cta = <button className="cta" onClick={next}>{derniere ? 'Terminer la leçon' : 'Continuer'}</button>;
+  const marks: BoardMarks = img
+    ? { libs: [...img.libs, ...img.yeux], targets: img.atari, mistake: img.interdit, last: img.derniere ?? null, ...territoire(img.terr, reduit),
+        note: img.compteur ? { p: img.compteur.p, fond: JADE_COMPTEUR, texte: '#0B2A1D', symbole: String(img.compteur.n), libelle: `${img.compteur.n} liberté${img.compteur.n > 1 ? 's' : ''}`, cle: `${idx}-${temps}` } : undefined }
+    : { libs: step.kind === 'info' && step.libs ? step.libs.map(l => fromLabel(l, 9)) : undefined, targets: marked, owner,
+        ok: answer?.ok ? answer.p : undefined, mistake: answer && !answer.ok ? answer.p : undefined, last: answer?.ok ? answer.p : null };
 
   return (
     <div className="lecteur lecteur-lecon">
@@ -168,11 +195,14 @@ export function LessonPlayer({ lesson, start, confirmTouch, progress = {}, celeb
       <h2 className="lecteur-titre"><SceauLecon id={lesson.id} taille={24} />{fr(lesson.title)}</h2>
       <Bubble>{fr(step.text)}</Bubble>
       {/* Zone souple : le plateau prend la place qui reste au-dessus du bouton (iPhone SE compris). */}
-      <div className="lecteur-plateau">
-        <Board size={9} board={board} interactive={step.kind === 'move' && !answer?.ok} confirmTouch={confirmTouch} onPlay={onPlay}
-        marks={{ libs: step.kind === 'info' && step.libs ? step.libs.map(l => fromLabel(l, 9)) : undefined, targets: marked, owner,
-          ok: answer?.ok ? answer.p : undefined, mistake: answer && !answer.ok ? answer.p : undefined, last: answer?.ok ? answer.p : null }} />
+      <div className={`lecteur-plateau${img?.atari.length ? ' demo-atari' : ''}`} data-demo={images ? (demoFinie ? 'finie' : 'en-cours') : undefined}
+        onClick={images && !demoFinie ? () => setTemps(images.length - 1) : undefined}>
+        <Board size={9} board={board} interactive={step.kind === 'move' && !answer?.ok} confirmTouch={confirmTouch} onPlay={onPlay} marks={marks} />
       </div>
+      {img?.terr && <Compteur cle={`${idx}-${temps}`} n={img.terr.points.length} reduit={reduit} />}
+      {images && images.length > 1 && (
+        <button className="lien revoir" disabled={!demoFinie} onClick={() => setTemps(0)}>Revoir</button>
+      )}
       {step.kind === 'quiz' && (
         <div className="choix" role="group" aria-label="Ta réponse">
           {step.choices.map((c, i) => (
@@ -190,6 +220,26 @@ export function LessonPlayer({ lesson, start, confirmTouch, progress = {}, celeb
       )}
     </div>
   );
+}
+
+/** Territoire d'une démonstration : les carrés se colorent case par case (`ownerDelai`), ou d'emblée en mouvements réduits. */
+function territoire(terr: DemoImage['terr'], reduit: boolean): Pick<BoardMarks, 'owner' | 'ownerDelai'> {
+  if (!terr) return {};
+  const owner = new Int8Array(81);
+  for (const p of terr.points) owner[p] = terr.couleur;
+  return { owner, ownerDelai: reduit ? undefined : new Map(terr.points.map((p, i) => [p, i * CASE_MS])) };
+}
+
+/** Compteur qui suit les cases coloriées : 1, 2, 3… jusqu'à `n`, au rythme des carrés. */
+function Compteur({ n, reduit, cle }: { n: number; reduit: boolean; cle: string }) {
+  const [k, setK] = useState(reduit ? n : 0);
+  useEffect(() => {
+    if (reduit) { setK(n); return; }
+    setK(0);
+    const m = window.setInterval(() => setK(v => { if (v + 1 >= n) window.clearInterval(m); return Math.min(n, v + 1); }), CASE_MS);
+    return () => window.clearInterval(m);
+  }, [n, reduit, cle]);
+  return <p className="demo-compteur" aria-live="off" data-compteur={k}><b>{k}</b> {k > 1 ? 'points' : 'point'}</p>;
 }
 
 /**
