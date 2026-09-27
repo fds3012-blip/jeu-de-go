@@ -39,4 +39,8 @@ Méthode : recherche de `@keyframes`, `transition`, `animation`, `requestAnimati
 
 ## Vérifications
 
-`npm run lint`, `npm run typecheck`, `npm test`, `npm run build` et `PW_PORT=4322 npx playwright test` : voir le message de commit et le compte rendu de l'agent.
+- `npm run lint` et `npm run typecheck` : sans erreur.
+- `npm test` : 389 tests passés, 2 ignorés.
+- `npm run build` : construit.
+- `PW_PORT=4322 npx playwright test` : 45 passés.
+- Capture 390 × 844 de l'écran de partie en clair et en sombre : la barre d'avantage s'affiche comme avant (coins arrondis, portion noire coupée net), sans défilement horizontal.
