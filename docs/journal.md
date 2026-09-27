@@ -120,3 +120,29 @@ Chaque livraison : issue traitée, agent, pull request, résultat des vérificat
 - Suites :
   - ajouter une adresse de contact RGPD dans « Tes droits » (juridique) ;
   - rafraîchir le pseudo de la carte d'identité sans recharger l'app.
+## 27/09, 15 h 45 : retours de Florian, deuxième vague de design
+
+**Retours de Florian**
+- Ce qui lui plaît : le son est parfait, et il aime le logo aux deux pierres, la partie Jouer et les Problèmes.
+- Ce qu'il faut revoir :
+  - le Profil est trop long ;
+  - le consentement doit être demandé une seule fois, dans une fenêtre qui mène aux conditions ;
+  - les icônes du bas sont fades ;
+  - chaque élément doit avoir son identité, et tout doit être relié.
+
+**Recherche de skills de design**
+- L'agent de recherche a trouvé 10 candidates et les a lues, licence et contenu compris.
+- Florian en a validé 4 lots (#52, PR #53) :
+  - l'animation d'Emil Kowalski ;
+  - des extraits d'impeccable, sans le script qui télécharge un binaire ;
+  - la checklist mobile de ui-ux-pro-max ;
+  - motion-design de LottieFiles et icon-system.
+- Écartées :
+  - les skills sans licence, rastian et rknall ;
+  - les thèmes pour présentations et la charte Anthropic ;
+  - taste-skill, faite pour des pages d'accueil.
+
+**Issues créées et confiées**
+- #50 : consentement en fenêtre unique et Profil court (frontend).
+- #51 : identité reliée à partir du logo, avec des icônes de navigation en pierres (designer).
+- #54 : un chemin Apprendre qui donne envie (designer).
