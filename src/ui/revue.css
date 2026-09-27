@@ -1,6 +1,6 @@
 /* Revue d'une partie (issue #34) : src/app/Revue.tsx. Design v2 (docs/design/v2/direction.md) :
    sumi, jade, Bricolage ; une seule action en relief (« Rejouer d'ici »), cibles de 44 px. */
-.revue { display: flex; flex-direction: column; gap: var(--space-3); padding-bottom: calc(var(--cible-cta) + var(--relief) + var(--space-4) * 2 + env(safe-area-inset-bottom, 0px)); }
+.revue { display: flex; flex-direction: column; gap: var(--space-3); padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom, 0px)); }
 
 .revue-tete { display: flex; align-items: center; gap: var(--space-2); min-height: var(--cible-min); }
 .revue-tete .retour { flex: none; width: var(--cible-min); height: var(--cible-min); margin-left: -10px; display: grid; place-items: center;
@@ -82,7 +82,8 @@
 .revue-mochi { display: flex; align-items: flex-start; gap: var(--space-3); padding: var(--space-3); border-radius: 14px; background: var(--surface); }
 .revue-mochi p { margin: 0; font-size: 15px; line-height: 1.4; }
 
-.app-partie .revue-dock { bottom: calc(var(--space-4) + env(safe-area-inset-bottom, 0px)); }
+/* « Rejouer d'ici » dans le flux, sous la liste des coups : il ne recouvre jamais le goban ni la liste. */
+.app-partie .revue-dock, .revue-dock { position: static; left: auto; bottom: auto; transform: none; width: 100%; margin-bottom: var(--relief); }
 .revue-dock .cta { min-height: var(--cible-cta); }
 
 @media (prefers-reduced-motion: no-preference) {

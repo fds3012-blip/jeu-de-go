@@ -172,7 +172,8 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer }: Props) {
         </button>
       )}
 
-      {resume && precMoi != null && (
+      {/* Résumé et coups se partagent la place, comme deux onglets : le résumé ne repousse jamais le goban. */}
+      {resume && precMoi != null ? (
         <section id="revue-resume" className="revue-resume" aria-label="Résumé de la partie">
           <table className="revue-table">
             <thead><tr><th scope="col"><span className="sr-only">Note</span></th><th scope="col">{nomMoi}</th><th scope="col">{nomLui}</th></tr></thead>
@@ -191,8 +192,8 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer }: Props) {
           </div>
           {!avecKataGo && <p className="revue-note">{fr('Sans KataGo, Mochi ne note que les pertes sûres : pas de « Meilleur coup ».')}</p>}
         </section>
-      )}
-
+      ) : (
+        <>
       <div className="revue-plateau">
         <Board size={size} board={q.board} marks={{ last: q.lastMove, meilleur, note: marqueNote }} />
       </div>
@@ -217,6 +218,15 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer }: Props) {
         </ol>
         <button type="button" className="btn revue-pas" onClick={() => aller(i + 1)} disabled={i >= n} aria-label="Suivant"><Icone nom="suivant" /></button>
       </div>
+
+      <div className="dock revue-dock">
+        <button type="button" className="cta" onClick={() => onRejouer(rejouerDici(positions, i + 1, joueur ?? null))}>Rejouer d'ici</button>
+      </div>
+      <div className="revue-mochi" aria-live="polite">
+        <Mochi size={40} />
+        <p>{fr(phrase)}</p>
+      </div>
+      {sansKataGo && erreurs.length > 0 && <p className="revue-note">{fr(SANS_KATAGO)}</p>}
 
       <figure className="revue-courbe">
         <svg viewBox={`0 0 ${L} ${H}`} preserveAspectRatio="none" role="img" aria-label="Courbe d'avantage : Noir en bas, Blanc en haut"
@@ -247,16 +257,8 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer }: Props) {
           ))}
         </div>
       )}
-
-      <div className="revue-mochi" aria-live="polite">
-        <Mochi size={40} />
-        <p>{fr(phrase)}</p>
-      </div>
-      {sansKataGo && erreurs.length > 0 && <p className="revue-note">{fr(SANS_KATAGO)}</p>}
-
-      <div className="dock revue-dock">
-        <button type="button" className="cta" onClick={() => onRejouer(rejouerDici(positions, i + 1, joueur ?? null))}>Rejouer d'ici</button>
-      </div>
+        </>
+      )}
     </div>
   );
 }

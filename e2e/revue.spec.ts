@@ -122,7 +122,15 @@ test('la revue note le coup affiché et montre la précision des deux joueurs', 
   await expect(resume.getByRole('table')).toBeVisible();
   await expect(resume.getByRole('row', { name: /Grosse erreur/ })).toBeVisible();
   await expect(resume.locator('.revue-mochi-bilan p')).not.toBeEmpty();
+  // Le résumé prend la place des coups, sans repousser le goban : « Fermer » y revient.
+  await expect(plateau(page)).toHaveCount(0);
+  await bilan.click();
+  await expect(plateau(page)).toBeVisible();
   await expect(page.locator('.cta')).toHaveCount(1);
+  // « Rejouer d'ici » est dans le flux : il ne recouvre ni le goban ni la liste des coups.
+  const cta = await page.locator('.cta').boundingBox(), liste = await page.locator('.revue-nav').boundingBox(), gob = await plateau(page).boundingBox();
+  expect(cta!.y).toBeGreaterThanOrEqual(liste!.y + liste!.height);
+  expect(cta!.y).toBeGreaterThanOrEqual(gob!.y + gob!.height);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
 });
 
@@ -135,14 +143,19 @@ test('captures des notes, sombre et clair', async ({ page }) => {
   await page.getByRole('button', { name: 'Revoir ma partie' }).click();
   await expect(page.locator('.revue-analyse')).toHaveCount(0, { timeout: 90_000 });
   await page.getByRole('button', { name: /^Coup 5,/ }).click();
-  for (const theme of ['dark', 'light'] as const) {
-    await page.evaluate(t => document.documentElement.setAttribute('data-theme', t), theme);
-    await page.screenshot({ path: `docs/design/v2/captures/notes-coup-${theme === 'dark' ? 'sombre' : 'clair'}.png` });
-  }
-  await page.getByRole('button', { name: /Précision/ }).click();
-  for (const theme of ['dark', 'light'] as const) {
-    await page.evaluate(t => document.documentElement.setAttribute('data-theme', t), theme);
-    await page.screenshot({ path: `docs/design/v2/captures/notes-resume-${theme === 'dark' ? 'sombre' : 'clair'}.png` });
+  const bilan = page.getByRole('button', { name: /Précision/ });
+  for (const [w, h, suffixe] of [[390, 844, ''], [375, 667, '-se']] as const) {
+    await page.setViewportSize({ width: w, height: h });
+    for (const theme of ['dark', 'light'] as const) {
+      await page.evaluate(t => document.documentElement.setAttribute('data-theme', t), theme);
+      await page.screenshot({ path: `docs/design/v2/captures/notes-coup-${theme === 'dark' ? 'sombre' : 'clair'}${suffixe}.png` });
+    }
+    await bilan.click();
+    for (const theme of ['dark', 'light'] as const) {
+      await page.evaluate(t => document.documentElement.setAttribute('data-theme', t), theme);
+      await page.screenshot({ path: `docs/design/v2/captures/notes-resume-${theme === 'dark' ? 'sombre' : 'clair'}${suffixe}.png` });
+    }
+    await bilan.click();
   }
   // Planche des 7 sceaux en grand, sur le bois du goban : mêmes couleurs que src/ui/notes.ts.
   const sceaux: [string, string, string, string][] = [
