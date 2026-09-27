@@ -1,0 +1,31 @@
+/* Série protégée (issue #76) : pierre givrée, annonce de Mochi et micro-célébration. */
+:root {
+  --givre: #CFE6F2;
+  --givre-bord: #9CC6DC;
+  --givre-trait: #2F6F93;
+  --givre-texte: #A9D4EA;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) { --givre: #DCEEF7; --givre-bord: #7FAFC8; --givre-trait: #3F7FA3; --givre-texte: #245E80; }
+}
+:root[data-theme="light"] { --givre: #DCEEF7; --givre-bord: #7FAFC8; --givre-trait: #3F7FA3; --givre-texte: #245E80; }
+
+.glacon { display: inline-flex; align-items: center; gap: 3px; padding: 6px 10px 6px 8px; border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--givre-bord) 18%, transparent); color: var(--givre-texte);
+  font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: 1.05rem; line-height: 1; }
+.pierre-givree { flex: none; }
+.top .serie-groupe { display: inline-flex; align-items: center; gap: 6px; }
+.numero-du-jour + .glacon, .titre-pierres .glacon { font-size: .9rem; padding: 4px 8px 4px 6px; margin-left: auto; }
+
+.gel-annonce { display: flex; align-items: center; gap: 10px; margin: 0 0 var(--space-3); padding: 10px 14px; border-radius: 14px;
+  background: color-mix(in srgb, var(--givre-bord) 14%, var(--surface)); color: var(--text); font-weight: 600; }
+.gel-gagne { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 4px 0 0; color: var(--givre-texte); font-weight: 600; }
+
+/* Micro-célébration : la pierre givrée se pose avec un léger rebond. Jamais avec les mouvements réduits. */
+@media (prefers-reduced-motion: no-preference) {
+  .glacon-fete .pierre-givree, .gel-gagne.fete .pierre-givree { animation: givre-pose 520ms cubic-bezier(.2, .9, .3, 1.3) both; }
+}
+@keyframes givre-pose {
+  from { transform: scale(.4) rotate(-30deg); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}

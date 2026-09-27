@@ -21,8 +21,10 @@ import { hapticIllegal, hapticStone } from '../ui/haptics';
 import { EVENTS, track } from '../data/analytics';
 import { prefersReducedMotion, readLocal, useOnline, writeLocal } from './hooks';
 import { legendeSerie, niveau, suivant } from './problemes';
-import { SERIE_KEY, numeroDuJour, problemeDuNumero, serieApres, serieVivante, textePartage, type Serie } from './goDuJour';
+import { SERIE_KEY, numeroDuJour, problemeDuNumero, serieVivante, textePartage, type Serie } from './goDuJour';
 import '../ui/apprendre.css';
+import { Glacon, PierreGivree } from '../ui/Glacon';
+import { lireReserveAppareil, reussirAppareil } from './gelAppareil';
 
 const LOCAL_PUZZLES = parsePuzzles(ALL_PUZZLES);
 const SOLVED_KEY = 'go.problemes.v1';
@@ -37,6 +39,8 @@ interface Props {
   lien?: number | null;
   /** Prévient quand le Go du jour est ouvert : la fenêtre de consentement attend, comme pendant une partie. */
   onDuJour?: (ouvert: boolean) => void;
+  /** Réglage « Célébrations » : la pierre givrée se pose avec un rebond quand un gel est gagné. */
+  celebrer?: boolean;
 }
 
 /** Flamme de la série de jours, en or. */
@@ -60,11 +64,14 @@ function Difficulte({ d }: { d: number }) {
 }
 
 /** Onglet Problèmes : problème du jour, problèmes de base, cote problèmes et série de jours. */
-export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, lien = null, onDuJour }: Props) {
+export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, lien = null, onDuJour, celebrer = true }: Props) {
   // Go du jour (issue #75) : le même pour tous, choisi dans la liste publique des problèmes de base, en heure de Paris.
   const [numero] = useState(() => numeroDuJour(new Date()));
   const daily = problemeDuNumero(LOCAL_PUZZLES, numero);
   const [serieDuJour, setSerieDuJour] = useState<Serie | null>(() => readLocal<Serie | null>(SERIE_KEY, null));
+  // Série protégée (issue #76) : gels en réserve, et gel gagné à l'instant (micro-célébration).
+  const [gels, setGels] = useState(() => lireReserveAppareil().gels);
+  const [gelGagne, setGelGagne] = useState(false);
   const online = useOnline();
   const [list, setList] = useState<Puzzle[]>(LOCAL_PUZZLES);
   const [load, setLoad] = useState<Load>({ status: 'loading' });
@@ -119,7 +126,7 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
     const estDuJour = open.id === daily?.id;
     return (
       <PuzzlePlayer key={open.id} puzzle={open} rang={list.indexOf(open) + 1} confirmTouch={confirmTouch}
-        duJour={estDuJour ? { numero, serie: serieVivante(serieDuJour, numero), defiChange } : undefined}
+        duJour={estDuJour ? { numero, serie: serieVivante(serieDuJour, numero), defiChange, gelGagne, celebrer } : undefined}
         rated={!!db && !!userId && online && !!stats && !stats.attempted.includes(open.id) && !solved.has(open.id)}
         rating={stats?.rating}
         onAttempt={async ok => {
@@ -132,8 +139,9 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
         onSolved={essais => {
           if (!solved.has(open.id)) track(EVENTS.problemeResolu, { probleme: open.id, du_jour: estDuJour });
           if (estDuJour && serieDuJour?.dernier !== numero) {
-            const s = serieApres(serieDuJour, numero);
-            writeLocal(SERIE_KEY, s); setSerieDuJour(s);
+            const { serie: s, gagne } = reussirAppareil(serieDuJour, numero);
+            setSerieDuJour(s);
+            if (gagne) { setGelGagne(true); setGels(lireReserveAppareil().gels); }
             track(EVENTS.goDuJourResolu, { numero, essais, serie: s.jours, arrivee_par_lien: lien !== null });
           }
           markSolved(open.id);
@@ -184,7 +192,7 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
 
       {daily && (
         <section aria-labelledby="jour-titre">
-          <h2 id="jour-titre" className="titre-pierres">Go du jour <span className="numero-du-jour">n°&nbsp;{numero}</span></h2>
+          <h2 id="jour-titre" className="titre-pierres">Go du jour <span className="numero-du-jour">n°&nbsp;{numero}</span><Glacon gels={gels} /></h2>
           <p className="muted small bases-aide">Le même défi pour tout le monde, aujourd’hui.</p>
           <DuJour pz={daily} reussi={serieDuJour?.dernier === numero} onOpen={() => setOpenId(daily.id)} />
         </section>
@@ -273,7 +281,7 @@ function Partager({ numero, essais, serie }: { numero: number; essais: number; s
   );
 }
 
-interface DuJourInfo { numero: number; serie: number; defiChange: boolean }
+interface DuJourInfo { numero: number; serie: number; defiChange: boolean; gelGagne: boolean; celebrer: boolean }
 
 function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating, onAttempt, onSolved, onNext, onExit }: {
   puzzle: Puzzle; rang: number; duJour?: DuJourInfo; confirmTouch: boolean; rated: boolean; rating?: number;
@@ -367,6 +375,9 @@ function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating, onAtt
         // Go du jour réussi : « Partager » est l'action principale, en relief ; la suite reste à portée, en lien.
         ? <>
             <Partager numero={duJour.numero} essais={tries} serie={duJour.serie} />
+            {duJour.gelGagne && (
+              <p className={`gel-gagne${duJour.celebrer ? ' fete' : ''}`} role="status"><PierreGivree taille={18} />{fr('Tu gagnes un gel : il protégera ta série si tu oublies un jour.')}</p>
+            )}
             <div className="row liens-du-jour">
               <button className="lien" onClick={showLine}>Voir la suite</button>
               <button className="lien" onClick={onNext ?? onExit}>{onNext ? 'Problème suivant' : 'Retour aux problèmes'}</button>
