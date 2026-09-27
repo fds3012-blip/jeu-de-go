@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { installAudioUnlock, setSoundEnabled } from '../ui/sound';
 
-export interface Settings { theme: 'auto' | 'dark' | 'light'; confirmTouch: boolean; size: 9 | 13 | 19; sound: boolean }
+export interface Settings { theme: 'auto' | 'dark' | 'light'; confirmTouch: boolean; size: 9 | 13 | 19; sound: boolean; celebrations: boolean }
 const KEY = 'go.settings.v1';
-const DEFAULTS: Settings = { theme: 'auto', confirmTouch: true, size: 9, sound: true };
+const DEFAULTS: Settings = { theme: 'auto', confirmTouch: true, size: 9, sound: true, celebrations: true };
 
 function read(): Settings {
   try { return { ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY) || '{}') }; } catch { return DEFAULTS; }

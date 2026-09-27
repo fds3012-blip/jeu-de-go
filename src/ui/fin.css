@@ -1,0 +1,81 @@
+/* Fin de partie (issue #40, phase 5). Maquette : docs/design/v2/maquettes-v2.png, écran de droite.
+   Le goban final reste l'image de l'écran ; tout le reste tient en une colonne centrée, un seul bouton en relief. */
+
+/* Plein écran, sans barre d'actions : le bouton principal tombe sous le pouce. */
+.app.app-partie:has(> .fin) { padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom, 0px)); }
+.fin { position: relative; display: flex; flex-direction: column;
+  min-height: calc(100dvh - var(--space-1) - var(--space-4) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); }
+
+/* ---------- Fond : le plateau final, territoires compris, sous un voile ---------- */
+.fin-fond { position: relative; margin: 0 calc(4px - var(--gouttiere)); }
+@media (min-width: 600px) { .fin-fond { margin: 0; } }
+/* Le voile déborde largement vers le bas pour couvrir aussi l'ombre portée du plateau. */
+.fin-voile { position: absolute; inset: -2px -4px -44px; pointer-events: none;
+  background: linear-gradient(to bottom,
+    color-mix(in srgb, var(--bg) 22%, transparent) 0%,
+    color-mix(in srgb, var(--bg) 48%, transparent) 42%,
+    color-mix(in srgb, var(--bg) 88%, transparent) 72%,
+    var(--bg) 94%); }
+
+/* ---------- Feuille : la colonne qui mord sur le bas du plateau ---------- */
+.fin-feuille { position: relative; flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; margin-top: -132px; }
+
+.fin-sceau { margin-top: auto; position: relative; width: 108px; height: 108px; filter: drop-shadow(0 12px 18px rgba(0, 0, 0, .42)); }
+.fin-sceau .sceau { --sceau-socle: var(--bg); }
+/* Pierre du vainqueur (partie à deux) à la place du sceau. */
+.fin-pierre { display: block; width: 96px; height: 96px; margin: 6px; border-radius: 50%; }
+.fin-pierre.b { background: radial-gradient(circle at 35% 30%, #676b69, #151716 55%, #050606); }
+.fin-pierre.w { background: radial-gradient(circle at 38% 32%, #fff, #e9e3d6 60%, #bdb3a0); }
+
+/* Tampon « BATTUE » : encre hanko sur papier, posé de travers sur le coin du sceau. Seul texte en capitales : c'est un tampon. */
+.fin-tampon { position: absolute; left: 70px; top: 62px; white-space: nowrap; transform: rotate(-12deg); transform-origin: 30% 50%;
+  font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: 19px; line-height: 1; letter-spacing: .07em;
+  color: #B23520; background: #F7E9DA; border: 2.5px solid #B23520; border-radius: 7px; padding: 6px 10px 5px;
+  box-shadow: inset 0 0 0 2px #F7E9DA, inset 0 0 0 3px rgba(178, 53, 32, .35), 0 6px 14px -6px rgba(0, 0, 0, .5); }
+
+.fin-titre { margin: var(--space-4) 0 6px; font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: 56px; line-height: 1; letter-spacing: -.035em; }
+.fin-titre:focus { outline: none; }
+.fin-marge { margin: 0; color: var(--muted); font-size: 17px; font-variant-numeric: tabular-nums; }
+.fin-bilan { margin: var(--space-3) 0 0; font-size: 15px; line-height: 1.45; max-width: 30em; text-wrap: balance; }
+.fin-bilan b { font-weight: var(--fw-bold); }
+/* L'or ne sert qu'aux récompenses : le bilan n'est doré qu'après une victoire. */
+.fin-bilan b.or { color: var(--recompense-texte); }
+
+/* Mochi tire la leçon : son sceau jade et une phrase, sans bulle (la barre du coach n'est plus là). */
+.fin-mochi { display: flex; align-items: center; gap: var(--space-3); width: 100%; margin-top: var(--space-4); text-align: left; font-size: 15px; line-height: 1.4; }
+.fin-mochi p { margin: 0; }
+.fin-mochi .lien { margin-left: -12px; min-height: 40px; }
+
+/* Un seul bouton en relief, avec le sceau de l'adversaire proposé. */
+/* Le bouton reste près de la leçon de Mochi ; la hauteur libre va au-dessus du sceau, qui laisse voir plus de plateau. */
+.fin-action { width: 100%; margin-top: clamp(var(--space-5), 5vh, 44px); }
+.fin .cta { position: static; transform: none; width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; }
+.fin .cta .sceau { filter: drop-shadow(0 1px 0 rgba(7, 35, 26, .35)); }
+.fin-liens { display: flex; justify-content: center; gap: var(--space-4); margin-top: calc(var(--space-2) + var(--relief)); }
+.fin-liens .lien-discret { color: var(--muted); text-decoration-color: var(--line); }
+
+/* Confettis : au-dessus de tout, ne prennent aucun toucher. */
+.confettis { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 40; pointer-events: none; }
+
+/* ---------- Relecture ---------- */
+/* À la place de la barre d'avantage : on sait tout de suite qu'on revoit la partie, et où on en est. */
+.relecture-titre { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); margin: 0 2px 10px; min-height: 19.5px; font-size: 15px; line-height: 1.3; }
+.relecture-titre b { font-family: var(--font-titre); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre); }
+.relecture-titre span { color: var(--muted); font-size: 14px; font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; }
+
+/* ---------- Mouvement : un seul moment orchestré (tampon, écart qui défile, confettis) ---------- */
+@media (prefers-reduced-motion: no-preference) {
+  .fin .cta:active { transform: translateY(var(--relief)); box-shadow: none; }
+  .fin-feuille { animation: fin-entree 240ms var(--ease) both; }
+  .fin-tampon { animation: fin-tampon 280ms cubic-bezier(.3, 1.4, .5, 1) 360ms both; }
+  .fin-sceau:has(.fin-tampon) > .sceau { animation: fin-coup 180ms ease-out 560ms both; }
+}
+@keyframes fin-entree { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+/* Le tampon arrive de haut, grand et flou de mouvement, s'écrase un peu, puis se pose. */
+@keyframes fin-tampon {
+  0% { opacity: 0; transform: rotate(-4deg) scale(1.9); }
+  55% { opacity: 1; transform: rotate(-13deg) scale(.9); }
+  100% { opacity: 1; transform: rotate(-12deg) scale(1); }
+}
+/* Le sceau encaisse le coup. */
+@keyframes fin-coup { 0% { transform: none; } 40% { transform: translateY(2px) scale(.98); } 100% { transform: none; } }

@@ -14,6 +14,10 @@ import { useProfil } from './hooks';
 import { useStored } from './settings';
 import { coupsJoues, libelleAvantage, libelleCoup, metEnAtari, nouveauxAtari, partNoir } from './partie';
 import { choisirReplique, DUREE_REPLIQUE, type Situation } from './repliques';
+import { FinPartie } from '../ui/FinPartie';
+import { Sceau } from '../ui/Sceau';
+import { battuAccorde } from '../ui/sceaux';
+import type { StatsPartie } from './bilan';
 
 const REFUS = { occupe: '', ko: "Ko : tu ne peux pas reprendre tout de suite, joue d'abord ailleurs.", suicide: 'Coup interdit : cette pierre serait capturée par elle-même.', 'hors-plateau': '' };
 const pierres = (n: number) => `${n} pierre${n > 1 ? 's' : ''}`;
@@ -23,18 +27,22 @@ const virgule = (n: number) => String(n).replace('.', ',');
 const ATARI_KEY = 'go.atari-explique.v1';
 
 // Sans `opponent` : partie à deux sur le même appareil. Avec : le joueur a Noir, l'ordi joue Blanc.
-// `onResult` est appelé une fois à la fin de chaque partie (abandon ou score validé) avec le vainqueur.
-// `fin` remplace le bouton « Rejouer » de l'écran de fin : phrase de Mochi et actions choisies par l'écran parent.
+// `onResult` est appelé une fois à la fin de chaque partie (abandon ou score validé) avec le vainqueur (0 : égalité)
+// et ce qu'on sait de la partie (captures, atari subis…), pour le bilan et la leçon de Mochi.
+// `fin` complète l'écran de fin (src/ui/FinPartie.tsx) : bilan, leçon de Mochi et action principale choisis par l'écran parent.
 interface Props {
   size: number; komi: number; confirmTouch: boolean; onExit: () => void; opponent?: Opponent; intro?: ReactNode;
-  onResult?: (winner: 1 | 2) => void; fin?: { mochi: ReactNode; actions: ReactNode };
+  onResult?: (winner: 0 | 1 | 2, stats: StatsPartie) => void;
+  fin?: { bilan: ReactNode; mochi: ReactNode; action: ReactNode; onAccueil: () => void };
+  /** Réglage « Célébrations » : carillon, vibration et confettis après une victoire. */
+  celebrer?: boolean;
   /** Komi vu par l'ordi pour choisir ses coups ; par défaut `komi`. Sert au paramètre de test `?komi=` (voir bilan.ts). */
   aiKomi?: number;
   /** Portrait de l'adversaire (44 px), par exemple son sceau. Par défaut : une pierre blanche. */
   portrait?: ReactNode;
 }
 
-export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, onResult, fin, aiKomi = komi, portrait }: Props) {
+export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, onResult, fin, aiKomi = komi, portrait, celebrer = true }: Props) {
   const [history, setHistory] = useState<Position[]>(() => [newPosition(size)]);
   const [phase, setPhase] = useState<'play' | 'score' | 'end'>('play');
   const [dead, setDead] = useState<Set<number>>(new Set());
@@ -56,6 +64,9 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   const profil = useProfil(ai ? supabase : null);
   const token = useRef(0); // invalide les réponses de l'ordi devenues caduques (annulation, sortie)
   const scoreToken = useRef(0); // idem pour les pierres mortes proposées
+  const atarisSubis = useRef(0); // tes groupes mis en atari par l'ordi (leçon de Mochi en fin de partie)
+  // Relecture simple de la partie terminée : index de la position affichée dans l'historique.
+  const [relecture, setRelecture] = useState<number | null>(null);
   const pos = history[history.length - 1];
   const sc = useMemo(() => score(pos, komi, 'japanese', dead), [pos, komi, dead]);
   const aiTurn = !!ai && phase === 'play' && pos.toPlay === 2;
@@ -112,6 +123,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
         if (cap) { playCapture(cap); repliquer('capture'); }
         if (metEnAtari(r, m)) playAtari();
         const alerte = cap ? null : alerteAtari(pos, r, 1, history.length + 1);
+        if (alerte) atarisSubis.current++;
         setMsg(cap ? `${ai.nom} capture ${pierres(cap)} en ${toLabel(m, size)}.` : alerte ?? `${ai.nom} joue ${toLabel(m, size)}. À toi.`);
       }
     });
@@ -203,32 +215,38 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     setThinking(false);
     setHistory(history.slice(0, undoTo)); resume(); setMsg(ai ? 'Coup annulé. À toi de rejouer.' : 'Coup annulé.');
   }
-  function finish(winner: 1 | 2) {
-    setPhase('end'); onResult?.(winner);
-    if (!ai || winner === 1) { playVictory(); hapticVictory(); }
+  function finish(winner: 1 | 2, abandon: boolean) {
+    const egalite = !abandon && sc.margin === 0;
+    setPhase('end'); setRelecture(null);
+    onResult?.(egalite ? 0 : winner, {
+      coups: history.length - 1, capturesMoi: pos.captures[1], capturesAdv: pos.captures[2], atarisSubis: atarisSubis.current,
+      abandon, marge: abandon ? 0 : sc.margin, komi,
+    });
+    // Célébration (réglage « Célébrations ») : carillon et vibration ; les confettis sont sur l'écran de fin.
+    if (celebrer && !egalite && (!ai || winner === 1)) { playVictory(); hapticVictory(); }
   }
   function resign() {
     if (!resignArm) { setResignArm(true); setTimeout(() => setResignArm(false), 3000); return; }
     token.current++;
     const loser = ai ? 1 : pos.toPlay;
-    setResigned(loser); finish((3 - loser) as 1 | 2);
+    setResigned(loser); finish((3 - loser) as 1 | 2, true);
   }
   function restart() {
-    token.current++;
-    setHistory([newPosition(size)]); resume(); setResigned(0); setThinking(false);
+    token.current++; atarisSubis.current = 0;
+    setHistory([newPosition(size)]); resume(); setResigned(0); setThinking(false); setRelecture(null);
     setMsg(ai ? `Nouvelle partie : tu as Noir, à toi.` : 'Nouvelle partie : Noir commence.');
   }
 
   const name = (c: 1 | 2) => (ai ? (c === 1 ? 'Toi' : ai.nom) : c === 1 ? 'Noir' : 'Blanc');
-  const retour = <button type="button" className="retour" onClick={onExit} aria-label="Retour à l'accueil">‹</button>;
-  const bandeau = (c: 1 | 2) => {
-    const actif = phase === 'play' && pos.toPlay === c;
+  const retourAccueil = <button type="button" className="retour" onClick={onExit} aria-label="Retour à l'accueil">‹</button>;
+  // En relecture, on montre la position `q` et « ‹ » ramène au bilan.
+  const bandeau = (c: 1 | 2, q: Position = pos, retour: ReactNode = retourAccueil, actif = phase === 'play' && q.toPlay === c) => {
     let sousTitre: string;
     if (c === 2) sousTitre = ai ? ai.rang : `komi ${virgule(komi)}`;
     else sousTitre = ai ? (profil ? `Noir, cote ${profil.cote}` : 'Noir') : 'joue en premier';
     const initiale = c === 1 && profil?.pseudo ? profil.pseudo[0] : undefined;
     return (
-      <Bandeau nom={name(c)} sousTitre={sousTitre} actif={actif} captures={pos.captures[c]} pierresPrises={c === 1 ? 'blanc' : 'noir'}
+      <Bandeau nom={name(c)} sousTitre={sousTitre} actif={actif} captures={q.captures[c]} pierresPrises={c === 1 ? 'blanc' : 'noir'}
         portrait={c === 2 && portrait ? portrait : <Avatar couleur={c} initiale={initiale} />}
         replique={c === 2 ? replique : null} avant={c === 2 ? retour : undefined} />
     );
@@ -237,31 +255,73 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   // Mesure : une partie terminée (score validé ou abandon). Ajout isolé pour faciliter les fusions.
   useEffect(() => { if (phase === 'end') track(EVENTS.partieTerminee, { mode: ai ? 'ordi' : 'deux', adversaire: ai?.id, taille: size, coups: history.length - 1, fin: resigned ? 'abandon' : 'score', gagnant: (resigned ? 3 - resigned : sc.winner) === 1 ? 'noir' : 'blanc' }); }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (phase === 'end') {
-    const winner = resigned ? (3 - resigned) as 1 | 2 : sc.winner;
-    const how = resigned ? 'par abandon' : `de ${virgule(sc.margin)} point${sc.margin >= 2 ? 's' : ''}`;
+  // Relecture au clavier : flèches gauche et droite.
+  useEffect(() => {
+    if (relecture === null) return;
+    const n = history.length - 1;
+    const touche = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') setRelecture(r => (r === null ? r : Math.max(0, r - 1)));
+      else if (e.key === 'ArrowRight') setRelecture(r => (r === null ? r : Math.min(n, r + 1)));
+    };
+    window.addEventListener('keydown', touche);
+    return () => window.removeEventListener('keydown', touche);
+  }, [relecture === null, history.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (phase === 'end' && relecture !== null) {
+    // Relecture simple, coup par coup (sans analyse : c'est l'issue #34).
+    const n = history.length - 1, i = Math.min(relecture, n), q = history[i];
+    let phrase = 'Début de la partie. Touche « Suivant » pour avancer.';
+    if (i > 0) {
+      const avant = history[i - 1], c = avant.toPlay, m = q.lastMove ?? -1, cap = q.captures[c] - avant.captures[c];
+      const toi = !!ai && c === 1;
+      const geste = m < 0 ? (toi ? 'Tu passes' : `${name(c)} passe`) : `${toi ? 'Tu joues' : `${name(c)} joue`} ${toLabel(m, size)}`;
+      phrase = `${geste}${cap ? ` et ${toi ? 'captures' : 'capture'} ${pierres(cap)}` : ''}.`;
+    }
+    const versBilan = <button type="button" className="retour" onClick={() => setRelecture(null)} aria-label="Retour au bilan">‹</button>;
     return (
-      <div className="partie">
-        {!fin && <button className="back" onClick={onExit}>‹ Accueil</button>}
-        <p className="big">{ai && winner === 1 ? 'Tu gagnes' : `${name(winner)} gagne`} {how}</p>
-        <p className="muted">{history.length - 1} coups joués sur {size} × {size}.</p>
-        {fin && <div aria-live="polite">{fin.mochi}</div>}
-        {!resigned && (
-          <table>
-            <thead><tr><th /><th>{name(1)}</th><th>{name(2)}</th></tr></thead>
-            <tbody>
-              <tr><td>Territoire</td><td>{sc.territory[1]}</td><td>{sc.territory[2]}</td></tr>
-              <tr><td>Prisonniers</td><td>{sc.black - sc.territory[1]}</td><td>{sc.white - komi - sc.territory[2]}</td></tr>
-              <tr><td>Komi</td><td>–</td><td>{virgule(komi)}</td></tr>
-              <tr><td><b>Total</b></td><td><b>{virgule(sc.black)}</b></td><td><b>{virgule(sc.white)}</b></td></tr>
-            </tbody>
-          </table>
-        )}
-        <div className="partie-plateau" style={{ marginTop: 12 }}>
-          <Board size={size} board={pos.board} marks={{ owner: resigned ? undefined : sc.owner, dead }} />
+      <div className="partie relecture">
+        {bandeau(2, q, versBilan, false)}
+        <ListeCoups coups={coups} courant={i - 1} />
+        <p className="relecture-titre"><b>Revoir ma partie</b><span>Coup {i} sur {n}</span></p>
+        <div className="partie-plateau">
+          <Board size={size} board={q.board} marks={{ last: q.lastMove }} />
         </div>
-        {fin ? <><div className="fin-espace" aria-hidden="true" />{fin.actions}</> : <button className="cta" onClick={restart}>Rejouer</button>}
+        {bandeau(1, q, undefined, false)}
+        <div className="partie-souffle" aria-hidden="true" />
+        <Coach cle={i}>{fr(phrase)}</Coach>
+        <BarreActions label="Relecture de la partie" actions={[
+          { label: 'Précédent', icone: <Icone nom="precedent" />, onClick: () => setRelecture(Math.max(0, i - 1)), disabled: i <= 0 },
+          { label: 'Suivant', icone: <Icone nom="suivant" />, onClick: () => setRelecture(Math.min(n, i + 1)), disabled: i >= n },
+        ]} />
       </div>
+    );
+  }
+
+  if (phase === 'end') {
+    const abandon = !!resigned;
+    const winner = resigned ? (3 - resigned) as 1 | 2 : sc.winner;
+    const egalite = !abandon && sc.margin === 0;
+    const gagne = !egalite && (!ai || winner === 1);
+    const titre = egalite ? 'Égalité' : ai ? (winner === 1 ? 'Victoire' : 'Défaite') : `${name(winner)} gagne`;
+    const plateau = `${size} × ${size}`;
+    const n = history.length - 1;
+    const bilanDeux = fr(`${n} coup${n > 1 ? 's' : ''} sur ${plateau}. Captures : Noir ${pos.captures[1]}, Blanc ${pos.captures[2]}.`);
+    return (
+      <FinPartie
+        fond={<Board size={size} board={pos.board} marks={{ owner: abandon ? undefined : sc.owner, dead, last: pos.lastMove }} />}
+        sceau={ai ? <Sceau id={ai.id} taille={108} /> : <span className={`fin-pierre ${winner === 1 ? 'b' : 'w'}`} aria-hidden="true" />}
+        tampon={ai && gagne ? battuAccorde(ai.id).toUpperCase() : null}
+        titre={titre}
+        marge={abandon || egalite ? null : sc.margin}
+        texteMarge={v => `de ${virgule(v)} point${v >= 2 ? 's' : ''} sur ${plateau}`}
+        sousTitre={abandon ? 'par abandon' : `sur ${plateau}, komi compris`}
+        bilan={fin?.bilan ?? bilanDeux}
+        mochi={fin?.mochi}
+        action={fin?.action ?? <button type="button" className="cta" onClick={restart}>Rejouer</button>}
+        onRevoir={n > 0 ? () => setRelecture(1) : undefined}
+        onAccueil={fin?.onAccueil ?? onExit}
+        confettis={celebrer && gagne}
+      />
     );
   }
 
@@ -281,6 +341,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
           marks={{ last: pos.lastMove, owner: phase === 'score' ? sc.owner : undefined, dead, libs, zone }} onPlay={onPlay} shake={shake} versCouvercles />
       </div>
       {bandeau(1)}
+      <div className="partie-souffle" aria-hidden="true" />
       {montrerIntro ? <div className="coach-intro">{intro}</div> : <Coach cle={messageCoach}>{fr(messageCoach)}</Coach>}
       {phase === 'play' ? (
         <BarreActions label="Actions de la partie" actions={[
@@ -294,7 +355,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
           <p className="comptage">{fr(`${name(1)} ${virgule(sc.black)}, ${name(2)} ${virgule(sc.white)} (komi compris). Les pierres pâles sont comptées comme mortes.`)}</p>
           <div className="barre-comptage" role="toolbar" aria-label="Comptage des points">
             <button className="btn" onClick={() => { resume(); setMsg('La partie reprend.'); }}>Reprendre</button>
-            <button className="btn primary" onClick={() => finish(sc.winner)} disabled={finding}>Valider le score</button>
+            <button className="btn primary" onClick={() => finish(sc.winner, false)} disabled={finding}>Valider le score</button>
           </div>
         </>
       )}
