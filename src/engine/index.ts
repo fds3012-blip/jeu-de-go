@@ -1,11 +1,14 @@
-// API du moteur pour les écrans : bestMove(position, niveau) renvoie un coup (index y * N + x, -1 = passe).
+// API du moteur pour les écrans :
+// - bestMove(position, niveau) renvoie un coup (index y * N + x, -1 = passe) ;
+// - proposeDead(position) renvoie les pierres mortes proposées en fin de partie (deadStones en version synchrone).
 // Le calcul tourne dans un Web Worker ; repli synchrone si les Workers sont indisponibles (tests, vieux navigateurs).
 import { chooseMove, isLegalMove, OPPONENTS, opponent, type EngineOptions, type Opponent, type OpponentId } from './simple';
+import { deadStones, ownership, type DeadOptions } from './dead';
 import type { Position } from '../go/rules';
-import type { Demande, Reponse } from './simple.worker';
+import type { Demande, Reponse, Tache } from './simple.worker';
 
-export { OPPONENTS, opponent, chooseMove };
-export type { Opponent, OpponentId, EngineOptions };
+export { OPPONENTS, opponent, chooseMove, deadStones, ownership };
+export type { Opponent, OpponentId, EngineOptions, DeadOptions };
 
 let worker: Worker | null = null, broken = false, nextId = 1;
 const pending = new Map<number, (r: Reponse) => void>();
@@ -22,19 +25,34 @@ function getWorker(): Worker | null {
   return worker;
 }
 
-function sync(pos: Position, niveau: OpponentId, opts: EngineOptions): Promise<number> {
-  return new Promise(resolve => setTimeout(() => resolve(chooseMove(pos, niveau, opts)), 0));
+function later<T>(f: () => T): Promise<T> {
+  return new Promise(resolve => setTimeout(() => resolve(f()), 0));
+}
+
+/** Envoie une demande au Worker ; `null` s'il est indisponible. */
+function ask(d: Tache): Promise<Reponse> | null {
+  const w = getWorker();
+  if (!w) return null;
+  const id = nextId++;
+  return new Promise<Reponse>(resolve => { pending.set(id, resolve); w.postMessage({ ...d, id } satisfies Demande); });
 }
 
 export async function bestMove(pos: Position, niveau: OpponentId, opts: EngineOptions = {}): Promise<number> {
-  const w = getWorker();
+  const sync = () => later(() => chooseMove(pos, niveau, opts));
+  const q = ask({ kind: 'move', pos, niveau, opts });
   let move: number;
-  if (!w) move = await sync(pos, niveau, opts);
+  if (!q) move = await sync();
   else {
-    const id = nextId++;
-    const r = await new Promise<Reponse>(resolve => { pending.set(id, resolve); w.postMessage({ id, pos, niveau, opts } satisfies Demande); });
-    move = Number.isNaN(r.move) ? await sync(pos, niveau, opts) : r.move;
+    const r = await q;
+    move = Number.isNaN(r.move) ? await sync() : r.move;
   }
   // Garde-fou : un coup illégal devient une passe.
   return isLegalMove(pos, move) ? move : -1;
+}
+
+/** Pierres mortes proposées à l'entrée du comptage, calculées sans bloquer l'interface. */
+export async function proposeDead(pos: Position): Promise<number[]> {
+  const q = ask({ kind: 'dead', pos });
+  const r = q && (await q);
+  return r?.dead ?? later(() => deadStones(pos));
 }
