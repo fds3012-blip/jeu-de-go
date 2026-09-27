@@ -45,7 +45,8 @@ test('le carrousel ne laisse pas choisir un adversaire verrouillé', async ({ pa
   // Échap ferme la feuille ; l'accueil propose Caillou.
   await page.keyboard.press('Escape');
   await expect(feuille).toBeHidden();
-  await expect(page.locator('.cta')).toHaveText('Joue ta première partie contre Caillou');
+  await expect(page.locator('.cta')).toHaveText('Joue ta première partie');
+  await expect(page.locator('.cta')).toHaveAccessibleName('Joue ta première partie contre Caillou');
 });
 
 test('battre Caillou ouvre Bambou, et un choix verrouillé retombe sur l’adversaire à battre', async ({ page }) => {

@@ -126,6 +126,15 @@
 .lecteur-tete .difficulte { flex: none; }
 .lecteur:has(.verdict) { padding-bottom: 120px; }
 
+/* Leçon : la colonne tient dans l'écran, au-dessus du bouton flottant (réserve de 150 px de .app, zone sûre comprise).
+   Le plateau prend la hauteur qui reste : carré de côté min(largeur, hauteur) grâce à une requête de conteneur.
+   Sur iPhone SE, « Continuer » ne cache plus les rangées 1 et 2. Plancher de 220 px : en dessous, la page défile. */
+.lecteur-lecon { display: flex; flex-direction: column; box-sizing: content-box;
+  height: calc(100dvh - var(--space-2) - 150px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); }
+.lecteur-lecon > .lecteur-plateau { flex: 1 1 0; min-height: 220px; container-type: size; display: flex; justify-content: center; }
+.lecteur-plateau .board-wrap { width: min(100cqw, calc(100cqh - var(--space-2))); height: fit-content; }
+.lecteur-lecon > .bubble { flex: none; }
+
 /* Choix du quiz : à plat ; la couleur dit juste ou à revoir. */
 .choix { display: flex; gap: var(--space-2); margin-top: var(--space-3); }
 .choix button { flex: 1; min-height: 56px; font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: 1.3rem;

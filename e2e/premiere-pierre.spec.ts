@@ -9,7 +9,8 @@ test('première pierre en deux touches, accueil sans défilement', async ({ page
   // Une seule action principale, et la bulle de Pomme dit la même chose.
   const cta = page.locator('.cta');
   await expect(cta).toHaveCount(1);
-  await expect(cta).toHaveText('Joue ta première partie contre Pomme');
+  await expect(cta).toHaveText('Joue ta première partie');
+  await expect(cta).toHaveAccessibleName('Joue ta première partie contre Pomme');
   await expect(page.getByText(/Touche le centre pour poser ta première pierre\s!/)).toBeVisible();
   await expect(page.getByRole('heading', { level: 2, name: 'Pomme' })).toBeVisible();
   await expect(page.getByText('Elle apprend comme toi.', { exact: false })).toBeVisible();
@@ -67,5 +68,6 @@ test('« Changer » ouvre le choix de l’adversaire et de la taille', async ({ 
   await expect(feuille).toBeHidden();
   await expect(page.getByRole('heading', { level: 2, name: 'Caillou' })).toBeVisible();
   await expect(page.getByText('Plateau 13 × 13, tu as Noir')).toBeVisible();
-  await expect(page.locator('.cta')).toHaveText('Joue ta première partie contre Caillou');
+  await expect(page.locator('.cta')).toHaveText('Joue ta première partie');
+  await expect(page.locator('.cta')).toHaveAccessibleName('Joue ta première partie contre Caillou');
 });

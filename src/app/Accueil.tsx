@@ -74,7 +74,9 @@ export function Accueil(p: Props) {
       </div>
 
       {/* Libellé court (« Jouer contre Pomme ») : taille pleine ; long (première partie) : un cran plus petit, sur une ligne. */}
-      <button className={`cta${textes.cta.length <= 26 ? ' court' : ''}`} onClick={p.onJouer}>{textes.cta}</button>
+      <button className={`cta cta-sceau${textes.cta.length <= 26 ? ' court' : ''}`} aria-label={textes.ctaNom} onClick={p.onJouer}>
+        <Sceau id={adv.id} taille={30} />{textes.cta}
+      </button>
 
       <div className="tuiles">
         <button className="tuile tuile-probleme" onClick={p.onProbleme}>
@@ -123,7 +125,7 @@ function Reglages({ adv, cartes, taille, reglages, setReglages, onTaille, onChoi
             {([9, 13, 19] as const).map(n => <button key={n} aria-pressed={taille === n} onClick={() => onTaille(n)}>{n} × {n}</button>)}
           </div>
           <p className="muted small">{AIDE_TAILLE[taille]}</p>
-          <button className="btn primary" onClick={onJouer}>{textes.cta}</button>
+          <button className="btn primary" aria-label={textes.ctaNom} onClick={onJouer}>{textes.cta}</button>
           <button className="lien deux" onClick={onDeux}>Jouer à deux sur ce téléphone</button>
         </div>
       )}

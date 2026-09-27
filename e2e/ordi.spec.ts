@@ -6,7 +6,9 @@ test("jouer contre l'ordi : Pomme répond en moins d'une seconde", async ({ page
   page.on('pageerror', (e) => erreurs.push(e.message));
   await page.goto('/');
 
-  const cta = page.locator('.cta', { hasText: /contre Pomme/ }); // « Joue ta première partie contre Pomme » (issue #23)
+  // « Joue ta première partie », avec le sceau de Pomme (issue #85) ; le nom accessible nomme l'adversaire.
+  const cta = page.locator('.cta');
+  await expect(cta).toHaveAccessibleName(/contre Pomme$/);
   await expect(cta).toBeVisible();
   await cta.click();
 
