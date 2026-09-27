@@ -11,8 +11,11 @@
     "noFallthroughCasesInSwitch": true,
     "skipLibCheck": true,
     "noEmit": true,
-    "types": ["vitest/globals"],
-    "allowJs": true
+    "types": ["vitest/globals", "vite/client", "node"],
+    "allowJs": true,
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   },
-  "include": ["src", "content", "vite.config.ts"]
+  "include": ["src", "content", "e2e", "vite.config.ts", "playwright.config.ts"]
 }

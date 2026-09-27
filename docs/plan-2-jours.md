@@ -27,3 +27,8 @@ Objectif à la fin du jour 2 : une application web installable, en ligne sur Ver
 
 ## Hors périmètre de ces 2 jours
 Analyse coup par coup avec KataGo, badges, mascotte animée, publication sur les stores, abonnement Premium. Ils viennent juste après, le prototype sert de référence.
+
+## Suivi (tenu par l'architecte)
+
+- [x] Jour 1, architecte : socle Vite + React + TS, alias `@/`, ESLint + Prettier, Vitest, Playwright (viewport 390 x 844), CI GitHub Actions (lint, types, tests, build, e2e), PWA installable (manifeste, icônes, service worker). Issue #1, branche `issue-1-socle`.
+- [ ] Jour 1, architecte : déploiement Vercel de chaque PR. Glisse : projet Vercel à relier au dépôt (hors issue #1).

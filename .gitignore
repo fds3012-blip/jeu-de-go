@@ -4,3 +4,7 @@ dist
 !.env.example
 *.log
 .DS_Store
+playwright-report
+test-results
+blob-report
+*.tsbuildinfo
