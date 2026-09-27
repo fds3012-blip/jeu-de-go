@@ -15,6 +15,9 @@ import { useStored } from './settings';
 import { coupsJoues, descriptionIndices, indicesRestants, INDICES_PAR_PARTIE, libelleAvantage, libelleCoup, messageAtari, messageIndice, metEnAtari, nouveauxAtari, partNoir } from './partie';
 import { choisirReplique, DUREE_REPLIQUE, type Situation } from './repliques';
 import { FinPartie } from '../ui/FinPartie';
+import { RecitScore } from '../ui/RecitScore';
+import { mouvementsReduits } from '../ui/defilement';
+import { recitScore } from './score';
 import { Sceau } from '../ui/Sceau';
 import { battuAccorde } from '../ui/sceaux';
 import type { StatsPartie } from './bilan';
@@ -27,6 +30,8 @@ const PALES = "Les pierres pâles sont prisonnières : elles ne peuvent plus s'�
 const virgule = (n: number) => String(n).replace('.', ',');
 /** Vrai une fois que Mochi a expliqué le mot « atari » (on ne l'explique qu'une fois). */
 const ATARI_KEY = 'go.atari-explique.v1';
+/** Vrai une fois que le récit du score a expliqué le mot « komi » (#78). */
+const KOMI_KEY = 'go.komi-explique.v1';
 
 // Sans `opponent` : partie à deux sur le même appareil. Avec : le joueur a Noir, l'ordi joue Blanc.
 // `onResult` est appelé une fois à la fin de chaque partie (abandon ou score validé) avec le vainqueur (0 : égalité)
@@ -67,6 +72,9 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   // Indices donnés dans cette partie : limités à 3 contre l'ordi (#35), illimités à deux.
   const [indicesUtilises, setIndicesUtilises] = useState(0);
   const [atariExplique, setAtariExplique] = useStored<boolean>(ATARI_KEY, false);
+  const [komiExplique, setKomiExplique] = useStored<boolean>(KOMI_KEY, false);
+  // Récit du score (#78) : raconté une fois après « Valider le score », avant l'écran de fin.
+  const [recitFini, setRecitFini] = useState(true);
   const profil = useProfil(ai ? supabase : null);
   const token = useRef(0); // invalide les réponses de l'ordi devenues caduques (annulation, sortie)
   const scoreToken = useRef(0); // idem pour les pierres mortes proposées
@@ -227,7 +235,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   }
   function finish(winner: 1 | 2, abandon: boolean) {
     const egalite = !abandon && sc.margin === 0;
-    setPhase('end'); setRelecture(null);
+    setPhase('end'); setRelecture(null); setRecitFini(abandon);
     // La partie est gardée en SGF sur ce téléphone, pour la revue (Supabase viendra plus tard).
     const texte = sgfDepuisHistorique(history, komi, { noir: ai ? 'Toi' : 'Noir', blanc: ai?.nom ?? 'Blanc' });
     setSgf(texte);
@@ -237,7 +245,17 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
       abandon, marge: abandon ? 0 : sc.margin, komi,
     });
     // Célébration (réglage « Célébrations ») : carillon et vibration ; les confettis sont sur l'écran de fin.
+    // Après un comptage, elle attend la fin du récit du score (le résultat n'est pas gâché d'avance).
+    if (abandon) celebrerVictoire(winner, egalite);
+  }
+  function celebrerVictoire(winner: 1 | 2, egalite: boolean) {
     if (celebrer && !egalite && (!ai || winner === 1)) { playVictory(); hapticVictory(); }
+  }
+  function finRecit() {
+    if (recitFini) return;
+    setRecitFini(true);
+    if (!komiExplique) setKomiExplique(true);
+    celebrerVictoire(sc.winner, sc.margin === 0);
   }
   function resign() {
     if (!resignArm) { setResignArm(true); setTimeout(() => setResignArm(false), 3000); return; }
@@ -290,6 +308,15 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     const titre = egalite ? 'Égalité' : ai ? (winner === 1 ? 'Victoire' : 'Défaite') : `${name(winner)} gagne`;
     const plateau = `${size} × ${size}`;
     const n = history.length - 1;
+    if (!abandon && !recitFini) {
+      const recit = recitScore(pos, komi, 'japanese', dead);
+      const immediat = !celebrer || mouvementsReduits();
+      const ownerDelai = immediat ? undefined : new Map(recit.territoire.map(q => [q.p, q.delai]));
+      return (
+        <RecitScore recit={recit} immediat={immediat} expliquerKomi={!komiExplique} onFini={finRecit}
+          fond={<Board size={size} board={pos.board} marks={{ owner: sc.owner, ownerDelai, dead, last: pos.lastMove }} />} />
+      );
+    }
     const bilanDeux = fr(`${n} coup${n > 1 ? 's' : ''} sur ${plateau}. Captures : Noir ${pos.captures[1]}, Blanc ${pos.captures[2]}.`);
     return (
       <FinPartie

@@ -160,16 +160,19 @@ export function LessonPlayer({ lesson, start, confirmTouch, progress = {}, celeb
   const cta = <button className="cta" onClick={next}>{derniere ? 'Terminer la leçon' : 'Continuer'}</button>;
 
   return (
-    <div className="lecteur">
+    <div className="lecteur lecteur-lecon">
       <div className="lecteur-tete">
         <Retour label="Retour au chemin" onClick={onExit} />
         <Etapes total={lesson.steps.length} faites={faites} />
       </div>
       <h2 className="lecteur-titre"><SceauLecon id={lesson.id} taille={24} />{fr(lesson.title)}</h2>
       <Bubble>{fr(step.text)}</Bubble>
-      <Board size={9} board={board} interactive={step.kind === 'move' && !answer?.ok} confirmTouch={confirmTouch} onPlay={onPlay}
+      {/* Zone souple : le plateau prend la place qui reste au-dessus du bouton (iPhone SE compris). */}
+      <div className="lecteur-plateau">
+        <Board size={9} board={board} interactive={step.kind === 'move' && !answer?.ok} confirmTouch={confirmTouch} onPlay={onPlay}
         marks={{ libs: step.kind === 'info' && step.libs ? step.libs.map(l => fromLabel(l, 9)) : undefined, targets: marked, owner,
           ok: answer?.ok ? answer.p : undefined, mistake: answer && !answer.ok ? answer.p : undefined, last: answer?.ok ? answer.p : null }} />
+      </div>
       {step.kind === 'quiz' && (
         <div className="choix" role="group" aria-label="Ta réponse">
           {step.choices.map((c, i) => (
