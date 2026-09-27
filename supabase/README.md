@@ -2,7 +2,7 @@
 
 Projet `jeu-de-go` (réf. `xjvsalkvpgcjrznznxoi`, région Paris, plan gratuit).
 
-Les migrations de ce dossier sont celles déjà appliquées en production, dans l'ordre. Toute modification passe par une nouvelle migration, jamais par une modification d'un fichier existant.
+Les migrations déjà appliquées en production sont listées ci-dessous. Première tâche de l'agent backend : les rapatrier dans ce dossier avec `supabase link --project-ref xjvsalkvpgcjrznznxoi` puis `supabase db pull`. Ensuite, toute modification passe par une nouvelle migration, jamais par la modification d'un fichier existant.
 
 | Migration | Contenu |
 |---|---|
