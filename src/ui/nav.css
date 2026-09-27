@@ -13,7 +13,7 @@ html:has(.nav) { scroll-padding-bottom: calc(max(var(--nav-h), 3.75rem) + env(sa
   font-size: var(--fs-xs); font-weight: var(--fw-medium); line-height: 1.2; }
 .nav .onglet { padding-inline: 2px; }
 /* Zoom 200 % et petits écrans (#121) : le libellé se tronque proprement au lieu de déborder de l'onglet. */
-.onglet-libelle { max-width: 100%; min-width: 0; contain: inline-size; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.onglet-libelle { max-width: 100%; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .nav .onglet[aria-current="page"] { color: var(--text); font-weight: var(--fw-bold); }
 /* Point indicateur : une petite pierre de la couleur de l'onglet, sous le libellé. Place réservée : rien ne bouge d'un onglet à l'autre. */
 .onglet-point { width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: 0; flex: none; }

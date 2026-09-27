@@ -97,3 +97,15 @@ test('les onglets sont des cibles tactiles de 44 px minimum', async ({ page }) =
     expect(box.height).toBeGreaterThanOrEqual(44);
   }
 });
+
+// Régression de #145 : `contain: inline-size` réduisait les libellés des onglets à 0 px (icônes seules).
+test('les quatre onglets affichent leur libellé en entier', async ({ page }) => {
+  await page.goto('/');
+  const libelles = page.locator('.onglet-libelle');
+  await expect(libelles).toHaveCount(4);
+  for (const l of await libelles.all()) {
+    await expect(l).toBeVisible();
+    const tronque = await l.evaluate(e => e.scrollWidth > e.clientWidth || e.clientWidth === 0);
+    expect(tronque).toBe(false);
+  }
+});
