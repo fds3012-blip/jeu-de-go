@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+// Onglet Problèmes (issue #40, phase 6) : cote et série, problème du jour mis en scène, grille des problèmes de base.
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import type { Db } from '../data/supabase';
 import { BASE_PUZZLES } from '../content/puzzles';
 import {
@@ -6,20 +7,54 @@ import {
   type Puzzle, type PuzzleStats
 } from '../data/puzzles';
 import { Board } from '../ui/Board';
+import { MiniGoban } from '../ui/MiniGoban';
+import { Defile } from '../ui/Defile';
+import { ecart } from '../ui/defile';
+import { centreVertical } from '../ui/cadrage';
+import { C, M, viewBoxOf } from '../ui/boardArt';
+import { Retour, Verdict } from '../ui/Lecteur';
+import { Bubble } from '../ui/Mochi';
+import { fr } from '../ui/typo';
 import { playFail, playIllegal, playStone, playSuccess } from '../ui/sound';
 import { hapticIllegal, hapticStone } from '../ui/haptics';
-import { Bubble } from '../ui/Mochi';
+import { EVENTS, track } from '../data/analytics';
 import { prefersReducedMotion, readLocal, useOnline, writeLocal } from './hooks';
+import { legendeSerie, niveau, suivant } from './problemes';
+import '../ui/apprendre.css';
 
 const LOCAL_PUZZLES = parsePuzzles(BASE_PUZZLES);
 const SOLVED_KEY = 'go.problemes.v1';
 
 type Load = { status: 'loading' } | { status: 'ready'; source: 'base' | 'copie'; error?: string };
 
-interface Props { db: Db | null; userId: string | undefined; sessionLoading: boolean; confirmTouch: boolean }
+interface Props {
+  db: Db | null; userId: string | undefined; sessionLoading: boolean; confirmTouch: boolean;
+  /** Mène à l'onglet Profil pour se connecter. */
+  onCompte?: () => void;
+}
+
+/** Flamme de la série de jours, en or. */
+function Flamme({ taille = 22 }: { taille?: number }) {
+  return (
+    <svg viewBox="0 0 16 16" width={taille} height={taille} aria-hidden="true" focusable="false">
+      <path d="M8.6 1.2c.4 2.3 3.9 3.9 3.9 7.9A4.5 4.5 0 0 1 8 13.8a4.5 4.5 0 0 1-4.5-4.6c0-2 1-3.2 2-4 0 1.4.6 2.4 1.5 2.7C6.6 5.6 7.4 3 8.6 1.2Z" fill="currentColor" />
+    </svg>
+  );
+}
+
+/** Difficulté : trois petites pierres, pleines selon le niveau, et le mot. */
+function Difficulte({ d }: { d: number }) {
+  const n = niveau(d);
+  return (
+    <span className="difficulte">
+      <span className="crans" aria-hidden="true">{[1, 2, 3].map(i => <i key={i} className={i <= n.crans ? 'plein' : undefined} />)}</span>
+      {n.mot}
+    </span>
+  );
+}
 
 /** Onglet Problèmes : problème du jour, problèmes de base, cote problèmes et série de jours. */
-export function Puzzles({ db, userId, sessionLoading, confirmTouch }: Props) {
+export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte }: Props) {
   const online = useOnline();
   const [list, setList] = useState<Puzzle[]>(LOCAL_PUZZLES);
   const [load, setLoad] = useState<Load>({ status: 'loading' });
@@ -63,10 +98,9 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch }: Props) {
 
   const open = list.find(p => p.id === openId);
   if (open) {
-    const idx = list.indexOf(open);
-    const nextPz = list.slice(idx + 1).find(p => !solved.has(p.id)) ?? list.find(p => !solved.has(p.id) && p.id !== open.id);
+    const nextPz = suivant(list, open, solved);
     return (
-      <PuzzlePlayer key={open.id} puzzle={open} daily={open === daily} confirmTouch={confirmTouch}
+      <PuzzlePlayer key={open.id} puzzle={open} rang={list.indexOf(open) + 1} daily={open === daily} confirmTouch={confirmTouch}
         rated={!!db && !!userId && online && !!stats && !stats.attempted.includes(open.id) && !solved.has(open.id)}
         rating={stats?.rating}
         onAttempt={async ok => {
@@ -76,74 +110,103 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch }: Props) {
           if (r.ok && ok) setStatsTick(n => n + 1); // relit la série calculée par le serveur
           return r;
         }}
-        onSolved={() => markSolved(open.id)}
-        onNext={nextPz ? () => setOpenId(nextPz.id) : undefined}
+        onSolved={() => { if (!solved.has(open.id)) track(EVENTS.problemeResolu, { probleme: open.id, du_jour: open === daily }); markSolved(open.id); }}
+        onNext={nextPz ? () => { setOpenId(nextPz.id); window.scrollTo({ top: 0 }); } : undefined}
         onExit={() => setOpenId(null)} />
     );
   }
 
   if (load.status === 'loading') {
-    return <div className="card muted" aria-busy="true" role="status">Chargement des problèmes…</div>;
+    return <div className="problemes-chargement" aria-busy="true" role="status"><span className="sr-only">Chargement des problèmes…</span></div>;
   }
 
-  const todo = daily && !solved.has(daily.id) ? daily : list.find(p => !solved.has(p.id)) ?? daily;
+  const connecte = !!db && !!userId;
   return (
-    <div>
-      <Bubble>{daily && !solved.has(daily.id) ? `Un problème par jour, et tu progresses vite. Aujourd'hui : « ${daily.title} ».` : 'Problème du jour réussi. Bravo ! Continue avec les bases.'}</Bubble>
-
+    <div className="problemes">
       {load.error === 'offline' && <p className="notice" role="status">Tu es hors ligne. Les problèmes restent jouables, mais ta cote ne bouge pas.</p>}
       {load.error && load.error !== 'offline' && (
         <p className="notice" role="alert">{load.error} On t’affiche ceux de ce téléphone. <button className="lien" onClick={() => setRetry(n => n + 1)}>Réessayer</button></p>
       )}
 
-      {db && userId && stats ? (
-        <div className="card stats">
-          <div><span className="big">{stats.rating}</span><small className="muted">Cote problèmes</small></div>
-          <div><span className="big">{stats.streak}</span><small className="muted">Jour{stats.streak > 1 ? 's' : ''} de suite</small></div>
+      {connecte && stats ? (
+        <div className="palmares">
+          <div>
+            <span className="chiffre">{stats.rating}</span>
+            <span className="legende">ta cote problèmes</span>
+          </div>
+          <div className="palmares-serie">
+            <span className="chiffre"><Flamme taille={30} />{stats.streak}</span>
+            <span className="legende">{legendeSerie(stats.streak)}</span>
+          </div>
         </div>
-      ) : db && userId && statsError ? (
-        <p className="notice" role="alert">{statsError}</p>
-      ) : (
-        <p className="muted small">Connecte-toi dans l’onglet Profil pour garder ta cote problèmes. La cote mesure ton niveau : elle monte quand tu réussis.</p>
-      )}
+      ) : connecte && statsError ? (
+        <p className="notice" role="alert">{statsError} <button className="lien" onClick={() => setRetry(n => n + 1)}>Réessayer</button></p>
+      ) : connecte && online ? (
+        <div className="palmares" aria-busy="true"><span className="sr-only">Chargement de ta cote…</span><div><span className="chiffre attente" /><span className="legende">ta cote problèmes</span></div></div>
+      ) : !connecte ? (
+        <div className="invitation">
+          <p>{fr('Connecte-toi pour avoir ta ')}<b>cote</b>{fr(' : elle mesure ton niveau et monte quand tu réussis.')}</p>
+          {onCompte && <button className="lien" onClick={onCompte}>Me connecter</button>}
+        </div>
+      ) : null}
 
       {daily && (
-        <>
-          <h2>Problème du jour</h2>
-          <ol className="path">
-            <PuzzleItem pz={daily} n={list.indexOf(daily) + 1} done={solved.has(daily.id)} next onOpen={setOpenId} />
-          </ol>
-        </>
+        <section aria-labelledby="jour-titre">
+          <h2 id="jour-titre">Problème du jour</h2>
+          <DuJour pz={daily} reussi={solved.has(daily.id)} onOpen={() => setOpenId(daily.id)} />
+        </section>
       )}
-      <h2>Les bases</h2>
-      <p className="muted small" style={{ marginTop: 0 }}>Une pierre est en <b>atari</b> quand il ne lui reste qu’une liberté : elle peut être prise au prochain coup.</p>
-      <ol className="path">
-        {list.map((p, i) => <PuzzleItem key={p.id} pz={p} n={i + 1} done={solved.has(p.id)} next={p === todo && p !== daily} onOpen={setOpenId} />)}
-      </ol>
-      {todo && <button className="cta" onClick={() => setOpenId(todo.id)}>{todo === daily && !solved.has(todo.id) ? 'Résoudre le problème du jour' : solved.has(todo.id) ? 'Refaire le problème du jour' : `Résoudre le problème ${list.indexOf(todo) + 1}`}</button>}
+
+      <section aria-labelledby="bases-titre">
+        <h2 id="bases-titre">Les bases</h2>
+        <p className="muted small bases-aide">{fr('Une pierre est en ')}<b>atari</b>{fr(' quand il ne lui reste qu’une liberté : elle peut être prise au prochain coup.')}</p>
+        <ul className="grille-pb">
+          {list.map((p, i) => {
+            const ok = solved.has(p.id);
+            return (
+              <li key={p.id}>
+                <button className={ok ? 'reussi' : undefined} onClick={() => setOpenId(p.id)} aria-label={`Problème ${i + 1} : ${p.title}${ok ? ', réussi' : ''}`}>
+                  <span className="grille-goban">
+                    <MiniGoban rows={p.rows} />
+                    {ok && <span className="pastille-ok" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M4 8.4 6.8 11 12 5.4" /></svg></span>}
+                  </span>
+                  <b aria-hidden="true">{p.title}</b>
+                  <span aria-hidden="true"><Difficulte d={p.difficulty} /></span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
     </div>
   );
 }
 
-function PuzzleItem({ pz, n, done, next, onOpen }: { pz: Puzzle; n: number; done: boolean; next?: boolean; onOpen: (id: string) => void }) {
+/** Problème du jour : la vraie position sur le goban, recadrée sur les pierres, et le bouton « Résoudre » en relief. */
+function DuJour({ pz, reussi, onOpen }: { pz: Puzzle; reussi: boolean; onOpen: () => void }) {
+  const start = useMemo(() => startOf(pz), [pz]);
+  const vb = viewBoxOf(pz.size);
+  // Hauteur du centre des pierres, en fraction de la largeur de l'image du goban (qui est carrée).
+  const f = (M + centreVertical(pz.rows) * C - vb.min) / vb.span;
   return (
-    <li className={done ? 'done' : next ? 'next' : ''}>
-      <button onClick={() => onOpen(pz.id)} aria-label={`Problème ${n} : ${pz.title}${done ? ', réussi' : ''}`}>
-        <span className="pebble">{done ? '✓' : n}</span>
-        <span><b>{pz.title}</b><small>{level(pz.difficulty)}</small></span>
-      </button>
-    </li>
+    <div className={`du-jour${reussi ? ' reussi' : ''}`}>
+      <div className="du-jour-plateau" aria-hidden="true" onClick={onOpen} style={{ '--f': f } as CSSProperties}>
+        <div className="du-jour-cadre"><Board size={pz.size} board={start.pos.board} marks={{ targets: start.marked }} /></div>
+        {reussi && <span className="tampon-reussi">Réussi</span>}
+      </div>
+      <div className="du-jour-corps">
+        <h3>{pz.title}</h3>
+        <p><Difficulte d={pz.difficulty} /> <span className="muted">{pz.toPlay === 1 ? 'Noir joue' : 'Blanc joue'}</span></p>
+        <button className="cta" aria-label={reussi ? 'Refaire le problème du jour' : 'Résoudre le problème du jour'} onClick={onOpen}>{reussi ? 'Refaire' : 'Résoudre'}</button>
+      </div>
+    </div>
   );
 }
 
-function level(d: number): string {
-  return d < 500 ? 'Facile' : d < 750 ? 'Moyen' : 'Difficile';
-}
+type Answer = { kind: 'ok' | 'wrong' | 'illegal'; p: number; text: string; n: number };
 
-type Answer = { kind: 'ok' | 'wrong' | 'illegal'; p: number; text: string };
-
-function PuzzlePlayer({ puzzle, daily, confirmTouch, rated, rating, onAttempt, onSolved, onNext, onExit }: {
-  puzzle: Puzzle; daily: boolean; confirmTouch: boolean; rated: boolean; rating?: number;
+function PuzzlePlayer({ puzzle, rang, daily, confirmTouch, rated, rating, onAttempt, onSolved, onNext, onExit }: {
+  puzzle: Puzzle; rang: number; daily: boolean; confirmTouch: boolean; rated: boolean; rating?: number;
   onAttempt: (ok: boolean) => Promise<{ ok: true; value: number } | { ok: false; error: string } | null>;
   onSolved: () => void; onNext?: () => void; onExit: () => void;
 }) {
@@ -151,8 +214,9 @@ function PuzzlePlayer({ puzzle, daily, confirmTouch, rated, rating, onAttempt, o
   const [answer, setAnswer] = useState<Answer | null>(null);
   const [board, setBoard] = useState(start.pos.board);
   const [tries, setTries] = useState(0);
-  const [ratingMsg, setRatingMsg] = useState('');
+  const [cote, setCote] = useState<{ de: number; a: number } | { erreur: string } | null>(null);
   const [replay, setReplay] = useState<{ frame: number; total: number } | null>(null);
+  const [shake, setShake] = useState<{ p: number; n: number } | null>(null);
   const firstTry = useRef(true);
   const timer = useRef<number | undefined>(undefined);
   useEffect(() => () => window.clearTimeout(timer.current), []);
@@ -162,22 +226,25 @@ function PuzzlePlayer({ puzzle, daily, confirmTouch, rated, rating, onAttempt, o
   async function onPlay(p: number) {
     if (solvedNow || replay) return;
     const r = checkAnswer(puzzle, p);
-    if (r.kind === 'illegal') { playIllegal(); hapticIllegal(); setAnswer({ kind: 'illegal', p, text: ILLEGAL_TEXT[r.reason] }); return; }
+    const n = (answer?.n ?? 0) + 1;
+    if (r.kind === 'illegal') {
+      playIllegal(); hapticIllegal(); setShake({ p, n });
+      setAnswer({ kind: 'illegal', p, text: ILLEGAL_TEXT[r.reason], n });
+      return;
+    }
     const ok = r.kind === 'ok';
     playStone(p, puzzle.size); hapticStone();
     if (ok) playSuccess(); else playFail();
     setTries(t => t + 1);
-    setAnswer({ kind: r.kind, p, text: ok ? (puzzle.explanation ?? 'Bravo, c’est le bon coup !') : 'Pas tout à fait. Essaie encore.' });
+    setAnswer({ kind: r.kind, p, text: ok ? (puzzle.explanation ?? 'Bravo, c’est le bon coup !') : 'Pas tout à fait. Essaie encore.', n });
     setBoard(ok ? r.after.board : start.pos.board);
     if (ok) onSolved();
     // Seul le premier essai compte pour la cote.
     if (firstTry.current && rated) {
       firstTry.current = false;
       const res = await onAttempt(ok);
-      if (res && res.ok) {
-        const diff = rating !== undefined ? res.value - rating : 0;
-        setRatingMsg(`Ta cote problèmes : ${res.value}${diff ? ` (${diff > 0 ? '+' : ''}${diff})` : ''}.`);
-      } else if (res) setRatingMsg(res.error);
+      if (res && res.ok) setCote({ de: rating ?? res.value, a: res.value });
+      else if (res) setCote({ erreur: res.error });
     }
     firstTry.current = false;
   }
@@ -201,32 +268,59 @@ function PuzzlePlayer({ puzzle, daily, confirmTouch, rated, rating, onAttempt, o
     };
     timer.current = window.setTimeout(stepOnce, 500);
   }
+  function reessayer() {
+    window.clearTimeout(timer.current);
+    setReplay(null); setBoard(start.pos.board); setAnswer(null);
+  }
 
   const frames = replay ? solutionFrames(puzzle) : null;
   const lastMove = replay && frames ? frames[replay.frame].lastMove : solvedNow ? answer.p : null;
-  const replayDone = replay && replay.frame === replay.total;
+  const replayDone = !!replay && replay.frame === replay.total;
+
+  const ligneCote = cote && ('erreur' in cote
+    ? <p className="verdict-cote">{cote.erreur}</p>
+    : <p className="verdict-cote">Ta cote : <b><Defile de={cote.de} a={cote.a} /></b>{cote.a !== cote.de && <span className={cote.a > cote.de ? 'monte' : 'baisse'}> {ecart(cote.de, cote.a)}</span>}</p>);
+  const suivantBtn = <button className="cta" onClick={onNext ?? onExit}>{onNext ? 'Problème suivant' : 'Retour aux problèmes'}</button>;
+
+  let verdict = null;
+  if (replay) {
+    verdict = (
+      <Verdict ton="neutre" actions={solvedNow
+        ? <>{suivantBtn}<button className="lien" onClick={showLine} disabled={!replayDone}>Revoir la suite</button></>
+        : <div className="row"><button className="btn" onClick={showLine} disabled={!replayDone}>Revoir la suite</button><button className="btn" onClick={reessayer}>Réessayer</button></div>}>
+        <p>{replayDone ? 'Voilà la suite. Le coup marqué est la réponse.' : `Coup ${replay.frame} sur ${replay.total}…`}</p>
+      </Verdict>
+    );
+  } else if (answer) {
+    verdict = solvedNow ? (
+      <Verdict ton="juste" cle={answer.n} actions={<>{suivantBtn}<button className="lien" onClick={showLine}>Voir la suite</button></>}>
+        <p>{fr(answer.text)}</p>{ligneCote}
+      </Verdict>
+    ) : (
+      <Verdict ton="revoir" cle={answer.n} actions={
+        <div className="row">
+          {tries >= 1 && <button className="btn" onClick={showLine}>Voir la suite</button>}
+          <button className="btn" onClick={() => setAnswer(null)}>Réessayer</button>
+        </div>}>
+        <p>{fr(answer.text)}</p>{ligneCote}
+      </Verdict>
+    );
+  }
 
   return (
-    <div>
-      <button className="back" onClick={onExit}>‹ Problèmes</button>
-      <p className="muted small" style={{ margin: 0 }}>{daily ? 'Problème du jour' : 'Problème'} : {puzzle.title} · {level(puzzle.difficulty)}</p>
-      <Bubble>{puzzle.prompt} Tu joues {puzzle.toPlay === 1 ? 'Noir' : 'Blanc'}.</Bubble>
-      <Board size={puzzle.size} board={board} toPlay={puzzle.toPlay} interactive={!solvedNow && !replay} confirmTouch={confirmTouch} onPlay={onPlay}
-        marks={{ targets: start.marked, last: lastMove, ok: solvedNow && !replay ? answer.p : undefined, mistake: answer && answer.kind !== 'ok' && !replay ? answer.p : undefined }} />
-      <div aria-live="polite">
-        {answer && !replay && <p className={`feedback ${answer.kind === 'ok' ? 'good' : 'bad'}`}>{answer.text}</p>}
-        {ratingMsg && <p className="muted small">{ratingMsg}</p>}
-        {replay && <p className="feedback good">{replayDone ? 'Voilà la suite. Le coup marqué est la réponse.' : `Coup ${replay.frame} sur ${replay.total}…`}</p>}
+    <div className="lecteur">
+      <div className="lecteur-tete">
+        <Retour label="Retour aux problèmes" onClick={onExit} />
+        <div className="lecteur-nom">
+          <small>{daily ? 'Problème du jour' : `Problème ${rang}`}</small>
+          <h2>{puzzle.title}</h2>
+        </div>
+        <Difficulte d={puzzle.difficulty} />
       </div>
-      {(solvedNow || tries >= 1) && (
-        <button className="btn" style={{ width: '100%', marginTop: 10 }} onClick={showLine} disabled={!!replay && !replayDone}>
-          {replay ? 'Revoir la suite' : 'Voir la suite'}
-        </button>
-      )}
-      {replay && !solvedNow && (
-        <button className="btn" style={{ width: '100%', marginTop: 10 }} onClick={() => { window.clearTimeout(timer.current); setReplay(null); setBoard(start.pos.board); setAnswer(null); }}>Réessayer</button>
-      )}
-      {solvedNow && <button className="cta" onClick={onNext ?? onExit}>{onNext ? 'Problème suivant' : 'Retour aux problèmes'}</button>}
+      <Bubble>{fr(`${puzzle.prompt} Tu joues ${puzzle.toPlay === 1 ? 'Noir' : 'Blanc'}.`)}</Bubble>
+      <Board size={puzzle.size} board={board} toPlay={puzzle.toPlay} interactive={!solvedNow && !replay} confirmTouch={confirmTouch} onPlay={onPlay} shake={shake}
+        marks={{ targets: start.marked, last: lastMove, ok: solvedNow && !replay ? answer.p : undefined, mistake: answer && answer.kind === 'wrong' && !replay ? answer.p : undefined }} />
+      {verdict}
     </div>
   );
 }

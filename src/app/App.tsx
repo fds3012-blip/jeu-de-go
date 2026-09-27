@@ -111,12 +111,15 @@ export function App() {
       </>
     );
   } else if (tab === 'apprendre' && lesson) {
-    screen = <LessonPlayer lesson={lesson} start={(progress[lesson.id] ?? 0) % lesson.steps.length} confirmTouch={settings.confirmTouch}
-      onProgress={n => record(lesson.id, n)} onExit={() => setLessonId(null)} />;
+    const leconSuivante = LESSONS[LESSONS.indexOf(lesson) + 1];
+    screen = <LessonPlayer key={lesson.id} lesson={lesson} start={(progress[lesson.id] ?? 0) % lesson.steps.length} confirmTouch={settings.confirmTouch}
+      progress={progress} celebrer={(settings as Partial<{ celebrations: boolean }>).celebrations !== false}
+      onProgress={n => record(lesson.id, n)} onExit={() => { setLessonId(null); window.scrollTo({ top: 0 }); }}
+      onNext={leconSuivante && (() => { setLessonId(leconSuivante.id); window.scrollTo({ top: 0 }); })} />;
   } else if (tab === 'apprendre') {
     screen = <LearnHome progress={progress} onOpen={setLessonId} sync={syncState} />;
   } else if (tab === 'problemes') {
-    screen = <Puzzles db={supabase} userId={session?.user.id} sessionLoading={session === undefined} confirmTouch={settings.confirmTouch} />;
+    screen = <Puzzles db={supabase} userId={session?.user.id} sessionLoading={session === undefined} confirmTouch={settings.confirmTouch} onCompte={() => go('profil')} />;
   } else if (tab === 'profil') {
     screen = (
       <div>

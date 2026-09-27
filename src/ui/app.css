@@ -86,27 +86,11 @@ h2 { font-size: var(--fs-xl); font-weight: var(--fw-bold); line-height: var(--lh
 .feedback.good { background: color-mix(in srgb, var(--accent) 16%, var(--surface)); }
 .feedback.bad { background: color-mix(in srgb, var(--danger) 16%, var(--surface)); }
 
-/* ---------- Chemin de pierres (Apprendre, Problèmes) : des pierres de gué, pas des cartes ---------- */
-.path { list-style: none; padding: 0; margin: 0; }
-.path li { display: flex; align-items: center; gap: 14px; }
-.path li + li { margin-top: 4px; }
-.path li:nth-child(even) { padding-left: 44px; }
-.path button { display: flex; align-items: center; gap: 14px; flex: 1; text-align: left; background: transparent; border: 0; border-radius: var(--radius); padding: 8px 14px 8px 8px; min-height: 60px; }
-.path button:active { background: var(--surface); }
-.path .next button { background: var(--surface); }
-.path .pebble { width: var(--cible-min); height: var(--cible-min); border-radius: 50%; display: grid; place-items: center; font-family: var(--font-titre); font-weight: var(--fw-titre); background: var(--surface-2); color: var(--text); flex: 0 0 auto; }
-.path .done .pebble { background: var(--accent); color: var(--on-accent); }
-.path .next .pebble { box-shadow: 0 0 0 3px var(--recompense); }
-.path b { display: block; font-family: var(--font-titre); font-weight: var(--fw-bold); letter-spacing: -0.01em; font-size: var(--fs-l); line-height: 1.25; }
-.path small { color: var(--muted); }
-
 table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
 td, th { padding: 8px 4px; border-bottom: 1px solid var(--line); text-align: right; }
 td:first-child, th:first-child { text-align: left; }
 .big { font-size: var(--fs-2xl); font-weight: var(--fw-titre); margin: var(--space-1) 0; line-height: var(--lh-titre); font-variant-numeric: tabular-nums; }
 .back { background: none; border: 0; color: var(--muted); padding: 6px 0; min-height: var(--cible-min); }
-.choices { display: flex; gap: var(--space-2); margin-top: 10px; }
-.choices button { flex: 1; min-height: 52px; font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: var(--fs-l); background: var(--surface); border: 2px solid transparent; border-radius: var(--radius-s); }
 
 /* Accueil : voir src/ui/accueil.css (issue #40, phase 4). */
 .lien { background: none; border: 0; color: var(--text); font-weight: var(--fw-bold); min-height: var(--cible-min); min-width: var(--cible-min); padding: 0 12px; border-radius: 10px;
