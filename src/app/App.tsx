@@ -1,16 +1,17 @@
 import { useState } from 'react';
 import { Game } from './Game';
-import { Account } from './Account';
 import { LearnHome, LessonPlayer } from './Learn';
 import { LESSONS } from '../content/lessons';
 import { Puzzles } from './Puzzles';
-import { readLocal, useLessonProgress, useSerie, useSession } from './hooks';
+import { readLocal, useLessonProgress, useProfil, useSerie, useSession } from './hooks';
 import { supabase } from '../data/supabase';
 import { useSettings, useStored } from './settings';
 import { Bubble } from '../ui/Mochi';
 import { Sceau } from '../ui/Sceau';
 import { OPPONENTS, type OpponentId } from '../engine';
-import { ConsentBanner, Confidentialite } from './Confidentialite';
+import { ConsentModal } from './Confidentialite';
+import { Profil, type VueProfil } from './Profil';
+import { fenetreVisible, useConsentement } from './consentement';
 import { accueil, adversaireOuvert, echelle, introBut, INTRO_KEY, PARTIES_KEY, type Parties } from './home';
 import { Accueil } from './Accueil';
 import { BASE_PUZZLES } from '../content/puzzles';
@@ -63,6 +64,11 @@ export function App() {
   const [partie, setPartie] = useState(0); // change à chaque partie pour repartir d'un plateau vide
   const home = accueil(parties, done, adv, settings.size);
   const leconConseillee = LESSONS.find(l => (progress[l.id] ?? 0) < l.steps.length);
+  // Profil (issue #50) : sous-vue ouverte, et fenêtre de consentement fermée avec Échap pendant cette session.
+  const [vueProfil, setVueProfil] = useState<VueProfil>('menu');
+  const [accordIgnore, setAccordIgnore] = useState(false);
+  const consent = useConsentement();
+  const profil = useProfil(supabase);
 
   function lancer(mode: 'ordi' | 'deux', contre: OpponentId = adv.id) {
     // Première partie contre l'ordi : Mochi explique le but, une seule fois.
@@ -106,7 +112,7 @@ export function App() {
     };
   }
 
-  const go = (t: Tab) => { setTab(t); setPlaying(false); setLessonId(null); window.scrollTo({ top: 0 }); };
+  const go = (t: Tab) => { setTab(t); setPlaying(false); setLessonId(null); setVueProfil('menu'); window.scrollTo({ top: 0 }); };
 
   const enPartie = tab === 'jouer' && !!playing;
   let screen;
@@ -129,36 +135,7 @@ export function App() {
   } else if (tab === 'problemes') {
     screen = <Puzzles db={supabase} userId={session?.user.id} sessionLoading={session === undefined} confirmTouch={settings.confirmTouch} onCompte={() => go('profil')} />;
   } else if (tab === 'profil') {
-    screen = (
-      <div>
-        <h2 style={{ marginTop: 0 }}>Réglages</h2>
-        <p className="muted small">Thème</p>
-        <div className="seg">
-          {(['auto', 'dark', 'light'] as const).map(t => <button key={t} aria-pressed={settings.theme === t} onClick={() => set({ theme: t })}>{t === 'auto' ? 'Automatique' : t === 'dark' ? 'Encre' : 'Papier'}</button>)}
-        </div>
-        <p className="muted small">Au doigt, confirmer chaque coup par une seconde touche</p>
-        <div className="seg">
-          <button aria-pressed={settings.confirmTouch} onClick={() => set({ confirmTouch: true })}>Oui</button>
-          <button aria-pressed={!settings.confirmTouch} onClick={() => set({ confirmTouch: false })}>Non</button>
-        </div>
-        <p className="muted small">Sons</p>
-        <div className="seg" role="group" aria-label="Sons">
-          <button aria-pressed={settings.sound} onClick={() => set({ sound: true })}>Activés</button>
-          <button aria-pressed={!settings.sound} onClick={() => set({ sound: false })}>Coupés</button>
-        </div>
-        <p className="muted small">Célébrations après une victoire (confettis, carillon, vibration)</p>
-        <div className="seg" role="group" aria-label="Célébrations">
-          <button aria-pressed={settings.celebrations} onClick={() => set({ celebrations: true })}>Activées</button>
-          <button aria-pressed={!settings.celebrations} onClick={() => set({ celebrations: false })}>Coupées</button>
-        </div>
-        <h2>Ton compte</h2>
-        <Account />
-        <h2>Confidentialité</h2>
-        <Confidentialite />
-        <h2>Bientôt</h2>
-        <div className="card">Parties en ligne contre des joueurs de ton niveau.</div>
-      </div>
-    );
+    screen = <Profil vue={vueProfil} onVue={setVueProfil} settings={settings} set={set} profil={profil} serie={serie} />;
   } else {
     const daily = puzzleOfDay(PROBLEMES_LOCAUX, new Date());
     const rangLecon = leconConseillee ? LESSONS.indexOf(leconConseillee) + 1 : 0;
@@ -183,11 +160,13 @@ export function App() {
             ? serie > 0 && <p className="serie" role="img" aria-label={`Série de ${serie} jour${serie > 1 ? 's' : ''}`}><Flamme />{serie}</p>
             : <p>{tab === 'jouer' ? 'Jouer' : tab === 'apprendre' ? 'Le chemin des leçons' : tab === 'problemes' ? 'Problèmes' : 'Profil'}</p>}
         </header>}
-        {!playing && !lesson && <ConsentBanner onMore={() => go('profil')} />}
         {screen}
       </main>
       {/* Pendant une partie, comme chez chess.com : pas de barre de navigation, « ‹ » ramène à l'accueil. */}
       {!enPartie && <BarreNav actif={tab} onChoisir={go} />}
+      <ConsentModal visible={fenetreVisible({ consent, ignoree: accordIgnore, enPartie, surConditions: tab === 'profil' && vueProfil === 'conditions' })}
+        onConditions={() => { go('profil'); setVueProfil('conditions'); }} onIgnorer={() => setAccordIgnore(true)} />
+
     </>
   );
 }

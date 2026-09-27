@@ -28,6 +28,9 @@ export default defineConfig({
     baseURL: `http://localhost:${PORT}`,
     trace: 'on-first-retry',
     locale: 'fr-FR',
+    // Fenêtre de consentement (issue #50) : déjà répondue pour les parcours qui ne la testent pas.
+    // e2e/confidentialite.spec.ts repart d'un stockage vide pour la tester.
+    storageState: { cookies: [], origins: [{ origin: `http://localhost:${PORT}`, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }] }] },
   },
   projects: [
     {

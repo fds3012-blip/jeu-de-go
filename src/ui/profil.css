@@ -1,0 +1,94 @@
+/*
+ * Profil court, page Conditions et fenêtre de consentement (issue #50).
+ * Le Profil tient en 390 × 844 sans défiler : une carte d'identité, des lignes de 48 px, pas de paragraphe.
+ */
+
+/* ---------- Carte d'identité ---------- */
+.identite { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); background: var(--surface); border-radius: var(--radius); }
+.identite .avatar, .identite .stone { width: 48px; height: 48px; flex: none; }
+.identite .avatar { font-size: 22px; background: var(--surface-2); }
+.identite-texte { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.identite-texte b { font-family: var(--font-titre); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre); font-size: var(--fs-xl); line-height: 1.15;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.identite-texte span { color: var(--muted); font-size: var(--fs-s); line-height: 1.35; }
+.identite-serie { display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px 6px 10px; border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--or) 16%, transparent); color: var(--recompense-texte);
+  font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: 1.05rem; line-height: 1; }
+
+.profil h2 { margin: var(--space-6) 0 var(--space-2); font-size: var(--fs-l); font-weight: var(--fw-titre); }
+
+/* ---------- Lignes : un bloc groupé, filets entre les lignes ---------- */
+.lignes { background: var(--surface); border-radius: var(--radius); overflow: hidden; }
+.lignes + .lignes { margin-top: var(--space-4); }
+.ligne { display: flex; align-items: center; gap: var(--space-3); width: 100%; min-height: var(--cible-bouton); padding: 4px var(--space-4);
+  background: none; border: 0; color: var(--text); text-align: left; font: inherit; }
+.ligne + .ligne { box-shadow: inset 0 1px 0 var(--line); }
+button.ligne:active { background: var(--surface-2); }
+button.ligne:focus-visible { outline-offset: -3px; }
+.ligne-texte { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.ligne-libelle { font-weight: var(--fw-medium); line-height: 1.25; }
+.ligne > .ligne-libelle { flex: 1; min-width: 0; }
+.ligne-aide { color: var(--muted); font-size: var(--fs-xs); line-height: 1.3; }
+.ligne-valeur { color: var(--muted); font-size: var(--fs-s); max-width: 45%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chevron { width: 16px; height: 16px; flex: none; fill: none; stroke: var(--muted); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Choix segmenté dans une ligne : la ligne fait 48 px, chaque segment 44 px (cible tactile). */
+.ligne-choix { padding-right: 6px; }
+.ligne-choix .seg { flex: none; padding: 2px; background: var(--bg); }
+.ligne-choix .seg button { min-height: var(--cible-min); min-width: var(--cible-min); padding: 0 12px; font-size: var(--fs-s); }
+
+/* Interrupteur : piste et pastille. Allumé = jade ; l'état se lit aussi à la position de la pastille. */
+.interrupteur { flex: none; width: 46px; height: 28px; border-radius: var(--radius-pill); background: var(--surface-2); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--muted) 70%, transparent);
+  display: flex; align-items: center; padding: 3px; }
+.interrupteur span { width: 22px; height: 22px; border-radius: 50%; background: var(--muted); }
+/* Bord jade foncé : la piste allumée garde 3:1 sur la surface claire comme sur la sombre. */
+[aria-checked="true"] .interrupteur { background: var(--accent); box-shadow: inset 0 0 0 1.5px var(--accent-bord); }
+[aria-checked="true"] .interrupteur span { background: var(--blanc); transform: translateX(18px); }
+@media (prefers-reduced-motion: no-preference) {
+  .interrupteur, .interrupteur span { transition: background-color var(--duree) var(--ease), transform var(--duree) var(--ease); }
+}
+
+/* ---------- Sous-vues (Mon compte, Conditions) ---------- */
+.retour { display: inline-flex; align-items: center; gap: 2px; margin: -6px 0 0 -8px; padding: 0 12px 0 4px; font-weight: var(--fw-medium); }
+.retour svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.sous-vue h2 { margin: var(--space-2) 0 var(--space-4); font-size: var(--fs-2xl); font-weight: var(--fw-titre); }
+.conditions-texte { margin-top: var(--space-6); }
+.conditions-texte h3 { margin: 0; font-size: var(--fs-m); font-weight: var(--fw-bold); }
+.conditions-texte p { margin: 4px 0 0; line-height: 1.5; }
+.conditions-texte p + p { margin-top: 6px; }
+
+/* ---------- Fenêtre de consentement : carte centrée sur un voile d'encre ---------- */
+.accord { width: min(358px, calc(100% - 2 * var(--gouttiere))); max-width: none; max-height: calc(100dvh - 32px); margin: auto; padding: 0; border: 0; overflow: auto;
+  border-radius: 22px; background: var(--surface); color: var(--text); --sceau-socle: var(--surface); box-shadow: 0 24px 48px -20px rgba(0, 0, 0, .6); }
+.accord::backdrop { background: rgba(12, 10, 8, .78); }
+.accord-corps { padding: var(--space-6) var(--space-5) var(--space-5); display: flex; flex-direction: column; align-items: flex-start; }
+.accord h2:focus { outline: none; }
+.accord h2 { margin: var(--space-4) 0 var(--space-2); font-size: 1.6rem; font-weight: var(--fw-titre); line-height: var(--lh-titre); text-wrap: balance; }
+.accord p { margin: 0; color: var(--muted); line-height: 1.45; }
+.accord-conditions { margin: var(--space-2) 0 0 -12px; }
+.accord-actions { align-self: stretch; display: grid; gap: calc(var(--space-2) + var(--relief)); margin-top: var(--space-4); }
+.accord-actions .btn { width: 100%; }
+/* Refuser : même taille tactile qu'Accepter, sans relief ni couleur. */
+.accord .accord-refuser { min-height: var(--cible-cta); background: transparent; box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--muted) 70%, transparent); color: var(--text); }
+
+/* Entrée et sortie (fenêtre rare, vue une fois) : fondu et léger zoom, 200 ms, courbe de sortie des jetons. */
+@media (prefers-reduced-motion: no-preference) {
+  .accord, .accord::backdrop {
+    transition: opacity var(--duree) var(--ease), transform var(--duree) var(--ease),
+      overlay var(--duree) var(--ease) allow-discrete, display var(--duree) var(--ease) allow-discrete;
+  }
+  .accord:not([open]) { opacity: 0; transform: scale(.96); }
+  .accord:not([open])::backdrop { opacity: 0; }
+  @starting-style {
+    .accord[open] { opacity: 0; transform: scale(.96); }
+    .accord[open]::backdrop { opacity: 0; }
+  }
+}
+/* Mouvements réduits : un simple fondu, sans déplacement. */
+@media (prefers-reduced-motion: reduce) {
+  .accord, .accord::backdrop { transition: opacity 150ms linear, overlay 150ms allow-discrete, display 150ms allow-discrete; }
+  .accord:not([open]), .accord:not([open])::backdrop { opacity: 0; }
+  @starting-style {
+    .accord[open], .accord[open]::backdrop { opacity: 0; }
+  }
+}
