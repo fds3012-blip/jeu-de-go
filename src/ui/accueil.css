@@ -19,7 +19,7 @@
 
 /* ---------- Mise en page : une colonne qui remplit l'écran au-dessus de la barre de navigation ---------- */
 .app.app-home { display: flex; flex-direction: column; min-height: calc(100dvh - env(safe-area-inset-top, 0px));
-  padding-bottom: calc(var(--nav-h) + var(--space-3) + env(safe-area-inset-bottom, 0px)); }
+  padding-bottom: calc(max(var(--nav-h), 3.75rem) + var(--space-3) + env(safe-area-inset-bottom, 0px)); } /* #121 : 3.75rem = 60 px en taille normale ; suit la barre du bas quand le texte est agrandi */
 .app-home .top { margin-bottom: var(--space-3); }
 .accueil { flex: 1; display: flex; flex-direction: column; container-type: inline-size; }
 
@@ -35,7 +35,8 @@
 .adversaire { display: flex; align-items: center; gap: 12px; margin-top: var(--space-2); }
 .adversaire .portrait { filter: drop-shadow(0 4px 8px rgba(0, 0, 0, .25)); }
 .adversaire-texte { min-width: 0; flex: 1; }
-.adversaire-identite { display: flex; align-items: baseline; gap: 10px; }
+.adversaire-identite { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 10px; } /* #121 */
+.adversaire-identite h2 { overflow-wrap: anywhere; min-width: 0; }
 .adversaire-identite h2 { margin: 0; font-size: 1.75rem; font-weight: var(--fw-titre); line-height: 1.1; }
 .adversaire-identite span { color: var(--muted); }
 /* La réplique, texte simple : elle accompagne le bouton, elle n'en est pas un second. */
