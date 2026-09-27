@@ -9,8 +9,8 @@ test('problèmes sans compte : erreur, bonne réponse, suite et problème suivan
   await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
 
   await expect(page.getByRole('heading', { name: /^Go du jour n°\s\d+$/ })).toBeVisible();
-  // Le Go du jour mis en scène, puis la grille des 18 problèmes (6 de base et 12 de l'issue #16).
-  await expect(page.getByRole('button', { name: /^Problème \d+ : / })).toHaveCount(18);
+  // Le Go du jour mis en scène, puis la grille des problèmes (au moins les 18 de #11 et #16 ; les lots de #91 s'y ajoutent).
+  expect(await page.getByRole('button', { name: /^Problème \d+ : / }).count()).toBeGreaterThanOrEqual(18);
   await expect(page.getByRole('button', { name: 'Résoudre le Go du jour' })).toBeVisible();
   const debord = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(debord).toBeLessThanOrEqual(0);
@@ -33,7 +33,8 @@ test('problèmes sans compte : erreur, bonne réponse, suite et problème suivan
   await attendrePierre(page, 'E5', 'noir');
 
   await page.getByRole('button', { name: 'Problème suivant' }).click();
-  await expect(page.getByRole('heading', { name: 'Vers le bord' })).toBeVisible();
+  // Les problèmes sont rangés par difficulté (#91) : après b1 (400) vient b4 (400), « Sauve ta pierre ».
+  await expect(page.getByRole('heading', { name: 'Sauve ta pierre' })).toBeVisible();
 
   // Le problème réussi reste coché après rechargement.
   await page.reload();
