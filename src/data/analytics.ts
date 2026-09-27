@@ -29,6 +29,8 @@ export const EVENTS = {
   goDuJourResolu: 'go_du_jour_resolu',
   goDuJourPartage: 'go_du_jour_partage',
   arriveeParPartage: 'arrivee_par_partage',
+  // « Rejoue tes erreurs » (issue #77) : une erreur de la revue rejouée comme problème (premier essai).
+  erreurRejouee: 'erreur_rejouee',
 } as const;
 export type AnalyticsEvent = (typeof EVENTS)[keyof typeof EVENTS];
 export type Props = Record<string, string | number | boolean | null | undefined>;

@@ -22,6 +22,7 @@ import { EVENTS, track } from '../data/analytics';
 import { prefersReducedMotion, readLocal, useOnline, writeLocal } from './hooks';
 import { legendeSerie, niveau, suivant } from './problemes';
 import { SERIE_KEY, numeroDuJour, problemeDuNumero, serieApres, serieVivante, textePartage, type Serie } from './goDuJour';
+import { MesErreurs } from '../ui/MesErreurs';
 import '../ui/apprendre.css';
 
 const LOCAL_PUZZLES = parsePuzzles(ALL_PUZZLES);
@@ -190,6 +191,7 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
         </section>
       )}
 
+      <MesErreurs confirmTouch={confirmTouch} Lecteur={PuzzlePlayer} />
       <section aria-labelledby="bases-titre">
         <h2 id="bases-titre" className="titre-pierres">Les bases</h2>
         <p className="muted small bases-aide">{fr('Une pierre est en ')}<b>atari</b>{fr(' quand il ne lui reste qu’une liberté : elle peut être prise au prochain coup.')}</p>
