@@ -1,7 +1,9 @@
 // Confettis de victoire (docs/design/v2/direction.md, section 5) : canvas maison, sans dépendance.
 // Petites pierres (ardoise et coquillage) et éclats jade, or, hanko et papier, pendant 1,5 s.
 // Le parent ne le monte que si les célébrations sont activées et que les mouvements ne sont pas réduits.
-import { useEffect, useRef } from 'react';
+// Par sécurité, avec les mouvements réduits le composant ne rend rien et ne calcule rien : il appelle seulement `onFin`.
+import { useEffect, useRef, useState } from 'react';
+import { mouvementsReduits } from './defilement';
 
 const COULEURS = ['#3CC48E', '#EFB84A', '#D2432C', '#F3EDE3'];
 const GRAVITE = 1100; // px/s²
@@ -62,8 +64,10 @@ interface Props {
 export function Confettis({ origine, duree = 1500, onFin }: Props) {
   const ref = useRef<HTMLCanvasElement>(null);
   const fin = useRef(onFin);
+  const [reduit] = useState(mouvementsReduits);
   useEffect(() => { fin.current = onFin; });
   useEffect(() => {
+    if (reduit) { fin.current?.(); return; }
     const cv = ref.current, g = cv?.getContext('2d');
     if (!cv || !g) { fin.current?.(); return; }
     const L = window.innerWidth, H = window.innerHeight, dpr = Math.min(2, window.devicePixelRatio || 1);
@@ -102,5 +106,6 @@ export function Confettis({ origine, duree = 1500, onFin }: Props) {
     raf = requestAnimationFrame(image);
     return () => cancelAnimationFrame(raf);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  if (reduit) return null;
   return <canvas ref={ref} className="confettis" aria-hidden="true" data-testid="confettis" />;
 }

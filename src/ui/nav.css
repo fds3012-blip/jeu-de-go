@@ -48,7 +48,7 @@
   .nav .onglet[aria-current="page"] .onglet-point { animation: nav-point var(--duree-pose) var(--ease) both; }
 }
 @keyframes nav-pose { from { transform: scale(1.15); } to { transform: scale(1); } }
-@keyframes nav-point { from { transform: scale(.4); } to { transform: scale(1); } }
+@keyframes nav-point { from { transform: scale(.8); } to { transform: scale(1); } }
 
 /* ---------- Indicateur d'attente : deux pierres qui tournent ---------- */
 .reflexion { display: inline-block; flex: none; vertical-align: middle; }

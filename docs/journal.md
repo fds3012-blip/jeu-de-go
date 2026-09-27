@@ -208,3 +208,11 @@ Chaque livraison : issue traitée, agent, pull request, résultat des vérificat
 - **Questions en attente** :
   - l'adresse de contact RGPD ;
   - la fenêtre de consentement : au premier lancement, ou après la première partie ?
+
+## #62 Mouvement : les restes de l'audit (frontend)
+
+- **Feuille « Changer »** : elle entre par une transition qu'on peut interrompre (200 ms) et sort en 160 ms. Avec les mouvements réduits, elle apparaît et disparaît par un simple fondu.
+- **Confettis** : ils ne sont plus ni affichés ni calculés quand les mouvements sont réduits.
+- **Point de l'onglet** : il part de `scale(.8)`.
+- **Vérifications** : 392 tests unitaires et 45 tests e2e verts.
+- **Reste à vérifier sur un vrai téléphone** : la courbe des pierres prises qui partent vers les couvercles.
