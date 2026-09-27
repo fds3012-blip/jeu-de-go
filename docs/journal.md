@@ -164,3 +164,15 @@ Chaque livraison : issue traitée, agent, pull request, résultat des vérificat
 - Skills appliquées : icon-system, animate, mobile-pro-rules.
 - Vérifications : 385 tests unitaires et 44 tests e2e verts.
 - Suite : le mot « Sombre » est coupé dans le choix du thème du Profil. C'est à corriger dans la boucle d'amélioration.
+
+## #54 Apprendre : un chemin qui donne envie (designer)
+
+- Le chemin est posé sur un goban dessiné à l'encre, chaque leçon étant une pierre sur une intersection :
+  - leçon faite : pierre noire pleine ;
+  - leçon en cours : pierre claire translucide, cerclée de jade, qui respire ;
+  - leçon à venir : pierre fantôme.
+- Le tracé parcouru est en or, et chaque leçon a son sceau jade.
+- Le bouton en relief est unique, sous la leçon en cours.
+- Fin de leçon : le sceau s'imprime, puis la pierre se pose avec le claquement, en moins de 600 ms. Carillon et confettis seulement en fin de chapitre, si les célébrations sont activées.
+- Retouche après ma revue : en mode sombre, la pierre « en cours » se confondait avec une leçon faite.
+- Vérifications : 389 tests unitaires et 45 tests e2e verts.
