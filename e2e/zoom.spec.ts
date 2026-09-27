@@ -78,15 +78,10 @@ for (const c of CAS) {
 
       await onglet(page, 'Profil').click();
       await expect(page.getByRole('heading', { name: 'Réglages' })).toBeVisible();
-      // Reste à faire (#121) : à 195 px, l'en-tête du Profil (.identite, .vitrine) déborde encore de ~50 px.
-      if (c.largeur >= 320) await sansDebord(page, 'Profil');
-      else test.info().annotations.push({ type: 'fixme', description: 'Profil : .identite et .vitrine débordent sous 320 px' });
+      await sansDebord(page, 'Profil');
     });
 
     test('apprendre et leçon 1 sans défilement horizontal', async ({ page }) => {
-      // Reste à faire (#121) : à 195 px, le chemin de pierres place ses pierres à des décalages fixes en px
-      // depuis le milieu (Learn.tsx, --x) ; il faut les mettre à l'échelle de la largeur disponible.
-      test.fixme(c.largeur < 320, 'chemin de pierres trop large sous 320 px');
       await page.goto('/');
       await onglet(page, 'Apprendre').click();
       await expect(page.getByRole('button', { name: 'Commencer' })).toBeVisible();
