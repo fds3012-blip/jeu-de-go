@@ -44,6 +44,20 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
+describe('choix mémorisé sans stockage (issue #50)', () => {
+  it('localStorage bloqué : le choix vaut pour la session, la fenêtre ne revient pas', () => {
+    vi.stubGlobal('window', {});
+    vi.stubGlobal('document', {});
+    vi.stubGlobal('localStorage', { getItem: () => { throw new Error('bloqué'); }, setItem: () => { throw new Error('bloqué'); } });
+    const vu = vi.fn();
+    A.subscribeConsent(vu);
+    expect(A.getConsent()).toBeNull();
+    A.setConsent('refuse');
+    expect(A.getConsent()).toBe('refuse');
+    expect(vu).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe('hors navigateur', () => {
   it('track, initAnalytics, setConsent et captureError sont sans effet', async () => {
     withKeys();

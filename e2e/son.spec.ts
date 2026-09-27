@@ -50,7 +50,7 @@ test('sons coupés dans le Profil : aucun contexte audio créé', async ({ page 
   await page.addInitScript(() => localStorage.setItem('go.settings.v1', JSON.stringify({ sound: false })));
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Profil' }).click();
-  await expect(page.getByRole('button', { name: 'Coupés' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('switch', { name: 'Sons' })).toHaveAttribute('aria-checked', 'false');
   await page.getByRole('navigation').getByRole('button', { name: 'Jouer' }).click();
   await lancerADeux(page);
   await jouer(page, 'E5');

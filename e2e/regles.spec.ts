@@ -98,7 +98,8 @@ test('au doigt, il faut toucher deux fois pour confirmer un coup', async ({ page
 test('au doigt, sans confirmation dans le Profil, une touche suffit', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Profil' }).click();
-  await page.getByRole('button', { name: 'Non' }).click();
+  await page.getByRole('switch', { name: /^Confirmer au doigt/ }).click();
+  await expect(page.getByRole('switch', { name: /^Confirmer au doigt/ })).toHaveAttribute('aria-checked', 'false');
   await page.getByRole('navigation').getByRole('button', { name: 'Jouer' }).click();
   await lancerADeux(page);
 
