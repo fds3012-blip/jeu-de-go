@@ -6,7 +6,7 @@
 // Pomme et Caillou utilisent le moteur simple (Monte-Carlo). Les 7 autres niveaux utilisent KataGo
 // dans un Web Worker ; s'il ne démarre pas (pas de Worker, pas de backend, réseau introuvable),
 // ils se replient sur le moteur simple, sans rien casser.
-import { chooseMove, isLegalMove, OPPONENTS, opponent, type EngineOptions, type KataGoLevel, type Opponent, type OpponentId, type Style } from './simple';
+import { chooseMove, chooseMoveDetail, gainDuCoup, isLegalMove, OPPONENTS, opponent, raisonFrontiere, raisonPoints, SEUIL_POINTS, type CoupExplique, type EngineOptions, type KataGoLevel, type Opponent, type OpponentId, type Raison, type Style } from './simple';
 import { comptageAuto, deadStones, groupesIncertains, ownership as ownershipSimple, type ComptageAuto, type DeadOptions } from './dead';
 import type { Position } from '../go/rules';
 import type { Rules } from '../go/score';
@@ -18,7 +18,10 @@ import { chooseFromAnalysis } from './katago/choose';
 import { CACHE_NAME, DEFAULT_MODEL_URL } from './katago/loader';
 import type { Analysis, AnalyzeOptions, MoveInfo } from './katago/search';
 
-export { OPPONENTS, opponent, chooseMove, deadStones, ownershipSimple };
+export { OPPONENTS, opponent, chooseMove, chooseMoveDetail, deadStones, ownershipSimple };
+// Réponse à la passe du joueur (#185) : seuil de points, gain d'un coup, raison affichable.
+export { SEUIL_POINTS, gainDuCoup };
+export type { CoupExplique, Raison };
 // Fin de partie (#159) : points encore à fermer, coup qui en ferme un, avance comptée comme au comptage.
 export { avanceEstimee, coupDeFermeture, frontieresOuvertes, mortesSelonPropriete, partieAvancee };
 export type { ComptageAuto, Opponent, OpponentId, EngineOptions, DeadOptions, KataGoLevel, Style, Analysis, AnalyzeOptions, MoveInfo, KataGoInfo };
@@ -56,14 +59,18 @@ function later<T>(f: () => T): Promise<T> {
   return new Promise(resolve => setTimeout(() => resolve(f()), 0));
 }
 
-async function simpleMove(pos: Position, lvl: Opponent, opts: EngineOptions): Promise<number> {
-  const sync = () => later(() => chooseMove(pos, lvl, opts));
+async function simpleMoveDetail(pos: Position, lvl: Opponent, opts: EngineOptions): Promise<CoupExplique> {
+  const sync = () => later(() => chooseMoveDetail(pos, lvl, opts));
   // Le Worker simple ne connaît que les identifiants : on lui passe les réglages du niveau en options.
   const niveau: OpponentId = lvl.katago ? 'caillou' : lvl.id;
   const q = ask({ kind: 'move', pos, niveau, opts: { timeMs: lvl.timeMs, playouts: lvl.playouts, ...opts } });
   if (!q) return sync();
   const r = await q;
-  return Number.isNaN(r.move) ? sync() : r.move;
+  return Number.isNaN(r.move) ? sync() : { move: r.move, raison: r.raison ?? null };
+}
+
+async function simpleMove(pos: Position, lvl: Opponent, opts: EngineOptions): Promise<number> {
+  return (await simpleMoveDetail(pos, lvl, opts)).move;
 }
 
 /** Pierres mortes proposées à l'entrée du comptage, calculées sans bloquer l'interface. */
@@ -148,27 +155,52 @@ export async function ownership(pos: Position, options: AnalyzeOptions = {}): Pr
 
 /** Coup de l'adversaire `niveau` pour le joueur au trait. Ne renvoie jamais un coup illégal (sinon passe). */
 export async function bestMove(pos: Position, niveau: OpponentId | Opponent, opts: EngineOptions = {}): Promise<number> {
+  return (await bestMoveExplique(pos, niveau, opts)).move;
+}
+
+/**
+ * Comme `bestMove`, avec la raison (#185) quand l'ordi joue au lieu de passer juste après la passe du joueur :
+ * `raison.texte` (« il reste une frontière à fermer en E4 », « il reste 3 points à prendre en E4 ») peut être affiché
+ * par l'écran. `opts.accommodant` (3 premières parties) : l'ordi passe dès que les frontières sont fermées.
+ */
+export async function bestMoveExplique(pos: Position, niveau: OpponentId | Opponent, opts: EngineOptions = {}): Promise<CoupExplique> {
   const lvl = typeof niveau === 'string' ? opponent(niveau) : niveau;
-  let move: number | null = null;
+  let coup: CoupExplique | null = null;
   const k = lvl.katago ? getKataGo() : null;
   if (lvl.katago && k) {
     try {
       // Plafond de 1,8 s par coup : l'objectif est une réponse en moins de 2 s.
       const a = await k.analyze(pos, { komi: opts.komi ?? 6.5, visits: lvl.katago.visits, timeMs: opts.timeMs ?? 1800 });
-      move = chooseFromAnalysis(a, pos, lvl.katago);
-      // Pas de passe tant qu'une frontière reste ouverte (#159) : on la ferme, de préférence avec un coup de KataGo.
-      if (move === -1 && lvl.fermeFrontieres && partieAvancee(pos.board)) {
-        const f = coupDeFermeture(pos, mortesSelonPropriete(pos, a.ownership), a.moves.map(m => m.move));
-        if (f >= 0) move = f;
-      }
+      coup = apresAnalyse(pos, lvl, opts, a, chooseFromAnalysis(a, pos, lvl.katago));
     } catch (e) {
-      move = null;
+      coup = null;
       if (!warned) { warned = true; console.warn('KataGo indisponible, repli sur le moteur simple :', e instanceof Error ? e.message : e); }
     }
   }
-  if (move === null) move = await simpleMove(pos, lvl, opts);
+  if (coup === null) coup = await simpleMoveDetail(pos, lvl, opts);
   // Garde-fou : un coup illégal devient une passe.
-  return isLegalMove(pos, move) ? move : -1;
+  return isLegalMove(pos, coup.move) ? coup : { move: -1, raison: null };
+}
+
+/** Politique de passe appliquée au coup choisi par KataGo (#159, #185). Mêmes règles que `chooseMoveDetail`. */
+function apresAnalyse(pos: Position, lvl: Opponent, opts: EngineOptions, a: Analysis, move: number): CoupExplique {
+  const avancee = partieAvancee(pos.board), PASSE: CoupExplique = { move: -1, raison: null };
+  const fermer = () => (lvl.fermeFrontieres && avancee ? coupDeFermeture(pos, mortesSelonPropriete(pos, a.ownership), [move, ...a.moves.map(m => m.move)]) : -1);
+  if (pos.lastMove !== -1) {
+    // Pas de passe tant qu'une frontière reste ouverte (#159) : on la ferme, de préférence avec un coup de KataGo.
+    const f = move === -1 ? fermer() : -1;
+    return f >= 0 ? { move: f, raison: raisonFrontiere(f, pos.size) } : { move, raison: null };
+  }
+  // Le joueur vient de passer (#185).
+  if (!avancee) return opts.accommodant ? PASSE : { move, raison: null };
+  const f = fermer();
+  if (f >= 0) return { move: f, raison: raisonFrontiere(f, pos.size) };
+  if (opts.accommodant || move === -1) return PASSE;
+  // Frontières fermées : KataGo compare lui-même le coup et la passe ; sans la passe dans ses candidats, on compte.
+  const lead = (m: number) => a.moves.find(x => x.move === m)?.lead;
+  const lp = lead(-1), lm = lead(move);
+  const gain = lp !== undefined && lm !== undefined ? lm - lp : gainDuCoup(pos, move);
+  return gain >= SEUIL_POINTS ? { move, raison: raisonPoints(move, gain, pos.size) } : PASSE;
 }
 
 /**

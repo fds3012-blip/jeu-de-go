@@ -23,6 +23,10 @@ describe('équilibrage des premières parties contre l’ordi (#160)', () => {
     expect([0, 1, 2, 3].map(r => equilibrage(r).avantage)).toEqual([false, true, true, true]);
   });
 
+  it('l’ordi passe quand tu passes pendant les 3 premières parties (#185)', () => {
+    expect([0, 1, 2, 3, 4].map(r => equilibrage(r).accommodant)).toEqual([true, true, true, false, false]);
+  });
+
   it('compteur : champ `ordi`, sinon `n` pour les anciens compteurs, jamais négatif', () => {
     expect(partiesOrdi({ n: 0 })).toBe(0);
     expect(partiesOrdi({ n: 5, ordi: 1 })).toBe(1);

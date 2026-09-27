@@ -4,6 +4,7 @@
 import { groupAt, neighbors, play, type Color, type Position } from '../go/rules';
 import { score } from '../go/score';
 import { coupDeFermeture, frontieresOuvertes, partieAvancee } from '../go/frontieres';
+import { toLabel } from '../go/coords';
 import { deadStones } from './dead';
 import { isEye, now, rng, Sim } from './sim';
 
@@ -58,7 +59,98 @@ export function opponent(id: OpponentId): Opponent {
   return OPPONENTS.find(o => o.id === id) ?? OPPONENTS[0];
 }
 
-export interface EngineOptions { komi?: number; seed?: number; timeMs?: number; playouts?: number }
+export interface EngineOptions {
+  komi?: number; seed?: number; timeMs?: number; playouts?: number;
+  /**
+   * Premières parties (#185, voir `accommodant` dans src/app/equilibrage.ts) : quand le joueur passe, l'ordi passe aussi,
+   * même s'il pourrait encore grappiller quelques points. Seule exception : une frontière ouverte, qu'il ferme d'abord.
+   */
+  accommodant?: boolean;
+}
+
+// ---------- Réponse à la passe du joueur (#185) ----------
+/**
+ * Gain minimal, en points, pour que l'ordi continue après la passe du joueur (hors parties accommodantes).
+ * Gain = avance comptée si l'ordi joue ce coup (pierres mortes réestimées, le joueur au trait) moins avance comptée
+ * s'il passe maintenant (la partie s'arrête), en points de surface : une pierre vivante prise vaut sa pierre et son point.
+ * Sous 2 points, ce n'est que du bruit d'estimation ou une pierre déjà morte qu'on retire ; à partir de 2,
+ * l'ordi prend vraiment quelque chose (au moins une pierre vivante), et on peut dire où.
+ */
+export const SEUIL_POINTS = 2;
+
+/** Pourquoi l'ordi joue au lieu de passer, en une phrase courte que l'écran peut afficher (« Pomme continue : … »). */
+export interface Raison {
+  motif: 'frontiere' | 'points';
+  /** Point joué (index y * N + x). */
+  point: number;
+  /** Gain estimé en points (motif « points »). */
+  gain?: number;
+  /** Par exemple « il reste une frontière à fermer en E4 » ou « il reste 3 points à prendre en E4 ». */
+  texte: string;
+}
+
+/** Coup de l'ordi (-1 = passe) et, s'il répond à une passe du joueur sans passer, la raison (sinon `null`). */
+export interface CoupExplique { move: number; raison: Raison | null }
+
+export function raisonFrontiere(point: number, size: number): Raison {
+  return { motif: 'frontiere', point, texte: `il reste une frontière à fermer en ${toLabel(point, size)}` };
+}
+
+export function raisonPoints(point: number, gain: number, size: number): Raison {
+  const n = Math.max(1, Math.round(gain));
+  return { motif: 'points', point, gain, texte: `il reste ${n === 1 ? 'un point' : `${n} points`} à prendre en ${toLabel(point, size)}` };
+}
+
+/**
+ * Simulations des pierres mortes pour mesurer un gain : nombre fixe (le résultat ne dépend pas de la vitesse de l'appareil,
+ * sinon un seki mal estimé sur un téléphone lent ferait jouer l'ordi pour rien), avec un plafond de temps large.
+ */
+const ESTIMATION_GAIN = { playouts: 400, timeMs: 1500 } as const;
+
+/** Position telle qu'elle serait comptée si le joueur au trait passait : l'adversaire au trait, plus de ko. */
+function apresPasse(pos: Position): Position {
+  return { ...pos, toPlay: (3 - pos.toPlay) as Color, ko: -1, lastMove: -1 };
+}
+
+/** Avance de `c` au comptage par surface, pierres `dead` retirées. */
+function avanceSurface(pos: Position, c: Color, dead: readonly number[]): number {
+  const s = score(pos, 0, 'chinese', new Set(dead));
+  return c === 1 ? s.black - s.white : s.white - s.black;
+}
+
+/**
+ * Points que rapporte le coup `m` au joueur au trait, par rapport à une passe qui finit la partie (voir SEUIL_POINTS).
+ * `mortesSiPasse` : pierres mortes si la partie s'arrête maintenant (par défaut, estimées). Estimation par simulations,
+ * l'adversaire au trait après le coup : une pierre posée chez lui est jugée morte (gain nul ou négatif), une vraie prise rapporte.
+ */
+export function gainDuCoup(pos: Position, m: number, opts: { seed?: number; timeMs?: number; mortesSiPasse?: readonly number[] } = {}): number {
+  const r = play(pos, m);
+  if (typeof r === 'string') return -Infinity;
+  const c = pos.toPlay, dOpts = { seed: opts.seed, ...ESTIMATION_GAIN, ...(opts.timeMs ? { timeMs: opts.timeMs } : {}) };
+  const avant = opts.mortesSiPasse ?? deadStones(apresPasse(pos), dOpts);
+  return avanceSurface(r, c, deadStones(r, dOpts)) - avanceSurface(pos, c, avant);
+}
+
+/**
+ * Après une passe du joueur, frontières fermées : le coup qui rapporte le plus s'il atteint SEUIL_POINTS, sinon la passe.
+ * On évalue les 3 coups préférés du moteur (`ordre`) et les prises immédiates, 5 coups au plus : la réponse reste rapide.
+ */
+export function coupQuiRapporte(pos: Position, ordre: readonly number[], seed?: number): CoupExplique {
+  const c = pos.toPlay, essais: number[] = [];
+  for (const m of ordre) {
+    if (essais.length >= 5) break;
+    if (essais.length < 3) { essais.push(m); continue; }
+    const r = play(pos, m);
+    if (typeof r !== 'string' && r.captures[c] > pos.captures[c]) essais.push(m);
+  }
+  const mortesSiPasse = deadStones(apresPasse(pos), { seed, ...ESTIMATION_GAIN });
+  let best = -1, gain = -Infinity;
+  for (const m of essais) {
+    const g = gainDuCoup(pos, m, { seed, mortesSiPasse });
+    if (g > gain) { gain = g; best = m; }
+  }
+  return best >= 0 && gain >= SEUIL_POINTS ? { move: best, raison: raisonPoints(best, gain, pos.size) } : { move: -1, raison: null };
+}
 
 interface Candidate { move: number; prior: number; wins: number; visits: number }
 
@@ -117,24 +209,46 @@ function settled(pos: Position, own: Int32Array, playouts: number): boolean {
 
 /** Choisit un coup (index y * N + x, -1 = passe) pour le joueur au trait. Synchrone. */
 export function chooseMove(pos: Position, niveau: OpponentId | Opponent, opts: EngineOptions = {}): number {
+  return chooseMoveDetail(pos, niveau, opts).move;
+}
+
+/**
+ * Comme `chooseMove`, avec la raison quand l'ordi ne passe pas juste après une passe du joueur (#185) :
+ * - partie avancée et frontière ouverte : il la ferme (« il reste une frontière à fermer en E4 ») ;
+ * - frontières fermées, partie accommodante : il passe ;
+ * - frontières fermées sinon : il ne joue que si un coup rapporte au moins SEUIL_POINTS (« il reste 3 points à prendre en E4 »).
+ * Début de partie (moins d'un quart du plateau couvert) : accommodant, il passe ; sinon il passe s'il se croit gagnant.
+ */
+export function chooseMoveDetail(pos: Position, niveau: OpponentId | Opponent, opts: EngineOptions = {}): CoupExplique {
   const lvl = typeof niveau === 'string' ? opponent(niveau) : niveau;
   const komi = opts.komi ?? 6.5, rand = rng(opts.seed), c = pos.toPlay;
+  const PASSE: CoupExplique = { move: -1, raison: null };
   // Avant de passer, un niveau qui ferme ses frontières joue un coup de fermeture s'il en reste un (#159).
   // `prefer` : coups du moteur, du meilleur au moins bon. Pierres mortes calculées seulement s'il y a une frontière.
   let morts: number[] | null = null;
   const mortes = () => (morts ??= deadStones(pos, { seed: opts.seed, timeMs: Math.min(150, opts.timeMs ?? 150) }));
-  const passer = (prefer: number[] = []): number => {
-    if (!lvl.fermeFrontieres || !partieAvancee(pos.board) || !frontieresOuvertes(pos.board, pos.size).length) return -1;
-    return coupDeFermeture(pos, mortes(), prefer);
+  const passer = (prefer: number[] = []): CoupExplique => {
+    if (!lvl.fermeFrontieres || !partieAvancee(pos.board) || !frontieresOuvertes(pos.board, pos.size).length) return PASSE;
+    const f = coupDeFermeture(pos, mortes(), prefer);
+    return f < 0 ? PASSE : { move: f, raison: raisonFrontiere(f, pos.size) };
   };
+
+  // Le joueur vient de passer (#185).
+  let viserGain = false;
+  if (pos.lastMove === -1) {
+    if (partieAvancee(pos.board)) {
+      const f = passer();
+      if (f.move >= 0 || opts.accommodant) return f;
+      viserGain = true; // frontières fermées : on ne continue que si un coup rapporte vraiment (voir après la recherche)
+    } else {
+      if (opts.accommodant) return PASSE;
+      const sc = score(pos, komi, 'chinese', new Set(mortes()));
+      if (sc.winner === c) return PASSE;
+    }
+  }
+
   const cands = candidates(pos, lvl.heuristiques);
   if (!cands.length) return passer();
-
-  // L'adversaire vient de passer : si le compte, pierres mortes estimées retirées, nous donne gagnant, on passe aussi.
-  if (pos.lastMove === -1) {
-    const sc = score(pos, komi, 'chinese', new Set(mortes()));
-    if (sc.winner === c) return passer();
-  }
 
   const size = pos.size, sim = new Sim(size), empties = new Int32Array(size * size);
   const budget = opts.timeMs ?? lvl.timeMs, maxPlayouts = opts.playouts ?? lvl.playouts, t0 = now();
@@ -159,16 +273,17 @@ export function chooseMove(pos: Position, niveau: OpponentId | Opponent, opts: E
 
   const rate = (a: Candidate) => a.wins / a.visits;
   cands.sort((a, b) => b.visits - a.visits || rate(b) - rate(a));
-  const top = cands[0];
+  if (viserGain) return coupQuiRapporte(pos, cands.map(a => a.move), opts.seed);
+  const top = cands[0], coup = (move: number): CoupExplique => ({ move, raison: null });
   // Partie terminée : plus rien d'utile à jouer, on passe.
   if (done >= 20 && settled(pos, own, done)) return passer(cands.map(a => a.move));
   // Part de hasard des niveaux faibles.
-  if (lvl.hasard > 0 && rand() < lvl.hasard) return cands[Math.floor(rand() * cands.length)].move;
+  if (lvl.hasard > 0 && rand() < lvl.hasard) return coup(cands[Math.floor(rand() * cands.length)].move);
   // Coups urgents (capture, sauvetage) : joués sauf si les simulations les jugent nettement moins bons.
   let urgent: Candidate | null = null;
   for (const a of cands) if (a.prior >= 4 && (!urgent || a.prior > urgent.prior)) urgent = a;
-  if (urgent && rate(urgent) >= rate(top) - 0.15) return urgent.move;
-  return top.move;
+  if (urgent && rate(urgent) >= rate(top) - 0.15) return coup(urgent.move);
+  return coup(top.move);
 }
 
 /** Vrai si le coup (ou la passe) est légal dans la position. */
