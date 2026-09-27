@@ -1,7 +1,9 @@
 // Onglet Profil (issue #50) : une carte d'identité, quatre réglages en lignes, deux liens. Tient sans défiler.
 import { Account } from './Account';
 import { Conditions } from './Confidentialite';
-import type { Settings } from './settings';
+import { choisirThemeGoban, useIdThemeGoban, type Settings } from './settings';
+import { lireXp, niveauDe, niveauRequis, themeDebloque } from './xp';
+import { ORDRE_THEMES, THEMES_GOBAN } from '../ui/boardArt';
 import { identite, texteSerie } from './identite';
 import { LigneChoix, LigneInterrupteur, LigneLien } from '../ui/Reglage';
 import { useMemo } from 'react';
@@ -91,16 +93,47 @@ function Menu({ onVue, settings, set, profil, serie }: Omit<Props, 'vue'>) {
       <h2>Réglages</h2>
       <div className="lignes">
         <LigneChoix libelle="Thème" options={THEMES} valeur={settings.theme} onChange={t => set({ theme: t })} />
+        <LigneGoban />
         <LigneInterrupteur libelle="Confirmer au doigt" aide="Une seconde touche pose la pierre." actif={settings.confirmTouch} onChange={v => set({ confirmTouch: v })} />
         <LigneInterrupteur libelle="Sons" actif={settings.sound} onChange={v => set({ sound: v })} />
         <LigneInterrupteur libelle="Célébrations" aide="Confettis et carillon quand tu gagnes." actif={settings.celebrations} onChange={v => set({ celebrations: v })} />
-        <LigneChoix libelle="Aide de Mochi en partie" options={AIDES} valeur={settings.aide} onChange={a => set({ aide: a })} />
+        <LigneChoix libelle="Aide de Mochi" options={AIDES} valeur={settings.aide} onChange={a => set({ aide: a })} />
       </div>
 
       <div className="lignes">
         <LigneLien libelle="Mon compte" valeur={profil?.pseudo ?? (profil ? undefined : 'Se connecter')} onClick={() => onVue('compte')} />
         <LigneLien libelle="Conditions et confidentialité" onClick={() => onVue('conditions')} />
       </div>
+    </div>
+  );
+}
+
+/**
+ * Thème du goban (#109) sur une seule ligne : quatre pastilles de 44 px. Un thème pas encore débloqué
+ * reste visible avec son niveau requis, pour donner envie sans rien cacher.
+ */
+function LigneGoban() {
+  const actuel = useIdThemeGoban();
+  const niveau = niveauDe(lireXp()).niveau;
+  return (
+    <div className="ligne ligne-choix ligne-goban" role="group" aria-label="Goban">
+      <span className="ligne-libelle" aria-hidden="true">Goban</span>
+      <span className="pastilles">
+        {ORDRE_THEMES.map(id => {
+          const t = THEMES_GOBAN[id], ouvert = themeDebloque(id, niveau), requis = niveauRequis(id);
+          return (
+            <button key={id} type="button" className="pastille" aria-pressed={actuel === id} aria-disabled={!ouvert || undefined}
+              aria-label={ouvert ? t.nom : `${t.nom}, débloqué au niveau ${requis}`} data-theme-goban={id}
+              onClick={() => { if (ouvert) choisirThemeGoban(id); }}>
+              <span className="pastille-bois" style={{ background: `radial-gradient(circle at 40% 35%, ${t.fond[0]}, ${t.fond[1]} 60%, ${t.fond[2]})` }}>
+                <span className="pastille-pierre" style={{ background: `radial-gradient(circle at 38% 32%, ${t.blanche[0]}, ${t.blanche[1]} 55%, ${t.blanche[3]})` }} />
+                <span className="pastille-ligne" style={{ background: t.ligne }} />
+              </span>
+              {!ouvert && <span className="pastille-niveau" aria-hidden="true">Niv. {requis}</span>}
+            </button>
+          );
+        })}
+      </span>
     </div>
   );
 }
