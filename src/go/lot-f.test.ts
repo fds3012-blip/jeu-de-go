@@ -22,7 +22,7 @@ const rowsOf = (setup: unknown) => (setup as { rows: string[] }).rows;
 
 /** Objectif de chaque problème : capturer les pierres blanches marquées, ou sauver les pierres noires marquées. */
 const GOAL: Record<string, 'capture' | 'sauve'> = {
-  f01: 'sauve', f02: 'capture', f03: 'capture', f04: 'capture', f05: 'capture', f06: 'capture', f07: 'capture', f08: 'capture'
+  f01: 'sauve', f02: 'capture', f03: 'capture', f04: 'capture', f05: 'capture', f06: 'capture', f07: 'capture', f08: 'capture', f09: 'capture'
 };
 
 describe('lot F : courses aux libertés, coupes et connexions', () => {
@@ -154,8 +154,8 @@ describe('chaque problème, coup par coup', () => {
     expect(captureWorks(j9, t)).toBe(false);
   });
 
-  it('f07 : sortie B5 puis libertés extérieures, la commune C1 en dernier', () => {
-    const p = pz('f07'), [t] = startOf(p).marked, { pos } = startOf(p), k = at('C2');
+  it('f08 : sortie B5 puis libertés extérieures, la commune C1 en dernier', () => {
+    const p = pz('f08'), [t] = startOf(p).marked, { pos } = startOf(p), k = at('C2');
     expect(libs(pos, t)).toBe(4);
     expect(libs(pos, k)).toBe(4);
     expect(groupAt(pos.board, 9, k).liberties.has(at('C1'))).toBe(true);
@@ -167,8 +167,8 @@ describe('chaque problème, coup par coup', () => {
     expect(captureWorks(a2, t)).toBe(false);
   });
 
-  it('f08 : l’œil E9 et la sortie B5 ; bloquer d’abord, puis A8 et A9', () => {
-    const p = pz('f08'), [t] = startOf(p).marked, { pos } = startOf(p), k = at('C8');
+  it('f09 : l’œil E9 et la sortie B5 ; bloquer d’abord, puis A8 et A9', () => {
+    const p = pz('f09'), [t] = startOf(p).marked, { pos } = startOf(p), k = at('C8');
     expect(libs(pos, t)).toBe(4);
     expect(libs(pos, k)).toBe(3);
     const b5 = ok(play(pos, at('B5')));
@@ -181,5 +181,17 @@ describe('chaque problème, coup par coup', () => {
     const a8 = seq(pos, 'A8', 'B5');
     expect(groupAt(a8.board, 9, t).stones).toContain(at('C5'));
     expect(captureWorks(a8, t)).toBe(false);
+  });
+
+  it('f07 : trois contre trois avec sortie H5 et liberté commune G1', () => {
+    const p = pz('f07'), [t] = startOf(p).marked, { pos } = startOf(p), k = at('G2');
+    expect(libs(pos, t)).toBe(3);
+    expect(libs(pos, k)).toBe(3);
+    const h5 = ok(play(pos, at('H5')));
+    expect(libs(h5, t)).toBe(2);
+    expect(seq(h5, 'E2', 'J1', 'E1', 'G1').board[t]).toBe(0);
+    const j1 = seq(pos, 'J1', 'H5');
+    expect(groupAt(j1.board, 9, t).stones).toContain(at('G5'));
+    expect(captureWorks(j1, t)).toBe(false);
   });
 });
