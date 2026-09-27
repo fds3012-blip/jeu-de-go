@@ -6,6 +6,7 @@ import { Puzzles } from './Puzzles';
 import { readLocal, useLessonProgress, useProfil, useSerie, useSession } from './hooks';
 import { supabase } from '../data/supabase';
 import { useSettings, useStored } from './settings';
+import { aideActive } from './partie';
 import { Bubble } from '../ui/Mochi';
 import { Sceau } from '../ui/Sceau';
 import { OPPONENTS, type OpponentId } from '../engine';
@@ -123,7 +124,7 @@ export function App() {
       <>
         <Game key={`${playing === 'ordi' ? adv.id : 'deux'}-${partie}`} size={settings.size} komi={KOMI} aiKomi={KOMI_ORDI} confirmTouch={settings.confirmTouch} opponent={playing === 'ordi' ? adv : undefined}
           intro={intro && playing === 'ordi' ? <Bubble>{introBut(adv.nom)}</Bubble> : undefined} onExit={() => { setIntro(false); setPlaying(false); setResultat(null); }}
-          onResult={onResult} fin={finEcran} celebrer={settings.celebrations} portrait={playing === 'ordi' ? <Sceau id={adv.id} taille={44} /> : undefined} />
+          onResult={onResult} fin={finEcran} celebrer={settings.celebrations} aide={aideActive(settings.aide, adv.id)} portrait={playing === 'ordi' ? <Sceau id={adv.id} taille={44} /> : undefined} />
       </>
     );
   } else if (tab === 'apprendre' && lesson) {

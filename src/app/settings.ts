@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { installAudioUnlock, setSoundEnabled } from '../ui/sound';
+import type { ReglageAide } from './partie';
 
-export interface Settings { theme: 'auto' | 'dark' | 'light'; confirmTouch: boolean; size: 9 | 13 | 19; sound: boolean; celebrations: boolean }
+// `aide` : « Aide de Mochi en partie » (#35). `auto` : contre Pomme et Caillou seulement.
+export interface Settings { theme: 'auto' | 'dark' | 'light'; confirmTouch: boolean; size: 9 | 13 | 19; sound: boolean; celebrations: boolean; aide: ReglageAide }
 const KEY = 'go.settings.v1';
-const DEFAULTS: Settings = { theme: 'auto', confirmTouch: true, size: 9, sound: true, celebrations: true };
+const DEFAULTS: Settings = { theme: 'auto', confirmTouch: true, size: 9, sound: true, celebrations: true, aide: 'auto' };
 
 function read(): Settings {
   try { return { ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY) || '{}') }; } catch { return DEFAULTS; }

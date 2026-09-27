@@ -34,7 +34,10 @@
   .board .partante.vers-couvercle { animation: go-vers-couvercle 280ms var(--ease) both; }
   /* Coup interdit : la pierre fantôme tremble (3 allers-retours de 4 px). */
   .board .tremble { animation: go-tremble 300ms ease-in-out both; }
+  /* Atari (#35) : la liberté restante clignote une fois pour attirer l'œil, puis reste affichée. */
+  .board .liberte { transform-box: fill-box; transform-origin: center; animation: go-liberte 700ms var(--ease) both; }
 }
+@keyframes go-liberte { 0% { transform: scale(.4); opacity: 0; } 35% { transform: scale(1.7); opacity: 1; } 60% { transform: scale(.9); opacity: .55; } to { transform: none; opacity: 1; } }
 /* Mouvements réduits : l'état final s'affiche directement, sans pierre qui part. */
 @media (prefers-reduced-motion: reduce) {
   .board .partante { display: none; }

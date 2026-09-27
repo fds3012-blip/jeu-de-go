@@ -13,6 +13,13 @@ const THEMES = [
   { valeur: 'auto', libelle: 'Auto' },
 ] as const;
 
+// Aide de Mochi en partie (#35) : « Débutants » = contre Pomme et Caillou seulement (par défaut).
+const AIDES = [
+  { valeur: 'auto', libelle: 'Débutants' },
+  { valeur: 'oui', libelle: 'Toujours' },
+  { valeur: 'non', libelle: 'Jamais' },
+] as const;
+
 interface Props {
   vue: VueProfil;
   onVue: (v: VueProfil) => void;
@@ -58,6 +65,7 @@ export function Profil({ vue, onVue, settings, set, profil, serie }: Props) {
         <LigneInterrupteur libelle="Confirmer au doigt" aide="Une seconde touche pose la pierre." actif={settings.confirmTouch} onChange={v => set({ confirmTouch: v })} />
         <LigneInterrupteur libelle="Sons" actif={settings.sound} onChange={v => set({ sound: v })} />
         <LigneInterrupteur libelle="Célébrations" aide="Confettis et carillon quand tu gagnes." actif={settings.celebrations} onChange={v => set({ celebrations: v })} />
+        <LigneChoix libelle="Aide de Mochi en partie" options={AIDES} valeur={settings.aide} onChange={a => set({ aide: a })} />
       </div>
 
       <div className="lignes">

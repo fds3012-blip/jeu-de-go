@@ -1,8 +1,59 @@
 import { describe, expect, it } from 'vitest';
-import { arrondiDemi, coupsJoues, groupesEnAtari, libelleAvantage, libelleCoup, metEnAtari, nouveauxAtari, partNoir } from './partie';
+import { aideActive, ALERTE_ATARI, arrondiDemi, coupsJoues, EXPLICATION_ATARI, groupesEnAtari, libelleAvantage, libelleCoup, messageAtari, metEnAtari, nouveauxAtari, partNoir } from './partie';
 import { choisirReplique, GENERIQUES, LONGUEUR_MAX, PERSONNELLES, repliques, type Situation } from './repliques';
 import { newPosition, play, type Position } from '../go/rules';
 import { fromLabel } from '../go/coords';
+import { fromRows } from '../go/position';
+
+describe("aide de Mochi : alerte d'atari (#35)", () => {
+  // Plateaux 5 × 5, y depuis le haut : l'index d'un point est y * 5 + x.
+  it("coin : la pierre noire du coin n'a plus qu'une liberté", () => {
+    const { pos } = fromRows(['X....', 'O....', '.....', '.....', '.....']);
+    expect(groupesEnAtari(pos.board, 5, 1)).toEqual([{ pierres: [0], liberte: 1 }]);
+    expect(groupesEnAtari(pos.board, 5, 2)).toEqual([]);
+  });
+
+  it('bord : une pierre du bord bloquée de deux côtés', () => {
+    const { pos } = fromRows(['.OXO.', '.....', '.....', '.....', '.....']);
+    expect(groupesEnAtari(pos.board, 5, 1)).toEqual([{ pierres: [2], liberte: 7 }]);
+  });
+
+  it('groupe de deux pierres : une seule liberté commune', () => {
+    const { pos } = fromRows(['OXX..', '.OO..', '.....', '.....', '.....']);
+    const [g, autre] = groupesEnAtari(pos.board, 5, 1);
+    expect(autre).toBeUndefined();
+    expect([...g.pierres].sort()).toEqual([1, 2]);
+    expect(g.liberte).toBe(3);
+  });
+
+  it("pas d'alerte avec deux libertés", () => {
+    const { pos } = fromRows(['.XX..', '.OO..', '.....', '.....', '.....']);
+    expect(groupesEnAtari(pos.board, 5, 1)).toEqual([]);
+  });
+
+  it('partie scriptée : une alerte à chaque nouvel atari, pas deux fois pour le même groupe', () => {
+    const h = suite(9, ['E5', 'D5', 'A1', 'F5', 'A2', 'E6']);
+    const alertes = h.slice(1).map((q, i) => nouveauxAtari(h[i].board, q.board, 9, 1).length);
+    expect(alertes).toEqual([0, 0, 0, 0, 0, 1]);
+    const noir = play(h[h.length - 1], fromLabel('J9', 9)) as Position;
+    const blanc = play(noir, fromLabel('J1', 9)) as Position;
+    expect(nouveauxAtari(noir.board, blanc.board, 9, 1)).toEqual([]);
+  });
+
+  it('message : avec explication la première fois, sans ensuite', () => {
+    expect(messageAtari(true)).toBe(`${ALERTE_ATARI} ${EXPLICATION_ATARI}`);
+    expect(messageAtari(false)).toBe("Atari ! Ton groupe n'a plus qu'une liberté. Sauve-le ou contre-attaque.");
+    expect(messageAtari(true)).toContain("Atari : il ne reste qu'une liberté, la pierre peut être prise au prochain coup.");
+  });
+
+  it('active par défaut contre Pomme et Caillou seulement, et réglable', () => {
+    expect(aideActive(undefined, 'pomme')).toBe(true);
+    expect(aideActive('auto', 'caillou')).toBe(true);
+    expect(aideActive('auto', 'bambou')).toBe(false);
+    expect(aideActive('oui', 'sensei')).toBe(true);
+    expect(aideActive('non', 'pomme')).toBe(false);
+  });
+});
 
 /** Joue une suite de coups affichés (« D5 », « passe ») depuis un plateau vide ; les couleurs alternent. */
 function suite(size: number, coups: string[]): Position[] {

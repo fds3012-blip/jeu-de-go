@@ -12,7 +12,7 @@ import { supabase } from '../data/supabase';
 import { fr } from '../ui/typo';
 import { useProfil } from './hooks';
 import { useStored } from './settings';
-import { coupsJoues, libelleAvantage, libelleCoup, metEnAtari, nouveauxAtari, partNoir } from './partie';
+import { coupsJoues, libelleAvantage, libelleCoup, messageAtari, metEnAtari, nouveauxAtari, partNoir } from './partie';
 import { choisirReplique, DUREE_REPLIQUE, type Situation } from './repliques';
 import { FinPartie } from '../ui/FinPartie';
 import { Sceau } from '../ui/Sceau';
@@ -40,9 +40,11 @@ interface Props {
   aiKomi?: number;
   /** Portrait de l'adversaire (44 px), par exemple son sceau. Par défaut : une pierre blanche. */
   portrait?: ReactNode;
+  /** Aide de Mochi en partie (contre l'ordi) : alerte d'atari et liberté montrée. Voir aideActive (partie.ts). */
+  aide?: boolean;
 }
 
-export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, onResult, fin, aiKomi = komi, portrait, celebrer = true }: Props) {
+export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, onResult, fin, aiKomi = komi, portrait, celebrer = true, aide = true }: Props) {
   const [history, setHistory] = useState<Position[]>(() => [newPosition(size)]);
   const [phase, setPhase] = useState<'play' | 'score' | 'end'>('play');
   const [dead, setDead] = useState<Set<number>>(new Set());
@@ -88,13 +90,13 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   function alerteAtari(avant: Position, apres: Position, c: 1 | 2, len: number): string | null {
     const g = nouveauxAtari(avant.board, apres.board, size, c);
     if (!g.length) return null;
+    // Contre l'ordi, l'alerte est l'aide de Mochi (#35) : active contre Pomme et Caillou, réglable dans le Profil.
+    if (ai && !aide) return null;
     setAtari({ len, libs: g.map(a => a.liberte) });
     if (ai) {
       const premiere = !atariExplique;
       if (premiere) setAtariExplique(true);
-      return premiere
-        ? `Atari ! Ton groupe n'a plus qu'une liberté, le point vert. On dit « atari » : si ${ai.nom} joue là, il capture ton groupe.`
-        : "Atari ! Ton groupe n'a plus qu'une liberté.";
+      return messageAtari(premiere);
     }
     return `Atari ! Un groupe ${c === 1 ? 'noir' : 'blanc'} n'a plus qu'une liberté, le point vert.`;
   }
