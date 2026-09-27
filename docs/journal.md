@@ -335,3 +335,14 @@ Chaque livraison : issue traitée, agent, pull request, résultat des vérificat
   - la série liée au compte ;
   - l'indicateur dans PostHog.
 - Aujourd'hui, le même problème revient tous les 6 jours. Les nouveaux problèmes (#16) allongeront ce cycle.
+
+## #71 Revue : une note pour chaque coup (moteur-go)
+
+- Chaque coup reçoit une note sous forme de sceau posé sur la pierre : !! Brillant, ★ Meilleur, ! Excellent, ✓ Bon ou Solide, ?! Imprécision, ? Erreur, ?? Grosse erreur. Chaque sceau a une couleur et un symbole dont le contraste atteint 4,5:1.
+- Le bilan donne la précision du joueur et de l'adversaire en %, le nombre de coups par catégorie et une phrase de Mochi.
+- Seuils de perte en points :
+  - avec KataGo : 0,5, 1,5, 3 et 6 ;
+  - sans KataGo : seuils élargis et courbe lissée, et jamais de note « Meilleur » ni « Brillant ».
+- « Brillant » demande une confirmation par une analyse longue. Il faut éviter tout faux positif.
+- Correction après ma revue : « Rejouer d'ici » recouvrait la liste des coups. Le Résumé s'affiche maintenant à la place du goban.
+- Reste : régler les seuils sur de vraies parties analysées par KataGo.
