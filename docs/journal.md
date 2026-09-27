@@ -176,3 +176,17 @@ Chaque livraison : issue traitée, agent, pull request, résultat des vérificat
 - Fin de leçon : le sceau s'imprime, puis la pierre se pose avec le claquement, en moins de 600 ms. Carillon et confettis seulement en fin de chapitre, si les célébrations sont activées.
 - Retouche après ma revue : en mode sombre, la pierre « en cours » se confondait avec une leçon faite.
 - Vérifications : 389 tests unitaires et 45 tests e2e verts.
+
+## #57 Passe de finition : Profil et fin de partie (designer)
+
+- Critique de chaque écran en sombre et en clair : Accueil, Partie, Fin de partie, Problèmes et Profil.
+- Corrigé :
+  - le mot « Sombre » coupé dans le choix du thème ;
+  - le lien « Ouvrir la leçon » passé à 44 px ;
+  - le bilan de défaite, dont la ligne se coupait mal ;
+  - l'alignement de l'avatar de Mochi.
+- Laissé en l'état, car ce sont des choix voulus ou des changements trop larges :
+  - l'espace au-dessus de l'adversaire en partie ;
+  - le titre de la barre du haut, qui répète l'onglet ;
+  - la bulle de Pomme qui chevauche le plateau.
+- Vérifications : 389 tests unitaires et 45 tests e2e verts.
