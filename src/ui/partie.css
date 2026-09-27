@@ -1,9 +1,17 @@
 /* Écran de partie v2 (docs/design/v2/direction.md, section 6 « Partie ») : grammaire de chess.com.
    Le goban occupe toute la largeur ; autour, tout reste calme : pas de cadre, pas de carte. */
 
-.partie { display: flex; flex-direction: column; }
+/* La colonne remplit l'écran au-dessus de la barre d'actions (84 px, voir .app-partie). Le bloc
+   adversaire, plateau, toi est centré verticalement ; la barre du coach reste posée juste au-dessus des actions. */
+.partie { display: flex; flex-direction: column;
+  min-height: calc(100dvh - var(--space-1) - 84px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); }
+/* La hauteur libre se partage à parts égales au-dessus de l'adversaire et sous « Toi » : le bloc
+   adversaire, plateau, toi est centré, et la barre du coach reste posée sur la barre d'actions. */
+.partie::before, .partie-souffle { content: ""; flex: 1 1 0; }
+.partie-souffle { min-height: var(--space-3); }
+.partie > .partie-souffle + .coach, .partie > .partie-souffle + .coach-intro { margin-top: 0; }
 /* Pendant une partie : pas d'en-tête ni de barre de navigation, place à la barre d'actions. */
-.app-partie { padding-top: var(--space-1); padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
+.app.app-partie { padding-top: var(--space-1); padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
 .app-partie .dock { bottom: calc(var(--space-4) + env(safe-area-inset-bottom, 0px)); }
 .app-partie > .cta, .app-partie .partie > .cta { bottom: calc(var(--space-4) + var(--relief) + env(safe-area-inset-bottom, 0px)); }
 

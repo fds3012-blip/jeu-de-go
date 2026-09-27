@@ -15,7 +15,8 @@ import { accueil, adversaireOuvert, echelle, introBut, INTRO_KEY, PARTIES_KEY, t
 import { Accueil } from './Accueil';
 import { BASE_PUZZLES } from '../content/puzzles';
 import { parsePuzzles, puzzleOfDay } from '../data/puzzles';
-import { battu, BILAN_KEY, enregistrer, fin, komiDepuisUrl, lireBilan, type Bilan } from './bilan';
+import { battu, BILAN_KEY, enregistrer, fin, komiDepuisUrl, lireBilan, type Bilan, type Issue, type StatsPartie } from './bilan';
+import { fr } from '../ui/typo';
 
 const PROBLEMES_LOCAUX = parsePuzzles(BASE_PUZZLES);
 /** Problèmes réussis sur ce téléphone (même clé que l'onglet Problèmes). */
@@ -57,7 +58,7 @@ export function App() {
   const adv = adversaireOuvert(OPPONENTS, bilan, adversaire);
   const cartes = echelle(OPPONENTS, bilan).map(e => ({ id: e.adv.id, nom: e.adv.nom, rang: e.adv.rang, battu: e.battu, ouvert: e.ouvert, requis: e.requis?.nom }));
   const serie = useSerie(supabase, session?.user.id);
-  const [resultat, setResultat] = useState<null | { gagne: boolean }>(null); // fin de la partie en cours contre l'ordi
+  const [resultat, setResultat] = useState<null | { issue: Issue; stats: StatsPartie }>(null); // fin de la partie en cours contre l'ordi
   const [partie, setPartie] = useState(0); // change à chaque partie pour repartir d'un plateau vide
   const home = accueil(parties, done, adv, settings.size);
   const leconConseillee = LESSONS.find(l => (progress[l.id] ?? 0) < l.steps.length);
@@ -76,27 +77,31 @@ export function App() {
     window.scrollTo({ top: 0 });
   }
 
-  function onResult(winner: 1 | 2) {
+  function onResult(winner: 0 | 1 | 2, stats: StatsPartie) {
     if (playing !== 'ordi') return;
-    const gagne = winner === 1;
-    setBilan(enregistrer(bilan, adv.id, gagne));
-    setResultat({ gagne });
+    const issue: Issue = winner === 0 ? 'egalite' : winner === 1 ? 'victoire' : 'defaite';
+    if (issue !== 'egalite') setBilan(enregistrer(bilan, adv.id, issue === 'victoire'));
+    setResultat({ issue, stats });
   }
 
   let finEcran;
   if (playing === 'ordi' && resultat) {
-    const f = fin(adv, resultat.gagne, bilan, OPPONENTS);
+    const f = fin(adv, resultat.issue, resultat.stats, bilan, OPPONENTS);
+    const lecon = f.lecon ? LESSONS.find(l => l.id === f.lecon) : undefined;
     finEcran = {
-      mochi: <Bubble>{f.mochi}</Bubble>,
-      actions: (
-        <div className="dock">
-          <button className="cta" onClick={() => lancer('ordi', f.cible as OpponentId)}>{f.cta}</button>
-          <div className="row">
-            {leconConseillee && <button className="btn" onClick={() => { setPlaying(false); setResultat(null); setTab('apprendre'); setLessonId(leconConseillee.id); window.scrollTo({ top: 0 }); }}>Leçon : {leconConseillee.title}</button>}
-            <button className="btn" onClick={() => { setPlaying(false); setResultat(null); setIntro(false); }}>Accueil</button>
-          </div>
-        </div>
+      bilan: <>{fr(f.bilan.texte)}<b className={resultat.issue === 'victoire' ? 'or' : undefined}>{f.bilan.gras}</b>.</>,
+      mochi: (
+        <>
+          <p>{fr(f.mochi)}</p>
+          {lecon && <button type="button" className="lien" onClick={() => { setPlaying(false); setResultat(null); setTab('apprendre'); setLessonId(lecon.id); window.scrollTo({ top: 0 }); }}>Ouvrir la leçon</button>}
+        </>
       ),
+      action: (
+        <button type="button" className="cta" onClick={() => lancer('ordi', f.cible as OpponentId)}>
+          <Sceau id={f.cible as OpponentId} taille={30} />{f.cta}
+        </button>
+      ),
+      onAccueil: () => { setPlaying(false); setResultat(null); setIntro(false); window.scrollTo({ top: 0 }); },
     };
   }
 
@@ -109,7 +114,7 @@ export function App() {
       <>
         <Game key={`${playing === 'ordi' ? adv.id : 'deux'}-${partie}`} size={settings.size} komi={KOMI} aiKomi={KOMI_ORDI} confirmTouch={settings.confirmTouch} opponent={playing === 'ordi' ? adv : undefined}
           intro={intro && playing === 'ordi' ? <Bubble>{introBut(adv.nom)}</Bubble> : undefined} onExit={() => { setIntro(false); setPlaying(false); setResultat(null); }}
-          onResult={onResult} fin={finEcran} portrait={playing === 'ordi' ? <Sceau id={adv.id} taille={44} /> : undefined} />
+          onResult={onResult} fin={finEcran} celebrer={settings.celebrations} portrait={playing === 'ordi' ? <Sceau id={adv.id} taille={44} /> : undefined} />
       </>
     );
   } else if (tab === 'apprendre' && lesson) {
@@ -136,6 +141,11 @@ export function App() {
         <div className="seg" role="group" aria-label="Sons">
           <button aria-pressed={settings.sound} onClick={() => set({ sound: true })}>Activés</button>
           <button aria-pressed={!settings.sound} onClick={() => set({ sound: false })}>Coupés</button>
+        </div>
+        <p className="muted small">Célébrations après une victoire (confettis, carillon, vibration)</p>
+        <div className="seg" role="group" aria-label="Célébrations">
+          <button aria-pressed={settings.celebrations} onClick={() => set({ celebrations: true })}>Activées</button>
+          <button aria-pressed={!settings.celebrations} onClick={() => set({ celebrations: false })}>Coupées</button>
         </div>
         <h2>Ton compte</h2>
         <Account />

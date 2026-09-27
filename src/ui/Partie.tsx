@@ -56,18 +56,24 @@ export function Avatar({ initiale, couleur }: { initiale?: string; couleur: 1 | 
   return <span className={`stone ${couleur === 1 ? 'b' : 'w'}`} aria-hidden="true" />;
 }
 
-/** Liste des coups qui défile horizontalement ; elle suit toujours le dernier coup. */
-export function ListeCoups({ coups }: { coups: string[] }) {
+/**
+ * Liste des coups qui défile horizontalement. En partie, elle suit le dernier coup ;
+ * en relecture, `courant` (index dans `coups`, -1 : aucun) désigne le coup affiché, gardé au centre.
+ */
+export function ListeCoups({ coups, courant = coups.length - 1 }: { coups: string[]; courant?: number }) {
   const ref = useRef<HTMLOListElement>(null);
   useLayoutEffect(() => {
     const el = ref.current;
-    if (el) el.scrollLeft = el.scrollWidth;
-  }, [coups.length]);
+    if (!el) return;
+    if (courant >= coups.length - 1) { el.scrollLeft = el.scrollWidth; return; }
+    const li = el.children[Math.max(0, courant)] as HTMLElement | undefined;
+    if (li) el.scrollLeft = li.offsetLeft - (el.clientWidth - li.offsetWidth) / 2;
+  }, [coups.length, courant]);
   return (
     <ol ref={ref} className="coups" aria-label="Coups joués">
       {coups.length === 0 && <li className="vide">Aucun coup joué</li>}
       {coups.map((m, i) => (
-        <li key={i} aria-current={i === coups.length - 1 ? 'step' : undefined}>{m}</li>
+        <li key={i} aria-current={i === courant ? 'step' : undefined}>{m}</li>
       ))}
     </ol>
   );
@@ -119,6 +125,8 @@ const ICONES = {
   annuler: <><path d="M9 5 4 10l5 5" /><path d="M4 10h11a6 6 0 0 1 0 12h-4" /></>,
   passer: <circle cx="13" cy="13" r="9" strokeDasharray="3 3" />,
   abandonner: <path d="M6 23V4M6 4h13l-3 5 3 5H6" />,
+  precedent: <path d="M16 5 8 13l8 8" />,
+  suivant: <path d="M10 5l8 8-8 8" />,
 };
 
 export function Icone({ nom }: { nom: keyof typeof ICONES }) {
