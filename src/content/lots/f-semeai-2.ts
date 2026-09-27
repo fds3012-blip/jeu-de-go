@@ -13,7 +13,15 @@ const LOT_F: PuzzleRow[] = [
     explanation: "Bravo ! Tes pierres marquées sont des pierres de coupe : elles séparent les pierres blanches. Elles sont en atari (une seule liberté, B5), mais les deux pierres blanches D6-D5 aussi : leur seule liberté est D4. En D4, tu les captures, et tes pierres retrouvent des libertés. B5 marche aussi : tes pierres ont alors deux libertés, et si Blanc les attaque, tu prends D6-D5 en D4."
   },
   {
-    id: 'f02', size: 9, difficulty: 800, answers: ['B5'],
+    id: 'f02', size: 9, difficulty: 750, answers: ['C2'],
+    setup: { rows: ['.........', '.........', '.........', '.........', '....X....', '.OO......', '...XX....', 'XO.T.X...', '.XXOX....'], toPlay: 'B',
+      refutation: "Pas tout à fait. Après E2, Blanc s'allonge en C2 : il se relie à sa pierre B2 et met en plus tes pierres B1-C1 en atari. Mets-le en atari de l'autre côté." },
+    title: 'Le bon côté',
+    prompt: 'Noir joue et capture les pierres blanches marquées. Elles ont deux libertés : laquelle prendre ?',
+    explanation: "Bien vu ! C2 coupe les pierres marquées de la pierre blanche B2 et les met en atari (une seule liberté). Leur dernière liberté, E2, est entourée par tes pierres E3, F2 et E1 : Blanc ne peut pas s'y allonger, ce serait un suicide. En plus, C2 relie tes pierres B1-C1 et met B2 en atari."
+  },
+  {
+    id: 'f03', size: 9, difficulty: 800, answers: ['B5'],
     setup: { rows: ['.XO......', 'XXO......', '.XO......', 'XXO......', 'X.OOO....', 'XTX.O....', 'XOX.O....', '.OX.O....', '.OXOO....'], toPlay: 'B',
       refutation: "Pas tout à fait. Blanc joue B5 et relie son groupe au mur blanc C5 : il sort de la course aux libertés et ne peut plus être capturé." },
     title: 'Trois contre trois, une sortie',
@@ -21,7 +29,7 @@ const LOT_F: PuzzleRow[] = [
     explanation: "Exact ! Dans une course aux libertés (semeai), deux groupes s'entourent et le premier qui prend toutes les libertés de l'autre gagne. Blanc a 3 libertés : A2, A1 et B5. Toi aussi : D4, D3 et D2. Mais en B5, Blanc se relierait au mur blanc C5. Bloque cette sortie d'abord : Blanc n'a plus que 2 libertés contre 3 pour toi, et tu le captures un coup avant lui."
   },
   {
-    id: 'f03', size: 9, difficulty: 900, answers: ['B5'],
+    id: 'f04', size: 9, difficulty: 900, answers: ['B5'],
     setup: { rows: ['.XO......', 'XXO......', '.XO......', 'XXO......', 'X.OO.....', 'XTX.O....', '.OX......', '.OX......', '.OX......'], toPlay: 'B',
       refutation: "Pas tout à fait. Blanc joue B5 et relie son groupe au mur blanc C5 : il sort de la course et ne peut plus être capturé. Bloque d'abord la sortie." },
     title: 'Bloque la sortie',

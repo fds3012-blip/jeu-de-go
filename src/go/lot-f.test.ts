@@ -22,7 +22,7 @@ const rowsOf = (setup: unknown) => (setup as { rows: string[] }).rows;
 
 /** Objectif de chaque problème : capturer les pierres blanches marquées, ou sauver les pierres noires marquées. */
 const GOAL: Record<string, 'capture' | 'sauve'> = {
-  f01: 'sauve', f02: 'capture', f03: 'capture'
+  f01: 'sauve', f02: 'capture', f03: 'capture', f04: 'capture'
 };
 
 describe('lot F : courses aux libertés, coupes et connexions', () => {
@@ -87,8 +87,8 @@ describe('lot F : courses aux libertés, coupes et connexions', () => {
 });
 
 describe('chaque problème, coup par coup', () => {
-  it('f03 : B5 bloque la sortie ; sinon Blanc se relie au mur en B5', () => {
-    const p = pz('f03'), [t] = startOf(p).marked, { pos } = startOf(p), k = at('C1');
+  it('f04 : B5 bloque la sortie ; sinon Blanc se relie au mur en B5', () => {
+    const p = pz('f04'), [t] = startOf(p).marked, { pos } = startOf(p), k = at('C1');
     expect(libs(pos, t)).toBe(4);
     expect(libs(pos, k)).toBe(4);
     const b5 = ok(play(pos, at('B5')));
@@ -109,8 +109,8 @@ describe('chaque problème, coup par coup', () => {
     expect(seq(pos, 'passe', 'B5').board[s]).toBe(0);
   });
 
-  it('f02 : trois contre trois avec une sortie en B5 ; la bloquer gagne', () => {
-    const p = pz('f02'), [t] = startOf(p).marked, { pos } = startOf(p), k = at('C1');
+  it('f03 : trois contre trois avec une sortie en B5 ; la bloquer gagne', () => {
+    const p = pz('f03'), [t] = startOf(p).marked, { pos } = startOf(p), k = at('C1');
     expect(libs(pos, t)).toBe(3);
     expect(libs(pos, k)).toBe(3);
     const b5 = ok(play(pos, at('B5')));
@@ -119,5 +119,16 @@ describe('chaque problème, coup par coup', () => {
     const a2 = seq(pos, 'A2', 'B5');
     expect(groupAt(a2.board, 9, t).stones).toContain(at('C5'));
     expect(captureWorks(a2, t)).toBe(false);
+  });
+
+  it('f02 : C2 met en atari du bon côté ; E2 laisse Blanc se relier en C2', () => {
+    const p = pz('f02'), [t] = startOf(p).marked, { pos } = startOf(p);
+    const c2 = ok(play(pos, at('C2')));
+    expect(libs(c2, t)).toBe(1);
+    expect(libs(c2, at('B2'))).toBe(1);
+    expect(play(c2, at('E2'))).toBe('suicide');
+    const e2 = seq(pos, 'E2', 'C2');
+    expect(groupAt(e2.board, 9, t).stones).toContain(at('B2'));
+    expect(libs(e2, at('B1'))).toBe(1);
   });
 });
