@@ -1,5 +1,6 @@
 @import './tokens.css';
 @import './accueil.css';
+@import './profil.css';
 *, *::before, *::after { box-sizing: border-box; }
 html { background: var(--bg); }
 /* Halo de lampe : fixé en haut du document, il défile avec la page (pas de repeint au défilement). */

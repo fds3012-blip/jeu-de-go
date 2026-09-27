@@ -8,7 +8,7 @@
 //
 // Avant le choix du joueur, les événements attendent en mémoire (jamais envoyés, jamais stockés) :
 // s'il accepte pendant la session, ils partent avec leur heure d'origine ; s'il refuse, ils sont effacés.
-// Cela permet de mesurer la première pierre, souvent posée avant de répondre au bandeau.
+// Cela permet de mesurer la première pierre, posée avant de répondre si le joueur a fermé la fenêtre de consentement.
 
 /** Événements suivis. Noms stables : ils servent aux entonnoirs et à la rétention dans PostHog. */
 export const EVENTS = {
@@ -70,7 +70,7 @@ export function analyticsConfig() {
   };
 }
 
-/** Vrai si au moins un service est configuré : sinon, pas de bandeau à afficher. */
+/** Vrai si au moins un service est configuré : sinon, rien n'est chargé ni envoyé, même avec l'accord du joueur. */
 export function analyticsAvailable(): boolean {
   const c = analyticsConfig();
   return browser() && (!!c.posthogKey || !!c.sentryDsn);
@@ -80,8 +80,8 @@ export function getConsent(): Consent | null {
   if (!browser()) return null;
   try {
     const v = localStorage.getItem(CONSENT_KEY);
-    return v === 'accepte' || v === 'refuse' ? v : null;
-  } catch { return null; }
+    return v === 'accepte' || v === 'refuse' ? v : memoryConsent;
+  } catch { return memoryConsent; }
 }
 
 /** Abonnement aux changements de consentement (pour useSyncExternalStore). */
