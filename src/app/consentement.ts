@@ -1,10 +1,15 @@
 // Fenêtre de consentement (issue #50) : une seule question, au premier lancement, jamais pendant une partie.
 import { useSyncExternalStore } from 'react';
-import { getConsent, subscribeConsent, type Consent } from '../data/analytics';
+import { getConsent, getOpposition, subscribeConsent, type Consent } from '../data/analytics';
 
 /** Choix mémorisé du joueur, mis à jour dès qu'il change (fenêtre, interrupteur). */
 export function useConsentement(): Consent | null {
   return useSyncExternalStore(subscribeConsent, getConsent, () => null);
+}
+
+/** Opposition à la mesure anonyme (page Conditions), mise à jour dès qu'elle change. */
+export function useOpposition(): boolean {
+  return useSyncExternalStore(subscribeConsent, getOpposition, () => false);
 }
 
 export interface EtatFenetre {
