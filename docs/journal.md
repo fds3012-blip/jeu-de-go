@@ -385,3 +385,45 @@ Chaque livraison : issue traitée, agent, pull request, résultat des vérificat
 - #77 Rejoue tes erreurs.
 - #76 Série protégée.
 - #75 Go du jour stable quand un lot s'ajoute.
+
+## 27/09, 20 h à 22 h : vague « visuel, leçons fluides, toute l'équipe »
+
+**Skills** (#105) : 16 skills validés par Florian (pédagogie visuelle, gamification, fin mémorable, audit UX, WCAG, style d'illustration) et une charte maison des personnages (`personnages-go`).
+
+**Leçons** (#101)
+- Les 6 leçons sont au format « je montre, on fait ensemble, tu fais seul ». L'image explique, le texte (12 mots au plus) accompagne.
+- Démos en miroir de la question, aide verte sur les libertés, ko barré puis permis, question « touche le point ».
+
+**Visuels** (#102, #106, #108)
+- 9 adversaires illustrés, 4 couleurs au plus. En partie, leur portrait réagit aux captures.
+- Portrait de Mochi (neutre, content, fier, pensif).
+- Montagne des paliers et vitrine des badges.
+
+**Problèmes** (#91) : lots E (15) et F (12). **101 problèmes** en production, empreintes md5 identiques au dépôt.
+
+**Jeu**
+- #109 XP et niveaux, sur l'appareil. Thèmes de goban annoncés, pas encore appliqués.
+- #117 Pierres mortes marquées seules contre l'ordi, avec « Corriger » en secours.
+- #118 Score raconté « Toi / Pomme ».
+- #120 Conseil pour passer.
+
+**Accessibilité** (#110, #116) : audit UX et accessibilité (6 issues ouvertes). Goban jouable au clavier et au lecteur d'écran.
+
+**Compte et serveur**
+- #114 Supprimer mon compte : fonction serveur, parties partagées conservées.
+- #76 Gels de série côté serveur.
+
+**Hors produit**
+- #111 Confidentialité et CGU : champs légaux à remplir par Florian.
+- #112 Dossier marketing.
+- Feuille de route d'octobre (`docs/produit/feuille-de-route-2026-10.md`).
+
+**Méthode** : les 9 branches ont d'abord été assemblées et testées ensemble avant fusion. Deux cassures ont été repérées et corrigées avant d'arriver sur main : un sélecteur de plateau (#116) et le test de score avec le comptage automatique (#117).
+
+**Reste**
+- #119 accueil à une seule action.
+- #121 zoom 200 %.
+- Fin de #116 : nom de l'adversaire dans l'annonce, clavier dans les problèmes et les leçons.
+- Fin de #120 : bouton Passer mis en évidence.
+- Thèmes de goban.
+- Retrait des droits TRUNCATE sur `profiles`.
