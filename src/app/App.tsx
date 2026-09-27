@@ -159,7 +159,7 @@ export function App() {
   if (enPartie) {
     screen = (
       <>
-        <Game key={`${playing === 'ordi' ? adv.id : 'deux'}-${partie}`} size={settings.size} komi={komiCompte(reglage.komi)} aiKomi={reglage.komi} avantage={reglage.avantage} confirmTouch={settings.confirmTouch} opponent={playing === 'ordi' ? adv : undefined}
+        <Game key={`${playing === 'ordi' ? adv.id : 'deux'}-${partie}`} size={settings.size} komi={komiCompte(reglage.komi)} aiKomi={reglage.komi} avantage={reglage.avantage} accommodant={reglage.accommodant} confirmTouch={settings.confirmTouch} opponent={playing === 'ordi' ? adv : undefined}
           intro={playing === 'ordi' && (intro || reglage.annonce) ? <Bubble>{intro ? introBut(adv.nom) : `Tu as Noir, ${adv.nom} a Blanc.`}{reglage.annonce && <><br /><span className="annonce-komi">{reglage.annonce}</span></>}</Bubble> : undefined}
           onExit={() => { setIntro(false); setPlaying(false); setResultat(null); }}
           onResult={onResult} fin={finEcran} celebrer={settings.celebrations} aide={aideActive(settings.aide, adv.id)} portrait={playing === 'ordi' ? <Sceau id={adv.id} taille={44} /> : undefined} />

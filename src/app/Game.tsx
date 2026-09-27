@@ -56,9 +56,10 @@ interface Props {
   aide?: boolean;
   /** Barre d'avantage contre l'ordi ; cachée pendant la toute première partie (#160, voir equilibrage.ts). */
   avantage?: boolean;
+  /** L'ordi passe quand tu passes, frontières fermées (#185, 3 premières parties, voir equilibrage.ts). */ accommodant?: boolean;
 }
 
-export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, onResult, fin, aiKomi = komi, portrait, celebrer = true, aide = true, avantage = true }: Props) {
+export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, onResult, fin, aiKomi = komi, portrait, celebrer = true, aide = true, avantage = true, accommodant = false }: Props) {
   const [history, setHistory] = useState<Position[]>(() => [newPosition(size)]);
   const [phase, setPhase] = useState<'play' | 'score' | 'end'>('play');
   const [dead, setDead] = useState<Set<number>>(new Set());
@@ -144,7 +145,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     const jeton = token; // même objet ref ; alias pour la fonction de nettoyage
     const t = ++jeton.current, t0 = Date.now();
     setThinking(true);
-    bestMove(pos, ai.id, { komi: aiKomi }).then(async m => {
+    bestMove(pos, ai.id, { komi: aiKomi, accommodant }).then(async m => {
       const wait = 350 - (Date.now() - t0); // petite pause pour que la réponse ne paraisse pas instantanée
       if (wait > 0) await new Promise(r => setTimeout(r, wait));
       if (t !== token.current) return;
