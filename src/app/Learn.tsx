@@ -134,7 +134,7 @@ export function LessonPlayer({ lesson, start, confirmTouch, progress = {}, celeb
   const owner = useMemo(() => (step.kind === 'quiz' && step.terr ? score(pos, 0, 'japanese').owner : undefined), [step, pos]);
   const derniere = idx === lesson.steps.length - 1;
   // Démonstration (#101) : un temps toutes les 600 ms ; mouvements réduits : l'état final d'emblée.
-  const images = useMemo(() => (step.kind === 'info' && step.demo ? imagesDemo(step.rows, step.demo) : null), [step]);
+  const images = useMemo(() => (step.kind === 'info' && step.demo ? imagesDemo(step.rows, step.demo, step.avant) : null), [step]);
   const [reduit] = useState(prefersReducedMotion);
   const [temps, setTemps] = useState(() => (reduit && images ? images.length - 1 : 0));
   useEffect(() => { setTemps(reduit && images ? images.length - 1 : 0); }, [images, reduit]);
@@ -161,7 +161,10 @@ export function LessonPlayer({ lesson, start, confirmTouch, progress = {}, celeb
     setAnswer(a => ({ ok, ...extra, n: (a?.n ?? 0) + 1 }));
   }
   function onPlay(p: number) {
-    if (step.kind !== 'move' || answer?.ok) return;
+    if (answer?.ok) return;
+    // Question « touche » : on désigne un point, sans poser de pierre.
+    if (step.kind === 'touche') { hapticStone(); repondre(step.accept.map(a => fromLabel(a, 9)).includes(p), { p }); return; }
+    if (step.kind !== 'move') return;
     const r = play(pos, p);
     if (typeof r === 'string') return;
     const ok = step.accept === 'line3' ? lineOf(p, 9) >= 2
@@ -183,7 +186,7 @@ export function LessonPlayer({ lesson, start, confirmTouch, progress = {}, celeb
   const marks: BoardMarks = img
     ? { libs: [...img.libs, ...img.yeux], targets: img.atari, mistake: img.interdit, last: img.derniere ?? null, ...territoire(img.terr, reduit),
         note: img.compteur ? { p: img.compteur.p, fond: JADE_COMPTEUR, texte: '#0B2A1D', symbole: String(img.compteur.n), libelle: `${img.compteur.n} liberté${img.compteur.n > 1 ? 's' : ''}`, cle: `${idx}-${temps}` } : undefined }
-    : { libs: step.kind === 'info' && step.libs ? step.libs.map(l => fromLabel(l, 9)) : undefined, targets: marked, owner,
+    : { libs: (step.kind === 'info' || step.kind === 'move') && step.libs ? step.libs.map(l => fromLabel(l, 9)) : undefined, targets: marked, owner,
         ok: answer?.ok ? answer.p : undefined, mistake: answer && !answer.ok ? answer.p : undefined, last: answer?.ok ? answer.p : null };
 
   return (
@@ -197,7 +200,7 @@ export function LessonPlayer({ lesson, start, confirmTouch, progress = {}, celeb
       {/* Zone souple : le plateau prend la place qui reste au-dessus du bouton (iPhone SE compris). */}
       <div className={`lecteur-plateau${img?.atari.length ? ' demo-atari' : ''}`} data-demo={images ? (demoFinie ? 'finie' : 'en-cours') : undefined}
         onClick={images && !demoFinie ? () => setTemps(images.length - 1) : undefined}>
-        <Board size={9} board={board} interactive={step.kind === 'move' && !answer?.ok} confirmTouch={confirmTouch} onPlay={onPlay} marks={marks} />
+        <Board size={9} board={board} interactive={(step.kind === 'move' || step.kind === 'touche') && !answer?.ok} confirmTouch={confirmTouch} onPlay={onPlay} marks={marks} />
       </div>
       {img?.terr && <Compteur cle={`${idx}-${temps}`} n={img.terr.points.length} reduit={reduit} />}
       {images && images.length > 1 && (
