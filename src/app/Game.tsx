@@ -18,7 +18,7 @@ import { FinPartie } from '../ui/FinPartie';
 import { RecitScore } from '../ui/RecitScore';
 import { mouvementsReduits } from '../ui/defilement';
 import { recitScore } from './score';
-import { Sceau } from '../ui/Sceau';
+import { Portrait } from '../ui/Portrait';
 import { battuAccorde } from '../ui/sceaux';
 import type { StatsPartie } from './bilan';
 import { Revue } from './Revue';
@@ -355,7 +355,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     return (
       <FinPartie
         fond={<Board size={size} board={pos.board} marks={{ owner: abandon ? undefined : sc.owner, dead, last: pos.lastMove }} />}
-        sceau={ai ? <Sceau id={ai.id} taille={108} /> : <span className={`fin-pierre ${winner === 1 ? 'b' : 'w'}`} aria-hidden="true" />}
+        sceau={ai ? <Portrait id={ai.id} taille={108} decoratif humeur={gagne ? 'surpris' : 'content'} /> : <span className={`fin-pierre ${winner === 1 ? 'b' : 'w'}`} aria-hidden="true" />}
         tampon={ai && gagne ? battuAccorde(ai.id).toUpperCase() : null}
         titre={titre}
         marge={abandon || egalite ? null : sc.margin}

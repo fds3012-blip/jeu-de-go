@@ -71,9 +71,10 @@ test('pas de défilement horizontal à 390 px, carrousel ouvert compris', async 
   const carrousel = page.getByRole('list', { name: /Adversaires/ });
   await expect(carrousel).toBeVisible();
   expect(await debord()).toBeLessThanOrEqual(0);
-  // Le carrousel, lui, défile horizontalement.
+  // Issue #102 : les adversaires sont groupés par palier, trois par ligne, sans défilement horizontal.
   const { scroll, largeur } = await carrousel.evaluate(el => ({ scroll: el.scrollWidth, largeur: el.clientWidth }));
-  expect(scroll).toBeGreaterThan(largeur);
+  expect(scroll).toBeLessThanOrEqual(largeur);
+  await expect(page.locator('.choix-vedette [data-portrait="pomme"]')).toBeVisible();
   expect(largeur).toBeLessThanOrEqual(390);
 });
 

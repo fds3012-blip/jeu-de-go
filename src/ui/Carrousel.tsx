@@ -1,7 +1,9 @@
-// Carrousel horizontal des adversaires (issue #40, phase 4) : défilement à accroche, sceaux de 64 px.
+// Choix de l'adversaire (issues #40 et #102) : grand portrait de l'adversaire choisi et sa bulle,
+// puis les 9 adversaires groupés par palier (les 3 encres des sceaux), en vignettes rondes.
 // Les verrouillés restent visibles (grisés, cadenas) mais ne se choisissent pas : un message dit qui battre d'abord.
-import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
-import { Sceau } from './Sceau';
+// Les battus portent une couronne et le tampon « BATTU ».
+import { useRef, useState, type KeyboardEvent } from 'react';
+import { Couronne, Portrait, palierDe, type PortraitId } from './Portrait';
 import { battuAccorde, type SceauId } from './sceaux';
 import { fr } from './typo';
 
@@ -19,20 +21,16 @@ interface Props<I extends SceauId> {
   cartes: CarteAdversaire<I>[];
   choisi: string;
   onChoisir: (id: I) => void;
-  /** Texte affiché sous le carrousel quand rien n'est verrouillé (description de l'adversaire choisi). */
+  /** Réplique de l'adversaire choisi, dans sa bulle à côté du grand portrait. */
   legende?: string;
 }
 
-export function CarrouselAdversaires<I extends SceauId>({ cartes, choisi, onChoisir, legende }: Props<I>) {
-  const liste = useRef<HTMLUListElement>(null);
-  const [message, setMessage] = useState('');
+const PALIERS = ['Premiers pas', 'Ça se corse', 'Les maîtres'] as const;
 
-  // À l'ouverture, l'adversaire choisi est centré, sans animer la page.
-  useEffect(() => {
-    const el = liste.current?.querySelector<HTMLElement>('[aria-pressed="true"]');
-    const ul = liste.current;
-    if (el && ul) ul.scrollLeft = el.offsetLeft - (ul.clientWidth - el.offsetWidth) / 2;
-  }, []);
+export function CarrouselAdversaires<I extends SceauId>({ cartes, choisi, onChoisir, legende }: Props<I>) {
+  const zone = useRef<HTMLUListElement>(null);
+  const [message, setMessage] = useState('');
+  const actuel = cartes.find(c => c.id === choisi) ?? cartes[0];
 
   function toucher(c: CarteAdversaire<I>) {
     if (!c.ouvert) { setMessage(fr(`Bats d'abord ${c.requis ?? 'le précédent'} pour affronter ${c.nom}.`)); return; }
@@ -40,35 +38,64 @@ export function CarrouselAdversaires<I extends SceauId>({ cartes, choisi, onChoi
     onChoisir(c.id);
   }
 
-  // Flèches gauche et droite : passer d'une carte à l'autre (Tab marche aussi).
+  // Flèches : passer d'une vignette à l'autre (Tab marche aussi).
   function clavier(e: KeyboardEvent<HTMLUListElement>) {
     if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
-    const boutons = [...(liste.current?.querySelectorAll<HTMLButtonElement>('button') ?? [])];
+    const boutons = [...(zone.current?.querySelectorAll<HTMLButtonElement>('button.carte') ?? [])];
     const i = boutons.indexOf(document.activeElement as HTMLButtonElement);
     const j = e.key === 'Home' ? 0 : e.key === 'End' ? boutons.length - 1 : Math.min(boutons.length - 1, Math.max(0, i + (e.key === 'ArrowRight' ? 1 : -1)));
     e.preventDefault();
     boutons[j]?.focus();
-    boutons[j]?.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
   }
+
+  const groupes = PALIERS.map((titre, p) => ({ titre, cartes: cartes.filter(c => c.id !== 'mochi' && palierDe(c.id as PortraitId) === p) }));
 
   return (
     <>
-      <ul className="carrousel" ref={liste} aria-label="Adversaires, du plus facile au plus fort" onKeyDown={clavier}>
-        {cartes.map(c => {
-          const etat = !c.ouvert ? ', verrouillé' : c.battu ? `, ${battuAccorde(c.id)}` : '';
-          return (
-            <li key={c.id}>
-              <button className={`carte${c.ouvert ? '' : ' verrou'}`} aria-pressed={c.id === choisi} aria-disabled={!c.ouvert || undefined}
-                aria-label={`${c.nom}, ${c.rang}${etat}`} onClick={() => toucher(c)}>
-                <Sceau id={c.id} taille={64} verrouille={!c.ouvert} battu={c.battu} />
-                <b>{c.nom}</b>
-                <small>{c.rang}</small>
-              </button>
-            </li>
-          );
-        })}
+      {actuel && actuel.id !== 'mochi' && (
+        <div className="choix-vedette">
+          {/* La clé relance l'entrée avec rebond à chaque nouveau choix. */}
+          <Portrait key={actuel.id} id={actuel.id as PortraitId} taille={104} decoratif className="vedette-portrait" />
+          <div className="vedette-bulle">
+            <b>{actuel.nom} <small>{actuel.rang}</small></b>
+            <p className={`carrousel-legende${message ? ' alerte' : ''}`} aria-live="polite">{message || legende}</p>
+          </div>
+        </div>
+      )}
+      <ul className="paliers" ref={zone} onKeyDown={clavier} aria-label="Adversaires, du plus facile au plus fort">
+        {groupes.map(g => (
+          <li key={g.titre} className="palier">
+            <h3>{g.titre}</h3>
+            <ul className="carrousel">
+              {g.cartes.map(c => {
+                const etat = !c.ouvert ? ', verrouillé' : c.battu ? `, ${battuAccorde(c.id)}` : '';
+                return (
+                  <li key={c.id}>
+                    <button className={`carte${c.ouvert ? '' : ' verrou'}`} aria-pressed={c.id === choisi} aria-disabled={!c.ouvert || undefined}
+                      aria-label={`${c.nom}, ${c.rang}${etat}`} onClick={() => toucher(c)}>
+                      <span className="vignette">
+                        <Portrait id={c.id as PortraitId} taille={52} rond decoratif signature={false} />
+                        {!c.ouvert && (
+                          <span className="vignette-cadenas" aria-hidden="true">
+                            <svg viewBox="0 0 16 16" width="100%" height="100%" focusable="false">
+                              <path d="M5 7V5.2a3 3 0 0 1 6 0V7" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                              <rect x="3.2" y="7" width="9.6" height="7" rx="1.8" fill="currentColor" />
+                            </svg>
+                          </span>
+                        )}
+                        {c.battu && c.ouvert && <span className="vignette-couronne"><Couronne /></span>}
+                        {c.battu && c.ouvert && <span className="vignette-tampon" aria-hidden="true">{battuAccorde(c.id).toUpperCase()}</span>}
+                      </span>
+                      <b>{c.nom}</b>
+                      <small>{c.rang}</small>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </li>
+        ))}
       </ul>
-      <p className={`carrousel-legende small${message ? ' alerte' : ''}`} aria-live="polite">{message || legende}</p>
     </>
   );
 }
