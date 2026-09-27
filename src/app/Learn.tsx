@@ -76,7 +76,7 @@ export function LearnHome({ progress, onOpen, sync = 'local' }: { progress: Prog
     <div className="apprendre">
       <div className="chapitre">
         <h2>Les bases</h2>
-        <p>{faites === 0 ? 'Six leçons courtes pour jouer ta première partie.' : faites === liste.length ? 'Chapitre terminé. Tu connais les règles du go !' : `${faites} leçon${faites > 1 ? 's' : ''} faite${faites > 1 ? 's' : ''} sur ${liste.length}. Continue !`}</p>
+        <p>{faites === 0 ? 'Sept leçons courtes pour jouer ta première partie.' : faites === liste.length ? 'Chapitre terminé. Tu connais les règles du go !' : `${faites} leçon${faites > 1 ? 's' : ''} faite${faites > 1 ? 's' : ''} sur ${liste.length}. Continue !`}</p>
       </div>
 
       <div className="gue" style={{ height: t.hauteur }}>
@@ -199,7 +199,7 @@ export function LessonPlayer({ lesson, start, confirmTouch, progress = {}, celeb
   const marks: BoardMarks = img
     ? { libs: [...img.libs, ...img.yeux], targets: img.atari, mistake: img.interdit, last: img.derniere ?? null, ...territoire(img.terr, reduit),
         note: img.compteur ? { p: img.compteur.p, fond: JADE_COMPTEUR, texte: '#0B2A1D', symbole: String(img.compteur.n), libelle: `${img.compteur.n} liberté${img.compteur.n > 1 ? 's' : ''}`, cle: `${idx}-${temps}` } : undefined }
-    : { libs: (step.kind === 'info' || step.kind === 'move') && step.libs ? step.libs.map(l => fromLabel(l, 9)) : undefined, targets: marked, owner,
+    : { libs: step.kind === 'info' || step.kind === 'move' ? (step.libs ?? (step.kind === 'move' ? step.aide : undefined))?.map(l => fromLabel(l, 9)) : undefined, targets: marked, owner,
         ok: answer?.ok ? answer.p : undefined, mistake: answer && !answer.ok ? answer.p : undefined, last: answer?.ok ? answer.p : null };
 
   return (
@@ -220,7 +220,7 @@ export function LessonPlayer({ lesson, start, confirmTouch, progress = {}, celeb
         <button className="lien revoir" disabled={!demoFinie} onClick={() => setTemps(0)}>Revoir</button>
       )}
       {step.kind === 'quiz' && (
-        <div className="choix" role="group" aria-label="Ta réponse">
+        <div className={`choix${step.choices.some(c => /\p{L}/u.test(c)) ? ' choix-mots' : ''}`} role="group" aria-label="Ta réponse">
           {step.choices.map((c, i) => (
             <button key={c} disabled={answer?.ok && answer.choice !== i}
               className={answer?.choice === i ? (answer.ok ? 'choix-juste' : 'choix-faux') : undefined}

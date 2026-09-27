@@ -85,7 +85,7 @@ test('les tuiles mènent au problème du jour et à la leçon suivante', async (
   await expect(page.getByRole('navigation').getByRole('button', { name: 'Problèmes' })).toHaveAttribute('aria-current', 'page');
 
   await page.getByRole('navigation').getByRole('button', { name: 'Jouer' }).click();
-  await page.getByRole('button', { name: /^Leçon 1 sur 6/ }).click();
+  await page.getByRole('button', { name: /^Leçon 1 sur 7/ }).click();
   await expect(page.getByRole('navigation').getByRole('button', { name: 'Apprendre' })).toHaveAttribute('aria-current', 'page');
   await expect(page.getByRole('button', { name: 'Retour au chemin' })).toBeVisible();
 });

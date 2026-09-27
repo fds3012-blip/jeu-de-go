@@ -157,9 +157,12 @@
 @keyframes demo-atari { from { opacity: 1; } to { opacity: .15; } }
 
 /* Choix du quiz : à plat ; la couleur dit juste ou à revoir. */
-.choix { display: flex; gap: var(--space-2); margin-top: var(--space-3); }
-.choix button { flex: 1; min-height: 56px; font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: 1.3rem;
+.choix { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
+/* Choix longs (« Chez Blanc ») : jamais coupés ; ils passent à la ligne sur un écran étroit (zoom 200 %). */
+.choix button { flex: 1 1 0; min-width: max-content; padding-inline: var(--space-2); min-height: 56px; font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: 1.3rem;
   background: var(--surface); border: 2px solid transparent; border-radius: var(--radius-s); }
+/* Choix en mots (« Je passe », « Chez Blanc ») : plus petits que les nombres, pour tenir à trois sur une ligne. */
+.choix-mots button { font-size: 1.05rem; }
 .choix button:disabled { opacity: .4; cursor: default; }
 .choix .choix-juste { background: color-mix(in srgb, var(--jade) 20%, var(--surface)); border-color: var(--accent-trait); }
 .choix .choix-faux { background: color-mix(in srgb, var(--hanko) 16%, var(--surface)); border-color: var(--danger); }

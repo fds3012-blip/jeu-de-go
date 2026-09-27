@@ -88,7 +88,9 @@ export function trace(n: number, { encours = -1, apres = 2 } = {}): Trace {
     pierres.push({ col, x: col * LIGNE, y });
     y += 2 * LIGNE + (i === encours ? apres * LIGNE : 0);
   }
-  const hauteur = n ? pierres[n - 1].y + LIGNE : 0;
+  // Dernière leçon en cours (#177) : son bouton en relief et son titre ont besoin de place avant « Bientôt »,
+  // y compris avec la police doublée : une ligne de plus que sous une leçon du milieu.
+  const hauteur = n ? pierres[n - 1].y + LIGNE + (encours === n - 1 ? (apres + 1) * LIGNE : 0) : 0;
   return { pierres, hauteur, d: traceJusqua({ pierres, hauteur, d: '' }, n - 1, encours, true) };
 }
 
