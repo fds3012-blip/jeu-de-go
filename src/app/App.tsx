@@ -11,7 +11,8 @@ import { battu, BILAN_KEY, enregistrer, fin, komiDepuisUrl, lireBilan, type Bila
 
 const KOMI_ORDI = 6.5;
 // Komi du comptage : 6,5, sauf paramètre de test `?komi=` (l'ordi, lui, joue toujours avec 6,5).
-const KOMI = komiDepuisUrl(typeof location === 'undefined' ? '' : location.search, KOMI_ORDI);
+// `?komi=` ne sert qu'aux tests de bout en bout : il n'est lu que dans un build de test (VITE_E2E, voir playwright.config.ts).
+const KOMI = import.meta.env.VITE_E2E && typeof location !== 'undefined' ? komiDepuisUrl(location.search, KOMI_ORDI) : KOMI_ORDI;
 
 type Tab = 'jouer' | 'apprendre' | 'profil';
 

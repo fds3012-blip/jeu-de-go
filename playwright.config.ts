@@ -44,7 +44,8 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: `npm run build && npm run preview -- --port ${PORT} --strictPort`,
+    // VITE_E2E=1 active les paramètres de test (ex. `?komi=`), absents des builds de production.
+    command: `VITE_E2E=1 npm run build && npm run preview -- --port ${PORT} --strictPort`,
     url: `http://localhost:${PORT}`,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
