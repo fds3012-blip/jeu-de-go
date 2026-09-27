@@ -1,6 +1,6 @@
 import { useEffect, useRef, type KeyboardEvent } from 'react';
-import { setConsent } from '../data/analytics';
-import { useConsentement } from './consentement';
+import { setConsent, setOpposition } from '../data/analytics';
+import { useConsentement, useOpposition } from './consentement';
 import { Sceau } from '../ui/Sceau';
 import { LigneInterrupteur } from '../ui/Reglage';
 
@@ -43,12 +43,17 @@ export function ConsentModal({ visible, onConditions, onIgnorer }: { visible: bo
       {/* Contenu toujours rendu : la sortie en fondu garde le texte visible jusqu'au bout. */}
       <div className="accord-corps">
         <Sceau id="mochi" taille={48} />
-        <h2 id="accord-titre" tabIndex={-1}>Aide-nous à améliorer le jeu</h2>
-        <p id="accord-texte">On aimerait compter les parties et repérer les bugs, sans jamais voir ton e-mail ni tes coups.</p>
+        <h2 id="accord-titre" tabIndex={-1}>Tu m’aides à chasser les bugs ?</h2>
+        <p id="accord-texte">
+          Si le jeu plante chez toi, l’équipe reçoit un rapport et répare plus vite. Elle voit aussi si tu reviens jouer,
+          pour garder ce qui te plaît. Jamais ton e-mail ni tes coups.
+        </p>
+        <p className="accord-note">Sans ton accord, on compte juste les parties, sans savoir qui joue.</p>
         <button type="button" className="lien accord-conditions" onClick={onConditions}>Lire les conditions</button>
+        {/* Deux choix de même taille et de même poids : aucun n'est mis en avant (issue #64, CNIL). */}
         <div className="accord-actions">
-          <button type="button" className="btn primary" onClick={() => setConsent('accepte')}>Accepter</button>
-          <button type="button" className="btn accord-refuser" onClick={() => setConsent('refuse')}>Refuser</button>
+          <button type="button" className="btn accord-choix" onClick={() => setConsent('accepte')}>Oui, j’aide</button>
+          <button type="button" className="btn accord-choix" onClick={() => setConsent('refuse')}>Non merci</button>
         </div>
         </div>
     </dialog>
@@ -58,6 +63,7 @@ export function ConsentModal({ visible, onConditions, onIgnorer }: { visible: bo
 /** Page « Conditions et confidentialité » : l'interrupteur pour changer d'avis, puis les données collectées. */
 export function Conditions({ onRetour }: { onRetour: () => void }) {
   const consent = useConsentement();
+  const oppose = useOpposition();
   return (
     <section className="sous-vue" aria-labelledby="conditions-titre">
       <button type="button" className="back retour" onClick={onRetour}>
@@ -65,8 +71,10 @@ export function Conditions({ onRetour }: { onRetour: () => void }) {
       </button>
       <h2 id="conditions-titre">Conditions et confidentialité</h2>
       <div className="lignes">
-        <LigneInterrupteur libelle="Mesure d’audience et erreurs" aide="Refuser ne t’enlève aucune fonction."
+        <LigneInterrupteur libelle="Rapports de bugs et suivi détaillé" aide="Seulement avec ton accord. Refuser ne t’enlève aucune fonction."
           actif={consent === 'accepte'} onChange={v => setConsent(v ? 'accepte' : 'refuse')} />
+        <LigneInterrupteur libelle="Comptage anonyme des parties" aide="Sans cookie ni identifiant. Tu peux le couper."
+          actif={!oppose} onChange={v => setOpposition(!v)} />
       </div>
       <div className="conditions-texte">
         <div className="card small">
@@ -78,18 +86,27 @@ export function Conditions({ onRetour }: { onRetour: () => void }) {
           <p>Ton adresse e-mail, ton pseudo et ta cote sont enregistrés chez Supabase, sur des serveurs à Paris. Ils servent à te connecter et à jouer en ligne.</p>
         </div>
         <div className="card small">
-          <h3>Seulement si tu acceptes la mesure d’audience</h3>
+          <h3>Comptage anonyme, sans ton accord</h3>
           <p>
-            PostHog (serveurs dans l’Union européenne) reçoit quelques événements : ouverture de l’app, première pierre, partie terminée
-            (taille, adversaire, résultat), leçon terminée, création de compte. Avec un identifiant tiré au hasard, et l’identifiant de ton compte si tu es connecté.
-            Jamais ton e-mail ni tes coups. Ton adresse IP n’est pas conservée.
+            Pour savoir combien de parties se jouent, PostHog (serveurs dans l’Union européenne) reçoit quelques événements :
+            ouverture de l’app, première pierre, partie terminée (taille, adversaire, résultat), leçon terminée, création de compte.
+            Rien n’est écrit sur ton téléphone, aucun identifiant ne te suit d’une visite à l’autre, ton adresse IP n’est pas conservée,
+            et ces chiffres ne sont jamais reliés à ton compte ni croisés avec d’autres données. Ils servent seulement à nos statistiques.
           </p>
-          <p>Sentry (serveurs en Allemagne) reçoit les rapports d’erreur : message d’erreur, version de l’app, navigateur.</p>
+          <p>Tu peux t’y opposer à tout moment avec l’interrupteur « Comptage anonyme des parties » en haut de cette page.</p>
+        </div>
+        <div className="card small">
+          <h3>Seulement si tu dis oui</h3>
+          <p>
+            Sentry (serveurs en Allemagne) reçoit les rapports de bug : message d’erreur, version de l’app, navigateur.
+            PostHog garde un identifiant tiré au hasard sur ton téléphone, et celui de ton compte si tu es connecté, pour voir si tu reviens jouer.
+            Jamais ton e-mail ni tes coups.
+          </p>
         </div>
         <div className="card small">
           <h3>Tes droits</h3>
           <p>
-            Tu peux retirer ton accord à tout moment avec l’interrupteur en haut de cette page. Tu peux aussi demander à voir,
+            Tu peux changer d’avis à tout moment avec les interrupteurs en haut de cette page. Tu peux aussi demander à voir,
             corriger ou effacer tes données. Sans compte, effacer les données du site dans ton navigateur supprime tout ce qui est sur ce téléphone.
           </p>
         </div>
