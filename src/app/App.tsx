@@ -15,7 +15,7 @@ import { Profil, type VueProfil } from './Profil';
 import { fenetreVisible, useConsentement } from './consentement';
 import { accueil, adversaireOuvert, echelle, introBut, INTRO_KEY, PARTIES_KEY, type Parties } from './home';
 import { Accueil } from './Accueil';
-import { BASE_PUZZLES } from '../content/puzzles';
+import { ALL_PUZZLES } from '../content/puzzles';
 import { parsePuzzles } from '../data/puzzles';
 import { EVENTS, track } from '../data/analytics';
 import { PARAM, SERIE_KEY, numeroDuJour, numeroDuLien, problemeDuNumero, type Serie } from './goDuJour';
@@ -23,7 +23,7 @@ import { battu, BILAN_KEY, enregistrer, fin, komiDepuisUrl, lireBilan, type Bila
 import { fr } from '../ui/typo';
 import { BarreNav, type Onglet } from '../ui/IconesNav';
 
-const PROBLEMES_LOCAUX = parsePuzzles(BASE_PUZZLES);
+const PROBLEMES_LOCAUX = parsePuzzles(ALL_PUZZLES);
 
 /** Flamme de la série de jours, en or. */
 function Flamme() {

@@ -22,6 +22,8 @@ export interface Puzzle {
   title: string;
   prompt: string;
   explanation: string | null;
+  /** Texte affiché après une erreur (`setup.refutation`), null s'il n'y en a pas. */
+  refutation: string | null;
   difficulty: number;
 }
 
@@ -48,7 +50,9 @@ export function parsePuzzle(row: PuzzleRow): Puzzle | null {
     return {
       id: row.id, size, rows: rows as string[], toPlay, answers, line,
       title: row.title ?? 'Problème', prompt: row.prompt ?? 'Trouve le meilleur coup.',
-      explanation: row.explanation, difficulty: row.difficulty
+      explanation: row.explanation,
+      refutation: typeof setup.refutation === 'string' && setup.refutation ? setup.refutation : null,
+      difficulty: row.difficulty
     };
   } catch {
     return null;

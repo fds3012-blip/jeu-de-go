@@ -70,6 +70,12 @@ describe('lecture des lignes de la base', () => {
     expect(p.toPlay).toBe(2);
     expect(p.title).toBe('Problème');
   });
+  it('lit le texte d’erreur dans setup.refutation, absent pour les problèmes de base', () => {
+    expect(parsePuzzle(base)!.refutation).toBeNull();
+    const rows = (base.setup as { rows: string[] }).rows;
+    expect(parsePuzzle({ ...base, setup: { rows, toPlay: 'B', refutation: 'Raté.' } })!.refutation).toBe('Raté.');
+    expect(parsePuzzle({ ...base, setup: { rows, toPlay: 'B', refutation: 3 } })!.refutation).toBeNull();
+  });
   it('utilise une suite enregistrée si la colonne existe', () => {
     const p = parsePuzzle({ ...BASE_PUZZLES[5], solution: ['F5', 'E4', 'D4'] } as PuzzleRow)!;
     expect(p.line).toHaveLength(3);
