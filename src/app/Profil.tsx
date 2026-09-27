@@ -5,7 +5,9 @@ import { choisirThemeGoban, useIdThemeGoban, type Settings } from './settings';
 import { lireXp, niveauDe, niveauRequis, themeDebloque } from './xp';
 import { ORDRE_THEMES, THEMES_GOBAN } from '../ui/boardArt';
 import { identite, texteSerie } from './identite';
-import { LigneChoix, LigneInterrupteur, LigneLien } from '../ui/Reglage';
+import { LigneBascules, LigneChoix, LigneInterrupteur, LigneLien } from '../ui/Reglage';
+import { hapticStone } from '../ui/haptics';
+import { playStone } from '../ui/sound';
 import { useMemo } from 'react';
 import { readLocal } from './hooks';
 import { BILAN_KEY, lireBilan } from './bilan';
@@ -97,7 +99,11 @@ function Menu({ onVue, settings, set, profil, serie }: Omit<Props, 'vue'>) {
         <LigneChoix libelle={t('profil.theme')} options={themes()} valeur={settings.theme} onChange={v => set({ theme: v })} />
         <LigneGoban />
         <LigneInterrupteur libelle={t('profil.confirmer')} aide={t('profil.confirmerAide')} actif={settings.confirmTouch} onChange={v => set({ confirmTouch: v })} />
-        <LigneInterrupteur libelle={t('profil.sons')} actif={settings.sound} onChange={v => set({ sound: v })} />
+        <LigneBascules libelle={t('profil.sons')} bascules={[
+          // #165 : un aperçu à l'allumage, le claquement de pierre ou une petite vibration.
+          { libelle: t('profil.son'), actif: settings.sound, onChange: v => { set({ sound: v }); if (v) setTimeout(() => playStone(40, 9), 0); } },
+          { libelle: t('profil.vibrations'), actif: settings.vibrations, onChange: v => { set({ vibrations: v }); if (v) setTimeout(hapticStone, 0); } },
+        ]} />
         <LigneInterrupteur libelle={t('profil.celebrations')} aide={t('profil.celebrationsAide')} actif={settings.celebrations} onChange={v => set({ celebrations: v })} />
         <LigneChoix libelle={t('profil.aide')} options={aides()} valeur={settings.aide} onChange={a => set({ aide: a })} />
       </div>

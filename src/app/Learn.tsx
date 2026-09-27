@@ -18,7 +18,7 @@ import { fromLabel } from '../go/coords';
 import { score } from '../go/score';
 import { prefersReducedMotion, type SyncState } from './hooks';
 import { playFail, playStone, playSuccess, playVictory } from '../ui/sound';
-import { hapticStone, hapticVictory } from '../ui/haptics';
+import { hapticFail, hapticStone, hapticSuccess, hapticVictory } from '../ui/haptics';
 import { EVENTS, track } from '../data/analytics';
 import { gagnerXp } from './xp';
 import { CHAPITRES_A_VENIR, LIGNE, boutonChemin, etapes, finDeLecon, trace, traceJusqua, type Progression } from './apprendre';
@@ -170,7 +170,7 @@ export function LessonPlayer({ lesson, start, confirmTouch, progress = {}, celeb
     window.scrollTo({ top: 0 });
   }
   function repondre(ok: boolean, extra: { p?: number; after?: Position; choice?: number }) {
-    if (ok) playSuccess(); else playFail();
+    if (ok) { playSuccess(); hapticSuccess(); } else { playFail(); hapticFail(); }
     setAnswer(a => ({ ok, ...extra, n: (a?.n ?? 0) + 1 }));
   }
   function onPlay(p: number) {
