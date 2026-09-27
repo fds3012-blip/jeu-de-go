@@ -1,19 +1,22 @@
-// Issue #136, lot I : preuve de chaque problème de vie et mort (i01…) avec le moteur de règles.
+// Issue #136, lot I : preuve de chaque problème (vie et mort, puis captures) avec le moteur de règles.
 // Même méthode que le lot C (src/go/lecteurs-lot-c.ts) : recherche complète dans l'espace clos. Le défenseur gagne
 // s'il atteint deux vrais yeux, l'attaquant s'il capture le groupe marqué ; une double passe ne compte pour personne,
 // donc ni seki ni ko ne sont acceptés. Aucun doublon (8 symétries, marques ignorées), migration identique au fichier.
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import LOT_I from '../content/lots/i-vie-et-mort-3';
+import LOT_I_CAP from '../content/lots/i-captures';
+import LOT_I_VM from '../content/lots/i-vie-et-mort-3';
 import { ALL_PUZZLES } from '../content/puzzles';
 import { checkAnswer, parsePuzzles, startOf } from '../data/puzzles';
 import { fromLabel, toLabel } from './coords';
 import { solve, winningMoves, zoneOf } from './lecteurs-lot-c';
-import { plainKey, symmetries } from './lecteurs-lot-e';
+import { whiteFails } from './lecteurs-lot-a';
+import { captureWinners, plainKey, symmetries } from './lecteurs-lot-e';
 import { groupAt, play, type Position } from './rules';
 import { hasTwoEyes } from './tactics';
 
-const all = parsePuzzles(LOT_I);
+const LOT_I = [...LOT_I_VM, ...LOT_I_CAP];
+const all = parsePuzzles(LOT_I_VM);
 const at = (l: string) => fromLabel(l, 9);
 const label = (m: number) => (m < 0 ? 'passe' : toLabel(m, 9));
 const ok = (r: Position | string): Position => { if (typeof r === 'string') throw new Error(r); return r; };
@@ -25,8 +28,8 @@ const REPLY: Record<string, string> = { i01: 'E2', i02: 'B1', i03: 'B1', i04: 'E
 
 describe('lot I : vie et mort de haut niveau (issue #136)', () => {
   it('problèmes i01, i02… sans trou, 9 × 9, Noir au trait, difficulté croissante de 1100 à 1500', () => {
-    expect(all).toHaveLength(LOT_I.length);
-    expect(all.map(p => p.id)).toEqual(LOT_I.map((_, i) => `i${String(i + 1).padStart(2, '0')}`));
+    expect(all).toHaveLength(LOT_I_VM.length);
+    expect(LOT_I.map(r => r.id)).toEqual(LOT_I.map((_, i) => `i${String(i + 1).padStart(2, '0')}`));
     expect(Object.keys(REPLY).sort()).toEqual(all.map(p => p.id).sort());
     let prev = 0;
     for (const p of all) {
@@ -179,5 +182,65 @@ describe('lot I : vie et mort de haut niveau (issue #136)', () => {
     for (const row of LOT_I) {
       expect(sql).toContain(`('${row.id}', null, 9, '${q(JSON.stringify(row.setup))}', array[${row.answers.map(a => `'${a}'`).join(',')}], '${q(row.title!)}', '${q(row.prompt!)}', '${q(row.explanation!)}', ${row.difficulty})`);
     }
+  });
+});
+
+// Captures : lecteur exact du lot A (tous les coups légaux de Blanc et la passe ; Noir capture en au plus k coups).
+describe('lot I : captures en trois coups (échelle, filet)', () => {
+  const caps = parsePuzzles(LOT_I_CAP), K = 3;
+  const pz = (id: string) => caps.find(p => p.id === id)!;
+  const seq = (pos: Position, ...moves: string[]) => moves.reduce((q, m) => ok(play(q, at(m))), pos);
+  const libs = (pos: Position, l: string) => groupAt(pos.board, 9, at(l)).liberties.size;
+
+  it('en 9 × 9, Noir au trait, difficulté 400 à 600 croissante, une pierre blanche marquée, textes complets', () => {
+    expect(caps).toHaveLength(LOT_I_CAP.length);
+    let prev = 0;
+    for (const p of caps) {
+      const { pos, marked } = startOf(p);
+      expect(p.size).toBe(9);
+      expect(p.toPlay).toBe(1);
+      expect(pos.ko).toBe(-1);
+      expect(p.difficulty).toBeGreaterThan(prev);
+      expect(p.difficulty).toBeGreaterThanOrEqual(400);
+      expect(p.difficulty).toBeLessThanOrEqual(600);
+      prev = p.difficulty;
+      expect(p.prompt).toBe('Capture la pierre marquée en trois coups au plus.');
+      expect(p.refutation, p.id).toBeTruthy();
+      expect(p.explanation, p.id).toMatch(/libert/);
+      expect(marked).toHaveLength(1);
+      expect(pos.board[marked[0]]).toBe(2);
+      for (let q = 0; q < 81; q++) if (pos.board[q]) expect(groupAt(pos.board, 9, q).liberties.size, `${p.id} ${label(q)}`).toBeGreaterThan(0);
+      for (const a of p.answers) expect(checkAnswer(p, a).kind, p.id).toBe('ok');
+    }
+  });
+
+  for (const row of LOT_I_CAP) {
+    it(`${row.id} : les réponses capturent quoi que fasse Blanc, et ce sont les seuls coups gagnants`, () => {
+      const p = pz(row.id), { pos, marked } = startOf(p);
+      for (const a of row.answers) expect(whiteFails(ok(play(pos, at(a))), marked, K - 1), `${p.id} ${a}`).toBe(true);
+      expect(captureWinners(pos, marked, K)).toEqual([...row.answers].sort());
+    }, 60000);
+  }
+
+  it('i09 : D2 puis C1, D1 : de nouveau en atari ; B1, A1 capture les trois pierres. En C1, Blanc s’allonge en D2 avec trois libertés', () => {
+    const { pos } = startOf(pz('i09'));
+    expect(libs(seq(pos, 'D2'), 'C2')).toBe(1);
+    const d1 = seq(pos, 'D2', 'C1', 'D1');
+    expect(libs(d1, 'C2')).toBe(1);
+    const a1 = seq(d1, 'B1', 'A1');
+    for (const l of ['C2', 'C1', 'B1']) expect(a1.board[at(l)], l).toBe(0);
+    expect(libs(seq(pos, 'C1', 'D2'), 'C2')).toBe(3);
+  });
+
+  it('i10 : le filet D4 ; C4 puis C5, ou D3 puis E3 : atari, puis capture. Un atari direct laisse deux libertés', () => {
+    const { pos } = startOf(pz('i10')), c3 = at('C3');
+    const a = seq(pos, 'D4', 'C4', 'C5');
+    expect(libs(a, 'C3')).toBe(1);
+    expect(seq(a, 'D3', 'E3').board[c3]).toBe(0);
+    const b = seq(pos, 'D4', 'D3', 'E3');
+    expect(libs(b, 'C3')).toBe(1);
+    expect(seq(b, 'C4', 'C5').board[c3]).toBe(0);
+    expect(libs(seq(pos, 'C4', 'D3'), 'C3')).toBe(2);
+    expect(libs(seq(pos, 'D3', 'C4'), 'C3')).toBe(2);
   });
 });
