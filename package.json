@@ -14,10 +14,13 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
-    "icons": "node scripts/generate-icons.mjs"
+    "icons": "node scripts/generate-icons.mjs",
+    "fetch-model": "node scripts/fetch-model.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.2",
+    "@tensorflow/tfjs": "^4.22.0",
+    "@tensorflow/tfjs-backend-webgpu": "^4.22.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },

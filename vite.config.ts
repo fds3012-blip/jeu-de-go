@@ -4,6 +4,8 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
+  // Workers en modules ES : le Worker KataGo charge TensorFlow.js par import dynamique.
+  worker: { format: 'es' },
   resolve: {
     // `@/go/rules` -> `src/go/rules`
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },

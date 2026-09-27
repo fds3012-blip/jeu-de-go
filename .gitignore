@@ -9,3 +9,6 @@ playwright-report
 test-results
 blob-report
 *.tsbuildinfo
+
+# Réseau KataGo téléchargé par npm run fetch-model (jamais commité)
+public/models/
