@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Game } from './Game';
+import { Account } from './Account';
 import { LearnHome, LessonPlayer } from './Learn';
 import { LESSONS } from '../content/lessons';
 import { useSettings, useStored } from './settings';
@@ -42,8 +43,9 @@ export function App() {
           <button aria-pressed={settings.confirmTouch} onClick={() => set({ confirmTouch: true })}>Oui</button>
           <button aria-pressed={!settings.confirmTouch} onClick={() => set({ confirmTouch: false })}>Non</button>
         </div>
+        <h2>Ton compte</h2>
+        <Account />
         <h2>Bientôt</h2>
-        <div className="card">Ton compte, ta cote, tes amis et tes parties sauvegardées dans le cloud.</div>
         <div className="card">Jouer contre KataGo, une IA de niveau professionnel, directement sur ton téléphone.</div>
         <div className="card">Parties en ligne contre des joueurs de ton niveau.</div>
       </div>
