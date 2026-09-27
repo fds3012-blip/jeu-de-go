@@ -8,7 +8,7 @@ for (const theme of ['dark', 'light'] as const) {
     // Pomme battue : Bambou s'ouvre, les suivants restent verrouillés.
     await page.addInitScript(() => localStorage.setItem('go.bilan.v1', JSON.stringify({ pomme: { v: 1, d: 0 }, caillou: { v: 1, d: 1 } })));
     await page.goto('/');
-    await expect(page.locator('.scene-bulle [data-portrait]')).toBeVisible();
+    await expect(page.locator('.adversaire [data-portrait]')).toBeVisible();
     await page.screenshot({ path: `docs/design/v2/captures/accueil-portrait-${theme}.png` });
     await page.getByRole('button', { name: 'Changer' }).click();
     await expect(page.locator('.choix-vedette [data-portrait]')).toBeVisible();

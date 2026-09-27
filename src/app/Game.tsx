@@ -13,7 +13,7 @@ import { supabase } from '../data/supabase';
 import { fr } from '../ui/typo';
 import { useProfil } from './hooks';
 import { useStored } from './settings';
-import { carteTerritoire, conseilPasser, coupsJoues, descriptionIndices, descriptionQuiMene, DUREE_QUI_MENE, indicesRestants, INDICES_PAR_PARTIE, libelleAvantage, libelleCoup, messageAtari, messageIndice, metEnAtari, nouveauxAtari, partNoir, phraseQuiMene, QUI_MENE_PAR_PARTIE, quiMeneDisponible, quiMeneRestants } from './partie';
+import { carteTerritoire, conseilPasser, passerEnEvidence, coupsJoues, descriptionIndices, descriptionQuiMene, DUREE_QUI_MENE, indicesRestants, INDICES_PAR_PARTIE, libelleAvantage, libelleCoup, messageAtari, messageIndice, metEnAtari, nouveauxAtari, partNoir, phraseQuiMene, QUI_MENE_PAR_PARTIE, quiMeneDisponible, quiMeneRestants } from './partie';
 import { CORRIGER_MORTES, EXPLICATION_MORTES, messageComptage, modeComptage } from './partie';
 import '../ui/comptage.css';
 import { choisirReplique, DUREE_REPLIQUE, type Situation } from './repliques';
@@ -98,6 +98,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   const [relecture, setRelecture] = useState<number | null>(null);
   const [sgf, setSgf] = useState<string | null>(null);
   const pos = history[history.length - 1];
+  const [conseilPasserA, setConseilPasserA] = useState<number | null>(null); // #120 : longueur d'historique au conseil « passer »
   const sc = useMemo(() => score(pos, komi, 'japanese', dead), [pos, komi, dead]);
   const aiTurn = !!ai && phase === 'play' && pos.toPlay === 2;
   const myTurn = !ai || (pos.toPlay === 1 && !thinking);
@@ -152,7 +153,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
       if (m === -1) {
         repliquer('passe');
         if (pos.lastMove === -1) enterScore(r, `${ai.nom} passe aussi : la partie est finie.`);
-        else setMsg(conseilPasser(ai.nom, aide, true, r.board) ?? `${ai.nom} passe. Si tu passes aussi, on compte les points.`);
+        else { const c = conseilPasser(ai.nom, aide, true, r.board); if (c) setConseilPasserA(history.length + 1); setMsg(c ?? `${ai.nom} passe. Si tu passes aussi, on compte les points.`); }
       } else {
         const cap = r.captures[2] - pos.captures[2];
         playStone(m, size, true);
@@ -160,7 +161,9 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
         if (metEnAtari(r, m)) playAtari();
         const alerte = cap ? null : alerteAtari(pos, r, 1, history.length + 1);
         if (alerte) atarisSubis.current++;
-        setMsg(cap ? `${ai.nom} capture ${pierres(cap)} en ${toLabel(m, size)}.` : alerte ?? conseilPasser(ai.nom, aide, false, r.board) ?? `${ai.nom} joue ${toLabel(m, size)}. À toi.`);
+        const c = cap || alerte ? null : conseilPasser(ai.nom, aide, false, r.board);
+        if (c) setConseilPasserA(history.length + 1);
+        setMsg(cap ? `${ai.nom} capture ${pierres(cap)} en ${toLabel(m, size)}.` : alerte ?? c ?? `${ai.nom} joue ${toLabel(m, size)}. À toi.`);
       }
     });
     return () => { jeton.current++; setThinking(false); };
@@ -443,7 +446,8 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
             onClick: quiMeneToucher, disabled: !quiMeneVisible && (quiMeneCalcul || quiMeneReste <= 0),
             description: ai ? descriptionQuiMene(quiMeneReste) : undefined }] : []),
           { label: 'Annuler', icone: <Icone nom="annuler" />, onClick: undo, disabled: undoTo < 1 },
-          { label: 'Passer', icone: <Icone nom="passer" />, onClick: pass, disabled: !myTurn },
+          { label: 'Passer', icone: <Icone nom="passer" />, onClick: pass, disabled: !myTurn,
+            evidence: passerEnEvidence(aide && !!ai, myTurn, pos.lastMove === -1, conseilPasserA, history.length), pulse: celebrer && !mouvementsReduits() },
           { label: resignArm ? fr('Confirmer ?') : 'Abandonner', icone: <Icone nom="abandonner" />, onClick: resign, danger: resignArm },
         ]} />
       ) : (
