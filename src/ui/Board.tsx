@@ -213,7 +213,7 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
         {stones}
         {leaving}
         {owner}
-        {marks.libs?.filter(p => !board[p]).map(p => <circle key={`lb${p}`} cx={X(p)} cy={Y(p)} r={C * 0.15} fill={JADE} stroke={JADE_FONCE} strokeWidth={1.6} />)}
+        {marks.libs?.filter(p => !board[p]).map(p => <circle key={`lb${p}`} className="liberte" cx={X(p)} cy={Y(p)} r={C * 0.15} fill={JADE} stroke={JADE_FONCE} strokeWidth={1.6} />)}
         {marks.targets?.filter(p => board[p]).map(p => { const [x, y] = at(p); return <circle key={`tg${p}`} cx={x} cy={y} r={C * 0.3} fill="none" stroke={HANKO} strokeWidth={2.6} strokeDasharray="5 3" />; })}
         {last >= 0 ? (() => { const [x, y] = at(last); return <circle cx={x} cy={y} r={R * 0.3} fill="none" stroke={board[last] === 1 ? PAPIER : '#1a1a1a'} strokeWidth={2.4} data-dernier="" />; })() : null}
         {marks.zone != null && marks.zone >= 0 ? (() => {
