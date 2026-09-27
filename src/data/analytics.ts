@@ -25,6 +25,10 @@ export const EVENTS = {
   problemeResolu: 'probleme_resolu',
   // Écran de revue d'une partie terminée (issue #34).
   revueOuverte: 'revue_ouverte',
+  // Go du jour (issue #75) : défi quotidien commun. Réussite, partage, et arrivée par un lien partagé (une fois par session).
+  goDuJourResolu: 'go_du_jour_resolu',
+  goDuJourPartage: 'go_du_jour_partage',
+  arriveeParPartage: 'arrivee_par_partage',
 } as const;
 export type AnalyticsEvent = (typeof EVENTS)[keyof typeof EVENTS];
 export type Props = Record<string, string | number | boolean | null | undefined>;
