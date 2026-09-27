@@ -13,7 +13,7 @@ describe('accueil', () => {
     expect(a.nouveau).toBe(true);
     expect(a.cta).toBe('Joue ta première partie');
     expect(a.ctaNom).toBe('Joue ta première partie contre Pomme');
-    expect(a.bulle).toBe('Touche le centre pour poser ta première pierre !');
+    expect(a.bulle).toMatch(/^On joue ensemble\s\? Je t’explique tout\.$/);
   });
 
   it('leçons faites, aucune partie : toujours la première partie', () => {
@@ -34,7 +34,13 @@ describe('accueil', () => {
   it('joueur qui revient avec un autre adversaire : Jouer contre lui', () => {
     const a = accueil({ n: 3, dernier: 'pomme' }, 1, caillou, 9);
     expect(a.cta).toBe('Jouer contre Caillou');
-    expect(a.bulle).toContain('Touche le plateau');
+    expect(a.bulle).toContain('Je t’attends');
+  });
+
+  it('issue #119 : la bulle ne propose jamais une seconde action (toucher le plateau)', () => {
+    for (const a of [accueil({ n: 0 }, 0, pomme, 9), accueil({ n: 0 }, 2, pomme, 9), accueil({ n: 1, dernier: 'pomme' }, 0, pomme, 9), accueil({ n: 1 }, 0, caillou, 19)]) {
+      expect(a.bulle).not.toMatch(/touche/i);
+    }
   });
 
   it('la bulle tient en deux phrases au plus', () => {

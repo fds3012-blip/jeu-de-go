@@ -11,7 +11,7 @@ test('première pierre en deux touches, accueil sans défilement', async ({ page
   await expect(cta).toHaveCount(1);
   await expect(cta).toHaveText('Joue ta première partie');
   await expect(cta).toHaveAccessibleName('Joue ta première partie contre Pomme');
-  await expect(page.getByText(/Touche le centre pour poser ta première pierre\s!/)).toBeVisible();
+  await expect(page.getByText(/On joue ensemble\s\? Je t’explique tout\./)).toBeVisible();
   await expect(page.getByRole('heading', { level: 2, name: 'Pomme' })).toBeVisible();
   await expect(page.getByText('Elle apprend comme toi.', { exact: false })).toBeVisible();
   await expect(page.getByText('Plateau 9 × 9, tu as Noir')).toBeVisible();
