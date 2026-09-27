@@ -5,7 +5,7 @@
 
 /* ---------- Carte d'identité ---------- */
 .identite { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); background: var(--surface); border-radius: var(--radius); }
-.identite .avatar, .identite .stone { width: 48px; height: 48px; flex: none; }
+.identite .avatar, .identite .stone { width: 44px; height: 44px; flex: none; }
 .identite .avatar { font-size: 22px; background: var(--surface-2); }
 .identite-texte { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .identite-texte b { font-family: var(--font-titre); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre); font-size: var(--fs-xl); line-height: 1.15;
@@ -15,7 +15,7 @@
   background: color-mix(in srgb, var(--or) 16%, transparent); color: var(--recompense-texte);
   font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: 1.05rem; line-height: 1; }
 
-.profil h2 { margin: var(--space-6) 0 var(--space-2); font-size: var(--fs-l); font-weight: var(--fw-titre); }
+.profil h2 { margin: var(--space-2) 0 var(--space-2); font-size: var(--fs-l); font-weight: var(--fw-titre); }
 
 /* ---------- Lignes : un bloc groupé, filets entre les lignes ---------- */
 .lignes { background: var(--surface); border-radius: var(--radius); overflow: hidden; }
@@ -98,3 +98,46 @@ button.ligne:focus-visible { outline-offset: -3px; }
     .accord[open], .accord[open]::backdrop { opacity: 0; }
   }
 }
+
+/* ---------- Profil vivant (issue #103) : statistiques et vitrine de badges ---------- */
+.identite { flex-wrap: wrap; row-gap: 6px; padding-block: 8px; }
+.stats { flex: 1 0 100%; list-style: none; margin: 0; padding: 6px 0 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px;
+  box-shadow: inset 0 1px 0 var(--line); }
+.stat { display: grid; grid-template-columns: auto auto; justify-content: center; align-items: center; column-gap: 4px; row-gap: 1px; text-align: center; }
+.stat svg { display: block; width: 20px; height: 20px; }
+.stat b { font-family: var(--font-titre); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre); font-size: 1.4rem; line-height: 1; font-variant-numeric: tabular-nums; }
+.stat span { grid-column: 1 / -1; color: var(--muted); font-size: 11.5px; line-height: 1.15; }
+.p-noire { fill: var(--encre, #111); stroke: var(--papier); stroke-width: 1.2; }
+.p-blanche { fill: var(--papier); stroke: var(--encre, #111); stroke-width: 1.2; }
+.p-trait { fill: none; stroke: var(--jade-bord); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.p-or { fill: var(--or); stroke: var(--encre, #111); stroke-width: .8; stroke-linejoin: round; }
+
+.vitrine h2 { display: flex; align-items: baseline; justify-content: space-between; }
+.vitrine-compte { color: var(--muted); font-family: var(--font-texte, inherit); font-weight: var(--fw-bold); font-size: var(--fs-s); font-variant-numeric: tabular-nums; }
+/* Une rangée qui défile à l'horizontale : le Profil tient toujours en 390 × 844. La marge négative fait déborder
+   la rangée jusqu'au bord de l'écran, pour que la coupe du dernier badge dise « il y en a d'autres ». */
+.vitrine-rangee { list-style: none; margin: var(--space-1) calc(-1 * var(--gouttiere, 16px)); padding: 2px var(--gouttiere, 16px) 4px; display: flex; gap: 10px;
+  overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none; overscroll-behavior-x: contain; }
+.vitrine-rangee::-webkit-scrollbar { display: none; }
+.vitrine-rangee li { flex: none; width: 74px; display: flex; flex-direction: column; align-items: center; gap: 3px; text-align: center; scroll-snap-align: start; }
+.vitrine-rangee b { font-size: 11px; font-weight: var(--fw-bold); line-height: 1.15; }
+.vitrine-rangee small { color: var(--muted); font-size: 11px; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.vitrine-rangee .a-gagner b { color: var(--muted); }
+
+.sceau-badge { display: block; }
+.sceau-badge .b-point { fill: currentColor; opacity: .55; }
+.sceau-badge.jade { color: var(--encre-jade); }
+.sceau-badge.jade .b-fond { fill: var(--jade); stroke: var(--jade-bord); stroke-width: 1.5; }
+.sceau-badge.or { color: var(--encre-jade); }
+.sceau-badge.or .b-fond { fill: var(--or); stroke: #A0680A; stroke-width: 1.5; }
+.sceau-badge .b-anneau { fill: none; stroke: currentColor; stroke-width: 1.4; opacity: .7; }
+.sceau-badge .s-plein { fill: currentColor; }
+.sceau-badge .s-creux { fill: none; stroke: currentColor; stroke-width: 1.6; }
+.sceau-badge .s-trait { fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.sceau-badge .s-trait.fin { stroke-width: 1.5; }
+.sceau-badge .s-texte { fill: currentColor; text-anchor: middle; font-family: var(--font-titre); font-weight: 800; font-size: 12px; }
+/* À gagner : sceau en creux, pointillé, gris. Il se lit comme « pas encore » sans compter sur la couleur. */
+.sceau-badge.eteint { color: var(--muted); }
+.sceau-badge.eteint .b-fond { fill: var(--surface); stroke: var(--muted); stroke-width: 1.2; stroke-dasharray: 3 3; }
+.sceau-badge.eteint .b-anneau { opacity: .35; }
+.sceau-badge.eteint .s-plein { opacity: .55; }
