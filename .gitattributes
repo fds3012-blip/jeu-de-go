@@ -1,0 +1,2 @@
+# Journal tenu par plusieurs branches : on garde les deux côtés lors des fusions locales.
+docs/journal.md merge=union

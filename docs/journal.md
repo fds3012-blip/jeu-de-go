@@ -46,6 +46,12 @@ Chaque livraison : issue traitée, agent, pull request, résultat des vérificat
 - Livré : `e2e/plateau.ts` (jouer « D5 » à la souris ou au doigt), `navigation.spec.ts` (accueil en moins de 3 s, onglets, cibles de 44 px) et `regles.spec.ts` (poser, capturer, suicide et ko refusés avec leur message, double touche de confirmation). 14 tests e2e au total, lancés par la CI sur chaque PR.
 - Bug bloquant trouvé et corrigé dans `src/ui/Board.tsx` (périmètre frontend) : au doigt, la pierre fantôme s'effaçait juste après la touche, donc la seconde touche ne confirmait jamais le coup. Aucun coup n'était jouable au doigt avec le réglage par défaut.
 - Outillage : `PW_PORT` permet de lancer plusieurs suites e2e en parallèle sans collision de port.
+## #3 Maquettes des 5 écrans et design tokens (designer)
+
+- Livré : fichier Figma « Jeu de go : Encre & Jade » (https://www.figma.com/design/9Ft0rUVY3lB7cY7pIyjNti) avec tokens, 7 composants et les 5 écrans en 390 × 844, modes sombre et clair ; `src/ui/tokens.css` complet (rôles, typographie, espacements, rayons, tailles de cible, mouvement réduit) ; `app.css` passe par les tokens ; test Vitest du contraste AA dans les deux modes.
+- Constat : le vermillon pur n'atteint pas 4,5:1 comme texte, d'où `--danger-texte`.
+- Vérifications : lint, typecheck, 57 tests, build, e2e : vert.
+- Reste : validation des maquettes par Florian. L'issue reste ouverte avec le label « bloqué ».
 
 ## #21 L'ordi propose les pierres mortes (moteur-go)
 
