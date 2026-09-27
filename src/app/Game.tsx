@@ -18,6 +18,8 @@ import { CORRIGER_MORTES, EXPLICATION_MORTES, messageComptage, modeComptage } fr
 import '../ui/comptage.css';
 import { choisirReplique, DUREE_REPLIQUE, type Situation } from './repliques';
 import { FinPartie } from '../ui/FinPartie';
+import { ProposerInstallation } from '../ui/ProposerInstallation';
+import { noterVictoire } from './installation';
 import { RecitScore } from '../ui/RecitScore';
 import { mouvementsReduits } from '../ui/defilement';
 import { recitScore } from './score';
@@ -368,6 +370,18 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   // Première partie contre l'ordi menée jusqu'au score ou à l'abandon : une seule fois par appareil (trackOnce, #35).
   useEffect(() => { if (phase === 'end' && ai) trackOnce(EVENTS.premierePartieTerminee, { adversaire: ai.id, taille: size, coups: history.length - 1, fin: resigned ? 'abandon' : 'score', indices: indicesUtilises, secondes: secondsSinceOpen() }); }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Proposer d'installer l'app (#178) : après la toute première victoire contre l'ordi sur cet appareil, jamais pendant la partie.
+  // Le repère n'est lu qu'une fois par fin de partie (le double effet du mode strict ne doit pas le consommer).
+  const [premiereVictoire, setPremiereVictoire] = useState(false);
+  const victoireLue = useRef(false);
+  useEffect(() => {
+    if (phase !== 'end') { victoireLue.current = false; setPremiereVictoire(false); return; }
+    if (victoireLue.current) return;
+    victoireLue.current = true;
+    const gagneOrdi = !!ai && (resigned ? 3 - resigned : sc.winner) === 1 && (!!resigned || sc.margin !== 0);
+    if (gagneOrdi && noterVictoire()) setPremiereVictoire(true);
+  }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
+
   if (phase === 'end' && relecture !== null && sgf) {
     // Revue de la partie (issue #34) : erreurs, courbe d'avantage, « Rejouer d'ici ».
     return <Revue sgf={sgf} joueur={ai ? 1 : null} adversaire={ai?.nom} onRetour={() => setRelecture(null)} onRejouer={rejouer} />;
@@ -417,6 +431,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
         onRevoir={n > 0 ? () => setRelecture(1) : undefined}
         onAccueil={fin?.onAccueil ?? onExit}
         confettis={celebrer && gagne}
+        apres={premiereVictoire && gagne ? <ProposerInstallation moment="premiere_victoire" /> : null}
       />
     );
   }

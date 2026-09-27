@@ -26,6 +26,7 @@ import { aContinuer, aSuivre, ordrePaliers, palierRecommande, paliers, type Pali
 import { SceauLecon } from '../ui/SceauLecon';
 import { aFeter, FETES_KEY } from './fetesPaliers';
 import { MesErreurs } from '../ui/MesErreurs';
+import { ProposerInstallation } from '../ui/ProposerInstallation';
 import { SERIE_KEY, numeroDuJour, problemeDuNumero, serieVivante, textePartage, type Serie } from './goDuJour';
 import '../ui/apprendre.css';
 import { Glacon, PierreGivree } from '../ui/Glacon';
@@ -458,6 +459,7 @@ function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating, onAtt
               <button className="lien" onClick={showLine}>Voir la suite</button>
               <button className="lien" onClick={onNext ?? onExit}>{onNext ? 'Problème suivant' : 'Retour aux problèmes'}</button>
             </div>
+            <ProposerInstallation moment="go_du_jour" />
           </>
         : <>{suivantBtn}<button className="lien" onClick={showLine}>Voir la suite</button></>}>
         <p>{fr(answer.text)}</p>{ligneCote}

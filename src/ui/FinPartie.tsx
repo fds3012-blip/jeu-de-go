@@ -29,9 +29,11 @@ interface Props {
   onAccueil: () => void;
   /** Confettis (victoire, réglage « Célébrations » activé). Jamais avec les mouvements réduits. */
   confettis?: boolean;
+  /** Sous les liens, discret : proposition d'installer l'app après une première victoire (#178). */
+  apres?: ReactNode;
 }
 
-export function FinPartie({ fond, sceau, tampon, titre, marge, texteMarge, sousTitre, bilan, mochi, action, onRevoir, onAccueil, confettis = false }: Props) {
+export function FinPartie({ fond, sceau, tampon, titre, marge, texteMarge, sousTitre, bilan, mochi, action, onRevoir, onAccueil, confettis = false, apres }: Props) {
   const [reduit] = useState(mouvementsReduits);
   const titreRef = useRef<HTMLHeadingElement>(null);
   const sceauRef = useRef<HTMLDivElement>(null);
@@ -81,6 +83,7 @@ export function FinPartie({ fond, sceau, tampon, titre, marge, texteMarge, sousT
           {onRevoir && <button type="button" className="lien" onClick={onRevoir}>Revoir ma partie</button>}
           <button type="button" className="lien lien-discret" onClick={onAccueil}>Accueil</button>
         </div>
+        {apres}
       </div>
       {gerbe && !gerbeFinie && <Confettis origine={gerbe} onFin={() => setGerbeFinie(true)} />}
     </section>
