@@ -46,7 +46,7 @@
 
 /* Les pierres. Le dégradé et le reflet reprennent l'ardoise du goban (Board.tsx, go-n et go-nr). */
 .pierre-gue { position: relative; flex: none; width: var(--pierre); height: var(--pierre); border-radius: 50%; }
-.pas-faite .pierre-gue, .pas-encours .pierre-gue::before {
+.pas-faite .pierre-gue {
   background: radial-gradient(circle at 34% 26%, rgba(255, 255, 255, .34), rgba(255, 255, 255, 0) 24%),
     radial-gradient(72% 72% at 36% 30%, #5b5f5d, #2e3130 18%, #151716 55%, #050606); }
 .pas-faite .pierre-gue { box-shadow: 0 7px 10px -5px rgba(0, 0, 0, .6), 0 1px 2px rgba(0, 0, 0, .35); }
@@ -55,7 +55,20 @@
  * elle est translucide, cerclée de jade, et respire. Elle devient pleine à la fin de la leçon.
  */
 .pas-encours .pierre-gue { background: var(--bg); }
-.pas-encours .pierre-gue::before { content: ""; position: absolute; inset: 0; border-radius: 50%; opacity: var(--fantome, .5); }
+/*
+ * Matière de la pierre fantôme. En sombre, une ardoise translucide se confondrait avec les pierres faites (noires pleines) :
+ * on prend le coquillage (la pierre blanche du goban), translucide, qui s'allume sur le sumi. En clair, l'ardoise translucide suffit.
+ */
+.gue { --fantome-matiere: radial-gradient(circle at 34% 26%, rgba(255, 255, 255, .9), rgba(255, 255, 255, 0) 30%),
+  radial-gradient(78% 78% at 38% 32%, #fff, #F3EEE3 55%, #DDD5C4 85%, #BDB3A0); --fantome-min: .3; --fantome-max: .46; }
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) .gue { --fantome-matiere: radial-gradient(circle at 34% 26%, rgba(255, 255, 255, .34), rgba(255, 255, 255, 0) 24%),
+    radial-gradient(72% 72% at 36% 30%, #5b5f5d, #2e3130 18%, #151716 55%, #050606); --fantome-min: .42; --fantome-max: .62; }
+}
+:root[data-theme="light"] .gue { --fantome-matiere: radial-gradient(circle at 34% 26%, rgba(255, 255, 255, .34), rgba(255, 255, 255, 0) 24%),
+  radial-gradient(72% 72% at 36% 30%, #5b5f5d, #2e3130 18%, #151716 55%, #050606); --fantome-min: .42; --fantome-max: .62; }
+.pas-encours .pierre-gue::before { content: ""; position: absolute; inset: 0; border-radius: 50%;
+  background: var(--fantome-matiere); opacity: var(--fantome-max); }
 .pas-encours .pierre-gue::after { content: ""; position: absolute; inset: -7px; border-radius: 50%; border: 3px solid var(--accent-trait); }
 /* À venir : pierre fantôme en pointillés ; son fond cache les lignes pour qu'on lise « une place », pas « un trou ». */
 .pas-avenir .pierre-gue { background: color-mix(in srgb, var(--bg) 78%, transparent);
@@ -76,7 +89,7 @@
   /* Seul mouvement spontané de l'écran : la pierre en cours respire (skill motion-design, « waiting/idle » : ±2 %, 3 s, sinus). */
   .pas-encours .pierre-gue::before { animation: respire 3s cubic-bezier(.37, 0, .63, 1) infinite; }
 }
-@keyframes respire { 0%, 100% { transform: scale(.98); opacity: .42; } 50% { transform: scale(1.02); opacity: .62; } }
+@keyframes respire { 0%, 100% { transform: scale(.98); opacity: var(--fantome-min); } 50% { transform: scale(1.02); opacity: var(--fantome-max); } }
 
 /* ---------- Chapitres à venir : discrets, sans promesse de date ---------- */
 .a-venir { margin-top: var(--space-2); color: var(--muted); }
