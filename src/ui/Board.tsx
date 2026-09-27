@@ -61,6 +61,11 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
     const p = pointFrom(e);
     setGhost(p >= 0 && !board[p] ? p : -1);
   }
+  // Au doigt, le navigateur envoie pointerleave juste après pointerup : on garde alors la pierre
+  // fantôme, sinon la seconde touche de confirmation ne jouerait jamais.
+  function onLeave(e: PointerEvent) {
+    if (e.pointerType === 'mouse') setGhost(-1);
+  }
 
   const stone = (p: number, c: number, op = 1) => (
     <g key={`s${p}`} opacity={op}>
@@ -83,7 +88,7 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
   return (
     <div className="board-wrap">
       <svg ref={ref} className="board" viewBox={`0 0 ${w} ${w}`} role="img" aria-label={`Plateau de go ${size} × ${size}`}
-        onPointerUp={onUp} onPointerMove={onMove} onPointerLeave={() => setGhost(-1)}>
+        onPointerUp={onUp} onPointerMove={onMove} onPointerLeave={onLeave}>
         <defs>
           <radialGradient id="gb" cx="35%" cy="30%" r="70%"><stop offset="0" stopColor="#6a6f6c" /><stop offset=".45" stopColor="#1c1e1d" /><stop offset="1" stopColor="#050505" /></radialGradient>
           <radialGradient id="gw" cx="35%" cy="30%" r="75%"><stop offset="0" stopColor="#ffffff" /><stop offset=".6" stopColor="#ebe6db" /><stop offset="1" stopColor="#c4bdae" /></radialGradient>

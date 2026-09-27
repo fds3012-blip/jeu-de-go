@@ -1,28 +1,155 @@
-import { LESSONS } from '../content/lessons';
+// Vérification automatique des 6 leçons de content/lessons.fr.js : positions, bonnes réponses, et mauvaises réponses.
+import { LESSONS, type LessonStep } from '../content/lessons';
 import { fromRows } from './position';
-import { play } from './rules';
-import { fromLabel } from './coords';
+import { groupAt, isLegal, neighbors, play, type Position } from './rules';
+import { fromLabel, toLabel } from './coords';
 import { score } from './score';
+import { canEscape, isDead, ladderWorks } from './tactics';
 
-describe('leçons', () => {
-  for (const lesson of LESSONS) {
-    it(`${lesson.id} : chaque bonne réponse est un coup légal`, () => {
-      for (const step of lesson.steps) {
-        const { pos } = fromRows(step.rows);
-        if (step.kind === 'move' && step.accept !== 'line3') {
-          for (const a of step.accept) expect(typeof play(pos, fromLabel(a, 9))).not.toBe('string');
-        }
-        if (step.kind === 'quiz' && step.terr) {
-          expect(String(score(pos, 0, 'japanese').territory[1])).toBe(step.choices[step.answer]);
-        }
+const N = 9;
+const at = (l: string) => fromLabel(l, N);
+const ok = (r: Position | string): Position => { if (typeof r === 'string') throw new Error(r); return r; };
+const libs = (pos: Position, p: number) => groupAt(pos.board, N, p).liberties;
+const step = (id: string, i: number) => LESSONS.find(l => l.id === id)!.steps[i];
+const all = LESSONS.flatMap(l => l.steps.map((s, i) => ({ id: `${l.id}.${i + 1}`, s })));
+
+/** Après le coup noir (Blanc au trait), l'une des pierres visées est-elle perdue, quoi que Blanc réponde ? */
+function targetsLost(r: Position, targets: number[]): boolean {
+  if (targets.some(t => r.board[t] === 0)) return true;
+  const replies = new Set<number>([-1]);
+  for (const t of targets) for (const s of groupAt(r.board, N, t).stones) {
+    for (const l of libs(r, s)) replies.add(l);
+    for (const q of neighbors(N)[s]) if (r.board[q] === 1 && libs(r, q).size === 1) replies.add([...libs(r, q)][0]);
+  }
+  return [...replies].every(w => {
+    const q = play(r, w);
+    return typeof q === 'string' || targets.some(u => q.board[u] === 2 && ladderWorks(q, u));
+  });
+}
+
+describe('leçons : forme des positions', () => {
+  it('six leçons, chacune avec au moins deux étapes', () => {
+    expect(LESSONS).toHaveLength(6);
+    for (const l of LESSONS) expect(l.steps.length).toBeGreaterThanOrEqual(2);
+  });
+  for (const { id, s } of all) {
+    it(`${id} : plateau 9 × 9 valide, sans groupe sans liberté`, () => {
+      expect(s.rows).toHaveLength(N);
+      for (const row of s.rows) expect(row).toMatch(/^[.XOTS]{9}$/);
+      const { pos } = fromRows(s.rows);
+      for (let p = 0; p < N * N; p++) if (pos.board[p]) expect(libs(pos, p).size).toBeGreaterThan(0);
+    });
+  }
+});
+
+describe('leçons : libertés montrées', () => {
+  for (const { id, s } of all.filter(x => x.s.kind === 'info' && x.s.libs)) {
+    it(`${id} : chaque point vert est une liberté, et tout groupe concerné est montré en entier`, () => {
+      const { pos } = fromRows(s.rows);
+      const shown = new Set((s as Extract<LessonStep, { kind: 'info' }>).libs!.map(at));
+      for (const p of shown) expect(pos.board[p]).toBe(0);
+      const groups = [...Array(N * N).keys()].filter(p => pos.board[p] && [...libs(pos, p)].every(l => shown.has(l)));
+      const covered = new Set(groups.flatMap(p => [...libs(pos, p)]));
+      expect([...shown].every(p => covered.has(p))).toBe(true);
+    });
+  }
+});
+
+describe('leçons : bonnes et mauvaises réponses', () => {
+  for (const { id, s } of all.filter(x => x.s.kind === 'move')) {
+    const m = s as Extract<LessonStep, { kind: 'move' }>;
+    it(`${id} : chaque bonne réponse est légale et atteint le but`, () => {
+      const { pos, marked } = fromRows(m.rows);
+      if (m.accept === 'line3') {
+        const good = [...Array(N * N).keys()].filter(p => { const x = p % N, y = Math.floor(p / N); return x >= 2 && x <= 6 && y >= 2 && y <= 6; });
+        expect(good).toHaveLength(25);
+        for (const p of good) expect(isLegal(pos, p)).toBe(true);
+        return;
+      }
+      const targets = marked.filter(p => pos.board[p] === 2), saved = marked.filter(p => pos.board[p] === 1);
+      expect(marked.length).toBeGreaterThan(0);
+      for (const a of m.accept) {
+        const r = ok(play(pos, at(a)));
+        if (targets.length) expect(targetsLost(r, targets)).toBe(true);
+        for (const s of saved) expect(libs(r, s).size >= 3 || (libs(r, s).size === 2 && !ladderWorks(r, s))).toBe(true);
+      }
+      // Pierres en atari ou à deux libertés : les autres libertés ne marchent pas, la bonne réponse est unique.
+      if (marked.some(p => libs(pos, p).size > 2)) return;
+      const others = new Set(marked.flatMap(p => [...libs(pos, p)]).filter(p => !m.accept.includes(toLabel(p, N))));
+      for (const o of others) {
+        const r = play(pos, o);
+        if (typeof r === 'string') continue;
+        if (targets.length) expect(targetsLost(r, targets), `${toLabel(o, N)} ne devrait pas suffire`).toBe(false);
+        for (const s of saved) expect(libs(r, s).size, `${toLabel(o, N)} ne devrait pas sauver`).toBeLessThanOrEqual(1);
       }
     });
   }
-  it('la leçon 1 capture bien la pierre marquée', () => {
-    const step = LESSONS[0].steps[1];
-    const { pos, marked } = fromRows(step.rows);
-    const r = play(pos, fromLabel('E5', 9));
-    if (typeof r === 'string') throw new Error(r);
-    expect(r.board[marked[0]]).toBe(0);
+});
+
+describe('leçons : cas particuliers', () => {
+  it('l1 : la pierre marquée est capturée, puis les deux pierres du groupe', () => {
+    const s1 = fromRows(step('l1', 1).rows);
+    expect(ok(play(s1.pos, at('E5'))).board[s1.marked[0]]).toBe(0);
+    const r = ok(play(fromRows(step('l1', 2).rows).pos, at('E4')));
+    expect(r.captures[1]).toBe(2);
+  });
+  it('l1 : dans le coin, deux libertés seulement ; au centre, quatre', () => {
+    const { pos } = fromRows(step('l1', 0).rows);
+    expect(libs(pos, at('E5')).size).toBe(4);
+    expect(libs(pos, at('A1')).size).toBe(2);
+  });
+  it('l2 : la pierre blanche est en atari en F5', () => {
+    const { pos } = fromRows(step('l2', 0).rows);
+    expect([...libs(pos, at('E5'))].map(p => toLabel(p, N))).toEqual(['F5']);
+  });
+  it('l2 : s’allonger en E6 laisse en atari, capturer F5 sauve', () => {
+    const { pos, marked } = fromRows(step('l2', 2).rows);
+    expect(libs(ok(play(pos, at('E6'))), marked[0]).size).toBe(1);
+    const r = ok(play(pos, at('F6')));
+    expect(r.board[at('F5')]).toBe(0);
+    expect(r.captures[1]).toBe(1);
+  });
+  it('l3 : l’échelle marche des deux côtés, et un casseur blanc la fait échouer', () => {
+    const { pos, marked } = fromRows(step('l3', 2).rows);
+    expect(ladderWorks(pos, marked[0])).toBe(true);
+    const rows = step('l3', 2).rows.slice();
+    rows[7] = '.O.......'; // pierre blanche en B2, sur le chemin de l'échelle
+    const b = fromRows(rows);
+    expect(canEscape(ok(play(b.pos, at('F5'))), b.marked[0])).toBe(true);
+  });
+  it('l3 : pousser vers le centre (E1) laisse la pierre s’échapper', () => {
+    const { pos, marked } = fromRows(step('l3', 1).rows);
+    expect(canEscape(ok(play(pos, at('E1'))), marked[0])).toBe(true);
+  });
+  it('l4 : après la capture, Blanc ne peut pas reprendre tout de suite ; l’étape suivante montre ce ko', () => {
+    const { pos } = fromRows(step('l4', 0).rows);
+    const r = ok(play(pos, at('F5')));
+    expect(play(r, at('E5'))).toBe('ko');
+    expect(fromRows(step('l4', 1).rows).pos.board).toEqual(r.board);
+  });
+  const corner = [...Array(N * N).keys()].filter(p => p % N <= 4 && Math.floor(p / N) >= 6);
+  it('l5 : un groupe à deux yeux ne peut pas être tué', () => {
+    expect(isDead(fromRows(step('l5', 0).rows, 2).pos, at('B2'), corner)).toBe(false);
+  });
+  it('l5 : deux yeux, Blanc ne peut jouer ni en A1 ni en C1', () => {
+    const { pos } = fromRows(step('l5', 0).rows, 2);
+    expect(play(pos, at('A1'))).toBe('suicide');
+    expect(play(pos, at('C1'))).toBe('suicide');
+  });
+  it('l5 : B1 fait vivre le groupe noir ; ailleurs, Blanc le tue', () => {
+    const { pos, marked } = fromRows(step('l5', 1).rows);
+    expect(isDead(ok(play(pos, at('B1'))), marked[0], corner)).toBe(false);
+    for (const l of ['A1', 'C1']) expect(isDead(ok(play(pos, at(l))), marked[0], corner), l).toBe(true);
+  });
+  it('l5 : B1 tue le groupe blanc ; sinon Blanc vit', () => {
+    const { pos, marked } = fromRows(step('l5', 2).rows);
+    expect(isDead(ok(play(pos, at('B1'))), marked[0], corner)).toBe(true);
+    for (const l of ['A1', 'C1']) expect(isDead(ok(play(pos, at(l))), marked[0], corner), l).toBe(false);
+  });
+  it('l6 : la réponse du quiz est le territoire noir compté par le moteur', () => {
+    const q = step('l6', 0) as Extract<LessonStep, { kind: 'quiz' }>;
+    const s = score(fromRows(q.rows).pos, 0, 'japanese');
+    expect(q.choices[q.answer]).toBe(String(s.territory[1]));
+    expect(q.ok).toContain(`Blanc en a ${s.territory[2]},`);
   });
 });

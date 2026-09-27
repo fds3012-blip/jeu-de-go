@@ -53,7 +53,7 @@ export const LESSONS = [
   { id: 'l6', title: 'Territoire et ouverture', desc: 'Compter et bien commencer', steps: [
     { kind: 'quiz', rows: ['...XO....', '...XO....', '...XO....', '...XO....', '...XO....', '...XO....', '...XO....', '...XO....', '...XO....'], terr: true,
       text: 'La partie est finie. Combien de points de territoire pour Noir (les intersections vides entourées par Noir) ?',
-      choices: ['18', '27', '36'], answer: 1, ok: "27 : trois colonnes de neuf. Blanc en a 45, plus le komi : il gagne largement.", no: 'Compte les intersections vides du côté noir : trois colonnes de neuf.' },
+      choices: ['18', '27', '36'], answer: 1, ok: "27 : trois colonnes de neuf. Blanc en a 36, plus le komi : il gagne largement.", no: 'Compte les intersections vides du côté noir : trois colonnes de neuf.' },
     { kind: 'info', rows: ['.........', '.........', '..X...O..', '.........', '.........', '.........', '..O...X..', '.........', '.........'],
       text: "En ouverture, on joue d'abord dans les coins, puis sur les bords, et enfin au centre : les bords et les coins aident à entourer du territoire avec moins de pierres." },
     { kind: 'move', rows: ['.........', '.........', '.........', '.........', '.........', '.........', '.........', '.........', '.........'], accept: 'line3',
