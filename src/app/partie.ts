@@ -111,3 +111,49 @@ export function descriptionIndices(restants: number): string {
   if (restants <= 0) return "Plus d'indice pour cette partie";
   return `${restants} indice${restants > 1 ? 's' : ''} restant${restants > 1 ? 's' : ''}`;
 }
+
+// « Qui mène ? » (#94) : la carte des territoires estimés et une phrase, 3 fois par partie contre l'ordi.
+
+/** Nombre de « Qui mène ? » par partie contre l'ordi (illimité à deux). */
+export const QUI_MENE_PAR_PARTIE = 3;
+/** Durée d'affichage de la carte, en millisecondes. */
+export const DUREE_QUI_MENE = 3000;
+export const SERRE = "C'est serré.";
+/** Écart sous lequel on dit « C'est serré » : 2 points avec KataGo, 5 avec l'estimation simple, moins sûre. */
+export const SEUIL_SERRE = { katago: 2, simple: 5 } as const;
+
+/** L'action « Qui mène ? » est-elle proposée ? Contre l'ordi, elle suit le réglage « Aide de Mochi en partie ». */
+export function quiMeneDisponible(contreOrdi: boolean, aide: boolean): boolean {
+  return !contreOrdi || aide;
+}
+
+/** « Qui mène ? » restants après `utilises` (jamais négatif). */
+export function quiMeneRestants(utilises: number): number {
+  return Math.max(0, QUI_MENE_PAR_PARTIE - Math.max(0, utilises));
+}
+
+/** Description accessible du bouton « Qui mène ? » contre l'ordi. */
+export function descriptionQuiMene(restants: number): string {
+  if (restants <= 0) return 'Plus disponible pour cette partie';
+  return `Encore ${restants} fois dans cette partie`;
+}
+
+/**
+ * Phrase affichée au-dessus du goban. `lead` : avance de Noir, komi compris. Quand l'écart est sous le seuil
+ * du moteur (ou n'est pas un nombre), on dit « C'est serré » : jamais un chiffre trompeur.
+ */
+export function phraseQuiMene(lead: number, engine: 'katago' | 'simple'): string {
+  const n = Math.round(Math.abs(lead));
+  if (!Number.isFinite(lead) || Math.abs(lead) < SEUIL_SERRE[engine] || n < 2) return SERRE;
+  return `${lead > 0 ? 'Noir' : 'Blanc'} mène d'environ ${n} points.`;
+}
+
+/**
+ * Carte des territoires pour le goban (même codage que le score : 1 Noir, 2 Blanc, 0 personne) à partir
+ * d'une propriété de -1 (Blanc) à +1 (Noir). Sous `seuil`, l'intersection reste neutre.
+ */
+export function carteTerritoire(own: ArrayLike<number>, seuil = 0.4): Int8Array {
+  const out = new Int8Array(own.length);
+  for (let p = 0; p < own.length; p++) out[p] = own[p] >= seuil ? 1 : own[p] <= -seuil ? 2 : 0;
+  return out;
+}

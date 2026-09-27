@@ -19,6 +19,8 @@ export interface BoardMarks {
   note?: { p: number; fond: string; texte: string; symbole: string; libelle: string; cle: string | number };
   /** Récit du score (#78) : délai d'apparition (ms) de chaque carré de territoire. Sans délai, le carré est là d'emblée. */
   ownerDelai?: Map<number, number>;
+  /** « Qui mène ? » (#94) : les carrés de territoire apparaissent en fondu (150 ms, rien si les mouvements sont réduits). */
+  ownerFondu?: boolean;
 }
 
 interface Props {
@@ -218,7 +220,7 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
         {grid}
         {stones}
         {leaving}
-        {owner}
+        {marks.ownerFondu ? <g className="territoire-fondu" data-qui-mene="">{owner}</g> : owner}
         {marks.libs?.filter(p => !board[p]).map(p => <circle key={`lb${p}`} className="liberte" cx={X(p)} cy={Y(p)} r={C * 0.15} fill={JADE} stroke={JADE_FONCE} strokeWidth={1.6} />)}
         {marks.targets?.filter(p => board[p]).map(p => { const [x, y] = at(p); return <circle key={`tg${p}`} cx={x} cy={y} r={C * 0.3} fill="none" stroke={HANKO} strokeWidth={2.6} strokeDasharray="5 3" />; })}
         {last >= 0 ? (() => { const [x, y] = at(last); return <circle cx={x} cy={y} r={R * 0.3} fill="none" stroke={board[last] === 1 ? PAPIER : '#1a1a1a'} strokeWidth={2.4} data-dernier="" />; })() : null}

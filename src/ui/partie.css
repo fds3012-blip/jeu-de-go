@@ -73,7 +73,14 @@
 }
 
 /* ---------- Plateau : toute la largeur, 4 px de marge ---------- */
-.partie-plateau { margin: 0 calc(4px - var(--gouttiere)); }
+.partie-plateau { margin: 0 calc(4px - var(--gouttiere)); position: relative; }
+/* « Qui mène ? » (#94) : la phrase se pose en haut du goban, sans décaler la mise en page. */
+.qui-mene-phrase { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); z-index: 3; margin: 0; max-width: calc(100% - 24px);
+  padding: 6px 14px; border-radius: 999px; background: var(--surface); color: var(--text); border: 1px solid var(--line);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, .25); font-size: var(--fs-legende); font-weight: var(--fw-bold); white-space: nowrap; pointer-events: none; }
+@media (prefers-reduced-motion: no-preference) {
+  .qui-mene-phrase { animation: go-fondu 150ms var(--ease) both; }
+}
 @media (min-width: 600px) { .partie-plateau { margin: 0; } }
 /* Petits écrans (iPhone SE, 667 px) : le plateau cède un peu de largeur pour que la barre du coach tienne au-dessus
    de la barre d'actions (explication du comptage, indice). Plancher de 280 px. Issue #85. */
@@ -98,6 +105,8 @@
   padding: 4px 4px env(safe-area-inset-bottom, 0px); }
 .actions button { flex: 1; max-width: 140px; min-height: 64px; border: 0; background: none; color: var(--text); border-radius: 12px;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: var(--fs-legende); font-weight: var(--fw-medium); }
+/* Cinq actions (#94) : chaque libellé tient sur une ligne, même sur un iPhone SE (375 px). */
+.actions button > span:last-child { white-space: nowrap; }
 .actions .icone-trait { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 /* Désactivé : encre brume sans voile d'opacité (contraste AA sur la barre, 7:1 en sombre, 6:1 en clair). */
 .actions button:disabled { color: var(--muted); cursor: default; }
