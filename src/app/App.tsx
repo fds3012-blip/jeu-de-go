@@ -9,6 +9,7 @@ import { supabase } from '../data/supabase';
 import { useSettings, useStored } from './settings';
 import { Bubble } from '../ui/Mochi';
 import { OPPONENTS, opponent, type OpponentId } from '../engine';
+import { ConsentBanner, Confidentialite } from './Confidentialite';
 import { accueil, introBut, INTRO_KEY, PARTIES_KEY, type Parties } from './home';
 
 type Tab = 'jouer' | 'apprendre' | 'problemes' | 'profil';
@@ -73,6 +74,8 @@ export function App() {
         </div>
         <h2>Ton compte</h2>
         <Account />
+        <h2>Confidentialité</h2>
+        <Confidentialite />
         <h2>Bientôt</h2>
         <div className="card">Jouer contre KataGo, une IA de niveau professionnel, directement sur ton téléphone.</div>
         <div className="card">Parties en ligne contre des joueurs de ton niveau.</div>
@@ -119,6 +122,7 @@ export function App() {
           <h1>Go</h1>
           <p>{tab === 'jouer' ? 'Jouer' : tab === 'apprendre' ? 'Le chemin des leçons' : tab === 'problemes' ? 'Problèmes' : 'Profil'}</p>
         </header>
+        {!playing && !lesson && <ConsentBanner onMore={() => go('profil')} />}
         {screen}
       </main>
       <nav className="nav" aria-label="Navigation principale">
