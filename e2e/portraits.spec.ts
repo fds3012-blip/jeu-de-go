@@ -19,7 +19,11 @@ for (const theme of ['dark', 'light'] as const) {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.emulateMedia({ colorScheme: theme, reducedMotion: 'reduce' });
     // Bulle « but du jeu » déjà vue : la barre du coach est affichée tout de suite.
-    await page.addInitScript(() => localStorage.setItem('go.intro-but.v1', 'true'));
+    // Ni annonce du komi (#160) : on n'est plus dans les 4 premières parties contre l'ordi.
+    await page.addInitScript(() => {
+      localStorage.setItem('go.intro-but.v1', 'true');
+      localStorage.setItem('go.parties.v1', JSON.stringify({ n: 4, ordi: 4 }));
+    });
     await page.goto('/');
     await page.getByRole('button', { name: /contre Pomme$/ }).first().click();
     const portrait = page.locator('.joueur [data-portrait="pomme"]');

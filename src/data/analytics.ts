@@ -37,6 +37,10 @@ export const EVENTS = {
   // Progression (issue #109) : XP gagnés (agrégés sur quelques secondes) et niveau franchi.
   xpGagne: 'xp_gagne',
   niveauAtteint: 'niveau_atteint',
+  // Plan de marquage (issue #166). Chaque partie commencée (premier coup joué) : dénominateur du taux de parties finies.
+  partieCommencee: 'partie_commencee',
+  // Deux passes, puis comptage manuel (pierres mortes à corriger à la main) : part des fins de partie qui perdent le joueur (#159).
+  comptageManuel: 'comptage_manuel',
 } as const;
 export type AnalyticsEvent = (typeof EVENTS)[keyof typeof EVENTS];
 export type Props = Record<string, string | number | boolean | null | undefined>;
@@ -250,7 +254,8 @@ export function track(event: AnalyticsEvent, props?: Props): void {
   void loadPostHog().then(ph => {
     if (!ph || niveau() === 'aucun') return;
     const c = analyticsConfig();
-    ph.capture(event, { ...props, version: c.release, environnement: c.environment }, { timestamp: at });
+    // `mesure` : niveau au moment de l'envoi. Les indicateurs par appareil (rétention, nouveaux joueurs) se lisent sur « complet ».
+    ph.capture(event, { ...props, version: c.release, environnement: c.environment, mesure: niveau() }, { timestamp: at });
   });
 }
 

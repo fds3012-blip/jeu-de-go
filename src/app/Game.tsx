@@ -54,9 +54,11 @@ interface Props {
   portrait?: ReactNode;
   /** Aide de Mochi en partie (contre l'ordi) : alerte d'atari et liberté montrée. Voir aideActive (partie.ts). */
   aide?: boolean;
+  /** Barre d'avantage contre l'ordi ; cachée pendant la toute première partie (#160, voir equilibrage.ts). */
+  avantage?: boolean;
 }
 
-export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, onResult, fin, aiKomi = komi, portrait, celebrer = true, aide = true }: Props) {
+export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, onResult, fin, aiKomi = komi, portrait, celebrer = true, aide = true, avantage = true }: Props) {
   const [history, setHistory] = useState<Position[]>(() => [newPosition(size)]);
   const [phase, setPhase] = useState<'play' | 'score' | 'end'>('play');
   const [dead, setDead] = useState<Set<number>>(new Set());
@@ -190,6 +192,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
       if (t !== scoreToken.current) return;
       setFinding(false); setDead(new Set(d));
       if (modeComptage(!!ai, incertains) === 'auto') setAutoCompte('calcule');
+      if (modeComptage(!!ai, incertains) !== 'auto') track(EVENTS.comptageManuel, { mode: ai ? 'ordi' : 'deux', adversaire: ai?.id, taille: size, mortes: d.length, incertains: incertains.length });
       else setMsg(messageComptage(fin, d.length, incertains.length > 0));
     });
   }
@@ -221,6 +224,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     const enAtari = metEnAtari(r, p);
     if (!ai && enAtari) { playAtari(); hapticAtari(); }
     setHistory([...history, r]);
+    if (history.length === 1) track(EVENTS.partieCommencee, { mode: ai ? 'ordi' : 'deux', adversaire: ai?.id, taille: size });
     if (history.length === 1) trackOnce(EVENTS.premierePierre, { secondes: secondsSinceOpen(), mode: ai ? 'ordi' : 'deux', adversaire: ai?.id, taille: size });
     if (ai) {
       if (cap) { repliquer('captureSubie'); reagir('surpris'); }
@@ -428,7 +432,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     <div className="partie">
       {bandeau(2)}
       <ListeCoups coups={coups} />
-      {ai && !estimationKo && <BarreAvantage libelle={lead === null ? '' : libelleAvantage(lead)} part={lead === null ? 0.5 : partNoir(lead, size)} />}
+      {ai && avantage && !estimationKo && <BarreAvantage libelle={lead === null ? '' : libelleAvantage(lead)} part={lead === null ? 0.5 : partNoir(lead, size)} />}
       <div className="partie-plateau">
         <Board size={size} board={pos.board} toPlay={pos.toPlay} interactive={phase === 'score' || myTurn} stonesTappable={phase === 'score'} confirmTouch={confirmTouch}
           marks={{ last: pos.lastMove, owner: phase === 'score' ? sc.owner : quiMeneVisible?.owner, ownerFondu: !!quiMeneVisible, dead, libs, zone }} onPlay={onPlay} shake={shake} versCouvercles noms={ai ? { 2: ai.nom } : undefined} />
