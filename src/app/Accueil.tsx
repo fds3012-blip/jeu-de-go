@@ -1,8 +1,7 @@
 // Écran d'accueil v2 (issue #40, phase 4 ; maquette docs/design/v2/maquettes-v2.png, écran de gauche).
-// Le goban est l'image d'accueil : le toucher lance la partie, comme le bouton principal.
+// Issue #119 : une seule action principale, le bouton. Le goban est l'illustration ; le toucher lance aussi la partie.
 import { useEffect, useMemo, useRef } from 'react';
 import { Board } from '../ui/Board';
-import { R, boardWidth, viewBoxOf } from '../ui/boardArt';
 import { Sceau } from '../ui/Sceau';
 import { Portrait } from '../ui/Portrait';
 import { CarrouselAdversaires, type CarteAdversaire } from '../ui/Carrousel';
@@ -44,29 +43,30 @@ const AIDE_TAILLE: Record<Taille, string> = {
 
 export function Accueil(p: Props) {
   const { adv, textes, taille } = p;
-  // Géométrie du goban (src/ui/boardArt.ts) : le viewBox a une bande de coordonnées en haut et à gauche,
-  // le centre du plateau n'est donc pas au milieu de l'image.
-  const vb = viewBoxOf(taille), centre = `${((boardWidth(taille) / 2 - vb.min) / vb.span) * 100}%`;
   const kyu = /kyu/.test(adv.rang) ? ' Le kyu est un niveau : plus il est petit, plus on est fort.' : '';
   return (
     <div className="accueil">
+      {/* Le goban est une illustration : plateau entier, aucune bulle ni pierre qui pulse par-dessus.
+          Il reste touchable (même effet que le bouton), sans y inviter. */}
       <div className="scene">
         {/* Doublon tactile du bouton principal : masqué aux lecteurs d'écran, qui ont déjà le bouton. */}
         <div className="scene-plateau" aria-hidden="true" data-testid="plateau-accueil" onClick={p.onJouer}>
           <div className="scene-cadre">
             <Board size={taille} board={PLATEAUX[taille]} />
-            <span className="fantome-repere"><span className="fantome" style={{ width: `${((2 * R) / vb.span) * 100}%`, left: centre, top: centre }} /></span>
           </div>
-        </div>
-        <div className="scene-bulle">
-          <Portrait id={adv.id} taille={64} decoratif signature={false} />
-          <p>{textes.bulle}</p>
         </div>
       </div>
 
-      <div className="adversaire-identite">
-        <h2>{adv.nom}</h2>
-        <span>{adv.rang}</span>
+      {/* L'adversaire parle sous le plateau : sa bulle ne cache plus aucune ligne. */}
+      <div className="adversaire">
+        <Portrait id={adv.id} taille={48} decoratif signature={false} />
+        <div className="adversaire-texte">
+          <div className="adversaire-identite">
+            <h2>{adv.nom}</h2>
+            <span>{adv.rang}</span>
+          </div>
+          <p className="scene-bulle">{textes.bulle}</p>
+        </div>
       </div>
       <p className="phrase">{fr(adv.phrase + (textes.nouveau ? kyu : ''))}</p>
 
