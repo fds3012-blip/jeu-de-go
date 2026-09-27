@@ -5,4 +5,7 @@ dist
 *.log
 .DS_Store
 coverage
+playwright-report
+test-results
+blob-report
 *.tsbuildinfo
