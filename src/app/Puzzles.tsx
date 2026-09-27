@@ -24,7 +24,6 @@ import { prefersReducedMotion, readLocal, useOnline, writeLocal } from './hooks'
 import { legendeSerie, niveau } from './problemes';
 import { ordrePaliers, palierRecommande, paliers, prochain, suivantPalier, type Palier } from './paliers';
 import { SceauLecon } from '../ui/SceauLecon';
-import { Montagne } from '../ui/Montagne';
 import { aFeter, FETES_KEY } from './fetesPaliers';
 import { MesErreurs } from '../ui/MesErreurs';
 import { SERIE_KEY, numeroDuJour, problemeDuNumero, serieVivante, textePartage, type Serie } from './goDuJour';
@@ -183,8 +182,6 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   // Une seule action en relief : le Go du jour tant qu'il n'est pas fait, « Continuer » ensuite.
   const duJourFait = !daily || serieDuJour?.dernier === numero;
   const recommande = connecte && stats ? palierRecommande(tiers, stats.rating) : undefined;
-  // Ta position sur la montagne : le palier du prochain problème, sinon le dernier palier ouvert.
-  const ici = prochainPz ? tiers.findIndex(t => t.problemes.includes(prochainPz)) : Math.max(0, tiers.map(t => t.ouvert && t.total > 0).lastIndexOf(true));
   return (
     <div className={`problemes${prochainPz && duJourFait ? ' avec-continuer' : ''}`}>
       {load.error === 'offline' && <p className="notice" role="status">Tu es hors ligne. Les problèmes restent jouables, mais ta cote ne bouge pas.</p>}
@@ -224,7 +221,7 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
 
       <MesErreurs confirmTouch={confirmTouch} Lecteur={PuzzlePlayer} />
       <section aria-labelledby="paliers-titre">
-        <h2 id="paliers-titre" className="titre-pierres">Ta progression</h2>
+        <h2 id="paliers-titre" className="titre-pierres">Problèmes</h2>
         <p className="muted small bases-aide">{fr('Du plus facile au plus dur. Une pierre est en ')}<b>atari</b>{fr(' quand il ne lui reste qu’une liberté.')}</p>
         {prochainPz && (
           <button className={duJourFait ? 'cta continuer' : 'btn continuer'} onClick={() => setOpenId(prochainPz.id)}
@@ -234,21 +231,23 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
         )}
         {tiers.filter(t => t.total > 0).map(t => (
           <PalierVue key={t.id} t={t} ordre={ordre} solved={solved} recommande={t.id === recommande} onOpen={setOpenId}
-            ici={ici} fete={fetes.includes(t.id)} />
+            fete={fetes.includes(t.id)} />
         ))}
       </section>
     </div>
   );
 }
 
-/** Un palier : nom, rang en kyu, progression, sceau quand il est complet, et sa grille de miniatures. */
-function PalierVue({ t, ordre, solved, recommande, onOpen, ici, fete }: {
-  t: Palier<Puzzle>; ordre: Puzzle[]; solved: Set<string>; recommande: boolean; onOpen: (id: string) => void; ici: number; fete: boolean;
+/**
+ * Un palier : nom, rang en kyu, sceau quand il est complet, et sa grille de miniatures.
+ * Aucun total affiché (ni « 3 / 33 », ni barre, ni montagne) : le joueur doit sentir que les problèmes ne s'arrêtent jamais.
+ */
+function PalierVue({ t, ordre, solved, recommande, onOpen, fete }: {
+  t: Palier<Puzzle>; ordre: Puzzle[]; solved: Set<string>; recommande: boolean; onOpen: (id: string) => void; fete: boolean;
 }) {
   const titre = `palier-${t.id}`;
   return (
-    <div className={`palier${t.ouvert ? '' : ' verrouille'}${t.complet ? ' complet' : ''}${fete ? ' fete' : ''}`} data-palier={t.id} aria-labelledby={titre} role="group">
-      <Montagne rang={t.rang} ici={ici} complet={t.complet} />
+    <div className={`palier${t.ouvert ? '' : ' verrouille'}${t.complet ? ' complet' : ''}${fete ? ' fete' : ''}`} data-palier={t.id} data-reussis={t.reussis} aria-labelledby={titre} role="group">
       <div className="palier-tete">
         <div className="palier-nom">
           <h3 id={titre}>
@@ -260,13 +259,8 @@ function PalierVue({ t, ordre, solved, recommande, onOpen, ici, fete }: {
         </div>
         {t.complet && <span className="palier-sceau" role="img" aria-label="Palier complet"><SceauLecon id={`p${t.rang}`} taille={34} /></span>}
       </div>
-      <div className="palier-progres">
-        <div className="palier-barre" role="progressbar" aria-label={`Progression ${t.nom}`} aria-valuemin={0} aria-valuemax={t.total} aria-valuenow={t.reussis}>
-          <span style={{ width: `${(100 * t.reussis) / t.total}%` }} />
-        </div>
-        <span className="palier-compte">{t.reussis}&nbsp;/&nbsp;{t.total}</span>
-      </div>
-      {!t.ouvert && <p className="palier-verrou">{fr('Réussis 60 % du palier précédent pour l’ouvrir.')}</p>}
+      {t.reussis > 0 && <p className="palier-compte">{t.reussis}&nbsp;{t.reussis > 1 ? 'réussis' : 'réussi'}</p>}
+      {!t.ouvert && <p className="palier-verrou">{fr('Réussis encore quelques problèmes du palier d’avant pour l’ouvrir.')}</p>}
       <ul className="grille-pb">
         {t.problemes.map(p => {
           const ok = solved.has(p.id);
