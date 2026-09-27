@@ -98,3 +98,10 @@ Chaque livraison : issue traitée, agent, pull request, résultat des vérificat
 - Constat : le joueur voit son score mais jamais ses erreurs, alors que KataGo sait les analyser ; un débutant perd ses pierres sans alerte ; rien ne le fait revenir le lendemain.
 - Issues créées : #34 revue de partie avec KataGo (priorité-haute), #35 alerte d'atari et indice (jour-2), #36 problème du jour et série sur l'accueil avec rappel (jour-2). Également #29 (sécurité côté serveur, priorité-haute) après #9 et #11.
 - Retouche : la carte « Bientôt : jouer contre KataGo » du Profil est retirée avec #8. Le comptage chinois en partie est à ajouter au périmètre de #10.
+
+## #2 Déploiement Vercel (architecte, avec Florian)
+
+- Florian a relié le dépôt à Vercel (espace « Florian's projects ») : production sur `https://jeu-de-go.vercel.app` depuis `main`, aperçu pour chaque PR.
+- Variables ajoutées pour Production et Preview : `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_POSTHOG_KEY`, `VITE_POSTHOG_HOST`, `VITE_SENTRY_DSN` (valeurs publiques).
+- Supabase Auth : Site URL `https://jeu-de-go.vercel.app`, Redirect URLs de production, des aperçus (`https://*-florians-projects-100ae27d.vercel.app/**`) et de `localhost:5173`.
+- Cette PR déclenche le premier déploiement de production.
