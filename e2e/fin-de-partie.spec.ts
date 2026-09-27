@@ -22,6 +22,7 @@ test('fin de partie contre Pomme : valider le score affiche le résultat', async
 
   await valider.click();
   await expect(page.getByText(/gagne|Tu gagnes/).first()).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Rejouer' })).toBeVisible();
+  // Issue #22 : l'action principale dépend du résultat (défaite : rejouer ; victoire : adversaire suivant).
+  await expect(page.locator('.cta')).toHaveText(/^(Rejouer contre Pomme|Défier Caillou)$/);
   expect(erreurs).toEqual([]);
 });
