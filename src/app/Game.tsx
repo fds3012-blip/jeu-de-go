@@ -13,7 +13,7 @@ import { supabase } from '../data/supabase';
 import { fr } from '../ui/typo';
 import { useProfil } from './hooks';
 import { useStored } from './settings';
-import { carteTerritoire, coupsJoues, descriptionIndices, descriptionQuiMene, DUREE_QUI_MENE, indicesRestants, INDICES_PAR_PARTIE, libelleAvantage, libelleCoup, messageAtari, messageIndice, metEnAtari, nouveauxAtari, partNoir, phraseQuiMene, QUI_MENE_PAR_PARTIE, quiMeneDisponible, quiMeneRestants } from './partie';
+import { carteTerritoire, conseilPasser, coupsJoues, descriptionIndices, descriptionQuiMene, DUREE_QUI_MENE, indicesRestants, INDICES_PAR_PARTIE, libelleAvantage, libelleCoup, messageAtari, messageIndice, metEnAtari, nouveauxAtari, partNoir, phraseQuiMene, QUI_MENE_PAR_PARTIE, quiMeneDisponible, quiMeneRestants } from './partie';
 import { choisirReplique, DUREE_REPLIQUE, type Situation } from './repliques';
 import { FinPartie } from '../ui/FinPartie';
 import { RecitScore } from '../ui/RecitScore';
@@ -147,7 +147,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
       if (m === -1) {
         repliquer('passe');
         if (pos.lastMove === -1) enterScore(r, `${ai.nom} passe aussi : la partie est finie.`);
-        else setMsg(`${ai.nom} passe. Si tu passes aussi, on compte les points.`);
+        else setMsg(conseilPasser(ai.nom, aide, true, r.board) ?? `${ai.nom} passe. Si tu passes aussi, on compte les points.`);
       } else {
         const cap = r.captures[2] - pos.captures[2];
         playStone(m, size, true);
@@ -155,7 +155,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
         if (metEnAtari(r, m)) playAtari();
         const alerte = cap ? null : alerteAtari(pos, r, 1, history.length + 1);
         if (alerte) atarisSubis.current++;
-        setMsg(cap ? `${ai.nom} capture ${pierres(cap)} en ${toLabel(m, size)}.` : alerte ?? `${ai.nom} joue ${toLabel(m, size)}. À toi.`);
+        setMsg(cap ? `${ai.nom} capture ${pierres(cap)} en ${toLabel(m, size)}.` : alerte ?? conseilPasser(ai.nom, aide, false, r.board) ?? `${ai.nom} joue ${toLabel(m, size)}. À toi.`);
       }
     });
     return () => { jeton.current++; setThinking(false); };
@@ -363,7 +363,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
       const immediat = !celebrer || mouvementsReduits();
       const ownerDelai = immediat ? undefined : new Map(recit.territoire.map(q => [q.p, q.delai]));
       return (
-        <RecitScore recit={recit} immediat={immediat} expliquerKomi={!komiExplique} onFini={finRecit}
+        <RecitScore recit={recit} immediat={immediat} expliquerKomi={!komiExplique} adversaire={ai?.nom} onFini={finRecit}
           fond={<Board size={size} board={pos.board} marks={{ owner: sc.owner, ownerDelai, dead, last: pos.lastMove }} />} />
       );
     }

@@ -64,27 +64,44 @@ export function etatRecit(r: Recit, t: number): EtatRecit {
 
 const pluriel = (n: number, mot: string) => `${virgule(n)} ${mot}${Math.abs(n) >= 2 ? 's' : ''}`;
 
-/** Ligne du deuxième temps : « + 3 prisonniers pour Noir, + 1 pour Blanc ». */
-export function ligneDeuxieme(r: Recit): string {
-  const { type, noir, blanc } = r.deuxieme, mot = type === 'prisonniers' ? 'prisonnier' : 'pierre';
-  if (!noir && !blanc) return type === 'prisonniers' ? 'Aucun prisonnier' : 'Aucune pierre';
-  if (!blanc) return `+ ${pluriel(noir, mot)} pour Noir`;
-  if (!noir) return `+ ${pluriel(blanc, mot)} pour Blanc`;
-  return `+ ${pluriel(noir, mot)} pour Noir, + ${virgule(blanc)} pour Blanc`;
+/**
+ * Noms des deux camps dans le récit (#118). À deux : « Noir » et « Blanc ». Contre l'ordi : « Toi » et son nom
+ * (« Pomme ») ; `toi` sert dans les phrases (« pour toi », « Tu gagnes »).
+ */
+export interface Camps { noir: string; blanc: string; toi: boolean }
+export const CAMPS_DEUX: Camps = { noir: 'Noir', blanc: 'Blanc', toi: false };
+
+/** Camps du récit : contre l'ordi (`adversaire` = son nom), « Toi » a Noir ; sinon Noir et Blanc. */
+export function campsRecit(adversaire?: string): Camps {
+  return adversaire ? { noir: 'Toi', blanc: adversaire, toi: true } : CAMPS_DEUX;
 }
 
-/** « + 6,5 komi pour Blanc » (un komi négatif, en test, s'écrit « − 100 »). */
-export function ligneKomi(komi: number): string {
+/** Nom d'un camp au milieu d'une phrase : « pour toi », « pour Pomme », « pour Noir ». */
+const dans = (c: Camps, camp: 1 | 2) => (camp === 1 ? (c.toi ? 'toi' : c.noir) : c.blanc);
+
+/** Ligne du deuxième temps : « + 3 prisonniers pour Noir, + 1 pour Blanc » (contre l'ordi : « pour toi », « pour Pomme »). */
+export function ligneDeuxieme(r: Recit, c: Camps = CAMPS_DEUX): string {
+  const { type, noir, blanc } = r.deuxieme, mot = type === 'prisonniers' ? 'prisonnier' : 'pierre';
+  if (!noir && !blanc) return type === 'prisonniers' ? 'Aucun prisonnier' : 'Aucune pierre';
+  if (!blanc) return `+ ${pluriel(noir, mot)} pour ${dans(c, 1)}`;
+  if (!noir) return `+ ${pluriel(blanc, mot)} pour ${dans(c, 2)}`;
+  return `+ ${pluriel(noir, mot)} pour ${dans(c, 1)}, + ${virgule(blanc)} pour ${dans(c, 2)}`;
+}
+
+/** « + 6,5 komi pour Blanc » (contre l'ordi « pour Pomme » ; un komi négatif, en test, s'écrit « − 100 »). */
+export function ligneKomi(komi: number, c: Camps = CAMPS_DEUX): string {
   if (!komi) return 'Pas de komi';
-  return `${komi < 0 ? '−' : '+'} ${virgule(Math.abs(komi))} komi pour Blanc`;
+  return `${komi < 0 ? '−' : '+'} ${virgule(Math.abs(komi))} komi pour ${dans(c, 2)}`;
 }
 
 export const EXPLICATION_KOMI = "Le komi compense l'avantage de Noir, qui joue en premier.";
 
-/** « Noir gagne de 2,5 points », ou « Égalité ». */
-export function ligneResultat(r: Recit): string {
+/** « Noir gagne de 2,5 points » à deux ; contre l'ordi « Tu gagnes de 3,5 points ! » ou « Pomme gagne de 2,5 points ». */
+export function ligneResultat(r: Recit, c: Camps = CAMPS_DEUX): string {
   if (!r.gagnant) return 'Égalité';
-  return `${r.gagnant === 1 ? 'Noir' : 'Blanc'} gagne de ${pluriel(r.marge, 'point')}`;
+  const marge = pluriel(r.marge, 'point');
+  if (r.gagnant === 1 && c.toi) return `Tu gagnes de ${marge} !`;
+  return `${r.gagnant === 1 ? c.noir : c.blanc} gagne de ${marge}`;
 }
 
 /** Compteur : « Noir 18 · Blanc 12 ». */

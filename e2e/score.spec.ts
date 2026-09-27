@@ -29,6 +29,9 @@ test('fin de partie : le récit du score, puis le résultat, sans toucher', asyn
   await valider.click();
   const recit = page.locator('.recit');
   await expect(recit).toBeVisible();
+  // À deux, les camps restent Noir et Blanc (#118) ; « Continuer » est le bouton principal.
+  await expect(recit.locator('.camp-nom')).toHaveText(['Noir', 'Blanc']);
+  await expect(page.getByRole('button', { name: 'Continuer' })).toHaveClass(/\bcta\b/);
   // Les carrés de territoire se posent un à un.
   await expect(page.locator('.territoire-recit')).toHaveCount(36 + 27);
   // Le résultat arrive, avec les totaux du comptage.
@@ -53,6 +56,31 @@ test('fin de partie : le récit du score, puis le résultat, sans toucher', asyn
   await expect(page.locator('.recit')).toBeVisible();
   await expect(page.locator('.recit')).not.toContainText('Le komi compense');
   expect(erreurs).toEqual([]);
+});
+
+// Issue #118 : contre l'ordi, le récit dit « Toi » et « Pomme », et « Continuer » est le bouton principal.
+test("contre Pomme : « Toi » et « Pomme », « Tu gagnes… ! » et un vrai bouton Continuer", async ({ page }) => {
+  await page.goto('/?komi=-100');
+  await page.locator('.cta').click();
+  const passer = page.getByRole('button', { name: 'Passer' });
+  const valider = page.getByRole('button', { name: 'Valider le score' });
+  for (let i = 0; i < 6 && !(await valider.isVisible()); i++) {
+    await expect(passer).toBeEnabled({ timeout: 10_000 });
+    await passer.click();
+    await expect(valider.or(page.getByText(/Pomme (joue|capture)/))).toBeVisible({ timeout: 10_000 });
+  }
+  await valider.click({ timeout: 10_000 });
+  const recit = page.locator('.recit');
+  await expect(recit).toBeVisible();
+  await expect(recit.locator('.camp-nom')).toHaveText(['Toi', 'Pomme']);
+  await expect(recit.locator('.recit-pierre.b')).toHaveCount(1);
+  await expect(page.locator('.recit-resultat.vu')).toHaveText(/^Tu gagnes de \d+(,5)? points\s?!$/, { timeout: 3000 });
+  const continuer = page.getByRole('button', { name: 'Continuer' });
+  await expect(continuer).toHaveClass(/\bcta\b/);
+  expect((await continuer.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  await continuer.click();
+  await expect(page.getByRole('heading', { level: 2, name: 'Victoire' })).toBeVisible();
 });
 
 test('un toucher saute directement au résultat', async ({ page }) => {
