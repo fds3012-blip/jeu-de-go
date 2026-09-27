@@ -15,6 +15,8 @@ export interface BoardMarks {
   zone?: number;
   /** Revue (issue #34) : meilleur coup du moteur, montré par une pierre fantôme jade. */
   meilleur?: number;
+  /** Revue (issue #71) : sceau de note posé en haut à droite de la pierre `p`. `cle` relance le tampon. */
+  note?: { p: number; fond: string; texte: string; symbole: string; libelle: string; cle: string | number };
   /** Récit du score (#78) : délai d'apparition (ms) de chaque carré de territoire. Sans délai, le carré est là d'emblée. */
   ownerDelai?: Map<number, number>;
 }
@@ -236,6 +238,20 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
         {marks.meilleur != null && marks.meilleur >= 0 && !board[marks.meilleur] ? (() => { const [x, y] = at(marks.meilleur); return (
           <circle cx={x} cy={y} r={R * 0.92} fill={JADE} fillOpacity={0.55} stroke={JADE_FONCE} strokeWidth={2.4} data-meilleur="" />
         ); })() : null}
+        {marks.note && marks.note.p >= 0 && board[marks.note.p] ? (() => {
+          const n = marks.note, [x, y] = at(n.p), s = C * 0.5, cx = x + R * 0.78, cy = y - R * 0.78;
+          return (
+            <g key={`note${n.cle}`} transform={`translate(${cx.toFixed(2)} ${cy.toFixed(2)})`} data-note-sceau={n.libelle}>
+              <g className="note-tampon" transform="rotate(-6)">
+                <rect x={-s / 2 - 1.5} y={-s / 2 - 1.5} width={s + 3} height={s + 3} rx={s * 0.3} fill={PAPIER} fillOpacity={0.9} />
+                <rect x={-s / 2} y={-s / 2} width={s} height={s} rx={s * 0.26} fill={n.fond} />
+                <rect x={-s / 2 + 2} y={-s / 2 + 2} width={s - 4} height={s - 4} rx={s * 0.2} fill="none" stroke={n.texte} strokeOpacity={0.35} strokeWidth={1} />
+                <text y={s * 0.02} textAnchor="middle" dominantBaseline="central" fill={n.texte}
+                  fontSize={s * (n.symbole.length > 1 ? 0.5 : 0.62)} fontWeight={800} fontFamily="var(--font-titre)">{n.symbole}</text>
+              </g>
+            </g>
+          );
+        })() : null}
         {ghostP >= 0 ? <g {...fantome(ghostP)} opacity={0.5} data-fantome="" aria-hidden="true">{corps(toPlay, ghostP, size)}</g> : null}
         {shaking >= 0 && !board[shaking] ? (
           <g key={`tr${shakeSeen}`} {...fantome(shaking)} opacity={0.5} aria-hidden="true"><g className="tremble">{corps(toPlay, shaking, size)}</g></g>

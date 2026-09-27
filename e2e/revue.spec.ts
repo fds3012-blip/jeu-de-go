@@ -49,7 +49,7 @@ test("fin de partie, revue coup par coup, erreurs analysées, puis rejouer d'ici
   const precedent = page.getByRole('button', { name: 'Précédent' });
   const suivant = page.getByRole('button', { name: 'Suivant' });
   await expect(page.getByText(/Coup 1 sur \d+/)).toBeVisible();
-  await expect(page.locator('.revue-mochi p')).toHaveText('Tu joues E5.');
+  await expect(page.locator('.revue-mochi p')).toHaveText(/^Tu joues E5\./);
   await expect(plateau(page).locator('g[data-pierre]')).toHaveCount(1);
   await expect(page.getByRole('img', { name: /Courbe d'avantage/ })).toBeVisible();
 
@@ -93,6 +93,82 @@ test("rejouer d'ici garde les coups joués jusqu'à la position choisie", async 
   await expect(plateau(page).locator('g[data-pierre]')).toHaveCount(pierres);
   await expect(plateau(page).locator('g[data-point="E5"][data-pierre="noir"]')).toHaveCount(1);
   await expect(page.getByRole('button', { name: 'Passer' })).toBeEnabled();
+});
+
+// Issue #71 : une note sur le coup affiché (sceau sur la pierre, liste des coups) et le bilan de précision.
+test('la revue note le coup affiché et montre la précision des deux joueurs', async ({ page }) => {
+  await partieCourte(page, ['E5', 'C3', 'G7']);
+  await page.getByRole('button', { name: 'Revoir ma partie' }).click();
+  await expect(page.locator('.revue-analyse')).toHaveCount(0, { timeout: 60_000 });
+
+  // Coup 1 : un sceau de note sur la pierre E5, et le même dans la liste des coups, avec son libellé lu à voix haute.
+  const sceau = plateau(page).locator('[data-note-sceau]');
+  await expect(sceau).toHaveCount(1);
+  const note = await sceau.getAttribute('data-note-sceau');
+  expect(note).toMatch(/^(Solide|Imprécision|Erreur|Grosse erreur|Meilleur coup|Excellent|Bon|Brillant)$/);
+  await expect(page.getByRole('button', { name: `Coup 1, E5, ${note}` })).toHaveAttribute('aria-current', 'true');
+  await expect(page.locator('.revue-mochi p')).toHaveText(/^Tu joues E5\. \S/);
+
+  // Toucher un coup de la liste l'affiche.
+  await page.getByRole('button', { name: /^Coup 2,/ }).click();
+  await expect(page.getByText(/Coup 2 sur \d+/)).toBeVisible();
+
+  // Bilan : précision des deux joueurs, puis le résumé (tableau et phrase de Mochi).
+  const bilan = page.getByRole('button', { name: /Précision/ });
+  await expect(bilan).toContainText(/Toi \d+\s%/);
+  await expect(bilan).toContainText(/Pomme \d+\s%/);
+  await bilan.click();
+  const resume = page.getByRole('region', { name: 'Résumé de la partie' });
+  await expect(resume.getByRole('table')).toBeVisible();
+  await expect(resume.getByRole('row', { name: /Grosse erreur/ })).toBeVisible();
+  await expect(resume.locator('.revue-mochi-bilan p')).not.toBeEmpty();
+  // Le résumé prend la place des coups, sans repousser le goban : « Fermer » y revient.
+  await expect(plateau(page)).toHaveCount(0);
+  await bilan.click();
+  await expect(plateau(page)).toBeVisible();
+  await expect(page.locator('.cta')).toHaveCount(1);
+  // « Rejouer d'ici » est dans le flux : il ne recouvre ni le goban ni la liste des coups.
+  const cta = await page.locator('.cta').boundingBox(), liste = await page.locator('.revue-nav').boundingBox(), gob = await plateau(page).boundingBox();
+  expect(cta!.y).toBeGreaterThanOrEqual(liste!.y + liste!.height);
+  expect(cta!.y).toBeGreaterThanOrEqual(gob!.y + gob!.height);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+});
+
+// Captures des notes (docs/design/v2/captures/notes-*.png) : `CAPTURES=1 npx playwright test e2e/revue.spec.ts`.
+test('captures des notes, sombre et clair', async ({ page }) => {
+  test.skip(!process.env.CAPTURES, 'captures à la demande');
+  test.setTimeout(180_000);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await partieCourte(page, ['E5', 'C3', 'G7', 'C7', 'G3', 'D6', 'F4', 'B2']);
+  await page.getByRole('button', { name: 'Revoir ma partie' }).click();
+  await expect(page.locator('.revue-analyse')).toHaveCount(0, { timeout: 90_000 });
+  await page.getByRole('button', { name: /^Coup 5,/ }).click();
+  const bilan = page.getByRole('button', { name: /Précision/ });
+  for (const [w, h, suffixe] of [[390, 844, ''], [375, 667, '-se']] as const) {
+    await page.setViewportSize({ width: w, height: h });
+    for (const theme of ['dark', 'light'] as const) {
+      await page.evaluate(t => document.documentElement.setAttribute('data-theme', t), theme);
+      await page.screenshot({ path: `docs/design/v2/captures/notes-coup-${theme === 'dark' ? 'sombre' : 'clair'}${suffixe}.png` });
+    }
+    await bilan.click();
+    for (const theme of ['dark', 'light'] as const) {
+      await page.evaluate(t => document.documentElement.setAttribute('data-theme', t), theme);
+      await page.screenshot({ path: `docs/design/v2/captures/notes-resume-${theme === 'dark' ? 'sombre' : 'clair'}${suffixe}.png` });
+    }
+    await bilan.click();
+  }
+  // Planche des 7 sceaux en grand, sur le bois du goban : mêmes couleurs que src/ui/notes.ts.
+  const sceaux: [string, string, string, string][] = [
+    ['Brillant', '!!', '#2F9FD8', '#04172A'], ['Meilleur coup', '★', '#3CC48E', '#07231A'], ['Excellent', '!', '#3CC48E', '#07231A'],
+    ['Bon', '✓', '#A5D66F', '#12240A'], ['Imprécision', '?!', '#EFB84A', '#2E1D00'], ['Erreur', '?', '#EC8236', '#2A1200'], ['Grosse erreur', '??', '#C23A24', '#FFF6EC'],
+  ];
+  const cases = sceaux.map(([l, s, f, t]) => `<figure><div class="p"><i style="background:${f};color:${t};font-size:${s.length > 1 ? 30 : 38}px">${s}</i></div><figcaption>${l}</figcaption></figure>`).join('');
+  await page.setViewportSize({ width: 820, height: 560 });
+  await page.setContent(`<style>body{margin:0;background:#1C1916;font-family:system-ui;color:#F3EDE3}main{display:grid;grid-template-columns:repeat(4,1fr);gap:22px;padding:28px;background:linear-gradient(#EDC27A,#C58D42);border-radius:14px;margin:18px}
+    figure{margin:0;display:grid;justify-items:center;gap:10px}.p{position:relative;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle at 36% 30%,#5b5f5d,#151716 55%,#050606);box-shadow:4px 7px 10px rgba(35,18,4,.45)}
+    i{position:absolute;right:-14px;top:-14px;width:60px;height:60px;display:grid;place-items:center;border-radius:28%;transform:rotate(-6deg);font-style:normal;font-weight:800;box-shadow:0 0 0 4px rgba(243,237,227,.9)}
+    figcaption{color:#2b1a08;font-weight:700;font-size:17px;white-space:nowrap}</style><main>${cases}</main>`);
+  await page.locator('main').screenshot({ path: 'docs/design/v2/captures/notes-sceaux.png' });
 });
 
 // Captures du design (docs/design/v2/captures/revue-*.png) : `CAPTURES=1 npx playwright test e2e/revue.spec.ts`.
