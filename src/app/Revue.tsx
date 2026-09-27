@@ -12,7 +12,7 @@ import { toLabel } from '../go/coords';
 import type { Color, Position } from '../go/rules';
 import { estimateLead, meilleurCoup } from '../engine';
 import { EVENTS, track } from '../data/analytics';
-import { courbe, grossesErreurs, phraseErreur, positionsDepuisSgf, rejouerDici, type Erreur } from './revue';
+import { AUCUNE_ERREUR, conseilFiable, courbe, grossesErreurs, phraseErreur, SANS_KATAGO, positionsDepuisSgf, rejouerDici, type Erreur } from './revue';
 import '../ui/revue.css';
 
 interface Props {
@@ -35,7 +35,9 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer }: Props) {
   const n = positions.length - 1, size = positions[0].size;
   const [i, setI] = useState(Math.min(1, n));
   const [avances, setAvances] = useState<(number | null)[]>([]);
-  const [meilleurs, setMeilleurs] = useState<Record<number, number>>({});
+  // Meilleur coup par erreur, seulement s'il est fiable (conseilFiable) ; `null` : rien à montrer.
+  const [meilleurs, setMeilleurs] = useState<Record<number, number | null>>({});
+  const [sansKataGo, setSansKataGo] = useState(false);
   const [choisie, setChoisie] = useState<Erreur | null>(null);
   const analysees = avances.length;
   const finie = analysees > n;
@@ -59,20 +61,28 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer }: Props) {
     return () => { vivant = false; };
   }, [positions, komi]);
 
-  // Meilleur coup, seulement là où tu t'es trompé : juste avant chaque erreur.
+  // Meilleur coup, seulement là où tu t'es trompé, et seulement avec KataGo : sans lui, aucun conseil (jamais de conseil faux).
   useEffect(() => {
     if (!erreurs.length) return;
     let vivant = true;
     (async () => {
       for (const e of erreurs) {
-        let m: number;
-        try { m = await meilleurCoup(positions[e.coup - 1], komi); } catch { m = -1; }
+        const avant = positions[e.coup - 1], c = avant.toPlay, apres = avances[e.coup];
+        let m: number | null = null;
+        try {
+          const r = await meilleurCoup(avant, komi);
+          if (!vivant) return;
+          if (!r.katago) { setSansKataGo(true); return; }
+          // Gain du coup conseillé sur le coup joué, pour le joueur qui s'est trompé.
+          const gain = apres == null ? 0 : r.lead - (c === 1 ? apres : -apres);
+          m = conseilFiable(avant, r.move, gain) ? r.move : null;
+        } catch { m = null; }
         if (!vivant) return;
         setMeilleurs(o => ({ ...o, [e.coup]: m }));
       }
     })();
     return () => { vivant = false; };
-  }, [erreurs, positions, komi]);
+  }, [erreurs, positions, komi]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Clavier : flèches gauche et droite.
   useEffect(() => {
@@ -97,11 +107,11 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer }: Props) {
     const geste = m < 0 ? (toi ? 'Tu passes' : `${nom} passe`) : `${toi ? 'Tu joues' : `${nom} joue`} ${toLabel(m, size)}`;
     phrase = `${geste}${cap ? ` et ${toi ? 'captures' : 'capture'} ${pierres(cap)}` : ''}.`;
   }
-  if (finie && !erreurs.length && !choisie && i === Math.min(1, n)) phrase = "Pas de grosse erreur dans cette partie. Bravo, continue comme ça !";
+  if (finie && !erreurs.length && !choisie && i === Math.min(1, n)) phrase = AUCUNE_ERREUR;
 
   const { ligne, aire } = courbe(avances, L, H, size);
   const x = (k: number) => (n <= 0 ? L / 2 : (k * L) / n);
-  const meilleur = choisie ? meilleurs[choisie.coup] : undefined;
+  const meilleur = choisie ? meilleurs[choisie.coup] ?? undefined : undefined;
 
   return (
     <div className="revue">
@@ -135,7 +145,9 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer }: Props) {
 
       {!finie ? (
         <p className="revue-analyse"><Reflexion taille={22} />{fr(`Mochi analyse ta partie… ${Math.min(analysees, n + 1)} / ${n + 1}`)}</p>
-      ) : erreurs.length > 0 && (
+      ) : !erreurs.length ? (
+        <p className="revue-aucune">{fr(AUCUNE_ERREUR)}</p>
+      ) : (
         <div className="revue-erreurs" role="group" aria-label={fr(`Tes ${erreurs.length} plus grosses erreurs`)}>
           {erreurs.map(e => (
             <button type="button" key={e.coup} className={`revue-erreur${choisie?.coup === e.coup ? ' actif' : ''}`} aria-pressed={choisie?.coup === e.coup} onClick={() => voir(e)}>
@@ -149,6 +161,7 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer }: Props) {
         <Mochi size={40} />
         <p>{fr(phrase)}</p>
       </div>
+      {sansKataGo && erreurs.length > 0 && <p className="revue-note">{fr(SANS_KATAGO)}</p>}
 
       <div className="dock revue-dock">
         <button type="button" className="cta" onClick={() => onRejouer(rejouerDici(positions, i + 1, joueur ?? null))}>Rejouer d'ici</button>

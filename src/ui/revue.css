@@ -45,3 +45,6 @@
 @media (prefers-reduced-motion: no-preference) {
   .revue-erreur { transition: border-color var(--duree-rapide) var(--ease), background-color var(--duree-rapide) var(--ease); }
 }
+
+.revue-aucune { display: flex; align-items: center; min-height: var(--cible-min); margin: 0; font-weight: var(--fw-bold); color: var(--accent-texte); }
+.revue-note { margin: calc(var(--space-1) * -1) 2px 0; color: var(--muted); font-size: 14px; line-height: 1.35; }

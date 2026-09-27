@@ -1,7 +1,7 @@
 // Revue d'une partie terminée (issue #34) : logique pure, testée dans revue.test.ts.
 // La partie est gardée en SGF dans localStorage (clé REVUE_KEY) ; l'écran src/app/Revue.tsx la relit,
 // estime l'avance de Noir après chaque coup, puis montre les plus grosses erreurs du joueur.
-import { newPosition, play, type Color, type Position } from '../go/rules';
+import { isLegal, newPosition, play, type Color, type Position } from '../go/rules';
 import { readSgf, writeSgf } from '../go/sgf';
 import { toLabel } from '../go/coords';
 
@@ -41,9 +41,9 @@ export interface Erreur {
 /**
  * Les `n` plus grosses erreurs de `joueur` : les plus fortes chutes de son avance après un de ses coups.
  * `avances[i]` : avance de Noir (points, komi compris) dans la position i ; `null` si inconnue.
- * Une chute de moins de `seuil` points n'est pas une erreur (bruit de l'estimation). Triées de la plus grosse à la plus petite.
+ * Une chute de moins de `seuil` points (1 par défaut) n'est pas une erreur : c'est du bruit de l'estimation. Triées de la plus grosse à la plus petite.
  */
-export function grossesErreurs(positions: Position[], avances: (number | null)[], joueur: Color | null, n = 3, seuil = 1.5): Erreur[] {
+export function grossesErreurs(positions: Position[], avances: (number | null)[], joueur: Color | null, n = 3, seuil = 1): Erreur[] {
   const out: Erreur[] = [];
   for (let i = 1; i < positions.length && i < avances.length; i++) {
     const avant = avances[i - 1], apres = avances[i], c = positions[i - 1].toPlay;
@@ -56,18 +56,40 @@ export function grossesErreurs(positions: Position[], avances: (number | null)[]
 
 const pts = (n: number) => { const v = Math.max(1, Math.round(n)); return `${v} point${v > 1 ? 's' : ''}`; };
 
-/** Phrase de Mochi pour une erreur : courte, au tutoiement, sans jargon. `meilleur` : coup conseillé (-1 : passer). */
+/** Message de Mochi quand aucune erreur ne dépasse le seuil. */
+export const AUCUNE_ERREUR = 'Aucune grosse erreur. Bien joué !';
+/** Ligne discrète quand KataGo n'est pas disponible : pas de meilleur coup montré. */
+export const SANS_KATAGO = 'Pour voir le meilleur coup, joue contre Bambou ou plus fort.';
+
+/**
+ * Vrai si on peut montrer `move` comme meilleur coup à un débutant. On ne montre rien plutôt qu'un conseil douteux :
+ * pas de passe, pas de coup illégal, pas de première ligne tant que le plateau est encore ouvert (moins d'un tiers
+ * des intersections occupées), et le coup doit gagner au moins `seuil` point par rapport au coup joué.
+ * `gain` : avance du joueur après le coup conseillé moins son avance après le coup joué.
+ */
+export function conseilFiable(pos: Position, move: number | null | undefined, gain: number, seuil = 1): boolean {
+  if (move == null || move < 0 || move >= pos.size * pos.size || !isLegal(pos, move)) return false;
+  if (!(gain >= seuil)) return false;
+  const n = pos.size, x = move % n, y = Math.floor(move / n);
+  let pierres = 0;
+  for (const c of pos.board) if (c) pierres++;
+  const bord = x === 0 || y === 0 || x === n - 1 || y === n - 1;
+  return !(bord && pierres < (n * n) / 3);
+}
+
+/**
+ * Phrase de Mochi pour une erreur : courte, au tutoiement, sans jargon. Elle décrit l'erreur, sans coordonnée ;
+ * `meilleur` (coup conseillé, déjà validé par conseilFiable) ajoute « Essaie plutôt D4, la pierre verte. ».
+ */
 export function phraseErreur(e: Erreur, positions: Position[], meilleur: number | null): string {
   const avant = positions[e.coup - 1], apres = positions[e.coup], size = avant.size;
-  const joue = apres.lastMove ?? -1, c = avant.toPlay, adv = (3 - c) as Color;
+  const joue = apres.lastMove ?? -1, adv = (3 - avant.toPlay) as Color;
   const perdues = positions[e.coup + 1] ? positions[e.coup + 1].captures[adv] - apres.captures[adv] : 0;
-  const conseil = meilleur == null ? '' : meilleur < 0 ? ' Ici, il valait mieux passer.' : ` Essaie plutôt ${toLabel(meilleur, size)}, la pierre verte.`;
   let constat: string;
-  if (joue < 0) constat = `Tu passes trop tôt : il restait environ ${pts(e.perte)} à prendre.`;
-  else if (perdues > 0) constat = `Après ${toLabel(joue, size)}, l'adversaire capture ${perdues > 1 ? `${perdues} pierres` : 'une pierre'}. Tu perds environ ${pts(e.perte)}.`;
-  else if (e.perte >= 10) constat = `${toLabel(joue, size)} coûte cher : environ ${pts(e.perte)}.`;
-  else constat = `${toLabel(joue, size)} laisse filer environ ${pts(e.perte)}.`;
-  return constat + conseil;
+  if (joue < 0) constat = 'Tu as passé trop tôt : il restait des points à prendre.';
+  else if (perdues > 0) constat = `Après ce coup, l'adversaire capture ${perdues > 1 ? `${perdues} pierres` : 'une pierre'}. Tu perds environ ${pts(e.perte)}.`;
+  else constat = `Ici tu as perdu environ ${pts(e.perte)}.`;
+  return meilleur != null && meilleur >= 0 ? `${constat} Essaie plutôt ${toLabel(meilleur, size)}, la pierre verte.` : constat;
 }
 
 /**

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { newPosition, play, type Position } from '../go/rules';
 import { fromLabel } from '../go/coords';
-import { courbe, grossesErreurs, phraseErreur, positionsDepuisSgf, rejouerDici, sgfDepuisHistorique } from './revue';
+import { AUCUNE_ERREUR, conseilFiable, courbe, grossesErreurs, phraseErreur, positionsDepuisSgf, rejouerDici, sgfDepuisHistorique } from './revue';
 
 /** Joue une suite de coups (« E5 », « passe ») sur un 9 × 9 et renvoie l'historique. */
 function partie(coups: string[], size = 9): Position[] {
@@ -42,8 +42,13 @@ describe('grossesErreurs', () => {
   const avances = [-6.5, 2, 1, 0, 3, -5, 4, -8, -8];
 
   it('garde les 3 plus fortes chutes du joueur Noir, de la plus grosse à la plus petite', () => {
-    // Coups de Noir : 1 (+8,5), 3 (-1), 5 (-8), 7 (-12). Seules les chutes >= 1,5 comptent.
-    expect(grossesErreurs(h, avances, 1)).toEqual([{ coup: 7, perte: 12 }, { coup: 5, perte: 8 }]);
+    // Coups de Noir : 1 (+8,5), 3 (-1), 5 (-8), 7 (-12).
+    expect(grossesErreurs(h, avances, 1)).toEqual([{ coup: 7, perte: 12 }, { coup: 5, perte: 8 }, { coup: 3, perte: 1 }]);
+  });
+
+  it("écarte les chutes de moins d'un point : c'est du bruit", () => {
+    expect(grossesErreurs(h, [0, 0, 0, -0.9, 0, -0.5, 0, -0.99, 0], 1)).toEqual([]);
+    expect(AUCUNE_ERREUR).toBe('Aucune grosse erreur. Bien joué !');
   });
 
   it('pour Blanc, une hausse de Noir est une perte', () => {
@@ -59,15 +64,52 @@ describe('grossesErreurs', () => {
     expect(grossesErreurs(h, [9, -9, null, -9], 1)).toEqual([{ coup: 1, perte: 18 }]);
   });
 
-  it('phrase de Mochi : tutoiement, coup conseillé, passe trop tôt', () => {
-    expect(phraseErreur({ coup: 5, perte: 8 }, h, fromLabel('C7', 9))).toBe('G7 laisse filer environ 8 points. Essaie plutôt C7, la pierre verte.');
-    expect(phraseErreur({ coup: 7, perte: 12 }, h, null)).toBe('Tu passes trop tôt : il restait environ 12 points à prendre.');
-    expect(phraseErreur({ coup: 5, perte: 14 }, h, -1)).toBe('G7 coûte cher : environ 14 points. Ici, il valait mieux passer.');
+  it("phrase de Mochi sans conseil : décrit l'erreur, sans aucune coordonnée", () => {
+    expect(phraseErreur({ coup: 5, perte: 2.2 }, h, null)).toBe('Ici tu as perdu environ 2 points.');
+    expect(phraseErreur({ coup: 7, perte: 12 }, h, null)).toBe('Tu as passé trop tôt : il restait des points à prendre.');
+    expect(phraseErreur({ coup: 5, perte: 14 }, h, -1)).toBe('Ici tu as perdu environ 14 points.');
+    for (const e of [{ coup: 5, perte: 2 }, { coup: 7, perte: 3 }]) expect(phraseErreur(e, h, null)).not.toMatch(/[A-HJ-T][1-9]/);
+  });
+
+  it('phrase de Mochi avec un conseil fiable de KataGo : la pierre verte', () => {
+    expect(phraseErreur({ coup: 5, perte: 8 }, h, fromLabel('C7', 9))).toBe('Ici tu as perdu environ 8 points. Essaie plutôt C7, la pierre verte.');
   });
 
   it("phrase de Mochi : l'adversaire capture juste après", () => {
     const c = partie(['A9', 'B9', 'E5', 'A8']);
-    expect(phraseErreur({ coup: 3, perte: 3 }, c, null)).toBe("Après E5, l'adversaire capture une pierre. Tu perds environ 3 points.");
+    expect(phraseErreur({ coup: 3, perte: 3 }, c, null)).toBe("Après ce coup, l'adversaire capture une pierre. Tu perds environ 3 points.");
+  });
+});
+
+describe('conseilFiable', () => {
+  const ouvert = partie(['E5', 'D5', 'C3'])[3];
+
+  it('accepte un bon coup légal, loin du bord, qui gagne au moins un point', () => {
+    expect(conseilFiable(ouvert, fromLabel('C7', 9), 3)).toBe(true);
+  });
+
+  it('refuse la première ligne tant que le plateau est ouvert (A9 dans le coin)', () => {
+    expect(conseilFiable(ouvert, fromLabel('A9', 9), 5)).toBe(false);
+    expect(conseilFiable(ouvert, fromLabel('E1', 9), 5)).toBe(false);
+  });
+
+  it('accepte la première ligne quand le plateau est bien rempli', () => {
+    const plein = newPosition(9);
+    for (let p = 20; p < 50; p++) plein.board[p] = p % 2 ? 1 : 2;
+    expect(conseilFiable(plein, fromLabel('A9', 9), 5)).toBe(true);
+  });
+
+  it('refuse un coup illégal, une passe ou rien', () => {
+    expect(conseilFiable(ouvert, fromLabel('E5', 9), 5)).toBe(false); // occupé
+    expect(conseilFiable(ouvert, -1, 5)).toBe(false);
+    expect(conseilFiable(ouvert, null, 5)).toBe(false);
+    expect(conseilFiable(ouvert, 999, 5)).toBe(false);
+  });
+
+  it("refuse un coup qui n'améliore pas l'estimation", () => {
+    expect(conseilFiable(ouvert, fromLabel('C7', 9), 0.5)).toBe(false);
+    expect(conseilFiable(ouvert, fromLabel('C7', 9), -2)).toBe(false);
+    expect(conseilFiable(ouvert, fromLabel('C7', 9), Number.NaN)).toBe(false);
   });
 });
 

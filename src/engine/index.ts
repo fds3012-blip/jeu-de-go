@@ -12,7 +12,7 @@ import type { Position } from '../go/rules';
 import type { Demande, Reponse, Tache } from './simple.worker';
 import { KataGoClient, type KataGoInfo } from './katago/client';
 import { chooseFromAnalysis } from './katago/choose';
-import { DEFAULT_MODEL_URL } from './katago/loader';
+import { CACHE_NAME, DEFAULT_MODEL_URL } from './katago/loader';
 import type { Analysis, AnalyzeOptions, MoveInfo } from './katago/search';
 
 export { OPPONENTS, opponent, chooseMove, deadStones, ownershipSimple };
@@ -166,18 +166,32 @@ export async function estimateLead(pos: Position, komi: number, opts: { kataGo?:
   return { lead: black, engine: 'simple' };
 }
 
+/** Vrai si le réseau KataGo est déjà dans le cache du navigateur (Cache API) : le charger ne télécharge rien. */
+export async function reseauEnCache(): Promise<boolean> {
+  try {
+    if (typeof caches === 'undefined') return false;
+    const url = new URL(modelUrl(), typeof location !== 'undefined' ? location.href : 'http://localhost/').href;
+    return !!(await (await caches.open(CACHE_NAME)).match(url));
+  } catch { return false; }
+}
+
 /**
- * Meilleur coup pour la revue d'une partie (issue #34) : KataGo s'il est déjà chargé (visites basses, 9 × 9 rapide),
- * sinon le moteur simple (niveau Caillou, dans son Worker). -1 : passer.
+ * Conseil de KataGo pour la revue d'une partie (issue #34). Jamais le moteur simple : ses conseils sont trop peu sûrs
+ * pour un débutant. KataGo est chargé seulement s'il l'est déjà ou si son réseau est en cache (aucun téléchargement).
+ * `katago: false` : pas de conseil possible. Sinon `move` (-1 : passer, `null` : aucun) et `lead`, l'avance
+ * en points pour le joueur au trait après ce coup.
  */
-export async function meilleurCoup(pos: Position, komi: number): Promise<number> {
-  const k = katago ?? null;
-  if (k && k.info.state === 'pret') {
-    try {
-      const a = await k.analyze(pos, { komi, visits: 48, timeMs: 1200 });
-      const m = a.moves[0]?.move;
-      if (m != null && isLegalMove(pos, m)) return m;
-    } catch { /* repli ci-dessous */ }
+export type Conseil = { katago: false } | { katago: true; move: number | null; lead: number };
+export async function meilleurCoup(pos: Position, komi: number): Promise<Conseil> {
+  let k = katago ?? null;
+  if ((!k || k.info.state !== 'pret') && (await reseauEnCache())) {
+    k = getKataGo();
+    try { await k?.start?.(); } catch { /* KataGo indisponible */ }
   }
-  return bestMove(pos, 'caillou', { komi });
+  if (!k || k.info.state !== 'pret') return { katago: false };
+  try {
+    const a = await k.analyze(pos, { komi, visits: 48, timeMs: 1200 });
+    const b = a.moves[0];
+    return b ? { katago: true, move: b.move, lead: b.lead } : { katago: true, move: null, lead: a.lead };
+  } catch { return { katago: false }; }
 }
