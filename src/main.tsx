@@ -6,6 +6,10 @@ import './ui/fonts.css';
 import './ui/app.css';
 import { registerSW } from './registerSW';
 import { captureError, EVENTS, initAnalytics, track } from './data/analytics';
+import { choisirLangue, langue } from './content/i18n';
+
+// Langue de l'interface (#167) : `<html lang>` suit la langue choisie au chargement.
+choisirLangue(langue());
 
 initAnalytics();
 track(EVENTS.appOuverte, { installee: window.matchMedia?.('(display-mode: standalone)').matches ?? false });

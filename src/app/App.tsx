@@ -12,6 +12,7 @@ import { Sceau } from '../ui/Sceau';
 import { OPPONENTS, type OpponentId } from '../engine';
 import { ConsentModal } from './Confidentialite';
 import { Profil, type VueProfil } from './Profil';
+import { t } from '../content/i18n';
 import { fenetreVisible, useConsentement } from './consentement';
 import { accueil, adversaireOuvert, echelle, introBut, INTRO_KEY, PARTIES_KEY, type Parties } from './home';
 import { Accueil } from './Accueil';
@@ -196,7 +197,7 @@ export function App() {
                 <Glacon gels={gels} />
               </span>
             )
-            : <p>{tab === 'jouer' ? 'Jouer' : tab === 'apprendre' ? 'Le chemin des leçons' : tab === 'problemes' ? 'Problèmes' : 'Profil'}</p>}
+            : <p>{tab === 'jouer' ? 'Jouer' : tab === 'apprendre' ? 'Le chemin des leçons' : tab === 'problemes' ? 'Problèmes' : t('nav.profil')}</p>}
         </header>}
         {annonceGel !== null && !enPartie && (tab === 'jouer' || tab === 'problemes') && (
           <p className="gel-annonce" role="status"><Mochi size={30} />{fr(messageGel(annonceGel))}</p>

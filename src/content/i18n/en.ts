@@ -1,0 +1,40 @@
+// English catalogue (issue #167). Same keys as fr.ts, enforced by the `Catalogue` type.
+// Tone: short sentences, a simple and warm "you". Go terms: docs/localisation/glossaire.md.
+import type { Catalogue } from './types';
+
+export const en = {
+  'nav.aria': 'Main navigation',
+  'nav.jouer': 'Play',
+  'nav.apprendre': 'Learn',
+  'nav.problemes': 'Puzzles',
+  'nav.profil': 'Profile',
+
+  'profil.aria': 'Your profile',
+  'profil.invite': 'Guest',
+  'profil.inviteDetail': 'No account: everything stays on this phone.',
+  'profil.sansPseudo': 'No username',
+  'profil.cote': 'Rating {cote}',
+  'profil.jours': { one: '{n} day', other: '{n} days' },
+  'profil.serieAria': 'Streak: {jours}',
+  'profil.reglages': 'Settings',
+  'profil.theme': 'Theme',
+  'profil.theme.sombre': 'Dark',
+  'profil.theme.clair': 'Light',
+  'profil.theme.auto': 'Auto',
+  'profil.goban': 'Board',
+  'profil.gobanVerrou': '{nom}, unlocks at level {niveau}',
+  'profil.gobanNiveau': 'Lv. {niveau}',
+  'profil.confirmer': 'Confirm moves',
+  'profil.confirmerAide': 'A second tap places the stone.',
+  'profil.sons': 'Sounds',
+  'profil.celebrations': 'Celebrations',
+  'profil.celebrationsAide': 'Confetti and chimes when you win.',
+  'profil.aide': 'Mochi’s help',
+  'profil.aide.auto': 'Beginners',
+  'profil.aide.oui': 'Always',
+  'profil.aide.non': 'Never',
+  'profil.compte': 'My account',
+  'profil.seConnecter': 'Sign in',
+  'profil.conditions': 'Terms and privacy',
+  'profil.retour': 'Back',
+} as const satisfies Catalogue;

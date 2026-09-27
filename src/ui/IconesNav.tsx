@@ -8,6 +8,7 @@
 // Styles et animation (la pierre « tombe ») : nav.css.
 import { useId, type ReactElement } from 'react';
 import { ONGLETS, type Onglet } from './onglets';
+import { t } from '../content/i18n';
 
 export type { Onglet };
 
@@ -116,7 +117,7 @@ export function IconeNav({ onglet, actif = false }: { onglet: Onglet; actif?: bo
 /** Barre de navigation du bas : quatre onglets, l'actif porte aria-current="page". */
 export function BarreNav({ actif, onChoisir }: { actif: Onglet; onChoisir: (o: Onglet) => void }) {
   return (
-    <nav className="nav" aria-label="Navigation principale">
+    <nav className="nav" aria-label={t('nav.aria')}>
       {ONGLETS.map(o => {
         const est = o.id === actif;
         return (
