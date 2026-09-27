@@ -1,7 +1,24 @@
 import { describe, expect, it } from 'vitest';
-import { DUREE_CARRE, DUREE_RECIT, etatRecit, ligneCompteur, ligneDeuxieme, ligneKomi, ligneResultat, recitScore, TEMPS } from './score';
+import { campsRecit, DUREE_CARRE, DUREE_RECIT, etatRecit, ligneCompteur, ligneDeuxieme, ligneKomi, ligneResultat, recitScore, TEMPS } from './score';
 import { score } from '../go/score';
 import { fromRows } from '../go/position';
+
+describe('camps du récit (#118)', () => {
+  const r = (gagnant: 0 | 1 | 2, marge: number) => ({ ...recitScore(fromRows(['.....', '.....', '.....', '.....', '.....']).pos, 6.5), gagnant, marge });
+  it("contre l'ordi : « Toi » et le nom de l'adversaire", () => {
+    expect(campsRecit('Pomme')).toEqual({ noir: 'Toi', blanc: 'Pomme', toi: true });
+    expect(ligneResultat(r(1, 3.5), campsRecit('Pomme'))).toBe('Tu gagnes de 3,5 points !');
+    expect(ligneResultat(r(2, 2.5), campsRecit('Pomme'))).toBe('Pomme gagne de 2,5 points');
+    expect(ligneKomi(6.5, campsRecit('Pomme'))).toBe('+ 6,5 komi pour Pomme');
+    const d = { ...r(1, 1), deuxieme: { type: 'prisonniers' as const, noir: 3, blanc: 1 } };
+    expect(ligneDeuxieme(d, campsRecit('Pomme'))).toBe('+ 3 prisonniers pour toi, + 1 pour Pomme');
+  });
+  it('à deux : Noir et Blanc', () => {
+    expect(campsRecit()).toEqual({ noir: 'Noir', blanc: 'Blanc', toi: false });
+    expect(ligneResultat(r(1, 3.5), campsRecit())).toBe('Noir gagne de 3,5 points');
+    expect(ligneResultat(r(0, 0), campsRecit('Pomme'))).toBe('Égalité');
+  });
+});
 
 // Partie 5 × 5 : Noir tient la gauche, Blanc la droite ; une pierre blanche morte (T) dans le camp noir.
 const { pos, marked } = fromRows([
