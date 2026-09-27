@@ -230,3 +230,14 @@ Chaque livraison : issue traitée, agent, pull request, résultat des vérificat
 - À faire valider par un avocat : que PostHog relève bien de l'exemption. Analyse et sources : `docs/juridique/consentement.md`.
 - Action pour Florian dans PostHog : activer « Discard client IP data » et régler la conservation à 25 mois maximum.
 - Vérifications : 397 tests unitaires et 46 tests e2e verts.
+
+## #35 Aide en partie : alerte d'atari de Mochi (frontend)
+
+- Contre Pomme et Caillou, Mochi prévient dès qu'un groupe du joueur n'a plus qu'une liberté. Il explique le mot « atari » la première fois.
+- La liberté restante clignote une fois sur le goban, sans animation si les mouvements sont réduits.
+- Nouveau réglage « Aide de Mochi en partie » dans le Profil :
+  - trois choix : Débutants (par défaut), Toujours, Jamais ;
+  - avec « Débutants », l'aide est coupée à partir de Bambou.
+- Reste :
+  - limiter l'indice à 3 par partie ;
+  - mesurer dans PostHog le taux de premières parties terminées.
