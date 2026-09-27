@@ -37,7 +37,7 @@ interface Props {
   shake?: { p: number; n: number } | null;
   /** Les pierres prises partent vers leur couvercle : les noires vers le haut, les blanches vers le bas (écran de partie). */
   versCouvercles?: boolean;
-  /** Noms lus dans les annonces (issue #116) : { 2: 'Pomme' } fait dire « Pomme joue C3 » au lieu de « Blanc joue C3 ». */
+  /** Noms lus dans les annonces (issue #116) : { 2: 'Pomme' } fait dire « Pomme a joué C3 » au lieu de « Blanc joue C3 ». */
   noms?: NomsCamps;
 }
 
@@ -112,8 +112,9 @@ export function nomIntersection(p: number, board: Int8Array, size: number, last 
 
 /** Annonce polie d'un coup : « Noir joue D4 » ou « Blanc joue C3 et prend 2 pierres ». */
 export function annonceCoup(c: number, p: number, prises: number, size: number, noms: NomsCamps = {}): string {
-  const qui = (c === 1 ? noms[1] : noms[2]) || (c === 1 ? 'Noir' : 'Blanc');
-  return `${qui} joue ${toLabel(p, size)}${prises ? ` et prend ${prises} pierre${prises > 1 ? 's' : ''}` : ''}`;
+  // Un camp nommé dit « Pomme a joué C3 » : ne répète pas mot pour mot le message visible « Pomme joue C3. À toi. ».
+  const nom = c === 1 ? noms[1] : noms[2];
+  return `${nom ? `${nom} a joué` : `${c === 1 ? 'Noir' : 'Blanc'} joue`} ${toLabel(p, size)}${prises ? ` et prend ${prises} pierre${prises > 1 ? 's' : ''}` : ''}`;
 }
 
 /**

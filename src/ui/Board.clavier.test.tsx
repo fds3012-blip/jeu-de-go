@@ -52,7 +52,7 @@ describe('noms lus', () => {
   });
 
   it("l'annonce cite le nom de l'adversaire", () => {
-    expect(annonceCoup(2, at('C3'), 0, N, { 2: 'Pomme' })).toBe('Pomme joue C3');
+    expect(annonceCoup(2, at('C3'), 0, N, { 2: 'Pomme' })).toBe('Pomme a joué C3');
     expect(annonceCoup(1, at('D4'), 0, N, { 2: 'Pomme' })).toBe('Noir joue D4');
   });
 
