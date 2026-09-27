@@ -79,3 +79,5 @@ td:first-child, th:first-child { text-align: left; }
 .intro .bubble svg { width: 36px; height: 36px; }
 .intro .bubble p { font-size: .9rem; padding: 8px 12px; line-height: 1.4; }
 @media (prefers-reduced-motion: no-preference) { .cta, .btn { transition: transform var(--duree-rapide); } .cta:active, .btn:active { transform: translateX(-50%) scale(.98); } .btn:active, .dock .cta:active { transform: scale(.98); } }
+.consent { margin-bottom: 14px; }
+.link { background: none; border: 0; padding: 0; min-height: 44px; color: var(--text); text-decoration: underline; text-underline-offset: 2px; }

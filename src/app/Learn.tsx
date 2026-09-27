@@ -6,6 +6,7 @@ import { fromRows } from '../go/position';
 import { play, type Position } from '../go/rules';
 import { fromLabel } from '../go/coords';
 import { score } from '../go/score';
+import { EVENTS, track } from '../data/analytics';
 
 type Progress = Record<string, number>;
 
@@ -42,6 +43,7 @@ export function LessonPlayer({ lesson, start, confirmTouch, onProgress, onExit }
 
   function next() {
     onProgress(idx + 1);
+    if (idx === lesson.steps.length - 1) track(EVENTS.leconTerminee, { lecon: lesson.id, rang: LESSONS.indexOf(lesson) + 1 });
     if (idx < lesson.steps.length - 1) { setIdx(idx + 1); setAnswer(null); } else onExit();
   }
   function onPlay(p: number) {

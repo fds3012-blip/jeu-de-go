@@ -64,6 +64,12 @@ Chaque livraison : issue traitée, agent, pull request, résultat des vérificat
 - Retouches du dirigeant : la bulle du but passe dans `Game` (prop `intro`) et disparaît au premier coup, sinon elle poussait les boutons Passer, Annuler et Abandonner hors de l'écran ; test e2e rendu robuste (le message « Tu joues » est vite remplacé par « Pomme réfléchit… »).
 - Vérifications : lint, typecheck, 104 tests, build, 6 tests e2e (3 passages) : vert.
 
+## #12 Mesure d'audience, erreurs et onboarding (growth)
+
+- Livré : `src/data/analytics.ts` (PostHog et Sentry chargés à la demande, rien sans consentement ni sans clés) ; événements `app_ouverte`, `premiere_pierre` (avec les secondes depuis l'ouverture), `partie_terminee`, `lecon_terminee`, `inscription`, `lien_connexion_envoye` ; bandeau Refuser / Accepter et section Confidentialité dans Profil.
+- Configuré : tableau de bord PostHog « Croissance – jeu de go » (entonnoir, rétention J1/J7/J30, première pierre dans la minute) et projet Sentry `jeu-de-go-web`, sans rien de payant. Seules des clés publiques sont dans `.env.example`.
+- Vérifications : lint, typecheck, 165 tests, build, 18 tests e2e (dont « aucune requête de suivi sans consentement ») : vert.
+- Reste (Florian) : variables dans Vercel, puis démo de l'entonnoir et erreur de test `#erreur-test`. L'issue reste ouverte avec le label « bloqué ».
 ## #9 Validation des coups côté serveur et fin aux points (backend)
 
 - Livré : Edge Function `game-action` (déployée en production, JWT exigé) qui rejoue la partie avec les règles de `src/go` et refuse case occupée, suicide, ko (422) et coup hors tour (409) ; fin aux points avec proposition des pierres mortes, acceptation ou reprise, score calculé côté serveur et cotes mises à jour. `play_move` n'est plus appelable par les clients.
