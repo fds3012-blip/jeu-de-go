@@ -6,6 +6,8 @@ import {
   type Puzzle, type PuzzleStats
 } from '../data/puzzles';
 import { Board } from '../ui/Board';
+import { playFail, playIllegal, playStone, playSuccess } from '../ui/sound';
+import { hapticIllegal, hapticStone } from '../ui/haptics';
 import { Bubble } from '../ui/Mochi';
 import { prefersReducedMotion, readLocal, useOnline, writeLocal } from './hooks';
 
@@ -160,8 +162,10 @@ function PuzzlePlayer({ puzzle, daily, confirmTouch, rated, rating, onAttempt, o
   async function onPlay(p: number) {
     if (solvedNow || replay) return;
     const r = checkAnswer(puzzle, p);
-    if (r.kind === 'illegal') { setAnswer({ kind: 'illegal', p, text: ILLEGAL_TEXT[r.reason] }); return; }
+    if (r.kind === 'illegal') { playIllegal(); hapticIllegal(); setAnswer({ kind: 'illegal', p, text: ILLEGAL_TEXT[r.reason] }); return; }
     const ok = r.kind === 'ok';
+    playStone(p, puzzle.size); hapticStone();
+    if (ok) playSuccess(); else playFail();
     setTries(t => t + 1);
     setAnswer({ kind: r.kind, p, text: ok ? (puzzle.explanation ?? 'Bravo, c’est le bon coup !') : 'Pas tout à fait. Essaie encore.' });
     setBoard(ok ? r.after.board : start.pos.board);

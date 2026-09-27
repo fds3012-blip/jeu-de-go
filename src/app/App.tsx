@@ -111,6 +111,11 @@ export function App() {
           <button aria-pressed={settings.confirmTouch} onClick={() => set({ confirmTouch: true })}>Oui</button>
           <button aria-pressed={!settings.confirmTouch} onClick={() => set({ confirmTouch: false })}>Non</button>
         </div>
+        <p className="muted small">Sons</p>
+        <div className="seg" role="group" aria-label="Sons">
+          <button aria-pressed={settings.sound} onClick={() => set({ sound: true })}>Activés</button>
+          <button aria-pressed={!settings.sound} onClick={() => set({ sound: false })}>Coupés</button>
+        </div>
         <h2>Ton compte</h2>
         <Account />
         <h2>Confidentialité</h2>

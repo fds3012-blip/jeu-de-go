@@ -7,6 +7,8 @@ import { play, type Position } from '../go/rules';
 import { fromLabel } from '../go/coords';
 import { score } from '../go/score';
 import type { SyncState } from './hooks';
+import { playFail, playStone, playSuccess } from '../ui/sound';
+import { hapticStone } from '../ui/haptics';
 import { EVENTS, track } from '../data/analytics';
 
 type Progress = Record<string, number>;
@@ -60,6 +62,8 @@ export function LessonPlayer({ lesson, start, confirmTouch, onProgress, onExit }
     const r = play(pos, p);
     if (typeof r === 'string') return;
     const ok = step.accept === 'line3' ? lineOf(p, 9) >= 2 : step.accept.map(a => fromLabel(a, 9)).includes(p);
+    playStone(p, 9); hapticStone();
+    if (ok) playSuccess(); else playFail();
     setAnswer({ ok, p, after: ok ? r : undefined });
   }
   const board = answer?.ok && answer.after ? answer.after.board : pos.board;
@@ -76,7 +80,7 @@ export function LessonPlayer({ lesson, start, confirmTouch, onProgress, onExit }
       {step.kind === 'quiz' && (
         <div className="choices">
           {step.choices.map((c, i) => (
-            <button key={c} onClick={() => !answer?.ok && setAnswer({ ok: i === step.answer, choice: i })}
+            <button key={c} onClick={() => { if (answer?.ok) return; const ok = i === step.answer; setAnswer({ ok, choice: i }); if (ok) playSuccess(); else playFail(); }}
               style={answer?.choice === i ? { borderColor: answer.ok ? 'var(--jade)' : 'var(--vermillon)' } : undefined}>{c}</button>
           ))}
         </div>

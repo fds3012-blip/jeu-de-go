@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
+import { installAudioUnlock, setSoundEnabled } from '../ui/sound';
 
-export interface Settings { theme: 'auto' | 'dark' | 'light'; confirmTouch: boolean; size: 9 | 13 | 19 }
+export interface Settings { theme: 'auto' | 'dark' | 'light'; confirmTouch: boolean; size: 9 | 13 | 19; sound: boolean }
 const KEY = 'go.settings.v1';
-const DEFAULTS: Settings = { theme: 'auto', confirmTouch: true, size: 9 };
+const DEFAULTS: Settings = { theme: 'auto', confirmTouch: true, size: 9, sound: true };
 
 function read(): Settings {
   try { return { ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY) || '{}') }; } catch { return DEFAULTS; }
@@ -14,6 +15,9 @@ export function useSettings(): [Settings, (patch: Partial<Settings>) => void] {
     try { localStorage.setItem(KEY, JSON.stringify(s)); } catch { /* stockage indisponible */ }
     const root = document.documentElement;
     if (s.theme === 'auto') root.removeAttribute('data-theme'); else root.setAttribute('data-theme', s.theme);
+    // Sons du goban (réglage « Sons ») : le contexte audio démarre au premier geste.
+    setSoundEnabled(s.sound);
+    if (s.sound) installAudioUnlock();
   }, [s]);
   return [s, patch => setS(prev => ({ ...prev, ...patch }))];
 }

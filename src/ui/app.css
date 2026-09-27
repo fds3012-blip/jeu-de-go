@@ -30,8 +30,7 @@ h2 { font-family: var(--font-titre); font-size: var(--fs-xl); margin: 26px 0 10p
 .nav button[aria-current="page"] { color: var(--text); }
 .nav button[aria-current="page"]::before { content: ""; position: absolute; top: 0; left: 32%; right: 32%; height: 3px; border-radius: 0 0 3px 3px; background: var(--accent); }
 .nav svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.board-wrap { border-radius: var(--radius-plateau); background: repeating-linear-gradient(86deg, rgba(120,70,20,.07) 0 2px, transparent 2px 9px), linear-gradient(160deg, var(--kaya), var(--kaya-2)); box-shadow: 0 14px 28px -16px rgba(0,0,0,.7); }
-.board { display: block; width: 100%; height: auto; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+/* Plateau : voir board.css (goban v2). */
 .strip { display: flex; align-items: center; gap: 10px; padding: var(--space-2) var(--space-3); border-radius: var(--radius-s); margin: var(--space-2) 0; border: 1.5px solid transparent; }
 .strip.active { border-color: var(--accent); background: var(--surface); }
 .strip b { display: block; }
