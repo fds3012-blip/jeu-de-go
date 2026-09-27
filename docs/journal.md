@@ -287,6 +287,13 @@ Chaque livraison : issue traitée, agent, pull request, résultat des vérificat
   - activer « Discard client IP data » dans PostHog ;
   - essayer la revue de partie et l'alerte d'atari sur iPhone.
 
+## #29 Sécurité côté serveur (backend)
+
+- Deux migrations appliquées en production, après des tests SQL joués dans des transactions annulées :
+  - **Parties classées** : komi 6,5 et handicap 0 imposés, avec la contrainte `games_rated_standard`.
+  - **Problèmes** : seul le premier essai compte pour la cote, et deux essais simultanés ne comptent qu'une fois. Un essai répété et réussi fait quand même avancer la série de jours. Correctif demandé après ma revue : sinon, le Go du jour aurait cassé la série.
+  - **Leçons** : la progression ne recule jamais, grâce au trigger `lesson_progress_keep_max`.
+- Aucune donnée supprimée, aucune branche Supabase payante créée. Advisors : aucune nouvelle alerte.
 ## #73 Veille concurrentielle et innovations (produit)
 
 - L'app est comparée à chess.com, BadukPop, OGS, KaTrain, AI Sensei, Tsumego Pro, SmartGo, Fox et Tygem, 101weiqi et Duolingo, sur quatre axes : accueil, rétention, profondeur et social. Document : `docs/produit/veille-2026-09-27.md`.
@@ -314,3 +321,17 @@ Chaque livraison : issue traitée, agent, pull request, résultat des vérificat
   - les deux sortes d'apostrophes mélangées ;
   - le bouton principal de l'accueil sur deux lignes ;
   - des états pas encore capturés.
+
+## #75 Go du jour partageable, premier incrément (growth)
+
+- Un défi commun à tous, numéroté en heure de Paris. Le 27/09 est le n° 1.
+- Il remplace le « problème du jour », qui variait d'un joueur à l'autre.
+- Bouton « Partager » en relief : il ouvre le partage du téléphone, ou copie le texte sinon. Exemple : `Go du jour n° 1 · résolu en 2 essais · série 1 🔥` suivi du lien. La réponse n'est jamais dévoilée.
+- Le lien `?go-du-jour=N` ouvre directement le problème, sans compte. La fenêtre de consentement attend la fin du problème.
+- Événements suivis : `go_du_jour_resolu`, `go_du_jour_partage` et `arrivee_par_partage`.
+- Reste :
+  - les trois paliers de difficulté ;
+  - une table du défi côté serveur ;
+  - la série liée au compte ;
+  - l'indicateur dans PostHog.
+- Aujourd'hui, le même problème revient tous les 6 jours. Les nouveaux problèmes (#16) allongeront ce cycle.
