@@ -50,6 +50,15 @@ export function LearnHome({ progress, onOpen, sync = 'local' }: { progress: Prog
   const faites = liste.filter(e => e.etat === 'faite').length;
   const bouton = boutonChemin(LESSONS, progress);
   const cta = useRef<HTMLButtonElement>(null);
+  // #121 : sous 390 px (zoom 200 %), les écarts horizontaux du chemin (pierres, tracé, lignes) sont mis à l'échelle
+  // de la largeur de l'écran pour que les pierres restent dedans ; à 390 px et plus, k = 1 : rien ne change.
+  const [k, setK] = useState(() => Math.min(1, window.innerWidth / 390));
+  useEffect(() => {
+    const maj = () => setK(Math.min(1, window.innerWidth / 390));
+    window.addEventListener('resize', maj);
+    return () => window.removeEventListener('resize', maj);
+  }, []);
+  const echelle = k < 1 ? `scale(${k} 1)` : undefined;
 
   // La leçon en cours doit être à l'écran, avec son bouton : on fait défiler d'un coup, sans animation.
   useEffect(() => {
@@ -72,16 +81,18 @@ export function LearnHome({ progress, onOpen, sync = 'local' }: { progress: Prog
 
       <div className="gue" style={{ height: t.hauteur }}>
         <div className="gue-goban" aria-hidden="true">
-          <svg width="1" height={t.hauteur} focusable="false"><path d={lignesGoban(t.hauteur)} /></svg>
+          <svg width="1" height={t.hauteur} focusable="false"><path d={lignesGoban(t.hauteur)} transform={echelle} vectorEffect="non-scaling-stroke" /></svg>
         </div>
         <svg className="gue-trace" width="1" height={t.hauteur} aria-hidden="true" focusable="false">
-          <path d={t.d} className="gue-route" />
-          {parcouru && <path d={parcouru} className="gue-parcouru" />}
+          <g transform={echelle}>
+            <path d={t.d} className="gue-route" vectorEffect="non-scaling-stroke" />
+            {parcouru && <path d={parcouru} className="gue-parcouru" vectorEffect="non-scaling-stroke" />}
+          </g>
         </svg>
         <ol>
           {liste.map((e, i) => {
             const p = t.pierres[i], droite = p.col > 0;
-            const style = { top: p.y, '--x': `${p.x}px` } as CSSProperties;
+            const style = { top: p.y, '--x': `${p.x * k}px` } as CSSProperties;
             const etat = e.etat === 'faite' ? ', terminée' : e.etat === 'encours' ? ', prochaine étape' : '';
             return (
               <li key={e.lecon.id} className={`pas pas-${e.etat} ${droite ? 'a-droite' : 'a-gauche'}`} style={style}>
