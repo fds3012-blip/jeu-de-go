@@ -34,7 +34,9 @@ for (const largeur of [390, 320]) {
     await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible();
     const theme = page.getByRole('group', { name: 'Theme' });
     for (const nom of ['Dark', 'Light', 'Auto']) await expect(theme.getByRole('button', { name: nom })).toBeVisible();
-    for (const nom of [/^Confirm moves/, /^Sounds$/, /^Celebrations/]) await expect(page.getByRole('switch', { name: nom })).toBeVisible();
+    for (const nom of [/^Confirm moves/, /^Celebrations/]) await expect(page.getByRole('switch', { name: nom })).toBeVisible();
+    const sons = page.getByRole('group', { name: 'Sounds' });
+    for (const nom of ['Sound', 'Vibration']) await expect(sons.getByRole('button', { name: nom, exact: true })).toBeVisible();
     await expect(page.getByRole('group', { name: 'Mochi’s help' }).getByRole('button', { name: 'Beginners' })).toBeVisible();
     await expect(page.getByRole('button', { name: /^My account/ })).toContainText('Sign in');
     await expect(page.getByRole('button', { name: 'Terms and privacy' })).toBeVisible();
