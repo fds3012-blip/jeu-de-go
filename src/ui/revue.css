@@ -81,6 +81,9 @@
 
 .revue-mochi { display: flex; align-items: flex-start; gap: var(--space-3); padding: var(--space-3); border-radius: 14px; background: var(--surface); }
 .revue-mochi p { margin: 0; font-size: 15px; line-height: 1.4; }
+/* « En faire un problème » (issue #77) : action secondaire, sous la phrase de Mochi. */
+.revue-probleme { display: block; width: 100%; margin-top: var(--space-2); border-color: var(--line); }
+.revue-probleme-ok { margin: var(--space-2) 0 0; min-height: var(--cible-bouton); display: flex; align-items: center; justify-content: center; font-size: var(--fs-s); font-weight: var(--fw-bold); color: var(--accent-texte); }
 
 /* « Rejouer d'ici » dans le flux, sous la liste des coups : il ne recouvre jamais le goban ni la liste. */
 .app-partie .revue-dock, .revue-dock { position: static; left: auto; bottom: auto; transform: none; width: 100%; margin-bottom: var(--relief); }

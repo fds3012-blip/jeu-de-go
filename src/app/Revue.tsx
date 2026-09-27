@@ -21,6 +21,8 @@ import {
   AUCUNE_ERREUR, candidatsBrillant, compteNotes, conseilFiable, courbe, courbeY, NOTE_INFO, noterCoups, phraseBilan, phraseErreur, phraseNote,
   precision, SANS_KATAGO, positionsDepuisSgf, rejouerDici, type AnalyseRevue, type Erreur, type Note, type NoteCoup,
 } from './revue';
+import { readLocal, writeLocal } from './hooks';
+import { ajouter, creerErreur, ERREURS_KEY, lireErreurs, peutEnFaireUnProbleme } from './erreurs';
 import '../ui/revue.css';
 
 interface Props {
@@ -51,6 +53,8 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer }: Props) {
   const [sansKataGo, setSansKataGo] = useState(false);
   const [choisie, setChoisie] = useState<Erreur | null>(null);
   const [resume, setResume] = useState(false);
+  // Erreurs déjà transformées en problème pendant cette revue (issue #77).
+  const [gardees, setGardees] = useState<Record<number, true>>({});
   const liste = useRef<HTMLOListElement>(null);
   const analysees = analyses.length;
   const finie = analysees > n;
@@ -128,6 +132,16 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer }: Props) {
 
   function aller(k: number) { setI(Math.max(0, Math.min(n, k))); setChoisie(null); }
   function voir(e: Erreur) { setI(e.coup - 1); setChoisie(e); setResume(false); }
+  /** « En faire un problème » : la position avant l'erreur, le meilleur coup de KataGo et ses équivalents, gardés sur l'appareil. */
+  function enFaireUnProbleme(e: Erreur) {
+    const pb = creerErreur({
+      avant: positions[e.coup - 1], joue: positions[e.coup].lastMove ?? -1, coup: e.coup, note: notes[e.coup - 1]?.note,
+      meilleur: meilleurs[e.coup], perte: e.perte, analyse: analyses[e.coup - 1], adversaire,
+    }, new Date());
+    if (!pb) return;
+    writeLocal(ERREURS_KEY, ajouter(lireErreurs(readLocal<unknown>(ERREURS_KEY, [])), pb));
+    setGardees(g => ({ ...g, [e.coup]: true }));
+  }
 
   const q = positions[i];
   const note = i > 0 ? notes[i - 1] ?? null : null;
@@ -226,6 +240,11 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer }: Props) {
         <Mochi size={40} />
         <p>{fr(phrase)}</p>
       </div>
+      {choisie && peutEnFaireUnProbleme(notes[choisie.coup - 1]?.note, meilleurs[choisie.coup]) && (
+        gardees[choisie.coup]
+          ? <p className="revue-probleme-ok" role="status">{fr('Ajouté à tes problèmes : retrouve-le dans l’onglet Problèmes.')}</p>
+          : <button type="button" className="btn revue-probleme" onClick={() => enFaireUnProbleme(choisie)}>En faire un problème</button>
+      )}
       {sansKataGo && erreurs.length > 0 && <p className="revue-note">{fr(SANS_KATAGO)}</p>}
 
       <figure className="revue-courbe">

@@ -23,6 +23,7 @@ import { prefersReducedMotion, readLocal, useOnline, writeLocal } from './hooks'
 import { legendeSerie, niveau } from './problemes';
 import { ordrePaliers, palierRecommande, paliers, prochain, suivantPalier, type Palier } from './paliers';
 import { SceauLecon } from '../ui/SceauLecon';
+import { MesErreurs } from '../ui/MesErreurs';
 import { SERIE_KEY, numeroDuJour, problemeDuNumero, serieVivante, textePartage, type Serie } from './goDuJour';
 import '../ui/apprendre.css';
 import { Glacon, PierreGivree } from '../ui/Glacon';
@@ -206,6 +207,7 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
         </section>
       )}
 
+      <MesErreurs confirmTouch={confirmTouch} Lecteur={PuzzlePlayer} />
       <section aria-labelledby="paliers-titre">
         <h2 id="paliers-titre" className="titre-pierres">Ta progression</h2>
         <p className="muted small bases-aide">{fr('Du plus facile au plus dur. Une pierre est en ')}<b>atari</b>{fr(' quand il ne lui reste qu’une liberté.')}</p>

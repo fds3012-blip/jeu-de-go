@@ -290,6 +290,12 @@
 .partage-lien { user-select: all; overflow-wrap: anywhere; font-weight: normal; }
 .liens-du-jour { justify-content: center; gap: var(--space-2); flex-wrap: wrap; }
 
+/* ---------- Tes erreurs à rejouer (issue #77) ---------- */
+.mes-erreurs-compteur { display: inline-flex; align-items: center; justify-content: center; min-width: 28px; height: 28px; padding: 0 8px;
+  border-radius: 14px; background: var(--text); color: var(--bg); font-size: var(--fs-s); font-weight: var(--fw-bold); letter-spacing: 0; }
+.mes-erreurs-ecran { position: fixed; inset: 0; z-index: 30; background: var(--bg); overflow-y: auto; overscroll-behavior: contain; }
+.mes-erreurs-contenu { max-width: var(--largeur-max); margin: 0 auto;
+  padding: calc(var(--space-3) + env(safe-area-inset-top, 0px)) var(--gouttiere) calc(var(--space-6) + env(safe-area-inset-bottom, 0px)); }
 /* Problèmes par paliers (issue #93). */
 .problemes.avec-continuer { padding-bottom: calc(var(--cible-cta) + var(--relief) + var(--space-4)); }
 .du-jour-refaire { width: 100%; }
