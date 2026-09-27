@@ -43,8 +43,8 @@ export function App() {
   if (tab === 'jouer' && playing) {
     screen = (
       <>
-        {intro && playing === 'ordi' && <div className="intro"><Bubble>{introBut(adv.nom)}</Bubble></div>}
-        <Game key={playing === 'ordi' ? adv.id : 'deux'} size={settings.size} komi={6.5} confirmTouch={settings.confirmTouch} opponent={playing === 'ordi' ? adv : undefined} onExit={() => { setIntro(false); setPlaying(false); }} />
+        <Game key={playing === 'ordi' ? adv.id : 'deux'} size={settings.size} komi={6.5} confirmTouch={settings.confirmTouch} opponent={playing === 'ordi' ? adv : undefined}
+          intro={intro && playing === 'ordi' ? <Bubble>{introBut(adv.nom)}</Bubble> : undefined} onExit={() => { setIntro(false); setPlaying(false); }} />
       </>
     );
   } else if (tab === 'apprendre' && lesson) {

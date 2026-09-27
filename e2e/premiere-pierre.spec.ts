@@ -34,7 +34,8 @@ test('première pierre en deux touches, accueil sans défilement', async ({ page
   // Touche 2 : clic souris au centre du plateau (pas de confirmation à la souris).
   const box = (await plateau.boundingBox())!;
   await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
-  await expect(page.getByText(/Tu joues /)).toBeVisible();
+  // Le message « Tu joues … » laisse vite place à « Pomme réfléchit… » : l'un ou l'autre prouve que la pierre est posée.
+  await expect(page.getByText(/Tu joues |Pomme réfléchit|Pomme (joue|capture|passe)/)).toBeVisible();
 
   // Au retour, Mochi et le bouton restent cohérents, et la bulle du but ne revient plus.
   await page.getByRole('button', { name: '‹ Accueil' }).click();

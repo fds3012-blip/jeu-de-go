@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Board } from '../ui/Board';
 import { groupAt, newPosition, play, type Position } from '../go/rules';
 import { score } from '../go/score';
@@ -9,9 +9,9 @@ const REFUS = { occupe: '', ko: "Ko : tu ne peux pas reprendre tout de suite, jo
 const pierres = (n: number) => `${n} pierre${n > 1 ? 's' : ''}`;
 
 // Sans `opponent` : partie à deux sur le même appareil. Avec : le joueur a Noir, l'ordi joue Blanc.
-interface Props { size: number; komi: number; confirmTouch: boolean; onExit: () => void; opponent?: Opponent }
+interface Props { size: number; komi: number; confirmTouch: boolean; onExit: () => void; opponent?: Opponent; intro?: ReactNode }
 
-export function Game({ size, komi, confirmTouch, onExit, opponent: ai }: Props) {
+export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro }: Props) {
   const [history, setHistory] = useState<Position[]>(() => [newPosition(size)]);
   const [phase, setPhase] = useState<'play' | 'score' | 'end'>('play');
   const [dead, setDead] = useState<Set<number>>(new Set());
@@ -130,6 +130,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai }: Props) 
   return (
     <div>
       <button className="back" onClick={onExit}>‹ Accueil</button>
+      {intro && history.length === 1 && <div className="intro">{intro}</div>}
       {strip(2)}
       <Board size={size} board={pos.board} toPlay={pos.toPlay} interactive={phase === 'score' || myTurn} stonesTappable={phase === 'score'} confirmTouch={confirmTouch}
         marks={{ last: pos.lastMove, owner: phase === 'score' ? sc.owner : undefined, dead }} onPlay={onPlay} />
