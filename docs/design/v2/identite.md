@@ -67,6 +67,22 @@ Le fond du sceau reste `#2F4B8A` dans les deux modes. Sur la barre sombre, son c
 - Chaque bouton fait 60 px de haut et au moins 44 px de large.
 - Mouvements réduits : pas de chute, pas d'enfoncement. L'état actif s'affiche directement.
 
+## 2 bis. Barre d'actions de la partie (issue #65)
+
+Code : `src/ui/IconesActions.tsx`, styles dans `src/ui/partie.css`. Captures : `captures/actions-*.png` (planche : `captures/actions-planche.png`, régénérée par `npx vite-node scripts/captures-actions.tsx`, serveur `npx vite --port 4326` lancé).
+
+| Action | Dessin | Accent |
+|---|---|---|
+| **Indice** | La pierre fantôme de l'accueil, dans son onde jade | Le halo jade : la seule couleur de la barre au repos |
+| **Annuler** | Ta pierre qui remonte par un chemin pointillé qui tourne vers la gauche | Aucun |
+| **Passer** | Le bord du goban, et tes deux pierres qui restent dessous, hors du plateau | Aucun |
+| **Abandonner** | Une pierre posée sur le couvercle retourné, le geste traditionnel | À « Confirmer ? », le couvercle devient un sceau hanko et la pierre s'y pose |
+
+- **Disponible** : les pierres ont la matière du goban, comme un onglet actif.
+- **Désactivé** (Annuler au premier coup, Indice et Passer pendant que l'adversaire joue) : encre brume, comme un onglet inactif. Pas de voile d'opacité : le libellé reste à 7:1 en sombre et 6:1 en clair.
+- **Appui** : la pierre s'enfonce (`translateY` et `scale(.9)`, 100 ms), transform seulement. Rien en mouvements réduits.
+- Une grille en croix derrière l'indice en faisait un viseur ; une pierre centrée sur un dôme faisait un buste. Les deux ont été écartés.
+
 ## 3. Déclinaisons
 
 | Où | Quoi |
