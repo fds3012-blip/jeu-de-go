@@ -166,6 +166,35 @@ export async function estimateLead(pos: Position, komi: number, opts: { kataGo?:
   return { lead: black, engine: 'simple' };
 }
 
+/**
+ * Analyse d'une position pour la note des coups (issue #71). `lead` : avance de Noir, komi compris.
+ * Avec KataGo : ses candidats (avance pour le joueur au trait), du meilleur au moins bon. Sinon, l'estimation
+ * du moteur simple, sans candidats (on ne connaît pas le meilleur coup). `null` si aucune estimation possible.
+ */
+export interface AnalyseRevue { lead: number; engine: 'katago' | 'simple'; coups?: { move: number; visits: number; lead: number }[] }
+export async function analyseRevue(pos: Position, komi: number, opts: { visits?: number; kataGo?: boolean } = {}): Promise<AnalyseRevue | null> {
+  const k = opts.kataGo === false ? null : katago ?? null;
+  if (k && k.info.state === 'pret') {
+    try {
+      const visits = opts.visits ?? 32;
+      const a = await k.analyze(pos, { komi, visits, timeMs: visits * 40, maxMoves: 6 });
+      return { lead: pos.toPlay === 1 ? a.lead : -a.lead, engine: 'katago', coups: a.moves.map(m => ({ move: m.move, visits: m.visits, lead: m.lead })) };
+    } catch { return null; }
+  }
+  const r = await estimateLead(pos, komi, { kataGo: false });
+  return r && { lead: r.lead, engine: 'simple' };
+}
+
+/** Prépare KataGo pour la revue s'il est déjà chargé ou si son réseau est en cache (aucun téléchargement). */
+export async function preparerKataGo(): Promise<boolean> {
+  let k = katago ?? null;
+  if ((!k || k.info.state !== 'pret') && (await reseauEnCache())) {
+    k = getKataGo();
+    try { await k?.start?.(); } catch { /* KataGo indisponible */ }
+  }
+  return !!k && k.info.state === 'pret';
+}
+
 /** Vrai si le réseau KataGo est déjà dans le cache du navigateur (Cache API) : le charger ne télécharge rien. */
 export async function reseauEnCache(): Promise<boolean> {
   try {

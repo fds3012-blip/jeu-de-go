@@ -3,7 +3,7 @@
 import { describe, expect, it } from 'vitest';
 import { newPosition, play, type Position } from '../go/rules';
 import { fromLabel } from '../go/coords';
-import { candidatsBrillant, compteNotes, lisser, NOTE_INFO, NOTES, noterCoups, phraseBilan, precision, rienAPrendre, type AnalyseRevue, type NoteCoup } from './revue';
+import { candidatsBrillant, compteNotes, lisser, NOTE_INFO, NOTES, noterCoups, phraseBilan, phraseNote, precision, rienAPrendre, type AnalyseRevue, type NoteCoup } from './revue';
 
 function partie(coups: string[], size = 9, depart = newPosition(size)): Position[] {
   const h = [depart];
@@ -215,6 +215,14 @@ describe('précision et bilan', () => {
     expect(phraseBilan([nc(1, 1, 0), nc(2, 2, 2)], 1, 'Pomme')).toBe('Très belle partie, tu as joué juste. Aucune erreur, continue comme ça !');
     expect(phraseBilan([nc(1, 1, 2.5), nc(2, 2, 6)], 1, 'Pomme')).toBe('Tu as joué plus juste que Pomme. Aucune erreur, continue comme ça !');
     expect(phraseBilan([], 1)).toBe('Pas assez de coups pour faire le bilan.');
+  });
+
+  it('Mochi dit la note du coup affiché, en langage clair', () => {
+    expect(phraseNote(nc(1, 1, 0, 'meilleur'))).toBe('Meilleur coup !');
+    expect(phraseNote(nc(1, 1, 2.4, 'imprecision'))).toBe('Imprécision : environ 2 points de perdus.');
+    expect(phraseNote(nc(1, 1, 9, 'grosse'))).toBe('Grosse erreur : environ 9 points de perdus.');
+    expect(phraseNote(nc(1, 1, 0.8, 'bon'))).toBe('Bon coup, à peine un point de moins que le meilleur.');
+    expect(phraseNote(nc(1, 1, 0.5, 'solide'))).toBe('Coup solide.');
   });
 
   it('chaque note a un symbole, pas seulement une couleur', () => {

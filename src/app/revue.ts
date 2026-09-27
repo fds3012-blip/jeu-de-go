@@ -4,6 +4,7 @@
 import { groupAt, isLegal, neighbors, newPosition, play, type Color, type Position } from '../go/rules';
 import { readSgf, writeSgf } from '../go/sgf';
 import { toLabel } from '../go/coords';
+import type { AnalyseRevue } from '../engine';
 
 /** Dernière partie terminée, pour la revue (localStorage ; Supabase viendra plus tard). */
 export const REVUE_KEY = 'go.revue.v1';
@@ -102,12 +103,16 @@ export function rejouerDici(positions: Position[], coup: number, joueur: Color |
   return positions.slice(0, i + 1);
 }
 
+/** Hauteur de la courbe pour une avance de Noir `v` (0 en haut du repère). */
+export function courbeY(v: number, hauteur: number, size: number): number {
+  return hauteur / 2 - (hauteur / 2) * Math.tanh(v / (size * 1.5)) * 0.94;
+}
+
 /** Tracé SVG de la courbe d'avantage : Noir en bas, Blanc en haut. Une avance de Noir fait monter la courbe. */
 export function courbe(avances: (number | null)[], largeur: number, hauteur: number, size: number): { ligne: string; aire: string } {
   const n = avances.length;
   if (n === 0) return { ligne: '', aire: '' };
-  const echelle = size * 1.5;
-  const y = (v: number) => hauteur / 2 - (hauteur / 2) * Math.tanh(v / echelle) * 0.94;
+  const y = (v: number) => courbeY(v, hauteur, size);
   const x = (i: number) => (n === 1 ? largeur / 2 : (i * largeur) / (n - 1));
   let dernier = 0;
   const pts: string[] = [];
@@ -160,12 +165,21 @@ export const VISITES_MIN = 8;
 /** Au-delà de cette avance, la partie est jouée : pas de Brillant (tout coup « gagne »). */
 const PARTIE_JOUEE = 15;
 
-/** Analyse d'une position pour la revue. `lead` : avance de Noir, komi compris. */
-export interface AnalyseRevue {
-  lead: number;
-  engine: 'katago' | 'simple';
-  /** Candidats de KataGo, du meilleur au moins bon ; `lead` pour le joueur au trait. */
-  coups?: { move: number; visits: number; lead: number }[];
+/** Analyse d'une position pour la revue (moteur : `analyseRevue`). `lead` : avance de Noir, komi compris. */
+export type { AnalyseRevue };
+
+/** Ce que dit Mochi de la note du coup affiché, après « Tu joues E5. ». */
+export function phraseNote(n: NoteCoup): string {
+  switch (n.note) {
+    case 'brillant': return 'Brillant ! Tu as trouvé mieux que le premier choix de KataGo.';
+    case 'meilleur': return 'Meilleur coup !';
+    case 'excellent': return 'Excellent coup.';
+    case 'bon': return `Bon coup, à peine ${n.perte < 1 ? 'un point' : pts(n.perte)} de moins que le meilleur.`;
+    case 'solide': return 'Coup solide.';
+    case 'imprecision': return `Imprécision : environ ${pts(n.perte)} de perdus.`;
+    case 'erreur': return `Erreur : environ ${pts(n.perte)} de perdus.`;
+    case 'grosse': return `Grosse erreur : environ ${pts(n.perte)} de perdus.`;
+  }
 }
 
 export interface NoteCoup {
