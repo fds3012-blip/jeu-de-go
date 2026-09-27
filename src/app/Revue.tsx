@@ -107,7 +107,6 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer }: Props) {
     const geste = m < 0 ? (toi ? 'Tu passes' : `${nom} passe`) : `${toi ? 'Tu joues' : `${nom} joue`} ${toLabel(m, size)}`;
     phrase = `${geste}${cap ? ` et ${toi ? 'captures' : 'capture'} ${pierres(cap)}` : ''}.`;
   }
-  if (finie && !erreurs.length && !choisie && i === Math.min(1, n)) phrase = AUCUNE_ERREUR;
 
   const { ligne, aire } = courbe(avances, L, H, size);
   const x = (k: number) => (n <= 0 ? L / 2 : (k * L) / n);
