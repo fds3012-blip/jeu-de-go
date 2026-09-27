@@ -10,9 +10,16 @@ const pierres = (n: number) => `${n} pierre${n > 1 ? 's' : ''}`;
 const PALES = "Les pierres pâles sont prisonnières : elles ne peuvent plus s'échapper. Touche un groupe pour corriger.";
 
 // Sans `opponent` : partie à deux sur le même appareil. Avec : le joueur a Noir, l'ordi joue Blanc.
-interface Props { size: number; komi: number; confirmTouch: boolean; onExit: () => void; opponent?: Opponent; intro?: ReactNode }
+// `onResult` est appelé une fois à la fin de chaque partie (abandon ou score validé) avec le vainqueur.
+// `fin` remplace le bouton « Rejouer » de l'écran de fin : phrase de Mochi et actions choisies par l'écran parent.
+interface Props {
+  size: number; komi: number; confirmTouch: boolean; onExit: () => void; opponent?: Opponent; intro?: ReactNode;
+  onResult?: (winner: 1 | 2) => void; fin?: { mochi: ReactNode; actions: ReactNode };
+  /** Komi vu par l'ordi pour choisir ses coups ; par défaut `komi`. Sert au paramètre de test `?komi=` (voir bilan.ts). */
+  aiKomi?: number;
+}
 
-export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro }: Props) {
+export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, onResult, fin, aiKomi = komi }: Props) {
   const [history, setHistory] = useState<Position[]>(() => [newPosition(size)]);
   const [phase, setPhase] = useState<'play' | 'score' | 'end'>('play');
   const [dead, setDead] = useState<Set<number>>(new Set());
@@ -33,7 +40,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro }: 
     if (!ai || !aiTurn) return;
     const t = ++token.current, t0 = Date.now();
     setThinking(true);
-    bestMove(pos, ai.id, { komi }).then(async m => {
+    bestMove(pos, ai.id, { komi: aiKomi }).then(async m => {
       const wait = 350 - (Date.now() - t0); // petite pause pour que la réponse ne paraisse pas instantanée
       if (wait > 0) await new Promise(r => setTimeout(r, wait));
       if (t !== token.current) return;
@@ -50,7 +57,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro }: 
       }
     });
     return () => { token.current++; setThinking(false); };
-  }, [ai, aiTurn, pos, komi, size]);
+  }, [ai, aiTurn, pos, aiKomi, size]);
 
   // Deux passes : on passe au comptage et le moteur propose les pierres mortes (pâles), que le joueur corrige d'une touche.
   function enterScore(p: Position, fin: string) {
@@ -97,10 +104,12 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro }: 
     setThinking(false);
     setHistory(history.slice(0, undoTo)); resume(); setMsg(ai ? 'Coup annulé. À toi de rejouer.' : 'Coup annulé.');
   }
+  function finish(winner: 1 | 2) { setPhase('end'); onResult?.(winner); }
   function resign() {
     if (!resignArm) { setResignArm(true); setTimeout(() => setResignArm(false), 3000); return; }
     token.current++;
-    setResigned(ai ? 1 : pos.toPlay); setPhase('end');
+    const loser = ai ? 1 : pos.toPlay;
+    setResigned(loser); finish((3 - loser) as 1 | 2);
   }
   function restart() {
     token.current++;
@@ -122,9 +131,10 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro }: 
     const how = resigned ? 'par abandon' : `de ${String(sc.margin).replace('.', ',')} point${sc.margin >= 2 ? 's' : ''}`;
     return (
       <div>
-        <button className="back" onClick={onExit}>‹ Accueil</button>
+        {!fin && <button className="back" onClick={onExit}>‹ Accueil</button>}
         <p className="big">{ai && winner === 1 ? 'Tu gagnes' : `${name(winner)} gagne`} {how}</p>
         <p className="muted">{history.length - 1} coups joués sur {size} × {size}.</p>
+        {fin && <div aria-live="polite">{fin.mochi}</div>}
         {!resigned && (
           <table>
             <thead><tr><th /><th>{name(1)}</th><th>{name(2)}</th></tr></thead>
@@ -137,7 +147,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro }: 
           </table>
         )}
         <Board size={size} board={pos.board} marks={{ owner: resigned ? undefined : sc.owner, dead }} />
-        <button className="cta" onClick={restart}>Rejouer</button>
+        {fin ? <><div className="fin-espace" aria-hidden="true" />{fin.actions}</> : <button className="cta" onClick={restart}>Rejouer</button>}
       </div>
     );
   }
@@ -162,7 +172,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro }: 
           <p className="card small">{name(1)} {String(sc.black).replace('.', ',')}, {name(2)} {String(sc.white).replace('.', ',')} (komi compris). Les pierres pâles sont comptées comme mortes.</p>
           <div className="row" style={{ marginTop: 8 }}>
             <button className="btn" onClick={() => { resume(); setMsg('La partie reprend.'); }}>Reprendre</button>
-            <button className="btn primary" onClick={() => setPhase('end')} disabled={finding}>Valider le score</button>
+            <button className="btn primary" onClick={() => finish(sc.winner)} disabled={finding}>Valider le score</button>
           </div>
         </>
       )}
