@@ -59,9 +59,13 @@ test('paliers : Novice verrouillé, puis ouvert après les réussites', async ({
   await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
 
   const novice = page.getByRole('group', { name: /^Novice/ });
-  await expect(debutant.getByRole('progressbar')).toHaveAttribute('aria-valuenow', String(seuil - 1));
+  await expect(debutant).toHaveAttribute('data-reussis', String(seuil - 1));
+  // Aucun total visible : les problèmes doivent sembler sans fin.
+  await expect(debutant.getByRole('progressbar')).toHaveCount(0);
+  await expect(page.locator('svg.montagne')).toHaveCount(0);
+  await expect(debutant.getByText(/\d+\s\/\s\d+/)).toHaveCount(0);
   await expect(novice).toHaveAccessibleName(/verrouillé/);
-  await expect(novice.getByText('Réussis 60 % du palier précédent pour l’ouvrir.')).toBeVisible();
+  await expect(novice.getByText('Réussis encore quelques problèmes du palier d’avant pour l’ouvrir.')).toBeVisible();
   const verrouilles = novice.getByRole('button', { name: /, verrouillé$/ });
   expect(await verrouilles.count()).toBeGreaterThan(0);
   await expect(verrouilles.first()).toBeDisabled();
@@ -74,9 +78,9 @@ test('paliers : Novice verrouillé, puis ouvert après les réussites', async ({
   await expect(page.getByRole('button', { name: 'Problème suivant' })).toBeVisible();
   await page.getByRole('button', { name: 'Retour aux problèmes' }).first().click();
 
-  await expect(debutant.getByRole('progressbar')).toHaveAttribute('aria-valuenow', String(seuil));
+  await expect(debutant).toHaveAttribute('data-reussis', String(seuil));
   await expect(novice).not.toHaveAccessibleName(/verrouillé/);
-  await expect(novice.getByText('Réussis 60 % du palier précédent pour l’ouvrir.')).toHaveCount(0);
+  await expect(novice.getByText('Réussis encore quelques problèmes du palier d’avant pour l’ouvrir.')).toHaveCount(0);
   await expect(novice.getByRole('button').first()).toBeEnabled();
   const debord = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(debord).toBeLessThanOrEqual(0);

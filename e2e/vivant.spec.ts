@@ -57,7 +57,6 @@ for (const theme of ['dark', 'light'] as const) {
     await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
 
     const debutant = page.getByRole('group', { name: /^Débutant/ });
-    await expect(debutant.locator('svg.montagne.complet')).toHaveCount(1);
     await expect(debutant.getByRole('img', { name: 'Palier complet' })).toBeVisible();
     await expect(debutant.locator('.pastille-ok')).toHaveCount(ids.length);
     // La fête ne se joue qu'une fois : le palier est noté comme fêté.
@@ -69,7 +68,7 @@ for (const theme of ['dark', 'light'] as const) {
       const nom = theme === 'dark' ? 'sombre' : 'clair';
       await page.waitForTimeout(1200);
       await debutant.scrollIntoViewIfNeeded();
-      await page.getByRole('heading', { name: 'Ta progression' }).evaluate(e => e.scrollIntoView());
+      await page.getByRole('heading', { name: 'Problèmes', level: 2 }).evaluate(e => e.scrollIntoView());
       await page.screenshot({ path: `docs/design/v2/captures/vivant-problemes-${nom}.png` });
       await page.getByRole('navigation').getByRole('button', { name: 'Profil' }).click();
       await page.screenshot({ path: `docs/design/v2/captures/vivant-profil-${nom}.png` });

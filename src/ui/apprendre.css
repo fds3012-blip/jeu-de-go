@@ -323,11 +323,7 @@
 .palier-nom small { display: block; margin-top: 2px; color: var(--muted); font-size: var(--fs-legende); }
 .palier-reco { color: var(--recompense-texte); font-weight: var(--fw-bold); }
 .palier-sceau { flex: none; }
-.palier-progres { display: flex; align-items: center; gap: var(--space-3); margin: 10px 0 var(--space-4); }
-.palier-barre { flex: 1; height: 8px; border-radius: 99px; background: var(--surface-2); overflow: hidden; }
-.palier-barre span { display: block; height: 100%; border-radius: inherit; background: var(--accent); }
-@media (prefers-reduced-motion: no-preference) { .palier-barre span { transition: width 400ms cubic-bezier(.23, 1, .32, 1); } }
-.palier-compte { flex: none; min-width: 3.5em; text-align: right; font-variant-numeric: tabular-nums; font-weight: var(--fw-bold); font-size: var(--fs-s); }
+.palier-compte { margin: 6px 0 var(--space-3); font-variant-numeric: tabular-nums; font-weight: var(--fw-bold); font-size: var(--fs-s); color: var(--accent-texte, var(--accent)); }
 .palier-verrou { margin: -6px 0 var(--space-4); color: var(--muted); font-size: var(--fs-s); }
 .palier.verrouille .palier-nom h3, .palier.verrouille .palier-compte { color: var(--muted); }
 .palier.verrouille .grille-pb { filter: grayscale(1); opacity: .45; }
@@ -335,25 +331,8 @@
 .cadenas { flex: none; }
 
 /* ---------- Paliers illustrés (issue #103) : l'ascension, du village au sommet ---------- */
-.montagne { display: block; width: 100%; height: auto; aspect-ratio: 320 / 72; margin-bottom: var(--space-2); border-radius: var(--radius);
   background: linear-gradient(180deg, color-mix(in srgb, var(--kaya) 14%, var(--surface)) 0%, var(--surface) 100%); }
-.montagne .m-loin { fill: color-mix(in srgb, var(--muted) 18%, var(--surface)); }
-.montagne .m-mont { fill: color-mix(in srgb, var(--kaya-2) 34%, var(--surface)); }
-.montagne .m-chemin { fill: none; stroke: var(--muted); stroke-width: 1.6; stroke-dasharray: 2 4; stroke-linecap: round; opacity: .8; }
-.montagne .m-fait { fill: none; stroke: var(--accent-trait); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
-.montagne .m-etape { fill: var(--surface); stroke: var(--muted); stroke-width: 1.6; }
-.montagne .m-etape.passee { fill: var(--accent-trait); stroke: var(--accent-trait); }
-.montagne .m-etape.la { stroke: var(--text); stroke-width: 2; }
-.montagne .m-repere { fill: var(--text); opacity: .72; }
-.montagne .m-repere.fin { fill: none; stroke: var(--text); stroke-width: 1.4; stroke-linecap: round; }
-.montagne .m-neige { fill: var(--papier); stroke: var(--text); stroke-width: .8; stroke-linejoin: round; opacity: .9; }
-.montagne .m-mat { stroke: var(--text); stroke-width: 1.6; stroke-linecap: round; }
-.montagne .m-flamme { fill: var(--hanko); }
 /* Palier complet : chemin et étapes en or, fond doré. */
-.montagne.complet { background: linear-gradient(180deg, color-mix(in srgb, var(--or) 26%, var(--surface)) 0%, var(--surface) 100%); }
-.montagne.complet .m-fait, .montagne.complet .m-etape.la { stroke: var(--or); }
-.montagne.complet .m-etape.la { fill: var(--or); }
-.palier.complet .palier-barre span { background: var(--or); }
 
 /* Miniature réussie : un sceau jade net (fond, anneau, coche), lisible sans la couleur. */
 .pastille-ok { padding: 0; background: none; }
@@ -366,7 +345,6 @@
   .palier.fete .palier-sceau { display: inline-block; animation: sceau-pose 520ms cubic-bezier(.34, 1.56, .64, 1) 150ms both; }
   .palier.fete .m-drapeau { transform-box: fill-box; }
   .palier.fete .m-flamme { transform-box: fill-box; transform-origin: left center; animation: drapeau-flotte 700ms ease-in-out 2; }
-  .palier.fete .montagne { animation: or-lueur 900ms ease-out both; }
 }
 @keyframes sceau-pose { 0% { transform: scale(1.4) rotate(-10deg); opacity: 0; } 60% { opacity: 1; } 100% { transform: none; } }
 @keyframes drapeau-flotte { 50% { transform: scaleX(.75) skewY(-8deg); } }
