@@ -154,3 +154,12 @@ button.ligne:focus-visible { outline-offset: -3px; }
 .sceau-badge.eteint .b-fond { fill: var(--surface); stroke: var(--muted); stroke-width: 1.2; stroke-dasharray: 3 3; }
 .sceau-badge.eteint .b-anneau { opacity: .35; }
 .sceau-badge.eteint .s-plein { opacity: .55; }
+
+/* ---------- Supprimer mon compte (#114) : discret, en bas de « Mon compte » ---------- */
+.btn-supprimer { display: block; width: 100%; min-height: 44px; margin-top: var(--space-4); padding: 0 var(--space-2);
+  background: none; border: 0; color: var(--danger-texte); font: inherit; font-size: var(--fs-s); font-weight: var(--fw-medium);
+  text-decoration: underline; text-underline-offset: 3px; }
+.suppression { margin-top: var(--space-4); padding-top: var(--space-4); box-shadow: inset 0 1px 0 var(--line); }
+.suppression b { color: var(--danger-texte); }
+.btn.btn-danger { background: var(--bg); color: var(--danger-texte); border-color: var(--danger-texte); }
+.btn.btn-danger:disabled { opacity: .45; }

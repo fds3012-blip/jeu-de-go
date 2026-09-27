@@ -527,6 +527,7 @@ export type Database = {
         Args: { p_game: string; p_loser: string; p_winner: string }
         Returns: undefined
       }
+      delete_my_account: { Args: never; Returns: undefined }
       find_match: { Args: { p_size: number }; Returns: string }
       finish_game_by_score: {
         Args: {

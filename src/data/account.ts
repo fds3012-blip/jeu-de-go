@@ -48,3 +48,23 @@ export async function saveUsername(db: Db, userId: string, raw: string): Promise
   if (error) return { ok: false, error: usernameErrorFromDb(error.code) };
   return { ok: true, value: data };
 }
+
+/** Mot à taper pour confirmer la suppression du compte (#114). */
+export const MOT_SUPPRESSION = 'SUPPRIMER';
+
+/** Vrai si la saisie vaut le mot de confirmation (espaces et casse ignorés). */
+export function confirmationValide(saisie: string): boolean {
+  return saisie.trim().toUpperCase() === MOT_SUPPRESSION;
+}
+
+/**
+ * Supprime définitivement le compte du joueur connecté (#114), puis ferme la session locale.
+ * Tout se passe côté serveur dans `delete_my_account()`, qui n'agit que sur auth.uid().
+ */
+export async function deleteMyAccount(db: Db): Promise<Result<null>> {
+  const { error } = await db.rpc('delete_my_account');
+  if (error) return { ok: false, error: 'La suppression n’a pas abouti. Ton compte est intact. Réessaie dans un moment.' };
+  // L'utilisateur n'existe plus côté serveur : on efface seulement la session de cet appareil.
+  await db.auth.signOut({ scope: 'local' });
+  return { ok: true, value: null };
+}
