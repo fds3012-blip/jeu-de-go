@@ -105,3 +105,4 @@ Chaque livraison : issue traitée, agent, pull request, résultat des vérificat
 - Variables ajoutées pour Production et Preview : `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_POSTHOG_KEY`, `VITE_POSTHOG_HOST`, `VITE_SENTRY_DSN` (valeurs publiques).
 - Supabase Auth : Site URL `https://jeu-de-go.vercel.app`, Redirect URLs de production, des aperçus (`https://*-florians-projects-100ae27d.vercel.app/**`) et de `localhost:5173`.
 - Cette PR déclenche le premier déploiement de production.
+- Correctif : les 5 variables avaient été créées en type « Secret ». Vercel refuse ce type pour un préfixe public `VITE_`, et l'app déployée n'appelait pas Supabase (aucun compte ni aucune requête dans les journaux). Florian les a recréées en type « Config » ; cette PR relance le déploiement. `.env.example` le précise.
