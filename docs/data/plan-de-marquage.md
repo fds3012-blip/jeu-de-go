@@ -36,6 +36,8 @@ Issue #166. Source unique : `src/data/analytics.ts` (constante `EVENTS`). Un tes
 | `gel_utilise` | `jour`, `serie`, `gels_restants` | Jour manqué couvert par un gel (`src/app/gelAppareil.ts`) | Rétention (séries sauvées) |
 | `xp_gagne` | `points`, `gains`, `sources`, `xp_total`, `niveau` | Gains d'XP agrégés sur quelques secondes (#109, `src/app/xp.ts`) | Engagement par source d'XP |
 | `niveau_atteint` | `niveau`, `xp_total`, `source`, `recompense` | Niveau franchi (#109, `src/app/xp.ts`) | Progression, paliers de récompense |
+| `installation_proposee` | `plateforme` (`chrome` : invite native ; `ios` : consigne Safari), `moment` (`premiere_victoire`/`go_du_jour`) | Carte « Installe l'app » montrée, une seule fois par appareil, juste après une première victoire contre l'ordi ou un Go du jour réussi (#178, `src/ui/ProposerInstallation.tsx`). **Nouveau (#178)** | Taux d'installation (`installation_acceptee` / `installation_proposee`), part des joueurs actifs qui ont l'app (`app_ouverte.installee`) : condition du futur rappel quotidien sur iPhone |
+| `installation_acceptee` | `plateforme` (`chrome` seulement), `moment` | Le joueur accepte l'invite native de Chrome (`userChoice` = `accepted`, #178, `src/ui/ProposerInstallation.tsx`). Sur iPhone, Safari ne dit pas si l'ajout a été fait : on le lit après coup dans `app_ouverte.installee = true`. **Nouveau (#178)** | Taux d'installation (Chrome), rétention J7/J30 des joueurs qui ont installé comparée aux autres |
 
 `identify(id)` (`src/app/Account.tsx`) relie les événements au compte, seulement au niveau `complet`.
 
