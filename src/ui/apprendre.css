@@ -80,8 +80,8 @@
 .app:has(.lecteur) .top { display: none; }
 .app:has(.lecteur) { padding-top: var(--space-2); }
 .lecteur-tete { display: flex; align-items: center; gap: 10px; min-height: 48px; margin: 0 0 4px -10px; }
-.retour { flex: none; width: var(--cible-min); height: var(--cible-min); display: grid; place-items: center; border: 0; border-radius: 50%; background: none; color: var(--text); }
-.retour:active { background: var(--surface); }
+.lecteur-tete .retour { flex: none; width: var(--cible-min); height: var(--cible-min); display: grid; place-items: center; border: 0; border-radius: 50%; background: none; color: var(--text); }
+.lecteur-tete .retour:active { background: var(--surface); }
 .etapes { flex: 1; display: flex; gap: 6px; }
 .etapes span { flex: 1; height: 12px; border-radius: var(--radius-pill); background: var(--surface-2); }
 .etapes span.faite { background: var(--accent); }
