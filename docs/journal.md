@@ -190,3 +190,21 @@ Chaque livraison : issue traitée, agent, pull request, résultat des vérificat
   - le titre de la barre du haut, qui répète l'onglet ;
   - la bulle de Pomme qui chevauche le plateau.
 - Vérifications : 389 tests unitaires et 45 tests e2e verts.
+
+## #60 Audit du mouvement (frontend)
+
+- Audit fait avec les skills `improve-animations` et `review-animations`. Rapport : `docs/design/v2/audit-mouvement.md`.
+- Corrigé :
+  - les pierres prises et leur glissement vers les couvercles passent d'une courbe qui démarre lentement (ease-in) à une courbe qui démarre vite (ease-out), en 280 ms au lieu de 340 ;
+  - la barre d'avantage glisse (translateX) au lieu d'animer sa largeur ;
+  - la pulsation du couvercle est plus courte.
+- Déjà conforme : les mouvements réduits partout, et des boutons en relief qui ne bougent que par transform.
+- Reste, en basse gravité : l'animation de la feuille « Changer », que l'on ne peut pas interrompre, et les confettis encore calculés quand les mouvements sont réduits.
+
+## 27/09, 16 h 30 : bilan de la boucle de design
+
+- **Fusionné** : #52 (skills), #50 (Profil et consentement), #51 (identité), #54 (Apprendre), #57 (finition), #60 (mouvement).
+- **À valider par Florian sur iPhone** : les icônes, le chemin Apprendre, la fenêtre de consentement et le glissement des pierres prises.
+- **Questions en attente** :
+  - l'adresse de contact RGPD ;
+  - la fenêtre de consentement : au premier lancement, ou après la première partie ?

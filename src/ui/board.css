@@ -25,12 +25,13 @@
 
 @media (prefers-reduced-motion: no-preference) {
   /* Chute de la pierre : elle arrive un peu grande et se pose, son ombre grandit. */
-  .board .drop .corps { animation: go-chute 140ms cubic-bezier(.2, .8, .3, 1.2) both; }
-  .board .drop .ombre { animation: go-ombre 140ms cubic-bezier(.2, .8, .3, 1.2) both; }
-  /* Pierres prises : elles rétrécissent et s'effacent, 30 ms de décalage entre elles (animation-delay en ligne). */
-  .board .partante { animation: go-prise 220ms cubic-bezier(.4, 0, .7, .2) both; }
+  .board .drop .corps { animation: go-chute 140ms var(--ease-pose) both; }
+  .board .drop .ombre { animation: go-ombre 140ms var(--ease-pose) both; }
+  /* Pierres prises : elles rétrécissent et s'effacent, 30 ms de décalage entre elles (animation-delay en ligne).
+     Courbe de sortie (ease-out) : la prise se voit dès la pose, jamais de ease-in sur une interaction (audit #60). */
+  .board .partante { animation: go-prise 220ms var(--ease) both; }
   /* Écran de partie : elles glissent vers le couvercle (bord haut ou bas du plateau) en s'effaçant. */
-  .board .partante.vers-couvercle { animation: go-vers-couvercle 340ms cubic-bezier(.5, 0, .75, .4) both; }
+  .board .partante.vers-couvercle { animation: go-vers-couvercle 280ms var(--ease) both; }
   /* Coup interdit : la pierre fantôme tremble (3 allers-retours de 4 px). */
   .board .tremble { animation: go-tremble 300ms ease-in-out both; }
 }
