@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import type { Db } from '../data/supabase';
+import { fetchStreak } from '../data/account';
 import { cleanProgress, mergeProgress, supabaseProgressStore, syncProgress, type Progress } from '../data/progress';
 
 /** Session Supabase : undefined pendant le chargement, null sans connexion. */
@@ -71,6 +72,22 @@ export function useLessonProgress(db: Db | null, userId: string | undefined): { 
   }, [db, userId, apply]);
 
   return { progress, state, record };
+}
+
+/**
+ * Série de jours du joueur connecté (profil `streak_days`). 0 sans compte, hors ligne, pendant le chargement
+ * ou en cas d'erreur : l'accueil n'affiche alors rien, plutôt qu'une flamme vide.
+ */
+export function useSerie(db: Db | null, userId: string | undefined): number {
+  const online = useOnline();
+  const [serie, setSerie] = useState(0);
+  useEffect(() => {
+    if (!db || !userId || !online) { setSerie(0); return; }
+    let alive = true;
+    fetchStreak(db, userId).then(r => { if (alive) setSerie(r.ok ? r.value : 0); }, () => { if (alive) setSerie(0); });
+    return () => { alive = false; };
+  }, [db, userId, online]);
+  return serie;
 }
 
 /** Vrai si l'utilisateur demande moins d'animations. */

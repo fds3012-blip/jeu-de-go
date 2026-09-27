@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8">
+<style>
+@font-face { font-family: "Bricolage"; src: url(https://cdn.jsdelivr.net/npm/@fontsource-variable/bricolage-grotesque/files/bricolage-grotesque-latin-wght-normal.woff2) format("woff2"); font-weight: 200 800; }
+body { margin: 0; background: #1C1916; color: #F3EDE3; font-family: "Bricolage", system-ui; padding: 24px; }
+.grille { display: grid; grid-template-columns: repeat(5, 150px); gap: 22px 18px; }
+.c { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.c b { font-weight: 800; font-size: 18px; } .c small { color: #A99F92; font-size: 13px; }
+.lock { opacity: .35; filter: grayscale(1); }
+</style></head><body>
+<div class="grille" id="g"></div>
+<script>
+let W = '#F7E9DA';
+let C = '#D2432C', A = '#F7E9DA';
+// Pictogrammes dessinés sur une grille 100 × 100, zone utile 22–78.
+const PF = () => ({
+  pomme: `<path d="M50 38c-7-6-24-4-25 12-1 13 8 28 16 28 4 0 6-2 9-2s5 2 9 2c8 0 17-15 16-28-1-16-18-18-25-12Z" fill="${W}"/>
+          <path d="M50 38c0-6 2-10 6-13" stroke="${W}" stroke-width="4" stroke-linecap="round" fill="none"/>
+          <path d="M54 29c5-6 12-5 15-3-3 5-10 7-15 3Z" fill="${W}"/>`,
+  caillou: `<g fill="${W}"><ellipse cx="50" cy="70" rx="24" ry="8"/><ellipse cx="49" cy="55" rx="17" ry="7"/><ellipse cx="51" cy="42" rx="11" ry="5.5"/><ellipse cx="50" cy="31" rx="6" ry="4"/></g>`,
+  bambou: `<g fill="${W}"><rect x="31" y="22" width="9" height="56" rx="3"/><rect x="47" y="30" width="9" height="48" rx="3"/></g>
+           <g stroke="${C}" stroke-width="3"><path d="M31 40h9M31 58h9M47 46h9M47 63h9"/></g>
+           <path d="M56 40c8-8 16-9 20-8-3 7-12 11-20 8Z" fill="${W}"/><path d="M40 33c-7-6-13-6-16-5 3 6 10 8 16 5Z" fill="${W}"/>`,
+  renard: `<path d="M20 30 36 40 50 36 64 40 80 30 74 52 50 78 26 52Z" fill="${W}"/>
+           <path d="M26 52 40 50 50 62 60 50 74 52 50 78Z" fill="#fff" opacity=".0"/>
+           <path d="M34 50l9 3M66 50l-9 3" stroke="${C}" stroke-width="3.6" stroke-linecap="round"/>
+           <path d="M45 70h10l-5 6Z" fill="${C}"/><path d="M27 34l8 5M73 34l-8 5" stroke="${C}" stroke-width="2.6" stroke-linecap="round"/>`,
+  riviere: `<g stroke="${W}" stroke-width="5.2" stroke-linecap="round" fill="none">
+            <path d="M22 38c7-7 14-7 21 0s14 7 21 0 11-6 14-4"/><path d="M22 52c7-7 14-7 21 0s14 7 21 0 11-6 14-4"/><path d="M22 66c7-7 14-7 21 0s14 7 21 0 11-6 14-4"/></g>`,
+  tigre: `<path d="M27 36l6-10 9 7h16l9-7 6 10c3 5 4 10 4 16 0 14-11 24-27 24S23 66 23 52c0-6 1-11 4-16Z" fill="${W}"/>
+          <g stroke="${C}" stroke-width="3.6" stroke-linecap="round" fill="none"><path d="M50 33v9M42 34l2 7M58 34l-2 7M24 50h9M67 50h9M25 60l8-2M75 60l-8-2"/></g>
+          <circle cx="42" cy="52" r="3" fill="${C}"/><circle cx="58" cy="52" r="3" fill="${C}"/><path d="M45 61h10l-5 5Z" fill="${C}"/>`,
+  montagne: `<circle cx="64" cy="38" r="10" fill="${A}"/><path d="M18 74 42 34l11 18 7-10 22 32Z" fill="${W}"/>`,
+  dragon: `<path d="M72 50a22 22 0 1 1-10-18.5" fill="none" stroke="${W}" stroke-width="8" stroke-linecap="round"/>
+           <g fill="${W}"><path d="M28 40l-7-4 8-2Z"/><path d="M34 29l-3-8 7 3Z"/><path d="M46 24l1-8 5 7Z"/><path d="M27 58l-8 2 6 5Z"/><path d="M36 70l-4 7 8-2Z"/><path d="M52 73l2 8 4-7Z"/></g>
+           <path d="M60 30l13-6-3 9 6 2-10 7c-3-2-6-7-6-12Z" fill="${W}"/><circle cx="67" cy="31" r="1.8" fill="${C}"/>
+           <circle cx="50" cy="50" r="7" fill="${A}"/>`,
+  sensei: `<path d="M50 72 20 40a42 42 0 0 1 60 0Z" fill="${W}"/>
+           <g stroke="${C}" stroke-width="2.4"><path d="M50 72 28 33M50 72 39 27M50 72V25M50 72 61 27M50 72 72 33"/></g>
+           <circle cx="50" cy="72" r="4" fill="${W}"/>`,
+  mochi: `<ellipse cx="50" cy="56" rx="26" ry="20" fill="${W}"/><path d="M28 44 32 28l10 12M72 44l-4-16-10 12" fill="${W}"/>
+          <circle cx="41" cy="54" r="3" fill="#1E8A5F"/><circle cx="59" cy="54" r="3" fill="#1E8A5F"/><path d="M46 62q4 3 8 0" stroke="#1E8A5F" stroke-width="2.5" stroke-linecap="round" fill="none"/>`,
+});
+const PALIER = { pomme: 0, caillou: 0, bambou: 0, renard: 1, riviere: 1, tigre: 1, montagne: 2, dragon: 2, sensei: 2, mochi: 3 };
+const ENCRES = [['#D2432C', '#D2432C', '#F7E9DA'], ['#2F4B8A', '#2F4B8A', '#F7E9DA'], ['#1B1A18', '#1B1A18', '#E9B949'], ['#3CC48E', '#1E8A5F', '#F7E9DA']];
+function sceau(nom, t, i) {
+  const [col, c2, w] = ENCRES[PALIER[nom]]; C = c2; A = PALIER[nom] === 2 ? '#E9B949' : '#F7E9DA'; W = PALIER[nom] === 2 ? '#E9B949' : '#F7E9DA';
+  const P = PF();
+  const Wsave = W;
+  return `<svg width="${t}" height="${t}" viewBox="0 0 100 100">
+    <defs><filter id="enc${i}"><feTurbulence type="fractalNoise" baseFrequency="1.3" numOctaves="2" seed="${4 + i}"/><feDisplacementMap in="SourceGraphic" scale="3"/></filter></defs>
+    <g filter="url(#enc${i})"><rect x="6" y="6" width="88" height="88" rx="22" fill="${col}" stroke="${PALIER[nom] === 2 ? '#E9B949' : 'none'}" stroke-width="3"/>
+    <rect x="12" y="12" width="76" height="76" rx="17" fill="none" stroke="${PALIER[nom] === 2 ? '#E9B949' : W}" stroke-width="2.2" opacity=".85"/>${P[nom]}</g></svg>`;
+}
+const L = [['pomme','Pomme','20 kyu'],['caillou','Caillou','16 kyu'],['bambou','Bambou','13 kyu'],['renard','Renard','10 kyu'],['riviere','Rivière','7 kyu'],['tigre','Tigre','5 kyu'],['montagne','Montagne','3 kyu'],['dragon','Dragon','1 kyu'],['sensei','Sensei','1 dan'],['mochi','Mochi','coach']];
+document.getElementById('g').innerHTML = L.map(([k, n, r], i) => `<div class="c ${i > 3 && i < 9 ? '' : ''}">${sceau(k, 110, i)}<b>${n}</b><small>${r}</small></div>`).join('');
+</script></body></html>
