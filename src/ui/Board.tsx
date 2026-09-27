@@ -33,6 +33,8 @@ interface Props {
   interactive?: boolean;
   stonesTappable?: boolean;
   confirmTouch?: boolean;
+  /** Question « touche le point » : on désigne un point sans poser de pierre (annonce « choisir ce point »). */
+  toucher?: boolean;
   onPlay?: (p: number) => void;
   /** Coup interdit : la pierre fantôme tremble en `p`. Change `n` pour relancer l'effet. */
   shake?: { p: number; n: number } | null;
@@ -154,7 +156,12 @@ function corps(c: number, p: number, size: number): ReactElement {
   return <use href={c === 1 ? '#go-noire' : `#go-blanche-${shellVariant(p, size)}`} />;
 }
 
-export function Board({ size, board, toPlay = 1, marks = {}, interactive = false, stonesTappable = false, confirmTouch = true, onPlay, shake, versCouvercles = false, noms }: Props) {
+/** Annonce après le premier Entrée quand la confirmation est active. */
+export function annonceConfirmation(label: string, toucher = false): string {
+  return `${label} : appuie encore pour ${toucher ? 'choisir ce point' : 'poser'}`;
+}
+
+export function Board({ size, board, toPlay = 1, marks = {}, interactive = false, stonesTappable = false, confirmTouch = true, toucher = false, onPlay, shake, versCouvercles = false, noms }: Props) {
   const ref = useRef<SVGSVGElement>(null);
   const theme = useThemeGoban();
   const [ghost, setGhost] = useState(-1);
@@ -231,7 +238,7 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
     if (!interactive || !onPlay) return;
     if (board[cur] && !stonesTappable) { setAnnonce(`${toLabel(cur, size)} est occupé`); return; }
     // « Confirmer au doigt » : le premier appui montre la pierre fantôme, le second la pose.
-    if (!board[cur] && confirmTouch && ghost !== cur) { setGhost(cur); setAnnonce(`${toLabel(cur, size)} : appuie encore pour poser`); return; }
+    if (!board[cur] && confirmTouch && ghost !== cur) { setGhost(cur); setAnnonce(annonceConfirmation(toLabel(cur, size), toucher)); return; }
     setGhost(-1);
     onPlay(cur);
   }

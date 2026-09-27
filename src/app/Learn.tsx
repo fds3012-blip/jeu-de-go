@@ -202,7 +202,7 @@ export function LessonPlayer({ lesson, start, confirmTouch, progress = {}, celeb
       {/* Zone souple : le plateau prend la place qui reste au-dessus du bouton (iPhone SE compris). */}
       <div className={`lecteur-plateau${img?.atari.length ? ' demo-atari' : ''}`} data-demo={images ? (demoFinie ? 'finie' : 'en-cours') : undefined}
         onClick={images && !demoFinie ? () => setTemps(images.length - 1) : undefined}>
-        <Board size={9} board={board} interactive={(step.kind === 'move' || step.kind === 'touche') && !answer?.ok} confirmTouch={confirmTouch} onPlay={onPlay} marks={marks} />
+        <Board size={9} board={board} interactive={(step.kind === 'move' || step.kind === 'touche') && !answer?.ok} confirmTouch={confirmTouch} toucher={step.kind === 'touche'} onPlay={onPlay} marks={marks} />
       </div>
       {img?.terr && <Compteur cle={`${idx}-${temps}`} n={img.terr.points.length} reduit={reduit} />}
       {images && images.length > 1 && (

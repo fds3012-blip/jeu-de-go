@@ -2,7 +2,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { fromLabel } from '../go/coords';
 import { fromRows } from '../go/position';
-import { Board, annonceAtari, annonceCoup, deplacerCurseur, nomIntersection } from './Board';
+import { Board, annonceAtari, annonceConfirmation, annonceCoup, deplacerCurseur, nomIntersection } from './Board';
 
 // Issue #116 : le goban se joue au clavier et se lit au lecteur d'écran.
 const N = 9;
@@ -87,5 +87,14 @@ describe('noms lus', () => {
     expect(html).toContain('role="img"');
     expect(html).not.toContain('tabindex');
     expect(html).not.toContain('gridcell');
+  });
+});
+
+describe('annonce de confirmation', () => {
+  it('dit « poser » par défaut', () => {
+    expect(annonceConfirmation('D4')).toBe('D4 : appuie encore pour poser');
+  });
+  it('dit « choisir ce point » sur une question « touche »', () => {
+    expect(annonceConfirmation('D4', true)).toBe('D4 : appuie encore pour choisir ce point');
   });
 });
