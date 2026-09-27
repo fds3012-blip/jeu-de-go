@@ -41,12 +41,12 @@ test('erreur à rejouer : la section apparaît, on résout, elle disparaît', as
   await page.getByRole('button', { name: 'Retour aux problèmes' }).first().click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect(section).toHaveCount(0);
-  await expect(page.getByRole('heading', { name: 'Les bases' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Ta progression' })).toBeVisible();
 
   // Après rechargement, elle ne revient pas.
   await page.reload();
   await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
-  await expect(page.getByRole('heading', { name: 'Les bases' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Ta progression' })).toBeVisible();
   await expect(section).toHaveCount(0);
 });
 
