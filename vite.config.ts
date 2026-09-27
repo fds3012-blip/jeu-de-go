@@ -15,5 +15,13 @@ export default defineConfig({
     exclude: [...configDefaults.exclude, 'e2e/**'],
     // tokens.test.ts lit le CSS des tokens.
     css: { include: [/tokens\.css/] },
+    // Couverture (npm run test:coverage) : module des règles uniquement.
+    coverage: {
+      provider: 'v8',
+      include: ['src/go/**'],
+      exclude: ['src/go/**/*.test.ts'],
+      reporter: ['text', 'json-summary'],
+      thresholds: { lines: 90, functions: 90, statements: 90, branches: 85 },
+    },
   },
 });

@@ -4,13 +4,16 @@ import { LearnHome, LessonPlayer } from './Learn';
 import { LESSONS } from '../content/lessons';
 import { useSettings, useStored } from './settings';
 import { Bubble } from '../ui/Mochi';
+import { OPPONENTS, opponent, type OpponentId } from '../engine';
 
 type Tab = 'jouer' | 'apprendre' | 'profil';
 
 export function App() {
   const [tab, setTab] = useState<Tab>('jouer');
   const [settings, set] = useSettings();
-  const [playing, setPlaying] = useState(false);
+  const [playing, setPlaying] = useState<false | 'ordi' | 'deux'>(false);
+  const [adversaire, setAdversaire] = useStored<OpponentId>('go.adversaire.v1', 'pomme');
+  const adv = opponent(adversaire);
   const [lessonId, setLessonId] = useState<string | null>(null);
   const [progress, setProgress] = useStored<Record<string, number>>('go.lecons.v1', {});
   const done = LESSONS.filter(l => (progress[l.id] ?? 0) >= l.steps.length).length;
@@ -20,7 +23,7 @@ export function App() {
 
   let screen;
   if (tab === 'jouer' && playing) {
-    screen = <Game size={settings.size} komi={6.5} confirmTouch={settings.confirmTouch} onExit={() => setPlaying(false)} />;
+    screen = <Game key={playing === 'ordi' ? adv.id : 'deux'} size={settings.size} komi={6.5} confirmTouch={settings.confirmTouch} opponent={playing === 'ordi' ? adv : undefined} onExit={() => setPlaying(false)} />;
   } else if (tab === 'apprendre' && lesson) {
     screen = <LessonPlayer lesson={lesson} start={(progress[lesson.id] ?? 0) % lesson.steps.length} confirmTouch={settings.confirmTouch}
       onProgress={n => setProgress({ ...progress, [lesson.id]: Math.max(progress[lesson.id] ?? 0, n) })} onExit={() => setLessonId(null)} />;
@@ -50,7 +53,13 @@ export function App() {
       <div>
         <Bubble>{done === 0 ? 'Nouveau au go ? Commence par le chemin des leçons : en dix minutes, tu sauras jouer.' : `Tu as terminé ${done} leçon${done > 1 ? 's' : ''} sur ${LESSONS.length}. Prêt pour une partie ?`}</Bubble>
         <h2>Nouvelle partie</h2>
-        <p className="muted small" style={{ marginTop: 0 }}>Taille du plateau</p>
+        <p className="muted small" style={{ marginTop: 0 }}>Ton adversaire</p>
+        <div className="seg">
+          {OPPONENTS.map(o => <button key={o.id} aria-pressed={adv.id === o.id} onClick={() => setAdversaire(o.id)}>{o.nom}</button>)}
+        </div>
+        <p className="muted small"><b>{adv.nom}, {adv.rang}.</b> {adv.description} Tu as Noir.</p>
+        <p className="muted small" style={{ marginTop: -6 }}>Le kyu est un niveau : plus le nombre est petit, plus on est fort.</p>
+        <p className="muted small">Taille du plateau</p>
         <div className="seg">
           {([9, 13, 19] as const).map(n => <button key={n} aria-pressed={settings.size === n} onClick={() => set({ size: n })}>{n} × {n}</button>)}
         </div>
@@ -60,7 +69,8 @@ export function App() {
           <p className="muted small" style={{ margin: '4px 0 10px' }}>{done} leçon{done > 1 ? 's' : ''} terminée{done > 1 ? 's' : ''} sur {LESSONS.length}</p>
           <button className="btn" style={{ width: '100%' }} onClick={() => go('apprendre')}>Continuer le chemin</button>
         </div>
-        <button className="cta" onClick={() => setPlaying(true)}>Jouer à deux sur ce téléphone</button>
+        <button className="btn" style={{ width: '100%', marginTop: 10 }} onClick={() => setPlaying('deux')}>Jouer à deux sur ce téléphone</button>
+        <button className="cta" onClick={() => setPlaying('ordi')}>Jouer contre l'ordi</button>
       </div>
     );
   }
