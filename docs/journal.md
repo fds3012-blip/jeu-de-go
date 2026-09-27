@@ -286,3 +286,11 @@ Chaque livraison : issue traitée, agent, pull request, résultat des vérificat
   - faire valider l'exemption de PostHog par un avocat ;
   - activer « Discard client IP data » dans PostHog ;
   - essayer la revue de partie et l'alerte d'atari sur iPhone.
+
+## #29 Sécurité côté serveur (backend)
+
+- Deux migrations appliquées en production, après des tests SQL joués dans des transactions annulées :
+  - **Parties classées** : komi 6,5 et handicap 0 imposés, avec la contrainte `games_rated_standard`.
+  - **Problèmes** : seul le premier essai compte pour la cote, et deux essais simultanés ne comptent qu'une fois. Un essai répété et réussi fait quand même avancer la série de jours. Correctif demandé après ma revue : sinon, le Go du jour aurait cassé la série.
+  - **Leçons** : la progression ne recule jamais, grâce au trigger `lesson_progress_keep_max`.
+- Aucune donnée supprimée, aucune branche Supabase payante créée. Advisors : aucune nouvelle alerte.
