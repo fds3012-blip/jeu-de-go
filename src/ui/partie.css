@@ -85,7 +85,7 @@
 /* Petits écrans (iPhone SE, 667 px) : le plateau cède un peu de largeur pour que la barre du coach tienne au-dessus
    de la barre d'actions (explication du comptage, indice). Plancher de 280 px. Issue #85. */
 @media (max-height: 700px) {
-  .partie > .partie-plateau { align-self: center; width: clamp(280px, calc(100dvh - 340px), calc(100% + 2 * var(--gouttiere) - 8px)); }
+  .partie > .partie-plateau { align-self: center; width: clamp(min(280px, 100% + 2 * var(--gouttiere) - 8px), calc(100dvh - 340px), calc(100% + 2 * var(--gouttiere) - 8px)); }
 }
 
 /* ---------- Coach Mochi : une phrase à la fois ---------- */

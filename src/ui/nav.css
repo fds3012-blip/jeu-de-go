@@ -4,11 +4,16 @@
  */
 
 /* ---------- Barre de navigation ---------- */
+/* #121 (WCAG 2.4.11) : un élément amené à l’écran (focus clavier, zoom 200 %) s’arrête au-dessus de la barre du bas. */
+html:has(.nav) { scroll-padding-bottom: calc(max(var(--nav-h), 3.75rem) + env(safe-area-inset-bottom, 0px)); }
 .nav { position: fixed; left: 0; right: 0; bottom: 0; display: flex; justify-content: center; background: var(--barre); border-top: 1px solid var(--line);
   padding-bottom: env(safe-area-inset-bottom, 0px); z-index: 20; }
 .nav .onglet { flex: 1; max-width: 180px; min-width: var(--cible-min); min-height: var(--nav-h); border: 0; background: none; color: var(--muted);
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 6px 0 4px;
   font-size: var(--fs-xs); font-weight: var(--fw-medium); line-height: 1.2; }
+.nav .onglet { padding-inline: 2px; }
+/* Zoom 200 % et petits écrans (#121) : le libellé se tronque proprement au lieu de déborder de l'onglet. */
+.onglet-libelle { max-width: 100%; min-width: 0; contain: inline-size; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .nav .onglet[aria-current="page"] { color: var(--text); font-weight: var(--fw-bold); }
 /* Point indicateur : une petite pierre de la couleur de l'onglet, sous le libellé. Place réservée : rien ne bouge d'un onglet à l'autre. */
 .onglet-point { width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: 0; flex: none; }

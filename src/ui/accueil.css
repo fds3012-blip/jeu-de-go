@@ -19,7 +19,7 @@
 
 /* ---------- Mise en page : une colonne qui remplit l'écran au-dessus de la barre de navigation ---------- */
 .app.app-home { display: flex; flex-direction: column; min-height: calc(100dvh - env(safe-area-inset-top, 0px));
-  padding-bottom: calc(var(--nav-h) + var(--space-3) + env(safe-area-inset-bottom, 0px)); }
+  padding-bottom: calc(max(var(--nav-h), 3.75rem) + var(--space-3) + env(safe-area-inset-bottom, 0px)); } /* #121 : 3.75rem = 60 px en taille normale ; suit la barre du bas quand le texte est agrandi */
 .app-home .top { margin-bottom: var(--space-3); }
 .accueil { flex: 1; display: flex; flex-direction: column; container-type: inline-size; }
 
@@ -35,28 +35,29 @@
 .adversaire { display: flex; align-items: center; gap: 12px; margin-top: var(--space-2); }
 .adversaire .portrait { filter: drop-shadow(0 4px 8px rgba(0, 0, 0, .25)); }
 .adversaire-texte { min-width: 0; flex: 1; }
-.adversaire-identite { display: flex; align-items: baseline; gap: 10px; }
+.adversaire-identite { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 10px; } /* #121 */
+.adversaire-identite h2 { overflow-wrap: anywhere; min-width: 0; }
 .adversaire-identite h2 { margin: 0; font-size: 1.75rem; font-weight: var(--fw-titre); line-height: 1.1; }
 .adversaire-identite span { color: var(--muted); }
 /* La réplique, texte simple : elle accompagne le bouton, elle n'en est pas un second. */
 .scene-bulle { margin: 2px 0 0; font-size: var(--fs-corps-s); line-height: 1.35; font-weight: var(--fw-medium); color: var(--text); }
 .phrase { margin: 6px 0 0; color: var(--muted); font-size: var(--fs-corps-s); line-height: 1.4; max-width: 34em; }
 
-.reglage { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); min-height: var(--cible-min); margin: 6px -12px var(--space-2) 0; }
+.reglage { display: flex; flex-wrap: wrap; align-items: center; /* #121 */ justify-content: space-between; gap: var(--space-3); min-height: var(--cible-min); margin: 6px -12px var(--space-2) 0; }
 .reglage .lien { padding: 0 12px; }
 
 /* Bouton principal dans le flux (plus fixé en bas) : le goban, lui, prend la hauteur libre. */
 .accueil .cta { position: static; transform: none; width: 100%; font-size: var(--fs-l); padding: 0 var(--space-3); text-wrap: balance; }
 .accueil .cta.court { font-size: var(--fs-cta); }
 /* Le sceau de l'adversaire dans le bouton, comme « Défier Caillou » en fin de partie : le nom n'a plus besoin d'être écrit. */
-.accueil .cta-sceau { display: flex; align-items: center; justify-content: center; gap: 10px; white-space: nowrap; }
+.accueil .cta-sceau { display: flex; align-items: center; justify-content: center; gap: 10px; }  /* #121 : pas de nowrap, le libellé passe à la ligne au zoom 200 % */
 .accueil .cta-sceau .sceau { flex: none; filter: drop-shadow(0 1px 0 rgba(7, 35, 26, .35)); }
 @media (prefers-reduced-motion: no-preference) {
   .accueil .cta:active { transform: translateY(var(--relief)); }
 }
 
 /* ---------- Deux tuiles de nature différente ---------- */
-.tuiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: calc(var(--space-3) + var(--relief)); }
+.tuiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 9.5rem), 1fr)); /* #121 : une colonne quand la place manque */ gap: 10px; margin-top: calc(var(--space-3) + var(--relief)); }
 .tuile { display: flex; align-items: center; gap: 10px; min-height: 68px; padding: 10px 12px; border: 0; border-radius: var(--radius); background: var(--surface); text-align: left; }
 .tuile span { min-width: 0; }
 .tuile small { display: block; color: var(--muted); font-size: var(--fs-legende); line-height: 1.3; }
