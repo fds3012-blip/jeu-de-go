@@ -38,7 +38,10 @@
   .board .liberte { transform-box: fill-box; transform-origin: center; animation: go-liberte 700ms var(--ease) both; }
   /* Récit du score (#78) : les carrés de territoire se posent un à un (délai en ligne, 40 ms au plus entre deux). */
   .board .territoire-recit { transform-box: fill-box; transform-origin: center; animation: go-territoire 200ms var(--ease) both; }
+  /* « Qui mène ? » (#94) : la carte des territoires apparaît en fondu, 150 ms. */
+  .board .territoire-fondu { animation: go-fondu 150ms var(--ease) both; }
 }
+@keyframes go-fondu { from { opacity: 0; } to { opacity: 1; } }
 @keyframes go-territoire { from { transform: scale(.4); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes go-liberte { 0% { transform: scale(.4); opacity: 0; } 35% { transform: scale(1.7); opacity: 1; } 60% { transform: scale(.9); opacity: .55; } to { transform: none; opacity: 1; } }
 /* Mouvements réduits : l'état final s'affiche directement, sans pierre qui part. */

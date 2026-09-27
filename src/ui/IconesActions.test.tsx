@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { IconeAction, type NomAction } from './IconesActions';
 import { BarreActions, Icone } from './Partie';
 
-const NOMS_ACTIONS: NomAction[] = ['indice', 'annuler', 'passer', 'abandonner'];
+const NOMS_ACTIONS: NomAction[] = ['indice', 'quimene', 'annuler', 'passer', 'abandonner'];
 // Lu sur disque : Partie.tsx importe déjà partie.css, et Vitest rend alors l'import ?raw vide.
 const partieCss = readFileSync(new URL('./partie.css', import.meta.url), 'utf8');
 
