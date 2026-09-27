@@ -106,3 +106,30 @@ Chaque livraison : issue traitée, agent, pull request, résultat des vérificat
 - Supabase Auth : Site URL `https://jeu-de-go.vercel.app`, Redirect URLs de production, des aperçus (`https://*-florians-projects-100ae27d.vercel.app/**`) et de `localhost:5173`.
 - Cette PR déclenche le premier déploiement de production.
 - Correctif : les 5 variables avaient été créées en type « Secret ». Vercel refuse ce type pour un préfixe public `VITE_`, et l'app déployée n'appelait pas Supabase (aucun compte ni aucune requête dans les journaux). Florian les a recréées en type « Config » ; cette PR relance le déploiement. `.env.example` le précise.
+
+## 27/09, 15 h 45 : retours de Florian, deuxième vague de design
+
+**Retours de Florian**
+- Ce qui lui plaît : le son est parfait, et il aime le logo aux deux pierres, la partie Jouer et les Problèmes.
+- Ce qu'il faut revoir :
+  - le Profil est trop long ;
+  - le consentement doit être demandé une seule fois, dans une fenêtre qui mène aux conditions ;
+  - les icônes du bas sont fades ;
+  - chaque élément doit avoir son identité, et tout doit être relié.
+
+**Recherche de skills de design**
+- L'agent de recherche a trouvé 10 candidates et les a lues, licence et contenu compris.
+- Florian en a validé 4 lots (#52, PR #53) :
+  - l'animation d'Emil Kowalski ;
+  - des extraits d'impeccable, sans le script qui télécharge un binaire ;
+  - la checklist mobile de ui-ux-pro-max ;
+  - motion-design de LottieFiles et icon-system.
+- Écartées :
+  - les skills sans licence, rastian et rknall ;
+  - les thèmes pour présentations et la charte Anthropic ;
+  - taste-skill, faite pour des pages d'accueil.
+
+**Issues créées et confiées**
+- #50 : consentement en fenêtre unique et Profil court (frontend).
+- #51 : identité reliée à partir du logo, avec des icônes de navigation en pierres (designer).
+- #54 : un chemin Apprendre qui donne envie (designer).
