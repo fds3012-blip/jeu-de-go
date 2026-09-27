@@ -108,14 +108,14 @@ export function Coach({ children, cle, attente = false }: { children: ReactNode;
   );
 }
 
-export interface Action { label: string; icone: ReactNode; onClick: () => void; disabled?: boolean; danger?: boolean; description?: string }
+export interface Action { label: string; icone: ReactNode; onClick: () => void; disabled?: boolean; danger?: boolean; description?: string; action?: string }
 
 /** Barre d'actions fixe en bas de l'écran, à la place de la barre de navigation. */
 export function BarreActions({ actions, label }: { actions: Action[]; label: string }) {
   return (
     <div className="actions" role="toolbar" aria-label={label}>
       {actions.map(a => (
-        <button key={a.label} type="button" onClick={a.onClick} disabled={a.disabled} className={a.danger ? 'danger' : undefined} aria-description={a.description}>
+        <button key={a.label} type="button" onClick={a.onClick} disabled={a.disabled} className={a.danger ? 'danger' : undefined} aria-description={a.description} data-action={a.action}>
           {a.icone}<span>{a.label}</span>
         </button>
       ))}

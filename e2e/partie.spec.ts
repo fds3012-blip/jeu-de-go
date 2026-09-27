@@ -41,7 +41,7 @@ test('liste des coups, couvercle, atari et navigation masquée (partie à deux)'
   await expect(bandeau(page, 'Noir')).toHaveClass(/active/);
 
   // Barre d'actions : cibles de 44 px au moins, et pas de défilement horizontal.
-  for (const nom of ['Indice', 'Annuler', 'Passer', 'Abandonner']) {
+  for (const nom of ['Indice', 'Qui mène', 'Annuler', 'Passer', 'Abandonner']) {
     const box = (await page.getByRole('toolbar', { name: 'Actions de la partie' }).getByRole('button', { name: nom }).boundingBox())!;
     expect(box.width).toBeGreaterThanOrEqual(44);
     expect(box.height).toBeGreaterThanOrEqual(44);

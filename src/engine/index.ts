@@ -167,6 +167,28 @@ export async function estimateLead(pos: Position, komi: number, opts: { kataGo?:
 }
 
 /**
+ * Territoires estimés pour « Qui mène ? » (#94) : avance de Noir (komi compris) et propriété de chaque
+ * intersection, de -1 (Blanc) à +1 (Noir). KataGo s'il est déjà prêt, sinon le moteur simple dans son Worker.
+ * `null` si aucune estimation n'est possible sans bloquer l'interface.
+ */
+export async function estimateTerritoire(pos: Position, komi: number, opts: { kataGo?: boolean } = {}): Promise<{ lead: number; own: Float32Array; engine: 'katago' | 'simple' } | null> {
+  const k = opts.kataGo === false ? null : katago ?? null;
+  if (k && k.info.state === 'pret') {
+    try {
+      const a = await k.analyze(pos, { komi, visits: 16, timeMs: 600 });
+      return { lead: pos.toPlay === 1 ? a.lead : -a.lead, own: a.ownership, engine: 'katago' };
+    } catch { /* repli ci-dessous */ }
+  }
+  const q = askEstimation({ kind: 'own', pos, timeMs: pos.size <= 9 ? 150 : 400 });
+  const r = q && (await q);
+  if (!r?.own) return null;
+  const own = Float32Array.from(r.own);
+  let black = -komi;
+  for (const v of own) black += v;
+  return { lead: black, own, engine: 'simple' };
+}
+
+/**
  * Analyse d'une position pour la note des coups (issue #71). `lead` : avance de Noir, komi compris.
  * Avec KataGo : ses candidats (avance pour le joueur au trait), du meilleur au moins bon. Sinon, l'estimation
  * du moteur simple, sans candidats (on ne connaît pas le meilleur coup). `null` si aucune estimation possible.
