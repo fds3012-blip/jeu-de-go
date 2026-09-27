@@ -2,8 +2,8 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Board } from '../ui/Board';
 import { Avatar, Bandeau, BarreActions, BarreAvantage, Coach, CompteurIndices, Icone, ListeCoups } from '../ui/Partie';
 import { groupAt, newPosition, play, type Position } from '../go/rules';
-import { playAtari, playCapture, playIllegal, playStone, playVictory } from '../ui/sound';
-import { hapticCapture, hapticIllegal, hapticStone, hapticVictory } from '../ui/haptics';
+import { playAtari, playCapture, playDefeat, playIllegal, playStone, playVictory } from '../ui/sound';
+import { hapticAtari, hapticCapture, hapticDefeat, hapticIllegal, hapticStone, hapticVictory } from '../ui/haptics';
 import { score } from '../go/score';
 import { toLabel } from '../go/coords';
 import { bestMove, estimateLead, estimateTerritoire, proposeComptage, type Opponent } from '../engine';
@@ -15,9 +15,12 @@ import { useProfil } from './hooks';
 import { useStored } from './settings';
 import { carteTerritoire, conseilPasser, passerEnEvidence, coupsJoues, descriptionIndices, descriptionQuiMene, DUREE_QUI_MENE, indicesRestants, INDICES_PAR_PARTIE, libelleAvantage, libelleCoup, messageAtari, messageIndice, metEnAtari, nouveauxAtari, partNoir, phraseQuiMene, QUI_MENE_PAR_PARTIE, quiMeneDisponible, quiMeneRestants } from './partie';
 import { CORRIGER_MORTES, EXPLICATION_MORTES, messageComptage, modeComptage } from './partie';
+import { ALERTE_FRONTIERES, avanceBarre, frontieresAuPasse, frontieresVisibles, type AlerteFrontieres } from './partie';
 import '../ui/comptage.css';
 import { choisirReplique, DUREE_REPLIQUE, type Situation } from './repliques';
 import { FinPartie } from '../ui/FinPartie';
+import { ProposerInstallation } from '../ui/ProposerInstallation';
+import { noterVictoire } from './installation';
 import { RecitScore } from '../ui/RecitScore';
 import { mouvementsReduits } from '../ui/defilement';
 import { recitScore } from './score';
@@ -101,6 +104,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   const [sgf, setSgf] = useState<string | null>(null);
   const pos = history[history.length - 1];
   const [conseilPasserA, setConseilPasserA] = useState<number | null>(null); // #120 : longueur d'historique au conseil « passer »
+  const [frontieres, setFrontieres] = useState<AlerteFrontieres | null>(null); // #159 : frontières ouvertes montrées au passe
   const sc = useMemo(() => score(pos, komi, 'japanese', dead), [pos, komi, dead]);
   const aiTurn = !!ai && phase === 'play' && pos.toPlay === 2;
   const myTurn = !ai || (pos.toPlay === 1 && !thinking);
@@ -160,12 +164,13 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
         const cap = r.captures[2] - pos.captures[2];
         playStone(m, size, true);
         if (cap) { playCapture(cap); repliquer('capture'); reagir('content'); }
-        if (metEnAtari(r, m)) playAtari();
+        if (metEnAtari(r, m)) { playAtari(); hapticAtari(); }
         const alerte = cap ? null : alerteAtari(pos, r, 1, history.length + 1);
         if (alerte) atarisSubis.current++;
         const c = cap || alerte ? null : conseilPasser(ai.nom, aide, false, r.board);
         if (c) setConseilPasserA(history.length + 1);
-        setMsg(cap ? `${ai.nom} capture ${pierres(cap)} en ${toLabel(m, size)}.` : alerte ?? c ?? `${ai.nom} joue ${toLabel(m, size)}. À toi.`);
+        const rappel = frontieresVisibles(frontieres, history.length + 1, r.board, size, true) ? ` ${ALERTE_FRONTIERES}` : ' À toi.';
+        setMsg(cap ? `${ai.nom} capture ${pierres(cap)} en ${toLabel(m, size)}.` : alerte ?? c ?? `${ai.nom} joue ${toLabel(m, size)}.${rappel}`);
       }
     });
     return () => { jeton.current++; setThinking(false); };
@@ -202,7 +207,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     resultatDiffere.current = null;
     setAutoCompte('non'); setRecitFini(true); setPhase('score'); setMsg(`${EXPLICATION_MORTES} Touche un groupe pour corriger.`);
   }
-  function resume() { scoreToken.current++; setFinding(false); setPhase('play'); setDead(new Set()); setAutoCompte('non'); resultatDiffere.current = null; }
+  function resume() { setFrontieres(null); scoreToken.current++; setFinding(false); setPhase('play'); setDead(new Set()); setAutoCompte('non'); resultatDiffere.current = null; }
 
   function onPlay(p: number) {
     if (phase === 'score') {
@@ -222,7 +227,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     playStone(p, size); hapticStone();
     if (cap) { playCapture(cap); hapticCapture(); }
     const enAtari = metEnAtari(r, p);
-    if (!ai && enAtari) playAtari();
+    if (!ai && enAtari) { playAtari(); hapticAtari(); }
     setHistory([...history, r]);
     if (history.length === 1) track(EVENTS.partieCommencee, { mode: ai ? 'ordi' : 'deux', adversaire: ai?.id, taille: size });
     if (history.length === 1) trackOnce(EVENTS.premierePierre, { secondes: secondsSinceOpen(), mode: ai ? 'ordi' : 'deux', adversaire: ai?.id, taille: size });
@@ -239,7 +244,9 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     if (!myTurn) return;
     const r = play(pos, -1) as Position;
     setHistory([...history, r]);
+    const ouverts = pos.lastMove === -1 ? [] : frontieresAuPasse(aide, pos.board, size);
     if (pos.lastMove === -1) enterScore(r, 'Deux passes : la partie est finie.');
+    else if (ouverts.length) { setFrontieres({ len: history.length + 1, points: ouverts }); setMsg(ALERTE_FRONTIERES); if (ai) repliquer('passeJoueur'); }
     else if (ai) { repliquer('passeJoueur'); setMsg(`Tu passes. Si ${ai.nom} passe aussi, on compte les points.`); }
     else setMsg(`${pos.toPlay === 1 ? 'Noir' : 'Blanc'} passe. Si ${r.toPlay === 1 ? 'Noir' : 'Blanc'} passe aussi, on compte les points.`);
   }
@@ -318,6 +325,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   }
   function celebrerVictoire(winner: 1 | 2, egalite: boolean) {
     if (celebrer && !egalite && (!ai || winner === 1)) { playVictory(); hapticVictory(); }
+    else if (ai && !egalite && winner === 2) { playDefeat(); hapticDefeat(); }
   }
   function finRecit() {
     if (recitFini) return;
@@ -368,6 +376,18 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   // Première partie contre l'ordi menée jusqu'au score ou à l'abandon : une seule fois par appareil (trackOnce, #35).
   useEffect(() => { if (phase === 'end' && ai) trackOnce(EVENTS.premierePartieTerminee, { adversaire: ai.id, taille: size, coups: history.length - 1, fin: resigned ? 'abandon' : 'score', indices: indicesUtilises, secondes: secondsSinceOpen() }); }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Proposer d'installer l'app (#178) : après la toute première victoire contre l'ordi sur cet appareil, jamais pendant la partie.
+  // Le repère n'est lu qu'une fois par fin de partie (le double effet du mode strict ne doit pas le consommer).
+  const [premiereVictoire, setPremiereVictoire] = useState(false);
+  const victoireLue = useRef(false);
+  useEffect(() => {
+    if (phase !== 'end') { victoireLue.current = false; setPremiereVictoire(false); return; }
+    if (victoireLue.current) return;
+    victoireLue.current = true;
+    const gagneOrdi = !!ai && (resigned ? 3 - resigned : sc.winner) === 1 && (!!resigned || sc.margin !== 0);
+    if (gagneOrdi && noterVictoire()) setPremiereVictoire(true);
+  }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
+
   if (phase === 'end' && relecture !== null && sgf) {
     // Revue de la partie (issue #34) : erreurs, courbe d'avantage, « Rejouer d'ici ».
     return <Revue sgf={sgf} joueur={ai ? 1 : null} adversaire={ai?.nom} onRetour={() => setRelecture(null)} onRejouer={rejouer} />;
@@ -417,11 +437,12 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
         onRevoir={n > 0 ? () => setRelecture(1) : undefined}
         onAccueil={fin?.onAccueil ?? onExit}
         confettis={celebrer && gagne}
+        apres={premiereVictoire && gagne ? <ProposerInstallation moment="premiere_victoire" /> : null}
       />
     );
   }
 
-  const lead = estimation && ai ? estimation.lead : null;
+  const lead = ai ? avanceBarre(phase, estimation?.lead ?? null, sc) : null;
   const libs = atari && atari.len === history.length && phase === 'play' ? atari.libs : undefined;
   const zone = indice && indice.len === history.length && phase === 'play' ? indice.p : undefined;
   const messageCoach = phase === 'play' && thinking && ai ? `${ai.nom} réfléchit…` : msg;
@@ -431,10 +452,10 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     <div className="partie">
       {bandeau(2)}
       <ListeCoups coups={coups} />
-      {ai && avantage && !estimationKo && <BarreAvantage libelle={lead === null ? '' : libelleAvantage(lead)} part={lead === null ? 0.5 : partNoir(lead, size)} />}
+      {ai && avantage && (!estimationKo || phase === 'score') && <BarreAvantage libelle={lead === null ? '' : libelleAvantage(lead)} part={lead === null ? 0.5 : partNoir(lead, size)} titre={phase === 'score' ? 'Score compté' : undefined} />}
       <div className="partie-plateau">
         <Board size={size} board={pos.board} toPlay={pos.toPlay} interactive={phase === 'score' || myTurn} stonesTappable={phase === 'score'} confirmTouch={confirmTouch}
-          marks={{ last: pos.lastMove, owner: phase === 'score' ? sc.owner : quiMeneVisible?.owner, ownerFondu: !!quiMeneVisible, dead, libs, zone }} onPlay={onPlay} shake={shake} versCouvercles noms={ai ? { 2: ai.nom } : undefined} />
+          marks={{ last: pos.lastMove, owner: phase === 'score' ? sc.owner : quiMeneVisible?.owner, ownerFondu: !!quiMeneVisible, dead, libs, zone, ouverts: phase === 'play' ? frontieresVisibles(frontieres, history.length, pos.board, size, !!ai) : undefined }} onPlay={onPlay} shake={shake} versCouvercles noms={ai ? { 2: ai.nom } : undefined} />
         {quiMeneVisible && <p key={quiMeneVisible.n} className="qui-mene-phrase" role="status">{fr(quiMeneVisible.phrase)}</p>}
       </div>
       {bandeau(1)}

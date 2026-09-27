@@ -32,12 +32,27 @@ test('réglages en lignes : thème segmenté, interrupteurs, cibles de 44 px', a
   await theme.getByRole('button', { name: 'Auto' }).click();
   await expect(page.locator('html')).not.toHaveAttribute('data-theme');
 
-  for (const nom of [/^Confirmer au doigt/, /^Sons$/, /^Célébrations/]) {
+  for (const nom of [/^Confirmer au doigt/, /^Célébrations/]) {
     const s = page.getByRole('switch', { name: nom });
     await expect(s).toHaveAttribute('aria-checked', 'true');
     expect((await s.boundingBox())!.height).toBeGreaterThanOrEqual(44);
   }
   for (const b of await theme.getByRole('button').all()) expect((await b.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+
+  // #165 : son et vibrations sur une seule ligne, réglables séparément.
+  const sons = page.getByRole('group', { name: 'Sons' });
+  const son = sons.getByRole('button', { name: 'Son', exact: true }), vib = sons.getByRole('button', { name: 'Vibrations' });
+  for (const b of [son, vib]) {
+    await expect(b).toHaveAttribute('aria-pressed', 'true');
+    const box = (await b.boundingBox())!;
+    expect(box.height).toBeGreaterThanOrEqual(44); expect(box.width).toBeGreaterThanOrEqual(44);
+  }
+  await vib.click();
+  await expect(vib).toHaveAttribute('aria-pressed', 'false');
+  await expect(son).toHaveAttribute('aria-pressed', 'true');
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('go.settings.v1')!))).toMatchObject({ sound: true, vibrations: false });
+  await vib.click();
+  await expect(vib).toHaveAttribute('aria-pressed', 'true');
 
   // « Mon compte » ouvre une sous-vue, Retour ramène au Profil.
   await page.getByRole('button', { name: /^Mon compte/ }).click();
