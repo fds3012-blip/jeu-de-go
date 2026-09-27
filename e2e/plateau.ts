@@ -1,7 +1,7 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 import { fromLabel } from '../src/go/coords';
 
-// Géométrie du plateau, identique à src/ui/Board.tsx : écart C entre les lignes, marge M autour de la grille.
+// Géométrie du plateau (src/ui/boardArt.ts) : écart C entre les lignes, marge M autour de la grille.
 const C = 40;
 const M = 34;
 
@@ -22,9 +22,10 @@ export async function point(page: Page, label: string, taille = 9): Promise<{ x:
   await svg.scrollIntoViewIfNeeded();
   const box = await svg.boundingBox();
   if (!box) throw new Error('Plateau introuvable');
-  const w = Number((await svg.getAttribute('viewBox'))!.split(' ')[2]);
+  // viewBox « min min étendue min » : une bande de coordonnées déborde en haut et à gauche (min < 0).
+  const [min, , w] = (await svg.getAttribute('viewBox'))!.split(' ').map(Number);
   const { cx, cy } = centre(label, taille);
-  return { x: box.x + (cx * box.width) / w, y: box.y + (cy * box.height) / w };
+  return { x: box.x + ((cx - min) * box.width) / w, y: box.y + ((cy - min) * box.height) / w };
 }
 
 /** Pose une pierre à la souris (pas de seconde touche de confirmation à la souris). */
@@ -44,26 +45,24 @@ export async function toucher(page: Page, label: string, taille = 9): Promise<vo
   await page.touchscreen.tap(x, y);
 }
 
-/** Pierres posées d'une couleur (les pierres fantômes, semi-transparentes, sont exclues). */
+// Chaque pierre posée porte data-pierre (« noir » ou « blanc ») et data-point (« D5 »). Les pierres fantômes
+// et les pierres prises en train de s'effacer n'ont pas data-pierre. Les pierres mortes du comptage portent data-morte.
+/** Pierres posées d'une couleur (les pierres fantômes et les pierres mortes du comptage sont exclues). */
 export function pierres(page: Page, couleur: 'noir' | 'blanc', taille = 9): Locator {
-  return plateau(page, taille).locator(`g[opacity="1"] > circle[fill="url(#${couleur === 'noir' ? 'gb' : 'gw'})"]`);
+  return plateau(page, taille).locator(`g[data-pierre="${couleur}"]:not([data-morte])`);
 }
 
 /** Pierre fantôme (coup en attente de confirmation au doigt). */
 export function fantome(page: Page, taille = 9): Locator {
-  return plateau(page, taille).locator('g[opacity="0.5"]');
+  return plateau(page, taille).locator('g[data-fantome]');
 }
 
 /** Vérifie la pierre posée à une intersection (null : intersection vide). */
 export async function attendrePierre(page: Page, label: string, couleur: 'noir' | 'blanc' | null, taille = 9): Promise<void> {
-  const { cx, cy } = centre(label, taille);
-  const ici = (id: string) => plateau(page, taille).locator(`g[opacity="1"] > circle[cx="${cx}"][cy="${cy}"][fill="url(#${id})"]`);
-  if (couleur === null) {
-    await expect(ici('gb')).toHaveCount(0);
-    await expect(ici('gw')).toHaveCount(0);
-  } else {
-    await expect(ici(couleur === 'noir' ? 'gb' : 'gw')).toHaveCount(1);
-  }
+  fromLabel(label, taille); // valide la coordonnée
+  const ici = plateau(page, taille).locator(`g[data-point="${label.toUpperCase()}"][data-pierre]:not([data-morte])`);
+  if (couleur === null) await expect(ici).toHaveCount(0);
+  else await expect(ici.and(page.locator(`[data-pierre="${couleur}"]`))).toHaveCount(1);
 }
 
 /** Ouvre une partie à deux sur le même téléphone depuis l'accueil. */
