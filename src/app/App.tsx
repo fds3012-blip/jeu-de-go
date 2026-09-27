@@ -14,6 +14,7 @@ import { accueil, adversaireOuvert, echelle, introBut, INTRO_KEY, PARTIES_KEY, t
 import { Accueil } from './Accueil';
 import { BASE_PUZZLES } from '../content/puzzles';
 import { parsePuzzles, puzzleOfDay } from '../data/puzzles';
+import { battu, BILAN_KEY, enregistrer, fin, komiDepuisUrl, lireBilan, type Bilan } from './bilan';
 
 const PROBLEMES_LOCAUX = parsePuzzles(BASE_PUZZLES);
 /** Problèmes réussis sur ce téléphone (même clé que l'onglet Problèmes). */
@@ -27,7 +28,6 @@ function Flamme() {
     </svg>
   );
 }
-import { battu, BILAN_KEY, enregistrer, fin, komiDepuisUrl, lireBilan, type Bilan } from './bilan';
 
 const KOMI_ORDI = 6.5;
 // Komi du comptage : 6,5, sauf paramètre de test `?komi=` (l'ordi, lui, joue toujours avec 6,5).
@@ -129,6 +129,11 @@ export function App() {
         <div className="seg">
           <button aria-pressed={settings.confirmTouch} onClick={() => set({ confirmTouch: true })}>Oui</button>
           <button aria-pressed={!settings.confirmTouch} onClick={() => set({ confirmTouch: false })}>Non</button>
+        </div>
+        <p className="muted small">Sons</p>
+        <div className="seg" role="group" aria-label="Sons">
+          <button aria-pressed={settings.sound} onClick={() => set({ sound: true })}>Activés</button>
+          <button aria-pressed={!settings.sound} onClick={() => set({ sound: false })}>Coupés</button>
         </div>
         <h2>Ton compte</h2>
         <Account />

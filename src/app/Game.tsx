@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Board } from '../ui/Board';
-import { groupAt, newPosition, play, type Position } from '../go/rules';
+import { groupAt, neighbors, newPosition, play, type Position } from '../go/rules';
+import { playAtari, playCapture, playIllegal, playStone, playVictory } from '../ui/sound';
+import { hapticCapture, hapticIllegal, hapticStone, hapticVictory } from '../ui/haptics';
 import { score } from '../go/score';
 import { toLabel } from '../go/coords';
 import { bestMove, proposeDead, type Opponent } from '../engine';
@@ -8,6 +10,11 @@ import { EVENTS, secondsSinceOpen, track, trackOnce } from '../data/analytics';
 
 const REFUS = { occupe: '', ko: "Ko : tu ne peux pas reprendre tout de suite, joue d'abord ailleurs.", suicide: 'Coup interdit : cette pierre serait capturée par elle-même.', 'hors-plateau': '' };
 const pierres = (n: number) => `${n} pierre${n > 1 ? 's' : ''}`;
+// Le coup `m` met-il en atari (une seule liberté) un groupe de l'autre couleur ?
+function metEnAtari(r: Position, m: number, size: number): boolean {
+  const c = r.board[m];
+  return m >= 0 && neighbors(size)[m].some(q => r.board[q] === 3 - c && groupAt(r.board, size, q).liberties.size === 1);
+}
 const PALES = "Les pierres pâles sont prisonnières : elles ne peuvent plus s'échapper. Touche un groupe pour corriger.";
 
 // Sans `opponent` : partie à deux sur le même appareil. Avec : le joueur a Noir, l'ordi joue Blanc.
@@ -29,6 +36,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   const [resigned, setResigned] = useState<0 | 1 | 2>(0);
   const [thinking, setThinking] = useState(false);
   const [finding, setFinding] = useState(false);
+  const [shake, setShake] = useState<{ p: number; n: number } | null>(null); // coup interdit : la pierre fantôme tremble
   const token = useRef(0); // invalide les réponses de l'ordi devenues caduques (annulation, sortie)
   const scoreToken = useRef(0); // idem pour les pierres mortes proposées
   const pos = history[history.length - 1];
@@ -54,6 +62,9 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
         else setMsg(`${ai.nom} passe. Si tu passes aussi, on compte les points.`);
       } else {
         const cap = r.captures[2] - pos.captures[2];
+        playStone(m, size, true);
+        if (cap) playCapture(cap);
+        if (metEnAtari(r, m, size)) playAtari();
         setMsg(cap ? `${ai.nom} capture ${pierres(cap)} en ${toLabel(m, size)}.` : `${ai.nom} joue ${toLabel(m, size)}. À toi.`);
       }
     });
@@ -82,8 +93,14 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     }
     if (phase !== 'play' || !myTurn) return;
     const r = play(pos, p);
-    if (typeof r === 'string') { if (REFUS[r]) setMsg(REFUS[r]); return; }
+    if (typeof r === 'string') {
+      if (REFUS[r]) { setMsg(REFUS[r]); playIllegal(); hapticIllegal(); setShake(s => ({ p, n: (s?.n ?? 0) + 1 })); }
+      return;
+    }
     const cap = r.captures[pos.toPlay] - pos.captures[pos.toPlay];
+    playStone(p, size); hapticStone();
+    if (cap) { playCapture(cap); hapticCapture(); }
+    if (!ai && metEnAtari(r, p, size)) playAtari();
     setHistory([...history, r]);
     if (history.length === 1) trackOnce(EVENTS.premierePierre, { secondes: secondsSinceOpen(), mode: ai ? 'ordi' : 'deux', adversaire: ai?.id, taille: size });
     if (ai) setMsg(cap ? `Bravo, tu captures ${pierres(cap)} !` : `Tu joues ${toLabel(p, size)}.`);
@@ -106,7 +123,10 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     setThinking(false);
     setHistory(history.slice(0, undoTo)); resume(); setMsg(ai ? 'Coup annulé. À toi de rejouer.' : 'Coup annulé.');
   }
-  function finish(winner: 1 | 2) { setPhase('end'); onResult?.(winner); }
+  function finish(winner: 1 | 2) {
+    setPhase('end'); onResult?.(winner);
+    if (!ai || winner === 1) { playVictory(); hapticVictory(); }
+  }
   function resign() {
     if (!resignArm) { setResignArm(true); setTimeout(() => setResignArm(false), 3000); return; }
     token.current++;
@@ -163,7 +183,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
       {intro && history.length === 1 && <div className="intro">{intro}</div>}
       {strip(2)}
       <Board size={size} board={pos.board} toPlay={pos.toPlay} interactive={phase === 'score' || myTurn} stonesTappable={phase === 'score'} confirmTouch={confirmTouch}
-        marks={{ last: pos.lastMove, owner: phase === 'score' ? sc.owner : undefined, dead }} onPlay={onPlay} />
+        marks={{ last: pos.lastMove, owner: phase === 'score' ? sc.owner : undefined, dead }} onPlay={onPlay} shake={shake} />
       {strip(1)}
       <p className="hint" aria-live="polite">{thinking && ai ? `${ai.nom} réfléchit…` : msg}</p>
       {phase === 'play' ? (

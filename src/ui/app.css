@@ -63,10 +63,8 @@ h2 { font-size: var(--fs-xl); font-weight: var(--fw-bold); line-height: var(--lh
 .nav button[aria-current="page"] { color: var(--text); font-weight: var(--fw-bold); }
 .nav button[aria-current="page"] svg { stroke-width: 2.2; }
 .nav svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+/* ---------- Plateau : voir src/ui/board.css (goban v2) ---------- */
 
-/* ---------- Plateau (le rendu du bois est dans src/ui/Board.tsx) ---------- */
-.board-wrap { border-radius: var(--radius-plateau); background: repeating-linear-gradient(86deg, rgba(120,70,20,.07) 0 2px, transparent 2px 9px), radial-gradient(85% 85% at 42% 35%, var(--kaya), var(--kaya-2)); box-shadow: var(--ombre-plateau); }
-.board { display: block; width: 100%; height: auto; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
 
 /* ---------- Bandeaux joueurs : sans cadre, le joueur au trait est éclairé ---------- */
 .strip { display: flex; align-items: center; gap: 10px; padding: var(--space-2) var(--space-3); border-radius: var(--radius-s); margin: var(--space-2) 0; }
@@ -110,6 +108,7 @@ td:first-child, th:first-child { text-align: left; }
 .choices { display: flex; gap: var(--space-2); margin-top: 10px; }
 .choices button { flex: 1; min-height: 52px; font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: var(--fs-l); background: var(--surface); border: 2px solid transparent; border-radius: var(--radius-s); }
 
+/* Accueil : voir src/ui/accueil.css (issue #40, phase 4). */
 .lien { background: none; border: 0; color: var(--text); font-weight: var(--fw-bold); min-height: var(--cible-min); min-width: var(--cible-min); padding: 0 12px; border-radius: 10px;
   text-decoration: underline; text-decoration-color: var(--accent-trait); text-decoration-thickness: 2px; text-underline-offset: 5px; }
 .dock { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(74px + env(safe-area-inset-bottom, 0px)); width: min(528px, calc(100% - 32px)); display: grid; gap: calc(var(--space-2) + var(--relief)); z-index: 10; }

@@ -2,6 +2,7 @@
 // Le goban est l'image d'accueil : le toucher lance la partie, comme le bouton principal.
 import { useEffect, useMemo, useRef } from 'react';
 import { Board } from '../ui/Board';
+import { R, boardWidth, viewBoxOf } from '../ui/boardArt';
 import { Sceau } from '../ui/Sceau';
 import { CarrouselAdversaires, type CarteAdversaire } from '../ui/Carrousel';
 import type { Opponent } from '../engine';
@@ -32,7 +33,6 @@ interface Props {
   onLecon: () => void;
 }
 
-const C = 40, M = 34; // géométrie du composant Board (src/ui/Board.tsx)
 const PLATEAUX: Record<Taille, Int8Array> = { 9: new Int8Array(81), 13: new Int8Array(169), 19: new Int8Array(361) };
 const AIDE_TAILLE: Record<Taille, string> = {
   9: 'Parties courtes, idéal pour apprendre.',
@@ -42,7 +42,9 @@ const AIDE_TAILLE: Record<Taille, string> = {
 
 export function Accueil(p: Props) {
   const { adv, textes, taille } = p;
-  const w = 2 * M + (taille - 1) * C;
+  // Géométrie du goban (src/ui/boardArt.ts) : le viewBox a une bande de coordonnées en haut et à gauche,
+  // le centre du plateau n'est donc pas au milieu de l'image.
+  const vb = viewBoxOf(taille), centre = `${((boardWidth(taille) / 2 - vb.min) / vb.span) * 100}%`;
   const kyu = /kyu/.test(adv.rang) ? ' Le kyu est un niveau : plus il est petit, plus on est fort.' : '';
   return (
     <div className="accueil">
@@ -51,7 +53,7 @@ export function Accueil(p: Props) {
         <div className="scene-plateau" aria-hidden="true" data-testid="plateau-accueil" onClick={p.onJouer}>
           <div className="scene-cadre">
             <Board size={taille} board={PLATEAUX[taille]} />
-            <span className="fantome" style={{ width: `${(C * 95) / w}%` }} />
+            <span className="fantome-repere"><span className="fantome" style={{ width: `${((2 * R) / vb.span) * 100}%`, left: centre, top: centre }} /></span>
           </div>
         </div>
         <div className="scene-bulle">
@@ -67,7 +69,7 @@ export function Accueil(p: Props) {
       <p className="phrase">{fr(adv.phrase + (textes.nouveau ? kyu : ''))}</p>
 
       <div className="reglage">
-        <span>{`Plateau ${taille} × ${taille}, tu as Noir`}</span>
+        <span>{`Plateau ${taille}\u00A0×\u00A0${taille}, tu as Noir`}</span>
         <button className="lien" aria-haspopup="dialog" aria-expanded={p.reglages} onClick={() => p.setReglages(true)}>Changer</button>
       </div>
 
