@@ -1,4 +1,4 @@
-import { useEffect, useRef, type KeyboardEvent } from 'react';
+import { useEffect, useRef, type KeyboardEvent, type ReactNode } from 'react';
 import { setConsent, setOpposition } from '../data/analytics';
 import { useConsentement, useOpposition } from './consentement';
 import { Sceau } from '../ui/Sceau';
@@ -78,40 +78,42 @@ export function Conditions({ onRetour }: { onRetour: () => void }) {
           actif={!oppose} onChange={v => setOpposition(!v)} />
       </div>
       <div className="conditions-texte">
-        <div className="card small">
-          <h3>Ce qui reste sur ton téléphone</h3>
-          <p>Tes réglages et ta progression dans les leçons. L’ordi calcule ses coups sur ton téléphone{FINE}: tes parties contre lui ne sont pas envoyées.</p>
-        </div>
-        <div className="card small">
-          <h3>Si tu crées un compte</h3>
-          <p>Ton adresse e-mail, ton pseudo et ta cote sont enregistrés chez Supabase, sur des serveurs à Paris. Ils servent à te connecter et à jouer en ligne.</p>
-        </div>
-        <div className="card small">
-          <h3>Comptage anonyme, sans ton accord</h3>
-          <p>
-            Pour savoir combien de parties se jouent, PostHog (serveurs dans l’Union européenne) reçoit quelques événements{FINE}:
-            ouverture de l’app, première pierre, partie terminée (taille, adversaire, résultat), leçon terminée, création de compte.
-            Rien n’est écrit sur ton téléphone, aucun identifiant ne te suit d’une visite à l’autre, ton adresse IP n’est pas conservée,
-            et ces chiffres ne sont jamais reliés à ton compte ni croisés avec d’autres données. Ils servent seulement à nos statistiques.
-          </p>
-          <p>Tu peux t’y opposer à tout moment avec l’interrupteur «{FINE}Comptage anonyme des parties{FINE}» en haut de cette page.</p>
-        </div>
-        <div className="card small">
-          <h3>Seulement si tu dis oui</h3>
-          <p>
-            Sentry (serveurs en Allemagne) reçoit les rapports de bug{FINE}: message d’erreur, version de l’app, navigateur.
-            PostHog garde un identifiant tiré au hasard sur ton téléphone, et celui de ton compte si tu es connecté, pour voir si tu reviens jouer.
-            Jamais ton e-mail ni tes coups.
-          </p>
-        </div>
-        <div className="card small">
-          <h3>Tes droits</h3>
-          <p>
-            Tu peux changer d’avis à tout moment avec les interrupteurs en haut de cette page. Tu peux aussi demander à voir,
-            corriger ou effacer tes données. Sans compte, effacer les données du site dans ton navigateur supprime tout ce qui est sur ce téléphone.
-          </p>
-        </div>
+        <p className="conditions-intro">Pas de pub. Tes données ne sont jamais vendues.</p>
+        <Repli titre="Ce qu’on garde" ouvert>
+          <p><strong>Sur ton téléphone{FINE}:</strong> tes réglages et ta progression. L’ordi calcule ses coups ici{FINE}: tes parties contre lui ne partent pas.</p>
+          <p><strong>Si tu crées un compte{FINE}:</strong> ton e-mail, ton pseudo, ta cote, tes parties en ligne, tes badges. Chez Supabase, à Paris.</p>
+          <p><strong>Comptage anonyme{FINE}:</strong> quelques événements (partie jouée, leçon finie) chez PostHog, dans l’Union européenne. Sans cookie, sans identifiant, sans ton adresse IP.</p>
+          <p><strong>Seulement si tu dis oui{FINE}:</strong> les rapports de bug chez Sentry, et un identifiant pour voir si tu reviens jouer. Jamais ton e-mail ni tes coups.</p>
+        </Repli>
+        <Repli titre="Pourquoi">
+          <p>Ton compte sert à te connecter, à jouer en ligne et à garder ta progression partout.</p>
+          <p>Le comptage nous dit combien de parties se jouent. Les rapports de bug nous aident à réparer vite.</p>
+          <p>Le site est hébergé par Vercel. Personne d’autre ne reçoit tes données.</p>
+        </Repli>
+        <Repli titre="Combien de temps">
+          <p><strong>Compte{FINE}:</strong> tant qu’il existe. Tu peux le faire effacer quand tu veux.</p>
+          <p><strong>Comptage et suivi{FINE}:</strong> 1 an, puis effacés.</p>
+          <p><strong>Sur ton téléphone{FINE}:</strong> jusqu’à ce que tu effaces les données du site ou l’app.</p>
+        </Repli>
+        <Repli titre="Tes droits">
+          <p>Change d’avis quand tu veux avec les interrupteurs en haut de la page.</p>
+          <p>Tu peux demander à voir, corriger ou effacer tes données. On répond sous un mois.</p>
+          <p>Moins de 15 ans{FINE}? Crée ton compte avec un parent.</p>
+          <p>Un souci{FINE}? Tu peux aussi saisir la CNIL.</p>
+          {/* Aucune adresse inventée : le contact sera ajouté par l'éditeur (docs/juridique/politique-confidentialite.md). */}
+          <p className="conditions-contact">Contact{FINE}: bientôt disponible</p>
+        </Repli>
       </div>
     </section>
+  );
+}
+
+/** Section repliable native : clavier et lecteur d'écran gérés par le navigateur. */
+function Repli({ titre, ouvert, children }: { titre: string; ouvert?: boolean; children: ReactNode }) {
+  return (
+    <details className="card small repli" open={ouvert}>
+      <summary><h3>{titre}</h3></summary>
+      <div className="repli-corps">{children}</div>
+    </details>
   );
 }
