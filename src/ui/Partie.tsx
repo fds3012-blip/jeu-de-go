@@ -85,11 +85,12 @@ export function ListeCoups({ coups, courant = coups.length - 1 }: { coups: strin
  * Barre d'avantage : portion noire à gauche, papier à droite. `part` : part de Noir, de 0 à 1.
  * Sans estimation encore (`libelle` vide), la place est réservée pour que le plateau ne saute pas.
  */
-export function BarreAvantage({ libelle, part }: { libelle: string; part: number }) {
+/** `titre` : nom lu par les lecteurs d'écran (« Score compté » au comptage, #159). */
+export function BarreAvantage({ libelle, part, titre = 'Avantage estimé' }: { libelle: string; part: number; titre?: string }) {
   return (
     <div className="avantage" style={libelle ? undefined : { visibility: 'hidden' }}>
       <span className="avantage-libelle" aria-hidden="true">{libelle || 'Noir +0'}</span>
-      <div className="avantage-barre" role="img" aria-label={`Avantage estimé : ${libelle}`}>
+      <div className="avantage-barre" role="img" aria-label={`${titre} : ${libelle}`}>
         <i style={{ transform: `translateX(${((part - 1) * 100).toFixed(2)}%)` }} />
       </div>
     </div>
