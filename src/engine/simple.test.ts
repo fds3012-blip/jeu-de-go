@@ -8,7 +8,7 @@ const at = (l: string, size = 9) => fromLabel(l, size);
 
 describe('moteur simple', () => {
   it('expose Pomme et Caillou', () => {
-    expect(OPPONENTS.map(o => o.id)).toEqual(['pomme', 'caillou']);
+    expect(OPPONENTS.map(o => o.id).slice(0, 2)).toEqual(['pomme', 'caillou']);
     for (const o of OPPONENTS) expect(o.description.length).toBeGreaterThan(10);
   });
 

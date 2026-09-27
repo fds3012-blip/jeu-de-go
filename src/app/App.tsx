@@ -116,7 +116,6 @@ export function App() {
         <h2>Confidentialité</h2>
         <Confidentialite />
         <h2>Bientôt</h2>
-        <div className="card">Jouer contre KataGo, une IA de niveau professionnel, directement sur ton téléphone.</div>
         <div className="card">Parties en ligne contre des joueurs de ton niveau.</div>
       </div>
     );

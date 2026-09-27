@@ -77,6 +77,11 @@ Chaque livraison : issue traitée, agent, pull request, résultat des vérificat
 - Essai réel : fait en SQL dans une transaction annulée (droits refusés au client, score W+7,5 et cotes mises à jour). L'appel HTTP n'a pas pu être fait : le réseau du conteneur bloque `*.supabase.co`.
 - Suite : brancher `src/data/games.ts` dans l'écran de partie en ligne (#10) ; issue de sécurité créée pour les parties classées déséquilibrées.
 
+## #8 KataGo dans un Web Worker et niveaux (moteur-go)
+
+- Livré : KataGo en TensorFlow.js dans un Web Worker (`src/engine/katago`, adapté de web-katrain sous licence MIT), réseau g170-b6c96 téléchargé à la demande et mis en cache (Cache API), hors du bundle principal ; backends WebGPU, puis WebGL, puis CPU ; API `analyze`, `bestMove`, `ownership` ; repli sur le moteur simple si KataGo ne démarre pas. Échelle complète de 9 adversaires : Pomme, Caillou (moteur simple), puis Bambou, Renard, Rivière, Tigre, Montagne, Dragon et Sensei (KataGo, styles solide, agressif et territorial).
+- Mesures : dans Chromium sans GPU du conteneur (WebGL logiciel), Tigre répond en 1,8 à 2,3 s par coup. Le critère « moins de 2 s sur un iPhone récent au niveau moyen » reste à mesurer sur un vrai téléphone.
+- Vérifications : lint, typecheck, 220 tests (2 tests du vrai réseau ignorés sans le fichier), build, 18 tests e2e : vert.
 ## #22 Fin de partie contre l'ordi : bilan et adversaire suivant (frontend)
 
 - Livré : Mochi réagit au résultat ; bilan par adversaire en localStorage (`go.bilan.v1`) ; une seule action principale (« Défier Caillou » après une victoire, « Rejouer contre Pomme » après une défaite), leçon conseillée et Accueil en actions secondaires ; adversaires battus marqués d'un ✓ sur l'accueil.
@@ -87,3 +92,9 @@ Chaque livraison : issue traitée, agent, pull request, résultat des vérificat
 - Livré : 4 onglets (Jouer, Apprendre, Problèmes, Profil) comme dans les maquettes ; progression des leçons en localStorage et dans `lesson_progress` une fois connecté, avec fusion à la connexion ; problème du jour et 6 problèmes de base, réponses vérifiées par `src/go`, `record_puzzle_attempt` au premier essai, « Voir la suite » animé (sans animation si mouvements réduits) ; copie locale des problèmes pour jouer sans compte ni réseau ; états chargement, erreur et hors ligne.
 - Vérifications : lint, typecheck, 203 tests, build, 18 tests e2e (dont un parcours problèmes complet sans compte) : vert.
 - Reste : le critère avec un vrai compte connecté n'est pas testable depuis ce conteneur (réseau vers Supabase bloqué, Vercel non relié) ; besoins côté base (suite des problèmes, lecture sans compte, cote et progression protégées) : issue #29 et commentaire sur #11.
+
+## Boucle d'amélioration après #8, #11, #21, #22 et #23 (produit)
+
+- Constat : le joueur voit son score mais jamais ses erreurs, alors que KataGo sait les analyser ; un débutant perd ses pierres sans alerte ; rien ne le fait revenir le lendemain.
+- Issues créées : #34 revue de partie avec KataGo (priorité-haute), #35 alerte d'atari et indice (jour-2), #36 problème du jour et série sur l'accueil avec rappel (jour-2). Également #29 (sécurité côté serveur, priorité-haute) après #9 et #11.
+- Retouche : la carte « Bientôt : jouer contre KataGo » du Profil est retirée avec #8. Le comptage chinois en partie est à ajouter au périmètre de #10.
