@@ -18,7 +18,10 @@ import { FinPartie } from '../ui/FinPartie';
 import { RecitScore } from '../ui/RecitScore';
 import { mouvementsReduits } from '../ui/defilement';
 import { recitScore } from './score';
-import { Portrait } from '../ui/Portrait';
+import { Portrait, type Humeur } from '../ui/Portrait';
+
+/** Durée d'une réaction du portrait de l'adversaire (content, surpris), en millisecondes. */
+const DUREE_HUMEUR = 1500;
 import { battuAccorde } from '../ui/sceaux';
 import type { StatsPartie } from './bilan';
 import { Revue } from './Revue';
@@ -62,6 +65,8 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   const [finding, setFinding] = useState(false);
   const [shake, setShake] = useState<{ p: number; n: number } | null>(null); // coup interdit : la pierre fantôme tremble
   const [replique, setReplique] = useState<{ texte: string; n: number } | null>(null);
+  // Humeur du portrait de l'adversaire dans l'en-tête (issue #102) : elle réagit aux prises, puis revient à neutre.
+  const [humeur, setHumeur] = useState<{ h: Humeur; n: number }>({ h: 'neutre', n: 0 });
   // Estimation d'avantage, rattachée à la position estimée (une estimation d'une autre position est ignorée).
   const [estimation, setEstimation] = useState<{ pos: Position; lead: number } | null>(null);
   const [estimationKo, setEstimationKo] = useState(false);
@@ -97,6 +102,12 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     setReplique(r => ({ texte: choisirReplique(ai.id, s, r?.texte), n: (r?.n ?? 0) + 1 }));
   }
   // La réplique s'efface au bout de 3 s.
+  useEffect(() => {
+    if (humeur.h === 'neutre') return;
+    const t = window.setTimeout(() => setHumeur(x => (x.n === humeur.n ? { h: 'neutre', n: x.n } : x)), DUREE_HUMEUR);
+    return () => window.clearTimeout(t);
+  }, [humeur]);
+  const reagir = (h: Humeur) => setHumeur(x => ({ h, n: x.n + 1 }));
   useEffect(() => {
     if (!replique) return;
     const t = window.setTimeout(() => setReplique(r => (r?.n === replique.n ? null : r)), DUREE_REPLIQUE);
@@ -139,7 +150,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
       } else {
         const cap = r.captures[2] - pos.captures[2];
         playStone(m, size, true);
-        if (cap) { playCapture(cap); repliquer('capture'); }
+        if (cap) { playCapture(cap); repliquer('capture'); reagir('content'); }
         if (metEnAtari(r, m)) playAtari();
         const alerte = cap ? null : alerteAtari(pos, r, 1, history.length + 1);
         if (alerte) atarisSubis.current++;
@@ -195,7 +206,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     setHistory([...history, r]);
     if (history.length === 1) trackOnce(EVENTS.premierePierre, { secondes: secondsSinceOpen(), mode: ai ? 'ordi' : 'deux', adversaire: ai?.id, taille: size });
     if (ai) {
-      if (cap) repliquer('captureSubie');
+      if (cap) { repliquer('captureSubie'); reagir('surpris'); }
       else if (enAtari) repliquer('atariSubi');
       setMsg(cap ? `Bravo, tu captures ${pierres(cap)} !` : `Tu joues ${toLabel(p, size)}.`);
     } else {
@@ -319,7 +330,8 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     const initiale = c === 1 && profil?.pseudo ? profil.pseudo[0] : undefined;
     return (
       <Bandeau nom={name(c)} sousTitre={sousTitre} actif={actif} captures={q.captures[c]} pierresPrises={c === 1 ? 'blanc' : 'noir'}
-        portrait={c === 2 && portrait ? portrait : <Avatar couleur={c} initiale={initiale} />}
+        portrait={c === 2 && ai ? <Portrait id={ai.id} taille={44} humeur={humeur.h} decoratif signature={false} />
+          : c === 2 && portrait ? portrait : <Avatar couleur={c} initiale={initiale} />}
         replique={c === 2 ? replique : null} avant={c === 2 ? retour : undefined} />
     );
   };
@@ -389,7 +401,8 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
       </div>
       {bandeau(1)}
       <div className="partie-souffle" aria-hidden="true" />
-      {montrerIntro ? <div className="coach-intro">{intro}</div> : <Coach cle={messageCoach} attente={phase === 'play' && thinking && !!ai}>{fr(messageCoach)}</Coach>}
+      {montrerIntro ? <div className="coach-intro">{intro}</div> : <Coach cle={messageCoach} attente={phase === 'play' && thinking && !!ai}
+        humeur={phase === 'play' && thinking && ai ? 'pensif' : humeur.h === 'surpris' ? 'content' : 'neutre'}>{fr(messageCoach)}</Coach>}
       {phase === 'play' ? (
         <BarreActions label="Actions de la partie" actions={[
           { label: cherche ? 'Indice…' : 'Indice', icone: ai ? <CompteurIndices restants={restants}><Icone nom="indice" /></CompteurIndices> : <Icone nom="indice" />,
