@@ -6,7 +6,7 @@ test('aucune requête de suivi sans consentement, section Confidentialité dans 
   page.on('request', (r) => { if (/posthog|sentry/i.test(r.url())) suivi.push(r.url()); });
 
   await page.goto('/');
-  await page.getByRole('button', { name: "Jouer contre l'ordi" }).click();
+  await page.locator('.cta').click();
   const plateau = page.getByRole('img', { name: /Plateau de go 9 × 9/ });
   const box = (await plateau.boundingBox())!;
   await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);

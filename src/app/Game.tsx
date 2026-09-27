@@ -1,18 +1,19 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Board } from '../ui/Board';
 import { groupAt, newPosition, play, type Position } from '../go/rules';
 import { score } from '../go/score';
 import { toLabel } from '../go/coords';
-import { bestMove, type Opponent } from '../engine';
+import { bestMove, proposeDead, type Opponent } from '../engine';
 import { EVENTS, secondsSinceOpen, track, trackOnce } from '../data/analytics';
 
 const REFUS = { occupe: '', ko: "Ko : tu ne peux pas reprendre tout de suite, joue d'abord ailleurs.", suicide: 'Coup interdit : cette pierre serait capturée par elle-même.', 'hors-plateau': '' };
 const pierres = (n: number) => `${n} pierre${n > 1 ? 's' : ''}`;
+const PALES = "Les pierres pâles sont prisonnières : elles ne peuvent plus s'échapper. Touche un groupe pour corriger.";
 
 // Sans `opponent` : partie à deux sur le même appareil. Avec : le joueur a Noir, l'ordi joue Blanc.
-interface Props { size: number; komi: number; confirmTouch: boolean; onExit: () => void; opponent?: Opponent }
+interface Props { size: number; komi: number; confirmTouch: boolean; onExit: () => void; opponent?: Opponent; intro?: ReactNode }
 
-export function Game({ size, komi, confirmTouch, onExit, opponent: ai }: Props) {
+export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro }: Props) {
   const [history, setHistory] = useState<Position[]>(() => [newPosition(size)]);
   const [phase, setPhase] = useState<'play' | 'score' | 'end'>('play');
   const [dead, setDead] = useState<Set<number>>(new Set());
@@ -20,7 +21,9 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai }: Props) 
   const [resignArm, setResignArm] = useState(false);
   const [resigned, setResigned] = useState<0 | 1 | 2>(0);
   const [thinking, setThinking] = useState(false);
+  const [finding, setFinding] = useState(false);
   const token = useRef(0); // invalide les réponses de l'ordi devenues caduques (annulation, sortie)
+  const scoreToken = useRef(0); // idem pour les pierres mortes proposées
   const pos = history[history.length - 1];
   const sc = useMemo(() => score(pos, komi, 'japanese', dead), [pos, komi, dead]);
   const aiTurn = !!ai && phase === 'play' && pos.toPlay === 2;
@@ -40,7 +43,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai }: Props) 
       if (typeof r === 'string') return;
       setHistory(h => [...h, r]);
       if (m === -1) {
-        if (pos.lastMove === -1) { setPhase('score'); setMsg(`${ai.nom} passe aussi : la partie est finie. Touche les groupes morts pour les retirer, puis valide.`); }
+        if (pos.lastMove === -1) enterScore(r, `${ai.nom} passe aussi : la partie est finie.`);
         else setMsg(`${ai.nom} passe. Si tu passes aussi, on compte les points.`);
       } else {
         const cap = r.captures[2] - pos.captures[2];
@@ -49,6 +52,18 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai }: Props) 
     });
     return () => { token.current++; setThinking(false); };
   }, [ai, aiTurn, pos, komi, size]);
+
+  // Deux passes : on passe au comptage et le moteur propose les pierres mortes (pâles), que le joueur corrige d'une touche.
+  function enterScore(p: Position, fin: string) {
+    const t = ++scoreToken.current;
+    setPhase('score'); setDead(new Set()); setFinding(true); setMsg(`${fin} Je cherche les pierres prisonnières…`);
+    proposeDead(p).then(d => {
+      if (t !== scoreToken.current) return;
+      setFinding(false); setDead(new Set(d));
+      setMsg(d.length ? PALES : `${fin} Aucune pierre prisonnière. Si un groupe est mort, touche-le pour le retirer.`);
+    });
+  }
+  function resume() { scoreToken.current++; setFinding(false); setPhase('play'); setDead(new Set()); }
 
   function onPlay(p: number) {
     if (phase === 'score') {
@@ -71,7 +86,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai }: Props) 
     if (!myTurn) return;
     const r = play(pos, -1) as Position;
     setHistory([...history, r]);
-    if (pos.lastMove === -1) { setPhase('score'); setMsg('Deux passes : la partie est finie. Touche les groupes morts pour les retirer, puis valide.'); }
+    if (pos.lastMove === -1) enterScore(r, 'Deux passes : la partie est finie.');
     else if (ai) setMsg(`Tu passes. Si ${ai.nom} passe aussi, on compte les points.`);
     else setMsg(`${pos.toPlay === 1 ? 'Noir' : 'Blanc'} passe. Si ${r.toPlay === 1 ? 'Noir' : 'Blanc'} passe aussi, on compte les points.`);
   }
@@ -82,7 +97,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai }: Props) 
     if (undoTo < 1) return;
     token.current++;
     setThinking(false);
-    setHistory(history.slice(0, undoTo)); setPhase('play'); setDead(new Set()); setMsg(ai ? 'Coup annulé. À toi de rejouer.' : 'Coup annulé.');
+    setHistory(history.slice(0, undoTo)); resume(); setMsg(ai ? 'Coup annulé. À toi de rejouer.' : 'Coup annulé.');
   }
   function resign() {
     if (!resignArm) { setResignArm(true); setTimeout(() => setResignArm(false), 3000); return; }
@@ -91,7 +106,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai }: Props) 
   }
   function restart() {
     token.current++;
-    setHistory([newPosition(size)]); setPhase('play'); setDead(new Set()); setResigned(0); setThinking(false);
+    setHistory([newPosition(size)]); resume(); setResigned(0); setThinking(false);
     setMsg(ai ? `Nouvelle partie : tu as Noir, à toi.` : 'Nouvelle partie : Noir commence.');
   }
 
@@ -135,6 +150,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai }: Props) 
   return (
     <div>
       <button className="back" onClick={onExit}>‹ Accueil</button>
+      {intro && history.length === 1 && <div className="intro">{intro}</div>}
       {strip(2)}
       <Board size={size} board={pos.board} toPlay={pos.toPlay} interactive={phase === 'score' || myTurn} stonesTappable={phase === 'score'} confirmTouch={confirmTouch}
         marks={{ last: pos.lastMove, owner: phase === 'score' ? sc.owner : undefined, dead }} onPlay={onPlay} />
@@ -150,8 +166,8 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai }: Props) 
         <>
           <p className="card small">{name(1)} {String(sc.black).replace('.', ',')}, {name(2)} {String(sc.white).replace('.', ',')} (komi compris). Les pierres pâles sont comptées comme mortes.</p>
           <div className="row" style={{ marginTop: 8 }}>
-            <button className="btn" onClick={() => { setPhase('play'); setDead(new Set()); setMsg('La partie reprend.'); }}>Reprendre</button>
-            <button className="btn primary" onClick={() => setPhase('end')}>Valider le score</button>
+            <button className="btn" onClick={() => { resume(); setMsg('La partie reprend.'); }}>Reprendre</button>
+            <button className="btn primary" onClick={() => setPhase('end')} disabled={finding}>Valider le score</button>
           </div>
         </>
       )}
