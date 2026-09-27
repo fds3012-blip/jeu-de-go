@@ -1,5 +1,6 @@
 // Accueil (issues #23 et #40, phase 4) : la réplique de l'adversaire, l'action principale, et l'échelle des adversaires.
 import { fr } from '../ui/typo';
+import { t } from '../content/i18n';
 import { battu, type Bilan } from './bilan';
 
 /** Historique minimal des parties, gardé en localStorage. `ordi` : parties contre l'ordi lancées (#160, voir equilibrage.ts). */
@@ -9,7 +10,7 @@ export const PARTIES_KEY = 'go.parties.v1';
 export const INTRO_KEY = 'go.intro-but.v1';
 
 export const introBut = (nom: string) =>
-  fr(`Le but : entourer plus de territoire que ${nom}, et capturer ses pierres en leur retirant leurs libertés (les cases vides qui les touchent).`);
+  fr(t('accueil.introBut', { nom }));
 
 export interface Accueil {
   /** Réplique de l'adversaire, dans sa bulle sur le plateau d'accueil. */
@@ -34,18 +35,18 @@ export function accueil(parties: Parties, lecons: number, adv: { id: string; nom
   const plateau = `${taille}\u00A0×\u00A0${taille}`; // insécables : « 9 × 9 » ne se coupe pas
   if (parties.n === 0) {
     // Le nom de l'adversaire est déjà juste au-dessus, en grand, et son sceau est dans le bouton.
-    const cta = 'Joue ta première partie';
-    const ctaNom = `${cta} contre ${adv.nom}`;
-    if (lecons === 0) return { nouveau: true, cta, ctaNom, bulle: fr('On joue ensemble ? Je t’explique tout.') };
-    return { nouveau: false, cta, ctaNom, bulle: fr(`Bravo pour ${lecons > 1 ? `tes ${lecons} leçons` : 'ta première leçon'} ! On passe à une vraie partie ?`) };
+    const cta = t('accueil.cta.premiere');
+    const ctaNom = t('accueil.cta.premiereNom', { nom: adv.nom });
+    if (lecons === 0) return { nouveau: true, cta, ctaNom, bulle: fr(t('accueil.bulle.nouveau')) };
+    return { nouveau: false, cta, ctaNom, bulle: fr(t('accueil.bulle.lecons', { n: lecons })) };
   }
   const rejouer = parties.dernier === adv.id;
-  const cta = `${rejouer ? 'Rejouer' : 'Jouer'} contre ${adv.nom}`;
+  const cta = t(rejouer ? 'accueil.cta.rejouer' : 'accueil.cta.jouer', { nom: adv.nom });
   return {
     nouveau: false,
     cta,
     ctaNom: cta,
-    bulle: fr(rejouer ? `Te revoilà ! On rejoue sur le ${plateau} ?` : `Une partie sur le ${plateau} ? Je t’attends.`),
+    bulle: fr(t(rejouer ? 'accueil.bulle.rejouer' : 'accueil.bulle.jouer', { plateau })),
   };
 }
 

@@ -133,6 +133,35 @@ for (const c of CAS) {
       await sansDebord(page, 'Leçon 1');
     });
 
+    // #177 : sept leçons sur le chemin ; la septième et ses choix longs tiennent dans la largeur.
+    test('chemin de sept leçons et leçon 7 sans défilement horizontal', async ({ page }) => {
+      await page.addInitScript(() => localStorage.setItem('go.lecons.v1', JSON.stringify({ l1: 6, l2: 6, l3: 8, l4: 5, l5: 5, l6: 6, l7: 4 })));
+      await page.goto('/');
+      await onglet(page, 'Apprendre').click();
+      await expect(page.locator('.gue li')).toHaveCount(7);
+      await sansDebord(page, 'Apprendre (7 leçons)');
+      const cta = page.getByRole('button', { name: 'Continuer : Compter les points' });
+      await boutonLibre(cta, 'Apprendre (leçon 7)');
+      const pierre = page.getByRole('button', { name: 'Leçon 7 : Compter les points, prochaine étape' });
+      const b = (await pierre.boundingBox())!;
+      expect(b.x, 'pierre 7 coupée à gauche').toBeGreaterThanOrEqual(0);
+      expect(b.x + b.width, 'pierre 7 coupée à droite').toBeLessThanOrEqual(c.largeur + 1);
+      // Le bouton de la dernière leçon ne mord pas sur « Bientôt » (après la mesure des rangées, qui peut suivre d'un rendu).
+      await expect.poll(async () => {
+        const bas = (await cta.boundingBox())!, bientot = (await page.getByRole('heading', { name: 'Bientôt' }).boundingBox())!;
+        return bientot.y - (bas.y + bas.height);
+      }, { message: 'bouton de la leçon 7 sur « Bientôt »' }).toBeGreaterThanOrEqual(0);
+      await cta.click();
+      for (const n of ['Je passe', 'Chez moi', 'Chez Blanc']) {
+        const choix = page.locator('.choix').getByRole('button', { name: n, exact: true });
+        await expect(choix).toBeVisible();
+        const r = (await choix.boundingBox())!;
+        expect(r.x + r.width, `choix « ${n} » coupé`).toBeLessThanOrEqual(c.largeur + 1);
+        expect(r.height, `choix « ${n} » trop petit`).toBeGreaterThanOrEqual(44);
+      }
+      await sansDebord(page, 'Leçon 7');
+    });
+
     test('partie contre l’ordinateur sans défilement horizontal', async ({ page }) => {
       await page.goto('/');
       await page.locator('.cta').click();
