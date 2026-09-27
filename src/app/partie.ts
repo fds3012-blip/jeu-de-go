@@ -1,6 +1,7 @@
 // Logique pure de l'écran de partie : barre d'avantage, liste des coups, détection d'atari.
 import { groupAt, neighbors, type Color, type Position } from '../go/rules';
 import { toLabel } from '../go/coords';
+import { frontieresOuvertes, partieAvancee } from '../go/frontieres';
 
 const virgule = (n: number) => String(n).replace('.', ',');
 
@@ -225,4 +226,40 @@ export function messageComptage(fin: string, morts: number, incertain: boolean):
   if (incertain) return `${EXPLICATION_MORTES} ${DOUTE_MORTES}`;
   if (morts) return `${EXPLICATION_MORTES} Touche un groupe pour corriger.`;
   return `${fin} Aucune pierre morte. Si un groupe ne peut plus vivre, touche-le pour le compter comme prisonnier.`;
+}
+
+// Frontières ouvertes (#159) : quand tu passes trop tôt, Mochi montre les points qui ne sont encore à personne.
+
+/** Phrase de Mochi quand tu passes alors qu'il reste des frontières ouvertes. */
+export const ALERTE_FRONTIERES = 'Il reste des frontières ouvertes : ferme-les avant de passer.';
+
+/**
+ * Points à montrer quand tu passes : les frontières ouvertes, si l'aide est active et la partie avancée
+ * (voir `partieAvancee`). Sinon, rien : passer tôt reste un moyen rapide de finir. Le passe n'est jamais bloqué.
+ */
+export function frontieresAuPasse(aide: boolean, board: Int8Array, size: number): number[] {
+  if (!aide || !partieAvancee(board)) return [];
+  return frontieresOuvertes(board, size);
+}
+
+/** Alerte donnée au passe : longueur de l'historique juste après le passe, et points montrés. */
+export interface AlerteFrontieres { len: number; points: number[] }
+
+/**
+ * Points de l'alerte encore visibles sur le plateau : juste après ton passe, et contre l'ordi encore après sa réponse
+ * (jusqu'à ton coup suivant). Seulement ceux qui sont toujours ouverts. `undefined` : rien à montrer.
+ */
+export function frontieresVisibles(a: AlerteFrontieres | null, longueur: number, board: Int8Array, size: number, contreOrdi: boolean): number[] | undefined {
+  if (!a || longueur < a.len || longueur > a.len + (contreOrdi ? 1 : 0)) return undefined;
+  const ouverts = new Set(frontieresOuvertes(board, size));
+  const v = a.points.filter(p => ouverts.has(p));
+  return v.length ? v : undefined;
+}
+
+/**
+ * Avance de Noir affichée par la barre d'avantage. Au comptage, c'est le score réel (`noir - blanc`, komi compris,
+ * pierres mortes retirées), jamais l'estimation : la barre dit la même chose que le score. En jeu, l'estimation.
+ */
+export function avanceBarre(phase: 'play' | 'score' | 'end', estimation: number | null, score: { black: number; white: number }): number | null {
+  return phase === 'score' ? score.black - score.white : estimation;
 }
