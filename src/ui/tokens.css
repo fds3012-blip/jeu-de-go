@@ -1,16 +1,113 @@
-/* Thème Encre & Jade (docs/design/encre-et-jade.md) */
+/*
+ * Thème Encre & Jade : design tokens.
+ * Source : docs/design/encre-et-jade.md et fichier Figma « Jeu de go : Encre & Jade »
+ * (https://www.figma.com/design/9Ft0rUVY3lB7cY7pIyjNti).
+ * Les noms ci-dessous correspondent aux variables Figma (collection « Couleurs »,
+ * modes « Sombre » et « Clair » ; collections « Espacements », « Rayons », « Tailles »).
+ * Contraste AA vérifié par src/ui/tokens.test.ts.
+ */
 :root {
-  --encre: #16202B; --encre-2: #1F2C3A; --ardoise: #2E3D4E;
-  --papier: #F4EFE6; --brume: #9FB0BF;
-  --jade: #2EBD85; --jade-fonce: #1E9A6A; --or: #F2B84B; --vermillon: #E4572E;
-  --kaya: #DBAE62; --kaya-2: #C99550; --grille: #3A2912;
-  --bg: var(--encre); --surface: var(--encre-2); --line: var(--ardoise); --text: var(--papier); --muted: var(--brume);
-  --radius: 16px; --radius-s: 12px;
+  /* ---------- Palette (primitives, identiques dans les deux modes) ---------- */
+  --encre: #16202B;        /* fond sombre */
+  --encre-2: #1F2C3A;      /* cartes, barres (sombre) */
+  --ardoise: #2E3D4E;      /* séparateurs (sombre) */
+  --papier: #F4EFE6;       /* texte sombre, fond clair */
+  --brume: #9FB0BF;        /* texte secondaire (sombre) */
+  --jade: #2EBD85;         /* action principale */
+  --jade-fonce: #1E9A6A;   /* action principale pressée */
+  --or: #F2B84B;           /* récompenses, séries */
+  --vermillon: #E4572E;    /* alertes, pastilles */
+  --kaya: #DBAE62;         /* plateau, haut du dégradé */
+  --kaya-2: #C99550;       /* plateau, bas du dégradé */
+  --grille: #3A2912;       /* lignes et hoshi du plateau */
+  --blanc: #FFFFFF;
+  --nuit: #0B1117;         /* texte posé sur jade, or ou vermillon */
+
+  /* ---------- Rôles (mode sombre, par défaut) ---------- */
+  --bg: var(--encre);
+  --surface: var(--encre-2);
+  --line: var(--ardoise);
+  --text: var(--papier);
+  --muted: var(--brume);
+  --accent: var(--jade);
+  --accent-press: var(--jade-fonce);
+  --on-accent: var(--nuit);
+  --accent-texte: #2EBD85;     /* jade utilisé comme texte ou lien */
+  --danger: var(--vermillon);  /* bordures, pastilles */
+  --danger-texte: #F07650;     /* vermillon lisible sur fond sombre */
+  --recompense: var(--or);
+  --recompense-texte: #F2B84B;
+  --focus: var(--jade);
+
+  /* ---------- Typographie ---------- */
   --font-ui: "Zen Kaku Gothic New", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-titre: "Shippori Mincho", "Hiragino Mincho ProN", Georgia, serif;
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-bold: 700;
+  --fs-base: 16px;     /* corps de texte */
+  --fs-xs: .78rem;     /* 12,5 px : libellés de la barre de navigation */
+  --fs-s: .88rem;      /* 14 px : texte secondaire */
+  --fs-m: 1rem;        /* 16 px : texte courant */
+  --fs-l: 1.1rem;      /* 17,6 px : bouton principal, choix */
+  --fs-xl: 1.25rem;    /* 20 px : titres de section */
+  --fs-2xl: 1.8rem;    /* 28,8 px : chiffres forts (cote, score) */
+  --fs-3xl: 1.9rem;    /* 30,4 px : titre d'écran */
+  --lh-base: 1.5;
+  --lh-titre: 1.2;
+
+  /* ---------- Espacements (grille de 4 px) ---------- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --gouttiere: 16px;   /* marge latérale des écrans */
+
+  /* ---------- Rayons ---------- */
+  --radius-xs: 4px;       /* coin de la bulle de Mochi côté chat */
+  --radius-plateau: 8px;
+  --radius-s: 12px;       /* boutons secondaires, bandeaux, champs */
+  --radius-bouton: 14px;  /* bouton principal */
+  --radius: 16px;         /* cartes */
+  --radius-pill: 999px;   /* pastilles, badges */
+
+  /* ---------- Tailles ---------- */
+  --cible-min: 44px;      /* cible tactile minimale (WCAG 2.5.5) */
+  --cible-bouton: 46px;   /* bouton secondaire */
+  --cible-cta: 54px;      /* bouton principal */
+  --nav-h: 60px;          /* barre de navigation */
+  --largeur-max: 560px;   /* colonne de contenu */
+  --maquette-l: 390px;    /* largeur des maquettes mobiles */
+  --maquette-h: 844px;
+
+  /* ---------- Mouvement ---------- */
+  --duree-rapide: 100ms;      /* appui sur un bouton */
+  --duree: 200ms;             /* transitions d'interface */
+  --duree-recompense: 600ms;  /* obtention d'un badge ou d'une série */
+  --ease: cubic-bezier(.2, .8, .2, 1);
+
   color-scheme: dark;
 }
+
+/* Mode clair : fond papier, cartes blanches, texte encre, mêmes accents. */
 @media (prefers-color-scheme: light) {
-  :root:not([data-theme="dark"]) { --bg: #F4EFE6; --surface: #FFFFFF; --line: #DDD5C7; --text: #16202B; --muted: #5B6B7A; color-scheme: light; }
+  :root:not([data-theme="dark"]) {
+    --bg: #F4EFE6; --surface: #FFFFFF; --line: #DDD5C7; --text: #16202B; --muted: #5B6B7A;
+    --accent-texte: #177A53; --danger-texte: #A83A18; --recompense-texte: #8A5A00;
+    color-scheme: light;
+  }
 }
-:root[data-theme="light"] { --bg: #F4EFE6; --surface: #FFFFFF; --line: #DDD5C7; --text: #16202B; --muted: #5B6B7A; color-scheme: light; }
+:root[data-theme="light"] {
+  --bg: #F4EFE6; --surface: #FFFFFF; --line: #DDD5C7; --text: #16202B; --muted: #5B6B7A;
+  --accent-texte: #177A53; --danger-texte: #A83A18; --recompense-texte: #8A5A00;
+  color-scheme: light;
+}
+
+/* Mouvements réduits : pas d'animation, les changements d'état restent instantanés. */
+@media (prefers-reduced-motion: reduce) {
+  :root { --duree-rapide: 0ms; --duree: 0ms; --duree-recompense: 0ms; }
+}
