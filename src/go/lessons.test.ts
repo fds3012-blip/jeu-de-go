@@ -44,10 +44,12 @@ describe('leçons : forme des positions', () => {
 });
 
 describe('leçons : libertés montrées', () => {
-  for (const { id, s } of all.filter(x => x.s.kind === 'info' && x.s.libs)) {
+  // Étapes « on fait ensemble » (#101) : les points verts sont exactement les libertés des pierres marquées.
+  for (const { id, s } of all.filter(x => (x.s.kind === 'info' || x.s.kind === 'move') && x.s.libs)) {
     it(`${id} : chaque point vert est une liberté, et tout groupe concerné est montré en entier`, () => {
-      const { pos } = fromRows(s.rows);
-      const shown = new Set((s as Extract<LessonStep, { kind: 'info' }>).libs!.map(at));
+      const { pos, marked } = fromRows(s.rows);
+      const shown = new Set((s as Extract<LessonStep, { kind: 'move' }>).libs!.map(at));
+      if (s.kind === 'move') expect(new Set(marked.flatMap(p => [...libs(pos, p)]))).toEqual(shown);
       for (const p of shown) expect(pos.board[p]).toBe(0);
       const groups = [...Array(N * N).keys()].filter(p => pos.board[p] && [...libs(pos, p)].every(l => shown.has(l)));
       const covered = new Set(groups.flatMap(p => [...libs(pos, p)]));
@@ -109,33 +111,33 @@ describe('leçons : cas particuliers', () => {
     expect(fin(1).libs.map(p => toLabel(p, N)).sort()).toEqual(['A2', 'B1']);
   });
   it('l2 : la pierre blanche est en atari en F5', () => {
-    const { pos } = fromRows(step('l2', 0).rows);
+    const { pos } = fromRows(step('l2', 1).rows);
     expect([...libs(pos, at('E5'))].map(p => toLabel(p, N))).toEqual(['F5']);
   });
   it('l2 : s’allonger en E6 laisse en atari, capturer F5 sauve', () => {
-    const { pos, marked } = fromRows(step('l2', 2).rows);
+    const { pos, marked } = fromRows(step('l2', 5).rows);
     expect(libs(ok(play(pos, at('E6'))), marked[0]).size).toBe(1);
     const r = ok(play(pos, at('F6')));
     expect(r.board[at('F5')]).toBe(0);
     expect(r.captures[1]).toBe(1);
   });
   it('l3 : l’échelle marche des deux côtés, et un casseur blanc la fait échouer', () => {
-    const { pos, marked } = fromRows(step('l3', 2).rows);
+    const { pos, marked } = fromRows(step('l3', 7).rows);
     expect(ladderWorks(pos, marked[0])).toBe(true);
-    const rows = step('l3', 2).rows.slice();
+    const rows = step('l3', 7).rows.slice();
     rows[7] = '.O.......'; // pierre blanche en B2, sur le chemin de l'échelle
     const b = fromRows(rows);
     expect(canEscape(ok(play(b.pos, at('F5'))), b.marked[0])).toBe(true);
   });
   it('l3 : pousser vers le centre (E1) laisse la pierre s’échapper', () => {
-    const { pos, marked } = fromRows(step('l3', 1).rows);
+    const { pos, marked } = fromRows(step('l3', 4).rows);
     expect(canEscape(ok(play(pos, at('E1'))), marked[0])).toBe(true);
   });
   it('l4 : après la capture, Blanc ne peut pas reprendre tout de suite ; l’étape suivante montre ce ko', () => {
-    const { pos } = fromRows(step('l4', 0).rows);
+    const { pos } = fromRows(step('l4', 3).rows);
     const r = ok(play(pos, at('F5')));
     expect(play(r, at('E5'))).toBe('ko');
-    expect(fromRows(step('l4', 1).rows).pos.board).toEqual(r.board);
+    expect(fromRows(step('l4', 4).rows).pos.board).toEqual(r.board);
   });
   const corner = [...Array(N * N).keys()].filter(p => p % N <= 4 && Math.floor(p / N) >= 6);
   it('l5 : un groupe à deux yeux ne peut pas être tué', () => {
