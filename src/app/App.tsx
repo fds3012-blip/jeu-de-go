@@ -201,11 +201,11 @@ export function App() {
           {accueilVisible
             ? (serie > 0 || gels > 0) && (
               <span className="serie-groupe">
-                {serie > 0 && <p className="serie" role="img" aria-label={`Série de ${serie} jour${serie > 1 ? 's' : ''}`}><Flamme />{serie}</p>}
+                {serie > 0 && <p className="serie" role="img" aria-label={t('profil.serieAria', { jours: t('profil.jours', { n: serie }) })}><Flamme />{serie}</p>}
                 <Glacon gels={gels} />
               </span>
             )
-            : <p>{tab === 'jouer' ? 'Jouer' : tab === 'apprendre' ? 'Le chemin des leçons' : tab === 'problemes' ? 'Problèmes' : t('nav.profil')}</p>}
+            : <p>{tab === 'jouer' ? t('nav.jouer') : tab === 'apprendre' ? t('entete.apprendre') : tab === 'problemes' ? t('nav.problemes') : t('nav.profil')}</p>}
         </header>}
         {annonceGel !== null && !enPartie && (tab === 'jouer' || tab === 'problemes') && (
           <p className="gel-annonce" role="status"><Mochi size={30} />{fr(messageGel(annonceGel))}</p>

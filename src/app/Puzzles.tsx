@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties }
 import type { Db } from '../data/supabase';
 import { ALL_PUZZLES } from '../content/puzzles';
 import {
-  ILLEGAL_TEXT, checkAnswer, fetchPuzzleStats, fetchPuzzles, parsePuzzles, recordPuzzleAttempt, solutionFrames, startOf,
+  checkAnswer, fetchPuzzleStats, fetchPuzzles, parsePuzzles, recordPuzzleAttempt, solutionFrames, startOf,
   type Puzzle, type PuzzleStats
 } from '../data/puzzles';
 import { Board } from '../ui/Board';
@@ -21,7 +21,7 @@ import { hapticIllegal, hapticStone } from '../ui/haptics';
 import { EVENTS, track } from '../data/analytics';
 import { gagnerXp } from './xp';
 import { prefersReducedMotion, readLocal, useOnline, writeLocal } from './hooks';
-import { legendeSerie, niveau } from './problemes';
+import { niveau } from './problemes';
 import { aContinuer, aSuivre, ordrePaliers, palierRecommande, paliers, type Palier } from './paliers';
 import { SceauLecon } from '../ui/SceauLecon';
 import { aFeter, FETES_KEY } from './fetesPaliers';
@@ -30,6 +30,8 @@ import { SERIE_KEY, numeroDuJour, problemeDuNumero, serieVivante, textePartage, 
 import '../ui/apprendre.css';
 import { Glacon, PierreGivree } from '../ui/Glacon';
 import { lireReserveAppareil, reussirAppareil } from './gelAppareil';
+// `t` désigne déjà un palier dans ce fichier : la traduction s'appelle `tr` (#167).
+import { t as tr } from '../content/i18n';
 
 const LOCAL_PUZZLES = parsePuzzles(ALL_PUZZLES);
 const SOLVED_KEY = 'go.problemes.v1';
@@ -63,7 +65,7 @@ function Difficulte({ d }: { d: number }) {
   return (
     <span className="difficulte">
       <span className="crans" aria-hidden="true">{[1, 2, 3].map(i => <i key={i} className={i <= n.crans ? 'plein' : undefined} />)}</span>
-      {n.mot}
+      {tr(`pb.difficulte.${n.crans}`)}
     </span>
   );
 }
@@ -178,7 +180,7 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
     return (
       <div className="problemes-chargement" aria-busy="true" role="status">
         <Reflexion taille={32} />
-        <span>Chargement des problèmes…</span>
+        <span>{tr('pb.chargement')}</span>
       </div>
     );
   }
@@ -190,49 +192,49 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   const recommande = connecte && stats ? palierRecommande(tiers, stats.rating) : undefined;
   return (
     <div className={`problemes${prochainPz && duJourFait ? ' avec-continuer' : ''}`}>
-      {load.error === 'offline' && <p className="notice" role="status">Tu es hors ligne. Les problèmes restent jouables, mais ta cote ne bouge pas.</p>}
+      {load.error === 'offline' && <p className="notice" role="status">{tr('pb.horsLigne')}</p>}
       {load.error && load.error !== 'offline' && (
-        <p className="notice" role="alert">{load.error} On t’affiche ceux de ce téléphone. <button className="lien" onClick={() => setRetry(n => n + 1)}>Réessayer</button></p>
+        <p className="notice" role="alert">{load.error} {tr('pb.copieLocale')} <button className="lien" onClick={() => setRetry(n => n + 1)}>{tr('pb.reessayer')}</button></p>
       )}
 
       {connecte && stats ? (
         <div className="palmares">
           <div>
             <span className="chiffre">{stats.rating}</span>
-            <span className="legende">ta cote problèmes</span>
+            <span className="legende">{tr('pb.coteLegende')}</span>
           </div>
           <div className="palmares-serie">
             <span className="chiffre"><Flamme taille={30} />{stats.streak}</span>
-            <span className="legende">{legendeSerie(stats.streak)}</span>
+            <span className="legende">{tr('pb.serieLegende', { n: stats.streak })}</span>
           </div>
         </div>
       ) : connecte && statsError ? (
-        <p className="notice" role="alert">{statsError} <button className="lien" onClick={() => setRetry(n => n + 1)}>Réessayer</button></p>
+        <p className="notice" role="alert">{statsError} <button className="lien" onClick={() => setRetry(n => n + 1)}>{tr('pb.reessayer')}</button></p>
       ) : connecte && online ? (
-        <div className="palmares" aria-busy="true"><span className="sr-only">Chargement de ta cote…</span><div><span className="chiffre attente" /><span className="legende">ta cote problèmes</span></div></div>
+        <div className="palmares" aria-busy="true"><span className="sr-only">{tr('pb.chargementCote')}</span><div><span className="chiffre attente" /><span className="legende">{tr('pb.coteLegende')}</span></div></div>
       ) : !connecte ? (
         <div className="invitation">
-          <p>{fr('Connecte-toi pour avoir ta ')}<b>cote</b>{fr(' : elle mesure ton niveau et monte quand tu réussis.')}</p>
-          {onCompte && <button className="lien" onClick={onCompte}>Me connecter</button>}
+          <p>{fr(tr('pb.invitation.avant'))}<b>{tr('pb.invitation.mot')}</b>{fr(tr('pb.invitation.apres'))}</p>
+          {onCompte && <button className="lien" onClick={onCompte}>{tr('pb.meConnecter')}</button>}
         </div>
       ) : null}
 
       {daily && (
         <section aria-labelledby="jour-titre">
-          <h2 id="jour-titre" className="titre-pierres">Go du jour <span className="numero-du-jour">n°&nbsp;{numero}</span><Glacon gels={stats ? stats.freezes : gels} /></h2>
-          <p className="muted small bases-aide">Le même défi pour tout le monde, aujourd’hui.</p>
+          <h2 id="jour-titre" className="titre-pierres">{tr('accueil.goDuJour')} <span className="numero-du-jour">{tr('pb.numero', { numero })}</span><Glacon gels={stats ? stats.freezes : gels} /></h2>
+          <p className="muted small bases-aide">{tr('pb.duJourAide')}</p>
           <DuJour pz={daily} reussi={serieDuJour?.dernier === numero} onOpen={() => setOpenId(daily.id)} />
         </section>
       )}
 
       <MesErreurs confirmTouch={confirmTouch} Lecteur={PuzzlePlayer} />
       <section aria-labelledby="paliers-titre">
-        <h2 id="paliers-titre" className="titre-pierres">Problèmes</h2>
-        <p className="muted small bases-aide">{fr('Du plus facile au plus dur. Une pierre est en ')}<b>atari</b>{fr(' quand il ne lui reste qu’une liberté.')}</p>
+        <h2 id="paliers-titre" className="titre-pierres">{tr('nav.problemes')}</h2>
+        <p className="muted small bases-aide">{fr(tr('pb.aide.avant'))}<b>{tr('pb.aide.mot')}</b>{fr(tr('pb.aide.apres'))}</p>
         {prochainPz && (
           <button className={duJourFait ? 'cta continuer' : 'btn continuer'} onClick={() => setOpenId(prochainPz.id)}
-            aria-label={`Continuer : ${prochainPz.title}`}>
-            Continuer <span className="continuer-titre">{prochainPz.title}</span>
+            aria-label={tr('pb.continuerAria', { titre: prochainPz.title })}>
+            {tr('pb.continuer')} <span className="continuer-titre">{prochainPz.title}</span>
           </button>
         )}
         {tiers.filter(t => t.total > 0).map(t => (
@@ -258,15 +260,15 @@ function PalierVue({ t, ordre, solved, recommande, onOpen, fete }: {
         <div className="palier-nom">
           <h3 id={titre}>
             {!t.ouvert && <Cadenas />}
-            {t.nom}
-            {!t.ouvert && <span className="sr-only"> (verrouillé)</span>}
+            {tr(`palier.${t.id}.nom`)}
+            {!t.ouvert && <span className="sr-only"> ({tr('pb.verrouille')})</span>}
           </h3>
-          <small>{t.kyu}{recommande && <span className="palier-reco"> · Pour ta cote</span>}</small>
+          <small>{tr(`palier.${t.id}.kyu`)}{recommande && <span className="palier-reco"> · {tr('pb.pourTaCote')}</span>}</small>
         </div>
-        {t.complet && <span className="palier-sceau" role="img" aria-label="Palier complet"><SceauLecon id={`p${t.rang}`} taille={34} /></span>}
+        {t.complet && <span className="palier-sceau" role="img" aria-label={tr('pb.palierComplet')}><SceauLecon id={`p${t.rang}`} taille={34} /></span>}
       </div>
-      {t.reussis > 0 && <p className="palier-compte">{t.reussis}&nbsp;{t.reussis > 1 ? 'réussis' : 'réussi'}</p>}
-      {!t.ouvert && <p className="palier-verrou">{fr('Réussis encore quelques problèmes du palier d’avant pour l’ouvrir.')}</p>}
+      {t.reussis > 0 && <p className="palier-compte">{tr('pb.reussis', { n: t.reussis })}</p>}
+      {!t.ouvert && <p className="palier-verrou">{fr(tr('pb.palierVerrou'))}</p>}
       <ul className="grille-pb">
         {t.problemes.map(p => {
           const ok = solved.has(p.id);
@@ -274,7 +276,7 @@ function PalierVue({ t, ordre, solved, recommande, onOpen, fete }: {
           return (
             <li key={p.id}>
               <button className={ok ? 'reussi' : undefined} disabled={!t.ouvert} onClick={() => onOpen(p.id)} data-probleme={p.id}
-                aria-label={`Problème ${i + 1} : ${p.title}${ok ? ', réussi' : ''}${t.ouvert ? '' : ', verrouillé'}`}>
+                aria-label={`${tr('pb.problemeAria', { n: i + 1, titre: p.title })}${ok ? `, ${tr('pb.reussi')}` : ''}${t.ouvert ? '' : `, ${tr('pb.verrouille')}`}`}>
                 <span className="grille-goban">
                   <MiniGoban rows={p.rows} />
                   {ok && <span className="pastille-ok" aria-hidden="true"><svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="15" className="sceau-fond" /><circle cx="16" cy="16" r="11.5" className="sceau-anneau" /><path d="M10.5 16.6 14.3 20.2 21.5 12.4" className="sceau-coche" /></svg></span>}
@@ -309,12 +311,12 @@ function DuJour({ pz, reussi, onOpen }: { pz: Puzzle; reussi: boolean; onOpen: (
     <div className={`du-jour${reussi ? ' reussi' : ''}`}>
       <div className="du-jour-plateau" aria-hidden="true" onClick={onOpen} style={{ '--f': f } as CSSProperties}>
         <div className="du-jour-cadre"><Board size={pz.size} board={start.pos.board} marks={{ targets: start.marked }} /></div>
-        {reussi && <span className="tampon-reussi">Réussi</span>}
+        {reussi && <span className="tampon-reussi">{tr('pb.tampon')}</span>}
       </div>
       <div className="du-jour-corps">
         <h3>{pz.title}</h3>
-        <p><Difficulte d={pz.difficulty} /> <span className="muted">{pz.toPlay === 1 ? 'Noir joue' : 'Blanc joue'}</span></p>
-        <button className={reussi ? 'btn du-jour-refaire' : 'cta'} aria-label={reussi ? 'Refaire le Go du jour' : 'Résoudre le Go du jour'} onClick={onOpen}>{reussi ? 'Refaire' : 'Résoudre'}</button>
+        <p><Difficulte d={pz.difficulty} /> <span className="muted">{tr(pz.toPlay === 1 ? 'pb.joue.1' : 'pb.joue.2')}</span></p>
+        <button className={reussi ? 'btn du-jour-refaire' : 'cta'} aria-label={tr(reussi ? 'pb.refaireAria' : 'pb.resoudreAria')} onClick={onOpen}>{tr(reussi ? 'pb.refaire' : 'pb.resoudre')}</button>
       </div>
     </div>
   );
@@ -348,10 +350,10 @@ function Partager({ numero, essais, serie }: { numero: number; essais: number; s
     <>
       <button className="cta partager" onClick={partager}>
         <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path d="M12 3v12M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6" /></svg>
-        Partager
+        {tr('pb.partager')}
       </button>
       <p className="partage-etat" role="status" aria-live="polite">
-        {etat === 'copie' ? 'Copié !' : etat === 'erreur' ? <>Copie impossible. Envoie ce lien&nbsp;: <span className="partage-lien">{p.url}</span></> : null}
+        {etat === 'copie' ? tr('pb.copie') : etat === 'erreur' ? <>{tr('pb.copieImpossible')} <span className="partage-lien">{p.url}</span></> : null}
       </p>
     </>
   );
@@ -383,14 +385,14 @@ function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating, onAtt
     const n = (answer?.n ?? 0) + 1;
     if (r.kind === 'illegal') {
       playIllegal(); hapticIllegal(); setShake({ p, n });
-      setAnswer({ kind: 'illegal', p, text: ILLEGAL_TEXT[r.reason], n });
+      setAnswer({ kind: 'illegal', p, text: tr(`pb.illegal.${r.reason}`), n });
       return;
     }
     const ok = r.kind === 'ok';
     playStone(p, puzzle.size); hapticStone();
     if (ok) playSuccess(); else playFail();
     setTries(tries + 1);
-    setAnswer({ kind: r.kind, p, text: ok ? (puzzle.explanation ?? 'Bravo, c’est le bon coup !') : (puzzle.refutation ?? 'Pas tout à fait. Essaie encore.'), n });
+    setAnswer({ kind: r.kind, p, text: ok ? (puzzle.explanation ?? tr('pb.bonCoup')) : (puzzle.refutation ?? tr('pb.pasTout')), n });
     setBoard(ok ? r.after.board : start.pos.board);
     if (ok) onSolved(tries + 1);
     // Seul le premier essai compte pour la cote.
@@ -433,16 +435,16 @@ function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating, onAtt
 
   const ligneCote = cote && ('erreur' in cote
     ? <p className="verdict-cote">{cote.erreur}</p>
-    : <p className="verdict-cote">Ta cote : <b><Defile de={cote.de} a={cote.a} /></b>{cote.a !== cote.de && <span className={cote.a > cote.de ? 'monte' : 'baisse'}> {ecart(cote.de, cote.a)}</span>}</p>);
-  const suivantBtn = <button className="cta" onClick={onNext ?? onExit}>{onNext ? 'Problème suivant' : 'Retour aux problèmes'}</button>;
+    : <p className="verdict-cote">{tr('pb.taCote')} <b><Defile de={cote.de} a={cote.a} /></b>{cote.a !== cote.de && <span className={cote.a > cote.de ? 'monte' : 'baisse'}> {ecart(cote.de, cote.a)}</span>}</p>);
+  const suivantBtn = <button className="cta" onClick={onNext ?? onExit}>{tr(onNext ? 'pb.suivant' : 'pb.retour')}</button>;
 
   let verdict = null;
   if (replay) {
     verdict = (
       <Verdict ton="neutre" actions={solvedNow
-        ? <>{suivantBtn}<button className="lien" onClick={showLine} disabled={!replayDone}>Revoir la suite</button></>
-        : <div className="row"><button className="btn" onClick={showLine} disabled={!replayDone}>Revoir la suite</button><button className="btn" onClick={reessayer}>Réessayer</button></div>}>
-        <p>{replayDone ? 'Voilà la suite. Le coup marqué est la réponse.' : `Coup ${replay.frame} sur ${replay.total}…`}</p>
+        ? <>{suivantBtn}<button className="lien" onClick={showLine} disabled={!replayDone}>{tr('pb.revoirSuite')}</button></>
+        : <div className="row"><button className="btn" onClick={showLine} disabled={!replayDone}>{tr('pb.revoirSuite')}</button><button className="btn" onClick={reessayer}>{tr('pb.reessayer')}</button></div>}>
+        <p>{replayDone ? tr('pb.suiteFinie') : tr('pb.suiteCoup', { n: replay.frame, total: replay.total })}</p>
       </Verdict>
     );
   } else if (answer) {
@@ -452,21 +454,21 @@ function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating, onAtt
         ? <>
             <Partager numero={duJour.numero} essais={tries} serie={duJour.serie} />
             {duJour.gelGagne && (
-              <p className={`gel-gagne${duJour.celebrer ? ' fete' : ''}`} role="status"><PierreGivree taille={18} />{fr('Tu gagnes un gel : il protégera ta série si tu oublies un jour.')}</p>
+              <p className={`gel-gagne${duJour.celebrer ? ' fete' : ''}`} role="status"><PierreGivree taille={18} />{fr(tr('pb.gelGagne'))}</p>
             )}
             <div className="row liens-du-jour">
-              <button className="lien" onClick={showLine}>Voir la suite</button>
-              <button className="lien" onClick={onNext ?? onExit}>{onNext ? 'Problème suivant' : 'Retour aux problèmes'}</button>
+              <button className="lien" onClick={showLine}>{tr('pb.voirSuite')}</button>
+              <button className="lien" onClick={onNext ?? onExit}>{tr(onNext ? 'pb.suivant' : 'pb.retour')}</button>
             </div>
           </>
-        : <>{suivantBtn}<button className="lien" onClick={showLine}>Voir la suite</button></>}>
+        : <>{suivantBtn}<button className="lien" onClick={showLine}>{tr('pb.voirSuite')}</button></>}>
         <p>{fr(answer.text)}</p>{ligneCote}
       </Verdict>
     ) : (
       <Verdict ton="revoir" cle={answer.n} actions={
         <div className="row">
-          {tries >= 1 && <button className="btn" onClick={showLine}>Voir la suite</button>}
-          <button className="btn" onClick={() => setAnswer(null)}>Réessayer</button>
+          {tries >= 1 && <button className="btn" onClick={showLine}>{tr('pb.voirSuite')}</button>}
+          <button className="btn" onClick={() => setAnswer(null)}>{tr('pb.reessayer')}</button>
         </div>}>
         <p>{fr(answer.text)}</p>{ligneCote}
       </Verdict>
@@ -476,17 +478,17 @@ function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating, onAtt
   return (
     <div className="lecteur">
       <div className="lecteur-tete">
-        <Retour label="Retour aux problèmes" onClick={onExit} />
+        <Retour label={tr('pb.retour')} onClick={onExit} />
         <div className="lecteur-nom">
           {duJour
-            ? <small className="entete-du-jour">Go du jour <b className="numero-du-jour">n°&nbsp;{duJour.numero}</b></small>
-            : <small>{`Problème ${rang}`}</small>}
+            ? <small className="entete-du-jour">{tr('accueil.goDuJour')} <b className="numero-du-jour">{tr('pb.numero', { numero: duJour.numero })}</b></small>
+            : <small>{tr('pb.probleme', { n: rang })}</small>}
           <h2>{puzzle.title}</h2>
         </div>
         <Difficulte d={puzzle.difficulty} />
       </div>
-      {duJour?.defiChange && <p className="notice" role="status">{fr('Le défi a changé : voici celui d’aujourd’hui.')}</p>}
-      <Bubble>{fr(`${puzzle.prompt} Tu joues ${puzzle.toPlay === 1 ? 'Noir' : 'Blanc'}.`)}</Bubble>
+      {duJour?.defiChange && <p className="notice" role="status">{fr(tr('pb.defiChange'))}</p>}
+      <Bubble>{fr(`${puzzle.prompt} ${tr(puzzle.toPlay === 1 ? 'pb.tuJoues.1' : 'pb.tuJoues.2')}`)}</Bubble>
       <Board size={puzzle.size} board={board} toPlay={puzzle.toPlay} interactive={!solvedNow && !replay} confirmTouch={confirmTouch} onPlay={onPlay} shake={shake}
         marks={{ targets: start.marked, last: lastMove, ok: solvedNow && !replay ? answer.p : undefined, mistake: answer && answer.kind === 'wrong' && !replay ? answer.p : undefined }} />
       {verdict}
