@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import type { Db } from '../data/supabase';
 import { fetchGels, fetchProfile, fetchStreak } from '../data/account';
+import { importerSerieAppareil, serieAEnvoyer } from '../data/serieServeur';
+import { LANCEMENT, SERIE_KEY, numeroDuJour } from './goDuJour';
 import { cleanProgress, mergeProgress, supabaseProgressStore, syncProgress, type Progress } from '../data/progress';
 
 /** Session Supabase : undefined pendant le chargement, null sans connexion. */
@@ -84,7 +86,12 @@ export function useSerie(db: Db | null, userId: string | undefined): number {
   useEffect(() => {
     if (!db || !userId || !online) { setSerie(0); return; }
     let alive = true;
-    fetchStreak(db, userId).then(r => { if (alive) setSerie(r.ok ? r.value : 0); }, () => { if (alive) setSerie(0); });
+    // À la connexion, la série de l'appareil est d'abord envoyée au serveur (issue #176), puis la série du serveur est lue.
+    // Un échec de l'envoi n'empêche pas la lecture.
+    importerSerieAppareil(db, serieAEnvoyer(readLocal<unknown>(SERIE_KEY, null), numeroDuJour(new Date()), LANCEMENT))
+      .catch(() => null)
+      .then(() => fetchStreak(db, userId))
+      .then(r => { if (alive) setSerie(r.ok ? r.value : 0); }, () => { if (alive) setSerie(0); });
     return () => { alive = false; };
   }, [db, userId, online]);
   return serie;

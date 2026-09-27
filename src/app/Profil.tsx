@@ -5,7 +5,10 @@ import { choisirThemeGoban, useIdThemeGoban, type Settings } from './settings';
 import { lireXp, niveauDe, niveauRequis, themeDebloque } from './xp';
 import { ORDRE_THEMES, THEMES_GOBAN } from '../ui/boardArt';
 import { identite, texteSerie } from './identite';
-import { LigneChoix, LigneInterrupteur, LigneLien } from '../ui/Reglage';
+import { inviterCompte } from './serieLocale';
+import { LigneBascules, LigneChoix, LigneInterrupteur, LigneLien } from '../ui/Reglage';
+import { hapticStone } from '../ui/haptics';
+import { playStone } from '../ui/sound';
 import { useMemo } from 'react';
 import { readLocal } from './hooks';
 import { BILAN_KEY, lireBilan } from './bilan';
@@ -83,7 +86,8 @@ function Menu({ onVue, settings, set, profil, serie }: Omit<Props, 'vue'>) {
         {id.initiale ? <span className="avatar" aria-hidden="true">{id.initiale}</span> : <span className="stone b" aria-hidden="true" />}
         <div className="identite-texte">
           <b>{id.nom}</b>
-          <span>{id.detail}</span>
+          {/* #161 : au 3e jour de série sans compte, la ligne sous « Invité » propose le compte ; l'action reste « Mon compte ». */}
+          <span>{inviterCompte(!!profil, id.serie) ? t('serie.invitation') : id.detail}</span>
         </div>
         {id.serie > 0 && <span className="identite-serie" role="img" aria-label={t('profil.serieAria', { jours: texteSerie(id.serie) })}>
           <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false"><path d="M8.6 1.2c.4 2.3 3.9 3.9 3.9 7.9A4.5 4.5 0 0 1 8 13.8a4.5 4.5 0 0 1-4.5-4.6c0-2 1-3.2 2-4 0 1.4.6 2.4 1.5 2.7C6.6 5.6 7.4 3 8.6 1.2Z" fill="currentColor" /></svg>{id.serie}
@@ -97,7 +101,11 @@ function Menu({ onVue, settings, set, profil, serie }: Omit<Props, 'vue'>) {
         <LigneChoix libelle={t('profil.theme')} options={themes()} valeur={settings.theme} onChange={v => set({ theme: v })} />
         <LigneGoban />
         <LigneInterrupteur libelle={t('profil.confirmer')} aide={t('profil.confirmerAide')} actif={settings.confirmTouch} onChange={v => set({ confirmTouch: v })} />
-        <LigneInterrupteur libelle={t('profil.sons')} actif={settings.sound} onChange={v => set({ sound: v })} />
+        <LigneBascules libelle={t('profil.sons')} bascules={[
+          // #165 : un aperçu à l'allumage, le claquement de pierre ou une petite vibration.
+          { libelle: t('profil.son'), actif: settings.sound, onChange: v => { set({ sound: v }); if (v) setTimeout(() => playStone(40, 9), 0); } },
+          { libelle: t('profil.vibrations'), actif: settings.vibrations, onChange: v => { set({ vibrations: v }); if (v) setTimeout(hapticStone, 0); } },
+        ]} />
         <LigneInterrupteur libelle={t('profil.celebrations')} aide={t('profil.celebrationsAide')} actif={settings.celebrations} onChange={v => set({ celebrations: v })} />
         <LigneChoix libelle={t('profil.aide')} options={aides()} valeur={settings.aide} onChange={a => set({ aide: a })} />
       </div>

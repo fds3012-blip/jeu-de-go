@@ -13,7 +13,8 @@ export interface Identite {
 
 /** Données de la carte, pour un joueur connecté (profil chargé) ou non. */
 export function identite(profil: { pseudo: string | null; cote: number } | null, serie: number): Identite {
-  if (!profil) return { initiale: null, nom: t('profil.invite'), detail: t('profil.inviteDetail'), serie: 0 };
+  // Sans compte, la série de l'appareil s'affiche aussi (issue #161).
+  if (!profil) return { initiale: null, nom: t('profil.invite'), detail: t('profil.inviteDetail'), serie: Math.max(0, Math.floor(serie)) };
   const nom = profil.pseudo?.trim() || t('profil.sansPseudo');
   const initiale = profil.pseudo?.trim() ? [...profil.pseudo.trim()][0].toUpperCase() : null;
   return { initiale, nom, detail: t('profil.cote', { cote: profil.cote }), serie: Math.max(0, Math.floor(serie)) };

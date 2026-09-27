@@ -7,10 +7,13 @@ import './ui/app.css';
 import { registerSW } from './registerSW';
 import { captureError, EVENTS, initAnalytics, track } from './data/analytics';
 import { choisirLangue, langue } from './content/i18n';
+import { ecouterInstallation } from './app/installation';
 
 // Langue de l'interface (#167) : `<html lang>` suit la langue choisie au chargement.
 choisirLangue(langue());
 
+// Invite d'installation de Chrome (#178) : capturée tôt, montrée seulement au bon moment.
+ecouterInstallation();
 initAnalytics();
 track(EVENTS.appOuverte, { installee: window.matchMedia?.('(display-mode: standalone)').matches ?? false });
 // Vérification de Sentry : #erreur-test dans l'adresse envoie une erreur de test (seulement avec consentement).
