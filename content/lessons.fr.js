@@ -1,4 +1,4 @@
-// Six leçons interactives, positions vérifiées par un lecteur tactique.
+// Sept leçons interactives, positions vérifiées par un lecteur tactique.
 // rows : plateau 9 × 9 ligne par ligne depuis le haut. X noir, O blanc, T pierre blanche visée, S pierre noire à sauver.
 // Coordonnées : lettres A à J sans I, lignes numérotées depuis le bas. accept: 'line3' = tout coup hors des deux premières lignes.
 const L_CAP1 = ['.........', '.........', '.........', '...X.....', '..XT.O...', '...X.....', '.........', '.........', '.........'];
@@ -15,6 +15,9 @@ const L_ECHELLE = ['.........', '.........', '.........', '....X....', '....OX..
 const ECHELLE_1 = [{ pose: 'D5', couleur: 'B' }, { libs: 'E5' }, { pose: 'E4', couleur: 'W' }, { pose: 'E3', couleur: 'B' }, { pose: 'F4', couleur: 'W' }, { pose: 'G4', couleur: 'B' }, { pose: 'F3', couleur: 'W' }];
 const ECHELLE_2 = ['F2', 'G3', 'H3', 'G2', 'H2', 'G1', 'F1', 'H1', 'J1'].map((pose, i) => ({ pose, couleur: i % 2 ? 'W' : 'B' }));
 const L_KO = ['.........', '.........', '.........', '...OX....', '..O.OX...', '...OX....', '.........', '.........', '.........'];
+// Leçon 7 (#177) : partie finie, frontière en E (Noir) et F (Blanc). Chaque chiffre est recalculé par score() (src/go/lessons.test.ts).
+const L_COMPTE = Array(9).fill('....XO...');
+const ouverte = (y) => L_COMPTE.map((r, i) => (i === y ? '.....O...' : r));
 export const LESSONS = [
   { id: 'l1', title: 'Libertés et capture', desc: 'La règle qui fait tout le jeu', steps: [
     { kind: 'info', rows: V, demo: [{ pose: 'E5', couleur: 'W' }, { libs: 'E5' }],
@@ -110,5 +113,23 @@ export const LESSONS = [
     { kind: 'move', rows: ['.........', '.........', '.........', '.........', '.........', '.........', '.........', '.........', '.........'], accept: 'line3',
       text: 'Joue le premier coup. Évite les deux lignes du bord.',
       ok: 'Bon premier coup : assez loin du bord pour construire, assez proche pour entourer du territoire.', no: 'Trop près du bord : une pierre sur les deux premières lignes entoure très peu. Rapproche-toi du centre.' }
+  ] },
+  { id: 'l7', title: 'Compter les points', desc: 'Fermer, passer, compter', steps: [
+    { kind: 'info', rows: L_COMPTE, demo: [{ terr: 'B' }, { terr: 'W' }],
+      text: 'On compte territoire + prisonniers. Blanc reçoit aussi le komi (6,5 points, car Noir commence).' },
+    { kind: 'quiz', rows: L_COMPTE, terr: true, compte: { pour: 'W', komi: 6.5 },
+      text: 'Territoire colorié. Avec le komi, combien de points pour Blanc ?', choices: ['27', '33,5', '36'], answer: 1,
+      ok: '27 + 6,5 = 33,5. Noir a 36 : il gagne de 2,5 points.', no: 'Compte les points de Blanc, puis ajoute le komi.' },
+    { kind: 'info', rows: ouverte(2), demo: [{ pose: 'E7', couleur: 'B' }, { terr: 'B' }],
+      text: 'Trou en E7 : le territoire de Noir ne compte pas. Noir ferme.' },
+    { kind: 'move', rows: ouverte(6), accept: ['E3'], aide: ['E3'],
+      text: 'À toi : ferme la frontière sur le point vert.',
+      ok: 'Fermée : tes 36 points comptent enfin.', no: 'Tant que ce trou reste ouvert, Blanc peut entrer chez toi.' },
+    { kind: 'quiz', rows: L_COMPTE,
+      text: 'Toutes les frontières sont fermées. Que fais-tu ?', choices: ['Je passe', 'Chez moi', 'Chez Blanc'], answer: 0,
+      ok: 'Oui. Après deux passes de suite, la partie s’arrête : on compte.', no: 'Chez toi, tu perds un point. Chez Blanc, ta pierre serait prise.' },
+    { kind: 'quiz', rows: L_COMPTE, compte: { pour: 'B', komi: 6.5, prises: [3, 5] },
+      text: 'Noir a 3 prisonniers, Blanc 5. Combien de points pour Noir ?', choices: ['36', '39', '42,5'], answer: 1,
+      ok: '36 + 3 = 39. Blanc : 27 + 5 + 6,5 = 38,5. Noir gagne d’un demi-point.', no: 'Territoire plus prisonniers. Le komi, lui, va à Blanc.' }
   ] }
 ];
