@@ -30,6 +30,7 @@ import { messageGel } from './gel';
 import { BarreNav, type Onglet } from '../ui/IconesNav';
 import { BarreNiveau, FeteNiveau } from '../ui/Niveau';
 import { annonceKomi, equilibrage, KOMI_NORMAL, partiesOrdi, type Equilibrage } from './equilibrage';
+import { AnnonceXp } from '../ui/PastilleXp';
 
 const PROBLEMES_LOCAUX = parsePuzzles(ALL_PUZZLES);
 
@@ -217,6 +218,7 @@ export function App() {
         {screen}
       </main>
       <FeteNiveau celebrer={settings.celebrations} />
+      <AnnonceXp celebrer={settings.celebrations} />
       {/* Pendant une partie, comme chez chess.com : pas de barre de navigation, « ‹ » ramène à l'accueil. */}
       {!enPartie && <BarreNav actif={tab} onChoisir={go} />}
       <ConsentModal visible={fenetreVisible({ consent, ignoree: accordIgnore, enPartie: enPartie || (tab === 'problemes' && duJourOuvert), surConditions: tab === 'profil' && vueProfil === 'conditions' })}

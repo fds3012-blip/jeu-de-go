@@ -32,6 +32,8 @@ export const fr = {
   'profil.confirmer': 'Confirmer au doigt',
   'profil.confirmerAide': 'Une seconde touche pose la pierre.',
   'profil.sons': 'Sons',
+  'profil.son': 'Son',
+  'profil.vibrations': 'Vibrations',
   'profil.celebrations': 'Célébrations',
   'profil.celebrationsAide': 'Confettis et carillon quand tu gagnes.',
   'profil.aide': 'Aide de Mochi',

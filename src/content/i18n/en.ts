@@ -29,6 +29,8 @@ export const en = {
   'profil.confirmer': 'Confirm moves',
   'profil.confirmerAide': 'A second tap places the stone.',
   'profil.sons': 'Sounds',
+  'profil.son': 'Sound',
+  'profil.vibrations': 'Vibration',
   'profil.celebrations': 'Celebrations',
   'profil.celebrationsAide': 'Confetti and chimes when you win.',
   'profil.aide': 'Mochi’s help',

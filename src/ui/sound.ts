@@ -3,7 +3,7 @@
 // + quelques résonances sinusoïdales amorties, non harmoniques (le bois qui sonne) + un « toc » grave (le plateau).
 // Le contexte audio est créé ou repris au premier geste (exigence des navigateurs, surtout Safari iOS).
 
-export type SoundName = 'pose' | 'poseAdverse' | 'capture' | 'atari' | 'interdit' | 'victoire' | 'reussite' | 'echec';
+export type SoundName = 'pose' | 'poseAdverse' | 'capture' | 'atari' | 'interdit' | 'victoire' | 'defaite' | 'niveau' | 'badge' | 'reussite' | 'echec';
 
 /** Panoramique d'un coup selon sa colonne : de −0,15 (colonne A) à +0,15 (dernière colonne). */
 export function panFor(x: number, size: number): number {
@@ -23,6 +23,17 @@ export function shouldPlay(last: Map<string, number>, key: string, now: number, 
 export function pitchFactor(r: number): number {
   return 1 + (r * 2 - 1) * 0.03;
 }
+
+/**
+ * Geste humain (#165) : deux poses ne sont jamais identiques. À partir de trois tirages dans [0, 1) :
+ * force de la pose (gain 0,86 à 1), clarté du choc (±8 % sur sa fréquence), tenue de la résonance du bois (±10 %).
+ * La hauteur (±3 %) reste tirée à part par `pitchFactor`.
+ */
+export interface Geste { force: number; clarte: number; tenue: number }
+export function geste(r1: number, r2: number, r3: number): Geste {
+  return { force: 0.86 + r1 * 0.14, clarte: 1 + (r2 * 2 - 1) * 0.08, tenue: 1 + (r3 * 2 - 1) * 0.1 };
+}
+const GESTE_NEUTRE: Geste = { force: 1, clarte: 1, tenue: 1 };
 
 /** Nombre de pierres qui tombent sur le tas pour une capture de `n` pierres (1, 2, puis un tas). */
 export function pileClicks(n: number): number {
@@ -226,20 +237,21 @@ function clicSurLeTas(a: Ctx, dest: AudioNode, t: number, amp: number): void {
 
 /** Synthèse de chaque son, à l'instant `t`, vers `root`. Exposée pour l'analyse hors ligne (OfflineAudioContext). */
 export const synth = {
-  /** Claquement d'une pierre sur le bois. `variant` 0 à 3, `pitch` facteur de hauteur, `adverse` : plus sourd. */
-  pose(a: Ctx, root: AudioNode, t: number, variant: number, pitch: number, adverse: boolean, pan: number): void {
-    const c = CLAQUEMENTS[variant], amp = adverse ? 0.72 : 1, f = pitch * (adverse ? 0.94 : 1);
+  /** Claquement d'une pierre sur le bois. `variant` 0 à 3, `pitch` facteur de hauteur, `adverse` : plus sourd, `g` : geste humain. */
+  pose(a: Ctx, root: AudioNode, t: number, variant: number, pitch: number, adverse: boolean, pan: number, g: Geste = GESTE_NEUTRE): void {
+    const c = CLAQUEMENTS[variant], amp = (adverse ? 0.72 : 1) * g.force, f = pitch * (adverse ? 0.94 : 1), k = g.tenue;
     const dest = out(a, root, pan, adverse ? 1700 : 12000);
     // 1. Le choc : bruit large bande, très bref (c'est lui qui rend le son « sec »), plus un souffle aigu.
-    choc(a, dest, t, c.choc * f, 0.7, 1.1 * amp, 0.012);
-    choc(a, dest, t, 6500, 0.7, 0.35 * amp, 0.006, 'highpass');
+    //    Sa clarté varie un peu d'une pose à l'autre, comme la main qui ne frappe jamais pareil.
+    choc(a, dest, t, c.choc * f * g.clarte, 0.7, 1.1 * amp, 0.012);
+    choc(a, dest, t, 6500 * g.clarte, 0.7, 0.35 * amp * g.force, 0.006, 'highpass');
     // 2. Le bois qui répond : bruit filtré autour des deux premiers modes (Q moyen) = résonance « granuleuse », pas une note pure.
-    choc(a, dest, t, c.modes[0][0] * f, 7, 1.5 * amp, 0.05);
-    choc(a, dest, t, c.modes[1][0] * f, 8, 0.9 * amp, 0.035);
+    choc(a, dest, t, c.modes[0][0] * f, 7, 1.5 * amp, 0.05 * k);
+    choc(a, dest, t, c.modes[1][0] * f, 8, 0.9 * amp, 0.035 * k);
     // 3. Les modes eux-mêmes, courts et discrets, pour la hauteur du claquement.
-    c.modes.forEach(([fm, am, tau], i) => mode(a, dest, t, fm * f, am * 0.5 * amp, tau * 0.55, i === 0 ? 1.018 : 1));
-    // 4. Le plateau sonne creux sous la pierre : « toc » grave, bref.
-    mode(a, dest, t, c.toc * f, 0.3 * amp, 0.015, 1.3);
+    c.modes.forEach(([fm, am, tau], i) => mode(a, dest, t, fm * f, am * 0.5 * amp, tau * 0.55 * k, i === 0 ? 1.018 : 1));
+    // 4. Le kaya épais sonne creux sous la pierre : « toc » grave, bref, 1,5 ms après le choc (le bloc répond après la surface).
+    mode(a, dest, t + 0.0015, c.toc * f, 0.3 * amp, 0.015 * k, 1.3);
   },
   capture(a: Ctx, root: AudioNode, t: number, n: number): void {
     const dest = out(a, root, (Math.random() - 0.5) * 0.2, 9000);
@@ -262,6 +274,25 @@ export const synth = {
   victoire(a: Ctx, root: AudioNode, t: number): void {
     const dest = out(a, root, 0, 9000);
     [1046.5, 1318.5, 1568, 2093].forEach((f, i) => cloche(a, dest, t + i * 0.11 + (i === 3 ? 0.04 : 0), f, i === 3 ? 0.2 : 0.15));
+  },
+  /** Défaite : deux lames de bois douces qui descendent (mi → do), sans drame. */
+  defaite(a: Ctx, root: AudioNode, t: number): void {
+    const dest = out(a, root, 0, 2200);
+    mode(a, dest, t, 659.3, 0.16, 0.09); mode(a, dest, t, 659.3 * 3.9, 0.025, 0.015);
+    mode(a, dest, t + 0.16, 523.3, 0.17, 0.16); mode(a, dest, t + 0.16, 523.3 * 3.9, 0.025, 0.02);
+  },
+  /** Nouveau niveau : trois lames de bois qui montent (sol, si, ré), puis une petite cloche au ré aigu. */
+  niveau(a: Ctx, root: AudioNode, t: number): void {
+    const dest = out(a, root, 0, 9000);
+    [784, 987.8, 1174.7].forEach((f, i) => { mode(a, dest, t + i * 0.085, f, 0.18, 0.07); mode(a, dest, t + i * 0.085, f * 3.9, 0.035, 0.012); });
+    cloche(a, dest, t + 0.255, 2349.3, 0.09);
+  },
+  /** Badge (sceau obtenu) : le « toc » mat d'un sceau posé sur le papier, puis une cloche claire. */
+  badge(a: Ctx, root: AudioNode, t: number): void {
+    const dest = out(a, root, 0, 8000);
+    mode(a, dest, t, 330, 0.32, 0.02, 1.2);
+    choc(a, dest, t, 900, 1.2, 0.3, 0.018);
+    cloche(a, dest, t + 0.09, 1568, 0.13);
   },
   reussite(a: Ctx, root: AudioNode, t: number): void {
     const dest = out(a, root, 0, 7000);
@@ -290,7 +321,8 @@ export function playStone(p: number, size: number, adverse = false): void {
   let v = Math.floor(Math.random() * 4);
   if (v === lastVariant) v = (v + 1) % 4; // jamais deux fois le même claquement de suite
   lastVariant = v;
-  synth.pose(a, master!, a.currentTime + 0.004, v, pitchFactor(Math.random()), adverse, panFor(p % size, size));
+  synth.pose(a, master!, a.currentTime + 0.004, v, pitchFactor(Math.random()), adverse, panFor(p % size, size),
+    geste(Math.random(), Math.random(), Math.random()));
 }
 /** Pierres prises qui tombent sur le tas : 1, 2, ou 3 et plus. Suit le claquement de la pose. */
 export function playCapture(n: number): void { const a = start('capture'); if (a) synth.capture(a, master!, a.currentTime + 0.09, n); }
@@ -300,6 +332,12 @@ export function playAtari(): void { const a = start('atari'); if (a) synth.atari
 export function playIllegal(): void { const a = start('interdit'); if (a) synth.interdit(a, master!, a.currentTime + 0.004); }
 /** Victoire : petit carillon montant. */
 export function playVictory(): void { const a = start('victoire'); if (a) synth.victoire(a, master!, a.currentTime + 0.05); }
+/** Défaite contre l'ordi : deux notes douces qui descendent. */
+export function playDefeat(): void { const a = start('defaite'); if (a) synth.defaite(a, master!, a.currentTime + 0.05); }
+/** Nouveau niveau : trois lames de bois montantes et une cloche. */
+export function playLevel(): void { const a = start('niveau'); if (a) synth.niveau(a, master!, a.currentTime + 0.05); }
+/** Badge ou sceau obtenu : « toc » du sceau puis une cloche. */
+export function playBadge(): void { const a = start('badge'); if (a) synth.badge(a, master!, a.currentTime + 0.05); }
 /** Problème ou exercice réussi : deux notes montantes (après le claquement de la pierre). */
 export function playSuccess(): void { const a = start('reussite'); if (a) synth.reussite(a, master!, a.currentTime + 0.14); }
 /** Problème ou exercice raté : une note qui descend. */

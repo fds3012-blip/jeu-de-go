@@ -2,8 +2,8 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Board } from '../ui/Board';
 import { Avatar, Bandeau, BarreActions, BarreAvantage, Coach, CompteurIndices, Icone, ListeCoups } from '../ui/Partie';
 import { groupAt, newPosition, play, type Position } from '../go/rules';
-import { playAtari, playCapture, playIllegal, playStone, playVictory } from '../ui/sound';
-import { hapticCapture, hapticIllegal, hapticStone, hapticVictory } from '../ui/haptics';
+import { playAtari, playCapture, playDefeat, playIllegal, playStone, playVictory } from '../ui/sound';
+import { hapticAtari, hapticCapture, hapticDefeat, hapticIllegal, hapticStone, hapticVictory } from '../ui/haptics';
 import { score } from '../go/score';
 import { toLabel } from '../go/coords';
 import { bestMove, estimateLead, estimateTerritoire, proposeComptage, type Opponent } from '../engine';
@@ -160,7 +160,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
         const cap = r.captures[2] - pos.captures[2];
         playStone(m, size, true);
         if (cap) { playCapture(cap); repliquer('capture'); reagir('content'); }
-        if (metEnAtari(r, m)) playAtari();
+        if (metEnAtari(r, m)) { playAtari(); hapticAtari(); }
         const alerte = cap ? null : alerteAtari(pos, r, 1, history.length + 1);
         if (alerte) atarisSubis.current++;
         const c = cap || alerte ? null : conseilPasser(ai.nom, aide, false, r.board);
@@ -222,7 +222,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     playStone(p, size); hapticStone();
     if (cap) { playCapture(cap); hapticCapture(); }
     const enAtari = metEnAtari(r, p);
-    if (!ai && enAtari) playAtari();
+    if (!ai && enAtari) { playAtari(); hapticAtari(); }
     setHistory([...history, r]);
     if (history.length === 1) track(EVENTS.partieCommencee, { mode: ai ? 'ordi' : 'deux', adversaire: ai?.id, taille: size });
     if (history.length === 1) trackOnce(EVENTS.premierePierre, { secondes: secondsSinceOpen(), mode: ai ? 'ordi' : 'deux', adversaire: ai?.id, taille: size });
@@ -318,6 +318,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   }
   function celebrerVictoire(winner: 1 | 2, egalite: boolean) {
     if (celebrer && !egalite && (!ai || winner === 1)) { playVictory(); hapticVictory(); }
+    else if (ai && !egalite && winner === 2) { playDefeat(); hapticDefeat(); }
   }
   function finRecit() {
     if (recitFini) return;
