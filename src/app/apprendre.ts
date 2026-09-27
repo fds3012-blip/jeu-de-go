@@ -56,6 +56,8 @@ export interface Trace {
   /** Chaque pierre est sur une intersection : `col` en lignes depuis le milieu (négatif à gauche), x = col × LIGNE, y depuis le haut. */
   pierres: { col: number; x: number; y: number }[];
   hauteur: number;
+  /** Ligne (y) où le chemin tourne sous chaque pierre pour rejoindre la suivante : sous la rangée, jamais à travers son texte. */
+  virages: number[];
   /** Tracé SVG (x relatif au milieu) qui suit les lignes du goban : descendre, tourner à angle droit, descendre. */
   d: string;
 }
@@ -68,38 +70,48 @@ function morceau(a: { x: number; y: number }, b: { x: number; y: number }, tourn
   return a.x === b.x ? `V${b.y}` : `V${tourne}H${b.x}V${b.y}`;
 }
 
-/**
- * Ligne du virage entre les pierres i − 1 et i : la première ligne libre sous la pierre du haut.
- * Sous la leçon en cours, on tourne juste au-dessus de la suivante : son bouton en relief a la place.
- */
-function virage(p: Trace['pierres'], i: number, encours: number): number {
-  return i - 1 === encours ? p[i].y - LIGNE : p[i - 1].y + LIGNE;
-}
+/** Place minimale, en px, entre le bas d'une rangée (titre, description, bouton) et la ligne du virage au-dessous. */
+export const MARGE_RANGEE = 8;
+
+/** Plus petit multiple de LIGNE supérieur ou égal à `y` : la première ligne du goban à partir de `y`. */
+const ligneSous = (y: number) => Math.ceil(y / LIGNE) * LIGNE;
 
 /**
  * Chemin de pierres sur les lignes du goban : une pierre toutes les deux lignes, en alternant les côtés.
  * `encours` : indice de la leçon en cours ; elle a `apres` lignes de plus au-dessous, pour son bouton en relief.
+ * `bas` (#169) : pour chaque rangée, la place qu'elle occupe sous le centre de sa pierre, en px (mesurée à l'écran).
+ * Une rangée plus haute que l'écart prévu (titre sur plusieurs lignes au zoom 200 %) repousse la suivante
+ * d'autant de lignes qu'il faut, et le virage passe sous elle. Sans mesure, ou si tout tient, rien ne change.
  */
-export function trace(n: number, { encours = -1, apres = 2 } = {}): Trace {
+export function trace(n: number, { encours = -1, apres = 2, bas = [] as readonly number[] } = {}): Trace {
   const pierres: Trace['pierres'] = [];
+  const virages: number[] = [];
   let y = LIGNE;
   for (let i = 0; i < n; i++) {
     const col = COLS[i % COLS.length];
     pierres.push({ col, x: col * LIGNE, y });
-    y += 2 * LIGNE + (i === encours ? apres * LIGNE : 0);
+    // Virage par défaut : la première ligne sous la pierre, ou juste au-dessus de la suivante sous la leçon en cours.
+    const ecart = 2 * LIGNE + (i === encours ? apres * LIGNE : 0);
+    const defaut = i === encours ? y + ecart - LIGNE : y + LIGNE;
+    const v = Math.max(defaut, ligneSous(y + (bas[i] ?? 0) + MARGE_RANGEE));
+    virages.push(v);
+    y = Math.max(y + ecart, v + LIGNE);
   }
-  // Dernière leçon en cours (#177) : son bouton en relief et son titre ont besoin de place avant « Bientôt »,
-  // y compris avec la police doublée : une ligne de plus que sous une leçon du milieu.
-  const hauteur = n ? pierres[n - 1].y + LIGNE + (encours === n - 1 ? (apres + 1) * LIGNE : 0) : 0;
-  return { pierres, hauteur, d: traceJusqua({ pierres, hauteur, d: '' }, n - 1, encours, true) };
+  // Le goban s'arrête une ligne sous la dernière pierre ; il s'allonge si la dernière rangée dépasse la place
+  // qu'elle aurait au milieu du chemin. Dernière leçon en cours (#177, sept leçons) : sa place est toujours réservée,
+  // plus une ligne de marge (avec la police doublée, la pierre est dessinée sous sa ligne et la mesure est courte),
+  // sinon son bouton en relief mord sur « Bientôt ».
+  const der = n - 1, place = (der === encours ? apres + 1 : 1) * LIGNE, rangee = (bas[der] ?? 0) + MARGE_RANGEE;
+  const hauteur = n ? pierres[der].y + (der === encours ? Math.max(place, ligneSous(rangee)) + LIGNE : rangee > place ? ligneSous(rangee) : LIGNE) : 0;
+  return { pierres, hauteur, virages, d: traceJusqua({ pierres, hauteur, virages, d: '' }, n - 1, true) };
 }
 
 /** Tracé partiel : du début du chemin jusqu'à la pierre d'indice `jusqua` (incluse). Vide si `jusqua` < 1, sauf `seul` (une pierre seule). */
-export function traceJusqua(t: Trace, jusqua: number, encours = -1, seul = false): string {
+export function traceJusqua(t: Trace, jusqua: number, seul = false): string {
   const p = t.pierres, k = Math.min(jusqua, p.length - 1);
   if (k < 0 || (k < 1 && !seul)) return '';
   let d = `M${p[0].x} ${p[0].y}`;
-  for (let i = 1; i <= k; i++) d += morceau(p[i - 1], p[i], virage(p, i, encours));
+  for (let i = 1; i <= k; i++) d += morceau(p[i - 1], p[i], t.virages[i - 1]);
   return d;
 }
 

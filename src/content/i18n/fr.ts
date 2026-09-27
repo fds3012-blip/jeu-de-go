@@ -14,6 +14,9 @@ export const fr = {
   'profil.aria': 'Ton profil',
   'profil.invite': 'Invité',
   'profil.inviteDetail': 'Sans compte, tout reste sur ce téléphone.',
+  // Série sans compte (#161) : invitation au 3e jour de série.
+  'serie.invitation': 'Crée un compte pour garder ta série.',
+  'serie.creerCompte': 'Créer un compte',
   'profil.sansPseudo': 'Sans pseudo',
   'profil.cote': 'Cote {cote}',
   'profil.jours': { one: '{n} jour', other: '{n} jours' },
@@ -29,6 +32,8 @@ export const fr = {
   'profil.confirmer': 'Confirmer au doigt',
   'profil.confirmerAide': 'Une seconde touche pose la pierre.',
   'profil.sons': 'Sons',
+  'profil.son': 'Son',
+  'profil.vibrations': 'Vibrations',
   'profil.celebrations': 'Célébrations',
   'profil.celebrationsAide': 'Confettis et carillon quand tu gagnes.',
   'profil.aide': 'Aide de Mochi',

@@ -87,6 +87,15 @@
   .a-gauche .cta-chemin { margin-left: 0; }
   .a-droite .cta-chemin { margin-right: 0; }
   .a-gauche .cta-chemin, .a-droite .cta-chemin { max-width: 100%; }
+  /* #169 : à côté de la pierre, il restait une colonne de 50 px où les titres se coupaient au milieu des mots.
+     Le texte passe sous la pierre, sur toute la largeur de la rangée, avec un titre un peu plus petit ;
+     son fond cache les lignes du goban et le chemin qui passent derrière. trace() espace les rangées selon leur hauteur. */
+  .pas-bouton, .a-droite .pas-bouton { flex-direction: column; align-items: flex-start; gap: 6px; }
+  .a-droite .pas-bouton { align-items: flex-end; }
+  .pas-texte { padding: 2px 4px; margin-inline: -4px; border-radius: 6px; background: var(--bg); }
+  .pas-texte > * { overflow-wrap: break-word; hyphens: auto; }
+  .pas-texte b { font-size: var(--fs-m); }
+  .pas-texte small { font-size: var(--fs-legende); }
 }
 .chemin-fini { margin: 0 0 var(--space-6); }
 .chemin-fini .cta-chemin { width: 100%; margin: 0; }
@@ -265,6 +274,10 @@
 .invitation { display: flex; flex-wrap: wrap; /* #121 */ align-items: center; justify-content: space-between; gap: var(--space-2); margin: 0 0 var(--space-2); }
 .invitation p { margin: 0; font-size: var(--fs-corps-s); line-height: 1.4; }
 .invitation .lien { flex: none; margin-right: -12px; }
+/* #161 : sans compte, l'invitation à gauche, la série de l'appareil à droite. */
+.palmares-invite { align-items: center; }
+.palmares-invite .invitation { flex-direction: column; align-items: flex-start; gap: 0; margin: 0; }
+.palmares-invite .invitation .lien { margin: 0 0 0 -12px; }
 
 .problemes h2 { margin: var(--space-6) 0 10px; }
 .problemes section:first-of-type h2 { margin-top: var(--space-4); }

@@ -49,6 +49,46 @@ async function boutonLibre(bouton: Locator, ecran: string) {
   expect(r.coupe, `${ecran} : texte du bouton principal coupé`).toBe(false);
 }
 
+/**
+ * #169 : chemin d'Apprendre lisible. Les rangées (pierre, titre, description, bouton) ne se chevauchent pas,
+ * et aucun texte du chemin n'est recouvert : au milieu de chaque ligne de texte, l'élément visible est
+ * celui qui porte le texte (ou un de ses enfants), jamais une autre rangée, le bouton ou la barre du bas.
+ */
+async function cheminLisible(page: Page, ecran: string) {
+  const r = await page.evaluate(async () => {
+    const soucis: string[] = [];
+    const rangees = [...document.querySelectorAll<HTMLElement>('.gue .pas')];
+    const boites = rangees.map(li => li.getBoundingClientRect()).map(b => ({ top: b.top + scrollY, bottom: b.bottom + scrollY }));
+    const ordre = boites.map((b, i) => ({ ...b, i })).sort((a, b) => a.top - b.top);
+    for (let j = 1; j < ordre.length; j++) {
+      if (ordre[j].top < ordre[j - 1].bottom - 0.5) soucis.push(`rangées ${ordre[j - 1].i + 1} et ${ordre[j].i + 1} se chevauchent (${Math.round(ordre[j - 1].bottom - ordre[j].top)} px)`);
+    }
+    // Chaque ligne de texte du chemin, amenée au milieu de l'écran (la barre du bas ne compte pas).
+    const porteurs = [...document.querySelectorAll<HTMLElement>('.gue .pas-texte b, .gue .pas-texte small, .gue .cta-chemin')];
+    for (const el of porteurs) {
+      for (const n of el.childNodes) {
+        if (n.nodeType !== Node.TEXT_NODE || !n.textContent?.trim()) continue;
+        const range = document.createRange();
+        range.selectNodeContents(n);
+        const lignes = [...range.getClientRects()].filter(l => l.width > 1 && l.height > 1).map(l => ({ x: l.left + l.width / 2, y: l.top + l.height / 2 + scrollY }));
+        for (const l of lignes) {
+          window.scrollTo(0, l.y - innerHeight / 2);
+          await new Promise(requestAnimationFrame);
+          const dessus = document.elementFromPoint(l.x, l.y - scrollY);
+          if (!dessus || !(dessus === el || el.contains(dessus))) {
+            soucis.push(`« ${n.textContent.trim().slice(0, 24)} » recouvert par ${dessus ? `${dessus.tagName.toLowerCase()}.${String(dessus.className)}` : 'rien (hors écran)'}`);
+            break;
+          }
+        }
+      }
+    }
+    window.scrollTo(0, 0);
+    return { soucis, n: rangees.length };
+  });
+  expect(r.n, `${ecran} : chemin introuvable`).toBeGreaterThan(0);
+  expect(r.soucis, `${ecran} : chemin illisible`).toEqual([]);
+}
+
 const onglet = (page: Page, nom: string) =>
   page.getByRole('navigation', { name: 'Navigation principale' }).getByRole('button', { name: nom });
 
@@ -106,9 +146,11 @@ for (const c of CAS) {
       const b = (await pierre.boundingBox())!;
       expect(b.x, 'pierre 7 coupée à gauche').toBeGreaterThanOrEqual(0);
       expect(b.x + b.width, 'pierre 7 coupée à droite').toBeLessThanOrEqual(c.largeur + 1);
-      // Le bouton de la dernière leçon ne mord pas sur « Bientôt ».
-      const bas = (await cta.boundingBox())!, bientot = (await page.getByRole('heading', { name: 'Bientôt' }).boundingBox())!;
-      expect(bas.y + bas.height, 'bouton de la leçon 7 sur « Bientôt »').toBeLessThanOrEqual(bientot.y);
+      // Le bouton de la dernière leçon ne mord pas sur « Bientôt » (après la mesure des rangées, qui peut suivre d'un rendu).
+      await expect.poll(async () => {
+        const bas = (await cta.boundingBox())!, bientot = (await page.getByRole('heading', { name: 'Bientôt' }).boundingBox())!;
+        return bientot.y - (bas.y + bas.height);
+      }, { message: 'bouton de la leçon 7 sur « Bientôt »' }).toBeGreaterThanOrEqual(0);
       await cta.click();
       for (const n of ['Je passe', 'Chez moi', 'Chez Blanc']) {
         const choix = page.locator('.choix').getByRole('button', { name: n, exact: true });
@@ -126,5 +168,29 @@ for (const c of CAS) {
       await expect(page.locator('.board, [role="grid"]').first()).toBeVisible();
       await sansDebord(page, 'Partie');
     });
+  });
+}
+
+// #169 : à 195 px, les titres du chemin passaient sur 4 à 6 lignes et chevauchaient la rangée suivante,
+// et « Commencer » recouvrait « Atari ». Vérifié sur un chemin neuf, en cours et fini.
+const PROGRESSIONS: Record<string, Record<string, number>> = {
+  neuf: {},
+  'leçon 2 en cours': { l1: 99, l2: 1 },
+  'dernière leçon en cours': { l1: 99, l2: 99, l3: 99, l4: 99, l5: 99 },
+  fini: { l1: 99, l2: 99, l3: 99, l4: 99, l5: 99, l6: 99 },
+};
+for (const [largeur, hauteur] of [[195, 422], [320, 640], [390, 844]]) {
+  test.describe(`chemin d’Apprendre à ${largeur} px`, () => {
+    test.use({ viewport: { width: largeur, height: hauteur } });
+    for (const [nom, p] of Object.entries(PROGRESSIONS)) {
+      test(`${nom} : rangées sans chevauchement, textes non recouverts`, async ({ page }) => {
+        await page.addInitScript(v => localStorage.setItem('go.lecons.v1', v), JSON.stringify(p));
+        await page.goto('/');
+        await onglet(page, 'Apprendre').click();
+        await expect(page.locator('.cta-chemin')).toBeVisible();
+        await page.evaluate(() => document.fonts.ready);
+        await cheminLisible(page, `Apprendre ${largeur} px, ${nom}`);
+      });
+    }
   });
 }

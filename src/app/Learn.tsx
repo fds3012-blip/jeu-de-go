@@ -1,5 +1,5 @@
 // Onglet Apprendre (issues #40 et #54) : chemin de pierres sur les lignes d'un goban, lecteur de leçon, fin de leçon.
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { LESSONS, type Lesson } from '../content/lessons';
 import { acquis } from '../content/acquis';
 import { Board, type BoardMarks } from '../ui/Board';
@@ -18,7 +18,7 @@ import { fromLabel } from '../go/coords';
 import { score } from '../go/score';
 import { prefersReducedMotion, type SyncState } from './hooks';
 import { playFail, playStone, playSuccess, playVictory } from '../ui/sound';
-import { hapticStone, hapticVictory } from '../ui/haptics';
+import { hapticFail, hapticStone, hapticSuccess, hapticVictory } from '../ui/haptics';
 import { EVENTS, track } from '../data/analytics';
 import { gagnerXp } from './xp';
 import { CHAPITRES_A_VENIR, LIGNE, boutonChemin, etapes, finDeLecon, trace, traceJusqua, type Progression } from './apprendre';
@@ -45,8 +45,12 @@ function lignesGoban(hauteur: number): string {
 export function LearnHome({ progress, onOpen, sync = 'local' }: { progress: Progression; onOpen: (id: string) => void; sync?: SyncState }) {
   const liste = etapes(LESSONS, progress);
   const iEnCours = liste.findIndex(e => e.etat === 'encours');
-  const t = useMemo(() => trace(liste.length, { encours: iEnCours }), [liste.length, iEnCours]);
-  const parcouru = traceJusqua(t, iEnCours >= 0 ? iEnCours : liste.length - 1, iEnCours);
+  // #169 : place occupée par chaque rangée sous le centre de sa pierre, mesurée après l'affichage. Au zoom 200 %,
+  // un titre sur plusieurs lignes repousse la rangée suivante au lieu de la chevaucher. À 390 px, tout tient : rien ne bouge.
+  const [bas, setBas] = useState<number[]>([]);
+  const t = useMemo(() => trace(liste.length, { encours: iEnCours, bas }), [liste.length, iEnCours, bas]);
+  const parcouru = traceJusqua(t, iEnCours >= 0 ? iEnCours : liste.length - 1);
+  const chemin = useRef<HTMLOListElement>(null);
   const faites = liste.filter(e => e.etat === 'faite').length;
   const bouton = boutonChemin(LESSONS, progress);
   const cta = useRef<HTMLButtonElement>(null);
@@ -58,6 +62,24 @@ export function LearnHome({ progress, onOpen, sync = 'local' }: { progress: Prog
     window.addEventListener('resize', maj);
     return () => window.removeEventListener('resize', maj);
   }, []);
+  // Une rangée qui change de hauteur sans nouveau rendu (police chargée après coup, texte agrandi) : on remesure.
+  const [tour, remesurer] = useState(0);
+  // Mesure avant l'affichage : si une rangée a changé de hauteur, le chemin est recalculé tout de suite.
+  // Stable : la hauteur d'une rangée ne dépend pas de sa position, la seconde mesure donne le même résultat.
+  useLayoutEffect(() => {
+    const rangees = [...(chemin.current?.children ?? [])] as HTMLElement[];
+    const mesure = rangees.map(li => {
+      const pierre = li.querySelector('.pierre-gue')?.getBoundingClientRect();
+      return pierre ? Math.ceil(li.getBoundingClientRect().bottom - (pierre.top + pierre.height / 2)) : 0;
+    });
+    if (mesure.length !== bas.length || mesure.some((m, i) => m !== bas[i])) setBas(mesure);
+  }, [bas, k, tour, progress]);
+  useEffect(() => {
+    if (typeof ResizeObserver === 'undefined' || !chemin.current) return;
+    const obs = new ResizeObserver(() => remesurer(x => x + 1));
+    for (const li of chemin.current.children) obs.observe(li);
+    return () => obs.disconnect();
+  }, [liste.length]);
   const echelle = k < 1 ? `scale(${k} 1)` : undefined;
 
   // La leçon en cours doit être à l'écran, avec son bouton : on fait défiler d'un coup, sans animation.
@@ -89,7 +111,7 @@ export function LearnHome({ progress, onOpen, sync = 'local' }: { progress: Prog
             {parcouru && <path d={parcouru} className="gue-parcouru" vectorEffect="non-scaling-stroke" />}
           </g>
         </svg>
-        <ol>
+        <ol ref={chemin}>
           {liste.map((e, i) => {
             const p = t.pierres[i], droite = p.col > 0;
             const style = { top: p.y, '--x': `${p.x * k}px` } as CSSProperties;
@@ -170,7 +192,7 @@ export function LessonPlayer({ lesson, start, confirmTouch, progress = {}, celeb
     window.scrollTo({ top: 0 });
   }
   function repondre(ok: boolean, extra: { p?: number; after?: Position; choice?: number }) {
-    if (ok) playSuccess(); else playFail();
+    if (ok) { playSuccess(); hapticSuccess(); } else { playFail(); hapticFail(); }
     setAnswer(a => ({ ok, ...extra, n: (a?.n ?? 0) + 1 }));
   }
   function onPlay(p: number) {
