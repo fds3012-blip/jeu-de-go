@@ -5,7 +5,9 @@ import { choisirThemeGoban, useIdThemeGoban, type Settings } from './settings';
 import { lireXp, niveauDe, niveauRequis, themeDebloque } from './xp';
 import { ORDRE_THEMES, THEMES_GOBAN } from '../ui/boardArt';
 import { identite, texteSerie } from './identite';
-import { LigneChoix, LigneInterrupteur, LigneLien } from '../ui/Reglage';
+import { LigneBascules, LigneChoix, LigneInterrupteur, LigneLien } from '../ui/Reglage';
+import { hapticStone } from '../ui/haptics';
+import { playStone } from '../ui/sound';
 import { useMemo } from 'react';
 import { readLocal } from './hooks';
 import { BILAN_KEY, lireBilan } from './bilan';
@@ -95,7 +97,11 @@ function Menu({ onVue, settings, set, profil, serie }: Omit<Props, 'vue'>) {
         <LigneChoix libelle="Thème" options={THEMES} valeur={settings.theme} onChange={t => set({ theme: t })} />
         <LigneGoban />
         <LigneInterrupteur libelle="Confirmer au doigt" aide="Une seconde touche pose la pierre." actif={settings.confirmTouch} onChange={v => set({ confirmTouch: v })} />
-        <LigneInterrupteur libelle="Sons" actif={settings.sound} onChange={v => set({ sound: v })} />
+        <LigneBascules libelle="Sons" bascules={[
+          // Un aperçu à l'allumage : le claquement de pierre, ou une petite vibration.
+          { libelle: 'Son', actif: settings.sound, onChange: v => { set({ sound: v }); if (v) setTimeout(() => playStone(40, 9), 0); } },
+          { libelle: 'Vibrations', actif: settings.vibrations, onChange: v => { set({ vibrations: v }); if (v) setTimeout(hapticStone, 0); } },
+        ]} />
         <LigneInterrupteur libelle="Célébrations" aide="Confettis et carillon quand tu gagnes." actif={settings.celebrations} onChange={v => set({ celebrations: v })} />
         <LigneChoix libelle="Aide de Mochi" options={AIDES} valeur={settings.aide} onChange={a => set({ aide: a })} />
       </div>

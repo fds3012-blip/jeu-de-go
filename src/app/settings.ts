@@ -2,12 +2,14 @@ import { useEffect, useState, useSyncExternalStore } from 'react';
 import { themeGoban, type IdThemeGoban, type ThemeGoban } from '../ui/boardArt';
 import { lireXp, niveauDe, themeDebloque } from './xp';
 import { installAudioUnlock, setSoundEnabled } from '../ui/sound';
+import { setHapticsEnabled } from '../ui/haptics';
 import type { ReglageAide } from './partie';
 
 // `aide` : « Aide de Mochi en partie » (#35). `auto` : contre Pomme et Caillou seulement.
-export interface Settings { theme: 'auto' | 'dark' | 'light'; confirmTouch: boolean; size: 9 | 13 | 19; sound: boolean; celebrations: boolean; aide: ReglageAide }
+// `vibrations` : réglable à part du son (#165).
+export interface Settings { theme: 'auto' | 'dark' | 'light'; confirmTouch: boolean; size: 9 | 13 | 19; sound: boolean; vibrations: boolean; celebrations: boolean; aide: ReglageAide }
 const KEY = 'go.settings.v1';
-const DEFAULTS: Settings = { theme: 'auto', confirmTouch: true, size: 9, sound: true, celebrations: true, aide: 'auto' };
+const DEFAULTS: Settings = { theme: 'auto', confirmTouch: true, size: 9, sound: true, vibrations: true, celebrations: true, aide: 'auto' };
 
 function read(): Settings {
   try { return { ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY) || '{}') }; } catch { return DEFAULTS; }
@@ -22,6 +24,7 @@ export function useSettings(): [Settings, (patch: Partial<Settings>) => void] {
     // Sons du goban (réglage « Sons ») : le contexte audio démarre au premier geste.
     setSoundEnabled(s.sound);
     if (s.sound) installAudioUnlock();
+    setHapticsEnabled(s.vibrations);
   }, [s]);
   return [s, patch => setS(prev => ({ ...prev, ...patch }))];
 }
