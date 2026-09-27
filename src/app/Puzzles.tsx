@@ -22,7 +22,7 @@ import { EVENTS, track } from '../data/analytics';
 import { gagnerXp } from './xp';
 import { prefersReducedMotion, readLocal, useOnline, writeLocal } from './hooks';
 import { legendeSerie, niveau } from './problemes';
-import { ordrePaliers, palierRecommande, paliers, prochain, suivantPalier, type Palier } from './paliers';
+import { aContinuer, aSuivre, ordrePaliers, palierRecommande, paliers, type Palier } from './paliers';
 import { SceauLecon } from '../ui/SceauLecon';
 import { aFeter, FETES_KEY } from './fetesPaliers';
 import { MesErreurs } from '../ui/MesErreurs';
@@ -131,6 +131,12 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
     if (celebrer && !prefersReducedMotion()) setFetes(nouveaux);
   }, [tiers, openId, celebrer]);
   const ordre = useMemo(() => ordrePaliers(tiers), [tiers]);
+  // #147 : « Continuer » propose toujours un problème ; le tirage change à chaque retour à la liste
+  // et évite le dernier problème joué.
+  const dernierRef = useRef<string | undefined>(undefined);
+  if (openId) dernierRef.current = openId;
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- nouveau tirage voulu à chaque changement de problème
+  const tirage = useMemo(() => Math.random(), [openId]);
   const open = list.find(p => p.id === openId) ?? (daily && openId === daily.id ? daily : undefined);
   const duJourOuvert = !!open && open.id === daily?.id;
   useEffect(() => {
@@ -139,7 +145,7 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   useEffect(() => () => onDuJour?.(false), [onDuJour]);
 
   if (open) {
-    const nextPz = suivantPalier(tiers, open, solved);
+    const nextPz = aSuivre(tiers, open, solved);
     const estDuJour = open.id === daily?.id;
     return (
       <PuzzlePlayer key={open.id} puzzle={open} rang={ordre.indexOf(open) + 1} confirmTouch={confirmTouch}
@@ -178,7 +184,7 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   }
 
   const connecte = !!db && !!userId;
-  const prochainPz = prochain(tiers, solved);
+  const prochainPz = aContinuer(tiers, solved, dernierRef.current, () => tirage);
   // Une seule action en relief : le Go du jour tant qu'il n'est pas fait, « Continuer » ensuite.
   const duJourFait = !daily || serieDuJour?.dernier === numero;
   const recommande = connecte && stats ? palierRecommande(tiers, stats.rating) : undefined;

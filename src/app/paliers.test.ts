@@ -1,6 +1,42 @@
 import { describe, expect, it } from 'vitest';
 import { ALL_PUZZLES, BASE_PUZZLES, PUZZLES_16 } from '../content/puzzles';
-import { PALIERS, indexPalier, ordrePaliers, palierRecommande, paliers, prochain, suivantPalier } from './paliers';
+import { PALIERS, aContinuer, aSuivre, auHasard, indexPalier, ordrePaliers, palierRecommande, paliers, prochain, suivantPalier } from './paliers';
+
+describe('problèmes sans fin (#147)', () => {
+  const liste = [pbx('a', 300), pbx('b', 350), pbx('c', 400), pbx('n', 500)];
+  const tous = new Set(liste.map(p => p.id));
+  it("Continuer propose d'abord le prochain non résolu", () => {
+    const r = new Set(['a']);
+    expect(aContinuer(paliers(liste, r), r)?.id).toBe('b');
+  });
+  it('tout réussi : Continuer propose toujours un problème, jamais le dernier joué', () => {
+    const ps = paliers(liste, tous);
+    for (let k = 0; k < 20; k++) {
+      const p = aContinuer(ps, tous, 'a', () => k / 20);
+      expect(p).toBeDefined();
+      expect(p?.id).not.toBe('a');
+    }
+  });
+  it("tout réussi : Problème suivant n'est jamais le même deux fois de suite", () => {
+    const ps = paliers(liste, tous);
+    for (const c of liste) for (const x of [0, 0.5, 0.999]) {
+      const p = aSuivre(ps, c, tous, () => x);
+      expect(p).toBeDefined();
+      expect(p?.id).not.toBe(c.id);
+    }
+  });
+  it('ne tire que dans les paliers ouverts', () => {
+    const ps = paliers([pbx('a', 300), pbx('z', 700)], new Set<string>());
+    expect(auHasard(ps, undefined, () => 0.99)?.id).toBe('a');
+  });
+  it('un seul problème : il est reproposé plutôt que rien', () => {
+    const one = [pbx('a', 300)];
+    const r = new Set(['a']);
+    expect(aSuivre(paliers(one, r), one[0], r)?.id).toBe('a');
+  });
+});
+
+function pbx(id: string, difficulty: number) { return { id, difficulty }; }
 
 const pb = (id: string, difficulty: number) => ({ id, difficulty });
 const LISTE = [
