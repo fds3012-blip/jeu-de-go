@@ -9,9 +9,9 @@ import type { SceauId } from './sceaux';
 export type PortraitId = Exclude<SceauId, 'mochi'>;
 export type Humeur = 'neutre' | 'content' | 'surpris';
 
-const ENCRE = '#1B1A18', PAPIER = '#F7E9DA', OR = '#E9B949', VERMILLON = '#D2432C', INDIGO = '#2F4B8A';
+const ENCRE = '#1C1916', PAPIER = '#F7E9DA', OR = '#E9B949', VERMILLON = '#D2432C', INDIGO = '#2F4B8A';
 const JADE = '#3CC48E', JADE_F = '#1E8A5F', ROSE = "#F08A7A";
-const T = { stroke: ENCRE, strokeWidth: 2.2, strokeLinecap: 'round', strokeLinejoin: 'round' } as const;
+const T = { stroke: ENCRE, strokeWidth: 2.5, strokeLinecap: 'round', strokeLinejoin: 'round' } as const;
 
 export const NOMS: Record<PortraitId, string> = {
   pomme: 'Pomme', caillou: 'Caillou', bambou: 'Bambou', renard: 'Renard', riviere: 'Rivière',
@@ -216,7 +216,7 @@ export function Portrait({ id, humeur = 'neutre', taille = 44, rond = false, dec
   const clip = `portrait-clip-${id}-${rond ? 'r' : 'c'}`;
   const forme = rond
     ? <circle cx="50" cy="50" r="48" />
-    : <rect x="2" y="2" width="96" height="96" rx="24" />;
+    : <rect x="2" y="2" width="96" height="96" rx="21" />;
   return (
     <span className={['portrait', className].filter(Boolean).join(' ')} data-portrait={id} data-humeur={humeur}
       style={{ width: taille, height: taille }}>
@@ -231,7 +231,7 @@ export function Portrait({ id, humeur = 'neutre', taille = 44, rond = false, dec
         </g>
         {rond
           ? <circle cx="50" cy="50" r="48" fill="none" stroke={f.anneau} strokeWidth="3" />
-          : <rect x="2" y="2" width="96" height="96" rx="24" fill="none" stroke={f.anneau} strokeWidth="3" />}
+          : <rect x="2" y="2" width="96" height="96" rx="21" fill="none" stroke={f.anneau} strokeWidth="3" />}
       </svg>
       {signe && <span className="portrait-signature"><Sceau id={id} taille={Math.round(taille * 0.24)} /></span>}
     </span>
