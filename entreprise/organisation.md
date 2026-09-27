@@ -12,6 +12,7 @@ Le dirigeant (Claude, sous la supervision de Florian) fixe les priorités, répa
 | moteur-go | Règles, comptage, SGF, KataGo, niveaux des adversaires |
 | backend | Supabase, sécurité, parties en ligne, anti-triche |
 | qa | Tests, accessibilité, recette |
+| ux-jeux-mobiles | Analyse de l'expérience joueur, comparaison avec les meilleurs jeux mobiles, base de connaissances UX (`docs/ux/`) |
 
 ## Contenu et joueurs
 | Agent | Périmètre |
@@ -30,6 +31,7 @@ Le dirigeant (Claude, sous la supervision de Florian) fixe les priorités, répa
 ## Boucle d'amélioration continue
 Après chaque livraison :
 1. **qa** vérifie les parcours clés et note les défauts.
+   **ux-jeux-mobiles** analyse l'expérience du parcours livré et enrichit `docs/ux/base-de-connaissances.md`.
 2. **produit** compare l'écran livré aux meilleurs concurrents (chess.com, BadukPop, OGS, KaTrain) et liste ce qui manque.
 3. Le dirigeant classe les améliorations par impact sur les indicateurs de la charte, crée les issues et les confie aux agents.
 4. On recommence.
