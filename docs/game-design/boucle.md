@@ -36,6 +36,6 @@ Règles communes : pas de fausse urgence, pas de perte punitive (la série est p
 **Garde-fous** : si la victoire devient trop facile (plus de 80 % des 3 premières parties gagnées contre Pomme), on garde 0,5 mais pour 2 parties seulement. Si la 4e partie (retour à 6,5) montre une chute nette des parties terminées, on étudie un komi intermédiaire (3,5) pour les parties 4 à 6.
 
 ## Prochains réglages à instruire
-- Courbe des 9 adversaires : un nouveau joueur doit battre Pomme dans ses 3 premières parties et Caillou dans sa première semaine.
+- Courbe des 9 adversaires : un nouveau joueur doit battre Pomme dans ses 3 premières parties et Caillou dans sa première semaine. Mesurée dans `equilibrage.md` (#179) : l'ordre est bon, mais Caillou → Bambou est un mur (proposition P1 : une part de hasard pour Bambou et Renard).
 - XP : le niveau 2 doit tomber pendant la première session (progrès offert, base UX).
 - Go du jour : piste « Débutant » les 7 premiers jours (hypothèse de la base UX).
