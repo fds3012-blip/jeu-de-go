@@ -97,6 +97,28 @@ export function suivantPalier<T extends { id: string }>(ps: Palier<T>[], courant
 }
 
 /**
+ * Problème à proposer quand plus rien n'est à faire (issue #147) : un problème déjà réussi, tiré au hasard
+ * parmi les paliers ouverts, jamais `eviter` (le dernier joué) sauf s'il est le seul.
+ */
+export function auHasard<T extends { id: string }>(ps: Palier<T>[], eviter?: string, alea: () => number = Math.random): T | undefined {
+  const jouables = ps.filter(p => p.ouvert).flatMap(p => p.problemes);
+  const autres = jouables.filter(p => p.id !== eviter);
+  const pool = autres.length ? autres : jouables;
+  if (!pool.length) return undefined;
+  return pool[Math.min(pool.length - 1, Math.floor(alea() * pool.length))];
+}
+
+/** « Continuer » : le prochain non résolu, sinon un problème réussi au hasard (jamais `dernier`). */
+export function aContinuer<T extends { id: string }>(ps: Palier<T>[], reussis: Set<string>, dernier?: string, alea?: () => number): T | undefined {
+  return prochain(ps, reussis) ?? auHasard(ps, dernier, alea);
+}
+
+/** « Problème suivant » : le suivant non résolu, sinon un problème réussi au hasard, jamais `courant`. */
+export function aSuivre<T extends { id: string }>(ps: Palier<T>[], courant: T, reussis: Set<string>, alea?: () => number): T | undefined {
+  return suivantPalier(ps, courant, reussis) ?? auHasard(ps, courant.id, alea);
+}
+
+/**
  * Palier recommandé pour un joueur connecté, selon sa cote : celui dont les problèmes ont sa difficulté,
  * sans dépasser le palier ouvert le plus avancé. `undefined` sans cote.
  */
