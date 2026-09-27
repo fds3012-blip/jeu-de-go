@@ -448,3 +448,11 @@ Chaque livraison : issue traitée, agent, pull request, résultat des vérificat
 - #136 : « relier sous une pierre » et la vie et mort de haut de courbe.
 - Droit MAINTAIN des privilèges par défaut.
 - Champs légaux (#111).
+
+## 27/09, 23 h à 23 h 30
+
+- #147 Problèmes sans fin : « Continuer » et « Problème suivant » proposent toujours un problème. Quand tout est résolu, c'est un problème déjà réussi, tiré au hasard, jamais deux fois le même de suite.
+- #116 Le lecteur d'écran dit « appuie encore pour choisir ce point » sur les questions « touche le point ».
+- #148 Droit MAINTAIN retiré à `anon` et `authenticated`, en production.
+- #136 Lot H : 1 problème « relier » prouvé (6 positions écartées). **107 problèmes** en production.
+- #121 Non fait : Apprendre et Profil débordent encore à 195 px (détail dans l'issue).
