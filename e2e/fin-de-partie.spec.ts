@@ -8,7 +8,7 @@ test('fin de partie contre Pomme : deux passes, récit du score direct, puis le 
   page.on('pageerror', (e) => erreurs.push(e.message));
   await page.goto('/');
   await page.locator('.cta').click();
-  await expect(page.getByRole('img', { name: /Plateau de go 9 × 9/ })).toBeVisible();
+  await expect(page.locator('svg.board[aria-label="Plateau de go 9 × 9"]')).toBeVisible();
 
   // Plateau vide : Noir passe, Pomme (qui mène grâce au komi) passe aussi. Rien d'incertain : pas de phase manuelle.
   await page.getByRole('button', { name: 'Passer' }).click();

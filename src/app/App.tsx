@@ -3,7 +3,7 @@ import { Game } from './Game';
 import { LearnHome, LessonPlayer } from './Learn';
 import { LESSONS } from '../content/lessons';
 import { Puzzles } from './Puzzles';
-import { readLocal, useLessonProgress, useProfil, useSerie, useSession } from './hooks';
+import { readLocal, useGelsServeur, useLessonProgress, useProfil, useSerie, useSession } from './hooks';
 import { supabase } from '../data/supabase';
 import { useSettings, useStored } from './settings';
 import { aideActive } from './partie';
@@ -26,6 +26,7 @@ import { Mochi } from '../ui/Mochi';
 import { lireReserveAppareil, reconcilierAppareil } from './gelAppareil';
 import { messageGel } from './gel';
 import { BarreNav, type Onglet } from '../ui/IconesNav';
+import { BarreNiveau, FeteNiveau } from '../ui/Niveau';
 
 const PROBLEMES_LOCAUX = parsePuzzles(ALL_PUZZLES);
 
@@ -85,7 +86,9 @@ export function App() {
   const serie = useSerie(supabase, session?.user.id);
   // Série protégée (issue #76) : les jours manqués consomment un gel dès l'ouverture, avant que Problèmes lise la série.
   const [annonceGel, setAnnonceGel] = useState(() => reconcilierAppareil(new Date()));
-  const gels = lireReserveAppareil().gels;
+  // Joueur connecté : les gels du serveur ; sinon ceux de l'appareil (issue #76).
+  const gelsServeur = useGelsServeur(supabase, session?.user.id);
+  const gels = gelsServeur ?? lireReserveAppareil().gels;
   const [resultat, setResultat] = useState<null | { issue: Issue; stats: StatsPartie }>(null); // fin de la partie en cours contre l'ordi
   const [partie, setPartie] = useState(0); // change à chaque partie pour repartir d'un plateau vide
   const home = accueil(parties, done, adv, settings.size);
@@ -198,8 +201,10 @@ export function App() {
         {annonceGel !== null && !enPartie && (tab === 'jouer' || tab === 'problemes') && (
           <p className="gel-annonce" role="status"><Mochi size={30} />{fr(messageGel(annonceGel))}</p>
         )}
+        {accueilVisible && <BarreNiveau />}
         {screen}
       </main>
+      <FeteNiveau celebrer={settings.celebrations} />
       {/* Pendant une partie, comme chez chess.com : pas de barre de navigation, « ‹ » ramène à l'accueil. */}
       {!enPartie && <BarreNav actif={tab} onChoisir={go} />}
       <ConsentModal visible={fenetreVisible({ consent, ignoree: accordIgnore, enPartie: enPartie || (tab === 'problemes' && duJourOuvert), surConditions: tab === 'profil' && vueProfil === 'conditions' })}

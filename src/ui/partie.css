@@ -174,3 +174,14 @@
 @keyframes couvercle-pulse { 0% { transform: scale(1); } 40% { transform: scale(1.12); } 100% { transform: scale(1); } }
 @keyframes replique-entree { from { opacity: 0; transform: translateX(-6px) scale(.96); } to { opacity: 1; transform: none; } }
 @keyframes coach-phrase { from { opacity: .2; } to { opacity: 1; } }
+
+/* Mochi en portrait dans la barre du coach (issue #102). */
+.coach-portrait { flex: none; filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .18)); }
+/* Portrait de l'adversaire dans l'en-tête : il réagit aux prises pendant 1,5 s. */
+.joueur .portrait .portrait { width: 44px; height: 44px; }
+/* Le conteneur du bandeau garde sa grille, même si la feuille des portraits (accueil.css) est chargée après. */
+.joueur > .portrait { display: grid; place-items: center; line-height: normal; }
+@media (prefers-reduced-motion: no-preference) {
+  .joueur .portrait [data-humeur="content"], .joueur .portrait [data-humeur="surpris"] { animation: humeur-rebond 320ms cubic-bezier(.34, 1.56, .64, 1); }
+}
+@keyframes humeur-rebond { 40% { transform: scale(1.12); } }

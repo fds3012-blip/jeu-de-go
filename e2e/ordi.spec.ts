@@ -12,7 +12,7 @@ test("jouer contre l'ordi : Pomme répond en moins d'une seconde", async ({ page
   await expect(cta).toBeVisible();
   await cta.click();
 
-  const plateau = page.getByRole('img', { name: /Plateau de go 9 × 9/ });
+  const plateau = page.locator('svg.board[aria-label="Plateau de go 9 × 9"]');
   await expect(plateau).toBeVisible();
   const box = (await plateau.boundingBox())!;
   // Clic souris au centre (tengen) : pas de seconde touche de confirmation à la souris.

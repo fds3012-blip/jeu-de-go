@@ -58,7 +58,7 @@ test('terminer la leçon 1 affiche la fin de leçon, puis la pierre 1 est coché
 });
 
 test('dernière leçon : « Chapitre terminé », confettis, sauf si les célébrations sont coupées', async ({ page }) => {
-  const presque = { l1: 6, l2: 3, l3: 3, l4: 2, l5: 5, l6: 5 };
+  const presque = { l1: 6, l2: 6, l3: 8, l4: 5, l5: 5, l6: 5 };
   for (const celebrations of [true, false]) {
     await page.addInitScript(([p, c]) => {
       localStorage.setItem('go.lecons.v1', JSON.stringify(p));
@@ -111,7 +111,7 @@ test('démonstration : les libertés s’allument une à une, toucher passe, « 
 });
 
 test('territoire : l’élève touche le goban, puis on compte avec lui', async ({ page }) => {
-  await page.addInitScript(() => localStorage.setItem('go.lecons.v1', JSON.stringify({ l1: 6, l2: 3, l3: 3, l4: 2, l5: 5 })));
+  await page.addInitScript(() => localStorage.setItem('go.lecons.v1', JSON.stringify({ l1: 6, l2: 6, l3: 8, l4: 5, l5: 5 })));
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
@@ -154,11 +154,53 @@ test('captures des leçons v2 (390 × 844, sombre)', async ({ page }) => {
   await jouer(page, 'E5');
   await page.waitForTimeout(120);
   await photo('4-capture');
-  await ouvrir({ l1: 6, l2: 3, l3: 3, l4: 2, l5: 5 }, 'Territoire et ouverture');
+  await ouvrir({ l1: 6, l2: 6, l3: 8, l4: 5, l5: 5 }, 'Territoire et ouverture');
   await photo('5-territoire-question');
-  await ouvrir({ l1: 6, l2: 3, l3: 3, l4: 2, l5: 5, l6: 1 }, 'Territoire et ouverture');
+  await ouvrir({ l1: 6, l2: 6, l3: 8, l4: 5, l5: 5, l6: 1 }, 'Territoire et ouverture');
   await avance(2);
   await page.clock.runFor(2000);
   await page.waitForTimeout(2600);
   await photo('6-territoire-compte');
+});
+
+// Suite de #101 : leçons 2 à 4. Le ko se répond sur le goban, en touchant le point interdit.
+test('ko : la question se répond en touchant le goban, sans poser de pierre', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('go.lecons.v1', JSON.stringify({ l1: 6, l2: 6, l3: 8, l4: 4 })));
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/');
+  await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
+  await page.getByRole('button', { name: 'Continuer : Le ko' }).click();
+  await jouer(page, 'H5');
+  await expect(page.getByText(/Essaie encore\./)).toBeVisible();
+  await page.getByRole('button', { name: 'Réessayer' }).click();
+  await jouer(page, 'E5');
+  await expect(page.getByText(/Blanc doit d.abord jouer ailleurs/)).toBeVisible();
+  await page.getByRole('button', { name: 'Terminer la leçon' }).click();
+  await expect(page.getByRole('heading', { name: 'Leçon terminée' })).toBeVisible();
+});
+
+test('captures des leçons 2 à 4 (390 × 844, sombre)', async ({ page }) => {
+  test.skip(!process.env.CAPTURES, 'captures à la demande');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'reduce' });
+  const avant: Record<string, Record<string, number>> = { Atari: { l1: 6 }, 'Techniques de capture': { l1: 6, l2: 6 }, 'Le ko': { l1: 6, l2: 6, l3: 8 } };
+  const cles: Record<string, string> = { Atari: 'l2', 'Techniques de capture': 'l3', 'Le ko': 'l4' };
+  const ouvrir = async (lecon: string, etape: number) => {
+    await page.evaluate(p => localStorage.setItem('go.lecons.v1', JSON.stringify(p)), { ...avant[lecon], [cles[lecon]]: etape });
+    await page.goto('/');
+    await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
+    await page.getByRole('button', { name: `Continuer : ${lecon}` }).click();
+    await expect(page.locator('.lecteur-plateau')).toBeVisible();
+  };
+  const photo = (n: string) => page.screenshot({ path: `docs/design/v2/captures/lecons-v2-${n}.png` });
+  await page.goto('/');
+  await ouvrir('Atari', 0); await photo('l2-1-atari');
+  await ouvrir('Atari', 2); await photo('l2-2-je-montre');
+  await ouvrir('Atari', 3); await photo('l2-3-ensemble');
+  await ouvrir('Techniques de capture', 0); await photo('l3-1-double-atari');
+  await ouvrir('Techniques de capture', 3); await photo('l3-2-bord');
+  await ouvrir('Techniques de capture', 6); await photo('l3-3-echelle');
+  await ouvrir('Le ko', 1); await photo('l4-1-ko-barre');
+  await ouvrir('Le ko', 2); await photo('l4-2-reprise');
+  await ouvrir('Le ko', 4); await jouer(page, 'E5'); await photo('l4-3-touche');
 });

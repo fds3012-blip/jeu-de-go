@@ -1,7 +1,7 @@
 import { useEffect, useState, type CSSProperties, type FormEvent } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase, type Db } from '../data/supabase';
-import { fetchProfile, saveUsername, sendMagicLink, type Profile } from '../data/account';
+import { MOT_SUPPRESSION, confirmationValide, deleteMyAccount, fetchProfile, saveUsername, sendMagicLink, type Profile } from '../data/account';
 import { USERNAME_MAX, USERNAME_MIN, isEmail, validateUsername } from '../data/username';
 import { EVENTS, identify, track } from '../data/analytics';
 import { FINE } from '../ui/typo';
@@ -12,8 +12,19 @@ const field: CSSProperties = {
 };
 const full: CSSProperties = { width: '100%', marginTop: 10 };
 
+/** Client Supabase simulé pour les tests de bout en bout (`?compte-simule`) : rien ne sort du navigateur. */
+const clientSimule = {
+  rpc: () => new Promise(r => setTimeout(() => r({ data: null, error: null }), 150)),
+  auth: { signOut: () => Promise.resolve({ error: null }) },
+} as unknown as Db;
+
 /** Carte « Ton compte » de l'onglet Profil : connexion par lien e-mail, pseudo, déconnexion. */
 export function Account({ db = supabase }: { db?: Db | null }) {
+  // Tests de bout en bout seulement (build VITE_E2E) : `?compte-simule` monte la suppression
+  // avec un client simulé, sans aucun appel réseau.
+  if (import.meta.env.VITE_E2E && typeof location !== 'undefined' && new URLSearchParams(location.search).has('compte-simule')) {
+    return <div className="card"><b>joueur-test</b><SupprimerCompte db={clientSimule} /></div>;
+  }
   if (!db) {
     return (
       <div className="card">
@@ -80,7 +91,50 @@ function Connected({ db }: { db: Db }) {
         <button className="btn" onClick={() => setEditing(true)}>Changer de pseudo</button>
         <button className="btn" onClick={signOut}>Me déconnecter</button>
       </div>
+      <SupprimerCompte db={db} />
     </div>
+  );
+}
+
+/**
+ * « Supprimer mon compte » (#114), en deux temps : un lien discret ouvre l'explication,
+ * puis le bouton final ne s'active qu'une fois « SUPPRIMER » tapé. Après succès : retour à l'accueil.
+ */
+export function SupprimerCompte({ db, onSupprime = () => window.location.assign('/') }: { db: Db; onSupprime?: () => void }) {
+  const [ouvert, setOuvert] = useState(false);
+  const [saisie, setSaisie] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+
+  if (!ouvert) {
+    return (
+      <button type="button" className="btn-supprimer" onClick={() => setOuvert(true)}>Supprimer mon compte</button>
+    );
+  }
+
+  const confirmer = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!confirmationValide(saisie) || busy) return;
+    setBusy(true); setError('');
+    const r = await deleteMyAccount(db);
+    setBusy(false);
+    if (r.ok) onSupprime(); else setError(r.error);
+  };
+
+  return (
+    <form className="suppression" onSubmit={confirmer} noValidate aria-labelledby="suppression-titre">
+      <b id="suppression-titre">Supprimer ton compte{FINE}?</b>
+      <p className="small" style={{ margin: '6px 0 0' }}>C’est définitif. On efface ton profil, ton pseudo, ta cote, tes badges, ta progression et ton adresse e-mail.</p>
+      <p className="small" style={{ margin: '6px 0 0' }}>Tes parties contre d’autres joueurs restent pour eux, sans ton nom{FINE}: tu y deviens «{FINE}joueur supprimé{FINE}».</p>
+      <label className="small" htmlFor="suppression-mot" style={{ display: 'block', marginTop: 10 }}>Pour confirmer, tape {MOT_SUPPRESSION}</label>
+      <input id="suppression-mot" autoComplete="off" autoCapitalize="characters" spellCheck={false} style={{ ...field, marginTop: 4 }}
+        value={saisie} onChange={e => { setSaisie(e.target.value); setError(''); }} aria-describedby="suppression-erreur" />
+      <p id="suppression-erreur" className="small" role="alert" style={{ color: 'var(--vermillon)', margin: error ? '6px 0 0' : 0 }}>{error}</p>
+      <button type="submit" className="btn btn-danger" style={full} disabled={!confirmationValide(saisie) || busy}>
+        {busy ? 'Suppression…' : 'Supprimer définitivement'}
+      </button>
+      <button type="button" className="btn" style={full} onClick={() => { setOuvert(false); setSaisie(''); setError(''); }}>Annuler</button>
+    </form>
   );
 }
 

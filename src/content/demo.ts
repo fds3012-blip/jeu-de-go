@@ -18,6 +18,8 @@ export type DemoTemps =
   | { libs: string }
   | { yeux: string[] }
   | { interdit: string; couleur: 'B' | 'W' }
+  /** Plusieurs groupes en atari à la fois (double atari) : ils clignotent sur cette image. */
+  | { atari: string[] }
   | { terr: 'B' | 'W' };
 
 /** Délai entre deux cases de territoire qui se colorent (ms). */
@@ -43,7 +45,7 @@ const at = (l: string) => fromLabel(l, N);
 const couleur = (c: 'B' | 'W') => (c === 'B' ? 1 : 2) as 1 | 2;
 
 /** Suite des images d'une démonstration. L'image 0 est la position de départ. Lève une erreur sur un coup illégal. */
-export function imagesDemo(rows: string[], demo: DemoTemps[]): DemoImage[] {
+export function imagesDemo(rows: string[], demo: DemoTemps[], avant: DemoTemps[] = []): DemoImage[] {
   let pos: Position = fromRows(rows).pos;
   let suivi = -1, derniere: number | undefined;
   let yeux: number[] = [];
@@ -58,7 +60,10 @@ export function imagesDemo(rows: string[], demo: DemoTemps[]): DemoImage[] {
     };
   };
   const images: DemoImage[] = [photo()];
-  for (const t of demo) {
+  // `avant` : la suite d'une démonstration précédente, rejouée sans image (le ko garde ainsi son point interdit).
+  let debut = 0;
+  for (const [i, t] of [...avant, ...demo].entries()) {
+    if (i === avant.length) debut = images.length - 1;
     if ('pose' in t) {
       const p = at(t.pose);
       const r = play({ ...pos, toPlay: couleur(t.couleur) }, p);
@@ -76,6 +81,13 @@ export function imagesDemo(rows: string[], demo: DemoTemps[]): DemoImage[] {
     } else if ('yeux' in t) {
       yeux = [...yeux, ...t.yeux.map(at)];
       images.push(photo());
+    } else if ('atari' in t) {
+      const pierres = t.atari.flatMap(l => {
+        const g = groupAt(pos.board, N, at(l));
+        if (!pos.board[at(l)] || g.liberties.size !== 1) throw new Error(`${l} : pas en atari`);
+        return g.stones;
+      });
+      images.push(photo({ atari: pierres }));
     } else if ('terr' in t) {
       const c = couleur(t.terr), owner = score(pos, 0, 'japanese').owner;
       const points = [...owner.keys()].filter(p => owner[p] === c && !pos.board[p]).sort((a, b) => (a % N) - (b % N) || a - b);
@@ -86,7 +98,7 @@ export function imagesDemo(rows: string[], demo: DemoTemps[]): DemoImage[] {
       images.push(photo({ interdit: p }));
     }
   }
-  return images;
+  return images.slice(avant.length ? debut : 0);
 }
 
 /** Rythme : un temps toutes les 600 ms. */

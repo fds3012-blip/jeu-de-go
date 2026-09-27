@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import type { Db } from '../data/supabase';
-import { fetchProfile, fetchStreak } from '../data/account';
+import { fetchGels, fetchProfile, fetchStreak } from '../data/account';
 import { cleanProgress, mergeProgress, supabaseProgressStore, syncProgress, type Progress } from '../data/progress';
 
 /** Session Supabase : undefined pendant le chargement, null sans connexion. */
@@ -88,6 +88,22 @@ export function useSerie(db: Db | null, userId: string | undefined): number {
     return () => { alive = false; };
   }, [db, userId, online]);
   return serie;
+}
+
+/**
+ * Gels de série du joueur connecté, tels que le serveur les compte (issue #76).
+ * null sans compte, hors ligne, pendant le chargement ou en cas d'erreur : l'appelant garde alors les gels de l'appareil.
+ */
+export function useGelsServeur(db: Db | null, userId: string | undefined): number | null {
+  const online = useOnline();
+  const [gels, setGels] = useState<number | null>(null);
+  useEffect(() => {
+    if (!db || !userId || !online) { setGels(null); return; }
+    let alive = true;
+    fetchGels(db, userId).then(r => { if (alive) setGels(r.ok ? r.value : null); }, () => { if (alive) setGels(null); });
+    return () => { alive = false; };
+  }, [db, userId, online]);
+  return gels;
 }
 
 /** Vrai si l'utilisateur demande moins d'animations. */

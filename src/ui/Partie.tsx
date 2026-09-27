@@ -2,7 +2,7 @@
 // liste des coups, barre d'avantage, coach Mochi et barre d'actions. Styles : partie.css.
 import { useLayoutEffect, useRef, type ReactNode } from 'react';
 import { IconeAction, type NomAction } from './IconesActions';
-import { Mochi } from './Mochi';
+import { PortraitMochi, type HumeurMochi } from './Portrait';
 import { Reflexion } from './Reflexion';
 import { fr } from './typo';
 import './partie.css';
@@ -97,10 +97,10 @@ export function BarreAvantage({ libelle, part }: { libelle: string; part: number
 }
 
 /** Coach Mochi : une phrase à la fois. */
-export function Coach({ children, cle, attente = false }: { children: ReactNode; cle?: string | number; attente?: boolean }) {
+export function Coach({ children, cle, attente = false, humeur = attente ? 'pensif' : 'neutre' }: { children: ReactNode; cle?: string | number; attente?: boolean; humeur?: HumeurMochi }) {
   return (
     <div className="coach">
-      <span className="coach-sceau"><Mochi size={30} /></span>
+      <PortraitMochi humeur={humeur} taille={44} decoratif className="coach-portrait" />
       <p key={cle} aria-live="polite">{children}</p>
       {/* L'adversaire réfléchit : les deux pierres du logo tournent (le texte voisin dit qui réfléchit). */}
       {attente && <Reflexion taille={22} />}

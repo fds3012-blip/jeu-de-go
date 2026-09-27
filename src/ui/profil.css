@@ -61,6 +61,19 @@ button.ligne:focus-visible { outline-offset: -3px; }
 .conditions-texte h3 { margin: 0; font-size: var(--fs-m); font-weight: var(--fw-bold); }
 .conditions-texte p { margin: 4px 0 0; line-height: 1.5; }
 .conditions-texte p + p { margin-top: 6px; }
+.conditions-texte .conditions-intro { margin: 0 0 var(--space-3); font-weight: var(--fw-medium); }
+/* Sections repliables : toute la ligne est cliquable (44 px minimum), chevron qui pivote. */
+.repli { padding-top: 0; padding-bottom: 0; }
+.repli summary { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); min-height: 48px; cursor: pointer; list-style: none; }
+.repli summary::-webkit-details-marker { display: none; }
+.repli summary::after { content: ''; width: 8px; height: 8px; margin-right: 4px; border: solid currentColor; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+.repli[open] summary::after { transform: rotate(-135deg); }
+.repli summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.repli-corps { padding-bottom: var(--space-4); }
+.conditions-texte .conditions-contact { margin-top: var(--space-3); color: var(--muted); }
+@media (prefers-reduced-motion: no-preference) {
+  .repli summary::after { transition: transform var(--duree) var(--ease); }
+}
 
 /* ---------- Fenêtre de consentement : carte centrée sur un voile d'encre ---------- */
 .accord { width: min(358px, calc(100% - 2 * var(--gouttiere))); max-width: none; max-height: calc(100dvh - 32px); margin: auto; padding: 0; border: 0; overflow: auto;
@@ -141,3 +154,12 @@ button.ligne:focus-visible { outline-offset: -3px; }
 .sceau-badge.eteint .b-fond { fill: var(--surface); stroke: var(--muted); stroke-width: 1.2; stroke-dasharray: 3 3; }
 .sceau-badge.eteint .b-anneau { opacity: .35; }
 .sceau-badge.eteint .s-plein { opacity: .55; }
+
+/* ---------- Supprimer mon compte (#114) : discret, en bas de « Mon compte » ---------- */
+.btn-supprimer { display: block; width: 100%; min-height: 44px; margin-top: var(--space-4); padding: 0 var(--space-2);
+  background: none; border: 0; color: var(--danger-texte); font: inherit; font-size: var(--fs-s); font-weight: var(--fw-medium);
+  text-decoration: underline; text-underline-offset: 3px; }
+.suppression { margin-top: var(--space-4); padding-top: var(--space-4); box-shadow: inset 0 1px 0 var(--line); }
+.suppression b { color: var(--danger-texte); }
+.btn.btn-danger { background: var(--bg); color: var(--danger-texte); border-color: var(--danger-texte); }
+.btn.btn-danger:disabled { opacity: .45; }

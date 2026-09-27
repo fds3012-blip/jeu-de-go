@@ -57,7 +57,7 @@ test('« Lire les conditions » ouvre la page, Retour ramène la fenêtre, Refus
   await fenetre(page).getByRole('button', { name: 'Lire les conditions' }).click();
   await expect(fenetre(page)).toBeHidden();
   await expect(page.getByRole('heading', { name: 'Conditions et confidentialité' })).toBeVisible();
-  await expect(page.getByText('Ce qui reste sur ton téléphone')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Ce qu’on garde' })).toBeVisible();
   await expect(page.getByRole('switch', { name: /^Rapports de bugs et suivi détaillé/ })).toHaveAttribute('aria-checked', 'false');
 
   await page.getByRole('button', { name: 'Retour' }).click();
@@ -100,7 +100,7 @@ test('aucune requête de suivi sans consentement, conditions accessibles depuis 
   await page.keyboard.press('Escape'); // pas de choix
   await expect(fenetre(page)).toBeHidden();
   await page.locator('.cta').click();
-  const plateau = page.getByRole('img', { name: /Plateau de go 9 × 9/ });
+  const plateau = page.locator('svg.board[aria-label="Plateau de go 9 × 9"]');
   const box = (await plateau.boundingBox())!;
   await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
   await expect(page.getByText(/Pomme (joue|capture|passe)/)).toBeVisible({ timeout: 5000 });
@@ -110,6 +110,31 @@ test('aucune requête de suivi sans consentement, conditions accessibles depuis 
   await page.getByRole('navigation').getByRole('button', { name: 'Profil' }).click();
   await page.getByRole('button', { name: 'Conditions et confidentialité' }).click();
   await expect(page.getByRole('heading', { name: 'Conditions et confidentialité' })).toBeVisible();
-  await expect(page.getByText('Ce qui reste sur ton téléphone')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Ce qu’on garde' })).toBeVisible();
   expect(suivi).toEqual([]);
+});
+
+test('conditions : sections repliables, aucune fausse adresse de contact', async ({ page }) => {
+  await page.goto('/');
+  await fenetre(page).getByRole('button', { name: 'Lire les conditions' }).click();
+  await expect(page.getByRole('heading', { name: 'Conditions et confidentialité' })).toBeVisible();
+  for (const titre of ['Ce qu’on garde', 'Pourquoi', 'Combien de temps', 'Tes droits']) {
+    await expect(page.getByRole('heading', { name: titre })).toBeVisible();
+  }
+  // « Ce qu'on garde » est ouvert d'entrée ; les autres s'ouvrent au toucher.
+  await expect(page.getByText('Pas de pub. Tes données ne sont jamais vendues.')).toBeVisible();
+  await expect(page.getByText(/Chez Supabase, à Paris/)).toBeVisible();
+  const contact = page.locator('.conditions-contact');
+  await expect(contact).toBeHidden();
+  const droits = page.locator('summary', { hasText: 'Tes droits' });
+  expect((await droits.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  await droits.click();
+  await expect(contact).toBeVisible();
+  await expect(contact).toHaveText(/^Contact\s*: bientôt disponible$/);
+  const duree = page.getByText(/1 an, puis effacés/);
+  await expect(duree).toBeHidden();
+  await page.locator('summary', { hasText: 'Combien de temps' }).click();
+  await expect(duree).toBeVisible();
+  // Aucune adresse e-mail dans la page.
+  expect(await page.locator('.conditions-texte').innerText()).not.toMatch(/@/);
 });
