@@ -69,7 +69,7 @@ export async function attendrePierre(page: Page, label: string, couleur: 'noir' 
 /** Ouvre une partie à deux sur le même téléphone depuis l'accueil. */
 export async function partieADeux(page: Page): Promise<void> {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Jouer à deux sur ce téléphone' }).click();
+  await page.getByRole('button', { name: 'Jouer à deux', exact: true }).click();
   await expect(plateau(page)).toBeVisible();
 }
 

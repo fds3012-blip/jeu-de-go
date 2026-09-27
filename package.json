@@ -15,7 +15,8 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "icons": "node scripts/generate-icons.mjs",
-    "fetch-model": "node scripts/fetch-model.mjs"
+    "fetch-model": "node scripts/fetch-model.mjs",
+    "sync:functions": "node scripts/sync-functions.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.2",

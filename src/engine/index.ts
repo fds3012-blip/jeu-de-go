@@ -1,21 +1,22 @@
 // API du moteur pour les écrans et les autres modules :
 // - bestMove(position, niveau) : coup de l'adversaire (index y * N + x, -1 = passe) ;
 // - analyze(position, options) : coups candidats, taux de victoire, avance, propriété ;
-// - ownership(position) : carte de propriété de -1 (Blanc) à +1 (Noir).
+// - ownership(position) : carte de propriété de -1 (Blanc) à +1 (Noir) (KataGo, sinon simulations) ;
+// - proposeDead(position) : pierres mortes proposées en fin de partie (deadStones en version synchrone).
 // Pomme et Caillou utilisent le moteur simple (Monte-Carlo). Les 7 autres niveaux utilisent KataGo
 // dans un Web Worker ; s'il ne démarre pas (pas de Worker, pas de backend, réseau introuvable),
 // ils se replient sur le moteur simple, sans rien casser.
 import { chooseMove, isLegalMove, OPPONENTS, opponent, type EngineOptions, type KataGoLevel, type Opponent, type OpponentId, type Style } from './simple';
+import { deadStones, ownership as ownershipSimple, type DeadOptions } from './dead';
 import type { Position } from '../go/rules';
-import { score } from '../go/score';
-import type { Demande, Reponse } from './simple.worker';
+import type { Demande, Reponse, Tache } from './simple.worker';
 import { KataGoClient, type KataGoInfo } from './katago/client';
 import { chooseFromAnalysis } from './katago/choose';
 import { DEFAULT_MODEL_URL } from './katago/loader';
 import type { Analysis, AnalyzeOptions, MoveInfo } from './katago/search';
 
-export { OPPONENTS, opponent, chooseMove };
-export type { Opponent, OpponentId, EngineOptions, KataGoLevel, Style, Analysis, AnalyzeOptions, MoveInfo, KataGoInfo };
+export { OPPONENTS, opponent, chooseMove, deadStones, ownershipSimple };
+export type { Opponent, OpponentId, EngineOptions, DeadOptions, KataGoLevel, Style, Analysis, AnalyzeOptions, MoveInfo, KataGoInfo };
 
 // ---------- Moteur simple dans son Worker ----------
 let worker: Worker | null = null, broken = false, nextId = 1;
@@ -33,19 +34,33 @@ function getWorker(): Worker | null {
   return worker;
 }
 
-function sync(pos: Position, niveau: Opponent, opts: EngineOptions): Promise<number> {
-  return new Promise(resolve => setTimeout(() => resolve(chooseMove(pos, niveau, opts)), 0));
+function later<T>(f: () => T): Promise<T> {
+  return new Promise(resolve => setTimeout(() => resolve(f()), 0));
+}
+
+/** Envoie une demande au Worker ; `null` s'il est indisponible. */
+function ask(d: Tache): Promise<Reponse> | null {
+  const w = getWorker();
+  if (!w) return null;
+  const id = nextId++;
+  return new Promise<Reponse>(resolve => { pending.set(id, resolve); w.postMessage({ ...d, id } satisfies Demande); });
 }
 
 async function simpleMove(pos: Position, lvl: Opponent, opts: EngineOptions): Promise<number> {
-  const w = getWorker();
-  if (!w) return sync(pos, lvl, opts);
+  const sync = () => later(() => chooseMove(pos, lvl, opts));
   // Le Worker simple ne connaît que les identifiants : on lui passe les réglages du niveau en options.
-  const o: EngineOptions = { timeMs: lvl.timeMs, playouts: lvl.playouts, ...opts };
-  const niveau: OpponentId = lvl.heuristiques ? 'caillou' : 'pomme';
-  const id = nextId++;
-  const r = await new Promise<Reponse>(resolve => { pending.set(id, resolve); w.postMessage({ id, pos, niveau, opts: o } satisfies Demande); });
-  return Number.isNaN(r.move) ? sync(pos, lvl, opts) : r.move;
+  const niveau: OpponentId = lvl.katago ? 'caillou' : lvl.id;
+  const q = ask({ kind: 'move', pos, niveau, opts: { timeMs: lvl.timeMs, playouts: lvl.playouts, ...opts } });
+  if (!q) return sync();
+  const r = await q;
+  return Number.isNaN(r.move) ? sync() : r.move;
+}
+
+/** Pierres mortes proposées à l'entrée du comptage, calculées sans bloquer l'interface. */
+export async function proposeDead(pos: Position): Promise<number[]> {
+  const q = ask({ kind: 'dead', pos });
+  const r = q && (await q);
+  return r?.dead ?? later(() => deadStones(pos));
 }
 
 // ---------- KataGo ----------
@@ -70,7 +85,7 @@ function getKataGo(): KataGoBackend | null {
   return katago;
 }
 
-/** Remplace le moteur KataGo (tests) ; `null` = KataGo absent. */
+/** Remplace le moteur KataGo (tests) ; `null` = KataGo absent, `undefined` = réglage par défaut. */
 export function setKataGo(k: KataGoBackend | null | undefined) { katago = k; }
 
 /** État de KataGo (chargement, backend choisi, erreur). */
@@ -79,17 +94,15 @@ export function kataGoInfo(): KataGoInfo { return getKataGo()?.info ?? { state: 
 /** Démarre le chargement de KataGo en avance (téléchargement du réseau, choix du backend). */
 export function preloadKataGo(): void { getKataGo()?.start?.().catch(() => {}); }
 
-/** Analyse de secours sans réseau : coup du moteur simple et propriété tirée du comptage. */
+/** Analyse de secours sans réseau : coup du moteur simple et propriété tirée des simulations. */
 async function simpleAnalysis(pos: Position, o: AnalyzeOptions): Promise<Analysis> {
   const t0 = Date.now(), komi = o.komi ?? 6.5;
   const move = await simpleMove(pos, opponent('caillou'), { komi, timeMs: Math.min(o.timeMs ?? 600, 600) });
-  const s = score(pos, komi, o.regles ?? 'chinese'), n = pos.size * pos.size, own = new Float32Array(n);
-  for (let p = 0; p < n; p++) {
-    const c = pos.board[p] || s.owner[p];
-    own[p] = c === 1 ? 1 : c === 2 ? -1 : 0;
-  }
-  const lead = (pos.toPlay === 1 ? 1 : -1) * (s.black - s.white);
-  return { moves: [{ move, visits: 1, prior: 1, winrate: lead > 0 ? 0.6 : 0.4, lead, scoreLoss: 0 }], winrate: lead > 0 ? 0.6 : 0.4, lead, ownership: own, visits: 1, ms: Date.now() - t0, engine: 'simple' };
+  const own = await later(() => ownershipSimple(pos, { timeMs: 150 }));
+  let black = -komi;
+  for (const v of own) black += v;
+  const lead = pos.toPlay === 1 ? black : -black, winrate = lead > 0 ? 0.6 : 0.4;
+  return { moves: [{ move, visits: 1, prior: 1, winrate, lead, scoreLoss: 0 }], winrate, lead, ownership: own, visits: 1, ms: Date.now() - t0, engine: 'simple' };
 }
 
 /** Analyse la position avec KataGo (repli : estimation du moteur simple, `engine: 'simple'`). */
