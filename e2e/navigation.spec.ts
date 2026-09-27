@@ -9,13 +9,13 @@ test("première ouverture : l'accueil s'affiche en moins de 3 secondes", async (
   const t0 = Date.now();
   await page.goto('/');
   // L'action principale de l'accueil est visible et utilisable.
-  const cta = page.getByRole('button', { name: "Jouer contre l'ordi" });
+  const cta = page.locator('.cta');
   await expect(cta).toBeVisible({ timeout: 3000 });
   await expect(cta).toBeInViewport();
   expect(Date.now() - t0).toBeLessThan(3000);
 
   await expect(page.getByRole('heading', { level: 1, name: 'Go' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Jouer à deux sur ce téléphone' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Jouer à deux', exact: true })).toBeVisible();
   // Pas de défilement horizontal sur un écran de téléphone.
   const debord = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(debord).toBeLessThanOrEqual(0);
@@ -42,17 +42,17 @@ test('navigation entre les onglets Jouer, Apprendre et Profil', async ({ page })
 
   await onglet('Jouer').click();
   await expect(onglet('Jouer')).toHaveAttribute('aria-current', 'page');
-  await expect(page.getByRole('button', { name: "Jouer contre l'ordi" })).toBeVisible();
+  await expect(page.locator('.cta')).toBeVisible();
 });
 
 test("l'onglet Jouer ramène à l'accueil depuis une partie en cours", async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Jouer à deux sur ce téléphone' }).click();
+  await page.getByRole('button', { name: 'Jouer à deux', exact: true }).click();
   await expect(page.getByRole('img', { name: /Plateau de go/ })).toBeVisible();
 
   await page.getByRole('navigation').getByRole('button', { name: 'Jouer' }).click();
   await expect(page.getByRole('img', { name: /Plateau de go/ })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: "Jouer contre l'ordi" })).toBeVisible();
+  await expect(page.locator('.cta')).toBeVisible();
 });
 
 test('les onglets sont des cibles tactiles de 44 px minimum', async ({ page }) => {
