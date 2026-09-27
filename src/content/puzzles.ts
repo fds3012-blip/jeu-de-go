@@ -146,4 +146,14 @@ export const PUZZLES_16: PuzzleRow[] = [
 ];
 
 /** Tous les problèmes communs, dans l'ordre de la base (`order by id`). */
-export const ALL_PUZZLES: PuzzleRow[] = [...BASE_PUZZLES, ...PUZZLES_16];
+// Lots de problèmes supplémentaires (issue #91) : un fichier par lot dans `lots/`, chacun avec
+// `export default` un tableau de PuzzleRow. Chargés automatiquement : ajouter un lot ne touche pas ce fichier.
+const LOTS = import.meta.glob<{ default: PuzzleRow[] }>('./lots/*.ts', { eager: true });
+export const LOT_PUZZLES: PuzzleRow[] = Object.keys(LOTS)
+  .filter(k => !k.endsWith('.test.ts'))
+  .sort()
+  .flatMap(k => LOTS[k].default);
+
+/** Tous les problèmes, du plus facile au plus difficile (à difficulté égale, ordre d'identifiant). */
+export const ALL_PUZZLES: PuzzleRow[] = [...BASE_PUZZLES, ...PUZZLES_16, ...LOT_PUZZLES]
+  .sort((a, b) => a.difficulty - b.difficulty || a.id.localeCompare(b.id));
