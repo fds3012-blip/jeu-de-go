@@ -7,7 +7,7 @@
 // dans un Web Worker ; s'il ne démarre pas (pas de Worker, pas de backend, réseau introuvable),
 // ils se replient sur le moteur simple, sans rien casser.
 import { chooseMove, isLegalMove, OPPONENTS, opponent, type EngineOptions, type KataGoLevel, type Opponent, type OpponentId, type Style } from './simple';
-import { deadStones, ownership as ownershipSimple, type DeadOptions } from './dead';
+import { comptageAuto, deadStones, groupesIncertains, ownership as ownershipSimple, type ComptageAuto, type DeadOptions } from './dead';
 import type { Position } from '../go/rules';
 import type { Demande, Reponse, Tache } from './simple.worker';
 import { KataGoClient, type KataGoInfo } from './katago/client';
@@ -16,7 +16,7 @@ import { CACHE_NAME, DEFAULT_MODEL_URL } from './katago/loader';
 import type { Analysis, AnalyzeOptions, MoveInfo } from './katago/search';
 
 export { OPPONENTS, opponent, chooseMove, deadStones, ownershipSimple };
-export type { Opponent, OpponentId, EngineOptions, DeadOptions, KataGoLevel, Style, Analysis, AnalyzeOptions, MoveInfo, KataGoInfo };
+export type { ComptageAuto, Opponent, OpponentId, EngineOptions, DeadOptions, KataGoLevel, Style, Analysis, AnalyzeOptions, MoveInfo, KataGoInfo };
 
 // ---------- Moteur simple dans son Worker ----------
 // Deux Workers indépendants : l'un pour les coups et les pierres mortes, l'autre pour l'estimation d'avantage
@@ -66,6 +66,23 @@ export async function proposeDead(pos: Position): Promise<number[]> {
   const q = ask({ kind: 'dead', pos });
   const r = q && (await q);
   return r?.dead ?? later(() => deadStones(pos));
+}
+
+/**
+ * Comptage automatique (#117) : pierres mortes et groupes incertains. Simulations dans le Worker, plus l'avis
+ * de KataGo s'il est déjà chargé (on ne télécharge rien pour ça) : un désaccord rend le groupe incertain.
+ */
+export async function proposeComptage(pos: Position, komi: number): Promise<ComptageAuto> {
+  const q = ask({ kind: 'dead', pos });
+  const r = q && (await q);
+  const base: ComptageAuto = r?.dead && r.incertains ? { dead: r.dead, incertains: r.incertains } : await later(() => comptageAuto(pos));
+  const k = katago ?? null;
+  if (!k || k.info.state !== 'pret' || !pos.board.some(v => v)) return base;
+  try {
+    const a = await k.analyze(pos, { komi, visits: 16, timeMs: 800 });
+    const incertains = new Set([...base.incertains, ...groupesIncertains(pos, base.dead, [a.ownership])]);
+    return { dead: base.dead, incertains: [...incertains].sort((x, y) => x - y) };
+  } catch { return base; }
 }
 
 // ---------- KataGo ----------

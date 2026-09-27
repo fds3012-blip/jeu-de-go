@@ -92,3 +92,20 @@ export function couvercle(page: Page, nom: string): Locator {
 export function message(page: Page): Locator {
   return page.locator('.coach p[aria-live="polite"]');
 }
+
+/**
+ * Contre l'ordi : passe jusqu'à la fin de la partie, puis valide le score. Depuis #117, le comptage est automatique
+ * quand les pierres mortes sont sûres (récit direct) ; sinon, phase manuelle et « Valider le score ».
+ */
+export async function passerJusquAuScore(page: Page, adversaire = 'Pomme'): Promise<void> {
+  const passer = page.getByRole('button', { name: 'Passer' });
+  const fin = page.locator('.recit, .barre-comptage .btn.primary:enabled');
+  for (let i = 0; i < 6 && !(await fin.first().isVisible()); i++) {
+    await expect(passer).toBeEnabled({ timeout: 10_000 });
+    await passer.click();
+    await expect(fin.or(page.getByText(new RegExp(`${adversaire} (joue|capture)`))).first()).toBeVisible({ timeout: 10_000 });
+  }
+  await expect(fin.first()).toBeVisible({ timeout: 10_000 });
+  const valider = page.getByRole('button', { name: 'Valider le score' });
+  if (await valider.isVisible()) await valider.click();
+}

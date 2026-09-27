@@ -157,3 +157,25 @@ export function carteTerritoire(own: ArrayLike<number>, seuil = 0.4): Int8Array 
   for (let p = 0; p < own.length; p++) out[p] = own[p] >= seuil ? 1 : own[p] <= -seuil ? 2 : 0;
   return out;
 }
+
+// Comptage automatique contre l'ordi (#117) : le débutant n'a pas à retirer lui-même les groupes morts.
+
+export const EXPLICATION_MORTES = 'Les pierres grisées sont mortes : elles ne peuvent plus vivre, elles comptent comme prisonniers.';
+export const CORRIGER_MORTES = 'Corriger les pierres mortes';
+export const DOUTE_MORTES = "Je ne suis pas sûr pour certains groupes. Touche un groupe s'il est mort, touche-le encore s'il est vivant.";
+
+/**
+ * Après deux passes : `auto` = on va droit au récit du score avec les pierres mortes marquées ; `manuel` = phase
+ * de comptage à la main. À deux sur un appareil, toujours à la main (les deux joueurs doivent s'accorder).
+ * Contre l'ordi, à la main dès qu'un groupe est incertain : on ne compte jamais faux sans le dire.
+ */
+export function modeComptage(contreOrdi: boolean, incertains: readonly number[]): 'auto' | 'manuel' {
+  return contreOrdi && incertains.length === 0 ? 'auto' : 'manuel';
+}
+
+/** Message de Mochi à l'entrée du comptage manuel. `fin` : phrase de fin de partie (« Deux passes… »). */
+export function messageComptage(fin: string, morts: number, incertain: boolean): string {
+  if (incertain) return `${EXPLICATION_MORTES} ${DOUTE_MORTES}`;
+  if (morts) return `${EXPLICATION_MORTES} Touche un groupe pour corriger.`;
+  return `${fin} Aucune pierre morte. Si un groupe ne peut plus vivre, touche-le pour le compter comme prisonnier.`;
+}
