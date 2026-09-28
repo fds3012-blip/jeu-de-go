@@ -5,7 +5,7 @@ import type { Catalogue } from './types';
 
 const cles = Object.keys(fr) as Cle[];
 const textes = (v: unknown): string[] => (typeof v === 'string' ? [v] : Object.values(v as Record<string, string>));
-const variables = (s: string) => [...s.matchAll(/\{(\w+)\}/g)].map(m => m[1]).sort();
+const variables = (s: string) => [...new Set([...s.matchAll(/\{(\w+)\}/g)].map(m => m[1]))].sort();
 
 describe('catalogues', () => {
   for (const l of LANGUES) {
@@ -18,7 +18,9 @@ describe('catalogues', () => {
       for (const k of cles) {
         expect(typeof CATALOGUES[l][k], k).toBe(typeof fr[k]);
         const attendu = [...new Set(textes(fr[k]).flatMap(variables))].sort();
-        for (const s of textes(CATALOGUES[l][k])) expect(variables(s), `${l} ${k}`).toEqual(attendu);
+        // Une forme plurielle peut taire `n` (« ta première leçon »), jamais les autres variables.
+        const sansN = (v: string[]) => (typeof fr[k] === 'string' ? v : v.filter(x => x !== 'n'));
+        for (const s of textes(CATALOGUES[l][k])) expect(sansN(variables(s)), `${l} ${k}`).toEqual(sansN(attendu));
         if (typeof fr[k] !== 'string') expect(CATALOGUES[l][k]).toHaveProperty('other');
       }
     });

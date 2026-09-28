@@ -48,12 +48,18 @@ function motif(id: string, W: string, C: string): ReactElement {
       <circle cx="54" cy="46" r="10" fill={W} />
       <g fill={W}><rect x="34" y="55" width="8" height="8" rx="1.5" /><rect x="34" y="37" width="8" height="8" rx="1.5" /><rect x="52" y="62" width="8" height="8" rx="1.5" /></g>
     </>);
+    // Compter les points : un boulier, trois pierres comptées, une à compter.
+    case 'l7': return (<>
+      <path d="M24 34H76M24 50H76M24 66H76" stroke={W} strokeWidth="3" strokeLinecap="round" />
+      <g fill={W}><circle cx="34" cy="34" r="7" /><circle cx="48" cy="34" r="7" /><circle cx="34" cy="50" r="7" /><circle cx="66" cy="66" r="7" /></g>
+      <circle cx="66" cy="50" r="6" fill={C} stroke={W} strokeWidth="2.6" />
+    </>);
     default: return <circle cx="50" cy="50" r="14" fill={W} />;
   }
 }
 
 interface Props {
-  /** Identifiant de la leçon (l1 à l6). */
+  /** Identifiant de la leçon (l1 à l7). */
   id: string;
   /** Côté en pixels. */
   taille?: number;
