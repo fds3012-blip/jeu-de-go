@@ -62,7 +62,7 @@ Ces données sont écrites dans le stockage local (`localStorage`) de ton naviga
 | XP et niveau | `go.xp.v1`, `go.xp.premieres.v1` | Total d'XP, premières fois déjà récompensées |
 | Badges | `go.badges.v1`, `go.paliers-fetes.v1` | Badges gagnés sur l'appareil, paliers déjà fêtés |
 | Parties contre l'ordi | `go.parties.v1`, `go.bilan.v1`, `go.adversaire.v1` | Nombre de parties, victoires et défaites par adversaire, dernier adversaire choisi |
-| Revue et erreurs | `go.revue.v1`, `go.erreurs.v1` | Dernière partie terminée (coups au format SGF, date), jusqu'à 30 erreurs à rejouer |
+| Revue et erreurs | `go.revue.v1`, `go.erreurs.v1` | Dernière partie terminée (coups au format SGF, date), jusqu'à 30 erreurs à rejouer (position, coups acceptés, date du prochain passage, réussites et échecs) |
 | Explications déjà vues | `go.intro-but.v1`, `go.atari-explique.v1`, `go.komi-explique.v1`, `go.passer-explique.v1` | Pour ne pas répéter une explication |
 | Installation | `go.installation.v1`, `go.premiere-victoire.v1`, `go.retours.v1`, `go.annonce-du-jour.v1` | Proposition d'installer l'app déjà montrée, refusée ou acceptée ; repère de première victoire ; nombre de jours d'ouverture, pour proposer l'installation au 2e retour (#214) ; jour de la dernière annonce de Mochi, pour ne pas proposer l'installation le même jour (#236) |
 | Réseau de l'IA | Cache du navigateur `katago-reseaux-v1` | Le réseau de KataGo (fichier public), gardé pour jouer hors ligne. Aucune donnée personnelle |
@@ -95,7 +95,7 @@ Ces données sont écrites dans le stockage local (`localStorage`) de ton naviga
 - ouverture de l'app : `app_ouverte` (avec « app installée ou non ») ;
 - parties : `premiere_pierre`, `partie_commencee`, `comptage_manuel`, `partie_terminee`, `premiere_partie_terminee` (taille, adversaire, nombre de coups, résultat, secondes écoulées) ;
 - leçons : `lecon_commencee`, `lecon_terminee` ;
-- problèmes : `probleme_resolu`, `solution_vue`, `erreur_rejouee`, `revision_faite` ;
+- problèmes : `probleme_resolu`, `solution_vue`, `erreur_rejouee`, `erreur_maitrisee`, `revision_faite` ;
 - revue : `revue_ouverte`, `revue_rejouer` ;
 - Go du jour et série : `go_du_jour_resolu`, `go_du_jour_partage`, `arrivee_par_partage`, `gel_gagne`, `gel_utilise`, `serie_perdue` ;
 - progression : `xp_gagne`, `niveau_atteint` ;

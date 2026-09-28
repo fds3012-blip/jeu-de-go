@@ -6,12 +6,15 @@ import type { Puzzle } from '../data/puzzles';
 import type { Color, Position } from '../go/rules';
 import { conseilFiable, VISITES_MIN, type Note } from './revue';
 import { t } from '../content/i18n';
+import { ECHEANCES } from './revision';
 
 export const ERREURS_KEY = 'go.erreurs.v1';
 /** Au plus 30 problèmes : les plus anciens sont remplacés en premier. */
 export const MAX_ERREURS = 30;
-/** Un coup est équivalent au meilleur s'il perd au plus 0,5 point selon KataGo. */
-export const MARGE_EQUIVALENT = 0.5;
+/** Un coup est accepté s'il perd moins de 1 point par rapport au meilleur, selon KataGo (issue #77). */
+export const MARGE_EQUIVALENT = 1;
+/** Deux réussites en révision : l'erreur est maîtrisée et ne revient plus. */
+export const REUSSITES_MAITRISE = 2;
 
 export interface ErreurGardee {
   id: string;
@@ -21,6 +24,8 @@ export interface ErreurGardee {
   prochain: string;
   /** Nombre d'échecs. */
   rates: number;
+  /** Réussites en révision (absent dans les anciennes listes : 0). À 2, l'erreur est maîtrisée. */
+  reussites?: number;
   size: 9 | 13 | 19;
   rows: string[];
   toPlay: Color;
@@ -43,9 +48,14 @@ export function jour(d: Date): string {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }
 
+/** Jour `n` jours après `d` (heure locale). */
+export function dansJours(d: Date, n: number): string {
+  return jour(new Date(d.getFullYear(), d.getMonth(), d.getDate() + n));
+}
+
 /** Lendemain du jour `d`. */
 export function lendemain(d: Date): string {
-  return jour(new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1));
+  return dansJours(d, 1);
 }
 
 /** Rangées du plateau (X noir, O blanc, . vide), format des problèmes. */
@@ -60,7 +70,7 @@ export function rangees(pos: Position): string[] {
 }
 
 /**
- * Coups que KataGo juge équivalents au meilleur, à 0,5 point près, tirés de l'analyse de la position avant l'erreur.
+ * Coups que KataGo juge équivalents au meilleur (ils perdent moins de 1 point), tirés de l'analyse de la position avant l'erreur.
  * Seulement si le meilleur coup y figure avec assez de visites : sinon, on ne sait pas, et seul le meilleur est accepté.
  * Chaque équivalent passe aussi par conseilFiable (pas de première ligne sur un plateau ouvert, coup légal).
  * `perte` : points perdus par le coup joué.
@@ -73,7 +83,7 @@ export function equivalents(avant: Position, meilleur: number, analyse: AnalyseR
   if (!m || m.visits < VISITES_MIN) return [];
   const ref = Math.max(premier.lead, m.lead);
   return coups
-    .filter(c => c.move !== meilleur && c.move !== joue && c.move >= 0 && c.visits >= VISITES_MIN && c.lead >= ref - MARGE_EQUIVALENT)
+    .filter(c => c.move !== meilleur && c.move !== joue && c.move >= 0 && c.visits >= VISITES_MIN && ref - c.lead < MARGE_EQUIVALENT)
     .filter(c => conseilFiable(avant, c.move, perte - (ref - c.lead)))
     .map(c => c.move);
 }
@@ -128,10 +138,39 @@ export function aRejouer(liste: ErreurGardee[], maintenant: Date): ErreurGardee[
   return liste.filter(e => e.prochain <= j);
 }
 
-/** Après un essai : réussi, le problème sort de la liste ; raté, il revient le lendemain. */
+/** Vrai si le coup `p` est accepté pour cette erreur : le meilleur coup ou un coup qui perd moins de 1 point. */
+export function coupAccepte(e: Pick<ErreurGardee, 'reponses'>, p: number): boolean {
+  return p >= 0 && e.reponses.includes(p);
+}
+
+/**
+ * Erreur ratée au premier essai dans la revue : elle rejoint la révision espacée et revient demain (J+1).
+ * La même position déjà gardée repart aussi de J+1, sans perdre ses réussites.
+ */
+export function garderRatee(liste: ErreurGardee[], e: ErreurGardee, maintenant: Date): ErreurGardee[] {
+  const ancienne = liste.find(x => x.id === e.id);
+  return ajouter(liste, { ...e, prochain: dansJours(maintenant, ECHEANCES[0]), rates: (ancienne?.rates ?? 0) + 1, reussites: ancienne?.reussites ?? 0 });
+}
+
+/**
+ * Après un essai en révision (même calendrier que la Révision du jour, revision.ts) :
+ * - raté : elle revient le lendemain (J+1) ;
+ * - réussi : elle revient plus tard, J+3 après la 1re réussite, J+7 après la 2e ;
+ *   à REUSSITES_MAITRISE réussites, elle est maîtrisée et sort de la liste.
+ */
 export function apresEssai(liste: ErreurGardee[], id: string, reussi: boolean, maintenant: Date): ErreurGardee[] {
-  if (reussi) return liste.filter(e => e.id !== id);
-  return liste.map(e => (e.id === id ? { ...e, prochain: lendemain(maintenant), rates: e.rates + 1 } : e));
+  return liste.flatMap(e => {
+    if (e.id !== id) return [e];
+    if (!reussi) return [{ ...e, prochain: dansJours(maintenant, ECHEANCES[0]), rates: e.rates + 1 }];
+    const reussites = (e.reussites ?? 0) + 1;
+    if (reussites >= REUSSITES_MAITRISE) return [];
+    return [{ ...e, reussites, prochain: dansJours(maintenant, ECHEANCES[Math.min(reussites, ECHEANCES.length - 1)]) }];
+  });
+}
+
+/** Vrai si cet essai réussi rend l'erreur maîtrisée (elle quitte alors la liste). */
+export function devientMaitrisee(e: Pick<ErreurGardee, 'reussites'>, reussi: boolean): boolean {
+  return reussi && (e.reussites ?? 0) + 1 >= REUSSITES_MAITRISE;
 }
 
 /** Titre du problème : « Ta partie contre Pomme, coup 14 ». */

@@ -449,7 +449,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
 
   if (phase === 'end' && relecture !== null && sgf) {
     // Revue de la partie (issue #34) : erreurs, courbe d'avantage, « Rejouer d'ici ».
-    return <Revue sgf={sgf} joueur={ai ? 1 : null} adversaire={ai?.nom} onRetour={() => setRelecture(null)} onRejouer={rejouer} />;
+    return <Revue sgf={sgf} joueur={ai ? 1 : null} adversaire={ai?.nom} onRetour={() => setRelecture(null)} onRejouer={rejouer} confirmTouch={confirmTouch} />;
   }
 
   if (phase === 'end') {
