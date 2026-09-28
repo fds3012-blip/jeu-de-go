@@ -26,6 +26,17 @@ async function poser(page: Page, label: string, verbe = 'poser'): Promise<void> 
   await page.keyboard.press('Enter');
 }
 
+/** Amène le curseur sur une pierre et la touche (un seul appui : pas de confirmation sur une pierre ; #198). */
+async function toucherPierre(page: Page, label: string): Promise<void> {
+  const curseur = grille(page).locator('[data-curseur]');
+  const depart = fromLabel((await curseur.getAttribute('data-curseur'))!, 9), cible = fromLabel(label, 9);
+  const dx = (cible % 9) - (depart % 9), dy = Math.floor(cible / 9) - Math.floor(depart / 9);
+  for (let i = 0; i < Math.abs(dx); i++) await page.keyboard.press(dx > 0 ? 'ArrowRight' : 'ArrowLeft');
+  for (let i = 0; i < Math.abs(dy); i++) await page.keyboard.press(dy > 0 ? 'ArrowDown' : 'ArrowUp');
+  await expect(curseur).toHaveAttribute('data-curseur', label);
+  await page.keyboard.press('Enter');
+}
+
 /** Active un bouton au clavier : focus puis Entrée. */
 async function appuyer(page: Page, nom: string | RegExp): Promise<void> {
   const b = page.getByRole('button', { name: nom, exact: typeof nom === 'string' });
@@ -65,7 +76,8 @@ test('leçon du ko : la question « touche le point » se répond au clavier', a
   await tabulerVersPlateau(page);
   await poser(page, 'D4', 'choisir ce point');
   await expect(page.getByText(/Essaie encore\./)).toBeVisible();
-  await appuyer(page, 'Réessayer');
+  // #198 : pas de « Réessayer » ; le plateau garde le focus, on choisit un autre point tout de suite.
+  await expect(page.getByRole('button', { name: 'Réessayer' })).toHaveCount(0);
   await tabulerVersPlateau(page);
   await poser(page, 'E5', 'choisir ce point');
   await expect(page.getByText(/^Oui, E5/)).toBeVisible();
@@ -79,7 +91,10 @@ test('leçon 1 jouée au clavier, jusqu’à « Leçon terminée »', async ({ p
   await appuyer(page, 'Commencer');
 
   const progression = page.getByRole('progressbar', { name: 'Progression de la leçon' });
-  for (let i = 1; i <= 3; i++) {
+  // #198 : les trois premières étapes demandent de poser la pierre de la démonstration.
+  for (const [i, p] of [[1, 'E5'], [2, 'A1'], [3, 'D6']] as const) {
+    await tabulerVersPlateau(page);
+    await poser(page, p);
     await appuyer(page, 'Continuer');
     await expect(progression).toHaveAttribute('aria-valuenow', String(i));
   }
@@ -90,6 +105,9 @@ test('leçon 1 jouée au clavier, jusqu’à « Leçon terminée »', async ({ p
   await expect(page.getByText(/^Capturée/)).toBeVisible();
   await expect(annonce(page)).toHaveText('Noir joue E5 et prend 1 pierre');
   await appuyer(page, 'Continuer');
+  // Groupe : on touche une de ses pierres, au clavier.
+  await tabulerVersPlateau(page);
+  await toucherPierre(page, 'E5');
   await appuyer(page, 'Continuer');
 
   // Groupe de deux pierres : E4.

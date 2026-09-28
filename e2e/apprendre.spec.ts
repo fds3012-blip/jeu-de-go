@@ -18,22 +18,42 @@ test('terminer la leçon 1 affiche la fin de leçon, puis la pierre 1 est coché
   // Barre de progression des étapes (pas de texte « étape 1 sur 3 »).
   const progression = page.getByRole('progressbar', { name: 'Progression de la leçon' });
   await expect(progression).toHaveAttribute('aria-valuenow', '0');
-  // Leçons v2 (#101) : démonstrations ; mouvements réduits, l'état final est là d'emblée (4 libertés, compteur 4).
+  // #198 : dès le premier écran, on pose sa pierre. Un seul point vert, pas de « Continuer » avant le geste.
+  const zone = page.locator('.lecteur-plateau');
+  await expect(zone).toHaveAttribute('data-demo', 'geste');
+  await expect(page.locator('.board .liberte')).toHaveCount(1);
+  await expect(page.getByRole('button', { name: 'Continuer' })).toHaveCount(0);
+  // Geste faux : le point se marque, l'aide dit quoi faire, sans bouton ; on rejoue tout de suite.
+  await jouer(page, 'D4');
+  await expect(page.getByText('Pose ta pierre sur le point vert.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Réessayer' })).toHaveCount(0);
+  await jouer(page, 'E5');
+  // Mouvements réduits : l'état final est là d'emblée (4 libertés, compteur 4).
+  await expect(zone).toHaveAttribute('data-demo', 'finie');
   await expect(page.locator('.board .liberte')).toHaveCount(4);
   await expect(page.locator('[data-note-sceau="4 libertés"]')).toBeAttached();
-  for (let i = 1; i <= 3; i++) {
+  await page.getByRole('button', { name: 'Continuer' }).click();
+  await expect(progression).toHaveAttribute('aria-valuenow', '1');
+  // Le coin, puis boucher les libertés : deux autres pierres à poser.
+  for (const [i, p] of [[2, 'A1'], [3, 'D6']] as const) {
+    await expect(zone).toHaveAttribute('data-demo', 'geste');
+    await jouer(page, p);
     await page.getByRole('button', { name: 'Continuer' }).click();
     await expect(progression).toHaveAttribute('aria-valuenow', String(i));
   }
 
-  // Mauvaise réponse : verdict « à revoir », puis bonne réponse.
+  // Mauvaise réponse : verdict « à revoir » sans bouton, puis bonne réponse jouée directement.
   await jouer(page, 'A1');
   await expect(page.getByText(/Essaie encore\./)).toBeVisible();
-  await page.getByRole('button', { name: 'Réessayer' }).click();
+  await expect(page.getByRole('button', { name: 'Réessayer' })).toHaveCount(0);
   await jouer(page, 'E5');
   await expect(page.getByText(/^Capturée/)).toBeVisible();
   await expect(progression).toHaveAttribute('aria-valuenow', '4');
   await page.getByRole('button', { name: 'Continuer' }).click();
+  // Groupe : on touche une pierre du groupe, ses libertés partagées s'allument.
+  await expect(zone).toHaveAttribute('data-demo', 'geste');
+  await jouer(page, 'E5');
+  await expect(page.locator('.board .liberte')).toHaveCount(1);
   await page.getByRole('button', { name: 'Continuer' }).click();
 
   await jouer(page, 'E4');
@@ -97,9 +117,15 @@ test('démonstration : les libertés s’allument une à une, toucher passe, « 
   await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
   await page.getByRole('button', { name: 'Commencer' }).click();
   const zone = page.locator('.lecteur-plateau');
+  // #198 : la démonstration attend la pierre de l'élève (un point vert), puis se joue.
+  await expect(zone).toHaveAttribute('data-demo', 'geste');
+  await expect(page.locator('.board .liberte')).toHaveCount(1);
+  await page.clock.runFor(2000);
+  await expect(zone).toHaveAttribute('data-demo', 'geste');
+  await jouer(page, 'E5');
   await expect(zone).toHaveAttribute('data-demo', 'en-cours');
   await expect(page.locator('.board .liberte')).toHaveCount(0);
-  await page.clock.runFor(1300);
+  await page.clock.runFor(700);
   await expect(page.locator('.board .liberte')).toHaveCount(1);
   await expect(page.locator('[data-note-sceau="1 liberté"]')).toBeAttached();
   await zone.click({ position: { x: 5, y: 5 } });
@@ -121,7 +147,6 @@ test('territoire : l’élève touche le goban, puis on compte avec lui', async 
   await expect(page.locator('.choix')).toHaveCount(0);
   await jouer(page, 'G5');
   await expect(page.getByText(/Essaie encore\./)).toBeVisible();
-  await page.getByRole('button', { name: 'Réessayer' }).click();
   await jouer(page, 'B5');
   await expect(page.getByText(/Ces points vides sont entourés par Noir/)).toBeVisible();
   await page.getByRole('button', { name: 'Continuer' }).click();
@@ -148,6 +173,7 @@ test('captures des leçons v2 (390 × 844, sombre)', async ({ page }) => {
   await photo('1-libertes');
   await avance(3);
   await photo('2-compteur');
+  await jouer(page, 'D6');
   await avance(3);
   await photo('3-atari');
   await page.getByRole('button', { name: 'Continuer' }).click();
@@ -172,7 +198,6 @@ test('ko : la question se répond en touchant le goban, sans poser de pierre', a
   await page.getByRole('button', { name: 'Continuer : Le ko' }).click();
   await jouer(page, 'H5');
   await expect(page.getByText(/Essaie encore\./)).toBeVisible();
-  await page.getByRole('button', { name: 'Réessayer' }).click();
   await jouer(page, 'E5');
   await expect(page.getByText(/Blanc doit d.abord jouer ailleurs/)).toBeVisible();
   await page.getByRole('button', { name: 'Terminer la leçon' }).click();
@@ -225,32 +250,34 @@ test('leçon 7 : compter les points, jusqu’à « Chapitre terminé »', async 
   await expect(page.locator('[data-territoire="blanc"]')).toHaveCount(27);
   await choix('27').click();
   await expect(page.getByText(/ajoute le komi\. Essaie encore\./)).toBeVisible();
-  await page.getByRole('button', { name: 'Réessayer' }).click();
+  // #198 : le choix faux se marque, les réponses restent visibles et on rechoisit tout de suite.
+  await expect(choix('27')).toHaveClass(/choix-faux/);
+  await expect(page.locator('.verdict')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Réessayer' })).toHaveCount(0);
   await choix('33,5').click();
   await expect(page.getByText(/Noir a 36\s:\sil gagne de 2,5\spoints/)).toBeVisible();
   await page.getByRole('button', { name: 'Continuer' }).click();
-  // 3. Je montre : Noir ferme E7, puis compte 36.
+  // 3. Je fais avec toi : l'élève ferme E7 (point vert), puis on compte 36.
+  await expect(page.locator('.lecteur-plateau')).toHaveAttribute('data-demo', 'geste');
+  await jouer(page, 'E7');
   await expect(page.locator('.demo-compteur')).toHaveAttribute('data-compteur', '36');
   await page.getByRole('button', { name: 'Continuer' }).click();
   // 4. Ensemble : le point vert est le trou à fermer.
   await expect(page.locator('.board .liberte')).toHaveCount(1);
   await jouer(page, 'B3');
   await expect(page.getByText(/Blanc peut entrer chez toi/)).toBeVisible();
-  await page.getByRole('button', { name: 'Réessayer' }).click();
   await jouer(page, 'E3');
   await expect(page.getByText(/tes 36\spoints comptent enfin/)).toBeVisible();
   await page.getByRole('button', { name: 'Continuer' }).click();
   // 5. Quand passer.
   await choix('Chez moi').click();
   await expect(page.getByText(/tu perds un point/)).toBeVisible();
-  await page.getByRole('button', { name: 'Réessayer' }).click();
   await choix('Je passe').click();
   await page.getByRole('button', { name: 'Continuer' }).click();
   // 6. Seul : compte final avec les prisonniers.
   await expect(page.locator('[data-territoire]')).toHaveCount(0);
   await choix('42,5').click();
   await expect(page.getByText(/Le komi, lui, va à Blanc/)).toBeVisible();
-  await page.getByRole('button', { name: 'Réessayer' }).click();
   await choix('39').click();
   await expect(page.getByText(/Noir gagne d.un demi-point/)).toBeVisible();
   await expect(progression).toHaveAttribute('aria-valuenow', '6');

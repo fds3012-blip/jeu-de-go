@@ -175,6 +175,11 @@
 .choix button:disabled { opacity: .4; cursor: default; }
 .choix .choix-juste { background: color-mix(in srgb, var(--jade) 20%, var(--surface)); border-color: var(--accent-trait); }
 .choix .choix-faux { background: color-mix(in srgb, var(--hanko) 16%, var(--surface)); border-color: var(--danger); }
+.choix .choix-faux[aria-disabled] { cursor: default; }
+/* Quiz (#198) : l'aide après un choix faux, sous les réponses, qui restent visibles et touchables. */
+.choix-aide { display: flex; gap: var(--space-2); align-items: flex-start; margin-top: var(--space-3); }
+.choix-aide p { margin: 0; line-height: 1.4; font-weight: var(--fw-medium); color: var(--danger-texte); }
+.choix-aide .marque { flex: none; margin-top: 1px; }
 
 /* Feuille de verdict : posée sur la barre de navigation, pleine largeur, contenu dans la colonne. */
 .verdict { position: fixed; left: 0; right: 0; bottom: calc(var(--nav-h) + 1px + env(safe-area-inset-bottom, 0px)); z-index: 15;
