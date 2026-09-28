@@ -8,9 +8,13 @@ import LOT_G from '../content/lots/g-relier';
 import { ALL_PUZZLES } from '../content/puzzles';
 import { checkAnswer, parsePuzzles, startOf } from '../data/puzzles';
 import { fromLabel, toLabel } from './coords';
-import { canonical, saveAllAfter, winningMoves } from './lecteurs-lot-f';
+import { canonical, saveAllAfter } from './lecteurs-lot-f';
+import { cederLaMain, preuveParCoup } from './preuve-par-coup';
 import { groupAt, play, type Position } from './rules';
 import { captureWorks } from './tactics';
+
+// Recette du 28/09 (#195) : longues preuves synchrones, voir cederLaMain (preuve-par-coup.ts).
+beforeEach(cederLaMain);
 
 const all = parsePuzzles(LOT_G);
 const pz = (id: string) => all.find(p => p.id === id)!;
@@ -58,13 +62,11 @@ describe('lot G : relier deux groupes', () => {
     }
   });
 
-  it('les coups gagnants sont exactement les réponses acceptées', () => {
-    for (const p of all) {
-      const { pos, marked } = startOf(p);
-      const found = winningMoves(pos, m => saveAllAfter(pos, m, marked)).map(m => toLabel(m, 9)).sort();
-      expect(found, p.id).toEqual(p.answers.map(a => toLabel(a, 9)).sort());
-    }
-  }, 180000);
+  // Recette du 28/09 (#195) : preuve déclarée coup par coup (voir preuve-par-coup.ts), même vérification qu'avant.
+  for (const p of all) {
+    const { pos, marked } = startOf(p);
+    preuveParCoup(p.id, pos, p.answers, m => saveAllAfter(pos, m, marked));
+  }
 
   it('la migration insère exactement ces problèmes, sans rien modifier', () => {
     const sql = readFileSync(resolve(__dirname, '../../supabase/migrations/20260927220100_lot_g_relier.sql'), 'utf8');

@@ -133,7 +133,7 @@ function LigneGoban() {
           const th = THEMES_GOBAN[id], ouvert = themeDebloque(id, niveau), requis = niveauRequis(id);
           return (
             <button key={id} type="button" className="pastille" aria-pressed={actuel === id} aria-disabled={!ouvert || undefined}
-              aria-label={ouvert ? th.nom : t('profil.gobanVerrou', { nom: th.nom, niveau: requis })} data-theme-goban={id}
+              aria-label={ouvert ? t(`theme.${id}`) : t('profil.gobanVerrou', { nom: t(`theme.${id}`), niveau: requis })} data-theme-goban={id}
               onClick={() => { if (ouvert) choisirThemeGoban(id); }}>
               <span className="pastille-bois" style={{ background: `radial-gradient(circle at 40% 35%, ${th.fond[0]}, ${th.fond[1]} 60%, ${th.fond[2]})` }}>
                 <span className="pastille-pierre" style={{ background: `radial-gradient(circle at 38% 32%, ${th.blanche[0]}, ${th.blanche[1]} 55%, ${th.blanche[3]})` }} />

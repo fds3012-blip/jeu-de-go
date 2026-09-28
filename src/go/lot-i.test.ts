@@ -14,6 +14,10 @@ import { whiteFails } from './lecteurs-lot-a';
 import { captureWinners, plainKey, symmetries } from './lecteurs-lot-e';
 import { groupAt, play, type Position } from './rules';
 import { hasTwoEyes } from './tactics';
+import { cederLaMain } from './preuve-par-coup';
+
+// Recette du 28/09 (#195) : longues preuves synchrones, voir cederLaMain (preuve-par-coup.ts).
+beforeEach(cederLaMain);
 
 const LOT_I = [...LOT_I_VM, ...LOT_I_CAP];
 const all = parsePuzzles(LOT_I_VM);

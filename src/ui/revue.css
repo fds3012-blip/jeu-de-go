@@ -52,8 +52,10 @@
   border: 0; border-radius: 14px; background: var(--surface); color: var(--text); text-align: left; font-size: 15px; }
 .revue-precision-texte { flex: 1; min-width: 0; display: flex; flex-direction: column; padding: 6px 0; }
 .revue-precision-titre { color: var(--muted); font-size: 13px; font-weight: var(--fw-bold); }
-.revue-precision-duo { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: 17px; font-variant-numeric: tabular-nums; }
-.revue-precision-lui { color: var(--muted); font-weight: 600; }
+/* Recette du 28/09 (#195) : en 320 px, « Toi 73 % · Pomme 100 % » était coupé (« Pomme 100… »). Le score de l'adversaire
+   passe à la ligne d'un bloc au lieu d'être tronqué ; chaque score reste sur une ligne (flex). */
+.revue-precision-duo { display: flex; flex-wrap: wrap; align-items: baseline; white-space: nowrap; font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: 17px; font-variant-numeric: tabular-nums; }
+.revue-precision-lui { color: var(--muted); font-weight: 600; white-space: nowrap; }
 .revue-precision-voir { color: var(--accent-texte); font-weight: var(--fw-bold); font-size: 14px; }
 .revue-precision-voir::after { content: ''; display: inline-block; width: 6px; height: 6px; margin-left: 6px; border: solid currentColor; border-width: 0 2px 2px 0; transform: translateY(-2px) rotate(45deg); }
 .revue-precision[aria-expanded="true"] .revue-precision-voir::after { transform: translateY(1px) rotate(-135deg); }

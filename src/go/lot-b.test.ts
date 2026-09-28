@@ -7,9 +7,13 @@ import LOT_B from '../content/lots/b-techniques';
 import { BASE_PUZZLES, PUZZLES_16 } from '../content/puzzles';
 import { checkAnswer, parsePuzzles, startOf, type Puzzle } from '../data/puzzles';
 import { fromLabel, toLabel } from './coords';
-import { capturedAgainstAll, winningMoves } from './lecteurs-lot-b';
+import { capturedAgainstAll, legalMoves, winningMoves } from './lecteurs-lot-b';
+import { cederLaMain, preuveParCoup } from './preuve-par-coup';
 import { groupAt, play, type Position } from './rules';
 import { canEscape, hasTwoEyes, ladderWorks } from './tactics';
+
+// Recette du 28/09 (#195) : longues preuves synchrones, voir cederLaMain (preuve-par-coup.ts).
+beforeEach(cederLaMain);
 
 const all = parsePuzzles(LOT_B);
 const pz = (id: string) => all.find(p => p.id === id)!;
@@ -67,17 +71,19 @@ describe('lot B : techniques de capture', () => {
     }
   });
 
-  it('chaque réponse gagne contre toutes les défenses légales de Blanc, passe comprise', () => {
-    for (const p of all) {
+  // Recette du 28/09 (#195) : un test par problème, puis la preuve coup par coup (voir preuve-par-coup.ts), passe de Noir
+  // comprise comme avant. Même vérification ; k08 prenait 33 s d'un bloc sur une machine chargée (délai de 20 s).
+  for (const p of all) {
+    it(`${p.id} : chaque réponse gagne contre toutes les défenses légales de Blanc, passe comprise`, () => {
       const t = targets(p);
       for (const a of labels(p.answers)) expect(capturedAgainstAll(answer(p, a), t), `${p.id} ${a}`).toBe(true);
-    }
-  });
+    }, 60_000);
+  }
 
-  it.each(LOT_B.map(r => r.id))('%s : les réponses acceptées sont exactement les coups gagnants de Noir', id => {
-    const p = pz(id), { pos } = startOf(p);
-    expect(labels(winningMoves(pos, targets(p))), id).toEqual(labels(p.answers));
-  }, 20000);
+  for (const p of all) {
+    const { pos } = startOf(p), t = targets(p);
+    preuveParCoup(p.id, pos, p.answers, m => { const r = play(pos, m); return typeof r !== 'string' && capturedAgainstAll(r, t); }, { coups: legalMoves(pos) });
+  }
 
   it('la migration insère exactement ces problèmes, sans toucher aux anciens', () => {
     const sql = readFileSync(resolve(__dirname, '../../supabase/migrations/20260927170200_lot_b_techniques.sql'), 'utf8');

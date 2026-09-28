@@ -1,13 +1,14 @@
 // Carte « Installe l'app » (issue #178). Montée seulement à un bon moment (première victoire contre l'ordi,
 // Go du jour réussi), jamais pendant une partie ; elle décide seule, avec src/app/installation.ts, si elle se montre.
 // Une seule fois par appareil : montrée, elle ne revient plus, même sans réponse. « Plus tard » est mémorisé.
-// Les écrans qui l'accueillent (fin de partie, Go du jour) n'utilisent pas encore l'i18n : textes en français.
+// Textes passés par l'i18n (#167, étape 3).
 import { useEffect, useId, useRef, useState } from 'react';
 import { EVENTS, track } from '../data/analytics';
 import {
   doitProposer, etatInstallation, noterInstallation, ouvrirInvite, plateformeCourante, type Moment, type Plateforme
 } from '../app/installation';
 import { fr } from './typo';
+import { t } from '../content/i18n';
 import './installation.css';
 
 /** Icône « Partager » de Safari : un carré ouvert et une flèche vers le haut. */
@@ -67,21 +68,21 @@ export function ProposerInstallation({ moment }: { moment: Moment }) {
       <div className="installer-tete">
         <img className="installer-app" src="/icon-192.png" alt="" width="44" height="44" />
         <div>
-          <h3 id={titre}>Garde le go sous la main</h3>
-          <p>{fr('Ajoute l’app à ton écran d’accueil : elle s’ouvre en un geste, en plein écran.')}</p>
+          <h3 id={titre}>{t('installer.titre')}</h3>
+          <p>{fr(t('installer.texte'))}</p>
         </div>
       </div>
       {plateforme === 'ios' ? (
         <ol className="installer-etapes">
-          <li><span className="installer-num" aria-hidden="true">1</span>Touche <IconePartager /><b>Partager</b></li>
-          <li><span className="installer-num" aria-hidden="true">2</span>{fr('Choisis ')}<IconeAjouter /><b>{fr('Sur l’écran d’accueil')}</b></li>
+          <li><span className="installer-num" aria-hidden="true">1</span>{t('installer.touche')}<IconePartager /><b>{t('installer.partager')}</b></li>
+          <li><span className="installer-num" aria-hidden="true">2</span>{t('installer.choisis')}<IconeAjouter /><b>{t('installer.ecranAccueil')}</b></li>
         </ol>
       ) : null}
       <div className="installer-actions">
         {plateforme === 'chrome' && (
-          <button type="button" className="btn installer-oui" onClick={installer} disabled={attente}>Installer</button>
+          <button type="button" className="btn installer-oui" onClick={installer} disabled={attente}>{t('installer.oui')}</button>
         )}
-        <button type="button" className="lien lien-discret" onClick={plusTard} disabled={attente}>Plus tard</button>
+        <button type="button" className="lien lien-discret" onClick={plusTard} disabled={attente}>{t('installer.plusTard')}</button>
       </div>
     </aside>
   );

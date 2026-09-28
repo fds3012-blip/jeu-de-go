@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { abonnerXp } from '../app/xp';
 import { cumuler, DUREE_XP_MS, hautPastille, SORTIE_XP_MS, texteXp, type Affiche } from './gainXp';
 import { mouvementsReduits } from './defilement';
+import { t } from '../content/i18n';
 import './pastille-xp.css';
 
 /**
@@ -15,7 +16,7 @@ export function PastilleXp({ points, bonus = 0, anime = false }: { points: numbe
   return (
     <span className={`pastille-xp${anime && !mouvementsReduits() ? ' anime' : ''}`} data-testid="pastille-xp">
       <b>{texteXp(points)}</b>
-      {bonus > 0 && <small>{`dont +${bonus} première fois`}</small>}
+      {bonus > 0 && <small>{t('xp.bonus', { bonus })}</small>}
     </span>
   );
 }
