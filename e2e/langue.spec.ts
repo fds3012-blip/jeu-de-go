@@ -102,17 +102,25 @@ for (const largeur of [390, 320]) {
     await expect(page.getByText(/^(Black|White) to play$/).first()).toBeVisible();
     await expect(page.getByText('Sign in to get your rating: it shows your level and goes up as you solve puzzles.')).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Puzzles', exact: true })).toBeVisible();
+    await expect(page.locator('[data-palier-en-cours]')).toContainText('Your tier');
+    await expect(page.locator('[data-palier-en-cours]')).toContainText('30 to 25 kyu');
+    await expect(page.getByText(/Problème|Résoudre|Palier|verrouillé/)).toHaveCount(0);
+    await sansDebordement(page);
+    await sansCoupe(page, largeur);
+    await page.screenshot({ path: `docs/localisation/captures/problemes-en-${largeur}.png` });
+
+    // « All puzzles » (#196) : la grille, et le prochain palier fermé en une ligne.
+    await page.getByRole('button', { name: 'All puzzles' }).click();
     await expect(page.getByText('From easiest to hardest. A stone is in atari when it has only one liberty left.')).toBeVisible();
     const debutant = page.getByRole('group', { name: 'Beginner' });
     await expect(debutant.getByText('30 to 25 kyu')).toBeVisible();
     await expect(page.getByRole('group', { name: /^Novice \(locked\)$/ })).toBeVisible();
     await expect(page.getByText('Solve a few more puzzles in the tier before to unlock it.').first()).toBeVisible();
-    expect(await page.getByRole('button', { name: /^Puzzle \d+: / }).count()).toBeGreaterThanOrEqual(18);
-    await expect(page.getByRole('button', { name: /^Puzzle \d+: .*, locked$/ }).first()).toBeVisible();
+    expect(await page.getByRole('button', { name: /^Puzzle \d+: / }).count()).toBeGreaterThan(0);
+    await expect(page.getByRole('button', { name: /, locked$/ })).toHaveCount(0);
     await expect(page.getByText(/Problème|Résoudre|Palier|verrouillé/)).toHaveCount(0);
     await sansDebordement(page);
     await sansCoupe(page, largeur);
-    await page.screenshot({ path: `docs/localisation/captures/problemes-en-${largeur}.png` });
 
     // Un problème ouvert : en-tête, consigne, retour.
     await debutant.locator('[data-probleme]').first().click();

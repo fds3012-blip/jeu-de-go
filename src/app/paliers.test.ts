@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ALL_PUZZLES, BASE_PUZZLES, PUZZLES_16 } from '../content/puzzles';
-import { PALIERS, aContinuer, aSuivre, auHasard, indexPalier, ordrePaliers, palierRecommande, paliers, prochain, suivantPalier } from './paliers';
+import { PALIERS, aContinuer, aSuivre, auHasard, indexPalier, ordrePaliers, palierEnCours, palierRecommande, paliers, paliersVisibles, prochain, suivantPalier } from './paliers';
 
 describe('problèmes sans fin (#147)', () => {
   const liste = [pbx('a', 300), pbx('b', 350), pbx('c', 400), pbx('n', 500)];
@@ -131,5 +131,29 @@ describe('paliers', () => {
     expect(palierRecommande(paliers(LISTE, new Set()), 1500)).toBe('debutant');
     expect(palierRecommande(paliers(LISTE, tout), undefined)).toBeUndefined();
     expect(PALIERS).toHaveLength(5);
+  });
+});
+
+describe('un écran, une action (#196)', () => {
+  const liste = [pbx('a', 300), pbx('b', 350), pbx('n1', 500), pbx('n2', 550), pbx('x', 700), pbx('y', 900)];
+  it('palier en cours : le premier palier au départ', () => {
+    expect(palierEnCours(paliers(liste, new Set()))?.id).toBe('debutant');
+  });
+  it('palier en cours : le plus avancé des ouverts, tant qu’il reste à finir', () => {
+    expect(palierEnCours(paliers(liste, new Set(['a', 'b'])))?.id).toBe('novice');
+    expect(palierEnCours(paliers(liste, new Set(['a', 'b', 'n1'])))?.id).toBe('novice');
+    expect(palierEnCours(paliers(liste, new Set(['a', 'b', 'n1', 'n2'])))?.id).toBe('apprenti');
+  });
+  it('palier en cours : tout réussi, le dernier ouvert (jamais rien)', () => {
+    const r = new Set(liste.map(p => p.id));
+    expect(palierEnCours(paliers(liste, r))?.id).toBe('club');
+  });
+  it('liste complète : les paliers ouverts et un seul palier fermé, sans les vides', () => {
+    const v = paliersVisibles(paliers(liste, new Set()));
+    expect(v.ouverts.map(p => p.id)).toEqual(['debutant']);
+    expect(v.prochain?.id).toBe('novice');
+    const tout = paliersVisibles(paliers(liste, new Set(liste.map(p => p.id))));
+    expect(tout.ouverts.map(p => p.id)).toEqual(['debutant', 'novice', 'apprenti', 'club']);
+    expect(tout.prochain).toBeUndefined();
   });
 });

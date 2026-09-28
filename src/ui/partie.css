@@ -10,6 +10,12 @@
 .partie::before, .partie-souffle { content: ""; flex: 1 1 0; }
 .partie-souffle { min-height: var(--space-3); }
 .partie > .partie-souffle + .coach, .partie > .partie-souffle + .coach-intro { margin-top: 0; }
+/* Zone de Mochi (#187) : hauteur stable pour que le plateau ne bouge pas quand la bulle change.
+   L'intro et la bulle se superposent ; l'intro, cachée après le premier coup, garde sa place.
+   Sans intro, la zone réserve trois lignes (la plupart des phrases de Mochi). */
+.partie-mochi { display: grid; align-items: end; min-height: calc(3 * 1.4 * var(--fs-corps-s) + 20px); }
+.partie-mochi > .coach, .partie-mochi > .coach-intro { grid-area: 1 / 1; margin-top: 0; }
+.partie-mochi > .coach-intro[data-cache] { visibility: hidden; }
 /* Pendant une partie : pas d'en-tête ni de barre de navigation, place à la barre d'actions. */
 .app.app-partie { padding-top: var(--space-1); padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
 .app-partie .dock { bottom: calc(var(--space-4) + env(safe-area-inset-bottom, 0px)); }
@@ -174,12 +180,23 @@
 .barre-comptage > .btn:not(.primary) { background: var(--surface-2); }
 .barre-comptage > .btn.primary { flex: 1.5; font-size: var(--fs-l); }
 
+/* « +N » après ta capture (#187) : il sort de ton couvercle et monte en s'effaçant. Absent si mouvements réduits. */
+.couvercle-zone { position: relative; flex: none; display: inline-flex; }
+.gain-capture { position: absolute; left: 50%; bottom: calc(100% + 2px); transform: translateX(-50%); pointer-events: none; opacity: 0;
+  padding: 3px 9px; border-radius: 999px; background: var(--accent); color: var(--on-accent); box-shadow: 0 4px 10px -4px rgba(0, 0, 0, .45);
+  font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: var(--fs-l); line-height: 1; font-variant-numeric: tabular-nums; white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) { .gain-capture { display: none; } }
+
 /* ---------- Mouvement : seulement en réponse à un coup ---------- */
 @media (prefers-reduced-motion: no-preference) {
   .couvercle.plein { animation: couvercle-pulse 240ms var(--ease) both; }
   .replique { animation: replique-entree 180ms var(--ease) both; }
   .coach p { animation: coach-phrase 200ms var(--ease) both; }
+  /* Départ après l'arrivée des pierres dans le couvercle (280 ms, board.css). */
+  .gain-capture { animation: gain-capture 640ms var(--ease) 180ms both; }
 }
+@keyframes gain-capture { from { opacity: 0; transform: translate(-50%, 12px) scale(.9); } 25% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  70% { opacity: 1; transform: translate(-50%, -4px); } to { opacity: 0; transform: translate(-50%, -10px); } }
 @keyframes couvercle-pulse { 0% { transform: scale(1); } 40% { transform: scale(1.12); } 100% { transform: scale(1); } }
 @keyframes replique-entree { from { opacity: 0; transform: translateX(-6px) scale(.96); } to { opacity: 1; transform: none; } }
 @keyframes coach-phrase { from { opacity: .2; } to { opacity: 1; } }

@@ -16,6 +16,8 @@ async function preparer(page: Page, theme: 'dark' | 'light', donnees: Record<str
 async function idsDebutant(page: Page) {
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
+  await page.getByRole('button', { name: 'Tous les problèmes' }).click();
+  await expect(page.getByRole('group', { name: /^Débutant/ })).toBeVisible();
   return page.getByRole('group', { name: /^Débutant/ }).locator('[data-probleme]').evaluateAll(els => els.map(e => e.getAttribute('data-probleme')!));
 }
 
@@ -55,6 +57,7 @@ for (const theme of ['dark', 'light'] as const) {
     }, [theme, Object.fromEntries([...ids.map(id => [id, true]), ['b3', true]])] as const);
     await page.reload();
     await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
+    await page.getByRole('button', { name: 'Tous les problèmes' }).click();
 
     const debutant = page.getByRole('group', { name: /^Débutant/ });
     await expect(debutant.getByRole('img', { name: 'Palier complet' })).toBeVisible();
