@@ -226,7 +226,7 @@ for (const largeur of [390, 320]) {
     const vitrine = page.getByRole('region', { name: /^Badges, \d of 7$/ });
     await expect(vitrine.getByRole('listitem', { name: 'Pomme beaten: earned' })).toBeVisible();
     await expect(vitrine.getByRole('listitem', { name: 'First game: earned' })).toBeVisible();
-    await expect(vitrine.getByRole('listitem', { name: '7-day streak: not earned yet. Daily Go 7 days running.' })).toHaveCount(1);
+    await expect(vitrine.getByRole('listitem', { name: '7-day streak: not earned yet. 7 days of challenges.' })).toHaveCount(1);
     await expect(page.getByText(/problèmes|victoires|Première partie|Réussis/)).toHaveCount(0);
     await sansDebordement(page);
     await sansCoupeComposants(page, largeur);

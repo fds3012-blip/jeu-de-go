@@ -12,6 +12,8 @@ async function preremplir(page: Page) {
     if (sessionStorage.getItem('revision-prete')) return;
     localStorage.setItem('go.problemes.v1', JSON.stringify({ b1: true }));
     localStorage.setItem('go.revision.v1', JSON.stringify({ suivis: { b1: { base: 4, etape: 0 } }, jour: null }));
+    // b1 a été réussi : le bonus « premier problème » est déjà pris.
+    localStorage.setItem('go.xp.premieres.v1', JSON.stringify(['probleme']));
     sessionStorage.setItem('revision-prete', '1');
   });
 }
@@ -51,6 +53,8 @@ test('révision du jour : un problème déjà réussi revient à J+1, on le refa
   const etat = await page.evaluate(() => JSON.parse(localStorage.getItem('go.revision.v1') ?? 'null'));
   expect(etat.suivis.b1).toEqual({ base: 4, etape: 1 });
   expect(etat.jour).toEqual({ numero: 5, ids: ['b1'], faits: ['b1'] });
+  // #233 : la révision finie rapporte 20 XP, une fois (le problème, déjà réussi, n'en rapporte pas).
+  expect(await page.evaluate(() => localStorage.getItem('go.xp.v1'))).toBe('20');
 
   // Accueil : la flamme de la série.
   await nav(page, 'Jouer');

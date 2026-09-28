@@ -38,4 +38,5 @@ Règles communes : pas de fausse urgence, pas de perte punitive (la série est p
 ## Prochains réglages à instruire
 - Courbe des 9 adversaires : un nouveau joueur doit battre Pomme dans ses 3 premières parties et Caillou dans sa première semaine. Mesurée dans `equilibrage.md` (#179) : l'ordre est bon, mais Caillou → Bambou est un mur (proposition P1 : une part de hasard pour Bambou et Renard).
 - XP : le niveau 2 doit tomber pendant la première session (progrès offert, base UX).
+- Économie de progression (#233) : carte de toutes les récompenses, simulation sur 30 jours et incohérences restantes dans `economie.md`. Tenu : le niveau 2 tombe à J1, le niveau 3 dans la première semaine à 10 min/jour.
 - Go du jour : piste « Débutant » les 7 premiers jours (hypothèse de la base UX).

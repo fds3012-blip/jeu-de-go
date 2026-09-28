@@ -298,7 +298,7 @@ export const fr = {
   'badge.palier-novice.nom': 'Palier Novice',
   'badge.palier-novice.condition': 'Finis le palier Novice.',
   'badge.serie-7.nom': '7 jours de série',
-  'badge.serie-7.condition': 'Fais 7 Go du jour de suite.',
+  'badge.serie-7.condition': 'Un défi 7 jours de suite.',
 
   // Étape 4 (#167) : écran de partie, récit du score, fin de partie et revue.
   // Camps
