@@ -50,6 +50,8 @@ export const EVENTS = {
   installationAcceptee: 'installation_acceptee',
   // Aide graduée des problèmes (#197) : la réponse a été montrée après un échec (le problème devient « Vu », pas « Réussi »).
   solutionVue: 'solution_vue',
+  // Révision du jour (#199) : les exercices du jour (problèmes déjà réussis, repris à J+1, J+3, J+7) sont tous faits.
+  revisionFaite: 'revision_faite',
 } as const;
 export type AnalyticsEvent = (typeof EVENTS)[keyof typeof EVENTS];
 export type Props = Record<string, string | number | boolean | null | undefined>;
