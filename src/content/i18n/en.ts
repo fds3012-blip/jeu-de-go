@@ -369,7 +369,7 @@ export const en = {
   'conseil.zoneAPrendre': 'The area at {point} is still up for grabs.',
   'conseil.aucun': 'Nothing sure to tell you here. Your move!',
   'conseil.cherche': 'Mochi is looking at the board…',
-  'partie.action.conseil': "Mochi's advice",
+  'partie.action.conseil': 'Advice',
   'quiMene.serre': 'It’s close.',
   'quiMene.noir': 'Black leads by about {n} points.',
   'quiMene.blanc': 'White leads by about {n} points.',

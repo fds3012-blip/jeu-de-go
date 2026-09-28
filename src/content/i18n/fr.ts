@@ -395,7 +395,7 @@ export const fr = {
   'conseil.zoneAPrendre': 'La zone en {point} est encore à prendre.',
   'conseil.aucun': 'Rien de sûr à te dire ici. À toi de jouer !',
   'conseil.cherche': 'Mochi regarde le plateau…',
-  'partie.action.conseil': 'Conseil de Mochi',
+  'partie.action.conseil': 'Conseil',
   'quiMene.serre': "C'est serré.",
   'quiMene.noir': "Noir mène d'environ {n} points.",
   'quiMene.blanc': "Blanc mène d'environ {n} points.",
