@@ -22,7 +22,7 @@ import { EVENTS, track } from '../data/analytics';
 import { gagnerXp } from './xp';
 import { prefersReducedMotion, readLocal, useOnline, writeLocal } from './hooks';
 import { niveau } from './problemes';
-import { aContinuer, aSuivre, ordrePaliers, palierRecommande, paliers, type Palier } from './paliers';
+import { aContinuer, aSuivre, ordrePaliers, palierEnCours, palierRecommande, paliers, paliersVisibles, type Palier } from './paliers';
 import { SceauLecon } from '../ui/SceauLecon';
 import { aFeter, FETES_KEY } from './fetesPaliers';
 import { MesErreurs } from '../ui/MesErreurs';
@@ -91,6 +91,8 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   // Lien d'un autre jour : on ouvre celui d'aujourd'hui, et on le dit.
   const [defiChange] = useState(() => lien !== null && lien !== numero);
   const [retry, setRetry] = useState(0);
+  // Liste « Tous les problèmes » ouverte (#196) ; on y revient après un problème ouvert depuis la grille.
+  const [tous, setTous] = useState(false);
   const [statsTick, setStatsTick] = useState(0);
 
   // Problèmes : la base pour un joueur connecté (RLS), la copie locale sinon.
@@ -196,12 +198,77 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   const recommande = connecte && stats ? palierRecommande(tiers, stats.rating) : undefined;
   // Série (issue #161) : celle de l'appareil sans compte, la plus longue des deux avec un compte.
   const serie = serieAffichee(connecte && stats ? stats.streak : null, serieDuJour, numero);
+  const notices = <>
+    {load.error === 'offline' && <p className="notice" role="status">{tr('pb.horsLigne')}</p>}
+    {load.error && load.error !== 'offline' && (
+      <p className="notice" role="alert">{load.error} {tr('pb.copieLocale')} <button className="lien" onClick={() => setRetry(n => n + 1)}>{tr('pb.reessayer')}</button></p>
+    )}
+  </>;
+
+  // « Tous les problèmes » (issue #196) : la grille, derrière un lien. Paliers ouverts, puis le prochain palier en une ligne.
+  if (tous) {
+    const { ouverts, prochain: suivant } = paliersVisibles(tiers);
+    return (
+      <div className="problemes problemes-tous">
+        <div className="tous-tete">
+          <Retour label={tr('pb.retour')} onClick={() => { setTous(false); window.scrollTo({ top: 0 }); }} />
+          <h2 id="paliers-titre">{tr('pb.tous')}</h2>
+        </div>
+        {notices}
+        <p className="muted small bases-aide">{fr(tr('pb.aide.avant'))}<b>{tr('pb.aide.mot')}</b>{fr(tr('pb.aide.apres'))}</p>
+        {ouverts.map(t => (
+          <PalierVue key={t.id} t={t} ordre={ordre} solved={solved} recommande={t.id === recommande} onOpen={setOpenId}
+            fete={fetes.includes(t.id)} />
+        ))}
+        {suivant && (
+          <div className="palier verrouille palier-prochain" data-palier={suivant.id} role="group" aria-labelledby={`palier-${suivant.id}`}>
+            <h3 id={`palier-${suivant.id}`}><Cadenas />{tr(`palier.${suivant.id}.nom`)}<span className="sr-only"> ({tr('pb.verrouille')})</span></h3>
+            <p className="palier-verrou">{fr(tr('pb.palierVerrou'))}</p>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  const enCours = palierEnCours(tiers);
   return (
     <div className={`problemes${prochainPz && duJourFait ? ' avec-continuer' : ''}`}>
-      {load.error === 'offline' && <p className="notice" role="status">{tr('pb.horsLigne')}</p>}
-      {load.error && load.error !== 'offline' && (
-        <p className="notice" role="alert">{load.error} {tr('pb.copieLocale')} <button className="lien" onClick={() => setRetry(n => n + 1)}>{tr('pb.reessayer')}</button></p>
+      {notices}
+
+      {daily && (
+        <section aria-labelledby="jour-titre">
+          <h2 id="jour-titre" className="titre-pierres">{tr('accueil.goDuJour')} <span className="numero-du-jour">{tr('pb.numero', { numero })}</span><Glacon gels={stats ? stats.freezes : gels} /></h2>
+          <p className="muted small bases-aide">{tr('pb.duJourAide')}</p>
+          <DuJour pz={daily} reussi={serieDuJour?.dernier === numero} onOpen={() => setOpenId(daily.id)} />
+        </section>
       )}
+
+      {/* Un seul « Continuer », le palier en cours sans total, la grille derrière un lien discret (#196). */}
+      <section aria-labelledby="paliers-titre">
+        <h2 id="paliers-titre" className="titre-pierres">{tr('nav.problemes')}</h2>
+        {prochainPz && (
+          <button className={duJourFait ? 'cta continuer' : 'btn continuer'} onClick={() => setOpenId(prochainPz.id)}
+            aria-label={tr('pb.continuerAria', { titre: prochainPz.title })}>
+            {tr('pb.continuer')} <span className="continuer-titre">{prochainPz.title}</span>
+          </button>
+        )}
+        {enCours && (
+          <div className="palier-en-cours" data-palier-en-cours={enCours.id} data-reussis={enCours.reussis}>
+            <div className="palier-nom">
+              <small className="palier-surtitre">{tr('pb.tonPalier')}</small>
+              <h3>{tr(`palier.${enCours.id}.nom`)}</h3>
+              <small>{tr(`palier.${enCours.id}.kyu`)}{enCours.id === recommande && <span className="palier-reco"> · {tr('pb.pourTaCote')}</span>}</small>
+            </div>
+            {enCours.reussis > 0 && <p className="palier-compte">{tr('pb.reussis', { n: enCours.reussis })}</p>}
+          </div>
+        )}
+        <button className="lien lien-tous" onClick={() => { setTous(true); window.scrollTo({ top: 0 }); }}>
+          {tr('pb.tous')}
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path d="m9 5 7 7-7 7" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
+        </button>
+      </section>
+
+      <MesErreurs confirmTouch={confirmTouch} Lecteur={PuzzlePlayer} />
 
       {connecte && stats ? (
         <div className="palmares">
@@ -238,30 +305,6 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
           {onCompte && <button className="lien" onClick={onCompte}>{tr('pb.meConnecter')}</button>}
         </div>
       ) : null}
-
-      {daily && (
-        <section aria-labelledby="jour-titre">
-          <h2 id="jour-titre" className="titre-pierres">{tr('accueil.goDuJour')} <span className="numero-du-jour">{tr('pb.numero', { numero })}</span><Glacon gels={stats ? stats.freezes : gels} /></h2>
-          <p className="muted small bases-aide">{tr('pb.duJourAide')}</p>
-          <DuJour pz={daily} reussi={serieDuJour?.dernier === numero} onOpen={() => setOpenId(daily.id)} />
-        </section>
-      )}
-
-      <MesErreurs confirmTouch={confirmTouch} Lecteur={PuzzlePlayer} />
-      <section aria-labelledby="paliers-titre">
-        <h2 id="paliers-titre" className="titre-pierres">{tr('nav.problemes')}</h2>
-        <p className="muted small bases-aide">{fr(tr('pb.aide.avant'))}<b>{tr('pb.aide.mot')}</b>{fr(tr('pb.aide.apres'))}</p>
-        {prochainPz && (
-          <button className={duJourFait ? 'cta continuer' : 'btn continuer'} onClick={() => setOpenId(prochainPz.id)}
-            aria-label={tr('pb.continuerAria', { titre: prochainPz.title })}>
-            {tr('pb.continuer')} <span className="continuer-titre">{prochainPz.title}</span>
-          </button>
-        )}
-        {tiers.filter(t => t.total > 0).map(t => (
-          <PalierVue key={t.id} t={t} ordre={ordre} solved={solved} recommande={t.id === recommande} onOpen={setOpenId}
-            fete={fetes.includes(t.id)} />
-        ))}
-      </section>
     </div>
   );
 }
@@ -275,28 +318,23 @@ function PalierVue({ t, ordre, solved, recommande, onOpen, fete }: {
 }) {
   const titre = `palier-${t.id}`;
   return (
-    <div className={`palier${t.ouvert ? '' : ' verrouille'}${t.complet ? ' complet' : ''}${fete ? ' fete' : ''}`} data-palier={t.id} data-reussis={t.reussis} aria-labelledby={titre} role="group">
+    <div className={`palier${t.complet ? ' complet' : ''}${fete ? ' fete' : ''}`} data-palier={t.id} data-reussis={t.reussis} aria-labelledby={titre} role="group">
       <div className="palier-tete">
         <div className="palier-nom">
-          <h3 id={titre}>
-            {!t.ouvert && <Cadenas />}
-            {tr(`palier.${t.id}.nom`)}
-            {!t.ouvert && <span className="sr-only"> ({tr('pb.verrouille')})</span>}
-          </h3>
+          <h3 id={titre}>{tr(`palier.${t.id}.nom`)}</h3>
           <small>{tr(`palier.${t.id}.kyu`)}{recommande && <span className="palier-reco"> · {tr('pb.pourTaCote')}</span>}</small>
         </div>
         {t.complet && <span className="palier-sceau" role="img" aria-label={tr('pb.palierComplet')}><SceauLecon id={`p${t.rang}`} taille={34} /></span>}
       </div>
       {t.reussis > 0 && <p className="palier-compte">{tr('pb.reussis', { n: t.reussis })}</p>}
-      {!t.ouvert && <p className="palier-verrou">{fr(tr('pb.palierVerrou'))}</p>}
       <ul className="grille-pb">
         {t.problemes.map(p => {
           const ok = solved.has(p.id);
           const i = ordre.indexOf(p);
           return (
             <li key={p.id}>
-              <button className={ok ? 'reussi' : undefined} disabled={!t.ouvert} onClick={() => onOpen(p.id)} data-probleme={p.id}
-                aria-label={`${tr('pb.problemeAria', { n: i + 1, titre: p.title })}${ok ? `, ${tr('pb.reussi')}` : ''}${t.ouvert ? '' : `, ${tr('pb.verrouille')}`}`}>
+              <button className={ok ? 'reussi' : undefined} onClick={() => onOpen(p.id)} data-probleme={p.id}
+                aria-label={`${tr('pb.problemeAria', { n: i + 1, titre: p.title })}${ok ? `, ${tr('pb.reussi')}` : ''}`}>
                 <span className="grille-goban">
                   <MiniGoban rows={p.rows} />
                   {ok && <span className="pastille-ok" aria-hidden="true"><svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="15" className="sceau-fond" /><circle cx="16" cy="16" r="11.5" className="sceau-anneau" /><path d="M10.5 16.6 14.3 20.2 21.5 12.4" className="sceau-coche" /></svg></span>}

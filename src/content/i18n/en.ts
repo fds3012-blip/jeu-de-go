@@ -108,6 +108,8 @@ export const en = {
   'pb.aide.apres': ' when it has only one liberty left.',
   'pb.continuer': 'Continue',
   'pb.continuerAria': 'Continue: {titre}',
+  'pb.tous': 'All puzzles',
+  'pb.tonPalier': 'Your tier',
   'pb.verrouille': 'locked',
   'pb.reussi': 'solved',
   'pb.pourTaCote': 'For your rating',

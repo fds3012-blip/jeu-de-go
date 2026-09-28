@@ -128,3 +128,21 @@ export function palierRecommande<T>(ps: Palier<T>[], cote: number | undefined): 
   while (i > 0 && !ps[i]?.ouvert) i--;
   return ps[i]?.id;
 }
+
+/**
+ * Palier en cours (issue #196) : le palier ouvert le plus avancé qui reste à finir (celui de « Continuer »),
+ * sinon le dernier palier ouvert non vide. C'est le seul palier montré sur l'écran Problèmes.
+ */
+export function palierEnCours<T>(ps: Palier<T>[]): Palier<T> | undefined {
+  const ouverts = ps.filter(p => p.ouvert && p.total > 0);
+  return [...ouverts].reverse().find(p => !p.complet) ?? ouverts[ouverts.length - 1];
+}
+
+/**
+ * Paliers de la liste « Tous les problèmes » (issue #196) : les paliers ouverts, puis le premier palier fermé seul,
+ * annoncé sans ses miniatures. Aucun mur de cadenas, aucun total : la suite reste une surprise.
+ */
+export function paliersVisibles<T>(ps: Palier<T>[]): { ouverts: Palier<T>[]; prochain?: Palier<T> } {
+  const nonVides = ps.filter(p => p.total > 0);
+  return { ouverts: nonVides.filter(p => p.ouvert), prochain: nonVides.find(p => !p.ouvert) };
+}

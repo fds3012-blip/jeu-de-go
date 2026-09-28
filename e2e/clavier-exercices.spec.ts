@@ -38,6 +38,7 @@ test('problème « Capture la pierre » résolu au clavier', async ({ page }) =>
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).focus();
   await page.keyboard.press('Enter');
+  await appuyer(page, 'Tous les problèmes');
   await appuyer(page, /^Problème \d+ : Capture la pierre/);
 
   await tabulerVersPlateau(page);
