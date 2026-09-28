@@ -55,6 +55,7 @@ Ces données sont écrites dans le stockage local (`localStorage`) de ton naviga
 | Repères d'événements | `go.evenement.<nom>` (par exemple `go.evenement.premiere_pierre`) | « Déjà envoyé une fois » pour certains événements. **Écrits seulement si tu as dit « Oui »** |
 | Leçons | `go.lecons.v1` | Leçons commencées et terminées |
 | Problèmes | `go.problemes.v1`, `go.problemes.vus.v1` | Problèmes réussis, et problèmes dont tu as vu la réponse |
+| Problèmes à ta mesure | `go.cote-joueur.v1` | Une cote estimée d'après tes premiers essais, jamais affichée, pour choisir le prochain problème (#284) ; nombre d'essais, réussites d'affilée, dernier problème joué et problèmes déjà faits aujourd'hui |
 | Révision espacée | `go.revision.v1` | Pour chaque problème réussi : jour de référence et prochaine échéance (J+1, J+3, J+7) |
 | Go du jour et série | `go.go-du-jour.v1`, `go.go-du-jour.fait.v1`, `go.gel.v1` | Dernier défi du jour réussi, nombre de jours de suite, gels de série en réserve |
 | Record de série | `go.serie-record.v1` | Plus longue série, et dernière série perdue déjà annoncée (#212) |

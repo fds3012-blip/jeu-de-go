@@ -40,6 +40,7 @@ import { noterRediteAppareil, repriseDeLeconFaite, suivreEnRevisionAppareil } fr
 import { t as tr } from '../content/i18n';
 import { useExercice } from '../ui/celebrations';
 import { XpEnLigne } from '../ui/PastilleXp';
+import { COTE_KEY, choisirProbleme, nettoyerCote, noter, ouvrir, requalifierEnAide, type EtatCote } from './coteJoueur';
 
 const LOCAL_PUZZLES = parsePuzzles(ALL_PUZZLES);
 export const SOLVED_KEY = 'go.problemes.v1';
@@ -144,6 +145,11 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   const markSolved = useCallback((id: string) => {
     setLocalSolved(prev => { const next = { ...prev, [id]: true as const }; writeLocal(SOLVED_KEY, next); return next; });
   }, []);
+  // « Continuer » à ta mesure (#284) : cote du joueur sur l'appareil, jamais affichée (décision #137).
+  const [cote, setCote] = useState<EtatCote>(() => nettoyerCote(readLocal<unknown>(COTE_KEY, null)));
+  const majCote = useCallback((f: (c: EtatCote) => EtatCote) => {
+    setCote(prev => { const next = f(prev); if (next !== prev) writeLocal(COTE_KEY, next); return next; });
+  }, []);
   const [vus, setVus] = useState<Record<string, true>>(() => readLocal(VUS_KEY, {}));
   const markVu = useCallback((id: string) => {
     setVus(prev => { const next = { ...prev, [id]: true as const }; writeLocal(VUS_KEY, next); return next; });
@@ -172,8 +178,14 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   if (openId) dernierRef.current = openId;
   // eslint-disable-next-line react-hooks/exhaustive-deps -- nouveau tirage voulu à chaque changement de problème
   const tirage = useMemo(() => Math.random(), [openId]);
+  // Le Go du jour reste hors du choix à ta mesure (#284) : il est le même pour tous.
+  const aMesure = useMemo(() => list.filter(p => p.id !== daily?.id), [list, daily]);
   const open = list.find(p => p.id === openId) ?? (daily && openId === daily.id ? daily : pzArchive && openId === pzArchive.id ? pzArchive : undefined);
   const duJourOuvert = !!open && (open.id === daily?.id || archive !== null);
+  // Un problème ouvert hors Go du jour devient la référence du prochain choix (jamais deux fois de suite, pas de saut).
+  useEffect(() => {
+    if (open && !duJourOuvert) majCote(c => ouvrir(c, open));
+  }, [open, duJourOuvert, majCote]);
   useEffect(() => {
     onDuJour?.(duJourOuvert);
   }, [duJourOuvert, onDuJour]);
@@ -182,14 +194,19 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   if (open) {
     // Go du jour d'un autre jour (lien partagé ancien) : ni série ni XP du jour ; ensuite, celui d'aujourd'hui.
     const enArchive = archive !== null && open.id === pzArchive?.id;
-    const nextPz = enArchive && daily && !goDuJourFaitAppareil(numero) ? daily : aSuivre(tiers, open, solved);
+    // #284 : le suivant est choisi à ta mesure ; tout réussi, la série infinie de #147 prend le relais.
+    const nextPz = enArchive && daily && !goDuJourFaitAppareil(numero) ? daily
+      : choisirProbleme(aMesure, cote, solved, { jour: numero, eviter: open.id, alea: () => tirage }) ?? aSuivre(tiers, open, solved);
     const estDuJour = !enArchive && open.id === daily?.id;
+    // Seul le premier essai d'un problème jamais réussi ni vu compte pour la cote ; ni le Go du jour ni un lien partagé.
+    const note = !estDuJour && !enArchive && !solved.has(open.id) && !vus[open.id];
     return (
       <PuzzlePlayer key={`${open.id}${enArchive ? '-archive' : ''}`} puzzle={open} rang={ordre.indexOf(open) + 1} confirmTouch={confirmTouch}
         duJour={enArchive ? { numero: archive, serie: 0, defiChange: false, archive: numero, gelGagne: false, celebrer }
           : estDuJour ? { numero, serie: serieVivante(serieDuJour, numero), defiChange, gelGagne, celebrer } : undefined}
         rated={!!db && !!userId && online && !!stats && !stats.attempted.includes(open.id) && !solved.has(open.id)}
         rating={stats?.rating}
+        onPremierEssai={note ? ok => majCote(c => noter(c, open, ok ? 'premier' : 'rate', numero)) : undefined}
         onAttempt={async ok => {
           if (!db || !userId) return null;
           const r = await recordPuzzleAttempt(db, open.id, ok);
@@ -212,6 +229,8 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
             track(EVENTS.goDuJourResolu, { numero, essais, serie: s?.jours ?? 1, arrivee_par_lien: lien !== null, vu: gain.statut === 'vu' });
           }
           if (gain.palier) markSolved(open.id); else markVu(open.id);
+          // Raté au premier essai, puis trouvé sans voir la réponse : réussite avec aide, elle compte un peu (#284).
+          if (note && gain.palier && essais > 1) majCote(c => requalifierEnAide(c, open.id));
           suivreEnRevisionAppareil(open.id);
           // #237 : un Go du jour qui reprend une étape de leçon ne revient pas dès demain en révision.
           // #251 (M3) : seulement si le joueur a fait cette étape ; sinon, il le voyait pour la première fois.
@@ -235,7 +254,9 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   }
 
   const connecte = !!db && !!userId;
-  const prochainPz = aContinuer(tiers, solved, dernierRef.current, () => tirage);
+  // #284 : le prochain problème pas encore réussi le plus proche de 85 % de réussite prévue ; tout réussi, la série infinie (#147).
+  const prochainPz = choisirProbleme(aMesure, cote, solved, { jour: numero, eviter: dernierRef.current, alea: () => tirage })
+    ?? aContinuer(tiers, solved, dernierRef.current, () => tirage);
   // Une seule action en relief : le Go du jour tant qu'il n'est pas fait, « Problème suivant » ensuite.
   const duJourReussi = !!daily && goDuJourFaitAppareil(numero);
   const duJourFait = !daily || duJourReussi;
@@ -487,8 +508,10 @@ interface DuJourInfo { numero: number; serie: number; defiChange: boolean; archi
 /** Temps pendant lequel la réponse de l'adversaire reste sur le plateau après une erreur (#237, N6). */
 const DUREE_ERREUR = 2200;
 
-export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating, onAttempt, onSolved, onNext, onExit, onSolutionVue, retour, surtitre, exercice = true }: {
+export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating, onPremierEssai, onAttempt, onSolved, onNext, onExit, onSolutionVue, retour, surtitre, exercice = true }: {
   puzzle: Puzzle; rang: number; duJour?: DuJourInfo; confirmTouch: boolean; rated: boolean; rating?: number;
+  /** Premier essai joué (#284) : réussi ou non. Sert à la cote de « Continuer », jamais affichée. */
+  onPremierEssai?: (ok: boolean) => void;
   onAttempt: (ok: boolean) => Promise<{ ok: true; value: number } | { ok: false; error: string } | null>;
   onSolved: (essais: number, aide: NiveauAide) => void; onNext?: () => void; onExit: () => void;
   /** La réponse vient d'être montrée (#197). */
@@ -547,6 +570,7 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating
     if (ok) { setApercu(null); setBoard(r.after.board); onSolved(tries + 1, aide); }
     else montrerErreur(p, r.after.board);
     // Seul le premier essai compte pour la cote.
+    if (firstTry.current) onPremierEssai?.(ok);
     if (firstTry.current && rated) {
       firstTry.current = false;
       const res = await onAttempt(ok);
@@ -709,7 +733,7 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating
   }
 
   return (
-    <div className="lecteur">
+    <div className="lecteur" data-probleme={puzzle.id}>
       <div className="lecteur-tete">
         <Retour label={retour ?? tr('pb.retour')} onClick={onExit} />
         <div className="lecteur-nom">
