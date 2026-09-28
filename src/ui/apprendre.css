@@ -314,6 +314,9 @@
 .grille-pb b { font-family: var(--font-titre); font-weight: var(--fw-bold); letter-spacing: -0.01em; font-size: var(--fs-m); line-height: 1.2; }
 .grille-pb button:active .mini-goban { transform: scale(.98); }
 .pastille-ok { position: absolute; right: -6px; top: -6px; width: 30px; height: 30px; padding: 5px; border-radius: 50%; background: var(--accent); color: var(--on-accent); box-shadow: 0 0 0 3px var(--bg); }
+/* #197 : problème vu (résolu après la réponse) : une étiquette discrète, pas le sceau de réussite. */
+.pastille-vu { position: absolute; right: 6px; top: 6px; padding: 2px 8px; border-radius: var(--radius-pill); background: var(--surface); color: var(--text); font-size: var(--fs-legende); font-weight: var(--fw-bold); }
+.tampon-reussi.tampon-vu { background: var(--surface); color: var(--text); }
 .pastille-ok svg { display: block; width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
 
 /* ---------- Go du jour (issue #75) : numéro en Bricolage, « Partager » en relief ---------- */
