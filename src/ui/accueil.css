@@ -63,6 +63,12 @@
 .tuile small { display: block; color: var(--muted); font-size: var(--fs-legende); line-height: 1.3; }
 .tuile b { display: block; font-family: var(--font-titre); font-weight: var(--fw-bold); letter-spacing: -0.01em; font-size: var(--fs-m); line-height: 1.2; }
 /* Leçon suivante : « à faire plus tard », en pointillés. */
+/* #213 : état du Go du jour, en pastille dans le coin. « À faire » : or, comme la flamme creuse ; « Fait » : jade. */
+.tuile-probleme { position: relative; }
+.tuile-etat { position: absolute; top: -9px; right: 10px; display: inline-flex; align-items: center; gap: 3px; padding: 3px 8px;
+  border-radius: var(--radius-pill); font-style: normal; font-size: var(--fs-legende); font-weight: 700; line-height: 1.2; }
+.a-faire .tuile-etat { background: var(--or); color: #2A1D05; }
+.fait .tuile-etat { background: var(--surface-2); color: var(--accent-texte); box-shadow: inset 0 0 0 1.5px currentColor; }
 .tuile-lecon { background: transparent; border: 1.5px dashed color-mix(in srgb, var(--text) 26%, transparent); }
 .tuile:active { background: var(--surface-2); }
 .mini-plateau { width: 44px; height: 44px; flex: none; border-radius: 6px; box-shadow: 0 3px 8px -4px rgba(0, 0, 0, .5); }
@@ -71,6 +77,19 @@
 .top .serie { display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px 6px 10px; border-radius: var(--radius-pill);
   background: color-mix(in srgb, var(--or) 16%, transparent); color: var(--recompense-texte);
   font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: 1.05rem; line-height: 1; }
+/* #213 : flamme creuse tant que le Go du jour d'aujourd'hui reste à faire, pleine après. */
+.top .serie .flamme-corps { fill: currentColor; stroke: currentColor; stroke-width: 1.3; stroke-linejoin: round; transform-origin: 50% 90%; }
+.top .serie.creuse { background: transparent; box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--or) 55%, transparent); }
+.top .serie.creuse .flamme-corps { fill: transparent; }
+/* Allumage (une fois par jour, au retour sur l'accueil) : la flamme se remplit et monte d'un cran. Mouvements réduits : rien ne bouge. */
+@media (prefers-reduced-motion: no-preference) {
+  .top .serie.allumage .flamme-corps { animation: flamme-allumage var(--duree-recompense) var(--ease) both; }
+}
+@keyframes flamme-allumage {
+  0% { fill: transparent; transform: scale(.9); }
+  45% { fill: currentColor; transform: scale(1.18); }
+  100% { fill: currentColor; transform: none; }
+}
 
 /* ---------- Feuille « Changer » : boîte de dialogue en bas d'écran ---------- */
 .feuille { margin: auto auto 0; width: min(var(--largeur-max), 100%); max-width: 100%; max-height: 92dvh; padding: 0; border: 0; overflow: auto;
