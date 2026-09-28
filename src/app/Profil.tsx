@@ -25,6 +25,7 @@ import { BarreNiveau } from '../ui/Niveau';
 import { ProposerInstallation, usePlateformeInstallation } from '../ui/ProposerInstallation';
 import { etatInstallation, installable } from './installation';
 import { LANGUES, langue, memoriserChoixLangue, t, type Langue } from '../content/i18n';
+import type { Placement } from './placement';
 
 const SOLVED_KEY = 'go.problemes.v1';
 
@@ -75,6 +76,9 @@ interface Props {
   record?: number;
   /** « Ton parcours » (#214) : leçons terminées et taille de l'échelle des adversaires. */
   parcours: Parcours;
+  /** « Je sais déjà jouer » (#283) : niveau estimé (discret, une ligne) et placement à refaire. */
+  placement?: Placement | null;
+  onPlacement?: () => void;
 }
 
 /** Sous-vue du Profil : « Retour » en haut, un titre, un contenu. */
@@ -90,7 +94,7 @@ function SousVue({ id, titre, onRetour, children }: { id: string; titre: string;
   );
 }
 
-export function Profil({ vue, onVue, settings, set, profil, serie, record = 0, parcours }: Props) {
+export function Profil({ vue, onVue, settings, set, profil, serie, record = 0, parcours, placement, onPlacement }: Props) {
   const retour = () => { onVue('menu'); window.scrollTo({ top: 0 }); };
   if (vue === 'conditions') return <Conditions onRetour={retour} />;
   // #286 : analyser une partie jouée ailleurs (SGF), action secondaire du Profil.
@@ -105,10 +109,16 @@ export function Profil({ vue, onVue, settings, set, profil, serie, record = 0, p
     );
   }
 
-  return <Menu onVue={onVue} settings={settings} set={set} profil={profil} serie={serie} record={record} parcours={parcours} />;
+  return <Menu onVue={onVue} settings={settings} set={set} profil={profil} serie={serie} record={record} parcours={parcours} placement={placement} onPlacement={onPlacement} />;
 }
 
-function Menu({ onVue, profil, serie, record = 0, parcours }: Omit<Props, 'vue'>) {
+/** Date courte du placement (« 28/09 »), dans la langue de l'interface. */
+function dateCourte(iso: string): string {
+  const d = new Date(`${iso}T12:00:00`);
+  return Number.isNaN(d.getTime()) ? iso : d.toLocaleDateString(langue() === 'en' ? 'en-GB' : 'fr-FR', { day: '2-digit', month: '2-digit' });
+}
+
+function Menu({ onVue, profil, serie, record = 0, parcours, placement, onPlacement }: Omit<Props, 'vue'>) {
   const id = identite(profil, serie);
   const donnees = useDonnees(serie, record, parcours);
   // Ligne « Installer l'app » (#214) : tant que l'app est installable ici et pas installée.
@@ -132,6 +142,10 @@ function Menu({ onVue, profil, serie, record = 0, parcours }: Omit<Props, 'vue'>
       <VitrineBadges liste={donnees.badges} />
 
       <div className="lignes">
+        {/* #283 : le kyu estimé ne s'affiche qu'ici, sur une ligne, avec sa date ; la ligne relance le placement. */}
+        {onPlacement && (placement?.fait && placement.kyu !== null
+          ? <LigneLien libelle={t('placement.profil')} valeur={t('placement.profilValeur', { kyu: placement.kyu, date: dateCourte(placement.date) })} onClick={onPlacement} />
+          : <LigneLien libelle={t(placement?.fait ? 'placement.profilRefaire' : 'placement.profilFaire')} onClick={onPlacement} />)}
         <LigneLien libelle={t('profil.reglages')} valeur={t('profil.reglagesResume')} onClick={() => onVue('reglages')} />
         <LigneLien libelle={t('profil.importer')} valeur={t('profil.importerResume')} onClick={() => onVue('importer')} />
         {proposerInstallation && <LigneLien libelle={t('profil.installer')} onClick={() => onVue('installer')} />}

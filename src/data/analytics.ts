@@ -57,6 +57,10 @@ export const EVENTS = {
   solutionVue: 'solution_vue',
   // Révision du jour (#199) : les exercices du jour (problèmes déjà réussis, repris à J+1, J+3, J+7) sont tous faits.
   revisionFaite: 'revision_faite',
+  // « Je sais déjà jouer » (#283) : placement commencé, terminé (`kyu`, null si tout raté), passé (`etape` : 0 à 3).
+  placementCommence: 'placement_commence',
+  placementTermine: 'placement_termine',
+  placementSaute: 'placement_saute',
   // Import d'une partie SGF réussi (#286) : `octets` (taille du texte), `coups`, `taille` (plateau), `source` (fichier ou texte).
   sgfImporte: 'sgf_importe',
 } as const;

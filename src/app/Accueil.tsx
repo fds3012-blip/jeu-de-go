@@ -39,6 +39,8 @@ interface Props {
   onLecon: () => void;
   /** Carte « Installe l'app » (#214), sous les tuiles, au 2e retour ; elle décide seule si elle se montre. */
   installation?: ReactNode;
+  /** « Je sais déjà jouer » (#283) : lien discret sous le bouton, au premier lancement seulement. */
+  onPlacement?: () => void;
 }
 
 const PLATEAUX: Record<Taille, Int8Array> = { 9: new Int8Array(81), 13: new Int8Array(169), 19: new Int8Array(361) };
@@ -84,6 +86,7 @@ export function Accueil(p: Props) {
       <button className={`cta cta-sceau${textes.cta.length <= 26 ? ' court' : ''}`} aria-label={textes.ctaNom} onClick={p.onJouer}>
         <Sceau id={adv.id} taille={30} />{textes.cta}
       </button>
+      {p.onPlacement && <button type="button" className="lien lien-placement" onClick={p.onPlacement}>{t('placement.lien')}</button>}
 
       <div className="tuiles">
         {/* #213 : la tuile dit l'état du jour, « À faire » tant que le Go du jour d'aujourd'hui n'est pas réussi, puis « Fait ». */}

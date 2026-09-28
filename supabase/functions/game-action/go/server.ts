@@ -247,3 +247,28 @@ export function planAction(game: GameRow, userId: string, req: ActionRequest): A
   if (!s || !s.ok) return refuse(500, 'partie-invalide', 'Comptage impossible.');
   return { ok: true, kind: 'finish', expect, result: s.result, black: s.black, white: s.white };
 }
+
+// ---------------------------------------------------------------------------
+// Défi par lien (issue #81) : partie en différé dont les coups passent par la fonction SQL `jouer_coup_defi`,
+// qui revérifie sous verrou le joueur, le tour et le délai de 3 jours (migration defi_par_lien).
+
+/** Arguments de `jouer_coup_defi`. */
+export interface DefiMoveArgs {
+  p_partie: string;
+  p_joueur: string;
+  p_coups_avant: string;
+  p_coup: string;
+  p_comptage: boolean;
+}
+
+/**
+ * Pour un coup déjà validé par `planAction` (règles, captures, ko) : arguments de `jouer_coup_defi`.
+ * Null si le plan n'ajoute pas exactement un coup (les autres actions s'écrivent comme pour une partie normale).
+ */
+export function defiMoveArgs(gameId: string, userId: string, plan: ActionPlan): DefiMoveArgs | null {
+  if (!plan.ok || plan.kind !== 'update' || plan.patch.moves === undefined) return null;
+  const avant = plan.expect.moves;
+  const apres = plan.patch.moves;
+  if (!apres.startsWith(avant) || apres.length !== avant.length + 2) return null;
+  return { p_partie: gameId, p_joueur: userId, p_coups_avant: avant, p_coup: apres.slice(avant.length), p_comptage: plan.patch.counting === true };
+}
