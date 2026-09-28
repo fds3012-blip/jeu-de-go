@@ -117,8 +117,12 @@ for (const c of CAS) {
       await sansDebord(page, 'Problèmes');
 
       await onglet(page, 'Profil').click();
-      await expect(page.getByRole('heading', { name: 'Réglages' })).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'Ton parcours' })).toBeVisible();
       await sansDebord(page, 'Profil');
+      // #214 : les réglages, derrière leur ligne, sans débord non plus.
+      await page.getByRole('button', { name: /^Réglages/ }).click();
+      await expect(page.getByRole('heading', { name: 'Réglages' })).toBeVisible();
+      await sansDebord(page, 'Réglages');
     });
 
     test('apprendre et leçon 1 sans défilement horizontal', async ({ page }) => {

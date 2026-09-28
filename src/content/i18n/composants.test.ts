@@ -56,9 +56,10 @@ describe('français identique aux textes d’origine', () => {
   });
 
   it('statistiques et badges', () => {
-    expect(statistiques(vide).map(s => s.legende)).toEqual(['problème', 'jour de série', 'partie', 'victoire']);
-    expect(statistiques({ ...vide, reussis: 1, serie: 1, parties: 1 }).map(s => s.legende)).toEqual(['problème', 'jour de série', 'partie', 'victoire']);
-    expect(statistiques(plein).map(s => s.legende)).toEqual(['problèmes', 'jours de série', 'parties', 'victoires']);
+    const p0 = { lecons: { faites: 0, total: 7 }, adversaires: 9 }, p2 = { lecons: { faites: 2, total: 7 }, adversaires: 9 };
+    expect(statistiques(vide, p0).map(s => s.legende)).toEqual(['jour de record', 'leçon finie', 'adversaire battu', 'problème réussi']);
+    expect(statistiques({ ...vide, reussis: 1, serie: 1, parties: 1 }, p0).map(s => s.legende)).toEqual(['jour de record', 'leçon finie', 'adversaire battu', 'problème réussi']);
+    expect(statistiques({ ...plein, serie: 7, bilan: { pomme: { v: 1, d: 0 }, caillou: { v: 2, d: 0 } } }, p2).map(s => s.legende)).toEqual(['jours de record', 'leçons finies', 'adversaires battus', 'problèmes réussis']);
     expect(badges(vide).map(b => [b.id, b.nom, b.condition])).toEqual([
       ['premiere-partie', 'Première partie', 'Joue une partie contre l’ordi.'],
       ['premier-probleme', 'Premier problème', 'Réussis un problème.'],
@@ -90,8 +91,9 @@ describe('en anglais', () => {
   });
 
   it('statistiques (0 est pluriel en anglais) et badges', () => {
-    expect(statistiques(vide).map(s => s.legende)).toEqual(['puzzles', 'day streak', 'games', 'wins']);
-    expect(statistiques({ ...vide, reussis: 1, parties: 1 }).map(s => s.legende).slice(0, 3)).toEqual(['puzzle', 'day streak', 'game']);
+    const p = { lecons: { faites: 0, total: 7 }, adversaires: 9 };
+    expect(statistiques(vide, p).map(s => s.legende)).toEqual(['day record', 'lessons done', 'opponents beaten', 'puzzles solved']);
+    expect(statistiques({ ...vide, reussis: 1, bilan: { pomme: { v: 1, d: 0 } } }, { ...p, lecons: { faites: 1, total: 7 } }).map(s => s.legende)).toEqual(['day record', 'lesson done', 'opponent beaten', 'puzzle solved']);
     expect(badges(vide)[0]).toMatchObject({ nom: 'First game', condition: 'Play a game vs the computer.' });
   });
 });

@@ -23,3 +23,12 @@
   .installer { animation: installer-entree 320ms var(--ease) 400ms both; }
 }
 @keyframes installer-entree { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+/* Accueil (#214) : carte compacte sous les tuiles, pour que le goban reste l'illustration. */
+.installer.installer-compacte { margin-top: var(--space-3); padding: var(--space-2) var(--space-3); }
+.installer-compacte .installer-tete { align-items: center; }
+.installer-compacte h3 { font-size: var(--fs-corps-s); }
+.installer-compacte p { font-size: var(--fs-s); line-height: 1.3; }
+.installer-compacte .installer-actions { margin-top: 2px; }
+.installer-etapes:focus { outline: none; }
+.installer-etapes:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 6px; }

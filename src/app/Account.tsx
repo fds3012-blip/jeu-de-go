@@ -4,7 +4,8 @@ import { supabase, type Db } from '../data/supabase';
 import { MOT_SUPPRESSION, confirmationValide, deleteMyAccount, fetchProfile, saveUsername, sendMagicLink, type Profile } from '../data/account';
 import { USERNAME_MAX, USERNAME_MIN, isEmail, validateUsername } from '../data/username';
 import { EVENTS, identify, track } from '../data/analytics';
-import { FINE } from '../ui/typo';
+import { FINE, fr } from '../ui/typo';
+import { t } from '../content/i18n';
 
 const field: CSSProperties = {
   width: '100%', minHeight: 46, padding: '0 14px', borderRadius: 12, border: '1.5px solid var(--line)',
@@ -166,7 +167,10 @@ function SignIn({ db }: { db: Db }) {
   return (
     <form className="card" onSubmit={submit} noValidate>
       <b>Crée ton compte</b>
-      <p className="muted small" style={{ margin: '4px 0 10px' }}>Garde ta cote et joue en ligne. Pas de mot de passe{FINE}: on t’envoie un lien par e-mail.</p>
+      {/* #214 : promesse exacte. Seules la série et les leçons montent sur le serveur (importer_serie_appareil, syncProgress). */}
+      <p className="muted small" style={{ margin: '4px 0 0' }}>{fr(t('compte.promesse'))}</p>
+      <p className="muted small" style={{ margin: '4px 0 0' }}>{fr(t('compte.resteIci'))}</p>
+      <p className="muted small" style={{ margin: '4px 0 10px' }}>{fr(t('compte.sansMotDePasse'))}</p>
       <label className="small" htmlFor="account-email">Ton adresse e-mail</label>
       <input id="account-email" type="email" inputMode="email" autoComplete="email" required style={{ ...field, marginTop: 4 }}
         value={email} onChange={e => { setEmail(e.target.value); setError(''); }} aria-invalid={!!error} aria-describedby="account-email-error" />

@@ -1,8 +1,9 @@
 // Issue #178 : quand proposer d'installer l'app, et quand jamais.
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
-  _inviteDeTest, detecterPlateforme, doitProposer, estPremiereVictoire, lireEtat, ouvrirInvite,
-  type Appareil, type InviteInstallation, type Plateforme
+  _inviteDeTest, compterRetour, detecterPlateforme, doitProposer, estMomentRetour, estPremiereVictoire, installable, lireEtat, lireRetours,
+  noterOuverture, ouvrirInvite, RETOURS_KEY,
+  type Appareil, type InviteInstallation, type Moment, type Plateforme
 } from './installation';
 
 const UA = {
@@ -43,12 +44,22 @@ describe('detecterPlateforme', () => {
 });
 
 describe('doitProposer', () => {
-  const ok = { plateforme: 'ios' as Plateforme, etat: null, moment: 'go_du_jour' as const, enPartie: false };
+  const ok = { plateforme: 'ios' as Plateforme, etat: null, moment: 'retour' as Moment, enPartie: false };
 
-  it('montre après un Go du jour réussi ou une première victoire, sur iOS comme sur Chrome', () => {
+  it('montre à l\'accueil d\'un retour ou après une première victoire, sur iOS comme sur Chrome', () => {
     expect(doitProposer(ok)).toBe(true);
     expect(doitProposer({ ...ok, moment: 'premiere_victoire' })).toBe(true);
     expect(doitProposer({ ...ok, plateforme: 'chrome' })).toBe(true);
+  });
+  it('#214 : plus jamais par-dessus le plateau résolu du Go du jour', () => {
+    expect(doitProposer({ ...ok, moment: 'go_du_jour' })).toBe(false);
+    expect(doitProposer({ ...ok, moment: 'go_du_jour', plateforme: 'chrome' })).toBe(false);
+  });
+  it('#214 : demandée depuis le Profil, elle se montre même après « Plus tard », jamais une fois installée', () => {
+    for (const etat of [null, 'proposee', 'refusee'] as const) expect(doitProposer({ ...ok, moment: 'profil', etat }), String(etat)).toBe(true);
+    expect(doitProposer({ ...ok, moment: 'profil', etat: 'acceptee' })).toBe(false);
+    expect(doitProposer({ ...ok, moment: 'profil', plateforme: 'installee' })).toBe(false);
+    expect(doitProposer({ ...ok, moment: 'profil', plateforme: 'aucune' })).toBe(false);
   });
   it('jamais pendant une partie', () => {
     expect(doitProposer({ ...ok, enPartie: true })).toBe(false);
@@ -62,6 +73,53 @@ describe('doitProposer', () => {
   it('jamais si l\'app est déjà installée ou impossible à installer', () => {
     expect(doitProposer({ ...ok, plateforme: 'installee' })).toBe(false);
     expect(doitProposer({ ...ok, plateforme: 'aucune' })).toBe(false);
+  });
+});
+
+describe('ligne « Installer l\'app » du Profil (#214)', () => {
+  it('seulement si l\'installation est possible et pas encore faite', () => {
+    expect(installable('ios', null)).toBe(true);
+    expect(installable('chrome', 'refusee')).toBe(true);
+    expect(installable('ios', 'acceptee')).toBe(false);
+    expect(installable('installee', null)).toBe(false);
+    expect(installable('aucune', null)).toBe(false);
+  });
+});
+
+describe('retours (#214)', () => {
+  it('premier jour : 0 retour ; chaque nouveau jour en ajoute un ; le même jour, rien', () => {
+    const j1 = compterRetour(null, 10);
+    expect(j1).toEqual({ jour: 10, retours: 0 });
+    expect(compterRetour(j1, 10)).toBe(j1);
+    const j2 = compterRetour(j1, 11);
+    expect(j2).toEqual({ jour: 11, retours: 1 });
+    expect(compterRetour(j2, 15)).toEqual({ jour: 15, retours: 2 });
+    expect(compterRetour(j2, 9)).toBe(j2); // horloge reculée : rien
+  });
+  it('la carte vient à partir du 2e retour (et au suivant si elle n\'a pas pu se montrer)', () => {
+    expect(estMomentRetour({ jour: 1, retours: 0 })).toBe(false);
+    expect(estMomentRetour({ jour: 2, retours: 1 })).toBe(false);
+    expect(estMomentRetour({ jour: 3, retours: 2 })).toBe(true);
+    expect(estMomentRetour({ jour: 4, retours: 3 })).toBe(true);
+  });
+  it('lit le compteur en tolérant les valeurs abîmées', () => {
+    expect(lireRetours({ jour: 3, retours: 1 })).toEqual({ jour: 3, retours: 1 });
+    for (const x of [null, 'x', { jour: 1.5, retours: 0 }, { jour: 1, retours: -1 }, { jour: 1 }]) expect(lireRetours(x)).toBeNull();
+  });
+  it('noterOuverture écrit le compteur une fois par jour', () => {
+    const memoire = new Map<string, string>();
+    vi.stubGlobal('localStorage', { getItem: (k: string) => memoire.get(k) ?? null, setItem: (k: string, v: string) => { memoire.set(k, v); } });
+    try {
+      expect(noterOuverture(5)).toEqual({ jour: 5, retours: 0 });
+      expect(noterOuverture(5)).toEqual({ jour: 5, retours: 0 });
+      expect(noterOuverture(6)).toEqual({ jour: 6, retours: 1 });
+      expect(noterOuverture(8)).toEqual({ jour: 8, retours: 2 });
+      expect(JSON.parse(memoire.get(RETOURS_KEY)!)).toEqual({ jour: 8, retours: 2 });
+      memoire.set(RETOURS_KEY, '{abîmé');
+      expect(noterOuverture(9)).toEqual({ jour: 9, retours: 0 });
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });
 

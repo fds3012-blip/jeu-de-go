@@ -31,6 +31,15 @@ for (const largeur of [390, 320]) {
     await sansDebordement(page);
 
     await nav.getByRole('button', { name: 'Profile' }).click();
+    await expect(page.getByRole('heading', { name: 'Your journey' })).toBeVisible();
+    await expect(page.getByRole('button', { name: /^My account/ })).toContainText('Sign in');
+    await expect(page.getByRole('button', { name: 'Terms and privacy' })).toBeVisible();
+    await expect(page.getByText('Guest', { exact: true })).toBeVisible();
+    await expect(page.getByText(/Ton parcours|Réglages/)).toHaveCount(0);
+    await sansDebordement(page);
+    await page.screenshot({ path: `docs/localisation/captures/profil-en-${largeur}.png` });
+    // #214 : les réglages derrière leur ligne.
+    await page.getByRole('button', { name: /^Settings/ }).click();
     await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible();
     const theme = page.getByRole('group', { name: 'Theme' });
     for (const nom of ['Dark', 'Light', 'Auto']) await expect(theme.getByRole('button', { name: nom })).toBeVisible();
@@ -38,13 +47,9 @@ for (const largeur of [390, 320]) {
     const sons = page.getByRole('group', { name: 'Sounds' });
     for (const nom of ['Sound', 'Vibration']) await expect(sons.getByRole('button', { name: nom, exact: true })).toBeVisible();
     await expect(page.getByRole('group', { name: 'Mochi’s help' }).getByRole('button', { name: 'Beginners' })).toBeVisible();
-    await expect(page.getByRole('button', { name: /^My account/ })).toContainText('Sign in');
-    await expect(page.getByRole('button', { name: 'Terms and privacy' })).toBeVisible();
-    await expect(page.getByText('Guest', { exact: true })).toBeVisible();
     await expect(page.getByText('Réglages')).toHaveCount(0);
     await expect(page.locator('header').getByText('Profile', { exact: true })).toBeVisible();
     await sansDebordement(page);
-    await page.screenshot({ path: `docs/localisation/captures/profil-en-${largeur}.png` });
   });
 }
 
@@ -137,6 +142,8 @@ test('sans paramètre, une interface française reste en français', async ({ pa
   await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
   const nav = page.getByRole('navigation', { name: 'Navigation principale' });
   await nav.getByRole('button', { name: 'Profil' }).click();
+  await expect(page.getByRole('heading', { name: 'Ton parcours' })).toBeVisible();
+  await page.getByRole('button', { name: /^Réglages/ }).click();
   await expect(page.getByRole('heading', { name: 'Réglages' })).toBeVisible();
   await expect(page.getByRole('switch', { name: /^Confirmer au doigt/ })).toBeVisible();
 });
@@ -214,11 +221,15 @@ for (const largeur of [390, 320]) {
     // Profil complet : statistiques, badges, thèmes du goban.
     await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: 'Profile' }).click();
     const stats = page.getByRole('list', { name: 'Your stats' });
-    for (const legende of ['puzzles', 'day streak', 'games', 'wins']) await expect(stats.getByText(legende, { exact: true })).toBeVisible();
+    for (const legende of ['day record', 'lessons done', 'opponent beaten', 'puzzles solved']) await expect(stats.getByText(legende, { exact: true })).toBeVisible();
     const vitrine = page.getByRole('region', { name: /^Badges, \d of 7$/ });
     await expect(vitrine.getByRole('listitem', { name: 'Pomme beaten: earned' })).toBeVisible();
     await expect(vitrine.getByRole('listitem', { name: 'First game: earned' })).toBeVisible();
     await expect(vitrine.getByRole('listitem', { name: '7-day streak: not earned yet. Daily Go 7 days running.' })).toHaveCount(1);
+    await expect(page.getByText(/problèmes|victoires|Première partie|Réussis/)).toHaveCount(0);
+    await sansDebordement(page);
+    await sansCoupeComposants(page, largeur);
+    await page.getByRole('button', { name: /^Settings/ }).click();
     const goban = page.getByRole('group', { name: 'Board' });
     await expect(goban.getByRole('button', { name: 'Kaya', exact: true })).toBeVisible();
     await expect(goban.getByRole('button', { name: 'Light kaya, unlocks at level 3' })).toBeVisible();

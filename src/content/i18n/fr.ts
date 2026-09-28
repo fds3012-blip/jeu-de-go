@@ -15,7 +15,15 @@ export const fr = {
   'profil.invite': 'Invité',
   'profil.inviteDetail': 'Sans compte, tout reste sur ce téléphone.',
   // Série sans compte (#161) : invitation au 3e jour de série.
-  'serie.invitation': 'Crée un compte pour garder ta série.',
+  // #214 : promesse exacte. Seules la série (importer_serie_appareil) et les leçons (syncProgress) montent sur le serveur.
+  'serie.invitation': 'Avec un compte, ta série et tes leçons te suivent.',
+  'compte.promesse': 'Ta série et tes leçons te suivent sur tous tes appareils, et tu joues en ligne.',
+  'compte.resteIci': 'Le reste (niveau, XP, badges, gels) reste sur ce téléphone.',
+  'compte.sansMotDePasse': 'Pas de mot de passe : on t’envoie un lien par e-mail.',
+  // Profil « Ton parcours » (#214) : la progression d'abord, les réglages derrière une ligne.
+  'profil.parcours': 'Ton parcours',
+  'profil.reglagesResume': 'Thème, sons…',
+  'profil.installer': 'Installer l’app',
   'serie.creerCompte': 'Créer un compte',
   // Rien de gagné ne se perd (#212) : retour après une série perdue, sans reproche. {jours} et {record} : « 7 jours ».
   'serie.perdueRecord': 'Content de te revoir ! Ta série de {jours} est dans ton record. On en commence une nouvelle ?',
@@ -220,12 +228,14 @@ export const fr = {
   // Carte « Installe l'app » (#178)
   'installer.titre': 'Garde le go sous la main',
   'installer.texte': 'Ajoute l’app à ton écran d’accueil : elle s’ouvre en un geste, en plein écran.',
-  'installer.touche': 'Touche ',
+  'installer.touche': 'Dans Safari, touche ',
   'installer.partager': 'Partager',
   'installer.choisis': 'Choisis ',
   'installer.ecranAccueil': 'Sur l’écran d’accueil',
   'installer.oui': 'Installer',
   'installer.plusTard': 'Plus tard',
+  'installer.texteCourt': 'Ajoute l’app à ton écran d’accueil : un geste pour revenir.',
+  'installer.comment': 'Comment faire ?',
 
   // Texte partagé du Go du jour (#75)
   'partage.numero': 'Go du jour n° {numero}',
@@ -234,10 +244,11 @@ export const fr = {
 
   // Profil vivant (#103) : statistiques et badges (mêmes textes que les données d'origine, vérifié par un test)
   'stats.aria': 'Tes statistiques',
-  'stats.problemes': { one: 'problème', other: 'problèmes' },
-  'stats.serie': { one: 'jour de série', other: 'jours de série' },
-  'stats.parties': { one: 'partie', other: 'parties' },
-  'stats.victoires': { one: 'victoire', other: 'victoires' },
+  // #214 : « Ton parcours » : record, leçons, adversaires battus, problèmes réussis (sans total : ils n'ont pas de fin).
+  'stats.problemes': { one: 'problème réussi', other: 'problèmes réussis' },
+  'stats.lecons': { one: 'leçon finie', other: 'leçons finies' },
+  'stats.adversaires': { one: 'adversaire battu', other: 'adversaires battus' },
+  'stats.sur': 'sur {total}',
   'vitrine.titre': 'Badges, {n} sur {total}',
   'vitrine.obtenu': '{nom} : obtenu',
   'vitrine.aGagner': '{nom} : à gagner. {condition}',
