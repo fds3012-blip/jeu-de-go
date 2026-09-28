@@ -29,6 +29,7 @@ import { annoncerPerte, messagePerte } from './serieRecord';
 import { VISITE_KEY, etatFlamme, lireVisite, visiter } from './flamme';
 import { serieAffichee } from './serieLocale';
 import { messageGel } from './gel';
+import { goDuJourFaitAppareil } from './defiAppareil';
 import { BarreNav, type Onglet } from '../ui/IconesNav';
 import { BarreNiveau, FeteNiveau } from '../ui/Niveau';
 import { annonceKomi, equilibrage, KOMI_NORMAL, partiesOrdi, type Equilibrage } from './equilibrage';
@@ -115,7 +116,7 @@ export function App() {
   const [partie, setPartie] = useState(0); // change à chaque partie pour repartir d'un plateau vide
   const numeroJour = numeroDuJour(new Date());
   const duJour = problemeDuNumero(PROBLEMES_LOCAUX, numeroJour);
-  const duJourFait = readLocal<Serie | null>(SERIE_KEY, null)?.dernier === numeroJour;
+  const duJourFait = goDuJourFaitAppareil(numeroJour);
   const home = accueil(parties, done, adv, settings.size, { numero: numeroJour, absence, duJourFait, titreDuJour: duJour?.title });
   const flamme = etatFlamme(serie, duJourFait);
   const leconConseillee = LESSONS.find(l => (progress[l.id] ?? 0) < l.steps.length);
@@ -172,7 +173,12 @@ export function App() {
     };
   }
 
-  const go = (t: Tab) => { setAnnonceGel(null); setRetourSerie(null); setTab(t); setPlaying(false); setLessonId(null); setVueProfil('menu'); window.scrollTo({ top: 0 }); };
+  // Toucher l'onglet Problèmes déjà actif ramène à sa liste, comme Apprendre ramène au chemin (recette du 28/09, R4).
+  const [racineProblemes, setRacineProblemes] = useState(0);
+  const go = (t: Tab) => {
+    if (t === 'problemes' && tab === 'problemes') setRacineProblemes(n => n + 1);
+    setAnnonceGel(null); setRetourSerie(null); setTab(t); setPlaying(false); setLessonId(null); setVueProfil('menu'); window.scrollTo({ top: 0 });
+  };
 
   const enPartie = tab === 'jouer' && !!playing;
   let screen;
@@ -195,7 +201,7 @@ export function App() {
     screen = <LearnHome progress={progress} onOpen={setLessonId} sync={syncState} />;
   } else if (tab === 'problemes') {
     screen = <Puzzles db={supabase} userId={session?.user.id} sessionLoading={session === undefined} confirmTouch={settings.confirmTouch} onCompte={() => go('profil')}
-      lien={LIEN_DU_JOUR} onDuJour={setDuJourOuvert} celebrer={settings.celebrations} />;
+      lien={LIEN_DU_JOUR} onDuJour={setDuJourOuvert} celebrer={settings.celebrations} racine={racineProblemes} />;
   } else if (tab === 'profil') {
     screen = <Profil vue={vueProfil} onVue={setVueProfil} settings={settings} set={set} profil={profil} serie={serie} record={recordSerie} />;
   } else {
@@ -252,7 +258,7 @@ export function App() {
         {accueilVisible && <BarreNiveau />}
         {screen}
       </main>
-      <FeteNiveau celebrer={settings.celebrations} />
+      <FeteNiveau celebrer={settings.celebrations} ecran={`${tab}|${playing}|${lessonId ?? ''}|${vueProfil}`} />
       <AnnonceXp celebrer={settings.celebrations} />
       {/* Pendant une partie, comme chez chess.com : pas de barre de navigation, « ‹ » ramène à l'accueil. */}
       {!enPartie && <BarreNav actif={tab} onChoisir={go} />}

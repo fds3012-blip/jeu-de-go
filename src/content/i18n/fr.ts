@@ -242,6 +242,14 @@ export const fr = {
   'erreurs.bravoKataGo': 'Bravo, c’est le coup de KataGo !',
   'erreurs.refutation': 'Pas celui-là. Cherche encore.',
 
+  // Révision du jour (#199) : problèmes déjà réussis, repris à J+1, J+3, J+7 ; « un défi par jour » pour la série
+  'revision.titre': 'Révision du jour',
+  'revision.aide': 'Refaire un problème réussi t’aide à le retenir.',
+  'revision.ouvrirAria': 'Réviser : {titre}',
+  'revision.dejaReussi': 'Déjà réussi · refais-le sans aide',
+  'revision.faite': 'Révision faite. D’autres problèmes reviendront demain.',
+  'revision.serie': 'Un défi par jour garde ta série : le Go du jour, une leçon ou la révision.',
+
   // Carte « Installe l'app » (#178)
   'installer.titre': 'Garde le go sous la main',
   'installer.texte': 'Ajoute l’app à ton écran d’accueil : elle s’ouvre en un geste, en plein écran.',
@@ -267,17 +275,17 @@ export const fr = {
   'vitrine.obtenu': '{nom} : obtenu',
   'vitrine.aGagner': '{nom} : à gagner. {condition}',
   'badge.premiere-partie.nom': 'Première partie',
-  'badge.premiere-partie.condition': 'Joue une partie contre l’ordi.',
+  'badge.premiere-partie.condition': 'Joue contre l’ordi.',
   'badge.premier-probleme.nom': 'Premier problème',
   'badge.premier-probleme.condition': 'Réussis un problème.',
   'badge.victoire-pomme.nom': 'Pomme battue',
-  'badge.victoire-pomme.condition': 'Gagne une partie contre Pomme.',
+  'badge.victoire-pomme.condition': 'Gagne contre Pomme.',
   'badge.palier-debutant.nom': 'Palier Débutant',
-  'badge.palier-debutant.condition': 'Réussis tout le palier Débutant.',
+  'badge.palier-debutant.condition': 'Finis le palier Débutant.',
   'badge.dix-problemes.nom': '10 problèmes',
   'badge.dix-problemes.condition': 'Réussis 10 problèmes.',
   'badge.palier-novice.nom': 'Palier Novice',
-  'badge.palier-novice.condition': 'Réussis tout le palier Novice.',
+  'badge.palier-novice.condition': 'Finis le palier Novice.',
   'badge.serie-7.nom': '7 jours de série',
-  'badge.serie-7.condition': 'Fais le Go du jour 7 jours de suite.',
+  'badge.serie-7.condition': 'Fais 7 Go du jour de suite.',
 } as const;

@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { PastilleXp } from './PastilleXp';
-import { cumuler, texteXp } from './gainXp';
+import { cumuler, hautPastille, HAUT_XP, HAUT_XP_SOUS_FETE, texteXp } from './gainXp';
 import type { Gain } from '../app/xp';
 
 // Issue #162 : pastille « +N XP ». Rendu statique (node, sans DOM) : `window` minimal pour `matchMedia`.
@@ -35,5 +35,20 @@ describe('PastilleXp', () => {
     const a = cumuler(null, gain({ points: 30, bonus: 20 }));
     const b = cumuler(a, gain({ points: 10, niveauAvant: 1, niveauApres: 2 }));
     expect(b).toEqual({ points: 40, bonus: 20, niveauFranchi: true });
+  });
+});
+
+describe('hautPastille (recette du 28/09, R3)', () => {
+  it("se pose sous l'en-tête d'un problème, pas sur son titre", () => {
+    expect(hautPastille(56, false, 844)).toBe(62);
+  });
+  it("sans en-tête, ou en-tête sorti de l'écran : sous l'encoche", () => {
+    expect(hautPastille(null, false, 844)).toBe(HAUT_XP);
+    expect(hautPastille(-20, false, 844)).toBe(HAUT_XP);
+    expect(hautPastille(400, false, 844)).toBe(HAUT_XP);
+  });
+  it('un niveau franchi : sous la carte de niveau si elle descend plus bas que l’en-tête', () => {
+    expect(hautPastille(56, true, 844)).toBe(HAUT_XP_SOUS_FETE);
+    expect(hautPastille(120, true, 844)).toBe(126);
   });
 });

@@ -388,7 +388,8 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   useEffect(() => { if (phase === 'end') track(EVENTS.partieTerminee, { mode: ai ? 'ordi' : 'deux', adversaire: ai?.id, taille: size, coups: history.length - 1, fin: resigned ? 'abandon' : 'score', gagnant: (resigned ? 3 - resigned : sc.winner) === 1 ? 'noir' : 'blanc' }); }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
   // Progression (issue #109) : la partie terminée rapporte de l'XP, une victoire contre l'ordi davantage
   // (au moins 10 coups : un abandon immédiat ne rapporte rien).
-  useEffect(() => { if (phase === 'end' && history.length > 10) gagnerXp(ai && (resigned ? 3 - resigned : sc.winner) === 1 ? 'victoire' : 'partie'); }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Le gain arrive avec l'écran de fin, après le récit du score : « +60 XP » ne doit pas dévoiler la victoire (recette du 28/09, R2).
+  useEffect(() => { if (phase === 'end' && recitFini && history.length > 10) gagnerXp(ai && (resigned ? 3 - resigned : sc.winner) === 1 ? 'victoire' : 'partie'); }, [phase, recitFini]); // eslint-disable-line react-hooks/exhaustive-deps
   // Première partie contre l'ordi menée jusqu'au score ou à l'abandon : une seule fois par appareil (trackOnce, #35).
   useEffect(() => { if (phase === 'end' && ai) trackOnce(EVENTS.premierePartieTerminee, { adversaire: ai.id, taille: size, coups: history.length - 1, fin: resigned ? 'abandon' : 'score', indices: indicesUtilises, secondes: secondsSinceOpen() }); }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
