@@ -1,0 +1,35 @@
+/* Analyser une partie SGF (#286). Une seule action en relief (le bouton fixé en bas), le reste en secondaire. */
+.import { padding-bottom: calc(var(--cible-cta) + var(--space-8)); }
+.import-intro, .import-resume { margin: 0 0 var(--space-4); color: var(--text); font-size: var(--fs-base); line-height: var(--lh-base); }
+.import-resume { font-variant-numeric: tabular-nums; font-weight: var(--fw-medium); }
+.import-aide { margin: var(--space-3) 2px 0; color: var(--muted); font-size: var(--fs-corps-s, 14px); line-height: 1.4; }
+
+/* Fichier : bouton secondaire pleine largeur ; le vrai champ reste accessible au clavier (focus visible sur le libellé). */
+.import-fichier { display: flex; align-items: center; justify-content: center; width: 100%; border-color: var(--line); cursor: pointer; }
+.import-fichier:active { background: var(--surface-2); }
+.import-fichier:focus-within { outline: 3px solid var(--focus); outline-offset: 2px; }
+.import-ou { display: block; margin: var(--space-4) 2px var(--space-2); color: var(--muted); font-size: var(--fs-corps-s, 14px); }
+.import-texte { display: block; width: 100%; min-height: 132px; box-sizing: border-box; resize: vertical; padding: var(--space-3);
+  border: 1.5px solid var(--line); border-radius: var(--radius-s); background: var(--surface); color: var(--text);
+  font: 14px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap: anywhere; }
+.import-texte:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.import-texte[aria-invalid="true"] { border-color: var(--danger); }
+.import-erreur { margin: var(--space-2) 2px 0; color: var(--danger-texte); font-weight: var(--fw-bold); font-size: var(--fs-corps-s, 14px); line-height: 1.4; }
+.import-derniere { display: block; margin: var(--space-3) auto 0; }
+
+/* Camp du joueur : deux grandes cartes, pierre + couleur + nom (le nom vient du fichier : coupé, jamais interprété). */
+.import-camps { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); }
+.import-camp { display: flex; align-items: center; gap: var(--space-2); min-width: 0; min-height: 64px; padding: var(--space-2) var(--space-3);
+  border: 2px solid var(--line); border-radius: var(--radius-bouton); background: var(--surface); color: var(--text); text-align: left;
+  transition: border-color var(--duree-rapide) var(--ease), background-color var(--duree-rapide) var(--ease); }
+.import-camp:active { background: var(--surface-2); }
+.import-camp[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+/* Choix visible sans la couleur seule : une coche, en plus de la bordure d'accent. */
+.import-camp { position: relative; }
+.import-camp[aria-pressed="true"]::after { content: ""; position: absolute; top: 8px; right: 10px; width: 6px; height: 11px;
+  border: solid var(--accent-texte); border-width: 0 2.5px 2.5px 0; transform: rotate(45deg); }
+.import-camp-texte { display: flex; flex-direction: column; min-width: 0; }
+.import-camp-texte b { font-weight: var(--fw-bold); }
+.import-camp-nom { color: var(--muted); font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.import .cta:disabled { opacity: .45; cursor: default; }
+@media (prefers-reduced-motion: reduce) { .import-camp { transition: none; } }

@@ -57,6 +57,8 @@ export const EVENTS = {
   solutionVue: 'solution_vue',
   // Révision du jour (#199) : les exercices du jour (problèmes déjà réussis, repris à J+1, J+3, J+7) sont tous faits.
   revisionFaite: 'revision_faite',
+  // Import d'une partie SGF réussi (#286) : `octets` (taille du texte), `coups`, `taille` (plateau), `source` (fichier ou texte).
+  sgfImporte: 'sgf_importe',
 } as const;
 export type AnalyticsEvent = (typeof EVENTS)[keyof typeof EVENTS];
 export type Props = Record<string, string | number | boolean | null | undefined>;

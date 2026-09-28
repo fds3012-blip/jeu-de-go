@@ -108,3 +108,14 @@
 .revue-erreur-cle b { color: var(--accent-texte); }
 /* Défaite nette sans erreur isolée : ton neutre, pas le vert des félicitations. */
 .revue-aucune.revue-diffuses { font-weight: var(--fw-medium); color: var(--text); line-height: 1.35; }
+
+/* Partie importée (#286) : barre d'avancement de l'analyse, « Arrêter l'analyse », « Analyser une autre partie ». */
+.revue-avance { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.revue-avance .revue-analyse { flex: 1 1 100%; }
+.revue-barre { flex: 1 1 auto; min-width: 0; height: 8px; appearance: none; border: 0; border-radius: var(--radius-pill); background: var(--surface-2); overflow: hidden; }
+.revue-barre::-webkit-progress-bar { background: var(--surface-2); border-radius: var(--radius-pill); }
+.revue-barre::-webkit-progress-value { background: var(--accent); border-radius: var(--radius-pill); transition: width var(--duree-rapide) var(--ease); }
+.revue-barre::-moz-progress-bar { background: var(--accent); border-radius: var(--radius-pill); }
+.revue-arret { flex: none; border-color: var(--line); }
+.revue-importer { display: block; margin: var(--space-2) auto 0; }
+@media (prefers-reduced-motion: reduce) { .revue-barre::-webkit-progress-value { transition: none; } }

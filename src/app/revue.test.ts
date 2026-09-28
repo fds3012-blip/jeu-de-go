@@ -166,3 +166,14 @@ describe('résultat dans le SGF (#187)', () => {
     expect(positionsDepuisSgf(texte).positions).toHaveLength(h.length);
   });
 });
+
+describe('partie importée avec handicap (#286)', () => {
+  it('la revue part des pierres de handicap, Blanc au trait', () => {
+    const { positions, komi } = positionsDepuisSgf('(;GM[1]SZ[19]KM[0.5]HA[2]AB[pd][dp];W[dd];B[pp])');
+    expect(komi).toBe(0.5);
+    expect(positions).toHaveLength(3);
+    expect(positions[0].board.filter(c => c === 1)).toHaveLength(2);
+    expect(positions[0].toPlay).toBe(2);
+    expect(positions[2].board.filter(c => c === 1)).toHaveLength(3);
+  });
+});
