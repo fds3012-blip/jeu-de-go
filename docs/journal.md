@@ -499,3 +499,27 @@ Chaque livraison : issue traitée, agent, pull request, résultat des vérificat
 - #263 (#258) Test de passe robuste sous charge (la cause était le test). Deux autres specs instables : #260.
 - #264 (#237, N6) Après une erreur, on rejoue directement sur le plateau.
 - Assemblage vérifié en local : Vitest 7 343 tests, Playwright 218 passés. CI GitHub toujours bloquée par la facturation.
+
+## 28/09 au soir : CI débloquée, tout fusionné
+
+**Déblocage**
+- Cause du blocage : les 2 000 minutes gratuites d'Actions du mois étaient épuisées. Le dépôt était privé, sans moyen de paiement, et le quota était partagé avec `flightle`.
+- Décision de Florian : passer le dépôt en public.
+  - Avant de le faire, j'ai vérifié tout l'historique (gitleaks, 571 commits) : aucun secret, seulement des clés publiques par nature.
+  - La licence « tous droits réservés » est ajoutée (#266, #267).
+- #246 est fusionnée après la CI verte. Les 21 PR qu'elle contenait sont fermées.
+- Les lots O, P et Q sont appliqués en production, avec des empreintes md5 identiques : **165 problèmes**.
+- Vercel limite le nombre de déploiements par jour (plan gratuit) et reste bloqué pendant 24 h. Deux projets Vercel pointent vers le même dépôt : c'est à Florian de décider lequel supprimer. Les déploiements reprendront quand Florian le décidera.
+
+**Fusionné (CI verte)**
+- #270 (#268) : confirmation avant de quitter une partie en cours ; nom accessible de « Problème suivant » ; la feuille de verdict ne cache plus le focus.
+- #271 (#136) : outil de preuve de vie et mort (`src/go/preuve-vie-mort.ts`, yeux de Benson ; un ko ou un seki donne « non résolu ») et lot Q.
+- #272 (#260) : deux specs rendues robustes sous charge.
+- #269 et #273 (#167) : les 8 leçons en anglais avec `?lang=en`, relues par l'agent pédagogie.
+- #274 (#75) : Go du jour partageable ; un lien ancien ouvre ce défi-là ; « Partager » devient une action secondaire.
+- #275 (#77) : « Rejoue cette erreur » depuis la revue, avec révision espacée jusqu'à la maîtrise.
+
+**Appris**
+- Les passages en public se préparent : scan de tout l'historique, licence, liste de ce qui devient visible.
+- La CI annule les exécutions de main quand une autre fusion arrive. Seule la dernière exécution fait foi.
+- Un agent a recréé une branche dont le nom existait déjà sur GitHub. Elle a été poussée sous un autre nom (`rejoue-erreurs-77`) pour ne pas écraser l'historique.
