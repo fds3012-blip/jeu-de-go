@@ -1019,4 +1019,40 @@ export const PROBLEMES_EN: Record<string, TexteProbleme> = {
     explanation: "Superb! B2 is the vital point of the corner. It supports your stone at A1 and cuts White's space into pieces that are too small. White can no longer make two eyes, and its group ends up captured.",
     refutation: 'Not quite. White plays B2 and takes the vital point. It then keeps enough room for two eyes: its group is alive.',
   },
+  s01: {
+    title: 'Against the edge',
+    prompt: 'Capture the marked stones in three moves or less.',
+    explanation: 'Well done! The three white stones have three liberties: C2, D2 and E2. On the left, your stone at B2 already closes the way. E2 closes the right. If White extends to D2, you play D1; if it plays C2, you play C1. It runs into the edge and your stones: it stays in atari (only one liberty), and you capture it.',
+    refutation: 'Not quite. White plays E2, on the open side, and keeps too many liberties to be captured in three moves. Your stone at B2 already closes the left: close the right.',
+  },
+  s02: {
+    title: 'The net between your stones',
+    prompt: 'Capture the marked stone in three moves or less.',
+    explanation: "Well done! F6 doesn't touch the stone, but it closes both its exits, E6 and F5: this is a net (geta in Japanese). If White comes out at E6, you play E7: it is in atari, and if it extends to F5, you take it at F4. If it comes out at F5, you play F4, then E7.",
+    refutation: "Not quite. White extends to F5, or to E6 if you played F5 or F4, and keeps enough liberties to escape. Don't touch the stone: close both its exits.",
+  },
+  s03: {
+    title: 'Cut first',
+    prompt: 'Capture the marked stone in five moves or less.',
+    explanation: 'Superb! D3 cuts E3 off from its stone at D4 and puts it in atari in one move. It extends to F3: you play G3. It goes down to F2: you play G2. It extends to F1: it has two liberties, E1 and G1, against the edge. You play E1, it extends to G1, and you take it at H1. Putting a fleeing stone back in atari every move is a ladder.',
+    refutation: 'Not quite. White plays D3: it connects E3 to its stone at D4 and escapes. Play D3 first: you cut and put it in atari in one move.',
+  },
+  s04: {
+    title: 'The ladder breaker',
+    prompt: 'Capture the marked stone in five moves or less.',
+    explanation: 'Superb! F3 puts the stone in atari and pushes it to the left, away from the white stone at G2. It extends to D3: you play C3. It goes down to D2: you play C2. It extends to D1: you play E1, then it extends to C1 and you take it at B1. This is a ladder. If you play D3, White extends to F3, toward G2: it has three liberties and escapes.',
+    refutation: "Not quite. White extends to F3, on the side of its stone at G2, and escapes: the ladder doesn't work on that side. Push it to the left instead, where nothing is waiting.",
+  },
+  s05: {
+    title: 'Your helper stone',
+    prompt: 'Capture the marked stone in five moves or less.',
+    explanation: "Superb! D3 closes the exit toward the center, without putting it in atari. If White extends to F3, you play G3: your stone at F2 blocks it, and it is in atari. If it goes down to E2, you play D2. Each time, it runs into the edge and your stone at F2, which acts as a helper: it can't get out, and you capture it.",
+    refutation: 'Not quite. White extends to D3, toward the center, and escapes. Close that exit first, without putting it in atari: your stone at F2 guards the other side.',
+  },
+  s06: {
+    title: 'The net from a distance',
+    prompt: 'Capture the marked stone in five moves or less.',
+    explanation: "Superb! G5 doesn't touch the stone: it closes the way to the right from a distance. This is a distant net. If White comes out at E6, you play D6; if it goes on to F6, you play F7, then G7 if it extends to G6. If it comes out at F5, you play F4. Your stones at E7 and H6 close the top: it stays trapped, and you capture it.",
+    refutation: 'Not quite. White extends to F5, or to E6 if you played F5 or F4, and finds a way out. Close the way to the right from a distance, without touching the stone.',
+  },
 };

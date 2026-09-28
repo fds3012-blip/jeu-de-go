@@ -31,7 +31,7 @@ const LOT_Q: PuzzleRow[] = [
       refutation: "Pas tout à fait. Blanc joue G1, ou D1 si tu as joué E1. Il garde assez de place pour deux yeux : son groupe est vivant. Joue en G1 ou en D1 avant lui." },
     title: 'Cinq points sur le bord',
     prompt: 'Noir joue et tue. Blanc a cinq points vides, de C1 à G1. Ta pierre H1 touche G1.',
-    explanation: "Superbe ! Deux coups marchent. En G1, tu réduis l'espace à quatre points, et F1 touche ta pierre : Blanc n'a plus la place pour deux yeux (deux points vides entourés par ses pierres). En D1, tu joues au milieu de son espace et tu l'empêches de le couper en deux yeux. Dans les deux cas, son groupe finit capturé."
+    explanation: "Superbe ! Deux coups marchent. En G1, tu réduis l'espace à quatre points, et F1 touche ta pierre : Blanc n'a plus la place pour deux yeux (deux points vides entourés par ses pierres). En D1, tu joues à l'intérieur de son espace et tu l'empêches de le couper en deux yeux. Dans les deux cas, son groupe finit capturé."
   },
 ];
 

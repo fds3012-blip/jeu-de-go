@@ -12,6 +12,7 @@ import { ALL_PUZZLES, CALENDRIER_GO_DU_JOUR } from '../content/puzzles';
 import { THEME_DU_PROBLEME } from '../content/themes';
 import { checkAnswer, parsePuzzles, startOf, type Puzzle } from '../data/puzzles';
 import { fromLabel, toLabel } from './coords';
+import { avantMiseAJour } from './miseAJourTextes';
 import { plainKey, symmetries } from './lecteurs-lot-e';
 import { cederLaMain, preuveParCoup } from './preuve-par-coup';
 import { defautsDeZone, issueApres, yeuxDuGroupe, type Issue } from './preuve-vie-mort';
@@ -88,10 +89,13 @@ describe('lot R : identifiants, thèmes, doublons, calendrier, migration (issue 
     for (const p of all) expect(THEME_DU_PROBLEME[p.id], p.id).toBe('vie-mort');
   });
 
-  it('le Go du jour garde son ordre : le lot R vient après le lot Q', () => {
-    const ids = LOT_R.map(r => r.id);
-    expect(CALENDRIER_GO_DU_JOUR.slice(-ids.length)).toEqual(ids);
-    expect(CALENDRIER_GO_DU_JOUR.indexOf('r01')).toBeGreaterThan(CALENDRIER_GO_DU_JOUR.indexOf('q03'));
+  it('le Go du jour garde son ordre : le lot R, d’un seul tenant, vient après le lot Q et juste avant s01', () => {
+    const ids = LOT_R.map(r => r.id), i = CALENDRIER_GO_DU_JOUR.indexOf('r01');
+    expect(CALENDRIER_GO_DU_JOUR.slice(i, i + ids.length)).toEqual(ids);
+    expect(i).toBeGreaterThan(CALENDRIER_GO_DU_JOUR.indexOf('q03'));
+    // Lot S (#136) : il suit le lot R ; tant qu'il n'existe pas, le lot R ferme le calendrier.
+    const s = CALENDRIER_GO_DU_JOUR.indexOf('s01');
+    expect(s === -1 ? CALENDRIER_GO_DU_JOUR.length : s).toBe(i + ids.length);
   });
 
   it('aucun doublon : ni identifiant, ni position (à une rotation ou un miroir près, marques ignorées) déjà utilisés', () => {
@@ -111,7 +115,8 @@ describe('lot R : identifiants, thèmes, doublons, calendrier, migration (issue 
     expect(sql).toMatch(/on conflict \(id\) do nothing/i);
     expect(sql.match(/\('r\d\d', null, 9,/g)).toHaveLength(LOT_R.length);
     const q = (s: string) => s.replace(/'/g, "''");
-    for (const row of LOT_R) {
+    // Textes corrigés depuis par 20260928233100_textes_problemes (#282) : on compare au texte d'avant, refait par avantMiseAJour.
+    for (const row of LOT_R.map(r => avantMiseAJour(r))) {
       expect(sql).toContain(`('${row.id}', null, 9, '${q(JSON.stringify(row.setup))}', array[${row.answers.map(a => `'${a}'`).join(',')}], '${q(row.title!)}', '${q(row.prompt!)}', '${q(row.explanation!)}', ${row.difficulty})`);
     }
   });

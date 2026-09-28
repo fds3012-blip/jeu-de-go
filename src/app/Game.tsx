@@ -24,8 +24,9 @@ import { ProposerInstallation } from '../ui/ProposerInstallation';
 import { noterVictoire } from './installation';
 import { RecitScore } from '../ui/RecitScore';
 import { mouvementsReduits } from '../ui/defilement';
+import { conseil as conseilMochi, phraseConseil } from '../engine/conseil';
 import { recitScore } from './score';
-import { Portrait, type Humeur } from '../ui/Portrait';
+import { Portrait, PortraitMochi, type Humeur } from '../ui/Portrait';
 
 /** Durée d'une réaction du portrait de l'adversaire (content, surpris), en millisecondes. */
 const DUREE_HUMEUR = 1500;
@@ -93,9 +94,19 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   // Libertés à montrer (atari) et zone d'indice : valables pour un seul état de l'historique.
   const [atari, setAtari] = useState<{ len: number; libs: number[] } | null>(null);
   const [indice, setIndice] = useState<{ len: number; p: number } | null>(null);
+  // Conseil de Mochi (#80) : une phrase et la zone entourée, pour un seul état de l'historique.
+  const [conseilVu, setConseilVu] = useState<{ len: number; zone: number[] } | null>(null);
   const [cherche, setCherche] = useState(false);
   // Indices donnés dans cette partie : limités à 3 contre l'ordi (#35), illimités à deux.
   const [indicesUtilises, setIndicesUtilises] = useState(0);
+  // Conseil de Mochi (#80) : calculé sur l'appareil par src/engine/conseil.ts (règles seules, instantané).
+  function conseiller() {
+    if (!myTurn) return;
+    const c = conseilMochi(pos);
+    if (!c) { setConseilVu(null); setMsg(tr('conseil.aucun')); return; }
+    setConseilVu({ len: history.length, zone: c.zone });
+    setMsg(phraseConseil(c, size));
+  }
   // « Qui mène ? » (#94) : carte des territoires et phrase, valables pour un seul état de l'historique, 3 s au plus.
   const [quiMene, setQuiMene] = useState<{ len: number; owner: Int8Array; phrase: string; n: number } | null>(null);
   const [quiMeneCalcul, setQuiMeneCalcul] = useState(false);
@@ -427,7 +438,9 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     const initiale = c === 1 && profil?.pseudo ? profil.pseudo[0] : undefined;
     return (
       <Bandeau nom={name(c)} sousTitre={sousTitre} actif={actif} captures={q.captures[c]} pierresPrises={c === 1 ? 'blanc' : 'noir'}
-        portrait={c === 2 && ai ? <Portrait id={ai.id} taille={44} humeur={humeur.h} decoratif signature={false} />
+        // Partie guidée (#79) : l'adversaire est Mochi, pas l'adversaire de l'échelle dont il emprunte la force (recette du soir, S1).
+        portrait={c === 2 && ai && guidee ? <PortraitMochi taille={44} decoratif />
+          : c === 2 && ai ? <Portrait id={ai.id} taille={44} humeur={humeur.h} decoratif signature={false} />
           : c === 2 && portrait ? portrait : <Avatar couleur={c} initiale={initiale} />}
         replique={c === 2 ? replique : null} avant={c === 2 ? retour : undefined} gain={gain} />
     );
@@ -510,8 +523,10 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     return (
       <FinPartie
         fond={<Board size={size} board={pos.board} marks={{ owner: abandon ? undefined : sc.owner, dead, last: pos.lastMove }} />}
-        sceau={ai ? <Portrait id={ai.id} taille={108} decoratif humeur={gagne ? 'surpris' : 'content'} /> : <span className={`fin-pierre ${winner === 1 ? 'b' : 'w'}`} aria-hidden="true" />}
-        tampon={ai && gagne ? battuAccorde(ai.id).toUpperCase() : null}
+        sceau={ai && guidee ? <PortraitMochi taille={108} decoratif humeur={gagne ? 'fier' : 'content'} />
+          : ai ? <Portrait id={ai.id} taille={108} decoratif humeur={gagne ? 'surpris' : 'content'} /> : <span className={`fin-pierre ${winner === 1 ? 'b' : 'w'}`} aria-hidden="true" />}
+        // Partie guidée : elle ne compte pas dans le bilan, personne n'est « battu ».
+        tampon={ai && gagne && !guidee ? battuAccorde(ai.id).toUpperCase() : null}
         titre={titre}
         marge={abandon || egalite ? null : sc.margin}
         texteMarge={v => tr('fin.marge', { n: v, v: virgule(v), plateau })}
@@ -530,6 +545,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   const lead = ai ? avanceBarre(phase, estimation?.lead ?? null, sc) : null;
   const libs = atari && atari.len === history.length && phase === 'play' ? atari.libs : undefined;
   const zone = indice && indice.len === history.length && phase === 'play' ? indice.p : undefined;
+  const zoneConseil = conseilVu && conseilVu.len === history.length && phase === 'play' ? conseilVu.zone : undefined;
   // Ta capture reste affichée pendant que Pomme réfléchit (#187) : le « Bravo » ne s'efface qu'à sa réponse.
   const feteVisible = fete && fete.len === history.length && phase === 'play' ? fete : null;
   const pense = phase === 'play' && thinking && !!ai && !feteVisible;
@@ -545,7 +561,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
       {ai && avantage && (!estimationKo || phase === 'score') && <BarreAvantage libelle={lead === null ? '' : libelleAvantage(lead)} part={lead === null ? 0.5 : partNoir(lead, size)} titre={phase === 'score' ? tr('partie.scoreCompte') : undefined} />}
       <div className="partie-plateau">
         <Board size={size} board={pos.board} toPlay={pos.toPlay} interactive={phase === 'score' || myTurn} stonesTappable={phase === 'score'} confirmTouch={confirmTouch}
-          marks={{ last: pos.lastMove, owner: phase === 'score' ? sc.owner : quiMeneVisible?.owner, ownerFondu: !!quiMeneVisible, dead, libs, zone, ouverts: phase === 'play' ? frontieresVisibles(frontieres, history.length, pos.board, size, !!ai) : undefined }} onPlay={onPlay} shake={shake} versCouvercles noms={ai ? { 2: ai.nom } : undefined} />
+          marks={{ last: pos.lastMove, owner: phase === 'score' ? sc.owner : quiMeneVisible?.owner, ownerFondu: !!quiMeneVisible, dead, libs, zone, conseil: zoneConseil, ouverts: phase === 'play' ? frontieresVisibles(frontieres, history.length, pos.board, size, !!ai) : undefined }} onPlay={onPlay} shake={shake} versCouvercles noms={ai ? { 2: ai.nom } : undefined} />
         {quiMeneVisible && <p key={quiMeneVisible.n} className="qui-mene-phrase" aria-hidden="true">{fr(quiMeneVisible.phrase)}</p>}
         {/* Zones d'annonce permanentes (audit web, points 3 et 4) : seul leur texte change, pour être lues à coup sûr. */}
         <p className="sr-only" role="status" data-annonce="qui-mene">{quiMeneVisible ? fr(quiMeneVisible.phrase) : ''}</p>
@@ -573,6 +589,8 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
         <BarreActions label={tr('partie.actions')} actions={[
           { label: tr(cherche ? 'partie.action.indiceCours' : 'partie.action.indice'), icone: ai ? <CompteurIndices restants={restants}><Icone nom="indice" /></CompteurIndices> : <Icone nom="indice" />,
             onClick: hint, disabled: !myTurn || cherche || restants <= 0, description: ai ? descriptionIndices(restants) : undefined },
+          ...(ai && aide ? [{ label: tr('partie.action.conseil'), action: 'conseil', icone: <PortraitMochi humeur="neutre" taille={26} decoratif />,
+            onClick: conseiller, disabled: !myTurn }] : []),
           ...(avecQuiMene ? [{ label: fr(tr('partie.action.quiMene')), action: 'qui-mene',
             icone: ai ? <CompteurIndices restants={quiMeneReste}><Icone nom="quimene" /></CompteurIndices> : <Icone nom="quimene" />,
             onClick: quiMeneToucher, disabled: !quiMeneVisible && (quiMeneCalcul || quiMeneReste <= 0),
