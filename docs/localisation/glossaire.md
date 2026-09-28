@@ -160,7 +160,7 @@ Principes :
 - Conditions : « saisir la CNIL » devient *contact the CNIL, the French data protection authority* (sigle inconnu hors de France).
 - « Pomme continue : il reste un point à prendre en E4 » : *Pomme keeps playing: there’s still one point to take at E4*. La raison vient du moteur par une clé et des paramètres (point, nombre).
 - Gel : « Ton gel a protégé ta série de 12 jours ! » : *Your freeze protected your 12-day streak!*
-- Contenu encore en français en anglais (#167, étape 5) : titres, consignes et explications des problèmes. L’e2e `langue-parcours.spec.ts` retire tout le contenu des leçons et des problèmes avant de chercher des mots français.
+- Problèmes en anglais (#167) : catalogue local `src/content/problemes.en.ts`, indexé par id, sans migration. Il remplace titre, consigne, explication et réfutation par-dessus le français, que le problème vienne de Supabase ou des lots (`parsePuzzle`). Les 165 problèmes locaux sont traduits ; un problème ajouté plus tard reste en français tant qu'il n'a pas d'entrée. Coordonnées et nombres vérifiés par `src/content/problemes.en.test.ts`. L’e2e `langue-parcours.spec.ts` retire encore le contenu des problèmes avant de chercher des mots français (utile pour les futurs problèmes non traduits).
 - Leçons 1 à 8 et chapitres traduits (`content/lessons.en.js`, textes seulement ; positions et réponses reprises du français, vérifiées par `src/content/lessons.en.test.ts`, nombres compris). « point vert » : *green point* ; « Touche » : *Tap* ; « À toi » : *Your turn*. Titre « Le ko » : *Ko*.
 
 ## Leçons en anglais : choix de vocabulaire (#167, relecture)
@@ -182,4 +182,24 @@ Principes :
 | trou dans la frontière | *hole* | « frontière » : *border* (voir *open borders*). |
 | Chez moi, Chez Blanc (quiz l7) | *In my territory*, *In White’s* | |
 | 3-3, 3-4, 5-5, 3e ligne | 3-3, 3-4, 5-5, *3rd line* | Points nommés comme dans l'usage anglais (*3-3 point*). |
+
+## Problèmes en anglais : choix de vocabulaire (#167)
+
+Même vocabulaire que les leçons (*empty points next to it*, *extend*, *side by side*, *fill*). En plus :
+
+| Français (problèmes) | Anglais retenu | Raison |
+|---|---|---|
+| Bravo ! / Exact ! / Bien vu ! | *Well done!* / *Correct!* / *Well spotted!* | Même gradation qu'en français. |
+| Pas encore. / Pas tout à fait. / Pas celle-là. | *Not yet.* / *Not quite.* / *Not that one.* | |
+| Noir joue et vit / tue / capture | *Black to play and live / kill / capture* | Formule standard des tsumego anglais. |
+| prise en retour, retour de capture | *snapback* | Terme du glossaire. |
+| filet | *net* (*geta*) | |
+| pierre relais | *helper stone* | Pas de terme établi ; *ladder breaker* désigne la pierre adverse. |
+| course aux libertés | *capturing race* (*semeai*) | |
+| liberté extérieure, liberté commune | *outside liberty*, *shared liberty* | Sensei's Library dit aussi *outside / shared liberties*. |
+| manque de libertés | *shortage of liberties* (*damezumari*) | |
+| point vital | *vital point* | |
+| coude (trois points) | *bent three* | |
+| chapeau, cinq en bloc, croix de cinq, lapin | *pyramid four*, *bulky five*, *crossed five*, *rabbity six* | Noms des formes sur Sensei's Library. |
+| sortie (vers le mur) | *way out* | |
 | Noir gagne d'un demi-point | Black wins by half a point | |
