@@ -1,6 +1,7 @@
 // Équilibrage des premières parties contre l'ordi (issue #160) : une première victoire possible et honnête.
 // Décision et indicateurs visés : docs/game-design/boucle.md.
 import { fr } from '../ui/typo';
+import { nombre, t } from '../content/i18n';
 import type { Parties } from './home';
 
 /** Komi habituel (règles japonaises, 9 × 9 compris) : points donnés à Blanc parce que Noir commence. */
@@ -51,7 +52,6 @@ export function equilibrage(rang: number): Equilibrage {
   };
 }
 
-const virgule = (n: number) => String(n).replace('.', ',');
 
 /**
  * Phrase de Mochi au début de la partie, qui annonce le komi réellement compté (`komi`) :
@@ -62,11 +62,11 @@ const virgule = (n: number) => String(n).replace('.', ',');
  */
 export function annonceKomi(rang: number, komi: number): string | null {
   if (komi === KOMI_DEBUTANT && rang < PARTIES_KOMI_DEBUTANT) {
-    const k = virgule(KOMI_DEBUTANT);
-    if (rang === 0) return fr(`Le komi, ce sont des points donnés à Blanc parce que Noir commence. Pour tes premières parties, il est de ${k}.`);
-    if (rang === PARTIES_KOMI_DEBUTANT - 1) return fr(`Dernière partie avec un komi de ${k} point.`);
-    return fr(`Cette partie encore, le komi est de ${k} point.`);
+    const k = nombre(KOMI_DEBUTANT);
+    if (rang === 0) return fr(t('komi.premiere', { k }));
+    if (rang === PARTIES_KOMI_DEBUTANT - 1) return fr(t('komi.derniere', { k }));
+    return fr(t('komi.encore', { k }));
   }
-  if (komi === KOMI_NORMAL && rang === PARTIES_KOMI_DEBUTANT) return fr(`Le komi passe à ${virgule(KOMI_NORMAL)} points, sa valeur habituelle.`);
+  if (komi === KOMI_NORMAL && rang === PARTIES_KOMI_DEBUTANT) return fr(t('komi.normal', { k: nombre(KOMI_NORMAL) }));
   return null;
 }

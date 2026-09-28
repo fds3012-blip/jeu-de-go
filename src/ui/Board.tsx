@@ -3,6 +3,7 @@ import { LETTERS, toLabel } from '../go/coords';
 import { groupAt, neighbors } from '../go/rules';
 import { C, M, R, R_NOIR, VARIANTES_COQUILLAGE, coordCenter, diffBoards, hoshi, jitter, shellStriae, shellVariant, viewBoxOf, woodDataUrl, type ThemeGoban } from './boardArt';
 import { useThemeGoban } from '../app/settings';
+import { t } from '../content/i18n';
 import './board.css';
 
 export interface BoardMarks {
@@ -118,15 +119,18 @@ export function deplacerCurseur(p: number, touche: string, size: number): number
 
 /** Nom lu d'une intersection : « D4, vide », « D4, pierre noire » ou « D4, pierre blanche, dernier coup ». */
 export function nomIntersection(p: number, board: Int8Array, size: number, last = -1): string {
-  const c = board[p], pierre = c === 1 ? 'pierre noire' : c === 2 ? 'pierre blanche' : 'vide';
-  return `${toLabel(p, size)}, ${pierre}${c && p === last ? ', dernier coup' : ''}`;
+  const c = board[p], point = toLabel(p, size);
+  const intersection = t(c === 1 ? 'plateau.pierreNoire' : c === 2 ? 'plateau.pierreBlanche' : 'plateau.vide', { point });
+  return c && p === last ? t('plateau.dernierCoup', { intersection }) : intersection;
 }
 
 /** Annonce polie d'un coup : « Noir joue D4 » ou « Blanc joue C3 et prend 2 pierres ». */
 export function annonceCoup(c: number, p: number, prises: number, size: number, noms: NomsCamps = {}): string {
   // Un camp nommé dit « Pomme a joué C3 » : ne répète pas mot pour mot le message visible « Pomme joue C3. À toi. ».
   const nom = c === 1 ? noms[1] : noms[2];
-  return `${nom ? `${nom} a joué` : `${c === 1 ? 'Noir' : 'Blanc'} joue`} ${toLabel(p, size)}${prises ? ` et prend ${prises} pierre${prises > 1 ? 's' : ''}` : ''}`;
+  const point = toLabel(p, size);
+  const coup = nom ? t('plateau.aJoue', { nom, point }) : t('plateau.joue', { camp: t(c === 1 ? 'camp.noir' : 'camp.blanc'), point });
+  return prises ? t('plateau.prend', { coup, n: prises }) : coup;
 }
 
 /**
@@ -145,10 +149,10 @@ export function annonceAtari(board: Int8Array, p: number, size: number, noms: No
     if (g.liberties.size !== 1) continue;
     const lib = toLabel([...g.liberties][0], size);
     const pts = g.stones.map(s => toLabel(s, size)).sort().join(', ');
-    const autre = c === 1 ? noms[2] : noms[1], de = autre ? ` de ${autre}` : '';
-    phrases.push(g.stones.length > 1
-      ? `Atari : ${autre ? 'les' : 'tes'} pierres ${pts}${de} n'ont plus qu'une liberté, en ${lib}.`
-      : `Atari : ${autre ? 'la' : 'ta'} pierre ${pts}${de} n'a plus qu'une liberté, en ${lib}.`);
+    const autre = c === 1 ? noms[2] : noms[1], plusieurs = g.stones.length > 1;
+    phrases.push(autre
+      ? t(plusieurs ? 'plateau.atari.pierresDe' : 'plateau.atari.pierreDe', { pierres: pts, nom: autre, liberte: lib })
+      : t(plusieurs ? 'plateau.atari.tesPierres' : 'plateau.atari.taPierre', { pierres: pts, liberte: lib }));
   }
   return phrases.join(' ');
 }
@@ -160,7 +164,7 @@ function corps(c: number, p: number, size: number): ReactElement {
 
 /** Annonce après le premier Entrée quand la confirmation est active. */
 export function annonceConfirmation(label: string, toucher = false): string {
-  return `${label} : appuie encore pour ${toucher ? 'choisir ce point' : 'poser'}`;
+  return t(toucher ? 'plateau.confirmer.choisir' : 'plateau.confirmer.poser', { point: label });
 }
 
 export function Board({ size, board, toPlay = 1, marks = {}, interactive = false, stonesTappable = false, confirmTouch = true, toucher = false, onPlay, shake, versCouvercles = false, noms }: Props) {
@@ -238,7 +242,7 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
     if (e.key !== 'Enter' && e.key !== ' ') return;
     e.preventDefault();
     if (!interactive || !onPlay) return;
-    if (board[cur] && !stonesTappable) { setAnnonce(`${toLabel(cur, size)} est occupé`); return; }
+    if (board[cur] && !stonesTappable) { setAnnonce(t('plateau.occupe', { point: toLabel(cur, size) })); return; }
     // « Confirmer au doigt » : le premier appui montre la pierre fantôme, le second la pose.
     if (!board[cur] && confirmTouch && ghost !== cur) { setGhost(cur); setAnnonce(annonceConfirmation(toLabel(cur, size), toucher)); return; }
     setGhost(-1);
@@ -334,7 +338,7 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
 
   return (
     <div className="board-wrap">
-      <svg ref={ref} className="board" viewBox={`${vb.min} ${vb.min} ${vb.span} ${vb.span}`} role={jouable ? 'grid' : 'img'} aria-label={`Plateau de go ${size} × ${size}`}
+      <svg ref={ref} className="board" viewBox={`${vb.min} ${vb.min} ${vb.span} ${vb.span}`} role={jouable ? 'grid' : 'img'} aria-label={t('plateau.aria', { size })}
         tabIndex={jouable ? 0 : undefined} aria-activedescendant={jouable ? idCase(cur) : undefined} aria-rowcount={jouable ? size : undefined} aria-colcount={jouable ? size : undefined}
         onKeyDown={jouable ? onKey : undefined} onFocus={jouable ? () => setFocus(true) : undefined} onBlur={jouable ? () => setFocus(false) : undefined}
         onPointerDown={jouable ? () => setClavier(false) : undefined}

@@ -2,8 +2,7 @@
 import { groupAt, neighbors, type Color, type Position } from '../go/rules';
 import { toLabel } from '../go/coords';
 import { frontieresOuvertes, partieAvancee } from '../go/frontieres';
-
-const virgule = (n: number) => String(n).replace('.', ',');
+import { nombre, t } from '../content/i18n';
 
 /** Avance arrondie au demi-point (le komi a souvent une demie). */
 export function arrondiDemi(n: number): number {
@@ -13,8 +12,8 @@ export function arrondiDemi(n: number): number {
 /** Libellé de la barre d'avantage : « Noir +3,5 », « Blanc +12 » ou « À égalité ». `lead` : avance de Noir. */
 export function libelleAvantage(lead: number): string {
   const a = arrondiDemi(lead);
-  if (a === 0) return 'À égalité';
-  return `${a > 0 ? 'Noir' : 'Blanc'} +${virgule(Math.abs(a))}`;
+  if (a === 0) return t('avantage.egalite');
+  return t(a > 0 ? 'avantage.noir' : 'avantage.blanc', { v: nombre(Math.abs(a)) });
 }
 
 /**
@@ -28,7 +27,7 @@ export function partNoir(lead: number, size: number): number {
 
 /** Libellé d'un coup dans la liste : « 8. D6 », « 9. passe ». `numero` commence à 1. */
 export function libelleCoup(numero: number, coup: number, size: number): string {
-  return `${numero}. ${toLabel(coup, size)}`;
+  return `${numero}. ${coup < 0 ? t('coup.passe') : toLabel(coup, size)}`;
 }
 
 /** Coups joués depuis le début (index de plateau, -1 = passe), tirés de l'historique des positions. */
@@ -82,12 +81,13 @@ export function aideActive(reglage: ReglageAide | undefined, id: string): boolea
   return ADVERSAIRES_DEBUTANTS.includes(id);
 }
 
+// Constantes de ce fichier : le texte français d'origine (tests) ; l'interface passe par `t` (#167).
 export const ALERTE_ATARI = "Atari ! Ton groupe n'a plus qu'une liberté. Sauve-le ou contre-attaque.";
 export const EXPLICATION_ATARI = "Atari : il ne reste qu'une liberté, la pierre peut être prise au prochain coup.";
 
 /** Message du coach quand un de tes groupes est mis en atari ; la première fois, le mot est expliqué. */
 export function messageAtari(premiereFois: boolean): string {
-  return premiereFois ? `${ALERTE_ATARI} ${EXPLICATION_ATARI}` : ALERTE_ATARI;
+  return premiereFois ? `${t('partie.atari.alerte')} ${t('partie.atari.explication')}` : t('partie.atari.alerte');
 }
 
 // Comment finir la partie (#120) : quand le plateau est presque plein, ou dès que l'ordi passe,
@@ -108,10 +108,8 @@ export function presquePlein(board: Int8Array): boolean {
 
 /** Message de Mochi : l'adversaire `nom` vient de passer (`ilPasse`), ou le plateau est presque plein. Le mot est expliqué. */
 export function messagePasser(nom: string, ilPasse: boolean): string {
-  const conseil = ilPasse
-    ? `${nom} passe. Plus rien à gagner ? Passe aussi, et on compte.`
-    : `Plus rien à gagner ? Passe. Si ${nom} passe aussi, on compte.`;
-  return `${conseil} ${EXPLICATION_PASSER}`;
+  const conseil = t(ilPasse ? 'partie.passer.ilPasse' : 'partie.passer.plein', { nom });
+  return `${conseil} ${t('partie.passer.explication')}`;
 }
 
 /**
@@ -142,7 +140,6 @@ export function passerEnEvidence(aide: boolean, monTour: boolean, adversairePass
 /** Nombre d'indices par partie contre l'ordi. */
 export const INDICES_PAR_PARTIE = 3;
 export const PLUS_D_INDICE = "Plus d'indice pour cette partie. À toi de jouer !";
-const REGARDE = 'Regarde dans le cercle vert : il y a un bon coup.';
 
 /** Indices restants après `utilises` indices (jamais négatif). */
 export function indicesRestants(utilises: number): number {
@@ -151,13 +148,14 @@ export function indicesRestants(utilises: number): number {
 
 /** Message du coach après un indice réussi ; le dernier annonce, une seule fois, qu'il n'y en a plus. */
 export function messageIndice(restantsApres: number): string {
-  return restantsApres > 0 ? REGARDE : `${REGARDE} ${PLUS_D_INDICE}`;
+  const regarde = t('partie.indice.regarde');
+  return restantsApres > 0 ? regarde : `${regarde} ${t('partie.indice.plusDIndice')}`;
 }
 
 /** Description accessible du bouton « Indice » (le libellé reste « Indice »). */
 export function descriptionIndices(restants: number): string {
-  if (restants <= 0) return "Plus d'indice pour cette partie";
-  return `${restants} indice${restants > 1 ? 's' : ''} restant${restants > 1 ? 's' : ''}`;
+  if (restants <= 0) return t('partie.indice.aucunRestant');
+  return t('partie.indice.restants', { n: restants });
 }
 
 // « Qui mène ? » (#94) : la carte des territoires estimés et une phrase, 3 fois par partie contre l'ordi.
@@ -182,8 +180,8 @@ export function quiMeneRestants(utilises: number): number {
 
 /** Description accessible du bouton « Qui mène ? » contre l'ordi. */
 export function descriptionQuiMene(restants: number): string {
-  if (restants <= 0) return 'Plus disponible pour cette partie';
-  return `Encore ${restants} fois dans cette partie`;
+  if (restants <= 0) return t('quiMene.plusDisponible');
+  return t('quiMene.encore', { n: restants });
 }
 
 /**
@@ -192,8 +190,8 @@ export function descriptionQuiMene(restants: number): string {
  */
 export function phraseQuiMene(lead: number, engine: 'katago' | 'simple'): string {
   const n = Math.round(Math.abs(lead));
-  if (!Number.isFinite(lead) || Math.abs(lead) < SEUIL_SERRE[engine] || n < 2) return SERRE;
-  return `${lead > 0 ? 'Noir' : 'Blanc'} mène d'environ ${n} points.`;
+  if (!Number.isFinite(lead) || Math.abs(lead) < SEUIL_SERRE[engine] || n < 2) return t('quiMene.serre');
+  return t(lead > 0 ? 'quiMene.noir' : 'quiMene.blanc', { n });
 }
 
 /**
@@ -223,9 +221,9 @@ export function modeComptage(contreOrdi: boolean, incertains: readonly number[])
 
 /** Message de Mochi à l'entrée du comptage manuel. `fin` : phrase de fin de partie (« Deux passes… »). */
 export function messageComptage(fin: string, morts: number, incertain: boolean): string {
-  if (incertain) return `${EXPLICATION_MORTES} ${DOUTE_MORTES}`;
-  if (morts) return `${EXPLICATION_MORTES} Touche un groupe pour corriger.`;
-  return `${fin} Aucune pierre morte. Si un groupe ne peut plus vivre, touche-le pour le compter comme prisonnier.`;
+  if (incertain) return `${t('partie.mortes.explication')} ${t('partie.mortes.doute')}`;
+  if (morts) return `${t('partie.mortes.explication')} ${t('partie.mortes.toucher')}`;
+  return t('partie.mortes.aucune', { fin });
 }
 
 // Frontières ouvertes (#159) : quand tu passes trop tôt, Mochi montre les points qui ne sont encore à personne.

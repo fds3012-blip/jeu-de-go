@@ -122,6 +122,25 @@ Principes :
 | taux de victoire | win rate | |
 | avance au score | score lead | « Qui mène » : *Who's ahead*. |
 | variante | variation | |
+| moment clé | key moment | Coup où le joueur a perdu le plus (revue). |
+| précision | accuracy | « Précision 80 % » : *You 80%* (pas d'espace avant % en anglais). |
+| notes : Brillant, Meilleur coup, Excellent, Bon, Solide, Imprécision, Erreur, Grosse erreur | Brilliant, Best move, Excellent, Good, Solid, Inaccuracy, Mistake, Blunder | Vocabulaire de la *Game Review* de chess.com. |
+| « Revoir ma partie », « Rejouer d'ici » | Review my game, Replay from here | |
+| « Qui mène ? » | Who’s ahead? | |
+
+## Partie et fin de partie
+
+| Français | Anglais retenu | Remarques |
+|---|---|---|
+| Indice, Annuler, Passer, Abandonner | Hint, Undo, Pass, Resign | Barre d'actions. |
+| Valider le score, Reprendre | Confirm score, Resume | Comptage manuel. |
+| pierres grisées (mortes) | grayed-out stones | |
+| Victoire, Défaite, Égalité | Victory, Defeat, Draw | Titre de l'écran de fin. |
+| « de 3,5 points sur 9 × 9 », « par abandon » | by 3.5 points on 9 × 9, by resignation | |
+| « Défier Caillou » | Challenge Caillou | |
+| bilan contre un adversaire | record vs Pomme (1 win, 2 losses) | |
+| frontières ouvertes | open borders | « Ferme-les avant de passer » : *close them before you pass*. |
+| « À toi. » | Your turn. | |
 
 ## À signaler (textes français ambigus)
 
@@ -131,3 +150,7 @@ Principes :
 - « Voir la suite » (Problèmes) : traduit par *Show the answer* ; la « suite » est la séquence de coups qui résout le problème.
 - « Plateau 9 × 9, tu as Noir » : *9 × 9 board, you’re Black*.
 - Vitrine des badges (Profil) : la condition d'un badge à gagner est coupée à 2 lignes (74 px). En français, 3 conditions sont déjà tronquées à 320 et 390 px (« Gagne une partie contre Pomme. », « Réussis tout le palier Débutant. », « Fais le Go du jour 7 jours de suite. »). L'anglais est raccourci pour tenir (*Beat Pomme once.*, *Clear the Beginner tier.*, *Daily Go 7 days running.*). À reprendre côté design ou texte français.
+- Annonce du komi : « Dernière partie avec un komi de 0,5 point » (singulier, usage français sous 2) devient *0.5 points* (pluriel en anglais).
+- « Tes {n} plus grosses erreurs » (revue, nom accessible) : avec une seule erreur, le français dit « Tes 1 plus grosses erreurs ». L'anglais dit *Your biggest mistake*. Le français pourrait gagner un singulier.
+- Revue : « Imprécision : environ 3 points de perdus » : tournure orale gardée ; anglais *Inaccuracy: about 3 points lost*.
+- Répliques des adversaires : 15 caractères au plus dans les deux langues (vérifié par un test).

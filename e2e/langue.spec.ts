@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { jouer } from './plateau';
 
 // Issue #167 : `?lang=en` traduit la barre du bas et le Profil, sans débordement à 390 et 320 px.
 
@@ -250,5 +251,122 @@ for (const largeur of [390, 320]) {
     await sansCoupeComposants(page, largeur);
     await erreur.click();
     await expect(page.getByText('Find a better move than yours: only KataGo’s move counts.')).toBeVisible();
+  });
+}
+
+// Étape 4 : écran de partie, récit du score, fin de partie et revue. `?komi=-100` (paramètre de test) : Noir gagne en passant.
+const PARTIE = '.actions button > span:last-child, .joueur-nom b, .joueur small, .barre-comptage .btn, .recit-etapes li, .camp-nom, .recit-continuer, '
+  + '.fin-titre, .fin-marge, .fin-bilan, .fin-mochi p, .fin-action .cta, .fin-liens button, '
+  + '.revue-tete h2, .revue-compteur, .revue-precision-titre, .revue-precision-duo, .revue-precision-voir, .revue-erreur b, .revue-erreur span, .revue-dock .cta, .revue-table th';
+
+async function sansCoupePartie(page: Page, largeur: number) {
+  const coupes = await page.evaluate(sel => [...document.querySelectorAll<HTMLElement>(sel)]
+    .filter(e => e.offsetParent !== null && (e.scrollWidth > e.clientWidth + 1 || e.getBoundingClientRect().right > innerWidth + 0.5))
+    .map(e => e.textContent), PARTIE);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(largeur);
+  expect(coupes).toEqual([]);
+}
+
+for (const largeur of [390, 320]) {
+  test(`?lang=en : partie courte contre Pomme, score, fin et revue en anglais à ${largeur} px`, async ({ page }) => {
+    await page.setViewportSize({ width: largeur, height: 844 });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    const erreurs: string[] = [];
+    page.on('pageerror', e => erreurs.push(e.message));
+    await page.goto('/?lang=en&komi=-100');
+    await page.getByRole('button', { name: 'Play your first game against Pomme' }).click();
+
+    // Écran de partie : bandeaux, bulle d'intro, barre d'actions.
+    const grille = page.getByRole('grid', { name: 'Go board 9 × 9' });
+    await expect(grille).toBeVisible();
+    await expect(page.locator('.joueur[data-joueur="You"]')).toBeVisible();
+    await expect(page.getByText(/^The goal: surround more territory than Pomme/)).toBeVisible();
+    const actions = page.getByRole('toolbar', { name: 'Game actions' });
+    for (const nom of ['Hint', 'Who’s ahead?', 'Undo', 'Pass', 'Resign']) await expect(actions.getByRole('button', { name: nom, exact: true })).toBeVisible();
+    await expect(actions.getByRole('button', { name: 'Hint' })).toHaveAccessibleDescription('3 hints left');
+    await sansCoupePartie(page, largeur);
+
+    // Un coup, la réponse de Pomme, puis deux passes.
+    const passer = actions.getByRole('button', { name: 'Pass', exact: true });
+    await expect(passer).toBeEnabled({ timeout: 10_000 });
+    await jouer(page, 'E5');
+    const coach = page.locator('.coach p[aria-live="polite"]');
+    await expect(coach).toHaveText(/^Pomme (plays [A-J]\d\. (Your turn\.|Some borders)|captures)|^Atari!/, { timeout: 10_000 });
+    await expect(page.getByRole('list', { name: 'Moves played' })).toContainText('1. E5');
+    await expect(page.getByText(/Tu joues|Pomme joue|À toi|Indice|Passer|Abandonner/)).toHaveCount(0);
+    await sansCoupePartie(page, largeur);
+    await page.screenshot({ path: `docs/localisation/captures/partie-en-${largeur}.png` });
+
+    const fin = page.locator('.recit, .barre-comptage .btn.primary:enabled');
+    for (let i = 0; i < 6 && !(await fin.first().isVisible()); i++) {
+      await expect(passer).toBeEnabled({ timeout: 10_000 });
+      await passer.click();
+      await expect(fin.or(page.getByText(/Pomme (plays|captures|continue)|Some borders are still open/)).first()).toBeVisible({ timeout: 10_000 });
+    }
+    await expect(fin.first()).toBeVisible({ timeout: 10_000 });
+    const valider = page.getByRole('button', { name: 'Confirm score' });
+    if (await valider.isVisible()) {
+      await expect(page.locator('.comptage')).toContainText('(komi included)');
+      await sansCoupePartie(page, largeur);
+      await valider.click();
+    }
+
+    // Récit du score (tout affiché d'emblée : mouvements réduits).
+    const recit = page.getByRole('region', { name: 'Counting the points' });
+    await expect(recit).toBeVisible();
+    await expect(recit.locator('.camp-nom').first()).toHaveText('You');
+    await expect(recit.getByText(/^(Territory: the empty points each side surrounds|No territory)$/)).toBeVisible();
+    await expect(recit.getByText(/^− 100 komi for Pomme/)).toBeVisible();
+    await expect(recit.getByText('Komi makes up for Black’s edge of playing first.')).toBeVisible();
+    await expect(recit.getByText(/^You win by [\d.]+ points?!$/)).toBeVisible();
+    await expect(recit.getByText(/Territoires|komi pour|Tu gagnes/)).toHaveCount(0);
+    await sansCoupePartie(page, largeur);
+    await page.screenshot({ path: `docs/localisation/captures/score-en-${largeur}.png` });
+    await recit.getByRole('button', { name: 'Continue' }).click();
+
+    // Écran de fin : titre, écart, bilan, leçon de Mochi, action principale, liens.
+    await expect(page.getByRole('heading', { level: 2, name: 'Victory' })).toBeVisible();
+    await expect(page.locator('.fin-marge .sr-only')).toHaveText(/^by [\d.]+ points? on 9 × 9$/);
+    await expect(page.locator('.fin-tampon')).toHaveText('BEATEN');
+    await expect(page.locator('.fin-bilan')).toHaveText(/^(\d+ moves?|No moves played), (\d+ stones? captured|no stones captured)\. Your record vs Pomme: 1 win\.$/);
+    await expect(page.locator('.fin-action .cta')).toHaveText(/Challenge Caillou$/);
+    for (const nom of ['Review my game', 'Home']) await expect(page.getByRole('button', { name: nom, exact: true })).toBeVisible();
+    await expect(page.getByText(/Victoire|Revoir ma partie|Accueil|Défier|Ton bilan|coups?,/)).toHaveCount(0);
+    await sansDebordement(page);
+    await sansCoupePartie(page, largeur);
+    await page.screenshot({ path: `docs/localisation/captures/fin-en-${largeur}.png` });
+
+    // Revue : en-tête, navigation, analyse, précision et résumé.
+    await page.getByRole('button', { name: 'Review my game' }).click();
+    await expect(page.getByRole('heading', { level: 2, name: 'Review my game' })).toBeVisible();
+    await expect(page.getByText(/^Move \d+ of \d+$/)).toBeVisible();
+    await expect(page.getByRole('img', { name: 'Lead graph: Black at the bottom, White at the top' })).toBeVisible();
+    await expect(page.locator('.revue-analyse')).toHaveCount(0, { timeout: 30_000 });
+    await expect(page.locator('.revue-dock .cta')).toHaveText('Replay from here');
+    await expect(page.getByRole('button', { name: 'Previous' })).toBeVisible();
+    for (let k = 0; k < 8; k++) await page.keyboard.press('ArrowLeft');
+    await expect(page.getByText(/^Move 0 of \d+$/)).toBeVisible();
+    await expect(page.locator('.revue-mochi p')).toHaveText('Start of the game. Tap “Next” to move forward.');
+    await page.getByRole('button', { name: 'Next' }).click();
+    await expect(page.locator('.revue-mochi p')).toHaveText(/^You play E5\./);
+    await expect(page.getByRole('button', { name: /^Move 1, E5/ })).toBeVisible();
+    await expect(page.getByText(/Coup \d|Tu joues|Rejouer|Précision|Résumé/)).toHaveCount(0);
+    await sansDebordement(page);
+    await sansCoupePartie(page, largeur);
+    await page.screenshot({ path: `docs/localisation/captures/revue-en-${largeur}.png` });
+
+    const precision = page.locator('.revue-precision');
+    if (await precision.isVisible()) {
+      await expect(precision).toContainText('Accuracy');
+      await expect(precision).toContainText(/You \d+%/);
+      await precision.click();
+      const resume = page.getByRole('region', { name: 'Game summary' });
+      await expect(resume).toBeVisible();
+      await expect(resume.locator('.revue-table thead')).toContainText('You');
+      await expect(resume.getByText(/Meilleur|Erreur|Solide|Imprécision/)).toHaveCount(0);
+      await sansCoupePartie(page, largeur);
+      await precision.click();
+    }
+    expect(erreurs).toEqual([]);
   });
 }

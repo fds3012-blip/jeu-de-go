@@ -170,7 +170,7 @@ export function App() {
       mochi: (
         <>
           <p>{fr(f.mochi)}</p>
-          {lecon && <button type="button" className="lien" onClick={() => { setPlaying(false); setResultat(null); setTab('apprendre'); setLessonId(lecon.id); window.scrollTo({ top: 0 }); }}>Ouvrir la leçon</button>}
+          {lecon && <button type="button" className="lien" onClick={() => { setPlaying(false); setResultat(null); setTab('apprendre'); setLessonId(lecon.id); window.scrollTo({ top: 0 }); }}>{t('fin.ouvrirLecon')}</button>}
         </>
       ),
       action: (
@@ -195,7 +195,7 @@ export function App() {
     screen = (
       <>
         <Game key={`${playing === 'ordi' ? adv.id : 'deux'}-${partie}`} size={settings.size} komi={komiCompte(reglage.komi)} aiKomi={reglage.komi} avantage={reglage.avantage} accommodant={reglage.accommodant} confirmTouch={settings.confirmTouch} opponent={playing === 'ordi' ? adv : undefined}
-          intro={playing === 'ordi' && (intro || reglage.annonce) ? <Bubble>{intro ? introBut(adv.nom) : `Tu as Noir, ${adv.nom} a Blanc.`}{reglage.annonce && <><br /><span className="annonce-komi">{reglage.annonce}</span></>}</Bubble> : undefined}
+          intro={playing === 'ordi' && (intro || reglage.annonce) ? <Bubble>{intro ? introBut(adv.nom) : t('partie.bulle', { nom: adv.nom })}{reglage.annonce && <><br /><span className="annonce-komi">{reglage.annonce}</span></>}</Bubble> : undefined}
           onExit={() => { setIntro(false); setPlaying(false); setResultat(null); }}
           onResult={onResult} fin={finEcran} celebrer={settings.celebrations} aide={aideActive(settings.aide, adv.id)} portrait={playing === 'ordi' ? <Sceau id={adv.id} taille={44} /> : undefined} />
       </>
