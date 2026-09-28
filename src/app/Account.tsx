@@ -1,10 +1,10 @@
 import { useEffect, useState, type CSSProperties, type FormEvent } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase, type Db } from '../data/supabase';
-import { MOT_SUPPRESSION, confirmationValide, deleteMyAccount, fetchProfile, saveUsername, sendMagicLink, type Profile } from '../data/account';
+import { motSuppression, confirmationValide, deleteMyAccount, fetchProfile, saveUsername, sendMagicLink, type Profile } from '../data/account';
 import { USERNAME_MAX, USERNAME_MIN, isEmail, validateUsername } from '../data/username';
 import { EVENTS, identify, track } from '../data/analytics';
-import { FINE, fr } from '../ui/typo';
+import { fr } from '../ui/typo';
 import { t } from '../content/i18n';
 
 const field: CSSProperties = {
@@ -29,8 +29,8 @@ export function Account({ db = supabase }: { db?: Db | null }) {
   if (!db) {
     return (
       <div className="card">
-        <b>Ton compte</b>
-        <p className="muted small" style={{ margin: '4px 0 0' }}>La connexion n’est pas disponible pour le moment. Tu peux jouer et apprendre sans compte{FINE}: ta progression reste sur ce téléphone.</p>
+        <b>{t('compte.titre')}</b>
+        <p className="muted small" style={{ margin: '4px 0 0' }}>{fr(t('compte.indisponible'))}</p>
       </div>
     );
   }
@@ -62,7 +62,7 @@ function Connected({ db }: { db: Db }) {
     return () => { alive = false; };
   }, [db, userId]);
 
-  if (session === undefined) return <div className="card muted small" aria-busy="true">Chargement de ton compte…</div>;
+  if (session === undefined) return <div className="card muted small" aria-busy="true">{t('compte.chargement')}</div>;
   if (!session) return <SignIn db={db} />;
 
   const signOut = async () => { await db.auth.signOut(); setEditing(false); };
@@ -70,8 +70,8 @@ function Connected({ db }: { db: Db }) {
   if (!profile) {
     return (
       <div className="card">
-        <p className="muted small" style={{ margin: 0 }} role={error ? 'alert' : undefined}>{error || 'Chargement de ton profil…'}</p>
-        <button className="btn" style={full} onClick={signOut}>Me déconnecter</button>
+        <p className="muted small" style={{ margin: 0 }} role={error ? 'alert' : undefined}>{error || t('compte.chargementProfil')}</p>
+        <button className="btn" style={full} onClick={signOut}>{t('compte.deconnecter')}</button>
       </div>
     );
   }
@@ -86,11 +86,11 @@ function Connected({ db }: { db: Db }) {
   return (
     <div className="card">
       <b style={{ fontSize: '1.2rem' }}>{profile.username}</b>
-      <p className="muted small" style={{ margin: '4px 0 0' }}>Cote {profile.rating} · Problèmes {profile.puzzle_rating}</p>
+      <p className="muted small" style={{ margin: '4px 0 0' }}>{t('compte.cotes', { cote: profile.rating, pb: profile.puzzle_rating })}</p>
       <p className="muted small" style={{ margin: '2px 0 0' }}>{session.user.email}</p>
       <div className="row" style={{ marginTop: 12 }}>
-        <button className="btn" onClick={() => setEditing(true)}>Changer de pseudo</button>
-        <button className="btn" onClick={signOut}>Me déconnecter</button>
+        <button className="btn" onClick={() => setEditing(true)}>{t('compte.changerPseudo')}</button>
+        <button className="btn" onClick={signOut}>{t('compte.deconnecter')}</button>
       </div>
       <SupprimerCompte db={db} />
     </div>
@@ -109,7 +109,7 @@ export function SupprimerCompte({ db, onSupprime = () => window.location.assign(
 
   if (!ouvert) {
     return (
-      <button type="button" className="btn-supprimer" onClick={() => setOuvert(true)}>Supprimer mon compte</button>
+      <button type="button" className="btn-supprimer" onClick={() => setOuvert(true)}>{t('compte.supprimer')}</button>
     );
   }
 
@@ -124,17 +124,17 @@ export function SupprimerCompte({ db, onSupprime = () => window.location.assign(
 
   return (
     <form className="suppression" onSubmit={confirmer} noValidate aria-labelledby="suppression-titre">
-      <b id="suppression-titre">Supprimer ton compte{FINE}?</b>
-      <p className="small" style={{ margin: '6px 0 0' }}>C’est définitif. On efface ton profil, ton pseudo, ta cote, tes badges, ta progression et ton adresse e-mail.</p>
-      <p className="small" style={{ margin: '6px 0 0' }}>Tes parties contre d’autres joueurs restent pour eux, sans ton nom{FINE}: tu y deviens «{FINE}joueur supprimé{FINE}».</p>
-      <label className="small" htmlFor="suppression-mot" style={{ display: 'block', marginTop: 10 }}>Pour confirmer, tape {MOT_SUPPRESSION}</label>
+      <b id="suppression-titre">{fr(t('compte.supprimer.titre'))}</b>
+      <p className="small" style={{ margin: '6px 0 0' }}>{t('compte.supprimer.texte')}</p>
+      <p className="small" style={{ margin: '6px 0 0' }}>{fr(t('compte.supprimer.parties'))}</p>
+      <label className="small" htmlFor="suppression-mot" style={{ display: 'block', marginTop: 10 }}>{t('compte.supprimer.tape', { mot: motSuppression() })}</label>
       <input id="suppression-mot" autoComplete="off" autoCapitalize="characters" spellCheck={false} style={{ ...field, marginTop: 4 }}
         value={saisie} onChange={e => { setSaisie(e.target.value); setError(''); }} aria-describedby="suppression-erreur" />
       <p id="suppression-erreur" className="small" role="alert" style={{ color: 'var(--vermillon)', margin: error ? '6px 0 0' : 0 }}>{error}</p>
       <button type="submit" className="btn btn-danger" style={full} disabled={!confirmationValide(saisie) || busy}>
-        {busy ? 'Suppression…' : 'Supprimer définitivement'}
+        {t(busy ? 'compte.supprimer.enCours' : 'compte.supprimer.definitif')}
       </button>
-      <button type="button" className="btn" style={full} onClick={() => { setOuvert(false); setSaisie(''); setError(''); }}>Annuler</button>
+      <button type="button" className="btn" style={full} onClick={() => { setOuvert(false); setSaisie(''); setError(''); }}>{t('compte.annuler')}</button>
     </form>
   );
 }
@@ -147,7 +147,7 @@ function SignIn({ db }: { db: Db }) {
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!isEmail(email)) { setError('Entre une adresse e-mail valide.'); return; }
+    if (!isEmail(email)) { setError(t('compte.emailInvalide')); return; }
     setBusy(true); setError('');
     const r = await sendMagicLink(db, email);
     setBusy(false);
@@ -157,25 +157,25 @@ function SignIn({ db }: { db: Db }) {
   if (sent) {
     return (
       <div className="card" role="status">
-        <b>Regarde tes e-mails</b>
-        <p className="muted small" style={{ margin: '4px 0 0' }}>On t’a envoyé un lien à {email.trim()}. Ouvre-le sur ce téléphone pour te connecter.</p>
-        <button className="btn" style={full} onClick={() => setSent(false)}>Changer d’adresse</button>
+        <b>{t('compte.regardeEmails')}</b>
+        <p className="muted small" style={{ margin: '4px 0 0' }}>{t('compte.lienEnvoye', { email: email.trim() })}</p>
+        <button className="btn" style={full} onClick={() => setSent(false)}>{t('compte.changerAdresse')}</button>
       </div>
     );
   }
 
   return (
     <form className="card" onSubmit={submit} noValidate>
-      <b>Crée ton compte</b>
+      <b>{t('compte.creer')}</b>
       {/* #214 : promesse exacte. Seules la série et les leçons montent sur le serveur (importer_serie_appareil, syncProgress). */}
       <p className="muted small" style={{ margin: '4px 0 0' }}>{fr(t('compte.promesse'))}</p>
       <p className="muted small" style={{ margin: '4px 0 0' }}>{fr(t('compte.resteIci'))}</p>
       <p className="muted small" style={{ margin: '4px 0 10px' }}>{fr(t('compte.sansMotDePasse'))}</p>
-      <label className="small" htmlFor="account-email">Ton adresse e-mail</label>
+      <label className="small" htmlFor="account-email">{t('compte.email')}</label>
       <input id="account-email" type="email" inputMode="email" autoComplete="email" required style={{ ...field, marginTop: 4 }}
         value={email} onChange={e => { setEmail(e.target.value); setError(''); }} aria-invalid={!!error} aria-describedby="account-email-error" />
       <p id="account-email-error" className="small" role="alert" style={{ color: 'var(--vermillon)', margin: error ? '6px 0 0' : 0 }}>{error}</p>
-      <button className="btn primary" style={full} type="submit" disabled={busy}>{busy ? 'Envoi…' : 'Recevoir mon lien'}</button>
+      <button className="btn primary" style={full} type="submit" disabled={busy}>{t(busy ? 'compte.envoi' : 'compte.recevoirLien')}</button>
     </form>
   );
 }
@@ -200,16 +200,16 @@ function UsernameForm({ db, profile, canCancel, onDone, onCancel, onSignOut }: {
 
   return (
     <form className="card" onSubmit={submit} noValidate>
-      <b>{canCancel ? 'Ton nouveau pseudo' : 'Choisis ton pseudo'}</b>
-      <p className="muted small" style={{ margin: '4px 0 10px' }}>C’est le nom que verront les autres joueurs. De {USERNAME_MIN} à {USERNAME_MAX} caractères{FINE}: lettres, chiffres, _ et -.</p>
-      <label className="small" htmlFor="account-username">Pseudo</label>
+      <b>{t(canCancel ? 'compte.nouveauPseudo' : 'compte.choisisPseudo')}</b>
+      <p className="muted small" style={{ margin: '4px 0 10px' }}>{fr(t('compte.pseudoAide', { min: USERNAME_MIN, max: USERNAME_MAX }))}</p>
+      <label className="small" htmlFor="account-username">{t('compte.pseudo')}</label>
       <input id="account-username" autoComplete="username" autoCapitalize="none" spellCheck={false} maxLength={USERNAME_MAX} style={{ ...field, marginTop: 4 }}
         value={name} onChange={e => { setName(e.target.value); setError(''); }} aria-invalid={!!error} aria-describedby="account-username-error" />
       <p id="account-username-error" className="small" role="alert" style={{ color: 'var(--vermillon)', margin: error ? '6px 0 0' : 0 }}>{error}</p>
-      <button className="btn primary" style={full} type="submit" disabled={busy}>{busy ? 'Enregistrement…' : 'Valider'}</button>
+      <button className="btn primary" style={full} type="submit" disabled={busy}>{t(busy ? 'compte.enregistrement' : 'compte.valider')}</button>
       {canCancel
-        ? <button className="btn" style={full} type="button" onClick={onCancel}>Annuler</button>
-        : <button className="btn" style={full} type="button" onClick={onSignOut}>Me déconnecter</button>}
+        ? <button className="btn" style={full} type="button" onClick={onCancel}>{t('compte.annuler')}</button>
+        : <button className="btn" style={full} type="button" onClick={onSignOut}>{t('compte.deconnecter')}</button>}
     </form>
   );
 }

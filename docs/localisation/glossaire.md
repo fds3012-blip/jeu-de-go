@@ -154,3 +154,9 @@ Principes :
 - « Tes {n} plus grosses erreurs » (revue, nom accessible) : avec une seule erreur, le français dit « Tes 1 plus grosses erreurs ». L'anglais dit *Your biggest mistake*. Le français pourrait gagner un singulier.
 - Revue : « Imprécision : environ 3 points de perdus » : tournure orale gardée ; anglais *Inaccuracy: about 3 points lost*.
 - Répliques des adversaires : 15 caractères au plus dans les deux langues (vérifié par un test).
+- Suppression du compte : le mot à taper suit la langue (« SUPPRIMER », *DELETE*) ; « SUPPRIMER » reste accepté dans toutes les langues.
+- « Pseudo » : *Username*. « Me déconnecter » : *Sign out*. « Recevoir mon lien » : *Send me a link*.
+- Conditions : « saisir la CNIL » devient *contact the CNIL, the French data protection authority* (sigle inconnu hors de France).
+- « Pomme continue : il reste un point à prendre en E4 » : *Pomme keeps playing: there’s still one point to take at E4*. La raison vient du moteur par une clé et des paramètres (point, nombre).
+- Gel : « Ton gel a protégé ta série de 12 jours ! » : *Your freeze protected your 12-day streak!*
+- Contenu encore en français en anglais (#167, étape 5) : titres, descriptions et consignes des leçons, titres, consignes et explications des problèmes. L’e2e `langue-parcours.spec.ts` les retire avant de chercher des mots français.

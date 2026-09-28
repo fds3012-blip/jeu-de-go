@@ -1,5 +1,6 @@
 // Onglet Apprendre (issue #40, phase 6) : logique pure du chemin des leçons, sans React.
 import type { Lesson } from '../content/lessons';
+import { t } from '../content/i18n';
 
 export type Progression = Record<string, number>;
 export type EtatPierre = 'faite' | 'encours' | 'avenir';
@@ -35,17 +36,17 @@ export function titreCourt(titre: string): string {
 export function boutonChemin(lecons: Lesson[], progression: Progression): { texte: string; verbe: string; id: string } | null {
   if (!lecons.length) return null;
   const suivante = lecons.find(l => (progression[l.id] ?? 0) < l.steps.length);
-  if (!suivante) return { texte: `Revoir : ${titreCourt(lecons[0].title)}`, verbe: 'Revoir', id: lecons[0].id };
+  if (!suivante) return { texte: t('apprendre.revoirTitre', { titre: titreCourt(lecons[0].title) }), verbe: t('apprendre.revoir'), id: lecons[0].id };
   const commence = lecons.some(l => (progression[l.id] ?? 0) > 0);
   return commence
-    ? { texte: `Continuer : ${titreCourt(suivante.title)}`, verbe: 'Continuer', id: suivante.id }
-    : { texte: 'Commencer', verbe: 'Commencer', id: suivante.id };
+    ? { texte: t('apprendre.continuerTitre', { titre: titreCourt(suivante.title) }), verbe: t('apprendre.continuer'), id: suivante.id }
+    : { texte: t('apprendre.commencer'), verbe: t('apprendre.commencer'), id: suivante.id };
 }
 
 /** Titre et phrase de l'écran de fin : plus modestes qu'une victoire, sauf pour la dernière leçon du chapitre. */
 export function finDeLecon(lecons: Lesson[], id: string): { titre: string; derniere: boolean } {
   const derniere = lecons.length > 0 && lecons[lecons.length - 1].id === id;
-  return { titre: derniere ? 'Chapitre terminé' : 'Leçon terminée', derniere };
+  return { titre: t(derniere ? 'apprendre.fin.chapitre' : 'apprendre.fin.lecon'), derniere };
 }
 
 /** Fin de chapitre (#200) : la dernière leçon est terminée, ou toutes les leçons le sont. */
@@ -156,3 +157,6 @@ export const CHAPITRES_A_VENIR = [
   'Ouverture en 19\u00A0×\u00A019',
   'Fin de partie et comptage',
 ];
+
+/** Chapitres à venir dans la langue de l'interface (#167) ; en français, les textes ci-dessus (vérifié par un test). */
+export const chapitresAVenir = (): string[] => ([1, 2, 3, 4, 5] as const).map(i => t(`apprendre.avenir.${i}`));

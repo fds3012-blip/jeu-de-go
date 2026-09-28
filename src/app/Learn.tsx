@@ -22,19 +22,15 @@ import { hapticFail, hapticStone, hapticSuccess, hapticVictory } from '../ui/hap
 import { EVENTS, track } from '../data/analytics';
 import { gagnerXp } from './xp';
 import { validerDefi } from './defiAppareil';
-import { CHAPITRES_A_VENIR, LIGNE, actionsFin, boutonChemin, etapes, finDeChapitre, finDeLecon, placeSousLigne, trace, traceJusqua, type ActionFin, type Etape, type Progression } from './apprendre';
+import { LIGNE, actionsFin, boutonChemin, chapitresAVenir, etapes, finDeChapitre, finDeLecon, placeSousLigne, trace, traceJusqua, type ActionFin, type Etape, type Progression } from './apprendre';
 import { t } from '../content/i18n';
 import { useExercice } from '../ui/celebrations';
 import '../ui/apprendre.css';
 
 function lineOf(p: number, n: number) { const x = p % n, y = Math.floor(p / n); return Math.min(x, y, n - 1 - x, n - 1 - y); }
 
-const SYNC_TEXT: Record<SyncState, string> = {
-  local: 'Ta progression reste sur ce téléphone. Connecte-toi dans Profil pour la garder partout.',
-  sync: 'Synchronisation de ta progression…',
-  ok: 'Progression enregistrée sur ton compte.',
-  error: 'Hors ligne : ta progression est gardée ici et partira plus tard.'
-};
+/** Texte de l'état de synchronisation (#167 : clés `apprendre.synchro.*`). */
+const texteSynchro = (s: SyncState) => t(`apprendre.synchro.${s}`);
 
 /** Lignes du goban sous le chemin : un seul tracé, x compté depuis le milieu, assez large pour les écrans jusqu'à 560 px. */
 function lignesGoban(hauteur: number): string {
@@ -81,12 +77,12 @@ export function LearnHome({ progress, onOpen, sync = 'local' }: { progress: Prog
       {iEnCours < 0 && <div className="chemin-fini">{boutonCta}</div>}
 
       <section className="a-venir" aria-labelledby="a-venir-titre">
-        <h2 id="a-venir-titre" className="titre-pierres">Bientôt</h2>
-        <p>Cinq autres chapitres sont en préparation, jusqu’au niveau des joueurs de club.</p>
-        <ul>{CHAPITRES_A_VENIR.map(c => <li key={c}>{c}</li>)}</ul>
+        <h2 id="a-venir-titre" className="titre-pierres">{t('apprendre.bientot')}</h2>
+        <p>{t('apprendre.bientot.texte')}</p>
+        <ul>{chapitresAVenir().map(c => <li key={c}>{c}</li>)}</ul>
       </section>
 
-      <p className={`synchro synchro-${sync}`} role="status" aria-busy={sync === 'sync'}>{SYNC_TEXT[sync]}</p>
+      <p className={`synchro synchro-${sync}`} role="status" aria-busy={sync === 'sync'}>{texteSynchro(sync)}</p>
     </div>
   );
 }
@@ -95,8 +91,9 @@ export function LearnHome({ progress, onOpen, sync = 'local' }: { progress: Prog
 function phraseChapitre(c: Chapitre, faites: number): string {
   const n = c.lecons.length;
   if (faites === 0) return c.intro;
-  if (faites === n) return c.complet ? `Chapitre terminé.${c.fin ? ` ${c.fin.replace(/\.$/, ' !')}` : ''}` : 'Tout est fait. La suite arrive bientôt.';
-  return `${faites} leçon${faites > 1 ? 's' : ''} faite${faites > 1 ? 's' : ''} sur ${n}. Continue !`;
+  // Titre, intro et phrase de fin du chapitre : contenu des leçons (content/lessons.fr.js), traduit avec elles.
+  if (faites === n) return c.complet ? `${t('apprendre.chapitre.termine')}${c.fin ? ` ${c.fin.replace(/\.$/, ' !')}` : ''}` : t('apprendre.chapitre.suite');
+  return t('apprendre.bases.progres', { n: faites, total: n });
 }
 
 /** Chemin d'un chapitre : titre, puis ses pierres de gué sur les lignes d'un goban. */
@@ -107,10 +104,10 @@ function CheminChapitre({ chapitre, liste, k, boutonCta, onOpen, progress }: {
   // #169 : place occupée par chaque rangée sous sa ligne, mesurée après l'affichage. Au zoom 200 %,
   // un titre sur plusieurs lignes repousse la rangée suivante au lieu de la chevaucher. À 390 px, tout tient : rien ne bouge.
   const [bas, setBas] = useState<number[]>([]);
-  const t = useMemo(() => trace(liste.length, { encours: iEnCours, bas }), [liste.length, iEnCours, bas]);
+  const tc = useMemo(() => trace(liste.length, { encours: iEnCours, bas }), [liste.length, iEnCours, bas]);
   const faites = liste.filter(e => e.etat === 'faite').length;
   // Tracé parcouru : jusqu'à la leçon en cours, tout le chapitre s'il est fini, rien s'il n'est pas commencé.
-  const parcouru = traceJusqua(t, iEnCours >= 0 ? iEnCours : faites === liste.length ? liste.length - 1 : -1);
+  const parcouru = traceJusqua(tc, iEnCours >= 0 ? iEnCours : faites === liste.length ? liste.length - 1 : -1);
   const chemin = useRef<HTMLOListElement>(null);
   // Une rangée qui change de hauteur sans nouveau rendu (police chargée après coup, texte agrandi) : on remesure.
   const [tour, remesurer] = useState(0);
@@ -141,24 +138,24 @@ function CheminChapitre({ chapitre, liste, k, boutonCta, onOpen, progress }: {
         <p>{fr(phraseChapitre(chapitre, faites))}</p>
       </div>
 
-      <div className="gue" style={{ height: t.hauteur }}>
+      <div className="gue" style={{ height: tc.hauteur }}>
         <div className="gue-goban" aria-hidden="true">
-          <svg width="1" height={t.hauteur} focusable="false"><path d={lignesGoban(t.hauteur)} transform={echelle} vectorEffect="non-scaling-stroke" /></svg>
+          <svg width="1" height={tc.hauteur} focusable="false"><path d={lignesGoban(tc.hauteur)} transform={echelle} vectorEffect="non-scaling-stroke" /></svg>
         </div>
-        <svg className="gue-trace" width="1" height={t.hauteur} aria-hidden="true" focusable="false">
+        <svg className="gue-trace" width="1" height={tc.hauteur} aria-hidden="true" focusable="false">
           <g transform={echelle}>
-            <path d={t.d} className="gue-route" vectorEffect="non-scaling-stroke" />
+            <path d={tc.d} className="gue-route" vectorEffect="non-scaling-stroke" />
             {parcouru && <path d={parcouru} className="gue-parcouru" vectorEffect="non-scaling-stroke" />}
           </g>
         </svg>
         <ol ref={chemin}>
           {liste.map((e, i) => {
-            const p = t.pierres[i], droite = p.col > 0;
+            const p = tc.pierres[i], droite = p.col > 0;
             const style = { top: p.y, '--x': `${p.x * k}px` } as CSSProperties;
-            const etat = e.etat === 'faite' ? ', terminée' : e.etat === 'encours' ? ', prochaine étape' : '';
+            const etat = e.etat === 'faite' ? t('apprendre.pas.faite') : e.etat === 'encours' ? t('apprendre.pas.encours') : '';
             return (
               <li key={e.lecon.id} className={`pas pas-${e.etat} ${droite ? 'a-droite' : 'a-gauche'}`} style={style}>
-                <button className="pas-bouton" data-etat={e.etat} aria-label={`Leçon ${e.rang} : ${e.lecon.title}${etat}`} onClick={() => onOpen(e.lecon.id)}>
+                <button className="pas-bouton" data-etat={e.etat} aria-label={t('apprendre.pas', { rang: e.rang, titre: e.lecon.title, etat })} onClick={() => onOpen(e.lecon.id)}>
                   <span className="pierre-gue" aria-hidden="true" />
                   <span className="pas-texte" aria-hidden="true">
                     <SceauLecon id={e.lecon.id} taille={34} pale={e.etat === 'avenir'} />
@@ -288,17 +285,17 @@ export function LessonPlayer({ lesson, start, confirmTouch, progress = {}, celeb
   const faites = idx + (answer?.ok ? 1 : 0);
   // En attente du geste « pose » : seul le point à jouer est vert (le compteur de libertés reste).
   const vert = attente && geste && 'pose' in geste ? [fromLabel(geste.pose, 9)] : null;
-  const cta = <button className="cta" onClick={next}>{derniere ? 'Terminer la leçon' : 'Continuer'}</button>;
+  const cta = <button className="cta" onClick={next}>{t(derniere ? 'lecon.terminer' : 'apprendre.continuer')}</button>;
   const marks: BoardMarks = img
     ? { libs: vert ?? [...img.libs, ...img.yeux], targets: img.atari, mistake: attente && rate ? rate.p : img.interdit, last: img.derniere ?? null, ...territoire(img.terr, reduit),
-        note: img.compteur ? { p: img.compteur.p, fond: JADE_COMPTEUR, texte: '#0B2A1D', symbole: String(img.compteur.n), libelle: `${img.compteur.n} liberté${img.compteur.n > 1 ? 's' : ''}`, cle: `${idx}-${temps}` } : undefined }
+        note: img.compteur ? { p: img.compteur.p, fond: JADE_COMPTEUR, texte: '#0B2A1D', symbole: String(img.compteur.n), libelle: t('lecon.libertes', { n: img.compteur.n }), cle: `${idx}-${temps}` } : undefined }
     : { libs: step.kind === 'info' || step.kind === 'move' ? (step.libs ?? (step.kind === 'move' ? step.aide : undefined))?.map(l => fromLabel(l, 9)) : undefined, targets: marked, owner,
         ok: answer?.ok ? answer.p : undefined, mistake: answer && !answer.ok ? answer.p : undefined, last: answer?.ok ? answer.p : null };
 
   return (
     <div className="lecteur lecteur-lecon">
       <div className="lecteur-tete">
-        <Retour label="Retour au chemin" onClick={onExit} />
+        <Retour label={t('lecon.retourChemin')} onClick={onExit} />
         <Etapes total={lesson.steps.length} faites={faites} />
       </div>
       <h2 className="lecteur-titre"><SceauLecon id={lesson.id} taille={24} />{fr(lesson.title)}</h2>
@@ -311,10 +308,10 @@ export function LessonPlayer({ lesson, start, confirmTouch, progress = {}, celeb
       </div>
       {img?.terr && <Compteur cle={`${idx}-${temps}`} n={img.terr.points.length} reduit={reduit} />}
       {images && images.length > 1 && !attente && (
-        <button className="lien revoir" disabled={!demoFinie} onClick={() => setTemps(0)}>Revoir</button>
+        <button className="lien revoir" disabled={!demoFinie} onClick={() => setTemps(0)}>{t('apprendre.revoir')}</button>
       )}
       {step.kind === 'quiz' && (
-        <div className={`choix${step.choices.some(c => /\p{L}/u.test(c)) ? ' choix-mots' : ''}`} role="group" aria-label="Ta réponse">
+        <div className={`choix${step.choices.some(c => /\p{L}/u.test(c)) ? ' choix-mots' : ''}`} role="group" aria-label={t('lecon.taReponse')}>
           {step.choices.map((c, i) => (
             <button key={c} disabled={answer?.ok && answer.choice !== i} aria-disabled={faux.includes(i) || undefined}
               className={answer?.ok && answer.choice === i ? 'choix-juste' : faux.includes(i) ? 'choix-faux' : undefined}
@@ -328,17 +325,17 @@ export function LessonPlayer({ lesson, start, confirmTouch, progress = {}, celeb
       )}
       {/* Quiz (#198) : l'erreur s'écrit sous les choix, sans feuille qui les cache ni bouton ; on rechoisit tout de suite. */}
       {step.kind === 'quiz' && answer && !answer.ok && (
-        <div className="choix-aide" role="status" aria-live="polite"><Marque key={answer.n} juste={false} taille={24} /><p>{fr(`${step.no} Essaie encore.`)}</p></div>
+        <div className="choix-aide" role="status" aria-live="polite"><Marque key={answer.n} juste={false} taille={24} /><p>{fr(t('lecon.essaieEncore', { no: step.no }))}</p></div>
       )}
       {step.kind === 'info' && !attente && cta}
       {attente && rate && geste && (
-        <Verdict ton="revoir" cle={rate.n}><p>{fr('pose' in geste ? 'Pose ta pierre sur le point vert.' : geste.no)}</p></Verdict>
+        <Verdict ton="revoir" cle={rate.n}><p>{fr('pose' in geste ? t('lecon.poseVert') : geste.no)}</p></Verdict>
       )}
       {answer && step.kind !== 'info' && (
         answer.ok
           ? <Verdict ton="juste" cle={answer.n} actions={cta}><p>{fr(step.ok)}</p></Verdict>
           // #198 : pas de bouton « Réessayer » ; le plateau reste jouable, on rejoue directement.
-          : step.kind !== 'quiz' && <Verdict ton="revoir" cle={answer.n}><p>{fr(`${step.kind === 'move' && answer.p != null ? explicationRefus(step, toLabel(answer.p, 9)) : step.no} Essaie encore.`)}</p></Verdict>
+          : step.kind !== 'quiz' && <Verdict ton="revoir" cle={answer.n}><p>{fr(t('lecon.essaieEncore', { no: step.kind === 'move' && answer.p != null ? explicationRefus(step, toLabel(answer.p, 9)) : step.no }))}</p></Verdict>
       )}
     </div>
   );
@@ -361,7 +358,7 @@ function Compteur({ n, reduit, cle }: { n: number; reduit: boolean; cle: string 
     const m = window.setInterval(() => setK(v => { if (v + 1 >= n) window.clearInterval(m); return Math.min(n, v + 1); }), CASE_MS);
     return () => window.clearInterval(m);
   }, [n, reduit, cle]);
-  return <p className="demo-compteur" aria-live="off" data-compteur={k}><b>{k}</b> {k > 1 ? 'points' : 'point'}</p>;
+  return <p className="demo-compteur" aria-live="off" data-compteur={k}><b>{k}</b> {t('lecon.point', { n: k })}</p>;
 }
 
 /**

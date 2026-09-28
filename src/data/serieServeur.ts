@@ -3,6 +3,7 @@
 // qui borne les valeurs (dernier jour = aujourd'hui ou hier à Paris, pas plus de jours que depuis le lancement)
 // et ne fait jamais baisser la série du serveur. L'appel est idempotent : on peut le refaire à chaque connexion.
 import type { Db } from './supabase';
+import { t } from '../content/i18n';
 import type { Result } from './account';
 
 /** Série du Go du jour telle que l'appareil la garde : dernier numéro réussi et jours de suite. */
@@ -42,9 +43,9 @@ export async function importerSerieAppareil(db: Pick<Db, 'rpc'>, envoi: EnvoiSer
   if (!envoi || !Number.isInteger(envoi.jours) || envoi.jours < 1 || !ISO.test(envoi.dernierJour)) return { ok: true, value: null };
   try {
     const { data, error } = await db.rpc('importer_serie_appareil', { p_jours: envoi.jours, p_dernier_jour: envoi.dernierJour });
-    if (error) return { ok: false, error: 'Impossible d’enregistrer ta série.' };
+    if (error) return { ok: false, error: t('erreur.enregistrerSerie') };
     return { ok: true, value: typeof data === 'number' ? data : null };
   } catch {
-    return { ok: false, error: 'Impossible d’enregistrer ta série.' };
+    return { ok: false, error: t('erreur.enregistrerSerie') };
   }
 }

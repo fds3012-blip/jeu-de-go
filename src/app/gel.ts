@@ -1,6 +1,7 @@
 // Série protégée (issue #76), premier incrément côté appareil : le gel de série du Go du jour. Logique pure, sans React.
 // Les jours sont les numéros du Go du jour (`numeroDuJour`), donc comptés en heure de Paris quel que soit le fuseau.
 // La série elle-même reste celle de goDuJour.ts (même clé, même format) : le texte de partage ne change pas.
+import { t } from '../content/i18n';
 import { serieApres, type Serie } from './goDuJour';
 
 /** Réserve de gels, gardée sur l'appareil à côté de la série. */
@@ -65,7 +66,7 @@ export function lireReserve(brut: unknown): Reserve {
 }
 
 /** Message de Mochi au retour, après un jour sauvé. */
-export const messageGel = (jours: number) => `Ton gel a protégé ta série de ${jours} jour${jours > 1 ? 's' : ''} !`;
+export const messageGel = (jours: number) => t('gel.message', { n: jours });
 
 /** Nom accessible du glaçon. */
 export const libelleGels = (n: number) => (n === 0 ? 'Aucun gel de série' : `${n} gel${n > 1 ? 's' : ''} de série en réserve`);
