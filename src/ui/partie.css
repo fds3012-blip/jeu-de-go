@@ -16,6 +16,14 @@
 .partie-mochi { display: grid; align-items: end; min-height: calc(3 * 1.4 * var(--fs-corps-s) + 20px); }
 .partie-mochi > .coach, .partie-mochi > .coach-intro { grid-area: 1 / 1; margin-top: 0; }
 .partie-mochi > .coach-intro[data-cache] { visibility: hidden; }
+/* Écrans bas (iPhone SE, 8, Safari avec ses barres) : la bulle d'intro (but du jeu, komi) ne tient pas dans la colonne
+   et finissait sous la barre d'actions (recette du 28/09, R1). Elle se pose alors sur le bas de la colonne, posée sur
+   la barre d'actions et montant par-dessus ton bandeau : tout se lit sans défiler, et rien ne bouge quand elle s'efface. */
+@media (max-height: 829px) {
+  .partie-mochi { position: relative; }
+  .partie-mochi > .coach-intro { position: absolute; left: 0; right: 0; bottom: 0; z-index: 4; }
+  .partie-mochi > .coach-intro .bubble { box-shadow: 0 -10px 24px -14px rgba(0, 0, 0, .55); }
+}
 /* Pendant une partie : pas d'en-tête ni de barre de navigation, place à la barre d'actions. */
 .app.app-partie { padding-top: var(--space-1); padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
 .app-partie .dock { bottom: calc(var(--space-4) + env(safe-area-inset-bottom, 0px)); }
@@ -43,6 +51,12 @@
   box-shadow: 0 6px 14px -8px rgba(0, 0, 0, .5); }
 :root[data-theme="light"] .replique { background: var(--sumi); color: var(--papier); }
 @media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .replique { background: var(--sumi); color: var(--papier); } }
+/* Écrans étroits (320 px) : à côté du nom, la bulle n'avait que 58 px et coupait « Rien à jouer. » (recette du 28/09, R5).
+   Elle se pose alors sur la ligne du rang, sous le nom, sur toute la largeur du texte : une ligne, sans décaler le plateau. */
+@media (max-width: 359px) {
+  .joueur-texte { position: relative; }
+  .joueur-nom .replique { position: absolute; left: -2px; bottom: -6px; max-width: calc(100% + 4px); z-index: 1; }
+}
 
 /* ---------- Couvercle : bois foncé en creux, pierres prises empilées ---------- */
 .couvercle { flex: none; display: inline-flex; align-items: center; gap: 6px; min-width: 52px; height: 30px; padding: 0 11px 0 7px; border-radius: 999px;
@@ -92,6 +106,11 @@
    de la barre d'actions (explication du comptage, indice). Plancher de 280 px. Issue #85. */
 @media (max-height: 700px) {
   .partie > .partie-plateau { align-self: center; width: clamp(min(280px, 100% + 2 * var(--gouttiere) - 8px), calc(100dvh - 340px), calc(100% + 2 * var(--gouttiere) - 8px)); }
+}
+/* Très petits écrans (iPhone SE de 1re génération, 568 px) : plancher abaissé à 220 px pour que la colonne tienne
+   au-dessus de la barre d'actions (R1) ; la seconde touche de confirmation garde la pose précise. */
+@media (max-height: 600px) {
+  .partie > .partie-plateau { width: clamp(min(220px, 100% + 2 * var(--gouttiere) - 8px), calc(100dvh - 340px), calc(100% + 2 * var(--gouttiere) - 8px)); }
 }
 
 /* ---------- Coach Mochi : une phrase à la fois ---------- */

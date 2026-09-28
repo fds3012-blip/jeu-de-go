@@ -36,13 +36,13 @@ const complet = (d: Donnees, id: string) => d.paliers.some(p => p.id === id && p
 /** Badges de la vitrine : obtenus d'abord, dans l'ordre du parcours ; les autres ensuite, grisés avec leur condition. */
 export function badges(d: Donnees): Badge[] {
   const tous: Badge[] = [
-    { id: 'premiere-partie', nom: 'Première partie', condition: 'Joue une partie contre l’ordi.', obtenu: d.parties > 0 },
+    { id: 'premiere-partie', nom: 'Première partie', condition: 'Joue contre l’ordi.', obtenu: d.parties > 0 },
     { id: 'premier-probleme', nom: 'Premier problème', condition: 'Réussis un problème.', obtenu: d.reussis > 0 },
-    { id: 'victoire-pomme', nom: 'Pomme battue', condition: 'Gagne une partie contre Pomme.', obtenu: (d.bilan.pomme?.v ?? 0) > 0 },
-    { id: 'palier-debutant', nom: 'Palier Débutant', condition: 'Réussis tout le palier Débutant.', obtenu: complet(d, 'debutant') },
+    { id: 'victoire-pomme', nom: 'Pomme battue', condition: 'Gagne contre Pomme.', obtenu: (d.bilan.pomme?.v ?? 0) > 0 },
+    { id: 'palier-debutant', nom: 'Palier Débutant', condition: 'Finis le palier Débutant.', obtenu: complet(d, 'debutant') },
     { id: 'dix-problemes', nom: '10 problèmes', condition: 'Réussis 10 problèmes.', obtenu: d.reussis >= 10 },
-    { id: 'palier-novice', nom: 'Palier Novice', condition: 'Réussis tout le palier Novice.', obtenu: complet(d, 'novice') },
-    { id: 'serie-7', nom: '7 jours de série', condition: 'Fais le Go du jour 7 jours de suite.', obtenu: d.serie >= 7 },
+    { id: 'palier-novice', nom: 'Palier Novice', condition: 'Finis le palier Novice.', obtenu: complet(d, 'novice') },
+    { id: 'serie-7', nom: '7 jours de série', condition: 'Fais 7 Go du jour de suite.', obtenu: d.serie >= 7 },
   ];
   return [...tous.filter(b => b.obtenu), ...tous.filter(b => !b.obtenu)];
 }
