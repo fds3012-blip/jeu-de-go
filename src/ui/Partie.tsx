@@ -32,10 +32,12 @@ interface BandeauProps {
   pierresPrises: 'noir' | 'blanc';
   replique?: { texte: string; n: number } | null;
   avant?: ReactNode;
+  /** Pierres que ce joueur vient de prendre (#187) : un « +N » monte depuis le couvercle. `k` relance l'animation. */
+  gain?: { n: number; k: number } | null;
 }
 
 /** Bandeau d'un joueur : portrait, nom, rang, réplique éventuelle et couvercle. */
-export function Bandeau({ nom, sousTitre, portrait, actif, captures, pierresPrises, replique, avant }: BandeauProps) {
+export function Bandeau({ nom, sousTitre, portrait, actif, captures, pierresPrises, replique, avant, gain }: BandeauProps) {
   return (
     <div className={`joueur${actif ? ' active' : ''}`} data-joueur={nom}>
       {avant}
@@ -47,7 +49,11 @@ export function Bandeau({ nom, sousTitre, portrait, actif, captures, pierresPris
         </div>
         <small>{sousTitre}{actif && <span className="sr-only">, au trait</span>}</small>
       </div>
-      <Couvercle n={captures} pierres={pierresPrises} />
+      <span className="couvercle-zone">
+        <Couvercle n={captures} pierres={pierresPrises} />
+        {/* Décoratif : la phrase de Mochi dit déjà combien de pierres tu as prises. */}
+        {gain && <span key={gain.k} className="gain-capture" aria-hidden="true">+{gain.n}</span>}
+      </span>
     </div>
   );
 }
