@@ -41,6 +41,8 @@ import { t as tr } from '../content/i18n';
 import { useExercice } from '../ui/celebrations';
 import { XpEnLigne } from '../ui/PastilleXp';
 import { COTE_KEY, choisirProbleme, nettoyerCote, noter, ouvrir, requalifierEnAide, type EtatCote } from './coteJoueur';
+import { Course } from './CourseProblemes';
+import { lireMeilleurCourse } from './course';
 
 const LOCAL_PUZZLES = parsePuzzles(ALL_PUZZLES);
 export const SOLVED_KEY = 'go.problemes.v1';
@@ -107,13 +109,15 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   const [retry, setRetry] = useState(0);
   // Liste « Tous les problèmes » ouverte (#196) ; on y revient après un problème ouvert depuis la grille.
   const [tous, setTous] = useState(false);
+  // Course aux problèmes (#287) : consigne, course et fin, à la place de la liste.
+  const [course, setCourse] = useState(false);
   const [statsTick, setStatsTick] = useState(0);
   // Onglet actif touché (R4) : retour à la liste, sans remonter l'écran (le lien partagé rouvrirait le Go du jour).
   const racineVue = useRef(racine);
   useEffect(() => {
     if (racineVue.current === racine) return;
     racineVue.current = racine;
-    setOpenId(null); setTous(false);
+    setOpenId(null); setTous(false); setCourse(false);
   }, [racine]);
 
   // Problèmes : la base pour un joueur connecté (RLS), la copie locale sinon.
@@ -244,6 +248,12 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
     );
   }
 
+  if (course) {
+    // Ni la cote, ni les problèmes réussis, ni la série ne bougent pendant une course. Le Go du jour n'y est pas.
+    return <Course liste={list} cote={cote.cote} exclure={daily ? [daily.id] : []} confirmTouch={confirmTouch}
+      onExit={() => { setCourse(false); window.scrollTo({ top: 0 }); }} />;
+  }
+
   if (load.status === 'loading') {
     return (
       <div className="problemes-chargement" aria-busy="true" role="status">
@@ -336,6 +346,7 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
             {enCours.reussis > 0 && <p className="palier-compte">{tr('pb.reussis', { n: enCours.reussis })}</p>}
           </div>
         )}
+        <CarteCourse onOpen={() => { setCourse(true); window.scrollTo({ top: 0 }); }} />
         <button className="lien lien-tous" onClick={() => { setTous(true); window.scrollTo({ top: 0 }); }}>
           {tr('pb.tous')}
           <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path d="m9 5 7 7-7 7" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
@@ -421,6 +432,27 @@ function PalierVue({ t, ordre, solved, vus, recommande, onOpen, fete }: {
         })}
       </ul>
     </div>
+  );
+}
+
+/**
+ * Entrée de la course (#287) : une carte secondaire, sans or ni relief. Le Go du jour et « Problème suivant » restent
+ * les actions principales. Le meilleur score est un record de ce mode, jamais un total de problèmes (#137).
+ */
+function CarteCourse({ onOpen }: { onOpen: () => void }) {
+  const [meilleur] = useState(lireMeilleurCourse);
+  return (
+    <button type="button" className="course-carte" onClick={onOpen} data-course="">
+      <svg className="course-picto" viewBox="0 0 24 24" width="30" height="30" aria-hidden="true" focusable="false">
+        <circle cx="12" cy="13.5" r="8" fill="none" stroke="currentColor" strokeWidth="2" />
+        <path d="M12 9.5v4.2l2.6 1.6M9.5 2.5h5M12 2.5v3" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+      <span className="course-carte-texte">
+        <b>{fr(tr('course.carte.titre'))}</b>
+        <small>{fr(tr('course.carte.texte'))}{meilleur > 0 && <> <span className="course-carte-meilleur">{fr(tr('course.carte.meilleur', { meilleur }))}</span></>}</small>
+      </span>
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="m9 5 7 7-7 7" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
+    </button>
   );
 }
 
