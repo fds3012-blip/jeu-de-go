@@ -31,8 +31,8 @@ export const THEMES: readonly Theme[] = [
 
 const PAR_THEME: Record<Theme, readonly string[]> = {
   capture: ['a01', 'a02', 'a03', 'a04', 'a05', 'a06', 'a15', 'a16', 'a18', 'a20', 'b1', 'e01', 'e02', 'n01', 'n02', 'n16'],
-  atari: ['a07', 'a08', 'a10', 'a17', 'a19', 'b4', 'b5', 'e03', 'e05', 'e06', 's1', 's3', 'n03', 'n04', 'n05', 'n08', 'n09', 'n13', 'n14', 'n17'],
-  'double-atari': ['a11', 'a13', 'b3', 'c1', 'e10', 'j01', 'j04', 'n15'],
+  atari: ['a07', 'a08', 'a10', 'a17', 'a19', 'b4', 'b5', 'e03', 'e05', 'e06', 's1', 's3', 'n03', 'n04', 'n05', 'n08', 'n09', 'n13', 'n14', 'n17', 'p01'],
+  'double-atari': ['a11', 'a13', 'b3', 'c1', 'e10', 'j01', 'j04', 'n15', 'p02'],
   bord: ['a09', 'a12', 'b2', 'e04', 'e07', 'e08', 'e09', 'e11', 'e12', 'e13', 'e14', 'e15', 'k01', 'k02', 'n06', 'n07', 'n11', 'n12'],
   echelle: ['b6', 'c2', 'i09', 'k03', 'k05', 'k06', 'k07', 'o08', 'o11'],
   filet: ['c3', 'i10', 'k09', 'o01', 'o04', 'o06', 'o09', 'o12'],
@@ -47,7 +47,7 @@ const PAR_THEME: Record<Theme, readonly string[]> = {
     'v1', 'v2', 'v3', 'v4',
   ],
   semeai: ['a14', 'd05', 'd07', 'd08', 'd09', 'd10', 'd11', 'd12', 'd13', 'f02', 'f08', 'f09', 'f10', 'f11', 'f12', 'o03', 'o10'],
-  'prise-en-retour': ['c4', 'j02', 'j03', 'o02', 'o05', 'o07'],
+  'prise-en-retour': ['c4', 'j02', 'j03', 'o02', 'o05', 'o07', 'p03'],
 };
 
 /** Thème de chaque problème, par identifiant. */
