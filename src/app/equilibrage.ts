@@ -33,12 +33,21 @@ export interface Equilibrage {
   komi: number;
   /** Barre d'avantage (« qui mène ») affichée pendant la partie. */
   avantage: boolean;
+  /**
+   * L'ordi passe quand tu passes, une fois les frontières fermées, même s'il pourrait grappiller (#185, option
+   * `accommodant` du moteur). Indicateur visé : au plus 2 passes du joueur par partie (médiane), plus de parties finies.
+   */
+  accommodant?: boolean;
 }
+
+/** Premières parties contre l'ordi où il passe quand tu passes (#185) : le même « camp » de 3 parties que le komi. */
+export const PARTIES_ACCOMMODANTES = 3;
 
 export function equilibrage(rang: number): Equilibrage {
   return {
     komi: rang < PARTIES_KOMI_DEBUTANT ? KOMI_DEBUTANT : KOMI_NORMAL,
     avantage: rang >= PARTIES_SANS_BARRE_AVANTAGE,
+    accommodant: rang < PARTIES_ACCOMMODANTES,
   };
 }
 

@@ -18,8 +18,9 @@ import type { Color, Position } from '../go/rules';
 import { analyseRevue, meilleurCoup, preparerKataGo } from '../engine';
 import { EVENTS, track } from '../data/analytics';
 import {
-  AUCUNE_ERREUR, candidatsBrillant, compteNotes, conseilFiable, courbe, courbeY, NOTE_INFO, noterCoups, phraseBilan, phraseErreur, phraseNote,
-  precision, SANS_KATAGO, positionsDepuisSgf, rejouerDici, type AnalyseRevue, type Erreur, type Note, type NoteCoup,
+  AUCUNE_ERREUR, avanceFinale, candidatsBrillant, compteNotes, conseilFiable, courbe, courbeY, defaiteNette, momentCle, NOTE_INFO, noterCoups,
+  PERTES_DIFFUSES, phraseBilan, phraseErreur, phraseMomentCle, phraseNote, precisionHonnete, SANS_KATAGO, positionsDepuisSgf, rejouerDici,
+  type AnalyseRevue, type Erreur, type Note, type NoteCoup,
 } from './revue';
 import { readLocal, writeLocal } from './hooks';
 import { ajouter, creerErreur, ERREURS_KEY, lireErreurs, peutEnFaireUnProbleme } from './erreurs';
@@ -43,7 +44,7 @@ const pierres = (n: number) => `${n} pierre${n > 1 ? 's' : ''}`;
 const LIGNES: Note[] = ['brillant', 'meilleur', 'excellent', 'bon', 'solide', 'imprecision', 'erreur', 'grosse'];
 
 export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer }: Props) {
-  const { positions, komi } = useMemo(() => positionsDepuisSgf(sgf), [sgf]);
+  const { positions, komi, resultat } = useMemo(() => positionsDepuisSgf(sgf), [sgf]);
   const n = positions.length - 1, size = positions[0].size;
   const [i, setI] = useState(Math.min(1, n));
   const [analyses, setAnalyses] = useState<(AnalyseRevue | null)[]>([]);
@@ -56,6 +57,9 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer }: Props) {
   // Erreurs déjà transformées en problème pendant cette revue (issue #77).
   const [gardees, setGardees] = useState<Record<number, true>>({});
   const liste = useRef<HTMLOListElement>(null);
+  // Issue #186 : la revue s'ouvre sur le moment clé dès qu'il est connu, sauf si le joueur a déjà navigué.
+  const [enCle, setEnCle] = useState(false);
+  const navigue = useRef(false);
   const analysees = analyses.length;
   const finie = analysees > n;
   const avances = useMemo(() => analyses.map(a => a?.lead ?? null), [analyses]);
@@ -64,6 +68,15 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer }: Props) {
   const erreurs = useMemo<Erreur[]>(() => notes
     .filter((x): x is NoteCoup => !!x && (!joueur || x.couleur === joueur) && (x.note === 'imprecision' || x.note === 'erreur' || x.note === 'grosse'))
     .sort((a, b) => b.perte - a.perte || a.coup - b.coup).slice(0, 3).map(x => ({ coup: x.coup, perte: x.perte })), [notes, joueur]);
+  // Moment clé (passes comprises) et avance finale de Noir : la précision et le bilan ne contredisent jamais le score.
+  const cle = useMemo(() => (finie ? momentCle(positions, analyses, joueur) : null), [finie, positions, analyses, joueur]);
+  const avanceNoir = finie ? avanceFinale(resultat, analyses[n]?.lead) : null;
+
+  useEffect(() => {
+    if (!cle || navigue.current) return;
+    navigue.current = true;
+    setI(cle.coup); setChoisie(null); setEnCle(true); setResume(false);
+  }, [cle]);
 
   useEffect(() => { track(EVENTS.revueOuverte, { coups: n, taille: size, mode: adversaire ? 'ordi' : 'deux' }); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -130,8 +143,16 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer }: Props) {
     b?.scrollIntoView?.({ inline: 'center', block: 'nearest', behavior: mouvementsReduits() ? 'auto' : 'smooth' });
   }, [i]);
 
-  function aller(k: number) { setI(Math.max(0, Math.min(n, k))); setChoisie(null); }
-  function voir(e: Erreur) { setI(e.coup - 1); setChoisie(e); setResume(false); }
+  function aller(k: number) { navigue.current = true; setI(Math.max(0, Math.min(n, k))); setChoisie(null); setEnCle(false); }
+  function voir(e: Erreur) { navigue.current = true; setI(e.coup - 1); setChoisie(e); setResume(false); setEnCle(false); }
+  function voirCle() { if (!cle) return; navigue.current = true; setI(cle.coup); setChoisie(null); setResume(false); setEnCle(true); }
+  function rejouer() {
+    // Au moment clé, le goban montre le coup fautif ; on rejoue depuis la position juste avant lui.
+    const surCle = enCle && !!cle && i === cle.coup;
+    const h = rejouerDici(positions, surCle ? cle.coup : i + 1, joueur ?? null);
+    track(EVENTS.revueRejouer, { coup: h.length - 1, cle: surCle, perte: surCle ? Math.round(cle.perte) : null, taille: size, mode: adversaire ? 'ordi' : 'deux' });
+    onRejouer(h);
+  }
   /** « En faire un problème » : la position avant l'erreur, le meilleur coup de KataGo et ses équivalents, gardés sur l'appareil. */
   function enFaireUnProbleme(e: Erreur) {
     const pb = creerErreur({
@@ -146,7 +167,9 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer }: Props) {
   const q = positions[i];
   const note = i > 0 ? notes[i - 1] ?? null : null;
   let phrase: string;
-  if (choisie) phrase = phraseErreur(choisie, positions, meilleurs[choisie.coup] ?? null);
+  const surCle = enCle && !!cle && i === cle.coup;
+  if (surCle) phrase = phraseMomentCle(cle, positions, adversaire);
+  else if (choisie) phrase = phraseErreur(choisie, positions, meilleurs[choisie.coup] ?? null);
   else if (i === 0) phrase = 'Début de la partie. Touche « Suivant » pour avancer.';
   else {
     const avant = positions[i - 1], c = avant.toPlay, m = q.lastMove ?? -1, cap = q.captures[c] - avant.captures[c];
@@ -160,12 +183,16 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer }: Props) {
   const meilleur = choisie ? meilleurs[choisie.coup] ?? undefined : undefined;
   const moi: Color = joueur ?? 1, lui = (3 - moi) as Color;
   const nomMoi = adversaire ? 'Toi' : 'Noir', nomLui = adversaire ?? 'Blanc';
-  const precMoi = finie ? precision(notes, moi) : null, precLui = finie ? precision(notes, lui) : null;
+  const precMoi = finie ? precisionHonnete(notes, moi, avanceNoir, size) : null, precLui = finie ? precisionHonnete(notes, lui, avanceNoir, size) : null;
+  const nette = defaiteNette(avanceNoir, moi, size);
+  // Puces sous la courbe : le moment clé d'abord, puis les plus grosses erreurs notées (3 en tout).
+  const autres = erreurs.filter(e => e.coup !== cle?.coup).slice(0, cle ? 2 : 3);
   const cMoi = compteNotes(notes, moi), cLui = compteNotes(notes, lui);
   // Avec KataGo : toutes les notes (Brillant seulement s'il y en a un). Sans lui : Solide et les pertes, rien d'autre.
   const avecKataGo = analyses.some(a => a?.engine === 'katago');
   const lignes = LIGNES.filter(l => (avecKataGo ? l !== 'solide' && (l !== 'brillant' || cMoi[l] + cLui[l] > 0) : l === 'solide' || l === 'imprecision' || l === 'erreur' || l === 'grosse'));
-  const marqueNote = note && q.lastMove != null && q.lastMove >= 0
+  // Au moment clé, pas de sceau : la note juge le coup seul, le moment clé compte aussi la réponse (pas de message contradictoire).
+  const marqueNote = !surCle && note && q.lastMove != null && q.lastMove >= 0
     ? { p: q.lastMove, ...NOTE_ENCRE[note.note], symbole: NOTE_INFO[note.note].symbole, libelle: NOTE_INFO[note.note].libelle, cle: i } : undefined;
 
   return (
@@ -202,7 +229,7 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer }: Props) {
           </table>
           <div className="revue-mochi revue-mochi-bilan">
             <Mochi size={40} />
-            <p>{fr(phraseBilan(notes, moi, adversaire))}</p>
+            <p>{fr(phraseBilan(notes, moi, adversaire, { avanceNoir, size, cle }))}</p>
           </div>
           {!avecKataGo && <p className="revue-note">{fr('Sans KataGo, Mochi ne note que les pertes sûres : pas de « Meilleur coup ».')}</p>}
         </section>
@@ -234,12 +261,13 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer }: Props) {
       </div>
 
       <div className="dock revue-dock">
-        <button type="button" className="cta" onClick={() => onRejouer(rejouerDici(positions, i + 1, joueur ?? null))}>Rejouer d'ici</button>
+        <button type="button" className="cta" onClick={rejouer}>Rejouer d'ici</button>
       </div>
       <div className="revue-mochi" aria-live="polite">
         <Mochi size={40} />
         <p>{fr(phrase)}</p>
       </div>
+      {surCle && i > 0 && <button type="button" className="btn revue-debut" onClick={() => aller(0)}>Revenir au début</button>}
       {choisie && peutEnFaireUnProbleme(notes[choisie.coup - 1]?.note, meilleurs[choisie.coup]) && (
         gardees[choisie.coup]
           ? <p className="revue-probleme-ok" role="status">{fr('Ajouté à tes problèmes : retrouve-le dans l’onglet Problèmes.')}</p>
@@ -264,12 +292,17 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer }: Props) {
       </figure>
 
       {!finie ? (
-        <p className="revue-analyse"><Reflexion taille={22} />{fr(`Mochi analyse ta partie… ${Math.min(analysees, n + 1)} / ${n + 1}`)}</p>
-      ) : !erreurs.length ? (
-        <p className="revue-aucune">{fr(AUCUNE_ERREUR)}</p>
+        <p className="revue-analyse"><Reflexion taille={22} />{fr(`Mochi cherche le moment clé… ${Math.min(analysees, n + 1)} / ${n + 1}`)}</p>
+      ) : !erreurs.length && !cle ? (
+        <p className={`revue-aucune${nette ? ' revue-diffuses' : ''}`}>{fr(nette ? PERTES_DIFFUSES : AUCUNE_ERREUR)}</p>
       ) : (
-        <div className="revue-erreurs" role="group" aria-label={fr(`Tes ${erreurs.length} plus grosses erreurs`)}>
-          {erreurs.map(e => (
+        <div className="revue-erreurs" role="group" aria-label={fr(cle ? 'Le moment clé et tes plus grosses erreurs' : `Tes ${erreurs.length} plus grosses erreurs`)}>
+          {cle && (
+            <button type="button" className={`revue-erreur revue-erreur-cle${surCle ? ' actif' : ''}`} aria-pressed={surCle} aria-label={fr(`Moment clé, coup ${cle.coup}, ${Math.max(1, Math.round(cle.perte))} points perdus`)} onClick={voirCle}>
+              <b>Moment clé</b><span>{fr(`−${Math.max(1, Math.round(cle.perte))} pts`)}</span>
+            </button>
+          )}
+          {autres.map(e => (
             <button type="button" key={e.coup} className={`revue-erreur${choisie?.coup === e.coup ? ' actif' : ''}`} aria-pressed={choisie?.coup === e.coup} onClick={() => voir(e)}>
               <b>Coup {e.coup}</b><span>{fr(`−${Math.max(1, Math.round(e.perte))} pts`)}</span>
             </button>

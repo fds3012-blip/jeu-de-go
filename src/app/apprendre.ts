@@ -97,10 +97,12 @@ export function trace(n: number, { encours = -1, apres = 2, bas = [] as readonly
     virages.push(v);
     y = Math.max(y + ecart, v + LIGNE);
   }
-  // Le goban s'arrête une ligne sous la dernière pierre ; il ne s'allonge que si la dernière rangée dépasse la place
-  // qu'elle aurait au milieu du chemin (sinon, comme avant, son bouton déborde dans la marge du dessous).
-  const der = n - 1, place = (der === encours ? apres + 1 : 1) * LIGNE;
-  const hauteur = n ? pierres[der].y + ((bas[der] ?? 0) + MARGE_RANGEE > place ? ligneSous((bas[der] ?? 0) + MARGE_RANGEE) : LIGNE) : 0;
+  // Le goban s'arrête une ligne sous la dernière pierre ; il s'allonge si la dernière rangée dépasse la place
+  // qu'elle aurait au milieu du chemin. Dernière leçon en cours (#177, sept leçons) : sa place est toujours réservée,
+  // plus une ligne de marge (avec la police doublée, la pierre est dessinée sous sa ligne et la mesure est courte),
+  // sinon son bouton en relief mord sur « Bientôt ».
+  const der = n - 1, place = (der === encours ? apres + 1 : 1) * LIGNE, rangee = (bas[der] ?? 0) + MARGE_RANGEE;
+  const hauteur = n ? pierres[der].y + (der === encours ? Math.max(place, ligneSous(rangee)) + LIGNE : rangee > place ? ligneSous(rangee) : LIGNE) : 0;
   return { pierres, hauteur, virages, d: traceJusqua({ pierres, hauteur, virages, d: '' }, n - 1, true) };
 }
 
