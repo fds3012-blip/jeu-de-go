@@ -226,6 +226,14 @@ export const fr = {
   'erreurs.bravoKataGo': 'Bravo, c’est le coup de KataGo !',
   'erreurs.refutation': 'Pas celui-là. Cherche encore.',
 
+  // Révision du jour (#199) : problèmes déjà réussis, repris à J+1, J+3, J+7 ; « un défi par jour » pour la série
+  'revision.titre': 'Révision du jour',
+  'revision.aide': 'Refaire un problème réussi t’aide à le retenir.',
+  'revision.ouvrirAria': 'Réviser : {titre}',
+  'revision.dejaReussi': 'Déjà réussi · refais-le sans aide',
+  'revision.faite': 'Révision faite. D’autres problèmes reviendront demain.',
+  'revision.serie': 'Un défi par jour garde ta série : le Go du jour, une leçon ou la révision.',
+
   // Carte « Installe l'app » (#178)
   'installer.titre': 'Garde le go sous la main',
   'installer.texte': 'Ajoute l’app à ton écran d’accueil : elle s’ouvre en un geste, en plein écran.',

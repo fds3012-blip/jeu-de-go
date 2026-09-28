@@ -27,6 +27,7 @@ import { Mochi } from '../ui/Mochi';
 import { lireReserveAppareil, reconcilierAppareil } from './gelAppareil';
 import { serieAffichee } from './serieLocale';
 import { messageGel } from './gel';
+import { goDuJourFaitAppareil } from './defiAppareil';
 import { BarreNav, type Onglet } from '../ui/IconesNav';
 import { BarreNiveau, FeteNiveau } from '../ui/Niveau';
 import { annonceKomi, equilibrage, KOMI_NORMAL, partiesOrdi, type Equilibrage } from './equilibrage';
@@ -194,7 +195,7 @@ export function App() {
       <Accueil adv={adv} battu={battu(bilan, adv.id)} textes={home} taille={settings.size} cartes={cartes}
         reglages={reglages} setReglages={setReglages} onTaille={n => set({ size: n })} onChoisir={setAdversaire}
         onJouer={() => lancer('ordi')} onDeux={() => lancer('deux')}
-        probleme={daily && { numero, titre: daily.title, rows: daily.rows, reussi: readLocal<Serie | null>(SERIE_KEY, null)?.dernier === numero }}
+        probleme={daily && { numero, titre: daily.title, rows: daily.rows, reussi: goDuJourFaitAppareil(numero) }}
         onProbleme={() => go('problemes')}
         lecon={leconConseillee && { rang: rangLecon, total: LESSONS.length, titre: leconConseillee.title }}
         onLecon={() => { go('apprendre'); if (leconConseillee) setLessonId(leconConseillee.id); }} />
