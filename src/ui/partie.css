@@ -159,6 +159,18 @@
 .actions-aides { flex: 3 1 0; justify-content: flex-end; }
 .actions-decisions { flex: 2 1 0; gap: 4px; justify-content: flex-start; padding-right: 4px; }
 .actions-groupees button { min-width: 0; }
+/* En 320 px, « Abandonner » (69 px) débordait de son bouton de 58 px et passait sous « Passer », et « Qui mène ? »
+   (62 px) de son bouton de 60 px. Aucun bouton ne descend plus sous la largeur de son libellé (plus 4 px d'air de
+   chaque côté) ; le reste de la place se partage comme avant. Sous 300 px (zoom 200 %), les libellés ne tiennent de
+   toute façon pas : on garde le partage égal plutôt que d'écraser certaines cibles sous 44 px. */
+@media (min-width: 300px) {
+  .actions-aides, .actions-decisions { min-width: min-content; }
+  .actions-groupees button { min-width: min-content; padding-inline: 4px; }
+  /* Plancher de 44 px par cible, même pour un libellé court (« Indice ») : 36 px de libellé plus 2 × 4 px. */
+  .actions-groupees button > span:last-child { min-width: 36px; text-align: center; }
+  /* « Passer » est cerné : son libellé ne frôle pas le cadre. */
+  .actions-groupees button.decider { padding-inline: 8px; }
+}
 .actions-filet { flex: none; align-self: center; width: 1px; height: 36px; margin: 0 2px; background: var(--line); }
 .actions button.decider { margin: 6px 0; min-height: 52px; background: var(--surface-2); font-weight: var(--fw-bold);
   box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--text) 45%, transparent); }

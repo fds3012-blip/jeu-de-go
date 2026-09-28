@@ -184,6 +184,34 @@ for (const c of CAS) {
   });
 }
 
+// En 320 px, « Abandonner » débordait de son bouton et passait sous « Passer » (bouton plein).
+// Chaque libellé de la barre d'actions tient dans son bouton, sans toucher le voisin, et chaque bouton garde 44 px.
+for (const largeur of [320, 375, 390]) {
+  test(`barre d’actions de la partie à ${largeur} px : libellés entiers`, async ({ page }) => {
+    await page.setViewportSize({ width: largeur, height: 640 });
+    await page.goto('/');
+    await page.locator('.cta').click();
+    const barre = page.getByRole('toolbar', { name: 'Actions de la partie' });
+    await expect(barre.getByRole('button', { name: 'Abandonner' })).toBeVisible();
+    const boutons = await barre.getByRole('button').evaluateAll(bs => bs.map(b => {
+      const bb = b.getBoundingClientRect();
+      const libelle = b.querySelector(':scope > span:last-child');
+      const lb = libelle?.getBoundingClientRect();
+      return { nom: libelle?.textContent ?? '', gauche: bb.left, droite: bb.right, largeur: bb.width, hauteur: bb.height,
+        texteGauche: lb?.left ?? bb.left, texteDroite: lb?.right ?? bb.right };
+    }));
+    for (const [i, b] of boutons.entries()) {
+      expect(b.largeur, `« ${b.nom} » : cible trop étroite`).toBeGreaterThanOrEqual(44);
+      expect(b.hauteur, `« ${b.nom} » : cible trop basse`).toBeGreaterThanOrEqual(44);
+      if (!b.nom.trim()) continue;
+      expect(b.texteGauche, `« ${b.nom} » coupé à gauche`).toBeGreaterThanOrEqual(b.gauche - 0.5);
+      expect(b.texteDroite, `« ${b.nom} » coupé à droite`).toBeLessThanOrEqual(b.droite + 0.5);
+      const suivant = boutons[i + 1];
+      if (suivant) expect(b.texteDroite, `« ${b.nom} » passe sous « ${suivant.nom} »`).toBeLessThanOrEqual(suivant.gauche);
+    }
+  });
+}
+
 // #169 : à 195 px, les titres du chemin passaient sur 4 à 6 lignes et chevauchaient la rangée suivante,
 // et « Commencer » recouvrait « Atari ». Vérifié sur un chemin neuf, en cours et fini.
 const PROGRESSIONS: Record<string, Record<string, number>> = {
