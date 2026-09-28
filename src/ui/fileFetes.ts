@@ -80,6 +80,12 @@ export function retirer(e: EtatFile, genre: Genre): EtatFile {
   return actif === e.actif && attente.length === e.attente.length ? e : { ...e, actif, attente };
 }
 
+/** Niveau franchi pas encore fêté (à l'écran ou en attente), ou null. */
+export function niveauEnAttente(e: EtatFile): number | null {
+  const f = [e.actif, ...e.attente].find(x => x?.genre === 'niveau');
+  return f?.genre === 'niveau' ? f.niveau : null;
+}
+
 /** La feuille de réussite a montré l'XP de l'exercice : elle ne sera pas répétée à la fin. */
 export function marquerVue(e: EtatFile): EtatFile {
   return e.enLigne && !e.enLigne.vue ? { ...e, enLigne: { ...e.enLigne, vue: true } } : e;

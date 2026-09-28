@@ -1,6 +1,6 @@
 // Issue #236 (N2) : une fête à la fois, jamais sur la consigne.
 import { describe, expect, it } from 'vitest';
-import { ajouter, avancer, exercice, FILE_VIDE, marquerVue, retirer, terminer, type EtatFile, type Fete } from './fileFetes';
+import { ajouter, avancer, exercice, FILE_VIDE, marquerVue, niveauEnAttente, retirer, terminer, type EtatFile, type Fete } from './fileFetes';
 
 const xp = (points: number, bonus = 0): Fete => ({ genre: 'xp', points, bonus });
 const niveau = (n: number): Fete => ({ genre: 'niveau', niveau: n });
@@ -94,5 +94,18 @@ describe('file des célébrations', () => {
     const e = pousser(FILE_VIDE, niveau(2));
     expect(terminer(e, 'xp')).toBe(e);
     expect(terminer(e, 'niveau').actif).toBeNull();
+  });
+});
+
+describe('niveauEnAttente (#236, fin de série)', () => {
+  it('trouve le niveau qui attend la fin de l’exercice, ou celui à l’écran', () => {
+    const pendant = ajouter(exercice(FILE_VIDE, true), niveau(2));
+    expect(niveauEnAttente(pendant)).toBe(2);
+    expect(niveauEnAttente(pousser(FILE_VIDE, niveau(3)))).toBe(3);
+  });
+  it('rien quand aucun niveau n’est à fêter', () => {
+    expect(niveauEnAttente(FILE_VIDE)).toBeNull();
+    expect(niveauEnAttente(pousser(FILE_VIDE, xp(20)))).toBeNull();
+    expect(niveauEnAttente(retirer(ajouter(FILE_VIDE, niveau(2)), 'niveau'))).toBeNull();
   });
 });

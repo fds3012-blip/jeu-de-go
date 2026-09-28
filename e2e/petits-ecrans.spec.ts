@@ -94,7 +94,6 @@ test('M9 : fin de la pratique, « Niveau 2 ! » ne couvre pas le titre du chemin
   await jouer(page, 'E4');
   await page.getByRole('button', { name: 'Terminer la leçon' }).click();
   await page.getByRole('button', { name: /^Entraîne-toi/ }).click();
-  const fete = page.getByTestId('fete-niveau');
   for (const [rang, coup] of [[1, 'E2'], [2, 'F1'], [3, 'A2']] as const) {
     await expect(page.getByText(`Entraînement, ${rang} sur 3`)).toBeVisible();
     // Le dernier problème fait passer au niveau 2 (100 XP).
@@ -103,11 +102,14 @@ test('M9 : fin de la pratique, « Niveau 2 ! » ne couvre pas le titre du chemin
     await expect(page.locator('.verdict')).toBeVisible();
     if (rang < 3) await page.getByRole('button', { name: 'Problème suivant' }).click();
   }
-  // La série est finie : la fête se pose sur la feuille de réussite (comme en fin de leçon), pas sur le chemin.
-  await expect(fete).toContainText(/Niveau\s2/);
-  const retour = page.locator('.verdict').getByRole('button', { name: 'Retour au chemin' });
-  const [c, r] = await Promise.all([fete.boundingBox(), retour.boundingBox()]);
-  expect(c!.y + c!.height).toBeLessThanOrEqual(r!.y);
+  // La série est finie. #236 (N2) : le niveau n'arrive plus sur la feuille de réussite, mais sur son propre écran,
+  // entre la feuille et le chemin (e2e/une-fete.spec.ts). Ici : rien ne couvre le chemin ensuite.
+  await page.locator('.verdict').getByRole('button', { name: 'Retour au chemin' }).click();
+  const ecranNiveau = page.getByTestId('niveau-atteint');
+  await expect(ecranNiveau).toContainText(/Niveau\s2/);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+  const retour = ecranNiveau.getByRole('button', { name: 'Retour au chemin' });
+  expect((await retour.boundingBox())!.y + 44).toBeLessThanOrEqual(640);
   await retour.click();
   const titre = page.getByRole('heading', { level: 2, name: 'Les bases' });
   await expect(titre).toBeVisible();

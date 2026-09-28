@@ -219,7 +219,7 @@ export function App() {
       </>
     );
   } else if (tab === 'apprendre' && serie3) {
-    screen = <SeriePratique problemes={serie3} confirmTouch={settings.confirmTouch} onFin={() => { setSerie3(null); window.scrollTo({ top: 0 }); }} />;
+    screen = <SeriePratique problemes={serie3} confirmTouch={settings.confirmTouch} celebrer={settings.celebrations} onFin={() => { setSerie3(null); window.scrollTo({ top: 0 }); }} />;
   } else if (tab === 'apprendre' && lesson) {
     const leconSuivante = LESSONS[LESSONS.indexOf(lesson) + 1];
     // Fin de leçon (#200) : 3 problèmes du thème, et en fin de chapitre une partie contre le premier adversaire.

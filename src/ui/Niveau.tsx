@@ -82,3 +82,29 @@ export function FeteNiveau({ celebrer, ecran }: { celebrer: boolean; ecran?: str
     </div>
   );
 }
+
+/**
+ * Le niveau a son moment à lui (#236, N2) : après la feuille « Bravo » de la série d'entraînement, un écran seul,
+ * « Niveau 2 ! » en grand, sans consigne ni pastille autour. Une seule action : continuer vers le chemin.
+ * Avec les mouvements réduits ou sans célébrations : le même écran, immobile et sans son.
+ */
+export function NiveauAtteint({ niveau, celebrer, action, onAction }: { niveau: number; celebrer: boolean; action: string; onAction: () => void }) {
+  const bouton = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    bouton.current?.focus({ preventScroll: true });
+    window.scrollTo({ top: 0 });
+    if (!celebrer) return;
+    const son = window.setTimeout(() => { playLevel(); hapticLevel(); }, 120);
+    return () => window.clearTimeout(son);
+  }, [celebrer]);
+  const anime = celebrer && !mouvementsReduits();
+  const recompense = recompenseDuNiveau(niveau);
+  return (
+    <section className={`niveau-atteint${anime ? ' anime' : ''}`} data-testid="niveau-atteint" aria-labelledby="niveau-atteint-titre">
+      <span className="niveau-atteint-pierre" aria-hidden="true"><b>{niveau}</b></span>
+      <h2 id="niveau-atteint-titre">{fr(t('niveau.fete', { niveau }))}</h2>
+      <p>{fr(recompense ? t('niveau.debloque', { recompense: libelleRecompense(recompense) }) : t('niveau.bravo'))}</p>
+      <button ref={bouton} type="button" className="cta" onClick={onAction}>{action}</button>
+    </section>
+  );
+}
