@@ -45,6 +45,16 @@ export function Marque({ juste, taille = 32 }: { juste: boolean; taille?: number
 export function Verdict({ ton, children, actions, cle }: { ton: 'juste' | 'revoir' | 'neutre'; children: ReactNode; actions?: ReactNode; cle?: string | number }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => devoilerPlateau(ref.current), [ton, cle]);
+  // #268 : hauteur de la feuille pour le scroll-padding-bottom de la page (apprendre.css), suivie si elle change.
+  useEffect(() => {
+    const el = ref.current, racine = document.documentElement;
+    if (!el) return;
+    const poser = () => racine.style.setProperty('--verdict-h-page', `${el.offsetHeight + 8}px`);
+    poser();
+    const ro = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(poser);
+    ro?.observe(el);
+    return () => { ro?.disconnect(); racine.style.removeProperty('--verdict-h-page'); };
+  }, []);
   return (
     <div ref={ref} className={`verdict verdict-${ton}`}>
       <div className="verdict-texte" role="status" aria-live="polite">

@@ -19,7 +19,7 @@ test('tout résolu : « Problème suivant » de la liste ouvre un problème, et 
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
 
-  const continuer = page.getByRole('button', { name: /^Problème suivant : / });
+  const continuer = page.getByRole('button', { name: /^Problème suivant / });
   await expect(continuer).toBeVisible();
   await expect(page.getByText(/c.est fini|tout est résolu/i)).toHaveCount(0);
   // Issue #196 : le palier en cours dit « N réussis », jamais de total ni de palier « fini ».

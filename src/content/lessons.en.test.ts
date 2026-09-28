@@ -29,9 +29,28 @@ function textes(l: Lesson): string[] {
 
 const FRANCAIS = /\b(le|la|les|des|du|une|est|et|pour|avec|sans|ton|ta|tes|tu|toi|je|pas|sur|dans|qui|que|pierres?|noir|blanc|libertés?|coup)\b|[àâçéèêëîïôûùœ]/iu;
 
+describe('leçon 7 en anglais : komi et scores (#167)', () => {
+  const l7 = localiser(LESSONS_FR.find(l => l.id === 'l7')!, 'en');
+  const q = (i: number) => l7.steps[i] as Extract<Lesson['steps'][number], { kind: 'quiz' }>;
+  it('komi annoncé à l’anglaise : 6.5 points', () => {
+    expect(l7.steps[0].text).toContain('komi (6.5 points');
+  });
+  it('l7.2 et l7.6 : la bonne réponse reste la même, écrite 33.5 et 39', () => {
+    expect(q(1).choices[q(1).answer]).toBe('33.5');
+    expect(q(1).ok).toContain('27 + 6.5 = 33.5');
+    expect(q(1).ok).toContain('2.5 points');
+    expect(q(5).choices).toEqual(['36', '39', '42.5']);
+    expect(q(5).choices[q(5).answer]).toBe('39');
+    expect(q(5).ok).toContain('27 + 5 + 6.5 = 38.5');
+  });
+  it('l7.5 : la bonne réponse est de passer', () => {
+    expect(q(4).choices[q(4).answer]).toBe('I pass');
+  });
+});
+
 describe('leçons en anglais : catalogue (#167)', () => {
-  it('au moins les leçons 1 à 3 sont traduites, et chaque traduction vise une leçon existante', () => {
-    for (const id of ['l1', 'l2', 'l3']) expect(Object.keys(EN)).toContain(id);
+  it('les leçons 1 à 8 sont traduites, et chaque traduction vise une leçon existante', () => {
+    for (const id of ['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7', 'l8']) expect(Object.keys(EN)).toContain(id);
     for (const id of Object.keys(LESSONS_EN)) expect(LESSONS_FR.map(l => l.id)).toContain(id);
     for (const id of Object.keys(CHAPITRES_EN)) expect(CHAPITRES.map(c => c.id)).toContain(id);
   });
@@ -81,6 +100,19 @@ for (const fr of traduites) describe(`${fr.id} en anglais : ${EN[fr.id].title}`,
   it('les coordonnées citées sont les mêmes qu’en français', () => {
     const coords = (l: Lesson) => textes(l).map(x => (x.match(/\b[A-HJ][1-9]\b/g) ?? []).sort().join(' '));
     expect(coords(en)).toEqual(coords(fr));
+  });
+  it('les nombres cités sont ceux du français, écrits à l’anglaise (6.5, jamais 6,5)', () => {
+    const nombres = (l: Lesson, sep: string) => textes(l).map(x => (x.match(/\d+(?:[.,]\d+)?/g) ?? [])
+      .map(n => { expect(n.includes(sep === '.' ? ',' : '.'), `« ${x} »`).toBe(false); return n.replace(sep, '.'); }).sort().join(' '));
+    expect(nombres(en, '.')).toEqual(nombres(fr, ','));
+  });
+  it('choix des quiz : chiffres identiques au français, décimales à l’anglaise', () => {
+    fr.steps.forEach((s, i) => {
+      if (s.kind !== 'quiz' || !s.choices.every(c => /^\d+(,\d+)?$/.test(c))) return;
+      const e = en.steps[i] as typeof s;
+      expect(e.choices).toEqual(s.choices.map(c => c.replace(',', '.')));
+      for (const c of e.choices) expect(c).toMatch(/^\d+(\.5)?$/);
+    });
   });
   it('vocabulaire du glossaire : jamais « square », « case », « shicho » ; atari et ko en minuscules', () => {
     for (const x of textes(en)) {

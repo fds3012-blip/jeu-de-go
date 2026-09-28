@@ -1,6 +1,6 @@
 // Composants de l'écran de partie (grammaire de chess.com) : bandeaux des joueurs avec leur couvercle,
 // liste des coups, barre d'avantage, coach Mochi et barre d'actions. Styles : partie.css.
-import { useLayoutEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, type ReactNode } from 'react';
 import { IconeAction, type NomAction } from './IconesActions';
 import { PortraitMochi, type HumeurMochi } from './Portrait';
 import { Reflexion } from './Reflexion';
@@ -112,6 +112,28 @@ export function Coach({ children, cle, attente = false, humeur = attente ? 'pens
       <p key={cle} aria-live="polite">{children}</p>
       {/* L'adversaire réfléchit : les deux pierres du logo tournent (le texte voisin dit qui réfléchit). */}
       {attente && <Reflexion taille={22} />}
+    </div>
+  );
+}
+
+/**
+ * Bulle de Mochi à deux choix (#235, reprise par #268) : une question, un choix qui agit (`agir`) et le choix sûr
+ * (`rester`), en principal. Posée sur le bas de la zone de Mochi, elle monte par-dessus ton bandeau (voir partie.css).
+ * `focus` : le choix sûr prend le focus à l'ouverture (demande venue d'un bouton qui disparaît du parcours clavier).
+ */
+export function ChoixMochi({ question, aria, agir, rester, focus = false, nom }: {
+  question: string; aria: string; agir: { label: string; onClick: () => void }; rester: { label: string; onClick: () => void };
+  focus?: boolean; nom?: string;
+}) {
+  const sur = useRef<HTMLButtonElement>(null);
+  useEffect(() => { if (focus) sur.current?.focus(); }, [focus]);
+  return (
+    <div className="coach-avertir" data-choix={nom}>
+      <Coach cle={question}>{question}</Coach>
+      <div className="coach-choix" role="group" aria-label={aria}>
+        <button type="button" className="btn" onClick={agir.onClick}>{agir.label}</button>
+        <button ref={sur} type="button" className="btn primary" onClick={rester.onClick}>{rester.label}</button>
+      </div>
     </div>
   );
 }
