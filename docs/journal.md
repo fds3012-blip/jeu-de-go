@@ -523,3 +523,32 @@ Chaque livraison : issue traitée, agent, pull request, résultat des vérificat
 - Les passages en public se préparent : scan de tout l'historique, licence, liste de ce qui devient visible.
 - La CI annule les exécutions de main quand une autre fusion arrive. Seule la dernière exécution fait foi.
 - Un agent a recréé une branche dont le nom existait déjà sur GitHub. Elle a été poussée sous un autre nom (`rejoue-erreurs-77`) pour ne pas écraser l'historique.
+
+## Nuit du 28 au 29/09 (jusqu'à 3 h)
+
+**Fusionné (CI verte à chaque fois)**
+- Contenu :
+  - #281 : relecture pédagogique des problèmes en anglais (17 corrections), lot R traduit.
+  - #296 (#282) : 10 textes français ambigus corrigés, avec une migration qui ne fait que des mises à jour. Appliquée en production, empreintes md5 identiques.
+  - #298 et #304 : lots S (tesuji de capture, 900 à 1250) et T (difficiles, 1100 à 1500). Appliqués en production : **183 problèmes**.
+- Jeu :
+  - #294 (#80) : bouton « Conseil » de Mochi. 5 phrases prouvées sur 342 positions ; Mochi se tait s'il n'est pas sûr.
+  - #299 (#284) : « Continuer » à ta mesure. Une cote cachée du joueur vise 85 % de réussite, sans jamais afficher de total.
+  - #302 (#283) : placement « Je sais déjà jouer ». 3 problèmes donnent un niveau estimé en kyu et l'adversaire conseillé.
+  - #305 (#286) : import d'une partie SGF (OGS, Fox, KGS) et analyse avec KataGo, avec « Rejoue cette erreur ».
+  - #306 (#287) : course aux problèmes. 3 minutes, 3 erreurs, meilleur score à partager.
+- Monde :
+  - #301 (#167) : choix de la langue dans le Profil ; un appareil en anglais ouvre l'app en anglais.
+  - #297 (#285) : aperçu riche du lien partagé (Open Graph, image 1200 × 630). Le domaine reste à confirmer par Florian.
+- Qualité :
+  - #295 : recette du soir, 360 écrans, et correction de la partie guidée (Mochi s'affichait comme Pomme).
+  - #300 (#290 à #293) : 4 défauts d'affichage corrigés.
+- Produit :
+  - #288 : veille face à chess.com, BadukPop, OGS et KaTrain. Nouvelles issues #283 à #287.
+- Backend :
+  - #303 (#81) : défi par lien, phase 1. Schéma avec RLS, fonctions `security definer`, tests SQL. **Migration non appliquée** : il faut d'abord la décision de Florian sur les connexions anonymes.
+
+**Appris**
+- Deux PR vertes chacune peuvent casser ensemble. Exemple : un import `PortraitMochi` en double après #294 et #295. Avant de fusionner la seconde, je ramène main dans sa branche et je relance le typecheck. Il faut aussi lire le code de sortie du typecheck, pas la dernière ligne d'un tube.
+- Chromium bloque certains ports, comme 5060 et 5061 (`ERR_UNSAFE_PORT`) : on les évite pour les e2e.
+- Plusieurs agents partageaient le même fichier `/tmp/*.pid` : chaque agent prend maintenant son propre fichier.
