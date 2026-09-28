@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CHAPITRES, LESSONS } from '../content/lessons';
 import { ACQUIS, acquis } from '../content/acquis';
-import { CHAPITRES_A_VENIR, LIGNE, MARGE_RANGEE, boutonChemin, etapes, finDeLecon, titreCourt, trace, traceJusqua, type Progression } from './apprendre';
+import { CHAPITRES_A_VENIR, LIGNE, MARGE_RANGEE, boutonChemin, placeSousLigne, etapes, finDeLecon, titreCourt, trace, traceJusqua, type Progression } from './apprendre';
 
 const plein = (id: string) => LESSONS.find(l => l.id === id)!.steps.length;
 
@@ -145,6 +145,40 @@ describe('trace : rangées plus hautes que l’écart (#169, zoom 200 %)', () =>
   });
   it('la dernière rangée haute agrandit le goban', () => {
     expect(trace(2, { bas: [pierre, 300] }).hauteur).toBeGreaterThanOrEqual(trace(2).pierres[1].y + 300);
+  });
+});
+
+describe('placeSousLigne et trace avec la police doublée (#232)', () => {
+  const PIERRE = 58;
+  it('mesure depuis la ligne de la rangée, pas depuis la pierre dessinée plus bas', () => {
+    // Rangée posée une demi-pierre au-dessus de sa ligne (y = 56) : haut 27, bas 291.
+    expect(placeSousLigne({ haut: 27, bas: 291 }, PIERRE)).toBe(291 - 56);
+    // Pierre seule : une demi-pierre sous la ligne.
+    expect(placeSousLigne({ haut: 100, bas: 158 }, PIERRE)).toBe(29);
+    expect(placeSousLigne({ haut: 0, bas: 60.2 }, PIERRE)).toBe(32);
+  });
+  // Hauteurs des rangées du chapitre 1 mesurées à 390 × 844 (e2e, 28/09), leçon 1 en cours.
+  const rangees = (hauteurs: number[]) => hauteurs.map(h => placeSousLigne({ haut: 0, bas: h }, PIERRE));
+  it('390 px, police normale : rien ne change', () => {
+    expect(trace(7, { encours: 0, bas: rangees([126, 63, 81, 60, 58, 81, 58]) })).toEqual(trace(7, { encours: 0 }));
+    expect(trace(7, { encours: 6, bas: rangees([58, 63, 81, 60, 58, 81, 126]) })).toEqual(trace(7, { encours: 6 }));
+  });
+  it('390 px, police doublée : les rangées ne se chevauchent plus', () => {
+    for (const [encours, hauteurs] of [
+      [0, [264, 238, 238, 154, 123, 281, 160]],
+      [1, [160, 306, 238, 154, 123, 281, 160]],
+      [5, [160, 238, 238, 154, 123, 385, 160]],
+      [-1, [160, 238, 238, 154, 123, 281, 160]],
+    ] as const) {
+      const bas = rangees([...hauteurs]);
+      const t = trace(7, { encours, bas });
+      for (let i = 1; i < 7; i++) {
+        const finRangee = t.pierres[i - 1].y + bas[i - 1], debutSuivante = t.pierres[i].y - PIERRE / 2;
+        expect(t.virages[i - 1]).toBeGreaterThanOrEqual(finRangee + MARGE_RANGEE);
+        expect(debutSuivante).toBeGreaterThan(t.virages[i - 1]);
+      }
+      expect(t.hauteur).toBeGreaterThanOrEqual(t.pierres[6].y + bas[6]);
+    }
   });
 });
 

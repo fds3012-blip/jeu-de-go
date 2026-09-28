@@ -90,8 +90,22 @@ function morceau(a: { x: number; y: number }, b: { x: number; y: number }, tourn
   return a.x === b.x ? `V${b.y}` : `V${tourne}H${b.x}V${b.y}`;
 }
 
-/** Place minimale, en px, entre le bas d'une rangée (titre, description, bouton) et la ligne du virage au-dessous. */
-export const MARGE_RANGEE = 8;
+/**
+ * Place minimale, en px, entre le bas d'une rangée (titre, description, bouton) et la ligne du virage au-dessous.
+ * 4 px (#232) : c'est l'écart réel des rangées de trois lignes à 390 px, où le chemin ne bouge pas.
+ */
+export const MARGE_RANGEE = 4;
+
+/**
+ * Place occupée par une rangée sous sa ligne du goban, en px (#232), à partir de sa boîte à l'écran (`haut`, `bas`)
+ * et du diamètre de la pierre. La rangée est posée une demi-pierre au-dessus de sa ligne (CSS de `.pas`) :
+ * la ligne est donc à `haut + pierre / 2`, même quand la pierre est dessinée plus bas, centrée sur un texte
+ * plus haut qu'elle (police doublée : jusqu'à 110 px sous sa ligne). Mesurer depuis le centre de la pierre
+ * oubliait ce décalage, et les rangées se chevauchaient.
+ */
+export function placeSousLigne(rangee: { haut: number; bas: number }, pierre: number): number {
+  return Math.ceil(rangee.bas - (rangee.haut + pierre / 2));
+}
 
 /** Plus petit multiple de LIGNE supérieur ou égal à `y` : la première ligne du goban à partir de `y`. */
 const ligneSous = (y: number) => Math.ceil(y / LIGNE) * LIGNE;
@@ -99,7 +113,7 @@ const ligneSous = (y: number) => Math.ceil(y / LIGNE) * LIGNE;
 /**
  * Chemin de pierres sur les lignes du goban : une pierre toutes les deux lignes, en alternant les côtés.
  * `encours` : indice de la leçon en cours ; elle a `apres` lignes de plus au-dessous, pour son bouton en relief.
- * `bas` (#169) : pour chaque rangée, la place qu'elle occupe sous le centre de sa pierre, en px (mesurée à l'écran).
+ * `bas` (#169) : pour chaque rangée, la place qu'elle occupe sous sa ligne, en px (mesurée à l'écran, voir `placeSousLigne`).
  * Une rangée plus haute que l'écart prévu (titre sur plusieurs lignes au zoom 200 %) repousse la suivante
  * d'autant de lignes qu'il faut, et le virage passe sous elle. Sans mesure, ou si tout tient, rien ne change.
  */
@@ -119,8 +133,7 @@ export function trace(n: number, { encours = -1, apres = 2, bas = [] as readonly
   }
   // Le goban s'arrête une ligne sous la dernière pierre ; il s'allonge si la dernière rangée dépasse la place
   // qu'elle aurait au milieu du chemin. Dernière leçon en cours (#177, sept leçons) : sa place est toujours réservée,
-  // plus une ligne de marge (avec la police doublée, la pierre est dessinée sous sa ligne et la mesure est courte),
-  // sinon son bouton en relief mord sur « Bientôt ».
+  // plus une ligne de marge, sinon son bouton en relief mord sur « Bientôt ».
   const der = n - 1, place = (der === encours ? apres + 1 : 1) * LIGNE, rangee = (bas[der] ?? 0) + MARGE_RANGEE;
   const hauteur = n ? pierres[der].y + (der === encours ? Math.max(place, ligneSous(rangee)) + LIGNE : rangee > place ? ligneSous(rangee) : LIGNE) : 0;
   return { pierres, hauteur, virages, d: traceJusqua({ pierres, hauteur, virages, d: '' }, n - 1, true) };

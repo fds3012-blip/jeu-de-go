@@ -161,11 +161,9 @@ for (const c of CAS) {
         const bas = (await cta.boundingBox())!, chap2 = (await page.getByRole('heading', { name: 'Ouverture sur 9 × 9' }).boundingBox())!;
         return chap2.y - (bas.y + bas.height);
       }, { message: 'bouton de la leçon 7 sur le chapitre 2' }).toBeGreaterThanOrEqual(0);
-      // Police doublée : des rangées du chapitre 1 se chevauchaient déjà avant le chapitre 2 (défaut signalé dans #228).
-      if (!c.police) {
-        await page.evaluate(() => document.fonts.ready);
-        await cheminLisible(page, 'Apprendre (2 chapitres)');
-      }
+      // #232 : aussi avec la police doublée (les rangées 2/3, 3/4 et 6/7 du chapitre 1 se chevauchaient).
+      await page.evaluate(() => document.fonts.ready);
+      await cheminLisible(page, 'Apprendre (2 chapitres)');
       await cta.click();
       for (const n of ['Je passe', 'Chez moi', 'Chez Blanc']) {
         const choix = page.locator('.choix').getByRole('button', { name: n, exact: true });
@@ -194,17 +192,21 @@ const PROGRESSIONS: Record<string, Record<string, number>> = {
   'dernière leçon en cours': { l1: 99, l2: 99, l3: 99, l4: 99, l5: 99 },
   fini: { l1: 99, l2: 99, l3: 99, l4: 99, l5: 99, l6: 99 },
 };
-for (const [largeur, hauteur] of [[195, 422], [320, 640], [390, 844]]) {
-  test.describe(`chemin d’Apprendre à ${largeur} px`, () => {
+// #232 : et à 390 px avec la police doublée, où la pierre est dessinée jusqu'à 110 px sous sa ligne.
+for (const [largeur, hauteur, police] of [[195, 422, false], [320, 640, false], [390, 844, false], [390, 844, true]] as const) {
+  test.describe(`chemin d’Apprendre à ${largeur} px${police ? ', police doublée' : ''}`, () => {
     test.use({ viewport: { width: largeur, height: hauteur } });
     for (const [nom, p] of Object.entries(PROGRESSIONS)) {
       test(`${nom} : rangées sans chevauchement, textes non recouverts`, async ({ page }) => {
         await page.addInitScript(v => localStorage.setItem('go.lecons.v1', v), JSON.stringify(p));
+        if (police) await page.addInitScript(() => {
+          document.addEventListener('DOMContentLoaded', () => { document.documentElement.style.fontSize = '200%'; });
+        });
         await page.goto('/');
         await onglet(page, 'Apprendre').click();
         await expect(page.locator('.cta-chemin')).toBeVisible();
         await page.evaluate(() => document.fonts.ready);
-        await cheminLisible(page, `Apprendre ${largeur} px, ${nom}`);
+        await cheminLisible(page, `Apprendre ${largeur} px${police ? ' (police doublée)' : ''}, ${nom}`);
       });
     }
   });

@@ -22,7 +22,7 @@ import { hapticFail, hapticStone, hapticSuccess, hapticVictory } from '../ui/hap
 import { EVENTS, track } from '../data/analytics';
 import { gagnerXp } from './xp';
 import { validerDefi } from './defiAppareil';
-import { CHAPITRES_A_VENIR, LIGNE, actionsFin, boutonChemin, etapes, finDeChapitre, finDeLecon, trace, traceJusqua, type ActionFin, type Etape, type Progression } from './apprendre';
+import { CHAPITRES_A_VENIR, LIGNE, actionsFin, boutonChemin, etapes, finDeChapitre, finDeLecon, placeSousLigne, trace, traceJusqua, type ActionFin, type Etape, type Progression } from './apprendre';
 import { t } from '../content/i18n';
 import '../ui/apprendre.css';
 
@@ -103,7 +103,7 @@ function CheminChapitre({ chapitre, liste, k, boutonCta, onOpen, progress }: {
   chapitre: Chapitre; liste: Etape[]; k: number; boutonCta: ReactNode; onOpen: (id: string) => void; progress: Progression;
 }) {
   const iEnCours = liste.findIndex(e => e.etat === 'encours');
-  // #169 : place occupée par chaque rangée sous le centre de sa pierre, mesurée après l'affichage. Au zoom 200 %,
+  // #169 : place occupée par chaque rangée sous sa ligne, mesurée après l'affichage. Au zoom 200 %,
   // un titre sur plusieurs lignes repousse la rangée suivante au lieu de la chevaucher. À 390 px, tout tient : rien ne bouge.
   const [bas, setBas] = useState<number[]>([]);
   const t = useMemo(() => trace(liste.length, { encours: iEnCours, bas }), [liste.length, iEnCours, bas]);
@@ -117,9 +117,11 @@ function CheminChapitre({ chapitre, liste, k, boutonCta, onOpen, progress }: {
   // Stable : la hauteur d'une rangée ne dépend pas de sa position, la seconde mesure donne le même résultat.
   useLayoutEffect(() => {
     const rangees = [...(chemin.current?.children ?? [])] as HTMLElement[];
+    // #232 : depuis la ligne de la rangée, pas depuis le centre de sa pierre (dessinée plus bas quand le texte est plus haut qu'elle).
     const mesure = rangees.map(li => {
       const pierre = li.querySelector('.pierre-gue')?.getBoundingClientRect();
-      return pierre ? Math.ceil(li.getBoundingClientRect().bottom - (pierre.top + pierre.height / 2)) : 0;
+      const r = li.getBoundingClientRect();
+      return pierre ? placeSousLigne({ haut: r.top, bas: r.bottom }, pierre.height) : 0;
     });
     if (mesure.length !== bas.length || mesure.some((m, i) => m !== bas[i])) setBas(mesure);
   }, [bas, k, tour, progress]);
