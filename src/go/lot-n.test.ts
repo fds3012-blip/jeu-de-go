@@ -21,7 +21,16 @@ import { groupAt, play, type Position } from './rules';
 // Recette du 28/09 (#195) : longues preuves synchrones, voir cederLaMain (preuve-par-coup.ts).
 beforeEach(cederLaMain);
 
+/**
+ * Horizon des problèmes « sauver » : Blanc ne doit rien prendre en HORIZON coups. n18 est prouvé coup par coup à
+ * trois coups (au-delà, la recherche complète de chaque coup prend une minute) ; sa réponse C1 est prouvée en plus à
+ * quatre coups, avec et sans ko, dans un test à part. Comme « prendre en au plus k coups » ne peut que devenir plus
+ * facile quand k grandit, les erreurs qui perdent à trois coups perdent aussi à quatre : l'ensemble exact des coups
+ * gagnants est donc le même à quatre coups.
+ */
 const HORIZON = 4;
+const HORIZON_DE: Record<string, number> = { n18: 3 };
+const horizonOf = (p: Puzzle) => HORIZON_DE[p.id] ?? HORIZON;
 const all = parsePuzzles(LOT_N);
 const pz = (id: string) => all.find(p => p.id === id)!;
 const at = (l: string) => fromLabel(l, 9);
@@ -53,20 +62,22 @@ const REPLY: Record<string, { defaut: string; sauf?: Record<string, string> }> =
   n06: { defaut: 'B1', sauf: { A1: 'passe' } },
   n07: { defaut: 'F2' },
   n08: { defaut: 'E4' },
-  n09: { defaut: 'F5' },
-  n10: { defaut: 'J8' },
-  n11: { defaut: 'H3' },
-  n12: { defaut: 'E9', sauf: { E9: 'F9' } },
-  n13: { defaut: 'A4', sauf: { A4: 'B4' } },
-  n14: { defaut: 'E5' },
-  n15: { defaut: 'E3' },
-  n16: { defaut: 'E1' },
+  n09: { defaut: 'E4' },
+  n10: { defaut: 'F5' },
+  n11: { defaut: 'J8' },
+  n12: { defaut: 'H3' },
+  n13: { defaut: 'E9', sauf: { E9: 'F9' } },
+  n14: { defaut: 'A4', sauf: { A4: 'B4' } },
+  n15: { defaut: 'E5' },
+  n16: { defaut: 'E3' },
+  n17: { defaut: 'E1' },
+  n18: { defaut: 'C1', sauf: { B1: 'D1', D1: 'B1' } },
 };
 
 /** Le coup noir `m` atteint-il l'objectif ? `o` : ko permis ou interdit. */
 function gagne(p: Puzzle, m: number, o = AVEC_KO): boolean {
   const { pos, marked } = startOf(p), obj = objectifOf(p);
-  return obj.kind === 'capture' ? captureEn(pos, m, marked, obj.k, o) : sauveEn(pos, m, marked, HORIZON, o);
+  return obj.kind === 'capture' ? captureEn(pos, m, marked, obj.k, o) : sauveEn(pos, m, marked, horizonOf(p), o);
 }
 
 describe('lot N : identifiants, doublons, migration (issue #136)', () => {
@@ -160,7 +171,7 @@ describe('lot N : les réfutations disent vrai', () => {
         const after = ok(play(ok(play(pos, m)), r === 'passe' ? -1 : at(r)));
         for (const o of [AVEC_KO, SANS_KO]) {
           if (obj.kind === 'capture') expect(attackerCaptures(after, marked, obj.k - 1, o), `${p.id} ${label(m)} puis ${r}`).toBe(false);
-          else expect(defenderFails(after, marked, HORIZON - 1, o), `${p.id} ${label(m)} puis ${r}`).toBe(true);
+          else expect(defenderFails(after, marked, horizonOf(p) - 1, o), `${p.id} ${label(m)} puis ${r}`).toBe(true);
         }
       }
     }, 120_000);
@@ -195,13 +206,14 @@ describe('lot N : les suites des explications', () => {
     expect(libsOf(seq(start('n06'), 'B1', 'A2'), 'B2')).toEqual(['A1']);
   });
 
-  it('n07 à n11 : après l’atari et l’allongement, une seule liberté ; après l’autre atari, Blanc respire', () => {
+  it('n07 à n12 (et n09) : après l’atari et l’allongement, une seule liberté ; après l’autre atari, Blanc respire', () => {
     const cas: [string, string, string, string, string[], string, string, string[]][] = [
       ['n07', 'E2', 'F2', 'E1', ['F1'], 'E1', 'F2', ['F1', 'F3', 'G2']],
       ['n08', 'E5', 'E4', 'F5', ['F6'], 'F5', 'E4', ['D4', 'E3']],
-      ['n09', 'E5', 'F5', 'E4', ['F4'], 'E4', 'F5', ['F4', 'F6', 'G4', 'G6', 'H5']],
-      ['n10', 'H8', 'J8', 'H9', ['J9'], 'H9', 'J8', ['J7', 'J9']],
-      ['n11', 'H4', 'H3', 'J4', ['J3'], 'J4', 'H3', ['G3', 'H2', 'J3']],
+      ['n09', 'E5', 'E4', 'F4', ['F3'], 'F4', 'E4', ['D4', 'E3']],
+      ['n10', 'E5', 'F5', 'E4', ['F4'], 'E4', 'F5', ['F4', 'F6', 'G4', 'G6', 'H5']],
+      ['n11', 'H8', 'J8', 'H9', ['J9'], 'H9', 'J8', ['J7', 'J9']],
+      ['n12', 'H4', 'H3', 'J4', ['J3'], 'J4', 'H3', ['G3', 'H2', 'J3']],
     ];
     for (const [id, t, bon, suite, reste, faux, fuite, respire] of cas) {
       expect(libsOf(seq(start(id), bon, suite), t), id).toEqual(reste);
@@ -210,43 +222,64 @@ describe('lot N : les suites des explications', () => {
     }
   });
 
-  it('n12 : E9 te met en atari (F9) ; B9 prend C9, et Blanc ne peut pas y jouer', () => {
-    expect(libsOf(seq(start('n12'), 'E9'), 'D9')).toEqual(['F9']);
-    const b9 = seq(start('n12'), 'B9');
+  it('n13 : E9 te met en atari (F9) ; B9 prend C9, et Blanc ne peut pas y jouer', () => {
+    expect(libsOf(seq(start('n13'), 'E9'), 'D9')).toEqual(['F9']);
+    const b9 = seq(start('n13'), 'B9');
     expect(b9.captures[1]).toBe(1);
     expect(libsOf(b9, 'D9')).toEqual(['C9', 'E9']);
     expect(play(b9, at('C9'))).toBe('suicide');
   });
 
-  it('n13 : A4 ne donne que deux libertés, puis B4 remet en atari ; B4 prend B5, et Blanc ne peut pas y jouer', () => {
-    expect(libsOf(seq(start('n13'), 'A4'), 'A5')).toEqual(['A3', 'B4']);
-    expect(libsOf(seq(start('n13'), 'A4', 'B4'), 'A5')).toEqual(['A3']);
-    const b4 = seq(start('n13'), 'B4');
+  it('n14 : A4 ne donne que deux libertés, puis B4 remet en atari ; B4 prend B5, et Blanc ne peut pas y jouer', () => {
+    expect(libsOf(seq(start('n14'), 'A4'), 'A5')).toEqual(['A3', 'B4']);
+    expect(libsOf(seq(start('n14'), 'A4', 'B4'), 'A5')).toEqual(['A3']);
+    const b4 = seq(start('n14'), 'B4');
     expect(b4.captures[1]).toBe(1);
     expect(libsOf(b4, 'A5')).toEqual(['A4', 'B5']);
     expect(play(b4, at('B5'))).toBe('suicide');
   });
 
-  it('n14 : E5 est un double atari (D4, F6) ; après un seul atari, E5 relie avec trois libertés', () => {
-    const e5 = seq(start('n14'), 'E5');
+  it('n15 : E5 est un double atari (D4, F6) ; après un seul atari, E5 relie avec trois libertés', () => {
+    const e5 = seq(start('n15'), 'E5');
     expect(libsOf(e5, 'D5')).toEqual(['D4']);
     expect(libsOf(e5, 'F5')).toEqual(['F6']);
-    expect(libsOf(seq(start('n14'), 'D4', 'E5'), 'D5')).toEqual(['E4', 'E6', 'F6']);
+    expect(libsOf(seq(start('n15'), 'D4', 'E5'), 'D5')).toEqual(['E4', 'E6', 'F6']);
   });
 
-  it('n15 : E3 puis E1 : trois pierres à une liberté, F1 ; E1 prend D1, puis E3 donne trois libertés', () => {
-    const r = seq(start('n15'), 'E3', 'E1');
+  it('n16 : E3 puis E1 : trois pierres à une liberté, F1 ; E1 prend D1, puis E3 donne trois libertés', () => {
+    const r = seq(start('n16'), 'E3', 'E1');
     expect(libsOf(r, 'E2')).toEqual(['F1']);
     expect(seq(r, 'F1').captures[1]).toBe(3);
-    expect(libsOf(seq(start('n15'), 'E1', 'E3'), 'E2')).toEqual(['D3', 'E4', 'F3']);
+    expect(libsOf(seq(start('n16'), 'E1', 'E3'), 'E2')).toEqual(['D3', 'E4', 'F3']);
   });
 
-  it('n16 : F2 est en atari (F1) ; après E1 puis D1, F1 prend F2 ; A9 prend deux pierres mais E1 prend ta pierre', () => {
-    expect(libsOf(start('n16'), 'F2')).toEqual(['F1']);
-    expect(libsOf(seq(start('n16'), 'E1'), 'E2')).toEqual(['D1', 'F1']);
-    expect(seq(start('n16'), 'E1', 'D1', 'F1').board[at('F2')]).toBe(0);
-    const a9 = seq(start('n16'), 'A9');
+  it('n17 : F2 est en atari (F1) ; après E1 puis D1, F1 prend F2 ; A9 prend deux pierres mais E1 prend ta pierre', () => {
+    expect(libsOf(start('n17'), 'F2')).toEqual(['F1']);
+    expect(libsOf(seq(start('n17'), 'E1'), 'E2')).toEqual(['D1', 'F1']);
+    expect(seq(start('n17'), 'E1', 'D1', 'F1').board[at('F2')]).toBe(0);
+    const a9 = seq(start('n17'), 'A9');
     expect(a9.captures[1]).toBe(2);
     expect(seq(a9, 'E1').board[at('E2')]).toBe(0);
   });
+
+  it('n18 : C1 prend la pierre qui coupe ; chaque pierre a deux libertés, et Blanc ne peut pas jouer en C2', () => {
+    const c1 = seq(start('n18'), 'C1');
+    expect(c1.captures[1]).toBe(1);
+    expect(libsOf(c1, 'B2')).toEqual(['B1', 'C2']);
+    expect(libsOf(c1, 'D2')).toEqual(['C2', 'D1']);
+    expect(play(c1, at('C2'))).toBe('suicide');
+    // Après J4, Blanc sauve sa pierre en C1 : B2 (B1) et D2 (D1) sont toutes deux en atari.
+    const j4 = seq(start('n18'), 'J4', 'C1');
+    expect(libsOf(j4, 'B2')).toEqual(['B1']);
+    expect(libsOf(j4, 'D2')).toEqual(['D1']);
+  });
+});
+
+describe('lot N : n18 à l’horizon de quatre coups', () => {
+  const p = pz('n18'), { pos, marked } = startOf(p);
+  for (const [nom, o] of [['avec ko', AVEC_KO], ['sans ko', SANS_KO]] as const) {
+    it(`après C1, Blanc ne prend aucune pierre marquée en quatre coups (${nom})`, () => {
+      expect(sauveEn(pos, at('C1'), marked, 4, o)).toBe(true);
+    }, 300_000);
+  }
 });
