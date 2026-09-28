@@ -301,6 +301,9 @@ for (const largeur of [390, 320]) {
     for (let i = 0; i < 6 && !(await fin.first().isVisible()); i++) {
       await expect(passer).toBeEnabled({ timeout: 10_000 });
       await passer.click();
+      // Partie pas finie : Mochi prévient avant le passe (#235), on confirme.
+      const choix = page.getByRole('group', { name: 'Pass now?' });
+      if (await choix.waitFor({ state: 'visible', timeout: 600 }).then(() => true, () => false)) await choix.getByRole('button', { name: 'Pass', exact: true }).click();
       await expect(fin.or(page.getByText(/Pomme (plays|captures|continue)|Some borders are still open/)).first()).toBeVisible({ timeout: 10_000 });
     }
     await expect(fin.first()).toBeVisible({ timeout: 10_000 });

@@ -94,16 +94,32 @@ export function message(page: Page): Locator {
   return page.locator('.coach p[aria-live="polite"]');
 }
 
+/** « Passer » de la barre d'actions (la bulle de Mochi peut en montrer un second, #235). */
+export function boutonPasser(page: Page): Locator {
+  return page.getByRole('toolbar').getByRole('button', { name: 'Passer', exact: true });
+}
+
+/**
+ * Passe. Si Mochi prévient que la partie n'est pas finie (#235, « Tu passes quand même ? »), confirme avec « Passer ».
+ * Renvoie vrai si Mochi a prévenu.
+ */
+export async function passer(page: Page): Promise<boolean> {
+  await boutonPasser(page).click();
+  const choix = page.getByRole('group', { name: 'Passer maintenant ?' });
+  const averti = await choix.waitFor({ state: 'visible', timeout: 600 }).then(() => true, () => false);
+  if (averti) await choix.getByRole('button', { name: 'Passer', exact: true }).click();
+  return averti;
+}
+
 /**
  * Contre l'ordi : passe jusqu'à la fin de la partie, puis valide le score. Depuis #117, le comptage est automatique
  * quand les pierres mortes sont sûres (récit direct) ; sinon, phase manuelle et « Valider le score ».
  */
 export async function passerJusquAuScore(page: Page, adversaire = 'Pomme'): Promise<void> {
-  const passer = page.getByRole('button', { name: 'Passer' });
   const fin = page.locator('.recit, .barre-comptage .btn.primary:enabled');
   for (let i = 0; i < 6 && !(await fin.first().isVisible()); i++) {
-    await expect(passer).toBeEnabled({ timeout: 10_000 });
-    await passer.click();
+    await expect(boutonPasser(page)).toBeEnabled({ timeout: 10_000 });
+    await passer(page);
     await expect(fin.or(page.getByText(new RegExp(`${adversaire} (joue|capture|continue)`))).first()).toBeVisible({ timeout: 10_000 });
   }
   await expect(fin.first()).toBeVisible({ timeout: 10_000 });

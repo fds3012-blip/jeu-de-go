@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { jouerSuite, message, partieADeux, plateau } from './plateau';
+import { jouerSuite, message, partieADeux, passer, plateau } from './plateau';
 
 // Issue #159, partie écran. Position avancée jouée à deux : murs noir en D et blanc en F, la colonne E reste ouverte.
 // 21 pierres (un quart du plateau) : la partie est « avancée ».
@@ -49,7 +49,7 @@ test("au comptage, la barre d'avantage affiche le score réel", async ({ page })
   await page.locator('.cta').click();
   await expect(plateau(page)).toBeVisible();
   // Plateau vide : deux passes, puis « Corriger les pierres mortes » ouvre le comptage (la barre reste à l'écran).
-  await page.getByRole('button', { name: 'Passer' }).click();
+  await passer(page);
   await page.getByRole('button', { name: 'Corriger les pierres mortes' }).click({ timeout: 10_000 });
   await expect(page.getByRole('button', { name: 'Valider le score' })).toBeVisible();
   // Score : Toi 0, Pomme 6,5 (komi). La barre dit exactement la même chose.
