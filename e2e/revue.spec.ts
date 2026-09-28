@@ -7,9 +7,9 @@ import { jouer, passerJusquAuScore, plateau } from './plateau';
 // Depuis #117, le comptage contre l'ordi peut être automatique (récit direct) : voir passerJusquAuScore.
 const passerJusquAuComptage = passerJusquAuScore;
 
-/** Partie courte contre Pomme : quelques coups, puis deux passes. */
-async function partieCourte(page: Page, coups: string[]) {
-  await page.goto('/?komi=-100');
+/** Partie courte contre Pomme : quelques coups, puis deux passes. `komi` : -100 pour gagner, 100 pour perdre. */
+async function partieCourte(page: Page, coups: string[], komi = -100) {
+  await page.goto(`/?komi=${komi}`);
   await page.locator('.cta').click();
   await expect(plateau(page)).toBeVisible();
   const passer = page.getByRole('button', { name: 'Passer' });
@@ -22,7 +22,7 @@ async function partieCourte(page: Page, coups: string[]) {
     await expect(passer).toBeEnabled({ timeout: 10_000 });
   }
   await passerJusquAuComptage(page);
-  await expect(page.getByRole('heading', { level: 2, name: 'Victoire' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 2, name: komi < 0 ? 'Victoire' : 'Défaite' })).toBeVisible();
 }
 
 test("fin de partie, revue coup par coup, erreurs analysées, puis rejouer d'ici", async ({ page }) => {
@@ -91,6 +91,8 @@ test('la revue note le coup affiché et montre la précision des deux joueurs', 
   await partieCourte(page, ['E5', 'C3', 'G7']);
   await page.getByRole('button', { name: 'Revoir ma partie' }).click();
   await expect(page.locator('.revue-analyse')).toHaveCount(0, { timeout: 60_000 });
+  // Depuis #186, la revue peut s'être placée sur le moment clé : on revient au coup 1.
+  await page.getByRole('button', { name: /^Coup 1,/ }).click();
 
   // Coup 1 : un sceau de note sur la pierre E5, et le même dans la liste des coups, avec son libellé lu à voix haute.
   const sceau = plateau(page).locator('[data-note-sceau]');
@@ -123,6 +125,80 @@ test('la revue note le coup affiché et montre la précision des deux joueurs', 
   expect(cta!.y).toBeGreaterThanOrEqual(liste!.y + liste!.height);
   expect(cta!.y).toBeGreaterThanOrEqual(gob!.y + gob!.height);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+});
+
+// Issue #186 : revue honnête. Après une lourde défaite (komi de 100), ni précision flatteuse ni « aucune erreur ».
+test('défaite lourde : précision plafonnée et bilan sans félicitations', async ({ page }) => {
+  await partieCourte(page, ['E5', 'C3'], 100);
+  await page.getByRole('button', { name: 'Revoir ma partie' }).click();
+  await expect(page.locator('.revue-analyse')).toHaveCount(0, { timeout: 60_000 });
+  const bilan = page.getByRole('button', { name: /Précision/ });
+  const texte = ((await bilan.textContent()) ?? '').replace(/\s/g, ' ');
+  expect(Number(/Toi (\d+)/.exec(texte)?.[1])).toBeLessThanOrEqual(50);
+  await expect(page.getByText(/Aucune grosse erreur|Bien joué/)).toHaveCount(0);
+  await bilan.click();
+  const phrase = page.locator('.revue-mochi-bilan p');
+  await expect(phrase).toHaveText(/^Tu perds de \d/);
+  await expect(phrase).not.toHaveText(/Aucune erreur|Très belle|plus juste/);
+});
+
+// Issue #186 : la revue s'ouvre sur le moment clé (passes comprises) et « Rejouer d'ici » en repart.
+// Pomme choisit ses coups au hasard parmi ses bons coups : on joue sur la première ligne (des coups perdants) et on
+// recommence jusqu'à trois fois si la partie n'a pas de moment clé (2 parties sur 3 en ont un, mesuré le 28/09).
+test("la revue s'ouvre sur le moment clé, revient au début, et rejoue d'ici sans partie vide", async ({ page }) => {
+  test.setTimeout(150_000);
+  const puce = page.getByRole('button', { name: /^Moment clé, coup \d+/ });
+  for (let essai = 0; essai < 3 && !(await puce.count()); essai++) {
+    await partieCourte(page, ['E5', 'A1', 'A9', 'J1', 'J9']);
+    await page.getByRole('button', { name: 'Revoir ma partie' }).click();
+    await expect(page.locator('.revue-analyse')).toHaveCount(0, { timeout: 60_000 });
+  }
+  test.skip((await puce.count()) === 0, 'trois parties sans moment clé : Pomme a joué sans laisser de points');
+  const coup = Number(/coup (\d+)/.exec((await puce.getAttribute('aria-label'))!)![1]);
+  expect(coup).toBeGreaterThan(1);
+  const compteur = (k: number) => page.getByText(new RegExp(`^Coup ${k} sur \\d+$`));
+  // Ouverte sur le coup du moment clé (la pierre jouée est visible), avec la phrase de Mochi.
+  await expect(compteur(coup)).toBeVisible();
+  await expect(puce).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('.revue-mochi p').first()).toHaveText(/^Moment clé\s:\sici, tu as (passé|joué)/);
+  await expect(page.locator('.cta')).toHaveCount(1);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+
+  // « Revenir au début », puis la puce ramène au moment clé.
+  await page.getByRole('button', { name: 'Revenir au début' }).click();
+  await expect(compteur(0)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Revenir au début' })).toHaveCount(0);
+  // Position juste avant le coup clé : c'est d'elle que « Rejouer d'ici » doit repartir.
+  await page.getByRole('button', { name: new RegExp(`^Coup ${coup - 1},`) }).click();
+  const pierres = await plateau(page).locator('g[data-pierre]').count();
+  expect(pierres).toBeGreaterThan(0);
+  await puce.click();
+  await expect(compteur(coup)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Revenir au début' })).toBeVisible();
+
+  // Rejouer d'ici : juste avant le coup clé, pas une partie vide.
+  await page.getByRole('button', { name: "Rejouer d'ici" }).click();
+  await expect(page.getByText('On reprend ici. À toi de trouver mieux !')).toBeVisible();
+  await expect(plateau(page).locator('g[data-pierre]')).toHaveCount(pierres);
+  await expect(page.getByRole('button', { name: 'Passer' })).toBeEnabled();
+});
+
+// Captures de la revue honnête, sombre et clair : `CAPTURES=1 npx playwright test e2e/revue.spec.ts -g "moment clé, sombre"`.
+test('captures du moment clé, sombre et clair', async ({ page }) => {
+  test.skip(!process.env.CAPTURES, 'captures à la demande');
+  test.setTimeout(120_000);
+  const puce = page.getByRole('button', { name: /^Moment clé, coup \d+/ });
+  for (let essai = 0; essai < 3 && !(await puce.count()); essai++) {
+    await partieCourte(page, ['E5', 'A1', 'A9', 'J1', 'J9']);
+    await page.getByRole('button', { name: 'Revoir ma partie' }).click();
+    await expect(page.locator('.revue-analyse')).toHaveCount(0, { timeout: 60_000 });
+  }
+  for (const theme of ['dark', 'light'] as const) {
+    await page.evaluate(t => document.documentElement.setAttribute('data-theme', t), theme);
+    const nom = theme === 'dark' ? 'sombre' : 'clair';
+    await page.screenshot({ path: `test-results/captures/revue-cle-${nom}.png` });
+    await page.screenshot({ path: `test-results/captures/revue-cle-${nom}-page.png`, fullPage: true });
+  }
 });
 
 // Captures des notes (docs/design/v2/captures/notes-*.png) : `CAPTURES=1 npx playwright test e2e/revue.spec.ts`.

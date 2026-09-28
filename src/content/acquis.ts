@@ -8,6 +8,7 @@ export const ACQUIS: Record<string, string> = {
   l4: 'Tu sais pourquoi on ne reprend pas un ko tout de suite.',
   l5: 'Tu sais qu’un groupe avec deux yeux ne peut plus mourir.',
   l6: 'Tu sais compter un territoire et jouer un bon premier coup.',
+  l7: 'Tu sais fermer tes frontières, passer au bon moment et compter la partie.',
 };
 
 /** Phrase de fin d'une leçon ; une phrase générale si la leçon n'en a pas. */

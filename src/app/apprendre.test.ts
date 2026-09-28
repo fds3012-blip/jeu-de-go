@@ -8,7 +8,7 @@ const plein = (id: string) => LESSONS.find(l => l.id === id)!.steps.length;
 describe('etapes : état des pierres du chemin', () => {
   it('chemin neuf : la leçon 1 est en cours, les autres à venir', () => {
     const e = etapes(LESSONS, {});
-    expect(e.map(x => x.etat)).toEqual(['encours', 'avenir', 'avenir', 'avenir', 'avenir', 'avenir']);
+    expect(e.map(x => x.etat)).toEqual(['encours', 'avenir', 'avenir', 'avenir', 'avenir', 'avenir', 'avenir']);
     expect(e[0].rang).toBe(1);
   });
   it('leçon 1 finie, leçon 2 commencée', () => {
@@ -54,6 +54,12 @@ describe('boutonChemin', () => {
 });
 
 describe('trace : chemin de pierres sur les lignes du goban', () => {
+  it('sept leçons (#177) : sept pierres, toujours sur les lignes et près du milieu', () => {
+    const t = trace(LESSONS.length, { encours: 6 });
+    expect(t.pierres).toHaveLength(7);
+    for (let i = 1; i < 7; i++) expect(Math.sign(t.pierres[i].x)).toBe(-Math.sign(t.pierres[i - 1].x));
+    expect(t.hauteur).toBeGreaterThan(t.pierres[6].y);
+  });
   it('une pierre par leçon, qui alterne de gauche à droite, de haut en bas', () => {
     const t = trace(6);
     expect(t.pierres).toHaveLength(6);
@@ -72,6 +78,11 @@ describe('trace : chemin de pierres sur les lignes du goban', () => {
   });
   it('les pierres restent près du milieu : 390 px de large laissent la place d’un titre de l’autre côté', () => {
     for (const p of trace(12).pierres) { expect(Math.abs(p.col)).toBeGreaterThanOrEqual(1); expect(Math.abs(p.col)).toBeLessThanOrEqual(2); }
+  });
+  it('dernière leçon en cours (#177) : sa place reste réservée sous le chemin, plus une ligne de marge', () => {
+    expect(trace(7, { encours: 6 }).hauteur - trace(7).hauteur).toBe(3 * LIGNE);
+    expect(trace(7, { encours: 6, bas: [0, 0, 0, 0, 0, 0, 100] }).hauteur - trace(7).hauteur).toBe(3 * LIGNE);
+    expect(trace(7, { encours: 6, bas: [0, 0, 0, 0, 0, 0, 300] }).hauteur).toBe(trace(7).pierres[6].y + 336 + LIGNE);
   });
   it('la leçon en cours a deux lignes de plus au-dessous, pour son bouton en relief', () => {
     const sans = trace(6), avec = trace(6, { encours: 2 });
