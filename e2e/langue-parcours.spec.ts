@@ -113,6 +113,12 @@ for (const largeur of [390, 320]) test(`?lang=en : toute l’interface en anglai
   for (let i = 0; i < 6 && !(await fin.first().isVisible()); i++) {
     await expect(passer).toBeEnabled({ timeout: 10_000 });
     await passer.click();
+    // #235 : si Mochi prévient que la partie n'est pas finie, on vérifie l'avertissement en anglais puis on confirme.
+    const choix = page.getByRole('group', { name: 'Pass now?' });
+    if (await choix.waitFor({ state: 'visible', timeout: 600 }).then(() => true, () => false)) {
+      await sansFrancais(page, `partie, avertissement ${i + 1}`);
+      await choix.getByRole('button', { name: 'Pass', exact: true }).click();
+    }
     await expect(fin.or(page.getByText(/Pomme (plays|captures|keeps playing)|Some borders are still open/)).first()).toBeVisible({ timeout: 10_000 });
     await sansFrancais(page, `partie, passe ${i + 1}`);
   }
