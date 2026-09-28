@@ -3,7 +3,7 @@
 // Toute la logique de jeu vient de src/go (copie dans ./go, voir scripts/sync-functions.mjs).
 // La clé service (SUPABASE_SERVICE_ROLE_KEY) est fournie par l'environnement Supabase : elle n'est jamais dans le dépôt.
 import { createClient } from 'npm:@supabase/supabase-js@2';
-import { parseActionRequest, planAction, type GameRow } from './go/server.ts';
+import { defiMoveArgs, parseActionRequest, planAction, type GameRow } from './go/server.ts';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -54,6 +54,21 @@ Deno.serve(async (req: Request) => {
     });
     if (error) return refuse(409, 'conflit', error.message);
     return json(200, { ok: true, result, black: plan.black, white: plan.white });
+  }
+
+  // Défi par lien (#81) : le coup s'écrit par jouer_coup_defi, qui revérifie joueur, tour et délai de 3 jours.
+  // Les autres actions d'un défi (comptage, reprise) s'écrivent comme pour une partie normale.
+  const defiArgs = defiMoveArgs(action.gameId, userId, plan);
+  if (defiArgs) {
+    const { data: defi, error: defiError } = await admin.from('defis').select('partie_id').eq('partie_id', action.gameId).maybeSingle();
+    if (defiError) return refuse(500, 'lecture', 'Impossible de lire la partie.');
+    if (defi) {
+      const { data: r, error } = await admin.rpc('jouer_coup_defi', defiArgs);
+      if (error) return refuse(409, 'conflit', error.message);
+      if (!r?.ok) return refuse(409, 'temps', `Temps écoulé : la partie est finie (${r?.resultat ?? ''}).`);
+      const { data: after } = await admin.from('games').select(COLUMNS).eq('id', action.gameId).maybeSingle();
+      return json(200, { ok: true, game: after ?? { moves: r.coups }, dateLimite: r.date_limite });
+    }
   }
 
   // Écriture conditionnelle : refusée si un autre coup ou une autre action est passé entre la lecture et l'écriture.
