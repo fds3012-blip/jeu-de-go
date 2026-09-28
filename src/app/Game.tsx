@@ -69,7 +69,9 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   const [phase, setPhase] = useState<'play' | 'score' | 'end'>('play');
   const [dead, setDead] = useState<Set<number>>(new Set());
   const [msg, setMsg] = useState(ai ? tr('partie.debut.ordi', { nom: ai.nom }) : tr('partie.debut.deux'));
-  const [resignArm, setResignArm] = useState(false);
+  // « Abandonner » armé (#audit-wig, point 3) : valable pour l'état courant de l'historique seulement, sans minuterie.
+  // Un coup joué le désarme ; l'état est annoncé par une zone polie permanente (voir plus bas).
+  const [resignArmAt, setResignArmAt] = useState<number | null>(null);
   const [resigned, setResigned] = useState<0 | 1 | 2>(0);
   const [thinking, setThinking] = useState(false);
   const [finding, setFinding] = useState(false);
@@ -368,8 +370,9 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     if (!komiExplique) setKomiExplique(true);
     celebrerVictoire(sc.winner, sc.margin === 0);
   }
+  const resignArm = resignArmAt === history.length && phase === 'play';
   function resign() {
-    if (!resignArm) { setResignArm(true); setTimeout(() => setResignArm(false), 3000); return; }
+    if (!resignArm) { setResignArmAt(history.length); return; }
     token.current++;
     const loser = ai ? 1 : pos.toPlay;
     setResigned(loser); finish((3 - loser) as 1 | 2, true);
@@ -516,7 +519,10 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
       <div className="partie-plateau">
         <Board size={size} board={pos.board} toPlay={pos.toPlay} interactive={phase === 'score' || myTurn} stonesTappable={phase === 'score'} confirmTouch={confirmTouch}
           marks={{ last: pos.lastMove, owner: phase === 'score' ? sc.owner : quiMeneVisible?.owner, ownerFondu: !!quiMeneVisible, dead, libs, zone, ouverts: phase === 'play' ? frontieresVisibles(frontieres, history.length, pos.board, size, !!ai) : undefined }} onPlay={onPlay} shake={shake} versCouvercles noms={ai ? { 2: ai.nom } : undefined} />
-        {quiMeneVisible && <p key={quiMeneVisible.n} className="qui-mene-phrase" role="status">{fr(quiMeneVisible.phrase)}</p>}
+        {quiMeneVisible && <p key={quiMeneVisible.n} className="qui-mene-phrase" aria-hidden="true">{fr(quiMeneVisible.phrase)}</p>}
+        {/* Zones d'annonce permanentes (audit web, points 3 et 4) : seul leur texte change, pour être lues à coup sûr. */}
+        <p className="sr-only" role="status" data-annonce="qui-mene">{quiMeneVisible ? fr(quiMeneVisible.phrase) : ''}</p>
+        <p className="sr-only" aria-live="polite" data-annonce="abandon">{resignArm ? `${tr('partie.action.abandonner')} : ${fr(tr('partie.action.confirmer'))}` : ''}</p>
       </div>
       {bandeau(1, pos, retourAccueil, phase === 'play' && pos.toPlay === 1, feteVisible && !mouvementsReduits() ? { n: feteVisible.n, k: feteVisible.len } : null)}
       <div className="partie-souffle" aria-hidden="true" />
