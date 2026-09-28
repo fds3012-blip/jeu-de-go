@@ -6,6 +6,7 @@ import { resolve } from 'node:path';
 import { PUZZLES_16 } from '../content/puzzles';
 import { checkAnswer, parsePuzzles, startOf, type Puzzle } from '../data/puzzles';
 import { fromLabel, toLabel } from './coords';
+import { avantMiseAJour } from './miseAJourTextes';
 import { groupAt, play, type Position } from './rules';
 import { canEscape, captureWorks, defenceFails, hasTwoEyes, isDead, ladderWorks } from './tactics';
 import { cederLaMain } from './preuve-par-coup';
@@ -51,7 +52,8 @@ describe('les 12 problèmes de l’issue #16', () => {
     const sql = readFileSync(resolve(__dirname, '../../supabase/migrations/20260927160000_problemes_capture_sauvetage_vie_mort.sql'), 'utf8');
     expect(sql).not.toMatch(/\b(delete|update|drop|truncate)\b/i);
     expect(sql).toMatch(/on conflict \(id\) do nothing/i);
-    for (const row of PUZZLES_16) {
+    // Textes corrigés depuis par 20260928233100_textes_problemes (#282) : on compare au texte d'avant, refait par avantMiseAJour.
+    for (const row of PUZZLES_16.map(r => avantMiseAJour(r))) {
       const q = (s: string) => s.replace(/'/g, "''");
       expect(sql).toContain(`('${row.id}', null, 9, '${q(JSON.stringify(row.setup))}', array[${row.answers.map(a => `'${a}'`).join(',')}], '${q(row.title!)}', '${q(row.prompt!)}', '${q(row.explanation!)}', ${row.difficulty})`);
     }

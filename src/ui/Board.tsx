@@ -16,6 +16,8 @@ export interface BoardMarks {
   dead?: Set<number>;
   /** Indice : une zone entourée autour de ce point (le bon coup est dedans, sans être désigné). */
   zone?: number;
+  /** Conseil de Mochi (#80) : les points concernés, entourés d'un cadre arrondi (sans animation). */
+  conseil?: number[];
   /** Revue (issue #34) : meilleur coup du moteur, montré par une pierre fantôme jade. */
   meilleur?: number;
   /** Revue (issue #71) : sceau de note posé en haut à droite de la pierre `p`. `cle` relance le tampon. */
@@ -362,6 +364,11 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
           const lim = (v: number) => Math.min(M + (size - 1) * C - C * 0.9, Math.max(M + C * 0.9, v));
           const x = lim(X(marks.zone) + (marks.zone % 2 ? 0.5 : -0.5) * C), y = lim(Y(marks.zone) + (Math.floor(marks.zone / size) % 2 ? -0.5 : 0.5) * C);
           return <g fill="none" data-indice=""><circle cx={x} cy={y} r={C * 1.35} stroke={JADE_FONCE} strokeWidth={5} strokeOpacity={0.5} /><circle cx={x} cy={y} r={C * 1.35} stroke={JADE} strokeWidth={3} strokeDasharray="7 5" /></g>;
+        })() : null}
+        {marks.conseil?.length ? (() => {
+          const xs = marks.conseil.map(X), ys = marks.conseil.map(Y), d = C * 0.5;
+          const x0 = Math.min(...xs) - d, y0 = Math.min(...ys) - d, w = Math.max(...xs) + d - x0, h = Math.max(...ys) + d - y0;
+          return <g fill="none" data-conseil={marks.conseil.map(p => toLabel(p, size)).join(' ')}><rect x={x0} y={y0} width={w} height={h} rx={C * 0.45} stroke={JADE_FONCE} strokeWidth={5} strokeOpacity={0.5} /><rect x={x0} y={y0} width={w} height={h} rx={C * 0.45} stroke={JADE} strokeWidth={3} strokeDasharray="7 5" /></g>;
         })() : null}
         {marks.ok != null && marks.ok >= 0 ? (() => { const [x, y] = at(marks.ok); return (
           <g fill="none"><circle cx={x} cy={y} r={C * 0.52} stroke={JADE_FONCE} strokeWidth={5.4} /><circle cx={x} cy={y} r={C * 0.52} stroke={JADE} strokeWidth={3} /></g>

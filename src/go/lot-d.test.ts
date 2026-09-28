@@ -6,6 +6,7 @@ import { resolve } from 'node:path';
 import LOT_D from '../content/lots/d-connexions-semeai';
 import { checkAnswer, parsePuzzles, startOf, type Puzzle } from '../data/puzzles';
 import { fromLabel, toLabel } from './coords';
+import { avantMiseAJour } from './miseAJourTextes';
 import { captureAfter, legalMoves, saveAfter } from './lecteurs-lot-d';
 import { cederLaMain, preuveParCoup } from './preuve-par-coup';
 import { groupAt, play, type Position } from './rules';
@@ -66,7 +67,8 @@ describe('lot D : connexions et courses aux libertés', () => {
     expect(sql).not.toMatch(/\b(delete|update|drop|truncate|alter)\b/i);
     expect(sql).toMatch(/on conflict \(id\) do nothing/i);
     const q = (s: string) => s.replace(/'/g, "''");
-    const tuples = LOT_D.map(row =>
+    // Textes corrigés depuis par 20260928233100_textes_problemes (#282) : on compare au texte d'avant, refait par avantMiseAJour.
+    const tuples = LOT_D.map(r => avantMiseAJour(r)).map(row =>
       `('${row.id}', null, 9, '${q(JSON.stringify(row.setup))}', array[${row.answers.map(a => `'${a}'`).join(',')}], '${q(row.title!)}', '${q(row.prompt!)}', '${q(row.explanation!)}', ${row.difficulty})`);
     for (const t of tuples) expect(sql).toContain(t);
     expect(sql.match(/\('d\d\d', null, 9,/g)).toHaveLength(LOT_D.length);

@@ -39,7 +39,7 @@ const LOT_R: PuzzleRow[] = [
       refutation: "Pas tout à fait. Blanc joue A2 (ou C2 si tu as joué A1). Ses pierres tiennent au point vital, et ton coin ne peut plus faire deux yeux. Ton groupe finit capturé." },
     title: 'La pierre au point vital',
     prompt: 'Noir joue et vit. Blanc a placé une pierre en B2, au point vital de ton coin. Chasse-la.',
-    explanation: "Bravo ! Ton coup met B2 en atari : il ne lui reste qu'une liberté. Si Blanc s'allonge, tu prends ses deux pierres. Après A2, A1 est d'abord un faux œil : il ressemble à un œil, mais son coin B2 est à Blanc. Quand tu prends B2, A1 devient un vrai œil, et ton groupe est vivant. C2 marche aussi."
+    explanation: "Bravo ! Ton coup met B2 en atari : il ne lui reste qu'une liberté. Si Blanc s'allonge, tu prends ses deux pierres. Après A2, A1 est d'abord un faux œil : il ressemble à un œil, mais le point en diagonale B2 est à Blanc. Quand tu prends B2, A1 devient un vrai œil, et ton groupe est vivant. C2 marche aussi."
   },
   {
     id: 'r05', size: 9, difficulty: 950, answers: ['E1'],
