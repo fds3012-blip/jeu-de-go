@@ -8,6 +8,10 @@ import { checkAnswer, parsePuzzles, startOf, type Puzzle } from '../data/puzzles
 import { fromLabel, toLabel } from './coords';
 import { groupAt, play, type Position } from './rules';
 import { canEscape, captureWorks, defenceFails, hasTwoEyes, isDead, ladderWorks } from './tactics';
+import { cederLaMain } from './preuve-par-coup';
+
+// Recette du 28/09 (#195) : longues preuves synchrones, voir cederLaMain (preuve-par-coup.ts).
+beforeEach(cederLaMain);
 
 const all = parsePuzzles(PUZZLES_16);
 const pz = (id: string) => all.find(p => p.id === id)!;
@@ -238,11 +242,12 @@ describe('ensemble exact des bonnes réponses (tous les coups légaux de Noir)',
     const all = legalMoves(r);
     return [...all.filter(m => near.has(m)), ...all.filter(m => !near.has(m))];
   };
-  const captureGuaranteed = (r: Position, targets: number[], depth = 12) => nearFirst(r, targets).every(w => {
+  /** Après la défense `w` de Blanc, Noir capture une cible. Deux lecteurs : l'échelle (sans limite pratique de longueur) et le lecteur de capture général. */
+  const captureApres = (r: Position, w: number, targets: number[], depth = 12) => {
     const x = ok(play(r, w));
-    // Deux lecteurs : l'échelle (sans limite pratique de longueur) et le lecteur de capture général.
     return targets.some(t => x.board[t] === 0 || ladderWorks(x, t) || captureWorks(x, t, depth));
-  });
+  };
+  const captureGuaranteed = (r: Position, targets: number[], depth = 12) => nearFirst(r, targets).every(w => captureApres(r, w, targets, depth));
   /** Groupe sauvé : Blanc au trait ne trouve aucune capture de la pierre marquée. */
   const saved = (r: Position, s: number) => r.board[s] !== 0 && !captureWorks(r, s) && !ladderWorks(r, s);
   const winners = (id: string, goal: (r: Position, marked: number[]) => boolean) => {
@@ -251,18 +256,36 @@ describe('ensemble exact des bonnes réponses (tous les coups légaux de Noir)',
   };
   const accepted = (id: string) => pz(id).answers.map(a => toLabel(a, 9)).sort();
 
-  it('c1 : seul E5 garantit une capture', { timeout: 60_000 }, () => {
-    expect(accepted('c1')).toEqual(['E5']);
-    expect(winners('c1', captureGuaranteed)).toEqual(accepted('c1'));
-  });
-  it('c2 : seul E4 garantit la capture', { timeout: 60_000 }, () => {
-    expect(accepted('c2')).toEqual(['E4']);
-    expect(winners('c2', captureGuaranteed)).toEqual(accepted('c2'));
-  });
-  it('c3 : seuls les coups acceptés (F4, G4, F3) garantissent la capture', { timeout: 180_000 }, () => {
-    expect(accepted('c3')).toEqual(['F3', 'F4', 'G4']);
-    expect(winners('c3', captureGuaranteed)).toEqual(accepted('c3'));
-  });
+  // Recette du 28/09 (#195) : la preuve de c1, c2 et c3 est découpée (c3 prenait jusqu'à 106 s d'un bloc sur une machine
+  // chargée ; au-delà de 60 s, Vitest perd le contact avec le fichier). Même preuve qu'avant :
+  // - un coup refusé : Blanc a au moins une défense qui tient (un test par coup) ;
+  // - un coup accepté : Noir capture après chacune des défenses légales de Blanc, passe comprise (un test par défense) ;
+  // - les réponses acceptées sont bien des coups légaux.
+  const parCoup = (id: string, attendu: string[]) => {
+    const p = pz(id), { pos, marked } = startOf(p);
+    const coups = legalMoves(pos).filter(m => m !== -1);
+    it(`${id} : réponses acceptées ${attendu.join(', ')}, toutes légales`, () => {
+      expect(accepted(id)).toEqual(attendu);
+      expect(coups.map(m => toLabel(m, 9))).toEqual(expect.arrayContaining(attendu));
+    });
+    describe(`${id} : chaque coup légal de Noir`, () => {
+      for (const m of coups) {
+        const l = toLabel(m, 9), r = ok(play(pos, m));
+        if (!attendu.includes(l)) {
+          it(`${l} ne garantit pas la capture`, { timeout: 60_000 }, () => expect(captureGuaranteed(r, marked)).toBe(false));
+          continue;
+        }
+        describe(`${l} garantit la capture`, () => {
+          for (const w of legalMoves(r)) {
+            it(`contre ${toLabel(w, 9)}`, { timeout: 60_000 }, () => expect(captureApres(r, w, marked)).toBe(true));
+          }
+        });
+      }
+    });
+  };
+  parCoup('c1', ['E5']);
+  parCoup('c2', ['E4']);
+  parCoup('c3', ['F3', 'F4', 'G4']);
   it('s3 : seul E6 sauve la pierre marquée', () => {
     expect(accepted('s3')).toEqual(['E6']);
     expect(winners('s3', (r, [s]) => saved(r, s))).toEqual(accepted('s3'));

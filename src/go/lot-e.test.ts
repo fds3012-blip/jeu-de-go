@@ -11,6 +11,10 @@ import { fromLabel, toLabel } from './coords';
 import { blackCaptures, whiteFails } from './lecteurs-lot-a';
 import { captureWinners, plainKey, symmetries } from './lecteurs-lot-e';
 import { groupAt, play, type Position } from './rules';
+import { cederLaMain } from './preuve-par-coup';
+
+// Recette du 28/09 (#195) : longues preuves synchrones, voir cederLaMain (preuve-par-coup.ts).
+beforeEach(cederLaMain);
 
 const SPEC: Record<string, { k: number; atari?: boolean }> = {
   e01: { k: 1 }, e02: { k: 1 }, e03: { k: 1 }, e04: { k: 2 }, e05: { k: 1 }, e06: { k: 3, atari: true }, e07: { k: 2 }, e08: { k: 2 }, e09: { k: 2 },
@@ -113,7 +117,7 @@ describe('lot E : variantes de capture et d’atari (issue #91)', () => {
     it(`${id} : même avec un coup noir de plus, aucune autre solution`, () => {
       const p = pz(id), { k, atari } = SPEC[id];
       expect(captureWinners(startOf(p).pos, targetsOf(p), k + 1, atari), id).toEqual([...p.answers.map(a => toLabel(a, 9))].sort());
-    }, 20000);
+    }, 60_000); // recette du 28/09 (#195) : e12 prend 6 s au calme, plus de 20 s sur une machine chargée
   }
 
   it('e11 : après A4, Blanc s’allonge en B3 et a trois libertés', () => {

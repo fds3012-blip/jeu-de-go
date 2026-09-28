@@ -6,9 +6,13 @@ import { resolve } from 'node:path';
 import LOT_D from '../content/lots/d-connexions-semeai';
 import { checkAnswer, parsePuzzles, startOf, type Puzzle } from '../data/puzzles';
 import { fromLabel, toLabel } from './coords';
-import { captureAfter, legalMoves, saveAfter, winningMoves } from './lecteurs-lot-d';
+import { captureAfter, legalMoves, saveAfter } from './lecteurs-lot-d';
+import { cederLaMain, preuveParCoup } from './preuve-par-coup';
 import { groupAt, play, type Position } from './rules';
 import { captureWorks, defenceFails } from './tactics';
+
+// Recette du 28/09 (#195) : longues preuves synchrones, voir cederLaMain (preuve-par-coup.ts).
+beforeEach(cederLaMain);
 
 const all = parsePuzzles(LOT_D);
 const pz = (id: string) => all.find(p => p.id === id)!;
@@ -54,12 +58,8 @@ describe('lot D : connexions et courses aux libertés', () => {
     }
   });
 
-  it('les coups gagnants sont exactement les réponses acceptées', () => {
-    for (const p of all) {
-      const found = winningMoves(startOf(p).pos, wins(p)).map(m => toLabel(m, 9)).sort();
-      expect(found, p.id).toEqual(p.answers.map(a => toLabel(a, 9)).sort());
-    }
-  }, 30000);
+  // Recette du 28/09 (#195) : preuve déclarée coup par coup (voir preuve-par-coup.ts), même vérification qu'avant.
+  for (const p of all) preuveParCoup(p.id, startOf(p).pos, p.answers, wins(p));
 
   it('la migration insère exactement ces problèmes, sans rien modifier', () => {
     const sql = readFileSync(resolve(__dirname, '../../supabase/migrations/20260927170400_lot_d_connexions_semeai.sql'), 'utf8');
