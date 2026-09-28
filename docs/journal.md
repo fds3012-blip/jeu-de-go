@@ -489,3 +489,13 @@ Chaque livraison : issue traitée, agent, pull request, résultat des vérificat
 - Assembler toutes les branches en local avant de fusionner a évité plusieurs cassures croisées (profil « 2/7 » devenu « 2/8 », textes i18n).
 - `pkill -f` avec le motif dans sa propre commande tue le shell : on arrête les serveurs par PID.
 - Le disque s'est rempli à 2 h : les agents lient `node_modules` au lieu de l'installer.
+
+## 28/09, 8 h 40 à 9 h 30
+
+- #259 Skills design proposées par Florian : `web-design-guidelines`, `redesign-skill` et `taste-skill` ajoutées ; `image-to-code`, `awesome-design-md`, 21st Magic et Playwright CLI écartés (raisons dans `.claude/skills/README.md`).
+- #265 Premier audit avec `web-design-guidelines` (partie et problèmes). Points 3 et 4 corrigés : « Abandonner » et « Qui mène ? » annoncés au lecteur d'écran. Reste : confirmer avant de quitter une partie, nom accessible de « Continuer », `scroll-padding` sous le verdict.
+- #261 (#233) Le Go du jour rapporte chaque jour ; l'XP d'une partie n'est plus perdue si on ferme pendant le score ; « Rejouer d'ici » ne rapporte plus d'XP.
+- #262 (#136) Lot P : 3 problèmes prouvés, migration non appliquée.
+- #263 (#258) Test de passe robuste sous charge (la cause était le test). Deux autres specs instables : #260.
+- #264 (#237, N6) Après une erreur, on rejoue directement sur le plateau.
+- Assemblage vérifié en local : Vitest 7 343 tests, Playwright 218 passés. CI GitHub toujours bloquée par la facturation.
