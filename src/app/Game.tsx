@@ -25,7 +25,6 @@ import { noterVictoire } from './installation';
 import { RecitScore } from '../ui/RecitScore';
 import { mouvementsReduits } from '../ui/defilement';
 import { conseil as conseilMochi, phraseConseil } from '../engine/conseil';
-import { PortraitMochi } from '../ui/Portrait';
 import { recitScore } from './score';
 import { Portrait, PortraitMochi, type Humeur } from '../ui/Portrait';
 
