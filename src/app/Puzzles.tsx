@@ -19,7 +19,7 @@ import { fr } from '../ui/typo';
 import { playBadge, playFail, playIllegal, playStone, playSuccess } from '../ui/sound';
 import { hapticBadge, hapticFail, hapticIllegal, hapticStone, hapticSuccess } from '../ui/haptics';
 import { EVENTS, track } from '../data/analytics';
-import { gagnerXp } from './xp';
+import { gagnerXp, sourceXpProbleme } from './xp';
 import { aideSuivante, recompense, refutation, reponseVue, toucherApresErreur, type NiveauAide, type Refutation } from './aide';
 import { prefersReducedMotion, readLocal, useOnline, writeLocal } from './hooks';
 import { niveau } from './problemes';
@@ -194,7 +194,10 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
         onSolved={(essais, aide) => {
           // #197 : résolu après avoir vu la réponse, c'est « Vu » : ni XP ni palier. La série du Go du jour tient quand même.
           const gain = recompense(aide, estDuJour);
-          if (gain.xp && !solved.has(open.id)) { track(EVENTS.problemeResolu, { probleme: open.id, du_jour: estDuJour }); gagnerXp(estDuJour ? 'goDuJour' : 'probleme'); }
+          // #233 (P1) : le Go du jour rapporte une fois par jour, même s'il était déjà réussi dans la grille.
+          const source = gain.xp ? sourceXpProbleme({ dejaReussi: solved.has(open.id), estDuJour, goDuJourDejaFait: goDuJourFaitAppareil(numero) }) : null;
+          if (gain.xp && !solved.has(open.id)) track(EVENTS.problemeResolu, { probleme: open.id, du_jour: estDuJour });
+          if (source) gagnerXp(source);
           // #199 : un défi par jour ; le Go du jour est coché à part, une leçon ou la révision ont pu faire vivre la série avant lui.
           if (gain.serie && !goDuJourFaitAppareil(numero)) {
             const { serie: s, gagne } = validerDefi('go_du_jour');

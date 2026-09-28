@@ -53,6 +53,19 @@ describe('gains', () => {
     expect(GAINS.lecon).toBeGreaterThan(GAINS.goDuJour);
   });
 
+  it('#233 (P1) : le Go du jour rapporte une fois par jour, même s’il était déjà réussi dans la grille', () => {
+    const { sourceXpProbleme } = xp;
+    expect(sourceXpProbleme({ dejaReussi: true, estDuJour: true, goDuJourDejaFait: false })).toBe('goDuJour');
+    expect(sourceXpProbleme({ dejaReussi: false, estDuJour: true, goDuJourDejaFait: false })).toBe('goDuJour');
+    // « Vu » plus tôt dans la journée, puis réussi sans aide : c'est la première vraie réussite, elle rapporte.
+    expect(sourceXpProbleme({ dejaReussi: false, estDuJour: true, goDuJourDejaFait: true })).toBe('goDuJour');
+    // Refait le même jour : rien de plus.
+    expect(sourceXpProbleme({ dejaReussi: true, estDuJour: true, goDuJourDejaFait: true })).toBeNull();
+    // Un problème ordinaire ne rapporte qu'à sa première réussite.
+    expect(sourceXpProbleme({ dejaReussi: false, estDuJour: false, goDuJourDejaFait: true })).toBe('probleme');
+    expect(sourceXpProbleme({ dejaReussi: true, estDuJour: false, goDuJourDejaFait: false })).toBeNull();
+  });
+
   it('#233 : la révision est un problème pour le bonus « première fois » (pas de second bonus)', () => {
     expect(premiereDe('revision')).toBe('probleme');
     expect(appliquer(0, 'revision', true)).toMatchObject({ points: 30, bonus: 10 });

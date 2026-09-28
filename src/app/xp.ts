@@ -23,6 +23,17 @@ export const GAINS: Record<SourceXp, number> = { probleme: 10, goDuJour: 20, rev
  * Le niveau 2 arrive donc à 100 XP (9 problèmes, ou 3 leçons, bonus « première fois » compris), le niveau 3 à 225,
  * le niveau 5 à 575, le niveau 8 à 1505. Rythme simulé sur 30 jours : docs/game-design/economie.md.
  */
+/**
+ * Source d'XP d'un problème réussi sans voir la réponse (#233, P1), ou `null` s'il ne rapporte rien.
+ * Un problème ordinaire rapporte une seule fois : à sa première réussite.
+ * Le Go du jour rapporte ses 20 XP une fois par jour, même si le joueur avait déjà réussi ce problème dans la grille :
+ * c'est le défi commun du jour, il ne doit pas rapporter moins au joueur le plus assidu.
+ */
+export function sourceXpProbleme(o: { dejaReussi: boolean; estDuJour: boolean; goDuJourDejaFait: boolean }): SourceXp | null {
+  if (o.estDuJour) return o.goDuJourDejaFait && o.dejaReussi ? null : 'goDuJour';
+  return o.dejaReussi ? null : 'probleme';
+}
+
 export const BASE = 100;
 export const RAISON = 1.25;
 export const PLAFOND = 1000;

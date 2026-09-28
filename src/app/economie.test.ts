@@ -6,7 +6,7 @@
 import { describe, expect, it } from 'vitest';
 import { LESSONS } from '../content/lessons';
 import { ALL_PUZZLES } from '../content/puzzles';
-import { appliquer, niveauDe, recompensesDebloquees, type Premiere, type SourceXp, premiereDe } from './xp';
+import { appliquer, niveauDe, recompensesDebloquees, sourceXpProbleme, type Premiere, type SourceXp, premiereDe } from './xp';
 import { apresReussite, reconcilier, RESERVE_VIDE, type Reserve } from './gel';
 import { problemeDuNumero, type Serie } from './goDuJour';
 import { apresRevision, aFaire, ETAT_VIDE, revisionDuJour, revisionFaite, synchroniser, type EtatRevision } from './revision';
@@ -44,7 +44,7 @@ export interface Releve {
   reussis: number; lecons: number; parties: number; victoires: number;
   /** XP du jour, par source. */
   duJour: Partial<Record<SourceXp, number>>;
-  /** Go du jour réussi, mais déjà résolu avant : 0 XP (règle actuelle de Puzzles.tsx). */
+  /** Go du jour réussi sans XP (0 jour depuis #233, P1 ; 9 à 18 jours sur 30 avant). */
   goDuJourSansXp: boolean;
 }
 
@@ -87,10 +87,11 @@ export function simuler(p: Profil, jours = 30): Releve[] {
     const b = reconcilier(serie, reserve, numero);
     serie = b.serie; reserve = b.reserve;
     if (!p.absences?.includes(numero)) {
-      // 1. Go du jour : série toujours ; XP seulement si ce problème n'était pas déjà réussi.
+      // 1. Go du jour : série toujours ; XP une fois par jour, même s'il était déjà réussi (#233, P1, règle de Puzzles.tsx).
       const gdj = problemeDuNumero(PROBLEMES, numero)!;
-      if (reussis.has(gdj.id)) goDuJourSansXp = true;
-      else { reussis.add(gdj.id); gagner('goDuJour'); }
+      const source = sourceXpProbleme({ dejaReussi: reussis.has(gdj.id), estDuJour: true, goDuJourDejaFait: false });
+      if (source) gagner(source); else goDuJourSansXp = true;
+      reussis.add(gdj.id);
       defi(numero);
       // 2. Révision du jour : 3 problèmes déjà réussis, dus à J+1, J+3, J+7.
       revision = revisionDuJour(synchroniser(revision, reussis, numero), numero, new Set(PROBLEMES.map(x => x.id)));
@@ -176,6 +177,11 @@ describe('économie de progression : simulation sur 30 jours (#233)', () => {
     expect(r.some(x => (x.duJour.revision ?? 0) > 0)).toBe(true);
     // Chaque jour joué rapporte de l'XP (plus de jour « série sans rien »).
     for (const x of r) expect(Object.values(x.duJour).reduce((s, v) => s + (v ?? 0), 0)).toBeGreaterThan(0);
+  });
+
+  it('le Go du jour rapporte chaque jour joué, même quand le problème était déjà réussi (#233, P1)', () => {
+    for (const r of resultats.values()) for (const x of r) expect(x.goDuJourSansXp).toBe(false);
+    for (const x of resultats.get(TRENTE_MIN.nom)!) expect(x.duJour.goDuJour).toBeGreaterThanOrEqual(20);
   });
 
   it('gels : 5 jours sur 7 suffisent à garder la série grâce aux gels, sans jamais la perdre', () => {
