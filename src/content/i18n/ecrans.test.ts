@@ -28,7 +28,7 @@ describe('français identique aux données d’origine', () => {
     for (const [raison, texte] of Object.entries(ILLEGAL_TEXT)) expect(traduire('fr', `pb.illegal.${raison as keyof typeof ILLEGAL_TEXT}`)).toBe(texte);
     for (const d of [100, 600, 900]) expect(traduire('fr', `pb.difficulte.${niveau(d).crans}`)).toBe(niveau(d).mot);
     for (const n of [0, 1, 2, 30]) expect(traduire('fr', 'pb.serieLegende', { n })).toBe(legendeSerie(n));
-    expect([0, 1, 2].map(n => traduire('en', 'pb.serieLegende', { n }))).toEqual(['days in a row', 'day in a row', 'days in a row']);
+    expect([0, 1, 2].map(n => traduire('en', 'pb.serieLegende', { n }))).toEqual(['day streak', 'day streak', 'day streak']);
     expect(traduire('fr', 'pb.reussis', { n: 1 })).toBe('1 réussi');
     expect(traduire('fr', 'pb.reussis', { n: 3 })).toBe('3 réussis');
   });

@@ -38,9 +38,13 @@ export function boutonChemin(lecons: Lesson[], progression: Progression): { text
   const suivante = lecons.find(l => (progression[l.id] ?? 0) < l.steps.length);
   if (!suivante) return { texte: t('apprendre.revoirTitre', { titre: titreCourt(lecons[0].title) }), verbe: t('apprendre.revoir'), id: lecons[0].id };
   const commence = lecons.some(l => (progression[l.id] ?? 0) > 0);
-  return commence
-    ? { texte: t('apprendre.continuerTitre', { titre: titreCourt(suivante.title) }), verbe: t('apprendre.continuer'), id: suivante.id }
-    : { texte: t('apprendre.commencer'), verbe: t('apprendre.commencer'), id: suivante.id };
+  if (!commence) return { texte: t('apprendre.commencer'), verbe: t('apprendre.commencer'), id: suivante.id };
+  // #237 : « Continuer » est réservé à l'étape suivante dans une leçon. Sur le chemin, le verbe dit l'action :
+  // « Reprendre » une leçon entamée, « Commencer » la suivante.
+  const titre = titreCourt(suivante.title);
+  return (progression[suivante.id] ?? 0) > 0
+    ? { texte: t('apprendre.reprendreTitre', { titre }), verbe: t('apprendre.reprendre'), id: suivante.id }
+    : { texte: t('apprendre.commencerTitre', { titre }), verbe: t('apprendre.commencer'), id: suivante.id };
 }
 
 /** Titre et phrase de l'écran de fin : plus modestes qu'une victoire, sauf pour la dernière leçon du chapitre. */

@@ -30,9 +30,10 @@ describe('boutonChemin', () => {
   it('« Commencer » sur un chemin neuf', () => {
     expect(boutonChemin(LESSONS, {})).toEqual({ texte: 'Commencer', verbe: 'Commencer', id: 'l1' });
   });
-  it('« Continuer : » avec le titre court de la prochaine leçon ; le bouton n’affiche que le verbe', () => {
-    expect(boutonChemin(LESSONS, { l1: plein('l1') })).toEqual({ texte: 'Continuer : Atari', verbe: 'Continuer', id: 'l2' });
-    expect(boutonChemin(LESSONS, { l1: 1 })).toEqual({ texte: 'Continuer : Libertés et capture', verbe: 'Continuer', id: 'l1' });
+  it('le verbe dit l’action (#237) : « Commencer » la leçon suivante, « Reprendre » une leçon entamée ; le bouton n’affiche que le verbe', () => {
+    expect(boutonChemin(LESSONS, { l1: plein('l1') })).toEqual({ texte: 'Commencer la leçon : Atari', verbe: 'Commencer', id: 'l2' });
+    expect(boutonChemin(LESSONS, { l1: 1 })).toEqual({ texte: 'Reprendre la leçon : Libertés et capture', verbe: 'Reprendre', id: 'l1' });
+    expect(boutonChemin(LESSONS, { l1: plein('l1'), l2: 1 })).toEqual({ texte: 'Reprendre la leçon : Atari', verbe: 'Reprendre', id: 'l2' });
   });
   it('le nom lu contient le texte affiché (WCAG 2.5.3)', () => {
     const cas: Progression[] = [{}, { l1: 1 }, { l1: plein('l1') }];

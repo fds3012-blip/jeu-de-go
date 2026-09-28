@@ -120,7 +120,7 @@ describe('français identique aux textes d’origine', () => {
   it('chemin des leçons, bouton principal et fin de leçon', () => {
     expect(chapitresAVenir()).toEqual(CHAPITRES_A_VENIR);
     expect(boutonChemin(LESSONS, {})).toEqual({ texte: 'Commencer', verbe: 'Commencer', id: 'l1' });
-    expect(boutonChemin(LESSONS, { l1: 1 })!.texte).toBe(`Continuer : ${'Libertés et capture'}`);
+    expect(boutonChemin(LESSONS, { l1: 1 })!.texte).toBe(`Reprendre la leçon : ${'Libertés et capture'}`);
     const tout = Object.fromEntries(LESSONS.map(l => [l.id, plein(l.id)]));
     expect(boutonChemin(LESSONS, tout)).toMatchObject({ verbe: 'Revoir' });
     expect(finDeLecon(LESSONS, 'l1').titre).toBe('Leçon terminée');
@@ -189,7 +189,7 @@ describe('en anglais', () => {
   it('chemin, lecteur et fin de leçon', () => {
     expect(chapitresAVenir()).toEqual(['Capture and save', 'Life and death', 'Shape and tesuji, the clever moves', 'Opening on 19\u00A0×\u00A019', 'Endgame and counting']);
     expect(boutonChemin(LESSONS, {})).toEqual({ texte: 'Start', verbe: 'Start', id: 'l1' });
-    expect(boutonChemin(LESSONS, { l1: 1 })).toMatchObject({ verbe: 'Continue' });
+    expect(boutonChemin(LESSONS, { l1: 1 })).toMatchObject({ verbe: 'Resume', texte: 'Resume the lesson: Libertés et capture' });
     expect(finDeLecon(LESSONS, 'l1').titre).toBe('Lesson complete');
     expect(traduire('en', 'apprendre.bases.progres', { n: 1, total: 7 })).toBe('1 of 7 lessons done. Keep going!');
     expect(traduire('en', 'lecteur.etapes', { n: 2, total: 5 })).toBe('2 of 5 steps done');

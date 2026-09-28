@@ -77,7 +77,7 @@ test('Go du jour vu : pas de partage ni d’XP, mais la série du jour tient', a
   await expect(page.getByText(/^Go du jour n°\s1$/)).toBeVisible();
 
   await aideComplete(page);
-  await expect(page.getByText('Ta série du jour tient quand même.')).toBeVisible();
+  await expect(page.getByText('Ta série tient quand même.')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Partager' })).toHaveCount(0);
   expect(await page.evaluate(() => localStorage.getItem('go.xp.v1'))).toBeNull();
 

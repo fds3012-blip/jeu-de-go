@@ -30,7 +30,7 @@ test('révision du jour : un problème déjà réussi revient à J+1, on le refa
 
   // Sous le Go du jour, une seule carte : le prochain exercice, sans total.
   await expect(page.getByRole('heading', { name: 'Révision du jour' })).toBeVisible();
-  await expect(page.getByText('Un défi par jour garde ta série : le Go du jour, une leçon ou la révision.')).toBeVisible();
+  await expect(page.getByText('Pour garder ta série, fais chaque jour le Go du jour, une leçon ou une révision.')).toBeVisible();
   const carte = page.getByRole('button', { name: /^Réviser : / });
   await expect(carte).toHaveCount(1);
   await expect(page.locator('.revision')).not.toContainText(/\d\s*\/\s*\d/);
@@ -80,7 +80,7 @@ test('un défi par jour : une leçon terminée fait vivre la série, sans cocher
   await page.goto('/');
   await expect(page.getByRole('img', { name: /^Série de/ })).toHaveCount(0);
   await nav(page, 'Apprendre');
-  await page.getByRole('button', { name: 'Continuer : Le ko' }).click();
+  await page.getByRole('button', { name: 'Reprendre la leçon : Le ko' }).click();
   await jouer(page, 'E5');
   await page.getByRole('button', { name: 'Terminer la leçon' }).click();
   await expect(page.getByRole('heading', { name: 'Leçon terminée' })).toBeVisible();

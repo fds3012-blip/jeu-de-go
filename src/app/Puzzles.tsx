@@ -160,7 +160,7 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
     if (celebrer && !prefersReducedMotion()) setFetes(nouveaux);
   }, [tiers, openId, celebrer]);
   const ordre = useMemo(() => ordrePaliers(tiers), [tiers]);
-  // #147 : « Continuer » propose toujours un problème ; le tirage change à chaque retour à la liste
+  // #147 : « Problème suivant » propose toujours un problème ; le tirage change à chaque retour à la liste
   // et évite le dernier problème joué.
   const dernierRef = useRef<string | undefined>(undefined);
   if (openId) dernierRef.current = openId;
@@ -220,7 +220,7 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
 
   const connecte = !!db && !!userId;
   const prochainPz = aContinuer(tiers, solved, dernierRef.current, () => tirage);
-  // Une seule action en relief : le Go du jour tant qu'il n'est pas fait, « Continuer » ensuite.
+  // Une seule action en relief : le Go du jour tant qu'il n'est pas fait, « Problème suivant » ensuite.
   const duJourReussi = !!daily && goDuJourFaitAppareil(numero);
   const duJourFait = !daily || duJourReussi;
   const recommande = connecte && stats ? palierRecommande(tiers, stats.rating) : undefined;
@@ -274,7 +274,7 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
       {/* Révision du jour (#199) : problèmes déjà réussis, repris à J+1, J+3, J+7. */}
       <RevisionDuJour liste={list} reussis={solved} confirmTouch={confirmTouch} Lecteur={PuzzlePlayer} onSerie={setSerieDuJour} />
 
-      {/* Un seul « Continuer », le palier en cours sans total, la grille derrière un lien discret (#196). */}
+      {/* Un seul « Problème suivant », le palier en cours sans total, la grille derrière un lien discret (#196). */}
       <section aria-labelledby="paliers-titre">
         <h2 id="paliers-titre" className="titre-pierres">{tr('nav.problemes')}</h2>
         {prochainPz && (

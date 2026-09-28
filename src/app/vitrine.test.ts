@@ -10,7 +10,7 @@ describe('statistiques du profil', () => {
   it('Ton parcours (#214) : record, leçons, adversaires battus, problèmes réussis (sans total), légendes accordées', () => {
     const s = statistiques({ ...vide, reussis: 1, serie: 3, parties: 0, record: 5 }, { lecons: { faites: 2, total: 7 }, adversaires: 9 });
     expect(s.map(x => x.id)).toEqual(['record', 'lecons', 'adversaires', 'problemes']);
-    expect(s[0]).toMatchObject({ valeur: 5, legende: 'jours de record' });
+    expect(s[0]).toMatchObject({ valeur: 5, legende: 'jours, ton record' });
     expect(s[1]).toMatchObject({ valeur: 2, total: 7, legende: 'leçons finies' });
     expect(s[2]).toMatchObject({ valeur: 0, total: 9, legende: 'adversaire battu' });
     expect(s[3]).toMatchObject({ valeur: 1, legende: 'problème réussi' });

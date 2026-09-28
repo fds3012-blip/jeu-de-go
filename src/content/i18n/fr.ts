@@ -1,4 +1,4 @@
-// Catalogue français (issue #167) : langue source. Toute clé ajoutée ici doit exister dans en.ts (le typage l'impose).
+// Catalogue français (issue #167) : langue source. Charte du vocabulaire (#237) : docs/design/vocabulaire.md. Toute clé ajoutée ici doit exister dans en.ts (le typage l'impose).
 // Variables : {nom}. Pluriels : objet { one, other } choisi par Intl.PluralRules avec la variable `n`.
 // Vocabulaire du go : docs/localisation/glossaire.md.
 
@@ -28,7 +28,7 @@ export const fr = {
   // Rien de gagné ne se perd (#212) : retour après une série perdue, sans reproche. {jours} et {record} : « 7 jours ».
   'serie.perdueRecord': 'Content de te revoir ! Ta série de {jours} est dans ton record. On en commence une nouvelle ?',
   'serie.perdue': 'Content de te revoir ! Ton record reste {record}. On commence une nouvelle série ?',
-  'profil.recordLegende': { one: 'jour de record', other: 'jours de record' },
+  'profil.recordLegende': { one: 'jour, ton record', other: 'jours, ton record' },
   'profil.sansPseudo': 'Sans pseudo',
   'profil.cote': 'Cote {cote}',
   'profil.jours': { one: '{n} jour', other: '{n} jours' },
@@ -81,7 +81,7 @@ export const fr = {
   'accueil.fait': 'Fait',
   'accueil.tuileAria': 'Go du jour n° {numero} : {titre}. {etat}.',
   'accueil.tuileAriaSimple': 'Go du jour n° {numero} : {titre}.',
-  'entete.flammeAFaire': 'Série de {jours}. Go du jour à faire aujourd’hui pour la garder.',
+  'entete.flammeAFaire': 'Série de {jours}. Go du jour à faire aujourd’hui.',
   'entete.flammeFaite': 'Série de {jours}. Go du jour fait aujourd’hui.',
   'accueil.introBut': 'Le but : entourer plus de territoire que {nom}, et capturer ses pierres en leur retirant leurs libertés (les cases vides qui les touchent).',
   'accueil.kyu': 'Le kyu est un niveau : plus il est petit, plus on est fort.',
@@ -126,7 +126,7 @@ export const fr = {
   'pb.copieLocale': 'On t’affiche ceux de ce téléphone.',
   'pb.reessayer': 'Réessayer',
   'pb.coteLegende': 'ta cote problèmes',
-  'pb.serieLegende': { one: 'jour de suite', other: 'jours de suite' },
+  'pb.serieLegende': { one: 'jour de série', other: 'jours de série' },
   'pb.chargementCote': 'Chargement de ta cote…',
   'pb.invitation.avant': 'Connecte-toi pour avoir ta ',
   'pb.invitation.mot': 'cote',
@@ -134,12 +134,12 @@ export const fr = {
   'pb.invitationCourte.apres': ' : elle mesure ton niveau.',
   'pb.meConnecter': 'Me connecter',
   'pb.numero': 'n° {numero}',
-  'pb.duJourAide': 'Le même défi pour tout le monde, aujourd’hui.',
+  'pb.duJourAide': 'Le même problème pour tout le monde, aujourd’hui.',
   'pb.aide.avant': 'Du plus facile au plus dur. Une pierre est en ',
   'pb.aide.mot': 'atari',
   'pb.aide.apres': ' quand il ne lui reste qu’une liberté.',
-  'pb.continuer': 'Continuer',
-  'pb.continuerAria': 'Continuer : {titre}',
+  'pb.continuer': 'Problème suivant',
+  'pb.continuerAria': 'Problème suivant : {titre}',
   'pb.tous': 'Tous les problèmes',
   'pb.tonPalier': 'Ton palier',
   'pb.verrouille': 'verrouillé',
@@ -185,11 +185,11 @@ export const fr = {
   'pb.aide.refutationSeule': 'Ton coup ne menace rien ici. Cherche ailleurs.',
   'pb.rejouePlateau': 'Rejoue directement sur le plateau.',
   'pb.vuTexte': 'C’est ça ! Tu as vu la réponse : ce problème compte comme vu, pas réussi. Retente-le plus tard.',
-  'pb.vuSerie': 'Ta série du jour tient quand même.',
+  'pb.vuSerie': 'Ta série tient quand même.',
   'pb.tamponVu': 'Vu',
   'pb.vu': 'vu',
   'pb.gelGagne': 'Tu gagnes un gel : il protégera ta série si tu oublies un jour.',
-  'pb.defiChange': 'Le défi a changé : voici celui d’aujourd’hui.',
+  'pb.defiChange': 'Le Go du jour a changé : voici celui d’aujourd’hui.',
   'pb.illegal.occupe': 'Il y a déjà une pierre ici.',
   'pb.illegal.ko': 'Interdit à cause du ko : tu ne peux pas reprendre tout de suite.',
   'pb.illegal.suicide': 'Interdit : ta pierre n’aurait aucune liberté.',
@@ -252,13 +252,13 @@ export const fr = {
   'erreurs.bravoKataGo': 'Bravo, c’est le coup de KataGo !',
   'erreurs.refutation': 'Pas celui-là. Cherche encore.',
 
-  // Révision du jour (#199) : problèmes déjà réussis, repris à J+1, J+3, J+7 ; « un défi par jour » pour la série
+  // Révision du jour (#199) : problèmes déjà réussis, repris à J+1, J+3, J+7. Ce qui garde la série : docs/design/vocabulaire.md
   'revision.titre': 'Révision du jour',
   'revision.aide': 'Refaire un problème réussi t’aide à le retenir.',
   'revision.ouvrirAria': 'Réviser : {titre}',
   'revision.dejaReussi': 'Déjà réussi · refais-le sans aide',
   'revision.faite': 'Révision faite. D’autres problèmes reviendront demain.',
-  'revision.serie': 'Un défi par jour garde ta série : le Go du jour, une leçon ou la révision.',
+  'revision.serie': 'Pour garder ta série, fais chaque jour le Go du jour, une leçon ou une révision.',
 
   // Carte « Installe l'app » (#178)
   'installer.titre': 'Garde le go sous la main',
@@ -300,7 +300,7 @@ export const fr = {
   'badge.palier-novice.nom': 'Palier Novice',
   'badge.palier-novice.condition': 'Finis le palier Novice.',
   'badge.serie-7.nom': '7 jours de série',
-  'badge.serie-7.condition': 'Un défi 7 jours de suite.',
+  'badge.serie-7.condition': 'Garde ta série 7 jours.',
 
   // Étape 4 (#167) : écran de partie, récit du score, fin de partie et revue.
   // Camps
@@ -393,7 +393,7 @@ export const fr = {
   // Avant un passe trop tôt (#235) : Mochi prévient, le joueur choisit.
   'partie.passe.avertir': 'Il reste de la place à prendre. Tu passes quand même ?',
   'partie.passe.confirmer': 'Passer',
-  'partie.passe.continuer': 'Continuer à jouer',
+  'partie.passe.continuer': 'Jouer encore',
   'partie.passe.continue': 'À toi ! Pose tes pierres pour fermer ta zone.',
   'partie.passe.aria': 'Passer maintenant ?',
   // Répliques des adversaires (src/app/repliques.ts) : 15 caractères au plus
@@ -406,9 +406,9 @@ export const fr = {
   'replique.capture.0': 'Hop, prise !',
   'replique.capture.1': 'Merci !',
   'replique.capture.2': 'Je la prends !',
-  'replique.passeJoueur.0': 'Déjà fini ?',
-  'replique.passeJoueur.1': 'On compte ?',
-  'replique.passeJoueur.2': 'Tu es sûr ?',
+  'replique.passeJoueur.0': 'Voyons voir…',
+  'replique.passeJoueur.1': 'Je regarde.',
+  'replique.passeJoueur.2': 'À moi.',
   'replique.passe.0': 'Je passe.',
   'replique.passe.1': 'Rien à jouer.',
   'replique.passe.2': 'À toi de voir.',
@@ -433,7 +433,7 @@ export const fr = {
   'recit.score': '{noir} {pn}, {blanc} {pb}.',
   'recit.territoires': 'Territoires : les points vides que chaque camp entoure',
   'recit.aucunTerritoire': 'Aucun territoire',
-  'recit.continuer': 'Continuer',
+  'recit.continuer': 'Voir le résultat',
   // Écran de fin (src/ui/FinPartie.tsx, src/app/Game.tsx, src/app/bilan.ts)
   'fin.egalite': 'Égalité',
   'fin.victoire': 'Victoire',
@@ -523,7 +523,7 @@ export const fr = {
   'revue.points': { one: '{n} point', other: '{n} points' },
   'revue.unPoint': 'un point',
   'revue.aucuneErreur': 'Aucune grosse erreur. Bien joué !',
-  'revue.sansKataGo': 'Pour voir le meilleur coup, joue contre Bambou ou plus fort.',
+  'revue.sansKataGo': 'Pour voir le meilleur coup, affronte un adversaire plus fort.',
   'revue.passeTot': 'Tu as passé trop tôt : il restait des points à prendre.',
   'revue.captureApres': { one: "Après ce coup, l'adversaire capture une pierre. Tu perds environ {pts}.", other: "Après ce coup, l'adversaire capture {n} pierres. Tu perds environ {pts}." },
   'revue.perdu': 'Ici tu as perdu environ {pts}.',
@@ -610,8 +610,11 @@ export const fr = {
   'apprendre.avenir.5': 'Fin de partie et comptage',
   'apprendre.revoir': 'Revoir',
   'apprendre.revoirTitre': 'Revoir : {titre}',
+  // « Continuer » : seulement l'étape suivante dans une leçon (docs/design/vocabulaire.md).
   'apprendre.continuer': 'Continuer',
-  'apprendre.continuerTitre': 'Continuer : {titre}',
+  'apprendre.reprendre': 'Reprendre',
+  'apprendre.reprendreTitre': 'Reprendre la leçon : {titre}',
+  'apprendre.commencerTitre': 'Commencer la leçon : {titre}',
   'apprendre.commencer': 'Commencer',
   'apprendre.fin.lecon': 'Leçon terminée',
   'apprendre.fin.chapitre': 'Chapitre terminé',

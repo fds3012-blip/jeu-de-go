@@ -44,6 +44,6 @@ describe('avertir avant un passe (#235)', () => {
   it('une phrase courte, deux choix clairs', () => {
     expect(t('partie.passe.avertir')).toBe('Il reste de la place à prendre. Tu passes quand même ?');
     expect(t('partie.passe.confirmer')).toBe('Passer');
-    expect(t('partie.passe.continuer')).toBe('Continuer à jouer');
+    expect(t('partie.passe.continuer')).toBe('Jouer encore');
   });
 });

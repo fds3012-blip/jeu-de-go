@@ -146,7 +146,7 @@ for (const c of CAS) {
       await expect(page.locator('[data-chapitre="c1"] .gue li')).toHaveCount(7);
       await expect(page.locator('[data-chapitre="c2"] .gue li')).toHaveCount(1);
       await sansDebord(page, 'Apprendre (7 leçons)');
-      const cta = page.getByRole('button', { name: 'Continuer : Compter les points' });
+      const cta = page.getByRole('button', { name: 'Reprendre la leçon : Compter les points' });
       await boutonLibre(cta, 'Apprendre (leçon 7)');
       const pierre = page.getByRole('button', { name: 'Leçon 7 : Compter les points, prochaine étape' });
       const b = (await pierre.boundingBox())!;
