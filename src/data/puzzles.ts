@@ -3,7 +3,8 @@
 import type { Json, Tables } from './database.types';
 import type { Db } from './supabase';
 import type { Result } from './account';
-import { t } from '../content/i18n';
+import { langue, t } from '../content/i18n';
+import { localiserProbleme } from '../content/problemesLangue';
 import { fromRows } from '../go/position';
 import { play, type MoveError, type Position } from '../go/rules';
 import { fromLabel } from '../go/coords';
@@ -48,13 +49,14 @@ export function parsePuzzle(row: PuzzleRow): Puzzle | null {
     const line = Array.isArray(stored) && stored.every(s => typeof s === 'string') && stored.length
       ? (stored as string[]).map(s => fromLabel(s, size))
       : [answers[0]];
-    return {
+    // Textes dans la langue de l'interface (#167) : catalogue local par id, le français sinon.
+    return localiserProbleme<Puzzle>({
       id: row.id, size, rows: rows as string[], toPlay, answers, line,
       title: row.title ?? 'Problème', prompt: row.prompt ?? 'Trouve le meilleur coup.',
       explanation: row.explanation,
       refutation: typeof setup.refutation === 'string' && setup.refutation ? setup.refutation : null,
       difficulty: row.difficulty
-    };
+    }, langue());
   } catch {
     return null;
   }
