@@ -18,23 +18,33 @@ export interface Donnees {
   paliers: Pick<Palier<unknown>, 'id' | 'complet'>[];
 }
 
-export interface Stat { id: 'problemes' | 'serie' | 'parties' | 'victoires'; valeur: number; legende: string }
+/** #214 : un compteur, avec son total quand il y en a un (« 3 / 7 leçons ») ; les problèmes n'ont pas de fin. */
+export interface Stat { id: 'record' | 'lecons' | 'adversaires' | 'problemes'; valeur: number; total?: number; legende: string }
+
+/** Ce que « Ton parcours » ajoute aux données locales (#214) : leçons terminées et taille de l'échelle des adversaires. */
+export interface Parcours {
+  lecons: { faites: number; total: number };
+  /** Nombre d'adversaires de l'échelle (les battus se lisent dans le bilan). */
+  adversaires: number;
+}
 
 export const victoires = (b: Bilan) => Object.values(b).reduce((s, x) => s + x.v, 0);
 
-/** Quatre statistiques, toujours dans le même ordre. Les légendes s'accordent au nombre. */
-export function statistiques(d: Donnees): Stat[] {
-  const v = victoires(d.bilan);
-  const record = d.record ?? 0;
-  // Série finie (#212) : on montre le record, jamais un « 0 jour de série » en gros.
-  const serie: Stat = d.serie === 0 && record > 0
-    ? { id: 'serie', valeur: record, legende: t('profil.recordLegende', { n: record }) }
-    : { id: 'serie', valeur: d.serie, legende: t('stats.serie', { n: d.serie }) };
+/** Adversaires battus au moins une fois sur cet appareil. */
+export const adversairesBattus = (b: Bilan) => Object.values(b).filter(x => x.v > 0).length;
+
+/**
+ * « Ton parcours » (#214), toujours dans le même ordre : record de série, leçons, adversaires battus, problèmes réussis.
+ * Le record n'est jamais plus petit que la série en cours : jamais de « 0 jour de série » en gros (#212).
+ */
+export function statistiques(d: Donnees, p: Parcours): Stat[] {
+  const record = Math.max(d.serie, d.record ?? 0);
+  const battus = Math.min(adversairesBattus(d.bilan), p.adversaires);
   return [
+    { id: 'record', valeur: record, legende: t('profil.recordLegende', { n: record }) },
+    { id: 'lecons', valeur: p.lecons.faites, total: p.lecons.total, legende: t('stats.lecons', { n: p.lecons.faites }) },
+    { id: 'adversaires', valeur: battus, total: p.adversaires, legende: t('stats.adversaires', { n: battus }) },
     { id: 'problemes', valeur: d.reussis, legende: t('stats.problemes', { n: d.reussis }) },
-    serie,
-    { id: 'parties', valeur: d.parties, legende: t('stats.parties', { n: d.parties }) },
-    { id: 'victoires', valeur: v, legende: t('stats.victoires', { n: v }) },
   ];
 }
 

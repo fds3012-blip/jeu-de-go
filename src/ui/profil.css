@@ -194,3 +194,19 @@ button.ligne:focus-visible { outline-offset: -3px; }
 .pastille:not([aria-disabled="true"]):active .pastille-bois { transform: scale(.94); }
 .pastille-bois { transition: transform 140ms cubic-bezier(.23, 1, .32, 1); }
 @media (prefers-reduced-motion: reduce) { .pastille-bois { transition: none; } .pastille .pastille-bois { transform: none !important; } }
+
+/* ---------- Ton parcours (#214) : la progression d'abord, les réglages derrière une ligne ---------- */
+.profil .profil-titre { margin: 0 0 var(--space-2); font-size: var(--fs-xl); }
+/* Barre de niveau dans la carte, pleine largeur sous le nom, entre deux filets. */
+.identite-niveau { flex: 1 0 100%; min-width: 0; padding-top: 6px; box-shadow: inset 0 1px 0 var(--line); }
+.identite-niveau .niveau { margin: 0; }
+/* Total discret à côté du compteur : « 3/7 ». */
+.stat b small { margin-left: 1px; color: var(--muted); font-family: var(--font-texte, inherit); font-size: .6em; font-weight: var(--fw-bold); letter-spacing: 0; }
+.stat span { text-wrap: balance; }
+/* La vitrine suit la carte de près ; les lignes (Réglages, Installer, Compte, Conditions) juste après. */
+.profil .vitrine + .lignes { margin-top: var(--space-2); }
+/* Carte d'installation demandée depuis le Profil : pas d'entrée retardée, le joueur l'a ouverte lui-même. */
+.installer.installer-demandee { margin-top: 0; animation: none; }
+/* Quatre colonnes égales sur un iPhone ; au zoom 200 %, elles passent sur deux rangées (min-width). */
+.identite .stats { gap: 6px; }
+.identite .stats > .stat { flex: 1 1 0; min-width: 68px; align-content: start; }

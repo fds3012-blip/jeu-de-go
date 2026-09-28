@@ -6,6 +6,7 @@ const XP_NIVEAU_5 = 575; // seuil(5) dans src/app/xp.ts
 
 async function ouvrirProfil(page: Page) {
   await page.getByRole('navigation').getByRole('button', { name: 'Profil' }).click();
+  await page.getByRole('button', { name: /^Réglages/ }).click(); // #214 : réglages derrière une ligne
   return page.getByRole('group', { name: 'Goban' });
 }
 

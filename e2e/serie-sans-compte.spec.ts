@@ -23,7 +23,7 @@ test('jour 1 sans compte : la série vaut 1 partout (accueil, Problèmes, Profil
   await expect(page.locator('.palmares-serie')).toContainText('1');
   await expect(page.locator('.palmares-serie')).toContainText('jour de suite');
   await expect(page.getByRole('button', { name: 'Me connecter' })).toBeVisible();
-  await expect(page.getByText('Crée un compte pour garder ta série.')).toHaveCount(0);
+  await expect(page.getByText('Avec un compte, ta série et tes leçons te suivent.')).toHaveCount(0);
 
   // Accueil : la flamme dans l'en-tête.
   await nav(page, 'Jouer');
@@ -52,12 +52,12 @@ test('3e jour de série sans compte : invitation discrète à créer un compte',
   await expect(page.getByRole('img', { name: 'Série de 3 jours' })).toBeVisible();
   await nav(page, 'Problèmes');
   await expect(page.locator('.palmares-serie')).toContainText('3');
-  await expect(page.getByText('Crée un compte pour garder ta série.')).toBeVisible();
+  await expect(page.getByText('Avec un compte, ta série et tes leçons te suivent.')).toBeVisible();
   await page.getByRole('button', { name: 'Créer un compte' }).click();
   await expect(page.getByRole('navigation').getByRole('button', { name: 'Profil' })).toHaveAttribute('aria-current', 'page');
 
   // Profil : la ligne sous « Invité » devient l'invitation ; « Mon compte » reste l'action.
-  await expect(page.locator('.identite')).toContainText('Crée un compte pour garder ta série.');
+  await expect(page.locator('.identite')).toContainText('Avec un compte, ta série et tes leçons te suivent.');
   await page.getByRole('button', { name: /Mon compte/ }).click();
   await expect(page.getByRole('heading', { name: 'Mon compte' })).toBeVisible();
 

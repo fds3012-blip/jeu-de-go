@@ -34,6 +34,8 @@ import { BarreNav, type Onglet } from '../ui/IconesNav';
 import { BarreNiveau, FeteNiveau } from '../ui/Niveau';
 import { annonceKomi, equilibrage, KOMI_NORMAL, partiesOrdi, type Equilibrage } from './equilibrage';
 import { AnnonceXp } from '../ui/PastilleXp';
+import { ProposerInstallation } from '../ui/ProposerInstallation';
+import { estMomentRetour, noterOuverture } from './installation';
 import { SeriePratique } from './SeriePratique';
 import { THEMES_DE_LECON, serieDeLecon } from '../content/themes';
 import type { Puzzle } from '../data/puzzles';
@@ -127,6 +129,8 @@ export function App() {
   const leconConseillee = LESSONS.find(l => (progress[l.id] ?? 0) < l.steps.length);
   // Profil (issue #50) : sous-vue ouverte, et fenêtre de consentement fermée avec Échap pendant cette session.
   const [vueProfil, setVueProfil] = useState<VueProfil>('menu');
+  // Installation (#214) : proposée sur l'accueil à partir du 2e retour (jour d'ouverture distinct), une seule fois.
+  const [ouverture] = useState(() => noterOuverture(numeroDuJour(new Date())));
   const [accordIgnore, setAccordIgnore] = useState(false);
   const consent = useConsentement();
   const profil = useProfil(supabase);
@@ -221,7 +225,8 @@ export function App() {
     screen = <Puzzles db={supabase} userId={session?.user.id} sessionLoading={session === undefined} confirmTouch={settings.confirmTouch} onCompte={() => go('profil')}
       lien={LIEN_DU_JOUR} onDuJour={setDuJourOuvert} celebrer={settings.celebrations} racine={racineProblemes} />;
   } else if (tab === 'profil') {
-    screen = <Profil vue={vueProfil} onVue={setVueProfil} settings={settings} set={set} profil={profil} serie={serie} record={recordSerie} />;
+    screen = <Profil vue={vueProfil} onVue={setVueProfil} settings={settings} set={set} profil={profil} serie={serie} record={recordSerie}
+      parcours={{ lecons: { faites: done, total: LESSONS.length }, adversaires: OPPONENTS.length }} />;
   } else {
     const numero = numeroJour;
     const daily = duJour;
@@ -233,7 +238,9 @@ export function App() {
         probleme={daily && { numero, titre: daily.title, rows: daily.rows, reussi: duJourFait }}
         onProbleme={() => go('problemes')}
         lecon={leconConseillee && { rang: rangLecon, total: LESSONS.length, titre: leconConseillee.title }}
-        onLecon={() => { go('apprendre'); if (leconConseillee) setLessonId(leconConseillee.id); }} />
+        onLecon={() => { go('apprendre'); if (leconConseillee) setLessonId(leconConseillee.id); }}
+        // Un seul message à la fois : pas de carte d'installation le jour où Mochi annonce un gel ou un record.
+        installation={estMomentRetour(ouverture) && annonceGel === null && retourSerie === null ? <ProposerInstallation moment="retour" /> : null} />
     );
   }
 

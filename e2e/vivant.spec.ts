@@ -31,9 +31,11 @@ test('profil vivant : statistiques et badges déduits des données locales, sans
   await page.getByRole('navigation').getByRole('button', { name: 'Profil' }).click();
   const stats = page.getByRole('list', { name: 'Tes statistiques' });
   await expect(stats.getByText('3', { exact: true })).toBeVisible();
-  await expect(stats.getByText('problèmes')).toBeVisible();
-  await expect(stats.getByText('parties')).toBeVisible();
-  await expect(stats.getByText('victoires')).toBeVisible();
+  await expect(stats.getByText('problèmes réussis')).toBeVisible();
+  // #214 : Ton parcours. Pomme battue : 1 adversaire sur 9.
+  await expect(stats.getByText('adversaire battu')).toBeVisible();
+  await expect(stats.getByText('leçon finie')).toBeVisible();
+  await expect(stats.getByText('jour de record')).toBeVisible();
 
   const vitrine = page.getByRole('region', { name: /^Badges/ });
   await expect(vitrine.getByRole('listitem', { name: 'Pomme battue : obtenu' })).toBeVisible();

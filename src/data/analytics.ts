@@ -47,7 +47,7 @@ export const EVENTS = {
   partieCommencee: 'partie_commencee',
   // Deux passes, puis comptage manuel (pierres mortes à corriger à la main) : part des fins de partie qui perdent le joueur (#159).
   comptageManuel: 'comptage_manuel',
-  // Proposer d'installer l'app (#178) : carte montrée (une fois, après une première victoire ou un Go du jour réussi), puis installation acceptée.
+  // Proposer d'installer l'app (#178) : carte montrée (une fois, après une première victoire ou à l'accueil du 2e retour depuis #214 ; `profil` : ligne du Profil), puis installation acceptée.
   installationProposee: 'installation_proposee',
   installationAcceptee: 'installation_acceptee',
   // Aide graduée des problèmes (#197) : la réponse a été montrée après un échec (le problème devient « Vu », pas « Réussi »).
