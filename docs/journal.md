@@ -472,9 +472,17 @@ Chaque livraison : issue traitée, agent, pull request, résultat des vérificat
 
 **Bloqué à 4 h 50** : GitHub Actions ne démarre plus (« recent account payments have failed or your spending limit needs to be increased »). Aucune dépense faite. Plus aucune fusion depuis : la règle est « CI verte avant fusion ».
 
-**En attente de CI** : tout est intégré dans `assemblage-nuit` (PR #246), validé en local (`tsc`, lint, Vitest 7 093 tests, Playwright 198 passés). Il contient #234, #238, #239, #242 à #245, le vocabulaire du design, le lot O (#248, 12 problèmes, migration pas encore appliquée) et la recette du matin (#249).
+**En attente de CI** : tout est intégré dans `assemblage-nuit` (PR #246), validé en local (`tsc`, lint, Vitest 7 093 tests, Playwright 198 passés). Il contient #234, #238, #239, #242 à #245, le vocabulaire du design, le lot O (#248, 12 problèmes, migration pas encore appliquée) la recette du matin (#249) et les correctifs #252 à #256.
 
-**Recette du matin** (#247) : 4 parcours × 4 configurations, rien de bloquant. M1 corrigé. M2 à M9 ouverts dans #250 (petits écrans) et #251 (komi et révisions).
+**Recette du matin** (#247, PR #249) : 4 parcours × 4 configurations, rien de bloquant. M1 corrigé sur place.
+
+**Vagues de 6 h à 7 h 30** (toutes dans l'assemblage, validées en local)
+- #252 (#250) : en 320 px, le plateau reste visible sous le verdict et sous la bulle de Mochi ; les liens du verdict tiennent sur une ligne ; la fête de niveau quitte le chemin.
+- #253 (#251) : une défaite au komi sur un plateau presque vide est expliquée, sans « perdu de peu ». Un Go du jour vu avec la réponse revient le lendemain en révision.
+- #254 (#236, N2) : une seule fête à la fois en fin de pratique ; « Niveau 2 ! » a son propre écran.
+- #255 (#232) : la barre de partie à 320 px garde ses libellés entiers ; le chemin en police doublée est vérifié.
+- #256 (#250) : la bulle de Mochi tient sous le plateau en 320 × 568.
+- Dernier état vérifié : Vitest 7 104 tests, Playwright 213 passés.
 
 **Appris**
 - Assembler toutes les branches en local avant de fusionner a évité plusieurs cassures croisées (profil « 2/7 » devenu « 2/8 », textes i18n).
