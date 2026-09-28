@@ -1,5 +1,5 @@
 // Issue #136, lot J : preuve de chaque problème avec le moteur de règles.
-// Captures (j01 à j04) : lecteur exact (src/go/lecteurs-lot-j.ts), tous les coups légaux de Blanc et la passe, une
+// Captures (j01 à j04, j12) : lecteur exact (src/go/lecteurs-lot-j.ts), tous les coups légaux de Blanc et la passe, une
 // fois avec le ko permis et une fois avec toute prise en ko interdite : le résultat doit être le même.
 // Vie et mort (j05 à j11) : recherche complète dans l'espace clos (lecteur du lot C). Le défenseur gagne s'il atteint
 // deux vrais yeux, l'attaquant s'il capture le groupe marqué ; une double passe ne compte pour personne, donc ni seki
@@ -17,7 +17,7 @@ import { blackCaptures, captureWinners, whiteFails } from './lecteurs-lot-j';
 import { groupAt, play, type Position } from './rules';
 import { hasTwoEyes } from './tactics';
 
-const LOT_J = [...LOT_J_CAP, ...LOT_J_VM];
+const LOT_J = [...LOT_J_CAP, ...LOT_J_VM].sort((a, b) => a.id.localeCompare(b.id));
 const at = (l: string) => fromLabel(l, 9);
 const label = (m: number) => (m < 0 ? 'passe' : toLabel(m, 9));
 const ok = (r: Position | string): Position => { if (typeof r === 'string') throw new Error(r); return r; };
@@ -61,8 +61,10 @@ describe('lot J : identifiants, doublons, migration (issue #136)', () => {
   });
 });
 
-describe('lot J : captures en deux coups (double atari par la coupe, prise en retour)', () => {
-  const caps = parsePuzzles(LOT_J_CAP), K = 2;
+describe('lot J : captures (double atari par la coupe, prise en retour, capturer pour relier)', () => {
+  const caps = parsePuzzles(LOT_J_CAP);
+  /** Nombre de coups noirs annoncé par l'énoncé. */
+  const kOf = (prompt: string) => (prompt.includes('en trois coups') ? 3 : 2);
   const pz = (id: string) => caps.find(p => p.id === id)!;
 
   it('difficulté 600 à 800 croissante, pierres blanches marquées, départ légal sans ko ni atari', () => {
@@ -74,7 +76,7 @@ describe('lot J : captures en deux coups (double atari par la coupe, prise en re
       expect(p.difficulty).toBeGreaterThanOrEqual(600);
       expect(p.difficulty).toBeLessThanOrEqual(800);
       prev = p.difficulty;
-      expect(p.prompt).toBe(marked.length > 1 ? 'Capture une des pierres marquées en deux coups au plus.' : 'Capture la pierre marquée en deux coups au plus.');
+      expect(p.prompt).toMatch(marked.length > 1 ? /^Capture une des pierres marquées en (deux|trois) coups au plus\./ : /^Capture la pierre marquée en (deux|trois) coups au plus\./);
       for (const t of marked) {
         expect(pos.board[t]).toBe(2);
         expect(groupAt(pos.board, 9, t).liberties.size, `${p.id} ${label(t)}`).toBeGreaterThanOrEqual(2);
@@ -85,10 +87,10 @@ describe('lot J : captures en deux coups (double atari par la coupe, prise en re
   });
 
   for (const row of LOT_J_CAP) {
-    it(`${row.id} : pas de prise en un coup ; les réponses capturent contre toute défense, avec ou sans ko, et ce sont les seuls coups gagnants`, () => {
-      const p = pz(row.id), { pos, marked } = startOf(p);
-      expect(captureWinners(pos, marked, 1)).toEqual([]);
-      expect(blackCaptures(pos, marked, 1)).toBe(false);
+    it(`${row.id} : pas de prise plus rapide ; les réponses capturent contre toute défense, avec ou sans ko, et ce sont les seuls coups gagnants`, () => {
+      const p = pz(row.id), { pos, marked } = startOf(p), K = kOf(p.prompt);
+      expect(captureWinners(pos, marked, K - 1)).toEqual([]);
+      expect(blackCaptures(pos, marked, K - 1)).toBe(false);
       for (const a of row.answers) {
         expect(whiteFails(ok(play(pos, at(a))), marked, K - 1), `${p.id} ${a}`).toBe(true);
         expect(whiteFails(ok(play(pos, at(a))), marked, K - 1, NO_KO), `${p.id} ${a} sans ko`).toBe(true);
@@ -145,6 +147,31 @@ describe('lot J : captures en deux coups (double atari par la coupe, prise en re
       const r = seq(pos, m, 'D2');
       expect(blackCaptures(r, startOf(pz('j04')).marked, 1), m).toBe(false);
     }
+  });
+});
+
+describe('lot J : j12, capturer pour relier', () => {
+  const p = parsePuzzles(LOT_J_CAP).find(q => q.id === 'j12')!, { pos, marked } = startOf(p);
+
+  it('E3 : atari vers le bord ; E1 : deux libertés, D1 et F1 ; D1 puis F1 : une liberté, G1 ; G1 capture et relie', () => {
+    const e3 = seq(pos, 'E3');
+    expect([...groupAt(e3.board, 9, at('E2')).liberties].map(label)).toEqual(['E1']);
+    const e1 = seq(e3, 'E1');
+    expect([...groupAt(e1.board, 9, at('E2')).liberties].map(label).sort()).toEqual(['D1', 'F1']);
+    expect(captureWinners(e1, marked, 2)).toEqual(['D1', 'F1']);
+    const f1 = seq(e1, 'D1', 'F1');
+    expect([...groupAt(f1.board, 9, at('E2')).liberties].map(label)).toEqual(['G1']);
+    const g1 = seq(f1, 'G1');
+    expect(g1.board[at('E2')]).toBe(0);
+    expect(g1.captures[1]).toBe(3);
+    // Les pierres C2-D2 et F2-G2 sont maintenant reliées par la chaîne du bas.
+    expect(groupAt(seq(g1, 'passe', 'E2').board, 9, at('C2')).stones).toContain(at('G2'));
+    // Et si Blanc recoupe en E2, sa pierre n'a qu'une liberté.
+    expect(libs(seq(g1, 'E2'), 'E2')).toBe(1);
+  });
+
+  it('en E1, Blanc s’allonge en E3 avec trois libertés', () => {
+    expect(libs(seq(pos, 'E1', 'E3'), 'E2')).toBe(3);
   });
 });
 

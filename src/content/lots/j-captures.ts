@@ -1,4 +1,5 @@
-// Lot J de l'issue #136, première partie : captures en deux coups (double atari par la coupe, prise en retour),
+// Lot J de l'issue #136, première partie : captures en deux ou trois coups (double atari par la coupe, prise en
+// retour, capturer pour relier),
 // 9 × 9, Noir au trait. Aucun ko. Même contenu que la migration 20260928020100_lot_j ; chaque position est prouvée
 // par src/go/lot-j.test.ts (lecteur exact, tous les coups légaux de Blanc et la passe, avec et sans ko).
 import type { PuzzleRow } from '../../data/puzzles';
@@ -37,6 +38,14 @@ const LOT_J_CAPTURES: PuzzleRow[] = [
     title: 'Coupe malgré la menace',
     prompt: 'Capture une des pierres marquées en deux coups au plus.',
     explanation: "Superbe ! D2 coupe et met les deux groupes en atari (une seule liberté) : A1 pour celui de gauche, E1 pour celui de droite. Ta pierre C1 est en atari aussi. Mais si Blanc la prend en D1, le groupe de droite reste en atari : tu le captures en E1."
+  },
+  {
+    id: 'j12', size: 9, difficulty: 780, answers: ['E3'],
+    setup: { rows: [E, E, E, E, E, E, '.O.....O.', '..XXTXX..', E], toPlay: 'B',
+      refutation: "Pas tout à fait. En E1, Blanc s'allonge en E3 et a trois libertés : sa pierre s'échappe, et tes pierres restent coupées. Mets-la en atari par le haut, pour la pousser vers le bord." },
+    title: 'Capture pour relier',
+    prompt: 'Capture la pierre marquée en trois coups au plus. Elle coupe tes pierres en deux.',
+    explanation: "Bravo ! E3 met la pierre en atari (il ne lui reste qu'une liberté, E1) et la pousse vers le bord. Si Blanc s'allonge en E1, ses deux pierres ont deux libertés, D1 et F1. Tu en prends une, par exemple D1 : Blanc s'allonge en F1 et n'a plus que G1. Tu captures en G1. Tes deux groupes sont reliés."
   },
 ];
 
