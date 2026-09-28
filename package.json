@@ -16,6 +16,7 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "icons": "node scripts/generate-icons.mjs",
+    "apercu": "node scripts/generate-apercu.mjs",
     "fetch-model": "node scripts/fetch-model.mjs",
     "sync:functions": "node scripts/sync-functions.mjs"
   },
