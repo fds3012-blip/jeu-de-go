@@ -1055,4 +1055,40 @@ export const PROBLEMES_EN: Record<string, TexteProbleme> = {
     explanation: "Superb! G5 doesn't touch the stone: it closes the way to the right from a distance. This is a distant net. If White comes out at E6, you play D6; if it goes on to F6, you play F7, then G7 if it extends to G6. If it comes out at F5, you play F4. Your stones at E7 and H6 close the top: it stays trapped, and you capture it.",
     refutation: 'Not quite. White extends to F5, or to E6 if you played F5 or F4, and finds a way out. Close the way to the right from a distance, without touching the stone.',
   },
+  t01: {
+    title: 'The net against the edge',
+    prompt: 'Capture the marked stones in four moves or less.',
+    explanation: "Well done! The two stones have three liberties: B4, B3 and A2. B2 doesn't touch them: it closes the way out at the bottom, from a distance. This is a net. If White extends to B4, you play C4; if it extends to B3, you play C3. It stays stuck against the edge, short of liberties, and you capture it on the fourth move.",
+    refutation: 'Not quite. White plays B2: this stone opens the way down, and it keeps too many liberties to be captured in four moves. Take that point first, without touching its stones.',
+  },
+  t02: {
+    title: 'Close it from the edge',
+    prompt: 'Black to play and live. A white stone has entered your space at D1.',
+    explanation: 'Well done! E1, on the first line, closes your space on the right and puts D1 in atari: it has only one liberty left, C1. If White plays F1, you capture D1 at C1. The stone at D1 can no longer get out, and your corner keeps room for two eyes: your group is alive.',
+    refutation: 'Not quite. White plays E1: it connects its stone at D1 and enters your space from the right. You no longer have room for two eyes, and your group ends up captured.',
+  },
+  t03: {
+    title: 'The corner eye',
+    prompt: 'Black to play and live. The white stone at C1 wants to get into your corner.',
+    explanation: 'Superb! B1 guards A1, your first eye, and blocks the stone at C1 against the edge. If White extends to C2, you play C3: its two stones are in atari. If it plays C3, you play C2. Each time, its stones stay trapped, and your group is alive.',
+    refutation: 'Not quite. White plays B1 and slips under your stones: A1 is no longer an eye. You no longer have room for two eyes, and your group ends up captured.',
+  },
+  t04: {
+    title: 'The cutting point',
+    prompt: 'Black to play and kill. Look at the white stones F1 and F2.',
+    explanation: 'Well done! E2 cuts F1 and F2 off from the rest of the group and puts them in atari. If White connects them at E1, E1 will never be an eye. A3, B3 and C3 touch your stones: that is not an eye either. White has only one eye, at B1, and its group ends up captured.',
+    refutation: 'Not quite. White plays E2: it connects F1 and F2 to the rest of the group, and E1 becomes a second eye, next to B1. With two eyes, its group is alive.',
+  },
+  t05: {
+    title: 'Slip in at the edge',
+    prompt: 'Black to play and kill. Your stone at B3 already touches the white group.',
+    explanation: "Superb! A2 slips under your stone at B3, on the edge: A1 can no longer become an eye. If White plays A1 to put A2 in atari, you connect at A3. White's corner no longer has room for two eyes, and its group ends up captured.",
+    refutation: 'Not quite. White plays A2: A1 becomes an eye, and it keeps room for a second one. Its group is alive.',
+  },
+  t06: {
+    title: 'The first-line vital point',
+    prompt: "Black to play and kill. White's space looks big: where is its weak point?",
+    explanation: "Superb! C1, on the first line, is the vital point: it cuts White's space into pieces. If White plays D1, you play E2; if it plays E2, you play D1. Each time, only one move works: you have to read ahead. White can no longer make two eyes, and its group ends up captured.",
+    refutation: 'Not quite. White plays C1: its space stays in one piece, big enough for two eyes. Its group is alive.',
+  },
 };
