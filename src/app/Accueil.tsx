@@ -13,7 +13,9 @@ import { t } from '../content/i18n';
 type Taille = 9 | 13 | 19;
 
 /** Tuile du Go du jour (issue #75) : le défi commun, numéroté. */
-export interface TuileProbleme { titre: string; reussi: boolean; rows: string[]; numero: number }
+export interface TuileProbleme { titre: string; reussi: boolean; rows: string[]; numero: number;
+  /** Pastille d'état (#236, N4) : « Fait », « À faire », ou rien (premier lancement, autre appel à l'écran). */
+  etat?: 'fait' | 'aFaire' | null }
 export interface TuileLecon { rang: number; total: number; titre: string }
 
 interface Props {
@@ -42,6 +44,8 @@ const AIDE_TAILLE = { 9: 'accueil.aideTaille.9', 13: 'accueil.aideTaille.13', 19
 
 export function Accueil(p: Props) {
   const { adv, textes, taille } = p;
+  // Sans état fourni : l'ancien comportement (« Fait » ou « À faire »).
+  const etat = p.probleme ? (p.probleme.etat !== undefined ? p.probleme.etat : p.probleme.reussi ? 'fait' : 'aFaire') : null;
   const kyu = /kyu/.test(adv.rang) ? ` ${t('accueil.kyu')}` : '';
   return (
     <div className="accueil">
@@ -81,17 +85,19 @@ export function Accueil(p: Props) {
 
       <div className="tuiles">
         {/* #213 : la tuile dit l'état du jour, « À faire » tant que le Go du jour d'aujourd'hui n'est pas réussi, puis « Fait ». */}
-        <button className={`tuile tuile-probleme${p.probleme ? (p.probleme.reussi ? ' fait' : ' a-faire') : ''}`} onClick={p.onProbleme}
-          aria-label={p.probleme ? t('accueil.tuileAria', { numero: p.probleme.numero, titre: p.probleme.titre, etat: t(p.probleme.reussi ? 'accueil.fait' : 'accueil.aFaire') }) : undefined}>
+        <button className={`tuile tuile-probleme${etat === 'fait' ? ' fait' : etat === 'aFaire' ? ' a-faire' : ''}`} onClick={p.onProbleme}
+          aria-label={p.probleme ? (etat
+            ? t('accueil.tuileAria', { numero: p.probleme.numero, titre: p.probleme.titre, etat: t(etat === 'fait' ? 'accueil.fait' : 'accueil.aFaire') })
+            : t('accueil.tuileAriaSimple', { numero: p.probleme.numero, titre: p.probleme.titre })) : undefined}>
           {p.probleme && <MiniPlateau rows={p.probleme.rows} />}
           <span>
             <small>{p.probleme ? t('accueil.goDuJourNumero', { numero: p.probleme.numero }) : t('accueil.goDuJour')}</small>
             <b>{p.probleme?.titre ?? t('nav.problemes')}</b>
           </span>
-          {p.probleme && (
+          {p.probleme && etat && (
             <em className="tuile-etat" data-testid="etat-du-jour" aria-hidden="true">
-              {p.probleme.reussi && <svg viewBox="0 0 12 12" width="11" height="11" focusable="false"><path d="M2.5 6.4 5 8.8l4.6-5.3" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>}
-              {t(p.probleme.reussi ? 'accueil.fait' : 'accueil.aFaire')}
+              {etat === 'fait' && <svg viewBox="0 0 12 12" width="11" height="11" focusable="false"><path d="M2.5 6.4 5 8.8l4.6-5.3" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>}
+              {t(etat === 'fait' ? 'accueil.fait' : 'accueil.aFaire')}
             </em>
           )}
         </button>

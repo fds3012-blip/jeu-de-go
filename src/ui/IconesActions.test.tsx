@@ -91,6 +91,34 @@ describe('états (partie.css)', () => {
   });
 });
 
+describe('BarreActions : « Passer » se distingue des aides (#236, N7)', () => {
+  const html = renderToStaticMarkup(
+    <BarreActions label="Actions" actions={[
+      { label: 'Indice', icone: null, onClick: () => {} },
+      { label: 'Qui mène ?', icone: null, onClick: () => {} },
+      { label: 'Annuler', icone: null, onClick: () => {} },
+      { label: 'Passer', icone: null, onClick: () => {}, groupe: 'decision', principale: true },
+      { label: 'Abandonner', icone: null, onClick: () => {}, groupe: 'decision' },
+    ]} />);
+  it('aides à gauche, filet, décisions à droite ; « Passer » en dernier, bouton plein', () => {
+    const aides = html.slice(html.indexOf('actions-aides'), html.indexOf('actions-filet'));
+    const decisions = html.slice(html.indexOf('actions-decisions'));
+    expect(aides).toContain('Qui mène ?');
+    expect(aides).not.toContain('Passer');
+    expect(decisions.indexOf('Abandonner')).toBeLessThan(decisions.indexOf('Passer'));
+    expect(html.match(/class="decider"/g)).toHaveLength(1);
+  });
+  it('bouton plein : au moins 44 px de haut, cerné et en gras', () => {
+    const regle = partieCss.match(/\.actions button\.decider \{[^}]*\}/)?.[0] ?? '';
+    expect(Number(regle.match(/min-height: (\d+)px/)?.[1])).toBeGreaterThanOrEqual(44);
+    expect(regle).toContain('box-shadow: inset');
+    expect(regle).toContain('font-weight: var(--fw-bold)');
+  });
+  it('sans groupes : une seule rangée, comme avant', () => {
+    expect(barre()).not.toContain('actions-filet');
+  });
+});
+
 describe('BarreActions : bouton mis en évidence (#120)', () => {
   const rendu = (disabled = false) => renderToStaticMarkup(
     <BarreActions label="Actions" actions={[{ label: 'Passer', icone: null, onClick: () => {}, evidence: true, pulse: true, disabled }]} />);

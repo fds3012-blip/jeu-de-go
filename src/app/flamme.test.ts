@@ -61,9 +61,9 @@ describe('bulle de Pomme selon le jour', () => {
     expect(semaine.size).toBeGreaterThanOrEqual(3);
   });
 
-  it('parle du Go du jour à faire, puis le félicite une fois fait', () => {
+  it('ne propose pas le Go du jour à faire (le bouton dit « Rejouer », #236 N4), puis le félicite une fois fait', () => {
     const tous = Array.from({ length: 8 }, (_, i) => accueil(joueur, 1, pomme, 9, jour(i)).bulle);
-    expect(tous.some(b => /Nouveau Go du jour\s: Double atari\./.test(b))).toBe(true);
+    expect(tous.some(b => /Go du jour/.test(b))).toBe(false);
     const faits = Array.from({ length: 8 }, (_, i) => accueil(joueur, 1, pomme, 9, jour(i, { duJourFait: true })).bulle);
     expect(faits.some(b => /Bravo pour le Go du jour/.test(b))).toBe(true);
     expect(faits.some(b => /Nouveau Go du jour/.test(b))).toBe(false);

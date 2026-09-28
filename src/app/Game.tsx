@@ -522,9 +522,9 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
             onClick: quiMeneToucher, disabled: !quiMeneVisible && (quiMeneCalcul || quiMeneReste <= 0),
             description: ai ? descriptionQuiMene(quiMeneReste) : undefined }] : []),
           { label: tr('partie.action.annuler'), icone: <Icone nom="annuler" />, onClick: undo, disabled: undoTo < 1 },
-          { label: tr('partie.action.passer'), icone: <Icone nom="passer" />, onClick: pass, disabled: !myTurn,
+          { label: tr('partie.action.passer'), icone: <Icone nom="passer" />, onClick: pass, disabled: !myTurn, groupe: 'decision', principale: true,
             evidence: passerEnEvidence(aide && !!ai, myTurn, pos.lastMove === -1, conseilPasserA, history.length), pulse: celebrer && !mouvementsReduits() },
-          { label: resignArm ? fr(tr('partie.action.confirmer')) : tr('partie.action.abandonner'), icone: <Icone nom="abandonner" />, onClick: resign, danger: resignArm },
+          { label: resignArm ? fr(tr('partie.action.confirmer')) : tr('partie.action.abandonner'), icone: <Icone nom="abandonner" />, onClick: resign, danger: resignArm, groupe: 'decision' },
         ]} />
       ) : (
         <>

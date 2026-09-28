@@ -71,6 +71,7 @@ export const en = {
   'accueil.aFaire': 'To do',
   'accueil.fait': 'Done',
   'accueil.tuileAria': 'Daily Go #{numero}: {titre}. {etat}.',
+  'accueil.tuileAriaSimple': 'Daily Go #{numero}: {titre}.',
   'entete.flammeAFaire': 'Streak: {jours}. Do today’s Daily Go to keep it.',
   'entete.flammeFaite': 'Streak: {jours}. Today’s Daily Go is done.',
   'accueil.introBut': 'The goal: surround more territory than {nom}, and capture their stones by taking away their liberties (the empty points touching them).',

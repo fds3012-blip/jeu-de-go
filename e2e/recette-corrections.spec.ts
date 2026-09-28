@@ -75,14 +75,18 @@ test.describe('R3, R6 : 390 × 844', () => {
 
 test.describe('R3, R6 : 320 × 640', () => {
   test.use({ viewport: { width: 320, height: 640 } });
-  test('R6 : la carte « Niveau 2 ! » se ferme au changement d’écran, le titre du chemin reste libre', async ({ page }) => {
+  test('R6 et #236 : « Niveau 2 ! » attend la fin du problème, puis se ferme au changement d’écran', async ({ page }) => {
     await page.clock.setFixedTime(MIDI_PARIS);
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.addInitScript(() => { if (localStorage.getItem('go.xp.v1') === null) localStorage.setItem('go.xp.v1', '90'); });
     await resoudreGoDuJour(page); // 90 + 20 + 10 : niveau 2
     const fete = page.getByTestId('fete-niveau');
-    await expect(fete).toContainText(/Niveau\s2/);
+    // Pendant le problème, rien sur la consigne.
+    await page.waitForTimeout(800);
+    await expect(fete).toHaveCount(0);
     await nav(page).getByRole('button', { name: 'Apprendre' }).click();
+    await expect(fete).toContainText(/Niveau\s2/);
+    await nav(page).getByRole('button', { name: 'Problèmes' }).click();
     // Bien avant les 3,2 s de la carte.
     await expect(fete).toHaveCount(0, { timeout: 1000 });
   });

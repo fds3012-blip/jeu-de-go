@@ -80,6 +80,7 @@ export const fr = {
   'accueil.aFaire': 'À faire',
   'accueil.fait': 'Fait',
   'accueil.tuileAria': 'Go du jour n° {numero} : {titre}. {etat}.',
+  'accueil.tuileAriaSimple': 'Go du jour n° {numero} : {titre}.',
   'entete.flammeAFaire': 'Série de {jours}. Go du jour à faire aujourd’hui pour la garder.',
   'entete.flammeFaite': 'Série de {jours}. Go du jour fait aujourd’hui.',
   'accueil.introBut': 'Le but : entourer plus de territoire que {nom}, et capturer ses pierres en leur retirant leurs libertés (les cases vides qui les touchent).',

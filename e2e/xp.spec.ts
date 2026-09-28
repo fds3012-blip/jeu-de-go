@@ -43,20 +43,22 @@ test("un problème réussi fait monter l'XP sur l'accueil", async ({ page }) => 
   await page.screenshot({ path: 'docs/design/v2/captures/xp-accueil.png' });
 });
 
-test('un niveau franchi est célébré à la fin du problème', async ({ page }) => {
+test('un niveau franchi est célébré après le problème, seul, sans couvrir la consigne (#236)', async ({ page }) => {
   await preparer(page, 90);
   await resoudreGoDuJour(page); // 90 + 20 + 10 (premier problème) = 120 : niveau 2
   const fete = page.getByTestId('fete-niveau');
+  // Pendant le problème : l'XP se lit dans la feuille de réussite, la fête de niveau attend.
+  await expect(page.locator('.verdict').getByTestId('pastille-xp')).toContainText(/\+30\sXP/);
+  await page.waitForTimeout(800);
+  await expect(fete).toHaveCount(0);
+  // Retour à l'accueil : « Niveau 2 ! », seul à l'écran.
+  await nav(page).getByRole('button', { name: 'Jouer' }).click();
   await expect(fete).toBeVisible();
   await expect(fete).toContainText(/Niveau\s2/);
-  // La pastille se range sous la carte, sans la chevaucher.
-  const [carte, pastille] = await Promise.all([fete.boundingBox(), page.getByTestId('pastille-xp').boundingBox()]);
-  expect(pastille!.y).toBeGreaterThanOrEqual(carte!.y + carte!.height);
+  await expect(page.getByTestId('pastille-xp')).toHaveCount(0);
   await page.screenshot({ path: 'docs/design/v2/captures/xp-celebration.png' });
   await fete.getByRole('button').click();
   await expect(fete).toHaveCount(0);
-
-  await nav(page).getByRole('button', { name: 'Jouer' }).click();
   await expect(page.getByTestId('barre-niveau')).toContainText(/20\s\/\s125\sXP/);
 });
 

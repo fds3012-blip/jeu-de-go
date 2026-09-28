@@ -144,6 +144,17 @@
 /* Désactivé : encre brume sans voile d'opacité (contraste AA sur la barre, 7:1 en sombre, 6:1 en clair). */
 .actions button:disabled { color: var(--muted); cursor: default; }
 .actions button.danger { color: var(--danger-texte); font-weight: var(--fw-bold); }
+/* #236 (N7) : deux familles. Les aides à gauche, les décisions à droite, séparées par un filet vertical.
+   « Passer » (l'action qui finit la partie) est un bouton plein, cerné, en gras : il ne pèse pas comme « Qui mène ? ». */
+.actions-groupees { gap: 2px; }
+.actions-aides, .actions-decisions { display: flex; min-width: 0; }
+.actions-aides { flex: 3 1 0; justify-content: flex-end; }
+.actions-decisions { flex: 2 1 0; gap: 4px; justify-content: flex-start; padding-right: 4px; }
+.actions-groupees button { min-width: 0; }
+.actions-filet { flex: none; align-self: center; width: 1px; height: 36px; margin: 0 2px; background: var(--line); }
+.actions button.decider { margin: 6px 0; min-height: 52px; background: var(--surface-2); font-weight: var(--fw-bold);
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--text) 45%, transparent); }
+.actions button.decider:disabled { background: none; box-shadow: inset 0 0 0 1.5px var(--line); font-weight: var(--fw-medium); }
 /* Mis en évidence (#120) : Mochi conseille de passer, le bouton prend le style primaire jade jusqu'au prochain coup. */
 .actions button.evidence { position: relative; background: var(--accent); color: var(--on-accent); font-weight: var(--fw-bold); }
 @media (prefers-reduced-motion: no-preference) {

@@ -118,18 +118,44 @@ export function Coach({ children, cle, attente = false, humeur = attente ? 'pens
 
 export interface Action { label: string; icone: ReactNode; onClick: () => void; disabled?: boolean; danger?: boolean; description?: string; action?: string;
   /** Mis en évidence (#120) : style primaire jade ; `pulse` ajoute une pulsation douce (mouvements non réduits). */
-  evidence?: boolean; pulse?: boolean }
+  evidence?: boolean; pulse?: boolean;
+  /** #236 (N7) : `decision` (passer, abandonner) se range à droite, après un filet ; les autres sont des aides. */
+  groupe?: 'aide' | 'decision';
+  /** L'action qui décide de la partie (passer) : bouton plein, tout à droite, sous le pouce. */
+  principale?: boolean }
 
-/** Barre d'actions fixe en bas de l'écran, à la place de la barre de navigation. */
-export function BarreActions({ actions, label }: { actions: Action[]; label: string }) {
+function Bouton({ a }: { a: Action }) {
   return (
-    <div className="actions" role="toolbar" aria-label={label}>
-      {actions.map(a => (
-        <button key={a.label} type="button" onClick={a.onClick} disabled={a.disabled} className={[a.danger && 'danger', a.evidence && !a.disabled && 'evidence', a.evidence && a.pulse && !a.disabled && 'pulse'].filter(Boolean).join(' ') || undefined}
-          aria-description={a.description} data-action={a.action}>
-          {a.icone}<span>{a.label}</span>
-        </button>
-      ))}
+    <button type="button" onClick={a.onClick} disabled={a.disabled}
+      className={[a.principale && 'decider', a.danger && 'danger', a.evidence && !a.disabled && 'evidence', a.evidence && a.pulse && !a.disabled && 'pulse'].filter(Boolean).join(' ') || undefined}
+      aria-description={a.description} data-action={a.action}>
+      {a.icone}<span>{a.label}</span>
+    </button>
+  );
+}
+
+/**
+ * Barre d'actions fixe en bas de l'écran, à la place de la barre de navigation.
+ * #236 (N7) : les aides (indice, qui mène, annuler) à gauche, les décisions à droite après un filet ;
+ * « Passer », l'action qui finit la partie, en bouton plein tout à droite. Sans groupes : une seule rangée.
+ */
+export function BarreActions({ actions, label }: { actions: Action[]; label: string }) {
+  const decisions = actions.filter(a => a.groupe === 'decision');
+  if (!decisions.length) {
+    return (
+      <div className="actions" role="toolbar" aria-label={label}>
+        {actions.map(a => <Bouton key={a.label} a={a} />)}
+      </div>
+    );
+  }
+  const aides = actions.filter(a => a.groupe !== 'decision');
+  // La principale en dernier : à droite, là où tombe le pouce ; l'ordre de lecture suit l'ordre visuel.
+  const rangees = [...decisions.filter(a => !a.principale), ...decisions.filter(a => a.principale)];
+  return (
+    <div className="actions actions-groupees" role="toolbar" aria-label={label}>
+      <div className="actions-aides">{aides.map(a => <Bouton key={a.label} a={a} />)}</div>
+      <span className="actions-filet" aria-hidden="true" />
+      <div className="actions-decisions">{rangees.map(a => <Bouton key={a.label} a={a} />)}</div>
     </div>
   );
 }
