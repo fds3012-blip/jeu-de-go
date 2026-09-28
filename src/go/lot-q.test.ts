@@ -12,6 +12,7 @@ import { ALL_PUZZLES, CALENDRIER_GO_DU_JOUR } from '../content/puzzles';
 import { THEME_DU_PROBLEME } from '../content/themes';
 import { checkAnswer, parsePuzzles, startOf, type Puzzle } from '../data/puzzles';
 import { fromLabel, toLabel } from './coords';
+import { avantMiseAJour } from './miseAJourTextes';
 import { plainKey, symmetries } from './lecteurs-lot-e';
 import { cederLaMain, preuveParCoup } from './preuve-par-coup';
 import { defautsDeZone, issueApres, yeuxDuGroupe, type Issue } from './preuve-vie-mort';
@@ -106,7 +107,8 @@ describe('lot Q : identifiants, thèmes, doublons, calendrier, migration (issue 
     expect(sql).toMatch(/on conflict \(id\) do nothing/i);
     expect(sql.match(/\('q\d\d', null, 9,/g)).toHaveLength(LOT_Q.length);
     const q = (s: string) => s.replace(/'/g, "''");
-    for (const row of LOT_Q) {
+    // Textes corrigés depuis par 20260928233100_textes_problemes (#282) : on compare au texte d'avant, refait par avantMiseAJour.
+    for (const row of LOT_Q.map(r => avantMiseAJour(r))) {
       expect(sql).toContain(`('${row.id}', null, 9, '${q(JSON.stringify(row.setup))}', array[${row.answers.map(a => `'${a}'`).join(',')}], '${q(row.title!)}', '${q(row.prompt!)}', '${q(row.explanation!)}', ${row.difficulty})`);
     }
   });

@@ -74,10 +74,10 @@ export const PUZZLES_16: PuzzleRow[] = [
   {
     id: 'c4', size: 9, difficulty: 750, answers: ['C1'],
     setup: { rows: ['.........', '.........', '.........', '.........', '.........', '.........', 'XXXX.....', 'OOTXOO...', 'O..OO....'], toPlay: 'B',
-      refutation: "Pas tout à fait. Après B1, Blanc prend ta pierre en C1 et se relie à ses pierres D1 et E1 : il s'échappe. Sacrifie plutôt ta pierre au point qui touche aussi ces pierres-là." },
+      refutation: "Pas tout à fait. Après B1, Blanc joue C1 : il prend ta pierre et se relie à ses pierres D1 et E1. Il s'échappe. Sacrifie plutôt ta pierre au point qui touche aussi ces pierres-là." },
     title: 'Le retour de capture',
     prompt: 'Noir joue et capture. Le groupe marqué n’a que deux libertés, et Blanc menace de se relier en C1.',
-    explanation: "Superbe ! Ta pierre en C1 peut être prise, mais si Blanc la capture en B1, son groupe n'a plus qu'une liberté : C1. Tu y rejoues aussitôt et prends 5 pierres. C'est un retour de capture (snapback) : on sacrifie une pierre pour en prendre plus. Ce n'est pas un ko, car tu reprends plusieurs pierres, pas une seule."
+    explanation: "Superbe ! Ta pierre en C1 peut être prise, mais si Blanc joue B1 et la capture, son groupe n'a plus qu'une liberté : C1. Tu y rejoues aussitôt et prends 5 pierres. C'est un retour de capture (snapback) : on sacrifie une pierre pour en prendre plus. Ce n'est pas un ko, car tu reprends plusieurs pierres, pas une seule."
   },
   {
     id: 's1', size: 9, difficulty: 400, answers: ['E2'],
