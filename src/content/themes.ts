@@ -34,8 +34,8 @@ const PAR_THEME: Record<Theme, readonly string[]> = {
   atari: ['a07', 'a08', 'a10', 'a17', 'a19', 'b4', 'b5', 'e03', 'e05', 'e06', 's1', 's3', 'n03', 'n04', 'n05', 'n08', 'n09', 'n13', 'n14', 'n17'],
   'double-atari': ['a11', 'a13', 'b3', 'c1', 'e10', 'j01', 'j04', 'n15'],
   bord: ['a09', 'a12', 'b2', 'e04', 'e07', 'e08', 'e09', 'e11', 'e12', 'e13', 'e14', 'e15', 'k01', 'k02', 'n06', 'n07', 'n11', 'n12'],
-  echelle: ['b6', 'c2', 'i09', 'k03', 'k05', 'k06', 'k07'],
-  filet: ['c3', 'i10', 'k09'],
+  echelle: ['b6', 'c2', 'i09', 'k03', 'k05', 'k06', 'k07', 'o07', 'o09'],
+  filet: ['c3', 'i10', 'k09', 'o01', 'o03', 'o05', 'o08', 'o10'],
   'relier-couper': [
     'd01', 'd02', 'd03', 'd04', 'd06', 'f01', 'f03', 'f04', 'f05', 'f06', 'f07',
     'g01', 'g02', 'g03', 'g04', 'g05', 'h01', 'j12', 'k08', 'k10', 's2', 's4', 'n10', 'n18',
@@ -47,7 +47,7 @@ const PAR_THEME: Record<Theme, readonly string[]> = {
     'v1', 'v2', 'v3', 'v4',
   ],
   semeai: ['a14', 'd05', 'd07', 'd08', 'd09', 'd10', 'd11', 'd12', 'd13', 'f02', 'f08', 'f09', 'f10', 'f11', 'f12'],
-  'prise-en-retour': ['c4', 'j02', 'j03'],
+  'prise-en-retour': ['c4', 'j02', 'j03', 'o02', 'o04', 'o06'],
 };
 
 /** Thème de chaque problème, par identifiant. */
