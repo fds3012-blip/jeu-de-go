@@ -60,16 +60,16 @@ describe('français identique aux textes d’origine', () => {
     expect(statistiques({ ...vide, reussis: 1, serie: 1, parties: 1 }).map(s => s.legende)).toEqual(['problème', 'jour de série', 'partie', 'victoire']);
     expect(statistiques(plein).map(s => s.legende)).toEqual(['problèmes', 'jours de série', 'parties', 'victoires']);
     expect(badges(vide).map(b => [b.id, b.nom, b.condition])).toEqual([
-      ['premiere-partie', 'Première partie', 'Joue une partie contre l’ordi.'],
+      ['premiere-partie', 'Première partie', 'Joue contre l’ordi.'],
       ['premier-probleme', 'Premier problème', 'Réussis un problème.'],
-      ['victoire-pomme', 'Pomme battue', 'Gagne une partie contre Pomme.'],
-      ['palier-debutant', 'Palier Débutant', 'Réussis tout le palier Débutant.'],
+      ['victoire-pomme', 'Pomme battue', 'Gagne contre Pomme.'],
+      ['palier-debutant', 'Palier Débutant', 'Finis le palier Débutant.'],
       ['dix-problemes', '10 problèmes', 'Réussis 10 problèmes.'],
-      ['palier-novice', 'Palier Novice', 'Réussis tout le palier Novice.'],
-      ['serie-7', '7 jours de série', 'Fais le Go du jour 7 jours de suite.'],
+      ['palier-novice', 'Palier Novice', 'Finis le palier Novice.'],
+      ['serie-7', '7 jours de série', 'Fais 7 Go du jour de suite.'],
     ]);
     expect(badges(plein).every(b => b.obtenu)).toBe(true);
-    expect(traduire('fr', 'vitrine.aGagner', { nom: 'Pomme battue', condition: 'Gagne une partie contre Pomme.' })).toBe('Pomme battue : à gagner. Gagne une partie contre Pomme.');
+    expect(traduire('fr', 'vitrine.aGagner', { nom: 'Pomme battue', condition: 'Gagne contre Pomme.' })).toBe('Pomme battue : à gagner. Gagne contre Pomme.');
   });
 });
 

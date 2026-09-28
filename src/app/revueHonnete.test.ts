@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { newPosition, play, type Position } from '../go/rules';
 import { fromLabel } from '../go/coords';
 import {
-  avanceFinale, defaiteNette, momentCle, noterCoups, PERTES_DIFFUSES, phraseBilan, phraseMomentCle, plafondPrecision, precision,
+  avanceFinale, compteNotes, defaiteNette, momentCle, noterCoups, notesAvecCle, PERTES_DIFFUSES, phraseBilan, phraseMomentCle, plafondPrecision, precision,
   precisionHonnete, rejouerDici, type AnalyseRevue, type NoteCoup,
 } from './revue';
 
@@ -127,6 +127,28 @@ describe('moment clé, passes comprises', () => {
     expect(momentCle(h, [0, 1, 0, 1, 0, 0, 20].map(simple), 1)).toBeNull();
     const mixte = [...a.slice(0, 6), { lead: -5, engine: 'katago' } as AnalyseRevue];
     expect(momentCle(h, mixte, 1)).toBeNull();
+  });
+  it('au moment clé, la note et la précision suivent Mochi : plus de « Solide » ni de 100 % (fiche des stores, 28/09)', () => {
+    const h2 = partie(['A1', 'B1', 'E5', 'D5', 'G7', 'A2']);
+    const brutes = noterCoups(h2, a);
+    const cle = momentCle(h2, a, 1)!;
+    // Avant : le coup seul ne perd rien (« Solide »), toute la perte vient de la réponse de Pomme.
+    expect(brutes[4]).toMatchObject({ coup: 5, note: 'solide', perte: 0 });
+    expect(precision(brutes, 1)).toBe(100);
+    const notes = notesAvecCle(brutes, cle, a);
+    expect(notes[4]).toMatchObject({ coup: 5, note: 'erreur' });
+    expect(notes[4]!.perte).toBeCloseTo(cle.perte);
+    expect(precision(notes, 1)).toBeLessThan(100);
+    expect(compteNotes(notes, 1).solide).toBe(compteNotes(brutes, 1).solide - 1);
+    // Les autres coups ne bougent pas ; sans moment clé, rien ne change.
+    expect(notes.filter((_, k) => k !== 4)).toEqual(brutes.filter((_, k) => k !== 4));
+    expect(notesAvecCle(brutes, null, a)).toBe(brutes);
+  });
+  it('au moment clé avec KataGo : au moins une Imprécision', () => {
+    const k = (lead: number): AnalyseRevue => ({ lead, engine: 'katago' });
+    const n: NoteCoup[] = [{ coup: 1, couleur: 1, note: 'bon', perte: 1 }];
+    expect(notesAvecCle(n, { coup: 1, perte: 3, passe: false, prises: 0 }, [k(0)])[0]!.note).toBe('imprecision');
+    expect(notesAvecCle(n, { coup: 1, perte: 7, passe: false, prises: 0 }, [k(0)])[0]!.note).toBe('grosse');
   });
   it('à la plus grosse perte', () => {
     const h4 = partie(['A1', 'B1', 'E5', 'D5', 'passe', 'A2', 'G7', 'C7']);

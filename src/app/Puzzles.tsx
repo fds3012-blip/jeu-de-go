@@ -53,6 +53,8 @@ interface Props {
   onDuJour?: (ouvert: boolean) => void;
   /** Réglage « Célébrations » : la pierre givrée se pose avec un rebond quand un gel est gagné. */
   celebrer?: boolean;
+  /** Change quand on touche l'onglet Problèmes déjà actif : retour à la liste (R4). */
+  racine?: number;
 }
 
 /** Flamme de la série de jours, en or. */
@@ -76,7 +78,7 @@ function Difficulte({ d }: { d: number }) {
 }
 
 /** Onglet Problèmes : problème du jour, problèmes de base, cote problèmes et série de jours. */
-export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, lien = null, onDuJour, celebrer = true }: Props) {
+export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, lien = null, onDuJour, celebrer = true, racine = 0 }: Props) {
   // Go du jour (issue #75) : le même pour tous, choisi dans la liste publique des problèmes de base, en heure de Paris.
   const [numero] = useState(() => numeroDuJour(new Date()));
   const daily = problemeDuNumero(LOCAL_PUZZLES, numero);
@@ -97,6 +99,13 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   // Liste « Tous les problèmes » ouverte (#196) ; on y revient après un problème ouvert depuis la grille.
   const [tous, setTous] = useState(false);
   const [statsTick, setStatsTick] = useState(0);
+  // Onglet actif touché (R4) : retour à la liste, sans remonter l'écran (le lien partagé rouvrirait le Go du jour).
+  const racineVue = useRef(racine);
+  useEffect(() => {
+    if (racineVue.current === racine) return;
+    racineVue.current = racine;
+    setOpenId(null); setTous(false);
+  }, [racine]);
 
   // Problèmes : la base pour un joueur connecté (RLS), la copie locale sinon.
   useEffect(() => {
