@@ -3,14 +3,14 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperti
 import { LESSONS, type Lesson } from '../content/lessons';
 import { acquis } from '../content/acquis';
 import { Board, type BoardMarks } from '../ui/Board';
-import { CASE_MS, TEMPS_MS, imagesDemo, type DemoImage } from '../content/demo';
+import { CASE_MS, TEMPS_MS, imageDuGeste, imagesDemo, type DemoImage } from '../content/demo';
 
 /** Fond du compteur de libertés, posé sur le bois comme les autres marques jade. */
 const JADE_COMPTEUR = '#3CC48E';
 import { Bubble } from '../ui/Mochi';
 import { SceauLecon } from '../ui/SceauLecon';
 import { Confettis } from '../ui/Confettis';
-import { Etapes, Retour, Verdict } from '../ui/Lecteur';
+import { Etapes, Marque, Retour, Verdict } from '../ui/Lecteur';
 import { fr } from '../ui/typo';
 import { fromRows } from '../go/position';
 import { play, type Position } from '../go/rules';
@@ -162,6 +162,8 @@ interface PlayerProps {
 export function LessonPlayer({ lesson, start, confirmTouch, progress = {}, celebrer = true, onProgress, onExit, onNext }: PlayerProps) {
   const [idx, setIdx] = useState(Math.min(start, lesson.steps.length - 1));
   const [answer, setAnswer] = useState<{ ok: boolean; p?: number; after?: Position; choice?: number; n: number } | null>(null);
+  /** Choix faux déjà touchés au quiz (#198) : ils restent marqués, les autres restent touchables. */
+  const [faux, setFaux] = useState<number[]>([]);
   const [fini, setFini] = useState(false);
   const step = lesson.steps[idx];
   const { pos, marked } = useMemo(() => fromRows(step.rows), [step]);
@@ -169,18 +171,31 @@ export function LessonPlayer({ lesson, start, confirmTouch, progress = {}, celeb
   const derniere = idx === lesson.steps.length - 1;
   // Démonstration (#101) : un temps toutes les 600 ms ; mouvements réduits : l'état final d'emblée.
   const images = useMemo(() => (step.kind === 'info' && step.demo ? imagesDemo(step.rows, step.demo, step.avant) : null), [step]);
+  // Geste (#198) : la démonstration s'arrête sur l'image `pause` jusqu'à ce que l'élève pose la pierre ou touche le point.
+  const geste = step.kind === 'info' && step.demo ? step.geste : undefined;
+  const pause = useMemo(() => (step.kind === 'info' && step.demo && step.geste ? imageDuGeste(step.rows, step.demo, step.avant, step.geste) : -1), [step]);
+  const [gesteFait, setGesteFait] = useState(false);
+  const [rate, setRate] = useState<{ p: number; n: number } | null>(null);
+  const attente = !!geste && !gesteFait;
+  const gesteA = useRef(0);
   const [reduit] = useState(prefersReducedMotion);
-  const [temps, setTemps] = useState(() => (reduit && images ? images.length - 1 : 0));
-  useEffect(() => { setTemps(reduit && images ? images.length - 1 : 0); }, [images, reduit]);
+  const limite = images ? (attente ? pause : images.length - 1) : 0;
+  const [temps, setTemps] = useState(() => (reduit ? limite : 0));
+  useEffect(() => { setTemps(reduit ? limite : 0); }, [images, reduit]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
-    if (!images || temps >= images.length - 1) return;
+    if (!images || temps >= limite) return;
     const m = window.setTimeout(() => {
       const suivant = images[temps + 1];
       if (suivant.derniere != null && suivant.derniere !== images[temps].derniere) { playStone(suivant.derniere, 9); }
       setTemps(temps + 1);
     }, TEMPS_MS);
     return () => window.clearTimeout(m);
-  }, [images, temps]);
+  }, [images, temps, limite]);
+
+  // Événement d'entonnoir (#198) : leçons terminées ÷ leçons commencées.
+  useEffect(() => {
+    track(EVENTS.leconCommencee, { lecon: lesson.id, rang: LESSONS.indexOf(lesson) + 1, etape: Math.min(start, lesson.steps.length - 1) + 1 });
+  }, [lesson.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function next() {
     onProgress(idx + 1);
@@ -188,14 +203,31 @@ export function LessonPlayer({ lesson, start, confirmTouch, progress = {}, celeb
       track(EVENTS.leconTerminee, { lecon: lesson.id, rang: LESSONS.indexOf(lesson) + 1 });
       if ((progress[lesson.id] ?? 0) < lesson.steps.length) gagnerXp('lecon'); // une seule fois par leçon
       setFini(true);
-    } else { setIdx(idx + 1); setAnswer(null); }
+    } else { setIdx(idx + 1); setAnswer(null); setFaux([]); setGesteFait(false); setRate(null); }
     window.scrollTo({ top: 0 });
   }
   function repondre(ok: boolean, extra: { p?: number; after?: Position; choice?: number }) {
     if (ok) { playSuccess(); hapticSuccess(); } else { playFail(); hapticFail(); }
     setAnswer(a => ({ ok, ...extra, n: (a?.n ?? 0) + 1 }));
   }
+  /** Geste de la démonstration : juste, la suite se joue ; faux, le point se marque et l'élève rejoue tout de suite. */
+  function onGeste(p: number) {
+    if (!geste || !images) return;
+    const bons = 'pose' in geste ? [geste.pose] : geste.touche;
+    if (!bons.map(a => fromLabel(a, 9)).includes(p)) {
+      playFail(); hapticFail();
+      setRate(r => ({ p, n: (r?.n ?? 0) + 1 }));
+      return;
+    }
+    gesteA.current = Date.now();
+    setRate(null);
+    setGesteFait(true);
+    if ('pose' in geste) { playStone(p, 9); hapticStone(); } else hapticStone();
+    const suite = 'pose' in geste ? pause + 1 : pause;
+    setTemps(reduit ? images.length - 1 : suite);
+  }
   function onPlay(p: number) {
+    if (attente) { onGeste(p); return; }
     if (answer?.ok) return;
     // Question « touche » : on désigne un point, sans poser de pierre.
     if (step.kind === 'touche') { hapticStone(); repondre(step.accept.map(a => fromLabel(a, 9)).includes(p), { p }); return; }
@@ -217,9 +249,11 @@ export function LessonPlayer({ lesson, start, confirmTouch, progress = {}, celeb
   const demoFinie = !images || temps >= images.length - 1;
   const board = img ? img.board : answer?.ok && answer.after ? answer.after.board : pos.board;
   const faites = idx + (answer?.ok ? 1 : 0);
+  // En attente du geste « pose » : seul le point à jouer est vert (le compteur de libertés reste).
+  const vert = attente && geste && 'pose' in geste ? [fromLabel(geste.pose, 9)] : null;
   const cta = <button className="cta" onClick={next}>{derniere ? 'Terminer la leçon' : 'Continuer'}</button>;
   const marks: BoardMarks = img
-    ? { libs: [...img.libs, ...img.yeux], targets: img.atari, mistake: img.interdit, last: img.derniere ?? null, ...territoire(img.terr, reduit),
+    ? { libs: vert ?? [...img.libs, ...img.yeux], targets: img.atari, mistake: attente && rate ? rate.p : img.interdit, last: img.derniere ?? null, ...territoire(img.terr, reduit),
         note: img.compteur ? { p: img.compteur.p, fond: JADE_COMPTEUR, texte: '#0B2A1D', symbole: String(img.compteur.n), libelle: `${img.compteur.n} liberté${img.compteur.n > 1 ? 's' : ''}`, cle: `${idx}-${temps}` } : undefined }
     : { libs: step.kind === 'info' || step.kind === 'move' ? (step.libs ?? (step.kind === 'move' ? step.aide : undefined))?.map(l => fromLabel(l, 9)) : undefined, targets: marked, owner,
         ok: answer?.ok ? answer.p : undefined, mistake: answer && !answer.ok ? answer.p : undefined, last: answer?.ok ? answer.p : null };
@@ -233,28 +267,41 @@ export function LessonPlayer({ lesson, start, confirmTouch, progress = {}, celeb
       <h2 className="lecteur-titre"><SceauLecon id={lesson.id} taille={24} />{fr(lesson.title)}</h2>
       <Bubble>{fr(step.text)}</Bubble>
       {/* Zone souple : le plateau prend la place qui reste au-dessus du bouton (iPhone SE compris). */}
-      <div className={`lecteur-plateau${img?.atari.length ? ' demo-atari' : ''}`} data-demo={images ? (demoFinie ? 'finie' : 'en-cours') : undefined}
-        onClick={images && !demoFinie ? () => setTemps(images.length - 1) : undefined}>
-        <Board size={9} board={board} interactive={(step.kind === 'move' || step.kind === 'touche') && !answer?.ok} confirmTouch={confirmTouch} toucher={step.kind === 'touche'} onPlay={onPlay} marks={marks} />
+      <div className={`lecteur-plateau${img?.atari.length ? ' demo-atari' : ''}`} data-demo={images ? (attente ? 'geste' : demoFinie ? 'finie' : 'en-cours') : undefined}
+        onClick={images && !demoFinie && temps < limite ? () => { if (Date.now() - gesteA.current > 400) setTemps(limite); } : undefined}>
+        <Board size={9} board={board} interactive={attente || ((step.kind === 'move' || step.kind === 'touche') && !answer?.ok)} confirmTouch={confirmTouch}
+          toucher={step.kind === 'touche' || (attente && !!geste && 'touche' in geste)} stonesTappable={attente && !!geste && 'touche' in geste} onPlay={onPlay} marks={marks} />
       </div>
       {img?.terr && <Compteur cle={`${idx}-${temps}`} n={img.terr.points.length} reduit={reduit} />}
-      {images && images.length > 1 && (
+      {images && images.length > 1 && !attente && (
         <button className="lien revoir" disabled={!demoFinie} onClick={() => setTemps(0)}>Revoir</button>
       )}
       {step.kind === 'quiz' && (
         <div className={`choix${step.choices.some(c => /\p{L}/u.test(c)) ? ' choix-mots' : ''}`} role="group" aria-label="Ta réponse">
           {step.choices.map((c, i) => (
-            <button key={c} disabled={answer?.ok && answer.choice !== i}
-              className={answer?.choice === i ? (answer.ok ? 'choix-juste' : 'choix-faux') : undefined}
-              onClick={() => { if (!answer?.ok) repondre(i === step.answer, { choice: i }); }}>{c}</button>
+            <button key={c} disabled={answer?.ok && answer.choice !== i} aria-disabled={faux.includes(i) || undefined}
+              className={answer?.ok && answer.choice === i ? 'choix-juste' : faux.includes(i) ? 'choix-faux' : undefined}
+              onClick={() => {
+                if (answer?.ok || faux.includes(i)) return;
+                if (i !== step.answer) setFaux(f => [...f, i]);
+                repondre(i === step.answer, { choice: i });
+              }}>{c}</button>
           ))}
         </div>
       )}
-      {step.kind === 'info' && cta}
+      {/* Quiz (#198) : l'erreur s'écrit sous les choix, sans feuille qui les cache ni bouton ; on rechoisit tout de suite. */}
+      {step.kind === 'quiz' && answer && !answer.ok && (
+        <div className="choix-aide" role="status" aria-live="polite"><Marque key={answer.n} juste={false} taille={24} /><p>{fr(`${step.no} Essaie encore.`)}</p></div>
+      )}
+      {step.kind === 'info' && !attente && cta}
+      {attente && rate && geste && (
+        <Verdict ton="revoir" cle={rate.n}><p>{fr('pose' in geste ? 'Pose ta pierre sur le point vert.' : geste.no)}</p></Verdict>
+      )}
       {answer && step.kind !== 'info' && (
         answer.ok
           ? <Verdict ton="juste" cle={answer.n} actions={cta}><p>{fr(step.ok)}</p></Verdict>
-          : <Verdict ton="revoir" cle={answer.n} actions={<button className="btn" onClick={() => setAnswer(null)}>Réessayer</button>}><p>{fr(`${step.no} Essaie encore.`)}</p></Verdict>
+          // #198 : pas de bouton « Réessayer » ; le plateau reste jouable, on rejoue directement.
+          : step.kind !== 'quiz' && <Verdict ton="revoir" cle={answer.n}><p>{fr(`${step.no} Essaie encore.`)}</p></Verdict>
       )}
     </div>
   );

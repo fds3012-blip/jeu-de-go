@@ -1,9 +1,9 @@
 // Leçons v2 (issue #101) : chaque démonstration est légale selon src/go, chaque question a la réponse annoncée,
 // et chaque texte d'étape tient en 12 mots (hors vocabulaire entre parenthèses).
 import { LESSONS, type LessonStep } from '../content/lessons';
-import { imagesDemo, mots } from '../content/demo';
+import { imageDuGeste, imagesDemo, mots } from '../content/demo';
 import { fromRows } from './position';
-import { groupAt, play } from './rules';
+import { groupAt, neighbors, play } from './rules';
 import { fromLabel, toLabel } from './coords';
 
 const N = 9;
@@ -128,5 +128,79 @@ describe('leçons 2 à 4 : ce que montre l’image', () => {
     expect(r.board).toEqual(fromRows(s.rows).pos.board);
     expect(s.accept.map(at)).toEqual([r.ko]);
     expect(play(r, at('E5'))).toBe('ko');
+  });
+});
+
+// Issue #198 : jouer dès le premier écran. Chaque geste de démonstration est vérifié avec src/go.
+describe('gestes : l’élève joue dans la démonstration (#198)', () => {
+  const avecGeste = LESSONS.flatMap(l => l.steps.map((s, i) => ({ id: `${l.id}.${i + 1}`, s })))
+    .filter(x => x.s.kind === 'info' && x.s.geste) as { id: string; s: Info }[];
+
+  it('au plus 35 % des étapes sans geste, et la leçon 1 commence par une pierre à poser', () => {
+    const toutes = LESSONS.flatMap(l => l.steps);
+    const sansGeste = toutes.filter(s => s.kind === 'info' && !s.geste);
+    expect(sansGeste.length / toutes.length).toBeLessThanOrEqual(0.35);
+    const premiere = step('l1', 0) as Info;
+    expect(premiere.geste).toEqual({ pose: 'E5' });
+    expect(imageDuGeste(premiere.rows, premiere.demo!, premiere.avant, premiere.geste!)).toBe(0);
+  });
+
+  for (const { id, s } of avecGeste) {
+    const g = s.geste!;
+    if ('pose' in g) it(`${id} : la pierre à poser (${g.pose}) est un coup noir légal de la démonstration, montré en vert`, () => {
+      const im = imagesDemo(s.rows, s.demo!, s.avant);
+      const k = imageDuGeste(s.rows, s.demo!, s.avant, g);
+      const attente = im[k];
+      expect(attente.board[at(g.pose)]).toBe(0);
+      // Le coup de l'élève, rejoué avec src/go depuis l'image d'attente, donne l'image suivante de la démonstration.
+      const r = play({ ...fromRows(s.rows).pos, board: attente.board.slice(), toPlay: 1, ko: -1 }, at(g.pose));
+      if (typeof r === 'string') throw new Error(r);
+      expect(r.board).toEqual(im[k + 1].board);
+      expect(im[k + 1].derniere).toBe(at(g.pose));
+      expect(s.text).toContain('point vert');
+    });
+    else it(`${id} : on touche avant la démonstration, et l’aide tient en 12 mots`, () => {
+      expect(imageDuGeste(s.rows, s.demo!, s.avant, g)).toBe(0);
+      expect(g.touche.length).toBeGreaterThan(0);
+      expect(mots(g.no)).toBeLessThanOrEqual(12);
+    });
+  }
+
+  it('l1.5 : les points à toucher sont exactement les pierres du groupe blanc, dont la démo montre la liberté', () => {
+    const s = step('l1', 4) as Info;
+    const g = s.geste as { touche: string[] };
+    const { pos } = fromRows(s.rows);
+    expect(labels(groupAt(pos.board, N, at('D5')).stones)).toEqual([...g.touche].sort());
+    expect(g.touche.every(l => pos.board[at(l)] === 2)).toBe(true);
+  });
+  it('l5.1 : les points à toucher sont les deux yeux, vides et entourés par le seul groupe noir', () => {
+    const s = step('l5', 0) as Info;
+    const g = s.geste as { touche: string[] };
+    const { pos } = fromRows(s.rows);
+    const groupe = new Set(groupAt(pos.board, N, at('B2')).stones);
+    expect([...g.touche].sort()).toEqual(labels(fin('l5', 0).yeux));
+    for (const e of g.touche) {
+      expect(pos.board[at(e)]).toBe(0);
+      for (const q of neighbors(N)[at(e)]) expect(groupe.has(q), `${e} → ${toLabel(q, N)}`).toBe(true);
+    }
+  });
+  it('l1.3 : l’élève pose D6 après les 4 libertés allumées ; la suite baisse le compteur 3, 2, 1', () => {
+    const s = step('l1', 2) as Info;
+    const k = imageDuGeste(s.rows, s.demo!, s.avant, s.geste!);
+    const im = imagesDemo(s.rows, s.demo!);
+    expect(im[k].compteur?.n).toBe(4);
+    expect(im.slice(k + 1).map(x => x.compteur?.n)).toEqual([3, 2, 1]);
+  });
+  it('l3.2 : avec `avant`, l’attente vient après la réponse blanche D4, et l’élève prend F5', () => {
+    const s = step('l3', 1) as Info;
+    const k = imageDuGeste(s.rows, s.demo!, s.avant, s.geste!);
+    const im = imagesDemo(s.rows, s.demo!, s.avant);
+    expect(k).toBe(1);
+    expect(im[k].derniere).toBe(at('D4'));
+    expect(im[k + 1].board[at('F5')]).toBe(0);
+  });
+  it('imageDuGeste refuse une pierre absente ou blanche', () => {
+    expect(() => imageDuGeste(step('l1', 0).rows, [{ pose: 'E5', couleur: 'W' }], [], { pose: 'E5' })).toThrow(/noire/);
+    expect(() => imageDuGeste(step('l1', 0).rows, [{ pose: 'E5', couleur: 'B' }], [], { pose: 'D4' })).toThrow(/noire/);
   });
 });
