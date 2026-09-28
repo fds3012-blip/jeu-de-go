@@ -104,7 +104,7 @@ export async function passerJusquAuScore(page: Page, adversaire = 'Pomme'): Prom
   for (let i = 0; i < 6 && !(await fin.first().isVisible()); i++) {
     await expect(passer).toBeEnabled({ timeout: 10_000 });
     await passer.click();
-    await expect(fin.or(page.getByText(new RegExp(`${adversaire} (joue|capture)`))).first()).toBeVisible({ timeout: 10_000 });
+    await expect(fin.or(page.getByText(new RegExp(`${adversaire} (joue|capture|continue)`))).first()).toBeVisible({ timeout: 10_000 });
   }
   await expect(fin.first()).toBeVisible({ timeout: 10_000 });
   const valider = page.getByRole('button', { name: 'Valider le score' });
