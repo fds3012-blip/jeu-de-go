@@ -106,7 +106,11 @@ export function boutonPasser(page: Page): Locator {
 export async function passer(page: Page): Promise<boolean> {
   await boutonPasser(page).click();
   const choix = page.getByRole('group', { name: 'Passer maintenant ?' });
-  const averti = await choix.waitFor({ state: 'visible', timeout: 600 }).then(() => true, () => false);
+  // On attend l'une des deux suites (l'avertissement, ou la réponse de l'adversaire / le score) plutôt qu'un délai fixe :
+  // sous forte charge, 600 ms ne suffisaient pas toujours à voir l'avertissement.
+  const suite = page.locator('.recit, .barre-comptage').or(page.getByText(/ (joue|capture|continue|passe)\b/));
+  await choix.or(suite).first().waitFor({ state: 'visible', timeout: 10_000 }).catch(() => {});
+  const averti = await choix.isVisible();
   if (averti) await choix.getByRole('button', { name: 'Passer', exact: true }).click();
   return averti;
 }
