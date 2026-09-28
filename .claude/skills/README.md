@@ -14,6 +14,9 @@ Compétences partagées par tous les agents (chargées automatiquement par Claud
 | `impeccable-extraits` | [pbakaus/impeccable](https://github.com/pbakaus/impeccable) | Apache 2.0 | Niveau minimum de finition, moments de plaisir, accueil des nouveaux, passe de finition |
 | `mobile-pro-rules` | [nextlevelbuilder/ui-ux-pro-max-skill](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill) | MIT | Checklist avant livraison d'un écran mobile |
 | `icon-system` | [Owl-Listener/designer-skills](https://github.com/Owl-Listener/designer-skills) | MIT | Charte d'icônes : grille, tailles, trait, nommage |
+| `web-design-guidelines` | [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills) | MIT | Revue d'un écran contre les Web Interface Guidelines (accessibilité, formulaires, focus, mouvement), sortie `fichier:ligne`. Récupère les règles à jour sur GitHub à chaque revue |
+| `redesign-skill` | [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill) | MIT | Audit d'un écran existant : repérer les motifs génériques et les états manquants, améliorer sans réécrire |
+| `taste-skill` | idem | MIT | Anti « rendu générique » pour les pages vitrines (site, page d'accueil marketing, fiches stores) |
 
 Les quatre premières skills sont copiées sans modification, sauf la ligne de renvoi vers `CONNECTORS.md`, retirée (le fichier est absent ici). Les suivantes, validées par Florian le 27/09 (#52), sont copiées telles quelles avec leur `LICENSE`.
 - `impeccable-extraits` et `mobile-pro-rules` n'ont qu'une partie des fichiers d'origine : sans scripts, sans binaire téléchargé et sans base de données. Leur `SKILL.md` est écrit ici.
@@ -28,3 +31,7 @@ Les quatre premières skills sont copiées sans modification, sauf la ligne de r
 | `peak-end-rule`, `zeigarnik-effect`, `heuristic-evaluation`, `journey-map`, `usability-test-plan`, `illustration-style` | [Owl-Listener/designer-skills](https://github.com/Owl-Listener/designer-skills) | MIT | Fin mémorable, envie de revenir, audit Nielsen, parcours du débutant, tests, style d'illustration |
 | `accessibility-review`, `user-research`, `research-synthesis` | [anthropics/knowledge-work-plugins](https://github.com/anthropics/knowledge-work-plugins) | Apache 2.0 | Audit WCAG AA, recherche et synthèse des retours joueurs (renvoi `CONNECTORS.md` retiré) |
 | `personnages-go` | écrite ici | projet | Charte des 9 adversaires et de Mochi |
+
+Ajoutées le 28/09 sur proposition de Florian, copiées telles quelles avec leur licence :
+- `taste-skill` et `redesign-skill` visent surtout les sites vitrines. Pour les écrans du jeu, on garde notre design system : ne jamais installer de librairie d'interface (shadcn, Material, Tailwind…) ni changer de police sans décision du designer.
+- Écartées : `image-to-code` (il faut générer des images de maquette, outil que nous n'avons pas), `awesome-design-md` (fiches de style de marques connues : on ne copie pas une autre marque ; à consulter comme source d'étude seulement), le MCP 21st Magic (clé d'API d'un service tiers, décision de Florian) et Playwright CLI (Playwright est déjà installé et utilisé par les agents).
