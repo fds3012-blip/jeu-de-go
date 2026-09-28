@@ -7,6 +7,7 @@ import LOT_B from '../content/lots/b-techniques';
 import { BASE_PUZZLES, PUZZLES_16 } from '../content/puzzles';
 import { checkAnswer, parsePuzzles, startOf, type Puzzle } from '../data/puzzles';
 import { fromLabel, toLabel } from './coords';
+import { avantMiseAJour } from './miseAJourTextes';
 import { capturedAgainstAll, legalMoves, winningMoves } from './lecteurs-lot-b';
 import { cederLaMain, preuveParCoup } from './preuve-par-coup';
 import { groupAt, play, type Position } from './rules';
@@ -90,7 +91,8 @@ describe('lot B : techniques de capture', () => {
     expect(sql).not.toMatch(/\b(delete|update|drop|truncate)\b/i);
     expect(sql).toMatch(/on conflict \(id\) do nothing/i);
     const q = (s: string) => s.replace(/'/g, "''");
-    const rows = LOT_B.map(row => ` ('${row.id}', null, 9, '${q(JSON.stringify(row.setup))}', array[${row.answers.map(a => `'${a}'`).join(',')}], '${q(row.title!)}', '${q(row.prompt!)}', '${q(row.explanation!)}', ${row.difficulty})`);
+    // Textes corrigés depuis par 20260928233100_textes_problemes (#282) : on compare au texte d'avant, refait par avantMiseAJour.
+    const rows = LOT_B.map(r => avantMiseAJour(r)).map(row => ` ('${row.id}', null, 9, '${q(JSON.stringify(row.setup))}', array[${row.answers.map(a => `'${a}'`).join(',')}], '${q(row.title!)}', '${q(row.prompt!)}', '${q(row.explanation!)}', ${row.difficulty})`);
     expect(sql).toContain(`values\n${rows.join(',\n')}\non conflict (id) do nothing;`);
     expect(sql.match(/^ \('k\d\d'/gm)?.length).toBe(LOT_B.length);
   });

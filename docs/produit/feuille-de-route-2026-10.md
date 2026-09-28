@@ -1,6 +1,55 @@
 # Feuille de route — octobre 2026
 
-Auteur : responsable produit. Date : 27 septembre 2026.
+Auteur : responsable produit. Date : 27 septembre 2026. **Mise à jour : 28 septembre 2026 au soir** (section 0, d'après `docs/produit/veille-2026-09-28-soir.md`). Les sections 1 à 5 gardent l'état du 27 pour mémoire.
+
+## 0. Mise à jour du 28 septembre au soir
+
+### Fait depuis le 27
+
+| # du 27 | Priorité | État | Preuve |
+|---|---|---|---|
+| 1 | Accueil à une seule action | **Fait** | #119, #236 (un appel à la fois) |
+| 2 | Consentement après la première partie ou leçon | **En partie** : le lien du Go du jour attend la fin du problème ; au premier lancement, la fenêtre reste sur le chemin | #75, base UX (v2) |
+| 3 | Leçons jouables dès l'étape 1 | **Fait** | #198, #202, #220 |
+| 4 | Mochi et la passe au bon moment | **Fait** | #120, #185, #235 |
+| 5 | Zoom 200 % et 320 px | **Fait** | #121, #250, #232 |
+| 6 | Thèmes de goban appliqués | **Fait** | #109 |
+| 7 | Rappel quotidien | **Pas commencé** | #36 |
+| 8 | Défier un ami par lien | **Pas commencé** | #81 |
+| 9 | Revue lisible, moment clé | **Fait** | #186, #192, #71 |
+| 10 | Fin du clavier | **En partie** : « Lire le plateau » reste | #116 |
+
+Livré en plus, hors de la liste : 171 problèmes prouvés et l'outil de preuve de vie et mort (#136), leçons et problèmes en anglais (#167), « Rejoue cette erreur » (#77), Go du jour commun et partageable (#75), partie guidée (#79), série sans compte, record et flamme (#161, #212, #213), révision du jour (#199), économie de progression (#233), confirmation avant de quitter (#268).
+
+**Lecture** : ce qui se passe **dans** l'app est à parité avec chess.com et BadukPop pour un débutant. L'écart est maintenant **hors** de l'app : rien ne fait revenir, rien ne fait venir, et le joueur de club ne sait pas où il se situe.
+
+### Les 10 priorités de la suite d'octobre
+
+| # | Priorité | Mouvement | Impact | Effort | Indicateur visé | Issue |
+|---|---|---|---|---|---|---|
+| 1 | Rappel quotidien (notification web, app installée, heure choisie) | **Monte** (7 → 1) | 5 | 3 | J7 25 %, J30 12 % | #36 |
+| 2 | Défier un ami par lien, partie en différé ; ouvre enfin le serveur de parties en ligne | **Monte** (8 → 2) | 5 | 3 | Nouveaux joueurs par semaine (10 000), J30 | #81, #10 |
+| 3 | Lien partagé qui recrute : aperçu Open Graph, arrivée sur le Go du jour | **Nouveau** | 4 | 1 | Nouveaux joueurs par partage (10 %) | #285 |
+| 4 | « Continuer » à ta mesure, cible 85 % de réussite | **Nouveau** | 4 | 2 | J7 | #284 |
+| 5 | Je sais déjà jouer : placement et niveau en kyu | **Nouveau** | 4 | 2 | J1 du second cercle | #283 |
+| 6 | Consentement après le premier plaisir (fin de la priorité 2 du 27) | Reste | 4 | 1 | Première pierre dans la minute (90 %) | UX-05, à créer |
+| 7 | Interface anglaise sans `?lang=en` (détection de la langue, choix dans le Profil) | **Monte** | 3 | 1 | Nouveaux joueurs (marché anglais) | #167 |
+| 8 | Course aux problèmes de 3 minutes | **Nouveau** | 3 | 2 | J7, durée de session | #287 |
+| 9 | Importer une partie SGF et l'analyser | **Monte** (novembre → fin octobre) | 3 | 2 | Acquisition du second cercle, J7 club | #286 |
+| 10 | Fin du clavier : « Lire le plateau » | **Descend** (reste dans la liste) | 2 | 2 | Conformité AA | #116 |
+
+### Ce qui descend
+
+- **Mochi coach en phrases simples** (#80) : la revue honnête et « Rejoue cette erreur » couvrent le besoin immédiat ; à reprendre en novembre avec Premium.
+- **Carte de territoire animée** (#78) : le récit du score, les frontières et « Qui mène ? » suffisent pour l'instant ; la mise en valeur des pierres mortes reste en réserve.
+- **Nouveaux lots de problèmes** (#136) : 171 problèmes prouvés couvrent plusieurs semaines de Go du jour et de « Continuer ». Le sélecteur à ta mesure (#284) passe avant le volume.
+- **Refonte visuelle v2** (#40) : après le test utilisateur avec 5 débutants.
+
+### Ce qu'on ne fait toujours pas en octobre
+
+- Cote Elo publique et classements : la cote des problèmes (#284) reste privée ; le classement entre amis attend #81.
+- Ligues, tournois, clubs, parties commentées (GoTV d'OGS) : trop tôt pour notre base de joueurs.
+- Capacitor et stores : après le test utilisateur.
 
 Sources : charte (`entreprise/charte.md`), audit UX et a11y (`docs/qa/audit-ux-a11y-2026-09-27.md`), veille (`docs/produit/veille-2026-09-27.md`), issues ouvertes #116, #119, #120, #121, livraisons du 27 septembre.
 
