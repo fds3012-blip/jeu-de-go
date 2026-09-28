@@ -34,7 +34,10 @@ export const EVENTS = {
   goDuJourPartage: 'go_du_jour_partage',
   arriveeParPartage: 'arrivee_par_partage',
   // « Rejoue tes erreurs » (issue #77) : une erreur de la revue rejouée comme problème (premier essai).
+  // `source` : `revue` (« Rejoue cette erreur ») ou `problemes` (révision espacée, « Tes erreurs à rejouer »).
   erreurRejouee: 'erreur_rejouee',
+  // Erreur maîtrisée (issue #77) : deuxième réussite en révision, elle ne revient plus.
+  erreurMaitrisee: 'erreur_maitrisee',
   // Série protégée (issue #76) : gel gagné tous les 7 jours de série, gel consommé par un jour manqué.
   gelGagne: 'gel_gagne',
   gelUtilise: 'gel_utilise',

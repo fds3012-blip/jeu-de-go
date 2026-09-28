@@ -125,6 +125,19 @@ function getKataGo(): KataGoBackend | null {
 /** Remplace le moteur KataGo (tests) ; `null` = KataGo absent, `undefined` = réglage par défaut. */
 export function setKataGo(k: KataGoBackend | null | undefined) { katago = k; }
 
+/**
+ * KataGo de la revue. Dans un build de test (VITE_E2E) seulement, `window.__kataGoFactice` le remplace :
+ * les tests de bout en bout (e2e/rejoue-erreur.spec.ts) écrivent ainsi une analyse connue d'avance.
+ * Le jeu contre l'ordi n'est pas touché. En production, la condition disparaît au build.
+ */
+function kataGoRevue(): KataGoBackend | null | undefined {
+  if (import.meta.env.VITE_E2E && typeof window !== 'undefined') {
+    const f = (window as unknown as { __kataGoFactice?: KataGoBackend }).__kataGoFactice;
+    if (f) return f;
+  }
+  return katago;
+}
+
 /** État de KataGo (chargement, backend choisi, erreur). */
 export function kataGoInfo(): KataGoInfo { return getKataGo()?.info ?? { state: 'indisponible', error: 'Web Workers indisponibles' }; }
 
@@ -220,7 +233,7 @@ export interface OptionsEstimation { kataGo?: boolean; rules?: Rules; fin?: bool
 /** Propriété de chaque intersection pour l'estimation : KataGo s'il est prêt (et libre), sinon le Worker simple. */
 async function proprieteEstimee(pos: Position, komi: number, opts: OptionsEstimation): Promise<{ own: Float32Array; engine: 'katago' | 'simple' } | null> {
   // `kataGo: false` : KataGo est occupé à chercher le coup de l'adversaire, on ne le ralentit pas.
-  const k = opts.kataGo === false ? null : katago ?? null;
+  const k = opts.kataGo === false ? null : kataGoRevue() ?? null;
   if (k && k.info.state === 'pret') {
     try {
       const a = await k.analyze(pos, { komi, visits: 16, timeMs: 600, regles: opts.rules ?? 'japanese' });
@@ -265,7 +278,7 @@ export async function estimateTerritoire(pos: Position, komi: number, opts: Opti
  */
 export interface AnalyseRevue { lead: number; engine: 'katago' | 'simple'; coups?: { move: number; visits: number; lead: number }[] }
 export async function analyseRevue(pos: Position, komi: number, opts: { visits?: number; kataGo?: boolean } = {}): Promise<AnalyseRevue | null> {
-  const k = opts.kataGo === false ? null : katago ?? null;
+  const k = opts.kataGo === false ? null : kataGoRevue() ?? null;
   if (k && k.info.state === 'pret') {
     try {
       const visits = opts.visits ?? 32;
@@ -279,7 +292,7 @@ export async function analyseRevue(pos: Position, komi: number, opts: { visits?:
 
 /** Prépare KataGo pour la revue s'il est déjà chargé ou si son réseau est en cache (aucun téléchargement). */
 export async function preparerKataGo(): Promise<boolean> {
-  let k = katago ?? null;
+  let k = kataGoRevue() ?? null;
   if ((!k || k.info.state !== 'pret') && (await reseauEnCache())) {
     k = getKataGo();
     try { await k?.start?.(); } catch { /* KataGo indisponible */ }
@@ -304,7 +317,7 @@ export async function reseauEnCache(): Promise<boolean> {
  */
 export type Conseil = { katago: false } | { katago: true; move: number | null; lead: number };
 export async function meilleurCoup(pos: Position, komi: number): Promise<Conseil> {
-  let k = katago ?? null;
+  let k = kataGoRevue() ?? null;
   if ((!k || k.info.state !== 'pret') && (await reseauEnCache())) {
     k = getKataGo();
     try { await k?.start?.(); } catch { /* KataGo indisponible */ }

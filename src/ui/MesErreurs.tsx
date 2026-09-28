@@ -1,12 +1,12 @@
 // « Tes erreurs à rejouer » (issue #77) : les erreurs de tes parties, gardées sur l'appareil, rejouées comme des problèmes.
 // Section de l'onglet Problèmes, affichée seulement s'il y en a à rejouer aujourd'hui. Chaque problème s'ouvre dans le
-// lecteur de problème existant (passé par Puzzles.tsx), en plein écran. Réussi au premier essai : il sort de la liste.
-// Raté : il revient le lendemain. Logique pure : src/app/erreurs.ts.
+// lecteur de problème existant (passé par Puzzles.tsx), en plein écran. Raté : il revient le lendemain ;
+// réussi : il revient à J+3, puis J+7 ; à la deuxième réussite, il est maîtrisé et sort de la liste. Logique pure : src/app/erreurs.ts.
 import { useEffect, useMemo, useState, type ComponentType } from 'react';
 import type { Puzzle } from '../data/puzzles';
 import { EVENTS, track } from '../data/analytics';
 import { readLocal, writeLocal } from '../app/hooks';
-import { apresEssai, aRejouer, ERREURS_KEY, lireErreurs, versProbleme, type ErreurGardee } from '../app/erreurs';
+import { apresEssai, aRejouer, devientMaitrisee, ERREURS_KEY, lireErreurs, versProbleme, type ErreurGardee } from '../app/erreurs';
 import { MiniGoban } from './MiniGoban';
 import { fr } from './typo';
 import { t } from '../content/i18n';
@@ -33,10 +33,12 @@ export function MesErreurs({ confirmTouch, Lecteur }: { confirmTouch: boolean; L
   }, [ouvert]);
 
   function noter(e: ErreurGardee, reussi: boolean) {
-    const suite = apresEssai(lireErreurs(readLocal<unknown>(ERREURS_KEY, [])), e.id, reussi, new Date());
+    const avant = lireErreurs(readLocal<unknown>(ERREURS_KEY, [])), gardee = avant.find(x => x.id === e.id) ?? e;
+    const suite = apresEssai(avant, e.id, reussi, new Date());
     writeLocal(ERREURS_KEY, suite);
     setListe(suite);
-    track(EVENTS.erreurRejouee, { reussi, taille: e.size, coup: e.coup, rates: e.rates, reponses: e.reponses.length });
+    track(EVENTS.erreurRejouee, { reussi, source: 'problemes', taille: e.size, coup: e.coup, rates: gardee.rates, reponses: e.reponses.length });
+    if (devientMaitrisee(gardee, reussi)) track(EVENTS.erreurMaitrisee, { taille: e.size, coup: e.coup, rates: gardee.rates });
   }
 
   if (ouvert) {

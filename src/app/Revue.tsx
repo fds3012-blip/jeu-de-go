@@ -2,6 +2,9 @@
 // Goban en lecture avec navigation coup par coup, courbe d'avantage (Noir en bas, Blanc en haut),
 // les 3 plus grosses erreurs du joueur avec une phrase de Mochi et le meilleur coup en pierre fantôme jade,
 // puis une seule action en relief : « Rejouer d'ici ». Logique pure : revue.ts.
+// Issue #77 : « Rejoue cette erreur » sur une Erreur ou Grosse erreur du joueur (avec un conseil fiable de KataGo) :
+// la position d'avant revient, tout coup qui perd moins de 1 point est accepté (données de la revue, pas de nouvelle
+// analyse). Ratée au premier essai, elle rejoint « Tes erreurs à rejouer » (J+1, J+3, J+7 ; logique : erreurs.ts).
 // Issue #71 : une note pour chaque coup (sceau sur la pierre, liste des coups, points sur la courbe),
 // et un bilan de précision pour les deux joueurs, avec la phrase de Mochi.
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -15,7 +18,7 @@ import { fr } from '../ui/typo';
 import { t as tr } from '../content/i18n';
 import { mouvementsReduits } from '../ui/defilement';
 import { toLabel } from '../go/coords';
-import type { Color, Position } from '../go/rules';
+import { play, type Color, type Position } from '../go/rules';
 import { analyseRevue, meilleurCoup, preparerKataGo } from '../engine';
 import { EVENTS, track } from '../data/analytics';
 import {
@@ -24,7 +27,7 @@ import {
   type AnalyseRevue, type Erreur, type Note, type NoteCoup,
 } from './revue';
 import { readLocal, writeLocal } from './hooks';
-import { ajouter, creerErreur, ERREURS_KEY, lireErreurs, peutEnFaireUnProbleme } from './erreurs';
+import { coupAccepte, creerErreur, ERREURS_KEY, garderRatee, lireErreurs, peutEnFaireUnProbleme, type ErreurGardee } from './erreurs';
 import '../ui/revue.css';
 
 interface Props {
@@ -37,13 +40,18 @@ interface Props {
   onRetour: () => void;
   /** « Rejouer d'ici » : historique jusqu'à la position choisie. */
   onRejouer: (history: Position[]) => void;
+  /** Réglage « confirmer au doigt » : pour « Rejoue cette erreur ». */
+  confirmTouch?: boolean;
 }
+
+/** « Rejoue cette erreur » en cours : le problème, le nombre d'essais, le dernier coup faux, la réussite. */
+interface Rejeu { pb: ErreurGardee; avant: Position; essais: number; faux: number | null; n: number; apres: Position | null }
 
 const L = 300, H = 64; // courbe : repère du viewBox
 /** Lignes du tableau du bilan, du meilleur au pire (Solide seulement sans KataGo, Brillant seulement s'il y en a). */
 const LIGNES: Note[] = ['brillant', 'meilleur', 'excellent', 'bon', 'solide', 'imprecision', 'erreur', 'grosse'];
 
-export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer }: Props) {
+export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTouch = false }: Props) {
   const { positions, komi, resultat } = useMemo(() => positionsDepuisSgf(sgf), [sgf]);
   const n = positions.length - 1, size = positions[0].size;
   const [i, setI] = useState(Math.min(1, n));
@@ -54,8 +62,8 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer }: Props) {
   const [sansKataGo, setSansKataGo] = useState(false);
   const [choisie, setChoisie] = useState<Erreur | null>(null);
   const [resume, setResume] = useState(false);
-  // Erreurs déjà transformées en problème pendant cette revue (issue #77).
-  const [gardees, setGardees] = useState<Record<number, true>>({});
+  // « Rejoue cette erreur » (issue #77) : `null` hors rejeu.
+  const [rejeu, setRejeu] = useState<Rejeu | null>(null);
   const liste = useRef<HTMLOListElement>(null);
   // Issue #186 : la revue s'ouvre sur le moment clé dès qu'il est connu, sauf si le joueur a déjà navigué.
   const [enCle, setEnCle] = useState(false);
@@ -154,22 +162,47 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer }: Props) {
     track(EVENTS.revueRejouer, { coup: h.length - 1, cle: surCle, perte: surCle ? Math.round(cle.perte) : null, taille: size, mode: adversaire ? 'ordi' : 'deux' });
     onRejouer(h);
   }
-  /** « En faire un problème » : la position avant l'erreur, le meilleur coup de KataGo et ses équivalents, gardés sur l'appareil. */
-  function enFaireUnProbleme(e: Erreur) {
+  /**
+   * « Rejoue cette erreur » : la position avant l'erreur, avec le meilleur coup de KataGo et les coups qui perdent
+   * moins de 1 point, tirés de l'analyse déjà faite pour la revue.
+   */
+  function rejouerErreur(e: Erreur) {
+    const avant = positions[e.coup - 1];
     const pb = creerErreur({
-      avant: positions[e.coup - 1], joue: positions[e.coup].lastMove ?? -1, coup: e.coup, note: notes[e.coup - 1]?.note,
+      avant, joue: positions[e.coup].lastMove ?? -1, coup: e.coup, note: notes[e.coup - 1]?.note,
       meilleur: meilleurs[e.coup], perte: e.perte, analyse: analyses[e.coup - 1], adversaire,
     }, new Date());
     if (!pb) return;
-    writeLocal(ERREURS_KEY, ajouter(lireErreurs(readLocal<unknown>(ERREURS_KEY, [])), pb));
-    setGardees(g => ({ ...g, [e.coup]: true }));
+    setRejeu({ pb, avant, essais: 0, faux: null, n: 0, apres: null });
+    window.scrollTo?.({ top: 0 });
+  }
+  function essayer(p: number) {
+    if (!rejeu || rejeu.apres) return;
+    const { pb, avant } = rejeu, ok = coupAccepte(pb, p);
+    const suite = ok ? play(avant, p) : null;
+    const apres = suite && typeof suite === 'object' ? suite : null;
+    if (rejeu.essais === 0) {
+      track(EVENTS.erreurRejouee, { reussi: !!apres, source: 'revue', taille: size, coup: pb.coup, rates: 0, reponses: pb.reponses.length });
+      // Ratée au premier essai : elle revient demain dans « Tes erreurs à rejouer ».
+      if (!apres) writeLocal(ERREURS_KEY, garderRatee(lireErreurs(readLocal<unknown>(ERREURS_KEY, [])), pb, new Date()));
+    }
+    setRejeu({ ...rejeu, essais: rejeu.essais + 1, faux: apres ? null : p, n: rejeu.n + 1, apres });
+  }
+  function finirRejeu() {
+    const coup = rejeu?.pb.coup;
+    setRejeu(null);
+    if (coup != null) setI(coup - 1);
   }
 
   const q = positions[i];
   const note = i > 0 ? notes[i - 1] ?? null : null;
   let phrase: string;
   const surCle = enCle && !!cle && i === cle.coup;
-  if (surCle) phrase = phraseMomentCle(cle, positions, adversaire);
+  if (rejeu) {
+    phrase = rejeu.apres
+      ? `${tr(rejeu.pb.reponses.length > 1 ? 'erreurs.bravoParmi' : 'erreurs.bravoKataGo')}${rejeu.essais > 1 ? ` ${tr('revue.rejeu.revient')}` : ''}`
+      : rejeu.faux != null ? tr('revue.rejeu.rate') : tr('revue.rejeu.consigne');
+  } else if (surCle) phrase = phraseMomentCle(cle, positions, adversaire);
   else if (choisie) phrase = phraseErreur(choisie, positions, meilleurs[choisie.coup] ?? null);
   else if (i === 0) phrase = tr('revue.debut');
   else {
@@ -194,8 +227,36 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer }: Props) {
   const avecKataGo = analyses.some(a => a?.engine === 'katago');
   const lignes = LIGNES.filter(l => (avecKataGo ? l !== 'solide' && (l !== 'brillant' || cMoi[l] + cLui[l] > 0) : l === 'solide' || l === 'imprecision' || l === 'erreur' || l === 'grosse'));
   // Au moment clé, pas de sceau : la note juge le coup seul, le moment clé compte aussi la réponse (pas de message contradictoire).
+  // Erreur que « Rejoue cette erreur » reprend : la puce choisie, ou le moment clé affiché.
+  const cible: Erreur | null = surCle && cle ? { coup: cle.coup, perte: cle.perte } : choisie;
+  const peutRejouer = !!cible && peutEnFaireUnProbleme(notes[cible.coup - 1]?.note, meilleurs[cible.coup]);
   const marqueNote = !surCle && note && q.lastMove != null && q.lastMove >= 0
     ? { p: q.lastMove, ...NOTE_ENCRE[note.note], symbole: NOTE_INFO[note.note].symbole, libelle: NOTE_INFO[note.note].libelle, cle: i } : undefined;
+
+  if (rejeu) {
+    const pos = rejeu.apres ?? rejeu.avant;
+    return (
+      <div className="revue revue-rejeu">
+        <header className="revue-tete">
+          <button type="button" className="retour" onClick={finirRejeu} aria-label={tr('revue.rejeu.retour')}>‹</button>
+          <h2>{tr('revue.rejeu.titre')}</h2>
+          <span className="revue-compteur">{tr('revue.coup', { coup: rejeu.pb.coup })}</span>
+        </header>
+        <div className="revue-plateau">
+          <Board size={size} board={pos.board} toPlay={rejeu.avant.toPlay} interactive={!rejeu.apres} confirmTouch={confirmTouch} onPlay={essayer}
+            marks={{ last: rejeu.apres ? rejeu.apres.lastMove : undefined, ok: rejeu.apres?.lastMove ?? undefined, mistake: rejeu.faux ?? undefined }}
+            shake={rejeu.faux != null ? { p: rejeu.faux, n: rejeu.n } : null} />
+        </div>
+        <div className={`revue-mochi${rejeu.apres ? ' revue-rejeu-ok' : ''}`} aria-live="polite">
+          <Mochi size={40} />
+          <p>{fr(phrase)}</p>
+        </div>
+        {rejeu.apres
+          ? <div className="dock revue-dock"><button type="button" className="cta" onClick={finirRejeu}>{tr('revue.rejeu.retour')}</button></div>
+          : <button type="button" className="btn revue-probleme" onClick={finirRejeu}>{tr('revue.rejeu.retour')}</button>}
+      </div>
+    );
+  }
 
   return (
     <div className="revue">
@@ -271,10 +332,8 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer }: Props) {
         <p>{fr(phrase)}</p>
       </div>
       {surCle && i > 0 && <button type="button" className="btn revue-debut" onClick={() => aller(0)}>{tr('revue.revenirDebut')}</button>}
-      {choisie && peutEnFaireUnProbleme(notes[choisie.coup - 1]?.note, meilleurs[choisie.coup]) && (
-        gardees[choisie.coup]
-          ? <p className="revue-probleme-ok" role="status">{fr(tr('revue.problemeAjoute'))}</p>
-          : <button type="button" className="btn revue-probleme" onClick={() => enFaireUnProbleme(choisie)}>{tr('revue.enFaireProbleme')}</button>
+      {cible && peutRejouer && (
+        <button type="button" className="btn revue-probleme" onClick={() => rejouerErreur(cible)}>{tr('revue.rejoueErreur')}</button>
       )}
       {sansKataGo && erreurs.length > 0 && <p className="revue-note">{fr(tr('revue.sansKataGo'))}</p>}
 

@@ -3,8 +3,8 @@ import { fromRows } from '../go/position';
 import { fromLabel } from '../go/coords';
 import { checkAnswer } from '../data/puzzles';
 import {
-  ajouter, apresEssai, aRejouer, consigneErreur, creerErreur, equivalents, jour, lendemain, lireErreurs, MAX_ERREURS,
-  peutEnFaireUnProbleme, rangees, titreErreur, versProbleme, type ErreurGardee, type Source,
+  ajouter, apresEssai, aRejouer, consigneErreur, coupAccepte, creerErreur, dansJours, devientMaitrisee, equivalents, garderRatee,
+  jour, lendemain, lireErreurs, MAX_ERREURS, peutEnFaireUnProbleme, rangees, titreErreur, versProbleme, type ErreurGardee, type Source,
 } from './erreurs';
 
 // Position de partie réelle (9 × 9, ouverture) : Noir au trait.
@@ -50,7 +50,7 @@ describe('création du problème', () => {
     expect(titreErreur(e)).toBe('Ta partie contre Pomme, coup 14');
   });
 
-  it('accepte les coups équivalents à 0,5 point près, avec assez de visites', () => {
+  it('accepte les coups qui perdent moins de 1 point, avec assez de visites', () => {
     const e = creerErreur(source(), MAINTENANT)!;
     expect(e.reponses).toEqual([at('C4'), at('G4'), at('D7')]);
     expect(consigneErreur(e)).toBe('Trouve mieux que ton coup.');
@@ -113,15 +113,55 @@ describe('liste et répétition espacée', () => {
     expect(ajouter(ajouter([], a), b)).toEqual([b]);
   });
 
-  it('réussi : il sort de la liste ; raté : il revient le lendemain', () => {
+  it('réussi une fois : il revient à J+3 ; raté : il revient le lendemain', () => {
     const l = [e(1), e(2)];
     expect(aRejouer(l, MAINTENANT)).toHaveLength(2);
-    expect(apresEssai(l, 'e1', true, MAINTENANT).map(x => x.id)).toEqual(['e2']);
+    const ok = apresEssai(l, 'e1', true, MAINTENANT);
+    expect(ok.map(x => x.id)).toEqual(['e1', 'e2']);
+    expect(ok[0].prochain).toBe('2026-09-30');
+    expect(ok[0].reussites).toBe(1);
     const r = apresEssai(l, 'e1', false, MAINTENANT);
     expect(r[0].prochain).toBe('2026-09-28');
     expect(r[0].rates).toBe(1);
     expect(aRejouer(r, MAINTENANT).map(x => x.id)).toEqual(['e2']);
     expect(aRejouer(r, new Date(2026, 8, 28, 0, 5)).map(x => x.id)).toEqual(['e1', 'e2']);
+  });
+
+  it('erreur ratée dans la revue : elle revient à J+1, puis J+3, puis J+7, jusqu’à deux réussites', () => {
+    const j0 = new Date(2026, 8, 28, 22, 0);
+    let l = garderRatee([], e(1), j0);
+    expect(l[0].prochain).toBe('2026-09-29');
+    expect(l[0].rates).toBe(1);
+    expect(aRejouer(l, j0)).toEqual([]);
+    // J+1 : ratée encore, elle revient le lendemain.
+    const j1 = new Date(2026, 8, 29, 9, 0);
+    expect(aRejouer(l, j1)).toHaveLength(1);
+    l = apresEssai(l, 'e1', false, j1);
+    expect(l[0].prochain).toBe('2026-09-30');
+    expect(l[0].rates).toBe(2);
+    // J+2 : 1re réussite, retour à J+3.
+    const j2 = new Date(2026, 8, 30, 9, 0);
+    expect(devientMaitrisee(l[0], true)).toBe(false);
+    l = apresEssai(l, 'e1', true, j2);
+    expect(l[0].prochain).toBe('2026-10-03');
+    expect(aRejouer(l, new Date(2026, 9, 2, 23, 0))).toEqual([]);
+    // Ratée après une réussite : retour à J+1, la réussite est gardée ; la suivante vise J+7.
+    const j5 = new Date(2026, 9, 3, 9, 0);
+    l = apresEssai(l, 'e1', false, j5);
+    expect(l[0].prochain).toBe('2026-10-04');
+    expect(l[0].reussites).toBe(1);
+    // 2e réussite : maîtrisée, elle sort de la liste.
+    expect(devientMaitrisee(l[0], true)).toBe(true);
+    expect(apresEssai(l, 'e1', true, new Date(2026, 9, 4, 9, 0))).toEqual([]);
+    expect(dansJours(j0, 7)).toBe('2026-10-05');
+  });
+
+  it('la même erreur ratée de nouveau repart de J+1 sans perdre ses réussites', () => {
+    const j0 = new Date(2026, 8, 28, 22, 0);
+    const l = [{ ...e(1), reussites: 1, rates: 2, prochain: '2026-10-10' }];
+    const r = garderRatee(l, e(1), j0);
+    expect(r).toHaveLength(1);
+    expect(r[0]).toMatchObject({ prochain: '2026-09-29', rates: 3, reussites: 1 });
   });
 
   it('jours locaux, fin de mois comprise', () => {
@@ -133,4 +173,31 @@ describe('liste et répétition espacée', () => {
     expect(lireErreurs(null)).toEqual([]);
     expect(lireErreurs([e(1), { id: 'x' }, { ...e(2), reponses: [] }]).map(x => x.id)).toEqual(['e1']);
   });
+});
+
+describe('acceptation : tout coup qui perd moins de 1 point', () => {
+  // Cinq positions, chacune avec son meilleur coup et deux autres candidats : l'un perd un peu moins de 1 point
+  // (accepté), l'autre 1 point ou plus (refusé).
+  const cas: { nom: string; rows: string[]; toPlay: 1 | 2; meilleur: string; proche: string; loin: string; ecartLoin: number }[] = [
+    { nom: 'ouverture 9 × 9', rows: ROWS, toPlay: 1, meilleur: 'C4', proche: 'G4', loin: 'E7', ecartLoin: 1 },
+    { nom: 'plateau vide, Noir', rows: Array(9).fill('.........'), toPlay: 1, meilleur: 'E5', proche: 'C3', loin: 'D4', ecartLoin: 1.2 },
+    { nom: 'Blanc au trait', rows: ROWS, toPlay: 2, meilleur: 'G6', proche: 'C6', loin: 'E3', ecartLoin: 2 },
+    { nom: 'milieu de partie', rows: ['.........', '..X.O....', '..XO.....', '..XO.X...', '...XO....', '....XO...', '.....X...', '.........', '.........'], toPlay: 2, meilleur: 'F5', proche: 'D3', loin: 'G7', ecartLoin: 1.01 },
+    { nom: '13 × 13', rows: Array(13).fill('.............'), toPlay: 1, meilleur: 'K10', proche: 'D4', loin: 'G7', ecartLoin: 3 },
+  ];
+  for (const c of cas) {
+    it(c.nom, () => {
+      const n = c.rows.length, pos = fromRows(c.rows, c.toPlay).pos, a = (l: string) => fromLabel(l, n);
+      const an = { lead: 0, engine: 'katago' as const, coups: [
+        { move: a(c.meilleur), visits: 40, lead: 5 },
+        { move: a(c.proche), visits: 20, lead: 5 - 0.99 },
+        { move: a(c.loin), visits: 20, lead: 5 - c.ecartLoin },
+      ] };
+      const e = creerErreur({ avant: pos, joue: -1, coup: 10, note: 'grosse', meilleur: a(c.meilleur), perte: 8, analyse: an }, MAINTENANT)!;
+      expect(coupAccepte(e, a(c.meilleur))).toBe(true);
+      expect(coupAccepte(e, a(c.proche))).toBe(true);
+      expect(coupAccepte(e, a(c.loin))).toBe(false);
+      expect(coupAccepte(e, -1)).toBe(false);
+    });
+  }
 });
