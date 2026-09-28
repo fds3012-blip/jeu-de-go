@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { abonnerXp, libelleRecompense, lireXp, niveauDe, prochaineRecompense, recompenseDuNiveau } from '../app/xp';
 import { mouvementsReduits } from './defilement';
 import { fr } from './typo';
+import { t } from '../content/i18n';
 import { playLevel } from './sound';
 import { hapticLevel } from './haptics';
 import './niveau.css';
@@ -23,15 +24,15 @@ export function BarreNiveau() {
   return (
     <div className="niveau" data-testid="barre-niveau">
       <p className="niveau-texte">
-        <b>{`Niveau\u00A0${niveau}`}</b>
-        <span>{`${dans}\u00A0/\u00A0${besoin}\u00A0XP`}</span>
+        <b>{t('niveau.barre', { niveau })}</b>
+        <span>{t('niveau.xp', { dans, besoin })}</span>
       </p>
-      <div className="niveau-piste" role="progressbar" aria-label={`Niveau ${niveau}`} aria-valuemin={0} aria-valuemax={besoin} aria-valuenow={dans}
-        aria-valuetext={`${dans} XP sur ${besoin} avant le niveau ${niveau + 1}`}>
+      <div className="niveau-piste" role="progressbar" aria-label={t('niveau.aria', { niveau })} aria-valuemin={0} aria-valuemax={besoin} aria-valuenow={dans}
+        aria-valuetext={t('niveau.valeur', { dans, besoin, suivant: niveau + 1 })}>
         <span className="niveau-plein" style={{ width: `${part}%` }} />
         <span className="niveau-pierre" style={{ left: `${part}%` }} />
       </div>
-      {suivante && <p className="niveau-suite">{fr(`Niveau ${suivante.niveau} : ${libelleRecompense(suivante)}`)}</p>}
+      {suivante && <p className="niveau-suite">{fr(t('niveau.suite', { niveau: suivante.niveau, recompense: libelleRecompense(suivante) }))}</p>}
     </div>
   );
 }
@@ -62,11 +63,11 @@ export function FeteNiveau({ celebrer }: { celebrer: boolean }) {
   const recompense = recompenseDuNiveau(niveau);
   return (
     <div className={`fete-niveau${anime ? ' anime' : ''}`} role="status" data-testid="fete-niveau">
-      <button type="button" onClick={() => setNiveau(null)} aria-label={`Niveau ${niveau} atteint. Fermer`}>
+      <button type="button" onClick={() => setNiveau(null)} aria-label={t('niveau.feteAria', { niveau })}>
         <span className="fete-pierre" aria-hidden="true"><b>{niveau}</b></span>
         <span className="fete-texte">
-          <b>{fr(`Niveau ${niveau} !`)}</b>
-          <small>{fr(recompense ? `Tu débloques ${libelleRecompense(recompense)}.` : 'Bravo, tu progresses.')}</small>
+          <b>{fr(t('niveau.fete', { niveau }))}</b>
+          <small>{fr(recompense ? t('niveau.debloque', { recompense: libelleRecompense(recompense) }) : t('niveau.bravo'))}</small>
         </span>
       </button>
     </div>

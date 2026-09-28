@@ -1,4 +1,5 @@
 import { CALENDRIER_GO_DU_JOUR } from '../content/puzzles';
+import { t } from '../content/i18n';
 // Go du jour (issue #75) : un défi quotidien commun et partageable, façon Wordle. Logique pure, sans React.
 // Tout le monde voit le même problème le même jour, en heure de Paris, quel que soit le fuseau de l'appareil.
 
@@ -77,8 +78,8 @@ export interface Partage { texte: string; url: string; complet: string }
  */
 export function textePartage(numero: number, essais: number, serie: number): Partage {
   const n = Math.max(1, essais);
-  const morceaux = [`Go du jour n° ${numero}`, `résolu en ${n} essai${n > 1 ? 's' : ''}`];
-  if (serie > 0) morceaux.push(`série ${serie} 🔥`);
+  const morceaux = [t('partage.numero', { numero }), t('partage.essais', { n })];
+  if (serie > 0) morceaux.push(t('partage.serie', { serie }));
   const texte = morceaux.join(' · ');
   const url = `${URL_JEU}?${PARAM}=${numero}`;
   return { texte, url, complet: `${texte}\n${url}` };

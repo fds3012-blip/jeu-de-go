@@ -150,3 +150,94 @@ test.describe('appareil réglé en anglais', () => {
     await expect(page.getByRole('navigation', { name: 'Navigation principale' }).getByRole('button', { name: 'Profil' })).toBeVisible();
   });
 });
+
+// Étape 3 : composants partagés. Joueur avec de l'XP, des parties, des problèmes réussis, Pomme battue et une erreur à rejouer.
+const ERREUR = {
+  id: 'erreur-en', creeLe: '2026-01-01T10:00:00.000Z', prochain: '2026-01-01', rates: 0, size: 9,
+  rows: ['.........', '.........', '..O...X..', '.........', '....X....', '.........', '..X...O..', '.........', '.........'],
+  toPlay: 1, reponses: [6 * 9 + 4], joue: 0, coup: 14, adversaire: 'Pomme',
+};
+const COMPOSANTS = '.niveau-texte, .niveau-suite, .paliers h3, .carte b, .carte small, .vedette-bulle b, .carrousel-legende, .stat span, .vitrine-rangee b, .vitrine-rangee small, .pastille-niveau, .titre-pierres, .bases-aide, .grille-pb .small';
+
+async function sansCoupeComposants(page: Page, largeur: number) {
+  // Coupé : plus large que sa boîte, tronqué par le line-clamp, ou qui dépasse l'écran (sauf dans la vitrine, qui défile de côté).
+  const coupes = await page.evaluate(sel => [...document.querySelectorAll<HTMLElement>(sel)]
+    .filter(e => e.offsetParent !== null && (e.scrollWidth > e.clientWidth + 1 || e.scrollHeight > e.clientHeight + 2
+      || (!e.closest('.vitrine-rangee') && e.getBoundingClientRect().right > innerWidth + 0.5)))
+    .map(e => e.textContent), COMPOSANTS);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(largeur);
+  expect(coupes).toEqual([]);
+}
+
+for (const largeur of [390, 320]) {
+  test(`?lang=en : barre XP, carrousel, profil complet et Mes erreurs en anglais à ${largeur} px`, async ({ page }) => {
+    await page.setViewportSize({ width: largeur, height: 844 });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.addInitScript(e => {
+      if (sessionStorage.getItem('composants-prets')) return;
+      sessionStorage.setItem('composants-prets', '1');
+      localStorage.setItem('go.xp.v1', '40');
+      localStorage.setItem('go.parties.v1', JSON.stringify({ n: 3, ordi: 3, dernier: 'pomme' }));
+      localStorage.setItem('go.bilan.v1', JSON.stringify({ pomme: { v: 2, d: 1 } }));
+      localStorage.setItem('go.problemes.v1', JSON.stringify({ b1: true, b3: true, b4: true }));
+      localStorage.setItem('go.intro-but.v1', 'true');
+      localStorage.setItem('go.erreurs.v1', JSON.stringify([e]));
+    }, ERREUR);
+    await page.goto('/?lang=en');
+
+    // Accueil avec la barre de niveau.
+    const barre = page.getByTestId('barre-niveau');
+    await expect(barre).toContainText(/^Level\u00A01/);
+    await expect(barre).toContainText(/\d+\u00A0\/\u00A0\d+\u00A0XP/);
+    await expect(barre.getByRole('progressbar', { name: 'Level 1' })).toHaveAttribute('aria-valuetext', /^\d+ of \d+ XP to level 2$/);
+    await expect(barre.locator('.niveau-suite')).toHaveText('Level 3: the “Light kaya” board');
+    await expect(page.getByText(/Niveau|goban «/)).toHaveCount(0);
+    await sansDebordement(page);
+    await sansCoupeComposants(page, largeur);
+    await page.screenshot({ path: `docs/localisation/captures/accueil-xp-en-${largeur}.png` });
+
+    // Carrousel des adversaires : paliers, battus, verrouillés.
+    await page.getByRole('button', { name: 'Change' }).click();
+    const feuille = page.getByRole('dialog', { name: 'Your opponent' });
+    const liste = feuille.getByRole('list', { name: 'Opponents, from easiest to strongest' });
+    for (const titre of ['First steps', 'Getting tougher', 'The masters']) await expect(liste.getByRole('heading', { name: titre })).toBeVisible();
+    await expect(liste.getByRole('button', { name: 'Pomme, 20 kyu, beaten' })).toBeVisible();
+    await expect(liste.locator('.vignette-tampon').first()).toHaveText('BEATEN');
+    await liste.getByRole('button', { name: 'Tigre, 5 kyu, locked' }).click({ force: true }); // aria-disabled : le toucher explique quoi faire
+    await expect(feuille.locator('.carrousel-legende')).toHaveText(/^Beat .+ first to face Tigre\.$/);
+    await expect(feuille.getByText(/Premiers pas|verrouillé|battue?\b|BATTU|Bats d/)).toHaveCount(0);
+    await sansDebordement(page);
+    await sansCoupeComposants(page, largeur);
+    await page.screenshot({ path: `docs/localisation/captures/adversaires-en-${largeur}.png` });
+    await feuille.getByRole('button', { name: 'Close' }).click();
+
+    // Profil complet : statistiques, badges, thèmes du goban.
+    await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: 'Profile' }).click();
+    const stats = page.getByRole('list', { name: 'Your stats' });
+    for (const legende of ['puzzles', 'day streak', 'games', 'wins']) await expect(stats.getByText(legende, { exact: true })).toBeVisible();
+    const vitrine = page.getByRole('region', { name: /^Badges, \d of 7$/ });
+    await expect(vitrine.getByRole('listitem', { name: 'Pomme beaten: earned' })).toBeVisible();
+    await expect(vitrine.getByRole('listitem', { name: 'First game: earned' })).toBeVisible();
+    await expect(vitrine.getByRole('listitem', { name: '7-day streak: not earned yet. Daily Go 7 days running.' })).toHaveCount(1);
+    const goban = page.getByRole('group', { name: 'Board' });
+    await expect(goban.getByRole('button', { name: 'Kaya', exact: true })).toBeVisible();
+    await expect(goban.getByRole('button', { name: 'Light kaya, unlocks at level 3' })).toBeVisible();
+    await expect(goban.getByRole('button', { name: 'Golden shell, unlocks at level 8' })).toBeVisible();
+    await expect(page.getByText(/problèmes|victoires|Première partie|Réussis/)).toHaveCount(0);
+    await sansDebordement(page);
+    await sansCoupeComposants(page, largeur);
+    await page.screenshot({ path: `docs/localisation/captures/profil-complet-en-${largeur}.png` });
+
+    // Mes erreurs, dans les Problèmes.
+    await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: 'Puzzles' }).click();
+    await expect(page.getByRole('heading', { name: /^Your mistakes to replay/ })).toBeVisible();
+    await expect(page.getByText('Positions from your games. Find the move KataGo suggested.')).toBeVisible();
+    const erreur = page.getByRole('button', { name: 'Replay: Your game against Pomme, move 14' });
+    await expect(erreur).toContainText('Black to play');
+    await expect(page.getByText(/Tes erreurs|Ta partie|Noir joue/)).toHaveCount(0);
+    await sansDebordement(page);
+    await sansCoupeComposants(page, largeur);
+    await erreur.click();
+    await expect(page.getByText('Find a better move than yours: only KataGo’s move counts.')).toBeVisible();
+  });
+}
