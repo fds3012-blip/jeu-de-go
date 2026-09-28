@@ -8,6 +8,7 @@ Tenu par l'agent `game-designer`. Issue #179. Mesures du 28/09/2026. Voir aussi 
 - **Mais les marches ne sont pas régulières.** En bas de l'échelle, il y a un mur. Caillou (moteur simple) perd **toutes** ses parties contre Bambou (premier niveau KataGo), avec 71 points d'écart en moyenne sur 81. Bambou → Renard est aussi très haut (8 sur 8, +27,5 points).
 - **En haut, les marches sont faibles** : Dragon → Sensei, 5 sur 8 seulement.
 - **Aucune constante de la table ne corrige le mur.** Même réduit à 1 visite et 30 points de tolérance, Bambou gagne 4 sur 4 contre Caillou : le réseau seul est bien plus fort que le Monte-Carlo. Il faut une part de hasard pour les niveaux KataGo, ce qui demande du code. C'est la proposition P1 (mesurée ci-dessous). Aucun réglage n'a été modifié dans cette PR.
+- **Mise à jour (mur de Bambou, P1b en place)** : `bestMove` applique maintenant `hasard` aux niveaux KataGo. Le coup est tiré selon la politique du réseau, avec une température. Réglage retenu : Bambou 0,7 (T = 1,5), Renard 0,35 (T = 1,5). Mesures sur 16 à 32 parties par marche : Caillou → Bambou **26 / 32** (81 %, +45 points au lieu de +71), Bambou → Renard **12 / 16** (75 %), Renard → Rivière **13 / 16** (81 %). Le mur est cassé. Détail dans « P1 en place » ci-dessous.
 - Mesures brutes (une ligne par partie, avec les réglages essayés) : `equilibrage-mesures.jsonl`.
 
 Indicateurs visés : progression dans l'échelle (part des joueurs qui battent Bambou, Rivière, Sensei), parties terminées par semaine (5, charte), rétention J7 (25 %, charte).
@@ -112,6 +113,42 @@ Lecture :
 **Variante plus douce, à essayer d'abord (P1b)** : au lieu d'un coup uniforme, tirer le coup au hasard **selon la politique du réseau**, avec une température (par exemple T = 1,5 pour Bambou, 1 pour Renard). Les erreurs restent des coups « humains » : plausibles, pas absurdes. La force baisse de façon continue, et un débutant peut comprendre pourquoi il gagne. Même principe que les niveaux faibles des bots de chess.com.
 
 Indicateur : part des joueurs qui battent Bambou dans les 7 jours après avoir battu Caillou (`partie_terminee` avec `adversaire` et `gagnant`), puis rétention J7. Garde-fou : si plus de 60 % des joueurs battent Bambou dès la 1re partie, on baisse le hasard de 0,05.
+
+### P1 en place : tirage selon la politique (branche `mur-bambou`)
+
+Code (`src/engine/katago/choose.ts`, `choisirCoup` et `coupSelonPolitique`) :
+- Avec la probabilité `hasard`, le niveau ne prend pas le coup de la recherche. Il tire un coup selon la politique brute du réseau (nouveau champ `policy` de l'analyse), élevée à la puissance 1 / `temperature`.
+- Garde-fous : jamais la passe, jamais dans ses propres yeux, jamais en auto-atari sans capture (`candidates`), jamais un coup que le réseau juge absurde (politique sous 0,1 %). Pas de hasard quand l'adversaire vient de passer ou quand la recherche conseille de passer : la fin de partie reste propre.
+- `bestMove(pos, niveau, { seed })` est reproductible : même graine, même coup. Sans graine, vrai hasard.
+- Le repli sur le moteur simple (KataGo absent) garde sa pleine force : `hasard` ne l'affaiblit pas.
+- Le banc joue exactement ce code (`choisirCoup`), plus la simulation d'avant.
+- Test rapide, sans réseau (faux moteur) : `src/engine/hasard.test.ts`.
+
+Pourquoi ces valeurs sont plus hautes que le 0,2 proposé plus haut : un coup tiré selon la politique est **bien moins coûteux** qu'un coup tiré uniformément. C'est souvent un coup plausible, juste pas le meilleur. Il faut donc en jouer beaucoup plus pour la même baisse de force. En échange, le bouton est **bien plus doux** : de 0,5 à 0,8, le taux baisse par paliers, sans le saut de 100 % à 25 % du tirage uniforme.
+
+Mesures (banc, 9 × 9, komi 6,5, couleurs alternées ; graines entre parenthèses) :
+
+| Réglage essayé | Caillou → Bambou | Bambou → Renard | Renard → Rivière |
+|---|---|---|---|
+| Actuel (hasard 0 partout) | 4 / 4, +71,0 | 8 / 8, +27,5 | 6 / 8, +17,3 |
+| Bambou 0,5, T = 1 (179) | 8 / 8, +55,0 | — | — |
+| Bambou 0,8, T = 1,5 (179) | 5 / 8, +19,8 | — | — |
+| Bambou 0,7, T = 1,5 (500) | 12 / 16, +42,1 | — | — |
+| Bambou 0,7, T = 1,5 (2100) | 14 / 16, +48,2 | — | — |
+| **Bambou 0,7, T = 1,5 (les deux séries)** | **26 / 32, +45,2** | — | — |
+| Bambou 0,6, T = 2 (2100) | 10 / 16, +26,2 | — | — |
+| Bambou 0,7 ; Renard 0,4, T = 1,5 (500) | — | 5 / 8, +11,5 | 6 / 8, +26,3 |
+| Bambou 0,7 ; Renard 0,3, T = 1,5 (900) | — | 14 / 16, +34,8 | 13 / 16, +17,1 |
+| **Bambou 0,7 ; Renard 0,35, T = 1,5** (1300) | — | **12 / 16, +31,9** | **13 / 16, +19,8** |
+
+Lecture :
+- Les trois marches du bas sont autour de la cible : 81 %, 75 %, 81 %. Plus de mur : Caillou gagne 6 parties sur 32.
+- **Piste suivante** : Bambou 0,6 avec T = 2 donne 10 / 16 et un écart bien plus faible (+26). Une température plus haute rend les erreurs plus fréquentes mais moins lourdes. Un réglage intermédiaire (0,65, T = 2) viserait 70 % avec un écart d'environ 30 points. Pas mesuré ici faute de temps (machine chargée) : à mesurer sur 32 parties avant de changer.
+- **L'écart moyen reste grand** (+32 à +42 points) : les parties sont bimodales. Quand Bambou gagne, il gagne souvent tout le plateau ; quand il perd, c'est de peu. Sur 9 × 9, un débutant qui perd un groupe perd la partie. L'écart moyen a baissé de 71 à 45 points contre Caillou, mais ce n'est pas encore une marche douce aux points.
+- Renard 0,3 ou 0,4 : 5 / 8 et 14 / 16. Le bruit sur 8 à 16 parties reste de l'ordre de ± 12 points de pourcentage. Les réglages sont à confirmer par PostHog (indicateur ci-dessus).
+- **Limite de cette série** : la machine de mesure était très chargée (autres agents, charge 30 sur 4 cœurs). Caillou joue avec un budget de temps (600 ms) : sous charge, il fait moins de simulations et joue plus faiblement. Les taux Caillou → Bambou sont donc plutôt **surestimés** pour Bambou. Sur un téléphone récent, Caillou est probablement un peu plus fort qu'ici.
+
+Rangs affichés (P3) : pas changés. Bambou et Renard se sont rapprochés de Caillou ; « 13 kyu » et « 10 kyu » restent plausibles, à recaler avec la courbe complète.
 
 ### P2. Resserrer le haut de l'échelle (constantes, après P1)
 
