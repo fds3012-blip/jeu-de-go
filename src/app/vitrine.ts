@@ -29,12 +29,12 @@ export function statistiques(d: Donnees): Stat[] {
   // Série finie (#212) : on montre le record, jamais un « 0 jour de série » en gros.
   const serie: Stat = d.serie === 0 && record > 0
     ? { id: 'serie', valeur: record, legende: t('profil.recordLegende', { n: record }) }
-    : { id: 'serie', valeur: d.serie, legende: d.serie > 1 ? 'jours de série' : 'jour de série' };
+    : { id: 'serie', valeur: d.serie, legende: t('stats.serie', { n: d.serie }) };
   return [
-    { id: 'problemes', valeur: d.reussis, legende: d.reussis > 1 ? 'problèmes' : 'problème' },
+    { id: 'problemes', valeur: d.reussis, legende: t('stats.problemes', { n: d.reussis }) },
     serie,
-    { id: 'parties', valeur: d.parties, legende: d.parties > 1 ? 'parties' : 'partie' },
-    { id: 'victoires', valeur: v, legende: v > 1 ? 'victoires' : 'victoire' },
+    { id: 'parties', valeur: d.parties, legende: t('stats.parties', { n: d.parties }) },
+    { id: 'victoires', valeur: v, legende: t('stats.victoires', { n: v }) },
   ];
 }
 
@@ -49,16 +49,18 @@ const complet = (d: Donnees, id: string) => d.paliers.some(p => p.id === id && p
  * `gagnes` : badges déjà gagnés (stockage de l'appareil). Ils restent obtenus pour toujours (#212).
  */
 export function badges(d: Donnees, gagnes: readonly string[] = []): Badge[] {
-  const tous: Badge[] = [
-    { id: 'premiere-partie', nom: 'Première partie', condition: 'Joue une partie contre l’ordi.', obtenu: d.parties > 0 },
-    { id: 'premier-probleme', nom: 'Premier problème', condition: 'Réussis un problème.', obtenu: d.reussis > 0 },
-    { id: 'victoire-pomme', nom: 'Pomme battue', condition: 'Gagne une partie contre Pomme.', obtenu: (d.bilan.pomme?.v ?? 0) > 0 },
-    { id: 'palier-debutant', nom: 'Palier Débutant', condition: 'Réussis tout le palier Débutant.', obtenu: complet(d, 'debutant') },
-    { id: 'dix-problemes', nom: '10 problèmes', condition: 'Réussis 10 problèmes.', obtenu: d.reussis >= 10 },
-    { id: 'palier-novice', nom: 'Palier Novice', condition: 'Réussis tout le palier Novice.', obtenu: complet(d, 'novice') },
-    { id: 'serie-7', nom: '7 jours de série', condition: 'Fais le Go du jour 7 jours de suite.', obtenu: Math.max(d.serie, d.record ?? 0) >= 7 },
-  ];
-  for (const b of tous) if (gagnes.includes(b.id)) b.obtenu = true;
+  const obtenus: Record<BadgeId, boolean> = {
+    'premiere-partie': d.parties > 0,
+    'premier-probleme': d.reussis > 0,
+    'victoire-pomme': (d.bilan.pomme?.v ?? 0) > 0,
+    'palier-debutant': complet(d, 'debutant'),
+    'dix-problemes': d.reussis >= 10,
+    'palier-novice': complet(d, 'novice'),
+    'serie-7': Math.max(d.serie, d.record ?? 0) >= 7,
+  };
+  // Textes dans la langue de l'interface (#167) : src/content/i18n, clés badge.<id>.nom et badge.<id>.condition.
+  const tous: Badge[] = (Object.keys(obtenus) as BadgeId[])
+    .map(id => ({ id, nom: t(`badge.${id}.nom`), condition: t(`badge.${id}.condition`), obtenu: obtenus[id] || gagnes.includes(id) }));
   return [...tous.filter(b => b.obtenu), ...tous.filter(b => !b.obtenu)];
 }
 

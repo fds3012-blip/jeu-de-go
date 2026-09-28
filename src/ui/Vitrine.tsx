@@ -1,6 +1,7 @@
 // Profil vivant (issue #103) : rangée de statistiques et vitrine de badges en sceaux ronds.
 import type { ReactNode } from 'react';
 import type { Badge, BadgeId, Stat } from '../app/vitrine';
+import { t } from '../content/i18n';
 
 /** Icônes de la grammaire « deux pierres » : une pierre noire, une blanche, et un signe. 24 × 24. */
 const ICONES: Record<Stat['id'], ReactNode> = {
@@ -23,7 +24,7 @@ const ICONES: Record<Stat['id'], ReactNode> = {
 
 export function Statistiques({ stats }: { stats: Stat[] }) {
   return (
-    <ul className="stats" aria-label="Tes statistiques">
+    <ul className="stats" aria-label={t('stats.aria')}>
       {stats.map(s => (
         <li key={s.id} className={`stat stat-${s.id}`}>
           <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false">{ICONES[s.id]}</svg>
@@ -66,11 +67,11 @@ export function VitrineBadges({ liste }: { liste: Badge[] }) {
   const n = liste.filter(b => b.obtenu).length;
   return (
     <section className="vitrine" aria-labelledby="vitrine-titre">
-      <h2 id="vitrine-titre" className="sr-only">Badges, {n} sur {liste.length}</h2>
+      <h2 id="vitrine-titre" className="sr-only">{t('vitrine.titre', { n, total: liste.length })}</h2>
       <ul className="vitrine-rangee">
         {liste.map(b => (
           <li key={b.id} className={b.obtenu ? 'obtenu' : 'a-gagner'} data-badge={b.id}
-            aria-label={b.obtenu ? `${b.nom} : obtenu` : `${b.nom} : à gagner. ${b.condition}`}>
+            aria-label={b.obtenu ? t('vitrine.obtenu', { nom: b.nom }) : t('vitrine.aGagner', { nom: b.nom, condition: b.condition })}>
             <SceauBadge id={b.id} obtenu={b.obtenu} taille={36} />
             {/* Obtenu : son nom. À gagner : ce qu'il faut faire, le sceau en creux dit déjà de quoi il s'agit. */}
             {b.obtenu ? <b aria-hidden="true">{b.nom}</b> : <small aria-hidden="true">{b.condition}</small>}

@@ -6,6 +6,7 @@ import { useRef, useState, type KeyboardEvent } from 'react';
 import { Couronne, Portrait, palierDe, type PortraitId } from './Portrait';
 import { battuAccorde, type SceauId } from './sceaux';
 import { fr } from './typo';
+import { t } from '../content/i18n';
 
 export interface CarteAdversaire<I extends SceauId = SceauId> {
   id: I;
@@ -25,7 +26,7 @@ interface Props<I extends SceauId> {
   legende?: string;
 }
 
-const PALIERS = ['Premiers pas', 'Ça se corse', 'Les maîtres'] as const;
+const PALIERS = ['carrousel.palier.0', 'carrousel.palier.1', 'carrousel.palier.2'] as const;
 
 export function CarrouselAdversaires<I extends SceauId>({ cartes, choisi, onChoisir, legende }: Props<I>) {
   const zone = useRef<HTMLUListElement>(null);
@@ -33,7 +34,7 @@ export function CarrouselAdversaires<I extends SceauId>({ cartes, choisi, onChoi
   const actuel = cartes.find(c => c.id === choisi) ?? cartes[0];
 
   function toucher(c: CarteAdversaire<I>) {
-    if (!c.ouvert) { setMessage(fr(`Bats d'abord ${c.requis ?? 'le précédent'} pour affronter ${c.nom}.`)); return; }
+    if (!c.ouvert) { setMessage(fr(t('carrousel.verrou', { requis: c.requis ?? t('carrousel.precedent'), nom: c.nom }))); return; }
     setMessage('');
     onChoisir(c.id);
   }
@@ -48,7 +49,7 @@ export function CarrouselAdversaires<I extends SceauId>({ cartes, choisi, onChoi
     boutons[j]?.focus();
   }
 
-  const groupes = PALIERS.map((titre, p) => ({ titre, cartes: cartes.filter(c => c.id !== 'mochi' && palierDe(c.id as PortraitId) === p) }));
+  const groupes = PALIERS.map((cle, p) => ({ titre: t(cle), cartes: cartes.filter(c => c.id !== 'mochi' && palierDe(c.id as PortraitId) === p) }));
 
   return (
     <>
@@ -62,13 +63,13 @@ export function CarrouselAdversaires<I extends SceauId>({ cartes, choisi, onChoi
           </div>
         </div>
       )}
-      <ul className="paliers" ref={zone} onKeyDown={clavier} aria-label="Adversaires, du plus facile au plus fort">
+      <ul className="paliers" ref={zone} onKeyDown={clavier} aria-label={t('carrousel.aria')}>
         {groupes.map(g => (
           <li key={g.titre} className="palier">
             <h3>{g.titre}</h3>
             <ul className="carrousel">
               {g.cartes.map(c => {
-                const etat = !c.ouvert ? ', verrouillé' : c.battu ? `, ${battuAccorde(c.id)}` : '';
+                const etat = !c.ouvert ? `, ${t('carrousel.verrouille')}` : c.battu ? `, ${battuAccorde(c.id)}` : '';
                 return (
                   <li key={c.id}>
                     <button className={`carte${c.ouvert ? '' : ' verrou'}`} aria-pressed={c.id === choisi} aria-disabled={!c.ouvert || undefined}

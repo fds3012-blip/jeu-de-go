@@ -108,6 +108,9 @@ Principes :
 | palier (des problèmes) | tier | Débutant, Novice, Apprenti, Joueur de club, Confirmé : *Beginner, Novice, Apprentice, Club player, Advanced*. Pas *level* (réservé à l'XP). |
 | cote problèmes | puzzle rating | |
 | Go du jour n° 12 | Daily Go #12 | Défi commun du jour. |
+| battu, battue (tampon) | beaten (BEATEN) | Même mot au masculin et au féminin. |
+| badge obtenu, à gagner | earned, not earned yet | |
+| goban (thème) | board | Kaya, *Light kaya*, *Slate*, *Golden shell*. « le goban « Ardoise » » : *the “Slate” board*. |
 
 ## Analyse et IA
 
@@ -127,3 +130,4 @@ Principes :
 - Noms des adversaires (Pomme, Caillou, Bambou, Renard, Rivière, Tigre, Montagne, Dragon, Sensei) : gardés en français pour l'instant, comme des prénoms. À trancher (Apple, Pebble… ?) avec l'agent design, car les portraits et sceaux les portent.
 - « Voir la suite » (Problèmes) : traduit par *Show the answer* ; la « suite » est la séquence de coups qui résout le problème.
 - « Plateau 9 × 9, tu as Noir » : *9 × 9 board, you’re Black*.
+- Vitrine des badges (Profil) : la condition d'un badge à gagner est coupée à 2 lignes (74 px). En français, 3 conditions sont déjà tronquées à 320 et 390 px (« Gagne une partie contre Pomme. », « Réussis tout le palier Débutant. », « Fais le Go du jour 7 jours de suite. »). L'anglais est raccourci pour tenir (*Beat Pomme once.*, *Clear the Beginner tier.*, *Daily Go 7 days running.*). À reprendre côté design ou texte français.
