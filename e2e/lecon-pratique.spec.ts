@@ -24,10 +24,11 @@ test('fin de la leçon 1 : 3 problèmes de capture enchaînés, puis retour au c
   expect(cible!.height).toBeGreaterThanOrEqual(44);
   await pratique.click();
 
-  // Les trois plus faciles du thème, dans le lecteur de problèmes existant.
+  // Les trois plus faciles du thème, dans le lecteur de problèmes existant. #237 : pas ceux qui répètent la leçon
+  // (b1 est l'étape 4, a01 et n01 ont la même forme que les étapes 4 et 6).
   const serie = page.locator('.serie-pratique');
-  await expect(serie).toHaveAttribute('data-serie', 'a01 n01 a02');
-  for (const [rang, titre, coup] of [[1, 'Première capture', 'E4'], [2, 'Deux pierres d’un coup', 'E3'], [3, 'Capture au bord', 'E2']] as const) {
+  await expect(serie).toHaveAttribute('data-serie', 'a02 n02 a03');
+  for (const [rang, titre, coup] of [[1, 'Capture au bord', 'E2'], [2, 'Le plus gros d’abord', 'F1'], [3, 'Capture dans le coin', 'A2']] as const) {
     await expect(page.getByText(`Entraînement, ${rang} sur 3`)).toBeVisible();
     await expect(page.getByRole('heading', { name: titre })).toBeVisible();
     await jouer(page, coup);
@@ -38,7 +39,10 @@ test('fin de la leçon 1 : 3 problèmes de capture enchaînés, puis retour au c
   await page.locator('.verdict').getByRole('button', { name: 'Retour au chemin' }).click();
   await expect(page.getByRole('button', { name: 'Continuer : Atari' })).toBeVisible();
   const reussis = await page.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('go.problemes.v1') ?? '{}')));
-  expect(reussis.sort()).toEqual(['a01', 'a02', 'n01']);
+  expect(reussis.sort()).toEqual(['a02', 'a03', 'n02']);
+  // #237 : réussis en pratique, ils ne reviendront pas dès demain dans la Révision du jour.
+  const recents = await page.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('go.revision.v1') ?? '{}').recents ?? {}));
+  expect(recents.sort()).toEqual(['a02', 'a03', 'n02']);
 
 });
 

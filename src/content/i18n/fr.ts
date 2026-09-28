@@ -183,6 +183,7 @@ export const fr = {
   'pb.aide.refutation.1': 'Blanc répond au point clé. Le bon coup, c’est de jouer là avant lui.',
   'pb.aide.refutation.2': 'Noir répond au point clé. Le bon coup, c’est de jouer là avant lui.',
   'pb.aide.refutationSeule': 'Ton coup ne menace rien ici. Cherche ailleurs.',
+  'pb.rejouePlateau': 'Rejoue directement sur le plateau.',
   'pb.vuTexte': 'C’est ça ! Tu as vu la réponse : ce problème compte comme vu, pas réussi. Retente-le plus tard.',
   'pb.vuSerie': 'Ta série du jour tient quand même.',
   'pb.tamponVu': 'Vu',

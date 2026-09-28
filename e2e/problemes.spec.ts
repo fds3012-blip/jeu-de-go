@@ -37,6 +37,12 @@ test('problèmes sans compte : erreur, bonne réponse, suite et problème suivan
   await jouer(page, 'A1');
   await expect(page.getByText('Pas tout à fait. Essaie encore.')).toBeVisible();
   await attendrePierre(page, 'A1', null);
+  // #237 (N6) : comme en leçon, une seule suite après l'erreur, rejouer sur le plateau ; l'indice est un lien discret.
+  await expect(page.getByRole('button', { name: 'Réessayer' })).toHaveCount(0);
+  const indice = page.getByRole('button', { name: 'Voir un indice' });
+  await expect(indice).toHaveClass(/\blien\b/);
+  await expect(page.locator('.verdict .cta, .verdict .btn')).toHaveCount(0);
+  expect((await indice.boundingBox())!.height).toBeGreaterThanOrEqual(44);
 
   await jouer(page, 'E5');
   await expect(page.getByText('Bravo, c’est le bon coup !')).toBeVisible();
