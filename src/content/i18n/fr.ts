@@ -257,6 +257,7 @@ export const fr = {
   'revision.aide': 'Refaire un problème réussi t’aide à le retenir.',
   'revision.ouvrirAria': 'Réviser : {titre}',
   'revision.dejaReussi': 'Déjà réussi · refais-le sans aide',
+  'revision.dejaVu': 'Vu avec la réponse · trouve-le seul',
   'revision.faite': 'Révision faite. D’autres problèmes reviendront demain.',
   'revision.serie': 'Pour garder ta série, fais chaque jour le Go du jour, une leçon ou une révision.',
 
@@ -470,6 +471,9 @@ export const fr = {
   'lecon.revois': 'Revois ta partie : tu trouveras le coup qui a tout changé.',
   'lecon.komi': 'Sans le komi, les {komi} points donnés à Blanc qui joue en second, tu gagnais !',
   'lecon.perduDePeu': 'Perdu de peu. La prochaine fois sera la bonne !',
+  // #251 : partie finie sur un plateau presque vide (bilan.ts, finTropTot).
+  'lecon.finTotKomi': "Le plateau était presque vide : Blanc gagne grâce au komi, les points donnés à Blanc parce que Noir joue en premier. Joue plus longtemps pour entourer du territoire.",
+  'lecon.finTot': 'Le plateau était presque vide. Joue plus longtemps pour entourer du territoire.',
   'lecon.territoireAdv': '{adv} a entouré plus de territoire. La leçon « Territoire et ouverture » montre comment bien commencer.',
   // Plateau : lecteur d'écran (src/ui/Board.tsx)
   'plateau.aria': 'Plateau de go {size} × {size}',

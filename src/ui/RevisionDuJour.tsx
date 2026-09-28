@@ -28,6 +28,8 @@ interface Props {
   liste: Puzzle[];
   /** Problèmes réussis (appareil et compte) : ils entrent dans la révision le jour où on les voit. */
   reussis: ReadonlySet<string>;
+  /** Parmi eux, ceux vus avec la réponse sans être réussis (#251) : même calendrier, autre libellé. */
+  vus?: ReadonlySet<string>;
   confirmTouch: boolean;
   Lecteur: ComponentType<LecteurRevisionProps>;
   /** Série de l'appareil après la révision du jour (pour rafraîchir la flamme). */
@@ -36,7 +38,7 @@ interface Props {
 
 function lire(): EtatRevision { return lireRevision(readLocal<unknown>(REVISION_KEY, null)); }
 
-export function RevisionDuJour({ liste, reussis, confirmTouch, Lecteur, onSerie }: Props) {
+export function RevisionDuJour({ liste, reussis, vus, confirmTouch, Lecteur, onSerie }: Props) {
   const [numero] = useState(() => numeroDuJour(new Date()));
   const parId = useMemo(() => new Map(liste.map(p => [p.id, p])), [liste]);
   const [etat, setEtat] = useState<EtatRevision>(() => {
@@ -117,7 +119,7 @@ export function RevisionDuJour({ liste, reussis, confirmTouch, Lecteur, onSerie 
             <span className="revision-goban" aria-hidden="true"><MiniGoban rows={pzSuivant.rows} /></span>
             <span className="revision-texte" aria-hidden="true">
               <b>{pzSuivant.title}</b>
-              <small>{t('revision.dejaReussi')}</small>
+              <small>{t(vus?.has(pzSuivant.id) ? 'revision.dejaVu' : 'revision.dejaReussi')}</small>
             </span>
             <svg className="revision-fleche" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path d="m9 5 7 7-7 7" /></svg>
           </button>

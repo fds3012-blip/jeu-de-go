@@ -78,3 +78,26 @@ export function reprend(rows: Lignes, positions: readonly Lignes[]): boolean {
   const c = formeCanonique(rows);
   return positions.some(p => p.length === rows.length && formeCanonique(p) === c);
 }
+
+/** Indices (depuis 0) des étapes de la leçon dont la position est celle du problème, à symétrie près. */
+export function etapesReprises(rows: Lignes, lecon: Pick<Lesson, 'steps'>): number[] {
+  const c = formeCanonique(rows);
+  const out: number[] = [];
+  lecon.steps.forEach((s, i) => {
+    if ((s.kind === 'move' || s.kind === 'touche') && s.rows.length === rows.length && formeCanonique(s.rows) === c) out.push(i);
+  });
+  return out;
+}
+
+/**
+ * Vrai si le joueur a déjà fait, dans la leçon, l'exercice que le problème répète (#251, recette du 28/09, M3).
+ * `faites` : étapes faites dans cette leçon (progression `go.lecons.v1` ; l'étape i est faite quand faites > i).
+ * Même position : il faut que l'une des étapes reprises soit faite. Liste d'exclusion : l'étape exacte n'est pas
+ * notée, on demande la leçon finie. Dans le doute, ce n'est pas une redite : une révision de trop ne coûte rien,
+ * une révision qui manque laisse le débutant sans exercice le lendemain.
+ */
+export function repriseFaite(p: { id: string; rows?: Lignes }, lecon: Pick<Lesson, 'id' | 'steps'>, faites: number): boolean {
+  if (faites <= 0) return false;
+  if (PROCHES_DE_LECON[lecon.id]?.includes(p.id)) return faites >= lecon.steps.length;
+  return !!p.rows && etapesReprises(p.rows, lecon).some(i => i < faites);
+}

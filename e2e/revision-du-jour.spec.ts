@@ -93,6 +93,65 @@ test('un défi par jour : une leçon terminée fait vivre la série, sans cocher
   await expect(page.getByRole('button', { name: /^Résoudre/ })).toBeVisible();
 });
 
+// Issue #251 (recette du 28/09, M3 et M2) : le Go du jour n° 1 (b1, réponse E5) reprend l'étape 4 de la leçon 1.
+// Sans la leçon, ce n'est pas une redite : il revient le lendemain. Vu avec la réponse, il revient aussi.
+const J1 = new Date('2026-09-27T12:00:00+02:00');
+const J2 = new Date('2026-09-28T12:00:00+02:00');
+
+async function lendemain(page: Page) {
+  await page.clock.setFixedTime(J2);
+  await page.goto('/');
+  await nav(page, 'Problèmes');
+  await expect(page.getByRole('heading', { name: 'Révision du jour' })).toBeVisible();
+  const carte = page.getByRole('button', { name: 'Réviser : Capture la pierre' });
+  await expect(carte).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  return carte;
+}
+
+test('Go du jour réussi sans avoir fait la leçon : pas une redite, il revient le lendemain (M3)', async ({ page }) => {
+  await page.clock.setFixedTime(J1);
+  await page.goto('/?go-du-jour=1');
+  await expect(page.getByText(/^Go du jour n°\s1$/)).toBeVisible();
+  await jouer(page, 'E5');
+  await expect(page.getByText('Bravo, c’est le bon coup !')).toBeVisible();
+  // Application fermée tout de suite, sans repasser par la liste : le problème est déjà suivi.
+  const carte = await lendemain(page);
+  await expect(carte).toContainText('Déjà réussi · refais-le sans aide');
+});
+
+test('Go du jour vu avec la réponse : il revient le lendemain, « Vu avec la réponse » (M2)', async ({ page }) => {
+  await page.clock.setFixedTime(J1);
+  await page.goto('/?go-du-jour=1');
+  await expect(page.getByText(/^Go du jour n°\s1$/)).toBeVisible();
+  await jouer(page, 'A1');
+  await page.getByRole('button', { name: 'Voir un indice' }).click();
+  await jouer(page, 'B2');
+  await page.getByRole('button', { name: 'Voir pourquoi' }).click();
+  await page.getByRole('button', { name: 'Voir la réponse' }).click();
+  await attendrePierre(page, 'E5', 'noir');
+  await jouer(page, 'E5');
+  await jouer(page, 'E5');
+  await expect(page.getByText(/Tu as vu la réponse\s:\sce problème compte comme vu, pas réussi/)).toBeVisible();
+  const carte = await lendemain(page);
+  await expect(carte).toContainText('Vu avec la réponse · trouve-le seul');
+});
+
+test('Go du jour réussi après la leçon 1 : redite, il saute J+1 (#237 inchangé)', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('go.lecons.v1', JSON.stringify({ l1: 6 })));
+  await page.clock.setFixedTime(J1);
+  await page.goto('/?go-du-jour=1');
+  await jouer(page, 'E5');
+  await expect(page.getByText('Bravo, c’est le bon coup !')).toBeVisible();
+  const recents = await page.evaluate(() => JSON.parse(localStorage.getItem('go.revision.v1') ?? '{}').recents);
+  expect(recents).toEqual({ b1: 1 });
+  await page.clock.setFixedTime(J2);
+  await page.goto('/');
+  await nav(page, 'Problèmes');
+  await expect(page.getByRole('heading', { name: /Go du jour/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Révision du jour' })).toHaveCount(0);
+});
+
 // Captures (docs/design/v2/captures/revision-*.png) : `CAPTURES=1 npx playwright test e2e/revision-du-jour.spec.ts`.
 test('captures de la révision du jour, sombre et clair', async ({ page }) => {
   test.skip(!process.env.CAPTURES, 'captures à la demande');

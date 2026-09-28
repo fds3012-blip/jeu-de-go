@@ -240,6 +240,7 @@ export const en = {
   'revision.aide': 'Solving a puzzle again helps you remember it.',
   'revision.ouvrirAria': 'Review: {titre}',
   'revision.dejaReussi': 'Already solved · redo it without help',
+  'revision.dejaVu': 'Seen with the answer · find it on your own',
   'revision.faite': 'Review done. More puzzles will come back tomorrow.',
   'revision.serie': 'To keep your streak, do the Daily Go, a lesson or a review every day.',
 
@@ -440,6 +441,8 @@ export const en = {
   'lecon.revois': 'Review your game: you’ll find the move that changed everything.',
   'lecon.komi': 'Without komi, the {komi} points given to White for playing second, you would have won!',
   'lecon.perduDePeu': 'A narrow loss. Next time’s the one!',
+  'lecon.finTotKomi': 'The board was almost empty: White wins thanks to komi, the points given to White because Black plays first. Play longer to surround some territory.',
+  'lecon.finTot': 'The board was almost empty. Play longer to surround some territory.',
   'lecon.territoireAdv': '{adv} surrounded more territory. The “Territory and opening” lesson shows how to start well.',
   'plateau.aria': 'Go board {size} × {size}',
   'plateau.vide': '{point}, empty',

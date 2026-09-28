@@ -50,6 +50,21 @@ export interface StatsPartie {
   marge: number;
   /** Komi de la partie. */
   komi: number;
+  /** Pierres sur le plateau à la fin (#251). Absent : inconnu, on ne présume pas d'un plateau vide. */
+  pierres?: number;
+}
+
+/**
+ * Plateau « presque vide » à la fin (#251, recette du 28/09, M4) : moins de 10 pierres posées, quelle que soit la taille.
+ * Pourquoi 10 : c'est 5 coups chacun, moins d'un huitième des 81 points du 9 × 9. En dessous, aucun camp n'a encore
+ * fermé de territoire : le résultat vient du komi, pas du jeu. On compte les pierres et non les coups, pour que
+ * des passes répétées sur un plateau vide ne fassent pas passer la partie pour « jouée ».
+ */
+export const PIERRES_PLATEAU_VIDE = 10;
+
+/** Vrai si la partie s'est finie au comptage (pas par abandon) sur un plateau presque vide. */
+export function finTropTot(s: StatsPartie): boolean {
+  return !s.abandon && s.pierres !== undefined && s.pierres < PIERRES_PLATEAU_VIDE;
 }
 
 export type Issue = 'victoire' | 'defaite' | 'egalite';
@@ -96,6 +111,8 @@ export function leconMochi(issue: Issue, s: StatsPartie, adv: string, suivant?: 
     else pourquoi = t('lecon.territoire', { adv });
     return { texte: `${pourquoi} ${suivant ? t('lecon.suivant', { suivant }) : t('lecon.personne')}` };
   }
+  // #251 : passé très tôt, le débutant perd au komi sans l'avoir vu venir. Pas de « perdu de peu » : on explique.
+  if (finTropTot(s)) return { texte: t(s.marge <= s.komi ? 'lecon.finTotKomi' : 'lecon.finTot'), lecon: 'l6' };
   if (s.abandon && s.coups < 10) return { texte: t('lecon.abandonTot', { adv }) };
   if (s.capturesAdv >= 3) return { texte: t('lecon.prises', { adv, n: s.capturesAdv }), lecon: 'l2' };
   if (s.atarisSubis >= 2) return { texte: t('lecon.atariSubis', { n: s.atarisSubis }), lecon: 'l2' };

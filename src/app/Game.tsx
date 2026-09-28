@@ -347,7 +347,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     try { localStorage.setItem(REVUE_KEY, JSON.stringify({ sgf: texte, adversaire: ai?.id, date: new Date().toISOString() } satisfies PartieGardee)); } catch { /* stockage indisponible */ }
     const resultat = () => onResult?.(egalite ? 0 : winner, {
       coups: history.length - 1, capturesMoi: pos.captures[1], capturesAdv: pos.captures[2], atarisSubis: atarisSubis.current,
-      abandon, marge: abandon ? 0 : sc.margin, komi,
+      abandon, marge: abandon ? 0 : sc.margin, komi, pierres: pos.board.reduce((n, c) => n + (c ? 1 : 0), 0),
     });
     resultatDiffere.current = differe ? resultat : null;
     if (!differe) resultat();
