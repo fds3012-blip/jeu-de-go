@@ -30,6 +30,8 @@ interface Props {
   onChoisir: (id: Opponent['id']) => void;
   onJouer: () => void;
   onDeux: () => void;
+  /** Partie guidée contre Mochi (#79), hors de l'échelle des adversaires. */
+  onGuidee?: () => void;
   probleme?: TuileProbleme;
   onProbleme: () => void;
   /** Leçon suivante ; absente quand tout le chemin est fait. */
@@ -117,7 +119,7 @@ export function Accueil(p: Props) {
 }
 
 /** Feuille « Changer » : carrousel des adversaires et taille du plateau, dans une boîte de dialogue modale native. */
-function Reglages({ adv, cartes, taille, reglages, setReglages, onTaille, onChoisir, onJouer, onDeux, textes }: Props) {
+function Reglages({ adv, cartes, taille, reglages, setReglages, onTaille, onChoisir, onJouer, onDeux, onGuidee, textes }: Props) {
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const d = ref.current;
@@ -144,6 +146,7 @@ function Reglages({ adv, cartes, taille, reglages, setReglages, onTaille, onChoi
           <p className="muted small">{t(AIDE_TAILLE[taille])}</p>
           <button className="btn primary" aria-label={textes.ctaNom} onClick={onJouer}>{textes.cta}</button>
           <button className="lien deux" onClick={onDeux}>{t('accueil.deux')}</button>
+          {onGuidee && <button className="lien deux" onClick={onGuidee}>{t('accueil.guidee')}</button>}
         </div>
       )}
     </dialog>

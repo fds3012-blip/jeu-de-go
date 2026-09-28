@@ -99,6 +99,13 @@ export const fr = {
   'accueil.aideTaille.13': 'Une partie de taille moyenne.',
   'accueil.aideTaille.19': 'Le plateau classique des joueurs confirmés.',
   'accueil.deux': 'Jouer à deux sur ce téléphone',
+  // Partie guidée (#79) : Mochi règle sa force tous les 10 coups pour garder la partie serrée.
+  'accueil.guidee': 'Partie guidée contre Mochi',
+  'guidee.bulle': 'Partie guidée : Mochi règle sa force pour que la partie reste serrée. Tu as Noir.',
+  'guidee.plusDoux': 'Mochi joue un peu plus doux.',
+  'guidee.plusFort': 'Mochi joue un peu plus fort.',
+  'guidee.fin': 'Partie guidée : elle ne compte pas dans ton bilan.',
+  'guidee.rejouer': 'Rejouer contre Mochi',
 
   // Adversaires : phrase et description (mêmes textes que src/engine/simple.ts, vérifié par un test)
   'adv.pomme.phrase': 'Elle apprend comme toi.',

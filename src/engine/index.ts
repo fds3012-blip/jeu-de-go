@@ -66,7 +66,9 @@ async function simpleMoveDetail(pos: Position, lvl: Opponent, opts: EngineOption
   const sync = () => later(() => chooseMoveDetail(pos, lvl.katago ? { ...lvl, hasard: 0 } : lvl, opts));
   // Le Worker simple ne connaît que les identifiants : on lui passe les réglages du niveau en options.
   const niveau: OpponentId = lvl.katago ? 'caillou' : lvl.id;
-  const q = ask({ kind: 'move', pos, niveau, opts: { timeMs: lvl.timeMs, playouts: lvl.playouts, ...opts } });
+  // Mochi (#79) : ses crans plus doux que Pomme changent seulement `hasard`, qu'on transmet aussi.
+  const hasard = !lvl.katago && lvl.hasard !== opponent(lvl.id).hasard ? lvl.hasard : undefined;
+  const q = ask({ kind: 'move', pos, niveau, opts: { timeMs: lvl.timeMs, playouts: lvl.playouts, ...opts }, ...(hasard === undefined ? {} : { hasard }) });
   if (!q) return sync();
   const r = await q;
   return Number.isNaN(r.move) ? sync() : { move: r.move, raison: r.raison ?? null };
@@ -329,3 +331,7 @@ export async function meilleurCoup(pos: Position, komi: number): Promise<Conseil
     return b ? { katago: true, move: b.move, lead: b.lead } : { katago: true, move: null, lead: a.lead };
   } catch { return { katago: false }; }
 }
+
+// Partie guidée (#79) : réglage de la force de Mochi tous les 10 coups, selon l'écart estimé.
+export { CRAN_DEPART, cranDuNiveau, cranSuivant, forceInitiale, momentDeReglage, niveauGuide, PERIODE_GUIDEE, reglerForce } from './guidee';
+export type { AnnonceGuidee, ForceGuidee } from './guidee';
