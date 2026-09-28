@@ -460,6 +460,9 @@ function Partager({ numero, essais, serie }: { numero: number; essais: number; s
 
 interface DuJourInfo { numero: number; serie: number; defiChange: boolean; gelGagne: boolean; celebrer: boolean }
 
+/** Temps pendant lequel la réponse de l'adversaire reste sur le plateau après une erreur (#237, N6). */
+const DUREE_ERREUR = 2200;
+
 export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating, onAttempt, onSolved, onNext, onExit, onSolutionVue, retour, surtitre, exercice = true }: {
   puzzle: Puzzle; rang: number; duJour?: DuJourInfo; confirmTouch: boolean; rated: boolean; rating?: number;
   onAttempt: (ok: boolean) => Promise<{ ok: true; value: number } | { ok: false; error: string } | null>;
@@ -477,6 +480,8 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating
   // Aide graduée (#197) : indice, puis réfutation, puis réponse.
   const [aide, setAide] = useState<NiveauAide>(0);
   const [refut, setRefut] = useState<{ r: Refutation; vue: boolean } | null>(null);
+  // #237 (N6) : après une erreur, l'adversaire répond au coup faux, puis la position revient d'elle-même (ou au toucher).
+  const [apercu, setApercu] = useState<{ faux: number; reponse: number | null; vue: boolean } | null>(null);
   const dernierFaux = useRef<number | null>(null);
   const [answer, setAnswer] = useState<Answer | null>(null);
   const [board, setBoard] = useState(start.pos.board);
@@ -492,6 +497,8 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating
 
   async function onPlay(p: number) {
     if (solvedNow) return;
+    // Réfutation montrée après l'erreur : toucher le plateau remet la position de départ et joue le coup tout de suite.
+    if (apercu) { window.clearTimeout(timer.current); setApercu(null); setBoard(start.pos.board); }
     // #237 (N6) : comme en leçon, on rejoue directement sur le plateau, sans « Réessayer ».
     // Pendant la réfutation ou la réponse montrée, le plateau revient d'abord à la position de départ.
     if (refut || replay) {
@@ -512,8 +519,9 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating
     setTries(tries + 1);
     if (!ok) dernierFaux.current = p;
     setAnswer({ kind: r.kind, p, text: ok ? (puzzle.explanation ?? tr('pb.bonCoup')) : (puzzle.refutation ?? tr('pb.pasTout')), n });
-    setBoard(ok ? r.after.board : start.pos.board);
-    if (ok) onSolved(tries + 1, aide);
+    window.clearTimeout(timer.current);
+    if (ok) { setApercu(null); setBoard(r.after.board); onSolved(tries + 1, aide); }
+    else montrerErreur(p, r.after.board);
     // Seul le premier essai compte pour la cote.
     if (firstTry.current && rated) {
       firstTry.current = false;
@@ -543,9 +551,32 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating
     };
     timer.current = window.setTimeout(stepOnce, 500);
   }
+  /**
+   * Erreur (#237, N6) : le coup faux reste posé, l'adversaire y répond au point clé, puis la position de départ revient
+   * d'elle-même. Mouvements réduits : la réponse est posée d'un coup et le retour est instantané, sans animation.
+   */
+  function montrerErreur(faux: number, apresFaux: Int8Array) {
+    const r = refutation(puzzle, faux);
+    const reduit = prefersReducedMotion();
+    const revenir = () => { setApercu(null); setBoard(start.pos.board); };
+    if (!r || r.reponse === null) {
+      setBoard(apresFaux); setApercu({ faux, reponse: null, vue: true });
+      timer.current = window.setTimeout(revenir, DUREE_ERREUR);
+      return;
+    }
+    const reponse = r.reponse;
+    const montrer = () => {
+      setBoard(r.pos.board); setApercu({ faux, reponse, vue: true });
+      if (!reduit) { playStone(reponse, puzzle.size); hapticStone(); }
+      timer.current = window.setTimeout(revenir, DUREE_ERREUR);
+    };
+    if (reduit) { montrer(); return; }
+    setBoard(apresFaux); setApercu({ faux, reponse, vue: false });
+    timer.current = window.setTimeout(montrer, 600);
+  }
   function reessayer() {
     window.clearTimeout(timer.current);
-    setReplay(null); setRefut(null); setBoard(start.pos.board); setAnswer(null);
+    setApercu(null); setReplay(null); setRefut(null); setBoard(start.pos.board); setAnswer(null);
   }
 
   /** Marche suivante de l'aide : l'indice entoure la zone, la réfutation joue la réponse de l'adversaire, puis la réponse. */
@@ -553,6 +584,7 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating
     const suite = aideSuivante(aide);
     if (suite === null) return;
     window.clearTimeout(timer.current);
+    setApercu(null);
     const r = suite === 2 && dernierFaux.current !== null ? refutation(puzzle, dernierFaux.current) : null;
     if (suite === 1) {
       setAide(1); setAnswer(null); setBoard(start.pos.board);
@@ -644,7 +676,8 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating
     ) : (
       // Erreur (#237, N6) : pas de « Réessayer », le plateau reste jouable ; l'indice est un lien discret.
       <Verdict ton="revoir" cle={answer.n} actions={boutonAide}>
-        <p>{fr(answer.text)}</p>{ligneCote}
+        <p>{fr(answer.text)}</p>
+        {answer.kind === 'wrong' && <p className="muted small rejoue-plateau">{fr(tr('pb.rejouePlateau'))}</p>}{ligneCote}
       </Verdict>
     );
   }
@@ -664,10 +697,10 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating
       {duJour?.defiChange && <p className="notice" role="status">{fr(tr('pb.defiChange'))}</p>}
       <Bubble>{fr(`${puzzle.prompt} ${tr(puzzle.toPlay === 1 ? 'pb.tuJoues.1' : 'pb.tuJoues.2')}`)}</Bubble>
       <Board size={puzzle.size} board={board} toPlay={puzzle.toPlay} interactive={!solvedNow && (!replay || replayDone) && (!refut || refut.vue)}
-        stonesTappable={!!refut || !!replay} confirmTouch={confirmTouch} onPlay={onPlay} shake={shake}
+        stonesTappable={!!refut || !!replay || !!apercu} confirmTouch={confirmTouch} onPlay={onPlay} shake={shake}
         marks={{
           targets: start.marked,
-          last: refut ? (refut.vue ? refut.r.reponse : refut.r.faux) : lastMove,
+          last: refut ? (refut.vue ? refut.r.reponse : refut.r.faux) : apercu ? (apercu.vue && apercu.reponse !== null ? apercu.reponse : apercu.faux) : lastMove,
           ok: solvedNow && !replay ? answer.p : undefined,
           mistake: refut ? refut.r.faux : answer && answer.kind === 'wrong' && !replay ? answer.p : undefined,
           // Indice : zone entourée autour du bon coup, tant que le problème n'est pas résolu.
