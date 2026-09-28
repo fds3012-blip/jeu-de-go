@@ -32,3 +32,23 @@ test('partie guidée : lancée depuis « Changer », jouée au-delà du 10e coup
   expect(await page.evaluate(() => localStorage.getItem('go.guidee.v1'))).toMatch(/^\d+$/);
   expect(erreurs).toEqual([]);
 });
+
+// Recette du soir du 28/09 (S1) : Mochi emprunte la force d'un adversaire de l'échelle (ici Pomme), pas son visage.
+// Avant le correctif, le bandeau montrait Pomme sous le nom « Mochi », et l'écran de fin « BATTUE » sur Pomme.
+test('partie guidée : le portrait est celui de Mochi, sans tampon « battue » à la fin', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/?komi=-100');
+  await page.getByRole('button', { name: 'Changer' }).click();
+  await page.getByRole('dialog', { name: 'Ton adversaire' }).getByRole('button', { name: 'Partie guidée contre Mochi' }).click();
+  await expect(plateau(page)).toBeVisible();
+  await expect(page.locator('[data-portrait="pomme"]')).toHaveCount(0);
+  await expect(page.locator('[data-portrait="mochi"]:not(.coach-portrait)').first()).toBeVisible();
+
+  await jouer(page, 'E5');
+  await expect(page.getByRole('toolbar').getByRole('button', { name: 'Passer', exact: true })).toBeEnabled({ timeout: 10_000 });
+  await passerJusquAuScore(page);
+  await expect(page.getByRole('heading', { level: 2, name: 'Victoire' })).toBeVisible({ timeout: 15_000 });
+  await expect(page.locator('[data-portrait="pomme"]')).toHaveCount(0);
+  await expect(page.locator('[data-portrait="mochi"]:not(.coach-portrait)').first()).toBeVisible();
+  await expect(page.getByText(/^BATTUE?$/)).toHaveCount(0);
+});
