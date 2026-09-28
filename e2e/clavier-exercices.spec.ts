@@ -70,7 +70,7 @@ test('leçon du ko : la question « touche le point » se répond au clavier', a
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).focus();
   await page.keyboard.press('Enter');
-  await appuyer(page, 'Continuer : Le ko');
+  await appuyer(page, 'Reprendre la leçon : Le ko');
   await expect(page.getByText('Touche le point où Blanc ne peut pas reprendre.')).toBeVisible();
 
   await tabulerVersPlateau(page);

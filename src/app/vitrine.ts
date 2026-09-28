@@ -28,6 +28,9 @@ export interface Parcours {
   adversaires: number;
 }
 
+/** Nombre de jours à partir duquel on parle de record (#237). */
+export const RECORD_MIN = 2;
+
 export const victoires = (b: Bilan) => Object.values(b).reduce((s, x) => s + x.v, 0);
 
 /** Adversaires battus au moins une fois sur cet appareil. */
@@ -41,7 +44,8 @@ export function statistiques(d: Donnees, p: Parcours): Stat[] {
   const record = Math.max(d.serie, d.record ?? 0);
   const battus = Math.min(adversairesBattus(d.bilan), p.adversaires);
   return [
-    { id: 'record', valeur: record, legende: t('profil.recordLegende', { n: record }) },
+    // #237 : « record » seulement à partir d'un vrai record (2 jours) ; avant, c'est une série comme une autre.
+    { id: 'record', valeur: record, legende: t(record >= RECORD_MIN ? 'profil.recordLegende' : 'pb.serieLegende', { n: record }) },
     { id: 'lecons', valeur: p.lecons.faites, total: p.lecons.total, legende: t('stats.lecons', { n: p.lecons.faites }) },
     { id: 'adversaires', valeur: battus, total: p.adversaires, legende: t('stats.adversaires', { n: battus }) },
     { id: 'problemes', valeur: d.reussis, legende: t('stats.problemes', { n: d.reussis }) },

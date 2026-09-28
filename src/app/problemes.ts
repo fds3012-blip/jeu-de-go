@@ -13,7 +13,7 @@ export function suivant<T extends { id: string }>(liste: T[], courant: T, reussi
   return liste.slice(i + 1).find(p => !reussis.has(p.id)) ?? liste.find(p => !reussis.has(p.id) && p.id !== courant.id);
 }
 
-/** Série de jours, écrite en toutes lettres pour la légende : « jour de suite », « jours de suite ». */
+/** Série de jours, écrite en toutes lettres pour la légende : « jour de série », « jours de série » (#237). */
 export function legendeSerie(n: number): string {
-  return n > 1 ? 'jours de suite' : 'jour de suite';
+  return n > 1 ? 'jours de série' : 'jour de série';
 }

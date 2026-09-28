@@ -70,10 +70,10 @@ test('terminer la leçon 1 affiche la fin de leçon, puis la pierre 1 est coché
   await expect(pierre1).toBeVisible();
   await expect(pierre1).toHaveAttribute('data-etat', 'faite');
   await expect(page.getByRole('button', { name: /^Leçon 2 : .*, prochaine étape$/ })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Continuer : Atari' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Commencer la leçon : Atari' })).toBeVisible();
   // Un seul bouton en relief : sous la leçon en cours, il n'affiche que le verbe.
   await expect(page.locator('.cta')).toHaveCount(1);
-  await expect(page.getByRole('button', { name: 'Continuer : Atari' })).toHaveText('Continuer');
+  await expect(page.getByRole('button', { name: 'Commencer la leçon : Atari' })).toHaveText('Commencer');
   await expect(page.getByRole('button', { name: /^Leçon 3 : / })).toHaveAttribute('data-etat', 'avenir');
 });
 
@@ -86,7 +86,7 @@ test('dernière leçon : « Chapitre terminé », confettis, sauf si les céléb
     }, [presque, celebrations] as const);
     await page.goto('/');
     await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
-    await page.getByRole('button', { name: 'Continuer : Compter les points' }).click();
+    await page.getByRole('button', { name: 'Reprendre la leçon : Compter les points' }).click();
     await page.locator('.choix').getByRole('button', { name: '39', exact: true }).click();
     await page.getByRole('button', { name: 'Terminer la leçon' }).click();
     await expect(page.getByRole('heading', { name: 'Chapitre terminé' })).toBeVisible();
@@ -101,7 +101,7 @@ test('« Leçon suivante » ouvre la leçon 2', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
-  await page.getByRole('button', { name: 'Continuer : Libertés et capture' }).click();
+  await page.getByRole('button', { name: 'Reprendre la leçon : Libertés et capture' }).click();
   await jouer(page, 'E4');
   await page.getByRole('button', { name: 'Terminer la leçon' }).click();
   await page.getByRole('button', { name: 'Leçon suivante' }).click();
@@ -141,7 +141,7 @@ test('territoire : l’élève touche le goban, puis on compte avec lui', async 
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
-  await page.getByRole('button', { name: 'Continuer : Territoire et ouverture' }).click();
+  await page.getByRole('button', { name: 'Commencer la leçon : Territoire et ouverture' }).click();
   // La question vient avant la réponse : aucun carré de territoire, aucun choix de nombre.
   await expect(page.locator('[data-territoire]')).toHaveCount(0);
   await expect(page.locator('.choix')).toHaveCount(0);
@@ -163,7 +163,7 @@ test('captures des leçons v2 (390 × 844, sombre)', async ({ page }) => {
     await page.evaluate(p => localStorage.setItem('go.lecons.v1', JSON.stringify(p)), progres);
     await page.goto('/');
     await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
-    await page.getByRole('button', { name: `Continuer : ${lecon}` }).click();
+    await page.getByRole('button', { name: new RegExp(`^(Commencer|Reprendre) la leçon : ${lecon}$`) }).click();
   };
   const photo = (n: string) => page.screenshot({ path: `docs/design/v2/captures/lecons-v2-${n}.png` });
   const avance = async (n: number) => { for (let i = 0; i < n; i++) { await page.clock.runFor(600); await page.waitForTimeout(80); } };
@@ -195,7 +195,7 @@ test('ko : la question se répond en touchant le goban, sans poser de pierre', a
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
-  await page.getByRole('button', { name: 'Continuer : Le ko' }).click();
+  await page.getByRole('button', { name: 'Reprendre la leçon : Le ko' }).click();
   await jouer(page, 'H5');
   await expect(page.getByText(/Essaie encore\./)).toBeVisible();
   await jouer(page, 'E5');
@@ -214,7 +214,7 @@ test('captures des leçons 2 à 4 (390 × 844, sombre)', async ({ page }) => {
     await page.evaluate(p => localStorage.setItem('go.lecons.v1', JSON.stringify(p)), { ...avant[lecon], [cles[lecon]]: etape });
     await page.goto('/');
     await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
-    await page.getByRole('button', { name: `Continuer : ${lecon}` }).click();
+    await page.getByRole('button', { name: new RegExp(`^(Commencer|Reprendre) la leçon : ${lecon}$`) }).click();
     await expect(page.locator('.lecteur-plateau')).toBeVisible();
   };
   const photo = (n: string) => page.screenshot({ path: `docs/design/v2/captures/lecons-v2-${n}.png` });
@@ -239,7 +239,7 @@ test('leçon 7 : compter les points, jusqu’à « Chapitre terminé »', async 
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
   await expect(page.getByRole('button', { name: 'Leçon 7 : Compter les points, prochaine étape' })).toBeVisible();
-  await page.getByRole('button', { name: 'Continuer : Compter les points' }).click();
+  await page.getByRole('button', { name: 'Commencer la leçon : Compter les points' }).click();
   const progression = page.getByRole('progressbar', { name: 'Progression de la leçon' });
   const choix = (n: string) => page.locator('.choix').getByRole('button', { name: n, exact: true });
 
@@ -297,7 +297,7 @@ test('captures de la leçon 7 (390 × 844, sombre)', async ({ page }) => {
     await page.evaluate(p => localStorage.setItem('go.lecons.v1', JSON.stringify(p)), { ...AVANT_L7, l7: etape });
     await page.goto('/');
     await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
-    await page.getByRole('button', { name: 'Continuer : Compter les points' }).click();
+    await page.getByRole('button', { name: /^(Commencer|Reprendre) la leçon : Compter les points$/ }).click();
     await expect(page.locator('.lecteur-plateau')).toBeVisible();
   };
   const photo = (n: string) => page.screenshot({ path: `docs/design/v2/captures/lecons-v2-l7-${n}.png` });
@@ -328,7 +328,7 @@ test('leçon 8 : bien commencer sur 9 × 9, du chemin à la fin de leçon', asyn
   await expect(page.getByRole('heading', { name: 'Ouverture sur 9 × 9' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Leçon 8 : Les premiers coups, prochaine étape' })).toBeVisible();
   await expect(page.locator('.cta')).toHaveCount(1);
-  await page.getByRole('button', { name: 'Continuer : Les premiers coups' }).click();
+  await page.getByRole('button', { name: 'Commencer la leçon : Les premiers coups' }).click();
   const continuer = page.getByRole('button', { name: 'Continuer' });
 
   // 1. Je montre : l'élève ferme le coin ; les trois zones de 4 points s'allument.

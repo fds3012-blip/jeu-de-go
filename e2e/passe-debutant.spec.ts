@@ -20,7 +20,7 @@ async function jouerContrePomme(page: Page, labels: string[], n: number): Promis
   }
 }
 
-test('passer trop tôt : Mochi prévient, « Continuer à jouer » reprend la main, « Passer » passe', async ({ page }) => {
+test('passer trop tôt : Mochi prévient, « Jouer encore » reprend la main, « Passer » passe', async ({ page }) => {
   const erreurs: string[] = [];
   page.on('pageerror', (e) => erreurs.push(e.message));
   await page.goto('/');
@@ -38,7 +38,7 @@ test('passer trop tôt : Mochi prévient, « Continuer à jouer » reprend la ma
   // Les deux choix restent au-dessus de la barre d'actions.
   const barre = (await page.getByRole('toolbar').boundingBox())!, zone = (await choix(page).boundingBox())!;
   expect(zone.y + zone.height).toBeLessThanOrEqual(barre.y);
-  const [passerBulle, continuer] = [choix(page).getByRole('button', { name: 'Passer', exact: true }), choix(page).getByRole('button', { name: 'Continuer à jouer' })];
+  const [passerBulle, continuer] = [choix(page).getByRole('button', { name: 'Passer', exact: true }), choix(page).getByRole('button', { name: 'Jouer encore' })];
   for (const b of [passerBulle, continuer]) {
     const box = (await b.boundingBox())!;
     expect(box.height).toBeGreaterThanOrEqual(44);
@@ -48,7 +48,7 @@ test('passer trop tôt : Mochi prévient, « Continuer à jouer » reprend la ma
     await page.screenshot({ path: `${process.env.CAPTURE_DIR}/passe-avertissement-${theme}.png` });
   }
 
-  // « Continuer à jouer » : l'avertissement disparaît, c'est toujours à toi, aucune passe jouée.
+  // « Jouer encore » : l'avertissement disparaît, c'est toujours à toi, aucune passe jouée.
   await continuer.click();
   await expect(choix(page)).toHaveCount(0);
   await expect(message(page)).toHaveText(/À toi\s!/);

@@ -24,8 +24,8 @@ describe('suivant', () => {
 
 describe('legendeSerie', () => {
   it('accorde « jour »', () => {
-    expect(legendeSerie(0)).toBe('jour de suite');
-    expect(legendeSerie(1)).toBe('jour de suite');
-    expect(legendeSerie(4)).toBe('jours de suite');
+    expect(legendeSerie(0)).toBe('jour de série');
+    expect(legendeSerie(1)).toBe('jour de série');
+    expect(legendeSerie(4)).toBe('jours de série');
   });
 });

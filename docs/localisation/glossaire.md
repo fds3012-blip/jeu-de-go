@@ -104,10 +104,11 @@ Principes :
 | rang | rank | Réservé au kyu/dan. |
 | partie classée, amicale | ranked game, unranked (casual) game | |
 | série (jours consécutifs) | streak | « Série de 3 jours » : *3-day streak* ; libellé : *Streak: 3 days*. |
+| record (plus longue série, à partir de 2 jours) | record | « 7 jours, ton record » : *7 days, your record*. Charte : `docs/design/vocabulaire.md`. |
 | gel (protège la série) | freeze | « Tu gagnes un gel » : *You earned a freeze* (usage des apps grand public). |
 | palier (des problèmes) | tier | Débutant, Novice, Apprenti, Joueur de club, Confirmé : *Beginner, Novice, Apprentice, Club player, Advanced*. Pas *level* (réservé à l'XP). |
 | cote problèmes | puzzle rating | |
-| Go du jour n° 12 | Daily Go #12 | Défi commun du jour. |
+| Go du jour n° 12 | Daily Go #12 | Problème commun du jour. Jamais « défi » ni *challenge* à l'écran (#237). |
 | battu, battue (tampon) | beaten (BEATEN) | Même mot au masculin et au féminin. |
 | badge obtenu, à gagner | earned, not earned yet | |
 | goban (thème) | board | Kaya, *Light kaya*, *Slate*, *Golden shell*. « le goban « Ardoise » » : *the “Slate” board*. |

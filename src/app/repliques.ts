@@ -20,7 +20,8 @@ export const GENERIQUES: Record<Situation, readonly string[]> = {
   captureSubie: ['Oh ! Bien vu.', 'Aïe !', 'Bien joué !'],
   atariSubi: ['Oups…', 'Ça chauffe !', 'Tu me serres.'],
   capture: ['Hop, prise !', 'Merci !', 'Je la prends !'],
-  passeJoueur: ['Déjà fini ?', 'On compte ?', 'Tu es sûr ?'],
+  // #237 : neutres. Mochi a déjà demandé confirmation avant la passe (#235), et l'adversaire peut encore jouer.
+  passeJoueur: ['Voyons voir…', 'Je regarde.', 'À moi.'],
   passe: ['Je passe.', 'Rien à jouer.', 'À toi de voir.'],
 };
 

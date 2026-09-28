@@ -9,9 +9,9 @@ test('problèmes sans compte : erreur, bonne réponse, suite et problème suivan
   await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
 
   await expect(page.getByRole('heading', { name: /^Go du jour n°\s\d+$/ })).toBeVisible();
-  // Issue #196 : un écran, une action. Le Go du jour, un seul « Continuer », le palier en cours ; pas de grille ni de cadenas.
+  // Issue #196 : un écran, une action. Le Go du jour, un seul « Problème suivant », le palier en cours ; pas de grille ni de cadenas.
   await expect(page.getByRole('button', { name: 'Résoudre le Go du jour' })).toBeVisible();
-  await expect(page.getByRole('button', { name: /^Continuer : / })).toHaveCount(1);
+  await expect(page.getByRole('button', { name: /^Problème suivant : / })).toHaveCount(1);
   await expect(page.locator('[data-palier-en-cours="debutant"]')).toContainText('Débutant');
   await expect(page.getByRole('button', { name: /^Problème \d+ : / })).toHaveCount(0);
   await expect(page.locator('svg.cadenas')).toHaveCount(0);
@@ -78,7 +78,7 @@ test('paliers : Novice verrouillé, puis ouvert après les réussites', async ({
   await page.evaluate(v => localStorage.setItem('go.problemes.v1', JSON.stringify(v)), avant);
   await page.reload();
   await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
-  await expect(page.getByRole('button', { name: /^Continuer : / })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Problème suivant : / })).toBeVisible();
   await page.getByRole('button', { name: 'Tous les problèmes' }).click();
 
   const novice = page.getByRole('group', { name: /^Novice/ });

@@ -9,17 +9,17 @@ const CONTENU = fileURLToPath(new URL('../src/content', import.meta.url));
 const sources = [join(CONTENU, 'puzzles.ts'), ...readdirSync(join(CONTENU, 'lots')).filter(f => f.endsWith('.ts') && !f.endsWith('.test.ts')).map(f => join(CONTENU, 'lots', f))];
 const ALL_PUZZLES = sources.flatMap(f => [...readFileSync(f, 'utf8').matchAll(/id: ?'([^']+)'/g)].map(m => ({ id: m[1] })));
 
-// Issue #147 : les problèmes ne finissent jamais. Tout est résolu, et pourtant « Continuer »
-// et « Problème suivant » proposent toujours un problème.
+// Issue #147 : les problèmes ne finissent jamais. Tout est résolu, et pourtant « Problème suivant »
+// (liste et feuille de réussite) propose toujours un problème.
 
-test('tout résolu : Continuer ouvre un problème, et Problème suivant existe après une réussite', async ({ page }) => {
+test('tout résolu : « Problème suivant » de la liste ouvre un problème, et Problème suivant existe après une réussite', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   const tous = Object.fromEntries(ALL_PUZZLES.map(p => [p.id, true]));
   await page.addInitScript(v => localStorage.setItem('go.problemes.v1', JSON.stringify(v)), tous);
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
 
-  const continuer = page.getByRole('button', { name: /^Continuer : / });
+  const continuer = page.getByRole('button', { name: /^Problème suivant : / });
   await expect(continuer).toBeVisible();
   await expect(page.getByText(/c.est fini|tout est résolu/i)).toHaveCount(0);
   // Issue #196 : le palier en cours dit « N réussis », jamais de total ni de palier « fini ».

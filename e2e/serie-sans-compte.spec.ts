@@ -21,7 +21,7 @@ test('jour 1 sans compte : la série vaut 1 partout (accueil, Problèmes, Profil
 
   // Écran Problèmes : la flamme, comme pour un joueur connecté, et l'invitation habituelle (pas encore le jour 3).
   await expect(page.locator('.palmares-serie')).toContainText('1');
-  await expect(page.locator('.palmares-serie')).toContainText('jour de suite');
+  await expect(page.locator('.palmares-serie')).toContainText('jour de série');
   await expect(page.getByRole('button', { name: 'Me connecter' })).toBeVisible();
   await expect(page.getByText('Avec un compte, ta série et tes leçons te suivent.')).toHaveCount(0);
 

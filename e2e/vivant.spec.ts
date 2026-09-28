@@ -35,7 +35,7 @@ test('profil vivant : statistiques et badges déduits des données locales, sans
   // #214 : Ton parcours. Pomme battue : 1 adversaire sur 9.
   await expect(stats.getByText('adversaire battu')).toBeVisible();
   await expect(stats.getByText('leçon finie')).toBeVisible();
-  await expect(stats.getByText('jour de record')).toBeVisible();
+  await expect(stats.getByText('jour de série')).toBeVisible();
 
   const vitrine = page.getByRole('region', { name: /^Badges/ });
   await expect(vitrine.getByRole('listitem', { name: 'Pomme battue : obtenu' })).toBeVisible();

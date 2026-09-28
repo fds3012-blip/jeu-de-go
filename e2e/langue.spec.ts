@@ -103,7 +103,7 @@ for (const largeur of [390, 320]) {
     await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: 'Puzzles' }).click();
     await expect(page.locator('header').getByText('Puzzles', { exact: true })).toBeVisible();
     await expect(page.getByRole('heading', { name: /^Daily Go #\d+$/ })).toBeVisible();
-    await expect(page.getByText('The same challenge for everyone, today.')).toBeVisible();
+    await expect(page.getByText('The same puzzle for everyone, today.')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Solve the Daily Go' })).toHaveText('Solve');
     await expect(page.getByText(/^(Black|White) to play$/).first()).toBeVisible();
     await expect(page.getByText('Sign in to get your rating: it shows your level and goes up as you solve puzzles.')).toBeVisible();
@@ -222,11 +222,11 @@ for (const largeur of [390, 320]) {
     // Profil complet : statistiques, badges, thèmes du goban.
     await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: 'Profile' }).click();
     const stats = page.getByRole('list', { name: 'Your stats' });
-    for (const legende of ['day record', 'lessons done', 'opponent beaten', 'puzzles solved']) await expect(stats.getByText(legende, { exact: true })).toBeVisible();
+    for (const legende of ['day streak', 'lessons done', 'opponent beaten', 'puzzles solved']) await expect(stats.getByText(legende, { exact: true })).toBeVisible();
     const vitrine = page.getByRole('region', { name: /^Badges, \d of 7$/ });
     await expect(vitrine.getByRole('listitem', { name: 'Pomme beaten: earned' })).toBeVisible();
     await expect(vitrine.getByRole('listitem', { name: 'First game: earned' })).toBeVisible();
-    await expect(vitrine.getByRole('listitem', { name: '7-day streak: not earned yet. 7 days of challenges.' })).toHaveCount(1);
+    await expect(vitrine.getByRole('listitem', { name: '7-day streak: not earned yet. Keep a 7-day streak.' })).toHaveCount(1);
     await expect(page.getByText(/problèmes|victoires|Première partie|Réussis/)).toHaveCount(0);
     await sansDebordement(page);
     await sansCoupeComposants(page, largeur);
@@ -325,7 +325,7 @@ for (const largeur of [390, 320]) {
     await expect(recit.getByText(/Territoires|komi pour|Tu gagnes/)).toHaveCount(0);
     await sansCoupePartie(page, largeur);
     await page.screenshot({ path: `docs/localisation/captures/score-en-${largeur}.png` });
-    await recit.getByRole('button', { name: 'Continue' }).click();
+    await recit.getByRole('button', { name: 'See the result' }).click();
 
     // Écran de fin : titre, écart, bilan, leçon de Mochi, action principale, liens.
     await expect(page.getByRole('heading', { level: 2, name: 'Victory' })).toBeVisible();

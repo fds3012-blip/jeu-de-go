@@ -131,7 +131,7 @@ for (const largeur of [390, 320]) test(`?lang=en : toute l’interface en anglai
   const recit = page.getByRole('region', { name: 'Counting the points' });
   await expect(recit).toBeVisible();
   await sansFrancais(page, 'récit du score');
-  await recit.getByRole('button', { name: 'Continue' }).click();
+  await recit.getByRole('button', { name: 'See the result' }).click();
   await expect(page.getByRole('heading', { level: 2, name: 'Victory' })).toBeVisible();
   await sansFrancais(page, 'fin de partie');
   await page.getByRole('button', { name: 'Review my game' }).click();

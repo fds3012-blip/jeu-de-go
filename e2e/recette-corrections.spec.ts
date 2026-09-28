@@ -56,7 +56,7 @@ test('R2 : pas de « +XP » pendant le récit du score, la pastille arrive avec 
   const pastille = page.getByTestId('pastille-xp');
   await expect(page.locator('.recit-resultat.vu')).toBeVisible({ timeout: 5000 });
   await expect(pastille).toHaveCount(0);
-  await page.getByRole('button', { name: 'Continuer' }).click();
+  await page.getByRole('button', { name: 'Voir le résultat' }).click();
   await expect(page.getByRole('heading', { level: 2, name: 'Noir gagne' })).toBeVisible();
   await expect(pastille).toContainText(/\+\d+\sXP/);
 });
@@ -126,7 +126,7 @@ test.describe('R5 : 320 × 640', () => {
     const avant = (await plateau.boundingBox())!.y;
     // Toutes les répliques possibles, posées dans la bulle de Pomme : entières, et le plateau ne bouge pas.
     const toutes = ['Oh ! Bien vu.', 'Aïe !', 'Bien joué !', 'Oups…', 'Ça chauffe !', 'Tu me serres.', 'Hop, prise !', 'Merci !', 'Je la prends !',
-      'Déjà fini ?', 'On compte ?', 'Tu es sûr ?', 'Je passe.', 'Rien à jouer.', 'À toi de voir.'];
+      'Voyons voir…', 'Je regarde.', 'À moi.', 'Je passe.', 'Rien à jouer.', 'À toi de voir.'];
     const mesures = await page.locator('.joueur[data-joueur="Pomme"] .joueur-nom').evaluate((nom, ts) => {
       const bulle = document.createElement('span');
       bulle.className = 'replique';

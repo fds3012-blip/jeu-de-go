@@ -57,9 +57,9 @@ describe('français identique aux textes d’origine', () => {
 
   it('statistiques et badges', () => {
     const p0 = { lecons: { faites: 0, total: 7 }, adversaires: 9 }, p2 = { lecons: { faites: 2, total: 7 }, adversaires: 9 };
-    expect(statistiques(vide, p0).map(s => s.legende)).toEqual(['jour de record', 'leçon finie', 'adversaire battu', 'problème réussi']);
-    expect(statistiques({ ...vide, reussis: 1, serie: 1, parties: 1 }, p0).map(s => s.legende)).toEqual(['jour de record', 'leçon finie', 'adversaire battu', 'problème réussi']);
-    expect(statistiques({ ...plein, serie: 7, bilan: { pomme: { v: 1, d: 0 }, caillou: { v: 2, d: 0 } } }, p2).map(s => s.legende)).toEqual(['jours de record', 'leçons finies', 'adversaires battus', 'problèmes réussis']);
+    expect(statistiques(vide, p0).map(s => s.legende)).toEqual(['jour de série', 'leçon finie', 'adversaire battu', 'problème réussi']);
+    expect(statistiques({ ...vide, reussis: 1, serie: 1, parties: 1 }, p0).map(s => s.legende)).toEqual(['jour de série', 'leçon finie', 'adversaire battu', 'problème réussi']);
+    expect(statistiques({ ...plein, serie: 7, bilan: { pomme: { v: 1, d: 0 }, caillou: { v: 2, d: 0 } } }, p2).map(s => s.legende)).toEqual(['jours, ton record', 'leçons finies', 'adversaires battus', 'problèmes réussis']);
     expect(badges(vide).map(b => [b.id, b.nom, b.condition])).toEqual([
       ['premiere-partie', 'Première partie', 'Joue contre l’ordi.'],
       ['premier-probleme', 'Premier problème', 'Réussis un problème.'],
@@ -67,7 +67,7 @@ describe('français identique aux textes d’origine', () => {
       ['palier-debutant', 'Palier Débutant', 'Finis le palier Débutant.'],
       ['dix-problemes', '10 problèmes', 'Réussis 10 problèmes.'],
       ['palier-novice', 'Palier Novice', 'Finis le palier Novice.'],
-      ['serie-7', '7 jours de série', 'Un défi 7 jours de suite.'],
+      ['serie-7', '7 jours de série', 'Garde ta série 7 jours.'],
     ]);
     expect(badges(plein).every(b => b.obtenu)).toBe(true);
     expect(traduire('fr', 'vitrine.aGagner', { nom: 'Pomme battue', condition: 'Gagne contre Pomme.' })).toBe('Pomme battue : à gagner. Gagne contre Pomme.');
@@ -92,8 +92,8 @@ describe('en anglais', () => {
 
   it('statistiques (0 est pluriel en anglais) et badges', () => {
     const p = { lecons: { faites: 0, total: 7 }, adversaires: 9 };
-    expect(statistiques(vide, p).map(s => s.legende)).toEqual(['day record', 'lessons done', 'opponents beaten', 'puzzles solved']);
-    expect(statistiques({ ...vide, reussis: 1, bilan: { pomme: { v: 1, d: 0 } } }, { ...p, lecons: { faites: 1, total: 7 } }).map(s => s.legende)).toEqual(['day record', 'lesson done', 'opponent beaten', 'puzzle solved']);
+    expect(statistiques(vide, p).map(s => s.legende)).toEqual(['day streak', 'lessons done', 'opponents beaten', 'puzzles solved']);
+    expect(statistiques({ ...vide, reussis: 1, bilan: { pomme: { v: 1, d: 0 } } }, { ...p, lecons: { faites: 1, total: 7 } }).map(s => s.legende)).toEqual(['day streak', 'lesson done', 'opponent beaten', 'puzzle solved']);
     expect(badges(vide)[0]).toMatchObject({ nom: 'First game', condition: 'Play a game vs the computer.' });
   });
 });

@@ -39,7 +39,7 @@ test('le lien ouvre le Go du jour sans compte, on le résout, puis on le partage
   await expect(page.getByText(/^Go du jour n°\s1$/)).toBeVisible();
   await expect(plateau(page)).toBeVisible();
   expect(Date.now() - t0).toBeLessThan(3000);
-  await expect(page.getByText('Le défi a changé')).toHaveCount(0);
+  await expect(page.getByText('Le Go du jour a changé')).toHaveCount(0);
   // Le paramètre est retiré de l'adresse : un rechargement ne compte pas une nouvelle arrivée.
   await expect(page).toHaveURL(/\/$/);
 
@@ -82,7 +82,7 @@ test('sans Web Share API : copie dans le presse-papiers et « Copié ! »', asyn
 test('un lien d’un autre jour ouvre celui d’aujourd’hui et le dit', async ({ page }) => {
   await figer(page);
   await page.goto('/?go-du-jour=5');
-  await expect(page.getByText('Le défi a changé : voici celui d’aujourd’hui.')).toBeVisible();
+  await expect(page.getByText('Le Go du jour a changé : voici celui d’aujourd’hui.')).toBeVisible();
   await expect(page.getByText(/^Go du jour n°\s1$/)).toBeVisible();
 });
 
