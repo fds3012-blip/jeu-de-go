@@ -19,9 +19,9 @@ import { play, newPosition, type Position } from '../go/rules';
 import { score } from '../go/score';
 import { mortesSelonPropriete } from '../go/estimation';
 import { coupDeFermeture, partieAvancee } from '../go/frontieres';
-import { candidates, chooseMove, isLegalMove, OPPONENTS, type Opponent } from './simple';
+import { chooseMove, isLegalMove, OPPONENTS, type Opponent } from './simple';
 import { rng } from './sim';
-import { chooseFromAnalysis } from './katago/choose';
+import { choisirCoup } from './katago/choose';
 import { gunzip, parseNet } from './katago/parse';
 import { TfNet } from './katago/net';
 import { search } from './katago/search';
@@ -37,14 +37,9 @@ export interface Resultat { noir: string; blanc: string; gagnant: string; marge:
 
 async function coup(net: TfNet, pos: Position, lvl: Opponent, rand: () => number, graine: number): Promise<number> {
   if (lvl.katago) {
-    // Proposition simulée (#179) : part de hasard pour un niveau KataGo. En production, `hasard` vaut 0 pour ces
-    // niveaux et `bestMove` l'ignore : ce bloc ne sert qu'à mesurer la proposition avec ECHELLE_REGLAGES.
-    if (lvl.hasard > 0 && rand() < lvl.hasard) {
-      const c = candidates(pos, false);
-      if (c.length) return c[Math.floor(rand() * c.length)].move;
-    }
     const a = await search(net, pos, { komi: KOMI, visits: lvl.katago.visits });
-    let m = chooseFromAnalysis(a, pos, lvl.katago, rand);
+    // Même choix que `bestMove`, part de hasard comprise (tirage selon la politique, #179).
+    let m = choisirCoup(a, pos, { hasard: lvl.hasard, katago: lvl.katago }, rand);
     if (m === -1 && lvl.fermeFrontieres && partieAvancee(pos.board)) {
       const f = coupDeFermeture(pos, mortesSelonPropriete(pos, a.ownership), a.moves.map(x => x.move));
       if (f >= 0) m = f;
