@@ -24,13 +24,13 @@ Issue #166. Source unique : `src/data/analytics.ts` (constante `EVENTS`). Un tes
 | `partie_terminee` | `mode`, `adversaire`, `taille`, `coups`, `fin` (`score`/`abandon`), `gagnant` (`noir`/`blanc`) | Passage à l'écran de fin (`src/app/Game.tsx`) | **Parties terminées par joueur actif et par semaine** |
 | `premiere_partie_terminee` | `adversaire`, `taille`, `coups`, `fin`, `indices`, `secondes` | Première partie contre l'ordi finie, une fois (`trackOnce`, #35, `src/app/Game.tsx`) | Activation : part des nouveaux joueurs qui finissent une partie |
 | `lecon_commencee` | `lecon`, `rang`, `etape` (étape d'ouverture, 1 = début ; plus : reprise) | Ouverture du lecteur d'une leçon, depuis le chemin, l'accueil ou « Leçon suivante » (`src/app/Learn.tsx`). **Nouveau (#198)** | Taux de leçons finies (`lecon_terminee` / `lecon_commencee`), abandon en cours de leçon, J1 |
-| `lecon_terminee` | `lecon`, `rang` | Dernière étape d'une leçon (`src/app/Learn.tsx`) | Activation (chemin des leçons), entonnoir leçon 1 → 6 |
+| `lecon_terminee` | `lecon`, `rang` | Dernière étape d'une leçon (`src/app/Learn.tsx`). Depuis #199, une leçon terminée est aussi le défi du jour (fait vivre la série de l'appareil si `SERIE_UN_DEFI`) ; l'événement ne porte pas la série | Activation (chemin des leçons, étape 5 de l'entonnoir, `tableaux-de-bord.md` 7.1), taux de leçons finies, entonnoir leçon 1 → 7 |
 | `lien_connexion_envoye` | aucune | Lien magique envoyé (`src/app/Account.tsx`) | Entonnoir de création de compte (étape 1) |
 | `inscription` | aucune | Premier pseudo enregistré (`src/app/Account.tsx`) | Entonnoir de création de compte (étape 2), base de la future conversion |
 | `probleme_resolu` | `probleme`, `du_jour` | Problème réussi pour la première fois sur l'appareil (`src/app/Puzzles.tsx`) | Engagement (problèmes), future limite Premium « problèmes illimités » |
 | `revue_ouverte` | `coups`, `taille`, `mode` | Ouverture de la revue d'une partie (#34, `src/app/Revue.tsx`) | Usage de l'analyse (future limite « une analyse par jour ») |
 | `revue_rejouer` | `coup` (position reprise, 0 = plateau vide), `cle` (depuis le moment clé ou non), `perte` (points perdus au moment clé, arrondis), `taille`, `mode` | « Rejouer d'ici » touché dans la revue (#186, `src/app/Revue.tsx`). **Nouveau (#186)** | Revue utile : `revue_rejouer` / `revue_ouverte`, cible 30 % (analyse UX du 28/09, C11-C12) |
-| `go_du_jour_resolu` | `numero`, `essais`, `serie`, `arrivee_par_lien`, `vu` (résolu après avoir vu la réponse, #197) | Go du jour résolu, une fois par jour (#75, `src/app/Puzzles.tsx`). Aussi quand il est « Vu » : la série tient | Habitude quotidienne, rétention ; réussite sans aide (`vu = false`) |
+| `go_du_jour_resolu` | `numero`, `essais`, `serie` (série de l'appareil après coup ; depuis #199, elle compte aussi les leçons et révisions), `arrivee_par_lien`, `vu` (résolu après avoir vu la réponse, #197) | Go du jour résolu, une fois par jour (#75, `src/app/Puzzles.tsx`). Aussi quand il est « Vu » : la série tient. Depuis #199, ne part pas si le Go du jour du jour est déjà coché sur l'appareil | Habitude quotidienne, J7 (étape 6 de l'entonnoir d'activation) ; réussite sans aide (`vu = false`) ; séries perdues (`serie` qui repart à 1, `tableaux-de-bord.md` 7.7) |
 | `go_du_jour_partage` | `numero`, `essais`, `methode` (`partage`/`copie`) | Partage du Go du jour (`src/app/Puzzles.tsx`) | Acquisition par partage (coefficient viral) |
 | `arrivee_par_partage` | `numero_demande`, `numero_du_jour` | Ouverture de l'app par un lien partagé, une fois par session (`src/app/App.tsx`) | Nouveaux joueurs venus par partage |
 | `erreur_rejouee` | `reussi`, `taille`, `coup`, `rates`, `reponses` | Premier essai sur une erreur rejouée (#77, `src/ui/MesErreurs.tsx`) | Usage de « Rejoue tes erreurs » (distinction n° 3 de la charte) |
@@ -63,6 +63,25 @@ Issue #166. Source unique : `src/data/analytics.ts` (constante `EVENTS`). Un tes
 - `limite_atteinte` (`type` : `analyse`, `probleme`, `lecon`) : combien de joueurs gratuits touchent une limite.
 - `partie_en_ligne_terminee` : quand les parties en ligne auront leur écran.
 - `note_demandee` / `note_donnee` : invite à noter l'app, quand l'app sera sur les stores.
+
+## Vérification du 28/09 (#222)
+
+- **Couverture** : les 25 événements de `EVENTS` ont leur ligne (test `analytics.test.ts`). Événements ajoutés la nuit du 27 au 28/09 : `lecon_commencee` (#198), `revue_rejouer` (#186), `installation_proposee` et `installation_acceptee` (#178), `solution_vue` (#197), `revision_faite` (#199). Propriétés et déclencheurs relus dans le code : conformes au tableau.
+- **Réception dans PostHog** (lecture seule, 28/09 vers 03 h 30) : aucun de ces six événements n'a encore été reçu, ni `partie_commencee`, `comptage_manuel`, ni la propriété `mesure` (#166). Dernier événement reçu : 28/09 à 00 h 06. Soit aucun trafic depuis les déploiements, soit un souci de version : à revérifier au premier trafic réel.
+- **Requêtes** : chaque événement cité dans `tableaux-de-bord.md` existe dans `EVENTS` ou dans la liste « À ajouter plus tard » (test `src/data/tableauxDeBord.test.ts`).
+
+## Propriétés à ajouter pour les tests A/B (#222)
+
+Proposées, **pas encore dans le code** (issue d'instrumentation à ouvrir) :
+
+| Événement | Propriété | Pourquoi |
+|---|---|---|
+| `partie_commencee`, `partie_terminee` | `komi` (komi réellement compté) | Test du komi réduit (`tableaux-de-bord.md` 8.3). Aujourd'hui le komi se devine par le rang, mal |
+| `partie_commencee`, `partie_terminee` | `rang` (parties contre l'ordi déjà lancées sur l'appareil, celui de `equilibrage`) | Victoires des 3 premières parties (7.2) : le rang recalculé dans PostHog compte les parties terminées, pas lancées |
+| `partie_commencee`, `partie_terminee` | `respire` (booléen) | Test `POMME_RESPIRE` (8.2), tiré par partie |
+| Tous les événements des bras testés | `variante` | Séparer les bras d'un test. Les drapeaux PostHog sont coupés aujourd'hui (`advanced_disable_feature_flags`) |
+| `lecon_terminee` | `serie` | Voir une série reprise par une leçon (7.7) |
+| nouveau `probleme_ouvert` | `probleme`, `du_jour` | Dénominateur de la réussite sans aide (7.4) |
 
 ## Limites connues des nouveaux événements
 
