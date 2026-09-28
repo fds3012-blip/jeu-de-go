@@ -56,6 +56,7 @@ Ces données sont écrites dans le stockage local (`localStorage`) de ton naviga
 | Leçons | `go.lecons.v1` | Leçons commencées et terminées |
 | Problèmes | `go.problemes.v1`, `go.problemes.vus.v1` | Problèmes réussis, et problèmes dont tu as vu la réponse |
 | Problèmes à ta mesure | `go.cote-joueur.v1` | Une cote estimée d'après tes premiers essais, jamais affichée, pour choisir le prochain problème (#284) ; nombre d'essais, réussites d'affilée, dernier problème joué et problèmes déjà faits aujourd'hui |
+| Niveau de départ | `go.placement.v1` | Résultat du placement « Je sais déjà jouer » (#283) : niveau estimé en kyu, cote de départ, adversaire conseillé et date ; ou seulement « passé » et la date |
 | Révision espacée | `go.revision.v1` | Pour chaque problème réussi : jour de référence et prochaine échéance (J+1, J+3, J+7) |
 | Go du jour et série | `go.go-du-jour.v1`, `go.go-du-jour.fait.v1`, `go.gel.v1` | Dernier défi du jour réussi, nombre de jours de suite, gels de série en réserve |
 | Record de série | `go.serie-record.v1` | Plus longue série, et dernière série perdue déjà annoncée (#212) |
@@ -72,7 +73,7 @@ Ces données sont écrites dans le stockage local (`localStorage`) de ton naviga
 
 **Proposer d'installer l'app.** À partir de ton 2e jour de visite, l'app peut te proposer, **une seule fois** sur l'accueil, de l'installer sur ton écran d'accueil ; une ligne « Installer l'app » reste aussi dans le Profil. Pour savoir si c'est possible, elle lit sur l'appareil le type de navigateur et si l'app est déjà installée. Ces informations restent sur l'appareil ; seuls le fait que la carte a été montrée et, sur Chrome, ta réponse partent dans le comptage (section 3.3).
 
-### 3.2 Sur notre serveur (Supabase, Paris), si tu crées un compte
+### 3.2 Sur notre serveur (Supabase, Paris), si tu crées un compte ou joues un défi par lien
 
 | Traitement | Données | Finalité | Base légale (art. 6 RGPD) | Durée de conservation |
 |---|---|---|---|---|
@@ -80,6 +81,8 @@ Ces données sont écrites dans le stockage local (`localStorage`) de ton naviga
 | **Série de jours** | Nombre de jours de suite et dernier jour réussi, gels de série | Garder ta série d'un appareil à l'autre | Exécution du contrat | Tant que le compte existe. |
 | **Envoi de la série de l'appareil** | À chaque connexion : nombre de jours de suite et date du dernier jour réussi, lus sur l'appareil (`importer_serie_appareil`) | Ne pas perdre la série faite avant de créer ton compte ou sur un autre appareil | Exécution du contrat | Le serveur ne garde que la plus longue des deux séries, dans ton profil. Il refuse une série impossible (plus de jours que depuis le lancement, ou dernier jour trop ancien). |
 | **Parties en ligne** | Parties, coups (format SGF), résultats, adversaires, file d'attente de recherche d'adversaire | Jouer en ligne, calculer la cote, revoir tes parties | Exécution du contrat | Tant que le compte existe. À la suppression du compte, les parties contre un autre joueur restent pour lui, **anonymisées** (section 6). |
+| **Défi par lien** | Lien du défi (code aléatoire), qui l'a créé, qui l'a rejoint, date limite du coup en cours (3 jours par coup), date de création, coups et résultat de la partie | Jouer une partie en différé avec un ami, déclarer la victoire au temps | Exécution du contrat | Tant que le compte existe. Le lien ne sert plus après l'arrivée de l'ami, ni au-delà de 7 jours. La partie n'est visible que par ses deux joueurs. |
+| **Session sans compte** | Identifiant technique créé par Supabase quand tu ouvres un défi sans être inscrit (ni e-mail, ni pseudo) | Te laisser jouer tout de suite, puis garder ta partie si tu t'inscris | Exécution du contrat | Tant que la session existe sur ton appareil. **À valider** : durée maximale d'une session sans compte inutilisée (section 9, E13). |
 | **Progression** | Leçons terminées, essais de problèmes, badges, amis | Garder ta progression d'un appareil à l'autre, afficher tes badges et tes amis | Exécution du contrat | Tant que le compte existe. |
 
 ### 3.3 Mesure d'audience (PostHog, Union européenne)
@@ -98,6 +101,7 @@ Ces données sont écrites dans le stockage local (`localStorage`) de ton naviga
 - parties : `premiere_pierre`, `partie_commencee`, `comptage_manuel`, `partie_terminee`, `premiere_partie_terminee` (taille, adversaire, nombre de coups, résultat, secondes écoulées) ;
 - leçons : `lecon_commencee`, `lecon_terminee` ;
 - problèmes : `probleme_resolu`, `solution_vue`, `erreur_rejouee`, `erreur_maitrisee`, `revision_faite` ;
+- placement « Je sais déjà jouer » : `placement_commence`, `placement_termine` (niveau estimé en kyu), `placement_saute` (étape où tu l'as passé) ;
 - revue : `revue_ouverte`, `revue_rejouer` ;
 - Go du jour et série : `go_du_jour_resolu`, `go_du_jour_partage`, `arrivee_par_partage`, `gel_gagne`, `gel_utilise`, `serie_perdue` ;
 - progression : `xp_gagne`, `niveau_atteint` ;
@@ -211,3 +215,4 @@ Cette section n'est pas destinée aux joueurs : à retirer de la version publié
 | E10 | **Réseau de KataGo téléchargé chez GitHub** par défaut : l'IP du joueur part chez un tiers américain non cité jusqu'ici. | `DEFAULT_MODEL_URL` dans `src/engine/katago/loader.ts` | Faible | Servir le fichier depuis Vercel (`npm run fetch-model` et `VITE_KATAGO_MODEL_URL`), ou citer GitHub. |
 | E11 | **Texte de l'app à réaligner** : la page « Conditions et confidentialité » dit « Sans cookie, sans identifiant, sans ton adresse IP » (juste pour l'IP conservée, mais muet sur la localisation déduite), et « Tu peux le faire effacer » alors que le bouton existe maintenant. | `src/app/Confidentialite.tsx` (périmètre du front) | Faible | **Corrigé le 28/09 (#227)** : texte réaligné (mesure anonyme, pas de localisation, suppression depuis le Profil). |
 | E12 | **Durées encore non définies** : Sentry (champ 7), journaux Vercel. | Réglages des services | Faible | Relever les deux durées et les écrire ici. |
+| E13 | **Sessions sans compte (défi par lien, #81) gardées sans limite** : chaque ami qui ouvre un lien sans s'inscrire crée un utilisateur anonyme dans Supabase, avec ses parties. | `rejoindre_defi`, `signInAnonymously` | Faible : aucune donnée directe, mais conservation sans fin | Supprimer les utilisateurs anonymes sans activité depuis 30 jours (tâche planifiée, à décider) ; les parties partagées restent anonymisées comme à la suppression du compte. |
