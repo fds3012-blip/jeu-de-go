@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Mochi } from './Mochi';
 import { Confettis } from './Confettis';
 import { mouvementsReduits, useDefilement } from './defilement';
+import { t } from '../content/i18n';
 import './fin.css';
 
 interface Props {
@@ -80,8 +81,8 @@ export function FinPartie({ fond, sceau, tampon, titre, marge, texteMarge, sousT
         )}
         <div className="fin-action">{action}</div>
         <div className="fin-liens">
-          {onRevoir && <button type="button" className="lien" onClick={onRevoir}>Revoir ma partie</button>}
-          <button type="button" className="lien lien-discret" onClick={onAccueil}>Accueil</button>
+          {onRevoir && <button type="button" className="lien" onClick={onRevoir}>{t('fin.revoir')}</button>}
+          <button type="button" className="lien lien-discret" onClick={onAccueil}>{t('fin.accueil')}</button>
         </div>
         {apres}
       </div>

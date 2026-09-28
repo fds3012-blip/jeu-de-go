@@ -5,6 +5,7 @@ import { groupAt, isLegal, neighbors, newPosition, play, type Color, type Positi
 import { readSgf, writeSgf } from '../go/sgf';
 import { toLabel } from '../go/coords';
 import type { AnalyseRevue } from '../engine';
+import { nombre, t } from '../content/i18n';
 
 /** Dernière partie terminée, pour la revue (localStorage ; Supabase viendra plus tard). */
 export const REVUE_KEY = 'go.revue.v1';
@@ -64,8 +65,9 @@ export function grossesErreurs(positions: Position[], avances: (number | null)[]
   return out.sort((a, b) => b.perte - a.perte || a.coup - b.coup).slice(0, n);
 }
 
-const pts = (n: number) => { const v = Math.max(1, Math.round(n)); return `${v} point${v > 1 ? 's' : ''}`; };
+const pts = (n: number) => t('revue.points', { n: Math.max(1, Math.round(n)) });
 
+// Constantes de ce fichier : le texte français d'origine (tests) ; l'écran passe par `t` (#167).
 /** Message de Mochi quand aucune erreur ne dépasse le seuil. */
 export const AUCUNE_ERREUR = 'Aucune grosse erreur. Bien joué !';
 /** Ligne discrète quand KataGo n'est pas disponible : pas de meilleur coup montré. */
@@ -96,10 +98,10 @@ export function phraseErreur(e: Erreur, positions: Position[], meilleur: number 
   const joue = apres.lastMove ?? -1, adv = (3 - avant.toPlay) as Color;
   const perdues = positions[e.coup + 1] ? positions[e.coup + 1].captures[adv] - apres.captures[adv] : 0;
   let constat: string;
-  if (joue < 0) constat = 'Tu as passé trop tôt : il restait des points à prendre.';
-  else if (perdues > 0) constat = `Après ce coup, l'adversaire capture ${perdues > 1 ? `${perdues} pierres` : 'une pierre'}. Tu perds environ ${pts(e.perte)}.`;
-  else constat = `Ici tu as perdu environ ${pts(e.perte)}.`;
-  return meilleur != null && meilleur >= 0 ? `${constat} Essaie plutôt ${toLabel(meilleur, size)}, la pierre verte.` : constat;
+  if (joue < 0) constat = t('revue.passeTot');
+  else if (perdues > 0) constat = t('revue.captureApres', { n: perdues, pts: pts(e.perte) });
+  else constat = t('revue.perdu', { pts: pts(e.perte) });
+  return meilleur != null && meilleur >= 0 ? t('revue.essaie', { constat, point: toLabel(meilleur, size) }) : constat;
 }
 
 /**
@@ -141,16 +143,17 @@ export type Note = 'brillant' | 'meilleur' | 'excellent' | 'bon' | 'solide' | 'i
 /** Ordre d'affichage, du meilleur au pire. */
 export const NOTES: Note[] = ['brillant', 'meilleur', 'excellent', 'bon', 'solide', 'imprecision', 'erreur', 'grosse'];
 
-/** Libellé et symbole de chaque note : le symbole double la couleur (accessibilité). */
-export const NOTE_INFO: Record<Note, { libelle: string; symbole: string }> = {
-  brillant: { libelle: 'Brillant', symbole: '!!' },
-  meilleur: { libelle: 'Meilleur coup', symbole: '★' },
-  excellent: { libelle: 'Excellent', symbole: '!' },
-  bon: { libelle: 'Bon', symbole: '✓' },
-  solide: { libelle: 'Solide', symbole: '✓' },
-  imprecision: { libelle: 'Imprécision', symbole: '?!' },
-  erreur: { libelle: 'Erreur', symbole: '?' },
-  grosse: { libelle: 'Grosse erreur', symbole: '??' },
+/** Libellé et symbole de chaque note : le symbole double la couleur (accessibilité). Libellé dans la langue de l'interface (#167). */
+const info = (note: Note, symbole: string) => ({ get libelle() { return t(`note.${note}`); }, symbole });
+export const NOTE_INFO: Record<Note, { readonly libelle: string; symbole: string }> = {
+  brillant: info('brillant', '!!'),
+  meilleur: info('meilleur', '★'),
+  excellent: info('excellent', '!'),
+  bon: info('bon', '✓'),
+  solide: info('solide', '✓'),
+  imprecision: info('imprecision', '?!'),
+  erreur: info('erreur', '?'),
+  grosse: info('grosse', '??'),
 };
 
 /**
@@ -180,14 +183,14 @@ export type { AnalyseRevue };
 /** Ce que dit Mochi de la note du coup affiché, après « Tu joues E5. ». */
 export function phraseNote(n: NoteCoup): string {
   switch (n.note) {
-    case 'brillant': return 'Brillant ! Tu as trouvé mieux que le premier choix de KataGo.';
-    case 'meilleur': return 'Meilleur coup !';
-    case 'excellent': return 'Excellent coup.';
-    case 'bon': return `Bon coup, à peine ${n.perte < 1 ? 'un point' : pts(n.perte)} de moins que le meilleur.`;
-    case 'solide': return 'Coup solide.';
-    case 'imprecision': return `Imprécision : environ ${pts(n.perte)} de perdus.`;
-    case 'erreur': return `Erreur : environ ${pts(n.perte)} de perdus.`;
-    case 'grosse': return `Grosse erreur : environ ${pts(n.perte)} de perdus.`;
+    case 'brillant': return t('note.phrase.brillant');
+    case 'meilleur': return t('note.phrase.meilleur');
+    case 'excellent': return t('note.phrase.excellent');
+    case 'bon': return t('note.phrase.bon', { pts: n.perte < 1 ? t('revue.unPoint') : pts(n.perte) });
+    case 'solide': return t('note.phrase.solide');
+    case 'imprecision': return t('note.phrase.imprecision', { pts: pts(n.perte) });
+    case 'erreur': return t('note.phrase.erreur', { pts: pts(n.perte) });
+    case 'grosse': return t('note.phrase.grosse', { pts: pts(n.perte) });
   }
 }
 
@@ -473,15 +476,15 @@ export function notesAvecCle(notes: (NoteCoup | null)[], cle: MomentCle | null, 
 /** Phrase de Mochi sur le moment clé, au tutoiement. `adversaire` : nom de l'ordi ; sans lui, partie à deux. */
 export function phraseMomentCle(cle: MomentCle, positions: Position[], adversaire?: string): string {
   const avant = positions[cle.coup - 1], c = avant.toPlay, joue = positions[cle.coup].lastMove ?? -1;
-  const lui = adversaire ?? (c === 1 ? 'Blanc' : 'Noir');
-  const qui = adversaire ? 'tu as' : `${c === 1 ? 'Noir' : 'Blanc'} a`;
-  const prises = cle.prises > 1 ? `${cle.prises} pierres` : 'une pierre';
-  const fin = adversaire ? ' Rejoue ce coup !' : '';
-  if (cle.passe && cle.prises > 0) return `Moment clé : ici, ${qui} passé. ${lui} a pris ${prises}.${fin}`;
-  if (cle.passe) return `Moment clé : ici, ${qui} passé trop tôt. ${lui} en a profité : environ ${pts(cle.perte)} perdus.${fin}`;
+  const lui = adversaire ?? t(c === 1 ? 'camp.blanc' : 'camp.noir');
+  const qui = adversaire ? t('cle.quiToi') : t('cle.quiCamp', { camp: t(c === 1 ? 'camp.noir' : 'camp.blanc') });
+  const prises = t('cle.prises', { n: cle.prises });
+  const fin = adversaire ? ` ${t('cle.rejoue')}` : '';
+  if (cle.passe && cle.prises > 0) return t('cle.passePrise', { qui, lui, prises, fin });
+  if (cle.passe) return t('cle.passeTot', { qui, lui, pts: pts(cle.perte), fin });
   const lieu = toLabel(joue, avant.size);
-  if (cle.prises > 0) return `Moment clé : ici, ${qui} joué ${lieu}. Ensuite, ${lui} a pris ${prises} : environ ${pts(cle.perte)} perdus.${fin}`;
-  return `Moment clé : ici, ${qui} joué ${lieu}. Environ ${pts(cle.perte)} perdus.${fin}`;
+  if (cle.prises > 0) return t('cle.jouePrise', { qui, lieu, lui, prises, pts: pts(cle.perte), fin });
+  return t('cle.joue', { qui, lieu, pts: pts(cle.perte), fin });
 }
 
 /** Après une défaite nette sans erreur isolée notée : jamais « aucune erreur ». */
@@ -498,8 +501,9 @@ export function compteNotes(notes: (NoteCoup | null)[], couleur: Color): Record<
 export interface ContexteBilan { avanceNoir?: number | null; size?: number; cle?: MomentCle | null }
 
 /** Écart final lisible : « 20,5 points ». */
-const ecart = (v: number) => { const r = Math.round(Math.abs(v) * 2) / 2; return `${String(r).replace('.', ',')} point${r > 1 ? 's' : ''}`; };
-const citeCle = (cle: MomentCle) => `${cle.passe ? `Ta passe au coup ${cle.coup}` : `Ton coup ${cle.coup}`} t'a coûté ${pts(cle.perte)}`;
+// Accord de « point » : pluriel au-delà de 1 (« 1,5 points »), comme le texte d'origine ; en anglais, l'écart d'une défaite nette dépasse toujours 1.
+const ecart = (v: number) => { const r = Math.round(Math.abs(v) * 2) / 2; return t('revue.ecart', { n: r > 1 ? 2 : 1, v: nombre(r) }); };
+const citeCle = (cle: MomentCle) => t(cle.passe ? 'revue.citePasse' : 'revue.citeCoup', { coup: cle.coup, pts: pts(cle.perte) });
 
 /**
  * Phrase de Mochi qui résume la partie, au tutoiement. `adversaire` : nom de l'ordi (sinon Blanc).
@@ -509,21 +513,22 @@ const citeCle = (cle: MomentCle) => `${cle.passe ? `Ta passe au coup ${cle.coup}
 export function phraseBilan(notes: (NoteCoup | null)[], joueur: Color, adversaire?: string, ctx: ContexteBilan = {}): string {
   const size = ctx.size ?? 9;
   const moi = precisionHonnete(notes, joueur, ctx.avanceNoir, size), lui = precisionHonnete(notes, (3 - joueur) as Color, ctx.avanceNoir, size);
-  if (moi == null) return 'Pas assez de coups pour faire le bilan.';
+  if (moi == null) return t('revue.bilan.pasAssez');
   const miens = notes.filter((n): n is NoteCoup => !!n && n.couleur === joueur);
   const pire = miens.filter(n => n.note === 'erreur' || n.note === 'grosse').sort((a, b) => b.perte - a.perte || a.coup - b.coup)[0];
-  const brillant = miens.some(n => n.note === 'brillant') ? 'Un coup brillant, bravo ! ' : '';
+  const brillant = miens.some(n => n.note === 'brillant') ? `${t('revue.bilan.brillant')} ` : '';
   const cle = ctx.cle ?? null;
+  const revoirPire = (p: NoteCoup) => t('revue.bilan.vaRevoir', { cite: t('revue.citeCoup', { coup: p.coup, pts: pts(p.perte) }) });
   if (defaiteNette(ctx.avanceNoir, joueur, size)) {
-    const debut = `${brillant}Tu perds de ${ecart(ctx.avanceNoir!)}. `;
-    if (cle && (!pire || cle.perte >= pire.perte)) return `${debut}${citeCle(cle)} : rejoue-le.`;
-    if (pire) return `${debut}Ton coup ${pire.coup} t'a coûté ${pts(pire.perte)} : va le revoir.`;
-    return `${debut}${PERTES_DIFFUSES}`;
+    const debut = `${brillant}${t('revue.bilan.tuPerds', { ecart: ecart(ctx.avanceNoir!) })} `;
+    if (cle && (!pire || cle.perte >= pire.perte)) return `${debut}${t('revue.bilan.rejoueLe', { cite: citeCle(cle) })}`;
+    if (pire) return `${debut}${revoirPire(pire)}`;
+    return `${debut}${t('revue.pertesDiffuses')}`;
   }
-  const debut = brillant || (moi >= 85 ? 'Très belle partie, tu as joué juste. '
-    : lui != null && moi > lui ? `Tu as joué plus juste que ${adversaire ?? 'Blanc'}. `
-    : moi >= 60 ? 'Partie correcte. ' : 'Partie difficile, ça arrive. ');
-  if (pire) return `${debut}Ton coup ${pire.coup} t'a coûté ${pts(pire.perte)} : va le revoir.`;
-  if (cle) return `${debut}${citeCle(cle)} : va le revoir.`;
-  return `${debut}Aucune erreur, continue comme ça !`;
+  const debut = brillant || `${moi >= 85 ? t('revue.bilan.tresBelle')
+    : lui != null && moi > lui ? t('revue.bilan.plusJuste', { nom: adversaire ?? t('camp.blanc') })
+    : moi >= 60 ? t('revue.bilan.correcte') : t('revue.bilan.difficile')} `;
+  if (pire) return `${debut}${revoirPire(pire)}`;
+  if (cle) return `${debut}${t('revue.bilan.vaRevoir', { cite: citeCle(cle) })}`;
+  return `${debut}${t('revue.bilan.aucuneErreur')}`;
 }

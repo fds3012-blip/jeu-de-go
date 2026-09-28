@@ -2,8 +2,7 @@
 // Logique pure : les étapes et leurs totaux viennent du comptage de src/go/score.ts, jamais d'un calcul à part.
 import { score, type Rules } from '../go/score';
 import type { Position } from '../go/rules';
-
-const virgule = (n: number) => String(n).replace('.', ',');
+import { nombre, t } from '../content/i18n';
 
 /** Horloge du récit, en ms. Tout est fini à DUREE_RECIT (2,5 s au plus, exigence de l'issue). */
 export const TEMPS = { territoire: 0, etalement: 1100, prisonniers: 1350, komi: 1800, resultat: 2250 } as const;
@@ -62,49 +61,52 @@ export function etatRecit(r: Recit, t: number): EtatRecit {
   return { etape: 3, noir, blanc: blanc + r.komi };
 }
 
-const pluriel = (n: number, mot: string) => `${virgule(n)} ${mot}${Math.abs(n) >= 2 ? 's' : ''}`;
-
 /**
  * Noms des deux camps dans le récit (#118). À deux : « Noir » et « Blanc ». Contre l'ordi : « Toi » et son nom
  * (« Pomme ») ; `toi` sert dans les phrases (« pour toi », « Tu gagnes »).
  */
 export interface Camps { noir: string; blanc: string; toi: boolean }
+/** Camps d'une partie à deux, en français (texte d'origine) ; l'interface passe par `campsRecit()` (#167). */
 export const CAMPS_DEUX: Camps = { noir: 'Noir', blanc: 'Blanc', toi: false };
 
 /** Camps du récit : contre l'ordi (`adversaire` = son nom), « Toi » a Noir ; sinon Noir et Blanc. */
 export function campsRecit(adversaire?: string): Camps {
-  return adversaire ? { noir: 'Toi', blanc: adversaire, toi: true } : CAMPS_DEUX;
+  return adversaire ? { noir: t('camp.toi'), blanc: adversaire, toi: true } : { noir: t('camp.noir'), blanc: t('camp.blanc'), toi: false };
 }
 
 /** Nom d'un camp au milieu d'une phrase : « pour toi », « pour Pomme », « pour Noir ». */
-const dans = (c: Camps, camp: 1 | 2) => (camp === 1 ? (c.toi ? 'toi' : c.noir) : c.blanc);
+const dans = (c: Camps, camp: 1 | 2) => (camp === 1 ? (c.toi ? t('camp.toiDans') : c.noir) : c.blanc);
+
+/** « + 3 prisonniers pour Noir » : `v` affiché avec la virgule, accord selon `n`. */
+const plus = (type: Recit['deuxieme']['type'], n: number, pour: string) =>
+  t(type === 'prisonniers' ? 'recit.prisonniers' : 'recit.pierres', { n, v: nombre(n), pour });
 
 /** Ligne du deuxième temps : « + 3 prisonniers pour Noir, + 1 pour Blanc » (contre l'ordi : « pour toi », « pour Pomme »). */
-export function ligneDeuxieme(r: Recit, c: Camps = CAMPS_DEUX): string {
-  const { type, noir, blanc } = r.deuxieme, mot = type === 'prisonniers' ? 'prisonnier' : 'pierre';
-  if (!noir && !blanc) return type === 'prisonniers' ? 'Aucun prisonnier' : 'Aucune pierre';
-  if (!blanc) return `+ ${pluriel(noir, mot)} pour ${dans(c, 1)}`;
-  if (!noir) return `+ ${pluriel(blanc, mot)} pour ${dans(c, 2)}`;
-  return `+ ${pluriel(noir, mot)} pour ${dans(c, 1)}, + ${virgule(blanc)} pour ${dans(c, 2)}`;
+export function ligneDeuxieme(r: Recit, c: Camps = campsRecit()): string {
+  const { type, noir, blanc } = r.deuxieme;
+  if (!noir && !blanc) return t(type === 'prisonniers' ? 'recit.aucunPrisonnier' : 'recit.aucunePierre');
+  if (!blanc) return plus(type, noir, dans(c, 1));
+  if (!noir) return plus(type, blanc, dans(c, 2));
+  return t('recit.etPour', { debut: plus(type, noir, dans(c, 1)), v: nombre(blanc), pour: dans(c, 2) });
 }
 
 /** « + 6,5 komi pour Blanc » (contre l'ordi « pour Pomme » ; un komi négatif, en test, s'écrit « − 100 »). */
-export function ligneKomi(komi: number, c: Camps = CAMPS_DEUX): string {
-  if (!komi) return 'Pas de komi';
-  return `${komi < 0 ? '−' : '+'} ${virgule(Math.abs(komi))} komi pour ${dans(c, 2)}`;
+export function ligneKomi(komi: number, c: Camps = campsRecit()): string {
+  if (!komi) return t('recit.pasDeKomi');
+  return t('recit.komi', { signe: komi < 0 ? '−' : '+', v: nombre(Math.abs(komi)), pour: dans(c, 2) });
 }
 
 export const EXPLICATION_KOMI = "Le komi compense l'avantage de Noir, qui joue en premier.";
 
 /** « Noir gagne de 2,5 points » à deux ; contre l'ordi « Tu gagnes de 3,5 points ! » ou « Pomme gagne de 2,5 points ». */
-export function ligneResultat(r: Recit, c: Camps = CAMPS_DEUX): string {
-  if (!r.gagnant) return 'Égalité';
-  const marge = pluriel(r.marge, 'point');
-  if (r.gagnant === 1 && c.toi) return `Tu gagnes de ${marge} !`;
-  return `${r.gagnant === 1 ? c.noir : c.blanc} gagne de ${marge}`;
+export function ligneResultat(r: Recit, c: Camps = campsRecit()): string {
+  if (!r.gagnant) return t('recit.egalite');
+  const marge = { n: r.marge, v: nombre(r.marge) };
+  if (r.gagnant === 1 && c.toi) return t('recit.tuGagnes', marge);
+  return t('recit.gagne', { ...marge, nom: r.gagnant === 1 ? c.noir : c.blanc });
 }
 
 /** Compteur : « Noir 18 · Blanc 12 ». */
 export function ligneCompteur(noir: number, blanc: number): string {
-  return `Noir ${virgule(noir)} · Blanc ${virgule(blanc)}`;
+  return t('recit.compteur', { noir: nombre(noir), blanc: nombre(blanc) });
 }

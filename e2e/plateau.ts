@@ -5,9 +5,9 @@ import { fromLabel } from '../src/go/coords';
 const C = 40;
 const M = 34;
 
-/** Le plateau de go (SVG accessible) : une grille s'il est jouable (issue #116), une image sinon. */
+/** Le plateau de go (SVG accessible) : une grille s'il est jouable (issue #116), une image sinon. En français ou en anglais (#167). */
 export function plateau(page: Page, taille = 9): Locator {
-  const name = `Plateau de go ${taille} × ${taille}`;
+  const name = new RegExp(`^(Plateau de go|Go board) ${taille} × ${taille}$`);
   return page.getByRole('grid', { name }).or(page.getByRole('img', { name }));
 }
 

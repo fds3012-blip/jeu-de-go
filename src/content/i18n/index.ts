@@ -63,6 +63,11 @@ export function traduire<K extends Cle>(l: Langue, cle: K, ...params: Params<K>)
   return brut.replace(/\{(\w+)\}/g, (tout, nom: string) => (nom in vars ? String(vars[nom]) : tout));
 }
 
+/** Nombre décimal lisible : virgule en français (« 6,5 »), point en anglais (« 6.5 »). */
+export function nombre(n: number, l: Langue = courante): string {
+  return l === 'fr' ? String(n).replace('.', ',') : String(n);
+}
+
 /** Texte de `cle` dans la langue de l'interface. Ex. : `t('profil.jours', { n: 3 })` → « 3 jours ». */
 export function t<K extends Cle>(cle: K, ...params: Params<K>): string {
   return traduire(courante, cle, ...params);
