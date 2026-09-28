@@ -16,6 +16,8 @@ class MemoryStorage {
   setItem(k: string, v: string) { this.m.set(k, String(v)); }
   removeItem(k: string) { this.m.delete(k); }
   clear() { this.m.clear(); }
+  get length() { return this.m.size; }
+  key(i: number) { return [...this.m.keys()][i] ?? null; }
 }
 
 const flush = () => new Promise(r => setTimeout(r, 0));
@@ -25,6 +27,7 @@ function asBrowser() {
   vi.stubGlobal('window', {});
   vi.stubGlobal('document', {});
   vi.stubGlobal('localStorage', new MemoryStorage());
+  vi.stubGlobal('sessionStorage', new MemoryStorage());
 }
 function withKeys() {
   vi.stubEnv('VITE_POSTHOG_KEY', 'phc_test');
@@ -42,6 +45,24 @@ beforeEach(() => {
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.unstubAllEnvs();
+});
+
+describe('sans localisation déduite de l’IP (#223, E2)', () => {
+  it('les deux niveaux ajoutent $geoip_disable à chaque événement via before_send', async () => {
+    asBrowser(); withKeys();
+    A.track(A.EVENTS.appOuverte);
+    await vi.waitFor(() => expect(posthog.init).toHaveBeenCalled());
+    expect(posthog.init.mock.calls[0][1].before_send).toBe(A.sansLocalisation);
+    expect(A.POSTHOG_COMPLET.before_send).toBe(A.sansLocalisation);
+    A.setConsent('accepte');
+    await vi.waitFor(() => expect(posthog.set_config).toHaveBeenCalledWith(expect.objectContaining({ before_send: A.sansLocalisation })));
+  });
+
+  it('sansLocalisation garde les propriétés et laisse passer un événement déjà rejeté', () => {
+    expect(A.sansLocalisation({ event: 'x', properties: { a: 1 } })).toEqual({ event: 'x', properties: { a: 1, $geoip_disable: true } });
+    expect(A.sansLocalisation({ event: '$identify' })).toEqual({ event: '$identify', properties: { $geoip_disable: true } });
+    expect(A.sansLocalisation(null)).toBeNull();
+  });
 });
 
 describe('choix mémorisé sans stockage (issue #50)', () => {
@@ -192,6 +213,54 @@ describe('avec consentement', () => {
     await vi.waitFor(() => expect(posthog.set_config).toHaveBeenCalledWith(expect.objectContaining({ persistence: 'memory' })));
     expect(posthog.reset).toHaveBeenCalled();
     await vi.waitFor(() => expect(sentry.close).toHaveBeenCalled());
+  });
+
+  it("retirer son accord efface l'identifiant PostHog et les repères go.evenement.*, pas la progression (#223, E5)", async () => {
+    asBrowser(); withKeys();
+    A.setConsent('accepte');
+    A.trackOnce(A.EVENTS.premierePierre);
+    await vi.waitFor(() => expect(posthog.capture).toHaveBeenCalled());
+    // Ce que posthog-js écrit en mode complet, plus des données du joueur qui doivent rester.
+    localStorage.setItem('ph_phc_test_posthog', '{"distinct_id":"abc"}');
+    localStorage.setItem('__ph_opt_in_out_phc_test', '1');
+    sessionStorage.setItem('ph_phc_test_window_id', 'w1');
+    localStorage.setItem('go.progression.v1', '{"xp":120}');
+    localStorage.setItem('go.serie.v1', '{"jours":4}');
+    expect(localStorage.getItem('go.evenement.premiere_pierre')).toBe('1');
+
+    A.setConsent('refuse');
+    expect(localStorage.getItem('ph_phc_test_posthog')).toBeNull();
+    expect(localStorage.getItem('__ph_opt_in_out_phc_test')).toBeNull();
+    expect(sessionStorage.getItem('ph_phc_test_window_id')).toBeNull();
+    expect(localStorage.getItem('go.evenement.premiere_pierre')).toBeNull();
+    // reset() peut réécrire un identifiant : effacé à nouveau après le passage en mémoire.
+    localStorage.setItem('ph_phc_test_posthog', '{"distinct_id":"nouveau"}');
+    await vi.waitFor(() => expect(posthog.reset).toHaveBeenCalled());
+    await flush();
+    expect(localStorage.getItem('ph_phc_test_posthog')).toBeNull();
+    // Rien d'autre n'est touché.
+    expect(localStorage.getItem('go.progression.v1')).toBe('{"xp":120}');
+    expect(localStorage.getItem('go.serie.v1')).toBe('{"jours":4}');
+    expect(localStorage.getItem(A.CONSENT_KEY)).toBe('refuse');
+  });
+
+  it("s'opposer après avoir accepté efface aussi les traces (#223, E5)", () => {
+    asBrowser();
+    A.setConsent('accepte');
+    localStorage.setItem('ph_x_posthog', 'id');
+    localStorage.setItem('go.evenement.inscription', '1');
+    A.setOpposition(true);
+    expect(localStorage.getItem('ph_x_posthog')).toBeNull();
+    expect(localStorage.getItem('go.evenement.inscription')).toBeNull();
+    expect(localStorage.getItem(A.OPPOSITION_KEY)).toBe('1');
+  });
+
+  it("sans retrait d'accord, rien n'est effacé", () => {
+    asBrowser();
+    localStorage.setItem('go.evenement.inscription', '1');
+    A.setConsent('refuse');
+    A.setConsent('accepte');
+    expect(localStorage.getItem('go.evenement.inscription')).toBe('1');
   });
 
   it("trackOnce n'envoie qu'une fois par appareil", async () => {
