@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { LESSONS } from '../content/lessons';
+import { CHAPITRES, LESSONS } from '../content/lessons';
 import { ACQUIS, acquis } from '../content/acquis';
 import { CHAPITRES_A_VENIR, LIGNE, MARGE_RANGEE, boutonChemin, etapes, finDeLecon, titreCourt, trace, traceJusqua, type Progression } from './apprendre';
 
@@ -8,7 +8,7 @@ const plein = (id: string) => LESSONS.find(l => l.id === id)!.steps.length;
 describe('etapes : état des pierres du chemin', () => {
   it('chemin neuf : la leçon 1 est en cours, les autres à venir', () => {
     const e = etapes(LESSONS, {});
-    expect(e.map(x => x.etat)).toEqual(['encours', 'avenir', 'avenir', 'avenir', 'avenir', 'avenir', 'avenir']);
+    expect(e.map(x => x.etat)).toEqual(['encours', ...Array(LESSONS.length - 1).fill('avenir')]);
     expect(e[0].rang).toBe(1);
   });
   it('leçon 1 finie, leçon 2 commencée', () => {
@@ -54,8 +54,9 @@ describe('boutonChemin', () => {
 });
 
 describe('trace : chemin de pierres sur les lignes du goban', () => {
-  it('sept leçons (#177) : sept pierres, toujours sur les lignes et près du milieu', () => {
-    const t = trace(LESSONS.length, { encours: 6 });
+  it('sept leçons au chapitre 1 (#177) : sept pierres, toujours sur les lignes et près du milieu', () => {
+    expect(CHAPITRES[0].lecons).toHaveLength(7);
+    const t = trace(CHAPITRES[0].lecons.length, { encours: 6 });
     expect(t.pierres).toHaveLength(7);
     for (let i = 1; i < 7; i++) expect(Math.sign(t.pierres[i].x)).toBe(-Math.sign(t.pierres[i - 1].x));
     expect(t.hauteur).toBeGreaterThan(t.pierres[6].y);
@@ -160,6 +161,23 @@ describe('finDeLecon', () => {
     expect(finDeLecon(LESSONS, 'l1')).toEqual({ titre: 'Leçon terminée', derniere: false });
     expect(finDeLecon(LESSONS, LESSONS[LESSONS.length - 1].id)).toEqual({ titre: 'Chapitre terminé', derniere: true });
     expect(finDeLecon([], 'l1').derniere).toBe(false);
+  });
+});
+
+describe('chapitres (#228)', () => {
+  it('chaque leçon est dans un seul chapitre, dans l’ordre du chemin', () => {
+    expect(CHAPITRES.flatMap(c => c.lecons)).toEqual(LESSONS);
+  });
+  it('« Les bases » (l1 à l7) est complet ; le chapitre 2 s’ouvre sur la leçon 8, encore en cours d’écriture', () => {
+    expect(CHAPITRES.map(c => c.lecons.map(l => l.id))).toEqual([['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7'], ['l8']]);
+    expect(CHAPITRES.map(c => c.complet)).toEqual([true, false]);
+    expect(CHAPITRES[0].titre).toBe('Les bases');
+  });
+  it('la leçon 7 finit « Les bases », pas le chemin : la leçon 8 est la prochaine étape', () => {
+    const avant = Object.fromEntries(CHAPITRES[0].lecons.map(l => [l.id, l.steps.length]));
+    expect(finDeLecon(CHAPITRES[0].lecons, 'l7').derniere).toBe(true);
+    expect(etapes(LESSONS, avant).find(e => e.etat === 'encours')!.lecon.id).toBe('l8');
+    expect(boutonChemin(LESSONS, avant)!.id).toBe('l8');
   });
 });
 

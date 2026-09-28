@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { LESSONS } from '../content/lessons';
+import { CHAPITRES } from '../content/lessons';
+
+// #228 : la fin de chapitre se compte dans le chapitre de la leçon (ici « Les bases », l1 à l7).
+const LESSONS = CHAPITRES[0].lecons;
 import { actionsFin, finDeChapitre, type Progression } from './apprendre';
 
 const toutes = (sauf?: string): Progression =>
