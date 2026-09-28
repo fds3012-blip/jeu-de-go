@@ -37,7 +37,7 @@ Validation locale sur la branche `recette-soir` : `tsc -b` vert ; `eslint .` 0 e
 | # | Défaut | Gravité | Écran | Suite |
 |---|---|---|---|---|
 | S1 | Partie guidée : portrait et rang de Pomme sous le nom « Mochi », puis Pomme « BATTUE » à la fin, alors que la partie ne compte pas | 3 | Partie guidée, fin | **corrigé ici** (`src/app/Game.tsx`, test dans `e2e/partie-guidee.spec.ts`) |
-| S2 | `?lang=en` : les 6 problèmes du lot R (r01 à r06) restent en français (titre, consigne, réfutation, explication) | 2 | Problème, Go du jour | #289 |
+| S2 | `?lang=en` : les 6 problèmes du lot R (r01 à r06) restent en français (titre, consigne, réfutation, explication) | 2 | Problème, Go du jour | #289, fermée : corrigé par #281, fusionné pendant la recette |
 | S3 | 320 px : le verdict des problèmes de vie et mort (7 lignes) cache les lignes 1 à 4 du plateau, dont le coup gagnant | 2 | Problème | #290 |
 | S4 | Tampon « BATTUE » / « BEATEN » de 9 px à 3,85:1 (seuil AA 4,5:1) | 2 | Feuille des adversaires | #291 |
 | S6 | Le lendemain, « Tes erreurs à rejouer » est la dernière section de Problèmes (2 à 3 écrans plus bas), rien sur le premier écran de l'accueil | 2 | Problèmes, J+1 | #293 |
@@ -58,7 +58,9 @@ Restes, hors correctif : les répliques du bandeau (`choisirReplique(ai.id)`) et
 
 Capture après correctif : `07-fin-partie-guidee-sombre-390.jpg`.
 
-### S2. Lot R non traduit (gravité 2) : #289
+### S2. Lot R non traduit (gravité 2) : #289, corrigé depuis par #281
+
+Mise à jour : #281 (lot R traduit) a été fusionné sur `origin/main` pendant la recette et est inclus dans cette branche par la fusion finale. #289 est fermée.
 
 #278 (165 problèmes en anglais) a été fusionné avant #280 (lot R). Sous `?lang=en`, r01 affiche « Daily Go #166 · Six points dans le coin », puis « Noir joue et vit… You play Black. ». q01 (lot Q) est bien traduit. Le test `problemes.en.test.ts` n'exige pas une traduction pour chaque problème du calendrier.
 
