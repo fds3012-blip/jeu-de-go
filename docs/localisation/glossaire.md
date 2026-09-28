@@ -160,5 +160,26 @@ Principes :
 - Conditions : « saisir la CNIL » devient *contact the CNIL, the French data protection authority* (sigle inconnu hors de France).
 - « Pomme continue : il reste un point à prendre en E4 » : *Pomme keeps playing: there’s still one point to take at E4*. La raison vient du moteur par une clé et des paramètres (point, nombre).
 - Gel : « Ton gel a protégé ta série de 12 jours ! » : *Your freeze protected your 12-day streak!*
-- Contenu encore en français en anglais (#167, étape 5) : leçons 6 à 8, titres, consignes et explications des problèmes. L’e2e `langue-parcours.spec.ts` les retire avant de chercher des mots français.
-- Leçons 1 à 5 et chapitres traduits (`content/lessons.en.js`, textes seulement ; positions et réponses reprises du français, vérifiées par `src/content/lessons.en.test.ts`). « point vert » : *green point* ; « Touche » : *Tap* ; « Allonge-toi » : *Extend* ; « À toi » : *Your turn* ; « Pierres collées » : *Touching stones*. Titre « Le ko » : *Ko*. l2.1 dit *Play the green point* (12 mots au plus).
+- Contenu encore en français en anglais (#167, étape 5) : titres, consignes et explications des problèmes. L’e2e `langue-parcours.spec.ts` retire tout le contenu des leçons et des problèmes avant de chercher des mots français.
+- Leçons 1 à 8 et chapitres traduits (`content/lessons.en.js`, textes seulement ; positions et réponses reprises du français, vérifiées par `src/content/lessons.en.test.ts`, nombres compris). « point vert » : *green point* ; « Touche » : *Tap* ; « À toi » : *Your turn*. Titre « Le ko » : *Ko*.
+
+## Leçons en anglais : choix de vocabulaire (#167, relecture)
+
+| Français (leçons) | Anglais retenu | Raison |
+|---|---|---|
+| libertés « autour » d'une pierre | empty points *next to it* | *around* inclut les diagonales pour un enfant : faux sens. |
+| boucher les libertés | *fill* its liberties | Usage AGA et Sensei's Library (*fill a liberty*). |
+| pierres collées (un groupe) | stones *side by side* are *connected* | *touching* peut se lire en diagonale. *connected* est le terme des règles. |
+| collée à Blanc (ouverture) | *right next to* White | Même raison ; *contact play* réservé aux joueurs. |
+| prisonniers (1re fois, l1) | prisoners (*captured stones*) | Terme repris en l7 pour le comptage : expliqué dès la leçon 1. |
+| s'allonger (en atari) | *extend* (*add a stone at…*) | *extend* = nobi ; en l8, *extend* = hiraki (extension le long du bord). Les deux sont l'usage anglais ; chaque leçon montre le coup. |
+| reprendre (ko) | *take back* | Plus clair que *retake* pour un enfant. « ne peut pas reprendre » : *can’t take back yet* (il le pourra après un coup ailleurs). |
+| interdit (jouer dans un œil) | *suicide, not allowed* | Nomme la règle (glossaire : suicide). |
+| deux vrais yeux : vit pour toujours | two eyes: *can never be captured. It is alive.* | *real eye* n'est pas encore opposé à *false eye* ; *alive* est le terme à apprendre. |
+| pierre blanche sur le chemin (échelle) | *a ladder breaker* | Terme standard, donné entre parenthèses. |
+| coins, bords, centre (ouverture) | corners, *sides*, center | Proverbe anglais (*corners, sides, center*). *edge* reste le bord du plateau. |
+| les deux lignes du bord | the first two lines, the two lines nearest the edge | |
+| trou dans la frontière | *hole* | « frontière » : *border* (voir *open borders*). |
+| Chez moi, Chez Blanc (quiz l7) | *In my territory*, *In White’s* | |
+| 3-3, 3-4, 5-5, 3e ligne | 3-3, 3-4, 5-5, *3rd line* | Points nommés comme dans l'usage anglais (*3-3 point*). |
+| Noir gagne d'un demi-point | Black wins by half a point | |

@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { attendrePierre, jouer, jouerSuite, partieADeux, passer } from './plateau';
+import { attendrePierre, attendreReponse, jouer, jouerSuite, partieADeux, passer } from './plateau';
 
 // Issue #207 : corrections de la recette du 28/09 (docs/qa/recette-2026-09-28.md sur la branche recette-nuit).
 // Chaque défaut est vérifié à la taille d'écran où il a été vu.
@@ -36,7 +36,12 @@ for (const [largeur, hauteur] of [[375, 667], [320, 640], [320, 568]] as const) 
       // Le plateau reste jouable au-dessus de la bulle, et il ne bouge pas quand elle s'efface.
       const avant = (await page.locator('.partie-plateau').boundingBox())!.y;
       await jouer(page, 'E7');
-      await expect(page.locator('ol.coups li:not(.vide)')).toHaveCount(1);
+      // #260 : Pomme répond en 60 ms en e2e ; sous charge, sa réponse est souvent déjà là. On attend donc un état
+      // observable : ta pierre posée, puis la réponse de Pomme (deux coups, et « Passer » de nouveau actif).
+      await attendrePierre(page, 'E7', 'noir');
+      await expect(intro).toHaveAttribute('data-cache', 'true');
+      expect(Math.abs((await page.locator('.partie-plateau').boundingBox())!.y - avant)).toBeLessThanOrEqual(2);
+      expect(await attendreReponse(page, 0), 'la partie ne finit pas au premier coup').toBe(false);
       await expect(intro).toHaveAttribute('data-cache', 'true');
       expect(Math.abs((await page.locator('.partie-plateau').boundingBox())!.y - avant)).toBeLessThanOrEqual(2);
     });

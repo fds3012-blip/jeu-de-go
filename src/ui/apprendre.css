@@ -185,6 +185,10 @@
 .verdict { position: fixed; left: 0; right: 0; bottom: calc(var(--nav-h) + 1px + env(safe-area-inset-bottom, 0px)); z-index: 15;
   padding: 14px max(var(--gouttiere), calc((100% - var(--largeur-max)) / 2 + var(--gouttiere))) 16px;
   background: var(--surface); border-radius: 20px 20px 0 0; box-shadow: 0 -12px 28px -14px rgba(0, 0, 0, .55); }
+/* #268 (WCAG 2.4.11) : feuille ouverte, un élément amené à l'écran par le focus s'arrête au-dessus d'elle, pas dessous.
+   --verdict-h-page est posée sur <html> par Verdict (Lecteur.tsx) ; 240 px tant qu'elle n'est pas mesurée.
+   `:root` et non `html` : cette règle l'emporte sur `html:has(.nav)` (nav.css), quel que soit l'ordre des feuilles. */
+:root:has(.verdict) { scroll-padding-bottom: calc(max(var(--nav-h), 3.75rem) + 1px + env(safe-area-inset-bottom, 0px) + var(--verdict-h-page, 240px)); }
 .verdict-juste { background: color-mix(in srgb, var(--jade) 15%, var(--surface)); }
 .verdict-revoir { background: color-mix(in srgb, var(--hanko) 14%, var(--surface)); }
 .verdict-texte { display: flex; gap: 12px; align-items: flex-start; }
@@ -349,7 +353,8 @@
 /* Recette du 28/09 matin (#247) : le verbe « Problème suivant » ne passe jamais sur deux lignes ; seul le titre s'abrège. */
 .continuer { display: flex; align-items: center; justify-content: center; gap: 8px; white-space: nowrap; }
 .continuer-titre { font-weight: var(--fw-medium); opacity: .8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
-.continuer-titre::before { content: "· "; }
+/* #268 : le point médian est décoratif ; texte de remplacement vide, le nom accessible reste le texte lu à l'écran. */
+.continuer-titre::before { content: "· "; content: "· " / ""; }
 .btn.continuer { width: 100%; margin: 0 0 var(--space-2); background: var(--surface); }
 /* #196 : l'écran Problèmes ne montre que le palier en cours ; la grille est derrière « Tous les problèmes ». */
 .palier-en-cours { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-3); margin-top: var(--space-2);

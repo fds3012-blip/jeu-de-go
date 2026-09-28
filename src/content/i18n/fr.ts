@@ -139,7 +139,6 @@ export const fr = {
   'pb.aide.mot': 'atari',
   'pb.aide.apres': ' quand il ne lui reste qu’une liberté.',
   'pb.continuer': 'Problème suivant',
-  'pb.continuerAria': 'Problème suivant : {titre}',
   'pb.tous': 'Tous les problèmes',
   'pb.tonPalier': 'Ton palier',
   'pb.verrouille': 'verrouillé',
@@ -399,6 +398,10 @@ export const fr = {
   'partie.passe.continuer': 'Jouer encore',
   'partie.passe.continue': 'À toi ! Pose tes pierres pour fermer ta zone.',
   'partie.passe.aria': 'Passer maintenant ?',
+  'partie.quitter.avertir': 'Tu quittes la partie ? Elle sera perdue.',
+  'partie.quitter.confirmer': 'Quitter',
+  'partie.quitter.continuer': 'Jouer encore',
+  'partie.quitter.aria': 'Quitter la partie ?',
   // Répliques des adversaires (src/app/repliques.ts) : 15 caractères au plus
   'replique.captureSubie.0': 'Oh ! Bien vu.',
   'replique.captureSubie.1': 'Aïe !',

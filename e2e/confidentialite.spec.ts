@@ -107,6 +107,8 @@ test('aucune requête de suivi sans consentement, conditions accessibles depuis 
 
   // En partie, la navigation est masquée : on revient d'abord à l'accueil.
   await page.getByRole('button', { name: "Retour à l'accueil" }).click();
+  // #268 : une partie en cours se quitte après la confirmation de Mochi.
+  await page.getByRole('group', { name: 'Quitter la partie ?' }).getByRole('button', { name: 'Quitter', exact: true }).click();
   await page.getByRole('navigation').getByRole('button', { name: 'Profil' }).click();
   await page.getByRole('button', { name: 'Conditions et confidentialité' }).click();
   await expect(page.getByRole('heading', { name: 'Conditions et confidentialité' })).toBeVisible();
