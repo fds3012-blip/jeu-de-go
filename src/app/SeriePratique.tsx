@@ -8,6 +8,7 @@ import { PuzzlePlayer, SOLVED_KEY, VUS_KEY } from './Puzzles';
 import { readLocal, writeLocal } from './hooks';
 import { recompense } from './aide';
 import { gagnerXp } from './xp';
+import { noterRediteAppareil } from './rediteAppareil';
 import { t } from '../content/i18n';
 
 function noter(cle: string, id: string) {
@@ -29,6 +30,8 @@ export function SeriePratique({ problemes, confirmTouch, onFin }: { problemes: P
           const deja = !!readLocal<Record<string, true>>(SOLVED_KEY, {})[pz.id];
           if (gain.xp && !deja) { track(EVENTS.problemeResolu, { probleme: pz.id, du_jour: false }); gagnerXp('probleme'); }
           noter(gain.palier ? SOLVED_KEY : VUS_KEY, pz.id);
+          // #237 : déjà vu en leçon puis en pratique, il ne revient pas dès demain en révision.
+          noterRediteAppareil(pz.id);
         }}
         onNext={suivant}
         onExit={onFin} />

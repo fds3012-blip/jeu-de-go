@@ -171,6 +171,7 @@ export const en = {
   'pb.aide.refutation.1': 'White plays the key point. The right move is to play there first.',
   'pb.aide.refutation.2': 'Black plays the key point. The right move is to play there first.',
   'pb.aide.refutationSeule': 'Your move doesn’t threaten anything here. Look elsewhere.',
+  'pb.rejouePlateau': 'Play again right on the board.',
   'pb.vuTexte': 'That’s it! You saw the answer, so this puzzle counts as seen, not solved. Try it again later.',
   'pb.vuSerie': 'Your daily streak still counts.',
   'pb.tamponVu': 'Seen',

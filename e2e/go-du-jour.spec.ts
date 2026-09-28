@@ -45,9 +45,14 @@ test('le lien ouvre le Go du jour sans compte, on le résout, puis on le partage
 
   await jouer(page, 'A1');
   await expect(page.getByText('Pas tout à fait. Essaie encore.')).toBeVisible();
-  await page.getByRole('button', { name: 'Réessayer' }).click();
+  // #237 (N6) : comme en leçon, pas de « Réessayer » ; on rejoue directement, l'indice reste un lien discret.
+  await expect(page.getByRole('button', { name: 'Réessayer' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Voir un indice' })).toHaveClass(/\blien\b/);
   await jouer(page, 'E5');
   await attendrePierre(page, 'E5', 'noir');
+  // #237 (N3) : ce Go du jour (b1) est l'étape 4 de la leçon 1 ; la Révision du jour ne le reprendra pas demain.
+  const recents = await page.evaluate(() => JSON.parse(localStorage.getItem('go.revision.v1') ?? '{}').recents);
+  expect(recents).toEqual({ b1: 1 });
 
   // « Partager » est l'action principale, en relief.
   const partager = page.getByRole('button', { name: 'Partager' });

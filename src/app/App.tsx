@@ -37,7 +37,8 @@ import { AnnonceXp } from '../ui/PastilleXp';
 import { ProposerInstallation } from '../ui/ProposerInstallation';
 import { estMomentRetour, noterOuverture } from './installation';
 import { SeriePratique } from './SeriePratique';
-import { THEMES_DE_LECON, serieDeLecon } from '../content/themes';
+import { TAILLE_SERIE, THEMES_DE_LECON, serieDeLecon } from '../content/themes';
+import { estRedite } from '../content/redites';
 import type { Puzzle } from '../data/puzzles';
 
 const PROBLEMES_LOCAUX = parsePuzzles(ALL_PUZZLES);
@@ -214,7 +215,9 @@ export function App() {
       pratique={themes.length ? {
         themes: themes.map(th => t(`theme.${th}`)),
         ouvrir: () => {
-          const s = serieDeLecon(lesson.id, PROBLEMES_LOCAUX, new Set(Object.keys(readLocal<Record<string, true>>(SOLVED_KEY, {}))));
+          const s = serieDeLecon(lesson.id, PROBLEMES_LOCAUX, new Set(Object.keys(readLocal<Record<string, true>>(SOLVED_KEY, {}))),
+            // #237 : pas le même exercice que l'étape de leçon qui vient d'être jouée.
+            TAILLE_SERIE, p => estRedite(p, lesson));
           if (s.length) { setSerie3(s); setLessonId(null); window.scrollTo({ top: 0 }); }
         },
       } : undefined}

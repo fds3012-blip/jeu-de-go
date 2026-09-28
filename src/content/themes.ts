@@ -84,15 +84,21 @@ export const TAILLE_SERIE = 3;
  * Série d'entraînement de fin de leçon : dans chaque thème de la leçon, les plus faciles non réussis d'abord,
  * puis, s'il n'en reste plus, les plus faciles déjà réussis. Plusieurs thèmes : on les prend chacun à leur tour.
  * Vide si la leçon n'a pas de thème.
+ *
+ * `redite` (#237, N3) : vrai pour un problème qui répète un exercice de la leçon qui vient d'être jouée
+ * (`estRedite` de redites.ts : même position à symétrie près, ou liste d'exclusion). Il passe en dernier :
+ * il ne sert que si le thème n'a rien d'autre. Exemple : après la leçon 1, la pratique ne repropose ni b1
+ * « Capture la pierre » (l'étape 4 elle-même) ni a01 « Première capture » (la même forme).
  */
 export function serieDeLecon<T extends { id: string; difficulty: number }>(
-  lecon: string, liste: readonly T[], reussis: ReadonlySet<string>, n = TAILLE_SERIE,
+  lecon: string, liste: readonly T[], reussis: ReadonlySet<string>, n = TAILLE_SERIE, redite: (p: T) => boolean = () => false,
 ): T[] {
   const themes = THEMES_DE_LECON[lecon] ?? [];
   const facile = (a: T, b: T) => a.difficulty - b.difficulty || a.id.localeCompare(b.id);
   const files = themes.map(t => {
     const du = liste.filter(p => THEME_DU_PROBLEME[p.id] === t).sort(facile);
-    return [...du.filter(p => !reussis.has(p.id)), ...du.filter(p => reussis.has(p.id))];
+    const neufs = du.filter(p => !redite(p));
+    return [...neufs.filter(p => !reussis.has(p.id)), ...neufs.filter(p => reussis.has(p.id)), ...du.filter(redite)];
   });
   const out: T[] = [];
   for (let rang = 0; out.length < n && files.some(f => rang < f.length); rang++) {

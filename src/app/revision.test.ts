@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { numeroDuJour } from './goDuJour';
 import {
-  ECHEANCES, ETAT_VIDE, PAR_JOUR, aFaire, apresRevision, dus, lireRevision, prochain, revisionDuJour, revisionFaite, synchroniser,
+  ECHEANCES, ETAT_VIDE, PAR_JOUR, aFaire, apresRevision, dus, lireRevision, noterRedite, prochain, revisionDuJour, revisionFaite, synchroniser, vuRecemment,
   type EtatRevision
 } from './revision';
 
@@ -125,5 +125,38 @@ describe('lecture du stockage', () => {
     const e = lireRevision({ suivis: { a: { base: 3, etape: 1 }, b: { base: 'x', etape: 0 }, c: null, d: { base: 1, etape: 9 } }, jour: { numero: 4, ids: ['a', 2], faits: [] } });
     expect(e.suivis).toEqual({ a: { base: 3, etape: 1 }, d: { base: 1, etape: 3 } });
     expect(e.jour).toEqual({ numero: 4, ids: ['a'], faits: [] });
+  });
+});
+
+describe('pas de redite le lendemain (#237, N3)', () => {
+  // Jour J : leçon 1 (étape « capture »), puis pratique « Première capture » (b1) ou Go du jour b1, identique à l'étape.
+  it('un problème réussi en redite hier ne revient pas dans la révision du jour', () => {
+    let e = synchroniser(ETAT_VIDE, ['b1', 'a01'], J);
+    e = noterRedite(e, 'b1', J);
+    expect(vuRecemment(e, 'b1', J)).toBe(true);
+    expect(vuRecemment(e, 'b1', J + 1)).toBe(true);
+    expect(dus(e, J + 1)).toEqual(['a01']);
+    expect(revisionDuJour(e, J + 1).jour?.ids).toEqual(['a01']);
+    // Le surlendemain, il revient (en retard) comme les autres.
+    expect(vuRecemment(e, 'b1', J + 2)).toBe(false);
+    expect(dus(e, J + 2)).toEqual(['a01', 'b1']);
+  });
+
+  it('les notes de plus d’un jour sont oubliées, et la révision les garde', () => {
+    let e = noterRedite(ETAT_VIDE, 'b1', J);
+    e = noterRedite(e, 'a01', J + 1);
+    expect(e.recents).toEqual({ b1: J, a01: J + 1 });
+    e = noterRedite(e, 'a02', J + 3);
+    expect(e.recents).toEqual({ a02: J + 3 });
+    // Les autres fonctions ne perdent pas les notes.
+    e = synchroniser(e, ['c1'], J + 3);
+    e = revisionDuJour(e, J + 3);
+    e = apresRevision(e, 'c1', true, J + 3);
+    expect(e.recents).toEqual({ a02: J + 3 });
+  });
+
+  it('relit les notes gardées sur l’appareil', () => {
+    expect(lireRevision({ suivis: {}, jour: null, recents: { b1: 5, x: 'y' } }).recents).toEqual({ b1: 5 });
+    expect(lireRevision({ suivis: {}, jour: null })).toEqual(ETAT_VIDE);
   });
 });
