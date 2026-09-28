@@ -164,3 +164,30 @@ test.describe('très petite hauteur (320 × 568)', () => {
     expect(Math.abs(apres.width - jeu!.width)).toBeLessThanOrEqual(2);
   });
 });
+
+// Recette de nuit du 29/09 (N1, docs/qa/recette-2026-09-29-nuit.md) : avec « Conseil » (#80), la barre contre Pomme a
+// six actions. En 320 px, elle mesurait 342 px : « Indice » sortait à gauche et « Passer » à droite.
+for (const largeur of [320, 360] as const) {
+  test(`N1 : les six actions de la partie tiennent dans l’écran en ${largeur} px, 44 px chacune`, async ({ page }) => {
+    await page.setViewportSize({ width: largeur, height: 640 });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/');
+    await page.locator('.cta').click();
+    await expect(plateau(page)).toBeVisible();
+    await jouer(page, 'E5');
+    const barre = page.getByRole('toolbar', { name: 'Actions de la partie' });
+    await expect(barre.getByRole('button', { name: 'Conseil', exact: true })).toBeVisible();
+    await expect(barre.getByRole('button', { name: 'Passer', exact: true })).toBeEnabled({ timeout: 10_000 });
+    const boutons = await barre.getByRole('button').all();
+    expect(boutons.length).toBe(6);
+    for (const b of boutons) {
+      const box = (await b.boundingBox())!;
+      const nom = await b.innerText();
+      expect(box.x, nom).toBeGreaterThanOrEqual(0);
+      expect(box.x + box.width, nom).toBeLessThanOrEqual(largeur);
+      expect(box.width, nom).toBeGreaterThanOrEqual(44);
+      expect(box.height, nom).toBeGreaterThanOrEqual(44);
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(largeur);
+  });
+}
