@@ -8,6 +8,8 @@ export const LANCEMENT = '2026-09-27';
 export const FUSEAU = 'Europe/Paris';
 export const URL_JEU = 'https://jeu-de-go.vercel.app/';
 export const PARAM = 'go-du-jour';
+/** Variante sans tiret, plus facile à taper à la main (`/?godujour=42`). */
+export const PARAM_COURT = 'godujour';
 /** Série du Go du jour sur cet appareil : dernier numéro réussi et nombre de jours de suite. */
 export const SERIE_KEY = 'go.go-du-jour.v1';
 
@@ -48,9 +50,10 @@ export function problemeDuNumero<T extends { id: string }>(
   return tries[((i % tries.length) + tries.length) % tries.length];
 }
 
-/** Numéro demandé par un lien `?go-du-jour=N` (null si absent ou illisible). */
+/** Numéro demandé par un lien `?go-du-jour=N` ou `?godujour=N` (null si absent ou illisible). */
 export function numeroDuLien(search: string): number | null {
-  const brut = new URLSearchParams(search).get(PARAM);
+  const params = new URLSearchParams(search);
+  const brut = params.get(PARAM) ?? params.get(PARAM_COURT);
   if (brut === null || !/^\d{1,6}$/.test(brut.trim())) return null;
   return Number(brut.trim());
 }

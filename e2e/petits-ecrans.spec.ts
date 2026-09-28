@@ -15,7 +15,7 @@ const MIDI_PARIS_28 = new Date('2026-09-28T12:00:00+02:00');
 async function resoudreGoDuJour2(page: Page) {
   await page.clock.setFixedTime(MIDI_PARIS_28);
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('/?go-du-jour=1');
+  await page.goto('/?go-du-jour=2');
   await expect(page.getByRole('heading', { level: 2, name: 'Vers le bord' })).toBeVisible();
   await jouer(page, 'E3');
   await attendrePierre(page, 'E3', 'noir');
@@ -74,8 +74,9 @@ test('M6 : la bulle de Mochi (but et komi) ne recouvre pas le plateau au premier
 
 test('M8 : dans le verdict, « Voir la suite » et « Problème suivant » tiennent chacun sur une ligne', async ({ page }) => {
   await resoudreGoDuJour2(page);
-  const liens = page.locator('.verdict .liens-du-jour .lien');
-  await expect(liens).toHaveCount(2);
+  // Depuis #75 (go-du-jour-partage), « Problème suivant » est l'action principale et « Partager » la secondaire.
+  const liens = page.locator('.verdict .liens-du-jour .lien, .verdict .cta, .verdict .partager');
+  await expect(liens).toHaveCount(3);
   for (const lien of await liens.all()) {
     expect(await uneLigne(lien)).toBe(true);
     const box = (await lien.boundingBox())!;
@@ -83,7 +84,7 @@ test('M8 : dans le verdict, « Voir la suite » et « Problème suivant » tienn
     expect(box.x).toBeGreaterThanOrEqual(0);
     expect(box.x + box.width).toBeLessThanOrEqual(320);
   }
-  await expect(liens.nth(1)).toHaveText('Problème suivant');
+  await expect(page.locator('.verdict .cta')).toHaveText('Problème suivant');
 });
 
 test('M9 : fin de la pratique, « Niveau 2 ! » ne couvre pas le titre du chemin', async ({ page }) => {
