@@ -213,6 +213,14 @@ export const en = {
   'erreurs.bravoKataGo': 'Well done, that’s KataGo’s move!',
   'erreurs.refutation': 'Not that one. Keep looking.',
 
+  // Daily review (#199)
+  'revision.titre': 'Daily review',
+  'revision.aide': 'Solving a puzzle again helps you remember it.',
+  'revision.ouvrirAria': 'Review: {titre}',
+  'revision.dejaReussi': 'Already solved · redo it without help',
+  'revision.faite': 'Review done. More puzzles will come back tomorrow.',
+  'revision.serie': 'One challenge a day keeps your streak: the Daily Go, a lesson or the review.',
+
   'installer.titre': 'Keep Go close at hand',
   'installer.texte': 'Add the app to your home screen: it opens in one tap, full screen.',
   'installer.touche': 'Tap ',
