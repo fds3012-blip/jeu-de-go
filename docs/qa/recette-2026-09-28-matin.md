@@ -1,6 +1,6 @@
 # Recette du matin du 28/09/2026 (issue #247)
 
-Périmètre : l'app telle qu'elle sera après la fusion de la nuit, branche `origin/assemblage-nuit` à `6689579` (#235, #237, #228, #232, #241, #167…). **Build de production** (`vite build`, sans `VITE_E2E`), servi par `vite preview` sur le port 4802 ; Chromium de `/opt/pw-browsers`, locale `fr-FR`, fuseau Europe/Paris, écran tactile émulé, agent Safari iOS. Aucun paramètre de test : Pomme joue à son vrai rythme, le komi est le vrai (0,5), le Go du jour est celui du jour.
+Périmètre : l'app telle qu'elle sera après la fusion de la nuit, branche `origin/assemblage-nuit` à `6689579` (recette), puis `a45425b` (lot O de problèmes, #136, sans effet sur les parcours ; tests relancés) (#235, #237, #228, #232, #241, #167…). **Build de production** (`vite build`, sans `VITE_E2E`), servi par `vite preview` sur le port 4802 ; Chromium de `/opt/pw-browsers`, locale `fr-FR`, fuseau Europe/Paris, écran tactile émulé, agent Safari iOS. Aucun paramètre de test : Pomme joue à son vrai rythme, le komi est le vrai (0,5), le Go du jour est celui du jour.
 
 | Config | Taille | Thème | Mouvements |
 |---|---|---|---|
@@ -26,7 +26,7 @@ Gravité (Nielsen) : 1 cosmétique · 2 mineur · 3 majeur (à corriger avant di
 
 **Aucun parcours clé cassé : pas de blocage de mise en production.** Les 4 parcours passent dans les 4 configurations. Aucune erreur JavaScript, aucun débordement horizontal, aucune cible sous 44 px, aucun contraste sous AA, jamais deux fêtes en même temps. Un seul chevauchement réel (M9, cosmétique). Chargement à froid : 1,1 à 1,2 s.
 
-Validation locale (la CI GitHub est bloquée par le quota, elle fait foi ici) : `tsc -b` vert, `eslint .` 0 erreur (9 avertissements existants), Vitest complet 6 184 tests verts, Playwright complet vert : 198 tests passés, 16 ignorés (dont les 2 nouveaux de `e2e/recette-matin.spec.ts`, rouges avant le correctif M1).
+Validation locale (la CI GitHub est bloquée par le quota, elle fait foi ici) : `tsc -b` vert, `eslint .` 0 erreur (9 avertissements existants), Vitest complet 7 093 tests verts (après fusion du lot O, #136), Playwright complet vert : 198 tests passés, 16 ignorés (dont les 2 nouveaux de `e2e/recette-matin.spec.ts`, rouges avant le correctif M1).
 
 | # | Défaut | Gravité | Écran | Qui corrige |
 |---|---|---|---|---|
