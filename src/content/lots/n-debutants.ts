@@ -33,7 +33,7 @@ const LOT_N: PuzzleRow[] = [
       refutation: "Pas tout à fait. Tu prends B8, mais Blanc joue E4 et capture ta pierre. Quand une de tes pierres est en atari, sauve-la d'abord." },
     title: 'Sauve avant de prendre',
     prompt: 'Ta pierre marquée est en atari : il ne lui reste qu’une liberté. Sauve-la.',
-    explanation: "Bravo ! En E4, ta pierre s'allonge : tes deux pierres forment une chaîne avec trois libertés, D4, F4 et E3. Elle est hors de danger. Prendre B8 était tentant, mais Blanc aurait pris ta pierre en E4."
+    explanation: "Bravo ! En E4, ta pierre s'allonge : tes deux pierres forment une chaîne avec trois libertés, D4, F4 et E3. Elle est hors de danger. Prendre B8 était tentant, mais Blanc aurait joué E4 et pris ta pierre."
   },
   {
     id: 'n04', size: 9, difficulty: 380, answers: ['C7'],
@@ -110,7 +110,7 @@ const LOT_N: PuzzleRow[] = [
   {
     id: 'n13', size: 9, difficulty: 560, answers: ['B9'],
     setup: { rows: ['..OS.....', '..XOO....', E, E, E, E, E, E, E], toPlay: 'B',
-      refutation: "Pas tout à fait. Si tu t'allonges en E9, tes deux pierres n'ont qu'une liberté, F9 : tu te mets toi-même en atari, et Blanc les prend. Ailleurs, Blanc prend ta pierre en E9. Regarde plutôt la pierre C9." },
+      refutation: "Pas tout à fait. Si tu t'allonges en E9, tes deux pierres n'ont qu'une liberté, F9 : tu te mets toi-même en atari, et Blanc les prend. Ailleurs, Blanc joue E9 et prend ta pierre. Regarde plutôt la pierre C9." },
     title: 'Ne te mets pas en atari',
     prompt: 'Ta pierre marquée est en atari. Sauve-la.',
     explanation: "Bravo ! La pierre blanche C9 est en atari aussi : B9 la capture. Ta pierre a maintenant deux libertés, C9 et E9. Blanc ne peut pas jouer en C9 : sa pierre n'y aurait aucune liberté. Et s'il joue E9, tu relies en C9. En E9, tu te serais mis toi-même en atari."
@@ -118,7 +118,7 @@ const LOT_N: PuzzleRow[] = [
   {
     id: 'n14', size: 9, difficulty: 580, answers: ['B4'],
     setup: { rows: [E, E, 'O........', 'OX.......', 'SOX......', E, E, E, E], toPlay: 'B',
-      refutation: "Pas tout à fait. En A4, tes deux pierres n'ont que deux libertés : Blanc joue B4 et elles sont de nouveau en atari, contre le bord. Ailleurs, Blanc prend ta pierre en A4. Regarde plutôt la pierre B5." },
+      refutation: "Pas tout à fait. En A4, tes deux pierres n'ont que deux libertés : Blanc joue B4 et elles sont de nouveau en atari, contre le bord. Ailleurs, Blanc joue A4 et prend ta pierre. Regarde plutôt la pierre B5." },
     title: 'Capture pour sauver',
     prompt: 'Ta pierre marquée est en atari. Sauve-la.',
     explanation: "Bravo ! La pierre blanche B5 est en atari : B4 la capture. Ta pierre a maintenant deux libertés, A4 et B5, et Blanc ne peut pas jouer en B5 : il n'y aurait aucune liberté. S'il joue A4, tu relies en B5. S'allonger en A4, le long du bord, ne donnait que deux libertés."

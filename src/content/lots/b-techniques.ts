@@ -10,7 +10,7 @@ const LOT_B: PuzzleRow[] = [
       refutation: "Pas tout à fait. Après F1, Blanc s'allonge en E2, vers le centre, et ses pierres s'échappent. Bloque plutôt le côté du centre." },
     title: 'Le long du bord',
     prompt: 'Noir joue et capture les pierres blanches marquées. Garde-les collées au bord.',
-    explanation: "Bravo ! Après E2, les pierres blanches sont en atari : il ne leur reste qu'une liberté (un point vide à côté d'elles), F1. Si Blanc s'allonge en F1, tu joues F2 et il est de nouveau en atari, et ainsi de suite jusqu'au coin. Remettre en atari à chaque coup une pierre qui fuit, c'est une échelle. Le long du bord, elle finit toujours par capturer."
+    explanation: "Bravo ! Après E2, les pierres blanches sont en atari : il ne leur reste qu'une liberté (un point vide à côté d'elles), F1. Si Blanc s'allonge en F1, tu joues F2 et il est de nouveau en atari, et ainsi de suite jusqu'au coin. Remettre en atari à chaque coup une pierre qui fuit, c'est une échelle. Ici, aucune pierre blanche ne bloque le chemin jusqu'au coin : l'échelle finit par capturer."
   },
   {
     id: 'k02', size: 9, difficulty: 650, answers: ['F2'],
