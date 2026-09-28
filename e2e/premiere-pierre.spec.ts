@@ -42,6 +42,8 @@ test('première pierre en deux touches, accueil sans défilement', async ({ page
 
   // Au retour, Mochi et le bouton restent cohérents, et la bulle du but ne revient plus.
   await page.getByRole('button', { name: "Retour à l'accueil" }).click();
+  // #268 : une partie en cours se quitte après la confirmation de Mochi.
+  await page.getByRole('group', { name: 'Quitter la partie ?' }).getByRole('button', { name: 'Quitter', exact: true }).click();
   await expect(page.locator('.cta')).toHaveText('Rejouer contre Pomme');
   // #213 : la réplique de Pomme change selon le jour ; ce n'est plus celle du premier lancement.
   await expect(page.locator('.scene-bulle')).not.toHaveText(/On joue ensemble/);

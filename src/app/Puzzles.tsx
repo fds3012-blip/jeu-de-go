@@ -289,8 +289,8 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
       <section aria-labelledby="paliers-titre">
         <h2 id="paliers-titre" className="titre-pierres">{tr('nav.problemes')}</h2>
         {prochainPz && (
-          <button className={duJourFait ? 'cta continuer' : 'btn continuer'} onClick={() => setOpenId(prochainPz.id)}
-            aria-label={tr('pb.continuerAria', { titre: prochainPz.title })}>
+          // #268 (WCAG 2.5.3) : pas d'aria-label ; le nom accessible est le texte visible, verbe d'abord.
+          <button type="button" className={duJourFait ? 'cta continuer' : 'btn continuer'} onClick={() => setOpenId(prochainPz.id)}>
             {tr('pb.continuer')} <span className="continuer-titre">{prochainPz.title}</span>
           </button>
         )}

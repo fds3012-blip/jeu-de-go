@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Board } from '../ui/Board';
-import { Avatar, Bandeau, BarreActions, BarreAvantage, Coach, CompteurIndices, Icone, ListeCoups } from '../ui/Partie';
+import { Avatar, Bandeau, BarreActions, BarreAvantage, ChoixMochi, Coach, CompteurIndices, Icone, ListeCoups } from '../ui/Partie';
 import { groupAt, newPosition, play, type Position } from '../go/rules';
 import { playAtari, playCapture, playDefeat, playIllegal, playStone, playVictory } from '../ui/sound';
 import { hapticAtari, hapticCapture, hapticDefeat, hapticIllegal, hapticStone, hapticVictory } from '../ui/haptics';
@@ -118,6 +118,9 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   const [conseilPasserA, setConseilPasserA] = useState<number | null>(null); // #120 : longueur d'historique au conseil « passer »
   const [frontieres, setFrontieres] = useState<AlerteFrontieres | null>(null); // #159 : frontières ouvertes montrées au passe
   const [avertiPasse, setAvertiPasse] = useState<number | null>(null); // #235 : longueur d'historique quand Mochi a prévenu avant un passe
+  // #268 : le bouton retour a demandé « Tu quittes la partie ? » (partie en cours, au moins un coup joué).
+  const [demandeQuitter, setDemandeQuitter] = useState(false);
+  const retourRef = useRef<HTMLButtonElement>(null);
   const sc = useMemo(() => score(pos, komi, 'japanese', dead), [pos, komi, dead]);
   const aiTurn = !!ai && phase === 'play' && pos.toPlay === 2;
   const myTurn = !ai || (pos.toPlay === 1 && !thinking);
@@ -238,6 +241,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     }
     if (phase !== 'play' || !myTurn) return;
     const r = play(pos, p);
+    if (typeof r !== 'string') setDemandeQuitter(false);
     if (typeof r === 'string') {
       const refus = REFUS[r];
       if (refus) { setMsg(tr(refus)); playIllegal(); hapticIllegal(); setShake(s => ({ p, n: (s?.n ?? 0) + 1 })); }
@@ -266,6 +270,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   /** Tu passes. Partie pas finie (#235) : Mochi prévient d'abord ; « Passer » (ici ou dans sa bulle) confirme. */
   function pass() {
     if (!myTurn) return;
+    setDemandeQuitter(false);
     const avertir = avertiPasse !== history.length && avertirAvantPasse({ contreOrdi: !!ai, aide, premieresParties: accommodant, adversairePasse: pos.lastMove === -1, board: pos.board, size });
     if (avertir) {
       setAvertiPasse(history.length);
@@ -392,7 +397,10 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   }
 
   const name = (c: 1 | 2) => (ai ? (c === 1 ? tr('camp.toi') : ai.nom) : camp(c));
-  const retourAccueil = <button type="button" className="retour" onClick={onExit} aria-label={tr('partie.retourAccueil')}>‹</button>;
+  // #268 : quitter une partie en cours (au moins un coup, pas finie) la perd ; Mochi demande d'abord, avec la bulle du passe.
+  // Sans coup joué, ou partie finie (l'écran de fin a son propre retour), on sort tout de suite.
+  const quitterDemandeConfirmation = phase !== 'end' && history.length > 1;
+  const retourAccueil = <button ref={retourRef} type="button" className="retour" onClick={() => (quitterDemandeConfirmation ? setDemandeQuitter(true) : onExit())} aria-label={tr('partie.retourAccueil')}>‹</button>;
   // En relecture, on montre la position `q` et « ‹ » ramène au bilan.
   const bandeau = (c: 1 | 2, q: Position = pos, retour: ReactNode = retourAccueil, actif = phase === 'play' && q.toPlay === c, gain: { n: number; k: number } | null = null) => {
     let sousTitre: string;
@@ -508,8 +516,9 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   const feteVisible = fete && fete.len === history.length && phase === 'play' ? fete : null;
   const pense = phase === 'play' && thinking && !!ai && !feteVisible;
   const messageCoach = pense && ai ? tr('partie.reflechit', { nom: ai.nom }) : msg;
-  const avertissementPasse = phase === 'play' && myTurn && avertiPasse === history.length;
-  const montrerIntro = intro && history.length === 1 && phase === 'play' && !avertissementPasse;
+  const quitter = demandeQuitter && quitterDemandeConfirmation;
+  const avertissementPasse = phase === 'play' && myTurn && avertiPasse === history.length && !quitter;
+  const montrerIntro = intro && history.length === 1 && phase === 'play' && !avertissementPasse && !quitter;
 
   return (
     <div className="partie">
@@ -529,17 +538,17 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
       {/* Zone de Mochi de hauteur fixe (#187) : la bulle d'intro garde sa place après le premier coup, le plateau ne bouge pas. */}
       <div className="partie-mochi">
         {intro && phase === 'play' && <div className="coach-intro" aria-hidden={!montrerIntro || undefined} data-cache={!montrerIntro || undefined}>{intro}</div>}
-        {!montrerIntro && !avertissementPasse && <Coach cle={messageCoach} attente={pense}
+        {!montrerIntro && !avertissementPasse && !quitter && <Coach cle={messageCoach} attente={pense}
           humeur={pense ? 'pensif' : feteVisible || humeur.h === 'surpris' ? 'content' : 'neutre'}>{fr(messageCoach)}</Coach>}
         {/* Avant un passe trop tôt (#235) : la bulle et ses deux choix montent au-dessus de ton bandeau, rien ne bouge. */}
         {avertissementPasse && (
-          <div className="coach-avertir">
-            <Coach cle={messageCoach}>{fr(messageCoach)}</Coach>
-            <div className="coach-choix" role="group" aria-label={tr('partie.passe.aria')}>
-              <button type="button" className="btn" onClick={pass}>{tr('partie.passe.confirmer')}</button>
-              <button type="button" className="btn primary" onClick={continuerAJouer}>{tr('partie.passe.continuer')}</button>
-            </div>
-          </div>
+          <ChoixMochi nom="passe" question={fr(messageCoach)} aria={tr('partie.passe.aria')}
+            agir={{ label: tr('partie.passe.confirmer'), onClick: pass }} rester={{ label: tr('partie.passe.continuer'), onClick: continuerAJouer }} />
+        )}
+        {/* Quitter une partie en cours (#268) : même bulle ; « Jouer encore » (principal) prend le focus, rien n'est perdu. */}
+        {quitter && (
+          <ChoixMochi nom="quitter" focus question={fr(tr('partie.quitter.avertir'))} aria={tr('partie.quitter.aria')}
+            agir={{ label: tr('partie.quitter.confirmer'), onClick: onExit }} rester={{ label: tr('partie.quitter.continuer'), onClick: () => { setDemandeQuitter(false); retourRef.current?.focus(); } }} />
         )}
       </div>
       {phase === 'play' ? (
