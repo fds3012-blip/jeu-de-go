@@ -22,12 +22,16 @@ test('tout résolu : Continuer ouvre un problème, et Problème suivant existe a
   const continuer = page.getByRole('button', { name: /^Continuer : / });
   await expect(continuer).toBeVisible();
   await expect(page.getByText(/c.est fini|tout est résolu/i)).toHaveCount(0);
+  // Issue #196 : le palier en cours dit « N réussis », jamais de total ni de palier « fini ».
+  await expect(page.locator('[data-palier-en-cours]')).toContainText(/\d+\sréussis/);
+  await expect(page.getByText(/\d+\s\/\s\d+/)).toHaveCount(0);
   await continuer.click();
   await expect(plateau(page)).toBeVisible();
 
   // Retour à la liste, puis le problème b1 : la bonne réponse est E5.
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
+  await page.getByRole('button', { name: 'Tous les problèmes' }).click();
   await page.getByRole('button', { name: /^Problème \d+ : Capture la pierre/ }).click();
   await jouer(page, 'E5');
   await expect(page.getByText('Bravo, c’est le bon coup !')).toBeVisible();

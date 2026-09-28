@@ -115,6 +115,8 @@ export const fr = {
   'pb.aide.apres': ' quand il ne lui reste qu’une liberté.',
   'pb.continuer': 'Continuer',
   'pb.continuerAria': 'Continuer : {titre}',
+  'pb.tous': 'Tous les problèmes',
+  'pb.tonPalier': 'Ton palier',
   'pb.verrouille': 'verrouillé',
   'pb.reussi': 'réussi',
   'pb.pourTaCote': 'Pour ta cote',

@@ -345,6 +345,19 @@
 .continuer-titre { font-weight: var(--fw-medium); opacity: .8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .continuer-titre::before { content: "· "; }
 .btn.continuer { width: 100%; margin: 0 0 var(--space-2); background: var(--surface); }
+/* #196 : l'écran Problèmes ne montre que le palier en cours ; la grille est derrière « Tous les problèmes ». */
+.palier-en-cours { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-3); margin-top: var(--space-2);
+  padding: var(--space-3) var(--space-4); border-radius: 16px; background: var(--surface); }
+.palier-en-cours .palier-compte { margin: 0; flex: none; }
+.palier-surtitre { margin: 0 0 2px !important; text-transform: uppercase; letter-spacing: .06em; font-weight: var(--fw-bold); }
+.lien-tous { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; margin: var(--space-2) 0 0 -12px; }
+.tous-tete { display: flex; align-items: center; gap: 4px; margin: var(--space-2) 0 var(--space-3) -10px; }
+.tous-tete .retour { flex: none; width: var(--cible-min); height: var(--cible-min); margin: 0; padding: 0; display: grid; place-items: center; border: 0; border-radius: 50%; background: none; color: var(--text); }
+.tous-tete .retour:active { background: var(--surface); }
+.problemes-tous .palier h3 { color: var(--text); text-transform: none; letter-spacing: var(--tracking-titre); font-size: var(--fs-xl); }
+.problemes .tous-tete h2 { margin: 0; font-family: var(--font-titre); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre); font-size: var(--fs-2xl); }
+.problemes-tous .palier-prochain h3 { display: flex; align-items: center; gap: 6px; margin: 0 0 var(--space-2); font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: var(--fs-xl); color: var(--muted); }
+.palier-prochain .palier-verrou { margin: 0; }
 .palier { margin-top: var(--space-6); }
 .palier-tete { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); min-height: 40px; }
 .palier-nom h3 { display: flex; align-items: center; gap: 6px; margin: 0; font-family: var(--font-titre); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre); font-size: var(--fs-xl); line-height: 1.15; }
