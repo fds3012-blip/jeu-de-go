@@ -5,6 +5,7 @@
 // - les récompenses sont purement cosmétiques, rien ne s'achète ;
 // - le coût d'un niveau est plafonné : la progression ne devient jamais une corvée sans fin.
 import { EVENTS, track } from '../data/analytics';
+import { t } from '../content/i18n';
 
 export type SourceXp = 'probleme' | 'goDuJour' | 'lecon' | 'partie' | 'victoire';
 
@@ -54,7 +55,8 @@ export const RECOMPENSES: readonly Recompense[] = [
   { niveau: 8, id: 'coquillage-dore', nom: 'Coquillage doré', genre: 'pierres' },
 ];
 
-export const libelleRecompense = (r: Recompense) => `${r.genre === 'goban' ? 'le goban' : 'les pierres'} « ${r.nom} »`;
+/** « le goban « Kaya clair » », dans la langue de l'interface (#167). */
+export const libelleRecompense = (r: Recompense) => t(r.genre === 'goban' ? 'recompense.goban' : 'recompense.pierres', { nom: t(`theme.${r.id}`) });
 export const recompenseDuNiveau = (niveau: number) => RECOMPENSES.find(r => r.niveau === niveau);
 export const prochaineRecompense = (niveau: number) => RECOMPENSES.find(r => r.niveau > niveau);
 /** Niveau requis pour un thème du goban : 1 pour le kaya par défaut. */

@@ -165,4 +165,88 @@ export const fr = {
   'palier.club.kyu': '14 à 10 kyu',
   'palier.confirme.nom': 'Confirmé',
   'palier.confirme.kyu': '9 kyu et plus',
+
+  // Étape 3 (#167) : composants partagés.
+  // Thèmes du goban (mêmes noms que src/ui/boardArt.ts, vérifié par un test)
+  'theme.kaya': 'Kaya',
+  'theme.kaya-clair': 'Kaya clair',
+  'theme.ardoise': 'Ardoise',
+  'theme.coquillage-dore': 'Coquillage doré',
+
+  // Niveau et XP (#109, #162) : barre de l'accueil, fête de niveau, pastille
+  'niveau.barre': 'Niveau {niveau}',
+  'niveau.aria': 'Niveau {niveau}',
+  'niveau.xp': '{dans} / {besoin} XP',
+  'niveau.valeur': '{dans} XP sur {besoin} avant le niveau {suivant}',
+  'niveau.suite': 'Niveau {niveau} : {recompense}',
+  'niveau.fete': 'Niveau {niveau} !',
+  'niveau.feteAria': 'Niveau {niveau} atteint. Fermer',
+  'niveau.debloque': 'Tu débloques {recompense}.',
+  'niveau.bravo': 'Bravo, tu progresses.',
+  'recompense.goban': 'le goban « {nom} »',
+  'recompense.pierres': 'les pierres « {nom} »',
+  'xp.bonus': 'dont +{bonus} première fois',
+
+  // Carrousel des adversaires (#40, #102) et tampon des battus
+  'carrousel.palier.0': 'Premiers pas',
+  'carrousel.palier.1': 'Ça se corse',
+  'carrousel.palier.2': 'Les maîtres',
+  'carrousel.aria': 'Adversaires, du plus facile au plus fort',
+  'carrousel.verrou': "Bats d'abord {requis} pour affronter {nom}.",
+  'carrousel.precedent': 'le précédent',
+  'carrousel.verrouille': 'verrouillé',
+  'sceau.battu': 'battu',
+  'sceau.battue': 'battue',
+
+  // Mes erreurs (#77) : section des Problèmes et problèmes tirés de tes parties
+  'erreurs.titre': 'Tes erreurs à rejouer',
+  'erreurs.compteurAria': '{n} à rejouer',
+  'erreurs.aide': 'Des positions de tes parties. Trouve le coup que KataGo conseillait.',
+  'erreurs.rejouerAria': 'Rejouer : {titre}',
+  'erreurs.titreContre': 'Ta partie contre {adversaire}, coup {coup}',
+  'erreurs.titreDeux': 'Ta partie à deux, coup {coup}',
+  'erreurs.consigneMieux': 'Trouve mieux que ton coup.',
+  'erreurs.consigneKataGo': 'Trouve mieux que ton coup : seul le coup de KataGo est accepté.',
+  'erreurs.bravoParmi': 'Bravo ! KataGo range ce coup parmi les meilleurs.',
+  'erreurs.bravoKataGo': 'Bravo, c’est le coup de KataGo !',
+  'erreurs.refutation': 'Pas celui-là. Cherche encore.',
+
+  // Carte « Installe l'app » (#178)
+  'installer.titre': 'Garde le go sous la main',
+  'installer.texte': 'Ajoute l’app à ton écran d’accueil : elle s’ouvre en un geste, en plein écran.',
+  'installer.touche': 'Touche ',
+  'installer.partager': 'Partager',
+  'installer.choisis': 'Choisis ',
+  'installer.ecranAccueil': 'Sur l’écran d’accueil',
+  'installer.oui': 'Installer',
+  'installer.plusTard': 'Plus tard',
+
+  // Texte partagé du Go du jour (#75)
+  'partage.numero': 'Go du jour n° {numero}',
+  'partage.essais': { one: 'résolu en {n} essai', other: 'résolu en {n} essais' },
+  'partage.serie': 'série {serie} 🔥',
+
+  // Profil vivant (#103) : statistiques et badges (mêmes textes que les données d'origine, vérifié par un test)
+  'stats.aria': 'Tes statistiques',
+  'stats.problemes': { one: 'problème', other: 'problèmes' },
+  'stats.serie': { one: 'jour de série', other: 'jours de série' },
+  'stats.parties': { one: 'partie', other: 'parties' },
+  'stats.victoires': { one: 'victoire', other: 'victoires' },
+  'vitrine.titre': 'Badges, {n} sur {total}',
+  'vitrine.obtenu': '{nom} : obtenu',
+  'vitrine.aGagner': '{nom} : à gagner. {condition}',
+  'badge.premiere-partie.nom': 'Première partie',
+  'badge.premiere-partie.condition': 'Joue une partie contre l’ordi.',
+  'badge.premier-probleme.nom': 'Premier problème',
+  'badge.premier-probleme.condition': 'Réussis un problème.',
+  'badge.victoire-pomme.nom': 'Pomme battue',
+  'badge.victoire-pomme.condition': 'Gagne une partie contre Pomme.',
+  'badge.palier-debutant.nom': 'Palier Débutant',
+  'badge.palier-debutant.condition': 'Réussis tout le palier Débutant.',
+  'badge.dix-problemes.nom': '10 problèmes',
+  'badge.dix-problemes.condition': 'Réussis 10 problèmes.',
+  'badge.palier-novice.nom': 'Palier Novice',
+  'badge.palier-novice.condition': 'Réussis tout le palier Novice.',
+  'badge.serie-7.nom': '7 jours de série',
+  'badge.serie-7.condition': 'Fais le Go du jour 7 jours de suite.',
 } as const;

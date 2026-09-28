@@ -9,6 +9,7 @@ import { readLocal, writeLocal } from '../app/hooks';
 import { apresEssai, aRejouer, ERREURS_KEY, lireErreurs, versProbleme, type ErreurGardee } from '../app/erreurs';
 import { MiniGoban } from './MiniGoban';
 import { fr } from './typo';
+import { t } from '../content/i18n';
 
 /** Ce que MesErreurs passe au lecteur de problème (PuzzlePlayer de Puzzles.tsx). */
 export interface LecteurProps {
@@ -59,18 +60,18 @@ export function MesErreurs({ confirmTouch, Lecteur }: { confirmTouch: boolean; L
   return (
     <section aria-labelledby="erreurs-titre" className="mes-erreurs">
       <h2 id="erreurs-titre" className="titre-pierres">
-        Tes erreurs à rejouer <span className="mes-erreurs-compteur" aria-label={`${aJouer.length} à rejouer`}>{aJouer.length}</span>
+        {t('erreurs.titre')} <span className="mes-erreurs-compteur" aria-label={t('erreurs.compteurAria', { n: aJouer.length })}>{aJouer.length}</span>
       </h2>
-      <p className="muted small bases-aide">{fr('Des positions de tes parties. Trouve le coup que KataGo conseillait.')}</p>
+      <p className="muted small bases-aide">{fr(t('erreurs.aide'))}</p>
       <ul className="grille-pb">
         {aJouer.map(e => {
           const pz = versProbleme(e);
           return (
             <li key={e.id}>
-              <button onClick={() => setOuvert(e)} aria-label={`Rejouer : ${pz.title}`}>
+              <button onClick={() => setOuvert(e)} aria-label={t('erreurs.rejouerAria', { titre: pz.title })}>
                 <span className="grille-goban"><MiniGoban rows={e.rows} /></span>
                 <b aria-hidden="true">{pz.title}</b>
-                <span aria-hidden="true" className="muted small">{e.toPlay === 1 ? 'Noir joue' : 'Blanc joue'}</span>
+                <span aria-hidden="true" className="muted small">{t(e.toPlay === 1 ? 'pb.joue.1' : 'pb.joue.2')}</span>
               </button>
             </li>
           );

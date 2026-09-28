@@ -5,6 +5,7 @@ import type { AnalyseRevue } from '../engine';
 import type { Puzzle } from '../data/puzzles';
 import type { Color, Position } from '../go/rules';
 import { conseilFiable, VISITES_MIN, type Note } from './revue';
+import { t } from '../content/i18n';
 
 export const ERREURS_KEY = 'go.erreurs.v1';
 /** Au plus 30 problèmes : les plus anciens sont remplacés en premier. */
@@ -135,12 +136,12 @@ export function apresEssai(liste: ErreurGardee[], id: string, reussi: boolean, m
 
 /** Titre du problème : « Ta partie contre Pomme, coup 14 ». */
 export function titreErreur(e: Pick<ErreurGardee, 'coup' | 'adversaire'>): string {
-  return e.adversaire ? `Ta partie contre ${e.adversaire}, coup ${e.coup}` : `Ta partie à deux, coup ${e.coup}`;
+  return e.adversaire ? t('erreurs.titreContre', { adversaire: e.adversaire, coup: e.coup }) : t('erreurs.titreDeux', { coup: e.coup });
 }
 
 /** Consigne : avec des coups équivalents, « trouve mieux » ; sinon, on dit que seul le coup de KataGo compte. */
 export function consigneErreur(e: Pick<ErreurGardee, 'reponses'>): string {
-  return e.reponses.length > 1 ? 'Trouve mieux que ton coup.' : 'Trouve mieux que ton coup : seul le coup de KataGo est accepté.';
+  return t(e.reponses.length > 1 ? 'erreurs.consigneMieux' : 'erreurs.consigneKataGo');
 }
 
 /** Problème pour le lecteur existant. */
@@ -148,8 +149,8 @@ export function versProbleme(e: ErreurGardee): Puzzle {
   return {
     id: e.id, size: e.size, rows: e.rows, toPlay: e.toPlay, answers: e.reponses, line: [e.reponses[0]],
     title: titreErreur(e), prompt: consigneErreur(e),
-    explanation: e.reponses.length > 1 ? 'Bravo ! KataGo range ce coup parmi les meilleurs.' : 'Bravo, c’est le coup de KataGo !',
-    refutation: 'Pas celui-là. Cherche encore.',
+    explanation: t(e.reponses.length > 1 ? 'erreurs.bravoParmi' : 'erreurs.bravoKataGo'),
+    refutation: t('erreurs.refutation'),
     difficulty: 600,
   };
 }
