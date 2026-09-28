@@ -82,7 +82,10 @@ describe('lot Q : identifiants, thèmes, doublons, calendrier, migration (issue 
 
   it('le Go du jour garde son ordre : le lot Q vient après le lot P', () => {
     const ids = LOT_Q.map(r => r.id);
-    expect(CALENDRIER_GO_DU_JOUR.slice(-ids.length)).toEqual(ids);
+    // Lot R (#136) ajouté après : le lot Q reste d'un seul tenant, juste avant r01.
+    const debut = CALENDRIER_GO_DU_JOUR.indexOf('q01');
+    expect(CALENDRIER_GO_DU_JOUR.slice(debut, debut + ids.length)).toEqual(ids);
+    expect(CALENDRIER_GO_DU_JOUR[debut + ids.length]).toBe('r01');
     expect(CALENDRIER_GO_DU_JOUR.indexOf('q01')).toBeGreaterThan(CALENDRIER_GO_DU_JOUR.indexOf('p03'));
   });
 
