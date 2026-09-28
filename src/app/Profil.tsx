@@ -23,7 +23,7 @@ import { Statistiques, VitrineBadges } from '../ui/Vitrine';
 import { BarreNiveau } from '../ui/Niveau';
 import { ProposerInstallation, usePlateformeInstallation } from '../ui/ProposerInstallation';
 import { etatInstallation, installable } from './installation';
-import { t } from '../content/i18n';
+import { LANGUES, langue, memoriserChoixLangue, t, type Langue } from '../content/i18n';
 
 const SOLVED_KEY = 'go.problemes.v1';
 
@@ -143,6 +143,7 @@ function Reglages({ settings, set }: Pick<Props, 'settings' | 'set'>) {
   return (
     <div className="profil">
       <div className="lignes">
+        <LigneLangue />
         <LigneChoix libelle={t('profil.theme')} options={themes()} valeur={settings.theme} onChange={v => set({ theme: v })} />
         <LigneGoban />
         <LigneInterrupteur libelle={t('profil.confirmer')} aide={t('profil.confirmerAide')} actif={settings.confirmTouch} onChange={v => set({ confirmTouch: v })} />
@@ -154,6 +155,28 @@ function Reglages({ settings, set }: Pick<Props, 'settings' | 'set'>) {
         <LigneInterrupteur libelle={t('profil.celebrations')} aide={t('profil.celebrationsAide')} actif={settings.celebrations} onChange={v => set({ celebrations: v })} />
         <LigneChoix libelle={t('profil.aide')} options={aides()} valeur={settings.aide} onChange={a => set({ aide: a })} />
       </div>
+    </div>
+  );
+}
+
+/**
+ * Langue de l'interface (#167) : « Français / English », chaque nom écrit dans sa langue (attribut `lang` pour les lecteurs
+ * d'écran). Le choix est gardé sur l'appareil (`go.langue.v1`) et prime sur `?lang` et sur l'appareil. La page se recharge
+ * pour tout traduire d'un coup, leçons et problèmes compris.
+ */
+function LigneLangue() {
+  const actuelle = langue();
+  const choisir = (l: Langue) => {
+    if (l === actuelle) return;
+    memoriserChoixLangue(l);
+    location.reload();
+  };
+  return (
+    <div className="ligne ligne-choix" role="group" aria-label={t('profil.langue')}>
+      <span className="ligne-libelle" aria-hidden="true">{t('profil.langue')}</span>
+      <span className="seg">
+        {LANGUES.map(l => <button type="button" key={l} lang={l} aria-pressed={actuelle === l} onClick={() => choisir(l)}>{t(`langue.${l}`)}</button>)}
+      </span>
     </div>
   );
 }

@@ -27,12 +27,13 @@ function textesProblemes(): string[] {
 //    des quiz. Les leçons de content/lessons.en.js s'affichent en anglais et ne sont pas exclues (anglais vérifié ici aussi).
 // 2. Contenu des problèmes (src/content/puzzles.ts et table `puzzles`) : titres, consignes, explications, réfutations.
 // 3. Noms propres des adversaires et de Mochi (glossaire : gardés comme des prénoms). « Rivière » porte un accent.
+// 4. « Français » dans le réglage Langue : chaque langue garde son nom dans sa langue.
 // Ces textes sont retirés de la page avant la recherche ; tout le reste (boutons, titres d'écran, bulles de Mochi,
 // messages, textes pour lecteur d'écran visibles dans l'arbre) doit être en anglais.
 
 /** Mots français courants, absents de l'anglais de l'interface. Les lettres accentuées aussi. */
 const FRANCAIS = /\b(le|la|les|des|du|une|est|et|pour|avec|sans|ton|ta|tes|tu|toi|je|pas|sur|dans|qui|que|mon|mes|au|aux|ce|cette|leçons?|parties?|joue[rsz]?|jouer|problèmes?|coups?|pierres?|réglages|accueil|suivante?|continuer|terminer|revoir|compte|niveau|série|jours?|noir|blanc|retour|partout|encore)\b|[àâçéèêëîïôûùœ]/giu;
-const NOMS = ['Rivière'];
+const NOMS = ['Rivière', 'Français'];
 
 const norm = (s: string) => s.replace(/[\u00A0\u202F\s]+/g, ' ').trim();
 
