@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { GO_FILES, OUT_DIR, SRC_DIR, toDeno } from '../../scripts/sync-functions.mjs';
 import { handicapPoints } from './rules';
 import {
-  countingStarts, finalScore, formatResult, normalizeDead, parseActionRequest, parseDead, parseMove, planAction,
+  countingStarts, defiMoveArgs, finalScore, formatResult, normalizeDead, parseActionRequest, parseDead, parseMove, planAction,
   recordFromOnlineGame, validateMove, type ActionRequest, type GameRow, type OnlineGame
 } from './server';
 import type { GameRecord } from './sgf';
@@ -133,6 +133,20 @@ describe('planAction (fonction serveur)', () => {
     expect(planAction(row(), B, move('ee'))).toEqual({
       ok: true, kind: 'update', expect: { moves: '', counting: false, dead_stones: null }, patch: { moves: 'ee' }
     });
+  });
+
+  it('défi par lien (#81) : un coup validé devient un appel à jouer_coup_defi', () => {
+    expect(defiMoveArgs(ID, B, planAction(row(), B, move('ee')))).toEqual({
+      p_partie: ID, p_joueur: B, p_coups_avant: '', p_coup: 'ee', p_comptage: false
+    });
+    // Deuxième passe de suite : le comptage commence
+    expect(defiMoveArgs(ID, B, planAction(row({ moves: 'eett' }), B, move('tt')))).toEqual({
+      p_partie: ID, p_joueur: B, p_coups_avant: 'eett', p_coup: 'tt', p_comptage: true
+    });
+    // Refus des règles (hors tour, ko…) et actions sans coup : rien à transmettre
+    expect(defiMoveArgs(ID, W, planAction(row(), W, move('ee')))).toBeNull();
+    expect(defiMoveArgs(ID, W, planAction(row({ moves: 'eetttt', counting: true }), W, act('resume')))).toBeNull();
+    expect(defiMoveArgs(ID, B, { ok: true, kind: 'update', expect: { moves: 'ee', counting: false, dead_stones: null }, patch: { moves: 'ccdd' } })).toBeNull();
   });
 
   it('refuse hors tour, spectateur, partie IA ou terminée, coup illégal', () => {

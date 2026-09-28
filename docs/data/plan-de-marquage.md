@@ -64,6 +64,11 @@ Issue #166. Source unique : `src/data/analytics.ts` (constante `EVENTS`). Un tes
 - `limite_atteinte` (`type` : `analyse`, `probleme`, `lecon`) : combien de joueurs gratuits touchent une limite.
 - `partie_en_ligne_terminee` : quand les parties en ligne auront leur écran.
 - `note_demandee` / `note_donnee` : invite à noter l'app, quand l'app sera sur les stores.
+- Défi par lien (#81, backend prêt, pas encore d'écran ; à brancher avec l'écran et à citer alors dans la politique de confidentialité) :
+  - `defi_cree` : lien créé (`creer_defi` a répondu). Propriétés : `partage` (`web_share`, `copie`), `anonyme` (booléen : créateur sans compte).
+  - `defi_ouvert` : un invité ouvre un lien et rejoint la partie (`rejoindre_defi` a répondu). Propriétés : `anonyme` (booléen), `deja_joueur` (le créateur rouvre son propre lien).
+  - `defi_inscription` : un invité arrivé sans compte relie son e-mail après son premier coup (`garderMonCompte`). Propriété : `coups` (coups joués avant l'inscription).
+  - Coefficient viral : `uniq(defi_ouvert sans deja_joueur) / uniq(defi_cree)` par semaine, puis `defi_inscription / defi_ouvert (anonyme)`. Aucune donnée du jeton ni de l'identifiant de partie dans les propriétés.
 
 ## Vérification du 28/09 (#222)
 

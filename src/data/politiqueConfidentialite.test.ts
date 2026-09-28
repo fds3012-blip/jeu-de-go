@@ -55,4 +55,12 @@ describe('politique de confidentialité et code', () => {
     // Aucune adresse e-mail réelle dans le texte destiné aux joueurs.
     expect(politique).not.toMatch(/[\w.+-]+@[\w-]+\.[a-z]{2,}/i);
   });
+
+  it('décrit les données gardées par le défi par lien (#81) : défi, date limite, session sans compte', () => {
+    const migration = readFileSync(join(racine, 'supabase/migrations/20260929003100_defi_par_lien.sql'), 'utf8');
+    expect(migration).toMatch(/create table public\.defis/);
+    expect(politique).toContain('**Défi par lien**');
+    expect(politique).toMatch(/date limite du coup en cours/);
+    expect(politique).toContain('**Session sans compte**');
+  });
 });
