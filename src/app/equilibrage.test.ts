@@ -1,9 +1,28 @@
 import { describe, expect, it } from 'vitest';
 import { newPosition } from '../go/rules';
 import { score } from '../go/score';
-import { annonceKomi, equilibrage, KOMI_DEBUTANT, KOMI_NORMAL, PARTIES_KOMI_DEBUTANT, PARTIES_SANS_BARRE_AVANTAGE, partiesOrdi } from './equilibrage';
+import { annonceKomi, equilibrage, KOMI_DEBUTANT, KOMI_NORMAL, PARTIES_KOMI_DEBUTANT, PARTIES_SANS_BARRE_AVANTAGE, partiesOrdi, rendrePartieOrdi } from './equilibrage';
 
 const FINE = ' ';
+
+describe('partie finie sur un plateau presque vide (#251)', () => {
+  it('rend la partie à komi réduit consommée au lancement', () => {
+    // Lancement de la première partie : ordi passe à 1. Deux passes précoces : on rend la partie.
+    const apres = rendrePartieOrdi({ n: 1, ordi: 1, dernier: 'pomme' });
+    expect(apres).toEqual({ n: 1, ordi: 0, dernier: 'pomme' });
+    expect(equilibrage(partiesOrdi(apres)).komi).toBe(KOMI_DEBUTANT);
+    // Dernière partie à komi réduit : elle est rendue, la suivante l'a encore.
+    const derniere = rendrePartieOrdi({ n: 3, ordi: PARTIES_KOMI_DEBUTANT });
+    expect(equilibrage(partiesOrdi(derniere)).komi).toBe(KOMI_DEBUTANT);
+  });
+
+  it('ne touche pas au compteur hors des parties à komi réduit', () => {
+    const p = { n: 9, ordi: PARTIES_KOMI_DEBUTANT + 1 };
+    expect(rendrePartieOrdi(p)).toBe(p);
+    const vide = { n: 0 };
+    expect(rendrePartieOrdi(vide)).toBe(vide);
+  });
+});
 
 describe('équilibrage des premières parties contre l’ordi (#160)', () => {
   it('constantes : komi 0,5 pour 3 parties, barre cachée pendant 1 partie, komi habituel 6,5', () => {
