@@ -388,6 +388,12 @@ export const fr = {
   'partie.mortes.aucune': '{fin} Aucune pierre morte. Si un groupe ne peut plus vivre, touche-le pour le compter comme prisonnier.',
   'partie.mortes.aria': 'Pierres mortes',
   'partie.frontieres': 'Il reste des frontières ouvertes : ferme-les avant de passer.',
+  // Avant un passe trop tôt (#235) : Mochi prévient, le joueur choisit.
+  'partie.passe.avertir': 'Il reste de la place à prendre. Tu passes quand même ?',
+  'partie.passe.confirmer': 'Passer',
+  'partie.passe.continuer': 'Continuer à jouer',
+  'partie.passe.continue': 'À toi ! Pose tes pierres pour fermer ta zone.',
+  'partie.passe.aria': 'Passer maintenant ?',
   // Répliques des adversaires (src/app/repliques.ts) : 15 caractères au plus
   'replique.captureSubie.0': 'Oh ! Bien vu.',
   'replique.captureSubie.1': 'Aïe !',

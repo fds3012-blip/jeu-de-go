@@ -6,7 +6,7 @@
 // Pomme et Caillou utilisent le moteur simple (Monte-Carlo). Les 7 autres niveaux utilisent KataGo
 // dans un Web Worker ; s'il ne démarre pas (pas de Worker, pas de backend, réseau introuvable),
 // ils se replient sur le moteur simple, sans rien casser.
-import { chooseMove, chooseMoveDetail, gainDuCoup, isLegalMove, OPPONENTS, opponent, raisonFrontiere, raisonPoints, SEUIL_POINTS, type CoupExplique, type EngineOptions, type KataGoLevel, type Opponent, type OpponentId, type Raison, type Style } from './simple';
+import { chooseMove, chooseMoveDetail, gainDuCoup, isLegalMove, OPPONENTS, opponent, raisonFrontiere, raisonPoints, reponseAccommodante, SEUIL_POINTS, type CoupExplique, type EngineOptions, type KataGoLevel, type Opponent, type OpponentId, type Raison, type Style } from './simple';
 import { comptageAuto, deadStones, groupesIncertains, ownership as ownershipSimple, type ComptageAuto, type DeadOptions } from './dead';
 import type { Position } from '../go/rules';
 import type { Rules } from '../go/score';
@@ -197,8 +197,9 @@ function apresAnalyse(pos: Position, lvl: Opponent, opts: EngineOptions, a: Anal
     const f = move === -1 ? fermer() : -1;
     return f >= 0 ? { move: f, raison: raisonFrontiere(f, pos.size) } : { move, raison: null };
   }
-  // Le joueur vient de passer (#185).
-  if (!avancee) return opts.accommodant ? PASSE : { move, raison: null };
+  // Le joueur vient de passer (#185). Parties accommodantes (#235) : seulement un trou dans sa frontière, puis la passe.
+  if (opts.accommodant) return reponseAccommodante(pos, lvl, opts, () => mortesSelonPropriete(pos, a.ownership), [move, ...a.moves.map(m => m.move)]);
+  if (!avancee) return { move, raison: null };
   const f = fermer();
   if (f >= 0) return { move: f, raison: raisonFrontiere(f, pos.size) };
   if (opts.accommodant || move === -1) return PASSE;

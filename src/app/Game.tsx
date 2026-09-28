@@ -16,7 +16,7 @@ import { useProfil } from './hooks';
 import { useStored } from './settings';
 import { carteTerritoire, conseilPasser, passerEnEvidence, coupsJoues, descriptionIndices, descriptionQuiMene, DUREE_QUI_MENE, indicesRestants, INDICES_PAR_PARTIE, libelleAvantage, libelleCoup, messageAtari, messageIndice, metEnAtari, nouveauxAtari, partNoir, phraseQuiMene, QUI_MENE_PAR_PARTIE, quiMeneDisponible, quiMeneRestants } from './partie';
 import { messageComptage, modeComptage } from './partie';
-import { avanceBarre, frontieresAuPasse, frontieresVisibles, type AlerteFrontieres } from './partie';
+import { avanceBarre, avertirAvantPasse, frontieresAuPasse, frontieresVisibles, type AlerteFrontieres } from './partie';
 import '../ui/comptage.css';
 import { choisirReplique, DUREE_REPLIQUE, type Situation } from './repliques';
 import { FinPartie } from '../ui/FinPartie';
@@ -113,6 +113,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   const pos = history[history.length - 1];
   const [conseilPasserA, setConseilPasserA] = useState<number | null>(null); // #120 : longueur d'historique au conseil « passer »
   const [frontieres, setFrontieres] = useState<AlerteFrontieres | null>(null); // #159 : frontières ouvertes montrées au passe
+  const [avertiPasse, setAvertiPasse] = useState<number | null>(null); // #235 : longueur d'historique quand Mochi a prévenu avant un passe
   const sc = useMemo(() => score(pos, komi, 'japanese', dead), [pos, komi, dead]);
   const aiTurn = !!ai && phase === 'play' && pos.toPlay === 2;
   const myTurn = !ai || (pos.toPlay === 1 && !thinking);
@@ -158,7 +159,9 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     setThinking(true);
     // Pomme « respire » (#187) : délai variable, plus long après ta capture ; court dans les tests de bout en bout.
     const cible = delaiReponse({ hasard: Math.random(), ...aRepondre.current, e2e: !!import.meta.env.VITE_E2E });
-    bestMoveExplique(pos, ai.id, { komi: aiKomi, accommodant }).then(async ({ move: m, raison }) => {
+    // Passes du joueur (Noir) depuis le début : en partie accommodante, l'ordi passe dès la deuxième (#235).
+    const passesJoueur = history.filter((h, i) => i > 0 && h.lastMove === -1 && h.toPlay === 2).length;
+    bestMoveExplique(pos, ai.id, { komi: aiKomi, accommodant, passesJoueur }).then(async ({ move: m, raison }) => {
       const wait = cible - (Date.now() - t0);
       if (wait > 0) await new Promise(r => setTimeout(r, wait));
       if (t !== token.current) return;
@@ -256,8 +259,18 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
       setMsg(cap ? tr('partie.campCapture', { camp: camp(pos.toPlay), n: cap }) : alerte ?? tr('partie.campJoue', { camp: camp(r.toPlay), point: toLabel(p, size) }));
     }
   }
+  /** Tu passes. Partie pas finie (#235) : Mochi prévient d'abord ; « Passer » (ici ou dans sa bulle) confirme. */
   function pass() {
     if (!myTurn) return;
+    const avertir = avertiPasse !== history.length && avertirAvantPasse({ contreOrdi: !!ai, aide, premieresParties: accommodant, adversairePasse: pos.lastMove === -1, board: pos.board, size });
+    if (avertir) {
+      setAvertiPasse(history.length);
+      const ouverts = frontieresAuPasse(true, pos.board, size);
+      setFrontieres(ouverts.length ? { len: history.length, points: ouverts } : null);
+      setMsg(tr('partie.passe.avertir'));
+      return;
+    }
+    setAvertiPasse(null);
     const r = play(pos, -1) as Position;
     aRepondre.current = { capture: false, forcee: false }; setFete(null);
     setHistory([...history, r]);
@@ -267,6 +280,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     else if (ai) { repliquer('passeJoueur'); setMsg(tr('partie.tuPasses', { nom: ai.nom })); }
     else setMsg(tr('partie.campPasse', { camp: camp(pos.toPlay), autre: camp(r.toPlay) }));
   }
+  function continuerAJouer() { setAvertiPasse(null); setMsg(tr('partie.passe.continue')); }
   // Indice : le moteur cherche un bon coup (niveau Caillou, dans son Worker) et on entoure la zone où il se trouve.
   const restants = ai ? indicesRestants(indicesUtilises) : INDICES_PAR_PARTIE;
   function hint() {
@@ -468,7 +482,8 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   const feteVisible = fete && fete.len === history.length && phase === 'play' ? fete : null;
   const pense = phase === 'play' && thinking && !!ai && !feteVisible;
   const messageCoach = pense && ai ? tr('partie.reflechit', { nom: ai.nom }) : msg;
-  const montrerIntro = intro && history.length === 1 && phase === 'play';
+  const avertissementPasse = phase === 'play' && myTurn && avertiPasse === history.length;
+  const montrerIntro = intro && history.length === 1 && phase === 'play' && !avertissementPasse;
 
   return (
     <div className="partie">
@@ -485,8 +500,18 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
       {/* Zone de Mochi de hauteur fixe (#187) : la bulle d'intro garde sa place après le premier coup, le plateau ne bouge pas. */}
       <div className="partie-mochi">
         {intro && phase === 'play' && <div className="coach-intro" aria-hidden={!montrerIntro || undefined} data-cache={!montrerIntro || undefined}>{intro}</div>}
-        {!montrerIntro && <Coach cle={messageCoach} attente={pense}
+        {!montrerIntro && !avertissementPasse && <Coach cle={messageCoach} attente={pense}
           humeur={pense ? 'pensif' : feteVisible || humeur.h === 'surpris' ? 'content' : 'neutre'}>{fr(messageCoach)}</Coach>}
+        {/* Avant un passe trop tôt (#235) : la bulle et ses deux choix montent au-dessus de ton bandeau, rien ne bouge. */}
+        {avertissementPasse && (
+          <div className="coach-avertir">
+            <Coach cle={messageCoach}>{fr(messageCoach)}</Coach>
+            <div className="coach-choix" role="group" aria-label={tr('partie.passe.aria')}>
+              <button type="button" className="btn" onClick={pass}>{tr('partie.passe.confirmer')}</button>
+              <button type="button" className="btn primary" onClick={continuerAJouer}>{tr('partie.passe.continuer')}</button>
+            </div>
+          </div>
+        )}
       </div>
       {phase === 'play' ? (
         <BarreActions label={tr('partie.actions')} actions={[

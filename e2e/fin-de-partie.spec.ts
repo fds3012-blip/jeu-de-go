@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { passerJusquAuScore } from './plateau';
+import { passer, passerJusquAuScore } from './plateau';
 
 // Issue #21 puis #117 : fin de partie contre Pomme. Après deux passes, les pierres mortes sont marquées
 // automatiquement et on voit directement le récit du score, puis le résultat, sans rien toucher.
@@ -11,7 +11,7 @@ test('fin de partie contre Pomme : deux passes, récit du score direct, puis le 
   await expect(page.locator('svg.board[aria-label="Plateau de go 9 × 9"]')).toBeVisible();
 
   // Plateau vide : Noir passe, Pomme (qui mène grâce au komi) passe aussi. Rien d'incertain : pas de phase manuelle.
-  await page.getByRole('button', { name: 'Passer' }).click();
+  await passer(page);
   await expect(page.locator('.recit')).toBeVisible({ timeout: 10_000 });
   await expect(page.getByRole('button', { name: 'Valider le score' })).toHaveCount(0);
   const corriger = page.getByRole('button', { name: 'Corriger les pierres mortes' });
@@ -31,7 +31,7 @@ test('fin de partie contre Pomme : deux passes, récit du score direct, puis le 
 test('« Corriger les pierres mortes » ouvre la phase manuelle, puis « Valider le score »', async ({ page }) => {
   await page.goto('/');
   await page.locator('.cta').click();
-  await page.getByRole('button', { name: 'Passer' }).click();
+  await passer(page);
   await page.getByRole('button', { name: 'Corriger les pierres mortes' }).click({ timeout: 10_000 });
   await expect(page.locator('.recit')).toHaveCount(0);
   await expect(page.getByText(/Les pierres grisées sont mortes/)).toBeVisible();

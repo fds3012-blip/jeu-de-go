@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { attendrePierre, jouer, jouerSuite, partieADeux } from './plateau';
+import { attendrePierre, jouer, jouerSuite, partieADeux, passer } from './plateau';
 
 // Issue #207 : corrections de la recette du 28/09 (docs/qa/recette-2026-09-28.md sur la branche recette-nuit).
 // Chaque défaut est vérifié à la taille d'écran où il a été vu.
@@ -142,7 +142,7 @@ test.describe('R5 : 320 × 640', () => {
         if (!vues.some(v => v.texte === e.textContent)) vues.push({ texte: e.textContent ?? '', coupe: e.scrollWidth > e.clientWidth + 1 });
       })).observe(document.body, { childList: true, subtree: true });
     });
-    await page.getByRole('button', { name: 'Passer' }).click();
+    await passer(page);
     await expect.poll(() => page.evaluate(() => (window as unknown as { vues: unknown[] }).vues.length)).toBeGreaterThan(0);
     expect(await page.evaluate(() => (window as unknown as { vues: { coupe: boolean }[] }).vues.filter(v => v.coupe))).toEqual([]);
   });

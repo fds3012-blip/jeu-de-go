@@ -240,6 +240,18 @@ export function frontieresAuPasse(aide: boolean, board: Int8Array, size: number)
   return frontieresOuvertes(board, size);
 }
 
+/**
+ * Avant un passe qui coûte cher (#235) : Mochi prévient et demande confirmation, sans bloquer. Contre l'ordi seulement,
+ * si l'aide est active ou pendant les premières parties (`premieresParties`, voir `accommodant` dans equilibrage.ts).
+ * La partie n'est pas finie si elle est peu avancée (voir `partieAvancee`) ou s'il reste au moins `size` points
+ * de frontière ouverte (une partie bien finie n'en a que quelques-uns). Jamais quand l'adversaire vient de passer :
+ * Mochi conseille alors de passer aussi (#120).
+ */
+export function avertirAvantPasse(o: { contreOrdi: boolean; aide: boolean; premieresParties: boolean; adversairePasse: boolean; board: Int8Array; size: number }): boolean {
+  if (!o.contreOrdi || (!o.aide && !o.premieresParties) || o.adversairePasse) return false;
+  return !partieAvancee(o.board) || frontieresOuvertes(o.board, o.size).length >= o.size;
+}
+
 /** Alerte donnée au passe : longueur de l'historique juste après le passe, et points montrés. */
 export interface AlerteFrontieres { len: number; points: number[] }
 
