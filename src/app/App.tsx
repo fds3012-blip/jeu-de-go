@@ -19,7 +19,7 @@ import { Accueil } from './Accueil';
 import { ALL_PUZZLES } from '../content/puzzles';
 import { parsePuzzles } from '../data/puzzles';
 import { EVENTS, track } from '../data/analytics';
-import { PARAM, SERIE_KEY, numeroDuJour, numeroDuLien, problemeDuNumero, type Serie } from './goDuJour';
+import { PARAM, PARAM_COURT, SERIE_KEY, numeroDuJour, numeroDuLien, problemeDuNumero, type Serie } from './goDuJour';
 import { battu, BILAN_KEY, enregistrer, fin, finTropTot, komiDepuisUrl, lireBilan, type Bilan, type Issue, type StatsPartie } from './bilan';
 import { fr } from '../ui/typo';
 import { Glacon } from '../ui/Glacon';
@@ -74,6 +74,7 @@ function noterArrivee() {
   try {
     const url = new URL(location.href);
     url.searchParams.delete(PARAM);
+    url.searchParams.delete(PARAM_COURT);
     history.replaceState(history.state, '', url.pathname + url.search + url.hash);
   } catch { /* adresse inchangée : sans conséquence */ }
 }

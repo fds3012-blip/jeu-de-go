@@ -97,9 +97,12 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   const [stats, setStats] = useState<PuzzleStats | null>(null);
   const [statsError, setStatsError] = useState('');
   const [localSolved, setLocalSolved] = useState<Record<string, true>>(() => readLocal(SOLVED_KEY, {}));
-  const [openId, setOpenId] = useState<string | null>(() => (lien !== null && daily ? daily.id : null));
-  // Lien d'un autre jour : on ouvre celui d'aujourd'hui, et on le dit.
-  const [defiChange] = useState(() => lien !== null && lien !== numero);
+  // Lien partagé : un numéro passé ouvre ce Go du jour-là (archive), comme sur Wordle ; un numéro à venir (ou 0)
+  // n'est pas encore sorti : on ouvre celui d'aujourd'hui, et on le dit.
+  const [archive, setArchive] = useState<number | null>(() => (lien !== null && lien >= 1 && lien < numero ? lien : null));
+  const pzArchive = archive !== null ? problemeDuNumero(LOCAL_PUZZLES, archive) : undefined;
+  const [openId, setOpenId] = useState<string | null>(() => (pzArchive ? pzArchive.id : lien !== null && daily ? daily.id : null));
+  const [defiChange] = useState(() => lien !== null && archive === null && lien !== numero);
   const [retry, setRetry] = useState(0);
   // Liste « Tous les problèmes » ouverte (#196) ; on y revient après un problème ouvert depuis la grille.
   const [tous, setTous] = useState(false);
@@ -169,19 +172,22 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   if (openId) dernierRef.current = openId;
   // eslint-disable-next-line react-hooks/exhaustive-deps -- nouveau tirage voulu à chaque changement de problème
   const tirage = useMemo(() => Math.random(), [openId]);
-  const open = list.find(p => p.id === openId) ?? (daily && openId === daily.id ? daily : undefined);
-  const duJourOuvert = !!open && open.id === daily?.id;
+  const open = list.find(p => p.id === openId) ?? (daily && openId === daily.id ? daily : pzArchive && openId === pzArchive.id ? pzArchive : undefined);
+  const duJourOuvert = !!open && (open.id === daily?.id || archive !== null);
   useEffect(() => {
     onDuJour?.(duJourOuvert);
   }, [duJourOuvert, onDuJour]);
   useEffect(() => () => onDuJour?.(false), [onDuJour]);
 
   if (open) {
-    const nextPz = aSuivre(tiers, open, solved);
-    const estDuJour = open.id === daily?.id;
+    // Go du jour d'un autre jour (lien partagé ancien) : ni série ni XP du jour ; ensuite, celui d'aujourd'hui.
+    const enArchive = archive !== null && open.id === pzArchive?.id;
+    const nextPz = enArchive && daily && !goDuJourFaitAppareil(numero) ? daily : aSuivre(tiers, open, solved);
+    const estDuJour = !enArchive && open.id === daily?.id;
     return (
-      <PuzzlePlayer key={open.id} puzzle={open} rang={ordre.indexOf(open) + 1} confirmTouch={confirmTouch}
-        duJour={estDuJour ? { numero, serie: serieVivante(serieDuJour, numero), defiChange, gelGagne, celebrer } : undefined}
+      <PuzzlePlayer key={`${open.id}${enArchive ? '-archive' : ''}`} puzzle={open} rang={ordre.indexOf(open) + 1} confirmTouch={confirmTouch}
+        duJour={enArchive ? { numero: archive, serie: 0, defiChange: false, archive: numero, gelGagne: false, celebrer }
+          : estDuJour ? { numero, serie: serieVivante(serieDuJour, numero), defiChange, gelGagne, celebrer } : undefined}
         rated={!!db && !!userId && online && !!stats && !stats.attempted.includes(open.id) && !solved.has(open.id)}
         rating={stats?.rating}
         onAttempt={async ok => {
@@ -214,8 +220,8 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
           if (estDuJour && gain.palier && repriseDeLeconFaite(open)) noterRediteAppareil(open.id);
         }}
         onSolutionVue={essais => track(EVENTS.solutionVue, { probleme: open.id, du_jour: estDuJour, essais })}
-        onNext={nextPz ? () => { setOpenId(nextPz.id); window.scrollTo({ top: 0 }); } : undefined}
-        onExit={() => setOpenId(null)} />
+        onNext={nextPz ? () => { setArchive(null); setOpenId(nextPz.id); window.scrollTo({ top: 0 }); } : undefined}
+        onExit={() => { setArchive(null); setOpenId(null); }} />
     );
   }
 
@@ -450,7 +456,7 @@ function Partager({ numero, essais, serie }: { numero: number; essais: number; s
   }
   return (
     <>
-      <button className="cta partager" onClick={partager}>
+      <button className="btn partager" onClick={partager}>
         <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path d="M12 3v12M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6" /></svg>
         {tr('pb.partager')}
       </button>
@@ -461,7 +467,8 @@ function Partager({ numero, essais, serie }: { numero: number; essais: number; s
   );
 }
 
-interface DuJourInfo { numero: number; serie: number; defiChange: boolean; gelGagne: boolean; celebrer: boolean }
+/** `archive` : numéro d'aujourd'hui quand le joueur ouvre un Go du jour passé par un lien partagé. */
+interface DuJourInfo { numero: number; serie: number; defiChange: boolean; archive?: number; gelGagne: boolean; celebrer: boolean }
 
 /** Temps pendant lequel la réponse de l'adversaire reste sur le plateau après une erreur (#237, N6). */
 const DUREE_ERREUR = 2200;
@@ -661,15 +668,17 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating
       </Verdict>
     ) : solvedNow ? (
       <Verdict ton="juste" cle={answer.n} actions={duJour
-        // Go du jour réussi : « Partager » est l'action principale, en relief ; la suite reste à portée, en lien.
+        // Go du jour réussi (#75) : continuer est l'action principale ; « Partager » est l'action secondaire, juste dessous.
         ? <>
+            {duJour.archive !== undefined && onNext
+              ? <button className="cta" onClick={onNext}>{tr('pb.duJourAujourdhui', { numero: duJour.archive })}</button>
+              : suivantBtn}
             <Partager numero={duJour.numero} essais={tries} serie={duJour.serie} />
             {duJour.gelGagne && (
               <p className={`gel-gagne${duJour.celebrer ? ' fete' : ''}`} role="status"><PierreGivree taille={18} />{fr(tr('pb.gelGagne'))}</p>
             )}
             <div className="row liens-du-jour">
               <button className="lien" onClick={showLine}>{tr('pb.voirSuite')}</button>
-              <button className="lien" onClick={onNext ?? onExit}>{tr(onNext ? 'pb.suivant' : 'pb.retour')}</button>
             </div>
             <ProposerInstallation moment="go_du_jour" />
           </>
@@ -698,6 +707,7 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating
         <Difficulte d={puzzle.difficulty} />
       </div>
       {duJour?.defiChange && <p className="notice" role="status">{fr(tr('pb.defiChange'))}</p>}
+      {duJour?.archive !== undefined && <p className="notice" role="status">{fr(tr('pb.archive', { numero: duJour.archive }))}</p>}
       <Bubble>{fr(`${puzzle.prompt} ${tr(puzzle.toPlay === 1 ? 'pb.tuJoues.1' : 'pb.tuJoues.2')}`)}</Bubble>
       <Board size={puzzle.size} board={board} toPlay={puzzle.toPlay} interactive={!solvedNow && (!replay || replayDone) && (!refut || refut.vue)}
         stonesTappable={!!refut || !!replay || !!apercu} confirmTouch={confirmTouch} onPlay={onPlay} shake={shake}

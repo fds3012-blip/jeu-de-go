@@ -56,10 +56,11 @@ test('le lien ouvre le Go du jour sans compte, on le résout, puis on le partage
   expect(revision.recents ?? {}).toEqual({});
   expect(revision.suivis).toEqual({ b1: { base: 1, etape: 0 } });
 
-  // « Partager » est l'action principale, en relief.
+  // « Partager » est l'action secondaire (#75) : à plat, sous « Problème suivant » en relief.
   const partager = page.getByRole('button', { name: 'Partager' });
   await expect(partager).toBeVisible();
-  await expect(partager).toHaveClass(/\bcta\b/);
+  await expect(partager).not.toHaveClass(/\bcta\b/);
+  await expect(page.locator('.verdict .cta')).toHaveCount(1);
   const boite = await partager.boundingBox();
   expect(boite!.height).toBeGreaterThanOrEqual(44);
   await partager.click();
@@ -86,7 +87,7 @@ test('sans Web Share API : copie dans le presse-papiers et « Copié ! »', asyn
   expect(copies).toEqual(['Go du jour n° 1 · résolu en 1 essai · série 1 🔥\nhttps://jeu-de-go.vercel.app/?go-du-jour=1']);
 });
 
-test('un lien d’un autre jour ouvre celui d’aujourd’hui et le dit', async ({ page }) => {
+test('un lien d’un jour à venir ouvre celui d’aujourd’hui et le dit', async ({ page }) => {
   await figer(page);
   await page.goto('/?go-du-jour=5');
   await expect(page.getByText('Le Go du jour a changé : voici celui d’aujourd’hui.')).toBeVisible();
@@ -111,4 +112,41 @@ test.describe('premier lancement', () => {
     await page.getByRole('button', { name: 'Retour aux problèmes' }).first().click();
     await expect(fenetre).toBeVisible();
   });
+});
+
+test('résoudre, partager (texte copié), puis ouvrir le lien dans un nouveau contexte : même problème', async ({ browser }) => {
+  // Le 29 septembre à 10 h à Paris : Go du jour n° 3 (problème b3).
+  const jour = new Date('2026-09-29T10:00:00+02:00');
+  const a = await browser.newContext({ storageState: { cookies: [], origins: [] } });
+  const pa = await a.newPage();
+  await pa.clock.setFixedTime(jour);
+  await pa.emulateMedia({ reducedMotion: 'reduce' });
+  await mockPressePapiers(pa);
+  await pa.goto('/?go-du-jour=3');
+  await expect(pa.getByText(/^Go du jour n°\s3$/)).toBeVisible();
+  const titre = await pa.locator('.lecteur-nom h2').innerText();
+  // Le n° 3 est le problème b3 (calendrier, goDuJour.test.ts) ; sa réponse est E5.
+  await jouer(pa, 'E5');
+  await attendrePierre(pa, 'E5', 'noir');
+  await pa.getByRole('button', { name: 'Partager' }).click();
+  await expect(pa.getByText(/^Copié\s!$/)).toBeVisible();
+  const [copie] = await pa.evaluate(() => (window as unknown as { __copies: string[] }).__copies);
+  expect(copie).toMatch(/^Go du jour n° 3 · résolu en 1 essai · série 1 🔥\nhttps:\/\/jeu-de-go\.vercel\.app\/\?go-du-jour=3$/);
+  // Aucune coordonnée (lettre A-T sans I suivie d'un numéro de ligne).
+  expect(copie).not.toMatch(/\b[A-HJ-T](1[0-9]|[1-9])\b/);
+  await a.close();
+
+  // Un ami, sans compte ni consentement, ouvre le lien le lendemain : il tombe sur le n° 3, pas sur celui du jour.
+  const b = await browser.newContext({ storageState: { cookies: [], origins: [] } });
+  const pb = await b.newPage();
+  await pb.clock.setFixedTime(new Date('2026-09-30T10:00:00+02:00'));
+  await pb.emulateMedia({ reducedMotion: 'reduce' });
+  const lien = copie.split('\n')[1].replace('https://jeu-de-go.vercel.app', '');
+  await pb.goto(lien);
+  await expect(pb.getByText(/^Go du jour n°\s3$/)).toBeVisible();
+  await expect(pb.locator('.lecteur-nom h2')).toHaveText(titre);
+  await expect(pb.getByText('Ce Go du jour date d’un autre jour. Celui d’aujourd’hui, c’est le n° 4.')).toBeVisible();
+  await expect(pb.getByRole('dialog', { name: 'Tu m’aides à chasser les bugs ?' })).toBeHidden();
+  await expect(plateau(pb)).toBeVisible();
+  await b.close();
 });
