@@ -456,3 +456,27 @@ Chaque livraison : issue traitée, agent, pull request, résultat des vérificat
 - #148 Droit MAINTAIN retiré à `anon` et `authenticated`, en production.
 - #136 Lot H : 1 problème « relier » prouvé (6 positions écartées). **107 problèmes** en production.
 - #121 Non fait : Apprendre et Profil débordent encore à 195 px (détail dans l'issue).
+
+## Nuit du 27 au 28/09 (23 h 30 à 8 h)
+
+**Équipe** : 5 rôles ajoutés (#164) : UX jeux mobiles (base de connaissances `docs/ux/base-de-connaissances.md`), game designer, son et haptique, data, localisation.
+
+**Fusionné sur main (CI verte)**
+- Jeu : komi 0,5 (#171), fin de partie par la passe (#190), écran des frontières (#174, #188), sensation de partie (#203), mur de Bambou (#216), sons v2 (#180).
+- Apprendre : leçons 7 et 8 (#193, #231), leçons aux gestes (#202), leçon puis pratique (#220), solution vue (#210).
+- Problèmes : un seul bouton « Continuer », sans montagne ni total (#137, #204). Révision du jour (#219). Lots I, J, N (#175, #205, #230) : **147 problèmes** en production, empreintes md5 vérifiées lot par lot.
+- Motivation : XP visible (#172), série sans compte (#181, #184), record (#217), flamme (#221), Profil « Ton parcours » (#224), invitation à installer (#189).
+- Anglais en 4 étapes (#173, #191, #209, #229), seulement avec `?lang=en` tant que les contenus ne sont pas traduits.
+- Données et droit : plan de marquage (#170), entonnoirs (#226), rapport juridique (#225), GeoIP coupée et effacement des traces (#227).
+- Études : analyses UX (#183, #201, #215), revue honnête (#192), équilibrage (#194), fiches stores (#211), recette de nuit (#206, #218).
+
+**Bloqué à 4 h 50** : GitHub Actions ne démarre plus (« recent account payments have failed or your spending limit needs to be increased »). Aucune dépense faite. Plus aucune fusion depuis : la règle est « CI verte avant fusion ».
+
+**En attente de CI** : tout est intégré dans `assemblage-nuit` (PR #246), validé en local (`tsc`, lint, Vitest 7 093 tests, Playwright 198 passés). Il contient #234, #238, #239, #242 à #245, le vocabulaire du design, le lot O (#248, 12 problèmes, migration pas encore appliquée) et la recette du matin (#249).
+
+**Recette du matin** (#247) : 4 parcours × 4 configurations, rien de bloquant. M1 corrigé. M2 à M9 ouverts dans #250 (petits écrans) et #251 (komi et révisions).
+
+**Appris**
+- Assembler toutes les branches en local avant de fusionner a évité plusieurs cassures croisées (profil « 2/7 » devenu « 2/8 », textes i18n).
+- `pkill -f` avec le motif dans sa propre commande tue le shell : on arrête les serveurs par PID.
+- Le disque s'est rempli à 2 h : les agents lient `node_modules` au lieu de l'installer.
