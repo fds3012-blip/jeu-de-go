@@ -170,6 +170,7 @@ export const fr = {
   'pb.refaireAria': 'Refaire le Go du jour',
   'pb.partager': 'Partager',
   'pb.copie': 'Copié !',
+  'pb.copieAnnonce': 'Texte copié. Colle-le dans un message.',
   'pb.copieImpossible': 'Copie impossible. Envoie ce lien :',
   'pb.bonCoup': 'Bravo, c’est le bon coup !',
   'pb.pasTout': 'Pas tout à fait. Essaie encore.',
@@ -658,6 +659,9 @@ export const fr = {
   'acquis.l8': 'Tu sais où poser tes premières pierres : coins, bords, puis centre.',
   'acquis.defaut': 'Une leçon de plus dans ta poche.',
   'lecteur.progression': 'Progression de la leçon',
+  // #290 : sur un écran bas, l'explication du verdict est repliée pour laisser voir le plateau.
+  'lecteur.lireExplication': 'Lire l’explication',
+  'lecteur.replierExplication': 'Replier l’explication',
   'lecteur.etapes': { one: '{n} étape faite sur {total}', other: '{n} étapes faites sur {total}' },
   // Compte et connexion (src/app/Account.tsx)
   'compte.titre': 'Ton compte',
