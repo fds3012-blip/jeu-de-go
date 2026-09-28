@@ -20,7 +20,7 @@ import { ALL_PUZZLES } from '../content/puzzles';
 import { parsePuzzles } from '../data/puzzles';
 import { EVENTS, track } from '../data/analytics';
 import { PARAM, SERIE_KEY, numeroDuJour, numeroDuLien, problemeDuNumero, type Serie } from './goDuJour';
-import { battu, BILAN_KEY, enregistrer, fin, komiDepuisUrl, lireBilan, type Bilan, type Issue, type StatsPartie } from './bilan';
+import { battu, BILAN_KEY, enregistrer, fin, finTropTot, komiDepuisUrl, lireBilan, type Bilan, type Issue, type StatsPartie } from './bilan';
 import { fr } from '../ui/typo';
 import { Glacon } from '../ui/Glacon';
 import { Mochi } from '../ui/Mochi';
@@ -32,7 +32,7 @@ import { messageGel } from './gel';
 import { goDuJourFaitAppareil } from './defiAppareil';
 import { BarreNav, type Onglet } from '../ui/IconesNav';
 import { BarreNiveau, FeteNiveau } from '../ui/Niveau';
-import { annonceKomi, equilibrage, KOMI_NORMAL, partiesOrdi, type Equilibrage } from './equilibrage';
+import { annonceKomi, equilibrage, KOMI_NORMAL, partiesOrdi, rendrePartieOrdi, type Equilibrage } from './equilibrage';
 import { AnnonceXp } from '../ui/PastilleXp';
 import { useExercice } from '../ui/celebrations';
 import { ProposerInstallation, usePlateformeInstallation } from '../ui/ProposerInstallation';
@@ -174,6 +174,8 @@ export function App() {
     if (playing !== 'ordi') return;
     const issue: Issue = winner === 0 ? 'egalite' : winner === 1 ? 'victoire' : 'defaite';
     if (issue !== 'egalite') setBilan(enregistrer(bilan, adv.id, issue === 'victoire'));
+    // #251 : une partie finie sur un plateau presque vide ne consomme pas une partie à komi réduit.
+    if (finTropTot(stats)) setParties(rendrePartieOrdi(parties));
     setResultat({ issue, stats });
   }
 
