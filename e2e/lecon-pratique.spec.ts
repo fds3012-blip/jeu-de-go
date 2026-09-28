@@ -26,8 +26,8 @@ test('fin de la leçon 1 : 3 problèmes de capture enchaînés, puis retour au c
 
   // Les trois plus faciles du thème, dans le lecteur de problèmes existant.
   const serie = page.locator('.serie-pratique');
-  await expect(serie).toHaveAttribute('data-serie', 'a01 a02 a03');
-  for (const [rang, titre, coup] of [[1, 'Première capture', 'E4'], [2, 'Capture au bord', 'E2'], [3, 'Capture dans le coin', 'A2']] as const) {
+  await expect(serie).toHaveAttribute('data-serie', 'a01 n01 a02');
+  for (const [rang, titre, coup] of [[1, 'Première capture', 'E4'], [2, 'Deux pierres d’un coup', 'E3'], [3, 'Capture au bord', 'E2']] as const) {
     await expect(page.getByText(`Entraînement, ${rang} sur 3`)).toBeVisible();
     await expect(page.getByRole('heading', { name: titre })).toBeVisible();
     await jouer(page, coup);
@@ -38,7 +38,7 @@ test('fin de la leçon 1 : 3 problèmes de capture enchaînés, puis retour au c
   await page.locator('.verdict').getByRole('button', { name: 'Retour au chemin' }).click();
   await expect(page.getByRole('button', { name: 'Continuer : Atari' })).toBeVisible();
   const reussis = await page.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('go.problemes.v1') ?? '{}')));
-  expect(reussis.sort()).toEqual(['a01', 'a02', 'a03']);
+  expect(reussis.sort()).toEqual(['a01', 'a02', 'n01']);
 
 });
 
@@ -83,7 +83,7 @@ test('fin de la leçon 3, toutes les autres faites : fin de chapitre, et un prob
   const pratique = page.getByRole('button', { name: /^Entraîne-toi\s:\s3 problèmes sur ce thème, Double atari, Vers le bord, Échelle$/ });
   await expect(pratique).toHaveClass(/\blien\b/);
   await pratique.click();
-  await expect(page.locator('.serie-pratique')).toHaveAttribute('data-serie', 'c1 e04 i09');
+  await expect(page.locator('.serie-pratique')).toHaveAttribute('data-serie', 'c1 n06 i09');
   await expect(page.getByText('Entraînement, 1 sur 3')).toBeVisible();
   // Le retour du lecteur ramène au chemin.
   await page.getByRole('button', { name: 'Retour au chemin' }).first().click();
