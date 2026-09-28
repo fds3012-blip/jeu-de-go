@@ -316,3 +316,60 @@ test('captures de la leçon 7 (390 × 844, sombre)', async ({ page }) => {
   await page.waitForTimeout(200);
   await photo('8-chemin');
 });
+
+// Issue #228 : chapitre 2, leçon 8. Coins, bords, centre ; ne pas coller ; s'étendre ; la première ligne rapporte peu.
+test('leçon 8 : bien commencer sur 9 × 9, du chemin à la fin de leçon', async ({ page }) => {
+  await page.addInitScript(p => localStorage.setItem('go.lecons.v1', JSON.stringify(p)), { ...AVANT_L7, l7: 6 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/');
+  await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
+  // Les bases finies ; le chapitre 2 s'ouvre sous elles, la leçon 8 est la prochaine étape.
+  await expect(page.getByText('Chapitre terminé. Tu connais les règles du go !')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Ouverture sur 9 × 9' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Leçon 8 : Les premiers coups, prochaine étape' })).toBeVisible();
+  await expect(page.locator('.cta')).toHaveCount(1);
+  await page.getByRole('button', { name: 'Continuer : Les premiers coups' }).click();
+  const continuer = page.getByRole('button', { name: 'Continuer' });
+
+  // 1. Je montre : l'élève ferme le coin ; les trois zones de 4 points s'allument.
+  await expect(page.locator('.lecteur-plateau')).toHaveAttribute('data-demo', 'geste');
+  await jouer(page, 'C1');
+  await expect(page.locator('.board .liberte')).toHaveCount(12);
+  await continuer.click();
+  // 2. Le 3-3, puis Blanc au 5-5.
+  await jouer(page, 'C3');
+  await continuer.click();
+  // 3. Ensemble : neuf points verts ; chaque erreur a sa réfutation.
+  await expect(page.locator('.board .liberte')).toHaveCount(9);
+  await jouer(page, 'E6');
+  await expect(page.getByText(/Collée à Blanc/)).toBeVisible();
+  await jouer(page, 'B8');
+  await expect(page.getByText(/deux premières lignes/)).toBeVisible();
+  await jouer(page, 'G7');
+  await expect(page.getByText(/le 3-3 garde le coin/)).toBeVisible();
+  await continuer.click();
+  // 4. Touche la pierre collée.
+  await jouer(page, 'D4');
+  await expect(page.getByText(/Cherche la pierre noire qui touche/)).toBeVisible();
+  await jouer(page, 'F5');
+  await continuer.click();
+  // 5. S'étendre au point vert.
+  await jouer(page, 'E3');
+  await continuer.click();
+  // 6. Seul : trop serrée, puis la bonne extension.
+  await expect(page.locator('.board .liberte')).toHaveCount(0);
+  await jouer(page, 'D3');
+  await expect(page.getByText(/Trop serrée/)).toBeVisible();
+  await jouer(page, 'C5');
+  await expect(page.getByText(/Bien étendu/)).toBeVisible();
+  await page.getByRole('button', { name: 'Terminer la leçon' }).click();
+
+  // Chapitre en cours d'écriture : fin de leçon classique, sans entraînement (pas encore de problèmes d'ouverture).
+  await expect(page.getByRole('heading', { name: 'Leçon terminée' })).toBeVisible();
+  await expect(page.getByText(/coins, bords, puis centre/)).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Entraîne-toi/ })).toHaveCount(0);
+  await expect(page.getByTestId('confettis')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Retour au chemin' }).click();
+  await expect(page.getByRole('button', { name: 'Leçon 8 : Les premiers coups, terminée' })).toBeVisible();
+  await expect(page.getByText('Tout est fait. La suite arrive bientôt.')).toBeVisible();
+});

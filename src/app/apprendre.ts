@@ -140,6 +140,6 @@ export const CHAPITRES_A_VENIR = [
   'Capturer et sauver',
   'Vie et mort',
   'Formes et tesuji, les coups astucieux',
-  'Ouverture en 9\u00A0×\u00A09 puis en 19\u00A0×\u00A019',
+  'Ouverture en 19\u00A0×\u00A019',
   'Fin de partie et comptage',
 ];
