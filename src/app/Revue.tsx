@@ -5,6 +5,8 @@
 // Issue #77 : « Rejoue cette erreur » sur une Erreur ou Grosse erreur du joueur (avec un conseil fiable de KataGo) :
 // la position d'avant revient, tout coup qui perd moins de 1 point est accepté (données de la revue, pas de nouvelle
 // analyse). Ratée au premier essai, elle rejoint « Tes erreurs à rejouer » (J+1, J+3, J+7 ; logique : erreurs.ts).
+// Suite (#77) : sur une Erreur ou Grosse erreur rejouable, le bon coup reste caché jusqu'à un essai
+// ou jusqu'à « Voir le bon coup » : « Rejoue cette erreur » devient l'action principale.
 // Issue #71 : une note pour chaque coup (sceau sur la pierre, liste des coups, points sur la courbe),
 // et un bilan de précision pour les deux joueurs, avec la phrase de Mochi.
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -64,6 +66,8 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
   const [resume, setResume] = useState(false);
   // « Rejoue cette erreur » (issue #77) : `null` hors rejeu.
   const [rejeu, setRejeu] = useState<Rejeu | null>(null);
+  // Erreurs dont le bon coup est dévoilé (après un essai ou « Voir le bon coup »), par numéro de coup.
+  const [devoilees, setDevoilees] = useState<ReadonlySet<number>>(() => new Set());
   const liste = useRef<HTMLOListElement>(null);
   // Issue #186 : la revue s'ouvre sur le moment clé dès qu'il est connu, sauf si le joueur a déjà navigué.
   const [enCle, setEnCle] = useState(false);
@@ -188,8 +192,11 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
     }
     setRejeu({ ...rejeu, essais: rejeu.essais + 1, faux: apres ? null : p, n: rejeu.n + 1, apres });
   }
+  function devoiler(coup: number) { setDevoilees(d => new Set(d).add(coup)); }
   function finirRejeu() {
     const coup = rejeu?.pb.coup;
+    // Après un essai, réussi ou non, la revue montre le bon coup.
+    if (coup != null && rejeu && rejeu.essais > 0) devoiler(coup);
     setRejeu(null);
     if (coup != null) setI(coup - 1);
   }
@@ -198,11 +205,14 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
   const note = i > 0 ? notes[i - 1] ?? null : null;
   let phrase: string;
   const surCle = enCle && !!cle && i === cle.coup;
+  // Erreur choisie, rejouable, pas encore dévoilée : on montre l'erreur, pas la réponse.
+  const aTrouver = !surCle && !!choisie && !devoilees.has(choisie.coup) && peutEnFaireUnProbleme(notes[choisie.coup - 1]?.note, meilleurs[choisie.coup]);
   if (rejeu) {
     phrase = rejeu.apres
       ? `${tr(rejeu.pb.reponses.length > 1 ? 'erreurs.bravoParmi' : 'erreurs.bravoKataGo')}${rejeu.essais > 1 ? ` ${tr('revue.rejeu.revient')}` : ''}`
       : rejeu.faux != null ? tr('revue.rejeu.rate') : tr('revue.rejeu.consigne');
   } else if (surCle) phrase = phraseMomentCle(cle, positions, adversaire);
+  else if (choisie && aTrouver) phrase = `${phraseErreur(choisie, positions, null)} ${tr('revue.aTrouver')}`;
   else if (choisie) phrase = phraseErreur(choisie, positions, meilleurs[choisie.coup] ?? null);
   else if (i === 0) phrase = tr('revue.debut');
   else {
@@ -215,7 +225,7 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
 
   const { ligne, aire } = courbe(avances, L, H, size);
   const x = (k: number) => (n <= 0 ? L / 2 : (k * L) / n);
-  const meilleur = choisie ? meilleurs[choisie.coup] ?? undefined : undefined;
+  const meilleur = choisie && !aTrouver ? meilleurs[choisie.coup] ?? undefined : undefined;
   const moi: Color = joueur ?? 1, lui = (3 - moi) as Color;
   const nomMoi = tr(adversaire ? 'camp.toi' : 'camp.noir'), nomLui = adversaire ?? tr('camp.blanc');
   const precMoi = finie ? precisionHonnete(notes, moi, avanceNoir, size) : null, precLui = finie ? precisionHonnete(notes, lui, avanceNoir, size) : null;
@@ -299,7 +309,8 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
       ) : (
         <>
       <div className="revue-plateau">
-        <Board size={size} board={q.board} marks={{ last: q.lastMove, meilleur, note: marqueNote }} />
+        {/* Bon coup caché : la croix rouge montre où tu as joué, sur la position d'avant. */}
+        <Board size={size} board={q.board} marks={{ last: q.lastMove, meilleur, note: marqueNote, mistake: aTrouver && choisie ? positions[choisie.coup].lastMove ?? undefined : undefined }} />
       </div>
 
       <div className="revue-nav">
@@ -325,14 +336,19 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
       </div>
 
       <div className="dock revue-dock">
-        <button type="button" className="cta" onClick={rejouer}>{tr('revue.rejouer')}</button>
+        {aTrouver && choisie
+          ? <button type="button" className="cta" onClick={() => rejouerErreur(choisie)}>{tr('revue.rejoueErreur')}</button>
+          : <button type="button" className="cta" onClick={rejouer}>{tr('revue.rejouer')}</button>}
       </div>
       <div className="revue-mochi" aria-live="polite">
         <Mochi size={40} />
         <p>{fr(phrase)}</p>
       </div>
       {surCle && i > 0 && <button type="button" className="btn revue-debut" onClick={() => aller(0)}>{tr('revue.revenirDebut')}</button>}
-      {cible && peutRejouer && (
+      {aTrouver && choisie && (
+        <button type="button" className="lien revue-voir" onClick={() => devoiler(choisie.coup)}>{tr('revue.voirBonCoup')}</button>
+      )}
+      {!aTrouver && cible && peutRejouer && (
         <button type="button" className="btn revue-probleme" onClick={() => rejouerErreur(cible)}>{tr('revue.rejoueErreur')}</button>
       )}
       {sansKataGo && erreurs.length > 0 && <p className="revue-note">{fr(tr('revue.sansKataGo'))}</p>}
