@@ -1,6 +1,6 @@
-# Conditions générales d'utilisation (issue #111)
+# Conditions générales d'utilisation (issues #111 et #223)
 
-Projet rédigé par le responsable juridique (non-avocat) le 27 septembre 2026. **À faire relire par un avocat avant la mise en production.** Les conditions de l'abonnement Premium feront l'objet d'un document séparé (conditions générales de vente) quand l'offre existera.
+Projet rédigé par le responsable juridique (non-avocat) le 27 septembre 2026, mis à jour le 28 septembre 2026 (#223 : progression sur l'appareil, série envoyée à la connexion, installation de l'app, suppression du compte dans l'app). **À faire relire par un avocat avant la mise en production.** Les conditions de l'abonnement Premium feront l'objet d'un document séparé (conditions générales de vente) quand l'offre existera.
 
 ## Pour Florian : champs à compléter avant publication
 
@@ -26,9 +26,10 @@ Elles fixent les règles pour utiliser le jeu (site et applications). En utilisa
 
 ## 3. Le service
 
-- Apprendre et jouer au go : leçons, problèmes, parties contre l'ordinateur, parties en ligne, badges.
+- Apprendre et jouer au go : leçons, problèmes, révision du jour, Go du jour, parties contre l'ordinateur, revue de tes parties, parties en ligne, badges, XP et séries de jours.
 - L'ordinateur (IA KataGo) calcule sur ton appareil. Sa force et ses conseils sont donnés à titre indicatif.
 - Le jeu est **gratuit**. Une offre Premium pourra s'y ajouter ; elle aura ses propres conditions, et ce qui est gratuit aujourd'hui sera signalé clairement si cela change.
+- Tu peux utiliser le jeu dans ton navigateur ou **l'installer** sur ton écran d'accueil. Le jeu peut te le proposer une fois ; tu es libre de refuser.
 - Le jeu est fourni tel quel. Nous faisons de notre mieux pour qu'il marche, sans garantir qu'il soit toujours disponible ou sans erreur. Nous pouvons le faire évoluer, le suspendre pour maintenance ou arrêter une fonction.
 
 ## 4. Ton compte
@@ -37,7 +38,9 @@ Elles fixent les règles pour utiliser le jeu (site et applications). En utilisa
 - Tu te connectes avec un lien envoyé à ton adresse e-mail. Garde l'accès à cette adresse : c'est ta clé.
 - **Âge** : tu peux créer un compte seul à partir de **15 ans**. Avant 15 ans, il faut l'accord d'un parent (ou du titulaire de l'autorité parentale).
 - Un compte par personne. Tu es responsable de ce qui se fait avec ton compte.
-- Tu peux supprimer ton compte à tout moment (voir la politique de confidentialité, section « Tes droits »).
+- **Sans compte**, ta progression (leçons, problèmes, série, record, badges, XP) est gardée **seulement sur ton appareil**. Si tu effaces les données du site, changes d'appareil ou désinstalles l'app, elle est perdue : nous ne pouvons pas la retrouver.
+- **Avec un compte**, ta progression est aussi gardée sur notre serveur. À chaque connexion, la série de jours de ton appareil y est envoyée : le serveur garde la plus longue des deux et refuse une série impossible.
+- Tu peux **supprimer ton compte à tout moment depuis l'app** (dans Profil, sous ton compte). C'est immédiat et définitif : ton profil, ta cote, ta série et ta progression sur le serveur sont effacés. Tes parties contre d'autres joueurs restent pour eux, sous le nom « joueur supprimé ». Le détail est dans la politique de confidentialité, section « Tes droits ».
 
 ## 5. Ton pseudo et ton comportement
 
@@ -47,6 +50,10 @@ Ton pseudo est visible par les autres joueurs. Il ne doit pas :
 - contenir de coordonnées (e-mail, téléphone, adresse) ni de publicité.
 
 En partie, sont interdits : l'usage d'un programme ou d'une aide extérieure pendant une partie classée, les abandons ou déconnexions répétés pour nuire, la manipulation de la cote (parties arrangées, comptes multiples), toute tentative d'attaquer ou de perturber le service.
+
+## 5 bis. Séries, XP, badges et cote
+
+Les séries de jours, gels de série, records, XP, niveaux, badges et la cote servent à suivre ta progression et à rendre le jeu plus motivant. Ils n'ont **aucune valeur en argent**, ne s'achètent pas, ne s'échangent pas et ne se revendent pas. Nous pouvons en changer les règles (par exemple le nombre de gels) pour garder le jeu juste ; nous corrigeons une valeur obtenue par une erreur du jeu ou par triche.
 
 ## 6. Ce qui se passe en cas d'abus
 
@@ -66,7 +73,7 @@ Nous ne sommes pas responsables des dommages indirects liés à l'usage du jeu, 
 
 ## 9. Données personnelles
 
-Tout est expliqué dans la [politique de confidentialité](politique-confidentialite.md). En résumé : ni vente de données, ni publicité.
+Tout est expliqué dans la [politique de confidentialité](politique-confidentialite.md). En résumé : ni vente de données, ni publicité. Un comptage anonyme de l'usage fonctionne par défaut et tu peux t'y opposer ; les rapports de bugs et le suivi détaillé n'ont lieu qu'avec ton accord.
 
 ## 10. Changements de ces conditions
 
