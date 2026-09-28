@@ -182,3 +182,147 @@
 {"noir":"riviere","blanc":"renard","gagnant":"riviere","marge":36.5,"coups":83,"graine":1448,"reglages":"{\"bambou\":{\"hasard\":0.25},\"renard\":{\"hasard\":0.08}}"}
 {"noir":"renard","blanc":"riviere","gagnant":"riviere","marge":37.5,"coups":84,"graine":1449,"reglages":"{\"bambou\":{\"hasard\":0.25},\"renard\":{\"hasard\":0.08}}"}
 {"noir":"riviere","blanc":"renard","gagnant":"riviere","marge":0.5,"coups":59,"graine":1450,"reglages":"{\"bambou\":{\"hasard\":0.25},\"renard\":{\"hasard\":0.08}}"}
+{"noir":"caillou","blanc":"bambou","gagnant":"bambou","marge":87.5,"coups":136,"graine":302,"reglages":"politique bambou 0.5 T1"}
+{"noir":"bambou","blanc":"caillou","gagnant":"bambou","marge":20.5,"coups":96,"graine":303,"reglages":"politique bambou 0.5 T1"}
+{"noir":"caillou","blanc":"bambou","gagnant":"bambou","marge":33.5,"coups":94,"graine":304,"reglages":"politique bambou 0.5 T1"}
+{"noir":"bambou","blanc":"caillou","gagnant":"bambou","marge":32.5,"coups":115,"graine":305,"reglages":"politique bambou 0.5 T1"}
+{"noir":"caillou","blanc":"bambou","gagnant":"bambou","marge":87.5,"coups":124,"graine":306,"reglages":"politique bambou 0.5 T1"}
+{"noir":"bambou","blanc":"caillou","gagnant":"bambou","marge":34.5,"coups":119,"graine":307,"reglages":"politique bambou 0.5 T1"}
+{"noir":"caillou","blanc":"bambou","gagnant":"bambou","marge":69.5,"coups":124,"graine":308,"reglages":"politique bambou 0.5 T1"}
+{"noir":"bambou","blanc":"caillou","gagnant":"bambou","marge":74.5,"coups":135,"graine":309,"reglages":"politique bambou 0.5 T1"}
+{"noir":"caillou","blanc":"bambou","gagnant":"bambou","marge":13.5,"coups":85,"graine":302,"reglages":"politique bambou 0.8 T1.5"}
+{"noir":"bambou","blanc":"caillou","gagnant":"bambou","marge":22.5,"coups":87,"graine":303,"reglages":"politique bambou 0.8 T1.5"}
+{"noir":"caillou","blanc":"bambou","gagnant":"caillou","marge":12.5,"coups":77,"graine":304,"reglages":"politique bambou 0.8 T1.5"}
+{"noir":"bambou","blanc":"caillou","gagnant":"caillou","marge":3.5,"coups":56,"graine":305,"reglages":"politique bambou 0.8 T1.5"}
+{"noir":"caillou","blanc":"bambou","gagnant":"bambou","marge":87.5,"coups":142,"graine":306,"reglages":"politique bambou 0.8 T1.5"}
+{"noir":"bambou","blanc":"caillou","gagnant":"caillou","marge":5.5,"coups":76,"graine":307,"reglages":"politique bambou 0.8 T1.5"}
+{"noir":"caillou","blanc":"bambou","gagnant":"bambou","marge":43.5,"coups":96,"graine":308,"reglages":"politique bambou 0.8 T1.5"}
+{"noir":"bambou","blanc":"caillou","gagnant":"bambou","marge":12.5,"coups":89,"graine":309,"reglages":"politique bambou 0.8 T1.5"}
+{"noir":"caillou","blanc":"bambou","gagnant":"bambou","marge":39.5,"coups":98,"graine":623,"reglages":"politique bambou 0.7 T1.5 (retenu)"}
+{"noir":"bambou","blanc":"caillou","gagnant":"bambou","marge":42.5,"coups":109,"graine":624,"reglages":"politique bambou 0.7 T1.5 (retenu)"}
+{"noir":"caillou","blanc":"bambou","gagnant":"caillou","marge":16.5,"coups":67,"graine":625,"reglages":"politique bambou 0.7 T1.5 (retenu)"}
+{"noir":"bambou","blanc":"caillou","gagnant":"caillou","marge":3.5,"coups":58,"graine":626,"reglages":"politique bambou 0.7 T1.5 (retenu)"}
+{"noir":"caillou","blanc":"bambou","gagnant":"bambou","marge":39.5,"coups":94,"graine":627,"reglages":"politique bambou 0.7 T1.5 (retenu)"}
+{"noir":"bambou","blanc":"caillou","gagnant":"bambou","marge":6.5,"coups":90,"graine":628,"reglages":"politique bambou 0.7 T1.5 (retenu)"}
+{"noir":"caillou","blanc":"bambou","gagnant":"bambou","marge":35.5,"coups":94,"graine":629,"reglages":"politique bambou 0.7 T1.5 (retenu)"}
+{"noir":"bambou","blanc":"caillou","gagnant":"bambou","marge":74.5,"coups":160,"graine":630,"reglages":"politique bambou 0.7 T1.5 (retenu)"}
+{"noir":"caillou","blanc":"bambou","gagnant":"bambou","marge":87.5,"coups":134,"graine":631,"reglages":"politique bambou 0.7 T1.5 (retenu)"}
+{"noir":"bambou","blanc":"caillou","gagnant":"bambou","marge":74.5,"coups":131,"graine":632,"reglages":"politique bambou 0.7 T1.5 (retenu)"}
+{"noir":"caillou","blanc":"bambou","gagnant":"bambou","marge":87.5,"coups":134,"graine":633,"reglages":"politique bambou 0.7 T1.5 (retenu)"}
+{"noir":"bambou","blanc":"caillou","gagnant":"caillou","marge":3.5,"coups":76,"graine":634,"reglages":"politique bambou 0.7 T1.5 (retenu)"}
+{"noir":"caillou","blanc":"bambou","gagnant":"bambou","marge":87.5,"coups":134,"graine":635,"reglages":"politique bambou 0.7 T1.5 (retenu)"}
+{"noir":"bambou","blanc":"caillou","gagnant":"bambou","marge":36.5,"coups":115,"graine":636,"reglages":"politique bambou 0.7 T1.5 (retenu)"}
+{"noir":"caillou","blanc":"bambou","gagnant":"bambou","marge":87.5,"coups":138,"graine":637,"reglages":"politique bambou 0.7 T1.5 (retenu)"}
+{"noir":"bambou","blanc":"caillou","gagnant":"caillou","marge":1.5,"coups":80,"graine":638,"reglages":"politique bambou 0.7 T1.5 (retenu)"}
+{"noir":"caillou","blanc":"bambou","gagnant":"bambou","marge":87.5,"coups":122,"graine":2223,"reglages":"politique bambou 0.7 T1.5 (retenu)"}
+{"noir":"bambou","blanc":"caillou","gagnant":"bambou","marge":74.5,"coups":145,"graine":2224,"reglages":"politique bambou 0.7 T1.5 (retenu)"}
+{"noir":"caillou","blanc":"bambou","gagnant":"bambou","marge":87.5,"coups":130,"graine":2225,"reglages":"politique bambou 0.7 T1.5 (retenu)"}
+{"noir":"bambou","blanc":"caillou","gagnant":"bambou","marge":74.5,"coups":127,"graine":2226,"reglages":"politique bambou 0.7 T1.5 (retenu)"}
+{"noir":"caillou","blanc":"bambou","gagnant":"bambou","marge":41.5,"coups":104,"graine":2227,"reglages":"politique bambou 0.7 T1.5 (retenu)"}
+{"noir":"bambou","blanc":"caillou","gagnant":"bambou","marge":74.5,"coups":135,"graine":2228,"reglages":"politique bambou 0.7 T1.5 (retenu)"}
+{"noir":"caillou","blanc":"bambou","gagnant":"bambou","marge":65.5,"coups":136,"graine":2229,"reglages":"politique bambou 0.7 T1.5 (retenu)"}
+{"noir":"bambou","blanc":"caillou","gagnant":"caillou","marge":17.5,"coups":72,"graine":2230,"reglages":"politique bambou 0.7 T1.5 (retenu)"}
+{"noir":"caillou","blanc":"bambou","gagnant":"bambou","marge":49.5,"coups":110,"graine":2231,"reglages":"politique bambou 0.7 T1.5 (retenu)"}
+{"noir":"bambou","blanc":"caillou","gagnant":"bambou","marge":30.5,"coups":107,"graine":2232,"reglages":"politique bambou 0.7 T1.5 (retenu)"}
+{"noir":"caillou","blanc":"bambou","gagnant":"caillou","marge":0.5,"coups":81,"graine":2233,"reglages":"politique bambou 0.7 T1.5 (retenu)"}
+{"noir":"bambou","blanc":"caillou","gagnant":"bambou","marge":74.5,"coups":135,"graine":2234,"reglages":"politique bambou 0.7 T1.5 (retenu)"}
+{"noir":"caillou","blanc":"bambou","gagnant":"bambou","marge":87.5,"coups":146,"graine":2235,"reglages":"politique bambou 0.7 T1.5 (retenu)"}
+{"noir":"bambou","blanc":"caillou","gagnant":"bambou","marge":6.5,"coups":81,"graine":2236,"reglages":"politique bambou 0.7 T1.5 (retenu)"}
+{"noir":"caillou","blanc":"bambou","gagnant":"bambou","marge":13.5,"coups":94,"graine":2237,"reglages":"politique bambou 0.7 T1.5 (retenu)"}
+{"noir":"bambou","blanc":"caillou","gagnant":"bambou","marge":22.5,"coups":97,"graine":2238,"reglages":"politique bambou 0.7 T1.5 (retenu)"}
+{"noir":"caillou","blanc":"bambou","gagnant":"bambou","marge":67.5,"coups":130,"graine":2223,"reglages":"politique bambou 0.6 T2"}
+{"noir":"bambou","blanc":"caillou","gagnant":"bambou","marge":74.5,"coups":127,"graine":2224,"reglages":"politique bambou 0.6 T2"}
+{"noir":"caillou","blanc":"bambou","gagnant":"caillou","marge":26.5,"coups":67,"graine":2225,"reglages":"politique bambou 0.6 T2"}
+{"noir":"bambou","blanc":"caillou","gagnant":"bambou","marge":74.5,"coups":123,"graine":2226,"reglages":"politique bambou 0.6 T2"}
+{"noir":"caillou","blanc":"bambou","gagnant":"bambou","marge":23.5,"coups":97,"graine":2227,"reglages":"politique bambou 0.6 T2"}
+{"noir":"bambou","blanc":"caillou","gagnant":"caillou","marge":1.5,"coups":60,"graine":2228,"reglages":"politique bambou 0.6 T2"}
+{"noir":"caillou","blanc":"bambou","gagnant":"bambou","marge":87.5,"coups":152,"graine":2229,"reglages":"politique bambou 0.6 T2"}
+{"noir":"bambou","blanc":"caillou","gagnant":"bambou","marge":32.5,"coups":107,"graine":2230,"reglages":"politique bambou 0.6 T2"}
+{"noir":"caillou","blanc":"bambou","gagnant":"bambou","marge":11.5,"coups":89,"graine":2231,"reglages":"politique bambou 0.6 T2"}
+{"noir":"bambou","blanc":"caillou","gagnant":"caillou","marge":5.5,"coups":68,"graine":2232,"reglages":"politique bambou 0.6 T2"}
+{"noir":"caillou","blanc":"bambou","gagnant":"caillou","marge":10.5,"coups":65,"graine":2233,"reglages":"politique bambou 0.6 T2"}
+{"noir":"bambou","blanc":"caillou","gagnant":"caillou","marge":1.5,"coups":68,"graine":2234,"reglages":"politique bambou 0.6 T2"}
+{"noir":"caillou","blanc":"bambou","gagnant":"caillou","marge":10.5,"coups":65,"graine":2235,"reglages":"politique bambou 0.6 T2"}
+{"noir":"bambou","blanc":"caillou","gagnant":"bambou","marge":44.5,"coups":127,"graine":2236,"reglages":"politique bambou 0.6 T2"}
+{"noir":"caillou","blanc":"bambou","gagnant":"bambou","marge":53.5,"coups":102,"graine":2237,"reglages":"politique bambou 0.6 T2"}
+{"noir":"bambou","blanc":"caillou","gagnant":"bambou","marge":6.5,"coups":77,"graine":2238,"reglages":"politique bambou 0.6 T2"}
+{"noir":"bambou","blanc":"renard","gagnant":"renard","marge":49.5,"coups":102,"graine":733,"reglages":"politique bambou 0.7 T1.5, renard 0.4 T1.5"}
+{"noir":"renard","blanc":"bambou","gagnant":"renard","marge":6.5,"coups":59,"graine":734,"reglages":"politique bambou 0.7 T1.5, renard 0.4 T1.5"}
+{"noir":"bambou","blanc":"renard","gagnant":"renard","marge":47.5,"coups":90,"graine":735,"reglages":"politique bambou 0.7 T1.5, renard 0.4 T1.5"}
+{"noir":"renard","blanc":"bambou","gagnant":"renard","marge":20.5,"coups":67,"graine":736,"reglages":"politique bambou 0.7 T1.5, renard 0.4 T1.5"}
+{"noir":"bambou","blanc":"renard","gagnant":"bambou","marge":12.5,"coups":79,"graine":737,"reglages":"politique bambou 0.7 T1.5, renard 0.4 T1.5"}
+{"noir":"renard","blanc":"bambou","gagnant":"bambou","marge":1.5,"coups":53,"graine":738,"reglages":"politique bambou 0.7 T1.5, renard 0.4 T1.5"}
+{"noir":"bambou","blanc":"renard","gagnant":"renard","marge":1.5,"coups":66,"graine":739,"reglages":"politique bambou 0.7 T1.5, renard 0.4 T1.5"}
+{"noir":"renard","blanc":"bambou","gagnant":"bambou","marge":19.5,"coups":84,"graine":740,"reglages":"politique bambou 0.7 T1.5, renard 0.4 T1.5"}
+{"noir":"renard","blanc":"riviere","gagnant":"renard","marge":14.5,"coups":75,"graine":843,"reglages":"politique bambou 0.7 T1.5, renard 0.4 T1.5"}
+{"noir":"riviere","blanc":"renard","gagnant":"riviere","marge":74.5,"coups":89,"graine":844,"reglages":"politique bambou 0.7 T1.5, renard 0.4 T1.5"}
+{"noir":"renard","blanc":"riviere","gagnant":"riviere","marge":19.5,"coups":80,"graine":845,"reglages":"politique bambou 0.7 T1.5, renard 0.4 T1.5"}
+{"noir":"riviere","blanc":"renard","gagnant":"riviere","marge":26.5,"coups":89,"graine":846,"reglages":"politique bambou 0.7 T1.5, renard 0.4 T1.5"}
+{"noir":"renard","blanc":"riviere","gagnant":"riviere","marge":87.5,"coups":96,"graine":847,"reglages":"politique bambou 0.7 T1.5, renard 0.4 T1.5"}
+{"noir":"riviere","blanc":"renard","gagnant":"riviere","marge":14.5,"coups":59,"graine":848,"reglages":"politique bambou 0.7 T1.5, renard 0.4 T1.5"}
+{"noir":"renard","blanc":"riviere","gagnant":"riviere","marge":5.5,"coups":73,"graine":849,"reglages":"politique bambou 0.7 T1.5, renard 0.4 T1.5"}
+{"noir":"riviere","blanc":"renard","gagnant":"renard","marge":3.5,"coups":44,"graine":850,"reglages":"politique bambou 0.7 T1.5, renard 0.4 T1.5"}
+{"noir":"bambou","blanc":"renard","gagnant":"renard","marge":87.5,"coups":88,"graine":1133,"reglages":"politique bambou 0.7 T1.5, renard 0.3 T1.5"}
+{"noir":"renard","blanc":"bambou","gagnant":"renard","marge":74.5,"coups":85,"graine":1134,"reglages":"politique bambou 0.7 T1.5, renard 0.3 T1.5"}
+{"noir":"bambou","blanc":"renard","gagnant":"renard","marge":25.5,"coups":68,"graine":1135,"reglages":"politique bambou 0.7 T1.5, renard 0.3 T1.5"}
+{"noir":"renard","blanc":"bambou","gagnant":"renard","marge":74.5,"coups":97,"graine":1136,"reglages":"politique bambou 0.7 T1.5, renard 0.3 T1.5"}
+{"noir":"bambou","blanc":"renard","gagnant":"bambou","marge":14.5,"coups":68,"graine":1137,"reglages":"politique bambou 0.7 T1.5, renard 0.3 T1.5"}
+{"noir":"renard","blanc":"bambou","gagnant":"renard","marge":74.5,"coups":97,"graine":1138,"reglages":"politique bambou 0.7 T1.5, renard 0.3 T1.5"}
+{"noir":"bambou","blanc":"renard","gagnant":"renard","marge":43.5,"coups":82,"graine":1139,"reglages":"politique bambou 0.7 T1.5, renard 0.3 T1.5"}
+{"noir":"renard","blanc":"bambou","gagnant":"bambou","marge":23.5,"coups":90,"graine":1140,"reglages":"politique bambou 0.7 T1.5, renard 0.3 T1.5"}
+{"noir":"bambou","blanc":"renard","gagnant":"renard","marge":1.5,"coups":61,"graine":1141,"reglages":"politique bambou 0.7 T1.5, renard 0.3 T1.5"}
+{"noir":"renard","blanc":"bambou","gagnant":"renard","marge":10.5,"coups":77,"graine":1142,"reglages":"politique bambou 0.7 T1.5, renard 0.3 T1.5"}
+{"noir":"bambou","blanc":"renard","gagnant":"renard","marge":13.5,"coups":56,"graine":1143,"reglages":"politique bambou 0.7 T1.5, renard 0.3 T1.5"}
+{"noir":"renard","blanc":"bambou","gagnant":"renard","marge":8.5,"coups":61,"graine":1144,"reglages":"politique bambou 0.7 T1.5, renard 0.3 T1.5"}
+{"noir":"bambou","blanc":"renard","gagnant":"renard","marge":45.5,"coups":86,"graine":1145,"reglages":"politique bambou 0.7 T1.5, renard 0.3 T1.5"}
+{"noir":"renard","blanc":"bambou","gagnant":"renard","marge":40.5,"coups":97,"graine":1146,"reglages":"politique bambou 0.7 T1.5, renard 0.3 T1.5"}
+{"noir":"bambou","blanc":"renard","gagnant":"renard","marge":87.5,"coups":88,"graine":1147,"reglages":"politique bambou 0.7 T1.5, renard 0.3 T1.5"}
+{"noir":"renard","blanc":"bambou","gagnant":"renard","marge":6.5,"coups":69,"graine":1148,"reglages":"politique bambou 0.7 T1.5, renard 0.3 T1.5"}
+{"noir":"renard","blanc":"riviere","gagnant":"renard","marge":6.5,"coups":83,"graine":1243,"reglages":"politique bambou 0.7 T1.5, renard 0.3 T1.5"}
+{"noir":"riviere","blanc":"renard","gagnant":"riviere","marge":12.5,"coups":63,"graine":1244,"reglages":"politique bambou 0.7 T1.5, renard 0.3 T1.5"}
+{"noir":"renard","blanc":"riviere","gagnant":"renard","marge":40.5,"coups":81,"graine":1245,"reglages":"politique bambou 0.7 T1.5, renard 0.3 T1.5"}
+{"noir":"riviere","blanc":"renard","gagnant":"riviere","marge":32.5,"coups":89,"graine":1246,"reglages":"politique bambou 0.7 T1.5, renard 0.3 T1.5"}
+{"noir":"renard","blanc":"riviere","gagnant":"riviere","marge":21.5,"coups":64,"graine":1247,"reglages":"politique bambou 0.7 T1.5, renard 0.3 T1.5"}
+{"noir":"riviere","blanc":"renard","gagnant":"riviere","marge":24.5,"coups":87,"graine":1248,"reglages":"politique bambou 0.7 T1.5, renard 0.3 T1.5"}
+{"noir":"renard","blanc":"riviere","gagnant":"riviere","marge":23.5,"coups":92,"graine":1249,"reglages":"politique bambou 0.7 T1.5, renard 0.3 T1.5"}
+{"noir":"riviere","blanc":"renard","gagnant":"riviere","marge":14.5,"coups":81,"graine":1250,"reglages":"politique bambou 0.7 T1.5, renard 0.3 T1.5"}
+{"noir":"renard","blanc":"riviere","gagnant":"riviere","marge":31.5,"coups":84,"graine":1251,"reglages":"politique bambou 0.7 T1.5, renard 0.3 T1.5"}
+{"noir":"riviere","blanc":"renard","gagnant":"riviere","marge":0.5,"coups":70,"graine":1252,"reglages":"politique bambou 0.7 T1.5, renard 0.3 T1.5"}
+{"noir":"renard","blanc":"riviere","gagnant":"riviere","marge":29.5,"coups":76,"graine":1253,"reglages":"politique bambou 0.7 T1.5, renard 0.3 T1.5"}
+{"noir":"riviere","blanc":"renard","gagnant":"riviere","marge":48.5,"coups":99,"graine":1254,"reglages":"politique bambou 0.7 T1.5, renard 0.3 T1.5"}
+{"noir":"renard","blanc":"riviere","gagnant":"renard","marge":0.5,"coups":52,"graine":1255,"reglages":"politique bambou 0.7 T1.5, renard 0.3 T1.5"}
+{"noir":"riviere","blanc":"renard","gagnant":"riviere","marge":38.5,"coups":83,"graine":1256,"reglages":"politique bambou 0.7 T1.5, renard 0.3 T1.5"}
+{"noir":"renard","blanc":"riviere","gagnant":"riviere","marge":9.5,"coups":69,"graine":1257,"reglages":"politique bambou 0.7 T1.5, renard 0.3 T1.5"}
+{"noir":"riviere","blanc":"renard","gagnant":"riviere","marge":34.5,"coups":83,"graine":1258,"reglages":"politique bambou 0.7 T1.5, renard 0.3 T1.5"}
+{"noir":"bambou","blanc":"renard","gagnant":"renard","marge":13.5,"coups":70,"graine":1533,"reglages":"politique bambou 0.7 T1.5, renard 0.35 T1.5 (retenu)"}
+{"noir":"renard","blanc":"bambou","gagnant":"renard","marge":24.5,"coups":79,"graine":1534,"reglages":"politique bambou 0.7 T1.5, renard 0.35 T1.5 (retenu)"}
+{"noir":"bambou","blanc":"renard","gagnant":"bambou","marge":8.5,"coups":59,"graine":1535,"reglages":"politique bambou 0.7 T1.5, renard 0.35 T1.5 (retenu)"}
+{"noir":"renard","blanc":"bambou","gagnant":"renard","marge":22.5,"coups":65,"graine":1536,"reglages":"politique bambou 0.7 T1.5, renard 0.35 T1.5 (retenu)"}
+{"noir":"bambou","blanc":"renard","gagnant":"renard","marge":29.5,"coups":62,"graine":1537,"reglages":"politique bambou 0.7 T1.5, renard 0.35 T1.5 (retenu)"}
+{"noir":"renard","blanc":"bambou","gagnant":"renard","marge":18.5,"coups":62,"graine":1538,"reglages":"politique bambou 0.7 T1.5, renard 0.35 T1.5 (retenu)"}
+{"noir":"bambou","blanc":"renard","gagnant":"renard","marge":87.5,"coups":94,"graine":1539,"reglages":"politique bambou 0.7 T1.5, renard 0.35 T1.5 (retenu)"}
+{"noir":"renard","blanc":"bambou","gagnant":"renard","marge":74.5,"coups":89,"graine":1540,"reglages":"politique bambou 0.7 T1.5, renard 0.35 T1.5 (retenu)"}
+{"noir":"bambou","blanc":"renard","gagnant":"bambou","marge":20.5,"coups":84,"graine":1541,"reglages":"politique bambou 0.7 T1.5, renard 0.35 T1.5 (retenu)"}
+{"noir":"renard","blanc":"bambou","gagnant":"bambou","marge":11.5,"coups":89,"graine":1542,"reglages":"politique bambou 0.7 T1.5, renard 0.35 T1.5 (retenu)"}
+{"noir":"bambou","blanc":"renard","gagnant":"bambou","marge":0.5,"coups":44,"graine":1543,"reglages":"politique bambou 0.7 T1.5, renard 0.35 T1.5 (retenu)"}
+{"noir":"renard","blanc":"bambou","gagnant":"renard","marge":74.5,"coups":93,"graine":1544,"reglages":"politique bambou 0.7 T1.5, renard 0.35 T1.5 (retenu)"}
+{"noir":"bambou","blanc":"renard","gagnant":"renard","marge":61.5,"coups":88,"graine":1545,"reglages":"politique bambou 0.7 T1.5, renard 0.35 T1.5 (retenu)"}
+{"noir":"renard","blanc":"bambou","gagnant":"renard","marge":74.5,"coups":97,"graine":1546,"reglages":"politique bambou 0.7 T1.5, renard 0.35 T1.5 (retenu)"}
+{"noir":"bambou","blanc":"renard","gagnant":"renard","marge":55.5,"coups":100,"graine":1547,"reglages":"politique bambou 0.7 T1.5, renard 0.35 T1.5 (retenu)"}
+{"noir":"renard","blanc":"bambou","gagnant":"renard","marge":14.5,"coups":85,"graine":1548,"reglages":"politique bambou 0.7 T1.5, renard 0.35 T1.5 (retenu)"}
+{"noir":"renard","blanc":"riviere","gagnant":"renard","marge":12.5,"coups":69,"graine":1643,"reglages":"politique bambou 0.7 T1.5, renard 0.35 T1.5 (retenu)"}
+{"noir":"riviere","blanc":"renard","gagnant":"riviere","marge":2.5,"coups":54,"graine":1644,"reglages":"politique bambou 0.7 T1.5, renard 0.35 T1.5 (retenu)"}
+{"noir":"renard","blanc":"riviere","gagnant":"riviere","marge":15.5,"coups":78,"graine":1645,"reglages":"politique bambou 0.7 T1.5, renard 0.35 T1.5 (retenu)"}
+{"noir":"riviere","blanc":"renard","gagnant":"riviere","marge":4.5,"coups":61,"graine":1646,"reglages":"politique bambou 0.7 T1.5, renard 0.35 T1.5 (retenu)"}
+{"noir":"renard","blanc":"riviere","gagnant":"riviere","marge":29.5,"coups":64,"graine":1647,"reglages":"politique bambou 0.7 T1.5, renard 0.35 T1.5 (retenu)"}
+{"noir":"riviere","blanc":"renard","gagnant":"riviere","marge":8.5,"coups":62,"graine":1648,"reglages":"politique bambou 0.7 T1.5, renard 0.35 T1.5 (retenu)"}
+{"noir":"renard","blanc":"riviere","gagnant":"riviere","marge":45.5,"coups":78,"graine":1649,"reglages":"politique bambou 0.7 T1.5, renard 0.35 T1.5 (retenu)"}
+{"noir":"riviere","blanc":"renard","gagnant":"riviere","marge":8.5,"coups":65,"graine":1650,"reglages":"politique bambou 0.7 T1.5, renard 0.35 T1.5 (retenu)"}
+{"noir":"renard","blanc":"riviere","gagnant":"riviere","marge":19.5,"coups":74,"graine":1651,"reglages":"politique bambou 0.7 T1.5, renard 0.35 T1.5 (retenu)"}
+{"noir":"riviere","blanc":"renard","gagnant":"riviere","marge":2.5,"coups":67,"graine":1652,"reglages":"politique bambou 0.7 T1.5, renard 0.35 T1.5 (retenu)"}
+{"noir":"renard","blanc":"riviere","gagnant":"riviere","marge":39.5,"coups":74,"graine":1653,"reglages":"politique bambou 0.7 T1.5, renard 0.35 T1.5 (retenu)"}
+{"noir":"riviere","blanc":"renard","gagnant":"riviere","marge":30.5,"coups":79,"graine":1654,"reglages":"politique bambou 0.7 T1.5, renard 0.35 T1.5 (retenu)"}
+{"noir":"renard","blanc":"riviere","gagnant":"renard","marge":0.5,"coups":75,"graine":1655,"reglages":"politique bambou 0.7 T1.5, renard 0.35 T1.5 (retenu)"}
+{"noir":"riviere","blanc":"renard","gagnant":"renard","marge":3.5,"coups":62,"graine":1656,"reglages":"politique bambou 0.7 T1.5, renard 0.35 T1.5 (retenu)"}
+{"noir":"renard","blanc":"riviere","gagnant":"riviere","marge":87.5,"coups":110,"graine":1657,"reglages":"politique bambou 0.7 T1.5, renard 0.35 T1.5 (retenu)"}
+{"noir":"riviere","blanc":"renard","gagnant":"riviere","marge":38.5,"coups":95,"graine":1658,"reglages":"politique bambou 0.7 T1.5, renard 0.35 T1.5 (retenu)"}
