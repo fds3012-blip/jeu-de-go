@@ -179,6 +179,8 @@ export const en = {
   'pb.vu': 'seen',
   'pb.gelGagne': 'You earned a freeze: it protects your streak if you miss a day.',
   'pb.defiChange': 'The Daily Go has changed: here’s today’s.',
+  'pb.archive': 'This Daily Go is from another day. Today’s is #{numero}.',
+  'pb.duJourAujourdhui': 'Daily Go #{numero}',
   'pb.illegal.occupe': 'There’s already a stone here.',
   'pb.illegal.ko': 'Not allowed because of ko: you can’t recapture right away.',
   'pb.illegal.suicide': 'Not allowed: your stone would have no liberties.',

@@ -190,6 +190,8 @@ export const fr = {
   'pb.vu': 'vu',
   'pb.gelGagne': 'Tu gagnes un gel : il protégera ta série si tu oublies un jour.',
   'pb.defiChange': 'Le Go du jour a changé : voici celui d’aujourd’hui.',
+  'pb.archive': 'Ce Go du jour date d’un autre jour. Celui d’aujourd’hui, c’est le n° {numero}.',
+  'pb.duJourAujourdhui': 'Go du jour n° {numero}',
   'pb.illegal.occupe': 'Il y a déjà une pierre ici.',
   'pb.illegal.ko': 'Interdit à cause du ko : tu ne peux pas reprendre tout de suite.',
   'pb.illegal.suicide': 'Interdit : ta pierre n’aurait aucune liberté.',

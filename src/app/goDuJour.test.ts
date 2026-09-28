@@ -35,6 +35,9 @@ describe('numéro du Go du jour', () => {
     expect(numeroDuLien('?go-du-jour=abc')).toBeNull();
     expect(numeroDuLien('?go-du-jour=-3')).toBeNull();
     expect(numeroDuLien('')).toBeNull();
+    // Variante courte, plus facile à taper : `/?godujour=42`.
+    expect(numeroDuLien('?godujour=42')).toBe(42);
+    expect(numeroDuLien('?godujour=x')).toBeNull();
   });
 });
 
@@ -64,6 +67,17 @@ describe('problème du Go du jour', () => {
     const demain = problemeDuNumero(liste, numeroDuJour(new Date('2026-09-28T00:01:00+02:00')));
     expect(soir).toBe(matin);
     expect(demain).not.toBe(matin);
+  });
+
+  it('deux appareils, même jour à Paris mais fuseaux différents : même numéro, même problème', () => {
+    // Paris 00 h 30 le 29 : New York est encore le 28 à 18 h 30, Tokyo déjà le 29 à 7 h 30.
+    const a = new Date('2026-09-28T22:30:00Z');
+    const b = new Date('2026-09-29T09:00:00+09:00');
+    expect(numeroDuJour(a)).toBe(3);
+    expect(numeroDuJour(b)).toBe(3);
+    expect(problemeDuNumero(liste, numeroDuJour(a))).toBe(problemeDuNumero(liste, numeroDuJour(b)));
+    // Une minute avant minuit à Paris : encore le n° 2.
+    expect(numeroDuJour(new Date('2026-09-28T21:59:00Z'))).toBe(2);
   });
 
   it('liste vide : pas de problème', () => {
