@@ -6,7 +6,7 @@ import { playAtari, playCapture, playDefeat, playIllegal, playStone, playVictory
 import { hapticAtari, hapticCapture, hapticDefeat, hapticIllegal, hapticStone, hapticVictory } from '../ui/haptics';
 import { score } from '../go/score';
 import { toLabel } from '../go/coords';
-import { bestMove, estimateLead, estimateTerritoire, proposeComptage, type Opponent } from '../engine';
+import { bestMove, bestMoveExplique, estimateLead, estimateTerritoire, proposeComptage, type Opponent } from '../engine';
 import { EVENTS, secondsSinceOpen, track, trackOnce } from '../data/analytics';
 import { gagnerXp } from './xp';
 import { supabase } from '../data/supabase';
@@ -31,7 +31,8 @@ const DUREE_HUMEUR = 1500;
 import { battuAccorde } from '../ui/sceaux';
 import type { StatsPartie } from './bilan';
 import { Revue } from './Revue';
-import { REVUE_KEY, sgfDepuisHistorique, type PartieGardee } from './revue';
+import { resultatSgf, REVUE_KEY, sgfDepuisHistorique, type PartieGardee } from './revue';
+import { delaiReponse, messageContinue } from './rythme';
 
 const REFUS = { occupe: '', ko: "Ko : tu ne peux pas reprendre tout de suite, joue d'abord ailleurs.", suicide: 'Coup interdit : cette pierre serait capturée par elle-même.', 'hors-plateau': '' };
 const pierres = (n: number) => `${n} pierre${n > 1 ? 's' : ''}`;
@@ -59,9 +60,10 @@ interface Props {
   aide?: boolean;
   /** Barre d'avantage contre l'ordi ; cachée pendant la toute première partie (#160, voir equilibrage.ts). */
   avantage?: boolean;
+  /** L'ordi passe quand tu passes, frontières fermées (#185, 3 premières parties, voir equilibrage.ts). */ accommodant?: boolean;
 }
 
-export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, onResult, fin, aiKomi = komi, portrait, celebrer = true, aide = true, avantage = true }: Props) {
+export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, onResult, fin, aiKomi = komi, portrait, celebrer = true, aide = true, avantage = true, accommodant = false }: Props) {
   const [history, setHistory] = useState<Position[]>(() => [newPosition(size)]);
   const [phase, setPhase] = useState<'play' | 'score' | 'end'>('play');
   const [dead, setDead] = useState<Set<number>>(new Set());
@@ -98,6 +100,11 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   const profil = useProfil(ai ? supabase : null);
   const token = useRef(0); // invalide les réponses de l'ordi devenues caduques (annulation, sortie)
   const scoreToken = useRef(0); // idem pour les pierres mortes proposées
+  // Ce que le dernier coup du joueur demande à la réponse de l'ordi (#187) : une pause pour fêter sa capture,
+  // une réponse plus rapide quand l'ordi doit sauver un groupe en atari.
+  const aRepondre = useRef<{ capture: boolean; forcee: boolean }>({ capture: false, forcee: false });
+  // Capture du joueur fêtée (#187) : longueur d'historique et nombre de pierres, pour le « +N » et la phrase de Mochi.
+  const [fete, setFete] = useState<{ len: number; n: number } | null>(null);
   const atarisSubis = useRef(0); // tes groupes mis en atari par l'ordi (leçon de Mochi en fin de partie)
   // Revue de la partie terminée (issue #34) : ouverte ou non (le nombre est gardé pour compatibilité), et SGF de la partie.
   const [relecture, setRelecture] = useState<number | null>(null);
@@ -148,8 +155,10 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     const jeton = token; // même objet ref ; alias pour la fonction de nettoyage
     const t = ++jeton.current, t0 = Date.now();
     setThinking(true);
-    bestMove(pos, ai.id, { komi: aiKomi }).then(async m => {
-      const wait = 350 - (Date.now() - t0); // petite pause pour que la réponse ne paraisse pas instantanée
+    // Pomme « respire » (#187) : délai variable, plus long après ta capture ; court dans les tests de bout en bout.
+    const cible = delaiReponse({ hasard: Math.random(), ...aRepondre.current, e2e: !!import.meta.env.VITE_E2E });
+    bestMoveExplique(pos, ai.id, { komi: aiKomi, accommodant }).then(async ({ move: m, raison }) => {
+      const wait = cible - (Date.now() - t0);
       if (wait > 0) await new Promise(r => setTimeout(r, wait));
       if (t !== token.current) return;
       setThinking(false);
@@ -167,10 +176,12 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
         if (metEnAtari(r, m)) { playAtari(); hapticAtari(); }
         const alerte = cap ? null : alerteAtari(pos, r, 1, history.length + 1);
         if (alerte) atarisSubis.current++;
-        const c = cap || alerte ? null : conseilPasser(ai.nom, aide, false, r.board);
+        // Pomme joue après ta passe (#185) : Mochi dit pourquoi, en une phrase (#187).
+        const continue_ = pos.lastMove === -1 && raison ? messageContinue(ai.nom, raison) : null;
+        const c = cap || alerte || continue_ ? null : conseilPasser(ai.nom, aide, false, r.board);
         if (c) setConseilPasserA(history.length + 1);
         const rappel = frontieresVisibles(frontieres, history.length + 1, r.board, size, true) ? ` ${ALERTE_FRONTIERES}` : ' À toi.';
-        setMsg(cap ? `${ai.nom} capture ${pierres(cap)} en ${toLabel(m, size)}.` : alerte ?? c ?? `${ai.nom} joue ${toLabel(m, size)}.${rappel}`);
+        setMsg(cap ? `${ai.nom} capture ${pierres(cap)} en ${toLabel(m, size)}.` : alerte ?? continue_ ?? c ?? `${ai.nom} joue ${toLabel(m, size)}.${rappel}`);
       }
     });
     return () => { jeton.current++; setThinking(false); };
@@ -227,7 +238,10 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     playStone(p, size); hapticStone();
     if (cap) { playCapture(cap); hapticCapture(); }
     const enAtari = metEnAtari(r, p);
-    if (!ai && enAtari) { playAtari(); hapticAtari(); }
+    // Ton atari sur l'ordi sonne aussi (#187) ; la vibration reste réservée à l'atari à deux (et à l'atari subi).
+    if (enAtari) playAtari();
+    if (!ai && enAtari) hapticAtari();
+    if (ai) { aRepondre.current = { capture: cap > 0, forcee: enAtari }; setFete(cap ? { len: history.length + 1, n: cap } : null); }
     setHistory([...history, r]);
     if (history.length === 1) track(EVENTS.partieCommencee, { mode: ai ? 'ordi' : 'deux', adversaire: ai?.id, taille: size });
     if (history.length === 1) trackOnce(EVENTS.premierePierre, { secondes: secondsSinceOpen(), mode: ai ? 'ordi' : 'deux', adversaire: ai?.id, taille: size });
@@ -243,6 +257,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   function pass() {
     if (!myTurn) return;
     const r = play(pos, -1) as Position;
+    aRepondre.current = { capture: false, forcee: false }; setFete(null);
     setHistory([...history, r]);
     const ouverts = pos.lastMove === -1 ? [] : frontieresAuPasse(aide, pos.board, size);
     if (pos.lastMove === -1) enterScore(r, 'Deux passes : la partie est finie.');
@@ -310,7 +325,8 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     const egalite = !abandon && sc.margin === 0;
     setPhase('end'); setRelecture(null); setRecitFini(abandon);
     // La partie est gardée en SGF sur ce téléphone, pour la revue (Supabase viendra plus tard).
-    const texte = sgfDepuisHistorique(history, komi, { noir: ai ? 'Toi' : 'Noir', blanc: ai?.nom ?? 'Blanc' });
+    // Résultat exact (RE) : la revue connaît l'écart, komi compris (#187).
+    const texte = sgfDepuisHistorique(history, komi, { noir: ai ? 'Toi' : 'Noir', blanc: ai?.nom ?? 'Blanc', resultat: resultatSgf(egalite ? 0 : winner, abandon, sc.margin) });
     setSgf(texte);
     try { localStorage.setItem(REVUE_KEY, JSON.stringify({ sgf: texte, adversaire: ai?.id, date: new Date().toISOString() } satisfies PartieGardee)); } catch { /* stockage indisponible */ }
     const resultat = () => onResult?.(egalite ? 0 : winner, {
@@ -355,7 +371,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   const name = (c: 1 | 2) => (ai ? (c === 1 ? 'Toi' : ai.nom) : c === 1 ? 'Noir' : 'Blanc');
   const retourAccueil = <button type="button" className="retour" onClick={onExit} aria-label="Retour à l'accueil">‹</button>;
   // En relecture, on montre la position `q` et « ‹ » ramène au bilan.
-  const bandeau = (c: 1 | 2, q: Position = pos, retour: ReactNode = retourAccueil, actif = phase === 'play' && q.toPlay === c) => {
+  const bandeau = (c: 1 | 2, q: Position = pos, retour: ReactNode = retourAccueil, actif = phase === 'play' && q.toPlay === c, gain: { n: number; k: number } | null = null) => {
     let sousTitre: string;
     if (c === 2) sousTitre = ai ? ai.rang : `komi ${virgule(komi)}`;
     else sousTitre = ai ? (profil ? `Noir, cote ${profil.cote}` : 'Noir') : 'joue en premier';
@@ -364,7 +380,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
       <Bandeau nom={name(c)} sousTitre={sousTitre} actif={actif} captures={q.captures[c]} pierresPrises={c === 1 ? 'blanc' : 'noir'}
         portrait={c === 2 && ai ? <Portrait id={ai.id} taille={44} humeur={humeur.h} decoratif signature={false} />
           : c === 2 && portrait ? portrait : <Avatar couleur={c} initiale={initiale} />}
-        replique={c === 2 ? replique : null} avant={c === 2 ? retour : undefined} />
+        replique={c === 2 ? replique : null} avant={c === 2 ? retour : undefined} gain={gain} />
     );
   };
 
@@ -445,7 +461,10 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   const lead = ai ? avanceBarre(phase, estimation?.lead ?? null, sc) : null;
   const libs = atari && atari.len === history.length && phase === 'play' ? atari.libs : undefined;
   const zone = indice && indice.len === history.length && phase === 'play' ? indice.p : undefined;
-  const messageCoach = phase === 'play' && thinking && ai ? `${ai.nom} réfléchit…` : msg;
+  // Ta capture reste affichée pendant que Pomme réfléchit (#187) : le « Bravo » ne s'efface qu'à sa réponse.
+  const feteVisible = fete && fete.len === history.length && phase === 'play' ? fete : null;
+  const pense = phase === 'play' && thinking && !!ai && !feteVisible;
+  const messageCoach = pense && ai ? `${ai.nom} réfléchit…` : msg;
   const montrerIntro = intro && history.length === 1 && phase === 'play';
 
   return (
@@ -458,10 +477,14 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
           marks={{ last: pos.lastMove, owner: phase === 'score' ? sc.owner : quiMeneVisible?.owner, ownerFondu: !!quiMeneVisible, dead, libs, zone, ouverts: phase === 'play' ? frontieresVisibles(frontieres, history.length, pos.board, size, !!ai) : undefined }} onPlay={onPlay} shake={shake} versCouvercles noms={ai ? { 2: ai.nom } : undefined} />
         {quiMeneVisible && <p key={quiMeneVisible.n} className="qui-mene-phrase" role="status">{fr(quiMeneVisible.phrase)}</p>}
       </div>
-      {bandeau(1)}
+      {bandeau(1, pos, retourAccueil, phase === 'play' && pos.toPlay === 1, feteVisible && !mouvementsReduits() ? { n: feteVisible.n, k: feteVisible.len } : null)}
       <div className="partie-souffle" aria-hidden="true" />
-      {montrerIntro ? <div className="coach-intro">{intro}</div> : <Coach cle={messageCoach} attente={phase === 'play' && thinking && !!ai}
-        humeur={phase === 'play' && thinking && ai ? 'pensif' : humeur.h === 'surpris' ? 'content' : 'neutre'}>{fr(messageCoach)}</Coach>}
+      {/* Zone de Mochi de hauteur fixe (#187) : la bulle d'intro garde sa place après le premier coup, le plateau ne bouge pas. */}
+      <div className="partie-mochi">
+        {intro && phase === 'play' && <div className="coach-intro" aria-hidden={!montrerIntro || undefined} data-cache={!montrerIntro || undefined}>{intro}</div>}
+        {!montrerIntro && <Coach cle={messageCoach} attente={pense}
+          humeur={pense ? 'pensif' : feteVisible || humeur.h === 'surpris' ? 'content' : 'neutre'}>{fr(messageCoach)}</Coach>}
+      </div>
       {phase === 'play' ? (
         <BarreActions label="Actions de la partie" actions={[
           { label: cherche ? 'Indice…' : 'Indice', icone: ai ? <CompteurIndices restants={restants}><Icone nom="indice" /></CompteurIndices> : <Icone nom="indice" />,

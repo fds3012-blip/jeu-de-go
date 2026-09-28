@@ -48,6 +48,90 @@ for (const largeur of [390, 320]) {
   });
 }
 
+// Étape 2 : accueil et Problèmes. Libellés d'interface seulement : les titres des problèmes et des leçons sont du contenu,
+// traduit plus tard (ils peuvent être coupés par une ellipse voulue).
+const LIBELLES = '.phrase, .reglage, .cta, .btn, .tuile small, .titre-pierres, .bases-aide, .palier-nom h3, .palier-nom small, .difficulte, .lecteur-nom small, .notice, .invitation';
+
+async function sansCoupe(page: Page, largeur: number) {
+  const { page: large, coupes } = await page.evaluate(sel => ({
+    page: document.documentElement.scrollWidth,
+    coupes: [...document.querySelectorAll<HTMLElement>(sel)]
+      .filter(e => e.offsetParent !== null && (e.scrollWidth > e.clientWidth + 1 || e.getBoundingClientRect().right > innerWidth + 0.5))
+      .map(e => e.textContent),
+  }), LIBELLES);
+  expect(large).toBeLessThanOrEqual(largeur);
+  expect(coupes).toEqual([]);
+}
+
+for (const largeur of [390, 320]) {
+  test(`?lang=en : accueil et Problèmes en anglais, sans débordement à ${largeur} px`, async ({ page }) => {
+    await page.setViewportSize({ width: largeur, height: 844 });
+    await page.goto('/?lang=en');
+
+    // Accueil d'un nouveau joueur : réplique de Pomme, explication du kyu, action principale, tuiles.
+    await expect(page.getByText('Shall we play together? I’ll explain everything.')).toBeVisible();
+    await expect(page.getByText(/^She’s learning, just like you\. Kyu is a rank/)).toBeVisible();
+    await expect(page.getByText('9 × 9 board, you’re Black')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Change' })).toBeVisible();
+    const cta = page.getByRole('button', { name: 'Play your first game against Pomme' });
+    await expect(cta).toContainText('Play your first game');
+    expect((await cta.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+    await expect(page.getByRole('button', { name: /^Daily Go #\d+/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /^Lesson 1 of \d+/ })).toBeVisible();
+    await expect(page.locator('header').getByText('Go', { exact: true })).toBeVisible();
+    await expect(page.getByText(/Joue|Plateau|Changer|Go du jour/)).toHaveCount(0);
+    await sansDebordement(page);
+    await sansCoupe(page, largeur);
+    await page.screenshot({ path: `docs/localisation/captures/accueil-en-${largeur}.png` });
+
+    // Feuille « Change » : adversaire et taille du plateau.
+    await page.getByRole('button', { name: 'Change' }).click();
+    const feuille = page.getByRole('dialog', { name: 'Your opponent' });
+    await expect(feuille.getByText('Plays a bit at random. Perfect for your first game.')).toBeVisible();
+    await expect(feuille.getByRole('heading', { name: 'Board size' })).toBeVisible();
+    await expect(feuille.getByText('Short games, perfect for learning.')).toBeVisible();
+    await expect(feuille.getByRole('button', { name: 'Play a friend on this phone' })).toBeVisible();
+    await feuille.getByRole('button', { name: 'Close' }).click();
+
+    // Problèmes : Go du jour, paliers, grille.
+    await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: 'Puzzles' }).click();
+    await expect(page.locator('header').getByText('Puzzles', { exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /^Daily Go #\d+$/ })).toBeVisible();
+    await expect(page.getByText('The same challenge for everyone, today.')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Solve the Daily Go' })).toHaveText('Solve');
+    await expect(page.getByText(/^(Black|White) to play$/).first()).toBeVisible();
+    await expect(page.getByText('Sign in to get your rating: it shows your level and goes up as you solve puzzles.')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Puzzles', exact: true })).toBeVisible();
+    await expect(page.locator('[data-palier-en-cours]')).toContainText('Your tier');
+    await expect(page.locator('[data-palier-en-cours]')).toContainText('30 to 25 kyu');
+    await expect(page.getByText(/Problème|Résoudre|Palier|verrouillé/)).toHaveCount(0);
+    await sansDebordement(page);
+    await sansCoupe(page, largeur);
+    await page.screenshot({ path: `docs/localisation/captures/problemes-en-${largeur}.png` });
+
+    // « All puzzles » (#196) : la grille, et le prochain palier fermé en une ligne.
+    await page.getByRole('button', { name: 'All puzzles' }).click();
+    await expect(page.getByText('From easiest to hardest. A stone is in atari when it has only one liberty left.')).toBeVisible();
+    const debutant = page.getByRole('group', { name: 'Beginner' });
+    await expect(debutant.getByText('30 to 25 kyu')).toBeVisible();
+    await expect(page.getByRole('group', { name: /^Novice \(locked\)$/ })).toBeVisible();
+    await expect(page.getByText('Solve a few more puzzles in the tier before to unlock it.').first()).toBeVisible();
+    expect(await page.getByRole('button', { name: /^Puzzle \d+: / }).count()).toBeGreaterThan(0);
+    await expect(page.getByRole('button', { name: /, locked$/ })).toHaveCount(0);
+    await expect(page.getByText(/Problème|Résoudre|Palier|verrouillé/)).toHaveCount(0);
+    await sansDebordement(page);
+    await sansCoupe(page, largeur);
+
+    // Un problème ouvert : en-tête, consigne, retour.
+    await debutant.locator('[data-probleme]').first().click();
+    await expect(page.getByRole('button', { name: 'Back to puzzles' })).toBeVisible();
+    await expect(page.locator('.lecteur-nom small')).toHaveText('Puzzle 1');
+    await expect(page.getByText(/You play (Black|White)\.$/)).toBeVisible();
+    await sansDebordement(page);
+    await sansCoupe(page, largeur);
+  });
+}
+
 test('sans paramètre, une interface française reste en français', async ({ page }) => {
   await page.goto('/');
   await expect(page.locator('html')).toHaveAttribute('lang', 'fr');

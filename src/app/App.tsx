@@ -162,7 +162,7 @@ export function App() {
   if (enPartie) {
     screen = (
       <>
-        <Game key={`${playing === 'ordi' ? adv.id : 'deux'}-${partie}`} size={settings.size} komi={komiCompte(reglage.komi)} aiKomi={reglage.komi} avantage={reglage.avantage} confirmTouch={settings.confirmTouch} opponent={playing === 'ordi' ? adv : undefined}
+        <Game key={`${playing === 'ordi' ? adv.id : 'deux'}-${partie}`} size={settings.size} komi={komiCompte(reglage.komi)} aiKomi={reglage.komi} avantage={reglage.avantage} accommodant={reglage.accommodant} confirmTouch={settings.confirmTouch} opponent={playing === 'ordi' ? adv : undefined}
           intro={playing === 'ordi' && (intro || reglage.annonce) ? <Bubble>{intro ? introBut(adv.nom) : `Tu as Noir, ${adv.nom} a Blanc.`}{reglage.annonce && <><br /><span className="annonce-komi">{reglage.annonce}</span></>}</Bubble> : undefined}
           onExit={() => { setIntro(false); setPlaying(false); setResultat(null); }}
           onResult={onResult} fin={finEcran} celebrer={settings.celebrations} aide={aideActive(settings.aide, adv.id)} portrait={playing === 'ordi' ? <Sceau id={adv.id} taille={44} /> : undefined} />
@@ -205,11 +205,11 @@ export function App() {
           {accueilVisible
             ? (serie > 0 || gels > 0) && (
               <span className="serie-groupe">
-                {serie > 0 && <p className="serie" role="img" aria-label={`Série de ${serie} jour${serie > 1 ? 's' : ''}`}><Flamme />{serie}</p>}
+                {serie > 0 && <p className="serie" role="img" aria-label={t('profil.serieAria', { jours: t('profil.jours', { n: serie }) })}><Flamme />{serie}</p>}
                 <Glacon gels={gels} />
               </span>
             )
-            : <p>{tab === 'jouer' ? 'Jouer' : tab === 'apprendre' ? 'Le chemin des leçons' : tab === 'problemes' ? 'Problèmes' : t('nav.profil')}</p>}
+            : <p>{tab === 'jouer' ? t('nav.jouer') : tab === 'apprendre' ? t('entete.apprendre') : tab === 'problemes' ? t('nav.problemes') : t('nav.profil')}</p>}
         </header>}
         {annonceGel !== null && !enPartie && (tab === 'jouer' || tab === 'problemes') && (
           <p className="gel-annonce" role="status"><Mochi size={30} />{fr(messageGel(annonceGel))}</p>

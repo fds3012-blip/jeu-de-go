@@ -11,6 +11,6 @@ export type Catalogue = { readonly [K in Cle]: Texte };
 
 type Chaine<T> = T extends string ? T : T extends Record<string, string> ? T[keyof T] : never;
 type Vars<S> = S extends `${string}{${infer V}}${infer R}` ? V | Vars<R> : never;
-/** Variables attendues par une clé, lues dans le texte français. */
-export type VarsDe<K extends Cle> = Vars<Chaine<(typeof fr)[K]>>;
+/** Variables attendues par une clé, lues dans le texte français ; un pluriel attend toujours `n`, même s'il ne l'affiche pas. */
+export type VarsDe<K extends Cle> = Vars<Chaine<(typeof fr)[K]>> | ((typeof fr)[K] extends string ? never : 'n');
 export type Params<K extends Cle> = [VarsDe<K>] extends [never] ? [] : [Record<VarsDe<K>, string | number>];

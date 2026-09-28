@@ -18,6 +18,8 @@ export const EVENTS = {
   partieTerminee: 'partie_terminee',
   // Première partie contre l'ordi menée jusqu'au score ou à l'abandon (une fois par appareil, via trackOnce ; #35).
   premierePartieTerminee: 'premiere_partie_terminee',
+  // Leçon ouverte (#198) : dénominateur de l'entonnoir des leçons (`lecon_terminee` / `lecon_commencee`).
+  leconCommencee: 'lecon_commencee',
   leconTerminee: 'lecon_terminee',
   lienConnexionEnvoye: 'lien_connexion_envoye',
   inscription: 'inscription',
@@ -25,6 +27,8 @@ export const EVENTS = {
   problemeResolu: 'probleme_resolu',
   // Écran de revue d'une partie terminée (issue #34).
   revueOuverte: 'revue_ouverte',
+  // « Rejouer d'ici » depuis la revue (issue #186) : cible, 30 % des revues ; `cle` dit si c'est depuis le moment clé.
+  revueRejouer: 'revue_rejouer',
   // Go du jour (issue #75) : défi quotidien commun. Réussite, partage, et arrivée par un lien partagé (une fois par session).
   goDuJourResolu: 'go_du_jour_resolu',
   goDuJourPartage: 'go_du_jour_partage',
