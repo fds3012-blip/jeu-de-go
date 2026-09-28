@@ -28,6 +28,7 @@ import { constaterPerteAppareil, lireRecordAppareil, lireReserveAppareil, noterR
 import { annoncerPerte, messagePerte } from './serieRecord';
 import { serieAffichee } from './serieLocale';
 import { messageGel } from './gel';
+import { goDuJourFaitAppareil } from './defiAppareil';
 import { BarreNav, type Onglet } from '../ui/IconesNav';
 import { BarreNiveau, FeteNiveau } from '../ui/Niveau';
 import { annonceKomi, equilibrage, KOMI_NORMAL, partiesOrdi, type Equilibrage } from './equilibrage';
@@ -165,7 +166,12 @@ export function App() {
     };
   }
 
-  const go = (t: Tab) => { setAnnonceGel(null); setRetourSerie(null); setTab(t); setPlaying(false); setLessonId(null); setVueProfil('menu'); window.scrollTo({ top: 0 }); };
+  // Toucher l'onglet Problèmes déjà actif ramène à sa liste, comme Apprendre ramène au chemin (recette du 28/09, R4).
+  const [racineProblemes, setRacineProblemes] = useState(0);
+  const go = (t: Tab) => {
+    if (t === 'problemes' && tab === 'problemes') setRacineProblemes(n => n + 1);
+    setAnnonceGel(null); setRetourSerie(null); setTab(t); setPlaying(false); setLessonId(null); setVueProfil('menu'); window.scrollTo({ top: 0 });
+  };
 
   const enPartie = tab === 'jouer' && !!playing;
   let screen;
@@ -188,7 +194,7 @@ export function App() {
     screen = <LearnHome progress={progress} onOpen={setLessonId} sync={syncState} />;
   } else if (tab === 'problemes') {
     screen = <Puzzles db={supabase} userId={session?.user.id} sessionLoading={session === undefined} confirmTouch={settings.confirmTouch} onCompte={() => go('profil')}
-      lien={LIEN_DU_JOUR} onDuJour={setDuJourOuvert} celebrer={settings.celebrations} />;
+      lien={LIEN_DU_JOUR} onDuJour={setDuJourOuvert} celebrer={settings.celebrations} racine={racineProblemes} />;
   } else if (tab === 'profil') {
     screen = <Profil vue={vueProfil} onVue={setVueProfil} settings={settings} set={set} profil={profil} serie={serie} record={recordSerie}
       parcours={{ lecons: { faites: done, total: LESSONS.length }, adversaires: OPPONENTS.length }} />;
@@ -200,7 +206,7 @@ export function App() {
       <Accueil adv={adv} battu={battu(bilan, adv.id)} textes={home} taille={settings.size} cartes={cartes}
         reglages={reglages} setReglages={setReglages} onTaille={n => set({ size: n })} onChoisir={setAdversaire}
         onJouer={() => lancer('ordi')} onDeux={() => lancer('deux')}
-        probleme={daily && { numero, titre: daily.title, rows: daily.rows, reussi: readLocal<Serie | null>(SERIE_KEY, null)?.dernier === numero }}
+        probleme={daily && { numero, titre: daily.title, rows: daily.rows, reussi: goDuJourFaitAppareil(numero) }}
         onProbleme={() => go('problemes')}
         lecon={leconConseillee && { rang: rangLecon, total: LESSONS.length, titre: leconConseillee.title }}
         onLecon={() => { go('apprendre'); if (leconConseillee) setLessonId(leconConseillee.id); }}
@@ -233,7 +239,7 @@ export function App() {
         {accueilVisible && <BarreNiveau />}
         {screen}
       </main>
-      <FeteNiveau celebrer={settings.celebrations} />
+      <FeteNiveau celebrer={settings.celebrations} ecran={`${tab}|${playing}|${lessonId ?? ''}|${vueProfil}`} />
       <AnnonceXp celebrer={settings.celebrations} />
       {/* Pendant une partie, comme chez chess.com : pas de barre de navigation, « ‹ » ramène à l'accueil. */}
       {!enPartie && <BarreNav actif={tab} onChoisir={go} />}

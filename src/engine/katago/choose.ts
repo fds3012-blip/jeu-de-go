@@ -1,7 +1,7 @@
 // Choix du coup d'un niveau KataGo à partir d'une analyse : on garde les coups dont la perte
 // reste sous la tolérance du niveau, puis le style oriente le tirage parmi eux.
 import { neighbors, type Position } from '../../go/rules';
-import type { KataGoLevel, Style } from '../simple';
+import { candidates, type KataGoLevel, type Style } from '../simple';
 import type { Analysis, MoveInfo } from './search';
 
 /** Bonus multiplicatif d'un coup selon le style (1 = neutre). */
@@ -44,4 +44,44 @@ export function chooseFromAnalysis(a: Analysis, pos: Position, lvl: KataGoLevel,
   let r = rand() * weights.reduce((s, w) => s + w, 0);
   for (let i = 0; i < ok.length; i++) { r -= weights[i]; if (r <= 0) return ok[i].move; }
   return ok[ok.length - 1].move;
+}
+
+/** Politique minimale d'un coup tiré au hasard : en dessous, le réseau le juge absurde (1 chance sur 1 000). */
+const PRIOR_MIN = 0.001;
+
+/**
+ * Coup tiré selon la politique du réseau, avec une température (#179) : une erreur « humaine », plausible.
+ * Jamais la passe, jamais dans ses propres yeux, jamais en auto-atari sans capture (`candidates`), et jamais un
+ * coup que le réseau juge absurde (politique sous `PRIOR_MIN`), sauf s'il ne reste rien d'autre.
+ * Sans politique (moteur ancien ou de secours) : les priors de l'analyse, sinon un candidat uniforme.
+ * -1 si aucun coup ne convient.
+ */
+export function coupSelonPolitique(a: Analysis, pos: Position, temperature = 1, rand: () => number = Math.random): number {
+  const cands = candidates(pos, false).map(c => c.move);
+  if (!cands.length) return -1;
+  const priors = new Map<number, number>();
+  if (a.policy && a.policy.length === pos.size * pos.size + 1) for (const m of cands) priors.set(m, a.policy[m]);
+  else for (const m of a.moves) if (m.move >= 0) priors.set(m.move, m.prior);
+  let liste = cands.filter(m => (priors.get(m) ?? 0) >= PRIOR_MIN);
+  if (!liste.length) liste = cands.filter(m => (priors.get(m) ?? 0) > 0);
+  if (!liste.length) return cands[Math.floor(rand() * cands.length)];
+  const inv = 1 / Math.max(0.05, temperature);
+  const w = liste.map(m => Math.pow(priors.get(m)!, inv));
+  let r = rand() * w.reduce((s, x) => s + x, 0);
+  for (let i = 0; i < liste.length; i++) { r -= w[i]; if (r <= 0) return liste[i]; }
+  return liste[liste.length - 1];
+}
+
+/**
+ * Coup d'un niveau KataGo, part de hasard comprise (#179). Avec la probabilité `hasard`, un coup tiré selon la
+ * politique (`coupSelonPolitique`) ; sinon `chooseFromAnalysis`. Pas de hasard quand la partie se termine
+ * (l'adversaire vient de passer, ou la recherche conseille de passer) : on ne gâche pas une fin de partie.
+ */
+export function choisirCoup(a: Analysis, pos: Position, lvl: { hasard: number; katago: KataGoLevel }, rand: () => number = Math.random): number {
+  const fin = pos.lastMove === -1 || a.moves[0]?.move === -1;
+  if (lvl.hasard > 0 && !fin && rand() < lvl.hasard) {
+    const m = coupSelonPolitique(a, pos, lvl.katago.temperature ?? 1, rand);
+    if (m >= 0) return m;
+  }
+  return chooseFromAnalysis(a, pos, lvl.katago, rand);
 }
