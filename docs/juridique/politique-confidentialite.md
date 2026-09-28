@@ -56,6 +56,7 @@ Ces données sont écrites dans le stockage local (`localStorage`) de ton naviga
 | Leçons | `go.lecons.v1` | Leçons commencées et terminées |
 | Problèmes | `go.problemes.v1`, `go.problemes.vus.v1` | Problèmes réussis, et problèmes dont tu as vu la réponse |
 | Problèmes à ta mesure | `go.cote-joueur.v1` | Une cote estimée d'après tes premiers essais, jamais affichée, pour choisir le prochain problème (#284) ; nombre d'essais, réussites d'affilée, dernier problème joué et problèmes déjà faits aujourd'hui |
+| Niveau de départ | `go.placement.v1` | Résultat du placement « Je sais déjà jouer » (#283) : niveau estimé en kyu, cote de départ, adversaire conseillé et date ; ou seulement « passé » et la date |
 | Révision espacée | `go.revision.v1` | Pour chaque problème réussi : jour de référence et prochaine échéance (J+1, J+3, J+7) |
 | Go du jour et série | `go.go-du-jour.v1`, `go.go-du-jour.fait.v1`, `go.gel.v1` | Dernier défi du jour réussi, nombre de jours de suite, gels de série en réserve |
 | Record de série | `go.serie-record.v1` | Plus longue série, et dernière série perdue déjà annoncée (#212) |
@@ -100,6 +101,7 @@ Ces données sont écrites dans le stockage local (`localStorage`) de ton naviga
 - parties : `premiere_pierre`, `partie_commencee`, `comptage_manuel`, `partie_terminee`, `premiere_partie_terminee` (taille, adversaire, nombre de coups, résultat, secondes écoulées) ;
 - leçons : `lecon_commencee`, `lecon_terminee` ;
 - problèmes : `probleme_resolu`, `solution_vue`, `erreur_rejouee`, `erreur_maitrisee`, `revision_faite` ;
+- placement « Je sais déjà jouer » : `placement_commence`, `placement_termine` (niveau estimé en kyu), `placement_saute` (étape où tu l'as passé) ;
 - revue : `revue_ouverte`, `revue_rejouer` ;
 - Go du jour et série : `go_du_jour_resolu`, `go_du_jour_partage`, `arrivee_par_partage`, `gel_gagne`, `gel_utilise`, `serie_perdue` ;
 - progression : `xp_gagne`, `niveau_atteint` ;
