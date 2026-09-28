@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { jouer } from './plateau';
 import { readdirSync, readFileSync } from 'node:fs';
-import { CHAPITRES, LESSONS } from '../src/content/lessons';
+import { CHAPITRES, LESSONS, localiser } from '../src/content/lessons';
 
 /**
  * Textes des problèmes, lus dans les sources (src/content/puzzles.ts et lots/*.ts) : ces fichiers passent par
@@ -23,8 +23,8 @@ function textesProblemes(): string[] {
 // courant, hors contenu pas encore traduit.
 //
 // Exclusions (documentées) :
-// 1. Contenu des leçons (content/lessons.fr.js) : titres, descriptions, consignes, réponses et choix des quiz.
-//    Il sera traduit après l'interface, avec l'agent pédagogie.
+// 1. Contenu des leçons pas encore traduites (content/lessons.fr.js) : titres, descriptions, consignes, réponses et choix
+//    des quiz. Les leçons de content/lessons.en.js s'affichent en anglais et ne sont pas exclues (anglais vérifié ici aussi).
 // 2. Contenu des problèmes (src/content/puzzles.ts et table `puzzles`) : titres, consignes, explications, réfutations.
 // 3. Noms propres des adversaires et de Mochi (glossaire : gardés comme des prénoms). « Rivière » porte un accent.
 // Ces textes sont retirés de la page avant la recherche ; tout le reste (boutons, titres d'écran, bulles de Mochi,
@@ -81,7 +81,8 @@ test('le détecteur trouve bien le français de l’interface, et ignore le cont
   expect(await textesFrancais(page)).toEqual(expect.arrayContaining([expect.stringMatching(/^Joue ta première partie/)]));
   await page.goto('/?lang=en');
   await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: 'Learn' }).click();
-  await expect(page.getByText(LESSONS[0].desc)).toBeVisible();
+  // Leçon 1 traduite (#167) : sa description est en anglais.
+  await expect(page.getByText(localiser(LESSONS[0], 'en').desc)).toBeVisible();
   await sansFrancais(page, 'Apprendre');
 });
 

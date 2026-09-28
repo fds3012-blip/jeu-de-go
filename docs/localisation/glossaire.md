@@ -160,4 +160,5 @@ Principes :
 - Conditions : « saisir la CNIL » devient *contact the CNIL, the French data protection authority* (sigle inconnu hors de France).
 - « Pomme continue : il reste un point à prendre en E4 » : *Pomme keeps playing: there’s still one point to take at E4*. La raison vient du moteur par une clé et des paramètres (point, nombre).
 - Gel : « Ton gel a protégé ta série de 12 jours ! » : *Your freeze protected your 12-day streak!*
-- Contenu encore en français en anglais (#167, étape 5) : titres, descriptions et consignes des leçons, titres, consignes et explications des problèmes. L’e2e `langue-parcours.spec.ts` les retire avant de chercher des mots français.
+- Contenu encore en français en anglais (#167, étape 5) : leçons 6 à 8, titres, consignes et explications des problèmes. L’e2e `langue-parcours.spec.ts` les retire avant de chercher des mots français.
+- Leçons 1 à 5 et chapitres traduits (`content/lessons.en.js`, textes seulement ; positions et réponses reprises du français, vérifiées par `src/content/lessons.en.test.ts`). « point vert » : *green point* ; « Touche » : *Tap* ; « Allonge-toi » : *Extend* ; « À toi » : *Your turn* ; « Pierres collées » : *Touching stones*. Titre « Le ko » : *Ko*. l2.1 dit *Play the green point* (12 mots au plus).
