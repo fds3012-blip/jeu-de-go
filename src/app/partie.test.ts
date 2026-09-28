@@ -191,8 +191,8 @@ describe('répliques des adversaires', () => {
     try {
       expect(repliques('renard', 'capture')).toEqual(['Trop facile.']);
       expect(choisirReplique('renard', 'capture', 'Trop facile.')).toBe('Trop facile.'); // une seule : on la répète
-      expect(repliques('renard', 'passe')).toBe(GENERIQUES.passe);
-      expect(repliques('pomme', 'capture')).toBe(GENERIQUES.capture);
+      expect(repliques('renard', 'passe')).toEqual(GENERIQUES.passe);
+      expect(repliques('pomme', 'capture')).toEqual(GENERIQUES.capture);
     } finally {
       delete PERSONNELLES.renard;
     }

@@ -5,6 +5,7 @@ import { IconeAction, type NomAction } from './IconesActions';
 import { PortraitMochi, type HumeurMochi } from './Portrait';
 import { Reflexion } from './Reflexion';
 import { fr } from './typo';
+import { t } from '../content/i18n';
 import './partie.css';
 
 /** Pierres capturées, rangées dans un couvercle en bois. `pierres` : couleur des pierres prises. */
@@ -17,7 +18,7 @@ export function Couvercle({ n, pierres }: { n: number; pierres: 'noir' | 'blanc'
         {Array.from({ length: vues }, (_, i) => <i key={i} className={`mini ${pierres === 'noir' ? 'n' : 'b'}`} />)}
       </span>
       <b aria-hidden="true">{n}</b>
-      <span className="sr-only">{n} pierre{n > 1 ? 's' : ''} capturée{n > 1 ? 's' : ''}</span>
+      <span className="sr-only">{t('bilan.pierresCapturees', { n })}</span>
     </span>
   );
 }
@@ -47,7 +48,7 @@ export function Bandeau({ nom, sousTitre, portrait, actif, captures, pierresPris
           <b>{nom}</b>
           {replique && <span key={replique.n} className="replique" role="status">{fr(replique.texte)}</span>}
         </div>
-        <small>{sousTitre}{actif && <span className="sr-only">, au trait</span>}</small>
+        <small>{sousTitre}{actif && <span className="sr-only">{t('partie.auTrait')}</span>}</small>
       </div>
       <span className="couvercle-zone">
         <Couvercle n={captures} pierres={pierresPrises} />
@@ -78,8 +79,8 @@ export function ListeCoups({ coups, courant = coups.length - 1 }: { coups: strin
     if (li) el.scrollLeft = li.offsetLeft - (el.clientWidth - li.offsetWidth) / 2;
   }, [coups.length, courant]);
   return (
-    <ol ref={ref} className="coups" aria-label="Coups joués">
-      {coups.length === 0 && <li className="vide">Aucun coup joué</li>}
+    <ol ref={ref} className="coups" aria-label={t('partie.coupsJoues')}>
+      {coups.length === 0 && <li className="vide">{t('bilan.aucunCoup')}</li>}
       {coups.map((m, i) => (
         <li key={i} aria-current={i === courant ? 'step' : undefined}>{m}</li>
       ))}
@@ -92,11 +93,11 @@ export function ListeCoups({ coups, courant = coups.length - 1 }: { coups: strin
  * Sans estimation encore (`libelle` vide), la place est réservée pour que le plateau ne saute pas.
  */
 /** `titre` : nom lu par les lecteurs d'écran (« Score compté » au comptage, #159). */
-export function BarreAvantage({ libelle, part, titre = 'Avantage estimé' }: { libelle: string; part: number; titre?: string }) {
+export function BarreAvantage({ libelle, part, titre = t('partie.avantageEstime') }: { libelle: string; part: number; titre?: string }) {
   return (
     <div className="avantage" style={libelle ? undefined : { visibility: 'hidden' }}>
-      <span className="avantage-libelle" aria-hidden="true">{libelle || 'Noir +0'}</span>
-      <div className="avantage-barre" role="img" aria-label={`${titre} : ${libelle}`}>
+      <span className="avantage-libelle" aria-hidden="true">{libelle || t('avantage.noir', { v: 0 })}</span>
+      <div className="avantage-barre" role="img" aria-label={t('partie.avantageAria', { titre, libelle })}>
         <i style={{ transform: `translateX(${((part - 1) * 100).toFixed(2)}%)` }} />
       </div>
     </div>

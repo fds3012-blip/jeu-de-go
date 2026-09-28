@@ -45,7 +45,7 @@ test('navigation entre les onglets Jouer, Apprendre, Problèmes et Profil', asyn
 
   await onglet('Profil').click();
   await expect(onglet('Profil')).toHaveAttribute('aria-current', 'page');
-  await expect(page.getByRole('heading', { name: 'Réglages' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Ton parcours' })).toBeVisible();
 
   await onglet('Jouer').click();
   await expect(onglet('Jouer')).toHaveAttribute('aria-current', 'page');

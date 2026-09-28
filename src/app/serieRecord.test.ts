@@ -131,9 +131,11 @@ describe('vitrine : un badge gagné n’est jamais retiré', () => {
     expect(lireBadges(['serie-7', 3])).toEqual(['serie-7']);
   });
 
-  it('Profil : le record à la place de « 0 jour de série »', () => {
-    const s = statistiques({ ...base, serie: 0, record: 7 }).find(x => x.id === 'serie');
+  it('Profil : le record à la place de « 0 jour de série », jamais plus petit que la série en cours (#214)', () => {
+    const p = { lecons: { faites: 0, total: 7 }, adversaires: 9 };
+    const s = statistiques({ ...base, serie: 0, record: 7 }, p).find(x => x.id === 'record');
     expect(s).toMatchObject({ valeur: 7, legende: 'jours de record' });
-    expect(statistiques({ ...base, serie: 2, record: 7 }).find(x => x.id === 'serie')).toMatchObject({ valeur: 2, legende: 'jours de série' });
+    expect(statistiques({ ...base, serie: 2, record: 7 }, p).find(x => x.id === 'record')).toMatchObject({ valeur: 7 });
+    expect(statistiques({ ...base, serie: 9, record: 7 }, p).find(x => x.id === 'record')).toMatchObject({ valeur: 9 });
   });
 });

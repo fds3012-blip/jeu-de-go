@@ -39,9 +39,9 @@ import { RevisionDuJour } from '../ui/RevisionDuJour';
 import { t as tr } from '../content/i18n';
 
 const LOCAL_PUZZLES = parsePuzzles(ALL_PUZZLES);
-const SOLVED_KEY = 'go.problemes.v1';
+export const SOLVED_KEY = 'go.problemes.v1';
 /** Problèmes « vus » (#197) : résolus après avoir vu la réponse. Ni XP, ni palier. */
-const VUS_KEY = 'go.problemes.vus.v1';
+export const VUS_KEY = 'go.problemes.vus.v1';
 
 type Load = { status: 'loading' } | { status: 'ready'; source: 'base' | 'copie'; error?: string };
 
@@ -447,12 +447,14 @@ function Partager({ numero, essais, serie }: { numero: number; essais: number; s
 
 interface DuJourInfo { numero: number; serie: number; defiChange: boolean; gelGagne: boolean; celebrer: boolean }
 
-function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating, onAttempt, onSolved, onNext, onExit, onSolutionVue }: {
+export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating, onAttempt, onSolved, onNext, onExit, onSolutionVue, retour, surtitre }: {
   puzzle: Puzzle; rang: number; duJour?: DuJourInfo; confirmTouch: boolean; rated: boolean; rating?: number;
   onAttempt: (ok: boolean) => Promise<{ ok: true; value: number } | { ok: false; error: string } | null>;
   onSolved: (essais: number, aide: NiveauAide) => void; onNext?: () => void; onExit: () => void;
   /** La réponse vient d'être montrée (#197). */
   onSolutionVue?: (essais: number) => void;
+  /** Série de fin de leçon (#200) : libellé du retour (« Retour au chemin ») et surtitre (« Entraînement, 1 sur 3 »). */
+  retour?: string; surtitre?: string;
 }) {
   const start = useMemo(() => startOf(puzzle), [puzzle]);
   // Aide graduée (#197) : indice, puis réfutation, puis réponse.
@@ -563,7 +565,7 @@ function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating, onAtt
   const ligneCote = cote && ('erreur' in cote
     ? <p className="verdict-cote">{cote.erreur}</p>
     : <p className="verdict-cote">{tr('pb.taCote')} <b><Defile de={cote.de} a={cote.a} /></b>{cote.a !== cote.de && <span className={cote.a > cote.de ? 'monte' : 'baisse'}> {ecart(cote.de, cote.a)}</span>}</p>);
-  const suivantBtn = <button className="cta" onClick={onNext ?? onExit}>{tr(onNext ? 'pb.suivant' : 'pb.retour')}</button>;
+  const suivantBtn = <button className="cta" onClick={onNext ?? onExit}>{onNext ? tr('pb.suivant') : retour ?? tr('pb.retour')}</button>;
 
   let verdict = null;
   if (replay) {
@@ -627,11 +629,11 @@ function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating, onAtt
   return (
     <div className="lecteur">
       <div className="lecteur-tete">
-        <Retour label={tr('pb.retour')} onClick={onExit} />
+        <Retour label={retour ?? tr('pb.retour')} onClick={onExit} />
         <div className="lecteur-nom">
           {duJour
             ? <small className="entete-du-jour">{tr('accueil.goDuJour')} <b className="numero-du-jour">{tr('pb.numero', { numero: duJour.numero })}</b></small>
-            : <small>{tr('pb.probleme', { n: rang })}</small>}
+            : <small>{surtitre ?? tr('pb.probleme', { n: rang })}</small>}
           <h2>{puzzle.title}</h2>
         </div>
         <Difficulte d={puzzle.difficulty} />

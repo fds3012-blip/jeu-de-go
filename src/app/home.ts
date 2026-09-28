@@ -2,6 +2,7 @@
 import { fr } from '../ui/typo';
 import { t } from '../content/i18n';
 import { battu, type Bilan } from './bilan';
+import { estRetour, repliqueDuJour } from './flamme';
 
 /** Historique minimal des parties, gardé en localStorage. `ordi` : parties contre l'ordi lancées (#160, voir equilibrage.ts). */
 export interface Parties { n: number; dernier?: string; ordi?: number }
@@ -31,7 +32,39 @@ export interface Accueil {
  * - Leçons faites mais aucune partie : on l'invite à sa première partie.
  * - Joueur qui revient : « Rejouer contre X » si c'est son dernier adversaire, sinon « Jouer contre X ».
  */
-export function accueil(parties: Parties, lecons: number, adv: { id: string; nom: string }, taille: number): Accueil {
+/** Contexte du jour (issue #213) : la bulle change selon le jour, le Go du jour et le retour après une absence. */
+export interface Jour {
+  /** Numéro du Go du jour d'aujourd'hui. */
+  numero: number;
+  /** Jours depuis la visite précédente (0 : déjà venu aujourd'hui ou hier, ou premier passage). */
+  absence: number;
+  duJourFait: boolean;
+  titreDuJour?: string;
+}
+
+/**
+ * Réplique du joueur qui revient, choisie par jour (même jour, même réplique) :
+ * - après une absence (3 jours ou plus) : un accueil chaleureux, sans reproche ;
+ * - sinon, une rotation de répliques, dont une sur le Go du jour (à faire, ou fait).
+ */
+function bulleDuJour(jour: Jour, rejouer: boolean, plateau: string): string {
+  if (estRetour(jour.absence)) {
+    return repliqueDuJour([
+      () => t('accueil.bulle.retour.0'),
+      () => t('accueil.bulle.retour.1', { plateau }),
+      () => t('accueil.bulle.retour.2'),
+    ], jour.numero)();
+  }
+  const duJour = jour.duJourFait
+    ? () => t('accueil.bulle.duJourFait', { plateau })
+    : jour.titreDuJour ? () => t('accueil.bulle.duJour', { titre: jour.titreDuJour! }) : () => t('accueil.bulle.jour', { plateau });
+  const lignes = rejouer
+    ? [() => t('accueil.bulle.rejouer', { plateau }), () => t('accueil.bulle.revanche'), duJour, () => t('accueil.bulle.jour', { plateau })]
+    : [() => t('accueil.bulle.jouer', { plateau }), duJour, () => t('accueil.bulle.jour', { plateau })];
+  return repliqueDuJour(lignes, jour.numero)();
+}
+
+export function accueil(parties: Parties, lecons: number, adv: { id: string; nom: string }, taille: number, jour?: Jour): Accueil {
   const plateau = `${taille}\u00A0×\u00A0${taille}`; // insécables : « 9 × 9 » ne se coupe pas
   if (parties.n === 0) {
     // Le nom de l'adversaire est déjà juste au-dessus, en grand, et son sceau est dans le bouton.
@@ -46,7 +79,7 @@ export function accueil(parties: Parties, lecons: number, adv: { id: string; nom
     nouveau: false,
     cta,
     ctaNom: cta,
-    bulle: fr(t(rejouer ? 'accueil.bulle.rejouer' : 'accueil.bulle.jouer', { plateau })),
+    bulle: fr(jour ? bulleDuJour(jour, rejouer, plateau) : t(rejouer ? 'accueil.bulle.rejouer' : 'accueil.bulle.jouer', { plateau })),
   };
 }
 

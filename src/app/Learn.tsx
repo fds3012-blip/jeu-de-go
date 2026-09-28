@@ -22,7 +22,8 @@ import { hapticFail, hapticStone, hapticSuccess, hapticVictory } from '../ui/hap
 import { EVENTS, track } from '../data/analytics';
 import { gagnerXp } from './xp';
 import { validerDefi } from './defiAppareil';
-import { CHAPITRES_A_VENIR, LIGNE, boutonChemin, etapes, finDeLecon, trace, traceJusqua, type Progression } from './apprendre';
+import { CHAPITRES_A_VENIR, LIGNE, actionsFin, boutonChemin, etapes, finDeChapitre, finDeLecon, trace, traceJusqua, type ActionFin, type Progression } from './apprendre';
+import { t } from '../content/i18n';
 import '../ui/apprendre.css';
 
 function lineOf(p: number, n: number) { const x = p % n, y = Math.floor(p / n); return Math.min(x, y, n - 1 - x, n - 1 - y); }
@@ -158,9 +159,13 @@ interface PlayerProps {
   onExit: () => void;
   /** Ouvre la leçon suivante ; absent pour la dernière. */
   onNext?: () => void;
+  /** Fin de leçon (#200) : série de 3 problèmes du thème de la leçon (`themes` : leurs noms) ; absente si la leçon n'a pas de thème. */
+  pratique?: { themes: string[]; ouvrir: () => void };
+  /** Fin de chapitre (#200) : lance une partie contre le premier adversaire. */
+  jouer?: { nom: string; lancer: () => void };
 }
 
-export function LessonPlayer({ lesson, start, confirmTouch, progress = {}, celebrer = true, onProgress, onExit, onNext }: PlayerProps) {
+export function LessonPlayer({ lesson, start, confirmTouch, progress = {}, celebrer = true, onProgress, onExit, onNext, pratique, jouer }: PlayerProps) {
   const [idx, setIdx] = useState(Math.min(start, lesson.steps.length - 1));
   const [answer, setAnswer] = useState<{ ok: boolean; p?: number; after?: Position; choice?: number; n: number } | null>(null);
   /** Choix faux déjà touchés au quiz (#198) : ils restent marqués, les autres restent touchables. */
@@ -244,7 +249,7 @@ export function LessonPlayer({ lesson, start, confirmTouch, progress = {}, celeb
   }
 
   if (fini) {
-    return <FinLecon lesson={lesson} progress={{ ...progress, [lesson.id]: lesson.steps.length }} celebrer={celebrer} onNext={onNext} onExit={onExit} />;
+    return <FinLecon lesson={lesson} progress={{ ...progress, [lesson.id]: lesson.steps.length }} celebrer={celebrer} onNext={onNext} onExit={onExit} pratique={pratique} jouer={jouer} />;
   }
 
   const img = images ? images[Math.min(temps, images.length - 1)] : null;
@@ -339,9 +344,25 @@ export const POSE_MS = 460;
  * Fin de leçon : le sceau de la leçon s'imprime, la pierre se pose sur la rangée du chemin (avec son claquement),
  * puis une seule action en relief. Célébration modeste ; carillon et confettis seulement pour la dernière leçon.
  */
-function FinLecon({ lesson, progress, celebrer, onNext, onExit }: { lesson: Lesson; progress: Progression; celebrer: boolean; onNext?: () => void; onExit: () => void }) {
+function FinLecon({ lesson, progress, celebrer, onNext, onExit, pratique, jouer }: {
+  lesson: Lesson; progress: Progression; celebrer: boolean; onNext?: () => void; onExit: () => void;
+  pratique?: PlayerProps['pratique']; jouer?: PlayerProps['jouer'];
+}) {
   const liste = etapes(LESSONS, progress);
-  const { titre, derniere } = finDeLecon(LESSONS, lesson.id);
+  const { derniere } = finDeLecon(LESSONS, lesson.id);
+  // Fin de chapitre (#200) : dernière leçon terminée, ou toutes les leçons faites.
+  const chapitre = finDeChapitre(LESSONS, progress, lesson.id);
+  const titre = finDeLecon(LESSONS, chapitre ? LESSONS[LESSONS.length - 1].id : lesson.id).titre;
+  const { principale, liens } = actionsFin({ chapitre, pratique: !!pratique, suivante: !!onNext, jouer: !!jouer });
+  const bouton = (a: ActionFin, classe: 'cta' | 'lien') => {
+    const props = { className: classe, 'data-action': a };
+    if (a === 'jouer' && jouer) return <button key={a} {...props} onClick={jouer.lancer}>{t('lecon.jouerContre', { nom: jouer.nom })}</button>;
+    if (a === 'pratique' && pratique) {
+      return <button key={a} {...props} onClick={pratique.ouvrir} aria-label={fr(t('lecon.pratiqueAria', { themes: pratique.themes.join(', ') }))}>{fr(t('lecon.pratique'))}</button>;
+    }
+    if (a === 'suivante' && onNext) return <button key={a} {...props} onClick={onNext}>{t('lecon.suivante')}</button>;
+    return <button key={a} {...props} onClick={onExit}>{t('lecon.retourChemin')}</button>;
+  };
   const [reduit] = useState(prefersReducedMotion);
   const fete = derniere && celebrer;
   const sceau = useRef<HTMLDivElement>(null);
@@ -374,9 +395,9 @@ function FinLecon({ lesson, progress, celebrer, onNext, onExit }: { lesson: Less
         ))}
       </ol>
       <h2 className="fin-titre" ref={titreRef} tabIndex={-1}>{titre}</h2>
-      <p className="fin-acquis">{fr(acquis(lesson.id))}{derniere && <> {fr('Tu connais les règles du go.')}</>}</p>
-      <button className="cta" onClick={onNext ?? onExit}>{onNext ? 'Leçon suivante' : 'Retour au chemin'}</button>
-      {onNext && <button className="lien" onClick={onExit}>Retour au chemin</button>}
+      <p className="fin-acquis">{fr(acquis(lesson.id))}{chapitre && <> {fr('Tu connais les règles du go.')}</>}</p>
+      {bouton(principale, 'cta')}
+      {liens.map(a => bouton(a, 'lien'))}
       {gerbe && <Confettis origine={gerbe} onFin={() => setGerbe(null)} />}
     </div>
   );

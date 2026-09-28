@@ -1,7 +1,10 @@
 // Série protégée (issue #76) : la pierre givrée, dans la grammaire aux deux pierres (docs/design/v2).
 // Une pierre claire, bleutée, avec un éclat de givre ; à côté, le nombre de gels en réserve.
-import { libelleGels } from '../app/gel';
+import { t } from '../content/i18n';
 import './gel.css';
+
+/** Nom accessible de la pastille : même texte que libelleGels (src/app/gel.ts), dans la langue de l'interface (#167). */
+const libelleGels = (n: number) => (n === 0 ? t('gel.aucun') : t('gel.reserve', { n }));
 
 export function PierreGivree({ taille = 16 }: { taille?: number }) {
   return (

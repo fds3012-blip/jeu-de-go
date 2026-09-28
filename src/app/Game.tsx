@@ -11,11 +11,12 @@ import { EVENTS, secondsSinceOpen, track, trackOnce } from '../data/analytics';
 import { gagnerXp } from './xp';
 import { supabase } from '../data/supabase';
 import { fr } from '../ui/typo';
+import { nombre as virgule, t as tr } from '../content/i18n';
 import { useProfil } from './hooks';
 import { useStored } from './settings';
 import { carteTerritoire, conseilPasser, passerEnEvidence, coupsJoues, descriptionIndices, descriptionQuiMene, DUREE_QUI_MENE, indicesRestants, INDICES_PAR_PARTIE, libelleAvantage, libelleCoup, messageAtari, messageIndice, metEnAtari, nouveauxAtari, partNoir, phraseQuiMene, QUI_MENE_PAR_PARTIE, quiMeneDisponible, quiMeneRestants } from './partie';
-import { CORRIGER_MORTES, EXPLICATION_MORTES, messageComptage, modeComptage } from './partie';
-import { ALERTE_FRONTIERES, avanceBarre, frontieresAuPasse, frontieresVisibles, type AlerteFrontieres } from './partie';
+import { messageComptage, modeComptage } from './partie';
+import { avanceBarre, frontieresAuPasse, frontieresVisibles, type AlerteFrontieres } from './partie';
 import '../ui/comptage.css';
 import { choisirReplique, DUREE_REPLIQUE, type Situation } from './repliques';
 import { FinPartie } from '../ui/FinPartie';
@@ -34,9 +35,9 @@ import { Revue } from './Revue';
 import { resultatSgf, REVUE_KEY, sgfDepuisHistorique, type PartieGardee } from './revue';
 import { delaiReponse, messageContinue } from './rythme';
 
-const REFUS = { occupe: '', ko: "Ko : tu ne peux pas reprendre tout de suite, joue d'abord ailleurs.", suicide: 'Coup interdit : cette pierre serait capturée par elle-même.', 'hors-plateau': '' };
-const pierres = (n: number) => `${n} pierre${n > 1 ? 's' : ''}`;
-const virgule = (n: number) => String(n).replace('.', ',');
+// Textes de l'écran passés par `tr` (#167) : français d'origine dans src/content/i18n/fr.ts.
+const REFUS = { occupe: null, ko: 'partie.refus.ko', suicide: 'partie.refus.suicide', 'hors-plateau': null } as const;
+const camp = (c: number) => tr(c === 1 ? 'camp.noir' : 'camp.blanc');
 /** Vrai une fois que Mochi a expliqué le mot « atari » (on ne l'explique qu'une fois). */
 const ATARI_KEY = 'go.atari-explique.v1';
 /** Vrai une fois que le récit du score a expliqué le mot « komi » (#78). */
@@ -67,7 +68,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   const [history, setHistory] = useState<Position[]>(() => [newPosition(size)]);
   const [phase, setPhase] = useState<'play' | 'score' | 'end'>('play');
   const [dead, setDead] = useState<Set<number>>(new Set());
-  const [msg, setMsg] = useState(ai ? `Tu as Noir, ${ai.nom} a Blanc. Touche une intersection pour jouer.` : 'Noir commence. Touche une intersection, puis touche-la à nouveau pour confirmer.');
+  const [msg, setMsg] = useState(ai ? tr('partie.debut.ordi', { nom: ai.nom }) : tr('partie.debut.deux'));
   const [resignArm, setResignArm] = useState(false);
   const [resigned, setResigned] = useState<0 | 1 | 2>(0);
   const [thinking, setThinking] = useState(false);
@@ -146,7 +147,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
       if (premiere) setAtariExplique(true);
       return messageAtari(premiere);
     }
-    return `Atari ! Un groupe ${c === 1 ? 'noir' : 'blanc'} n'a plus qu'une liberté, le point vert.`;
+    return tr(c === 1 ? 'partie.atari.noir' : 'partie.atari.blanc');
   }
 
   // Tour de l'ordi : on demande un coup au moteur (dans un Web Worker), puis on le joue.
@@ -167,8 +168,8 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
       setHistory(h => [...h, r]);
       if (m === -1) {
         repliquer('passe');
-        if (pos.lastMove === -1) enterScore(r, `${ai.nom} passe aussi : la partie est finie.`);
-        else { const c = conseilPasser(ai.nom, aide, true, r.board); if (c) setConseilPasserA(history.length + 1); setMsg(c ?? `${ai.nom} passe. Si tu passes aussi, on compte les points.`); }
+        if (pos.lastMove === -1) enterScore(r, tr('partie.ordiPasseAussi', { nom: ai.nom }));
+        else { const c = conseilPasser(ai.nom, aide, true, r.board); if (c) setConseilPasserA(history.length + 1); setMsg(c ?? tr('partie.ordiPasse', { nom: ai.nom })); }
       } else {
         const cap = r.captures[2] - pos.captures[2];
         playStone(m, size, true);
@@ -180,8 +181,8 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
         const continue_ = pos.lastMove === -1 && raison ? messageContinue(ai.nom, raison) : null;
         const c = cap || alerte || continue_ ? null : conseilPasser(ai.nom, aide, false, r.board);
         if (c) setConseilPasserA(history.length + 1);
-        const rappel = frontieresVisibles(frontieres, history.length + 1, r.board, size, true) ? ` ${ALERTE_FRONTIERES}` : ' À toi.';
-        setMsg(cap ? `${ai.nom} capture ${pierres(cap)} en ${toLabel(m, size)}.` : alerte ?? continue_ ?? c ?? `${ai.nom} joue ${toLabel(m, size)}.${rappel}`);
+        const rappel = ` ${tr(frontieresVisibles(frontieres, history.length + 1, r.board, size, true) ? 'partie.frontieres' : 'partie.aToi')}`;
+        setMsg(cap ? tr('partie.ordiCapture', { nom: ai.nom, n: cap, point: toLabel(m, size) }) : alerte ?? continue_ ?? c ?? `${tr('partie.ordiJoue', { nom: ai.nom, point: toLabel(m, size) })}${rappel}`);
       }
     });
     return () => { jeton.current++; setThinking(false); };
@@ -203,7 +204,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   // au récit du score (#117) ; sinon, et toujours à deux, le joueur corrige d'une touche avant « Valider le score ».
   function enterScore(p: Position, fin: string) {
     const t = ++scoreToken.current;
-    setPhase('score'); setDead(new Set()); setFinding(true); setMsg(`${fin} Je cherche les pierres mortes…`);
+    setPhase('score'); setDead(new Set()); setFinding(true); setMsg(tr('partie.chercheMortes', { fin }));
     proposeComptage(p, komi).then(({ dead: d, incertains }) => {
       if (t !== scoreToken.current) return;
       setFinding(false); setDead(new Set(d));
@@ -216,7 +217,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   useEffect(() => { if (autoCompte === 'calcule' && phase === 'score') { setAutoCompte('oui'); finish(sc.winner, false, true); } }, [autoCompte]); // eslint-disable-line react-hooks/exhaustive-deps
   function corriger() {
     resultatDiffere.current = null;
-    setAutoCompte('non'); setRecitFini(true); setPhase('score'); setMsg(`${EXPLICATION_MORTES} Touche un groupe pour corriger.`);
+    setAutoCompte('non'); setRecitFini(true); setPhase('score'); setMsg(`${tr('partie.mortes.explication')} ${tr('partie.mortes.toucher')}`);
   }
   function resume() { setFrontieres(null); scoreToken.current++; setFinding(false); setPhase('play'); setDead(new Set()); setAutoCompte('non'); resultatDiffere.current = null; }
 
@@ -231,7 +232,8 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     if (phase !== 'play' || !myTurn) return;
     const r = play(pos, p);
     if (typeof r === 'string') {
-      if (REFUS[r]) { setMsg(REFUS[r]); playIllegal(); hapticIllegal(); setShake(s => ({ p, n: (s?.n ?? 0) + 1 })); }
+      const refus = REFUS[r];
+      if (refus) { setMsg(tr(refus)); playIllegal(); hapticIllegal(); setShake(s => ({ p, n: (s?.n ?? 0) + 1 })); }
       return;
     }
     const cap = r.captures[pos.toPlay] - pos.captures[pos.toPlay];
@@ -248,10 +250,10 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     if (ai) {
       if (cap) { repliquer('captureSubie'); reagir('surpris'); }
       else if (enAtari) repliquer('atariSubi');
-      setMsg(cap ? `Bravo, tu captures ${pierres(cap)} !` : `Tu joues ${toLabel(p, size)}.`);
+      setMsg(cap ? tr('partie.tuCaptures', { n: cap }) : tr('partie.tuJoues', { point: toLabel(p, size) }));
     } else {
       const alerte = cap ? null : alerteAtari(pos, r, r.toPlay, history.length + 1);
-      setMsg(cap ? `${pos.toPlay === 1 ? 'Noir' : 'Blanc'} capture ${pierres(cap)}.` : alerte ?? `${r.toPlay === 1 ? 'Noir' : 'Blanc'} joue. Dernier coup : ${toLabel(p, size)}.`);
+      setMsg(cap ? tr('partie.campCapture', { camp: camp(pos.toPlay), n: cap }) : alerte ?? tr('partie.campJoue', { camp: camp(r.toPlay), point: toLabel(p, size) }));
     }
   }
   function pass() {
@@ -260,10 +262,10 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     aRepondre.current = { capture: false, forcee: false }; setFete(null);
     setHistory([...history, r]);
     const ouverts = pos.lastMove === -1 ? [] : frontieresAuPasse(aide, pos.board, size);
-    if (pos.lastMove === -1) enterScore(r, 'Deux passes : la partie est finie.');
-    else if (ouverts.length) { setFrontieres({ len: history.length + 1, points: ouverts }); setMsg(ALERTE_FRONTIERES); if (ai) repliquer('passeJoueur'); }
-    else if (ai) { repliquer('passeJoueur'); setMsg(`Tu passes. Si ${ai.nom} passe aussi, on compte les points.`); }
-    else setMsg(`${pos.toPlay === 1 ? 'Noir' : 'Blanc'} passe. Si ${r.toPlay === 1 ? 'Noir' : 'Blanc'} passe aussi, on compte les points.`);
+    if (pos.lastMove === -1) enterScore(r, tr('partie.deuxPasses'));
+    else if (ouverts.length) { setFrontieres({ len: history.length + 1, points: ouverts }); setMsg(tr('partie.frontieres')); if (ai) repliquer('passeJoueur'); }
+    else if (ai) { repliquer('passeJoueur'); setMsg(tr('partie.tuPasses', { nom: ai.nom })); }
+    else setMsg(tr('partie.campPasse', { camp: camp(pos.toPlay), autre: camp(r.toPlay) }));
   }
   // Indice : le moteur cherche un bon coup (niveau Caillou, dans son Worker) et on entoure la zone où il se trouve.
   const restants = ai ? indicesRestants(indicesUtilises) : INDICES_PAR_PARTIE;
@@ -271,16 +273,16 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     if (!myTurn || cherche || restants <= 0) return;
     const len = history.length;
     setCherche(true);
-    setMsg('Je cherche un bon coup…');
+    setMsg(tr('partie.indice.cherche'));
     bestMove(pos, 'caillou', { komi }).then(m => {
       setCherche(false);
       if (len !== history.length) return;
-      if (m < 0) { setMsg("Je ne vois plus de bon coup : tu peux passer."); return; }
+      if (m < 0) { setMsg(tr('partie.indice.aucun')); return; }
       setIndice({ len, p: m });
       // Seul un indice montré compte ; le dernier, Mochi annonce qu'il n'y en a plus.
       if (ai) setIndicesUtilises(u => u + 1);
       setMsg(ai ? messageIndice(indicesRestants(indicesUtilises + 1)) : messageIndice(1));
-    }, () => { setCherche(false); setMsg("Pas d'indice pour l'instant. Réessaie dans un instant."); });
+    }, () => { setCherche(false); setMsg(tr('partie.indice.erreur')); });
   }
   // « Qui mène ? » (#94) : l'estimation tourne dans un Worker (KataGo s'il est prêt, sinon le moteur simple).
   // Contre l'ordi : 3 fois par partie et seulement si l'aide de Mochi est active. À deux : illimité.
@@ -297,10 +299,10 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     estimateTerritoire(pos, komi, { kataGo: !thinking }).then(e => {
       setQuiMeneCalcul(false);
       if (len !== history.length) return;
-      if (!e) { setMsg("Je n'arrive pas à estimer pour l'instant. Réessaie dans un instant."); return; }
+      if (!e) { setMsg(tr('partie.quiMene.erreur')); return; }
       setQuiMene(q => ({ len, owner: carteTerritoire(e.own), phrase: phraseQuiMene(e.lead, e.engine), n: (q?.n ?? 0) + 1 }));
       if (ai) setQuiMeneUtilises(u => u + 1);
-    }, () => { setQuiMeneCalcul(false); setMsg("Je n'arrive pas à estimer pour l'instant. Réessaie dans un instant."); });
+    }, () => { setQuiMeneCalcul(false); setMsg(tr('partie.quiMene.erreur')); });
   }
   // La carte s'efface au bout de 3 s, ou au prochain toucher n'importe où (sauf sur le bouton, qui la masque lui-même).
   const quiMeneN = quiMeneVisible?.n;
@@ -319,7 +321,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     if (undoTo < 1) return;
     token.current++;
     setThinking(false);
-    setHistory(history.slice(0, undoTo)); resume(); setMsg(ai ? 'Coup annulé. À toi de rejouer.' : 'Coup annulé.');
+    setHistory(history.slice(0, undoTo)); resume(); setMsg(tr(ai ? 'partie.annule.ordi' : 'partie.annule.deux'));
   }
   function finish(winner: 1 | 2, abandon: boolean, differe = false) {
     const egalite = !abandon && sc.margin === 0;
@@ -360,21 +362,21 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   function rejouer(h: Position[]) {
     token.current++; atarisSubis.current = 0; setIndicesUtilises(0); setQuiMeneUtilises(0); setQuiMene(null);
     setHistory(h); resume(); setResigned(0); setThinking(false); setRelecture(null); setSgf(null);
-    setMsg(h.length > 1 ? (ai ? 'On reprend ici. À toi de trouver mieux !' : 'On reprend ici.') : ai ? 'Nouvelle partie : tu as Noir, à toi.' : 'Nouvelle partie : Noir commence.');
+    setMsg(tr(h.length > 1 ? (ai ? 'partie.reprise.ordi' : 'partie.reprise.deux') : ai ? 'partie.nouvelle.ordi' : 'partie.nouvelle.deux'));
   }
   function restart() {
     token.current++; atarisSubis.current = 0; setIndicesUtilises(0); setQuiMeneUtilises(0); setQuiMene(null);
     setHistory([newPosition(size)]); resume(); setResigned(0); setThinking(false); setRelecture(null);
-    setMsg(ai ? `Nouvelle partie : tu as Noir, à toi.` : 'Nouvelle partie : Noir commence.');
+    setMsg(tr(ai ? 'partie.nouvelle.ordi' : 'partie.nouvelle.deux'));
   }
 
-  const name = (c: 1 | 2) => (ai ? (c === 1 ? 'Toi' : ai.nom) : c === 1 ? 'Noir' : 'Blanc');
-  const retourAccueil = <button type="button" className="retour" onClick={onExit} aria-label="Retour à l'accueil">‹</button>;
+  const name = (c: 1 | 2) => (ai ? (c === 1 ? tr('camp.toi') : ai.nom) : camp(c));
+  const retourAccueil = <button type="button" className="retour" onClick={onExit} aria-label={tr('partie.retourAccueil')}>‹</button>;
   // En relecture, on montre la position `q` et « ‹ » ramène au bilan.
   const bandeau = (c: 1 | 2, q: Position = pos, retour: ReactNode = retourAccueil, actif = phase === 'play' && q.toPlay === c, gain: { n: number; k: number } | null = null) => {
     let sousTitre: string;
-    if (c === 2) sousTitre = ai ? ai.rang : `komi ${virgule(komi)}`;
-    else sousTitre = ai ? (profil ? `Noir, cote ${profil.cote}` : 'Noir') : 'joue en premier';
+    if (c === 2) sousTitre = ai ? ai.rang : tr('partie.komi', { komi: virgule(komi) });
+    else sousTitre = ai ? (profil ? tr('partie.noirCote', { cote: profil.cote }) : camp(1)) : tr('partie.joueEnPremier');
     const initiale = c === 1 && profil?.pseudo ? profil.pseudo[0] : undefined;
     return (
       <Bandeau nom={name(c)} sousTitre={sousTitre} actif={actif} captures={q.captures[c]} pierresPrises={c === 1 ? 'blanc' : 'noir'}
@@ -415,7 +417,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     const winner = resigned ? (3 - resigned) as 1 | 2 : sc.winner;
     const egalite = !abandon && sc.margin === 0;
     const gagne = !egalite && (!ai || winner === 1);
-    const titre = egalite ? 'Égalité' : ai ? (winner === 1 ? 'Victoire' : 'Défaite') : `${name(winner)} gagne`;
+    const titre = egalite ? tr('fin.egalite') : ai ? tr(winner === 1 ? 'fin.victoire' : 'fin.defaite') : tr('fin.gagne', { nom: name(winner) });
     const plateau = `${size} × ${size}`;
     const n = history.length - 1;
     if (!abandon && !recitFini) {
@@ -431,14 +433,14 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
       return (
         <div className="recit-auto">
           {recitEl}
-          <aside className="comptage-auto" aria-label="Pierres mortes">
-            {dead.size > 0 && <p>{fr(EXPLICATION_MORTES)}</p>}
-            <button type="button" className="lien lien-discret" onClick={corriger}>{CORRIGER_MORTES}</button>
+          <aside className="comptage-auto" aria-label={tr('partie.mortes.aria')}>
+            {dead.size > 0 && <p>{fr(tr('partie.mortes.explication'))}</p>}
+            <button type="button" className="lien lien-discret" onClick={corriger}>{tr('partie.mortes.corriger')}</button>
           </aside>
         </div>
       );
     }
-    const bilanDeux = fr(`${n} coup${n > 1 ? 's' : ''} sur ${plateau}. Captures : Noir ${pos.captures[1]}, Blanc ${pos.captures[2]}.`);
+    const bilanDeux = fr(tr('fin.bilanDeux', { n, plateau, noir: pos.captures[1], blanc: pos.captures[2] }));
     return (
       <FinPartie
         fond={<Board size={size} board={pos.board} marks={{ owner: abandon ? undefined : sc.owner, dead, last: pos.lastMove }} />}
@@ -446,11 +448,11 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
         tampon={ai && gagne ? battuAccorde(ai.id).toUpperCase() : null}
         titre={titre}
         marge={abandon || egalite ? null : sc.margin}
-        texteMarge={v => `de ${virgule(v)} point${v >= 2 ? 's' : ''} sur ${plateau}`}
-        sousTitre={abandon ? 'par abandon' : `sur ${plateau}, komi compris`}
+        texteMarge={v => tr('fin.marge', { n: v, v: virgule(v), plateau })}
+        sousTitre={abandon ? tr('fin.parAbandon') : tr('fin.komiCompris', { plateau })}
         bilan={fin?.bilan ?? bilanDeux}
         mochi={fin?.mochi}
-        action={fin?.action ?? <button type="button" className="cta" onClick={restart}>Rejouer</button>}
+        action={fin?.action ?? <button type="button" className="cta" onClick={restart}>{tr('fin.rejouer')}</button>}
         onRevoir={n > 0 ? () => setRelecture(1) : undefined}
         onAccueil={fin?.onAccueil ?? onExit}
         confettis={celebrer && gagne}
@@ -465,14 +467,14 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   // Ta capture reste affichée pendant que Pomme réfléchit (#187) : le « Bravo » ne s'efface qu'à sa réponse.
   const feteVisible = fete && fete.len === history.length && phase === 'play' ? fete : null;
   const pense = phase === 'play' && thinking && !!ai && !feteVisible;
-  const messageCoach = pense && ai ? `${ai.nom} réfléchit…` : msg;
+  const messageCoach = pense && ai ? tr('partie.reflechit', { nom: ai.nom }) : msg;
   const montrerIntro = intro && history.length === 1 && phase === 'play';
 
   return (
     <div className="partie">
       {bandeau(2)}
       <ListeCoups coups={coups} />
-      {ai && avantage && (!estimationKo || phase === 'score') && <BarreAvantage libelle={lead === null ? '' : libelleAvantage(lead)} part={lead === null ? 0.5 : partNoir(lead, size)} titre={phase === 'score' ? 'Score compté' : undefined} />}
+      {ai && avantage && (!estimationKo || phase === 'score') && <BarreAvantage libelle={lead === null ? '' : libelleAvantage(lead)} part={lead === null ? 0.5 : partNoir(lead, size)} titre={phase === 'score' ? tr('partie.scoreCompte') : undefined} />}
       <div className="partie-plateau">
         <Board size={size} board={pos.board} toPlay={pos.toPlay} interactive={phase === 'score' || myTurn} stonesTappable={phase === 'score'} confirmTouch={confirmTouch}
           marks={{ last: pos.lastMove, owner: phase === 'score' ? sc.owner : quiMeneVisible?.owner, ownerFondu: !!quiMeneVisible, dead, libs, zone, ouverts: phase === 'play' ? frontieresVisibles(frontieres, history.length, pos.board, size, !!ai) : undefined }} onPlay={onPlay} shake={shake} versCouvercles noms={ai ? { 2: ai.nom } : undefined} />
@@ -487,24 +489,24 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
           humeur={pense ? 'pensif' : feteVisible || humeur.h === 'surpris' ? 'content' : 'neutre'}>{fr(messageCoach)}</Coach>}
       </div>
       {phase === 'play' ? (
-        <BarreActions label="Actions de la partie" actions={[
-          { label: cherche ? 'Indice…' : 'Indice', icone: ai ? <CompteurIndices restants={restants}><Icone nom="indice" /></CompteurIndices> : <Icone nom="indice" />,
+        <BarreActions label={tr('partie.actions')} actions={[
+          { label: tr(cherche ? 'partie.action.indiceCours' : 'partie.action.indice'), icone: ai ? <CompteurIndices restants={restants}><Icone nom="indice" /></CompteurIndices> : <Icone nom="indice" />,
             onClick: hint, disabled: !myTurn || cherche || restants <= 0, description: ai ? descriptionIndices(restants) : undefined },
-          ...(avecQuiMene ? [{ label: fr('Qui mène ?'), action: 'qui-mene',
+          ...(avecQuiMene ? [{ label: fr(tr('partie.action.quiMene')), action: 'qui-mene',
             icone: ai ? <CompteurIndices restants={quiMeneReste}><Icone nom="quimene" /></CompteurIndices> : <Icone nom="quimene" />,
             onClick: quiMeneToucher, disabled: !quiMeneVisible && (quiMeneCalcul || quiMeneReste <= 0),
             description: ai ? descriptionQuiMene(quiMeneReste) : undefined }] : []),
-          { label: 'Annuler', icone: <Icone nom="annuler" />, onClick: undo, disabled: undoTo < 1 },
-          { label: 'Passer', icone: <Icone nom="passer" />, onClick: pass, disabled: !myTurn,
+          { label: tr('partie.action.annuler'), icone: <Icone nom="annuler" />, onClick: undo, disabled: undoTo < 1 },
+          { label: tr('partie.action.passer'), icone: <Icone nom="passer" />, onClick: pass, disabled: !myTurn,
             evidence: passerEnEvidence(aide && !!ai, myTurn, pos.lastMove === -1, conseilPasserA, history.length), pulse: celebrer && !mouvementsReduits() },
-          { label: resignArm ? fr('Confirmer ?') : 'Abandonner', icone: <Icone nom="abandonner" />, onClick: resign, danger: resignArm },
+          { label: resignArm ? fr(tr('partie.action.confirmer')) : tr('partie.action.abandonner'), icone: <Icone nom="abandonner" />, onClick: resign, danger: resignArm },
         ]} />
       ) : (
         <>
-          <p className="comptage">{fr(`${name(1)} ${virgule(sc.black)}, ${name(2)} ${virgule(sc.white)} (komi compris). Les pierres grisées sont comptées comme mortes.`)}</p>
-          <div className="barre-comptage" role="toolbar" aria-label="Comptage des points">
-            <button className="btn" onClick={() => { resume(); setMsg('La partie reprend.'); }}>Reprendre</button>
-            <button className="btn primary" onClick={() => finish(sc.winner, false)} disabled={finding}>Valider le score</button>
+          <p className="comptage">{fr(tr('partie.comptage', { noir: name(1), pn: virgule(sc.black), blanc: name(2), pb: virgule(sc.white) }))}</p>
+          <div className="barre-comptage" role="toolbar" aria-label={tr('partie.comptageAria')}>
+            <button className="btn" onClick={() => { resume(); setMsg(tr('partie.reprend')); }}>{tr('partie.reprendre')}</button>
+            <button className="btn primary" onClick={() => finish(sc.winner, false)} disabled={finding}>{tr('partie.valider')}</button>
           </div>
         </>
       )}

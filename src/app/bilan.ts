@@ -1,5 +1,6 @@
 // Fin de partie contre l'ordi (issue #22) : bilan par adversaire, adversaire suivant et texte de Mochi.
 // Logique pure, testée par Vitest ; l'écran (App.tsx) garde le bilan en localStorage.
+import { nombre, t } from '../content/i18n';
 
 /** Victoires et défaites par adversaire. En attendant les comptes et les parties sauvegardées. */
 export type Bilan = Record<string, { v: number; d: number }>;
@@ -66,20 +67,17 @@ export interface Fin {
   bilan: { texte: string; gras: string };
 }
 
-const fois = (n: number, mot: string) => `${n} ${mot}${n > 1 ? 's' : ''}`;
-const virgule = (n: number) => String(n).replace('.', ',');
-
 /** Bilan contre un adversaire : « 1 victoire », « 2 victoires, 1 défaite », « 1 défaite ». */
 export function texteBilan(b: { v: number; d: number }): string {
-  if (!b.d) return fois(b.v, 'victoire');
-  if (!b.v) return fois(b.d, 'défaite');
-  return `${fois(b.v, 'victoire')}, ${fois(b.d, 'défaite')}`;
+  if (!b.d) return t('bilan.victoires', { n: b.v });
+  if (!b.v) return t('bilan.defaites', { n: b.d });
+  return `${t('bilan.victoires', { n: b.v })}, ${t('bilan.defaites', { n: b.d })}`;
 }
 
 /** Début de la phrase de bilan : « 34 coups, 3 pierres capturées. » */
 export function texteCoups(coups: number, captures: number): string {
-  const c = coups ? fois(coups, 'coup') : 'Aucun coup joué';
-  const p = captures ? `${fois(captures, 'pierre')} capturée${captures > 1 ? 's' : ''}` : 'aucune pierre capturée';
+  const c = coups ? t('bilan.coups', { n: coups }) : t('bilan.aucunCoup');
+  const p = captures ? t('bilan.pierresCapturees', { n: captures }) : t('bilan.aucunePierre');
   return `${c}, ${p}.`;
 }
 
@@ -88,23 +86,23 @@ export function texteCoups(coups: number, captures: number): string {
  * Victoire : ce qui a marché, puis l'adversaire suivant. Défaite : ton encourageant et, si c'est utile, une leçon.
  */
 export function leconMochi(issue: Issue, s: StatsPartie, adv: string, suivant?: string): { texte: string; lecon?: string } {
-  if (issue === 'egalite') return { texte: "Égalité parfaite : au go, c'est très rare !" };
+  if (issue === 'egalite') return { texte: t('lecon.egalite') };
   if (issue === 'victoire') {
     let pourquoi: string;
-    if (s.capturesMoi >= 3 && s.capturesMoi > s.capturesAdv) pourquoi = `Tes ${s.capturesMoi} captures ont fait la différence.`;
-    else if (s.coups >= 20 && s.capturesAdv === 0) pourquoi = "Aucune de tes pierres n'a été prise : solide !";
-    else if (s.marge < 5) pourquoi = 'Gagné de peu : chaque point a compté.';
-    else if (s.marge >= 30) pourquoi = 'Victoire nette : ton territoire est bien plus grand.';
-    else pourquoi = `Tu as entouré plus de territoire que ${adv}.`;
-    return { texte: `${pourquoi} ${suivant ? `${suivant} t'attend : prêt ?` : 'Personne ne te résiste ici.'}` };
+    if (s.capturesMoi >= 3 && s.capturesMoi > s.capturesAdv) pourquoi = t('lecon.captures', { n: s.capturesMoi });
+    else if (s.coups >= 20 && s.capturesAdv === 0) pourquoi = t('lecon.intacte');
+    else if (s.marge < 5) pourquoi = t('lecon.dePeu');
+    else if (s.marge >= 30) pourquoi = t('lecon.nette');
+    else pourquoi = t('lecon.territoire', { adv });
+    return { texte: `${pourquoi} ${suivant ? t('lecon.suivant', { suivant }) : t('lecon.personne')}` };
   }
-  if (s.abandon && s.coups < 10) return { texte: `Tu as abandonné tôt. Joue jusqu'au bout : ${adv} fait des erreurs aussi.` };
-  if (s.capturesAdv >= 3) return { texte: `${adv} a pris ${fois(s.capturesAdv, 'pierre')}. La leçon sur l'atari t'apprend à les sauver.`, lecon: 'l2' };
-  if (s.atarisSubis >= 2) return { texte: `Tes pierres ont été ${s.atarisSubis} fois en atari. La leçon sur l'atari t'apprend à les sauver.`, lecon: 'l2' };
-  if (s.abandon) return { texte: 'Revois ta partie : tu trouveras le coup qui a tout changé.' };
-  if (s.marge < s.komi) return { texte: `Sans le komi, les ${virgule(s.komi)} points donnés à Blanc qui joue en second, tu gagnais !` };
-  if (s.marge <= 10) return { texte: 'Perdu de peu. La prochaine fois sera la bonne !' };
-  return { texte: `${adv} a entouré plus de territoire. La leçon « Territoire et ouverture » montre comment bien commencer.`, lecon: 'l6' };
+  if (s.abandon && s.coups < 10) return { texte: t('lecon.abandonTot', { adv }) };
+  if (s.capturesAdv >= 3) return { texte: t('lecon.prises', { adv, n: s.capturesAdv }), lecon: 'l2' };
+  if (s.atarisSubis >= 2) return { texte: t('lecon.atariSubis', { n: s.atarisSubis }), lecon: 'l2' };
+  if (s.abandon) return { texte: t('lecon.revois') };
+  if (s.marge < s.komi) return { texte: t('lecon.komi', { komi: nombre(s.komi) }) };
+  if (s.marge <= 10) return { texte: t('lecon.perduDePeu') };
+  return { texte: t('lecon.territoireAdv', { adv }), lecon: 'l6' };
 }
 
 /**
@@ -119,9 +117,9 @@ export function fin(adv: Adv, issue: Issue, stats: StatsPartie, bilan: Bilan, li
   return {
     mochi: texte,
     ...(lecon ? { lecon } : {}),
-    cta: s ? `Défier ${s.nom}` : `Rejouer contre ${adv.nom}`,
+    cta: s ? t('bilan.defier', { nom: s.nom }) : t('bilan.rejouerContre', { nom: adv.nom }),
     cible: s ? s.id : adv.id,
-    bilan: { texte: `${texteCoups(stats.coups, stats.capturesMoi)} Ton bilan contre ${adv.nom} : `, gras: texteBilan(b) },
+    bilan: { texte: t('bilan.tonBilan', { coups: texteCoups(stats.coups, stats.capturesMoi), nom: adv.nom }), gras: texteBilan(b) },
   };
 }
 

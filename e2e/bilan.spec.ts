@@ -59,6 +59,7 @@ test('victoire contre Pomme : tampon, confettis, Caillou en un geste, bilan gard
 test('célébrations coupées dans Profil : victoire sans confettis', async ({ page }) => {
   await page.goto('/?komi=-100');
   await page.getByRole('button', { name: 'Profil' }).click();
+  await page.getByRole('button', { name: /^Réglages/ }).click();
   const celebrations = page.getByRole('switch', { name: /^Célébrations/ });
   await celebrations.click();
   await expect(celebrations).toHaveAttribute('aria-checked', 'false');

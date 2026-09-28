@@ -2,6 +2,7 @@
 // Pour l'instant les mêmes pour tous ; pour donner une voix à un adversaire, ajoute-le dans PERSONNELLES
 // (seules les situations fournies remplacent les répliques génériques).
 import type { OpponentId } from '../engine';
+import { t } from '../content/i18n';
 
 export type Situation =
   | 'captureSubie' // le joueur vient de lui prendre des pierres
@@ -25,9 +26,9 @@ export const GENERIQUES: Record<Situation, readonly string[]> = {
 
 export const PERSONNELLES: Partial<Record<OpponentId, Partial<Record<Situation, readonly string[]>>>> = {};
 
-/** Répliques possibles d'un adversaire dans une situation. */
+/** Répliques possibles d'un adversaire dans une situation. Les génériques passent par `t` (#167) : GENERIQUES garde le français d'origine. */
 export function repliques(id: OpponentId, s: Situation): readonly string[] {
-  return PERSONNELLES[id]?.[s] ?? GENERIQUES[s];
+  return PERSONNELLES[id]?.[s] ?? GENERIQUES[s].map((_, i) => t(`replique.${s}.${i as 0 | 1 | 2}`));
 }
 
 /**

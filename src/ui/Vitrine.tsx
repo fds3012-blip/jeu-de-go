@@ -5,31 +5,35 @@ import { t } from '../content/i18n';
 
 /** Icônes de la grammaire « deux pierres » : une pierre noire, une blanche, et un signe. 24 × 24. */
 const ICONES: Record<Stat['id'], ReactNode> = {
+  record: <>
+    <circle cx="8" cy="15" r="5" className="p-noire" /><circle cx="16" cy="15" r="5" className="p-blanche" />
+    <path d="M12.3 2.5c.3 1.6 2.6 2.6 2.6 5.2a2.9 2.9 0 0 1-5.8 0c0-1.3.6-2 1.3-2.6 0 .9.4 1.6 1 1.8-.3-1.6.2-3.2.9-4.4Z" className="p-or" />
+  </>,
+  // Leçons : deux pierres et le fanion du chemin.
+  lecons: <>
+    <circle cx="8" cy="15" r="5" className="p-noire" /><circle cx="16" cy="15" r="5" className="p-blanche" />
+    <path d="M12 10V2.8l5 1.9-5 1.9" className="p-or" />
+  </>,
+  adversaires: <>
+    <circle cx="8" cy="15" r="5" className="p-blanche" /><circle cx="16" cy="15" r="5" className="p-noire" />
+    <path d="M7.5 8.5 9 3.5l3 3 3-3 1.5 5Z" className="p-or" />
+  </>,
   problemes: <>
     <circle cx="9" cy="12" r="6" className="p-noire" /><circle cx="16" cy="12" r="6" className="p-blanche" />
     <path d="M13.2 12.2 15.2 14.2 18.8 10.2" className="p-trait" />
   </>,
-  serie: <>
-    <circle cx="8" cy="15" r="5" className="p-noire" /><circle cx="16" cy="15" r="5" className="p-blanche" />
-    <path d="M12.3 2.5c.3 1.6 2.6 2.6 2.6 5.2a2.9 2.9 0 0 1-5.8 0c0-1.3.6-2 1.3-2.6 0 .9.4 1.6 1 1.8-.3-1.6.2-3.2.9-4.4Z" className="p-or" />
-  </>,
-  parties: <>
-    <circle cx="8.5" cy="12" r="6" className="p-noire" /><circle cx="15.5" cy="12" r="6" className="p-blanche" />
-  </>,
-  victoires: <>
-    <circle cx="8" cy="15" r="5" className="p-blanche" /><circle cx="16" cy="15" r="5" className="p-noire" />
-    <path d="M7.5 8.5 9 3.5l3 3 3-3 1.5 5Z" className="p-or" />
-  </>,
 };
 
+/** « Ton parcours » (#214) : quatre compteurs ; « 3/7 » se lit « 3 leçons finies sur 7 ». */
 export function Statistiques({ stats }: { stats: Stat[] }) {
   return (
     <ul className="stats" aria-label={t('stats.aria')}>
       {stats.map(s => (
         <li key={s.id} className={`stat stat-${s.id}`}>
           <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false">{ICONES[s.id]}</svg>
-          <b>{s.valeur}</b>
+          <b>{s.valeur}{s.total !== undefined && <small aria-hidden="true">/{s.total}</small>}</b>
           <span>{s.legende}</span>
+          {s.total !== undefined && <small className="sr-only"> {t('stats.sur', { total: s.total })}</small>}
         </li>
       ))}
     </ul>
