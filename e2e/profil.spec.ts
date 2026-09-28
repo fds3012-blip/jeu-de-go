@@ -50,7 +50,7 @@ test('Ton parcours : niveau et XP, record, leçons, adversaires battus, problèm
   const lignes = stats.getByRole('listitem');
   await expect(lignes).toHaveCount(4);
   await expect(lignes.nth(0)).toHaveText(/^7\s*jours de record$/);
-  await expect(lignes.nth(1)).toHaveText(/^2\/7\s*leçons finies sur 7$/);
+  await expect(lignes.nth(1)).toHaveText(/^2\/(\d+)\s*leçons finies sur \1$/); // le total suit le nombre de leçons (8 depuis #228)
   await expect(lignes.nth(2)).toHaveText(/^2\/9\s*adversaires battus sur 9$/);
   await expect(lignes.nth(3)).toHaveText(/^3\s*problèmes réussis$/); // sans total : les problèmes n'ont pas de fin
   await expect(page.getByRole('region', { name: /^Badges/ }).getByRole('listitem', { name: 'Pomme battue : obtenu' })).toBeVisible();
