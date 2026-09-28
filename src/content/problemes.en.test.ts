@@ -31,7 +31,7 @@ const ENTREES = Object.entries(PROBLEMES_EN);
 
 describe('problèmes en anglais', () => {
   it('traduit les problèmes locaux, en commençant par les plus faciles', () => {
-    expect(ENTREES.length).toBeGreaterThanOrEqual(165);
+    expect(ENTREES.length).toBeGreaterThanOrEqual(171);
     const faciles = [...ALL_PUZZLES].sort((a, b) => a.difficulty - b.difficulty).slice(0, 40).map(p => p.id);
     expect(faciles.filter(id => !PROBLEMES_EN[id])).toEqual([]);
   });
