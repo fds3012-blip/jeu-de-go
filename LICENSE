@@ -1,0 +1,29 @@
+Copyright (c) 2026 Florian (fds3012-blip). Tous droits réservés.
+
+Le code source, les textes, les leçons, les problèmes, les illustrations, la mascotte
+Mochi et les autres contenus de ce dépôt sont publiés pour consultation seulement.
+Aucune licence n'est accordée. Sans autorisation écrite préalable du titulaire des
+droits, il est interdit de les copier, modifier, distribuer, publier ou exploiter,
+en tout ou en partie, à des fins commerciales ou non.
+
+All rights reserved. The source code and content of this repository are published
+for viewing only. No license is granted. Copying, modifying, distributing or using
+them, in whole or in part, requires the prior written permission of the copyright
+holder.
+
+-------------------------------------------------------------------------------
+Composants tiers / Third-party components
+-------------------------------------------------------------------------------
+
+Les composants suivants gardent leur propre licence, qui prime sur le texte
+ci-dessus pour les fichiers concernés :
+
+- src/engine/katago/ : adapté de web-katrain (https://github.com/Sir-Teo/web-katrain),
+  licence MIT. Texte complet : src/engine/katago/LICENSE-web-katrain.
+- Réseau KataGo g170-b6c96-s175395328-d26788732 : non inclus dans ce dépôt ;
+  téléchargé depuis le dépôt KataGo (https://github.com/lightvector/KataGo),
+  qui a sa propre licence.
+- .claude/skills/ : chaque skill garde la licence de son dépôt d'origine (fichier
+  LICENSE ou LICENSE.txt dans son dossier, et tableau dans .claude/skills/README.md).
+- Dépendances npm (dont les polices @fontsource, licence SIL Open Font License) :
+  chacune sous sa propre licence, indiquée dans node_modules après installation.
