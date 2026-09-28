@@ -176,8 +176,9 @@
 .vignette-cadenas { position: absolute; right: -4px; bottom: -4px; width: 22px; height: 22px; padding: 4px; border-radius: 50%;
   background: var(--surface-2); color: var(--text); box-shadow: 0 0 0 2px var(--surface); }
 .vignette-couronne { position: absolute; left: 50%; top: -11px; transform: translateX(-50%) rotate(-8deg); line-height: 0; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .35)); }
-.vignette-tampon { position: absolute; right: -16px; bottom: 0; transform: rotate(-12deg); padding: 1px 4px; border: 1.5px solid #D2432C; border-radius: 4px;
-  color: #D2432C; background: var(--tampon-papier); font: 800 9px/1.2 var(--font-titre); letter-spacing: .04em; }
+.vignette-tampon { position: absolute; right: -16px; bottom: 0; transform: rotate(-12deg); padding: 1px 4px; border: 1.5px solid var(--tampon-encre); border-radius: 4px;
+  color: var(--tampon-encre); background: var(--tampon-papier); font: 800 9px/1.2 var(--font-titre); letter-spacing: .04em; }
+/* #291 : encre du grand tampon (--tampon-encre, 5,1:1 sur le papier) au lieu du rouge hanko (3,85:1) : ce texte de 9 px doit passer AA. */
 .carte[aria-pressed="true"] .vignette .portrait { box-shadow: 0 0 0 3px var(--accent); border-radius: 50%; }
 /* L'action principale reste visible en bas de la feuille, même quand la liste des adversaires défile (issue #102). */
 .feuille-corps > .btn.primary { position: sticky; bottom: var(--space-2); z-index: 1; box-shadow: 0 0 0 8px var(--surface), 0 -12px 16px 4px var(--surface); }

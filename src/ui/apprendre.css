@@ -194,6 +194,15 @@
 .verdict-texte { display: flex; gap: 12px; align-items: flex-start; }
 .verdict-texte p { margin: 0; line-height: 1.4; font-weight: var(--fw-medium); }
 .verdict-texte .marque { margin-top: -2px; }
+/* #290 : écran bas, explication longue. Deux lignes visibles et « Lire l'explication » ; le texte entier reste lu
+   par le lecteur d'écran (le repli est seulement visuel). */
+.verdict[data-compact] .verdict-texte > div > p:first-child { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
+.verdict-deplier { display: inline-flex; align-items: center; min-height: var(--cible-min); margin: -6px 0 -4px -12px; }
+/* Le lien suit le texte qu'il déplie, avant l'XP et la cote (rien d'autre n'y prend le focus). */
+.verdict-texte > div:has(> .verdict-deplier) { display: flex; flex-direction: column; align-items: flex-start; }
+.verdict-texte > div:has(> .verdict-deplier) > * { order: 2; }
+.verdict-texte > div:has(> .verdict-deplier) > p:first-child { order: 0; }
+.verdict-texte > div:has(> .verdict-deplier) > .verdict-deplier { order: 1; }
 .verdict-actions { display: grid; gap: calc(var(--space-2) + var(--relief)); margin-top: var(--space-3); }
 .verdict-actions .lien { justify-self: center; margin-top: -4px; }
 .verdict .cta { position: static; transform: none; width: 100%; }
@@ -344,6 +353,8 @@
 /* ---------- Tes erreurs à rejouer (issue #77) ---------- */
 .mes-erreurs-compteur { display: inline-flex; align-items: center; justify-content: center; min-width: 28px; height: 28px; padding: 0 8px;
   border-radius: 14px; background: var(--text); color: var(--bg); font-size: var(--fs-s); font-weight: var(--fw-bold); letter-spacing: 0; }
+/* #293 : une seule erreur reste une vignette, comme les autres problèmes, au lieu d'un grand plateau pleine largeur. */
+.mes-erreurs .grille-pb { grid-template-columns: repeat(auto-fill, minmax(min(100%, 8rem), 1fr)); }
 .mes-erreurs-ecran { position: fixed; inset: 0; z-index: 30; background: var(--bg); overflow-y: auto; overscroll-behavior: contain; }
 .mes-erreurs-contenu { max-width: var(--largeur-max); margin: 0 auto;
   padding: calc(var(--space-3) + env(safe-area-inset-top, 0px)) var(--gouttiere) calc(var(--space-6) + env(safe-area-inset-bottom, 0px)); }

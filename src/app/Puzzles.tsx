@@ -308,6 +308,11 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
         </section>
       )}
 
+      {/* #293 : les erreurs dues aujourd'hui viennent juste sous le Go du jour (la revue promet « Cette position
+          reviendra dans Problèmes »). La section n'existe que s'il y en a ; ses vignettes restent des actions
+          secondaires : l'action en relief reste le Go du jour, ou « Problème suivant » une fois le Go du jour fait. */}
+      <MesErreurs confirmTouch={confirmTouch} Lecteur={PuzzlePlayer} />
+
       {/* Révision du jour (#199) : problèmes déjà réussis, repris à J+1, J+3, J+7. Depuis #251 (M2), aussi ceux
           vus avec la réponse : « Retente-le plus tard » (pb.vuTexte), c'est la révision qui le repropose. */}
       <RevisionDuJour liste={list} reussis={aReviser} vus={vusSeuls} confirmTouch={confirmTouch} Lecteur={PuzzlePlayer} onSerie={setSerieDuJour} />
@@ -336,8 +341,6 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
           <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path d="m9 5 7 7-7 7" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
         </button>
       </section>
-
-      <MesErreurs confirmTouch={confirmTouch} Lecteur={PuzzlePlayer} />
 
       {connecte && stats ? (
         <div className="palmares">
@@ -475,15 +478,26 @@ function Partager({ numero, essais, serie }: { numero: number; essais: number; s
       setEtat('erreur');
     }
   }
+  // #292 : « Copié ! » s'affiche dans le bouton pendant 2 s, au lieu d'une ligne de plus qui agrandissait la feuille
+  // et la faisait mordre sur le plateau. L'annonce passe par une zone lue seulement par le lecteur d'écran.
+  useEffect(() => {
+    if (etat !== 'copie') return;
+    const id = window.setTimeout(() => setEtat(''), 2000);
+    return () => window.clearTimeout(id);
+  }, [etat]);
+  const copie = etat === 'copie';
   return (
     <>
-      <button className="btn partager" onClick={partager}>
-        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path d="M12 3v12M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6" /></svg>
-        {tr('pb.partager')}
+      <button className={`btn partager${copie ? ' partage-copie' : ''}`} onClick={partager}>
+        {copie
+          ? <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path d="M5 12.5 10 17l9-10" /></svg>
+          : <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path d="M12 3v12M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6" /></svg>}
+        {copie ? tr('pb.copie') : tr('pb.partager')}
       </button>
-      <p className="partage-etat" role="status" aria-live="polite">
-        {etat === 'copie' ? tr('pb.copie') : etat === 'erreur' ? <>{tr('pb.copieImpossible')} <span className="partage-lien">{p.url}</span></> : null}
-      </p>
+      <p className="sr-only" role="status" aria-live="polite">{copie ? tr('pb.copieAnnonce') : ''}</p>
+      {etat === 'erreur' && (
+        <p className="partage-etat" role="alert">{tr('pb.copieImpossible')} <span className="partage-lien">{p.url}</span></p>
+      )}
     </>
   );
 }
