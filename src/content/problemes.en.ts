@@ -32,7 +32,7 @@ export const PROBLEMES_EN: Record<string, TexteProbleme> = {
     title: 'Capture in the corner',
     prompt: 'Capture the marked white stone in the corner right now.',
     explanation: 'Nice move! The liberties of a stone are the empty points right next to it. In the corner, there are only two. Your stone at B1 took one, so the white stone was in atari (only one liberty), and A2 captures it.',
-    refutation: 'Not yet. In the corner, a stone starts with only two liberties. Your stone at B1 already takes one: the other is left.',
+    refutation: 'Not yet. In the corner, a stone starts with only two liberties. Your stone at B1 already takes one: only the other one is left.',
   },
   e01: {
     title: 'Two stones in the center',
@@ -49,7 +49,7 @@ export const PROBLEMES_EN: Record<string, TexteProbleme> = {
   n03: {
     title: 'Save before you take',
     prompt: 'Your marked stone is in atari: it has only one liberty left. Save it.',
-    explanation: 'Well done! At E4, your stone extends: your two stones form a chain with three liberties, D4, F4 and E3. It is out of danger. Taking B8 was tempting, but White would have captured your stone at E4.',
+    explanation: 'Well done! At E4, your stone extends: your two stones form a chain with three liberties, D4, F4 and E3. It is out of danger. Taking B8 was tempting, but White would have played E4 and captured your stone.',
     refutation: 'Not quite. You take B8, but White plays E4 and captures your stone. When one of your stones is in atari, save it first.',
   },
   a04: {
@@ -290,7 +290,7 @@ export const PROBLEMES_EN: Record<string, TexteProbleme> = {
     title: "Don't put yourself in atari",
     prompt: 'Your marked stone is in atari. Save it.',
     explanation: "Well done! The white stone at C9 is in atari too: B9 captures it. Your stone now has two liberties, C9 and E9. White can't play at C9: its stone would have no liberty there. And if it plays E9, you connect at C9. At E9, you would have put yourself in atari.",
-    refutation: 'Not quite. If you extend to E9, your two stones have only one liberty, F9: you put yourself in atari, and White takes them. Anywhere else, White takes your stone at E9. Look at the stone at C9 instead.',
+    refutation: 'Not quite. If you extend to E9, your two stones have only one liberty, F9: you put yourself in atari, and White takes them. Anywhere else, White plays E9 and takes your stone. Look at the stone at C9 instead.',
   },
   e09: {
     title: 'On the top edge',
@@ -308,7 +308,7 @@ export const PROBLEMES_EN: Record<string, TexteProbleme> = {
     title: 'Capture to save',
     prompt: 'Your marked stone is in atari. Save it.',
     explanation: "Well done! The white stone at B5 is in atari: B4 captures it. Your stone now has two liberties, A4 and B5, and White can't play at B5: it would have no liberty there. If it plays A4, you connect at B5. Extending to A4, along the edge, gave only two liberties.",
-    refutation: 'Not quite. At A4, your two stones have only two liberties: White plays B4 and they are in atari again, against the edge. Anywhere else, White takes your stone at A4. Look at the stone at B5 instead.',
+    refutation: 'Not quite. At A4, your two stones have only two liberties: White plays B4 and they are in atari again, against the edge. Anywhere else, White plays A4 and takes your stone. Look at the stone at B5 instead.',
   },
   a13: {
     title: 'The shared point',
@@ -331,7 +331,7 @@ export const PROBLEMES_EN: Record<string, TexteProbleme> = {
   k01: {
     title: 'Along the edge',
     prompt: 'Black to play and capture the marked white stones. Keep them pressed against the edge.',
-    explanation: 'Well done! After E2, the white stones are in atari: they have only one liberty left (an empty point next to them), F1. If White extends to F1, you play F2 and it is in atari again, and so on up to the corner. Putting a fleeing stone back in atari every move is a ladder. Along the edge, it always ends in a capture.',
+    explanation: 'Well done! After E2, the white stones are in atari: they have only one liberty left (an empty point next to them), F1. If White extends to F1, you play F2 and it is in atari again, and so on up to the corner. Putting a fleeing stone back in atari every move is a ladder. Here, nothing blocks its path to the corner: it ends in a capture.',
     refutation: 'Not quite. After F1, White extends to E2, toward the center, and its stones escape. Block the center side instead.',
   },
   n15: {
@@ -373,7 +373,7 @@ export const PROBLEMES_EN: Record<string, TexteProbleme> = {
   n16: {
     title: 'Not the easiest one',
     prompt: 'Capture the marked stone in two moves or less.',
-    explanation: 'Well done! E3 puts E2 in atari from above: its only liberty is E1. If White extends there, it connects to D1, but its three stones have only one liberty, F1. You capture them at F1. Taking D1 at E1 was easier, but E2 would escape.',
+    explanation: 'Well done! E3 puts E2 in atari from above: its only liberty is E1. If White extends there, it connects to D1, but its three stones have only one liberty, F1. You capture them at F1. Taking D1 at E1 was easier, but E2 would have escaped.',
     refutation: 'Not quite. At E1, you take D1, but White extends to E3, toward the center, and has three liberties. The stone that matters is E2.',
   },
   a14: {
@@ -502,7 +502,7 @@ export const PROBLEMES_EN: Record<string, TexteProbleme> = {
   },
   q02: {
     title: 'Make the eye false',
-    prompt: 'Black to play and kill. White has two eyes, C1 and E1. Look at the corners of E1.',
+    prompt: 'Black to play and kill. White has two eyes, C1 and E1. Look at the diagonal points of E1.',
     explanation: "Well done! F2 touches E1 diagonally. The stones at F1 and G1 have only one liberty left, E1: you can take them. So E1 is a false eye: it doesn't count. White has only one real eye, C1 (an empty point surrounded by its stones), and its group ends up captured.",
     refutation: 'Not quite. White plays F2 and connects F1 and G1 to its group. C1 and E1 are then two real eyes: the white group is alive and can never be captured.',
   },
@@ -580,12 +580,12 @@ export const PROBLEMES_EN: Record<string, TexteProbleme> = {
     title: 'The snapback',
     prompt: 'Black to play and capture. The marked group has only two liberties, and White threatens to connect at C1.',
     explanation: "Superb! Your stone at C1 can be taken, but if White captures it at B1, its group has only one liberty left: C1. You play there again right away and take 5 stones. This is a snapback: you sacrifice one stone to take more. It is not a ko, because you take back several stones, not just one.",
-    refutation: 'Not quite. After B1, White takes your stone at C1 and connects to its stones at D1 and E1: it escapes. Sacrifice your stone instead, at the point that also touches those stones.',
+    refutation: 'Not quite. After B1, White plays C1, takes your stone and connects to its stones at D1 and E1: it escapes. Sacrifice your stone instead, at the point that also touches those stones.',
   },
   d05: {
     title: 'First one there',
     prompt: 'Your group C1-C4 and the marked white group surround each other. Count their liberties and win the race.',
-    explanation: "Well spotted! This is a capturing race (semeai in Japanese): two groups surround each other, neither can live on its own, and whoever takes all the other's liberties first wins. Here, 2 against 2: whoever plays first wins. At A2, White has only A1 left and you capture it on the next move. A1 works too: if White takes your stone at A2, its group still has only one liberty, A1, and you take it.",
+    explanation: "Well spotted! This is a capturing race (semeai in Japanese): two groups surround each other, neither can live on its own, and whoever takes all the other's liberties first wins. Here, 2 against 2: whoever plays first wins. At A2, White has only A1 left and you capture it on the next move. A1 works too: if White plays A2 and takes your stone, its group still has only one liberty, A1, and you take it.",
     refutation: "Not quite. White takes one of your liberties at D2: your group C1-C4 has only one left, D1, and White captures it before you take White's. Attack White's liberties first.",
   },
   e15: {
@@ -688,7 +688,7 @@ export const PROBLEMES_EN: Record<string, TexteProbleme> = {
     title: 'The stone in your camp',
     prompt: 'Black to play and live. A white stone has come into your space.',
     explanation: "Perfect! E1 puts the white stone at D1 in atari: it has only one liberty left, C1, and White can't play there, it would be suicide. F1 is already an eye (an empty point surrounded by your stones). You capture D1 whenever you like, and its point becomes your second eye. Your group is alive.",
-    refutation: 'Not quite. White plays E1 and connects its stone at D1: your space becomes too small, you have only one eye left and your group ends up captured. The right point is right next to the white stone.',
+    refutation: 'Not quite. White plays E1 and connects its stone at D1: your space becomes too small, you have only one eye left and your group ends up captured. The correct point is right next to the white stone.',
   },
   o07: {
     title: 'Snapback at the top',
@@ -739,7 +739,7 @@ export const PROBLEMES_EN: Record<string, TexteProbleme> = {
   d07: {
     title: 'Three against three',
     prompt: 'Capturing race: your group C1-C4 against the marked white group. Who wins? Play the winning move.',
-    explanation: "Correct! In a capturing race (semeai), you count: 3 liberties for White (A3, A2, A1), 3 for you (D3, D2, D1). When it's equal, whoever plays first wins. Each move at A3, A2 or A1 takes a liberty from White. Then, each time White plays on your liberties, you answer on its own, and you capture it one move before it captures you.",
+    explanation: "Correct! In a capturing race (semeai), you count: 3 liberties for White (A3, A2, A1), 3 for you (D3, D2, D1). When it's equal, whoever plays first wins. Each move at A3, A2 or A1 takes a liberty from White. Then, each time White plays on your liberties, you answer on White's, and you capture it one move before it captures you.",
     refutation: "Not quite. Your group C1-C4 and the white group have 3 liberties each. If you don't reduce White's right away, White takes yours (D3, D2, D1) and wins by one move.",
   },
   k06: {
@@ -751,7 +751,7 @@ export const PROBLEMES_EN: Record<string, TexteProbleme> = {
   q03: {
     title: 'Five points on the edge',
     prompt: 'Black to play and kill. White has five empty points, from C1 to G1. Your stone at H1 touches G1.',
-    explanation: 'Superb! Two moves work. At G1, you shrink the space to four points, and F1 touches your stone: White no longer has room for two eyes (two empty points surrounded by its stones). At D1, you play in the middle of its space and stop it from splitting it into two eyes. Either way, its group ends up captured.',
+    explanation: 'Superb! Two moves work. At G1, you shrink the space to four points, and F1 touches your stone: White no longer has room for two eyes (two empty points surrounded by its stones). At D1, you play inside its space and stop it from splitting it into two eyes. Either way, its group ends up captured.',
     refutation: 'Not quite. White plays G1, or D1 if you played E1. It keeps enough room for two eyes: its group is alive. Play G1 or D1 before White does.',
   },
   j07: {
@@ -770,7 +770,7 @@ export const PROBLEMES_EN: Record<string, TexteProbleme> = {
     title: 'Keep your stone inside',
     prompt: 'Black to play and kill. Your stone at F1 has come into the white camp.',
     explanation: "Well done! Your stone at F1 had only two liberties, E1 and G1. G1 connects it to H1: it is saved. E1 touches F1, so it isn't an eye for White. White has only one eye left, at C1, and its group ends up captured.",
-    refutation: 'Not quite. White plays G1: your stone at F1 is in atari (only one liberty, E1). White will take it, and its point will give White a second eye.',
+    refutation: 'Not quite. White plays G1: your stone at F1 is in atari (only one liberty, E1). White will take it, and the empty point it leaves will give White a second eye.',
   },
   o10: {
     title: 'From one end',
@@ -781,7 +781,7 @@ export const PROBLEMES_EN: Record<string, TexteProbleme> = {
   d08: {
     title: 'The race in the corner',
     prompt: 'Capturing race: your group G6-G9 against the marked white group. Count, then play the winning move.',
-    explanation: "Correct! In a capturing race (semeai), you count: White has 4 liberties (J9, J8, J7, J6), so do you (F9, F8, F7, F6), and none is shared by both groups. When it's equal, whoever plays first wins: any of the four points works. Then answer each White move on your liberties with a move on its own.",
+    explanation: "Correct! In a capturing race (semeai), you count: White has 4 liberties (J9, J8, J7, J6), so do you (F9, F8, F7, F6), and none is shared by both groups. When it's equal, whoever plays first wins: any of the four points works. Then answer each White move on your liberties with a move on White's.",
     refutation: "Not quite. Each group has 4 liberties. If you don't reduce White's right away, White takes yours (F9, F8, F7, F6) and wins by one move.",
   },
   f09: {
@@ -853,7 +853,7 @@ export const PROBLEMES_EN: Record<string, TexteProbleme> = {
   d10: {
     title: 'Outside first',
     prompt: 'Capturing race between your group and the marked white group. C1 touches both groups. Where do you start?',
-    explanation: "Well done! In a capturing race (semeai), you fill the outside liberties first: those that belong to the enemy group alone, here A2 and A1. C1 is a shared liberty, belonging to both groups: you fill it last. After A2, White has 2 liberties (A1, C1) and you have 3 (C1, E2, E1): you capture White one move ahead. A1 works too: if White takes your stone at A2, it still has only two liberties.",
+    explanation: "Well done! In a capturing race (semeai), you fill the outside liberties first: those that belong to the enemy group alone, here A2 and A1. C1 is a shared liberty, belonging to both groups: you fill it last. After A2, White has 2 liberties (A1, C1) and you have 3 (C1, E2, E1): you capture White one move ahead. A1 works too: if White plays A2 and takes your stone, it still has only two liberties.",
     refutation: "Not quite. C1 is a liberty shared by both groups: filling it also takes one of yours. After C1, each side has 2 liberties left and it's White's turn: White plays E2, then E1, and captures your group first.",
   },
   f11: {
@@ -889,7 +889,7 @@ export const PROBLEMES_EN: Record<string, TexteProbleme> = {
   d11: {
     title: 'Four against four',
     prompt: 'Capturing race between your group and the marked white group. Count carefully, then play the winning move.',
-    explanation: "Perfect! Each group has 4 liberties: 3 outside liberties (those that belong to it alone) and C1, the shared liberty. In a capturing race (semeai), you fill White's outside liberties first: A3, A2 or A1. Each time White plays on your liberties, you answer on its own. In the end, both groups have only C1 left, it's your turn, and you capture White at C1.",
+    explanation: "Perfect! Each group has 4 liberties: 3 outside liberties (those that belong to it alone) and C1, the shared liberty. In a capturing race (semeai), you fill White's outside liberties first: A3, A2 or A1. Each time White plays on your liberties, you answer on White's. In the end, both groups have only C1 left, it's your turn, and you capture White at C1.",
     refutation: "Not quite. C1 is the shared liberty: filling it also takes one of yours. Each side then has 3 liberties left and it's White's turn: White wins the race by one move.",
   },
   m10: {
@@ -944,7 +944,7 @@ export const PROBLEMES_EN: Record<string, TexteProbleme> = {
     title: 'The eye that wins',
     prompt: 'Capturing race: your group has an eye at E1, the marked white group has none. Win the race.',
     explanation: "Excellent! Your group has an eye at E1: an empty point surrounded by your stones, where White can play only last. In this capturing race (semeai), you have 2 liberties, C1 and the eye E1; White has 3, A2, A1 and C1, the liberty shared by both groups. After A2, White can neither play in your eye (it would be suicide) nor play C1 without putting itself in atari. You then play A1, then C1, and capture it. The eye let you win a race where you had fewer liberties.",
-    refutation: 'Not quite. If you fill C1, your group has only its eye E1 left: White plays there and captures it. And A1 comes too early: White takes your stone at A2, and you can no longer play A1 again.',
+    refutation: 'Not quite. If you fill C1, your group has only its eye E1 left: White plays there and captures it. And A1 comes too early: White plays A2 and takes your stone, and you can no longer play A1 again.',
   },
   f12: {
     title: 'The eye and the way out',
@@ -981,5 +981,42 @@ export const PROBLEMES_EN: Record<string, TexteProbleme> = {
     prompt: 'Black to play and kill. The white group has six empty points. Are six points enough to live?',
     explanation: "Superb! This six-point shape is called the rabbity six: a five-point cross plus one diagonal point. Its vital point, E2, touches four of the five other points. By taking it, you stop White from making two eyes (two empty points surrounded by its stones). Whatever it does, its group ends up captured. Six points aren't always enough: shape matters more than size.",
     refutation: 'Not quite. White plays E2, in the center of its space: it makes at least two eyes, and its group is alive.',
+  },
+  // Lot R (#136) : vie et mort, difficulté 700 à 1050.
+  r01: {
+    title: 'Six points in the corner',
+    prompt: 'Black to play and live. Your group surrounds six points, from A1 to C2, and has no liberties outside.',
+    explanation: "Well done! B2 is the vital point: the point that decides whether your space makes two eyes. An eye is an empty point surrounded by your stones, where White can't play. After B2, whatever White plays, you keep two eyes: your group is alive and can never be captured. B1 works too.",
+    refutation: 'Not quite. White plays B2 (or B1 if you played A2 or C2). It takes the vital point: your space can no longer make two eyes, and your group ends up captured.',
+  },
+  r02: {
+    title: 'Two spaces on the edge',
+    prompt: 'Black to play and kill. White has two spaces: A1-B1-C1 and E1-F1. Only one of them can still change.',
+    explanation: 'Well done! On the right, E1-F1 makes only one eye (an empty point surrounded by its stones). On the left, B1 is the vital point: if White played there, C1 would become a second eye. Your stone at B1 stops that. White has only one eye, and its group ends up captured.',
+    refutation: 'Not quite. White plays B1: C1 becomes a second eye, next to the one at E1-F1. With two eyes, its group is alive.',
+  },
+  r03: {
+    title: 'The side that needs you',
+    prompt: 'Black to play and live. You have two spaces: A1-B1-C1 and E1-F1-G1. Which one needs you?',
+    explanation: 'Well done! B1 makes C1 a real eye. Without it, White would play B1, then A1 to connect to A2: no eye left on the left. On the right, you can always answer and keep one eye. With two eyes, your group is alive.',
+    refutation: 'Not quite. White plays B1 (or F1 if you played C1) and takes away one of your eyes. With only one eye, your group ends up captured.',
+  },
+  r04: {
+    title: 'The stone on the vital point',
+    prompt: 'Black to play and live. White has placed a stone at B2, on the vital point of your corner. Get rid of it.',
+    explanation: "Well done! Your move puts B2 in atari: it has only one liberty left. If White extends, you take both its stones. After A2, A1 is a false eye at first: it looks like an eye, but its diagonal point B2 is White's. Once you take B2, A1 becomes a real eye, and your group is alive. C2 works too.",
+    refutation: "Not quite. White plays A2 (or C2 if you played A1). Its stones hold the vital point, and your corner can no longer make two eyes. Your group ends up captured.",
+  },
+  r05: {
+    title: 'Reduce it from the outside',
+    prompt: 'Black to play and kill. White has two spaces: A1-B1 and D1-E1. Your stone at F1 touches E1.',
+    explanation: 'Well done! E1 reduces the right-hand space from the outside, backed by your stone at F1. D1 now touches your stone: it can no longer become an eye. White has only one eye, A1-B1, and its group ends up captured.',
+    refutation: 'Not quite. White plays E1: D1 becomes a second eye, next to A1-B1. With two eyes, its group is alive.',
+  },
+  r06: {
+    title: 'The vital point of the corner',
+    prompt: "Black to play and kill. Your stone at A1 is already inside White's corner. Find the point that helps it.",
+    explanation: "Superb! B2 is the vital point of the corner. It supports your stone at A1 and cuts White's space into pieces that are too small. White can no longer make two eyes, and its group ends up captured.",
+    refutation: 'Not quite. White plays B2 and takes the vital point. It then keeps enough room for two eyes: its group is alive.',
   },
 };
