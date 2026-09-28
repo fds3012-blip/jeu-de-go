@@ -139,6 +139,17 @@
 .coach-intro .bubble { margin: 0; background: var(--surface); border-radius: var(--radius); padding: 10px 14px 10px 10px; align-items: center; }
 .coach-intro .bubble p { background: none; padding: 0; font-size: var(--fs-corps-s); line-height: 1.4; }
 .coach-intro .bubble svg { width: 38px; height: 38px; }
+/* Très petits écrans (320 × 568, iPhone SE de 1re génération ; suite de #250, M6) : le plateau est à son plancher de
+   220 px et la bulle (but, komi) montait encore de 40 px sur ses lignes 1 et 2. Même texte, même taille de lettre :
+   la bulle prend la largeur du plateau (4 px du bord) et le sceau de Mochi flotte à gauche, le texte coulant dessous.
+   Neuf lignes deviennent sept, la bulle tient sous le plateau et au-dessus de la barre d'actions. */
+@media (max-width: 359px) and (max-height: 600px) {
+  .partie-mochi > .coach-intro { left: calc(4px - var(--gouttiere)); right: calc(4px - var(--gouttiere)); }
+  .coach-intro .bubble { display: block; padding: 8px 10px 8px 8px; }
+  .coach-intro .bubble .sceau { float: left; width: 32px !important; height: 32px !important; margin: 1px 8px 0 0; }
+  .coach-intro .bubble svg { width: 100%; height: 100%; }
+  .coach-intro .bubble p { line-height: 1.35; }
+}
 .comptage { margin: var(--space-2) 2px 0; color: var(--muted); font-size: var(--fs-s); }
 
 /* ---------- Barre d'actions fixe ---------- */

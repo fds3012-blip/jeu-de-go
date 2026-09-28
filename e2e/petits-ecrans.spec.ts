@@ -125,3 +125,41 @@ test('M9 : fin de la pratique, « Niveau 2 ! » ne couvre pas le titre du chemin
     await page.waitForTimeout(100);
   }
 });
+
+// Suite de #250 (M6) en 320 × 568 (iPhone SE de 1re génération) : le plateau est déjà à son plancher de 220 px,
+// c'est donc la bulle elle-même qui doit tenir sous lui, sans perdre l'explication du komi.
+test.describe('très petite hauteur (320 × 568)', () => {
+  test.use({ viewport: { width: 320, height: 568 } });
+
+  test('M6 : la bulle de Mochi (but et komi) tient sous le plateau, texte entier, sans défiler', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('.cta').click();
+    const intro = page.locator('.coach-intro');
+    const texte = intro.locator('p');
+    const komi = page.locator('.annonce-komi');
+    // L'explication du komi et le but du jeu restent entiers.
+    await expect(komi).toContainText('Le komi, ce sont des points donnés à Blanc parce que Noir commence.');
+    await expect(intro).toContainText('Le but : entourer plus de territoire');
+    const [bulle, jeu, barre] = await Promise.all([
+      intro.boundingBox(), plateau(page).boundingBox(), page.getByRole('toolbar', { name: 'Actions de la partie' }).boundingBox(),
+    ]);
+    // Aucune ligne du plateau (donc aucune pierre) sous la bulle.
+    expect(jeu!.y + jeu!.height).toBeLessThanOrEqual(bulle!.y + 1);
+    // La bulle se lit en entier, au-dessus de la barre d'actions, sans défiler ni couper son texte.
+    expect(bulle!.y + bulle!.height).toBeLessThanOrEqual(barre!.y + 1);
+    expect(await page.evaluate(() => scrollY)).toBe(0);
+    expect(await texte.evaluate((p) => p.scrollHeight <= p.clientHeight + 1)).toBe(true);
+    const [k, p] = [(await komi.boundingBox())!, (await texte.boundingBox())!];
+    expect(k.y + k.height).toBeLessThanOrEqual(p.y + p.height + 1);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+    // Le texte reste lisible : pas sous 14 px.
+    expect(await texte.evaluate((el) => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(14);
+    // Le plateau garde son plancher de 220 px et ne bouge pas quand la bulle s'efface.
+    expect(jeu!.width).toBeGreaterThanOrEqual(220);
+    await jouer(page, 'E5');
+    await expect(intro).toHaveAttribute('data-cache', 'true');
+    const apres = (await plateau(page).boundingBox())!;
+    expect(Math.abs(apres.y - jeu!.y)).toBeLessThanOrEqual(2);
+    expect(Math.abs(apres.width - jeu!.width)).toBeLessThanOrEqual(2);
+  });
+});
