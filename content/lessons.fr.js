@@ -1,4 +1,4 @@
-// Sept leçons interactives, positions vérifiées par un lecteur tactique.
+// Huit leçons interactives, positions vérifiées par un lecteur tactique.
 // rows : plateau 9 × 9 ligne par ligne depuis le haut. X noir, O blanc, T pierre blanche visée, S pierre noire à sauver.
 // Coordonnées : lettres A à J sans I, lignes numérotées depuis le bas. accept: 'line3' = tout coup hors des deux premières lignes.
 const L_CAP1 = ['.........', '.........', '.........', '...X.....', '..XT.O...', '...X.....', '.........', '.........', '.........'];
@@ -19,6 +19,22 @@ const L_KO = ['.........', '.........', '.........', '...OX....', '..O.OX...', '
 // Leçon 7 (#177) : partie finie, frontière en E (Noir) et F (Blanc). Chaque chiffre est recalculé par score() (src/go/lessons.test.ts).
 const L_COMPTE = Array(9).fill('....XO...');
 const ouverte = (y) => L_COMPTE.map((r, i) => (i === y ? '.....O...' : r));
+// Leçon 8 (#228, chapitre 2) : bien commencer une partie sur 9 × 9. Chaque ensemble de réponses acceptées
+// et chaque ensemble de réfutations est recalculé par src/go/lessons.test.ts à partir d'un critère écrit en clair.
+const L_FORMES = ['.........', '.........', '..XX.....', '.X..X..XX', '.X..X.X..', '..XX..X..', 'XX.....XX', '..X......', '.........'];
+const L_3_3_5_5 = ['.........', '.........', '.........', '.........', '....O....', '.........', '..X......', '.........', '.........'];
+const L_COLLE = ['.........', '.........', '......O..', '.........', '....OX...', '.........', '..X......', '.........', '.........'];
+const L_ETENDRE = ['.........', '.........', '......O..', '.........', '.........', '.........', '..X......', '.........', '.........'];
+const L_QUATRE_COINS = ['.........', '.........', '..X...O..', '.........', '.........', '.........', '..X...O..', '.........', '.........'];
+const COINS_LIBRES = ['C7', 'D7', 'C6', 'G7', 'F7', 'G6', 'G3', 'F3', 'G4'];
+const lignes12 = (sauf) => ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J'].flatMap((c, x) => [1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => ({ l: `${c}${n}`, x, y: 9 - n })))
+  .filter(({ l, x, y }) => Math.min(x, y, 8 - x, 8 - y) <= 1 && !sauf.includes(l)).map(({ l }) => l);
+const BAS = { no: 'Sur les deux premières lignes, au début, ta pierre entoure peu.' };
+export const CHAPITRES = [
+  { id: 'c1', titre: 'Les bases', intro: 'Sept leçons courtes pour jouer ta première partie.', fin: 'Tu connais les règles du go.', lecons: ['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7'] },
+  // Chapitre en cours d'écriture (`complet: false`) : sa dernière leçon ne ferme pas encore le chapitre.
+  { id: 'c2', titre: 'Ouverture sur 9\u00A0×\u00A09', intro: 'Où poser tes premières pierres.', lecons: ['l8'], complet: false }
+];
 export const LESSONS = [
   { id: 'l1', title: 'Libertés et capture', desc: 'La règle qui fait tout le jeu', steps: [
     { kind: 'info', rows: V, demo: [{ pose: 'E5', couleur: 'B' }, { libs: 'E5' }], geste: { pose: 'E5' },
@@ -132,5 +148,32 @@ export const LESSONS = [
     { kind: 'quiz', rows: L_COMPTE, compte: { pour: 'B', komi: 6.5, prises: [3, 5] },
       text: 'Noir a 3 prisonniers, Blanc 5. Combien de points pour Noir ?', choices: ['36', '39', '42,5'], answer: 1,
       ok: '36 + 3 = 39. Blanc : 27 + 5 + 6,5 = 38,5. Noir gagne d’un demi-point.', no: 'Territoire plus prisonniers. Le komi, lui, va à Blanc.' }
+  ] },
+  { id: 'l8', title: 'Les premiers coups', desc: 'Coins, puis bords, puis centre', steps: [
+    { kind: 'info', rows: L_FORMES, geste: { pose: 'C1' },
+      demo: [{ pose: 'C1', couleur: 'B' }, { zone: ['A1', 'A2', 'B1', 'B2'] }, { zone: ['H4', 'H5', 'J4', 'J5'] }, { zone: ['C5', 'C6', 'D5', 'D6'] }],
+      text: 'Ferme le coin au point vert : 4 pierres (pour 4 points). Bord : 6, centre : 8.' },
+    { kind: 'info', rows: V, geste: { pose: 'C3' }, demo: [{ pose: 'C3', couleur: 'B' }, { pose: 'E5', couleur: 'W' }],
+      text: 'Pose le 3-3 (3e ligne depuis deux bords) au point vert. Blanc prend le 5-5 (le centre, proche des quatre coins).' },
+    { kind: 'move', rows: L_3_3_5_5, accept: COINS_LIBRES, aide: COINS_LIBRES,
+      text: 'Prends un coin libre : au 3-3, ou au 3-4 (un cran plus loin).',
+      ok: 'Bien : le 3-3 garde le coin, le 3-4 regarde aussi un bord.', no: 'Choisis un point vert, dans un coin sans pierre.',
+      refus: [
+        { points: ['D5', 'F5', 'E4', 'E6'], no: 'Collée à Blanc, ta pierre le renforce. Laisse de l’espace.' },
+        { points: lignes12([]), ...BAS }
+      ] },
+    { kind: 'info', rows: L_COLLE, geste: { touche: ['F5'], no: 'Cherche la pierre noire qui touche une pierre blanche.' },
+      demo: [{ libs: 'F5' }, { pose: 'F6', couleur: 'W' }],
+      text: 'Touche la pierre collée à Blanc : 3 libertés. Blanc la presse aussitôt.' },
+    { kind: 'info', rows: L_ETENDRE, geste: { pose: 'E3' }, demo: [{ pose: 'E3', couleur: 'B' }, { zone: ['C1', 'C2', 'D1', 'D2', 'E1', 'E2'] }],
+      text: 'Étends-toi au point vert : un point libre entre tes deux pierres.' },
+    { kind: 'move', rows: L_QUATRE_COINS, accept: ['C5', 'E3', 'E7'],
+      text: 'À toi : étends-toi depuis une de tes pierres, le long du bord.',
+      ok: 'Bien étendu : sur la 3e ligne, sans toucher aucune pierre.', no: 'Reste sur la 3e ligne, à deux ou trois points d’une de tes pierres.',
+      refus: [
+        { points: ['F3', 'G2', 'G4', 'H3', 'F7', 'G6', 'G8', 'H7'], no: 'Collée à Blanc, ta pierre le renforce. Laisse de l’espace.' },
+        { points: ['B3', 'C2', 'C4', 'D3', 'B7', 'C6', 'C8', 'D7'], no: 'Trop serrée : laisse un point libre entre tes pierres.' },
+        { points: lignes12(['F3', 'G2', 'G4', 'H3', 'F7', 'G6', 'G8', 'H7', 'B3', 'C2', 'C4', 'D3', 'B7', 'C6', 'C8', 'D7']), ...BAS }
+      ] }
   ] }
 ];

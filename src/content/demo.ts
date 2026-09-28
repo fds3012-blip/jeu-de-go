@@ -20,7 +20,9 @@ export type DemoTemps =
   | { interdit: string; couleur: 'B' | 'W' }
   /** Plusieurs groupes en atari à la fois (double atari) : ils clignotent sur cette image. */
   | { atari: string[] }
-  | { terr: 'B' | 'W' };
+  | { terr: 'B' | 'W' }
+  /** Points vides montrés en jade, comme les yeux (#228) : la zone qu'une forme ferme ou protège. */
+  | { zone: string[] };
 
 /** Délai entre deux cases de territoire qui se colorent (ms). */
 export const CASE_MS = 70;
@@ -105,6 +107,11 @@ function suiteDemo(rows: string[], demo: DemoTemps[], avant: DemoTemps[]): { ima
       images.push(photo());
     } else if ('yeux' in t) {
       yeux = [...yeux, ...t.yeux.map(at)];
+      images.push(photo());
+    } else if ('zone' in t) {
+      const pts = t.zone.map(at);
+      for (const [i, p] of pts.entries()) if (pos.board[p]) throw new Error(`${t.zone[i]} : pas vide`);
+      yeux = [...yeux, ...pts];
       images.push(photo());
     } else if ('atari' in t) {
       const pierres = t.atari.flatMap(l => {

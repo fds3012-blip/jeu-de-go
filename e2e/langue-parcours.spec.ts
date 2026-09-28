@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { jouer } from './plateau';
 import { readdirSync, readFileSync } from 'node:fs';
-import { LESSONS } from '../src/content/lessons';
+import { CHAPITRES, LESSONS } from '../src/content/lessons';
 
 /**
  * Textes des problèmes, lus dans les sources (src/content/puzzles.ts et lots/*.ts) : ces fichiers passent par
@@ -40,14 +40,15 @@ const norm = (s: string) => s.replace(/[\u00A0\u202F\s]+/g, ' ').trim();
 const CONTENU: string[] = (() => {
   const textes = new Set<string>();
   const ajouter = (v: unknown) => {
-    if (typeof v === 'string') { if (v.trim().length > 1) textes.add(norm(v)); }
+    if (typeof v === 'string') { if (/\s/.test(v.trim())) textes.add(norm(v)); }
     else if (Array.isArray(v)) v.forEach(ajouter);
     else if (v && typeof v === 'object') Object.values(v).forEach(ajouter);
   };
-  for (const l of LESSONS) {
-    ajouter(l.title); ajouter(l.desc);
-    for (const s of l.steps) { ajouter(s.text); if ('ok' in s) ajouter(s.ok); if ('no' in s) ajouter(s.no); if ('choices' in s) ajouter(s.choices); if ('geste' in s) ajouter(s.geste); }
-  }
+  // Leçons entières (titres, descriptions, consignes, réponses, réfutations) et chapitres (titre, intro, phrase de fin).
+  ajouter(LESSONS);
+  // Choix des quiz d'un seul mot (« Noir », « Blanc ») : ajoutés à part, le filtre ci-dessus ne garde que les phrases.
+  for (const l of LESSONS) for (const s of l.steps) if ('choices' in s) for (const c of s.choices) textes.add(norm(c));
+  for (const c of CHAPITRES) { ajouter(c.titre); ajouter(c.intro); if (c.fin) { ajouter(c.fin); ajouter(c.fin.replace(/\.$/, ' !')); } }
   ajouter(textesProblemes());
   return [...textes].sort((a, b) => b.length - a.length);
 })();
@@ -135,7 +136,6 @@ for (const largeur of [390, 320]) test(`?lang=en : toute l’interface en anglai
   // Apprendre : le chemin, puis la première leçon.
   await page.goto('/?lang=en');
   await nav.getByRole('button', { name: 'Learn' }).click();
-  await expect(page.getByRole('heading', { name: 'The basics' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Coming soon' })).toBeVisible();
   await sansFrancais(page, 'Apprendre');
   await page.screenshot({ path: `docs/localisation/captures/apprendre-en-${largeur}.png` });

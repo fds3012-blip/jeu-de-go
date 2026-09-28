@@ -44,7 +44,7 @@ Les guides de configuration publiés par la CNIL pour d'autres outils (par exemp
 | Pas de traceur persistant | `persistence: 'memory'` : rien n'est écrit sur l'appareil ; l'identifiant change à chaque ouverture. Mieux que la limite de 13 mois. |
 | Statistiques anonymes, pas de profil | `person_profiles: 'never'` ; `identify()` n'est jamais appelé sans accord ; le repère « première pierre déjà comptée » reste en mémoire. |
 | IP non conservée | `ip: false` côté client **et** réglage projet « Discard client IP data » : **activé** (vérifié le 27/09 via l'API PostHog, `anonymize_ips: true`). |
-| Pas de croisement, pas d'enregistrement | `autocapture`, pages vues, enregistrement de session, sondages, feature flags et scripts externes désactivés. Seuls 7 événements nommés partent. |
+| Pas de croisement, pas d'enregistrement | `autocapture`, pages vues, enregistrement de session, sondages, feature flags et scripts externes désactivés. Seuls des événements nommés partent (7 au 27/09 ; 25 au 28/09, 26 avec `serie_perdue` de #212 ; liste dans `docs/data/plan-de-marquage.md`). **Mise à jour du 28/09 (#223)** : PostHog ajoute des propriétés techniques (navigateur, écran, page, page précédente) et une localisation déduite de l'IP avant de l'effacer ; voir les écarts E2 à E4 de `politique-confidentialite.md`, section 9. |
 | Droit d'opposition | Interrupteur « Comptage anonyme des parties » dans Conditions ; le choix est gardé dans `go.mesure.opposition.v1` (mémoriser un refus est lui-même exempté). |
 | Hébergement | PostHog Cloud UE (Francfort). |
 

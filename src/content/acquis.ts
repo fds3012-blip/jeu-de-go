@@ -12,9 +12,10 @@ export const ACQUIS: Record<string, string> = {
   l5: 'Tu sais qu’un groupe avec deux yeux ne peut plus mourir.',
   l6: 'Tu sais compter un territoire et jouer un bon premier coup.',
   l7: 'Tu sais fermer tes frontières, passer au bon moment et compter la partie.',
+  l8: 'Tu sais où poser tes premières pierres : coins, bords, puis centre.',
 };
 
-const IDS = ['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7'] as const;
+const IDS = ['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7', 'l8'] as const;
 const connu = (id: string): id is (typeof IDS)[number] => (IDS as readonly string[]).includes(id);
 
 /** Phrase de fin d'une leçon dans la langue de l'interface (#167) ; une phrase générale si la leçon n'en a pas. */

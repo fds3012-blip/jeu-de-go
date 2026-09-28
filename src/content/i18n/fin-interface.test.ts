@@ -21,16 +21,14 @@ const ORIGINAUX: [Cle, string, boolean?][] = [
   ['apprendre.synchro.sync', 'Synchronisation de ta progression…'],
   ['apprendre.synchro.ok', 'Progression enregistrée sur ton compte.'],
   ['apprendre.synchro.error', 'Hors ligne : ta progression est gardée ici et partira plus tard.'],
-  ['apprendre.bases', 'Les bases'],
-  ['apprendre.bases.debut', 'Sept leçons courtes pour jouer ta première partie.'],
-  ['apprendre.bases.fini', 'Chapitre terminé. Tu connais les règles du go !'],
+  ['apprendre.chapitre.termine', 'Chapitre terminé.'],
+  ['apprendre.chapitre.suite', 'Tout est fait. La suite arrive bientôt.'],
   ['apprendre.bientot', 'Bientôt'],
   ['apprendre.bientot.texte', 'Cinq autres chapitres sont en préparation, jusqu’au niveau des joueurs de club.'],
   ['lecon.terminer', 'Terminer la leçon'],
   ['lecon.retourChemin', 'Retour au chemin'],
   ['lecon.taReponse', 'Ta réponse'],
   ['lecon.poseVert', 'Pose ta pierre sur le point vert.'],
-  ['lecon.reglesConnues', 'Tu connais les règles du go.'],
   ['lecteur.progression', 'Progression de la leçon'],
   ['compte.titre', 'Ton compte'],
   ['compte.indisponible', `La connexion n’est pas disponible pour le moment. Tu peux jouer et apprendre sans compte${F}: ta progression reste sur ce téléphone.`, true],
@@ -189,7 +187,7 @@ describe('en anglais', () => {
   });
 
   it('chemin, lecteur et fin de leçon', () => {
-    expect(chapitresAVenir()).toEqual(['Capture and save', 'Life and death', 'Shape and tesuji, the clever moves', 'Opening on 9 × 9, then 19 × 19', 'Endgame and counting']);
+    expect(chapitresAVenir()).toEqual(['Capture and save', 'Life and death', 'Shape and tesuji, the clever moves', 'Opening on 19\u00A0×\u00A019', 'Endgame and counting']);
     expect(boutonChemin(LESSONS, {})).toEqual({ texte: 'Start', verbe: 'Start', id: 'l1' });
     expect(boutonChemin(LESSONS, { l1: 1 })).toMatchObject({ verbe: 'Continue' });
     expect(finDeLecon(LESSONS, 'l1').titre).toBe('Lesson complete');

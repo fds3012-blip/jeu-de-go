@@ -1,6 +1,6 @@
 // Onglet Apprendre (issues #40 et #54) : chemin de pierres sur les lignes d'un goban, lecteur de leçon, fin de leçon.
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
-import { LESSONS, type Lesson } from '../content/lessons';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { CHAPITRES, LESSONS, chapitreDe, explicationRefus, type Chapitre, type Lesson } from '../content/lessons';
 import { acquis } from '../content/acquis';
 import { Board, type BoardMarks } from '../ui/Board';
 import { CASE_MS, TEMPS_MS, imageDuGeste, imagesDemo, type DemoImage } from '../content/demo';
@@ -14,7 +14,7 @@ import { Etapes, Marque, Retour, Verdict } from '../ui/Lecteur';
 import { fr } from '../ui/typo';
 import { fromRows } from '../go/position';
 import { play, type Position } from '../go/rules';
-import { fromLabel } from '../go/coords';
+import { fromLabel, toLabel } from '../go/coords';
 import { score } from '../go/score';
 import { prefersReducedMotion, type SyncState } from './hooks';
 import { playFail, playStone, playSuccess, playVictory } from '../ui/sound';
@@ -22,7 +22,7 @@ import { hapticFail, hapticStone, hapticSuccess, hapticVictory } from '../ui/hap
 import { EVENTS, track } from '../data/analytics';
 import { gagnerXp } from './xp';
 import { validerDefi } from './defiAppareil';
-import { LIGNE, actionsFin, chapitresAVenir, boutonChemin, etapes, finDeChapitre, finDeLecon, trace, traceJusqua, type ActionFin, type Progression } from './apprendre';
+import { LIGNE, actionsFin, boutonChemin, chapitresAVenir, etapes, finDeChapitre, finDeLecon, trace, traceJusqua, type ActionFin, type Etape, type Progression } from './apprendre';
 import { t } from '../content/i18n';
 import '../ui/apprendre.css';
 
@@ -43,13 +43,6 @@ function lignesGoban(hauteur: number): string {
 export function LearnHome({ progress, onOpen, sync = 'local' }: { progress: Progression; onOpen: (id: string) => void; sync?: SyncState }) {
   const liste = etapes(LESSONS, progress);
   const iEnCours = liste.findIndex(e => e.etat === 'encours');
-  // #169 : place occupée par chaque rangée sous le centre de sa pierre, mesurée après l'affichage. Au zoom 200 %,
-  // un titre sur plusieurs lignes repousse la rangée suivante au lieu de la chevaucher. À 390 px, tout tient : rien ne bouge.
-  const [bas, setBas] = useState<number[]>([]);
-  const tc = useMemo(() => trace(liste.length, { encours: iEnCours, bas }), [liste.length, iEnCours, bas]);
-  const parcouru = traceJusqua(tc, iEnCours >= 0 ? iEnCours : liste.length - 1);
-  const chemin = useRef<HTMLOListElement>(null);
-  const faites = liste.filter(e => e.etat === 'faite').length;
   const bouton = boutonChemin(LESSONS, progress);
   const cta = useRef<HTMLButtonElement>(null);
   // #121 : sous 390 px (zoom 200 %), les écarts horizontaux du chemin (pierres, tracé, lignes) sont mis à l'échelle
@@ -60,6 +53,61 @@ export function LearnHome({ progress, onOpen, sync = 'local' }: { progress: Prog
     window.addEventListener('resize', maj);
     return () => window.removeEventListener('resize', maj);
   }, []);
+
+  // La leçon en cours doit être à l'écran, avec son bouton : on fait défiler d'un coup, sans animation.
+  useEffect(() => {
+    const r = cta.current?.getBoundingClientRect();
+    const bas = window.innerHeight - 96;
+    if (r && r.bottom > bas) window.scrollBy({ top: r.bottom - bas, behavior: 'instant' as ScrollBehavior });
+  }, []);
+
+  // Sous la leçon en cours, le verbe suffit (le titre est juste au-dessus) ; chemin fini, le bouton dit quelle leçon il rouvre.
+  const boutonCta = bouton && (
+    <button ref={cta} className="cta cta-chemin" aria-label={fr(bouton.texte)} onClick={() => onOpen(bouton.id)}>{iEnCours < 0 ? fr(bouton.texte) : bouton.verbe}</button>
+  );
+
+  return (
+    <div className="apprendre">
+      {/* #228 : un chemin par chapitre, l'un sous l'autre ; un seul bouton en relief, sous la première leçon pas finie. */}
+      {CHAPITRES.map(c => (
+        <CheminChapitre key={c.id} chapitre={c} liste={liste.filter(e => c.lecons.includes(e.lecon))} k={k} boutonCta={boutonCta} onOpen={onOpen} progress={progress} />
+      ))}
+
+      {iEnCours < 0 && <div className="chemin-fini">{boutonCta}</div>}
+
+      <section className="a-venir" aria-labelledby="a-venir-titre">
+        <h2 id="a-venir-titre" className="titre-pierres">{t('apprendre.bientot')}</h2>
+        <p>{t('apprendre.bientot.texte')}</p>
+        <ul>{chapitresAVenir().map(c => <li key={c}>{c}</li>)}</ul>
+      </section>
+
+      <p className={`synchro synchro-${sync}`} role="status" aria-busy={sync === 'sync'}>{texteSynchro(sync)}</p>
+    </div>
+  );
+}
+
+/** Phrase sous le titre d'un chapitre : son intro, l'avancée, ou la fin (« la suite arrive » pour un chapitre en cours d'écriture). */
+function phraseChapitre(c: Chapitre, faites: number): string {
+  const n = c.lecons.length;
+  if (faites === 0) return c.intro;
+  // Titre, intro et phrase de fin du chapitre : contenu des leçons (content/lessons.fr.js), traduit avec elles.
+  if (faites === n) return c.complet ? `${t('apprendre.chapitre.termine')}${c.fin ? ` ${c.fin.replace(/\.$/, ' !')}` : ''}` : t('apprendre.chapitre.suite');
+  return t('apprendre.bases.progres', { n: faites, total: n });
+}
+
+/** Chemin d'un chapitre : titre, puis ses pierres de gué sur les lignes d'un goban. */
+function CheminChapitre({ chapitre, liste, k, boutonCta, onOpen, progress }: {
+  chapitre: Chapitre; liste: Etape[]; k: number; boutonCta: ReactNode; onOpen: (id: string) => void; progress: Progression;
+}) {
+  const iEnCours = liste.findIndex(e => e.etat === 'encours');
+  // #169 : place occupée par chaque rangée sous le centre de sa pierre, mesurée après l'affichage. Au zoom 200 %,
+  // un titre sur plusieurs lignes repousse la rangée suivante au lieu de la chevaucher. À 390 px, tout tient : rien ne bouge.
+  const [bas, setBas] = useState<number[]>([]);
+  const tc = useMemo(() => trace(liste.length, { encours: iEnCours, bas }), [liste.length, iEnCours, bas]);
+  const faites = liste.filter(e => e.etat === 'faite').length;
+  // Tracé parcouru : jusqu'à la leçon en cours, tout le chapitre s'il est fini, rien s'il n'est pas commencé.
+  const parcouru = traceJusqua(tc, iEnCours >= 0 ? iEnCours : faites === liste.length ? liste.length - 1 : -1);
+  const chemin = useRef<HTMLOListElement>(null);
   // Une rangée qui change de hauteur sans nouveau rendu (police chargée après coup, texte agrandi) : on remesure.
   const [tour, remesurer] = useState(0);
   // Mesure avant l'affichage : si une rangée a changé de hauteur, le chemin est recalculé tout de suite.
@@ -80,23 +128,11 @@ export function LearnHome({ progress, onOpen, sync = 'local' }: { progress: Prog
   }, [liste.length]);
   const echelle = k < 1 ? `scale(${k} 1)` : undefined;
 
-  // La leçon en cours doit être à l'écran, avec son bouton : on fait défiler d'un coup, sans animation.
-  useEffect(() => {
-    const r = cta.current?.getBoundingClientRect();
-    const bas = window.innerHeight - 96;
-    if (r && r.bottom > bas) window.scrollBy({ top: r.bottom - bas, behavior: 'instant' as ScrollBehavior });
-  }, []);
-
-  // Sous la leçon en cours, le verbe suffit (le titre est juste au-dessus) ; chemin fini, le bouton dit quelle leçon il rouvre.
-  const boutonCta = bouton && (
-    <button ref={cta} className="cta cta-chemin" aria-label={fr(bouton.texte)} onClick={() => onOpen(bouton.id)}>{iEnCours < 0 ? fr(bouton.texte) : bouton.verbe}</button>
-  );
-
   return (
-    <div className="apprendre">
+    <section className="chapitre-chemin" data-chapitre={chapitre.id} aria-labelledby={`chapitre-${chapitre.id}`}>
       <div className="chapitre">
-        <h2>{t('apprendre.bases')}</h2>
-        <p>{faites === 0 ? t('apprendre.bases.debut') : faites === liste.length ? t('apprendre.bases.fini') : t('apprendre.bases.progres', { n: faites, total: liste.length })}</p>
+        <h2 id={`chapitre-${chapitre.id}`}>{fr(chapitre.titre)}</h2>
+        <p>{fr(phraseChapitre(chapitre, faites))}</p>
       </div>
 
       <div className="gue" style={{ height: tc.hauteur }}>
@@ -129,17 +165,7 @@ export function LearnHome({ progress, onOpen, sync = 'local' }: { progress: Prog
           })}
         </ol>
       </div>
-
-      {iEnCours < 0 && <div className="chemin-fini">{boutonCta}</div>}
-
-      <section className="a-venir" aria-labelledby="a-venir-titre">
-        <h2 id="a-venir-titre" className="titre-pierres">{t('apprendre.bientot')}</h2>
-        <p>{t('apprendre.bientot.texte')}</p>
-        <ul>{chapitresAVenir().map(c => <li key={c}>{c}</li>)}</ul>
-      </section>
-
-      <p className={`synchro synchro-${sync}`} role="status" aria-busy={sync === 'sync'}>{texteSynchro(sync)}</p>
-    </div>
+    </section>
   );
 }
 
@@ -304,7 +330,7 @@ export function LessonPlayer({ lesson, start, confirmTouch, progress = {}, celeb
         answer.ok
           ? <Verdict ton="juste" cle={answer.n} actions={cta}><p>{fr(step.ok)}</p></Verdict>
           // #198 : pas de bouton « Réessayer » ; le plateau reste jouable, on rejoue directement.
-          : step.kind !== 'quiz' && <Verdict ton="revoir" cle={answer.n}><p>{fr(t('lecon.essaieEncore', { no: step.no }))}</p></Verdict>
+          : step.kind !== 'quiz' && <Verdict ton="revoir" cle={answer.n}><p>{fr(t('lecon.essaieEncore', { no: step.kind === 'move' && answer.p != null ? explicationRefus(step, toLabel(answer.p, 9)) : step.no }))}</p></Verdict>
       )}
     </div>
   );
@@ -344,11 +370,14 @@ function FinLecon({ lesson, progress, celebrer, onNext, onExit, pratique, jouer 
   lesson: Lesson; progress: Progression; celebrer: boolean; onNext?: () => void; onExit: () => void;
   pratique?: PlayerProps['pratique']; jouer?: PlayerProps['jouer'];
 }) {
-  const liste = etapes(LESSONS, progress);
-  const { derniere } = finDeLecon(LESSONS, lesson.id);
-  // Fin de chapitre (#200) : dernière leçon terminée, ou toutes les leçons faites.
-  const chapitre = finDeChapitre(LESSONS, progress, lesson.id);
-  const titre = finDeLecon(LESSONS, chapitre ? LESSONS[LESSONS.length - 1].id : lesson.id).titre;
+  // #228 : tout se compte dans le chapitre de la leçon. Un chapitre en cours d'écriture ne se ferme pas encore.
+  const chap = chapitreDe(lesson.id), lecons = chap.lecons;
+  const liste = etapes(lecons, progress);
+  const derniere = chap.complet && finDeLecon(lecons, lesson.id).derniere;
+  // Fin de chapitre (#200) : dernière leçon terminée, ou toutes les leçons du chapitre faites.
+  const chapitre = chap.complet && finDeChapitre(lecons, progress, lesson.id);
+  // Hors fin de chapitre, « Leçon terminée » (la dernière leçon d'un chapitre en cours d'écriture aussi).
+  const titre = chapitre ? finDeLecon(lecons, lecons[lecons.length - 1].id).titre : finDeLecon([], lesson.id).titre;
   const { principale, liens } = actionsFin({ chapitre, pratique: !!pratique, suivante: !!onNext, jouer: !!jouer });
   const bouton = (a: ActionFin, classe: 'cta' | 'lien') => {
     const props = { className: classe, 'data-action': a };
@@ -391,7 +420,7 @@ function FinLecon({ lesson, progress, celebrer, onNext, onExit, pratique, jouer 
         ))}
       </ol>
       <h2 className="fin-titre" ref={titreRef} tabIndex={-1}>{titre}</h2>
-      <p className="fin-acquis">{fr(acquis(lesson.id))}{chapitre && <> {fr(t('lecon.reglesConnues'))}</>}</p>
+      <p className="fin-acquis">{fr(acquis(lesson.id))}{chapitre && chap.fin && <> {fr(chap.fin)}</>}</p>
       {bouton(principale, 'cta')}
       {liens.map(a => bouton(a, 'lien'))}
       {gerbe && <Confettis origine={gerbe} onFin={() => setGerbe(null)} />}
