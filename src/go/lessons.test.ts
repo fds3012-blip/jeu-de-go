@@ -1,4 +1,4 @@
-// Vérification automatique des 7 leçons de content/lessons.fr.js : positions, bonnes réponses, et mauvaises réponses.
+// Vérification automatique des 8 leçons de content/lessons.fr.js : positions, bonnes réponses, et mauvaises réponses.
 import { LESSONS, type LessonStep } from '../content/lessons';
 import { fromRows } from './position';
 import { groupAt, isLegal, neighbors, play, type Position } from './rules';
@@ -31,8 +31,8 @@ function targetsLost(r: Position, targets: number[]): boolean {
 }
 
 describe('leçons : forme des positions', () => {
-  it('sept leçons, chacune avec au moins deux étapes', () => {
-    expect(LESSONS).toHaveLength(7);
+  it('huit leçons, chacune avec au moins deux étapes', () => {
+    expect(LESSONS).toHaveLength(8);
     for (const l of LESSONS) expect(l.steps.length).toBeGreaterThanOrEqual(2);
   });
   for (const { id, s } of all) {
@@ -63,6 +63,8 @@ describe('leçons : libertés montrées', () => {
 describe('leçons : bonnes et mauvaises réponses', () => {
   for (const { id, s } of all.filter(x => x.s.kind === 'move')) {
     const m = s as Extract<LessonStep, { kind: 'move' }>;
+    // Leçon 8 (ouverture) : pas de pierre visée ; ses ensembles de réponses ont leurs propres tests, plus bas.
+    if (id.startsWith('l8.')) return;
     it(`${id} : chaque bonne réponse est légale et atteint le but`, () => {
       const { pos, marked } = fromRows(m.rows);
       if (m.accept === 'line3') {
@@ -276,5 +278,137 @@ describe('leçon 7 : compter les points (#177), chaque chiffre vient de score()'
     const h = ok(play(pos, at('H5')));
     expect(neighbors(N)[at('H5')].every(q => h.board[q] !== 1)).toBe(true);
     expect(score(pos, 0, 'japanese').owner[at('H5')]).toBe(2);
+  });
+});
+
+// Leçon 8 (#228) : bien commencer sur 9 × 9. En ouverture, il n'y a pas « le » bon coup : chaque réponse acceptée
+// appartient à un ensemble défini par un critère écrit ici en clair, et chaque réfutation aussi.
+describe('leçon 8 : ouverture sur 9 × 9, ensembles de points justifiés (#228)', () => {
+  type Move = Extract<LessonStep, { kind: 'move' }>;
+  type Info = Extract<LessonStep, { kind: 'info' }>;
+  const l8 = (i: number) => step('l8', i);
+  const tous = [...Array(N * N).keys()];
+  /** Ligne comptée depuis le bord le plus proche : 1 = première ligne. */
+  const ligne = (p: number) => { const x = p % N, y = Math.floor(p / N); return Math.min(x, y, N - 1 - x, N - 1 - y) + 1; };
+  /** Lignes depuis les deux bords les plus proches, la plus petite d'abord : C3 donne [3, 3], C4 donne [3, 4]. */
+  const lignes = (p: number) => { const x = p % N, y = Math.floor(p / N); return [Math.min(x, N - 1 - x) + 1, Math.min(y, N - 1 - y) + 1].sort((a, b) => a - b); };
+  const labelsDe = (ps: number[]) => ps.map(p => toLabel(p, N)).sort();
+  const touche = (pos: Position, p: number, c: number) => neighbors(N)[p].some(q => pos.board[q] === c);
+  /** Régions de points vides reliés, avec les pierres et les couleurs qui les bordent. */
+  function regions(board: Int8Array) {
+    const vu = new Set<number>(), out: { points: number[]; bord: Set<number>; couleurs: Set<number> }[] = [];
+    for (const p of tous) {
+      if (board[p] || vu.has(p)) continue;
+      const r = { points: [] as number[], bord: new Set<number>(), couleurs: new Set<number>() };
+      const pile = [p]; vu.add(p);
+      while (pile.length) {
+        const q = pile.pop()!; r.points.push(q);
+        for (const v of neighbors(N)[q]) {
+          if (board[v]) { r.bord.add(v); r.couleurs.add(board[v]); } else if (!vu.has(v)) { vu.add(v); pile.push(v); }
+        }
+      }
+      out.push(r);
+    }
+    return out;
+  }
+
+  it('l8.1 : même 4 points, fermés par 4 pierres au coin, 6 au bord, 8 au centre', () => {
+    const s = l8(0) as Info;
+    const fin = imagesDemo(s.rows, s.demo!).at(-1)!;
+    const zones = s.demo!.filter((t): t is { zone: string[] } => 'zone' in t).map(t => t.zone.map(at));
+    const petites = regions(fin.board).filter(r => r.points.length <= 4);
+    expect(petites).toHaveLength(3);
+    const infos = zones.map(z => {
+      const r = petites.find(x => x.points.length === z.length && z.every(p => x.points.includes(p)))!;
+      expect(r, `zone ${labelsDe(z)}`).toBeTruthy();
+      expect([...r.couleurs]).toEqual([1]);
+      // Bords du plateau touchés : 2 au coin, 1 au bord, 0 au centre.
+      const bords = new Set(r.points.flatMap(p => { const x = p % N, y = Math.floor(p / N); return [x === 0 && 'g', x === N - 1 && 'd', y === 0 && 'h', y === N - 1 && 'b'].filter(Boolean); }));
+      return { points: r.points.length, pierres: r.bord.size, bords: bords.size };
+    });
+    expect(infos).toEqual([{ points: 4, pierres: 4, bords: 2 }, { points: 4, pierres: 6, bords: 1 }, { points: 4, pierres: 8, bords: 0 }]);
+    expect(s.text).toContain('4 pierres (pour 4 points)');
+    expect(s.text).toContain('Bord : 6, centre : 8');
+    // Le point vert ferme bien le coin : avant lui, seules les zones du bord et du centre sont fermées.
+    expect(regions(fromRows(s.rows).pos.board).filter(r => r.points.length <= 4)).toHaveLength(2);
+  });
+
+  it('l8.2 : le 3-3 est sur la 3e ligne depuis deux bords ; le 5-5 est le centre du 9 × 9', () => {
+    expect(lignes(at('C3'))).toEqual([3, 3]);
+    expect(lignes(at('E5'))).toEqual([5, 5]);
+    expect(at('E5')).toBe((N * N - 1) / 2);
+    expect(l8(1).text).toMatch(/3-3 \(3e ligne depuis deux bords\)/);
+  });
+
+  it('l8.3 : accepté = 3-3 ou 3-4 d’un coin sans pierre ; les points verts sont exactement ces points', () => {
+    const m = l8(2) as Move;
+    const { pos } = fromRows(m.rows);
+    // Coin : le carré 4 × 4 d'un angle. Libre : aucune pierre dedans.
+    const coin = (p: number) => { const x = p % N, y = Math.floor(p / N); return (x <= 3 ? 'g' : x >= 5 ? 'd' : '') + (y <= 3 ? 'h' : y >= 5 ? 'b' : ''); };
+    const libres = new Set(['gh', 'gb', 'dh', 'db'].filter(c => tous.every(q => coin(q) !== c || !pos.board[q])));
+    expect([...libres].sort()).toEqual(['db', 'dh', 'gh']);
+    const bons = tous.filter(p => !pos.board[p] && libres.has(coin(p)) && ['3,3', '3,4'].includes(lignes(p).join(',')));
+    expect([...(m.accept as string[])].sort()).toEqual(labelsDe(bons));
+    expect(bons).toHaveLength(9);
+    expect(m.aide).toEqual(m.accept);
+    for (const p of bons) { expect(isLegal(pos, p)).toBe(true); expect(ligne(p)).toBe(3); expect(touche(pos, p, 1) || touche(pos, p, 2)).toBe(false); }
+    // Réfutations : collée à Blanc ; sur les deux premières lignes.
+    expect([...m.refus![0].points].sort()).toEqual(labelsDe(tous.filter(p => !pos.board[p] && touche(pos, p, 2))));
+    expect([...m.refus![1].points].sort()).toEqual(labelsDe(tous.filter(p => !pos.board[p] && ligne(p) <= 2)));
+    expect(m.refus![1].no).toMatch(/deux premières lignes/);
+    for (const r of m.refus!) for (const l of r.points) expect(m.accept).not.toContain(l);
+  });
+
+  it('l8.4 : la seule pierre noire collée à Blanc a 3 libertés, puis 2 après la réponse blanche', () => {
+    const s = l8(3) as Info;
+    const { pos } = fromRows(s.rows);
+    const collees = tous.filter(p => pos.board[p] === 1 && touche(pos, p, 2));
+    expect(labelsDe(collees)).toEqual((s.geste as { touche: string[] }).touche);
+    expect(libs(pos, at('F5')).size).toBe(3);
+    const im = imagesDemo(s.rows, s.demo!);
+    expect(im.at(-2)!.compteur?.n).toBe(3);
+    expect(im.at(-1)!.compteur?.n).toBe(2);
+    expect(s.text).toContain('3 libertés');
+  });
+
+  it('l8.5 : l’extension E3 est sur la 3e ligne, un point libre entre elle et C3 ; la zone montrée est dessous, lignes 1 et 2', () => {
+    const s = l8(4) as Info;
+    const { pos } = fromRows(s.rows);
+    expect(ligne(at('E3'))).toBe(3);
+    expect(pos.board[at('C3')]).toBe(1);
+    expect(pos.board[at('D3')]).toBe(0);
+    expect(touche(pos, at('E3'), 1) || touche(pos, at('E3'), 2)).toBe(false);
+    const zone = (s.demo!.find(t => 'zone' in t) as { zone: string[] }).zone.map(at);
+    for (const p of zone) { expect(ligne(p)).toBeLessThanOrEqual(2); expect([2, 3, 4]).toContain(p % N); }
+    expect(zone).toHaveLength(6);
+  });
+
+  it('l8.6 : accepté = 3e ligne, en ligne droite depuis une pierre noire à 2 ou 3 points, sans toucher aucune pierre', () => {
+    const m = l8(5) as Move;
+    const { pos } = fromRows(m.rows);
+    const noires = tous.filter(p => pos.board[p] === 1);
+    const etend = (p: number) => noires.some(b => {
+      const [bx, by, x, y] = [b % N, Math.floor(b / N), p % N, Math.floor(p / N)];
+      if (bx !== x && by !== y) return false;
+      const d = Math.abs(bx - x) + Math.abs(by - y);
+      if (d < 2 || d > 3) return false;
+      for (let k = 1; k < d; k++) { const q = (by + Math.sign(y - by) * k) * N + bx + Math.sign(x - bx) * k; if (pos.board[q]) return false; }
+      return true;
+    });
+    const bons = tous.filter(p => !pos.board[p] && ligne(p) === 3 && !touche(pos, p, 1) && !touche(pos, p, 2) && etend(p));
+    expect([...(m.accept as string[])].sort()).toEqual(labelsDe(bons));
+    expect(labelsDe(bons)).toEqual(['C5', 'E3', 'E7']);
+    for (const p of bons) expect(isLegal(pos, p)).toBe(true);
+    const vides = tous.filter(p => !pos.board[p]);
+    const [colle, serre, bas] = m.refus!;
+    expect([...colle.points].sort()).toEqual(labelsDe(vides.filter(p => touche(pos, p, 2))));
+    expect([...serre.points].sort()).toEqual(labelsDe(vides.filter(p => touche(pos, p, 1) && !touche(pos, p, 2))));
+    expect([...bas.points].sort()).toEqual(labelsDe(vides.filter(p => ligne(p) <= 2 && !touche(pos, p, 1) && !touche(pos, p, 2))));
+    const vus = [...colle.points, ...serre.points, ...bas.points];
+    expect(new Set(vus).size).toBe(vus.length);
+    for (const l of vus) expect(m.accept).not.toContain(l);
+    // Un coup légitime hors des ensembles (le centre, par exemple) reçoit la consigne, pas un reproche.
+    expect(vus).not.toContain('E5');
+    expect(m.no).not.toMatch(/mauvais|faux|erreur/i);
   });
 });

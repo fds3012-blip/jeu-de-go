@@ -133,12 +133,14 @@ for (const c of CAS) {
       await sansDebord(page, 'Leçon 1');
     });
 
-    // #177 : sept leçons sur le chemin ; la septième et ses choix longs tiennent dans la largeur.
+    // #177 : sept leçons dans « Les bases » ; la septième et ses choix longs tiennent dans la largeur.
+    // #228 : le chapitre 2 (leçon 8) suit, sous la leçon 7 et son bouton.
     test('chemin de sept leçons et leçon 7 sans défilement horizontal', async ({ page }) => {
       await page.addInitScript(() => localStorage.setItem('go.lecons.v1', JSON.stringify({ l1: 6, l2: 6, l3: 8, l4: 5, l5: 5, l6: 6, l7: 4 })));
       await page.goto('/');
       await onglet(page, 'Apprendre').click();
-      await expect(page.locator('.gue li')).toHaveCount(7);
+      await expect(page.locator('[data-chapitre="c1"] .gue li')).toHaveCount(7);
+      await expect(page.locator('[data-chapitre="c2"] .gue li')).toHaveCount(1);
       await sansDebord(page, 'Apprendre (7 leçons)');
       const cta = page.getByRole('button', { name: 'Continuer : Compter les points' });
       await boutonLibre(cta, 'Apprendre (leçon 7)');
@@ -151,6 +153,15 @@ for (const c of CAS) {
         const bas = (await cta.boundingBox())!, bientot = (await page.getByRole('heading', { name: 'Bientôt' }).boundingBox())!;
         return bientot.y - (bas.y + bas.height);
       }, { message: 'bouton de la leçon 7 sur « Bientôt »' }).toBeGreaterThanOrEqual(0);
+      await expect.poll(async () => {
+        const bas = (await cta.boundingBox())!, chap2 = (await page.getByRole('heading', { name: 'Ouverture sur 9 × 9' }).boundingBox())!;
+        return chap2.y - (bas.y + bas.height);
+      }, { message: 'bouton de la leçon 7 sur le chapitre 2' }).toBeGreaterThanOrEqual(0);
+      // Police doublée : des rangées du chapitre 1 se chevauchaient déjà avant le chapitre 2 (défaut signalé dans #228).
+      if (!c.police) {
+        await page.evaluate(() => document.fonts.ready);
+        await cheminLisible(page, 'Apprendre (2 chapitres)');
+      }
       await cta.click();
       for (const n of ['Je passe', 'Chez moi', 'Chez Blanc']) {
         const choix = page.locator('.choix').getByRole('button', { name: n, exact: true });
