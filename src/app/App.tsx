@@ -24,7 +24,8 @@ import { battu, BILAN_KEY, enregistrer, fin, komiDepuisUrl, lireBilan, type Bila
 import { fr } from '../ui/typo';
 import { Glacon } from '../ui/Glacon';
 import { Mochi } from '../ui/Mochi';
-import { lireReserveAppareil, reconcilierAppareil } from './gelAppareil';
+import { constaterPerteAppareil, lireRecordAppareil, lireReserveAppareil, noterRecordAppareil, reconcilierAppareil } from './gelAppareil';
+import { annoncerPerte, messagePerte } from './serieRecord';
 import { serieAffichee } from './serieLocale';
 import { messageGel } from './gel';
 import { BarreNav, type Onglet } from '../ui/IconesNav';
@@ -93,11 +94,16 @@ export function App() {
   const serieServeur = useSerie(supabase, session?.user.id);
   // Série protégée (issue #76) : les jours manqués consomment un gel dès l'ouverture, avant que Problèmes lise la série.
   const [annonceGel, setAnnonceGel] = useState(() => reconcilierAppareil(new Date()));
+  // Rien de gagné ne se perd (issue #212) : série perdue constatée juste après les gels, annoncée une fois par Mochi.
+  const [retourSerie, setRetourSerie] = useState(() => { const p = constaterPerteAppareil(new Date()); return annoncerPerte(p) ? messagePerte(p) : null; });
   // Joueur connecté : les gels du serveur ; sinon ceux de l'appareil (issue #76).
   const gelsServeur = useGelsServeur(supabase, session?.user.id);
   const gels = gelsServeur ?? lireReserveAppareil().gels;
   // Série dès le jour 1, avec ou sans compte (issue #161) : l'appareil sans compte, la plus longue des deux sinon.
   const serie = serieAffichee(session?.user.id ? serieServeur : null, readLocal<Serie | null>(SERIE_KEY, null), numeroDuJour(new Date()));
+  // Record : celui de l'appareil, ou la série affichée (celle du serveur si connecté) si elle le dépasse (#212).
+  const recordSerie = Math.max(lireRecordAppareil().record, serie);
+  useEffect(() => { noterRecordAppareil(serie); }, [serie]);
   const [resultat, setResultat] = useState<null | { issue: Issue; stats: StatsPartie }>(null); // fin de la partie en cours contre l'ordi
   const [partie, setPartie] = useState(0); // change à chaque partie pour repartir d'un plateau vide
   const home = accueil(parties, done, adv, settings.size);
@@ -155,7 +161,7 @@ export function App() {
     };
   }
 
-  const go = (t: Tab) => { setAnnonceGel(null); setTab(t); setPlaying(false); setLessonId(null); setVueProfil('menu'); window.scrollTo({ top: 0 }); };
+  const go = (t: Tab) => { setAnnonceGel(null); setRetourSerie(null); setTab(t); setPlaying(false); setLessonId(null); setVueProfil('menu'); window.scrollTo({ top: 0 }); };
 
   const enPartie = tab === 'jouer' && !!playing;
   let screen;
@@ -180,7 +186,7 @@ export function App() {
     screen = <Puzzles db={supabase} userId={session?.user.id} sessionLoading={session === undefined} confirmTouch={settings.confirmTouch} onCompte={() => go('profil')}
       lien={LIEN_DU_JOUR} onDuJour={setDuJourOuvert} celebrer={settings.celebrations} />;
   } else if (tab === 'profil') {
-    screen = <Profil vue={vueProfil} onVue={setVueProfil} settings={settings} set={set} profil={profil} serie={serie} />;
+    screen = <Profil vue={vueProfil} onVue={setVueProfil} settings={settings} set={set} profil={profil} serie={serie} record={recordSerie} />;
   } else {
     const numero = numeroDuJour(new Date());
     const daily = problemeDuNumero(PROBLEMES_LOCAUX, numero);
@@ -213,6 +219,9 @@ export function App() {
         </header>}
         {annonceGel !== null && !enPartie && (tab === 'jouer' || tab === 'problemes') && (
           <p className="gel-annonce" role="status"><Mochi size={30} />{fr(messageGel(annonceGel))}</p>
+        )}
+        {retourSerie !== null && annonceGel === null && !enPartie && (tab === 'jouer' || tab === 'problemes') && (
+          <p className="gel-annonce retour-serie" role="status" data-testid="retour-serie"><Mochi size={30} />{fr(retourSerie)}</p>
         )}
         {accueilVisible && <BarreNiveau />}
         {screen}

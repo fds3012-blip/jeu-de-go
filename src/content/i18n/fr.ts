@@ -17,6 +17,10 @@ export const fr = {
   // Série sans compte (#161) : invitation au 3e jour de série.
   'serie.invitation': 'Crée un compte pour garder ta série.',
   'serie.creerCompte': 'Créer un compte',
+  // Rien de gagné ne se perd (#212) : retour après une série perdue, sans reproche. {jours} et {record} : « 7 jours ».
+  'serie.perdueRecord': 'Content de te revoir ! Ta série de {jours} est dans ton record. On en commence une nouvelle ?',
+  'serie.perdue': 'Content de te revoir ! Ton record reste {record}. On commence une nouvelle série ?',
+  'profil.recordLegende': { one: 'jour de record', other: 'jours de record' },
   'profil.sansPseudo': 'Sans pseudo',
   'profil.cote': 'Cote {cote}',
   'profil.jours': { one: '{n} jour', other: '{n} jours' },
