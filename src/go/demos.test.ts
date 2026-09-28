@@ -14,7 +14,7 @@ const fin = (id: string, i: number) => { const s = step(id, i) as Info; return i
 const suite = (id: string, i: number) => { const s = step(id, i) as Info; return imagesDemo(s.rows, s.demo!, s.avant); };
 const labels = (ps: number[]) => ps.map(p => toLabel(p, N)).sort();
 /** Leçons déjà réécrites « l'image d'abord ». */
-const V2 = ['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7'];
+const V2 = ['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7', 'l8'];
 
 describe('démonstrations : légalité', () => {
   for (const l of LESSONS) l.steps.forEach((s, i) => {
@@ -25,6 +25,15 @@ describe('démonstrations : légalité', () => {
       // Chaque pose est un coup légal depuis l'image précédente (imagesDemo lève sinon) ; on rejoue pour le prouver.
       for (const t of s.demo!) if ('pose' in t) expect(t.pose).toMatch(/^[A-HJ][1-9]$/);
     });
+  });
+  it('imagesDemo refuse une zone sur une pierre (#228)', () => {
+    expect(() => imagesDemo(step('l8', 0).rows, [{ zone: ['C4'] }])).toThrow(/pas vide/);
+    expect(imagesDemo(step('l8', 0).rows, [{ zone: ['A1', 'B1'] }]).at(-1)!.yeux).toHaveLength(2);
+  });
+  it('leçon 8 : une seule étape sur six sans geste au plus (#228)', () => {
+    const l8 = LESSONS.find(l => l.id === 'l8')!;
+    expect(l8.steps.length).toBeLessThanOrEqual(6);
+    expect(l8.steps.filter(s => s.kind === 'info' && !s.geste).length).toBeLessThanOrEqual(1);
   });
   it('imagesDemo refuse un coup illégal et un faux interdit', () => {
     const rows = fromRowsYeux();
