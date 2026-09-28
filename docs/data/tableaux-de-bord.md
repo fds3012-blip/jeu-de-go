@@ -125,6 +125,33 @@ ORDER BY cohorte DESC
 
 Variante à garder en tête : « revient le jour N ou après » (rétention non bornée), plus haute. On garde le jour exact, standard du marché mobile.
 
+### Série : un défi par jour (hypothèse à tester en A/B, #199)
+
+**Hypothèse** (base de connaissances UX, section Rétention) : si le Go du jour, une leçon terminée **ou** la Révision du jour font vivre la série, J7 monte, sans changer l'action proposée. Chez Duolingo, n'importe quelle leçon entretient la série ; chez nous, avant #199, seul le Go du jour comptait.
+
+- **Interrupteur** : constante `SERIE_UN_DEFI` dans `src/app/defi.ts` (vraie aujourd'hui, pour tout le monde). Fausse, on revient à l'ancienne règle (seul le Go du jour compte). Il n'y a pas encore de tirage A/B : pour le vrai test, brancher la constante sur un drapeau PostHog (50/50 sur les nouveaux joueurs, population `complet`) et comparer J7 (requête ci-dessus, filtrée par variante).
+- **Limite** : c'est la série de l'appareil. Côté serveur, la série d'un joueur connecté reste celle du Go du jour (aucune migration dans #199) ; l'écran montre la plus longue des deux. Mais à la connexion, l'import de la série de l'appareil (`importer_serie_appareil`, #176) peut relever la série du serveur avec des jours de leçon ou de révision.
+- **Critère** : J7 de la variante « un défi » au moins 2 points au-dessus du témoin, sans baisse de `go_du_jour_resolu` par joueur actif (le Go du jour ne doit pas être délaissé pour une leçon déjà faite).
+
+Défis relevés par jour et par type (qui fait vivre la série, et par quoi) :
+
+```sql
+SELECT
+    toDate(toTimeZone(timestamp, 'Europe/Paris')) AS jour,
+    uniqIf(person_id, event = 'go_du_jour_resolu') AS go_du_jour,
+    uniqIf(person_id, event = 'lecon_terminee') AS lecon,
+    uniqIf(person_id, event = 'revision_faite') AS revision,
+    uniq(person_id) AS joueurs_avec_un_defi
+FROM events
+WHERE event IN ('go_du_jour_resolu', 'lecon_terminee', 'revision_faite')
+  AND timestamp >= now() - INTERVAL 30 DAY
+  AND properties.environnement = 'production'
+GROUP BY jour
+ORDER BY jour DESC
+```
+
+Réussite des révisions (indicateur d'appui) : `sum(du_premier_coup) / sum(exercices)` sur `revision_faite`.
+
 ## 4. Parties terminées par joueur actif et par semaine (cible : 5)
 
 ```sql

@@ -34,6 +34,11 @@ export interface Analysis {
   visits: number;
   ms: number;
   engine: string;
+  /**
+   * Politique brute du réseau à la racine, pour chaque intersection (index y * N + x), puis la passe (index N * N).
+   * 0 pour une intersection occupée ou en ko. Sert au tirage « humain » des niveaux faibles (`hasard`).
+   */
+  policy?: Float32Array;
 }
 
 interface Edge { move: number; prior: number; n: number; w: number; lead: number; child: Node | null; pos: Position | null }
@@ -148,6 +153,8 @@ export async function search(ev: Evaluator, root: Position, o: AnalyzeOptions = 
   const bestLead = list.length ? list[0].lead : 0;
   for (const m of list) m.scoreLoss = Math.max(0, bestLead - m.lead);
   const top = list[0];
+  const policy = new Float32Array(n + 1);
+  for (const e of first.edges) policy[e.move < 0 ? n : e.move] = e.n < 0 ? 0 : e.prior;
   return {
     moves: list.slice(0, o.maxMoves ?? 20),
     winrate: top?.winrate ?? first.winrate,
@@ -156,5 +163,6 @@ export async function search(ev: Evaluator, root: Position, o: AnalyzeOptions = 
     visits,
     ms: now() - t0,
     engine: ev.name,
+    policy,
   };
 }

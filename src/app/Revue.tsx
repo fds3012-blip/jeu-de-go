@@ -18,7 +18,7 @@ import type { Color, Position } from '../go/rules';
 import { analyseRevue, meilleurCoup, preparerKataGo } from '../engine';
 import { EVENTS, track } from '../data/analytics';
 import {
-  AUCUNE_ERREUR, avanceFinale, candidatsBrillant, compteNotes, conseilFiable, courbe, courbeY, defaiteNette, momentCle, NOTE_INFO, noterCoups,
+  AUCUNE_ERREUR, avanceFinale, candidatsBrillant, compteNotes, conseilFiable, courbe, courbeY, defaiteNette, momentCle, NOTE_INFO, noterCoups, notesAvecCle,
   PERTES_DIFFUSES, phraseBilan, phraseErreur, phraseMomentCle, phraseNote, precisionHonnete, SANS_KATAGO, positionsDepuisSgf, rejouerDici,
   type AnalyseRevue, type Erreur, type Note, type NoteCoup,
 } from './revue';
@@ -63,13 +63,14 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer }: Props) {
   const analysees = analyses.length;
   const finie = analysees > n;
   const avances = useMemo(() => analyses.map(a => a?.lead ?? null), [analyses]);
-  const notes = useMemo(() => (finie ? noterCoups(positions, analyses, confirmations) : []), [finie, positions, analyses, confirmations]);
+  // Moment clé (passes comprises) et avance finale de Noir : la précision et le bilan ne contredisent jamais le score.
+  const cle = useMemo(() => (finie ? momentCle(positions, analyses, joueur) : null), [finie, positions, analyses, joueur]);
+  // La note du coup clé compte aussi la réponse, comme Mochi : plus de « Solide » ni de 100 % sur un coup qui a coûté des points.
+  const notes = useMemo(() => (finie ? notesAvecCle(noterCoups(positions, analyses, confirmations), cle, analyses) : []), [finie, positions, analyses, confirmations, cle]);
   // Les 3 plus grosses erreurs du joueur, tirées des notes (le bruit du moteur y est déjà écarté).
   const erreurs = useMemo<Erreur[]>(() => notes
     .filter((x): x is NoteCoup => !!x && (!joueur || x.couleur === joueur) && (x.note === 'imprecision' || x.note === 'erreur' || x.note === 'grosse'))
     .sort((a, b) => b.perte - a.perte || a.coup - b.coup).slice(0, 3).map(x => ({ coup: x.coup, perte: x.perte })), [notes, joueur]);
-  // Moment clé (passes comprises) et avance finale de Noir : la précision et le bilan ne contredisent jamais le score.
-  const cle = useMemo(() => (finie ? momentCle(positions, analyses, joueur) : null), [finie, positions, analyses, joueur]);
   const avanceNoir = finie ? avanceFinale(resultat, analyses[n]?.lead) : null;
 
   useEffect(() => {

@@ -14,7 +14,8 @@ import { avanceEstimee, mortesSelonPropriete } from '../go/estimation';
 import { coupDeFermeture, frontieresOuvertes, partieAvancee } from '../go/frontieres';
 import type { Demande, Reponse, Tache } from './simple.worker';
 import { KataGoClient, type KataGoInfo } from './katago/client';
-import { chooseFromAnalysis } from './katago/choose';
+import { choisirCoup } from './katago/choose';
+import { rng } from './sim';
 import { CACHE_NAME, DEFAULT_MODEL_URL } from './katago/loader';
 import type { Analysis, AnalyzeOptions, MoveInfo } from './katago/search';
 
@@ -60,7 +61,9 @@ function later<T>(f: () => T): Promise<T> {
 }
 
 async function simpleMoveDetail(pos: Position, lvl: Opponent, opts: EngineOptions): Promise<CoupExplique> {
-  const sync = () => later(() => chooseMoveDetail(pos, lvl, opts));
+  // Repli d'un niveau KataGo : le moteur simple à pleine force. Son `hasard` règle le tirage selon la politique
+  // du réseau (#179), pas le moteur simple, qui est déjà bien plus faible.
+  const sync = () => later(() => chooseMoveDetail(pos, lvl.katago ? { ...lvl, hasard: 0 } : lvl, opts));
   // Le Worker simple ne connaît que les identifiants : on lui passe les réglages du niveau en options.
   const niveau: OpponentId = lvl.katago ? 'caillou' : lvl.id;
   const q = ask({ kind: 'move', pos, niveau, opts: { timeMs: lvl.timeMs, playouts: lvl.playouts, ...opts } });
@@ -171,7 +174,10 @@ export async function bestMoveExplique(pos: Position, niveau: OpponentId | Oppon
     try {
       // Plafond de 1,8 s par coup : l'objectif est une réponse en moins de 2 s.
       const a = await k.analyze(pos, { komi: opts.komi ?? 6.5, visits: lvl.katago.visits, timeMs: opts.timeMs ?? 1800 });
-      coup = apresAnalyse(pos, lvl, opts, a, chooseFromAnalysis(a, pos, lvl.katago));
+      // Graine fixée (tests) : tirage reproductible. Sinon, vrai hasard.
+      // La graine est mélangée : xorshift démarre mal sur les petites graines (premiers tirages proches de 0).
+      const rand = opts.seed !== undefined ? rng(Math.imul(opts.seed ^ 0x9e3779b9, 0x85ebca6b)) : Math.random;
+      coup = apresAnalyse(pos, lvl, opts, a, choisirCoup(a, pos, { hasard: lvl.hasard, katago: lvl.katago }, rand));
     } catch (e) {
       coup = null;
       if (!warned) { warned = true; console.warn('KataGo indisponible, repli sur le moteur simple :', e instanceof Error ? e.message : e); }

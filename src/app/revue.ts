@@ -447,6 +447,29 @@ export function momentCle(positions: Position[], analyses: (AnalyseRevue | null)
   return best;
 }
 
+/**
+ * Notes accordées au moment clé (défaut relevé sur la fiche des stores, 28/09) : la note juge le coup seul, le moment clé
+ * compte aussi la réponse de l'adversaire. Sans cet accord, la puce du coup clé portait « Solide » et la précision
+ * affichait 100 % pendant que Mochi comptait des points perdus. Le coup clé prend la perte du moment clé (si elle est
+ * plus forte) et la note qui va avec ; la précision et le résumé suivent. Les autres coups ne changent pas.
+ */
+export function notesAvecCle(notes: (NoteCoup | null)[], cle: MomentCle | null, analyses: (AnalyseRevue | null)[]): (NoteCoup | null)[] {
+  const k = cle ? cle.coup - 1 : -1, n = notes[k];
+  if (!cle || !n || n.perte >= cle.perte) return notes;
+  const perte = cle.perte;
+  let note: Note;
+  if (analyses[k]?.engine === 'katago') {
+    const T = SEUILS_KATAGO;
+    note = perte <= T.imprecision ? 'imprecision' : perte <= T.erreur ? 'erreur' : 'grosse';
+  } else {
+    const S = SEUILS_SIMPLE;
+    note = perte <= S.imprecision ? 'imprecision' : perte <= S.erreur ? 'erreur' : 'grosse';
+  }
+  const out = notes.slice();
+  out[k] = { ...n, note, perte };
+  return out;
+}
+
 /** Phrase de Mochi sur le moment clé, au tutoiement. `adversaire` : nom de l'ordi ; sans lui, partie à deux. */
 export function phraseMomentCle(cle: MomentCle, positions: Position[], adversaire?: string): string {
   const avant = positions[cle.coup - 1], c = avant.toPlay, joue = positions[cle.coup].lastMove ?? -1;
