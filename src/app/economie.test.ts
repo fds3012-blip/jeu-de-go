@@ -129,7 +129,7 @@ export function simuler(p: Profil, jours = 30): Releve[] {
 }
 
 const resume = (r: Releve) =>
-  `J${String(r.jour).padStart(2)} · ${String(r.xp).padStart(4)} XP · niv. ${String(r.niveau).padStart(2)} · ${r.badges}/7 badges · série ${String(r.serie).padStart(2)} (gels ${r.gels}) · ${String(r.reussis).padStart(3)} pb · ${r.lecons}/7 leçons · ${r.parties} parties`;
+  `J${String(r.jour).padStart(2)} · ${String(r.xp).padStart(4)} XP · niv. ${String(r.niveau).padStart(2)} · ${r.badges}/7 badges · série ${String(r.serie).padStart(2)} (gels ${r.gels}) · ${String(r.reussis).padStart(3)} pb · ${r.lecons}/${LESSONS.length} leçons · ${r.parties} parties`;
 
 describe('économie de progression : simulation sur 30 jours (#233)', () => {
   const profils = [DIX_MIN, TRENTE_MIN, DIX_MIN_SEMAINE];
