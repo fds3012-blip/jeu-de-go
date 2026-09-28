@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { newPosition, play, type Position } from '../go/rules';
 import { fromLabel } from '../go/coords';
-import { AUCUNE_ERREUR, conseilFiable, courbe, grossesErreurs, phraseErreur, positionsDepuisSgf, rejouerDici, sgfDepuisHistorique } from './revue';
+import { AUCUNE_ERREUR, conseilFiable, courbe, grossesErreurs, phraseErreur, positionsDepuisSgf, rejouerDici, resultatSgf, sgfDepuisHistorique } from './revue';
+import { readSgf } from '../go/sgf';
 
 /** Joue une suite de coups (« E5 », « passe ») sur un 9 × 9 et renvoie l'historique. */
 function partie(coups: string[], size = 9): Position[] {
@@ -149,5 +150,19 @@ describe('courbe', () => {
     const { ligne } = courbe([5, null], 100, 60, 9);
     const ys = ligne.slice(1).split('L').map(s => s.split(' ')[1]);
     expect(ys[0]).toBe(ys[1]);
+  });
+});
+
+describe('résultat dans le SGF (#187)', () => {
+  it("écrit RE avec l'écart exact, l'abandon ou l'égalité", () => {
+    expect(resultatSgf(1, false, 3.5)).toBe('B+3.5');
+    expect(resultatSgf(2, false, 12)).toBe('W+12');
+    expect(resultatSgf(2, true, 0)).toBe('W+R');
+    expect(resultatSgf(0, false, 0)).toBe('0');
+    const h = partie(['E5', 'passe', 'passe']);
+    const texte = sgfDepuisHistorique(h, 6.5, { noir: 'Toi', blanc: 'Pomme', resultat: 'B+18.5' });
+    expect(texte).toContain('RE[B+18.5]');
+    expect(readSgf(texte).result).toBe('B+18.5');
+    expect(positionsDepuisSgf(texte).positions).toHaveLength(h.length);
   });
 });

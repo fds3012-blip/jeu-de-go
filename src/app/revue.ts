@@ -11,12 +11,21 @@ export const REVUE_KEY = 'go.revue.v1';
 
 export interface PartieGardee { sgf: string; adversaire?: string; date: string }
 
-/** SGF de la partie, tiré de l'historique des positions (Noir commence, `tt` = passe). */
-export function sgfDepuisHistorique(history: Position[], komi: number, noms: { noir?: string; blanc?: string } = {}): string {
+/**
+ * Résultat au format SGF (propriété RE, #187) : « B+3.5 », « W+R » (abandon), « 0 » (égalité).
+ * `marge` : écart en points, komi compris (ignoré en cas d'abandon).
+ */
+export function resultatSgf(gagnant: 0 | 1 | 2, abandon: boolean, marge: number): string {
+  if (gagnant === 0 || (!abandon && marge === 0)) return '0';
+  return `${gagnant === 1 ? 'B' : 'W'}+${abandon ? 'R' : String(Math.abs(marge))}`;
+}
+
+/** SGF de la partie, tiré de l'historique des positions (Noir commence, `tt` = passe) ; `resultat` : propriété RE. */
+export function sgfDepuisHistorique(history: Position[], komi: number, noms: { noir?: string; blanc?: string; resultat?: string } = {}): string {
   const size = history[0].size;
   const moves: { color: Color; p: number }[] = [];
   for (let i = 1; i < history.length; i++) moves.push({ color: history[i - 1].toPlay, p: history[i].lastMove ?? -1 });
-  return writeSgf({ size, komi, rules: 'japanese', black: noms.noir, white: noms.blanc, setupBlack: [], setupWhite: [], moves });
+  return writeSgf({ size, komi, rules: 'japanese', black: noms.noir, white: noms.blanc, result: noms.resultat, setupBlack: [], setupWhite: [], moves });
 }
 
 /** Positions successives rejouées depuis le SGF (index 0 : plateau vide). S'arrête au premier coup illégal. */
