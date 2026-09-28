@@ -78,7 +78,7 @@ Issue #166. Source unique : `src/data/analytics.ts` (constante `EVENTS`). Un tes
 
 ## Vérification du 28/09 (#222)
 
-- **Couverture** : les 32 événements de `EVENTS` ont leur ligne (test `analytics.test.ts`). Événements ajoutés la nuit du 27 au 28/09 : `lecon_commencee` (#198), `revue_rejouer` (#186), `installation_proposee` et `installation_acceptee` (#178), `solution_vue` (#197), `revision_faite` (#199). Propriétés et déclencheurs relus dans le code : conformes au tableau.
+- **Couverture** : les 33 événements de `EVENTS` ont leur ligne (test `analytics.test.ts`). Événements ajoutés la nuit du 27 au 28/09 : `lecon_commencee` (#198), `revue_rejouer` (#186), `installation_proposee` et `installation_acceptee` (#178), `solution_vue` (#197), `revision_faite` (#199). Propriétés et déclencheurs relus dans le code : conformes au tableau.
 - **Réception dans PostHog** (lecture seule, 28/09 vers 03 h 30) : aucun de ces six événements n'a encore été reçu, ni `partie_commencee`, `comptage_manuel`, ni la propriété `mesure` (#166). Dernier événement reçu : 28/09 à 00 h 06. Soit aucun trafic depuis les déploiements, soit un souci de version : à revérifier au premier trafic réel.
 - **Requêtes** : chaque événement cité dans `tableaux-de-bord.md` existe dans `EVENTS` ou dans la liste « À ajouter plus tard » (test `src/data/tableauxDeBord.test.ts`).
 
