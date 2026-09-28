@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Game } from './Game';
 import { LearnHome, LessonPlayer } from './Learn';
 import { LESSONS } from '../content/lessons';
-import { Puzzles } from './Puzzles';
+import { Puzzles, SOLVED_KEY } from './Puzzles';
 import { readLocal, writeLocal, useGelsServeur, useLessonProgress, useProfil, useSerie, useSession } from './hooks';
 import { supabase } from '../data/supabase';
 import { useSettings, useStored } from './settings';
@@ -34,6 +34,9 @@ import { BarreNav, type Onglet } from '../ui/IconesNav';
 import { BarreNiveau, FeteNiveau } from '../ui/Niveau';
 import { annonceKomi, equilibrage, KOMI_NORMAL, partiesOrdi, type Equilibrage } from './equilibrage';
 import { AnnonceXp } from '../ui/PastilleXp';
+import { SeriePratique } from './SeriePratique';
+import { THEMES_DE_LECON, serieDeLecon } from '../content/themes';
+import type { Puzzle } from '../data/puzzles';
 
 const PROBLEMES_LOCAUX = parsePuzzles(ALL_PUZZLES);
 
@@ -78,6 +81,8 @@ export function App() {
   const [playing, setPlaying] = useState<false | 'ordi' | 'deux'>(false);
   const [adversaire, setAdversaire] = useStored<OpponentId>('go.adversaire.v1', 'pomme');
   const [lessonId, setLessonId] = useState<string | null>(null);
+  // Série de 3 problèmes ouverte depuis la fin d'une leçon (#200), figée à l'ouverture.
+  const [serie3, setSerie3] = useState<Puzzle[] | null>(null);
   const session = useSession(supabase);
   const { progress, state: syncState, record } = useLessonProgress(supabase, session?.user.id);
   const done = LESSONS.filter(l => (progress[l.id] ?? 0) >= l.steps.length).length;
@@ -177,7 +182,7 @@ export function App() {
   const [racineProblemes, setRacineProblemes] = useState(0);
   const go = (t: Tab) => {
     if (t === 'problemes' && tab === 'problemes') setRacineProblemes(n => n + 1);
-    setAnnonceGel(null); setRetourSerie(null); setTab(t); setPlaying(false); setLessonId(null); setVueProfil('menu'); window.scrollTo({ top: 0 });
+    setAnnonceGel(null); setRetourSerie(null); setTab(t); setPlaying(false); setLessonId(null); setSerie3(null); setVueProfil('menu'); window.scrollTo({ top: 0 });
   };
 
   const enPartie = tab === 'jouer' && !!playing;
@@ -191,12 +196,25 @@ export function App() {
           onResult={onResult} fin={finEcran} celebrer={settings.celebrations} aide={aideActive(settings.aide, adv.id)} portrait={playing === 'ordi' ? <Sceau id={adv.id} taille={44} /> : undefined} />
       </>
     );
+  } else if (tab === 'apprendre' && serie3) {
+    screen = <SeriePratique problemes={serie3} confirmTouch={settings.confirmTouch} onFin={() => { setSerie3(null); window.scrollTo({ top: 0 }); }} />;
   } else if (tab === 'apprendre' && lesson) {
     const leconSuivante = LESSONS[LESSONS.indexOf(lesson) + 1];
+    // Fin de leçon (#200) : 3 problèmes du thème, et en fin de chapitre une partie contre le premier adversaire.
+    const themes = THEMES_DE_LECON[lesson.id] ?? [];
+    const premier = OPPONENTS[0];
     screen = <LessonPlayer key={lesson.id} lesson={lesson} start={(progress[lesson.id] ?? 0) % lesson.steps.length} confirmTouch={settings.confirmTouch}
       progress={progress} celebrer={(settings as Partial<{ celebrations: boolean }>).celebrations !== false}
       onProgress={n => record(lesson.id, n)} onExit={() => { setLessonId(null); window.scrollTo({ top: 0 }); }}
-      onNext={leconSuivante && (() => { setLessonId(leconSuivante.id); window.scrollTo({ top: 0 }); })} />;
+      onNext={leconSuivante && (() => { setLessonId(leconSuivante.id); window.scrollTo({ top: 0 }); })}
+      pratique={themes.length ? {
+        themes: themes.map(th => t(`theme.${th}`)),
+        ouvrir: () => {
+          const s = serieDeLecon(lesson.id, PROBLEMES_LOCAUX, new Set(Object.keys(readLocal<Record<string, true>>(SOLVED_KEY, {}))));
+          if (s.length) { setSerie3(s); setLessonId(null); window.scrollTo({ top: 0 }); }
+        },
+      } : undefined}
+      jouer={{ nom: premier.nom, lancer: () => { setLessonId(null); setTab('jouer'); lancer('ordi', premier.id); } }} />;
   } else if (tab === 'apprendre') {
     screen = <LearnHome progress={progress} onOpen={setLessonId} sync={syncState} />;
   } else if (tab === 'problemes') {
