@@ -61,6 +61,8 @@ export const EVENTS = {
   placementCommence: 'placement_commence',
   placementTermine: 'placement_termine',
   placementSaute: 'placement_saute',
+  // Import d'une partie SGF réussi (#286) : `octets` (taille du texte), `coups`, `taille` (plateau), `source` (fichier ou texte).
+  sgfImporte: 'sgf_importe',
 } as const;
 export type AnalyticsEvent = (typeof EVENTS)[keyof typeof EVENTS];
 export type Props = Record<string, string | number | boolean | null | undefined>;
