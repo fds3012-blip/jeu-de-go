@@ -3,6 +3,30 @@ import { EVENTS, track } from '../data/analytics';
 import { GEL_KEY, apresReussite, lireReserve, reconcilier, type Reserve } from './gel';
 import { SERIE_KEY, numeroDuJour, type Serie } from './goDuJour';
 import { readLocal, writeLocal } from './hooks';
+import { RECORD_KEY, avecRecord, constaterPerte, lireRecord, type Perte } from './serieRecord';
+
+export const lireRecordAppareil = () => lireRecord(readLocal<unknown>(RECORD_KEY, null));
+
+/** Garde `jours` dans le record de l'appareil s'il le dépasse (série locale ou série du serveur). Le record ne descend jamais. */
+export function noterRecordAppareil(jours: number): number {
+  const avant = lireRecordAppareil();
+  const apres = avecRecord(avant, jours);
+  if (apres !== avant) writeLocal(RECORD_KEY, apres);
+  return apres.record;
+}
+
+/**
+ * À appeler à l'ouverture, juste après `reconcilierAppareil` (issue #212) : constate une série perdue, une seule fois,
+ * et envoie `serie_perdue`. Le record garde la série perdue. Idempotent.
+ */
+export function constaterPerteAppareil(maintenant: Date): Perte | null {
+  const numero = numeroDuJour(maintenant);
+  const avant = lireRecordAppareil();
+  const { etat, perte } = constaterPerte(readLocal<Serie | null>(SERIE_KEY, null), avant, numero);
+  if (etat.record !== avant.record || etat.perdue !== avant.perdue) writeLocal(RECORD_KEY, etat);
+  if (perte) track(EVENTS.seriePerdue, { jours: perte.jours, record: perte.record, jours_manques: perte.manques, gels: lireReserveAppareil().gels });
+  return perte;
+}
 
 export const lireReserveAppareil = (): Reserve => lireReserve(readLocal<unknown>(GEL_KEY, null));
 
@@ -27,6 +51,7 @@ export function reconcilierAppareil(maintenant: Date): number | null {
 export function reussirAppareil(serie: Serie | null, numero: number): { serie: Serie; gagne: boolean } {
   const r = apresReussite(serie, lireReserveAppareil(), numero);
   writeLocal(SERIE_KEY, r.serie);
+  noterRecordAppareil(r.serie.jours);
   if (r.gagne) {
     writeLocal(GEL_KEY, r.reserve);
     track(EVENTS.gelGagne, { serie: r.serie.jours, gels: r.reserve.gels });
