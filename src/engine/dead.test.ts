@@ -5,7 +5,10 @@ import { deadStones } from './dead';
 import { chooseMove } from './simple';
 import { CAS } from './dead.fixtures';
 
-const trouve = (pos: Position, seed = 7) => deadStones(pos, { seed });
+// Recette du 28/09 (#195) : budget de temps levé, seul le plafond de simulations (600 en 9 × 9, 400 en 13 × 13) arrête
+// l'estimation. Une graine donne donc toujours les mêmes pierres mortes, quelle que soit la charge de la machine.
+// La vitesse réelle (moins de 300 ms en 9 × 9, moins d'1 s en 13 × 13) est vérifiée dans vitesse.test.ts.
+const trouve = (pos: Position, seed = 7) => deadStones(pos, { seed, timeMs: Number.POSITIVE_INFINITY });
 
 describe('pierres mortes (deadStones)', () => {
   it('au moins 7 positions en 9 × 9 et 3 en 13 × 13', () => {
@@ -19,16 +22,8 @@ describe('pierres mortes (deadStones)', () => {
       for (const seed of [1, 7]) expect(trouve(pos, seed)).toEqual([...marked].sort((a, b) => a - b));
       // Même réponse quel que soit le joueur au trait.
       expect(trouve({ ...pos, toPlay: 2 })).toEqual([...marked].sort((a, b) => a - b));
-    });
+    }, 20000);
   }
-
-  it('assez rapide : moins de 300 ms en 9 × 9, moins d’1 s en 13 × 13', () => {
-    for (const { rows } of CAS) {
-      const { pos } = fromRows(rows, 1), t0 = performance.now();
-      deadStones(pos);
-      expect(performance.now() - t0).toBeLessThan(rows.length === 9 ? 300 : 1000);
-    }
-  });
 
   it('plateau vide : rien de mort', () => {
     expect(deadStones(fromRows(Array(9).fill('.........')).pos)).toEqual([]);
@@ -41,6 +36,6 @@ describe('pierres mortes (deadStones)', () => {
     const r = play(pos, -1) as Position; // Noir passe, Blanc au trait
     expect(score(r, 6.5, 'chinese').winner).toBe(1);
     expect(score(r, 6.5, 'chinese', new Set(deadStones(r))).winner).toBe(2);
-    expect(chooseMove(r, 'caillou', { seed: 3 })).toBe(-1);
+    expect(chooseMove(r, 'caillou', { seed: 3, timeMs: Number.POSITIVE_INFINITY, playouts: 2000 })).toBe(-1);
   });
 });

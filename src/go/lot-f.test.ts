@@ -8,9 +8,13 @@ import LOT_F from '../content/lots/f-semeai-2';
 import { ALL_PUZZLES } from '../content/puzzles';
 import { checkAnswer, parsePuzzles, startOf } from '../data/puzzles';
 import { fromLabel, toLabel } from './coords';
-import { canonical, captureAfter, saveAfter, winningMoves } from './lecteurs-lot-f';
+import { canonical, captureAfter, saveAfter } from './lecteurs-lot-f';
+import { cederLaMain, preuveParCoup } from './preuve-par-coup';
 import { groupAt, play, type Position } from './rules';
 import { captureWorks } from './tactics';
+
+// Recette du 28/09 (#195) : longues preuves synchrones, voir cederLaMain (preuve-par-coup.ts).
+beforeEach(cederLaMain);
 
 const all = parsePuzzles(LOT_F);
 const pz = (id: string) => all.find(p => p.id === id)!;
@@ -64,14 +68,11 @@ describe('lot F : courses aux libertés, coupes et connexions', () => {
     }
   });
 
-  it('les coups gagnants sont exactement les réponses acceptées', () => {
-    for (const p of all) {
-      const { pos, marked } = startOf(p);
-      const test = (m: number) => (GOAL[p.id] === 'capture' ? captureAfter(pos, m, marked) : saveAfter(pos, m, marked));
-      const found = winningMoves(pos, test).map(m => toLabel(m, 9)).sort();
-      expect(found, p.id).toEqual(p.answers.map(a => toLabel(a, 9)).sort());
-    }
-  }, 30000);
+  // Recette du 28/09 (#195) : preuve déclarée coup par coup (voir preuve-par-coup.ts), même vérification qu'avant.
+  for (const p of all) {
+    const { pos, marked } = startOf(p);
+    preuveParCoup(p.id, pos, p.answers, m => (GOAL[p.id] === 'capture' ? captureAfter(pos, m, marked) : saveAfter(pos, m, marked)));
+  }
 
   it('la migration insère exactement ces problèmes, sans rien modifier', () => {
     const sql = readFileSync(resolve(__dirname, '../../supabase/migrations/20260927190600_lot_f_semeai.sql'), 'utf8');
