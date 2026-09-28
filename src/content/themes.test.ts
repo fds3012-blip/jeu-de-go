@@ -6,7 +6,7 @@ import { traduire } from './i18n';
 
 describe('thèmes des problèmes (#200)', () => {
   it('chaque problème de la banque a un thème, et un seul', () => {
-    expect(ALL_PUZZLES).toHaveLength(129);
+    expect(ALL_PUZZLES.length).toBeGreaterThanOrEqual(129); // la banque grandit lot après lot : chaque nouveau problème doit recevoir un thème
     for (const p of ALL_PUZZLES) expect(themeDe(p.id), p.id).toBeDefined();
     // Aucun identifiant en double dans la table, aucun identifiant inconnu.
     const ids = Object.keys(THEME_DU_PROBLEME);

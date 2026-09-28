@@ -1,5 +1,5 @@
 // Thèmes des problèmes (issue #200) : de la leçon à la pratique.
-// Chaque problème de la banque (les 129 de ALL_PUZZLES) reçoit un thème, d'après ce qu'il enseigne : le coup juste
+// Chaque problème de la banque (tous ceux de ALL_PUZZLES) reçoit un thème, d'après ce qu'il enseigne : le coup juste
 // et son explication, pas seulement le titre. Les fichiers de lots et la base ne changent pas : le thème vit ici.
 // Vérifié par src/content/themes.test.ts (chaque problème a un thème, chaque thème de leçon a assez de problèmes).
 
@@ -30,15 +30,15 @@ export const THEMES: readonly Theme[] = [
 ];
 
 const PAR_THEME: Record<Theme, readonly string[]> = {
-  capture: ['a01', 'a02', 'a03', 'a04', 'a05', 'a06', 'a15', 'a16', 'a18', 'a20', 'b1', 'e01', 'e02'],
-  atari: ['a07', 'a08', 'a10', 'a17', 'a19', 'b4', 'b5', 'e03', 'e05', 'e06', 's1', 's3'],
-  'double-atari': ['a11', 'a13', 'b3', 'c1', 'e10', 'j01', 'j04'],
-  bord: ['a09', 'a12', 'b2', 'e04', 'e07', 'e08', 'e09', 'e11', 'e12', 'e13', 'e14', 'e15', 'k01', 'k02'],
+  capture: ['a01', 'a02', 'a03', 'a04', 'a05', 'a06', 'a15', 'a16', 'a18', 'a20', 'b1', 'e01', 'e02', 'n01', 'n02', 'n16'],
+  atari: ['a07', 'a08', 'a10', 'a17', 'a19', 'b4', 'b5', 'e03', 'e05', 'e06', 's1', 's3', 'n03', 'n04', 'n05', 'n08', 'n09', 'n13', 'n14', 'n17'],
+  'double-atari': ['a11', 'a13', 'b3', 'c1', 'e10', 'j01', 'j04', 'n15'],
+  bord: ['a09', 'a12', 'b2', 'e04', 'e07', 'e08', 'e09', 'e11', 'e12', 'e13', 'e14', 'e15', 'k01', 'k02', 'n06', 'n07', 'n11', 'n12'],
   echelle: ['b6', 'c2', 'i09', 'k03', 'k05', 'k06', 'k07'],
   filet: ['c3', 'i10', 'k09'],
   'relier-couper': [
     'd01', 'd02', 'd03', 'd04', 'd06', 'f01', 'f03', 'f04', 'f05', 'f06', 'f07',
-    'g01', 'g02', 'g03', 'g04', 'g05', 'h01', 'j12', 'k08', 'k10', 's2', 's4',
+    'g01', 'g02', 'g03', 'g04', 'g05', 'h01', 'j12', 'k08', 'k10', 's2', 's4', 'n10', 'n18',
   ],
   'vie-mort': [
     'i01', 'i02', 'i03', 'i04', 'i05', 'i06', 'i07', 'i08',
