@@ -74,7 +74,7 @@ export function Conditions({ onRetour }: { onRetour: () => void }) {
       <div className="lignes">
         <LigneInterrupteur libelle="Rapports de bugs et suivi détaillé" aide="Seulement avec ton accord. Refuser ne t’enlève aucune fonction."
           actif={consent === 'accepte'} onChange={v => setConsent(v ? 'accepte' : 'refuse')} />
-        <LigneInterrupteur libelle="Comptage anonyme des parties" aide="Sans cookie ni identifiant. Tu peux le couper."
+        <LigneInterrupteur libelle="Comptage anonyme des parties" aide="Anonyme, sans cookie. Tu peux le couper."
           actif={!oppose} onChange={v => setOpposition(!v)} />
       </div>
       <div className="conditions-texte">
@@ -82,8 +82,8 @@ export function Conditions({ onRetour }: { onRetour: () => void }) {
         <Repli titre="Ce qu’on garde" ouvert>
           <p><strong>Sur ton téléphone{FINE}:</strong> tes réglages et ta progression. L’ordi calcule ses coups ici{FINE}: tes parties contre lui ne partent pas.</p>
           <p><strong>Si tu crées un compte{FINE}:</strong> ton e-mail, ton pseudo, ta cote, tes parties en ligne, tes badges. Chez Supabase, à Paris.</p>
-          <p><strong>Comptage anonyme{FINE}:</strong> quelques événements (partie jouée, leçon finie) chez PostHog, dans l’Union européenne. Sans cookie, sans identifiant, sans ton adresse IP.</p>
-          <p><strong>Seulement si tu dis oui{FINE}:</strong> les rapports de bug chez Sentry, et un identifiant pour voir si tu reviens jouer. Jamais ton e-mail ni tes coups.</p>
+          <p><strong>Comptage anonyme{FINE}:</strong> quelques événements (partie jouée, leçon finie) chez PostHog, dans l’Union européenne. Sans cookie ni lien avec ton compte{FINE}: le numéro tiré au hasard change à chaque ouverture de l’app. Ton adresse IP n’est pas gardée, et elle ne sert pas à te localiser.</p>
+          <p><strong>Seulement si tu dis oui{FINE}:</strong> les rapports de bug chez Sentry, et un numéro gardé sur ton téléphone pour voir si tu reviens jouer. Jamais ton e-mail ni tes coups. Tu changes d’avis{FINE}? Ce numéro est effacé.</p>
         </Repli>
         <Repli titre="Pourquoi">
           <p>Ton compte sert à te connecter, à jouer en ligne et à garder ta progression partout.</p>
@@ -91,7 +91,7 @@ export function Conditions({ onRetour }: { onRetour: () => void }) {
           <p>Le site est hébergé par Vercel. Personne d’autre ne reçoit tes données.</p>
         </Repli>
         <Repli titre="Combien de temps">
-          <p><strong>Compte{FINE}:</strong> tant qu’il existe. Tu peux le faire effacer quand tu veux.</p>
+          <p><strong>Compte{FINE}:</strong> tant qu’il existe. Supprime-le quand tu veux{FINE}: Profil, sous ton compte.</p>
           <p><strong>Comptage et suivi{FINE}:</strong> 1 an, puis effacés.</p>
           <p><strong>Sur ton téléphone{FINE}:</strong> jusqu’à ce que tu effaces les données du site ou l’app.</p>
         </Repli>
