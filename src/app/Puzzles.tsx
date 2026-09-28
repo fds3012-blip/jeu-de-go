@@ -452,7 +452,7 @@ function Partager({ numero, essais, serie }: { numero: number; essais: number; s
 
 interface DuJourInfo { numero: number; serie: number; defiChange: boolean; gelGagne: boolean; celebrer: boolean }
 
-export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating, onAttempt, onSolved, onNext, onExit, onSolutionVue, retour, surtitre }: {
+export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating, onAttempt, onSolved, onNext, onExit, onSolutionVue, retour, surtitre, exercice = true }: {
   puzzle: Puzzle; rang: number; duJour?: DuJourInfo; confirmTouch: boolean; rated: boolean; rating?: number;
   onAttempt: (ok: boolean) => Promise<{ ok: true; value: number } | { ok: false; error: string } | null>;
   onSolved: (essais: number, aide: NiveauAide) => void; onNext?: () => void; onExit: () => void;
@@ -460,9 +460,11 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating
   onSolutionVue?: (essais: number) => void;
   /** Série de fin de leçon (#200) : libellé du retour (« Retour au chemin ») et surtitre (« Entraînement, 1 sur 3 »). */
   retour?: string; surtitre?: string;
+  /** Faux quand l'exercice est fini alors que le lecteur reste affiché (dernier problème d'une série, #250 M9). */
+  exercice?: boolean;
 }) {
   // #236 (N2) : un problème est un exercice ; aucune fête ne se pose sur sa consigne (l'XP se lit dans la feuille).
-  useExercice();
+  useExercice(exercice);
   const start = useMemo(() => startOf(puzzle), [puzzle]);
   // Aide graduée (#197) : indice, puis réfutation, puis réponse.
   const [aide, setAide] = useState<NiveauAide>(0);

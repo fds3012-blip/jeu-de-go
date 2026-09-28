@@ -120,6 +120,14 @@
 @media (max-height: 600px) {
   .partie > .partie-plateau { width: clamp(min(220px, 100% + 2 * var(--gouttiere) - 8px), calc(100dvh - 340px), calc(100% + 2 * var(--gouttiere) - 8px)); }
 }
+/* Écrans étroits et bas (320 × 640), première partie (#250, M6) : sur 288 px, la bulle d'intro (but, komi) passe à neuf
+   lignes et montait sur les lignes 1 et 2. Le plateau de cette partie cède 60 px et se pose en haut de la colonne :
+   la bulle tient sous lui. Même taille jusqu'à la fin de la partie, rien ne bouge quand la bulle s'efface. */
+@media (max-width: 359px) and (max-height: 700px) {
+  .partie:has(> .partie-mochi > .coach-intro)::before { flex-grow: 0; }
+  .partie:has(> .partie-mochi > .coach-intro) > .partie-plateau {
+    width: clamp(min(220px, 100% + 2 * var(--gouttiere) - 8px), calc(100dvh - 400px), calc(100% + 2 * var(--gouttiere) - 8px)); }
+}
 
 /* ---------- Coach Mochi : une phrase à la fois ---------- */
 .coach { display: flex; gap: 12px; align-items: center; margin-top: var(--space-3); background: var(--surface); border-radius: var(--radius); padding: 10px 14px 10px 10px; min-height: 60px; }
