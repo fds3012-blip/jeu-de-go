@@ -50,6 +50,8 @@ const KOMI_KEY = 'go.komi-explique.v1';
 // `fin` complète l'écran de fin (src/ui/FinPartie.tsx) : bilan, leçon de Mochi et action principale choisis par l'écran parent.
 interface Props {
   size: number; komi: number; confirmTouch: boolean; onExit: () => void; opponent?: Opponent; intro?: ReactNode;
+  /** « Analyser une autre partie » (#286) : ouvre l'import SGF du Profil, depuis la revue. */
+  onImporter?: () => void;
   onResult?: (winner: 0 | 1 | 2, stats: StatsPartie) => void;
   fin?: { bilan: ReactNode; mochi: ReactNode; action: ReactNode; onAccueil: () => void };
   /** Réglage « Célébrations » : carillon, vibration et confettis après une victoire. */
@@ -70,7 +72,7 @@ interface Props {
   guidee?: { depart: number; onCran?: (cran: number) => void };
 }
 
-export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, onResult, fin, aiKomi = komi, portrait, celebrer = true, aide = true, avantage = true, accommodant = false, guidee }: Props) {
+export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, onResult, fin, aiKomi = komi, portrait, celebrer = true, aide = true, avantage = true, accommodant = false, guidee, onImporter }: Props) {
   const [history, setHistory] = useState<Position[]>(() => [newPosition(size)]);
   const [phase, setPhase] = useState<'play' | 'score' | 'end'>('play');
   const [dead, setDead] = useState<Set<number>>(new Set());
@@ -488,7 +490,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
 
   if (phase === 'end' && relecture !== null && sgf) {
     // Revue de la partie (issue #34) : erreurs, courbe d'avantage, « Rejouer d'ici ».
-    return <Revue sgf={sgf} joueur={ai ? 1 : null} adversaire={ai?.nom} onRetour={() => setRelecture(null)} onRejouer={rejouer} confirmTouch={confirmTouch} />;
+    return <Revue sgf={sgf} joueur={ai ? 1 : null} adversaire={ai?.nom} onRetour={() => setRelecture(null)} onRejouer={rejouer} confirmTouch={confirmTouch} onImporter={onImporter} />;
   }
 
   if (phase === 'end') {

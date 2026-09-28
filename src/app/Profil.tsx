@@ -3,6 +3,7 @@
 // les réglages passent derrière une ligne « Réglages » (sous-vue), comme chez chess.com ; ligne « Installer l'app ».
 import { Account } from './Account';
 import { Conditions } from './Confidentialite';
+import { ImportSgf } from './ImportSgf';
 import { choisirThemeGoban, useIdThemeGoban, type Settings } from './settings';
 import { lireXp, niveauDe, niveauRequis, themeDebloque } from './xp';
 import { ORDRE_THEMES, THEMES_GOBAN } from '../ui/boardArt';
@@ -47,7 +48,7 @@ function useDonnees(serie: number, record: number, parcours: Parcours) {
   return donnees;
 }
 
-export type VueProfil = 'menu' | 'reglages' | 'installer' | 'compte' | 'conditions';
+export type VueProfil = 'menu' | 'reglages' | 'installer' | 'compte' | 'conditions' | 'importer';
 
 // Libellés traduits (#167) : calculés à l'affichage, dans la langue de l'interface.
 const themes = () => [
@@ -96,6 +97,8 @@ function SousVue({ id, titre, onRetour, children }: { id: string; titre: string;
 export function Profil({ vue, onVue, settings, set, profil, serie, record = 0, parcours, placement, onPlacement }: Props) {
   const retour = () => { onVue('menu'); window.scrollTo({ top: 0 }); };
   if (vue === 'conditions') return <Conditions onRetour={retour} />;
+  // #286 : analyser une partie jouée ailleurs (SGF), action secondaire du Profil.
+  if (vue === 'importer') return <ImportSgf onRetour={retour} pseudo={profil?.pseudo} confirmTouch={settings.confirmTouch} />;
   if (vue === 'compte') return <SousVue id="compte-titre" titre={t('profil.compte')} onRetour={retour}><Account /></SousVue>;
   if (vue === 'reglages') return <SousVue id="reglages-titre" titre={t('profil.reglages')} onRetour={retour}><Reglages settings={settings} set={set} /></SousVue>;
   if (vue === 'installer') {
@@ -144,6 +147,7 @@ function Menu({ onVue, profil, serie, record = 0, parcours, placement, onPlaceme
           ? <LigneLien libelle={t('placement.profil')} valeur={t('placement.profilValeur', { kyu: placement.kyu, date: dateCourte(placement.date) })} onClick={onPlacement} />
           : <LigneLien libelle={t(placement?.fait ? 'placement.profilRefaire' : 'placement.profilFaire')} onClick={onPlacement} />)}
         <LigneLien libelle={t('profil.reglages')} valeur={t('profil.reglagesResume')} onClick={() => onVue('reglages')} />
+        <LigneLien libelle={t('profil.importer')} valeur={t('profil.importerResume')} onClick={() => onVue('importer')} />
         {proposerInstallation && <LigneLien libelle={t('profil.installer')} onClick={() => onVue('installer')} />}
         <LigneLien libelle={t('profil.compte')} valeur={profil?.pseudo ?? (profil ? undefined : t('profil.seConnecter'))} onClick={() => onVue('compte')} />
         <LigneLien libelle={t('profil.conditions')} onClick={() => onVue('conditions')} />

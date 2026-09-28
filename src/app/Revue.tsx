@@ -40,10 +40,16 @@ interface Props {
   /** Nom de l'adversaire (contre l'ordi), pour les phrases. */
   adversaire?: string;
   onRetour: () => void;
-  /** « Rejouer d'ici » : historique jusqu'à la position choisie. */
-  onRejouer: (history: Position[]) => void;
+  /** « Rejouer d'ici » : historique jusqu'à la position choisie. Absent (partie importée, #286) : pas de « Rejouer d'ici ». */
+  onRejouer?: (history: Position[]) => void;
   /** Réglage « confirmer au doigt » : pour « Rejoue cette erreur ». */
   confirmTouch?: boolean;
+  /** Partie importée (#286) : visites de KataGo par position (limitées en 19 × 19), sans la confirmation des Brillants. */
+  visites?: number;
+  /** Libellé du bouton « ‹ » (par défaut : retour au bilan). */
+  retour?: string;
+  /** « Analyser une autre partie » (#286) : action secondaire, en bas de la revue. */
+  onImporter?: () => void;
 }
 
 /** « Rejoue cette erreur » en cours : le problème, le nombre d'essais, le dernier coup faux, la réussite. */
@@ -53,7 +59,7 @@ const L = 300, H = 64; // courbe : repère du viewBox
 /** Lignes du tableau du bilan, du meilleur au pire (Solide seulement sans KataGo, Brillant seulement s'il y en a). */
 const LIGNES: Note[] = ['brillant', 'meilleur', 'excellent', 'bon', 'solide', 'imprecision', 'erreur', 'grosse'];
 
-export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTouch = false }: Props) {
+export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTouch = false, visites, retour, onImporter }: Props) {
   const { positions, komi, resultat } = useMemo(() => positionsDepuisSgf(sgf), [sgf]);
   const n = positions.length - 1, size = positions[0].size;
   const [i, setI] = useState(Math.min(1, n));
@@ -72,6 +78,10 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
   // Issue #186 : la revue s'ouvre sur le moment clé dès qu'il est connu, sauf si le joueur a déjà navigué.
   const [enCle, setEnCle] = useState(false);
   const navigue = useRef(false);
+  // Analyse arrêtée par le joueur (#286) : les positions restantes n'ont pas d'estimation.
+  const arretee = useRef(false);
+  const [arret, setArret] = useState(false);
+  const mode = visites ? 'import' : adversaire ? 'ordi' : 'deux';
   const analysees = analyses.length;
   const finie = analysees > n;
   const avances = useMemo(() => analyses.map(a => a?.lead ?? null), [analyses]);
@@ -91,7 +101,7 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
     setI(cle.coup); setChoisie(null); setEnCle(true); setResume(false);
   }, [cle]);
 
-  useEffect(() => { track(EVENTS.revueOuverte, { coups: n, taille: size, mode: adversaire ? 'ordi' : 'deux' }); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { track(EVENTS.revueOuverte, { coups: n, taille: size, mode }); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Analyse dans le Worker du moteur, une position après l'autre. Le moteur est choisi une fois pour toutes
   // (KataGo s'il est prêt ou en cache, sinon le moteur simple) : deux moteurs ne se comparent pas.
@@ -102,12 +112,14 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
       const out: (AnalyseRevue | null)[] = [];
       for (const p of positions) {
         let a: AnalyseRevue | null;
-        try { a = await analyseRevue(p, komi, { kataGo }); } catch { a = null; }
-        if (!vivant) return;
+        try { a = await analyseRevue(p, komi, { kataGo, visits: visites }); } catch { a = null; }
+        if (!vivant || arretee.current) return;
         out.push(a);
         setAnalyses([...out]);
       }
       // Brillant : chaque candidat est revu par une analyse cinq fois plus longue. Sans confirmation, pas de Brillant.
+      // Partie importée : pas de confirmation (analyse déjà longue sur mobile), donc pas de Brillant.
+      if (visites) return;
       for (const k of candidatsBrillant(positions, out)) {
         const a = await analyseRevue(positions[k], komi, { visits: 160 }).catch(() => null);
         if (!vivant) return;
@@ -115,7 +127,14 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
       }
     })();
     return () => { vivant = false; };
-  }, [positions, komi]);
+  }, [positions, komi, visites]);
+
+  /** « Arrêter l'analyse » (#286) : la revue se contente des positions déjà analysées. */
+  function arreter() {
+    arretee.current = true;
+    setArret(true);
+    setAnalyses(a => [...a, ...Array<AnalyseRevue | null>(Math.max(0, n + 1 - a.length)).fill(null)]);
+  }
 
   // Meilleur coup, seulement là où tu t'es trompé, et seulement avec KataGo : sans lui, aucun conseil (jamais de conseil faux).
   useEffect(() => {
@@ -163,8 +182,8 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
     // Au moment clé, le goban montre le coup fautif ; on rejoue depuis la position juste avant lui.
     const surCle = enCle && !!cle && i === cle.coup;
     const h = rejouerDici(positions, surCle ? cle.coup : i + 1, joueur ?? null);
-    track(EVENTS.revueRejouer, { coup: h.length - 1, cle: surCle, perte: surCle ? Math.round(cle.perte) : null, taille: size, mode: adversaire ? 'ordi' : 'deux' });
-    onRejouer(h);
+    track(EVENTS.revueRejouer, { coup: h.length - 1, cle: surCle, perte: surCle ? Math.round(cle.perte) : null, taille: size, mode });
+    onRejouer?.(h);
   }
   /**
    * « Rejoue cette erreur » : la position avant l'erreur, avec le meilleur coup de KataGo et les coups qui perdent
@@ -217,7 +236,7 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
   else if (i === 0) phrase = tr('revue.debut');
   else {
     const avant = positions[i - 1], c = avant.toPlay, m = q.lastMove ?? -1, cap = q.captures[c] - avant.captures[c];
-    const toi = !!adversaire && c === 1, nom = adversaire ? (c === 1 ? tr('camp.toi') : adversaire) : tr(c === 1 ? 'camp.noir' : 'camp.blanc');
+    const toi = !!adversaire && c === (joueur ?? 1), nom = adversaire ? (c === 1 ? tr('camp.toi') : adversaire) : tr(c === 1 ? 'camp.noir' : 'camp.blanc');
     const point = toLabel(m, size);
     const geste = m < 0 ? (toi ? tr('revue.tuPasses') : tr('revue.passe', { nom })) : toi ? tr('revue.tuJoues', { point }) : tr('revue.joue', { nom, point });
     phrase = `${cap ? tr(toi ? 'revue.tuCaptures' : 'revue.capture', { geste, n: cap }) : geste}.${note ? ` ${phraseNote(note)}` : ''}`;
@@ -271,7 +290,7 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
   return (
     <div className="revue">
       <header className="revue-tete">
-        <button type="button" className="retour" onClick={onRetour} aria-label={tr('revue.retour')}>‹</button>
+        <button type="button" className="retour" onClick={onRetour} aria-label={retour ?? tr('revue.retour')}>‹</button>
         <h2>{tr('fin.revoir')}</h2>
         <span className="revue-compteur">{tr('revue.compteur', { i, n })}</span>
       </header>
@@ -335,11 +354,13 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
         <button type="button" className="btn revue-pas" onClick={() => aller(i + 1)} disabled={i >= n} aria-label={tr('revue.suivant')}><Icone nom="suivant" /></button>
       </div>
 
-      <div className="dock revue-dock">
-        {aTrouver && choisie
-          ? <button type="button" className="cta" onClick={() => rejouerErreur(choisie)}>{tr('revue.rejoueErreur')}</button>
-          : <button type="button" className="cta" onClick={rejouer}>{tr('revue.rejouer')}</button>}
-      </div>
+      {(onRejouer || (aTrouver && choisie)) && (
+        <div className="dock revue-dock">
+          {aTrouver && choisie
+            ? <button type="button" className="cta" onClick={() => rejouerErreur(choisie)}>{tr('revue.rejoueErreur')}</button>
+            : <button type="button" className="cta" onClick={rejouer}>{tr('revue.rejouer')}</button>}
+        </div>
+      )}
       <div className="revue-mochi" aria-live="polite">
         <Mochi size={40} />
         <p>{fr(phrase)}</p>
@@ -370,7 +391,13 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
       </figure>
 
       {!finie ? (
-        <p className="revue-analyse"><Reflexion taille={22} />{fr(tr('revue.analyse', { fait: Math.min(analysees, n + 1), total: n + 1 }))}</p>
+        <div className="revue-avance">
+          <p className="revue-analyse"><Reflexion taille={22} />{fr(tr('revue.analyse', { fait: Math.min(analysees, n + 1), total: n + 1 }))}</p>
+          {visites != null && <>
+            <progress className="revue-barre" max={n + 1} value={Math.min(analysees, n + 1)} aria-label={tr('import.progression')} />
+            <button type="button" className="btn revue-arret" onClick={arreter}>{tr('import.arreter')}</button>
+          </>}
+        </div>
       ) : !erreurs.length && !cle ? (
         <p className={`revue-aucune${nette ? ' revue-diffuses' : ''}`}>{fr(tr(nette ? 'revue.pertesDiffuses' : 'revue.aucuneErreur'))}</p>
       ) : (
@@ -388,6 +415,10 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
         </div>
       )}
         </>
+      )}
+      {arret && <p className="revue-note revue-arretee">{fr(tr('import.arretee'))}</p>}
+      {onImporter && !resume && (
+        <button type="button" className="lien revue-importer" onClick={onImporter}>{tr('import.autre')}</button>
       )}
     </div>
   );

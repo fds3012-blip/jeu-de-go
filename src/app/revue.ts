@@ -4,13 +4,18 @@
 import { groupAt, isLegal, neighbors, newPosition, play, type Color, type Position } from '../go/rules';
 import { readSgf, writeSgf } from '../go/sgf';
 import { toLabel } from '../go/coords';
+import { initialPosition } from '../go/replay';
 import type { AnalyseRevue } from '../engine';
 import { nombre, t } from '../content/i18n';
 
 /** Dernière partie terminée, pour la revue (localStorage ; Supabase viendra plus tard). */
 export const REVUE_KEY = 'go.revue.v1';
 
-export interface PartieGardee { sgf: string; adversaire?: string; date: string }
+/**
+ * Partie gardée pour la revue. Partie importée (#286) : `importee`, le camp du joueur et le nom de l'adversaire
+ * (tiré du SGF, nettoyé) ; elle remplace la dernière partie jouée, comme une partie jouée remplace la précédente.
+ */
+export interface PartieGardee { sgf: string; adversaire?: string; date: string; importee?: boolean; joueur?: Color }
 
 /**
  * Résultat au format SGF (propriété RE, #187) : « B+3.5 », « W+R » (abandon), « 0 » (égalité).
@@ -29,10 +34,13 @@ export function sgfDepuisHistorique(history: Position[], komi: number, noms: { n
   return writeSgf({ size, komi, rules: 'japanese', black: noms.noir, white: noms.blanc, result: noms.resultat, setupBlack: [], setupWhite: [], moves });
 }
 
-/** Positions successives rejouées depuis le SGF (index 0 : plateau vide). S'arrête au premier coup illégal. */
+/**
+ * Positions successives rejouées depuis le SGF (index 0 : position de départ, pierres de handicap comprises, #286).
+ * S'arrête au premier coup illégal.
+ */
 export function positionsDepuisSgf(sgf: string): { positions: Position[]; komi: number; resultat?: string } {
   const g = readSgf(sgf);
-  const positions: Position[] = [newPosition(g.size)];
+  const positions: Position[] = [initialPosition(g) ?? newPosition(g.size)];
   for (const m of g.moves) {
     const cur = positions[positions.length - 1];
     const r = play(m.color === cur.toPlay ? cur : { ...cur, toPlay: m.color, ko: -1 }, m.p);
