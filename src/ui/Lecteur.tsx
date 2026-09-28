@@ -1,6 +1,7 @@
 // Langage commun des lecteurs de leçon et de problème (issue #40, phase 6) :
 // barre du haut (retour, progression), feuille de verdict en bas (jade : juste, hanko : à revoir), coche qui se dessine.
 import type { ReactNode } from 'react';
+import { t } from '../content/i18n';
 import './apprendre.css';
 
 /** Bouton retour, rond, en haut à gauche. Le libellé dit où il mène. */
@@ -17,8 +18,8 @@ export function Retour({ label, onClick }: { label: string; onClick: () => void 
 /** Barre de progression des étapes : un segment par étape, rempli quand l'étape est faite. */
 export function Etapes({ total, faites }: { total: number; faites: number }) {
   return (
-    <div className="etapes" role="progressbar" aria-label="Progression de la leçon" aria-valuemin={0} aria-valuemax={total} aria-valuenow={faites}
-      aria-valuetext={`${faites} étape${faites > 1 ? 's' : ''} faite${faites > 1 ? 's' : ''} sur ${total}`}>
+    <div className="etapes" role="progressbar" aria-label={t('lecteur.progression')} aria-valuemin={0} aria-valuemax={total} aria-valuenow={faites}
+      aria-valuetext={t('lecteur.etapes', { n: faites, total })}>
       {Array.from({ length: total }, (_, i) => <span key={i} className={i < faites ? 'faite' : undefined} />)}
     </div>
   );

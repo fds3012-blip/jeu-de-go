@@ -1,5 +1,6 @@
 // Rythme de la partie contre l'ordi (#187) : délai de réponse « humain » et phrases qui accompagnent la réponse.
 import type { Raison } from '../engine';
+import { t } from '../content/i18n';
 
 /**
  * Pomme « respire » : sa réponse arrive après un délai variable plutôt qu'en 350 ms fixes.
@@ -41,6 +42,6 @@ export function delaiReponse({ hasard, capture = false, forcee = false, respire 
 }
 
 /** Phrase de Mochi quand l'ordi joue au lieu de passer après ta passe (#185, #187). */
-export function messageContinue(nom: string, raison: Pick<Raison, 'texte'>): string {
-  return `${nom} continue : ${raison.texte}.`;
+export function messageContinue(nom: string, raison: Pick<Raison, 'cle' | 'params'>): string {
+  return t('partie.continue', { nom, raison: t(raison.cle, raison.params) });
 }

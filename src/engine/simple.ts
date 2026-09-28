@@ -5,6 +5,7 @@ import { groupAt, neighbors, play, type Color, type Position } from '../go/rules
 import { score } from '../go/score';
 import { coupDeFermeture, frontieresOuvertes, partieAvancee } from '../go/frontieres';
 import { toLabel } from '../go/coords';
+import { traduire } from '../content/i18n';
 import { deadStones } from './dead';
 import { isEye, now, rng, Sim } from './sim';
 
@@ -99,20 +100,28 @@ export interface Raison {
   point: number;
   /** Gain estimé en points (motif « points »). */
   gain?: number;
-  /** Par exemple « il reste une frontière à fermer en E4 » ou « il reste 3 points à prendre en E4 ». */
+  /** En français, par exemple « il reste une frontière à fermer en E4 » ou « il reste 3 points à prendre en E4 ». */
   texte: string;
+  /** Clé du catalogue et paramètres (#167) : l'écran affiche `t(cle, params)` dans la langue de l'interface. */
+  cle: 'raison.frontiere' | 'raison.points';
+  params: { point: string; n: number };
+}
+
+function raison(motif: Raison['motif'], point: number, size: number, n: number, gain?: number): Raison {
+  const cle = motif === 'frontiere' ? 'raison.frontiere' : 'raison.points';
+  const params = { point: toLabel(point, size), n };
+  return { motif, point, ...(gain === undefined ? {} : { gain }), texte: traduire('fr', cle, params), cle, params };
 }
 
 /** Coup de l'ordi (-1 = passe) et, s'il répond à une passe du joueur sans passer, la raison (sinon `null`). */
 export interface CoupExplique { move: number; raison: Raison | null }
 
 export function raisonFrontiere(point: number, size: number): Raison {
-  return { motif: 'frontiere', point, texte: `il reste une frontière à fermer en ${toLabel(point, size)}` };
+  return raison('frontiere', point, size, 1);
 }
 
 export function raisonPoints(point: number, gain: number, size: number): Raison {
-  const n = Math.max(1, Math.round(gain));
-  return { motif: 'points', point, gain, texte: `il reste ${n === 1 ? 'un point' : `${n} points`} à prendre en ${toLabel(point, size)}` };
+  return raison('points', point, size, Math.max(1, Math.round(gain)), gain);
 }
 
 /**

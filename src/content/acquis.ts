@@ -1,6 +1,9 @@
 // Fin de leçon (issue #40, phase 6) : ce que le joueur sait faire maintenant, en une phrase.
 // Texte d'interface seulement : les positions et les réponses des leçons ne changent pas (content/lessons.fr.js).
 
+import { t } from './i18n';
+
+/** Textes d'origine (français), comparés au catalogue par un test. */
 export const ACQUIS: Record<string, string> = {
   l1: 'Tu sais compter les libertés d’un groupe et le capturer.',
   l2: 'Tu repères une pierre en atari, pour la prendre ou pour la sauver.',
@@ -11,7 +14,10 @@ export const ACQUIS: Record<string, string> = {
   l7: 'Tu sais fermer tes frontières, passer au bon moment et compter la partie.',
 };
 
-/** Phrase de fin d'une leçon ; une phrase générale si la leçon n'en a pas. */
+const IDS = ['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7'] as const;
+const connu = (id: string): id is (typeof IDS)[number] => (IDS as readonly string[]).includes(id);
+
+/** Phrase de fin d'une leçon dans la langue de l'interface (#167) ; une phrase générale si la leçon n'en a pas. */
 export function acquis(id: string): string {
-  return ACQUIS[id] ?? 'Une leçon de plus dans ta poche.';
+  return connu(id) ? t(`acquis.${id}`) : t('acquis.defaut');
 }
