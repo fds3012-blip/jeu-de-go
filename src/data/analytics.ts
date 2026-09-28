@@ -38,6 +38,8 @@ export const EVENTS = {
   // Série protégée (issue #76) : gel gagné tous les 7 jours de série, gel consommé par un jour manqué.
   gelGagne: 'gel_gagne',
   gelUtilise: 'gel_utilise',
+  // Rien de gagné ne se perd (issue #212) : série perdue constatée à l'ouverture, une fois par série. Dénominateur du retour à J+7.
+  seriePerdue: 'serie_perdue',
   // Progression (issue #109) : XP gagnés (agrégés sur quelques secondes) et niveau franchi.
   xpGagne: 'xp_gagne',
   niveauAtteint: 'niveau_atteint',
