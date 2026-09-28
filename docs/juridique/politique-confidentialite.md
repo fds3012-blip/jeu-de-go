@@ -64,7 +64,7 @@ Ces données sont écrites dans le stockage local (`localStorage`) de ton naviga
 | Parties contre l'ordi | `go.parties.v1`, `go.bilan.v1`, `go.adversaire.v1` | Nombre de parties, victoires et défaites par adversaire, dernier adversaire choisi |
 | Revue et erreurs | `go.revue.v1`, `go.erreurs.v1` | Dernière partie terminée (coups au format SGF, date), jusqu'à 30 erreurs à rejouer |
 | Explications déjà vues | `go.intro-but.v1`, `go.atari-explique.v1`, `go.komi-explique.v1`, `go.passer-explique.v1` | Pour ne pas répéter une explication |
-| Installation | `go.installation.v1`, `go.premiere-victoire.v1`, `go.retours.v1` | Proposition d'installer l'app déjà montrée, refusée ou acceptée ; repère de première victoire ; nombre de jours d'ouverture, pour proposer l'installation au 2e retour (#214) |
+| Installation | `go.installation.v1`, `go.premiere-victoire.v1`, `go.retours.v1`, `go.annonce-du-jour.v1` | Proposition d'installer l'app déjà montrée, refusée ou acceptée ; repère de première victoire ; nombre de jours d'ouverture, pour proposer l'installation au 2e retour (#214) ; jour de la dernière annonce de Mochi, pour ne pas proposer l'installation le même jour (#236) |
 | Réseau de l'IA | Cache du navigateur `katago-reseaux-v1` | Le réseau de KataGo (fichier public), gardé pour jouer hors ligne. Aucune donnée personnelle |
 | Suivi détaillé (PostHog) | Stockage géré par PostHog (`ph_…_posthog`) | Identifiant tiré au hasard. **Écrit seulement si tu as dit « Oui »** (section 3.3) |
 

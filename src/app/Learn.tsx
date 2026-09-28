@@ -24,6 +24,7 @@ import { gagnerXp } from './xp';
 import { validerDefi } from './defiAppareil';
 import { CHAPITRES_A_VENIR, LIGNE, actionsFin, boutonChemin, etapes, finDeChapitre, finDeLecon, trace, traceJusqua, type ActionFin, type Etape, type Progression } from './apprendre';
 import { t } from '../content/i18n';
+import { useExercice } from '../ui/celebrations';
 import '../ui/apprendre.css';
 
 function lineOf(p: number, n: number) { const x = p % n, y = Math.floor(p / n); return Math.min(x, y, n - 1 - x, n - 1 - y); }
@@ -196,6 +197,8 @@ export function LessonPlayer({ lesson, start, confirmTouch, progress = {}, celeb
   /** Choix faux déjà touchés au quiz (#198) : ils restent marqués, les autres restent touchables. */
   const [faux, setFaux] = useState<number[]>([]);
   const [fini, setFini] = useState(false);
+  // #236 (N2) : les étapes sont un exercice ; l'XP et la fête de niveau attendent l'écran de fin.
+  useExercice(!fini);
   const step = lesson.steps[idx];
   const { pos, marked } = useMemo(() => fromRows(step.rows), [step]);
   const owner = useMemo(() => (step.kind === 'quiz' && step.terr ? score(pos, 0, 'japanese').owner : undefined), [step, pos]);

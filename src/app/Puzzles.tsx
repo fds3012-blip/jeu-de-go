@@ -37,6 +37,8 @@ import { goDuJourFaitAppareil, validerDefi } from './defiAppareil';
 import { RevisionDuJour } from '../ui/RevisionDuJour';
 // `t` désigne déjà un palier dans ce fichier : la traduction s'appelle `tr` (#167).
 import { t as tr } from '../content/i18n';
+import { useExercice } from '../ui/celebrations';
+import { XpEnLigne } from '../ui/PastilleXp';
 
 const LOCAL_PUZZLES = parsePuzzles(ALL_PUZZLES);
 export const SOLVED_KEY = 'go.problemes.v1';
@@ -456,6 +458,8 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating
   /** Série de fin de leçon (#200) : libellé du retour (« Retour au chemin ») et surtitre (« Entraînement, 1 sur 3 »). */
   retour?: string; surtitre?: string;
 }) {
+  // #236 (N2) : un problème est un exercice ; aucune fête ne se pose sur sa consigne (l'XP se lit dans la feuille).
+  useExercice();
   const start = useMemo(() => startOf(puzzle), [puzzle]);
   // Aide graduée (#197) : indice, puis réfutation, puis réponse.
   const [aide, setAide] = useState<NiveauAide>(0);
@@ -613,7 +617,7 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating
             <ProposerInstallation moment="go_du_jour" />
           </>
         : <>{suivantBtn}<button className="lien" onClick={showLine}>{tr('pb.voirSuite')}</button></>}>
-        <p>{fr(answer.text)}</p>{ligneCote}
+        <p>{fr(answer.text)}</p>{ligneCote}<XpEnLigne anime={duJour?.celebrer ?? true} />
       </Verdict>
     ) : (
       <Verdict ton="revoir" cle={answer.n} actions={

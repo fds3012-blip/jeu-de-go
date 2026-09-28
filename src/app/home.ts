@@ -55,9 +55,11 @@ function bulleDuJour(jour: Jour, rejouer: boolean, plateau: string): string {
       () => t('accueil.bulle.retour.2'),
     ], jour.numero)();
   }
+  // #236 (N4) : la bulle parle de la même chose que le bouton, la partie. Le Go du jour à faire reste sur sa tuile :
+  // Pomme n'y invite plus pendant que le bouton dit « Rejouer ». Fait, elle le salue et enchaîne sur la partie.
   const duJour = jour.duJourFait
     ? () => t('accueil.bulle.duJourFait', { plateau })
-    : jour.titreDuJour ? () => t('accueil.bulle.duJour', { titre: jour.titreDuJour! }) : () => t('accueil.bulle.jour', { plateau });
+    : () => t('accueil.bulle.jour', { plateau });
   const lignes = rejouer
     ? [() => t('accueil.bulle.rejouer', { plateau }), () => t('accueil.bulle.revanche'), duJour, () => t('accueil.bulle.jour', { plateau })]
     : [() => t('accueil.bulle.jouer', { plateau }), duJour, () => t('accueil.bulle.jour', { plateau })];
