@@ -44,8 +44,31 @@ const N = 9;
 const at = (l: string) => fromLabel(l, N);
 const couleur = (c: 'B' | 'W') => (c === 'B' ? 1 : 2) as 1 | 2;
 
+/**
+ * Geste de l'élève dans une démonstration (#198) : l'image attend qu'il agisse, puis la suite se joue.
+ * - `pose` : l'élève pose lui-même la pierre de ce temps de la démonstration (toujours une pierre noire) ;
+ * - `touche` : l'élève touche l'un de ces points (une pierre, un œil…) avant que la démonstration commence ; `no` l'aide s'il se trompe.
+ */
+export type Geste = { pose: string } | { touche: string[]; no: string };
+
 /** Suite des images d'une démonstration. L'image 0 est la position de départ. Lève une erreur sur un coup illégal. */
 export function imagesDemo(rows: string[], demo: DemoTemps[], avant: DemoTemps[] = []): DemoImage[] {
+  return suiteDemo(rows, demo, avant).images;
+}
+
+/**
+ * Image où la démonstration attend le geste de l'élève (#198) : celle d'avant le temps `pose`, ou la première pour `touche`.
+ * Lève une erreur si la pierre à poser n'est pas un temps noir de la démonstration.
+ */
+export function imageDuGeste(rows: string[], demo: DemoTemps[], avant: DemoTemps[] = [], geste: Geste): number {
+  if ('touche' in geste) return 0;
+  const k = demo.findIndex(t => 'pose' in t && t.pose === geste.pose);
+  const t = demo[k];
+  if (k < 0 || !('pose' in t) || t.couleur !== 'B') throw new Error(`${geste.pose} : pas une pierre noire de la démonstration`);
+  return suiteDemo(rows, demo, avant).debuts[k];
+}
+
+function suiteDemo(rows: string[], demo: DemoTemps[], avant: DemoTemps[]): { images: DemoImage[]; debuts: number[] } {
   let pos: Position = fromRows(rows).pos;
   let suivi = -1, derniere: number | undefined;
   let yeux: number[] = [];
@@ -62,8 +85,10 @@ export function imagesDemo(rows: string[], demo: DemoTemps[], avant: DemoTemps[]
   const images: DemoImage[] = [photo()];
   // `avant` : la suite d'une démonstration précédente, rejouée sans image (le ko garde ainsi son point interdit).
   let debut = 0;
+  const debuts: number[] = [];
   for (const [i, t] of [...avant, ...demo].entries()) {
     if (i === avant.length) debut = images.length - 1;
+    if (i >= avant.length) debuts.push(images.length - 1);
     if ('pose' in t) {
       const p = at(t.pose);
       const r = play({ ...pos, toPlay: couleur(t.couleur) }, p);
@@ -98,7 +123,8 @@ export function imagesDemo(rows: string[], demo: DemoTemps[], avant: DemoTemps[]
       images.push(photo({ interdit: p }));
     }
   }
-  return images.slice(avant.length ? debut : 0);
+  const d = avant.length ? debut : 0;
+  return { images: images.slice(d), debuts: debuts.map(x => x - d) };
 }
 
 /** Rythme : un temps toutes les 600 ms. */
