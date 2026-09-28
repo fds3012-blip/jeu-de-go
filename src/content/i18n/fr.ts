@@ -513,6 +513,8 @@ export const fr = {
   'revue.rejouer': "Rejouer d'ici",
   'revue.revenirDebut': 'Revenir au début',
   'revue.rejoueErreur': 'Rejoue cette erreur',
+  'revue.aTrouver': 'La croix montre ton coup. Tu peux trouver mieux : rejoue-la !',
+  'revue.voirBonCoup': 'Voir le bon coup',
   'revue.rejeu.titre': 'Rejoue ton erreur',
   'revue.rejeu.consigne': 'Ici, ton coup a coûté des points. Trouve mieux : tout coup qui perd moins de 1 point est accepté.',
   'revue.rejeu.rate': 'Pas celui-là. Cherche encore. Cette position reviendra demain dans Problèmes.',
