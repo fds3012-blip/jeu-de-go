@@ -1,6 +1,6 @@
 // Socle i18n léger (issue #167), sans librairie : deux catalogues, une fonction `t` typée, Intl.PluralRules.
-// Langue choisie une fois au chargement : `?lang=en|fr` dans l'adresse, sinon (si DETECTION_APPAREIL) la langue de l'appareil,
-// sinon le français.
+// Langue choisie une fois au chargement, dans cet ordre : le choix du Profil (clé locale `go.langue.v1`), puis `?lang=en|fr`
+// dans l'adresse, puis (si DETECTION_APPAREIL) la langue de l'appareil, sinon le français.
 import { en } from './en';
 import { fr } from './fr';
 import type { Catalogue, Cle, Langue, Params, Texte } from './types';
@@ -11,29 +11,47 @@ export const LANGUES: readonly Langue[] = ['fr', 'en'];
 export const CATALOGUES: Record<Langue, Catalogue> = { fr, en };
 
 /**
- * Suivre la langue de l'appareil. À activer quand tous les écrans sont traduits : d'ici là, un appareil
- * en anglais reste en français (pas d'interface à moitié traduite) ; l'anglais passe par `?lang=en` ou un futur réglage.
+ * Suivre la langue de l'appareil : activé depuis que toute l'interface, les leçons et les problèmes existent en anglais.
+ * Un appareil en anglais ouvre l'app en anglais ; tout autre appareil (français ou autre langue) l'ouvre en français.
  */
-export const DETECTION_APPAREIL = false;
+export const DETECTION_APPAREIL = true;
+
+/** Clé locale du choix fait dans le Profil (« Langue ») : il prime sur `?lang` et sur l'appareil. */
+export const LANGUE_KEY = 'go.langue.v1';
 
 const estLangue = (x: string | null | undefined): x is Langue => !!x && (LANGUES as readonly string[]).includes(x);
 
-/** Langue à utiliser : paramètre `lang` de l'adresse, puis (si `detection`) première langue connue de l'appareil, puis le français. */
-export function detecterLangue(search: string, preferees: readonly string[], detection = DETECTION_APPAREIL): Langue {
+/**
+ * Langue à utiliser : `choix` du Profil, puis paramètre `lang` de l'adresse, puis (si `detection`) la langue principale
+ * de l'appareil si c'est une langue traduite, sinon le français.
+ */
+export function detecterLangue(search: string, preferees: readonly string[], detection = DETECTION_APPAREIL, choix: string | null = null): Langue {
+  if (estLangue(choix)) return choix;
   const param = new URLSearchParams(search).get('lang')?.toLowerCase();
   if (estLangue(param)) return param;
   if (!detection) return 'fr';
-  for (const l of preferees) {
-    const base = l.toLowerCase().split(/[-_]/)[0];
-    if (estLangue(base)) return base;
-  }
-  return 'fr';
+  // Seule la langue principale de l'appareil compte : un appareil en espagnol qui accepte aussi l'anglais reste en français.
+  const base = preferees[0]?.toLowerCase().split(/[-_]/)[0];
+  return estLangue(base) ? base : 'fr';
+}
+
+/** Choix du Profil gardé sur l'appareil, ou null (aucun choix, stockage indisponible). */
+export function lireChoixLangue(): Langue | null {
+  try {
+    const v = JSON.parse(localStorage.getItem(LANGUE_KEY) ?? 'null') as unknown;
+    return typeof v === 'string' && estLangue(v) ? v : null;
+  } catch { return null; }
+}
+
+/** Garde le choix du Profil sur l'appareil. Le rechargement de la page l'applique partout (leçons comprises). */
+export function memoriserChoixLangue(l: Langue): void {
+  try { localStorage.setItem(LANGUE_KEY, JSON.stringify(l)); } catch { /* le choix vaut pour cette visite seulement */ }
 }
 
 function langueDuNavigateur(): Langue {
   if (typeof location === 'undefined' || typeof navigator === 'undefined') return 'fr';
   const preferees = navigator.languages?.length ? navigator.languages : [navigator.language];
-  return detecterLangue(location.search, preferees.filter(Boolean));
+  return detecterLangue(location.search, preferees.filter(Boolean), DETECTION_APPAREIL, lireChoixLangue());
 }
 
 let courante: Langue = langueDuNavigateur();

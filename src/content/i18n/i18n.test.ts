@@ -1,5 +1,5 @@
 // Socle i18n (issue #167) : couverture des clés, textes non vides, variables, pluriels, choix de la langue.
-import { CATALOGUES, DETECTION_APPAREIL, LANGUES, choisirLangue, detecterLangue, langue, t, traduire, type Cle } from './index';
+import { CATALOGUES, DETECTION_APPAREIL, LANGUES, LANGUE_KEY, choisirLangue, detecterLangue, langue, lireChoixLangue, memoriserChoixLangue, t, traduire, type Cle } from './index';
 import { fr } from './fr';
 import type { Catalogue } from './types';
 
@@ -61,22 +61,55 @@ describe('t', () => {
   });
 });
 
-describe('detecterLangue', () => {
+describe('detecterLangue : Profil > ?lang > appareil > français', () => {
+  it('le choix du Profil l\'emporte sur ?lang et sur l\'appareil', () => {
+    expect(detecterLangue('?lang=en', ['en-US'], true, 'fr')).toBe('fr');
+    expect(detecterLangue('?lang=fr', ['fr-FR'], true, 'en')).toBe('en');
+    expect(detecterLangue('', ['en-GB'], true, 'fr')).toBe('fr');
+  });
+  it('un choix absent ou invalide est ignoré', () => {
+    expect(detecterLangue('?lang=en', ['fr-FR'], true, null)).toBe('en');
+    expect(detecterLangue('', ['en-US'], true, 'de')).toBe('en');
+  });
   it('?lang= l\'emporte sur l\'appareil', () => {
     expect(detecterLangue('?lang=en', ['fr-FR'])).toBe('en');
     expect(detecterLangue('?x=1&lang=FR', ['en-US'])).toBe('fr');
   });
-  it('détection de l\'appareil désactivée tant que tous les écrans ne sont pas traduits', () => {
-    expect(DETECTION_APPAREIL).toBe(false);
-    expect(detecterLangue('', ['en-US'])).toBe('fr');
+  it('détection de l\'appareil activée : un appareil en anglais ouvre l\'app en anglais', () => {
+    expect(DETECTION_APPAREIL).toBe(true);
+    expect(detecterLangue('', ['en-US'])).toBe('en');
+    expect(detecterLangue('', ['en-GB', 'fr'])).toBe('en');
+    expect(detecterLangue('', ['en_US'])).toBe('en');
+    expect(detecterLangue('', ['fr-FR', 'en-US'])).toBe('fr');
   });
-  it('détection forcée : suit la première langue connue de l\'appareil', () => {
-    expect(detecterLangue('', ['en-GB', 'fr'], true)).toBe('en');
-    expect(detecterLangue('', ['de-DE', 'fr-CA'], true)).toBe('fr');
-    expect(detecterLangue('', ['es', 'en_US'], true)).toBe('en');
+  it('tout autre appareil ouvre l\'app en français, même s\'il accepte aussi l\'anglais', () => {
+    expect(detecterLangue('', ['de-DE', 'fr-CA'])).toBe('fr');
+    expect(detecterLangue('', ['es', 'en_US'])).toBe('fr');
+    expect(detecterLangue('', ['ja-JP'])).toBe('fr');
   });
-  it('se replie sur le français (langue inconnue ou paramètre invalide)', () => {
-    expect(detecterLangue('?lang=xx', ['de'], true)).toBe('fr');
-    expect(detecterLangue('', [], true)).toBe('fr');
+  it('détection coupée : français, sauf ?lang ou choix du Profil', () => {
+    expect(detecterLangue('', ['en-US'], false)).toBe('fr');
+    expect(detecterLangue('', ['en-US'], false, 'en')).toBe('en');
+  });
+  it('se replie sur le français (langue inconnue, paramètre invalide, aucune langue)', () => {
+    expect(detecterLangue('?lang=xx', ['de'])).toBe('fr');
+    expect(detecterLangue('', [])).toBe('fr');
+  });
+});
+
+describe('choix de la langue gardé sur l\'appareil', () => {
+  const memoire = new Map<string, string>();
+  beforeEach(() => vi.stubGlobal('localStorage', { getItem: (k: string) => memoire.get(k) ?? null, setItem: (k: string, v: string) => { memoire.set(k, v); } }));
+  afterEach(() => { memoire.clear(); vi.unstubAllGlobals(); });
+  it('lit et écrit go.langue.v1', () => {
+    expect(LANGUE_KEY).toBe('go.langue.v1');
+    expect(lireChoixLangue()).toBeNull();
+    memoriserChoixLangue('en');
+    expect(localStorage.getItem('go.langue.v1')).toBe('"en"');
+    expect(lireChoixLangue()).toBe('en');
+    memoire.set(LANGUE_KEY, '"xx"');
+    expect(lireChoixLangue()).toBeNull();
+    memoire.set(LANGUE_KEY, '{oups');
+    expect(lireChoixLangue()).toBeNull();
   });
 });

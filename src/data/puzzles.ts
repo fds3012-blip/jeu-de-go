@@ -52,7 +52,7 @@ export function parsePuzzle(row: PuzzleRow): Puzzle | null {
     // Textes dans la langue de l'interface (#167) : catalogue local par id, le français sinon.
     return localiserProbleme<Puzzle>({
       id: row.id, size, rows: rows as string[], toPlay, answers, line,
-      title: row.title ?? 'Problème', prompt: row.prompt ?? 'Trouve le meilleur coup.',
+      title: row.title ?? t('pb.titreDefaut'), prompt: row.prompt ?? t('pb.consigneDefaut'),
       explanation: row.explanation,
       refutation: typeof setup.refutation === 'string' && setup.refutation ? setup.refutation : null,
       difficulty: row.difficulty
