@@ -6,7 +6,7 @@ import { playAtari, playCapture, playDefeat, playIllegal, playStone, playVictory
 import { hapticAtari, hapticCapture, hapticDefeat, hapticIllegal, hapticStone, hapticVictory } from '../ui/haptics';
 import { score } from '../go/score';
 import { toLabel } from '../go/coords';
-import { bestMove, bestMoveExplique, estimateLead, estimateTerritoire, proposeComptage, type Opponent } from '../engine';
+import { bestMove, bestMoveExplique, estimateLead, estimateTerritoire, forceInitiale, niveauGuide, PERIODE_GUIDEE, proposeComptage, reglerForce, type Opponent } from '../engine';
 import { EVENTS, secondsSinceOpen, track, trackOnce } from '../data/analytics';
 import { gagnerXp, sourceXpPartie, type SourceXp } from './xp';
 import { supabase } from '../data/supabase';
@@ -62,9 +62,14 @@ interface Props {
   /** Barre d'avantage contre l'ordi ; cachée pendant la toute première partie (#160, voir equilibrage.ts). */
   avantage?: boolean;
   /** L'ordi passe quand tu passes, frontières fermées (#185, 3 premières parties, voir equilibrage.ts). */ accommodant?: boolean;
+  /**
+   * Partie guidée (#79) : l'ordi est Mochi, dont la force part du cran `depart` et se règle tous les 10 coups
+   * (src/engine/guidee.ts). `onCran` reçoit chaque nouveau cran, pour que la partie suivante reparte de là.
+   */
+  guidee?: { depart: number; onCran?: (cran: number) => void };
 }
 
-export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, onResult, fin, aiKomi = komi, portrait, celebrer = true, aide = true, avantage = true, accommodant = false }: Props) {
+export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, onResult, fin, aiKomi = komi, portrait, celebrer = true, aide = true, avantage = true, accommodant = false, guidee }: Props) {
   const [history, setHistory] = useState<Position[]>(() => [newPosition(size)]);
   const [phase, setPhase] = useState<'play' | 'score' | 'end'>('play');
   const [dead, setDead] = useState<Set<number>>(new Set());
@@ -82,6 +87,9 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   // Estimation d'avantage, rattachée à la position estimée (une estimation d'une autre position est ignorée).
   const [estimation, setEstimation] = useState<{ pos: Position; lead: number } | null>(null);
   const [estimationKo, setEstimationKo] = useState(false);
+  // Partie guidée (#79) : force de Mochi, réglée tous les 10 coups selon l'écart estimé ; dernier coup réglé.
+  const force = useRef(forceInitiale(guidee?.depart));
+  const regleA = useRef(0);
   // Libertés à montrer (atari) et zone d'indice : valables pour un seul état de l'historique.
   const [atari, setAtari] = useState<{ len: number; libs: number[] } | null>(null);
   const [indice, setIndice] = useState<{ len: number; p: number } | null>(null);
@@ -168,7 +176,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     const cible = delaiReponse({ hasard: Math.random(), ...aRepondre.current, e2e: !!import.meta.env.VITE_E2E });
     // Passes du joueur (Noir) depuis le début : en partie accommodante, l'ordi passe dès la deuxième (#235).
     const passesJoueur = history.filter((h, i) => i > 0 && h.lastMove === -1 && h.toPlay === 2).length;
-    bestMoveExplique(pos, ai.id, { komi: aiKomi, accommodant, passesJoueur }).then(async ({ move: m, raison }) => {
+    bestMoveExplique(pos, guidee ? niveauGuide(force.current.cran) : ai.id, { komi: aiKomi, accommodant, passesJoueur }).then(async ({ move: m, raison }) => {
       const wait = cible - (Date.now() - t0);
       if (wait > 0) await new Promise(r => setTimeout(r, wait));
       if (t !== token.current) return;
@@ -206,9 +214,19 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
       if (!alive) return;
       if (e) setEstimation({ pos, lead: e.lead });
       else setEstimationKo(true);
+      // Partie guidée : tous les 10 coups, l'écart estimé règle la force de Mochi (Blanc : son avance est -lead).
+      // Première estimation reçue 10 coups après le réglage précédent : une estimation annulée ne saute pas un réglage.
+      const coups = history.length - 1;
+      if (guidee && e && coups - regleA.current >= PERIODE_GUIDEE) {
+        regleA.current = coups;
+        const r = reglerForce(-e.lead, force.current);
+        force.current = r.force;
+        guidee.onCran?.(r.force.cran);
+        if (r.annonce) { const phrase = tr(r.annonce === 'plus-doux' ? 'guidee.plusDoux' : 'guidee.plusFort'); setMsg(m => `${m} ${phrase}`); }
+      }
     }, () => { if (alive) setEstimationKo(true); });
     return () => { alive = false; };
-  }, [ai, pos, komi, phase]);
+  }, [ai, pos, komi, phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Deux passes : le moteur marque les pierres mortes (grisées). Contre l'ordi, si rien n'est incertain, on va droit
   // au récit du score (#117) ; sinon, et toujours à deux, le joueur corrige d'une touche avant « Valider le score ».

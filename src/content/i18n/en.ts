@@ -90,6 +90,12 @@ export const en = {
   'accueil.aideTaille.13': 'A medium-length game.',
   'accueil.aideTaille.19': 'The classic board of experienced players.',
   'accueil.deux': 'Play a friend on this phone',
+  'accueil.guidee': 'Guided game against Mochi',
+  'guidee.bulle': 'Guided game: Mochi adjusts his strength to keep the game close. You’re Black.',
+  'guidee.plusDoux': 'Mochi plays a little softer.',
+  'guidee.plusFort': 'Mochi plays a little stronger.',
+  'guidee.fin': 'Guided game: it doesn’t count in your record.',
+  'guidee.rejouer': 'Play Mochi again',
 
   'adv.pomme.phrase': 'She’s learning, just like you.',
   'adv.pomme.description': 'Plays a bit at random. Perfect for your first game.',

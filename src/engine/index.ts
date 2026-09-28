@@ -333,5 +333,5 @@ export async function meilleurCoup(pos: Position, komi: number): Promise<Conseil
 }
 
 // Partie guidée (#79) : réglage de la force de Mochi tous les 10 coups, selon l'écart estimé.
-export { CRAN_DEPART, cranDuNiveau, cranSuivant, forceInitiale, momentDeReglage, niveauGuide, reglerForce } from './guidee';
+export { CRAN_DEPART, cranDuNiveau, cranSuivant, forceInitiale, momentDeReglage, niveauGuide, PERIODE_GUIDEE, reglerForce } from './guidee';
 export type { AnnonceGuidee, ForceGuidee } from './guidee';

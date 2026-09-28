@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Game } from './Game';
 import { LearnHome, LessonPlayer } from './Learn';
 import { LESSONS } from '../content/lessons';
@@ -9,7 +9,7 @@ import { useSettings, useStored } from './settings';
 import { aideActive } from './partie';
 import { Bubble } from '../ui/Mochi';
 import { Sceau } from '../ui/Sceau';
-import { OPPONENTS, type OpponentId } from '../engine';
+import { CRAN_DEPART, cranDuNiveau, niveauGuide, OPPONENTS, type OpponentId } from '../engine';
 import { ConsentModal } from './Confidentialite';
 import { Profil, type VueProfil } from './Profil';
 import { t } from '../content/i18n';
@@ -84,7 +84,7 @@ export function App() {
   const [duJourOuvert, setDuJourOuvert] = useState(false);
   useEffect(noterArrivee, []);
   const [settings, set] = useSettings();
-  const [playing, setPlaying] = useState<false | 'ordi' | 'deux'>(false);
+  const [playing, setPlaying] = useState<false | 'ordi' | 'deux' | 'guidee'>(false);
   const [adversaire, setAdversaire] = useStored<OpponentId>('go.adversaire.v1', 'pomme');
   const [lessonId, setLessonId] = useState<string | null>(null);
   // Série de 3 problèmes ouverte depuis la fin d'une leçon (#200), figée à l'ouverture.
@@ -95,6 +95,11 @@ export function App() {
   const lesson = LESSONS.find(l => l.id === lessonId);
   const [parties, setParties] = useStored<Parties>(PARTIES_KEY, { n: 0 });
   const [introVue, setIntroVue] = useStored<boolean>(INTRO_KEY, false);
+  // Partie guidée (#79) : cran de force où Mochi s'est arrêté ; `null` avant la première partie guidée.
+  const [cranGuide, setCranGuide] = useStored<number | null>('go.guidee.v1', null);
+  const [departGuide, setDepartGuide] = useState(CRAN_DEPART);
+  // Objet stable : l'écran de partie relance le tour de l'ordi quand son adversaire change.
+  const mochiGuide = useMemo(() => niveauGuide(departGuide), [departGuide]);
   const [intro, setIntro] = useState(false); // bulle « but du jeu » au-dessus du plateau
   // Équilibrage de la partie contre l'ordi en cours (#160) et son annonce du komi par Mochi.
   const [reglage, setReglage] = useState<Equilibrage & { annonce: string | null }>({ komi: KOMI_NORMAL, avantage: true, annonce: null });
@@ -170,6 +175,24 @@ export function App() {
     window.scrollTo({ top: 0 });
   }
 
+  /**
+   * Partie guidée contre Mochi (#79) : hors de l'échelle, sans effet sur le bilan ni sur les parties à komi réduit.
+   * Mochi repart du cran de la partie guidée précédente ; la première fois, de la force de l'adversaire choisi.
+   */
+  function lancerGuidee() {
+    const oppIndex = OPPONENTS.findIndex(o => o.id === adv.id);
+    setDepartGuide(typeof cranGuide === 'number' && Number.isFinite(cranGuide) ? cranGuide : cranDuNiveau(Math.max(0, oppIndex)));
+    setIntro(false);
+    setReglage({ komi: KOMI_NORMAL, avantage: true, accommodant: true, annonce: null });
+    setParties({ ...parties, n: parties.n + 1 });
+    setReglages(false);
+    setResultat(null);
+    setPartieFinie(false);
+    setPartie(partie + 1);
+    setPlaying('guidee');
+    window.scrollTo({ top: 0 });
+  }
+
   function onResult(winner: 0 | 1 | 2, stats: StatsPartie) {
     setPartieFinie(true);
     if (playing !== 'ordi') return;
@@ -181,6 +204,14 @@ export function App() {
   }
 
   let finEcran;
+  if (playing === 'guidee') {
+    finEcran = {
+      bilan: <>{t('guidee.fin')}</>,
+      mochi: null,
+      action: <button type="button" className="cta" onClick={lancerGuidee}>{t('guidee.rejouer')}</button>,
+      onAccueil: () => { setPlaying(false); window.scrollTo({ top: 0 }); },
+    };
+  }
   if (playing === 'ordi' && resultat) {
     const f = fin(adv, resultat.issue, resultat.stats, bilan, OPPONENTS);
     const coupure = f.bilan.texte.indexOf('. ');
@@ -215,8 +246,10 @@ export function App() {
   if (enPartie) {
     screen = (
       <>
-        <Game key={`${playing === 'ordi' ? adv.id : 'deux'}-${partie}`} size={settings.size} komi={komiCompte(reglage.komi)} aiKomi={reglage.komi} avantage={reglage.avantage} accommodant={reglage.accommodant} confirmTouch={settings.confirmTouch} opponent={playing === 'ordi' ? adv : undefined}
-          intro={playing === 'ordi' && (intro || reglage.annonce) ? <Bubble>{intro ? introBut(adv.nom) : t('partie.bulle', { nom: adv.nom })}{reglage.annonce && <><br /><span className="annonce-komi">{reglage.annonce}</span></>}</Bubble> : undefined}
+        <Game key={`${playing === 'ordi' ? adv.id : playing}-${partie}`} size={settings.size} komi={komiCompte(reglage.komi)} aiKomi={reglage.komi} avantage={reglage.avantage} accommodant={reglage.accommodant} confirmTouch={settings.confirmTouch}
+          opponent={playing === 'ordi' ? adv : playing === 'guidee' ? mochiGuide : undefined}
+          guidee={playing === 'guidee' ? { depart: departGuide, onCran: setCranGuide } : undefined}
+          intro={playing === 'guidee' ? <Bubble>{t('guidee.bulle')}</Bubble> : playing === 'ordi' && (intro || reglage.annonce) ? <Bubble>{intro ? introBut(adv.nom) : t('partie.bulle', { nom: adv.nom })}{reglage.annonce && <><br /><span className="annonce-komi">{reglage.annonce}</span></>}</Bubble> : undefined}
           onExit={() => { setIntro(false); setPlaying(false); setResultat(null); }}
           onResult={onResult} fin={finEcran} celebrer={settings.celebrations} aide={aideActive(settings.aide, adv.id)} portrait={playing === 'ordi' ? <Sceau id={adv.id} taille={44} /> : undefined} />
       </>
@@ -257,7 +290,7 @@ export function App() {
     screen = (
       <Accueil adv={adv} battu={battu(bilan, adv.id)} textes={home} taille={settings.size} cartes={cartes}
         reglages={reglages} setReglages={setReglages} onTaille={n => set({ size: n })} onChoisir={setAdversaire}
-        onJouer={() => lancer('ordi')} onDeux={() => lancer('deux')}
+        onJouer={() => lancer('ordi')} onDeux={() => lancer('deux')} onGuidee={lancerGuidee}
         probleme={daily && { numero, titre: daily.title, rows: daily.rows, reussi: duJourFait, etat: etatTuile(appel, duJourFait) }}
         onProbleme={() => go('problemes')}
         lecon={leconConseillee && { rang: rangLecon, total: LESSONS.length, titre: leconConseillee.title }}
