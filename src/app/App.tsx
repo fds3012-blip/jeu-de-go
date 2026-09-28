@@ -304,7 +304,7 @@ export function App() {
         {accueilVisible && <BarreNiveau />}
         {screen}
       </main>
-      <FeteNiveau celebrer={settings.celebrations} ecran={`${tab}|${playing}|${lessonId ?? ''}|${vueProfil}`} />
+      <FeteNiveau celebrer={settings.celebrations} ecran={`${tab}|${playing}|${lessonId ?? ''}|${serie3 ? 'serie' : ''}|${vueProfil}`} />
       <AnnonceXp celebrer={settings.celebrations} />
       {/* Pendant une partie, comme chez chess.com : pas de barre de navigation, « ‹ » ramène à l'accueil. */}
       {!enPartie && <BarreNav actif={tab} onChoisir={go} />}

@@ -17,6 +17,9 @@ function noter(cle: string, id: string) {
 
 export function SeriePratique({ problemes, confirmTouch, onFin }: { problemes: Puzzle[]; confirmTouch: boolean; onFin: () => void }) {
   const [i, setI] = useState(0);
+  // #250 (M9) : le dernier problème réussi, la série est finie. Une fête de niveau prise pendant la série se pose ici,
+  // sur la feuille de réussite, et non sur le titre du chemin après « Retour au chemin ».
+  const [finie, setFinie] = useState(false);
   const pz = problemes[i];
   if (!pz) return null;
   const suivant = i + 1 < problemes.length ? () => { setI(i + 1); window.scrollTo({ top: 0 }); } : undefined;
@@ -32,7 +35,9 @@ export function SeriePratique({ problemes, confirmTouch, onFin }: { problemes: P
           noter(gain.palier ? SOLVED_KEY : VUS_KEY, pz.id);
           // #237 : déjà vu en leçon puis en pratique, il ne revient pas dès demain en révision.
           noterRediteAppareil(pz.id);
+          if (i + 1 === problemes.length) setFinie(true);
         }}
+        exercice={!finie}
         onNext={suivant}
         onExit={onFin} />
     </div>
