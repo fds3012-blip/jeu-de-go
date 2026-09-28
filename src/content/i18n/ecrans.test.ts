@@ -35,7 +35,8 @@ describe('français identique aux données d’origine', () => {
 });
 
 describe('accueil', () => {
-  const pomme = { id: 'pomme', nom: 'Pomme' };
+  // Une partie finie contre Pomme : « Rejouer » (#309).
+  const pomme = { id: 'pomme', nom: 'Pomme', fini: true };
   afterEach(() => choisirLangue('fr'));
 
   it('français inchangé', () => {

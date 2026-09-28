@@ -89,6 +89,13 @@ for (const theme of ['dark', 'light'] as const) {
     // Le kyu ne revient que dans le Profil, sur une ligne discrète ; jamais sur l'accueil.
     await page.goto('/');
     await expect(page.getByRole('button', { name: 'Je sais déjà jouer' })).toHaveCount(0);
+    // #309 : la partie contre Renard n'est pas finie, l'accueil ne dit pas « Rejouer ». Une seule action principale.
+    await expect(page.locator('.cta')).toHaveCount(1);
+    await expect(page.locator('.cta')).toHaveText('Jouer contre Renard');
+    // #308 : la carte « Leçon » suit le chapitre conseillé (Ouverture sur 9 × 9), pas la leçon 1 des débutants.
+    const carte = page.locator('.tuile-lecon');
+    await expect(carte).toContainText(/Leçon \d+ sur \d+/);
+    await expect(carte).not.toContainText('Leçon 1 sur');
     await expect(page.getByText(/\d+ kyu/).filter({ hasText: /environ/ })).toHaveCount(0);
     await page.getByRole('navigation').getByRole('button', { name: 'Profil' }).click();
     await expect(page.getByRole('button', { name: /Niveau estimé.*8 kyu, le \d\d\/\d\d/ })).toBeVisible();

@@ -6,7 +6,7 @@ import { COTE_DEPART, ETAT_INITIAL, nettoyerCote } from './coteJoueur';
 import { echelle, OUVERTS_D_OFFICE } from './home';
 import {
   adversaireConseille, bilanPlacement, chapitreConseille, choisirPlacement, cibleSuivante, coteApresPlacement, coteDePlacement,
-  kyuDeCote, kyuDuRang, lirePlacement, NB_PROBLEMES, ouvertsApresPlacement, proposerPlacement, type Essai, type Placement,
+  kyuDeCote, kyuDuRang, leconDeLAccueil, lirePlacement, NB_PROBLEMES, ouvertsApresPlacement, proposerPlacement, type Essai, type Placement,
 } from './placement';
 
 const PROBLEMES = parsePuzzles(ALL_PUZZLES);
@@ -153,5 +153,31 @@ describe('stockage et accueil', () => {
     expect(proposerPlacement(1, null)).toBe(false);
     expect(proposerPlacement(0, { fait: false, saute: true, date: '2026-09-29' })).toBe(false);
     expect(proposerPlacement(0, null, 1)).toBe(false);
+  });
+});
+
+// #308 : après le placement, la carte « Leçon » de l'accueil suit le chapitre conseillé, pas la leçon 1.
+describe('leçon proposée sur l’accueil', () => {
+  const l = (id: string) => ({ id, steps: [1, 2] });
+  const lecons = [l('l1'), l('l2'), l('l8')];
+  const chapitres = [{ lecons: lecons.slice(0, 2) }, { lecons: lecons.slice(2) }];
+  const place = (kyu: number | null): Placement => ({ fait: true, kyu, cote: 1400, adversaire: 'renard', date: '2026-09-29' });
+
+  it('sans placement, ou placement passé : la première leçon pas finie', () => {
+    expect(leconDeLAccueil(lecons, chapitres, {}, null)?.id).toBe('l1');
+    expect(leconDeLAccueil(lecons, chapitres, { l1: 2 }, { fait: false, saute: true, date: '2026-09-29' })?.id).toBe('l2');
+  });
+
+  it('placé à 8 kyu : le chapitre conseillé, pas la leçon 1', () => {
+    expect(leconDeLAccueil(lecons, chapitres, {}, place(8))?.id).toBe('l8');
+  });
+
+  it('placé mais tout raté (pas de kyu) ou 20 kyu : les bases', () => {
+    expect(leconDeLAccueil(lecons, chapitres, {}, place(null))?.id).toBe('l1');
+    expect(leconDeLAccueil(lecons, chapitres, {}, place(20))?.id).toBe('l1');
+  });
+
+  it('chapitre conseillé fini : aucune leçon, le Go du jour reste seul', () => {
+    expect(leconDeLAccueil(lecons, chapitres, { l8: 2 }, place(8))).toBeUndefined();
   });
 });

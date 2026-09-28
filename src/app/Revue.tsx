@@ -299,7 +299,7 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
         <button type="button" className="revue-precision" aria-expanded={resume} aria-controls="revue-resume" onClick={() => setResume(r => !r)}>
           <span className="revue-precision-texte">
             <span className="revue-precision-titre">{tr('revue.precision')}</span>
-            <span className="revue-precision-duo">{fr(tr('revue.precisionJoueur', { nom: nomMoi, p: precMoi }))}{precLui != null && <span className="revue-precision-lui">{fr(` · ${tr('revue.precisionJoueur', { nom: nomLui, p: precLui })}`)}</span>}</span>
+            <span className="revue-precision-duo">{fr(tr('revue.precisionJoueur', { nom: nomMoi, p: precMoi }))}{precLui != null && <span className="revue-precision-lui">{fr(`\u00A0· ${tr('revue.precisionJoueur', { nom: nomLui, p: precLui })}`)}</span>}</span>
           </span>
           <span className="revue-precision-voir">{tr(resume ? 'revue.fermer' : 'revue.resume')}</span>
         </button>

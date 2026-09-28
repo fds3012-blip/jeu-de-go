@@ -41,7 +41,8 @@ test.describe('N4 : un seul appel sur l’accueil', () => {
 
   test('après la première partie : « À faire » revient, la bulle parle de la partie comme le bouton', async ({ page }) => {
     await preparer(page);
-    await semer(page, { 'go.parties.v1': JSON.stringify({ n: 1, dernier: 'pomme', ordi: 1 }) });
+    // #309 : « Rejouer » suppose une partie finie contre Pomme (ici perdue).
+    await semer(page, { 'go.parties.v1': JSON.stringify({ n: 1, dernier: 'pomme', ordi: 1 }), 'go.bilan.v1': JSON.stringify({ pomme: { v: 0, d: 1 } }) });
     await page.goto('/');
     await expect(page.locator('.cta-sceau')).toContainText('Rejouer contre Pomme');
     await expect(page.getByTestId('etat-du-jour')).toHaveText('À faire');

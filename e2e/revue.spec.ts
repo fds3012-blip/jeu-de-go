@@ -110,6 +110,14 @@ test('la revue note le coup affiché et montre la précision des deux joueurs', 
   const bilan = page.getByRole('button', { name: /Précision/ });
   await expect(bilan).toContainText(/Toi \d+\s%/);
   await expect(bilan).toContainText(/Pomme \d+\s%/);
+  // #310 : une espace visible avant le point médian (« Toi 100 % · Pomme 80 % »), pas « Toi 100 %· Pomme ».
+  const ecart = await page.locator('.revue-precision-duo').evaluate(duo => {
+    const moi = duo.firstChild!, lui = duo.querySelector('.revue-precision-lui')!.firstChild!;
+    const a = document.createRange(); a.selectNodeContents(moi);
+    const b = document.createRange(); const i = lui.textContent!.indexOf('·'); b.setStart(lui, i); b.setEnd(lui, i + 1);
+    return b.getBoundingClientRect().left - a.getBoundingClientRect().right;
+  });
+  expect(ecart).toBeGreaterThanOrEqual(3);
   await bilan.click();
   const resume = page.getByRole('region', { name: 'Résumé de la partie' });
   await expect(resume.getByRole('table')).toBeVisible();

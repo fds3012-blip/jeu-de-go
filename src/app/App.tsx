@@ -16,14 +16,14 @@ import { t } from '../content/i18n';
 import { fenetreVisible, useConsentement } from './consentement';
 import { accueil, adversaireOuvert, echelle, introBut, INTRO_KEY, OUVERTS_D_OFFICE, PARTIES_KEY, type Parties } from './home';
 import { Placement } from './Placement';
-import { PLACEMENT_KEY, chapitreConseille, coteApresPlacement, lirePlacement, ouvertsApresPlacement, proposerPlacement, type Placement as ResultatPlacement } from './placement';
+import { PLACEMENT_KEY, chapitreConseille, coteApresPlacement, leconDeLAccueil, lirePlacement, ouvertsApresPlacement, proposerPlacement, type Placement as ResultatPlacement } from './placement';
 import { COTE_KEY } from './coteJoueur';
 import { Accueil } from './Accueil';
 import { ALL_PUZZLES } from '../content/puzzles';
 import { parsePuzzles } from '../data/puzzles';
 import { EVENTS, track } from '../data/analytics';
 import { PARAM, PARAM_COURT, SERIE_KEY, numeroDuJour, numeroDuLien, problemeDuNumero, type Serie } from './goDuJour';
-import { battu, BILAN_KEY, enregistrer, fin, finTropTot, komiDepuisUrl, lireBilan, type Bilan, type Issue, type StatsPartie } from './bilan';
+import { battu, BILAN_KEY, dejaAffronte, enregistrer, fin, finTropTot, komiDepuisUrl, lireBilan, type Bilan, type Issue, type StatsPartie } from './bilan';
 import { fr } from '../ui/typo';
 import { Glacon } from '../ui/Glacon';
 import { Mochi } from '../ui/Mochi';
@@ -144,9 +144,11 @@ export function App() {
   const numeroJour = numeroDuJour(new Date());
   const duJour = problemeDuNumero(PROBLEMES_LOCAUX, numeroJour);
   const duJourFait = goDuJourFaitAppareil(numeroJour);
-  const home = accueil(parties, done, adv, settings.size, { numero: numeroJour, absence, duJourFait, titreDuJour: duJour?.title });
+  // #309 : « Rejouer » seulement après une partie finie contre cet adversaire.
+  const home = accueil(parties, done, { ...adv, fini: dejaAffronte(bilan, adv.id) }, settings.size, { numero: numeroJour, absence, duJourFait, titreDuJour: duJour?.title });
   const flamme = etatFlamme(serie, duJourFait);
-  const leconConseillee = LESSONS.find(l => (progress[l.id] ?? 0) < l.steps.length);
+  // #308 : après le placement, la carte « Leçon » suit le chapitre conseillé.
+  const leconConseillee = leconDeLAccueil(LESSONS, CHAPITRES, progress, placement);
   // Profil (issue #50) : sous-vue ouverte, et fenêtre de consentement fermée avec Échap pendant cette session.
   const [vueProfil, setVueProfil] = useState<VueProfil>('menu');
   // Installation (#214) : proposée sur l'accueil à partir du 2e retour (jour d'ouverture distinct), une seule fois.
