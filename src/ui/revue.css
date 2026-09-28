@@ -85,6 +85,8 @@
 .revue-mochi p { margin: 0; font-size: 15px; line-height: 1.4; }
 /* « Rejoue cette erreur » (issue #77) : action secondaire, sous la phrase de Mochi. */
 .revue-probleme { display: block; width: 100%; min-height: var(--cible-bouton); margin-top: var(--space-2); border-color: var(--line); }
+/* « Voir le bon coup » : lien secondaire centré sous la phrase de Mochi, tant que le bon coup reste caché. */
+.revue-voir { display: block; margin: calc(var(--space-1) * -1) auto 0; }
 /* Rejeu réussi : la bulle de Mochi prend la bordure d'accent (le texte dit aussi « Bravo », pas la couleur seule). */
 .revue-rejeu-ok { box-shadow: inset 0 0 0 2px var(--accent); }
 

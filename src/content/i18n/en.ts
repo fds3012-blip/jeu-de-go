@@ -480,6 +480,8 @@ export const en = {
   'revue.rejouer': 'Replay from here',
   'revue.revenirDebut': 'Back to the start',
   'revue.rejoueErreur': 'Replay this mistake',
+  'revue.aTrouver': 'The cross shows your move. You can find better: replay it!',
+  'revue.voirBonCoup': 'Show the right move',
   'revue.rejeu.titre': 'Replay your mistake',
   'revue.rejeu.consigne': 'Your move cost points here. Find better: any move that loses less than 1 point counts.',
   'revue.rejeu.rate': 'Not that one. Keep looking. This position will come back tomorrow in Puzzles.',

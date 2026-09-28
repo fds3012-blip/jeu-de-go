@@ -49,14 +49,17 @@ test('revue : rejoue ton erreur, un coup raté revient demain, un coup à moins 
   await page.getByRole('button', { name: 'Revoir ma partie' }).click();
   await expect(page.locator('.revue-analyse')).toHaveCount(0, { timeout: 30_000 });
 
-  // La Grosse erreur du coup 1 : le bouton secondaire apparaît avec le conseil de KataGo.
+  // La Grosse erreur du coup 1 : « Rejoue cette erreur » devient l'action principale, le bon coup reste caché.
   await page.locator('.revue-erreur', { hasText: 'Coup 1' }).click();
   const rejoue = page.getByRole('button', { name: 'Rejoue cette erreur' });
   await expect(rejoue).toBeVisible({ timeout: 10_000 });
-  // Une seule action en relief : « Rejouer d'ici » ; « Rejoue cette erreur » reste secondaire.
   await expect(page.locator('.cta')).toHaveCount(1);
-  const haut = await rejoue.boundingBox();
-  expect(haut!.height).toBeGreaterThanOrEqual(44);
+  await expect(page.locator('.cta')).toHaveText('Rejoue cette erreur');
+  const voir = page.getByRole('button', { name: 'Voir le bon coup' });
+  await expect(voir).toBeVisible();
+  await expect(page.locator('[data-meilleur]')).toHaveCount(0);
+  await expect(page.getByText(/Essaie plutôt/)).toHaveCount(0);
+  for (const b of [rejoue, voir]) expect((await b.boundingBox())!.height).toBeGreaterThanOrEqual(44);
   await rejoue.click();
 
   // La position d'avant l'erreur revient : plateau vide, Noir au trait.
@@ -81,6 +84,47 @@ test('revue : rejoue ton erreur, un coup raté revient demain, un coup à moins 
   await page.getByRole('button', { name: 'Retour à la revue' }).last().click();
   await expect(page.getByRole('heading', { level: 2, name: 'Revoir ma partie' })).toBeVisible();
 
+  // Après l'essai, la revue montre le bon coup : pierre verte, « Essaie plutôt D4 », « Rejouer d'ici » redevient principal.
+  await expect(page.locator('[data-meilleur]')).toHaveCount(1);
+  await expect(page.getByText(/Essaie plutôt D4/)).toBeVisible();
+  await expect(page.locator('.cta')).toHaveText("Rejouer d'ici");
+  await expect(page.getByRole('button', { name: 'Rejoue cette erreur' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Voir le bon coup' })).toHaveCount(0);
+
+  expect(erreursPage).toEqual([]);
+});
+
+test("revue : le bon coup n'est pas visible avant l'essai, « Voir le bon coup » le montre", async ({ page }) => {
+  const erreursPage: string[] = [];
+  page.on('pageerror', e => erreursPage.push(e.message));
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await kataGoFactice(page);
+
+  await page.goto('/?komi=-100');
+  await page.locator('.cta').click();
+  await expect(page.getByRole('button', { name: 'Passer' })).toBeEnabled({ timeout: 10_000 });
+  await jouer(page, 'E5');
+  await expect(page.getByRole('button', { name: 'Passer' })).toBeEnabled({ timeout: 10_000 });
+  await passerJusquAuScore(page);
+  await page.getByRole('button', { name: 'Revoir ma partie' }).click();
+  await expect(page.locator('.revue-analyse')).toHaveCount(0, { timeout: 30_000 });
+
+  await page.locator('.revue-erreur', { hasText: 'Coup 1' }).click();
+  await expect(page.locator('.cta')).toHaveText('Rejoue cette erreur', { timeout: 10_000 });
+  // L'erreur est décrite, la réponse non : ni pierre verte, ni coordonnée du bon coup.
+  await expect(page.locator('.revue-mochi p')).toContainText('Tu peux trouver mieux');
+  await expect(page.locator('.revue-mochi p')).not.toContainText('D4');
+  await expect(page.locator('[data-meilleur]')).toHaveCount(0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+
+  // « Voir le bon coup » : la pierre verte et le conseil apparaissent, « Rejouer d'ici » redevient l'action principale.
+  await page.getByRole('button', { name: 'Voir le bon coup' }).click();
+  await expect(page.locator('[data-meilleur]')).toHaveCount(1);
+  await expect(page.getByText(/Essaie plutôt D4/)).toBeVisible();
+  await expect(page.locator('.cta')).toHaveText("Rejouer d'ici");
+  await expect(page.getByRole('button', { name: 'Rejoue cette erreur' })).toBeVisible();
+
   expect(erreursPage).toEqual([]);
 });
 
@@ -101,7 +145,7 @@ test('captures de « Rejoue cette erreur », sombre et clair', async ({ page }) 
     await page.getByRole('button', { name: 'Revoir ma partie' }).click();
     await expect(page.locator('.revue-analyse')).toHaveCount(0, { timeout: 30_000 });
     await page.locator('.revue-erreur', { hasText: 'Coup 1' }).click();
-    await page.getByRole('button', { name: 'Rejoue cette erreur' }).scrollIntoViewIfNeeded();
+    await page.getByRole('button', { name: 'Voir le bon coup' }).scrollIntoViewIfNeeded();
     await page.screenshot({ path: `docs/design/v2/captures/rejoue-erreur-bouton-${nom}.png` });
     await page.getByRole('button', { name: 'Rejoue cette erreur' }).click();
     await jouer(page, 'C5');
