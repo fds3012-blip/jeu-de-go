@@ -23,7 +23,7 @@ const LOT_O: PuzzleRow[] = [
       refutation: "Pas tout à fait. En E2, tu mets les pierres en atari, mais Blanc joue E1 : il les relie à ses pierres F1, G1 et H1, et le groupe respire. Joue plutôt en E1, même si Blanc peut prendre ta pierre." },
     title: 'Donne une pierre, prends-en trois',
     prompt: 'Capture les pierres marquées en deux coups au plus.',
-    explanation: "Bravo ! En E1, ta pierre n'a qu'une liberté, E2 : Blanc peut la prendre. Mais ses pierres D2 et D1 sont en atari (une seule liberté), E2 elles aussi. S'il prend en E2, ses trois pierres n'ont plus qu'une liberté, E1. Tu rejoues en E1 et tu les captures. C'est la prise en retour : tu donnes une pierre pour en prendre trois."
+    explanation: "Bravo ! En E1, ta pierre n'a qu'une liberté, E2 : Blanc peut la prendre. Mais ses pierres D2 et D1 n'ont plus qu'une liberté elles aussi, E2 : elles sont en atari. S'il prend en E2, ses trois pierres n'ont plus qu'une liberté, E1. Tu rejoues en E1 et tu les captures. C'est la prise en retour : tu donnes une pierre pour en prendre trois."
   },
   {
     id: 'o03', size: 9, difficulty: 700, answers: ['D1', 'E1', 'F1'],
@@ -71,7 +71,7 @@ const LOT_O: PuzzleRow[] = [
       refutation: "Pas tout à fait. En F3, Blanc s'allonge en E4, vers le haut, loin de ta pierre H2 : il a deux libertés, D4 et E5, et tu ne le prends plus en quatre coups. Ailleurs, il s'allonge aussi en E4. Pousse-le plutôt vers H2." },
     title: 'Vers ta pierre H2',
     prompt: 'Capture la pierre marquée en quatre coups au plus.',
-    explanation: "Bravo ! E4 met la pierre en atari et la pousse vers le bas. Si elle s'allonge en F3, tu joues F2 ; si elle s'allonge ensuite en G3, tu joues H3. Blanc n'a plus qu'une liberté, G2. S'il s'y allonge, ta pierre H2 lui ferme la route : il reste en atari, et tu le prends en G1. Une pierre qui aide ainsi une échelle s'appelle une pierre relais."
+    explanation: "Bravo ! E4 met la pierre en atari et la pousse vers le bas. Si elle s'allonge en F3, tu joues F2 ; si elle s'allonge ensuite en G3, tu joues H3. Blanc n'a plus qu'une liberté, G2. S'il s'y allonge, ta pierre H2 lui ferme la route : il reste en atari, et tu le prends en G1. Remettre en atari à chaque coup une pierre qui fuit, c'est une échelle. Ta pierre H2 l'aide : on l'appelle une pierre relais."
   },
   {
     id: 'o09', size: 9, difficulty: 860, answers: ['D5'],
