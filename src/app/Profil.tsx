@@ -9,12 +9,12 @@ import { inviterCompte } from './serieLocale';
 import { LigneBascules, LigneChoix, LigneInterrupteur, LigneLien } from '../ui/Reglage';
 import { hapticStone } from '../ui/haptics';
 import { playStone } from '../ui/sound';
-import { useMemo } from 'react';
-import { readLocal } from './hooks';
+import { useEffect, useMemo } from 'react';
+import { readLocal, writeLocal } from './hooks';
 import { BILAN_KEY, lireBilan } from './bilan';
 import { PARTIES_KEY, type Parties } from './home';
 import { paliers } from './paliers';
-import { badges, statistiques } from './vitrine';
+import { BADGES_KEY, badges, lireBadges, memoriser, statistiques } from './vitrine';
 import { ALL_PUZZLES } from '../content/puzzles';
 import { parsePuzzles } from '../data/puzzles';
 import { Statistiques, VitrineBadges } from '../ui/Vitrine';
@@ -22,15 +22,22 @@ import { t } from '../content/i18n';
 
 const SOLVED_KEY = 'go.problemes.v1';
 
-/** Données locales du Profil vivant (#103) : problèmes réussis, parties, bilan, paliers complets. */
-function useDonnees(serie: number) {
-  return useMemo(() => {
+/**
+ * Données locales du Profil vivant (#103) : problèmes réussis, parties, bilan, paliers complets.
+ * #212 : le record de série, et les badges gagnés gardés pour toujours sur l'appareil.
+ */
+function useDonnees(serie: number, record: number) {
+  const donnees = useMemo(() => {
     const reussis = new Set(Object.keys(readLocal<Record<string, true>>(SOLVED_KEY, {}) ?? {}));
     const parties = readLocal<Parties>(PARTIES_KEY, { n: 0 })?.n ?? 0;
     const bilan = lireBilan(readLocal<unknown>(BILAN_KEY, {}));
-    const d = { reussis: reussis.size, serie, parties, bilan, paliers: paliers(parsePuzzles(ALL_PUZZLES), reussis) };
-    return { stats: statistiques(d), badges: badges(d) };
-  }, [serie]);
+    const d = { reussis: reussis.size, serie, record, parties, bilan, paliers: paliers(parsePuzzles(ALL_PUZZLES), reussis) };
+    const gagnes = lireBadges(readLocal<unknown>(BADGES_KEY, []));
+    const liste = badges(d, gagnes);
+    return { stats: statistiques(d), badges: liste, gagnes, apres: memoriser(gagnes, liste) };
+  }, [serie, record]);
+  useEffect(() => { if (donnees.apres !== donnees.gagnes) writeLocal(BADGES_KEY, donnees.apres); }, [donnees]);
+  return donnees;
 }
 
 export type VueProfil = 'menu' | 'compte' | 'conditions';
@@ -57,9 +64,11 @@ interface Props {
   /** Pseudo et cote du joueur connecté, null sans compte. */
   profil: { pseudo: string | null; cote: number } | null;
   serie: number;
+  /** Plus longue série connue (#212). */
+  record?: number;
 }
 
-export function Profil({ vue, onVue, settings, set, profil, serie }: Props) {
+export function Profil({ vue, onVue, settings, set, profil, serie, record = 0 }: Props) {
   const retour = () => { onVue('menu'); window.scrollTo({ top: 0 }); };
   if (vue === 'conditions') return <Conditions onRetour={retour} />;
   if (vue === 'compte') {
@@ -74,12 +83,12 @@ export function Profil({ vue, onVue, settings, set, profil, serie }: Props) {
     );
   }
 
-  return <Menu onVue={onVue} settings={settings} set={set} profil={profil} serie={serie} />;
+  return <Menu onVue={onVue} settings={settings} set={set} profil={profil} serie={serie} record={record} />;
 }
 
-function Menu({ onVue, settings, set, profil, serie }: Omit<Props, 'vue'>) {
+function Menu({ onVue, settings, set, profil, serie, record = 0 }: Omit<Props, 'vue'>) {
   const id = identite(profil, serie);
-  const donnees = useDonnees(serie);
+  const donnees = useDonnees(serie, record);
   return (
     <div className="profil">
       <section className="identite" aria-label={t('profil.aria')}>
