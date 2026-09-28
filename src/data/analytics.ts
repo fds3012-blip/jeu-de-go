@@ -48,6 +48,8 @@ export const EVENTS = {
   // Proposer d'installer l'app (#178) : carte montrée (une fois, après une première victoire ou un Go du jour réussi), puis installation acceptée.
   installationProposee: 'installation_proposee',
   installationAcceptee: 'installation_acceptee',
+  // Aide graduée des problèmes (#197) : la réponse a été montrée après un échec (le problème devient « Vu », pas « Réussi »).
+  solutionVue: 'solution_vue',
 } as const;
 export type AnalyticsEvent = (typeof EVENTS)[keyof typeof EVENTS];
 export type Props = Record<string, string | number | boolean | null | undefined>;
