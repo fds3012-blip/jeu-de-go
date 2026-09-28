@@ -1,6 +1,6 @@
 // Langage commun des lecteurs de leçon et de problème (issue #40, phase 6) :
 // barre du haut (retour, progression), feuille de verdict en bas (jade : juste, hanko : à revoir), coche qui se dessine.
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { t } from '../content/i18n';
 import { mouvementsReduits } from './defilement';
 import './apprendre.css';
@@ -44,7 +44,18 @@ export function Marque({ juste, taille = 32 }: { juste: boolean; taille?: number
  */
 export function Verdict({ ton, children, actions, cle }: { ton: 'juste' | 'revoir' | 'neutre'; children: ReactNode; actions?: ReactNode; cle?: string | number }) {
   const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => devoilerPlateau(ref.current), [ton, cle]);
+  const reponse = `${ton}|${cle ?? ''}`;
+  // #290 : écran bas et longue explication. La feuille se replie (deux lignes et « Lire l'explication ») quand le
+  // plateau ne tient pas au-dessus d'elle. Mesurée avant l'affichage, à chaque nouvelle réponse.
+  const [mesure, setMesure] = useState<{ reponse: string; compact: boolean } | null>(null);
+  const [deplie, setDeplie] = useState(false);
+  useLayoutEffect(() => {
+    setDeplie(false);
+    setMesure({ reponse, compact: aReplier(ref.current) });
+  }, [reponse]);
+  const mesuree = mesure?.reponse === reponse;
+  const compact = mesuree && mesure.compact;
+  useEffect(() => { if (mesuree) devoilerPlateau(ref.current); }, [mesuree, reponse, compact]);
   // #268 : hauteur de la feuille pour le scroll-padding-bottom de la page (apprendre.css), suivie si elle change.
   useEffect(() => {
     const el = ref.current, racine = document.documentElement;
@@ -56,32 +67,76 @@ export function Verdict({ ton, children, actions, cle }: { ton: 'juste' | 'revoi
     return () => { ro?.disconnect(); racine.style.removeProperty('--verdict-h-page'); };
   }, []);
   return (
-    <div ref={ref} className={`verdict verdict-${ton}`}>
+    <div ref={ref} className={`verdict verdict-${ton}`} data-compact={compact && !deplie ? '' : undefined}>
       <div className="verdict-texte" role="status" aria-live="polite">
         {ton !== 'neutre' && <Marque key={cle} juste={ton === 'juste'} />}
-        <div>{children}</div>
+        <div>
+          {children}
+          {compact && (
+            // Le texte entier reste dans la zone annoncée : le repli n'est que visuel.
+            <button type="button" className="lien verdict-deplier" aria-expanded={deplie}
+              onClick={() => { setDeplie(!deplie); if (deplie) window.requestAnimationFrame(() => devoilerPlateau(ref.current)); }}>
+              {t(deplie ? 'lecteur.replierExplication' : 'lecteur.lireExplication')}
+            </button>
+          )}
+        </div>
       </div>
       {actions && <div className="verdict-actions">{actions}</div>}
     </div>
   );
 }
 
+/** Marge gardée entre le plateau et le haut de l'écran, et entre le plateau et la feuille. */
+const MARGE = 8;
+
+/** Haut de la feuille une fois posée (l'animation d'entrée la décale encore de quelques pixels). */
+function hautDeLaFeuille(verdict: HTMLDivElement): number {
+  return window.innerHeight - (parseFloat(getComputedStyle(verdict).bottom) || 0) - verdict.offsetHeight;
+}
+
+/**
+ * #290 : faut-il replier l'explication ? Oui quand le plateau entier ne tient pas entre le haut de l'écran et la
+ * feuille, et que le texte fait plus de trois lignes (un verdict court n'a rien à replier).
+ */
+function aReplier(verdict: HTMLDivElement | null): boolean {
+  const plateau = verdict?.closest<HTMLElement>('.lecteur')?.querySelector<HTMLElement>('.board-wrap');
+  const texte = verdict?.querySelector<HTMLElement>('.verdict-texte > div > p');
+  if (!verdict || !plateau || !texte) return false;
+  const ligne = parseFloat(getComputedStyle(texte).lineHeight) || 22;
+  if (texte.offsetHeight <= ligne * 3.5) return false;
+  return plateau.offsetHeight + 2 * MARGE > hautDeLaFeuille(verdict);
+}
+
 /**
  * Petits écrans (#250, M5) : la feuille de verdict monte sur le bas du plateau et cachait le coup joué, au moment
  * de la récompense. La page réserve la hauteur de la feuille et défile juste assez pour poser le bas du plateau
  * au-dessus d'elle, sans faire sortir le haut du plateau. Rien ne bouge quand le plateau est déjà visible (390 × 844).
+ *
+ * #290 : ce défilement s'arrête au haut du plateau. Quand la feuille est trop haute pour laisser voir le plateau entier
+ * (320 × 640, explication de 7 lignes : 167 px de place pour 288 px de plateau), le bas restait caché, et avec lui le
+ * coup gagnant. La feuille se replie d'abord (aReplier) ; si le plateau entier ne tient toujours pas, on cadre la zone
+ * des pierres (plus une demi-ligne) : le haut vide du plateau peut sortir de l'écran, pas le coup joué ni les yeux.
  */
 function devoilerPlateau(verdict: HTMLDivElement | null) {
   const lecteur = verdict?.closest<HTMLElement>('.lecteur');
   const plateau = lecteur?.querySelector<HTMLElement>('.board-wrap');
   if (!verdict || !lecteur || !plateau) return;
-  const hauteur = verdict.offsetHeight;
-  lecteur.style.setProperty('--verdict-h', `${hauteur + 16}px`);
-  // Haut de la feuille une fois posée (l'animation d'entrée la décale encore de quelques pixels).
-  const haut = window.innerHeight - (parseFloat(getComputedStyle(verdict).bottom) || 0) - hauteur;
+  lecteur.style.setProperty('--verdict-h', `${verdict.offsetHeight + 16}px`);
+  const haut = hautDeLaFeuille(verdict);
   const p = plateau.getBoundingClientRect();
-  const manque = p.bottom - haut + 8;
+  let zone = { top: p.top, bottom: p.bottom };
+  if (p.height + 2 * MARGE > haut) {
+    const pierres = [...plateau.querySelectorAll('g[data-pierre]')].map(g => g.getBoundingClientRect()).filter(r => r.height > 0);
+    if (pierres.length) {
+      const demiLigne = pierres[0].height / 2;
+      zone = {
+        top: Math.max(p.top, Math.min(...pierres.map(r => r.top)) - demiLigne),
+        bottom: Math.min(p.bottom, Math.max(...pierres.map(r => r.bottom)) + demiLigne),
+      };
+    }
+  }
+  const manque = zone.bottom - haut + MARGE;
   if (manque <= 0) return;
-  const pas = Math.min(manque, Math.max(0, p.top - 8));
+  const pas = Math.min(manque, Math.max(0, zone.top - MARGE));
   if (pas > 0) window.scrollBy({ top: pas, behavior: mouvementsReduits() ? 'instant' : 'smooth' });
 }

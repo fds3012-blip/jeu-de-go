@@ -149,14 +149,71 @@ test('sans paramètre, une interface française reste en français', async ({ pa
   await expect(page.getByRole('switch', { name: /^Confirmer au doigt/ })).toBeVisible();
 });
 
+// Choix de la langue (#167) : Profil > ?lang > appareil > français. DETECTION_APPAREIL = true.
 test.describe('appareil réglé en anglais', () => {
   test.use({ locale: 'en-US' });
-  // DETECTION_APPAREIL = false : pas d'interface à moitié traduite tant que tous les écrans ne sont pas traduits.
-  test('reste en français tant que la détection de l\'appareil est désactivée', async ({ page }) => {
+
+  test('sans réglage, l\'app s\'ouvre en anglais', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+    await expect(page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: 'Profile' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Play your first game against Pomme' })).toBeVisible();
+  });
+
+  for (const largeur of [390, 320]) test(`le choix « Français » du Profil l'emporte sur l'appareil et sur ?lang, à ${largeur} px`, async ({ page }) => {
+    await page.setViewportSize({ width: largeur, height: 844 });
+    await page.goto('/');
+    await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: 'Profile' }).click();
+    await page.getByRole('button', { name: /^Settings/ }).click();
+    const ligne = page.getByRole('group', { name: 'Language' });
+    await expect(ligne.getByRole('button', { name: 'English' })).toHaveAttribute('aria-pressed', 'true');
+    for (const b of await ligne.getByRole('button').all()) expect((await b.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+    await sansDebordement(page);
+    await page.screenshot({ path: `docs/localisation/captures/reglages-langue-en-${largeur}.png` });
+
+    // Le choix recharge la page en français et reste gardé sur l'appareil.
+    await ligne.getByRole('button', { name: 'Français' }).click();
+    await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
+    const nav = page.getByRole('navigation', { name: 'Navigation principale' });
+    await expect(nav.getByRole('button', { name: 'Profil' })).toBeVisible();
+    expect(await page.evaluate(() => localStorage.getItem('go.langue.v1'))).toBe('"fr"');
+
+    // Il prime aussi sur ?lang=en, et se relit dans les Réglages.
+    await page.goto('/?lang=en');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
+    await nav.getByRole('button', { name: 'Profil' }).click();
+    await page.getByRole('button', { name: /^Réglages/ }).click();
+    const langue = page.getByRole('group', { name: 'Langue' });
+    await expect(langue.getByRole('button', { name: 'Français' })).toHaveAttribute('aria-pressed', 'true');
+    await expect(langue.getByRole('button', { name: 'English' })).toHaveAttribute('lang', 'en');
+    await sansDebordement(page);
+
+    // Retour à l'anglais par le même réglage.
+    await langue.getByRole('button', { name: 'English' }).click();
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+    expect(await page.evaluate(() => localStorage.getItem('go.langue.v1'))).toBe('"en"');
+  });
+});
+
+test.describe('appareil réglé dans une autre langue', () => {
+  test.use({ locale: 'de-DE' });
+  test('l\'app s\'ouvre en français', async ({ page }) => {
     await page.goto('/');
     await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
     await expect(page.getByRole('navigation', { name: 'Navigation principale' }).getByRole('button', { name: 'Profil' })).toBeVisible();
   });
+});
+
+test('appareil en français (fr-FR) : l\'app reste en français, choix « Français » coché dans les Réglages', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
+  const nav = page.getByRole('navigation', { name: 'Navigation principale' });
+  for (const nom of ['Jouer', 'Apprendre', 'Problèmes', 'Profil']) await expect(nav.getByRole('button', { name: nom })).toBeVisible();
+  await nav.getByRole('button', { name: 'Profil' }).click();
+  await expect(page.getByRole('button', { name: /^Réglages/ })).toContainText('Thème, sons…');
+  await page.getByRole('button', { name: /^Réglages/ }).click();
+  await expect(page.getByRole('group', { name: 'Langue' }).getByRole('button', { name: 'Français' })).toHaveAttribute('aria-pressed', 'true');
+  expect(await page.evaluate(() => localStorage.getItem('go.langue.v1'))).toBeNull();
 });
 
 // Étape 3 : composants partagés. Joueur avec de l'XP, des parties, des problèmes réussis, Pomme battue et une erreur à rejouer.
