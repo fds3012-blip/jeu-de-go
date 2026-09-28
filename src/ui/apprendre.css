@@ -344,7 +344,8 @@
 /* Problèmes par paliers (issue #93). */
 .problemes.avec-continuer { padding-bottom: calc(var(--cible-cta) + var(--relief) + var(--space-4)); }
 .du-jour-refaire { width: 100%; }
-.continuer { display: flex; align-items: center; justify-content: center; gap: 8px; }
+/* Recette du 28/09 matin (#247) : le verbe « Problème suivant » ne passe jamais sur deux lignes ; seul le titre s'abrège. */
+.continuer { display: flex; align-items: center; justify-content: center; gap: 8px; white-space: nowrap; }
 .continuer-titre { font-weight: var(--fw-medium); opacity: .8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .continuer-titre::before { content: "· "; }
 .btn.continuer { width: 100%; margin: 0 0 var(--space-2); background: var(--surface); }
