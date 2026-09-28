@@ -160,7 +160,7 @@ Principes :
 - Conditions : « saisir la CNIL » devient *contact the CNIL, the French data protection authority* (sigle inconnu hors de France).
 - « Pomme continue : il reste un point à prendre en E4 » : *Pomme keeps playing: there’s still one point to take at E4*. La raison vient du moteur par une clé et des paramètres (point, nombre).
 - Gel : « Ton gel a protégé ta série de 12 jours ! » : *Your freeze protected your 12-day streak!*
-- Problèmes en anglais (#167) : catalogue local `src/content/problemes.en.ts`, indexé par id, sans migration. Il remplace titre, consigne, explication et réfutation par-dessus le français, que le problème vienne de Supabase ou des lots (`parsePuzzle`). Les 165 problèmes locaux sont traduits ; un problème ajouté plus tard reste en français tant qu'il n'a pas d'entrée. Coordonnées et nombres vérifiés par `src/content/problemes.en.test.ts`. L’e2e `langue-parcours.spec.ts` retire encore le contenu des problèmes avant de chercher des mots français (utile pour les futurs problèmes non traduits).
+- Problèmes en anglais (#167) : catalogue local `src/content/problemes.en.ts`, indexé par id, sans migration. Il remplace titre, consigne, explication et réfutation par-dessus le français, que le problème vienne de Supabase ou des lots (`parsePuzzle`). Les 171 problèmes locaux sont traduits (lot R compris) et relus ; un problème ajouté plus tard reste en français tant qu'il n'a pas d'entrée. Coordonnées et nombres vérifiés par `src/content/problemes.en.test.ts`. L’e2e `langue-parcours.spec.ts` retire encore le contenu des problèmes avant de chercher des mots français (utile pour les futurs problèmes non traduits).
 - Leçons 1 à 8 et chapitres traduits (`content/lessons.en.js`, textes seulement ; positions et réponses reprises du français, vérifiées par `src/content/lessons.en.test.ts`, nombres compris). « point vert » : *green point* ; « Touche » : *Tap* ; « À toi » : *Your turn*. Titre « Le ko » : *Ko*.
 
 ## Leçons en anglais : choix de vocabulaire (#167, relecture)
@@ -202,4 +202,23 @@ Même vocabulaire que les leçons (*empty points next to it*, *extend*, *side by
 | coude (trois points) | *bent three* | |
 | chapeau, cinq en bloc, croix de cinq, lapin | *pyramid four*, *bulky five*, *crossed five*, *rabbity six* | Noms des formes sur Sensei's Library. |
 | sortie (vers le mur) | *way out* | |
-| Noir gagne d'un demi-point | Black wins by half a point | |
+| Noir gagne d'un demi-point | Black wins by half a point |
+
+### Relecture des problèmes (#167, lot R compris)
+
+| Français (problèmes) | Anglais retenu | Raison |
+|---|---|---|
+| « Blanc prend ta pierre en A2 » (Blanc joue A2, ta pierre est ailleurs) | *White plays A2 and takes your stone* | *takes your stone at A2* se lit « ta pierre qui est en A2 » : faux sens sur la position. On garde *take X at Y* seulement quand X est nommé (*you take F2 at F1*). |
+| « tu réponds sur les siennes » (libertés, semeai) | *you answer on White's* | *on its own* se lit « tout seul ». |
+| coin d'un œil (point en diagonale) | *diagonal point* | *corner* est ambigu pour un enfant (coin du plateau). Même mot que « Regarde les points en diagonale » (m08). |
+| faux œil « d'abord » (r04) | *a false eye at first* | L'œil devient vrai après la capture. |
+| chasse-la (pierre au point vital) | *get rid of it* | *chase* suggère de la faire fuir ; ici on la capture. |
+| réduire (l'espace d'yeux) par l'extérieur | *reduce* (*from the outside*) | Usage Sensei's Library (*reduce the eye space*). *shrink* reste possible dans une explication d'enfant. |
+| « s'appuyer sur » (une pierre) | *backed by*, *lean on* | |
+| rabbity six, bulky five, pyramid four, crossed five | inchangés | Relus : noms Sensei's Library. |
+
+Textes français à reprendre (non modifiés, périmètre du contenu français) :
+- Même tournure ambiguë « Blanc prend ta pierre en X » quand ta pierre n'est pas en X : n03, n13, n14, c4, d05, d10, d12. Proposition : « Blanc joue X et prend ta pierre ».
+- k01 : « Le long du bord, elle finit toujours par capturer » : faux en général (une pierre blanche sur le chemin casse l'échelle, même au bord). L'anglais dit « rien ne bloque le chemin vers le coin ».
+- q03 : « En D1, tu joues au milieu de son espace » : l'espace va de C1 à G1, son milieu est E1. L'anglais dit *inside its space*.
+- r04 : « son coin B2 » : pour un enfant, préférer « le point en diagonale B2 ». |
