@@ -58,7 +58,7 @@ test('terminer la leçon 1 affiche la fin de leçon, puis la pierre 1 est coché
 });
 
 test('dernière leçon : « Chapitre terminé », confettis, sauf si les célébrations sont coupées', async ({ page }) => {
-  const presque = { l1: 6, l2: 6, l3: 8, l4: 5, l5: 5, l6: 5 };
+  const presque = { l1: 6, l2: 6, l3: 8, l4: 5, l5: 5, l6: 6, l7: 5 };
   for (const celebrations of [true, false]) {
     await page.addInitScript(([p, c]) => {
       localStorage.setItem('go.lecons.v1', JSON.stringify(p));
@@ -66,8 +66,8 @@ test('dernière leçon : « Chapitre terminé », confettis, sauf si les céléb
     }, [presque, celebrations] as const);
     await page.goto('/');
     await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
-    await page.getByRole('button', { name: 'Continuer : Territoire et ouverture' }).click();
-    await jouer(page, 'E5');
+    await page.getByRole('button', { name: 'Continuer : Compter les points' }).click();
+    await page.locator('.choix').getByRole('button', { name: '39', exact: true }).click();
     await page.getByRole('button', { name: 'Terminer la leçon' }).click();
     await expect(page.getByRole('heading', { name: 'Chapitre terminé' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Retour au chemin' })).toBeVisible();
@@ -203,4 +203,89 @@ test('captures des leçons 2 à 4 (390 × 844, sombre)', async ({ page }) => {
   await ouvrir('Le ko', 1); await photo('l4-1-ko-barre');
   await ouvrir('Le ko', 2); await photo('l4-2-reprise');
   await ouvrir('Le ko', 4); await jouer(page, 'E5'); await photo('l4-3-touche');
+});
+
+// Issue #177 : leçon 7, compter les points. Komi, frontière à fermer, quand passer, compte final.
+const AVANT_L7 = { l1: 6, l2: 6, l3: 8, l4: 5, l5: 5, l6: 6 };
+
+test('leçon 7 : compter les points, jusqu’à « Chapitre terminé »', async ({ page }) => {
+  await page.addInitScript(p => localStorage.setItem('go.lecons.v1', JSON.stringify(p)), AVANT_L7);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/');
+  await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
+  await expect(page.getByRole('button', { name: 'Leçon 7 : Compter les points, prochaine étape' })).toBeVisible();
+  await page.getByRole('button', { name: 'Continuer : Compter les points' }).click();
+  const progression = page.getByRole('progressbar', { name: 'Progression de la leçon' });
+  const choix = (n: string) => page.locator('.choix').getByRole('button', { name: n, exact: true });
+
+  // 1. Je montre : territoire noir puis blanc (mouvements réduits : l'état final, 27 points blancs).
+  await expect(page.locator('.demo-compteur')).toHaveAttribute('data-compteur', '27');
+  await page.getByRole('button', { name: 'Continuer' }).click();
+  // 2. Ensemble : le territoire est colorié ; oublier le komi est une erreur.
+  await expect(page.locator('[data-territoire="blanc"]')).toHaveCount(27);
+  await choix('27').click();
+  await expect(page.getByText(/ajoute le komi\. Essaie encore\./)).toBeVisible();
+  await page.getByRole('button', { name: 'Réessayer' }).click();
+  await choix('33,5').click();
+  await expect(page.getByText(/Noir a 36\s:\sil gagne de 2,5\spoints/)).toBeVisible();
+  await page.getByRole('button', { name: 'Continuer' }).click();
+  // 3. Je montre : Noir ferme E7, puis compte 36.
+  await expect(page.locator('.demo-compteur')).toHaveAttribute('data-compteur', '36');
+  await page.getByRole('button', { name: 'Continuer' }).click();
+  // 4. Ensemble : le point vert est le trou à fermer.
+  await expect(page.locator('.board .liberte')).toHaveCount(1);
+  await jouer(page, 'B3');
+  await expect(page.getByText(/Blanc peut entrer chez toi/)).toBeVisible();
+  await page.getByRole('button', { name: 'Réessayer' }).click();
+  await jouer(page, 'E3');
+  await expect(page.getByText(/tes 36\spoints comptent enfin/)).toBeVisible();
+  await page.getByRole('button', { name: 'Continuer' }).click();
+  // 5. Quand passer.
+  await choix('Chez moi').click();
+  await expect(page.getByText(/tu perds un point/)).toBeVisible();
+  await page.getByRole('button', { name: 'Réessayer' }).click();
+  await choix('Je passe').click();
+  await page.getByRole('button', { name: 'Continuer' }).click();
+  // 6. Seul : compte final avec les prisonniers.
+  await expect(page.locator('[data-territoire]')).toHaveCount(0);
+  await choix('42,5').click();
+  await expect(page.getByText(/Le komi, lui, va à Blanc/)).toBeVisible();
+  await page.getByRole('button', { name: 'Réessayer' }).click();
+  await choix('39').click();
+  await expect(page.getByText(/Noir gagne d.un demi-point/)).toBeVisible();
+  await expect(progression).toHaveAttribute('aria-valuenow', '6');
+  await page.getByRole('button', { name: 'Terminer la leçon' }).click();
+  await expect(page.getByRole('heading', { name: 'Chapitre terminé' })).toBeVisible();
+  await expect(page.getByText(/fermer tes frontières/)).toBeVisible();
+  await page.getByRole('button', { name: 'Retour au chemin' }).click();
+  await expect(page.getByRole('button', { name: 'Leçon 7 : Compter les points, terminée' })).toBeVisible();
+  await expect(page.getByText('Chapitre terminé. Tu connais les règles du go !')).toBeVisible();
+});
+
+test('captures de la leçon 7 (390 × 844, sombre)', async ({ page }) => {
+  test.skip(!process.env.CAPTURES, 'captures à la demande');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'reduce' });
+  const ouvrir = async (etape: number) => {
+    await page.evaluate(p => localStorage.setItem('go.lecons.v1', JSON.stringify(p)), { ...AVANT_L7, l7: etape });
+    await page.goto('/');
+    await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
+    await page.getByRole('button', { name: 'Continuer : Compter les points' }).click();
+    await expect(page.locator('.lecteur-plateau')).toBeVisible();
+  };
+  const photo = (n: string) => page.screenshot({ path: `docs/design/v2/captures/lecons-v2-l7-${n}.png` });
+  const choix = (n: string) => page.locator('.choix').getByRole('button', { name: n, exact: true });
+  await page.goto('/');
+  await ouvrir(0); await photo('1-komi');
+  await ouvrir(1); await choix('33,5').click(); await photo('2-ensemble');
+  await ouvrir(2); await photo('3-frontiere');
+  await ouvrir(3); await photo('4-fermer');
+  await ouvrir(4); await photo('5-passer');
+  await ouvrir(5); await photo('6-compte-final');
+  await choix('39').click(); await photo('7-reponse');
+  await page.evaluate(p => localStorage.setItem('go.lecons.v1', JSON.stringify(p)), AVANT_L7);
+  await page.goto('/');
+  await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
+  await page.waitForTimeout(200);
+  await photo('8-chemin');
 });

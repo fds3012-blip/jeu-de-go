@@ -8,6 +8,7 @@ import { CarrouselAdversaires, type CarteAdversaire } from '../ui/Carrousel';
 import type { Opponent } from '../engine';
 import type { Accueil as TextesAccueil } from './home';
 import { fr } from '../ui/typo';
+import { t } from '../content/i18n';
 
 type Taille = 9 | 13 | 19;
 
@@ -35,15 +36,11 @@ interface Props {
 }
 
 const PLATEAUX: Record<Taille, Int8Array> = { 9: new Int8Array(81), 13: new Int8Array(169), 19: new Int8Array(361) };
-const AIDE_TAILLE: Record<Taille, string> = {
-  9: 'Parties courtes, idéal pour apprendre.',
-  13: 'Une partie de taille moyenne.',
-  19: 'Le plateau classique des joueurs confirmés.',
-};
+const AIDE_TAILLE = { 9: 'accueil.aideTaille.9', 13: 'accueil.aideTaille.13', 19: 'accueil.aideTaille.19' } as const satisfies Record<Taille, string>;
 
 export function Accueil(p: Props) {
   const { adv, textes, taille } = p;
-  const kyu = /kyu/.test(adv.rang) ? ' Le kyu est un niveau : plus il est petit, plus on est fort.' : '';
+  const kyu = /kyu/.test(adv.rang) ? ` ${t('accueil.kyu')}` : '';
   return (
     <div className="accueil">
       {/* Le goban est une illustration : plateau entier, aucune bulle ni pierre qui pulse par-dessus.
@@ -68,11 +65,11 @@ export function Accueil(p: Props) {
           <p className="scene-bulle">{textes.bulle}</p>
         </div>
       </div>
-      <p className="phrase">{fr(adv.phrase + (textes.nouveau ? kyu : ''))}</p>
+      <p className="phrase">{fr(t(`adv.${adv.id}.phrase`) + (textes.nouveau ? kyu : ''))}</p>
 
       <div className="reglage">
-        <span>{`Plateau ${taille}\u00A0×\u00A0${taille}, tu as Noir`}</span>
-        <button className="lien" aria-haspopup="dialog" aria-expanded={p.reglages} onClick={() => p.setReglages(true)}>Changer</button>
+        <span>{t('accueil.plateau', { taille })}</span>
+        <button className="lien" aria-haspopup="dialog" aria-expanded={p.reglages} onClick={() => p.setReglages(true)}>{t('accueil.changer')}</button>
       </div>
 
       {/* Libellé court (« Jouer contre Pomme ») : taille pleine ; long (première partie) : un cran plus petit, sur une ligne. */}
@@ -84,14 +81,14 @@ export function Accueil(p: Props) {
         <button className="tuile tuile-probleme" onClick={p.onProbleme}>
           {p.probleme && <MiniPlateau rows={p.probleme.rows} />}
           <span>
-            <small>{p.probleme ? `Go du jour n°\u00A0${p.probleme.numero}${p.probleme.reussi ? ' réussi' : ''}` : 'Go du jour'}</small>
-            <b>{p.probleme?.titre ?? 'Problèmes'}</b>
+            <small>{p.probleme ? t(p.probleme.reussi ? 'accueil.goDuJourReussi' : 'accueil.goDuJourNumero', { numero: p.probleme.numero }) : t('accueil.goDuJour')}</small>
+            <b>{p.probleme?.titre ?? t('nav.problemes')}</b>
           </span>
         </button>
         <button className="tuile tuile-lecon" onClick={p.onLecon}>
           <span>
-            <small>{p.lecon ? `Leçon ${p.lecon.rang} sur ${p.lecon.total}` : 'Leçons terminées'}</small>
-            <b>{p.lecon?.titre ?? 'Revoir le chemin'}</b>
+            <small>{p.lecon ? t('accueil.lecon', { rang: p.lecon.rang, total: p.lecon.total }) : t('accueil.leconsTerminees')}</small>
+            <b>{p.lecon?.titre ?? t('accueil.revoirChemin')}</b>
           </span>
         </button>
       </div>
@@ -118,17 +115,17 @@ function Reglages({ adv, cartes, taille, reglages, setReglages, onTaille, onChoi
       {reglages && (
         <div className="feuille-corps">
           <div className="feuille-tete">
-            <h2 id="feuille-titre">Ton adversaire</h2>
-            <button className="lien" onClick={() => setReglages(false)}>Fermer</button>
+            <h2 id="feuille-titre">{t('accueil.tonAdversaire')}</h2>
+            <button className="lien" onClick={() => setReglages(false)}>{t('accueil.fermer')}</button>
           </div>
-          <CarrouselAdversaires cartes={cartes} choisi={adv.id} onChoisir={onChoisir} legende={adv.description} />
-          <h2>Taille du plateau</h2>
+          <CarrouselAdversaires cartes={cartes} choisi={adv.id} onChoisir={onChoisir} legende={t(`adv.${adv.id}.description`)} />
+          <h2>{t('accueil.taillePlateau')}</h2>
           <div className="seg">
             {([9, 13, 19] as const).map(n => <button key={n} aria-pressed={taille === n} onClick={() => onTaille(n)}>{n} × {n}</button>)}
           </div>
-          <p className="muted small">{AIDE_TAILLE[taille]}</p>
+          <p className="muted small">{t(AIDE_TAILLE[taille])}</p>
           <button className="btn primary" aria-label={textes.ctaNom} onClick={onJouer}>{textes.cta}</button>
-          <button className="lien deux" onClick={onDeux}>Jouer à deux sur ce téléphone</button>
+          <button className="lien deux" onClick={onDeux}>{t('accueil.deux')}</button>
         </div>
       )}
     </dialog>

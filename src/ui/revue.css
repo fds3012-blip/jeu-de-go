@@ -95,3 +95,11 @@
 
 .revue-aucune { display: flex; align-items: center; min-height: var(--cible-min); margin: 0; font-weight: var(--fw-bold); color: var(--accent-texte); }
 .revue-note { margin: calc(var(--space-1) * -1) 2px 0; color: var(--muted); font-size: 14px; line-height: 1.35; }
+
+/* Revue honnête (issue #186). « Revenir au début » : action secondaire sous la phrase de Mochi, au moment clé. */
+.revue-debut { display: block; width: 100%; min-height: var(--cible-bouton); margin-top: calc(var(--space-1) * -1); border-color: var(--line); }
+/* Puce du moment clé : même forme que les erreurs, bordure d'accent pour la distinguer sans couleur seule (libellé « Moment clé »). */
+.revue-erreur-cle { border-color: var(--accent); }
+.revue-erreur-cle b { color: var(--accent-texte); }
+/* Défaite nette sans erreur isolée : ton neutre, pas le vert des félicitations. */
+.revue-aucune.revue-diffuses { font-weight: var(--fw-medium); color: var(--text); line-height: 1.35; }

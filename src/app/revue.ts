@@ -29,7 +29,7 @@ export function sgfDepuisHistorique(history: Position[], komi: number, noms: { n
 }
 
 /** Positions successives rejouées depuis le SGF (index 0 : plateau vide). S'arrête au premier coup illégal. */
-export function positionsDepuisSgf(sgf: string): { positions: Position[]; komi: number } {
+export function positionsDepuisSgf(sgf: string): { positions: Position[]; komi: number; resultat?: string } {
   const g = readSgf(sgf);
   const positions: Position[] = [newPosition(g.size)];
   for (const m of g.moves) {
@@ -38,7 +38,7 @@ export function positionsDepuisSgf(sgf: string): { positions: Position[]; komi: 
     if (typeof r === 'string') break;
     positions.push(r);
   }
-  return { positions, komi: g.komi };
+  return { positions, komi: g.komi, resultat: g.result };
 }
 
 export interface Erreur {
@@ -289,8 +289,17 @@ export function noterCoups(positions: Position[], analyses: (AnalyseRevue | null
     const finale = move < 0 && rienAPrendre(positions[i - 1]);
 
     if (avant.engine === 'simple') {
-      const l0 = lisse[i - 1] ?? avant.lead, l1 = lisse[i] ?? apres.lead;
-      const perte = finale ? 0 : Math.max(0, Math.min(brute, s * (l0 - l1)));
+      const l0 = lisse[i - 1] ?? avant.lead;
+      let b = brute, l1 = lisse[i] ?? apres.lead;
+      // Une passe ne change pas le plateau : le moteur simple ne peut juger que le coup gratuit de l'adversaire qui
+      // suit (issue #186). Si l'adversaire passe aussi, l'écart entre deux estimations du même plateau n'est que du bruit.
+      const suite = analyses[i + 1];
+      const repond = (positions[i + 1]?.lastMove ?? -1) >= 0 && !!suite && suite.engine === avant.engine;
+      if (move < 0 && repond) {
+        b = Math.max(b, s * (avant.lead - suite!.lead));
+        l1 = s > 0 ? Math.min(l1, lisse[i + 1] ?? suite!.lead) : Math.max(l1, lisse[i + 1] ?? suite!.lead);
+      }
+      const perte = finale || (move < 0 && !repond) ? 0 : Math.max(0, Math.min(b, s * (l0 - l1)));
       const S = SEUILS_SIMPLE;
       const note: Note = perte <= S.solide ? 'solide' : perte <= S.imprecision ? 'imprecision' : perte <= S.erreur ? 'erreur' : 'grosse';
       out.push({ coup: i, couleur, note, perte });
@@ -326,6 +335,135 @@ export function precision(notes: (NoteCoup | null)[], couleur: Color): number | 
   return Math.round(100 / (1 + m / 4));
 }
 
+// ---------- Revue honnête (issue #186) ----------
+// Constat de l'analyse UX du 28/09 : « Précision 97 % » et « Aucune erreur » après une défaite de 20,5 points.
+// Sans KataGo, le moteur simple ne voit que les pertes sûres, coup par coup : la somme des petites pertes et les
+// passes qui offrent des coups gratuits lui échappent. Le score final, lui, ne ment pas : la précision affichée
+// ne doit jamais le contredire. Règle expliquée dans docs/game-design/revue-honnete.md.
+
+/**
+ * Plafonds de précision après une défaite, en points ramenés au 9 × 9 (voir `defaiteRamenee`).
+ * Défaite de moins de 3 points : partie serrée, pas de plafond. 3 à 10 : 80 % au plus. 10 à 20 : 65 %. 20 et plus : 50 %.
+ * Une victoire n'est jamais plafonnée. Exemples de l'analyse : défaite de 20,5 → 50 % au plus (et non 97 %) ;
+ * défaite de 61,5 → 50 % (et non 99 %) ; victoire de 1,5 → la précision calculée (91 %).
+ */
+export const DEFAITE_SERREE = 3;
+export const PLAFONDS_DEFAITE: readonly { des: number; max: number }[] = [
+  { des: 20, max: 50 },
+  { des: 10, max: 65 },
+  { des: DEFAITE_SERREE, max: 80 },
+];
+
+/** Avance finale de `couleur` (points, komi compris) à partir de l'avance de Noir. */
+export function avanceDe(avanceNoir: number | null | undefined, couleur: Color): number | null {
+  if (avanceNoir == null || !Number.isFinite(avanceNoir)) return null;
+  return couleur === 1 ? avanceNoir : -avanceNoir;
+}
+
+/**
+ * Défaite en points ramenée au 9 × 9 (0 pour une victoire ou un écart inconnu). Un grand plateau donne de plus
+ * grands écarts : on divise par taille / 9 (13 × 13 : 1,44 ; 19 × 19 : 2,11). Perdre de 38 points en 19 × 19 vaut 18 en 9 × 9.
+ */
+export function defaiteRamenee(avance: number | null, size: number): number {
+  if (avance == null || avance >= 0) return 0;
+  return -avance / (Math.max(9, size) / 9);
+}
+
+/** Précision maximale compatible avec l'avance finale du joueur ; `null` : pas de plafond. */
+export function plafondPrecision(avance: number | null, size: number): number | null {
+  const d = defaiteRamenee(avance, size);
+  for (const p of PLAFONDS_DEFAITE) if (d >= p.des) return p.max;
+  return null;
+}
+
+/** Précision affichée : celle des notes, plafonnée par le score final (`avanceNoir` : avance finale de Noir, komi compris). */
+export function precisionHonnete(notes: (NoteCoup | null)[], couleur: Color, avanceNoir: number | null | undefined, size: number): number | null {
+  const p = precision(notes, couleur);
+  if (p == null) return null;
+  const max = plafondPrecision(avanceDe(avanceNoir, couleur), size);
+  return max == null ? p : Math.min(p, max);
+}
+
+/** Vrai si la partie est une défaite nette pour `couleur` (au moins 3 points ramenés au 9 × 9). */
+export function defaiteNette(avanceNoir: number | null | undefined, couleur: Color, size: number): boolean {
+  return defaiteRamenee(avanceDe(avanceNoir, couleur), size) >= DEFAITE_SERREE;
+}
+
+/**
+ * Avance finale de Noir : le résultat du SGF (`RE[B+20.5]`, `RE[W+3]`, `RE[0]`) s'il est chiffré, sinon l'estimation
+ * du moteur sur la dernière position. Un abandon (`B+R`) garde l'estimation, mais jamais avec le mauvais signe.
+ */
+export function avanceFinale(resultat: string | undefined, estimation: number | null | undefined): number | null {
+  const est = estimation != null && Number.isFinite(estimation) ? estimation : null;
+  const r = (resultat ?? '').trim().toUpperCase();
+  if (r === '0' || r === 'DRAW' || r === 'JIGO') return 0;
+  const m = /^([BW])\+(.*)$/.exec(r);
+  if (!m) return est;
+  const s = m[1] === 'B' ? 1 : -1, v = Number(m[2].replace(',', '.'));
+  if (m[2] !== '' && Number.isFinite(v)) return s * v;
+  return est != null && Math.sign(est) === s ? est : null;
+}
+
+export interface MomentCle {
+  /** Numéro du coup (1 = premier coup) : on rejoue depuis la position `coup - 1`. */
+  coup: number;
+  /** Points perdus entre la position avant ce coup et la réponse de l'adversaire. */
+  perte: number;
+  passe: boolean;
+  /** Pierres prises par l'adversaire dans sa réponse. */
+  prises: number;
+}
+
+/** Sous ces pertes, c'est du bruit : mêmes seuils que la note « Imprécision » de chaque moteur. */
+export const SEUIL_CLE = { katago: SEUILS_KATAGO.imprecision, simple: SEUILS_SIMPLE.imprecision } as const;
+
+/**
+ * Moment clé de `joueur` (issue #186) : son coup, passes comprises, où il a perdu le plus de points.
+ * Un coup se juge avec la réponse de l'adversaire : une passe ne change pas le plateau, c'est le coup gratuit
+ * qui suit qui coûte (« tu as passé, Pomme a pris 6 pierres »). Perte : chute de l'avance du joueur entre la
+ * position avant son coup et la position après la réponse ; on garde la plus petite des deux mesures (brute et
+ * lissée) pour écarter le bruit. Ignorés : le premier coup (« Rejouer d'ici » y relancerait une partie vide) et
+ * la passe de fin de partie quand il ne reste rien à prendre. `null` si aucune perte n'atteint le seuil.
+ */
+export function momentCle(positions: Position[], analyses: (AnalyseRevue | null)[], joueur: Color | null): MomentCle | null {
+  const lisse = lisser(analyses);
+  let best: MomentCle | null = null;
+  for (let i = 2; i < positions.length; i++) {
+    const c = positions[i - 1].toPlay;
+    if (joueur && c !== joueur) continue;
+    const a0 = analyses[i - 1], a1 = analyses[i];
+    if (!a0 || !a1 || a0.engine !== a1.engine) continue;
+    const passe = (positions[i].lastMove ?? -1) < 0;
+    // Une passe ne coûte que par le coup gratuit qui suit : si l'adversaire passe aussi (fin de partie), le plateau
+    // n'a pas bougé et tout écart d'estimation n'est que du bruit.
+    if (passe && (rienAPrendre(positions[i - 1]) || !((positions[i + 1]?.lastMove ?? -1) >= 0))) continue;
+    const a2 = analyses[i + 1];
+    const bout = a2 && a2.engine === a0.engine && positions[i + 1] ? i + 1 : i;
+    const fin = analyses[bout]!, s = c === 1 ? 1 : -1, adv = (3 - c) as Color;
+    const perte = Math.min(s * (a0.lead - fin.lead), s * ((lisse[i - 1] ?? a0.lead) - (lisse[bout] ?? fin.lead)));
+    if (!(perte >= SEUIL_CLE[a0.engine]) || (best && perte <= best.perte)) continue;
+    best = { coup: i, perte, passe, prises: positions[bout].captures[adv] - positions[i].captures[adv] };
+  }
+  return best;
+}
+
+/** Phrase de Mochi sur le moment clé, au tutoiement. `adversaire` : nom de l'ordi ; sans lui, partie à deux. */
+export function phraseMomentCle(cle: MomentCle, positions: Position[], adversaire?: string): string {
+  const avant = positions[cle.coup - 1], c = avant.toPlay, joue = positions[cle.coup].lastMove ?? -1;
+  const lui = adversaire ?? (c === 1 ? 'Blanc' : 'Noir');
+  const qui = adversaire ? 'tu as' : `${c === 1 ? 'Noir' : 'Blanc'} a`;
+  const prises = cle.prises > 1 ? `${cle.prises} pierres` : 'une pierre';
+  const fin = adversaire ? ' Rejoue ce coup !' : '';
+  if (cle.passe && cle.prises > 0) return `Moment clé : ici, ${qui} passé. ${lui} a pris ${prises}.${fin}`;
+  if (cle.passe) return `Moment clé : ici, ${qui} passé trop tôt. ${lui} en a profité : environ ${pts(cle.perte)} perdus.${fin}`;
+  const lieu = toLabel(joue, avant.size);
+  if (cle.prises > 0) return `Moment clé : ici, ${qui} joué ${lieu}. Ensuite, ${lui} a pris ${prises} : environ ${pts(cle.perte)} perdus.${fin}`;
+  return `Moment clé : ici, ${qui} joué ${lieu}. Environ ${pts(cle.perte)} perdus.${fin}`;
+}
+
+/** Après une défaite nette sans erreur isolée notée : jamais « aucune erreur ». */
+export const PERTES_DIFFUSES = 'Pas de grosse erreur isolée : les points se sont perdus petit à petit.';
+
 /** Nombre de coups par note pour un joueur. */
 export function compteNotes(notes: (NoteCoup | null)[], couleur: Color): Record<Note, number> {
   const c = Object.fromEntries(NOTES.map(n => [n, 0])) as Record<Note, number>;
@@ -333,19 +471,36 @@ export function compteNotes(notes: (NoteCoup | null)[], couleur: Color): Record<
   return c;
 }
 
+/** Contexte du bilan (issue #186) : avance finale de Noir (komi compris), taille du plateau, moment clé du joueur. */
+export interface ContexteBilan { avanceNoir?: number | null; size?: number; cle?: MomentCle | null }
+
+/** Écart final lisible : « 20,5 points ». */
+const ecart = (v: number) => { const r = Math.round(Math.abs(v) * 2) / 2; return `${String(r).replace('.', ',')} point${r > 1 ? 's' : ''}`; };
+const citeCle = (cle: MomentCle) => `${cle.passe ? `Ta passe au coup ${cle.coup}` : `Ton coup ${cle.coup}`} t'a coûté ${pts(cle.perte)}`;
+
 /**
  * Phrase de Mochi qui résume la partie, au tutoiement. `adversaire` : nom de l'ordi (sinon Blanc).
- * Elle cite la plus grosse erreur du joueur s'il y en a une, sinon elle félicite.
+ * Elle cite la plus grosse erreur du joueur s'il y en a une, sinon elle félicite. Après une défaite nette
+ * (issue #186), jamais de félicitations ni d'« aucune erreur » : elle dit l'écart et renvoie au moment clé.
  */
-export function phraseBilan(notes: (NoteCoup | null)[], joueur: Color, adversaire?: string): string {
-  const moi = precision(notes, joueur), lui = precision(notes, (3 - joueur) as Color);
+export function phraseBilan(notes: (NoteCoup | null)[], joueur: Color, adversaire?: string, ctx: ContexteBilan = {}): string {
+  const size = ctx.size ?? 9;
+  const moi = precisionHonnete(notes, joueur, ctx.avanceNoir, size), lui = precisionHonnete(notes, (3 - joueur) as Color, ctx.avanceNoir, size);
   if (moi == null) return 'Pas assez de coups pour faire le bilan.';
   const miens = notes.filter((n): n is NoteCoup => !!n && n.couleur === joueur);
   const pire = miens.filter(n => n.note === 'erreur' || n.note === 'grosse').sort((a, b) => b.perte - a.perte || a.coup - b.coup)[0];
-  const debut = miens.some(n => n.note === 'brillant') ? 'Un coup brillant, bravo ! '
-    : moi >= 85 ? 'Très belle partie, tu as joué juste. '
+  const brillant = miens.some(n => n.note === 'brillant') ? 'Un coup brillant, bravo ! ' : '';
+  const cle = ctx.cle ?? null;
+  if (defaiteNette(ctx.avanceNoir, joueur, size)) {
+    const debut = `${brillant}Tu perds de ${ecart(ctx.avanceNoir!)}. `;
+    if (cle && (!pire || cle.perte >= pire.perte)) return `${debut}${citeCle(cle)} : rejoue-le.`;
+    if (pire) return `${debut}Ton coup ${pire.coup} t'a coûté ${pts(pire.perte)} : va le revoir.`;
+    return `${debut}${PERTES_DIFFUSES}`;
+  }
+  const debut = brillant || (moi >= 85 ? 'Très belle partie, tu as joué juste. '
     : lui != null && moi > lui ? `Tu as joué plus juste que ${adversaire ?? 'Blanc'}. `
-    : moi >= 60 ? 'Partie correcte. ' : 'Partie difficile, ça arrive. ';
+    : moi >= 60 ? 'Partie correcte. ' : 'Partie difficile, ça arrive. ');
   if (pire) return `${debut}Ton coup ${pire.coup} t'a coûté ${pts(pire.perte)} : va le revoir.`;
+  if (cle) return `${debut}${citeCle(cle)} : va le revoir.`;
   return `${debut}Aucune erreur, continue comme ça !`;
 }
