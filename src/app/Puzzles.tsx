@@ -35,7 +35,7 @@ import { lireReserveAppareil } from './gelAppareil';
 import { inviterCompte, serieAffichee } from './serieLocale';
 import { goDuJourFaitAppareil, validerDefi } from './defiAppareil';
 import { RevisionDuJour } from '../ui/RevisionDuJour';
-import { noterRediteAppareil, repriseDeLecon } from './rediteAppareil';
+import { noterRediteAppareil, repriseDeLeconFaite, suivreEnRevisionAppareil } from './rediteAppareil';
 // `t` désigne déjà un palier dans ce fichier : la traduction s'appelle `tr` (#167).
 import { t as tr } from '../content/i18n';
 import { useExercice } from '../ui/celebrations';
@@ -145,6 +145,9 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   const markVu = useCallback((id: string) => {
     setVus(prev => { const next = { ...prev, [id]: true as const }; writeLocal(VUS_KEY, next); return next; });
   }, []);
+  // Révision du jour (#251, M2) : les problèmes réussis et ceux vus avec la réponse ; ces derniers à part, pour le libellé.
+  const vusSeuls = useMemo(() => new Set(Object.keys(vus).filter(id => !solved.has(id))), [vus, solved]);
+  const aReviser = useMemo(() => new Set([...solved, ...vusSeuls]), [solved, vusSeuls]);
 
   const tiers = useMemo(() => paliers(list, solved), [list, solved]);
   // Palier complet : une micro-fête en or, une seule fois par palier (réglage Célébrations et mouvements réduits respectés).
@@ -200,8 +203,12 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
             track(EVENTS.goDuJourResolu, { numero, essais, serie: s?.jours ?? 1, arrivee_par_lien: lien !== null, vu: gain.statut === 'vu' });
           }
           if (gain.palier) markSolved(open.id); else markVu(open.id);
+          suivreEnRevisionAppareil(open.id);
           // #237 : un Go du jour qui reprend une étape de leçon ne revient pas dès demain en révision.
-          if (estDuJour && repriseDeLecon(open)) noterRediteAppareil(open.id);
+          // #251 (M3) : seulement si le joueur a fait cette étape ; sinon, il le voyait pour la première fois.
+          // #251 (M2) : et seulement s'il l'a réussi sans voir la réponse. Vu avec l'aide, il n'est pas acquis :
+          // la révision le repropose dès demain (J+1, comme une révision ratée, revision.ts).
+          if (estDuJour && gain.palier && repriseDeLeconFaite(open)) noterRediteAppareil(open.id);
         }}
         onSolutionVue={essais => track(EVENTS.solutionVue, { probleme: open.id, du_jour: estDuJour, essais })}
         onNext={nextPz ? () => { setOpenId(nextPz.id); window.scrollTo({ top: 0 }); } : undefined}
@@ -271,8 +278,9 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
         </section>
       )}
 
-      {/* Révision du jour (#199) : problèmes déjà réussis, repris à J+1, J+3, J+7. */}
-      <RevisionDuJour liste={list} reussis={solved} confirmTouch={confirmTouch} Lecteur={PuzzlePlayer} onSerie={setSerieDuJour} />
+      {/* Révision du jour (#199) : problèmes déjà réussis, repris à J+1, J+3, J+7. Depuis #251 (M2), aussi ceux
+          vus avec la réponse : « Retente-le plus tard » (pb.vuTexte), c'est la révision qui le repropose. */}
+      <RevisionDuJour liste={list} reussis={aReviser} vus={vusSeuls} confirmTouch={confirmTouch} Lecteur={PuzzlePlayer} onSerie={setSerieDuJour} />
 
       {/* Un seul « Problème suivant », le palier en cours sans total, la grille derrière un lien discret (#196). */}
       <section aria-labelledby="paliers-titre">

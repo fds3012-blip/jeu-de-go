@@ -38,7 +38,7 @@ export function writeLocal(key: string, v: unknown): void {
   try { localStorage.setItem(key, JSON.stringify(v)); } catch { /* stockage indisponible */ }
 }
 
-const LESSONS_KEY = 'go.lecons.v1';
+export const LESSONS_KEY = 'go.lecons.v1';
 export type SyncState = 'local' | 'sync' | 'ok' | 'error';
 
 /**

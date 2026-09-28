@@ -28,6 +28,28 @@ test('fin de partie contre Pomme : deux passes, récit du score direct, puis le 
   expect(erreurs).toEqual([]);
 });
 
+// Issue #251 (recette du 28/09, M4) : passer sur un plateau presque vide, c'est perdre au komi.
+// Mochi l'explique et invite à jouer plus longtemps, au lieu de « Perdu de peu ».
+test('passes sur un plateau vide : Mochi explique le komi, pas « perdu de peu »', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' }); // écart affiché tout de suite, sans décompte
+  await page.goto('/');
+  await page.locator('.cta').click();
+  await expect(page.locator('svg.board[aria-label="Plateau de go 9 × 9"]')).toBeVisible();
+  await passer(page);
+  await expect(page.getByRole('heading', { level: 2, name: 'Défaite' })).toBeVisible({ timeout: 15_000 });
+  const mochi = page.getByText(/Le plateau était presque vide\s:\sBlanc gagne grâce au komi, les points donnés à Blanc parce que Noir joue en premier\. Joue plus longtemps pour entourer du territoire\./);
+  await expect(mochi).toBeVisible();
+  await expect(page.locator('.fin-marge')).toContainText(/0,5\spoint sur 9 × 9/);
+  await expect(page.getByText(/Perdu de peu/)).toHaveCount(0);
+  // Une seule action principale : rejouer. La leçon sur le territoire reste un lien discret.
+  await expect(page.locator('.cta')).toHaveText('Rejouer contre Pomme');
+  await expect(page.getByRole('button', { name: 'Ouvrir la leçon' })).toBeVisible();
+  await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: 'light' });
+  await page.screenshot({ path: 'docs/qa/captures/recette-matin/m4-apres-komi-explique-clair-390.png' });
+  await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: 'dark' });
+  await page.screenshot({ path: 'docs/qa/captures/recette-matin/m4-apres-komi-explique-sombre-390.png' });
+});
+
 test('« Corriger les pierres mortes » ouvre la phase manuelle, puis « Valider le score »', async ({ page }) => {
   await page.goto('/');
   await page.locator('.cta').click();

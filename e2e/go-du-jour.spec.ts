@@ -50,9 +50,11 @@ test('le lien ouvre le Go du jour sans compte, on le résout, puis on le partage
   await expect(page.getByRole('button', { name: 'Voir un indice' })).toHaveClass(/\blien\b/);
   await jouer(page, 'E5');
   await attendrePierre(page, 'E5', 'noir');
-  // #237 (N3) : ce Go du jour (b1) est l'étape 4 de la leçon 1 ; la Révision du jour ne le reprendra pas demain.
-  const recents = await page.evaluate(() => JSON.parse(localStorage.getItem('go.revision.v1') ?? '{}').recents);
-  expect(recents).toEqual({ b1: 1 });
+  // #237 (N3) : ce Go du jour (b1) est l'étape 4 de la leçon 1. #251 (M3) : le joueur n'a pas fait la leçon,
+  // ce n'est donc pas une redite ; la Révision du jour le reprendra demain (voir revision-du-jour.spec.ts).
+  const revision = await page.evaluate(() => JSON.parse(localStorage.getItem('go.revision.v1') ?? '{}'));
+  expect(revision.recents ?? {}).toEqual({});
+  expect(revision.suivis).toEqual({ b1: { base: 1, etape: 0 } });
 
   // « Partager » est l'action principale, en relief.
   const partager = page.getByRole('button', { name: 'Partager' });

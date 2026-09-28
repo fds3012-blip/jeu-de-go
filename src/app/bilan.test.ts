@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { battu, enregistrer, fin, komiDepuisUrl, leconMochi, lireBilan, suivant, texteBilan, texteCoups, type Bilan, type StatsPartie } from './bilan';
+import { battu, enregistrer, fin, finTropTot, PIERRES_PLATEAU_VIDE, komiDepuisUrl, leconMochi, lireBilan, suivant, texteBilan, texteCoups, type Bilan, type StatsPartie } from './bilan';
 import { OPPONENTS } from '../engine';
 
 const [pomme, caillou] = OPPONENTS;
@@ -102,6 +102,37 @@ describe('leçon de Mochi', () => {
     expect(leconMochi('defaite', stats({ marge: 3.5 }), 'Pomme').texte).toBe('Sans le komi, les 6,5 points donnés à Blanc qui joue en second, tu gagnais !');
     expect(leconMochi('defaite', stats({ marge: 8.5 }), 'Pomme').lecon).toBeUndefined();
     expect(leconMochi('defaite', stats({ marge: 25.5 }), 'Pomme')).toMatchObject({ lecon: 'l6' });
+  });
+});
+
+describe('fin sur un plateau presque vide (#251, M4)', () => {
+  it('seuil : moins de 10 pierres, au comptage seulement, et jamais sans le nombre de pierres', () => {
+    expect(PIERRES_PLATEAU_VIDE).toBe(10);
+    expect(finTropTot(stats({ pierres: 2 }))).toBe(true);
+    expect(finTropTot(stats({ pierres: 9 }))).toBe(true);
+    expect(finTropTot(stats({ pierres: 10 }))).toBe(false);
+    expect(finTropTot(stats({ pierres: 0, abandon: true }))).toBe(false);
+    expect(finTropTot(stats({}))).toBe(false);
+  });
+
+  it('2 coups puis deux passes, komi 0,5 : le komi est expliqué, pas « perdu de peu »', () => {
+    const l = leconMochi('defaite', stats({ coups: 4, pierres: 2, marge: 0.5, komi: 0.5 }), 'Pomme');
+    expect(l.texte).toBe('Le plateau était presque vide : Blanc gagne grâce au komi, les points donnés à Blanc parce que Noir joue en premier. Joue plus longtemps pour entourer du territoire.');
+    expect(l.texte).not.toContain('de peu');
+    expect(l.lecon).toBe('l6');
+    // Même chose avec le komi habituel : l'écart vient du komi seul.
+    expect(leconMochi('defaite', stats({ pierres: 0, marge: 6.5, komi: 6.5 }), 'Pomme').texte).toContain('grâce au komi');
+  });
+
+  it("écart plus grand que le komi : pas d'explication du komi, mais toujours l'invitation à jouer plus longtemps", () => {
+    const l = leconMochi('defaite', stats({ pierres: 6, marge: 9.5, komi: 0.5 }), 'Pomme');
+    expect(l.texte).toBe('Le plateau était presque vide. Joue plus longtemps pour entourer du territoire.');
+  });
+
+  it("ne change ni la victoire, ni l'abandon, ni une partie jouée", () => {
+    expect(leconMochi('victoire', stats({ coups: 0, pierres: 0, marge: 93.5 }), 'Pomme', 'Caillou').texte).toContain('Victoire nette');
+    expect(leconMochi('defaite', stats({ abandon: true, coups: 4, pierres: 4, marge: 0 }), 'Pomme').texte).toContain('Tu as abandonné tôt');
+    expect(leconMochi('defaite', stats({ pierres: 40, marge: 8.5 }), 'Pomme').texte).toBe('Perdu de peu. La prochaine fois sera la bonne !');
   });
 });
 
