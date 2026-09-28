@@ -25,9 +25,8 @@ import { noterVictoire } from './installation';
 import { RecitScore } from '../ui/RecitScore';
 import { mouvementsReduits } from '../ui/defilement';
 import { conseil as conseilMochi, phraseConseil } from '../engine/conseil';
-import { PortraitMochi } from '../ui/Portrait';
 import { recitScore } from './score';
-import { Portrait, type Humeur } from '../ui/Portrait';
+import { Portrait, PortraitMochi, type Humeur } from '../ui/Portrait';
 
 /** Durée d'une réaction du portrait de l'adversaire (content, surpris), en millisecondes. */
 const DUREE_HUMEUR = 1500;
@@ -381,7 +380,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     setPhase('end'); setRelecture(null); setRecitFini(abandon);
     // La partie est gardée en SGF sur ce téléphone, pour la revue (Supabase viendra plus tard).
     // Résultat exact (RE) : la revue connaît l'écart, komi compris (#187).
-    const texte = sgfDepuisHistorique(history, komi, { noir: ai ? 'Toi' : 'Noir', blanc: ai?.nom ?? 'Blanc', resultat: resultatSgf(egalite ? 0 : winner, abandon, sc.margin) });
+    const texte = sgfDepuisHistorique(history, komi, { noir: ai ? tr('camp.toi') : tr('camp.noir'), blanc: ai?.nom ?? tr('camp.blanc'), resultat: resultatSgf(egalite ? 0 : winner, abandon, sc.margin) });
     setSgf(texte);
     try { localStorage.setItem(REVUE_KEY, JSON.stringify({ sgf: texte, adversaire: ai?.id, date: new Date().toISOString() } satisfies PartieGardee)); } catch { /* stockage indisponible */ }
     const resultat = () => onResult?.(egalite ? 0 : winner, {
@@ -439,7 +438,9 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     const initiale = c === 1 && profil?.pseudo ? profil.pseudo[0] : undefined;
     return (
       <Bandeau nom={name(c)} sousTitre={sousTitre} actif={actif} captures={q.captures[c]} pierresPrises={c === 1 ? 'blanc' : 'noir'}
-        portrait={c === 2 && ai ? <Portrait id={ai.id} taille={44} humeur={humeur.h} decoratif signature={false} />
+        // Partie guidée (#79) : l'adversaire est Mochi, pas l'adversaire de l'échelle dont il emprunte la force (recette du soir, S1).
+        portrait={c === 2 && ai && guidee ? <PortraitMochi taille={44} decoratif />
+          : c === 2 && ai ? <Portrait id={ai.id} taille={44} humeur={humeur.h} decoratif signature={false} />
           : c === 2 && portrait ? portrait : <Avatar couleur={c} initiale={initiale} />}
         replique={c === 2 ? replique : null} avant={c === 2 ? retour : undefined} gain={gain} />
     );
@@ -522,8 +523,10 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     return (
       <FinPartie
         fond={<Board size={size} board={pos.board} marks={{ owner: abandon ? undefined : sc.owner, dead, last: pos.lastMove }} />}
-        sceau={ai ? <Portrait id={ai.id} taille={108} decoratif humeur={gagne ? 'surpris' : 'content'} /> : <span className={`fin-pierre ${winner === 1 ? 'b' : 'w'}`} aria-hidden="true" />}
-        tampon={ai && gagne ? battuAccorde(ai.id).toUpperCase() : null}
+        sceau={ai && guidee ? <PortraitMochi taille={108} decoratif humeur={gagne ? 'fier' : 'content'} />
+          : ai ? <Portrait id={ai.id} taille={108} decoratif humeur={gagne ? 'surpris' : 'content'} /> : <span className={`fin-pierre ${winner === 1 ? 'b' : 'w'}`} aria-hidden="true" />}
+        // Partie guidée : elle ne compte pas dans le bilan, personne n'est « battu ».
+        tampon={ai && gagne && !guidee ? battuAccorde(ai.id).toUpperCase() : null}
         titre={titre}
         marge={abandon || egalite ? null : sc.margin}
         texteMarge={v => tr('fin.marge', { n: v, v: virgule(v), plateau })}

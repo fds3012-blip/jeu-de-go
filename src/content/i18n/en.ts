@@ -28,6 +28,10 @@ export const en = {
   'profil.jours': { one: '{n} day', other: '{n} days' },
   'profil.serieAria': 'Streak: {jours}',
   'profil.reglages': 'Settings',
+  // Langue de l'interface (#167) : chaque langue garde son nom dans sa langue, dans les deux catalogues.
+  'profil.langue': 'Language',
+  'langue.fr': 'Français',
+  'langue.en': 'English',
   'profil.theme': 'Theme',
   'profil.theme.sombre': 'Dark',
   'profil.theme.clair': 'Light',
@@ -142,6 +146,9 @@ export const en = {
   'pb.palierComplet': 'Tier complete',
   'pb.reussis': { one: '{n} solved', other: '{n} solved' },
   'pb.palierVerrou': 'Solve a few more puzzles in the tier before to unlock it.',
+  // Repli quand la table `puzzles` n'a ni titre ni consigne (src/data/puzzles.ts)
+  'pb.titreDefaut': 'Puzzle',
+  'pb.consigneDefaut': 'Find the best move.',
   'pb.probleme': 'Puzzle {n}',
   'pb.problemeAria': 'Puzzle {n}: {titre}',
   'pb.difficulte.1': 'Easy',
@@ -158,6 +165,7 @@ export const en = {
   'pb.refaireAria': 'Play the Daily Go again',
   'pb.partager': 'Share',
   'pb.copie': 'Copied!',
+  'pb.copieAnnonce': 'Text copied. Paste it into a message.',
   'pb.copieImpossible': 'Couldn’t copy. Send this link:',
   'pb.bonCoup': 'Well done, that’s the right move!',
   'pb.pasTout': 'Not quite. Try again.',
@@ -625,6 +633,8 @@ export const en = {
   'acquis.l8': 'You know where to place your first stones: corners, sides, then the center.',
   'acquis.defaut': 'One more lesson in your pocket.',
   'lecteur.progression': 'Lesson progress',
+  'lecteur.lireExplication': 'Read the explanation',
+  'lecteur.replierExplication': 'Hide the explanation',
   'lecteur.etapes': { one: '{n} of {total} steps done', other: '{n} of {total} steps done' },
   'compte.titre': 'Your account',
   'compte.indisponible': 'Sign-in isn’t available right now. You can play and learn without an account: your progress stays on this phone.',
@@ -717,4 +727,7 @@ export const en = {
   'raison.breche': 'there is still a gap in its border at {point}',
   'raison.points': { one: 'there’s still one point to take at {point}', other: 'there are still {n} points to take at {point}' },
   'partie.continue': '{nom} keeps playing: {raison}.',
+  // Nom accessible d'un portrait selon son humeur (src/ui/Portrait.tsx)
+  'portrait.content': '{nom}, happy',
+  'portrait.surpris': '{nom}, surprised',
 } as const satisfies Catalogue;

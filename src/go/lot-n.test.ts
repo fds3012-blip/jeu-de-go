@@ -13,6 +13,7 @@ import LOT_N from '../content/lots/n-debutants';
 import { ALL_PUZZLES } from '../content/puzzles';
 import { checkAnswer, parsePuzzles, startOf, type Puzzle } from '../data/puzzles';
 import { fromLabel, toLabel } from './coords';
+import { avantMiseAJour } from './miseAJourTextes';
 import { plainKey, symmetries } from './lecteurs-lot-e';
 import { AVEC_KO, SANS_KO, attackerCaptures, captureEn, defenderFails, legal, sauveEn } from './lecteurs-lot-n';
 import { cederLaMain, preuveParCoup } from './preuve-par-coup';
@@ -117,7 +118,8 @@ describe('lot N : identifiants, doublons, migration (issue #136)', () => {
     expect(sql).toMatch(/on conflict \(id\) do nothing/i);
     expect(sql.match(/\('n\d\d', null, 9,/g)).toHaveLength(LOT_N.length);
     const q = (s: string) => s.replace(/'/g, "''");
-    for (const row of LOT_N) {
+    // Textes corrigés depuis par 20260928233100_textes_problemes (#282) : on compare au texte d'avant, refait par avantMiseAJour.
+    for (const row of LOT_N.map(r => avantMiseAJour(r))) {
       expect(sql).toContain(`('${row.id}', null, 9, '${q(JSON.stringify(row.setup))}', array[${row.answers.map(a => `'${a}'`).join(',')}], '${q(row.title!)}', '${q(row.prompt!)}', '${q(row.explanation!)}', ${row.difficulty})`);
     }
   });

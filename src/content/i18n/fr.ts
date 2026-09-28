@@ -34,6 +34,10 @@ export const fr = {
   'profil.jours': { one: '{n} jour', other: '{n} jours' },
   'profil.serieAria': 'Série de {jours}',
   'profil.reglages': 'Réglages',
+  // Langue de l'interface (#167) : chaque langue garde son nom dans sa langue, dans les deux catalogues.
+  'profil.langue': 'Langue',
+  'langue.fr': 'Français',
+  'langue.en': 'English',
   'profil.theme': 'Thème',
   'profil.theme.sombre': 'Sombre',
   'profil.theme.clair': 'Clair',
@@ -154,6 +158,9 @@ export const fr = {
   'pb.palierComplet': 'Palier complet',
   'pb.reussis': { one: '{n} réussi', other: '{n} réussis' },
   'pb.palierVerrou': 'Réussis encore quelques problèmes du palier d’avant pour l’ouvrir.',
+  // Repli quand la table `puzzles` n'a ni titre ni consigne (src/data/puzzles.ts)
+  'pb.titreDefaut': 'Problème',
+  'pb.consigneDefaut': 'Trouve le meilleur coup.',
   'pb.probleme': 'Problème {n}',
   'pb.problemeAria': 'Problème {n} : {titre}',
   'pb.difficulte.1': 'Facile',
@@ -170,6 +177,7 @@ export const fr = {
   'pb.refaireAria': 'Refaire le Go du jour',
   'pb.partager': 'Partager',
   'pb.copie': 'Copié !',
+  'pb.copieAnnonce': 'Texte copié. Colle-le dans un message.',
   'pb.copieImpossible': 'Copie impossible. Envoie ce lien :',
   'pb.bonCoup': 'Bravo, c’est le bon coup !',
   'pb.pasTout': 'Pas tout à fait. Essaie encore.',
@@ -667,6 +675,9 @@ export const fr = {
   'acquis.l8': 'Tu sais où poser tes premières pierres : coins, bords, puis centre.',
   'acquis.defaut': 'Une leçon de plus dans ta poche.',
   'lecteur.progression': 'Progression de la leçon',
+  // #290 : sur un écran bas, l'explication du verdict est repliée pour laisser voir le plateau.
+  'lecteur.lireExplication': 'Lire l’explication',
+  'lecteur.replierExplication': 'Replier l’explication',
   'lecteur.etapes': { one: '{n} étape faite sur {total}', other: '{n} étapes faites sur {total}' },
   // Compte et connexion (src/app/Account.tsx)
   'compte.titre': 'Ton compte',
@@ -764,4 +775,7 @@ export const fr = {
   'raison.breche': 'il reste un trou dans sa frontière en {point}',
   'raison.points': { one: 'il reste un point à prendre en {point}', other: 'il reste {n} points à prendre en {point}' },
   'partie.continue': '{nom} continue : {raison}.',
+  // Nom accessible d'un portrait selon son humeur (src/ui/Portrait.tsx)
+  'portrait.content': '{nom}, content',
+  'portrait.surpris': '{nom}, surpris',
 } as const;

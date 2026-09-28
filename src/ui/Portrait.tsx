@@ -3,6 +3,7 @@
 // (vermillon : Pomme, Caillou, Bambou ; indigo : Renard, Rivière, Tigre ; noir et or : Montagne, Dragon, Sensei).
 // L'humeur change surtout les yeux et la bouche. Le sceau de l'adversaire signe le portrait, en bas à droite.
 import type { ReactElement } from 'react';
+import { t } from '../content/i18n';
 import { Sceau } from './Sceau';
 import type { SceauId } from './sceaux';
 
@@ -214,7 +215,7 @@ interface Props {
 export function Portrait({ id, humeur = 'neutre', taille = 44, rond = false, decoratif = false, signature, className }: Props) {
   const f = FOND[PALIER[id]];
   const signe = signature ?? taille >= 72;
-  const titre = `${NOMS[id]}${humeur === 'content' ? ', content' : humeur === 'surpris' ? ', surpris' : ''}`;
+  const titre = humeur === 'content' || humeur === 'surpris' ? t(`portrait.${humeur}`, { nom: NOMS[id] }) : NOMS[id];
   const clip = `portrait-clip-${id}-${rond ? 'r' : 'c'}`;
   const forme = rond
     ? <circle cx="50" cy="50" r="48" />

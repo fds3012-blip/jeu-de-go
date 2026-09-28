@@ -42,7 +42,7 @@ const LOT_D: PuzzleRow[] = [
       refutation: "Pas tout à fait. Blanc prend une de tes libertés en D2 : ton groupe C1-C4 n'en a plus qu'une, D1, et Blanc le capture avant que tu prennes le sien. Attaque d'abord les libertés de Blanc." },
     title: 'Premier arrivé',
     prompt: 'Ton groupe C1-C4 et le groupe blanc marqué s’entourent. Compte leurs libertés et gagne la course.',
-    explanation: "Bien vu ! C'est une course aux libertés (semeai en japonais) : deux groupes s'entourent, aucun ne peut vivre seul, et le premier qui prend toutes les libertés de l'autre gagne. Ici, 2 contre 2 : celui qui joue d'abord gagne. En A2, Blanc n'a plus que A1 et tu le captures au coup suivant. A1 marche aussi : si Blanc prend ta pierre en A2, son groupe n'a toujours qu'une liberté, A1, et tu le prends."
+    explanation: "Bien vu ! C'est une course aux libertés (semeai en japonais) : deux groupes s'entourent, aucun ne peut vivre seul, et le premier qui prend toutes les libertés de l'autre gagne. Ici, 2 contre 2 : celui qui joue d'abord gagne. En A2, Blanc n'a plus que A1 et tu le captures au coup suivant. A1 marche aussi : si Blanc joue A2 et prend ta pierre, son groupe n'a toujours qu'une liberté, A1, et tu le prends."
   },
   {
     id: 'd06', size: 9, difficulty: 800, answers: ['G4'],
@@ -82,7 +82,7 @@ const LOT_D: PuzzleRow[] = [
       refutation: "Pas tout à fait. C1 est une liberté commune aux deux groupes : la remplir t'enlève aussi une liberté. Après C1, il reste 2 libertés de chaque côté et c'est à Blanc : il joue E2, puis E1, et capture ton groupe en premier." },
     title: "Dehors d'abord",
     prompt: 'Course aux libertés entre ton groupe et le groupe blanc marqué. C1 touche les deux groupes. Par où commencer ?',
-    explanation: "Bravo ! Dans une course aux libertés (semeai), on remplit d'abord les libertés extérieures : celles qui n'appartiennent qu'au groupe adverse, ici A2 et A1. C1 est une liberté commune, partagée par les deux groupes : on la remplit en dernier. Après A2, Blanc a 2 libertés (A1, C1) et toi 3 (C1, E2, E1) : tu captures Blanc un coup avant lui. A1 marche aussi : si Blanc prend ta pierre en A2, il n'a toujours que deux libertés."
+    explanation: "Bravo ! Dans une course aux libertés (semeai), on remplit d'abord les libertés extérieures : celles qui n'appartiennent qu'au groupe adverse, ici A2 et A1. C1 est une liberté commune, partagée par les deux groupes : on la remplit en dernier. Après A2, Blanc a 2 libertés (A1, C1) et toi 3 (C1, E2, E1) : tu captures Blanc un coup avant lui. A1 marche aussi : si Blanc joue A2 et prend ta pierre, il n'a toujours que deux libertés."
   },
   {
     id: 'd11', size: 9, difficulty: 1100, answers: ['A3', 'A2', 'A1'],
@@ -95,7 +95,7 @@ const LOT_D: PuzzleRow[] = [
   {
     id: 'd12', size: 9, difficulty: 1250, answers: ['A2'],
     setup: { rows: ['.XO......', 'XXO......', '.XO......', 'XXO......', 'XXOOO....', 'XTXOO....', 'XOXOOOO..', '.OXXXXO..', '.O.X.XO..'], toPlay: 'B',
-      refutation: "Pas tout à fait. Si tu remplis C1, ton groupe n'a plus que son œil E1 : Blanc y joue et le capture. Et A1 vient trop tôt : Blanc prend ta pierre en A2, et tu ne peux plus rejouer en A1." },
+      refutation: "Pas tout à fait. Si tu remplis C1, ton groupe n'a plus que son œil E1 : Blanc y joue et le capture. Et A1 vient trop tôt : Blanc joue A2 et prend ta pierre, et tu ne peux plus rejouer en A1." },
     title: "L'œil qui gagne",
     prompt: 'Course aux libertés : ton groupe a un œil en E1, le groupe blanc marqué n’en a pas. Gagne la course.',
     explanation: "Excellent ! Ton groupe a un œil en E1 : un point vide entouré par tes pierres, où Blanc ne peut jouer qu'en dernier. Dans une course aux libertés (semeai), tu as 2 libertés, C1 et l'œil E1 ; Blanc en a 3, A2, A1 et C1, la liberté commune aux deux groupes. Après A2, Blanc ne peut ni jouer dans ton œil (ce serait un suicide) ni jouer C1 sans se mettre en atari. Tu joues ensuite A1, puis C1, et tu le captures. L'œil t'a fait gagner une course où tu avais moins de libertés."
