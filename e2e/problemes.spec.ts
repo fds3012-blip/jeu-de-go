@@ -59,8 +59,12 @@ test('problèmes sans compte : erreur, bonne réponse, suite et problème suivan
   await attendrePierre(page, 'E5', 'noir');
 
   await page.getByRole('button', { name: 'Problème suivant' }).click();
-  // Les problèmes sont rangés par difficulté (#91) : après b1 (400) vient b4 (400), « Sauve ta pierre ».
-  await expect(page.getByRole('heading', { name: 'Sauve ta pierre' })).toBeVisible();
+  // #284 : le suivant est choisi à ta mesure, plus un ordre fixe. b1 a été raté au premier essai :
+  // le suivant est un autre problème, « Facile ».
+  const lecteur = page.locator('.lecteur');
+  await expect(lecteur).toHaveAttribute('data-probleme', /.+/);
+  await expect(lecteur).not.toHaveAttribute('data-probleme', 'b1');
+  await expect(lecteur.locator('.lecteur-tete .difficulte')).toHaveText(/Facile/);
 
   // Le problème réussi reste coché après rechargement.
   await page.reload();
