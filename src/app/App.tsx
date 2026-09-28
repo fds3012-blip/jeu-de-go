@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Game } from './Game';
 import { LearnHome, LessonPlayer } from './Learn';
-import { LESSONS } from '../content/lessons';
+import { CHAPITRES, LESSONS } from '../content/lessons';
 import { Puzzles, SOLVED_KEY } from './Puzzles';
 import { readLocal, writeLocal, useGelsServeur, useLessonProgress, useProfil, useSerie, useSession } from './hooks';
 import { supabase } from '../data/supabase';
@@ -14,7 +14,10 @@ import { ConsentModal } from './Confidentialite';
 import { Profil, type VueProfil } from './Profil';
 import { t } from '../content/i18n';
 import { fenetreVisible, useConsentement } from './consentement';
-import { accueil, adversaireOuvert, echelle, introBut, INTRO_KEY, PARTIES_KEY, type Parties } from './home';
+import { accueil, adversaireOuvert, echelle, introBut, INTRO_KEY, OUVERTS_D_OFFICE, PARTIES_KEY, type Parties } from './home';
+import { Placement } from './Placement';
+import { PLACEMENT_KEY, chapitreConseille, coteApresPlacement, lirePlacement, ouvertsApresPlacement, proposerPlacement, type Placement as ResultatPlacement } from './placement';
+import { COTE_KEY } from './coteJoueur';
 import { Accueil } from './Accueil';
 import { ALL_PUZZLES } from '../content/puzzles';
 import { parsePuzzles } from '../data/puzzles';
@@ -107,8 +110,13 @@ export function App() {
   const [bilanBrut, setBilan] = useStored<Bilan>(BILAN_KEY, {});
   const bilan = lireBilan(bilanBrut);
   // Un adversaire verrouillé (choisi avant l'arrivée des verrous) laisse place à celui qu'il faut battre d'abord.
-  const adv = adversaireOuvert(OPPONENTS, bilan, adversaire);
-  const cartes = echelle(OPPONENTS, bilan).map(e => ({ id: e.adv.id, nom: e.adv.nom, rang: e.adv.rang, battu: e.battu, ouvert: e.ouvert, requis: e.requis?.nom }));
+  // « Je sais déjà jouer » (#283) : résultat du placement ; il ouvre l'échelle jusqu'à l'adversaire conseillé.
+  const [placementBrut, setPlacementBrut] = useStored<unknown>(PLACEMENT_KEY, null);
+  const placement = lirePlacement(placementBrut);
+  const [enPlacement, setEnPlacement] = useState(false);
+  const ouverts = ouvertsApresPlacement(OPPONENTS, placement, OUVERTS_D_OFFICE);
+  const adv = adversaireOuvert(OPPONENTS, bilan, adversaire, ouverts);
+  const cartes = echelle(OPPONENTS, bilan, ouverts).map(e => ({ id: e.adv.id, nom: e.adv.nom, rang: e.adv.rang, battu: e.battu, ouvert: e.ouvert, requis: e.requis?.nom }));
   const serieServeur = useSerie(supabase, session?.user.id);
   // Série protégée (issue #76) : les jours manqués consomment un gel dès l'ouverture, avant que Problèmes lise la série.
   const [annonceGel, setAnnonceGel] = useState(() => reconcilierAppareil(new Date()));
@@ -156,6 +164,20 @@ export function App() {
   const [accordIgnore, setAccordIgnore] = useState(false);
   const consent = useConsentement();
   const profil = useProfil(supabase);
+
+  function ouvrirPlacement() {
+    track(EVENTS.placementCommence, { refait: placement !== null });
+    setEnPlacement(true); setTab('jouer'); setPlaying(false); setLessonId(null); setSerie3(null);
+    window.scrollTo({ top: 0 });
+  }
+
+  /** Leçons conseillées après le placement : la première leçon pas encore faite du chapitre ; la leçon 1 si tout est raté. */
+  function ouvrirLeconsConseillees(kyu: number | null) {
+    const chapitre = CHAPITRES[chapitreConseille(kyu, CHAPITRES.length)];
+    const l = kyu === null ? LESSONS[0] : chapitre?.lecons.find(x => (progress[x.id] ?? 0) < x.steps.length) ?? chapitre?.lecons[0];
+    setEnPlacement(false); setTab('apprendre'); setLessonId(l?.id ?? null);
+    window.scrollTo({ top: 0 });
+  }
 
   function lancer(mode: 'ordi' | 'deux', contre: OpponentId = adv.id) {
     // Première partie contre l'ordi : Mochi explique le but, une seule fois.
@@ -238,7 +260,7 @@ export function App() {
   const [racineProblemes, setRacineProblemes] = useState(0);
   const go = (t: Tab) => {
     if (t === 'problemes' && tab === 'problemes') setRacineProblemes(n => n + 1);
-    setAnnonceGel(null); setRetourSerie(null); setTab(t); setPlaying(false); setLessonId(null); setSerie3(null); setVueProfil('menu'); window.scrollTo({ top: 0 });
+    setAnnonceGel(null); setRetourSerie(null); setEnPlacement(false); setTab(t); setPlaying(false); setLessonId(null); setSerie3(null); setVueProfil('menu'); window.scrollTo({ top: 0 });
   };
 
   const enPartie = tab === 'jouer' && !!playing;
@@ -254,6 +276,25 @@ export function App() {
           onResult={onResult} fin={finEcran} celebrer={settings.celebrations} aide={aideActive(settings.aide, adv.id)} portrait={playing === 'ordi' ? <Sceau id={adv.id} taille={44} /> : undefined} />
       </>
     );
+  } else if (tab === 'jouer' && enPlacement) {
+    screen = <Placement problemes={PROBLEMES_LOCAUX} adversaires={OPPONENTS} confirmTouch={settings.confirmTouch}
+      chapitre={kyu => CHAPITRES[chapitreConseille(kyu, CHAPITRES.length)]?.titre ?? ''}
+      onTermine={({ bilan: b, adversaire: a }) => {
+        const r: ResultatPlacement = { fait: true, kyu: b.kyu, cote: b.cote, adversaire: a.id, date: new Date().toISOString().slice(0, 10) };
+        setPlacementBrut(r);
+        // La cote de « Continuer à ta mesure » (#284) part du placement : les problèmes démarrent à ce palier.
+        writeLocal(COTE_KEY, coteApresPlacement(readLocal<unknown>(COTE_KEY, null), b.cote));
+        setAdversaire(a.id);
+        track(EVENTS.placementTermine, { kyu: b.kyu });
+      }}
+      onPasser={etape => {
+        // Passé : le lien de l'accueil ne revient plus ; un placement déjà fait reste tel quel.
+        if (!placement) setPlacementBrut({ fait: false, saute: true, date: new Date().toISOString().slice(0, 10) } satisfies ResultatPlacement);
+        track(EVENTS.placementSaute, { etape });
+        setEnPlacement(false); window.scrollTo({ top: 0 });
+      }}
+      onJouer={id => { setEnPlacement(false); lancer('ordi', id); }}
+      onLecons={ouvrirLeconsConseillees} />;
   } else if (tab === 'apprendre' && serie3) {
     screen = <SeriePratique problemes={serie3} confirmTouch={settings.confirmTouch} celebrer={settings.celebrations} onFin={() => { setSerie3(null); window.scrollTo({ top: 0 }); }} />;
   } else if (tab === 'apprendre' && lesson) {
@@ -282,7 +323,8 @@ export function App() {
       lien={LIEN_DU_JOUR} onDuJour={setDuJourOuvert} celebrer={settings.celebrations} racine={racineProblemes} />;
   } else if (tab === 'profil') {
     screen = <Profil vue={vueProfil} onVue={setVueProfil} settings={settings} set={set} profil={profil} serie={serie} record={recordSerie}
-      parcours={{ lecons: { faites: done, total: LESSONS.length }, adversaires: OPPONENTS.length }} />;
+      parcours={{ lecons: { faites: done, total: LESSONS.length }, adversaires: OPPONENTS.length }}
+      placement={placement} onPlacement={ouvrirPlacement} />;
   } else {
     const numero = numeroJour;
     const daily = duJour;
@@ -297,11 +339,12 @@ export function App() {
         onLecon={() => { go('apprendre'); if (leconConseillee) setLessonId(leconConseillee.id); }}
         // Un seul appel à la fois (#236, N4) : pas de carte d'installation le jour où Mochi fait une annonce ;
         // quand elle se montre, la pastille « À faire » s'efface.
-        installation={appel === 'installation' ? <ProposerInstallation moment="retour" /> : null} />
+        installation={appel === 'installation' ? <ProposerInstallation moment="retour" /> : null}
+        onPlacement={proposerPlacement(parties.n, placement, ouverture.retours) ? ouvrirPlacement : undefined} />
     );
   }
 
-  const accueilVisible = tab === 'jouer' && !playing;
+  const accueilVisible = tab === 'jouer' && !playing && !enPlacement;
   // #213 : la flamme vue creuse s'allume au retour sur l'accueil, une fois, quand le Go du jour vient d'être fait.
   const flammeVue = useRef<typeof flamme>(null);
   const [allumage, setAllumage] = useState(false);

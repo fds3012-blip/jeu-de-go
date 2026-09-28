@@ -98,11 +98,12 @@ export interface Echelon<T> {
 export const OUVERTS_D_OFFICE = 2;
 
 /** Échelle des adversaires, dans l'ordre, avec leur verrou calculé à partir du bilan (`go.bilan.v1`). */
-export function echelle<T extends { id: string }>(liste: readonly T[], bilan: Bilan): Echelon<T>[] {
+// `ouverts` : adversaires ouverts d'office ; le placement (#283) ouvre l'échelle jusqu'à l'adversaire conseillé.
+export function echelle<T extends { id: string }>(liste: readonly T[], bilan: Bilan, ouverts = OUVERTS_D_OFFICE): Echelon<T>[] {
   const out: Echelon<T>[] = [];
   liste.forEach((adv, i) => {
     const b = battu(bilan, adv.id);
-    const ouvert = i < OUVERTS_D_OFFICE || battu(bilan, liste[i - 1].id);
+    const ouvert = i < ouverts || battu(bilan, liste[i - 1].id);
     let requis: T | undefined;
     if (!ouvert) {
       // Le premier adversaire ouvert et pas encore battu, en remontant vers le bas de l'échelle.
@@ -118,8 +119,8 @@ export function echelle<T extends { id: string }>(liste: readonly T[], bilan: Bi
  * Adversaire réellement proposé : celui choisi s'il est ouvert, sinon celui qu'il faut battre d'abord.
  * (Un choix fait avant l'arrivée des verrous peut désigner un adversaire verrouillé.)
  */
-export function adversaireOuvert<T extends { id: string }>(liste: readonly T[], bilan: Bilan, id: string): T {
-  const e = echelle(liste, bilan).find(x => x.adv.id === id);
+export function adversaireOuvert<T extends { id: string }>(liste: readonly T[], bilan: Bilan, id: string, ouverts = OUVERTS_D_OFFICE): T {
+  const e = echelle(liste, bilan, ouverts).find(x => x.adv.id === id);
   if (!e) return liste[0];
   return e.ouvert ? e.adv : (e.requis ?? liste[0]);
 }

@@ -48,6 +48,61 @@ export type Database = {
           },
         ]
       }
+      defis: {
+        Row: {
+          cree_le: string
+          createur_id: string | null
+          date_limite: string | null
+          delai_coup: unknown
+          invite_id: string | null
+          jeton: string
+          lien_expire_le: string
+          partie_id: string
+        }
+        Insert: {
+          cree_le?: string
+          createur_id?: string | null
+          date_limite?: string | null
+          delai_coup?: unknown
+          invite_id?: string | null
+          jeton: string
+          lien_expire_le?: string
+          partie_id: string
+        }
+        Update: {
+          cree_le?: string
+          createur_id?: string | null
+          date_limite?: string | null
+          delai_coup?: unknown
+          invite_id?: string | null
+          jeton?: string
+          lien_expire_le?: string
+          partie_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "defis_createur_id_fkey"
+            columns: ["createur_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "defis_invite_id_fkey"
+            columns: ["invite_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "defis_partie_id_fkey"
+            columns: ["partie_id"]
+            isOneToOne: true
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       friendships: {
         Row: {
           addressee_id: string
@@ -113,6 +168,7 @@ export type Database = {
           invite_code: string | null
           komi: number
           moves: string
+          prive: boolean
           rated: boolean
           result: string | null
           resumed_at: number
@@ -138,6 +194,7 @@ export type Database = {
           invite_code?: string | null
           komi?: number
           moves?: string
+          prive?: boolean
           rated?: boolean
           result?: string | null
           resumed_at?: number
@@ -163,6 +220,7 @@ export type Database = {
           invite_code?: string | null
           komi?: number
           moves?: string
+          prive?: boolean
           rated?: boolean
           result?: string | null
           resumed_at?: number
@@ -527,6 +585,13 @@ export type Database = {
         Args: { p_game: string; p_loser: string; p_winner: string }
         Returns: undefined
       }
+      creer_defi: {
+        Args: never
+        Returns: {
+          jeton: string
+          partie_id: string
+        }[]
+      }
       delete_my_account: { Args: never; Returns: undefined }
       find_match: { Args: { p_size: number }; Returns: string }
       finish_game_by_score: {
@@ -546,12 +611,24 @@ export type Database = {
         Returns: number
       }
       join_game: { Args: { p_code: string }; Returns: string }
+      jouer_coup_defi: {
+        Args: {
+          p_comptage?: boolean
+          p_coup: string
+          p_coups_avant: string
+          p_joueur: string
+          p_partie: string
+        }
+        Returns: Json
+      }
       play_move: { Args: { p_game: string; p_move: string }; Returns: string }
       record_puzzle_attempt: {
         Args: { p_puzzle: string; p_solved: boolean }
         Returns: number
       }
+      rejoindre_defi: { Args: { p_jeton: string }; Returns: string }
       resign_game: { Args: { p_game: string }; Returns: string }
+      victoire_au_temps: { Args: { p_partie: string }; Returns: string }
     }
     Enums: {
       friend_status: "pending" | "accepted"

@@ -60,6 +60,10 @@ export const EVENTS = {
   // Course aux problèmes (#287) : fin d'une course (score, erreurs, durée, raison) et partage du score.
   courseTerminee: 'course_terminee',
   coursePartagee: 'course_partagee',
+  // « Je sais déjà jouer » (#283) : placement commencé, terminé (`kyu`, null si tout raté), passé (`etape` : 0 à 3).
+  placementCommence: 'placement_commence',
+  placementTermine: 'placement_termine',
+  placementSaute: 'placement_saute',
 } as const;
 export type AnalyticsEvent = (typeof EVENTS)[keyof typeof EVENTS];
 export type Props = Record<string, string | number | boolean | null | undefined>;

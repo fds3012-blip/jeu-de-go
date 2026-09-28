@@ -46,6 +46,9 @@ Issue #166. Source unique : `src/data/analytics.ts` (constante `EVENTS`). Un tes
 | `revision_faite` | `exercices` (exercices du jour, 3 au plus), `du_premier_coup` (réussis du premier coup et sans aide dans cette visite), `serie` (série de l'appareil après coup), `compte_serie` (vrai si la révision fait vivre la série : constante `SERIE_UN_DEFI`) | Dernier exercice de la Révision du jour résolu, une fois par jour (#199, `src/ui/RevisionDuJour.tsx`). Les exercices sont des problèmes déjà réussis, repris à J+1, J+3 et J+7. **Nouveau (#199)** | J7 et J30 (analyse UX du 28/09, A5) ; réussite des révisions (`du_premier_coup` / `exercices`) ; test A/B « un défi par jour » (`docs/data/tableaux-de-bord.md`, section 3) |
 | `course_terminee` | `score` (problèmes résolus), `erreurs` (0 à 3), `duree` (secondes jouées, 180 au plus), `raison` (`temps`, `erreurs` ou `epuise`) | Fin d'une course aux problèmes : 3 minutes écoulées, 3e erreur ou plus de problème (#287, `src/app/CourseProblemes.tsx`). Une course quittée avant la fin n'envoie rien. **Nouveau (#287)** | Part des joueurs actifs qui font une course dans la semaine, courses par joueur, durée de session ; J7 et J30 des joueurs qui font une course |
 | `course_partagee` | `score`, `meilleur` (meilleur score de l'appareil, après la course), `methode` (`partage`/`copie`) | « Partager » touché sur l'écran de fin de la course (#287, `src/app/CourseProblemes.tsx`). Le texte n'a pas de spoiler : score, durée et meilleur score. **Nouveau (#287)** | Partages de course par semaine (acquisition) |
+| `placement_commence` | `refait` (vrai si un placement était déjà fait ou passé) | Lien « Je sais déjà jouer » de l'accueil (premier lancement) ou ligne du Profil (#283, `src/app/App.tsx`). **Nouveau (#283)** | Part des nouveaux qui choisissent « Je sais déjà jouer » (second cercle) |
+| `placement_termine` | `kyu` (niveau estimé, `null` si les 3 problèmes sont ratés) | Troisième problème de placement joué (#283, `src/app/Placement.tsx`). **Nouveau (#283)** | J1 des joueurs placés (cible : au moins 45 %) ; répartition des kyu |
+| `placement_saute` | `etape` (problèmes déjà joués, 0 à 2) | « Passer » pendant le placement (#283). **Nouveau (#283)** | Abandon du placement, par étape |
 
 `identify(id)` (`src/app/Account.tsx`) relie les événements au compte, seulement au niveau `complet`.
 
@@ -66,10 +69,15 @@ Issue #166. Source unique : `src/data/analytics.ts` (constante `EVENTS`). Un tes
 - `limite_atteinte` (`type` : `analyse`, `probleme`, `lecon`) : combien de joueurs gratuits touchent une limite.
 - `partie_en_ligne_terminee` : quand les parties en ligne auront leur écran.
 - `note_demandee` / `note_donnee` : invite à noter l'app, quand l'app sera sur les stores.
+- Défi par lien (#81, backend prêt, pas encore d'écran ; à brancher avec l'écran et à citer alors dans la politique de confidentialité) :
+  - `defi_cree` : lien créé (`creer_defi` a répondu). Propriétés : `partage` (`web_share`, `copie`), `anonyme` (booléen : créateur sans compte).
+  - `defi_ouvert` : un invité ouvre un lien et rejoint la partie (`rejoindre_defi` a répondu). Propriétés : `anonyme` (booléen), `deja_joueur` (le créateur rouvre son propre lien).
+  - `defi_inscription` : un invité arrivé sans compte relie son e-mail après son premier coup (`garderMonCompte`). Propriété : `coups` (coups joués avant l'inscription).
+  - Coefficient viral : `uniq(defi_ouvert sans deja_joueur) / uniq(defi_cree)` par semaine, puis `defi_inscription / defi_ouvert (anonyme)`. Aucune donnée du jeton ni de l'identifiant de partie dans les propriétés.
 
 ## Vérification du 28/09 (#222)
 
-- **Couverture** : les 27 événements de `EVENTS` ont leur ligne (test `analytics.test.ts`). Événements ajoutés la nuit du 27 au 28/09 : `lecon_commencee` (#198), `revue_rejouer` (#186), `installation_proposee` et `installation_acceptee` (#178), `solution_vue` (#197), `revision_faite` (#199). Propriétés et déclencheurs relus dans le code : conformes au tableau.
+- **Couverture** : les 32 événements de `EVENTS` ont leur ligne (test `analytics.test.ts`). Événements ajoutés la nuit du 27 au 28/09 : `lecon_commencee` (#198), `revue_rejouer` (#186), `installation_proposee` et `installation_acceptee` (#178), `solution_vue` (#197), `revision_faite` (#199). Propriétés et déclencheurs relus dans le code : conformes au tableau.
 - **Réception dans PostHog** (lecture seule, 28/09 vers 03 h 30) : aucun de ces six événements n'a encore été reçu, ni `partie_commencee`, `comptage_manuel`, ni la propriété `mesure` (#166). Dernier événement reçu : 28/09 à 00 h 06. Soit aucun trafic depuis les déploiements, soit un souci de version : à revérifier au premier trafic réel.
 - **Requêtes** : chaque événement cité dans `tableaux-de-bord.md` existe dans `EVENTS` ou dans la liste « À ajouter plus tard » (test `src/data/tableauxDeBord.test.ts`).
 

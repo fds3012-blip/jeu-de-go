@@ -1,0 +1,32 @@
+/* « Je sais déjà jouer » (#283) : placement en 3 problèmes, puis le niveau de départ. */
+
+/* Lien discret de l'accueil, sous le bouton principal : texte secondaire, pas de fond, cible de 44 px. */
+/* La cible de 44 px porte l'espace sous le bouton : l'écart habituel des tuiles est repris, le goban garde sa place. */
+.accueil .lien-placement { display: block; margin: 0 auto; color: var(--muted); font-weight: var(--fw-medium);
+  text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+.accueil .lien-placement + .tuiles { margin-top: 0; }
+
+/* En-tête du placement : pas de « Retour » (on passe), le lien « Passer » à droite. */
+.placement-tete { margin-left: 0; }
+.placement-passer { flex: none; color: var(--muted); margin-right: -12px; }
+
+/* Résultat : une phrase forte, l'explication du kyu, l'adversaire conseillé, une seule action. */
+.placement-fin { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-6) 0 var(--space-4); text-align: center; }
+.placement-fin h2 { margin: 0; font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: var(--fs-3xl); line-height: 1.1; text-wrap: balance; }
+.placement-surtitre { margin: 0; color: var(--muted); font-size: var(--fs-s); }
+.placement-explique, .placement-phrase { margin: 0 auto; max-width: 34ch; color: var(--muted); font-size: var(--fs-corps-s); line-height: 1.45; }
+.placement-phrase { color: var(--text); }
+.placement-adversaire { display: flex; align-items: center; gap: var(--space-3); margin-top: var(--space-2); padding: var(--space-3); border-radius: var(--radius); background: var(--surface); text-align: left; }
+.placement-adversaire p { margin: 0; font-size: var(--fs-corps-s); line-height: 1.4; }
+.placement-fin .cta { position: static; transform: none; width: 100%; margin-top: var(--space-2); }
+.placement-fin .cta-sceau { display: flex; align-items: center; justify-content: center; gap: 10px; }
+.placement-fin .lien { align-self: center; color: var(--muted); font-weight: var(--fw-medium); }
+
+/* Le niveau apparaît en douceur, une seule fois ; rien ne bouge avec les mouvements réduits. */
+@media (prefers-reduced-motion: no-preference) {
+  .placement-fin > * { animation: placement-entree 320ms cubic-bezier(.2, .8, .2, 1) both; }
+  .placement-fin > :nth-child(2) { animation-delay: 60ms; }
+  .placement-fin > :nth-child(3) { animation-delay: 120ms; }
+  .placement-fin > :nth-child(n + 4) { animation-delay: 180ms; }
+}
+@keyframes placement-entree { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
