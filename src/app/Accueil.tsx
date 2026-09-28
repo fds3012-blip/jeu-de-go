@@ -80,12 +80,20 @@ export function Accueil(p: Props) {
       </button>
 
       <div className="tuiles">
-        <button className="tuile tuile-probleme" onClick={p.onProbleme}>
+        {/* #213 : la tuile dit l'état du jour, « À faire » tant que le Go du jour d'aujourd'hui n'est pas réussi, puis « Fait ». */}
+        <button className={`tuile tuile-probleme${p.probleme ? (p.probleme.reussi ? ' fait' : ' a-faire') : ''}`} onClick={p.onProbleme}
+          aria-label={p.probleme ? t('accueil.tuileAria', { numero: p.probleme.numero, titre: p.probleme.titre, etat: t(p.probleme.reussi ? 'accueil.fait' : 'accueil.aFaire') }) : undefined}>
           {p.probleme && <MiniPlateau rows={p.probleme.rows} />}
           <span>
-            <small>{p.probleme ? t(p.probleme.reussi ? 'accueil.goDuJourReussi' : 'accueil.goDuJourNumero', { numero: p.probleme.numero }) : t('accueil.goDuJour')}</small>
+            <small>{p.probleme ? t('accueil.goDuJourNumero', { numero: p.probleme.numero }) : t('accueil.goDuJour')}</small>
             <b>{p.probleme?.titre ?? t('nav.problemes')}</b>
           </span>
+          {p.probleme && (
+            <em className="tuile-etat" data-testid="etat-du-jour" aria-hidden="true">
+              {p.probleme.reussi && <svg viewBox="0 0 12 12" width="11" height="11" focusable="false"><path d="M2.5 6.4 5 8.8l4.6-5.3" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>}
+              {t(p.probleme.reussi ? 'accueil.fait' : 'accueil.aFaire')}
+            </em>
+          )}
         </button>
         <button className="tuile tuile-lecon" onClick={p.onLecon}>
           <span>

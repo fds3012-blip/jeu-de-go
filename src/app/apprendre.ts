@@ -48,6 +48,26 @@ export function finDeLecon(lecons: Lesson[], id: string): { titre: string; derni
   return { titre: derniere ? 'Chapitre terminé' : 'Leçon terminée', derniere };
 }
 
+/** Fin de chapitre (#200) : la dernière leçon est terminée, ou toutes les leçons le sont. */
+export function finDeChapitre(lecons: Lesson[], progression: Progression, id: string): boolean {
+  if (!lecons.length) return false;
+  return lecons[lecons.length - 1].id === id || lecons.every(l => (progression[l.id] ?? 0) >= l.steps.length);
+}
+
+export type ActionFin = 'jouer' | 'pratique' | 'suivante' | 'chemin';
+
+/**
+ * Actions de l'écran de fin de leçon (#200), la principale d'abord (en relief), puis les liens discrets.
+ * Fin de chapitre : « Joue contre Pomme ». Sinon, la série de 3 problèmes du thème s'il y en a une, puis la leçon suivante.
+ */
+export function actionsFin({ chapitre, pratique, suivante, jouer }: { chapitre: boolean; pratique: boolean; suivante: boolean; jouer: boolean }): { principale: ActionFin; liens: ActionFin[] } {
+  const ordre: ActionFin[] = chapitre
+    ? [...(jouer ? ['jouer' as const] : []), ...(pratique ? ['pratique' as const] : []), 'chemin']
+    : [...(pratique ? ['pratique' as const] : []), ...(suivante ? ['suivante' as const] : []), 'chemin'];
+  const [principale, ...liens] = ordre;
+  return { principale, liens };
+}
+
 /** Écart entre deux lignes du goban dessiné sous le chemin, en px : une pierre tient pile sur une intersection. */
 export const LIGNE = 56;
 

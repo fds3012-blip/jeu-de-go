@@ -4,7 +4,7 @@
 // - « anonyme » (par défaut, sans consentement) : mesure d'audience réglée pour entrer dans l'exemption
 //   de la CNIL (lignes directrices du 17 septembre 2020, art. 5) : rien n'est écrit sur l'appareil
 //   (`persistence: 'memory'`), aucun profil (`person_profiles: 'never'`), jamais d'identifiant de compte,
-//   IP non conservée, pas d'enregistrement de session. Le joueur peut s'y opposer (page Conditions).
+//   IP non conservée, pas de localisation déduite de l'IP (`$geoip_disable`, #223), pas d'enregistrement de session. Le joueur peut s'y opposer (page Conditions).
 // - « complet » (seulement après « Oui ») : identifiant persistant (rétention J1, lien avec le compte)
 //   et rapports d'erreur Sentry. Rien de cela ne part avant l'accord.
 // - « aucun » : le joueur s'est opposé à la mesure anonyme ; rien n'est chargé ni envoyé.
@@ -112,8 +112,20 @@ export function analyticsAvailable(): boolean {
   return browser() && (!!c.posthogKey || !!c.sentryDsn);
 }
 
+/**
+ * Localisation (#223, écart E2 de la politique de confidentialité) : PostHog déduit pays, région et coordonnées
+ * approchées de l'IP, sauf si l'événement porte `$geoip_disable: true`. posthog-js n'a pas d'option d'init pour
+ * cela : `before_send` l'ajoute à chaque envoi (nos événements comme ceux du SDK, `$identify` compris), aux deux
+ * niveaux. Contrairement à `register()`, ce réglage survit à `reset()`.
+ */
+export function sansLocalisation<E extends { event?: string; properties?: Record<string, unknown> } | null>(ev: E): E {
+  if (ev) ev.properties = { ...ev.properties, $geoip_disable: true };
+  return ev;
+}
+
 /** Réglages PostHog de la mesure exemptée : rien sur l'appareil, aucun profil, rien de superflu. */
 export const POSTHOG_ANONYME: Readonly<Record<string, unknown>> = {
+  before_send: sansLocalisation,
   persistence: 'memory',
   person_profiles: 'never',
   ip: false,
@@ -175,9 +187,11 @@ export function subscribeConsent(fn: () => void): () => void {
 /** Réponse à la fenêtre : « Oui » active les rapports d'erreur et la mesure détaillée ; « Non merci » les coupe. */
 export function setConsent(c: Consent): void {
   if (!browser()) return;
+  const avant = niveau();
   ecrire(CONSENT_KEY, c);
   memoryConsent = c;
   if (c === 'accepte') { ecrire(OPPOSITION_KEY, null); memoryOpposition = false; }
+  if (avant === 'complet' && niveau() !== 'complet') effacerTraces();
   listeners.forEach(fn => fn());
   appliquer();
 }
@@ -185,11 +199,31 @@ export function setConsent(c: Consent): void {
 /** Droit d'opposition à la mesure anonyme. S'opposer retire aussi l'accord donné dans la fenêtre. */
 export function setOpposition(oppose: boolean): void {
   if (!browser()) return;
+  const avant = niveau();
   ecrire(OPPOSITION_KEY, oppose ? '1' : null);
   memoryOpposition = oppose;
   if (oppose && getConsent() === 'accepte') { ecrire(CONSENT_KEY, 'refuse'); memoryConsent = 'refuse'; }
+  if (avant === 'complet' && niveau() !== 'complet') effacerTraces();
   listeners.forEach(fn => fn());
   appliquer();
+}
+
+/**
+ * Retrait de l'accord (#223, écart E5) : efface de l'appareil l'identifiant PostHog persistant (clés `ph_*`,
+ * dont `ph_<clé>_posthog`, et l'état d'opt-out `__ph_opt_in_out_*`) et les repères `go.evenement.*` de trackOnce.
+ * Ne touche à rien d'autre : réglages, choix de consentement et progression du joueur restent.
+ */
+export function effacerTraces(): void {
+  if (!browser()) return;
+  const aEffacer = (k: string) => k.startsWith('ph_') || k.startsWith('__ph_opt_in_out_') || k.startsWith(ONCE_PREFIX);
+  for (const store of [() => localStorage, () => sessionStorage]) {
+    try {
+      const s = store();
+      const cles: string[] = [];
+      for (let i = 0; i < s.length; i++) { const k = s.key(i); if (k !== null && aEffacer(k)) cles.push(k); }
+      cles.forEach(k => s.removeItem(k));
+    } catch { /* stockage indisponible : rien à effacer */ }
+  }
 }
 
 /** Met les SDK en accord avec le niveau courant : chargement, passage anonyme ↔ complet, arrêt. */
@@ -211,16 +245,21 @@ function appliquer() {
   if (n === 'anonyme') {
     void loadPostHog().then(ph => {
       if (!ph || niveauPostHog === 'anonyme') return;
+      const quitteComplet = niveauPostHog === 'complet';
       ph.reset(); // oublie l'identifiant persistant et le lien avec le compte
       ph.set_config({ ...POSTHOG_ANONYME });
       niveauPostHog = 'anonyme';
+      // reset() a pu réécrire un nouvel identifiant dans le stockage avant le passage en mémoire.
+      if (quitteComplet && niveau() !== 'complet') effacerTraces();
     });
   } else if (phLoading) {
     void phLoading.then(ph => {
       if (!ph || niveauPostHog === 'aucun') return;
+      const quitteComplet = niveauPostHog === 'complet';
       ph.reset();
       ph.set_config({ ...POSTHOG_ANONYME });
       niveauPostHog = 'aucun';
+      if (quitteComplet && niveau() !== 'complet') effacerTraces();
     });
   }
 }
