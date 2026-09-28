@@ -7,7 +7,7 @@ vi.stubGlobal('localStorage', { getItem: (k: string) => memoire.get(k) ?? null, 
 vi.mock('../data/analytics', async orig => ({ ...(await orig<typeof import('../data/analytics')>()), track: (...a: unknown[]) => track(...a) }));
 
 const xp = await import('./xp');
-const { GAINS, BONUS_PREMIERE, PREMIERES_KEY, lirePremieres, appliquer, cout, seuil, niveauDe, prochaineRecompense, recompenseDuNiveau, gagnerXp, lireXp, envoyerAgregat, abonnerXp, XP_KEY, PLAFOND } = xp;
+const { GAINS, premiereDe, BONUS_PREMIERE, PREMIERES_KEY, lirePremieres, appliquer, cout, seuil, niveauDe, prochaineRecompense, recompenseDuNiveau, gagnerXp, lireXp, envoyerAgregat, abonnerXp, XP_KEY, PLAFOND } = xp;
 
 describe('courbe des niveaux', () => {
   it('le niveau 2 arrive à 100 XP, puis environ +25 % par niveau', () => {
@@ -44,8 +44,19 @@ describe('courbe des niveaux', () => {
 });
 
 describe('gains', () => {
-  it('barème : problème 10, Go du jour 20, leçon 30, partie 15, victoire 15 + 25', () => {
-    expect(GAINS).toEqual({ probleme: 10, goDuJour: 20, lecon: 30, partie: 15, victoire: 40 });
+  it('barème : problème 10, Go du jour 20, révision du jour 20, leçon 30, partie 15, victoire 15 + 25', () => {
+    expect(GAINS).toEqual({ probleme: 10, goDuJour: 20, revision: 20, lecon: 30, partie: 15, victoire: 40 });
+  });
+
+  it('#233 : chaque défi du jour qui fait vivre la série rapporte au moins autant que le Go du jour', () => {
+    expect(GAINS.revision).toBe(GAINS.goDuJour);
+    expect(GAINS.lecon).toBeGreaterThan(GAINS.goDuJour);
+  });
+
+  it('#233 : la révision est un problème pour le bonus « première fois » (pas de second bonus)', () => {
+    expect(premiereDe('revision')).toBe('probleme');
+    expect(appliquer(0, 'revision', true)).toMatchObject({ points: 30, bonus: 10 });
+    expect(appliquer(0, 'revision')).toMatchObject({ points: 20, bonus: 0 });
   });
 
   it('un gain ne fait jamais baisser l’XP et signale le niveau franchi', () => {

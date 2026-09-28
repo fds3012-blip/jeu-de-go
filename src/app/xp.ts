@@ -7,16 +7,21 @@
 import { EVENTS, track } from '../data/analytics';
 import { t } from '../content/i18n';
 
-export type SourceXp = 'probleme' | 'goDuJour' | 'lecon' | 'partie' | 'victoire';
+export type SourceXp = 'probleme' | 'goDuJour' | 'revision' | 'lecon' | 'partie' | 'victoire';
 
-/** XP gagnés par source. Une victoire compte la partie terminée (+15) et le bonus de victoire (+25). */
-export const GAINS: Record<SourceXp, number> = { probleme: 10, goDuJour: 20, lecon: 30, partie: 15, victoire: 40 };
+/**
+ * XP gagnés par source. Une victoire compte la partie terminée (+15) et le bonus de victoire (+25).
+ * Révision du jour (#233) : finie une fois par jour, elle fait vivre la série comme le Go du jour ; elle rapporte donc
+ * autant que lui. Un défi du jour qui compte pour la série rapporte toujours quelque chose (docs/game-design/economie.md).
+ */
+export const GAINS: Record<SourceXp, number> = { probleme: 10, goDuJour: 20, revision: 20, lecon: 30, partie: 15, victoire: 40 };
 
 /**
  * Courbe des niveaux. On commence au niveau 1 avec 0 XP.
  * Passer du niveau n au niveau n + 1 coûte `cout(n) = min(PLAFOND, arrondi5(100 × 1,25^(n − 1)))` XP :
  * 100, 125, 155, 195, 245, 305, 380, 475, 595, 745, 930, puis 1000 par niveau.
- * Le niveau 2 arrive donc à 100 XP (environ 7 problèmes, ou 3 leçons), le niveau 3 à 225, le niveau 5 à 575.
+ * Le niveau 2 arrive donc à 100 XP (9 problèmes, ou 3 leçons, bonus « première fois » compris), le niveau 3 à 225,
+ * le niveau 5 à 575, le niveau 8 à 1505. Rythme simulé sur 30 jours : docs/game-design/economie.md.
  */
 export const BASE = 100;
 export const RAISON = 1.25;
@@ -71,9 +76,9 @@ export const recompensesDebloquees = (niveau: number) => RECOMPENSES.filter(r =>
  */
 export type Premiere = 'partie' | 'lecon' | 'probleme';
 export const BONUS_PREMIERE: Record<Premiere, number> = { partie: 20, lecon: 20, probleme: 10 };
-/** Le Go du jour est un problème ; une victoire est une partie. */
+/** Le Go du jour et la révision sont des problèmes ; une victoire est une partie. */
 export const premiereDe = (source: SourceXp): Premiere =>
-  source === 'goDuJour' ? 'probleme' : source === 'victoire' ? 'partie' : source;
+  source === 'goDuJour' || source === 'revision' ? 'probleme' : source === 'victoire' ? 'partie' : source;
 
 export interface Gain {
   source: SourceXp;

@@ -277,7 +277,7 @@ export const en = {
   'badge.palier-novice.nom': 'Novice tier',
   'badge.palier-novice.condition': 'Clear the Novice tier.',
   'badge.serie-7.nom': '7-day streak',
-  'badge.serie-7.condition': 'Daily Go 7 days running.',
+  'badge.serie-7.condition': '7 days of challenges.',
 
   // Step 4: game screen, score story, end screen and game review.
   'camp.noir': 'Black',

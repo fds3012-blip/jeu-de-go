@@ -1,7 +1,8 @@
 // « Révision du jour » (issue #199) : 3 problèmes déjà réussis, repris à J+1, J+3 et J+7 (logique : src/app/revision.ts).
 // Section de l'onglet Problèmes, sous le Go du jour. Une seule carte : le prochain exercice, sans total ni fin visible.
 // Chaque exercice s'ouvre dans le lecteur de problème existant (passé par Puzzles.tsx), en plein écran, comme « Tes erreurs ».
-// Révision du jour finie : c'est un défi du jour (série de l'appareil, SERIE_UN_DEFI) et l'événement `revision_faite`.
+// Révision du jour finie : c'est un défi du jour (série de l'appareil, SERIE_UN_DEFI), l'événement `revision_faite`
+// et, depuis #233, +20 XP une fois par jour (comme le Go du jour : un défi qui fait vivre la série rapporte toujours).
 import { useEffect, useMemo, useRef, useState, type ComponentType } from 'react';
 import type { Puzzle } from '../data/puzzles';
 import { EVENTS, track } from '../data/analytics';
@@ -10,6 +11,7 @@ import { numeroDuJour, type Serie } from '../app/goDuJour';
 import { REVISION_KEY, aFaire, apresRevision, lireRevision, revisionDuJour, revisionFaite, synchroniser, type EtatRevision } from '../app/revision';
 import { SERIE_UN_DEFI, compteDansSerie } from '../app/defi';
 import { validerDefi } from '../app/defiAppareil';
+import { gagnerXp } from '../app/xp';
 import { MiniGoban } from './MiniGoban';
 import { fr } from './typo';
 import { t } from '../content/i18n';
@@ -74,6 +76,7 @@ export function RevisionDuJour({ liste, reussis, confirmTouch, Lecteur, onSerie 
     if (!revisionFaite(etat, numero) && revisionFaite(e, numero)) {
       const { serie } = validerDefi('revision');
       onSerie?.(serie);
+      gagnerXp('revision');
       track(EVENTS.revisionFaite, {
         exercices: e.jour?.ids.length ?? 0, du_premier_coup: bilan.current.premierCoup,
         serie: serie?.jours ?? 0, compte_serie: compteDansSerie('revision'),

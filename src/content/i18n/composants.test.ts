@@ -67,7 +67,7 @@ describe('français identique aux textes d’origine', () => {
       ['palier-debutant', 'Palier Débutant', 'Finis le palier Débutant.'],
       ['dix-problemes', '10 problèmes', 'Réussis 10 problèmes.'],
       ['palier-novice', 'Palier Novice', 'Finis le palier Novice.'],
-      ['serie-7', '7 jours de série', 'Fais 7 Go du jour de suite.'],
+      ['serie-7', '7 jours de série', 'Un défi 7 jours de suite.'],
     ]);
     expect(badges(plein).every(b => b.obtenu)).toBe(true);
     expect(traduire('fr', 'vitrine.aGagner', { nom: 'Pomme battue', condition: 'Gagne contre Pomme.' })).toBe('Pomme battue : à gagner. Gagne contre Pomme.');
