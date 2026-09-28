@@ -369,7 +369,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     setPhase('end'); setRelecture(null); setRecitFini(abandon);
     // La partie est gardée en SGF sur ce téléphone, pour la revue (Supabase viendra plus tard).
     // Résultat exact (RE) : la revue connaît l'écart, komi compris (#187).
-    const texte = sgfDepuisHistorique(history, komi, { noir: ai ? 'Toi' : 'Noir', blanc: ai?.nom ?? 'Blanc', resultat: resultatSgf(egalite ? 0 : winner, abandon, sc.margin) });
+    const texte = sgfDepuisHistorique(history, komi, { noir: ai ? tr('camp.toi') : tr('camp.noir'), blanc: ai?.nom ?? tr('camp.blanc'), resultat: resultatSgf(egalite ? 0 : winner, abandon, sc.margin) });
     setSgf(texte);
     try { localStorage.setItem(REVUE_KEY, JSON.stringify({ sgf: texte, adversaire: ai?.id, date: new Date().toISOString() } satisfies PartieGardee)); } catch { /* stockage indisponible */ }
     const resultat = () => onResult?.(egalite ? 0 : winner, {

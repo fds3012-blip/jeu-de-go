@@ -50,7 +50,7 @@ Ces données sont écrites dans le stockage local (`localStorage`) de ton naviga
 
 | Données | Clé de stockage | Contenu |
 |---|---|---|
-| Réglages | `go.settings.v1`, `go.themeGoban.v1` | Thème, taille du plateau, son, vibrations, fêtes, aide, confirmation du coup, décor du plateau |
+| Réglages | `go.settings.v1`, `go.themeGoban.v1`, `go.langue.v1` | Thème, taille du plateau, son, vibrations, fêtes, aide, confirmation du coup, décor du plateau, langue de l’interface choisie dans le Profil (`"fr"` ou `"en"`) |
 | Choix sur la mesure | `go.consentement.v1`, `go.mesure.opposition.v1` | Ta réponse à la fenêtre (« Oui » ou « Non merci ») et ton opposition au comptage anonyme |
 | Repères d'événements | `go.evenement.<nom>` (par exemple `go.evenement.premiere_pierre`) | « Déjà envoyé une fois » pour certains événements. **Écrits seulement si tu as dit « Oui »** |
 | Leçons | `go.lecons.v1` | Leçons commencées et terminées |
