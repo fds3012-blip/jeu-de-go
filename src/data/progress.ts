@@ -2,6 +2,7 @@
 // À la connexion, la progression locale et celle de la base sont fusionnées (on garde le maximum).
 import type { Db } from './supabase';
 import type { Result } from './account';
+import { t } from '../content/i18n';
 
 /** Nombre d'étapes faites par leçon. */
 export type Progress = Record<string, number>;
@@ -64,14 +65,14 @@ export function supabaseProgressStore(db: Db, userId: string): ProgressStore {
   return {
     async load() {
       const { data, error } = await db.from('lesson_progress').select('lesson_id, steps_done').eq('user_id', userId);
-      if (error) return { ok: false, error: 'Impossible de charger ta progression.' };
+      if (error) return { ok: false, error: t('erreur.progression') };
       return { ok: true, value: cleanProgress(Object.fromEntries(data.map(r => [r.lesson_id, r.steps_done]))) };
     },
     async save(rows) {
       const now = new Date().toISOString();
       const { error } = await db.from('lesson_progress')
         .upsert(rows.map(r => ({ ...r, user_id: userId, updated_at: now })), { onConflict: 'user_id,lesson_id' });
-      if (error) return { ok: false, error: 'Progression non enregistrée.' };
+      if (error) return { ok: false, error: t('erreur.progressionNonEnregistree') };
       return { ok: true, value: null };
     }
   };

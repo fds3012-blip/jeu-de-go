@@ -1,6 +1,8 @@
 // Langage commun des lecteurs de leçon et de problème (issue #40, phase 6) :
 // barre du haut (retour, progression), feuille de verdict en bas (jade : juste, hanko : à revoir), coche qui se dessine.
-import type { ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
+import { t } from '../content/i18n';
+import { mouvementsReduits } from './defilement';
 import './apprendre.css';
 
 /** Bouton retour, rond, en haut à gauche. Le libellé dit où il mène. */
@@ -17,8 +19,8 @@ export function Retour({ label, onClick }: { label: string; onClick: () => void 
 /** Barre de progression des étapes : un segment par étape, rempli quand l'étape est faite. */
 export function Etapes({ total, faites }: { total: number; faites: number }) {
   return (
-    <div className="etapes" role="progressbar" aria-label="Progression de la leçon" aria-valuemin={0} aria-valuemax={total} aria-valuenow={faites}
-      aria-valuetext={`${faites} étape${faites > 1 ? 's' : ''} faite${faites > 1 ? 's' : ''} sur ${total}`}>
+    <div className="etapes" role="progressbar" aria-label={t('lecteur.progression')} aria-valuemin={0} aria-valuemax={total} aria-valuenow={faites}
+      aria-valuetext={t('lecteur.etapes', { n: faites, total })}>
       {Array.from({ length: total }, (_, i) => <span key={i} className={i < faites ? 'faite' : undefined} />)}
     </div>
   );
@@ -41,8 +43,10 @@ export function Marque({ juste, taille = 32 }: { juste: boolean; taille?: number
  * `cle` relance l'animation de la marque à chaque nouvelle réponse.
  */
 export function Verdict({ ton, children, actions, cle }: { ton: 'juste' | 'revoir' | 'neutre'; children: ReactNode; actions?: ReactNode; cle?: string | number }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => devoilerPlateau(ref.current), [ton, cle]);
   return (
-    <div className={`verdict verdict-${ton}`}>
+    <div ref={ref} className={`verdict verdict-${ton}`}>
       <div className="verdict-texte" role="status" aria-live="polite">
         {ton !== 'neutre' && <Marque key={cle} juste={ton === 'juste'} />}
         <div>{children}</div>
@@ -50,4 +54,24 @@ export function Verdict({ ton, children, actions, cle }: { ton: 'juste' | 'revoi
       {actions && <div className="verdict-actions">{actions}</div>}
     </div>
   );
+}
+
+/**
+ * Petits écrans (#250, M5) : la feuille de verdict monte sur le bas du plateau et cachait le coup joué, au moment
+ * de la récompense. La page réserve la hauteur de la feuille et défile juste assez pour poser le bas du plateau
+ * au-dessus d'elle, sans faire sortir le haut du plateau. Rien ne bouge quand le plateau est déjà visible (390 × 844).
+ */
+function devoilerPlateau(verdict: HTMLDivElement | null) {
+  const lecteur = verdict?.closest<HTMLElement>('.lecteur');
+  const plateau = lecteur?.querySelector<HTMLElement>('.board-wrap');
+  if (!verdict || !lecteur || !plateau) return;
+  const hauteur = verdict.offsetHeight;
+  lecteur.style.setProperty('--verdict-h', `${hauteur + 16}px`);
+  // Haut de la feuille une fois posée (l'animation d'entrée la décale encore de quelques pixels).
+  const haut = window.innerHeight - (parseFloat(getComputedStyle(verdict).bottom) || 0) - hauteur;
+  const p = plateau.getBoundingClientRect();
+  const manque = p.bottom - haut + 8;
+  if (manque <= 0) return;
+  const pas = Math.min(manque, Math.max(0, p.top - 8));
+  if (pas > 0) window.scrollBy({ top: pas, behavior: mouvementsReduits() ? 'instant' : 'smooth' });
 }

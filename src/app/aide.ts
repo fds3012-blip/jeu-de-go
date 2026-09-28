@@ -59,3 +59,12 @@ export function recompense(n: NiveauAide, duJour: boolean): Recompense {
   const vu = reponseVue(n);
   return { statut: vu ? 'vu' : 'reussi', xp: !vu, palier: !vu, serie: duJour };
 }
+
+/**
+ * Toucher le plateau pendant la réfutation ou la réponse montrée (#237, N6) : comme en leçon, pas de « Réessayer ».
+ * Le plateau revient à la position de départ ; le point touché est joué s'il est vide au départ et à l'écran,
+ * sinon (ta pierre fausse, la pierre de l'adversaire) il remet seulement la position.
+ */
+export function toucherApresErreur(videAuDepart: boolean, videAffiche: boolean): 'jouer' | 'remettre' {
+  return videAuDepart && videAffiche ? 'jouer' : 'remettre';
+}

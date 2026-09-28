@@ -20,7 +20,7 @@ import { ALL_PUZZLES } from '../content/puzzles';
 import { parsePuzzles } from '../data/puzzles';
 import { EVENTS, track } from '../data/analytics';
 import { PARAM, SERIE_KEY, numeroDuJour, numeroDuLien, problemeDuNumero, type Serie } from './goDuJour';
-import { battu, BILAN_KEY, enregistrer, fin, komiDepuisUrl, lireBilan, type Bilan, type Issue, type StatsPartie } from './bilan';
+import { battu, BILAN_KEY, enregistrer, fin, finTropTot, komiDepuisUrl, lireBilan, type Bilan, type Issue, type StatsPartie } from './bilan';
 import { fr } from '../ui/typo';
 import { Glacon } from '../ui/Glacon';
 import { Mochi } from '../ui/Mochi';
@@ -32,12 +32,15 @@ import { messageGel } from './gel';
 import { goDuJourFaitAppareil } from './defiAppareil';
 import { BarreNav, type Onglet } from '../ui/IconesNav';
 import { BarreNiveau, FeteNiveau } from '../ui/Niveau';
-import { annonceKomi, equilibrage, KOMI_NORMAL, partiesOrdi, type Equilibrage } from './equilibrage';
+import { annonceKomi, equilibrage, KOMI_NORMAL, partiesOrdi, rendrePartieOrdi, type Equilibrage } from './equilibrage';
 import { AnnonceXp } from '../ui/PastilleXp';
-import { ProposerInstallation } from '../ui/ProposerInstallation';
-import { estMomentRetour, noterOuverture } from './installation';
+import { useExercice } from '../ui/celebrations';
+import { ProposerInstallation, usePlateformeInstallation } from '../ui/ProposerInstallation';
+import { doitProposer, estMomentRetour, etatInstallation, noterOuverture } from './installation';
+import { ANNONCE_DU_JOUR_KEY, appelSecondaire, etatTuile, lireJourAnnonce } from './appelsAccueil';
 import { SeriePratique } from './SeriePratique';
-import { THEMES_DE_LECON, serieDeLecon } from '../content/themes';
+import { TAILLE_SERIE, THEMES_DE_LECON, serieDeLecon } from '../content/themes';
+import { estRedite } from '../content/redites';
 import type { Puzzle } from '../data/puzzles';
 
 const PROBLEMES_LOCAUX = parsePuzzles(ALL_PUZZLES);
@@ -121,6 +124,9 @@ export function App() {
   useEffect(() => { noterRecordAppareil(serie); }, [serie]);
   const [resultat, setResultat] = useState<null | { issue: Issue; stats: StatsPartie }>(null); // fin de la partie en cours contre l'ordi
   const [partie, setPartie] = useState(0); // change à chaque partie pour repartir d'un plateau vide
+  // #236 (N2) : une partie en cours est un exercice ; l'XP et la fête de niveau attendent l'écran de fin.
+  const [partieFinie, setPartieFinie] = useState(false);
+  useExercice(tab === 'jouer' && !!playing && !partieFinie);
   const numeroJour = numeroDuJour(new Date());
   const duJour = problemeDuNumero(PROBLEMES_LOCAUX, numeroJour);
   const duJourFait = goDuJourFaitAppareil(numeroJour);
@@ -131,6 +137,16 @@ export function App() {
   const [vueProfil, setVueProfil] = useState<VueProfil>('menu');
   // Installation (#214) : proposée sur l'accueil à partir du 2e retour (jour d'ouverture distinct), une seule fois.
   const [ouverture] = useState(() => noterOuverture(numeroDuJour(new Date())));
+  // #236 (N4) : un seul appel secondaire sur l'accueil (annonce de Mochi, carte d'installation ou « À faire »).
+  const plateforme = usePlateformeInstallation();
+  const [etatInstall] = useState(etatInstallation);
+  const annonceAccueil = annonceGel !== null || retourSerie !== null;
+  useEffect(() => { if (annonceAccueil) writeLocal(ANNONCE_DU_JOUR_KEY, numeroJour); }, [annonceAccueil, numeroJour]);
+  const [jourAnnonce] = useState(() => lireJourAnnonce(readLocal<unknown>(ANNONCE_DU_JOUR_KEY, null)));
+  const appel = appelSecondaire({
+    jour: numeroJour, parties: parties.n, duJourFait, annonce: annonceAccueil, jourAnnonce,
+    installation: estMomentRetour(ouverture) && doitProposer({ plateforme, etat: etatInstall, moment: 'retour', enPartie: false }),
+  });
   const [accordIgnore, setAccordIgnore] = useState(false);
   const consent = useConsentement();
   const profil = useProfil(supabase);
@@ -147,15 +163,19 @@ export function App() {
     setParties({ n: parties.n + 1, dernier: mode === 'ordi' ? contre : parties.dernier, ordi: rang + (mode === 'ordi' ? 1 : 0) });
     setReglages(false);
     setResultat(null);
+    setPartieFinie(false);
     setPartie(partie + 1);
     setPlaying(mode);
     window.scrollTo({ top: 0 });
   }
 
   function onResult(winner: 0 | 1 | 2, stats: StatsPartie) {
+    setPartieFinie(true);
     if (playing !== 'ordi') return;
     const issue: Issue = winner === 0 ? 'egalite' : winner === 1 ? 'victoire' : 'defaite';
     if (issue !== 'egalite') setBilan(enregistrer(bilan, adv.id, issue === 'victoire'));
+    // #251 : une partie finie sur un plateau presque vide ne consomme pas une partie à komi réduit.
+    if (finTropTot(stats)) setParties(rendrePartieOrdi(parties));
     setResultat({ issue, stats });
   }
 
@@ -201,7 +221,7 @@ export function App() {
       </>
     );
   } else if (tab === 'apprendre' && serie3) {
-    screen = <SeriePratique problemes={serie3} confirmTouch={settings.confirmTouch} onFin={() => { setSerie3(null); window.scrollTo({ top: 0 }); }} />;
+    screen = <SeriePratique problemes={serie3} confirmTouch={settings.confirmTouch} celebrer={settings.celebrations} onFin={() => { setSerie3(null); window.scrollTo({ top: 0 }); }} />;
   } else if (tab === 'apprendre' && lesson) {
     const leconSuivante = LESSONS[LESSONS.indexOf(lesson) + 1];
     // Fin de leçon (#200) : 3 problèmes du thème, et en fin de chapitre une partie contre le premier adversaire.
@@ -214,7 +234,9 @@ export function App() {
       pratique={themes.length ? {
         themes: themes.map(th => t(`theme.${th}`)),
         ouvrir: () => {
-          const s = serieDeLecon(lesson.id, PROBLEMES_LOCAUX, new Set(Object.keys(readLocal<Record<string, true>>(SOLVED_KEY, {}))));
+          const s = serieDeLecon(lesson.id, PROBLEMES_LOCAUX, new Set(Object.keys(readLocal<Record<string, true>>(SOLVED_KEY, {}))),
+            // #237 : pas le même exercice que l'étape de leçon qui vient d'être jouée.
+            TAILLE_SERIE, p => estRedite(p, lesson));
           if (s.length) { setSerie3(s); setLessonId(null); window.scrollTo({ top: 0 }); }
         },
       } : undefined}
@@ -235,12 +257,13 @@ export function App() {
       <Accueil adv={adv} battu={battu(bilan, adv.id)} textes={home} taille={settings.size} cartes={cartes}
         reglages={reglages} setReglages={setReglages} onTaille={n => set({ size: n })} onChoisir={setAdversaire}
         onJouer={() => lancer('ordi')} onDeux={() => lancer('deux')}
-        probleme={daily && { numero, titre: daily.title, rows: daily.rows, reussi: duJourFait }}
+        probleme={daily && { numero, titre: daily.title, rows: daily.rows, reussi: duJourFait, etat: etatTuile(appel, duJourFait) }}
         onProbleme={() => go('problemes')}
         lecon={leconConseillee && { rang: rangLecon, total: LESSONS.length, titre: leconConseillee.title }}
         onLecon={() => { go('apprendre'); if (leconConseillee) setLessonId(leconConseillee.id); }}
-        // Un seul message à la fois : pas de carte d'installation le jour où Mochi annonce un gel ou un record.
-        installation={estMomentRetour(ouverture) && annonceGel === null && retourSerie === null ? <ProposerInstallation moment="retour" /> : null} />
+        // Un seul appel à la fois (#236, N4) : pas de carte d'installation le jour où Mochi fait une annonce ;
+        // quand elle se montre, la pastille « À faire » s'efface.
+        installation={appel === 'installation' ? <ProposerInstallation moment="retour" /> : null} />
     );
   }
 
@@ -283,7 +306,7 @@ export function App() {
         {accueilVisible && <BarreNiveau />}
         {screen}
       </main>
-      <FeteNiveau celebrer={settings.celebrations} ecran={`${tab}|${playing}|${lessonId ?? ''}|${vueProfil}`} />
+      <FeteNiveau celebrer={settings.celebrations} ecran={`${tab}|${playing}|${lessonId ?? ''}|${serie3 ? 'serie' : ''}|${vueProfil}`} />
       <AnnonceXp celebrer={settings.celebrations} />
       {/* Pendant une partie, comme chez chess.com : pas de barre de navigation, « ‹ » ramène à l'accueil. */}
       {!enPartie && <BarreNav actif={tab} onChoisir={go} />}

@@ -9,7 +9,7 @@ test('fin de la leçon 1 : 3 problèmes de capture enchaînés, puis retour au c
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
-  await page.getByRole('button', { name: 'Continuer : Libertés et capture' }).click();
+  await page.getByRole('button', { name: 'Reprendre la leçon : Libertés et capture' }).click();
   await jouer(page, 'E4');
   await page.getByRole('button', { name: 'Terminer la leçon' }).click();
   await expect(page.getByRole('heading', { name: 'Leçon terminée' })).toBeVisible();
@@ -24,10 +24,11 @@ test('fin de la leçon 1 : 3 problèmes de capture enchaînés, puis retour au c
   expect(cible!.height).toBeGreaterThanOrEqual(44);
   await pratique.click();
 
-  // Les trois plus faciles du thème, dans le lecteur de problèmes existant.
+  // Les trois plus faciles du thème, dans le lecteur de problèmes existant. #237 : pas ceux qui répètent la leçon
+  // (b1 est l'étape 4, a01 et n01 ont la même forme que les étapes 4 et 6).
   const serie = page.locator('.serie-pratique');
-  await expect(serie).toHaveAttribute('data-serie', 'a01 n01 a02');
-  for (const [rang, titre, coup] of [[1, 'Première capture', 'E4'], [2, 'Deux pierres d’un coup', 'E3'], [3, 'Capture au bord', 'E2']] as const) {
+  await expect(serie).toHaveAttribute('data-serie', 'a02 n02 a03');
+  for (const [rang, titre, coup] of [[1, 'Capture au bord', 'E2'], [2, 'Le plus gros d’abord', 'F1'], [3, 'Capture dans le coin', 'A2']] as const) {
     await expect(page.getByText(`Entraînement, ${rang} sur 3`)).toBeVisible();
     await expect(page.getByRole('heading', { name: titre })).toBeVisible();
     await jouer(page, coup);
@@ -36,9 +37,12 @@ test('fin de la leçon 1 : 3 problèmes de capture enchaînés, puis retour au c
   }
   // Fin de la série : retour au chemin, où la leçon 2 attend.
   await page.locator('.verdict').getByRole('button', { name: 'Retour au chemin' }).click();
-  await expect(page.getByRole('button', { name: 'Continuer : Atari' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Commencer la leçon : Atari' })).toBeVisible();
   const reussis = await page.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('go.problemes.v1') ?? '{}')));
-  expect(reussis.sort()).toEqual(['a01', 'a02', 'n01']);
+  expect(reussis.sort()).toEqual(['a02', 'a03', 'n02']);
+  // #237 : réussis en pratique, ils ne reviendront pas dès demain dans la Révision du jour.
+  const recents = await page.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('go.revision.v1') ?? '{}').recents ?? {}));
+  expect(recents.sort()).toEqual(['a02', 'a03', 'n02']);
 
 });
 
@@ -51,7 +55,7 @@ test('fin de chapitre : « Joue contre Pomme » en action principale, qui lance 
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
-  await page.getByRole('button', { name: 'Continuer : Compter les points' }).click();
+  await page.getByRole('button', { name: 'Reprendre la leçon : Compter les points' }).click();
   await page.locator('.choix').getByRole('button', { name: '39', exact: true }).click();
   await page.getByRole('button', { name: 'Terminer la leçon' }).click();
   await expect(page.getByRole('heading', { name: 'Chapitre terminé' })).toBeVisible();
@@ -73,7 +77,7 @@ test('fin de la leçon 3, toutes les autres faites : fin de chapitre, et un prob
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
-  await page.getByRole('button', { name: 'Continuer : Techniques de capture' }).click();
+  await page.getByRole('button', { name: 'Reprendre la leçon : Techniques de capture' }).click();
   await jouer(page, 'F5');
   await page.getByRole('button', { name: 'Terminer la leçon' }).click();
 

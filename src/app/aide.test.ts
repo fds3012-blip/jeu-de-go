@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ALL_PUZZLES } from '../content/puzzles';
 import { checkAnswer, parsePuzzles } from '../data/puzzles';
 import { fromLabel } from '../go/coords';
-import { aideSuivante, recompense, refutation, reponseVue } from './aide';
+import { aideSuivante, recompense, refutation, reponseVue, toucherApresErreur } from './aide';
 
 const PZ = parsePuzzles(ALL_PUZZLES);
 const b1 = PZ.find(p => p.id === 'b1')!;
@@ -52,5 +52,13 @@ describe('aide graduée (#197)', () => {
     expect(recompense(2, true)).toEqual({ statut: 'reussi', xp: true, palier: true, serie: true });
     expect(recompense(3, false)).toEqual({ statut: 'vu', xp: false, palier: false, serie: false });
     expect(recompense(3, true)).toEqual({ statut: 'vu', xp: false, palier: false, serie: true });
+  });
+});
+
+describe('rejouer sans « Réessayer » (#237, N6)', () => {
+  it('un point vide se joue tout de suite, une pierre montrée remet seulement la position', () => {
+    expect(toucherApresErreur(true, true)).toBe('jouer');
+    expect(toucherApresErreur(true, false)).toBe('remettre');
+    expect(toucherApresErreur(false, false)).toBe('remettre');
   });
 });

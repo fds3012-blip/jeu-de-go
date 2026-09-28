@@ -70,3 +70,15 @@ export function annonceKomi(rang: number, komi: number): string | null {
   if (komi === KOMI_NORMAL && rang === PARTIES_KOMI_DEBUTANT) return fr(t('komi.normal', { k: nombre(KOMI_NORMAL) }));
   return null;
 }
+
+/**
+ * Partie finie sur un plateau presque vide (#251, `finTropTot` dans bilan.ts) : le joueur n'y a rien appris, elle ne
+ * doit pas lui coûter une des PARTIES_KOMI_DEBUTANT parties à komi réduit. Le compteur `ordi` avance au lancement :
+ * on le rend ici, seulement si la partie comptait parmi ces premières parties. `n` (toutes les parties) ne bouge pas,
+ * et la défaite reste dans le bilan contre l'adversaire.
+ */
+export function rendrePartieOrdi(p: Parties): Parties {
+  const ordi = partiesOrdi(p);
+  if (ordi < 1 || ordi > PARTIES_KOMI_DEBUTANT) return p;
+  return { ...p, ordi: ordi - 1 };
+}

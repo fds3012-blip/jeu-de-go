@@ -1,8 +1,8 @@
 // Issue #162 : l'XP gagnée se voit. Une pastille or « +N XP » à chaque fin (problème réussi, leçon terminée,
 // fin de partie), avec la part du bonus « première fois ».
-import { useEffect, useRef, useState } from 'react';
-import { abonnerXp } from '../app/xp';
-import { cumuler, DUREE_XP_MS, hautPastille, SORTIE_XP_MS, texteXp, type Affiche } from './gainXp';
+import { useEffect, useState } from 'react';
+import { DUREE_XP_MS, SORTIE_XP_MS, texteXp } from './gainXp';
+import { marquerXpVue, terminerFete, useFile } from './celebrations';
 import { mouvementsReduits } from './defilement';
 import { t } from '../content/i18n';
 import './pastille-xp.css';
@@ -28,34 +28,40 @@ export function PastilleXp({ points, bonus = 0, anime = false }: { points: numbe
  * la carte de célébration (`FeteNiveau`).
  */
 export function AnnonceXp({ celebrer }: { celebrer: boolean }) {
-  const [affiche, setAffiche] = useState<Affiche | null>(null);
+  // Issue #236 (N2) : la pastille passe par la file des célébrations. Pendant un exercice, elle ne se pose jamais sur
+  // la consigne : l'XP se lit dans la feuille de réussite (`XpEnLigne`). Ici, seulement après (fin de leçon, de partie).
+  const file = useFile();
+  const affiche = file.actif?.genre === 'xp' ? file.actif : null;
   const [sortie, setSortie] = useState(false);
-  const [haut, setHaut] = useState<number | null>(null);
-  const minuterie = useRef<number | undefined>(undefined);
-  useEffect(() => abonnerXp(g => {
-    setAffiche(a => cumuler(a, g));
-    // En-tête d'un problème ou d'une leçon : la pastille se pose dessous, le titre reste lisible (R3).
-    // Sans en-tête, la classe CSS garde sa place (sous l'encoche, ou sous la carte de niveau).
-    const entete = document.querySelector('.lecteur-tete')?.getBoundingClientRect();
-    const franchi = g.niveauApres > g.niveauAvant;
-    const h = entete ? hautPastille(entete.bottom, franchi, window.innerHeight) : null;
-    setHaut(h !== null && h !== hautPastille(null, franchi, window.innerHeight) ? h : null);
+  const points = affiche?.points;
+  useEffect(() => {
+    if (points === undefined) return;
     setSortie(false);
-    window.clearTimeout(minuterie.current);
     const reduit = !celebrer || mouvementsReduits();
-    minuterie.current = window.setTimeout(() => {
-      if (reduit) { setAffiche(null); return; }
+    let fin: number | undefined;
+    const lecture = window.setTimeout(() => {
+      if (reduit) { terminerFete('xp'); return; }
       setSortie(true);
-      minuterie.current = window.setTimeout(() => { setAffiche(null); setSortie(false); }, SORTIE_XP_MS);
+      fin = window.setTimeout(() => { setSortie(false); terminerFete('xp'); }, SORTIE_XP_MS);
     }, DUREE_XP_MS);
-  }), [celebrer]);
-  useEffect(() => () => window.clearTimeout(minuterie.current), []);
+    return () => { window.clearTimeout(lecture); window.clearTimeout(fin); };
+  }, [points, celebrer]);
   return (
-    <div className={`annonce-xp${affiche?.niveauFranchi ? ' sous-fete' : ''}${sortie ? ' sortie' : ''}`} role="status" aria-live="polite"
-      style={affiche && haut !== null ? { top: haut } : undefined}>
+    <div className={`annonce-xp${sortie ? ' sortie' : ''}`} role="status" aria-live="polite">
       {affiche && (
         <PastilleXp key={affiche.points} points={affiche.points} bonus={affiche.bonus} anime={celebrer} />
       )}
     </div>
   );
+}
+
+/**
+ * XP de l'exercice, dans la feuille de réussite (#236, N2) : lue à sa place, sous le « Bravo », sans rien couvrir.
+ * Montrée, elle n'est pas répétée à la fin de l'exercice.
+ */
+export function XpEnLigne({ anime = false }: { anime?: boolean }) {
+  const x = useFile().enLigne;
+  useEffect(() => { if (x && !x.vue) marquerXpVue(); }, [x]);
+  if (!x) return null;
+  return <p className="xp-en-ligne"><PastilleXp points={x.points} bonus={x.bonus} anime={anime} /></p>;
 }

@@ -3,8 +3,9 @@
 // Synchrone et sans DOM, pour tourner dans un Web Worker comme dans les tests.
 import { groupAt, neighbors, play, type Color, type Position } from '../go/rules';
 import { score } from '../go/score';
-import { coupDeFermeture, frontieresOuvertes, partieAvancee } from '../go/frontieres';
+import { brecheAFermer, coupDeFermeture, frontieresOuvertes, partieAvancee } from '../go/frontieres';
 import { toLabel } from '../go/coords';
+import { traduire } from '../content/i18n';
 import { deadStones } from './dead';
 import { isEye, now, rng, Sim } from './sim';
 
@@ -77,9 +78,13 @@ export interface EngineOptions {
   komi?: number; seed?: number; timeMs?: number; playouts?: number;
   /**
    * Premières parties (#185, voir `accommodant` dans src/app/equilibrage.ts) : quand le joueur passe, l'ordi passe aussi,
-   * même s'il pourrait encore grappiller quelques points. Seule exception : une frontière ouverte, qu'il ferme d'abord.
+   * même s'il pourrait encore grappiller quelques points. Seule exception (#235) : une brèche dans **sa** frontière
+   * (`brecheAFermer`), qu'il ferme d'abord, une seule fois : dès la deuxième passe du joueur (`passesJoueur`), il passe.
+   * Il ne joue jamais chez le joueur, même si tout le plateau est encore ouvert (débutant qui passe tôt).
    */
   accommodant?: boolean;
+  /** Passes du joueur depuis le début de la partie, celle-ci comprise (parties accommodantes). Par défaut 1. */
+  passesJoueur?: number;
 }
 
 // ---------- Réponse à la passe du joueur (#185) ----------
@@ -99,20 +104,44 @@ export interface Raison {
   point: number;
   /** Gain estimé en points (motif « points »). */
   gain?: number;
-  /** Par exemple « il reste une frontière à fermer en E4 » ou « il reste 3 points à prendre en E4 ». */
+  /** En français, par exemple « il reste une frontière à fermer en E4 » ou « il reste 3 points à prendre en E4 ». */
   texte: string;
+  /** Clé du catalogue et paramètres (#167) : l'écran affiche `t(cle, params)` dans la langue de l'interface. */
+  cle: 'raison.frontiere' | 'raison.points' | 'raison.breche';
+  params: { point: string; n: number };
+}
+
+function raison(motif: Raison['motif'], point: number, size: number, n: number, gain?: number): Raison {
+  const cle = motif === 'frontiere' ? 'raison.frontiere' : 'raison.points';
+  const params = { point: toLabel(point, size), n };
+  return { motif, point, ...(gain === undefined ? {} : { gain }), texte: traduire('fr', cle, params), cle, params };
 }
 
 /** Coup de l'ordi (-1 = passe) et, s'il répond à une passe du joueur sans passer, la raison (sinon `null`). */
 export interface CoupExplique { move: number; raison: Raison | null }
 
 export function raisonFrontiere(point: number, size: number): Raison {
-  return { motif: 'frontiere', point, texte: `il reste une frontière à fermer en ${toLabel(point, size)}` };
+  return raison('frontiere', point, size, 1);
+}
+
+/** Brèche dans la frontière de l'ordi (parties accommodantes, #235) : il ferme sa porte, puis il passe. */
+export function raisonBreche(point: number, size: number): Raison {
+  const params = { point: toLabel(point, size), n: 1 };
+  return { motif: 'frontiere', point, texte: traduire('fr', 'raison.breche', params), cle: 'raison.breche', params };
+}
+
+/**
+ * Réponse accommodante à la passe du joueur (#235) : passe, sauf une brèche dans sa propre frontière à la première passe.
+ * Début de partie ou niveau qui ne ferme pas ses frontières : passe tout de suite.
+ */
+export function reponseAccommodante(pos: Position, lvl: Opponent, opts: EngineOptions, mortes: () => Iterable<number>, prefer: readonly number[] = []): CoupExplique {
+  if (!lvl.fermeFrontieres || !partieAvancee(pos.board) || (opts.passesJoueur ?? 1) >= 2) return { move: -1, raison: null };
+  const b = brecheAFermer(pos, mortes(), prefer);
+  return b < 0 ? { move: -1, raison: null } : { move: b, raison: raisonBreche(b, pos.size) };
 }
 
 export function raisonPoints(point: number, gain: number, size: number): Raison {
-  const n = Math.max(1, Math.round(gain));
-  return { motif: 'points', point, gain, texte: `il reste ${n === 1 ? 'un point' : `${n} points`} à prendre en ${toLabel(point, size)}` };
+  return raison('points', point, size, Math.max(1, Math.round(gain)), gain);
 }
 
 /**
@@ -249,6 +278,7 @@ export function chooseMoveDetail(pos: Position, niveau: OpponentId | Opponent, o
 
   // Le joueur vient de passer (#185).
   let viserGain = false;
+  if (pos.lastMove === -1 && opts.accommodant) return reponseAccommodante(pos, lvl, opts, mortes);
   if (pos.lastMove === -1) {
     if (partieAvancee(pos.board)) {
       const f = passer();

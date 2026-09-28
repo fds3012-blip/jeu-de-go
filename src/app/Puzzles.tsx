@@ -19,8 +19,8 @@ import { fr } from '../ui/typo';
 import { playBadge, playFail, playIllegal, playStone, playSuccess } from '../ui/sound';
 import { hapticBadge, hapticFail, hapticIllegal, hapticStone, hapticSuccess } from '../ui/haptics';
 import { EVENTS, track } from '../data/analytics';
-import { gagnerXp } from './xp';
-import { aideSuivante, recompense, refutation, reponseVue, type NiveauAide, type Refutation } from './aide';
+import { gagnerXp, sourceXpProbleme } from './xp';
+import { aideSuivante, recompense, refutation, reponseVue, toucherApresErreur, type NiveauAide, type Refutation } from './aide';
 import { prefersReducedMotion, readLocal, useOnline, writeLocal } from './hooks';
 import { niveau } from './problemes';
 import { aContinuer, aSuivre, ordrePaliers, palierEnCours, palierRecommande, paliers, paliersVisibles, type Palier } from './paliers';
@@ -35,8 +35,11 @@ import { lireReserveAppareil } from './gelAppareil';
 import { inviterCompte, serieAffichee } from './serieLocale';
 import { goDuJourFaitAppareil, validerDefi } from './defiAppareil';
 import { RevisionDuJour } from '../ui/RevisionDuJour';
+import { noterRediteAppareil, repriseDeLeconFaite, suivreEnRevisionAppareil } from './rediteAppareil';
 // `t` désigne déjà un palier dans ce fichier : la traduction s'appelle `tr` (#167).
 import { t as tr } from '../content/i18n';
+import { useExercice } from '../ui/celebrations';
+import { XpEnLigne } from '../ui/PastilleXp';
 
 const LOCAL_PUZZLES = parsePuzzles(ALL_PUZZLES);
 export const SOLVED_KEY = 'go.problemes.v1';
@@ -142,6 +145,9 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   const markVu = useCallback((id: string) => {
     setVus(prev => { const next = { ...prev, [id]: true as const }; writeLocal(VUS_KEY, next); return next; });
   }, []);
+  // Révision du jour (#251, M2) : les problèmes réussis et ceux vus avec la réponse ; ces derniers à part, pour le libellé.
+  const vusSeuls = useMemo(() => new Set(Object.keys(vus).filter(id => !solved.has(id))), [vus, solved]);
+  const aReviser = useMemo(() => new Set([...solved, ...vusSeuls]), [solved, vusSeuls]);
 
   const tiers = useMemo(() => paliers(list, solved), [list, solved]);
   // Palier complet : une micro-fête en or, une seule fois par palier (réglage Célébrations et mouvements réduits respectés).
@@ -157,7 +163,7 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
     if (celebrer && !prefersReducedMotion()) setFetes(nouveaux);
   }, [tiers, openId, celebrer]);
   const ordre = useMemo(() => ordrePaliers(tiers), [tiers]);
-  // #147 : « Continuer » propose toujours un problème ; le tirage change à chaque retour à la liste
+  // #147 : « Problème suivant » propose toujours un problème ; le tirage change à chaque retour à la liste
   // et évite le dernier problème joué.
   const dernierRef = useRef<string | undefined>(undefined);
   if (openId) dernierRef.current = openId;
@@ -188,7 +194,10 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
         onSolved={(essais, aide) => {
           // #197 : résolu après avoir vu la réponse, c'est « Vu » : ni XP ni palier. La série du Go du jour tient quand même.
           const gain = recompense(aide, estDuJour);
-          if (gain.xp && !solved.has(open.id)) { track(EVENTS.problemeResolu, { probleme: open.id, du_jour: estDuJour }); gagnerXp(estDuJour ? 'goDuJour' : 'probleme'); }
+          // #233 (P1) : le Go du jour rapporte une fois par jour, même s'il était déjà réussi dans la grille.
+          const source = gain.xp ? sourceXpProbleme({ dejaReussi: solved.has(open.id), estDuJour, goDuJourDejaFait: goDuJourFaitAppareil(numero) }) : null;
+          if (gain.xp && !solved.has(open.id)) track(EVENTS.problemeResolu, { probleme: open.id, du_jour: estDuJour });
+          if (source) gagnerXp(source);
           // #199 : un défi par jour ; le Go du jour est coché à part, une leçon ou la révision ont pu faire vivre la série avant lui.
           if (gain.serie && !goDuJourFaitAppareil(numero)) {
             const { serie: s, gagne } = validerDefi('go_du_jour');
@@ -197,6 +206,12 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
             track(EVENTS.goDuJourResolu, { numero, essais, serie: s?.jours ?? 1, arrivee_par_lien: lien !== null, vu: gain.statut === 'vu' });
           }
           if (gain.palier) markSolved(open.id); else markVu(open.id);
+          suivreEnRevisionAppareil(open.id);
+          // #237 : un Go du jour qui reprend une étape de leçon ne revient pas dès demain en révision.
+          // #251 (M3) : seulement si le joueur a fait cette étape ; sinon, il le voyait pour la première fois.
+          // #251 (M2) : et seulement s'il l'a réussi sans voir la réponse. Vu avec l'aide, il n'est pas acquis :
+          // la révision le repropose dès demain (J+1, comme une révision ratée, revision.ts).
+          if (estDuJour && gain.palier && repriseDeLeconFaite(open)) noterRediteAppareil(open.id);
         }}
         onSolutionVue={essais => track(EVENTS.solutionVue, { probleme: open.id, du_jour: estDuJour, essais })}
         onNext={nextPz ? () => { setOpenId(nextPz.id); window.scrollTo({ top: 0 }); } : undefined}
@@ -215,7 +230,7 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
 
   const connecte = !!db && !!userId;
   const prochainPz = aContinuer(tiers, solved, dernierRef.current, () => tirage);
-  // Une seule action en relief : le Go du jour tant qu'il n'est pas fait, « Continuer » ensuite.
+  // Une seule action en relief : le Go du jour tant qu'il n'est pas fait, « Problème suivant » ensuite.
   const duJourReussi = !!daily && goDuJourFaitAppareil(numero);
   const duJourFait = !daily || duJourReussi;
   const recommande = connecte && stats ? palierRecommande(tiers, stats.rating) : undefined;
@@ -266,10 +281,11 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
         </section>
       )}
 
-      {/* Révision du jour (#199) : problèmes déjà réussis, repris à J+1, J+3, J+7. */}
-      <RevisionDuJour liste={list} reussis={solved} confirmTouch={confirmTouch} Lecteur={PuzzlePlayer} onSerie={setSerieDuJour} />
+      {/* Révision du jour (#199) : problèmes déjà réussis, repris à J+1, J+3, J+7. Depuis #251 (M2), aussi ceux
+          vus avec la réponse : « Retente-le plus tard » (pb.vuTexte), c'est la révision qui le repropose. */}
+      <RevisionDuJour liste={list} reussis={aReviser} vus={vusSeuls} confirmTouch={confirmTouch} Lecteur={PuzzlePlayer} onSerie={setSerieDuJour} />
 
-      {/* Un seul « Continuer », le palier en cours sans total, la grille derrière un lien discret (#196). */}
+      {/* Un seul « Problème suivant », le palier en cours sans total, la grille derrière un lien discret (#196). */}
       <section aria-labelledby="paliers-titre">
         <h2 id="paliers-titre" className="titre-pierres">{tr('nav.problemes')}</h2>
         {prochainPz && (
@@ -447,7 +463,10 @@ function Partager({ numero, essais, serie }: { numero: number; essais: number; s
 
 interface DuJourInfo { numero: number; serie: number; defiChange: boolean; gelGagne: boolean; celebrer: boolean }
 
-export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating, onAttempt, onSolved, onNext, onExit, onSolutionVue, retour, surtitre }: {
+/** Temps pendant lequel la réponse de l'adversaire reste sur le plateau après une erreur (#237, N6). */
+const DUREE_ERREUR = 2200;
+
+export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating, onAttempt, onSolved, onNext, onExit, onSolutionVue, retour, surtitre, exercice = true }: {
   puzzle: Puzzle; rang: number; duJour?: DuJourInfo; confirmTouch: boolean; rated: boolean; rating?: number;
   onAttempt: (ok: boolean) => Promise<{ ok: true; value: number } | { ok: false; error: string } | null>;
   onSolved: (essais: number, aide: NiveauAide) => void; onNext?: () => void; onExit: () => void;
@@ -455,11 +474,17 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating
   onSolutionVue?: (essais: number) => void;
   /** Série de fin de leçon (#200) : libellé du retour (« Retour au chemin ») et surtitre (« Entraînement, 1 sur 3 »). */
   retour?: string; surtitre?: string;
+  /** Faux quand l'exercice est fini alors que le lecteur reste affiché (dernier problème d'une série, #250 M9). */
+  exercice?: boolean;
 }) {
+  // #236 (N2) : un problème est un exercice ; aucune fête ne se pose sur sa consigne (l'XP se lit dans la feuille).
+  useExercice(exercice);
   const start = useMemo(() => startOf(puzzle), [puzzle]);
   // Aide graduée (#197) : indice, puis réfutation, puis réponse.
   const [aide, setAide] = useState<NiveauAide>(0);
   const [refut, setRefut] = useState<{ r: Refutation; vue: boolean } | null>(null);
+  // #237 (N6) : après une erreur, l'adversaire répond au coup faux, puis la position revient d'elle-même (ou au toucher).
+  const [apercu, setApercu] = useState<{ faux: number; reponse: number | null; vue: boolean } | null>(null);
   const dernierFaux = useRef<number | null>(null);
   const [answer, setAnswer] = useState<Answer | null>(null);
   const [board, setBoard] = useState(start.pos.board);
@@ -474,7 +499,16 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating
   const solvedNow = answer?.kind === 'ok';
 
   async function onPlay(p: number) {
-    if (solvedNow || replay || refut) return;
+    if (solvedNow) return;
+    // Réfutation montrée après l'erreur : toucher le plateau remet la position de départ et joue le coup tout de suite.
+    if (apercu) { window.clearTimeout(timer.current); setApercu(null); setBoard(start.pos.board); }
+    // #237 (N6) : comme en leçon, on rejoue directement sur le plateau, sans « Réessayer ».
+    // Pendant la réfutation ou la réponse montrée, le plateau revient d'abord à la position de départ.
+    if (refut || replay) {
+      if ((replay && !replayDone) || (refut && !refut.vue)) return;
+      reessayer();
+      if (toucherApresErreur(!start.pos.board[p], !board[p]) === 'remettre') return;
+    }
     const r = checkAnswer(puzzle, p);
     const n = (answer?.n ?? 0) + 1;
     if (r.kind === 'illegal') {
@@ -488,8 +522,9 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating
     setTries(tries + 1);
     if (!ok) dernierFaux.current = p;
     setAnswer({ kind: r.kind, p, text: ok ? (puzzle.explanation ?? tr('pb.bonCoup')) : (puzzle.refutation ?? tr('pb.pasTout')), n });
-    setBoard(ok ? r.after.board : start.pos.board);
-    if (ok) onSolved(tries + 1, aide);
+    window.clearTimeout(timer.current);
+    if (ok) { setApercu(null); setBoard(r.after.board); onSolved(tries + 1, aide); }
+    else montrerErreur(p, r.after.board);
     // Seul le premier essai compte pour la cote.
     if (firstTry.current && rated) {
       firstTry.current = false;
@@ -519,9 +554,32 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating
     };
     timer.current = window.setTimeout(stepOnce, 500);
   }
+  /**
+   * Erreur (#237, N6) : le coup faux reste posé, l'adversaire y répond au point clé, puis la position de départ revient
+   * d'elle-même. Mouvements réduits : la réponse est posée d'un coup et le retour est instantané, sans animation.
+   */
+  function montrerErreur(faux: number, apresFaux: Int8Array) {
+    const r = refutation(puzzle, faux);
+    const reduit = prefersReducedMotion();
+    const revenir = () => { setApercu(null); setBoard(start.pos.board); };
+    if (!r || r.reponse === null) {
+      setBoard(apresFaux); setApercu({ faux, reponse: null, vue: true });
+      timer.current = window.setTimeout(revenir, DUREE_ERREUR);
+      return;
+    }
+    const reponse = r.reponse;
+    const montrer = () => {
+      setBoard(r.pos.board); setApercu({ faux, reponse, vue: true });
+      if (!reduit) { playStone(reponse, puzzle.size); hapticStone(); }
+      timer.current = window.setTimeout(revenir, DUREE_ERREUR);
+    };
+    if (reduit) { montrer(); return; }
+    setBoard(apresFaux); setApercu({ faux, reponse, vue: false });
+    timer.current = window.setTimeout(montrer, 600);
+  }
   function reessayer() {
     window.clearTimeout(timer.current);
-    setReplay(null); setRefut(null); setBoard(start.pos.board); setAnswer(null);
+    setApercu(null); setReplay(null); setRefut(null); setBoard(start.pos.board); setAnswer(null);
   }
 
   /** Marche suivante de l'aide : l'indice entoure la zone, la réfutation joue la réponse de l'adversaire, puis la réponse. */
@@ -529,6 +587,7 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating
     const suite = aideSuivante(aide);
     if (suite === null) return;
     window.clearTimeout(timer.current);
+    setApercu(null);
     const r = suite === 2 && dernierFaux.current !== null ? refutation(puzzle, dernierFaux.current) : null;
     if (suite === 1) {
       setAide(1); setAnswer(null); setBoard(start.pos.board);
@@ -553,8 +612,9 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating
   }
   const prochaineAide = aideSuivante(aide);
   const libelleAide = prochaineAide === 1 ? tr('pb.aide.indice') : prochaineAide === 2 && dernierFaux.current !== null ? tr('pb.aide.pourquoi') : tr('pb.aide.reponse');
+  // L'aide reste un lien discret (#237, N6) : l'action principale après une erreur, c'est de rejouer.
   const boutonAide = prochaineAide !== null && tries >= 1
-    ? <button className="btn" onClick={demanderAide}>{libelleAide}</button>
+    ? <button className="lien lien-aide" onClick={demanderAide}>{libelleAide}</button>
     : null;
   const vu = reponseVue(aide);
 
@@ -572,7 +632,7 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating
     verdict = (
       <Verdict ton="neutre" actions={solvedNow
         ? <>{suivantBtn}<button className="lien" onClick={showLine} disabled={!replayDone}>{tr('pb.revoirSuite')}</button></>
-        : <div className="row"><button className="btn" onClick={showLine} disabled={!replayDone}>{tr('pb.revoirSuite')}</button><button className="btn" onClick={reessayer}>{tr('pb.reessayer')}</button></div>}>
+        : <button className="lien" onClick={showLine} disabled={!replayDone}>{tr('pb.revoirSuite')}</button>}>
         <p>{replayDone ? tr(solvedNow ? 'pb.suiteFinie' : 'pb.suiteFinieVu') : tr('pb.suiteCoup', { n: replay.frame, total: replay.total })}</p>
       </Verdict>
     );
@@ -580,8 +640,9 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating
     // Réfutation (#197) : l'adversaire répond au coup faux, au point clé.
     const texte = puzzle.refutation ?? tr(refut.r.reponse === null ? 'pb.aide.refutationSeule' : puzzle.toPlay === 1 ? 'pb.aide.refutation.1' : 'pb.aide.refutation.2');
     verdict = (
-      <Verdict ton="neutre" actions={<div className="row">{boutonAide}<button className="btn" onClick={reessayer}>{tr('pb.reessayer')}</button></div>}>
+      <Verdict ton="neutre" actions={boutonAide}>
         <p data-refutation="">{refut.vue ? fr(texte) : tr('pb.aide.regarde')}</p>
+        {refut.vue && <p className="muted small rejoue-plateau">{fr(tr('pb.rejouePlateau'))}</p>}
       </Verdict>
     );
   } else if (!answer && aide >= 1 && tries >= 1 && !vu) {
@@ -613,15 +674,13 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating
             <ProposerInstallation moment="go_du_jour" />
           </>
         : <>{suivantBtn}<button className="lien" onClick={showLine}>{tr('pb.voirSuite')}</button></>}>
-        <p>{fr(answer.text)}</p>{ligneCote}
+        <p>{fr(answer.text)}</p>{ligneCote}<XpEnLigne anime={duJour?.celebrer ?? true} />
       </Verdict>
     ) : (
-      <Verdict ton="revoir" cle={answer.n} actions={
-        <div className="row">
-          {boutonAide}
-          <button className="btn" onClick={() => setAnswer(null)}>{tr('pb.reessayer')}</button>
-        </div>}>
-        <p>{fr(answer.text)}</p>{ligneCote}
+      // Erreur (#237, N6) : pas de « Réessayer », le plateau reste jouable ; l'indice est un lien discret.
+      <Verdict ton="revoir" cle={answer.n} actions={boutonAide}>
+        <p>{fr(answer.text)}</p>
+        {answer.kind === 'wrong' && <p className="muted small rejoue-plateau">{fr(tr('pb.rejouePlateau'))}</p>}{ligneCote}
       </Verdict>
     );
   }
@@ -640,10 +699,11 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating
       </div>
       {duJour?.defiChange && <p className="notice" role="status">{fr(tr('pb.defiChange'))}</p>}
       <Bubble>{fr(`${puzzle.prompt} ${tr(puzzle.toPlay === 1 ? 'pb.tuJoues.1' : 'pb.tuJoues.2')}`)}</Bubble>
-      <Board size={puzzle.size} board={board} toPlay={puzzle.toPlay} interactive={!solvedNow && !replay && !refut} confirmTouch={confirmTouch} onPlay={onPlay} shake={shake}
+      <Board size={puzzle.size} board={board} toPlay={puzzle.toPlay} interactive={!solvedNow && (!replay || replayDone) && (!refut || refut.vue)}
+        stonesTappable={!!refut || !!replay || !!apercu} confirmTouch={confirmTouch} onPlay={onPlay} shake={shake}
         marks={{
           targets: start.marked,
-          last: refut ? (refut.vue ? refut.r.reponse : refut.r.faux) : lastMove,
+          last: refut ? (refut.vue ? refut.r.reponse : refut.r.faux) : apercu ? (apercu.vue && apercu.reponse !== null ? apercu.reponse : apercu.faux) : lastMove,
           ok: solvedNow && !replay ? answer.p : undefined,
           mistake: refut ? refut.r.faux : answer && answer.kind === 'wrong' && !replay ? answer.p : undefined,
           // Indice : zone entourée autour du bon coup, tant que le problème n'est pas résolu.

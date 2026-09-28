@@ -146,7 +146,7 @@ for (const c of CAS) {
       await expect(page.locator('[data-chapitre="c1"] .gue li')).toHaveCount(7);
       await expect(page.locator('[data-chapitre="c2"] .gue li')).toHaveCount(1);
       await sansDebord(page, 'Apprendre (7 leçons)');
-      const cta = page.getByRole('button', { name: 'Continuer : Compter les points' });
+      const cta = page.getByRole('button', { name: 'Reprendre la leçon : Compter les points' });
       await boutonLibre(cta, 'Apprendre (leçon 7)');
       const pierre = page.getByRole('button', { name: 'Leçon 7 : Compter les points, prochaine étape' });
       const b = (await pierre.boundingBox())!;
@@ -161,11 +161,9 @@ for (const c of CAS) {
         const bas = (await cta.boundingBox())!, chap2 = (await page.getByRole('heading', { name: 'Ouverture sur 9 × 9' }).boundingBox())!;
         return chap2.y - (bas.y + bas.height);
       }, { message: 'bouton de la leçon 7 sur le chapitre 2' }).toBeGreaterThanOrEqual(0);
-      // Police doublée : des rangées du chapitre 1 se chevauchaient déjà avant le chapitre 2 (défaut signalé dans #228).
-      if (!c.police) {
-        await page.evaluate(() => document.fonts.ready);
-        await cheminLisible(page, 'Apprendre (2 chapitres)');
-      }
+      // #232 : aussi avec la police doublée (les rangées 2/3, 3/4 et 6/7 du chapitre 1 se chevauchaient).
+      await page.evaluate(() => document.fonts.ready);
+      await cheminLisible(page, 'Apprendre (2 chapitres)');
       await cta.click();
       for (const n of ['Je passe', 'Chez moi', 'Chez Blanc']) {
         const choix = page.locator('.choix').getByRole('button', { name: n, exact: true });
@@ -186,6 +184,34 @@ for (const c of CAS) {
   });
 }
 
+// En 320 px, « Abandonner » débordait de son bouton et passait sous « Passer » (bouton plein).
+// Chaque libellé de la barre d'actions tient dans son bouton, sans toucher le voisin, et chaque bouton garde 44 px.
+for (const largeur of [320, 375, 390]) {
+  test(`barre d’actions de la partie à ${largeur} px : libellés entiers`, async ({ page }) => {
+    await page.setViewportSize({ width: largeur, height: 640 });
+    await page.goto('/');
+    await page.locator('.cta').click();
+    const barre = page.getByRole('toolbar', { name: 'Actions de la partie' });
+    await expect(barre.getByRole('button', { name: 'Abandonner' })).toBeVisible();
+    const boutons = await barre.getByRole('button').evaluateAll(bs => bs.map(b => {
+      const bb = b.getBoundingClientRect();
+      const libelle = b.querySelector(':scope > span:last-child');
+      const lb = libelle?.getBoundingClientRect();
+      return { nom: libelle?.textContent ?? '', gauche: bb.left, droite: bb.right, largeur: bb.width, hauteur: bb.height,
+        texteGauche: lb?.left ?? bb.left, texteDroite: lb?.right ?? bb.right };
+    }));
+    for (const [i, b] of boutons.entries()) {
+      expect(b.largeur, `« ${b.nom} » : cible trop étroite`).toBeGreaterThanOrEqual(44);
+      expect(b.hauteur, `« ${b.nom} » : cible trop basse`).toBeGreaterThanOrEqual(44);
+      if (!b.nom.trim()) continue;
+      expect(b.texteGauche, `« ${b.nom} » coupé à gauche`).toBeGreaterThanOrEqual(b.gauche - 0.5);
+      expect(b.texteDroite, `« ${b.nom} » coupé à droite`).toBeLessThanOrEqual(b.droite + 0.5);
+      const suivant = boutons[i + 1];
+      if (suivant) expect(b.texteDroite, `« ${b.nom} » passe sous « ${suivant.nom} »`).toBeLessThanOrEqual(suivant.gauche);
+    }
+  });
+}
+
 // #169 : à 195 px, les titres du chemin passaient sur 4 à 6 lignes et chevauchaient la rangée suivante,
 // et « Commencer » recouvrait « Atari ». Vérifié sur un chemin neuf, en cours et fini.
 const PROGRESSIONS: Record<string, Record<string, number>> = {
@@ -194,17 +220,21 @@ const PROGRESSIONS: Record<string, Record<string, number>> = {
   'dernière leçon en cours': { l1: 99, l2: 99, l3: 99, l4: 99, l5: 99 },
   fini: { l1: 99, l2: 99, l3: 99, l4: 99, l5: 99, l6: 99 },
 };
-for (const [largeur, hauteur] of [[195, 422], [320, 640], [390, 844]]) {
-  test.describe(`chemin d’Apprendre à ${largeur} px`, () => {
+// #232 : et à 390 px avec la police doublée, où la pierre est dessinée jusqu'à 110 px sous sa ligne.
+for (const [largeur, hauteur, police] of [[195, 422, false], [320, 640, false], [390, 844, false], [390, 844, true]] as const) {
+  test.describe(`chemin d’Apprendre à ${largeur} px${police ? ', police doublée' : ''}`, () => {
     test.use({ viewport: { width: largeur, height: hauteur } });
     for (const [nom, p] of Object.entries(PROGRESSIONS)) {
       test(`${nom} : rangées sans chevauchement, textes non recouverts`, async ({ page }) => {
         await page.addInitScript(v => localStorage.setItem('go.lecons.v1', v), JSON.stringify(p));
+        if (police) await page.addInitScript(() => {
+          document.addEventListener('DOMContentLoaded', () => { document.documentElement.style.fontSize = '200%'; });
+        });
         await page.goto('/');
         await onglet(page, 'Apprendre').click();
         await expect(page.locator('.cta-chemin')).toBeVisible();
         await page.evaluate(() => document.fonts.ready);
-        await cheminLisible(page, `Apprendre ${largeur} px, ${nom}`);
+        await cheminLisible(page, `Apprendre ${largeur} px${police ? ' (police doublée)' : ''}, ${nom}`);
       });
     }
   });

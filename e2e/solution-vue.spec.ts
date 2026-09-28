@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { attendrePierre, jouer, plateau } from './plateau';
+import { attendrePierre, jouer, pierres, plateau } from './plateau';
 
 // Issue #197 : après un échec, l'aide vient par marches (indice, réfutation, réponse).
 // Un problème résolu après avoir vu la réponse est « Vu », pas « Réussi » : pas d'XP, pas de palier ; la série du jour tient.
@@ -8,6 +8,9 @@ import { attendrePierre, jouer, plateau } from './plateau';
 async function aideComplete(page: Page) {
   await jouer(page, 'A1');
   await expect(page.getByText('Pas tout à fait. Essaie encore.')).toBeVisible();
+  // #237 (N6) : pas de « Réessayer », l'indice est un lien discret.
+  await expect(page.getByRole('button', { name: 'Réessayer' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Voir un indice' })).toHaveClass(/\blien\b/);
   // Plus de réponse donnée dès le premier échec.
   await expect(page.getByRole('button', { name: 'Voir la suite' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Voir la réponse' })).toHaveCount(0);
@@ -24,12 +27,17 @@ async function aideComplete(page: Page) {
   await expect(page.getByText('Blanc répond au point clé. Le bon coup, c’est de jouer là avant lui.')).toBeVisible();
   await attendrePierre(page, 'B2', 'noir');
   await attendrePierre(page, 'E5', 'blanc');
+  await expect(page.getByText('Rejoue directement sur le plateau.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Réessayer' })).toHaveCount(0);
 
   // 3. La réponse.
   await page.getByRole('button', { name: 'Voir la réponse' }).click();
   await expect(page.getByText('Voilà la réponse. Rejoue-la pour la retenir.')).toBeVisible();
   await attendrePierre(page, 'E5', 'noir');
-  await page.getByRole('button', { name: 'Réessayer' }).click();
+  // Pas de « Réessayer » : toucher la pierre montrée remet la position de départ, puis on rejoue le coup.
+  await expect(page.getByRole('button', { name: 'Réessayer' })).toHaveCount(0);
+  await jouer(page, 'E5');
+  await expect(pierres(page, 'noir')).toHaveCount(3);
   await jouer(page, 'E5');
   await expect(page.getByText(/Tu as vu la réponse\s:\sce problème compte comme vu, pas réussi/)).toBeVisible();
   await expect(page.getByText('Bravo, c’est le bon coup !')).toHaveCount(0);
@@ -69,7 +77,7 @@ test('Go du jour vu : pas de partage ni d’XP, mais la série du jour tient', a
   await expect(page.getByText(/^Go du jour n°\s1$/)).toBeVisible();
 
   await aideComplete(page);
-  await expect(page.getByText('Ta série du jour tient quand même.')).toBeVisible();
+  await expect(page.getByText('Ta série tient quand même.')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Partager' })).toHaveCount(0);
   expect(await page.evaluate(() => localStorage.getItem('go.xp.v1'))).toBeNull();
 

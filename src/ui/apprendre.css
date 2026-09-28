@@ -143,7 +143,7 @@
 .lecteur-nom small { display: block; color: var(--muted); font-size: var(--fs-legende); line-height: 1.2; }
 .lecteur-nom h2 { margin: 0; font-size: var(--fs-xl); font-weight: var(--fw-titre); line-height: 1.15; }
 .lecteur-tete .difficulte { flex: none; }
-.lecteur:has(.verdict) { padding-bottom: 120px; }
+.lecteur:has(.verdict) { padding-bottom: max(120px, var(--verdict-h, 0px)); }
 
 /* Leçon : la colonne tient dans l'écran, au-dessus du bouton flottant (réserve de 150 px de .app, zone sûre comprise).
    Le plateau prend la hauteur qui reste : carré de côté min(largeur, hauteur) grâce à une requête de conteneur.
@@ -334,6 +334,8 @@
 .partage-etat:empty { min-height: 0; margin-top: calc(-1 * var(--space-2)); }
 .partage-lien { user-select: all; overflow-wrap: anywhere; font-weight: normal; }
 .liens-du-jour { justify-content: center; gap: var(--space-2); flex-wrap: wrap; }
+/* #250 (M8) : chaque lien reste sur une ligne ; faute de place (320 px), ils s'empilent au lieu de se couper. */
+.liens-du-jour .lien { white-space: nowrap; }
 
 /* ---------- Tes erreurs à rejouer (issue #77) ---------- */
 .mes-erreurs-compteur { display: inline-flex; align-items: center; justify-content: center; min-width: 28px; height: 28px; padding: 0 8px;
@@ -344,7 +346,8 @@
 /* Problèmes par paliers (issue #93). */
 .problemes.avec-continuer { padding-bottom: calc(var(--cible-cta) + var(--relief) + var(--space-4)); }
 .du-jour-refaire { width: 100%; }
-.continuer { display: flex; align-items: center; justify-content: center; gap: 8px; }
+/* Recette du 28/09 matin (#247) : le verbe « Problème suivant » ne passe jamais sur deux lignes ; seul le titre s'abrège. */
+.continuer { display: flex; align-items: center; justify-content: center; gap: 8px; white-space: nowrap; }
 .continuer-titre { font-weight: var(--fw-medium); opacity: .8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .continuer-titre::before { content: "· "; }
 .btn.continuer { width: 100%; margin: 0 0 var(--space-2); background: var(--surface); }

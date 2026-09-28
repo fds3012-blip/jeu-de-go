@@ -9,6 +9,7 @@ import {
   abonnerInvite, doitProposer, etatInstallation, noterInstallation, ouvrirInvite, plateformeCourante, type Moment, type Plateforme
 } from '../app/installation';
 import { fr } from './typo';
+import { useTour } from './celebrations';
 import { t } from '../content/i18n';
 import './installation.css';
 
@@ -49,7 +50,11 @@ export function ProposerInstallation({ moment, onFin }: { moment: Moment; /** Ap
   // État lu une fois : la carte montrée pose « proposée » sans se cacher elle-même.
   const [etat] = useState(etatInstallation);
   const [fermee, setFermee] = useState(false);
-  const visible = !fermee && doitProposer({ plateforme, etat, moment, enPartie: false });
+  const voulue = !fermee && doitProposer({ plateforme, etat, moment, enPartie: false });
+  // #236 (N2) : proposée, elle attend son tour dans la file des célébrations (après l'XP et le niveau, jamais avec).
+  // Demandée depuis le Profil, elle s'ouvre tout de suite.
+  const tour = useTour('installation', voulue && !demandee);
+  const visible = demandee ? voulue : tour;
   const setVisible = (v: boolean) => setFermee(!v);
   const [attente, setAttente] = useState(false);
   const annoncee = useRef(false);

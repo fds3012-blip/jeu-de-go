@@ -9,8 +9,9 @@
 /* Conteneur global : en haut, centré, sous l'encoche. Ne capte aucun toucher. */
 .annonce-xp { position: fixed; z-index: 59; left: 0; right: 0; top: calc(12px + env(safe-area-inset-top, 0px));
   display: flex; justify-content: center; padding: 0 16px; pointer-events: none; }
-/* Un niveau franchi : la carte de célébration (≈ 72 px) prend le haut, la pastille se range dessous. */
-.annonce-xp.sous-fete { top: calc(96px + env(safe-area-inset-top, 0px)); }
+/* #236 (N2) : pendant un exercice, l'XP se lit dans la feuille de réussite, sous le « Bravo », à plat (sans ombre). */
+.xp-en-ligne { margin: 6px 0 0; }
+.xp-en-ligne .pastille-xp { box-shadow: none; }
 
 /* Entrée : glisse de 6 px vers le bas et fondu, 220 ms, sortie rapide (160 ms), transform et opacité seulement. */
 .pastille-xp.anime { animation: pastille-xp-entre .22s cubic-bezier(.23, 1, .32, 1) both; }

@@ -16,6 +16,14 @@
 .partie-mochi { display: grid; align-items: end; min-height: calc(3 * 1.4 * var(--fs-corps-s) + 20px); }
 .partie-mochi > .coach, .partie-mochi > .coach-intro { grid-area: 1 / 1; margin-top: 0; }
 .partie-mochi > .coach-intro[data-cache] { visibility: hidden; }
+/* Avant un passe trop tôt (#235) : la bulle de Mochi et deux choix (« Continuer à jouer » en principal). Posés sur le bas
+   de la zone, ils montent par-dessus ton bandeau au lieu de pousser la page sous la barre d'actions. */
+.partie-mochi { position: relative; }
+.partie-mochi > .coach-avertir { grid-area: 1 / 1; position: absolute; left: 0; right: 0; bottom: 0; z-index: 4; }
+.coach-avertir > .coach { margin-top: 0; box-shadow: 0 -10px 24px -14px rgba(0, 0, 0, .55); }
+.coach-choix { display: flex; gap: var(--space-2); margin-top: var(--space-2); }
+.coach-choix .btn, .coach-choix .btn.primary { flex: 1 1 0; min-width: 0; min-height: max(44px, var(--cible-bouton)); padding: 0 var(--space-2); font-size: var(--fs-corps); line-height: 1.2; }
+.coach-choix .btn:not(.primary) { box-shadow: inset 0 0 0 1.5px var(--line); }
 /* Écrans bas (iPhone SE, 8, Safari avec ses barres) : la bulle d'intro (but du jeu, komi) ne tient pas dans la colonne
    et finissait sous la barre d'actions (recette du 28/09, R1). Elle se pose alors sur le bas de la colonne, posée sur
    la barre d'actions et montant par-dessus ton bandeau : tout se lit sans défiler, et rien ne bouge quand elle s'efface. */
@@ -112,6 +120,14 @@
 @media (max-height: 600px) {
   .partie > .partie-plateau { width: clamp(min(220px, 100% + 2 * var(--gouttiere) - 8px), calc(100dvh - 340px), calc(100% + 2 * var(--gouttiere) - 8px)); }
 }
+/* Écrans étroits et bas (320 × 640), première partie (#250, M6) : sur 288 px, la bulle d'intro (but, komi) passe à neuf
+   lignes et montait sur les lignes 1 et 2. Le plateau de cette partie cède 60 px et se pose en haut de la colonne :
+   la bulle tient sous lui. Même taille jusqu'à la fin de la partie, rien ne bouge quand la bulle s'efface. */
+@media (max-width: 359px) and (max-height: 700px) {
+  .partie:has(> .partie-mochi > .coach-intro)::before { flex-grow: 0; }
+  .partie:has(> .partie-mochi > .coach-intro) > .partie-plateau {
+    width: clamp(min(220px, 100% + 2 * var(--gouttiere) - 8px), calc(100dvh - 400px), calc(100% + 2 * var(--gouttiere) - 8px)); }
+}
 
 /* ---------- Coach Mochi : une phrase à la fois ---------- */
 .coach { display: flex; gap: 12px; align-items: center; margin-top: var(--space-3); background: var(--surface); border-radius: var(--radius); padding: 10px 14px 10px 10px; min-height: 60px; }
@@ -123,6 +139,17 @@
 .coach-intro .bubble { margin: 0; background: var(--surface); border-radius: var(--radius); padding: 10px 14px 10px 10px; align-items: center; }
 .coach-intro .bubble p { background: none; padding: 0; font-size: var(--fs-corps-s); line-height: 1.4; }
 .coach-intro .bubble svg { width: 38px; height: 38px; }
+/* Très petits écrans (320 × 568, iPhone SE de 1re génération ; suite de #250, M6) : le plateau est à son plancher de
+   220 px et la bulle (but, komi) montait encore de 40 px sur ses lignes 1 et 2. Même texte, même taille de lettre :
+   la bulle prend la largeur du plateau (4 px du bord) et le sceau de Mochi flotte à gauche, le texte coulant dessous.
+   Neuf lignes deviennent sept, la bulle tient sous le plateau et au-dessus de la barre d'actions. */
+@media (max-width: 359px) and (max-height: 600px) {
+  .partie-mochi > .coach-intro { left: calc(4px - var(--gouttiere)); right: calc(4px - var(--gouttiere)); }
+  .coach-intro .bubble { display: block; padding: 8px 10px 8px 8px; }
+  .coach-intro .bubble .sceau { float: left; width: 32px !important; height: 32px !important; margin: 1px 8px 0 0; }
+  .coach-intro .bubble svg { width: 100%; height: 100%; }
+  .coach-intro .bubble p { line-height: 1.35; }
+}
 .comptage { margin: var(--space-2) 2px 0; color: var(--muted); font-size: var(--fs-s); }
 
 /* ---------- Barre d'actions fixe ---------- */
@@ -136,6 +163,29 @@
 /* Désactivé : encre brume sans voile d'opacité (contraste AA sur la barre, 7:1 en sombre, 6:1 en clair). */
 .actions button:disabled { color: var(--muted); cursor: default; }
 .actions button.danger { color: var(--danger-texte); font-weight: var(--fw-bold); }
+/* #236 (N7) : deux familles. Les aides à gauche, les décisions à droite, séparées par un filet vertical.
+   « Passer » (l'action qui finit la partie) est un bouton plein, cerné, en gras : il ne pèse pas comme « Qui mène ? ». */
+.actions-groupees { gap: 2px; }
+.actions-aides, .actions-decisions { display: flex; min-width: 0; }
+.actions-aides { flex: 3 1 0; justify-content: flex-end; }
+.actions-decisions { flex: 2 1 0; gap: 4px; justify-content: flex-start; padding-right: 4px; }
+.actions-groupees button { min-width: 0; }
+/* En 320 px, « Abandonner » (69 px) débordait de son bouton de 58 px et passait sous « Passer », et « Qui mène ? »
+   (62 px) de son bouton de 60 px. Aucun bouton ne descend plus sous la largeur de son libellé (plus 4 px d'air de
+   chaque côté) ; le reste de la place se partage comme avant. Sous 300 px (zoom 200 %), les libellés ne tiennent de
+   toute façon pas : on garde le partage égal plutôt que d'écraser certaines cibles sous 44 px. */
+@media (min-width: 300px) {
+  .actions-aides, .actions-decisions { min-width: min-content; }
+  .actions-groupees button { min-width: min-content; padding-inline: 4px; }
+  /* Plancher de 44 px par cible, même pour un libellé court (« Indice ») : 36 px de libellé plus 2 × 4 px. */
+  .actions-groupees button > span:last-child { min-width: 36px; text-align: center; }
+  /* « Passer » est cerné : son libellé ne frôle pas le cadre. */
+  .actions-groupees button.decider { padding-inline: 8px; }
+}
+.actions-filet { flex: none; align-self: center; width: 1px; height: 36px; margin: 0 2px; background: var(--line); }
+.actions button.decider { margin: 6px 0; min-height: 52px; background: var(--surface-2); font-weight: var(--fw-bold);
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--text) 45%, transparent); }
+.actions button.decider:disabled { background: none; box-shadow: inset 0 0 0 1.5px var(--line); font-weight: var(--fw-medium); }
 /* Mis en évidence (#120) : Mochi conseille de passer, le bouton prend le style primaire jade jusqu'au prochain coup. */
 .actions button.evidence { position: relative; background: var(--accent); color: var(--on-accent); font-weight: var(--fw-bold); }
 @media (prefers-reduced-motion: no-preference) {

@@ -3,6 +3,7 @@
 // n'est plus appelable par les clients. L'abandon reste l'appel RPC `resign_game`.
 import type { Tables } from './database.types';
 import type { Result } from './account';
+import { t } from '../content/i18n';
 import type { Db } from './supabase';
 
 export type Game = Tables<'games'>;
@@ -19,7 +20,7 @@ export type GameActionResponse =
   | { ok: true; result: string; black: number; white: number }
   | { ok: false; error: string; message: string };
 
-const FALLBACK = 'Impossible de joindre le serveur. Vérifie ta connexion et réessaie.';
+const FALLBACK = () => t('erreur.serveur');
 
 /** Lit le message d'erreur renvoyé par la fonction (corps JSON `{ message }`), sinon un message générique. */
 export async function errorMessage(error: unknown): Promise<string> {
@@ -32,13 +33,13 @@ export async function errorMessage(error: unknown): Promise<string> {
       // corps illisible : message générique
     }
   }
-  return FALLBACK;
+  return FALLBACK();
 }
 
 export async function gameAction(db: Db, body: GameAction): Promise<Result<GameActionResponse & { ok: true }>> {
   const { data, error } = await db.functions.invoke<GameActionResponse>('game-action', { body });
   if (error) return { ok: false, error: await errorMessage(error) };
-  if (!data || !data.ok) return { ok: false, error: data?.message ?? FALLBACK };
+  if (!data || !data.ok) return { ok: false, error: data?.message ?? FALLBACK() };
   return { ok: true, value: data };
 }
 

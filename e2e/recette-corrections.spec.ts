@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { attendrePierre, jouer, jouerSuite, partieADeux } from './plateau';
+import { attendrePierre, jouer, jouerSuite, partieADeux, passer } from './plateau';
 
 // Issue #207 : corrections de la recette du 28/09 (docs/qa/recette-2026-09-28.md sur la branche recette-nuit).
 // Chaque défaut est vérifié à la taille d'écran où il a été vu.
@@ -56,7 +56,7 @@ test('R2 : pas de « +XP » pendant le récit du score, la pastille arrive avec 
   const pastille = page.getByTestId('pastille-xp');
   await expect(page.locator('.recit-resultat.vu')).toBeVisible({ timeout: 5000 });
   await expect(pastille).toHaveCount(0);
-  await page.getByRole('button', { name: 'Continuer' }).click();
+  await page.getByRole('button', { name: 'Voir le résultat' }).click();
   await expect(page.getByRole('heading', { level: 2, name: 'Noir gagne' })).toBeVisible();
   await expect(pastille).toContainText(/\+\d+\sXP/);
 });
@@ -75,14 +75,18 @@ test.describe('R3, R6 : 390 × 844', () => {
 
 test.describe('R3, R6 : 320 × 640', () => {
   test.use({ viewport: { width: 320, height: 640 } });
-  test('R6 : la carte « Niveau 2 ! » se ferme au changement d’écran, le titre du chemin reste libre', async ({ page }) => {
+  test('R6 et #236 : « Niveau 2 ! » attend la fin du problème, puis se ferme au changement d’écran', async ({ page }) => {
     await page.clock.setFixedTime(MIDI_PARIS);
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.addInitScript(() => { if (localStorage.getItem('go.xp.v1') === null) localStorage.setItem('go.xp.v1', '90'); });
     await resoudreGoDuJour(page); // 90 + 20 + 10 : niveau 2
     const fete = page.getByTestId('fete-niveau');
-    await expect(fete).toContainText(/Niveau\s2/);
+    // Pendant le problème, rien sur la consigne.
+    await page.waitForTimeout(800);
+    await expect(fete).toHaveCount(0);
     await nav(page).getByRole('button', { name: 'Apprendre' }).click();
+    await expect(fete).toContainText(/Niveau\s2/);
+    await nav(page).getByRole('button', { name: 'Problèmes' }).click();
     // Bien avant les 3,2 s de la carte.
     await expect(fete).toHaveCount(0, { timeout: 1000 });
   });
@@ -122,7 +126,7 @@ test.describe('R5 : 320 × 640', () => {
     const avant = (await plateau.boundingBox())!.y;
     // Toutes les répliques possibles, posées dans la bulle de Pomme : entières, et le plateau ne bouge pas.
     const toutes = ['Oh ! Bien vu.', 'Aïe !', 'Bien joué !', 'Oups…', 'Ça chauffe !', 'Tu me serres.', 'Hop, prise !', 'Merci !', 'Je la prends !',
-      'Déjà fini ?', 'On compte ?', 'Tu es sûr ?', 'Je passe.', 'Rien à jouer.', 'À toi de voir.'];
+      'Voyons voir…', 'Je regarde.', 'À moi.', 'Je passe.', 'Rien à jouer.', 'À toi de voir.'];
     const mesures = await page.locator('.joueur[data-joueur="Pomme"] .joueur-nom').evaluate((nom, ts) => {
       const bulle = document.createElement('span');
       bulle.className = 'replique';
@@ -142,7 +146,7 @@ test.describe('R5 : 320 × 640', () => {
         if (!vues.some(v => v.texte === e.textContent)) vues.push({ texte: e.textContent ?? '', coupe: e.scrollWidth > e.clientWidth + 1 });
       })).observe(document.body, { childList: true, subtree: true });
     });
-    await page.getByRole('button', { name: 'Passer' }).click();
+    await passer(page);
     await expect.poll(() => page.evaluate(() => (window as unknown as { vues: unknown[] }).vues.length)).toBeGreaterThan(0);
     expect(await page.evaluate(() => (window as unknown as { vues: { coupe: boolean }[] }).vues.filter(v => v.coupe))).toEqual([]);
   });

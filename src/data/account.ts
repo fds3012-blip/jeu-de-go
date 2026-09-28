@@ -2,6 +2,7 @@ import type { Tables } from './database.types';
 import type { Db } from './supabase';
 import { usernameErrorFromDb, validateUsername } from './username';
 import { liveStreak } from './puzzles';
+import { t } from '../content/i18n';
 
 export type Profile = Tables<'profiles'>;
 export type Result<T> = { ok: true; value: T } | { ok: false; error: string };
@@ -12,13 +13,13 @@ export async function sendMagicLink(db: Db, email: string): Promise<Result<null>
     email: email.trim(),
     options: { emailRedirectTo: window.location.origin }
   });
-  if (error) return { ok: false, error: error.status === 429 ? 'Trop d’essais. Attends une minute et réessaie.' : 'Impossible d’envoyer le lien. Vérifie ton adresse.' };
+  if (error) return { ok: false, error: t(error.status === 429 ? 'erreur.tropDEssais' : 'erreur.envoiLien') };
   return { ok: true, value: null };
 }
 
 export async function fetchProfile(db: Db, userId: string): Promise<Result<Profile | null>> {
   const { data, error } = await db.from('profiles').select('*').eq('id', userId).maybeSingle();
-  if (error) return { ok: false, error: 'Impossible de charger ton profil.' };
+  if (error) return { ok: false, error: t('erreur.profil') };
   return { ok: true, value: data };
 }
 
@@ -28,7 +29,7 @@ export async function fetchProfile(db: Db, userId: string): Promise<Result<Profi
  */
 export async function fetchStreak(db: Db, userId: string, now = new Date()): Promise<Result<number>> {
   const { data, error } = await db.from('profiles').select('streak_days, streak_last, streak_freezes').eq('id', userId).maybeSingle();
-  if (error) return { ok: false, error: 'Impossible de charger ta série.' };
+  if (error) return { ok: false, error: t('erreur.serie') };
   if (!data) return { ok: true, value: 0 };
   return { ok: true, value: liveStreak(data.streak_days, data.streak_last, now, data.streak_freezes) };
 }
@@ -36,7 +37,7 @@ export async function fetchStreak(db: Db, userId: string, now = new Date()): Pro
 /** Gels de série en réserve du joueur connecté (profil `streak_freezes`, écrit par le serveur seul ; issue #76). */
 export async function fetchGels(db: Db, userId: string): Promise<Result<number>> {
   const { data, error } = await db.from('profiles').select('streak_freezes').eq('id', userId).maybeSingle();
-  if (error) return { ok: false, error: 'Impossible de charger tes gels.' };
+  if (error) return { ok: false, error: t('erreur.gels') };
   return { ok: true, value: data?.streak_freezes ?? 0 };
 }
 
@@ -52,9 +53,13 @@ export async function saveUsername(db: Db, userId: string, raw: string): Promise
 /** Mot à taper pour confirmer la suppression du compte (#114). */
 export const MOT_SUPPRESSION = 'SUPPRIMER';
 
-/** Vrai si la saisie vaut le mot de confirmation (espaces et casse ignorés). */
+/** Mot de confirmation dans la langue de l'interface (#167) : « SUPPRIMER » en français, « DELETE » en anglais. */
+export const motSuppression = () => t('compte.supprimer.mot');
+
+/** Vrai si la saisie vaut le mot de confirmation affiché (espaces et casse ignorés). Le mot français reste accepté partout. */
 export function confirmationValide(saisie: string): boolean {
-  return saisie.trim().toUpperCase() === MOT_SUPPRESSION;
+  const s = saisie.trim().toUpperCase();
+  return s === MOT_SUPPRESSION || s === motSuppression();
 }
 
 /**
@@ -63,7 +68,7 @@ export function confirmationValide(saisie: string): boolean {
  */
 export async function deleteMyAccount(db: Db): Promise<Result<null>> {
   const { error } = await db.rpc('delete_my_account');
-  if (error) return { ok: false, error: 'La suppression n’a pas abouti. Ton compte est intact. Réessaie dans un moment.' };
+  if (error) return { ok: false, error: t('erreur.suppression') };
   // L'utilisateur n'existe plus côté serveur : on efface seulement la session de cet appareil.
   await db.auth.signOut({ scope: 'local' });
   return { ok: true, value: null };

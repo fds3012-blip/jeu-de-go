@@ -22,7 +22,7 @@ function finir(pos: Position, id: OpponentId, accommodant: boolean, seed: number
   let passes = 1;
   const raisons: string[] = [];
   for (let i = 0; i < 10; i++) {
-    const r = chooseMoveDetail(pos, id, { seed: seed + i, timeMs: 60, playouts: 400, accommodant });
+    const r = chooseMoveDetail(pos, id, { seed: seed + i, timeMs: 60, playouts: 400, accommodant, passesJoueur: passes });
     if (r.move === -1) return { passes, raisons };
     raisons.push(r.raison?.texte ?? '(sans raison)');
     pos = play(play(pos, r.move) as Position, -1) as Position;
@@ -62,23 +62,25 @@ describe('passer finit la partie (#185)', () => {
 
   it('deux points à fermer : l’ordi les ferme l’un après l’autre en disant où, puis passe', () => {
     const c = CAS.find(x => x.nom === DEUX_A_FERMER)!;
-    for (const accommodant of [true, false]) {
-      const f = finir(lire(c.rows, 2), 'pomme', accommodant, 1);
-      // Une passe par point à fermer, plus la dernière : c'est le minimum, et chaque coup a sa raison.
-      expect(f.passes).toBe(3);
-      expect(f.raisons.every(r => r.startsWith('il reste une frontière à fermer en '))).toBe(true);
-    }
+    const f = finir(lire(c.rows, 2), 'pomme', false, 1);
+    // Une passe par point à fermer, plus la dernière : c'est le minimum, et chaque coup a sa raison.
+    expect(f.passes).toBe(3);
+    expect(f.raisons.every(r => r.startsWith('il reste une frontière à fermer en '))).toBe(true);
+    // Parties accommodantes (#235) : aucun coup seul ne ferme sa zone, elle passe tout de suite (au plus 2 passes).
+    expect(finir(lire(c.rows, 2), 'pomme', true, 1).passes).toBeLessThanOrEqual(2);
   });
 
   // Blanc (l'ordi) peut capturer la pierre noire en F5 (atari) en jouant E5 : le point E5 est une frontière ouverte.
   const ATARI = ['...XO....', '...XO....', '...XO....', '...XOO...', '...X.XO..', '...XOO...', '...XO....', '...XO....', '...XO....'];
 
   it('frontière ouverte : même accommodant, l’ordi la ferme et dit où', () => {
-    for (const accommodant of [true, false]) {
-      const r = chooseMoveDetail(lire(ATARI, 2), 'pomme', { seed: 1, timeMs: 50, accommodant });
-      expect(r.move).toBe(4 * 9 + 4);
-      expect(r.raison).toMatchObject({ motif: 'frontiere', texte: 'il reste une frontière à fermer en E5' });
-    }
+    const r = chooseMoveDetail(lire(ATARI, 2), 'pomme', { seed: 1, timeMs: 50 });
+    expect(r.move).toBe(4 * 9 + 4);
+    expect(r.raison).toMatchObject({ motif: 'frontiere', texte: 'il reste une frontière à fermer en E5' });
+    // Accommodant (#235) : c'est un trou dans SA frontière (la pierre noire en atari chez elle), elle le ferme aussi.
+    const a = chooseMoveDetail(lire(ATARI, 2), 'pomme', { seed: 1, timeMs: 50, accommodant: true });
+    expect(a.move).toBe(4 * 9 + 4);
+    expect(a.raison).toMatchObject({ motif: 'frontiere', texte: 'il reste un trou dans sa frontière en E5' });
   });
 
   it('début de partie : accommodant, l’ordi passe toujours ; plateau vide, il passe aussi sinon', () => {

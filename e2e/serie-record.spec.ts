@@ -34,7 +34,7 @@ test('série de 7 jours perdue : record gardé, badge conservé, Mochi accueille
 
   // Profil : le record à la place de « 0 jour de série », et le badge toujours là.
   await nav(page, 'Profil');
-  await expect(page.getByText('jours de record')).toBeVisible();
+  await expect(page.getByText('jours, ton record')).toBeVisible();
   await expect(page.getByText(/^jours? de série$/)).toHaveCount(0);
   await expect(page.locator('[data-badge="serie-7"]')).toHaveClass('obtenu');
   await expect(page.getByRole('status').filter({ hasText: /record/ })).toHaveCount(0); // parti en changeant d'onglet

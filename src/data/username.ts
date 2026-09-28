@@ -2,6 +2,8 @@
 // 3 à 24 caractères, lettres sans accent, chiffres, « _ » et « - ». L'unicité (sans tenir compte
 // des majuscules) est garantie par la base : voir usernameErrorFromDb.
 
+import { t } from '../content/i18n';
+
 export const USERNAME_MIN = 3;
 export const USERNAME_MAX = 24;
 const PATTERN = /^[A-Za-z0-9_-]+$/;
@@ -14,17 +16,17 @@ export function normalizeUsername(raw: string): string {
 
 export function validateUsername(raw: string): UsernameCheck {
   const value = normalizeUsername(raw);
-  if (value.length < USERNAME_MIN) return { ok: false, error: `Au moins ${USERNAME_MIN} caractères.` };
-  if (value.length > USERNAME_MAX) return { ok: false, error: `${USERNAME_MAX} caractères au maximum.` };
-  if (!PATTERN.test(value)) return { ok: false, error: 'Lettres sans accent, chiffres, _ et - seulement.' };
+  if (value.length < USERNAME_MIN) return { ok: false, error: t('pseudo.court', { n: USERNAME_MIN }) };
+  if (value.length > USERNAME_MAX) return { ok: false, error: t('pseudo.long', { n: USERNAME_MAX }) };
+  if (!PATTERN.test(value)) return { ok: false, error: t('pseudo.motif') };
   return { ok: true, value };
 }
 
 /** Traduit une erreur Postgres renvoyée à l'enregistrement du pseudo en message pour le joueur. */
 export function usernameErrorFromDb(code: string | undefined): string {
-  if (code === '23505') return 'Ce pseudo est déjà pris. Essaie-en un autre.';
-  if (code === '23514') return 'Ce pseudo n’est pas valide.';
-  return 'Impossible d’enregistrer ton pseudo. Réessaie.';
+  if (code === '23505') return t('pseudo.pris');
+  if (code === '23514') return t('pseudo.invalide');
+  return t('pseudo.erreur');
 }
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

@@ -9,9 +9,9 @@ test('problèmes sans compte : erreur, bonne réponse, suite et problème suivan
   await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
 
   await expect(page.getByRole('heading', { name: /^Go du jour n°\s\d+$/ })).toBeVisible();
-  // Issue #196 : un écran, une action. Le Go du jour, un seul « Continuer », le palier en cours ; pas de grille ni de cadenas.
+  // Issue #196 : un écran, une action. Le Go du jour, un seul « Problème suivant », le palier en cours ; pas de grille ni de cadenas.
   await expect(page.getByRole('button', { name: 'Résoudre le Go du jour' })).toBeVisible();
-  await expect(page.getByRole('button', { name: /^Continuer : / })).toHaveCount(1);
+  await expect(page.getByRole('button', { name: /^Problème suivant : / })).toHaveCount(1);
   await expect(page.locator('[data-palier-en-cours="debutant"]')).toContainText('Débutant');
   await expect(page.getByRole('button', { name: /^Problème \d+ : / })).toHaveCount(0);
   await expect(page.locator('svg.cadenas')).toHaveCount(0);
@@ -36,7 +36,18 @@ test('problèmes sans compte : erreur, bonne réponse, suite et problème suivan
 
   await jouer(page, 'A1');
   await expect(page.getByText('Pas tout à fait. Essaie encore.')).toBeVisible();
+  // #237 (N6) : la réfutation est montrée (Blanc s'échappe en E5), d'un coup en mouvements réduits, puis la position revient seule.
+  await attendrePierre(page, 'E5', 'blanc');
+  await expect(page.locator('.verdict [role="status"]')).toContainText('Pas tout à fait');
+  await expect(page.getByText('Rejoue directement sur le plateau.')).toBeVisible();
   await attendrePierre(page, 'A1', null);
+  await attendrePierre(page, 'E5', null);
+  // #237 (N6) : comme en leçon, une seule suite après l'erreur, rejouer sur le plateau ; l'indice est un lien discret.
+  await expect(page.getByRole('button', { name: 'Réessayer' })).toHaveCount(0);
+  const indice = page.getByRole('button', { name: 'Voir un indice' });
+  await expect(indice).toHaveClass(/\blien\b/);
+  await expect(page.locator('.verdict .cta, .verdict .btn')).toHaveCount(0);
+  expect((await indice.boundingBox())!.height).toBeGreaterThanOrEqual(44);
 
   await jouer(page, 'E5');
   await expect(page.getByText('Bravo, c’est le bon coup !')).toBeVisible();
@@ -78,7 +89,7 @@ test('paliers : Novice verrouillé, puis ouvert après les réussites', async ({
   await page.evaluate(v => localStorage.setItem('go.problemes.v1', JSON.stringify(v)), avant);
   await page.reload();
   await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
-  await expect(page.getByRole('button', { name: /^Continuer : / })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Problème suivant : / })).toBeVisible();
   await page.getByRole('button', { name: 'Tous les problèmes' }).click();
 
   const novice = page.getByRole('group', { name: /^Novice/ });
@@ -109,4 +120,30 @@ test('paliers : Novice verrouillé, puis ouvert après les réussites', async ({
   await expect(novice.getByRole('button').first()).toBeEnabled();
   const debord = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(debord).toBeLessThanOrEqual(0);
+});
+
+// #237 (N6) : après une erreur, pas de bouton ; la réfutation se joue, et toucher le plateau pendant qu'elle est montrée
+// remet la position et joue le coup tout de suite, comme en leçon.
+test('problème : la réfutation se montre après l’erreur, puis on rejoue directement', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
+  await page.getByRole('button', { name: 'Tous les problèmes' }).click();
+  await page.getByRole('button', { name: /^Problème \d+ : Capture la pierre/ }).click();
+  await expect(plateau(page)).toBeVisible();
+
+  await jouer(page, 'A1');
+  await expect(page.locator('.verdict [role="status"]')).toContainText('Pas tout à fait');
+  await expect(page.getByRole('button', { name: 'Réessayer' })).toHaveCount(0);
+  // Le coup faux reste posé, puis Blanc répond au point clé.
+  await attendrePierre(page, 'A1', 'noir');
+  await attendrePierre(page, 'E5', 'blanc');
+  // Toucher un autre point pendant la réfutation : la position revient et le coup se joue (ici, encore faux).
+  await jouer(page, 'J9');
+  await attendrePierre(page, 'A1', null);
+  await attendrePierre(page, 'J9', 'noir');
+  // La position revient d'elle-même ; on joue alors le bon coup.
+  await attendrePierre(page, 'J9', null);
+  await attendrePierre(page, 'E5', null);
+  await jouer(page, 'E5');
+  await expect(page.getByText('Bravo, c’est le bon coup !')).toBeVisible();
 });

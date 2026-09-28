@@ -1,5 +1,6 @@
 // Onglet Apprendre (issue #40, phase 6) : logique pure du chemin des leçons, sans React.
 import type { Lesson } from '../content/lessons';
+import { t } from '../content/i18n';
 
 export type Progression = Record<string, number>;
 export type EtatPierre = 'faite' | 'encours' | 'avenir';
@@ -35,17 +36,21 @@ export function titreCourt(titre: string): string {
 export function boutonChemin(lecons: Lesson[], progression: Progression): { texte: string; verbe: string; id: string } | null {
   if (!lecons.length) return null;
   const suivante = lecons.find(l => (progression[l.id] ?? 0) < l.steps.length);
-  if (!suivante) return { texte: `Revoir : ${titreCourt(lecons[0].title)}`, verbe: 'Revoir', id: lecons[0].id };
+  if (!suivante) return { texte: t('apprendre.revoirTitre', { titre: titreCourt(lecons[0].title) }), verbe: t('apprendre.revoir'), id: lecons[0].id };
   const commence = lecons.some(l => (progression[l.id] ?? 0) > 0);
-  return commence
-    ? { texte: `Continuer : ${titreCourt(suivante.title)}`, verbe: 'Continuer', id: suivante.id }
-    : { texte: 'Commencer', verbe: 'Commencer', id: suivante.id };
+  if (!commence) return { texte: t('apprendre.commencer'), verbe: t('apprendre.commencer'), id: suivante.id };
+  // #237 : « Continuer » est réservé à l'étape suivante dans une leçon. Sur le chemin, le verbe dit l'action :
+  // « Reprendre » une leçon entamée, « Commencer » la suivante.
+  const titre = titreCourt(suivante.title);
+  return (progression[suivante.id] ?? 0) > 0
+    ? { texte: t('apprendre.reprendreTitre', { titre }), verbe: t('apprendre.reprendre'), id: suivante.id }
+    : { texte: t('apprendre.commencerTitre', { titre }), verbe: t('apprendre.commencer'), id: suivante.id };
 }
 
 /** Titre et phrase de l'écran de fin : plus modestes qu'une victoire, sauf pour la dernière leçon du chapitre. */
 export function finDeLecon(lecons: Lesson[], id: string): { titre: string; derniere: boolean } {
   const derniere = lecons.length > 0 && lecons[lecons.length - 1].id === id;
-  return { titre: derniere ? 'Chapitre terminé' : 'Leçon terminée', derniere };
+  return { titre: t(derniere ? 'apprendre.fin.chapitre' : 'apprendre.fin.lecon'), derniere };
 }
 
 /** Fin de chapitre (#200) : la dernière leçon est terminée, ou toutes les leçons le sont. */
@@ -90,8 +95,22 @@ function morceau(a: { x: number; y: number }, b: { x: number; y: number }, tourn
   return a.x === b.x ? `V${b.y}` : `V${tourne}H${b.x}V${b.y}`;
 }
 
-/** Place minimale, en px, entre le bas d'une rangée (titre, description, bouton) et la ligne du virage au-dessous. */
-export const MARGE_RANGEE = 8;
+/**
+ * Place minimale, en px, entre le bas d'une rangée (titre, description, bouton) et la ligne du virage au-dessous.
+ * 4 px (#232) : c'est l'écart réel des rangées de trois lignes à 390 px, où le chemin ne bouge pas.
+ */
+export const MARGE_RANGEE = 4;
+
+/**
+ * Place occupée par une rangée sous sa ligne du goban, en px (#232), à partir de sa boîte à l'écran (`haut`, `bas`)
+ * et du diamètre de la pierre. La rangée est posée une demi-pierre au-dessus de sa ligne (CSS de `.pas`) :
+ * la ligne est donc à `haut + pierre / 2`, même quand la pierre est dessinée plus bas, centrée sur un texte
+ * plus haut qu'elle (police doublée : jusqu'à 110 px sous sa ligne). Mesurer depuis le centre de la pierre
+ * oubliait ce décalage, et les rangées se chevauchaient.
+ */
+export function placeSousLigne(rangee: { haut: number; bas: number }, pierre: number): number {
+  return Math.ceil(rangee.bas - (rangee.haut + pierre / 2));
+}
 
 /** Plus petit multiple de LIGNE supérieur ou égal à `y` : la première ligne du goban à partir de `y`. */
 const ligneSous = (y: number) => Math.ceil(y / LIGNE) * LIGNE;
@@ -99,7 +118,7 @@ const ligneSous = (y: number) => Math.ceil(y / LIGNE) * LIGNE;
 /**
  * Chemin de pierres sur les lignes du goban : une pierre toutes les deux lignes, en alternant les côtés.
  * `encours` : indice de la leçon en cours ; elle a `apres` lignes de plus au-dessous, pour son bouton en relief.
- * `bas` (#169) : pour chaque rangée, la place qu'elle occupe sous le centre de sa pierre, en px (mesurée à l'écran).
+ * `bas` (#169) : pour chaque rangée, la place qu'elle occupe sous sa ligne, en px (mesurée à l'écran, voir `placeSousLigne`).
  * Une rangée plus haute que l'écart prévu (titre sur plusieurs lignes au zoom 200 %) repousse la suivante
  * d'autant de lignes qu'il faut, et le virage passe sous elle. Sans mesure, ou si tout tient, rien ne change.
  */
@@ -119,8 +138,7 @@ export function trace(n: number, { encours = -1, apres = 2, bas = [] as readonly
   }
   // Le goban s'arrête une ligne sous la dernière pierre ; il s'allonge si la dernière rangée dépasse la place
   // qu'elle aurait au milieu du chemin. Dernière leçon en cours (#177, sept leçons) : sa place est toujours réservée,
-  // plus une ligne de marge (avec la police doublée, la pierre est dessinée sous sa ligne et la mesure est courte),
-  // sinon son bouton en relief mord sur « Bientôt ».
+  // plus une ligne de marge, sinon son bouton en relief mord sur « Bientôt ».
   const der = n - 1, place = (der === encours ? apres + 1 : 1) * LIGNE, rangee = (bas[der] ?? 0) + MARGE_RANGEE;
   const hauteur = n ? pierres[der].y + (der === encours ? Math.max(place, ligneSous(rangee)) + LIGNE : rangee > place ? ligneSous(rangee) : LIGNE) : 0;
   return { pierres, hauteur, virages, d: traceJusqua({ pierres, hauteur, virages, d: '' }, n - 1, true) };
@@ -143,3 +161,6 @@ export const CHAPITRES_A_VENIR = [
   'Ouverture en 19\u00A0×\u00A019',
   'Fin de partie et comptage',
 ];
+
+/** Chapitres à venir dans la langue de l'interface (#167) ; en français, les textes ci-dessus (vérifié par un test). */
+export const chapitresAVenir = (): string[] => ([1, 2, 3, 4, 5] as const).map(i => t(`apprendre.avenir.${i}`));

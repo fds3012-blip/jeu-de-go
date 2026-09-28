@@ -94,17 +94,73 @@ export function message(page: Page): Locator {
   return page.locator('.coach p[aria-live="polite"]');
 }
 
+/** « Passer » de la barre d'actions (la bulle de Mochi peut en montrer un second, #235). */
+export function boutonPasser(page: Page): Locator {
+  return page.getByRole('toolbar').getByRole('button', { name: 'Passer', exact: true });
+}
+
+/** Coups joués de la partie en cours (liste « Coups joués » au-dessus du plateau, passes comprises). */
+export function coupsJoues(page: Page): Locator {
+  return page.locator('ol.coups > li:not(.vide)');
+}
+
+/** Fin de partie contre l'ordi : récit du score, ou comptage manuel prêt à valider. */
+export function finDePartie(page: Page): Locator {
+  return page.locator('.recit, .barre-comptage .btn.primary:enabled').first();
+}
+
+/**
+ * Passe. Si Mochi prévient que la partie n'est pas finie (#235, « Tu passes quand même ? »), confirme avec « Passer ».
+ * Renvoie vrai si Mochi a prévenu. Au retour, la passe est jouée : un coup de plus dans la liste des coups.
+ *
+ * #258 : on attend un état observable (l'avertissement, ou la passe inscrite dans la liste), jamais une phrase de
+ * Mochi. Avant, une phrase encore affichée (« Pomme joue E3. ») suffisait à croire l'attente finie, et l'erreur
+ * d'attente était avalée : la passe pouvait ne pas être jouée au retour.
+ */
+export async function passer(page: Page): Promise<boolean> {
+  const avant = await coupsJoues(page).count();
+  const choix = page.getByRole('group', { name: 'Passer maintenant ?' });
+  // La passe est jouée : elle est inscrite, ou la partie est déjà finie (l'écran de résultat remplace le plateau).
+  const passeJouee = async () => (await coupsJoues(page).count()) > avant || (await partieQuittee(page));
+  await boutonPasser(page).click();
+  await expect.poll(async () => (await choix.count()) > 0 || (await passeJouee()), { timeout: 10_000 }).toBe(true);
+  const averti = (await choix.count()) > 0;
+  if (averti) {
+    await choix.getByRole('button', { name: 'Passer', exact: true }).click();
+    await expect.poll(async () => (await choix.count()) === 0 && (await passeJouee()), { timeout: 10_000 }).toBe(true);
+  }
+  return averti;
+}
+
+/** Plus de partie à l'écran (liste des coups absente) : l'écran de résultat a pris la place. */
+async function partieQuittee(page: Page): Promise<boolean> {
+  return (await page.locator('ol.coups').count()) === 0;
+}
+
+/**
+ * Contre l'ordi, après ton coup ou ta passe (`avant` : nombre de coups avant le tien) : attend que l'adversaire ait
+ * répondu (deux coups de plus, et « Passer » de nouveau actif) ou que la partie soit finie. Vrai si elle est finie.
+ * On n'attend pas une phrase de Mochi : selon la réponse (atari, conseil de passer, « continue »…), elle change.
+ */
+export async function attendreReponse(page: Page, avant: number): Promise<boolean> {
+  const aToi = boutonPasser(page).and(page.locator('button:enabled'));
+  const finie = async () => (await finDePartie(page).isVisible()) || (await partieQuittee(page));
+  await expect.poll(async () => (await finie())
+    || ((await coupsJoues(page).count()) >= avant + 2 && (await aToi.count()) > 0), { timeout: 10_000 }).toBe(true);
+  return finie();
+}
+
 /**
  * Contre l'ordi : passe jusqu'à la fin de la partie, puis valide le score. Depuis #117, le comptage est automatique
  * quand les pierres mortes sont sûres (récit direct) ; sinon, phase manuelle et « Valider le score ».
  */
-export async function passerJusquAuScore(page: Page, adversaire = 'Pomme'): Promise<void> {
-  const passer = page.getByRole('button', { name: 'Passer' });
+export async function passerJusquAuScore(page: Page): Promise<void> {
   const fin = page.locator('.recit, .barre-comptage .btn.primary:enabled');
   for (let i = 0; i < 6 && !(await fin.first().isVisible()); i++) {
-    await expect(passer).toBeEnabled({ timeout: 10_000 });
-    await passer.click();
-    await expect(fin.or(page.getByText(new RegExp(`${adversaire} (joue|capture|continue)`))).first()).toBeVisible({ timeout: 10_000 });
+    await expect(boutonPasser(page)).toBeEnabled({ timeout: 10_000 });
+    const avant = await coupsJoues(page).count();
+    await passer(page);
+    await attendreReponse(page, avant);
   }
   await expect(fin.first()).toBeVisible({ timeout: 10_000 });
   const valider = page.getByRole('button', { name: 'Valider le score' });

@@ -1,0 +1,62 @@
+// Charte du vocabulaire (issue #237, docs/design/vocabulaire.md) : un mot par objet, un sens par mot.
+// Ces tests lisent tout le catalogue français : un texte ajouté plus tard qui réintroduit un terme banni échoue ici.
+import { fr } from './fr';
+import { traduire, type Cle } from './index';
+import { statistiques, RECORD_MIN } from '../../app/vitrine';
+import { GENERIQUES } from '../../app/repliques';
+
+const textes = (v: unknown): string[] => (typeof v === 'string' ? [v] : Object.values(v as Record<string, string>));
+const entrees = (Object.keys(fr) as Cle[]).flatMap(k => textes(fr[k]).map(s => [k, s] as const));
+const avec = (motif: RegExp) => entrees.filter(([, s]) => motif.test(s)).map(([k]) => k);
+
+describe('boucle quotidienne : « série » et « Go du jour »', () => {
+  it('jamais « jour(s) de suite » ni « défi du jour » : on dit « série »', () => {
+    expect(avec(/jours? de suite/i)).toEqual([]);
+    expect(avec(/défis? du jour|un défi par jour/i)).toEqual([]);
+  });
+
+  it('« défi » est réservé aux adversaires (défier, dernier défi de l’échelle)', () => {
+    expect(avec(/(^|[^\p{L}])défi(er|s)?([^\p{L}]|$)/iu)).toEqual(['adv.sensei.description', 'bilan.defier']);
+  });
+
+  it('« record » seulement à partir de 2 jours ; avant, la légende parle de série', () => {
+    expect(RECORD_MIN).toBe(2);
+    const vide = { reussis: 0, parties: 0, bilan: {}, paliers: [] };
+    const p = { lecons: { faites: 0, total: 7 }, adversaires: 9 };
+    const legende = (serie: number, record?: number) => statistiques({ ...vide, serie, record }, p)[0].legende;
+    expect(legende(0)).toBe('jour de série');
+    expect(legende(1, 1)).toBe('jour de série');
+    expect(legende(2)).toBe('jours, ton record');
+    expect(legende(0, 7)).toBe('jours, ton record');
+    expect(avec(/jours? de record/i)).toEqual([]);
+  });
+
+  it('même légende de série partout (onglet Problèmes et Profil)', () => {
+    expect([1, 3].map(n => traduire('fr', 'pb.serieLegende', { n }))).toEqual(['jour de série', 'jours de série']);
+  });
+});
+
+describe('« Continuer » : un seul sens, l’étape suivante d’une leçon', () => {
+  it('aucun autre bouton ne dit « Continuer »', () => {
+    expect(avec(/^Continuer\b/)).toEqual(['apprendre.continuer']);
+  });
+
+  it('les autres boutons disent leur action', () => {
+    expect(traduire('fr', 'pb.continuer')).toBe('Problème suivant');
+    expect(traduire('fr', 'recit.continuer')).toBe('Voir le résultat');
+    expect(traduire('fr', 'partie.passe.continuer')).toBe('Jouer encore');
+    expect(traduire('fr', 'apprendre.reprendre')).toBe('Reprendre');
+  });
+});
+
+describe('ton juste', () => {
+  it('la revue ne nomme pas un adversaire que le débutant ne connaît pas', () => {
+    const noms = /Caillou|Bambou|Renard|Rivière|Tigre|Montagne|Dragon|Sensei/;
+    expect(avec(noms).filter(k => k.startsWith('revue.') || k.startsWith('cle.') || k.startsWith('note.'))).toEqual([]);
+  });
+
+  it('l’adversaire ne demande pas « Tu es sûr ? » ni « Déjà fini ? » quand tu passes', () => {
+    for (const r of GENERIQUES.passeJoueur) expect(r).not.toMatch(/sûr|déjà fini/i);
+    expect(avec(/tu es sûr|déjà fini/i)).toEqual([]);
+  });
+});

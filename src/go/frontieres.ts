@@ -80,3 +80,58 @@ export function coupDeFermeture(pos: Position, dead?: Iterable<number>, prefer: 
   }
   return best;
 }
+
+/** Points des zones vides (sur `b`) voisines de `p` entourées par la seule couleur `c`. */
+function zonesA(b: Int8Array, size: number, p: number, c: Color): number {
+  const nb = neighbors(size), seen = new Uint8Array(b.length);
+  let total = 0;
+  for (const d of nb[p]) {
+    if (b[d] || seen[d]) continue;
+    const stack = [d];
+    let n = 0, border = 0;
+    seen[d] = 1;
+    while (stack.length) {
+      const q = stack.pop()!;
+      n++;
+      for (const r of nb[q]) {
+        if (!b[r]) { if (!seen[r]) { seen[r] = 1; stack.push(r); } }
+        else border |= b[r];
+      }
+    }
+    if (border === c) total += n;
+  }
+  return total;
+}
+
+/** Points qu'une brèche doit au moins protéger pour être fermée (un seul point : un œil, pas une frontière). */
+export const BRECHE_MIN = 2;
+
+/**
+ * Parties accommodantes (#235) : après la passe du joueur, l'ordi ne ferme que **sa** frontière, jamais celle du joueur.
+ * Une brèche est un point ouvert, collé à une de ses pierres vivantes, qui change une zone contestée en zone à lui
+ * (entourée de sa seule couleur) : il ferme sa porte, il n'entre pas chez le joueur (une zone qui touche une pierre
+ * du joueur n'est jamais « à lui »). Renvoie la brèche qui protège le plus de points (au moins BRECHE_MIN), sinon -1.
+ * Mêmes garde-fous que `coupDeFermeture` : coup légal, pas dans son œil, au moins deux libertés (sauf prise).
+ * `prefer` départage les égalités (coups du moteur, du meilleur au moins bon).
+ */
+export function brecheAFermer(pos: Position, dead?: Iterable<number>, prefer: readonly number[] = []): number {
+  const { size } = pos, c = pos.toPlay, nb = neighbors(size);
+  const mortes = new Set(dead ?? []);
+  const ouverts = frontieresOuvertes(pos.board, size, mortes);
+  if (!ouverts.length) return -1;
+  const b = sansMortes(pos.board, mortes), rang = new Map(prefer.map((m, i) => [m, i] as const));
+  let best = -1, bestGain = BRECHE_MIN - 1, bestRang = Infinity;
+  for (const p of ouverts) {
+    if (pos.board[p] !== 0 || !nb[p].some(r => b[r] === c)) continue;
+    if (nb[p].every(r => pos.board[r] === c)) continue;
+    const r = play(pos, p);
+    if (typeof r === 'string') continue;
+    const prises = r.captures[c] - pos.captures[c];
+    if (!prises && groupAt(r.board, size, p).liberties.size < 2) continue;
+    // Une pierre du joueur prise en fermant (intruse en atari dans sa frontière) compte avec la zone protégée.
+    const gain = zonesA(sansMortes(r.board, mortes), size, p, c) + prises;
+    const k = rang.get(p) ?? prefer.length;
+    if (gain > bestGain || (gain === bestGain && k < bestRang)) { best = p; bestGain = gain; bestRang = k; }
+  }
+  return best;
+}

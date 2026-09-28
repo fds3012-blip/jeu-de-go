@@ -3,6 +3,7 @@
 import type { Json, Tables } from './database.types';
 import type { Db } from './supabase';
 import type { Result } from './account';
+import { t } from '../content/i18n';
 import { fromRows } from '../go/position';
 import { play, type MoveError, type Position } from '../go/rules';
 import { fromLabel } from '../go/coords';
@@ -111,7 +112,7 @@ export async function fetchPuzzles(db: Db): Promise<Result<Puzzle[]>> {
   const { data, error } = await db.from('puzzles')
     .select('id, size, setup, answers, title, prompt, explanation, difficulty')
     .is('owner_id', null).order('id');
-  if (error) return { ok: false, error: 'Impossible de charger les problèmes.' };
+  if (error) return { ok: false, error: t('erreur.problemes') };
   return { ok: true, value: parsePuzzles(data) };
 }
 
@@ -124,7 +125,7 @@ export async function fetchPuzzleStats(db: Db, userId: string): Promise<Result<P
     db.from('profiles').select('puzzle_rating, streak_days, streak_last, streak_freezes').eq('id', userId).maybeSingle(),
     db.from('puzzle_attempts').select('puzzle_id, solved').eq('user_id', userId)
   ]);
-  if (profile.error || attempts.error || !profile.data) return { ok: false, error: 'Impossible de charger ta cote.' };
+  if (profile.error || attempts.error || !profile.data) return { ok: false, error: t('erreur.cote') };
   const rows = attempts.data ?? [];
   return {
     ok: true,
@@ -154,6 +155,6 @@ export function liveStreak(days: number, last: string | null, now: Date, freezes
 /** Enregistre un essai et renvoie la nouvelle cote problèmes. */
 export async function recordPuzzleAttempt(db: Db, puzzleId: string, solved: boolean): Promise<Result<number>> {
   const { data, error } = await db.rpc('record_puzzle_attempt', { p_puzzle: puzzleId, p_solved: solved });
-  if (error || typeof data !== 'number') return { ok: false, error: 'Essai non enregistré. Vérifie ta connexion.' };
+  if (error || typeof data !== 'number') return { ok: false, error: t('erreur.essai') };
   return { ok: true, value: data };
 }

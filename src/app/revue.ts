@@ -70,8 +70,8 @@ const pts = (n: number) => t('revue.points', { n: Math.max(1, Math.round(n)) });
 // Constantes de ce fichier : le texte français d'origine (tests) ; l'écran passe par `t` (#167).
 /** Message de Mochi quand aucune erreur ne dépasse le seuil. */
 export const AUCUNE_ERREUR = 'Aucune grosse erreur. Bien joué !';
-/** Ligne discrète quand KataGo n'est pas disponible : pas de meilleur coup montré. */
-export const SANS_KATAGO = 'Pour voir le meilleur coup, joue contre Bambou ou plus fort.';
+/** Ligne discrète quand KataGo n'est pas disponible : pas de meilleur coup montré. Sans nom d'adversaire inconnu du débutant (#237). */
+export const SANS_KATAGO = 'Pour voir le meilleur coup, affronte un adversaire plus fort.';
 
 /**
  * Vrai si on peut montrer `move` comme meilleur coup à un débutant. On ne montre rien plutôt qu'un conseil douteux :
