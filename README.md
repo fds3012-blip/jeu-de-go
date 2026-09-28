@@ -7,3 +7,7 @@ Application de go pour le grand public, web puis iOS et Android : parties contre
 - Design : [docs/design/encre-et-jade.md](docs/design/encre-et-jade.md)
 - Base de données : [supabase/migrations](supabase/migrations)
 - Agents spécialisés (Claude Code) : [.claude/agents](.claude/agents)
+
+## Licence
+
+Tous droits réservés : le code et les contenus sont publiés pour consultation seulement. Voir [LICENSE](LICENSE), qui liste aussi les composants tiers et leur licence.
