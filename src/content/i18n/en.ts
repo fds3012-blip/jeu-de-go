@@ -14,6 +14,9 @@ export const en = {
   'profil.inviteDetail': 'No account: everything stays on this phone.',
   'serie.invitation': 'Create an account to keep your streak.',
   'serie.creerCompte': 'Create an account',
+  'serie.perdueRecord': 'Good to see you! Your streak of {jours} is now your record. Shall we start a new one?',
+  'serie.perdue': 'Good to see you! Your record is still {record}. Shall we start a new streak?',
+  'profil.recordLegende': { one: 'day record', other: 'day record' },
   'profil.sansPseudo': 'No username',
   'profil.cote': 'Rating {cote}',
   'profil.jours': { one: '{n} day', other: '{n} days' },
@@ -212,6 +215,14 @@ export const en = {
   'erreurs.bravoParmi': 'Well done! KataGo ranks this move among the best.',
   'erreurs.bravoKataGo': 'Well done, that’s KataGo’s move!',
   'erreurs.refutation': 'Not that one. Keep looking.',
+
+  // Daily review (#199)
+  'revision.titre': 'Daily review',
+  'revision.aide': 'Solving a puzzle again helps you remember it.',
+  'revision.ouvrirAria': 'Review: {titre}',
+  'revision.dejaReussi': 'Already solved · redo it without help',
+  'revision.faite': 'Review done. More puzzles will come back tomorrow.',
+  'revision.serie': 'One challenge a day keeps your streak: the Daily Go, a lesson or the review.',
 
   'installer.titre': 'Keep Go close at hand',
   'installer.texte': 'Add the app to your home screen: it opens in one tap, full screen.',

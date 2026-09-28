@@ -31,8 +31,10 @@ import { ProposerInstallation } from '../ui/ProposerInstallation';
 import { SERIE_KEY, numeroDuJour, problemeDuNumero, serieVivante, textePartage, type Serie } from './goDuJour';
 import '../ui/apprendre.css';
 import { Glacon, PierreGivree } from '../ui/Glacon';
-import { lireReserveAppareil, reussirAppareil } from './gelAppareil';
+import { lireReserveAppareil } from './gelAppareil';
 import { inviterCompte, serieAffichee } from './serieLocale';
+import { goDuJourFaitAppareil, validerDefi } from './defiAppareil';
+import { RevisionDuJour } from '../ui/RevisionDuJour';
 // `t` désigne déjà un palier dans ce fichier : la traduction s'appelle `tr` (#167).
 import { t as tr } from '../content/i18n';
 
@@ -53,6 +55,8 @@ interface Props {
   onDuJour?: (ouvert: boolean) => void;
   /** Réglage « Célébrations » : la pierre givrée se pose avec un rebond quand un gel est gagné. */
   celebrer?: boolean;
+  /** Change quand on touche l'onglet Problèmes déjà actif : retour à la liste (R4). */
+  racine?: number;
 }
 
 /** Flamme de la série de jours, en or. */
@@ -76,7 +80,7 @@ function Difficulte({ d }: { d: number }) {
 }
 
 /** Onglet Problèmes : problème du jour, problèmes de base, cote problèmes et série de jours. */
-export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, lien = null, onDuJour, celebrer = true }: Props) {
+export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, lien = null, onDuJour, celebrer = true, racine = 0 }: Props) {
   // Go du jour (issue #75) : le même pour tous, choisi dans la liste publique des problèmes de base, en heure de Paris.
   const [numero] = useState(() => numeroDuJour(new Date()));
   const daily = problemeDuNumero(LOCAL_PUZZLES, numero);
@@ -97,6 +101,13 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   // Liste « Tous les problèmes » ouverte (#196) ; on y revient après un problème ouvert depuis la grille.
   const [tous, setTous] = useState(false);
   const [statsTick, setStatsTick] = useState(0);
+  // Onglet actif touché (R4) : retour à la liste, sans remonter l'écran (le lien partagé rouvrirait le Go du jour).
+  const racineVue = useRef(racine);
+  useEffect(() => {
+    if (racineVue.current === racine) return;
+    racineVue.current = racine;
+    setOpenId(null); setTous(false);
+  }, [racine]);
 
   // Problèmes : la base pour un joueur connecté (RLS), la copie locale sinon.
   useEffect(() => {
@@ -178,11 +189,12 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
           // #197 : résolu après avoir vu la réponse, c'est « Vu » : ni XP ni palier. La série du Go du jour tient quand même.
           const gain = recompense(aide, estDuJour);
           if (gain.xp && !solved.has(open.id)) { track(EVENTS.problemeResolu, { probleme: open.id, du_jour: estDuJour }); gagnerXp(estDuJour ? 'goDuJour' : 'probleme'); }
-          if (gain.serie && serieDuJour?.dernier !== numero) {
-            const { serie: s, gagne } = reussirAppareil(serieDuJour, numero);
+          // #199 : un défi par jour ; le Go du jour est coché à part, une leçon ou la révision ont pu faire vivre la série avant lui.
+          if (gain.serie && !goDuJourFaitAppareil(numero)) {
+            const { serie: s, gagne } = validerDefi('go_du_jour');
             setSerieDuJour(s);
             if (gagne) { setGelGagne(true); setGels(lireReserveAppareil().gels); }
-            track(EVENTS.goDuJourResolu, { numero, essais, serie: s.jours, arrivee_par_lien: lien !== null, vu: gain.statut === 'vu' });
+            track(EVENTS.goDuJourResolu, { numero, essais, serie: s?.jours ?? 1, arrivee_par_lien: lien !== null, vu: gain.statut === 'vu' });
           }
           if (gain.palier) markSolved(open.id); else markVu(open.id);
         }}
@@ -204,7 +216,8 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   const connecte = !!db && !!userId;
   const prochainPz = aContinuer(tiers, solved, dernierRef.current, () => tirage);
   // Une seule action en relief : le Go du jour tant qu'il n'est pas fait, « Continuer » ensuite.
-  const duJourFait = !daily || serieDuJour?.dernier === numero;
+  const duJourReussi = !!daily && goDuJourFaitAppareil(numero);
+  const duJourFait = !daily || duJourReussi;
   const recommande = connecte && stats ? palierRecommande(tiers, stats.rating) : undefined;
   // Série (issue #161) : celle de l'appareil sans compte, la plus longue des deux avec un compte.
   const serie = serieAffichee(connecte && stats ? stats.streak : null, serieDuJour, numero);
@@ -249,9 +262,12 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
         <section aria-labelledby="jour-titre">
           <h2 id="jour-titre" className="titre-pierres">{tr('accueil.goDuJour')} <span className="numero-du-jour">{tr('pb.numero', { numero })}</span><Glacon gels={stats ? stats.freezes : gels} /></h2>
           <p className="muted small bases-aide">{tr('pb.duJourAide')}</p>
-          <DuJour pz={daily} reussi={serieDuJour?.dernier === numero} vu={!!vus[daily.id] && !solved.has(daily.id)} onOpen={() => setOpenId(daily.id)} />
+          <DuJour pz={daily} reussi={duJourReussi} vu={!!vus[daily.id] && !solved.has(daily.id)} onOpen={() => setOpenId(daily.id)} />
         </section>
       )}
+
+      {/* Révision du jour (#199) : problèmes déjà réussis, repris à J+1, J+3, J+7. */}
+      <RevisionDuJour liste={list} reussis={solved} confirmTouch={confirmTouch} Lecteur={PuzzlePlayer} onSerie={setSerieDuJour} />
 
       {/* Un seul « Continuer », le palier en cours sans total, la grille derrière un lien discret (#196). */}
       <section aria-labelledby="paliers-titre">

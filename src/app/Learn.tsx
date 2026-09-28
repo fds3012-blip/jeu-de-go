@@ -21,6 +21,7 @@ import { playFail, playStone, playSuccess, playVictory } from '../ui/sound';
 import { hapticFail, hapticStone, hapticSuccess, hapticVictory } from '../ui/haptics';
 import { EVENTS, track } from '../data/analytics';
 import { gagnerXp } from './xp';
+import { validerDefi } from './defiAppareil';
 import { CHAPITRES_A_VENIR, LIGNE, actionsFin, boutonChemin, etapes, finDeChapitre, finDeLecon, trace, traceJusqua, type ActionFin, type Progression } from './apprendre';
 import { t } from '../content/i18n';
 import '../ui/apprendre.css';
@@ -206,6 +207,7 @@ export function LessonPlayer({ lesson, start, confirmTouch, progress = {}, celeb
     onProgress(idx + 1);
     if (derniere) {
       track(EVENTS.leconTerminee, { lecon: lesson.id, rang: LESSONS.indexOf(lesson) + 1 });
+      validerDefi('lecon'); // #199 : une leçon terminée est le défi du jour (série de l'appareil, SERIE_UN_DEFI)
       if ((progress[lesson.id] ?? 0) < lesson.steps.length) gagnerXp('lecon'); // une seule fois par leçon
       setFini(true);
     } else { setIdx(idx + 1); setAnswer(null); setFaux([]); setGesteFait(false); setRate(null); }

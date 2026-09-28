@@ -19,6 +19,8 @@
 
 .gel-annonce { display: flex; align-items: center; gap: 10px; margin: 0 0 var(--space-3); padding: 10px 14px; border-radius: 14px;
   background: color-mix(in srgb, var(--givre-bord) 14%, var(--surface)); color: var(--text); font-weight: 600; }
+/* Retour après une série perdue (#212) : ton chaud et calme, le même bandeau que le gel, jamais rouge. */
+.gel-annonce.retour-serie { background: color-mix(in srgb, var(--or) 16%, var(--surface)); }
 .gel-gagne { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 4px 0 0; color: var(--givre-texte); font-weight: 600; }
 
 /* Micro-célébration : la pierre givrée se pose avec un léger rebond. Jamais avec les mouvements réduits. */

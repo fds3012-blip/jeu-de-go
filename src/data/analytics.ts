@@ -38,6 +38,8 @@ export const EVENTS = {
   // Série protégée (issue #76) : gel gagné tous les 7 jours de série, gel consommé par un jour manqué.
   gelGagne: 'gel_gagne',
   gelUtilise: 'gel_utilise',
+  // Rien de gagné ne se perd (issue #212) : série perdue constatée à l'ouverture, une fois par série. Dénominateur du retour à J+7.
+  seriePerdue: 'serie_perdue',
   // Progression (issue #109) : XP gagnés (agrégés sur quelques secondes) et niveau franchi.
   xpGagne: 'xp_gagne',
   niveauAtteint: 'niveau_atteint',
@@ -50,6 +52,8 @@ export const EVENTS = {
   installationAcceptee: 'installation_acceptee',
   // Aide graduée des problèmes (#197) : la réponse a été montrée après un échec (le problème devient « Vu », pas « Réussi »).
   solutionVue: 'solution_vue',
+  // Révision du jour (#199) : les exercices du jour (problèmes déjà réussis, repris à J+1, J+3, J+7) sont tous faits.
+  revisionFaite: 'revision_faite',
 } as const;
 export type AnalyticsEvent = (typeof EVENTS)[keyof typeof EVENTS];
 export type Props = Record<string, string | number | boolean | null | undefined>;

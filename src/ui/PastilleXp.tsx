@@ -2,7 +2,7 @@
 // fin de partie), avec la part du bonus « première fois ».
 import { useEffect, useRef, useState } from 'react';
 import { abonnerXp } from '../app/xp';
-import { cumuler, DUREE_XP_MS, SORTIE_XP_MS, texteXp, type Affiche } from './gainXp';
+import { cumuler, DUREE_XP_MS, hautPastille, SORTIE_XP_MS, texteXp, type Affiche } from './gainXp';
 import { mouvementsReduits } from './defilement';
 import { t } from '../content/i18n';
 import './pastille-xp.css';
@@ -30,9 +30,16 @@ export function PastilleXp({ points, bonus = 0, anime = false }: { points: numbe
 export function AnnonceXp({ celebrer }: { celebrer: boolean }) {
   const [affiche, setAffiche] = useState<Affiche | null>(null);
   const [sortie, setSortie] = useState(false);
+  const [haut, setHaut] = useState<number | null>(null);
   const minuterie = useRef<number | undefined>(undefined);
   useEffect(() => abonnerXp(g => {
     setAffiche(a => cumuler(a, g));
+    // En-tête d'un problème ou d'une leçon : la pastille se pose dessous, le titre reste lisible (R3).
+    // Sans en-tête, la classe CSS garde sa place (sous l'encoche, ou sous la carte de niveau).
+    const entete = document.querySelector('.lecteur-tete')?.getBoundingClientRect();
+    const franchi = g.niveauApres > g.niveauAvant;
+    const h = entete ? hautPastille(entete.bottom, franchi, window.innerHeight) : null;
+    setHaut(h !== null && h !== hautPastille(null, franchi, window.innerHeight) ? h : null);
     setSortie(false);
     window.clearTimeout(minuterie.current);
     const reduit = !celebrer || mouvementsReduits();
@@ -44,7 +51,8 @@ export function AnnonceXp({ celebrer }: { celebrer: boolean }) {
   }), [celebrer]);
   useEffect(() => () => window.clearTimeout(minuterie.current), []);
   return (
-    <div className={`annonce-xp${affiche?.niveauFranchi ? ' sous-fete' : ''}${sortie ? ' sortie' : ''}`} role="status" aria-live="polite">
+    <div className={`annonce-xp${affiche?.niveauFranchi ? ' sous-fete' : ''}${sortie ? ' sortie' : ''}`} role="status" aria-live="polite"
+      style={affiche && haut !== null ? { top: haut } : undefined}>
       {affiche && (
         <PastilleXp key={affiche.points} points={affiche.points} bonus={affiche.bonus} anime={celebrer} />
       )}

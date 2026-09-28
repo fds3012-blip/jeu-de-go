@@ -24,9 +24,11 @@ import { battu, BILAN_KEY, enregistrer, fin, komiDepuisUrl, lireBilan, type Bila
 import { fr } from '../ui/typo';
 import { Glacon } from '../ui/Glacon';
 import { Mochi } from '../ui/Mochi';
-import { lireReserveAppareil, reconcilierAppareil } from './gelAppareil';
+import { constaterPerteAppareil, lireRecordAppareil, lireReserveAppareil, noterRecordAppareil, reconcilierAppareil } from './gelAppareil';
+import { annoncerPerte, messagePerte } from './serieRecord';
 import { serieAffichee } from './serieLocale';
 import { messageGel } from './gel';
+import { goDuJourFaitAppareil } from './defiAppareil';
 import { BarreNav, type Onglet } from '../ui/IconesNav';
 import { BarreNiveau, FeteNiveau } from '../ui/Niveau';
 import { annonceKomi, equilibrage, KOMI_NORMAL, partiesOrdi, type Equilibrage } from './equilibrage';
@@ -98,11 +100,16 @@ export function App() {
   const serieServeur = useSerie(supabase, session?.user.id);
   // Série protégée (issue #76) : les jours manqués consomment un gel dès l'ouverture, avant que Problèmes lise la série.
   const [annonceGel, setAnnonceGel] = useState(() => reconcilierAppareil(new Date()));
+  // Rien de gagné ne se perd (issue #212) : série perdue constatée juste après les gels, annoncée une fois par Mochi.
+  const [retourSerie, setRetourSerie] = useState(() => { const p = constaterPerteAppareil(new Date()); return annoncerPerte(p) ? messagePerte(p) : null; });
   // Joueur connecté : les gels du serveur ; sinon ceux de l'appareil (issue #76).
   const gelsServeur = useGelsServeur(supabase, session?.user.id);
   const gels = gelsServeur ?? lireReserveAppareil().gels;
   // Série dès le jour 1, avec ou sans compte (issue #161) : l'appareil sans compte, la plus longue des deux sinon.
   const serie = serieAffichee(session?.user.id ? serieServeur : null, readLocal<Serie | null>(SERIE_KEY, null), numeroDuJour(new Date()));
+  // Record : celui de l'appareil, ou la série affichée (celle du serveur si connecté) si elle le dépasse (#212).
+  const recordSerie = Math.max(lireRecordAppareil().record, serie);
+  useEffect(() => { noterRecordAppareil(serie); }, [serie]);
   const [resultat, setResultat] = useState<null | { issue: Issue; stats: StatsPartie }>(null); // fin de la partie en cours contre l'ordi
   const [partie, setPartie] = useState(0); // change à chaque partie pour repartir d'un plateau vide
   const home = accueil(parties, done, adv, settings.size);
@@ -160,7 +167,12 @@ export function App() {
     };
   }
 
-  const go = (t: Tab) => { setAnnonceGel(null); setTab(t); setPlaying(false); setLessonId(null); setSerie3(null); setVueProfil('menu'); window.scrollTo({ top: 0 }); };
+  // Toucher l'onglet Problèmes déjà actif ramène à sa liste, comme Apprendre ramène au chemin (recette du 28/09, R4).
+  const [racineProblemes, setRacineProblemes] = useState(0);
+  const go = (t: Tab) => {
+    if (t === 'problemes' && tab === 'problemes') setRacineProblemes(n => n + 1);
+    setAnnonceGel(null); setRetourSerie(null); setTab(t); setPlaying(false); setLessonId(null); setSerie3(null); setVueProfil('menu'); window.scrollTo({ top: 0 });
+  };
 
   const enPartie = tab === 'jouer' && !!playing;
   let screen;
@@ -196,9 +208,9 @@ export function App() {
     screen = <LearnHome progress={progress} onOpen={setLessonId} sync={syncState} />;
   } else if (tab === 'problemes') {
     screen = <Puzzles db={supabase} userId={session?.user.id} sessionLoading={session === undefined} confirmTouch={settings.confirmTouch} onCompte={() => go('profil')}
-      lien={LIEN_DU_JOUR} onDuJour={setDuJourOuvert} celebrer={settings.celebrations} />;
+      lien={LIEN_DU_JOUR} onDuJour={setDuJourOuvert} celebrer={settings.celebrations} racine={racineProblemes} />;
   } else if (tab === 'profil') {
-    screen = <Profil vue={vueProfil} onVue={setVueProfil} settings={settings} set={set} profil={profil} serie={serie} />;
+    screen = <Profil vue={vueProfil} onVue={setVueProfil} settings={settings} set={set} profil={profil} serie={serie} record={recordSerie} />;
   } else {
     const numero = numeroDuJour(new Date());
     const daily = problemeDuNumero(PROBLEMES_LOCAUX, numero);
@@ -207,7 +219,7 @@ export function App() {
       <Accueil adv={adv} battu={battu(bilan, adv.id)} textes={home} taille={settings.size} cartes={cartes}
         reglages={reglages} setReglages={setReglages} onTaille={n => set({ size: n })} onChoisir={setAdversaire}
         onJouer={() => lancer('ordi')} onDeux={() => lancer('deux')}
-        probleme={daily && { numero, titre: daily.title, rows: daily.rows, reussi: readLocal<Serie | null>(SERIE_KEY, null)?.dernier === numero }}
+        probleme={daily && { numero, titre: daily.title, rows: daily.rows, reussi: goDuJourFaitAppareil(numero) }}
         onProbleme={() => go('problemes')}
         lecon={leconConseillee && { rang: rangLecon, total: LESSONS.length, titre: leconConseillee.title }}
         onLecon={() => { go('apprendre'); if (leconConseillee) setLessonId(leconConseillee.id); }} />
@@ -232,10 +244,13 @@ export function App() {
         {annonceGel !== null && !enPartie && (tab === 'jouer' || tab === 'problemes') && (
           <p className="gel-annonce" role="status"><Mochi size={30} />{fr(messageGel(annonceGel))}</p>
         )}
+        {retourSerie !== null && annonceGel === null && !enPartie && (tab === 'jouer' || tab === 'problemes') && (
+          <p className="gel-annonce retour-serie" role="status" data-testid="retour-serie"><Mochi size={30} />{fr(retourSerie)}</p>
+        )}
         {accueilVisible && <BarreNiveau />}
         {screen}
       </main>
-      <FeteNiveau celebrer={settings.celebrations} />
+      <FeteNiveau celebrer={settings.celebrations} ecran={`${tab}|${playing}|${lessonId ?? ''}|${vueProfil}`} />
       <AnnonceXp celebrer={settings.celebrations} />
       {/* Pendant une partie, comme chez chess.com : pas de barre de navigation, « ‹ » ramène à l'accueil. */}
       {!enPartie && <BarreNav actif={tab} onChoisir={go} />}

@@ -44,9 +44,18 @@ const DUREE_MS = 3200;
  * terminée) : la célébration tombe donc sur ce moment de fin (règle peak-end), jamais au milieu d'un coup.
  * Sans célébrations ou avec les mouvements réduits : la même annonce, immobile.
  */
-export function FeteNiveau({ celebrer }: { celebrer: boolean }) {
+export function FeteNiveau({ celebrer, ecran }: { celebrer: boolean; ecran?: string }) {
   const [niveau, setNiveau] = useState<number | null>(null);
   const minuterie = useRef<number | undefined>(undefined);
+  // Changement d'écran (« Retour au chemin », autre onglet) : la carte se ferme, elle ne couvre pas le titre du nouvel
+  // écran (recette du 28/09, R6). Le premier rendu ne compte pas.
+  const ecranVu = useRef(ecran);
+  useEffect(() => {
+    if (ecranVu.current === ecran) return;
+    ecranVu.current = ecran;
+    window.clearTimeout(minuterie.current);
+    setNiveau(null);
+  }, [ecran]);
   const avecSon = useRef(celebrer);
   avecSon.current = celebrer;
   useEffect(() => abonnerXp(g => {
