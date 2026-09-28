@@ -107,6 +107,17 @@ export function appliquer(xp: number, source: SourceXp, premiere = false): Gain 
   return { source, points, bonus, avant, apres, niveauAvant: niveauDe(avant).niveau, niveauApres: niveauDe(apres).niveau };
 }
 
+/**
+ * Source d'XP d'une partie terminée (#233, P4 et P5), ou `null` si elle ne rapporte rien.
+ * - 10 coups ou moins : rien (un abandon immédiat ne rapporte pas).
+ * - Une partie reprise avec « Rejouer d'ici » (revue) ne rapporte rien : la partie d'origine a déjà payé son XP.
+ * - Une victoire contre l'ordi rapporte « victoire », tout le reste « partie ».
+ */
+export function sourceXpPartie(p: { coups: number; contreOrdi: boolean; gagne: boolean; reprise: boolean }): SourceXp | null {
+  if (p.reprise || p.coups < 10) return null;
+  return p.contreOrdi && p.gagne ? 'victoire' : 'partie';
+}
+
 // --- Stockage sur l'appareil et diffusion aux écrans ---
 
 export const XP_KEY = 'go.xp.v1';

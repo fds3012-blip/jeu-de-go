@@ -8,7 +8,7 @@ import { score } from '../go/score';
 import { toLabel } from '../go/coords';
 import { bestMove, bestMoveExplique, estimateLead, estimateTerritoire, proposeComptage, type Opponent } from '../engine';
 import { EVENTS, secondsSinceOpen, track, trackOnce } from '../data/analytics';
-import { gagnerXp } from './xp';
+import { gagnerXp, sourceXpPartie, type SourceXp } from './xp';
 import { supabase } from '../data/supabase';
 import { fr } from '../ui/typo';
 import { nombre as virgule, t as tr } from '../content/i18n';
@@ -98,6 +98,8 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   // jusqu'à la fin du récit pour que « Corriger les pierres mortes » reste possible.
   const [autoCompte, setAutoCompte] = useState<'non' | 'calcule' | 'oui'>('non');
   const resultatDiffere = useRef<(() => void) | null>(null);
+  // Vrai si la partie a été reprise avec « Rejouer d'ici » (revue) : elle ne rapporte pas d'XP (#233, P5).
+  const reprise = useRef(false);
   const profil = useProfil(ai ? supabase : null);
   const token = useRef(0); // invalide les réponses de l'ordi devenues caduques (annulation, sortie)
   const scoreToken = useRef(0); // idem pour les pierres mortes proposées
@@ -219,7 +221,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   // Validation automatique au rendu suivant, quand `dead`, le score et l'historique sont à jour.
   useEffect(() => { if (autoCompte === 'calcule' && phase === 'score') { setAutoCompte('oui'); finish(sc.winner, false, true); } }, [autoCompte]); // eslint-disable-line react-hooks/exhaustive-deps
   function corriger() {
-    resultatDiffere.current = null;
+    resultatDiffere.current = null; xpEnAttente.current = null;
     setAutoCompte('non'); setRecitFini(true); setPhase('score'); setMsg(`${tr('partie.mortes.explication')} ${tr('partie.mortes.toucher')}`);
   }
   function resume() { setFrontieres(null); scoreToken.current++; setFinding(false); setPhase('play'); setDead(new Set()); setAutoCompte('non'); resultatDiffere.current = null; }
@@ -375,11 +377,13 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   /** « Rejouer d'ici » (revue) : la partie reprend, contre le même adversaire, depuis la position choisie. */
   function rejouer(h: Position[]) {
     token.current++; atarisSubis.current = 0; setIndicesUtilises(0); setQuiMeneUtilises(0); setQuiMene(null);
+    reprise.current = h.length > 1;
     setHistory(h); resume(); setResigned(0); setThinking(false); setRelecture(null); setSgf(null);
     setMsg(tr(h.length > 1 ? (ai ? 'partie.reprise.ordi' : 'partie.reprise.deux') : ai ? 'partie.nouvelle.ordi' : 'partie.nouvelle.deux'));
   }
   function restart() {
     token.current++; atarisSubis.current = 0; setIndicesUtilises(0); setQuiMeneUtilises(0); setQuiMene(null);
+    reprise.current = false;
     setHistory([newPosition(size)]); resume(); setResigned(0); setThinking(false); setRelecture(null);
     setMsg(tr(ai ? 'partie.nouvelle.ordi' : 'partie.nouvelle.deux'));
   }
@@ -403,9 +407,28 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   // Mesure : une partie terminée (score validé ou abandon). Ajout isolé pour faciliter les fusions.
   useEffect(() => { if (phase === 'end') track(EVENTS.partieTerminee, { mode: ai ? 'ordi' : 'deux', adversaire: ai?.id, taille: size, coups: history.length - 1, fin: resigned ? 'abandon' : 'score', gagnant: (resigned ? 3 - resigned : sc.winner) === 1 ? 'noir' : 'blanc' }); }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
   // Progression (issue #109) : la partie terminée rapporte de l'XP, une victoire contre l'ordi davantage
-  // (au moins 10 coups : un abandon immédiat ne rapporte rien).
-  // Le gain arrive avec l'écran de fin, après le récit du score : « +60 XP » ne doit pas dévoiler la victoire (recette du 28/09, R2).
-  useEffect(() => { if (phase === 'end' && recitFini && history.length > 10) gagnerXp(ai && (resigned ? 3 - resigned : sc.winner) === 1 ? 'victoire' : 'partie'); }, [phase, recitFini]); // eslint-disable-line react-hooks/exhaustive-deps
+  // (au moins 10 coups : un abandon immédiat ne rapporte rien ; une partie reprise depuis la revue, rien : #233, P5).
+  // L'XP est acquise dès que le résultat est connu (#233, P4) : si le joueur quitte pendant le récit du score,
+  // elle est créditée à la sortie (#233, P4). Sinon elle arrive avec l'écran de fin, après le récit :
+  // « +60 XP » ne doit pas dévoiler la victoire (recette du 28/09, R2).
+  const xpEnAttente = useRef<SourceXp | null>(null);
+  useEffect(() => {
+    if (phase !== 'end') { xpEnAttente.current = null; return; }
+    if (!recitFini) {
+      xpEnAttente.current = sourceXpPartie({ coups: history.length - 1, contreOrdi: !!ai, gagne: (resigned ? 3 - resigned : sc.winner) === 1, reprise: reprise.current });
+      return;
+    }
+    const s = xpEnAttente.current ?? sourceXpPartie({ coups: history.length - 1, contreOrdi: !!ai, gagne: (resigned ? 3 - resigned : sc.winner) === 1, reprise: reprise.current });
+    xpEnAttente.current = null;
+    if (s) gagnerXp(s);
+  }, [phase, recitFini]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Sortie pendant le récit (écran quitté, app fermée ou rechargée) : le résultat est connu, l'XP est acquise.
+  useEffect(() => {
+    const crediter = () => { const s = xpEnAttente.current; xpEnAttente.current = null; if (s) gagnerXp(s); };
+    window.addEventListener('pagehide', crediter);
+    return () => { window.removeEventListener('pagehide', crediter); crediter(); };
+  }, []);
+
   // Première partie contre l'ordi menée jusqu'au score ou à l'abandon : une seule fois par appareil (trackOnce, #35).
   useEffect(() => { if (phase === 'end' && ai) trackOnce(EVENTS.premierePartieTerminee, { adversaire: ai.id, taille: size, coups: history.length - 1, fin: resigned ? 'abandon' : 'score', indices: indicesUtilises, secondes: secondsSinceOpen() }); }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
 

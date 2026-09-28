@@ -175,3 +175,27 @@ describe('bonus première fois', () => {
     }
   });
 });
+
+describe('sourceXpPartie (#233, P4 et P5)', () => {
+  const { sourceXpPartie } = xp;
+  it('10 coups au moins : partie, ou victoire contre l’ordi', () => {
+    expect(sourceXpPartie({ coups: 10, contreOrdi: true, gagne: true, reprise: false })).toBe('victoire');
+    expect(sourceXpPartie({ coups: 40, contreOrdi: true, gagne: false, reprise: false })).toBe('partie');
+    expect(sourceXpPartie({ coups: 40, contreOrdi: false, gagne: true, reprise: false })).toBe('partie');
+  });
+  it('9 coups ou moins : rien', () => {
+    expect(sourceXpPartie({ coups: 9, contreOrdi: true, gagne: true, reprise: false })).toBeNull();
+  });
+  it('une partie reprise depuis la revue ne redonne pas d’XP, même gagnée (P5)', () => {
+    expect(sourceXpPartie({ coups: 60, contreOrdi: true, gagne: true, reprise: true })).toBeNull();
+    expect(sourceXpPartie({ coups: 60, contreOrdi: true, gagne: false, reprise: true })).toBeNull();
+  });
+  it('reprendre en boucle ne fait plus monter l’XP', () => {
+    memoire.clear();
+    const s = sourceXpPartie({ coups: 30, contreOrdi: true, gagne: true, reprise: false });
+    if (s) gagnerXp(s);
+    const apres = lireXp();
+    for (let i = 0; i < 5; i++) { const r = sourceXpPartie({ coups: 30, contreOrdi: true, gagne: true, reprise: true }); if (r) gagnerXp(r); }
+    expect(lireXp()).toBe(apres);
+  });
+});
