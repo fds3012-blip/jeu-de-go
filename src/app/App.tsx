@@ -2,8 +2,8 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Game } from './Game';
 import { LearnHome, LessonPlayer } from './Learn';
 import { CHAPITRES, LESSONS } from '../content/lessons';
-import { Puzzles, SOLVED_KEY } from './Puzzles';
-import { readLocal, writeLocal, useGelsServeur, useLessonProgress, useProfil, useSerie, useSession } from './hooks';
+import { Puzzles, SOLVED_KEY, VUS_KEY } from './Puzzles';
+import { LESSONS_KEY, readLocal, writeLocal, useGelsServeur, useLessonProgress, useProfil, useSerie, useSession } from './hooks';
 import { supabase } from '../data/supabase';
 import { useSettings, useStored } from './settings';
 import { aideActive } from './partie';
@@ -12,7 +12,8 @@ import { Sceau } from '../ui/Sceau';
 import { CRAN_DEPART, cranDuNiveau, niveauGuide, OPPONENTS, type OpponentId } from '../engine';
 import { ConsentModal } from './Confidentialite';
 import { Profil, type VueProfil } from './Profil';
-import { t } from '../content/i18n';
+import { langue, t } from '../content/i18n';
+import { jamaisJoue, proprietesArrivee } from './arriveePartage';
 import { fenetreVisible, useConsentement } from './consentement';
 import { accueil, adversaireOuvert, echelle, introBut, INTRO_KEY, OUVERTS_D_OFFICE, PARTIES_KEY, type Parties } from './home';
 import { Placement } from './Placement';
@@ -69,11 +70,14 @@ type Tab = Onglet;
 // Lu une fois au chargement ; le paramètre est ensuite retiré de l'adresse, pour qu'un rechargement ne compte pas
 // une deuxième arrivée : `arrivee_par_partage` part donc une seule fois par session.
 const LIEN_DU_JOUR = typeof location !== 'undefined' ? numeroDuLien(location.search) : null;
+// #285 : l'ami arrivé par le lien n'a jamais joué sur cet appareil. Lu au chargement, avant que le problème n'écrive rien.
+const NOUVEAU_PAR_LIEN = LIEN_DU_JOUR !== null
+  && jamaisJoue([PARTIES_KEY, LESSONS_KEY, SOLVED_KEY, VUS_KEY, SERIE_KEY, PLACEMENT_KEY].map(k => readLocal<unknown>(k, null)));
 let arriveeEnvoyee = false;
 function noterArrivee() {
   if (LIEN_DU_JOUR === null || arriveeEnvoyee) return;
   arriveeEnvoyee = true;
-  track(EVENTS.arriveeParPartage, { numero_demande: LIEN_DU_JOUR, numero_du_jour: numeroDuJour(new Date()) });
+  track(EVENTS.arriveeParPartage, proprietesArrivee(LIEN_DU_JOUR, numeroDuJour(new Date()), langue(), NOUVEAU_PAR_LIEN));
   try {
     const url = new URL(location.href);
     url.searchParams.delete(PARAM);
@@ -85,6 +89,8 @@ function noterArrivee() {
 export function App() {
   const [tab, setTab] = useState<Tab>(LIEN_DU_JOUR !== null ? 'problemes' : 'jouer');
   const [duJourOuvert, setDuJourOuvert] = useState(false);
+  // #285 : après le Go du jour ouvert par le lien, une seule action pour qui n'a jamais joué : la leçon 1.
+  const [versLecon1, setVersLecon1] = useState(NOUVEAU_PAR_LIEN);
   useEffect(noterArrivee, []);
   const [settings, set] = useSettings();
   const [playing, setPlaying] = useState<false | 'ordi' | 'deux' | 'guidee'>(false);
@@ -323,7 +329,8 @@ export function App() {
     screen = <LearnHome progress={progress} onOpen={setLessonId} sync={syncState} />;
   } else if (tab === 'problemes') {
     screen = <Puzzles db={supabase} userId={session?.user.id} sessionLoading={session === undefined} confirmTouch={settings.confirmTouch} onCompte={() => go('profil')}
-      lien={LIEN_DU_JOUR} onDuJour={setDuJourOuvert} celebrer={settings.celebrations} racine={racineProblemes} />;
+      lien={LIEN_DU_JOUR} onDuJour={setDuJourOuvert} celebrer={settings.celebrations} racine={racineProblemes}
+      onApprendre={versLecon1 && LESSONS[0] ? () => { setVersLecon1(false); go('apprendre'); setLessonId(LESSONS[0].id); } : undefined} />;
   } else if (tab === 'profil') {
     screen = <Profil vue={vueProfil} onVue={setVueProfil} settings={settings} set={set} profil={profil} serie={serie} record={recordSerie}
       parcours={{ lecons: { faites: done, total: LESSONS.length }, adversaires: OPPONENTS.length }}
