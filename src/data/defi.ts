@@ -72,13 +72,15 @@ export async function creerDefi(db: Db): Promise<Result<{ partieId: string; jeto
 }
 
 /** Ouvre un lien de défi : session anonyme si besoin, puis place d'invité (Noir). Renvoie la partie et le joueur. */
-export async function ouvrirDefi(db: Db, jeton: string): Promise<Result<{ partieId: string; userId: string; anonyme: boolean }>> {
+export async function ouvrirDefi(db: Db, jeton: string): Promise<Result<{ partieId: string; userId: string; anonyme: boolean; createur: boolean }>> {
   if (!FORMAT_JETON.test(jeton)) return echec(t('defi.erreur.introuvable'));
   const session = await assurerSession(db);
   if (!session.ok) return session;
   const { data, error } = await db.rpc('rejoindre_defi', { p_jeton: jeton });
   if (error || !data) return echec(error?.message);
-  return { ok: true, value: { partieId: data, ...session.value } };
+  // Le créateur qui rouvre son propre lien n'est pas un nouvel invité (mesure du coefficient viral).
+  const ligne = await db.from('defis').select('createur_id').eq('partie_id', data).maybeSingle();
+  return { ok: true, value: { partieId: data, ...session.value, createur: ligne.data?.createur_id === session.value.userId } };
 }
 
 /** Codes de refus de `game-action` pour `defi_coup` (contrat avec le backend, #81). */

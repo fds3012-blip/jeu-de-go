@@ -223,8 +223,8 @@ function UsernameForm({ db, profile, canCancel, onDone, onCancel, onSignOut }: {
  * Session sans compte (ouverte par un défi, #81) : ajouter un e-mail relie la session à un compte, sans changer
  * d'identifiant, donc sans perdre les parties en cours. Un lien de connexion classique ouvrirait un autre compte.
  */
-export function LierEmail({ db, moment = 'profil', titre = t('compte.anonyme.titre'), texte = t('compte.anonyme.texte'), onPlusTard }: {
-  db: Db; moment?: 'profil' | 'apres_coup'; titre?: string; texte?: string; onPlusTard?: () => void;
+export function LierEmail({ db, moment = 'profil', coups = null, titre = t('compte.anonyme.titre'), texte = t('compte.anonyme.texte'), onPlusTard }: {
+  db: Db; moment?: 'profil' | 'apres_coup'; coups?: number | null; titre?: string; texte?: string; onPlusTard?: () => void;
 }) {
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
@@ -237,7 +237,7 @@ export function LierEmail({ db, moment = 'profil', titre = t('compte.anonyme.tit
     setBusy(true); setError('');
     const r = await garderMonCompte(db, email, window.location.origin);
     setBusy(false);
-    if (r.ok) { setSent(true); track(EVENTS.defiInscription, { moment }); } else setError(r.error);
+    if (r.ok) { setSent(true); track(EVENTS.defiInscription, { moment, coups }); } else setError(r.error);
   };
 
   if (sent) {

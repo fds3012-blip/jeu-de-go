@@ -39,8 +39,8 @@ export const PAS_MAX_NB = 3;
 /**
  * Résultat d'un problème :
  * - `premier` : réussi du premier coup (score 1) ;
- * - `aide` : raté au premier essai, puis réussi sans voir la réponse (score partiel) ;
- * - `rate` : raté au premier essai, réponse vue ou problème quitté (score 0).
+ * - `aide` : raté au premier essai, puis réussi seul, sans indice ni réponse (score partiel) ;
+ * - `rate` : raté au premier essai, puis indice, réponse vue ou problème quitté (score 0).
  */
 export type Resultat = 'premier' | 'aide' | 'rate';
 export const SCORE: Record<Resultat, number> = { premier: 1, aide: 0.2, rate: 0 };
@@ -140,7 +140,7 @@ export function noter(etat: EtatCote, pb: { id: string; difficulty: number }, re
 }
 
 /**
- * Un problème raté au premier essai, puis réussi sans voir la réponse : il compte comme « réussi avec aide ».
+ * Un problème raté au premier essai, puis réussi seul (sans indice ni réponse) : il compte comme « réussi avec aide ».
  * On rend la part de cote correspondante, avec le même K et la même chance prévue qu'au premier essai.
  * Sans effet si le dernier essai noté n'est pas cet échec.
  */

@@ -95,9 +95,11 @@ export function DefisEcran({ db, userId, onPartie }: EcranProps) {
     setCreation({ etat: 'cours' });
     const r = await creerDefi(db);
     if (!r.ok) { setCreation({ etat: 'erreur', message: r.error }); return; }
-    track(EVENTS.defiCree, { sans_compte: r.value.anonyme });
     const lien = lienDefi(r.value.jeton, location.origin);
-    setCreation({ etat: 'pret', lien, partage: await partager(lien) });
+    const partage = await partager(lien);
+    // Jamais le lien, le jeton ni la partie dans l'événement (constat E14).
+    track(EVENTS.defiCree, { partage: partage === 'partage' ? 'web_share' : partage === 'copie' ? 'copie' : partage, anonyme: r.value.anonyme });
+    setCreation({ etat: 'pret', lien, partage });
     setEssai(n => n + 1);
   }
 
@@ -173,7 +175,7 @@ export function DefiArrivee({ db, jeton, onPartie, onAccueil }: { db: Db | null;
       if (!r.ok) { setErreur(r.error); return; }
       fait.current = true;
       // Jamais le jeton ni l'identifiant de la partie dans l'événement (constat E14).
-      track(EVENTS.defiOuvert, { sans_compte: r.value.anonyme });
+      track(EVENTS.defiOuvert, { anonyme: r.value.anonyme, deja_joueur: r.value.createur });
       onPartie(r.value.partieId);
     });
     return () => { vivant = false; };
@@ -364,7 +366,7 @@ export function DefiPartie({ db, partieId, userId, anonyme, confirmTouch, onReto
         )}
         {proposerInscription && (
           <div className="defi-inscription">
-            <LierEmail db={db} moment="apres_coup" titre={t('defi.inscription.titre')} texte={t('defi.inscription.texte')} onPlusTard={() => setPlusTard(true)} />
+            <LierEmail db={db} moment="apres_coup" coups={v.mesCoups} titre={t('defi.inscription.titre')} texte={t('defi.inscription.texte')} onPlusTard={() => setPlusTard(true)} />
           </div>
         )}
       </div>

@@ -85,8 +85,8 @@ describe('creerDefi', () => {
 
 describe('ouvrirDefi', () => {
   it('rejoint avec le jeton, après une session anonyme', async () => {
-    const c = client({ rpc: { rejoindre_defi: { data: PARTIE, error: null } } });
-    expect(await ouvrirDefi(c.db, JETON)).toEqual({ ok: true, value: { partieId: PARTIE, userId: 'anon-1', anonyme: true } });
+    const c = client({ rpc: { rejoindre_defi: { data: PARTIE, error: null } }, lignes: { defis: { data: { createur_id: 'createur' }, error: null } } });
+    expect(await ouvrirDefi(c.db, JETON)).toEqual({ ok: true, value: { partieId: PARTIE, userId: 'anon-1', anonyme: true, createur: false } });
     expect(c.signInAnonymously).toHaveBeenCalledTimes(1);
     expect(c.rpc).toHaveBeenCalledWith('rejoindre_defi', { p_jeton: JETON });
   });
