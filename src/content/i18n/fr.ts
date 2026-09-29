@@ -293,6 +293,9 @@ export const fr = {
   'partage.numero': 'Go du jour n° {numero}',
   'partage.essais': { one: 'résolu en {n} essai', other: 'résolu en {n} essais' },
   'partage.serie': 'série {serie} 🔥',
+  // Arrivée par un lien partagé, pour qui n'a jamais joué (#285)
+  'arrivee.premierCoup': 'Premier coup au go ? Touche le plateau.',
+  'arrivee.apprendre': 'Apprends à jouer en 2 minutes',
   // Course aux problèmes (#287, src/app/course.ts et src/app/CourseProblemes.tsx)
   'course.carte.titre': 'Course : 3 minutes',
   'course.carte.texte': 'Un maximum de problèmes. À la 3e erreur, la course s’arrête.',
@@ -501,6 +504,7 @@ export const fr = {
   'recit.prisonniers': { one: '+ {v} prisonnier pour {pour}', other: '+ {v} prisonniers pour {pour}' },
   'recit.pierres': { one: '+ {v} pierre pour {pour}', other: '+ {v} pierres pour {pour}' },
   'recit.etPour': '{debut}, + {v} pour {pour}',
+  'recit.etAussi': '{debut}, {v} pour {pour}',
   'recit.pasDeKomi': 'Pas de komi',
   'recit.komi': '{signe} {v} komi pour {pour}',
   'recit.explicationKomi': "Le komi compense l'avantage de Noir, qui joue en premier.",
@@ -511,6 +515,7 @@ export const fr = {
   'recit.score': '{noir} {pn}, {blanc} {pb}.',
   'recit.territoires': 'Territoires : les points vides que chaque camp entoure',
   'recit.aucunTerritoire': 'Aucun territoire',
+  'recit.territoire': { one: '{v} point de territoire pour {pour}', other: '{v} points de territoire pour {pour}' },
   'recit.continuer': 'Voir le résultat',
   // Écran de fin (src/ui/FinPartie.tsx, src/app/Game.tsx, src/app/bilan.ts)
   'fin.egalite': 'Égalité',
@@ -568,6 +573,17 @@ export const fr = {
   'plateau.occupe': '{point} est occupé',
   'plateau.confirmer.poser': '{point} : appuie encore pour poser',
   'plateau.confirmer.choisir': '{point} : appuie encore pour choisir ce point',
+  // #116 : aide lue à l'arrivée sur le plateau, et commande « Lire le plateau » (touche L ou bouton visible au focus).
+  'plateau.aide': 'Flèches pour te déplacer, Entrée pour jouer, L pour lire le plateau.',
+  'plateau.lire.bouton': 'Lire le plateau',
+  'plateau.lire.vide': 'Le plateau est vide.',
+  'plateau.lire.compte': '{noires}, {blanches}.',
+  'plateau.lire.nbNoires': { one: '{n} pierre noire', other: '{n} pierres noires' },
+  'plateau.lire.nbBlanches': { one: '{n} pierre blanche', other: '{n} pierres blanches' },
+  'plateau.lire.ligne': 'Ligne {ligne} : {pierres}.',
+  'plateau.lire.noire': '{point} noire',
+  'plateau.lire.blanche': '{point} blanche',
+  'plateau.lire.autresVides': 'Les autres lignes sont vides.',
   // Revue (src/app/Revue.tsx, src/app/revue.ts)
   'revue.retour': 'Retour au bilan',
   'revue.compteur': 'Coup {i} sur {n}',

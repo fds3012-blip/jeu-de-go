@@ -10,6 +10,10 @@
 // - « aucun » : le joueur s'est opposé à la mesure anonyme ; rien n'est chargé ni envoyé.
 // Sans variables d'environnement (VITE_POSTHOG_KEY, VITE_SENTRY_DSN) ou hors navigateur, tout est sans effet.
 // Les SDK sont importés dynamiquement : ils ne pèsent pas sur le premier chargement.
+// Aux deux niveaux, les adresses envoyées sont nettoyées (fragment `#`, jetons, codes : src/data/urlSensible.ts, E14).
+import {
+  PARAMS_SENSIBLES, posthogSansUrlSensible, sentryBreadcrumbSansUrlSensible, sentrySansUrlSensible,
+} from './urlSensible';
 
 /** Événements suivis. Noms stables : ils servent aux entonnoirs et à la rétention dans PostHog. */
 export const EVENTS = {
@@ -85,6 +89,8 @@ export const CONSENT_KEY = 'go.consentement.v1';
 /** Opposition à la mesure anonyme (exemptée). Mémoriser ce choix est lui-même exempté. */
 export const OPPOSITION_KEY = 'go.mesure.opposition.v1';
 const ONCE_PREFIX = 'go.evenement.';
+// Hors de l'espace `go.*` : l'app ne l'écrit jamais, seul le test e2e le pose (rien à citer dans la politique).
+const E2E_POSTHOG_KEY = 'e2e.posthog.hote';
 
 interface PostHogLike {
   init: (key: string, config: Record<string, unknown>) => unknown;
@@ -118,9 +124,12 @@ function env(name: string): string {
 
 /** Configuration publique lue au moment de l'appel (modifiable dans les tests). */
 export function analyticsConfig() {
+  // Builds e2e seulement (VITE_E2E, retiré des builds de production) : e2e/url-sensible.spec.ts pointe PostHog
+  // vers un hôte intercepté par Playwright, pour lire ce qui serait envoyé. Sans ce repère, rien ne change.
+  const hoteE2e = import.meta.env.VITE_E2E && browser() ? lire(E2E_POSTHOG_KEY) : null;
   return {
-    posthogKey: env('VITE_POSTHOG_KEY'),
-    posthogHost: env('VITE_POSTHOG_HOST') || 'https://eu.i.posthog.com',
+    posthogKey: hoteE2e ? 'phc_e2e' : env('VITE_POSTHOG_KEY'),
+    posthogHost: hoteE2e || env('VITE_POSTHOG_HOST') || 'https://eu.i.posthog.com',
     sentryDsn: env('VITE_SENTRY_DSN'),
     release: env('VITE_APP_VERSION') || env('VITE_VERCEL_GIT_COMMIT_SHA') || 'dev',
     environment: env('VITE_VERCEL_ENV') || (import.meta.env.PROD ? 'production' : 'development'),
@@ -144,9 +153,17 @@ export function sansLocalisation<E extends { event?: string; properties?: Record
   return ev;
 }
 
+/**
+ * Filtres appliqués à chaque envoi PostHog, dans l'ordre : adresses nettoyées (E14), puis sans localisation (E2).
+ * `disable_capture_url_hashes` retire déjà le fragment côté SDK ; le filtre couvre aussi la requête (`?code=`…)
+ * et les propriétés que l'option ne connaît pas.
+ */
+export const POSTHOG_AVANT_ENVOI = [posthogSansUrlSensible, sansLocalisation] as const;
+
 /** Réglages PostHog de la mesure exemptée : rien sur l'appareil, aucun profil, rien de superflu. */
 export const POSTHOG_ANONYME: Readonly<Record<string, unknown>> = {
-  before_send: sansLocalisation,
+  before_send: [...POSTHOG_AVANT_ENVOI],
+  disable_capture_url_hashes: true,
   persistence: 'memory',
   person_profiles: 'never',
   ip: false,
@@ -161,6 +178,8 @@ export const POSTHOG_ANONYME: Readonly<Record<string, unknown>> = {
   disable_external_dependency_loading: true,
   save_referrer: false,
   mask_personal_data_properties: true,
+  // Double sécurité si un envoi échappait à before_send : ces paramètres sont masqués (`<MASKED>`) par le SDK.
+  custom_personal_data_properties: [...PARAMS_SENSIBLES],
 };
 /** Après accord seulement : identifiant persistant (rétention J1) et lien avec le compte. */
 export const POSTHOG_COMPLET: Readonly<Record<string, unknown>> = {
@@ -301,13 +320,20 @@ function loadPostHog(): Promise<PostHogLike | null> {
   return phLoading;
 }
 
+/** Réglages Sentry communs : pas de données personnelles, adresses nettoyées (request.url, breadcrumbs ; E14). */
+export const SENTRY_OPTIONS: Readonly<Record<string, unknown>> = {
+  sendDefaultPii: false,
+  beforeSend: sentrySansUrlSensible,
+  beforeBreadcrumb: sentryBreadcrumbSansUrlSensible,
+};
+
 function loadSentry(): Promise<SentryLike | null> {
   if (seLoading) return seLoading;
   const c = analyticsConfig();
   if (!c.sentryDsn) return Promise.resolve(null);
   seLoading = import('@sentry/react').then(m => {
     const sentry = m as unknown as SentryLike;
-    sentry.init({ dsn: c.sentryDsn, release: c.release, environment: c.environment, sendDefaultPii: false });
+    sentry.init({ ...SENTRY_OPTIONS, dsn: c.sentryDsn, release: c.release, environment: c.environment });
     if (userId) sentry.setUser({ id: userId });
     return sentry;
   }).catch(() => null);

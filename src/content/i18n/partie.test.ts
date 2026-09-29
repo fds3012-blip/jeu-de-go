@@ -11,7 +11,7 @@ import { campsRecit, EXPLICATION_KOMI, ligneCompteur, ligneDeuxieme, ligneKomi, 
 import { fin, leconMochi, texteBilan, texteCoups, type StatsPartie } from '../../app/bilan';
 import { AUCUNE_ERREUR, NOTE_INFO, NOTES, PERTES_DIFFUSES, phraseNote, SANS_KATAGO } from '../../app/revue';
 import { libelleGels } from '../../app/gel';
-import { annonceAtari, annonceConfirmation, annonceCoup, nomIntersection } from '../../ui/Board';
+import { annonceAtari, annonceConfirmation, annonceCoup, nomIntersection } from '../../ui/boardA11y';
 import { fromLabel } from '../../go/coords';
 import { choisirLangue, nombre, traduire } from './index';
 
