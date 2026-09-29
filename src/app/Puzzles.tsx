@@ -22,7 +22,7 @@ import { EVENTS, track } from '../data/analytics';
 import { gagnerXp, sourceXpProbleme } from './xp';
 import { aideSuivante, recompense, refutation, reponseVue, toucherApresErreur, type NiveauAide, type Refutation } from './aide';
 import { prefersReducedMotion, readLocal, useOnline, writeLocal } from './hooks';
-import { niveau } from './problemes';
+import { niveau, prochainAMesure } from './problemes';
 import { aContinuer, aSuivre, ordrePaliers, palierEnCours, palierRecommande, paliers, paliersVisibles, type Palier } from './paliers';
 import { SceauLecon } from '../ui/SceauLecon';
 import { aFeter, FETES_KEY } from './fetesPaliers';
@@ -40,7 +40,7 @@ import { noterRediteAppareil, repriseDeLeconFaite, suivreEnRevisionAppareil } fr
 import { t as tr } from '../content/i18n';
 import { useExercice } from '../ui/celebrations';
 import { XpEnLigne } from '../ui/PastilleXp';
-import { COTE_KEY, choisirProbleme, nettoyerCote, noter, ouvrir, requalifierEnAide, type EtatCote } from './coteJoueur';
+import { COTE_KEY, nettoyerCote, noter, ouvrir, requalifierEnAide, type EtatCote } from './coteJoueur';
 import { Course } from './CourseProblemes';
 import { lireMeilleurCourse } from './course';
 
@@ -184,8 +184,9 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   if (openId) dernierRef.current = openId;
   // eslint-disable-next-line react-hooks/exhaustive-deps -- nouveau tirage voulu à chaque changement de problème
   const tirage = useMemo(() => Math.random(), [openId]);
-  // Le Go du jour reste hors du choix à ta mesure (#284) : il est le même pour tous.
-  const aMesure = useMemo(() => list.filter(p => p.id !== daily?.id), [list, daily]);
+  // « Continuer » à ta mesure (#284) : ni le Go du jour ni la Révision du jour (réussis, vus) n'y entrent.
+  const aMesure = (eviter: string | undefined) =>
+    prochainAMesure(list, cote, { aReviser, goDuJour: daily?.id, jour: numero, eviter, alea: () => tirage });
   const open = list.find(p => p.id === openId) ?? (daily && openId === daily.id ? daily : pzArchive && openId === pzArchive.id ? pzArchive : undefined);
   const duJourOuvert = !!open && (open.id === daily?.id || archive !== null);
   // Un problème ouvert hors Go du jour devient la référence du prochain choix (jamais deux fois de suite, pas de saut).
@@ -202,7 +203,7 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
     const enArchive = archive !== null && open.id === pzArchive?.id;
     // #284 : le suivant est choisi à ta mesure ; tout réussi, la série infinie de #147 prend le relais.
     const nextPz = enArchive && daily && !goDuJourFaitAppareil(numero) ? daily
-      : choisirProbleme(aMesure, cote, solved, { jour: numero, eviter: open.id, alea: () => tirage }) ?? aSuivre(tiers, open, solved);
+      : aMesure(open.id) ?? aSuivre(tiers, open, solved);
     const estDuJour = !enArchive && open.id === daily?.id;
     // Seul le premier essai d'un problème jamais réussi ni vu compte pour la cote ; ni le Go du jour ni un lien partagé.
     const note = !estDuJour && !enArchive && !solved.has(open.id) && !vus[open.id];
@@ -212,7 +213,11 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
           : estDuJour ? { numero, serie: serieVivante(serieDuJour, numero), defiChange, gelGagne, celebrer, apprendre: onApprendre } : undefined}
         rated={!!db && !!userId && online && !!stats && !stats.attempted.includes(open.id) && !solved.has(open.id)}
         rating={stats?.rating}
-        onPremierEssai={note ? ok => majCote(c => noter(c, open, ok ? 'premier' : 'rate', numero)) : undefined}
+        onPremierEssai={note ? ok => {
+          // Mesure de « Continuer » (#284) : réussite au premier essai par tranche de cote. Cote avant l'essai, jamais affichée.
+          track(EVENTS.problemeTermine, { probleme: open.id, cote_joueur: Math.round(cote.cote), cote_probleme: open.difficulty, premier_essai_reussi: ok });
+          majCote(c => noter(c, open, ok ? 'premier' : 'rate', numero));
+        } : undefined}
         onAttempt={async ok => {
           if (!db || !userId) return null;
           const r = await recordPuzzleAttempt(db, open.id, ok);
@@ -235,8 +240,9 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
             track(EVENTS.goDuJourResolu, { numero, essais, serie: s?.jours ?? 1, arrivee_par_lien: lien !== null, vu: gain.statut === 'vu' });
           }
           if (gain.palier) markSolved(open.id); else markVu(open.id);
-          // Raté au premier essai, puis trouvé sans voir la réponse : réussite avec aide, elle compte un peu (#284).
-          if (note && gain.palier && essais > 1) majCote(c => requalifierEnAide(c, open.id));
+          // Raté au premier essai, puis trouvé seul, sans indice ni réponse : réussite avec aide, elle compte un peu (#284).
+          // Un indice ou la réponse vue ne changent pas la cote : l'échec du premier essai reste tel quel.
+          if (note && gain.palier && essais > 1 && aide === 0) majCote(c => requalifierEnAide(c, open.id));
           suivreEnRevisionAppareil(open.id);
           // #237 : un Go du jour qui reprend une étape de leçon ne revient pas dès demain en révision.
           // #251 (M3) : seulement si le joueur a fait cette étape ; sinon, il le voyait pour la première fois.
@@ -267,7 +273,7 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
 
   const connecte = !!db && !!userId;
   // #284 : le prochain problème pas encore réussi le plus proche de 85 % de réussite prévue ; tout réussi, la série infinie (#147).
-  const prochainPz = choisirProbleme(aMesure, cote, solved, { jour: numero, eviter: dernierRef.current, alea: () => tirage })
+  const prochainPz = aMesure(dernierRef.current)
     ?? aContinuer(tiers, solved, dernierRef.current, () => tirage);
   // Une seule action en relief : le Go du jour tant qu'il n'est pas fait, « Problème suivant » ensuite.
   const duJourReussi = !!daily && goDuJourFaitAppareil(numero);

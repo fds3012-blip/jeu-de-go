@@ -125,7 +125,7 @@ test('conditions : sections repliables, aucune fausse adresse de contact', async
   }
   // « Ce qu'on garde » est ouvert d'entrée ; les autres s'ouvrent au toucher.
   await expect(page.getByText('Pas de pub. Tes données ne sont jamais vendues.')).toBeVisible();
-  await expect(page.getByText(/Chez Supabase, à Paris/)).toBeVisible();
+  await expect(page.getByText(/ton e-mail, ton pseudo.*Chez Supabase, à Paris/)).toBeVisible();
   const contact = page.locator('.conditions-contact');
   await expect(contact).toBeHidden();
   const droits = page.locator('summary', { hasText: 'Tes droits' });
@@ -137,6 +137,12 @@ test('conditions : sections repliables, aucune fausse adresse de contact', async
   await expect(duree).toBeHidden();
   await page.locator('summary', { hasText: 'Combien de temps' }).click();
   await expect(duree).toBeVisible();
+  // #223 (29/09) : la page suit la politique : session sans compte du défi par lien (60 jours), prestataires cités.
+  await expect(page.getByText(/Un ami te défie, sans compte/)).toBeVisible();
+  await expect(page.getByText(/60 jours sans jouer, puis effacée/)).toBeVisible();
+  await page.locator('summary', { hasText: 'Pourquoi' }).click();
+  await expect(page.getByText(/Vercel \(hébergement\), Supabase \(compte\), PostHog \(comptage\), Sentry \(bugs\)/)).toBeVisible();
+  expect(await page.locator('.conditions-texte').innerText()).not.toMatch(/Personne d’autre/);
   // Aucune adresse e-mail dans la page.
   expect(await page.locator('.conditions-texte').innerText()).not.toMatch(/@/);
 });
