@@ -4,7 +4,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 
-export const GO_FILES = ['coords.ts', 'rules.ts', 'score.ts', 'sgf.ts', 'replay.ts', 'server.ts'];
+export const GO_FILES = ['coords.ts', 'rules.ts', 'score.ts', 'sgf.ts', 'replay.ts', 'server.ts', 'defi-action.ts'];
 export const SRC_DIR = 'src/go';
 export const OUT_DIR = 'supabase/functions/game-action/go';
 
