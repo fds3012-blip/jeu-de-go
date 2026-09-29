@@ -17,7 +17,7 @@ import './ui/import.css';
 import './ui/niveau.css';
 import './ui/placement.css';
 import { App } from './app/App';
-import { apresPremierEcran, prechargerEcrans, rechargerPourNouvelleVersion } from './app/ecrans';
+import { apresPremierEcran, prechargerEcrans, prechargerPartie, rechargerPourNouvelleVersion } from './app/ecrans';
 // Polices auto-hébergées (@fontsource, sous-ensemble latin) : avant les styles qui les utilisent.
 import './ui/fonts.css';
 import './ui/app.css';
@@ -49,6 +49,7 @@ createRoot(document.getElementById('root')!).render(
   </StrictMode>
 );
 
+prechargerPartie();
 // Après le premier écran et ses polices (sinon, sur un réseau lent, ils se disputent la bande passante) :
 // le service worker met l'app en cache et les autres écrans se téléchargent quand le navigateur est libre.
 apresPremierEcran(() => {

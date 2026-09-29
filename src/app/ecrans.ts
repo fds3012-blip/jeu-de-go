@@ -72,6 +72,14 @@ export const SeriePratique = ecran(serie, 'SeriePratique');
 export const Profil = ecran(profil, 'Profil');
 export const Placement = ecran(placement, 'Placement');
 
+/**
+ * La partie est l'action principale de l'accueil : son code part tout de suite (≈ 20 Ko gzip avec la revue),
+ * pour que « Jouer » ouvre le plateau sans attente, même touché dès l'affichage.
+ */
+export function prechargerPartie(): void {
+  partie().catch(() => {});
+}
+
 /** Télécharge tous les écrans en tâche de fond. */
 export function prechargerEcrans(): void {
   for (const f of [partie, problemes, lecons, profil, serie, placement]) f().catch(() => {});

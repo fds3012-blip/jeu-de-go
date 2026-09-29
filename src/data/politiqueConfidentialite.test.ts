@@ -90,10 +90,10 @@ describe('politique de confidentialité et code', () => {
     expect(surAppareil).toContain('`' + reseau + '`');
 
     const sw = readFileSync(join(racine, 'public/sw.js'), 'utf8');
-    const version = sw.match(/const VERSION\s*=\s*['"]([^'"]+)['"]/)?.[1];
-    const modele = sw.match(/const CACHE\s*=\s*`([^`]+)`/)?.[1];
-    expect(version && modele).toBeTruthy();
-    expect(surAppareil).toContain('`' + modele!.replace('${VERSION}', version!) + '`');
+    // Noms des caches du service worker ; la version injectée au build (`BUILD.version`) est citée `<version>`.
+    const noms = [...sw.matchAll(/const (?:CACHE|RUNTIME)\s*=\s*[`'"]([^`'"]+)[`'"]/g)].map(m => m[1].replace('${BUILD.version}', '<version>'));
+    expect(noms).toHaveLength(2);
+    for (const nom of noms) expect(surAppareil).toContain('`' + nom + '`');
   });
 
   it('cite la session de connexion Supabase gardée sur l’appareil', () => {

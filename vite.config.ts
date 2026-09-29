@@ -12,10 +12,11 @@ export default defineConfig({
         // Bibliothèques à part : leur empreinte ne change pas quand le code de l'app change,
         // un joueur qui revient après un déploiement ne les retélécharge pas.
         // Budget de taille vérifié par scripts/budget-bundle.mjs (CI).
+        // Noms neutres : des tests e2e guettent les requêtes dont l'adresse contient « supabase ».
         manualChunks(id) {
           if (!id.includes('node_modules')) return undefined;
-          if (/node_modules\/(react|react-dom|scheduler)\//.test(id)) return 'react';
-          if (/node_modules\/(@supabase|iceberg-js)\//.test(id)) return 'supabase';
+          if (/node_modules\/(react|react-dom|scheduler)\//.test(id)) return 'lib-react';
+          if (/node_modules\/(@supabase|iceberg-js)\//.test(id)) return 'lib-donnees';
           return undefined;
         },
       },

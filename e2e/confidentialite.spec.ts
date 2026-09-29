@@ -101,6 +101,8 @@ test('aucune requête de suivi sans consentement, conditions accessibles depuis 
   await expect(fenetre(page)).toBeHidden();
   await page.locator('.cta').click();
   const plateau = page.locator('svg.board[aria-label="Plateau de go 9 × 9"]');
+  // L'écran de partie est chargé à la demande (#323) : on attend son plateau avant de le mesurer.
+  await expect(page.getByRole('grid', { name: /Plateau de go/ })).toBeVisible();
   const box = (await plateau.boundingBox())!;
   await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
   await expect(page.getByText(/Pomme (joue|capture|passe)/)).toBeVisible({ timeout: 5000 });
