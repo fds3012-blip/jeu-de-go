@@ -1,4 +1,22 @@
 // Onglet Problèmes (issue #40, phase 6) : logique pure, sans React.
+import { choisirProbleme, type EtatCote } from './coteJoueur';
+
+/**
+ * « Continuer » à ta mesure (#284) : le prochain problème, choisi pour environ 85 % de réussite au premier essai
+ * (coteJoueur.ts). Restent hors du sélecteur :
+ * - le Go du jour (`goDuJour`) : il est le même pour tous et ne note pas la cote ;
+ * - la Révision du jour : les problèmes réussis et ceux vus avec la réponse (`aReviser`) reviennent par elle seule.
+ * `undefined` s'il ne reste rien à proposer : l'appelant garde sa série infinie (#147).
+ */
+export function prochainAMesure<T extends { id: string; difficulty: number }>(
+  liste: readonly T[], etat: EtatCote,
+  { aReviser, goDuJour, jour, eviter, alea }: {
+    aReviser: ReadonlySet<string>; goDuJour?: string; jour: number; eviter?: string; alea?: () => number;
+  }
+): T | undefined {
+  const aMesure = goDuJour ? liste.filter(p => p.id !== goDuJour) : liste;
+  return choisirProbleme(aMesure, etat, aReviser, { jour, eviter, alea });
+}
 
 export type Niveau = { mot: 'Facile' | 'Moyen' | 'Difficile'; crans: 1 | 2 | 3 };
 

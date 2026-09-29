@@ -110,7 +110,7 @@ Ces données sont écrites dans le stockage local (`localStorage`) de ton naviga
 - ouverture de l'app : `app_ouverte` (avec « app installée ou non ») ;
 - parties : `premiere_pierre`, `partie_commencee`, `comptage_manuel`, `partie_terminee`, `premiere_partie_terminee` (taille, adversaire, nombre de coups, résultat, secondes écoulées) ;
 - leçons : `lecon_commencee`, `lecon_terminee` ;
-- problèmes : `probleme_resolu`, `solution_vue`, `erreur_rejouee`, `erreur_maitrisee`, `revision_faite` ;
+- problèmes : `probleme_resolu`, `probleme_termine` (premier essai réussi ou non, cote estimée du joueur et difficulté du problème), `solution_vue`, `erreur_rejouee`, `erreur_maitrisee`, `revision_faite` ;
 - course aux problèmes : `course_terminee` (score, erreurs, durée, raison de la fin), `course_partagee` (score, meilleur score, partage ou copie) ;
 - placement « Je sais déjà jouer » : `placement_commence`, `placement_termine` (niveau estimé en kyu), `placement_saute` (étape où tu l'as passé) ;
 - revue : `revue_ouverte`, `revue_rejouer`, `sgf_importe` (partie importée : taille du fichier, nombre de coups, taille du plateau, handicap, fichier ou texte collé ; jamais les noms ni les coups) ;
