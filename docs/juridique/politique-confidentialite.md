@@ -104,7 +104,7 @@ Ces données sont écrites dans le stockage local (`localStorage`) de ton naviga
 - problèmes : `probleme_resolu`, `solution_vue`, `erreur_rejouee`, `erreur_maitrisee`, `revision_faite` ;
 - course aux problèmes : `course_terminee` (score, erreurs, durée, raison de la fin), `course_partagee` (score, meilleur score, partage ou copie) ;
 - placement « Je sais déjà jouer » : `placement_commence`, `placement_termine` (niveau estimé en kyu), `placement_saute` (étape où tu l'as passé) ;
-- revue : `revue_ouverte`, `revue_rejouer`, `sgf_importe` (partie importée : taille du fichier, nombre de coups, taille du plateau, handicap ; jamais les noms ni les coups) ;
+- revue : `revue_ouverte`, `revue_rejouer`, `import_sgf_commence`, `import_sgf_reussi`, `import_sgf_erreur` (partie importée : source — fichier, texte collé ou lien OGS —, taille du fichier, nombre de coups, taille du plateau, handicap, raison d'un refus ; jamais les noms, les coups ni le numéro de la partie OGS) ;
 - Go du jour et série : `go_du_jour_resolu`, `go_du_jour_partage`, `arrivee_par_partage`, `gel_gagne`, `gel_utilise`, `serie_perdue` ;
 - progression : `xp_gagne`, `niveau_atteint` ;
 - installation : `installation_proposee`, `installation_acceptee` ;
@@ -149,6 +149,8 @@ Seulement nous et nos sous-traitants techniques, qui agissent sur nos instructio
 | Vercel Inc. | Hébergement et diffusion du site | Réseau mondial (le site est servi depuis le point le plus proche de toi) | Oui, possible. Encadré par le DPA de Vercel (clauses contractuelles types, Data Privacy Framework). **À vérifier.** |
 
 **Téléchargement du réseau de l'IA.** Au premier lancement de l'IA, l'app télécharge le réseau de KataGo (un fichier public). Par défaut, le code le prend sur GitHub (`raw.githubusercontent.com`, GitHub Inc., États-Unis), qui voit alors ton adresse IP comme pour toute page web. **À vérifier** : si la production sert ce fichier depuis notre propre hébergement (variable `VITE_KATAGO_MODEL_URL`), cette ligne disparaît ; sinon, GitHub doit être cité ici comme destinataire.
+
+**Lien de partie OGS.** Si tu colles un lien `online-go.com/game/…` pour analyser une partie, ton appareil demande le fichier SGF de cette partie directement à OGS (Online Go Server), qui voit alors ton adresse IP et le numéro de la partie, comme si tu ouvrais la page. Rien ne passe par nos serveurs et la partie reste sur ton appareil. Avec un fichier ou un texte collé, aucun tiers n'est contacté.
 
 Les autres joueurs voient ton **pseudo**, ta **cote**, tes **badges** et les parties que vous jouez ensemble. Ils ne voient jamais ton e-mail.
 
