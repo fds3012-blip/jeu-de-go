@@ -2,7 +2,8 @@
 // avec la query et le fragment). Le jeton du défi (`#defi=JETON`) ne doit jamais y partir.
 // Ce module est importé EN PREMIER par src/main.tsx : il lit le jeton puis le retire de l'adresse avant que
 // la mesure ne soit chargée et avant tout événement. Il fait de même quand un lien est ouvert dans un onglet déjà
-// ouvert (`hashchange`), et prévient l'app par `ecouterJetonDefi`.
+// ouvert (`hashchange`), et prévient l'app par `ecouterJetonDefi`. Le filet avant envoi (fragment et paramètres
+// sensibles retirés des adresses envoyées à PostHog et Sentry) est src/data/urlSensible.ts (#336) : pas de doublon ici.
 import { jetonDeLAdresse } from './defiAmi';
 
 type Emplacement = Pick<Location, 'hash' | 'pathname' | 'search'>;
@@ -17,8 +18,6 @@ export function prendreJeton(loc: Emplacement, hist: Historique): string | null 
   return jeton ?? '';
 }
 
-/** Retire un jeton de défi d'une adresse (filet de sécurité avant envoi à PostHog ou Sentry). */
-export const sansJeton = (url: string): string => url.replace(/#defi=[^&\s]*/g, '');
 
 const navigateur = typeof location !== 'undefined' && typeof history !== 'undefined';
 

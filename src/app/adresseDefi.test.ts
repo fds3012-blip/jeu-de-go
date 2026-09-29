@@ -2,8 +2,9 @@
 import { describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { prendreJeton, sansJeton } from './adresseDefi';
-import { sansJetonDefi, sansLocalisation, sentrySansJeton } from '../data/analytics';
+import { prendreJeton } from './adresseDefi';
+import { nettoyerUrl, posthogSansUrlSensible, sentrySansUrlSensible } from '../data/urlSensible';
+import { lienDefi } from '../data/defi';
 
 const JETON = 'Ab3_-x'.padEnd(32, 'Z');
 const lire = (chemin: string) => readFileSync(fileURLToPath(new URL(chemin, import.meta.url)), 'utf8');
@@ -36,18 +37,13 @@ describe('le jeton quitte l’adresse', () => {
 });
 
 describe('filet de sécurité avant envoi', () => {
-  it('PostHog : $current_url sans jeton', () => {
-    const ev = sansLocalisation({ event: 'app_ouverte', properties: { $current_url: `https://go.exemple/?x=1#defi=${JETON}`, a: 1 } });
-    expect(ev.properties).toEqual({ $current_url: 'https://go.exemple/?x=1', a: 1, $geoip_disable: true });
+  it('le lien du défi est bien nettoyé par urlSensible (PostHog et Sentry)', () => {
+    const lien = lienDefi(JETON, 'https://go.exemple');
+    expect(nettoyerUrl(lien)).toBe('https://go.exemple/');
+    const ev = posthogSansUrlSensible({ event: 'app_ouverte', properties: { $current_url: lien } });
     expect(JSON.stringify(ev)).not.toContain(JETON);
-    const inchange = { a: 'rien' };
-    expect(sansJetonDefi(inchange)).toBe(inchange);
-  });
-
-  it('Sentry : adresse de la page sans jeton', () => {
-    const ev = sentrySansJeton({ request: { url: `https://go.exemple/#defi=${JETON}` } });
-    expect(ev.request.url).toBe('https://go.exemple/');
-    expect(sansJeton(`https://go.exemple/#defi=${JETON}`)).toBe('https://go.exemple/');
+    const err = sentrySansUrlSensible({ request: { url: lien } });
+    expect(JSON.stringify(err)).not.toContain(JETON);
   });
 
   it('les événements defi_* ne portent ni jeton, ni partie, ni lien', () => {
