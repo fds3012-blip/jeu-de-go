@@ -71,6 +71,11 @@ export const THEMES_DE_LECON: Readonly<Record<string, readonly Theme[]>> = {
   l2: ['atari'],
   l3: ['double-atari', 'bord', 'echelle'],
   l5: ['vie-mort'],
+  // #16 : chaque nouvelle leçon a la série de son thème (filet, prise en retour, course aux libertés, faux œil).
+  l9: ['filet'],
+  l10: ['prise-en-retour'],
+  l11: ['semeai'],
+  l12: ['vie-mort'],
 };
 
 /**

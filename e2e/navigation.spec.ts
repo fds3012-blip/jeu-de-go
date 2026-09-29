@@ -18,7 +18,7 @@ test("première ouverture : l'accueil s'affiche en moins de 3 secondes", async (
   await expect(page.getByRole('heading', { level: 1, name: 'Go' })).toBeVisible();
   // Les deux tuiles : problème du jour et leçon suivante.
   await expect(page.getByRole('button', { name: /^Go du jour n°\s\d+/ })).toBeVisible();
-  await expect(page.getByRole('button', { name: /^Leçon 1 sur 8/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Leçon 1 sur 12/ })).toBeVisible();
   // Pas de défilement horizontal sur un écran de téléphone.
   const debord = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(debord).toBeLessThanOrEqual(0);

@@ -5,7 +5,9 @@
 // Chaque étape : { text, ok?, no?, choices?, geste: { no }?, refus: [no, …]? }, dans l'ordre des étapes françaises.
 export const CHAPITRES_EN = {
   c1: { titre: 'The basics', intro: 'Seven short lessons to play your first game.', fin: 'You know the rules of Go.' },
-  c2: { titre: 'Opening on 9 × 9', intro: 'Where to place your first stones.' }
+  c2: { titre: 'Opening on 9 × 9', intro: 'Where to place your first stones.' },
+  c3: { titre: 'Capturing and saving', intro: 'Traps to capture more stones.' },
+  c4: { titre: 'Life and death', intro: 'When a group lives, and when it dies.' }
 };
 
 const COLLEE = 'Right next to White, your stone makes White stronger. Leave some space.';
@@ -104,5 +106,39 @@ export const LESSONS_EN = {
       ok: 'Nice extension: on the 3rd line, with no stone right next to it.',
       no: 'Stay on the 3rd line, two or three points from one of your stones.',
       refus: [COLLEE, 'Too tight: leave a free point between your stones.', BAS] }
+  ] },
+  l9: { title: 'The net', desc: 'Trap a stone without touching it', steps: [
+    { text: 'Atari at the green point? It runs to a white stone: safe.' },
+    { text: 'Net (geta): close its exits at the green point, without touching it.' },
+    { text: 'Your turn: catch the marked stone in a net.',
+      ok: 'Net! It still has two liberties, but no way out.', no: 'Don’t touch it: close both exits from a distance.',
+      refus: ['In atari, it extends, the ladder breaks, and it escapes.'] }
+  ] },
+  l10: { title: 'Snapback', desc: 'Give one stone to capture three', steps: [
+    { text: 'Play the green point. Your stone is in atari: on purpose.' },
+    { text: 'White took it, but is in atari. Recapture at the green point.' },
+    { text: 'Your turn: give one stone, then capture three.',
+      ok: 'Snapback! Not a ko: you capture three stones.', no: 'Play where White wants to connect, even if your stone gets captured.',
+      refus: ['Atari from the wrong side: White plays E9 and connects.'] }
+  ] },
+  l11: { title: 'The capturing race', desc: 'Who captures the other first', steps: [
+    { text: 'Capturing race (semeai): groups without eyes. Tap White’s group, we count.',
+      geste: { no: 'Tap one of the three connected white stones.' } },
+    { text: 'Three against three. You play first: fill the green point.' },
+    { text: 'Your turn: fill White’s liberties, not your own.',
+      ok: 'White has only one liberty left: you win the race.', no: 'Count: you must fill one of White’s liberties.',
+      refus: ['You’re filling your own liberty: White wins the race.'] }
+  ] },
+  l12: { title: 'The false eye', desc: 'An eye that doesn’t count', steps: [
+    { text: 'Two eyes? Tap D1: it isn’t connected to the rest.',
+      geste: { no: 'Tap one of the two black stones on the right.' } },
+    { text: 'D1 is in atari. Connect at the green point: one eye left.' },
+    { text: 'Tap the false eye (an eye White can destroy).',
+      ok: 'Yes, C1: its corner D2 is White’s. On the edge, one corner is enough.', no: 'Look at the corners (diagonal points) of each eye.' },
+    { text: 'Your turn: make two real eyes before White does.',
+      ok: 'D2 connects everything: A1 and C1 are two real eyes. You live.', no: 'Protect C1’s corner before White takes it.',
+      refus: ['You’re filling one of your own eyes: only one is left.'] },
+    { text: 'The other way around: make one of White’s eyes false.',
+      ok: 'White has only one real eye left: White is dead.', no: 'Take the corner of White’s eye, where its stones split apart.' }
   ] }
 };

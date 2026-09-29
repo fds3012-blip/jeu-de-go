@@ -1,4 +1,4 @@
-// Huit leçons interactives, positions vérifiées par un lecteur tactique.
+// Douze leçons interactives, positions vérifiées par un lecteur tactique.
 // rows : plateau 9 × 9 ligne par ligne depuis le haut. X noir, O blanc, T pierre blanche visée, S pierre noire à sauver.
 // Coordonnées : lettres A à J sans I, lignes numérotées depuis le bas. accept: 'line3' = tout coup hors des deux premières lignes.
 const L_CAP1 = ['.........', '.........', '.........', '...X.....', '..XT.O...', '...X.....', '.........', '.........', '.........'];
@@ -30,10 +30,29 @@ const COINS_LIBRES = ['C7', 'D7', 'C6', 'G7', 'F7', 'G6', 'G3', 'F3', 'G4'];
 const lignes12 = (sauf) => ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J'].flatMap((c, x) => [1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => ({ l: `${c}${n}`, x, y: 9 - n })))
   .filter(({ l, x, y }) => Math.min(x, y, 8 - x, 8 - y) <= 1 && !sauf.includes(l)).map(({ l }) => l);
 const BAS = { no: 'Sur les deux premières lignes, au début, ta pierre entoure peu.' };
+// Leçons 9 à 12 (#16) : filet, prise en retour, course aux libertés, faux œil. Chaque position, chaque réponse acceptée
+// et chaque réfutation est prouvée par src/go/lecons-16.test.ts (lecteur exact de capture, preuve de vie et mort).
+// Filet : trois pierres blanches (C7, G7, C3) cassent toutes les échelles ; seul un filet prend la pierre.
+const L_FILET = ['.........', '.........', '..O.X.O..', '.........', '..X.TX...', '....X....', '..O......', '.........', '.........'];
+const L_FILET_Q = ['.........', '.........', '......O..', '....X....', '...XT.X..', '.........', '..O.X.O..', '.........', '.........'];
+// Prise en retour : si Noir met en atari du mauvais côté, Blanc relie ses pierres marquées à son groupe du bas.
+const L_RETOUR = ['.........', '.........', '......XXX', '......XTT', '......X..', '.......XO', '.......OO', '.......OO', '.........'];
+const L_RETOUR_Q = ['.OOO.TX..', '.OOX.TX..', '....XXX..', '.........', '.........', '.........', '.........', '.........', '.........'];
+// Course aux libertés : deux groupes sans œil, aucune liberté commune. Démo 3 contre 3, question 2 contre 2.
+const L_COURSE = ['.........', '.........', '.........', '.........', '.........', '.....OOOO', '..XXXXOOO', '..XTTTXXX', '..X......'];
+const L_COURSE_Q = ['.........', '.........', '.........', '.........', 'OOO......', '..O......', 'SSO......', 'TTXX.....', '..X......'];
+// Faux œil : D1 et E1 ne tiennent au groupe que par C1, et le coin D2 de C1 est blanc. Deux pierres séparées :
+// Blanc les prend sans ko.
+const L_FAUX = ['.........', '.........', '.........', '.........', '.........', '.........', 'OOOOOOO..', 'XXXOOOO..', '.X.XX.O..'];
+const L_FAUX_D2 = ['.........', '.........', '.........', '.........', '.........', '.........', 'OOOOOO...', 'XXXOXO...', '.X.XXO...'];
+const L_FAUX_VIS = ['.........', '.........', '.........', '.........', '.........', '.........', 'OOOOOO...', 'SXX.XO...', '.X.XXO...'];
+const L_FAUX_TUE = ['...XOO.O.', '...XO.OOT', '...XXXXXX', '.........', '.........', '.........', '.........', '.........', '.........'];
 export const CHAPITRES = [
   { id: 'c1', titre: 'Les bases', intro: 'Sept leçons courtes pour jouer ta première partie.', fin: 'Tu connais les règles du go.', lecons: ['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7'] },
   // Chapitre en cours d'écriture (`complet: false`) : sa dernière leçon ne ferme pas encore le chapitre.
-  { id: 'c2', titre: 'Ouverture sur 9\u00A0×\u00A09', intro: 'Où poser tes premières pierres.', lecons: ['l8'], complet: false }
+  { id: 'c2', titre: 'Ouverture sur 9\u00A0×\u00A09', intro: 'Où poser tes premières pierres.', lecons: ['l8'], complet: false },
+  { id: 'c3', titre: 'Capturer et sauver', intro: 'Des pièges pour prendre plus de pierres.', lecons: ['l9', 'l10', 'l11'], complet: false },
+  { id: 'c4', titre: 'Vie et mort', intro: 'Quand un groupe vit, quand il meurt.', lecons: ['l12'], complet: false }
 ];
 export const LESSONS = [
   { id: 'l1', title: 'Libertés et capture', desc: 'La règle qui fait tout le jeu', steps: [
@@ -175,5 +194,59 @@ export const LESSONS = [
         { points: ['B3', 'C2', 'C4', 'D3', 'B7', 'C6', 'C8', 'D7'], no: 'Trop serrée : laisse un point libre entre tes pierres.' },
         { points: lignes12(['F3', 'G2', 'G4', 'H3', 'F7', 'G6', 'G8', 'H7', 'B3', 'C2', 'C4', 'D3', 'B7', 'C6', 'C8', 'D7']), ...BAS }
       ] }
+  ] },
+  { id: 'l9', title: 'Le filet', desc: 'Enfermer une pierre sans la toucher', steps: [
+    { kind: 'info', rows: L_FILET, geste: { pose: 'E6' },
+      demo: [{ pose: 'E6', couleur: 'B' }, { libs: 'E5' }, { pose: 'D5', couleur: 'W' }, { pose: 'D4', couleur: 'B' }, { pose: 'D6', couleur: 'W' }, { pose: 'C6', couleur: 'B' }, { pose: 'D7', couleur: 'W' }],
+      text: 'Atari au point vert ? Elle fuit vers une pierre blanche : sauvée.' },
+    { kind: 'info', rows: L_FILET, geste: { pose: 'D6' },
+      demo: [{ pose: 'D6', couleur: 'B' }, { libs: 'E5' }, { pose: 'D5', couleur: 'W' }, { pose: 'D4', couleur: 'B' }, { pose: 'E6', couleur: 'W' }, { pose: 'F6', couleur: 'B' }],
+      text: 'Filet (geta) : ferme ses sorties au point vert, sans la toucher.' },
+    { kind: 'move', rows: L_FILET_Q, accept: ['F4', 'G4', 'F3'],
+      text: 'À toi : prends la pierre marquée dans un filet.',
+      ok: 'Filet ! Elle a encore deux libertés, mais plus aucune sortie.', no: 'Ne la touche pas : ferme de loin ses deux sorties.',
+      refus: [{ points: ['F5', 'E4'], no: 'En atari, elle s’allonge et l’échelle casse : elle s’échappe.' }] }
+  ] },
+  { id: 'l10', title: 'La prise en retour', desc: 'Donner une pierre pour en prendre trois', steps: [
+    { kind: 'info', rows: L_RETOUR, geste: { pose: 'J5' },
+      demo: [{ pose: 'J5', couleur: 'B' }, { libs: 'J5' }, { pose: 'H5', couleur: 'W' }],
+      text: 'Pose au point vert. Ta pierre est en atari : c’est voulu.' },
+    { kind: 'info', rows: L_RETOUR, avant: [{ pose: 'J5', couleur: 'B' }, { pose: 'H5', couleur: 'W' }], geste: { pose: 'J5' },
+      demo: [{ libs: 'H5' }, { pose: 'J5', couleur: 'B' }],
+      text: 'Blanc a pris, mais il est en atari. Reprends au point vert.' },
+    { kind: 'move', rows: L_RETOUR_Q, accept: ['E9'],
+      text: 'À toi : donne une pierre, puis prends-en trois.',
+      ok: 'Prise en retour (snapback) ! Pas un ko : tu en prends trois.', no: 'Joue là où Blanc voudrait se relier, même si ta pierre est prise.',
+      refus: [{ points: ['E8'], no: 'Atari du mauvais côté : Blanc joue E9 et se relie.' }] }
+  ] },
+  { id: 'l11', title: 'La course aux libertés', desc: 'Qui prend l’autre en premier', steps: [
+    { kind: 'info', rows: L_COURSE, geste: { touche: ['D2', 'E2', 'F2'], no: 'Touche une des trois pierres blanches collées.' },
+      demo: [{ libs: 'E2' }, { libs: 'H2' }],
+      text: 'Course aux libertés (semeai) : groupes sans œil. Touche le blanc, on compte.' },
+    { kind: 'info', rows: L_COURSE, geste: { pose: 'D1' },
+      demo: [{ pose: 'D1', couleur: 'B' }, { libs: 'E2' }, { pose: 'H1', couleur: 'W' }, { pose: 'E1', couleur: 'B' }, { pose: 'G1', couleur: 'W' }, { pose: 'F1', couleur: 'B' }],
+      text: 'Trois contre trois. Tu joues d’abord : bouche le point vert.' },
+    { kind: 'move', rows: L_COURSE_Q, accept: ['A1', 'B1'],
+      text: 'À toi : bouche les libertés blanches, pas les tiennes.',
+      ok: 'Blanc n’a plus qu’une liberté : tu gagnes la course.', no: 'Compte : il faut boucher une liberté de Blanc.',
+      refus: [{ points: ['A4', 'B4'], no: 'Tu bouches ta propre liberté : Blanc gagne la course.' }] }
+  ] },
+  { id: 'l12', title: 'Le faux œil', desc: 'Un œil qui ne compte pas', steps: [
+    { kind: 'info', rows: L_FAUX, geste: { touche: ['D1', 'E1'], no: 'Touche une des deux pierres noires de droite.' },
+      demo: [{ yeux: ['A1', 'C1'] }, { libs: 'D1' }],
+      text: 'Deux yeux ? Touche D1 : elle n’est pas reliée au reste.' },
+    { kind: 'info', rows: L_FAUX, geste: { pose: 'C1' },
+      demo: [{ libs: 'D1' }, { pose: 'F1', couleur: 'W' }, { pose: 'C1', couleur: 'B' }, { pose: 'A1', couleur: 'W' }],
+      text: 'D1 est en atari. Relie au point vert : un seul œil reste.' },
+    { kind: 'touche', rows: L_FAUX_D2, accept: ['C1'],
+      text: 'Touche le faux œil (un œil que Blanc peut détruire).',
+      ok: 'Oui, C1 : son coin D2 est blanc. Au bord, un seul coin suffit.', no: 'Regarde les coins (diagonales) de chaque œil.' },
+    { kind: 'move', rows: L_FAUX_VIS, accept: ['D2'],
+      text: 'À toi : fais deux vrais yeux avant Blanc.',
+      ok: 'D2 relie tout : A1 et C1 sont deux vrais yeux. Tu vis.', no: 'Protège le coin de C1 avant que Blanc le prenne.',
+      refus: [{ points: ['A1', 'C1'], no: 'Tu bouches un de tes yeux : il n’en reste qu’un.' }] },
+    { kind: 'move', rows: L_FAUX_TUE, accept: ['F8'],
+      text: 'À l’inverse : rends un œil blanc faux.',
+      ok: 'Blanc n’a plus qu’un vrai œil : il est mort.', no: 'Prends le coin de l’œil blanc, là où ses pierres se séparent.' }
   ] }
 ];
