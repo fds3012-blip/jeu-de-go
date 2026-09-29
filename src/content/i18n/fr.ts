@@ -481,6 +481,7 @@ export const fr = {
   'recit.prisonniers': { one: '+ {v} prisonnier pour {pour}', other: '+ {v} prisonniers pour {pour}' },
   'recit.pierres': { one: '+ {v} pierre pour {pour}', other: '+ {v} pierres pour {pour}' },
   'recit.etPour': '{debut}, + {v} pour {pour}',
+  'recit.etAussi': '{debut}, {v} pour {pour}',
   'recit.pasDeKomi': 'Pas de komi',
   'recit.komi': '{signe} {v} komi pour {pour}',
   'recit.explicationKomi': "Le komi compense l'avantage de Noir, qui joue en premier.",
@@ -491,6 +492,7 @@ export const fr = {
   'recit.score': '{noir} {pn}, {blanc} {pb}.',
   'recit.territoires': 'Territoires : les points vides que chaque camp entoure',
   'recit.aucunTerritoire': 'Aucun territoire',
+  'recit.territoire': { one: '{v} point de territoire pour {pour}', other: '{v} points de territoire pour {pour}' },
   'recit.continuer': 'Voir le résultat',
   // Écran de fin (src/ui/FinPartie.tsx, src/app/Game.tsx, src/app/bilan.ts)
   'fin.egalite': 'Égalité',
