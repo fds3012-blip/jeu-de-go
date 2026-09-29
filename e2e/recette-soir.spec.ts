@@ -48,6 +48,8 @@ test.describe('#290 : verdict de vie et mort en 320 × 640', () => {
       test(`${cas.titre} (${schema}) : le coup joué et les yeux restent visibles`, async ({ page }) => {
         await page.clock.setFixedTime(new Date(cas.date));
         await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: schema });
+        // #285 : un joueur qui a déjà joué garde « Problème suivant » (le nouveau venu voit l'action vers la leçon 1).
+        await page.addInitScript(() => { if (localStorage.getItem('go.parties.v1') === null) localStorage.setItem('go.parties.v1', '{"n":1}'); });
         await page.goto(`/?go-du-jour=${cas.numero}`);
         await expect(page.getByRole('heading', { level: 2, name: cas.titre })).toBeVisible();
         await jouer(page, cas.coup);

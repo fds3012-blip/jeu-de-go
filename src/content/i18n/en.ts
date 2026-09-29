@@ -273,6 +273,9 @@ export const en = {
   'partage.numero': 'Daily Go #{numero}',
   'partage.essais': { one: 'solved in {n} try', other: 'solved in {n} tries' },
   'partage.serie': 'streak {serie} 🔥',
+  // Arrival from a shared link, for someone who has never played (#285)
+  'arrivee.premierCoup': 'First move in Go? Tap the board.',
+  'arrivee.apprendre': 'Learn to play in 2 minutes',
   // Puzzle rush (#287)
   'course.carte.titre': 'Rush: 3 minutes',
   'course.carte.texte': 'As many puzzles as you can. Your 3rd mistake ends the rush.',
