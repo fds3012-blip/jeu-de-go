@@ -170,8 +170,8 @@ test('Vitrine : chaque badge se touche et dit sa condition entière (#214)', asy
   // Sans toucher : le prochain badge à gagner, en entier.
   const detail = vitrine.locator('.vitrine-detail');
   await expect(detail).toHaveText('Prochain badge : Première partie. Joue contre l’ordi.');
-  await vitrine.getByRole('button', { name: 'Pomme battue : à gagner. Gagne contre Pomme.' }).click();
-  await expect(detail).toHaveText('Pomme battue : Gagne contre Pomme.');
+  await vitrine.getByRole('button', { name: 'Pomme battue : à gagner. Bats Pomme ou plus fort.' }).click();
+  await expect(detail).toHaveText('Pomme battue : Bats Pomme ou plus fort.');
   await expect(vitrine.getByRole('button', { name: /^Pomme battue/ })).toHaveAttribute('aria-pressed', 'true');
   await page.evaluate(() => document.fonts.ready);
   expect(await detail.evaluate(e => e.scrollWidth <= e.clientWidth + 1)).toBe(true);

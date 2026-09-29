@@ -76,6 +76,9 @@ export const EVENTS = {
   importSgfCommence: 'import_sgf_commence',
   importSgfReussi: 'import_sgf_reussi',
   importSgfErreur: 'import_sgf_erreur',
+  // Conseil de Mochi (#80) : phrase demandée (`modele`, `aucun` si rien de sûr), puis retour « utile / pas utile » (`utile`).
+  conseilDemande: 'conseil_demande',
+  conseilNote: 'conseil_note',
 } as const;
 export type AnalyticsEvent = (typeof EVENTS)[keyof typeof EVENTS];
 export type Props = Record<string, string | number | boolean | null | undefined>;

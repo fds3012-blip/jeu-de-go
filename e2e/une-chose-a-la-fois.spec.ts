@@ -93,7 +93,7 @@ test.describe('N2 : une fête à la fois, jamais sur la consigne', () => {
       await jouer(page, 'E5');
       await attendrePierre(page, 'E5', 'noir');
       const feuille = page.locator('.verdict');
-      await expect(feuille.getByTestId('pastille-xp')).toContainText(/\+30\sXP/);
+      await expect(feuille.getByTestId('pastille-xp')).toContainText(/\+40\sXP/);
       await page.waitForTimeout(600);
       // Ni carte de niveau ni pastille flottante pendant l'exercice.
       await expect(page.getByTestId('fete-niveau')).toHaveCount(0);
