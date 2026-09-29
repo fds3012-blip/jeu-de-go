@@ -12,7 +12,7 @@ export const MAX_COUPS = 500;
 /** Longueur maximale d'un nom de joueur gardé (un nom plus long est coupé). */
 export const MAX_NOM = 40;
 
-export type RaisonRefus = 'vide' | 'trop-gros' | 'format' | 'pas-go' | 'taille' | 'sans-coups' | 'trop-long' | 'installation' | 'illegal';
+export type RaisonRefus = 'vide' | 'trop-gros' | 'format' | 'pas-go' | 'taille' | 'sans-coups' | 'trop-long' | 'installation' | 'illegal' | 'coordonnee';
 
 export type Import =
   | { ok: true; partie: GameRecord; sgf: string; coups: number }
@@ -63,8 +63,12 @@ export function importerSgf(texte: string, octets = new TextEncoder().encode(tex
   if (gm && gm[1] !== '1') return { ok: false, raison: 'pas-go' };
   let g: GameRecord;
   try { g = readSgf(texte.slice(debut)); } catch (e) {
-    const m = /Plateau (\d+)/.exec(e instanceof Error ? e.message : '');
-    return m ? { ok: false, raison: 'taille', taille: Number(m[1]) } : { ok: false, raison: 'format' };
+    const message = e instanceof Error ? e.message : '';
+    const m = /Plateau (\d+)/.exec(message);
+    if (m) return { ok: false, raison: 'taille', taille: Number(m[1]) };
+    // Coordonnée hors plateau ou coupée (fichier tronqué) : le numéro du coup aide à retrouver l'endroit.
+    const c = /\(coup (\d+)\)/.exec(message);
+    return c ? { ok: false, raison: 'coordonnee', coup: Number(c[1]) } : { ok: false, raison: 'format' };
   }
   if (!g.moves.length) return { ok: false, raison: 'sans-coups' };
   if (g.moves.length > MAX_COUPS) return { ok: false, raison: 'trop-long' };

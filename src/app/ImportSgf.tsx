@@ -1,13 +1,15 @@
 // Analyser une partie jouée ailleurs (issue #286) : OGS, Fox, KGS. Action secondaire, ouverte depuis le Profil
 // ou depuis la revue, jamais depuis l'accueil du débutant.
-// Trois étapes : le SGF (fichier ou texte collé), le camp du joueur, puis la revue existante (courbe, moment clé,
-// erreurs, « Rejoue cette erreur »). Rien ne part au serveur : la partie est gardée sur l'appareil (REVUE_KEY).
+// Trois étapes : le SGF (fichier, texte collé ou lien de partie OGS), le camp du joueur, puis la revue existante (courbe, moment clé,
+// erreurs, « Rejoue cette erreur »). Rien ne part à nos serveurs : la partie est gardée sur l'appareil (REVUE_KEY).
+// Un lien OGS est demandé à OGS directement depuis l'appareil (src/go/ogs.ts) ; en cas de refus, on propose le fichier.
 // Logique pure : src/go/importSgf.ts.
 import { useId, useRef, useState, type ChangeEvent } from 'react';
 import { Revue } from './Revue';
 import { readLocal } from './hooks';
 import { REVUE_KEY, type PartieGardee } from './revue';
 import { campDuPseudo, decoderSgf, importerSgf, MAX_COUPS, MAX_OCTETS, type Import } from '../go/importSgf';
+import { chargerSgfOgs, idPartieOgs, type RefusOgs } from '../go/ogs';
 import type { GameRecord } from '../go/sgf';
 import type { Color } from '../go/rules';
 import { EVENTS, track } from '../data/analytics';
@@ -26,9 +28,17 @@ function messageRefus(r: Extract<Import, { ok: false }>): string {
     case 'taille': return t('import.erreur.taille', { taille: r.taille ?? 0 });
     case 'trop-long': return t('import.erreur.trop-long', { max: MAX_COUPS });
     case 'illegal': return t('import.erreur.illegal', { coup: r.coup ?? 0 });
+    case 'coordonnee': return t('import.erreur.coordonnee', { coup: r.coup ?? 0 });
     default: return t(`import.erreur.${r.raison}`);
   }
 }
+
+type Source = 'fichier' | 'texte' | 'ogs';
+/** Refus propres à l'écran (avant la lecture du SGF) : fichier illisible, lien d'un autre site, OGS injoignable. */
+type RefusEcran = 'lecture' | 'lien' | RefusOgs;
+
+/** Un lien, mais pas vers une partie OGS (Fox, KGS, une revue OGS…). */
+const estUnLien = (s: string) => /^(https?:\/\/|www\.)\S+$/i.test(s.trim()) || /^[\w-]+(\.[\w-]+)+\/\S*$/.test(s.trim());
 
 interface Lue { partie: GameRecord; sgf: string; coups: number }
 type Etape = { nom: 'saisie' } | { nom: 'camp'; lue: Lue } | { nom: 'revue'; lue: Lue; joueur: Color };
@@ -51,16 +61,26 @@ export function ImportSgf({ onRetour, pseudo, confirmTouch = false }: Props) {
   const [texte, setTexte] = useState('');
   const [erreur, setErreur] = useState<string | null>(null);
   const [camp, setCamp] = useState<Color | null>(null);
+  const [ogsEnCours, setOgsEnCours] = useState(false);
   const fichier = useRef<HTMLInputElement>(null);
   const ids = useId();
 
   function aller(e: Etape) { setEtape(e); window.scrollTo?.({ top: 0 }); }
 
-  function lire(contenu: string, octets: number, source: 'fichier' | 'texte') {
+  function refuser(source: Source, raison: RefusEcran) {
+    track(EVENTS.importSgfErreur, { source, raison, coup: null });
+    setErreur(t(`import.erreur.${raison}`));
+  }
+
+  function lire(contenu: string, octets: number, source: Source) {
     const r = importerSgf(contenu, octets);
-    if (!r.ok) { setErreur(messageRefus(r)); return; }
+    if (!r.ok) {
+      track(EVENTS.importSgfErreur, { source, raison: r.raison, coup: r.coup ?? null });
+      setErreur(messageRefus(r));
+      return;
+    }
     setErreur(null);
-    track(EVENTS.sgfImporte, { octets, coups: r.coups, taille: r.partie.size, source, handicap: r.partie.handicap ?? 0 });
+    track(EVENTS.importSgfReussi, { octets, coups: r.coups, taille: r.partie.size, source, handicap: r.partie.handicap ?? 0 });
     setCamp(campDuPseudo(r.partie, pseudo));
     aller({ nom: 'camp', lue: r });
   }
@@ -69,11 +89,30 @@ export function ImportSgf({ onRetour, pseudo, confirmTouch = false }: Props) {
     const f = e.target.files?.[0];
     e.target.value = '';
     if (!f) return;
-    if (f.size > MAX_OCTETS) { setErreur(t('import.erreur.trop-gros')); return; }
-    try {
-      const octets = new Uint8Array(await f.arrayBuffer());
-      lire(decoderSgf(octets), octets.length, 'fichier');
-    } catch { setErreur(t('import.erreur.lecture')); }
+    track(EVENTS.importSgfCommence, { source: 'fichier' });
+    if (f.size > MAX_OCTETS) { refuser('fichier', 'trop-gros'); return; }
+    let octets: Uint8Array;
+    try { octets = new Uint8Array(await f.arrayBuffer()); } catch { refuser('fichier', 'lecture'); return; }
+    lire(decoderSgf(octets), octets.length, 'fichier');
+  }
+
+  /** « Lire la partie » : texte SGF collé, ou lien de partie OGS demandé à OGS. */
+  async function lireTexte() {
+    if (ogsEnCours) return;
+    const id = idPartieOgs(texte);
+    if (id == null) {
+      track(EVENTS.importSgfCommence, { source: 'texte' });
+      if (estUnLien(texte)) { refuser('texte', 'lien'); return; }
+      lire(texte, new TextEncoder().encode(texte).length, 'texte');
+      return;
+    }
+    track(EVENTS.importSgfCommence, { source: 'ogs' });
+    setErreur(null);
+    setOgsEnCours(true);
+    const r = await chargerSgfOgs(id);
+    setOgsEnCours(false);
+    if (!r.ok) { refuser('ogs', r.raison); return; }
+    lire(r.texte, r.octets, 'ogs');
   }
 
   function analyser(lue: Lue, joueur: Color) {
@@ -137,7 +176,7 @@ export function ImportSgf({ onRetour, pseudo, confirmTouch = false }: Props) {
       <h2 id={`${ids}-titre`}>{t('import.titre')}</h2>
       <p className="import-intro">{fr(t('import.intro'))}</p>
       <label className="btn import-fichier">
-        <input ref={fichier} className="sr-only" type="file" accept=".sgf,application/x-go-sgf,text/plain" onChange={choisirFichier} />
+        <input ref={fichier} className="sr-only" type="file" accept=".sgf,application/x-go-sgf,text/plain" onChange={choisirFichier} disabled={ogsEnCours} />
         {t('import.fichier')}
       </label>
       <label className="import-ou" htmlFor={`${ids}-texte`}>{t('import.ou')}</label>
@@ -145,6 +184,7 @@ export function ImportSgf({ onRetour, pseudo, confirmTouch = false }: Props) {
         placeholder="(;GM[1]FF[4]SZ[19]…" aria-describedby={erreur ? `${ids}-erreur` : undefined} aria-invalid={erreur ? true : undefined}
         onChange={e => { setTexte(e.target.value); setErreur(null); }} />
       {erreur && <p id={`${ids}-erreur`} className="import-erreur" role="alert">{fr(erreur)}</p>}
+      {ogsEnCours && <p className="import-aide" role="status">{fr(t('import.ogsEnCours'))}</p>}
       {derniere && (
         <button type="button" className="lien import-derniere" onClick={() => {
           const r = importerSgf(derniere.sgf);
@@ -152,7 +192,7 @@ export function ImportSgf({ onRetour, pseudo, confirmTouch = false }: Props) {
         }}>{t('import.derniere')}</button>
       )}
       <div className="dock">
-        <button type="button" className="cta" onClick={() => lire(texte, new TextEncoder().encode(texte).length, 'texte')}>{t('import.lire')}</button>
+        <button type="button" className="cta" aria-busy={ogsEnCours || undefined} disabled={ogsEnCours} onClick={() => { void lireTexte(); }}>{t('import.lire')}</button>
       </div>
     </section>
   );

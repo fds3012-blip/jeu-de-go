@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -54,4 +54,57 @@ test('5 réussites d’affilée : le 6e problème est « Moyen », sans cote aff
   await expect(page.getByRole('button', { name: /^Problème suivant / })).toHaveCount(1);
   await expect(page.getByText(/\d+\s\/\s\d+/)).toHaveCount(0);
   await expect(page.getByText(String(Math.round(etat.cote)), { exact: true })).toHaveCount(0);
+});
+
+const lireCote = (page: Page) => page.evaluate(() => JSON.parse(localStorage.getItem('go.cote-joueur.v1') ?? 'null'));
+
+/** Joue un coup faux mais légal : le premier coin vide, autre que la réponse, que l'app note comme un échec. */
+async function coupFaux(page: Page, id: string, essaisAttendus: number) {
+  const r = REPONSES.get(id)!;
+  const lettre = 'ABCDEFGHJKLMNOPQRST'[r.taille - 1];
+  for (const c of ['A1', `${lettre}1`, `A${r.taille}`, `${lettre}${r.taille}`, 'B2', `${lettre}2`]) {
+    if (c === r.coup) continue;
+    await jouer(page, c, r.taille);
+    if ((await lireCote(page))?.essais === essaisAttendus) return;
+  }
+  throw new Error(`Aucun coup faux trouvé pour ${id}`);
+}
+
+test('un indice ne change pas la cote ; trouvé seul après un échec, elle remonte un peu', async ({ page }) => {
+  await page.clock.setFixedTime(MIDI_PARIS);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/');
+  await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
+  await page.getByRole('button', { name: /^Problème suivant / }).click();
+  const lecteur = page.locator('.lecteur');
+  const verdict = page.locator('.verdict');
+
+  // 1. Échec, indice, puis bonne réponse : la cote reste celle de l'échec.
+  const id1 = (await lecteur.getAttribute('data-probleme'))!;
+  const r1 = REPONSES.get(id1)!;
+  await expect(plateau(page, r1.taille)).toBeVisible();
+  await coupFaux(page, id1, 1);
+  const apresEchec = await lireCote(page);
+  expect(apresEchec.cote).toBeLessThan(400);
+  await page.getByRole('button', { name: 'Voir un indice' }).click();
+  await jouer(page, r1.coup, r1.taille);
+  await expect(verdict.getByRole('button', { name: 'Problème suivant' })).toBeVisible();
+  const apresIndice = await lireCote(page);
+  expect(apresIndice.cote).toBe(apresEchec.cote);
+  expect(apresIndice.dernier.resultat).toBe('rate');
+
+  // 2. Le suivant, jamais le même : échec, puis trouvé seul. Réussite avec aide : la cote remonte un peu.
+  await verdict.getByRole('button', { name: 'Problème suivant' }).click();
+  await expect(lecteur).not.toHaveAttribute('data-probleme', id1);
+  const id2 = (await lecteur.getAttribute('data-probleme'))!;
+  const r2 = REPONSES.get(id2)!;
+  await expect(plateau(page, r2.taille)).toBeVisible();
+  await coupFaux(page, id2, 2);
+  const echec2 = await lireCote(page);
+  await jouer(page, r2.coup, r2.taille);
+  await expect(verdict.getByRole('button', { name: 'Problème suivant' })).toBeVisible();
+  const aide = await lireCote(page);
+  expect(aide.dernier.resultat).toBe('aide');
+  expect(aide.cote).toBeGreaterThan(echec2.cote);
+  await expect(verdict).not.toContainText(/cote/i);
 });
