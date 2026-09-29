@@ -29,4 +29,6 @@ Ne pas charger `supabase_minimal.sql` sur une vraie base Supabase : ces objets y
 - Vrai compte : toutes les actions ci-dessus restent permises, 20 défis en attente au plus.
 - Structure : les 9 politiques restrictives attendues sont présentes, RLS active sur chaque table.
 
+`purge_anonymes.test.sql` (issue #318) : moins de 60 jours refusé ; fonction inaccessible depuis l'app (anon, authenticated, service_role) ; anonyme inactif depuis 100 jours supprimé avec son profil ; gardés : vrai compte même inactif, session rafraîchie il y a 10 jours, connexion il y a 5 jours, partie modifiée il y a 20 jours, compte créé il y a 30 jours ; partie contre un vrai joueur gardée pour lui (il en devient créateur, la place de l'anonyme est vidée) ; partie sans adversaire supprimée ; second passage sans effet.
+
 Rappel : les fonctions `security definer` appartiennent à `postgres`, qui contourne la RLS (vrai aussi en production, `rolbypassrls`). Les politiques restrictives ne bloquent donc pas les fonctions ; celles-ci contrôlent l'anonyme dans leur corps.
