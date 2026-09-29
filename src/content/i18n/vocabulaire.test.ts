@@ -15,8 +15,10 @@ describe('boucle quotidienne : « série » et « Go du jour »', () => {
     expect(avec(/défis? du jour|un défi par jour/i)).toEqual([]);
   });
 
-  it('« défi » est réservé aux adversaires (défier, dernier défi de l’échelle)', () => {
-    expect(avec(/(^|[^\p{L}])défi(er|s)?([^\p{L}]|$)/iu)).toEqual(['adv.sensei.description', 'bilan.defier']);
+  it('« défi » est réservé aux adversaires (défier, dernier défi de l’échelle, ami défié par lien #81)', () => {
+    const cles = avec(/(^|[^\p{L}])défi(er|s)?([^\p{L}]|$)/iu);
+    expect(cles.filter(k => !k.startsWith('defi.'))).toEqual(['adv.sensei.description', 'bilan.defier']);
+    expect(cles.filter(k => k.startsWith('defi.')).length).toBeGreaterThan(0);
   });
 
   it('« record » seulement à partir de 2 jours ; avant, la légende parle de série', () => {

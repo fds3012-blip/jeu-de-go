@@ -76,6 +76,11 @@ export const EVENTS = {
   importSgfCommence: 'import_sgf_commence',
   importSgfReussi: 'import_sgf_reussi',
   importSgfErreur: 'import_sgf_erreur',
+  // Défi par lien (#81) : lien créé (`sans_compte`), lien ouvert par l'ami (`sans_compte`), e-mail lié à une session
+  // sans compte (`moment` : `apres_coup` sur l'écran de partie, `profil`). Coefficient viral : `defi_ouvert` / `defi_cree`.
+  defiCree: 'defi_cree',
+  defiOuvert: 'defi_ouvert',
+  defiInscription: 'defi_inscription',
   // Conseil de Mochi (#80) : phrase demandée (`modele`, `aucun` si rien de sûr), puis retour « utile / pas utile » (`utile`).
   conseilDemande: 'conseil_demande',
   conseilNote: 'conseil_note',
