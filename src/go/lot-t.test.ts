@@ -117,10 +117,12 @@ describe('lot T : identifiants, thèmes, doublons, calendrier, migration (issue 
     for (const p of all) expect(THEME_DU_PROBLEME[p.id], p.id).toBe(ATTENDU[p.id].theme);
   });
 
-  it('le Go du jour garde son ordre : le lot T, d’un seul tenant, vient juste après le lot S et ferme le calendrier', () => {
-    const ids = LOT_T.map(r => r.id);
-    expect(CALENDRIER_GO_DU_JOUR.slice(-ids.length)).toEqual(ids);
-    expect(CALENDRIER_GO_DU_JOUR.indexOf('t01')).toBe(CALENDRIER_GO_DU_JOUR.indexOf('s06') + 1);
+  it('le Go du jour garde son ordre : le lot T, d’un seul tenant, vient juste après le lot S et juste avant u01', () => {
+    const ids = LOT_T.map(r => r.id), i = CALENDRIER_GO_DU_JOUR.indexOf('t01');
+    expect(CALENDRIER_GO_DU_JOUR.slice(i, i + ids.length)).toEqual(ids);
+    expect(i).toBe(CALENDRIER_GO_DU_JOUR.indexOf('s06') + 1);
+    // Lot U (#136) : il suit le lot T.
+    expect(CALENDRIER_GO_DU_JOUR.indexOf('u01')).toBe(i + ids.length);
   });
 
   it('aucun doublon : ni identifiant, ni position (à une rotation ou un miroir près, marques ignorées) déjà utilisés', () => {
