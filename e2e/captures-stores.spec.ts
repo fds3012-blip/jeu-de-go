@@ -110,7 +110,7 @@ test('Go du jour résolu, avec la série', async ({ page }) => {
   await jouer(page, 'E5');
   await attendrePierre(page, 'E5', 'noir');
   await expect(page.getByRole('button', { name: /Partager/ }).first()).toBeVisible();
-  // La pastille « +30 XP » passe par-dessus le titre : on attend qu'elle parte.
+  // La pastille « +40 XP » passe par-dessus le titre : on attend qu'elle parte.
   await page.clock.runFor(10_000).catch(() => {});
   await expect(page.getByTestId('pastille-xp')).toHaveCount(0, { timeout: 10_000 });
   await brute(page, '06-go-du-jour');

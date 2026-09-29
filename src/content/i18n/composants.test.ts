@@ -63,14 +63,14 @@ describe('français identique aux textes d’origine', () => {
     expect(badges(vide).map(b => [b.id, b.nom, b.condition])).toEqual([
       ['premiere-partie', 'Première partie', 'Joue contre l’ordi.'],
       ['premier-probleme', 'Premier problème', 'Réussis un problème.'],
-      ['victoire-pomme', 'Pomme battue', 'Gagne contre Pomme.'],
+      ['victoire-pomme', 'Pomme battue', 'Bats Pomme ou plus fort.'],
       ['palier-debutant', 'Palier Débutant', 'Finis le palier Débutant.'],
       ['dix-problemes', '10 problèmes', 'Réussis 10 problèmes.'],
       ['palier-novice', 'Palier Novice', 'Finis le palier Novice.'],
       ['serie-7', '7 jours de série', 'Garde ta série 7 jours.'],
     ]);
     expect(badges(plein).every(b => b.obtenu)).toBe(true);
-    expect(traduire('fr', 'vitrine.aGagner', { nom: 'Pomme battue', condition: 'Gagne contre Pomme.' })).toBe('Pomme battue : à gagner. Gagne contre Pomme.');
+    expect(traduire('fr', 'vitrine.aGagner', { nom: 'Pomme battue', condition: 'Bats Pomme ou plus fort.' })).toBe('Pomme battue : à gagner. Bats Pomme ou plus fort.');
   });
 });
 

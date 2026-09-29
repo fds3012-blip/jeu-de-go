@@ -66,9 +66,12 @@ describe('gains', () => {
     expect(sourceXpProbleme({ dejaReussi: true, estDuJour: false, goDuJourDejaFait: false })).toBeNull();
   });
 
+  it('#233 (C8) : chaque première fois rapporte le même bonus, +20', () => {
+    expect(new Set(Object.values(BONUS_PREMIERE))).toEqual(new Set([20]));
+  });
   it('#233 : la révision est un problème pour le bonus « première fois » (pas de second bonus)', () => {
     expect(premiereDe('revision')).toBe('probleme');
-    expect(appliquer(0, 'revision', true)).toMatchObject({ points: 30, bonus: 10 });
+    expect(appliquer(0, 'revision', true)).toMatchObject({ points: 40, bonus: 20 });
     expect(appliquer(0, 'revision')).toMatchObject({ points: 20, bonus: 0 });
   });
 

@@ -315,7 +315,7 @@ export const en = {
   'badge.premier-probleme.nom': 'First puzzle',
   'badge.premier-probleme.condition': 'Solve a puzzle.',
   'badge.victoire-pomme.nom': 'Pomme beaten',
-  'badge.victoire-pomme.condition': 'Beat Pomme once.',
+  'badge.victoire-pomme.condition': 'Beat Pomme or anyone stronger.',
   'badge.palier-debutant.nom': 'Beginner tier',
   'badge.palier-debutant.condition': 'Clear the Beginner tier.',
   'badge.dix-problemes.nom': '10 puzzles',

@@ -337,7 +337,7 @@ export const fr = {
   'badge.premier-probleme.nom': 'Premier problème',
   'badge.premier-probleme.condition': 'Réussis un problème.',
   'badge.victoire-pomme.nom': 'Pomme battue',
-  'badge.victoire-pomme.condition': 'Gagne contre Pomme.',
+  'badge.victoire-pomme.condition': 'Bats Pomme ou plus fort.',
   'badge.palier-debutant.nom': 'Palier Débutant',
   'badge.palier-debutant.condition': 'Finis le palier Débutant.',
   'badge.dix-problemes.nom': '10 problèmes',
