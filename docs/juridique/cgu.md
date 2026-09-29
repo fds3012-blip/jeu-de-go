@@ -1,6 +1,8 @@
 # Conditions générales d'utilisation (issues #111 et #223)
 
-Projet rédigé par le responsable juridique (non-avocat) le 27 septembre 2026, mis à jour le 28 septembre 2026 (#223 : progression sur l'appareil, série envoyée à la connexion, installation de l'app, suppression du compte dans l'app). **À faire relire par un avocat avant la mise en production.** Les conditions de l'abonnement Premium feront l'objet d'un document séparé (conditions générales de vente) quand l'offre existera.
+> **Relecture obligatoire avant la mise en production.** Ce document est un projet préparé par le responsable juridique, qui n'est pas avocat. Il doit être relu et validé par un **avocat** avant d'être publié. Les champs « À COMPLÉTER PAR FLORIAN » doivent être remplis.
+
+Rédigé le 27 septembre 2026, mis à jour le 28 septembre 2026 (#223 : progression sur l'appareil, série envoyée à la connexion, installation de l'app, suppression du compte dans l'app) et le 29 septembre 2026 (#223 : défi par lien, jeu sans compte limité au défi, session sans compte effacée après 60 jours sans activité). Les conditions de l'abonnement Premium feront l'objet d'un document séparé (conditions générales de vente) quand l'offre existera.
 
 ## Pour Florian : champs à compléter avant publication
 
@@ -26,7 +28,7 @@ Elles fixent les règles pour utiliser le jeu (site et applications). En utilisa
 
 ## 3. Le service
 
-- Apprendre et jouer au go : leçons, problèmes, révision du jour, Go du jour, parties contre l'ordinateur, revue de tes parties, parties en ligne, badges, XP et séries de jours.
+- Apprendre et jouer au go : leçons, problèmes, révision du jour, Go du jour, course aux problèmes, parties contre l'ordinateur, revue et import de tes parties (fichiers SGF), parties en ligne et défis par lien (quand leurs écrans seront ouverts), badges, XP et séries de jours.
 - L'ordinateur (IA KataGo) calcule sur ton appareil. Sa force et ses conseils sont donnés à titre indicatif.
 - Le jeu est **gratuit**. Une offre Premium pourra s'y ajouter ; elle aura ses propres conditions, et ce qui est gratuit aujourd'hui sera signalé clairement si cela change.
 - Tu peux utiliser le jeu dans ton navigateur ou **l'installer** sur ton écran d'accueil. Le jeu peut te le proposer une fois ; tu es libre de refuser.
@@ -40,6 +42,7 @@ Elles fixent les règles pour utiliser le jeu (site et applications). En utilisa
 - Un compte par personne. Tu es responsable de ce qui se fait avec ton compte.
 - **Sans compte**, ta progression (leçons, problèmes, série, record, badges, XP) est gardée **seulement sur ton appareil**. Si tu effaces les données du site, changes d'appareil ou désinstalles l'app, elle est perdue : nous ne pouvons pas la retrouver.
 - **Avec un compte**, ta progression est aussi gardée sur notre serveur. À chaque connexion, la série de jours de ton appareil y est envoyée : le serveur garde la plus longue des deux et refuse une série impossible.
+- **Défi par lien sans compte** : si un ami t'envoie un défi, tu peux le jouer sans créer de compte. Le jeu ouvre alors une **session sans compte** (ni e-mail, ni pseudo). Elle sert seulement aux défis : en créer (3 en attente au plus), en rejoindre, y jouer. Elle est **effacée après 60 jours sans activité**, avec ses parties (celles contre un autre joueur restent pour lui, sous le nom « joueur supprimé »). Pour la garder, relie ton adresse e-mail : elle devient un compte, avec ta partie en cours.
 - Tu peux **supprimer ton compte à tout moment depuis l'app** (dans Profil, sous ton compte). C'est immédiat et définitif : ton profil, ta cote, ta série et ta progression sur le serveur sont effacés. Tes parties contre d'autres joueurs restent pour eux, sous le nom « joueur supprimé ». Le détail est dans la politique de confidentialité, section « Tes droits ».
 
 ## 5. Ton pseudo et ton comportement
@@ -54,6 +57,12 @@ En partie, sont interdits : l'usage d'un programme ou d'une aide extérieure pen
 ## 5 bis. Séries, XP, badges et cote
 
 Les séries de jours, gels de série, records, XP, niveaux, badges et la cote servent à suivre ta progression et à rendre le jeu plus motivant. Ils n'ont **aucune valeur en argent**, ne s'achètent pas, ne s'échangent pas et ne se revendent pas. Nous pouvons en changer les règles (par exemple le nombre de gels) pour garder le jeu juste ; nous corrigeons une valeur obtenue par une erreur du jeu ou par triche.
+
+## 5 ter. Défi par lien
+
+- Un défi est une partie 9 × 9 **non classée**, en différé. Le lien est personnel : ne le publie pas. Il ne sert qu'une fois, pour le premier ami qui l'ouvre, et plus du tout après 7 jours.
+- Chaque joueur a **3 jours par coup**. Passé ce délai, le joueur au trait **perd au temps**. Le serveur fait foi pour l'heure.
+- La partie n'est visible que par ses deux joueurs.
 
 ## 6. Ce qui se passe en cas d'abus
 
