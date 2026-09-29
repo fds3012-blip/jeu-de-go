@@ -21,4 +21,18 @@ export function createSupabase(env: Env): Db | null {
   }
 }
 
-export const supabase: Db | null = createSupabase(import.meta.env);
+/**
+ * Tests de bout en bout seulement (build VITE_E2E) : une adresse de Supabase simulé, posée dans le stockage local
+ * par le test (`e2e.supabase`), remplace celle de l'environnement. Le test intercepte alors tous les appels réseau.
+ * Absent des builds de production.
+ */
+function envDeTest(env: Env): Env {
+  if (!import.meta.env.VITE_E2E) return env;
+  try {
+    const url = localStorage.getItem('e2e.supabase');
+    if (url) return { VITE_SUPABASE_URL: url, VITE_SUPABASE_ANON_KEY: 'cle-publique-de-test' };
+  } catch { /* pas de stockage : environnement normal */ }
+  return env;
+}
+
+export const supabase: Db | null = createSupabase(envDeTest(import.meta.env));

@@ -70,6 +70,7 @@ Ces données sont écrites dans le stockage local (`localStorage`) de ton naviga
 | Explications déjà vues | `go.intro-but.v1`, `go.atari-explique.v1`, `go.komi-explique.v1`, `go.passer-explique.v1` | Pour ne pas répéter une explication |
 | Installation | `go.installation.v1`, `go.premiere-victoire.v1`, `go.retours.v1`, `go.annonce-du-jour.v1` | Proposition d'installer l'app déjà montrée, refusée ou acceptée ; repère de première victoire ; nombre de jours d'ouverture, pour proposer l'installation au 2e retour (#214) ; jour de la dernière annonce de Mochi, pour ne pas proposer l'installation le même jour (#236) |
 | Réseau de l'IA | Cache du navigateur `katago-reseaux-v1` | Le réseau de KataGo (fichier public), gardé pour jouer hors ligne. Aucune donnée personnelle |
+| Session de connexion | Stockage géré par Supabase (`sb-…-auth-token`) | Jeton de ta session : celle de ton compte, ou la session sans compte ouverte quand tu crées ou ouvres un défi par lien (#81). Rien d'autre (ni le lien du défi, ni tes coups) |
 | Suivi détaillé (PostHog) | Stockage géré par PostHog (`ph_…_posthog`) | Identifiant tiré au hasard. **Écrit seulement si tu as dit « Oui »** (section 3.3) |
 
 **Proposer d'installer l'app.** À partir de ton 2e jour de visite, l'app peut te proposer, **une seule fois** sur l'accueil, de l'installer sur ton écran d'accueil ; une ligne « Installer l'app » reste aussi dans le Profil. Pour savoir si c'est possible, elle lit sur l'appareil le type de navigateur et si l'app est déjà installée. Ces informations restent sur l'appareil ; seuls le fait que la carte a été montrée et, sur Chrome, ta réponse partent dans le comptage (section 3.3).
@@ -109,6 +110,7 @@ Ces données sont écrites dans le stockage local (`localStorage`) de ton naviga
 - progression : `xp_gagne`, `niveau_atteint` ;
 - installation : `installation_proposee`, `installation_acceptee` ;
 - compte : `lien_connexion_envoye`, `inscription`.
+- défi par lien : `defi_cree` (lien créé, avec ou sans compte), `defi_ouvert` (lien ouvert par l'ami, avec ou sans compte), `defi_inscription` (e-mail ajouté à une partie commencée sans compte) ; jamais le lien, ni l'identifiant de la partie, ni l'e-mail.
 
 Chaque événement porte aussi la version de l'app, l'environnement (`production`…) et le niveau de mesure en vigueur (`mesure` : `anonyme` ou `complet`). Certains portent des valeurs tirées de ta progression sur l'appareil : série de jours, record, jours manqués, gels, total d'XP, niveau, meilleur score de la course.
 

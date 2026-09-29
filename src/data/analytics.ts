@@ -66,6 +66,11 @@ export const EVENTS = {
   placementSaute: 'placement_saute',
   // Import d'une partie SGF réussi (#286) : `octets` (taille du texte), `coups`, `taille` (plateau), `source` (fichier ou texte).
   sgfImporte: 'sgf_importe',
+  // Défi par lien (#81) : lien créé (`sans_compte`), lien ouvert par l'ami (`sans_compte`), e-mail lié à une session
+  // sans compte (`moment` : `apres_coup` sur l'écran de partie, `profil`). Coefficient viral : `defi_ouvert` / `defi_cree`.
+  defiCree: 'defi_cree',
+  defiOuvert: 'defi_ouvert',
+  defiInscription: 'defi_inscription',
 } as const;
 export type AnalyticsEvent = (typeof EVENTS)[keyof typeof EVENTS];
 export type Props = Record<string, string | number | boolean | null | undefined>;
@@ -131,7 +136,27 @@ export function analyticsAvailable(): boolean {
  * niveaux. Contrairement à `register()`, ce réglage survit à `reset()`.
  */
 export function sansLocalisation<E extends { event?: string; properties?: Record<string, unknown> } | null>(ev: E): E {
-  if (ev) ev.properties = { ...ev.properties, $geoip_disable: true };
+  if (ev) ev.properties = { ...sansJetonDefi(ev.properties ?? {}), $geoip_disable: true };
+  return ev;
+}
+
+/**
+ * Défi par lien (#81, constat E14) : le jeton du lien (`#defi=…`) ne part jamais, ni dans `$current_url` ni ailleurs.
+ * L'app le retire de l'adresse dès le chargement (src/app/adresseDefi.ts) ; ceci est le filet de sécurité.
+ */
+const JETON_DEFI = /#defi=[^&\s]*/g;
+export function sansJetonDefi<T extends Record<string, unknown>>(props: T): T {
+  let change = false;
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(props)) {
+    if (typeof v === 'string' && v.includes('#defi=')) { out[k] = v.replace(JETON_DEFI, ''); change = true; } else out[k] = v;
+  }
+  return change ? (out as T) : props;
+}
+
+/** Même filet pour Sentry : adresse de la page dans l'événement d'erreur. */
+export function sentrySansJeton<E extends { request?: { url?: string } } | null>(ev: E): E {
+  if (ev?.request?.url) ev.request.url = ev.request.url.replace(JETON_DEFI, '');
   return ev;
 }
 
@@ -298,7 +323,7 @@ function loadSentry(): Promise<SentryLike | null> {
   if (!c.sentryDsn) return Promise.resolve(null);
   seLoading = import('@sentry/react').then(m => {
     const sentry = m as unknown as SentryLike;
-    sentry.init({ dsn: c.sentryDsn, release: c.release, environment: c.environment, sendDefaultPii: false });
+    sentry.init({ dsn: c.sentryDsn, release: c.release, environment: c.environment, sendDefaultPii: false, beforeSend: sentrySansJeton });
     if (userId) sentry.setUser({ id: userId });
     return sentry;
   }).catch(() => null);
