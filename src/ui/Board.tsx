@@ -1,9 +1,9 @@
 import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent, type ReactElement } from 'react';
 import { LETTERS, toLabel } from '../go/coords';
-import { groupAt, neighbors } from '../go/rules';
 import { C, M, R, R_NOIR, VARIANTES_COQUILLAGE, coordCenter, diffBoards, hoshi, jitter, shellStriae, shellVariant, viewBoxOf, woodDataUrl, type ThemeGoban } from './boardArt';
 import { useThemeGoban } from '../app/settings';
 import { t } from '../content/i18n';
+import { CURSEUR, TOUCHE_LIRE, annonceApresCoup, annonceConfirmation, deplacerCurseur, lirePlateau, nomIntersection, type NomsCamps } from './boardA11y';
 import './board.css';
 
 export interface BoardMarks {
@@ -49,8 +49,7 @@ interface Props {
   noms?: NomsCamps;
 }
 
-/** Nom de chaque camp pour le lecteur d'écran : 1 noir, 2 blanc. Un camp absent garde « Noir » ou « Blanc ». */
-export type NomsCamps = { 1?: string; 2?: string };
+// Les fonctions pures du clavier et des annonces (issue #116) vivent dans boardA11y.ts.
 
 // Couleurs posées sur le bois : indépendantes du mode Encre ou Papier (le goban est le même dans les deux).
 // L'encre des lignes et la nacre des pierres blanches viennent du thème du goban (#109, boardArt.ts).
@@ -100,73 +99,9 @@ function defsDe(t: ThemeGoban): ReactElement {
   return d;
 }
 
-// Clavier et lecteur d'écran (issue #116) : fonctions pures, testées sans DOM.
-
-/** Nouvelle position du curseur après une touche, ou null si la touche ne déplace pas le curseur. */
-export function deplacerCurseur(p: number, touche: string, size: number): number | null {
-  const x = p % size, y = Math.floor(p / size), fin = size - 1;
-  const en = (nx: number, ny: number) => Math.max(0, Math.min(fin, ny)) * size + Math.max(0, Math.min(fin, nx));
-  switch (touche) {
-    case 'ArrowLeft': return en(x - 1, y);
-    case 'ArrowRight': return en(x + 1, y);
-    case 'ArrowUp': return en(x, y - 1);
-    case 'ArrowDown': return en(x, y + 1);
-    case 'Home': return en(0, y);
-    case 'End': return en(fin, y);
-    case 'PageUp': return en(x, 0);
-    case 'PageDown': return en(x, fin);
-    default: return null;
-  }
-}
-
-/** Nom lu d'une intersection : « D4, vide », « D4, pierre noire » ou « D4, pierre blanche, dernier coup ». */
-export function nomIntersection(p: number, board: Int8Array, size: number, last = -1): string {
-  const c = board[p], point = toLabel(p, size);
-  const intersection = t(c === 1 ? 'plateau.pierreNoire' : c === 2 ? 'plateau.pierreBlanche' : 'plateau.vide', { point });
-  return c && p === last ? t('plateau.dernierCoup', { intersection }) : intersection;
-}
-
-/** Annonce polie d'un coup : « Noir joue D4 » ou « Blanc joue C3 et prend 2 pierres ». */
-export function annonceCoup(c: number, p: number, prises: number, size: number, noms: NomsCamps = {}): string {
-  // Un camp nommé dit « Pomme a joué C3 » : ne répète pas mot pour mot le message visible « Pomme joue C3. À toi. ».
-  const nom = c === 1 ? noms[1] : noms[2];
-  const point = toLabel(p, size);
-  const coup = nom ? t('plateau.aJoue', { nom, point }) : t('plateau.joue', { camp: t(c === 1 ? 'camp.noir' : 'camp.blanc'), point });
-  return prises ? t('plateau.prend', { coup, n: prises }) : coup;
-}
-
-/**
- * Atari après un coup en `p` : les groupes adverses voisins réduits à une seule liberté.
- * « Atari : ta pierre D4 n'a plus qu'une liberté, en D5. » (le mot est expliqué dans la phrase). Chaîne vide sinon.
- * Si le camp menacé a un nom (l'adversaire), la phrase le cite : « la pierre D4 de Pomme ».
- */
-export function annonceAtari(board: Int8Array, p: number, size: number, noms: NomsCamps = {}): string {
-  const c = board[p];
-  if (!c) return '';
-  const vus = new Set<number>(), phrases: string[] = [];
-  for (const q of neighbors(size)[p]) {
-    if (board[q] !== 3 - c || vus.has(q)) continue;
-    const g = groupAt(board, size, q);
-    g.stones.forEach(s => vus.add(s));
-    if (g.liberties.size !== 1) continue;
-    const lib = toLabel([...g.liberties][0], size);
-    const pts = g.stones.map(s => toLabel(s, size)).sort().join(', ');
-    const autre = c === 1 ? noms[2] : noms[1], plusieurs = g.stones.length > 1;
-    phrases.push(autre
-      ? t(plusieurs ? 'plateau.atari.pierresDe' : 'plateau.atari.pierreDe', { pierres: pts, nom: autre, liberte: lib })
-      : t(plusieurs ? 'plateau.atari.tesPierres' : 'plateau.atari.taPierre', { pierres: pts, liberte: lib }));
-  }
-  return phrases.join(' ');
-}
-
 /** Corps d'une pierre (sans ombre), centré sur (0, 0). */
 function corps(c: number, p: number, size: number): ReactElement {
   return <use href={c === 1 ? '#go-noire' : `#go-blanche-${shellVariant(p, size)}`} />;
-}
-
-/** Annonce après le premier Entrée quand la confirmation est active. */
-export function annonceConfirmation(label: string, toucher = false): string {
-  return t(toucher ? 'plateau.confirmer.choisir' : 'plateau.confirmer.poser', { point: label });
 }
 
 export function Board({ size, board, toPlay = 1, marks = {}, interactive = false, stonesTappable = false, confirmTouch = true, toucher = false, onPlay, shake, versCouvercles = false, noms }: Props) {
@@ -180,8 +115,12 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
   const [curseur, setCurseur] = useState(() => (size >> 1) * size + (size >> 1));
   const [focus, setFocus] = useState(false);
   const [clavier, setClavier] = useState(true);
-  const [annonce, setAnnonce] = useState('');
+  // Annonce polie. `n` change à chaque annonce : le texte est posé dans un nouvel élément de la zone aria-live,
+  // pour qu'une même phrase redemandée (« Lire le plateau » deux fois) soit relue.
+  const [annonce, setAnnonceEtat] = useState({ texte: '', n: 0 });
+  const setAnnonce = (texte: string) => setAnnonceEtat(a => ({ texte, n: a.n + 1 }));
   const cur = curseur < size * size ? curseur : (size >> 1) * size + (size >> 1);
+  const last = marks.last != null && marks.last >= 0 && board[marks.last] ? marks.last : -1;
   const vb = viewBoxOf(size);
   const X = (p: number) => M + (p % size) * C, Y = (p: number) => M + Math.floor(p / size) * C;
   // Position affichée d'une pierre : intersection + micro-décalage déterministe.
@@ -196,8 +135,7 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
     const d = diffBoards(prev, board);
     setFx({ n: fx.n + 1, placed: d ? d.placed : -1, leaving: d ? d.captured.map(p => ({ p, c: prev[p] })) : [] });
     if (jouable && d && d.placed >= 0 && board[d.placed]) {
-      const atari = annonceAtari(board, d.placed, size, noms);
-      setAnnonce(`${annonceCoup(board[d.placed], d.placed, d.captured.length, size, noms)}${atari ? `. ${atari}` : ''}`);
+      setAnnonce(annonceApresCoup(board, d.placed, d.captured.length, size, noms));
     }
   }
   useEffect(() => {
@@ -238,9 +176,11 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
     const n = deplacerCurseur(cur, e.key, size);
     if (n != null) {
       e.preventDefault();
-      if (n !== cur) { setCurseur(n); setGhost(-1); }
+      // La case est annoncée dans la zone polie : VoiceOver iOS ne suit pas toujours aria-activedescendant dans un SVG.
+      if (n !== cur) { setCurseur(n); setGhost(-1); setAnnonce(nomIntersection(n, board, size, last)); }
       return;
     }
+    if (e.key.toLowerCase() === TOUCHE_LIRE && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); lire(); return; }
     if (e.key !== 'Enter' && e.key !== ' ') return;
     e.preventDefault();
     if (!interactive || !onPlay) return;
@@ -250,6 +190,7 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
     setGhost(-1);
     onPlay(cur);
   }
+  function lire() { setAnnonce(lirePlateau(board, size)); }
   function onMove(e: PointerEvent) {
     if (!interactive || e.pointerType !== 'mouse') return;
     const p = pointFrom(e);
@@ -324,7 +265,6 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
       stroke={o === 1 ? 'rgba(255,240,210,.25)' : 'rgba(40,25,8,.45)'} strokeWidth={0.8} data-territoire={o === 1 ? 'noir' : 'blanc'} />);
   }
 
-  const last = marks.last != null && marks.last >= 0 && board[marks.last] ? marks.last : -1;
   const idCase = (p: number) => `${uid}-c${p}`;
   const cases = jouable ? Array.from({ length: size }, (_, y) => (
     <g key={`r${y}`} role="row">
@@ -341,7 +281,7 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
   return (
     <div className="board-wrap">
       <svg ref={ref} className="board" viewBox={`${vb.min} ${vb.min} ${vb.span} ${vb.span}`} role={jouable ? 'grid' : 'img'} aria-label={t('plateau.aria', { size })}
-        tabIndex={jouable ? 0 : undefined} aria-activedescendant={jouable ? idCase(cur) : undefined} aria-rowcount={jouable ? size : undefined} aria-colcount={jouable ? size : undefined}
+        tabIndex={jouable ? 0 : undefined} aria-describedby={jouable ? `${uid}-aide` : undefined} aria-activedescendant={jouable ? idCase(cur) : undefined} aria-rowcount={jouable ? size : undefined} aria-colcount={jouable ? size : undefined}
         onKeyDown={jouable ? onKey : undefined} onFocus={jouable ? () => setFocus(true) : undefined} onBlur={jouable ? () => setFocus(false) : undefined}
         onPointerDown={jouable ? () => setClavier(false) : undefined}
         onPointerUp={onUp} onPointerMove={onMove} onPointerLeave={onLeave}>
@@ -394,10 +334,11 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
           );
         })() : null}
         {jouable && focus && clavier ? (
-          // Curseur clavier : anneau jade doublé de jade foncé, lisible (3:1 au moins) sur le bois clair comme sur les pierres.
+          // Curseur clavier : carré arrondi (distinct des cercles « bon coup » et « dernier coup »), anneau jade sur un liseré
+          // presque noir. Au moins 3:1 sur tous les bois et sur les deux couleurs de pierres (boardA11y.test.ts). Aucune animation.
           <g fill="none" data-curseur={toLabel(cur, size)} aria-hidden="true">
-            <circle cx={X(cur)} cy={Y(cur)} r={C * 0.5} stroke={JADE_FONCE} strokeWidth={5.4} />
-            <circle cx={X(cur)} cy={Y(cur)} r={C * 0.5} stroke={JADE} strokeWidth={3} />
+            <rect x={X(cur) - C * 0.48} y={Y(cur) - C * 0.48} width={C * 0.96} height={C * 0.96} rx={C * 0.2} stroke={CURSEUR.lisere} strokeWidth={6.5} />
+            <rect x={X(cur) - C * 0.48} y={Y(cur) - C * 0.48} width={C * 0.96} height={C * 0.96} rx={C * 0.2} stroke={CURSEUR.anneau} strokeWidth={3} />
           </g>
         ) : null}
         {ghostP >= 0 ? <g {...fantome(ghostP)} opacity={0.5} data-fantome="" aria-hidden="true">{corps(toPlay, ghostP, size)}</g> : null}
@@ -405,7 +346,14 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
           <g key={`tr${shakeSeen}`} {...fantome(shaking)} opacity={0.5} aria-hidden="true"><g className="tremble">{corps(toPlay, shaking, size)}</g></g>
         ) : null}
       </svg>
-      {jouable ? <p className="sr-only" aria-live="polite" data-annonce-plateau="">{annonce}</p> : null}
+      {jouable ? (
+        <>
+          <p id={`${uid}-aide`} className="sr-only">{t('plateau.aide')}</p>
+          {/* « Lire le plateau » : caché jusqu'au focus (lecteur d'écran, Tab), pour garder une seule action visible à l'écran. */}
+          <button type="button" className="lire-plateau" onClick={lire}>{t('plateau.lire.bouton')}</button>
+          <p className="sr-only" aria-live="polite" data-annonce-plateau=""><span key={annonce.n}>{annonce.texte}</span></p>
+        </>
+      ) : null}
     </div>
   );
 }

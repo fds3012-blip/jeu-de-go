@@ -9,6 +9,7 @@ vi.mock('posthog-js', () => ({ default: posthog }));
 vi.mock('@sentry/react', () => sentry);
 
 import * as A from './analytics';
+import { posthogSansUrlSensible, sentryBreadcrumbSansUrlSensible, sentrySansUrlSensible } from './urlSensible';
 
 class MemoryStorage {
   private m = new Map<string, string>();
@@ -52,10 +53,10 @@ describe('sans localisation déduite de l’IP (#223, E2)', () => {
     asBrowser(); withKeys();
     A.track(A.EVENTS.appOuverte);
     await vi.waitFor(() => expect(posthog.init).toHaveBeenCalled());
-    expect(posthog.init.mock.calls[0][1].before_send).toBe(A.sansLocalisation);
-    expect(A.POSTHOG_COMPLET.before_send).toBe(A.sansLocalisation);
+    expect(posthog.init.mock.calls[0][1].before_send).toContain(A.sansLocalisation);
+    expect(A.POSTHOG_COMPLET.before_send).toContain(A.sansLocalisation);
     A.setConsent('accepte');
-    await vi.waitFor(() => expect(posthog.set_config).toHaveBeenCalledWith(expect.objectContaining({ before_send: A.sansLocalisation })));
+    await vi.waitFor(() => expect(posthog.set_config).toHaveBeenCalledWith(expect.objectContaining({ before_send: expect.arrayContaining([A.sansLocalisation]) })));
   });
 
   it('sansLocalisation garde les propriétés et laisse passer un événement déjà rejeté', () => {
@@ -283,6 +284,30 @@ describe('avec consentement', () => {
 
 it('prépare la constante probleme_resolu', () => {
   expect(A.EVENTS.problemeResolu).toBe('probleme_resolu');
+});
+
+describe('adresses sensibles jamais envoyées (E14)', () => {
+  it('PostHog : fragment désactivé, filtre d\'adresses avant la localisation, paramètres sensibles masqués', async () => {
+    asBrowser(); withKeys();
+    A.track(A.EVENTS.appOuverte);
+    await vi.waitFor(() => expect(posthog.init).toHaveBeenCalled());
+    const config = posthog.init.mock.calls[0][1];
+    expect(config.disable_capture_url_hashes).toBe(true);
+    expect(config.before_send).toEqual([posthogSansUrlSensible, A.sansLocalisation]);
+    expect(config.custom_personal_data_properties).toEqual(expect.arrayContaining(['access_token', 'refresh_token', 'code', 'defi']));
+    expect(A.POSTHOG_COMPLET.disable_capture_url_hashes).toBe(true);
+    expect(A.POSTHOG_COMPLET.before_send).toEqual([posthogSansUrlSensible, A.sansLocalisation]);
+  });
+
+  it('Sentry : beforeSend et beforeBreadcrumb nettoient les adresses', async () => {
+    asBrowser(); withKeys();
+    A.setConsent('accepte');
+    await vi.waitFor(() => expect(sentry.init).toHaveBeenCalled());
+    const options = sentry.init.mock.calls[0][0];
+    expect(options.beforeSend).toBe(sentrySansUrlSensible);
+    expect(options.beforeBreadcrumb).toBe(sentryBreadcrumbSansUrlSensible);
+    expect(options.sendDefaultPii).toBe(false);
+  });
 });
 
 describe('plan de marquage (issue #166)', () => {
