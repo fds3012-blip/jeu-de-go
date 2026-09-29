@@ -6,7 +6,7 @@ import { playAtari, playCapture, playDefeat, playIllegal, playStone, playVictory
 import { hapticAtari, hapticCapture, hapticDefeat, hapticIllegal, hapticStone, hapticVictory } from '../ui/haptics';
 import { score } from '../go/score';
 import { toLabel } from '../go/coords';
-import { bestMove, bestMoveExplique, estimateLead, estimateTerritoire, forceInitiale, niveauGuide, PERIODE_GUIDEE, proposeComptage, reglerForce, type Opponent } from '../engine';
+import { analyseConseil, bestMove, bestMoveExplique, estimateLead, estimateTerritoire, forceInitiale, niveauGuide, PERIODE_GUIDEE, proposeComptage, reglerForce, type Opponent } from '../engine';
 import { EVENTS, secondsSinceOpen, track, trackOnce } from '../data/analytics';
 import { gagnerXp, sourceXpPartie, type SourceXp } from './xp';
 import { supabase } from '../data/supabase';
@@ -24,7 +24,9 @@ import { ProposerInstallation } from '../ui/ProposerInstallation';
 import { noterVictoire } from './installation';
 import { RecitScore } from '../ui/RecitScore';
 import { mouvementsReduits } from '../ui/defilement';
-import { conseil as conseilMochi, phraseConseil } from '../engine/conseil';
+import { conseil as conseilMochi, phraseConseil, type ModeleConseil } from '../engine/conseil';
+import { conseilsRestants, proprietesDemande, proprietesNote } from './conseilMochi';
+import { BulleConseil, CalqueConseil } from '../ui/ConseilMochi';
 import { recitScore } from './score';
 import { Portrait, PortraitMochi, type Humeur } from '../ui/Portrait';
 
@@ -96,18 +98,39 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   // Libertés à montrer (atari) et zone d'indice : valables pour un seul état de l'historique.
   const [atari, setAtari] = useState<{ len: number; libs: number[] } | null>(null);
   const [indice, setIndice] = useState<{ len: number; p: number } | null>(null);
-  // Conseil de Mochi (#80) : une phrase et la zone entourée, pour un seul état de l'historique.
-  const [conseilVu, setConseilVu] = useState<{ len: number; zone: number[] } | null>(null);
+  // Conseil de Mochi (#80) : une phrase et la zone montrée par un calque, pour un seul état de l'historique ;
+  // `note` : réponse « utile / pas utile » (une seule par conseil). Conseils donnés dans la partie (limite gratuite préparée).
+  const [conseilVu, setConseilVu] = useState<{ len: number; zone: number[]; point: number | null; modele: ModeleConseil; phrase: string; note: 'utile' | 'pas-utile' | null } | null>(null);
+  const [conseilCalcul, setConseilCalcul] = useState(false);
+  const [conseilsUtilises, setConseilsUtilises] = useState(0);
   const [cherche, setCherche] = useState(false);
   // Indices donnés dans cette partie : limités à 3 contre l'ordi (#35), illimités à deux.
   const [indicesUtilises, setIndicesUtilises] = useState(0);
-  // Conseil de Mochi (#80) : calculé sur l'appareil par src/engine/conseil.ts (règles seules, instantané).
+  // Conseil de Mochi (#80) : calculé sur l'appareil par src/engine/conseil.ts, avec l'analyse de KataGo s'il est prêt
+  // (propriété, meilleurs coups, zone qui basculerait), sinon avec les règles seules. Aucun modèle de langage.
   function conseiller() {
-    if (!myTurn) return;
-    const c = conseilMochi(pos);
-    if (!c) { setConseilVu(null); setMsg(tr('conseil.aucun')); return; }
-    setConseilVu({ len: history.length, zone: c.zone });
-    setMsg(phraseConseil(c, size));
+    if (!myTurn || conseilCalcul) return;
+    if (conseilsRestants(conseilsUtilises) <= 0) { setConseilVu(null); setMsg(tr('conseil.limite')); return; }
+    const len = history.length, p = pos, t0 = performance.now();
+    setConseilCalcul(true);
+    setMsg(tr('conseil.cherche'));
+    const finir = (a: Awaited<ReturnType<typeof analyseConseil>>) => {
+      setConseilCalcul(false);
+      if (posAffichee.current !== p) return;
+      const c = conseilMochi(p, a ?? {});
+      track(EVENTS.conseilDemande, proprietesDemande(c?.modele ?? null, { taille: size, adversaire: ai?.id ?? 'deux', coup: len, katago: !!a, ms: performance.now() - t0 }));
+      setConseilsUtilises(u => u + 1);
+      if (!c) { setConseilVu(null); setMsg(tr('conseil.aucun')); return; }
+      const phrase = phraseConseil(c, size);
+      setConseilVu({ len, zone: c.zone, point: c.point, modele: c.modele, phrase, note: null });
+      setMsg(phrase);
+    };
+    analyseConseil(p, komi).then(finir, () => finir(null));
+  }
+  function noterConseil(utile: boolean) {
+    if (!conseilVu || conseilVu.note) return;
+    track(EVENTS.conseilNote, proprietesNote(conseilVu.modele, utile, { taille: size, adversaire: ai?.id ?? 'deux' }));
+    setConseilVu({ ...conseilVu, note: utile ? 'utile' : 'pas-utile' });
   }
   // « Qui mène ? » (#94) : carte des territoires et phrase, valables pour un seul état de l'historique, 3 s au plus.
   const [quiMene, setQuiMene] = useState<{ len: number; owner: Int8Array; phrase: string; n: number } | null>(null);
@@ -136,6 +159,9 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   const [relecture, setRelecture] = useState<number | null>(null);
   const [sgf, setSgf] = useState<string | null>(null);
   const pos = history[history.length - 1];
+  // Position affichée, lue par les réponses asynchrones (conseil de Mochi) : une réponse d'une autre position est ignorée.
+  const posAffichee = useRef(pos);
+  posAffichee.current = pos;
   const [conseilPasserA, setConseilPasserA] = useState<number | null>(null); // #120 : longueur d'historique au conseil « passer »
   const [frontieres, setFrontieres] = useState<AlerteFrontieres | null>(null); // #159 : frontières ouvertes montrées au passe
   const [avertiPasse, setAvertiPasse] = useState<number | null>(null); // #235 : longueur d'historique quand Mochi a prévenu avant un passe
@@ -415,13 +441,13 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   }
   /** « Rejouer d'ici » (revue) : la partie reprend, contre le même adversaire, depuis la position choisie. */
   function rejouer(h: Position[]) {
-    token.current++; atarisSubis.current = 0; setIndicesUtilises(0); setQuiMeneUtilises(0); setQuiMene(null);
+    token.current++; atarisSubis.current = 0; setIndicesUtilises(0); setQuiMeneUtilises(0); setQuiMene(null); setConseilsUtilises(0); setConseilVu(null);
     reprise.current = h.length > 1;
     setHistory(h); resume(); setResigned(0); setThinking(false); setRelecture(null); setSgf(null);
     setMsg(tr(h.length > 1 ? (ai ? 'partie.reprise.ordi' : 'partie.reprise.deux') : ai ? 'partie.nouvelle.ordi' : 'partie.nouvelle.deux'));
   }
   function restart() {
-    token.current++; atarisSubis.current = 0; setIndicesUtilises(0); setQuiMeneUtilises(0); setQuiMene(null);
+    token.current++; atarisSubis.current = 0; setIndicesUtilises(0); setQuiMeneUtilises(0); setQuiMene(null); setConseilsUtilises(0); setConseilVu(null);
     reprise.current = false;
     setHistory([newPosition(size)]); resume(); setResigned(0); setThinking(false); setRelecture(null);
     setMsg(tr(ai ? 'partie.nouvelle.ordi' : 'partie.nouvelle.deux'));
@@ -547,7 +573,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   const lead = ai ? avanceBarre(phase, estimation?.lead ?? null, sc) : null;
   const libs = atari && atari.len === history.length && phase === 'play' ? atari.libs : undefined;
   const zone = indice && indice.len === history.length && phase === 'play' ? indice.p : undefined;
-  const zoneConseil = conseilVu && conseilVu.len === history.length && phase === 'play' ? conseilVu.zone : undefined;
+  const conseilVisible = conseilVu && conseilVu.len === history.length && phase === 'play' ? conseilVu : null;
   // Ta capture reste affichée pendant que Pomme réfléchit (#187) : le « Bravo » ne s'efface qu'à sa réponse.
   const feteVisible = fete && fete.len === history.length && phase === 'play' ? fete : null;
   const pense = phase === 'play' && thinking && !!ai && !feteVisible;
@@ -563,7 +589,8 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
       {ai && avantage && (!estimationKo || phase === 'score') && <BarreAvantage libelle={lead === null ? '' : libelleAvantage(lead)} part={lead === null ? 0.5 : partNoir(lead, size)} titre={phase === 'score' ? tr('partie.scoreCompte') : undefined} />}
       <div className="partie-plateau">
         <Board size={size} board={pos.board} toPlay={pos.toPlay} interactive={phase === 'score' || myTurn} stonesTappable={phase === 'score'} confirmTouch={confirmTouch}
-          marks={{ last: pos.lastMove, owner: phase === 'score' ? sc.owner : quiMeneVisible?.owner, ownerFondu: !!quiMeneVisible, dead, libs, zone, conseil: zoneConseil, ouverts: phase === 'play' ? frontieresVisibles(frontieres, history.length, pos.board, size, !!ai) : undefined }} onPlay={onPlay} shake={shake} versCouvercles noms={ai ? { 2: ai.nom } : undefined} />
+          marks={{ last: pos.lastMove, owner: phase === 'score' ? sc.owner : quiMeneVisible?.owner, ownerFondu: !!quiMeneVisible, dead, libs, zone, ouverts: phase === 'play' ? frontieresVisibles(frontieres, history.length, pos.board, size, !!ai) : undefined }} onPlay={onPlay} shake={shake} versCouvercles noms={ai ? { 2: ai.nom } : undefined} />
+        {conseilVisible && <CalqueConseil size={size} zone={conseilVisible.zone} point={conseilVisible.point} />}
         {quiMeneVisible && <p key={quiMeneVisible.n} className="qui-mene-phrase" aria-hidden="true">{fr(quiMeneVisible.phrase)}</p>}
         {/* Zones d'annonce permanentes (audit web, points 3 et 4) : seul leur texte change, pour être lues à coup sûr. */}
         <p className="sr-only" role="status" data-annonce="qui-mene">{quiMeneVisible ? fr(quiMeneVisible.phrase) : ''}</p>
@@ -574,7 +601,9 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
       {/* Zone de Mochi de hauteur fixe (#187) : la bulle d'intro garde sa place après le premier coup, le plateau ne bouge pas. */}
       <div className="partie-mochi">
         {intro && phase === 'play' && <div className="coach-intro" aria-hidden={!montrerIntro || undefined} data-cache={!montrerIntro || undefined}>{intro}</div>}
-        {!montrerIntro && !avertissementPasse && !quitter && <Coach cle={messageCoach} attente={pense}
+        {!montrerIntro && !avertissementPasse && !quitter && conseilVisible && !pense && messageCoach === conseilVisible.phrase
+          && <BulleConseil phrase={conseilVisible.phrase} cle={conseilVisible.len} note={conseilVisible.note} onNote={noterConseil} />}
+        {!montrerIntro && !avertissementPasse && !quitter && !(conseilVisible && !pense && messageCoach === conseilVisible.phrase) && <Coach cle={messageCoach} attente={pense}
           humeur={pense ? 'pensif' : feteVisible || humeur.h === 'surpris' ? 'content' : 'neutre'}>{fr(messageCoach)}</Coach>}
         {/* Avant un passe trop tôt (#235) : la bulle et ses deux choix montent au-dessus de ton bandeau, rien ne bouge. */}
         {avertissementPasse && (
@@ -592,7 +621,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
           { label: tr(cherche ? 'partie.action.indiceCours' : 'partie.action.indice'), icone: ai ? <CompteurIndices restants={restants}><Icone nom="indice" /></CompteurIndices> : <Icone nom="indice" />,
             onClick: hint, disabled: !myTurn || cherche || restants <= 0, description: ai ? descriptionIndices(restants) : undefined },
           ...(ai && aide ? [{ label: tr('partie.action.conseil'), action: 'conseil', icone: <PortraitMochi humeur="neutre" taille={26} decoratif />,
-            onClick: conseiller, disabled: !myTurn }] : []),
+            onClick: conseiller, disabled: !myTurn || conseilCalcul }] : []),
           ...(avecQuiMene ? [{ label: fr(tr('partie.action.quiMene')), action: 'qui-mene',
             icone: ai ? <CompteurIndices restants={quiMeneReste}><Icone nom="quimene" /></CompteurIndices> : <Icone nom="quimene" />,
             onClick: quiMeneToucher, disabled: !quiMeneVisible && (quiMeneCalcul || quiMeneReste <= 0),

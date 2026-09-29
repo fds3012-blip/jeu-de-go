@@ -332,6 +332,26 @@ export async function meilleurCoup(pos: Position, komi: number): Promise<Conseil
   } catch { return { katago: false }; }
 }
 
+/**
+ * Analyse pour le Conseil de Mochi (#80) : ce que `conseil()` (src/engine/conseil.ts) attend de KataGo.
+ * Deux recherches courtes (moins de 2 s en tout sur 9 × 9) : la position telle quelle (propriété, meilleurs coups)
+ * et la même position avec l'adversaire au trait (propriété s'il jouait maintenant, sa menace).
+ * KataGo seulement s'il est déjà prêt : jamais de téléchargement pour un conseil. `null` sans KataGo :
+ * l'écran se contente alors des modèles qui ne demandent que les règles.
+ */
+export interface AnalyseConseil { propriete: Float32Array; coups: number[]; proprieteSiTuPasses: Float32Array; menace: number }
+export async function analyseConseil(pos: Position, komi: number): Promise<AnalyseConseil | null> {
+  const k = kataGoRevue() ?? null;
+  if (!k || k.info.state !== 'pret') return null;
+  try {
+    const opts = { komi, visits: 24, timeMs: 800, maxMoves: 5 };
+    const a = await k.analyze(pos, opts);
+    const eux: Position = { ...pos, toPlay: (3 - pos.toPlay) as 1 | 2, ko: -1, lastMove: -1 };
+    const b = await k.analyze(eux, opts);
+    return { propriete: a.ownership, coups: a.moves.map(m => m.move), proprieteSiTuPasses: b.ownership, menace: b.moves[0]?.move ?? -1 };
+  } catch { return null; }
+}
+
 // Partie guidée (#79) : réglage de la force de Mochi tous les 10 coups, selon l'écart estimé.
 export { CRAN_DEPART, cranDuNiveau, cranSuivant, forceInitiale, momentDeReglage, niveauGuide, PERIODE_GUIDEE, reglerForce } from './guidee';
 export type { AnnonceGuidee, ForceGuidee } from './guidee';

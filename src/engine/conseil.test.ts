@@ -3,6 +3,7 @@ import { conseil, MODELES, phraseConseil, reglesCoin, type ConseilMochi, type Mo
 import { fromRows } from '../go/position';
 import { fromLabel, toLabel } from '../go/coords';
 import { boardKey, groupAt, newPosition, play, type Color, type Position } from '../go/rules';
+import { hasTwoEyes } from '../go/tactics';
 import { traduire } from '../content/i18n';
 
 /** Plateau `n` × `n` avec des pierres données en coordonnées affichées. */
@@ -78,8 +79,8 @@ const fixtures: Fixture[] = [
     attendu: { modele: 'peu-de-libertes', point: 'B1', zone: ['A1', 'B1', 'C1'], fr: "Ton groupe en B1 a peu de libertés : donne-lui de l'air." } },
   { nom: 'même forme en 19 × 19', pos: plateau(19, ['B1'], ['B2']),
     attendu: { modele: 'peu-de-libertes', point: 'B1', zone: ['A1', 'B1', 'C1'], fr: "Ton groupe en B1 a peu de libertés : donne-lui de l'air." } },
-  { nom: 'deux libertés mais deux yeux : aucune menace', pos: plateau(9, ['A2', 'B2', 'C2', 'D2', 'B1', 'D1'], ['A3', 'B3', 'C3', 'D3', 'E2', 'E1']),
-    attendu: null, jamais: ['atari-joueur', 'peu-de-libertes'] },
+  { nom: 'deux libertés mais deux yeux : aucune menace (seulement : ne remplis pas ton œil)', pos: plateau(9, ['A2', 'B2', 'C2', 'D2', 'B1', 'D1'], ['A3', 'B3', 'C3', 'D3', 'E2', 'E1']),
+    attendu: { modele: 'coup-a-eviter', point: 'A1', zone: ['A1', 'A2', 'B1', 'B2', 'C2', 'D1', 'D2'], fr: 'Ne joue pas en A1 : tes pierres seraient en atari, prêtes à être prises.' }, jamais: ['atari-joueur', 'peu-de-libertes'] },
   { nom: 'deux libertés mais déjà perdu : pas de « donne-lui de l’air »', pos: plateau(9, ['B1'], ['A2', 'B2', 'C2']),
     attendu: { modele: 'coin-libre', point: null, zone: ['F6', 'F7', 'G6', 'G7'], fr: "Un coin est encore libre : les coins d'abord." }, jamais: ['atari-joueur', 'peu-de-libertes'] },
   { nom: 'deux libertés vers le large : pas menacé', pos: plateau(9, ['E5', 'B2', 'H2', 'H8', 'B7'], ['E6', 'D5', 'C7']),
@@ -143,8 +144,143 @@ fixtures.push({
   attendu: null, jamais: ['atari-joueur'],
 });
 
+// ---------- Modèles ajoutés (#80, suite) : au moins 5 positions positives par modèle, et des positions pièges ----------
+
+/** Propriété `n` × `n` donnée par une fonction de (x, y), y depuis le haut. */
+const propriete = (n: number, f: (x: number, y: number) => number) => Float32Array.from({ length: n * n }, (_, p) => f(p % n, Math.floor(p / n)));
+const coups = (n: number, ...ls: string[]) => ls.map(l => fromLabel(l, n));
+const lettres = (xs: string, lignes: number[]) => [...xs].flatMap(c => lignes.map(l => `${c}${l}`));
+
+const UN_OEIL = "Ton groupe en B3 n'a qu'un œil (un trou fermé) : il en faut deux pour vivre.";
+const oeilCoin = ['.........', '.........', '.........', '.........', '.........', 'OOOO.....', 'XXXO.....', 'X.X......', 'XXX......'];
+const oeil13 = ['.............', '.............', '.............', '.............', '.............', '.............', '.............', '.............', '.............', '.....XXXX....', '.....OOOX....', '.....O.O.....', '.....OOO.....'];
+const oeilHaut = ['....XXX..', '....X.X..', '....XXX..', '....OOO..', '.........', '.........', '.........', '.........', '.........'];
+const deuxYeux = () => plateau(9, ['A2', 'B2', 'C2', 'D2', 'B1', 'D1'], ['A3', 'B3', 'C3', 'D3', 'E2', 'E1']);
+const deuxYeuxBord = (n: number, trait: Color = 1) => {
+  const [a, b] = trait === 1 ? [['E1', 'G1', 'J1', 'E2', 'F2', 'G2', 'H2', 'J2'], ['D1', 'D2', 'E3', 'F3', 'G3', 'H3', 'J3', 'K2', 'K1']] : [['D1', 'D2', 'E3', 'F3', 'G3', 'H3', 'J3', 'K2', 'K1'], ['E1', 'G1', 'J1', 'E2', 'F2', 'G2', 'H2', 'J2']];
+  return plateau(n, a, b, trait);
+};
+const EVITER = (p: string) => `Ne joue pas en ${p} : tes pierres seraient en atari, prêtes à être prises.`;
+
+// Zone à défendre : Noir tient la gauche, Blanc la droite ; si Blanc jouait, le bas à gauche basculerait.
+const gaucheDroite = propriete(9, x => (x < 4 ? 0.9 : x > 4 ? -0.9 : 0));
+const basGaucheBascule = propriete(9, (x, y) => (x < 4 && y >= 6 ? -0.6 : x < 4 ? 0.9 : x > 4 ? -0.9 : 0));
+const basDroiteBascule = propriete(9, (x, y) => (x > 4 && y >= 6 ? 0.6 : x < 4 ? 0.9 : x > 4 ? -0.9 : 0));
+const huit = () => plateau(9, huitPierresHorsE.noirs, huitPierresHorsE.blancs);
+const ZONE_BG = lettres('ABCD', [1, 2, 3]);
+const ZONE_BD = lettres('FGHJ', [1, 2, 3]);
+const DEFENDRE = (p: string) => `Protège ta zone vers ${p} : ton adversaire pourrait la prendre.`;
+const quatreCoins19 = () => plateau(19, ['D4', 'Q16'], ['D16', 'Q4']);
+
+fixtures.push(
+  // 4. Un seul œil
+  { nom: 'un seul œil dans le coin, deux libertés dehors', pos: fromRows(oeilCoin).pos,
+    attendu: { modele: 'un-seul-oeil', point: 'B3', zone: ['A1', 'A2', 'A3', 'B1', 'B2', 'B3', 'C1', 'C2', 'C3'], fr: UN_OEIL } },
+  { nom: 'un seul œil de deux points', pos: fromRows(['.........', '.........', '.........', '.........', '.........', 'OOOOO....', 'XXXXO....', 'X..X.....', 'XXXX.....']).pos,
+    attendu: { modele: 'un-seul-oeil', point: 'B3', zone: ['A1', 'A2', 'A3', 'B1', 'B2', 'B3', 'C1', 'C2', 'C3', 'D1', 'D2', 'D3'], fr: UN_OEIL } },
+  { nom: 'un seul œil, Blanc au trait', pos: fromRows(oeilCoin.map(r => r.replace(/[XO]/g, c => (c === 'X' ? 'O' : 'X'))), 2).pos,
+    attendu: { modele: 'un-seul-oeil', point: 'B3', zone: ['A1', 'A2', 'A3', 'B1', 'B2', 'B3', 'C1', 'C2', 'C3'], fr: UN_OEIL } },
+  { nom: 'un seul œil en 13 × 13, propriété incertaine', pos: fromRows(oeil13, 2).pos, options: { propriete: new Float32Array(169) },
+    attendu: { modele: 'un-seul-oeil', point: 'G3', zone: ['F1', 'F2', 'F3', 'G1', 'G2', 'G3', 'H1', 'H2', 'H3'], fr: "Ton groupe en G3 n'a qu'un œil (un trou fermé) : il en faut deux pour vivre." } },
+  { nom: 'un seul œil en haut, propriété incertaine', pos: fromRows(oeilHaut).pos, options: { propriete: new Float32Array(81).fill(0.2) },
+    attendu: { modele: 'un-seul-oeil', point: 'F9', zone: ['E7', 'E8', 'E9', 'F7', 'F8', 'F9', 'G7', 'G8', 'G9'], fr: "Ton groupe en F9 n'a qu'un œil (un trou fermé) : il en faut deux pour vivre." } },
+  { nom: 'un seul œil mais au large, sans propriété : pas « en danger »', pos: fromRows(oeilHaut).pos, attendu: null, jamais: ['un-seul-oeil'] },
+  { nom: 'un seul œil, KataGo le dit vivant (relié ailleurs)', pos: fromRows(oeil13, 2).pos, options: { propriete: new Float32Array(169).fill(-0.9) },
+    attendu: null, jamais: ['un-seul-oeil'] },
+  { nom: 'un seul œil, KataGo le dit déjà mort', pos: fromRows(oeil13, 2).pos, options: { propriete: new Float32Array(169).fill(0.9) },
+    attendu: null, jamais: ['un-seul-oeil'] },
+  { nom: 'faux œil au bord : ce n’est pas un œil', pos: fromRows(['.........', '.........', '.........', '.........', '.........', '.........', 'XX.......', 'XXO......', 'X.X......']).pos,
+    jamais: ['un-seul-oeil'], attendu: null },
+  { nom: 'deux yeux : jamais « un seul œil »', pos: deuxYeux(), jamais: ['un-seul-oeil'],
+    attendu: { modele: 'coup-a-eviter', point: 'A1', zone: ['A1', 'A2', 'B1', 'B2', 'C2', 'D1', 'D2'], fr: EVITER('A1') } },
+  { nom: 'une seule liberté dehors : plus la place pour un deuxième œil', pos: fromRows(['.........', '.........', '.........', '.........', '.........', '.OOOO....', 'OXXXXO...', 'OX..XO...', '.XXXXO...']).pos,
+    attendu: null, jamais: ['un-seul-oeil'] },
+
+  // 5. Zone à défendre (propriété avant et après un coup de l'adversaire)
+  { nom: 'le bas à gauche basculerait : défendre vers la menace', pos: huit(),
+    options: { propriete: gaucheDroite, proprieteSiTuPasses: basGaucheBascule, coups: coups(9, 'D2'), menace: fromLabel('D2', 9) },
+    attendu: { modele: 'zone-a-defendre', point: 'D2', zone: ZONE_BG, fr: DEFENDRE('D2') } },
+  { nom: 'menace loin de la zone : on nomme le centre de la zone', pos: huit(),
+    options: { propriete: gaucheDroite, proprieteSiTuPasses: basGaucheBascule, coups: coups(9, 'C2'), menace: fromLabel('H8', 9) },
+    attendu: { modele: 'zone-a-defendre', point: 'B2', zone: ZONE_BG, fr: DEFENDRE('B2') } },
+  { nom: 'Blanc au trait : le bas à droite basculerait', pos: { ...huit(), toPlay: 2 },
+    options: { propriete: gaucheDroite, proprieteSiTuPasses: basDroiteBascule, coups: coups(9, 'G2'), menace: fromLabel('G2', 9) },
+    attendu: { modele: 'zone-a-defendre', point: 'G2', zone: ZONE_BD, fr: DEFENDRE('G2') } },
+  { nom: '19 × 19 : le coin en bas à gauche basculerait', pos: quatreCoins19(),
+    options: { propriete: propriete(19, x => (x < 9 ? 0.8 : -0.8)), proprieteSiTuPasses: propriete(19, (x, y) => (x < 9 && y >= 14 ? -0.5 : x < 9 ? 0.8 : -0.8)),
+      coups: coups(19, 'C6'), menace: fromLabel('C3', 19) },
+    attendu: { modele: 'zone-a-defendre', point: 'C3', zone: lettres('ABCDEFGHJ', [1, 2, 3, 4, 5]), fr: DEFENDRE('C3') } },
+  { nom: '13 × 13 : le haut à gauche basculerait', pos: plateau(13, ['D10', 'D4'], ['K10', 'K4']),
+    options: { propriete: propriete(13, x => (x < 6 ? 0.7 : x > 6 ? -0.7 : 0)), proprieteSiTuPasses: propriete(13, (x, y) => (x < 6 && y < 3 ? -0.4 : x < 6 ? 0.7 : x > 6 ? -0.7 : 0)),
+      coups: coups(13, 'C12'), menace: fromLabel('C11', 13) },
+    attendu: { modele: 'zone-a-defendre', point: 'C11', zone: lettres('ABCDEF', [11, 12, 13]), fr: DEFENDRE('C11') } },
+  { nom: 'KataGo joue ailleurs : pas de « protège »', pos: huit(),
+    options: { propriete: gaucheDroite, proprieteSiTuPasses: basGaucheBascule, coups: coups(9, 'H8'), menace: fromLabel('D2', 9) },
+    attendu: { modele: 'zone-a-prendre', point: 'E5', zone: lettres('E', [1, 2, 3, 4, 5, 6, 7, 8, 9]), fr: 'La zone en E5 est encore à prendre.' }, jamais: ['zone-a-defendre'] },
+  { nom: 'zone qui bascule trop petite (2 points)', pos: huit(),
+    options: { propriete: gaucheDroite, proprieteSiTuPasses: propriete(9, (x, y) => (x === 3 && y >= 7 ? -0.6 : x < 4 ? 0.9 : x > 4 ? -0.9 : 0)), coups: coups(9, 'D2') },
+    attendu: { modele: 'zone-a-prendre', point: 'E5', zone: lettres('E', [1, 2, 3, 4, 5, 6, 7, 8, 9]), fr: 'La zone en E5 est encore à prendre.' }, jamais: ['zone-a-defendre'] },
+  { nom: 'sans l’analyse « si tu passes » : pas de zone à défendre', pos: huit(), options: { propriete: gaucheDroite, coups: coups(9, 'D2') },
+    attendu: { modele: 'zone-a-prendre', point: 'E5', zone: lettres('E', [1, 2, 3, 4, 5, 6, 7, 8, 9]), fr: 'La zone en E5 est encore à prendre.' }, jamais: ['zone-a-defendre'] },
+  { nom: 'le bord basculerait mais ce sont les pierres adverses : rien à défendre', pos: huit(),
+    options: { propriete: propriete(9, () => -0.9), proprieteSiTuPasses: propriete(9, () => -0.9), coups: coups(9, 'D2') }, attendu: null, jamais: ['zone-a-defendre'] },
+
+  // 6. Coup à éviter (auto-atari)
+  { nom: 'remplir son propre œil (coin)', pos: deuxYeux(),
+    attendu: { modele: 'coup-a-eviter', point: 'A1', zone: ['A1', 'A2', 'B1', 'B2', 'C2', 'D1', 'D2'], fr: EVITER('A1') } },
+  { nom: 'A1 est un coup de KataGo : on montre l’autre œil', pos: deuxYeux(), options: { coups: coups(9, 'A1') },
+    attendu: { modele: 'coup-a-eviter', point: 'C1', zone: ['A2', 'B1', 'B2', 'C1', 'C2', 'D1', 'D2'], fr: EVITER('C1') } },
+  { nom: 'les deux yeux sont des coups de KataGo : aucun « ne joue pas »', pos: deuxYeux(), options: { coups: coups(9, 'A1', 'C1') },
+    attendu: null, jamais: ['coup-a-eviter'] },
+  { nom: 'remplir son œil sur le bord, 13 × 13', pos: deuxYeuxBord(13),
+    attendu: { modele: 'coup-a-eviter', point: 'F1', zone: ['E1', 'E2', 'F1', 'F2', 'G1', 'G2', 'H2', 'J1', 'J2'], fr: EVITER('F1') } },
+  { nom: 'remplir son œil sur le bord, 19 × 19', pos: deuxYeuxBord(19),
+    attendu: { modele: 'coup-a-eviter', point: 'F1', zone: ['E1', 'E2', 'F1', 'F2', 'G1', 'G2', 'H2', 'J1', 'J2'], fr: EVITER('F1') } },
+  { nom: 'remplir son œil, Blanc au trait', pos: deuxYeuxBord(13, 2),
+    attendu: { modele: 'coup-a-eviter', point: 'F1', zone: ['E1', 'E2', 'F1', 'F2', 'G1', 'G2', 'H2', 'J1', 'J2'], fr: EVITER('F1') } },
+  { nom: 'une seule pierre en atari après le coup : pas de « ne joue pas » (moins de deux pierres)', pos: plateau(9, ['E5'], ['E6', 'D5']),
+    attendu: { modele: 'coin-libre', point: null, zone: ['F6', 'F7', 'G6', 'G7'], fr: "Un coin est encore libre : les coins d'abord." }, jamais: ['coup-a-eviter'] },
+
+  // 7. Grand coup (meilleur coup de KataGo dans un coin ou sur un bord encore vide)
+  { nom: '9 × 9 vide, KataGo joue C3 : coin en bas à gauche', pos: newPosition(9), options: { coups: coups(9, 'C3') },
+    attendu: { modele: 'grand-coup', point: null, zone: lettres('ABCDE', [1, 2, 3, 4, 5]), fr: 'Le plus grand coup est dans le coin en bas à gauche, encore vide.' } },
+  { nom: '19 × 19, KataGo joue Q16 : coin en haut à droite', pos: plateau(19, ['D4'], ['D16']), options: { coups: coups(19, 'Q16') },
+    attendu: { modele: 'grand-coup', point: null, zone: lettres('OPQRS', [14, 15, 16, 17, 18]), fr: 'Le plus grand coup est dans le coin en haut à droite, encore vide.' } },
+  { nom: '19 × 19, quatre coins pris, KataGo joue K4 : bord du bas', pos: quatreCoins19(), options: { coups: coups(19, 'K4') },
+    attendu: { modele: 'grand-coup', point: null, zone: lettres('HJKLM', [2, 3, 4, 5, 6]), fr: 'Le plus grand coup est sur le bord du bas, encore vide.' } },
+  { nom: '19 × 19, KataGo joue C10 : bord de gauche', pos: quatreCoins19(), options: { coups: coups(19, 'C10') },
+    attendu: { modele: 'grand-coup', point: null, zone: lettres('ABCDE', [8, 9, 10, 11, 12]), fr: 'Le plus grand coup est sur le bord de gauche, encore vide.' } },
+  { nom: '13 × 13, KataGo joue K10 : coin en haut à droite', pos: plateau(13, ['D4'], ['D10']), options: { coups: coups(13, 'K10') },
+    attendu: { modele: 'grand-coup', point: null, zone: lettres('HJKLM', [8, 9, 10, 11, 12]), fr: 'Le plus grand coup est dans le coin en haut à droite, encore vide.' } },
+  { nom: 'KataGo joue au centre : pas de « coin », on retombe sur le coin libre', pos: newPosition(9), options: { coups: coups(9, 'E5') },
+    attendu: { modele: 'coin-libre', point: null, zone: ['F6', 'F7', 'G6', 'G7'], fr: "Un coin est encore libre : les coins d'abord." }, jamais: ['grand-coup'] },
+  { nom: 'KataGo passe : pas de grand coup', pos: newPosition(9), options: { coups: [-1] },
+    attendu: { modele: 'coin-libre', point: null, zone: ['F6', 'F7', 'G6', 'G7'], fr: "Un coin est encore libre : les coins d'abord." }, jamais: ['grand-coup'] },
+  { nom: 'coin pas vide autour du coup : pas « encore vide »', pos: plateau(9, ['C3'], [], 1), options: { coups: coups(9, 'B4') },
+    attendu: { modele: 'coin-libre', point: null, zone: ['F6', 'F7', 'G6', 'G7'], fr: "Un coin est encore libre : les coins d'abord." }, jamais: ['grand-coup'] },
+
+  // Compléments : au moins 5 positions positives pour « peu de libertés » et « zone à prendre »
+  { nom: 'peu de libertés : Blanc au trait', pos: plateau(9, ['B2'], ['B1'], 2),
+    attendu: { modele: 'peu-de-libertes', point: 'B1', zone: ['A1', 'B1', 'C1'], fr: "Ton groupe en B1 a peu de libertés : donne-lui de l'air." } },
+  { nom: 'peu de libertés : 13 × 13', pos: plateau(13, ['B1'], ['B2']),
+    attendu: { modele: 'peu-de-libertes', point: 'B1', zone: ['A1', 'B1', 'C1'], fr: "Ton groupe en B1 a peu de libertés : donne-lui de l'air." } },
+  { nom: 'peu de libertés : deux pierres au bord', pos: plateau(9, ['B1', 'C1'], ['B2', 'C2']),
+    attendu: { modele: 'peu-de-libertes', point: 'B1', zone: ['A1', 'B1', 'C1', 'D1'], fr: "Ton groupe en B1 a peu de libertés : donne-lui de l'air." } },
+  { nom: 'zone à prendre : ligne 6 neutre', pos: huit(), options: { propriete: propriete(9, (_, y) => (y === 3 ? 0 : y < 3 ? -0.9 : 0.9)) },
+    attendu: { modele: 'zone-a-prendre', point: 'E6', zone: lettres('ABCDEFGHJ', [6]), fr: 'La zone en E6 est encore à prendre.' } },
+  { nom: 'zone à prendre : Blanc au trait', pos: { ...huit(), toPlay: 2 }, options: { propriete: proprieteColonneE },
+    attendu: { modele: 'zone-a-prendre', point: 'E5', zone: lettres('E', [1, 2, 3, 4, 5, 6, 7, 8, 9]), fr: 'La zone en E5 est encore à prendre.' } },
+  { nom: 'zone à prendre : 19 × 19, quatre coins pris, centre neutre', pos: quatreCoins19(),
+    options: { propriete: propriete(19, (x, y) => (Math.abs(x - 9) <= 1 && Math.abs(y - 9) <= 1 ? 0 : 0.8)) },
+    attendu: { modele: 'zone-a-prendre', point: 'K10', zone: lettres('JKL', [9, 10, 11]), fr: 'La zone en K10 est encore à prendre.' } },
+);
+
 describe('Conseil de Mochi : positions fixes', () => {
   it('au moins 30 positions', () => expect(fixtures.length).toBeGreaterThanOrEqual(30));
+
+  it('au moins 5 positions positives par modèle', () => {
+    for (const m of MODELES) expect(fixtures.filter(f => f.attendu?.modele === m).length, m).toBeGreaterThanOrEqual(5);
+  });
 
   it.each(fixtures.map(f => [f.nom, f] as const))('%s', (_, f) => {
     const c = conseil(f.pos, f.options);
@@ -159,6 +295,8 @@ describe('Conseil de Mochi : positions fixes', () => {
     for (const m of f.jamais ?? []) expect(c?.modele).not.toBe(m);
   });
 });
+
+const voisins = (p: number, n: number) => [p % n > 0 ? p - 1 : -1, p % n < n - 1 ? p + 1 : -1, p >= n ? p - n : -1, p < n * n - n ? p + n : -1].filter(q => q >= 0);
 
 /** Vérifie qu'une phrase est vraie sur la position (indépendamment du code qui l'a choisie). */
 function verifier(pos: Position, c: ConseilMochi) {
@@ -192,6 +330,38 @@ function verifier(pos: Position, c: ConseilMochi) {
     case 'zone-a-prendre':
       for (const p of c.zone) expect(pos.board[p]).toBe(0);
       break;
+    case 'un-seul-oeil': {
+      // « Un seul œil » : le groupe nommé borde exactement une région vide fermée par lui seul, d'un ou deux points,
+      // et il n'a pas deux yeux (Benson).
+      expect(pos.board[c.point!]).toBe(moi);
+      const pierres = c.zone.filter(p => pos.board[p] === moi), oeil = c.zone.filter(p => pos.board[p] === 0);
+      expect(oeil.length).toBeGreaterThanOrEqual(1);
+      expect(oeil.length).toBeLessThanOrEqual(2);
+      for (const p of oeil) for (const r of voisins(p, n)) expect(pos.board[r] === moi || oeil.includes(r)).toBe(true);
+      expect(pierres).toContain(c.point!);
+      expect(hasTwoEyes(pos, c.point!)).toBe(false);
+      break;
+    }
+    case 'zone-a-defendre':
+      for (const p of c.zone) expect(pos.board[p]).not.toBe(3 - moi);
+      break;
+    case 'coup-a-eviter': {
+      // Le coup est légal, met le groupe en atari, et l'adversaire prend au moins deux pierres sans prise en retour.
+      expect(pos.board[c.point!]).toBe(0);
+      const r = play(pos, c.point!) as Position;
+      expect(typeof r).not.toBe('string');
+      const g = groupAt(r.board, n, c.point!);
+      expect(g.liberties.size).toBe(1);
+      expect(g.stones.length).toBeGreaterThanOrEqual(2);
+      expect([...g.stones].sort((a, b) => a - b)).toEqual(c.zone);
+      const r2 = play(r, [...g.liberties][0]) as Position;
+      expect(typeof r2).not.toBe('string');
+      for (const p of g.stones) expect(r2.board[p]).toBe(0);
+      break;
+    }
+    case 'grand-coup':
+      for (const p of c.zone) expect(pos.board[p]).toBe(0);
+      break;
   }
 }
 
@@ -217,8 +387,52 @@ describe('Conseil de Mochi : aucune phrase fausse', () => {
       const c = conseil(pos);
       if (c) { vus.add(c.modele); verifier(pos, c); }
     }
-    // Les quatre modèles sans propriété apparaissent dans de vraies suites de coups.
-    expect([...vus].sort()).toEqual(['atari-adverse', 'atari-joueur', 'coin-libre', 'peu-de-libertes']);
+    // Les modèles sans KataGo apparaissent dans de vraies suites de coups.
+    for (const m of ['atari-adverse', 'atari-joueur', 'coin-libre', 'peu-de-libertes'] as const) expect(vus).toContain(m);
+    for (const m of vus) expect(['atari-adverse', 'atari-joueur', 'coin-libre', 'peu-de-libertes', 'coup-a-eviter', 'un-seul-oeil']).toContain(m);
+  });
+
+  it('300 positions au hasard avec une analyse KataGo factice (propriété, candidats, menace) : phrases vraies, calcul rapide', () => {
+    let graine = 777;
+    const hasard = () => ((graine = (graine * 1103515245 + 12345) & 0x7fffffff) / 0x80000000);
+    const vus = new Set<ModeleConseil>();
+    let pire = 0;
+    for (let k = 0; k < 300; k++) {
+      const n = [9, 13, 19][k % 3];
+      let pos = newPosition(n);
+      const nCoups = Math.floor(hasard() * n * n * 0.5);
+      for (let i = 0; i < nCoups; i++) {
+        for (let essai = 0; essai < 20; essai++) {
+          const r = play(pos, Math.floor(hasard() * n * n));
+          if (typeof r !== 'string') { pos = r; break; }
+        }
+      }
+      // Propriété lisse : un plan incliné (Noir d'un côté, Blanc de l'autre), et sa bascule si l'adversaire jouait.
+      const a = hasard() * 2 - 1, b = hasard() * 2 - 1, d = hasard() * 0.6;
+      const own = Float32Array.from({ length: n * n }, (_, p) => Math.max(-1, Math.min(1, a * ((p % n) / n - 0.5) * 3 + b * (Math.floor(p / n) / n - 0.5) * 3)));
+      const apres = own.map(v => v - (pos.toPlay === 1 ? d * 2 : -d * 2));
+      const vides = [...pos.board.keys()].filter(p => pos.board[p] === 0);
+      const coupsK = Array.from({ length: 3 }, () => vides[Math.floor(hasard() * vides.length)] ?? -1);
+      const t0 = performance.now();
+      const c = conseil(pos, { propriete: own, proprieteSiTuPasses: apres, coups: coupsK, menace: coupsK[1] });
+      pire = Math.max(pire, performance.now() - t0);
+      if (c) {
+        vus.add(c.modele);
+        verifier(pos, c);
+        if (c.modele === 'coup-a-eviter') expect(coupsK).not.toContain(c.point);
+        if (c.modele === 'grand-coup') expect(c.zone).toContain(coupsK[0]);
+        if (c.modele === 'zone-a-defendre') for (const p of c.zone) {
+          const s = pos.toPlay === 1 ? 1 : -1;
+          expect(s * own[p]).toBeGreaterThanOrEqual(0.4);
+          expect(s * apres[p]).toBeLessThanOrEqual(-0.2);
+        }
+        expect(phraseConseil(c, n, 'fr')).not.toMatch(/\{|undefined/);
+        expect(phraseConseil(c, n, 'en')).not.toMatch(/\{|undefined/);
+      }
+    }
+    for (const m of ['zone-a-defendre', 'grand-coup'] as const) expect(vus).toContain(m);
+    // Le calcul sur l'appareil reste instantané à côté de l'analyse KataGo (moins de 2 s en tout sur 9 × 9).
+    expect(pire).toBeLessThan(300);
   });
 
   it('jamais d’« atari » sur un groupe à deux libertés', () => {
@@ -231,14 +445,15 @@ describe('Conseil de Mochi : aucune phrase fausse', () => {
 });
 
 describe('Conseil de Mochi : textes', () => {
-  const cles = ['conseil.atariJoueur', 'conseil.atariAdverse', 'conseil.peuDeLibertes', 'conseil.coinLibre', 'conseil.zoneAPrendre'] as const;
+  const cles = ['conseil.atariJoueur', 'conseil.atariAdverse', 'conseil.peuDeLibertes', 'conseil.coinLibre', 'conseil.zoneAPrendre',
+    'conseil.unSeulOeil', 'conseil.zoneADefendre', 'conseil.coupAEviter', 'conseil.grandCoupCoin', 'conseil.grandCoupBord'] as const;
   const mots = (s: string) => s.replace(/[:!.,?]/g, ' ').split(/\s+/).filter(Boolean).length;
 
-  it('12 mots au plus, en français et en anglais, au singulier et au pluriel', () => {
+  it('16 mots au plus (une phrase de bulle), en français et en anglais, au singulier et au pluriel', () => {
     for (const l of ['fr', 'en'] as const) for (const cle of cles) for (const n of [1, 3]) {
-      const s = traduire(l, cle, { point: 'Q16', n } as never);
+      const s = traduire(l, cle, { point: 'Q16', n, ou: traduire(l, 'conseil.cote.hd') } as never);
       expect(s).not.toMatch(/\{/);
-      expect(mots(s)).toBeLessThanOrEqual(12);
+      expect(mots(s)).toBeLessThanOrEqual(16);
     }
   });
 
@@ -247,7 +462,7 @@ describe('Conseil de Mochi : textes', () => {
   });
 
   it('un modèle par phrase, dans l’ordre de priorité', () => {
-    expect(MODELES).toEqual(['atari-joueur', 'atari-adverse', 'peu-de-libertes', 'coin-libre', 'zone-a-prendre']);
+    expect(MODELES).toEqual(['atari-joueur', 'atari-adverse', 'peu-de-libertes', 'un-seul-oeil', 'zone-a-defendre', 'coup-a-eviter', 'grand-coup', 'coin-libre', 'zone-a-prendre']);
   });
 
   it('phrase anglaise', () => {
