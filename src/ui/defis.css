@@ -1,0 +1,70 @@
+/* Défi par lien (#81) : écran « Défier un ami », arrivée par le lien, partie en différé.
+   Tokens seulement (tokens.css) : les deux thèmes suivent sans règle de plus. */
+
+.defis { display: grid; gap: var(--space-3); padding-top: var(--space-2); }
+.defis-tete { display: grid; justify-items: center; gap: var(--space-2); text-align: center; padding: var(--space-4) var(--space-2) 0; }
+.defis-tete p { margin: 0; }
+.defis-pierres { display: flex; }
+.defis-pierres .stone { width: 44px; height: 44px; }
+.defis-pierres .stone + .stone { margin-left: -6px; }
+.defis-intro { font-family: var(--font-titre); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre);
+  font-size: var(--fs-l); line-height: var(--lh-titre); text-wrap: balance; max-width: 22em; }
+.defis .muted.small { text-wrap: pretty; max-width: 30em; }
+
+/* L'action principale de l'écran, dans le flux (pas le .cta fixe de l'accueil). */
+.btn.primary.defis-cta { width: 100%; min-height: var(--cible-cta); font-size: var(--fs-cta); }
+.defi-erreur { margin: 0; color: var(--danger-texte); }
+
+/* Lien créé : lisible, sélectionnable, jamais plus large que l'écran. */
+.defi-lien { display: grid; gap: var(--space-2); }
+.defi-lien-texte { width: 100%; min-width: 0; min-height: var(--cible-min); box-sizing: border-box; padding: 0 12px; border-radius: 12px;
+  border: 1.5px solid var(--line); background: var(--bg); color: var(--text); font: inherit; font-size: var(--fs-s);
+  text-overflow: ellipsis; }
+
+/* Parties en cours contre des amis. */
+.defis-liste h2 { font-size: var(--fs-m); margin: var(--space-2) 0 var(--space-2); }
+.defis-liste ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.defi-ligne { width: 100%; min-height: 60px; display: flex; align-items: center; gap: var(--space-2); text-align: left;
+  background: var(--surface); color: var(--text); border: 0; border-radius: var(--radius-xs); padding: 10px 14px; font: inherit; }
+.defis-liste li:first-child .defi-ligne { border-top-left-radius: var(--radius); border-top-right-radius: var(--radius); }
+.defis-liste li:last-child .defi-ligne { border-bottom-left-radius: var(--radius); border-bottom-right-radius: var(--radius); }
+.defi-ligne-texte { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.defi-ligne-texte b { font-weight: var(--fw-bold); }
+.defi-ligne-texte small { color: var(--muted); font-size: var(--fs-s); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.defi-ligne.a-moi small { color: var(--text); }
+.defi-point { flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--accent-trait); }
+.defi-chevron { flex: none; color: var(--muted); font-size: 24px; line-height: 1; }
+@media (hover: hover) and (pointer: fine) { .defi-ligne:hover { background: var(--surface-2); } }
+.defi-ligne:active { background: var(--surface-2); }
+
+/* Partie en différé : même grammaire que l'écran de partie (partie.css). */
+.defi-partie .defi-charge { display: grid; gap: var(--space-3); margin-top: var(--space-6); text-align: center; }
+.defi-bas { display: grid; gap: var(--space-2); }
+.defi-bas .coach { margin-top: 0; }
+.defi-rappel { margin: 0 2px; }
+.defi-bas .comptage { margin: 0 2px; }
+.defi-comptage { display: flex; gap: var(--space-2); }
+.defi-comptage .btn { flex: 1 1 0; min-width: 0; min-height: var(--cible-bouton); line-height: 1.2; }
+.defi-comptage .btn:not(.primary) { box-shadow: inset 0 0 0 1.5px var(--line); }
+.defi-fin { display: grid; gap: var(--space-2); justify-items: center; text-align: center; }
+.defi-fin-titre { margin: 0; font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: var(--fs-xl); line-height: var(--lh-titre); text-wrap: balance; }
+
+/* Carte « Garde ta partie » : arrive après le premier coup, sans pousser brusquement le plateau. */
+@media (prefers-reduced-motion: no-preference) {
+  .defi-inscription { animation: defi-apparait 220ms var(--ease) both; }
+  @keyframes defi-apparait { from { opacity: 0; transform: translateY(8px); } }
+}
+
+/* « Défier un ami » dans l'en-tête de l'accueil (#81) : pastille discrète, 44 px de haut, jamais un bouton plein. */
+.entete-droite { display: inline-flex; align-items: center; gap: var(--space-2); min-width: 0; }
+.entete-defi { position: relative; display: inline-flex; align-items: center; gap: 6px; min-height: var(--cible-min); min-width: var(--cible-min);
+  padding: 0 12px 0 8px; border: 0; border-radius: var(--radius-pill); background: none; color: var(--text); font: inherit;
+  font-size: var(--fs-s); font-weight: var(--fw-bold); box-shadow: inset 0 0 0 1.5px var(--line); white-space: nowrap; }
+.entete-defi-pierres { display: inline-flex; }
+.entete-defi-pierres .stone { width: 14px; height: 14px; }
+.entete-defi-pierres .stone + .stone { margin-left: -4px; }
+.entete-defi-point { position: absolute; top: 6px; right: 6px; width: 9px; height: 9px; border-radius: 50%; background: var(--accent-trait); box-shadow: 0 0 0 2px var(--bg); }
+.entete-defi:active { background: var(--surface); }
+@media (hover: hover) and (pointer: fine) { .entete-defi:hover { background: var(--surface); } }
+/* Petits écrans : l'icône seule (le nom reste lu par le lecteur d'écran). */
+@media (max-width: 359px) { .entete-defi-texte { display: none; } .entete-defi { padding: 0 12px; } }

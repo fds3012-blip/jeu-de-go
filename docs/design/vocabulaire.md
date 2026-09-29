@@ -20,7 +20,7 @@ Le vocabulaire du go (atari, ko, komi, liberté) suit `docs/localisation/glossai
 
 Pourquoi pas « défi du jour » comme mot chapeau : le débutant lirait deux noms quotidiens, « Go du jour » et « défi du jour », pour des choses presque pareilles. Trois actions concrètes se comprennent mieux qu'un mot de plus. La règle du code (`src/app/defi.ts`, « un défi par jour ») garde son nom interne ; il n'apparaît pas à l'écran.
 
-« Défi » et « défier » sont réservés aux **adversaires** : « Défier Caillou », « Le dernier défi » (Sensei, en haut de l'échelle).
+« Défi » et « défier » sont réservés aux **adversaires** : « Défier Caillou », « Le dernier défi » (Sensei, en haut de l'échelle), et l'ami qu'on défie par lien (« Défier un ami », #81), qui est un adversaire humain.
 
 Anglais : **streak** (« day streak », « days, your record »), **Daily Go**, **review**. Jamais « challenge » pour la boucle.
 

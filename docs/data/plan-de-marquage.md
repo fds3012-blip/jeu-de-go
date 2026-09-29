@@ -55,6 +55,9 @@ Issue #166. Source unique : `src/data/analytics.ts` (constante `EVENTS`). Un tes
 | `placement_commence` | `refait` (vrai si un placement était déjà fait ou passé) | Lien « Je sais déjà jouer » de l'accueil (premier lancement) ou ligne du Profil (#283, `src/app/App.tsx`). **Nouveau (#283)** | Part des nouveaux qui choisissent « Je sais déjà jouer » (second cercle) |
 | `placement_termine` | `kyu` (niveau estimé, `null` si les 3 problèmes sont ratés) | Troisième problème de placement joué (#283, `src/app/Placement.tsx`). **Nouveau (#283)** | J1 des joueurs placés (cible : au moins 45 %) ; répartition des kyu |
 | `placement_saute` | `etape` (problèmes déjà joués, 0 à 2) | « Passer » pendant le placement (#283). **Nouveau (#283)** | Abandon du placement, par étape |
+| `defi_cree` | `partage` (`web_share` : feuille de partage ; `copie` : presse-papiers ; `manuel` : lien à copier à la main ; `annule` : feuille fermée), `anonyme` (créateur sans compte) | Lien de défi créé par « Envoyer un lien » (#81, `src/app/Defis.tsx`), après la tentative de partage. Ni le lien ni la partie ne sont envoyés. **Nouveau (#81)** | Numérateur du coefficient viral ; défis créés par joueur actif et par semaine ; part des partages natifs |
+| `defi_ouvert` | `anonyme` (l'ami a ouvert le lien sans compte : session anonyme), `deja_joueur` (le créateur rouvre son propre lien) | Lien de défi ouvert et partie rejointe (`rejoindre_defi` réussi), une fois par ouverture (#81, `src/app/Defis.tsx`). Ni le jeton ni la partie ne sont envoyés ; le jeton quitte l'adresse avant tout événement (constat E14, `src/app/adresseDefi.ts`). **Nouveau (#81)** | **Coefficient viral** : `uniq(defi_ouvert sans deja_joueur) / uniq(defi_cree)` par semaine ; part des amis arrivés sans compte |
+| `defi_inscription` | `coups` (coups joués par ce joueur avant l'inscription ; `null` depuis le Profil), `moment` (`apres_coup` : carte « Garde ta partie » de l'écran du défi ; `profil` : carte du compte d'une session sans compte) | E-mail lié à une session anonyme (`updateUser`, le lien de confirmation part) (#81, `src/app/Defis.tsx`, `src/app/Account.tsx`). **Nouveau (#81)** | Conversion des amis venus par un défi : `defi_inscription / defi_ouvert (anonyme)` |
 
 `identify(id)` (`src/app/Account.tsx`) relie les événements au compte, seulement au niveau `complet`.
 
@@ -75,11 +78,6 @@ Issue #166. Source unique : `src/data/analytics.ts` (constante `EVENTS`). Un tes
 - `limite_atteinte` (`type` : `analyse`, `probleme`, `lecon`) : combien de joueurs gratuits touchent une limite.
 - `partie_en_ligne_terminee` : quand les parties en ligne auront leur écran.
 - `note_demandee` / `note_donnee` : invite à noter l'app, quand l'app sera sur les stores.
-- Défi par lien (#81, backend prêt, pas encore d'écran ; à brancher avec l'écran et à citer alors dans la politique de confidentialité) :
-  - `defi_cree` : lien créé (`creer_defi` a répondu). Propriétés : `partage` (`web_share`, `copie`), `anonyme` (booléen : créateur sans compte).
-  - `defi_ouvert` : un invité ouvre un lien et rejoint la partie (`rejoindre_defi` a répondu). Propriétés : `anonyme` (booléen), `deja_joueur` (le créateur rouvre son propre lien).
-  - `defi_inscription` : un invité arrivé sans compte relie son e-mail après son premier coup (`garderMonCompte`). Propriété : `coups` (coups joués avant l'inscription).
-  - Coefficient viral : `uniq(defi_ouvert sans deja_joueur) / uniq(defi_cree)` par semaine, puis `defi_inscription / defi_ouvert (anonyme)`. Aucune donnée du jeton ni de l'identifiant de partie dans les propriétés.
 
 ## Vérification du 28/09 (#222)
 
