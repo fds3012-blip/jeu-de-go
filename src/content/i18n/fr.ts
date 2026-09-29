@@ -548,6 +548,17 @@ export const fr = {
   'plateau.occupe': '{point} est occupé',
   'plateau.confirmer.poser': '{point} : appuie encore pour poser',
   'plateau.confirmer.choisir': '{point} : appuie encore pour choisir ce point',
+  // #116 : aide lue à l'arrivée sur le plateau, et commande « Lire le plateau » (touche L ou bouton visible au focus).
+  'plateau.aide': 'Flèches pour te déplacer, Entrée pour jouer, L pour lire le plateau.',
+  'plateau.lire.bouton': 'Lire le plateau',
+  'plateau.lire.vide': 'Le plateau est vide.',
+  'plateau.lire.compte': '{noires}, {blanches}.',
+  'plateau.lire.nbNoires': { one: '{n} pierre noire', other: '{n} pierres noires' },
+  'plateau.lire.nbBlanches': { one: '{n} pierre blanche', other: '{n} pierres blanches' },
+  'plateau.lire.ligne': 'Ligne {ligne} : {pierres}.',
+  'plateau.lire.noire': '{point} noire',
+  'plateau.lire.blanche': '{point} blanche',
+  'plateau.lire.autresVides': 'Les autres lignes sont vides.',
   // Revue (src/app/Revue.tsx, src/app/revue.ts)
   'revue.retour': 'Retour au bilan',
   'revue.compteur': 'Coup {i} sur {n}',
