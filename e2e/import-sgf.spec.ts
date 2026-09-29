@@ -9,7 +9,7 @@ import { attendrePierre, jouer, plateau } from './plateau';
 
 async function kataGoFactice(page: Page, attente = 0) {
   await page.addInitScript((ms: number) => {
-    const idx = (l: string) => { const x = 'ABCDEFGHJ'.indexOf(l[0]); return (9 - Number(l.slice(1))) * 9 + x; };
+    const idx = (l: string, n = 9) => { const x = 'ABCDEFGHJKLMNOPQRST'.indexOf(l[0]); return (n - Number(l.slice(1))) * n + x; };
     (window as unknown as { __kataGoFactice: unknown }).__kataGoFactice = {
       info: { state: 'pret' },
       async analyze(pos: { board: Int8Array; toPlay: 1 | 2; size: number }) {
@@ -23,6 +23,17 @@ async function kataGoFactice(page: Page, attente = 0) {
             { move: idx('C5'), visits: 20, lead: 3.5 },
             { move: idx('E5'), visits: 20, lead: -5 },
           ] };
+        }
+        // 19 × 19 : Noir mène de 5 points jusqu'au coup 2, puis est mené de 5 points. Au coup 3 (deux pierres posées),
+        // Q4 est le meilleur coup, R4 perd 0,5 point (accepté), K10 (tengen) perd 10 points.
+        if (pos.size === 19) {
+          const pierres = Array.from(pos.board).filter(c => c !== 0).length;
+          const noir = pierres < 3 ? 5 : -5, lead = pos.toPlay === 1 ? noir : -noir;
+          return { ...base, lead, moves: pierres === 2 ? [
+            { move: idx('Q4', 19), visits: 40, lead: 5 },
+            { move: idx('R4', 19), visits: 20, lead: 4.5 },
+            { move: idx('K10', 19), visits: 20, lead: -5 },
+          ] : [] };
         }
         return { ...base, lead: pos.toPlay === 1 ? -5 : 5, moves: [] };
       },
@@ -62,7 +73,7 @@ test('import SGF : coller, choisir son camp, revue, rejouer une erreur', async (
   await capturer(page, 'import-saisie');
 
   // Un texte qui n'est pas un SGF : message clair, tutoyé, et on reste sur l'écran.
-  const texte = page.getByLabel('ou colle le texte du SGF');
+  const texte = page.getByLabel(/ou colle le SGF/);
   await texte.fill('ma partie de dimanche');
   await page.getByRole('button', { name: 'Lire la partie' }).click();
   await expect(page.getByRole('alert')).toContainText('n’est pas un SGF lisible');
@@ -131,7 +142,7 @@ test('import SGF : 19 × 19 avec handicap, barre d’avancement et analyse annul
   // Fox : handicap 2 (pierres AB), Blanc commence.
   const coups = ['dd', 'pp', 'qf', 'nc', 'fq', 'dn', 'cf', 'qk', 'jd', 'jp', 'cj', 'jj'];
   const fox = `(;GM[1]FF[4]SZ[19]PB[Lune]PW[Soleil]KM[0]HA[2]RU[Chinese]AP[foxwq]RE[B+12.5]AB[pd][dp]${coups.map((c, i) => `;${i % 2 ? 'B' : 'W'}[${c}]`).join('')})`;
-  await page.getByLabel('ou colle le texte du SGF').fill(fox);
+  await page.getByLabel(/ou colle le SGF/).fill(fox);
   await page.getByRole('button', { name: 'Lire la partie' }).click();
   await expect(page.getByText(/19 × 19 · 12 coups · komi 0 · handicap 2/)).toBeVisible();
   await page.getByRole('button', { name: /Blanc\s*Soleil/ }).click();
@@ -149,4 +160,90 @@ test('import SGF : 19 × 19 avec handicap, barre d’avancement et analyse annul
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
 
   expect(erreursPage).toEqual([]);
+});
+
+// Partie KGS 19 × 19 (fichier) : au coup 3, Noir (« Lea_75 ») joue le tengen (K10), que le KataGo factice juge à -10 points.
+const coups19 = ['pd', 'dp', 'jj', 'dd', 'qp', 'qc', 'qd', 'pc', 'nc', 'nb', 'fc', 'cf', 'jd', 'jp', 'dj', 'pj'];
+const KGS_19 = `(;GM[1]FF[4]CA[UTF-8]AP[CGoban:3]ST[2]
+RU[Japanese]SZ[19]KM[6.50]TM[1800]OT[5x30 byo-yomi]
+PW[Kenji]PB[Lea_75]WR[2k]BR[6k]DT[2026-09-23]PC[The KGS Go Server at http://www.gokgs.com/]RE[W+Resign]
+${coups19.map((c, i) => `;${i % 2 ? 'W' : 'B'}[${c}]${i % 2 ? 'WL' : 'BL'}[${1790 - i}.0]`).join('\n')})`;
+
+test('import SGF : fichier 19 × 19 → revue ouverte sur le moment clé → « Rejoue cette erreur »', async ({ page }) => {
+  const erreursPage: string[] = [];
+  page.on('pageerror', e => erreursPage.push(e.message));
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await kataGoFactice(page);
+  await ouvrirImport(page);
+
+  await page.locator('input[type="file"]').setInputFiles({ name: 'lea-kenji.sgf', mimeType: 'application/x-go-sgf', buffer: Buffer.from(KGS_19, 'utf8') });
+  await expect(page.getByRole('heading', { level: 2, name: 'Quelle couleur avais-tu ?' })).toBeVisible();
+  await expect(page.getByText(/19 × 19 · 16 coups · komi 6,5/)).toBeVisible();
+  await page.getByRole('button', { name: /Noir\s*Lea_75/ }).click();
+  await page.getByRole('button', { name: 'Analyser la partie' }).click();
+
+  // Analyse finie : la revue s'ouvre d'elle-même sur le moment clé (coup 3, K10).
+  await expect(page.getByRole('heading', { level: 2, name: 'Revoir ma partie' })).toBeVisible();
+  await expect(page.locator('.revue-analyse')).toHaveCount(0, { timeout: 60_000 });
+  const cle = page.locator('.revue-erreur-cle');
+  await expect(cle).toHaveAttribute('aria-pressed', 'true');
+  await expect(cle).toHaveAccessibleName(/Moment clé, coup 3, 10 points perdus/);
+  await expect(page.getByText('Coup 3 sur 16')).toBeVisible();
+  await capturer(page, 'import-fichier-cle');
+
+  // « Rejoue cette erreur » : la position d'avant (Q16, D4) revient ; Q4, le meilleur coup, est accepté.
+  await page.getByRole('button', { name: 'Rejoue cette erreur' }).first().click();
+  await expect(page.getByRole('heading', { level: 2, name: 'Rejoue ton erreur' })).toBeVisible();
+  await expect(plateau(page, 19).locator('g[data-pierre]')).toHaveCount(2);
+  await jouer(page, 'Q4', 19);
+  await expect(page.getByText(/Bravo/)).toBeVisible();
+  await page.getByRole('button', { name: 'Retour à la revue' }).last().click();
+  await expect(page.getByRole('heading', { level: 2, name: 'Revoir ma partie' })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+
+  expect(erreursPage).toEqual([]);
+});
+
+test('import SGF : lien de partie OGS, puis OGS injoignable → message clair', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await kataGoFactice(page);
+  // API publique d'OGS simulée : la partie 67000002 existe, la 404 n'existe pas, la 500 ne répond pas (réseau ou CORS).
+  const demandes: string[] = [];
+  await page.route('https://online-go.com/api/v1/games/**', async route => {
+    const url = route.request().url();
+    demandes.push(url);
+    if (url.endsWith('/67000002/sgf')) {
+      await route.fulfill({ status: 200, contentType: 'application/x-go-sgf', headers: { 'Access-Control-Allow-Origin': '*' }, body: OGS_9 });
+    } else if (url.endsWith('/404/sgf')) {
+      await route.fulfill({ status: 404, headers: { 'Access-Control-Allow-Origin': '*' }, body: 'Not found' });
+    } else await route.abort('failed');
+  });
+  await ouvrirImport(page);
+  const texte = page.getByLabel(/ou colle le SGF/);
+  const lire = page.getByRole('button', { name: 'Lire la partie' });
+
+  await texte.fill('https://online-go.com/game/500');
+  await lire.click();
+  await expect(page.getByRole('alert')).toContainText('OGS ne répond pas');
+  await expect(page.getByRole('alert')).toContainText('choisis le fichier');
+
+  await texte.fill('online-go.com/game/404');
+  await lire.click();
+  await expect(page.getByRole('alert')).toContainText('OGS ne trouve pas cette partie');
+
+  // Lien d'un autre site : on dit ce qu'on sait lire.
+  await texte.fill('https://www.foxwq.com/qipu/12345');
+  await lire.click();
+  await expect(page.getByRole('alert')).toContainText('liens de partie OGS');
+
+  await texte.fill('https://online-go.com/game/67000002');
+  await lire.click();
+  await expect(page.getByRole('heading', { level: 2, name: 'Quelle couleur avais-tu ?' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Blanc\s*Takumi88/ })).toBeVisible();
+  // Seul OGS a été contacté, et rien d'autre que le SGF des parties demandées.
+  expect(demandes).toEqual([
+    'https://online-go.com/api/v1/games/500/sgf',
+    'https://online-go.com/api/v1/games/404/sgf',
+    'https://online-go.com/api/v1/games/67000002/sgf',
+  ]);
 });
