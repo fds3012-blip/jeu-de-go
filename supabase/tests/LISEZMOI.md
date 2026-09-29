@@ -21,6 +21,8 @@ Ne pas charger `supabase_minimal.sql` sur une vraie base Supabase : ces objets y
 
 ## Cas couverts
 
+`cote_a_mesure.test.sql` (issue #284) : sans connexion ou anonyme refusé ; aucune écriture directe dans `cotes_a_mesure` ni `essais_a_mesure` ; résultat inconnu, problème personnel d'un autre ou inexistant refusés ; valeurs Elo exactes (réussite +80, échec −73,85, réussite avec aide +29,54) ; « Rejouer » le même jour ne compte pas ; « aide » seulement sur l'échec du jour noté en dernier, une fois ; un autre jour, un problème réussi ne compte plus, un problème raté compte de nouveau ; chacun ne lit que sa ligne ; reprise de la cote de l'appareil bornée, une seule fois, avant tout essai ; RLS, droits d'anon, suppression en cascade avec le compte.
+
 `defi_par_lien.test.sql` (issue #81) : création (connexion requise), lecture limitée aux deux joueurs, aucune écriture directe, invité en session anonyme, tiers refusé, hors tour refusé, partie périmée refusée, coup mal formé ou hors plateau refusé, écriture des coups hors fonction refusée (même avec la clé service), délai dépassé ⇒ victoire au temps (à la lecture et au coup suivant), lien expiré, parties publiques toujours visibles.
 
 `garde_anonymes.test.sql` (issue #316) : le jeton est simulé par `request.jwt.claims` avec `is_anonymous` à `true`, à `false`, ou absent (traité comme un vrai compte).
