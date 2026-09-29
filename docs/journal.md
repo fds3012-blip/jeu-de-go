@@ -543,6 +543,9 @@ Chaque livraison : issue traitée, agent, pull request, résultat des vérificat
 - Qualité :
   - #295 : recette du soir, 360 écrans, et correction de la partie guidée (Mochi s'affichait comme Pomme).
   - #300 (#290 à #293) : 4 défauts d'affichage corrigés.
+  - #311 : recette de nuit, 165 écrans en `fr-FR` et en `en-US`, sans blocage. La barre d'actions à 320 px est tenue : libellés de 11 px, car à 12 px la CI débordait de 3 px.
+  - #312 (#308 à #310) : l'accueil suit le chapitre conseillé par le placement, « Jouer » ou « Rejouer » selon le cas, espace rétablie dans la revue.
+  - Ouvert pour Florian : #307, le conseil de Mochi contre les adversaires au-delà de Caillou.
 - Produit :
   - #288 : veille face à chess.com, BadukPop, OGS et KaTrain. Nouvelles issues #283 à #287.
 - Backend :
