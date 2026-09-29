@@ -35,8 +35,14 @@ test('fin de la leçon 1 : 3 problèmes de capture enchaînés, puis retour au c
     await expect(page.locator('.verdict')).toBeVisible();
     if (rang < 3) await page.getByRole('button', { name: 'Problème suivant' }).click();
   }
-  // Fin de la série : retour au chemin, où la leçon 2 attend.
+  // Fin de la série. #233 (C8) : leçon 1 (30 + 20 première fois) et 3 problèmes (10 + 20 première fois, puis 10 et 10)
+  // font 100 XP : le niveau 2 tombe à la fin de la première leçon et de son entraînement. Il a son écran à lui (#236),
+  // entre la feuille « Bravo » et le chemin, où la leçon 2 attend.
   await page.locator('.verdict').getByRole('button', { name: 'Retour au chemin' }).click();
+  const ecranNiveau = page.getByTestId('niveau-atteint');
+  await expect(ecranNiveau.getByRole('heading', { name: /Niveau\s2/ })).toBeVisible();
+  expect(await page.evaluate(() => localStorage.getItem('go.xp.v1'))).toBe('100');
+  await ecranNiveau.getByRole('button', { name: 'Retour au chemin' }).click();
   await expect(page.getByRole('button', { name: 'Commencer la leçon : Atari' })).toBeVisible();
   const reussis = await page.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('go.problemes.v1') ?? '{}')));
   expect(reussis.sort()).toEqual(['a02', 'a03', 'n02']);
