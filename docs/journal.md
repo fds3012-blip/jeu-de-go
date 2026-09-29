@@ -555,3 +555,9 @@ Chaque livraison : issue traitée, agent, pull request, résultat des vérificat
 - Deux PR vertes chacune peuvent casser ensemble. Exemple : un import `PortraitMochi` en double après #294 et #295. Avant de fusionner la seconde, je ramène main dans sa branche et je relance le typecheck. Il faut aussi lire le code de sortie du typecheck, pas la dernière ligne d'un tube.
 - Chromium bloque certains ports, comme 5060 et 5061 (`ERR_UNSAFE_PORT`) : on les évite pour les e2e.
 - Plusieurs agents partageaient le même fichier `/tmp/*.pid` : chaque agent prend maintenant son propre fichier.
+
+## 29/09 au soir : réglages de Florian et #318 (backend)
+
+- Vercel : Florian a supprimé le projet en double `jeu-de-go-1y5y` (son seul domaine était `jeu-de-go-1y5y.vercel.app`). Reste `jeu-de-go` → `jeu-de-go.vercel.app`.
+- Supabase (projet `jeu-de-go`, Paris) : connexions anonymes et liaison manuelle activées par Florian, limite 30 connexions anonymes par heure et par IP. Captcha laissé coupé : l'app ne l'envoie pas encore (à faire avec Cloudflare Turnstile, gratuit, avant de l'activer).
+- #318 → PR #319, CI verte, fusionnée ; migration `purge_anonymes` appliquée en production. Décision de Florian : sessions sans compte effacées après **60 jours** sans activité, chaque nuit (pg_cron, 03:17 UTC). Mêmes règles que « Supprimer mon compte » : parties partagées gardées pour l'autre joueur, anonymisées. Tests SQL (8 cas, mutation vérifiée) et Vitest. Politique de confidentialité : E13 corrigé. 0 anonyme en production aujourd'hui.
