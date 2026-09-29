@@ -15,6 +15,8 @@ const MIDI_PARIS_28 = new Date('2026-09-28T12:00:00+02:00');
 async function resoudreGoDuJour2(page: Page) {
   await page.clock.setFixedTime(MIDI_PARIS_28);
   await page.emulateMedia({ reducedMotion: 'reduce' });
+  // #285 : un joueur qui a déjà joué ; celui qui n'a jamais joué voit « Apprends à jouer en 2 minutes » (apercu-lien.spec.ts).
+  await page.addInitScript(() => { if (localStorage.getItem('go.parties.v1') === null) localStorage.setItem('go.parties.v1', '{"n":1}'); });
   await page.goto('/?go-du-jour=2');
   await expect(page.getByRole('heading', { level: 2, name: 'Vers le bord' })).toBeVisible();
   await jouer(page, 'E3');

@@ -34,3 +34,33 @@ test('lien ouvert sans stockage local : problème jouable en 1 tap, aucune fenê
   await attendrePierre(page, 'E5', 'noir');
   await expect(page.getByRole('dialog')).toHaveCount(0);
 });
+
+test("l'ami qui n'a jamais joué : Mochi l'accueille, puis une seule action vers la leçon 1", async ({ page }) => {
+  await page.clock.setFixedTime(new Date('2026-09-27T12:00:00+02:00'));
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/?go-du-jour=1');
+  await expect(page.getByText(/Premier coup au go\s\? Touche le plateau\./)).toBeVisible();
+  await jouer(page, 'E5');
+  await attendrePierre(page, 'E5', 'noir');
+  // Une seule action en relief, de 44 px au moins, et plus de « Problème suivant ».
+  const cta = page.locator('.cta');
+  await expect(cta).toHaveCount(1);
+  await expect(cta).toHaveText('Apprends à jouer en 2 minutes');
+  await expect(page.getByRole('button', { name: 'Problème suivant' })).toHaveCount(0);
+  expect((await cta.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  await cta.click();
+  await expect(page.locator('.lecteur-lecon .lecteur-titre')).toHaveText(/Libertés et capture/);
+});
+
+test('un joueur qui a déjà joué garde « Problème suivant » après le Go du jour du lien', async ({ page }) => {
+  await page.clock.setFixedTime(new Date('2026-09-27T12:00:00+02:00'));
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.addInitScript(() => localStorage.setItem('go.parties.v1', JSON.stringify({ n: 2 })));
+  await page.goto('/?go-du-jour=1');
+  await expect(plateau(page)).toBeVisible();
+  await expect(page.getByText(/Premier coup au go/)).toHaveCount(0);
+  await jouer(page, 'E5');
+  await attendrePierre(page, 'E5', 'noir');
+  await expect(page.getByRole('button', { name: 'Problème suivant' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Apprends à jouer en 2 minutes' })).toHaveCount(0);
+});

@@ -66,7 +66,9 @@ export function badges(d: Donnees, gagnes: readonly string[] = []): Badge[] {
   const obtenus: Record<BadgeId, boolean> = {
     'premiere-partie': d.parties > 0,
     'premier-probleme': d.reussis > 0,
-    'victoire-pomme': (d.bilan.pomme?.v ?? 0) > 0,
+    // #233 : Pomme ou n'importe quel adversaire de l'échelle (tous plus forts qu'elle). Un joueur placé par « Je sais déjà
+    // jouer » (#283) commence plus haut et ne joue jamais Pomme : sans cela, ce badge lui restait grisé pour toujours.
+    'victoire-pomme': victoires(d.bilan) > 0,
     'palier-debutant': complet(d, 'debutant'),
     'dix-problemes': d.reussis >= 10,
     'palier-novice': complet(d, 'novice'),

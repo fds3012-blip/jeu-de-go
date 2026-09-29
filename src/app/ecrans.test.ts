@@ -6,16 +6,18 @@ const lire = (f: string) => readFileSync(new URL(f, import.meta.url), 'utf8');
 describe('écrans chargés à la demande', () => {
   it("l'accueil n'importe aucun écran directement (ils passent par ecrans.ts)", () => {
     const app = lire('./App.tsx');
-    for (const ecran of ['Game', 'Learn', 'Puzzles', 'Profil', 'Placement', 'SeriePratique']) {
+    for (const ecran of ['Game', 'Learn', 'Puzzles', 'Profil', 'Placement', 'SeriePratique', 'Defis']) {
       // `import type` reste permis : il disparaît du JS.
       expect(app).not.toMatch(new RegExp(`^import (?!type )[^\\n]* from '\\./${ecran}';`, 'm'));
     }
   });
 
-  it('App.tsx lit les problèmes résolus sous la même clé que Puzzles.tsx', () => {
-    const cle = (src: string) => src.match(/SOLVED_KEY = '([^']+)'/)?.[1];
-    expect(cle(lire('./App.tsx'))).toBeDefined();
-    expect(cle(lire('./App.tsx'))).toBe(cle(lire('./Puzzles.tsx')));
+  it('App.tsx lit les problèmes résolus et vus sous les mêmes clés que Puzzles.tsx', () => {
+    for (const nom of ['SOLVED_KEY', 'VUS_KEY']) {
+      const cle = (src: string) => src.match(new RegExp(`${nom} = '([^']+)'`))?.[1];
+      expect(cle(lire('./App.tsx')), nom).toBeDefined();
+      expect(cle(lire('./App.tsx')), nom).toBe(cle(lire('./Puzzles.tsx')));
+    }
   });
 
   it('les styles des écrans restent dans la feuille principale (importés par main.tsx avant App)', () => {

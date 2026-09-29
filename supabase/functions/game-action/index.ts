@@ -1,9 +1,11 @@
 // Fonction serveur des parties en ligne entre humains (issue #9).
 // POST { action: 'move', gameId, move } | { action: 'propose_dead', gameId, dead } | { action: 'accept', gameId } | { action: 'resume', gameId }
+//    | { action: 'defi_coup', game_id, move } (défi par lien, #81 : voir go/defi-action.ts)
 // Toute la logique de jeu vient de src/go (copie dans ./go, voir scripts/sync-functions.mjs).
 // La clé service (SUPABASE_SERVICE_ROLE_KEY) est fournie par l'environnement Supabase : elle n'est jamais dans le dépôt.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { defiMoveArgs, parseActionRequest, planAction, type GameRow } from './go/server.ts';
+import { defiCoup, parseDefiCoupRequest, type DefiCoupDeps } from './go/defi-action.ts';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -37,6 +39,33 @@ Deno.serve(async (req: Request) => {
   } catch {
     return refuse(400, 'format', 'Demande invalide.');
   }
+
+  // Défi par lien (#81) : coup validé ici (règles du go), puis écrit par jouer_coup_defi (réservée à service_role).
+  // Session anonyme acceptée : son jeton est un vrai jeton `authenticated`, vérifié ci-dessus par auth.getUser.
+  if ((body as { action?: unknown } | null)?.action === 'defi_coup') {
+    const req = parseDefiCoupRequest(body);
+    if (!req) return refuse(400, 'format', 'Demande invalide.');
+    const deps: DefiCoupDeps = {
+      async lirePartie(id) {
+        const [g, d] = await Promise.all([
+          admin.from('games').select(COLUMNS).eq('id', id).maybeSingle(),
+          admin.from('defis').select('partie_id').eq('partie_id', id).maybeSingle()
+        ]);
+        return { game: (g.data as GameRow | null) ?? null, estDefi: !!d.data, error: !!(g.error || d.error) };
+      },
+      async jouerCoupDefi(args) {
+        const { data, error } = await admin.rpc('jouer_coup_defi', args);
+        return { data, error: error ? { code: error.code, message: error.message } : null };
+      },
+      async relirePartie(id) {
+        const { data } = await admin.from('games').select(COLUMNS).eq('id', id).maybeSingle();
+        return (data as GameRow | null) ?? null;
+      }
+    };
+    const r = await defiCoup(deps, userId, req);
+    return json(r.status, r.body);
+  }
+
   const action = parseActionRequest(body);
   if (!action) return refuse(400, 'format', 'Demande invalide.');
 

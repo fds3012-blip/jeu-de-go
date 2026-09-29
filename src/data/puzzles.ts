@@ -127,7 +127,7 @@ export async function fetchPuzzleStats(db: Db, userId: string): Promise<Result<P
     db.from('profiles').select('puzzle_rating, streak_days, streak_last, streak_freezes').eq('id', userId).maybeSingle(),
     db.from('puzzle_attempts').select('puzzle_id, solved').eq('user_id', userId)
   ]);
-  if (profile.error || attempts.error || !profile.data) return { ok: false, error: t('erreur.cote') };
+  if (profile.error || attempts.error || !profile.data) return { ok: false, error: t('erreur.reussis') };
   const rows = attempts.data ?? [];
   return {
     ok: true,

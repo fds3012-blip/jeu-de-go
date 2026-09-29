@@ -1,6 +1,7 @@
 // Simulation de l'économie de progression sur 30 jours (issue #233), avec les vraies règles et le vrai contenu :
 // XP et bonus « première fois » (xp.ts), série « un défi par jour » et gels (gel.ts), révision du jour (revision.ts),
-// paliers de problèmes (paliers.ts), Go du jour (goDuJour.ts), badges (vitrine.ts).
+// paliers de problèmes (paliers.ts), « Continuer » à ta mesure (coteJoueur.ts, #284), Go du jour (goDuJour.ts),
+// badges (vitrine.ts).
 // Carte complète et lecture des résultats : docs/game-design/economie.md.
 // Ce test ne touche pas au stockage : il rejoue les fonctions pures, jour par jour.
 import { describe, expect, it } from 'vitest';
@@ -10,8 +11,9 @@ import { appliquer, niveauDe, recompensesDebloquees, sourceXpProbleme, type Prem
 import { apresReussite, reconcilier, RESERVE_VIDE, type Reserve } from './gel';
 import { problemeDuNumero, type Serie } from './goDuJour';
 import { apresRevision, aFaire, ETAT_VIDE, revisionDuJour, revisionFaite, synchroniser, type EtatRevision } from './revision';
-import { paliers, prochain } from './paliers';
+import { paliers } from './paliers';
 import { badges } from './vitrine';
+import { chance, choisirProbleme, ETAT_INITIAL, noter, requalifierEnAide, type EtatCote } from './coteJoueur';
 
 type Pb = { id: string; difficulty: number };
 const PROBLEMES: Pb[] = ALL_PUZZLES.map(p => ({ id: p.id, difficulty: p.difficulty }));
@@ -30,14 +32,38 @@ export interface Profil {
   victoireSur: number;
   /** Jours sans rien ouvrir (numéros). */
   absences?: number[];
+  /** Force réelle du joueur sur l'échelle des problèmes (cote Elo) : au jour 1, et gain par jour joué. */
+  force: { depart: number; parJour: number };
+  /** Cote de départ de « Continuer » : 400 sans placement, plus haut après « Je sais déjà jouer » (#283). */
+  coteDepart?: number;
+  /** Adversaire des parties : Pomme par défaut ; un joueur placé joue l'adversaire conseillé (#283). */
+  adversaire?: string;
 }
 
 /** « 10 min par jour » : Go du jour, révision, 2 problèmes, puis une leçon un jour sur deux, sinon une partie. */
-export const DIX_MIN: Profil = { nom: '10 min/jour', problemes: 2, lecons: 0.5, pratique: false, parties: 1, victoireSur: 3 };
+export const DIX_MIN: Profil = { nom: '10 min/jour', problemes: 2, lecons: 0.5, pratique: false, parties: 1, victoireSur: 3, force: { depart: 350, parJour: 10 } };
 /** « 30 min par jour » : Go du jour, révision, 6 problèmes, une leçon et sa série d'entraînement, 2 parties. */
-export const TRENTE_MIN: Profil = { nom: '30 min/jour', problemes: 6, lecons: 1, pratique: true, parties: 2, victoireSur: 2 };
+export const TRENTE_MIN: Profil = { nom: '30 min/jour', problemes: 6, lecons: 1, pratique: true, parties: 2, victoireSur: 2, force: { depart: 350, parJour: 18 } };
 /** « 10 min, pas le week-end » : comme DIX_MIN, mais absent 2 jours sur 7 (les gels jouent). */
 export const DIX_MIN_SEMAINE: Profil = { ...DIX_MIN, nom: '10 min, 5 j/7', absences: [6, 7, 13, 14, 20, 21, 27, 28] };
+/**
+ * « Joueur de club » (#283) : placé à 10 kyu par « Je sais déjà jouer ». Il saute les leçons de base, fait le Go du jour,
+ * la révision, 4 problèmes à sa mesure et une partie contre l'adversaire conseillé (Renard), gagnée une fois sur 2.
+ */
+export const CLUB: Profil = {
+  nom: 'club, 20 min/jour', problemes: 4, lecons: 0, pratique: false, parties: 1, victoireSur: 2,
+  force: { depart: 1000, parJour: 3 }, coteDepart: 950, adversaire: 'renard',
+};
+
+/** Tirage pseudo-aléatoire reproductible (mulberry32) : la simulation donne toujours les mêmes chiffres. */
+export function graine(n: number): () => number {
+  return () => {
+    n = (n + 0x6d2b79f5) | 0;
+    let x = Math.imul(n ^ (n >>> 15), 1 | n);
+    x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x;
+    return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
+  };
+}
 
 export interface Releve {
   jour: number; xp: number; niveau: number; badges: number; serie: number; record: number; gels: number;
@@ -46,18 +72,27 @@ export interface Releve {
   duJour: Partial<Record<SourceXp, number>>;
   /** Go du jour réussi sans XP (0 jour depuis #233, P1 ; 9 à 18 jours sur 30 avant). */
   goDuJourSansXp: boolean;
+  /** Identifiants des badges gagnés, dans l'ordre. */
+  gagnes: string[];
+  /** Problèmes « Vu » pas encore réussis. */
+  vus: number;
 }
 
 /**
- * Rejoue `jours` jours. Tout problème tenté la première fois est « Vu » une fois sur 5 (aide jusqu'à la réponse, #197) :
- * ni XP ni palier ; il revient plus tard par « Continuer ». Les autres sont réussis. La révision est réussie du premier coup.
+ * Rejoue `jours` jours. « Continuer » choisit comme l'écran Problèmes (choisirProbleme, cote du joueur, #284).
+ * Chaque problème neuf est réussi du premier coup avec la chance prévue par l'écart entre la force du joueur et sa
+ * difficulté ; sinon, une fois sur deux il est trouvé avec l'aide (réussi, XP, cote requalifiée), l'autre fois
+ * « Vu » (aide jusqu'à la réponse, #197) : ni XP ni palier, il reste à réussir. La révision est réussie du premier coup.
  */
 export function simuler(p: Profil, jours = 30): Releve[] {
-  let xp = 0, lecons = 0, parties = 0, victoires = 0, tentes = 0, record = 0;
+  let xp = 0, lecons = 0, parties = 0, victoires = 0, record = 0;
   let serie: Serie | null = null, reserve: Reserve = RESERVE_VIDE, revision: EtatRevision = ETAT_VIDE;
+  let cote: EtatCote = { ...ETAT_INITIAL, cote: p.coteDepart ?? ETAT_INITIAL.cote };
   const premieres = new Set<Premiere>(), reussis = new Set<string>(), vus = new Set<string>(), gagnes: string[] = [];
   const releves: Releve[] = [];
+  const alea = graine(233);
   let duJour: Partial<Record<SourceXp, number>> = {};
+  let force = p.force.depart;
 
   const gagner = (source: SourceXp) => {
     const cat = premiereDe(source);
@@ -70,15 +105,16 @@ export function simuler(p: Profil, jours = 30): Releve[] {
     const r = apresReussite(serie, reserve, numero);
     serie = r.serie; reserve = r.reserve; record = Math.max(record, r.serie.jours);
   };
-  /** Un nouveau problème tenté : Vu une fois sur 5, sinon réussi (+10 XP). */
-  const tenter = (pb: Pb) => {
-    const vu = !vus.has(pb.id) && tentes++ % 5 === 4;
-    if (vu) { vus.add(pb.id); return; }
-    reussis.add(pb.id); vus.delete(pb.id); gagner('probleme');
-  };
-  const continuer = () => {
-    const pb = prochain(paliers(PROBLEMES, reussis), reussis);
-    if (pb) tenter(pb);
+  let dernier: string | undefined;
+  const continuer = (numero: number, gdj: string) => {
+    const pb = choisirProbleme(PROBLEMES.filter(x => x.id !== gdj), cote, reussis, { jour: numero, eviter: dernier, alea });
+    if (!pb) return;
+    dernier = pb.id;
+    const x = alea(), c = chance(force, pb.difficulty);
+    if (x < c) { cote = noter(cote, pb, 'premier', numero); reussis.add(pb.id); vus.delete(pb.id); gagner('probleme'); return; }
+    cote = noter(cote, pb, 'rate', numero);
+    if (x < c + (1 - c) / 2) { cote = requalifierEnAide(cote, pb.id); reussis.add(pb.id); vus.delete(pb.id); gagner('probleme'); return; }
+    vus.add(pb.id);
   };
 
   for (let numero = 1; numero <= jours; numero++) {
@@ -88,25 +124,27 @@ export function simuler(p: Profil, jours = 30): Releve[] {
     serie = b.serie; reserve = b.reserve;
     if (!p.absences?.includes(numero)) {
       // 1. Go du jour : série toujours ; XP une fois par jour, même s'il était déjà réussi (#233, P1, règle de Puzzles.tsx).
+      force += p.force.parJour;
       const gdj = problemeDuNumero(PROBLEMES, numero)!;
       const source = sourceXpProbleme({ dejaReussi: reussis.has(gdj.id), estDuJour: true, goDuJourDejaFait: false });
       if (source) gagner(source); else goDuJourSansXp = true;
       reussis.add(gdj.id);
       defi(numero);
       // 2. Révision du jour : 3 problèmes déjà réussis, dus à J+1, J+3, J+7.
-      revision = revisionDuJour(synchroniser(revision, reussis, numero), numero, new Set(PROBLEMES.map(x => x.id)));
+      // Depuis #251 (M2), les problèmes « Vu » y entrent aussi.
+      revision = revisionDuJour(synchroniser(revision, [...reussis, ...vus], numero), numero, new Set(PROBLEMES.map(x => x.id)));
       for (let id = aFaire(revision, numero); id; id = aFaire(revision, numero)) {
         const avant = revisionFaite(revision, numero);
         revision = apresRevision(revision, id, true, numero);
         if (!avant && revisionFaite(revision, numero)) { gagner('revision'); defi(numero); }
       }
       // 3. Nouveaux problèmes.
-      for (let i = 0; i < p.problemes; i++) continuer();
+      for (let i = 0; i < p.problemes; i++) continuer(numero, gdj.id);
       // 4. Leçon (et sa série d'entraînement), sinon partie.
-      const leconAujourdhui = lecons < LESSONS.length && (p.lecons >= 1 || numero % 2 === 1);
+      const leconAujourdhui = p.lecons > 0 && lecons < LESSONS.length && (p.lecons >= 1 || numero % 2 === 1);
       if (leconAujourdhui) {
         lecons++; gagner('lecon'); defi(numero);
-        if (p.pratique) for (let i = 0; i < 3; i++) continuer();
+        if (p.pratique) for (let i = 0; i < 3; i++) continuer(numero, gdj.id);
       }
       const nParties = p.lecons >= 1 || !leconAujourdhui ? p.parties : 0;
       for (let i = 0; i < nParties; i++) {
@@ -119,26 +157,27 @@ export function simuler(p: Profil, jours = 30): Releve[] {
     const s = serie as Serie | null;
     const vivante = s && numero - s.dernier <= 1 ? s.jours : 0;
     const ps = paliers(PROBLEMES, reussis);
-    const liste = badges({ reussis: reussis.size, serie: vivante, record, parties, bilan: { pomme: { v: Math.min(victoires, 1), d: 0 } }, paliers: ps }, gagnes);
+    const liste = badges({ reussis: reussis.size, serie: vivante, record, parties, bilan: { [p.adversaire ?? 'pomme']: { v: victoires, d: parties - victoires } }, paliers: ps }, gagnes);
     for (const x of liste) if (x.obtenu && !gagnes.includes(x.id)) gagnes.push(x.id);
     releves.push({
       jour: numero, xp, niveau: niveauDe(xp).niveau, badges: gagnes.length, serie: vivante, record, gels: reserve.gels,
-      reussis: reussis.size, lecons, parties, victoires, duJour, goDuJourSansXp,
+      reussis: reussis.size, lecons, parties, victoires, duJour, goDuJourSansXp, gagnes: [...gagnes], vus: vus.size,
     });
   }
   return releves;
 }
 
 const resume = (r: Releve) =>
-  `J${String(r.jour).padStart(2)} · ${String(r.xp).padStart(4)} XP · niv. ${String(r.niveau).padStart(2)} · ${r.badges}/7 badges · série ${String(r.serie).padStart(2)} (gels ${r.gels}) · ${String(r.reussis).padStart(3)} pb · ${r.lecons}/${LESSONS.length} leçons · ${r.parties} parties`;
+  `J${String(r.jour).padStart(2)} · ${String(r.xp).padStart(4)} XP · niv. ${String(r.niveau).padStart(2)} · ${r.badges}/7 badges · série ${String(r.serie).padStart(2)} (gels ${r.gels}) · ${String(r.reussis).padStart(3)} pb (${r.vus} vus) · ${r.lecons}/${LESSONS.length} leçons · ${r.parties} parties`;
 
 describe('économie de progression : simulation sur 30 jours (#233)', () => {
-  const profils = [DIX_MIN, TRENTE_MIN, DIX_MIN_SEMAINE];
+  const profils = [DIX_MIN, TRENTE_MIN, DIX_MIN_SEMAINE, CLUB];
   const resultats = new Map(profils.map(p => [p.nom, simuler(p)]));
 
   it('affiche J1, J7, J14 et J30 pour chaque joueur type (lu dans docs/game-design/economie.md)', () => {
     for (const [nom, r] of resultats) {
       console.log(`\n${nom}\n${[0, 6, 13, 29].map(i => resume(r[i])).join('\n')}`);
+      console.log(`  Badges (jour gagné) : ${r[r.length - 1].gagnes.map(id => `${id} J${r.find(x => x.gagnes.includes(id))!.jour}`).join(', ')}`);
       const sansXp = r.filter(x => x.goDuJourSansXp).length;
       console.log(`  Go du jour réussis sans XP (déjà résolus) : ${sansXp} jours sur ${r.length}`);
       const niveaux = [3, 5, 8].map(n => r.find(x => x.niveau >= n)?.jour ?? '—');
@@ -163,8 +202,17 @@ describe('économie de progression : simulation sur 30 jours (#233)', () => {
     }
   });
 
-  it('boucle de session : le niveau 2 tombe dès le premier jour, même à 10 minutes', () => {
+  it('boucle de session : le niveau 2 tombe dès le premier jour, même à 10 minutes et avec un problème « Vu »', () => {
     for (const r of resultats.values()) expect(r[0].niveau).toBeGreaterThanOrEqual(2);
+    // #233 (C8) : le joueur de 10 minutes a un problème « Vu » dès le premier jour ; il passe quand même le niveau 2.
+    expect(resultats.get(DIX_MIN.nom)![0].vus).toBeGreaterThanOrEqual(1);
+  });
+
+  it('joueur de club placé (#283) : il gagne le badge de la première victoire sans jamais jouer Pomme (#233, C7)', () => {
+    const r = resultats.get(CLUB.nom)!;
+    expect(r[29].lecons).toBe(0);
+    expect(r[29].victoires).toBeGreaterThan(0);
+    expect(r[29].gagnes).toContain('victoire-pomme');
   });
 
   it('boucle de semaine : la première récompense (niveau 3) arrive dans la première semaine à 10 minutes par jour', () => {

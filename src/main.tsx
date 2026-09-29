@@ -1,3 +1,5 @@
+// En premier : le jeton d'un défi par lien (#81) quitte l'adresse avant la mesure et tout événement (constat E14).
+import './app/adresseDefi';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 // Styles des écrans chargés à la demande (src/app/ecrans.ts) : importés ici, avant App et dans l'ordre
@@ -8,6 +10,7 @@ import './ui/partie.css';
 import './ui/comptage.css';
 import './ui/fin.css';
 import './ui/installation.css';
+import './ui/conseil.css';
 import './ui/revue.css';
 import './ui/apprendre.css';
 import './ui/gel.css';
@@ -16,6 +19,7 @@ import './ui/course.css';
 import './ui/import.css';
 import './ui/niveau.css';
 import './ui/placement.css';
+import './ui/defis.css';
 import { App } from './app/App';
 import { apresPremierEcran, prechargerEcrans, prechargerPartie, rechargerPourNouvelleVersion } from './app/ecrans';
 // Polices auto-hébergées (@fontsource, sous-ensemble latin) : avant les styles qui les utilisent.

@@ -4,13 +4,18 @@ import { score, type Rules } from '../go/score';
 import type { Position } from '../go/rules';
 import { nombre, t } from '../content/i18n';
 
-/** Horloge du récit, en ms. Tout est fini à DUREE_RECIT (2,5 s au plus, exigence de l'issue). */
+/** Horloge du récit, en ms. Tout est fini à DUREE_RECIT (2,5 s ; l'issue demande moins de 4 s, pause de lecture comprise). */
 export const TEMPS = { territoire: 0, etalement: 1100, prisonniers: 1350, komi: 1800, resultat: 2250 } as const;
 export const DUREE_RECIT = 2500;
 /** Pause de lecture sur le résultat, sans mouvement, avant l'écran de fin. */
 export const PAUSE_LECTURE = 1200;
 /** Durée d'apparition d'un carré de territoire (board.css, go-territoire). */
 export const DUREE_CARRE = 200;
+/**
+ * Prisonniers et komi « rejoignent leur camp » : un jeton monte vers le compteur (fin.css, recit-jeton, 420 ms)
+ * et le chiffre change quand il arrive, pas avant.
+ */
+export const ARRIVEE_JETON = 260;
 
 export interface PointTerritoire { p: number; c: 1 | 2; delai: number }
 
@@ -46,19 +51,38 @@ export function recitScore(pos: Position, komi: number, rules: Rules = 'japanese
 }
 
 export interface EtatRecit { etape: 0 | 1 | 2 | 3 | 4; noir: number; blanc: number }
+export interface Totaux { noir: number; blanc: number }
+
+/**
+ * Les trois temps du récit et le total atteint à la fin de chacun : territoires, puis + prisonniers
+ * (ou pierres vivantes en chinois), puis + komi. Le dernier est le score de src/go.
+ */
+export function totauxEtapes(r: Recit): [Totaux, Totaux, Totaux] {
+  const t1 = { noir: r.territoireNoir, blanc: r.territoireBlanc };
+  const t2 = { noir: t1.noir + r.deuxieme.noir, blanc: t1.blanc + r.deuxieme.blanc };
+  return [t1, t2, { noir: r.noir, blanc: r.blanc }];
+}
 
 /**
  * Ce qu'on affiche au temps `t` (ms) : étape atteinte et compteurs.
  * 1 territoires (le compteur monte avec les carrés), 2 prisonniers, 3 komi, 4 résultat.
+ * Aux étapes 2 et 3, le chiffre change quand le jeton arrive dans le camp (ARRIVEE_JETON).
  */
 export function etatRecit(r: Recit, t: number): EtatRecit {
-  if (t >= TEMPS.resultat) return { etape: 4, noir: r.noir, blanc: r.blanc };
+  const [t1, t2, t3] = totauxEtapes(r);
+  if (t >= TEMPS.resultat) return { etape: 4, ...t3 };
+  if (t >= TEMPS.komi) return { etape: 3, ...(t >= TEMPS.komi + ARRIVEE_JETON ? t3 : t2) };
+  if (t >= TEMPS.prisonniers) return { etape: 2, ...(t >= TEMPS.prisonniers + ARRIVEE_JETON ? t2 : t1) };
   let noir = 0, blanc = 0;
   for (const q of r.territoire) if (q.delai <= t) q.c === 1 ? noir++ : blanc++;
-  if (t < TEMPS.prisonniers) return { etape: 1, noir, blanc };
-  noir = r.territoireNoir + r.deuxieme.noir; blanc = r.territoireBlanc + r.deuxieme.blanc;
-  if (t < TEMPS.komi) return { etape: 2, noir, blanc };
-  return { etape: 3, noir, blanc: blanc + r.komi };
+  return { etape: 1, noir, blanc };
+}
+
+/** Jetons qui rejoignent les camps à l'étape 2 (prisonniers) ou 3 (komi) ; 0 : pas de jeton pour ce camp. */
+export function jetonsEtape(r: Recit, etape: number): Totaux {
+  if (etape === 2) return { noir: r.deuxieme.noir, blanc: r.deuxieme.blanc };
+  if (etape === 3) return { noir: 0, blanc: r.komi };
+  return { noir: 0, blanc: 0 };
 }
 
 /**
@@ -80,6 +104,16 @@ const dans = (c: Camps, camp: 1 | 2) => (camp === 1 ? (c.toi ? t('camp.toiDans')
 /** « + 3 prisonniers pour Noir » : `v` affiché avec la virgule, accord selon `n`. */
 const plus = (type: Recit['deuxieme']['type'], n: number, pour: string) =>
   t(type === 'prisonniers' ? 'recit.prisonniers' : 'recit.pierres', { n, v: nombre(n), pour });
+
+/** Premier temps : « 36 points de territoire pour Noir, 27 pour Blanc » (contre l'ordi : « pour toi », « pour Pomme »). */
+export function ligneTerritoire(r: Recit, c: Camps = campsRecit()): string {
+  const noir = r.territoireNoir, blanc = r.territoireBlanc;
+  const un = (n: number, camp: 1 | 2) => t('recit.territoire', { n, v: nombre(n), pour: dans(c, camp) });
+  if (!noir && !blanc) return t('recit.aucunTerritoire');
+  if (!blanc) return un(noir, 1);
+  if (!noir) return un(blanc, 2);
+  return t('recit.etAussi', { debut: un(noir, 1), v: nombre(blanc), pour: dans(c, 2) });
+}
 
 /** Ligne du deuxième temps : « + 3 prisonniers pour Noir, + 1 pour Blanc » (contre l'ordi : « pour toi », « pour Pomme »). */
 export function ligneDeuxieme(r: Recit, c: Camps = campsRecit()): string {

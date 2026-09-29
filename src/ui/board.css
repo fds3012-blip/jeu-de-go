@@ -66,3 +66,13 @@
   50% { transform: translateX(-4px); } 66% { transform: translateX(4px); }
   83% { transform: translateX(-2px); }
 }
+
+/* « Lire le plateau » (#116) : hors de la vue jusqu'au focus (Tab ou lecteur d'écran), puis posé en bas du plateau.
+   Une seule action principale reste visible à l'écran ; ce bouton ne sert qu'à qui navigue sans le doigt. */
+.board-wrap .lire-plateau:not(:focus) { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.board-wrap .lire-plateau:focus {
+  position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%);
+  min-height: 44px; padding: 0 18px; border: 0; border-radius: 22px;
+  background: var(--surface); color: var(--text); font: inherit; font-weight: 600; white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .35);
+}
