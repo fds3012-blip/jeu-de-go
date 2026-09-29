@@ -22,3 +22,11 @@ Ne pas charger `supabase_minimal.sql` sur une vraie base Supabase : ces objets y
 ## Cas couverts
 
 `defi_par_lien.test.sql` (issue #81) : création (connexion requise), lecture limitée aux deux joueurs, aucune écriture directe, invité en session anonyme, tiers refusé, hors tour refusé, partie périmée refusée, coup mal formé ou hors plateau refusé, écriture des coups hors fonction refusée (même avec la clé service), délai dépassé ⇒ victoire au temps (à la lecture et au coup suivant), lien expiré, parties publiques toujours visibles.
+
+`garde_anonymes.test.sql` (issue #316) : le jeton est simulé par `request.jwt.claims` avec `is_anonymous` à `true`, à `false`, ou absent (traité comme un vrai compte).
+- Anonyme refusé : demande et acceptation d'ami, problème personnel, création de partie (contre un humain ou l'IA), badge, progression des leçons, pseudo, `find_match`, `join_game`, `resign_game` hors défi, `record_puzzle_attempt`, `importer_serie_appareil`, plus de 3 défis en attente.
+- Anonyme accepté : lecture (profils, problèmes communs, ses relations), `creer_defi` (3 en attente), `rejoindre_defi`, lecture du défi, `victoire_au_temps`, coup par `jouer_coup_defi`, abandon d'un défi.
+- Vrai compte : toutes les actions ci-dessus restent permises, 20 défis en attente au plus.
+- Structure : les 9 politiques restrictives attendues sont présentes, RLS active sur chaque table.
+
+Rappel : les fonctions `security definer` appartiennent à `postgres`, qui contourne la RLS (vrai aussi en production, `rolbypassrls`). Les politiques restrictives ne bloquent donc pas les fonctions ; celles-ci contrôlent l'anonyme dans leur corps.
