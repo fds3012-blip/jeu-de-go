@@ -35,6 +35,10 @@ describe('badges', () => {
     expect(obtenus).toEqual(['premiere-partie', 'premier-probleme', 'victoire-pomme', 'palier-debutant', 'dix-problemes', 'serie-7']);
     expect(b[b.length - 1].id).toBe('palier-novice');
   });
+  it('#233 : une victoire contre un adversaire plus fort que Pomme donne aussi le badge (joueur placé, #283)', () => {
+    expect(badges({ ...vide, bilan: { renard: { v: 1, d: 2 } } }).find(x => x.id === 'victoire-pomme')!.obtenu).toBe(true);
+    expect(badges({ ...vide, bilan: { renard: { v: 0, d: 2 } } }).find(x => x.id === 'victoire-pomme')!.obtenu).toBe(false);
+  });
   it('9 problèmes ne suffisent pas pour le badge des 10, une défaite contre Pomme non plus', () => {
     const b = badges({ ...vide, reussis: 9, bilan: { pomme: { v: 0, d: 3 } } });
     expect(b.find(x => x.id === 'dix-problemes')!.obtenu).toBe(false);

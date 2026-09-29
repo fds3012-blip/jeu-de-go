@@ -165,5 +165,5 @@ test('Vitrine : chaque condition de badge tient sur ses deux lignes', async ({ p
   await page.evaluate(() => document.fonts.ready);
   const coupees = await conditions.evaluateAll(els => els.filter(e => e.scrollHeight > e.clientHeight + 1).map(e => e.textContent));
   expect(coupees).toEqual([]);
-  await expect(page.getByRole('listitem', { name: 'Pomme battue : à gagner. Gagne contre Pomme.' })).toBeVisible();
+  await expect(page.getByRole('listitem', { name: 'Pomme battue : à gagner. Bats Pomme ou plus fort.' })).toBeVisible();
 });

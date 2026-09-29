@@ -20,7 +20,7 @@ export const GAINS: Record<SourceXp, number> = { probleme: 10, goDuJour: 20, rev
  * Courbe des niveaux. On commence au niveau 1 avec 0 XP.
  * Passer du niveau n au niveau n + 1 coûte `cout(n) = min(PLAFOND, arrondi5(100 × 1,25^(n − 1)))` XP :
  * 100, 125, 155, 195, 245, 305, 380, 475, 595, 745, 930, puis 1000 par niveau.
- * Le niveau 2 arrive donc à 100 XP (9 problèmes, ou 3 leçons, bonus « première fois » compris), le niveau 3 à 225,
+ * Le niveau 2 arrive donc à 100 XP (9 problèmes neufs, ou 3 leçons ; 8 problèmes avec le bonus « première fois »), le niveau 3 à 225,
  * le niveau 5 à 575, le niveau 8 à 1505. Rythme simulé sur 30 jours : docs/game-design/economie.md.
  */
 /**
@@ -84,9 +84,12 @@ export const recompensesDebloquees = (niveau: number) => RECOMPENSES.filter(r =>
  * Bonus « première fois » (issue #162) : progrès offert (Nunes et Drèze, 2006). Sans lui, un parcours type de
  * 10 minutes (une partie perdue, une leçon, 2 problèmes) donnait 65 XP sur 100. Avec lui : 115, le niveau 2 tombe
  * pendant la première session. Chaque bonus ne se gagne qu'une fois par appareil.
+ * #233 (C8) : le même bonus pour les trois (+20). Avec +10 pour le premier problème, le joueur de 10 minutes finissait
+ * son premier jour à 100 XP pile : un seul problème « Vu » et le niveau 2 ne tombait pas (simulation : 90 XP).
+ * Règle simple à dire : « chaque première fois rapporte +20 ».
  */
 export type Premiere = 'partie' | 'lecon' | 'probleme';
-export const BONUS_PREMIERE: Record<Premiere, number> = { partie: 20, lecon: 20, probleme: 10 };
+export const BONUS_PREMIERE: Record<Premiere, number> = { partie: 20, lecon: 20, probleme: 20 };
 /** Le Go du jour et la révision sont des problèmes ; une victoire est une partie. */
 export const premiereDe = (source: SourceXp): Premiere =>
   source === 'goDuJour' || source === 'revision' ? 'probleme' : source === 'victoire' ? 'partie' : source;

@@ -1,86 +1,105 @@
 # Économie de progression
 
-Tenu par l'agent `game-designer`. Issue #233. Dernière mise à jour : 28/09/2026.
+Tenu par l'agent `game-designer`. Issue #233. Dernière mise à jour : 29/09/2026 (soir).
 
-Cette page fait la carte de tout ce que le joueur gagne : XP, niveaux, thèmes de goban, série, gels, record, badges, paliers. Elle dit où ces systèmes se contredisent et ce qu'on corrige. Les chiffres viennent de la simulation `src/app/economie.test.ts` (vraies règles, vrai contenu : 8 leçons, 159 problèmes). Lance `npx vitest run src/app/economie.test.ts` pour les revoir.
+Cette page fait la carte de tout ce que le joueur gagne : XP, niveaux, thèmes de goban, série, gels, record, badges, paliers. Elle dit où ces systèmes se contredisent et ce qu'on corrige. Les chiffres viennent de la simulation `src/app/economie.test.ts` : vraies règles, vrai contenu (8 leçons, 183 problèmes), et depuis le 29/09 le vrai « Continuer » à ta mesure (`coteJoueur.ts`, #284). Lance `npx vitest run src/app/economie.test.ts` pour revoir les chiffres.
 
-Règles communes, jamais négociées : pas de perte punitive, pas de fausse urgence, pas de loot box. Le public inclut des enfants.
+Règles communes, jamais négociées : pas de perte punitive, pas de fausse urgence, pas de loot box. Le public inclut des enfants. Décision de Florian (#137) : aucune progression visible ni total dans les problèmes (ils doivent sembler infinis), aucune cote affichée.
 
 ## 1. Carte : chaque action et ce qu'elle rapporte
 
-| Action du joueur | XP | Bonus « première fois » (une fois par appareil) | Série du jour (appareil) | Badge | Palier / autre | Où c'est décidé |
-|---|---|---|---|---|---|---|
-| Problème réussi (1re réussite, sans voir la réponse) | +10 | +10 (catégorie problème) | non | « 1er problème », « 10 problèmes », paliers | compte pour le palier (ouverture à 60 %, badge à 100 %) | `Puzzles.tsx`, `aide.ts`, `xp.ts` |
-| Problème résolu après avoir vu la réponse (« Vu », #197) | 0 | 0 | non | non | ne compte pas ; il revient dans la grille | `aide.ts` (`recompense`) |
-| Problème déjà réussi, refait (hors Go du jour) | 0 | 0 | non | non | non | `xp.ts` (`sourceXpProbleme`) |
-| Go du jour réussi | +20, **une fois par jour, même s'il était déjà réussi dans la grille** (#233, C4) | +10 (problème) | **oui** (+ gel tous les 7 jours, 2 au plus) | via problèmes et « 7 jours de série » | compte pour le palier | `xp.ts` (`sourceXpProbleme`), `Puzzles.tsx`, `defiAppareil.ts`, `gel.ts` |
-| Go du jour « Vu » | 0 | 0 | **oui** (l'effort du jour compte) | non | non | `aide.ts` |
-| Révision du jour finie (3 problèmes déjà réussis, #199) | **+20 (depuis #233, 0 avant)** | +10 si jamais pris (cas rare) | **oui** | non | calendrier J+1, J+3, J+7 | `RevisionDuJour.tsx`, `revision.ts` |
-| Leçon terminée, 1re fois | +30 | +20 (leçon) | **oui** | non (aucun badge de leçon) | chemin des leçons | `Learn.tsx` |
-| Leçon rejouée jusqu'au bout | 0 | 0 | **oui** | non | non | `Learn.tsx` |
-| Série d'entraînement après une leçon (3 problèmes, #200) | +10 par problème neuf | comme un problème | non | comme un problème | compte pour le palier | `SeriePratique.tsx` |
-| Partie contre l'ordi, perdue (plus de 10 coups) | +15 | +20 (partie) | **non** | « 1re partie » | adversaire suivant non ouvert | `Game.tsx` |
-| Partie contre l'ordi, gagnée | +40 (15 + 25) | +20 (partie) | **non** | « 1re partie », « Victoire contre Pomme » | adversaire suivant ouvert | `Game.tsx`, `bilan.ts` |
-| Partie abandonnée par le joueur (plus de 10 coups) | +15 | +20 | non | « 1re partie » | défaite au bilan | `Game.tsx` |
-| Partie de 10 coups ou moins (score ou abandon) | 0 | 0 | non | « 1re partie » | — | `Game.tsx` |
-| Partie à deux sur le même appareil | +15 | +20 | non | « 1re partie » | — | `Game.tsx` |
-| « Rejouer d'ici » depuis la revue, puis fin de partie | +15 ou +40, **à chaque fois** | — | non | — | — | `Game.tsx` |
-| Quitter pendant le récit du score | **0** (le gain attend la fin du récit) | — | non | — | — | `Game.tsx` (`recitFini`) |
-| Rejouer une erreur (« Tes erreurs », #77) | 0 | 0 | non | non | — | `MesErreurs.tsx` |
-| Revue d'une partie | 0 | 0 | non | non | — | `Revue.tsx` |
-| Premières parties contre l'ordi (komi 0,5, #160) | comme une partie | — | — | — | les 3 premières ; rend la 1re victoire possible, pas l'XP | `equilibrage.ts` |
+Bonus « première fois » : +20 une fois par appareil, pour chacune des trois catégories (problème, leçon, partie). Depuis le 29/09 (C8), c'est le même montant pour les trois.
+
+| Action du joueur | XP | Série du jour (appareil) | Badge | Palier / autre | Où c'est décidé |
+|---|---|---|---|---|---|
+| Problème réussi (1re réussite, sans voir la réponse, avec ou sans indice) | +10 | non | « Premier problème », « 10 problèmes », paliers | compte pour le palier ; fait monter la cote cachée | `Puzzles.tsx`, `aide.ts`, `xp.ts`, `coteJoueur.ts` |
+| Problème résolu après avoir vu la réponse (« Vu », #197) | 0 | non | non | ne compte pas ; revient par « Continuer » et par la révision (#251) | `aide.ts` (`recompense`) |
+| Problème déjà réussi, refait (hors Go du jour) | 0 | non | non | non | `xp.ts` (`sourceXpProbleme`) |
+| Go du jour réussi | +20, une fois par jour, même déjà réussi dans la grille (C4) | **oui** (+ un gel tous les 7 jours, 2 au plus) | via problèmes et « 7 jours de série » | compte pour le palier | `xp.ts`, `Puzzles.tsx`, `defiAppareil.ts`, `gel.ts` |
+| Go du jour « Vu » | 0 | **oui** (l'effort du jour compte) | non | non | `aide.ts` |
+| Révision du jour finie (3 problèmes réussis ou « Vu », J+1, J+3, J+7) | +20, une fois par jour (C1) | **oui** | non | un « Vu » réussi en révision **reste « Vu »** (voir P6) | `RevisionDuJour.tsx`, `revision.ts` |
+| Leçon terminée, 1re fois | +30 | **oui** | non (aucun badge de leçon) | chemin des leçons | `Learn.tsx` |
+| Leçon rejouée jusqu'au bout | 0 | **oui** | non | non | `Learn.tsx` |
+| Série d'entraînement après une leçon (3 problèmes, #200) | +10 par problème neuf | non | comme un problème | compte pour le palier | `SeriePratique.tsx` |
+| Course aux problèmes (3 min, 3 erreurs, #287) | **0** | **non** | non | meilleur score gardé ; ne touche ni la cote, ni les réussis | `course.ts`, `CourseProblemes.tsx` |
+| « Je sais déjà jouer » : placement en 3 problèmes (#283) | 0 | non | non | cote de départ, adversaires ouverts jusqu'au conseillé, leçon conseillée | `placement.ts` |
+| Partie contre l'ordi, perdue ou abandonnée (plus de 10 coups) | +15 | **non** | « Première partie » | défaite au bilan | `Game.tsx`, `bilan.ts` |
+| Partie contre l'ordi, gagnée | +40 (15 + 25) | **non** | « Première partie », « Pomme battue » (**Pomme ou plus fort**, C7) | adversaire suivant ouvert | `Game.tsx`, `bilan.ts`, `vitrine.ts` |
+| Partie guidée avec Mochi (#79), gagnée / perdue | +40 / +15 | non | « Première partie » ; **pas** « Pomme battue » (hors bilan) | Mochi ajuste sa force | `App.tsx`, `Game.tsx` |
+| Partie de 10 coups ou moins | 0 | non | « Première partie » | — | `xp.ts` (`sourceXpPartie`) |
+| Partie à deux sur le même appareil | +15 | non | « Première partie » | — | `Game.tsx` |
+| « Rejouer d'ici » depuis la revue | 0 (C6) | non | — | — | `xp.ts` (`sourceXpPartie`) |
+| Quitter pendant le récit du score | XP créditée au départ (C5) | non | — | — | `Game.tsx` |
+| Rejouer une erreur (« Tes erreurs », #77), jusqu'à la maîtrise | **0** | non | non | calendrier espacé propre | `MesErreurs.tsx`, `redite*.ts` |
+| Revue d'une partie, import SGF et analyse KataGo (#286) | 0 | non | non | — | `Revue.tsx`, `ImportSgf.tsx` |
+| Premières parties à komi réduit (#160) | comme une partie | — | — | rend la 1re victoire possible, pas l'XP | `equilibrage.ts` |
+| Défi par lien (#81, phase 1 : serveur seulement) | pas encore branché | pas encore | — | — | `src/data/defi.ts` |
 
 Paliers de niveau (`xp.ts`) : coût `min(1000, 100 × 1,25^(n−1))` arrondi à 5. Seuils cumulés : niveau 2 à 100 XP, 3 à 225, 4 à 380, 5 à 575, 6 à 820, 7 à 1 125, 8 à 1 505, 9 à 2 100, 10 à 2 845, 11 à 3 775, 12 à 4 775, puis +1 000 par niveau. Récompenses cosmétiques : Kaya clair (niveau 3), Ardoise (5), Coquillage doré (8). Rien après le niveau 8.
 
 Série de l'appareil (`defi.ts`, `gel.ts`, `serieRecord.ts`) : un défi par jour (Go du jour, leçon ou révision). Un gel gagné à chaque multiple de 7 jours, 2 au plus. Un jour manqué consomme un gel ; s'il n'y en a pas assez, la série repart et les gels restent. Le record ne descend jamais. Côté serveur (joueur connecté), la série reste celle du seul Go du jour ; l'écran montre la plus longue des deux.
 
-Badges (`vitrine.ts`) : 7, gardés pour toujours une fois gagnés. Ils sont mémorisés à l'ouverture du Profil.
-
-Contenu fini : les 8 leçons rapportent 260 XP au plus (bonus compris), les 159 problèmes environ 1 600 XP. Sans les parties, le contenu s'arrête vers le niveau 8. Les parties, sans limite, sont le seul robinet ouvert à l'infini.
+Badges (`vitrine.ts`) : 7, gardés pour toujours une fois gagnés, mémorisés à l'ouverture du Profil.
 
 ## 2. Simulation sur 30 jours
 
-Trois joueurs types, chaque jour (détail dans `src/app/economie.test.ts`) :
-- **10 min/jour** : Go du jour, révision du jour, 2 nouveaux problèmes, puis une leçon un jour sur deux (tant qu'il en reste), sinon une partie. Une partie sur 3 gagnée.
-- **30 min/jour** : Go du jour, révision, 6 problèmes, une leçon et sa série d'entraînement, 2 parties. Une sur 2 gagnée.
-- **10 min, 5 jours sur 7** : comme le premier, absent le week-end.
+Quatre joueurs types, chaque jour (détail dans `src/app/economie.test.ts`) :
+- **10 min/jour** : Go du jour, révision, 2 problèmes « Continuer », une leçon un jour sur deux (tant qu'il en reste), sinon une partie contre Pomme (une sur 3 gagnée). Force réelle 350, +10 par jour.
+- **30 min/jour** : Go du jour, révision, 6 problèmes, une leçon et sa série d'entraînement, 2 parties (une sur 2 gagnée). Force 350, +18 par jour.
+- **10 min, 5 j/7** : comme le premier, absent le week-end.
+- **Club, 20 min/jour** (nouveau) : placé à 10 kyu par « Je sais déjà jouer » (cote de départ 950). Pas de leçon, Go du jour, révision, 4 problèmes, une partie contre Renard (une sur 2 gagnée). Force 1 000.
 
-Un problème neuf sur 5 est « Vu » (aide jusqu'à la réponse). Hypothèse optimiste : tous les paliers sont à la portée du joueur.
+« Continuer » choisit comme l'écran (`choisirProbleme`). Chaque problème est réussi du premier coup avec la chance prévue par l'écart entre la force du joueur et sa difficulté ; sinon, une fois sur deux, il est trouvé avec l'aide (réussi), l'autre fois « Vu ». Le tirage est fixé (graine 233) : les chiffres sont reproductibles.
 
-| Joueur | J1 | J7 | J14 | J30 | Récompenses (niv. 3 / 5 / 8) | Dernier badge |
-|---|---|---|---|---|---|---|
-| 10 min/jour | niv. 2 (100 XP), 1 badge | niv. 5 (645), 5 badges, série 7 | niv. 7 (1 220) | **niv. 9** (2 500), 5 badges | J3 / J7 / J18 | **J7** |
-| 30 min/jour | niv. 3 (235), 3 badges | niv. 7 (1 435), 5 badges, 7 leçons | niv. 9 (2 500), 8/8 leçons | **niv. 12** (4 560), 7 badges, 159/159 problèmes | J1 / J3 / J8 | J25 |
-| 10 min, 5 j/7 | niv. 2 (100), 1 badge | niv. 4 (465), 4 badges, **série 0** | niv. 6 (875), série 0 | niv. 8 (1 855), 4 badges, **record 5 jours, 0 gel** | J3 / J9 / J24 | **J4** |
+| Joueur | J1 | J7 | J30 | Récompenses (niv. 3 / 5 / 8) |
+|---|---|---|---|---|
+| 10 min/jour | niv. 2 (100 XP), 1 badge | niv. 5 (635), 5 badges, série 7 | **niv. 9** (2 470), 6 badges | J3 / J7 / J18 |
+| 30 min/jour | niv. 3 (225), 3 badges | niv. 7 (1 345), 6 badges | **niv. 12** (4 560), 7 badges | J1 / J3 / J8 |
+| 10 min, 5 j/7 | niv. 2 (100), 1 badge | niv. 4 (455), 4 badges, série 0 | niv. 8 (1 835), 5 badges, **record 5, 0 gel** | J3 / J9 / J24 |
+| Club, 20 min/jour | niv. 2 (115), 2 badges | niv. 5 (730), 5 badges | niv. 10 (3 135), 7 badges | J2 / J6 / J15 |
 
-Badges (7 au total) : J1, 1 badge à 10 minutes (« 1er problème »), 3 à 30 minutes ; J7, 5 badges pour les deux joueurs quotidiens, 4 pour le joueur de semaine ; J30, 5, 7 et 4.
-
-Avant #233 (révision sans XP, Go du jour sans XP s'il était déjà réussi), les mêmes joueurs finissaient à 1 740 XP (niv. 8) et 3 680 XP (niv. 10). Aujourd'hui, le Go du jour (610 XP sur 30 jours) et la révision (580) sont les deux sources les plus régulières du joueur de 10 minutes, devant les problèmes neufs (500).
+Jour de chaque badge :
+- 10 min : « Premier problème » J1, « Première partie » J2, « Pomme battue » et « 10 problèmes » J4, « 7 jours » J7, « Palier Débutant » J13. « Palier Novice » jamais.
+- 30 min : trois badges J1, « 10 problèmes » J2, « Palier Débutant » J5, « 7 jours » J7, « Palier Novice » J14.
+- 5 j/7 : même début, « Palier Débutant » J16. « 7 jours » et « Palier Novice » jamais.
+- Club : « Pomme battue » J2 (**jamais avant C7**), « Palier Novice » J26, « Palier Débutant » **J29**.
 
 Lecture :
-- **Session** : le niveau 2 tombe dès le premier jour pour tous (objectif de #162 tenu).
-- **Semaine** : la première récompense (niveau 3) arrive à J3 à 10 minutes, dès J1 à 30 minutes. Bon rythme.
-- **Mois** : le joueur de 30 minutes a tout débloqué à J8 (dernier thème) et fini le contenu à J30. Il reste 22 jours sans rien de nouveau à gagner, sauf des niveaux sans récompense. C'est le trou le plus grand pour J30.
+- **Session** : le niveau 2 tombe dès le premier jour pour tous, y compris le joueur de 10 minutes qui a un problème « Vu » dès J1. Avant C8, il finissait à 90 XP sur 100.
+- **Semaine** : le niveau 3 arrive à J3 à 10 minutes, dès J1 à 30 minutes. 4 à 6 badges à J7. Bon rythme.
+- **Mois** : le joueur de 30 minutes a tout débloqué à J8 (dernier thème) et ses 7 badges à J14. Ensuite, plus rien de nouveau à gagner que des niveaux sans récompense. Le joueur de club gagne ses badges de palier par hasard, le jour où le Go du jour lui tend enfin les derniers problèmes faciles.
+- Le Go du jour (620 XP) et la révision (580) restent les sources les plus régulières à 10 minutes, devant les problèmes neufs (460).
 
 ## 3. Incohérences et trous
 
-Classés du plus net au moins net. **C** = corrigé dans cette PR ; **P** = proposé.
+Classés du plus net au moins net. **C** = corrigé ; **P** = proposé. C1 à C6 datent du 28/09 (PR #239, #261) ; C7 et C8 du 29/09.
 
-1. **C1. La révision du jour faisait vivre la série sans rien rapporter.** Même effort que le Go du jour (3 problèmes au lieu d'un), même rôle pour la série, 0 XP. Le joueur apprenait que la révision « ne compte pas ». Corrigé : `GAINS.revision = 20`, égal au Go du jour, une fois par jour, à la fin de la révision (`xp.ts`, `RevisionDuJour.tsx`). Pour le bonus « première fois », c'est un problème (pas de second bonus). Règle posée : **tout défi du jour qui fait vivre la série rapporte au moins autant que le Go du jour** (testé dans `xp.test.ts`). Indicateur : `revision_faite` par actif (doit monter), rétention J7.
-2. **C2. Le badge « 7 jours de série » disait « Fais 7 Go du jour de suite. »** alors que, depuis #199, une leçon ou la révision comptent aussi. Un joueur qui fait une leçon par jour gagnait un badge dont la condition lui semblait fausse. Corrigé : « Un défi 7 jours de suite. » (anglais : « 7 days of challenges. »), aussi court que possible (la vitrine coupe à 2 lignes).
-3. **C3. Commentaire faux dans `xp.ts`** : « niveau 2 : environ 7 problèmes ». Il en faut 9 (100 XP, bonus compris). Corrigé, avec un renvoi vers cette page.
-4. **C4 (ex-P1). Le Go du jour ne rapportait rien s'il était déjà réussi.** Le calendrier suit l'ordre d'arrivée des problèmes, la grille l'ordre des paliers : le joueur tombait souvent sur un problème déjà fait. Simulation avant correction : 9 jours sur 30 sans XP à 10 minutes, **15 sur 30** à 30 minutes. Le défi commun du jour, mis en avant sur l'accueil, rapportait donc moins au joueur le plus assidu. Corrigé : `sourceXpProbleme` (`xp.ts`) décide ; le Go du jour rapporte ses 20 XP une fois par jour, même déjà réussi. Refait le même jour, il ne rapporte plus rien. Un problème ordinaire ne rapporte toujours qu'une fois. `Puzzles.tsx` appelle cette fonction (3 lignes, périmètre de l'agent problèmes, signalé). L'évènement `probleme_resolu` ne part toujours qu'à la première réussite. Testé dans `xp.test.ts` et dans la simulation (0 jour sans XP). Indicateur : `go_du_jour_resolu` par actif, J7.
-5. **P2. Une partie ne fait pas vivre la série.** C'est pourtant l'action principale de l'app et un indicateur de la charte (5 parties terminées par actif et par semaine). Un joueur qui ne fait « que » jouer n'a jamais de série. Chez chess.com, toute activité compte. Proposition : ajouter `'partie'` à `Defi` (`defi.ts`) et appeler `validerDefi('partie')` au même endroit que le gain d'XP (`Game.tsx`, 1 ligne), pour une partie de plus de 10 coups. À tester en A/B avec `SERIE_UN_DEFI` (`docs/data/tableaux-de-bord.md`). Indicateur : J7, parties terminées par semaine.
-6. **P3. Les gels ne protègent pas le joueur irrégulier.** Un gel se gagne à 7 jours de série. Le joueur « 5 jours sur 7 » perd sa série chaque week-end, n'atteint jamais 7 jours, donc n'a **jamais** de gel ni le badge « 7 jours » (simulation : record de 5 jours, 0 gel en 30 jours). Ce sont les joueurs qui en ont le plus besoin. Pistes, à trancher en A/B : un gel offert au premier Go du jour (progrès offert) et `JOURS_PAR_GEL = 5` ; ou 1 jour de grâce comme chess.com (2 jours). Aucune ne suffit seule pour un week-end complet : la grâce d'un jour plus un gel le couvre. Indicateur : `serie_perdue` (jours, gels), J7 et J30 du segment « moins de 7 jours actifs par semaine ».
-7. **C5 (ex-P4). L'XP était perdue si on quittait pendant le récit du score.** Le gain attendait `recitFini` (pour ne pas dévoiler la victoire) : app fermée ou écran quitté pendant les 2,5 s du récit, rien n'était crédité. Corrigé (`Game.tsx`) : le gain est calculé dès que le résultat est connu ; la pastille attend toujours la fin du récit, mais si le joueur part avant (démontage, `pagehide`), l'XP est créditée à ce moment-là. « Corriger les pierres mortes » annule le gain en attente (le résultat peut changer). Testé dans `e2e/xp-partie.spec.ts`. Indicateur : écart entre `partie_terminee` et `xp_gagne` (sources `partie`, `victoire`).
-8. **C6 (ex-P5). « Rejouer d'ici » permettait de regagner l'XP d'une partie en boucle.** Corrigé : `sourceXpPartie` (`xp.ts`) décide ; une partie reprise depuis la revue ne rapporte pas d'XP, gagnée ou non. « Rejouer » depuis l'écran de fin ou reprendre au coup 0 reste une nouvelle partie. **Règle la plus simple et non punitive : la partie d'origine a déjà payé son XP, la reprise est un entraînement qui ne retire rien.** Testé dans `xp.test.ts`. Indicateur : `xp_gagne` par partie jouée.
-9. **P6. Le badge des paliers se bloque à cause des « Vu ».** « Continuer » mène au palier ouvert le plus avancé ; les problèmes « Vu » d'un palier plus bas n'y reviennent pas. Le badge demande 100 % du palier. Simulation : le joueur de 10 minutes gagne son 5e badge à J7, puis **plus rien jusqu'à J30**. Proposition : la révision du jour reprend aussi les problèmes « Vu » (c'est exactement ce qu'il faut revoir), et une réussite en révision compte comme réussite (XP et palier). Côté `RevisionDuJour.tsx` et `Puzzles.tsx`. Indicateur : badges gagnés par actif à J30.
-10. **P7. Plus rien à débloquer après le niveau 8.** Le joueur de 30 minutes l'atteint à J8, celui de 10 minutes à J18. Proposition : deux ou trois thèmes de plus aux niveaux 10, 12 et 15 (goban « Nuit », pierres « Ardoise et coquillage » ; à dessiner par l'agent design dans `boardArt.ts`), et un badge par tranche de leçons (« Chemin des leçons fini ») : les leçons n'ont aucun badge alors que le Profil montre « 3 / 8 leçons ». Indicateur : `niveau_atteint` au-delà de 8, J30.
-11. **P8. La leçon rejouée fait vivre la série sans rien rapporter** (après C1, c'est le seul défi dans ce cas). C'est acceptable (rejouer une leçon est une révision), mais la règle devient : « rejouer une leçon, c'est la révision du jour » : +20 XP une fois par jour, partagé avec la révision. À faire dans `Learn.tsx`. Indicateur : `lecon_terminee` sur leçons déjà finies.
-12. **P9. Contenu fini face à la courbe.** Toutes les leçons et tous les problèmes valent environ 1 860 XP : niveau 8. Au-delà, seules les parties font monter. Le joueur de 30 minutes finit les 159 problèmes vers J30 (hypothèse optimiste : en réalité, les paliers Club et Confirmé l'arrêteront avant). Ce n'est pas une incohérence de l'XP, c'est un rythme d'écriture : **environ 5 problèmes neufs par jour** pour que le joueur de 30 minutes n'en manque pas. À transmettre à l'agent contenu.
-13. **Tenu, rien à changer** : l'XP ne descend jamais (testé) ; le record non plus ; un badge gagné reste ; le komi réduit ne change pas l'XP (seulement la chance de gagner) ; « Vu » ne rapporte pas d'XP mais garde la série du Go du jour (pas de punition). Partie abandonnée : +15 après 10 coups, c'est voulu (l'effort compte, abandonner n'est pas une faute). Une partie de 10 coups ou moins ne rapporte rien : c'est le seul seuil, il empêche le gain sans effort.
+### Corrigées
+1. **C7. Le badge « Pomme battue » restait grisé pour toujours chez le joueur placé.** « Je sais déjà jouer » (#283) ouvre l'échelle jusqu'à l'adversaire conseillé ; un joueur de club joue Renard ou Tigre, jamais Pomme. Or ce badge vise la première victoire. Simulation avant : le joueur de club finit J30 à 6 badges sur 7, avec un badge impossible sous les yeux, alors que c'est le second cercle de la charte. Corrigé (`vitrine.ts`, 1 ligne) : une victoire contre **n'importe quel** adversaire de l'échelle le donne (ils sont tous plus forts que Pomme). Texte : « Bats Pomme ou plus fort. » (EN : « Beat Pomme or anyone stronger. »). Nom et icône inchangés. Testé dans `vitrine.test.ts` et la simulation. Indicateur : badges par actif à J7 chez les joueurs placés.
+2. **C8. Le niveau 2 du premier jour tenait à 0 XP près.** Le joueur de 10 minutes finissait J1 à 100 XP pile : un seul problème « Vu » (le cas normal d'un débutant) et le niveau 2 ne tombait pas (simulation réaliste : 90 XP). Et le bonus « première fois » valait +20 pour une partie ou une leçon, mais +10 pour un problème, sans raison. Corrigé (`xp.ts`, une constante) : `BONUS_PREMIERE.probleme = 20`. Règle simple : « chaque première fois rapporte +20 ». Le premier Go du jour affiche « +40 XP, dont +20 première fois ». Testé dans `xp.test.ts`, la simulation et `e2e/xp.spec.ts`. Indicateur : `niveau_atteint` (niveau 2) le jour de l'installation.
+3. C1 : la révision finie rapporte +20, comme le Go du jour. Règle : **tout défi qui fait vivre la série rapporte au moins autant que le Go du jour**.
+4. C2 : la condition du badge « 7 jours » parle d'un défi, plus du seul Go du jour.
+5. C3 : commentaire de `xp.ts` sur le niveau 2 corrigé (encore précisé le 29/09).
+6. C4 : le Go du jour rapporte chaque jour, même déjà réussi dans la grille.
+7. C5 : l'XP d'une partie est acquise même si on quitte pendant le récit du score.
+8. C6 : « Rejouer d'ici » ne rapporte pas d'XP (sinon, boucle infinie).
+
+### Proposées (hors des modules de logique, ou décision produit)
+9. **P10 (nouveau). La course aux problèmes ne rapporte rien.** 3 minutes d'effort réel, un problème juste après l'autre : 0 XP, pas de série, et les problèmes justes ne comptent pas comme réussis. C'est le seul mode d'effort sans gain, et c'est le mode le plus « jeu » de l'app. Proposition : une course finie avec au moins un problème juste rapporte **+15, comme une partie**, une fois par jour ; les suivantes rapportent 0 (un record à battre suffit, et on ferme le robinet de la course en boucle). Ajouter `course: 15` à `GAINS` et l'appeler à la fin (`CourseProblemes.tsx`, 2 lignes, périmètre de l'agent problèmes). Pas de série : une course n'est pas le défi commun. Indicateur : `course_terminee` par actif, J7.
+10. **P2. Une partie ne fait pas vivre la série.** C'est l'action principale de l'app et un indicateur de la charte (5 parties terminées par actif et par semaine). Le joueur de club qui ne fait « que » jouer n'a pas de série. Chez chess.com, toute activité compte. Proposition : `'partie'` dans `Defi`, `validerDefi('partie')` au gain d'XP d'une partie de plus de 10 coups (`Game.tsx`, 1 ligne). A/B avec `SERIE_UN_DEFI`. Indicateur : J7, parties terminées par semaine.
+11. **P3. Les gels ne protègent pas le joueur irrégulier.** Le joueur « 5 jours sur 7 » n'atteint jamais 7 jours : **jamais de gel ni de badge « 7 jours »** (record 5, 0 gel à J30). Pistes à trancher en A/B : un gel offert au premier Go du jour et `JOURS_PAR_GEL = 5` ; ou 1 jour de grâce (chess.com en donne 2). Aucune ne couvre seule un week-end : la grâce d'un jour plus un gel le couvre. Indicateur : `serie_perdue`, J7 et J30 du segment « moins de 7 jours actifs par semaine ».
+12. **P6 (à moitié fait). Un « Vu » réussi en révision reste « Vu ».** Depuis #251, la révision repropose les problèmes « Vu » (bien). Mais les réussir là, du premier coup, ne les compte pas comme réussis : ni XP, ni palier. Le joueur refait l'effort sans que rien ne bouge. Proposition : `RevisionDuJour` reçoit un `onReussi(id)` ; `Puzzles.tsx` y branche `markSolved` et `gagnerXp('probleme')` pour un « Vu » réussi sans aide (5 lignes, agent problèmes). Indicateur : `revision_faite`, badges de palier à J30.
+13. **P11 (nouveau). Les badges de palier arrivent par hasard chez le joueur de club.** « Continuer » à ta mesure (#284) ne lui propose jamais les problèmes faciles. « Palier Débutant » tombe à J29, le jour où le Go du jour sert le dernier problème facile qui manquait. Et « Finis le palier Débutant » annonce une fin, contre la règle #137. Proposition : le badge se gagne quand le palier est complet **ou dépassé** (cote cachée au-delà de la borne haute du palier, plus 3 réussites dans le palier suivant) ; condition « Passe le palier Débutant. ». Demande de passer la cote au calcul des badges (`Profil.tsx`, `vitrine.ts` : 5 lignes). Indicateur : badges par actif à J30, segment placé.
+14. **P12 (nouveau). Deux révisions espacées, une seule payée.** La révision du jour rapporte +20 ; « Tes erreurs », qui reprend tes propres fautes jusqu'à la maîtrise (le cœur de la charte, point 3), rapporte 0 et ne compte pas pour la série. Proposition : une erreur **maîtrisée** (dernière étape du calendrier) rapporte +10, comme un problème neuf ; une erreur rejouée du jour compte comme la révision du jour (partage ses +20). `MesErreurs.tsx`, 3 lignes. Indicateur : `erreur_rejouee` par actif, J7.
+15. **P7. Plus rien à débloquer après le niveau 8** (J8 à 30 minutes, J18 à 10 minutes). Proposition : deux ou trois thèmes aux niveaux 10, 12 et 15 (agent design, `boardArt.ts`), et un badge « Chemin des leçons fini » (aucun badge de leçon aujourd'hui, alors que le Profil montre « 3 / 8 leçons »). Indicateur : `niveau_atteint` au-delà de 8, J30.
+16. **P8. La leçon rejouée fait vivre la série sans rien rapporter.** Règle proposée : « rejouer une leçon, c'est la révision du jour » : +20 une fois par jour, partagé avec la révision (`Learn.tsx`).
+17. **P13 (nouveau). La partie guidée ne compte pas au bilan.** Une victoire contre Mochi guidé rapporte +40 mais ne donne ni « Pomme battue » ni « adversaire battu ». Avec C7, le joueur qui ne joue qu'en guidé n'a toujours pas le badge. À trancher : c'est peut-être voulu (Mochi s'adapte). Proposition minimale : ne rien changer au badge, mais le dire dans la fin de partie guidée (« Prêt pour Pomme ? »). Agent partie.
+18. **P14 (nouveau). Le défi par lien arrive sans règle de gain.** Phase 1 livrée côté serveur (#81). À décider avant l'écran : une partie par lien finie rapporte +15 / +40 comme une partie ; jouer un coup dans un défi fait vivre la série (c'est un rendez-vous quotidien naturel, comme chez chess.com en partie par correspondance). Et un mot par objet : « défi » désigne déjà « un défi par jour » (`defi.ts`) ; appeler l'autre « partie par lien » dans l'interface.
+19. **P9. Contenu fini face à la courbe.** Les 8 leçons (260 XP, bonus compris) et les 183 problèmes (environ 1 850 XP) valent environ 2 100 XP : le niveau 9. Au-delà, seules les parties font monter. Il faut environ 5 problèmes neufs par jour pour que le joueur de 30 minutes n'en manque pas. À transmettre à l'agent contenu.
+20. **Tenu, rien à changer** : l'XP ne descend jamais (testé) ; le record non plus ; un badge gagné reste ; la course et le placement ne touchent ni la série ni l'XP, donc rien ne se perd ; le komi réduit ne change pas l'XP ; « Vu » ne rapporte pas d'XP mais garde la série du Go du jour ; aucun total dans les problèmes, aucune cote affichée ; aucun minuteur pour revenir chercher une récompense ; rien ne s'achète.
 
 ## 4. Suite
-- Les propositions P2 et P8 touchent `Game.tsx`, `Learn.tsx` ou `Puzzles.tsx` : chacune fait 1 à 5 lignes, à prendre dans la PR suivante de leur propriétaire.
-- P3 (gels) et P2 (partie = défi) changent la règle de série : A/B, comme `SERIE_UN_DEFI`.
-- Relancer la simulation à chaque changement de barème : elle doit rester verte (niveau 2 à J1, niveau 3 dans la semaine à 10 minutes, XP et record jamais en baisse).
+- P10, P6, P12 : 2 à 5 lignes chacune dans les écrans des agents problèmes et partie. À prendre dans leur prochaine PR, avec la simulation relancée.
+- P2 et P3 changent la règle de série : A/B, comme `SERIE_UN_DEFI`.
+- P11 et P14 demandent une décision produit (badge de palier, règle du défi par lien).
+- Relancer la simulation à chaque changement de barème : elle doit rester verte (niveau 2 à J1 même avec un « Vu », niveau 3 dans la semaine à 10 minutes, XP et record jamais en baisse, joueur placé avec sa première victoire).
