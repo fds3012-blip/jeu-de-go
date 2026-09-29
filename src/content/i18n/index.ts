@@ -12,7 +12,7 @@ export const CATALOGUES: Record<Langue, Catalogue> = { fr, en };
 
 /**
  * Suivre la langue de l'appareil : activé depuis que toute l'interface, les leçons et les problèmes existent en anglais.
- * Un appareil en anglais ouvre l'app en anglais ; tout autre appareil (français ou autre langue) l'ouvre en français.
+ * L'app prend la première langue traduite (français ou anglais) de la liste de l'appareil ; à défaut, le français.
  */
 export const DETECTION_APPAREIL = true;
 
@@ -22,17 +22,21 @@ export const LANGUE_KEY = 'go.langue.v1';
 const estLangue = (x: string | null | undefined): x is Langue => !!x && (LANGUES as readonly string[]).includes(x);
 
 /**
- * Langue à utiliser : `choix` du Profil, puis paramètre `lang` de l'adresse, puis (si `detection`) la langue principale
- * de l'appareil si c'est une langue traduite, sinon le français.
+ * Langue à utiliser : `choix` du Profil, puis paramètre `lang` de l'adresse, puis (si `detection`) la première langue
+ * traduite de la liste de l'appareil, sinon le français.
  */
 export function detecterLangue(search: string, preferees: readonly string[], detection = DETECTION_APPAREIL, choix: string | null = null): Langue {
   if (estLangue(choix)) return choix;
   const param = new URLSearchParams(search).get('lang')?.toLowerCase();
   if (estLangue(param)) return param;
   if (!detection) return 'fr';
-  // Seule la langue principale de l'appareil compte : un appareil en espagnol qui accepte aussi l'anglais reste en français.
-  const base = preferees[0]?.toLowerCase().split(/[-_]/)[0];
-  return estLangue(base) ? base : 'fr';
+  // Première langue traduite dans la liste de l'appareil (décision de Florian, 29/09) : un appareil en espagnol qui accepte
+  // aussi l'anglais s'ouvre en anglais ; un appareil en allemand qui accepte aussi le français s'ouvre en français.
+  for (const p of preferees) {
+    const base = p.toLowerCase().split(/[-_]/)[0];
+    if (estLangue(base)) return base;
+  }
+  return 'fr';
 }
 
 /** Choix du Profil gardé sur l'appareil, ou null (aucun choix, stockage indisponible). */
