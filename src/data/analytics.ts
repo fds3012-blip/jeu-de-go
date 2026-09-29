@@ -29,6 +29,9 @@ export const EVENTS = {
   inscription: 'inscription',
   // L'écran des problèmes n'existe pas encore : constante prête pour lui.
   problemeResolu: 'probleme_resolu',
+  // « Continuer » à ta mesure (#284) : premier essai d'un problème noté (hors Go du jour, lien partagé, déjà réussi ou vu).
+  // `cote_joueur` (avant l'essai, jamais affichée), `cote_probleme`, `premier_essai_reussi` : réussite par tranche de cote.
+  problemeTermine: 'probleme_termine',
   // Écran de revue d'une partie terminée (issue #34).
   revueOuverte: 'revue_ouverte',
   // « Rejouer d'ici » depuis la revue (issue #186) : cible, 30 % des revues ; `cle` dit si c'est depuis le moment clé.
@@ -68,8 +71,11 @@ export const EVENTS = {
   placementCommence: 'placement_commence',
   placementTermine: 'placement_termine',
   placementSaute: 'placement_saute',
-  // Import d'une partie SGF réussi (#286) : `octets` (taille du texte), `coups`, `taille` (plateau), `source` (fichier ou texte).
-  sgfImporte: 'sgf_importe',
+  // Import d'une partie SGF (#286). `source` : `fichier`, `texte` ou `ogs` (lien de partie OGS).
+  // Commencé (bouton « Lire la partie » ou fichier choisi), réussi (`octets`, `coups`, `taille`, `handicap`), refusé (`raison`, `coup`).
+  importSgfCommence: 'import_sgf_commence',
+  importSgfReussi: 'import_sgf_reussi',
+  importSgfErreur: 'import_sgf_erreur',
 } as const;
 export type AnalyticsEvent = (typeof EVENTS)[keyof typeof EVENTS];
 export type Props = Record<string, string | number | boolean | null | undefined>;

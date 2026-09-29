@@ -31,10 +31,10 @@ export function writeSgf(g: GameRecord): string {
 }
 
 /** Coup SGF vers index : `[]` et `[tt]` sont des passes (plateaux jusqu'à 19 × 19) ; une coordonnée hors plateau est refusée. */
-function readMove(v: string, size: number): number {
+function readMove(v: string, size: number, n: number): number {
   if (v === '' || v === 'tt') return -1;
   const p = v.length === 2 ? fromSgf(v, size) : -1;
-  if (p < 0) throw new Error(`Coup SGF invalide : [${v}]`);
+  if (p < 0) throw new Error(`Coup SGF invalide : [${v}] (coup ${n})`);
   return p;
 }
 
@@ -88,8 +88,8 @@ export function readSgf(text: string): GameRecord {
   const list = (k: string) => (root[k] ?? []).map(v => fromSgf(v, size)).filter(p => p >= 0);
   const moves: GameRecord['moves'] = [];
   for (const n of nodes) {
-    if (n.B) moves.push({ color: 1, p: readMove(n.B[0], size) });
-    else if (n.W) moves.push({ color: 2, p: readMove(n.W[0], size) });
+    if (n.B) moves.push({ color: 1, p: readMove(n.B[0], size, moves.length + 1) });
+    else if (n.W) moves.push({ color: 2, p: readMove(n.W[0], size, moves.length + 1) });
   }
   return {
     size, komi: Number.isFinite(komi) ? komi : 6.5,
