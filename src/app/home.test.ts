@@ -26,9 +26,16 @@ describe('accueil', () => {
   });
 
   it('joueur qui revient contre le même adversaire : Rejouer', () => {
-    const a = accueil({ n: 3, dernier: 'pomme' }, 0, pomme, 13);
+    const a = accueil({ n: 3, dernier: 'pomme' }, 0, { ...pomme, fini: true }, 13);
     expect(a.cta).toBe('Rejouer contre Pomme');
     expect(a.bulle).toContain('13\u00A0×\u00A013');
+  });
+
+  it('#309 : partie lancée contre Renard mais jamais finie : Jouer, pas Rejouer', () => {
+    const renard = { id: 'renard', nom: 'Renard' };
+    expect(accueil({ n: 1, dernier: 'renard' }, 0, renard, 9).cta).toBe('Jouer contre Renard');
+    expect(accueil({ n: 1, dernier: 'renard' }, 0, { ...renard, fini: false }, 9).cta).toBe('Jouer contre Renard');
+    expect(accueil({ n: 2, dernier: 'renard' }, 0, { ...renard, fini: true }, 9).cta).toBe('Rejouer contre Renard');
   });
 
   it('joueur qui revient avec un autre adversaire : Jouer contre lui', () => {

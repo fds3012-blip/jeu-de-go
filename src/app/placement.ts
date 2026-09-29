@@ -94,6 +94,20 @@ export function chapitreConseille(kyu: number | null, nbChapitres: number): numb
   return Math.min(1, Math.max(0, nbChapitres - 1));
 }
 
+/**
+ * Leçon proposée par la carte « Leçon » de l'accueil (#308) : la première pas finie, dans l'ordre des leçons.
+ * Après un placement réussi, on part du chapitre conseillé : pas de retour aux bases pour un joueur placé à 8 kyu.
+ * Chapitre conseillé fini : la suite, sinon rien (le Go du jour reste seul).
+ */
+export function leconDeLAccueil<L extends { id: string; steps: readonly unknown[] }>(
+  lecons: readonly L[], chapitres: readonly { lecons: readonly L[] }[], progression: Record<string, number>, placement: Placement | null,
+): L | undefined {
+  const pasFinie = (l: L) => (progression[l.id] ?? 0) < l.steps.length;
+  if (!placement?.fait) return lecons.find(pasFinie);
+  const suite = new Set(chapitres.slice(chapitreConseille(placement.kyu, chapitres.length)).flatMap(c => c.lecons.map(l => l.id)));
+  return lecons.find(l => suite.has(l.id) && pasFinie(l));
+}
+
 export interface Bilan { kyu: number | null; cote: number }
 
 /** Bilan des 3 essais. Tout raté : pas de kyu, la cote reste celle d'un débutant. */

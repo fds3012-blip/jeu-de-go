@@ -4,7 +4,8 @@ import { ABSENCE_MIN, estRetour, etatFlamme, lireVisite, repliqueDuJour, visiter
 import { accueil, type Jour } from './home';
 import { numeroDuJour } from './goDuJour';
 
-const pomme = { id: 'pomme', nom: 'Pomme' };
+// Joueur qui revient : une partie finie contre Pomme, le bouton dit « Rejouer » (#309).
+const pomme = { id: 'pomme', nom: 'Pomme', fini: true };
 const joueur = { n: 3, dernier: 'pomme' };
 const jour = (numero: number, j: Partial<Jour> = {}): Jour => ({ numero, absence: 0, duJourFait: false, titreDuJour: 'Double atari', ...j });
 const phrases = (s: string) => s.split(/[.!?…](?:\s|$)/).filter(x => x.trim()).length;

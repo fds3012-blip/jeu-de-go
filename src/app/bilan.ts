@@ -27,6 +27,8 @@ export function lireBilan(raw: unknown): Bilan {
 }
 
 export const battu = (bilan: Bilan, id: string) => (bilan[id]?.v ?? 0) > 0;
+/** Au moins une partie finie (gagnée ou perdue) contre cet adversaire (#309). */
+export const dejaAffronte = (bilan: Bilan, id: string) => (bilan[id]?.v ?? 0) + (bilan[id]?.d ?? 0) > 0;
 
 /** Adversaire suivant dans l'ordre de la liste, ou `undefined` pour le dernier. */
 export function suivant<T extends { id: string }>(liste: readonly T[], id: string): T | undefined {

@@ -30,7 +30,8 @@ export interface Accueil {
  * pour qu'il n'y ait qu'une seule action principale.
  * - Nouveau joueur (aucune partie, aucune leçon) : première pierre au centre.
  * - Leçons faites mais aucune partie : on l'invite à sa première partie.
- * - Joueur qui revient : « Rejouer contre X » si c'est son dernier adversaire, sinon « Jouer contre X ».
+ * - Joueur qui revient : « Rejouer contre X » si c'est son dernier adversaire et qu'une partie contre lui est finie
+ *   (`adv.fini`, #309), sinon « Jouer contre X ».
  */
 /** Contexte du jour (issue #213) : la bulle change selon le jour, le Go du jour et le retour après une absence. */
 export interface Jour {
@@ -66,7 +67,7 @@ function bulleDuJour(jour: Jour, rejouer: boolean, plateau: string): string {
   return repliqueDuJour(lignes, jour.numero)();
 }
 
-export function accueil(parties: Parties, lecons: number, adv: { id: string; nom: string }, taille: number, jour?: Jour): Accueil {
+export function accueil(parties: Parties, lecons: number, adv: { id: string; nom: string; fini?: boolean }, taille: number, jour?: Jour): Accueil {
   const plateau = `${taille}\u00A0×\u00A0${taille}`; // insécables : « 9 × 9 » ne se coupe pas
   if (parties.n === 0) {
     // Le nom de l'adversaire est déjà juste au-dessus, en grand, et son sceau est dans le bouton.
@@ -75,7 +76,8 @@ export function accueil(parties: Parties, lecons: number, adv: { id: string; nom
     if (lecons === 0) return { nouveau: true, cta, ctaNom, bulle: fr(t('accueil.bulle.nouveau')) };
     return { nouveau: false, cta, ctaNom, bulle: fr(t('accueil.bulle.lecons', { n: lecons })) };
   }
-  const rejouer = parties.dernier === adv.id;
+  // #309 : une partie lancée puis quittée ne compte pas ; « Rejouer » attend une partie finie contre lui.
+  const rejouer = parties.dernier === adv.id && adv.fini === true;
   const cta = t(rejouer ? 'accueil.cta.rejouer' : 'accueil.cta.jouer', { nom: adv.nom });
   return {
     nouveau: false,
