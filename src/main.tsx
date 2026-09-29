@@ -1,6 +1,23 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+// Styles des écrans chargés à la demande (src/app/ecrans.ts) : importés ici, avant App et dans l'ordre
+// d'origine, pour qu'ils restent dans la feuille principale, à la même place qu'avant (rendu identique).
+// Un nouvel écran peut importer sa propre feuille : elle arrivera avec son code.
+import './ui/board.css';
+import './ui/partie.css';
+import './ui/comptage.css';
+import './ui/fin.css';
+import './ui/installation.css';
+import './ui/revue.css';
+import './ui/apprendre.css';
+import './ui/gel.css';
+import './ui/pastille-xp.css';
+import './ui/course.css';
+import './ui/import.css';
+import './ui/niveau.css';
+import './ui/placement.css';
 import { App } from './app/App';
+import { apresPremierEcran, prechargerEcrans, rechargerPourNouvelleVersion } from './app/ecrans';
 // Polices auto-hébergées (@fontsource, sous-ensemble latin) : avant les styles qui les utilisent.
 import './ui/fonts.css';
 import './ui/app.css';
@@ -32,4 +49,13 @@ createRoot(document.getElementById('root')!).render(
   </StrictMode>
 );
 
-registerSW();
+// Après le premier écran et ses polices (sinon, sur un réseau lent, ils se disputent la bande passante) :
+// le service worker met l'app en cache et les autres écrans se téléchargent quand le navigateur est libre.
+apresPremierEcran(() => {
+  registerSW();
+  prechargerEcrans();
+});
+// Morceau JS introuvable (nouvelle version déployée pendant que l'app était ouverte) : on recharge une fois.
+window.addEventListener('vite:preloadError', event => {
+  if (rechargerPourNouvelleVersion()) event.preventDefault();
+});
