@@ -80,16 +80,18 @@ export function Conditions({ onRetour }: { onRetour: () => void }) {
         <Repli titre={t('conditions.garde')} ouvert>
           <p><strong>{fr(t('conditions.garde.telephone'))}</strong> {fr(t('conditions.garde.telephoneTexte'))}</p>
           <p><strong>{fr(t('conditions.garde.compte'))}</strong> {t('conditions.garde.compteTexte')}</p>
+          <p><strong>{fr(t('conditions.garde.defi'))}</strong> {t('conditions.garde.defiTexte')}</p>
           <p><strong>{fr(t('conditions.garde.comptage'))}</strong> {fr(t('conditions.garde.comptageTexte'))}</p>
           <p><strong>{fr(t('conditions.garde.oui'))}</strong> {fr(t('conditions.garde.ouiTexte'))}</p>
         </Repli>
         <Repli titre={t('conditions.pourquoi')}>
           <p>{t('conditions.pourquoi.1')}</p>
           <p>{t('conditions.pourquoi.2')}</p>
-          <p>{t('conditions.pourquoi.3')}</p>
+          <p>{fr(t('conditions.pourquoi.3'))}</p>
         </Repli>
         <Repli titre={t('conditions.duree')}>
           <p><strong>{fr(t('conditions.duree.compte'))}</strong> {fr(t('conditions.duree.compteTexte'))}</p>
+          <p><strong>{fr(t('conditions.duree.defi'))}</strong> {t('conditions.duree.defiTexte')}</p>
           <p><strong>{fr(t('conditions.duree.comptage'))}</strong> {t('conditions.duree.comptageTexte')}</p>
           <p><strong>{fr(t('conditions.duree.telephone'))}</strong> {t('conditions.duree.telephoneTexte')}</p>
         </Repli>
