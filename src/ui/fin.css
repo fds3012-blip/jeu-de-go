@@ -100,7 +100,7 @@
 
 /* Compteur : deux camps, chiffres en Bricolage à chasse fixe (ils montent sans bouger la ligne). */
 .recit-compteur { display: flex; align-items: flex-end; justify-content: center; gap: var(--space-4); }
-.recit-compteur .camp { display: flex; flex-direction: column; align-items: center; min-width: 4.6ch; }
+.recit-compteur .camp { position: relative; display: flex; flex-direction: column; align-items: center; min-width: 4.6ch; }
 .recit-compteur .camp-nom { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 15px; font-weight: var(--fw-bold); }
 .recit-compteur b { font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: 52px; line-height: 1.05; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
 .recit-point { color: var(--muted); font-size: 32px; line-height: 1; padding-bottom: 12px; }
@@ -114,16 +114,44 @@
 .recit-etapes { list-style: none; margin: var(--space-4) 0 0; padding: 0; display: grid; gap: 12px; font-size: 16px; line-height: 1.35; max-width: 30em; }
 .recit-etape { opacity: 0; }
 .recit-etape.vu { opacity: 1; }
-.recit-etape:first-child { color: var(--muted); font-size: 15px; }
+/* Jeton « + 1 » / « + 6,5 » : ce que le temps en cours ajoute au camp. Il part de sous le chiffre et monte s'y fondre
+   (prisonniers et komi rejoignent leur camp). Sans mouvement, il n'est jamais rendu (RecitScore, immediat). */
+.recit-jeton {
+  position: absolute; top: 100%; left: 50%; display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px; border-radius: 999px; background: var(--surface-2); color: var(--text);
+  font-size: 15px; font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; white-space: nowrap;
+  pointer-events: none; opacity: 0; transform: translate(-50%, 0);
+}
+.recit-jeton .recit-pierre { width: 12px; height: 12px; }
 .recit-explication { display: block; margin-top: 2px; color: var(--muted); font-size: 15px; text-wrap: balance; }
 .recit-resultat { margin-top: var(--space-2); font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: 28px; letter-spacing: -.02em; }
 .recit-continuer { margin-top: var(--space-4); flex: none; }
+.recit-etape { text-wrap: balance; }
+/* Petites hauteurs (iPhone SE) : compteur et lignes resserrés, pour que les trois totaux restent sous le goban. */
+@media (max-height: 700px) {
+  .recit-feuille { margin-top: var(--space-3); }
+  .recit-bloc { padding-block: var(--space-2); }
+  .recit-compteur b { font-size: 40px; }
+  .recit-etapes { margin-top: var(--space-3); gap: 8px; font-size: 15px; }
+  .recit-explication { font-size: 14px; }
+  .recit-resultat { margin-top: var(--space-1); font-size: 24px; }
+  .recit-continuer { margin-top: var(--space-3); }
+}
 
 @media (prefers-reduced-motion: no-preference) {
   .recit:not(.immediat) .recit-feuille { animation: fin-entree 240ms var(--ease) both; }
   .recit:not(.immediat) .recit-etape { transform: translateY(6px); transition: opacity 200ms var(--ease), transform 200ms var(--ease); }
   .recit:not(.immediat) .recit-etape.vu { transform: none; }
+  /* Le jeton monte vers le chiffre (ease-out, 420 ms) ; le chiffre change à 260 ms (ARRIVEE_JETON) et encaisse. */
+  .recit-jeton { animation: recit-jeton 420ms cubic-bezier(.23, 1, .32, 1) both; }
+  .recit-compteur b.recoit { animation: recit-recoit 200ms cubic-bezier(.23, 1, .32, 1) 260ms both; }
   /* Après le récit, le voile de l'écran de fin se pose au lieu de tomber d'un coup. */
   .fin-voile { animation: fin-voile 300ms var(--ease) both; }
 }
 @keyframes fin-voile { from { opacity: 0; } to { opacity: 1; } }
+@keyframes recit-jeton {
+  0% { opacity: 0; transform: translate(-50%, 4px) scale(.96); }
+  35% { opacity: 1; transform: translate(-50%, -4px) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -36px) scale(.9); }
+}
+@keyframes recit-recoit { 0% { transform: none; } 45% { transform: scale(1.08); } 100% { transform: none; } }

@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest';
-import { campsRecit, DUREE_CARRE, DUREE_RECIT, etatRecit, ligneCompteur, ligneDeuxieme, ligneKomi, ligneResultat, recitScore, TEMPS } from './score';
+import { afterEach, describe, expect, it } from 'vitest';
+import { ARRIVEE_JETON, campsRecit, DUREE_CARRE, DUREE_RECIT, etatRecit, jetonsEtape, ligneCompteur, ligneDeuxieme, ligneKomi, ligneResultat, ligneTerritoire, PAUSE_LECTURE, recitScore, TEMPS, totauxEtapes } from './score';
+import { choisirLangue } from '../content/i18n';
 import { score } from '../go/score';
 import { fromRows } from '../go/position';
 
@@ -99,5 +100,80 @@ describe('récit du score (#78)', () => {
     const r = recitScore(vide, 0);
     expect(r.gagnant).toBe(0);
     expect(ligneResultat(r)).toBe('Égalité');
+  });
+});
+
+// Suite de #78 : chaque temps écrit son total, les prisonniers et le komi « rejoignent leur camp » (jetons).
+describe('trois temps, trois totaux (#78)', () => {
+  afterEach(() => choisirLangue('fr'));
+
+  // Tirage pseudo-aléatoire reproductible : plateaux quelconques, captures et pierres mortes au hasard.
+  function tirage(graine: number) {
+    let x = graine;
+    const hasard = () => ((x = (x * 1103515245 + 12345) % 2147483648) / 2147483648);
+    const n = [9, 13, 19][graine % 3];
+    const lignes = Array.from({ length: n }, () => Array.from({ length: n }, () => { const h = hasard(); return h < .25 ? 'X' : h < .5 ? 'O' : '.'; }).join(''));
+    const { pos: p } = fromRows(lignes);
+    p.captures = [0, Math.floor(hasard() * 12), Math.floor(hasard() * 12)];
+    const morts = new Set<number>();
+    for (let q = 0; q < p.board.length; q++) if (p.board[q] && hasard() < .05) morts.add(q);
+    return { p, morts };
+  }
+
+  for (const [rules, komi] of [['japanese', 6.5], ['chinese', 7.5], ['japanese', 0], ['chinese', -3]] as const) {
+    it(`${rules}, komi ${komi} : le total de chaque temps mène au score de src/go (60 plateaux)`, () => {
+      for (let g = 1; g <= 60; g++) {
+        const { p, morts } = tirage(g * 7919);
+        const r = recitScore(p, komi, rules, morts), sc = score(p, komi, rules, morts);
+        const [t1, t2, t3] = totauxEtapes(r);
+        expect(t1).toEqual({ noir: sc.territory[1], blanc: sc.territory[2] });
+        expect(t3).toEqual({ noir: sc.black, blanc: sc.white });
+        expect(t2.noir).toBe(t3.noir);
+        expect(t2.blanc + komi).toBe(t3.blanc);
+        // Ce qu'affiche le récit à la fin de chaque temps est ce total-là.
+        expect(etatRecit(r, TEMPS.prisonniers - 1)).toEqual({ etape: 1, ...t1 });
+        expect(etatRecit(r, TEMPS.komi - 1)).toEqual({ etape: 2, ...t2 });
+        expect(etatRecit(r, TEMPS.resultat - 1)).toEqual({ etape: 3, ...t3 });
+        expect(etatRecit(r, DUREE_RECIT)).toEqual({ etape: 4, ...t3 });
+        // Les jetons ajoutés aux totaux donnent le temps suivant.
+        const j2 = jetonsEtape(r, 2), j3 = jetonsEtape(r, 3);
+        expect({ noir: t1.noir + j2.noir, blanc: t1.blanc + j2.blanc }).toEqual(t2);
+        expect({ noir: t2.noir + j3.noir, blanc: t2.blanc + j3.blanc }).toEqual(t3);
+      }
+    });
+  }
+
+  it('le chiffre change quand le jeton arrive dans le camp, pas avant', () => {
+    const r = recitScore(pos, 6.5, 'japanese', dead);
+    expect(etatRecit(r, TEMPS.prisonniers)).toEqual({ etape: 2, noir: 10, blanc: 5 });
+    expect(etatRecit(r, TEMPS.prisonniers + ARRIVEE_JETON)).toEqual({ etape: 2, noir: 13, blanc: 6 });
+    expect(etatRecit(r, TEMPS.komi)).toEqual({ etape: 3, noir: 13, blanc: 6 });
+    expect(etatRecit(r, TEMPS.komi + ARRIVEE_JETON)).toEqual({ etape: 3, noir: 13, blanc: 12.5 });
+    expect(jetonsEtape(r, 1)).toEqual({ noir: 0, blanc: 0 });
+    expect(jetonsEtape(r, 4)).toEqual({ noir: 0, blanc: 0 });
+    expect(TEMPS.komi + ARRIVEE_JETON).toBeLessThan(TEMPS.resultat);
+  });
+
+  it('tout, pause de lecture comprise, tient en moins de 4 s', () => {
+    expect(DUREE_RECIT + PAUSE_LECTURE).toBeLessThan(4000);
+  });
+
+  it('ligne des territoires : chaque camp, son nombre', () => {
+    const r = recitScore(pos, 6.5, 'japanese', dead);
+    expect(ligneTerritoire(r)).toBe('10 points de territoire pour Noir, 5 pour Blanc');
+    expect(ligneTerritoire(r, campsRecit('Pomme'))).toBe('10 points de territoire pour toi, 5 pour Pomme');
+    expect(ligneTerritoire({ ...r, territoireBlanc: 0, territoireNoir: 1 })).toBe('1 point de territoire pour Noir');
+    expect(ligneTerritoire({ ...r, territoireNoir: 0 }, campsRecit('Pomme'))).toBe('5 points de territoire pour Pomme');
+    expect(ligneTerritoire({ ...r, territoireNoir: 0, territoireBlanc: 0 })).toBe('Aucun territoire');
+  });
+
+  it('en anglais', () => {
+    choisirLangue('en');
+    const r = recitScore(pos, 6.5, 'japanese', dead);
+    expect(ligneTerritoire(r)).toBe('10 points of territory for Black, 5 for White');
+    expect(ligneTerritoire(r, campsRecit('Pomme'))).toBe('10 points of territory for you, 5 for Pomme');
+    expect(ligneTerritoire({ ...r, territoireBlanc: 0, territoireNoir: 1 })).toBe('1 point of territory for Black');
+    expect(ligneDeuxieme(r)).toBe('+ 3 prisoners for Black, + 1 for White');
+    expect(ligneKomi(6.5)).toBe('+ 6.5 komi for White');
   });
 });

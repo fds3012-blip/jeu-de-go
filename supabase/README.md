@@ -40,11 +40,13 @@ Les parties entre humains ne s'écrivent plus depuis le client. Toutes les actio
 - **Comptage** : deux passes de suite (depuis la dernière reprise) mettent `counting = true` et bloquent les coups. Un joueur propose les pierres mortes `{ action: 'propose_dead', dead: 'aabb…' }` (groupes entiers, SGF concaténé) ; l'autre accepte `{ action: 'accept' }` ou reprend `{ action: 'resume' }`. Une nouvelle proposition remplace la précédente et c'est alors à l'autre joueur d'accepter.
 - **Fin** : à l'acceptation, le score est calculé par `src/go/score.ts` (komi et règles de la partie) puis `finish_game_by_score` (exécutable seulement par `service_role`) vérifie sous verrou que rien n'a changé, termine la partie et met à jour les cotes si elle est classée (même Elo que l'abandon, via `apply_game_rating`). Égalité (`0`) : pas de changement de cote.
 
+- **Coup de défi par lien (#81)** `{ action: 'defi_coup', game_id, move }` (SGF deux lettres, `tt` = passe), session anonyme acceptée : la fonction vérifie le jeton, que la partie est un défi (sinon 404), que l'appelant y joue (403), qu'elle est en cours (409 `terminee`, ou `comptage`), le tour (409 `tour`), puis les règles du go (422 : `format`, `hors-plateau`, `occupe`, `suicide`, `ko`). Elle appelle ensuite `jouer_coup_defi` (clé service), qui revérifie tout sous verrou ; délai de 3 jours dépassé : 409 `temps` avec `resultat` (`B+T` ou `W+T`), victoire au temps enregistrée. Réponse `{ ok: true, game }`, ou `{ ok: false, error, message }`. Logique dans `src/go/defi-action.ts` (Vitest).
+
 La clé service n'existe que dans l'environnement de la fonction (`SUPABASE_SERVICE_ROLE_KEY`, fournie par Supabase) : jamais dans le dépôt ni côté client.
 
 ### Code partagé avec Deno
 
-La logique pure est dans `src/go/server.ts` (`validateMove`, `finalScore`, `planAction`…), testée par Vitest. Deno exige l'extension `.ts` dans les imports : `npm run sync:functions` copie `src/go/{coords,rules,score,sgf,replay,server}.ts` dans `supabase/functions/game-action/go/` en ajoutant les extensions. Un test échoue si la copie n'est pas à jour.
+La logique pure est dans `src/go/server.ts` (`validateMove`, `finalScore`, `planAction`…), testée par Vitest. Deno exige l'extension `.ts` dans les imports : `npm run sync:functions` copie `src/go/{coords,rules,score,sgf,replay,server,defi-action}.ts` dans `supabase/functions/game-action/go/` en ajoutant les extensions. Un test échoue si la copie n'est pas à jour.
 
 Déploiement : avec la CLI, `supabase functions deploy game-action` ; avec l'outil MCP `deploy_edge_function`, envoyer `index.ts` et les fichiers `go/*.ts` (`verify_jwt: true`).
 

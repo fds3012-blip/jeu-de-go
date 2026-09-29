@@ -2,7 +2,8 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { fromLabel } from '../go/coords';
 import { fromRows } from '../go/position';
-import { Board, annonceAtari, annonceConfirmation, annonceCoup, deplacerCurseur, nomIntersection } from './Board';
+import { Board } from './Board';
+import { annonceAtari, annonceConfirmation, annonceCoup, deplacerCurseur, nomIntersection } from './boardA11y';
 
 // Issue #116 : le goban se joue au clavier et se lit au lecteur d'écran.
 const N = 9;
@@ -80,6 +81,10 @@ describe('noms lus', () => {
     const actif = /aria-activedescendant="([^"]+)"/.exec(html)![1];
     const cellule = html.slice(html.indexOf(`id="${actif}"`));
     expect(cellule).toMatch(/^id="[^"]+" role="gridcell" aria-label="E5, vide"/);
+    // L'aide lue à l'arrivée, et la commande « Lire le plateau ».
+    const aide = /aria-describedby="([^"]+)"/.exec(html)![1];
+    expect(html).toContain(`id="${aide}" class="sr-only">Flèches pour te déplacer, Entrée pour jouer, L pour lire le plateau.</p>`);
+    expect(html).toContain('<button type="button" class="lire-plateau">Lire le plateau</button>');
   });
 
   it("un plateau d'affichage reste une image, hors de la tabulation", () => {
@@ -87,6 +92,7 @@ describe('noms lus', () => {
     expect(html).toContain('role="img"');
     expect(html).not.toContain('tabindex');
     expect(html).not.toContain('gridcell');
+    expect(html).not.toContain('lire-plateau');
   });
 });
 
