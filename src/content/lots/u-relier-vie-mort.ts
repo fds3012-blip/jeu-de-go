@@ -1,5 +1,5 @@
 // Lot U de l'issue #136 : relier deux groupes et couper (800 à 1050), puis vie et mort de haut de courbe (1150 à 1500).
-// 9 × 9, Noir au trait. Aucun ko, aucun seki. Même contenu que la migration 20260929230100_lot_u ; chaque position est
+// 9 × 9, Noir au trait. Aucun ko, aucun seki. Même contenu que la migration 20260929234100_lot_u ; chaque position est
 // prouvée par src/go/lot-u.test.ts :
 // - relier, couper, vivre, tuer (outil src/go/preuve-vie-mort.ts, recherche complète dans une zone fermée, un ko compte
 //   comme non résolu). Relier : ta pierre marquée qui ne vit pas seule finit avec deux vrais yeux (reliée au groupe

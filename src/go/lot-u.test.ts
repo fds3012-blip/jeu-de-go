@@ -195,7 +195,7 @@ describe('lot U : identifiants, énoncés, thèmes, doublons, calendrier, migrat
   });
 
   it('la migration insère exactement ces problèmes, sans rien modifier', () => {
-    const sql = readFileSync(resolve(__dirname, '../../supabase/migrations/20260929230100_lot_u.sql'), 'utf8');
+    const sql = readFileSync(resolve(__dirname, '../../supabase/migrations/20260929234100_lot_u.sql'), 'utf8');
     expect(sql).not.toMatch(/\b(delete|update|drop|truncate|alter)\b/i);
     expect(sql).toMatch(/on conflict \(id\) do nothing/i);
     expect(sql.match(/\('u\d\d', null, 9,/g)).toHaveLength(LOT_U.length);
