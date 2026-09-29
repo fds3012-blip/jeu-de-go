@@ -182,6 +182,18 @@
   /* « Passer » est cerné : son libellé ne frôle pas le cadre. */
   .actions-groupees button.decider { padding-inline: 8px; }
 }
+/* Recette de nuit du 29/09 (N1) : avec « Conseil » (#80), la barre a six actions contre Pomme. En 320 px, elle
+   mesurait 342 px : « Indice » sortait à gauche et « Passer » à droite (et de 2 px en 360 px). Sous 375 px, moins
+   d'air autour des libellés et des libellés de 11 px (à 12 px, la barre faisait 318 px : aucune marge, et les polices
+   du serveur de CI la faisaient déborder de 3 px) ; chaque cible garde 44 px (40 px de libellé plus 2 × 2 px). */
+@media (min-width: 300px) and (max-width: 374px) {
+  .actions-groupees { padding-inline: 0; gap: 0; }
+  .actions-groupees button { padding-inline: 2px; font-size: .6875rem; }
+  .actions-groupees button > span:last-child { min-width: 40px; }
+  .actions-groupees button.decider { padding-inline: 4px; }
+  .actions-decisions { gap: 2px; padding-right: 2px; }
+  .actions-filet { margin: 0 1px; }
+}
 .actions-filet { flex: none; align-self: center; width: 1px; height: 36px; margin: 0 2px; background: var(--line); }
 .actions button.decider { margin: 6px 0; min-height: 52px; background: var(--surface-2); font-weight: var(--fw-bold);
   box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--text) 45%, transparent); }
