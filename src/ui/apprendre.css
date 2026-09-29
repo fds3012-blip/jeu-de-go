@@ -207,9 +207,6 @@
 .verdict-actions .lien { justify-self: center; margin-top: -4px; }
 .verdict .cta { position: static; transform: none; width: 100%; }
 .verdict-cote { margin-top: 4px !important; font-size: var(--fs-corps-s); }
-.verdict-cote b { font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: var(--fs-xl); font-variant-numeric: tabular-nums; }
-.verdict-cote .monte { color: var(--accent-texte); font-weight: var(--fw-bold); }
-.verdict-cote .baisse { color: var(--danger-texte); font-weight: var(--fw-bold); }
 @media (prefers-reduced-motion: no-preference) {
   .verdict { animation: verdict-monte 220ms var(--ease); }
   .verdict .cta:active { transform: translateY(var(--relief)); }
@@ -288,6 +285,7 @@
 .chiffre.attente { width: 3.4ch; height: .9em; border-radius: 10px; background: var(--surface); }
 .legende { color: var(--muted); font-size: var(--fs-s); margin-top: 4px; }
 .palmares-serie { align-items: flex-end; }
+.palmares > .palmares-serie:only-child { grid-column: 2; }
 .palmares-serie .chiffre { color: var(--recompense-texte); }
 .invitation { display: flex; flex-wrap: wrap; /* #121 */ align-items: center; justify-content: space-between; gap: var(--space-2); margin: 0 0 var(--space-2); }
 .invitation p { margin: 0; font-size: var(--fs-corps-s); line-height: 1.4; }
@@ -384,7 +382,6 @@
 .palier-tete { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); min-height: 40px; }
 .palier-nom h3 { display: flex; align-items: center; gap: 6px; margin: 0; font-family: var(--font-titre); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre); font-size: var(--fs-xl); line-height: 1.15; }
 .palier-nom small { display: block; margin-top: 2px; color: var(--muted); font-size: var(--fs-legende); }
-.palier-reco { color: var(--recompense-texte); font-weight: var(--fw-bold); }
 .palier-sceau { flex: none; }
 .palier-compte { margin: 6px 0 var(--space-3); font-variant-numeric: tabular-nums; font-weight: var(--fw-bold); font-size: var(--fs-s); color: var(--accent-texte, var(--accent)); }
 .palier-verrou { margin: -6px 0 var(--space-4); color: var(--muted); font-size: var(--fs-s); }

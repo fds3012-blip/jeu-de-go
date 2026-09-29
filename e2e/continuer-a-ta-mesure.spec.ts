@@ -108,3 +108,29 @@ test('un indice ne change pas la cote ; trouvé seul après un échec, elle remo
   expect(aide.cote).toBeGreaterThan(echec2.cote);
   await expect(verdict).not.toContainText(/cote/i);
 });
+
+// Décision de Florian : aucune cote affichée dans les problèmes (écran, verdict raté puis réussi), en français et en anglais.
+for (const { lang, mot, onglet, suivant } of [
+  { lang: 'fr', mot: /\bcotes?\b/i, onglet: 'Problèmes', suivant: /^Problème suivant / },
+  { lang: 'en', mot: /\bratings?\b/i, onglet: 'Puzzles', suivant: /^Next puzzle / }
+]) {
+  test(`${lang} : ni « cote » ni « rating » sur l’écran Problèmes et son verdict`, async ({ page }) => {
+    await page.clock.setFixedTime(MIDI_PARIS);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto(`/?lang=${lang}`);
+    await page.getByRole('navigation').getByRole('button', { name: onglet }).click();
+    await expect(page.getByRole('button', { name: suivant })).toBeVisible();
+    expect(await page.locator('body').innerText()).not.toMatch(mot);
+
+    await page.getByRole('button', { name: suivant }).click();
+    const id = (await page.locator('.lecteur').getAttribute('data-probleme'))!;
+    const r = REPONSES.get(id)!;
+    await expect(plateau(page, r.taille)).toBeVisible();
+    await coupFaux(page, id, 1);
+    await expect(page.locator('.verdict')).toBeVisible();
+    expect(await page.locator('body').innerText()).not.toMatch(mot);
+    await jouer(page, r.coup, r.taille);
+    await expect(page.locator('.verdict .cta')).toBeVisible();
+    expect(await page.locator('body').innerText()).not.toMatch(mot);
+  });
+}

@@ -8,8 +8,6 @@ import {
 } from '../data/puzzles';
 import { Board } from '../ui/Board';
 import { MiniGoban } from '../ui/MiniGoban';
-import { Defile } from '../ui/Defile';
-import { ecart } from '../ui/defile';
 import { centreVertical } from '../ui/cadrage';
 import { C, M, viewBoxOf } from '../ui/boardArt';
 import { Retour, Verdict } from '../ui/Lecteur';
@@ -23,7 +21,7 @@ import { gagnerXp, sourceXpProbleme } from './xp';
 import { aideSuivante, recompense, refutation, reponseVue, toucherApresErreur, type NiveauAide, type Refutation } from './aide';
 import { prefersReducedMotion, readLocal, useOnline, writeLocal } from './hooks';
 import { niveau, prochainAMesure } from './problemes';
-import { aContinuer, aSuivre, ordrePaliers, palierEnCours, palierRecommande, paliers, paliersVisibles, type Palier } from './paliers';
+import { aContinuer, aSuivre, ordrePaliers, palierEnCours, paliers, paliersVisibles, type Palier } from './paliers';
 import { SceauLecon } from '../ui/SceauLecon';
 import { aFeter, FETES_KEY } from './fetesPaliers';
 import { MesErreurs } from '../ui/MesErreurs';
@@ -210,7 +208,6 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
         duJour={enArchive ? { numero: archive, serie: 0, defiChange: false, archive: numero, gelGagne: false, celebrer }
           : estDuJour ? { numero, serie: serieVivante(serieDuJour, numero), defiChange, gelGagne, celebrer } : undefined}
         rated={!!db && !!userId && online && !!stats && !stats.attempted.includes(open.id) && !solved.has(open.id)}
-        rating={stats?.rating}
         onPremierEssai={note ? ok => {
           // Mesure de « Continuer » (#284) : réussite au premier essai par tranche de cote. Cote avant l'essai, jamais affichée.
           track(EVENTS.problemeTermine, { probleme: open.id, cote_joueur: Math.round(cote.cote), cote_probleme: open.difficulty, premier_essai_reussi: ok });
@@ -276,7 +273,6 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   // Une seule action en relief : le Go du jour tant qu'il n'est pas fait, « Problème suivant » ensuite.
   const duJourReussi = !!daily && goDuJourFaitAppareil(numero);
   const duJourFait = !daily || duJourReussi;
-  const recommande = connecte && stats ? palierRecommande(tiers, stats.rating) : undefined;
   // Série (issue #161) : celle de l'appareil sans compte, la plus longue des deux avec un compte.
   const serie = serieAffichee(connecte && stats ? stats.streak : null, serieDuJour, numero);
   const notices = <>
@@ -298,7 +294,7 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
         {notices}
         <p className="muted small bases-aide">{fr(tr('pb.aide.avant'))}<b>{tr('pb.aide.mot')}</b>{fr(tr('pb.aide.apres'))}</p>
         {ouverts.map(t => (
-          <PalierVue key={t.id} t={t} ordre={ordre} solved={solved} vus={vus} recommande={t.id === recommande} onOpen={setOpenId}
+          <PalierVue key={t.id} t={t} ordre={ordre} solved={solved} vus={vus} onOpen={setOpenId}
             fete={fetes.includes(t.id)} />
         ))}
         {suivant && (
@@ -347,7 +343,7 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
             <div className="palier-nom">
               <small className="palier-surtitre">{tr('pb.tonPalier')}</small>
               <h3>{tr(`palier.${enCours.id}.nom`)}</h3>
-              <small>{tr(`palier.${enCours.id}.kyu`)}{enCours.id === recommande && <span className="palier-reco"> · {tr('pb.pourTaCote')}</span>}</small>
+              <small>{tr(`palier.${enCours.id}.kyu`)}</small>
             </div>
             {enCours.reussis > 0 && <p className="palier-compte">{tr('pb.reussis', { n: enCours.reussis })}</p>}
           </div>
@@ -359,12 +355,9 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
         </button>
       </section>
 
+      {/* Aucune cote affichée (décision de Florian, #137) : la cote problèmes existe sur le serveur, invisible. */}
       {connecte && stats ? (
         <div className="palmares">
-          <div>
-            <span className="chiffre">{stats.rating}</span>
-            <span className="legende">{tr('pb.coteLegende')}</span>
-          </div>
           <div className="palmares-serie">
             <span className="chiffre"><Flamme taille={30} />{serie}</span>
             <span className="legende">{tr('pb.serieLegende', { n: serie })}</span>
@@ -373,7 +366,7 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
       ) : connecte && statsError ? (
         <p className="notice" role="alert">{statsError} <button className="lien" onClick={() => setRetry(n => n + 1)}>{tr('pb.reessayer')}</button></p>
       ) : connecte && online ? (
-        <div className="palmares" aria-busy="true"><span className="sr-only">{tr('pb.chargementCote')}</span><div><span className="chiffre attente" /><span className="legende">{tr('pb.coteLegende')}</span></div></div>
+        <div className="palmares" aria-busy="true"><div className="palmares-serie"><span className="sr-only">{tr('pb.chargementSerie')}</span><span className="chiffre attente" /><span className="legende">{tr('pb.serieLegende', { n: 2 })}</span></div></div>
       ) : !connecte && serie > 0 ? (
         // Sans compte, la série de l'appareil s'affiche comme pour un joueur connecté (issue #161).
         <div className="palmares palmares-invite">
@@ -402,8 +395,8 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
  * Un palier : nom, rang en kyu, sceau quand il est complet, et sa grille de miniatures.
  * Aucun total affiché (ni « 3 / 33 », ni barre, ni montagne) : le joueur doit sentir que les problèmes ne s'arrêtent jamais.
  */
-function PalierVue({ t, ordre, solved, vus, recommande, onOpen, fete }: {
-  t: Palier<Puzzle>; ordre: Puzzle[]; solved: Set<string>; vus: Record<string, true>; recommande: boolean; onOpen: (id: string) => void; fete: boolean;
+function PalierVue({ t, ordre, solved, vus, onOpen, fete }: {
+  t: Palier<Puzzle>; ordre: Puzzle[]; solved: Set<string>; vus: Record<string, true>; onOpen: (id: string) => void; fete: boolean;
 }) {
   const titre = `palier-${t.id}`;
   return (
@@ -411,7 +404,7 @@ function PalierVue({ t, ordre, solved, vus, recommande, onOpen, fete }: {
       <div className="palier-tete">
         <div className="palier-nom">
           <h3 id={titre}>{tr(`palier.${t.id}.nom`)}</h3>
-          <small>{tr(`palier.${t.id}.kyu`)}{recommande && <span className="palier-reco"> · {tr('pb.pourTaCote')}</span>}</small>
+          <small>{tr(`palier.${t.id}.kyu`)}</small>
         </div>
         {t.complet && <span className="palier-sceau" role="img" aria-label={tr('pb.palierComplet')}><SceauLecon id={`p${t.rang}`} taille={34} /></span>}
       </div>
@@ -546,8 +539,8 @@ interface DuJourInfo { numero: number; serie: number; defiChange: boolean; archi
 /** Temps pendant lequel la réponse de l'adversaire reste sur le plateau après une erreur (#237, N6). */
 const DUREE_ERREUR = 2200;
 
-export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating, onPremierEssai, onAttempt, onSolved, onNext, onExit, onSolutionVue, retour, surtitre, exercice = true }: {
-  puzzle: Puzzle; rang: number; duJour?: DuJourInfo; confirmTouch: boolean; rated: boolean; rating?: number;
+export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPremierEssai, onAttempt, onSolved, onNext, onExit, onSolutionVue, retour, surtitre, exercice = true }: {
+  puzzle: Puzzle; rang: number; duJour?: DuJourInfo; confirmTouch: boolean; rated: boolean;
   /** Premier essai joué (#284) : réussi ou non. Sert à la cote de « Continuer », jamais affichée. */
   onPremierEssai?: (ok: boolean) => void;
   onAttempt: (ok: boolean) => Promise<{ ok: true; value: number } | { ok: false; error: string } | null>;
@@ -571,7 +564,6 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating
   const [answer, setAnswer] = useState<Answer | null>(null);
   const [board, setBoard] = useState(start.pos.board);
   const [tries, setTries] = useState(0);
-  const [cote, setCote] = useState<{ de: number; a: number } | { erreur: string } | null>(null);
   const [replay, setReplay] = useState<{ frame: number; total: number } | null>(null);
   const [shake, setShake] = useState<{ p: number; n: number } | null>(null);
   const firstTry = useRef(true);
@@ -607,13 +599,11 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating
     window.clearTimeout(timer.current);
     if (ok) { setApercu(null); setBoard(r.after.board); onSolved(tries + 1, aide); }
     else montrerErreur(p, r.after.board);
-    // Seul le premier essai compte pour la cote.
+    // Seul le premier essai compte pour la cote, qui n'est jamais affichée (décision #137) : ni valeur ni message.
     if (firstTry.current) onPremierEssai?.(ok);
     if (firstTry.current && rated) {
       firstTry.current = false;
-      const res = await onAttempt(ok);
-      if (res && res.ok) setCote({ de: rating ?? res.value, a: res.value });
-      else if (res) setCote({ erreur: res.error });
+      await onAttempt(ok);
     }
     firstTry.current = false;
   }
@@ -705,9 +695,6 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating
   const lastMove = replay && frames ? frames[replay.frame].lastMove : solvedNow ? answer.p : null;
   const replayDone = !!replay && replay.frame === replay.total;
 
-  const ligneCote = cote && ('erreur' in cote
-    ? <p className="verdict-cote">{cote.erreur}</p>
-    : <p className="verdict-cote">{tr('pb.taCote')} <b><Defile de={cote.de} a={cote.a} /></b>{cote.a !== cote.de && <span className={cote.a > cote.de ? 'monte' : 'baisse'}> {ecart(cote.de, cote.a)}</span>}</p>);
   const suivantBtn = <button className="cta" onClick={onNext ?? onExit}>{onNext ? tr('pb.suivant') : retour ?? tr('pb.retour')}</button>;
 
   let verdict = null;
@@ -759,13 +746,13 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating
             <ProposerInstallation moment="go_du_jour" />
           </>
         : <>{suivantBtn}<button className="lien" onClick={showLine}>{tr('pb.voirSuite')}</button></>}>
-        <p>{fr(answer.text)}</p>{ligneCote}<XpEnLigne anime={duJour?.celebrer ?? true} />
+        <p>{fr(answer.text)}</p><XpEnLigne anime={duJour?.celebrer ?? true} />
       </Verdict>
     ) : (
       // Erreur (#237, N6) : pas de « Réessayer », le plateau reste jouable ; l'indice est un lien discret.
       <Verdict ton="revoir" cle={answer.n} actions={boutonAide}>
         <p>{fr(answer.text)}</p>
-        {answer.kind === 'wrong' && <p className="muted small rejoue-plateau">{fr(tr('pb.rejouePlateau'))}</p>}{ligneCote}
+        {answer.kind === 'wrong' && <p className="muted small rejoue-plateau">{fr(tr('pb.rejouePlateau'))}</p>}
       </Verdict>
     );
   }
