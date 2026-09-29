@@ -86,7 +86,7 @@ function Connected({ db }: { db: Db }) {
   return (
     <div className="card">
       <b style={{ fontSize: '1.2rem' }}>{profile.username}</b>
-      <p className="muted small" style={{ margin: '4px 0 0' }}>{t('compte.cotes', { cote: profile.rating, pb: profile.puzzle_rating })}</p>
+      {/* #214 : aucune cote affichée (décision de Florian). */}
       <p className="muted small" style={{ margin: '2px 0 0' }}>{session.user.email}</p>
       <div className="row" style={{ marginTop: 12 }}>
         <button className="btn" onClick={() => setEditing(true)}>{t('compte.changerPseudo')}</button>
@@ -167,9 +167,18 @@ function SignIn({ db }: { db: Db }) {
   return (
     <form className="card" onSubmit={submit} noValidate>
       <b>{t('compte.creer')}</b>
-      {/* #214 : promesse exacte. Seules la série et les leçons montent sur le serveur (importer_serie_appareil, syncProgress). */}
-      <p className="muted small" style={{ margin: '4px 0 0' }}>{fr(t('compte.promesse'))}</p>
-      <p className="muted small" style={{ margin: '4px 0 0' }}>{fr(t('compte.resteIci'))}</p>
+      {/* #214 : promesse exacte. Seules la série et les leçons montent sur le serveur (importer_serie_appareil, syncProgress).
+          Deux lignes à icône : ce qui te suit, ce qui reste sur ce téléphone. */}
+      <ul className="compte-garde">
+        <li className="compte-garde-oui">
+          <svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true" focusable="false"><path d="M4.5 10.5 8.5 14.5 15.5 6" /></svg>
+          {fr(t('compte.promesse'))}
+        </li>
+        <li className="compte-garde-ici">
+          <svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true" focusable="false"><rect x="5.5" y="2.5" width="9" height="15" rx="2" /><path d="M9 14.5h2" /></svg>
+          {fr(t('compte.resteIci'))}
+        </li>
+      </ul>
       <p className="muted small" style={{ margin: '4px 0 10px' }}>{fr(t('compte.sansMotDePasse'))}</p>
       <label className="small" htmlFor="account-email">{t('compte.email')}</label>
       <input id="account-email" type="email" inputMode="email" autoComplete="email" required style={{ ...field, marginTop: 4 }}

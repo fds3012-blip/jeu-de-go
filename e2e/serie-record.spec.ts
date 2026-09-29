@@ -18,7 +18,7 @@ test('série de 7 jours perdue : record gardé, badge conservé, Mochi accueille
   await page.evaluate(() => localStorage.setItem('go.go-du-jour.v1', JSON.stringify({ dernier: 7, jours: 7 })));
   await page.reload();
   await nav(page, 'Profil');
-  await expect(page.locator('[data-badge="serie-7"]')).toHaveClass('obtenu');
+  await expect(page.locator('[data-badge="serie-7"]')).toHaveClass(/\bobtenu\b/);
   expect(await stockage(page, 'go.badges.v1')).toContain('serie-7');
   expect(await stockage(page, 'go.serie-record.v1')).toMatchObject({ record: 7 });
 
@@ -36,7 +36,7 @@ test('série de 7 jours perdue : record gardé, badge conservé, Mochi accueille
   await nav(page, 'Profil');
   await expect(page.getByText('jours, ton record')).toBeVisible();
   await expect(page.getByText(/^jours? de série$/)).toHaveCount(0);
-  await expect(page.locator('[data-badge="serie-7"]')).toHaveClass('obtenu');
+  await expect(page.locator('[data-badge="serie-7"]')).toHaveClass(/\bobtenu\b/);
   await expect(page.getByRole('status').filter({ hasText: /record/ })).toHaveCount(0); // parti en changeant d'onglet
 
   // Une seule fois : pas de nouveau message au rechargement.

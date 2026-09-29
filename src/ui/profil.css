@@ -131,17 +131,30 @@ button.ligne:focus-visible { outline-offset: -3px; }
 .p-trait { fill: none; stroke: var(--jade-bord); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .p-or { fill: var(--or); stroke: var(--encre, #111); stroke-width: .8; stroke-linejoin: round; }
 
-.vitrine h2 { display: flex; align-items: baseline; justify-content: space-between; }
+/* Vitrine (#214) : les sept sceaux sur une rangée (344 px en 390), sur deux au-delà ; chaque sceau est un bouton de 44 px.
+   La ligne de détail dessous remplace les légendes coupées d'avant. */
+.profil .vitrine { margin-top: var(--space-3); }
+.profil .vitrine-tete { display: flex; align-items: baseline; justify-content: space-between; margin: 0 0 var(--space-1); font-size: var(--fs-m); }
 .vitrine-compte { color: var(--muted); font-family: var(--font-texte, inherit); font-weight: var(--fw-bold); font-size: var(--fs-s); font-variant-numeric: tabular-nums; }
-/* Une rangée qui défile à l'horizontale : le Profil tient toujours en 390 × 844. La marge négative fait déborder
-   la rangée jusqu'au bord de l'écran, pour que la coupe du dernier badge dise « il y en a d'autres ». */
-.vitrine-rangee { list-style: none; margin: var(--space-1) calc(-1 * var(--gouttiere, 16px)); padding: 2px var(--gouttiere, 16px) 4px; display: flex; gap: 10px;
-  overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none; overscroll-behavior-x: contain; }
-.vitrine-rangee::-webkit-scrollbar { display: none; }
-.vitrine-rangee li { flex: none; width: 74px; display: flex; flex-direction: column; align-items: center; gap: 3px; text-align: center; scroll-snap-align: start; }
-.vitrine-rangee b { font-size: 11px; font-weight: var(--fw-bold); line-height: 1.15; }
-.vitrine-rangee small { color: var(--muted); font-size: 11px; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.vitrine-rangee .a-gagner b { color: var(--muted); }
+/* Colonnes de 44 px réparties sur toute la largeur : la rangée s'aligne sur le compteur « 4/7 » ; en 320 px, 5 puis 2. */
+.vitrine-grille { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, var(--cible-min)); justify-content: space-between; gap: 6px 4px; }
+.badge-bouton { display: grid; place-items: center; width: var(--cible-min); height: var(--cible-min); padding: 0; border: 0; border-radius: 50%;
+  background: none; color: inherit; transition: transform 140ms cubic-bezier(.23, 1, .32, 1); }
+.badge-bouton:active { transform: scale(.94); }
+/* Badge touché : anneau jade autour du sceau (l'état se lit aussi par aria-pressed). */
+.badge-bouton[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent-bord); }
+.badge-bouton:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.vitrine-detail { margin: var(--space-1) 0 0; min-height: 2.7em; color: var(--muted); font-size: var(--fs-s); line-height: 1.35; }
+@media (prefers-reduced-motion: reduce) { .badge-bouton { transition: none; } .badge-bouton:active { transform: none; } }
+/* Gagné depuis la dernière visite : le sceau s'imprime une fois, comme un tampon (décalé de 60 ms par rang). */
+@media (prefers-reduced-motion: no-preference) {
+  .vitrine-grille .nouveau .sceau-badge { animation: badge-imprime 360ms cubic-bezier(.23, 1, .32, 1) calc(200ms + var(--rang, 0) * 60ms) both; }
+}
+@keyframes badge-imprime {
+  from { opacity: 0; transform: scale(1.3) rotate(-8deg); }
+  60% { opacity: 1; }
+  to { opacity: 1; transform: none; }
+}
 
 .sceau-badge { display: block; }
 .sceau-badge .b-point { fill: currentColor; opacity: .55; }
@@ -203,10 +216,18 @@ button.ligne:focus-visible { outline-offset: -3px; }
 /* Total discret à côté du compteur : « 3/7 ». */
 .stat b small { margin-left: 1px; color: var(--muted); font-family: var(--font-texte, inherit); font-size: .6em; font-weight: var(--fw-bold); letter-spacing: 0; }
 .stat span { text-wrap: balance; }
-/* La vitrine suit la carte de près ; les lignes (Réglages, Installer, Compte, Conditions) juste après. */
+/* Les lignes (Réglages, Installer, Compte, Conditions) juste après la vitrine. */
 .profil .vitrine + .lignes { margin-top: var(--space-2); }
 /* Carte d'installation demandée depuis le Profil : pas d'entrée retardée, le joueur l'a ouverte lui-même. */
 .installer.installer-demandee { margin-top: 0; animation: none; }
 /* Quatre colonnes égales sur un iPhone ; au zoom 200 %, elles passent sur deux rangées (min-width). */
 .identite .stats { gap: 6px; }
-.identite .stats > .stat { flex: 1 1 0; min-width: 68px; align-content: start; }
+/* #214 : 56 px au moins, pour que les quatre tiennent aussi en 320 px ; au zoom 200 %, elles passent toujours sur deux rangées. */
+.identite .stats > .stat { flex: 1 1 0; min-width: 56px; align-content: start; }
+
+/* ---------- Invitation au compte (#214) : ce qui te suit, ce qui reste sur ce téléphone ---------- */
+.compte-garde { list-style: none; margin: var(--space-2) 0 0; padding: 0; display: grid; gap: 6px; font-size: var(--fs-s); line-height: 1.4; }
+.compte-garde li { display: flex; align-items: flex-start; gap: var(--space-2); }
+.compte-garde svg { flex: none; margin-top: 1px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.compte-garde-oui svg { color: var(--accent-texte); stroke-width: 2.4; }
+.compte-garde-ici { color: var(--muted); }

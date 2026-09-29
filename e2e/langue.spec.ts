@@ -234,13 +234,13 @@ const ERREUR = {
   rows: ['.........', '.........', '..O...X..', '.........', '....X....', '.........', '..X...O..', '.........', '.........'],
   toPlay: 1, reponses: [6 * 9 + 4], joue: 0, coup: 14, adversaire: 'Pomme',
 };
-const COMPOSANTS = '.niveau-texte, .niveau-suite, .paliers h3, .carte b, .carte small, .vedette-bulle b, .carrousel-legende, .stat span, .vitrine-rangee b, .vitrine-rangee small, .pastille-niveau, .titre-pierres, .bases-aide, .grille-pb .small';
+const COMPOSANTS = '.niveau-texte, .niveau-suite, .paliers h3, .carte b, .carte small, .vedette-bulle b, .carrousel-legende, .stat span, .vitrine-detail, .pastille-niveau, .titre-pierres, .bases-aide, .grille-pb .small';
 
 async function sansCoupeComposants(page: Page, largeur: number) {
-  // Coupé : plus large que sa boîte, tronqué par le line-clamp, ou qui dépasse l'écran (sauf dans la vitrine, qui défile de côté).
+  // Coupé : plus large que sa boîte, tronqué par le line-clamp, ou qui dépasse l'écran .
   const coupes = await page.evaluate(sel => [...document.querySelectorAll<HTMLElement>(sel)]
     .filter(e => e.offsetParent !== null && (e.scrollWidth > e.clientWidth + 1 || e.scrollHeight > e.clientHeight + 2
-      || (!e.closest('.vitrine-rangee') && e.getBoundingClientRect().right > innerWidth + 0.5)))
+      || e.getBoundingClientRect().right > innerWidth + 0.5))
     .map(e => e.textContent), COMPOSANTS);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(largeur);
   expect(coupes).toEqual([]);
@@ -293,9 +293,9 @@ for (const largeur of [390, 320]) {
     const stats = page.getByRole('list', { name: 'Your stats' });
     for (const legende of ['day streak', 'lessons done', 'opponent beaten', 'puzzles solved']) await expect(stats.getByText(legende, { exact: true })).toBeVisible();
     const vitrine = page.getByRole('region', { name: /^Badges, \d of 7$/ });
-    await expect(vitrine.getByRole('listitem', { name: 'Pomme beaten: earned' })).toBeVisible();
-    await expect(vitrine.getByRole('listitem', { name: 'First game: earned' })).toBeVisible();
-    await expect(vitrine.getByRole('listitem', { name: '7-day streak: not earned yet. Keep a 7-day streak.' })).toHaveCount(1);
+    await expect(vitrine.getByRole('button', { name: 'Pomme beaten: earned' })).toBeVisible();
+    await expect(vitrine.getByRole('button', { name: 'First game: earned' })).toBeVisible();
+    await expect(vitrine.getByRole('button', { name: '7-day streak: not earned yet. Keep a 7-day streak.' })).toHaveCount(1);
     await expect(page.getByText(/problèmes|victoires|Première partie|Réussis/)).toHaveCount(0);
     await sansDebordement(page);
     await sansCoupeComposants(page, largeur);

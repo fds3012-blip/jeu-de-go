@@ -53,7 +53,7 @@ test('Ton parcours : niveau et XP, record, leçons, adversaires battus, problèm
   await expect(lignes.nth(1)).toHaveText(/^2\/(\d+)\s*leçons finies sur \1$/); // le total suit le nombre de leçons (8 depuis #228)
   await expect(lignes.nth(2)).toHaveText(/^2\/9\s*adversaires battus sur 9$/);
   await expect(lignes.nth(3)).toHaveText(/^3\s*problèmes réussis$/); // sans total : les problèmes n'ont pas de fin
-  await expect(page.getByRole('region', { name: /^Badges/ }).getByRole('listitem', { name: 'Pomme battue : obtenu' })).toBeVisible();
+  await expect(page.getByRole('region', { name: /^Badges/ }).getByRole('button', { name: 'Pomme battue : obtenu' })).toBeVisible();
 
   // Les réglages ne sont plus sur la page : ils sont derrière leur ligne.
   await expect(page.getByRole('group', { name: 'Thème' })).toHaveCount(0);

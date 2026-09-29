@@ -1,7 +1,8 @@
 // Profil vivant (issue #103) : rangée de statistiques et vitrine de badges en sceaux ronds.
-import type { ReactNode } from 'react';
+import { useState, type CSSProperties, type ReactNode } from 'react';
 import type { Badge, BadgeId, Stat } from '../app/vitrine';
 import { t } from '../content/i18n';
+import { fr } from './typo';
 
 /** Icônes de la grammaire « deux pierres » : une pierre noire, une blanche, et un signe. 24 × 24. */
 const ICONES: Record<Stat['id'], ReactNode> = {
@@ -67,21 +68,41 @@ export function SceauBadge({ id, obtenu, taille = 52 }: { id: BadgeId; obtenu: b
   );
 }
 
-export function VitrineBadges({ liste }: { liste: Badge[] }) {
+/**
+ * Vitrine des badges (#103, refaite pour #214) : les sept sceaux sur une rangée, chacun se touche (44 px).
+ * Une ligne dessous dit le badge touché : son nom, et comment le gagner. Sans toucher, elle montre le badge qui vient
+ * d'être gagné, sinon le prochain à gagner (effet de gradient : on voit le but suivant). Plus de texte coupé ni de
+ * défilement caché. Un badge gagné depuis la dernière visite s'imprime une fois (jamais avec les mouvements réduits).
+ */
+export function VitrineBadges({ liste, nouveaux = [] }: { liste: Badge[]; nouveaux?: readonly string[] }) {
   const n = liste.filter(b => b.obtenu).length;
+  const [choisi, setChoisi] = useState<BadgeId | null>(null);
+  const b = (choisi && liste.find(x => x.id === choisi))
+    || liste.find(x => x.obtenu && nouveaux.includes(x.id)) || null;
+  const prochain = liste.find(x => !x.obtenu);
+  const detail = b
+    ? (b.obtenu ? t('vitrine.detailObtenu', { nom: b.nom }) : t('vitrine.detailAGagner', { nom: b.nom, condition: b.condition }))
+    : prochain ? t('vitrine.prochain', { nom: prochain.nom, condition: prochain.condition }) : t('vitrine.aide');
   return (
     <section className="vitrine" aria-labelledby="vitrine-titre">
-      <h2 id="vitrine-titre" className="sr-only">{t('vitrine.titre', { n, total: liste.length })}</h2>
-      <ul className="vitrine-rangee">
-        {liste.map(b => (
-          <li key={b.id} className={b.obtenu ? 'obtenu' : 'a-gagner'} data-badge={b.id}
-            aria-label={b.obtenu ? t('vitrine.obtenu', { nom: b.nom }) : t('vitrine.aGagner', { nom: b.nom, condition: b.condition })}>
-            <SceauBadge id={b.id} obtenu={b.obtenu} taille={36} />
-            {/* Obtenu : son nom. À gagner : ce qu'il faut faire, le sceau en creux dit déjà de quoi il s'agit. */}
-            {b.obtenu ? <b aria-hidden="true">{b.nom}</b> : <small aria-hidden="true">{b.condition}</small>}
+      <h2 id="vitrine-titre" className="vitrine-tete">
+        <span aria-hidden="true">{t('vitrine.titreVisible')}</span>
+        <span className="vitrine-compte" aria-hidden="true">{n}/{liste.length}</span>
+        <span className="sr-only">{t('vitrine.titre', { n, total: liste.length })}</span>
+      </h2>
+      <ul className="vitrine-grille">
+        {liste.map((x, i) => (
+          <li key={x.id} className={`${x.obtenu ? 'obtenu' : 'a-gagner'}${x.obtenu && nouveaux.includes(x.id) ? ' nouveau' : ''}`} data-badge={x.id}
+            style={{ '--rang': i } as CSSProperties}>
+            <button type="button" className="badge-bouton" aria-pressed={choisi === x.id}
+              aria-label={x.obtenu ? t('vitrine.obtenu', { nom: x.nom }) : t('vitrine.aGagner', { nom: x.nom, condition: x.condition })}
+              onClick={() => setChoisi(c => (c === x.id ? null : x.id))}>
+              <SceauBadge id={x.id} obtenu={x.obtenu} taille={40} />
+            </button>
           </li>
         ))}
       </ul>
+      <p className="vitrine-detail" aria-live="polite">{fr(detail)}</p>
     </section>
   );
 }

@@ -157,13 +157,22 @@ test.describe('R5 : 320 × 640', () => {
   });
 });
 
-test('Vitrine : chaque condition de badge tient sur ses deux lignes', async ({ page }) => {
+test('Vitrine : chaque badge se touche et dit sa condition entière (#214)', async ({ page }) => {
   await page.goto('/');
   await nav(page).getByRole('button', { name: 'Profil' }).click();
-  const conditions = page.locator('.vitrine-rangee small');
-  await expect(conditions).toHaveCount(7);
+  const vitrine = page.getByRole('region', { name: /^Badges/ });
+  const badges = vitrine.getByRole('button');
+  await expect(badges).toHaveCount(7);
+  for (const b of await badges.all()) {
+    const box = (await b.boundingBox())!;
+    expect(box.width).toBeGreaterThanOrEqual(44); expect(box.height).toBeGreaterThanOrEqual(44);
+  }
+  // Sans toucher : le prochain badge à gagner, en entier.
+  const detail = vitrine.locator('.vitrine-detail');
+  await expect(detail).toHaveText('Prochain badge : Première partie. Joue contre l’ordi.');
+  await vitrine.getByRole('button', { name: 'Pomme battue : à gagner. Gagne contre Pomme.' }).click();
+  await expect(detail).toHaveText('Pomme battue : Gagne contre Pomme.');
+  await expect(vitrine.getByRole('button', { name: /^Pomme battue/ })).toHaveAttribute('aria-pressed', 'true');
   await page.evaluate(() => document.fonts.ready);
-  const coupees = await conditions.evaluateAll(els => els.filter(e => e.scrollHeight > e.clientHeight + 1).map(e => e.textContent));
-  expect(coupees).toEqual([]);
-  await expect(page.getByRole('listitem', { name: 'Pomme battue : à gagner. Gagne contre Pomme.' })).toBeVisible();
+  expect(await detail.evaluate(e => e.scrollWidth <= e.clientWidth + 1)).toBe(true);
 });

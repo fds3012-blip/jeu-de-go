@@ -38,9 +38,9 @@ test('profil vivant : statistiques et badges déduits des données locales, sans
   await expect(stats.getByText('jour de série')).toBeVisible();
 
   const vitrine = page.getByRole('region', { name: /^Badges/ });
-  await expect(vitrine.getByRole('listitem', { name: 'Pomme battue : obtenu' })).toBeVisible();
-  await expect(vitrine.getByRole('listitem', { name: 'Première partie : obtenu' })).toBeVisible();
-  await expect(vitrine.getByRole('listitem', { name: /^7 jours de série : à gagner/ })).toHaveCount(1);
+  await expect(vitrine.getByRole('button', { name: 'Pomme battue : obtenu' })).toBeVisible();
+  await expect(vitrine.getByRole('button', { name: 'Première partie : obtenu' })).toBeVisible();
+  await expect(vitrine.getByRole('button', { name: /^7 jours de série : à gagner/ })).toHaveCount(1);
 
   if (CAPTURES) await page.screenshot({ path: 'test-results/profil-plein.png', fullPage: true });
   const { scroll, largeur } = await page.evaluate(() => ({ scroll: document.documentElement.scrollHeight, largeur: document.documentElement.scrollWidth }));

@@ -17,6 +17,23 @@ export const fr = {
   // Série sans compte (#161) : invitation au 3e jour de série.
   // #214 : promesse exacte. Seules la série (importer_serie_appareil) et les leçons (syncProgress) montent sur le serveur.
   'serie.invitation': 'Avec un compte, ta série et tes leçons te suivent.',
+  // Série sur la feuille de réussite du Go du jour et jalons fêtés (#214)
+  // Charte du vocabulaire (#237) : « série », jamais « jours de suite » (l'issue disait « 3 jours de suite »).
+  'serie.duJour.jours': { one: '{n} jour de série', other: '{n} jours de série' },
+  'serie.duJour.aDemain': 'À demain',
+  'serie.jalon.titre': '{n} jours de série !',
+  // « À demain » ne se coupe pas en fin de ligne (espace insécable).
+  'serie.jalon.3': 'Tu prends le rythme. À demain !',
+  'serie.jalon.7': 'Une semaine entière, et un badge en plus. À demain !',
+  'serie.jalon.30': 'Un mois de go. Chapeau ! À demain.',
+  // Vitrine des badges (#214) : un toucher dit le nom et la condition
+  'vitrine.titreVisible': 'Tes badges',
+  'vitrine.aide': 'Touche un badge pour voir comment le gagner.',
+  'vitrine.prochain': 'Prochain badge : {nom}. {condition}',
+  'vitrine.detailObtenu': '{nom} : gagné !',
+  'vitrine.detailAGagner': '{nom} : {condition}',
+  // Joueur connecté (#214) : pas de cote dans le Profil, on dit ce qui est gardé
+  'profil.connecteDetail': 'Ta série et tes leçons sont gardées sur ton compte.',
   'compte.promesse': 'Ta série et tes leçons te suivent sur tous tes appareils, et tu joues en ligne.',
   'compte.resteIci': 'Le reste (niveau, XP, badges, gels) reste sur ce téléphone.',
   'compte.sansMotDePasse': 'Pas de mot de passe : on t’envoie un lien par e-mail.',
