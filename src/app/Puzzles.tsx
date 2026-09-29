@@ -25,7 +25,8 @@ import { aContinuer, aSuivre, ordrePaliers, palierEnCours, paliers, paliersVisib
 import { SceauLecon } from '../ui/SceauLecon';
 import { aFeter, FETES_KEY } from './fetesPaliers';
 import { MesErreurs } from '../ui/MesErreurs';
-import { ProposerInstallation } from '../ui/ProposerInstallation';
+import { SerieDuJour } from '../ui/SerieDuJour';
+import { jalonFranchi, type Jalon } from './jalonsSerie';
 import { SERIE_KEY, numeroDuJour, problemeDuNumero, serieVivante, textePartage, type Serie } from './goDuJour';
 import '../ui/apprendre.css';
 import { Glacon, PierreGivree } from '../ui/Glacon';
@@ -94,6 +95,8 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   // Série protégée (issue #76) : gels en réserve, et gel gagné à l'instant (micro-célébration).
   const [gels, setGels] = useState(() => lireReserveAppareil().gels);
   const [gelGagne, setGelGagne] = useState(false);
+  // Jalon de série (3, 7, 30 jours) franchi à l'instant par le Go du jour (#214) : fêté dans la feuille de réussite.
+  const [jalon, setJalon] = useState<Jalon | null>(null);
   const online = useOnline();
   const [list, setList] = useState<Puzzle[]>(LOCAL_PUZZLES);
   const [load, setLoad] = useState<Load>({ status: 'loading' });
@@ -207,8 +210,8 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
     const note = !estDuJour && !enArchive && !solved.has(open.id) && !vus[open.id];
     return (
       <PuzzlePlayer key={`${open.id}${enArchive ? '-archive' : ''}`} puzzle={open} rang={ordre.indexOf(open) + 1} confirmTouch={confirmTouch}
-        duJour={enArchive ? { numero: archive, serie: 0, defiChange: false, archive: numero, gelGagne: false, celebrer, apprendre: onApprendre }
-          : estDuJour ? { numero, serie: serieVivante(serieDuJour, numero), defiChange, gelGagne, celebrer, apprendre: onApprendre } : undefined}
+        duJour={enArchive ? { numero: archive, serie: 0, defiChange: false, archive: numero, gelGagne: false, celebrer, jalon: null, apprendre: onApprendre }
+          : estDuJour ? { numero, serie: serieVivante(serieDuJour, numero), defiChange, gelGagne, celebrer, jalon, apprendre: onApprendre } : undefined}
         rated={!!db && !!userId && online && !!stats && !stats.attempted.includes(open.id) && !solved.has(open.id)}
         onPremierEssai={note ? ok => {
           // Mesure de « Continuer » (#284) : réussite au premier essai par tranche de cote. Cote avant l'essai, jamais affichée.
@@ -231,8 +234,10 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
           if (source) gagnerXp(source);
           // #199 : un défi par jour ; le Go du jour est coché à part, une leçon ou la révision ont pu faire vivre la série avant lui.
           if (gain.serie && !goDuJourFaitAppareil(numero)) {
+            const avant = readLocal<Serie | null>(SERIE_KEY, null);
             const { serie: s, gagne } = validerDefi('go_du_jour');
             setSerieDuJour(s);
+            setJalon(jalonFranchi(avant, s, numero));
             if (gagne) { setGelGagne(true); setGels(lireReserveAppareil().gels); }
             track(EVENTS.goDuJourResolu, { numero, essais, serie: s?.jours ?? 1, arrivee_par_lien: lien !== null, vu: gain.statut === 'vu' });
           }
@@ -538,6 +543,8 @@ function Partager({ numero, essais, serie }: { numero: number; essais: number; s
 /** `archive` : numéro d'aujourd'hui quand le joueur ouvre un Go du jour passé par un lien partagé. */
 interface DuJourInfo {
   numero: number; serie: number; defiChange: boolean; archive?: number; gelGagne: boolean; celebrer: boolean;
+  /** Jalon de série franchi à l'instant (#214). */
+  jalon: Jalon | null;
   /** #285 : joueur arrivé par un lien sans avoir jamais joué. Après le problème, une seule action : la leçon 1. */
   apprendre?: () => void;
 }
@@ -757,10 +764,11 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
             <div className="row liens-du-jour">
               <button className="lien" onClick={showLine}>{tr('pb.voirSuite')}</button>
             </div>
-            <ProposerInstallation moment="go_du_jour" />
           </>
         : <>{suivantBtn}<button className="lien" onClick={showLine}>{tr('pb.voirSuite')}</button></>)}>
         <p>{fr(answer.text)}</p><XpEnLigne anime={duJour?.celebrer ?? true} />
+        {/* #214 : la série se lit sur la réussite (« 3 jours de série · À demain ») ; aux jalons 3, 7, 30, une petite fête. */}
+        {duJour && duJour.archive === undefined && <SerieDuJour jours={duJour.serie} jalon={duJour.jalon} celebrer={duJour.celebrer} />}
       </Verdict>
     ) : (
       // Erreur (#237, N6) : pas de « Réessayer », le plateau reste jouable ; l'indice est un lien discret.
