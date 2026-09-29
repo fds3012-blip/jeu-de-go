@@ -293,6 +293,9 @@ export const fr = {
   'partage.numero': 'Go du jour n° {numero}',
   'partage.essais': { one: 'résolu en {n} essai', other: 'résolu en {n} essais' },
   'partage.serie': 'série {serie} 🔥',
+  // Arrivée par un lien partagé, pour qui n'a jamais joué (#285)
+  'arrivee.premierCoup': 'Premier coup au go ? Touche le plateau.',
+  'arrivee.apprendre': 'Apprends à jouer en 2 minutes',
   // Course aux problèmes (#287, src/app/course.ts et src/app/CourseProblemes.tsx)
   'course.carte.titre': 'Course : 3 minutes',
   'course.carte.texte': 'Un maximum de problèmes. À la 3e erreur, la course s’arrête.',
