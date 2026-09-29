@@ -8,8 +8,6 @@ import {
 } from '../data/puzzles';
 import { Board } from '../ui/Board';
 import { MiniGoban } from '../ui/MiniGoban';
-import { Defile } from '../ui/Defile';
-import { ecart } from '../ui/defile';
 import { centreVertical } from '../ui/cadrage';
 import { C, M, viewBoxOf } from '../ui/boardArt';
 import { Retour, Verdict } from '../ui/Lecteur';
@@ -23,7 +21,7 @@ import { gagnerXp, sourceXpProbleme } from './xp';
 import { aideSuivante, recompense, refutation, reponseVue, toucherApresErreur, type NiveauAide, type Refutation } from './aide';
 import { prefersReducedMotion, readLocal, useOnline, writeLocal } from './hooks';
 import { niveau, prochainAMesure } from './problemes';
-import { aContinuer, aSuivre, ordrePaliers, palierEnCours, palierRecommande, paliers, paliersVisibles, type Palier } from './paliers';
+import { aContinuer, aSuivre, ordrePaliers, palierEnCours, paliers, paliersVisibles, type Palier } from './paliers';
 import { SceauLecon } from '../ui/SceauLecon';
 import { aFeter, FETES_KEY } from './fetesPaliers';
 import { MesErreurs } from '../ui/MesErreurs';
@@ -64,6 +62,8 @@ interface Props {
   celebrer?: boolean;
   /** Change quand on touche l'onglet Problèmes déjà actif : retour à la liste (R4). */
   racine?: number;
+  /** #285 : arrivé par un lien sans avoir jamais joué ; après le Go du jour, l'action unique mène à la leçon 1. */
+  onApprendre?: () => void;
 }
 
 /** Flamme de la série de jours, en or. */
@@ -87,7 +87,7 @@ function Difficulte({ d }: { d: number }) {
 }
 
 /** Onglet Problèmes : problème du jour, problèmes de base, cote problèmes et série de jours. */
-export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, lien = null, onDuJour, celebrer = true, racine = 0 }: Props) {
+export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, lien = null, onDuJour, celebrer = true, racine = 0, onApprendre }: Props) {
   // Go du jour (issue #75) : le même pour tous, choisi dans la liste publique des problèmes de base, en heure de Paris.
   const [numero] = useState(() => numeroDuJour(new Date()));
   const daily = problemeDuNumero(LOCAL_PUZZLES, numero);
@@ -210,10 +210,9 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
     const note = !estDuJour && !enArchive && !solved.has(open.id) && !vus[open.id];
     return (
       <PuzzlePlayer key={`${open.id}${enArchive ? '-archive' : ''}`} puzzle={open} rang={ordre.indexOf(open) + 1} confirmTouch={confirmTouch}
-        duJour={enArchive ? { numero: archive, serie: 0, defiChange: false, archive: numero, gelGagne: false, celebrer, jalon: null }
-          : estDuJour ? { numero, serie: serieVivante(serieDuJour, numero), defiChange, gelGagne, celebrer, jalon } : undefined}
+        duJour={enArchive ? { numero: archive, serie: 0, defiChange: false, archive: numero, gelGagne: false, celebrer, jalon: null, apprendre: onApprendre }
+          : estDuJour ? { numero, serie: serieVivante(serieDuJour, numero), defiChange, gelGagne, celebrer, jalon, apprendre: onApprendre } : undefined}
         rated={!!db && !!userId && online && !!stats && !stats.attempted.includes(open.id) && !solved.has(open.id)}
-        rating={stats?.rating}
         onPremierEssai={note ? ok => {
           // Mesure de « Continuer » (#284) : réussite au premier essai par tranche de cote. Cote avant l'essai, jamais affichée.
           track(EVENTS.problemeTermine, { probleme: open.id, cote_joueur: Math.round(cote.cote), cote_probleme: open.difficulty, premier_essai_reussi: ok });
@@ -281,7 +280,6 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   // Une seule action en relief : le Go du jour tant qu'il n'est pas fait, « Problème suivant » ensuite.
   const duJourReussi = !!daily && goDuJourFaitAppareil(numero);
   const duJourFait = !daily || duJourReussi;
-  const recommande = connecte && stats ? palierRecommande(tiers, stats.rating) : undefined;
   // Série (issue #161) : celle de l'appareil sans compte, la plus longue des deux avec un compte.
   const serie = serieAffichee(connecte && stats ? stats.streak : null, serieDuJour, numero);
   const notices = <>
@@ -303,7 +301,7 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
         {notices}
         <p className="muted small bases-aide">{fr(tr('pb.aide.avant'))}<b>{tr('pb.aide.mot')}</b>{fr(tr('pb.aide.apres'))}</p>
         {ouverts.map(t => (
-          <PalierVue key={t.id} t={t} ordre={ordre} solved={solved} vus={vus} recommande={t.id === recommande} onOpen={setOpenId}
+          <PalierVue key={t.id} t={t} ordre={ordre} solved={solved} vus={vus} onOpen={setOpenId}
             fete={fetes.includes(t.id)} />
         ))}
         {suivant && (
@@ -352,7 +350,7 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
             <div className="palier-nom">
               <small className="palier-surtitre">{tr('pb.tonPalier')}</small>
               <h3>{tr(`palier.${enCours.id}.nom`)}</h3>
-              <small>{tr(`palier.${enCours.id}.kyu`)}{enCours.id === recommande && <span className="palier-reco"> · {tr('pb.pourTaCote')}</span>}</small>
+              <small>{tr(`palier.${enCours.id}.kyu`)}</small>
             </div>
             {enCours.reussis > 0 && <p className="palier-compte">{tr('pb.reussis', { n: enCours.reussis })}</p>}
           </div>
@@ -364,12 +362,9 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
         </button>
       </section>
 
+      {/* Aucune cote affichée (décision de Florian, #137) : la cote problèmes existe sur le serveur, invisible. */}
       {connecte && stats ? (
         <div className="palmares">
-          <div>
-            <span className="chiffre">{stats.rating}</span>
-            <span className="legende">{tr('pb.coteLegende')}</span>
-          </div>
           <div className="palmares-serie">
             <span className="chiffre"><Flamme taille={30} />{serie}</span>
             <span className="legende">{tr('pb.serieLegende', { n: serie })}</span>
@@ -378,7 +373,7 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
       ) : connecte && statsError ? (
         <p className="notice" role="alert">{statsError} <button className="lien" onClick={() => setRetry(n => n + 1)}>{tr('pb.reessayer')}</button></p>
       ) : connecte && online ? (
-        <div className="palmares" aria-busy="true"><span className="sr-only">{tr('pb.chargementCote')}</span><div><span className="chiffre attente" /><span className="legende">{tr('pb.coteLegende')}</span></div></div>
+        <div className="palmares" aria-busy="true"><div className="palmares-serie"><span className="sr-only">{tr('pb.chargementSerie')}</span><span className="chiffre attente" /><span className="legende">{tr('pb.serieLegende', { n: 2 })}</span></div></div>
       ) : !connecte && serie > 0 ? (
         // Sans compte, la série de l'appareil s'affiche comme pour un joueur connecté (issue #161).
         <div className="palmares palmares-invite">
@@ -407,8 +402,8 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
  * Un palier : nom, rang en kyu, sceau quand il est complet, et sa grille de miniatures.
  * Aucun total affiché (ni « 3 / 33 », ni barre, ni montagne) : le joueur doit sentir que les problèmes ne s'arrêtent jamais.
  */
-function PalierVue({ t, ordre, solved, vus, recommande, onOpen, fete }: {
-  t: Palier<Puzzle>; ordre: Puzzle[]; solved: Set<string>; vus: Record<string, true>; recommande: boolean; onOpen: (id: string) => void; fete: boolean;
+function PalierVue({ t, ordre, solved, vus, onOpen, fete }: {
+  t: Palier<Puzzle>; ordre: Puzzle[]; solved: Set<string>; vus: Record<string, true>; onOpen: (id: string) => void; fete: boolean;
 }) {
   const titre = `palier-${t.id}`;
   return (
@@ -416,7 +411,7 @@ function PalierVue({ t, ordre, solved, vus, recommande, onOpen, fete }: {
       <div className="palier-tete">
         <div className="palier-nom">
           <h3 id={titre}>{tr(`palier.${t.id}.nom`)}</h3>
-          <small>{tr(`palier.${t.id}.kyu`)}{recommande && <span className="palier-reco"> · {tr('pb.pourTaCote')}</span>}</small>
+          <small>{tr(`palier.${t.id}.kyu`)}</small>
         </div>
         {t.complet && <span className="palier-sceau" role="img" aria-label={tr('pb.palierComplet')}><SceauLecon id={`p${t.rang}`} taille={34} /></span>}
       </div>
@@ -546,15 +541,19 @@ function Partager({ numero, essais, serie }: { numero: number; essais: number; s
 }
 
 /** `archive` : numéro d'aujourd'hui quand le joueur ouvre un Go du jour passé par un lien partagé. */
-interface DuJourInfo { numero: number; serie: number; defiChange: boolean; archive?: number; gelGagne: boolean; celebrer: boolean;
+interface DuJourInfo {
+  numero: number; serie: number; defiChange: boolean; archive?: number; gelGagne: boolean; celebrer: boolean;
   /** Jalon de série franchi à l'instant (#214). */
-  jalon: Jalon | null }
+  jalon: Jalon | null;
+  /** #285 : joueur arrivé par un lien sans avoir jamais joué. Après le problème, une seule action : la leçon 1. */
+  apprendre?: () => void;
+}
 
 /** Temps pendant lequel la réponse de l'adversaire reste sur le plateau après une erreur (#237, N6). */
 const DUREE_ERREUR = 2200;
 
-export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating, onPremierEssai, onAttempt, onSolved, onNext, onExit, onSolutionVue, retour, surtitre, exercice = true }: {
-  puzzle: Puzzle; rang: number; duJour?: DuJourInfo; confirmTouch: boolean; rated: boolean; rating?: number;
+export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPremierEssai, onAttempt, onSolved, onNext, onExit, onSolutionVue, retour, surtitre, exercice = true }: {
+  puzzle: Puzzle; rang: number; duJour?: DuJourInfo; confirmTouch: boolean; rated: boolean;
   /** Premier essai joué (#284) : réussi ou non. Sert à la cote de « Continuer », jamais affichée. */
   onPremierEssai?: (ok: boolean) => void;
   onAttempt: (ok: boolean) => Promise<{ ok: true; value: number } | { ok: false; error: string } | null>;
@@ -578,7 +577,6 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating
   const [answer, setAnswer] = useState<Answer | null>(null);
   const [board, setBoard] = useState(start.pos.board);
   const [tries, setTries] = useState(0);
-  const [cote, setCote] = useState<{ de: number; a: number } | { erreur: string } | null>(null);
   const [replay, setReplay] = useState<{ frame: number; total: number } | null>(null);
   const [shake, setShake] = useState<{ p: number; n: number } | null>(null);
   const firstTry = useRef(true);
@@ -614,13 +612,11 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating
     window.clearTimeout(timer.current);
     if (ok) { setApercu(null); setBoard(r.after.board); onSolved(tries + 1, aide); }
     else montrerErreur(p, r.after.board);
-    // Seul le premier essai compte pour la cote.
+    // Seul le premier essai compte pour la cote, qui n'est jamais affichée (décision #137) : ni valeur ni message.
     if (firstTry.current) onPremierEssai?.(ok);
     if (firstTry.current && rated) {
       firstTry.current = false;
-      const res = await onAttempt(ok);
-      if (res && res.ok) setCote({ de: rating ?? res.value, a: res.value });
-      else if (res) setCote({ erreur: res.error });
+      await onAttempt(ok);
     }
     firstTry.current = false;
   }
@@ -712,17 +708,21 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating
   const lastMove = replay && frames ? frames[replay.frame].lastMove : solvedNow ? answer.p : null;
   const replayDone = !!replay && replay.frame === replay.total;
 
-  // #214 : aucune cote affichée sur la feuille du Go du jour (décision de Florian) ; elle garde la série.
-  const ligneCote = !duJour && cote && ('erreur' in cote
-    ? <p className="verdict-cote">{cote.erreur}</p>
-    : <p className="verdict-cote">{tr('pb.taCote')} <b><Defile de={cote.de} a={cote.a} /></b>{cote.a !== cote.de && <span className={cote.a > cote.de ? 'monte' : 'baisse'}> {ecart(cote.de, cote.a)}</span>}</p>);
   const suivantBtn = <button className="cta" onClick={onNext ?? onExit}>{onNext ? tr('pb.suivant') : retour ?? tr('pb.retour')}</button>;
+  // #285 : arrivé par un lien sans avoir jamais joué, une seule action après le problème, vers la leçon 1.
+  const apprendreBtn = duJour?.apprendre ? <button className="cta vers-lecon-1" onClick={duJour.apprendre}>{tr('arrivee.apprendre')}</button> : null;
+  // « Partager » reste l'action secondaire, à plat : l'ami peut renvoyer le défi à son tour.
+  const versLecon1 = apprendreBtn && duJour && <>
+    {apprendreBtn}
+    <Partager numero={duJour.numero} essais={tries} serie={duJour.serie} />
+    <div className="row liens-du-jour"><button className="lien" onClick={showLine}>{tr('pb.voirSuite')}</button></div>
+  </>;
 
   let verdict = null;
   if (replay) {
     verdict = (
       <Verdict ton="neutre" actions={solvedNow
-        ? <>{suivantBtn}<button className="lien" onClick={showLine} disabled={!replayDone}>{tr('pb.revoirSuite')}</button></>
+        ? <>{apprendreBtn ?? suivantBtn}<button className="lien" onClick={showLine} disabled={!replayDone}>{tr('pb.revoirSuite')}</button></>
         : <button className="lien" onClick={showLine} disabled={!replayDone}>{tr('pb.revoirSuite')}</button>}>
         <p>{replayDone ? tr(solvedNow ? 'pb.suiteFinie' : 'pb.suiteFinieVu') : tr('pb.suiteCoup', { n: replay.frame, total: replay.total })}</p>
       </Verdict>
@@ -746,12 +746,12 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating
   } else if (answer) {
     verdict = solvedNow && vu ? (
       // Résolu après avoir vu la réponse (#197) : « Vu », sans XP ; la série du Go du jour tient quand même.
-      <Verdict ton="neutre" actions={<>{suivantBtn}<button className="lien" onClick={showLine}>{tr('pb.voirSuite')}</button></>}>
+      <Verdict ton="neutre" actions={<>{apprendreBtn ?? suivantBtn}<button className="lien" onClick={showLine}>{tr('pb.voirSuite')}</button></>}>
         <p data-vu="">{fr(tr('pb.vuTexte'))}</p>
         {duJour && <p className="verdict-cote">{fr(tr('pb.vuSerie'))}</p>}
       </Verdict>
     ) : solvedNow ? (
-      <Verdict ton="juste" cle={answer.n} actions={duJour
+      <Verdict ton="juste" cle={answer.n} actions={versLecon1 ?? (duJour
         // Go du jour réussi (#75) : continuer est l'action principale ; « Partager » est l'action secondaire, juste dessous.
         ? <>
             {duJour.archive !== undefined && onNext
@@ -765,8 +765,8 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating
               <button className="lien" onClick={showLine}>{tr('pb.voirSuite')}</button>
             </div>
           </>
-        : <>{suivantBtn}<button className="lien" onClick={showLine}>{tr('pb.voirSuite')}</button></>}>
-        <p>{fr(answer.text)}</p>{ligneCote}<XpEnLigne anime={duJour?.celebrer ?? true} />
+        : <>{suivantBtn}<button className="lien" onClick={showLine}>{tr('pb.voirSuite')}</button></>)}>
+        <p>{fr(answer.text)}</p><XpEnLigne anime={duJour?.celebrer ?? true} />
         {/* #214 : la série se lit sur la réussite (« 3 jours de série · À demain ») ; aux jalons 3, 7, 30, une petite fête. */}
         {duJour && duJour.archive === undefined && <SerieDuJour jours={duJour.serie} jalon={duJour.jalon} celebrer={duJour.celebrer} />}
       </Verdict>
@@ -774,7 +774,7 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating
       // Erreur (#237, N6) : pas de « Réessayer », le plateau reste jouable ; l'indice est un lien discret.
       <Verdict ton="revoir" cle={answer.n} actions={boutonAide}>
         <p>{fr(answer.text)}</p>
-        {answer.kind === 'wrong' && <p className="muted small rejoue-plateau">{fr(tr('pb.rejouePlateau'))}</p>}{ligneCote}
+        {answer.kind === 'wrong' && <p className="muted small rejoue-plateau">{fr(tr('pb.rejouePlateau'))}</p>}
       </Verdict>
     );
   }
@@ -793,7 +793,7 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, rating
       </div>
       {duJour?.defiChange && <p className="notice" role="status">{fr(tr('pb.defiChange'))}</p>}
       {duJour?.archive !== undefined && <p className="notice" role="status">{fr(tr('pb.archive', { numero: duJour.archive }))}</p>}
-      <Bubble>{fr(`${puzzle.prompt} ${tr(puzzle.toPlay === 1 ? 'pb.tuJoues.1' : 'pb.tuJoues.2')}`)}</Bubble>
+      <Bubble>{fr(`${duJour?.apprendre ? `${tr('arrivee.premierCoup')} ` : ''}${puzzle.prompt} ${tr(puzzle.toPlay === 1 ? 'pb.tuJoues.1' : 'pb.tuJoues.2')}`)}</Bubble>
       <Board size={puzzle.size} board={board} toPlay={puzzle.toPlay} interactive={!solvedNow && (!replay || replayDone) && (!refut || refut.vue)}
         stonesTappable={!!refut || !!replay || !!apercu} confirmTouch={confirmTouch} onPlay={onPlay} shake={shake}
         marks={{

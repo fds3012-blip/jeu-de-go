@@ -58,10 +58,12 @@
 
 /* ---------- Deux tuiles de nature différente ---------- */
 .tuiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 9.5rem), 1fr)); /* #121 : une colonne quand la place manque */ gap: 10px; margin-top: calc(var(--space-3) + var(--relief)); }
-.tuile { display: flex; align-items: center; gap: 10px; min-height: 68px; padding: 10px 12px; border: 0; border-radius: var(--radius); background: var(--surface); text-align: left; }
+.tuile { display: flex; align-items: center; gap: 10px; min-height: 68px; padding: 8px 12px; border: 0; border-radius: var(--radius); background: var(--surface); text-align: left; }
 .tuile span { min-width: 0; }
 .tuile small { display: block; color: var(--muted); font-size: var(--fs-legende); line-height: 1.3; }
-.tuile b { display: block; font-family: var(--font-titre); font-weight: var(--fw-bold); letter-spacing: -0.01em; font-size: var(--fs-m); line-height: 1.2; }
+.tuile b { display: block; font-family: var(--font-titre); font-weight: var(--fw-bold); letter-spacing: -0.01em; font-size: var(--fs-m); line-height: 1.15;
+  /* Deux lignes au plus : un titre du jour long (n° 4 « Sauve ta pierre ») ne doit pas rogner le goban d'accueil. */
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
 /* Leçon suivante : « à faire plus tard », en pointillés. */
 /* #213 : état du Go du jour, en pastille dans le coin. « À faire » : or, comme la flamme creuse ; « Fait » : jade. */
 .tuile-probleme { position: relative; }

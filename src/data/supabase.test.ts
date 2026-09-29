@@ -1,4 +1,4 @@
-import { createSupabase } from './supabase';
+import { FLUX_AUTH, createSupabase } from './supabase';
 
 describe('createSupabase', () => {
   it('vaut null sans variables d’environnement (mode hors connexion)', () => {
@@ -16,5 +16,11 @@ describe('createSupabase', () => {
     const db = createSupabase({ VITE_SUPABASE_URL: 'https://exemple.supabase.co', VITE_SUPABASE_ANON_KEY: 'cle-publique' });
     expect(db).not.toBeNull();
     expect(typeof db?.auth.signInWithOtp).toBe('function');
+  });
+
+  it('flux implicite gardé : un lien de connexion ouvert dans un autre navigateur doit marcher (E14, voir FLUX_AUTH)', () => {
+    const db = createSupabase({ VITE_SUPABASE_URL: 'https://exemple.supabase.co', VITE_SUPABASE_ANON_KEY: 'cle-publique' });
+    expect(FLUX_AUTH).toBe('implicit');
+    expect((db?.auth as unknown as { flowType: string }).flowType).toBe('implicit');
   });
 });

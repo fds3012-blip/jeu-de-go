@@ -86,7 +86,7 @@ function Connected({ db }: { db: Db }) {
   return (
     <div className="card">
       <b style={{ fontSize: '1.2rem' }}>{profile.username}</b>
-      {/* #214 : aucune cote affichée (décision de Florian). */}
+      <p className="muted small" style={{ margin: '4px 0 0' }}>{t('compte.cote', { cote: profile.rating })}</p>
       <p className="muted small" style={{ margin: '2px 0 0' }}>{session.user.email}</p>
       <div className="row" style={{ marginTop: 12 }}>
         <button className="btn" onClick={() => setEditing(true)}>{t('compte.changerPseudo')}</button>
