@@ -11,7 +11,17 @@ create table auth.users (
   id uuid primary key default gen_random_uuid(),
   email text,
   is_anonymous boolean not null default false,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  updated_at timestamptz,
+  last_sign_in_at timestamptz
+);
+-- Sessions (colonnes utiles à la suppression des anonymes inactifs, #318). refreshed_at est sans fuseau, comme Supabase.
+create table auth.sessions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users (id) on delete cascade,
+  created_at timestamptz default now(),
+  updated_at timestamptz,
+  refreshed_at timestamp
 );
 -- Même lecture que Supabase : l'identifiant vient des claims du jeton (request.jwt.claims).
 create function auth.uid() returns uuid language sql stable as $$
