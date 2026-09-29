@@ -82,10 +82,14 @@ describe('detecterLangue : Profil > ?lang > appareil > français', () => {
     expect(detecterLangue('', ['en_US'])).toBe('en');
     expect(detecterLangue('', ['fr-FR', 'en-US'])).toBe('fr');
   });
-  it('tout autre appareil ouvre l\'app en français, même s\'il accepte aussi l\'anglais', () => {
-    expect(detecterLangue('', ['de-DE', 'fr-CA'])).toBe('fr');
-    expect(detecterLangue('', ['es', 'en_US'])).toBe('fr');
+  it('la première langue traduite de la liste l\'emporte : l\'espagnol qui accepte l\'anglais s\'ouvre en anglais', () => {
+    expect(detecterLangue('', ['es', 'en_US'])).toBe('en');
+    expect(detecterLangue('', ['es-ES', 'de', 'en-GB', 'fr'])).toBe('en');
+    expect(detecterLangue('', ['de-DE', 'fr-CA', 'en'])).toBe('fr');
+  });
+  it('sans langue traduite dans la liste, l\'app s\'ouvre en français', () => {
     expect(detecterLangue('', ['ja-JP'])).toBe('fr');
+    expect(detecterLangue('', ['es-ES', 'de-DE'])).toBe('fr');
   });
   it('détection coupée : français, sauf ?lang ou choix du Profil', () => {
     expect(detecterLangue('', ['en-US'], false)).toBe('fr');

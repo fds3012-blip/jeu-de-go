@@ -204,6 +204,18 @@ test.describe('appareil réglé dans une autre langue', () => {
   });
 });
 
+test.describe('appareil en espagnol qui accepte aussi l\'anglais', () => {
+  test.use({ locale: 'es-ES' });
+  test('l\'app s\'ouvre en anglais, première langue traduite de la liste', async ({ page }) => {
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, 'languages', { get: () => ['es-ES', 'es', 'en-US', 'en'] });
+    });
+    await page.goto('/');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+    await expect(page.getByRole('navigation', { name: 'Main navigation' })).toBeVisible();
+  });
+});
+
 test('appareil en français (fr-FR) : l\'app reste en français, choix « Français » coché dans les Réglages', async ({ page }) => {
   await page.goto('/');
   await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
