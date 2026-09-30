@@ -1,0 +1,55 @@
+/*
+ * Série sur la feuille de réussite du Go du jour (issue #214).
+ * La ligne de chaque jour est calme ; seul le jalon (3, 7, 30 jours) a un moment à lui.
+ */
+.flamme-serie { flex: none; color: var(--or); }
+
+/* ---------- Ligne de chaque jour : « 3 jours de série · À demain » ---------- */
+.serie-du-jour { display: flex; align-items: center; flex-wrap: wrap; gap: 2px 6px; margin: 6px 0 0; font-size: var(--fs-s); line-height: 1.3; }
+.serie-du-jour b { color: var(--recompense-texte); font-weight: var(--fw-bold); }
+.serie-du-jour-demain { color: var(--muted); }
+.serie-du-jour-demain::before { content: '·'; margin-right: 6px; }
+/* Petit écran et longue explication (#290) : la feuille se replie pour laisser voir le coup joué. La ligne de série
+   se replie avec l'explication (toujours lue par le lecteur d'écran) ; un jalon, lui, reste à l'écran. */
+.verdict[data-compact] .serie-du-jour { position: absolute; width: 1px; height: 1px; margin: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* ---------- Jalon : la flamme porte le chiffre, le titre en Bricolage ---------- */
+.jalon { display: flex; align-items: center; gap: var(--space-3); margin: var(--space-2) 0 0; }
+.jalon-flamme { position: relative; flex: none; display: grid; place-items: center; width: 56px; height: 56px; }
+.jalon-flamme .flamme-serie { filter: drop-shadow(0 2px 0 color-mix(in srgb, #A0680A 70%, transparent)); }
+/* Le chiffre est posé dans le bas de la flamme, à l'encre (lisible sur l'or dans les deux modes). */
+.jalon-flamme b { position: absolute; left: 0; right: 0; bottom: 9px; text-align: center; color: var(--encre-jade);
+  font-family: var(--font-titre); font-weight: 800; font-size: 17px; line-height: 1; font-variant-numeric: tabular-nums; }
+.jalon-texte { display: flex; flex-direction: column; min-width: 0; }
+.jalon-titre { font-family: var(--font-titre); font-weight: 800; letter-spacing: var(--tracking-titre); font-size: var(--fs-xl); line-height: 1.1;
+  color: var(--recompense-texte); }
+.jalon-texte > span { font-size: var(--fs-s); line-height: 1.35; }
+.jalon .confettis { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 40; pointer-events: none; }
+
+/* ---------- La fête (jamais avec les mouvements réduits : l'état final s'affiche directement) ---------- */
+@media (prefers-reduced-motion: no-preference) {
+  /* La flamme s'allume : elle monte de 60 % à sa taille, avec un léger dépassement (courbe de pose des jetons). */
+  .jalon.anime .jalon-flamme .flamme-serie { animation: jalon-allume 460ms var(--ease-pose) 120ms both; transform-origin: 50% 85%; }
+  .jalon.anime .jalon-flamme b { animation: jalon-chiffre 260ms var(--ease) 420ms both; }
+  /* Un halo d'or s'ouvre une fois, derrière la flamme. */
+  .jalon.anime .jalon-flamme::before { content: ''; position: absolute; inset: 6px; border-radius: 50%;
+    background: radial-gradient(circle, color-mix(in srgb, var(--or) 55%, transparent) 0 45%, transparent 70%);
+    animation: jalon-halo 800ms var(--ease) 260ms both; }
+  .jalon.anime .jalon-texte { animation: jalon-texte 280ms var(--ease) 300ms both; }
+}
+@keyframes jalon-allume {
+  from { opacity: 0; transform: scale(.6); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes jalon-chiffre {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes jalon-halo {
+  from { opacity: 1; transform: scale(.7); }
+  to { opacity: 0; transform: scale(1.7); }
+}
+@keyframes jalon-texte {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
