@@ -30,7 +30,8 @@ export const fr = {
   'vitrine.titreVisible': 'Tes badges',
   'vitrine.aide': 'Touche un badge pour voir comment le gagner.',
   'vitrine.prochain': 'Prochain badge : {nom}. {condition}',
-  'vitrine.detailObtenu': '{nom} : gagné !',
+  // Recette du 30/09 : « Première partie : gagné ! » se lisait « partie gagnée » après une défaite. C'est le badge qui est gagné.
+  'vitrine.detailObtenu': 'Badge gagné : {nom}',
   'vitrine.detailAGagner': '{nom} : {condition}',
   // Joueur connecté (#214) : pas de cote dans le Profil, on dit ce qui est gardé
   'profil.connecteDetail': 'Ta série et tes leçons sont gardées sur ton compte.',
