@@ -1,8 +1,7 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { Game } from './Game';
-import { LearnHome, LessonPlayer } from './Learn';
+import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+// Écrans chargés à la demande (perf, #323) : seul l'accueil est dans le JS initial.
+import { DefiArrivee, DefiPartie, DefisEcran, Game, LearnHome, LessonPlayer, Placement, Profil, Puzzles, SeriePratique } from './ecrans';
 import { CHAPITRES, LESSONS } from '../content/lessons';
-import { Puzzles, SOLVED_KEY, VUS_KEY } from './Puzzles';
 import { LESSONS_KEY, readLocal, writeLocal, useGelsServeur, useLessonProgress, useProfil, useSerie, useSession } from './hooks';
 import { supabase } from '../data/supabase';
 import { useSettings, useStored } from './settings';
@@ -11,12 +10,11 @@ import { Bubble } from '../ui/Mochi';
 import { Sceau } from '../ui/Sceau';
 import { CRAN_DEPART, cranDuNiveau, niveauGuide, OPPONENTS, type OpponentId } from '../engine';
 import { ConsentModal } from './Confidentialite';
-import { Profil, type VueProfil } from './Profil';
+import type { VueProfil } from './Profil';
 import { langue, t } from '../content/i18n';
 import { jamaisJoue, proprietesArrivee } from './arriveePartage';
 import { fenetreVisible, useConsentement } from './consentement';
 import { accueil, adversaireOuvert, echelle, introBut, INTRO_KEY, OUVERTS_D_OFFICE, PARTIES_KEY, type Parties } from './home';
-import { Placement } from './Placement';
 import { PLACEMENT_KEY, chapitreConseille, coteApresPlacement, leconDeLAccueil, lirePlacement, ouvertsApresPlacement, proposerPlacement, type Placement as ResultatPlacement } from './placement';
 import { COTE_KEY } from './coteJoueur';
 import { Accueil } from './Accueil';
@@ -42,16 +40,19 @@ import { useExercice } from '../ui/celebrations';
 import { ProposerInstallation, usePlateformeInstallation } from '../ui/ProposerInstallation';
 import { doitProposer, estMomentRetour, etatInstallation, noterOuverture } from './installation';
 import { ANNONCE_DU_JOUR_KEY, appelSecondaire, etatTuile, lireJourAnnonce } from './appelsAccueil';
-import { SeriePratique } from './SeriePratique';
 import { TAILLE_SERIE, THEMES_DE_LECON, serieDeLecon } from '../content/themes';
 import { estRedite } from '../content/redites';
 import type { Puzzle } from '../data/puzzles';
 import { compteDe, estAnonyme } from '../data/defi';
 import { JETON_AU_CHARGEMENT, ecouterJetonDefi } from './adresseDefi';
-import { DefiArrivee, DefiPartie, DefisEcran, useDefisAJouer } from './Defis';
+import { useDefisAJouer } from './defisAJouer';
 import '../ui/defis.css';
 
 const PROBLEMES_LOCAUX = parsePuzzles(ALL_PUZZLES);
+// Problèmes résolus et vus sur l'appareil : mêmes clés que SOLVED_KEY et VUS_KEY de Puzzles.tsx (vérifié par ecrans.test.ts),
+// recopiée ici pour que l'accueil n'embarque pas l'écran des problèmes.
+const SOLVED_KEY = 'go.problemes.v1';
+const VUS_KEY = 'go.problemes.vus.v1';
 
 /** Flamme de la série de jours, en or. Creuse ou pleine selon la classe du parent (#213). */
 function Flamme() {
@@ -435,7 +436,7 @@ export function App() {
           <p className="gel-annonce retour-serie" role="status" data-testid="retour-serie"><Mochi size={30} />{fr(retourSerie)}</p>
         )}
         {accueilVisible && <BarreNiveau />}
-        {screen}
+        <Suspense fallback={null}>{screen}</Suspense>
       </main>
       <FeteNiveau celebrer={settings.celebrations} ecran={`${tab}|${playing}|${lessonId ?? ''}|${serie3 ? 'serie' : ''}|${vueProfil}`} />
       <AnnonceXp celebrer={settings.celebrations} />

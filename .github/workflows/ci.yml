@@ -23,6 +23,8 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+      # Budget de taille du JS initial, du CSS et des polices (scripts/budget-bundle.mjs).
+      - run: npm run budget
 
   e2e:
     name: Playwright (mobile)

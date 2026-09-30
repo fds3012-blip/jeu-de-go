@@ -18,7 +18,7 @@ import {
 import type { Db } from '../data/supabase';
 import { EVENTS, track } from '../data/analytics';
 import { useOnline } from './hooks';
-import { aJouer, phraseEtat, phraseIssue, resumeDefi, vueDefi } from './defiAmi';
+import { phraseEtat, phraseIssue, resumeDefi, vueDefi } from './defiAmi';
 import { LierEmail } from './Account';
 import { fr } from '../ui/typo';
 import { nombre, t } from '../content/i18n';
@@ -380,15 +380,4 @@ export function DefiPartie({ db, partieId, userId, anonyme, confirmTouch, onReto
   );
 }
 
-/** Nombre de défis où c'est au joueur d'agir, pour le lien de l'accueil. 0 sans session, hors ligne ou en erreur. */
-export function useDefisAJouer(db: Db | null, userId: string | undefined, actif: boolean): number {
-  const online = useOnline();
-  const [n, setN] = useState(0);
-  useEffect(() => {
-    if (!db || !userId || !online || !actif) return;
-    let vivant = true;
-    mesDefis(db, userId).then(r => { if (vivant) setN(r.ok ? aJouer(r.value.map(d => vueDefi(d.partie, d.defi, userId, Date.now(), d.resultat))) : 0); });
-    return () => { vivant = false; };
-  }, [db, userId, online, actif]);
-  return userId ? n : 0;
-}
+// useDefisAJouer (compteur de l'accueil) est dans defisAJouer.ts (#323) : l'accueil s'en sert sans charger cet écran.
