@@ -1,0 +1,19 @@
+/* Rappel quotidien (issue #36). La carte de fin de partie reprend la carte d'installation (.installer), sans relief :
+   l'action principale en relief reste « Rejouer ». */
+.rappel .rappel-moments { margin-top: var(--space-3); background: var(--bg); }
+/* Trois choix sur une ligne jusqu'à 320 px ; le texte passe à la ligne plutôt que de déborder. */
+.rappel-moments button { padding: 0 6px; font-size: var(--fs-s); line-height: 1.15; }
+.rappel-etat { margin: var(--space-3) 0 0; color: var(--text); font-size: var(--fs-corps-s); line-height: 1.4; }
+
+/* Profil : explication (compte, iPhone, navigateur), puis un bouton. */
+.rappel-explication { margin: 0; color: var(--muted); font-size: var(--fs-corps-s); line-height: 1.45; }
+.rappel-explication p { margin: 0 0 var(--space-3); }
+.rappel-explication .btn { min-height: var(--cible-min); }
+.lignes > .rappel-explication { padding: var(--space-3) var(--space-4); }
+.rappel-ligne-moment .rappel-moments { margin-left: auto; flex: none; padding: 2px; background: var(--bg); }
+.rappel-ligne-moment .rappel-moments button { flex: none; min-width: var(--cible-min); white-space: nowrap; }
+@media (max-width: 380px) {
+  .rappel-ligne-moment { flex-wrap: wrap; }
+  .rappel-ligne-moment .rappel-moments { margin-left: 0; width: 100%; }
+  .rappel-ligne-moment .rappel-moments button { flex: 1; }
+}

@@ -77,7 +77,7 @@ export function useExercice(enCours = true) {
 }
 
 /** Demande un tour dans la file tant que `voulu` ; vrai quand c'est son tour. Retiré en quittant l'écran. */
-export function useTour(genre: 'installation', voulu: boolean): boolean {
+export function useTour(genre: 'installation' | 'rappel', voulu: boolean): boolean {
   const file = useFile();
   useEffect(() => {
     if (!voulu) return;

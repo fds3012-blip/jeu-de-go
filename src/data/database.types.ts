@@ -15,6 +15,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      abonnements_rappel: {
+        Row: {
+          auth: string
+          cree_le: string
+          dernier_envoi: string | null
+          endpoint: string
+          fuseau: string
+          id: string
+          langue: string
+          moment: string
+          p256dh: string
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          cree_le?: string
+          dernier_envoi?: string | null
+          endpoint: string
+          fuseau?: string
+          id?: string
+          langue?: string
+          moment?: string
+          p256dh: string
+          user_id?: string
+        }
+        Update: {
+          auth?: string
+          cree_le?: string
+          dernier_envoi?: string | null
+          endpoint?: string
+          fuseau?: string
+          id?: string
+          langue?: string
+          moment?: string
+          p256dh?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       achievements: {
         Row: {
           badge_id: string
@@ -593,6 +632,17 @@ export type Database = {
         }[]
       }
       delete_my_account: { Args: never; Returns: undefined }
+      enregistrer_abonnement_rappel: {
+        Args: {
+          p_auth: string
+          p_endpoint: string
+          p_fuseau: string
+          p_langue: string
+          p_moment: string
+          p_p256dh: string
+        }
+        Returns: string
+      }
       find_match: { Args: { p_size: number }; Returns: string }
       finish_game_by_score: {
         Args: {
@@ -606,6 +656,7 @@ export type Database = {
         }
         Returns: string
       }
+      heure_rappel: { Args: { p_moment: string }; Returns: number }
       importer_serie_appareil: {
         Args: { p_dernier_jour: string; p_jours: number }
         Returns: number
@@ -622,6 +673,17 @@ export type Database = {
         Returns: Json
       }
       play_move: { Args: { p_game: string; p_move: string }; Returns: string }
+      reclamer_rappels: {
+        Args: { p_maintenant?: string }
+        Returns: {
+          auth: string
+          endpoint: string
+          id: string
+          jour: string
+          langue: string
+          p256dh: string
+        }[]
+      }
       record_puzzle_attempt: {
         Args: { p_puzzle: string; p_solved: boolean }
         Returns: number
