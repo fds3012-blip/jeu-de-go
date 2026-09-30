@@ -1,3 +1,5 @@
+// En premier : le jeton d'un défi par lien (#81) quitte l'adresse avant la mesure et tout événement (constat E14).
+import './app/adresseDefi';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './app/App';

@@ -1,11 +1,14 @@
 // Défi par lien (issue #81) : partie 9 × 9 en différé, 3 jours par coup, jouable sans compte (session anonyme Supabase).
-// Toute la sécurité est côté serveur (migration 20260929003100_defi_par_lien.sql) :
+// Toute la sécurité est côté serveur (migrations 20260929003100_defi_par_lien.sql et 20260929100100_garde_anonymes.sql) :
 // - `creer_defi` / `rejoindre_defi` / `victoire_au_temps` : fonctions SQL appelées en RPC ;
-// - les coups passent par la fonction serveur `game-action`, qui valide les règles puis appelle `jouer_coup_defi`.
-// Pas encore d'écran : ce module est prêt pour le front.
+// - les coups passent par la fonction serveur `game-action` (action `defi_coup`), qui valide les règles puis appelle
+//   `jouer_coup_defi` (réservée à la clé service) ;
+// - le temps réel suit la ligne de `games` (coups, comptage, résultat) et celle de `defis` (date limite).
+// Écrans : src/app/Defis.tsx.
+import type { Session } from '@supabase/supabase-js';
 import type { Result } from './account';
 import type { Tables } from './database.types';
-import { playMove, type Game } from './games';
+import type { Game } from './games';
 import type { Db } from './supabase';
 import { t } from '../content/i18n';
 
@@ -17,18 +20,33 @@ export const FORMAT_JETON = /^[A-Za-z0-9_-]{32}$/;
 /** Délai par coup (le serveur fait foi : `defis.delai_coup`). */
 export const DELAI_COUP_MS = 3 * 24 * 60 * 60 * 1000;
 
+/** Paramètre du fragment de l'adresse : `https://…/#defi=JETON`. */
+export const PARAM_DEFI = 'defi';
+
 const echec = (message?: string | null): { ok: false; error: string } => ({ ok: false, error: message || t('erreur.serveur') });
 
 /**
- * Lien à partager. Le jeton est dans le fragment (`#`) : il n'est envoyé ni au serveur web ni dans l'en-tête Referer.
+ * Session d'un vrai compte ? Une session anonyme (ouverte pour un défi) compte comme « pas de compte » partout
+ * ailleurs : pas de synchronisation des leçons, pas de cote, pas de pseudo (le serveur les refuse de toute façon).
+ */
+export const estAnonyme = (session: Session | null | undefined): boolean => session?.user.is_anonymous === true;
+
+/** Identifiant du compte, ou undefined sans compte ou avec une session anonyme. */
+export const compteDe = (session: Session | null | undefined): string | undefined =>
+  session && !estAnonyme(session) ? session.user.id : undefined;
+
+/**
+ * Lien à partager. Le jeton est dans le fragment (`#`) de la page d'accueil : il n'est envoyé ni au serveur web
+ * ni dans l'en-tête Referer, et aucune règle de réécriture n'est nécessaire chez l'hébergeur.
  */
 export function lienDefi(jeton: string, origine: string): string {
-  return `${origine.replace(/\/+$/, '')}/defi#${jeton}`;
+  return `${origine.replace(/\/+$/, '')}/#${PARAM_DEFI}=${jeton}`;
 }
 
-/** Lit le jeton d'un lien de défi (ou le jeton seul) ; null si le format ne correspond pas. */
+/** Lit le jeton d'un lien de défi (`#defi=JETON`, l'ancien `/defi#JETON`, ou le jeton seul) ; null sinon. */
 export function jetonDepuisLien(lien: string): string | null {
-  const brut = lien.includes('#') ? lien.slice(lien.indexOf('#') + 1) : lien;
+  let brut = lien.includes('#') ? lien.slice(lien.indexOf('#') + 1) : lien;
+  if (brut.startsWith(`${PARAM_DEFI}=`)) brut = brut.slice(PARAM_DEFI.length + 1);
   const jeton = brut.trim();
   return FORMAT_JETON.test(jeton) ? jeton : null;
 }
@@ -43,28 +61,64 @@ export async function assurerSession(db: Db): Promise<Result<{ userId: string; a
   return { ok: true, value: { userId: cree.user.id, anonyme: true } };
 }
 
-/** Crée un défi : renvoie la partie et le jeton du lien. */
-export async function creerDefi(db: Db): Promise<Result<{ partieId: string; jeton: string }>> {
+/** Crée un défi : renvoie la partie, le jeton du lien et si le créateur joue sans compte. */
+export async function creerDefi(db: Db): Promise<Result<{ partieId: string; jeton: string; anonyme: boolean }>> {
   const session = await assurerSession(db);
   if (!session.ok) return session;
   const { data, error } = await db.rpc('creer_defi');
   const ligne = data?.[0];
   if (error || !ligne) return echec(error?.message);
-  return { ok: true, value: { partieId: ligne.partie_id, jeton: ligne.jeton } };
+  return { ok: true, value: { partieId: ligne.partie_id, jeton: ligne.jeton, anonyme: session.value.anonyme } };
 }
 
-/** Ouvre un lien de défi : session anonyme si besoin, puis place d'invité (Noir). Renvoie l'identifiant de la partie. */
-export async function ouvrirDefi(db: Db, jeton: string): Promise<Result<string>> {
-  if (!FORMAT_JETON.test(jeton)) return { ok: false, error: 'Défi introuvable' };
+/** Ouvre un lien de défi : session anonyme si besoin, puis place d'invité (Noir). Renvoie la partie et le joueur. */
+export async function ouvrirDefi(db: Db, jeton: string): Promise<Result<{ partieId: string; userId: string; anonyme: boolean; createur: boolean }>> {
+  if (!FORMAT_JETON.test(jeton)) return echec(t('defi.erreur.introuvable'));
   const session = await assurerSession(db);
   if (!session.ok) return session;
   const { data, error } = await db.rpc('rejoindre_defi', { p_jeton: jeton });
   if (error || !data) return echec(error?.message);
-  return { ok: true, value: data };
+  // Le créateur qui rouvre son propre lien n'est pas un nouvel invité (mesure du coefficient viral).
+  const ligne = await db.from('defis').select('createur_id').eq('partie_id', data).maybeSingle();
+  return { ok: true, value: { partieId: data, ...session.value, createur: ligne.data?.createur_id === session.value.userId } };
 }
 
-/** Joue un coup de défi (SGF deux lettres, `tt` = passe). Le serveur refuse coup illégal, hors tour, tiers et délai dépassé. */
-export const jouerCoupDefi = (db: Db, partieId: string, coup: string) => playMove(db, partieId, coup);
+/** Codes de refus de `game-action` pour `defi_coup` (contrat avec le backend, #81). */
+export const CODES_REFUS = ['connexion', 'format', 'introuvable', 'spectateur', 'terminee', 'comptage', 'tour', 'temps',
+  'hors-plateau', 'occupe', 'suicide', 'ko'] as const;
+export type CodeRefus = (typeof CODES_REFUS)[number];
+
+/** Réponse de `game-action` pour l'action `defi_coup`. */
+type ReponseCoup = { ok: true; game?: Partial<Game> } | { ok?: false; error?: string; message?: string; resultat?: string };
+
+/** Message clair (FR/EN) d'un refus : d'abord le code connu, sinon le message du serveur, sinon un message générique. */
+export function messageRefus(corps: { error?: unknown; message?: unknown } | null | undefined): string {
+  const code = corps?.error;
+  if (typeof code === 'string' && (CODES_REFUS as readonly string[]).includes(code)) return t(`defi.refus.${code as CodeRefus}`);
+  if (typeof corps?.message === 'string' && corps.message) return corps.message;
+  return t('erreur.serveur');
+}
+
+/** Corps JSON d'une réponse en erreur HTTP de la fonction serveur, ou null. */
+async function corpsErreur(error: unknown): Promise<{ error?: unknown; message?: unknown } | null> {
+  const ctx = (error as { context?: unknown } | null)?.context;
+  if (ctx && typeof (ctx as Response).json === 'function') {
+    try { return (await (ctx as Response).json()) as { error?: unknown; message?: unknown }; } catch { /* corps illisible */ }
+  }
+  return null;
+}
+
+/**
+ * Joue un coup de défi (SGF deux lettres, `tt` = passe) par la fonction serveur `game-action`.
+ * Le serveur refuse : coup illégal, hors tour, joueur tiers, délai de 3 jours dépassé (la victoire au temps est alors
+ * enregistrée). Renvoie la ligne de partie mise à jour quand le serveur la donne.
+ */
+export async function jouerCoupDefi(db: Db, partieId: string, coup: string): Promise<Result<Partial<Game> | null>> {
+  const { data, error } = await db.functions.invoke<ReponseCoup>('game-action', { body: { action: 'defi_coup', game_id: partieId, move: coup } });
+  if (error) return echec(messageRefus(await corpsErreur(error)));
+  if (!data || data.ok !== true) return echec(messageRefus(data as { error?: string; message?: string } | null));
+  return { ok: true, value: data.game ?? null };
+}
 
 export interface EtatDefi {
   partie: Game;
@@ -75,6 +129,7 @@ export interface EtatDefi {
 
 /**
  * Lit un défi. Constate d'abord la victoire au temps si le délai du coup en cours est passé (pas de tâche planifiée).
+ * Tant que l'ami n'a pas ouvert le lien, la partie n'a qu'un joueur : on lit sans constater le temps.
  */
 export async function lireDefi(db: Db, partieId: string): Promise<Result<EtatDefi>> {
   const temps = await db.rpc('victoire_au_temps', { p_partie: partieId });
@@ -85,6 +140,43 @@ export async function lireDefi(db: Db, partieId: string): Promise<Result<EtatDef
   ]);
   if (partie.error || defi.error || !partie.data || !defi.data) return echec(partie.error?.message ?? defi.error?.message);
   return { ok: true, value: { partie: partie.data, defi: defi.data, resultat: temps.data ?? partie.data.result } };
+}
+
+/** Les défis du joueur (créés ou rejoints), du plus récent au plus ancien, avec leur partie. */
+export async function mesDefis(db: Db, userId: string): Promise<Result<EtatDefi[]>> {
+  const defis = await db.from('defis').select('*').or(`createur_id.eq.${userId},invite_id.eq.${userId}`).order('cree_le', { ascending: false }).limit(20);
+  if (defis.error) return echec(defis.error.message);
+  const lignes = defis.data ?? [];
+  if (!lignes.length) return { ok: true, value: [] };
+  const parties = await db.from('games').select('*').in('id', lignes.map(d => d.partie_id));
+  if (parties.error) return echec(parties.error.message);
+  const parId = new Map((parties.data ?? []).map(g => [g.id, g]));
+  return {
+    ok: true,
+    value: lignes.flatMap(d => {
+      const partie = parId.get(d.partie_id);
+      return partie ? [{ partie, defi: d, resultat: partie.result }] : [];
+    })
+  };
+}
+
+/**
+ * Suit un défi en temps réel : coups et résultat (table `games`), date limite (table `defis`).
+ * `onChange` est appelé à chaque changement ; l'écran relit alors le défi. Renvoie la fonction qui arrête le suivi.
+ */
+export function abonnerDefi(db: Db, partieId: string, onChange: () => void): () => void {
+  const canal = db.channel(`defi-${partieId}`)
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'games', filter: `id=eq.${partieId}` }, onChange)
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'defis', filter: `partie_id=eq.${partieId}` }, onChange)
+    .subscribe();
+  return () => { void db.removeChannel(canal); };
+}
+
+/** Abandonne le défi (autorisé sans compte pour un défi). Renvoie le résultat (`W+R` ou `B+R`). */
+export async function abandonnerDefi(db: Db, partieId: string): Promise<Result<string>> {
+  const { data, error } = await db.rpc('resign_game', { p_game: partieId });
+  if (error || !data) return echec(error?.message);
+  return { ok: true, value: data };
 }
 
 /** Temps restant pour le coup en cours, en millisecondes (0 si dépassé, null si le délai n'a pas commencé). */
@@ -100,6 +192,6 @@ export function tempsRestant(dateLimite: string | null, maintenant = Date.now())
  */
 export async function garderMonCompte(db: Db, email: string, redirection: string): Promise<Result<null>> {
   const { error } = await db.auth.updateUser({ email: email.trim() }, { emailRedirectTo: redirection });
-  if (error) return echec(t(error.status === 429 ? 'erreur.tropDEssais' : 'erreur.envoiLien'));
+  if (error) return echec(t(error.status === 429 ? 'erreur.tropDEssais' : error.status === 422 ? 'defi.erreur.emailPris' : 'erreur.envoiLien'));
   return { ok: true, value: null };
 }

@@ -42,7 +42,10 @@ function useDonnees(serie: number, record: number, parcours: Parcours) {
     const d = { reussis: reussis.size, serie, record, parties, bilan, paliers: paliers(parsePuzzles(ALL_PUZZLES), reussis) };
     const gagnes = lireBadges(readLocal<unknown>(BADGES_KEY, []));
     const liste = badges(d, gagnes);
-    return { stats: statistiques(d, { lecons: { faites, total }, adversaires }), badges: liste, gagnes, apres: memoriser(gagnes, liste) };
+    const apres = memoriser(gagnes, liste);
+    // #214 : badges gagnés depuis la dernière visite du Profil ; ils s'impriment une fois dans la vitrine.
+    const nouveaux = apres.filter(id => !gagnes.includes(id));
+    return { stats: statistiques(d, { lecons: { faites, total }, adversaires }), badges: liste, gagnes, apres, nouveaux };
   }, [serie, record, faites, total, adversaires]);
   useEffect(() => { if (donnees.apres !== donnees.gagnes) writeLocal(BADGES_KEY, donnees.apres); }, [donnees]);
   return donnees;
@@ -139,7 +142,7 @@ function Menu({ onVue, profil, serie, record = 0, parcours, placement, onPlaceme
         <div className="identite-niveau"><BarreNiveau /></div>
         <Statistiques stats={donnees.stats} />
       </section>
-      <VitrineBadges liste={donnees.badges} />
+      <VitrineBadges liste={donnees.badges} nouveaux={donnees.nouveaux} />
 
       <div className="lignes">
         {/* #283 : le kyu estimé ne s'affiche qu'ici, sur une ligne, avec sa date ; la ligne relance le placement. */}

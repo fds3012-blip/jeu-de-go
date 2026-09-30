@@ -5,6 +5,7 @@ import { fetchGels, fetchProfile, fetchStreak } from '../data/account';
 import { importerSerieAppareil, serieAEnvoyer } from '../data/serieServeur';
 import { LANCEMENT, SERIE_KEY, numeroDuJour } from './goDuJour';
 import { cleanProgress, mergeProgress, supabaseProgressStore, syncProgress, type Progress } from '../data/progress';
+import { compteDe } from '../data/defi';
 
 /** Session Supabase : undefined pendant le chargement, null sans connexion. */
 export function useSession(db: Db | null): Session | null | undefined {
@@ -121,7 +122,8 @@ export function prefersReducedMotion(): boolean {
 /** Pseudo et cote du joueur connecté (null sans compte, hors ligne ou pendant le chargement). */
 export function useProfil(db: Db | null): { pseudo: string | null; cote: number } | null {
   const session = useSession(db);
-  const userId = session?.user.id;
+  // Session anonyme (défi par lien, #81) : pas de compte, donc ni pseudo ni cote.
+  const userId = compteDe(session);
   const [profil, setProfil] = useState<{ id: string; pseudo: string | null; cote: number } | null>(null);
   useEffect(() => {
     if (!db || !userId) return;
