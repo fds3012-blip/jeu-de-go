@@ -89,16 +89,5 @@ export function prechargerEcrans(): void {
   for (const f of [partie, problemes, lecons, profil, serie, placement, defis]) f().catch(() => {});
 }
 
-/**
- * Lance `f` une fois la page chargée (événement `load`) et ses polices arrivées, quand le navigateur est libre.
- * Au plus 5 s d'attente pour les polices : une police bloquée ne retarde pas le reste indéfiniment.
- */
-export function apresPremierEcran(f: () => void): void {
-  const libre = () => (typeof requestIdleCallback === 'function' ? requestIdleCallback(() => f(), { timeout: 2000 }) : setTimeout(f, 200));
-  const polices = () => {
-    const pret = (document as Document & { fonts?: FontFaceSet }).fonts?.ready ?? Promise.resolve();
-    Promise.race([pret, new Promise(r => setTimeout(r, 5000))]).then(libre, libre);
-  };
-  if (document.readyState === 'complete') polices();
-  else window.addEventListener('load', polices, { once: true });
-}
+// Moment « après le premier écran » : src/premierEcran.ts (partagé avec PostHog, #325).
+export { apresPremierEcran } from '../premierEcran';

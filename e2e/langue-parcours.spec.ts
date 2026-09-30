@@ -1,6 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
 import { jouer } from './plateau';
 import { readdirSync, readFileSync } from 'node:fs';
+// Textes anglais : chargés à la demande dans l'app (#325), enregistrés ici pour `localiser(…, 'en')`.
+import '../src/content/anglais.setup';
 import { CHAPITRES, LESSONS, localiser } from '../src/content/lessons';
 
 /**

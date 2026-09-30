@@ -11,6 +11,7 @@
 // Sans variables d'environnement (VITE_POSTHOG_KEY, VITE_SENTRY_DSN) ou hors navigateur, tout est sans effet.
 // Les SDK sont importés dynamiquement : ils ne pèsent pas sur le premier chargement.
 // Aux deux niveaux, les adresses envoyées sont nettoyées (fragment `#`, jetons, codes : src/data/urlSensible.ts, E14).
+import { premierEcran } from '../premierEcran';
 import {
   PARAMS_SENSIBLES, posthogSansUrlSensible, sentryBreadcrumbSansUrlSensible, sentrySansUrlSensible,
 } from './urlSensible';
@@ -313,15 +314,26 @@ function loadPostHog(): Promise<PostHogLike | null> {
   if (phLoading) return phLoading;
   const c = analyticsConfig();
   if (!c.posthogKey) return Promise.resolve(null);
-  phLoading = import('posthog-js').then(m => {
-    const posthog = m.default as unknown as PostHogLike;
-    // Niveau relu au moment du chargement : le joueur a pu répondre pendant l'import.
-    const complet = niveau() === 'complet';
-    posthog.init(c.posthogKey, { api_host: c.posthogHost, ...(complet ? POSTHOG_COMPLET : POSTHOG_ANONYME) });
-    niveauPostHog = complet ? 'complet' : 'anonyme';
-    if (complet && userId) posthog.identify(userId);
-    return posthog;
+  // Niveau anonyme (#325) : PostHog (≈ 100 Ko gzip) attend que l'accueil soit affiché, pour ne pas ralentir l'ouverture
+  // sur un téléphone lent. Les événements gardent leur heure (`timestamp`) : rien n'est décalé. Avec accord : tout de suite.
+  const attente = niveau() === 'complet' ? Promise.resolve() : premierEcran();
+  const chargement: Promise<PostHogLike | null> = attente.then(() => {
+    // Opposition exprimée pendant l'attente : PostHog n'est pas chargé (un accord ultérieur le chargera).
+    if (niveau() === 'aucun') {
+      if (phLoading === chargement) phLoading = null;
+      return null;
+    }
+    return import('posthog-js').then(m => {
+      const posthog = m.default as unknown as PostHogLike;
+      // Niveau relu au moment du chargement : le joueur a pu répondre pendant l'attente ou l'import.
+      const complet = niveau() === 'complet';
+      posthog.init(c.posthogKey, { api_host: c.posthogHost, ...(complet ? POSTHOG_COMPLET : POSTHOG_ANONYME) });
+      niveauPostHog = complet ? 'complet' : 'anonyme';
+      if (complet && userId) posthog.identify(userId);
+      return posthog;
+    });
   }).catch(() => null);
+  phLoading = chargement;
   return phLoading;
 }
 
