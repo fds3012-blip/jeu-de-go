@@ -1,0 +1,93 @@
+# Déploie les fonctions serveur Supabase (supabase/functions) quand elles changent sur main (issue #344).
+# Sans le secret SUPABASE_ACCESS_TOKEN, le déploiement est simplement ignoré (job « deployer » sauté, pas d'échec).
+# Étapes pour Florian : docs/architecture/deploiement-fonctions.md. Aucun secret dans le dépôt ; aucune dépense
+# (minutes GitHub Actions gratuites, déploiement de fonctions inclus dans le plan Supabase).
+name: Déployer les fonctions Supabase
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/functions/**'
+      - 'src/go/**'
+      - 'scripts/sync-functions.mjs'
+      - '.github/workflows/deployer-fonctions.yml'
+  workflow_dispatch:
+
+# Un seul déploiement à la fois ; celui en cours va jusqu'au bout.
+concurrency:
+  group: deployer-fonctions
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  PROJET_SUPABASE: xjvsalkvpgcjrznznxoi
+
+jobs:
+  secret:
+    name: Secret présent ?
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      present: ${{ steps.lire.outputs.present }}
+    steps:
+      - id: lire
+        env:
+          JETON: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          if [ -n "$JETON" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Déploiement des fonctions ignoré::Le secret SUPABASE_ACCESS_TOKEN n'existe pas encore (docs/architecture/deploiement-fonctions.md)."
+          fi
+
+  deployer:
+    name: Déployer les fonctions
+    needs: secret
+    if: needs.secret.outputs.present == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # La copie des règles du go (src/go → supabase/functions/game-action/go) doit être à jour : sinon on
+      # déploierait un serveur différent de celui testé par la CI.
+      - name: Vérifier la copie des règles du go
+        run: |
+          node scripts/sync-functions.mjs
+          git diff --exit-code -- supabase/functions || { echo "::error::Copie périmée : lance npm run sync:functions et committe."; exit 1; }
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Déployer
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        # Chaque dossier de supabase/functions est une fonction (sauf les dossiers partagés, préfixés par « _ »).
+        run: |
+          for dossier in supabase/functions/*/; do
+            nom="$(basename "$dossier")"
+            case "$nom" in _*) continue ;; esac
+            echo "Déploiement de $nom"
+            supabase functions deploy "$nom" --project-ref "$PROJET_SUPABASE"
+          done
+      # Vérification après déploiement : la fonction répond avec la version du contrat du dépôt.
+      # Facultative : ne tourne que si la variable (non secrète) SUPABASE_PUBLISHABLE_KEY est définie.
+      - name: Vérifier la version déployée
+        if: vars.SUPABASE_PUBLISHABLE_KEY != ''
+        env:
+          CLE: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          attendu="$(sed -nE 's/^export const CONTRAT_GAME_ACTION = ([0-9]+);.*/\1/p' src/go/contrat.ts)"
+          for essai in 1 2 3 4 5 6; do
+            obtenu="$(curl -sS -X POST "https://$PROJET_SUPABASE.supabase.co/functions/v1/game-action" \
+              -H "apikey: $CLE" -H "Authorization: Bearer $CLE" -H 'Content-Type: application/json' \
+              -d '{"action":"version"}' | sed -nE 's/.*"contrat":([0-9]+).*/\1/p')"
+            [ "$obtenu" = "$attendu" ] && { echo "Contrat $obtenu en production."; exit 0; }
+            sleep 10
+          done
+          echo "::error::Contrat attendu $attendu, obtenu « $obtenu »."
+          exit 1

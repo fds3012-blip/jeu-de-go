@@ -798,6 +798,7 @@ export const fr = {
   'erreur.gels': 'Impossible de charger tes gels.',
   'erreur.suppression': 'La suppression n’a pas abouti. Ton compte est intact. Réessaie dans un moment.',
   'erreur.serveur': 'Impossible de joindre le serveur. Vérifie ta connexion et réessaie.',
+  'serveur.miseAJour': 'Mise à jour du serveur en cours. Réessaie dans quelques minutes.',
   'erreur.progression': 'Impossible de charger ta progression.',
   'erreur.progressionNonEnregistree': 'Progression non enregistrée.',
   'erreur.problemes': 'Impossible de charger les problèmes.',

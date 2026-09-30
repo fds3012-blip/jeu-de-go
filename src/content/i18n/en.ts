@@ -745,6 +745,7 @@ export const en = {
   'erreur.gels': 'Couldn’t load your freezes.',
   'erreur.suppression': 'Deletion didn’t go through. Your account is intact. Try again in a moment.',
   'erreur.serveur': 'Can’t reach the server. Check your connection and try again.',
+  'serveur.miseAJour': 'Server update in progress. Try again in a few minutes.',
   'erreur.progression': 'Couldn’t load your progress.',
   'erreur.progressionNonEnregistree': 'Progress not saved.',
   'erreur.problemes': 'Couldn’t load the puzzles.',
