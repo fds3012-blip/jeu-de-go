@@ -203,9 +203,9 @@ describe('chapitres (#228)', () => {
   it('chaque leçon est dans un seul chapitre, dans l’ordre du chemin', () => {
     expect(CHAPITRES.flatMap(c => c.lecons)).toEqual(LESSONS);
   });
-  it('« Les bases » (l1 à l7) est complet ; le chapitre 2 s’ouvre sur la leçon 8, encore en cours d’écriture', () => {
-    expect(CHAPITRES.map(c => c.lecons.map(l => l.id))).toEqual([['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7'], ['l8']]);
-    expect(CHAPITRES.map(c => c.complet)).toEqual([true, false]);
+  it('« Les bases » (l1 à l7) est complet ; les chapitres 2 à 4 (ouverture, capturer et sauver, vie et mort) sont en cours d’écriture', () => {
+    expect(CHAPITRES.map(c => c.lecons.map(l => l.id))).toEqual([['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7'], ['l8'], ['l9', 'l10', 'l11'], ['l12']]);
+    expect(CHAPITRES.map(c => c.complet)).toEqual([true, false, false, false]);
     expect(CHAPITRES[0].titre).toBe('Les bases');
   });
   it('la leçon 7 finit « Les bases », pas le chemin : la leçon 8 est la prochaine étape', () => {
@@ -224,8 +224,9 @@ describe('textes', () => {
     }
     expect(acquis('inconnue')).toBeTruthy();
   });
-  it('cinq chapitres annoncés, sans majuscules d’étiquette ni « A · B »', () => {
-    expect(CHAPITRES_A_VENIR).toHaveLength(5);
+  it('trois chapitres annoncés, sans majuscules d’étiquette ni « A · B », et aucun déjà ouvert sur le chemin (#16)', () => {
+    expect(CHAPITRES_A_VENIR).toHaveLength(3);
+    for (const c of CHAPITRES_A_VENIR) expect(CHAPITRES.map(x => x.titre)).not.toContain(c);
     for (const c of CHAPITRES_A_VENIR) { expect(c).not.toMatch(/·/); expect(c).not.toBe(c.toUpperCase()); }
   });
 });
