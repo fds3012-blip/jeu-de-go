@@ -561,3 +561,26 @@ Chaque livraison : issue traitée, agent, pull request, résultat des vérificat
 - Vercel : Florian a supprimé le projet en double `jeu-de-go-1y5y` (son seul domaine était `jeu-de-go-1y5y.vercel.app`). Reste `jeu-de-go` → `jeu-de-go.vercel.app`.
 - Supabase (projet `jeu-de-go`, Paris) : connexions anonymes et liaison manuelle activées par Florian, limite 30 connexions anonymes par heure et par IP. Captcha laissé coupé : l'app ne l'envoie pas encore (à faire avec Cloudflare Turnstile, gratuit, avant de l'activer).
 - #318 → PR #319, CI verte, fusionnée ; migration `purge_anonymes` appliquée en production. Décision de Florian : sessions sans compte effacées après **60 jours** sans activité, chaque nuit (pg_cron, 03:17 UTC). Mêmes règles que « Supprimer mon compte » : parties partagées gardées pour l'autre joueur, anonymisées. Tests SQL (8 cas, mutation vérifiée) et Vitest. Politique de confidentialité : E13 corrigé. 0 anonyme en production aujourd'hui.
+
+## Nuit du 29 au 30/09 : toute l'équipe sur l'amélioration de l'app
+
+Mandat de Florian : « fais bosser toute la team d'agents », jusqu'à 8 h, autant d'agents que nécessaire. 17 agents lancés (frontend ×2, backend ×2, qa ×2, moteur-go ×3, pedagogie ×3, growth ×2, produit, designer, juridique, architecte), chacun dans son worktree, avec des périmètres séparés.
+
+**Fusionné (CI verte avant chaque fusion) — 18 PR :**
+- #321 politique de confidentialité et CGU réalignées (#223, #111) ; nouvel écart E14 trouvé : jetons de session envoyés à PostHog/Sentry dans l'adresse.
+- #336 E14 corrigé : fragment `#` et paramètres sensibles retirés avant tout envoi (fuite confirmée par un essai, puis prouvée fermée par un e2e).
+- #322 et #328 « Continuer à ta mesure » (#284) ; plus aucune cote affichée dans les Problèmes.
+- #326 import SGF : lien OGS, erreurs lisibles (#286).
+- #327 action `defi_coup` dans `game-action` + faille corrigée (on pouvait nommer un tiers dans une partie) ; #338 écrans du défi par lien (#81).
+- #330 CI rouge depuis minuit (#329) : le titre du Go du jour n° 4 rognait le goban d'accueil ; tuiles resserrées.
+- #331 lot U (15 problèmes relier/couper/vie et mort) ; #341 leçons 9 à 12 (filet, prise en retour, course aux libertés, faux œil).
+- #332 arrivée par lien : premier coup guidé, « Apprends à jouer en 2 minutes » (#285).
+- #333 économie de progression (#233) + veille du 29/09 ; #334 score raconté (#78) ; #335 goban au clavier (#116) ; #337 conseil de Mochi, 9 modèles (#80) ; #339 série fêtée à 3/7/30 jours, Profil sans cote (#214) ; #340 performance et PWA (#323 : JS initial −17 %, hors ligne fiable, budget en CI).
+
+**Production Supabase :** migrations `places_du_joueur`, `cote_a_mesure`, `lot_u` appliquées (lot U : empreinte md5 identique au dépôt). 198 problèmes communs. Rien supprimé. Aucun déploiement Vercel ni de fonction.
+
+**Issues fermées avec rapport :** #284, #286, #287, #78, #214, #233, #136, #329. Points d'étape sur #81, #116, #80, #285.
+
+**Incidents :** le conteneur a redémarré deux fois (vers 1 h 20 et 1 h 30). Le second redémarrage a arrêté 5 agents pour le reste de la nuit : lot V de problèmes, recette complète, rappel quotidien (#36), suite perf (#325, #324, travail partiel non commité) — à relancer.
+
+**À décider par Florian :** déployer `game-action` (le défi par lien n'est jouable qu'après) ; propositions de l'économie (XP de la course, révision « Vu », gels) ; titres d'aperçu par numéro (fonction Vercel) ; modèles d'e-mail Supabase en `TokenHash` ; purge dans PostHog des évènements reçus avec un jeton.
