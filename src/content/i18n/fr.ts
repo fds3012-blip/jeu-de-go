@@ -1052,4 +1052,12 @@ export const fr = {
   'defi.arrivee.compte': 'Crée ton compte pour jouer : un e-mail et un pseudo, c’est tout.',
   'defi.compteRequis': 'Crée ton compte pour jouer ce défi : un e-mail et un pseudo.',
   'defi.arrivee.plateau': 'Plateau 9 × 9 vide : ta partie t’attend.',
+  // Case d'âge et d'acceptation (#343, texte de l'agent juridique : docs/juridique/compte-obligatoire.md, section 3).
+  'compte.age.case': 'J’ai 15 ans ou plus, ou un parent est d’accord. J’accepte les {conditions} et la {confidentialite}.',
+  'compte.age.conditions': 'conditions d’utilisation',
+  'compte.age.confidentialite': 'politique de confidentialité',
+  'compte.age.aide': 'Coche la case pour créer ton compte.',
+  'compte.age.moins15': 'Tu as moins de 15 ans ?',
+  'compte.age.moins15Detail': 'Montre cet écran à un parent. S’il est d’accord, coche la case avec lui. Tu peux aussi continuer l’essai sans compte : rien ne quitte ton téléphone.',
+  'compte.pseudo.conseil': 'Ton pseudo est visible par tous. Évite ton vrai nom.',
 } as const;

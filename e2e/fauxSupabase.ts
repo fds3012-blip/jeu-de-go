@@ -170,6 +170,7 @@ export async function brancher(context: BrowserContext, serveur: FauxServeur, st
 /** Crée un compte par le code reçu par e-mail, puis choisit le pseudo. */
 export async function creerCompte(page: Page, email: string, pseudo: string): Promise<void> {
   await page.getByLabel('Ton adresse e-mail').fill(email);
+  await page.getByRole('checkbox', { name: /J’ai 15\s+ans ou plus/ }).check();
   await page.getByRole('button', { name: 'Recevoir mon code' }).click();
   await page.getByLabel('Code à 6 chiffres').fill(CODE);
   await page.getByLabel('Pseudo').fill(pseudo);

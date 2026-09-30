@@ -29,9 +29,11 @@ interface Props {
   coups?: number | null;
   /** Code accepté : la session du compte est ouverte (tous les écrans la voient par onAuthStateChange). */
   onConnecte?: () => void;
+  /** Ouvre les conditions et la politique (liens de la case d'âge) ; absent : les mots restent en gras. */
+  onConditions?: () => void;
 }
 
-export function ConnexionCode({ db, mode = 'connexion', envoyer, moment = 'profil', coups = null, onConnecte }: Props) {
+export function ConnexionCode({ db, mode = 'connexion', envoyer, moment = 'profil', coups = null, onConnecte, onConditions }: Props) {
   const id = useId();
   const [etape, setEtape] = useState<'email' | 'code'>('email');
   const [email, setEmail] = useState('');
@@ -40,6 +42,7 @@ export function ConnexionCode({ db, mode = 'connexion', envoyer, moment = 'profi
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
   const [attente, setAttente] = useState(0);
+  const [age, setAge] = useState(false);
   const codeRef = useRef<HTMLInputElement>(null);
 
   // Compte à rebours du renvoi, une seconde à la fois.
@@ -65,6 +68,7 @@ export function ConnexionCode({ db, mode = 'connexion', envoyer, moment = 'profi
     e.preventDefault();
     if (busy) return;
     if (!isEmail(email)) { setError(t('compte.emailInvalide')); return; }
+    if (!age) { setError(t('compte.age.aide')); return; }
     if (await demander()) { setCode(''); setInfo(''); setEtape('code'); }
   };
 
@@ -113,8 +117,34 @@ export function ConnexionCode({ db, mode = 'connexion', envoyer, moment = 'profi
       <label className="small" htmlFor={`${id}-email`}>{t('compte.email')}</label>
       <input id={`${id}-email`} className="champ" type="email" inputMode="email" autoComplete="email" autoCapitalize="none" spellCheck={false} required
         value={email} onChange={e => { setEmail(e.target.value); setError(''); }} aria-invalid={!!error} aria-describedby={`${id}-erreur`} />
+      <CaseAge id={id} coche={age} onChange={v => { setAge(v); setError(''); }} onConditions={onConditions} />
       <p id={`${id}-erreur`} className="small connexion-erreur" role="alert">{error}</p>
-      <button className="btn primary connexion-cta" type="submit" disabled={busy} aria-busy={busy}>{busy ? t('compte.envoi') : envoyer ?? t('connexion.envoyer')}</button>
+      {/* Inactif tant que la case n'est pas cochée, mais touchable : l'aide dit alors pourquoi (juridique #343, section 3). */}
+      <button className={`btn primary connexion-cta${age ? '' : ' inactif'}`} type="submit" disabled={busy} aria-disabled={!age} aria-busy={busy}>
+        {busy ? t('compte.envoi') : envoyer ?? t('connexion.envoyer')}
+      </button>
     </form>
+  );
+}
+
+/**
+ * Case d'âge et d'acceptation des conditions (#343), jamais cochée d'avance. Texte de l'agent juridique
+ * (docs/juridique/compte-obligatoire.md, section 3, option A) : une seule case, déclarative, sans date de naissance.
+ */
+function CaseAge({ id, coche, onChange, onConditions }: { id: string; coche: boolean; onChange: (v: boolean) => void; onConditions?: () => void }) {
+  const [moins15, setMoins15] = useState(false);
+  const [avant, entre, apres] = t('compte.age.case', { conditions: '\u0001', confidentialite: '\u0002' }).split(/[\u0001\u0002]/);
+  const lien = (cle: 'compte.age.conditions' | 'compte.age.confidentialite') => onConditions
+    ? <button type="button" className="lien-texte" onClick={onConditions}>{t(cle)}</button>
+    : <b>{t(cle)}</b>;
+  return (
+    <div className="case-age">
+      <div className="case-age-ligne">
+        <input id={`${id}-age`} type="checkbox" checked={coche} onChange={e => onChange(e.target.checked)} />
+        <label htmlFor={`${id}-age`} className="small">{fr(avant)}{lien('compte.age.conditions')}{fr(entre)}{lien('compte.age.confidentialite')}{fr(apres)}</label>
+      </div>
+      <button type="button" className="lien case-age-moins15" aria-expanded={moins15} onClick={() => setMoins15(v => !v)}>{t('compte.age.moins15')}</button>
+      {moins15 && <p className="muted small case-age-detail">{fr(t('compte.age.moins15Detail'))}</p>}
+    </div>
   );
 }

@@ -995,4 +995,12 @@ export const en = {
   'defi.arrivee.compte': 'Create your account to play: an email and a username, that’s all.',
   'defi.compteRequis': 'Create your account to play this challenge: an email and a username.',
   'defi.arrivee.plateau': 'Empty 9 × 9 board: your game is waiting.',
+  // Case d'âge et d'acceptation (#343, texte de l'agent juridique : docs/juridique/compte-obligatoire.md, section 3).
+  'compte.age.case': 'I’m 15 or older, or a parent has agreed. I accept the {conditions} and the {confidentialite}.',
+  'compte.age.conditions': 'terms of use',
+  'compte.age.confidentialite': 'privacy policy',
+  'compte.age.aide': 'Tick the box to create your account.',
+  'compte.age.moins15': 'Under 15?',
+  'compte.age.moins15Detail': 'Show this screen to a parent. If they agree, tick the box together. You can also keep trying without an account: nothing leaves your phone.',
+  'compte.pseudo.conseil': 'Everyone can see your nickname. Don’t use your real name.',
 } as const satisfies Catalogue;

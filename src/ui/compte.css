@@ -60,3 +60,14 @@
   .creer-compte > :nth-child(4) { animation-delay: 80ms; }
   @keyframes compte-apparait { from { opacity: 0; transform: translateY(6px); } }
 }
+
+/* Case d'âge et d'acceptation (#343) : jamais cochée d'avance ; toute la ligne se touche (44 px). */
+.case-age { display: grid; gap: 0; margin-top: 8px; }
+.case-age-ligne { display: flex; align-items: flex-start; gap: 10px; min-height: var(--cible-min); }
+.case-age-ligne input { flex: none; width: 24px; height: 24px; margin: 10px 0 0; accent-color: var(--accent); }
+.case-age-ligne label { padding: 10px 0; line-height: 1.4; }
+.lien-texte { display: inline; min-height: 0; padding: 0; border: 0; background: none; color: inherit; font: inherit; font-weight: var(--fw-bold);
+  text-decoration: underline; text-underline-offset: 2px; }
+.case-age-moins15 { justify-self: start; font-weight: var(--fw-medium); font-size: var(--fs-s); padding-left: 34px; }
+.case-age-detail { margin: 0 0 4px 34px; text-wrap: pretty; }
+.connexion-cta.inactif { opacity: .55; box-shadow: none; }

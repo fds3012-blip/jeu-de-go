@@ -32,7 +32,7 @@ function BoutonRetour({ onClick }: { onClick: () => void }) {
 }
 
 /** « Crée ton compte » : dit pourquoi, ce qui est gardé, puis une seule action. `anonyme` : session d'un ancien défi. */
-export function CreerCompte({ db, raison, anonyme = false, onRetour }: { db: Db; raison: Raison; anonyme?: boolean; onRetour: () => void }) {
+export function CreerCompte({ db, raison, anonyme = false, onRetour, onConditions }: { db: Db; raison: Raison; anonyme?: boolean; onRetour: () => void; onConditions?: () => void }) {
   return (
     <div className="creer-compte" data-testid="creer-compte" data-raison={raison}>
       <BoutonRetour onClick={onRetour} />
@@ -48,7 +48,7 @@ export function CreerCompte({ db, raison, anonyme = false, onRetour }: { db: Db;
         </ul>
         <p className="muted small creer-appareils">{fr(t('creer.garde.appareils'))}</p>
       </section>
-      <ConnexionCode db={db} mode={anonyme ? 'liaison' : 'connexion'} moment="profil" />
+      <ConnexionCode db={db} mode={anonyme ? 'liaison' : 'connexion'} moment="profil" onConditions={onConditions} />
       <p className="muted small creer-gratuit">{fr(t('creer.gratuit'))}</p>
       <button type="button" className="lien creer-plus-tard" onClick={onRetour}>{t('creer.plusTard')}</button>
     </div>
@@ -113,7 +113,7 @@ export function PseudoObligatoire({ db, userId, onChoisi, onDeconnecter }: { db:
         <input id={`${id}-pseudo`} className="champ" autoComplete="username" autoCapitalize="none" autoCorrect="off" spellCheck={false}
           maxLength={USERNAME_MAX} value={nom} aria-invalid={!!statut} aria-describedby={`${id}-regles ${id}-statut`}
           onChange={e => { setNom(e.target.value); setError(''); }} />
-        <p id={`${id}-regles`} className="muted small pseudo-regles">{fr(t('pseudo.regles', { min: USERNAME_MIN, max: USERNAME_MAX }))}</p>
+        <p id={`${id}-regles`} className="muted small pseudo-regles">{fr(t('pseudo.regles', { min: USERNAME_MIN, max: USERNAME_MAX }))} {fr(t('compte.pseudo.conseil'))}</p>
         <p id={`${id}-statut`} className={`small pseudo-statut${statut ? ' erreur' : dispo.etat === 'libre' ? ' libre' : ''}`} role="status" aria-live="polite">
           {statut || (dispo.etat === 'verification' ? t('pseudo.verification') : dispo.etat === 'libre' ? <><Coche />{t('pseudo.libre', { pseudo: dispo.pseudo })}</> : '')}
         </p>

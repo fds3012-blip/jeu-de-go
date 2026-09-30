@@ -374,7 +374,8 @@ export function App() {
       onChoisi={p => { setPseudoChoisi({ id: compteId, pseudo: p }); setClePseudo(n => n + 1); }}
       onDeconnecter={() => { void supabase?.auth.signOut(); }} />;
   } else if (ecranCompte && supabase) {
-    screen = <CreerCompte db={supabase} raison={ecranCompte.raison} anonyme={etat === 'anonyme'} onRetour={() => { setEcranCompte(null); window.scrollTo({ top: 0 }); }} />;
+    screen = <CreerCompte db={supabase} raison={ecranCompte.raison} anonyme={etat === 'anonyme'} onRetour={() => { setEcranCompte(null); window.scrollTo({ top: 0 }); }}
+      onConditions={() => { go('profil'); setVueProfil('conditions'); }} />;
   } else if (enDefi && defi.vue === 'partie' && supabase) {
     screen = <DefiPartie key={defi.id} db={supabase} partieId={defi.id} userId={session?.user.id} anonyme={estAnonyme(session)} pseudo={pseudo ?? null} confirmTouch={settings.confirmTouch}
       onRetour={quitterDefi} onAutre={() => { setDefi({ vue: 'liste' }); window.scrollTo({ top: 0 }); }} />;

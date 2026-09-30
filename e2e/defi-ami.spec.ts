@@ -98,6 +98,7 @@ test('ancienne partie sans compte : l’ami lie son e-mail par code, choisit son
   // Session anonyme : l'écran propose de lier l'e-mail (même compte, la partie est gardée).
   await expect(page.getByTestId('creer-compte')).toHaveAttribute('data-raison', 'defi');
   await page.getByLabel('Ton adresse e-mail').fill('ancien@exemple.test');
+  await page.getByRole('checkbox').check();
   await page.getByRole('button', { name: 'Recevoir mon code' }).click();
   await page.getByLabel('Code à 6 chiffres').fill('123456');
   expect(serveur.appels).toContain('PUT /auth/v1/user');

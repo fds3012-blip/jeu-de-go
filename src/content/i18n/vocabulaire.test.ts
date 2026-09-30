@@ -17,7 +17,7 @@ describe('boucle quotidienne : « série » et « Go du jour »', () => {
 
   it('« défi » est réservé aux adversaires (défier, dernier défi de l’échelle, ami défié par lien #81)', () => {
     const cles = avec(/(^|[^\p{L}])défi(er|s)?([^\p{L}]|$)/iu);
-    expect(cles.filter(k => !k.startsWith('defi.'))).toEqual(['adv.sensei.description', 'bilan.defier']);
+    expect(cles.filter(k => !k.startsWith('defi.'))).toEqual(['adv.sensei.description', 'bilan.defier', 'creer.raison.defi']);
     expect(cles.filter(k => k.startsWith('defi.')).length).toBeGreaterThan(0);
   });
 

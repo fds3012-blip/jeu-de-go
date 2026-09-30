@@ -13,7 +13,7 @@ async function sansDefilementHorizontal(page: Page) {
 }
 
 async function ciblesDe44(page: Page, zone: string) {
-  const petites = await page.locator(`${zone} button:visible, ${zone} input:visible`).evaluateAll(els =>
+  const petites = await page.locator(`${zone} button:visible:not(.lien-texte), ${zone} input:visible:not([type=checkbox])`).evaluateAll(els =>
     els.map(e => ({ n: (e as HTMLElement).innerText || (e as HTMLInputElement).name || e.id, h: e.getBoundingClientRect().height })).filter(x => x.h < 44));
   expect(petites).toEqual([]);
 }
@@ -57,6 +57,15 @@ test('essai → 3e partie finie → « Crée ton compte » → code → pseudo �
 
   // Code par e-mail : saisie dans l'app (clavier chiffres, remplissage automatique du code).
   await page.getByLabel('Ton adresse e-mail').fill('nouveau@exemple.test');
+  // Case d'âge jamais cochée d'avance : sans elle, l'aide dit pourquoi et rien ne part.
+  const age = page.getByRole('checkbox', { name: /J’ai 15\s+ans ou plus, ou un parent est d’accord/ });
+  await expect(age).not.toBeChecked();
+  await page.getByRole('button', { name: 'Recevoir mon code' }).click();
+  await expect(page.getByText(/Coche la case pour créer ton compte/)).toBeVisible();
+  expect(serveur.emailsEnvoyes).toEqual([]);
+  await page.getByRole('button', { name: /moins de 15\s+ans\s*\?/ }).click();
+  await expect(page.getByText(/Montre cet écran à un parent/)).toBeVisible();
+  await age.check();
   await page.getByRole('button', { name: 'Recevoir mon code' }).click();
   const champ = page.getByLabel('Code à 6 chiffres');
   await expect(champ).toBeFocused();
@@ -143,6 +152,7 @@ test('code à 6 chiffres : champ, renvoi et retour à l’adresse (320 px, clair
   await page.getByRole('button', { name: 'Recevoir mon code' }).click();
   await expect(page.getByText('Entre une adresse e-mail valide.')).toBeVisible();
   await page.getByLabel('Ton adresse e-mail').fill('ami@exemple.test');
+  await page.getByRole('checkbox').check();
   await page.getByRole('button', { name: 'Recevoir mon code' }).click();
   await expect(page.getByLabel('Code à 6 chiffres')).toBeVisible();
   await sansDefilementHorizontal(page);

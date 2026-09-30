@@ -22,6 +22,11 @@ describe('« Crée ton compte » (#343)', () => {
     expect(html).toContain('Recevoir mon code');
     expect(html).toContain('autoComplete="email"');
     expect(html).toContain('Plus tard');
+    // Case d'âge (texte juridique), jamais cochée d'avance.
+    expect(html).toContain('J’ai 15 ans ou plus, ou un parent est d’accord. J’accepte les ');
+    expect(html).toContain('type="checkbox"');
+    expect(html).not.toMatch(/type="checkbox"[^>]*checked/);
+    expect(html).toContain('Tu as moins de 15 ans ?');
   });
 
   it('a un texte par raison', () => {
