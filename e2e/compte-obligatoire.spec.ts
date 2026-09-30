@@ -60,7 +60,9 @@ test('essai → 3e partie finie → « Crée ton compte » → code → pseudo �
   // Case d'âge jamais cochée d'avance : sans elle, l'aide dit pourquoi et rien ne part.
   const age = page.getByRole('checkbox', { name: /J’ai 15\s+ans ou plus, ou un parent est d’accord/ });
   await expect(age).not.toBeChecked();
-  await page.getByRole('button', { name: 'Recevoir mon code' }).click();
+  // aria-disabled : Playwright ne le toucherait pas ; au doigt, le toucher affiche l'aide.
+  await expect(page.getByRole('button', { name: 'Recevoir mon code' })).toHaveAttribute('aria-disabled', 'true');
+  await page.getByRole('button', { name: 'Recevoir mon code' }).click({ force: true });
   await expect(page.getByText(/Coche la case pour créer ton compte/)).toBeVisible();
   expect(serveur.emailsEnvoyes).toEqual([]);
   await page.getByRole('button', { name: /moins de 15\s+ans\s*\?/ }).click();
@@ -87,10 +89,10 @@ test('essai → 3e partie finie → « Crée ton compte » → code → pseudo �
   await expect(page.getByRole('heading', { name: 'Choisis ton pseudo' })).toBeVisible();
   await expect(page.getByText(/De 3 à 24 caractères/)).toBeVisible();
   await expect(page.getByRole('navigation')).toHaveCount(0);
-  await page.getByLabel('Pseudo').fill('pris');
+  await page.getByRole('textbox', { name: 'Pseudo' }).fill('pris');
   await expect(page.getByText('Ce pseudo est déjà pris.').or(page.getByText(/déjà pris/))).toBeVisible();
   await expect(page.getByRole('button', { name: 'C’est mon pseudo' })).toBeDisabled();
-  await page.getByLabel('Pseudo').fill('Joueur_1');
+  await page.getByRole('textbox', { name: 'Pseudo' }).fill('Joueur_1');
   await expect(page.getByText('Joueur_1 est libre.')).toBeVisible();
   await sansDefilementHorizontal(page);
   await ciblesDe44(page, '[data-testid="pseudo-obligatoire"]');
@@ -149,7 +151,7 @@ test('code à 6 chiffres : champ, renvoi et retour à l’adresse (320 px, clair
   await page.goto('/');
   await page.locator('.cta').click();
   await page.getByLabel('Ton adresse e-mail').fill('pas-une-adresse');
-  await page.getByRole('button', { name: 'Recevoir mon code' }).click();
+  await page.getByRole('button', { name: 'Recevoir mon code' }).click({ force: true });
   await expect(page.getByText('Entre une adresse e-mail valide.')).toBeVisible();
   await page.getByLabel('Ton adresse e-mail').fill('ami@exemple.test');
   await page.getByRole('checkbox').check();

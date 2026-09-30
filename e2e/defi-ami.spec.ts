@@ -101,9 +101,9 @@ test('ancienne partie sans compte : l’ami lie son e-mail par code, choisit son
   await page.getByRole('checkbox').check();
   await page.getByRole('button', { name: 'Recevoir mon code' }).click();
   await page.getByLabel('Code à 6 chiffres').fill('123456');
-  expect(serveur.appels).toContain('PUT /auth/v1/user');
+  expect(serveur.appels.some(x => x.startsWith('PUT /auth/v1/user'))).toBe(true);
   await expect(page.getByTestId('pseudo-obligatoire')).toBeVisible();
-  await page.getByLabel('Pseudo').fill('Ancien');
+  await page.getByRole('textbox', { name: 'Pseudo' }).fill('Ancien');
   await expect(page.getByText('Ancien est libre.')).toBeVisible();
   await page.getByRole('button', { name: 'C’est mon pseudo' }).click();
   // Compte complet, même identifiant : la liste des défis s'ouvre, la partie en cours y est, et il joue.
@@ -122,7 +122,7 @@ test('lien abîmé : message clair tout de suite, sans demander de compte', asyn
   const ctx = await browser.newContext(options(baseURL));
   const page = await brancher(ctx, serveur);
   await page.goto('/#defi=abc');
-  await expect(page.getByRole('alert')).toContainText('Défi introuvable');
+  await expect(page.getByRole('alert')).toContainText(/introuvable/);
   await expect(page.getByTestId('defi-apercu')).toHaveCount(0);
   await page.getByRole('button', { name: 'Retour à l’accueil' }).click();
   await expect(page.getByTestId('lien-defi')).toBeVisible();

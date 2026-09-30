@@ -173,7 +173,7 @@ export async function creerCompte(page: Page, email: string, pseudo: string): Pr
   await page.getByRole('checkbox', { name: /J’ai 15\s+ans ou plus/ }).check();
   await page.getByRole('button', { name: 'Recevoir mon code' }).click();
   await page.getByLabel('Code à 6 chiffres').fill(CODE);
-  await page.getByLabel('Pseudo').fill(pseudo);
+  await page.getByRole('textbox', { name: 'Pseudo' }).fill(pseudo);
   await page.getByText(`${pseudo} est libre.`).waitFor();
   await page.getByRole('button', { name: 'C’est mon pseudo' }).click();
 }

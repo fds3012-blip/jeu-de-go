@@ -2,7 +2,7 @@
    Tokens seulement (tokens.css) : sombre et clair suivent sans règle de plus. Une seule action en relief par écran. */
 
 .creer-compte { position: relative; display: grid; gap: var(--space-3); padding: var(--space-2) 0 var(--space-6); max-width: 30rem; margin: 0 auto; }
-.compte-retour { position: absolute; top: 0; left: calc(-1 * var(--space-2)); width: var(--cible-min); height: var(--cible-min); display: grid; place-items: center;
+.compte-retour { position: absolute; z-index: 1; top: 0; left: calc(-1 * var(--space-2)); width: var(--cible-min); height: var(--cible-min); display: grid; place-items: center;
   border: 0; border-radius: 50%; background: none; color: var(--text); }
 .compte-retour:active { background: var(--surface); }
 
@@ -50,8 +50,8 @@
 .pseudo-statut.erreur { color: var(--danger-texte); }
 
 /* Arrivée par un lien de défi : le plateau vide qui attend, sous le nom de qui t'invite. */
-.defi-apercu { display: grid; gap: var(--space-3); }
-.defi-apercu-plateau { width: min(100%, 300px); justify-self: center; pointer-events: none; }
+.defi-apercu { display: grid; gap: var(--space-3); padding-bottom: var(--space-4); }
+.defi-apercu-plateau { width: min(100%, 200px); justify-self: center; pointer-events: none; }
 .defi-apercu .creer-titre { font-size: var(--fs-l); }
 
 @media (prefers-reduced-motion: no-preference) {
