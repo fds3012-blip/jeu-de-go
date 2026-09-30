@@ -135,6 +135,15 @@ describe('contrat client ↔ serveur', () => {
     for (const op of besoin) expect(permis.has(op), `${acces.fichier} : ${op} sur ${table} sans politique permissive`).toBe(true);
   });
 
+  it('temps réel : chaque table écoutée par le client est publiée (supabase_realtime) et lisible par RLS', () => {
+    const ecoutees = new Set(CLIENT.flatMap(f => [...lire(f).matchAll(/postgres_changes'[^)]*?table:\s*'(\w+)'/g)].map(m => m[1])));
+    expect([...ecoutees]).toEqual(expect.arrayContaining(['games', 'defis']));
+    for (const table of ecoutees) {
+      expect(SQL, `${table} écoutée mais absente de la publication supabase_realtime`).toMatch(new RegExp(`alter\\s+publication\\s+supabase_realtime\\s+add\\s+table\\s+[^;]*public\\.${table}\\b`, 'i'));
+      expect(operationsPermises(table).has('select'), `${table} écoutée sans politique de lecture`).toBe(true);
+    }
+  });
+
   it('les e2e ne simulent que des RPC et des fonctions serveur qui existent dans le dépôt', () => {
     for (const f of E2E) {
       const src = lire(f);
