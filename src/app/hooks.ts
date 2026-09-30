@@ -119,8 +119,11 @@ export function prefersReducedMotion(): boolean {
   return typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 }
 
-/** Pseudo et cote du joueur connecté (null sans compte, hors ligne ou pendant le chargement). */
-export function useProfil(db: Db | null): { pseudo: string | null; cote: number } | null {
+/**
+ * Pseudo et cote du joueur connecté (null sans compte, hors ligne ou pendant le chargement).
+ * `cle` : à changer pour relire le profil (pseudo qui vient d'être choisi, #343).
+ */
+export function useProfil(db: Db | null, cle = 0): { pseudo: string | null; cote: number } | null {
   const session = useSession(db);
   // Session anonyme (défi par lien, #81) : pas de compte, donc ni pseudo ni cote.
   const userId = compteDe(session);
@@ -130,6 +133,26 @@ export function useProfil(db: Db | null): { pseudo: string | null; cote: number 
     let alive = true;
     fetchProfile(db, userId).then(r => { if (alive && r.ok && r.value) setProfil({ id: userId, pseudo: r.value.username, cote: r.value.rating }); });
     return () => { alive = false; };
-  }, [db, userId]);
+  }, [db, userId, cle]);
   return profil && profil.id === userId ? { pseudo: profil.pseudo, cote: profil.cote } : null;
+}
+
+/**
+ * Pseudo du compte `userId` (#343) : undefined pendant le chargement (ou sans réseau : on ne bloque pas le joueur
+ * sur un écran de pseudo qu'il ne pourrait pas valider), null si le compte n'a pas encore de pseudo.
+ * `cle` : à changer pour relire (pseudo qui vient d'être choisi).
+ */
+export function usePseudo(db: Db | null, userId: string | undefined, cle = 0): string | null | undefined {
+  const online = useOnline();
+  const [lu, setLu] = useState<{ id: string; pseudo: string | null } | null>(null);
+  useEffect(() => {
+    if (!db || !userId || !online) return;
+    let alive = true;
+    fetchProfile(db, userId).then(r => {
+      // Pas de ligne de profil (création en cours côté serveur) : comme un compte sans pseudo.
+      if (alive && r.ok) setLu({ id: userId, pseudo: r.value?.username ?? null });
+    }, () => {});
+    return () => { alive = false; };
+  }, [db, userId, online, cle]);
+  return lu && lu.id === userId ? lu.pseudo : undefined;
 }

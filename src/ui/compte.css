@@ -1,0 +1,62 @@
+/* Compte obligatoire (#343) : « Crée ton compte », pseudo obligatoire, connexion par code.
+   Tokens seulement (tokens.css) : sombre et clair suivent sans règle de plus. Une seule action en relief par écran. */
+
+.creer-compte { position: relative; display: grid; gap: var(--space-3); padding: var(--space-2) 0 var(--space-6); max-width: 30rem; margin: 0 auto; }
+.compte-retour { position: absolute; top: 0; left: calc(-1 * var(--space-2)); width: var(--cible-min); height: var(--cible-min); display: grid; place-items: center;
+  border: 0; border-radius: 50%; background: none; color: var(--text); }
+.compte-retour:active { background: var(--surface); }
+
+.creer-tete { display: grid; justify-items: center; gap: var(--space-2); text-align: center; padding-top: var(--space-4); }
+.creer-tete p { margin: 0; }
+.creer-titre { margin: 0; font-family: var(--font-titre); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre);
+  font-size: var(--fs-xl); line-height: var(--lh-titre); }
+.creer-raison { max-width: 24em; text-wrap: balance; }
+.pseudo-bienvenue { color: var(--accent-texte); font-weight: var(--fw-bold); font-size: var(--fs-s); }
+
+/* Ce qui est gardé : une liste à coches, sur une surface calme. */
+.creer-garde { background: var(--surface); border-radius: var(--radius); padding: 14px 16px; }
+.creer-garde-titre { margin: 0 0 6px; font-weight: var(--fw-bold); }
+.creer-garde ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.creer-garde li { display: flex; align-items: flex-start; gap: var(--space-2); line-height: 1.4; }
+.creer-garde svg, .pseudo-statut svg { flex: none; fill: none; stroke: var(--accent-texte); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.creer-appareils { margin: 8px 0 0; }
+
+/* Formulaires : e-mail, code, pseudo. Champs de 48 px, action principale pleine largeur. */
+.connexion { display: grid; gap: 4px; }
+.connexion-titre { font-size: var(--fs-m); }
+.connexion-texte { margin: 0 0 6px; overflow-wrap: anywhere; }
+.connexion .champ { width: 100%; min-width: 0; min-height: 48px; padding: 0 14px; box-sizing: border-box; border-radius: 12px;
+  border: 1.5px solid var(--line); background: var(--bg); color: var(--text); font: inherit; font-size: max(16px, var(--fs-base)); }
+.connexion .champ:focus-visible { outline: 3px solid var(--focus); outline-offset: 1px; border-color: transparent; }
+.connexion .champ[aria-invalid='true'] { border-color: var(--danger-texte); }
+/* Le code se lit d'un coup d'œil : chiffres larges, espacés, alignés. */
+.connexion .champ-code { min-height: 56px; text-align: center; font-variant-numeric: tabular-nums; font-size: var(--fs-xl);
+  font-weight: var(--fw-bold); letter-spacing: .4em; padding-left: calc(14px + .4em); }
+.connexion-erreur { margin: 2px 0 0; min-height: 1.4em; color: var(--danger-texte); }
+.connexion-erreur:empty { min-height: 0; margin: 0; }
+.connexion-cta { width: 100%; margin-top: 6px; }
+.connexion-liens { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 var(--space-2); margin-top: 4px; }
+.connexion-liens .lien:disabled { color: var(--muted); opacity: 1; }
+.connexion-info { margin: 0; text-align: center; color: var(--accent-texte); }
+.connexion-aide { margin: 4px 0 0; text-align: center; text-wrap: pretty; }
+
+.creer-gratuit { margin: 0; text-align: center; }
+.creer-plus-tard { justify-self: center; }
+
+/* Pseudo : règles toujours visibles, statut en dessous (libre, pris, format). Hauteur réservée : rien ne saute. */
+.pseudo-regles { margin: 6px 0 0; }
+.pseudo-statut { margin: 2px 0 0; min-height: 1.5em; display: flex; align-items: center; gap: 6px; }
+.pseudo-statut.libre { color: var(--accent-texte); font-weight: var(--fw-bold); }
+.pseudo-statut.erreur { color: var(--danger-texte); }
+
+/* Arrivée par un lien de défi : le plateau vide qui attend, sous le nom de qui t'invite. */
+.defi-apercu { display: grid; gap: var(--space-3); }
+.defi-apercu-plateau { width: min(100%, 300px); justify-self: center; pointer-events: none; }
+.defi-apercu .creer-titre { font-size: var(--fs-l); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .creer-compte > * { animation: compte-apparait 240ms var(--ease) both; }
+  .creer-compte > :nth-child(3) { animation-delay: 40ms; }
+  .creer-compte > :nth-child(4) { animation-delay: 80ms; }
+  @keyframes compte-apparait { from { opacity: 0; transform: translateY(6px); } }
+}

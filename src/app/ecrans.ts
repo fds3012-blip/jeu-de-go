@@ -58,6 +58,7 @@ const serie = charger(() => import('./SeriePratique'));
 const profil = charger(() => import('./Profil'));
 const placement = charger(() => import('./Placement'));
 const defis = charger(() => import('./Defis'));
+const compte = charger(() => import('./CreerCompte'));
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function ecran<M, K extends keyof M>(importer: () => Promise<M>, nom: K): M[K] extends ComponentType<any> ? M[K] : never {
@@ -75,6 +76,8 @@ export const Placement = ecran(placement, 'Placement');
 export const DefisEcran = ecran(defis, 'DefisEcran');
 export const DefiArrivee = ecran(defis, 'DefiArrivee');
 export const DefiPartie = ecran(defis, 'DefiPartie');
+export const CreerCompte = ecran(compte, 'CreerCompte');
+export const PseudoObligatoire = ecran(compte, 'PseudoObligatoire');
 
 /**
  * La partie est l'action principale de l'accueil : son code part tout de suite (≈ 20 Ko gzip avec la revue),
@@ -86,7 +89,7 @@ export function prechargerPartie(): void {
 
 /** Télécharge tous les écrans en tâche de fond. */
 export function prechargerEcrans(): void {
-  for (const f of [partie, problemes, lecons, profil, serie, placement, defis]) f().catch(() => {});
+  for (const f of [partie, problemes, lecons, profil, serie, placement, defis, compte]) f().catch(() => {});
 }
 
 /**
