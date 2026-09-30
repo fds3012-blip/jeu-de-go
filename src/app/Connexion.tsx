@@ -133,7 +133,8 @@ export function ConnexionCode({ db, mode = 'connexion', envoyer, moment = 'profi
  */
 function CaseAge({ id, coche, onChange, onConditions }: { id: string; coche: boolean; onChange: (v: boolean) => void; onConditions?: () => void }) {
   const [moins15, setMoins15] = useState(false);
-  const [avant, entre, apres] = t('compte.age.case', { conditions: '\u0001', confidentialite: '\u0002' }).split(/[\u0001\u0002]/);
+  // Repères du texte traduit, remplacés par les deux liens (caractères à usage privé, jamais dans un texte).
+  const [avant, entre, apres] = t('compte.age.case', { conditions: '', confidentialite: '' }).split(/[]/);
   const lien = (cle: 'compte.age.conditions' | 'compte.age.confidentialite') => onConditions
     ? <button type="button" className="lien-texte" onClick={onConditions}>{t(cle)}</button>
     : <b>{t(cle)}</b>;
