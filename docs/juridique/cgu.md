@@ -2,7 +2,7 @@
 
 > **Relecture obligatoire avant la mise en production.** Ce document est un projet préparé par le responsable juridique, qui n'est pas avocat. Il doit être relu et validé par un **avocat** avant d'être publié. Les champs « À COMPLÉTER PAR FLORIAN » doivent être remplis.
 
-Rédigé le 27 septembre 2026, mis à jour le 28 septembre 2026 (#223 : progression sur l'appareil, série envoyée à la connexion, installation de l'app, suppression du compte dans l'app) et le 29 septembre 2026 (#223 : défi par lien, jeu sans compte limité au défi, session sans compte effacée après 60 jours sans activité). Les conditions de l'abonnement Premium feront l'objet d'un document séparé (conditions générales de vente) quand l'offre existera.
+Rédigé le 27 septembre 2026, mis à jour le 28 septembre 2026 (#223 : progression sur l'appareil, série envoyée à la connexion, installation de l'app, suppression du compte dans l'app) et le 29 septembre 2026 (#223 : défi par lien, jeu sans compte limité au défi, session sans compte effacée après 60 jours sans activité) et le 30 septembre 2026 (#343 : compte obligatoire avec pseudo au-delà d'un essai, défi réservé aux comptes, fin des nouvelles sessions sans compte, case d'âge ; analyse et décisions : `compte-obligatoire.md`). *Note pour la relecture :* les passages marqués « (#343) » ne sont exacts qu'après la fusion du code de #343 ; ne pas publier avant. Les conditions de l'abonnement Premium feront l'objet d'un document séparé (conditions générales de vente) quand l'offre existera.
 
 ## Pour Florian : champs à compléter avant publication
 
@@ -30,24 +30,25 @@ Elles fixent les règles pour utiliser le jeu (site et applications). En utilisa
 
 - Apprendre et jouer au go : leçons, problèmes, révision du jour, Go du jour, course aux problèmes, parties contre l'ordinateur, revue et import de tes parties (fichiers SGF), parties en ligne et défis par lien (quand leurs écrans seront ouverts), badges, XP et séries de jours.
 - L'ordinateur (IA KataGo) calcule sur ton appareil. Sa force et ses conseils sont donnés à titre indicatif.
+- **Essai sans compte** (#343) : tu peux découvrir le jeu sans t'inscrire (quelques parties contre l'ordinateur, les premières leçons, le Go du jour). Pour le reste, il faut un compte gratuit.
 - Le jeu est **gratuit**. Une offre Premium pourra s'y ajouter ; elle aura ses propres conditions, et ce qui est gratuit aujourd'hui sera signalé clairement si cela change.
 - Tu peux utiliser le jeu dans ton navigateur ou **l'installer** sur ton écran d'accueil. Le jeu peut te le proposer une fois ; tu es libre de refuser.
 - Le jeu est fourni tel quel. Nous faisons de notre mieux pour qu'il marche, sans garantir qu'il soit toujours disponible ou sans erreur. Nous pouvons le faire évoluer, le suspendre pour maintenance ou arrêter une fonction.
 
 ## 4. Ton compte
 
-- Le compte est **facultatif** : tu peux jouer sans compte.
-- Tu te connectes avec un lien envoyé à ton adresse e-mail. Garde l'accès à cette adresse : c'est ta clé.
-- **Âge** : tu peux créer un compte seul à partir de **15 ans**. Avant 15 ans, il faut l'accord d'un parent (ou du titulaire de l'autorité parentale).
+- **Le compte est nécessaire au-delà de l'essai** (#343) : pour jouer en ligne, jouer un défi par lien et garder ta progression sur notre serveur. Il est gratuit.
+- Pour le créer : ton adresse e-mail et un **pseudo** (obligatoire). Tu te connectes avec un lien ou un code envoyé à cette adresse. Garde l'accès à cette adresse : c'est ta clé.
+- **Âge** : tu peux créer un compte seul à partir de **15 ans**. Avant 15 ans, il faut l'accord d'un parent (ou du titulaire de l'autorité parentale). À la création, tu coches la case « J'ai 15 ans ou plus, ou un parent est d'accord », qui vaut aussi acceptation de ces conditions. Nous ne demandons pas ta date de naissance. Si nous apprenons qu'un compte a été créé avant 15 ans sans accord, nous pouvons le suspendre et demander cet accord, ou le supprimer.
 - Un compte par personne. Tu es responsable de ce qui se fait avec ton compte.
-- **Sans compte**, ta progression (leçons, problèmes, série, record, badges, XP) est gardée **seulement sur ton appareil**. Si tu effaces les données du site, changes d'appareil ou désinstalles l'app, elle est perdue : nous ne pouvons pas la retrouver.
+- **Pendant l'essai sans compte**, ta progression (leçons, problèmes, série, record, badges, XP) est gardée **seulement sur ton appareil**. Si tu effaces les données du site, changes d'appareil ou désinstalles l'app, elle est perdue : nous ne pouvons pas la retrouver.
 - **Avec un compte**, ta progression est aussi gardée sur notre serveur. À chaque connexion, la série de jours de ton appareil y est envoyée : le serveur garde la plus longue des deux et refuse une série impossible.
-- **Défi par lien sans compte** : si un ami t'envoie un défi, tu peux le jouer sans créer de compte. Le jeu ouvre alors une **session sans compte** (ni e-mail, ni pseudo). Elle sert seulement aux défis : en créer (3 en attente au plus), en rejoindre, y jouer. Elle est **effacée après 60 jours sans activité**, avec ses parties (celles contre un autre joueur restent pour lui, sous le nom « joueur supprimé »). Pour la garder, relie ton adresse e-mail : elle devient un compte, avec ta partie en cours.
+- **Anciennes sessions sans compte** : avant le passage au compte obligatoire, un défi par lien pouvait se jouer sans compte, dans une **session sans compte** (ni e-mail, ni pseudo). Il ne s'en crée plus. Celles qui existent encore sont **effacées après 60 jours sans activité**, avec leurs parties (celles contre un autre joueur restent pour lui, sous le nom « joueur supprimé »). Pour la garder, relie ton adresse e-mail et choisis un pseudo : elle devient un compte, avec ta partie en cours.
 - Tu peux **supprimer ton compte à tout moment depuis l'app** (dans Profil, sous ton compte). C'est immédiat et définitif : ton profil, ta cote, ta série et ta progression sur le serveur sont effacés. Tes parties contre d'autres joueurs restent pour eux, sous le nom « joueur supprimé ». Le détail est dans la politique de confidentialité, section « Tes droits ».
 
 ## 5. Ton pseudo et ton comportement
 
-Ton pseudo est visible par les autres joueurs. Il ne doit pas :
+Ton pseudo est obligatoire et **visible par tous**, même par qui n'a pas de compte. Évite ton vrai nom, surtout si tu as moins de 18 ans. Il ne doit pas :
 - être injurieux, haineux, sexuel, violent ou discriminatoire ;
 - se faire passer pour quelqu'un d'autre ;
 - contenir de coordonnées (e-mail, téléphone, adresse) ni de publicité.
@@ -60,6 +61,7 @@ Les séries de jours, gels de série, records, XP, niveaux, badges et la cote se
 
 ## 5 ter. Défi par lien
 
+- Pour jouer un défi, il faut un compte avec un pseudo (#343). En ouvrant le lien, tu vois le plateau et qui t'invite ; tu crées ton compte avant ton premier coup.
 - Un défi est une partie 9 × 9 **non classée**, en différé. Le lien est personnel : ne le publie pas. Il ne sert qu'une fois, pour le premier ami qui l'ouvre, et plus du tout après 7 jours.
 - Chaque joueur a **3 jours par coup**. Passé ce délai, le joueur au trait **perd au temps**. Le serveur fait foi pour l'heure.
 - La partie n'est visible que par ses deux joueurs.
