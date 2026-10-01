@@ -1,7 +1,8 @@
 // Défi par lien (issue #81) : trois écrans.
 // - DefisEcran : « Défier un ami ». Action principale : « Envoyer un lien » (crée le défi, puis Web Share API ou copie).
 //   Dessous, les parties en cours contre des amis.
-// - DefiArrivee : l'ami ouvre le lien (`#defi=JETON`) ; session anonyme si besoin, puis il rejoint la partie.
+// - DefiArrivee : l'ami ouvre le lien (`#defi=JETON&de=Pseudo`) ; il voit le plateau et qui l'invite, crée son compte
+//   (code par e-mail, puis pseudo obligatoire) AVANT son premier coup, puis rejoint la partie (#343 : plus d'anonymes).
 // - DefiPartie : partie en différé, 3 jours par coup, résultat au temps ; suivie en temps réel.
 // Logique pure : defiAmi.ts. Données : src/data/defi.ts.
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
@@ -13,13 +14,16 @@ import { score } from '../go/score';
 import { deadToString, recordFromOnlineGame, validateMove } from '../go/server';
 import { acceptScore, proposeDeadStones, resumeGame, type Game } from '../data/games';
 import {
-  abandonnerDefi, abonnerDefi, creerDefi, jouerCoupDefi, lienDefi, lireDefi, mesDefis, messageRefus, ouvrirDefi, type EtatDefi
+  abandonnerDefi, abonnerDefi, creerDefi, FORMAT_JETON, jouerCoupDefi, lienDefi, lireDefi, mesDefis, messageRefus, ouvrirDefi, type EtatDefi
 } from '../data/defi';
 import type { Db } from '../data/supabase';
 import { EVENTS, track } from '../data/analytics';
 import { useOnline } from './hooks';
 import { phraseEtat, phraseIssue, resumeDefi, vueDefi } from './defiAmi';
 import { LierEmail } from './Account';
+import { ConnexionCode } from './Connexion';
+import type { EtatCompte } from './essai';
+import '../ui/compte.css';
 import { fr } from '../ui/typo';
 import { nombre, t } from '../content/i18n';
 import '../ui/defis.css';
@@ -68,11 +72,13 @@ interface EcranProps {
   db: Db | null;
   /** Identifiant de la session (compte ou anonyme) ; undefined pendant le chargement, null sans session. */
   userId: string | null | undefined;
+  /** Pseudo du joueur : il est mis dans le lien, pour que l'ami sache qui le défie (#343). */
+  pseudo?: string | null;
   onPartie: (id: string) => void;
 }
 
 /** « Défier un ami » : créer un lien, puis retrouver ses parties contre des amis. */
-export function DefisEcran({ db, userId, onPartie }: EcranProps) {
+export function DefisEcran({ db, userId, pseudo = null, onPartie }: EcranProps) {
   const online = useOnline();
   const [creation, setCreation] = useState<{ etat: 'repos' } | { etat: 'cours' } | { etat: 'erreur'; message: string } | { etat: 'pret'; lien: string; partage: Partage }>({ etat: 'repos' });
   const [liste, setListe] = useState<{ etat: 'chargement' } | { etat: 'erreur' } | { etat: 'pret'; defis: EtatDefi[] }>({ etat: 'chargement' });
@@ -95,7 +101,7 @@ export function DefisEcran({ db, userId, onPartie }: EcranProps) {
     setCreation({ etat: 'cours' });
     const r = await creerDefi(db);
     if (!r.ok) { setCreation({ etat: 'erreur', message: r.error }); return; }
-    const lien = lienDefi(r.value.jeton, location.origin);
+    const lien = lienDefi(r.value.jeton, location.origin, pseudo);
     const partage = await partager(lien);
     // Jamais le lien, le jeton ni la partie dans l'événement (constat E14).
     track(EVENTS.defiCree, { partage: partage === 'partage' ? 'web_share' : partage === 'copie' ? 'copie' : partage, anonyme: r.value.anonyme });
@@ -160,14 +166,23 @@ function DeuxPierres() {
   );
 }
 
-/** L'ami ouvre le lien : il rejoint la partie (session anonyme si besoin), puis joue tout de suite. */
-export function DefiArrivee({ db, jeton, onPartie, onAccueil }: { db: Db | null; jeton: string; onPartie: (id: string) => void; onAccueil: () => void }) {
+/** Plateau 9 × 9 vide, pour l'aperçu du défi : c'est à l'ami de poser la première pierre. */
+const PLATEAU_VIDE = new Int8Array(81);
+
+/**
+ * L'ami ouvre le lien (#343) : il voit le plateau et qui l'invite. Sans compte, il crée son compte (code par e-mail,
+ * puis pseudo, demandé par l'app avant tout le reste) ; une ancienne session anonyme lie son e-mail. Avec un compte
+ * complet, il rejoint la partie et joue son premier coup.
+ */
+export function DefiArrivee({ db, jeton, inviteur = null, compte, onPartie, onAccueil }: {
+  db: Db | null; jeton: string; inviteur?: string | null; compte: EtatCompte; onPartie: (id: string) => void; onAccueil: () => void;
+}) {
   const online = useOnline();
   const [erreur, setErreur] = useState<string | null>(null);
   const [essai, setEssai] = useState(0);
   const fait = useRef(false);
   useEffect(() => {
-    if (!db || !online || fait.current) return;
+    if (!db || !online || fait.current || compte !== 'complet') return;
     let vivant = true;
     setErreur(null);
     ouvrirDefi(db, jeton).then(r => {
@@ -175,13 +190,33 @@ export function DefiArrivee({ db, jeton, onPartie, onAccueil }: { db: Db | null;
       if (!r.ok) { setErreur(r.error); return; }
       fait.current = true;
       // Jamais le jeton ni l'identifiant de la partie dans l'événement (constat E14).
-      track(EVENTS.defiOuvert, { anonyme: r.value.anonyme, deja_joueur: r.value.createur });
+      track(EVENTS.defiOuvert, { anonyme: false, deja_joueur: r.value.createur });
       onPartie(r.value.partieId);
     });
     return () => { vivant = false; };
-  }, [db, jeton, online, essai, onPartie]);
+  }, [db, jeton, online, essai, onPartie, compte]);
 
-  const message = !db ? t('defi.indisponible') : !online ? t('defi.horsLigne') : erreur;
+  // Lien abîmé : on le dit tout de suite, sans faire créer un compte pour rien.
+  const invalide = !FORMAT_JETON.test(jeton);
+  const message = invalide ? t('defi.erreur.introuvable') : !db ? t('defi.indisponible') : !online ? t('defi.horsLigne') : erreur;
+  if (db && !message && (compte === 'aucun' || compte === 'anonyme')) {
+    return (
+      <div className="defis defi-arrivee defi-apercu" data-testid="defi-apercu">
+        <div className="creer-tete">
+          <h2 className="creer-titre">{inviteur ? t('defi.arrivee.titre', { pseudo: inviteur }) : t('defi.arrivee.titreSansNom')}</h2>
+          <p className="creer-raison">{fr(t('defi.arrivee.texte'))}</p>
+        </div>
+        <div className="defi-apercu-plateau" role="img" aria-label={t('defi.arrivee.plateau')}>
+          <Board size={9} board={PLATEAU_VIDE} toPlay={1} interactive={false} />
+        </div>
+        <div className="card">
+          <p className="small" style={{ margin: '0 0 8px' }}><b>{fr(t('defi.arrivee.compte'))}</b></p>
+          <ConnexionCode db={db} mode={compte === 'anonyme' ? 'liaison' : 'connexion'} moment="arrivee" />
+        </div>
+        <button type="button" className="lien creer-plus-tard" onClick={onAccueil}>{t('defi.retourAccueil')}</button>
+      </div>
+    );
+  }
   return (
     <div className="defis defi-arrivee">
       <div className="defis-tete">
@@ -191,7 +226,7 @@ export function DefiArrivee({ db, jeton, onPartie, onAccueil }: { db: Db | null;
       {message && (
         <>
           <p className="card" role="alert">{fr(message)}</p>
-          {db && online && <button type="button" className="btn" onClick={() => setEssai(n => n + 1)}>{t('defi.reessayer')}</button>}
+          {db && online && !invalide && <button type="button" className="btn" onClick={() => setEssai(n => n + 1)}>{t('defi.reessayer')}</button>}
           <button type="button" className="btn primary defis-cta" onClick={onAccueil}>{t('defi.retourAccueil')}</button>
         </>
       )}
@@ -203,22 +238,23 @@ interface PartieProps {
   db: Db;
   partieId: string;
   userId: string | undefined;
-  /** Session anonyme : l'inscription est proposée après le premier coup. */
+  /** Ancienne session anonyme (#81) : elle lie son e-mail avant de jouer le coup suivant (#343). */
   anonyme: boolean;
+  /** Pseudo du joueur, mis dans le lien renvoyé. */
+  pseudo?: string | null;
   confirmTouch: boolean;
   onRetour: () => void;
   onAutre: () => void;
 }
 
 /** Partie en différé contre un ami. */
-export function DefiPartie({ db, partieId, userId, anonyme, confirmTouch, onRetour, onAutre }: PartieProps) {
+export function DefiPartie({ db, partieId, userId, anonyme, pseudo = null, confirmTouch, onRetour, onAutre }: PartieProps) {
   const online = useOnline();
   const [etat, setEtat] = useState<{ etat: 'chargement' } | { etat: 'erreur'; message: string } | { etat: 'pret'; d: EtatDefi }>({ etat: 'chargement' });
   const [maintenant, setMaintenant] = useState(() => Date.now());
   const [envoi, setEnvoi] = useState(false);
   const [refus, setRefus] = useState<string | null>(null);
   const [abandon, setAbandon] = useState(false);
-  const [plusTard, setPlusTard] = useState(false);
   const [lienCopie, setLienCopie] = useState<Partage | null>(null);
   const [mortes, setMortes] = useState<Set<number> | null>(null);
 
@@ -290,7 +326,7 @@ export function DefiPartie({ db, partieId, userId, anonyme, confirmTouch, onReto
       setMortes(suivant);
       return;
     }
-    if (!v?.aMoi || envoi || !online) return;
+    if (!v?.aMoi || envoi || !online || anonyme) return;
     void envoyer(toSgf(p, partie.size));
   }
 
@@ -313,7 +349,7 @@ export function DefiPartie({ db, partieId, userId, anonyme, confirmTouch, onReto
   }
 
   async function renvoyer() {
-    setLienCopie(await partager(lienDefi(d!.defi.jeton, location.origin)));
+    setLienCopie(await partager(lienDefi(d!.defi.jeton, location.origin, pseudo)));
   }
 
   const nom = (c: 1 | 2) => (c === moi ? t('defi.toi') : t('defi.adversaire'));
@@ -325,14 +361,15 @@ export function DefiPartie({ db, partieId, userId, anonyme, confirmTouch, onReto
 
   const bienvenue = v.phase === 'jeu' && v.couleur === 1 && v.mesCoups === 0 && v.aMoi;
   const message = refus ?? (envoi ? t('defi.envoi') : !online ? t('defi.horsLigne') : bienvenue ? t('defi.bienvenue') : phraseEtat(v));
-  const proposerInscription = anonyme && !plusTard && v.mesCoups >= 1 && v.phase !== 'attente';
+  // #343 : une ancienne session anonyme lie son e-mail avant de continuer (le serveur refuse désormais les anonymes).
+  const proposerInscription = anonyme && v.phase !== 'fini';
 
   return (
     <div className={`partie defi-partie phase-${v.phase}`} data-phase={v.phase}>
       {bandeau(lui, retour)}
       <div className="partie-plateau">
         <Board size={partie.size} board={v.pos.board} toPlay={v.pos.toPlay} confirmTouch={confirmTouch}
-          interactive={(v.aMoi && !envoi && online) || (enComptage && !envoi && !v.proposeParMoi)} stonesTappable={enComptage}
+          interactive={!anonyme && ((v.aMoi && !envoi && online) || (enComptage && !envoi && !v.proposeParMoi))} stonesTappable={enComptage}
           marks={{ last: v.pos.lastMove, owner: sc?.owner, dead: enComptage || v.phase === 'fini' ? mortesVues : undefined }}
           onPlay={toucher} noms={{ [lui]: t('defi.adversaire') }} />
       </div>
@@ -346,7 +383,7 @@ export function DefiPartie({ db, partieId, userId, anonyme, confirmTouch, onReto
         {v.phase === 'attente' && (
           <>
             <button type="button" className="btn primary defis-cta" onClick={renvoyer}>{t('defi.renvoyer')}</button>
-            {lienCopie && lienCopie !== 'partage' && lienCopie !== 'annule' && <CarteLien lien={lienDefi(d.defi.jeton, location.origin)} partage={lienCopie} />}
+            {lienCopie && lienCopie !== 'partage' && lienCopie !== 'annule' && <CarteLien lien={lienDefi(d.defi.jeton, location.origin, pseudo)} partage={lienCopie} />}
           </>
         )}
         {enComptage && (
@@ -366,14 +403,14 @@ export function DefiPartie({ db, partieId, userId, anonyme, confirmTouch, onReto
         )}
         {proposerInscription && (
           <div className="defi-inscription">
-            <LierEmail db={db} moment="apres_coup" coups={v.mesCoups} titre={t('defi.inscription.titre')} texte={t('defi.inscription.texte')} onPlusTard={() => setPlusTard(true)} />
+            <LierEmail db={db} moment="apres_coup" coups={v.mesCoups} titre={t('defi.inscription.titre')} texte={t('defi.inscription.texte')} />
           </div>
         )}
       </div>
       {v.phase === 'jeu' && (
         <BarreActions label={t('partie.actions')} actions={[
-          { label: abandon ? fr(t('partie.action.confirmer')) : t('partie.action.abandonner'), icone: <Icone nom="abandonner" />, onClick: abandonner, danger: abandon, disabled: envoi || !online, groupe: 'decision' },
-          { label: t('partie.action.passer'), icone: <Icone nom="passer" />, onClick: () => { void envoyer('tt'); }, disabled: !v.aMoi || envoi || !online, groupe: 'decision', principale: true },
+          { label: abandon ? fr(t('partie.action.confirmer')) : t('partie.action.abandonner'), icone: <Icone nom="abandonner" />, onClick: abandonner, danger: abandon, disabled: envoi || !online || anonyme, groupe: 'decision' },
+          { label: t('partie.action.passer'), icone: <Icone nom="passer" />, onClick: () => { void envoyer('tt'); }, disabled: !v.aMoi || envoi || !online || anonyme, groupe: 'decision', principale: true },
         ]} />
       )}
     </div>
