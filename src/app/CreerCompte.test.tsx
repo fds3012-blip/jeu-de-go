@@ -29,6 +29,15 @@ describe('« Crée ton compte » (#343)', () => {
     expect(html).toContain('Tu as moins de 15 ans ?');
   });
 
+  it('#353 : lien « J’ai déjà un compte » visible, sans second bouton principal (avec ou sans session anonyme)', () => {
+    for (const anonyme of [false, true]) {
+      const html = rendu(<CreerCompte db={db} raison="defi" anonyme={anonyme} onRetour={() => {}} />);
+      expect(html).toContain('J’ai déjà un compte');
+      expect(html.match(/btn primary/g)).toHaveLength(1);
+      expect(html).not.toContain('btn primary connexion-sens');
+    }
+  });
+
   it('a un texte par raison', () => {
     for (const [raison, texte] of [['lecons', 'Les 3 premières leçons sont libres.'], ['problemes', 'Le Go du jour reste libre.'], ['defi', 'Pour défier un ami']] as const) {
       expect(rendu(<CreerCompte db={db} raison={raison} onRetour={() => {}} />)).toContain(texte);
@@ -71,6 +80,7 @@ describe('arrivée par un lien de défi (#343)', () => {
     expect(html).toContain('Plateau 9 × 9 vide');
     expect(html).toContain('Crée ton compte pour jouer');
     expect(html).toContain('Recevoir mon code');
+    expect(html).toContain('J’ai déjà un compte');
   });
 
   it('lien sans pseudo (ancien lien) : « Ton ami te défie ! »', () => {

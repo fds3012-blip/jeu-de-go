@@ -8,7 +8,7 @@
 // - le temps réel suit la ligne de `games` (coups, comptage, résultat) et celle de `defis` (date limite).
 // Écrans : src/app/Defis.tsx.
 import type { Session } from '@supabase/supabase-js';
-import type { Result } from './account';
+import { adresseDejaPrise, type EchecEnvoi, type Result } from './account';
 import type { Tables } from './database.types';
 import type { Game } from './games';
 import type { Db } from './supabase';
@@ -207,8 +207,10 @@ export function tempsRestant(dateLimite: string | null, maintenant = Date.now())
  * Inscription d'une session anonyme d'un ancien défi : relie l'e-mail à la session (même identifiant), la partie en
  * cours est donc gardée. Supabase envoie un e-mail avec un code (`verifyOtp` de type `email_change`) et un lien.
  */
-export async function garderMonCompte(db: Db, email: string, redirection: string): Promise<Result<null>> {
+export async function garderMonCompte(db: Db, email: string, redirection: string): Promise<Result<null> | EchecEnvoi> {
   const { error } = await db.auth.updateUser({ email: email.trim() }, { emailRedirectTo: redirection });
-  if (error) return echec(t(error.status === 429 ? 'erreur.tropDEssais' : error.status === 422 ? 'defi.erreur.emailPris' : 'erreur.envoiLien'));
-  return { ok: true, value: null };
+  if (!error) return { ok: true, value: null };
+  // #353 : l'adresse a déjà un compte. L'écran bascule vers la connexion à ce compte (raison `pris`).
+  if (adresseDejaPrise(error)) return { ok: false, error: t('defi.erreur.emailPris'), raison: 'pris' };
+  return echec(t(error.status === 429 ? 'erreur.tropDEssais' : 'erreur.envoiLien'));
 }

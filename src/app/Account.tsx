@@ -6,6 +6,7 @@ import { USERNAME_MAX, USERNAME_MIN, validateUsername } from '../data/username';
 import { EVENTS, identify, track } from '../data/analytics';
 import { compteDe, estAnonyme } from '../data/defi';
 import { ConnexionCode } from './Connexion';
+import type { Sens } from './connexionBascule';
 import { moyenConnexion } from './entonnoir';
 import { fr } from '../ui/typo';
 import { t } from '../content/i18n';
@@ -148,9 +149,10 @@ export function SupprimerCompte({ db, onSupprime = () => window.location.assign(
 
 /** Connexion ou création de compte : code à 6 chiffres par e-mail (#343), le lien de l'e-mail en second moyen. */
 function SignIn({ db }: { db: Db }) {
+  const [sens, setSens] = useState<Sens>('creer');
   return (
     <div className="card">
-      <b>{t('compte.creer')}</b>
+      <b>{t(sens === 'creer' ? 'compte.creer' : 'connexion.titre')}</b>
       {/* #214 : promesse exacte. Seules la série et les leçons montent sur le serveur (importer_serie_appareil, syncProgress).
           Deux lignes à icône : ce qui te suit, ce qui reste sur ce téléphone. */}
       <ul className="compte-garde">
@@ -164,7 +166,7 @@ function SignIn({ db }: { db: Db }) {
         </li>
       </ul>
       <p className="muted small" style={{ margin: '4px 0 10px' }}>{fr(t('connexion.sansMotDePasse'))}</p>
-      <ConnexionCode db={db} />
+      <ConnexionCode db={db} onSens={setSens} />
     </div>
   );
 }
@@ -211,11 +213,13 @@ function UsernameForm({ db, profile, canCancel, onDone, onCancel, onSignOut }: {
 export function LierEmail({ db, moment = 'profil', coups = null, titre = t('compte.anonyme.titre'), texte = t('compte.anonyme.texte') }: {
   db: Db; moment?: 'profil' | 'apres_coup' | 'arrivee'; coups?: number | null; titre?: string; texte?: string;
 }) {
+  // #353 : « J'ai déjà un compte », ou une adresse déjà prise, passe en connexion à ce compte.
+  const [sens, setSens] = useState<Sens>('creer');
   return (
     <div className="card" aria-labelledby={`lier-${moment}`} role="group" data-testid="lier-email">
-      <b id={`lier-${moment}`}>{titre}</b>
-      <p className="muted small" style={{ margin: '4px 0 10px' }}>{fr(texte)}</p>
-      <ConnexionCode db={db} mode="liaison" moment={moment} coups={coups} envoyer={t('defi.inscription.envoyer')} />
+      <b id={`lier-${moment}`}>{sens === 'creer' ? titre : t('connexion.titre')}</b>
+      {sens === 'creer' && <p className="muted small" style={{ margin: '4px 0 10px' }}>{fr(texte)}</p>}
+      <ConnexionCode db={db} mode="liaison" moment={moment} coups={coups} envoyer={t('defi.inscription.envoyer')} onSens={setSens} />
     </div>
   );
 }
