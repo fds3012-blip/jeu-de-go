@@ -9,6 +9,7 @@ import { join, relative, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { parseActionRequest } from '../go/server';
 import { parseDefiCoupRequest } from '../go/defi-action';
+import { estDemandeVersion } from '../go/contrat';
 
 const RACINE = resolve(__dirname, '../..');
 
@@ -107,11 +108,11 @@ describe('contrat client ↔ serveur', () => {
   it('game-action : chaque action envoyée par le client est acceptée par la fonction serveur', () => {
     const actions = new Set<string>();
     for (const i of invocations.filter(x => x.slug === 'game-action')) for (const m of i.src.matchAll(/action:\s*'(\w+)'/g)) actions.add(m[1]);
-    expect([...actions].sort()).toEqual(['accept', 'defi_coup', 'move', 'propose_dead', 'resume']);
+    expect([...actions].sort()).toEqual(['accept', 'defi_coup', 'move', 'propose_dead', 'resume', 'version']);
     const id = '11111111-1111-4111-8111-111111111111';
     for (const action of actions) {
       const corps = { action, gameId: id, game_id: id, move: 'aa', dead: '' };
-      expect(parseActionRequest(corps) ?? parseDefiCoupRequest(corps), `action ${action} refusée par le serveur`).not.toBeNull();
+      expect(parseActionRequest(corps) ?? parseDefiCoupRequest(corps) ?? (estDemandeVersion(corps) || null), `action ${action} refusée par le serveur`).not.toBeNull();
     }
     // La fonction Deno aiguille bien `defi_coup` avant les autres actions.
     expect(lire(join(RACINE, 'supabase/functions/game-action/index.ts'))).toMatch(/action\s*===\s*'defi_coup'/);
