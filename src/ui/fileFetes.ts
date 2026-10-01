@@ -9,7 +9,9 @@
 export type Fete =
   | { genre: 'xp'; points: number; bonus: number }
   | { genre: 'niveau'; niveau: number }
-  | { genre: 'installation' };
+  | { genre: 'installation' }
+  // Proposition du rappel quotidien (#36) : fin de partie, après l'XP et le niveau.
+  | { genre: 'rappel' };
 
 export type Genre = Fete['genre'];
 
@@ -26,7 +28,7 @@ export interface EtatFile {
 export const FILE_VIDE: EtatFile = { actif: null, attente: [], exercice: false, enLigne: null };
 
 /** Ordre de passage : l'XP d'abord (le gain de l'action), puis le niveau (le jalon), puis l'installation. */
-const RANG: Record<Genre, number> = { xp: 0, niveau: 1, installation: 2 };
+const RANG: Record<Genre, number> = { xp: 0, niveau: 1, installation: 2, rappel: 3 };
 
 function trier(f: Fete[]): Fete[] {
   return f.map((x, i) => [x, i] as const).sort((a, b) => RANG[a[0].genre] - RANG[b[0].genre] || a[1] - b[1]).map(([x]) => x);
@@ -56,7 +58,7 @@ export function ajouter(e: EtatFile, f: Fete): EtatFile {
     const deja = e.attente.find((x): x is Extract<Fete, { genre: 'niveau' }> => x.genre === 'niveau');
     return { ...e, attente: trier([...sans, { genre: 'niveau', niveau: Math.max(f.niveau, deja?.niveau ?? 0) }]) };
   }
-  if (e.actif?.genre === 'installation' || e.attente.some(x => x.genre === 'installation')) return e;
+  if (e.actif?.genre === f.genre || e.attente.some(x => x.genre === f.genre)) return e;
   return { ...e, attente: trier([...e.attente, f]) };
 }
 

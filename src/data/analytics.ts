@@ -67,6 +67,13 @@ export const EVENTS = {
   // Proposer d'installer l'app (#178) : carte montrée (une fois, après une première victoire ou à l'accueil du 2e retour depuis #214 ; `profil` : ligne du Profil), puis installation acceptée.
   installationProposee: 'installation_proposee',
   installationAcceptee: 'installation_acceptee',
+  // Rappel quotidien (#36) : proposition montrée en fin de partie (une fois, avec un compte), acceptée (`moment_jour` :
+  // matin, midi, soir ; `source` : fin_partie ou profil), refusée (`raison` : non, navigateur), notification touchée.
+  // Taux d'acceptation : `rappel_accepte` / `rappel_propose` ; efficacité : `rappel_ouvert`, puis `go_du_jour_resolu`.
+  rappelPropose: 'rappel_propose',
+  rappelAccepte: 'rappel_accepte',
+  rappelRefuse: 'rappel_refuse',
+  rappelOuvert: 'rappel_ouvert',
   // Aide graduée des problèmes (#197) : la réponse a été montrée après un échec (le problème devient « Vu », pas « Réussi »).
   solutionVue: 'solution_vue',
   // Révision du jour (#199) : les exercices du jour (problèmes déjà réussis, repris à J+1, J+3, J+7) sont tous faits.

@@ -103,3 +103,57 @@ self.addEventListener('fetch', (event) => {
     );
   }
 });
+
+/* Rappel quotidien du Go du jour (issue #36).
+ * - `push` : la fonction serveur `envoyer-rappels` envoie { titre, texte, url, tag } (chiffré, clés VAPID).
+ *   Même étiquette chaque jour : le rappel d'aujourd'hui remplace celui d'hier au lieu de s'empiler.
+ *   Ni son ni vibration imposés, sans insistance (`requireInteraction` absent).
+ * - `notificationclick` : ouvre le Go du jour (`/?rappel=1` ; l'app envoie alors `rappel_ouvert`). Si l'app est déjà
+ *   ouverte, elle revient au premier plan sur cette adresse ; sinon une fenêtre s'ouvre.
+ */
+const RAPPEL_DEFAUT = { titre: 'Le Go du jour est prêt', texte: 'Un petit problème de go t’attend.', url: '/?rappel=1', tag: 'rappel-du-jour' };
+
+/** Contenu du rappel, borné à notre origine (jamais une adresse extérieure). */
+function lireRappel(event) {
+  let d;
+  try {
+    d = (event.data && event.data.json()) || {};
+  } catch {
+    d = {};
+  }
+  const r = { ...RAPPEL_DEFAUT };
+  if (typeof d.titre === 'string' && d.titre) r.titre = d.titre.slice(0, 80);
+  if (typeof d.texte === 'string' && d.texte) r.texte = d.texte.slice(0, 160);
+  if (typeof d.tag === 'string' && d.tag) r.tag = d.tag.slice(0, 32);
+  if (typeof d.url === 'string' && d.url.startsWith('/') && !d.url.startsWith('//')) r.url = d.url;
+  return r;
+}
+
+self.addEventListener('push', (event) => {
+  const r = lireRappel(event);
+  event.waitUntil(
+    self.registration.showNotification(r.titre, {
+      body: r.texte,
+      tag: r.tag,
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
+      data: { url: r.url },
+    }),
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const chemin = (event.notification.data && event.notification.data.url) || RAPPEL_DEFAUT.url;
+  const cible = new URL(chemin, self.location.origin).href;
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((fenetres) => {
+      const ouverte = fenetres.find((c) => new URL(c.url).origin === self.location.origin);
+      if (!ouverte) return self.clients.openWindow(cible);
+      return ouverte
+        .focus()
+        .then((c) => (c && 'navigate' in c ? c.navigate(cible) : c))
+        .catch(() => self.clients.openWindow(cible));
+    }),
+  );
+});

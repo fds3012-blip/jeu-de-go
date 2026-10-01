@@ -24,6 +24,8 @@ import { Statistiques, VitrineBadges } from '../ui/Vitrine';
 import { BarreNiveau } from '../ui/Niveau';
 import { ProposerInstallation, usePlateformeInstallation } from '../ui/ProposerInstallation';
 import { etatInstallation, installable } from './installation';
+import { clePubliqueVapid, resumeRappel } from './rappel';
+import { ReglageRappel } from '../ui/ProposerRappel';
 import { LANGUES, langue, memoriserChoixLangue, t, type Langue } from '../content/i18n';
 import type { Placement } from './placement';
 
@@ -51,7 +53,7 @@ function useDonnees(serie: number, record: number, parcours: Parcours) {
   return donnees;
 }
 
-export type VueProfil = 'menu' | 'reglages' | 'installer' | 'compte' | 'conditions' | 'importer';
+export type VueProfil = 'menu' | 'reglages' | 'installer' | 'rappel' | 'compte' | 'conditions' | 'importer';
 
 // Libellés traduits (#167) : calculés à l'affichage, dans la langue de l'interface.
 const themes = () => [
@@ -104,6 +106,13 @@ export function Profil({ vue, onVue, settings, set, profil, serie, record = 0, p
   if (vue === 'importer') return <ImportSgf onRetour={retour} pseudo={profil?.pseudo} confirmTouch={settings.confirmTouch} />;
   if (vue === 'compte') return <SousVue id="compte-titre" titre={t('profil.compte')} onRetour={retour}><Account /></SousVue>;
   if (vue === 'reglages') return <SousVue id="reglages-titre" titre={t('profil.reglages')} onRetour={retour}><Reglages settings={settings} set={set} /></SousVue>;
+  if (vue === 'rappel') {
+    return (
+      <SousVue id="rappel-titre" titre={t('profil.rappel')} onRetour={retour}>
+        <ReglageRappel compte={!!profil?.pseudo} onCompte={() => onVue('compte')} onInstaller={() => onVue('installer')} />
+      </SousVue>
+    );
+  }
   if (vue === 'installer') {
     return (
       <SousVue id="installer-titre" titre={t('profil.installer')} onRetour={retour}>
@@ -151,6 +160,8 @@ function Menu({ onVue, profil, serie, record = 0, parcours, placement, onPlaceme
           : <LigneLien libelle={t(placement?.fait ? 'placement.profilRefaire' : 'placement.profilFaire')} onClick={onPlacement} />)}
         <LigneLien libelle={t('profil.reglages')} valeur={t('profil.reglagesResume')} onClick={() => onVue('reglages')} />
         <LigneLien libelle={t('profil.importer')} valeur={t('profil.importerResume')} onClick={() => onVue('importer')} />
+        {/* #36 : rappel du Go du jour, dès que le rappel est configuré (clé publique VAPID). */}
+        {clePubliqueVapid() !== '' && <LigneLien libelle={t('profil.rappel')} valeur={resumeRappel()} onClick={() => onVue('rappel')} />}
         {proposerInstallation && <LigneLien libelle={t('profil.installer')} onClick={() => onVue('installer')} />}
         <LigneLien libelle={t('profil.compte')} valeur={profil?.pseudo ?? (profil ? undefined : t('profil.seConnecter'))} onClick={() => onVue('compte')} />
         <LigneLien libelle={t('profil.conditions')} onClick={() => onVue('conditions')} />

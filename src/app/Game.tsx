@@ -21,7 +21,8 @@ import '../ui/comptage.css';
 import { choisirReplique, DUREE_REPLIQUE, type Situation } from './repliques';
 import { FinPartie } from '../ui/FinPartie';
 import { ProposerInstallation } from '../ui/ProposerInstallation';
-import { noterVictoire } from './installation';
+import { doitProposer, etatInstallation, noterVictoire, plateformeCourante } from './installation';
+import { ProposerRappel } from '../ui/ProposerRappel';
 import { RecitScore } from '../ui/RecitScore';
 import { mouvementsReduits } from '../ui/defilement';
 import { conseil as conseilMochi, phraseConseil, type ModeleConseil } from '../engine/conseil';
@@ -565,7 +566,12 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
         onRevoir={n > 0 ? () => setRelecture(1) : undefined}
         onAccueil={fin?.onAccueil ?? onExit}
         confettis={celebrer && gagne}
-        apres={premiereVictoire && gagne ? <ProposerInstallation moment="premiere_victoire" /> : null}
+        // Une seule proposition par écran : l'installation après la première victoire, sinon le rappel quotidien (#36).
+        apres={<>
+          {premiereVictoire && gagne ? <ProposerInstallation moment="premiere_victoire" /> : null}
+          <ProposerRappel partieFinie={!!ai}
+            autreCarte={premiereVictoire && gagne && doitProposer({ plateforme: plateformeCourante(), etat: etatInstallation(), moment: 'premiere_victoire', enPartie: false })} />
+        </>}
       />
     );
   }

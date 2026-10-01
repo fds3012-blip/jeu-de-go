@@ -125,6 +125,25 @@ describe('contrat client ↔ serveur', () => {
     for (const nom of noms) expect(signatureSql(nom), `supabase/functions appelle ${nom}, absente des migrations`).not.toBeNull();
   });
 
+  it('rappel quotidien (#36) : envoyer-rappels, reclamer_rappels réservée au serveur, inscription par compte avec pseudo', () => {
+    expect(FONCTIONS).toContain('envoyer-rappels');
+    const fonction = fichiers(join(RACINE, 'supabase/functions/envoyer-rappels'), f => f.endsWith('.ts')).map(lire).join('\n');
+    // La fonction appelle reclamer_rappels sans argument (heure du serveur) et supprime dans abonnements_rappel.
+    expect(fonction).toMatch(/\.rpc\(\s*'reclamer_rappels'\s*\)/);
+    expect(fonction).toMatch(/from\(\s*'abonnements_rappel'\s*\)\.delete\(\)/);
+    expect(signatureSql('reclamer_rappels')).toEqual(['p_maintenant']);
+    expect(SQL).toMatch(/p_maintenant\s+timestamptz\s+default\s+now\(\)/i);
+    // Clé service seulement : jamais exécutable par l'app.
+    expect(SQL).toMatch(/grant\s+execute\s+on\s+function\s+public\.reclamer_rappels\s*\(timestamptz\)\s+to\s+service_role\s*;/i);
+    expect(SQL).not.toMatch(/grant\s+execute\s+on\s+function\s+public\.reclamer_rappels[^;]*\bauthenticated\b/i);
+    // Les colonnes rendues sont celles que lit la fonction (logique.ts, type Abonnement).
+    expect(SQL).toMatch(/returns\s+table\s*\(\s*id uuid,\s*endpoint text,\s*p256dh text,\s*auth text,\s*langue text,\s*jour date\s*\)/i);
+    for (const champ of ['id', 'endpoint', 'p256dh', 'auth', 'langue', 'jour']) expect(fonction).toMatch(new RegExp(`\\b${champ}: string`));
+    // L'inscription exige un vrai compte avec pseudo (#343).
+    const inscription = SQL.slice(SQL.search(/create\s+function\s+public\.enregistrer_abonnement_rappel/i));
+    expect(inscription.slice(0, inscription.indexOf('$$;'))).toMatch(/public\.exiger_compte_avec_pseudo\(\)/);
+  });
+
   const tables = accesTables();
 
   it.each(tables.map(t => [t.table, [...t.ops].join('+') || 'lecture', t] as const))('table %s (%s) : créée, RLS activée, politique pour chaque opération', (table, _ops, acces) => {

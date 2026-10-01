@@ -21,6 +21,7 @@ import { Accueil } from './Accueil';
 import { ALL_PUZZLES } from '../content/puzzles';
 import { parsePuzzles } from '../data/puzzles';
 import { EVENTS, track } from '../data/analytics';
+import { estArriveeRappel, etatRappel } from './rappel';
 import { PARAM, PARAM_COURT, SERIE_KEY, numeroDuJour, numeroDuLien, problemeDuNumero, type Serie } from './goDuJour';
 import { battu, BILAN_KEY, dejaAffronte, enregistrer, fin, finTropTot, komiDepuisUrl, lireBilan, type Bilan, type Issue, type StatsPartie } from './bilan';
 import { fr } from '../ui/typo';
@@ -93,6 +94,22 @@ function noterArrivee() {
   } catch { /* adresse inchangée : sans conséquence */ }
 }
 
+// Rappel quotidien (issue #36) : la notification touchée ouvre `/?rappel=1` (public/sw.js). Lu une fois au chargement :
+// `rappel_ouvert` part, le paramètre est retiré, le Go du jour d'aujourd'hui s'ouvre.
+const ARRIVEE_RAPPEL = typeof location !== 'undefined' && estArriveeRappel(location.search);
+let rappelNote = false;
+function noterRappelOuvert() {
+  if (!ARRIVEE_RAPPEL || rappelNote) return;
+  rappelNote = true;
+  const e = etatRappel();
+  track(EVENTS.rappelOuvert, { moment_jour: e.actif ? e.moment : null });
+  try {
+    const url = new URL(location.href);
+    url.searchParams.delete('rappel');
+    history.replaceState(history.state, '', url.pathname + url.search + url.hash);
+  } catch { /* adresse inchangée : sans conséquence */ }
+}
+
 // Défi par lien (issue #81) : `#defi=JETON` ouvre la partie proposée par un ami, sans compte. Le jeton est lu et retiré
 // de l'adresse par src/app/adresseDefi.ts, avant la mesure et tout événement (constat E14).
 const LIEN_DEFI = JETON_AU_CHARGEMENT;
@@ -105,11 +122,12 @@ type Reprise = { quoi: 'ordi'; contre: OpponentId } | { quoi: 'deux' } | { quoi:
   | { quoi: 'defis' } | { quoi: 'placement' } | { quoi: 'importer' } | { quoi: 'problemes' };
 
 export function App() {
-  const [tab, setTab] = useState<Tab>(LIEN_DU_JOUR !== null ? 'problemes' : 'jouer');
+  const [tab, setTab] = useState<Tab>(LIEN_DU_JOUR !== null || ARRIVEE_RAPPEL ? 'problemes' : 'jouer');
   const [duJourOuvert, setDuJourOuvert] = useState(false);
   // #285 : après le Go du jour ouvert par le lien, une seule action pour qui n'a jamais joué : la leçon 1.
   const [versLecon1, setVersLecon1] = useState(NOUVEAU_PAR_LIEN);
   useEffect(noterArrivee, []);
+  useEffect(noterRappelOuvert, []);
   const [settings, set] = useSettings();
   const [playing, setPlaying] = useState<false | 'ordi' | 'deux' | 'guidee'>(false);
   const [adversaire, setAdversaire] = useStored<OpponentId>('go.adversaire.v1', 'pomme');
@@ -441,7 +459,7 @@ export function App() {
   } else if (tab === 'problemes') {
     screen = <Puzzles db={supabase} userId={compteId} sessionLoading={session === undefined} confirmTouch={settings.confirmTouch} onCompte={() => go('profil')}
       essai={decider({ quoi: 'probleme' }, etat, terminees, !!supabase).ok ? undefined : () => { garde({ quoi: 'probleme' }, { quoi: 'problemes' }); }}
-      lien={LIEN_DU_JOUR} onDuJour={setDuJourOuvert} celebrer={settings.celebrations} racine={racineProblemes}
+      lien={LIEN_DU_JOUR} depuisRappel={ARRIVEE_RAPPEL} onDuJour={setDuJourOuvert} celebrer={settings.celebrations} racine={racineProblemes}
       onApprendre={versLecon1 && LESSONS[0] ? () => { setVersLecon1(false); go('apprendre'); setLessonId(LESSONS[0].id); } : undefined} />;
   } else if (tab === 'profil') {
     screen = <Profil vue={vueProfil} onVue={v => { if (v === 'importer' && !garde({ quoi: 'import' }, { quoi: 'importer' })) return; setVueProfil(v); }} settings={settings} set={set} profil={profil} serie={serie} record={recordSerie}

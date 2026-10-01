@@ -64,6 +64,8 @@ interface Props {
   racine?: number;
   /** #285 : arrivé par un lien sans avoir jamais joué ; après le Go du jour, l'action unique mène à la leçon 1. */
   onApprendre?: () => void;
+  /** #36 : ouvert depuis le rappel quotidien (notification touchée) : le Go du jour d'aujourd'hui s'ouvre directement. */
+  depuisRappel?: boolean;
   /**
    * Essai sans compte (#343) : présent, seul le Go du jour (et ses liens partagés) est libre. Tout autre problème,
    * la course, la grille, la révision et « Tes erreurs à rejouer » appellent `essai`, qui ouvre « Crée ton compte ».
@@ -92,7 +94,7 @@ function Difficulte({ d }: { d: number }) {
 }
 
 /** Onglet Problèmes : problème du jour, problèmes de base, cote problèmes et série de jours. */
-export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, lien = null, onDuJour, celebrer = true, racine = 0, onApprendre, essai }: Props) {
+export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, lien = null, onDuJour, celebrer = true, racine = 0, onApprendre, essai, depuisRappel = false }: Props) {
   /** Ouvre un problème ; hors Go du jour pendant l'essai sans compte, c'est « Crée ton compte » qui s'ouvre (#343). */
   const ouvrirProbleme = (id: string) => { if (essai && id !== daily?.id) essai(); else setOpenId(id); };
   // Go du jour (issue #75) : le même pour tous, choisi dans la liste publique des problèmes de base, en heure de Paris.
@@ -114,7 +116,7 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   // n'est pas encore sorti : on ouvre celui d'aujourd'hui, et on le dit.
   const [archive, setArchive] = useState<number | null>(() => (lien !== null && lien >= 1 && lien < numero ? lien : null));
   const pzArchive = archive !== null ? problemeDuNumero(LOCAL_PUZZLES, archive) : undefined;
-  const [openId, setOpenId] = useState<string | null>(() => (pzArchive ? pzArchive.id : lien !== null && daily ? daily.id : null));
+  const [openId, setOpenId] = useState<string | null>(() => (pzArchive ? pzArchive.id : (lien !== null || depuisRappel) && daily ? daily.id : null));
   const [defiChange] = useState(() => lien !== null && archive === null && lien !== numero);
   const [retry, setRetry] = useState(0);
   // Liste « Tous les problèmes » ouverte (#196) ; on y revient après un problème ouvert depuis la grille.
