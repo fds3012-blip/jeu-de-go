@@ -624,6 +624,15 @@ export type Database = {
         Args: { p_game: string; p_loser: string; p_winner: string }
         Returns: undefined
       }
+      apercu_defi: {
+        Args: { p_jeton: string }
+        Returns: {
+          createur_pseudo: string | null
+          etat: string
+          ma_place: string | null
+          taille: number
+        }[]
+      }
       creer_defi: {
         Args: never
         Returns: {
@@ -643,6 +652,7 @@ export type Database = {
         }
         Returns: string
       }
+      exiger_compte_avec_pseudo: { Args: never; Returns: string }
       find_match: { Args: { p_size: number }; Returns: string }
       finish_game_by_score: {
         Args: {

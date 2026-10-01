@@ -2,10 +2,12 @@ import { fileURLToPath } from 'node:url';
 import { configDefaults, defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import { precacheSw } from './outils/pwa';
+import { prechargerAnglais } from './outils/prechargerAnglais';
 
 export default defineConfig({
   // precacheSw : liste des fichiers du service worker, injectée dans dist/sw.js (outils/pwa.ts).
-  plugins: [react(), precacheSw()],
+  // prechargerAnglais : pour un joueur en anglais, ses textes (#325) partent en même temps que le JS d'entrée.
+  plugins: [react(), precacheSw(), prechargerAnglais()],
   build: {
     rollupOptions: {
       output: {
@@ -31,6 +33,8 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
+    // Textes anglais chargés à la demande dans l'app (#325) : enregistrés d'office pour les tests.
+    setupFiles: ['./src/content/anglais.setup.ts'],
     // Les tests Playwright (e2e/) ne passent pas par Vitest.
     exclude: [...configDefaults.exclude, 'e2e/**', '.claude/**'],
     // tokens.test.ts et IconesNav.test.tsx lisent le CSS des tokens et de la barre de navigation.

@@ -390,9 +390,9 @@
 .palier.verrouille .grille-pb button { cursor: not-allowed; }
 .cadenas { flex: none; }
 
-/* ---------- Paliers illustrés (issue #103) : l'ascension, du village au sommet ---------- */
-  background: linear-gradient(180deg, color-mix(in srgb, var(--kaya) 14%, var(--surface)) 0%, var(--surface) 100%); }
-/* Palier complet : chemin et étapes en or, fond doré. */
+/* ---------- Paliers illustrés (issue #103) ---------- */
+/* #324 : ici restait la fin de la règle `.montagne`, retirée avec la montagne (#138). Sans sélecteur, elle faisait
+   ignorer la règle `.pastille-ok` qui suit (avertissement « css-syntax-error » au build). */
 
 /* Miniature réussie : un sceau jade net (fond, anneau, coche), lisible sans la couleur. */
 .pastille-ok { padding: 0; background: none; }

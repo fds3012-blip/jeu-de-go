@@ -54,11 +54,12 @@ insert into auth.users (id, email, is_anonymous) values
   ('bbbbbbbb-0000-4000-8000-000000000002', null, true),
   ('cccccccc-0000-4000-8000-000000000003', 'chloe@exemple.test', false),
   ('dddddddd-0000-4000-8000-000000000004', null, true);
--- Le déclencheur handle_new_user n'existe pas sur ce socle : les profils sont créés à la main.
-insert into public.profiles (id) values
-  ('aaaaaaaa-0000-4000-8000-000000000001'), ('bbbbbbbb-0000-4000-8000-000000000002'),
-  ('cccccccc-0000-4000-8000-000000000003'), ('dddddddd-0000-4000-8000-000000000004')
-  on conflict do nothing;
+-- Le déclencheur handle_new_user n'existe pas sur ce socle : les profils sont créés à la main. Les comptes ont un
+-- pseudo, exigé pour le jeu en ligne et les défis depuis #343 (20260930233100_compte_obligatoire.sql).
+insert into public.profiles (id, username) values
+  ('aaaaaaaa-0000-4000-8000-000000000001', 'Alice'), ('bbbbbbbb-0000-4000-8000-000000000002', null),
+  ('cccccccc-0000-4000-8000-000000000003', 'Chloe'), ('dddddddd-0000-4000-8000-000000000004', null)
+  on conflict (id) do update set username = excluded.username;
 \set alice '''aaaaaaaa-0000-4000-8000-000000000001'''
 \set bruno '''bbbbbbbb-0000-4000-8000-000000000002'''
 \set chloe '''cccccccc-0000-4000-8000-000000000003'''
@@ -85,8 +86,8 @@ select pg_temp.doit_refuser(format('insert into public.games (black_id, created_
 select pg_temp.doit_refuser(format('insert into public.achievements (user_id, badge_id) values (%L, ''premiere_partie'')', :bruno), 'row-level security');
 select pg_temp.doit_refuser(format('insert into public.lesson_progress (user_id, lesson_id, steps_done) values (%L, ''capture'', 1)', :bruno), 'row-level security');
 select pg_temp.egal(pg_temp.lignes(format('update public.profiles set username = ''Bruno'' where id = %L', :bruno)), 0::bigint, 'anonyme : pas de pseudo');
-select pg_temp.doit_refuser('select public.find_match(9::smallint)', 'Crée un compte');
-select pg_temp.doit_refuser('select public.join_game(''CODE42'')', 'Crée un compte');
+select pg_temp.doit_refuser('select public.find_match(9::smallint)', 'Crée ton compte');
+select pg_temp.doit_refuser('select public.join_game(''CODE42'')', 'Crée ton compte');
 select pg_temp.doit_refuser(format('select public.resign_game(%L)', :'classee'), 'Crée un compte');
 select pg_temp.doit_refuser(format('select public.record_puzzle_attempt(%L, true)', :'probleme'), 'Crée un compte');
 select pg_temp.doit_refuser(format('select public.importer_serie_appareil(1, %L::date)', (now() at time zone 'Europe/Paris')::date), 'Crée un compte');
@@ -107,11 +108,17 @@ select pg_temp.egal((select count(*) > 0 from public.puzzles), true, 'anonyme : 
 select pg_temp.egal((select count(*) from public.friendships), 1::bigint, 'anonyme : lit ses relations');
 select pg_temp.egal((select count(*) from public.lesson_progress), 0::bigint, 'anonyme : lit sa progression');
 
--- 2. Un anonyme peut toujours rejoindre et jouer un défi.
+-- 2. Depuis #343, un anonyme ne rejoint plus un défi ; celui qui y est déjà (rejoint avant #343) y joue toujours.
 select pg_temp.connecte(:alice);
 select partie_id as defi, jeton from public.creer_defi() \gset
 select pg_temp.connecte(:bruno, true);
-select pg_temp.egal(public.rejoindre_defi(:'jeton'), :'defi'::uuid, 'anonyme : rejoint le défi');
+select pg_temp.doit_refuser(format('select public.rejoindre_defi(%L)', :'jeton'), 'Crée ton compte');
+reset role;
+update public.games set black_id = :bruno, status = 'active' where id = :'defi';
+update public.defis set invite_id = :bruno, date_limite = now() + delai_coup where partie_id = :'defi';
+set local role authenticated;
+select pg_temp.connecte(:bruno, true);
+select pg_temp.egal(public.rejoindre_defi(:'jeton'), :'defi'::uuid, 'anonyme déjà invité : retrouve le défi');
 select pg_temp.egal((select count(*) from public.games where id = :'defi'), 1::bigint, 'anonyme : lit la partie du défi');
 select pg_temp.egal((select count(*) from public.defis where partie_id = :'defi'), 1::bigint, 'anonyme : lit le défi');
 select pg_temp.egal(public.victoire_au_temps(:'defi'), null::text, 'anonyme : constate le temps');
@@ -123,21 +130,18 @@ set local role authenticated;
 select pg_temp.connecte(:bruno, true);
 select pg_temp.egal(public.resign_game(:'defi'), 'W+R', 'anonyme : abandonne un défi');
 
--- Un anonyme crée un défi, mais 3 au plus en attente.
+-- Depuis #343, un anonyme ne crée plus de défi ; un défi qu'il a créé avant reste jouable par un compte.
 select pg_temp.connecte(:denis, true);
-select partie_id as d1 from public.creer_defi() \gset
-select partie_id as d2 from public.creer_defi() \gset
-select partie_id as d3 from public.creer_defi() \gset
-select pg_temp.doit_refuser('select * from public.creer_defi()', 'déjà 3 défis');
-select pg_temp.egal((select count(*) from public.games where created_by = :denis), 3::bigint, 'anonyme : 3 défis créés');
--- Un défi rejoint libère une place.
+select pg_temp.doit_refuser('select * from public.creer_defi()', 'Crée ton compte');
 reset role;
-select jeton as jeton_d1 from public.defis where partie_id = :'d1' \gset
+insert into public.games (white_id, created_by, size, rules, komi, status, rated, prive)
+  values (:denis, :denis, 9, 'japanese', 6.5, 'waiting', false, true) returning id as d1 \gset
+insert into public.defis (partie_id, jeton, createur_id) values (:'d1', repeat('D', 32), :denis);
 set local role authenticated;
 select pg_temp.connecte(:chloe);
-select pg_temp.egal(public.rejoindre_defi(:'jeton_d1'), :'d1'::uuid, 'un compte rejoint le défi d''un anonyme');
+select pg_temp.egal(public.rejoindre_defi(repeat('D', 32)), :'d1'::uuid, 'un compte rejoint le défi d''un anonyme');
 select pg_temp.connecte(:denis, true);
-select partie_id as d4 from public.creer_defi() \gset
+select pg_temp.egal(public.rejoindre_defi(repeat('D', 32)), :'d1'::uuid, 'anonyme créateur : retrouve son défi');
 
 -- 3. Un vrai compte garde toutes ses actions (avec le claim à false, puis sans claim).
 select pg_temp.connecte(:alice);

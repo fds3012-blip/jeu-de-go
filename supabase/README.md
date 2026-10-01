@@ -70,7 +70,7 @@ curl -s -X POST "$URL/rest/v1/rpc/play_move" -H "apikey: $KEY" -H "Authorization
 
 ## Rappel quotidien : fonction serveur `envoyer-rappels` (issue #36)
 
-Table `abonnements_rappel` (migration `20260930120100_abonnements_rappel`), fonction `supabase/functions/envoyer-rappels`, tâche pg_cron écrite mais désactivée (`supabase/planification/envoyer-rappels.sql`, hors des migrations). Rien n'est appliqué ni déployé : étapes, secrets et activation dans `docs/growth/rappel-quotidien.md`.
+Table `abonnements_rappel` (migration `20261001000100_abonnements_rappel`), fonction `supabase/functions/envoyer-rappels`, tâche pg_cron écrite mais désactivée (`supabase/planification/envoyer-rappels.sql`, hors des migrations). Rien n'est appliqué ni déployé : étapes, secrets et activation dans `docs/growth/rappel-quotidien.md`.
 
 - `enregistrer_abonnement_rappel` (joueur avec compte, anonyme refusé) inscrit l'appareil ; `reclamer_rappels` (clé service seulement) choisit les rappels dus et les marque envoyés : un par jour au plus, jamais la nuit.
 - La fonction lit `VAPID_CLE_PUBLIQUE`, `VAPID_CLE_PRIVEE`, `VAPID_SUJET` et `RAPPELS_SECRET` dans son environnement ; elle se déploie avec `--no-verify-jwt` (accès contrôlé par `RAPPELS_SECRET`). Logique testée par Vitest (`src/data/envoyerRappels.test.ts`).

@@ -83,7 +83,7 @@ describe('moments et heures', () => {
   it('trois moments, jamais la nuit, les mêmes heures que la base', () => {
     expect(MOMENTS).toEqual(['matin', 'midi', 'soir']);
     for (const m of MOMENTS) { expect(HEURES[m]).toBeGreaterThanOrEqual(8); expect(HEURES[m]).toBeLessThanOrEqual(19); }
-    const migration = lire('supabase/migrations/20260930120100_abonnements_rappel.sql');
+    const migration = lire('supabase/migrations/20261001000100_abonnements_rappel.sql');
     for (const m of MOMENTS) expect(migration).toContain(`when '${m}' then ${HEURES[m]}`);
     expect(migration).toMatch(/between 8 and 19/);
   });

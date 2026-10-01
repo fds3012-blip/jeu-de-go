@@ -109,7 +109,7 @@ export function Profil({ vue, onVue, settings, set, profil, serie, record = 0, p
   if (vue === 'rappel') {
     return (
       <SousVue id="rappel-titre" titre={t('profil.rappel')} onRetour={retour}>
-        <ReglageRappel compte={!!profil} onCompte={() => onVue('compte')} onInstaller={() => onVue('installer')} />
+        <ReglageRappel compte={!!profil?.pseudo} onCompte={() => onVue('compte')} onInstaller={() => onVue('installer')} />
       </SousVue>
     );
   }

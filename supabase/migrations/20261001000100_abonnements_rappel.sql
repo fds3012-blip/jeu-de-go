@@ -1,7 +1,7 @@
 -- Issue #36 : rappel quotidien du Go du jour par notification web (Web Push, clés VAPID).
 --
--- Une ligne par appareil abonné (un navigateur ou une app installée), liée à un vrai compte : pas de rappel
--- sans compte (#343), et une session anonyme (défi par lien) est refusée.
+-- Une ligne par appareil abonné (un navigateur ou une app installée), liée à un vrai compte avec pseudo (#343) :
+-- l'inscription appelle `exiger_compte_avec_pseudo` (migration compte_obligatoire) ; une session anonyme est refusée.
 --
 -- Règles de sécurité :
 -- - RLS active : chaque joueur ne lit, ne modifie et ne supprime que ses abonnements ; anonymes et visiteurs refusés ;
@@ -71,16 +71,12 @@ create function public.enregistrer_abonnement_rappel(
 language plpgsql security definer set search_path = ''
 as $$
 declare
-  v_uid uuid := auth.uid();
+  v_uid uuid;
   v_fuseau text := p_fuseau;
   v_id uuid;
 begin
-  if v_uid is null then
-    raise exception 'Connexion requise' using errcode = '42501';
-  end if;
-  if coalesce((auth.jwt() ->> 'is_anonymous')::boolean, false) then
-    raise exception 'Compte requis pour le rappel' using errcode = '42501';
-  end if;
+  -- #343 : un vrai compte avec pseudo (JGC01 sans compte ou en session anonyme, JGP01 sans pseudo).
+  v_uid := public.exiger_compte_avec_pseudo();
   -- Fuseau inconnu : Paris (heure du lancement), plutôt qu'un rappel à une heure imprévisible.
   if v_fuseau is null or not exists (select 1 from pg_catalog.pg_timezone_names where name = v_fuseau) then
     v_fuseau := 'Europe/Paris';

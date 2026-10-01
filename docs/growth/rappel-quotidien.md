@@ -1,6 +1,6 @@
 # Rappel quotidien du Go du jour (issue #36)
 
-Écart n° 1 de la veille du 29/09 : rien ne fait revenir un joueur qui n'ouvre pas l'app. Le rappel est une notification web (Web Push, clés VAPID), une par jour au plus, réservée aux joueurs avec un compte (#343).
+Écart n° 1 de la veille du 29/09 : rien ne fait revenir un joueur qui n'ouvre pas l'app. Le rappel est une notification web (Web Push, clés VAPID), une par jour au plus, réservée aux joueurs avec un compte et un pseudo (#343, vérifié par le serveur avec `exiger_compte_avec_pseudo`).
 
 **Tout est dans le dépôt, rien n'est déployé ni activé.** Aucune dépense : Web Push est gratuit, la fonction tourne 24 fois par jour (720 appels par mois, loin des 500 000 de l'offre gratuite de Supabase), pg_cron et pg_net sont inclus.
 
@@ -38,7 +38,7 @@ Entonnoir PostHog à créer : `premiere_partie_terminee` → `rappel_propose` �
 
 | Fichier | Rôle |
 |---|---|
-| `supabase/migrations/20260930120100_abonnements_rappel.sql` | Table, RLS, `enregistrer_abonnement_rappel`, `reclamer_rappels` (clé service seulement) |
+| `supabase/migrations/20261001000100_abonnements_rappel.sql` | Table, RLS, `enregistrer_abonnement_rappel`, `reclamer_rappels` (clé service seulement) |
 | `supabase/tests/abonnements_rappel.test.sql` | Tests SQL (`bash supabase/tests/lancer.sh`) |
 | `supabase/functions/envoyer-rappels/index.ts`, `logique.ts` | Fonction serveur : envoi chiffré (web-push), suppression des 404/410 |
 | `supabase/planification/envoyer-rappels.sql` | Tâche pg_cron + pg_net, créée **désactivée** ; hors des migrations |
@@ -66,7 +66,7 @@ Rien de payant. Chaque étape se défait (voir « Tout arrêter »).
      VAPID_SUJET=mailto:<adresse de contact> RAPPELS_SECRET=<secret de l'étape 2>
    ```
    `VAPID_SUJET` est exigé par Apple et Google pour te joindre en cas de problème ; une adresse de contact du projet suffit.
-4. **Appliquer la migration** `20260930120100_abonnements_rappel` (après relecture de la PR) : `supabase db push`, ou l'outil MCP `apply_migration` avec le même SQL. Puis `get_advisors` (sécurité) : aucune alerte nouvelle attendue.
+4. **Appliquer la migration** `20261001000100_abonnements_rappel` (après relecture de la PR) : `supabase db push`, ou l'outil MCP `apply_migration` avec le même SQL. Puis `get_advisors` (sécurité) : aucune alerte nouvelle attendue.
 5. **Déployer la fonction** sans vérification du JWT (l'accès est contrôlé par `RAPPELS_SECRET`) :
    ```sh
    supabase functions deploy envoyer-rappels --project-ref xjvsalkvpgcjrznznxoi --no-verify-jwt

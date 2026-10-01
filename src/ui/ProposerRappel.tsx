@@ -6,7 +6,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { EVENTS, track } from '../data/analytics';
 import { supabase } from '../data/supabase';
 import { compteDe } from '../data/defi';
-import { useSession } from '../app/hooks';
+import { usePseudo, useSession } from '../app/hooks';
 import {
   activerRappel, changerMoment, couperRappel, doitProposerRappel, etatRappel, MOMENTS, noterRappel, supportCourant,
   type MomentRappel, type Resultat,
@@ -39,7 +39,8 @@ const messageDe = (r: Resultat): Etape => (r === 'ok' ? 'fait' : r === 'refuse_n
  */
 export function ProposerRappel({ partieFinie, autreCarte }: { partieFinie: boolean; autreCarte: boolean }) {
   const session = useSession(supabase);
-  const compte = !!compteDe(session);
+  // #343 : un vrai compte AVEC pseudo (comme l'exige enregistrer_abonnement_rappel côté serveur).
+  const compte = !!usePseudo(supabase, compteDe(session));
   // Lus une fois : la carte montrée pose « proposée » sans se cacher elle-même.
   const [etat] = useState(etatRappel);
   const [support] = useState(supportCourant);
@@ -112,7 +113,7 @@ export function ProposerRappel({ partieFinie, autreCarte }: { partieFinie: boole
 }
 
 /**
- * Réglage du Profil (sous-vue « Rappel du Go du jour »). `compte` : un vrai compte est connecté.
+ * Réglage du Profil (sous-vue « Rappel du Go du jour »). `compte` : un vrai compte avec pseudo est connecté (#343).
  * Selon l'appareil : interrupteur et moment, ou une explication (compte, iPhone sans l'app installée, navigateur).
  */
 export function ReglageRappel({ compte, onCompte, onInstaller }: { compte: boolean; onCompte: () => void; onInstaller: () => void }) {

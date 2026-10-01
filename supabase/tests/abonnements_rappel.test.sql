@@ -43,17 +43,22 @@ end;
 $$;
 grant execute on all functions in schema pg_temp to anon, authenticated, service_role;
 
--- Alice et Chloé ont un compte ; Bruno est anonyme (défi par lien).
+-- Alice et Chloé ont un compte avec pseudo ; Bruno est anonyme (ancien défi par lien) ; Denis a un compte sans pseudo.
 insert into auth.users (id, email, is_anonymous) values
   ('aaaaaaaa-0000-4000-8000-000000000001', 'alice@exemple.test', false),
   ('bbbbbbbb-0000-4000-8000-000000000002', null, true),
-  ('cccccccc-0000-4000-8000-000000000003', 'chloe@exemple.test', false);
+  ('cccccccc-0000-4000-8000-000000000003', 'chloe@exemple.test', false),
+  ('dddddddd-0000-4000-8000-000000000004', 'denis@exemple.test', false);
 insert into public.profiles (id) values
-  ('aaaaaaaa-0000-4000-8000-000000000001'), ('bbbbbbbb-0000-4000-8000-000000000002'), ('cccccccc-0000-4000-8000-000000000003')
+  ('aaaaaaaa-0000-4000-8000-000000000001'), ('bbbbbbbb-0000-4000-8000-000000000002'), ('cccccccc-0000-4000-8000-000000000003'),
+  ('dddddddd-0000-4000-8000-000000000004')
   on conflict do nothing;
+update public.profiles set username = 'Alice' where id = 'aaaaaaaa-0000-4000-8000-000000000001';
+update public.profiles set username = 'Chloe' where id = 'cccccccc-0000-4000-8000-000000000003';
 \set alice '''aaaaaaaa-0000-4000-8000-000000000001'''
 \set bruno '''bbbbbbbb-0000-4000-8000-000000000002'''
 \set chloe '''cccccccc-0000-4000-8000-000000000003'''
+\set denis '''dddddddd-0000-4000-8000-000000000004'''
 \set cle '''BNcRdreALRFXTkOOUHK1EtK2wtaz5Ry4YfYCA_0QTpQtUbVlUls0VJXg7A8u-Ts1XbjhazAkj7I99e8QcYP7DkM'''
 \set sec '''tBHItJI5svbpez7KI4CCXg'''
 
@@ -66,11 +71,14 @@ reset role;
 set local role authenticated;
 -- 2. Anonyme (défi par lien) : refusé, par la fonction comme par la table.
 select pg_temp.connecte(:bruno, true);
-select pg_temp.doit_refuser(format('select public.enregistrer_abonnement_rappel(''https://push.exemple.test/b'', %L, %L, ''soir'', ''Europe/Paris'', ''fr'')', :cle, :sec), 'Compte requis');
+select pg_temp.doit_refuser(format('select public.enregistrer_abonnement_rappel(''https://push.exemple.test/b'', %L, %L, ''soir'', ''Europe/Paris'', ''fr'')', :cle, :sec), 'Crée ton compte');
 select pg_temp.doit_refuser(format('insert into public.abonnements_rappel (user_id, endpoint, p256dh, auth) values (%L, ''https://push.exemple.test/b'', %L, %L)', :bruno, :cle, :sec), 'permission denied');
+-- Compte sans pseudo : refusé (#343).
+select pg_temp.connecte(:denis);
+select pg_temp.doit_refuser(format('select public.enregistrer_abonnement_rappel(''https://push.exemple.test/d'', %L, %L, ''soir'', ''Europe/Paris'', ''fr'')', :cle, :sec), 'Choisis ton pseudo');
 -- Jeton sans utilisateur : refusé.
 select pg_temp.deconnecte();
-select pg_temp.doit_refuser(format('select public.enregistrer_abonnement_rappel(''https://push.exemple.test/x'', %L, %L, ''soir'', ''Europe/Paris'', ''fr'')', :cle, :sec), 'Connexion requise');
+select pg_temp.doit_refuser(format('select public.enregistrer_abonnement_rappel(''https://push.exemple.test/x'', %L, %L, ''soir'', ''Europe/Paris'', ''fr'')', :cle, :sec), 'Crée ton compte');
 
 -- 3. Alice s'abonne (téléphone, le soir) ; Chloé aussi (le matin, à Montréal).
 select pg_temp.connecte(:alice);

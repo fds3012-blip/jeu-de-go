@@ -44,9 +44,10 @@ grant execute on all functions in schema pg_temp to anon, authenticated, service
 insert into auth.users (id, email, is_anonymous) values
   ('aaaaaaaa-0000-4000-8000-000000000001', 'alice@exemple.test', false),
   ('cccccccc-0000-4000-8000-000000000003', 'chloe@exemple.test', false);
-insert into public.profiles (id) values
-  ('aaaaaaaa-0000-4000-8000-000000000001'), ('cccccccc-0000-4000-8000-000000000003')
-  on conflict do nothing;
+-- Pseudos : exigés pour les parties entre humains depuis #343 (20260930233100_compte_obligatoire.sql).
+insert into public.profiles (id, username) values
+  ('aaaaaaaa-0000-4000-8000-000000000001', 'Alice'), ('cccccccc-0000-4000-8000-000000000003', 'Chloe')
+  on conflict (id) do update set username = excluded.username;
 \set alice '''aaaaaaaa-0000-4000-8000-000000000001'''
 \set chloe '''cccccccc-0000-4000-8000-000000000003'''
 

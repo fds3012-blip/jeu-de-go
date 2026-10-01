@@ -1,5 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { jouer } from './plateau';
+// Textes anglais : chargés à la demande dans l'app (#325), enregistrés ici pour `localiser(…, 'en')`.
+import '../src/content/anglais.setup';
 import { LESSONS_FR, localiser, type LessonStep } from '../src/content/lessons';
 
 // Issue #167 : les leçons traduites s'affichent en anglais avec `?lang=en` ; sans `?lang`, rien ne change (français).

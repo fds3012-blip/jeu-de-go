@@ -11,6 +11,7 @@
 // Sans variables d'environnement (VITE_POSTHOG_KEY, VITE_SENTRY_DSN) ou hors navigateur, tout est sans effet.
 // Les SDK sont importés dynamiquement : ils ne pèsent pas sur le premier chargement.
 // Aux deux niveaux, les adresses envoyées sont nettoyées (fragment `#`, jetons, codes : src/data/urlSensible.ts, E14).
+import { premierEcran } from '../premierEcran';
 import {
   PARAMS_SENSIBLES, posthogSansUrlSensible, sentryBreadcrumbSansUrlSensible, sentrySansUrlSensible,
 } from './urlSensible';
@@ -25,8 +26,14 @@ export const EVENTS = {
   // Leçon ouverte (#198) : dénominateur de l'entonnoir des leçons (`lecon_terminee` / `lecon_commencee`).
   leconCommencee: 'lecon_commencee',
   leconTerminee: 'lecon_terminee',
+  // E-mail de connexion envoyé (code à 6 chiffres et lien, #343 ; `moyen` : `code`).
   lienConnexionEnvoye: 'lien_connexion_envoye',
-  inscription: 'inscription',
+  // Entonnoir essai → compte (#343). `essai_limite_atteinte` : écran « Crée ton compte » ouvert (`raison`, `parties`).
+  // `compte_cree` : connecté sans pseudo, donc nouveau compte (`moyen` : `code` ou `lien` ; `origine`).
+  // `pseudo_choisi` : premier pseudo enregistré (remplace `inscription`) ; le compte est complet.
+  essaiLimiteAtteinte: 'essai_limite_atteinte',
+  compteCree: 'compte_cree',
+  pseudoChoisi: 'pseudo_choisi',
   // L'écran des problèmes n'existe pas encore : constante prête pour lui.
   problemeResolu: 'probleme_resolu',
   // « Continuer » à ta mesure (#284) : premier essai d'un problème noté (hors Go du jour, lien partagé, déjà réussi ou vu).
@@ -320,15 +327,26 @@ function loadPostHog(): Promise<PostHogLike | null> {
   if (phLoading) return phLoading;
   const c = analyticsConfig();
   if (!c.posthogKey) return Promise.resolve(null);
-  phLoading = import('posthog-js').then(m => {
-    const posthog = m.default as unknown as PostHogLike;
-    // Niveau relu au moment du chargement : le joueur a pu répondre pendant l'import.
-    const complet = niveau() === 'complet';
-    posthog.init(c.posthogKey, { api_host: c.posthogHost, ...(complet ? POSTHOG_COMPLET : POSTHOG_ANONYME) });
-    niveauPostHog = complet ? 'complet' : 'anonyme';
-    if (complet && userId) posthog.identify(userId);
-    return posthog;
+  // Niveau anonyme (#325) : PostHog (≈ 100 Ko gzip) attend que l'accueil soit affiché, pour ne pas ralentir l'ouverture
+  // sur un téléphone lent. Les événements gardent leur heure (`timestamp`) : rien n'est décalé. Avec accord : tout de suite.
+  const attente = niveau() === 'complet' ? Promise.resolve() : premierEcran();
+  const chargement: Promise<PostHogLike | null> = attente.then(() => {
+    // Opposition exprimée pendant l'attente : PostHog n'est pas chargé (un accord ultérieur le chargera).
+    if (niveau() === 'aucun') {
+      if (phLoading === chargement) phLoading = null;
+      return null;
+    }
+    return import('posthog-js').then(m => {
+      const posthog = m.default as unknown as PostHogLike;
+      // Niveau relu au moment du chargement : le joueur a pu répondre pendant l'attente ou l'import.
+      const complet = niveau() === 'complet';
+      posthog.init(c.posthogKey, { api_host: c.posthogHost, ...(complet ? POSTHOG_COMPLET : POSTHOG_ANONYME) });
+      niveauPostHog = complet ? 'complet' : 'anonyme';
+      if (complet && userId) posthog.identify(userId);
+      return posthog;
+    });
   }).catch(() => null);
+  phLoading = chargement;
   return phLoading;
 }
 
