@@ -177,9 +177,12 @@ describe('lot U : identifiants, énoncés, thèmes, doublons, calendrier, migrat
     for (const p of all) expect(THEME_DU_PROBLEME[p.id], p.id).toBe(ATTENDU[p.id].theme);
   });
 
-  it('le Go du jour garde son ordre : le lot U, d’un seul tenant, vient juste après le lot T et ferme le calendrier', () => {
+  it('le Go du jour garde son ordre : le lot U, d’un seul tenant, vient juste après le lot T et juste avant v01', () => {
     const ids = LOT_U.map(r => r.id);
-    expect(CALENDRIER_GO_DU_JOUR.slice(-ids.length)).toEqual(ids);
+    // Lot V (#16) ajouté après : le lot U reste d'un seul tenant, juste avant v01.
+    const debut = CALENDRIER_GO_DU_JOUR.indexOf('u01');
+    expect(CALENDRIER_GO_DU_JOUR.slice(debut, debut + ids.length)).toEqual(ids);
+    expect(CALENDRIER_GO_DU_JOUR[debut + ids.length]).toBe('v01');
     expect(CALENDRIER_GO_DU_JOUR.indexOf('u01')).toBe(CALENDRIER_GO_DU_JOUR.indexOf('t06') + 1);
   });
 
