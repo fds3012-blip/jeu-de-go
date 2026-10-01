@@ -59,6 +59,17 @@ export async function envoyerCodeConnexion(db: Db, email: string): Promise<Resul
   return { ok: false, error: t(error.status === 429 ? 'erreur.tropDEssais' : 'erreur.envoiLien') };
 }
 
+/**
+ * « Continuer avec Google » (#354) : part chez Google (redirection), qui revient sur `retour` avec la session dans le
+ * fragment (flux implicite, lu par `detectSessionInUrl`). Même e-mail qu'un compte créé par code : même compte
+ * (liaison automatique de Supabase). Seul l'e-mail sert : le nom et la photo de Google ne sont jamais utilisés.
+ */
+export async function connexionGoogle(db: Db, retour: string): Promise<Result<null>> {
+  const { error } = await db.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: retour } });
+  if (error) return { ok: false, error: t('connexion.google.erreur') };
+  return { ok: true, value: null };
+}
+
 /** Nombre de chiffres du code (réglage « Email OTP Length » de Supabase, à laisser à 6). */
 export const LONGUEUR_CODE = 6;
 

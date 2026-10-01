@@ -40,7 +40,9 @@ describe('boucle quotidienne : « série » et « Go du jour »', () => {
 
 describe('« Continuer » : un seul sens, l’étape suivante d’une leçon', () => {
   it('aucun autre bouton ne dit « Continuer »', () => {
-    expect(avec(/^Continuer\b/)).toEqual(['apprendre.continuer']);
+    // Seule exception : « Continuer avec Google », libellé imposé par la charte de Google (#354).
+    expect(avec(/^Continuer\b/)).toEqual(['apprendre.continuer', 'connexion.google']);
+    expect(traduire('fr', 'connexion.google')).toBe('Continuer avec Google');
   });
 
   it('les autres boutons disent leur action', () => {

@@ -47,7 +47,8 @@ import type { Puzzle } from '../data/puzzles';
 import { compteDe, estAnonyme } from '../data/defi';
 import { INVITEUR_AU_CHARGEMENT, JETON_AU_CHARGEMENT, ecouterJetonDefi } from './adresseDefi';
 import { ESSAI_KEY, decider, etatCompte, lireEssai, noterPartieTerminee, partiesTerminees, type Acces, type EtatCompte, type Raison } from './essai';
-import { compteVientDEtreCree, moyenConnexion } from './entonnoir';
+import { compteVientDEtreCree, moyenConnexion, noterConnexionParGoogle } from './entonnoir';
+import { annoncerMessage, definirRetour, erreurRetour, messageRetour, prendreRetour } from './connexionGoogle';
 import { useDefisAJouer } from './defisAJouer';
 import '../ui/defis.css';
 
@@ -114,6 +115,25 @@ function noterRappelOuvert() {
 // de l'adresse par src/app/adresseDefi.ts, avant la mesure et tout événement (constat E14).
 const LIEN_DEFI = JETON_AU_CHARGEMENT;
 
+// « Continuer avec Google » (#354) : au retour de Google (même onglet), la note d'aller-retour dit où reprendre
+// (écran « Crée ton compte » et son action, défi ouvert par lien, ou Profil). Lue puis effacée une seule fois.
+// La session elle-même est lue dans l'adresse par Supabase (`detectSessionInUrl`).
+const RETOUR_GOOGLE = typeof location !== 'undefined' ? prendreRetour() : null;
+// Erreur dans l'adresse seulement si la page revient de Google : un lien magique expiré porte aussi `#error=…`.
+const ERREUR_GOOGLE = RETOUR_GOOGLE && typeof location !== 'undefined' ? erreurRetour(location.hash, location.search) : null;
+if (ERREUR_GOOGLE) {
+  annoncerMessage(messageRetour(ERREUR_GOOGLE));
+  try { history.replaceState(history.state, '', location.pathname); } catch { /* adresse inchangée */ }
+} else if (RETOUR_GOOGLE) noterConnexionParGoogle();
+const RAISONS: readonly Raison[] = ['parties', 'lecons', 'problemes', 'placement', 'import', 'defi', 'en_ligne'];
+const ECRAN_COMPTE_AU_RETOUR = RETOUR_GOOGLE?.raison && (RAISONS as readonly string[]).includes(RETOUR_GOOGLE.raison)
+  ? { raison: RETOUR_GOOGLE.raison as Raison, reprise: RETOUR_GOOGLE.reprise as Reprise | null } : null;
+const DEFI_AU_RETOUR = LIEN_DEFI === null && RETOUR_GOOGLE?.defi ? RETOUR_GOOGLE.defi : null;
+
+// Politique de confidentialité publique (#354) : `/confidentialite` ouvre la page « Conditions et confidentialité »
+// (Google la demande pour son écran de consentement). Réécriture vers l'app : vercel.json.
+const PAGE_CONFIDENTIALITE = typeof location !== 'undefined' && /^\/confidentialite\/?$/.test(location.pathname);
+
 /** Écran du défi par lien : liste et création, arrivée par le lien (avec le pseudo de qui invite), ou partie. */
 type VueDefi = { vue: 'liste' } | { vue: 'arrivee'; jeton: string; inviteur: string | null } | { vue: 'partie'; id: string };
 
@@ -122,7 +142,8 @@ type Reprise = { quoi: 'ordi'; contre: OpponentId } | { quoi: 'deux' } | { quoi:
   | { quoi: 'defis' } | { quoi: 'placement' } | { quoi: 'importer' } | { quoi: 'problemes' };
 
 export function App() {
-  const [tab, setTab] = useState<Tab>(LIEN_DU_JOUR !== null || ARRIVEE_RAPPEL ? 'problemes' : 'jouer');
+  const [tab, setTab] = useState<Tab>(PAGE_CONFIDENTIALITE || (RETOUR_GOOGLE?.profil && !ECRAN_COMPTE_AU_RETOUR && !DEFI_AU_RETOUR) ? 'profil'
+    : LIEN_DU_JOUR !== null || ARRIVEE_RAPPEL ? 'problemes' : 'jouer');
   const [duJourOuvert, setDuJourOuvert] = useState(false);
   // #285 : après le Go du jour ouvert par le lien, une seule action pour qui n'a jamais joué : la leçon 1.
   const [versLecon1, setVersLecon1] = useState(NOUVEAU_PAR_LIEN);
@@ -137,7 +158,8 @@ export function App() {
   const session = useSession(supabase);
   // Une session anonyme (ouverte pour un défi, #81) compte comme « pas de compte » : ni synchronisation, ni cote, ni série serveur.
   const compteId = compteDe(session);
-  const [defi, setDefi] = useState<VueDefi | null>(LIEN_DEFI !== null ? { vue: 'arrivee', jeton: LIEN_DEFI, inviteur: INVITEUR_AU_CHARGEMENT } : null);
+  const [defi, setDefi] = useState<VueDefi | null>(LIEN_DEFI !== null ? { vue: 'arrivee', jeton: LIEN_DEFI, inviteur: INVITEUR_AU_CHARGEMENT }
+    : DEFI_AU_RETOUR ? { vue: 'arrivee', ...DEFI_AU_RETOUR } : null);
   const { progress, state: syncState, record } = useLessonProgress(supabase, compteId);
   // Lien de défi ouvert alors que l'app est déjà ouverte (même onglet) : on part vers l'arrivée.
   useEffect(() => ecouterJetonDefi((jeton, inviteur) => {
@@ -201,7 +223,14 @@ export function App() {
   // #308 : après le placement, la carte « Leçon » suit le chapitre conseillé.
   const leconConseillee = leconDeLAccueil(LESSONS, CHAPITRES, progress, placement);
   // Profil (issue #50) : sous-vue ouverte, et fenêtre de consentement fermée avec Échap pendant cette session.
-  const [vueProfil, setVueProfil] = useState<VueProfil>('menu');
+  const [vueProfil, setVueProfil] = useState<VueProfil>(PAGE_CONFIDENTIALITE ? 'conditions'
+    : RETOUR_GOOGLE?.profil && !ECRAN_COMPTE_AU_RETOUR && !DEFI_AU_RETOUR ? 'compte' : 'menu');
+  // En quittant la page publique de la politique, l'adresse redevient celle de l'app.
+  useEffect(() => {
+    if (vueProfil !== 'conditions' && /^\/confidentialite\/?$/.test(location.pathname)) {
+      try { history.replaceState(history.state, '', '/' + location.search); } catch { /* adresse inchangée */ }
+    }
+  }, [vueProfil]);
   // Installation (#214) : proposée sur l'accueil à partir du 2e retour (jour d'ouverture distinct), une seule fois.
   const [ouverture] = useState(() => noterOuverture(numeroDuJour(new Date())));
   // #236 (N4) : un seul appel secondaire sur l'accueil (annonce de Mochi, carte d'installation ou « À faire »).
@@ -227,7 +256,7 @@ export function App() {
   const [essaiBrut, setEssai] = useStored<unknown>(ESSAI_KEY, { terminees: 0 });
   const essai = lireEssai(essaiBrut);
   const terminees = partiesTerminees(essai, bilan);
-  const [ecranCompte, setEcranCompte] = useState<{ raison: Raison; reprise: Reprise | null } | null>(null);
+  const [ecranCompte, setEcranCompte] = useState<{ raison: Raison; reprise: Reprise | null } | null>(ECRAN_COMPTE_AU_RETOUR);
 
   /**
    * Garde de l'essai (#343) : vrai si le joueur peut faire `a`. Sinon, l'écran « Crée ton compte » s'ouvre, et
@@ -378,6 +407,16 @@ export function App() {
       if (r) executer.current(r);
     }
   }, [etat, ecranCompte, defi]);
+
+  // #354 : où revenir si le joueur part chez Google depuis l'écran affiché.
+  useEffect(() => {
+    definirRetour({
+      raison: ecranCompte?.raison ?? null,
+      reprise: ecranCompte?.reprise ?? null,
+      defi: defi?.vue === 'arrivee' ? { jeton: defi.jeton, inviteur: defi.inviteur } : null,
+      profil: tab === 'profil',
+    });
+  }, [ecranCompte, defi, tab]);
 
   const enDefi = tab === 'jouer' && !playing && defi !== null;
   const enPartie = (tab === 'jouer' && !!playing) || (enDefi && defi.vue === 'partie');

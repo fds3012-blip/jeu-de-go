@@ -212,6 +212,16 @@ https://console.cloud.google.com/auth/audience : **Publier l'application**, puis
 5. **Authentication**, **URL Configuration** : **Site URL** `https://jeu-de-go.vercel.app` (déjà fait pour le code). Dans **Redirect URLs**, ajoute `https://jeu-de-go.vercel.app/**`.
 6. **Authentication**, **Sign In / Providers** : laisse **Manual linking** désactivé (5.3).
 
+### 7.5 bis Afficher le bouton (Vercel)
+
+Le bouton est livré (#354) mais **caché** tant que la variable publique `VITE_AUTH_GOOGLE` n'est pas à `1` :
+
+1. Vercel, projet du jeu, **Settings**, **Environment Variables** : ajoute `VITE_AUTH_GOOGLE` = `1` (Production ; Preview si tu veux tester avant).
+2. **Redeploy** le dernier déploiement (les variables `VITE_` sont lues à la construction).
+3. Pour le retirer : supprime la variable (ou mets-la vide) et redéploie. Rien d'autre ne change.
+
+Ne le fais **qu'après** 7.1 à 7.5 : sans Google activé dans Supabase, le bouton mènerait à une erreur.
+
 ### 7.6 Vérifier (5 minutes, après la livraison du front)
 
 1. Sur Chrome Android ou Safari iPhone, ouvre le jeu, joue jusqu'à « Crée ton compte », coche la case, touche **Continuer avec Google**.
@@ -230,6 +240,17 @@ https://console.cloud.google.com/auth/audience : **Publier l'application**, puis
 5. **Services**, **Sign in with Apple for Email Communication** : déclare le domaine et l'adresse d'envoi de nos e-mails (sinon les adresses relais Apple ne reçoivent pas nos codes).
 6. Supabase, **Authentication**, **Sign In / Providers**, **Apple** : active ; **Client IDs** : le Services ID (et plus tard l'App ID pour l'app iOS) ; **Secret Key** : à générer avec l'outil de la page Supabase à partir du `.p8`, du Team ID et du Key ID (dans Chrome ou Firefox, pas Safari).
 7. **Rappel tous les 5 mois** dans ton agenda : régénérer la clé secrète (elle expire à 6 mois) et la recoller dans Supabase. Sinon la connexion Apple tombe sans prévenir.
+
+## 8 bis. Ce que le front a livré (#354, phase 1)
+
+- Activation : `VITE_AUTH_GOOGLE=1` (`.env.example`, section 7.5 bis). Absente : aucun bouton, aucune aide.
+- Écran : case d'âge, puis **Continuer avec Google** (action principale, couleurs de la charte Google), « ou », e-mail et **Recevoir mon code** (contour), « J'ai déjà un compte ». En connexion, pas de case d'âge (`src/app/Connexion.tsx`, `src/ui/BoutonGoogle.tsx`).
+- Navigateurs intégrés (Messenger, Facebook, Instagram, TikTok, LINE, Snapchat, toute WebView Android) et app installée sur iPhone : Google caché, code en principal ; aide « Ouvre le jeu dans Chrome » (lien `intent://`, Android) ou « Touche ⋯ puis Ouvrir dans le navigateur » (iPhone). Module pur testé : `src/app/navigateurIntegre.ts`. Les anciennes sessions anonymes n'ont pas Google (5.3).
+- Retour à l'action demandée : note `go.retour-connexion.v1` dans l'onglet (sessionStorage, 30 min), `src/app/connexionGoogle.ts` : écran « Crée ton compte » et son action, défi ouvert par lien (rejoint une fois le compte complet), ou Profil. Annulé chez Google : « Connexion annulée. Réessaie, ou reçois un code par e-mail. »
+- Pseudo jamais pré-rempli (écran « Choisis ton pseudo » vide, testé avec un nom Google).
+- Mesure : `compte_methode` (`methode`, `navigateur_integre`) et `moyen: 'google'` sur `compte_cree` (plan de marquage et politique à jour).
+- Politique publique : **`https://jeu-de-go.vercel.app/confidentialite`** (réécriture dans `vercel.json`), avec le paragraphe « Si tu te connectes avec Google ». C'est l'adresse à donner à Google (7.2, Branding).
+- Pas encore : preuve de la case d'âge côté serveur (D2, backend), effacement du nom et de la photo Google (6.1, backend + juridique), One Tap (phase 2), Apple.
 
 ## 9. Issues à créer après accord
 
