@@ -269,7 +269,9 @@ export function chooseMoveDetail(pos: Position, niveau: OpponentId | Opponent, o
   // Avant de passer, un niveau qui ferme ses frontières joue un coup de fermeture s'il en reste un (#159).
   // `prefer` : coups du moteur, du meilleur au moins bon. Pierres mortes calculées seulement s'il y a une frontière.
   let morts: number[] | null = null;
-  const mortes = () => (morts ??= deadStones(pos, { seed: opts.seed, timeMs: Math.min(150, opts.timeMs ?? 150) }));
+  // Nombre fixe de simulations (ESTIMATION_GAIN) : avec un plafond de 150 ms, un appareil lent (ou une machine chargée)
+  // en faisait moins, voyait d'autres pierres mortes et fermait un autre « trou » (recette du 30/09 : écart 15,5 > 12).
+  const mortes = () => (morts ??= deadStones(pos, { seed: opts.seed, ...ESTIMATION_GAIN }));
   const passer = (prefer: number[] = []): CoupExplique => {
     if (!lvl.fermeFrontieres || !partieAvancee(pos.board) || !frontieresOuvertes(pos.board, pos.size).length) return PASSE;
     const f = coupDeFermeture(pos, mortes(), prefer);

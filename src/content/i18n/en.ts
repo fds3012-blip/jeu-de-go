@@ -22,7 +22,7 @@ export const en = {
   'vitrine.titreVisible': 'Your badges',
   'vitrine.aide': 'Tap a badge to see how to earn it.',
   'vitrine.prochain': 'Next badge: {nom}. {condition}',
-  'vitrine.detailObtenu': '{nom}: earned!',
+  'vitrine.detailObtenu': 'Badge earned: {nom}',
   'vitrine.detailAGagner': '{nom}: {condition}',
   'profil.connecteDetail': 'Your streak and lessons are saved to your account.',
   'compte.promesse': 'Your streak and lessons follow you on all your devices, and you can play online.',

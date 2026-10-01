@@ -125,7 +125,7 @@ test('Profil : aucune cote, la vitrine dit le prochain badge et un badge touché
   await vitrine.getByRole('button', { name: '7 jours de série : à gagner. Garde ta série 7 jours.' }).click();
   await expect(detail).toHaveText('7 jours de série : Garde ta série 7 jours.');
   await vitrine.getByRole('button', { name: 'Pomme battue : obtenu' }).click();
-  await expect(detail).toHaveText('Pomme battue : gagné !');
+  await expect(detail).toHaveText('Badge gagné : Pomme battue');
   // Un second toucher referme : retour au prochain badge.
   await vitrine.getByRole('button', { name: 'Pomme battue : obtenu' }).click();
   await expect(detail).toHaveText(/^Prochain badge/);
@@ -138,7 +138,7 @@ test('Profil : un badge gagné depuis la dernière visite est annoncé dans la v
   const profil = page.getByRole('navigation').getByRole('button', { name: 'Profil' });
   await profil.click();
   const vitrine = page.getByRole('region', { name: /^Badges/ });
-  await expect(vitrine.locator('.vitrine-detail')).toHaveText('Première partie : gagné !');
+  await expect(vitrine.locator('.vitrine-detail')).toHaveText('Badge gagné : Première partie');
   await expect(vitrine.locator('li.nouveau')).toHaveCount(1);
   await page.reload();
   await profil.click();
