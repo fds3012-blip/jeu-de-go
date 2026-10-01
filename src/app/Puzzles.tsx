@@ -64,6 +64,11 @@ interface Props {
   racine?: number;
   /** #285 : arrivé par un lien sans avoir jamais joué ; après le Go du jour, l'action unique mène à la leçon 1. */
   onApprendre?: () => void;
+  /**
+   * Essai sans compte (#343) : présent, seul le Go du jour (et ses liens partagés) est libre. Tout autre problème,
+   * la course, la grille, la révision et « Tes erreurs à rejouer » appellent `essai`, qui ouvre « Crée ton compte ».
+   */
+  essai?: () => void;
 }
 
 /** Flamme de la série de jours, en or. */
@@ -87,7 +92,9 @@ function Difficulte({ d }: { d: number }) {
 }
 
 /** Onglet Problèmes : problème du jour, problèmes de base, cote problèmes et série de jours. */
-export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, lien = null, onDuJour, celebrer = true, racine = 0, onApprendre }: Props) {
+export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, lien = null, onDuJour, celebrer = true, racine = 0, onApprendre, essai }: Props) {
+  /** Ouvre un problème ; hors Go du jour pendant l'essai sans compte, c'est « Crée ton compte » qui s'ouvre (#343). */
+  const ouvrirProbleme = (id: string) => { if (essai && id !== daily?.id) essai(); else setOpenId(id); };
   // Go du jour (issue #75) : le même pour tous, choisi dans la liste publique des problèmes de base, en heure de Paris.
   const [numero] = useState(() => numeroDuJour(new Date()));
   const daily = problemeDuNumero(LOCAL_PUZZLES, numero);
@@ -253,7 +260,7 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
           if (estDuJour && gain.palier && repriseDeLeconFaite(open)) noterRediteAppareil(open.id);
         }}
         onSolutionVue={essais => track(EVENTS.solutionVue, { probleme: open.id, du_jour: estDuJour, essais })}
-        onNext={nextPz ? () => { setArchive(null); setOpenId(nextPz.id); window.scrollTo({ top: 0 }); } : undefined}
+        onNext={nextPz ? () => { if (essai && nextPz.id !== daily?.id) { essai(); return; } setArchive(null); setOpenId(nextPz.id); window.scrollTo({ top: 0 }); } : undefined}
         onExit={() => { setArchive(null); setOpenId(null); }} />
     );
   }
@@ -301,7 +308,7 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
         {notices}
         <p className="muted small bases-aide">{fr(tr('pb.aide.avant'))}<b>{tr('pb.aide.mot')}</b>{fr(tr('pb.aide.apres'))}</p>
         {ouverts.map(t => (
-          <PalierVue key={t.id} t={t} ordre={ordre} solved={solved} vus={vus} onOpen={setOpenId}
+          <PalierVue key={t.id} t={t} ordre={ordre} solved={solved} vus={vus} onOpen={ouvrirProbleme}
             fete={fetes.includes(t.id)} />
         ))}
         {suivant && (
@@ -330,18 +337,18 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
       {/* #293 : les erreurs dues aujourd'hui viennent juste sous le Go du jour (la revue promet « Cette position
           reviendra dans Problèmes »). La section n'existe que s'il y en a ; ses vignettes restent des actions
           secondaires : l'action en relief reste le Go du jour, ou « Problème suivant » une fois le Go du jour fait. */}
-      <MesErreurs confirmTouch={confirmTouch} Lecteur={PuzzlePlayer} />
+      {!essai && <MesErreurs confirmTouch={confirmTouch} Lecteur={PuzzlePlayer} />}
 
       {/* Révision du jour (#199) : problèmes déjà réussis, repris à J+1, J+3, J+7. Depuis #251 (M2), aussi ceux
           vus avec la réponse : « Retente-le plus tard » (pb.vuTexte), c'est la révision qui le repropose. */}
-      <RevisionDuJour liste={list} reussis={aReviser} vus={vusSeuls} confirmTouch={confirmTouch} Lecteur={PuzzlePlayer} onSerie={setSerieDuJour} />
+      {!essai && <RevisionDuJour liste={list} reussis={aReviser} vus={vusSeuls} confirmTouch={confirmTouch} Lecteur={PuzzlePlayer} onSerie={setSerieDuJour} />}
 
       {/* Un seul « Problème suivant », le palier en cours sans total, la grille derrière un lien discret (#196). */}
       <section aria-labelledby="paliers-titre">
         <h2 id="paliers-titre" className="titre-pierres">{tr('nav.problemes')}</h2>
         {prochainPz && (
           // #268 (WCAG 2.5.3) : pas d'aria-label ; le nom accessible est le texte visible, verbe d'abord.
-          <button type="button" className={duJourFait ? 'cta continuer' : 'btn continuer'} onClick={() => setOpenId(prochainPz.id)}>
+          <button type="button" className={duJourFait ? 'cta continuer' : 'btn continuer'} onClick={() => ouvrirProbleme(prochainPz.id)}>
             {tr('pb.continuer')} <span className="continuer-titre">{prochainPz.title}</span>
           </button>
         )}
@@ -355,8 +362,8 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
             {enCours.reussis > 0 && <p className="palier-compte">{tr('pb.reussis', { n: enCours.reussis })}</p>}
           </div>
         )}
-        <CarteCourse onOpen={() => { setCourse(true); window.scrollTo({ top: 0 }); }} />
-        <button className="lien lien-tous" onClick={() => { setTous(true); window.scrollTo({ top: 0 }); }}>
+        <CarteCourse onOpen={() => { if (essai) { essai(); return; } setCourse(true); window.scrollTo({ top: 0 }); }} />
+        <button className="lien lien-tous" onClick={() => { if (essai) { essai(); return; } setTous(true); window.scrollTo({ top: 0 }); }}>
           {tr('pb.tous')}
           <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path d="m9 5 7 7-7 7" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
         </button>

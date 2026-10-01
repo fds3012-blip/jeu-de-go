@@ -1,183 +1,130 @@
-import { expect, test, type BrowserContext, type Page, type Route } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+import { brancher, creerCompte, fauxServeur, JETON, PARTIE } from './fauxSupabase';
 import { jouer, pierres, plateau } from './plateau';
 
-// Issue #81 : défier un ami par lien. Parcours création → lien → ouverture dans un 2e contexte (un autre téléphone),
-// sans vraie base : Supabase est simulé par interception réseau. Le build de test lit l'adresse simulée dans
-// le stockage local (`e2e.supabase`, voir src/data/supabase.ts).
+// Issue #81 : défier un ami par lien. Depuis #343 : compte avec pseudo obligatoire, plus de joueurs anonymes.
+// L'ami qui ouvre le lien voit qui l'invite et le plateau, crée son compte (code par e-mail + pseudo) AVANT son
+// premier coup. Deux contextes = deux téléphones ; Supabase simulé (e2e/fauxSupabase.ts).
 
-const SUPABASE = 'https://supabase.e2e.test';
-const PARTIE = '11111111-1111-4111-8111-111111111111';
-const JETON = 'Ab3_-xYz'.padEnd(32, 'Q');
+const CAPTURES = process.env.CAPTURES_343;
+const options = (baseURL: string | undefined, largeur = 390) => ({
+  viewport: { width: largeur, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, locale: 'fr-FR', baseURL,
+  storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }] }] },
+});
 
-interface Utilisateur { id: string; anonyme: boolean; email?: string }
-interface Ligne { [k: string]: unknown }
-
-/** Faux serveur partagé par les deux téléphones : auth anonyme, RPC du défi, tables, fonction game-action. */
-function fauxServeur() {
-  const jetons = new Map<string, Utilisateur>();
-  let n = 0;
-  const games: Ligne[] = [];
-  const defis: Ligne[] = [];
-  const appels: string[] = [];
-
-  const jwt = (u: Utilisateur) => {
-    const b64 = (o: object) => Buffer.from(JSON.stringify(o)).toString('base64url');
-    return `${b64({ alg: 'HS256', typ: 'JWT' })}.${b64({ sub: u.id, role: 'authenticated', is_anonymous: u.anonyme, exp: Math.floor(Date.now() / 1000) + 3600 })}.signature`;
-  };
-  const userJson = (u: Utilisateur) => ({ id: u.id, aud: 'authenticated', role: 'authenticated', is_anonymous: u.anonyme, email: u.email ?? '',
-    app_metadata: {}, user_metadata: {}, identities: [], created_at: new Date().toISOString() });
-  const qui = (route: Route) => jetons.get((route.request().headers()['authorization'] ?? '').replace(/^Bearer /, ''));
-
-  async function traiter(route: Route) {
-    const req = route.request();
-    const url = new URL(req.url());
-    const chemin = url.pathname;
-    const json = (corps: unknown, status = 200) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(corps),
-      headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' } });
-    if (req.method() === 'OPTIONS') return json({});
-    appels.push(`${req.method()} ${chemin}`);
-    const u = qui(route);
-
-    if (chemin === '/auth/v1/signup') {
-      const nouveau: Utilisateur = { id: `00000000-0000-4000-8000-00000000000${++n}`, anonyme: true };
-      const token = jwt(nouveau);
-      jetons.set(token, nouveau);
-      return json({ access_token: token, token_type: 'bearer', expires_in: 3600, expires_at: Math.floor(Date.now() / 1000) + 3600,
-        refresh_token: `r${n}`, user: userJson(nouveau) });
-    }
-    if (chemin === '/auth/v1/user') {
-      if (!u) return json({ message: 'no session' }, 401);
-      if (req.method() === 'PUT') u.email = (req.postDataJSON() as { email?: string }).email;
-      return json({ ...userJson(u), new_email: u.email });
-    }
-    if (chemin === '/rest/v1/rpc/creer_defi') {
-      if (!u) return json({ message: 'Connexion requise' }, 401);
-      games.push({ id: PARTIE, white_id: u.id, black_id: null, created_by: u.id, size: 9, komi: 6.5, rules: 'japanese', handicap: 0, moves: '',
-        status: 'waiting', counting: false, dead_stones: null, dead_proposed_by: null, result: null, resumed_at: 0, prive: true, rated: false });
-      defis.push({ partie_id: PARTIE, jeton: JETON, createur_id: u.id, invite_id: null, delai_coup: '3 days', date_limite: null,
-        lien_expire_le: new Date(Date.now() + 7 * 864e5).toISOString(), cree_le: new Date().toISOString() });
-      return json([{ partie_id: PARTIE, jeton: JETON }]);
-    }
-    if (chemin === '/rest/v1/rpc/rejoindre_defi') {
-      const { p_jeton } = req.postDataJSON() as { p_jeton: string };
-      const d = defis.find(x => x.jeton === p_jeton);
-      if (!u || !d) return json({ message: 'Défi introuvable' }, 400);
-      const g = games.find(x => x.id === d.partie_id)!;
-      if (u.id !== d.createur_id && !d.invite_id) {
-        d.invite_id = u.id; g.black_id = u.id; g.status = 'active';
-        d.date_limite = new Date(Date.now() + 3 * 864e5).toISOString();
-      }
-      return json(d.partie_id);
-    }
-    if (chemin === '/rest/v1/rpc/victoire_au_temps') return json(null);
-    if (chemin === '/functions/v1/game-action') {
-      const { action, game_id, move } = req.postDataJSON() as { action: string; game_id: string; move: string };
-      const g = games.find(x => x.id === game_id);
-      if (action !== 'defi_coup' || !g || !u) return json({ error: 'Demande invalide' }, 400);
-      const trait = (g.moves as string).length / 2 % 2 === 0 ? g.black_id : g.white_id;
-      if (trait !== u.id) return json({ error: 'Ce n’est pas ton tour' }, 409);
-      g.moves = (g.moves as string) + move;
-      defis[0].date_limite = new Date(Date.now() + 3 * 864e5).toISOString();
-      return json({ ok: true, game: g });
-    }
-    if (chemin.startsWith('/rest/v1/')) {
-      const table = chemin.slice('/rest/v1/'.length);
-      let lignes: Ligne[] = table === 'games' ? games : table === 'defis' ? defis : [];
-      for (const [cle, val] of url.searchParams) {
-        if (val.startsWith('eq.')) lignes = lignes.filter(l => String(l[cle]) === val.slice(3));
-        if (val.startsWith('in.(')) { const ids = val.slice(4, -1).split(','); lignes = lignes.filter(l => ids.includes(String(l[cle]))); }
-        if (cle === 'or') { const ids = [...val.matchAll(/eq\.([^,)]+)/g)].map(m => m[1]); lignes = lignes.filter(l => ids.includes(String(l.createur_id)) || ids.includes(String(l.invite_id))); }
-      }
-      // RLS simulée : seuls les joueurs lisent leur partie et leur défi.
-      lignes = lignes.filter(l => !u ? false : [l.black_id, l.white_id, l.createur_id, l.invite_id].includes(u.id));
-      const objet = (req.headers()['accept'] ?? '').includes('vnd.pgrst.object');
-      return json(objet ? lignes[0] ?? null : lignes);
-    }
-    return json({});
-  }
-  return { traiter, appels, games };
-}
-
-async function telephone(context: BrowserContext, serveur: ReturnType<typeof fauxServeur>): Promise<Page> {
-  await context.addInitScript(adresse => {
-    localStorage.setItem('e2e.supabase', adresse);
-    // Pas de feuille de partage native : la copie prend le relais. Le presse-papiers est simulé.
-    Object.defineProperty(navigator, 'share', { value: undefined, configurable: true });
-    Object.defineProperty(navigator, 'clipboard', { value: { writeText: async (t: string) => { (window as unknown as { __copie: string }).__copie = t; } }, configurable: true });
-  }, SUPABASE);
-  await context.route(`${SUPABASE}/**`, route => serveur.traiter(route));
-  return context.newPage();
-}
-
-test('défier un ami : lien créé, ouvert sur un 2e téléphone sans compte, premier coup, inscription proposée', async ({ browser, baseURL }) => {
+test('défier un ami : compte du créateur, lien avec son pseudo, l’ami crée son compte puis joue', async ({ browser, baseURL }) => {
   const serveur = fauxServeur();
   const erreurs: string[] = [];
-  const options = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, locale: 'fr-FR', baseURL,
-    storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }] }] } };
 
-  // Téléphone 1 : le créateur, depuis l'accueil. « Défier un ami » reste un lien secondaire, sous le bouton principal.
-  const ctxA = await browser.newContext(options);
-  const a = await telephone(ctxA, serveur);
+  // Téléphone 1 : le créateur, sans compte. « Défier un ami » reste un lien secondaire de l'accueil.
+  const ctxA = await browser.newContext(options(baseURL));
+  const a = await brancher(ctxA, serveur);
   a.on('pageerror', e => erreurs.push(e.message));
   await a.goto('/');
   const lien = a.getByRole('button', { name: 'Défier un ami' });
   await expect(lien).toBeVisible();
   await expect(lien).not.toHaveClass(/cta|primary/);
-  await expect(a.locator('.cta')).toHaveCount(1); // l'action principale de l'accueil reste « Jouer »
-  const boite = await lien.boundingBox();
-  expect(boite!.height).toBeGreaterThanOrEqual(44);
+  await expect(a.locator('.cta')).toHaveCount(1);
+  expect((await lien.boundingBox())!.height).toBeGreaterThanOrEqual(44);
   await lien.click();
-  await expect(a.getByText('Envoie un lien à un ami. Il joue tout de suite, sans compte.')).toBeVisible();
-  await expect(a.getByText(/chacun a 3 jours pour jouer son coup/)).toBeVisible();
+  // Compte obligatoire pour défier.
+  await expect(a.getByTestId('creer-compte')).toHaveAttribute('data-raison', 'defi');
+  await creerCompte(a, 'florian@exemple.test', 'Florian');
+  // Compte complet : l'écran du défi s'ouvre.
+  await expect(a.getByText('Envoie un lien à un ami. Il crée son compte en un instant, puis il joue.')).toBeVisible();
   await a.getByRole('button', { name: 'Envoyer un lien' }).click();
   await expect(a.getByText('Lien copié. Colle-le dans un message.')).toBeVisible();
   const adresse = await a.getByTestId('defi-lien').locator('input').inputValue();
-  expect(adresse).toBe(`${baseURL}/#defi=${JETON}`);
-  expect(await a.evaluate(() => (window as unknown as { __copie: string }).__copie)).toBe(adresse);
-  // Session anonyme ouverte pour créer le défi, puis creer_defi.
-  expect(serveur.appels).toContain('POST /auth/v1/signup');
+  expect(adresse).toBe(`${baseURL}/#defi=${JETON}&de=Florian`);
   expect(serveur.appels).toContain('POST /rest/v1/rpc/creer_defi');
-  await expect(a.getByRole('button', { name: /Partie du .*Lien pas encore ouvert/ })).toBeVisible();
-  // Pas de défilement horizontal à 390 px.
+  expect(serveur.appels).not.toContain('POST /auth/v1/signup');
   expect(await a.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
 
-  // Téléphone 2 : l'ami ouvre le lien. Aucun compte : il joue tout de suite, avec Noir.
-  const ctxB = await browser.newContext(options);
-  const b = await telephone(ctxB, serveur);
+  // Téléphone 2 : l'ami ouvre le lien. Il voit qui l'invite et le plateau, puis crée son compte.
+  const ctxB = await browser.newContext(options(baseURL));
+  const b = await brancher(ctxB, serveur);
   b.on('pageerror', e => erreurs.push(e.message));
   await b.goto(adresse);
+  await expect(b.getByRole('heading', { name: 'Florian te défie !' })).toBeVisible();
+  await expect(b.getByRole('img', { name: /Plateau 9 × 9 vide/ })).toBeVisible();
+  expect(new URL(b.url()).hash).toBe(''); // le jeton ne reste pas dans l'adresse
+  expect(serveur.appels.filter(x => x.includes('rejoindre_defi'))).toEqual([]); // rien avant le compte
+  expect(await b.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  if (CAPTURES) await b.screenshot({ path: `${CAPTURES}/defi-arrivee-390-clair.png`, fullPage: true });
+  await creerCompte(b, 'ami@exemple.test', 'Ami_du_go');
+
+  // Compte complet : il rejoint la partie et joue son premier coup, avec Noir.
   await expect(b.getByText('Ton ami te défie ! Tu as les pierres noires : à toi de commencer.')).toBeVisible();
   await expect(plateau(b)).toBeVisible();
-  // Le jeton ne reste pas dans l'adresse.
-  expect(new URL(b.url()).hash).toBe('');
-  await jouer(b, 'E5'); // à la souris : pas de seconde touche de confirmation
+  await jouer(b, 'E5');
   await expect(pierres(b, 'noir')).toHaveCount(1);
   await expect(b.getByText(/Au tour de ton ami\. Il lui reste [23]\s+jours/)).toBeVisible();
-  // Inscription proposée après son premier coup : e-mail lié à la session anonyme (même identifiant).
-  await expect(b.getByText('Garde ta partie')).toBeVisible();
-  await b.getByLabel('Ton e-mail').fill('ami@exemple.test');
-  await b.getByRole('button', { name: 'Garder ma partie' }).click();
-  await expect(b.getByTestId('lier-envoye')).toBeVisible();
-  expect(serveur.appels).toContain('PUT /auth/v1/user');
-  expect(await b.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  await expect(b.getByTestId('lier-email')).toHaveCount(0); // plus d'inscription après coup : il a déjà un compte
 
   // Téléphone 1 : le créateur retrouve la partie, c'est à lui de jouer.
   await a.getByRole('button', { name: /Partie du/ }).click();
   await expect(a.getByText(/À toi de jouer\. Il te reste [23]\s+jours/)).toBeVisible();
   await expect(pierres(a, 'noir')).toHaveCount(1);
-  await expect(a.getByText('Garde ta partie')).toHaveCount(0); // pas encore joué
 
   expect(erreurs).toEqual([]);
   await ctxA.close();
   await ctxB.close();
 });
 
-test('lien invalide : message clair et retour à l’accueil', async ({ page }) => {
+test('lien de défi à 320 px, mode sombre : lisible, sans défilement de côté', async ({ browser, baseURL }) => {
   const serveur = fauxServeur();
-  await page.addInitScript(adresse => localStorage.setItem('e2e.supabase', adresse), SUPABASE);
-  await page.route(`${SUPABASE}/**`, route => serveur.traiter(route));
-  await page.goto(`/#defi=${'Z'.repeat(32)}`);
-  await expect(page.getByRole('alert')).toContainText('Défi introuvable');
+  const ctx = await browser.newContext({ ...options(baseURL, 320), colorScheme: 'dark' });
+  const page = await brancher(ctx, serveur);
+  await page.goto(`/#defi=${JETON}&de=Florian`);
+  await expect(page.getByRole('heading', { name: 'Florian te défie !' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Recevoir mon code' })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+  if (CAPTURES) await page.screenshot({ path: `${CAPTURES}/defi-arrivee-320-sombre.png`, fullPage: true });
+  await ctx.close();
+});
+
+test('ancienne partie sans compte : l’ami lie son e-mail par code, choisit son pseudo et continue', async ({ browser, baseURL }) => {
+  const serveur = fauxServeur();
+  // Partie commencée avant #343 : l'ami (session anonyme) a Noir, c'est à lui de jouer.
+  const session = serveur.sessionAnonyme();
+  serveur.games.push({ id: PARTIE, white_id: 'createur', black_id: session.user.id, created_by: 'createur', size: 9, komi: 6.5, rules: 'japanese', handicap: 0,
+    moves: 'eeff', status: 'active', counting: false, dead_stones: null, dead_proposed_by: null, result: null, resumed_at: 0, prive: true, rated: false });
+  serveur.defis.push({ partie_id: PARTIE, jeton: JETON, createur_id: 'createur', invite_id: session.user.id, delai_coup: '3 days',
+    date_limite: new Date(Date.now() + 2 * 864e5).toISOString(), lien_expire_le: new Date(Date.now() + 7 * 864e5).toISOString(), cree_le: new Date().toISOString() });
+  const ctx = await browser.newContext(options(baseURL));
+  const page = await brancher(ctx, serveur, { 'sb-supabase-auth-token': JSON.stringify(session) });
+  await page.goto('/');
+  await page.getByTestId('lien-defi').click();
+  // Session anonyme : l'écran propose de lier l'e-mail (même compte, la partie est gardée).
+  await expect(page.getByTestId('creer-compte')).toHaveAttribute('data-raison', 'defi');
+  await page.getByLabel('Ton adresse e-mail').fill('ancien@exemple.test');
+  await page.getByRole('checkbox').check();
+  await page.getByRole('button', { name: 'Recevoir mon code' }).click();
+  await page.getByLabel('Code à 6 chiffres').fill('123456');
+  expect(serveur.appels.some(x => x.startsWith('PUT /auth/v1/user'))).toBe(true);
+  await expect(page.getByTestId('pseudo-obligatoire')).toBeVisible();
+  await page.getByRole('textbox', { name: 'Pseudo' }).fill('Ancien');
+  await expect(page.getByText('Ancien est libre.')).toBeVisible();
+  await page.getByRole('button', { name: 'C’est mon pseudo' }).click();
+  // Compte complet, même identifiant : la liste des défis s'ouvre, la partie en cours y est, et il joue.
+  await expect(page.getByRole('button', { name: 'Envoyer un lien' })).toBeVisible();
+  await page.getByRole('button', { name: /Partie du/ }).click();
+  await expect(page.getByText(/À toi de jouer/)).toBeVisible();
+  await expect(page.getByTestId('lier-email')).toHaveCount(0);
+  await jouer(page, 'C3');
+  await expect(pierres(page, 'noir')).toHaveCount(2);
+  expect(serveur.appels).not.toContain('POST /auth/v1/signup');
+  await ctx.close();
+});
+
+test('lien abîmé : message clair tout de suite, sans demander de compte', async ({ browser, baseURL }) => {
+  const serveur = fauxServeur();
+  const ctx = await browser.newContext(options(baseURL));
+  const page = await brancher(ctx, serveur);
+  await page.goto('/#defi=abc');
+  await expect(page.getByRole('alert')).toContainText(/introuvable/);
+  await expect(page.getByTestId('defi-apercu')).toHaveCount(0);
   await page.getByRole('button', { name: 'Retour à l’accueil' }).click();
   await expect(page.getByTestId('lien-defi')).toBeVisible();
+  await ctx.close();
 });
