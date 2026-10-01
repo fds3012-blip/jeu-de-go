@@ -44,6 +44,11 @@
 .connexion-bascule { margin: 0 0 4px; padding: 10px 12px; border-radius: 12px; background: var(--surface-2, var(--bg)); border: 1px solid var(--line);
   color: var(--text); text-wrap: pretty; }
 .connexion-partie { margin: 0 0 4px; text-wrap: pretty; }
+/* Boutons « Connexion avec Google / Apple » (masqués par défaut, voir ConnexionSociale.tsx) : secondaires. */
+.connexion-sociale { display: grid; gap: var(--space-2, 8px); margin-bottom: 4px; }
+.connexion-sociale-btn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 48px; }
+.connexion-ou { display: flex; align-items: center; gap: 10px; margin: 2px 0 0; }
+.connexion-ou::before, .connexion-ou::after { content: ''; flex: 1; height: 1px; background: var(--line); }
 
 .creer-gratuit { margin: 0; text-align: center; }
 .creer-plus-tard { justify-self: center; }

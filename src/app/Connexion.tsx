@@ -16,6 +16,7 @@ import { EVENTS, track } from '../data/analytics';
 import { noterConnexionParCode } from './entonnoir';
 import { apresRefus, demandeAge, typeCode, voieEnvoi, type Sens, type Voie } from './connexionBascule';
 import { fr } from '../ui/typo';
+import { ConnexionSociale } from '../ui/ConnexionSociale';
 import { t } from '../content/i18n';
 import '../ui/compte.css';
 
@@ -146,6 +147,8 @@ export function ConnexionCode({ db, mode = 'connexion', envoyer, moment = 'profi
   const pret = !demandeAge(sens) || age;
   return (
     <form className="connexion" onSubmit={envoyerEmail} noValidate data-sens={sens}>
+      {/* Masqués tant que FOURNISSEURS_ACTIFS est vide (src/ui/ConnexionSociale.tsx). */}
+      <ConnexionSociale db={db} />
       <label className="small" htmlFor={`${id}-email`}>{t('compte.email')}</label>
       <input id={`${id}-email`} className="champ" type="email" inputMode="email" autoComplete="email" autoCapitalize="none" spellCheck={false} required
         value={email} onChange={e => { setEmail(e.target.value); setError(''); }} aria-invalid={!!error} aria-describedby={`${id}-erreur`} />
