@@ -405,6 +405,8 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          conditions_acceptees_le: string | null
+          conditions_version: string | null
           country: string | null
           created_at: string
           id: string
@@ -418,6 +420,8 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          conditions_acceptees_le?: string | null
+          conditions_version?: string | null
           country?: string | null
           created_at?: string
           id: string
@@ -431,6 +435,8 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          conditions_acceptees_le?: string | null
+          conditions_version?: string | null
           country?: string | null
           created_at?: string
           id?: string
@@ -620,6 +626,7 @@ export type Database = {
       }
     }
     Functions: {
+      accepter_conditions: { Args: { p_version: string }; Returns: string }
       apply_game_rating: {
         Args: { p_game: string; p_loser: string; p_winner: string }
         Returns: undefined
