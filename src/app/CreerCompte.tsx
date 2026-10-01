@@ -10,6 +10,7 @@ import { pseudoDisponible, saveUsername } from '../data/account';
 import { USERNAME_MAX, USERNAME_MIN, validateUsername } from '../data/username';
 import { EVENTS, track } from '../data/analytics';
 import { ConnexionCode } from './Connexion';
+import type { Sens } from './connexionBascule';
 import { moyenConnexion } from './entonnoir';
 import type { Raison } from './essai';
 import { Mochi } from '../ui/Mochi';
@@ -33,13 +34,15 @@ function BoutonRetour({ onClick }: { onClick: () => void }) {
 
 /** « Crée ton compte » : dit pourquoi, ce qui est gardé, puis une seule action. `anonyme` : session d'un ancien défi. */
 export function CreerCompte({ db, raison, anonyme = false, onRetour, onConditions }: { db: Db; raison: Raison; anonyme?: boolean; onRetour: () => void; onConditions?: () => void }) {
+  // #353 : « J'ai déjà un compte » (ou une adresse déjà prise) fait passer l'écran en « Connecte-toi ».
+  const [sens, setSens] = useState<Sens>('creer');
   return (
     <div className="creer-compte" data-testid="creer-compte" data-raison={raison}>
       <BoutonRetour onClick={onRetour} />
       <div className="creer-tete">
         <Mochi size={64} />
-        <h2 className="creer-titre">{t('creer.titre')}</h2>
-        <p className="creer-raison">{fr(t(`creer.raison.${raison}`))}</p>
+        <h2 className="creer-titre">{t(sens === 'creer' ? 'creer.titre' : 'connexion.titre')}</h2>
+        <p className="creer-raison">{fr(sens === 'creer' ? t(`creer.raison.${raison}`) : t('connexion.raison'))}</p>
       </div>
       <section className="creer-garde" aria-labelledby="creer-garde-titre">
         <p id="creer-garde-titre" className="creer-garde-titre">{fr(t('creer.garde.titre'))}</p>
@@ -48,7 +51,7 @@ export function CreerCompte({ db, raison, anonyme = false, onRetour, onCondition
         </ul>
         <p className="muted small creer-appareils">{fr(t('creer.garde.appareils'))}</p>
       </section>
-      <ConnexionCode db={db} mode={anonyme ? 'liaison' : 'connexion'} moment="profil" onConditions={onConditions} />
+      <ConnexionCode db={db} mode={anonyme ? 'liaison' : 'connexion'} moment="profil" onConditions={onConditions} onSens={setSens} />
       <p className="muted small creer-gratuit">{fr(t('creer.gratuit'))}</p>
       <button type="button" className="lien creer-plus-tard" onClick={onRetour}>{t('creer.plusTard')}</button>
     </div>

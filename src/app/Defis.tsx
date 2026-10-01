@@ -22,6 +22,7 @@ import { useOnline } from './hooks';
 import { phraseEtat, phraseIssue, resumeDefi, vueDefi } from './defiAmi';
 import { LierEmail } from './Account';
 import { ConnexionCode } from './Connexion';
+import type { Sens } from './connexionBascule';
 import type { EtatCompte } from './essai';
 import '../ui/compte.css';
 import { fr } from '../ui/typo';
@@ -180,6 +181,7 @@ export function DefiArrivee({ db, jeton, inviteur = null, compte, onPartie, onAc
   const online = useOnline();
   const [erreur, setErreur] = useState<string | null>(null);
   const [essai, setEssai] = useState(0);
+  const [sens, setSens] = useState<Sens>('creer');
   const fait = useRef(false);
   useEffect(() => {
     if (!db || !online || fait.current || compte !== 'complet') return;
@@ -210,8 +212,9 @@ export function DefiArrivee({ db, jeton, inviteur = null, compte, onPartie, onAc
           <Board size={9} board={PLATEAU_VIDE} toPlay={1} interactive={false} />
         </div>
         <div className="card">
-          <p className="small" style={{ margin: '0 0 8px' }}><b>{fr(t('defi.arrivee.compte'))}</b></p>
-          <ConnexionCode db={db} mode={compte === 'anonyme' ? 'liaison' : 'connexion'} moment="arrivee" />
+          <p className="small" style={{ margin: '0 0 8px' }}><b>{fr(t(sens === 'creer' ? 'defi.arrivee.compte' : 'defi.arrivee.connexion'))}</b></p>
+          {/* #353 : une fois connecté (compte existant), le jeton est gardé : l'effet ci-dessus rejoint ce défi. */}
+          <ConnexionCode db={db} mode={compte === 'anonyme' ? 'liaison' : 'connexion'} moment="arrivee" onSens={setSens} />
         </div>
         <button type="button" className="lien creer-plus-tard" onClick={onAccueil}>{t('defi.retourAccueil')}</button>
       </div>

@@ -54,8 +54,10 @@ export function fauxServeur() {
 
     if (chemin === '/auth/v1/signup') return json({ message: 'Anonymous sign-ins are disabled' }, 422);
     if (chemin === '/auth/v1/otp') {
-      const { email } = req.postDataJSON() as { email: string };
-      emailsEnvoyes.push({ email, type: 'email' });
+      const { email, create_user } = req.postDataJSON() as { email: string; create_user?: boolean };
+      // #353 : connexion seule (`shouldCreateUser: false`) à une adresse inconnue : refus, comme Supabase.
+      if (create_user === false && !parEmail.has(email)) return json({ code: 422, error_code: 'otp_disabled', msg: 'Signups not allowed for otp' }, 422);
+      emailsEnvoyes.push({ email, type: create_user === false ? 'connexion' : 'email' });
       return json({});
     }
     if (chemin === '/auth/v1/verify') {
@@ -82,6 +84,10 @@ export function fauxServeur() {
     }
     if (chemin === '/auth/v1/user') {
       if (!u) return json({ message: 'no session' }, 401);
+      if (req.method() === 'PUT' && parEmail.has((req.postDataJSON() as { email?: string }).email ?? '')) {
+        // #353 : l'adresse a déjà un compte, comme Supabase (422 `email_exists`).
+        return json({ code: 422, error_code: 'email_exists', msg: 'A user with this email address has already been registered' }, 422);
+      }
       if (req.method() === 'PUT') { u.email = (req.postDataJSON() as { email?: string }).email; emailsEnvoyes.push({ email: u.email ?? '', type: 'email_change' }); }
       return json({ ...userJson(u), new_email: u.email });
     }
@@ -145,7 +151,14 @@ export function fauxServeur() {
     }
     return json({});
   }
-  return { traiter, appels, games, defis, profiles, emailsEnvoyes, sessionAnonyme };
+  /** Compte déjà créé (avec son pseudo), pour se connecter avec son adresse (#353). */
+  function compteExistant(email: string, pseudo: string | null, id = '00000000-0000-4000-8000-0000000000ee') {
+    const v: Utilisateur = { id, anonyme: false, email };
+    parEmail.set(email, v);
+    profiles.push({ id, username: pseudo, rating: 1500, streak_days: 0, streak_last: null, streak_freezes: 0 });
+    return v;
+  }
+  return { traiter, appels, games, defis, profiles, emailsEnvoyes, sessionAnonyme, compteExistant };
 }
 
 export type FauxServeur = ReturnType<typeof fauxServeur>;

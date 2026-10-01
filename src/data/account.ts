@@ -22,6 +22,43 @@ export async function sendMagicLink(db: Db, email: string): Promise<Result<null>
 }
 export const envoyerCode = sendMagicLink;
 
+/** Erreur d'auth telle que renvoyée par supabase-js (AuthApiError) : seuls ces champs servent. */
+export interface ErreurAuth { status?: number; code?: string; message?: string }
+
+/**
+ * #353 : l'adresse a déjà un compte (refus de `updateUser({ email })` sur une session anonyme). Supabase répond 422
+ * `email_exists` ; les serveurs plus anciens, 422 sans code.
+ */
+export function adresseDejaPrise(e: ErreurAuth | null | undefined): boolean {
+  if (!e) return false;
+  if (e.code === 'email_exists' || e.code === 'user_already_exists') return true;
+  return !e.code && e.status === 422;
+}
+
+/** #353 : aucun compte avec cette adresse (`signInWithOtp` avec `shouldCreateUser: false`). */
+export function aucunCompte(e: ErreurAuth | null | undefined): boolean {
+  if (!e) return false;
+  return e.code === 'otp_disabled' || e.code === 'user_not_found' || /signups? not allowed/i.test(e.message ?? '');
+}
+
+/** Échec d'envoi du code, avec la raison qui fait changer l'écran (#353). */
+export type EchecEnvoi = { ok: false; error: string; raison?: 'pris' | 'inconnu' };
+
+/**
+ * Connexion à un compte qui existe déjà (#353) : code par e-mail, sans jamais créer de compte. Adresse inconnue :
+ * « Aucun compte avec cette adresse. Crée ton compte. » La session en place (anonyme comprise) n'est pas touchée :
+ * seule la vérification du code la remplace.
+ */
+export async function envoyerCodeConnexion(db: Db, email: string): Promise<Result<null> | EchecEnvoi> {
+  const { error } = await db.auth.signInWithOtp({
+    email: email.trim(),
+    options: { emailRedirectTo: window.location.origin, shouldCreateUser: false }
+  });
+  if (!error) return { ok: true, value: null };
+  if (aucunCompte(error)) return { ok: false, error: t('connexion.inconnu'), raison: 'inconnu' };
+  return { ok: false, error: t(error.status === 429 ? 'erreur.tropDEssais' : 'erreur.envoiLien') };
+}
+
 /** Nombre de chiffres du code (réglage « Email OTP Length » de Supabase, à laisser à 6). */
 export const LONGUEUR_CODE = 6;
 
