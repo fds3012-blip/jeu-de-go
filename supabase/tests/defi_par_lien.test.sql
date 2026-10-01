@@ -33,11 +33,18 @@ end;
 $$;
 grant execute on all functions in schema pg_temp to anon, authenticated, service_role;
 
--- Trois joueurs : Alice crée le défi, Bruno l'ouvre avec une session anonyme, Chloé est une tierce personne.
+-- Trois joueurs : Alice crée le défi, Bruno l'ouvre, Chloé est une tierce personne. Depuis #343, il faut un compte
+-- avec pseudo pour créer ou rejoindre un défi (20260930233100_compte_obligatoire.sql) ; Denis, anonyme, est refusé.
 insert into auth.users (id, email, is_anonymous) values
   ('aaaaaaaa-0000-4000-8000-000000000001', 'alice@exemple.test', false),
-  ('bbbbbbbb-0000-4000-8000-000000000002', null, true),
-  ('cccccccc-0000-4000-8000-000000000003', 'chloe@exemple.test', false);
+  ('bbbbbbbb-0000-4000-8000-000000000002', 'bruno@exemple.test', false),
+  ('cccccccc-0000-4000-8000-000000000003', 'chloe@exemple.test', false),
+  ('dddddddd-0000-4000-8000-000000000004', null, true);
+insert into public.profiles (id, username) values
+  ('aaaaaaaa-0000-4000-8000-000000000001', 'Alice'), ('bbbbbbbb-0000-4000-8000-000000000002', 'Bruno'),
+  ('cccccccc-0000-4000-8000-000000000003', 'Chloe'), ('dddddddd-0000-4000-8000-000000000004', null)
+  on conflict (id) do update set username = excluded.username;
+\set denis '''dddddddd-0000-4000-8000-000000000004'''
 \set alice '''aaaaaaaa-0000-4000-8000-000000000001'''
 \set bruno '''bbbbbbbb-0000-4000-8000-000000000002'''
 \set chloe '''cccccccc-0000-4000-8000-000000000003'''
@@ -47,7 +54,7 @@ set local role anon;
 select pg_temp.doit_refuser('select * from public.creer_defi()', 'permission denied');
 reset role;
 set local role authenticated;
-select pg_temp.doit_refuser('select * from public.creer_defi()', 'Connexion requise');
+select pg_temp.doit_refuser('select * from public.creer_defi()', 'Crée ton compte');
 select pg_temp.connecte(:alice);
 select partie_id as partie, jeton from public.creer_defi() \gset
 select pg_temp.egal(:'jeton' ~ '^[A-Za-z0-9_-]{32}$', true, 'format du jeton');
@@ -70,10 +77,13 @@ set local role anon;
 select pg_temp.doit_refuser('select count(*) from public.defis', 'permission denied');
 reset role;
 
--- 3. Rejoindre : Bruno (session anonyme) prend Noir ; la partie commence ; le délai de 3 jours démarre.
+-- 3. Rejoindre : une session anonyme est refusée (#343) ; Bruno (compte avec pseudo) prend Noir ; la partie
+--    commence ; le délai de 3 jours démarre.
 set local role authenticated;
-select pg_temp.connecte(:bruno, true);
-select pg_temp.egal(public.rejoindre_defi(:'jeton'), :'partie'::uuid, 'l''invité anonyme rejoint');
+select pg_temp.connecte(:denis, true);
+select pg_temp.doit_refuser(format('select public.rejoindre_defi(%L)', :'jeton'), 'Crée ton compte');
+select pg_temp.connecte(:bruno);
+select pg_temp.egal(public.rejoindre_defi(:'jeton'), :'partie'::uuid, 'l''invité rejoint');
 select pg_temp.egal((select black_id from public.games where id = :'partie'), :bruno::uuid, 'invité en Noir');
 select pg_temp.egal((select status::text from public.games where id = :'partie'), 'active', 'partie commencée');
 select pg_temp.egal((select date_limite from public.defis), now() + interval '3 days', 'délai de 3 jours');
@@ -85,7 +95,7 @@ select pg_temp.egal((select black_id from public.games where id = :'partie'), :b
 
 -- 4. Coups : jouer_coup_defi est réservée à la fonction serveur (clé service).
 select pg_temp.doit_refuser(format('select public.jouer_coup_defi(%L, %L, '''', ''ee'')', :'partie', :bruno), 'permission denied');
-select pg_temp.connecte(:bruno, true);
+select pg_temp.connecte(:bruno);
 -- La RLS de games n'autorise la mise à jour que des parties contre l'IA : aucune ligne touchée.
 update public.games set moves = 'ee' where id = :'partie';
 select pg_temp.egal((select moves from public.games where id = :'partie'), '', 'aucun coup écrit directement par un joueur');
@@ -126,7 +136,7 @@ reset role;
 set local role authenticated;
 select pg_temp.connecte(:alice);
 select partie_id as partie2, jeton as jeton2 from public.creer_defi() \gset
-select pg_temp.connecte(:bruno, true);
+select pg_temp.connecte(:bruno);
 select pg_temp.egal(public.rejoindre_defi(:'jeton2'), :'partie2'::uuid, 'deuxième défi rejoint');
 select pg_temp.egal(public.victoire_au_temps(:'partie2'), null::text, 'dans le délai : la partie continue');
 reset role;

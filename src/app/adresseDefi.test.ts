@@ -47,7 +47,7 @@ describe('filet de sécurité avant envoi', () => {
   });
 
   it('les événements defi_* ne portent ni jeton, ni partie, ni lien', () => {
-    const sources = ['./Defis.tsx', './Account.tsx'].map(lire).join('\n');
+    const sources = ['./Defis.tsx', './Account.tsx', './Connexion.tsx'].map(lire).join('\n');
     const appels = [...sources.matchAll(/track\(EVENTS\.defi\w+,\s*(\{[^}]*\})/g)].map(m => m[1]);
     expect(appels.length).toBe(3);
     for (const props of appels) expect(props).not.toMatch(/jeton|partie|lien|id\b|email/i);

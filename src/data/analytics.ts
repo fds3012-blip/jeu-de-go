@@ -26,8 +26,14 @@ export const EVENTS = {
   // Leçon ouverte (#198) : dénominateur de l'entonnoir des leçons (`lecon_terminee` / `lecon_commencee`).
   leconCommencee: 'lecon_commencee',
   leconTerminee: 'lecon_terminee',
+  // E-mail de connexion envoyé (code à 6 chiffres et lien, #343 ; `moyen` : `code`).
   lienConnexionEnvoye: 'lien_connexion_envoye',
-  inscription: 'inscription',
+  // Entonnoir essai → compte (#343). `essai_limite_atteinte` : écran « Crée ton compte » ouvert (`raison`, `parties`).
+  // `compte_cree` : connecté sans pseudo, donc nouveau compte (`moyen` : `code` ou `lien` ; `origine`).
+  // `pseudo_choisi` : premier pseudo enregistré (remplace `inscription`) ; le compte est complet.
+  essaiLimiteAtteinte: 'essai_limite_atteinte',
+  compteCree: 'compte_cree',
+  pseudoChoisi: 'pseudo_choisi',
   // L'écran des problèmes n'existe pas encore : constante prête pour lui.
   problemeResolu: 'probleme_resolu',
   // « Continuer » à ta mesure (#284) : premier essai d'un problème noté (hors Go du jour, lien partagé, déjà réussi ou vu).

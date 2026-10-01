@@ -5,6 +5,7 @@
 // ouvert (`hashchange`), et prévient l'app par `ecouterJetonDefi`. Le filet avant envoi (fragment et paramètres
 // sensibles retirés des adresses envoyées à PostHog et Sentry) est src/data/urlSensible.ts (#336) : pas de doublon ici.
 import { jetonDeLAdresse } from './defiAmi';
+import { inviteurDepuisLien } from '../data/defi';
 
 type Emplacement = Pick<Location, 'hash' | 'pathname' | 'search'>;
 type Historique = Pick<History, 'replaceState' | 'state'>;
@@ -21,18 +22,22 @@ export function prendreJeton(loc: Emplacement, hist: Historique): string | null 
 
 const navigateur = typeof location !== 'undefined' && typeof history !== 'undefined';
 
+/** Pseudo de qui invite (`&de=Pseudo`, #343), lu au chargement AVANT que le fragment ne soit retiré ; null sinon. */
+export const INVITEUR_AU_CHARGEMENT: string | null = navigateur && /^#defi=/.test(location.hash) ? inviteurDepuisLien(location.hash) : null;
+
 /** Jeton lu au chargement ; '' si le fragment était mal formé (le défi est alors « introuvable »), null sans lien. */
 export const JETON_AU_CHARGEMENT: string | null = navigateur ? prendreJeton(location, history) : null;
 
-const abonnes = new Set<(jeton: string) => void>();
-/** Lien ouvert dans un onglet déjà ouvert : `f` reçoit le jeton, déjà retiré de l'adresse. */
-export function ecouterJetonDefi(f: (jeton: string) => void): () => void {
+const abonnes = new Set<(jeton: string, inviteur: string | null) => void>();
+/** Lien ouvert dans un onglet déjà ouvert : `f` reçoit le jeton (déjà retiré de l'adresse) et le pseudo de qui invite. */
+export function ecouterJetonDefi(f: (jeton: string, inviteur: string | null) => void): () => void {
   abonnes.add(f);
   return () => { abonnes.delete(f); };
 }
 if (navigateur && typeof window !== 'undefined') {
   window.addEventListener('hashchange', () => {
+    const inviteur = /^#defi=/.test(location.hash) ? inviteurDepuisLien(location.hash) : null;
     const jeton = prendreJeton(location, history);
-    if (jeton !== null) abonnes.forEach(f => f(jeton));
+    if (jeton !== null) abonnes.forEach(f => f(jeton, inviteur));
   });
 }

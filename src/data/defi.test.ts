@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { Db } from './supabase';
 import {
-  abandonnerDefi, abonnerDefi, assurerSession, CODES_REFUS, messageRefus, compteDe, creerDefi, estAnonyme, garderMonCompte, jetonDepuisLien, jouerCoupDefi,
+  abandonnerDefi, abonnerDefi, exigerCompte, CODES_REFUS, inviteurDepuisLien, messageRefus, compteDe, creerDefi, estAnonyme, garderMonCompte, jetonDepuisLien, jouerCoupDefi,
   lienDefi, lireDefi, mesDefis, ouvrirDefi, tempsRestant
 } from './defi';
 import type { Session } from '@supabase/supabase-js';
@@ -44,6 +44,17 @@ describe('lien du défi', () => {
     expect(jetonDepuisLien(`https://go.exemple/defi#${JETON}`)).toBe(JETON);
   });
 
+  it('ajoute le pseudo de qui invite après le jeton (#343), sans gêner la lecture du jeton', () => {
+    const lien = lienDefi(JETON, 'https://go.exemple', 'Flo_rian');
+    expect(lien).toBe(`https://go.exemple/#defi=${JETON}&de=Flo_rian`);
+    expect(jetonDepuisLien(lien)).toBe(JETON);
+    expect(inviteurDepuisLien(lien)).toBe('Flo_rian');
+    expect(inviteurDepuisLien(`#defi=${JETON}`)).toBeNull();
+    expect(inviteurDepuisLien(`#defi=${JETON}&de=<b>x</b>`)).toBeNull();
+    // Un pseudo qui n'a pas la forme d'un pseudo n'entre pas dans le lien.
+    expect(lienDefi(JETON, 'https://go.exemple', 'é t')).toBe(`https://go.exemple/#defi=${JETON}`);
+  });
+
   it('refuse un jeton mal formé', () => {
     expect(jetonDepuisLien('https://go.exemple/defi#court')).toBeNull();
     expect(jetonDepuisLien(`https://go.exemple/defi#${JETON}<script>`)).toBeNull();
@@ -51,55 +62,70 @@ describe('lien du défi', () => {
   });
 });
 
-describe('assurerSession', () => {
-  it('garde la session existante', async () => {
+describe('exigerCompte (#343)', () => {
+  it('garde la session d’un vrai compte', async () => {
     const c = client({ session: { user: { id: 'u1', is_anonymous: false } } });
-    expect(await assurerSession(c.db)).toEqual({ ok: true, value: { userId: 'u1', anonyme: false } });
+    expect(await exigerCompte(c.db)).toEqual({ ok: true, value: { userId: 'u1', anonyme: false } });
     expect(c.signInAnonymously).not.toHaveBeenCalled();
   });
 
-  it('ouvre une session anonyme sinon', async () => {
+  it('n’ouvre plus jamais de session anonyme', async () => {
     const c = client();
-    expect(await assurerSession(c.db)).toEqual({ ok: true, value: { userId: 'anon-1', anonyme: true } });
+    expect((await exigerCompte(c.db)).ok).toBe(false);
+    expect(c.signInAnonymously).not.toHaveBeenCalled();
   });
 
-  it('échoue proprement si la session anonyme est refusée', async () => {
-    const c = client({ anonyme: { data: { user: null }, error: { message: 'Anonymous sign-ins are disabled' } } });
-    expect((await assurerSession(c.db)).ok).toBe(false);
+  it('refuse une ancienne session anonyme : elle doit d’abord lier un e-mail', async () => {
+    const c = client({ session: { user: { id: 'anon', is_anonymous: true } } });
+    expect((await exigerCompte(c.db)).ok).toBe(false);
   });
 });
 
+const COMPTE = { user: { id: 'u1', is_anonymous: false } };
+
 describe('creerDefi', () => {
-  it('appelle creer_defi et renvoie partie et jeton', async () => {
-    const c = client({ rpc: { creer_defi: { data: [{ partie_id: PARTIE, jeton: JETON }], error: null } } });
-    expect(await creerDefi(c.db)).toEqual({ ok: true, value: { partieId: PARTIE, jeton: JETON, anonyme: true } });
+  it('appelle creer_defi avec un compte et renvoie partie et jeton', async () => {
+    const c = client({ session: COMPTE, rpc: { creer_defi: { data: [{ partie_id: PARTIE, jeton: JETON }], error: null } } });
+    expect(await creerDefi(c.db)).toEqual({ ok: true, value: { partieId: PARTIE, jeton: JETON, anonyme: false } });
     expect(c.rpc).toHaveBeenCalledWith('creer_defi');
-    expect(c.signInAnonymously.mock.invocationCallOrder[0]).toBeLessThan(c.rpc.mock.invocationCallOrder[0]);
+  });
+
+  it('sans compte : aucun appel au serveur', async () => {
+    const c = client();
+    expect((await creerDefi(c.db)).ok).toBe(false);
+    expect(c.rpc).not.toHaveBeenCalled();
+    expect(c.signInAnonymously).not.toHaveBeenCalled();
   });
 
   it('remonte le refus du serveur', async () => {
-    const c = client({ rpc: { creer_defi: { data: null, error: { message: 'Tu as déjà 20 défis en attente' } } } });
+    const c = client({ session: COMPTE, rpc: { creer_defi: { data: null, error: { message: 'Tu as déjà 20 défis en attente' } } } });
     expect(await creerDefi(c.db)).toEqual({ ok: false, error: 'Tu as déjà 20 défis en attente' });
   });
 });
 
 describe('ouvrirDefi', () => {
-  it('rejoint avec le jeton, après une session anonyme', async () => {
-    const c = client({ rpc: { rejoindre_defi: { data: PARTIE, error: null } }, lignes: { defis: { data: { createur_id: 'createur' }, error: null } } });
-    expect(await ouvrirDefi(c.db, JETON)).toEqual({ ok: true, value: { partieId: PARTIE, userId: 'anon-1', anonyme: true, createur: false } });
-    expect(c.signInAnonymously).toHaveBeenCalledTimes(1);
+  it('rejoint avec le jeton, avec son compte', async () => {
+    const c = client({ session: COMPTE, rpc: { rejoindre_defi: { data: PARTIE, error: null } }, lignes: { defis: { data: { createur_id: 'createur' }, error: null } } });
+    expect(await ouvrirDefi(c.db, JETON)).toEqual({ ok: true, value: { partieId: PARTIE, userId: 'u1', anonyme: false, createur: false } });
+    expect(c.signInAnonymously).not.toHaveBeenCalled();
     expect(c.rpc).toHaveBeenCalledWith('rejoindre_defi', { p_jeton: JETON });
   });
 
-  it('ne contacte pas le serveur pour un jeton invalide', async () => {
+  it('sans compte : pas de session anonyme, pas d’appel', async () => {
     const c = client();
-    expect((await ouvrirDefi(c.db, 'abc')).ok).toBe(false);
+    expect((await ouvrirDefi(c.db, JETON)).ok).toBe(false);
     expect(c.rpc).not.toHaveBeenCalled();
     expect(c.signInAnonymously).not.toHaveBeenCalled();
   });
 
+  it('ne contacte pas le serveur pour un jeton invalide', async () => {
+    const c = client({ session: COMPTE });
+    expect((await ouvrirDefi(c.db, 'abc')).ok).toBe(false);
+    expect(c.rpc).not.toHaveBeenCalled();
+  });
+
   it('remonte « déjà un adversaire »', async () => {
-    const c = client({ rpc: { rejoindre_defi: { data: null, error: { message: 'Ce défi a déjà un adversaire' } } } });
+    const c = client({ session: COMPTE, rpc: { rejoindre_defi: { data: null, error: { message: 'Ce défi a déjà un adversaire' } } } });
     expect(await ouvrirDefi(c.db, JETON)).toEqual({ ok: false, error: 'Ce défi a déjà un adversaire' });
   });
 });

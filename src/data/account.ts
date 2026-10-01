@@ -7,14 +7,61 @@ import { t } from '../content/i18n';
 export type Profile = Tables<'profiles'>;
 export type Result<T> = { ok: true; value: T } | { ok: false; error: string };
 
-/** Envoie le lien de connexion par e-mail (crée le compte s'il n'existe pas). */
+/**
+ * Envoie l'e-mail de connexion (crée le compte s'il n'existe pas). Depuis #343, il porte un code à 6 chiffres
+ * (`{{ .Token }}` dans le modèle Supabase, docs/growth/connexion-code.md) à saisir dans l'app, et garde le lien
+ * comme second moyen. Le code marche là où le lien échoue : navigateur intégré de Messenger ou WhatsApp, app installée.
+ */
 export async function sendMagicLink(db: Db, email: string): Promise<Result<null>> {
   const { error } = await db.auth.signInWithOtp({
     email: email.trim(),
-    options: { emailRedirectTo: window.location.origin }
+    options: { emailRedirectTo: window.location.origin, shouldCreateUser: true }
   });
   if (error) return { ok: false, error: t(error.status === 429 ? 'erreur.tropDEssais' : 'erreur.envoiLien') };
   return { ok: true, value: null };
+}
+export const envoyerCode = sendMagicLink;
+
+/** Nombre de chiffres du code (réglage « Email OTP Length » de Supabase, à laisser à 6). */
+export const LONGUEUR_CODE = 6;
+
+/** Garde les chiffres d'une saisie ou d'un collage (« 123 456 », « Code : 123456 »), au plus LONGUEUR_CODE. */
+export function nettoyerCode(brut: string): string {
+  return brut.replace(/\D/g, '').slice(0, LONGUEUR_CODE);
+}
+
+/** Vrai si le code a le bon nombre de chiffres. */
+export const codeComplet = (code: string) => new RegExp(`^\\d{${LONGUEUR_CODE}}$`).test(code);
+
+/**
+ * Vérifie le code reçu par e-mail. `email` : connexion ou création de compte (`signInWithOtp`) ;
+ * `email_change` : e-mail ajouté à une session sans compte (`updateUser`, ancien défi par lien). La session s'ouvre
+ * dans CE navigateur, quel que soit celui où l'e-mail a été lu.
+ */
+export async function verifierCode(db: Db, email: string, code: string, type: 'email' | 'email_change' = 'email'): Promise<Result<null>> {
+  const token = nettoyerCode(code);
+  if (!codeComplet(token)) return { ok: false, error: t('connexion.code.incomplet', { n: LONGUEUR_CODE }) };
+  const { data, error } = await db.auth.verifyOtp({ email: email.trim(), token, type });
+  if (error) return { ok: false, error: t(error.status === 429 ? 'erreur.tropDEssais' : error.status && error.status < 500 ? 'connexion.code.faux' : 'erreur.serveur') };
+  // E-mail ajouté à une session anonyme : sans nouvelle session renvoyée, le jeton en place dit encore « anonyme ».
+  // On le renouvelle pour que l'app (et la RLS) voient tout de suite un vrai compte.
+  if (type === 'email_change' && !data?.session) await db.auth.refreshSession().catch(() => null);
+  return { ok: true, value: null };
+}
+
+/**
+ * Pseudo libre ? Même règle que l'index unique de la base (sans tenir compte des majuscules). Les profils sont
+ * lisibles par tous (RLS « Profils visibles par tous ») ; `_` est un joker de ILIKE, il est donc échappé.
+ * La base revérifie à l'enregistrement : ceci n'est qu'une aide à la saisie.
+ */
+export async function pseudoDisponible(db: Db, pseudo: string, userId?: string): Promise<Result<boolean>> {
+  const check = validateUsername(pseudo);
+  if (!check.ok) return check;
+  let requete = db.from('profiles').select('id').ilike('username', check.value.replace(/[\\%_]/g, c => `\\${c}`));
+  if (userId) requete = requete.neq('id', userId);
+  const { data, error } = await requete.limit(1);
+  if (error) return { ok: false, error: t('pseudo.erreur') };
+  return { ok: true, value: (data ?? []).length === 0 };
 }
 
 export async function fetchProfile(db: Db, userId: string): Promise<Result<Profile | null>> {

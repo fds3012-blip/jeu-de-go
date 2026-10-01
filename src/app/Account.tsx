@@ -1,10 +1,12 @@
 import { useEffect, useState, type CSSProperties, type FormEvent } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase, type Db } from '../data/supabase';
-import { motSuppression, confirmationValide, deleteMyAccount, fetchProfile, saveUsername, sendMagicLink, type Profile } from '../data/account';
-import { USERNAME_MAX, USERNAME_MIN, isEmail, validateUsername } from '../data/username';
+import { motSuppression, confirmationValide, deleteMyAccount, fetchProfile, saveUsername, type Profile } from '../data/account';
+import { USERNAME_MAX, USERNAME_MIN, validateUsername } from '../data/username';
 import { EVENTS, identify, track } from '../data/analytics';
-import { compteDe, estAnonyme, garderMonCompte } from '../data/defi';
+import { compteDe, estAnonyme } from '../data/defi';
+import { ConnexionCode } from './Connexion';
+import { moyenConnexion } from './entonnoir';
 import { fr } from '../ui/typo';
 import { t } from '../content/i18n';
 
@@ -144,33 +146,10 @@ export function SupprimerCompte({ db, onSupprime = () => window.location.assign(
   );
 }
 
+/** Connexion ou création de compte : code à 6 chiffres par e-mail (#343), le lien de l'e-mail en second moyen. */
 function SignIn({ db }: { db: Db }) {
-  const [email, setEmail] = useState('');
-  const [sent, setSent] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
-
-  const submit = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!isEmail(email)) { setError(t('compte.emailInvalide')); return; }
-    setBusy(true); setError('');
-    const r = await sendMagicLink(db, email);
-    setBusy(false);
-    if (r.ok) { setSent(true); track(EVENTS.lienConnexionEnvoye); } else setError(r.error);
-  };
-
-  if (sent) {
-    return (
-      <div className="card" role="status">
-        <b>{t('compte.regardeEmails')}</b>
-        <p className="muted small" style={{ margin: '4px 0 0' }}>{t('compte.lienEnvoye', { email: email.trim() })}</p>
-        <button className="btn" style={full} onClick={() => setSent(false)}>{t('compte.changerAdresse')}</button>
-      </div>
-    );
-  }
-
   return (
-    <form className="card" onSubmit={submit} noValidate>
+    <div className="card">
       <b>{t('compte.creer')}</b>
       {/* #214 : promesse exacte. Seules la série et les leçons montent sur le serveur (importer_serie_appareil, syncProgress).
           Deux lignes à icône : ce qui te suit, ce qui reste sur ce téléphone. */}
@@ -184,13 +163,9 @@ function SignIn({ db }: { db: Db }) {
           {fr(t('compte.resteIci'))}
         </li>
       </ul>
-      <p className="muted small" style={{ margin: '4px 0 10px' }}>{fr(t('compte.sansMotDePasse'))}</p>
-      <label className="small" htmlFor="account-email">{t('compte.email')}</label>
-      <input id="account-email" type="email" inputMode="email" autoComplete="email" required style={{ ...field, marginTop: 4 }}
-        value={email} onChange={e => { setEmail(e.target.value); setError(''); }} aria-invalid={!!error} aria-describedby="account-email-error" />
-      <p id="account-email-error" className="small" role="alert" style={{ color: 'var(--vermillon)', margin: error ? '6px 0 0' : 0 }}>{error}</p>
-      <button className="btn primary" style={full} type="submit" disabled={busy}>{t(busy ? 'compte.envoi' : 'compte.recevoirLien')}</button>
-    </form>
+      <p className="muted small" style={{ margin: '4px 0 10px' }}>{fr(t('connexion.sansMotDePasse'))}</p>
+      <ConnexionCode db={db} />
+    </div>
   );
 }
 
@@ -209,7 +184,7 @@ function UsernameForm({ db, profile, canCancel, onDone, onCancel, onSignOut }: {
     setBusy(true); setError('');
     const r = await saveUsername(db, profile.id, check.value);
     setBusy(false);
-    if (r.ok) { if (!canCancel) track(EVENTS.inscription); onDone(r.value); } else setError(r.error);
+    if (r.ok) { if (!canCancel) track(EVENTS.pseudoChoisi, { moyen: moyenConnexion() }); onDone(r.value); } else setError(r.error);
   };
 
   return (
@@ -229,45 +204,18 @@ function UsernameForm({ db, profile, canCancel, onDone, onCancel, onSignOut }: {
 }
 
 /**
- * Session sans compte (ouverte par un défi, #81) : ajouter un e-mail relie la session à un compte, sans changer
- * d'identifiant, donc sans perdre les parties en cours. Un lien de connexion classique ouvrirait un autre compte.
+ * Session sans compte (ouverte par un ancien défi, #81) : ajouter un e-mail relie la session à un compte, sans changer
+ * d'identifiant, donc sans perdre les parties en cours. Depuis #343, un code à 6 chiffres confirme l'e-mail dans l'app
+ * (le lien de l'e-mail marche aussi). Le pseudo est ensuite demandé par l'écran de pseudo obligatoire.
  */
-export function LierEmail({ db, moment = 'profil', coups = null, titre = t('compte.anonyme.titre'), texte = t('compte.anonyme.texte'), onPlusTard }: {
-  db: Db; moment?: 'profil' | 'apres_coup'; coups?: number | null; titre?: string; texte?: string; onPlusTard?: () => void;
+export function LierEmail({ db, moment = 'profil', coups = null, titre = t('compte.anonyme.titre'), texte = t('compte.anonyme.texte') }: {
+  db: Db; moment?: 'profil' | 'apres_coup' | 'arrivee'; coups?: number | null; titre?: string; texte?: string;
 }) {
-  const [email, setEmail] = useState('');
-  const [sent, setSent] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
-
-  const submit = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!isEmail(email)) { setError(t('compte.emailInvalide')); return; }
-    setBusy(true); setError('');
-    const r = await garderMonCompte(db, email, window.location.origin);
-    setBusy(false);
-    if (r.ok) { setSent(true); track(EVENTS.defiInscription, { moment, coups }); } else setError(r.error);
-  };
-
-  if (sent) {
-    return (
-      <div className="card" role="status" data-testid="lier-envoye">
-        <b>{t('compte.regardeEmails')}</b>
-        <p className="muted small" style={{ margin: '4px 0 0' }}>{fr(t('defi.inscription.envoye'))}</p>
-      </div>
-    );
-  }
-
   return (
-    <form className="card" onSubmit={submit} noValidate aria-labelledby={`lier-${moment}`}>
+    <div className="card" aria-labelledby={`lier-${moment}`} role="group" data-testid="lier-email">
       <b id={`lier-${moment}`}>{titre}</b>
       <p className="muted small" style={{ margin: '4px 0 10px' }}>{fr(texte)}</p>
-      <label className="small" htmlFor={`lier-email-${moment}`}>{t('defi.inscription.email')}</label>
-      <input id={`lier-email-${moment}`} type="email" inputMode="email" autoComplete="email" required style={{ ...field, marginTop: 4 }}
-        value={email} onChange={e => { setEmail(e.target.value); setError(''); }} aria-invalid={!!error} aria-describedby={`lier-erreur-${moment}`} />
-      <p id={`lier-erreur-${moment}`} className="small" role="alert" style={{ color: 'var(--vermillon)', margin: error ? '6px 0 0' : 0 }}>{error}</p>
-      <button className="btn primary" style={full} type="submit" disabled={busy}>{t(busy ? 'defi.inscription.envoi' : 'defi.inscription.envoyer')}</button>
-      {onPlusTard && <button className="lien" style={{ ...full, marginTop: 6 }} type="button" onClick={onPlusTard}>{t('defi.inscription.plusTard')}</button>}
-    </form>
+      <ConnexionCode db={db} mode="liaison" moment={moment} coups={coups} envoyer={t('defi.inscription.envoyer')} />
+    </div>
   );
 }
