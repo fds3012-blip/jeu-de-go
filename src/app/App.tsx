@@ -1,8 +1,8 @@
 import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 // Écrans chargés à la demande (perf, #323) : seul l'accueil est dans le JS initial.
-import { DefiArrivee, DefiPartie, DefisEcran, Game, LearnHome, LessonPlayer, Placement, Profil, Puzzles, SeriePratique } from './ecrans';
+import { CreerCompte, DefiArrivee, DefiPartie, DefisEcran, Game, LearnHome, LessonPlayer, Placement, Profil, PseudoObligatoire, Puzzles, SeriePratique } from './ecrans';
 import { CHAPITRES, LESSONS } from '../content/lessons';
-import { LESSONS_KEY, readLocal, writeLocal, useGelsServeur, useLessonProgress, useProfil, useSerie, useSession } from './hooks';
+import { LESSONS_KEY, readLocal, writeLocal, useGelsServeur, useLessonProgress, useProfil, usePseudo, useSerie, useSession } from './hooks';
 import { supabase } from '../data/supabase';
 import { useSettings, useStored } from './settings';
 import { aideActive } from './partie';
@@ -44,7 +44,9 @@ import { TAILLE_SERIE, THEMES_DE_LECON, serieDeLecon } from '../content/themes';
 import { estRedite } from '../content/redites';
 import type { Puzzle } from '../data/puzzles';
 import { compteDe, estAnonyme } from '../data/defi';
-import { JETON_AU_CHARGEMENT, ecouterJetonDefi } from './adresseDefi';
+import { INVITEUR_AU_CHARGEMENT, JETON_AU_CHARGEMENT, ecouterJetonDefi } from './adresseDefi';
+import { ESSAI_KEY, decider, etatCompte, lireEssai, noterPartieTerminee, partiesTerminees, type Acces, type EtatCompte, type Raison } from './essai';
+import { compteVientDEtreCree, moyenConnexion } from './entonnoir';
 import { useDefisAJouer } from './defisAJouer';
 import '../ui/defis.css';
 
@@ -95,8 +97,12 @@ function noterArrivee() {
 // de l'adresse par src/app/adresseDefi.ts, avant la mesure et tout événement (constat E14).
 const LIEN_DEFI = JETON_AU_CHARGEMENT;
 
-/** Écran du défi par lien : liste et création, arrivée par le lien, ou partie. */
-type VueDefi = { vue: 'liste' } | { vue: 'arrivee'; jeton: string } | { vue: 'partie'; id: string };
+/** Écran du défi par lien : liste et création, arrivée par le lien (avec le pseudo de qui invite), ou partie. */
+type VueDefi = { vue: 'liste' } | { vue: 'arrivee'; jeton: string; inviteur: string | null } | { vue: 'partie'; id: string };
+
+/** Ce que le joueur voulait faire quand l'écran « Crée ton compte » s'est ouvert : repris dès que son compte est complet. */
+type Reprise = { quoi: 'ordi'; contre: OpponentId } | { quoi: 'deux' } | { quoi: 'guidee' } | { quoi: 'lecon'; id: string }
+  | { quoi: 'defis' } | { quoi: 'placement' } | { quoi: 'importer' } | { quoi: 'problemes' };
 
 export function App() {
   const [tab, setTab] = useState<Tab>(LIEN_DU_JOUR !== null ? 'problemes' : 'jouer');
@@ -113,11 +119,11 @@ export function App() {
   const session = useSession(supabase);
   // Une session anonyme (ouverte pour un défi, #81) compte comme « pas de compte » : ni synchronisation, ni cote, ni série serveur.
   const compteId = compteDe(session);
-  const [defi, setDefi] = useState<VueDefi | null>(LIEN_DEFI !== null ? { vue: 'arrivee', jeton: LIEN_DEFI } : null);
+  const [defi, setDefi] = useState<VueDefi | null>(LIEN_DEFI !== null ? { vue: 'arrivee', jeton: LIEN_DEFI, inviteur: INVITEUR_AU_CHARGEMENT } : null);
   const { progress, state: syncState, record } = useLessonProgress(supabase, compteId);
   // Lien de défi ouvert alors que l'app est déjà ouverte (même onglet) : on part vers l'arrivée.
-  useEffect(() => ecouterJetonDefi(jeton => {
-    setTab('jouer'); setPlaying(false); setLessonId(null); setDefi({ vue: 'arrivee', jeton }); window.scrollTo({ top: 0 });
+  useEffect(() => ecouterJetonDefi((jeton, inviteur) => {
+    setTab('jouer'); setPlaying(false); setLessonId(null); setEcranCompte(null); setDefi({ vue: 'arrivee', jeton, inviteur }); window.scrollTo({ top: 0 });
   }), []);
   const done = LESSONS.filter(l => (progress[l.id] ?? 0) >= l.steps.length).length;
   const lesson = LESSONS.find(l => l.id === lessonId);
@@ -192,9 +198,42 @@ export function App() {
   });
   const [accordIgnore, setAccordIgnore] = useState(false);
   const consent = useConsentement();
-  const profil = useProfil(supabase);
+  // #343 : compte obligatoire avec pseudo. `clePseudo` relit le profil après le choix du pseudo.
+  const [clePseudo, setClePseudo] = useState(0);
+  const [pseudoChoisi, setPseudoChoisi] = useState<{ id: string; pseudo: string } | null>(null);
+  const profil = useProfil(supabase, clePseudo);
+  const pseudoLu = usePseudo(supabase, compteId, clePseudo);
+  const pseudo = pseudoChoisi && pseudoChoisi.id === compteId ? pseudoChoisi.pseudo : pseudoLu;
+  const etat: EtatCompte = etatCompte(session === undefined ? undefined : session ? { anonyme: estAnonyme(session) } : null, pseudo);
+  // Essai sans compte : parties terminées sur l'appareil (bilan d'avant #343 compris).
+  const [essaiBrut, setEssai] = useStored<unknown>(ESSAI_KEY, { terminees: 0 });
+  const essai = lireEssai(essaiBrut);
+  const terminees = partiesTerminees(essai, bilan);
+  const [ecranCompte, setEcranCompte] = useState<{ raison: Raison; reprise: Reprise | null } | null>(null);
+
+  /**
+   * Garde de l'essai (#343) : vrai si le joueur peut faire `a`. Sinon, l'écran « Crée ton compte » s'ouvre, et
+   * `reprise` sera faite dès que le compte est complet (e-mail vérifié et pseudo choisi).
+   */
+  function garde(a: Acces, reprise: Reprise | null = null): boolean {
+    const d = decider(a, etat, terminees, !!supabase);
+    if (d.ok) return true;
+    if (!supabase) return false;
+    track(EVENTS.essaiLimiteAtteinte, { raison: d.raison, parties: terminees });
+    setEcranCompte({ raison: d.raison, reprise });
+    window.scrollTo({ top: 0 });
+    return false;
+  }
+
+  /** Ouvre une leçon, si l'essai le permet (leçons 1 à 3 sans compte). */
+  function ouvrirLecon(id: string) {
+    const rang = LESSONS.findIndex(l => l.id === id);
+    if (!garde({ quoi: 'lecon', rang: rang < 0 ? 0 : rang }, { quoi: 'lecon', id })) return;
+    setTab('apprendre'); setLessonId(id); window.scrollTo({ top: 0 });
+  }
 
   function ouvrirPlacement() {
+    if (!garde({ quoi: 'placement' }, { quoi: 'placement' })) return;
     track(EVENTS.placementCommence, { refait: placement !== null });
     setEnPlacement(true); setTab('jouer'); setPlaying(false); setLessonId(null); setSerie3(null);
     window.scrollTo({ top: 0 });
@@ -204,11 +243,13 @@ export function App() {
   function ouvrirLeconsConseillees(kyu: number | null) {
     const chapitre = CHAPITRES[chapitreConseille(kyu, CHAPITRES.length)];
     const l = kyu === null ? LESSONS[0] : chapitre?.lecons.find(x => (progress[x.id] ?? 0) < x.steps.length) ?? chapitre?.lecons[0];
-    setEnPlacement(false); setTab('apprendre'); setLessonId(l?.id ?? null);
+    setEnPlacement(false); setTab('apprendre');
+    if (l) ouvrirLecon(l.id);
     window.scrollTo({ top: 0 });
   }
 
   function lancer(mode: 'ordi' | 'deux', contre: OpponentId = adv.id) {
+    if (!garde({ quoi: 'partie' }, mode === 'ordi' ? { quoi: 'ordi', contre } : { quoi: 'deux' })) return;
     // Première partie contre l'ordi : Mochi explique le but, une seule fois.
     const montrer = mode === 'ordi' && !introVue;
     setIntro(montrer);
@@ -231,6 +272,7 @@ export function App() {
    * Mochi repart du cran de la partie guidée précédente ; la première fois, de la force de l'adversaire choisi.
    */
   function lancerGuidee() {
+    if (!garde({ quoi: 'partie' }, { quoi: 'guidee' })) return;
     const oppIndex = OPPONENTS.findIndex(o => o.id === adv.id);
     setDepartGuide(typeof cranGuide === 'number' && Number.isFinite(cranGuide) ? cranGuide : cranDuNiveau(Math.max(0, oppIndex)));
     setIntro(false);
@@ -246,6 +288,8 @@ export function App() {
 
   function onResult(winner: 0 | 1 | 2, stats: StatsPartie) {
     setPartieFinie(true);
+    // Essai sans compte (#343) : chaque partie menée à son terme compte, sauf sur un plateau presque vide (#251).
+    if (!finTropTot(stats)) setEssai(noterPartieTerminee(essai));
     if (playing !== 'ordi') return;
     const issue: Issue = winner === 0 ? 'egalite' : winner === 1 ? 'victoire' : 'defaite';
     if (issue !== 'egalite') setBilan(enregistrer(bilan, adv.id, issue === 'victoire'));
@@ -273,7 +317,7 @@ export function App() {
       mochi: (
         <>
           <p>{fr(f.mochi)}</p>
-          {lecon && <button type="button" className="lien" onClick={() => { setPlaying(false); setResultat(null); setTab('apprendre'); setLessonId(lecon.id); window.scrollTo({ top: 0 }); }}>{t('fin.ouvrirLecon')}</button>}
+          {lecon && <button type="button" className="lien" onClick={() => { setPlaying(false); setResultat(null); setTab('apprendre'); ouvrirLecon(lecon.id); }}>{t('fin.ouvrirLecon')}</button>}
         </>
       ),
       action: (
@@ -289,21 +333,56 @@ export function App() {
   const [racineProblemes, setRacineProblemes] = useState(0);
   const go = (t: Tab) => {
     if (t === 'problemes' && tab === 'problemes') setRacineProblemes(n => n + 1);
-    setDefi(null); setAnnonceGel(null); setRetourSerie(null); setEnPlacement(false); setTab(t); setPlaying(false); setLessonId(null); setSerie3(null); setVueProfil('menu'); window.scrollTo({ top: 0 });
+    setDefi(null); setEcranCompte(null); setAnnonceGel(null); setRetourSerie(null); setEnPlacement(false); setTab(t); setPlaying(false); setLessonId(null); setSerie3(null); setVueProfil('menu'); window.scrollTo({ top: 0 });
   };
+
+  // Reprise de l'action demandée, dès que le compte est complet ; `compte_cree` quand un compte sans pseudo apparaît.
+  const executer = useRef<(r: Reprise) => void>(() => {});
+  executer.current = r => {
+    if (r.quoi === 'ordi') lancer('ordi', r.contre);
+    else if (r.quoi === 'deux') lancer('deux');
+    else if (r.quoi === 'guidee') lancerGuidee();
+    else if (r.quoi === 'lecon') ouvrirLecon(r.id);
+    else if (r.quoi === 'defis') { setTab('jouer'); setDefi({ vue: 'liste' }); }
+    else if (r.quoi === 'placement') ouvrirPlacement();
+    else if (r.quoi === 'importer') { setTab('profil'); setVueProfil('importer'); }
+    else setTab('problemes');
+  };
+  const etatAvant = useRef<EtatCompte | null>(null);
+  useEffect(() => {
+    if (compteVientDEtreCree(etatAvant.current, etat)) {
+      track(EVENTS.compteCree, { moyen: moyenConnexion(), origine: ecranCompte?.raison ?? (defi?.vue === 'arrivee' ? 'defi_arrivee' : 'profil') });
+    }
+    etatAvant.current = etat;
+    if (etat === 'complet' && ecranCompte) {
+      const r = ecranCompte.reprise;
+      setEcranCompte(null);
+      if (r) executer.current(r);
+    }
+  }, [etat, ecranCompte, defi]);
 
   const enDefi = tab === 'jouer' && !playing && defi !== null;
   const enPartie = (tab === 'jouer' && !!playing) || (enDefi && defi.vue === 'partie');
   const ouvrirDefiPartie = useCallback((id: string) => { setDefi({ vue: 'partie', id }); window.scrollTo({ top: 0 }); }, []);
   const quitterDefi = () => { setDefi(null); window.scrollTo({ top: 0 }); };
+  // #343 : pseudo obligatoire juste après la première connexion, avant tout le reste ; puis « Crée ton compte ».
+  const pseudoAChoisir = !!supabase && etat === 'sans_pseudo' && !!compteId;
+  const ecranPlein = pseudoAChoisir || ecranCompte !== null;
   let screen;
-  if (enDefi && defi.vue === 'partie' && supabase) {
-    screen = <DefiPartie key={defi.id} db={supabase} partieId={defi.id} userId={session?.user.id} anonyme={estAnonyme(session)} confirmTouch={settings.confirmTouch}
+  if (pseudoAChoisir && supabase && compteId) {
+    screen = <PseudoObligatoire db={supabase} userId={compteId}
+      onChoisi={p => { setPseudoChoisi({ id: compteId, pseudo: p }); setClePseudo(n => n + 1); }}
+      onDeconnecter={() => { void supabase?.auth.signOut(); }} />;
+  } else if (ecranCompte && supabase) {
+    screen = <CreerCompte db={supabase} raison={ecranCompte.raison} anonyme={etat === 'anonyme'} onRetour={() => { setEcranCompte(null); window.scrollTo({ top: 0 }); }}
+      onConditions={() => { go('profil'); setVueProfil('conditions'); }} />;
+  } else if (enDefi && defi.vue === 'partie' && supabase) {
+    screen = <DefiPartie key={defi.id} db={supabase} partieId={defi.id} userId={session?.user.id} anonyme={estAnonyme(session)} pseudo={pseudo ?? null} confirmTouch={settings.confirmTouch}
       onRetour={quitterDefi} onAutre={() => { setDefi({ vue: 'liste' }); window.scrollTo({ top: 0 }); }} />;
   } else if (enDefi && defi.vue === 'arrivee') {
-    screen = <DefiArrivee key={defi.jeton} db={supabase} jeton={defi.jeton} onPartie={ouvrirDefiPartie} onAccueil={quitterDefi} />;
+    screen = <DefiArrivee key={defi.jeton} db={supabase} jeton={defi.jeton} inviteur={defi.inviteur} compte={supabase ? etat : 'aucun'} onPartie={ouvrirDefiPartie} onAccueil={quitterDefi} />;
   } else if (enDefi) {
-    screen = <DefisEcran db={supabase} userId={session === undefined ? undefined : session?.user.id ?? null} onPartie={ouvrirDefiPartie} />;
+    screen = <DefisEcran db={supabase} userId={session === undefined ? undefined : session?.user.id ?? null} pseudo={pseudo ?? null} onPartie={ouvrirDefiPartie} />;
   } else if (enPartie) {
     screen = (
       <>
@@ -312,7 +391,7 @@ export function App() {
           guidee={playing === 'guidee' ? { depart: departGuide, onCran: setCranGuide } : undefined}
           intro={playing === 'guidee' ? <Bubble>{t('guidee.bulle')}</Bubble> : playing === 'ordi' && (intro || reglage.annonce) ? <Bubble>{intro ? introBut(adv.nom) : t('partie.bulle', { nom: adv.nom })}{reglage.annonce && <><br /><span className="annonce-komi">{reglage.annonce}</span></>}</Bubble> : undefined}
           onExit={() => { setIntro(false); setPlaying(false); setResultat(null); }}
-          onImporter={() => { setPlaying(false); setResultat(null); setTab('profil'); setVueProfil('importer'); window.scrollTo({ top: 0 }); }}
+          onImporter={() => { if (!garde({ quoi: 'import' }, { quoi: 'importer' })) return; setPlaying(false); setResultat(null); setTab('profil'); setVueProfil('importer'); window.scrollTo({ top: 0 }); }}
           onResult={onResult} fin={finEcran} celebrer={settings.celebrations} aide={aideActive(settings.aide, adv.id)} portrait={playing === 'ordi' ? <Sceau id={adv.id} taille={44} /> : undefined} />
       </>
     );
@@ -345,10 +424,11 @@ export function App() {
     screen = <LessonPlayer key={lesson.id} lesson={lesson} start={(progress[lesson.id] ?? 0) % lesson.steps.length} confirmTouch={settings.confirmTouch}
       progress={progress} celebrer={(settings as Partial<{ celebrations: boolean }>).celebrations !== false}
       onProgress={n => record(lesson.id, n)} onExit={() => { setLessonId(null); window.scrollTo({ top: 0 }); }}
-      onNext={leconSuivante && (() => { setLessonId(leconSuivante.id); window.scrollTo({ top: 0 }); })}
+      onNext={leconSuivante && (() => ouvrirLecon(leconSuivante.id))}
       pratique={themes.length ? {
         themes: themes.map(th => t(`theme.${th}`)),
         ouvrir: () => {
+          if (!garde({ quoi: 'probleme' })) return;
           const s = serieDeLecon(lesson.id, PROBLEMES_LOCAUX, new Set(Object.keys(readLocal<Record<string, true>>(SOLVED_KEY, {}))),
             // #237 : pas le même exercice que l'étape de leçon qui vient d'être jouée.
             TAILLE_SERIE, p => estRedite(p, lesson));
@@ -357,13 +437,14 @@ export function App() {
       } : undefined}
       jouer={{ nom: premier.nom, lancer: () => { setLessonId(null); setTab('jouer'); lancer('ordi', premier.id); } }} />;
   } else if (tab === 'apprendre') {
-    screen = <LearnHome progress={progress} onOpen={setLessonId} sync={syncState} />;
+    screen = <LearnHome progress={progress} onOpen={ouvrirLecon} sync={syncState} />;
   } else if (tab === 'problemes') {
     screen = <Puzzles db={supabase} userId={compteId} sessionLoading={session === undefined} confirmTouch={settings.confirmTouch} onCompte={() => go('profil')}
+      essai={decider({ quoi: 'probleme' }, etat, terminees, !!supabase).ok ? undefined : () => { garde({ quoi: 'probleme' }, { quoi: 'problemes' }); }}
       lien={LIEN_DU_JOUR} onDuJour={setDuJourOuvert} celebrer={settings.celebrations} racine={racineProblemes}
       onApprendre={versLecon1 && LESSONS[0] ? () => { setVersLecon1(false); go('apprendre'); setLessonId(LESSONS[0].id); } : undefined} />;
   } else if (tab === 'profil') {
-    screen = <Profil vue={vueProfil} onVue={setVueProfil} settings={settings} set={set} profil={profil} serie={serie} record={recordSerie}
+    screen = <Profil vue={vueProfil} onVue={v => { if (v === 'importer' && !garde({ quoi: 'import' }, { quoi: 'importer' })) return; setVueProfil(v); }} settings={settings} set={set} profil={profil} serie={serie} record={recordSerie}
       parcours={{ lecons: { faites: done, total: LESSONS.length }, adversaires: OPPONENTS.length }}
       placement={placement} onPlacement={ouvrirPlacement} />;
   } else {
@@ -377,7 +458,7 @@ export function App() {
         probleme={daily && { numero, titre: daily.title, rows: daily.rows, reussi: duJourFait, etat: etatTuile(appel, duJourFait) }}
         onProbleme={() => go('problemes')}
         lecon={leconConseillee && { rang: rangLecon, total: LESSONS.length, titre: leconConseillee.title }}
-        onLecon={() => { go('apprendre'); if (leconConseillee) setLessonId(leconConseillee.id); }}
+        onLecon={() => { if (leconConseillee) { const id = leconConseillee.id; go('apprendre'); ouvrirLecon(id); } else go('apprendre'); }}
         // Un seul appel à la fois (#236, N4) : pas de carte d'installation le jour où Mochi fait une annonce ;
         // quand elle se montre, la pastille « À faire » s'efface.
         installation={appel === 'installation' ? <ProposerInstallation moment="retour" /> : null}
@@ -385,7 +466,7 @@ export function App() {
     );
   }
 
-  const accueilVisible = tab === 'jouer' && !playing && !enPlacement && !enDefi;
+  const accueilVisible = tab === 'jouer' && !playing && !enPlacement && !enDefi && !ecranPlein;
   // #213 : la flamme vue creuse s'allume au retour sur l'accueil, une fois, quand le Go du jour vient d'être fait.
   const flammeVue = useRef<typeof flamme>(null);
   const [allumage, setAllumage] = useState(false);
@@ -403,7 +484,7 @@ export function App() {
   return (
     <>
       <main className={`app${accueilVisible ? ' app-home' : ''}${enPartie ? ' app-partie' : ''}`}>
-        {!enPartie && <header className="top">
+        {!enPartie && !ecranPlein && <header className="top">
           <h1>Go</h1>
           {accueilVisible
             ? (
@@ -412,7 +493,7 @@ export function App() {
                 {supabase && (
                   <button type="button" className={`entete-defi${defisAJouer ? ' a-jouer' : ''}`} data-testid="lien-defi"
                     aria-label={defisAJouer ? t('defi.accueil.aJouer', { n: defisAJouer }) : t('defi.accueil.lien')}
-                    onClick={() => { setDefi({ vue: 'liste' }); window.scrollTo({ top: 0 }); }}>
+                    onClick={() => { if (!garde({ quoi: 'defi' }, { quoi: 'defis' })) return; setDefi({ vue: 'liste' }); window.scrollTo({ top: 0 }); }}>
                     <span className="entete-defi-pierres" aria-hidden="true"><span className="stone b" /><span className="stone w" /></span>
                     <span className="entete-defi-texte" aria-hidden="true">{t('defi.accueil.lien')}</span>
                     {defisAJouer > 0 && <span className="entete-defi-point" aria-hidden="true" />}
@@ -429,10 +510,10 @@ export function App() {
             )
             : <p>{enDefi ? t('defi.titre') : tab === 'jouer' ? t('nav.jouer') : tab === 'apprendre' ? t('entete.apprendre') : tab === 'problemes' ? t('nav.problemes') : t('nav.profil')}</p>}
         </header>}
-        {annonceGel !== null && !enPartie && (tab === 'jouer' || tab === 'problemes') && (
+        {annonceGel !== null && !enPartie && !ecranPlein && (tab === 'jouer' || tab === 'problemes') && (
           <p className="gel-annonce" role="status"><Mochi size={30} />{fr(messageGel(annonceGel))}</p>
         )}
-        {retourSerie !== null && annonceGel === null && !enPartie && (tab === 'jouer' || tab === 'problemes') && (
+        {retourSerie !== null && annonceGel === null && !enPartie && !ecranPlein && (tab === 'jouer' || tab === 'problemes') && (
           <p className="gel-annonce retour-serie" role="status" data-testid="retour-serie"><Mochi size={30} />{fr(retourSerie)}</p>
         )}
         {accueilVisible && <BarreNiveau />}
@@ -441,7 +522,7 @@ export function App() {
       <FeteNiveau celebrer={settings.celebrations} ecran={`${tab}|${playing}|${lessonId ?? ''}|${serie3 ? 'serie' : ''}|${vueProfil}`} />
       <AnnonceXp celebrer={settings.celebrations} />
       {/* Pendant une partie, comme chez chess.com : pas de barre de navigation, « ‹ » ramène à l'accueil. */}
-      {!enPartie && <BarreNav actif={tab} onChoisir={go} />}
+      {!enPartie && !ecranPlein && <BarreNav actif={tab} onChoisir={go} />}
       <ConsentModal visible={fenetreVisible({ consent, ignoree: accordIgnore, enPartie: enPartie || (tab === 'problemes' && duJourOuvert), surConditions: tab === 'profil' && vueProfil === 'conditions' })}
         onConditions={() => { go('profil'); setVueProfil('conditions'); }} onIgnorer={() => setAccordIgnore(true)} />
 

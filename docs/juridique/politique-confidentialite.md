@@ -67,7 +67,7 @@ Ces données sont écrites dans le stockage local (`localStorage`) de ton naviga
 | Visites | `go.visite.v1` | Jour de la dernière visite et nombre de jours d'absence, pour l'accueil au retour (#213) |
 | XP et niveau | `go.xp.v1`, `go.xp.premieres.v1` | Total d'XP, premières fois déjà récompensées |
 | Badges | `go.badges.v1`, `go.paliers-fetes.v1` | Badges gagnés sur l'appareil, paliers déjà fêtés |
-| Parties contre l'ordi | `go.parties.v1`, `go.bilan.v1`, `go.adversaire.v1` | Nombre de parties, victoires et défaites par adversaire, dernier adversaire choisi |
+| Parties contre l'ordi | `go.parties.v1`, `go.bilan.v1`, `go.adversaire.v1`, `go.essai.v1` | Nombre de parties, victoires et défaites par adversaire, dernier adversaire choisi, parties terminées pendant l'essai sans compte |
 | Partie guidée | `go.guidee.v1` | Niveau de force atteint par Mochi à la fin de la dernière partie guidée (un nombre de 0 à 10), pour reprendre au même niveau |
 | Revue et erreurs | `go.revue.v1`, `go.erreurs.v1` | Dernière partie terminée ou importée (coups au format SGF, date ; pour une partie importée : les noms des joueurs et le résultat tirés du fichier, et ta couleur), rien n'est envoyé au serveur, jusqu'à 30 erreurs à rejouer (position, coups acceptés, date du prochain passage, réussites et échecs) |
 | Explications déjà vues | `go.intro-but.v1`, `go.atari-explique.v1`, `go.komi-explique.v1`, `go.passer-explique.v1` | Pour ne pas répéter une explication |
@@ -119,7 +119,7 @@ Ces données sont écrites dans le stockage local (`localStorage`) de ton naviga
 - Go du jour et série : `go_du_jour_resolu`, `go_du_jour_partage`, `arrivee_par_partage`, `gel_gagne`, `gel_utilise`, `serie_perdue` ;
 - progression : `xp_gagne`, `niveau_atteint` ;
 - installation : `installation_proposee`, `installation_acceptee` ;
-- compte : `lien_connexion_envoye`, `inscription`.
+- compte : `essai_limite_atteinte` (raison : parties d'essai jouées, leçon ou problème réservé au compte…), `lien_connexion_envoye`, `compte_cree` (code ou lien de l'e-mail), `pseudo_choisi` ; jamais l'e-mail ni le pseudo ;
 - défi par lien : `defi_cree` (lien créé, avec ou sans compte), `defi_ouvert` (lien ouvert par l'ami, avec ou sans compte), `defi_inscription` (e-mail ajouté à une partie commencée sans compte) ; jamais le lien, ni l'identifiant de la partie, ni l'e-mail.
 
 Chaque événement porte aussi la version de l'app, l'environnement (`production`…) et le niveau de mesure en vigueur (`mesure` : `anonyme` ou `complet`). Certains portent des valeurs tirées de ta progression sur l'appareil : série de jours, record, jours manqués, gels, total d'XP, niveau, meilleur score de la course.

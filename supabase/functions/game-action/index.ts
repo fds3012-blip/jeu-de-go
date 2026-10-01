@@ -1,11 +1,13 @@
 // Fonction serveur des parties en ligne entre humains (issue #9).
 // POST { action: 'move', gameId, move } | { action: 'propose_dead', gameId, dead } | { action: 'accept', gameId } | { action: 'resume', gameId }
 //    | { action: 'defi_coup', game_id, move } (défi par lien, #81 : voir go/defi-action.ts)
+//    | { action: 'version' } → { ok: true, contrat } (#344 : voir go/contrat.ts ; sans connexion)
 // Toute la logique de jeu vient de src/go (copie dans ./go, voir scripts/sync-functions.mjs).
 // La clé service (SUPABASE_SERVICE_ROLE_KEY) est fournie par l'environnement Supabase : elle n'est jamais dans le dépôt.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { defiMoveArgs, parseActionRequest, planAction, type GameRow } from './go/server.ts';
 import { defiCoup, parseDefiCoupRequest, type DefiCoupDeps } from './go/defi-action.ts';
+import { estDemandeVersion, reponseVersion } from './go/contrat.ts';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -23,6 +25,17 @@ Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
   if (req.method !== 'POST') return refuse(405, 'methode', 'Méthode non autorisée.');
 
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return refuse(400, 'format', 'Demande invalide.');
+  }
+
+  // Version du contrat (#344) : sans connexion ni lecture de la base. Le client s'en sert pour dire « Mise à jour
+  // du serveur en cours » quand cette fonction n'a pas encore été redéployée.
+  if (estDemandeVersion(body)) return json(200, reponseVersion());
+
   const url = Deno.env.get('SUPABASE_URL');
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
   if (!url || !serviceKey) return refuse(500, 'configuration', 'Serveur mal configuré.');
@@ -32,13 +45,6 @@ Deno.serve(async (req: Request) => {
   const { data: auth, error: authError } = token ? await admin.auth.getUser(token) : { data: null, error: true };
   const userId = auth?.user?.id;
   if (authError || !userId) return refuse(401, 'connexion', 'Connexion requise.');
-
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return refuse(400, 'format', 'Demande invalide.');
-  }
 
   // Défi par lien (#81) : coup validé ici (règles du go), puis écrit par jouer_coup_defi (réservée à service_role).
   // Session anonyme acceptée : son jeton est un vrai jeton `authenticated`, vérifié ci-dessus par auth.getUser.

@@ -1,4 +1,6 @@
-// Défi par lien (issue #81) : partie 9 × 9 en différé, 3 jours par coup, jouable sans compte (session anonyme Supabase).
+// Défi par lien (issue #81) : partie 9 × 9 en différé, 3 jours par coup. Depuis #343, un compte avec pseudo est
+// obligatoire pour créer ou rejoindre un défi : plus de nouvelle session anonyme. Les sessions anonymes déjà ouvertes
+// (anciens défis) gardent leurs parties et lient un e-mail (`garderMonCompte`) pour continuer.
 // Toute la sécurité est côté serveur (migrations 20260929003100_defi_par_lien.sql et 20260929100100_garde_anonymes.sql) :
 // - `creer_defi` / `rejoindre_defi` / `victoire_au_temps` : fonctions SQL appelées en RPC ;
 // - les coups passent par la fonction serveur `game-action` (action `defi_coup`), qui valide les règles puis appelle
@@ -22,6 +24,9 @@ export const DELAI_COUP_MS = 3 * 24 * 60 * 60 * 1000;
 
 /** Paramètre du fragment de l'adresse : `https://…/#defi=JETON`. */
 export const PARAM_DEFI = 'defi';
+/** Pseudo de qui invite, dans le fragment après le jeton : `#defi=JETON&de=Pseudo` (#343). */
+export const PARAM_DE = 'de';
+const FORMAT_PSEUDO = /^[A-Za-z0-9_-]{3,24}$/;
 
 const echec = (message?: string | null): { ok: false; error: string } => ({ ok: false, error: message || t('erreur.serveur') });
 
@@ -39,31 +44,43 @@ export const compteDe = (session: Session | null | undefined): string | undefine
  * Lien à partager. Le jeton est dans le fragment (`#`) de la page d'accueil : il n'est envoyé ni au serveur web
  * ni dans l'en-tête Referer, et aucune règle de réécriture n'est nécessaire chez l'hébergeur.
  */
-export function lienDefi(jeton: string, origine: string): string {
-  return `${origine.replace(/\/+$/, '')}/#${PARAM_DEFI}=${jeton}`;
+export function lienDefi(jeton: string, origine: string, pseudo?: string | null): string {
+  const de = pseudo && FORMAT_PSEUDO.test(pseudo) ? `&${PARAM_DE}=${pseudo}` : '';
+  return `${origine.replace(/\/+$/, '')}/#${PARAM_DEFI}=${jeton}${de}`;
+}
+
+/**
+ * Pseudo de qui invite, lu dans le lien (`&de=Pseudo`) ; null s'il manque ou n'a pas la forme d'un pseudo.
+ * Il ne sert qu'à l'accueil de l'ami, avant son compte ; la partie affiche ensuite le pseudo lu en base.
+ */
+export function inviteurDepuisLien(lien: string): string | null {
+  const fragment = lien.includes('#') ? lien.slice(lien.indexOf('#') + 1) : lien;
+  const de = fragment.split('&').find(p => p.startsWith(`${PARAM_DE}=`))?.slice(PARAM_DE.length + 1) ?? '';
+  return FORMAT_PSEUDO.test(de) ? de : null;
 }
 
 /** Lit le jeton d'un lien de défi (`#defi=JETON`, l'ancien `/defi#JETON`, ou le jeton seul) ; null sinon. */
 export function jetonDepuisLien(lien: string): string | null {
   let brut = lien.includes('#') ? lien.slice(lien.indexOf('#') + 1) : lien;
   if (brut.startsWith(`${PARAM_DEFI}=`)) brut = brut.slice(PARAM_DEFI.length + 1);
-  const jeton = brut.trim();
+  const jeton = brut.split('&')[0].trim();
   return FORMAT_JETON.test(jeton) ? jeton : null;
 }
 
-/** Garantit une session : si le joueur n'est pas connecté, ouvre une session anonyme (sans e-mail ni pseudo). */
-export async function assurerSession(db: Db): Promise<Result<{ userId: string; anonyme: boolean }>> {
+/**
+ * Session d'un vrai compte, exigée pour créer ou rejoindre un défi (#343). Aucune session anonyme n'est plus ouverte :
+ * sans compte, ou avec une ancienne session anonyme, l'écran demande d'abord le compte (e-mail et pseudo).
+ */
+export async function exigerCompte(db: Db): Promise<Result<{ userId: string; anonyme: false }>> {
   const { data } = await db.auth.getSession();
   const user = data.session?.user;
-  if (user) return { ok: true, value: { userId: user.id, anonyme: user.is_anonymous === true } };
-  const { data: cree, error } = await db.auth.signInAnonymously();
-  if (error || !cree.user) return echec();
-  return { ok: true, value: { userId: cree.user.id, anonyme: true } };
+  if (!user || user.is_anonymous === true) return echec(t('defi.compteRequis'));
+  return { ok: true, value: { userId: user.id, anonyme: false } };
 }
 
-/** Crée un défi : renvoie la partie, le jeton du lien et si le créateur joue sans compte. */
+/** Crée un défi (compte avec pseudo exigé, #343) : renvoie la partie et le jeton du lien. */
 export async function creerDefi(db: Db): Promise<Result<{ partieId: string; jeton: string; anonyme: boolean }>> {
-  const session = await assurerSession(db);
+  const session = await exigerCompte(db);
   if (!session.ok) return session;
   const { data, error } = await db.rpc('creer_defi');
   const ligne = data?.[0];
@@ -71,10 +88,10 @@ export async function creerDefi(db: Db): Promise<Result<{ partieId: string; jeto
   return { ok: true, value: { partieId: ligne.partie_id, jeton: ligne.jeton, anonyme: session.value.anonyme } };
 }
 
-/** Ouvre un lien de défi : session anonyme si besoin, puis place d'invité (Noir). Renvoie la partie et le joueur. */
+/** Ouvre un lien de défi avec son compte, puis prend la place d'invité (Noir). Renvoie la partie et le joueur. */
 export async function ouvrirDefi(db: Db, jeton: string): Promise<Result<{ partieId: string; userId: string; anonyme: boolean; createur: boolean }>> {
   if (!FORMAT_JETON.test(jeton)) return echec(t('defi.erreur.introuvable'));
-  const session = await assurerSession(db);
+  const session = await exigerCompte(db);
   if (!session.ok) return session;
   const { data, error } = await db.rpc('rejoindre_defi', { p_jeton: jeton });
   if (error || !data) return echec(error?.message);
@@ -187,8 +204,8 @@ export function tempsRestant(dateLimite: string | null, maintenant = Date.now())
 }
 
 /**
- * Inscription après un défi joué sans compte : relie l'e-mail à la session anonyme (même identifiant),
- * la partie en cours est donc gardée. Supabase envoie un lien de confirmation.
+ * Inscription d'une session anonyme d'un ancien défi : relie l'e-mail à la session (même identifiant), la partie en
+ * cours est donc gardée. Supabase envoie un e-mail avec un code (`verifyOtp` de type `email_change`) et un lien.
  */
 export async function garderMonCompte(db: Db, email: string, redirection: string): Promise<Result<null>> {
   const { error } = await db.auth.updateUser({ email: email.trim() }, { emailRedirectTo: redirection });

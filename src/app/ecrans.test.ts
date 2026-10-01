@@ -6,7 +6,7 @@ const lire = (f: string) => readFileSync(new URL(f, import.meta.url), 'utf8');
 describe('écrans chargés à la demande', () => {
   it("l'accueil n'importe aucun écran directement (ils passent par ecrans.ts)", () => {
     const app = lire('./App.tsx');
-    for (const ecran of ['Game', 'Learn', 'Puzzles', 'Profil', 'Placement', 'SeriePratique', 'Defis']) {
+    for (const ecran of ['Game', 'Learn', 'Puzzles', 'Profil', 'Placement', 'SeriePratique', 'Defis', 'CreerCompte', 'Connexion']) {
       // `import type` reste permis : il disparaît du JS.
       expect(app).not.toMatch(new RegExp(`^import (?!type )[^\\n]* from '\\./${ecran}';`, 'm'));
     }
