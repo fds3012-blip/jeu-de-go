@@ -9,14 +9,16 @@
 // et une liaison refusée (adresse déjà prise) y bascule toute seule (voir connexionBascule.ts).
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import type { Db } from '../data/supabase';
-import { LONGUEUR_CODE, codeComplet, envoyerCodeConnexion, nettoyerCode, sendMagicLink, verifierCode, type EchecEnvoi } from '../data/account';
+import { LONGUEUR_CODE, codeComplet, connexionGoogle, envoyerCodeConnexion, nettoyerCode, sendMagicLink, verifierCode, type EchecEnvoi } from '../data/account';
 import { garderMonCompte } from '../data/defi';
 import { isEmail } from '../data/username';
 import { EVENTS, track } from '../data/analytics';
 import { noterConnexionParCode } from './entonnoir';
 import { apresRefus, demandeAge, typeCode, voieEnvoi, type Sens, type Voie } from './connexionBascule';
 import { fr } from '../ui/typo';
-import { ConnexionSociale } from '../ui/ConnexionSociale';
+import { BoutonGoogle } from '../ui/BoutonGoogle';
+import { garderRetour, googleActive, lireMessage, oublierMessage } from './connexionGoogle';
+import { aideNavigateur, contexteActuel, googleVisible, lienChrome } from './navigateurIntegre';
 import { t } from '../content/i18n';
 import '../ui/compte.css';
 
@@ -51,8 +53,16 @@ export function ConnexionCode({ db, mode = 'connexion', envoyer, moment = 'profi
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
+  // #354 : message laissé par un retour de Google annulé ou en erreur (une seule fois).
+  const [error, setError] = useState(() => lireMessage() ?? '');
+  useEffect(oublierMessage, []);
   const [info, setInfo] = useState('');
+  const [versGoogle, setVersGoogle] = useState(false);
+  // #354 : Google caché dans les navigateurs intégrés (Messenger, Instagram…), l'app iPhone et les anciennes sessions anonymes.
+  const [contexte] = useState(contexteActuel);
+  const active = googleActive();
+  const avecGoogle = googleVisible(contexte, active, anonyme);
+  const aide = anonyme ? null : aideNavigateur(contexte, active);
   const [attente, setAttente] = useState(0);
   const [age, setAge] = useState(false);
   const codeRef = useRef<HTMLInputElement>(null);
@@ -99,8 +109,21 @@ export function ConnexionCode({ db, mode = 'connexion', envoyer, moment = 'profi
     if (!isEmail(email)) { setError(t('compte.emailInvalide')); return; }
     if (demandeAge(sens) && !age) { setError(t('compte.age.aide')); return; }
     setBascule(false);
+    track(EVENTS.compteMethode, { methode: 'code', navigateur_integre: contexte.integre });
     if (await demander(voieEnvoi(sens, anonyme))) { setCode(''); setInfo(''); setEtape('code'); }
   };
+
+  /** « Continuer avec Google » : case d'âge d'abord (création), puis aller-retour chez Google. */
+  async function google() {
+    if (busy || versGoogle) return;
+    if (demandeAge(sens) && !age) { setError(t('compte.age.aide')); return; }
+    setError(''); setVersGoogle(true);
+    track(EVENTS.compteMethode, { methode: 'google', navigateur_integre: contexte.integre });
+    garderRetour();
+    const r = await connexionGoogle(db, `${window.location.origin}/`);
+    // En cas de succès, le navigateur part chez Google : le bouton reste « Connexion avec Google… ».
+    if (!r.ok) { setVersGoogle(false); setError(r.error); }
+  }
 
   async function verifier(valeur: string) {
     if (busy) return;
@@ -145,10 +168,39 @@ export function ConnexionCode({ db, mode = 'connexion', envoyer, moment = 'profi
   }
 
   const pret = !demandeAge(sens) || age;
+  const lienSens = (
+    // #353 : l'autre chemin, toujours visible, jamais en bouton principal.
+    <button type="button" className="lien connexion-sens" data-testid="connexion-sens" onClick={() => changerSens(sens === 'creer' ? 'connecter' : 'creer')}>
+      {t(sens === 'creer' ? 'connexion.dejaCompte' : 'connexion.pasDeCompte')}
+    </button>
+  );
+  const champEmail = (
+    <>
+      <label className="small" htmlFor={`${id}-email`}>{t('compte.email')}</label>
+      <input id={`${id}-email`} className="champ" type="email" inputMode="email" autoComplete="email" autoCapitalize="none" spellCheck={false} required
+        value={email} onChange={e => { setEmail(e.target.value); setError(''); }} aria-invalid={!!error} aria-describedby={`${id}-erreur`} />
+    </>
+  );
+
+  // #354 : Google en action principale, case d'âge au-dessus des deux moyens, le code par e-mail juste dessous.
+  if (avecGoogle) {
+    return (
+      <form className="connexion" onSubmit={envoyerEmail} noValidate data-sens={sens} data-google="1">
+        {demandeAge(sens) && <CaseAge id={id} coche={age} onChange={v => { setAge(v); setError(''); }} onConditions={onConditions} />}
+        <BoutonGoogle onClick={() => { void google(); }} busy={versGoogle} inactif={!pret} />
+        <p id={`${id}-erreur`} className="small connexion-erreur" role="alert">{error}</p>
+        <p className="connexion-ou muted small" aria-hidden="true">{t('connexion.ou')}</p>
+        {champEmail}
+        <button className={`btn connexion-cta secondaire${pret ? '' : ' inactif'}`} type="submit" disabled={busy || versGoogle} aria-disabled={!pret} aria-busy={busy}>
+          {busy ? t('compte.envoi') : t('connexion.envoyer')}
+        </button>
+        {lienSens}
+      </form>
+    );
+  }
+
   return (
     <form className="connexion" onSubmit={envoyerEmail} noValidate data-sens={sens}>
-      {/* Masqués tant que FOURNISSEURS_ACTIFS est vide (src/ui/ConnexionSociale.tsx). */}
-      <ConnexionSociale db={db} />
       <label className="small" htmlFor={`${id}-email`}>{t('compte.email')}</label>
       <input id={`${id}-email`} className="champ" type="email" inputMode="email" autoComplete="email" autoCapitalize="none" spellCheck={false} required
         value={email} onChange={e => { setEmail(e.target.value); setError(''); }} aria-invalid={!!error} aria-describedby={`${id}-erreur`} />
@@ -160,10 +212,10 @@ export function ConnexionCode({ db, mode = 'connexion', envoyer, moment = 'profi
       <button className={`btn primary connexion-cta${pret ? '' : ' inactif'}`} type="submit" disabled={busy} aria-disabled={!pret} aria-busy={busy}>
         {busy ? t('compte.envoi') : sens === 'creer' && envoyer ? envoyer : t('connexion.envoyer')}
       </button>
-      {/* #353 : l'autre chemin, toujours visible, jamais en bouton principal. */}
-      <button type="button" className="lien connexion-sens" data-testid="connexion-sens" onClick={() => changerSens(sens === 'creer' ? 'connecter' : 'creer')}>
-        {t(sens === 'creer' ? 'connexion.dejaCompte' : 'connexion.pasDeCompte')}
-      </button>
+      {/* #354 : navigateur intégré, Google y est bloqué. Android : lien vers Chrome ; iPhone : la consigne. */}
+      {aide === 'android' && <p className="small muted connexion-integre" data-testid="aide-navigateur"><a href={lienChrome(window.location.href)}>{t('connexion.integre.android')}</a></p>}
+      {aide === 'ios' && <p className="small muted connexion-integre" data-testid="aide-navigateur">{fr(t('connexion.integre.ios'))}</p>}
+      {lienSens}
     </form>
   );
 }

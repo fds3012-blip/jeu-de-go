@@ -9,7 +9,7 @@ export const CODE = '123456';
 export const PARTIE = '11111111-1111-4111-8111-111111111111';
 export const JETON = 'Ab3_-xYz'.padEnd(32, 'Q');
 
-interface Utilisateur { id: string; anonyme: boolean; email?: string }
+interface Utilisateur { id: string; anonyme: boolean; email?: string; nom?: string }
 type Ligne = Record<string, unknown>;
 
 export function fauxServeur() {
@@ -21,13 +21,15 @@ export function fauxServeur() {
   const defis: Ligne[] = [];
   const appels: string[] = [];
   const emailsEnvoyes: { email: string; type: string }[] = [];
+  const autorisations: string[] = [];
+  let google: { email: string; nom: string; annule?: boolean } | null = null;
 
   const jwt = (u: Utilisateur) => {
     const b64 = (o: object) => Buffer.from(JSON.stringify(o)).toString('base64url');
     return `${b64({ alg: 'HS256', typ: 'JWT' })}.${b64({ sub: u.id, role: 'authenticated', is_anonymous: u.anonyme, exp: Math.floor(Date.now() / 1000) + 3600, n: ++n })}.signature`;
   };
   const userJson = (u: Utilisateur) => ({ id: u.id, aud: 'authenticated', role: 'authenticated', is_anonymous: u.anonyme, email: u.email ?? '',
-    app_metadata: {}, user_metadata: {}, identities: [], created_at: new Date().toISOString() });
+    app_metadata: u.nom ? { provider: 'google' } : {}, user_metadata: u.nom ? { full_name: u.nom, name: u.nom, avatar_url: 'https://lh3.googleusercontent.com/a/photo' } : {}, identities: [], created_at: new Date().toISOString() });
   const session = (u: Utilisateur) => {
     const token = jwt(u);
     jetons.set(token, u);
@@ -53,6 +55,27 @@ export function fauxServeur() {
     const u = qui(route);
 
     if (chemin === '/auth/v1/signup') return json({ message: 'Anonymous sign-ins are disabled' }, 422);
+    // #354 : « Continuer avec Google » simulé. Le navigateur arrive ici (redirection) ; on renvoie tout de suite vers
+    // `redirect_to`, avec la session dans le fragment (flux implicite) ou l'erreur d'une connexion annulée.
+    if (chemin === '/auth/v1/authorize') {
+      const retour = url.searchParams.get('redirect_to') ?? '/';
+      autorisations.push(url.searchParams.get('provider') ?? '');
+      let fragment: string;
+      if (!google || google.annule) fragment = 'error=access_denied&error_code=access_denied&error_description=The+user+denied+access';
+      else {
+        let v = parEmail.get(google.email);
+        if (!v) {
+          v = { id: '00000000-0000-4000-8000-000000000099', anonyme: false, email: google.email, nom: google.nom };
+          parEmail.set(google.email, v);
+          profiles.push({ id: v.id, username: null, rating: 1500, streak_days: 0, streak_last: null, streak_freezes: 0 });
+        } else v.nom = google.nom;
+        const ses = session(v);
+        fragment = new URLSearchParams({ access_token: ses.access_token, refresh_token: ses.refresh_token, expires_in: '3600',
+          expires_at: String(ses.expires_at), token_type: 'bearer', provider_token: 'jeton-google' }).toString();
+      }
+      return route.fulfill({ status: 200, contentType: 'text/html',
+        body: `<!doctype html><title>Google</title><script>location.replace(${JSON.stringify(`${retour}#${fragment}`)})</script>` });
+    }
     if (chemin === '/auth/v1/otp') {
       const { email, create_user } = req.postDataJSON() as { email: string; create_user?: boolean };
       // #353 : connexion seule (`shouldCreateUser: false`) à une adresse inconnue : refus, comme Supabase.
@@ -158,7 +181,9 @@ export function fauxServeur() {
     profiles.push({ id, username: pseudo, rating: 1500, streak_days: 0, streak_last: null, streak_freezes: 0 });
     return v;
   }
-  return { traiter, appels, games, defis, profiles, emailsEnvoyes, sessionAnonyme, compteExistant };
+  /** Compte Google que « Continuer avec Google » renverra (#354) ; `annule` : le joueur annule chez Google. */
+  function compteGoogle(c: { email: string; nom: string; annule?: boolean }) { google = c; }
+  return { traiter, appels, games, defis, profiles, emailsEnvoyes, sessionAnonyme, compteExistant, compteGoogle, autorisations };
 }
 
 export type FauxServeur = ReturnType<typeof fauxServeur>;

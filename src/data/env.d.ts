@@ -11,6 +11,8 @@ interface ImportMetaEnv {
   readonly VITE_SENTRY_DSN?: string;
   /** Clé publique VAPID du rappel quotidien (#36). Publique par nature ; la clé privée reste dans la fonction serveur. */
   readonly VITE_VAPID_PUBLIC_KEY?: string;
+  /** « Continuer avec Google » (#354) : `1` l'affiche ; absente, rien n'apparaît. Google doit être activé dans Supabase avant. */
+  readonly VITE_AUTH_GOOGLE?: string;
   readonly VITE_APP_VERSION?: string;
   readonly VITE_VERCEL_GIT_COMMIT_SHA?: string;
   readonly VITE_VERCEL_ENV?: string;
