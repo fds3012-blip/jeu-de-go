@@ -14,7 +14,7 @@ import { gzipSync } from 'node:zlib';
 
 const KO = 1024;
 export const BUDGETS = {
-  jsInitial: 275 * KO, // gzip ; 260 Ko le 29/09 après découpage par écran (314 Ko avant)
+  jsInitial: 250 * KO, // gzip ; 260 Ko le 29/09 après découpage par écran (314 Ko avant), 230 Ko le 30/09 sans l'anglais (#325)
   cssInitial: 30 * KO, // gzip ; 22 Ko le 29/09
   polices: 80 * KO, // woff2 (déjà compressé) ; 70 Ko le 29/09
   morceauAlaDemande: 60 * KO, // gzip, chaque écran chargé à la demande

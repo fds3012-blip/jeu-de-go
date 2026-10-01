@@ -1,6 +1,6 @@
 // Types des leçons. Le contenu vit dans content/lessons.fr.js, vérifié par src/go/lessons.test.ts.
 import { CHAPITRES as RAW_CHAPITRES, LESSONS as RAW } from '../../content/lessons.fr.js';
-import { CHAPITRES_EN, LESSONS_EN } from '../../content/lessons.en.js';
+import { anglais } from './anglais';
 import { langue, type Langue } from './i18n';
 import type { DemoTemps, Geste } from './demo';
 export type { DemoTemps, Geste } from './demo';
@@ -32,8 +32,9 @@ export const LESSONS_FR = RAW as unknown as Lesson[];
 export interface TexteEtape { text: string; ok?: string; no?: string; choices?: string[]; geste?: { no: string }; refus?: string[] }
 export interface TexteLecon { title: string; desc: string; steps: TexteEtape[] }
 export interface TexteChapitre { titre: string; intro: string; fin?: string }
+// L'anglais n'est téléchargé que si l'interface est en anglais (#325, src/content/anglais.ts) ; sinon, aucune traduction.
 export const TRADUCTIONS: Record<Exclude<Langue, 'fr'>, { lecons: Record<string, TexteLecon>; chapitres: Record<string, TexteChapitre> }> = {
-  en: { lecons: LESSONS_EN as Record<string, TexteLecon>, chapitres: CHAPITRES_EN as Record<string, TexteChapitre> },
+  get en() { const a = anglais(); return { lecons: a?.lecons ?? {}, chapitres: a?.chapitres ?? {} }; },
 };
 
 /**

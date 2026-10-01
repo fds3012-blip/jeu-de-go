@@ -1,64 +1,24 @@
 // Socle i18n léger (issue #167), sans librairie : deux catalogues, une fonction `t` typée, Intl.PluralRules.
 // Langue choisie une fois au chargement, dans cet ordre : le choix du Profil (clé locale `go.langue.v1`), puis `?lang=en|fr`
 // dans l'adresse, puis (si DETECTION_APPAREIL) la langue de l'appareil, sinon le français.
-import { en } from './en';
+import { anglais, langueAuChargement } from '../anglais';
 import { fr } from './fr';
 import type { Catalogue, Cle, Langue, Params, Texte } from './types';
 
 export type { Cle, Langue } from './types';
 
-export const LANGUES: readonly Langue[] = ['fr', 'en'];
-export const CATALOGUES: Record<Langue, Catalogue> = { fr, en };
+export { DETECTION_APPAREIL, LANGUE_KEY, LANGUES, detecterLangue, lireChoixLangue, memoriserChoixLangue } from './detection';
 
 /**
- * Suivre la langue de l'appareil : activé depuis que toute l'interface, les leçons et les problèmes existent en anglais.
- * L'app prend la première langue traduite (français ou anglais) de la liste de l'appareil ; à défaut, le français.
+ * Catalogues par langue. L'anglais n'est téléchargé que si l'interface est en anglais (#325, src/content/anglais.ts) :
+ * sinon `CATALOGUES.en` est vide et `traduire('en', …)` retombe sur le français.
  */
-export const DETECTION_APPAREIL = true;
+export const CATALOGUES: Record<Langue, Catalogue> = {
+  fr,
+  get en() { return anglais()?.ui ?? ({} as Catalogue); },
+};
 
-/** Clé locale du choix fait dans le Profil (« Langue ») : il prime sur `?lang` et sur l'appareil. */
-export const LANGUE_KEY = 'go.langue.v1';
-
-const estLangue = (x: string | null | undefined): x is Langue => !!x && (LANGUES as readonly string[]).includes(x);
-
-/**
- * Langue à utiliser : `choix` du Profil, puis paramètre `lang` de l'adresse, puis (si `detection`) la première langue
- * traduite de la liste de l'appareil, sinon le français.
- */
-export function detecterLangue(search: string, preferees: readonly string[], detection = DETECTION_APPAREIL, choix: string | null = null): Langue {
-  if (estLangue(choix)) return choix;
-  const param = new URLSearchParams(search).get('lang')?.toLowerCase();
-  if (estLangue(param)) return param;
-  if (!detection) return 'fr';
-  // Première langue traduite dans la liste de l'appareil (décision de Florian, 29/09) : un appareil en espagnol qui accepte
-  // aussi l'anglais s'ouvre en anglais ; un appareil en allemand qui accepte aussi le français s'ouvre en français.
-  for (const p of preferees) {
-    const base = p.toLowerCase().split(/[-_]/)[0];
-    if (estLangue(base)) return base;
-  }
-  return 'fr';
-}
-
-/** Choix du Profil gardé sur l'appareil, ou null (aucun choix, stockage indisponible). */
-export function lireChoixLangue(): Langue | null {
-  try {
-    const v = JSON.parse(localStorage.getItem(LANGUE_KEY) ?? 'null') as unknown;
-    return typeof v === 'string' && estLangue(v) ? v : null;
-  } catch { return null; }
-}
-
-/** Garde le choix du Profil sur l'appareil. Le rechargement de la page l'applique partout (leçons comprises). */
-export function memoriserChoixLangue(l: Langue): void {
-  try { localStorage.setItem(LANGUE_KEY, JSON.stringify(l)); } catch { /* le choix vaut pour cette visite seulement */ }
-}
-
-function langueDuNavigateur(): Langue {
-  if (typeof location === 'undefined' || typeof navigator === 'undefined') return 'fr';
-  const preferees = navigator.languages?.length ? navigator.languages : [navigator.language];
-  return detecterLangue(location.search, preferees.filter(Boolean), DETECTION_APPAREIL, lireChoixLangue());
-}
-
-let courante: Langue = langueDuNavigateur();
+let courante: Langue = langueAuChargement();
 
 /** Langue de l'interface. */
 export const langue = (): Langue => courante;
