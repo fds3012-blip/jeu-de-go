@@ -584,3 +584,11 @@ Mandat de Florian : « fais bosser toute la team d'agents », jusqu'à 8 h, auta
 **Incidents :** le conteneur a redémarré deux fois (vers 1 h 20 et 1 h 30). Le second redémarrage a arrêté 5 agents pour le reste de la nuit : lot V de problèmes, recette complète, rappel quotidien (#36), suite perf (#325, #324, travail partiel non commité) — à relancer.
 
 **À décider par Florian :** déployer `game-action` (le défi par lien n'est jouable qu'après) ; propositions de l'économie (XP de la course, révision « Vu », gels) ; titres d'aperçu par numéro (fonction Vercel) ; modèles d'e-mail Supabase en `TokenHash` ; purge dans PostHog des évènements reçus avec un jeton.
+
+## 30/09 soir → 01/10 : défi réparé, compte obligatoire, nouvelle vague d'agents
+
+- **Bug signalé par Florian (22 h 55)** : dans un défi, l'ami ne pouvait poser aucune pierre (« Ce coup n'a pas pu être lu »). Cause : la fonction serveur `game-action` en production datait du 27/09 et ignorait `defi_coup` (#327 fusionné mais jamais déployé). Redéployée (v2), contenu vérifié identique au dépôt. #344 : déploiement automatique des fonctions par la CI (#345, actif après ajout du secret), test de contrat client-serveur (#348).
+- **Décision de Florian** : compte obligatoire avec pseudo, essai limité sans compte, défi = compte avant le premier coup (#343). Livré : #345 serveur (migration `compte_obligatoire` appliquée), #346 app (essai, connexion par code à 6 chiffres, pseudo obligatoire, défi avec compte), #347 juridique (âge 15 ans, politique, CGU, décisions D1–D8).
+- **Autres fusions (CI verte)** : #340 perf PWA, #341 leçons 9 à 12, #348 recette (Pomme stable après une passe sur téléphone lent, badge clarifié), #349 anglais chargé à la demande (JS initial 230 Ko), #350 lot V (16 problèmes, appliqué en production, md5 identique ; 214 problèmes communs), #351 rappel quotidien (prêt, désactivé).
+- **Incidents** : 2 redémarrages du processus ; tous les agents repris depuis leur dernier commit, rien perdu de commité.
+- **À faire par Florian** : modèles d'e-mail avec code (`docs/growth/connexion-code.md`), couper les connexions anonymes, secret `SUPABASE_ACCESS_TOKEN` (`docs/architecture/deploiement-fonctions.md`), activation du rappel (`docs/growth/rappel-quotidien.md`), décisions juridiques D1–D8.
