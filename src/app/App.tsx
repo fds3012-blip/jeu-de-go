@@ -51,8 +51,7 @@ import { compteVientDEtreCree, moyenConnexion, noterConnexionParGoogle } from '.
 import { annoncerMessage, definirRetour, erreurRetour, messageRetour, prendreRetour } from './connexionGoogle';
 import { useDefisAJouer } from './defisAJouer';
 import '../ui/defis.css';
-import { ecouterAide, estRaccourciAide, ouvrirAide, type Ouverture } from './ouvrirAide';
-import { ficheDeLecon } from './glossaire';
+import { ecouterAide, estRaccourciAide, ficheDeLecon, ouvrirAide, type Ouverture } from './ouvrirAide';
 
 // Aide (#362) : feuille chargée au premier « ? » ou à la ligne « Aide et règles » du Profil.
 const FeuilleAide = lazy(() => import('../ui/Aide'));

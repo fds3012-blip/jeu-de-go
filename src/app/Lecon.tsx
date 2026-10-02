@@ -30,7 +30,7 @@ import { t } from '../content/i18n';
 import { lireFile, retirerFete, useExercice } from '../ui/celebrations';
 import { niveauEnAttente } from '../ui/fileFetes';
 import { BoutonAide } from '../ui/BoutonAide';
-import { ficheDeLecon } from './glossaire';
+import { ficheDeLecon } from './ouvrirAide';
 import '../ui/lecon.css';
 
 /** Fond du compteur de libertés, posé sur le bois comme les autres marques jade. */

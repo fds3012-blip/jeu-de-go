@@ -35,3 +35,18 @@ export function estRaccourciAide(e: Pick<KeyboardEvent, 'key' | 'ctrlKey' | 'met
   const tag = el?.tagName?.toLowerCase();
   return !(tag === 'input' || tag === 'textarea' || tag === 'select' || el?.isContentEditable);
 }
+
+// Table gardée ici, sans le contenu de l'aide : App l'importe pour le raccourci « ? » sans alourdir le premier écran.
+/** Ce que le « ? » d'une leçon ouvre : le mot qu'elle enseigne, ou « Comment on compte ? » pour la leçon de comptage. */
+export const AIDE_DES_LECONS: Record<string, { fiche: Fiche; mot?: IdMot }> = {
+  l1: { fiche: 'mots', mot: 'liberte' }, l2: { fiche: 'mots', mot: 'atari' }, l3: { fiche: 'mots', mot: 'doubleAtari' },
+  l4: { fiche: 'mots', mot: 'ko' }, l5: { fiche: 'mots', mot: 'oeil' }, l6: { fiche: 'mots', mot: 'territoire' },
+  l7: { fiche: 'compter' }, l9: { fiche: 'mots', mot: 'filet' }, l10: { fiche: 'mots', mot: 'priseEnRetour' },
+  l11: { fiche: 'mots', mot: 'semeai' }, l12: { fiche: 'mots', mot: 'fauxOeil' }, l13: { fiche: 'mots', mot: 'pointVital' },
+  l14: { fiche: 'mots', mot: 'seki' }, l15: { fiche: 'mots', mot: 'dame' }, l16: { fiche: 'compter' },
+};
+
+/** Fiche à ouvrir depuis une leçon ; les règles quand la leçon n'a pas de mot à elle (ouverture, par exemple). */
+export function ficheDeLecon(lecon: string): { fiche: Fiche; mot?: IdMot } {
+  return AIDE_DES_LECONS[lecon] ?? { fiche: 'regles' };
+}

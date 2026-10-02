@@ -1,10 +1,13 @@
 // Recherche dans le glossaire et choix de la fiche d'aide (issue #362). Logique pure, sans React.
-import { AUSSI, COMPTER, MOTS, REGLES, type Fiche, type IdMot } from '../content/aide';
+import { AUSSI, COMPTER, MOTS, REGLES, type IdMot } from '../content/aide';
 import { traduire, type Langue } from '../content/i18n';
+import { AIDE_DES_LECONS } from './ouvrirAide';
+
+export { ficheDeLecon } from './ouvrirAide';
 
 /** Minuscules, sans accents ni ligatures : « Œil » et « oeil », « Échelle » et « echelle » se trouvent pareil. */
 export function normaliser(s: string): string {
-  return s.toLowerCase().replace(/œ/g, 'oe').replace(/æ/g, 'ae').normalize('NFD').replace(/[̀-ͯ]/g, '')
+  return s.toLowerCase().replace(/œ/g, 'oe').replace(/æ/g, 'ae').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .replace(/[’']/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
@@ -31,20 +34,6 @@ export function chercherMots(requete: string, l: Langue): IdMot[] {
     return 9;
   };
   return MOTS.map((m, i) => ({ id: m.id, r: rang(m.id), i })).filter(x => x.r < 9).sort((a, b) => a.r - b.r || a.i - b.i).map(x => x.id);
-}
-
-/** Ce que le « ? » d'une leçon ouvre : le mot qu'elle enseigne, ou « Comment on compte ? » pour la leçon de comptage. */
-const AIDE_DES_LECONS: Record<string, { fiche: Fiche; mot?: IdMot }> = {
-  l1: { fiche: 'mots', mot: 'liberte' }, l2: { fiche: 'mots', mot: 'atari' }, l3: { fiche: 'mots', mot: 'doubleAtari' },
-  l4: { fiche: 'mots', mot: 'ko' }, l5: { fiche: 'mots', mot: 'oeil' }, l6: { fiche: 'mots', mot: 'territoire' },
-  l7: { fiche: 'compter' }, l9: { fiche: 'mots', mot: 'filet' }, l10: { fiche: 'mots', mot: 'priseEnRetour' },
-  l11: { fiche: 'mots', mot: 'semeai' }, l12: { fiche: 'mots', mot: 'fauxOeil' }, l13: { fiche: 'mots', mot: 'pointVital' },
-  l14: { fiche: 'mots', mot: 'seki' }, l15: { fiche: 'mots', mot: 'dame' }, l16: { fiche: 'compter' },
-};
-
-/** Fiche à ouvrir depuis une leçon ; les règles quand la leçon n'a pas de mot à elle (ouverture, par exemple). */
-export function ficheDeLecon(lecon: string): { fiche: Fiche; mot?: IdMot } {
-  return AIDE_DES_LECONS[lecon] ?? { fiche: 'regles' };
 }
 
 /** Leçons citées par l'aide (liens « Rejoue la leçon » et « ? » des leçons), pour les tests. */
