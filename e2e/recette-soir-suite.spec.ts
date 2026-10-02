@@ -3,7 +3,8 @@ import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { brancher, fauxServeur } from './fauxSupabase';
 import { mesurer } from './mesures';
-import { jouer, partieADeux } from './plateau';
+import { jouer, partieADeux, plateau as goban } from './plateau';
+import { LESSONS_FR } from '../src/content/lessons';
 
 // Suite de la recette du 02/10 au soir (docs/qa/recette-2026-10-02-soir.md, « Laissé aux responsables ») et défauts
 // vus sur les captures du lot X (#398). Chaque test porte le numéro du défaut. En 390 × 844 et 320 × 568 ; avec
@@ -140,6 +141,34 @@ for (const [largeur, hauteur] of TAILLES) {
     // La feuille reste posée sur la barre des onglets et l'action principale reste entière à l'écran.
     const suivant = (await page.getByRole('button', { name: 'Problème suivant' }).boundingBox())!;
     expect(suivant.y + suivant.height).toBeLessThanOrEqual(await hautNav(page));
+  });
+
+  // ---------- Lot X : la même chose en 13 × 13 (leçon 8, série d'ouverture), là où le défaut a été vu ----------
+  test(`lot X, série 13 × 13 (${largeur}) : le surtitre « Entraînement » jamais rogné après le défilement`, async ({ page }) => {
+    const i = LESSONS_FR.findIndex(l => l.id === 'l8');
+    const progres = { ...Object.fromEntries(LESSONS_FR.slice(0, i).map(l => [l.id, l.steps.length])), l8: LESSONS_FR[i].steps.length - 1 };
+    await preparer(page, largeur, hauteur, progres);
+    await page.addInitScript(() => localStorage.setItem('go.settings.v1', JSON.stringify({ celebrations: false })));
+    await page.goto('/');
+    await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
+    await page.getByRole('button', { name: `Reprendre la leçon : ${LESSONS_FR[i].title}` }).click();
+    await jouer(page, 'C5');
+    await page.getByRole('button', { name: 'Terminer la leçon' }).click();
+    await page.getByRole('button', { name: /^Entraîne-toi/ }).click();
+    await expect(goban(page, 13)).toBeVisible();
+    // Erreur type (2e ligne, au bord du coin libre) : la feuille monte, la page défile pour montrer le plateau.
+    await jouer(page, 'B12', 13);
+    await expect(page.locator('.verdict-revoir')).toBeVisible();
+    await page.waitForTimeout(300);
+    await photo(page, 'x-serie-13-erreur');
+    for (const l of await page.locator('.lecteur-tete small, .lecteur-tete h2').evaluateAll(els => els.map(e => {
+      const r = e.getBoundingClientRect();
+      return { texte: (e as HTMLElement).innerText, haut: r.top, bas: r.bottom };
+    }))) expect(l.haut >= -0.5 || l.bas <= 0.5, `« ${l.texte} » coupé (${l.haut} → ${l.bas})`).toBe(true);
+    // Le coup joué (B12) reste au-dessus de la feuille.
+    const feuille = (await page.locator('.verdict').boundingBox())!;
+    const faux = (await page.locator('[data-point="B12"]').boundingBox())!;
+    expect(faux.y + faux.height).toBeLessThanOrEqual(feuille.y);
   });
 
   // ---------- L12, L7, L5, L4 : une partie à deux jusqu'à la revue ----------
