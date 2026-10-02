@@ -280,8 +280,10 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
       if (t !== scoreToken.current) return;
       setFinding(false); setDead(new Set(d));
       if (modeComptage(!!ai, incertains) === 'auto') setAutoCompte('calcule');
-      if (modeComptage(!!ai, incertains) !== 'auto') track(EVENTS.comptageManuel, { mode: ai ? 'ordi' : 'deux', adversaire: ai?.id, taille: size, mortes: d.length, incertains: incertains.length });
-      else setMsg(messageComptage(fin, d.length, incertains.length > 0));
+      else track(EVENTS.comptageManuel, { mode: ai ? 'ordi' : 'deux', adversaire: ai?.id, taille: size, mortes: d.length, incertains: incertains.length });
+      // Recette du 02/10 au soir : aussi en comptage manuel, où « Je cherche les pierres mortes… » restait affiché
+      // pendant que le joueur devait vérifier les pierres grisées puis valider.
+      setMsg(messageComptage(fin, d.length, incertains.length > 0));
     });
   }
   // Validation automatique au rendu suivant, quand `dead`, le score et l'historique sont à jour.
