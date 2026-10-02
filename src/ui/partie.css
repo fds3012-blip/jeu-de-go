@@ -222,6 +222,9 @@
 .actions-menu-plus .actions-decisions { flex: none; gap: 4px; padding-right: 0; }
 .actions-menu-plus button.decider { min-width: 72px; padding-inline: 10px; }
 .actions button.plus { flex: none; width: 48px; min-width: 48px; max-width: 48px; padding-inline: 0; }
+/* Sans aide (partie entre amis, #393) : « Passer » large et « Plus » à côté, au centre de la barre. */
+.actions-sans-aides .actions-decisions { gap: var(--space-2); }
+.actions-menu-plus.actions-sans-aides button.decider { min-width: 128px; }
 .actions button.plus .icone-trait { stroke-width: 3; }
 .actions button.plus.ouvert { background: var(--surface-2); }
 @media (min-width: 300px) and (max-width: 374px) {
