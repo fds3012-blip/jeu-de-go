@@ -20,7 +20,8 @@ const texteSynchro = (s: SyncState) => t(`apprendre.synchro.${s}`);
 const PAS_X = 92;
 
 const Coche = () => <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12.5 10 17l9-10" /></svg>;
-const Cadenas = () => <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="5" y="10.5" width="14" height="10" rx="2.5" /><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3" /></svg>;
+/** Verrou « compte » (#343) : une silhouette, pas un cadenas de progression ; la leçon reste touchable et mène à la création de compte. */
+const Compte = () => <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="8.5" r="3.5" /><path d="M5.5 19.5a6.5 6.5 0 0 1 13 0" /></svg>;
 const Horloge = () => <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3.5 2" /></svg>;
 
 /** Ce que dit Mochi sur la carte de la prochaine leçon : commencer, reprendre, continuer, ou tout est fait. */
@@ -30,7 +31,13 @@ function phraseMochi(liste: Etape[], iEnCours: number): string {
   return t(iEnCours === 0 ? 'apprendre.mochi.debut' : 'apprendre.mochi.suite');
 }
 
-export function LearnHome({ progress, onOpen, sync = 'local' }: { progress: Progression; onOpen: (id: string) => void; sync?: SyncState }) {
+/**
+ * `compteRequis` (#343) : vrai si la leçon de ce rang (0 = leçon 1) demande un compte. Sans compte, les leçons 1 à 3 sont libres ;
+ * les suivantes restent touchables, portent le verrou « compte », et `onOpen` ouvre la création de compte (garde d'App.tsx).
+ */
+export function LearnHome({ progress, onOpen, sync = 'local', compteRequis = () => false }: {
+  progress: Progression; onOpen: (id: string) => void; sync?: SyncState; compteRequis?: (rang: number) => boolean;
+}) {
   const liste = etapes(LESSONS, progress);
   const iEnCours = liste.findIndex(e => e.etat === 'encours');
   const bouton = boutonChemin(LESSONS, progress);
@@ -61,7 +68,7 @@ export function LearnHome({ progress, onOpen, sync = 'local' }: { progress: Prog
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const prochaine = bouton && (
-    <CarteProchaine refCarte={carte} etape={iEnCours >= 0 ? liste[iEnCours] : liste[0]} bouton={bouton} mochi={phraseMochi(liste, iEnCours)} onOpen={onOpen} />
+    <CarteProchaine refCarte={carte} etape={iEnCours >= 0 ? liste[iEnCours] : liste[0]} bouton={bouton} mochi={phraseMochi(liste, iEnCours)} onOpen={onOpen} compteRequis={compteRequis} />
   );
 
   return (
@@ -70,7 +77,7 @@ export function LearnHome({ progress, onOpen, sync = 'local' }: { progress: Prog
       {CHAPITRES.map(c => (
         <CheminChapitre key={c.id} chapitre={c} liste={liste.filter(e => c.lecons.includes(e.lecon))} k={k}
           carte={iEnCours >= 0 && c.lecons.includes(liste[iEnCours].lecon) ? prochaine : null}
-          fete={fete === c.id} onFeteFinie={() => setFete(null)} onOpen={onOpen} />
+          fete={fete === c.id} onFeteFinie={() => setFete(null)} onOpen={onOpen} compteRequis={compteRequis} />
       ))}
 
       {iEnCours < 0 && <div className="chemin-fini">{prochaine}</div>}
@@ -86,9 +93,9 @@ export function LearnHome({ progress, onOpen, sync = 'local' }: { progress: Prog
   );
 }
 
-/** Nom accessible d'une pierre du chemin : rang, titre, état. */
-function nomPas(e: Etape): string {
-  const etat = e.etat === 'faite' ? t('apprendre.pas.faite') : e.etat === 'encours' ? t('apprendre.pas.encours') : t('apprendre.pas.verrou');
+/** Nom accessible d'une pierre du chemin : rang, titre, état, et « avec un compte » si elle en demande un. */
+function nomPas(e: Etape, compte = false): string {
+  const etat = (e.etat === 'faite' ? t('apprendre.pas.faite') : e.etat === 'encours' ? t('apprendre.pas.encours') : '') + (compte ? t('apprendre.pas.compte') : '');
   return t('apprendre.pas', { rang: e.rang, titre: e.lecon.title, etat });
 }
 
@@ -96,22 +103,27 @@ function nomPas(e: Etape): string {
  * Carte de la prochaine leçon : Mochi la présente, la vignette et le titre disent de quoi il s'agit,
  * la promesse et la durée donnent envie, et le seul bouton en relief de l'écran l'ouvre.
  */
-function CarteProchaine({ etape, bouton, mochi, onOpen, refCarte }: {
+/** Mention visible sous une leçon qui demande un compte. */
+const MentionCompte = () => <span className="pas-compte"><Compte />{t('apprendre.compte')}</span>;
+
+function CarteProchaine({ etape, bouton, mochi, onOpen, refCarte, compteRequis }: {
   etape: Etape; bouton: NonNullable<ReturnType<typeof boutonChemin>>; mochi: string; onOpen: (id: string) => void;
+  compteRequis: (rang: number) => boolean;
   refCarte: React.RefObject<HTMLLIElement | HTMLDivElement | null>;
 }) {
-  const l = etape.lecon;
+  const l = etape.lecon, compte = compteRequis(etape.rang - 1);
   return (
     <div className="prochaine" ref={refCarte as React.RefObject<HTMLDivElement>} data-testid="prochaine-lecon">
       <Bubble>{fr(mochi)}</Bubble>
       <div className="prochaine-carte">
-        <button className="pas-bouton" data-etat={etape.etat} aria-label={nomPas(etape)} onClick={() => onOpen(l.id)}>
+        <button className="pas-bouton" data-etat={etape.etat} data-compte={compte || undefined} aria-label={nomPas(etape, compte)} onClick={() => onOpen(l.id)}>
           <span className="pas-texte" aria-hidden="true">
             <VignetteLecon id={l.id} taille={72} />
             <span>
               <b>{fr(l.title)}</b>
               <small>{fr(l.desc)}</small>
               <span className="prochaine-duree"><Horloge />{t('apprendre.duree', { n: dureeMinutes(l.steps.length) })}</span>
+              {compte && <MentionCompte />}
             </span>
           </span>
         </button>
@@ -129,8 +141,9 @@ function phraseChapitre(c: Chapitre, faites: number): string {
 }
 
 /** Chemin d'un chapitre : en-tête illustré, puis ses pierres sur une courbe, la prochaine leçon en carte. */
-function CheminChapitre({ chapitre, liste, k, carte, fete, onFeteFinie, onOpen }: {
+function CheminChapitre({ chapitre, liste, k, carte, fete, onFeteFinie, onOpen, compteRequis }: {
   chapitre: Chapitre; liste: Etape[]; k: number; carte: ReactNode; fete: boolean; onFeteFinie: () => void; onOpen: (id: string) => void;
+  compteRequis: (rang: number) => boolean;
 }) {
   const iEnCours = liste.findIndex(e => e.etat === 'encours');
   const faites = liste.filter(e => e.etat === 'faite').length;
@@ -203,17 +216,18 @@ function CheminChapitre({ chapitre, liste, k, carte, fete, onFeteFinie, onOpen }
             // Sous 390 px, toutes les pierres vont au bord (±1) : un titre comme « Techniques » garde sa ligne en face.
             const col = k < 1 ? Math.sign(colonne(i)) : colonne(i), droite = col > 0;
             const style = { '--x': `${Math.round(col * PAS_X * k)}px` } as CSSProperties;
-            const verrou = e.etat === 'avenir';
+            // À venir : pierre grise, toujours touchable (on peut sauter une leçon). Seul le compte (#343) verrouille.
+            const avenir = e.etat === 'avenir', compte = e.etat !== 'faite' && compteRequis(e.rang - 1);
             return (
               <li key={e.lecon.id} className={`pas pas-${e.etat} ${droite ? 'a-droite' : 'a-gauche'}`} style={style}>
-                <button className="pas-bouton" data-etat={e.etat} aria-label={nomPas(e)} disabled={verrou} onClick={() => onOpen(e.lecon.id)}>
+                <button className="pas-bouton" data-etat={e.etat} data-compte={compte || undefined} aria-label={nomPas(e, compte)} onClick={() => onOpen(e.lecon.id)}>
                   <span className="pierre-gue" aria-hidden="true">
                     {e.etat === 'faite' && <span className="pierre-coche"><Coche /></span>}
-                    {verrou && <span className="pierre-verrou"><Cadenas /></span>}
+                    {compte && <span className="pierre-compte"><Compte /></span>}
                   </span>
                   <span className="pas-texte" aria-hidden="true">
-                    <VignetteLecon id={e.lecon.id} taille={44} pale={verrou} />
-                    <span><b>{fr(e.lecon.title)}</b><small>{fr(e.lecon.desc)}</small></span>
+                    <VignetteLecon id={e.lecon.id} taille={44} pale={avenir} />
+                    <span><b>{fr(e.lecon.title)}</b><small>{fr(e.lecon.desc)}</small>{compte && <MentionCompte />}</span>
                   </span>
                 </button>
               </li>

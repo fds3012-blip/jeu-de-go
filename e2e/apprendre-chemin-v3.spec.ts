@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { brancher, fauxServeur } from './fauxSupabase';
 
 // Chemin Apprendre v3 (#40, mission du 1er octobre) : vignettes par leçon, chapitres illustrés, carte de la prochaine
 // leçon présentée par Mochi, courbe à l'encre dorée sur le parcours, pierres cochées, leçons suivantes verrouillées,
@@ -40,11 +41,11 @@ test('premier lancement : Mochi présente la leçon 1, une seule action, les aut
   // Une vignette distincte par leçon sur le chemin (16 leçons), plus celle de la carte et les emblèmes.
   const ids = await page.locator('.gue .pas-texte .vignette').evaluateAll(els => els.map(e => e.getAttribute('data-vignette')));
   expect(new Set(ids).size).toBe(16);
-  // Leçons suivantes : pierre grise, cadenas, bouton désactivé.
-  const l2 = page.getByRole('button', { name: 'Leçon 2 : Atari : attaquer et se sauver, verrouillée' });
+  // Leçons suivantes : pierre grise, toujours touchables ; sans service de comptes, aucun verrou « compte ».
+  const l2 = page.getByRole('button', { name: 'Leçon 2 : Atari : attaquer et se sauver' });
   await expect(l2).toHaveAttribute('data-etat', 'avenir');
-  await expect(l2).toBeDisabled();
-  await expect(page.locator('.pierre-verrou')).toHaveCount(15);
+  await expect(l2).toBeEnabled();
+  await expect(page.locator('.pierre-compte')).toHaveCount(0);
   await expect(page.locator('.pierre-coche')).toHaveCount(0);
   // La courbe existe, rien n'est encore doré.
   await expect(page.locator('[data-chapitre="c1"] .gue-route')).toHaveAttribute('d', /^M.*C/);
@@ -103,6 +104,32 @@ test('chapitre fini : tampon d’or, confettis une seule fois, la suite s’ouvr
   await expect(page.getByTestId('confettis')).toHaveCount(0);
 });
 
+// #343 : sans compte, les leçons 1 à 3 sont libres. La leçon 4 et les suivantes restent touchables et portent
+// le verrou « compte » (silhouette + « Avec un compte ») ; les toucher ouvre la création de compte.
+test('sans compte : leçons 1 à 3 libres, la leçon 4 porte le verrou « compte » et ouvre la création de compte', async ({ browser, baseURL }) => {
+  const ctx = await browser.newContext({ viewport: { width: 320, height: 640 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, locale: 'fr-FR', baseURL,
+    colorScheme: 'light', reducedMotion: 'reduce', storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }] }] } });
+  const page = await brancher(ctx, fauxServeur(), { 'go.lecons.v1': JSON.stringify(DEUX) });
+  await page.goto('/');
+  await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
+  // La leçon 3 (prochaine) est libre : pas de mention de compte sur sa carte.
+  const carte = page.getByTestId('prochaine-lecon');
+  await expect(carte.getByRole('button', { name: 'Leçon 3 : Techniques de capture, prochaine étape' })).toBeVisible();
+  await expect(carte.locator('.pas-compte')).toHaveCount(0);
+  // Leçons 4 à 16 : verrou « compte », jamais désactivées.
+  const l4 = page.getByRole('button', { name: 'Leçon 4 : Le ko, avec un compte' });
+  await expect(l4).toBeEnabled();
+  await expect(l4).toHaveAttribute('data-compte', 'true');
+  await expect(page.locator('.pierre-compte')).toHaveCount(13);
+  await expect(l4.getByText('Avec un compte')).toBeVisible();
+  await sansDebord(page);
+  await l4.scrollIntoViewIfNeeded();
+  if (process.env.CAPTURES) await page.screenshot({ path: `${DOSSIER}/compte-320-clair.jpg`, type: 'jpeg', quality: 70 });
+  await l4.click();
+  await expect(page.getByTestId('creer-compte')).toHaveAttribute('data-raison', 'lecons');
+  await ctx.close();
+});
+
 test('chapitre fini, mouvements réduits : le tampon sans confettis', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await ouvrir(page, BASES);
@@ -137,7 +164,7 @@ test('en anglais : chapitres, carte et verrous traduits', async ({ page }) => {
   await expect(carte.getByText('Nice work! Here comes the next one.')).toBeVisible();
   await expect(carte.getByText('About 2 min')).toBeVisible();
   await expect(page.locator('[data-chapitre="c1"]').getByText('2 of 7')).toBeVisible();
-  await expect(page.getByRole('button', { name: /^Lesson 4: .*, locked$/ })).toBeDisabled();
+  await expect(page.getByRole('button', { name: /^Lesson 4: / })).toBeEnabled();
 });
 
 // Captures APRÈS, en JPEG (dossier léger) : les trois états en 390 et en 320, sombre et clair répartis.
