@@ -23,10 +23,13 @@ function semerPartie(serveur: FauxServeur, aMoi = true) {
     moves: aMoi ? 'ee' : '', status: 'active', counting: false, dead_stones: null, dead_proposed_by: null, result: null, resumed_at: 0, prive: true, rated: false });
   serveur.defis.push({ partie_id: PARTIE, jeton: JETON, createur_id: MOI, invite_id: LEA, delai_coup: '3 days',
     date_limite: new Date(Date.now() + 50 * H).toISOString(), lien_expire_le: new Date(Date.now() + 7 * 864e5).toISOString(), cree_le: new Date().toISOString() });
+  // Le serveur (déclencheur `notifier_partie`, #367) a prévenu le joueur au trait.
+  serveur.notifier(aMoi ? MOI : LEA, 'tour', PARTIE);
 }
 
-async function ouvrir(browser: Browser, baseURL: string | undefined, serveur: FauxServeur, o: { largeur?: number; hauteur?: number; sombre?: boolean; stockage?: Record<string, unknown> } = {}): Promise<Page> {
-  const session = serveur.sessionCompte('moi@exemple.test', 'Florian', MOI);
+async function ouvrir(browser: Browser, baseURL: string | undefined, serveur: FauxServeur, o: { largeur?: number; hauteur?: number; sombre?: boolean; stockage?: Record<string, unknown>; compte?: { email: string; pseudo: string; id: string } } = {}): Promise<Page> {
+  const c = o.compte ?? { email: 'moi@exemple.test', pseudo: 'Florian', id: MOI };
+  const session = serveur.sessionCompte(c.email, c.pseudo, c.id);
   const ctx = await browser.newContext({
     viewport: { width: o.largeur ?? 390, height: o.hauteur ?? 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, locale: 'fr-FR', baseURL,
     colorScheme: o.sombre ? 'dark' : 'light', reducedMotion: 'reduce',
@@ -119,10 +122,51 @@ test('la pastille arrive sans recharger quand l’ami joue', async ({ browser, b
 
   // Léa joue sur son téléphone ; ici, l'app revient au premier plan.
   serveur.games[0].moves = 'ee';
+  serveur.notifier(MOI, 'tour', PARTIE);
   await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
   await expect(page.getByTestId('pastille-jouer')).toBeVisible({ timeout: 5000 });
 });
 
+test('deux téléphones : Léa joue, la pastille arrive chez moi sans recharger ; ouvrir la partie l’éteint', async ({ browser, baseURL }) => {
+  const serveur = fauxServeur();
+  semerPartie(serveur, false); // Léa (Noir) commence
+  serveur.profiles.push({ id: LEA, username: 'Léa', rating: 1500, streak_days: 0, streak_last: null, streak_freezes: 0 });
+  const moi = await ouvrir(browser, baseURL, serveur);
+  const lea = await ouvrir(browser, baseURL, serveur, { compte: { email: 'lea@exemple.test', pseudo: 'Léa', id: LEA } });
+  const erreurs: string[] = [];
+  for (const p of [moi, lea]) p.on('pageerror', e => erreurs.push(e.message));
+  await expect(moi.locator('.cta')).toBeVisible();
+  await expect(moi.getByTestId('pastille-jouer')).toHaveCount(0);
+  // Rien ne relit les défis chez moi pendant la suite (pas d'événement, la minuterie est d'une minute) : seul le
+  // temps réel peut allumer la pastille.
+  const lecturesAvant = serveur.appels.filter(a => a.startsWith('GET /rest/v1/defis')).length;
+
+  // Léa ouvre la partie depuis son accueil et joue C3.
+  await lea.getByTestId('tuile-defi').click();
+  await expect(plateau(lea)).toBeVisible();
+  await jouer(lea, 'C3');
+  await expect(lea.getByText(/Au tour de /)).toBeVisible();
+
+  // Chez moi, sans rechargement ni retour au premier plan : la pastille et la ligne nommée en moins de 5 s.
+  await expect(moi.getByTestId('pastille-jouer')).toBeVisible({ timeout: 5000 });
+  await expect(nav(moi).getByRole('button', { name: 'Jouer, C’est ton tour contre Léa' })).toBeVisible();
+  await expect(moi.getByTestId('tuile-defi')).toContainText('Contre Léa');
+  expect(serveur.appels.filter(a => a.startsWith('GET /rest/v1/defis')).length).toBeGreaterThan(lecturesAvant);
+  // Le temps réel ne m'a envoyé que ma notification : celle de Léa (lue à l'ouverture) ne m'arrive pas.
+  expect(serveur.notifications.filter(n => n.destinataire_id === MOI && n.lue_le === null)).toHaveLength(1);
+  await capture(moi, 'deux-telephones-pastille-390-clair');
+
+  // J'ouvre la partie : la notification est lue, la pastille s'éteint, même si c'est toujours à moi de jouer.
+  await moi.getByTestId('tuile-defi').click();
+  await expect(plateau(moi)).toBeVisible();
+  await expect(moi.getByText(/À toi de jouer\. Il te reste/)).toBeVisible();
+  await moi.getByRole('button', { name: 'Retour', exact: true }).click();
+  await expect(moi.locator('.cta')).toBeVisible();
+  await expect(moi.getByTestId('tuile-defi')).toContainText('Contre Léa');
+  await expect(moi.getByTestId('pastille-jouer')).toHaveCount(0);
+  expect(serveur.notifications.filter(n => n.lue_le === null)).toHaveLength(0);
+  expect(erreurs).toEqual([]);
+});
 
 test('état vide : aucune pastille, rien d’inquiétant', async ({ browser, baseURL }) => {
   const serveur = fauxServeur();
