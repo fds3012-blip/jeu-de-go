@@ -45,6 +45,14 @@ export function RecitScore({ fond, recit, immediat, expliquerKomi, adversaire, o
   }, [immediat]);
 
   const e = etatRecit(recit, t);
+  // Le résultat arrive : sur un écran bas (320 × 568), il peut être sous la ligne de flottaison. On l'amène dans l'écran,
+  // en douceur sauf si les mouvements sont réduits (un toucher pour défiler sauterait au résultat : onPointerUp).
+  const continuer = useRef<HTMLButtonElement>(null);
+  const resultatVu = e.etape >= 4;
+  useEffect(() => {
+    if (!resultatVu) return;
+    continuer.current?.scrollIntoView({ block: 'end', behavior: immediat ? 'auto' : 'smooth' });
+  }, [resultatVu, immediat]);
   const vu = (n: number) => (e.etape >= n ? 'recit-etape vu' : 'recit-etape');
   const gagnant = e.etape >= 4 ? recit.gagnant : 0;
   // Jetons : ce que le temps en cours ajoute à chaque camp ; ils montent dans le chiffre (fin.css). Rien d'emblée.
@@ -90,7 +98,7 @@ export function RecitScore({ fond, recit, immediat, expliquerKomi, adversaire, o
             <li className={`${vu(4)} recit-resultat`}>{fr(ligneResultat(recit, camps))}</li>
           </ol>
         </div>
-        <button type="button" className="cta recit-continuer" onClick={() => fini.current()}>{tr('recit.continuer')}</button>
+        <button ref={continuer} type="button" className="cta recit-continuer" onClick={() => fini.current()}>{tr('recit.continuer')}</button>
       </div>
     </section>
   );

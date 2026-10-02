@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Board } from '../ui/Board';
-import { Avatar, Bandeau, BarreActions, BarreAvantage, ChoixMochi, Coach, CompteurIndices, Icone, ListeCoups } from '../ui/Partie';
+import { Avatar, Bandeau, BarreActions, BarreAvantage, ChoixMochi, Coach, CompteurIndices, Icone, Interrupteur, ListeCoups } from '../ui/Partie';
 import { groupAt, newPosition, play, type Position } from '../go/rules';
 import { playAtari, playCapture, playDefeat, playIllegal, playStone, playVictory } from '../ui/sound';
 import { hapticAtari, hapticCapture, hapticDefeat, hapticIllegal, hapticStone, hapticVictory } from '../ui/haptics';
@@ -73,9 +73,11 @@ interface Props {
    * (src/engine/guidee.ts). `onCran` reçoit chaque nouveau cran, pour que la partie suivante reparte de là.
    */
   guidee?: { depart: number; onCran?: (cran: number) => void };
+  /** Réglages du menu « Plus » de la barre d'actions (partie-ecran-v3) : confirmation au doigt et sons, sans quitter la partie. */
+  reglages?: { son: boolean; modifier: (patch: { confirmTouch?: boolean; sound?: boolean }) => void };
 }
 
-export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, onResult, fin, aiKomi = komi, portrait, celebrer = true, aide = true, avantage = true, accommodant = false, guidee, onImporter }: Props) {
+export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, onResult, fin, aiKomi = komi, portrait, celebrer = true, aide = true, avantage = true, accommodant = false, guidee, onImporter, reglages }: Props) {
   const [history, setHistory] = useState<Position[]>(() => [newPosition(size)]);
   const [phase, setPhase] = useState<'play' | 'score' | 'end'>('play');
   const [dead, setDead] = useState<Set<number>>(new Set());
@@ -603,8 +605,8 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
         <p className="sr-only" aria-live="polite" data-annonce="abandon">{resignArm ? `${tr('partie.action.abandonner')} : ${fr(tr('partie.action.confirmer'))}` : ''}</p>
       </div>
       {bandeau(1, pos, retourAccueil, phase === 'play' && pos.toPlay === 1, feteVisible && !mouvementsReduits() ? { n: feteVisible.n, k: feteVisible.len } : null)}
-      <div className="partie-souffle" aria-hidden="true" />
-      {/* Zone de Mochi de hauteur fixe (#187) : la bulle d'intro garde sa place après le premier coup, le plateau ne bouge pas. */}
+      {/* Zone de Mochi de hauteur fixe (#187), posée juste sous ton bandeau (v3 : plus de trou entre « Toi » et la bulle) :
+          la bulle d'intro garde sa place après le premier coup, le plateau ne bouge pas. */}
       <div className="partie-mochi">
         {intro && phase === 'play' && <div className="coach-intro" aria-hidden={!montrerIntro || undefined} data-cache={!montrerIntro || undefined}>{intro}</div>}
         {!montrerIntro && !avertissementPasse && !quitter && conseilVisible && !pense && messageCoach === conseilVisible.phrase
@@ -622,7 +624,10 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
             agir={{ label: tr('partie.quitter.confirmer'), onClick: onExit }} rester={{ label: tr('partie.quitter.continuer'), onClick: () => { setDemandeQuitter(false); retourRef.current?.focus(); } }} />
         )}
       </div>
+      <div className="partie-souffle" aria-hidden="true" />
       {phase === 'play' ? (
+        // v3 : au plus trois aides visibles (indice, conseil, qui mène), « Passer » en bouton plein, et le menu « Plus »
+        // (annuler, abandonner, réglages) : la barre tient en 320 px avec des libellés lisibles.
         <BarreActions label={tr('partie.actions')} actions={[
           { label: tr(cherche ? 'partie.action.indiceCours' : 'partie.action.indice'), icone: ai ? <CompteurIndices restants={restants}><Icone nom="indice" /></CompteurIndices> : <Icone nom="indice" />,
             onClick: hint, disabled: !myTurn || cherche || restants <= 0, description: ai ? descriptionIndices(restants) : undefined },
@@ -632,11 +637,19 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
             icone: ai ? <CompteurIndices restants={quiMeneReste}><Icone nom="quimene" /></CompteurIndices> : <Icone nom="quimene" />,
             onClick: quiMeneToucher, disabled: !quiMeneVisible && (quiMeneCalcul || quiMeneReste <= 0),
             description: ai ? descriptionQuiMene(quiMeneReste) : undefined }] : []),
-          { label: tr('partie.action.annuler'), icone: <Icone nom="annuler" />, onClick: undo, disabled: undoTo < 1 },
           { label: tr('partie.action.passer'), icone: <Icone nom="passer" />, onClick: pass, disabled: !myTurn, groupe: 'decision', principale: true,
             evidence: passerEnEvidence(aide && !!ai, myTurn, pos.lastMove === -1, conseilPasserA, history.length), pulse: celebrer && !mouvementsReduits() },
-          { label: resignArm ? fr(tr('partie.action.confirmer')) : tr('partie.action.abandonner'), icone: <Icone nom="abandonner" />, onClick: resign, danger: resignArm, groupe: 'decision' },
-        ]} />
+        ]} menu={{
+          label: tr('partie.action.plus'),
+          actions: [
+            { label: tr('partie.action.annuler'), action: 'annuler', icone: <Icone nom="annuler" />, onClick: undo, disabled: undoTo < 1 },
+            { label: resignArm ? fr(tr('partie.action.confirmer')) : tr('partie.action.abandonner'), action: 'abandonner', icone: <Icone nom="abandonner" />, onClick: resign, danger: resignArm, reste: true },
+          ],
+          reglages: reglages ? <>
+            <Interrupteur label={tr('profil.confirmer')} actif={confirmTouch} onChange={v => reglages.modifier({ confirmTouch: v })} />
+            <Interrupteur label={tr('profil.sons')} actif={reglages.son} onChange={v => reglages.modifier({ sound: v })} />
+          </> : undefined,
+        }} />
       ) : (
         <>
           <p className="comptage">{fr(tr('partie.comptage', { noir: name(1), pn: virgule(sc.black), blanc: name(2), pb: virgule(sc.white) }))}</p>
