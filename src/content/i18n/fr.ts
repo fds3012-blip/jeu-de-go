@@ -720,10 +720,9 @@ export const fr = {
   'apprendre.pas.faite': ', terminée',
   'apprendre.pas.encours': ', prochaine étape',
   'apprendre.bientot': 'Bientôt',
-  'apprendre.bientot.texte': 'Trois autres chapitres sont en préparation, jusqu’au niveau des joueurs de club.',
+  'apprendre.bientot.texte': 'Deux autres chapitres sont en préparation, jusqu’au niveau des joueurs de club.',
   'apprendre.avenir.3': 'Formes et tesuji, les coups astucieux',
   'apprendre.avenir.4': 'Ouverture en 19\u00A0×\u00A019',
-  'apprendre.avenir.5': 'Fin de partie et comptage',
   'apprendre.revoir': 'Revoir',
   'apprendre.revoirTitre': 'Revoir : {titre}',
   // « Continuer » : seulement l'étape suivante dans une leçon (docs/design/vocabulaire.md).
@@ -754,6 +753,10 @@ export const fr = {
   'acquis.l10': 'Tu sais donner une pierre pour en reprendre plusieurs.',
   'acquis.l11': 'Tu sais compter les libertés pour gagner une course.',
   'acquis.l12': 'Tu reconnais un faux œil : tu sais l’éviter chez toi, le créer chez Blanc.',
+  'acquis.l13': 'Tu trouves le point vital qui fait vivre ou mourir un groupe.',
+  'acquis.l14': 'Tu reconnais un seki : personne n’attaque, ses points ne comptent pas.',
+  'acquis.l15': 'Tu sais finir une partie : frontières fermées, dame, pierres mortes.',
+  'acquis.l16': 'Tu sais compter une partie entière, pierres mortes et komi compris.',
   'acquis.defaut': 'Une leçon de plus dans ta poche.',
   'lecteur.progression': 'Progression de la leçon',
   // #290 : sur un écran bas, l'explication du verdict est repliée pour laisser voir le plateau.

@@ -33,12 +33,12 @@ for (const largeur of [390, 320]) {
     await page.goto('/');
     await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
 
-    // Le chemin : les deux nouveaux chapitres, leurs leçons ; « Bientôt » n'annonce plus que trois chapitres.
+    // Le chemin : les nouveaux chapitres, leurs leçons ; « Bientôt » n'annonce plus que deux chapitres (#16, leçons 13 à 16).
     await expect(page.getByRole('heading', { name: 'Capturer et sauver' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Vie et mort' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Leçon 9 : Le filet, terminée' })).toBeAttached();
     await expect(page.getByRole('button', { name: 'Leçon 12 : Le faux œil, prochaine étape' })).toBeAttached();
-    await expect(page.locator('.a-venir li')).toHaveText(['Formes et tesuji, les coups astucieux', 'Ouverture en 19\u00A0×\u00A019', 'Fin de partie et comptage']);
+    await expect(page.locator('.a-venir li')).toHaveText(['Formes et tesuji, les coups astucieux', 'Ouverture en 19\u00A0×\u00A019']);
     await sansDebordement(page, 'chemin');
     await page.locator('.cta-chemin').click();
 

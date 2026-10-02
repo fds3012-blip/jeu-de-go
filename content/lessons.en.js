@@ -7,7 +7,8 @@ export const CHAPITRES_EN = {
   c1: { titre: 'The basics', intro: 'Seven short lessons to play your first game.', fin: 'You know the rules of Go.' },
   c2: { titre: 'Opening on 9 × 9', intro: 'Where to place your first stones.' },
   c3: { titre: 'Capturing and saving', intro: 'Traps to capture more stones.' },
-  c4: { titre: 'Life and death', intro: 'When a group lives, and when it dies.' }
+  c4: { titre: 'Life and death', intro: 'When a group lives, and when it dies.' },
+  c5: { titre: 'Endgame and counting', intro: 'Finish cleanly, then count right.' }
 };
 
 const COLLEE = 'Right next to White, your stone makes White stronger. Leave some space.';
@@ -140,5 +141,57 @@ export const LESSONS_EN = {
       refus: ['You’re filling one of your own eyes: only one is left.'] },
     { text: 'The other way around: make one of White’s eyes false.',
       ok: 'White has only one real eye left: White is dead.', no: 'Take the corner of White’s eye, where its stones split apart.' }
+  ] },
+  l13: { title: 'The vital point', desc: 'Three points in a row: the middle decides', steps: [
+    { text: 'Three in a row: playing the middle (green point) makes two eyes.' },
+    { text: 'Tap the vital point. If White takes it, your group dies.',
+      geste: { no: 'Tap the middle point, between the other two.' } },
+    { text: 'Your turn: kill the marked white group.',
+      ok: 'Vital point! White can make only one eye: White is dead.', no: 'Play in the middle of White’s space.',
+      refus: ['Next to the middle: White plays there and makes two eyes.'] },
+    { text: 'Your turn: make your marked group live.',
+      ok: 'Two eyes, J4 and J2: your group lives.', no: 'Take the middle point before White does.',
+      refus: ['At the end of the space: White takes the middle, and you die.'] },
+    { text: 'Four in a row: White enters, answer the green point. You live.' },
+    { text: 'Only two points. Can this black group live?', choices: ['Yes, always', 'Yes, if Black plays first', 'No, never'],
+      ok: 'Two points make only one eye: this group is dead.', no: 'Even if Black plays first, it makes only one eye.' }
+  ] },
+  l14: { title: 'Seki', desc: 'Living together, without eyes', steps: [
+    { text: 'Seki (mutual life): no eyes, two shared liberties. Tap one.',
+      geste: { no: 'Tap an empty point between the stones.' } },
+    { text: 'Fill the green point: you put yourself in atari. White captures everything.' },
+    { text: 'If White fills C1, White dies. Capture at the green point.' },
+    { text: 'Nobody plays here. Who owns C1 and E1?', choices: ['Black', 'White', 'Nobody'],
+      ok: 'Nobody: in a seki, these points don’t count.', no: 'Neither player can fill them without dying.' },
+    { text: 'Your turn: save your marked stones with a seki.',
+      ok: 'Two shared liberties: nobody can attack. That’s seki.', no: 'Keep two liberties shared with White.',
+      refus: ['There, you put yourself in atari: White captures.'] }
+  ] },
+  l15: { title: 'Finishing the game', desc: 'Dame, borders, dead stones', steps: [
+    { text: 'Dame (neutral point): it touches Black and White. Tap it.',
+      geste: { no: 'Look for the empty point between Black and White.' } },
+    { text: 'Fill it at the green point: no point won, none lost.' },
+    { text: 'Before passing: one border is still open. Close it.',
+      ok: 'Closed right against White: all your points count.', no: 'Look for the hole between your territory and White.',
+      refus: ['Closed, but you lose D8: close it right against White.'] },
+    { text: 'Dead stone: it can never live. Tap it, in your territory.',
+      geste: { no: 'Look for the white stone, bottom left.' } },
+    { text: 'Should you capture B2 before passing?', choices: ['Yes', 'No, I pass'],
+      ok: 'It’s dead: it’s removed at the end, like a prisoner.', no: 'Each move in your own territory costs a point. It’s already dead.' },
+    { text: 'B2 is removed and becomes a prisoner. How many points for Black?', choices: ['26', '27', '28'],
+      ok: '26 territory + 1 prisoner = 27.', no: 'Count the colored territory, then add the prisoner.' }
+  ] },
+  l16: { title: 'Counting a game', desc: 'Dead stones, territory, prisoners, komi', steps: [
+    { text: 'The game is over. Tap your dead stone, in White’s area.',
+      geste: { no: 'Look for a lone black stone in White’s area.' } },
+    { text: 'Your turn: tap the dead white stone.',
+      ok: 'Yes: both dead stones are removed. Each one becomes a prisoner.', no: 'Look for a lone white stone in Black’s area.' },
+    { text: 'Dead stones removed. Count with me: 26 points each.' },
+    { text: 'Black has 7 prisoners, plus the dead stone. How many points?', choices: ['33', '34', '40.5'],
+      ok: '26 + 7 + 1 = 34.', no: 'Territory plus prisoners, dead stone included. Komi goes to White.' },
+    { text: 'White has 1 prisoner, plus the dead stone. With komi?', choices: ['28', '32.5', '34.5'],
+      ok: '26 + 1 + 1 + 6.5 = 34.5.', no: 'Territory, prisoners, dead stone, then komi (6.5).' },
+    { text: 'Black 34, White 34.5. Who wins?', choices: ['Black', 'White', 'Tie'],
+      ok: 'White, by half a point. The half point of komi prevents ties.', no: '34.5 is more than 34.' }
   ] }
 };

@@ -1,4 +1,4 @@
-// Douze leçons interactives, positions vérifiées par un lecteur tactique.
+// Seize leçons interactives, positions vérifiées par un lecteur tactique.
 // rows : plateau 9 × 9 ligne par ligne depuis le haut. X noir, O blanc, T pierre blanche visée, S pierre noire à sauver.
 // Coordonnées : lettres A à J sans I, lignes numérotées depuis le bas. accept: 'line3' = tout coup hors des deux premières lignes.
 const L_CAP1 = ['.........', '.........', '.........', '...X.....', '..XT.O...', '...X.....', '.........', '.........', '.........'];
@@ -47,12 +47,34 @@ const L_FAUX = ['.........', '.........', '.........', '.........', '.........',
 const L_FAUX_D2 = ['.........', '.........', '.........', '.........', '.........', '.........', 'OOOOOO...', 'XXXOXO...', '.X.XXO...'];
 const L_FAUX_VIS = ['.........', '.........', '.........', '.........', '.........', '.........', 'OOOOOO...', 'SXX.XO...', '.X.XXO...'];
 const L_FAUX_TUE = ['...XOO.O.', '...XO.OOT', '...XXXXXX', '.........', '.........', '.........', '.........', '.........', '.........'];
+// Leçons 13 à 16 (#16) : le point vital, le seki, finir la partie, compter une partie. Chaque position, chaque réponse
+// acceptée, chaque réfutation et chaque chiffre est prouvé par src/go/lecons-13-16.test.ts (preuve de vie et mort en zone
+// fermée, score() du moteur en règle japonaise).
+// Point vital : trois points en ligne, le milieu décide ; quatre en ligne vivent même si Blanc entre ; deux meurent.
+const L_TROIS = ['.........', '.........', '.........', '.........', '.........', '.........', 'OOOOOOO..', 'OXXXXXO..', 'OX...XO..'];
+const L_TROIS_TUE = ['XT...OX..', 'XOOOOOX..', 'XXXXXXX..', '.........', '.........', '.........', '.........', '.........', '.........'];
+const L_TROIS_VIS = ['.........', '.........', '.........', '.......OO', '......OSX', '......OX.', '......OX.', '......OX.', '......OXX'];
+const L_QUATRE = ['.........', '.........', '.........', '.........', '.........', '.........', 'OOOOOOOO.', 'OXXXXXXO.', 'OX....XO.'];
+const L_DEUX = ['.........', '.........', '.........', '.........', '.........', '.........', '...OOOOO.', '...OSXXO.', '...OX..O.'];
+// Seki : la chaîne noire C2-E2 et les chaînes blanches qui l'entourent n'ont aucun œil et partagent C1 et E1. Qui en
+// remplit une se met en atari et se fait prendre. Question : E2 vide ; seul E2 garde deux libertés partagées.
+const L_SEKI = ['.........', '.........', '.........', '.........', '.........', 'XXXXXXX..', 'XOOOOOX..', 'XOXXXOX..', 'XO.O.OX..'];
+const L_SEKI_Q = ['.........', '.........', '.........', '.........', '.........', 'XXXXXXX..', 'XOOOOOX..', 'XOSX.OX..', 'XO.O.OX..'];
+// Finir la partie : dame en E7 (touche Noir et Blanc), pierre blanche morte en B2 dans le coin noir (A1, A2, B1).
+// `TROU` : la frontière est encore ouverte en E8 ; `SANS` : B2 retirée, comptée prisonnière.
+const L_FIN_P = ['....XO...', '....XO...', '...X.O...', '...XO....', '...XO....', '...XXO...', 'XXXXXO...', '.OX.XO...', '..X.XO...'];
+const L_FIN_TROU = L_FIN_P.map((r, i) => (i === 1 ? '.....O...' : r));
+const L_FIN_SANS = L_FIN_P.map((r, i) => (i === 7 ? '..X.XO...' : r));
+// Compter une partie : une morte de chaque côté (B2 blanche, H8 noire), une dame en E5. `SANS` : mortes retirées.
+const L_COMPTE_P = ['...XO.O..', '...XO.OX.', '...XO.OOO', '...XO....', '...X.O...', '....XO...', 'XXX.XO...', '.OX.XO...', '..X.XO...'];
+const L_COMPTE_SANS = L_COMPTE_P.map((r, i) => (i === 1 ? '...XO.O..' : i === 7 ? '..X.XO...' : r));
 export const CHAPITRES = [
   { id: 'c1', titre: 'Les bases', intro: 'Sept leçons courtes pour jouer ta première partie.', fin: 'Tu connais les règles du go.', lecons: ['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7'] },
   // Chapitre en cours d'écriture (`complet: false`) : sa dernière leçon ne ferme pas encore le chapitre.
   { id: 'c2', titre: 'Ouverture sur 9\u00A0×\u00A09', intro: 'Où poser tes premières pierres.', lecons: ['l8'], complet: false },
   { id: 'c3', titre: 'Capturer et sauver', intro: 'Des pièges pour prendre plus de pierres.', lecons: ['l9', 'l10', 'l11'], complet: false },
-  { id: 'c4', titre: 'Vie et mort', intro: 'Quand un groupe vit, quand il meurt.', lecons: ['l12'], complet: false }
+  { id: 'c4', titre: 'Vie et mort', intro: 'Quand un groupe vit, quand il meurt.', lecons: ['l12', 'l13', 'l14'], complet: false },
+  { id: 'c5', titre: 'Fin de partie et comptage', intro: 'Finir proprement, puis compter juste.', lecons: ['l15', 'l16'], complet: false }
 ];
 export const LESSONS = [
   { id: 'l1', title: 'Libertés et capture', desc: 'La règle qui fait tout le jeu', steps: [
@@ -248,5 +270,77 @@ export const LESSONS = [
     { kind: 'move', rows: L_FAUX_TUE, accept: ['F8'],
       text: 'À l’inverse : rends un œil blanc faux.',
       ok: 'Blanc n’a plus qu’un vrai œil : il est mort.', no: 'Prends le coin de l’œil blanc, là où ses pierres se séparent.' }
+  ] },
+  { id: 'l13', title: 'Le point vital', desc: 'Trois points en ligne : le milieu décide', steps: [
+    { kind: 'info', rows: L_TROIS, geste: { pose: 'D1' }, demo: [{ pose: 'D1', couleur: 'B' }, { yeux: ['C1', 'E1'] }],
+      text: 'Trois points en ligne : le milieu, au point vert, fait deux yeux.' },
+    { kind: 'info', rows: L_TROIS, geste: { touche: ['D1'], no: 'Touche le point du milieu, entre les deux autres.' },
+      demo: [{ pose: 'D1', couleur: 'W' }, { libs: 'D1' }],
+      text: 'Touche le point vital. Si Blanc le prend, ton groupe meurt.' },
+    { kind: 'move', rows: L_TROIS_TUE, accept: ['D9'],
+      text: 'À toi : tue le groupe blanc marqué.',
+      ok: 'Point vital ! Blanc ne fera qu’un œil : il est mort.', no: 'Joue au milieu de l’espace blanc.',
+      refus: [{ points: ['C9', 'E9'], no: 'À côté du milieu : Blanc y joue et fait deux yeux.' }] },
+    { kind: 'move', rows: L_TROIS_VIS, accept: ['J3'],
+      text: 'À toi : fais vivre ton groupe marqué.',
+      ok: 'Deux yeux, J4 et J2 : ton groupe vit.', no: 'Prends le point du milieu avant Blanc.',
+      refus: [{ points: ['J4', 'J2'], no: 'Au bout de l’espace : Blanc prend le milieu, tu meurs.' }] },
+    { kind: 'info', rows: L_QUATRE, geste: { pose: 'E1' }, demo: [{ pose: 'D1', couleur: 'W' }, { pose: 'E1', couleur: 'B' }, { libs: 'D1' }],
+      text: 'Quatre en ligne : si Blanc entre, réponds au point vert. Tu vis.' },
+    { kind: 'quiz', rows: L_DEUX,
+      text: 'Deux points seulement. Ce groupe noir peut-il vivre ?', choices: ['Oui, toujours', 'Oui, s’il joue', 'Non, jamais'], answer: 2,
+      ok: 'Deux points ne font qu’un œil : ce groupe est mort.', no: 'Même si Noir joue le premier, il ne fait qu’un œil.' }
+  ] },
+  { id: 'l14', title: 'Le seki', desc: 'Vivre ensemble, sans yeux', steps: [
+    { kind: 'info', rows: L_SEKI, geste: { touche: ['C1', 'E1'], no: 'Touche un point vide entre les pierres.' },
+      demo: [{ libs: 'C2' }, { libs: 'B2' }],
+      text: 'Seki (vie commune) : aucun œil, deux libertés partagées. Touches-en une.' },
+    { kind: 'info', rows: L_SEKI, geste: { pose: 'C1' }, demo: [{ pose: 'C1', couleur: 'B' }, { pose: 'E1', couleur: 'W' }],
+      text: 'Remplis au point vert : tu te mets en atari. Blanc prend tout.' },
+    { kind: 'info', rows: L_SEKI, geste: { pose: 'E1' }, demo: [{ pose: 'C1', couleur: 'W' }, { pose: 'E1', couleur: 'B' }],
+      text: 'Si Blanc remplit C1, c’est lui qui meurt. Prends au point vert.' },
+    { kind: 'quiz', rows: L_SEKI,
+      text: 'Personne ne joue ici. À qui sont C1 et E1 ?', choices: ['À Noir', 'À Blanc', 'À personne'], answer: 2,
+      ok: 'À personne : en seki, ces points ne comptent pas.', no: 'Ni Noir ni Blanc ne peut les remplir sans mourir.' },
+    { kind: 'move', rows: L_SEKI_Q, accept: ['E2'],
+      text: 'À toi : sauve tes pierres marquées par un seki.',
+      ok: 'Deux libertés partagées : personne ne peut attaquer. C’est seki.', no: 'Garde deux libertés partagées avec Blanc.',
+      refus: [{ points: ['C1', 'E1'], no: 'Là, tu te mets en atari : Blanc prend.' }] }
+  ] },
+  { id: 'l15', title: 'Finir la partie', desc: 'Dame, frontières, pierres mortes', steps: [
+    { kind: 'info', rows: L_FIN_P, geste: { touche: ['E7'], no: 'Cherche le point vide entre Noir et Blanc.' }, demo: [{ zone: ['E7'] }],
+      text: 'Dame (point neutre) : il touche Noir et Blanc. Touche-le.' },
+    { kind: 'info', rows: L_FIN_P, geste: { pose: 'E7' }, demo: [{ pose: 'E7', couleur: 'B' }],
+      text: 'Remplis-la au point vert : aucun point gagné, aucun perdu.' },
+    { kind: 'move', rows: L_FIN_TROU, accept: ['E8'],
+      text: 'Avant de passer : une frontière est ouverte. Ferme-la.',
+      ok: 'Fermée au contact de Blanc : tous tes points comptent.', no: 'Cherche le trou entre ton territoire et Blanc.',
+      refus: [{ points: ['D8'], no: 'Fermée, mais tu perds D8 : ferme au contact de Blanc.' }] },
+    { kind: 'info', rows: L_FIN_P, geste: { touche: ['B2'], no: 'Cherche la pierre blanche, en bas à gauche.' }, demo: [{ libs: 'B2' }],
+      text: 'Pierre morte : elle ne peut plus vivre. Touche-la, chez toi.' },
+    { kind: 'quiz', rows: L_FIN_P,
+      text: 'Faut-il capturer B2 avant de passer ?', choices: ['Oui', 'Non, je passe'], answer: 1,
+      ok: 'Elle est morte : on la retire à la fin, comme un prisonnier.', no: 'Chaque coup chez toi coûte un point. Elle est déjà morte.' },
+    { kind: 'quiz', rows: L_FIN_SANS, terr: true, compte: { pour: 'B', komi: 6.5, prises: [1, 0] },
+      text: 'B2 retirée devient prisonnière. Combien de points pour Noir ?', choices: ['26', '27', '28'], answer: 1,
+      ok: '26 de territoire + 1 prisonnier = 27.', no: 'Compte le territoire colorié, puis ajoute la prisonnière.' }
+  ] },
+  { id: 'l16', title: 'Compter une partie', desc: 'Mortes, territoire, prisonniers, komi', steps: [
+    { kind: 'info', rows: L_COMPTE_P, geste: { touche: ['H8'], no: 'Cherche une pierre noire seule chez Blanc.' }, demo: [{ libs: 'H8' }],
+      text: 'Fin de partie. Touche ta pierre morte, chez Blanc.' },
+    { kind: 'touche', rows: L_COMPTE_P, accept: ['B2'],
+      text: 'À toi : touche la pierre blanche morte.',
+      ok: 'Oui : on retire les deux mortes. Chacune devient prisonnière.', no: 'Cherche une pierre blanche seule chez Noir.' },
+    { kind: 'info', rows: L_COMPTE_SANS, demo: [{ terr: 'B' }, { terr: 'W' }],
+      text: 'Mortes retirées. Compte avec moi : 26 points chacun.' },
+    { kind: 'quiz', rows: L_COMPTE_SANS, terr: true, compte: { pour: 'B', komi: 6.5, prises: [8, 2] },
+      text: 'Noir a 7 prisonniers, plus la morte. Combien de points ?', choices: ['33', '34', '40,5'], answer: 1,
+      ok: '26 + 7 + 1 = 34.', no: 'Territoire plus prisonniers, morte comprise. Le komi va à Blanc.' },
+    { kind: 'quiz', rows: L_COMPTE_SANS, terr: true, compte: { pour: 'W', komi: 6.5, prises: [8, 2] },
+      text: 'Blanc a 1 prisonnier, plus la morte. Avec le komi ?', choices: ['28', '32,5', '34,5'], answer: 2,
+      ok: '26 + 1 + 1 + 6,5 = 34,5.', no: 'Territoire, prisonniers, morte, puis le komi (6,5).' },
+    { kind: 'quiz', rows: L_COMPTE_SANS,
+      text: 'Noir 34, Blanc 34,5. Qui gagne ?', choices: ['Noir', 'Blanc', 'Égalité'], answer: 1,
+      ok: 'Blanc, d’un demi-point. Le demi-point du komi évite les égalités.', no: '34,5 est plus grand que 34.' }
   ] }
 ];
