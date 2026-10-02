@@ -238,10 +238,13 @@ export function BarreActions({ actions, label, menu }: { actions: Action[]; labe
   const aides = actions.filter(a => a.groupe !== 'decision');
   // La principale en dernier : à droite, là où tombe le pouce ; l'ordre de lecture suit l'ordre visuel.
   const rangees = [...decisions.filter(a => !a.principale), ...decisions.filter(a => a.principale)];
+  // Sans aide (partie entre amis, #393) : ni colonne vide ni filet, « Passer » et « Plus » se centrent.
   return (
-    <div className={`actions actions-groupees${menu ? ' actions-menu-plus' : ''}`} role="toolbar" aria-label={label}>
-      <div className="actions-aides">{aides.map(a => <Bouton key={a.label} a={a} />)}</div>
-      <span className="actions-filet" aria-hidden="true" />
+    <div className={`actions actions-groupees${menu ? ' actions-menu-plus' : ''}${aides.length ? '' : ' actions-sans-aides'}`} role="toolbar" aria-label={label}>
+      {aides.length > 0 && <>
+        <div className="actions-aides">{aides.map(a => <Bouton key={a.label} a={a} />)}</div>
+        <span className="actions-filet" aria-hidden="true" />
+      </>}
       <div className="actions-decisions">
         {rangees.map(a => <Bouton key={a.label} a={a} />)}
         {menu && <MenuPlus actions={menu.actions} label={menu.label} reglages={menu.reglages} />}

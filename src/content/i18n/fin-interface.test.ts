@@ -38,7 +38,7 @@ const ORIGINAUX: [Cle, string, boolean?][] = [
   ['compte.changerPseudo', 'Changer de pseudo'],
   ['compte.supprimer', 'Supprimer mon compte'],
   ['compte.supprimer.titre', `Supprimer ton compte${F}?`, true],
-  ['compte.supprimer.texte', 'C’est définitif. On efface ton profil, ton pseudo, ta cote, tes badges, ta progression et ton adresse e-mail.'],
+  ['compte.supprimer.texte', 'C’est définitif. On efface ton profil, ton pseudo, ta cote, tes badges, ta progression, tes parties enregistrées et ton adresse e-mail.'],
   ['compte.supprimer.parties', `Tes parties contre d’autres joueurs restent pour eux, sans ton nom${F}: tu y deviens «${F}joueur supprimé${F}».`, true],
   ['compte.supprimer.enCours', 'Suppression…'],
   ['compte.supprimer.definitif', 'Supprimer définitivement'],
@@ -83,10 +83,10 @@ const ORIGINAUX: [Cle, string, boolean?][] = [
   ['conditions.intro', 'Pas de pub. Tes données ne sont jamais vendues.'],
   ['conditions.garde', 'Ce qu’on garde'],
   ['conditions.garde.telephone', `Sur ton téléphone${F}:`, true],
-  ['conditions.garde.telephoneTexte', `tes réglages et ta progression. L’ordi calcule ses coups ici${F}: tes parties contre lui ne partent pas.`, true],
+  ['conditions.garde.telephoneTexte', 'tes réglages, ta progression et tes parties. L’ordi calcule ses coups ici, sans serveur.'],
   ['conditions.garde.compte', `Si tu crées un compte${F}:`, true],
   // #223 (29/09) : texte réaligné sur la politique de confidentialité (série, progression, défi sans compte, prestataires).
-  ['conditions.garde.compteTexte', 'ton e-mail, ton pseudo, ta cote, ta série, ta progression, tes parties en ligne, tes badges. Chez Supabase, à Paris.'],
+  ['conditions.garde.compteTexte', 'ton e-mail, ton pseudo, ta cote, ta série, ta progression, tes badges et tes parties (en ligne, contre l’ordi, importées), pour les retrouver sur tous tes appareils. Chez Supabase, à Paris.'],
   ['conditions.garde.defi', `Un ami te défie, sans compte${F}:`, true],
   ['conditions.garde.defiTexte', 'un numéro de session, sans e-mail ni pseudo, et vos parties. Chez Supabase, à Paris.'],
   ['conditions.garde.comptage', `Comptage anonyme${F}:`, true],
@@ -156,7 +156,6 @@ describe('français identique aux textes d’origine', () => {
   });
 
   it('compte : textes avec variables', () => {
-    expect(traduire('fr', 'compte.cote', { cote: 1500 })).toBe('Cote 1500');
     expect(traduire('fr', 'compte.supprimer.tape', { mot: motSuppression() })).toBe('Pour confirmer, tape SUPPRIMER');
     expect(traduire('fr', 'compte.lienEnvoye', { email: 'a@b.fr' })).toBe('On t’a envoyé un lien à a@b.fr. Ouvre-le sur ce téléphone pour te connecter.');
     expect(typo(traduire('fr', 'compte.pseudoAide', { min: 3, max: 24 }))).toBe(`C’est le nom que verront les autres joueurs. De 3 à 24 caractères${F}: lettres, chiffres, _ et -.`);

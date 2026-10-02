@@ -90,6 +90,16 @@ function verifier(s: Schema, pr: Preuve): void {
     expect([...groupes.values()]).toContain(1);
     const r = ok(play(avec(pos, 2), p));
     expect(r.captures[2]).toBeGreaterThan(0);
+    // Le texte : « Noir doit jouer en C1 pour sauver D1 ». Seul le coup noir dans l'œil sauve la pierre en atari
+    // (aucune pierre blanche voisine n'est en atari) ; il relie tout, et l'œil n'est plus un point vide.
+    const menacees = [...groupes.entries()].filter(([, l]) => l === 1).map(([k]) => at(k.split(',')[0]));
+    for (const m of menacees) for (const q of groupAt(pos.board, n, m).liberties) expect(q).toBe(p);
+    for (const m of menacees) for (const v of groupAt(pos.board, n, m).stones.flatMap(x => neighbors(n)[x])) {
+      if (pos.board[v] === 2) expect(libs(pos, v).size, `pierre blanche ${toLabel(v, n)}`).toBeGreaterThanOrEqual(2);
+    }
+    const relie = ok(play(avec(pos, 1), p));
+    expect(new Set(voisins.map(v => Math.min(...groupAt(relie.board, n, v).stones))).size).toBe(1);
+    expect(relie.board[p]).toBe(1);
   } else if ('seki' in pr) {
     const seki = findSeki(pos.board, n);
     for (const l of pr.seki) expect(seki.has(at(l)), l).toBe(true);

@@ -1333,4 +1333,53 @@ export const PROBLEMES_EN: Record<string, TexteProbleme> = {
     explanation: 'Well done! G7 closes right against White: you have 25 points. B2 and C1, in the seki, belong to nobody. White has 18 + 6.5 = 24.5. You win by half a point. At F7, you only had 24.',
     refutation: 'Not quite. White plays G7: your border closes at F7, and White wins. Never fill B2 or C1: in the seki, you would put yourself in atari.',
   },
+  // Lot X (#16) : ko (leçon 4), ouverture (leçons 6 et 8).
+  x01: {
+    title: 'Take the ko',
+    prompt: 'The marked white stone has only one liberty left. Capture it.',
+    explanation: 'Well done! C1 captures B1. Your stone at C1 has only one liberty left, B1: this is a ko. White can’t take back right away. White must play elsewhere first.',
+    refutation: 'Not quite. White plays C1: the marked stone joins White’s other stones, and it’s safe.',
+  },
+  x02: {
+    title: 'Close the ko',
+    prompt: 'Your marked stone is in atari. White can capture it and start a ko. Stop that.',
+    explanation: 'Well done! E9 joins your stone to your other stones: they have three liberties, and there is no ko any more. We say you closed the ko.',
+    refutation: 'Not quite. White plays E9: White captures your stone, and it’s a ko. Close it first.',
+  },
+  x03: {
+    title: 'The ko that saves',
+    prompt: 'Your marked stone is in atari, and you can’t extend. Save it.',
+    explanation: 'Well done! F5 captures E5: your stone gets a liberty back. This is a ko: White can’t take back at E5 right away. If White plays elsewhere, connect at E5: the ko is over.',
+    refutation: 'Not quite. White plays F5: E5 is connected, and your marked stone is still in atari. At E7, you would have no liberty: that move isn’t allowed.',
+  },
+  x04: {
+    title: 'The open corner',
+    prompt: 'Start of the game. One corner is still empty. Take it.',
+    explanation: 'Well done! The top left corner was open: it’s the biggest point. In a corner, a few stones surround many points. The 3-3, 3-4 and 4-4 points (3rd or 4th line from each edge) are all good there.',
+    refutation: 'Not quite. White then takes the top left corner, the biggest point. Play in the open corner first, on the 3rd or 4th line.',
+  },
+  x05: {
+    title: 'Corners first',
+    prompt: 'White has two corners, you have only one. Where do you play?',
+    explanation: 'Well done! The bottom left corner was open: it’s the biggest point. The 3-3, 3-4 and 4-4 points (3rd or 4th line from each edge) are all good there.',
+    refutation: 'Not quite. White then takes the bottom left corner, the biggest point. Play in the open corner first, on the 3rd or 4th line.',
+  },
+  x06: {
+    title: 'Before the side',
+    prompt: 'White just played on the side, at G3. The biggest point is elsewhere. Play it.',
+    explanation: 'Well done! The bottom right corner was still open: it’s worth more than a point on the side. Corners, then sides, then the centre. The 3-3, 3-4 and 4-4 points are all good there.',
+    refutation: 'Not quite. White then takes the bottom right corner, next to the G3 stone: the biggest point. Play in the open corner first, on the 3rd or 4th line.',
+  },
+  x07: {
+    title: 'The centre can wait',
+    prompt: 'White took the centre. What do you play?',
+    explanation: 'Well done! The bottom left corner is worth more than the centre: in the centre, you need many stones to surround a point. The 3-3, 3-4 and 4-4 points are all good there.',
+    refutation: 'Not quite. White then takes the bottom left corner, the biggest point. The centre can wait: play in the open corner first, on the 3rd or 4th line.',
+  },
+  x08: {
+    title: 'The biggest point',
+    prompt: 'Each player has played two stones. What is the biggest point?',
+    explanation: 'Well done! The bottom left corner was open: it’s the biggest point. With your G4 stone, you start to surround the bottom. The 3-3, 3-4 and 4-4 points are all good there.',
+    refutation: 'Not quite. White then takes the bottom left corner, the biggest point, and your G4 stone is left alone. Play in the open corner first, on the 3rd or 4th line.',
+  },
 };

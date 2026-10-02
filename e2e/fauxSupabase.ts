@@ -3,8 +3,9 @@ import type { BrowserContext, Page, Route, WebSocketRoute } from '@playwright/te
 // Supabase simulé par interception réseau, partagé par les parcours du compte (#343) et du défi par lien (#81).
 // Le build de test lit l'adresse simulée dans le stockage local (`e2e.supabase`, voir src/data/supabase.ts).
 // Auth : code à 6 chiffres (`/otp` puis `/verify`), le seul bon code est CODE. Tables : profiles, games, defis,
-// notifications (#367). Temps réel : le WebSocket de Supabase Realtime (protocole Phoenix, sérialisation 2.0.0) est
-// simulé ; seules les notifications sont poussées, à leur seul destinataire (RLS simulée).
+// notifications (#367), parties_perso (#358 : `enregistrer_parties_perso`, sans doublon, compte avec pseudo exigé).
+// Temps réel : le WebSocket de Supabase Realtime (protocole Phoenix, sérialisation 2.0.0) est simulé ; seules les
+// notifications sont poussées, à leur seul destinataire (RLS simulée).
 
 export const SUPABASE = 'https://supabase.e2e.test';
 export const CODE = '123456';
@@ -30,6 +31,7 @@ export function fauxServeur() {
   const abonnes = new Set<Abonne>();
   let idNotif = 0;
   let idFiltre = 0;
+  const partiesPerso: Ligne[] = [];
   const appels: string[] = [];
   const emailsEnvoyes: { email: string; type: string }[] = [];
   const autorisations: string[] = [];
@@ -200,6 +202,16 @@ export function fauxServeur() {
       const { p_partie, p_type } = req.postDataJSON() as { p_partie?: string; p_type?: string };
       return json(marquer(n => n.destinataire_id === u.id && (!p_partie || n.partie_id === p_partie) && (!p_type || n.type === p_type)));
     }
+    if (chemin === '/rest/v1/rpc/enregistrer_parties_perso') {
+      // Comme le serveur : compte avec pseudo, clé unique par joueur, clés rendues (ajoutées ou déjà là).
+      if (!u || u.anonyme) return json({ code: 'JGC01', message: 'Crée ton compte' }, 400);
+      if (!profiles.find(x => x.id === u.id)?.username) return json({ code: 'JGP01', message: 'Choisis ton pseudo' }, 400);
+      const { p_parties } = req.postDataJSON() as { p_parties: Ligne[] };
+      for (const l of p_parties) {
+        if (!partiesPerso.some(x => x.user_id === u.id && x.cle === l.cle)) partiesPerso.push({ ...l, user_id: u.id });
+      }
+      return json(p_parties.map(l => l.cle));
+    }
     if (chemin.startsWith('/rest/v1/rpc/')) return json(null);
     if (chemin === '/functions/v1/game-action') {
       const { action, game_id, move } = req.postDataJSON() as { action: string; game_id: string; move: string };
@@ -227,7 +239,7 @@ export function fauxServeur() {
     if (chemin.startsWith('/rest/v1/')) {
       const table = chemin.slice('/rest/v1/'.length);
       let lignes: Ligne[] = table === 'games' ? games : table === 'defis' ? defis : table === 'profiles' ? profiles
-        : table === 'notifications' ? notifications : [];
+        : table === 'notifications' ? notifications : table === 'parties_perso' ? partiesPerso : [];
       for (const [cle, val] of url.searchParams) {
         if (val.startsWith('eq.')) lignes = lignes.filter(l => String(l[cle]) === val.slice(3));
         if (val.startsWith('neq.')) lignes = lignes.filter(l => String(l[cle]) !== val.slice(4));
@@ -237,7 +249,9 @@ export function fauxServeur() {
         if (cle === 'or') { const ids = [...val.matchAll(/eq\.([^,)]+)/g)].map(m => m[1]); lignes = lignes.filter(l => ids.includes(String(l.createur_id)) || ids.includes(String(l.invite_id))); }
       }
       // RLS simulée : profils visibles par tous ; parties et défis par leurs seuls joueurs ; notifications par leur destinataire.
-      if (table !== 'profiles') lignes = lignes.filter(l => !u ? false : [l.black_id, l.white_id, l.createur_id, l.invite_id, l.destinataire_id].includes(u.id));
+      if (table === 'parties_perso') lignes = lignes.filter(l => !!u && !u.anonyme && l.user_id === u.id)
+        .sort((a, b) => Date.parse(String(b.joue_le)) - Date.parse(String(a.joue_le)));
+      else if (table !== 'profiles') lignes = lignes.filter(l => !u ? false : [l.black_id, l.white_id, l.createur_id, l.invite_id, l.destinataire_id].includes(u.id));
       if (req.method() !== 'GET') return json(table === 'lesson_progress' ? [] : {});
       const objet = (req.headers()['accept'] ?? '').includes('vnd.pgrst.object');
       return json(objet ? lignes[0] ?? null : lignes);
@@ -255,8 +269,8 @@ export function fauxServeur() {
   function compteGoogle(c: { email: string; nom: string; annule?: boolean }) { google = c; }
   /** Session ouverte d'un compte complet (avec pseudo), à poser dans le stockage du navigateur (#367). */
   function sessionCompte(email: string, pseudo: string, id: string) { return session(compteExistant(email, pseudo, id)); }
-  return { traiter, brancherTempsReel, notifier, appels, games, defis, notifications, profiles, emailsEnvoyes, sessionAnonyme, compteExistant,
-    compteGoogle, sessionCompte, autorisations };
+  return { traiter, brancherTempsReel, notifier, appels, games, defis, notifications, partiesPerso, profiles, emailsEnvoyes, sessionAnonyme,
+    compteExistant, compteGoogle, sessionCompte, autorisations };
 }
 
 export type FauxServeur = ReturnType<typeof fauxServeur>;

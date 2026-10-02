@@ -46,7 +46,7 @@ import { estRedite } from '../content/redites';
 import type { Puzzle } from '../data/puzzles';
 import { compteDe, estAnonyme } from '../data/defi';
 import { INVITEUR_AU_CHARGEMENT, JETON_AU_CHARGEMENT, ecouterJetonDefi } from './adresseDefi';
-import { ESSAI_KEY, decider, etatCompte, lireEssai, noterPartieTerminee, partiesTerminees, type Acces, type EtatCompte, type Raison } from './essai';
+import { ESSAI_KEY, decider, etatCompte, lireEssai, noterFinDePartie, partiesTerminees, type Acces, type EtatCompte, type Raison } from './essai';
 import { compteVientDEtreCree, moyenConnexion, noterConnexionParGoogle } from './entonnoir';
 import { annoncerMessage, definirRetour, erreurRetour, messageRetour, prendreRetour } from './connexionGoogle';
 import { useAFaire } from './useAFaire';
@@ -374,9 +374,11 @@ export function App() {
     // #358 : la partie (gardée pour la revue par l'écran de partie) rejoint « Mes parties ». Chargé à la demande :
     // l'accueil n'embarque pas la logique de l'historique (#323).
     const mode = playing === 'guidee' ? 'guidee' : playing === 'deux' ? 'deux' : 'ordi';
-    void import('./historique').then(h => h.garderDerniere(mode), () => { /* hors ligne sans le module : rattrapé à la lecture */ });
+    // Avec un compte, elle part aussi sur le compte (#358, suite).
+    void import('./historique').then(h => { h.garderDerniere(mode); synchroniserParties(); }, () => { /* hors ligne sans le module : rattrapé à la lecture */ });
     // Essai sans compte (#343) : chaque partie menée à son terme compte, sauf sur un plateau presque vide (#251).
-    if (!finTropTot(stats)) setEssai(noterPartieTerminee(essai));
+    // Recette du 02/10 au soir : la partie trop courte est notée (le compteur fait foi) sans être comptée.
+    setEssai(noterFinDePartie(essai, bilan, !finTropTot(stats)));
     if (playing !== 'ordi') return;
     const issue: Issue = winner === 0 ? 'egalite' : winner === 1 ? 'victoire' : 'defaite';
     if (issue !== 'egalite') setBilan(enregistrer(bilan, adv.id, issue === 'victoire'));
@@ -418,7 +420,11 @@ export function App() {
 
   // Toucher l'onglet Problèmes déjà actif ramène à sa liste, comme Apprendre ramène au chemin (recette du 28/09, R4).
   const [racineProblemes, setRacineProblemes] = useState(0);
+  // Recette du 02/10 au soir : la tuile « Go du jour · À faire » de l'accueil ouvre le problème lui-même, comme un lien
+  // partagé ou un rappel, au lieu de la liste (un toucher de moins). Fait, elle mène à l'onglet Problèmes.
+  const [duJourDirect, setDuJourDirect] = useState(false);
   const go = (t: Tab) => {
+    setDuJourDirect(false);
     if (t === 'problemes' && tab === 'problemes') setRacineProblemes(n => n + 1);
     setDefi(null); setEcranCompte(null); setAnnonceGel(null); setRetourSerie(null); setEnPlacement(false); setTab(t); setPlaying(false); setLessonId(null); setSerie3(null); setVueProfil('menu'); window.scrollTo({ top: 0 });
   };
@@ -466,6 +472,19 @@ export function App() {
     window.scrollTo({ top: 0 });
   }, []);
   const online = useOnline();
+  // #358 : avec un compte complet (pseudo choisi), les parties de l'appareil partent sur le compte, en arrière-plan :
+  // à l'ouverture, à la connexion, à la création du compte (parties jouées pendant l'essai), au retour du réseau et
+  // après chaque partie. Un envoi raté est refait la fois suivante. Module chargé à la demande (#323).
+  const synchroniserParties = useCallback(() => {
+    const db = supabase;
+    if (!db || !compteId || !pseudo) return;
+    void import('../data/partiesPerso').then(m => m.synchroniser(db, compteId)).catch(() => undefined);
+  }, [compteId, pseudo]);
+  useEffect(() => {
+    if (!online) return;
+    const id = window.setTimeout(synchroniserParties, 1500); // après le premier écran
+    return () => window.clearTimeout(id);
+  }, [online, synchroniserParties]);
   /** Ouvre l'écran d'un élément « À faire » (#367), en un toucher, et le mesure. */
   function ouvrirAFaire(e: ElementAFaire, source: 'accueil' | 'onglet') {
     track(EVENTS.notificationOuverte, { type: e.genre, source, attente_h: e.attenteH ?? null });
@@ -500,7 +519,7 @@ export function App() {
     screen = <CreerCompte db={supabase} raison={ecranCompte.raison} anonyme={etat === 'anonyme'} onRetour={() => { setEcranCompte(null); window.scrollTo({ top: 0 }); }}
       onConditions={() => { go('profil'); setVueProfil('conditions'); }} />;
   } else if (enDefi && defi.vue === 'partie' && supabase) {
-    screen = <DefiPartie key={defi.id} db={supabase} partieId={defi.id} userId={session?.user.id} anonyme={estAnonyme(session)} pseudo={pseudo ?? null} confirmTouch={settings.confirmTouch}
+    screen = <DefiPartie key={defi.id} db={supabase} partieId={defi.id} userId={session?.user.id} anonyme={estAnonyme(session)} pseudo={pseudo ?? null} confirmTouch={settings.confirmTouch} reglages={{ modifier: set }}
       onRetour={quitterDefi} onAutre={() => { setDefi({ vue: 'liste' }); window.scrollTo({ top: 0 }); }} />;
   } else if (enDefi && defi.vue === 'arrivee') {
     screen = <DefiArrivee key={defi.jeton} db={supabase} jeton={defi.jeton} inviteur={defi.inviteur} compte={supabase ? etat : 'aucun'} onPartie={ouvrirDefiPartie} onAccueil={quitterDefi} />;
@@ -566,7 +585,7 @@ export function App() {
   } else if (tab === 'problemes') {
     screen = <Puzzles db={supabase} userId={compteId} sessionLoading={session === undefined} confirmTouch={settings.confirmTouch} onCompte={() => go('profil')}
       essai={decider({ quoi: 'probleme' }, etat, terminees, !!supabase).ok ? undefined : () => { garde({ quoi: 'probleme' }, { quoi: 'problemes' }); }}
-      lien={LIEN_DU_JOUR} depuisRappel={ARRIVEE_RAPPEL} onDuJour={setDuJourOuvert} celebrer={settings.celebrations} racine={racineProblemes}
+      lien={LIEN_DU_JOUR} depuisRappel={ARRIVEE_RAPPEL || duJourDirect} onDuJour={setDuJourOuvert} celebrer={settings.celebrations} racine={racineProblemes}
       onApprendre={versLecon1 && LESSONS[0] ? () => { setVersLecon1(false); go('apprendre'); setLessonId(LESSONS[0].id); } : undefined} />;
   } else if (tab === 'profil') {
     screen = <Profil vue={vueProfil} onVue={v => { if (v === 'importer' && !garde({ quoi: 'import' }, { quoi: 'importer' })) return; setVueProfil(v); }} settings={settings} set={set} profil={profil} serie={serie} record={recordSerie}
@@ -583,7 +602,8 @@ export function App() {
         onJouer={() => lancer('ordi')} onDeux={() => lancer('deux')} onGuidee={lancerGuidee}
         probleme={daily && { numero, titre: daily.title, rows: daily.rows, reussi: duJourFait, etat: etatTuile(appel, duJourFait) }}
         // #367 : « Aujourd'hui » est la liste « À faire » ; un toucher sur un élément en attente est mesuré.
-        onProbleme={() => { mesurerAccueil('serie', 'goDuJour'); go('problemes'); }}
+        // Recette du 02/10 (S7) : Go du jour à faire → ouvert directement.
+        onProbleme={() => { mesurerAccueil('serie', 'goDuJour'); go('problemes'); if (!duJourFait) setDuJourDirect(true); }}
         lecon={leconConseillee && { rang: rangLecon, total: LESSONS.length, titre: leconConseillee.title }}
         onLecon={() => { mesurerAccueil('lecon'); if (leconConseillee) { const id = leconConseillee.id; go('apprendre'); ouvrirLecon(id); } else go('apprendre'); }}
         // Un seul appel à la fois (#236, N4) : pas de carte d'installation le jour où Mochi fait une annonce ;

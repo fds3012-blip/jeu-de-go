@@ -322,11 +322,13 @@
   padding: calc(var(--space-3) + env(safe-area-inset-top, 0px)) var(--gouttiere) calc(var(--space-6) + env(safe-area-inset-bottom, 0px)); }
 /* Problèmes par paliers (issue #93). */
 .du-jour-refaire { width: 100%; }
-/* Recette du 28/09 matin (#247) : le verbe « Problème suivant » ne passe jamais sur deux lignes ; seul le titre s'abrège. */
-.continuer { display: flex; align-items: center; justify-content: center; gap: 8px; white-space: nowrap; }
-.continuer-titre { font-weight: var(--fw-medium); opacity: .8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
-/* #268 : le point médian est décoratif ; texte de remplacement vide, le nom accessible reste le texte lu à l'écran. */
-.continuer-titre::before { content: "· "; content: "· " / ""; }
+/* Recette du 28/09 matin (#247) : le verbe « Problème suivant » ne passe jamais sur deux lignes.
+   Recette du 02/10 au soir (#393, L2) : le titre, coupé même à 390 px (« Deux pierres d'un c… »), passe sous le verbe,
+   en entier, sur une ou deux lignes. Il ne s'abrège qu'au-delà de deux lignes (titres très longs, 320 px). */
+.continuer { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; white-space: nowrap;
+  padding-block: 8px; line-height: 1.25; }
+.continuer-titre { max-width: 100%; font-weight: var(--fw-medium); font-size: var(--fs-s); white-space: normal; text-wrap: balance;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
 .btn.continuer { width: 100%; margin: 0; background: var(--surface-2); }
 
 /* ---------- Palier en cours (#196, illustré pour #103) : le paysage, le nom, puis la carte « Continuer » ---------- */
