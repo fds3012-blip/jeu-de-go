@@ -70,3 +70,9 @@
 .mp-parties-importer { display: flex; align-items: center; justify-content: center; gap: var(--space-2); width: 100%; min-height: var(--cible-min); margin-top: var(--space-4); }
 .mp-parties-importer .icone-reglage { flex: none; }
 .mp-parties-vide .mp-parties-importer { margin-top: var(--space-2); }
+/* Petite hauteur (320 × 568) : Mochi plus petit, pour que le lien d'import reste au-dessus du bouton fixé en bas. */
+@media (max-height: 700px) {
+  .mp-parties-vide { padding-top: 0; gap: var(--space-1); }
+  .mp-parties-vide > .portrait-mochi { width: 72px !important; height: 72px !important; } /* taille posée en ligne par PortraitMochi */
+  .mp-parties-vide h3 { margin-top: var(--space-2); }
+}

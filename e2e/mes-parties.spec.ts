@@ -5,7 +5,8 @@ import { brancher, fauxServeur, JETON, PARTIE } from './fauxSupabase';
 // Issue #358 : « Mes parties ». Chaque partie terminée est gardée sur l'appareil ; le Profil les liste, la plus
 // récente d'abord, avec l'adversaire, le résultat en mots, la date et la taille du plateau ; un toucher ouvre la revue.
 
-const capture = (nom: string) => `docs/design/captures/historique-358/${nom}.jpeg`;
+// Capture de la liste : seulement si CAPTURES_358 est posée (les captures du dépôt ne changent pas à chaque parcours).
+const CAPTURES = process.env.CAPTURES_358;
 
 async function ouvrirMesParties(page: Page) {
   await page.getByRole('navigation').getByRole('button', { name: 'Profil' }).click();
@@ -71,7 +72,7 @@ test('trois parties contre l’ordi : toutes dans « Mes parties », avec le bon
   await expect(page.locator('.mp-partie-sceau[data-issue="victoire"]')).toHaveCount(1);
   await expect(page.locator('.mp-partie-sceau[data-issue="defaite"]')).toHaveCount(2);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
-  await page.screenshot({ path: capture('liste-390-clair'), type: 'jpeg', quality: 80 });
+  if (CAPTURES) await page.screenshot({ path: `${CAPTURES}/liste-390-clair.jpeg`, type: 'jpeg', quality: 80 });
 
   // Chaque partie ouvre la revue, coup par coup, puis « ‹ » ramène à la liste.
   for (let i = 0; i < 3; i++) {
