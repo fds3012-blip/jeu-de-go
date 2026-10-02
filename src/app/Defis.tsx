@@ -20,6 +20,8 @@ import type { Db } from '../data/supabase';
 import { EVENTS, track } from '../data/analytics';
 import { useOnline } from './hooks';
 import { phraseEtat, phraseIssue, resumeDefi, vueDefi } from './defiAmi';
+import { depuisDefi } from './historique';
+import { Revue } from './Revue';
 import { LierEmail } from './Account';
 import { ConnexionCode } from './Connexion';
 import type { Sens } from './connexionBascule';
@@ -260,6 +262,8 @@ export function DefiPartie({ db, partieId, userId, anonyme, pseudo = null, confi
   const [abandon, setAbandon] = useState(false);
   const [lienCopie, setLienCopie] = useState<Partage | null>(null);
   const [mortes, setMortes] = useState<Set<number> | null>(null);
+  // #358 : défi terminé, revue de la partie (écran de revue existant), du point de vue du joueur.
+  const [enRevue, setEnRevue] = useState(false);
 
   const charger = useCallback(async () => {
     const r = await lireDefi(db, partieId);
@@ -299,6 +303,11 @@ export function DefiPartie({ db, partieId, userId, anonyme, pseudo = null, confi
 
   const partie = d.partie;
   const moi: 1 | 2 = v.couleur ?? 1;
+  const revue = v.phase === 'fini' && userId ? depuisDefi(partie, userId, d.resultat) : null;
+  if (enRevue && revue) {
+    return <Revue sgf={revue.sgf} joueur={revue.joueur} adversaire={t('defi.adversaire')} confirmTouch={confirmTouch}
+      retour={t('defi.revueRetour')} onRetour={() => { setEnRevue(false); window.scrollTo?.({ top: 0 }); }} />;
+  }
   const lui = (3 - moi) as 1 | 2;
   const enComptage = v.phase === 'comptage';
   const mortesVues = mortes ?? new Set(v.mortes);
@@ -401,6 +410,7 @@ export function DefiPartie({ db, partieId, userId, anonyme, pseudo = null, confi
           <div className="defi-fin">
             <p className="defi-fin-titre" role="status">{fr(phraseIssue(v.issue))}</p>
             <button type="button" className="btn primary defis-cta" onClick={onAutre}>{t('defi.autre')}</button>
+            {revue && <button type="button" className="lien" onClick={() => { setEnRevue(true); window.scrollTo?.({ top: 0 }); }}>{t('fin.revoir')}</button>}
             <button type="button" className="lien" onClick={onRetour}>{t('defi.retourAccueil')}</button>
           </div>
         )}
