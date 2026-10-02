@@ -15,7 +15,7 @@ import { playFail, playIllegal, playStone, playSuccess } from '../ui/sound';
 import { hapticFail, hapticIllegal, hapticStone, hapticSuccess } from '../ui/haptics';
 import { t } from '../content/i18n';
 import type { Opponent } from '../engine';
-import { NB_PROBLEMES, adversaireConseille, bilanPlacement, choisirPlacement, type Bilan, type Essai } from './placement';
+import { KYU_ANCRE, NB_PROBLEMES, adversaireConseille, bilanPlacement, choisirPlacement, kyuDuRang, type Bilan, type Essai } from './placement';
 import '../ui/placement.css';
 
 type Fin = { bilan: Bilan; adversaire: Opponent; essais: Essai[] };
@@ -87,7 +87,13 @@ function ProblemePlacement({ puzzle, rang, confirmTouch, dernier, onPasser, onSu
     <div className="lecteur placement" data-probleme={puzzle.id} data-rang={rang}>
       <div className="lecteur-tete placement-tete">
         <div className="lecteur-nom">
-          <small>{t('placement.etape', { n: rang, total: NB_PROBLEMES })}</small>
+          <small className="placement-etape">
+            {t('placement.etape', { n: rang, total: NB_PROBLEMES })}
+            {/* Trois repères : où l'on en est, d'un coup d'œil (le texte dit déjà le compte). */}
+            <span className="placement-reperes" aria-hidden="true">
+              {Array.from({ length: NB_PROBLEMES }, (_, i) => <i key={i} className={i < rang ? 'fait' : undefined} />)}
+            </span>
+          </small>
           <h2>{puzzle.title}</h2>
         </div>
         <button type="button" className="lien placement-passer" aria-label={t('placement.passerAria')} onClick={onPasser}>{t('placement.passer')}</button>
@@ -107,6 +113,24 @@ function ProblemePlacement({ puzzle, rang, confirmTouch, dernier, onPasser, onSu
           <p>{fr(t(coup.ok ? 'placement.juste' : 'placement.rate'))}</p>
         </Verdict>
       )}
+    </div>
+  );
+}
+
+/**
+ * Échelle de kyu, de 25 (débutant) à 1 : ta position et celle de l'adversaire conseillé. Elle montre ce que le
+ * texte explique (« plus le nombre est petit, plus on est fort ») : la force monte vers la droite.
+ */
+function EchelleKyu({ kyu, adversaire }: { kyu: number; adversaire: Opponent }) {
+  const pos = (k: number) => Math.round(((KYU_ANCRE - Math.min(KYU_ANCRE, Math.max(1, k))) / (KYU_ANCRE - 1)) * 100);
+  const toi = pos(kyu), adv = pos(kyuDuRang(adversaire.rang) || 1);
+  return (
+    <div className="placement-echelle" aria-hidden="true" data-testid="echelle-kyu">
+      <div className="placement-piste">
+        <span className="placement-point adv" style={{ left: `${adv}%` }}><Sceau id={adversaire.id} taille={22} /></span>
+        <span className="placement-point toi" style={{ left: `${toi}%` }}><b>{t('placement.toi')}</b></span>
+      </div>
+      <div className="placement-bornes"><span>{t('placement.kyuDebutant')}</span><span>{t('placement.kyuFort')}</span></div>
     </div>
   );
 }
@@ -137,6 +161,7 @@ function Resultat({ fin, chapitre, onJouer, onLecons }: { fin: Fin; chapitre: st
       <p className="placement-surtitre">{t('placement.titre')}</p>
       <h2 id="placement-titre" className="placement-kyu">{fr(t('placement.kyu', { kyu: bilan.kyu }))}</h2>
       <p className="placement-explique">{fr(t('placement.kyuExplique'))}</p>
+      <EchelleKyu kyu={bilan.kyu} adversaire={adversaire} />
       <div className="placement-adversaire">
         <Portrait id={adversaire.id} taille={56} decoratif signature={false} />
         <p>{fr(t('placement.adversaire', { nom: adversaire.nom, rang: adversaire.rang }))}</p>

@@ -1,12 +1,19 @@
-// Écran d'accueil v2 (issue #40, phase 4 ; maquette docs/design/v2/maquettes-v2.png, écran de gauche).
-// Issue #119 : une seule action principale, le bouton. Le goban est l'illustration ; le toucher lance aussi la partie.
-import { useEffect, useMemo, useRef, type ReactNode } from 'react';
+// Écran d'accueil v3 (issue #40, phase 4 ; #119 : une seule action principale ; v3 : les 60 premières secondes).
+// Premier lancement : une promesse en une phrase (Mochi), le goban, le bouton « Joue ta première partie », et
+// « Je sais déjà jouer » en lien discret. Ni XP ni niveau tant qu'il n'y a rien à montrer, l'adversaire nommé
+// sans son rang : rien à lire avant la première pierre (modèles : premier écran de chess.com et de Duolingo).
+// Retours : l'adversaire parle, le bouton propose la partie, et sous lui « Aujourd'hui » met en avant la bonne
+// chose à faire (défi où c'est ton tour, Go du jour à faire, leçon suivante ; src/app/aujourdhui.ts).
+import { useEffect, useRef, type ReactNode } from 'react';
 import { Board } from '../ui/Board';
 import { Sceau } from '../ui/Sceau';
 import { Portrait } from '../ui/Portrait';
+import { Mochi } from '../ui/Mochi';
+import { MiniGoban } from '../ui/MiniGoban';
 import { CarrouselAdversaires, type CarteAdversaire } from '../ui/Carrousel';
 import type { Opponent } from '../engine';
 import type { Accueil as TextesAccueil } from './home';
+import { ordreDuJour, type TuileDuJour } from './aujourdhui';
 import { fr } from '../ui/typo';
 import { t } from '../content/i18n';
 
@@ -17,6 +24,8 @@ export interface TuileProbleme { titre: string; reussi: boolean; rows: string[];
   /** Pastille d'état (#236, N4) : « Fait », « À faire », ou rien (premier lancement, autre appel à l'écran). */
   etat?: 'fait' | 'aFaire' | null }
 export interface TuileLecon { rang: number; total: number; titre: string }
+/** Défis d'amis où c'est ton tour (#81) : la tuile passe en premier. */
+export interface TuileDefis { n: number; ouvrir: () => void }
 
 interface Props {
   adv: Opponent;
@@ -37,6 +46,7 @@ interface Props {
   /** Leçon suivante ; absente quand tout le chemin est fait. */
   lecon?: TuileLecon;
   onLecon: () => void;
+  defis?: TuileDefis;
   /** Carte « Installe l'app » (#214), sous les tuiles, au 2e retour ; elle décide seule si elle se montre. */
   installation?: ReactNode;
   /** « Je sais déjà jouer » (#283) : lien discret sous le bouton, au premier lancement seulement. */
@@ -44,43 +54,78 @@ interface Props {
 }
 
 const PLATEAUX: Record<Taille, Int8Array> = { 9: new Int8Array(81), 13: new Int8Array(169), 19: new Int8Array(361) };
+/** Premier lancement : quelques pierres au centre, pour que le goban ressemble à une partie (illustration seulement). */
+const PLATEAU_PREMIER: Record<Taille, Int8Array> = (() => {
+  const scene = (n: Taille) => {
+    const b = new Int8Array(n * n), c = (n - 1) / 2;
+    const pose = (dx: number, dy: number, couleur: 1 | 2) => { b[(c + dy) * n + (c + dx)] = couleur; };
+    pose(0, 0, 1); pose(-1, 1, 1); pose(1, -1, 1); pose(-1, 0, 2); pose(1, 1, 2);
+    return b;
+  };
+  return { 9: scene(9), 13: scene(13), 19: scene(19) };
+})();
 const AIDE_TAILLE = { 9: 'accueil.aideTaille.9', 13: 'accueil.aideTaille.13', 19: 'accueil.aideTaille.19' } as const satisfies Record<Taille, string>;
 
 export function Accueil(p: Props) {
   const { adv, textes, taille } = p;
+  const premier = textes.nouveau;
   // Sans état fourni : l'ancien comportement (« Fait » ou « À faire »).
   const etat = p.probleme ? (p.probleme.etat !== undefined ? p.probleme.etat : p.probleme.reussi ? 'fait' : 'aFaire') : null;
-  const kyu = /kyu/.test(adv.rang) ? ` ${t('accueil.kyu')}` : '';
+  const defis = p.defis && p.defis.n > 0 ? p.defis : undefined;
+  const tuiles = ordreDuJour({ premier, defis: defis?.n ?? 0, goDuJour: p.probleme ? (etat ?? 'neutre') : null, lecon: !!p.lecon });
+  const enAvant = tuiles.some(x => x.enAvant);
+
   return (
-    <div className="accueil">
+    <div className={`accueil${premier ? ' accueil-premier' : ''}`} data-premier={premier || undefined}>
+      {/* Premier lancement : la promesse, en une phrase, par Mochi. Elle porte la classe de la réplique (`scene-bulle`) :
+          c'est la seule voix de l'écran, et elle invite à la même action que le bouton. */}
+      {premier && (
+        <div className="promesse" data-testid="promesse">
+          <Mochi size={40} />
+          <p className="scene-bulle">{textes.bulle}</p>
+        </div>
+      )}
+
       {/* Le goban est une illustration : plateau entier, aucune bulle ni pierre qui pulse par-dessus.
           Il reste touchable (même effet que le bouton), sans y inviter. */}
       <div className="scene">
         {/* Doublon tactile du bouton principal : masqué aux lecteurs d'écran, qui ont déjà le bouton. */}
         <div className="scene-plateau" aria-hidden="true" data-testid="plateau-accueil" onClick={p.onJouer}>
           <div className="scene-cadre">
-            <Board size={taille} board={PLATEAUX[taille]} />
+            <Board size={taille} board={premier ? PLATEAU_PREMIER[taille] : PLATEAUX[taille]} />
           </div>
         </div>
       </div>
 
-      {/* L'adversaire parle sous le plateau : sa bulle ne cache plus aucune ligne. */}
-      <div className="adversaire">
-        <Portrait id={adv.id} taille={48} decoratif signature={false} />
-        <div className="adversaire-texte">
-          <div className="adversaire-identite">
+      {premier ? (
+        // Une ligne : l'adversaire (nommé, sans rang : rien à expliquer avant la première pierre) et « Changer ».
+        <div className="reglage reglage-premier">
+          <Portrait id={adv.id} taille={32} decoratif signature={false} />
+          <div className="reglage-contre">
             <h2>{adv.nom}</h2>
-            <span>{adv.rang}</span>
+            <span>{fr(t('accueil.contre', { role: t('accueil.premierAdversaire'), taille }))}</span>
           </div>
-          <p className="scene-bulle">{textes.bulle}</p>
+          <button className="lien" aria-haspopup="dialog" aria-expanded={p.reglages} onClick={() => p.setReglages(true)}>{t('accueil.changer')}</button>
         </div>
-      </div>
-      <p className="phrase">{fr(t(`adv.${adv.id}.phrase`) + (textes.nouveau ? kyu : ''))}</p>
-
-      <div className="reglage">
-        <span>{t('accueil.plateau', { taille })}</span>
-        <button className="lien" aria-haspopup="dialog" aria-expanded={p.reglages} onClick={() => p.setReglages(true)}>{t('accueil.changer')}</button>
-      </div>
+      ) : (
+        <>
+          {/* L'adversaire parle sous le plateau : sa bulle ne cache plus aucune ligne. */}
+          <div className="adversaire">
+            <Portrait id={adv.id} taille={48} decoratif signature={false} />
+            <div className="adversaire-texte">
+              <div className="adversaire-identite">
+                <h2>{adv.nom}</h2>
+                <span>{adv.rang}</span>
+              </div>
+              <p className="scene-bulle">{textes.bulle}</p>
+            </div>
+          </div>
+          <div className="reglage">
+            <span>{t('accueil.plateau', { taille })}</span>
+            <button className="lien" aria-haspopup="dialog" aria-expanded={p.reglages} onClick={() => p.setReglages(true)}>{t('accueil.changer')}</button>
+          </div>
+        </>
+      )}
 
       {/* Libellé court (« Jouer contre Pomme ») : taille pleine ; long (première partie) : un cran plus petit, sur une ligne. */}
       <button className={`cta cta-sceau${textes.cta.length <= 26 ? ' court' : ''}`} aria-label={textes.ctaNom} onClick={p.onJouer}>
@@ -88,36 +133,66 @@ export function Accueil(p: Props) {
       </button>
       {p.onPlacement && <button type="button" className="lien lien-placement" onClick={p.onPlacement}>{t('placement.lien')}</button>}
 
-      <div className="tuiles">
-        {/* #213 : la tuile dit l'état du jour, « À faire » tant que le Go du jour d'aujourd'hui n'est pas réussi, puis « Fait ». */}
-        <button className={`tuile tuile-probleme${etat === 'fait' ? ' fait' : etat === 'aFaire' ? ' a-faire' : ''}`} onClick={p.onProbleme}
-          aria-label={p.probleme ? (etat
-            ? t('accueil.tuileAria', { numero: p.probleme.numero, titre: p.probleme.titre, etat: t(etat === 'fait' ? 'accueil.fait' : 'accueil.aFaire') })
-            : t('accueil.tuileAriaSimple', { numero: p.probleme.numero, titre: p.probleme.titre })) : undefined}>
-          {p.probleme && <MiniPlateau rows={p.probleme.rows} />}
-          <span>
-            <small>{p.probleme ? t('accueil.goDuJourNumero', { numero: p.probleme.numero }) : t('accueil.goDuJour')}</small>
-            <b>{p.probleme?.titre ?? t('nav.problemes')}</b>
-          </span>
-          {p.probleme && etat && (
-            <em className="tuile-etat" data-testid="etat-du-jour" aria-hidden="true">
-              {etat === 'fait' && <svg viewBox="0 0 12 12" width="11" height="11" focusable="false"><path d="M2.5 6.4 5 8.8l4.6-5.3" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>}
-              {t(etat === 'fait' ? 'accueil.fait' : 'accueil.aFaire')}
-            </em>
-          )}
-        </button>
-        <button className="tuile tuile-lecon" onClick={p.onLecon}>
-          <span>
-            <small>{p.lecon ? t('accueil.lecon', { rang: p.lecon.rang, total: p.lecon.total }) : t('accueil.leconsTerminees')}</small>
-            <b>{p.lecon?.titre ?? t('accueil.revoirChemin')}</b>
-          </span>
-        </button>
-      </div>
+      {/* Aujourd'hui : la bonne chose à faire en premier, mise en avant ; les autres tuiles suivent. */}
+      {tuiles.length > 0 && (
+        <div className={`tuiles${enAvant ? ' tuiles-jour' : ''}`}>
+          {enAvant && <p className="tuiles-titre">{t('accueil.aujourdhui')}</p>}
+          {tuiles.map(tu => <Tuile key={tu.genre} tuile={tu} p={p} etat={etat} defis={defis} />)}
+        </div>
+      )}
 
       {p.installation}
 
       <Reglages {...p} />
     </div>
+  );
+}
+
+function Tuile({ tuile, p, etat, defis }: { tuile: TuileDuJour; p: Props; etat: 'fait' | 'aFaire' | null; defis?: TuileDefis }) {
+  const avant = tuile.enAvant ? ' tuile-avant' : '';
+  if (tuile.genre === 'defi' && defis) {
+    return (
+      <button className={`tuile tuile-defi${avant}`} onClick={defis.ouvrir} aria-label={t('defi.accueil.tuileAria', { n: defis.n })} data-testid="tuile-defi">
+        <span className="tuile-pierres" aria-hidden="true"><span className="stone b" /><span className="stone w" /></span>
+        <span>
+          <small>{t('defi.accueil.tuile', { n: defis.n })}</small>
+          <b>{t('defi.accueil.tuileEtat')}</b>
+        </span>
+        <em className="tuile-etat" aria-hidden="true">{t('defi.accueil.tuileEtat')}</em>
+      </button>
+    );
+  }
+  if (tuile.genre === 'goDuJour') {
+    const pb = p.probleme;
+    return (
+      // #213 : la tuile dit l'état du jour, « À faire » tant que le Go du jour d'aujourd'hui n'est pas réussi, puis « Fait ».
+      <button className={`tuile tuile-probleme${etat === 'fait' ? ' fait' : etat === 'aFaire' ? ' a-faire' : ''}${avant}`} onClick={p.onProbleme}
+        aria-label={pb ? (etat
+          ? t('accueil.tuileAria', { numero: pb.numero, titre: pb.titre, etat: t(etat === 'fait' ? 'accueil.fait' : 'accueil.aFaire') })
+          : t('accueil.tuileAriaSimple', { numero: pb.numero, titre: pb.titre })) : undefined}>
+        {pb && <MiniGoban rows={pb.rows} className="mini-plateau" />}
+        <span>
+          <small>{pb ? t('accueil.goDuJourNumero', { numero: pb.numero }) : t('accueil.goDuJour')}</small>
+          <b>{pb?.titre ?? t('nav.problemes')}</b>
+        </span>
+        {pb && etat && (
+          <em className="tuile-etat" data-testid="etat-du-jour" aria-hidden="true">
+            {etat === 'fait' && <svg viewBox="0 0 12 12" width="11" height="11" focusable="false"><path d="M2.5 6.4 5 8.8l4.6-5.3" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>}
+            {t(etat === 'fait' ? 'accueil.fait' : 'accueil.aFaire')}
+          </em>
+        )}
+      </button>
+    );
+  }
+  return (
+    <button className={`tuile tuile-lecon${avant}`} onClick={p.onLecon}>
+      {tuile.enAvant && <span className="tuile-chemin" aria-hidden="true"><Sceau id="mochi" taille={36} /></span>}
+      <span>
+        <small>{p.lecon ? t('accueil.lecon', { rang: p.lecon.rang, total: p.lecon.total }) : t('accueil.leconsTerminees')}</small>
+        <b>{p.lecon?.titre ?? t('accueil.revoirChemin')}</b>
+      </span>
+      {tuile.enAvant && <em className="tuile-etat" aria-hidden="true">{t('accueil.leconSuivante')}</em>}
+    </button>
   );
 }
 
@@ -157,41 +232,5 @@ function Reglages({ adv, cartes, taille, reglages, setReglages, onTaille, onChoi
         </div>
       )}
     </dialog>
-  );
-}
-
-/** Miniature du problème du jour : la zone où sont les pierres, sur un bout de kaya. */
-function MiniPlateau({ rows }: { rows: string[] }) {
-  const n = rows.length;
-  const cadre = useMemo(() => {
-    let x0 = n, y0 = n, x1 = -1, y1 = -1;
-    rows.forEach((r, y) => [...r].forEach((ch, x) => { if (ch !== '.') { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); } }));
-    if (x1 < 0) return { x: 0, y: 0, k: n };
-    const k = Math.min(n, Math.max(x1 - x0, y1 - y0) + 3); // une ligne de marge autour des pierres
-    const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
-    const clamp = (v: number) => Math.max(0, Math.min(n - k, Math.round(v - (k - 1) / 2)));
-    return { x: clamp(cx), y: clamp(cy), k };
-  }, [rows, n]);
-  const { x, y, k } = cadre;
-  const pas = 10, bord = 5, cote = bord * 2 + (k - 1) * pas;
-  const pierres = [];
-  for (let j = 0; j < k; j++) for (let i = 0; i < k; i++) {
-    const ch = rows[y + j]?.[x + i];
-    if (ch && ch !== '.') {
-      const noir = ch === 'X' || ch === 'S';
-      pierres.push(<circle key={`${i}-${j}`} cx={bord + i * pas} cy={bord + j * pas} r={4.6} fill={noir ? '#1B1A18' : '#F3EDE3'} stroke={noir ? 'none' : 'rgba(60,40,15,.45)'} strokeWidth={0.6} />);
-    }
-  }
-  return (
-    <svg className="mini-plateau" viewBox={`0 0 ${cote} ${cote}`} aria-hidden="true" focusable="false">
-      <rect width={cote} height={cote} rx={3} fill="#E3B46A" />
-      {Array.from({ length: k }, (_, i) => (
-        <g key={i} stroke="#3A2912" strokeWidth={0.6} opacity={0.75}>
-          <line x1={bord} x2={cote - bord} y1={bord + i * pas} y2={bord + i * pas} />
-          <line y1={bord} y2={cote - bord} x1={bord + i * pas} x2={bord + i * pas} />
-        </g>
-      ))}
-      {pierres}
-    </svg>
   );
 }

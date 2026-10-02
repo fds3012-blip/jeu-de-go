@@ -153,12 +153,11 @@ export function traceJusqua(t: Trace, jusqua: number, seul = false): string {
   return d;
 }
 
-/** Chapitres du programme (issue #16) annoncés, pas encore commencés (« Capturer et sauver » et « Vie et mort » ont leurs premières leçons). */
+/** Chapitres du programme (issue #16) annoncés, pas encore commencés (« Fin de partie et comptage » a ses deux premières leçons). */
 export const CHAPITRES_A_VENIR = [
   'Formes et tesuji, les coups astucieux',
   'Ouverture en 19\u00A0×\u00A019',
-  'Fin de partie et comptage',
 ];
 
 /** Chapitres à venir dans la langue de l'interface (#167) ; en français, les textes ci-dessus (vérifié par un test). */
-export const chapitresAVenir = (): string[] => ([3, 4, 5] as const).map(i => t(`apprendre.avenir.${i}`));
+export const chapitresAVenir = (): string[] => ([3, 4] as const).map(i => t(`apprendre.avenir.${i}`));
