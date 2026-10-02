@@ -1,4 +1,4 @@
-import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 // Écrans chargés à la demande (perf, #323) : seul l'accueil est dans le JS initial.
 import { CreerCompte, DefiArrivee, DefiPartie, DefisEcran, Game, LearnHome, LessonPlayer, Placement, Profil, PseudoObligatoire, Puzzles, SeriePratique, apresPremierEcran } from './ecrans';
 import { CHAPITRES, LESSONS } from '../content/lessons';
@@ -54,6 +54,10 @@ import { LimiteErreur } from './LimiteErreur';
 import { BandeauHorsLigne, InviteMiseAJour } from '../ui/Bandeaux';
 import '../ui/defis.css';
 import '../ui/robustesse.css';
+import { ecouterAide, estRaccourciAide, ficheDeLecon, ouvrirAide, type Ouverture } from './ouvrirAide';
+
+// Aide (#362) : feuille chargée au premier « ? » (partie, leçon, problème, Profil) ou à la touche « ? ».
+const FeuilleAide = lazy(() => import('../ui/Aide'));
 
 const PROBLEMES_LOCAUX = parsePuzzles(ALL_PUZZLES);
 // Problèmes résolus et vus sur l'appareil : mêmes clés que SOLVED_KEY et VUS_KEY de Puzzles.tsx (vérifié par ecrans.test.ts),
@@ -156,6 +160,24 @@ export function App() {
   const [playing, setPlaying] = useState<false | 'ordi' | 'deux' | 'guidee'>(false);
   const [adversaire, setAdversaire] = useStored<OpponentId>('go.adversaire.v1', 'pomme');
   const [lessonId, setLessonId] = useState<string | null>(null);
+  // Aide ouverte (#362) : la feuille se pose par-dessus l'écran, qui reste monté (partie et leçon intactes).
+  const [aide, setAide] = useState<(Ouverture & { n: number }) | null>(null);
+  useEffect(() => ecouterAide(o => {
+    setAide(a => ({ ...o, n: (a?.n ?? 0) + 1 }));
+    track(EVENTS.aideOuverte, { fiche: o.fiche, mot: o.mot ?? null, depuis: o.depuis });
+  }), []);
+  // Raccourci « ? » (clavier, lecteur d'écran) : l'aide depuis n'importe quel écran, partie comprise ; dans une leçon, sur son mot.
+  const aideOuverte = aide !== null;
+  useEffect(() => {
+    if (aideOuverte) return;
+    const f = (e: KeyboardEvent) => {
+      if (!estRaccourciAide(e)) return;
+      e.preventDefault();
+      ouvrirAide({ ...(lessonId ? ficheDeLecon(lessonId) : { fiche: 'regles' }), depuis: 'clavier' });
+    };
+    window.addEventListener('keydown', f);
+    return () => window.removeEventListener('keydown', f);
+  }, [aideOuverte, lessonId]);
   // Série de 3 problèmes ouverte depuis la fin d'une leçon (#200), figée à l'ouverture.
   const [serie3, setSerie3] = useState<Puzzle[] | null>(null);
   const session = useSession(supabase);
@@ -617,6 +639,13 @@ export function App() {
       <AnnonceXp celebrer={settings.celebrations} />
       {/* Pendant une partie, comme chez chess.com : pas de barre de navigation, « ‹ » ramène à l'accueil. */}
       {!enPartie && !ecranPlein && <BarreNav actif={tab} onChoisir={go} />}
+      {aide && (
+        <Suspense fallback={null}>
+          {/* Depuis une partie, pas de lien vers une leçon : on ne quitte pas la partie depuis l'aide. */}
+          <FeuilleAide key={aide.n} ouverture={aide} onFermer={() => setAide(null)} leconCourante={lessonId}
+            onLecon={playing || enPlacement || defi !== null ? undefined : id => { setAide(null); ouvrirLecon(id); }} />
+        </Suspense>
+      )}
       <ConsentModal visible={fenetreVisible({ consent, ignoree: accordIgnore, enPartie: enPartie || (tab === 'problemes' && duJourOuvert), surConditions: tab === 'profil' && vueProfil === 'conditions' })}
         onConditions={() => { go('profil'); setVueProfil('conditions'); }} onIgnorer={() => setAccordIgnore(true)} />
 

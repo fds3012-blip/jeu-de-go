@@ -32,6 +32,7 @@ import { clePubliqueVapid, resumeRappel } from './rappel';
 import { ReglageRappel } from '../ui/ProposerRappel';
 import { LANGUES, langue, memoriserChoixLangue, t, type Langue } from '../content/i18n';
 import type { Placement } from './placement';
+import { BoutonAide } from '../ui/BoutonAide';
 
 const SOLVED_KEY = 'go.problemes.v1';
 
@@ -150,7 +151,11 @@ function Menu({ onVue, profil, serie, record = 0, parcours, placement, onPlaceme
   const proposerInstallation = installable(usePlateformeInstallation(), etatInstallation());
   return (
     <div className="profil">
-      <h2 className="profil-titre">{t('profil.parcours')}</h2>
+      {/* #362 : « Aide » à droite du titre, sans prendre de hauteur (le Profil tient sans défiler en 390 × 844). */}
+      <div className="profil-titre-ligne">
+        <h2 className="profil-titre">{t('profil.parcours')}</h2>
+        <BoutonAide depuis="profil" fiche="regles" libelle={t('profil.aideJeu')} />
+      </div>
       <section className="identite" aria-label={t('profil.aria')}>
         {id.initiale ? <span className="avatar" aria-hidden="true">{id.initiale}</span> : <span className="stone b" aria-hidden="true" />}
         <div className="identite-texte">

@@ -90,6 +90,12 @@
 .coups-ruban { display: flex; align-items: center; gap: var(--space-2); margin: -2px 2px 6px; min-height: 26px; }
 .coups-titre { flex: none; color: var(--muted); font-size: var(--fs-xs); font-weight: var(--fw-medium); }
 .coups-ruban:has(.vide) .coups-titre { display: none; }
+/* #362 : le « ? » de l'aide au bout du ruban. Cible de 44 px, mais marges négatives : le ruban garde ses 26 px,
+   le plateau ne bouge pas et le bandeau de l'adversaire garde toute sa largeur. */
+.coups-ruban .ruban-aide { margin: -9px -10px -9px -4px; }
+.coups-ruban:has(.ruban-aide) .coups { margin-right: 0; padding-right: 0;
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 28px); mask-image: linear-gradient(to right, transparent 0, #000 28px); }
+.coups-ruban:has(.ruban-aide) .coups:has(> .vide) { -webkit-mask-image: none; mask-image: none; }
 .coups { flex: 1; min-width: 0; list-style: none; margin: 0 calc(-1 * var(--gouttiere)) 0 0; padding: 2px var(--gouttiere) 2px 0; display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none;
   white-space: nowrap; color: var(--muted); font-size: var(--fs-xs); font-weight: var(--fw-bold); font-variant-numeric: tabular-nums;
   /* Les coups anciens s'effacent vers la gauche, et le bord droit se fond dans la gouttière. */

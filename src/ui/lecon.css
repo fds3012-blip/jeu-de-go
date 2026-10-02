@@ -19,6 +19,11 @@
 .lecteur-lecon .lecteur-titre { flex: 1; min-width: 0; margin: 0; font-size: var(--fs-m); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 8px; }
 .lecteur-lecon .lecteur-titre .sceau { flex: none; }
 .lecteur-lecon .lecteur-titre span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+/* #362 : le « ? » de l'aide ferme la barre. Le titre passe sur 2 lignes plutôt que d'être coupé (« Techniques de / capture ») ;
+   2 lignes tiennent dans les 48 px de la barre. En 320 px, le sceau de la leçon s'efface pour laisser la place au titre. */
+.lecteur-lecon .lecteur-titre > span:not([data-lecon]) { white-space: normal; line-height: 1.15; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow-wrap: break-word; hyphens: auto; }
+.lecteur-lecon .lecteur-tete .bouton-aide { margin-right: -10px; }
+@media (max-width: 359px) { .lecteur-lecon .lecteur-titre .sceau { display: none; } }
 
 /* Le plateau : carré de côté min(largeur, hauteur libre) grâce à une requête de conteneur. Plancher de 200 px : en dessous,
    la page défile. Plafond : sa largeur (la colonne, gouttières déduites), pour que la place en trop aille à Mochi, pas au vide. */
