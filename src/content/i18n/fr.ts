@@ -1162,4 +1162,20 @@ export const fr = {
   'defi.historique.chargement': 'Je cherche tes défis en ligne…',
   'defi.historique.horsLigne': 'Hors ligne : tes défis en ligne reviendront avec le réseau.',
   'defi.historique.erreur': 'Tes défis en ligne n’ont pas pu être lus. Réessaie plus tard.',
+
+  // Robustesse (#325, point 4) : écran d'erreur (jamais d'écran blanc), bandeau hors ligne, mise à jour prête.
+  'erreur.titre': 'Oups, ça n’a pas marché.',
+  'erreur.horsLigne': 'Tu es hors ligne et cet écran n’est pas encore sur ton téléphone. Dès que le réseau revient, réessaie.',
+  'erreur.chargement': 'Cet écran n’a pas pu se charger. Un réseau capricieux, ou une nouvelle version qui vient d’arriver.',
+  'erreur.reseau': 'Le réseau n’a pas répondu. Ce n’est pas de ta faute.',
+  'erreur.rendu': 'Quelque chose s’est mal passé de notre côté. Ce n’est pas de ta faute.',
+  'erreur.mochi': 'Pas de panique : ta progression est gardée.',
+  'erreur.reessayer': 'Réessayer',
+  'erreur.accueil': 'Retour à l’accueil',
+  'erreur.aria': 'Erreur',
+  'horsLigne.bandeau': 'Tu es hors ligne',
+  'horsLigne.detail': 'Ce qui est sur ton téléphone reste jouable.',
+  'miseAJour.prete': 'Mise à jour prête',
+  'miseAJour.recharger': 'Recharger',
+  'miseAJour.plusTard': 'Plus tard',
 } as const;

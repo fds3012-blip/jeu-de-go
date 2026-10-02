@@ -2,7 +2,7 @@ import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, use
 // Écrans chargés à la demande (perf, #323) : seul l'accueil est dans le JS initial.
 import { CreerCompte, DefiArrivee, DefiPartie, DefisEcran, Game, LearnHome, LessonPlayer, Placement, Profil, PseudoObligatoire, Puzzles, SeriePratique, apresPremierEcran } from './ecrans';
 import { CHAPITRES, LESSONS } from '../content/lessons';
-import { LESSONS_KEY, readLocal, writeLocal, useGelsServeur, useLessonProgress, useProfil, usePseudo, useSerie, useSession } from './hooks';
+import { LESSONS_KEY, readLocal, writeLocal, useGelsServeur, useLessonProgress, useOnline, useProfil, usePseudo, useSerie, useSession } from './hooks';
 import { supabase } from '../data/supabase';
 import { useSettings, useStored } from './settings';
 import { aideActive } from './partie';
@@ -50,7 +50,10 @@ import { ESSAI_KEY, decider, etatCompte, lireEssai, noterPartieTerminee, parties
 import { compteVientDEtreCree, moyenConnexion, noterConnexionParGoogle } from './entonnoir';
 import { annoncerMessage, definirRetour, erreurRetour, messageRetour, prendreRetour } from './connexionGoogle';
 import { useDefisAJouer } from './defisAJouer';
+import { LimiteErreur } from './LimiteErreur';
+import { BandeauHorsLigne, InviteMiseAJour } from '../ui/Bandeaux';
 import '../ui/defis.css';
+import '../ui/robustesse.css';
 
 const PROBLEMES_LOCAUX = parsePuzzles(ALL_PUZZLES);
 // Problèmes résolus et vus sur l'appareil : mêmes clés que SOLVED_KEY et VUS_KEY de Puzzles.tsx (vérifié par ecrans.test.ts),
@@ -426,11 +429,19 @@ export function App() {
 
   const enDefi = tab === 'jouer' && !playing && defi !== null;
   const enPartie = (tab === 'jouer' && !!playing) || (enDefi && defi.vue === 'partie');
+  // Robustesse (#325) : écran d'erreur à la place d'un écran blanc ; « Retour à l'accueil » change d'onglet sans recharger.
+  const versAccueil = useCallback(() => {
+    setDefi(null); setEcranCompte(null); setEnPlacement(false); setTab('jouer'); setPlaying(false); setLessonId(null); setSerie3(null); setVueProfil('menu');
+    window.scrollTo({ top: 0 });
+  }, []);
+  const online = useOnline();
   const ouvrirDefiPartie = useCallback((id: string) => { setDefi({ vue: 'partie', id }); window.scrollTo({ top: 0 }); }, []);
   const quitterDefi = () => { setDefi(null); window.scrollTo({ top: 0 }); };
   // #343 : pseudo obligatoire juste après la première connexion, avant tout le reste ; puis « Crée ton compte ».
   const pseudoAChoisir = !!supabase && etat === 'sans_pseudo' && !!compteId;
   const ecranPlein = pseudoAChoisir || ecranCompte !== null;
+  // Bandeau « Tu es hors ligne » : seulement là où le réseau sert (défi par lien, en ligne, compte et profil).
+  const ecranReseau = enDefi || tab === 'profil' || ecranPlein;
   let screen;
   if (pseudoAChoisir && supabase && compteId) {
     screen = <PseudoObligatoire db={supabase} userId={compteId}
@@ -594,7 +605,12 @@ export function App() {
         )}
         {/* Accueil v3 : pas de « Niveau 1 · 0 / 100 XP » avant le premier gain ; le Profil, lui, la montre toujours. */}
         {accueilVisible && <BarreNiveau sansXpMasquee />}
-        <Suspense fallback={null}>{screen}</Suspense>
+        {/* Nouvelle version prête : jamais pendant une partie (ordi, à deux, guidée, défi). */}
+        <InviteMiseAJour visible={!enPartie} />
+        {!online && ecranReseau && <BandeauHorsLigne />}
+        <LimiteErreur origine="ecran" onAccueil={versAccueil}>
+          <Suspense fallback={null}>{screen}</Suspense>
+        </LimiteErreur>
       </main>
       <FeteNiveau celebrer={settings.celebrations} ecran={`${tab}|${playing}|${lessonId ?? ''}|${serie3 ? 'serie' : ''}|${vueProfil}`} />
       <AnnonceXp celebrer={settings.celebrations} />

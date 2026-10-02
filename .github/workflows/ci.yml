@@ -26,6 +26,38 @@ jobs:
       # Budget de taille du JS initial, du CSS et des polices (scripts/budget-bundle.mjs).
       - run: npm run budget
 
+  # Tests SQL (supabase/tests/*.test.sql) : toutes les migrations rejouées sur un Postgres jetable, puis chaque test.
+  # Aucune connexion à la production. Le runner Ubuntu a déjà Postgres 16 ; sinon on l'installe par apt.
+  sql:
+    name: Migrations et tests SQL
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Postgres présent ?
+        run: |
+          if ! ls /usr/lib/postgresql/*/bin/initdb >/dev/null 2>&1; then
+            sudo apt-get update -qq && sudo apt-get install -y -qq postgresql
+          fi
+          ls -d /usr/lib/postgresql/*/bin
+      - run: bash supabase/tests/lancer.sh
+
+  # La copie des règles du go (src/go → supabase/functions/game-action/go) doit être à jour sur chaque PR :
+  # sinon le serveur déployé différerait du code testé. Même contrôle qu'avant le déploiement (deployer-fonctions.yml).
+  fonctions:
+    name: Copie src/go → supabase/functions à jour
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/sync-functions.mjs
+      - name: Copie à jour
+        run: |
+          git diff --exit-code -- supabase/functions || { echo "::error::Copie périmée : lance npm run sync:functions et committe."; exit 1; }
+
   e2e:
     name: Playwright (mobile)
     needs: verifier

@@ -1,0 +1,28 @@
+/* Robustesse (#325, point 4) : écran d'erreur, bandeau hors ligne, invite de mise à jour.
+   Rôles de tokens.css seulement : clair et sombre suivent. Mouvements réduits : aucune animation. */
+
+/* ---------- Écran d'erreur : Mochi, une phrase, une action ---------- */
+.ecran-erreur { display: flex; flex-direction: column; align-items: center; text-align: center; padding: clamp(24px, 8vh, 64px) 8px 24px; max-width: 420px; margin: 0 auto; }
+.ecran-erreur-mochi { margin-bottom: 14px; }
+.ecran-erreur-titre { margin: 0 0 10px; font-size: var(--fs-2xl, 1.5rem); line-height: var(--lh-titre); }
+.ecran-erreur-texte { margin: 0 0 6px; text-wrap: balance; }
+.ecran-erreur-mot { margin: 0 0 24px; font-size: var(--fs-s); }
+.ecran-erreur-actions { display: flex; flex-direction: column; align-items: stretch; gap: var(--space-2); width: 100%; max-width: 320px; }
+.ecran-erreur-actions .btn.primary { width: 100%; }
+.ecran-erreur-actions .lien { min-height: var(--cible-min); }
+
+/* ---------- Bandeaux discrets ---------- */
+.bandeau { display: flex; align-items: center; gap: 10px; margin: 0 0 var(--space-3); padding: 8px 12px; border-radius: 12px;
+  font-size: var(--fs-s); color: var(--text); background: var(--surface); }
+.bandeau svg { flex: none; }
+.bandeau-hors-ligne { color: var(--muted); }
+.bandeau-hors-ligne b { color: var(--text); font-weight: var(--fw-bold); }
+/* Écran étroit (320 px) : le détail saute, le bandeau tient sur une ligne. */
+@media (max-width: 359px) { .bandeau-detail { display: none; } }
+
+.bandeau-mise-a-jour { background: color-mix(in srgb, var(--accent) 14%, var(--surface)); padding-right: 4px; }
+.bandeau-mise-a-jour .bandeau-texte { flex: 1; font-weight: var(--fw-medium); }
+.bandeau-action { background: transparent; border: 0; color: var(--accent-texte); font-weight: var(--fw-bold); min-height: var(--cible-min); padding: 0 10px; border-radius: 10px; }
+.bandeau-action:active { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+.bandeau-fermer { background: transparent; border: 0; color: var(--muted); min-height: var(--cible-min); min-width: var(--cible-min); display: inline-flex; align-items: center; justify-content: center; border-radius: 10px; }
+.bandeau-fermer:active { background: var(--surface-2); }
