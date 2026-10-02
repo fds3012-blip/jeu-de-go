@@ -65,7 +65,9 @@ function verificateur(cfg: Config, mesures: Mesure[]) {
   };
 }
 
-const nav = (page: Page, nom: RegExp) => page.getByRole('navigation').getByRole('button', { name: nom });
+// #391 : un onglet avec un point jade ajoute la raison à son nom (« Problèmes, Garde ta série de 1 jour »).
+const nav = (page: Page, nom: RegExp) => page.getByRole('navigation')
+  .getByRole('button', { name: new RegExp(nom.source.replace(/\$$/, '(,|$)'), nom.flags) });
 const barre = (page: Page) => page.getByRole('toolbar').first();
 const boutonPasser = (page: Page) => barre(page).getByRole('button', { name: T.passer });
 const fin = (page: Page) => page.locator('.recit, .barre-comptage').filter({ visible: true });
