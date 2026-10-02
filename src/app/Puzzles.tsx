@@ -1,5 +1,5 @@
 // Onglet Problèmes (issue #40, phase 6) : cote et série, problème du jour mis en scène, grille des problèmes de base.
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import type { Db } from '../data/supabase';
 import { ALL_PUZZLES } from '../content/puzzles';
 import {
@@ -608,8 +608,8 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
   onSolved: (essais: number, aide: NiveauAide) => void; onNext?: () => void; onExit: () => void;
   /** La réponse vient d'être montrée (#197). */
   onSolutionVue?: (essais: number) => void;
-  /** Série de fin de leçon (#200) : libellé du retour (« Retour au chemin ») et surtitre (« Entraînement, 1 sur 3 »). */
-  retour?: string; surtitre?: string;
+  /** Série de fin de leçon (#200) : libellé du retour (« Retour au chemin ») et surtitre (« Entraînement » et ses points). */
+  retour?: string; surtitre?: ReactNode;
   /** Faux quand l'exercice est fini alors que le lecteur reste affiché (dernier problème d'une série, #250 M9). */
   exercice?: boolean;
 }) {

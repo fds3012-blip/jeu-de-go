@@ -127,59 +127,26 @@
 .synchro-sync::before { background: var(--or); }
 .synchro-error::before { background: var(--danger); }
 
-/* ---------- Lecteurs de leçon et de problème ---------- */
+/* ---------- Lecteurs de leçon et de problème (la mise en page de la leçon : lecon.css) ---------- */
 /* Le lecteur remplace l'en-tête de l'app : sa propre barre (retour, progression) prend sa place. */
 .app:has(.lecteur) .top { display: none; }
 .app:has(.lecteur) { padding-top: var(--space-2); }
 .lecteur-tete { display: flex; align-items: center; gap: 10px; min-height: 48px; margin: 0 0 4px -10px; }
 .lecteur-tete .retour { flex: none; width: var(--cible-min); height: var(--cible-min); display: grid; place-items: center; border: 0; border-radius: 50%; background: none; color: var(--text); }
 .lecteur-tete .retour:active { background: var(--surface); }
-.etapes { flex: 1; display: flex; gap: 6px; }
-.etapes span { flex: 1; height: 12px; border-radius: var(--radius-pill); background: var(--surface-2); }
+/* Points d'étapes (R2) : aucun chiffre. Faite : jade plein ; en cours : cerclée de jade, comme la pierre tenue au-dessus
+   du goban ; à venir : un point discret. */
+.etapes { flex: none; display: flex; align-items: center; gap: 7px; min-height: var(--cible-min); padding-right: 2px; }
+.etapes span { width: 9px; height: 9px; border-radius: 50%; background: color-mix(in srgb, var(--text) 18%, transparent); }
 .etapes span.faite { background: var(--accent); }
-@media (prefers-reduced-motion: no-preference) { .etapes span { transition: background-color 300ms var(--ease); } }
+.etapes span.encours { background: transparent; box-shadow: inset 0 0 0 2px var(--accent-trait); }
+@media (prefers-reduced-motion: no-preference) { .etapes span { transition: background-color 300ms var(--ease), box-shadow 300ms var(--ease); } }
 .lecteur-titre { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; font-size: var(--fs-m); font-weight: var(--fw-bold); color: var(--muted); letter-spacing: -0.01em; }
 .lecteur-nom { flex: 1; min-width: 0; }
 .lecteur-nom small { display: block; color: var(--muted); font-size: var(--fs-legende); line-height: 1.2; }
 .lecteur-nom h2 { margin: 0; font-size: var(--fs-xl); font-weight: var(--fw-titre); line-height: 1.15; }
 .lecteur-tete .difficulte { flex: none; }
 .lecteur:has(.verdict) { padding-bottom: max(120px, var(--verdict-h, 0px)); }
-
-/* Leçon : la colonne tient dans l'écran, au-dessus du bouton flottant (réserve de 150 px de .app, zone sûre comprise).
-   Le plateau prend la hauteur qui reste : carré de côté min(largeur, hauteur) grâce à une requête de conteneur.
-   Sur iPhone SE, « Continuer » ne cache plus les rangées 1 et 2. Plancher de 220 px : en dessous, la page défile. */
-.lecteur-lecon { display: flex; flex-direction: column; box-sizing: content-box;
-  height: calc(100dvh - var(--space-2) - 150px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); }
-.lecteur-lecon > .lecteur-plateau { flex: 1 1 0; min-height: 220px; container-type: size; display: flex; justify-content: center; }
-.lecteur-plateau .board-wrap { width: min(100cqw, calc(100cqh - var(--space-2))); height: fit-content; }
-.lecteur-lecon > .bubble { flex: none; }
-
-/* Démonstration (#101) : toucher le plateau passe à la fin ; « Revoir » rejoue. L'atari clignote (pas en mouvements réduits). */
-.lecteur-plateau[data-demo='en-cours'] { cursor: pointer; }
-.lecteur-lecon > .revoir { flex: none; align-self: center; min-height: 44px; min-width: 44px; }
-.lecteur-lecon > .revoir:disabled { visibility: hidden; }
-.lecteur-lecon > .demo-compteur { flex: none; margin: var(--space-2) 0 0; text-align: center; font-family: var(--font-titre); font-size: 1.1rem; }
-.demo-compteur b { font-size: 1.6rem; font-variant-numeric: tabular-nums; }
-@media (prefers-reduced-motion: no-preference) {
-  .demo-atari .board [data-cible] { animation: demo-atari 600ms steps(2, jump-none) infinite alternate; }
-}
-@keyframes demo-atari { from { opacity: 1; } to { opacity: .15; } }
-
-/* Choix du quiz : à plat ; la couleur dit juste ou à revoir. */
-.choix { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
-/* Choix longs (« Chez Blanc ») : jamais coupés ; ils passent à la ligne sur un écran étroit (zoom 200 %). */
-.choix button { flex: 1 1 0; min-width: max-content; padding-inline: var(--space-2); min-height: 56px; font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: 1.3rem;
-  background: var(--surface); border: 2px solid transparent; border-radius: var(--radius-s); }
-/* Choix en mots (« Je passe », « Chez Blanc ») : plus petits que les nombres, pour tenir à trois sur une ligne. */
-.choix-mots button { font-size: 1.05rem; }
-.choix button:disabled { opacity: .4; cursor: default; }
-.choix .choix-juste { background: color-mix(in srgb, var(--jade) 20%, var(--surface)); border-color: var(--accent-trait); }
-.choix .choix-faux { background: color-mix(in srgb, var(--hanko) 16%, var(--surface)); border-color: var(--danger); }
-.choix .choix-faux[aria-disabled] { cursor: default; }
-/* Quiz (#198) : l'aide après un choix faux, sous les réponses, qui restent visibles et touchables. */
-.choix-aide { display: flex; gap: var(--space-2); align-items: flex-start; margin-top: var(--space-3); }
-.choix-aide p { margin: 0; line-height: 1.4; font-weight: var(--fw-medium); color: var(--danger-texte); }
-.choix-aide .marque { flex: none; margin-top: 1px; }
 
 /* Feuille de verdict : posée sur la barre de navigation, pleine largeur, contenu dans la colonne. */
 .verdict { position: fixed; left: 0; right: 0; bottom: calc(var(--nav-h) + 1px + env(safe-area-inset-bottom, 0px)); z-index: 15;
@@ -224,58 +191,6 @@
   .marque .trait { animation: dessine 340ms 60ms cubic-bezier(.3, .7, .3, 1) both; }
 }
 @keyframes dessine { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
-
-/* ---------- Fin de leçon ---------- */
-.app:has(.fin-lecon) { padding-bottom: calc(var(--nav-h) + var(--space-4) + env(safe-area-inset-bottom, 0px)); }
-/* Écran de fin centré dans la hauteur libre au-dessus de la navigation. */
-.fin-lecon { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
-  min-height: calc(100dvh - var(--nav-h) - var(--space-4) - var(--space-2) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); padding-bottom: var(--space-6); }
-.fin-sceau { filter: drop-shadow(0 12px 18px rgba(0, 0, 0, .35)); }
-.fin-sceau .sceau { --sceau-socle: var(--bg); }
-.fin-titre:focus { outline: none; }
-
-/* La rangée du chemin, dessinée comme un bout de goban : trois lignes, une intersection par leçon. */
-.fin-gue { --pas: 38px; position: relative; list-style: none; display: flex; margin: 28px 0 24px; padding: 0; }
-.fin-gue::before { content: ""; position: absolute; left: -12px; right: -12px; top: 50%; border-top: 1.5px solid color-mix(in srgb, var(--text) 22%, transparent); }
-.fin-gue li { position: relative; width: var(--pas); height: 44px; display: grid; place-items: center; }
-.fin-gue li::before { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; border-left: 1.5px solid color-mix(in srgb, var(--text) 22%, transparent); }
-.fin-gue i { position: relative; width: 32px; height: 32px; border-radius: 50%; }
-.fin-gue .faite i { background: radial-gradient(circle at 34% 26%, rgba(255, 255, 255, .34), rgba(255, 255, 255, 0) 24%),
-  radial-gradient(72% 72% at 36% 30%, #5b5f5d, #2e3130 18%, #151716 55%, #050606);
-  box-shadow: 0 4px 6px -2px rgba(0, 0, 0, .5); }
-/* La pierre qu'on vient de poser : cerclée d'or, la couleur des récompenses. */
-.fin-gue .juste-posee i::after { content: ""; position: absolute; inset: -6px; border-radius: 50%; border: 2.5px solid var(--or); }
-
-.fin-titre { margin: 0; font-size: clamp(2.25rem, 11vw, 2.75rem); font-weight: var(--fw-titre); line-height: 1; letter-spacing: -0.03em; text-wrap: balance; }
-.fin-acquis { margin: 14px 0 28px; font-size: var(--fs-l); line-height: 1.4; max-width: 21em; text-wrap: balance; }
-.fin-lecon .cta { position: static; transform: none; width: 100%; }
-.fin-lecon .lien { margin-top: calc(var(--space-2) + var(--relief)); }
-
-/*
- * Un seul moment orchestré, plus modeste qu'une victoire (moins de 600 ms au total, jamais bloquant) :
- * 1. le sceau s'imprime : 0,9 → 1 avec un léger dépassement (skill motion-design, « bounce settle », succès 5-10 %) ;
- * 2. la pierre se pose : 1,12 → 1 en 140 ms (direction.md, section 5), le claquement part à l'impact (POSE_MS) ;
- * 3. le titre et la phrase arrivent, 60 ms d'écart (ease-out fort des skills animate et emil-design-eng).
- * Le bouton est là dès le début : on peut passer à la suite sans attendre.
- */
-@media (prefers-reduced-motion: no-preference) {
-  .fin-lecon .cta:active { transform: translateY(var(--relief)); box-shadow: none; }
-  .fin-sceau { animation: sceau-pose 360ms cubic-bezier(.175, .885, .32, 1.275) both; }
-  .fin-gue .juste-posee i { animation: pose 140ms 320ms cubic-bezier(.2, .8, .3, 1.2) both; }
-  .fin-gue .juste-posee i::after { animation: apparait-marque 160ms 460ms cubic-bezier(.23, 1, .32, 1) both; }
-  .fin-titre { animation: apparait 300ms 120ms cubic-bezier(.23, 1, .32, 1) both; }
-  .fin-acquis { animation: apparait 300ms 180ms cubic-bezier(.23, 1, .32, 1) both; }
-}
-@keyframes sceau-pose { from { transform: scale(.9) rotate(-6deg); opacity: 0; } to { transform: none; opacity: 1; } }
-@keyframes pose {
-  from { transform: scale(1.12); opacity: 0; box-shadow: 0 12px 14px -4px rgba(0, 0, 0, .25); }
-  to { transform: none; opacity: 1; box-shadow: 0 4px 6px -2px rgba(0, 0, 0, .5); }
-}
-@keyframes apparait-marque { from { opacity: 0; transform: scale(.9); } to { opacity: 1; transform: none; } }
-@keyframes apparait { from { transform: translateY(8px); opacity: 0; } to { transform: none; opacity: 1; } }
-
-/* Confettis (dernière leçon seulement) : le canevas de src/ui/Confettis.tsx, au-dessus de tout, sans prendre de toucher. */
-.fin-lecon .confettis { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 40; pointer-events: none; }
 
 /* ---------- Problèmes : cote et série ---------- */
 .palmares { display: grid; grid-template-columns: 1fr auto; align-items: end; gap: var(--space-4); margin: 2px 0 var(--space-2); }
