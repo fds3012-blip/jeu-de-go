@@ -79,6 +79,9 @@ export const THEMES_DE_LECON: Readonly<Record<string, readonly Theme[]>> = {
   l10: ['prise-en-retour'],
   l11: ['semeai'],
   l12: ['vie-mort'],
+  // #16 : le point vital (l13) a la série de vie et mort. Le seki (l14), finir la partie (l15) et compter (l16) n'en ont
+  // pas encore : la banque n'a aucun problème de seki ni de comptage.
+  l13: ['vie-mort'],
 };
 
 /**

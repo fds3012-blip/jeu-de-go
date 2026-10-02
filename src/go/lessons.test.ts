@@ -1,4 +1,4 @@
-// Vérification automatique des 12 leçons de content/lessons.fr.js : positions, bonnes réponses, et mauvaises réponses.
+// Vérification automatique des 16 leçons de content/lessons.fr.js : positions, bonnes réponses, et mauvaises réponses.
 // Les leçons 9 à 12 (#16) ont en plus leur preuve complète dans src/go/lecons-16.test.ts.
 import { LESSONS, type LessonStep } from '../content/lessons';
 import { fromRows } from './position';
@@ -32,8 +32,8 @@ function targetsLost(r: Position, targets: number[]): boolean {
 }
 
 describe('leçons : forme des positions', () => {
-  it('douze leçons, chacune avec au moins deux étapes', () => {
-    expect(LESSONS).toHaveLength(12);
+  it('seize leçons, chacune avec au moins deux étapes', () => {
+    expect(LESSONS).toHaveLength(16);
     for (const l of LESSONS) expect(l.steps.length).toBeGreaterThanOrEqual(2);
   });
   for (const { id, s } of all) {
@@ -65,8 +65,8 @@ describe('leçons : bonnes et mauvaises réponses', () => {
   for (const { id, s } of all.filter(x => x.s.kind === 'move')) {
     const m = s as Extract<LessonStep, { kind: 'move' }>;
     // Leçon 8 (ouverture) : pas de pierre visée ; ses ensembles de réponses ont leurs propres tests, plus bas.
-    // Leçons 9 à 12 (#16) : filet, prise en retour, course, vie et mort ; prouvées par le lecteur exact dans lecons-16.test.ts.
-    if (/^l(8|9|10|11|12)\./.test(id)) return;
+    // Leçons 9 à 16 (#16) : prouvées par le lecteur exact et la preuve de vie et mort (lecons-16.test.ts, lecons-13-16.test.ts).
+    if (/^l(8|9|10|11|12|13|14|15|16)\./.test(id)) return;
     it(`${id} : chaque bonne réponse est légale et atteint le but`, () => {
       const { pos, marked } = fromRows(m.rows);
       if (m.accept === 'line3') {

@@ -73,7 +73,8 @@ export function accueil(parties: Parties, lecons: number, adv: { id: string; nom
     // Le nom de l'adversaire est déjà juste au-dessus, en grand, et son sceau est dans le bouton.
     const cta = t('accueil.cta.premiere');
     const ctaNom = t('accueil.cta.premiereNom', { nom: adv.nom });
-    if (lecons === 0) return { nouveau: true, cta, ctaNom, bulle: fr(t('accueil.bulle.nouveau')) };
+    // Accueil v3 : au tout premier lancement, c'est Mochi qui parle, et il fait la promesse du jeu en une phrase.
+    if (lecons === 0) return { nouveau: true, cta, ctaNom, bulle: fr(t('accueil.promesse')) };
     return { nouveau: false, cta, ctaNom, bulle: fr(t('accueil.bulle.lecons', { n: lecons })) };
   }
   // #309 : une partie lancée puis quittée ne compte pas ; « Rejouer » attend une partie finie contre lui.
