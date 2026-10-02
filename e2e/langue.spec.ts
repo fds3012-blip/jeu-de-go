@@ -106,7 +106,7 @@ for (const largeur of [390, 320]) {
     await expect(page.getByText('The same puzzle for everyone, today.')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Solve the Daily Go' })).toHaveText('Solve');
     await expect(page.getByText(/^(Black|White) to play$/).first()).toBeVisible();
-    await expect(page.getByText('Sign in to keep your streak and solved puzzles on all your devices.')).toBeVisible();
+    await expect(page.getByText('Create your account to keep your streak and solved puzzles on all your devices.')).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Puzzles', exact: true })).toBeVisible();
     await expect(page.locator('[data-palier-en-cours]')).toContainText('Your tier');
     await expect(page.locator('[data-palier-en-cours]')).toContainText('30 to 25 kyu');
@@ -392,7 +392,7 @@ for (const largeur of [390, 320]) {
     await expect(recit).toBeVisible();
     await expect(recit.locator('.camp-nom').first()).toHaveText('You');
     await expect(recit.getByText(/^(Territory: the empty points each side surrounds|No territory)$/)).toBeVisible();
-    await expect(recit.getByText(/^− 100 komi for Pomme/)).toBeVisible();
+    await expect(recit.getByText(/^−100 komi for Pomme/)).toBeVisible();
     await expect(recit.getByText('Komi makes up for Black’s edge of playing first.')).toBeVisible();
     await expect(recit.getByText(/^You win by [\d.]+ points?!$/)).toBeVisible();
     await expect(recit.getByText(/Territoires|komi pour|Tu gagnes/)).toHaveCount(0);

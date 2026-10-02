@@ -10,9 +10,9 @@ describe('camps du récit (#118)', () => {
     expect(campsRecit('Pomme')).toEqual({ noir: 'Toi', blanc: 'Pomme', toi: true });
     expect(ligneResultat(r(1, 3.5), campsRecit('Pomme'))).toBe('Tu gagnes de 3,5 points !');
     expect(ligneResultat(r(2, 2.5), campsRecit('Pomme'))).toBe('Pomme gagne de 2,5 points');
-    expect(ligneKomi(6.5, campsRecit('Pomme'))).toBe('+ 6,5 komi pour Pomme');
+    expect(ligneKomi(6.5, campsRecit('Pomme'))).toBe('+6,5 komi pour Pomme');
     const d = { ...r(1, 1), deuxieme: { type: 'prisonniers' as const, noir: 3, blanc: 1 } };
-    expect(ligneDeuxieme(d, campsRecit('Pomme'))).toBe('+ 3 prisonniers pour toi, + 1 pour Pomme');
+    expect(ligneDeuxieme(d, campsRecit('Pomme'))).toBe('+3 prisonniers pour toi, +1 pour Pomme');
   });
   it('à deux : Noir et Blanc', () => {
     expect(campsRecit()).toEqual({ noir: 'Noir', blanc: 'Blanc', toi: false });
@@ -53,7 +53,7 @@ describe('récit du score (#78)', () => {
     expect(r.territoireNoir).toBe(10);
     expect(r.territoireBlanc).toBe(5);
     expect(r.deuxieme).toEqual({ type: 'prisonniers', noir: 3, blanc: 1 });
-    expect(ligneDeuxieme(r)).toBe('+ 3 prisonniers pour Noir, + 1 pour Blanc');
+    expect(ligneDeuxieme(r)).toBe('+3 prisonniers pour Noir, +1 pour Blanc');
     expect(ligneResultat(r)).toBe('Noir gagne de 0,5 point');
   });
 
@@ -93,8 +93,8 @@ describe('récit du score (#78)', () => {
   });
 
   it('textes : komi, compteur, égalité', () => {
-    expect(ligneKomi(6.5)).toBe('+ 6,5 komi pour Blanc');
-    expect(ligneKomi(-100)).toBe('− 100 komi pour Blanc');
+    expect(ligneKomi(6.5)).toBe('+6,5 komi pour Blanc');
+    expect(ligneKomi(-100)).toBe('−100 komi pour Blanc');
     expect(ligneCompteur(18, 12.5)).toBe('Noir 18 · Blanc 12,5');
     const vide = fromRows(Array.from({ length: 9 }, () => '.'.repeat(9))).pos;
     const r = recitScore(vide, 0);
@@ -173,7 +173,7 @@ describe('trois temps, trois totaux (#78)', () => {
     expect(ligneTerritoire(r)).toBe('10 points of territory for Black, 5 for White');
     expect(ligneTerritoire(r, campsRecit('Pomme'))).toBe('10 points of territory for you, 5 for Pomme');
     expect(ligneTerritoire({ ...r, territoireBlanc: 0, territoireNoir: 1 })).toBe('1 point of territory for Black');
-    expect(ligneDeuxieme(r)).toBe('+ 3 prisoners for Black, + 1 for White');
-    expect(ligneKomi(6.5)).toBe('+ 6.5 komi for White');
+    expect(ligneDeuxieme(r)).toBe('+3 prisoners for Black, +1 for White');
+    expect(ligneKomi(6.5)).toBe('+6.5 komi for White');
   });
 });

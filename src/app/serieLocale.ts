@@ -3,7 +3,7 @@
 // avec ou sans compte : le joueur ne voit jamais « 0 jour » après avoir réussi le Go du jour.
 import { serieVivante, type Serie } from './goDuJour';
 
-/** Jour de série à partir duquel on propose le compte, sans insister. Textes : clés `serie.invitation` et `serie.creerCompte`. */
+/** Jour de série à partir duquel on propose le compte, sans insister. Textes : clés `serie.invitation` et `pb.creerCompte`. */
 export const JOUR_INVITATION = 3;
 
 /**

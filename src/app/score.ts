@@ -115,7 +115,7 @@ export function ligneTerritoire(r: Recit, c: Camps = campsRecit()): string {
   return t('recit.etAussi', { debut: un(noir, 1), v: nombre(blanc), pour: dans(c, 2) });
 }
 
-/** Ligne du deuxième temps : « + 3 prisonniers pour Noir, + 1 pour Blanc » (contre l'ordi : « pour toi », « pour Pomme »). */
+/** Ligne du deuxième temps : « +3 prisonniers pour Noir, +1 pour Blanc » (contre l'ordi : « pour toi », « pour Pomme »). */
 export function ligneDeuxieme(r: Recit, c: Camps = campsRecit()): string {
   const { type, noir, blanc } = r.deuxieme;
   if (!noir && !blanc) return t(type === 'prisonniers' ? 'recit.aucunPrisonnier' : 'recit.aucunePierre');
@@ -124,7 +124,10 @@ export function ligneDeuxieme(r: Recit, c: Camps = campsRecit()): string {
   return t('recit.etPour', { debut: plus(type, noir, dans(c, 1)), v: nombre(blanc), pour: dans(c, 2) });
 }
 
-/** « + 6,5 komi pour Blanc » (contre l'ordi « pour Pomme » ; un komi négatif, en test, s'écrit « − 100 »). */
+/**
+ * « +6,5 komi pour Blanc » (contre l'ordi « pour Pomme » ; un komi négatif, en test, s'écrit « −100 »). Recette du 02/10
+ * au soir (L7) : le signe colle au nombre, sinon « − 100 » se lit comme un tiret long.
+ */
 export function ligneKomi(komi: number, c: Camps = campsRecit()): string {
   if (!komi) return t('recit.pasDeKomi');
   return t('recit.komi', { signe: komi < 0 ? '−' : '+', v: nombre(Math.abs(komi)), pour: dans(c, 2) });

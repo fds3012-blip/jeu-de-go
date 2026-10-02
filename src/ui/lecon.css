@@ -132,9 +132,8 @@
 .fin-titre { margin: 0; font-size: clamp(2.25rem, 11vw, 2.75rem); font-weight: var(--fw-titre); line-height: 1; letter-spacing: -0.03em; text-wrap: balance; }
 .fin-acquis { margin: 12px 0 14px; font-size: var(--fs-l); line-height: 1.4; max-width: 21em; text-wrap: balance; }
 /* L'XP gagnée, lue sur place (jamais en pastille flottante par-dessus). La place est réservée : rien ne saute. */
-.fin-gain { min-height: 32px; margin: 0 0 14px; }
+.fin-gain { min-height: 32px; margin: 0 0 20px; }
 .fin-gain .xp-en-ligne { margin: 0; }
-.fin-prochain { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 0 0 20px; color: var(--muted); font-size: var(--fs-s); font-weight: var(--fw-medium); }
 .fin-actions { display: flex; flex-direction: column; align-items: center; width: 100%; }
 .fin-lecon .cta { position: static; transform: none; width: 100%; }
 .fin-lecon .lien { margin-top: calc(var(--space-2) + var(--relief)); }
@@ -142,7 +141,7 @@
   .fin-sceau .sceau { width: 72px !important; height: 72px !important; }
   .fin-gue { margin: 14px 0 10px; }
   .fin-acquis { margin: 8px 0 10px; font-size: var(--fs-m); }
-  .fin-prochain { margin-bottom: 12px; }
+  .fin-gain { margin-bottom: 12px; }
   .fin-lecon .lien { margin-top: var(--relief); }
 }
 
@@ -161,7 +160,6 @@
   .fin-titre { animation: apparait 300ms 120ms cubic-bezier(.23, 1, .32, 1) both; }
   .fin-acquis { animation: apparait 300ms 180ms cubic-bezier(.23, 1, .32, 1) both; }
   .fin-gain .pastille-xp.anime { animation-delay: 520ms; }
-  .fin-prochain { animation: apparait 300ms 240ms cubic-bezier(.23, 1, .32, 1) both; }
 }
 @keyframes sceau-pose { from { transform: scale(.9) rotate(-6deg); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes pose {

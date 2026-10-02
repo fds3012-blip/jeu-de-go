@@ -20,7 +20,7 @@ test('première partie : komi 0,5 annoncé et expliqué, pas de barre d’avanta
   await passer(page);
   const recit = page.locator('.recit');
   await expect(recit).toBeVisible({ timeout: 10_000 });
-  await expect(recit).toContainText('+ 0,5 komi pour Pomme');
+  await expect(recit).toContainText('+0,5 komi pour Pomme');
   await expect(page.getByTestId('recit-noir')).toHaveText('0');
   await expect(page.getByTestId('recit-blanc')).toHaveText('0,5');
   await expect(page.getByRole('heading', { level: 2, name: 'Défaite' })).toBeVisible({ timeout: 6000 });
@@ -60,6 +60,6 @@ test('quatrième partie : le komi habituel (6,5) revient, et Mochi le dit', asyn
   await page.locator('.cta').click();
   await expect(page.locator('.annonce-komi')).toHaveText('Le komi passe à 6,5 points, sa valeur habituelle.');
   await passer(page);
-  await expect(page.locator('.recit')).toContainText('+ 6,5 komi pour Pomme', { timeout: 10_000 });
+  await expect(page.locator('.recit')).toContainText('+6,5 komi pour Pomme', { timeout: 10_000 });
   await expect(page.getByTestId('recit-blanc')).toHaveText('6,5');
 });

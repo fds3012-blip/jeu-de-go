@@ -5,6 +5,8 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Mochi } from './Mochi';
 import { Confettis } from './Confettis';
 import { mouvementsReduits, useDefilement } from './defilement';
+import { PastilleXp } from './PastilleXp';
+import { useFile } from './celebrations';
 import { t } from '../content/i18n';
 import './fin.css';
 
@@ -41,6 +43,11 @@ export function FinPartie({ fond, sceau, tampon, titre, marge, texteMarge, sousT
   const [gerbe, setGerbe] = useState<null | { x: number; y: number }>(null);
   const [gerbeFinie, setGerbeFinie] = useState(false);
   const v = useDefilement(marge ?? 0, 600, !reduit && marge != null);
+  // Recette du 02/10 au soir (L5) : l'XP de la partie se posait en haut de l'écran, sur la ligne des lettres du plateau.
+  // Elle se lit ici, sous le résultat, et y reste (l'annonce flottante s'efface quand cet écran est là : fin.css).
+  const actif = useFile().actif;
+  const [xp, setXp] = useState<{ points: number; bonus: number } | null>(null);
+  useEffect(() => { if (actif?.genre === 'xp') setXp({ points: actif.points, bonus: actif.bonus }); }, [actif]);
 
   // Le lecteur d'écran annonce le résultat : le focus va au titre.
   useEffect(() => { titreRef.current?.focus({ preventScroll: true }); }, []);
@@ -72,6 +79,7 @@ export function FinPartie({ fond, sceau, tampon, titre, marge, texteMarge, sousT
             <span className="sr-only">{texteMarge(marge)}</span>
           </p>
         ) : sousTitre && <p className="fin-marge">{sousTitre}</p>}
+        <div className="fin-xp" role="status" aria-live="polite">{xp && <PastilleXp points={xp.points} bonus={xp.bonus} anime={!reduit} />}</div>
         <p className="fin-bilan">{bilan}</p>
         {mochi && (
           <div className="fin-mochi">
