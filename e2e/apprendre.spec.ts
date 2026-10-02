@@ -364,10 +364,13 @@ test('leçon 8 : bien commencer sur 9 × 9, du chemin à la fin de leçon', asyn
   await expect(page.getByText(/Bien étendu/)).toBeVisible();
   await page.getByRole('button', { name: 'Terminer la leçon' }).click();
 
-  // Chapitre en cours d'écriture : fin de leçon classique, sans entraînement (pas encore de problèmes d'ouverture).
+  // Chapitre en cours d'écriture : la leçon 8 ne le ferme pas, fin de leçon classique (pas de partie contre Pomme).
+  // #16, lot X : sa série d'ouverture (13 × 13) y est l'action principale, comme pour les leçons 9 à 16.
   await expect(page.getByRole('heading', { name: 'Leçon terminée' })).toBeVisible();
   await expect(page.getByText(/coins, bords, puis centre/)).toBeVisible();
-  await expect(page.getByRole('button', { name: /^Entraîne-toi/ })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /^Entraîne-toi\s:\s3 problèmes sur ce thème, Ouverture$/ })).toHaveClass(/\bcta\b/);
+  await expect(page.locator('.fin-lecon .cta')).toHaveCount(1);
+  await expect(page.getByRole('button', { name: 'Joue contre Pomme' })).toHaveCount(0);
   await expect(page.getByTestId('confettis')).toHaveCount(0);
   await page.getByRole('button', { name: 'Retour au chemin' }).click();
   await expect(page.getByRole('button', { name: 'Leçon 8 : Les premiers coups, terminée' })).toBeVisible();
