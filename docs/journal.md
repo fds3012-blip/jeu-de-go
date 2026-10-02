@@ -592,3 +592,49 @@ Mandat de Florian : « fais bosser toute la team d'agents », jusqu'à 8 h, auta
 - **Autres fusions (CI verte)** : #340 perf PWA, #341 leçons 9 à 12, #348 recette (Pomme stable après une passe sur téléphone lent, badge clarifié), #349 anglais chargé à la demande (JS initial 230 Ko), #350 lot V (16 problèmes, appliqué en production, md5 identique ; 214 problèmes communs), #351 rappel quotidien (prêt, désactivé).
 - **Incidents** : 2 redémarrages du processus ; tous les agents repris depuis leur dernier commit, rien perdu de commité.
 - **À faire par Florian** : modèles d'e-mail avec code (`docs/growth/connexion-code.md`), couper les connexions anonymes, secret `SUPABASE_ACCESS_TOKEN` (`docs/architecture/deploiement-fonctions.md`), activation du rappel (`docs/growth/rappel-quotidien.md`), décisions juridiques D1–D8.
+
+## 01/10 → 02/10 : connexion améliorée, vague visuelle et complétude
+
+Mandat de Florian (01/10) : « améliorer l'app visuellement, Apprendre comme le reste ; optimisée pour les joueurs et complète ; faire les choses bien ».
+
+**Connexion** : #355 « Cette adresse a déjà un compte » ne bloque plus. L'app passe au code de connexion (`shouldCreateUser: false`), et « J'ai déjà un compte » est partout. Benchmark Google/Apple dans `docs/produit/benchmark-connexion.md`. La connexion Google est prête mais masquée tant que Florian ne l'a pas configurée (`docs/growth/connexion-google-apple.md`).
+
+**Fusionné le 02/10, CI verte avant chaque fusion :**
+- #374 : inventaire de complétude (`docs/produit/completude-2026-10-02.md`) et issues #358 à #373.
+- #375 et #378 : suite serveur du compte, puis audit visuel complet du 02/10, sans aucun 🔴.
+- #379 : Problèmes et Profil v3.
+- #377 : lecteur de leçon v3, avec Mochi, points d'étapes et guidage.
+- #380 : leçons 13 à 16 (point vital, seki, finir la partie, compter).
+- #376 : accueil v3, avec premier lancement épuré et « Aujourd'hui » au retour.
+- #384 (#381) : écran de partie v3, avec menu « Plus », bulles ancrées et récit lisible en 320 px.
+- #383 (#325) : robustesse. Écran d'erreur au lieu d'une page blanche, bandeau hors ligne, invite de mise à jour. La CI lance maintenant les tests SQL et vérifie la copie des règles vers les fonctions.
+- #385 (#40) : chemin Apprendre v3 en courbe, avec une vignette par leçon et le verrou « avec un compte » visible.
+- #387 (#16) : lot W (9 problèmes de pratique pour les leçons 14 à 16) et sceaux des leçons 8 à 16.
+- #386 (#358) : « Mes parties », l'historique ouvert en revue depuis le Profil.
+- #388 (#382) : défauts 🟠 de l'audit (consigne sous le plateau, écrans vides remplis, courbe de revue en clair, taille du plateau visible, action au-dessus du pli à 320 px).
+- #390 (#362) : aide avec règles illustrées, comptage, glossaire cherchable de 28 mots et questions fréquentes. Accessible depuis la partie, la leçon, le problème et le Profil.
+
+**Production Supabase :**
+- Lot W appliqué : 223 problèmes communs, empreinte md5 identique au dépôt.
+- Migration amis (#359) appliquée en partie : le journal anti-spam, `joueur_par_pseudo`, `mes_amis` et `defier_ami` sont en place. L'écriture directe dans `friendships` est fermée (0 ligne).
+- Il reste `demander_ami`, `repondre_ami` et `retirer_ami`. Chacune contient un `delete` (purge du journal à 30 jours, refus, retrait), et l'outil Supabase demande la confirmation de Florian pour toute instruction destructive. Je n'ai pas contourné ce garde-fou.
+- Rien n'a été supprimé.
+
+**En attente :**
+- #389 (amis) : verte, mais ne sera fusionnée qu'après les 3 fonctions.
+- #391 (#367, notifications dans l'app) : CI en cours.
+
+**Leçons :**
+- Une PR verte peut casser après la fusion d'une autre : je ramène main dans la branche et je relance la CI avant de fusionner. Cela a servi pour #384, #388 et #390.
+- Les agents commitent maintenant des captures légères : 15 JPEG au plus, 3 Mo au total. Une branche en avait 49 Mo, retirées avant le push.
+- Un YAML invalide dans `ci.yml` (« : » dans une valeur simple) fait échouer le workflow sans aucun job. Il faut le vérifier avec `yaml.safe_load` avant de pousser.
+
+**À faire par Florian :**
+- Confirmer la fin de la migration amis.
+- Modèles d'e-mail avec code.
+- Couper les connexions anonymes.
+- Secret `SUPABASE_ACCESS_TOKEN`.
+- Configurer Google OAuth et `VITE_AUTH_GOOGLE`.
+- Activer le rappel quotidien.
+- Décisions juridiques D1–D8.
+- Trancher : 3 ou 6 leçons gratuites ; Apple à 99 €/an ; « Cote 1500 » dans Mon compte ; « Analyser une partie » déplacée dans Mes parties.
