@@ -261,3 +261,15 @@ button.ligne:focus-visible { outline-offset: -3px; }
 .compte-garde svg { flex: none; margin-top: 1px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .compte-garde-oui svg { color: var(--accent-texte); stroke-width: 2.4; }
 .compte-garde-ici { color: var(--muted); }
+
+/* ---------- « À faire » (#367) : ce qui t'attend, une ligne par élément ---------- */
+.a-faire { list-style: none; margin: 0; padding: 0; }
+.a-faire li + li .ligne { box-shadow: inset 0 1px 0 var(--line); }
+.a-faire-ligne { min-height: 60px; padding-block: var(--space-2); }
+.a-faire-ligne .ligne-libelle { overflow-wrap: anywhere; }
+/* Ce qui attend vraiment (un ami, une série en jeu) : icône sur fond jade léger, rien de plus. */
+.a-faire-ligne.a-pastille .ligne-icone { background: color-mix(in srgb, var(--accent-trait) 18%, transparent); color: var(--accent-texte); }
+.a-faire-point { display: inline-block; width: 8px; height: 8px; margin-right: 6px; border-radius: 50%; background: var(--accent-trait); vertical-align: 1px; }
+.a-faire-vide { display: flex; align-items: center; gap: var(--space-3); margin: 0; padding: var(--space-4); border-radius: var(--radius);
+  background: var(--surface); color: var(--muted); line-height: 1.4; }
+.a-faire-vide > :first-child { flex: none; }

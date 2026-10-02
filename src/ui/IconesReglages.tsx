@@ -4,7 +4,9 @@ import type { ReactNode } from 'react';
 
 export type IconeReglageId =
   | 'parties' | 'placement' | 'reglages' | 'importer' | 'rappel' | 'installer' | 'compte' | 'conditions'
-  | 'langue' | 'theme' | 'goban' | 'confirmer' | 'sons' | 'celebrations' | 'aide';
+  | 'langue' | 'theme' | 'goban' | 'confirmer' | 'sons' | 'celebrations' | 'aide'
+  // « À faire » (#367) et ses éléments.
+  | 'aFaire' | 'defi' | 'flamme' | 'lecon' | 'ami';
 
 const TRACES: Record<IconeReglageId, ReactNode> = {
   // Flèche qui revient en arrière autour d'une pierre : tes parties passées (#358).
@@ -28,6 +30,13 @@ const TRACES: Record<IconeReglageId, ReactNode> = {
   celebrations: <><path d="M12 3.5 14.4 9l5.6.6-4.2 3.9 1.2 5.7L12 16.3 7 19.2l1.2-5.7L4 9.6 9.6 9Z" /></>,
   // Mochi : la bulle du coach.
   aide: <><path d="M5 5.5h14v10H11l-4.5 3.5V15.5H5Z" /><circle cx="9.5" cy="10.5" r="1" className="ir-plein" /><circle cx="14.5" cy="10.5" r="1" className="ir-plein" /></>,
+  // Trois lignes, deux pierres posées : ce qui t'attend (#367).
+  aFaire: <><path d="M10 7h10M10 12h10M10 17h6" /><circle cx="5.5" cy="7" r="1.7" className="ir-plein" /><circle cx="5.5" cy="12" r="1.7" className="ir-plein" /><circle cx="5.5" cy="17" r="1.7" /></>,
+  // Une noire et une blanche : une partie entre amis.
+  defi: <><circle cx="15.5" cy="12" r="5" /><circle cx="9" cy="12" r="5" className="ir-plein" /></>,
+  flamme: <><path d="M12.9 2.8c.6 3.4 5.8 5.8 5.8 11.6A6.7 6.7 0 0 1 12 21a6.7 6.7 0 0 1-6.7-6.8c0-3 1.5-4.7 3-5.9 0 2.1.9 3.5 2.2 3.9-.6-3.1.6-7 2.4-9.4Z" /></>,
+  lecon: <><path d="M12 6.5C10 5 7 4.5 3.5 5v13c3.5-.5 6.5 0 8.5 1.5 2-1.5 5-2 8.5-1.5V5C17 4.5 14 5 12 6.5Z" /><path d="M12 6.5v13" /></>,
+  ami: <><circle cx="9" cy="9" r="3.2" /><path d="M3.5 19.5a5.5 5.5 0 0 1 11 0" /><circle cx="16.5" cy="8.5" r="2.6" /><path d="M16 13.8a4.8 4.8 0 0 1 4.5 4.7" /></>,
 };
 
 export function IconeReglage({ id, taille = 20 }: { id: IconeReglageId; taille?: number }) {

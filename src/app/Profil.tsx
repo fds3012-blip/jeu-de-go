@@ -32,6 +32,9 @@ import { clePubliqueVapid, resumeRappel } from './rappel';
 import { ReglageRappel } from '../ui/ProposerRappel';
 import { LANGUES, langue, memoriserChoixLangue, t, type Langue } from '../content/i18n';
 import type { Placement } from './placement';
+import { resumeAFaire, type ElementAFaire, type GenreAFaire } from './aFaire';
+import { Mochi } from '../ui/Mochi';
+import type { IconeReglageId } from '../ui/IconesReglages';
 
 const SOLVED_KEY = 'go.problemes.v1';
 
@@ -57,7 +60,7 @@ function useDonnees(serie: number, record: number, parcours: Parcours) {
   return donnees;
 }
 
-export type VueProfil = 'menu' | 'reglages' | 'installer' | 'rappel' | 'compte' | 'conditions' | 'importer' | 'parties';
+export type VueProfil = 'menu' | 'reglages' | 'installer' | 'rappel' | 'compte' | 'conditions' | 'importer' | 'parties' | 'aFaire';
 
 // Libellés traduits (#167) : calculés à l'affichage, dans la langue de l'interface.
 const themes = () => [
@@ -93,6 +96,9 @@ interface Props {
   /** « Mes parties » : défis par lien terminés, lus dans Supabase pour la session ouverte. */
   db?: Db | null;
   userId?: string;
+  /** « À faire » (#367) : ce qui attend le joueur ; un toucher sur un élément ouvre son écran. */
+  aFaire?: readonly ElementAFaire[];
+  onAFaire?: (e: ElementAFaire) => void;
 }
 
 /** Sous-vue du Profil : « Retour » en haut, un titre, un contenu. */
@@ -108,12 +114,19 @@ function SousVue({ id, titre, onRetour, children }: { id: string; titre: string;
   );
 }
 
-export function Profil({ vue, onVue, settings, set, profil, serie, record = 0, parcours, placement, onPlacement, onJouer, db, userId }: Props) {
+export function Profil({ vue, onVue, settings, set, profil, serie, record = 0, parcours, placement, onPlacement, onJouer, db, userId, aFaire = [], onAFaire }: Props) {
   const retour = () => { onVue('menu'); window.scrollTo({ top: 0 }); };
   // #358 : toutes les parties terminées, et leur revue.
   // #286 : « Analyser une partie » est dans « Mes parties » depuis #358 (le Profil tient sans défiler) ; on y revient.
   if (vue === 'parties') return <MesParties onRetour={retour} onJouer={onJouer ?? retour} onImporter={() => onVue('importer')} db={db} userId={userId} confirmTouch={settings.confirmTouch} />;
   if (vue === 'conditions') return <Conditions onRetour={retour} />;
+  if (vue === 'aFaire') {
+    return (
+      <SousVue id="a-faire-titre" titre={t('aFaire.titre')} onRetour={retour}>
+        <ListeAFaire elements={aFaire} onOuvrir={e => onAFaire?.(e)} />
+      </SousVue>
+    );
+  }
   // #286 : analyser une partie jouée ailleurs (SGF), action secondaire du Profil.
   if (vue === 'importer') return <ImportSgf onRetour={() => { onVue('parties'); window.scrollTo({ top: 0 }); }} pseudo={profil?.pseudo} confirmTouch={settings.confirmTouch} />;
   if (vue === 'compte') return <SousVue id="compte-titre" titre={t('profil.compte')} onRetour={retour}><Account /></SousVue>;
@@ -133,7 +146,37 @@ export function Profil({ vue, onVue, settings, set, profil, serie, record = 0, p
     );
   }
 
-  return <Menu onVue={onVue} settings={settings} set={set} profil={profil} serie={serie} record={record} parcours={parcours} placement={placement} onPlacement={onPlacement} userId={userId} />;
+  return <Menu onVue={onVue} settings={settings} set={set} profil={profil} serie={serie} record={record} parcours={parcours} placement={placement} onPlacement={onPlacement} userId={userId} aFaire={aFaire} />;
+}
+
+const ICONE_A_FAIRE: Record<GenreAFaire, IconeReglageId> = { defi: 'defi', serie: 'flamme', goDuJour: 'goban', lecon: 'lecon', ami: 'ami' };
+
+/**
+ * Liste « À faire » (#367) : une ligne par élément, un toucher ouvre son écran. Vide : une phrase calme de Mochi,
+ * sans compteur ni reproche.
+ */
+export function ListeAFaire({ elements, onOuvrir }: { elements: readonly ElementAFaire[]; onOuvrir: (e: ElementAFaire) => void }) {
+  if (!elements.length) {
+    return (
+      <p className="a-faire-vide" data-testid="a-faire-vide"><Mochi size={36} /><span>{t('aFaire.vide')}</span></p>
+    );
+  }
+  return (
+    <ul className="lignes a-faire" data-testid="a-faire">
+      {elements.map(e => (
+        <li key={e.id}>
+          <button type="button" className={`ligne a-faire-ligne${e.pastille ? ' a-pastille' : ''}`} data-genre={e.genre} onClick={() => onOuvrir(e)}>
+            <LigneIcone><IconeReglage id={ICONE_A_FAIRE[e.genre]} /></LigneIcone>
+            <span className="ligne-texte">
+              <span className="ligne-libelle">{e.titre}</span>
+              <span className="ligne-aide">{e.detail}</span>
+            </span>
+            <svg className="chevron" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6 3.5 10.5 8 6 12.5" /></svg>
+          </button>
+        </li>
+      ))}
+    </ul>
+  );
 }
 
 /** Date courte du placement (« 28/09 »), dans la langue de l'interface. */
@@ -142,7 +185,7 @@ function dateCourte(iso: string): string {
   return Number.isNaN(d.getTime()) ? iso : d.toLocaleDateString(langue() === 'en' ? 'en-GB' : 'fr-FR', { day: '2-digit', month: '2-digit' });
 }
 
-function Menu({ onVue, profil, serie, record = 0, parcours, placement, onPlacement, userId }: Omit<Props, 'vue'>) {
+function Menu({ onVue, profil, serie, record = 0, parcours, placement, onPlacement, userId, aFaire = [] }: Omit<Props, 'vue'>) {
   const id = identite(profil, serie);
   const nParties = useMemo(() => historiqueAppareil().length, []);
   const donnees = useDonnees(serie, record, parcours);
@@ -167,6 +210,9 @@ function Menu({ onVue, profil, serie, record = 0, parcours, placement, onPlaceme
       <VitrineBadges liste={donnees.badges} nouveaux={donnees.nouveaux} />
 
       <div className="lignes">
+        {/* #367 : ce qui t'attend, en tête ; point jade quand quelqu'un ou quelque chose attend vraiment. */}
+        <LigneLien icone={<IconeReglage id="aFaire" />} libelle={t('aFaire.titre')} onClick={() => onVue('aFaire')}
+          valeur={<>{aFaire.some(e => e.pastille) && <span className="a-faire-point" aria-hidden="true" data-testid="a-faire-point" />}{resumeAFaire(aFaire)}</>} />
         {/* #358 : tes parties passées, en tête : c'est la ligne qu'on rouvre le plus. « Analyser une partie » (#286) y est. */}
         <LigneLien icone={<IconeReglage id="parties" />} libelle={t('historique.titre')}
           valeur={nParties ? t('historique.profilResume', { n: nParties }) : userId ? undefined : t('historique.profilVide')} onClick={() => onVue('parties')} />

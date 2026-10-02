@@ -103,6 +103,10 @@ export const EVENTS = {
   // Conseil de Mochi (#80) : phrase demandée (`modele`, `aucun` si rien de sûr), puis retour « utile / pas utile » (`utile`).
   conseilDemande: 'conseil_demande',
   conseilNote: 'conseil_note',
+  // Notifications dans l'app (#367) : un élément « À faire » touché. `type` : defi, serie, goDuJour, lecon, ami ;
+  // `source` : profil (liste « À faire »), accueil (tuile du défi), onglet (onglet à pastille) ; `attente_h` (défi) :
+  // heures depuis le coup de l'adversaire, pour le délai médian de réponse.
+  notificationOuverte: 'notification_ouverte',
 } as const;
 export type AnalyticsEvent = (typeof EVENTS)[keyof typeof EVENTS];
 export type Props = Record<string, string | number | boolean | null | undefined>;

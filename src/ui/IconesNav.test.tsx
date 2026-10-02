@@ -112,3 +112,21 @@ describe('mouvements (nav.css)', () => {
     expect(reduit).toContain('animation: allume');
   });
 });
+
+describe('pastille « quelque chose t’attend » (#367)', () => {
+  it('pose un point sur l’onglet choisi seulement, entendu avec le libellé', () => {
+    const html = renderToStaticMarkup(<BarreNav actif="profil" onChoisir={() => {}} pastilles={new Set<Onglet>(['jouer'])} />);
+    const b = boutons(html);
+    expect(b[0]).toContain('class="onglet-pastille" aria-hidden="true"');
+    expect(b[0]).toMatch(/>Jouer<\/span><span class="sr-only">, quelque chose t’attend<\/span>/);
+    for (const x of b.slice(1)) expect(x).not.toContain('onglet-pastille');
+  });
+
+  it('sans pastilles : aucun point', () => {
+    expect(barre('jouer')).not.toContain('onglet-pastille');
+  });
+
+  it('le point apparaît en fondu seulement sans préférence de mouvement réduit', () => {
+    expect(navCss).toMatch(/@media \(prefers-reduced-motion: no-preference\) \{\s*\.onglet-pastille \{ animation: nav-pastille/);
+  });
+});

@@ -49,7 +49,8 @@ import { INVITEUR_AU_CHARGEMENT, JETON_AU_CHARGEMENT, ecouterJetonDefi } from '.
 import { ESSAI_KEY, decider, etatCompte, lireEssai, noterPartieTerminee, partiesTerminees, type Acces, type EtatCompte, type Raison } from './essai';
 import { compteVientDEtreCree, moyenConnexion, noterConnexionParGoogle } from './entonnoir';
 import { annoncerMessage, definirRetour, erreurRetour, messageRetour, prendreRetour } from './connexionGoogle';
-import { useDefisAJouer } from './defisAJouer';
+import { useDefisEnAttente } from './defisAJouer';
+import { elementDeLOnglet, elementsAFaire, leconEnCours, ongletsAPastille, type ElementAFaire } from './aFaire';
 import { LimiteErreur } from './LimiteErreur';
 import { BandeauHorsLigne, InviteMiseAJour } from '../ui/Bandeaux';
 import '../ui/defis.css';
@@ -188,8 +189,11 @@ export function App() {
   const [placementBrut, setPlacementBrut] = useStored<unknown>(PLACEMENT_KEY, null);
   const placement = lirePlacement(placementBrut);
   const [enPlacement, setEnPlacement] = useState(false);
-  // Lien « Défier un ami » de l'accueil : parties où c'est à toi de jouer (session de compte ou anonyme).
-  const defisAJouer = useDefisAJouer(supabase, session?.user.id, tab === 'jouer' && !playing && !enPlacement && defi === null);
+  // Défis où c'est à toi de jouer (session de compte ou anonyme) : lien de l'accueil, pastille de l'onglet, « À faire » (#367).
+  // Relus à chaque changement d'écran ; pas pendant une partie (l'écran du défi suit déjà la sienne en temps réel).
+  const defisEnAttente = useDefisEnAttente(supabase, session?.user.id, `${tab}|${defi?.vue ?? ''}|${enPlacement}|${lessonId ?? ''}`,
+    !playing && defi?.vue !== 'partie');
+  const defisAJouer = defisEnAttente.length;
   const ouverts = ouvertsApresPlacement(OPPONENTS, placement, OUVERTS_D_OFFICE);
   const adv = adversaireOuvert(OPPONENTS, bilan, adversaire, ouverts);
   const cartes = echelle(OPPONENTS, bilan, ouverts).map(e => ({ id: e.adv.id, nom: e.adv.nom, rang: e.adv.rang, battu: e.battu, ouvert: e.ouvert, requis: e.requis?.nom }));
@@ -227,6 +231,14 @@ export function App() {
   const flamme = etatFlamme(serie, duJourFait);
   // #308 : après le placement, la carte « Leçon » suit le chapitre conseillé.
   const leconConseillee = leconDeLAccueil(LESSONS, CHAPITRES, progress, placement);
+  // Notifications dans l'app (#367) : ce qui t'attend. Rien au tout premier lancement (#236, N4).
+  // #359 (amis) : ajouter ici `demandesAmis` (demandes reçues, lues par `mes_amis()`), la source existe déjà (aFaire.ts).
+  const aFaire = elementsAFaire({
+    premier: home.nouveau, defis: defisEnAttente, serie, duJourFait,
+    goDuJour: duJour ? { numero: numeroJour, titre: duJour.title } : null,
+    leconEnCours: leconEnCours(LESSONS, progress),
+  });
+  const pastilles = ongletsAPastille(aFaire);
   // Profil (issue #50) : sous-vue ouverte, et fenêtre de consentement fermée avec Échap pendant cette session.
   const [vueProfil, setVueProfil] = useState<VueProfil>(PAGE_CONFIDENTIALITE ? 'conditions'
     : RETOUR_GOOGLE?.profil && !ECRAN_COMPTE_AU_RETOUR && !DEFI_AU_RETOUR ? 'compte' : 'menu');
@@ -435,6 +447,19 @@ export function App() {
     window.scrollTo({ top: 0 });
   }, []);
   const online = useOnline();
+  /** Ouvre l'écran d'un élément « À faire » (#367), en un toucher, et le mesure. */
+  function ouvrirAFaire(e: ElementAFaire, source: 'profil' | 'accueil' | 'onglet') {
+    track(EVENTS.notificationOuverte, { type: e.genre, source, attente_h: e.attenteH ?? null });
+    if (source === 'onglet') return; // l'onglet s'ouvre de lui-même
+    const c = e.cible;
+    if (c.ecran === 'defi') {
+      go('jouer');
+      setDefi({ vue: 'partie', id: c.partieId });
+    } else if (c.ecran === 'goDuJour') go('problemes');
+    else if (c.ecran === 'lecon') { go('apprendre'); ouvrirLecon(c.id); }
+    // #359 : la sous-vue des amis n'existe pas encore ; le Profil l'accueillera.
+    else go('profil');
+  }
   const ouvrirDefiPartie = useCallback((id: string) => { setDefi({ vue: 'partie', id }); window.scrollTo({ top: 0 }); }, []);
   const quitterDefi = () => { setDefi(null); window.scrollTo({ top: 0 }); };
   // #343 : pseudo obligatoire juste après la première connexion, avant tout le reste ; puis « Crée ton compte ».
@@ -523,7 +548,8 @@ export function App() {
     screen = <Profil vue={vueProfil} onVue={v => { if (v === 'importer' && !garde({ quoi: 'import' }, { quoi: 'importer' })) return; setVueProfil(v); }} settings={settings} set={set} profil={profil} serie={serie} record={recordSerie}
       parcours={{ lecons: { faites: done, total: LESSONS.length }, adversaires: OPPONENTS.length }}
       placement={placement} onPlacement={ouvrirPlacement}
-      onJouer={() => { go('jouer'); lancer('ordi'); }} db={supabase} userId={session?.user.id} />;
+      onJouer={() => { go('jouer'); lancer('ordi'); }} db={supabase} userId={session?.user.id}
+      aFaire={aFaire} onAFaire={e => ouvrirAFaire(e, 'profil')} />;
   } else {
     const numero = numeroJour;
     const daily = duJour;
@@ -540,7 +566,13 @@ export function App() {
         // quand elle se montre, la pastille « À faire » s'efface.
         installation={appel === 'installation' ? <ProposerInstallation moment="retour" /> : null}
         // Accueil v3 : un défi d'un ami où c'est ton tour passe en premier dans « Aujourd'hui ».
-        defis={supabase ? { n: defisAJouer, ouvrir: () => { if (!garde({ quoi: 'defi' }, { quoi: 'defis' })) return; setDefi({ vue: 'liste' }); window.scrollTo({ top: 0 }); } } : undefined}
+        // #367 : un seul défi où c'est ton tour ? La tuile ouvre directement la partie, en un toucher.
+        defis={supabase ? { n: defisAJouer, ouvrir: () => {
+          const seul = defisAJouer === 1 ? aFaire.find(e => e.genre === 'defi') : undefined;
+          if (seul) { ouvrirAFaire(seul, 'accueil'); return; }
+          if (!garde({ quoi: 'defi' }, { quoi: 'defis' })) return;
+          setDefi({ vue: 'liste' }); window.scrollTo({ top: 0 });
+        } } : undefined}
         onPlacement={proposerPlacement(parties.n, placement, ouverture.retours) ? ouvrirPlacement : undefined} />
     );
   }
@@ -616,7 +648,8 @@ export function App() {
       <FeteNiveau celebrer={settings.celebrations} ecran={`${tab}|${playing}|${lessonId ?? ''}|${serie3 ? 'serie' : ''}|${vueProfil}`} />
       <AnnonceXp celebrer={settings.celebrations} />
       {/* Pendant une partie, comme chez chess.com : pas de barre de navigation, « ‹ » ramène à l'accueil. */}
-      {!enPartie && !ecranPlein && <BarreNav actif={tab} onChoisir={go} />}
+      {!enPartie && !ecranPlein && <BarreNav actif={tab} pastilles={pastilles}
+        onChoisir={o => { const e = elementDeLOnglet(aFaire, o); if (e) ouvrirAFaire(e, 'onglet'); go(o); }} />}
       <ConsentModal visible={fenetreVisible({ consent, ignoree: accordIgnore, enPartie: enPartie || (tab === 'problemes' && duJourOuvert), surConditions: tab === 'profil' && vueProfil === 'conditions' })}
         onConditions={() => { go('profil'); setVueProfil('conditions'); }} onIgnorer={() => setAccordIgnore(true)} />
 

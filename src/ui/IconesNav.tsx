@@ -115,15 +115,25 @@ export function IconeNav({ onglet, actif = false }: { onglet: Onglet; actif?: bo
 }
 
 /** Barre de navigation du bas : quatre onglets, l'actif porte aria-current="page". */
-export function BarreNav({ actif, onChoisir }: { actif: Onglet; onChoisir: (o: Onglet) => void }) {
+/**
+ * Barre du bas. `pastilles` (#367) : onglets où quelque chose attend le joueur (un ami attend son coup, une série en
+ * jeu aujourd'hui) ; un point jade se pose sur l'icône, et le lecteur d'écran l'entend avec le libellé.
+ */
+export function BarreNav({ actif, onChoisir, pastilles }: { actif: Onglet; onChoisir: (o: Onglet) => void; pastilles?: ReadonlySet<Onglet> }) {
   return (
     <nav className="nav" aria-label={t('nav.aria')}>
       {ONGLETS.map(o => {
         const est = o.id === actif;
+        const pastille = pastilles?.has(o.id) ?? false;
         return (
-          <button key={o.id} type="button" className={`onglet onglet-${o.id}`} aria-current={est ? 'page' : undefined} onClick={() => onChoisir(o.id)}>
-            <IconeNav onglet={o.id} actif={est} />
+          <button key={o.id} type="button" className={`onglet onglet-${o.id}`} aria-current={est ? 'page' : undefined} onClick={() => onChoisir(o.id)}
+            data-pastille={pastille || undefined}>
+            <span className="onglet-icone">
+              <IconeNav onglet={o.id} actif={est} />
+              {pastille && <span className="onglet-pastille" aria-hidden="true" data-testid={`pastille-${o.id}`} />}
+            </span>
             <span className="onglet-libelle">{o.libelle}</span>
+            {pastille && <span className="sr-only">{`, ${t('aFaire.pastilleAria')}`}</span>}
             <span className="onglet-point" aria-hidden="true" />
           </button>
         );
