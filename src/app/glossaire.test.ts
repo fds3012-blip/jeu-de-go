@@ -108,7 +108,7 @@ const JARGON: [RegExp, IdMot][] = [
   [/libert[ée]/i, 'liberte'], [/faux (œ|oe)il|faux yeux/i, 'fauxOeil'], [/(^|[^\p{L}])(œil|yeux)\b/iu, 'oeil'], [/territoire/i, 'territoire'],
   [/prisonnier/i, 'prisonnier'], [/\bpass(e|es|er|é|ez)\b/i, 'passe'], [/semeai|course aux libert/i, 'semeai'], [/échelle/i, 'echelle'],
   [/\bfilet\b/i, 'filet'], [/prise en retour/i, 'priseEnRetour'], [/pierres? mortes?/i, 'pierresMortes'], [/\bdame\b|point neutre/i, 'dame'],
-  [/suicide/i, 'suicide'], [/\bgroupes?\b/i, 'groupe'],
+  [/suicide/i, 'suicide'], [/\bgroupes?\b/i, 'groupe'], [/point vital/i, 'pointVital'],
 ];
 
 describe('chaque mot du go employé dans l’interface a sa définition (#362)', () => {

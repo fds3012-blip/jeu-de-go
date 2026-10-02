@@ -126,15 +126,15 @@ const MORTS: Schema = {
 export const COMPTER: Carte<IdCompter>[] = [
   { id: 'territoire', lecon: 'l6', schema: NEUTRE },
   { id: 'prisonniers', lecon: 'l1', schema: CAPTURE },
-  { id: 'morts', lecon: 'l7', schema: MORTS },
-  { id: 'komi', lecon: 'l7' },
-  { id: 'regles', schema: FIN },
+  { id: 'morts', lecon: 'l15', schema: MORTS },
+  { id: 'komi', lecon: 'l16' },
+  { id: 'regles', lecon: 'l16', schema: FIN },
 ];
 
 // --- Glossaire ----------------------------------------------------------------------------------------------
 
 export const IDS_MOTS = [
-  'liberte', 'atari', 'groupe', 'prisonnier', 'suicide', 'ko', 'superko', 'oeil', 'fauxOeil', 'seki',
+  'liberte', 'atari', 'groupe', 'prisonnier', 'suicide', 'ko', 'superko', 'oeil', 'fauxOeil', 'pointVital', 'seki',
   'territoire', 'dame', 'pierresMortes', 'komi', 'passe', 'handicap', 'hoshi', 'kyuDan',
   'doubleAtari', 'echelle', 'filet', 'priseEnRetour', 'semeai', 'hane', 'senteGote', 'tesuji', 'joseki',
 ] as const;
@@ -152,10 +152,11 @@ export const MOTS: Mot[] = [
   { id: 'superko', lecon: 'l4' },
   { id: 'oeil', lecon: 'l5', schema: { rows: ['.....', 'OOOOO', 'XXXXO', 'X.X.X', 'XXXXX'], libs: ['B2', 'D2'], preuves: [{ vivant: 'A1', yeux: ['B2', 'D2'] }] } },
   { id: 'fauxOeil', lecon: 'l12', schema: { rows: ['.....', 'OOOOO', 'XXXXO', 'X.XOO', 'XX.XO'], interdit: 'C1', cibles: ['D1'], preuves: [{ fauxOeil: 'C1' }] } },
-  { id: 'seki', schema: { rows: ['.OX.OX.', '.OX.OX.', ...Array<string>(5).fill('.OXXOX.')], interdit: 'D7', preuves: [{ seki: ['C1', 'E1'], neutres: ['D7', 'D6'] }] } },
+  { id: 'pointVital', lecon: 'l13' },
+  { id: 'seki', lecon: 'l14', schema: { rows: ['.OX.OX.', '.OX.OX.', ...Array<string>(5).fill('.OXXOX.')], interdit: 'D7', preuves: [{ seki: ['C1', 'E1'], neutres: ['D7', 'D6'] }] } },
   { id: 'territoire', lecon: 'l6', schema: FIN },
-  { id: 'dame', lecon: 'l7', schema: NEUTRE },
-  { id: 'pierresMortes', lecon: 'l7', schema: MORTS },
+  { id: 'dame', lecon: 'l15', schema: NEUTRE },
+  { id: 'pierresMortes', lecon: 'l15', schema: MORTS },
   { id: 'komi', lecon: 'l7' },
   { id: 'passe', lecon: 'l7' },
   { id: 'handicap', schema: { rows: ['.........', '.........', '..X...X..', '.........', '....X....', '.........', '..X...X..', '.........', '.........'], preuves: [{ hoshi: ['C3', 'G3', 'C7', 'G7', 'E5'] }] } },
@@ -179,14 +180,14 @@ export const MOTS: Mot[] = [
 export const AUSSI: Record<'fr' | 'en', Partial<Record<IdMot, string[]>>> = {
   fr: {
     liberte: ['libertés'], groupe: ['chaîne', 'chaine'], prisonnier: ['capture', 'capturer', 'prendre'],
-    oeil: ['yeux', 'vivant', 'vie'], fauxOeil: ['faux yeux'], dame: ['point neutre', 'neutre'],
+    oeil: ['yeux', 'vivant', 'vie'], fauxOeil: ['faux yeux'], pointVital: ['vital', 'oki'], dame: ['point neutre', 'neutre'],
     pierresMortes: ['mort', 'morte'], passe: ['passer'], kyuDan: ['kyu', 'dan', 'grade', 'niveau', 'rang'],
     echelle: ['shicho'], filet: ['geta'], priseEnRetour: ['snapback'], semeai: ['course aux libertés'],
     senteGote: ['sente', 'gote', 'initiative'], territoire: ['points', 'compter'], komi: ['points'],
   },
   en: {
     liberte: ['liberties'], groupe: ['chain', 'string'], prisonnier: ['capture', 'captures'],
-    oeil: ['eyes', 'alive', 'life'], fauxOeil: ['false eyes'], dame: ['neutral point'],
+    oeil: ['eyes', 'alive', 'life'], fauxOeil: ['false eyes'], pointVital: ['vital', 'oki'], dame: ['neutral point'],
     pierresMortes: ['dead'], passe: ['passing'], kyuDan: ['kyu', 'dan', 'rank', 'grade'],
     echelle: ['shicho'], filet: ['geta'], priseEnRetour: ['snapback'], semeai: ['capturing race'],
     senteGote: ['sente', 'gote', 'initiative'], territoire: ['points', 'scoring'], komi: ['points'],

@@ -596,6 +596,8 @@ export const en = {
   'aide.mot.oeil.def': 'An empty point surrounded by a single group. With two real eyes, a group lives forever: the opponent can play in neither, it would be suicide.',
   'aide.mot.fauxOeil': 'False eye',
   'aide.mot.fauxOeil.def': 'It looks like an eye, but the stones around it are not all joined. Here, White plays C1 and captures D1: the eye is gone.',
+  'aide.mot.pointVital': 'Vital point',
+  'aide.mot.pointVital.def': 'The point that decides whether a group lives, often the middle of its eye space. Whoever takes it first saves their group, or kills the opponent’s.',
   'aide.mot.seki': 'Seki',
   'aide.mot.seki.def': 'Two groups without two eyes share their last liberties. Whoever plays there first puts themselves in atari and gets captured, so nobody does: both groups live. The shared points count for no one.',
   'aide.mot.territoire': 'Territory',

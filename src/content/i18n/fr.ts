@@ -639,6 +639,8 @@ export const fr = {
   'aide.mot.oeil.def': 'Un point vide entouré par un seul groupe. Avec deux vrais yeux, un groupe vit pour toujours : l’adversaire ne peut jouer dans aucun, ce serait un suicide.',
   'aide.mot.fauxOeil': 'Faux œil',
   'aide.mot.fauxOeil.def': 'Il ressemble à un œil, mais les pierres autour ne sont pas toutes reliées. Ici, Blanc joue en C1 et prend D1 : l’œil disparaît.',
+  'aide.mot.pointVital': 'Point vital',
+  'aide.mot.pointVital.def': 'Le point qui décide de la vie d’un groupe, souvent le milieu de son espace d’yeux. Qui le prend en premier fait vivre son groupe, ou tue celui de l’adversaire.',
   'aide.mot.seki': 'Seki',
   'aide.mot.seki.def': 'Deux groupes sans deux yeux partagent leurs dernières libertés. Le premier qui joue dedans se met en atari et se fait prendre : personne n’y joue, les deux vivent. Les points partagés ne comptent pour personne.',
   'aide.mot.territoire': 'Territoire',
