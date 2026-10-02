@@ -6,8 +6,9 @@
 // - rien au tout premier lancement : la seule chose à faire est la première partie (#236, N4) ;
 // - une pastille (point jade sur l'onglet) seulement quand quelqu'un ou quelque chose t'attend et peut se perdre :
 //   un ami qui attend ton coup, une série en jeu aujourd'hui (plus tard : une demande d'ami, #359) ;
-// - le Go du jour sans série et la leçon en cours vont dans la liste « À faire », sans pastille ;
-// - la liste est courte (au plus `MAX_ELEMENTS`) et l'état vide ne dit rien d'inquiétant.
+// - le Go du jour sans série et la leçon en cours restent dans « Aujourd'hui » (tuiles de l'accueil, sous l'action
+//   principale : c'est la liste « À faire »), sans pastille ;
+// - la liste est courte (au plus `MAX_ELEMENTS`) ; sans rien en attente, aucune pastille, aucun texte.
 import { t } from '../content/i18n';
 import type { Onglet } from '../ui/onglets';
 import { texteDelai } from './defiAmi';
@@ -127,19 +128,16 @@ export function elementsAFaire(d: DonneesAFaire, sources: readonly SourceAFaire[
   return (d.premier ? tous.filter(e => HUMAIN.has(e.genre)) : tous).slice(0, MAX_ELEMENTS);
 }
 
-/** Onglets qui portent une pastille. */
-export function ongletsAPastille(elements: readonly ElementAFaire[]): ReadonlySet<Onglet> {
-  return new Set(elements.filter(e => e.pastille).map(e => e.onglet));
+/** Onglets qui portent une pastille, avec ce qui les attend (le premier élément) : le lecteur d'écran l'entend. */
+export function ongletsAPastille(elements: readonly ElementAFaire[]): ReadonlyMap<Onglet, string> {
+  const m = new Map<Onglet, string>();
+  for (const e of elements) if (e.pastille && !m.has(e.onglet)) m.set(e.onglet, e.titre);
+  return m;
 }
 
 /** Premier élément à pastille d'un onglet (pour la mesure d'un toucher sur l'onglet). */
 export function elementDeLOnglet(elements: readonly ElementAFaire[], onglet: Onglet): ElementAFaire | undefined {
   return elements.find(e => e.pastille && e.onglet === onglet);
-}
-
-/** Résumé de la ligne « À faire » du Profil. */
-export function resumeAFaire(elements: readonly ElementAFaire[]): string {
-  return elements.length ? t('aFaire.resume', { n: elements.length }) : t('aFaire.resumeVide');
 }
 
 /** Lecture tolérante de la progression des leçons : la première commencée et pas finie, dans l'ordre du chemin. */

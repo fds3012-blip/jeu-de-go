@@ -70,7 +70,8 @@ export function Avatar({ initiale, couleur }: { initiale?: string; couleur: 1 | 
  * Liste des coups qui défile horizontalement. En partie, elle suit le dernier coup ;
  * en relecture, `courant` (index dans `coups`, -1 : aucun) désigne le coup affiché, gardé au centre.
  */
-export function ListeCoups({ coups, courant = coups.length - 1 }: { coups: string[]; courant?: number }) {
+/** `apres` (#362) : le « ? » de l'aide, au bout du ruban ; il ne prend rien au bandeau de l'adversaire (sa réplique reste entière). */
+export function ListeCoups({ coups, courant = coups.length - 1, apres }: { coups: string[]; courant?: number; apres?: ReactNode }) {
   const ref = useRef<HTMLOListElement>(null);
   useLayoutEffect(() => {
     const el = ref.current;
@@ -88,6 +89,7 @@ export function ListeCoups({ coups, courant = coups.length - 1 }: { coups: strin
           <li key={i} aria-current={i === courant ? 'step' : undefined}>{m}</li>
         ))}
       </ol>
+      {apres}
     </div>
   );
 }

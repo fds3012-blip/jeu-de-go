@@ -52,7 +52,7 @@ test('défi où c’est ton tour : pastille sur Jouer, un toucher sur la tuile o
 
   // La pastille jade, sur l'onglet Jouer seulement ; le lecteur d'écran l'entend avec le libellé.
   await expect(page.getByTestId('pastille-jouer')).toBeVisible();
-  await expect(nav(page).getByRole('button', { name: 'Jouer, quelque chose t’attend' })).toBeVisible();
+  await expect(nav(page).getByRole('button', { name: 'Jouer, C’est ton tour' })).toBeVisible();
   for (const o of ['apprendre', 'problemes', 'profil']) await expect(page.getByTestId(`pastille-${o}`)).toHaveCount(0);
   // Une seule action principale : le bouton de l'accueil.
   await expect(page.locator('.cta')).toHaveCount(1);
@@ -72,7 +72,7 @@ test('défi où c’est ton tour : pastille sur Jouer, un toucher sur la tuile o
   expect(erreurs).toEqual([]);
 });
 
-test('liste « À faire » du Profil : « C’est ton tour contre Léa », un toucher ouvre la partie', async ({ browser, baseURL }) => {
+test('« Aujourd’hui » sous l’action principale est la liste « À faire » : l’ami nommé, la série, la leçon ; un toucher ouvre la partie', async ({ browser, baseURL }) => {
   const serveur = fauxServeur();
   semerPartie(serveur);
   serveur.profiles.push({ id: LEA, username: 'Léa', rating: 1500, streak_days: 0, streak_last: null, streak_freezes: 0 });
@@ -82,31 +82,28 @@ test('liste « À faire » du Profil : « C’est ton tour contre Léa », un to
     'go.lecons.v1': { l1: 99, l2: 2 }, // leçon 2 commencée
   } });
 
-  await expect(page.getByTestId('pastille-jouer')).toBeVisible();
-  await expect(page.getByTestId('pastille-problemes')).toBeVisible(); // série en jeu aujourd'hui
-  await expect(page.getByTestId('pastille-apprendre')).toHaveCount(0); // une leçon en cours n'est pas une urgence
-  // Sur l'accueil, sous le bouton principal : la tuile nomme l'ami qui attend.
-  await expect(page.getByTestId('tuile-defi')).toContainText('Contre Léa');
+  // Pastilles : un ami attend (Jouer), une série en jeu aujourd'hui (Problèmes) ; une leçon en cours n'est pas une urgence.
+  await expect(nav(page).getByRole('button', { name: 'Jouer, C’est ton tour contre Léa' })).toBeVisible();
+  await expect(nav(page).getByRole('button', { name: 'Problèmes, Garde ta série de 4 jours' })).toBeVisible();
+  await expect(page.getByTestId('pastille-apprendre')).toHaveCount(0);
+  await expect(page.getByTestId('pastille-profil')).toHaveCount(0);
+
+  // Sous le bouton principal (toujours seul) : l'ami qui attend, nommé, en premier ; puis le Go du jour et la leçon.
+  await expect(page.locator('.cta')).toHaveCount(1);
+  const tuiles = page.locator('.tuiles .tuile');
+  await expect(tuiles.first()).toContainText('Contre Léa');
   await expect(page.getByRole('button', { name: 'Défi d’un ami, Contre Léa, À toi de jouer.' })).toBeVisible();
+  await expect(page.getByTestId('etat-du-jour')).toHaveText('À faire');
+  for (const b of await tuiles.all()) expect((await b.boundingBox())!.height).toBeGreaterThanOrEqual(44);
 
+  // Le Profil n'a pas de ligne de plus : il tient toujours sans défiler.
   await nav(page).getByRole('button', { name: /^Profil/ }).click();
-  const ligne = page.getByRole('button', { name: /^À faire/ });
-  await expect(ligne).toContainText('3 choses');
-  await expect(page.getByTestId('a-faire-point')).toBeVisible();
-  await capture(page, 'profil-ligne-390-clair');
-  await ligne.click();
+  await expect(page.getByRole('heading', { name: 'Ton parcours' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^À faire/ })).toHaveCount(0);
 
-  const liste = page.getByTestId('a-faire');
-  const lignes = liste.getByRole('button');
-  await expect(lignes).toHaveCount(3);
-  await expect(lignes.nth(0)).toContainText('C’est ton tour contre Léa');
-  await expect(lignes.nth(1)).toContainText('Garde ta série de 4 jours');
-  await expect(lignes.nth(2)).toContainText('Reprends ta leçon');
-  for (const b of await lignes.all()) expect((await b.boundingBox())!.height).toBeGreaterThanOrEqual(44);
-  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
-  await capture(page, 'a-faire-390-clair');
-
-  await lignes.nth(0).click();
+  // Retour à l'accueil par l'onglet à pastille, puis un toucher : la partie.
+  await nav(page).getByRole('button', { name: /^Jouer/ }).click();
+  await page.getByTestId('tuile-defi').click();
   await expect(plateau(page)).toBeVisible();
   await expect(page.getByText(/À toi de jouer\. Il te reste/)).toBeVisible();
 });
@@ -124,29 +121,24 @@ test('la pastille arrive sans recharger quand l’ami joue', async ({ browser, b
   await expect(page.getByTestId('pastille-jouer')).toBeVisible({ timeout: 5000 });
 });
 
-test('état vide : aucune pastille, une phrase calme', async ({ browser, baseURL }) => {
+
+test('état vide : aucune pastille, rien d’inquiétant', async ({ browser, baseURL }) => {
   const serveur = fauxServeur();
-  const n = numeroDuJour();
-  const page = await ouvrir(browser, baseURL, serveur, { stockage: { 'go.go-du-jour.v1': { dernier: n, jours: 2 } } });
+  const page = await ouvrir(browser, baseURL, serveur, { stockage: { 'go.go-du-jour.v1': { dernier: numeroDuJour(), jours: 2 } } });
   await expect(page.locator('.cta')).toBeVisible();
   await expect(page.locator('.onglet-pastille')).toHaveCount(0);
-
-  await nav(page).getByRole('button', { name: 'Profil' }).click();
-  const ligne = page.getByRole('button', { name: /^À faire/ });
-  await expect(ligne).toContainText('Rien pour l’instant');
-  await expect(page.getByTestId('a-faire-point')).toHaveCount(0);
-  await ligne.click();
-  const vide = page.getByTestId('a-faire-vide');
-  await expect(vide).toHaveText('Rien ne t’attend. Joue quand tu veux.');
-  await expect(page.getByTestId('a-faire')).toHaveCount(0);
-  await capture(page, 'a-faire-vide-390-clair');
+  for (const nom of ['Jouer', 'Apprendre', 'Problèmes', 'Profil']) await expect(nav(page).getByRole('button', { name: nom, exact: true })).toBeVisible();
+  await expect(page.getByTestId('tuile-defi')).toHaveCount(0);
+  await expect(page.getByTestId('etat-du-jour')).toHaveText('Fait');
+  await expect(page.locator('main')).not.toContainText(/perd|vite|dernière chance/i);
+  await capture(page, 'accueil-vide-390-clair');
 });
 
 test.describe('captures', () => {
   test.skip(!CAPTURES, 'captures seulement avec CAPTURES_367');
   for (const [largeur, hauteur, sombre] of [[390, 844, true], [320, 568, false], [320, 568, true]] as const) {
     const suffixe = `${largeur}-${sombre ? 'sombre' : 'clair'}`;
-    test(`accueil et « À faire » en ${suffixe}`, async ({ browser, baseURL }) => {
+    test(`accueil avec un ami qui attend en ${suffixe}`, async ({ browser, baseURL }) => {
       const serveur = fauxServeur();
       semerPartie(serveur);
       serveur.profiles.push({ id: LEA, username: 'Léa', rating: 1500, streak_days: 0, streak_last: null, streak_freezes: 0 });
@@ -154,12 +146,9 @@ test.describe('captures', () => {
         'go.go-du-jour.v1': { dernier: numeroDuJour() - 1, jours: 4 }, 'go.lecons.v1': { l1: 99, l2: 2 },
       } });
       await expect(page.getByTestId('pastille-jouer')).toBeVisible();
-      await capture(page, `accueil-pastille-${suffixe}`);
-      await nav(page).getByRole('button', { name: /^Profil/ }).click();
-      await page.getByRole('button', { name: /^À faire/ }).click();
-      await expect(page.getByTestId('a-faire').getByRole('button')).toHaveCount(3);
+      await expect(page.getByTestId('tuile-defi')).toContainText('Contre Léa');
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(largeur);
-      await capture(page, `a-faire-${suffixe}`);
+      await capture(page, `accueil-pastille-${suffixe}`);
     });
   }
 });

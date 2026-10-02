@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  DELAI_COUP_MS, MAX_ELEMENTS, SOURCES, elementDeLOnglet, elementsAFaire, leconEnCours, ongletsAPastille, resumeAFaire, sourceAmis,
+  DELAI_COUP_MS, MAX_ELEMENTS, SOURCES, elementDeLOnglet, elementsAFaire, leconEnCours, ongletsAPastille, sourceAmis,
   type DonneesAFaire, type DefiEnAttente,
 } from './aFaire';
 import { defisEnAttente } from './defisAJouer';
@@ -18,16 +18,15 @@ const d = (p: Partial<DonneesAFaire>): DonneesAFaire => ({ ...base, ...p });
 const defiDe = (p: Partial<DefiEnAttente> = {}): DefiEnAttente => ({ partieId: 'p1', adversaire: 'Léa', restant: 50 * H, comptage: false, ...p });
 
 describe('état vide', () => {
-  it('rien à faire : liste vide, aucune pastille, résumé calme', () => {
+  it('rien à faire : liste vide, aucune pastille', () => {
     const e = elementsAFaire(base);
     expect(e).toEqual([]);
     expect(ongletsAPastille(e).size).toBe(0);
-    expect(resumeAFaire(e)).toBe('Rien pour l’instant');
   });
 
-  it('les textes vides ne disent rien d’inquiétant (ni « perdre », ni « vite », ni « dernier »)', () => {
+  it('les textes ne disent rien d’inquiétant (ni « perdre », ni « vite », ni « dernier »)', () => {
     for (const l of ['fr', 'en'] as const) {
-      for (const k of ['aFaire.vide', 'aFaire.resumeVide', 'aFaire.serie', 'aFaire.serieDetail', 'aFaire.goDuJour'] as const) {
+      for (const k of ['aFaire.pastilleAria', 'aFaire.serie', 'aFaire.serieDetail', 'aFaire.goDuJour'] as const) {
         expect(traduire(l, k, { n: 3 })).not.toMatch(/perd|lose|lost|vite|hurry|dernier|last chance|!/i);
       }
     }
@@ -50,7 +49,7 @@ describe('défi où c’est ton tour', () => {
     const [e] = elementsAFaire(d({ defis: [defiDe()] }));
     expect(e).toMatchObject({ genre: 'defi', onglet: 'jouer', pastille: true, titre: 'C’est ton tour contre Léa', cible: { ecran: 'defi', partieId: 'p1' } });
     expect(sp(e.detail)).toBe('Partie entre amis · il te reste 2 jours et 2 h');
-    expect([...ongletsAPastille([e])]).toEqual(['jouer']);
+    expect([...ongletsAPastille([e])]).toEqual([['jouer', 'C’est ton tour contre Léa']]);
     expect(elementDeLOnglet([e], 'jouer')).toBe(e);
     expect(elementDeLOnglet([e], 'profil')).toBeUndefined();
   });
@@ -110,7 +109,7 @@ describe('ordre et longueur', () => {
   it('ami qui attend, puis série, puis leçon ; au plus MAX_ELEMENTS', () => {
     const e = elementsAFaire(d({ duJourFait: false, serie: 2, leconEnCours: { id: 'l2', titre: 'Atari' }, defis: [defiDe()] }));
     expect(e.map(x => x.genre)).toEqual(['defi', 'serie', 'lecon']);
-    expect(resumeAFaire(e)).toBe('3 choses');
+    expect([...ongletsAPastille(e).keys()]).toEqual(['jouer', 'problemes']);
     const beaucoup = elementsAFaire(d({ duJourFait: false, defis: Array.from({ length: 9 }, (_, i) => defiDe({ partieId: String(i) })) }));
     expect(beaucoup).toHaveLength(MAX_ELEMENTS);
   });
@@ -134,7 +133,7 @@ describe('EN', () => {
   it('textes anglais courts', () => {
     expect(traduire('en', 'aFaire.tourContre', { pseudo: 'Lea' })).toBe('Your move against Lea');
     expect(traduire('en', 'aFaire.serie', { n: 4 })).toBe('Keep your 4-day streak');
-    expect(traduire('en', 'aFaire.vide')).toBe('Nothing’s waiting. Play whenever you like.');
+    expect(traduire('en', 'aFaire.pastilleAria')).toBe('something’s waiting');
   });
 });
 

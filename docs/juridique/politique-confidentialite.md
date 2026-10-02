@@ -122,6 +122,7 @@ Ces données sont écrites dans le stockage local (`localStorage`) de ton naviga
 - ouverture de l'app : `app_ouverte` (avec « app installée ou non »), `premier_ecran_vu` (accueil affiché : secondes écoulées depuis l'ouverture, « tout premier lancement sur cet appareil » ou non, appel affiché sur l'accueil) ;
 - parties : `premiere_pierre`, `partie_commencee`, `comptage_manuel`, `partie_terminee`, `premiere_partie_terminee` (taille, adversaire, nombre de coups, résultat, secondes écoulées) ;
 - conseil de Mochi : `conseil_demande` (type de conseil donné, numéro du coup, temps de calcul), `conseil_note` (conseil jugé utile ou non) ;
+- aide : `aide_ouverte` (rubrique ouverte, mot du glossaire ouvert d'emblée, écran d'où elle est ouverte ; jamais le texte cherché) ;
 - leçons : `lecon_commencee`, `lecon_terminee` ;
 - problèmes : `probleme_resolu`, `probleme_termine` (premier essai réussi ou non, cote estimée du joueur et difficulté du problème), `solution_vue`, `erreur_rejouee`, `erreur_maitrisee`, `revision_faite` ;
 - course aux problèmes : `course_terminee` (score, erreurs, durée, raison de la fin), `course_partagee` (score, meilleur score, partage ou copie) ;
@@ -133,7 +134,7 @@ Ces données sont écrites dans le stockage local (`localStorage`) de ton naviga
 - rappel du Go du jour : `rappel_propose` (carte montrée), `rappel_accepte` (moment choisi), `rappel_refuse` (« Non merci » ou refus du navigateur), `rappel_ouvert` (notification touchée) ;
 - compte : `essai_limite_atteinte` (raison : parties d'essai jouées, leçon ou problème réservé au compte…), `lien_connexion_envoye`, `compte_methode` (moyen touché sur l'écran de compte : Google ou code par e-mail, et si la page est ouverte dans le navigateur d'une app comme Messenger), `compte_cree` (code, lien de l'e-mail ou Google), `pseudo_choisi` ; jamais l'e-mail ni le pseudo ;
 - défi par lien : `defi_cree` (lien créé, avec ou sans compte), `defi_ouvert` (lien ouvert par l'ami, avec ou sans compte), `defi_inscription` (e-mail ajouté à une partie commencée sans compte) ; jamais le lien, ni l'identifiant de la partie, ni l'e-mail.
-- notifications dans l'app : `notification_ouverte` (ce que tu as ouvert depuis « À faire » ou un onglet à pastille : ton tour dans une partie entre amis, ta série, le Go du jour ou une leçon ; d'où tu l'as ouvert ; pour une partie entre amis, le nombre d'heures depuis le coup de ton ami) ; jamais la partie, ni ton ami, ni son pseudo.
+- notifications dans l'app : `notification_ouverte` (ce que tu as ouvert depuis l'accueil ou un onglet à pastille : ton tour dans une partie entre amis, ta série, le Go du jour ou une leçon ; d'où tu l'as ouvert ; pour une partie entre amis, le nombre d'heures depuis le coup de ton ami) ; jamais la partie, ni ton ami, ni son pseudo.
 
 Chaque événement porte aussi la version de l'app, l'environnement (`production`…) et le niveau de mesure en vigueur (`mesure` : `anonyme` ou `complet`). Certains portent des valeurs tirées de ta progression sur l'appareil : série de jours, record, jours manqués, gels, total d'XP, niveau, meilleur score de la course.
 

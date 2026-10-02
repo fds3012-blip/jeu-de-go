@@ -1,4 +1,4 @@
-import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 // Écrans chargés à la demande (perf, #323) : seul l'accueil est dans le JS initial.
 import { CreerCompte, DefiArrivee, DefiPartie, DefisEcran, Game, LearnHome, LessonPlayer, Placement, Profil, PseudoObligatoire, Puzzles, SeriePratique, apresPremierEcran } from './ecrans';
 import { CHAPITRES, LESSONS } from '../content/lessons';
@@ -55,6 +55,10 @@ import { LimiteErreur } from './LimiteErreur';
 import { BandeauHorsLigne, InviteMiseAJour } from '../ui/Bandeaux';
 import '../ui/defis.css';
 import '../ui/robustesse.css';
+import { ecouterAide, estRaccourciAide, ficheDeLecon, ouvrirAide, type Ouverture } from './ouvrirAide';
+
+// Aide (#362) : feuille chargée au premier « ? » (partie, leçon, problème, Profil) ou à la touche « ? ».
+const FeuilleAide = lazy(() => import('../ui/Aide'));
 
 const PROBLEMES_LOCAUX = parsePuzzles(ALL_PUZZLES);
 // Problèmes résolus et vus sur l'appareil : mêmes clés que SOLVED_KEY et VUS_KEY de Puzzles.tsx (vérifié par ecrans.test.ts),
@@ -157,6 +161,24 @@ export function App() {
   const [playing, setPlaying] = useState<false | 'ordi' | 'deux' | 'guidee'>(false);
   const [adversaire, setAdversaire] = useStored<OpponentId>('go.adversaire.v1', 'pomme');
   const [lessonId, setLessonId] = useState<string | null>(null);
+  // Aide ouverte (#362) : la feuille se pose par-dessus l'écran, qui reste monté (partie et leçon intactes).
+  const [aide, setAide] = useState<(Ouverture & { n: number }) | null>(null);
+  useEffect(() => ecouterAide(o => {
+    setAide(a => ({ ...o, n: (a?.n ?? 0) + 1 }));
+    track(EVENTS.aideOuverte, { fiche: o.fiche, mot: o.mot ?? null, depuis: o.depuis });
+  }), []);
+  // Raccourci « ? » (clavier, lecteur d'écran) : l'aide depuis n'importe quel écran, partie comprise ; dans une leçon, sur son mot.
+  const aideOuverte = aide !== null;
+  useEffect(() => {
+    if (aideOuverte) return;
+    const f = (e: KeyboardEvent) => {
+      if (!estRaccourciAide(e)) return;
+      e.preventDefault();
+      ouvrirAide({ ...(lessonId ? ficheDeLecon(lessonId) : { fiche: 'regles' }), depuis: 'clavier' });
+    };
+    window.addEventListener('keydown', f);
+    return () => window.removeEventListener('keydown', f);
+  }, [aideOuverte, lessonId]);
   // Série de 3 problèmes ouverte depuis la fin d'une leçon (#200), figée à l'ouverture.
   const [serie3, setSerie3] = useState<Puzzle[] | null>(null);
   const session = useSession(supabase);
@@ -448,7 +470,7 @@ export function App() {
   }, []);
   const online = useOnline();
   /** Ouvre l'écran d'un élément « À faire » (#367), en un toucher, et le mesure. */
-  function ouvrirAFaire(e: ElementAFaire, source: 'profil' | 'accueil' | 'onglet') {
+  function ouvrirAFaire(e: ElementAFaire, source: 'accueil' | 'onglet') {
     track(EVENTS.notificationOuverte, { type: e.genre, source, attente_h: e.attenteH ?? null });
     if (source === 'onglet') return; // l'onglet s'ouvre de lui-même
     const c = e.cible;
@@ -459,6 +481,11 @@ export function App() {
     else if (c.ecran === 'lecon') { go('apprendre'); ouvrirLecon(c.id); }
     // #359 : la sous-vue des amis n'existe pas encore ; le Profil l'accueillera.
     else go('profil');
+  }
+  /** Tuile de l'accueil touchée : mesurée si elle porte un élément « À faire » (#367). */
+  function mesurerAccueil(...genres: ElementAFaire['genre'][]) {
+    const e = aFaire.find(x => genres.includes(x.genre));
+    if (e) track(EVENTS.notificationOuverte, { type: e.genre, source: 'accueil', attente_h: null });
   }
   const ouvrirDefiPartie = useCallback((id: string) => { setDefi({ vue: 'partie', id }); window.scrollTo({ top: 0 }); }, []);
   const quitterDefi = () => { setDefi(null); window.scrollTo({ top: 0 }); };
@@ -548,8 +575,7 @@ export function App() {
     screen = <Profil vue={vueProfil} onVue={v => { if (v === 'importer' && !garde({ quoi: 'import' }, { quoi: 'importer' })) return; setVueProfil(v); }} settings={settings} set={set} profil={profil} serie={serie} record={recordSerie}
       parcours={{ lecons: { faites: done, total: LESSONS.length }, adversaires: OPPONENTS.length }}
       placement={placement} onPlacement={ouvrirPlacement}
-      onJouer={() => { go('jouer'); lancer('ordi'); }} db={supabase} userId={session?.user.id}
-      aFaire={aFaire} onAFaire={e => ouvrirAFaire(e, 'profil')} />;
+      onJouer={() => { go('jouer'); lancer('ordi'); }} db={supabase} userId={session?.user.id} />;
   } else {
     const numero = numeroJour;
     const daily = duJour;
@@ -559,9 +585,10 @@ export function App() {
         reglages={reglages} setReglages={setReglages} onTaille={n => set({ size: n })} onChoisir={setAdversaire}
         onJouer={() => lancer('ordi')} onDeux={() => lancer('deux')} onGuidee={lancerGuidee}
         probleme={daily && { numero, titre: daily.title, rows: daily.rows, reussi: duJourFait, etat: etatTuile(appel, duJourFait) }}
-        onProbleme={() => go('problemes')}
+        // #367 : « Aujourd'hui » est la liste « À faire » ; un toucher sur un élément en attente est mesuré.
+        onProbleme={() => { mesurerAccueil('serie', 'goDuJour'); go('problemes'); }}
         lecon={leconConseillee && { rang: rangLecon, total: LESSONS.length, titre: leconConseillee.title }}
-        onLecon={() => { if (leconConseillee) { const id = leconConseillee.id; go('apprendre'); ouvrirLecon(id); } else go('apprendre'); }}
+        onLecon={() => { mesurerAccueil('lecon'); if (leconConseillee) { const id = leconConseillee.id; go('apprendre'); ouvrirLecon(id); } else go('apprendre'); }}
         // Un seul appel à la fois (#236, N4) : pas de carte d'installation le jour où Mochi fait une annonce ;
         // quand elle se montre, la pastille « À faire » s'efface.
         installation={appel === 'installation' ? <ProposerInstallation moment="retour" /> : null}
@@ -650,6 +677,13 @@ export function App() {
       {/* Pendant une partie, comme chez chess.com : pas de barre de navigation, « ‹ » ramène à l'accueil. */}
       {!enPartie && !ecranPlein && <BarreNav actif={tab} pastilles={pastilles}
         onChoisir={o => { const e = elementDeLOnglet(aFaire, o); if (e) ouvrirAFaire(e, 'onglet'); go(o); }} />}
+      {aide && (
+        <Suspense fallback={null}>
+          {/* Depuis une partie, pas de lien vers une leçon : on ne quitte pas la partie depuis l'aide. */}
+          <FeuilleAide key={aide.n} ouverture={aide} onFermer={() => setAide(null)} leconCourante={lessonId}
+            onLecon={playing || enPlacement || defi !== null ? undefined : id => { setAide(null); ouvrirLecon(id); }} />
+        </Suspense>
+      )}
       <ConsentModal visible={fenetreVisible({ consent, ignoree: accordIgnore, enPartie: enPartie || (tab === 'problemes' && duJourOuvert), surConditions: tab === 'profil' && vueProfil === 'conditions' })}
         onConditions={() => { go('profil'); setVueProfil('conditions'); }} onIgnorer={() => setAccordIgnore(true)} />
 

@@ -1,0 +1,10 @@
+/* Bouton « ? » de l'aide (#362) : rond, 44 px, couleur du texte secondaire ; aucun relief (ce n'est pas l'action principale). */
+.bouton-aide { flex: none; width: var(--cible-min); height: var(--cible-min); display: grid; place-items: center; padding: 0; border: 0;
+  border-radius: 50%; background: none; color: var(--muted); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.bouton-aide:hover { color: var(--text); }
+.bouton-aide:active { background: var(--surface); color: var(--text); }
+.bouton-aide:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+/* Avec un libellé (Profil) : le « ? » puis le mot, sans fond (une pastille au toucher) ; la cible garde 44 px de haut. */
+.bouton-aide.bouton-aide-texte { width: auto; display: inline-flex; align-items: center; gap: 6px; padding: 0 14px 0 10px; border-radius: var(--radius-pill);
+  font: inherit; font-size: var(--fs-s); font-weight: var(--fw-bold); color: var(--text); }
+.bouton-aide-texte svg { width: 20px; height: 20px; color: var(--muted); }
