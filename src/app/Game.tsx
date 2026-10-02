@@ -9,7 +9,7 @@ import { toLabel } from '../go/coords';
 import { analyseConseil, bestMove, bestMoveExplique, estimateLead, estimateTerritoire, forceInitiale, niveauGuide, PERIODE_GUIDEE, proposeComptage, reglerForce, type Opponent } from '../engine';
 import { EVENTS, secondsSinceOpen, track, trackOnce } from '../data/analytics';
 import { gagnerXp, sourceXpPartie, type SourceXp } from './xp';
-import { supabase } from '../data/supabase';
+import { useSupabase } from '../data/client';
 import { fr } from '../ui/typo';
 import { nombre as virgule, t as tr } from '../content/i18n';
 import { useProfil } from './hooks';
@@ -150,7 +150,8 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   const resultatDiffere = useRef<(() => void) | null>(null);
   // Vrai si la partie a été reprise avec « Rejouer d'ici » (revue) : elle ne rapporte pas d'XP (#233, P5).
   const reprise = useRef(false);
-  const profil = useProfil(ai ? supabase : null);
+  const supabase = useSupabase(); // chargé à la demande (#401)
+  const profil = useProfil(ai ? supabase ?? null : null);
   const token = useRef(0); // invalide les réponses de l'ordi devenues caduques (annulation, sortie)
   const scoreToken = useRef(0); // idem pour les pierres mortes proposées
   // Ce que le dernier coup du joueur demande à la réponse de l'ordi (#187) : une pause pour fêter sa capture,

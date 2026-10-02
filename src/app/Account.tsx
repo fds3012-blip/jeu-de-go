@@ -1,6 +1,7 @@
 import { useEffect, useState, type CSSProperties, type FormEvent } from 'react';
 import type { Session } from '@supabase/supabase-js';
-import { supabase, type Db } from '../data/supabase';
+import type { Db } from '../data/supabase';
+import { chargerSupabase, useSupabase } from '../data/client';
 import { motSuppression, confirmationValide, deleteMyAccount, fetchProfile, saveUsername, type Profile } from '../data/account';
 import { USERNAME_MAX, USERNAME_MIN, validateUsername } from '../data/username';
 import { EVENTS, identify, track } from '../data/analytics';
@@ -25,12 +26,16 @@ const clientSimule = {
 } as unknown as Db;
 
 /** Carte « Ton compte » de l'onglet Profil : connexion par lien e-mail, pseudo, déconnexion. */
-export function Account({ db = supabase }: { db?: Db | null }) {
+export function Account({ db: dbFourni }: { db?: Db | null }) {
+  const charge = useSupabase(); // client chargé à la demande (#401)
+  const db = dbFourni === undefined ? charge : dbFourni;
+  useEffect(() => { if (db === undefined) void chargerSupabase(); }, [db]);
   // Tests de bout en bout seulement (build VITE_E2E) : `?compte-simule` monte la suppression
   // avec un client simulé, sans aucun appel réseau.
   if (import.meta.env.VITE_E2E && typeof location !== 'undefined' && new URLSearchParams(location.search).has('compte-simule')) {
     return <div className="card"><b>joueur-test</b><SupprimerCompte db={clientSimule} /></div>;
   }
+  if (db === undefined) return null; // un instant, le temps de charger le client
   if (!db) {
     return (
       <div className="card">

@@ -4,7 +4,7 @@
 // La permission du navigateur n'est demandée qu'au toucher de « Me le rappeler » (Safari l'exige, et c'est plus honnête).
 import { useEffect, useId, useRef, useState } from 'react';
 import { EVENTS, track } from '../data/analytics';
-import { supabase } from '../data/supabase';
+import { useSupabase } from '../data/client';
 import { compteDe } from '../data/defi';
 import { usePseudo, useSession } from '../app/hooks';
 import {
@@ -38,7 +38,9 @@ const messageDe = (r: Resultat): Etape => (r === 'ok' ? 'fait' : r === 'refuse_n
  * d'installation est déjà sur cet écran (un seul appel secondaire à la fois).
  */
 export function ProposerRappel({ partieFinie, autreCarte }: { partieFinie: boolean; autreCarte: boolean }) {
-  const session = useSession(supabase);
+  const client = useSupabase(); // chargé à la demande (#401)
+  const supabase = client ?? null;
+  const session = useSession(client);
   // #343 : un vrai compte AVEC pseudo (comme l'exige enregistrer_abonnement_rappel côté serveur).
   const compte = !!usePseudo(supabase, compteDe(session));
   // Lus une fois : la carte montrée pose « proposée » sans se cacher elle-même.
@@ -121,7 +123,7 @@ export function ReglageRappel({ compte, onCompte, onInstaller }: { compte: boole
   const [support, setSupport] = useState(supportCourant);
   const [attente, setAttente] = useState(false);
   const [message, setMessage] = useState<Etape | null>(null);
-  const db = supabase;
+  const db = useSupabase();
 
   if (!compte || !db) {
     return (

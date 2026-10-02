@@ -4,8 +4,8 @@
 //
 // Lit dist/index.html, suit les imports statiques du JS d'entrée et mesure, compressé en gzip,
 // ce qu'un téléphone doit télécharger avant d'afficher l'accueil. Échoue si un budget est dépassé.
-// Le moteur KataGo, TensorFlow.js, PostHog, Sentry et les écrans chargés à la demande n'en font pas partie :
-// si l'un d'eux entre dans le JS initial, le budget saute.
+// Le moteur KataGo, TensorFlow.js, PostHog, Sentry, supabase-js (`lib-donnees`, #401) et les écrans chargés à la demande
+// n'en font pas partie : si l'un d'eux entre dans le JS initial, le budget saute.
 //
 // Relever un budget est une décision : dis pourquoi dans la PR.
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
@@ -14,7 +14,9 @@ import { gzipSync } from 'node:zlib';
 
 const KO = 1024;
 export const BUDGETS = {
-  jsInitial: 250 * KO, // gzip ; 260 Ko le 29/09 après découpage par écran (314 Ko avant), 230 Ko le 30/09 sans l'anglais (#325)
+  // gzip ; 260 Ko le 29/09 après découpage par écran (314 Ko avant), 230 Ko le 30/09 sans l'anglais (#325),
+  // 249 Ko le 02/10 ; 193 Ko avec supabase-js chargé à la demande (#401) : budget à 200 Ko, ≈ 7 Ko de marge.
+  jsInitial: 200 * KO,
   cssInitial: 30 * KO, // gzip ; 22 Ko le 29/09
   polices: 80 * KO, // woff2 (déjà compressé) ; 70 Ko le 29/09
   morceauAlaDemande: 60 * KO, // gzip, chaque écran chargé à la demande
@@ -59,6 +61,12 @@ function verifier(nom, taille, budget) {
   const ok = taille <= budget;
   if (!ok) echec = true;
   lignes.push(`${ok ? 'ok  ' : 'TROP'} ${nom.padEnd(44)} ${(taille / KO).toFixed(1).padStart(7)} Ko / ${(budget / KO).toFixed(0)} Ko`);
+}
+
+// supabase-js (#401) : chargé par src/data/client.ts, jamais dans le JS initial (Rollup le nomme `lib-donnees`, vite.config.ts).
+for (const f of [...initial].filter(f => /^assets\/lib-donnees-/.test(f))) {
+  echec = true;
+  lignes.push(`TROP ${f.replace('assets/', '')} dans le JS initial : importe le client par src/data/client.ts (useSupabase, chargerSupabase)`);
 }
 
 const jsInitial = [...initial].reduce((s, f) => s + gz(f), 0);
