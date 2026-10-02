@@ -271,7 +271,7 @@ export const LESSONS = [
       text: 'À l’inverse : rends un œil blanc faux.',
       ok: 'Blanc n’a plus qu’un vrai œil : il est mort.', no: 'Prends le coin de l’œil blanc, là où ses pierres se séparent.' }
   ] },
-  { id: 'l13', title: 'Le point vital', desc: 'Trois points en ligne : le milieu décide', steps: [
+  { id: 'l13', title: 'Le point vital', desc: 'Le milieu décide', steps: [
     { kind: 'info', rows: L_TROIS, geste: { pose: 'D1' }, demo: [{ pose: 'D1', couleur: 'B' }, { yeux: ['C1', 'E1'] }],
       text: 'Trois points en ligne : le milieu, au point vert, fait deux yeux.' },
     { kind: 'info', rows: L_TROIS, geste: { touche: ['D1'], no: 'Touche le point du milieu, entre les deux autres.' },

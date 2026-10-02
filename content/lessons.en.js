@@ -142,7 +142,7 @@ export const LESSONS_EN = {
     { text: 'The other way around: make one of White’s eyes false.',
       ok: 'White has only one real eye left: White is dead.', no: 'Take the corner of White’s eye, where its stones split apart.' }
   ] },
-  l13: { title: 'The vital point', desc: 'Three points in a row: the middle decides', steps: [
+  l13: { title: 'The vital point', desc: 'The middle decides', steps: [
     { text: 'Three in a row: playing the middle (green point) makes two eyes.' },
     { text: 'Tap the vital point. If White takes it, your group dies.',
       geste: { no: 'Tap the middle point, between the other two.' } },
