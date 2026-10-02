@@ -157,7 +157,6 @@ function Resultat({ fin, chapitre, onJouer, onLecons }: { fin: Fin; chapitre: st
   }
   return (
     <section className="placement-fin" aria-labelledby="placement-titre" data-testid="placement-fin" data-kyu={bilan.kyu}>
-      <PortraitMochi humeur="fier" taille={88} decoratif className="placement-mochi" />
       <p className="placement-surtitre">{t('placement.titre')}</p>
       <h2 id="placement-titre" className="placement-kyu">{fr(t('placement.kyu', { kyu: bilan.kyu }))}</h2>
       <p className="placement-explique">{fr(t('placement.kyuExplique'))}</p>
