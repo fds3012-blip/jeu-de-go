@@ -2,6 +2,7 @@
 // barre du haut (retour, progression), feuille de verdict en bas (jade : juste, hanko : à revoir), coche qui se dessine.
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { t } from '../content/i18n';
+import { etatsPoints } from '../app/lecon';
 import { mouvementsReduits } from './defilement';
 import './apprendre.css';
 
@@ -16,12 +17,15 @@ export function Retour({ label, onClick }: { label: string; onClick: () => void 
   );
 }
 
-/** Barre de progression des étapes : un segment par étape, rempli quand l'étape est faite. */
-export function Etapes({ total, faites }: { total: number; faites: number }) {
+/**
+ * Points d'étapes (recette du 30/09, R2) : un point par étape, jade quand elle est faite, cerclé pour celle en cours.
+ * Aucun chiffre à l'écran ; le lecteur d'écran, lui, entend « 2 étapes faites sur 6 ».
+ */
+export function Etapes({ total, faites, label }: { total: number; faites: number; label?: string }) {
   return (
-    <div className="etapes" role="progressbar" aria-label={t('lecteur.progression')} aria-valuemin={0} aria-valuemax={total} aria-valuenow={faites}
+    <div className="etapes" role="progressbar" aria-label={label ?? t('lecteur.progression')} aria-valuemin={0} aria-valuemax={total} aria-valuenow={faites}
       aria-valuetext={t('lecteur.etapes', { n: faites, total })}>
-      {Array.from({ length: total }, (_, i) => <span key={i} className={i < faites ? 'faite' : undefined} />)}
+      {etatsPoints(total, faites).map((e, i) => <span key={i} className={e === 'avenir' ? undefined : e} />)}
     </div>
   );
 }

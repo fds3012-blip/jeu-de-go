@@ -1,5 +1,5 @@
 // Onglet Problèmes (issue #40, phase 6) : cote et série, problème du jour mis en scène, grille des problèmes de base.
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import type { Db } from '../data/supabase';
 import { ALL_PUZZLES } from '../content/puzzles';
 import {
@@ -40,8 +40,9 @@ import { t as tr } from '../content/i18n';
 import { useExercice } from '../ui/celebrations';
 import { XpEnLigne } from '../ui/PastilleXp';
 import { COTE_KEY, nettoyerCote, noter, ouvrir, requalifierEnAide, type EtatCote } from './coteJoueur';
-import { Course } from './CourseProblemes';
+import { ChronoCourse, Course } from './CourseProblemes';
 import { lireMeilleurCourse } from './course';
+import { Paysage } from '../ui/Paysage';
 
 const LOCAL_PUZZLES = parsePuzzles(ALL_PUZZLES);
 export const SOLVED_KEY = 'go.problemes.v1';
@@ -325,7 +326,7 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
 
   const enCours = palierEnCours(tiers);
   return (
-    <div className={`problemes${prochainPz && duJourFait ? ' avec-continuer' : ''}`}>
+    <div className="problemes">
       {notices}
 
       {daily && (
@@ -348,22 +349,26 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
       {/* Un seul « Problème suivant », le palier en cours sans total, la grille derrière un lien discret (#196). */}
       <section aria-labelledby="paliers-titre">
         <h2 id="paliers-titre" className="titre-pierres">{tr('nav.problemes')}</h2>
-        {prochainPz && (
-          // #268 (WCAG 2.5.3) : pas d'aria-label ; le nom accessible est le texte visible, verbe d'abord.
-          <button type="button" className={duJourFait ? 'cta continuer' : 'btn continuer'} onClick={() => ouvrirProbleme(prochainPz.id)}>
-            {tr('pb.continuer')} <span className="continuer-titre">{prochainPz.title}</span>
-          </button>
-        )}
+        {/* #103 : le palier en cours est un paysage (le pied de la montagne, la pente, la crête…), jamais un total.
+            Dessous, la carte « Continuer » : le prochain problème, voilé, et une seule action. */}
         {enCours && (
-          <div className="palier-en-cours" data-palier-en-cours={enCours.id} data-reussis={enCours.reussis}>
-            <div className="palier-nom">
-              <small className="palier-surtitre">{tr('pb.tonPalier')}</small>
-              <h3>{tr(`palier.${enCours.id}.nom`)}</h3>
-              <small>{tr(`palier.${enCours.id}.kyu`)}</small>
+          <div className={`palier-en-cours${enCours.complet ? ' complet' : ''}`} data-palier-en-cours={enCours.id} data-reussis={enCours.reussis}>
+            <Paysage id={enCours.id} />
+            <div className="palier-en-cours-texte">
+              <div className="palier-nom">
+                <small className="palier-surtitre">{tr('pb.tonPalier')}</small>
+                <h3>{tr(`palier.${enCours.id}.nom`)}</h3>
+                <small>{tr(`palier.${enCours.id}.kyu`)}</small>
+              </div>
+              <div className="palier-etat">
+                {enCours.complet && <span className="palier-sceau" role="img" aria-label={tr('pb.palierComplet')}><SceauLecon id={`p${enCours.rang}`} taille={40} /></span>}
+                {enCours.reussis > 0 && <p className="palier-compte">{tr('pb.reussis', { n: enCours.reussis })}</p>}
+              </div>
             </div>
-            {enCours.reussis > 0 && <p className="palier-compte">{tr('pb.reussis', { n: enCours.reussis })}</p>}
+            {prochainPz && <Continuer pz={prochainPz} principal={duJourFait} onOpen={() => ouvrirProbleme(prochainPz.id)} />}
           </div>
         )}
+        {!enCours && prochainPz && <Continuer pz={prochainPz} principal={duJourFait} onOpen={() => ouvrirProbleme(prochainPz.id)} />}
         <CarteCourse onOpen={() => { if (essai) { essai(); return; } setCourse(true); window.scrollTo({ top: 0 }); }} />
         <button className="lien lien-tous" onClick={() => { if (essai) { essai(); return; } setTous(true); window.scrollTo({ top: 0 }); }}>
           {tr('pb.tous')}
@@ -408,6 +413,37 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
 }
 
 /**
+ * Carte « Continuer » (#103) : le prochain problème, voilé (on devine la position sans la lire), sa difficulté,
+ * qui joue, et une seule action. En relief quand le Go du jour est fait ; à plat sinon, le Go du jour reste l'action.
+ * #268 (WCAG 2.5.3) : pas d'aria-label ; le nom accessible du bouton est son texte visible, verbe d'abord.
+ */
+function Continuer({ pz, principal, onOpen }: { pz: Puzzle; principal: boolean; onOpen: () => void }) {
+  return (
+    <div className="continuer-carte">
+      <span className="continuer-goban" aria-hidden="true" onClick={onOpen}><MiniGoban rows={pz.rows} /></span>
+      <div className="continuer-corps">
+        <p className="continuer-aide">{fr(tr('pb.continuerAide'))}</p>
+        <p className="continuer-infos"><Difficulte d={pz.difficulty} /><span className="muted">{tr(pz.toPlay === 1 ? 'pb.joue.1' : 'pb.joue.2')}</span></p>
+      </div>
+      <button type="button" className={principal ? 'cta continuer' : 'btn continuer'} onClick={onOpen}>
+        {tr('pb.continuer')} <span className="continuer-titre">{pz.title}</span>
+      </button>
+    </div>
+  );
+}
+
+/** Sceau de réussite d'une miniature (#103) : un vrai tampon jade, carré arrondi, coche en papier. */
+function SceauReussi() {
+  return (
+    <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+      <rect x="1.5" y="1.5" width="29" height="29" rx="8" className="sceau-fond" />
+      <rect x="4.5" y="4.5" width="23" height="23" rx="6" className="sceau-anneau" />
+      <path d="M10 16.6 14 20.4 22 11.8" className="sceau-coche" />
+    </svg>
+  );
+}
+
+/**
  * Un palier : nom, rang en kyu, sceau quand il est complet, et sa grille de miniatures.
  * Aucun total affiché (ni « 3 / 33 », ni barre, ni montagne) : le joueur doit sentir que les problèmes ne s'arrêtent jamais.
  */
@@ -417,14 +453,20 @@ function PalierVue({ t, ordre, solved, vus, onOpen, fete }: {
   const titre = `palier-${t.id}`;
   return (
     <div className={`palier${t.complet ? ' complet' : ''}${fete ? ' fete' : ''}`} data-palier={t.id} data-reussis={t.reussis} aria-labelledby={titre} role="group">
+      {/* #103 : en-tête illustré, le paysage du palier ; complet, le sceau se pose dessus et le soleil se lève (fête). */}
       <div className="palier-tete">
-        <div className="palier-nom">
-          <h3 id={titre}>{tr(`palier.${t.id}.nom`)}</h3>
-          <small>{tr(`palier.${t.id}.kyu`)}</small>
+        <Paysage id={t.id} />
+        <div className="palier-tete-texte">
+          <div className="palier-nom">
+            <h3 id={titre}>{tr(`palier.${t.id}.nom`)}</h3>
+            <small>{tr(`palier.${t.id}.kyu`)}</small>
+          </div>
+          <div className="palier-etat">
+            {t.complet && <span className="palier-sceau" role="img" aria-label={tr('pb.palierComplet')}><SceauLecon id={`p${t.rang}`} taille={40} /></span>}
+            {t.reussis > 0 && <p className="palier-compte">{t.complet ? tr('pb.palierComplet') : tr('pb.reussis', { n: t.reussis })}</p>}
+          </div>
         </div>
-        {t.complet && <span className="palier-sceau" role="img" aria-label={tr('pb.palierComplet')}><SceauLecon id={`p${t.rang}`} taille={34} /></span>}
       </div>
-      {t.reussis > 0 && <p className="palier-compte">{tr('pb.reussis', { n: t.reussis })}</p>}
       <ul className="grille-pb">
         {t.problemes.map(p => {
           const ok = solved.has(p.id);
@@ -437,7 +479,7 @@ function PalierVue({ t, ordre, solved, vus, onOpen, fete }: {
                 <span className="grille-goban">
                   <MiniGoban rows={p.rows} />
                   {vu && <span className="pastille-vu" aria-hidden="true">{tr('pb.tamponVu')}</span>}
-                  {ok && <span className="pastille-ok" aria-hidden="true"><svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="15" className="sceau-fond" /><circle cx="16" cy="16" r="11.5" className="sceau-anneau" /><path d="M10.5 16.6 14.3 20.2 21.5 12.4" className="sceau-coche" /></svg></span>}
+                  {ok && <span className="pastille-ok" aria-hidden="true"><SceauReussi /></span>}
                 </span>
                 <b aria-hidden="true">{p.title}</b>
                 <span aria-hidden="true"><Difficulte d={p.difficulty} /></span>
@@ -458,10 +500,7 @@ function CarteCourse({ onOpen }: { onOpen: () => void }) {
   const [meilleur] = useState(lireMeilleurCourse);
   return (
     <button type="button" className="course-carte" onClick={onOpen} data-course="">
-      <svg className="course-picto" viewBox="0 0 24 24" width="30" height="30" aria-hidden="true" focusable="false">
-        <circle cx="12" cy="13.5" r="8" fill="none" stroke="currentColor" strokeWidth="2" />
-        <path d="M12 9.5v4.2l2.6 1.6M9.5 2.5h5M12 2.5v3" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
+      <ChronoCourse taille={56} />
       <span className="course-carte-texte">
         <b>{fr(tr('course.carte.titre'))}</b>
         <small>{fr(tr('course.carte.texte'))}{meilleur > 0 && <> <span className="course-carte-meilleur">{fr(tr('course.carte.meilleur', { meilleur }))}</span></>}</small>
@@ -569,8 +608,8 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
   onSolved: (essais: number, aide: NiveauAide) => void; onNext?: () => void; onExit: () => void;
   /** La réponse vient d'être montrée (#197). */
   onSolutionVue?: (essais: number) => void;
-  /** Série de fin de leçon (#200) : libellé du retour (« Retour au chemin ») et surtitre (« Entraînement, 1 sur 3 »). */
-  retour?: string; surtitre?: string;
+  /** Série de fin de leçon (#200) : libellé du retour (« Retour au chemin ») et surtitre (« Entraînement » et ses points). */
+  retour?: string; surtitre?: ReactNode;
   /** Faux quand l'exercice est fini alors que le lecteur reste affiché (dernier problème d'une série, #250 M9). */
   exercice?: boolean;
 }) {

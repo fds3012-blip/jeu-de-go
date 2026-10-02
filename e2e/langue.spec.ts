@@ -47,7 +47,7 @@ for (const largeur of [390, 320]) {
     for (const nom of [/^Confirm moves/, /^Celebrations/]) await expect(page.getByRole('switch', { name: nom })).toBeVisible();
     const sons = page.getByRole('group', { name: 'Sounds' });
     for (const nom of ['Sound', 'Vibration']) await expect(sons.getByRole('button', { name: nom, exact: true })).toBeVisible();
-    await expect(page.getByRole('group', { name: 'Mochi’s help' }).getByRole('button', { name: 'Beginners' })).toBeVisible();
+    await expect(page.getByRole('group', { name: 'Mochi’s help' }).getByRole('button', { name: 'At first' })).toBeVisible();
     await expect(page.getByText('Réglages')).toHaveCount(0);
     await expect(page.locator('header').getByText('Profile', { exact: true })).toBeVisible();
     await sansDebordement(page);

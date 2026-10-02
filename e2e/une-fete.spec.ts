@@ -15,7 +15,8 @@ async function finirSerie(page: Page, xpAvant3 = 95) {
   await page.getByRole('button', { name: 'Terminer la leçon' }).click();
   await page.getByRole('button', { name: /^Entraîne-toi/ }).click();
   for (const [rang, coup] of [[1, 'E2'], [2, 'F1'], [3, 'A2']] as const) {
-    await expect(page.getByText(`Entraînement, ${rang} sur 3`)).toBeVisible();
+    // R2 (recette du 30/09) : « Entraînement » et des points, aucun chiffre.
+    await expect(page.locator('.serie-pratique')).toHaveAttribute('data-rang', String(rang));
     if (rang === 3) await page.evaluate(x => localStorage.setItem('go.xp.v1', String(x)), xpAvant3);
     await jouer(page, coup);
     await expect(page.locator('.verdict-juste')).toBeVisible();
@@ -38,7 +39,7 @@ for (const theme of ['clair', 'sombre'] as const) {
     await page.locator('.verdict').getByRole('button', { name: 'Retour au chemin' }).click();
     await expect(ecranNiveau.getByRole('heading', { name: /Niveau\s2/ })).toBeVisible();
     await expect(page.locator('.verdict')).toHaveCount(0);
-    await expect(page.getByText('Entraînement, 3 sur 3')).toHaveCount(0);
+    await expect(page.locator('.serie-pratique')).toHaveCount(0);
     await page.waitForTimeout(800);
     await expect(carte).toHaveCount(0);
     await expect(page.getByTestId('pastille-xp')).toHaveCount(0);

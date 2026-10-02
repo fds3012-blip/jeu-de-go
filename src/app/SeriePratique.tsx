@@ -13,6 +13,8 @@ import { t } from '../content/i18n';
 import { lireFile, retirerFete } from '../ui/celebrations';
 import { niveauEnAttente } from '../ui/fileFetes';
 import { NiveauAtteint } from '../ui/Niveau';
+import { Etapes } from '../ui/Lecteur';
+import '../ui/lecon.css';
 
 function noter(cle: string, id: string) {
   writeLocal(cle, { ...readLocal<Record<string, true>>(cle, {}), [id]: true });
@@ -39,7 +41,9 @@ export function SeriePratique({ problemes, confirmTouch, celebrer = true, onFin 
   return (
     <div className="serie-pratique" data-serie={problemes.map(p => p.id).join(' ')} data-rang={i + 1}>
       <PuzzlePlayer key={pz.id} puzzle={pz} rang={i + 1} confirmTouch={confirmTouch}
-        surtitre={t('serie.pratique', { n: i + 1, total: problemes.length })} retour={t('lecon.retourChemin')}
+        // R2 (recette du 30/09) : « Entraînement » et des points de progression, aucun chiffre à l'écran.
+        surtitre={<span className="serie-surtitre">{t('serie.entrainement')}<Etapes total={problemes.length} faites={i} label={t('serie.progression')} /></span>}
+        retour={t('lecon.retourChemin')}
         rated={false} onAttempt={async () => null}
         onSolved={(_essais, aide) => {
           const gain = recompense(aide, false);
