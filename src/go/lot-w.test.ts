@@ -184,10 +184,11 @@ describe('lot W : identifiants, énoncés, thèmes, séries, doublons, calendrie
     }
   });
 
-  it('le Go du jour garde son ordre : le lot W, d’un seul tenant, vient juste après le lot V et ferme le calendrier', () => {
+  it('le Go du jour garde son ordre : le lot W, d’un seul tenant, vient juste après le lot V (le lot X le suit)', () => {
     const ids = LOT_W.map(r => r.id);
-    expect(CALENDRIER_GO_DU_JOUR.slice(-ids.length)).toEqual(ids);
-    expect(CALENDRIER_GO_DU_JOUR.indexOf('w01')).toBe(CALENDRIER_GO_DU_JOUR.indexOf('v16') + 1);
+    const debut = CALENDRIER_GO_DU_JOUR.indexOf('w01');
+    expect(CALENDRIER_GO_DU_JOUR.slice(debut, debut + ids.length)).toEqual(ids);
+    expect(debut).toBe(CALENDRIER_GO_DU_JOUR.indexOf('v16') + 1);
   });
 
   it('aucun doublon : ni identifiant, ni position (à une rotation ou un miroir près, marques ignorées)', () => {

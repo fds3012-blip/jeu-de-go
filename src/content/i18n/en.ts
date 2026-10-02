@@ -782,6 +782,8 @@ export const en = {
   'theme.seki': 'Seki',
   'theme.fin-de-partie': 'Ending the game',
   'theme.comptage': 'Counting',
+  'theme.ko': 'Ko',
+  'theme.ouverture': 'Opening',
 
   // Step 5: Learn tab, lesson player, account, privacy, remaining messages.
   'apprendre.synchro.local': 'Your progress stays on this phone. Sign in from Profile to keep it everywhere.',

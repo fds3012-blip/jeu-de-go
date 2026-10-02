@@ -829,6 +829,8 @@ export const fr = {
   'theme.seki': 'Seki',
   'theme.fin-de-partie': 'Finir la partie',
   'theme.comptage': 'Compter',
+  'theme.ko': 'Ko',
+  'theme.ouverture': 'Ouverture',
 
   // Étape 5 (#167) : Apprendre, lecteur de leçon, compte, confidentialité, messages restants. Textes d'interface seulement :
   // titres, descriptions et consignes des leçons (content/lessons.fr.js, src/content/acquis.ts) restent du contenu.
