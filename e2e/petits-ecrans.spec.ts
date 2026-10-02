@@ -98,7 +98,8 @@ test('M9 : fin de la pratique, « Niveau 2 ! » ne couvre pas le titre du chemin
   await page.getByRole('button', { name: 'Terminer la leçon' }).click();
   await page.getByRole('button', { name: /^Entraîne-toi/ }).click();
   for (const [rang, coup] of [[1, 'E2'], [2, 'F1'], [3, 'A2']] as const) {
-    await expect(page.getByText(`Entraînement, ${rang} sur 3`)).toBeVisible();
+    // R2 (recette du 30/09) : « Entraînement » et des points, aucun chiffre.
+    await expect(page.locator('.serie-pratique')).toHaveAttribute('data-rang', String(rang));
     // Le dernier problème fait passer au niveau 2 (100 XP).
     if (rang === 3) await page.evaluate(() => localStorage.setItem('go.xp.v1', '95'));
     await jouer(page, coup);

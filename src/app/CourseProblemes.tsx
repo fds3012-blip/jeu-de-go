@@ -90,7 +90,7 @@ function Consigne({ meilleur, onCommencer, onExit }: { meilleur: number; onComme
         <Retour label={t('pb.retour')} onClick={onExit} />
         <div className="lecteur-nom"><h2>{fr(t('course.carte.titre'))}</h2></div>
       </div>
-      <Chrono taille={72} />
+      <ChronoCourse taille={96} />
       <ul className="course-regles">
         {(['course.regles.1', 'course.regles.2', 'course.regles.3', 'course.regles.4'] as const).map(k => <li key={k}>{fr(t(k))}</li>)}
       </ul>
@@ -212,12 +212,36 @@ function Pastilles({ erreurs }: { erreurs: number }) {
   );
 }
 
-/** Pictogramme de chronomètre. */
+/** Pictogramme de chronomètre, en trait (bandeau de la course). */
 function Chrono({ taille }: { taille: number }) {
   return (
     <svg className="course-picto" viewBox="0 0 24 24" width={taille} height={taille} aria-hidden="true" focusable="false">
       <circle cx="12" cy="13.5" r="8" fill="none" stroke="currentColor" strokeWidth="2" />
       <path d="M12 9.5v4.2l2.6 1.6M9.5 2.5h5M12 2.5v3" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+/**
+ * Chronomètre dessiné (#103) : cadran en papier, graduations, les trois minutes de la course en arc hanko,
+ * aiguille sur la troisième, poussoir en haut. Sert à la carte d'entrée et à la consigne. Décoratif.
+ */
+export function ChronoCourse({ taille }: { taille: number }) {
+  const ticks = Array.from({ length: 12 }, (_, i) => {
+    const a = (i * Math.PI) / 6, grand = i % 3 === 0, r1 = grand ? 15.5 : 17.5, r2 = 20;
+    return <line key={i} x1={24 + r1 * Math.sin(a)} y1={26 - r1 * Math.cos(a)} x2={24 + r2 * Math.sin(a)} y2={26 - r2 * Math.cos(a)} strokeWidth={grand ? 2 : 1.3} />;
+  });
+  return (
+    <svg className="chrono-course" viewBox="0 0 48 48" width={taille} height={taille} aria-hidden="true" focusable="false">
+      <path className="ch-poussoir" d="M20 2.5h8M24 2.5v4.5M36.5 7.5l3 3" />
+      <circle className="ch-cadran" cx="24" cy="26" r="21" />
+      <circle className="ch-anneau" cx="24" cy="26" r="17.5" />
+      <g className="ch-ticks">{ticks}</g>
+      {/* Trois minutes : l'arc hanko de midi à trois heures, puis l'aiguille. */}
+      <path className="ch-arc" d="M24 8.5A17.5 17.5 0 0 1 41.5 26" />
+      <path className="ch-aiguille" d="M24 26V13.5" />
+      <path className="ch-aiguille" d="M24 26L36 26" />
+      <circle className="ch-axe" cx="24" cy="26" r="2.2" />
     </svg>
   );
 }

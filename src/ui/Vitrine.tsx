@@ -1,4 +1,4 @@
-// Profil vivant (issue #103) : rangée de statistiques et vitrine de badges en sceaux ronds.
+// Profil vivant (issue #103) : statistiques en anneaux et vitrine de badges, sept sceaux dessinés, tous différents.
 import { useState, type CSSProperties, type ReactNode } from 'react';
 import type { Badge, BadgeId, Stat } from '../app/vitrine';
 import { t } from '../content/i18n';
@@ -25,13 +25,32 @@ const ICONES: Record<Stat['id'], ReactNode> = {
   </>,
 };
 
+const RAYON = 20, TOUR = 2 * Math.PI * RAYON;
+
+/**
+ * Anneau d'une statistique (#103) : piste discrète et arc d'or quand il y a un total (« 3 sur 7 ») ; sans total
+ * (record, problèmes réussis : ils n'ont pas de fin), un médaillon plein, or ou jade. L'icône au centre.
+ */
+function Anneau({ s }: { s: Stat }) {
+  const part = s.total ? Math.min(1, s.valeur / s.total) : 0;
+  return (
+    <svg className={`stat-anneau${s.total === undefined ? ' medaillon' : ''}`} viewBox="0 0 48 48" width="48" height="48" aria-hidden="true" focusable="false">
+      <circle className="an-piste" cx="24" cy="24" r={RAYON} />
+      {s.total !== undefined && part > 0 && (
+        <circle className="an-arc" cx="24" cy="24" r={RAYON} strokeDasharray={`${part * TOUR} ${TOUR}`} transform="rotate(-90 24 24)" />
+      )}
+      <g transform="translate(12 12)">{ICONES[s.id]}</g>
+    </svg>
+  );
+}
+
 /** « Ton parcours » (#214) : quatre compteurs ; « 3/7 » se lit « 3 leçons finies sur 7 ». */
 export function Statistiques({ stats }: { stats: Stat[] }) {
   return (
     <ul className="stats" aria-label={t('stats.aria')}>
       {stats.map(s => (
         <li key={s.id} className={`stat stat-${s.id}`}>
-          <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false">{ICONES[s.id]}</svg>
+          <Anneau s={s} />
           <b>{s.valeur}{s.total !== undefined && <small aria-hidden="true">/{s.total}</small>}</b>
           <span>{s.legende}</span>
           {s.total !== undefined && <small className="sr-only"> {t('stats.sur', { total: s.total })}</small>}
@@ -41,29 +60,71 @@ export function Statistiques({ stats }: { stats: Stat[] }) {
   );
 }
 
-/** Signe gravé au centre de chaque sceau, dans un carré de 24. */
-const SIGNES: Record<BadgeId, ReactNode> = {
-  'premiere-partie': <><circle cx="9.5" cy="12" r="4.6" className="s-plein" /><circle cx="14.5" cy="12" r="4.6" className="s-creux" /></>,
-  'premier-probleme': <path d="M6.5 12.5 10.5 16.5 17.5 8.5" className="s-trait" />,
-  'victoire-pomme': <><path d="M12 8.2c-1.4-1.3-5.8-1.4-5.8 3.6 0 3.3 2.4 6 4.2 6 .8 0 1-.4 1.6-.4s.8.4 1.6.4c1.8 0 4.2-2.7 4.2-6 0-5-4.4-4.9-5.8-3.6Z" className="s-plein" /><path d="M12 8.2c0-1.6.6-2.8 2-3.6" className="s-trait fin" /></>,
-  'palier-debutant': <><path d="M4 18 10 9l3.2 4.6L15 11l5 7Z" className="s-plein" /><path d="M10 9V4.5l3.6 1.4L10 7.3" className="s-trait fin" /></>,
-  'dix-problemes': <text x="12" y="16.4" className="s-texte">10</text>,
-  'palier-novice': <><path d="M3.5 18 9 10l3 4 3.5-6.5L20.5 18Z" className="s-plein" /><path d="M15.5 7.5V3l3.4 1.3-3.4 1.4" className="s-trait fin" /></>,
-  'serie-7': <path d="M12.6 3.5c.5 2.8 4.7 4.7 4.7 9.5A5.4 5.4 0 0 1 12 18.5 5.4 5.4 0 0 1 6.6 13c0-2.4 1.2-3.8 2.4-4.8 0 1.7.7 2.9 1.8 3.3-.6-3 .4-6 1.8-8Z" className="s-plein" />,
+/** Encre et forme de chaque sceau : jade rond pour les premières fois, or carré pour les paliers et les jalons, hanko pour la victoire. */
+const SCEAUX: Record<BadgeId, { ton: 'jade' | 'or' | 'hanko'; forme: 'rond' | 'carre' }> = {
+  'premiere-partie': { ton: 'jade', forme: 'rond' },
+  'premier-probleme': { ton: 'jade', forme: 'rond' },
+  'victoire-pomme': { ton: 'hanko', forme: 'rond' },
+  'palier-debutant': { ton: 'or', forme: 'carre' },
+  'dix-problemes': { ton: 'or', forme: 'carre' },
+  'palier-novice': { ton: 'or', forme: 'carre' },
+  'serie-7': { ton: 'or', forme: 'rond' },
 };
 
-/** Or pour les jalons longs (paliers, série, 10 problèmes), jade pour les premières fois. */
-const OR: BadgeId[] = ['palier-debutant', 'palier-novice', 'serie-7', 'dix-problemes'];
+/** Motif gravé de chaque sceau, dans la grille 48 × 48 (zone utile 10–38). */
+const MOTIFS: Record<BadgeId, ReactNode> = {
+  // Première partie : le coin du goban, une pierre noire posée, une blanche à côté.
+  'premiere-partie': <>
+    <path d="M13 36V13H36M24 13v23M13 24h23" className="s-ligne" />
+    <circle cx="24" cy="24" r="6.2" className="s-pierre-n" /><circle cx="31.5" cy="16.5" r="5" className="s-pierre-b" />
+  </>,
+  // Premier problème : le point vital, entouré, et la pierre qui s'y pose.
+  'premier-probleme': <>
+    <circle cx="24" cy="24" r="12" className="s-cible" />
+    <circle cx="24" cy="24" r="6.5" className="s-pierre-b" />
+    <path d="M20.8 24.3 23.2 26.6 27.6 21.8" className="s-coche" />
+  </>,
+  // Pomme battue : la pomme de son sceau, et la coche jade dans le coin.
+  'victoire-pomme': <>
+    <g transform="translate(5.5 6) scale(.37)">
+      <path d="M50 38c-7-6-24-4-25 12-1 13 8 28 16 28 4 0 6-2 9-2s5 2 9 2c8 0 17-15 16-28-1-16-18-18-25-12Z" className="s-plein" />
+      <path d="M50 38c0-6 2-10 6-13" className="s-trait" strokeWidth="4" />
+      <path d="M54 29c5-6 12-5 15-3-3 5-10 7-15 3Z" className="s-plein" />
+    </g>
+    <circle cx="35" cy="34" r="6.5" className="s-pastille" /><path d="M31.8 34.2 34.2 36.5 38.4 31.8" className="s-coche-pastille" />
+  </>,
+  // Palier Débutant : les collines au pied de la montagne, le soleil, un pin.
+  'palier-debutant': <>
+    <circle cx="33" cy="15" r="4.5" className="s-clair" />
+    <path d="M8 36c6-9 12-9 18-5s8 4 14 1v8H8Z" className="s-plein" />
+    <path d="M15 30l4-8 4 8Z" className="s-plein" />
+  </>,
+  // 10 problèmes : le chiffre, et les deux pierres.
+  'dix-problemes': <>
+    <text x="24" y="27" className="s-texte">10</text>
+    <circle cx="19" cy="35.5" r="2.8" className="s-pierre-n" /><circle cx="29" cy="35.5" r="2.8" className="s-pierre-b" />
+  </>,
+  // Palier Novice : deux sommets au-dessus d'un nuage.
+  'palier-novice': <>
+    <path d="M7 38 19 17l6 9 7-11 9 23Z" className="s-plein" />
+    <path d="M32 15l3 3-3-1-3 1Z" className="s-clair" />
+    <ellipse cx="15" cy="34" rx="8" ry="2.6" className="s-clair" />
+  </>,
+  // 7 jours de série : la flamme, le chiffre dedans.
+  'serie-7': <>
+    <path d="M24.5 9c.7 4 6.6 6.6 6.6 13.3A7.5 7.5 0 0 1 24 30a7.5 7.5 0 0 1-7.5-7.7c0-3.4 1.7-5.3 3.4-6.7 0 2.4 1 4 2.5 4.6-.8-4.2.6-8.4 2.1-11.2Z" className="s-plein" />
+    <text x="24" y="27" className="s-texte s-texte-flamme">7</text>
+  </>,
+};
 
 export function SceauBadge({ id, obtenu, taille = 52 }: { id: BadgeId; obtenu: boolean; taille?: number }) {
-  const ton = !obtenu ? 'eteint' : OR.includes(id) ? 'or' : 'jade';
+  const { ton, forme } = SCEAUX[id];
   return (
-    <svg className={`sceau-badge ${ton}`} viewBox="0 0 48 48" width={taille} height={taille} aria-hidden="true" focusable="false">
-      <circle cx="24" cy="24" r="22.5" className="b-fond" />
-      <circle cx="24" cy="24" r="18.5" className="b-anneau" />
-      {/* Petites encoches de sceau sur le pourtour. */}
-      {[0, 45, 90, 135, 180, 225, 270, 315].map(a => <circle key={a} cx={24 + 20.5 * Math.cos((a * Math.PI) / 180)} cy={24 + 20.5 * Math.sin((a * Math.PI) / 180)} r="0.9" className="b-point" />)}
-      <g transform="translate(12 12)">{SIGNES[id]}</g>
+    <svg className={`sceau-badge ${obtenu ? ton : 'eteint'} ${forme}`} viewBox="0 0 48 48" width={taille} height={taille} aria-hidden="true" focusable="false">
+      {forme === 'rond'
+        ? <><circle cx="24" cy="24" r="22.5" className="b-fond" /><circle cx="24" cy="24" r="18.5" className="b-anneau" /></>
+        : <><rect x="2" y="2" width="44" height="44" rx="13" className="b-fond" /><rect x="6.5" y="6.5" width="35" height="35" rx="10" className="b-anneau" /></>}
+      {MOTIFS[id]}
     </svg>
   );
 }
@@ -97,7 +158,7 @@ export function VitrineBadges({ liste, nouveaux = [] }: { liste: Badge[]; nouvea
             <button type="button" className="badge-bouton" aria-pressed={choisi === x.id}
               aria-label={x.obtenu ? t('vitrine.obtenu', { nom: x.nom }) : t('vitrine.aGagner', { nom: x.nom, condition: x.condition })}
               onClick={() => setChoisi(c => (c === x.id ? null : x.id))}>
-              <SceauBadge id={x.id} obtenu={x.obtenu} taille={40} />
+              <SceauBadge id={x.id} obtenu={x.obtenu} taille={44} />
             </button>
           </li>
         ))}
