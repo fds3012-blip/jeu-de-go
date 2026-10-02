@@ -221,12 +221,16 @@ function Reglages({ adv, cartes, taille, reglages, setReglages, onTaille, onChoi
             <h2 id="feuille-titre">{t('accueil.tonAdversaire')}</h2>
             <button className="lien" onClick={() => setReglages(false)}>{t('accueil.fermer')}</button>
           </div>
-          <CarrouselAdversaires cartes={cartes} choisi={adv.id} onChoisir={onChoisir} legende={t(`adv.${adv.id}.description`)} />
-          <h2>{t('accueil.taillePlateau')}</h2>
-          <div className="seg">
-            {([9, 13, 19] as const).map(n => <button key={n} aria-pressed={taille === n} onClick={() => onTaille(n)}>{n} × {n}</button>)}
+          {/* Audit du 02/10 (n° 5) : la taille du plateau passe en tête, sur une ligne. Elle restait cachée sous le bouton
+              collant, au premier affichage comme au bout de la liste, en 320 px. */}
+          <div className="feuille-taille" role="group" aria-labelledby="feuille-taille-titre" aria-describedby="feuille-taille-aide">
+            <h3 id="feuille-taille-titre">{t('accueil.taillePlateau')}</h3>
+            <div className="seg">
+              {([9, 13, 19] as const).map(n => <button key={n} aria-pressed={taille === n} onClick={() => onTaille(n)}>{n} × {n}</button>)}
+            </div>
+            <p id="feuille-taille-aide" className="muted small">{t(AIDE_TAILLE[taille])}</p>
           </div>
-          <p className="muted small">{t(AIDE_TAILLE[taille])}</p>
+          <CarrouselAdversaires cartes={cartes} choisi={adv.id} onChoisir={onChoisir} legende={t(`adv.${adv.id}.description`)} />
           <button className="btn primary" aria-label={textes.ctaNom} onClick={onJouer}>{textes.cta}</button>
           <button className="lien deux" onClick={onDeux}>{t('accueil.deux')}</button>
           {onGuidee && <button className="lien deux" onClick={onGuidee}>{t('accueil.guidee')}</button>}

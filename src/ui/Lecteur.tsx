@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 're
 import { t } from '../content/i18n';
 import { etatsPoints } from '../app/lecon';
 import { mouvementsReduits } from './defilement';
+import { PortraitMochi, type HumeurMochi } from './Portrait';
 import './apprendre.css';
 
 /** Bouton retour, rond, en haut à gauche. Le libellé dit où il mène. */
@@ -26,6 +27,20 @@ export function Etapes({ total, faites, label }: { total: number; faites: number
     <div className="etapes" role="progressbar" aria-label={label ?? t('lecteur.progression')} aria-valuemin={0} aria-valuemax={total} aria-valuenow={faites}
       aria-valuetext={t('lecteur.etapes', { n: faites, total })}>
       {etatsPoints(total, faites).map((e, i) => <span key={i} className={e === 'avenir' ? undefined : e} />)}
+    </div>
+  );
+}
+
+/**
+ * Mochi parle sous le plateau (audit du 02/10, n° 1) : même grammaire que le lecteur de leçon (#377). Le plateau en haut,
+ * la consigne juste dessous, près du pouce ; la zone prend la hauteur libre, et la feuille de verdict arrive à sa place.
+ * La classe `bubble` reste sur la bulle : c'est elle que les parcours et le lecteur d'écran connaissent.
+ */
+export function ParoleMochi({ humeur = 'neutre', children }: { humeur?: HumeurMochi; children: ReactNode }) {
+  return (
+    <div className="lecteur-mochi">
+      <PortraitMochi humeur={humeur} taille={72} decoratif className="lecteur-mochi-portrait" />
+      <div className="bubble lecteur-bulle"><p>{children}</p></div>
     </div>
   );
 }

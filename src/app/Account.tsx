@@ -10,6 +10,7 @@ import type { Sens } from './connexionBascule';
 import { moyenConnexion } from './entonnoir';
 import { fr } from '../ui/typo';
 import { t } from '../content/i18n';
+import '../ui/compte.css';
 
 const field: CSSProperties = {
   width: '100%', minHeight: 46, padding: '0 14px', borderRadius: 12, border: '1.5px solid var(--line)',
@@ -92,17 +93,33 @@ function Connected({ db }: { db: Db }) {
   }
 
   return (
-    <div className="card">
-      <b style={{ fontSize: '1.2rem' }}>{profile.username}</b>
-      <p className="muted small" style={{ margin: '4px 0 0' }}>{t('compte.cote', { cote: profile.rating })}</p>
-      <p className="muted small" style={{ margin: '2px 0 0' }}>{session.user.email}</p>
-      <div className="row" style={{ marginTop: 12 }}>
-        <button className="btn" onClick={() => setEditing(true)}>{t('compte.changerPseudo')}</button>
-        <button className="btn" onClick={signOut}>{t('compte.deconnecter')}</button>
+    <>
+      <div className="card">
+        <b style={{ fontSize: '1.2rem' }}>{profile.username}</b>
+        <p className="muted small" style={{ margin: '4px 0 0' }}>{t('compte.cote', { cote: profile.rating })}</p>
+        <p className="muted small" style={{ margin: '2px 0 0' }}>{session.user.email}</p>
+        {/* Audit du 02/10 : deux boutons empilés, pleine largeur (« Changer de pseudo » ne passe plus sur deux lignes). */}
+        <div className="compte-boutons">
+          <button className="btn" onClick={() => setEditing(true)}>{t('compte.changerPseudo')}</button>
+          <button className="btn" onClick={signOut}>{t('compte.deconnecter')}</button>
+        </div>
+        <SupprimerCompte db={db} />
       </div>
-      <SupprimerCompte db={db} />
-    </div>
+      {/* Audit du 02/10 (n° 2) : l'écran était aux deux tiers vide. Il redit ce que le compte garde (la même promesse
+          qu'à la création, #214), sans action de plus. */}
+      <section className="creer-garde compte-connecte-garde" aria-labelledby="compte-garde-titre">
+        <p id="compte-garde-titre" className="creer-garde-titre">{fr(t('compte.gardeTitre'))}</p>
+        <ul>
+          {(['progression', 'serie', 'badges', 'parties'] as const).map(k => <li key={k}><Coche />{fr(t(`creer.garde.${k}`))}</li>)}
+        </ul>
+        <p className="muted small creer-appareils">{fr(t('creer.garde.appareils'))}</p>
+      </section>
+    </>
   );
+}
+
+function Coche() {
+  return <svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true" focusable="false"><path d="M4.5 10.5 8.5 14.5 15.5 6" /></svg>;
 }
 
 /**

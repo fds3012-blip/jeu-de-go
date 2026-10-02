@@ -10,8 +10,7 @@ import { Board } from '../ui/Board';
 import { MiniGoban } from '../ui/MiniGoban';
 import { centreVertical } from '../ui/cadrage';
 import { C, M, viewBoxOf } from '../ui/boardArt';
-import { Retour, Verdict } from '../ui/Lecteur';
-import { Bubble } from '../ui/Mochi';
+import { ParoleMochi, Retour, Verdict } from '../ui/Lecteur';
 import { Reflexion } from '../ui/Reflexion';
 import { fr } from '../ui/typo';
 import { playBadge, playFail, playIllegal, playStone, playSuccess } from '../ui/sound';
@@ -841,7 +840,6 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
       </div>
       {duJour?.defiChange && <p className="notice" role="status">{fr(tr('pb.defiChange'))}</p>}
       {duJour?.archive !== undefined && <p className="notice" role="status">{fr(tr('pb.archive', { numero: duJour.archive }))}</p>}
-      <Bubble>{fr(`${duJour?.apprendre ? `${tr('arrivee.premierCoup')} ` : ''}${puzzle.prompt} ${tr(puzzle.toPlay === 1 ? 'pb.tuJoues.1' : 'pb.tuJoues.2')}`)}</Bubble>
       <Board size={puzzle.size} board={board} toPlay={puzzle.toPlay} interactive={!solvedNow && (!replay || replayDone) && (!refut || refut.vue)}
         stonesTappable={!!refut || !!replay || !!apercu} confirmTouch={confirmTouch} onPlay={onPlay} shake={shake}
         marks={{
@@ -852,6 +850,10 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
           // Indice : zone entourée autour du bon coup, tant que le problème n'est pas résolu.
           zone: aide >= 1 && !solvedNow && !replay && !refut ? puzzle.answers[0] : undefined
         }} />
+      {/* Audit du 02/10 (n° 1) : la consigne sous le plateau, à la place du vide ; le verdict arrive au même endroit. */}
+      <ParoleMochi humeur={solvedNow ? 'content' : answer?.kind === 'wrong' ? 'pensif' : 'neutre'}>
+        {fr(`${duJour?.apprendre ? `${tr('arrivee.premierCoup')} ` : ''}${puzzle.prompt} ${tr(puzzle.toPlay === 1 ? 'pb.tuJoues.1' : 'pb.tuJoues.2')}`)}
+      </ParoleMochi>
       {verdict}
     </div>
   );

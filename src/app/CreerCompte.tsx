@@ -44,13 +44,17 @@ export function CreerCompte({ db, raison, anonyme = false, onRetour, onCondition
         <h2 className="creer-titre">{t(sens === 'creer' ? 'creer.titre' : 'connexion.titre')}</h2>
         <p className="creer-raison">{fr(sens === 'creer' ? t(`creer.raison.${raison}`) : t('connexion.raison'))}</p>
       </div>
-      <section className="creer-garde" aria-labelledby="creer-garde-titre">
-        <p id="creer-garde-titre" className="creer-garde-titre">{fr(t('creer.garde.titre'))}</p>
-        <ul>
-          {(['progression', 'serie', 'badges', 'parties'] as const).map(k => <li key={k}><Coche />{fr(t(`creer.garde.${k}`))}</li>)}
-        </ul>
-        <p className="muted small creer-appareils">{fr(t('creer.garde.appareils'))}</p>
-      </section>
+      {/* Audit du 02/10 : « ce qui est gardé » parle à qui crée un compte ; à la connexion, il poussait le champ pour rien.
+          Écran bas (320 × 568) : la carte passe sous le formulaire (compte.css), l'action reste au-dessus de la ligne de flottaison. */}
+      {sens === 'creer' && (
+        <section className="creer-garde" aria-labelledby="creer-garde-titre">
+          <p id="creer-garde-titre" className="creer-garde-titre">{fr(t('creer.garde.titre'))}</p>
+          <ul>
+            {(['progression', 'serie', 'badges', 'parties'] as const).map(k => <li key={k}><Coche />{fr(t(`creer.garde.${k}`))}</li>)}
+          </ul>
+          <p className="muted small creer-appareils">{fr(t('creer.garde.appareils'))}</p>
+        </section>
+      )}
       <ConnexionCode db={db} mode={anonyme ? 'liaison' : 'connexion'} moment="profil" onConditions={onConditions} onSens={setSens} />
       <p className="muted small creer-gratuit">{fr(t('creer.gratuit'))}</p>
       <button type="button" className="lien creer-plus-tard" onClick={onRetour}>{t('creer.plusTard')}</button>
