@@ -46,9 +46,11 @@ export function AnnonceXp({ celebrer }: { celebrer: boolean }) {
     }, DUREE_XP_MS);
     return () => { window.clearTimeout(lecture); window.clearTimeout(fin); };
   }, [points, celebrer]);
+  // L5 (recette du 02/10 au soir) : l'écran de fin de partie montre l'XP à sa place (FinPartie) ; rien ne flotte dessus.
+  const enPlace = typeof document !== 'undefined' && !!document.querySelector('.fin-xp');
   return (
     <div className={`annonce-xp${sortie ? ' sortie' : ''}`} role="status" aria-live="polite">
-      {affiche && (
+      {affiche && !enPlace && (
         <PastilleXp key={affiche.points} points={affiche.points} bonus={affiche.bonus} anime={celebrer} />
       )}
     </div>
