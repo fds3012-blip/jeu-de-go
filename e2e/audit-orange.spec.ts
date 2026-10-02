@@ -48,6 +48,9 @@ test.describe('320 × 568', () => {
     await page.getByRole('button', { name: 'Changer' }).click();
     const feuille = page.getByRole('dialog');
     await expect(feuille).toBeVisible();
+    // La feuille monte en 150 ms (accueil.css). Un clic pendant ce mouvement fait défiler la feuille par Playwright
+    // (élément « instable », nouvel essai avec un autre alignement) : on attend la fin de l'entrée, comme le doigt.
+    await feuille.evaluate(d => Promise.all(d.getAnimations({ subtree: true }).map(a => a.finished)));
     const treize = feuille.getByRole('button', { name: '13 × 13' });
     const cta = feuille.locator('.btn.primary');
     const t = await treize.boundingBox();
