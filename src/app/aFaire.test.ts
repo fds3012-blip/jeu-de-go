@@ -82,6 +82,16 @@ describe('défi où c’est ton tour', () => {
     expect(elementsAFaire(d({ defis: [defiDe({ restant: DELAI_COUP_MS - 5 * H })] }))[0].attenteH).toBe(5);
     expect(elementsAFaire(d({ defis: [defiDe({ restant: null })] }))[0].attenteH).toBeNull();
   });
+
+  it('partie déjà ouverte (notification lue, serveur #367) : la ligne reste, la pastille s’éteint', () => {
+    const vu = elementsAFaire(d({ defis: [defiDe({ nouveau: false })] }));
+    expect(vu).toHaveLength(1);
+    expect(vu[0].pastille).toBe(false);
+    expect(ongletsAPastille(vu).size).toBe(0);
+    expect(elementsAFaire(d({ defis: [defiDe({ nouveau: true })] }))[0].pastille).toBe(true);
+    // Notifications illisibles (serveur plus ancien) : comme avant, la pastille s'allume.
+    expect(elementsAFaire(d({ defis: [defiDe()] }))[0].pastille).toBe(true);
+  });
 });
 
 describe('Go du jour et série', () => {

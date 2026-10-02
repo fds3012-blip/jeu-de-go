@@ -47,6 +47,11 @@ export interface DefiEnAttente {
   restant: number | null;
   /** Le comptage attend sa réponse (et non un coup). */
   comptage: boolean;
+  /**
+   * Pas encore vu : une notification du serveur attend (table `notifications`, #367). Faux une fois la partie ouverte :
+   * la ligne reste dans la liste, la pastille s'éteint. Absent (notifications illisibles) : compté comme nouveau.
+   */
+  nouveau?: boolean;
 }
 
 export interface DonneesAFaire {
@@ -81,7 +86,7 @@ export const sourceDefis: SourceAFaire = d => [...d.defis]
     id: `defi-${x.partieId}`,
     genre: 'defi',
     onglet: 'jouer',
-    pastille: true,
+    pastille: x.nouveau !== false,
     titre: x.comptage
       ? (x.adversaire ? t('aFaire.comptageContre', { pseudo: x.adversaire }) : t('aFaire.comptage'))
       : (x.adversaire ? t('aFaire.tourContre', { pseudo: x.adversaire }) : t('aFaire.tour')),

@@ -11,6 +11,7 @@ import type { Session } from '@supabase/supabase-js';
 import { adresseDejaPrise, type EchecEnvoi, type Result } from './account';
 import type { Tables } from './database.types';
 import type { Game } from './games';
+import { marquerLues } from './notifications';
 import type { Db } from './supabase';
 import { t } from '../content/i18n';
 
@@ -157,9 +158,12 @@ export interface EtatDefi {
 export async function lireDefi(db: Db, partieId: string): Promise<Result<EtatDefi>> {
   const temps = await db.rpc('victoire_au_temps', { p_partie: partieId });
   if (temps.error) return echec(temps.error.message);
+  // #367 : la partie est sous les yeux du joueur, ses notifications sont lues (la pastille s'éteint partout).
+  // Sans effet sur la lecture si cela échoue.
   const [partie, defi] = await Promise.all([
     db.from('games').select('*').eq('id', partieId).maybeSingle(),
-    db.from('defis').select('*').eq('partie_id', partieId).maybeSingle()
+    db.from('defis').select('*').eq('partie_id', partieId).maybeSingle(),
+    marquerLues(db, { partieId }).catch(() => null)
   ]);
   if (partie.error || defi.error || !partie.data || !defi.data) return echec(partie.error?.message ?? defi.error?.message);
   return { ok: true, value: { partie: partie.data, defi: defi.data, resultat: temps.data ?? partie.data.result } };
