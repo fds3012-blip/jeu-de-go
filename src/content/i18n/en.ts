@@ -1072,4 +1072,20 @@ export const en = {
   'compte.age.moins15': 'Under 15?',
   'compte.age.moins15Detail': 'Show this screen to a parent. If they agree, tick the box together. You can also keep trying without an account: nothing leaves your phone.',
   'compte.pseudo.conseil': 'Everyone can see your nickname. Don’t use your real name.',
+
+  // Robustesse (#325, point 4) : écran d'erreur, bandeau hors ligne, mise à jour prête.
+  'erreur.titre': 'Oops, that didn’t work.',
+  'erreur.horsLigne': 'You’re offline and this screen isn’t on your phone yet. Try again once you’re back online.',
+  'erreur.chargement': 'This screen couldn’t load. A flaky network, or a new version that just arrived.',
+  'erreur.reseau': 'The network didn’t answer. It’s not your fault.',
+  'erreur.rendu': 'Something went wrong on our side. It’s not your fault.',
+  'erreur.mochi': 'Don’t worry: your progress is safe.',
+  'erreur.reessayer': 'Try again',
+  'erreur.accueil': 'Back to home',
+  'erreur.aria': 'Error',
+  'horsLigne.bandeau': 'You’re offline',
+  'horsLigne.detail': 'What’s on your phone is still playable.',
+  'miseAJour.prete': 'Update ready',
+  'miseAJour.recharger': 'Reload',
+  'miseAJour.plusTard': 'Later',
 } as const satisfies Catalogue;
