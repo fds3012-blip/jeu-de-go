@@ -1112,6 +1112,7 @@ export const fr = {
   'compte.age.moins15Detail': 'Montre cet écran à un parent. S’il est d’accord, coche la case avec lui. Tu peux aussi continuer l’essai sans compte : rien ne quitte ton téléphone.',
   'compte.pseudo.conseil': 'Ton pseudo est visible par tous. Évite ton vrai nom.',
   // Historique de mes parties (#358, src/app/MesParties.tsx, src/app/historique.ts)
+  'defi.revueRetour': 'Retour au défi',
   'historique.titre': 'Mes parties',
   'historique.profilResume': { one: '{n} partie', other: '{n} parties' },
   'historique.profilVide': 'Aucune encore',

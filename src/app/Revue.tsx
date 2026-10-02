@@ -238,7 +238,7 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
   else if (i === 0) phrase = tr('revue.debut');
   else {
     const avant = positions[i - 1], c = avant.toPlay, m = q.lastMove ?? -1, cap = q.captures[c] - avant.captures[c];
-    const toi = !!adversaire && c === (joueur ?? 1), nom = adversaire ? (c === 1 ? tr('camp.toi') : adversaire) : tr(c === 1 ? 'camp.noir' : 'camp.blanc');
+    const toi = !!adversaire && c === (joueur ?? 1), nom = adversaire ? (toi ? tr('camp.toi') : adversaire) : tr(c === 1 ? 'camp.noir' : 'camp.blanc');
     const point = toLabel(m, size);
     const geste = m < 0 ? (toi ? tr('revue.tuPasses') : tr('revue.passe', { nom })) : toi ? tr('revue.tuJoues', { point }) : tr('revue.joue', { nom, point });
     phrase = `${cap ? tr(toi ? 'revue.tuCaptures' : 'revue.capture', { geste, n: cap }) : geste}.${note ? ` ${phraseNote(note)}` : ''}`;

@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { jouer, passerJusquAuScore, plateau } from './plateau';
+import { brancher, fauxServeur, JETON, PARTIE } from './fauxSupabase';
 
 // Issue #358 : « Mes parties ». Chaque partie terminée est gardée sur l'appareil ; le Profil les liste, la plus
 // récente d'abord, avec l'adversaire, le résultat en mots, la date et la taille du plateau ; un toucher ouvre la revue.
@@ -70,7 +71,7 @@ test('trois parties contre l’ordi : toutes dans « Mes parties », avec le bon
   await expect(page.locator('.mp-partie-sceau[data-issue="victoire"]')).toHaveCount(1);
   await expect(page.locator('.mp-partie-sceau[data-issue="defaite"]')).toHaveCount(2);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
-  await page.screenshot({ path: capture('liste-390-sombre'), type: 'jpeg', quality: 80 });
+  await page.screenshot({ path: capture('liste-390-clair'), type: 'jpeg', quality: 80 });
 
   // Chaque partie ouvre la revue, coup par coup, puis « ‹ » ramène à la liste.
   for (let i = 0; i < 3; i++) {
@@ -104,4 +105,31 @@ test('la dernière partie gardée par une version d’avant #358 (à deux) appar
   await ligne.click();
   await expect(page.getByRole('heading', { level: 2, name: 'Revoir ma partie' })).toBeVisible();
   await expect(page.getByText(/Coup 1 sur 3/)).toBeVisible();
+});
+
+test('un défi par lien terminé, lu sur le serveur, rejoint la liste et ouvre la revue avec le bon camp', async ({ browser, baseURL }) => {
+  const serveur = fauxServeur();
+  // Ancienne session de défi : le joueur a Blanc ; son ami (Noir) a abandonné hier.
+  const session = serveur.sessionAnonyme();
+  const hier = new Date(Date.now() - 864e5).toISOString();
+  serveur.games.push({ id: PARTIE, white_id: session.user.id, black_id: 'ami', created_by: session.user.id, size: 9, komi: 6.5, rules: 'japanese', handicap: 0,
+    moves: 'eeffgg', status: 'finished', counting: false, dead_stones: null, dead_proposed_by: null, result: 'W+R', resumed_at: 0, prive: true, rated: false, updated_at: hier });
+  serveur.defis.push({ partie_id: PARTIE, jeton: JETON, createur_id: session.user.id, invite_id: 'ami', delai_coup: '3 days',
+    date_limite: null, lien_expire_le: hier, cree_le: hier });
+  const ctx = await browser.newContext({
+    viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, locale: 'fr-FR', baseURL,
+    storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }] }] },
+  });
+  const page = await brancher(ctx, serveur, { 'sb-supabase-auth-token': JSON.stringify(session) });
+  await page.goto('/');
+  await ouvrirMesParties(page);
+  const ligne = page.locator('.mp-parties > li > button');
+  await expect(ligne).toHaveCount(1);
+  await expect(ligne).toHaveAccessibleName('Ton ami. Tu as gagné par abandon. Hier, plateau 9 × 9.');
+  await ligne.click();
+  await expect(page.getByRole('heading', { level: 2, name: 'Revoir ma partie' })).toBeVisible();
+  await expect(page.getByText(/Coup 1 sur 3/)).toBeVisible();
+  // Le joueur a Blanc : le premier coup est celui de son ami.
+  await expect(page.locator('.revue-mochi p')).toHaveText(/^Ton ami joue E5\./);
+  await ctx.close();
 });

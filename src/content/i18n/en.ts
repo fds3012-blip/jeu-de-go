@@ -1054,6 +1054,7 @@ export const en = {
   'compte.age.moins15Detail': 'Show this screen to a parent. If they agree, tick the box together. You can also keep trying without an account: nothing leaves your phone.',
   'compte.pseudo.conseil': 'Everyone can see your nickname. Don’t use your real name.',
   // My games (#358)
+  'defi.revueRetour': 'Back to the challenge',
   'historique.titre': 'My games',
   'historique.profilResume': { one: '{n} game', other: '{n} games' },
   'historique.profilVide': 'None yet',
