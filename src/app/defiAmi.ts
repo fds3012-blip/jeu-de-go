@@ -92,13 +92,18 @@ export function texteDelai(ms: number): string {
   return t('defi.delai.joursHeures', { jours: t('defi.delai.jours', { n: jours }), heures: t('defi.delai.heures', { n: heures }) });
 }
 
-/** Phrase d'état sous le plateau : à qui de jouer, et combien de temps il reste. */
-export function phraseEtat(v: VueDefi): string {
+/** Phrase d'état sous le plateau : à qui de jouer, et combien de temps il reste. `nom` : pseudo de l'ami, s'il est connu (#393). */
+export function phraseEtat(v: VueDefi, nom?: string | null): string {
   if (v.phase === 'attente') return t('defi.etat.attente');
-  if (v.phase === 'comptage') return v.proposeParAutre ? t('defi.etat.comptageAccepter') : v.proposeParMoi ? t('defi.etat.comptageAttente') : t('defi.etat.comptage');
+  if (v.phase === 'comptage') {
+    if (v.proposeParAutre) return nom ? t('defi.etat.comptageAccepterNom', { nom }) : t('defi.etat.comptageAccepter');
+    if (v.proposeParMoi) return nom ? t('defi.etat.comptageAttenteNom', { nom }) : t('defi.etat.comptageAttente');
+    return t('defi.etat.comptage');
+  }
   if (v.phase === 'fini') return phraseIssue(v.issue);
   const delai = v.restant === null ? '' : texteDelai(v.restant);
-  return v.aMoi ? t('defi.etat.aToi', { delai }) : t('defi.etat.aLui', { delai });
+  if (v.aMoi) return t('defi.etat.aToi', { delai });
+  return nom ? t('defi.etat.aLuiNom', { nom, delai }) : t('defi.etat.aLui', { delai });
 }
 
 /** Phrase de fin, du point de vue du joueur. */

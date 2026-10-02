@@ -29,11 +29,15 @@ export type Theme =
   /** Finir la partie : fermer les frontières au contact, laisser la dame (point neutre), ne pas prendre une morte. */
   | 'fin-de-partie'
   /** Compter : territoire, prisonniers et pierres mortes, komi ; la dame et les points d'un seki ne comptent pas. */
-  | 'comptage';
+  | 'comptage'
+  /** Ko : prendre un ko, le fermer (relier), le prendre pour sauver ses pierres ; la reprise immédiate est interdite. */
+  | 'ko'
+  /** Ouverture : le coin libre d'abord, sur la 3e ou la 4e ligne (3-3, 3-4, 4-4). En 13 × 13, vérifié par KataGo. */
+  | 'ouverture';
 
 export const THEMES: readonly Theme[] = [
   'capture', 'atari', 'double-atari', 'bord', 'echelle', 'filet', 'relier-couper', 'vie-mort', 'semeai', 'prise-en-retour',
-  'seki', 'fin-de-partie', 'comptage',
+  'seki', 'fin-de-partie', 'comptage', 'ko', 'ouverture',
 ];
 
 const PAR_THEME: Record<Theme, readonly string[]> = {
@@ -64,6 +68,9 @@ const PAR_THEME: Record<Theme, readonly string[]> = {
   seki: ['w01', 'w02', 'w03'],
   'fin-de-partie': ['w04', 'w05', 'w06'],
   comptage: ['w07', 'w08', 'w09'],
+  // Lot X (#16) : les séries des leçons 4 (ko), 6 et 8 (ouverture).
+  ko: ['x01', 'x02', 'x03'],
+  ouverture: ['x04', 'x05', 'x06', 'x07', 'x08'],
 };
 
 /** Thème de chaque problème, par identifiant. */
@@ -76,16 +83,22 @@ export function themeDe(id: string): Theme | undefined {
 }
 
 /**
- * Thèmes travaillés par chaque leçon. Une leçon sans thème n'a pas de série :
- * la banque n'a encore aucun problème de ko (l4) ni de territoire et d'ouverture (l6). La leçon 7 (compter les points)
- * n'a pas de série : les problèmes de fin de partie et de comptage (lot W) suivent les leçons 15 et 16.
- * La leçon 3 enseigne trois pièges : sa série en prend un de chaque.
+ * Thèmes travaillés par chaque leçon. Une leçon sans thème n'a pas de série.
+ * La leçon 3 enseigne trois pièges : sa série en prend un de chaque. Les leçons 6 (territoire et ouverture) et 7
+ * (fermer, passer, compter) en ont deux chacune.
  */
 export const THEMES_DE_LECON: Readonly<Record<string, readonly Theme[]>> = {
   l1: ['capture'],
   l2: ['atari'],
   l3: ['double-atari', 'bord', 'echelle'],
+  // #16, lot X : le ko (l4) a sa série ; territoire et ouverture (l6) mêlent l'ouverture et le comptage ; compter les
+  // points (l7) reprend la fin de partie et le comptage du lot W (fermer une frontière, remplir la dame, le komi) ;
+  // les premiers coups (l8) ont la série d'ouverture.
+  l4: ['ko'],
   l5: ['vie-mort'],
+  l6: ['ouverture', 'comptage'],
+  l7: ['fin-de-partie', 'comptage'],
+  l8: ['ouverture'],
   // #16 : chaque nouvelle leçon a la série de son thème (filet, prise en retour, course aux libertés, faux œil).
   l9: ['filet'],
   l10: ['prise-en-retour'],

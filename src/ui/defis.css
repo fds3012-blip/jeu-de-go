@@ -42,6 +42,8 @@
 .defi-bas { display: grid; gap: var(--space-2); }
 .defi-bas .coach { margin-top: 0; }
 .defi-rappel { margin: 0 2px; }
+/* #393 : sur un écran bas (iPhone SE), la règle des 3 jours passait sous la barre d'actions ; Mochi dit déjà le temps qui reste. */
+@media (max-height: 700px) { .defi-rappel { display: none; } }
 .defi-bas .comptage { margin: 0 2px; }
 .defi-comptage { display: flex; gap: var(--space-2); }
 .defi-comptage .btn { flex: 1 1 0; min-width: 0; min-height: var(--cible-bouton); line-height: 1.2; }
