@@ -46,7 +46,7 @@ import { estRedite } from '../content/redites';
 import type { Puzzle } from '../data/puzzles';
 import { compteDe, estAnonyme } from '../data/defi';
 import { INVITEUR_AU_CHARGEMENT, JETON_AU_CHARGEMENT, ecouterJetonDefi } from './adresseDefi';
-import { ESSAI_KEY, decider, etatCompte, lireEssai, noterPartieTerminee, partiesTerminees, type Acces, type EtatCompte, type Raison } from './essai';
+import { ESSAI_KEY, decider, etatCompte, lireEssai, noterFinDePartie, partiesTerminees, type Acces, type EtatCompte, type Raison } from './essai';
 import { compteVientDEtreCree, moyenConnexion, noterConnexionParGoogle } from './entonnoir';
 import { annoncerMessage, definirRetour, erreurRetour, messageRetour, prendreRetour } from './connexionGoogle';
 import { useDefisAJouer } from './defisAJouer';
@@ -367,7 +367,8 @@ export function App() {
     const mode = playing === 'guidee' ? 'guidee' : playing === 'deux' ? 'deux' : 'ordi';
     void import('./historique').then(h => h.garderDerniere(mode), () => { /* hors ligne sans le module : rattrapé à la lecture */ });
     // Essai sans compte (#343) : chaque partie menée à son terme compte, sauf sur un plateau presque vide (#251).
-    if (!finTropTot(stats)) setEssai(noterPartieTerminee(essai));
+    // Recette du 02/10 au soir : la partie trop courte est notée (le compteur fait foi) sans être comptée.
+    setEssai(noterFinDePartie(essai, bilan, !finTropTot(stats)));
     if (playing !== 'ordi') return;
     const issue: Issue = winner === 0 ? 'egalite' : winner === 1 ? 'victoire' : 'defaite';
     if (issue !== 'egalite') setBilan(enregistrer(bilan, adv.id, issue === 'victoire'));
