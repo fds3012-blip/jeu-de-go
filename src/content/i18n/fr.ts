@@ -906,7 +906,6 @@ export const fr = {
   'compte.chargement': 'Chargement de ton compte…',
   'compte.chargementProfil': 'Chargement de ton profil…',
   'compte.deconnecter': 'Me déconnecter',
-  'compte.cote': 'Cote {cote}',
   'compte.changerPseudo': 'Changer de pseudo',
   'compte.supprimer': 'Supprimer mon compte',
   'compte.supprimer.titre': 'Supprimer ton compte ?',

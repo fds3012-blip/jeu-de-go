@@ -850,7 +850,6 @@ export const en = {
   'compte.chargement': 'Loading your account…',
   'compte.chargementProfil': 'Loading your profile…',
   'compte.deconnecter': 'Sign out',
-  'compte.cote': 'Rating {cote}',
   'compte.changerPseudo': 'Change username',
   'compte.supprimer': 'Delete my account',
   'compte.supprimer.titre': 'Delete your account?',

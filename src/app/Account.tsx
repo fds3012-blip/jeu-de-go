@@ -96,8 +96,8 @@ function Connected({ db }: { db: Db }) {
     <>
       <div className="card">
         <b style={{ fontSize: '1.2rem' }}>{profile.username}</b>
-        <p className="muted small" style={{ margin: '4px 0 0' }}>{t('compte.cote', { cote: profile.rating })}</p>
-        <p className="muted small" style={{ margin: '2px 0 0' }}>{session.user.email}</p>
+        {/* Recette du 02/10 au soir : aucune cote affichée (décision de Florian) ; l'e-mail suffit sous le pseudo. */}
+        <p className="muted small" style={{ margin: '4px 0 0' }}>{session.user.email}</p>
         {/* Audit du 02/10 : deux boutons empilés, pleine largeur (« Changer de pseudo » ne passe plus sur deux lignes). */}
         <div className="compte-boutons">
           <button className="btn" onClick={() => setEditing(true)}>{t('compte.changerPseudo')}</button>
