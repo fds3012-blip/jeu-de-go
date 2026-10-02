@@ -33,14 +33,12 @@ interface BandeauProps {
   pierresPrises: 'noir' | 'blanc';
   replique?: { texte: string; n: number } | null;
   avant?: ReactNode;
-  /** Après le couvercle (#362) : le « ? » de l'aide, dans le bandeau du haut. */
-  apres?: ReactNode;
   /** Pierres que ce joueur vient de prendre (#187) : un « +N » monte depuis le couvercle. `k` relance l'animation. */
   gain?: { n: number; k: number } | null;
 }
 
 /** Bandeau d'un joueur : portrait, nom, rang, réplique éventuelle et couvercle. */
-export function Bandeau({ nom, sousTitre, portrait, actif, captures, pierresPrises, replique, avant, apres, gain }: BandeauProps) {
+export function Bandeau({ nom, sousTitre, portrait, actif, captures, pierresPrises, replique, avant, gain }: BandeauProps) {
   return (
     <div className={`joueur${actif ? ' active' : ''}`} data-joueur={nom}>
       {avant}
@@ -58,7 +56,6 @@ export function Bandeau({ nom, sousTitre, portrait, actif, captures, pierresPris
         {/* Décoratif : la phrase de Mochi dit déjà combien de pierres tu as prises. */}
         {gain && <span key={gain.k} className="gain-capture" aria-hidden="true">+{gain.n}</span>}
       </span>
-      {apres}
     </div>
   );
 }
@@ -73,7 +70,8 @@ export function Avatar({ initiale, couleur }: { initiale?: string; couleur: 1 | 
  * Liste des coups qui défile horizontalement. En partie, elle suit le dernier coup ;
  * en relecture, `courant` (index dans `coups`, -1 : aucun) désigne le coup affiché, gardé au centre.
  */
-export function ListeCoups({ coups, courant = coups.length - 1 }: { coups: string[]; courant?: number }) {
+/** `apres` (#362) : le « ? » de l'aide, au bout du ruban ; il ne prend rien au bandeau de l'adversaire (sa réplique reste entière). */
+export function ListeCoups({ coups, courant = coups.length - 1, apres }: { coups: string[]; courant?: number; apres?: ReactNode }) {
   const ref = useRef<HTMLOListElement>(null);
   useLayoutEffect(() => {
     const el = ref.current;
@@ -91,6 +89,7 @@ export function ListeCoups({ coups, courant = coups.length - 1 }: { coups: strin
           <li key={i} aria-current={i === courant ? 'step' : undefined}>{m}</li>
         ))}
       </ol>
+      {apres}
     </div>
   );
 }

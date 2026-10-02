@@ -474,9 +474,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
         portrait={c === 2 && ai && guidee ? <PortraitMochi taille={44} decoratif />
           : c === 2 && ai ? <Portrait id={ai.id} taille={44} humeur={humeur.h} decoratif signature={false} />
           : c === 2 && portrait ? portrait : <Avatar couleur={c} initiale={initiale} />}
-        replique={c === 2 ? replique : null} avant={c === 2 ? retour : undefined} gain={gain}
-        // #362 : « ? » en haut à droite, sans quitter la partie ; pendant le comptage, il ouvre « Compter ».
-        apres={c === 2 && phase !== 'end' ? <BoutonAide depuis="partie" fiche={phase === 'score' ? 'compter' : 'regles'} className="joueur-aide" /> : undefined} />
+        replique={c === 2 ? replique : null} avant={c === 2 ? retour : undefined} gain={gain} />
     );
   };
 
@@ -596,7 +594,8 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   return (
     <div className="partie">
       {bandeau(2)}
-      <ListeCoups coups={coups} />
+      {/* #362 : « ? » au bout du ruban des coups, sans quitter la partie ; pendant le comptage, il ouvre « Compter ». */}
+      <ListeCoups coups={coups} apres={<BoutonAide depuis="partie" fiche={phase === 'score' ? 'compter' : 'regles'} className="ruban-aide" />} />
       {ai && avantage && (!estimationKo || phase === 'score') && <BarreAvantage libelle={lead === null ? '' : libelleAvantage(lead)} part={lead === null ? 0.5 : partNoir(lead, size)} titre={phase === 'score' ? tr('partie.scoreCompte') : undefined} />}
       <div className="partie-plateau">
         <Board size={size} board={pos.board} toPlay={pos.toPlay} interactive={phase === 'score' || myTurn} stonesTappable={phase === 'score'} confirmTouch={confirmTouch}
