@@ -6,6 +6,7 @@
 import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { defierAmi, demanderAmi, grouperAmis, repondreAmi, retirerAmi } from '../data/amis';
 import type { Db } from '../data/supabase';
+import { marquerLues } from '../data/notifications';
 import { EVENTS, track } from '../data/analytics';
 import { useAmis } from './amisListe';
 import { fr } from '../ui/typo';
@@ -30,6 +31,9 @@ export function Amis({ db, onDefi }: Props) {
   const champ = useRef<HTMLInputElement>(null);
   const idChamp = useId();
   const idAide = useId();
+
+  // #367 : la liste des amis ouverte, la notification « une demande d'ami t'attend » est vue (la demande, elle, reste).
+  useEffect(() => { if (db) void marquerLues(db, { type: 'ami' }); }, [db]);
 
   // La confirmation du retrait s'efface d'elle-même : jamais de bouton piégé qui reste armé.
   useEffect(() => {

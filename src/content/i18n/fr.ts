@@ -987,6 +987,8 @@ export const fr = {
   'conditions.duree.compteTexte': 'tant qu’il existe. Supprime-le quand tu veux : Profil, sous ton compte.',
   'conditions.duree.defi': 'Session sans compte :',
   'conditions.duree.defiTexte': '60 jours sans jouer, puis effacée. Relie ton e-mail pour la garder.',
+  'conditions.duree.notifications': 'Notifications :',
+  'conditions.duree.notificationsTexte': '30 jours, puis effacées. Toi seul les vois.',
   'conditions.duree.comptage': 'Comptage et suivi :',
   'conditions.duree.comptageTexte': '1 an, puis effacés.',
   'conditions.duree.telephone': 'Sur ton téléphone :',

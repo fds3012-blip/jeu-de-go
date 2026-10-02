@@ -25,7 +25,7 @@ export interface EntreeAFaire extends Omit<DonneesAFaire, 'defis' | 'leconEnCour
 
 /**
  * Ce qui attend le joueur. Les défis sont relus à chaque changement de `cle` (écran affiché), au retour sur l'app,
- * toutes les minutes tant qu'elle est visible, et à chaque changement d'une de ses parties (temps réel, sous la RLS).
+ * toutes les minutes tant qu'elle est visible, et à chaque notification du joueur (temps réel, sous la RLS, #367).
  * Rien sans session, hors ligne ou inactif (pendant une partie) pour les défis.
  */
 export function useAFaire(db: Db | null, userId: string | undefined, cle: string, actif: boolean, entree: EntreeAFaire): {
@@ -49,16 +49,16 @@ export function useAFaire(db: Db | null, userId: string | undefined, cle: string
     const relire = () => { if (document.visibilityState !== 'hidden') setTic(n => n + 1); };
     document.addEventListener('visibilitychange', relire);
     const id = setInterval(relire, RELECTURE_MS);
-    let canal: ReturnType<Db['channel']> | null = null;
+    // Temps réel : la file de notifications du joueur seul (filtre et RLS, #367), pas toute la table `games`, que la
+    // RLS ouvre aux parties publiques de tous les joueurs : chaque coup joué n'importe où relançait une lecture.
+    let arreter: (() => void) | null = null;
     try {
-      canal = db.channel(`a-faire-${userId}`)
-        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'games' }, relire)
-        .subscribe();
+      arreter = mod.ecouterNotifications(db, userId, relire);
     } catch { /* temps réel indisponible : la minuterie suffit */ }
     return () => {
       document.removeEventListener('visibilitychange', relire);
       clearInterval(id);
-      if (canal) void db.removeChannel(canal);
+      arreter?.();
     };
   }, [mod, db, userId, online, actif]);
 
