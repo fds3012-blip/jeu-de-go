@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from './database.types';
+import { configSupabase, envDeTest } from './client';
 
 export type Db = SupabaseClient<Database>;
 
@@ -23,29 +24,17 @@ export const FLUX_AUTH = 'implicit' as const;
  * Renvoie null si elles manquent ou sont invalides : l'application continue alors hors connexion.
  */
 export function createSupabase(env: Env): Db | null {
-  const url = env.VITE_SUPABASE_URL?.trim();
-  const key = env.VITE_SUPABASE_ANON_KEY?.trim();
-  if (!url || !key) return null;
+  const c = configSupabase(env);
+  if (!c) return null;
   try {
-    new URL(url);
-    return createClient<Database>(url, key, { auth: { flowType: FLUX_AUTH } });
+    return createClient<Database>(c.url, c.key, { auth: { flowType: FLUX_AUTH } });
   } catch {
     return null;
   }
 }
 
 /**
- * Tests de bout en bout seulement (build VITE_E2E) : une adresse de Supabase simulé, posée dans le stockage local
- * par le test (`e2e.supabase`), remplace celle de l'environnement. Le test intercepte alors tous les appels réseau.
- * Absent des builds de production.
+ * Le client de l'app. Ce module (et supabase-js) n'est chargé que par `chargerSupabase()` (src/data/client.ts, #401) :
+ * ne l'importe pas directement, utilise `useSupabase()` ou `chargerSupabase()`.
  */
-function envDeTest(env: Env): Env {
-  if (!import.meta.env.VITE_E2E) return env;
-  try {
-    const url = localStorage.getItem('e2e.supabase');
-    if (url) return { VITE_SUPABASE_URL: url, VITE_SUPABASE_ANON_KEY: 'cle-publique-de-test' };
-  } catch { /* pas de stockage : environnement normal */ }
-  return env;
-}
-
 export const supabase: Db | null = createSupabase(envDeTest(import.meta.env));
