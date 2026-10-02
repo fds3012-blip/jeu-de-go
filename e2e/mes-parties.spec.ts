@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { jouer, passerJusquAuScore, plateau } from './plateau';
+import { abandonner, jouer, passerJusquAuScore, plateau } from './plateau';
 import { brancher, fauxServeur, JETON, PARTIE } from './fauxSupabase';
 
 // Issue #358 : « Mes parties ». Chaque partie terminée est gardée sur l'appareil ; le Profil les liste, la plus
@@ -23,8 +23,7 @@ async function partieAbandonnee(page: Page) {
   await expect(passer).toBeEnabled({ timeout: 10_000 });
   await jouer(page, 'E5');
   await expect(passer).toBeEnabled({ timeout: 10_000 });
-  await page.getByRole('button', { name: 'Abandonner' }).click();
-  await page.getByRole('button', { name: /^Confirmer/ }).click();
+  await abandonner(page);
   await expect(page.getByRole('heading', { level: 2, name: 'Défaite' })).toBeVisible();
   await page.getByRole('button', { name: 'Accueil', exact: true }).click();
 }
