@@ -9,7 +9,8 @@ import { lireXp, niveauDe, niveauRequis, themeDebloque } from './xp';
 import { ORDRE_THEMES, THEMES_GOBAN } from '../ui/boardArt';
 import { identite, texteSerie } from './identite';
 import { inviterCompte } from './serieLocale';
-import { LigneBascules, LigneChoix, LigneInterrupteur, LigneLien } from '../ui/Reglage';
+import { LigneBascules, LigneChoix, LigneIcone, LigneInterrupteur, LigneLien } from '../ui/Reglage';
+import { IconeReglage } from '../ui/IconesReglages';
 import { hapticStone } from '../ui/haptics';
 import { playStone } from '../ui/sound';
 import { useEffect, useMemo, type ReactNode } from 'react';
@@ -156,36 +157,43 @@ function Menu({ onVue, profil, serie, record = 0, parcours, placement, onPlaceme
       <div className="lignes">
         {/* #283 : le kyu estimé ne s'affiche qu'ici, sur une ligne, avec sa date ; la ligne relance le placement. */}
         {onPlacement && (placement?.fait && placement.kyu !== null
-          ? <LigneLien libelle={t('placement.profil')} valeur={t('placement.profilValeur', { kyu: placement.kyu, date: dateCourte(placement.date) })} onClick={onPlacement} />
-          : <LigneLien libelle={t(placement?.fait ? 'placement.profilRefaire' : 'placement.profilFaire')} onClick={onPlacement} />)}
-        <LigneLien libelle={t('profil.reglages')} valeur={t('profil.reglagesResume')} onClick={() => onVue('reglages')} />
-        <LigneLien libelle={t('profil.importer')} valeur={t('profil.importerResume')} onClick={() => onVue('importer')} />
+          ? <LigneLien icone={<IconeReglage id="placement" />} libelle={t('placement.profil')} valeur={t('placement.profilValeur', { kyu: placement.kyu, date: dateCourte(placement.date) })} onClick={onPlacement} />
+          : <LigneLien icone={<IconeReglage id="placement" />} libelle={t(placement?.fait ? 'placement.profilRefaire' : 'placement.profilFaire')} onClick={onPlacement} />)}
+        <LigneLien icone={<IconeReglage id="reglages" />} libelle={t('profil.reglages')} valeur={t('profil.reglagesResume')} onClick={() => onVue('reglages')} />
+        <LigneLien icone={<IconeReglage id="importer" />} libelle={t('profil.importer')} valeur={t('profil.importerResume')} onClick={() => onVue('importer')} />
         {/* #36 : rappel du Go du jour, dès que le rappel est configuré (clé publique VAPID). */}
-        {clePubliqueVapid() !== '' && <LigneLien libelle={t('profil.rappel')} valeur={resumeRappel()} onClick={() => onVue('rappel')} />}
-        {proposerInstallation && <LigneLien libelle={t('profil.installer')} onClick={() => onVue('installer')} />}
-        <LigneLien libelle={t('profil.compte')} valeur={profil?.pseudo ?? (profil ? undefined : t('profil.seConnecter'))} onClick={() => onVue('compte')} />
-        <LigneLien libelle={t('profil.conditions')} onClick={() => onVue('conditions')} />
+        {clePubliqueVapid() !== '' && <LigneLien icone={<IconeReglage id="rappel" />} libelle={t('profil.rappel')} valeur={resumeRappel()} onClick={() => onVue('rappel')} />}
+        {proposerInstallation && <LigneLien icone={<IconeReglage id="installer" />} libelle={t('profil.installer')} onClick={() => onVue('installer')} />}
+        <LigneLien icone={<IconeReglage id="compte" />} libelle={t('profil.compte')} valeur={profil?.pseudo ?? (profil ? undefined : t('profil.seConnecter'))} onClick={() => onVue('compte')} />
+        <LigneLien icone={<IconeReglage id="conditions" />} libelle={t('profil.conditions')} onClick={() => onVue('conditions')} />
       </div>
     </div>
   );
 }
 
-/** Réglages (sous-vue depuis #214) : les six lignes d'avant, inchangées. */
+/** Réglages (sous-vue depuis #214), groupés avec une icône par ligne (#103) : apparence, pendant la partie, sons et fêtes. */
 function Reglages({ settings, set }: Pick<Props, 'settings' | 'set'>) {
   return (
-    <div className="profil">
+    <div className="profil profil-reglages">
+      <h3 className="lignes-titre">{t('profil.groupe.apparence')}</h3>
       <div className="lignes">
         <LigneLangue />
-        <LigneChoix libelle={t('profil.theme')} options={themes()} valeur={settings.theme} onChange={v => set({ theme: v })} />
+        <LigneChoix icone={<IconeReglage id="theme" />} libelle={t('profil.theme')} options={themes()} valeur={settings.theme} onChange={v => set({ theme: v })} />
         <LigneGoban />
-        <LigneInterrupteur libelle={t('profil.confirmer')} aide={t('profil.confirmerAide')} actif={settings.confirmTouch} onChange={v => set({ confirmTouch: v })} />
-        <LigneBascules libelle={t('profil.sons')} bascules={[
+      </div>
+      <h3 className="lignes-titre">{t('profil.groupe.jeu')}</h3>
+      <div className="lignes">
+        <LigneInterrupteur icone={<IconeReglage id="confirmer" />} libelle={t('profil.confirmer')} aide={t('profil.confirmerAide')} actif={settings.confirmTouch} onChange={v => set({ confirmTouch: v })} />
+        <LigneChoix icone={<IconeReglage id="aide" />} libelle={t('profil.aide')} options={aides()} valeur={settings.aide} onChange={a => set({ aide: a })} />
+      </div>
+      <h3 className="lignes-titre">{t('profil.groupe.sons')}</h3>
+      <div className="lignes">
+        <LigneBascules icone={<IconeReglage id="sons" />} libelle={t('profil.sons')} bascules={[
           // #165 : un aperçu à l'allumage, le claquement de pierre ou une petite vibration.
           { libelle: t('profil.son'), actif: settings.sound, onChange: v => { set({ sound: v }); if (v) setTimeout(() => playStone(40, 9), 0); } },
           { libelle: t('profil.vibrations'), actif: settings.vibrations, onChange: v => { set({ vibrations: v }); if (v) setTimeout(hapticStone, 0); } },
         ]} />
-        <LigneInterrupteur libelle={t('profil.celebrations')} aide={t('profil.celebrationsAide')} actif={settings.celebrations} onChange={v => set({ celebrations: v })} />
-        <LigneChoix libelle={t('profil.aide')} options={aides()} valeur={settings.aide} onChange={a => set({ aide: a })} />
+        <LigneInterrupteur icone={<IconeReglage id="celebrations" />} libelle={t('profil.celebrations')} aide={t('profil.celebrationsAide')} actif={settings.celebrations} onChange={v => set({ celebrations: v })} />
       </div>
     </div>
   );
@@ -205,6 +213,7 @@ function LigneLangue() {
   };
   return (
     <div className="ligne ligne-choix" role="group" aria-label={t('profil.langue')}>
+      <LigneIcone><IconeReglage id="langue" /></LigneIcone>
       <span className="ligne-libelle" aria-hidden="true">{t('profil.langue')}</span>
       <span className="seg">
         {LANGUES.map(l => <button type="button" key={l} lang={l} aria-pressed={actuelle === l} onClick={() => choisir(l)}>{t(`langue.${l}`)}</button>)}
@@ -222,6 +231,7 @@ function LigneGoban() {
   const niveau = niveauDe(lireXp()).niveau;
   return (
     <div className="ligne ligne-choix ligne-goban" role="group" aria-label={t('profil.goban')}>
+      <LigneIcone><IconeReglage id="goban" /></LigneIcone>
       <span className="ligne-libelle" aria-hidden="true">{t('profil.goban')}</span>
       <span className="pastilles">
         {ORDRE_THEMES.map(id => {

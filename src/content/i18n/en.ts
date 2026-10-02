@@ -40,6 +40,9 @@ export const en = {
   'profil.jours': { one: '{n} day', other: '{n} days' },
   'profil.serieAria': 'Streak: {jours}',
   'profil.reglages': 'Settings',
+  'profil.groupe.apparence': 'Appearance',
+  'profil.groupe.jeu': 'During a game',
+  'profil.groupe.sons': 'Sounds and celebrations',
   // Langue de l'interface (#167) : chaque langue garde son nom dans sa langue, dans les deux catalogues.
   'profil.langue': 'Language',
   'langue.fr': 'Français',
@@ -151,6 +154,7 @@ export const en = {
   'pb.continuer': 'Next puzzle',
   'pb.tous': 'All puzzles',
   'pb.tonPalier': 'Your tier',
+  'pb.continuerAide': 'Picked for you: not too easy, not too hard.',
   'pb.verrouille': 'locked',
   'pb.reussi': 'solved',
   'pb.palierComplet': 'Tier complete',

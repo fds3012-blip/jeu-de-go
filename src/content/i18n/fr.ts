@@ -52,6 +52,9 @@ export const fr = {
   'profil.jours': { one: '{n} jour', other: '{n} jours' },
   'profil.serieAria': 'Série de {jours}',
   'profil.reglages': 'Réglages',
+  'profil.groupe.apparence': 'Apparence',
+  'profil.groupe.jeu': 'Pendant la partie',
+  'profil.groupe.sons': 'Sons et fêtes',
   // Langue de l'interface (#167) : chaque langue garde son nom dans sa langue, dans les deux catalogues.
   'profil.langue': 'Langue',
   'langue.fr': 'Français',
@@ -169,6 +172,7 @@ export const fr = {
   'pb.continuer': 'Problème suivant',
   'pb.tous': 'Tous les problèmes',
   'pb.tonPalier': 'Ton palier',
+  'pb.continuerAide': 'Choisi pour toi : ni trop facile, ni trop dur.',
   'pb.verrouille': 'verrouillé',
   'pb.reussi': 'réussi',
   'pb.palierComplet': 'Palier complet',
