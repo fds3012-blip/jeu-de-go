@@ -927,6 +927,8 @@ export const en = {
   'conditions.duree.compteTexte': 'as long as it exists. Delete it whenever you like: Profile, under your account.',
   'conditions.duree.defi': 'Session without an account:',
   'conditions.duree.defiTexte': '60 days without playing, then erased. Add your email to keep it.',
+  'conditions.duree.notifications': 'Notifications:',
+  'conditions.duree.notificationsTexte': '30 days, then erased. Only you can see them.',
   'conditions.duree.comptage': 'Counting and tracking:',
   'conditions.duree.comptageTexte': '1 year, then erased.',
   'conditions.duree.telephone': 'On your phone:',
