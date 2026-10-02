@@ -8,12 +8,13 @@ const caillou = { id: 'caillou', nom: 'Caillou' };
 const phrases = (s: string) => s.split(/[.!?](\s|$)/).filter(x => x && x.trim()).length;
 
 describe('accueil', () => {
-  it('nouveau joueur : la bulle et le bouton proposent la première partie contre Pomme', () => {
+  it('nouveau joueur : la promesse de Mochi en une phrase, et le bouton propose la première partie contre Pomme', () => {
     const a = accueil({ n: 0 }, 0, pomme, 9);
     expect(a.nouveau).toBe(true);
     expect(a.cta).toBe('Joue ta première partie');
     expect(a.ctaNom).toBe('Joue ta première partie contre Pomme');
-    expect(a.bulle).toMatch(/^On joue ensemble\s\? Je t’explique tout\.$/);
+    expect(a.bulle).toMatch(/^Apprends le go en jouant\s: je t’explique chaque coup\.$/);
+    expect(phrases(a.bulle)).toBe(1);
   });
 
   it('leçons faites, aucune partie : toujours la première partie', () => {

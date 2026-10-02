@@ -16,10 +16,15 @@ function useXp(): number {
   return xp;
 }
 
-/** Barre compacte : « Niveau 3 · 140 / 155 XP », une pierre qui avance sur une ligne du goban. */
-export function BarreNiveau() {
+/**
+ * Barre compacte : « Niveau 3 · 140 / 155 XP », une pierre qui avance sur une ligne du goban.
+ * `sansXpMasquee` (accueil v3) : rien tant qu'il n'y a pas d'XP, pour ne pas montrer « Niveau 1 · 0 / 100 XP »
+ * à un nouveau joueur avant sa première partie ; le Profil la montre toujours.
+ */
+export function BarreNiveau({ sansXpMasquee = false }: { sansXpMasquee?: boolean } = {}) {
   const xp = useXp();
   const { niveau, dans, besoin } = niveauDe(xp);
+  if (sansXpMasquee && xp <= 0) return null;
   const part = Math.min(100, (dans / besoin) * 100);
   const suivante = prochaineRecompense(niveau);
   return (
