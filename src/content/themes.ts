@@ -23,10 +23,17 @@ export type Theme =
   /** Course aux libertés (semeai) : deux groupes s'entourent, le premier qui prend les libertés de l'autre gagne. */
   | 'semeai'
   /** Prise en retour (snapback) : sacrifier une pierre pour reprendre plus aussitôt. */
-  | 'prise-en-retour';
+  | 'prise-en-retour'
+  /** Seki (vie commune) : deux groupes sans deux yeux partagent leurs libertés ; celui qui en remplit une meurt. */
+  | 'seki'
+  /** Finir la partie : fermer les frontières au contact, laisser la dame (point neutre), ne pas prendre une morte. */
+  | 'fin-de-partie'
+  /** Compter : territoire, prisonniers et pierres mortes, komi ; la dame et les points d'un seki ne comptent pas. */
+  | 'comptage';
 
 export const THEMES: readonly Theme[] = [
   'capture', 'atari', 'double-atari', 'bord', 'echelle', 'filet', 'relier-couper', 'vie-mort', 'semeai', 'prise-en-retour',
+  'seki', 'fin-de-partie', 'comptage',
 ];
 
 const PAR_THEME: Record<Theme, readonly string[]> = {
@@ -53,6 +60,10 @@ const PAR_THEME: Record<Theme, readonly string[]> = {
   ],
   semeai: ['a14', 'd05', 'd07', 'd08', 'd09', 'd10', 'd11', 'd12', 'd13', 'f02', 'f08', 'f09', 'f10', 'f11', 'f12', 'o03', 'o10', 'v13'],
   'prise-en-retour': ['c4', 'j02', 'j03', 'o02', 'o05', 'o07', 'p03', 'v09', 'v12'],
+  // Lot W (#16) : les séries des leçons 14 à 16.
+  seki: ['w01', 'w02', 'w03'],
+  'fin-de-partie': ['w04', 'w05', 'w06'],
+  comptage: ['w07', 'w08', 'w09'],
 };
 
 /** Thème de chaque problème, par identifiant. */
@@ -65,8 +76,9 @@ export function themeDe(id: string): Theme | undefined {
 }
 
 /**
- * Thèmes travaillés par chaque leçon du chapitre « Les bases ». Une leçon sans thème n'a pas de série :
- * la banque n'a encore aucun problème de ko (l4), de territoire et d'ouverture (l6) ni de comptage (l7).
+ * Thèmes travaillés par chaque leçon. Une leçon sans thème n'a pas de série :
+ * la banque n'a encore aucun problème de ko (l4) ni de territoire et d'ouverture (l6). La leçon 7 (compter les points)
+ * n'a pas de série : les problèmes de fin de partie et de comptage (lot W) suivent les leçons 15 et 16.
  * La leçon 3 enseigne trois pièges : sa série en prend un de chaque.
  */
 export const THEMES_DE_LECON: Readonly<Record<string, readonly Theme[]>> = {
@@ -79,9 +91,12 @@ export const THEMES_DE_LECON: Readonly<Record<string, readonly Theme[]>> = {
   l10: ['prise-en-retour'],
   l11: ['semeai'],
   l12: ['vie-mort'],
-  // #16 : le point vital (l13) a la série de vie et mort. Le seki (l14), finir la partie (l15) et compter (l16) n'en ont
-  // pas encore : la banque n'a aucun problème de seki ni de comptage.
+  // #16 : le point vital (l13) a la série de vie et mort. Le seki (l14), finir la partie (l15) et compter (l16) ont
+  // chacun la leur, avec le lot W.
   l13: ['vie-mort'],
+  l14: ['seki'],
+  l15: ['fin-de-partie'],
+  l16: ['comptage'],
 };
 
 /**

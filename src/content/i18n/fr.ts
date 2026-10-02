@@ -711,6 +711,9 @@ export const fr = {
   'theme.vie-mort': 'Vie et mort',
   'theme.semeai': 'Course aux libertés',
   'theme.prise-en-retour': 'Prise en retour',
+  'theme.seki': 'Seki',
+  'theme.fin-de-partie': 'Finir la partie',
+  'theme.comptage': 'Compter',
 
   // Étape 5 (#167) : Apprendre, lecteur de leçon, compte, confidentialité, messages restants. Textes d'interface seulement :
   // titres, descriptions et consignes des leçons (content/lessons.fr.js, src/content/acquis.ts) restent du contenu.
