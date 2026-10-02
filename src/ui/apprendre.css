@@ -148,6 +148,32 @@
 .lecteur-tete .difficulte { flex: none; }
 .lecteur:has(.verdict) { padding-bottom: max(120px, var(--verdict-h, 0px)); }
 
+/* Audit du 02/10 (n° 1) : problème, Go du jour, entraînement, placement. Plus de vide sous le plateau : la colonne prend
+   la hauteur de l'écran (comme le lecteur de leçon, lecon.css), le plateau en haut sur toute la largeur, puis Mochi et
+   sa consigne au milieu de la place qui reste. Quand la feuille de verdict monte, Mochi se colle sous le plateau pour
+   rester visible au-dessus d'elle. */
+.app:has(.lecteur-mochi) { padding-bottom: calc(var(--nav-h) + var(--space-2) + env(safe-area-inset-bottom, 0px)); }
+.lecteur:has(> .lecteur-mochi) { --mochi: 72px; display: flex; flex-direction: column;
+  min-height: calc(100dvh - var(--space-2) - var(--nav-h) - var(--space-2) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); }
+@media (min-height: 760px) { .lecteur:has(> .lecteur-mochi) { --mochi: 88px; } }
+@media (max-width: 359px) { .lecteur:has(> .lecteur-mochi) { --mochi: 52px; } }
+.lecteur-mochi { flex: 1 0 auto; display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) 0 var(--space-2); }
+.lecteur:has(.verdict) .lecteur-mochi { flex-grow: 0; align-items: flex-start; }
+/* Réussite : la feuille (bravo, XP, suite) est haute et la consigne n'a plus d'objet ; Mochi s'efface au lieu de dépasser
+   à moitié de derrière la feuille. Il reste là après une erreur, au-dessus de la feuille (plus courte). */
+.lecteur:has(.verdict-juste) .lecteur-mochi { visibility: hidden; }
+.lecteur-mochi-portrait { flex: none; width: var(--mochi) !important; height: var(--mochi) !important; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, .22)); }
+.lecteur-mochi .bubble { flex: 1; min-width: 0; margin: 0; }
+.lecteur-mochi .bubble p { line-height: 1.45; font-weight: var(--fw-medium); }
+@media (min-height: 760px) and (min-width: 360px) { .lecteur-mochi .bubble p { font-size: var(--fs-l); } }
+/* Écran bas (320 × 568) : Mochi plus petit et texte un cran plus petit, pour que la consigne tienne au-dessus de la barre. */
+@media (max-height: 640px) {
+  .lecteur:has(> .lecteur-mochi) { --mochi: 44px; }
+  .lecteur-mochi { padding-top: var(--space-2); }
+  .lecteur-mochi .bubble p { font-size: var(--fs-s); line-height: 1.4; padding: 8px 12px; }
+  .lecteur:has(> .lecteur-mochi) > .notice { margin-block: 0 var(--space-1); padding-block: 6px; font-size: var(--fs-s); }
+}
+
 /* Feuille de verdict : posée sur la barre de navigation, pleine largeur, contenu dans la colonne. */
 .verdict { position: fixed; left: 0; right: 0; bottom: calc(var(--nav-h) + 1px + env(safe-area-inset-bottom, 0px)); z-index: 15;
   padding: 14px max(var(--gouttiere), calc((100% - var(--largeur-max)) / 2 + var(--gouttiere))) 16px;

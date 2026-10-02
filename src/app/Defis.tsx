@@ -7,6 +7,7 @@
 // Logique pure : defiAmi.ts. Données : src/data/defi.ts.
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Board } from '../ui/Board';
+import { MiniGoban } from '../ui/MiniGoban';
 import { Avatar, Bandeau, BarreActions, Coach, Icone } from '../ui/Partie';
 import { toSgf } from '../go/coords';
 import { groupAt } from '../go/rules';
@@ -132,6 +133,17 @@ export function DefisEcran({ db, userId, pseudo = null, onPartie }: EcranProps) 
       {liste.etat === 'erreur' && (
         <p className="card small" role="alert">{t('defi.erreur.chargement')} <button type="button" className="lien" onClick={() => setEssai(n => n + 1)}>{t('defi.reessayer')}</button></p>
       )}
+      {/* Audit du 02/10 (n° 2) : sans partie, l'écran disait seulement « Envoyer un lien ». L'état vide montre où les
+          parties arriveront et comment on sait que c'est son tour ; il n'ajoute aucune action. */}
+      {liste.etat === 'pret' && vues.length === 0 && online && (
+        <section className="defis-liste defis-vide" aria-labelledby="defis-liste-titre">
+          <h2 id="defis-liste-titre">{t('defi.tesParties')}</h2>
+          <div className="defis-vide-tuile">
+            <MiniGoban rows={PARTIE_EXEMPLE} className="defis-vide-goban" />
+            <p className="small">{fr(t('defi.vide'))}</p>
+          </div>
+        </section>
+      )}
       {vues.length > 0 && (
         <section className="defis-liste" aria-labelledby="defis-liste-titre">
           <h2 id="defis-liste-titre">{t('defi.tesParties')}</h2>
@@ -157,6 +169,9 @@ export function DefisEcran({ db, userId, pseudo = null, onPartie }: EcranProps) 
     </div>
   );
 }
+
+/** Début de partie 9 × 9 pour l'état vide : quatre pierres posées, la partie qui attend son ami. */
+const PARTIE_EXEMPLE = ['.........', '.........', '......O..', '.........', '....X....', '.........', '..X...O..', '.........', '.........'];
 
 /** Deux pierres qui se font face : l'illustration de l'écran (décorative). */
 function DeuxPierres() {

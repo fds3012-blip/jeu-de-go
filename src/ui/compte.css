@@ -96,3 +96,25 @@
 .case-age-moins15 { justify-self: start; font-weight: var(--fw-medium); font-size: var(--fs-s); padding-left: 34px; }
 .case-age-detail { margin: 0 0 4px 34px; text-wrap: pretty; }
 .connexion-cta.inactif { opacity: .55; box-shadow: none; }
+
+/* Mon compte, connecté (audit du 02/10) : deux boutons empilés pleine largeur, puis ce que le compte garde. */
+.compte-boutons { display: grid; gap: var(--space-2); margin-top: 12px; }
+.compte-boutons .btn { width: 100%; min-height: var(--cible-bouton); box-shadow: inset 0 0 0 1.5px var(--line); }
+.compte-connecte-garde { margin-top: var(--space-3); }
+
+/* Audit du 02/10 (n° 8) : écran bas (iPhone SE, 320 × 568). L'action principale doit se voir sans défiler : Mochi rapetisse,
+   les marges se serrent, et la carte « ce qui est gardé » passe sous le formulaire (même texte, juste après l'action). */
+@media (max-height: 640px) {
+  .creer-compte { gap: var(--space-2); padding-top: 0; }
+  .creer-tete { gap: 4px; padding-top: 0; }
+  .creer-tete > .sceau { width: 40px !important; height: 40px !important; }
+  .creer-compte > .creer-garde { order: 1; }
+  .creer-compte > .creer-gratuit, .creer-compte > .creer-plus-tard { order: 2; }
+  .creer-garde { padding: 10px 14px; }
+  .case-age { margin-top: 2px; }
+  /* Arrivée par un lien de défi : le plateau vide se range à côté du titre au lieu de le pousser. */
+  .defi-apercu { grid-template-columns: minmax(0, 1fr) auto; column-gap: var(--space-3); align-items: center; }
+  .defi-apercu > .creer-tete { grid-column: 1; justify-items: start; text-align: left; padding-top: 0; }
+  .defi-apercu > .defi-apercu-plateau { grid-column: 2; grid-row: 1; width: 92px; }
+  .defi-apercu > :not(.creer-tete):not(.defi-apercu-plateau) { grid-column: 1 / -1; }
+}
