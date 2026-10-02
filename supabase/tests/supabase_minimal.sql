@@ -11,9 +11,21 @@ create table auth.users (
   id uuid primary key default gen_random_uuid(),
   email text,
   is_anonymous boolean not null default false,
+  raw_user_meta_data jsonb,
+  raw_app_meta_data jsonb,
   created_at timestamptz not null default now(),
   updated_at timestamptz,
   last_sign_in_at timestamptz
+);
+-- Identités de connexion (Google, e-mail…) : identity_data porte ce que le fournisseur envoie (minimisation, #354).
+create table auth.identities (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users (id) on delete cascade,
+  provider text not null,
+  provider_id text not null,
+  identity_data jsonb not null,
+  created_at timestamptz default now(),
+  updated_at timestamptz
 );
 -- Sessions (colonnes utiles à la suppression des anonymes inactifs, #318). refreshed_at est sans fuseau, comme Supabase.
 create table auth.sessions (

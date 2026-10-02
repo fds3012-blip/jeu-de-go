@@ -405,6 +405,8 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          conditions_acceptees_le: string | null
+          conditions_version: string | null
           country: string | null
           created_at: string
           id: string
@@ -418,6 +420,8 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          conditions_acceptees_le?: string | null
+          conditions_version?: string | null
           country?: string | null
           created_at?: string
           id: string
@@ -431,6 +435,8 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          conditions_acceptees_le?: string | null
+          conditions_version?: string | null
           country?: string | null
           created_at?: string
           id?: string
@@ -557,6 +563,27 @@ export type Database = {
           },
         ]
       }
+      rattachements_anonymes: {
+        Row: {
+          anonyme_id: string
+          code_hash: string
+          cree_le: string
+          expire_le: string
+        }
+        Insert: {
+          anonyme_id: string
+          code_hash: string
+          cree_le?: string
+          expire_le: string
+        }
+        Update: {
+          anonyme_id?: string
+          code_hash?: string
+          cree_le?: string
+          expire_le?: string
+        }
+        Relationships: []
+      }
       rating_history: {
         Row: {
           created_at: string
@@ -620,6 +647,7 @@ export type Database = {
       }
     }
     Functions: {
+      accepter_conditions: { Args: { p_version: string }; Returns: string }
       apply_game_rating: {
         Args: { p_game: string; p_loser: string; p_winner: string }
         Returns: undefined
@@ -683,6 +711,8 @@ export type Database = {
         Returns: Json
       }
       play_move: { Args: { p_game: string; p_move: string }; Returns: string }
+      preparer_rattachement: { Args: never; Returns: string }
+      rattacher_session_anonyme: { Args: { p_code: string }; Returns: number }
       reclamer_rappels: {
         Args: { p_maintenant?: string }
         Returns: {
