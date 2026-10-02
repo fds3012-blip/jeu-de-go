@@ -29,7 +29,6 @@ const T = {
   nonMerci: /^(Non merci|No thanks)$/, premiere: /^(Joue ta première partie|Play your first game)/,
   apprendre: /^(Apprendre|Learn)$/, problemes: /^(Problèmes|Puzzles)$/, profil: /^(Profil|Profile)$/, jouer: /^(Jouer|Play)$/,
   passer: /^(Passer|Pass)$/, passeGroupe: /^(Passer maintenant\s?\?|Pass now\?)$/, valider: /^(Valider le score|Confirm score)$/,
-  resoudreJour: /^(Résoudre le Go du jour|Solve the Daily Go)$/,
   resultat: /^(Voir le résultat|See the result)$/, retourBilan: /^(Retour au bilan|Back to results)$/, revoir: /^(Revoir ma partie|Review my game)$/, accueil: /^(Accueil|Home)$/,
   commencer: /^(Commencer|Start)$/, continuer: /^(Continuer|Continue)$/, terminer: /^(Terminer la leçon|Finish the lesson)$/,
   retourChemin: /^(Retour au chemin|Back to the path)$/, plus: /^(Plus|More)$/, abandonner: /^(Abandonner|Resign)$/, confirmer: /^(Confirmer|Confirm)/,
@@ -210,9 +209,8 @@ for (const cfg of CONFIGS) {
     await voir(page, '10-accueil-retour');
 
     // 4. Go du jour : la tuile de l'accueil ouvre celui du jour ; un lien partagé (n° 1) se résout.
-    // La tuile mène à l'onglet Problèmes, où « Résoudre » ouvre le Go du jour.
+    // La tuile « À faire » ouvre le Go du jour lui-même.
     await page.locator('.tuile-probleme').click();
-    await page.getByRole('button', { name: T.resoudreJour }).click();
     await expect(plateau(page)).toBeVisible();
     await expect(page.getByText(/^(Go du jour|Daily Go)/).first()).toBeVisible();
     await voir(page, '11-go-du-jour');

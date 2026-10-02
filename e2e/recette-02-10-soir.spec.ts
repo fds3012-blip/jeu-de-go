@@ -80,3 +80,31 @@ for (const langue of ['fr', 'en'] as const) {
     }
   });
 }
+
+/** Numéro du Go du jour d'aujourd'hui (src/app/goDuJour.ts : 1 le 27/09/2026, +1 à chaque minuit de Paris). */
+function numeroDuJour(): number {
+  const [y, m, d] = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Paris' }).format(new Date()).split('-').map(Number);
+  return Math.round((Date.UTC(y, m - 1, d) - Date.UTC(2026, 8, 27)) / 864e5) + 1;
+}
+
+test('R-S7 : la tuile « Go du jour · À faire » ouvre le problème lui-même ; « Fait », elle mène à l’onglet Problèmes', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/');
+  await page.locator('.tuile-probleme').click();
+  await expect(page.getByRole('grid', { name: /^Plateau de go/ }).or(page.getByRole('img', { name: /^Plateau de go/ }))).toBeVisible();
+  await expect(page.getByText(new RegExp(`^Go du jour n°\\s${numeroDuJour()}$`))).toBeVisible();
+  // Le retour mène à la liste, et l'onglet Problèmes, touché ensuite, ne rouvre pas le problème.
+  await page.getByRole('button', { name: 'Retour aux problèmes' }).click();
+  await expect(page.getByRole('button', { name: 'Résoudre le Go du jour' })).toBeVisible();
+  await page.getByRole('navigation').getByRole('button', { name: 'Jouer' }).click();
+  await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
+  await expect(page.getByRole('button', { name: 'Résoudre le Go du jour' })).toBeVisible();
+
+  // Go du jour déjà fait : la tuile mène à la liste (le problème suivant y attend).
+  await page.evaluate(n => localStorage.setItem('go.go-du-jour.v1', JSON.stringify({ dernier: n, jours: 1 })), numeroDuJour());
+  await page.goto('/');
+  await expect(page.getByTestId('etat-du-jour')).toHaveText('Fait');
+  await page.locator('.tuile-probleme').click();
+  await expect(page.getByRole('heading', { name: /^Go du jour n°\s\d+$/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Retour aux problèmes' })).toHaveCount(0);
+});
