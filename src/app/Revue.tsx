@@ -50,6 +50,8 @@ interface Props {
   retour?: string;
   /** « Analyser une autre partie » (#286) : action secondaire, en bas de la revue. */
   onImporter?: () => void;
+  /** D'où vient la revue, pour la mesure (`revue_ouverte`) : `historique` depuis « Mes parties » (#358). */
+  source?: 'historique';
 }
 
 /** « Rejoue cette erreur » en cours : le problème, le nombre d'essais, le dernier coup faux, la réussite. */
@@ -59,7 +61,7 @@ const L = 300, H = 64; // courbe : repère du viewBox
 /** Lignes du tableau du bilan, du meilleur au pire (Solide seulement sans KataGo, Brillant seulement s'il y en a). */
 const LIGNES: Note[] = ['brillant', 'meilleur', 'excellent', 'bon', 'solide', 'imprecision', 'erreur', 'grosse'];
 
-export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTouch = false, visites, retour, onImporter }: Props) {
+export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTouch = false, visites, retour, onImporter, source }: Props) {
   const { positions, komi, resultat } = useMemo(() => positionsDepuisSgf(sgf), [sgf]);
   const n = positions.length - 1, size = positions[0].size;
   const [i, setI] = useState(Math.min(1, n));
@@ -101,7 +103,7 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
     setI(cle.coup); setChoisie(null); setEnCle(true); setResume(false);
   }, [cle]);
 
-  useEffect(() => { track(EVENTS.revueOuverte, { coups: n, taille: size, mode }); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { track(EVENTS.revueOuverte, { coups: n, taille: size, mode, ...(source ? { source } : {}) }); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Analyse dans le Worker du moteur, une position après l'autre. Le moteur est choisi une fois pour toutes
   // (KataGo s'il est prêt ou en cache, sinon le moteur simple) : deux moteurs ne se comparent pas.

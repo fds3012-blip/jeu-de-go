@@ -335,6 +335,10 @@ export function App() {
 
   function onResult(winner: 0 | 1 | 2, stats: StatsPartie) {
     setPartieFinie(true);
+    // #358 : la partie (gardée pour la revue par l'écran de partie) rejoint « Mes parties ». Chargé à la demande :
+    // l'accueil n'embarque pas la logique de l'historique (#323).
+    const mode = playing === 'guidee' ? 'guidee' : playing === 'deux' ? 'deux' : 'ordi';
+    void import('./historique').then(h => h.garderDerniere(mode), () => { /* hors ligne sans le module : rattrapé à la lecture */ });
     // Essai sans compte (#343) : chaque partie menée à son terme compte, sauf sur un plateau presque vide (#251).
     if (!finTropTot(stats)) setEssai(noterPartieTerminee(essai));
     if (playing !== 'ordi') return;
@@ -503,7 +507,8 @@ export function App() {
   } else if (tab === 'profil') {
     screen = <Profil vue={vueProfil} onVue={v => { if (v === 'importer' && !garde({ quoi: 'import' }, { quoi: 'importer' })) return; setVueProfil(v); }} settings={settings} set={set} profil={profil} serie={serie} record={recordSerie}
       parcours={{ lecons: { faites: done, total: LESSONS.length }, adversaires: OPPONENTS.length }}
-      placement={placement} onPlacement={ouvrirPlacement} />;
+      placement={placement} onPlacement={ouvrirPlacement}
+      onJouer={() => { go('jouer'); lancer('ordi'); }} db={supabase} userId={session?.user.id} />;
   } else {
     const numero = numeroJour;
     const daily = duJour;
