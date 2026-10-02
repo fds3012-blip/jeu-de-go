@@ -11,6 +11,18 @@ import { traduire } from '../content/i18n';
 
 // Issue #367 : notifications dans l'app. Ce qui attend le joueur, sans le harceler.
 
+describe('JS initial (budget, scripts/budget-bundle.mjs)', () => {
+  it('l’app et l’adresse du défi ne tirent pas « À faire » ni les règles du défi au chargement', async () => {
+    const { readFileSync } = await import('node:fs');
+    const lire = (f: string) => readFileSync(new URL(f, import.meta.url), 'utf8');
+    const statiques = (src: string) => [...src.matchAll(/^import (?!type )[^;]*?from '([^']+)'/gms)].map(m => m[1]);
+    for (const f of ['./App.tsx', './useAFaire.ts', './adresseDefi.ts']) {
+      expect(statiques(lire(f)).filter(m => /\/(aFaire|aFaireCharge|defisAJouer|defiAmi)$/.test(m)), f).toEqual([]);
+    }
+    expect(lire('./useAFaire.ts')).toContain("import('./aFaireCharge')");
+  });
+});
+
 const sp = (s: string) => s.replace(/\u00a0/g, ' ');
 const H = 3_600_000;
 const base: DonneesAFaire = { premier: false, defis: [], serie: 0, duJourFait: true, goDuJour: { numero: 6, titre: 'L’échelle' }, leconEnCours: null };

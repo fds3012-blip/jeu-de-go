@@ -49,8 +49,8 @@ import { INVITEUR_AU_CHARGEMENT, JETON_AU_CHARGEMENT, ecouterJetonDefi } from '.
 import { ESSAI_KEY, decider, etatCompte, lireEssai, noterPartieTerminee, partiesTerminees, type Acces, type EtatCompte, type Raison } from './essai';
 import { compteVientDEtreCree, moyenConnexion, noterConnexionParGoogle } from './entonnoir';
 import { annoncerMessage, definirRetour, erreurRetour, messageRetour, prendreRetour } from './connexionGoogle';
-import { useDefisEnAttente } from './defisAJouer';
-import { elementDeLOnglet, elementsAFaire, leconEnCours, ongletsAPastille, type ElementAFaire } from './aFaire';
+import { useAFaire } from './useAFaire';
+import type { ElementAFaire } from './aFaire';
 import { LimiteErreur } from './LimiteErreur';
 import { BandeauHorsLigne, InviteMiseAJour } from '../ui/Bandeaux';
 import '../ui/defis.css';
@@ -211,11 +211,6 @@ export function App() {
   const [placementBrut, setPlacementBrut] = useStored<unknown>(PLACEMENT_KEY, null);
   const placement = lirePlacement(placementBrut);
   const [enPlacement, setEnPlacement] = useState(false);
-  // Défis où c'est à toi de jouer (session de compte ou anonyme) : lien de l'accueil, pastille de l'onglet, « À faire » (#367).
-  // Relus à chaque changement d'écran ; pas pendant une partie (l'écran du défi suit déjà la sienne en temps réel).
-  const defisEnAttente = useDefisEnAttente(supabase, session?.user.id, `${tab}|${defi?.vue ?? ''}|${enPlacement}|${lessonId ?? ''}`,
-    !playing && defi?.vue !== 'partie');
-  const defisAJouer = defisEnAttente.length;
   const ouverts = ouvertsApresPlacement(OPPONENTS, placement, OUVERTS_D_OFFICE);
   const adv = adversaireOuvert(OPPONENTS, bilan, adversaire, ouverts);
   const cartes = echelle(OPPONENTS, bilan, ouverts).map(e => ({ id: e.adv.id, nom: e.adv.nom, rang: e.adv.rang, battu: e.battu, ouvert: e.ouvert, requis: e.requis?.nom }));
@@ -253,14 +248,16 @@ export function App() {
   const flamme = etatFlamme(serie, duJourFait);
   // #308 : après le placement, la carte « Leçon » suit le chapitre conseillé.
   const leconConseillee = leconDeLAccueil(LESSONS, CHAPITRES, progress, placement);
-  // Notifications dans l'app (#367) : ce qui t'attend. Rien au tout premier lancement (#236, N4).
+  // Notifications dans l'app (#367) : ce qui t'attend (défis où c'est ton tour, série, Go du jour, leçon en cours).
+  // Calcul chargé après le premier écran (useAFaire.ts). Défis relus à chaque changement d'écran ; pas pendant une
+  // partie (l'écran du défi suit déjà la sienne en temps réel). Rien au tout premier lancement, sauf un ami qui attend.
   // #359 (amis) : ajouter ici `demandesAmis` (demandes reçues, lues par `mes_amis()`), la source existe déjà (aFaire.ts).
-  const aFaire = elementsAFaire({
-    premier: home.nouveau, defis: defisEnAttente, serie, duJourFait,
-    goDuJour: duJour ? { numero: numeroJour, titre: duJour.title } : null,
-    leconEnCours: leconEnCours(LESSONS, progress),
-  });
-  const pastilles = ongletsAPastille(aFaire);
+  const { defis: defisEnAttente, elements: aFaire, pastilles } = useAFaire(supabase, session?.user.id,
+    `${tab}|${defi?.vue ?? ''}|${enPlacement}|${lessonId ?? ''}`, !playing && defi?.vue !== 'partie', {
+      premier: home.nouveau, serie, duJourFait, goDuJour: duJour ? { numero: numeroJour, titre: duJour.title } : null,
+      lecons: LESSONS, progres: progress,
+    });
+  const defisAJouer = defisEnAttente.length;
   // Profil (issue #50) : sous-vue ouverte, et fenêtre de consentement fermée avec Échap pendant cette session.
   const [vueProfil, setVueProfil] = useState<VueProfil>(PAGE_CONFIDENTIALITE ? 'conditions'
     : RETOUR_GOOGLE?.profil && !ECRAN_COMPTE_AU_RETOUR && !DEFI_AU_RETOUR ? 'compte' : 'menu');
@@ -676,7 +673,7 @@ export function App() {
       <AnnonceXp celebrer={settings.celebrations} />
       {/* Pendant une partie, comme chez chess.com : pas de barre de navigation, « ‹ » ramène à l'accueil. */}
       {!enPartie && !ecranPlein && <BarreNav actif={tab} pastilles={pastilles}
-        onChoisir={o => { const e = elementDeLOnglet(aFaire, o); if (e) ouvrirAFaire(e, 'onglet'); go(o); }} />}
+        onChoisir={o => { const e = aFaire.find(x => x.pastille && x.onglet === o); if (e) ouvrirAFaire(e, 'onglet'); go(o); }} />}
       {aide && (
         <Suspense fallback={null}>
           {/* Depuis une partie, pas de lien vers une leçon : on ne quitte pas la partie depuis l'aide. */}

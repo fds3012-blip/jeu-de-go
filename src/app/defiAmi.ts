@@ -3,16 +3,14 @@
 import { recordFromOnlineGame, parseDead } from '../go/server';
 import { replay } from '../go/replay';
 import { newPosition, type Position } from '../go/rules';
-import { jetonDepuisLien, PARAM_DEFI, tempsRestant } from '../data/defi';
+import { tempsRestant } from '../data/defi';
 import type { Game } from '../data/games';
 import type { Defi } from '../data/defi';
 import { t } from '../content/i18n';
 
-/** Jeton du défi lu dans le fragment de l'adresse (`#defi=JETON`), ou null. */
-export function jetonDeLAdresse(hash: string): string | null {
-  const brut = hash.replace(/^#/, '');
-  return brut.startsWith(`${PARAM_DEFI}=`) ? jetonDepuisLien(brut) : null;
-}
+// Lecture du jeton dans l'adresse : src/data/defi.ts (#367 : importée au chargement sans tirer ce module, ses règles
+// et son rejeu, qui ne servent qu'aux écrans du défi et à « À faire », chargés à la demande).
+export { jetonDeLAdresse } from '../data/defi';
 
 export type Raison = 'temps' | 'abandon' | 'points' | 'egalite';
 
