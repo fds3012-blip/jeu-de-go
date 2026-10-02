@@ -160,6 +160,7 @@ test('captures : bandeau hors ligne et mise à jour prête, clair et sombre, 390
       await page.evaluate(() => navigator.serviceWorker.dispatchEvent(new Event('controllerchange')));
       await context.setOffline(true);
       await NAV(page).getByRole('button', { name: 'Profil' }).click();
+      await expect(page.getByRole('heading', { name: 'Ton parcours' })).toBeVisible();
       await expect(page.getByTestId('bandeau-hors-ligne')).toBeVisible();
       await expect(page.getByTestId('invite-mise-a-jour')).toBeVisible();
       await page.screenshot({ path: `${DOSSIER}/bandeaux-${nom}.png` });
