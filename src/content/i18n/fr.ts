@@ -1157,7 +1157,6 @@ export const fr = {
   'amis.retirerConfirmer': 'Retirer ?',
   'amis.retirerConfirmerAria': 'Confirmer : retirer {pseudo} de tes amis',
   'amis.attente': 'Demande envoyée',
-  'amis.recue': 'Veut jouer avec toi',
   'defi.amis.defier': 'Défier',
   'defi.amis.defierAria': 'Défier {pseudo} : partie 9 × 9, 3 jours par coup',
   'defi.amis.creation': 'Partie…',

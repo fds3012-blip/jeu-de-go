@@ -3,6 +3,8 @@ import type { BrowserContext, Page, Route } from '@playwright/test';
 // Supabase simulé par interception réseau, partagé par les parcours du compte (#343) et du défi par lien (#81).
 // Le build de test lit l'adresse simulée dans le stockage local (`e2e.supabase`, voir src/data/supabase.ts).
 // Auth : code à 6 chiffres (`/otp` puis `/verify`), le seul bon code est CODE. Tables : profiles, games, defis.
+// Amis (#359) : `mes_amis`, `demander_ami`, `repondre_ami`, `retirer_ami`, `defier_ami`, mêmes règles et mêmes codes
+// d'erreur que supabase/migrations/20261002010100_amis.sql (sauf les limites de temps).
 
 export const SUPABASE = 'https://supabase.e2e.test';
 export const CODE = '123456';
@@ -19,6 +21,7 @@ export function fauxServeur() {
   const profiles: Ligne[] = [{ id: 'deja-la', username: 'Pris', rating: 1500, streak_days: 0, streak_last: null, streak_freezes: 0 }];
   const games: Ligne[] = [];
   const defis: Ligne[] = [];
+  const amities: { de: string; a: string; etat: 'pending' | 'accepted'; le: string }[] = [];
   const appels: string[] = [];
   const emailsEnvoyes: { email: string; type: string }[] = [];
   const autorisations: string[] = [];
@@ -135,6 +138,51 @@ export function fauxServeur() {
       }
       return json(d.partie_id);
     }
+    // Amis (#359) : refus avec les codes SQLSTATE du serveur.
+    if (chemin.startsWith('/rest/v1/rpc/') && /_amis?$/.test(chemin)) {
+      const nom = chemin.slice('/rest/v1/rpc/'.length);
+      const refus = (code: string) => json({ code, message: code, details: null, hint: null }, 400);
+      if (!u || u.anonyme) return refus('JGC01');
+      const moi = profiles.find(x => x.id === u.id);
+      if (!moi?.username) return refus('JGP01');
+      const corps = (req.postDataJSON() ?? {}) as { p_pseudo?: string; p_accepter?: boolean };
+      const pseudoDe = (id: string) => String(profiles.find(x => x.id === id)?.username ?? '');
+      const lien = (autre: string) => amities.find(f => (f.de === u.id && f.a === autre) || (f.de === autre && f.a === u.id));
+      if (nom === 'mes_amis') {
+        return json(amities.filter(f => f.de === u.id || f.a === u.id).map(f => {
+          const autre = f.de === u.id ? f.a : f.de;
+          return { pseudo: pseudoDe(autre), etat: f.etat === 'accepted' ? 'ami' : f.de === u.id ? 'envoyee' : 'recue', depuis: f.le };
+        }));
+      }
+      const cible = profiles.find(x => String(x.username ?? '').toLowerCase() === String(corps.p_pseudo ?? '').trim().toLowerCase());
+      if (!cible) return refus('JGA01');
+      const autre = String(cible.id);
+      const f = lien(autre);
+      if (nom === 'demander_ami') {
+        if (autre === u.id) return refus('JGA02');
+        if (f?.etat === 'accepted') return refus('JGA03');
+        if (f && f.de === u.id) return refus('JGA04');
+        if (f) { f.etat = 'accepted'; return json('amis'); }
+        amities.push({ de: u.id, a: autre, etat: 'pending', le: new Date().toISOString() });
+        return json('envoyee');
+      }
+      if (nom === 'repondre_ami') {
+        if (!f || f.etat !== 'pending' || f.de !== autre) return refus('JGA07');
+        if (corps.p_accepter) { f.etat = 'accepted'; return json('amis'); }
+        amities.splice(amities.indexOf(f), 1);
+        return json('refusee');
+      }
+      if (nom === 'retirer_ami') { if (f) amities.splice(amities.indexOf(f), 1); return json(null); }
+      if (nom === 'defier_ami') {
+        if (f?.etat !== 'accepted') return refus('JGA08');
+        const id = `22222222-2222-4222-8222-${String(games.length + 1).padStart(12, '0')}`;
+        games.push({ id, white_id: u.id, black_id: autre, created_by: u.id, size: 9, komi: 6.5, rules: 'japanese', handicap: 0, moves: '',
+          status: 'active', counting: false, dead_stones: null, dead_proposed_by: null, result: null, resumed_at: 0, prive: true, rated: false });
+        defis.push({ partie_id: id, jeton: `ami${games.length}`.padEnd(32, 'A'), createur_id: u.id, invite_id: autre, delai_coup: '3 days',
+          date_limite: new Date(Date.now() + 3 * 864e5).toISOString(), lien_expire_le: new Date().toISOString(), cree_le: new Date().toISOString() });
+        return json(id);
+      }
+    }
     if (chemin.startsWith('/rest/v1/rpc/')) return json(null);
     if (chemin === '/functions/v1/game-action') {
       const { action, game_id, move } = req.postDataJSON() as { action: string; game_id: string; move: string };
@@ -144,7 +192,7 @@ export function fauxServeur() {
       const trait = (g.moves as string).length / 2 % 2 === 0 ? g.black_id : g.white_id;
       if (trait !== u.id) return json({ error: 'tour' }, 409);
       g.moves = (g.moves as string) + move;
-      defis[0].date_limite = new Date(Date.now() + 3 * 864e5).toISOString();
+      (defis.find(d => d.partie_id === game_id) ?? defis[0]).date_limite = new Date(Date.now() + 3 * 864e5).toISOString();
       return json({ ok: true, game: g });
     }
     if (chemin === '/rest/v1/profiles' && req.method() === 'PATCH') {
@@ -181,9 +229,13 @@ export function fauxServeur() {
     profiles.push({ id, username: pseudo, rating: 1500, streak_days: 0, streak_last: null, streak_freezes: 0 });
     return v;
   }
+  /** Session d'un compte complet (e-mail et pseudo), à poser dans le stockage du navigateur (#359). */
+  function sessionCompte(email: string, pseudo: string, id: string) {
+    return session(compteExistant(email, pseudo, id));
+  }
   /** Compte Google que « Continuer avec Google » renverra (#354) ; `annule` : le joueur annule chez Google. */
   function compteGoogle(c: { email: string; nom: string; annule?: boolean }) { google = c; }
-  return { traiter, appels, games, defis, profiles, emailsEnvoyes, sessionAnonyme, compteExistant, compteGoogle, autorisations };
+  return { traiter, appels, games, defis, profiles, amities, emailsEnvoyes, sessionAnonyme, sessionCompte, compteExistant, compteGoogle, autorisations };
 }
 
 export type FauxServeur = ReturnType<typeof fauxServeur>;

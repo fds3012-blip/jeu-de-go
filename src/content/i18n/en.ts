@@ -1096,7 +1096,6 @@ export const en = {
   'amis.retirerConfirmer': 'Remove?',
   'amis.retirerConfirmerAria': 'Confirm: remove {pseudo} from your friends',
   'amis.attente': 'Request sent',
-  'amis.recue': 'Wants to play with you',
   'defi.amis.defier': 'Challenge',
   'defi.amis.defierAria': 'Challenge {pseudo}: 9 × 9 game, 3 days per move',
   'defi.amis.creation': 'Game…',

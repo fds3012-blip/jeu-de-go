@@ -1,7 +1,7 @@
 // « Mes amis » (issue #359), sous-vue du Profil.
 // - Vide : deux pierres, une phrase, et une seule action, « Ajouter » (bouton principal), avec le pseudo exact.
 // - Sinon : demandes reçues (Accepter / Refuser), tes amis (« Défier » crée la partie sans lien, puis l'ouvre avec
-//   l'écran du défi #81), demandes envoyées (Annuler). Le champ d'ajout reste en haut, en action secondaire.
+//   l'écran du défi #81), demandes envoyées (Annuler). Le champ d'ajout passe alors en bas, en action secondaire.
 // Données et règles : src/data/amis.ts (le serveur fait foi : supabase/migrations/20261002010100_amis.sql).
 import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { defierAmi, demanderAmi, grouperAmis, repondreAmi, retirerAmi } from '../data/amis';
@@ -90,8 +90,8 @@ export function Amis({ db, onDefi }: Props) {
 
   const formulaire = (
     <form className={`amis-ajout${vide ? ' amis-ajout-vide' : ' card'}`} onSubmit={ajouter} noValidate>
-      {!vide && <label className="amis-ajout-titre" htmlFor={idChamp}>{t('amis.ajouter.titre')}</label>}
-      {vide && <label className="sr-only" htmlFor={idChamp}>{t('amis.ajouter.label')}</label>}
+      {!vide && <p className="amis-ajout-titre" aria-hidden="true">{t('amis.ajouter.titre')}</p>}
+      <label className="sr-only" htmlFor={idChamp}>{t('amis.ajouter.label')}</label>
       <div className="amis-ajout-ligne">
         <input ref={champ} id={idChamp} className="amis-champ" type="text" inputMode="text" autoComplete="off" autoCapitalize="off"
           autoCorrect="off" spellCheck={false} enterKeyHint="send" maxLength={25} value={saisie}
@@ -124,7 +124,7 @@ export function Amis({ db, onDefi }: Props) {
           <p className="amis-vide-texte">{fr(t('defi.amis.videTexte'))}</p>
         </div>
       ) : null}
-      {(vide || liste.etat !== 'chargement') && formulaire}
+      {vide && formulaire}
 
       {liste.etat === 'chargement' && online && <p className="muted small" aria-busy="true">{t('amis.chargement')}</p>}
       {liste.etat === 'erreur' && (
@@ -137,7 +137,7 @@ export function Amis({ db, onDefi }: Props) {
             <li key={a.pseudo} className="ami">
               <div className="ami-ligne">
                 <Initiale pseudo={a.pseudo} />
-                <span className="ami-texte"><b>{a.pseudo}</b><small>{t('amis.recue')}</small></span>
+                <span className="ami-texte"><b>{a.pseudo}</b></span>
                 <span className="ami-actions">
                   <button type="button" className="lien ami-discret" disabled={occupe !== null} aria-label={t('amis.refuserAria', { pseudo: a.pseudo })}
                     onClick={() => repondre(a.pseudo, false)}>{t('amis.refuser')}</button>
@@ -195,6 +195,8 @@ export function Amis({ db, onDefi }: Props) {
           ))}
         </Groupe>
       )}
+      {/* Avec des amis, la liste passe d'abord : ajouter devient une action secondaire, en bas. */}
+      {!vide && liste.etat !== 'chargement' && formulaire}
     </div>
   );
 }
