@@ -402,6 +402,55 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          creee_le: string
+          destinataire_id: string
+          id: number
+          lue_le: string | null
+          partie_id: string | null
+          type: string
+        }
+        Insert: {
+          creee_le?: string
+          destinataire_id: string
+          id?: never
+          lue_le?: string | null
+          partie_id?: string | null
+          type: string
+        }
+        Update: {
+          creee_le?: string
+          destinataire_id?: string
+          id?: never
+          lue_le?: string | null
+          partie_id?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_destinataire_id_fkey"
+            columns: ["destinataire_id"]
+            isOneToOne: false
+            referencedRelation: "leaderboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_destinataire_id_fkey"
+            columns: ["destinataire_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_partie_id_fkey"
+            columns: ["partie_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       parties_perso: {
         Row: {
           adversaire: string | null
@@ -738,6 +787,11 @@ export type Database = {
         Returns: string
       }
       heure_rappel: { Args: { p_moment: string }; Returns: number }
+      marquer_notifications_lues: {
+        Args: { p_partie?: string; p_type?: string }
+        Returns: number
+      }
+      purger_notifications: { Args: never; Returns: number }
       importer_serie_appareil: {
         Args: { p_dernier_jour: string; p_jours: number }
         Returns: number
