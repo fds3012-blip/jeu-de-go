@@ -22,6 +22,9 @@ interface Props {
   onFini: () => void;
 }
 
+/** L7 (recette du 02/10 au soir) : un total négatif s'écrit avec le vrai signe moins (U+2212), pas un trait d'union. */
+const signeMoins = (texte: string) => texte.replace(/^-/, '\u2212');
+
 export function RecitScore({ fond, recit, immediat, expliquerKomi, adversaire, onFini }: Props) {
   const camps = campsRecit(adversaire);
   const [t, setT] = useState(immediat ? DUREE_RECIT : 0);
@@ -61,7 +64,7 @@ export function RecitScore({ fond, recit, immediat, expliquerKomi, adversaire, o
   const camp = (c: 1 | 2, nom: string, valeur: number, jeton: number) => (
     <span className={gagnant === c ? 'camp gagnant' : 'camp'}>
       <span className="camp-nom"><span className={`recit-pierre ${c === 1 ? 'b' : 'w'}`} />{nom}</span>
-      <b key={jeton ? `recoit-${e.etape}` : 'b'} className={jeton ? 'recoit' : undefined} data-testid={c === 1 ? 'recit-noir' : 'recit-blanc'}>{virgule(valeur)}</b>
+      <b key={jeton ? `recoit-${e.etape}` : 'b'} className={jeton ? 'recoit' : undefined} data-testid={c === 1 ? 'recit-noir' : 'recit-blanc'}>{signeMoins(virgule(valeur))}</b>
       {jeton !== 0 && (
         <span key={`jeton-${e.etape}`} className="recit-jeton">
           {e.etape === 2 && <span className={`recit-pierre ${pierreJeton(c)}`} />}

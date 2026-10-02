@@ -199,7 +199,12 @@ button.ligne:focus-visible { outline-offset: -3px; }
 .sceau-badge.eteint { --s-encre: var(--muted); --s-papier: var(--surface); filter: none; }
 .sceau-badge.eteint .b-fond { fill: var(--surface); stroke: var(--muted); stroke-width: 1.2; stroke-dasharray: 3 3; }
 .sceau-badge.eteint .b-anneau { stroke: var(--muted); opacity: .3; }
-.sceau-badge.eteint .s-plein, .sceau-badge.eteint .s-pierre-n, .sceau-badge.eteint .s-texte { opacity: .6; }
+.sceau-badge.eteint .s-plein, .sceau-badge.eteint .s-pierre-n { opacity: .6; }
+/* Recette du 02/10 au soir (L10) : le chiffre d'un sceau à gagner (« 10 », « 7 ») est un texte. À 60 %, il tombait à
+   4,29:1 en clair ; à pleine encre, il passe AA en clair et en sombre (e2e/recette-soir-suite.spec.ts) et reste gris. */
+.sceau-badge.eteint .s-texte { opacity: 1; }
+/* Le « 7 » est en papier dans la flamme : la flamme garde sa pleine encre, sinon il tombe aussi sous 4,5:1. */
+.sceau-badge.eteint .s-plein:has(+ .s-texte-flamme) { opacity: 1; }
 .sceau-badge.eteint .s-clair, .sceau-badge.eteint .s-pierre-b { fill: color-mix(in srgb, var(--muted) 35%, var(--surface)); }
 .sceau-badge.eteint .s-pastille { fill: var(--surface-2); stroke: var(--muted); }
 .sceau-badge.eteint .s-coche-pastille { stroke: var(--muted); }

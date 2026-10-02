@@ -182,7 +182,7 @@
 .lecteur:has(.verdict) .lecteur-mochi { flex-grow: 0; align-items: flex-start; }
 /* Réussite : la feuille (bravo, XP, suite) est haute et la consigne n'a plus d'objet ; Mochi s'efface au lieu de dépasser
    à moitié de derrière la feuille. Il reste là après une erreur, au-dessus de la feuille (plus courte). */
-.lecteur:has(.verdict-juste) .lecteur-mochi { visibility: hidden; }
+.lecteur:has(.verdict-juste) .lecteur-mochi { display: none; }
 .lecteur-mochi-portrait { flex: none; width: var(--mochi) !important; height: var(--mochi) !important; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, .22)); }
 .lecteur-mochi .bubble { flex: 1; min-width: 0; margin: 0; }
 .lecteur-mochi .bubble p { line-height: 1.45; font-weight: var(--fw-medium); }
@@ -223,6 +223,28 @@
 .verdict-actions .lien { justify-self: center; margin-top: -4px; }
 .verdict .cta { position: static; transform: none; width: 100%; }
 .verdict-cote { margin-top: 4px !important; font-size: var(--fs-corps-s); }
+/* Lot X (#398), à 390 × 844 : la feuille fixée en bas laissait 75 px de vide entre le plateau (ou Mochi) et elle.
+   Dans les lecteurs de problème (problème, Go du jour, entraînement, placement), quand tout tient dans l'écran, elle
+   suit maintenant le plateau dans la colonne et prend toute la hauteur qui reste jusqu'à la barre : plus de vide, le
+   texte juste sous le plateau, l'action au même endroit qu'avant, au-dessus de la barre. Quand la colonne ne tient pas
+   (écran bas, longue explication), Lecteur.tsx la repasse fixée (`data-feuille="fixe"`), comme avant. */
+@media (min-height: 641px) {
+  .lecteur:has(> .lecteur-mochi):not([data-feuille="fixe"]):has(> .verdict) { padding-bottom: 0; }
+  .lecteur:has(> .lecteur-mochi):not([data-feuille="fixe"]) > .verdict { position: sticky; left: auto; right: auto; flex: 1 0 auto;
+    display: flex; flex-direction: column; row-gap: var(--space-3);
+    margin: var(--space-2) calc(-1 * var(--gouttiere)) calc(1px - var(--space-2)); padding-inline: var(--gouttiere); }
+  .lecteur:has(> .lecteur-mochi):not([data-feuille="fixe"]) > .verdict > .verdict-actions { margin-top: auto; }
+}
+/* Feuille fixée (écran bas, ou colonne trop haute) : elle couvre la consigne de Mochi, qui s'efface plutôt que de
+   dépasser à moitié au-dessus d'elle (l'explication de la feuille la remplace). La page garde de quoi défiler pour
+   montrer le plateau entier et faire sortir l'en-tête entier, jamais rogné (Lecteur.tsx). */
+.lecteur[data-feuille="fixe"]:has(> .verdict) > .lecteur-mochi { display: none; }
+.lecteur[data-feuille="fixe"]:has(> .lecteur-mochi):has(> .verdict) { padding-bottom: calc(max(120px, var(--verdict-h, 0px)) + 96px); }
+@media (max-height: 640px) {
+  .lecteur:has(> .verdict) > .lecteur-mochi { display: none; }
+  .lecteur:has(> .lecteur-mochi):has(> .verdict) { padding-bottom: calc(max(120px, var(--verdict-h, 0px)) + 96px); }
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .verdict { animation: verdict-monte 220ms var(--ease); }
   .verdict .cta:active { transform: translateY(var(--relief)); }

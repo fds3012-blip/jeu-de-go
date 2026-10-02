@@ -226,18 +226,20 @@ export function ConnexionCode({ db, mode = 'connexion', envoyer, moment = 'profi
  */
 function CaseAge({ id, coche, onChange, onConditions }: { id: string; coche: boolean; onChange: (v: boolean) => void; onConditions?: () => void }) {
   const [moins15, setMoins15] = useState(false);
-  // Repères du texte traduit, remplacés par les deux liens (caractères à usage privé, jamais dans un texte).
-  const [avant, entre, apres] = t('compte.age.case', { conditions: '', confidentialite: '' }).split(/[]/);
-  const lien = (cle: 'compte.age.conditions' | 'compte.age.confidentialite') => onConditions
-    ? <button type="button" className="lien-texte" onClick={onConditions}>{t(cle)}</button>
-    : <b>{t(cle)}</b>;
+  // Repères du texte traduit, remplacés par les deux noms (caractères à usage privé, jamais dans un texte).
+  const [avant, entre, apres] = t('compte.age.case', { conditions: '\uE000', confidentialite: '\uE001' }).split(/[\uE000\uE001]/);
+  // Recette du 02/10 au soir (L11) : les deux liens dans la phrase faisaient 20 px de haut et menaient au même écran.
+  // Les noms restent en gras dans la phrase ; un seul lien de 44 px, « Lire les conditions », les ouvre, sous la case.
   return (
     <div className="case-age">
       <div className="case-age-ligne">
         <input id={`${id}-age`} type="checkbox" checked={coche} onChange={e => onChange(e.target.checked)} />
-        <label htmlFor={`${id}-age`} className="small">{fr(avant)}{lien('compte.age.conditions')}{fr(entre)}{lien('compte.age.confidentialite')}{fr(apres)}</label>
+        <label htmlFor={`${id}-age`} className="small">{fr(avant)}<b>{t('compte.age.conditions')}</b>{fr(entre)}<b>{t('compte.age.confidentialite')}</b>{fr(apres)}</label>
       </div>
-      <button type="button" className="lien case-age-moins15" aria-expanded={moins15} onClick={() => setMoins15(v => !v)}>{t('compte.age.moins15')}</button>
+      <div className="case-age-liens">
+        <button type="button" className="lien case-age-moins15" aria-expanded={moins15} onClick={() => setMoins15(v => !v)}>{t('compte.age.moins15')}</button>
+        {onConditions && <button type="button" className="lien case-age-conditions" onClick={onConditions}>{t('compte.age.lire')}</button>}
+      </div>
       {moins15 && <p className="muted small case-age-detail">{fr(t('compte.age.moins15Detail'))}</p>}
     </div>
   );
