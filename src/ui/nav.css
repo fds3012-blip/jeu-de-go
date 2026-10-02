@@ -22,6 +22,11 @@ html:has(.nav) { scroll-padding-bottom: calc(max(var(--nav-h), 3.75rem) + env(sa
 .onglet-problemes { --onglet: var(--onglet-problemes); }
 .onglet-profil { --onglet: var(--onglet-profil); }
 .onglet[aria-current="page"] .onglet-point { opacity: 1; background: var(--onglet); }
+/* Pastille « quelque chose t'attend » (#367) : point jade sur l'icône, liseré de la couleur de la barre.
+   Jade foncé en clair (--accent-trait) : contraste non textuel de 3:1 au moins sur la barre, dans les deux thèmes. */
+.onglet-icone { position: relative; display: block; flex: none; }
+.onglet-pastille { position: absolute; top: -1px; right: -4px; width: 10px; height: 10px; border-radius: 50%;
+  background: var(--accent-trait); box-shadow: 0 0 0 2px var(--barre); pointer-events: none; }
 
 /* ---------- Icônes (28 × 28) ---------- */
 .icone-nav { width: var(--icone-nav); height: var(--icone-nav); display: block; overflow: visible; flex: none; }
@@ -54,6 +59,11 @@ html:has(.nav) { scroll-padding-bottom: calc(max(var(--nav-h), 3.75rem) + env(sa
 }
 @keyframes nav-pose { from { transform: scale(1.15); } to { transform: scale(1); } }
 @keyframes nav-point { from { transform: scale(.8); } to { transform: scale(1); } }
+/* Pastille (#367) : elle apparaît en 200 ms ; en mouvements réduits, elle est là, sans plus. */
+@media (prefers-reduced-motion: no-preference) {
+  .onglet-pastille { animation: nav-pastille var(--duree) var(--ease) both; }
+}
+@keyframes nav-pastille { from { transform: scale(.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
 /* ---------- Indicateur d'attente : deux pierres qui tournent ---------- */
 .reflexion { display: inline-block; flex: none; vertical-align: middle; }
