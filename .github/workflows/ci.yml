@@ -54,7 +54,9 @@ jobs:
         with:
           node-version: 22
       - run: node scripts/sync-functions.mjs
-      - run: git diff --exit-code -- supabase/functions || { echo "::error::Copie périmée : lance npm run sync:functions et committe."; exit 1; }
+      - name: Copie à jour
+        run: |
+          git diff --exit-code -- supabase/functions || { echo "::error::Copie périmée : lance npm run sync:functions et committe."; exit 1; }
 
   e2e:
     name: Playwright (mobile)
