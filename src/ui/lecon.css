@@ -9,15 +9,19 @@
 .lecteur-lecon { --mochi: 72px; display: flex; flex-direction: column; gap: var(--space-2);
   min-height: calc(100dvh - var(--space-2) - var(--nav-h) - var(--space-2) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); }
 .lecteur-lecon:has(.verdict) { padding-bottom: 0; }
-@media (min-height: 760px) { .lecteur-lecon { --mochi: 88px; } }
+@media (min-height: 760px) { .lecteur-lecon { --mochi: 96px; } }
+/* Écran étroit (320 px) : les points se serrent, le titre reste lisible. */
+@media (max-width: 359px) { .lecteur-lecon .etapes { gap: 5px; } .lecteur-lecon .etapes span { width: 8px; height: 8px; } .lecteur-lecon .lecteur-titre { font-size: var(--fs-s); } }
 
 /* Barre : retour, titre de la leçon sur une ligne, points d'étapes à droite. */
 .lecteur-lecon .lecteur-tete { margin-bottom: 0; }
 .lecteur-lecon .lecteur-titre { flex: 1; min-width: 0; margin: 0; font-size: var(--fs-m); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 8px; }
 .lecteur-lecon .lecteur-titre .sceau { flex: none; }
 
-/* Le plateau : carré de côté min(largeur, hauteur libre) grâce à une requête de conteneur. Plancher de 200 px : en dessous, la page défile. */
-.lecteur-lecon > .lecteur-plateau { flex: 1 1 0; min-height: 200px; container-type: size; display: flex; justify-content: center; align-items: flex-start; }
+/* Le plateau : carré de côté min(largeur, hauteur libre) grâce à une requête de conteneur. Plancher de 200 px : en dessous,
+   la page défile. Plafond : sa largeur (la colonne, gouttières déduites), pour que la place en trop aille à Mochi, pas au vide. */
+.lecteur-lecon > .lecteur-plateau { flex: 1 1 0; min-height: 200px; max-height: calc(min(100vw, var(--largeur-max)) - 2 * var(--gouttiere) + 6px);
+  container-type: size; display: flex; justify-content: center; align-items: flex-start; }
 .plateau-cadre { position: relative; width: min(100cqw, calc(100cqh - 6px)); max-width: 100%; }
 .plateau-cadre .board-wrap { width: 100%; }
 .lecteur-plateau[data-demo='en-cours'] { cursor: pointer; }
@@ -46,7 +50,9 @@
 @keyframes demo-atari { from { opacity: 1; } to { opacity: .15; } }
 
 /* ---------- Mochi parle : portrait, puis la bulle (consigne, bravo en jade, erreur douce en hanko) ---------- */
-.mochi-zone { display: flex; gap: var(--space-3); align-items: flex-start; }
+/* La zone prend la hauteur qui reste sous le plateau ; Mochi et sa bulle s'y tiennent au milieu, l'action reste en bas. */
+.mochi-zone { flex: 1 0 auto; display: flex; gap: var(--space-3); align-items: center; }
+@media (min-height: 760px) { .lecteur-lecon .mochi-bulle p { font-size: var(--fs-l); } }
 .mochi-zone .mochi-portrait { flex: none; width: var(--mochi) !important; height: var(--mochi) !important; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, .22)); }
 .lecteur-lecon .mochi-bulle { position: static; flex: 1; min-width: 0; min-height: var(--mochi); display: flex; gap: 10px; align-items: center; margin: 0; padding: 10px 14px;
   background: var(--surface); border-radius: var(--radius-xs) var(--radius) var(--radius) var(--radius); box-shadow: none; z-index: auto; }
@@ -85,8 +91,7 @@
 }
 
 /* ---------- Une seule action, au bas de la colonne, sous le pouce ; sa place est réservée (rien ne saute) ---------- */
-.lecon-actions { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); margin-top: auto;
-  min-height: calc(var(--cible-cta) + var(--relief)); }
+.lecon-actions { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); min-height: calc(var(--cible-cta) + var(--relief)); }
 .lecteur-lecon .cta { position: static; transform: none; width: 100%; margin-bottom: var(--relief); }
 @media (prefers-reduced-motion: no-preference) {
   .lecteur-lecon .cta { animation: bulle-entre 200ms var(--ease) both; }
@@ -126,6 +131,7 @@
 .fin-lecon .cta { position: static; transform: none; width: 100%; }
 .fin-lecon .lien { margin-top: calc(var(--space-2) + var(--relief)); }
 @media (max-height: 640px) {
+  .fin-sceau .sceau { width: 72px !important; height: 72px !important; }
   .fin-gue { margin: 14px 0 10px; }
   .fin-acquis { margin: 8px 0 10px; font-size: var(--fs-m); }
   .fin-prochain { margin-bottom: 12px; }

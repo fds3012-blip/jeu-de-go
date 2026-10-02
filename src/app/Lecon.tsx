@@ -24,7 +24,7 @@ import { hapticFail, hapticStone, hapticSuccess, hapticVictory } from '../ui/hap
 import { EVENTS, track } from '../data/analytics';
 import { gagnerXp } from './xp';
 import { validerDefi } from './defiAppareil';
-import { actionsFin, etapes, finDeChapitre, finDeLecon, type ActionFin, type Progression } from './apprendre';
+import { actionsFin, etapes, finDeChapitre, finDeLecon, titreCourt, type ActionFin, type Progression } from './apprendre';
 import { GUIDE_KEY, doitGuider, humeurMochi, pointsGuide, type Moment } from './lecon';
 import { t } from '../content/i18n';
 import { lireFile, retirerFete, useExercice } from '../ui/celebrations';
@@ -97,9 +97,12 @@ export function LessonPlayer({ lesson, start, confirmTouch, progress = {}, celeb
 
   // Guidage (R2) : la toute première étape interactive, un halo discret sur le point à toucher, une seule fois par appareil.
   const guide = useMemo(() => pointsGuide(step, attente), [step, attente]);
-  const [guider] = useState(() => doitGuider(readLocal<string | null>(GUIDE_KEY, null), guide));
-  useEffect(() => { if (guider) writeLocal(GUIDE_KEY, '1'); }, [guider]);
-  const halo = guider && !answer && !rate && guide.length ? guide : [];
+  // Étape guidée : la première qui a un point à montrer ; la clé est posée dès qu'elle s'affiche, les suivantes n'ont rien.
+  const [guidee, setGuidee] = useState(-1);
+  useEffect(() => {
+    if (guidee === -1 && doitGuider(readLocal<string | null>(GUIDE_KEY, null), guide)) { setGuidee(idx); writeLocal(GUIDE_KEY, '1'); }
+  }, [guidee, guide, idx]);
+  const halo = guidee === idx && !answer && !rate ? guide : [];
 
   function next() {
     onProgress(idx + 1);
@@ -318,7 +321,7 @@ function FinLecon({ lesson, progress, celebrer, onNext, onExit, pratique, jouer 
   const suivante = LESSONS[LESSONS.indexOf(lesson) + 1];
   const prochain: ReactNode = chapitre && jouer
     ? t('lecon.prochainPas', { titre: t('lecon.jouerContre', { nom: jouer.nom }) })
-    : suivante && onNext ? <><SceauLecon id={suivante.id} taille={22} />{t('lecon.prochainPas', { titre: suivante.title })}</> : null;
+    : suivante && onNext ? <><SceauLecon id={suivante.id} taille={22} />{t('lecon.prochainPas', { titre: titreCourt(suivante.title) })}</> : null;
 
   useEffect(() => {
     titreRef.current?.focus({ preventScroll: true });

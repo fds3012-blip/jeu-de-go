@@ -29,7 +29,8 @@ test('fin de la leçon 1 : 3 problèmes de capture enchaînés, puis retour au c
   const serie = page.locator('.serie-pratique');
   await expect(serie).toHaveAttribute('data-serie', 'a02 n02 a03');
   for (const [rang, titre, coup] of [[1, 'Capture au bord', 'E2'], [2, 'Le plus gros d’abord', 'F1'], [3, 'Capture dans le coin', 'A2']] as const) {
-    await expect(page.getByText(`Entraînement, ${rang} sur 3`)).toBeVisible();
+    // R2 (recette du 30/09) : « Entraînement » et des points, aucun chiffre.
+    await expect(page.locator('.serie-pratique')).toHaveAttribute('data-rang', String(rang));
     await expect(page.getByRole('heading', { name: titre })).toBeVisible();
     await jouer(page, coup);
     await expect(page.locator('.verdict')).toBeVisible();
@@ -94,7 +95,7 @@ test('fin de la leçon 3, toutes les autres faites : fin de chapitre, et un prob
   await expect(pratique).toHaveClass(/\blien\b/);
   await pratique.click();
   await expect(page.locator('.serie-pratique')).toHaveAttribute('data-serie', 'c1 n06 i09');
-  await expect(page.getByText('Entraînement, 1 sur 3')).toBeVisible();
+  await expect(page.locator('.serie-pratique')).toHaveAttribute('data-rang', '1');
   // Le retour du lecteur ramène au chemin.
   await page.getByRole('button', { name: 'Retour au chemin' }).first().click();
   await expect(page.getByText('Chapitre terminé. Tu connais les règles du go !')).toBeVisible();
