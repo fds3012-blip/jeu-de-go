@@ -14,6 +14,7 @@ import { mesDefis } from '../data/defi';
 import type { Db } from '../data/supabase';
 import { Portrait, PortraitMochi } from '../ui/Portrait';
 import { Reflexion } from '../ui/Reflexion';
+import { IconeReglage } from '../ui/IconesReglages';
 import { fr } from '../ui/typo';
 import { t } from '../content/i18n';
 import '../ui/historique.css';
@@ -27,6 +28,8 @@ interface Props {
   onRetour: () => void;
   /** État vide : « Joue ta première partie ». */
   onJouer: () => void;
+  /** « Analyser une partie jouée ailleurs » (#286) : action secondaire, en bas de la liste. */
+  onImporter?: () => void;
   /** Client Supabase et identifiant de session : défis par lien terminés. Sans eux, l'appareil seulement. */
   db?: Db | null;
   userId?: string;
@@ -60,7 +63,7 @@ function SceauIssue({ p }: { p: PartieHistorique }) {
   );
 }
 
-export function MesParties({ onRetour, onJouer, db = null, userId, confirmTouch = false }: Props) {
+export function MesParties({ onRetour, onJouer, onImporter, db = null, userId, confirmTouch = false }: Props) {
   const [appareil] = useState(historiqueAppareil);
   const [defis, setDefis] = useState<PartieHistorique[]>([]);
   const [etat, setEtat] = useState<EtatDefis>(db && userId ? 'chargement' : 'sans');
@@ -99,6 +102,11 @@ export function MesParties({ onRetour, onJouer, db = null, userId, confirmTouch 
     );
   }
 
+  const importer = onImporter && (
+    <button type="button" className="lien mp-parties-importer" onClick={onImporter}>
+      <IconeReglage id="importer" taille={20} />{t('historique.importer')}
+    </button>
+  );
   const statut = etat === 'chargement' ? t('defi.historique.chargement') : etat === 'hors-ligne' ? t('defi.historique.horsLigne') : etat === 'erreur' ? t('defi.historique.erreur') : null;
 
   return (
@@ -114,6 +122,7 @@ export function MesParties({ onRetour, onJouer, db = null, userId, confirmTouch 
           <h3>{t('historique.vide.titre')}</h3>
           <p>{fr(t('historique.vide.texte'))}</p>
           {statut && <p className="mp-parties-statut" role="status">{fr(statut)}</p>}
+          {importer}
           <div className="dock">
             <button type="button" className="cta" onClick={onJouer}>{t('historique.vide.cta')}</button>
           </div>
@@ -147,6 +156,7 @@ export function MesParties({ onRetour, onJouer, db = null, userId, confirmTouch 
           {statut && (
             <p className="mp-parties-statut" role="status">{etat === 'chargement' && <Reflexion taille={20} />}{fr(statut)}</p>
           )}
+          {importer}
         </>
       )}
     </section>

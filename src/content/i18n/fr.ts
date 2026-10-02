@@ -1131,6 +1131,7 @@ export const fr = {
   'historique.resultat.campTemps': '{camp} gagne au temps',
   'historique.resultat.egalite': 'Égalité parfaite',
   'historique.resultat.inconnu': 'Résultat inconnu',
+  'historique.importer': 'Analyser une partie jouée ailleurs',
   'historique.aDeux': 'Partie à deux',
   'historique.ordi': 'L’ordi',
   'historique.importee': 'Partie importée',

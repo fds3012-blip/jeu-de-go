@@ -1073,6 +1073,7 @@ export const en = {
   'historique.resultat.campTemps': '{camp} won on time',
   'historique.resultat.egalite': 'A perfect draw',
   'historique.resultat.inconnu': 'Result unknown',
+  'historique.importer': 'Analyze a game played elsewhere',
   'historique.aDeux': 'Two-player game',
   'historique.ordi': 'Computer',
   'historique.importee': 'Imported game',

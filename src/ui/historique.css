@@ -65,3 +65,8 @@
 .mp-parties-vide h3 { margin: var(--space-3) 0 0; font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: var(--fs-xl); letter-spacing: var(--tracking-titre); }
 .mp-parties-vide p { margin: 0; max-width: 30ch; color: var(--muted); line-height: var(--lh-base); }
 .mp-parties-vide .mp-parties-statut { margin-top: var(--space-2); }
+
+/* « Analyser une partie jouée ailleurs » (#286) : lien secondaire sous la liste, 44 px de haut. */
+.mp-parties-importer { display: flex; align-items: center; justify-content: center; gap: var(--space-2); width: 100%; min-height: var(--cible-min); margin-top: var(--space-4); }
+.mp-parties-importer .icone-reglage { flex: none; }
+.mp-parties-vide .mp-parties-importer { margin-top: var(--space-2); }
