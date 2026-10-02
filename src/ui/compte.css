@@ -29,6 +29,8 @@
   border: 1.5px solid var(--line); background: var(--bg); color: var(--text); font: inherit; font-size: max(16px, var(--fs-base)); }
 .connexion .champ:focus-visible { outline: 3px solid var(--focus); outline-offset: 1px; border-color: transparent; }
 .connexion .champ[aria-invalid='true'] { border-color: var(--danger-texte); }
+/* Audit du 02/10 : en erreur et au focus, un seul liseré (rouge) au lieu du double vert + rouge. */
+.connexion .champ[aria-invalid='true']:focus-visible { outline-color: var(--danger-texte); }
 /* Le code se lit d'un coup d'œil : chiffres larges, espacés, alignés. */
 .connexion .champ-code { min-height: 56px; text-align: center; font-variant-numeric: tabular-nums; font-size: var(--fs-xl);
   font-weight: var(--fw-bold); letter-spacing: .4em; padding-left: calc(14px + .4em); }

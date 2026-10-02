@@ -11,7 +11,8 @@
 .placement-passer { flex: none; color: var(--muted); margin-right: -12px; }
 
 /* Résultat : une phrase forte, l'explication du kyu, l'adversaire conseillé, une seule action. */
-.placement-fin { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-6) 0 var(--space-4); text-align: center; }
+/* Audit du 02/10 : marge haute proportionnelle à l'écran, pour que le bloc ne reste pas collé en haut d'un écran aux deux tiers vide. */
+.placement-fin { display: flex; flex-direction: column; gap: var(--space-3); padding: clamp(var(--space-6), 16vh, 140px) 0 var(--space-4); text-align: center; }
 .placement-fin h2 { margin: 0; font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: var(--fs-3xl); line-height: 1.1; text-wrap: balance; }
 .placement-surtitre { margin: 0; color: var(--muted); font-size: var(--fs-s); }
 .placement-explique, .placement-phrase { margin: 0 auto; max-width: 34ch; color: var(--muted); font-size: var(--fs-corps-s); line-height: 1.45; }

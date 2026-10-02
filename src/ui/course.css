@@ -7,7 +7,17 @@
   padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4); background: var(--surface); color: var(--text);
   border: 1.5px solid var(--line); border-radius: var(--radius); text-align: left; font: inherit; cursor: pointer; }
 .course-carte:active { background: var(--surface-2); }
-.course-carte .course-picto { flex: none; color: var(--danger-texte); }
+.course-carte .chrono-course { flex: none; }
+/* Chronomètre dessiné (#103) : cadran en papier, arc hanko des trois minutes, aiguille d'encre. */
+.chrono-course { display: block; overflow: visible; }
+.chrono-course .ch-cadran { fill: var(--surface-2); stroke: var(--text); stroke-width: 2; }
+.chrono-course .ch-anneau { fill: none; stroke: color-mix(in srgb, var(--text) 22%, transparent); stroke-width: 1; }
+.chrono-course .ch-ticks { stroke: var(--text); opacity: .75; stroke-linecap: round; }
+.chrono-course .ch-poussoir { fill: none; stroke: var(--text); stroke-width: 2.4; stroke-linecap: round; }
+.chrono-course .ch-arc { fill: none; stroke: var(--danger-texte); stroke-width: 4; stroke-linecap: round; }
+.chrono-course .ch-aiguille { fill: none; stroke: var(--text); stroke-width: 2.2; stroke-linecap: round; }
+.chrono-course .ch-axe { fill: var(--danger-texte); }
+.course-consigne .chrono-course { margin: var(--space-4) auto var(--space-2); }
 .course-carte-texte { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .course-carte-texte b { font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: var(--fs-l); letter-spacing: var(--tracking-titre); line-height: 1.2; }
 .course-carte-texte small { color: var(--muted); font-size: var(--fs-legende); line-height: 1.3; }
