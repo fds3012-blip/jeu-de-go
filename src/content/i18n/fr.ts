@@ -1104,4 +1104,20 @@ export const fr = {
   'compte.age.moins15': 'Tu as moins de 15 ans ?',
   'compte.age.moins15Detail': 'Montre cet écran à un parent. S’il est d’accord, coche la case avec lui. Tu peux aussi continuer l’essai sans compte : rien ne quitte ton téléphone.',
   'compte.pseudo.conseil': 'Ton pseudo est visible par tous. Évite ton vrai nom.',
+
+  // Robustesse (#325, point 4) : écran d'erreur (jamais d'écran blanc), bandeau hors ligne, mise à jour prête.
+  'erreur.titre': 'Oups, ça n’a pas marché.',
+  'erreur.horsLigne': 'Tu es hors ligne et cet écran n’est pas encore sur ton téléphone. Dès que le réseau revient, réessaie.',
+  'erreur.chargement': 'Cet écran n’a pas pu se charger. Un réseau capricieux, ou une nouvelle version qui vient d’arriver.',
+  'erreur.reseau': 'Le réseau n’a pas répondu. Ce n’est pas de ta faute.',
+  'erreur.rendu': 'Quelque chose s’est mal passé de notre côté. Ce n’est pas de ta faute.',
+  'erreur.mochi': 'Pas de panique : ta progression est gardée.',
+  'erreur.reessayer': 'Réessayer',
+  'erreur.accueil': 'Retour à l’accueil',
+  'erreur.aria': 'Erreur',
+  'horsLigne.bandeau': 'Tu es hors ligne',
+  'horsLigne.detail': 'Ce qui est sur ton téléphone reste jouable.',
+  'miseAJour.prete': 'Mise à jour prête',
+  'miseAJour.recharger': 'Recharger',
+  'miseAJour.plusTard': 'Plus tard',
 } as const;
