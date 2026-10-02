@@ -11,7 +11,6 @@ import type { Session } from '@supabase/supabase-js';
 import { adresseDejaPrise, type EchecEnvoi, type Result } from './account';
 import type { Tables } from './database.types';
 import type { Game } from './games';
-import { marquerLues } from './notifications';
 import type { Db } from './supabase';
 import { t } from '../content/i18n';
 
@@ -159,11 +158,12 @@ export async function lireDefi(db: Db, partieId: string): Promise<Result<EtatDef
   const temps = await db.rpc('victoire_au_temps', { p_partie: partieId });
   if (temps.error) return echec(temps.error.message);
   // #367 : la partie est sous les yeux du joueur, ses notifications sont lues (la pastille s'éteint partout).
-  // Sans effet sur la lecture si cela échoue.
+  // Sans effet sur la lecture si cela échoue. Appel direct (et non `marquerLues` de ./notifications) : ce module est
+  // dans le JS initial, les notifications sont chargées à la demande.
   const [partie, defi] = await Promise.all([
     db.from('games').select('*').eq('id', partieId).maybeSingle(),
     db.from('defis').select('*').eq('partie_id', partieId).maybeSingle(),
-    marquerLues(db, { partieId }).catch(() => null)
+    Promise.resolve(db.rpc('marquer_notifications_lues', { p_partie: partieId, p_type: undefined })).catch(() => null)
   ]);
   if (partie.error || defi.error || !partie.data || !defi.data) return echec(partie.error?.message ?? defi.error?.message);
   return { ok: true, value: { partie: partie.data, defi: defi.data, resultat: temps.data ?? partie.data.result } };
