@@ -13,7 +13,8 @@
 // acceptées sont exactement ses points 3-3, 3-4, 4-3 et 4-4 (3e et 4e lignes depuis les deux bords). Ce test le
 // vérifie toujours. Le moteur de règles ne peut pas juger une ouverture : KataGo le fait, dans le bloc
 // « ouverture selon KataGo », lancé à la demande (voir son en-tête) : le meilleur coup de tout le plateau est une
-// réponse, chaque réponse en est à moins de TOLERANCE points, et chaque coup sur les deux lignes du bord en est loin.
+// réponse, chaque réponse en est à moins de TOLERANCE points, et chaque coup sur les deux lignes du bord perd au moins
+// MARGE point de plus que la moins bonne réponse.
 import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
@@ -267,8 +268,8 @@ const KATAGO = process.env.LOT_X_KATAGO === '1' && existsSync(MODELE);
 const VISITES = Number(process.env.LOT_X_VISITES ?? 1);
 /** Écart maximal (en points) entre une réponse acceptée et le meilleur coup du plateau. */
 const TOLERANCE = 2.5;
-/** Écart minimal entre le meilleur coup et un coup sur la 1re ou la 2e ligne. */
-const BORD = 2.5;
+/** Un coup sur la 1re ou la 2e ligne perd au moins MARGE points de plus que la moins bonne réponse. */
+const MARGE = 1;
 
 describe.skipIf(!KATAGO)('lot X, ouverture selon KataGo (LOT_X_KATAGO=1)', () => {
   let evaluer: (pos: Position) => Promise<number>;
@@ -284,17 +285,22 @@ describe.skipIf(!KATAGO)('lot X, ouverture selon KataGo (LOT_X_KATAGO=1)', () =>
   }, 60000);
 
   for (const id of OUVERTURE) {
-    it(`${id} : le meilleur coup est une réponse ; chaque réponse à moins de ${TOLERANCE} points ; le bord loin derrière`, async () => {
+    it(`${id} : le meilleur coup est une réponse ; chaque réponse à moins de ${TOLERANCE} points ; la 2e ligne derrière chaque réponse`, async () => {
       const p = pz(id), { pos } = startOf(p), n = p.size;
       const valeurs = new Map<number, number>();
-      for (const m of legalMoves(pos)) if (m >= 0) valeurs.set(m, await evaluer(ok(play(pos, m))));
+      for (const m of legalMoves(pos)) {
+        if (m >= 0) valeurs.set(m, await evaluer(ok(play(pos, m))));
+        // Rend la main à Vitest entre deux coups (sinon ses messages internes expirent).
+        await new Promise(r => setTimeout(r, 0));
+      }
       const tri = [...valeurs.entries()].sort((a, b) => b[1] - a[1]);
       const [meilleur, v0] = tri[0];
       console.log(`${id} : ${tri.slice(0, 8).map(([m, v]) => `${lab(p, m)} ${(v0 - v).toFixed(1)}`).join(', ')}`);
       expect(p.answers, `meilleur ${lab(p, meilleur)}`).toContain(meilleur);
       for (const a of p.answers) expect(v0 - valeurs.get(a)!, lab(p, a)).toBeLessThanOrEqual(TOLERANCE);
+      const pire = Math.min(...p.answers.map(a => valeurs.get(a)!));
       const ligne = (m: number) => Math.min(m % n, Math.floor(m / n), n - 1 - (m % n), n - 1 - Math.floor(m / n));
-      for (const [m, v] of valeurs) if (ligne(m) <= 1) expect(v0 - v, lab(p, m)).toBeGreaterThanOrEqual(BORD);
+      for (const [m, v] of valeurs) if (ligne(m) <= 1) expect(pire - v, lab(p, m)).toBeGreaterThanOrEqual(MARGE);
     }, 4 * 3600 * 1000);
   }
 });

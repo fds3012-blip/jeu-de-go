@@ -1,10 +1,11 @@
 -- Issue #16, lot X : 8 problèmes d'entraînement pour les leçons 4 (le ko), 6 (territoire et ouverture) et 8
--- (les premiers coups). Noir au trait, difficulté 350 à 650 (ouverts à un débutant).
+-- (les premiers coups). Noir au trait, difficulté 350 à 550 (ouverts à un débutant).
 -- - Ko (x01 à x03), 9 × 9 : prendre un ko, fermer un ko, prendre un ko pour sauver sa pierre. Prouvés par
 --   src/go/lot-x.test.ts avec les règles de src/go (seule réponse, ko vérifié, réfutations vérifiées).
 -- - Ouverture (x04 à x08), 13 × 13 : un seul coin libre ; les réponses sont ses points 3-3, 3-4, 4-3 et 4-4. Géométrie
 --   vérifiée par src/go/lot-x.test.ts ; chaque position contrôlée par KataGo (réseau g170 b6c96) : le meilleur coup
---   est une réponse, chaque réponse en est à moins de 2,5 points, les coups des deux premières lignes à plus de 3.
+--   est une réponse, chaque réponse en est à moins de 2,5 points, et chaque coup des deux premières lignes perd au
+--   moins 1 point de plus que la moins bonne réponse.
 -- La leçon 7 (compter) reprend les problèmes du lot W : aucune ligne ici.
 -- Commun à tous (owner_id null). Insertion seule : aucun problème existant n'est touché.
 -- setup.refutation : texte affiché après une erreur.

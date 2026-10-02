@@ -7,7 +7,7 @@
 //   meilleur coup (le centre et les approches y valent autant) : le principe des leçons ne s'y vérifie pas. En 13 × 13,
 //   il se vérifie. Les réponses acceptées sont les points du coin libre sur la 3e et la 4e ligne (3-3, 3-4, 4-4) ;
 //   src/go/lot-x.test.ts vérifie la géométrie, et KataGo (réseau g170 b6c96) chaque réponse : voir l'en-tête du test.
-// Noir au trait, tous ouverts à un débutant (difficulté 350 à 650). Même contenu que la migration
+// Noir au trait, tous ouverts à un débutant (difficulté 350 à 550). Même contenu que la migration
 // 20261002121100_lot_x.
 import type { PuzzleRow } from '../../data/puzzles';
 
