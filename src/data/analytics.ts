@@ -125,7 +125,7 @@ interface PostHogLike {
 }
 interface SentryLike {
   init: (options: Record<string, unknown>) => unknown;
-  captureException: (e: unknown) => unknown;
+  captureException: (e: unknown, hint?: { tags?: Record<string, string> }) => unknown;
   setUser: (u: { id: string } | null) => unknown;
   close: () => unknown;
 }
@@ -416,10 +416,28 @@ export function identify(id: string | null): void {
   if (seLoading) void seLoading.then(s => { s?.setUser(id ? { id } : null); });
 }
 
-/** Signale une erreur à Sentry, seulement si le joueur a accepté. */
-export function captureError(error: unknown): void {
+/**
+ * Catégorie d'une erreur signalée (robustesse, #325) : étiquette Sentry `categorie`, pour trier les écrans qui n'arrivent
+ * pas (`chargement`) et le réseau (`reseau`) des bogues de l'app (`rendu`). `origine` : d'où elle vient (`ecran`, `global`, `prechargement`).
+ */
+export interface ContexteErreur {
+  categorie: 'chargement' | 'reseau' | 'rendu';
+  origine?: string;
+}
+
+/**
+ * Signale une erreur à Sentry, seulement si le joueur a accepté. Jamais de donnée personnelle : `sendDefaultPii` est
+ * désactivé et `beforeSend` nettoie adresses et messages (src/data/urlSensible.ts) ; les étiquettes sont des mots fixes.
+ */
+export function captureError(error: unknown, contexte?: ContexteErreur): void {
   if (!browser() || !analyticsConfig().sentryDsn || niveau() !== 'complet') return;
-  void loadSentry().then(s => { s?.captureException(error); });
+  void loadSentry().then(s => {
+    if (!s) return;
+    if (!contexte) { s.captureException(error); return; }
+    const tags: Record<string, string> = { categorie: contexte.categorie };
+    if (contexte.origine) tags.origine = contexte.origine;
+    s.captureException(error, { tags });
+  });
 }
 
 /** Secondes écoulées depuis l'ouverture de la page (mesure « première pierre dans la minute »). */
