@@ -1118,4 +1118,20 @@ export const en = {
   'amis.erreur.tropDeParties': 'You already have 3 games going. Finish one first.',
   'amis.erreur.compte': 'Create your account to add friends.',
   'amis.erreur.pseudo': 'Choose your nickname to add friends.',
+
+  // Robustesse (#325, point 4) : écran d'erreur, bandeau hors ligne, mise à jour prête.
+  'erreur.titre': 'Oops, that didn’t work.',
+  'erreur.horsLigne': 'You’re offline and this screen isn’t on your phone yet. Try again once you’re back online.',
+  'erreur.chargement': 'This screen couldn’t load. A flaky network, or a new version that just arrived.',
+  'erreur.reseau': 'The network didn’t answer. It’s not your fault.',
+  'erreur.rendu': 'Something went wrong on our side. It’s not your fault.',
+  'erreur.mochi': 'Don’t worry: your progress is safe.',
+  'erreur.reessayer': 'Try again',
+  'erreur.accueil': 'Back to home',
+  'erreur.aria': 'Error',
+  'horsLigne.bandeau': 'You’re offline',
+  'horsLigne.detail': 'What’s on your phone is still playable.',
+  'miseAJour.prete': 'Update ready',
+  'miseAJour.recharger': 'Reload',
+  'miseAJour.plusTard': 'Later',
 } as const satisfies Catalogue;

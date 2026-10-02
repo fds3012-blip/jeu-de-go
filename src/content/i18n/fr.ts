@@ -1179,4 +1179,20 @@ export const fr = {
   'amis.erreur.tropDeParties': 'Vous avez déjà 3 parties en cours. Finis-en une d’abord.',
   'amis.erreur.compte': 'Crée ton compte pour ajouter des amis.',
   'amis.erreur.pseudo': 'Choisis ton pseudo pour ajouter des amis.',
+
+  // Robustesse (#325, point 4) : écran d'erreur (jamais d'écran blanc), bandeau hors ligne, mise à jour prête.
+  'erreur.titre': 'Oups, ça n’a pas marché.',
+  'erreur.horsLigne': 'Tu es hors ligne et cet écran n’est pas encore sur ton téléphone. Dès que le réseau revient, réessaie.',
+  'erreur.chargement': 'Cet écran n’a pas pu se charger. Un réseau capricieux, ou une nouvelle version qui vient d’arriver.',
+  'erreur.reseau': 'Le réseau n’a pas répondu. Ce n’est pas de ta faute.',
+  'erreur.rendu': 'Quelque chose s’est mal passé de notre côté. Ce n’est pas de ta faute.',
+  'erreur.mochi': 'Pas de panique : ta progression est gardée.',
+  'erreur.reessayer': 'Réessayer',
+  'erreur.accueil': 'Retour à l’accueil',
+  'erreur.aria': 'Erreur',
+  'horsLigne.bandeau': 'Tu es hors ligne',
+  'horsLigne.detail': 'Ce qui est sur ton téléphone reste jouable.',
+  'miseAJour.prete': 'Mise à jour prête',
+  'miseAJour.recharger': 'Recharger',
+  'miseAJour.plusTard': 'Plus tard',
 } as const;
