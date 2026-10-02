@@ -66,6 +66,13 @@ describe('défis par lien terminés', () => {
     expect(issueDe(blanc)).toBe('victoire');
     expect(issueDe(depuisDefi(ligne(), 'moi')!)).toBe('defaite');
   });
+  it('nomme l’ami par son pseudo (#400), sinon « Ton ami »', () => {
+    const nomme = depuisDefi(ligne(), 'moi', 'W+R', 'Lea_du_go')!;
+    expect(nomAdversaire(nomme)).toBe('Lea_du_go');
+    expect(etiquette(nomme, new Date('2026-09-30T12:00:00Z'))).toMatch(/^Lea_du_go\. /);
+    expect(nomAdversaire(depuisDefi(ligne(), 'moi', 'W+R', null)!)).toBe('Ton ami');
+    expect(nomAdversaire(depuisDefi(ligne(), 'moi')!)).toBe('Ton ami');
+  });
   it('écarte une partie en cours, une partie d’un autre joueur et des coups illisibles', () => {
     expect(depuisDefi(ligne({ status: 'active', result: null }), 'moi')).toBeNull();
     expect(depuisDefi(ligne(), 'quelquun')).toBeNull();

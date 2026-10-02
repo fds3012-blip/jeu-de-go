@@ -5,6 +5,7 @@ import { t } from '../content/i18n';
 import { checkAnswer, startOf, type Puzzle } from '../data/puzzles';
 import { EVENTS, track } from '../data/analytics';
 import { Board } from '../ui/Board';
+import { estSerre, Visee } from '../ui/Visee';
 import { Retour } from '../ui/Lecteur';
 import { Bubble } from '../ui/Mochi';
 import { fr } from '../ui/typo';
@@ -190,7 +191,7 @@ function EnCourse({ etat, setEtat, liste, confirmTouch, onFin, onExit }: {
           <Bubble>{fr(`${pz.prompt} ${t(pz.toPlay === 1 ? 'pb.tuJoues.1' : 'pb.tuJoues.2')}`)}</Bubble>
           <div className={`course-plateau${retour ? (retour.ok ? ' juste' : ' faux') : ''}`}>
             <Board key={pz.id} size={pz.size} board={board} toPlay={pz.toPlay} interactive={!retour && !etat.fin}
-              confirmTouch={confirmTouch} onPlay={onPlay} shake={shake}
+              confirmTouch={confirmTouch || estSerre(pz.size)} surFantome={estSerre(pz.size) ? q => <Visee p={q} size={pz.size} /> : undefined} onPlay={onPlay} shake={shake}
               marks={{ targets: depart.marked, last: retour?.p ?? null, ok: retour?.ok ? retour.p : undefined, mistake: retour && !retour.ok ? retour.p : undefined }} />
           </div>
         </>
