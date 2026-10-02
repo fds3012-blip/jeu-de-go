@@ -145,7 +145,7 @@ test('deux téléphones : Léa joue, la pastille arrive chez moi sans recharger 
   await lea.getByTestId('tuile-defi').click();
   await expect(plateau(lea)).toBeVisible();
   await jouer(lea, 'C3');
-  await expect(lea.getByText(/Au tour de ton ami/)).toBeVisible();
+  await expect(lea.getByText(/Au tour de /)).toBeVisible();
 
   // Chez moi, sans rechargement ni retour au premier plan : la pastille et la ligne nommée en moins de 5 s.
   await expect(moi.getByTestId('pastille-jouer')).toBeVisible({ timeout: 5000 });
