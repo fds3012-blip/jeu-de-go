@@ -25,7 +25,9 @@ export interface TuileProbleme { titre: string; reussi: boolean; rows: string[];
   etat?: 'fait' | 'aFaire' | null }
 export interface TuileLecon { rang: number; total: number; titre: string }
 /** Défis d'amis où c'est ton tour (#81) : la tuile passe en premier. */
-export interface TuileDefis { n: number; ouvrir: () => void }
+export interface TuileDefis { n: number; ouvrir: () => void;
+  /** #367 : un seul défi en attente, adversaire connu : « Contre Léa » (la tuile ouvre alors la partie). */
+  adversaire?: string | null }
 
 interface Props {
   adv: Opponent;
@@ -152,11 +154,14 @@ function Tuile({ tuile, p, etat, defis }: { tuile: TuileDuJour; p: Props; etat: 
   const avant = tuile.enAvant ? ' tuile-avant' : '';
   if (tuile.genre === 'defi' && defis) {
     return (
-      <button className={`tuile tuile-defi${avant}`} onClick={defis.ouvrir} aria-label={t('defi.accueil.tuileAria', { n: defis.n })} data-testid="tuile-defi">
+      <button className={`tuile tuile-defi${avant}`} onClick={defis.ouvrir} data-testid="tuile-defi"
+        aria-label={defis.adversaire
+          ? `${t('defi.accueil.tuile', { n: 1 })}, ${t('aFaire.contre', { pseudo: defis.adversaire })}, ${t('defi.accueil.tuileEtat')}.`
+          : t('defi.accueil.tuileAria', { n: defis.n })}>
         <span className="tuile-pierres" aria-hidden="true"><span className="stone b" /><span className="stone w" /></span>
         <span>
           <small>{t('defi.accueil.tuile', { n: defis.n })}</small>
-          <b>{t('defi.accueil.tuileEtat')}</b>
+          <b>{defis.adversaire ? t('aFaire.contre', { pseudo: defis.adversaire }) : t('defi.accueil.tuileEtat')}</b>
         </span>
         <em className="tuile-etat" aria-hidden="true">{t('defi.accueil.tuileEtat')}</em>
       </button>

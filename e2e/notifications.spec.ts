@@ -85,6 +85,9 @@ test('liste « À faire » du Profil : « C’est ton tour contre Léa », un to
   await expect(page.getByTestId('pastille-jouer')).toBeVisible();
   await expect(page.getByTestId('pastille-problemes')).toBeVisible(); // série en jeu aujourd'hui
   await expect(page.getByTestId('pastille-apprendre')).toHaveCount(0); // une leçon en cours n'est pas une urgence
+  // Sur l'accueil, sous le bouton principal : la tuile nomme l'ami qui attend.
+  await expect(page.getByTestId('tuile-defi')).toContainText('Contre Léa');
+  await expect(page.getByRole('button', { name: 'Défi d’un ami, Contre Léa, À toi de jouer.' })).toBeVisible();
 
   await nav(page).getByRole('button', { name: /^Profil/ }).click();
   const ligne = page.getByRole('button', { name: /^À faire/ });

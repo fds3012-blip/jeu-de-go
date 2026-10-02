@@ -567,7 +567,7 @@ export function App() {
         installation={appel === 'installation' ? <ProposerInstallation moment="retour" /> : null}
         // Accueil v3 : un défi d'un ami où c'est ton tour passe en premier dans « Aujourd'hui ».
         // #367 : un seul défi où c'est ton tour ? La tuile ouvre directement la partie, en un toucher.
-        defis={supabase ? { n: defisAJouer, ouvrir: () => {
+        defis={supabase ? { n: defisAJouer, adversaire: defisAJouer === 1 ? defisEnAttente[0].adversaire : null, ouvrir: () => {
           const seul = defisAJouer === 1 ? aFaire.find(e => e.genre === 'defi') : undefined;
           if (seul) { ouvrirAFaire(seul, 'accueil'); return; }
           if (!garde({ quoi: 'defi' }, { quoi: 'defis' })) return;

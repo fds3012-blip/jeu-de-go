@@ -1196,6 +1196,7 @@ export const fr = {
   // Notifications dans l'app (#367) : ce qui t'attend, d'un coup d'œil. Calme : jamais de reproche ni d'alarme.
   'aFaire.titre': 'À faire',
   'aFaire.tourContre': 'C’est ton tour contre {pseudo}',
+  'aFaire.contre': 'Contre {pseudo}',
   'aFaire.tour': 'C’est ton tour',
   'aFaire.comptageContre': 'Compte des points avec {pseudo}',
   'aFaire.comptage': 'Compte des points avec ton ami',

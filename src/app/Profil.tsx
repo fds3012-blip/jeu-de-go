@@ -210,9 +210,12 @@ function Menu({ onVue, profil, serie, record = 0, parcours, placement, onPlaceme
       <VitrineBadges liste={donnees.badges} nouveaux={donnees.nouveaux} />
 
       <div className="lignes">
-        {/* #367 : ce qui t'attend, en tête ; point jade quand quelqu'un ou quelque chose attend vraiment. */}
-        <LigneLien icone={<IconeReglage id="aFaire" />} libelle={t('aFaire.titre')} onClick={() => onVue('aFaire')}
-          valeur={<>{aFaire.some(e => e.pastille) && <span className="a-faire-point" aria-hidden="true" data-testid="a-faire-point" />}{resumeAFaire(aFaire)}</>} />
+        {/* #367 : ce qui t'attend, en tête ; point jade quand quelqu'un ou quelque chose attend vraiment. Sans compte et
+            sans rien à faire, la ligne ne se montre pas (rien ne peut arriver d'un ami) : le Profil tient sans défiler. */}
+        {(aFaire.length > 0 || !!profil?.pseudo) && (
+          <LigneLien icone={<IconeReglage id="aFaire" />} libelle={t('aFaire.titre')} onClick={() => onVue('aFaire')}
+            valeur={<>{aFaire.some(e => e.pastille) && <span className="a-faire-point" aria-hidden="true" data-testid="a-faire-point" />}{resumeAFaire(aFaire)}</>} />
+        )}
         {/* #358 : tes parties passées, en tête : c'est la ligne qu'on rouvre le plus. « Analyser une partie » (#286) y est. */}
         <LigneLien icone={<IconeReglage id="parties" />} libelle={t('historique.titre')}
           valeur={nParties ? t('historique.profilResume', { n: nParties }) : userId ? undefined : t('historique.profilVide')} onClick={() => onVue('parties')} />

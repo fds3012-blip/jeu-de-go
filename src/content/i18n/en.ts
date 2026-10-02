@@ -1133,6 +1133,7 @@ export const en = {
   'miseAJour.plusTard': 'Later',
   'aFaire.titre': 'To do',
   'aFaire.tourContre': 'Your move against {pseudo}',
+  'aFaire.contre': 'Against {pseudo}',
   'aFaire.tour': 'Your move',
   'aFaire.comptageContre': 'Score count with {pseudo}',
   'aFaire.comptage': 'Score count with your friend',
