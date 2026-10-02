@@ -27,6 +27,20 @@
 /* Hauteur libre, jusqu'au plateau entier (carré : 100cqw). Aucun masque ni bulle par-dessus : les 9 lignes restent visibles.
    S'il manque de la place, le plateau est centré et recadré en haut et en bas à parts égales. */
 .scene { position: relative; flex: 1 1 0; min-height: 200px; max-height: 100cqw; }
+/* iPhone SE (320 × 568) : le goban cède un peu de hauteur pour que le bouton principal reste au-dessus de la barre du bas. */
+@media (max-height: 640px) { .scene { min-height: 168px; } }
+
+/* ---------- Premier lancement (accueil v3) : Mochi fait la promesse en une phrase, au-dessus du goban ---------- */
+.promesse { display: flex; align-items: center; gap: 12px; margin: 0 0 var(--space-3); }
+.promesse .sceau { flex: none; }
+.promesse .scene-bulle { margin: 0; font-size: var(--fs-l); line-height: 1.3; font-weight: var(--fw-bold); text-wrap: balance; }
+/* L'adversaire sur une ligne, sans rang ni paragraphe : nom en titre, rôle en gris, « Changer » à droite. */
+.reglage-premier { gap: 10px; margin-top: var(--space-3); }
+.reglage-premier .portrait { flex: none; filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .25)); }
+.reglage-contre { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 8px; line-height: 1.25; }
+.reglage-contre h2 { margin: 0; font-size: var(--fs-l); font-weight: var(--fw-titre); }
+.reglage-contre span { color: var(--muted); font-size: var(--fs-s); }
+.reglage-premier .lien { margin-left: auto; }
 .scene-plateau { position: absolute; inset: 0; overflow: hidden; border-radius: var(--radius-plateau); cursor: pointer; }
 .scene-cadre { position: absolute; left: 0; right: 0; top: min(0px, calc(50% - 50cqw)); }
 .scene-cadre .board-wrap { box-shadow: none; margin-bottom: 0; }
@@ -74,6 +88,24 @@
 .tuile-lecon { background: transparent; border: 1.5px dashed color-mix(in srgb, var(--text) 26%, transparent); }
 .tuile:active { background: var(--surface-2); }
 .mini-plateau { width: 44px; height: 44px; flex: none; border-radius: 6px; box-shadow: 0 3px 8px -4px rgba(0, 0, 0, .5); }
+
+/* ---------- « Aujourd'hui » (accueil v3) : la bonne chose à faire en premier, sur toute la largeur ---------- */
+.tuiles-titre { grid-column: 1 / -1; margin: 0 0 -2px; color: var(--muted); font-size: var(--fs-legende); font-weight: var(--fw-bold); }
+.tuile-avant { grid-column: 1 / -1; min-height: 80px; padding: 10px 14px; gap: 10px 14px; background: var(--surface); border: 0; flex-wrap: wrap; }
+/* Le texte prend la place libre ; quand elle manque (zoom 200 %, 195 px), la pastille passe à la ligne au lieu de déborder. */
+.tuile-avant > span:not([class]) { flex: 1 1 7rem; min-width: 0; }
+.tuile-avant .mini-plateau { width: 60px; height: 60px; border-radius: 8px; }
+.tuile-avant b { font-size: var(--fs-l); }
+/* Dans la tuile mise en avant, la pastille d'état se range à droite, dans le flux (plus de coin qui dépasse). */
+.tuile-avant .tuile-etat { position: static; flex: none; margin-left: auto; }
+.tuile-avant.tuile-lecon .tuile-etat { background: var(--surface-2); color: var(--text); }
+.tuile-chemin { display: grid; place-items: center; flex: none; width: 60px; height: 60px; border-radius: 8px; background: var(--surface-2); }
+/* Défi d'un ami où c'est ton tour : deux pierres, et « À toi de jouer » en or (un appel, comme « À faire »). */
+.tuile-defi .tuile-pierres { display: inline-flex; flex: none; width: 60px; height: 60px; align-items: center; justify-content: center; border-radius: 8px; background: var(--surface-2); }
+.tuile-defi .tuile-pierres .stone { width: 22px; height: 22px; }
+.tuile-defi .tuile-pierres .stone.w { margin-left: -6px; }
+.tuile-defi .tuile-etat { background: var(--or); color: #2A1D05; }
+.tuile-defi:not(.tuile-avant) .tuile-etat { display: none; }
 
 /* ---------- Série de jours (en haut à droite) ---------- */
 .top .serie { display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px 6px 10px; border-radius: var(--radius-pill);

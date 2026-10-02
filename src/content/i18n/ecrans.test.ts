@@ -40,7 +40,7 @@ describe('accueil', () => {
   afterEach(() => choisirLangue('fr'));
 
   it('français inchangé', () => {
-    expect(accueil({ n: 0 }, 0, pomme, 9)).toEqual({ nouveau: true, cta: 'Joue ta première partie', ctaNom: 'Joue ta première partie contre Pomme', bulle: 'On joue ensemble ? Je t’explique tout.' });
+    expect(accueil({ n: 0 }, 0, pomme, 9)).toEqual({ nouveau: true, cta: 'Joue ta première partie', ctaNom: 'Joue ta première partie contre Pomme', bulle: 'Apprends le go en jouant\u202F: je t’explique chaque coup.' });
     expect(accueil({ n: 0 }, 1, pomme, 9).bulle).toBe('Bravo pour ta première leçon ! On passe à une vraie partie ?');
     expect(accueil({ n: 0 }, 3, pomme, 9).bulle).toBe('Bravo pour tes 3 leçons ! On passe à une vraie partie ?');
     expect(accueil({ n: 2, dernier: 'pomme' }, 0, pomme, 13)).toMatchObject({ cta: 'Rejouer contre Pomme', bulle: 'Te revoilà ! On rejoue sur le 13 × 13 ?' });
@@ -50,7 +50,7 @@ describe('accueil', () => {
 
   it('en anglais, sans espace fine avant la ponctuation', () => {
     choisirLangue('en');
-    expect(accueil({ n: 0 }, 0, pomme, 9)).toEqual({ nouveau: true, cta: 'Play your first game', ctaNom: 'Play your first game against Pomme', bulle: 'Shall we play together? I’ll explain everything.' });
+    expect(accueil({ n: 0 }, 0, pomme, 9)).toEqual({ nouveau: true, cta: 'Play your first game', ctaNom: 'Play your first game against Pomme', bulle: 'Learn Go by playing: I’ll explain every move.' });
     expect(accueil({ n: 0 }, 2, pomme, 9).bulle).toBe('Well done on your 2 lessons! Ready for a real game?');
     expect(accueil({ n: 2, dernier: 'pomme' }, 0, pomme, 19)).toMatchObject({ cta: 'Play Pomme again', bulle: 'You’re back! Another game on the 19 × 19?' });
     expect(introBut('Pomme')).toMatch(/^The goal: surround more territory than Pomme/);

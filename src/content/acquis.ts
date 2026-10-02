@@ -17,9 +17,13 @@ export const ACQUIS: Record<string, string> = {
   l10: 'Tu sais donner une pierre pour en reprendre plusieurs.',
   l11: 'Tu sais compter les libertés pour gagner une course.',
   l12: 'Tu reconnais un faux œil : tu sais l’éviter chez toi, le créer chez Blanc.',
+  l13: 'Tu trouves le point vital qui fait vivre ou mourir un groupe.',
+  l14: 'Tu reconnais un seki : personne n’attaque, ses points ne comptent pas.',
+  l15: 'Tu sais finir une partie : frontières fermées, dame, pierres mortes.',
+  l16: 'Tu sais compter une partie entière, pierres mortes et komi compris.',
 };
 
-const IDS = ['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7', 'l8', 'l9', 'l10', 'l11', 'l12'] as const;
+const IDS = ['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7', 'l8', 'l9', 'l10', 'l11', 'l12', 'l13', 'l14', 'l15', 'l16'] as const;
 const connu = (id: string): id is (typeof IDS)[number] => (IDS as readonly string[]).includes(id);
 
 /** Phrase de fin d'une leçon dans la langue de l'interface (#167) ; une phrase générale si la leçon n'en a pas. */
