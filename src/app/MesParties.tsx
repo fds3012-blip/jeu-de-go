@@ -2,13 +2,15 @@
 // existante (src/app/Revue.tsx) d'un toucher. Comme l'onglet Archive de chess.com, mais sans cote : l'adversaire avec
 // son portrait, le résultat en mots, la date en mots et la taille du plateau.
 // Les parties de l'appareil s'affichent tout de suite (hors ligne compris) ; les défis par lien terminés arrivent
-// ensuite de Supabase (lecture sous RLS : seulement les parties du joueur). Logique pure : historique.ts.
+// ensuite de Supabase (lecture sous RLS : seulement les parties du joueur), avec les parties gardées sur le compte
+// (`parties_perso`, src/data/partiesPerso.ts) : un nouvel appareil retrouve celles des autres. À l'ouverture, les
+// parties de l'appareil qui ne sont pas encore sur le compte y partent en arrière-plan. Logique pure : historique.ts.
 import { useEffect, useMemo, useState } from 'react';
 import { Revue } from './Revue';
 import { useOnline } from './hooks';
 import {
-  dateRelative, depuisDefi, etiquette, fusionner, historiqueAppareil, issueDe, nomAdversaire, phraseResultat, portraitDe,
-  type PartieHistorique,
+  dateRelative, depuisDefi, etiquette, fusionner, historiqueAppareil, issueDe, MAX_AFFICHEES, nomAdversaire, phraseResultat,
+  portraitDe, type PartieHistorique,
 } from './historique';
 import { mesDefis } from '../data/defi';
 import type { Db } from '../data/supabase';
@@ -30,7 +32,7 @@ interface Props {
   onJouer: () => void;
   /** « Analyser une partie jouée ailleurs » (#286) : action secondaire, en bas de la liste. */
   onImporter?: () => void;
-  /** Client Supabase et identifiant de session : défis par lien terminés. Sans eux, l'appareil seulement. */
+  /** Client Supabase et identifiant de session : défis par lien terminés et parties du compte. Sans eux, l'appareil seulement. */
   db?: Db | null;
   userId?: string;
   confirmTouch?: boolean;
@@ -66,6 +68,7 @@ function SceauIssue({ p }: { p: PartieHistorique }) {
 export function MesParties({ onRetour, onJouer, onImporter, db = null, userId, confirmTouch = false }: Props) {
   const [appareil] = useState(historiqueAppareil);
   const [defis, setDefis] = useState<PartieHistorique[]>([]);
+  const [duCompte, setDuCompte] = useState<PartieHistorique[]>([]);
   const [etat, setEtat] = useState<EtatDefis>(db && userId ? 'chargement' : 'sans');
   const [ouverte, setOuverte] = useState<PartieHistorique | null>(null);
   const online = useOnline();
@@ -77,16 +80,23 @@ export function MesParties({ onRetour, onJouer, onImporter, db = null, userId, c
     if (!online) { setEtat('hors-ligne'); return; }
     let vivant = true;
     setEtat('chargement');
-    mesDefis(db, userId).then(r => {
+    // Parties du compte : module chargé à la demande. Un échec ici n'empêche pas d'afficher les défis.
+    const perso = import('../data/partiesPerso').then(async m => {
+      const r = await m.lirePartiesPerso(db, userId);
+      // Puis, en arrière-plan, les parties de l'appareil qui n'y sont pas encore (refusé sans pseudo : sans effet).
+      void m.synchroniser(db, userId).catch(() => undefined);
+      return r;
+    });
+    Promise.all([mesDefis(db, userId), perso]).then(([d, p]) => {
       if (!vivant) return;
-      if (!r.ok) { setEtat('erreur'); return; }
-      setDefis(r.value.flatMap(d => { const p = depuisDefi(d.partie, userId, d.resultat); return p ? [p] : []; }));
-      setEtat('pret');
+      if (d.ok) setDefis(d.value.flatMap(x => { const g = depuisDefi(x.partie, userId, x.resultat); return g ? [g] : []; }));
+      if (p.ok) setDuCompte(p.value);
+      setEtat(d.ok && p.ok ? 'pret' : 'erreur');
     }, () => { if (vivant) setEtat('erreur'); });
     return () => { vivant = false; };
   }, [db, userId, online]);
 
-  const liste = useMemo(() => fusionner(appareil, defis), [appareil, defis]);
+  const liste = useMemo(() => fusionner(appareil, [...defis, ...duCompte], MAX_AFFICHEES), [appareil, defis, duCompte]);
   const maintenant = useMemo(() => new Date(), []);
 
   function ouvrir(p: PartieHistorique) { setOuverte(p); window.scrollTo?.({ top: 0 }); }

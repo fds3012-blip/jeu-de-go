@@ -3,6 +3,8 @@
 // Chaque partie terminée (contre l'ordi, guidée, à deux, importée) est maintenant gardée sur l'appareil, les 50 plus
 // récentes, sous HISTORIQUE_KEY. Les défis par lien terminés viennent de Supabase (table `games`, lue sous RLS) et
 // s'ajoutent à la liste à l'affichage ; ils ne sont pas recopiés sur l'appareil. Écran : src/app/MesParties.tsx.
+// Avec un compte, les parties de l'appareil sont aussi gardées sur le serveur (table `parties_perso`,
+// src/data/partiesPerso.ts) : elles s'ajoutent de même à l'affichage sur un autre appareil.
 import { readSgf, writeSgf } from '../go/sgf';
 import { recordFromOnlineGame } from '../go/server';
 import type { Color } from '../go/rules';
@@ -36,8 +38,8 @@ export interface PartieHistorique {
 
 const estCouleur = (c: unknown): c is Color => c === 1 || c === 2;
 
-/** Une entrée lue sur l'appareil, ou `null` si elle est abîmée (stockage modifié à la main, ancienne version). */
-function lireEntree(x: unknown): PartieHistorique | null {
+/** Une entrée lue (appareil ou serveur), ou `null` si elle est abîmée (stockage modifié à la main, ancienne version). */
+export function lireEntree(x: unknown): PartieHistorique | null {
   if (!x || typeof x !== 'object') return null;
   const o = x as Record<string, unknown>;
   if (typeof o.id !== 'string' || typeof o.sgf !== 'string' || !o.sgf.startsWith('(')) return null;
@@ -125,10 +127,22 @@ export function depuisDefi(g: LigneDefi, userId: string, resultat: string | null
   return lireEntree({ id: `defi:${g.id}`, date: g.updated_at, sgf, mode: 'defi', taille: g.size, joueur, resultat: resultat ?? undefined });
 }
 
-/** Fusionne l'appareil et les défis du serveur : un seul tri, et toujours au plus `max` parties. */
-export function fusionner(appareil: readonly PartieHistorique[], defis: readonly PartieHistorique[], max = MAX_PARTIES): PartieHistorique[] {
-  const ids = new Set<string>();
-  const uniques = [...appareil, ...defis].filter(p => !ids.has(p.id) && !!ids.add(p.id));
+/** Nombre de parties affichées dans « Mes parties » quand le serveur en ajoute (le serveur en garde 500 au plus). */
+export const MAX_AFFICHEES = 200;
+
+/**
+ * Fusionne l'appareil et le serveur (défis, parties gardées sur le compte) : l'appareil d'abord, puis un seul tri, et
+ * toujours au plus `max` parties. Une même partie (même identifiant, ou même instant de fin et même SGF) n'apparaît
+ * qu'une fois : celle de l'appareil est gardée.
+ */
+export function fusionner(appareil: readonly PartieHistorique[], serveur: readonly PartieHistorique[], max = MAX_PARTIES): PartieHistorique[] {
+  const vus = new Set<string>();
+  const uniques = [...appareil, ...serveur].filter(p => {
+    const signature = `${Date.parse(p.date)}|${p.sgf}`;
+    if (vus.has(p.id) || vus.has(signature)) return false;
+    vus.add(p.id); vus.add(signature);
+    return true;
+  });
   return trier(uniques).slice(0, max);
 }
 
