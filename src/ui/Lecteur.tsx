@@ -140,6 +140,12 @@ function devoilerPlateau(verdict: HTMLDivElement | null) {
   const lecteur = verdict?.closest<HTMLElement>('.lecteur');
   const plateau = lecteur?.querySelector<HTMLElement>('.board-wrap');
   if (!verdict || !lecteur || !plateau) return;
+  // Lot X (#398) : la feuille suit le plateau dans la colonne (apprendre.css) tant que tout tient dans l'écran. Sinon
+  // (longue explication, Go du jour avec sa note), elle repasse fixée sur la barre, et la page défile comme avant.
+  delete lecteur.dataset.feuille;
+  if (getComputedStyle(verdict).position === 'sticky' && document.documentElement.scrollHeight > window.innerHeight + 1) {
+    lecteur.dataset.feuille = 'fixe';
+  }
   lecteur.style.setProperty('--verdict-h', `${verdict.offsetHeight + 16}px`);
   const haut = hautDeLaFeuille(verdict);
   const p = plateau.getBoundingClientRect();

@@ -392,7 +392,7 @@ for (const largeur of [390, 320]) {
     await expect(recit).toBeVisible();
     await expect(recit.locator('.camp-nom').first()).toHaveText('You');
     await expect(recit.getByText(/^(Territory: the empty points each side surrounds|No territory)$/)).toBeVisible();
-    await expect(recit.getByText(/^− 100 komi for Pomme/)).toBeVisible();
+    await expect(recit.getByText(/^−100 komi for Pomme/)).toBeVisible();
     await expect(recit.getByText('Komi makes up for Black’s edge of playing first.')).toBeVisible();
     await expect(recit.getByText(/^You win by [\d.]+ points?!$/)).toBeVisible();
     await expect(recit.getByText(/Territoires|komi pour|Tu gagnes/)).toHaveCount(0);

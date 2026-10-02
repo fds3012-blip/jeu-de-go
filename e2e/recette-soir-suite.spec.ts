@@ -122,13 +122,13 @@ for (const [largeur, hauteur] of TAILLES) {
     await expect(page.locator('.verdict-revoir')).toBeVisible();
     await page.waitForTimeout(300);
     await photo(page, 'x-serie-erreur');
-    await enteteEntiere('erreur').catch(e => expect.soft(String(e)).toBe(''));
+    await enteteEntiere('erreur');
     // La feuille reste posée sur la barre des onglets (jamais en l'air), le coup joué visible au-dessus d'elle.
     const feuille = (await page.locator('.verdict').boundingBox())!;
     expect(Math.abs(feuille.y + feuille.height - await hautNav(page))).toBeLessThanOrEqual(2);
     const plateau = (await page.locator('.lecteur > .board-wrap').boundingBox())!;
     expect(plateau.y).toBeLessThan(feuille.y);
-    if (largeur === 390) expect.soft(await vide()).toBeLessThanOrEqual(24);
+    if (largeur === 390) expect(await vide()).toBeLessThanOrEqual(24);
 
     // Puis la bonne réponse : « Bravo », l'XP et la suite, au même endroit.
     await jouer(page, 'E2');
@@ -162,7 +162,7 @@ for (const [largeur, hauteur] of TAILLES) {
     await photo(page, 'l12-comptage');
     // L12 : pendant le comptage, aucune pierre de joueur grisée : c'est aux joueurs de valider.
     const opacites = await page.locator('.joueur .portrait, .joueur .joueur-nom b').evaluateAll(els => els.map(e => getComputedStyle(e).opacity));
-    expect.soft(opacites.every(o => o === '1'), opacites.join(' ')).toBe(true);
+    expect(opacites.every(o => o === '1'), opacites.join(' ')).toBe(true);
 
     await page.clock.pauseAt((await page.evaluate(() => Date.now())) + 1000);
     await valider.click();
@@ -171,9 +171,9 @@ for (const [largeur, hauteur] of TAILLES) {
     await page.clock.runFor(2600);
     await photo(page, 'l7-recit');
     // L7 : le signe colle au nombre, et le moins est un vrai signe moins (U+2212), jamais un trait d'union.
-    await expect.soft(recit).toContainText('+6,5 komi pour Blanc');
-    await expect.soft(recit).toContainText('+1 prisonnier pour Noir');
-    expect.soft(await recit.innerText()).not.toMatch(/[+−-] \d/);
+    await expect(recit).toContainText('+6,5 komi pour Blanc');
+    await expect(recit).toContainText('+1 prisonnier pour Noir');
+    expect(await recit.innerText()).not.toMatch(/[+−-] \d/);
 
     await page.clock.runFor(1200);
     await page.clock.resume();
@@ -182,16 +182,15 @@ for (const [largeur, hauteur] of TAILLES) {
     const xp = page.locator('.fin-feuille [data-testid="pastille-xp"]');
     await page.waitForTimeout(200);
     await photo(page, 'l5-fin');
-    await expect.soft(xp).toBeVisible();
-    await expect.soft(page.locator('.annonce-xp [data-testid="pastille-xp"]')).toBeHidden();
-    if (await xp.isVisible()) {
-      const pastille = (await xp.boundingBox())!;
-      const titre = (await page.locator('.fin-titre').boundingBox())!;
-      expect(pastille.y).toBeGreaterThanOrEqual(titre.y + titre.height);
-      // Elle reste à sa place après l'annonce (rien ne saute) : toujours là 4 s plus tard.
-      await page.waitForTimeout(4000);
-      await expect(xp).toBeVisible();
-    }
+    await expect(xp).toBeVisible();
+    await expect(page.locator('.annonce-xp [data-testid="pastille-xp"]')).toHaveCount(0);
+    const pastille = (await xp.boundingBox())!;
+    const titre = (await page.locator('.fin-titre').boundingBox())!;
+    expect(pastille.y).toBeGreaterThanOrEqual(titre.y + titre.height);
+    // Elle reste à sa place après l'annonce (rien ne saute) : toujours là 4 s plus tard, et toujours seule.
+    await page.waitForTimeout(4000);
+    await expect(xp).toBeVisible();
+    await expect(page.getByTestId('pastille-xp')).toHaveCount(1);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(largeur);
 
     // L4 : la courbe « Qui mène » de la revue.

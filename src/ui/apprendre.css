@@ -226,20 +226,22 @@
 /* Lot X (#398), à 390 × 844 : la feuille fixée en bas laissait 75 px de vide entre le plateau (ou Mochi) et elle.
    Dans les lecteurs de problème (problème, Go du jour, entraînement, placement), quand tout tient dans l'écran, elle
    suit maintenant le plateau dans la colonne et prend toute la hauteur qui reste jusqu'à la barre : plus de vide, le
-   texte juste sous le plateau, l'action au même endroit qu'avant, au-dessus de la barre. */
+   texte juste sous le plateau, l'action au même endroit qu'avant, au-dessus de la barre. Quand la colonne ne tient pas
+   (écran bas, longue explication), Lecteur.tsx la repasse fixée (`data-feuille="fixe"`), comme avant. */
 @media (min-height: 641px) {
-  .lecteur:has(> .lecteur-mochi):has(> .verdict) { padding-bottom: 0; }
-  .lecteur:has(> .lecteur-mochi) > .verdict { position: sticky; left: auto; right: auto; flex: 1 0 auto;
+  .lecteur:has(> .lecteur-mochi):not([data-feuille="fixe"]):has(> .verdict) { padding-bottom: 0; }
+  .lecteur:has(> .lecteur-mochi):not([data-feuille="fixe"]) > .verdict { position: sticky; left: auto; right: auto; flex: 1 0 auto;
     display: flex; flex-direction: column; row-gap: var(--space-3);
     margin: var(--space-2) calc(-1 * var(--gouttiere)) calc(1px - var(--space-2)); padding-inline: var(--gouttiere); }
-  .lecteur:has(> .lecteur-mochi) > .verdict > .verdict-actions { margin-top: auto; }
+  .lecteur:has(> .lecteur-mochi):not([data-feuille="fixe"]) > .verdict > .verdict-actions { margin-top: auto; }
 }
-/* Écran bas (320 × 568) : la feuille reste fixée sur la barre et couvre la consigne de Mochi, qui s'efface plutôt que
-   de dépasser à moitié au-dessus d'elle (l'explication de la feuille la remplace). La page défile pour montrer le
-   plateau, sans jamais rogner l'en-tête (Lecteur.tsx). */
+/* Feuille fixée (écran bas, ou colonne trop haute) : elle couvre la consigne de Mochi, qui s'efface plutôt que de
+   dépasser à moitié au-dessus d'elle (l'explication de la feuille la remplace). La page garde de quoi défiler pour
+   montrer le plateau entier et faire sortir l'en-tête entier, jamais rogné (Lecteur.tsx). */
+.lecteur[data-feuille="fixe"]:has(> .verdict) > .lecteur-mochi { display: none; }
+.lecteur[data-feuille="fixe"]:has(> .lecteur-mochi):has(> .verdict) { padding-bottom: calc(max(120px, var(--verdict-h, 0px)) + 96px); }
 @media (max-height: 640px) {
   .lecteur:has(> .verdict) > .lecteur-mochi { display: none; }
-  /* De quoi faire sortir l'en-tête entier (deux lignes de titre comprises) quand la page défile. */
   .lecteur:has(> .lecteur-mochi):has(> .verdict) { padding-bottom: calc(max(120px, var(--verdict-h, 0px)) + 96px); }
 }
 
