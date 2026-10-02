@@ -103,6 +103,10 @@ export const EVENTS = {
   // Conseil de Mochi (#80) : phrase demandée (`modele`, `aucun` si rien de sûr), puis retour « utile / pas utile » (`utile`).
   conseilDemande: 'conseil_demande',
   conseilNote: 'conseil_note',
+  // Notifications dans l'app (#367) : un élément « À faire » touché. `type` : defi, serie, goDuJour, lecon, ami ;
+  // `source` : accueil (tuile d'« Aujourd'hui »), onglet (onglet à pastille) ; `attente_h` (défi) :
+  // heures depuis le coup de l'adversaire, pour le délai médian de réponse.
+  notificationOuverte: 'notification_ouverte',
   // Aide du joueur (#362) : `fiche` (`regles`, `compter`, `mots`, `questions`), `mot` (mot du glossaire ouvert d'emblée, sinon vide),
   // `depuis` (`profil`, `lecon`, `probleme`, `partie`, `clavier`). Aucun texte cherché n'est envoyé.
   aideOuverte: 'aide_ouverte',

@@ -183,7 +183,9 @@ export function fauxServeur() {
   }
   /** Compte Google que « Continuer avec Google » renverra (#354) ; `annule` : le joueur annule chez Google. */
   function compteGoogle(c: { email: string; nom: string; annule?: boolean }) { google = c; }
-  return { traiter, appels, games, defis, profiles, emailsEnvoyes, sessionAnonyme, compteExistant, compteGoogle, autorisations };
+  /** Session ouverte d'un compte complet (avec pseudo), à poser dans le stockage du navigateur (#367). */
+  function sessionCompte(email: string, pseudo: string, id: string) { return session(compteExistant(email, pseudo, id)); }
+  return { traiter, appels, games, defis, profiles, emailsEnvoyes, sessionAnonyme, compteExistant, compteGoogle, sessionCompte, autorisations };
 }
 
 export type FauxServeur = ReturnType<typeof fauxServeur>;
