@@ -192,7 +192,7 @@ for (const largeur of [320, 375, 390]) {
     await page.goto('/');
     await page.locator('.cta').click();
     const barre = page.getByRole('toolbar', { name: 'Actions de la partie' });
-    await expect(barre.getByRole('button', { name: 'Abandonner' })).toBeVisible();
+    await expect(barre.getByRole('button', { name: 'Plus' })).toBeVisible();
     const boutons = await barre.getByRole('button').evaluateAll(bs => bs.map(b => {
       const bb = b.getBoundingClientRect();
       const libelle = b.querySelector(':scope > span:last-child');

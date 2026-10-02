@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { attendrePierre, jouer, partieADeux, plateau } from './plateau';
+import { abandonner, attendrePierre, jouer, partieADeux, plateau } from './plateau';
 
 // Issue #268 : suite de l'audit Web Interface Guidelines (docs/design/audit-web-guidelines-2026-09-28.md),
 // points 1, 2 et 5.
@@ -58,9 +58,7 @@ test.describe('point 1 : quitter une partie en cours', () => {
     await partieADeux(page);
     await jouer(page, 'E5');
     await attendrePierre(page, 'E5', 'noir');
-    const abandon = page.getByRole('toolbar').getByRole('button', { name: /Abandonner/ });
-    await abandon.click();
-    await page.getByRole('toolbar').getByRole('button', { name: /Confirmer/ }).click();
+    await abandonner(page);
     await page.getByRole('button', { name: 'Accueil', exact: true }).click();
     await expect(choixQuitter(page)).toHaveCount(0);
     await expect(accueil(page)).toBeVisible();
