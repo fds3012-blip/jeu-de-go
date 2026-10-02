@@ -3,7 +3,7 @@ import { Suspense, lazy, useCallback, useEffect, useLayoutEffect, useMemo, useRe
 import { CreerCompte, DefiArrivee, DefiPartie, DefisEcran, Game, LearnHome, LessonPlayer, Placement, Profil, PseudoObligatoire, Puzzles, SeriePratique, apresPremierEcran } from './ecrans';
 import { CHAPITRES, LESSONS } from '../content/lessons';
 import { LESSONS_KEY, readLocal, writeLocal, useGelsServeur, useLessonProgress, useOnline, useProfil, usePseudo, useSerie, useSession } from './hooks';
-import { supabase } from '../data/supabase';
+import { COMPTES, chargerSupabase, useSupabase } from '../data/client';
 import { useSettings, useStored } from './settings';
 import { aideActive } from './partie';
 import { Bubble } from '../ui/Mochi';
@@ -182,7 +182,11 @@ export function App() {
   }, [aideOuverte, lessonId]);
   // Série de 3 problèmes ouverte depuis la fin d'une leçon (#200), figée à l'ouverture.
   const [serie3, setSerie3] = useState<Puzzle[] | null>(null);
-  const session = useSession(supabase);
+  // Client Supabase chargé à la demande (#401) : undefined pendant le chargement, null sans comptes.
+  // `COMPTES` dit, sans attendre le client, si les comptes existent (lien « Défier un ami », essai sans compte).
+  const client = useSupabase();
+  const supabase = client ?? null;
+  const session = useSession(client);
   // Une session anonyme (ouverte pour un défi, #81) compte comme « pas de compte » : ni synchronisation, ni cote, ni série serveur.
   const compteId = compteDe(session);
   const [defi, setDefi] = useState<VueDefi | null>(LIEN_DEFI !== null ? { vue: 'arrivee', jeton: LIEN_DEFI, inviteur: INVITEUR_AU_CHARGEMENT }
@@ -301,9 +305,10 @@ export function App() {
    * `reprise` sera faite dès que le compte est complet (e-mail vérifié et pseudo choisi).
    */
   function garde(a: Acces, reprise: Reprise | null = null): boolean {
-    const d = decider(a, etat, terminees, !!supabase);
+    const d = decider(a, etat, terminees, COMPTES);
     if (d.ok) return true;
-    if (!supabase) return false;
+    if (!COMPTES) return false;
+    void chargerSupabase();
     track(EVENTS.essaiLimiteAtteinte, { raison: d.raison, parties: terminees });
     setEcranCompte({ raison: d.raison, reprise });
     window.scrollTo({ top: 0 });
@@ -468,6 +473,8 @@ export function App() {
   }, [ecranCompte, defi, tab]);
 
   const enDefi = tab === 'jouer' && !playing && defi !== null;
+  // Défi ou « Crée ton compte » ouvert avant que le client Supabase soit là (#401) : on le charge sans attendre.
+  useEffect(() => { if (enDefi || ecranCompte) void chargerSupabase(); }, [enDefi, ecranCompte]);
   const enPartie = (tab === 'jouer' && !!playing) || (enDefi && defi.vue === 'partie');
   // Robustesse (#325) : écran d'erreur à la place d'un écran blanc ; « Retour à l'accueil » change d'onglet sans recharger.
   const versAccueil = useCallback(() => {
@@ -482,7 +489,7 @@ export function App() {
     const db = supabase;
     if (!db || !compteId || !pseudo) return;
     void import('../data/partiesPerso').then(m => m.synchroniser(db, compteId)).catch(() => undefined);
-  }, [compteId, pseudo]);
+  }, [supabase, compteId, pseudo]);
   useEffect(() => {
     if (!online) return;
     const id = window.setTimeout(synchroniserParties, 1500); // après le premier écran
@@ -518,6 +525,9 @@ export function App() {
     screen = <PseudoObligatoire db={supabase} userId={compteId}
       onChoisi={p => { setPseudoChoisi({ id: compteId, pseudo: p }); setClePseudo(n => n + 1); }}
       onDeconnecter={() => { void supabase?.auth.signOut(); }} />;
+  } else if ((ecranCompte || enDefi) && client === undefined) {
+    // Client Supabase pas encore là (#401, chargé dès l'ouverture d'un lien de défi) : comme un écran à la demande.
+    screen = null;
   } else if (ecranCompte && supabase) {
     screen = <CreerCompte db={supabase} raison={ecranCompte.raison} anonyme={etat === 'anonyme'} onRetour={() => { setEcranCompte(null); window.scrollTo({ top: 0 }); }}
       onConditions={() => { go('profil'); setVueProfil('conditions'); }} />;
@@ -525,7 +535,7 @@ export function App() {
     screen = <DefiPartie key={defi.id} db={supabase} partieId={defi.id} userId={session?.user.id} anonyme={estAnonyme(session)} pseudo={pseudo ?? null} confirmTouch={settings.confirmTouch} reglages={{ modifier: set }}
       onRetour={quitterDefi} onAutre={() => { setDefi({ vue: 'liste' }); window.scrollTo({ top: 0 }); }} />;
   } else if (enDefi && defi.vue === 'arrivee') {
-    screen = <DefiArrivee key={defi.jeton} db={supabase} jeton={defi.jeton} inviteur={defi.inviteur} compte={supabase ? etat : 'aucun'} onPartie={ouvrirDefiPartie} onAccueil={quitterDefi} />;
+    screen = <DefiArrivee key={defi.jeton} db={supabase} jeton={defi.jeton} inviteur={defi.inviteur} compte={COMPTES ? etat : 'aucun'} onPartie={ouvrirDefiPartie} onAccueil={quitterDefi} />;
   } else if (enDefi) {
     screen = <DefisEcran db={supabase} userId={session === undefined ? undefined : session?.user.id ?? null} pseudo={pseudo ?? null} onPartie={ouvrirDefiPartie} />;
   } else if (enPartie) {
@@ -584,10 +594,10 @@ export function App() {
       jouer={{ nom: premier.nom, lancer: () => { setLessonId(null); setTab('jouer'); lancer('ordi', premier.id); } }} />;
   } else if (tab === 'apprendre') {
     screen = <LearnHome progress={progress} onOpen={ouvrirLecon} sync={syncState}
-      compteRequis={rang => !decider({ quoi: 'lecon', rang }, etat, terminees, !!supabase).ok} />;
+      compteRequis={rang => !decider({ quoi: 'lecon', rang }, etat, terminees, COMPTES).ok} />;
   } else if (tab === 'problemes') {
     screen = <Puzzles db={supabase} userId={compteId} sessionLoading={session === undefined} confirmTouch={settings.confirmTouch} onCompte={() => go('profil')}
-      essai={decider({ quoi: 'probleme' }, etat, terminees, !!supabase).ok ? undefined : () => { garde({ quoi: 'probleme' }, { quoi: 'problemes' }); }}
+      essai={decider({ quoi: 'probleme' }, etat, terminees, COMPTES).ok ? undefined : () => { garde({ quoi: 'probleme' }, { quoi: 'problemes' }); }}
       lien={LIEN_DU_JOUR} depuisRappel={ARRIVEE_RAPPEL || duJourDirect} onDuJour={setDuJourOuvert} celebrer={settings.celebrations} racine={racineProblemes}
       onApprendre={versLecon1 && LESSONS[0] ? () => { setVersLecon1(false); go('apprendre'); setLessonId(LESSONS[0].id); } : undefined} />;
   } else if (tab === 'profil') {
@@ -620,7 +630,7 @@ export function App() {
         installation={appel === 'installation' ? <ProposerInstallation moment="retour" /> : null}
         // Accueil v3 : un défi d'un ami où c'est ton tour passe en premier dans « Aujourd'hui ».
         // #367 : un seul défi où c'est ton tour ? La tuile ouvre directement la partie, en un toucher.
-        defis={supabase ? { n: defisAJouer, adversaire: defisAJouer === 1 ? defisEnAttente[0].adversaire : null, ouvrir: () => {
+        defis={COMPTES ? { n: defisAJouer, adversaire: defisAJouer === 1 ? defisEnAttente[0].adversaire : null, ouvrir: () => {
           const seul = defisAJouer === 1 ? aFaire.find(e => e.genre === 'defi') : undefined;
           if (seul) { ouvrirAFaire(seul, 'accueil'); return; }
           if (!garde({ quoi: 'defi' }, { quoi: 'defis' })) return;
@@ -663,7 +673,7 @@ export function App() {
             ? (
               <span className="entete-droite">
                 {/* « Défier un ami » (#81) : action secondaire, dans l'en-tête ; elle ne prend rien à la hauteur du goban. */}
-                {supabase && (
+                {COMPTES && (
                   <button type="button" className={`entete-defi${defisAJouer ? ' a-jouer' : ''}`} data-testid="lien-defi"
                     aria-label={defisAJouer ? t('defi.accueil.aJouer', { n: defisAJouer }) : t('defi.accueil.lien')}
                     onClick={() => { if (!garde({ quoi: 'defi' }, { quoi: 'defis' })) return; setDefi({ vue: 'liste' }); window.scrollTo({ top: 0 }); }}>

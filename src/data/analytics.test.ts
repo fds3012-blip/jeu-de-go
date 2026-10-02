@@ -345,3 +345,47 @@ describe('plan de marquage (issue #166)', () => {
     expect(Object.values(A.EVENTS).filter(n => !plan.includes('`' + n + '`'))).toEqual([]);
   });
 });
+
+describe('filet du démarrage : erreur avant Sentry (#401)', () => {
+  const erreur = (err: unknown) => Object.assign(new Event('error'), { error: err });
+  const rejet = (raison: unknown) => Object.assign(new Event('unhandledrejection'), { reason: raison });
+  const tags = { tags: { categorie: 'rendu', origine: 'demarrage' } };
+
+  it('une erreur non attrapée avant le chargement de Sentry part dès son arrivée, puis Sentry prend le relais', async () => {
+    asBrowser(); withKeys();
+    localStorage.setItem(A.CONSENT_KEY, 'accepte');
+    const cible = new EventTarget();
+    A.ecouterErreursAvantSentry(cible);
+    const e1 = new Error('au démarrage');
+    cible.dispatchEvent(erreur(e1));
+    cible.dispatchEvent(rejet('promesse rejetée'));
+    expect(sentry.captureException).not.toHaveBeenCalled(); // Sentry pas encore là : en file
+    await vi.waitFor(() => expect(sentry.captureException).toHaveBeenCalledTimes(2));
+    expect(sentry.captureException).toHaveBeenCalledWith(e1, tags);
+    expect(sentry.captureException).toHaveBeenCalledWith('promesse rejetée', tags);
+    // Sentry chargé : ses propres gestionnaires écoutent, le filet s'est retiré (pas de doublon).
+    cible.dispatchEvent(erreur(new Error('après')));
+    await flush();
+    expect(sentry.captureException).toHaveBeenCalledTimes(2);
+  });
+
+  it('sans accord : rien n’est chargé ni envoyé', async () => {
+    asBrowser(); withKeys();
+    const cible = new EventTarget();
+    A.ecouterErreursAvantSentry(cible);
+    cible.dispatchEvent(erreur(new Error('x')));
+    await flush();
+    expect(sentry.init).not.toHaveBeenCalled();
+    expect(sentry.captureException).not.toHaveBeenCalled();
+  });
+
+  it('« Script error. » d’une autre origine (sans objet d’erreur) : ignorée', async () => {
+    asBrowser(); withKeys();
+    localStorage.setItem(A.CONSENT_KEY, 'accepte');
+    const cible = new EventTarget();
+    A.ecouterErreursAvantSentry(cible);
+    cible.dispatchEvent(erreur(null));
+    await flush(); await flush();
+    expect(sentry.captureException).not.toHaveBeenCalled();
+  });
+});

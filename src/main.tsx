@@ -1,5 +1,5 @@
 // En premier : le jeton d'un défi par lien (#81) quitte l'adresse avant la mesure et tout événement (constat E14).
-import './app/adresseDefi';
+import { JETON_AU_CHARGEMENT } from './app/adresseDefi';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 // Styles des écrans chargés à la demande (src/app/ecrans.ts) : importés ici, avant App et dans l'ordre
@@ -28,7 +28,8 @@ import { apresPremierEcran, prechargerEcrans, prechargerPartie, rechargerPourNou
 import './ui/fonts.css';
 import './ui/app.css';
 import { registerSW } from './registerSW';
-import { captureError, EVENTS, initAnalytics, track } from './data/analytics';
+import { captureError, ecouterErreursAvantSentry, EVENTS, initAnalytics, track } from './data/analytics';
+import { chargementUrgent, chargerSupabase } from './data/client';
 import { choisirLangue, langue } from './content/i18n';
 import { ecouterInstallation } from './app/installation';
 import { LimiteErreur } from './app/LimiteErreur';
@@ -39,6 +40,8 @@ choisirLangue(langue());
 // Invite d'installation de Chrome (#178) : capturée tôt, montrée seulement au bon moment.
 ecouterInstallation();
 initAnalytics();
+// Erreurs non attrapées avant que Sentry soit chargé : mises en file, envoyées dès son arrivée (avec accord seulement).
+ecouterErreursAvantSentry();
 track(EVENTS.appOuverte, { installee: window.matchMedia?.('(display-mode: standalone)').matches ?? false });
 // Vérification de Sentry : #erreur-test dans l'adresse envoie une erreur de test (seulement avec consentement).
 // Envoi explicite, à l'ouverture comme quand on ajoute #erreur-test à une page déjà ouverte (Safari ne recharge pas).
@@ -59,12 +62,17 @@ createRoot(document.getElementById('root')!).render(
   </StrictMode>
 );
 
+// Client Supabase (#401) : hors du JS initial. Tout de suite si le premier écran en dépend (session sur l'appareil,
+// retour de connexion, lien de défi), sinon après le premier écran, avec les autres écrans.
+if (JETON_AU_CHARGEMENT !== null || chargementUrgent()) void chargerSupabase();
+
 prechargerPartie();
 // Après le premier écran et ses polices (sinon, sur un réseau lent, ils se disputent la bande passante) :
 // le service worker met l'app en cache et les autres écrans se téléchargent quand le navigateur est libre.
 apresPremierEcran(() => {
   registerSW();
   prechargerEcrans();
+  void chargerSupabase();
 });
 // Morceau JS introuvable (nouvelle version déployée pendant que l'app était ouverte) : on recharge une fois.
 // Sinon (déjà rechargé il y a moins d'une minute : le morceau manque vraiment, ou hors ligne sans cache), l'erreur

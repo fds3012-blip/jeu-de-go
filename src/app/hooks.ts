@@ -1,15 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import type { Db } from '../data/supabase';
+import { sessionProbable } from '../data/client';
 import { fetchGels, fetchProfile, fetchStreak } from '../data/account';
 import { importerSerieAppareil, serieAEnvoyer } from '../data/serieServeur';
 import { LANCEMENT, SERIE_KEY, numeroDuJour } from './goDuJour';
 import { cleanProgress, mergeProgress, supabaseProgressStore, syncProgress, type Progress } from '../data/progress';
 import { compteDe } from '../data/defi';
 
-/** Session Supabase : undefined pendant le chargement, null sans connexion. */
-export function useSession(db: Db | null): Session | null | undefined {
-  const [session, setSession] = useState<Session | null | undefined>(db ? undefined : null);
+/**
+ * Session Supabase : undefined pendant le chargement, null sans connexion.
+ * `db` vaut undefined tant que le client se charge (src/data/client.ts, #401). Sans session enregistrée sur l'appareil,
+ * la session est null tout de suite : l'essai sans compte (#343) s'applique dès le premier écran, sans attendre le client.
+ */
+export function useSession(db: Db | null | undefined): Session | null | undefined {
+  const [session, setSession] = useState<Session | null | undefined>(() => (db === null || !sessionProbable() ? null : undefined));
   useEffect(() => {
     if (!db) return;
     let alive = true;
