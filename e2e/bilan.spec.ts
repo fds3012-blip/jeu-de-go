@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { passerJusquAuScore } from './plateau';
+import { abandonner, passerJusquAuScore } from './plateau';
 
 // Issue #22 puis #40 (phase 5) : écran de fin contre l'ordi, bilan gardé en localStorage (go.bilan.v1), adversaire suivant,
 // tampon « BATTUE », célébration et relecture. Pour une victoire déterministe, on ouvre l'appli avec `?komi=-100`
@@ -96,8 +96,7 @@ test('défaite par abandon : pas de tampon ni de fête, Mochi encourage et propo
   await page.goto('/');
   await page.locator('.cta').click();
   await expect(page.locator('svg.board[aria-label="Plateau de go 9 × 9"]')).toBeVisible();
-  await page.getByRole('button', { name: 'Abandonner' }).click();
-  await page.getByRole('button', { name: /^Confirmer/ }).click();
+  await abandonner(page);
 
   await expect(page.getByRole('heading', { level: 2, name: 'Défaite' })).toBeVisible();
   await expect(page.locator('.fin-marge')).toHaveText('par abandon');
@@ -111,7 +110,7 @@ test('défaite par abandon : pas de tampon ni de fête, Mochi encourage et propo
 
   await cta.click();
   await expect(page.getByText(/Pomme a Blanc/)).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Abandonner' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Plus' })).toBeVisible();
 
   // Pas encore battue : aucune marque dans le carrousel.
   await page.goto('/');

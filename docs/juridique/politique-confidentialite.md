@@ -118,7 +118,7 @@ Ces données sont écrites dans le stockage local (`localStorage`) de ton naviga
 
 **Événements envoyés** (détail des propriétés : `docs/data/plan-de-marquage.md`) :
 
-- ouverture de l'app : `app_ouverte` (avec « app installée ou non ») ;
+- ouverture de l'app : `app_ouverte` (avec « app installée ou non »), `premier_ecran_vu` (accueil affiché : secondes écoulées depuis l'ouverture, « tout premier lancement sur cet appareil » ou non, appel affiché sur l'accueil) ;
 - parties : `premiere_pierre`, `partie_commencee`, `comptage_manuel`, `partie_terminee`, `premiere_partie_terminee` (taille, adversaire, nombre de coups, résultat, secondes écoulées) ;
 - conseil de Mochi : `conseil_demande` (type de conseil donné, numéro du coup, temps de calcul), `conseil_note` (conseil jugé utile ou non) ;
 - leçons : `lecon_commencee`, `lecon_terminee` ;

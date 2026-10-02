@@ -90,6 +90,6 @@ describe('bulle de Pomme selon le jour', () => {
   });
 
   it('nouveau joueur : la bulle de la première partie, même un jour de retour', () => {
-    expect(accueil({ n: 0 }, 0, pomme, 9, jour(3, { absence: 5 })).bulle).toMatch(/^On joue ensemble/);
+    expect(accueil({ n: 0 }, 0, pomme, 9, jour(3, { absence: 5 })).bulle).toMatch(/^Apprends le go en jouant/);
   });
 });

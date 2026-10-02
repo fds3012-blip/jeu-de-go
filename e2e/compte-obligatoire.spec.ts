@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { brancher, CODE, fauxServeur } from './fauxSupabase';
-import { plateau } from './plateau';
+import { abandonner, plateau } from './plateau';
 
 // #343 : compte obligatoire avec pseudo, essai limité sans compte (modèle chess.com), connexion par code à 6 chiffres.
 // Supabase est simulé (e2e/fauxSupabase.ts) : sans service de compte, l'essai n'est pas limité (src/app/essai.ts).
@@ -32,9 +32,7 @@ test('essai → 3e partie finie → « Crée ton compte » → code → pseudo �
   // 3e partie : libre. On abandonne tout de suite : elle compte.
   await page.locator('.cta').click();
   await expect(plateau(page)).toBeVisible();
-  const actions = page.getByRole('toolbar', { name: 'Actions de la partie' });
-  await actions.getByRole('button', { name: 'Abandonner' }).click();
-  await actions.getByRole('button', { name: /^Confirmer/ }).click();
+  await abandonner(page);
   await expect(page.locator('.cta')).toHaveText(/Rejouer contre Pomme/);
   expect(await page.evaluate(() => localStorage.getItem('go.essai.v1'))).toBe('{"terminees":3}');
 
