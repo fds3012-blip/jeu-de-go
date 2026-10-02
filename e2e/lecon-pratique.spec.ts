@@ -70,8 +70,9 @@ test('fin de chapitre : « Joue contre Pomme » en action principale, qui lance 
   const jouerPomme = page.getByRole('button', { name: 'Joue contre Pomme' });
   await expect(jouerPomme).toHaveClass(/\bcta\b/);
   await expect(page.locator('.fin-lecon .cta')).toHaveCount(1);
-  // La leçon 7 (comptage) n'a pas encore de problèmes : pas d'entraînement proposé.
-  await expect(page.getByRole('button', { name: /^Entraîne-toi/ })).toHaveCount(0);
+  // #16, lot X : la leçon 7 a sa série (fin de partie et comptage), mais en fin de chapitre elle reste un lien
+  // secondaire (#220) : Pomme garde seul le relief.
+  await expect(page.getByRole('button', { name: /^Entraîne-toi\s:\s3 problèmes sur ce thème, Finir la partie, Compter$/ })).toHaveClass(/\blien\b/);
   await expect(page.getByRole('button', { name: 'Retour au chemin' })).toHaveClass(/\blien\b/);
   await jouerPomme.click();
   await expect(page.locator('main.app-partie')).toBeVisible();

@@ -87,6 +87,9 @@ for (const [largeur, hauteur, theme] of [[390, 844, 'light'], [320, 568, 'dark']
     // proposé juste après, avec ses deux thèmes.
     const pratique = page.getByRole('button', { name: /^Entraîne-toi\s:\s3 problèmes sur ce thème, Finir la partie, Compter$/ });
     await expect(pratique).toBeVisible();
+    // #220 : en fin de chapitre, Pomme garde seul le relief ; l'entraînement est un lien.
+    await expect(page.getByRole('button', { name: 'Joue contre Pomme' })).toHaveClass(/\bcta\b/);
+    await expect(pratique).toHaveClass(/\blien\b/);
     await expect(page.locator('.fin-lecon .cta')).toHaveCount(1);
     expect((await pratique.boundingBox())!.height).toBeGreaterThanOrEqual(44);
     await sansDebordement(page, 'fin de la leçon 7');
