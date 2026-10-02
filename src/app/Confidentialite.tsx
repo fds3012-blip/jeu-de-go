@@ -94,6 +94,7 @@ export function Conditions({ onRetour }: { onRetour: () => void }) {
         <Repli titre={t('conditions.duree')}>
           <p><strong>{fr(t('conditions.duree.compte'))}</strong> {fr(t('conditions.duree.compteTexte'))}</p>
           <p><strong>{fr(t('conditions.duree.defi'))}</strong> {t('conditions.duree.defiTexte')}</p>
+          <p><strong>{fr(t('conditions.duree.notifications'))}</strong> {fr(t('conditions.duree.notificationsTexte'))}</p>
           <p><strong>{fr(t('conditions.duree.comptage'))}</strong> {t('conditions.duree.comptageTexte')}</p>
           <p><strong>{fr(t('conditions.duree.telephone'))}</strong> {t('conditions.duree.telephoneTexte')}</p>
         </Repli>
