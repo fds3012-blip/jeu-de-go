@@ -218,7 +218,9 @@ export function App() {
   const duJour = problemeDuNumero(PROBLEMES_LOCAUX, numeroJour);
   const duJourFait = goDuJourFaitAppareil(numeroJour);
   // #309 : « Rejouer » seulement après une partie finie contre cet adversaire.
-  const home = accueil(parties, done, { ...adv, fini: dejaAffronte(bilan, adv.id) }, settings.size, { numero: numeroJour, absence, duJourFait, titreDuJour: duJour?.title });
+  // Accueil v3 : un bilan contre l'ordi (appareil d'avant le compteur de parties, ou compteur abîmé) suffit à dire
+  // qu'il a déjà joué : pas d'accueil « premier lancement » pour lui.
+  const home = accueil({ ...parties, n: Math.max(parties.n, Object.keys(bilan).length > 0 ? 1 : 0) }, done, { ...adv, fini: dejaAffronte(bilan, adv.id) }, settings.size, { numero: numeroJour, absence, duJourFait, titreDuJour: duJour?.title });
   const flamme = etatFlamme(serie, duJourFait);
   // #308 : après le placement, la carte « Leçon » suit le chapitre conseillé.
   const leconConseillee = leconDeLAccueil(LESSONS, CHAPITRES, progress, placement);

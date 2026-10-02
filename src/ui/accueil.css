@@ -91,7 +91,9 @@
 
 /* ---------- « Aujourd'hui » (accueil v3) : la bonne chose à faire en premier, sur toute la largeur ---------- */
 .tuiles-titre { grid-column: 1 / -1; margin: 0 0 -2px; color: var(--muted); font-size: var(--fs-legende); font-weight: var(--fw-bold); }
-.tuile-avant { grid-column: 1 / -1; min-height: 80px; padding: 10px 14px; gap: 14px; background: var(--surface); border: 0; }
+.tuile-avant { grid-column: 1 / -1; min-height: 80px; padding: 10px 14px; gap: 10px 14px; background: var(--surface); border: 0; flex-wrap: wrap; }
+/* Le texte prend la place libre ; quand elle manque (zoom 200 %, 195 px), la pastille passe à la ligne au lieu de déborder. */
+.tuile-avant > span:not([class]) { flex: 1 1 7rem; min-width: 0; }
 .tuile-avant .mini-plateau { width: 60px; height: 60px; border-radius: 8px; }
 .tuile-avant b { font-size: var(--fs-l); }
 /* Dans la tuile mise en avant, la pastille d'état se range à droite, dans le flux (plus de coin qui dépasse). */
