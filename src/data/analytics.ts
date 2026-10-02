@@ -377,6 +377,8 @@ function loadSentry(): Promise<SentryLike | null> {
     const sentry = m as unknown as SentryLike;
     sentry.init({ ...SENTRY_OPTIONS, dsn: c.sentryDsn, release: c.release, environment: c.environment });
     if (userId) sentry.setUser({ id: userId });
+    // Sentry écoute maintenant lui-même les erreurs non attrapées : le filet du démarrage s'arrête (pas de doublon).
+    arreterFilet?.();
     return sentry;
   }).catch(() => null);
   return seLoading;
@@ -447,6 +449,29 @@ export function captureError(error: unknown, contexte?: ContexteErreur): void {
   });
 }
 
+let arreterFilet: (() => void) | null = null;
+
+/**
+ * Filet du démarrage (#401) : une erreur non attrapée (ou une promesse rejetée) qui arrive avant que Sentry soit chargé
+ * n'est pas perdue. Elle passe par `captureError`, qui attend Sentry : elle part dès son arrivée. Comme toute erreur,
+ * seulement avec l'accord du joueur. Le filet s'arrête quand Sentry est prêt (il prend alors le relais).
+ */
+export function ecouterErreursAvantSentry(cible: Pick<Window, 'addEventListener' | 'removeEventListener'> | undefined =
+  typeof window === 'undefined' ? undefined : window): void {
+  if (!cible || arreterFilet) return;
+  const contexte: ContexteErreur = { categorie: 'rendu', origine: 'demarrage' };
+  // `error` sans objet d'erreur : script d'une autre origine (« Script error. »), rien d'utile à signaler.
+  const surErreur = (e: Event) => { const err = (e as ErrorEvent).error; if (err !== undefined && err !== null) captureError(err, contexte); };
+  const surRejet = (e: Event) => { captureError((e as PromiseRejectionEvent).reason, contexte); };
+  cible.addEventListener('error', surErreur);
+  cible.addEventListener('unhandledrejection', surRejet);
+  arreterFilet = () => {
+    cible.removeEventListener('error', surErreur);
+    cible.removeEventListener('unhandledrejection', surRejet);
+    arreterFilet = null;
+  };
+}
+
 /** Secondes écoulées depuis l'ouverture de la page (mesure « première pierre dans la minute »). */
 export function secondsSinceOpen(): number {
   return typeof performance === 'undefined' ? 0 : Math.round(performance.now() / 1000);
@@ -454,6 +479,6 @@ export function secondsSinceOpen(): number {
 
 /** Réservé aux tests. */
 export function _resetForTests(): void {
-  phLoading = null; seLoading = null; niveauPostHog = 'aucun'; userId = null;
+  phLoading = null; seLoading = null; niveauPostHog = 'aucun'; userId = null; arreterFilet?.();
   memoryConsent = null; memoryOpposition = false; onceMemoire.clear(); listeners.clear();
 }
