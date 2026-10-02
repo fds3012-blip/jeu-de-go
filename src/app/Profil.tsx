@@ -4,6 +4,9 @@
 import { Account } from './Account';
 import { Conditions } from './Confidentialite';
 import { ImportSgf } from './ImportSgf';
+import { MesParties } from './MesParties';
+import { historiqueAppareil } from './historique';
+import type { Db } from '../data/supabase';
 import { choisirThemeGoban, useIdThemeGoban, type Settings } from './settings';
 import { lireXp, niveauDe, niveauRequis, themeDebloque } from './xp';
 import { ORDRE_THEMES, THEMES_GOBAN } from '../ui/boardArt';
@@ -55,7 +58,7 @@ function useDonnees(serie: number, record: number, parcours: Parcours) {
   return donnees;
 }
 
-export type VueProfil = 'menu' | 'reglages' | 'installer' | 'rappel' | 'compte' | 'conditions' | 'importer';
+export type VueProfil = 'menu' | 'reglages' | 'installer' | 'rappel' | 'compte' | 'conditions' | 'importer' | 'parties';
 
 // Libellés traduits (#167) : calculés à l'affichage, dans la langue de l'interface.
 const themes = () => [
@@ -86,6 +89,11 @@ interface Props {
   /** « Je sais déjà jouer » (#283) : niveau estimé (discret, une ligne) et placement à refaire. */
   placement?: Placement | null;
   onPlacement?: () => void;
+  /** « Mes parties » (#358) : état vide, « Joue ta première partie ». */
+  onJouer?: () => void;
+  /** « Mes parties » : défis par lien terminés, lus dans Supabase pour la session ouverte. */
+  db?: Db | null;
+  userId?: string;
 }
 
 /** Sous-vue du Profil : « Retour » en haut, un titre, un contenu. */
@@ -101,11 +109,14 @@ function SousVue({ id, titre, onRetour, children }: { id: string; titre: string;
   );
 }
 
-export function Profil({ vue, onVue, settings, set, profil, serie, record = 0, parcours, placement, onPlacement }: Props) {
+export function Profil({ vue, onVue, settings, set, profil, serie, record = 0, parcours, placement, onPlacement, onJouer, db, userId }: Props) {
   const retour = () => { onVue('menu'); window.scrollTo({ top: 0 }); };
+  // #358 : toutes les parties terminées, et leur revue.
+  // #286 : « Analyser une partie » est dans « Mes parties » depuis #358 (le Profil tient sans défiler) ; on y revient.
+  if (vue === 'parties') return <MesParties onRetour={retour} onJouer={onJouer ?? retour} onImporter={() => onVue('importer')} db={db} userId={userId} confirmTouch={settings.confirmTouch} />;
   if (vue === 'conditions') return <Conditions onRetour={retour} />;
   // #286 : analyser une partie jouée ailleurs (SGF), action secondaire du Profil.
-  if (vue === 'importer') return <ImportSgf onRetour={retour} pseudo={profil?.pseudo} confirmTouch={settings.confirmTouch} />;
+  if (vue === 'importer') return <ImportSgf onRetour={() => { onVue('parties'); window.scrollTo({ top: 0 }); }} pseudo={profil?.pseudo} confirmTouch={settings.confirmTouch} />;
   if (vue === 'compte') return <SousVue id="compte-titre" titre={t('profil.compte')} onRetour={retour}><Account /></SousVue>;
   if (vue === 'reglages') return <SousVue id="reglages-titre" titre={t('profil.reglages')} onRetour={retour}><Reglages settings={settings} set={set} /></SousVue>;
   if (vue === 'rappel') {
@@ -123,7 +134,7 @@ export function Profil({ vue, onVue, settings, set, profil, serie, record = 0, p
     );
   }
 
-  return <Menu onVue={onVue} settings={settings} set={set} profil={profil} serie={serie} record={record} parcours={parcours} placement={placement} onPlacement={onPlacement} />;
+  return <Menu onVue={onVue} settings={settings} set={set} profil={profil} serie={serie} record={record} parcours={parcours} placement={placement} onPlacement={onPlacement} userId={userId} />;
 }
 
 /** Date courte du placement (« 28/09 »), dans la langue de l'interface. */
@@ -132,8 +143,9 @@ function dateCourte(iso: string): string {
   return Number.isNaN(d.getTime()) ? iso : d.toLocaleDateString(langue() === 'en' ? 'en-GB' : 'fr-FR', { day: '2-digit', month: '2-digit' });
 }
 
-function Menu({ onVue, profil, serie, record = 0, parcours, placement, onPlacement }: Omit<Props, 'vue'>) {
+function Menu({ onVue, profil, serie, record = 0, parcours, placement, onPlacement, userId }: Omit<Props, 'vue'>) {
   const id = identite(profil, serie);
+  const nParties = useMemo(() => historiqueAppareil().length, []);
   const donnees = useDonnees(serie, record, parcours);
   // Ligne « Installer l'app » (#214) : tant que l'app est installable ici et pas installée.
   const proposerInstallation = installable(usePlateformeInstallation(), etatInstallation());
@@ -160,12 +172,14 @@ function Menu({ onVue, profil, serie, record = 0, parcours, placement, onPlaceme
       <VitrineBadges liste={donnees.badges} nouveaux={donnees.nouveaux} />
 
       <div className="lignes">
+        {/* #358 : tes parties passées, en tête : c'est la ligne qu'on rouvre le plus. « Analyser une partie » (#286) y est. */}
+        <LigneLien icone={<IconeReglage id="parties" />} libelle={t('historique.titre')}
+          valeur={nParties ? t('historique.profilResume', { n: nParties }) : userId ? undefined : t('historique.profilVide')} onClick={() => onVue('parties')} />
         {/* #283 : le kyu estimé ne s'affiche qu'ici, sur une ligne, avec sa date ; la ligne relance le placement. */}
         {onPlacement && (placement?.fait && placement.kyu !== null
           ? <LigneLien icone={<IconeReglage id="placement" />} libelle={t('placement.profil')} valeur={t('placement.profilValeur', { kyu: placement.kyu, date: dateCourte(placement.date) })} onClick={onPlacement} />
           : <LigneLien icone={<IconeReglage id="placement" />} libelle={t(placement?.fait ? 'placement.profilRefaire' : 'placement.profilFaire')} onClick={onPlacement} />)}
         <LigneLien icone={<IconeReglage id="reglages" />} libelle={t('profil.reglages')} valeur={t('profil.reglagesResume')} onClick={() => onVue('reglages')} />
-        <LigneLien icone={<IconeReglage id="importer" />} libelle={t('profil.importer')} valeur={t('profil.importerResume')} onClick={() => onVue('importer')} />
         {/* #36 : rappel du Go du jour, dès que le rappel est configuré (clé publique VAPID). */}
         {clePubliqueVapid() !== '' && <LigneLien icone={<IconeReglage id="rappel" />} libelle={t('profil.rappel')} valeur={resumeRappel()} onClick={() => onVue('rappel')} />}
         {proposerInstallation && <LigneLien icone={<IconeReglage id="installer" />} libelle={t('profil.installer')} onClick={() => onVue('installer')} />}

@@ -150,7 +150,7 @@ const T = {
   reprendre: /^(Reprendre la leçon|Resume the lesson)/, tous: /^(Tous les problèmes|All puzzles)$/, probleme: /^(Problème|Puzzle) \d+/,
   cestParti: /^(C’est parti|Start)$/, saisJouer: /^(Je sais déjà jouer|I already know how to play)$/, passerPlacement: /^(Passer le placement|Skip the placement)$/,
   reglages: /^(Réglages|Settings)/, compte: /^(Mon compte|My account)/, conditions: /^(Conditions et confidentialité|Terms and privacy)$/,
-  importer: /^(Analyser une partie|Analyze a game)/, lire: /^(Lire la partie|Read the game)$/, retour: /^(Retour|Back)$/,
+  importer: /^(Analyser une partie|Analyze a game)/, parties: /^(Mes parties|My games)/, lire: /^(Lire la partie|Read the game)$/, retour: /^(Retour|Back)$/,
   defier: /^(Défier un ami|Challenge a friend)/, envoyerLien: /^(Envoyer un lien|Send a link)$/, recevoirCode: /^(Recevoir mon code|Get my code)$/,
   dejaCompte: /^(J’ai déjà un compte|I already have an account)$/, creerCompte: /^(Créer un compte|Create an account)$/,
   monPseudo: /^(C’est mon pseudo|That’s my username)$/, pseudo: /^(Pseudo|Username)$/, email: /^(Ton adresse e-mail|Your email address)$/,
@@ -361,6 +361,7 @@ for (const cfg of CONFIGS) {
       await cap('20-conditions');
       await cap('20b-conditions-page', { pleine: true });
       await page.getByRole('button', { name: T.retour }).click();
+      await page.getByRole('button', { name: T.parties }).click(); // #358 : l'import est dans « Mes parties »
       await page.getByRole('button', { name: T.importer }).click();
       await expect(page.getByRole('button', { name: T.lire })).toBeVisible();
       await cap('21-import');
