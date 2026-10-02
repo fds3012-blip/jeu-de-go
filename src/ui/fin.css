@@ -127,6 +127,15 @@
 .recit-resultat { margin-top: var(--space-2); font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: 28px; letter-spacing: -.02em; }
 .recit-continuer { margin-top: var(--space-4); flex: none; }
 .recit-etape { text-wrap: balance; }
+/* Très petits écrans (320 × 568, recette du 30/09, R3) : le goban cède de la hauteur pendant le récit pour que le
+   résultat et « Voir le résultat » restent au-dessus de la ligne de flottaison (plancher 200 px) ; RecitScore fait en
+   plus défiler le résultat dans l'écran quand il arrive. */
+@media (max-height: 600px) {
+  .recit .fin-fond { width: clamp(200px, calc(100dvh - 350px), 100%); margin-inline: auto; }
+  .recit-feuille { margin-top: var(--space-2); }
+  .recit-etapes { gap: 6px; }
+  .recit-continuer { margin-top: var(--space-2); }
+}
 /* Petites hauteurs (iPhone SE) : compteur et lignes resserrés, pour que les trois totaux restent sous le goban. */
 @media (max-height: 700px) {
   .recit-feuille { margin-top: var(--space-3); }

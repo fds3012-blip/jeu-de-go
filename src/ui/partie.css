@@ -3,22 +3,21 @@
 
 /* La colonne remplit l'écran au-dessus de la barre d'actions (84 px, voir .app-partie). Le bloc
    adversaire, plateau, toi est centré verticalement ; la barre du coach reste posée juste au-dessus des actions. */
-.partie { display: flex; flex-direction: column;
+.partie { display: flex; flex-direction: column; position: relative;
   min-height: calc(100dvh - var(--space-1) - 84px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); }
-/* La hauteur libre se partage à parts égales au-dessus de l'adversaire et sous « Toi » : le bloc
-   adversaire, plateau, toi est centré, et la barre du coach reste posée sur la barre d'actions. */
-.partie::before, .partie-souffle { content: ""; flex: 1 1 0; }
-.partie-souffle { min-height: var(--space-3); }
-.partie > .partie-souffle + .coach, .partie > .partie-souffle + .coach-intro { margin-top: 0; }
+/* v3 : la bulle de Mochi est posée juste sous « Toi » (plus de trou entre ton bandeau et son conseil). La hauteur
+   libre se partage un tiers au-dessus de l'adversaire, deux tiers sous la bulle, au-dessus de la barre d'actions. */
+.partie::before { content: ""; flex: 1 1 0; }
+.partie-souffle { flex: 2 1 0; min-height: var(--space-3); }
 /* Zone de Mochi (#187) : hauteur stable pour que le plateau ne bouge pas quand la bulle change.
    L'intro et la bulle se superposent ; l'intro, cachée après le premier coup, garde sa place.
    Sans intro, la zone réserve trois lignes (la plupart des phrases de Mochi). */
-.partie-mochi { display: grid; align-items: end; min-height: calc(3 * 1.4 * var(--fs-corps-s) + 20px); }
+.partie-mochi { display: grid; align-items: start; margin-top: var(--space-1); min-height: calc(3 * 1.4 * var(--fs-corps-s) + 20px); }
 .partie-mochi > .coach, .partie-mochi > .coach-intro { grid-area: 1 / 1; margin-top: 0; }
 .partie-mochi > .coach-intro[data-cache] { visibility: hidden; }
 /* Avant un passe trop tôt (#235) : la bulle de Mochi et deux choix (« Continuer à jouer » en principal). Posés sur le bas
-   de la zone, ils montent par-dessus ton bandeau au lieu de pousser la page sous la barre d'actions. */
-.partie-mochi { position: relative; }
+   de la colonne (v3 : la zone de Mochi est sous « Toi », la bulle s'ancre sur la colonne entière, juste au-dessus de la
+   barre d'actions), ils montent par-dessus le souffle libre puis ton bandeau, sans pousser la page sous la barre. */
 .partie-mochi > .coach-avertir { grid-area: 1 / 1; position: absolute; left: 0; right: 0; bottom: 0; z-index: 4; }
 .coach-avertir > .coach { margin-top: 0; box-shadow: 0 -10px 24px -14px rgba(0, 0, 0, .55); }
 .coach-choix { display: flex; gap: var(--space-2); margin-top: var(--space-2); }
@@ -28,7 +27,6 @@
    et finissait sous la barre d'actions (recette du 28/09, R1). Elle se pose alors sur le bas de la colonne, posée sur
    la barre d'actions et montant par-dessus ton bandeau : tout se lit sans défiler, et rien ne bouge quand elle s'efface. */
 @media (max-height: 829px) {
-  .partie-mochi { position: relative; }
   .partie-mochi > .coach-intro { position: absolute; left: 0; right: 0; bottom: 0; z-index: 4; }
   .partie-mochi > .coach-intro .bubble { box-shadow: 0 -10px 24px -14px rgba(0, 0, 0, .55); }
 }
@@ -38,14 +36,23 @@
 .app-partie > .cta, .app-partie .partie > .cta { bottom: calc(var(--space-4) + var(--relief) + env(safe-area-inset-bottom, 0px)); }
 
 /* ---------- Bandeaux des joueurs ---------- */
-.joueur { display: flex; align-items: center; gap: 10px; min-height: 56px; padding: 6px 0; }
+.joueur { display: flex; align-items: center; gap: 10px; min-height: 60px; padding: 6px 0; }
 .joueur .retour { flex: none; width: var(--cible-min); height: var(--cible-min); margin: 0 -6px 0 -12px; border: 0; background: none; color: var(--muted);
   font-size: 30px; line-height: 1; display: grid; place-items: center; border-radius: 12px; }
 .joueur .retour:active { background: var(--surface); }
 .portrait { position: relative; flex: none; width: 44px; height: 44px; display: grid; place-items: center; }
 .portrait .stone { width: 34px; height: 34px; }
-/* Au trait : un point jade posé sur le portrait (lisible quelle que soit la forme du portrait, sceau ou pierre). */
+/* Au trait : un point jade posé sur le portrait (lisible quelle que soit la forme du portrait, sceau ou pierre).
+   v3 : un anneau s'en détache doucement toutes les 2 s (transform et opacité seulement ; rien en mouvements réduits). */
 .au-trait { position: absolute; right: -2px; bottom: -2px; width: 14px; height: 14px; border-radius: 50%; background: var(--accent-trait); box-shadow: 0 0 0 3px var(--bg); }
+.au-trait::after { content: ""; position: absolute; inset: 0; border-radius: inherit; border: 2px solid var(--accent-trait); opacity: 0; }
+@media (prefers-reduced-motion: no-preference) {
+  .au-trait::after { animation: trait-onde 2000ms cubic-bezier(.23, 1, .32, 1) 400ms infinite; }
+}
+@keyframes trait-onde { 0% { opacity: .8; transform: scale(1); } 60%, 100% { opacity: 0; transform: scale(2.2); } }
+/* Le joueur qui n'a pas le trait s'efface un peu : on sait d'un coup d'œil à qui c'est. */
+.joueur:not(.active) .portrait, .joueur:not(.active) .joueur-nom b { opacity: .78; }
+@media (prefers-reduced-motion: no-preference) { .joueur .portrait, .joueur .joueur-nom b { transition: opacity 200ms var(--ease); } }
 .avatar { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--surface-2);
   font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: 18px; text-transform: uppercase; }
 .joueur-texte { flex: 1; min-width: 0; }
@@ -79,15 +86,21 @@
 .mini.b { background: var(--matiere-blanche); }
 .mini + .mini { margin-left: -9px; }
 
-/* ---------- Liste des coups ---------- */
-.coups { list-style: none; margin: 0 calc(-1 * var(--gouttiere)); padding: 2px var(--gouttiere) 8px; display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none;
-  white-space: nowrap; color: var(--muted); font-size: var(--fs-s); font-weight: var(--fw-bold); font-variant-numeric: tabular-nums;
-  /* Les coups anciens s'effacent vers la gauche. */
-  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 36px); mask-image: linear-gradient(to right, transparent 0, #000 36px); }
+/* ---------- Liste des coups : un ruban discret sous l'adversaire, avec son titre (v3) ---------- */
+.coups-ruban { display: flex; align-items: center; gap: var(--space-2); margin: -2px 2px 6px; min-height: 26px; }
+.coups-titre { flex: none; color: var(--muted); font-size: var(--fs-xs); font-weight: var(--fw-medium); }
+.coups-ruban:has(.vide) .coups-titre { display: none; }
+.coups { flex: 1; min-width: 0; list-style: none; margin: 0 calc(-1 * var(--gouttiere)) 0 0; padding: 2px var(--gouttiere) 2px 0; display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none;
+  white-space: nowrap; color: var(--muted); font-size: var(--fs-xs); font-weight: var(--fw-bold); font-variant-numeric: tabular-nums;
+  /* Les coups anciens s'effacent vers la gauche, et le bord droit se fond dans la gouttière. */
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 28px, #000 calc(100% - var(--gouttiere) - 8px), transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 28px, #000 calc(100% - var(--gouttiere) - 8px), transparent 100%); }
 .coups::-webkit-scrollbar { display: none; }
-.coups li { flex: none; padding: 2px 6px; border-radius: 6px; }
-.coups li[aria-current] { color: var(--text); background: var(--surface-2); }
-.coups .vide { font-weight: var(--fw-medium); }
+/* Rien à faire défiler avant le premier coup : pas de fondu, « Aucun coup joué » se lit en entier. */
+.coups:has(> .vide) { -webkit-mask-image: none; mask-image: none; }
+.coups li { flex: none; padding: 2px 7px; border-radius: 999px; line-height: 18px; }
+.coups li[aria-current] { color: var(--text); background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--line); }
+.coups .vide { padding-left: 0; font-weight: var(--fw-medium); }
 
 /* ---------- Barre d'avantage : papier, portion noire, contour ---------- */
 .avantage { display: flex; align-items: center; gap: 10px; margin: 0 0 10px; font-size: var(--fs-legende); font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; }
@@ -195,6 +208,46 @@
   .actions-filet { margin: 0 1px; }
 }
 .actions-filet { flex: none; align-self: center; width: 1px; height: 36px; margin: 0 2px; background: var(--line); }
+
+/* ---------- v3 : trois aides, « Passer », et le menu « Plus » (annuler, abandonner, réglages) ---------- */
+.actions-menu-plus { gap: 4px; padding-inline: 4px; }
+.actions-menu-plus .actions-aides { flex: 1 1 0; justify-content: center; gap: 2px; }
+.actions-menu-plus .actions-aides button { flex: 1 1 0; max-width: 104px; }
+.actions-menu-plus .actions-decisions { flex: none; gap: 4px; padding-right: 0; }
+.actions-menu-plus button.decider { min-width: 72px; padding-inline: 10px; }
+.actions button.plus { flex: none; width: 48px; min-width: 48px; max-width: 48px; padding-inline: 0; }
+.actions button.plus .icone-trait { stroke-width: 3; }
+.actions button.plus.ouvert { background: var(--surface-2); }
+@media (min-width: 300px) and (max-width: 374px) {
+  .actions-menu-plus { gap: 2px; padding-inline: 2px; }
+  .actions-menu-plus button { font-size: .75rem; }
+  .actions-menu-plus .actions-aides button { padding-inline: 2px; }
+  .actions-menu-plus button.decider { min-width: 60px; padding-inline: 6px; }
+  .actions button.plus { width: 44px; min-width: 44px; max-width: 44px; }
+}
+/* La feuille du menu : posée au-dessus de la barre, à droite, et elle s'ouvre depuis le bouton (origine en bas à droite). */
+.actions-menu { position: absolute; right: 8px; bottom: calc(100% + 8px); z-index: 30; width: min(260px, calc(100vw - 16px)); padding: 6px;
+  border-radius: var(--radius); background: var(--surface); box-shadow: 0 0 0 1px var(--line), 0 18px 40px -16px rgba(0, 0, 0, .7); transform-origin: 90% 100%; }
+.actions .menu-ligne { flex-direction: row; justify-content: flex-start; gap: 12px; width: 100%; max-width: none; min-height: 48px; padding: 0 12px;
+  font-size: var(--fs-corps); font-weight: var(--fw-medium); text-align: left; }
+.actions .menu-ligne > .menu-libelle { flex: 1; min-width: 0; text-align: left; white-space: normal; }
+.actions .menu-ligne .icone-action { width: 26px; height: 26px; }
+.menu-ligne:active { background: var(--surface-2); }
+.actions .menu-ligne.danger { color: var(--danger-texte); font-weight: var(--fw-bold); }
+.menu-reglages { margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--line); }
+/* Réglage : piste et pastille (même dessin que l'interrupteur du Profil, en 40 × 24). */
+.menu-reglage-piste { position: relative; flex: none; width: 40px; height: 24px; border-radius: 999px; background: var(--surface-2);
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--muted) 70%, transparent); }
+.menu-reglage-piste i { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: var(--muted); }
+.menu-reglage[aria-checked="true"] .menu-reglage-piste { background: var(--accent); box-shadow: inset 0 0 0 1.5px var(--accent-bord); }
+.menu-reglage[aria-checked="true"] .menu-reglage-piste i { background: var(--blanc); transform: translateX(16px); }
+@media (prefers-reduced-motion: no-preference) {
+  .actions-menu { animation: menu-plus 160ms cubic-bezier(.23, 1, .32, 1) both; }
+  .menu-reglage-piste { transition: background-color 160ms var(--ease); }
+  .menu-reglage-piste i { transition: transform 160ms cubic-bezier(.23, 1, .32, 1), background-color 160ms var(--ease); }
+  .actions button.plus { transition: background-color 160ms var(--ease); }
+}
+@keyframes menu-plus { from { opacity: 0; transform: translateY(6px) scale(.96); } to { opacity: 1; transform: none; } }
 .actions button.decider { margin: 6px 0; min-height: 52px; background: var(--surface-2); font-weight: var(--fw-bold);
   box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--text) 45%, transparent); }
 .actions button.decider:disabled { background: none; box-shadow: inset 0 0 0 1.5px var(--line); font-weight: var(--fw-medium); }
@@ -219,11 +272,17 @@
 .icone-action .pierre-n { stroke: var(--pierre-n-bord); stroke-width: .7; }
 .icone-action .pierre-b { stroke: rgba(60, 40, 15, .42); stroke-width: .8; }
 .icone-action .ombre { fill: #000; opacity: .32; }
-/* Indices restants (#35) : trois mini-pierres en colonne à droite de l'icône ; la hauteur du bouton ne bouge pas. */
+/* Indices restants (#35, v3) : une pastille jade avec le nombre sur le coin de l'icône ; la hauteur du bouton ne bouge pas.
+   Jade et encre jade : 9:1 dans les deux modes. À zéro, ou bouton désactivé, elle passe à l'encre brume. */
 .compteur-indices { position: relative; display: inline-flex; }
-.compteur-pierres { position: absolute; left: 100%; top: 50%; transform: translateY(-50%); margin-left: 3px; display: flex; flex-direction: column; gap: 2px; }
-.compteur-pierres i { width: 5px; height: 5px; border-radius: 50%; border: 1px solid currentColor; opacity: .55; box-sizing: border-box; }
-.compteur-pierres i.pleine { background: var(--onglet-jouer); border-color: var(--onglet-jouer); opacity: 1; }
+.compteur-badge { position: absolute; top: -6px; right: -10px; min-width: 17px; height: 17px; padding: 0 4px; border-radius: 999px; box-sizing: border-box;
+  background: var(--accent); color: var(--on-accent); box-shadow: 0 0 0 2px var(--barre);
+  font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: 11px; line-height: 17px; text-align: center; font-variant-numeric: tabular-nums; }
+.compteur-indices[data-restants="0"] .compteur-badge, .actions button:disabled .compteur-badge { background: var(--surface-2); color: var(--muted); }
+@media (prefers-reduced-motion: no-preference) {
+  .compteur-badge { animation: badge-pose 200ms var(--ease-pose) both; }
+}
+@keyframes badge-pose { from { transform: scale(1.25); } to { transform: none; } }
 /* Indice : la pierre fantôme de l'accueil, dans son halo jade (seule couleur de la barre au repos). */
 .icone-action .lueur { fill: var(--onglet-jouer); opacity: .16; }
 .icone-action .lueur-anneau { fill: none; stroke: var(--onglet-jouer); stroke-width: 1.2; opacity: .6; }
@@ -262,7 +321,9 @@
 .barre-comptage > .btn.primary { flex: 1.5; font-size: var(--fs-l); }
 
 /* « +N » après ta capture (#187) : il sort de ton couvercle et monte en s'effaçant. Absent si mouvements réduits. */
-.couvercle-zone { position: relative; flex: none; display: inline-flex; }
+.couvercle-zone { position: relative; flex: none; display: inline-flex; flex-direction: column; align-items: center; gap: 3px; }
+/* v3 : le couvercle dit ce qu'il contient, en un mot, pour les débutants. */
+.couvercle-legende { color: var(--muted); font-size: 11px; line-height: 1; font-weight: var(--fw-medium); letter-spacing: .01em; }
 .gain-capture { position: absolute; left: 50%; bottom: calc(100% + 2px); transform: translateX(-50%); pointer-events: none; opacity: 0;
   padding: 3px 9px; border-radius: 999px; background: var(--accent); color: var(--on-accent); box-shadow: 0 4px 10px -4px rgba(0, 0, 0, .45);
   font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: var(--fs-l); line-height: 1; font-variant-numeric: tabular-nums; white-space: nowrap; }

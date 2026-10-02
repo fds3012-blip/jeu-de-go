@@ -351,7 +351,11 @@ for (const largeur of [390, 320]) {
     await expect(page.locator('.joueur[data-joueur="You"]')).toBeVisible();
     await expect(page.getByText(/^The goal: surround more territory than Pomme/)).toBeVisible();
     const actions = page.getByRole('toolbar', { name: 'Game actions' });
-    for (const nom of ['Hint', 'Who’s ahead?', 'Undo', 'Pass', 'Resign']) await expect(actions.getByRole('button', { name: nom, exact: true })).toBeVisible();
+    for (const nom of ['Hint', 'Who’s ahead?', 'Pass', 'More']) await expect(actions.getByRole('button', { name: nom, exact: true })).toBeVisible();
+    // Annuler et abandonner sont dans le menu « More » (v3).
+    await actions.getByRole('button', { name: 'More', exact: true }).click();
+    for (const nom of ['Undo', 'Resign']) await expect(actions.getByRole('button', { name: nom, exact: true })).toBeVisible();
+    await page.keyboard.press('Escape');
     await expect(actions.getByRole('button', { name: 'Hint' })).toHaveAccessibleDescription('3 hints left');
     await sansCoupePartie(page, largeur);
 
