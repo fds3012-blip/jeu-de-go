@@ -59,7 +59,7 @@ Ces données sont écrites dans le stockage local (`localStorage`) de ton naviga
 | Réglages | `go.settings.v1`, `go.themeGoban.v1`, `go.langue.v1` | Thème, taille du plateau, son, vibrations, fêtes, aide, confirmation du coup, décor du plateau, langue de l’interface choisie dans le Profil (`"fr"` ou `"en"`) |
 | Choix sur la mesure | `go.consentement.v1`, `go.mesure.opposition.v1` | Ta réponse à la fenêtre (« Oui » ou « Non merci ») et ton opposition au comptage anonyme |
 | Repères d'événements | `go.evenement.<nom>` (par exemple `go.evenement.premiere_pierre`) | « Déjà envoyé une fois » pour certains événements. **Écrits seulement si tu as dit « Oui »** |
-| Leçons | `go.lecons.v1` | Leçons commencées et terminées |
+| Leçons | `go.lecons.v1`, `go.lecons.guide.v1` | Leçons commencées et terminées ; aide visuelle de la première étape déjà montrée (oui ou non) |
 | Problèmes | `go.problemes.v1`, `go.problemes.vus.v1` | Problèmes réussis, et problèmes dont tu as vu la réponse |
 | Problèmes à ta mesure | `go.cote-joueur.v1` | Une cote estimée d'après tes premiers essais, jamais affichée, pour choisir le prochain problème (#284) ; nombre d'essais, réussites d'affilée, dernier problème joué et problèmes déjà faits aujourd'hui |
 | Course aux problèmes | `go.course-meilleur.v1` | Ton meilleur score à la course de 3 minutes (un nombre), pour l'afficher à la fin de la course et dans le texte partagé (#287) |
