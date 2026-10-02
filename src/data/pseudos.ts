@@ -11,13 +11,15 @@ export type Pseudos = Map<string, string | null>;
 const PAR_REQUETE = 50;
 
 /**
- * Lit en une requête les pseudos des `ids` pas encore dans `cache`, et les y range. Un échec de lecture n'est pas
- * gardé : la prochaine lecture réessaie, et l'écran dit « Ton ami » en attendant. Renvoie le cache complété.
+ * Lit en une requête les pseudos des `ids` pas encore dans `cache`, et les y range. Un échec de lecture (erreur ou
+ * exception réseau) n'est pas gardé : la prochaine lecture réessaie, et l'écran dit « Ton ami » en attendant. Renvoie le cache complété.
  */
 export async function lirePseudos(db: Db, ids: Iterable<string | null | undefined>, cache: Pseudos = new Map()): Promise<Pseudos> {
   const inconnus = [...new Set([...ids].filter((id): id is string => !!id && !cache.has(id)))].slice(0, PAR_REQUETE);
   if (!inconnus.length) return cache;
-  const { data, error } = await db.from('profiles').select('id, username').in('id', inconnus);
+  // Jamais d'exception : sans pseudo, la liste s'affiche quand même (« Ton ami »).
+  const { data, error } = await db.from('profiles').select('id, username').in('id', inconnus)
+    .then(r => r, () => ({ data: null, error: true }));
   if (error) return cache;
   for (const id of inconnus) cache.set(id, data?.find(x => x.id === id)?.username || null);
   return cache;

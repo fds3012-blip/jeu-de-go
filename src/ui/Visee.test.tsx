@@ -3,7 +3,8 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { fromLabel } from '../go/coords';
 import { Board } from './Board';
 import { viewBoxOf } from './boardArt';
-import { estSerre, Visee } from './Visee';
+import { estSerre } from './plateauSerre';
+import { Visee } from './Visee';
 
 describe('visée du plateau serré (#400)', () => {
   it('seulement à partir du 13 × 13 : le 9 × 9 garde son comportement', () => {

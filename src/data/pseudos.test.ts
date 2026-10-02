@@ -45,6 +45,12 @@ describe('pseudos des adversaires (#400)', () => {
     expect(lectures).toHaveLength(2);
   });
 
+  it('une exception réseau ne fait pas échouer la lecture', async () => {
+    const db = { from: () => ({ select: () => ({ in: () => Promise.reject(new TypeError('Failed to fetch')) }) }) } as unknown as Db;
+    const cache = await lirePseudos(db, ['lea']);
+    expect(cache.size).toBe(0);
+  });
+
   it('l’adversaire : l’autre camp, ou personne', () => {
     expect(adversaireDe({ black_id: 'moi', white_id: 'lea' }, 'moi')).toBe('lea');
     expect(adversaireDe({ black_id: 'lea', white_id: 'moi' }, 'moi')).toBe('lea');

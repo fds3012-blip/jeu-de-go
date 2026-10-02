@@ -9,7 +9,8 @@ import {
 } from '../data/puzzles';
 import { Board } from '../ui/Board';
 import { MiniGoban } from '../ui/MiniGoban';
-import { estSerre, Visee } from '../ui/Visee';
+import { Visee } from '../ui/Visee';
+import { estSerre } from '../ui/plateauSerre';
 import { centreVertical } from '../ui/cadrage';
 import { C, M, viewBoxOf } from '../ui/boardArt';
 import { ParoleMochi, Retour, Verdict } from '../ui/Lecteur';

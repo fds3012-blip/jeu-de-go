@@ -47,7 +47,7 @@ interface Props {
   versCouvercles?: boolean;
   /** Noms lus dans les annonces (issue #116) : { 2: 'Pomme' } fait dire « Pomme a joué C3 » au lieu de « Blanc joue C3 ». */
   noms?: NomsCamps;
-  /** Dessin posé sous la pierre fantôme (#400 : visée du plateau serré, src/ui/Visee.tsx, chargée avec son écran). */
+  /** Dessin posé sur la grille, sous les pierres, quand une pierre fantôme est montrée (#400 : visée du plateau serré, src/ui/Visee.tsx, chargée avec son écran). */
   surFantome?: (p: number) => ReactElement;
 }
 
@@ -291,6 +291,7 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
         {cases}
         <image href={woodDataUrl(theme.id)} x={vb.min} y={vb.min} width={vb.span} height={vb.span} preserveAspectRatio="none" />
         {grid}
+        {ghostP >= 0 && surFantome?.(ghostP)}
         {stones}
         {leaving}
         {marks.ownerFondu ? <g className="territoire-fondu" data-qui-mene="">{owner}</g> : owner}
@@ -343,7 +344,6 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
             <rect x={X(cur) - C * 0.48} y={Y(cur) - C * 0.48} width={C * 0.96} height={C * 0.96} rx={C * 0.2} stroke={CURSEUR.anneau} strokeWidth={3} />
           </g>
         ) : null}
-        {ghostP >= 0 && surFantome?.(ghostP)}
         {ghostP >= 0 ? <g {...fantome(ghostP)} opacity={0.5} data-fantome="" aria-hidden="true">{corps(toPlay, ghostP, size)}</g> : null}
         {shaking >= 0 && !board[shaking] ? (
           <g key={`tr${shakeSeen}`} {...fantome(shaking)} opacity={0.5} aria-hidden="true"><g className="tremble">{corps(toPlay, shaking, size)}</g></g>

@@ -1,7 +1,7 @@
 // Visée du plateau serré (#400) : en 13 × 13 (et 19 × 19) sur un téléphone de 320 px, les lignes ne sont qu'à 19 px
 // l'une de l'autre et le doigt cache la pierre fantôme. Après la première touche, la visée trace la ligne et la colonne
 // du point choisi jusqu'aux bords, et y allume sa lettre et son numéro : on lit « D10 » sans soulever la main.
-// Rendue par Board (prop `surFantome`) sous la pierre fantôme. Aucune animation : la visée suit le doigt tout de suite.
+// Rendue par Board (prop `surFantome`) sur la grille, sous les pierres et la pierre fantôme. Aucune animation : la visée suit le doigt tout de suite.
 // Chargée seulement avec les écrans qui l'utilisent (problèmes, Go du jour), pas dans le JS initial.
 import type { ReactElement } from 'react';
 import { LETTERS } from '../go/coords';
@@ -10,10 +10,6 @@ import './visee.css';
 
 // Jade de la direction artistique, foncé dessous pour le contraste sur tous les bois (comme le cadre du conseil).
 const JADE = '#3CC48E', JADE_FONCE = '#155E40', ENCRE = '#0E1A14';
-
-/** Taille à partir de laquelle un plateau est « serré » sur un téléphone : visée et confirmation au doigt imposées. */
-export const TAILLE_SERREE = 13;
-export const estSerre = (size: number): boolean => size >= TAILLE_SERREE;
 
 /** Étiquette d'un bord : pastille jade et texte encre, centrée sur (x, y) et gardée dans le bois (min : bord du viewBox). */
 function Pastille({ x: x0, y: y0, texte, fs, min }: { x: number; y: number; texte: string; fs: number; min: number }) {
