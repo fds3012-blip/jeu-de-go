@@ -77,3 +77,8 @@ html:has(dialog.aide[open]) { overflow: hidden; }
   .aide-mot { grid-template-columns: minmax(0, 1fr); }
   .aide-mot .aide-schema { width: min(180px, 80%); justify-self: center; }
 }
+
+/* Coordonnées lisibles sur un petit plateau : le plateau les dessine pour 358 px de large (Board.tsx) ; ici, en unités
+   du plateau, assez grandes pour qu'une phrase qui cite « C3 » se retrouve à l'œil (≈ 13 px dans une carte, 10 px à droite d'un mot). */
+.aide-schema .board .coord { font-size: 15px; fill-opacity: .85; }
+.aide-mot .aide-schema .board .coord { font-size: 19px; }

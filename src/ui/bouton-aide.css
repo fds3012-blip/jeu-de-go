@@ -4,3 +4,7 @@
 .bouton-aide:hover { color: var(--text); }
 .bouton-aide:active { background: var(--surface); color: var(--text); }
 .bouton-aide:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+/* Avec un libellé (Profil) : le « ? » puis le mot, sans fond (une pastille au toucher) ; la cible garde 44 px de haut. */
+.bouton-aide.bouton-aide-texte { width: auto; display: inline-flex; align-items: center; gap: 6px; padding: 0 14px 0 10px; border-radius: var(--radius-pill);
+  font: inherit; font-size: var(--fs-s); font-weight: var(--fw-bold); color: var(--text); }
+.bouton-aide-texte svg { width: 20px; height: 20px; color: var(--muted); }

@@ -1,4 +1,5 @@
 // Onglet Problèmes (issue #40, phase 6) : cote et série, problème du jour mis en scène, grille des problèmes de base.
+import { BoutonAide } from '../ui/BoutonAide';
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import type { Db } from '../data/supabase';
 import { ALL_PUZZLES } from '../content/puzzles';
@@ -838,6 +839,8 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
           <h2>{puzzle.title}</h2>
         </div>
         <Difficulte d={puzzle.difficulty} />
+        {/* #362 : « ? » ouvre les mots du go (atari, échelle, œil…) sans quitter le problème. */}
+        <BoutonAide depuis="probleme" fiche="mots" />
       </div>
       {duJour?.defiChange && <p className="notice" role="status">{fr(tr('pb.defiChange'))}</p>}
       {duJour?.archive !== undefined && <p className="notice" role="status">{fr(tr('pb.archive', { numero: duJour.archive }))}</p>}

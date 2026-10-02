@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 
 export type IconeReglageId =
   | 'placement' | 'reglages' | 'importer' | 'rappel' | 'installer' | 'compte' | 'conditions'
-  | 'langue' | 'theme' | 'goban' | 'confirmer' | 'sons' | 'celebrations' | 'aide' | 'regles';
+  | 'langue' | 'theme' | 'goban' | 'confirmer' | 'sons' | 'celebrations' | 'aide';
 
 const TRACES: Record<IconeReglageId, ReactNode> = {
   // Boussole : le placement trouve ton niveau de départ.
@@ -26,8 +26,6 @@ const TRACES: Record<IconeReglageId, ReactNode> = {
   celebrations: <><path d="M12 3.5 14.4 9l5.6.6-4.2 3.9 1.2 5.7L12 16.3 7 19.2l1.2-5.7L4 9.6 9.6 9Z" /></>,
   // Mochi : la bulle du coach.
   aide: <><path d="M5 5.5h14v10H11l-4.5 3.5V15.5H5Z" /><circle cx="9.5" cy="10.5" r="1" className="ir-plein" /><circle cx="14.5" cy="10.5" r="1" className="ir-plein" /></>,
-  // Aide et règles (#362) : un livre ouvert, une pierre sur la page de droite.
-  regles: <><path d="M12 6.5C10 5 7 4.5 3.5 5v13c3.5-.5 6.5 0 8.5 1.5 2-1.5 5-2 8.5-1.5V5c-3.5-.5-6.5 0-8.5 1.5ZM12 6.5v13" /><circle cx="16.3" cy="11.5" r="1.9" className="ir-plein" /></>,
 };
 
 export function IconeReglage({ id, taille = 20 }: { id: IconeReglageId; taille?: number }) {

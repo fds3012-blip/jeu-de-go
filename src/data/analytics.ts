@@ -101,7 +101,7 @@ export const EVENTS = {
   conseilDemande: 'conseil_demande',
   conseilNote: 'conseil_note',
   // Aide du joueur (#362) : `fiche` (`regles`, `compter`, `mots`), `mot` (mot du glossaire ouvert d'emblée, sinon vide),
-  // `depuis` (`profil`, `lecon`, `partie`, `clavier`). Aucun texte cherché n'est envoyé.
+  // `depuis` (`profil`, `lecon`, `probleme`, `partie`, `clavier`). Aucun texte cherché n'est envoyé.
   aideOuverte: 'aide_ouverte',
 } as const;
 export type AnalyticsEvent = (typeof EVENTS)[keyof typeof EVENTS];

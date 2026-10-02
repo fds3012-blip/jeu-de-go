@@ -7,7 +7,7 @@
 import type { Fiche, IdMot } from '../content/aide';
 
 /** D'où l'aide est ouverte : propriété `depuis` de l'événement `aide_ouverte`. */
-export type Depuis = 'profil' | 'lecon' | 'partie' | 'clavier';
+export type Depuis = 'profil' | 'lecon' | 'probleme' | 'partie' | 'clavier';
 
 export interface Ouverture { fiche: Fiche; mot?: IdMot; depuis: Depuis }
 
