@@ -39,7 +39,7 @@ export interface ErreurGardee {
 
 /** Vrai si ce coup peut devenir un problème : Erreur ou Grosse erreur, avec un meilleur coup fiable. */
 export function peutEnFaireUnProbleme(note: Note | null | undefined, meilleur: number | null | undefined): boolean {
-  return (note === 'erreur' || note === 'grosse') && meilleur != null && meilleur >= 0;
+  return (note === 'erreur' || note === 'manque' || note === 'grosse') && meilleur != null && meilleur >= 0;
 }
 
 /** Jour local au format AAAA-MM-JJ. */

@@ -145,11 +145,15 @@ export function courbe(avances: (number | null)[], largeur: number, hauteur: num
 // par rapport au meilleur coup du moteur. Règle d'or : aucune note fausse. Dans le doute, on ne note pas (`null`)
 // ou on donne la note la plus prudente.
 
-/** Notes possibles. `solide` : faible perte sans KataGo (on ne sait pas si c'était le meilleur coup). */
-export type Note = 'brillant' | 'meilleur' | 'excellent' | 'bon' | 'solide' | 'imprecision' | 'erreur' | 'grosse';
+/**
+ * Notes possibles. `solide` : faible perte sans KataGo (on ne sait pas si c'était le meilleur coup).
+ * Revue v3 (#405, docs/game-design/notation-go.md) : `classique` (coup d'ouverture connu), `force` (réponse obligée
+ * à un atari), `manque` (faute de l'adversaire non punie). `grosse` s'affiche « Gaffe ».
+ */
+export type Note = 'brillant' | 'meilleur' | 'excellent' | 'bon' | 'classique' | 'solide' | 'force' | 'imprecision' | 'erreur' | 'manque' | 'grosse';
 
 /** Ordre d'affichage, du meilleur au pire. */
-export const NOTES: Note[] = ['brillant', 'meilleur', 'excellent', 'bon', 'solide', 'imprecision', 'erreur', 'grosse'];
+export const NOTES: Note[] = ['brillant', 'meilleur', 'excellent', 'bon', 'classique', 'solide', 'force', 'imprecision', 'erreur', 'manque', 'grosse'];
 
 /** Libellé et symbole de chaque note : le symbole double la couleur (accessibilité). Libellé dans la langue de l'interface (#167). */
 const info = (note: Note, symbole: string) => ({ get libelle() { return t(`note.${note}`); }, symbole });
@@ -158,9 +162,12 @@ export const NOTE_INFO: Record<Note, { readonly libelle: string; symbole: string
   meilleur: info('meilleur', '★'),
   excellent: info('excellent', '!'),
   bon: info('bon', '✓'),
+  classique: info('classique', '≡'),
   solide: info('solide', '✓'),
+  force: info('force', '→'),
   imprecision: info('imprecision', '?!'),
   erreur: info('erreur', '?'),
+  manque: info('manque', '×'),
   grosse: info('grosse', '??'),
 };
 
@@ -178,6 +185,18 @@ export const NOTE_INFO: Record<Note, { readonly libelle: string; symbole: string
  */
 export const SEUILS_KATAGO = { excellent: 0.5, bon: 1.5, imprecision: 3, erreur: 6 } as const;
 export const SEUILS_SIMPLE = { solide: 2.5, imprecision: 4, erreur: 8 } as const;
+
+/**
+ * Facteur de taille des seuils (#405) : racine de taille / 9. 9 × 9 : 1 ; 13 × 13 : 1,2 ; 19 × 19 : 1,45.
+ * Un coup vaut plus de points sur un grand plateau, mais moins que proportionnellement au côté : la valeur d'un coup
+ * d'ouverture passe d'environ 12 points (9 × 9) à environ 20 (19 × 19). Justification : docs/game-design/notation-go.md.
+ */
+export const facteurTaille = (size: number) => Math.sqrt(Math.max(9, size) / 9);
+const fois = <T extends Record<string, number>>(o: T, f: number) => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, v * f])) as { [K in keyof T]: number };
+/** Seuils KataGo pour un plateau de côté `size`. */
+export const seuilsKataGo = (size: number) => fois(SEUILS_KATAGO, facteurTaille(size));
+/** Seuils du moteur simple pour un plateau de côté `size`. */
+export const seuilsSimple = (size: number) => fois(SEUILS_SIMPLE, facteurTaille(size));
 /** Brillant : le coup doit dépasser le premier choix de KataGo d'au moins ce nombre de points, confirmé par une analyse longue. */
 export const MARGE_BRILLANT = 1;
 /** Visites minimales pour croire l'ordre des candidats de KataGo. */
@@ -195,7 +214,10 @@ export function phraseNote(n: NoteCoup): string {
     case 'meilleur': return t('note.phrase.meilleur');
     case 'excellent': return t('note.phrase.excellent');
     case 'bon': return t('note.phrase.bon', { pts: n.perte < 1 ? t('revue.unPoint') : pts(n.perte) });
+    case 'classique': return t('note.phrase.classique');
     case 'solide': return t('note.phrase.solide');
+    case 'force': return t('note.phrase.force');
+    case 'manque': return t('note.phrase.manque', { pts: pts(n.perte) });
     case 'imprecision': return t('note.phrase.imprecision', { pts: pts(n.perte) });
     case 'erreur': return t('note.phrase.erreur', { pts: pts(n.perte) });
     case 'grosse': return t('note.phrase.grosse', { pts: pts(n.perte) });
@@ -291,6 +313,7 @@ export function candidatsBrillant(positions: Position[], analyses: (AnalyseRevue
 export function noterCoups(positions: Position[], analyses: (AnalyseRevue | null)[], confirmations: Record<number, number> = {}): (NoteCoup | null)[] {
   const lisse = lisser(analyses);
   const out: (NoteCoup | null)[] = [];
+  const size = positions[0]?.size ?? 9, S = seuilsSimple(size), T = seuilsKataGo(size);
   for (let i = 1; i < positions.length; i++) {
     const avant = analyses[i - 1], apres = analyses[i];
     const couleur = positions[i - 1].toPlay, s = couleur === 1 ? 1 : -1, move = positions[i].lastMove ?? -1;
@@ -311,7 +334,6 @@ export function noterCoups(positions: Position[], analyses: (AnalyseRevue | null
         l1 = s > 0 ? Math.min(l1, lisse[i + 1] ?? suite!.lead) : Math.max(l1, lisse[i + 1] ?? suite!.lead);
       }
       const perte = finale || (move < 0 && !repond) ? 0 : Math.max(0, Math.min(b, s * (l0 - l1)));
-      const S = SEUILS_SIMPLE;
       const note: Note = perte <= S.solide ? 'solide' : perte <= S.imprecision ? 'imprecision' : perte <= S.erreur ? 'erreur' : 'grosse';
       out.push({ coup: i, couleur, note, perte });
       continue;
@@ -322,7 +344,6 @@ export function noterCoups(positions: Position[], analyses: (AnalyseRevue | null
     const k = coups.findIndex(c => c.move === move), cand = k >= 0 ? coups[k] : undefined;
     let perte = sur && cand && cand.visits >= VISITES_MIN ? Math.max(0, premier.lead - cand.lead) : Math.max(0, brute);
     if (finale) perte = 0;
-    const T = SEUILS_KATAGO;
     let note: Note = sur && k === 0 ? 'meilleur'
       : perte <= T.excellent ? 'excellent' : perte <= T.bon ? 'bon' : perte <= T.imprecision ? 'imprecision' : perte <= T.erreur ? 'erreur' : 'grosse';
     const conf = confirmations[i];
@@ -339,8 +360,10 @@ export const PERTE_MAX = 12;
  * Précision d'un joueur, en % : 100 / (1 + m / 4), où m est sa perte moyenne par coup noté (plafonnée à 12 points
  * par coup). Perte moyenne 0 → 100 %, 1 point → 80 %, 2 → 67 %, 4 → 50 %, 8 → 33 %. `null` si aucun coup noté.
  */
-export function precision(notes: (NoteCoup | null)[], couleur: Color): number | null {
-  const pertes = notes.filter((n): n is NoteCoup => !!n && n.couleur === couleur).map(n => Math.min(PERTE_MAX, n.perte));
+export function precision(notes: (NoteCoup | null)[], couleur: Color, size = 9): number | null {
+  // #405 : sur un grand plateau, les pertes sont ramenées au 9 × 9 (même facteur que les seuils des notes).
+  const f = facteurTaille(size);
+  const pertes = notes.filter((n): n is NoteCoup => !!n && n.couleur === couleur).map(n => Math.min(PERTE_MAX, n.perte / f));
   if (!pertes.length) return null;
   const m = pertes.reduce((a, b) => a + b, 0) / pertes.length;
   return Math.round(100 / (1 + m / 4));
@@ -389,7 +412,7 @@ export function plafondPrecision(avance: number | null, size: number): number | 
 
 /** Précision affichée : celle des notes, plafonnée par le score final (`avanceNoir` : avance finale de Noir, komi compris). */
 export function precisionHonnete(notes: (NoteCoup | null)[], couleur: Color, avanceNoir: number | null | undefined, size: number): number | null {
-  const p = precision(notes, couleur);
+  const p = precision(notes, couleur, size);
   if (p == null) return null;
   const max = plafondPrecision(avanceDe(avanceNoir, couleur), size);
   return max == null ? p : Math.min(p, max);
@@ -440,7 +463,7 @@ export function momentCle(positions: Position[], analyses: (AnalyseRevue | null)
   const lisse = lisser(analyses);
   let best: MomentCle | null = null;
   for (let i = 2; i < positions.length; i++) {
-    const c = positions[i - 1].toPlay;
+    const avant = positions[i - 1], c = avant.toPlay;
     if (joueur && c !== joueur) continue;
     const a0 = analyses[i - 1], a1 = analyses[i];
     if (!a0 || !a1 || a0.engine !== a1.engine) continue;
@@ -452,7 +475,7 @@ export function momentCle(positions: Position[], analyses: (AnalyseRevue | null)
     const bout = a2 && a2.engine === a0.engine && positions[i + 1] ? i + 1 : i;
     const fin = analyses[bout]!, s = c === 1 ? 1 : -1, adv = (3 - c) as Color;
     const perte = Math.min(s * (a0.lead - fin.lead), s * ((lisse[i - 1] ?? a0.lead) - (lisse[bout] ?? fin.lead)));
-    if (!(perte >= SEUIL_CLE[a0.engine]) || (best && perte <= best.perte)) continue;
+    if (!(perte >= SEUIL_CLE[a0.engine] * facteurTaille(avant.size)) || (best && perte <= best.perte)) continue;
     best = { coup: i, perte, passe, prises: positions[bout].captures[adv] - positions[i].captures[adv] };
   }
   return best;
@@ -464,16 +487,16 @@ export function momentCle(positions: Position[], analyses: (AnalyseRevue | null)
  * affichait 100 % pendant que Mochi comptait des points perdus. Le coup clé prend la perte du moment clé (si elle est
  * plus forte) et la note qui va avec ; la précision et le résumé suivent. Les autres coups ne changent pas.
  */
-export function notesAvecCle(notes: (NoteCoup | null)[], cle: MomentCle | null, analyses: (AnalyseRevue | null)[]): (NoteCoup | null)[] {
+export function notesAvecCle(notes: (NoteCoup | null)[], cle: MomentCle | null, analyses: (AnalyseRevue | null)[], size = 9): (NoteCoup | null)[] {
   const k = cle ? cle.coup - 1 : -1, n = notes[k];
   if (!cle || !n || n.perte >= cle.perte) return notes;
   const perte = cle.perte;
   let note: Note;
   if (analyses[k]?.engine === 'katago') {
-    const T = SEUILS_KATAGO;
+    const T = seuilsKataGo(size);
     note = perte <= T.imprecision ? 'imprecision' : perte <= T.erreur ? 'erreur' : 'grosse';
   } else {
-    const S = SEUILS_SIMPLE;
+    const S = seuilsSimple(size);
     note = perte <= S.imprecision ? 'imprecision' : perte <= S.erreur ? 'erreur' : 'grosse';
   }
   const out = notes.slice();
@@ -523,7 +546,7 @@ export function phraseBilan(notes: (NoteCoup | null)[], joueur: Color, adversair
   const moi = precisionHonnete(notes, joueur, ctx.avanceNoir, size), lui = precisionHonnete(notes, (3 - joueur) as Color, ctx.avanceNoir, size);
   if (moi == null) return t('revue.bilan.pasAssez');
   const miens = notes.filter((n): n is NoteCoup => !!n && n.couleur === joueur);
-  const pire = miens.filter(n => n.note === 'erreur' || n.note === 'grosse').sort((a, b) => b.perte - a.perte || a.coup - b.coup)[0];
+  const pire = miens.filter(n => n.note === 'erreur' || n.note === 'manque' || n.note === 'grosse').sort((a, b) => b.perte - a.perte || a.coup - b.coup)[0];
   const brillant = miens.some(n => n.note === 'brillant') ? `${t('revue.bilan.brillant')} ` : '';
   const cle = ctx.cle ?? null;
   const revoirPire = (p: NoteCoup) => t('revue.bilan.vaRevoir', { cite: t('revue.citeCoup', { coup: p.coup, pts: pts(p.perte) }) });
