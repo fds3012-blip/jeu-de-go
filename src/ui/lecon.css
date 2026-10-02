@@ -1,0 +1,166 @@
+/*
+ * Lecteur de leçon v3 (recette du 30/09, R2 ; direction docs/design/v2/direction.md).
+ * De haut en bas : la barre (retour, titre, points d'étapes), le plateau, Mochi qui parle, puis une seule action en relief.
+ * Tout tient dans l'écran sans défiler, à 390 × 844 comme à 320 × 568 : le plateau prend la place qui reste.
+ */
+
+/* La leçon remplace la réserve de bas de page du bouton flottant : son bouton est dans la colonne. */
+.app:has(.lecteur-lecon) { padding-bottom: calc(var(--nav-h) + var(--space-2) + env(safe-area-inset-bottom, 0px)); }
+.lecteur-lecon { --mochi: 72px; display: flex; flex-direction: column; gap: var(--space-2);
+  min-height: calc(100dvh - var(--space-2) - var(--nav-h) - var(--space-2) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); }
+.lecteur-lecon:has(.verdict) { padding-bottom: 0; }
+@media (min-height: 760px) { .lecteur-lecon { --mochi: 88px; } }
+
+/* Barre : retour, titre de la leçon sur une ligne, points d'étapes à droite. */
+.lecteur-lecon .lecteur-tete { margin-bottom: 0; }
+.lecteur-lecon .lecteur-titre { flex: 1; min-width: 0; margin: 0; font-size: var(--fs-m); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 8px; }
+.lecteur-lecon .lecteur-titre .sceau { flex: none; }
+
+/* Le plateau : carré de côté min(largeur, hauteur libre) grâce à une requête de conteneur. Plancher de 200 px : en dessous, la page défile. */
+.lecteur-lecon > .lecteur-plateau { flex: 1 1 0; min-height: 200px; container-type: size; display: flex; justify-content: center; align-items: flex-start; }
+.plateau-cadre { position: relative; width: min(100cqw, calc(100cqh - 6px)); max-width: 100%; }
+.plateau-cadre .board-wrap { width: 100%; }
+.lecteur-plateau[data-demo='en-cours'] { cursor: pointer; }
+
+/* Calque des halos, posé sur le bois (même viewBox que Board.tsx), sous aucun toucher. */
+.halos { position: absolute; inset: 0 0 5px; width: 100%; height: calc(100% - 5px); pointer-events: none; z-index: 2; overflow: visible; }
+/* Guidage de la toute première étape (une fois) : un anneau de jade qui respire autour du point à toucher. */
+.halo-guide { fill: rgba(60, 196, 142, .18); stroke: #3CC48E; stroke-width: 3; transform-box: fill-box; transform-origin: center; }
+/* Bonne réponse : un anneau de jade s'ouvre autour de la pierre posée, 300 ms, puis disparaît. */
+.halo-juste { fill: none; stroke: #3CC48E; stroke-width: 4; opacity: 0; transform-box: fill-box; transform-origin: center; }
+@media (prefers-reduced-motion: no-preference) {
+  .halo-guide { animation: halo-respire 1.6s cubic-bezier(.37, 0, .63, 1) infinite; }
+  .halo-juste { animation: halo-ouvre 300ms cubic-bezier(.2, .8, .2, 1) both; }
+}
+@keyframes halo-respire { 0%, 100% { transform: scale(.92); opacity: .6; } 50% { transform: scale(1.08); opacity: 1; } }
+@keyframes halo-ouvre { from { transform: scale(.7); opacity: .9; } to { transform: scale(1.5); opacity: 0; } }
+
+/* Démonstration (#101) : « Revoir » rejoue ; l'atari clignote (pas en mouvements réduits). */
+.lecteur-lecon .revoir { min-height: 44px; min-width: 44px; }
+.lecteur-lecon .revoir:disabled { visibility: hidden; }
+.lecteur-lecon > .demo-compteur { flex: none; margin: 0; text-align: center; font-family: var(--font-titre); font-size: 1.1rem; line-height: 1.2; }
+.demo-compteur b { font-size: 1.6rem; font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: no-preference) {
+  .demo-atari .board [data-cible] { animation: demo-atari 600ms steps(2, jump-none) infinite alternate; }
+}
+@keyframes demo-atari { from { opacity: 1; } to { opacity: .15; } }
+
+/* ---------- Mochi parle : portrait, puis la bulle (consigne, bravo en jade, erreur douce en hanko) ---------- */
+.mochi-zone { display: flex; gap: var(--space-3); align-items: flex-start; }
+.mochi-zone .mochi-portrait { flex: none; width: var(--mochi) !important; height: var(--mochi) !important; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, .22)); }
+.lecteur-lecon .mochi-bulle { position: static; flex: 1; min-width: 0; min-height: var(--mochi); display: flex; gap: 10px; align-items: center; margin: 0; padding: 10px 14px;
+  background: var(--surface); border-radius: var(--radius-xs) var(--radius) var(--radius) var(--radius); box-shadow: none; z-index: auto; }
+.lecteur-lecon .mochi-bulle p { flex: 1; margin: 0; padding: 0; background: none; border-radius: 0; line-height: 1.45; font-weight: var(--fw-medium); }
+.lecteur-lecon .mochi-bulle .marque { flex: none; }
+.lecteur-lecon .mochi-bulle.verdict-juste { background: color-mix(in srgb, var(--jade) 18%, var(--surface)); }
+.lecteur-lecon .mochi-bulle.verdict-revoir, .lecteur-lecon .mochi-bulle.choix-aide { background: color-mix(in srgb, var(--hanko) 14%, var(--surface)); }
+.lecteur-lecon .mochi-bulle.verdict-revoir p, .lecteur-lecon .mochi-bulle.choix-aide p { color: var(--danger-texte); }
+/* Le lecteur d'écran garde le nom de feuille `verdict` ; l'écran, lui, ne la fait plus monter du bas. */
+.lecteur-lecon .verdict { animation: none; }
+@media (prefers-reduced-motion: no-preference) {
+  /* La bulle arrive en 200 ms ; après une erreur, elle tremble un peu (3 px, 240 ms), comme la pierre fantôme d'un coup interdit. */
+  .lecteur-lecon .mochi-bulle { animation: bulle-entre 200ms var(--ease) both; }
+  .lecteur-lecon[data-moment='revoir'] .mochi-bulle { animation: bulle-entre 200ms var(--ease) both, secousse 240ms var(--ease) 60ms; }
+  /* Content : Mochi rebondit une fois (300 ms, léger dépassement). */
+  .mochi-zone .mochi-portrait[data-humeur='content'] { animation: mochi-rebond 300ms cubic-bezier(.34, 1.56, .64, 1); }
+}
+@keyframes bulle-entre { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@keyframes secousse { 0%, 100% { transform: none; } 25% { transform: translateX(-3px); } 50% { transform: translateX(3px); } 75% { transform: translateX(-2px); } }
+@keyframes mochi-rebond { 0% { transform: scale(1); } 50% { transform: scale(1.08); } 100% { transform: scale(1); } }
+
+/* ---------- Choix du quiz : à plat ; la couleur dit juste ou à revoir ---------- */
+.choix { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+/* Choix longs (« Chez Blanc ») : jamais coupés ; ils passent à la ligne sur un écran étroit (zoom 200 %). */
+.choix button { flex: 1 1 0; min-width: max-content; padding-inline: var(--space-2); min-height: 56px; font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: 1.3rem;
+  background: var(--surface); border: 2px solid transparent; border-radius: var(--radius-s); }
+/* Choix en mots (« Je passe », « Chez Blanc ») : plus petits que les nombres, pour tenir à trois sur une ligne. */
+.choix-mots button { font-size: 1.05rem; }
+.choix button:disabled { opacity: .4; cursor: default; }
+.choix .choix-juste { background: color-mix(in srgb, var(--jade) 20%, var(--surface)); border-color: var(--accent-trait); }
+.choix .choix-faux { background: color-mix(in srgb, var(--hanko) 16%, var(--surface)); border-color: var(--danger); }
+.choix .choix-faux[aria-disabled] { cursor: default; }
+@media (prefers-reduced-motion: no-preference) {
+  .choix button { transition: transform var(--duree-rapide) var(--ease), background-color var(--duree-rapide); }
+  .choix button:not(:disabled):active { transform: scale(.97); }
+}
+
+/* ---------- Une seule action, au bas de la colonne, sous le pouce ; sa place est réservée (rien ne saute) ---------- */
+.lecon-actions { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); margin-top: auto;
+  min-height: calc(var(--cible-cta) + var(--relief)); }
+.lecteur-lecon .cta { position: static; transform: none; width: 100%; margin-bottom: var(--relief); }
+@media (prefers-reduced-motion: no-preference) {
+  .lecteur-lecon .cta { animation: bulle-entre 200ms var(--ease) both; }
+  .lecteur-lecon .cta:active { transform: translateY(var(--relief)); box-shadow: none; }
+}
+
+/* ---------- Fin de leçon ---------- */
+.app:has(.fin-lecon) { padding-bottom: calc(var(--nav-h) + var(--space-4) + env(safe-area-inset-bottom, 0px)); }
+/* Écran de fin centré dans la hauteur libre au-dessus de la navigation. */
+.fin-lecon { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+  min-height: calc(100dvh - var(--nav-h) - var(--space-4) - var(--space-2) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); padding-bottom: var(--space-4); }
+.fin-sceau { filter: drop-shadow(0 12px 18px rgba(0, 0, 0, .35)); }
+.fin-sceau .sceau { --sceau-socle: var(--bg); }
+.fin-titre:focus { outline: none; }
+
+/* La rangée du chemin, dessinée comme un bout de goban : trois lignes, une intersection par leçon. */
+.fin-gue { --pas: 38px; position: relative; list-style: none; display: flex; margin: 24px 0 20px; padding: 0; }
+.fin-gue::before { content: ""; position: absolute; left: -12px; right: -12px; top: 50%; border-top: 1.5px solid color-mix(in srgb, var(--text) 22%, transparent); }
+.fin-gue li { position: relative; width: var(--pas); height: 44px; display: grid; place-items: center; }
+.fin-gue li::before { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; border-left: 1.5px solid color-mix(in srgb, var(--text) 22%, transparent); }
+.fin-gue i { position: relative; width: 32px; height: 32px; border-radius: 50%; }
+.fin-gue .faite i { background: radial-gradient(circle at 34% 26%, rgba(255, 255, 255, .34), rgba(255, 255, 255, 0) 24%),
+  radial-gradient(72% 72% at 36% 30%, #5b5f5d, #2e3130 18%, #151716 55%, #050606);
+  box-shadow: 0 4px 6px -2px rgba(0, 0, 0, .5); }
+/* La pierre qu'on vient de poser : cerclée d'or, la couleur des récompenses. */
+.fin-gue .juste-posee i::after { content: ""; position: absolute; inset: -6px; border-radius: 50%; border: 2.5px solid var(--or); }
+/* Le prochain pas : une pierre fantôme en pointillés, la place qui attend. */
+.fin-gue .prochaine i { background: color-mix(in srgb, var(--bg) 78%, transparent); border: 2px dashed color-mix(in srgb, var(--text) 40%, transparent); }
+
+.fin-titre { margin: 0; font-size: clamp(2.25rem, 11vw, 2.75rem); font-weight: var(--fw-titre); line-height: 1; letter-spacing: -0.03em; text-wrap: balance; }
+.fin-acquis { margin: 12px 0 14px; font-size: var(--fs-l); line-height: 1.4; max-width: 21em; text-wrap: balance; }
+/* L'XP gagnée, lue sur place (jamais en pastille flottante par-dessus). La place est réservée : rien ne saute. */
+.fin-gain { min-height: 32px; margin: 0 0 14px; }
+.fin-gain .xp-en-ligne { margin: 0; }
+.fin-prochain { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 0 0 20px; color: var(--muted); font-size: var(--fs-s); font-weight: var(--fw-medium); }
+.fin-actions { display: flex; flex-direction: column; align-items: center; width: 100%; }
+.fin-lecon .cta { position: static; transform: none; width: 100%; }
+.fin-lecon .lien { margin-top: calc(var(--space-2) + var(--relief)); }
+@media (max-height: 640px) {
+  .fin-gue { margin: 14px 0 10px; }
+  .fin-acquis { margin: 8px 0 10px; font-size: var(--fs-m); }
+  .fin-prochain { margin-bottom: 12px; }
+  .fin-lecon .lien { margin-top: var(--relief); }
+}
+
+/*
+ * Un seul moment orchestré, plus modeste qu'une victoire (moins de 600 ms au total, jamais bloquant) :
+ * 1. le sceau s'imprime : 0,9 → 1 avec un léger dépassement (skill motion-design, « bounce settle », succès 5-10 %) ;
+ * 2. la pierre se pose : 1,12 → 1 en 140 ms (direction.md, section 5), le claquement part à l'impact (POSE_MS) ;
+ * 3. le titre, la phrase, puis l'XP arrivent, 60 ms d'écart (ease-out fort des skills animate et emil-design-eng).
+ * Le bouton est là dès le début : on peut passer à la suite sans attendre.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  .fin-lecon .cta:active { transform: translateY(var(--relief)); box-shadow: none; }
+  .fin-sceau { animation: sceau-pose 360ms cubic-bezier(.175, .885, .32, 1.275) both; }
+  .fin-gue .juste-posee i { animation: pose 140ms 320ms cubic-bezier(.2, .8, .3, 1.2) both; }
+  .fin-gue .juste-posee i::after { animation: apparait-marque 160ms 460ms cubic-bezier(.23, 1, .32, 1) both; }
+  .fin-titre { animation: apparait 300ms 120ms cubic-bezier(.23, 1, .32, 1) both; }
+  .fin-acquis { animation: apparait 300ms 180ms cubic-bezier(.23, 1, .32, 1) both; }
+  .fin-gain .pastille-xp.anime { animation-delay: 520ms; }
+  .fin-prochain { animation: apparait 300ms 240ms cubic-bezier(.23, 1, .32, 1) both; }
+}
+@keyframes sceau-pose { from { transform: scale(.9) rotate(-6deg); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes pose {
+  from { transform: scale(1.12); opacity: 0; box-shadow: 0 12px 14px -4px rgba(0, 0, 0, .25); }
+  to { transform: none; opacity: 1; box-shadow: 0 4px 6px -2px rgba(0, 0, 0, .5); }
+}
+@keyframes apparait-marque { from { opacity: 0; transform: scale(.9); } to { opacity: 1; transform: none; } }
+@keyframes apparait { from { transform: translateY(8px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* Confettis (dernière leçon seulement) : le canevas de src/ui/Confettis.tsx, au-dessus de tout, sans prendre de toucher. */
+.fin-lecon .confettis { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 40; pointer-events: none; }
+
+/* ---------- Entraînement de fin de leçon (#200) : « Entraînement » et ses points, sans chiffre ---------- */
+.serie-surtitre { display: inline-flex; align-items: center; gap: 8px; }
+.serie-surtitre .etapes { min-height: 0; gap: 5px; }
+.serie-surtitre .etapes span { width: 7px; height: 7px; }
