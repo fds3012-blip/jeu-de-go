@@ -67,6 +67,12 @@ export function jetonDepuisLien(lien: string): string | null {
   return FORMAT_JETON.test(jeton) ? jeton : null;
 }
 
+/** Jeton du défi lu dans le fragment de l'adresse (`#defi=JETON`), ou null. */
+export function jetonDeLAdresse(hash: string): string | null {
+  const brut = hash.replace(/^#/, '');
+  return brut.startsWith(`${PARAM_DEFI}=`) ? jetonDepuisLien(brut) : null;
+}
+
 /**
  * Session d'un vrai compte, exigée pour créer ou rejoindre un défi (#343). Aucune session anonyme n'est plus ouverte :
  * sans compte, ou avec une ancienne session anonyme, l'écran demande d'abord le compte (e-mail et pseudo).

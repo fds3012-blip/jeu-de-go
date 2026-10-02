@@ -445,4 +445,4 @@ export function DefiPartie({ db, partieId, userId, anonyme, pseudo = null, confi
   );
 }
 
-// useDefisAJouer (compteur de l'accueil) est dans defisAJouer.ts (#323) : l'accueil s'en sert sans charger cet écran.
+// useDefisEnAttente (accueil, pastilles, « À faire » #367) est dans defisAJouer.ts (#323) : l’app s’en sert sans charger cet écran.
