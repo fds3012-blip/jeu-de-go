@@ -1,7 +1,7 @@
 // Lecteur de leçon et fin de leçon (issues #40, #54, #101, #198, #200 ; recette du 30/09, R2 : lecteur v3).
 // L'écran se lit de haut en bas : les points d'étapes, le plateau, puis Mochi qui parle (consigne, bravo, erreur douce)
 // et une seule action en relief quand il y en a une. Le chemin des leçons, lui, est dans Learn.tsx.
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { LESSONS, chapitreDe, explicationRefus, type Lesson } from '../content/lessons';
 import { acquis } from '../content/acquis';
 import { Board, type BoardMarks } from '../ui/Board';
@@ -281,7 +281,7 @@ export const POSE_MS = 460;
 
 /**
  * Fin de leçon : le sceau de la leçon s'imprime, la pierre se pose sur la rangée du chemin (avec son claquement),
- * l'XP gagnée se lit sur place, le prochain pas est nommé, puis une seule action en relief.
+ * l'XP gagnée se lit sur place, puis une seule action en relief ; le lien de la leçon suivante la nomme.
  * Célébration modeste ; carillon et confettis seulement pour la dernière leçon.
  */
 function FinLecon({ lesson, progress, celebrer, onNext, onExit, pratique, jouer }: {
@@ -305,6 +305,8 @@ function FinLecon({ lesson, progress, celebrer, onNext, onExit, pratique, jouer 
     retirerFete('niveau');
     setNiveau({ n, libelle, agir });
   };
+  // La leçon suivante du chapitre, nommée sur son lien (L14).
+  const suivante = LESSONS[LESSONS.indexOf(lesson) + 1];
   const bouton = (a: ActionFin, classe: 'cta' | 'lien') => {
     const props = { className: classe, 'data-action': a };
     if (a === 'jouer' && jouer) { const l = t('lecon.jouerContre', { nom: jouer.nom }); return <button key={a} {...props} onClick={puis(l, jouer.lancer)}>{l}</button>; }
@@ -312,7 +314,11 @@ function FinLecon({ lesson, progress, celebrer, onNext, onExit, pratique, jouer 
       const l = fr(t('lecon.pratique'));
       return <button key={a} {...props} onClick={puis(l, pratique.ouvrir)} aria-label={fr(t('lecon.pratiqueAria', { themes: pratique.themes.join(', ') }))}>{l}</button>;
     }
-    if (a === 'suivante' && onNext) { const l = t('lecon.suivante'); return <button key={a} {...props} onClick={puis(l, onNext)}>{l}</button>; }
+    // Recette du 02/10 au soir (L14) : le lien dit lui-même où il mène ; plus de « Prochain pas » qui le répétait.
+    if (a === 'suivante' && onNext) {
+      const l = suivante ? t('lecon.suivanteTitre', { titre: titreCourt(suivante.title) }) : t('lecon.suivante');
+      return <button key={a} {...props} onClick={puis(l, onNext)}>{fr(l)}</button>;
+    }
     const l = t('lecon.retourChemin');
     return <button key={a} {...props} onClick={puis(l, onExit)}>{l}</button>;
   };
@@ -321,12 +327,6 @@ function FinLecon({ lesson, progress, celebrer, onNext, onExit, pratique, jouer 
   const sceau = useRef<HTMLDivElement>(null);
   const titreRef = useRef<HTMLHeadingElement>(null);
   const [gerbe, setGerbe] = useState<null | { x: number; y: number }>(null);
-  // Le prochain pas du chemin : la leçon suivante du chapitre, ou la suite proposée en fin de chapitre.
-  const suivante = LESSONS[LESSONS.indexOf(lesson) + 1];
-  const prochain: ReactNode = chapitre && jouer
-    ? t('lecon.prochainPas', { titre: t('lecon.jouerContre', { nom: jouer.nom }) })
-    : suivante && onNext ? <><SceauLecon id={suivante.id} taille={22} />{t('lecon.prochainPas', { titre: titreCourt(suivante.title) })}</> : null;
-
   useEffect(() => {
     titreRef.current?.focus({ preventScroll: true });
     // Minuteries annulées si on quitte l'écran avant la fin : rien ne claque après coup.
@@ -357,7 +357,6 @@ function FinLecon({ lesson, progress, celebrer, onNext, onExit, pratique, jouer 
       <h2 className="fin-titre" ref={titreRef} tabIndex={-1}>{titre}</h2>
       <p className="fin-acquis">{fr(acquis(lesson.id))}{chapitre && chap.fin && <> {fr(chap.fin)}</>}</p>
       <div className="fin-gain"><XpEnLigne anime={celebrer} /></div>
-      {prochain && <p className="fin-prochain">{prochain}</p>}
       <div className="fin-actions">
         {bouton(principale, 'cta')}
         {liens.map(a => bouton(a, 'lien'))}

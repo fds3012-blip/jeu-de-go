@@ -30,3 +30,23 @@ export function useDefilement(cible: number, duree: number, actif: boolean): num
   }, [cible, duree, actif]);
   return actif ? v : cible;
 }
+
+/** Une boîte à l'écran, en coordonnées de la fenêtre : haut et bas (px). */
+export interface Bande { haut: number; bas: number }
+
+/**
+ * Lot X (#398) : défilement de la page qui ne coupe jamais un élément en haut de l'écran (le surtitre « Entraînement »
+ * rogné à mi-hauteur, le titre du problème coupé). `pas` : défilement voulu ; `bandes` : les éléments au-dessus du
+ * plateau, à leur place actuelle ; `max` : défilement au plus. Un élément que le nouveau haut de l'écran couperait sort
+ * entièrement (le pas va jusqu'à son bas) si `max` le permet ; sinon il reste entier (le pas s'arrête à son haut).
+ */
+export function pasSansCoupure(pas: number, bandes: readonly Bande[], max: number): number {
+  let p = pas;
+  // Pousser le pas peut faire couper un autre élément plus bas : on recommence, au plus une fois par élément.
+  for (let i = 0; i <= bandes.length; i++) {
+    const coupee = bandes.find(b => b.haut < p - 0.5 && b.bas > p + 0.5);
+    if (!coupee) break;
+    p = coupee.bas <= max ? coupee.bas : Math.min(p, coupee.haut);
+  }
+  return Math.max(0, Math.round(p));
+}

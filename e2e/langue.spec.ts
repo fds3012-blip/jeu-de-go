@@ -106,7 +106,7 @@ for (const largeur of [390, 320]) {
     await expect(page.getByText('The same puzzle for everyone, today.')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Solve the Daily Go' })).toHaveText('Solve');
     await expect(page.getByText(/^(Black|White) to play$/).first()).toBeVisible();
-    await expect(page.getByText('Sign in to keep your streak and solved puzzles on all your devices.')).toBeVisible();
+    await expect(page.getByText('Create your account to keep your streak and solved puzzles on all your devices.')).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Puzzles', exact: true })).toBeVisible();
     await expect(page.locator('[data-palier-en-cours]')).toContainText('Your tier');
     await expect(page.locator('[data-palier-en-cours]')).toContainText('30 to 25 kyu');

@@ -3,7 +3,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { t } from '../content/i18n';
 import { etatsPoints } from '../app/lecon';
-import { mouvementsReduits } from './defilement';
+import { mouvementsReduits, pasSansCoupure } from './defilement';
 import { PortraitMochi, type HumeurMochi } from './Portrait';
 import './apprendre.css';
 
@@ -156,6 +156,11 @@ function devoilerPlateau(verdict: HTMLDivElement | null) {
   }
   const manque = zone.bottom - haut + MARGE;
   if (manque <= 0) return;
-  const pas = Math.min(manque, Math.max(0, zone.top - MARGE));
+  // Lot X (#398) : l'en-tête (retour, surtitre, titre, difficulté, « ? ») sort entier ou reste entier, jamais rogné.
+  const bandes = [...lecteur.querySelectorAll<HTMLElement>('.lecteur-tete > *, .lecteur-nom > *, .lecteur > .notice')]
+    .map(e => e.getBoundingClientRect()).filter(r => r.height > 0).map(r => ({ haut: r.top, bas: r.bottom }));
+  // Le défilement possible s'arrête au bas de la page : au-delà, l'en-tête resterait rogné.
+  const reste = document.documentElement.scrollHeight - window.innerHeight - window.scrollY;
+  const pas = pasSansCoupure(Math.min(manque, Math.max(0, zone.top - MARGE)), bandes, Math.max(0, Math.min(zone.top, reste)));
   if (pas > 0) window.scrollBy({ top: pas, behavior: mouvementsReduits() ? 'instant' : 'smooth' });
 }

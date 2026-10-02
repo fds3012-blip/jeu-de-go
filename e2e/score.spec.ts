@@ -42,8 +42,8 @@ test('fin de partie : le récit du score, puis le résultat, sans toucher', asyn
   await expect(page.locator('.recit-resultat.vu')).toHaveText('Noir gagne de 3,5 points');
   await expect(page.getByTestId('recit-noir')).toHaveText('37');
   await expect(page.getByTestId('recit-blanc')).toHaveText('33,5');
-  await expect(recit).toContainText('+ 1 prisonnier pour Noir');
-  await expect(recit).toContainText('+ 6,5 komi pour Blanc');
+  await expect(recit).toContainText('+1 prisonnier pour Noir');
+  await expect(recit).toContainText('+6,5 komi pour Blanc');
   // Première fois : le komi est expliqué.
   await expect(recit).toContainText("Le komi compense l'avantage de Noir, qui joue en premier.");
   // Puis l'écran de fin, tel qu'avant, sans toucher.
@@ -177,7 +177,7 @@ for (const largeur of [390, 320] as const) {
         // 3. Le komi s'ajoute à Blanc, expliqué la première fois.
         await page.clock.runFor(200);
         await expect(etape(2)).toHaveClass(/\bvu\b/);
-        await expect(etape(2)).toContainText('+ 6,5 komi pour Blanc');
+        await expect(etape(2)).toContainText('+6,5 komi pour Blanc');
         await expect(etape(2)).toContainText("Le komi compense l'avantage de Noir");
         await expect(recit.locator('.camp').last().locator('.recit-jeton')).toHaveText('+ 6,5');
         await page.clock.runFor(300);
@@ -204,8 +204,8 @@ for (const largeur of [390, 320] as const) {
         await expect(recit).toBeVisible();
         await expect(recit.locator('.recit-etape:not(.vu)')).toHaveCount(0);
         await expect(recit.locator('.recit-etape').nth(0)).toContainText('36 points de territoire pour Noir, 27 pour Blanc');
-        await expect(recit.locator('.recit-etape').nth(1)).toContainText('+ 1 prisonnier pour Noir');
-        await expect(recit.locator('.recit-etape').nth(2)).toContainText('+ 6,5 komi pour Blanc');
+        await expect(recit.locator('.recit-etape').nth(1)).toContainText('+1 prisonnier pour Noir');
+        await expect(recit.locator('.recit-etape').nth(2)).toContainText('+6,5 komi pour Blanc');
         await expect(page.getByTestId('recit-noir')).toHaveText('37');
         await expect(page.getByTestId('recit-blanc')).toHaveText('33,5');
         await expect(recit.locator('.recit-jeton, .territoire-recit')).toHaveCount(0);

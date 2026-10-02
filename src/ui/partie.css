@@ -52,6 +52,9 @@
 @keyframes trait-onde { 0% { opacity: .8; transform: scale(1); } 60%, 100% { opacity: 0; transform: scale(2.2); } }
 /* Le joueur qui n'a pas le trait s'efface un peu : on sait d'un coup d'œil à qui c'est. */
 .joueur:not(.active) .portrait, .joueur:not(.active) .joueur-nom b { opacity: .78; }
+/* Recette du 02/10 au soir (L12) : pendant le comptage, personne n'a le trait mais c'est aux joueurs de valider. Aucune
+   pierre grisée, sinon « Toi » semble n'avoir plus la main. */
+.partie:has(.barre-comptage) .joueur .portrait, .partie:has(.barre-comptage) .joueur .joueur-nom b { opacity: 1; }
 @media (prefers-reduced-motion: no-preference) { .joueur .portrait, .joueur .joueur-nom b { transition: opacity 200ms var(--ease); } }
 .avatar { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--surface-2);
   font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: 18px; text-transform: uppercase; }

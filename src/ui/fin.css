@@ -36,6 +36,11 @@
 .fin-titre { margin: var(--space-4) 0 6px; font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: 56px; line-height: 1; letter-spacing: -.035em; }
 .fin-titre:focus { outline: none; }
 .fin-marge { margin: 0; color: var(--muted); font-size: var(--fs-l); font-variant-numeric: tabular-nums; }
+/* L5 (recette du 02/10 au soir) : l'XP gagnée, à plat sous l'écart, à la place de l'annonce flottante qui couvrait les
+   lettres du plateau. Vide (sans XP), la ligne ne prend aucune place. */
+.fin-xp:not(:empty) { margin-top: var(--space-2); }
+.fin-xp .pastille-xp { box-shadow: none; }
+:root:has(.fin-xp) .annonce-xp { display: none; }
 .fin-bilan { margin: var(--space-3) 0 0; font-size: var(--fs-corps-s); line-height: 1.45; max-width: 30em; text-wrap: balance; }
 .fin-bilan b { font-weight: var(--fw-bold); }
 /* L'or ne sert qu'aux récompenses : le bilan n'est doré qu'après une victoire. */
