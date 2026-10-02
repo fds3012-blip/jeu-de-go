@@ -91,11 +91,13 @@ for (const [largeur, hauteur] of [[390, 844], [320, 568]] as const) {
       await jouer(page, 'E4');
       await page.getByRole('button', { name: 'Terminer la leçon' }).click();
 
-      // Fin de leçon : l'XP lue sur place (pas de pastille flottante), le prochain pas, une seule action en relief.
+      // Fin de leçon : l'XP lue sur place (pas de pastille flottante), une seule action en relief, la leçon suivante
+      // nommée sur son lien (recette du 02/10 au soir, L14 : plus de « Prochain pas » qui le répétait).
       await expect(page.getByRole('heading', { name: 'Leçon terminée' })).toBeVisible();
       await expect(page.locator('.fin-gain [data-testid="pastille-xp"]')).toContainText(/\+50\sXP/);
       await expect(page.locator('.annonce-xp [data-testid="pastille-xp"]')).toHaveCount(0);
-      await expect(page.locator('.fin-prochain')).toContainText('Prochain pas : Atari');
+      await expect(page.locator('.fin-prochain')).toHaveCount(0);
+      await expect(page.getByRole('button', { name: 'Leçon suivante : Atari', exact: true })).toBeVisible();
       await expect(page.locator('.fin-lecon .cta')).toHaveCount(1);
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(largeur);
       await page.getByRole('button', { name: /^Entraîne-toi/ }).click();

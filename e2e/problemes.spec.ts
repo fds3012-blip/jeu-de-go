@@ -17,7 +17,7 @@ test('problèmes sans compte : erreur, bonne réponse, suite et problème suivan
   await expect(page.locator('svg.cadenas')).toHaveCount(0);
   // Le Go du jour passe avant l'invitation à se connecter.
   const yJour = (await page.getByRole('heading', { name: /^Go du jour/ }).boundingBox())!.y;
-  const yInvit = (await page.getByRole('button', { name: 'Me connecter' }).boundingBox())!.y;
+  const yInvit = (await page.getByRole('button', { name: 'Créer mon compte' }).boundingBox())!.y;
   expect(yJour).toBeLessThan(yInvit);
   const debord = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(debord).toBeLessThanOrEqual(0);

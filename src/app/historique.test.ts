@@ -20,16 +20,38 @@ describe('tri et rangement', () => {
     expect(trier([a, b, c]).map(p => p.id)).toEqual(['b', 'c', 'a']);
   });
 
-  it('ajoute une partie, remplace une partie de même identifiant ou de même SGF, et en garde 50 au plus', () => {
+  it('ajoute une partie, remplace une partie de même identifiant, et en garde 50 au plus', () => {
     let l: PartieHistorique[] = [];
     for (let i = 0; i < 60; i++) l = ajouterPartie(l, partie({ id: `p${i}`, date: new Date(Date.UTC(2026, 0, 1, 0, i)).toISOString(), sgf: SGF('B+1', `;B[${String.fromCharCode(97 + (i % 19))}${String.fromCharCode(97 + Math.floor(i / 19))}]`) }));
     expect(l).toHaveLength(MAX_PARTIES);
     expect(l[0].id).toBe('p59');
     expect(l.at(-1)!.id).toBe('p10');
-    const meme = ajouterPartie(l, { ...l[3], id: 'nouvel-id', date: '2027-01-01T00:00:00Z' });
-    expect(meme).toHaveLength(MAX_PARTIES);
-    expect(meme[0].id).toBe('nouvel-id');
-    expect(meme.filter(p => p.sgf === l[3].sgf)).toHaveLength(1);
+    const remplacee = ajouterPartie(l, { ...l[3], resultat: 'W+R' });
+    expect(remplacee).toHaveLength(MAX_PARTIES);
+    expect(remplacee.filter(p => p.id === l[3].id)).toEqual([{ ...l[3], resultat: 'W+R' }]);
+  });
+
+  // Recette du 02/10 au soir, L3 : trois parties abandonnées au même coup ne faisaient qu'une ligne.
+  it('garde deux parties jouées au SGF identique, mais un fichier importé deux fois une seule fois', () => {
+    const a = partie({ id: '2026-10-02T10:00:00.000Z', date: '2026-10-02T10:00:00.000Z', sgf: SGF('W+R', ';B[ee]') });
+    const b = partie({ id: '2026-10-02T10:05:00.000Z', date: '2026-10-02T10:05:00.000Z', sgf: SGF('W+R', ';B[ee]') });
+    expect(ajouterPartie(ajouterPartie([], a), b).map(p => p.id)).toEqual([b.id, a.id]);
+    const i1 = partie({ id: 'i1', date: '2026-10-02T11:00:00.000Z', mode: 'import', sgf: SGF('B+R', ';B[cc]') });
+    const i2 = { ...i1, id: 'i2', date: '2026-10-02T11:10:00.000Z' };
+    expect(ajouterPartie(ajouterPartie([a], i1), i2).map(p => p.id)).toEqual(['i2', a.id]);
+    // Une partie jouée et un import du même SGF restent deux lignes.
+    expect(ajouterPartie([a], { ...a, id: 'i3', mode: 'import', date: '2026-10-02T12:00:00.000Z' })).toHaveLength(2);
+  });
+
+  it('ne garde pas une partie quittée sans aucun coup (L3), sauf un fichier importé', () => {
+    const date = '2026-10-02T12:00:00.000Z';
+    const vide = SGF('W+R', '');
+    expect(depuisRevue({ sgf: vide, date, adversaire: 'pomme' })).toBeNull();
+    expect(depuisRevue({ sgf: vide, date }, 'deux')).toBeNull();
+    expect(depuisRevue({ sgf: vide, date, importee: true })).toMatchObject({ mode: 'import' });
+    expect(lireHistorique([], { sgf: vide, date, adversaire: 'pomme' })).toEqual([]);
+    // Une passe compte comme un coup : la partie est gardée.
+    expect(depuisRevue({ sgf: SGF('W+R', ';B[tt]'), date, adversaire: 'pomme' })).not.toBeNull();
   });
 
   it('lit l’appareil en écartant les entrées abîmées, et y ajoute la dernière partie de la revue', () => {

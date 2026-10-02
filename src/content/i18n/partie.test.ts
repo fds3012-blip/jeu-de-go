@@ -64,10 +64,10 @@ describe('français identique aux textes d’origine', () => {
   });
 
   it('récit du score et fin de partie', () => {
-    expect(ligneDeuxieme(recit(1, 3))).toBe('+ 3 prisonniers pour Noir, + 1 pour Blanc');
-    expect(ligneDeuxieme(recit(1, 3, { type: 'pierres', noir: 1, blanc: 0 }))).toBe('+ 1 pierre pour Noir');
+    expect(ligneDeuxieme(recit(1, 3))).toBe('+3 prisonniers pour Noir, +1 pour Blanc');
+    expect(ligneDeuxieme(recit(1, 3, { type: 'pierres', noir: 1, blanc: 0 }))).toBe('+1 pierre pour Noir');
     expect(ligneDeuxieme(recit(1, 3, { type: 'prisonniers', noir: 0, blanc: 0 }))).toBe('Aucun prisonnier');
-    expect(ligneKomi(-100)).toBe('− 100 komi pour Blanc');
+    expect(ligneKomi(-100)).toBe('−100 komi pour Blanc');
     expect(ligneResultat(recit(1, 1.5), campsRecit('Pomme'))).toBe('Tu gagnes de 1,5 point !');
     expect(ligneResultat(recit(2, 2), campsRecit('Pomme'))).toBe('Pomme gagne de 2 points');
     expect(ligneCompteur(18, 12.5)).toBe('Noir 18 · Blanc 12,5');
@@ -123,8 +123,8 @@ describe('en anglais', () => {
   });
 
   it('récit du score, bilan et leçon de Mochi', () => {
-    expect(ligneDeuxieme(recit(1, 3), campsRecit('Pomme'))).toBe('+ 3 prisoners for you, + 1 for Pomme');
-    expect(ligneKomi(6.5, campsRecit('Pomme'))).toBe('+ 6.5 komi for Pomme');
+    expect(ligneDeuxieme(recit(1, 3), campsRecit('Pomme'))).toBe('+3 prisoners for you, +1 for Pomme');
+    expect(ligneKomi(6.5, campsRecit('Pomme'))).toBe('+6.5 komi for Pomme');
     expect(ligneResultat(recit(1, 1), campsRecit('Pomme'))).toBe('You win by 1 point!');
     expect(ligneResultat(recit(1, 1.5), campsRecit())).toBe('Black wins by 1.5 points');
     expect(ligneResultat(recit(0, 0))).toBe('Draw');

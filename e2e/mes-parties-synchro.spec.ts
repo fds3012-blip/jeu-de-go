@@ -1,5 +1,5 @@
 import { expect, test, type Browser, type Page } from '@playwright/test';
-import { abandonner, plateau } from './plateau';
+import { abandonner, jouer, plateau } from './plateau';
 import { brancher, CODE, creerCompte, fauxServeur, type FauxServeur } from './fauxSupabase';
 
 // Issue #358 (suite) : « Mes parties » sur le compte. Une partie jouée sur le téléphone A (pendant l'essai, puis avec
@@ -17,6 +17,9 @@ function telephone(browser: Browser, baseURL: string | undefined, serveur: FauxS
 /** La partie en cours : abandon tout de suite, puis retour à l'accueil. */
 async function abandonEtAccueil(page: Page) {
   await expect(plateau(page)).toBeVisible();
+  // Recette du 02/10 au soir (L3) : une partie quittée sans aucun coup n'est pas gardée ; on joue d'abord un coup.
+  await jouer(page, 'E5');
+  await expect(plateau(page).locator('g[data-pierre="noir"]')).toHaveCount(1);
   await abandonner(page);
   await expect(page.getByRole('heading', { level: 2, name: 'Défaite' })).toBeVisible();
   await page.getByRole('button', { name: 'Accueil', exact: true }).click();

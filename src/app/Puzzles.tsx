@@ -397,7 +397,7 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
             {inviterCompte(false, serie)
               ? <p>{fr(tr('serie.invitation'))}</p>
               : <p>{fr(tr('pb.invitation.avant'))}<b>{tr('pb.invitation.mot')}</b>{fr(tr('pb.invitationCourte.apres'))}</p>}
-            {onCompte && <button className="lien" onClick={onCompte}>{inviterCompte(false, serie) ? tr('serie.creerCompte') : tr('pb.meConnecter')}</button>}
+            {onCompte && <button className="lien" onClick={onCompte}>{tr('pb.creerCompte')}</button>}
           </div>
           <div className="palmares-serie">
             <span className="chiffre"><Flamme taille={30} />{serie}</span>
@@ -407,7 +407,8 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
       ) : !connecte ? (
         <div className="invitation">
           <p>{fr(tr('pb.invitation.avant'))}<b>{tr('pb.invitation.mot')}</b>{fr(tr('pb.invitation.apres'))}</p>
-          {onCompte && <button className="lien" onClick={onCompte}>{tr('pb.meConnecter')}</button>}
+          {/* Recette du 02/10 au soir (L8) : depuis #343, partout « Crée ton compte ». */}
+          {onCompte && <button className="lien" onClick={onCompte}>{tr('pb.creerCompte')}</button>}
         </div>
       ) : null}
     </div>

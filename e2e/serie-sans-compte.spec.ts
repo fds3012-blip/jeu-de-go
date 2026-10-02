@@ -22,7 +22,7 @@ test('jour 1 sans compte : la série vaut 1 partout (accueil, Problèmes, Profil
   // Écran Problèmes : la flamme, comme pour un joueur connecté, et l'invitation habituelle (pas encore le jour 3).
   await expect(page.locator('.palmares-serie')).toContainText('1');
   await expect(page.locator('.palmares-serie')).toContainText('jour de série');
-  await expect(page.getByRole('button', { name: 'Me connecter' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Créer mon compte' })).toBeVisible();
   await expect(page.getByText('Avec un compte, ta série et tes leçons te suivent.')).toHaveCount(0);
 
   // Accueil : la flamme dans l'en-tête.
@@ -53,7 +53,7 @@ test('3e jour de série sans compte : invitation discrète à créer un compte',
   await nav(page, 'Problèmes');
   await expect(page.locator('.palmares-serie')).toContainText('3');
   await expect(page.getByText('Avec un compte, ta série et tes leçons te suivent.')).toBeVisible();
-  await page.getByRole('button', { name: 'Créer un compte' }).click();
+  await page.getByRole('button', { name: 'Créer mon compte' }).click();
   await expect(page.getByRole('navigation').getByRole('button', { name: 'Profil' })).toHaveAttribute('aria-current', 'page');
 
   // Profil : la ligne sous « Invité » devient l'invitation ; « Mon compte » reste l'action.

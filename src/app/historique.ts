@@ -61,11 +61,13 @@ export function trier(liste: readonly PartieHistorique[]): PartieHistorique[] {
 }
 
 /**
- * Ajoute une partie : une partie de même identifiant ou de même SGF est remplacée (une partie importée deux fois
- * n'apparaît qu'une fois), puis la liste est triée et coupée aux `max` plus récentes.
+ * Ajoute une partie : une partie de même identifiant est remplacée, puis la liste est triée et coupée aux `max` plus
+ * récentes. Recette du 02/10 au soir (L3) : deux parties jouées ne se confondent plus parce que leurs SGF sont
+ * identiques (même abandon au même coup) ; seul un fichier importé deux fois n'apparaît qu'une fois.
  */
 export function ajouterPartie(liste: readonly PartieHistorique[], p: PartieHistorique, max = MAX_PARTIES): PartieHistorique[] {
-  return trier([p, ...liste.filter(x => x.id !== p.id && x.sgf !== p.sgf)]).slice(0, max);
+  const memeImport = (x: PartieHistorique) => p.mode === 'import' && x.mode === 'import' && x.sgf === p.sgf;
+  return trier([p, ...liste.filter(x => x.id !== p.id && !memeImport(x))]).slice(0, max);
 }
 
 /**
@@ -77,6 +79,9 @@ export function depuisRevue(g: PartieGardee | null | undefined, mode?: ModeParti
   let rec;
   try { rec = readSgf(g.sgf); } catch { return null; }
   const m: ModePartie = mode ?? (g.importee ? 'import' : g.adversaire ? 'ordi' : 'deux');
+  // L3 : une partie quittée sans aucun coup (abandon tout de suite) n'est pas une partie à revoir. Un fichier importé,
+  // lui, est gardé tel quel (position de départ seule comprise).
+  if (m !== 'import' && rec.moves.length === 0) return null;
   const joueur: Color | null = m === 'import' ? (estCouleur(g.joueur) ? g.joueur : 1) : m === 'deux' ? null : 1;
   return lireEntree({
     id: g.date, date: g.date, sgf: g.sgf, mode: m, taille: rec.size, joueur,

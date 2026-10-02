@@ -3,7 +3,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { t } from '../content/i18n';
 import { etatsPoints } from '../app/lecon';
-import { mouvementsReduits } from './defilement';
+import { mouvementsReduits, pasSansCoupure } from './defilement';
 import { PortraitMochi, type HumeurMochi } from './Portrait';
 import './apprendre.css';
 
@@ -140,6 +140,12 @@ function devoilerPlateau(verdict: HTMLDivElement | null) {
   const lecteur = verdict?.closest<HTMLElement>('.lecteur');
   const plateau = lecteur?.querySelector<HTMLElement>('.board-wrap');
   if (!verdict || !lecteur || !plateau) return;
+  // Lot X (#398) : la feuille suit le plateau dans la colonne (apprendre.css) tant que tout tient dans l'écran. Sinon
+  // (longue explication, Go du jour avec sa note), elle repasse fixée sur la barre, et la page défile comme avant.
+  delete lecteur.dataset.feuille;
+  if (getComputedStyle(verdict).position === 'sticky' && document.documentElement.scrollHeight > window.innerHeight + 1) {
+    lecteur.dataset.feuille = 'fixe';
+  }
   lecteur.style.setProperty('--verdict-h', `${verdict.offsetHeight + 16}px`);
   const haut = hautDeLaFeuille(verdict);
   const p = plateau.getBoundingClientRect();
@@ -156,6 +162,11 @@ function devoilerPlateau(verdict: HTMLDivElement | null) {
   }
   const manque = zone.bottom - haut + MARGE;
   if (manque <= 0) return;
-  const pas = Math.min(manque, Math.max(0, zone.top - MARGE));
+  // Lot X (#398) : l'en-tête (retour, surtitre, titre, difficulté, « ? ») sort entier ou reste entier, jamais rogné.
+  const bandes = [...lecteur.querySelectorAll<HTMLElement>('.lecteur-tete > *, .lecteur-nom > *, .lecteur > .notice')]
+    .map(e => e.getBoundingClientRect()).filter(r => r.height > 0).map(r => ({ haut: r.top, bas: r.bottom }));
+  // Le défilement possible s'arrête au bas de la page : au-delà, l'en-tête resterait rogné.
+  const reste = document.documentElement.scrollHeight - window.innerHeight - window.scrollY;
+  const pas = pasSansCoupure(Math.min(manque, Math.max(0, zone.top - MARGE)), bandes, Math.max(0, Math.min(zone.top, reste)));
   if (pas > 0) window.scrollBy({ top: pas, behavior: mouvementsReduits() ? 'instant' : 'smooth' });
 }
