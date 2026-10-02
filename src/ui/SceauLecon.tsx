@@ -54,12 +54,81 @@ function motif(id: string, W: string, C: string): ReactElement {
       <g fill={W}><circle cx="34" cy="34" r="7" /><circle cx="48" cy="34" r="7" /><circle cx="34" cy="50" r="7" /><circle cx="66" cy="66" r="7" /></g>
       <circle cx="66" cy="50" r="6" fill={C} stroke={W} strokeWidth="2.6" />
     </>);
+    // Les premiers coups : le goban et ses coins pris d'abord ; le centre, encore vide, vient après.
+    case 'l8': return (<>
+      <rect x="24" y="24" width="52" height="52" rx="3" stroke={W} strokeWidth="3" fill="none" />
+      <path d="M50 24V76M24 50H76" stroke={W} strokeWidth="1.6" opacity=".6" />
+      <g fill={W}><circle cx="33" cy="67" r="7" /><circle cx="67" cy="33" r="7" /></g>
+      <circle cx="33" cy="33" r="6.5" fill={C} stroke={W} strokeWidth="2.6" />
+      <circle cx="50" cy="50" r="4" fill="none" stroke={W} strokeWidth="2.2" />
+    </>);
+    // Le filet : la pierre adverse enfermée sous un arc, sans être touchée.
+    case 'l9': return (<>
+      <path d="M27 62A23 23 0 0 1 73 62" stroke={W} strokeWidth="3" strokeLinecap="round" fill="none" />
+      <path d="M38 44 44 51M50 39V48M62 44 56 51" stroke={W} strokeWidth="2.2" strokeLinecap="round" opacity=".8" />
+      <circle cx="50" cy="61" r="8.5" fill={C} stroke={W} strokeWidth="2.8" />
+      <g fill={W}><circle cx="27" cy="62" r="7" /><circle cx="73" cy="62" r="7" /></g>
+    </>);
+    // La prise en retour : une pierre donnée en bas, trois reprises en haut ; la flèche revient.
+    case 'l10': return (<>
+      <g fill={C} stroke={W} strokeWidth="2.6"><circle cx="31" cy="37" r="7.5" /><circle cx="50" cy="37" r="7.5" /><circle cx="69" cy="37" r="7.5" /></g>
+      <circle cx="40" cy="66" r="8.5" fill={W} />
+      <path d="M52 68C66 70 74 62 73 51" stroke={W} strokeWidth="3" strokeLinecap="round" fill="none" />
+      <path d="M66 53 73 45 79 54Z" fill={W} />
+    </>);
+    // La course aux libertés : deux chaînes face à face, chacune ses libertés comptées.
+    case 'l11': return (<>
+      <path d="M40 34V66M60 34V66" stroke={W} strokeWidth="3" />
+      <g fill={W}><circle cx="40" cy="38" r="8" /><circle cx="40" cy="62" r="8" /></g>
+      <g fill={C} stroke={W} strokeWidth="2.6"><circle cx="60" cy="38" r="7.5" /><circle cx="60" cy="62" r="7.5" /></g>
+      <g fill={W}><circle cx="24" cy="38" r="3.5" /><circle cx="24" cy="62" r="3.5" /><circle cx="76" cy="38" r="3.5" /><circle cx="76" cy="62" r="3.5" /></g>
+    </>);
+    // Le faux œil : un œil entouré, mais un coin pris par l'adversaire.
+    case 'l12': return (<>
+      <g fill={W}>
+        <circle cx="50" cy="31" r="8" /><circle cx="31" cy="50" r="8" /><circle cx="69" cy="50" r="8" /><circle cx="50" cy="69" r="8" />
+        <circle cx="31" cy="31" r="7" /><circle cx="69" cy="31" r="7" /><circle cx="31" cy="69" r="7" />
+      </g>
+      <circle cx="69" cy="69" r="6.5" fill={C} stroke={W} strokeWidth="2.6" />
+      <circle cx="50" cy="50" r="3.5" fill="none" stroke={W} strokeWidth="2" opacity=".75" />
+    </>);
+    // Le point vital : trois points en ligne, la pierre au milieu, visée.
+    case 'l13': return (<>
+      <path d="M24 56H76" stroke={W} strokeWidth="3" strokeLinecap="round" />
+      <g fill="none" stroke={W} strokeWidth="2.2" opacity=".8"><circle cx="30" cy="56" r="4.5" /><circle cx="70" cy="56" r="4.5" /></g>
+      <circle cx="50" cy="56" r="17" fill="none" stroke={W} strokeWidth="2.4" />
+      <path d="M50 26V34" stroke={W} strokeWidth="3" strokeLinecap="round" />
+      <circle cx="50" cy="56" r="9.5" fill={W} />
+    </>);
+    // Le seki : une pierre de chaque camp, deux libertés partagées, que personne ne remplit.
+    case 'l14': return (<>
+      <path d="M50 27 37 50 50 73 63 50Z" stroke={W} strokeWidth="2.4" strokeLinejoin="round" fill="none" opacity=".8" />
+      <circle cx="37" cy="50" r="9.5" fill={W} />
+      <circle cx="63" cy="50" r="9" fill={C} stroke={W} strokeWidth="2.8" />
+      <g fill="none" stroke={W} strokeWidth="2.4"><circle cx="50" cy="27" r="4.5" /><circle cx="50" cy="73" r="4.5" /></g>
+    </>);
+    // Finir la partie : la frontière fermée, pierre contre pierre ; un seul point neutre (dame) reste.
+    case 'l15': return (<>
+      <g fill={W}><circle cx="43" cy="27" r="7" /><circle cx="43" cy="50" r="7" /><circle cx="43" cy="73" r="7" /></g>
+      <g fill={C} stroke={W} strokeWidth="2.6"><circle cx="59" cy="27" r="6.5" /><circle cx="59" cy="73" r="6.5" /></g>
+      <circle cx="59" cy="50" r="4" fill="none" stroke={W} strokeWidth="2.2" />
+      <g fill={W} opacity=".85"><rect x="23" y="35" width="8" height="8" rx="1.5" /><rect x="23" y="57" width="8" height="8" rx="1.5" /></g>
+    </>);
+    // Compter une partie : le territoire, plus les prisonniers.
+    case 'l16': return (<>
+      <g fill={W}>
+        <rect x="24" y="26" width="10" height="10" rx="2" /><rect x="38" y="26" width="10" height="10" rx="2" />
+        <rect x="24" y="40" width="10" height="10" rx="2" /><rect x="38" y="40" width="10" height="10" rx="2" />
+      </g>
+      <path d="M66 31V45M59 38H73" stroke={W} strokeWidth="3.4" strokeLinecap="round" />
+      <g fill={C} stroke={W} strokeWidth="2.6"><circle cx="40" cy="66" r="7.5" /><circle cx="60" cy="66" r="7.5" /></g>
+    </>);
     default: return <circle cx="50" cy="50" r="14" fill={W} />;
   }
 }
 
 interface Props {
-  /** Identifiant de la leçon (l1 à l7). */
+  /** Identifiant de la leçon (l1 à l16). */
   id: string;
   /** Côté en pixels. */
   taille?: number;
