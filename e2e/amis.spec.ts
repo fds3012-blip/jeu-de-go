@@ -94,7 +94,7 @@ test('deux comptes deviennent amis, puis l’un défie l’autre depuis « Mes a
 
   // Bruno défie Alice : la partie s'ouvre tout de suite, sans lien. Alice a Noir et joue la première.
   await defier.click();
-  await expect(b.page.getByText(/Au tour de ton ami/)).toBeVisible();
+  await expect(b.page.getByText(/Au tour de Alice\./)).toBeVisible();
   expect(serveur.appels).toContain('POST /rest/v1/rpc/defier_ami');
   expect(serveur.appels).not.toContain('POST /rest/v1/rpc/creer_defi');
   await expect(b.page.getByRole('button', { name: 'Renvoyer le lien' })).toHaveCount(0);
@@ -105,10 +105,10 @@ test('deux comptes deviennent amis, puis l’un défie l’autre depuis « Mes a
   await expect(a.page.getByRole('heading', { name: 'Tes amis' })).toBeVisible();
   await expect(a.page.getByRole('button', { name: /^Défier Bruno/ })).toBeVisible();
   await capture(a.page, 'amis-liste-390-clair');
-  await a.page.getByRole('button', { name: 'Jouer', exact: true }).click();
+  await a.page.getByRole('navigation').getByRole('button', { name: /^Jouer/ }).click();
   await a.page.getByTestId('lien-defi').click();
   await a.page.getByRole('button', { name: /Partie du/ }).click();
-  await expect(a.page.getByText('Ton ami te défie ! Tu as les pierres noires : à toi de commencer.')).toBeVisible();
+  await expect(a.page.getByText('Bruno te défie ! Tu as les pierres noires : à toi de commencer.')).toBeVisible();
   await jouer(a.page, 'E5');
   await expect(pierres(a.page, 'noir')).toHaveCount(1);
 
@@ -161,6 +161,25 @@ test('« Mes amis » à 320 px, mode sombre : lisible, cibles de 44 px, sans dé
     expect(boite!.height, await bouton.innerText()).toBeGreaterThanOrEqual(44);
   }
   await capture(a.page, 'amis-liste-320-sombre');
+  await a.ctx.close();
+});
+
+test('avec un compte et une demande reçue, le Profil tient sur un écran de 390 × 844 ; « À faire » mène aux amis', async ({ browser, baseURL }) => {
+  const serveur = fauxServeur();
+  const a = await telephone(browser, baseURL, serveur, serveur.sessionCompte('alice@exemple.test', 'Alice', ALICE));
+  serveur.compteExistant('bruno@exemple.test', 'Bruno', BRUNO);
+  serveur.amities.push({ de: BRUNO, a: ALICE, etat: 'pending', le: new Date().toISOString() });
+  await a.page.goto('/');
+  // Pastille jade sur l'onglet Profil (#367) : une demande d'ami attend.
+  const onglet = a.page.getByRole('navigation').getByRole('button', { name: /Profil/ });
+  await expect(onglet.locator('.onglet-pastille')).toHaveCount(1);
+  await onglet.click();
+  await expect(a.page.getByRole('button', { name: /^Mes amis/ })).toContainText('1 demande');
+  await expect(a.page.getByRole('button', { name: /^Mes parties/ })).toBeVisible();
+  await capture(a.page, 'profil-amis-390-clair');
+  const { scroll, largeur } = await a.page.evaluate(() => ({ scroll: document.documentElement.scrollHeight, largeur: document.documentElement.scrollWidth }));
+  expect(scroll).toBeLessThanOrEqual(844);
+  expect(largeur).toBeLessThanOrEqual(390);
   await a.ctx.close();
 });
 

@@ -8,6 +8,7 @@ import type { Result } from './account';
 import { CODE_COMPTE_REQUIS, CODE_PSEUDO_REQUIS } from './compteRequis';
 import type { Db } from './supabase';
 import { t } from '../content/i18n';
+import { ta } from '../content/i18n/amis';
 
 /** Relation vue par le joueur : ami accepté, demande reçue, demande envoyée. */
 export type EtatAmi = 'ami' | 'recue' | 'envoyee';
@@ -34,7 +35,7 @@ export const CODES_AMIS = {
   JGA08: 'pasAmi',
   JGA09: 'tropDeParties',
   [CODE_COMPTE_REQUIS]: 'compte',
-  [CODE_PSEUDO_REQUIS]: 'pseudo',
+  [CODE_PSEUDO_REQUIS]: 'compte',
 } as const;
 export type RefusAmi = (typeof CODES_AMIS)[keyof typeof CODES_AMIS];
 
@@ -47,7 +48,7 @@ export function refusAmi(erreur: unknown): RefusAmi | null {
 /** Message clair (FR/EN) d'une erreur : le refus connu, sinon un message générique (jamais le texte brut du serveur). */
 export function messageAmi(erreur: unknown): string {
   const refus = refusAmi(erreur);
-  return refus ? t(`amis.erreur.${refus}`) : t('erreur.serveur');
+  return refus ? ta(`amis.erreur.${refus}`) : t('erreur.serveur');
 }
 
 /** Pseudo nettoyé (espaces autour retirés), ou null s'il ne peut pas être un pseudo. */
@@ -86,7 +87,7 @@ export async function mesAmis(db: Db): Promise<Result<Ami[]>> {
 /** Envoie une demande. `amis` : l'autre avait déjà demandé, vous êtes amis tout de suite. */
 export async function demanderAmi(db: Db, brut: string): Promise<Result<'envoyee' | 'amis'>> {
   const pseudo = pseudoSaisi(brut);
-  if (!pseudo) return { ok: false, error: t('amis.erreur.introuvable') };
+  if (!pseudo) return { ok: false, error: ta('amis.erreur.introuvable') };
   const { data, error } = await db.rpc('demander_ami', { p_pseudo: pseudo });
   if (error || (data !== 'envoyee' && data !== 'amis')) return echec(error);
   return { ok: true, value: data };

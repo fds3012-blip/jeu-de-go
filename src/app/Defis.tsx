@@ -7,19 +7,24 @@
 // Logique pure : defiAmi.ts. Données : src/data/defi.ts.
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Board } from '../ui/Board';
-import { Avatar, Bandeau, BarreActions, Coach, Icone } from '../ui/Partie';
-import { toSgf } from '../go/coords';
+import { MiniGoban } from '../ui/MiniGoban';
+import { Avatar, Bandeau, BarreActions, Coach, Icone, Interrupteur, ListeCoups } from '../ui/Partie';
+import { BoutonAide } from '../ui/BoutonAide';
+import { fromSgf, toSgf } from '../go/coords';
 import { groupAt } from '../go/rules';
 import { score } from '../go/score';
 import { deadToString, recordFromOnlineGame, validateMove } from '../go/server';
 import { acceptScore, proposeDeadStones, resumeGame, type Game } from '../data/games';
 import {
-  abandonnerDefi, abonnerDefi, creerDefi, FORMAT_JETON, jouerCoupDefi, lienDefi, lireDefi, mesDefis, messageRefus, ouvrirDefi, type EtatDefi
+  abandonnerDefi, abonnerDefi, creerDefi, FORMAT_JETON, jouerCoupDefi, lienDefi, lireDefi, mesDefis, messageRefus, ouvrirDefi, pseudoJoueur, type EtatDefi
 } from '../data/defi';
 import type { Db } from '../data/supabase';
 import { EVENTS, track } from '../data/analytics';
 import { useOnline } from './hooks';
 import { phraseEtat, phraseIssue, resumeDefi, vueDefi } from './defiAmi';
+import { depuisDefi } from './historique';
+import { libelleCoup } from './partie';
+import { Revue } from './Revue';
 import { LierEmail } from './Account';
 import { ConnexionCode } from './Connexion';
 import type { Sens } from './connexionBascule';
@@ -132,6 +137,17 @@ export function DefisEcran({ db, userId, pseudo = null, onPartie }: EcranProps) 
       {liste.etat === 'erreur' && (
         <p className="card small" role="alert">{t('defi.erreur.chargement')} <button type="button" className="lien" onClick={() => setEssai(n => n + 1)}>{t('defi.reessayer')}</button></p>
       )}
+      {/* Audit du 02/10 (n° 2) : sans partie, l'écran disait seulement « Envoyer un lien ». L'état vide montre où les
+          parties arriveront et comment on sait que c'est son tour ; il n'ajoute aucune action. */}
+      {liste.etat === 'pret' && vues.length === 0 && online && (
+        <section className="defis-liste defis-vide" aria-labelledby="defis-liste-titre">
+          <h2 id="defis-liste-titre">{t('defi.tesParties')}</h2>
+          <div className="defis-vide-tuile">
+            <MiniGoban rows={PARTIE_EXEMPLE} className="defis-vide-goban" />
+            <p className="small">{fr(t('defi.vide'))}</p>
+          </div>
+        </section>
+      )}
       {vues.length > 0 && (
         <section className="defis-liste" aria-labelledby="defis-liste-titre">
           <h2 id="defis-liste-titre">{t('defi.tesParties')}</h2>
@@ -157,6 +173,9 @@ export function DefisEcran({ db, userId, pseudo = null, onPartie }: EcranProps) 
     </div>
   );
 }
+
+/** Début de partie 9 × 9 pour l'état vide : quatre pierres posées, la partie qui attend son ami. */
+const PARTIE_EXEMPLE = ['.........', '.........', '......O..', '.........', '....X....', '.........', '..X...O..', '.........', '.........'];
 
 /** Deux pierres qui se font face : l'illustration de l'écran (décorative). */
 function DeuxPierres() {
@@ -246,12 +265,18 @@ interface PartieProps {
   /** Pseudo du joueur, mis dans le lien renvoyé. */
   pseudo?: string | null;
   confirmTouch: boolean;
+  /** Réglage du menu « Plus » (comme l'écran de partie v3) : confirmation au doigt, sans quitter la partie. */
+  reglages?: { modifier: (patch: { confirmTouch?: boolean }) => void };
   onRetour: () => void;
   onAutre: () => void;
 }
 
-/** Partie en différé contre un ami. */
-export function DefiPartie({ db, partieId, userId, anonyme, pseudo = null, confirmTouch, onRetour, onAutre }: PartieProps) {
+/**
+ * Partie en différé contre un ami. #393 : même grammaire que l'écran de partie v3 (#384) : le pseudo de l'ami sur son
+ * bandeau, le ruban des coups avec le « ? » de l'aide (#390), Mochi sous ton bandeau, « Passer » en bouton plein et
+ * « Abandonner » rangé dans le menu « Plus ».
+ */
+export function DefiPartie({ db, partieId, userId, anonyme, pseudo = null, confirmTouch, reglages, onRetour, onAutre }: PartieProps) {
   const online = useOnline();
   const [etat, setEtat] = useState<{ etat: 'chargement' } | { etat: 'erreur'; message: string } | { etat: 'pret'; d: EtatDefi }>({ etat: 'chargement' });
   const [maintenant, setMaintenant] = useState(() => Date.now());
@@ -260,12 +285,21 @@ export function DefiPartie({ db, partieId, userId, anonyme, pseudo = null, confi
   const [abandon, setAbandon] = useState(false);
   const [lienCopie, setLienCopie] = useState<Partage | null>(null);
   const [mortes, setMortes] = useState<Set<number> | null>(null);
+  // #358 : défi terminé, revue de la partie (écran de revue existant), du point de vue du joueur.
+  const [enRevue, setEnRevue] = useState(false);
+  // Pseudo de l'ami (#393), lu une fois dans son profil ; null : inconnu, l'écran dit « Ton ami ».
+  const [nomAmi, setNomAmi] = useState<string | null>(null);
+  const pseudosLus = useRef(new Map<string, string | null>());
 
   const charger = useCallback(async () => {
     const r = await lireDefi(db, partieId);
+    // L'ami est lu avant d'afficher la partie : son nom arrive en même temps que le plateau, sans « Ton ami » qui clignote.
+    const ami = r.ok && userId ? (r.value.partie.black_id === userId ? r.value.partie.white_id : r.value.partie.black_id) : null;
+    if (ami && !pseudosLus.current.has(ami)) pseudosLus.current.set(ami, await pseudoJoueur(db, ami));
+    if (ami) setNomAmi(pseudosLus.current.get(ami) ?? null);
     setMaintenant(Date.now());
     setEtat(prev => (r.ok ? { etat: 'pret', d: r.value } : prev.etat === 'pret' ? prev : { etat: 'erreur', message: r.error }));
-  }, [db, partieId]);
+  }, [db, partieId, userId]);
 
   useEffect(() => { void charger(); }, [charger]);
   // Temps réel : chaque coup de l'ami, ou nouvelle date limite, relit la partie. Au retour du réseau ou de l'onglet aussi.
@@ -288,7 +322,7 @@ export function DefiPartie({ db, partieId, userId, anonyme, pseudo = null, confi
 
   if (!d || !v) {
     return (
-      <div className="partie defi-partie">
+      <div className="partie defi-partie defi-partie-charge">
         <div className="joueur">{retour}</div>
         {etat.etat === 'erreur'
           ? <div className="defi-charge"><p className="card" role="alert">{fr(etat.message)}</p><button type="button" className="btn primary defis-cta" onClick={() => { setEtat({ etat: 'chargement' }); void charger(); }}>{t('defi.reessayer')}</button></div>
@@ -299,6 +333,11 @@ export function DefiPartie({ db, partieId, userId, anonyme, pseudo = null, confi
 
   const partie = d.partie;
   const moi: 1 | 2 = v.couleur ?? 1;
+  const revue = v.phase === 'fini' && userId ? depuisDefi(partie, userId, d.resultat) : null;
+  if (enRevue && revue) {
+    return <Revue sgf={revue.sgf} joueur={revue.joueur} adversaire={nomAmi ?? t('defi.adversaire')} confirmTouch={confirmTouch}
+      retour={t('defi.revueRetour')} onRetour={() => { setEnRevue(false); window.scrollTo?.({ top: 0 }); }} />;
+  }
   const lui = (3 - moi) as 1 | 2;
   const enComptage = v.phase === 'comptage';
   const mortesVues = mortes ?? new Set(v.mortes);
@@ -355,7 +394,9 @@ export function DefiPartie({ db, partieId, userId, anonyme, pseudo = null, confi
     setLienCopie(await partager(lienDefi(d!.defi.jeton, location.origin, pseudo)));
   }
 
-  const nom = (c: 1 | 2) => (c === moi ? t('defi.toi') : t('defi.adversaire'));
+  const nomLui = nomAmi ?? t('defi.adversaire');
+  const nom = (c: 1 | 2) => (c === moi ? t('defi.toi') : nomLui);
+  const coups = (partie.moves.match(/../g) ?? []).map((m, i) => libelleCoup(i + 1, fromSgf(m, partie.size), partie.size));
   const sousTitre = (c: 1 | 2) => (c === 1 ? t('defi.noir') : t('defi.blanc', { komi: nombre(Number(partie.komi)) }));
   const bandeau = (c: 1 | 2, avant?: ReactNode) => (
     <Bandeau nom={nom(c)} sousTitre={sousTitre(c)} actif={v.phase === 'jeu' && v.trait === c} captures={v.pos.captures[c]}
@@ -363,24 +404,30 @@ export function DefiPartie({ db, partieId, userId, anonyme, pseudo = null, confi
   );
 
   const bienvenue = v.phase === 'jeu' && v.couleur === 1 && v.mesCoups === 0 && v.aMoi;
-  const message = refus ?? (envoi ? t('defi.envoi') : !online ? t('defi.horsLigne') : bienvenue ? t('defi.bienvenue') : phraseEtat(v));
+  const message = refus ?? (envoi ? t('defi.envoi') : !online ? t('defi.horsLigne')
+    : bienvenue ? (nomAmi ? t('defi.bienvenueNom', { nom: nomAmi }) : t('defi.bienvenue')) : phraseEtat(v, nomAmi));
   // #343 : une ancienne session anonyme lie son e-mail avant de continuer (le serveur refuse désormais les anonymes).
   const proposerInscription = anonyme && v.phase !== 'fini';
 
   return (
     <div className={`partie defi-partie phase-${v.phase}`} data-phase={v.phase}>
       {bandeau(lui, retour)}
+      {/* #390 : « ? » au bout du ruban des coups, sans quitter la partie ; pendant le comptage, il ouvre « Compter ». */}
+      <ListeCoups coups={coups} apres={<BoutonAide depuis="partie" fiche={enComptage ? 'compter' : 'regles'} className="ruban-aide" />} />
       <div className="partie-plateau">
         <Board size={partie.size} board={v.pos.board} toPlay={v.pos.toPlay} confirmTouch={confirmTouch}
           interactive={!anonyme && ((v.aMoi && !envoi && online) || (enComptage && !envoi && !v.proposeParMoi))} stonesTappable={enComptage}
           marks={{ last: v.pos.lastMove, owner: sc?.owner, dead: enComptage || v.phase === 'fini' ? mortesVues : undefined }}
-          onPlay={toucher} noms={{ [lui]: t('defi.adversaire') }} />
+          onPlay={toucher} noms={{ [lui]: nomLui }} />
       </div>
       {bandeau(moi)}
-      <div className="partie-souffle" aria-hidden="true" />
-      <div className="defi-bas">
+      {/* v3 : Mochi juste sous ton bandeau, dans une zone de hauteur stable (partie.css). */}
+      <div className="partie-mochi">
         <Coach cle={message} attente={envoi}>{fr(message)}</Coach>
-        {v.phase === 'jeu' && <p className="muted small defi-rappel">{fr(t('defi.rappelDelai'))}</p>}
+      </div>
+      <div className="defi-bas">
+        {/* La règle des 3 jours, dite avant ton premier coup ; ensuite, Mochi dit le temps qui reste (écrans bas : Mochi seul). */}
+        {v.phase === 'jeu' && v.mesCoups === 0 && <p className="muted small defi-rappel">{fr(t('defi.rappelDelai'))}</p>}
         {sc && <p className="comptage">{fr(t('defi.comptage.score', { pn: nombre(sc.black), pb: nombre(sc.white) }))}</p>}
 
         {v.phase === 'attente' && (
@@ -401,6 +448,7 @@ export function DefiPartie({ db, partieId, userId, anonyme, pseudo = null, confi
           <div className="defi-fin">
             <p className="defi-fin-titre" role="status">{fr(phraseIssue(v.issue))}</p>
             <button type="button" className="btn primary defis-cta" onClick={onAutre}>{t('defi.autre')}</button>
+            {revue && <button type="button" className="lien" onClick={() => { setEnRevue(true); window.scrollTo?.({ top: 0 }); }}>{t('fin.revoir')}</button>}
             <button type="button" className="lien" onClick={onRetour}>{t('defi.retourAccueil')}</button>
           </div>
         )}
@@ -410,14 +458,22 @@ export function DefiPartie({ db, partieId, userId, anonyme, pseudo = null, confi
           </div>
         )}
       </div>
+      <div className="partie-souffle" aria-hidden="true" />
       {v.phase === 'jeu' && (
+        // v3 (#384) : pas d'aide contre un ami ; « Passer » en bouton plein, « Abandonner » et le réglage dans « Plus ».
         <BarreActions label={t('partie.actions')} actions={[
-          { label: abandon ? fr(t('partie.action.confirmer')) : t('partie.action.abandonner'), icone: <Icone nom="abandonner" />, onClick: abandonner, danger: abandon, disabled: envoi || !online || anonyme, groupe: 'decision' },
           { label: t('partie.action.passer'), icone: <Icone nom="passer" />, onClick: () => { void envoyer('tt'); }, disabled: !v.aMoi || envoi || !online || anonyme, groupe: 'decision', principale: true },
-        ]} />
+        ]} menu={{
+          label: t('partie.action.plus'),
+          actions: [
+            { label: abandon ? fr(t('partie.action.confirmer')) : t('partie.action.abandonner'), action: 'abandonner', icone: <Icone nom="abandonner" />,
+              onClick: abandonner, danger: abandon, disabled: envoi || !online || anonyme, reste: true },
+          ],
+          reglages: reglages ? <Interrupteur label={t('profil.confirmer')} actif={confirmTouch} onChange={c => reglages.modifier({ confirmTouch: c })} /> : undefined,
+        }} />
       )}
     </div>
   );
 }
 
-// useDefisAJouer (compteur de l'accueil) est dans defisAJouer.ts (#323) : l'accueil s'en sert sans charger cet écran.
+// useDefisEnAttente (accueil, pastilles, « À faire » #367) est dans defisAJouer.ts (#323) : l’app s’en sert sans charger cet écran.

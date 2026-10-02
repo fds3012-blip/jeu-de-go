@@ -25,7 +25,9 @@ export interface TuileProbleme { titre: string; reussi: boolean; rows: string[];
   etat?: 'fait' | 'aFaire' | null }
 export interface TuileLecon { rang: number; total: number; titre: string }
 /** Défis d'amis où c'est ton tour (#81) : la tuile passe en premier. */
-export interface TuileDefis { n: number; ouvrir: () => void }
+export interface TuileDefis { n: number; ouvrir: () => void;
+  /** #367 : un seul défi en attente, adversaire connu : « Contre Léa » (la tuile ouvre alors la partie). */
+  adversaire?: string | null }
 
 interface Props {
   adv: Opponent;
@@ -152,11 +154,14 @@ function Tuile({ tuile, p, etat, defis }: { tuile: TuileDuJour; p: Props; etat: 
   const avant = tuile.enAvant ? ' tuile-avant' : '';
   if (tuile.genre === 'defi' && defis) {
     return (
-      <button className={`tuile tuile-defi${avant}`} onClick={defis.ouvrir} aria-label={t('defi.accueil.tuileAria', { n: defis.n })} data-testid="tuile-defi">
+      <button className={`tuile tuile-defi${avant}`} onClick={defis.ouvrir} data-testid="tuile-defi"
+        aria-label={defis.adversaire
+          ? `${t('defi.accueil.tuile', { n: 1 })}, ${t('aFaire.contre', { pseudo: defis.adversaire })}, ${t('defi.accueil.tuileEtat')}.`
+          : t('defi.accueil.tuileAria', { n: defis.n })}>
         <span className="tuile-pierres" aria-hidden="true"><span className="stone b" /><span className="stone w" /></span>
         <span>
           <small>{t('defi.accueil.tuile', { n: defis.n })}</small>
-          <b>{t('defi.accueil.tuileEtat')}</b>
+          <b>{defis.adversaire ? t('aFaire.contre', { pseudo: defis.adversaire }) : t('defi.accueil.tuileEtat')}</b>
         </span>
         <em className="tuile-etat" aria-hidden="true">{t('defi.accueil.tuileEtat')}</em>
       </button>
@@ -216,12 +221,16 @@ function Reglages({ adv, cartes, taille, reglages, setReglages, onTaille, onChoi
             <h2 id="feuille-titre">{t('accueil.tonAdversaire')}</h2>
             <button className="lien" onClick={() => setReglages(false)}>{t('accueil.fermer')}</button>
           </div>
-          <CarrouselAdversaires cartes={cartes} choisi={adv.id} onChoisir={onChoisir} legende={t(`adv.${adv.id}.description`)} />
-          <h2>{t('accueil.taillePlateau')}</h2>
-          <div className="seg">
-            {([9, 13, 19] as const).map(n => <button key={n} aria-pressed={taille === n} onClick={() => onTaille(n)}>{n} × {n}</button>)}
+          {/* Audit du 02/10 (n° 5) : la taille du plateau passe en tête, sur une ligne. Elle restait cachée sous le bouton
+              collant, au premier affichage comme au bout de la liste, en 320 px. */}
+          <div className="feuille-taille" role="group" aria-labelledby="feuille-taille-titre" aria-describedby="feuille-taille-aide">
+            <h3 id="feuille-taille-titre">{t('accueil.taillePlateau')}</h3>
+            <div className="seg">
+              {([9, 13, 19] as const).map(n => <button key={n} aria-pressed={taille === n} onClick={() => onTaille(n)}>{n} × {n}</button>)}
+            </div>
+            <p id="feuille-taille-aide" className="muted small">{t(AIDE_TAILLE[taille])}</p>
           </div>
-          <p className="muted small">{t(AIDE_TAILLE[taille])}</p>
+          <CarrouselAdversaires cartes={cartes} choisi={adv.id} onChoisir={onChoisir} legende={t(`adv.${adv.id}.description`)} />
           <button className="btn primary" aria-label={textes.ctaNom} onClick={onJouer}>{textes.cta}</button>
           <button className="lien deux" onClick={onDeux}>{t('accueil.deux')}</button>
           {onGuidee && <button className="lien deux" onClick={onGuidee}>{t('accueil.guidee')}</button>}

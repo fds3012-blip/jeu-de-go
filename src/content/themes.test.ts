@@ -28,8 +28,8 @@ describe('thèmes des problèmes (#200)', () => {
     }
   });
 
-  it('les leçons de capture, d’atari, de techniques et de vie et mort ont une série', () => {
-    expect(Object.keys(THEMES_DE_LECON).sort()).toEqual(['l1', 'l10', 'l11', 'l12', 'l13', 'l2', 'l3', 'l5', 'l9']);
+  it('chaque leçon a sa série (#16 : le ko, l’ouverture et le comptage des leçons 4 à 8 avec le lot X)', () => {
+    expect(Object.keys(THEMES_DE_LECON).sort()).toEqual(LESSONS.map(l => l.id).sort());
   });
 
   it('quelques classements de référence', () => {
@@ -40,6 +40,11 @@ describe('thèmes des problèmes (#200)', () => {
     expect(themeDe('m07')).toBe('vie-mort');
     expect(themeDe('d07')).toBe('semeai');
     expect(themeDe('k04')).toBe('vie-mort'); // manque de libertés : Blanc ne vit pas
+    expect(themeDe('w01')).toBe('seki');
+    expect(themeDe('w05')).toBe('fin-de-partie');
+    expect(themeDe('w08')).toBe('comptage');
+    expect(themeDe('x02')).toBe('ko');
+    expect(themeDe('x04')).toBe('ouverture');
   });
 
   it('chaque thème a un nom en français et en anglais', () => {
@@ -69,7 +74,7 @@ describe('série de fin de leçon', () => {
     expect(serieDeLecon('l3', liste, new Set(['i09'])).map(p => p.id)).toEqual(['c1', 'a09', 'k03']);
   });
 
-  it('aucune série pour une leçon sans thème', () => {
+  it('aucune série pour une leçon sans thème, ni sans problème de son thème', () => {
     expect(serieDeLecon('l4', liste, new Set())).toEqual([]);
     expect(serieDeLecon('inconnue', liste, new Set())).toEqual([]);
   });

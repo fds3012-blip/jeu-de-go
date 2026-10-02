@@ -83,6 +83,9 @@ test('les tuiles mènent au problème du jour et à la leçon suivante', async (
   await page.goto('/');
   await page.getByRole('button', { name: /^Go du jour n°\s\d+/ }).click();
   await expect(page.getByRole('navigation').getByRole('button', { name: 'Problèmes' })).toHaveAttribute('aria-current', 'page');
+  // Recette du 02/10 au soir : à faire, la tuile ouvre le problème lui-même.
+  await expect(page.getByRole('grid', { name: /^Plateau de go/ }).or(page.getByRole('img', { name: /^Plateau de go/ }))).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Retour aux problèmes' })).toBeVisible();
 
   await page.getByRole('navigation').getByRole('button', { name: 'Jouer' }).click();
   await page.getByRole('button', { name: /^Leçon 1 sur 16/ }).click();

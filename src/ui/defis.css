@@ -42,6 +42,8 @@
 .defi-bas { display: grid; gap: var(--space-2); }
 .defi-bas .coach { margin-top: 0; }
 .defi-rappel { margin: 0 2px; }
+/* #393 : sur un écran bas (iPhone SE), la règle des 3 jours passait sous la barre d'actions ; Mochi dit déjà le temps qui reste. */
+@media (max-height: 700px) { .defi-rappel { display: none; } }
 .defi-bas .comptage { margin: 0 2px; }
 .defi-comptage { display: flex; gap: var(--space-2); }
 .defi-comptage .btn { flex: 1 1 0; min-width: 0; min-height: var(--cible-bouton); line-height: 1.2; }
@@ -68,3 +70,10 @@
 @media (hover: hover) and (pointer: fine) { .entete-defi:hover { background: var(--surface); } }
 /* Petits écrans : l'icône seule (le nom reste lu par le lecteur d'écran). */
 @media (max-width: 359px) { .entete-defi-texte { display: none; } .entete-defi { padding: 0 12px; } }
+
+/* Audit du 02/10 (n° 2) : état vide de « Tes parties contre tes amis ». Tuile en pointillés (direction v2 : ce qui viendra
+   plus tard), un bout de goban et une phrase ; aucune action de plus. */
+.defis-vide-tuile { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3); border-radius: var(--radius);
+  border: 1.5px dashed color-mix(in srgb, var(--text) 28%, transparent); }
+.defis-vide-tuile p { margin: 0; line-height: 1.45; color: var(--text); text-wrap: pretty; }
+.defis-vide-goban { flex: none; width: 76px; height: 76px; border-radius: 8px; box-shadow: 0 6px 12px -6px rgba(0, 0, 0, .45); }

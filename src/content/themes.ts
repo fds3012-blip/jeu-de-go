@@ -23,10 +23,21 @@ export type Theme =
   /** Course aux libertés (semeai) : deux groupes s'entourent, le premier qui prend les libertés de l'autre gagne. */
   | 'semeai'
   /** Prise en retour (snapback) : sacrifier une pierre pour reprendre plus aussitôt. */
-  | 'prise-en-retour';
+  | 'prise-en-retour'
+  /** Seki (vie commune) : deux groupes sans deux yeux partagent leurs libertés ; celui qui en remplit une meurt. */
+  | 'seki'
+  /** Finir la partie : fermer les frontières au contact, laisser la dame (point neutre), ne pas prendre une morte. */
+  | 'fin-de-partie'
+  /** Compter : territoire, prisonniers et pierres mortes, komi ; la dame et les points d'un seki ne comptent pas. */
+  | 'comptage'
+  /** Ko : prendre un ko, le fermer (relier), le prendre pour sauver ses pierres ; la reprise immédiate est interdite. */
+  | 'ko'
+  /** Ouverture : le coin libre d'abord, sur la 3e ou la 4e ligne (3-3, 3-4, 4-4). En 13 × 13, vérifié par KataGo. */
+  | 'ouverture';
 
 export const THEMES: readonly Theme[] = [
   'capture', 'atari', 'double-atari', 'bord', 'echelle', 'filet', 'relier-couper', 'vie-mort', 'semeai', 'prise-en-retour',
+  'seki', 'fin-de-partie', 'comptage', 'ko', 'ouverture',
 ];
 
 const PAR_THEME: Record<Theme, readonly string[]> = {
@@ -53,6 +64,13 @@ const PAR_THEME: Record<Theme, readonly string[]> = {
   ],
   semeai: ['a14', 'd05', 'd07', 'd08', 'd09', 'd10', 'd11', 'd12', 'd13', 'f02', 'f08', 'f09', 'f10', 'f11', 'f12', 'o03', 'o10', 'v13'],
   'prise-en-retour': ['c4', 'j02', 'j03', 'o02', 'o05', 'o07', 'p03', 'v09', 'v12'],
+  // Lot W (#16) : les séries des leçons 14 à 16.
+  seki: ['w01', 'w02', 'w03'],
+  'fin-de-partie': ['w04', 'w05', 'w06'],
+  comptage: ['w07', 'w08', 'w09'],
+  // Lot X (#16) : les séries des leçons 4 (ko), 6 et 8 (ouverture).
+  ko: ['x01', 'x02', 'x03'],
+  ouverture: ['x04', 'x05', 'x06', 'x07', 'x08'],
 };
 
 /** Thème de chaque problème, par identifiant. */
@@ -65,23 +83,33 @@ export function themeDe(id: string): Theme | undefined {
 }
 
 /**
- * Thèmes travaillés par chaque leçon du chapitre « Les bases ». Une leçon sans thème n'a pas de série :
- * la banque n'a encore aucun problème de ko (l4), de territoire et d'ouverture (l6) ni de comptage (l7).
- * La leçon 3 enseigne trois pièges : sa série en prend un de chaque.
+ * Thèmes travaillés par chaque leçon. Une leçon sans thème n'a pas de série.
+ * La leçon 3 enseigne trois pièges : sa série en prend un de chaque. Les leçons 6 (territoire et ouverture) et 7
+ * (fermer, passer, compter) en ont deux chacune.
  */
 export const THEMES_DE_LECON: Readonly<Record<string, readonly Theme[]>> = {
   l1: ['capture'],
   l2: ['atari'],
   l3: ['double-atari', 'bord', 'echelle'],
+  // #16, lot X : le ko (l4) a sa série ; territoire et ouverture (l6) mêlent l'ouverture et le comptage ; compter les
+  // points (l7) reprend la fin de partie et le comptage du lot W (fermer une frontière, remplir la dame, le komi) ;
+  // les premiers coups (l8) ont la série d'ouverture.
+  l4: ['ko'],
   l5: ['vie-mort'],
+  l6: ['ouverture', 'comptage'],
+  l7: ['fin-de-partie', 'comptage'],
+  l8: ['ouverture'],
   // #16 : chaque nouvelle leçon a la série de son thème (filet, prise en retour, course aux libertés, faux œil).
   l9: ['filet'],
   l10: ['prise-en-retour'],
   l11: ['semeai'],
   l12: ['vie-mort'],
-  // #16 : le point vital (l13) a la série de vie et mort. Le seki (l14), finir la partie (l15) et compter (l16) n'en ont
-  // pas encore : la banque n'a aucun problème de seki ni de comptage.
+  // #16 : le point vital (l13) a la série de vie et mort. Le seki (l14), finir la partie (l15) et compter (l16) ont
+  // chacun la leur, avec le lot W.
   l13: ['vie-mort'],
+  l14: ['seki'],
+  l15: ['fin-de-partie'],
+  l16: ['comptage'],
 };
 
 /**

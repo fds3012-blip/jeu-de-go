@@ -67,6 +67,12 @@ export function jetonDepuisLien(lien: string): string | null {
   return FORMAT_JETON.test(jeton) ? jeton : null;
 }
 
+/** Jeton du défi lu dans le fragment de l'adresse (`#defi=JETON`), ou null. */
+export function jetonDeLAdresse(hash: string): string | null {
+  const brut = hash.replace(/^#/, '');
+  return brut.startsWith(`${PARAM_DEFI}=`) ? jetonDepuisLien(brut) : null;
+}
+
 /**
  * Session d'un vrai compte, exigée pour créer ou rejoindre un défi (#343). Aucune session anonyme n'est plus ouverte :
  * sans compte, ou avec une ancienne session anonyme, l'écran demande d'abord le compte (e-mail et pseudo).
@@ -157,6 +163,15 @@ export async function lireDefi(db: Db, partieId: string): Promise<Result<EtatDef
   ]);
   if (partie.error || defi.error || !partie.data || !defi.data) return echec(partie.error?.message ?? defi.error?.message);
   return { ok: true, value: { partie: partie.data, defi: defi.data, resultat: temps.data ?? partie.data.result } };
+}
+
+/**
+ * Pseudo d'un joueur (#393 : l'ami nommé dans la partie), lu sous la RLS existante (profils visibles par tous).
+ * null s'il n'en a pas, ou si la lecture échoue : l'écran garde alors « Ton ami ».
+ */
+export async function pseudoJoueur(db: Db, id: string): Promise<string | null> {
+  const { data, error } = await db.from('profiles').select('username').eq('id', id).maybeSingle();
+  return error ? null : data?.username ?? null;
 }
 
 /** Les défis du joueur (créés ou rejoints), du plus récent au plus ancien, avec leur partie. */

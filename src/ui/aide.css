@@ -1,0 +1,85 @@
+/* Feuille d'aide (#362) : une feuille haute posée sur l'écran, qui reste dessous, intact.
+   Fond d'encre (ou de washi), cartes en surface sans bordure, aucun bouton en relief : on lit, on ne joue pas. */
+.aide { margin: auto auto 0; width: min(var(--largeur-max), 100%); max-width: 100%; height: 92dvh; max-height: 92dvh; padding: 0; border: 0;
+  overflow: hidden; border-radius: 22px 22px 0 0; background: var(--bg); color: var(--text); --sceau-socle: var(--bg); }
+.aide::backdrop { background: var(--voile); }
+html:has(dialog.aide[open]) { overflow: hidden; }
+
+/* Entrée : la feuille monte (≤ 240 ms, transform et opacité seulement). Mouvements réduits : un fondu court. */
+@media (prefers-reduced-motion: no-preference) {
+  .aide[open], .aide[open]::backdrop { transition: opacity var(--duree) var(--ease), transform var(--duree) var(--ease); }
+  @starting-style {
+    .aide[open] { opacity: 0; transform: translateY(48px); }
+    .aide[open]::backdrop { opacity: 0; }
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .aide[open], .aide[open]::backdrop { transition: opacity 120ms linear; }
+  @starting-style { .aide[open], .aide[open]::backdrop { opacity: 0; } }
+}
+
+.aide-feuille { display: flex; flex-direction: column; height: 100%; }
+/* Poignée : on reconnaît une feuille qui se ferme. */
+.aide-feuille::before { content: ""; align-self: center; flex: none; width: 40px; height: 4px; margin-top: 8px; border-radius: 2px;
+  background: color-mix(in srgb, var(--text) 22%, transparent); }
+.aide-tete { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); padding: 2px calc(var(--gouttiere) - 12px) 0 var(--gouttiere); }
+.aide-tete h2 { margin: 0; font-family: var(--font-titre); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre); font-size: var(--fs-2xl); outline: none; }
+.aide-fermer { flex: none; }
+.aide-onglets { flex: none; margin: var(--space-2) var(--gouttiere) 0; }
+/* Recette du 02/10 au soir : chaque onglet part de la largeur de son mot (« Questions » était coupé en 320 px). */
+.aide-onglets button { flex: 1 1 auto; font-size: var(--fs-s); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 6px; }
+.aide-onglets button[aria-selected="true"] { background: var(--text); color: var(--bg); font-weight: var(--fw-bold); }
+.aide-onglets button:focus-visible { outline: 3px solid var(--focus); outline-offset: -3px; }
+
+.aide-corps { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+  padding: var(--space-4) var(--gouttiere) calc(var(--space-8) + env(safe-area-inset-bottom, 0px)); }
+.aide-intro { margin: 0 0 var(--space-4); color: var(--muted); font-size: var(--fs-base); line-height: var(--lh-base); }
+
+/* Cartes des règles et du comptage : titre numéroté, petit plateau, une ou deux phrases, lien vers la leçon. */
+.aide-cartes { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-4); }
+.aide-carte { background: var(--surface); border-radius: var(--radius); padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-3); }
+.aide-carte h3 { margin: 0; display: flex; align-items: center; gap: 10px; font-family: var(--font-titre); font-weight: var(--fw-titre);
+  letter-spacing: var(--tracking-titre); font-size: var(--fs-xl); line-height: var(--lh-titre); }
+.aide-num { flex: none; width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; font-size: var(--fs-s);
+  font-family: var(--font-ui); font-weight: var(--fw-bold); color: var(--accent-texte); box-shadow: inset 0 0 0 2px var(--accent-trait); }
+.aide-carte p, .aide-mot p { margin: 0; font-size: var(--fs-base); line-height: var(--lh-base); }
+.aide-carte .aide-schema { width: min(220px, 70%); align-self: center; }
+
+.aide-schema .board-wrap { width: 100%; }
+.aide-schema .board { display: block; width: 100%; height: auto; }
+
+.aide-lien { align-self: flex-start; display: inline-flex; align-items: center; gap: 4px; margin: -6px 0 -8px -12px; color: var(--accent-texte); }
+.aide-lien svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Glossaire : un champ de recherche, puis les mots. */
+.aide-recherche { margin: 0 0 var(--space-3); }
+.aide-recherche-libelle { display: block; margin: 0 0 6px; font-size: var(--fs-s); font-weight: var(--fw-bold); color: var(--muted); }
+.aide-champ { position: relative; display: flex; align-items: center; }
+.aide-champ > svg { position: absolute; left: 14px; width: 20px; height: 20px; fill: none; stroke: var(--muted); stroke-width: 2; stroke-linecap: round; pointer-events: none; }
+.aide-champ input { width: 100%; min-height: 48px; padding: 0 48px 0 44px; border: 2px solid transparent; border-radius: var(--radius-s);
+  background: var(--surface); color: var(--text); font: inherit; font-size: max(16px, var(--fs-base)); -webkit-appearance: none; appearance: none; }
+.aide-champ input::placeholder { color: var(--muted); opacity: 1; }
+.aide-champ input:focus-visible { outline: none; border-color: var(--focus); }
+.aide-champ input::-webkit-search-cancel-button { display: none; }
+.aide-effacer { position: absolute; right: 2px; width: var(--cible-min); height: var(--cible-min); display: grid; place-items: center; border: 0; border-radius: 50%;
+  background: none; color: var(--muted); }
+.aide-effacer svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.aide-aucun { margin: var(--space-4) 0; color: var(--muted); line-height: var(--lh-base); }
+
+.aide-mots { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); }
+.aide-mot { background: var(--surface); border-radius: var(--radius); padding: var(--space-4); display: grid; grid-template-columns: minmax(0, 1fr) 128px;
+  gap: var(--space-3); align-items: start; }
+.aide-mot:not(:has(.aide-schema)) { grid-template-columns: minmax(0, 1fr); }
+.aide-mot-texte { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.aide-mot h3 { margin: 0; font-family: var(--font-titre); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre); font-size: var(--fs-l); line-height: var(--lh-titre); }
+.aide-mot .aide-lien { margin-top: 0; }
+/* Petit écran (320 px) : le plateau passe sous le texte, assez grand pour lire ses coordonnées. */
+@media (max-width: 359px) {
+  .aide-mot { grid-template-columns: minmax(0, 1fr); }
+  .aide-mot .aide-schema { width: min(180px, 80%); justify-self: center; }
+}
+
+/* Coordonnées lisibles sur un petit plateau : le plateau les dessine pour 358 px de large (Board.tsx) ; ici, en unités
+   du plateau, assez grandes pour qu'une phrase qui cite « C3 » se retrouve à l'œil (≈ 13 px dans une carte, 10 px à droite d'un mot). */
+.aide-schema .board .coord { font-size: 15px; fill-opacity: .85; }
+.aide-mot .aide-schema .board .coord { font-size: 19px; }

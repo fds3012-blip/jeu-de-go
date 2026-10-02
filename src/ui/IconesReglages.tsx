@@ -3,10 +3,12 @@
 import type { ReactNode } from 'react';
 
 export type IconeReglageId =
-  | 'amis' | 'placement' | 'reglages' | 'importer' | 'rappel' | 'installer' | 'compte' | 'conditions'
+  | 'amis' | 'parties' | 'placement' | 'reglages' | 'importer' | 'rappel' | 'installer' | 'compte' | 'conditions'
   | 'langue' | 'theme' | 'goban' | 'confirmer' | 'sons' | 'celebrations' | 'aide';
 
 const TRACES: Record<IconeReglageId, ReactNode> = {
+  // Flèche qui revient en arrière autour d'une pierre : tes parties passées (#358).
+  parties: <><path d="M4.6 12.5a7.5 7.5 0 1 0 2.1-6.2" /><path d="M4.5 3.8v3.4h3.4" /><circle cx="12.2" cy="12.2" r="3" className="ir-plein" /></>,
   // Deux joueurs côte à côte : tes amis (#359).
   amis: <><circle cx="9" cy="8.5" r="3.6" /><path d="M2.5 20a6.5 6.5 0 0 1 13 0" /><path d="M15.2 5.2a3.6 3.6 0 0 1 0 6.6M17.6 14.2A6.5 6.5 0 0 1 21.5 20" /></>,
   // Boussole : le placement trouve ton niveau de départ.

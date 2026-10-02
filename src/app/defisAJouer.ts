@@ -1,20 +1,15 @@
-// Compteur de l'accueil (#338), à part de l'écran des défis (src/app/Defis.tsx) : l'accueil l'affiche
-// sans charger le code des défis, chargé à la demande (#323, src/app/ecrans.ts).
-import { useEffect, useState } from 'react';
-import { mesDefis } from '../data/defi';
-import type { Db } from '../data/supabase';
-import { aJouer, vueDefi } from './defiAmi';
-import { useOnline } from './hooks';
+// Défis où c'est ton tour (#338, #367) : logique pure, à part de l'écran des défis (src/app/Defis.tsx).
+// Chargée à la demande avec le reste d'« À faire » (src/app/aFaireCharge.ts, crochet src/app/useAFaire.ts).
+import type { EtatDefi } from '../data/defi';
+import { resumeDefi, vueDefi } from './defiAmi';
+import type { DefiEnAttente } from './aFaire';
 
-/** Nombre de défis où c'est au joueur d'agir, pour le lien de l'accueil. 0 sans session, hors ligne ou en erreur. */
-export function useDefisAJouer(db: Db | null, userId: string | undefined, actif: boolean): number {
-  const online = useOnline();
-  const [n, setN] = useState(0);
-  useEffect(() => {
-    if (!db || !userId || !online || !actif) return;
-    let vivant = true;
-    mesDefis(db, userId).then(r => { if (vivant) setN(r.ok ? aJouer(r.value.map(d => vueDefi(d.partie, d.defi, userId, Date.now(), d.resultat))) : 0); });
-    return () => { vivant = false; };
-  }, [db, userId, online, actif]);
-  return userId ? n : 0;
+/** Défis où c'est au joueur d'agir (jouer, ou répondre au comptage), avec l'id de l'adversaire. */
+export function defisEnAttente(etats: readonly EtatDefi[], userId: string, maintenant = Date.now()): (DefiEnAttente & { adversaireId: string | null })[] {
+  return etats.flatMap(d => {
+    const v = vueDefi(d.partie, d.defi, userId, maintenant, d.resultat);
+    if (!resumeDefi(v).aMoi) return [];
+    const adversaireId = (v.couleur === 1 ? d.partie.white_id : d.partie.black_id) ?? null;
+    return [{ partieId: d.partie.id, adversaire: null, adversaireId, restant: v.restant, comptage: v.phase === 'comptage' }];
+  });
 }

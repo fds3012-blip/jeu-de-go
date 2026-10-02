@@ -177,7 +177,7 @@ reset role;
 select pg_temp.egal((select string_agg(tablename || ':' || cmd, ',' order by tablename, cmd) from pg_policies
   where schemaname = 'public' and permissive = 'RESTRICTIVE' and 'authenticated' = any(roles)
     and coalesce(qual, with_check) like '%is_anonymous%'),
-  'abonnements_rappel:ALL,achievements:INSERT,friendships:INSERT,friendships:UPDATE,games:INSERT,lesson_progress:INSERT,lesson_progress:UPDATE,profiles:UPDATE,puzzles:DELETE,puzzles:INSERT',
+  'abonnements_rappel:ALL,achievements:INSERT,friendships:INSERT,friendships:UPDATE,games:INSERT,lesson_progress:INSERT,lesson_progress:UPDATE,parties_perso:ALL,profiles:UPDATE,puzzles:DELETE,puzzles:INSERT',
   'politiques restrictives présentes');
 select pg_temp.egal((select bool_and(relrowsecurity) from pg_class
   where relnamespace = 'public'::regnamespace and relkind = 'r'), true, 'RLS active sur chaque table');

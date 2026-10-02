@@ -70,7 +70,8 @@ export function Avatar({ initiale, couleur }: { initiale?: string; couleur: 1 | 
  * Liste des coups qui défile horizontalement. En partie, elle suit le dernier coup ;
  * en relecture, `courant` (index dans `coups`, -1 : aucun) désigne le coup affiché, gardé au centre.
  */
-export function ListeCoups({ coups, courant = coups.length - 1 }: { coups: string[]; courant?: number }) {
+/** `apres` (#362) : le « ? » de l'aide, au bout du ruban ; il ne prend rien au bandeau de l'adversaire (sa réplique reste entière). */
+export function ListeCoups({ coups, courant = coups.length - 1, apres }: { coups: string[]; courant?: number; apres?: ReactNode }) {
   const ref = useRef<HTMLOListElement>(null);
   useLayoutEffect(() => {
     const el = ref.current;
@@ -88,6 +89,7 @@ export function ListeCoups({ coups, courant = coups.length - 1 }: { coups: strin
           <li key={i} aria-current={i === courant ? 'step' : undefined}>{m}</li>
         ))}
       </ol>
+      {apres}
     </div>
   );
 }
@@ -236,10 +238,13 @@ export function BarreActions({ actions, label, menu }: { actions: Action[]; labe
   const aides = actions.filter(a => a.groupe !== 'decision');
   // La principale en dernier : à droite, là où tombe le pouce ; l'ordre de lecture suit l'ordre visuel.
   const rangees = [...decisions.filter(a => !a.principale), ...decisions.filter(a => a.principale)];
+  // Sans aide (partie entre amis, #393) : ni colonne vide ni filet, « Passer » et « Plus » se centrent.
   return (
-    <div className={`actions actions-groupees${menu ? ' actions-menu-plus' : ''}`} role="toolbar" aria-label={label}>
-      <div className="actions-aides">{aides.map(a => <Bouton key={a.label} a={a} />)}</div>
-      <span className="actions-filet" aria-hidden="true" />
+    <div className={`actions actions-groupees${menu ? ' actions-menu-plus' : ''}${aides.length ? '' : ' actions-sans-aides'}`} role="toolbar" aria-label={label}>
+      {aides.length > 0 && <>
+        <div className="actions-aides">{aides.map(a => <Bouton key={a.label} a={a} />)}</div>
+        <span className="actions-filet" aria-hidden="true" />
+      </>}
       <div className="actions-decisions">
         {rangees.map(a => <Bouton key={a.label} a={a} />)}
         {menu && <MenuPlus actions={menu.actions} label={menu.label} reglages={menu.reglages} />}

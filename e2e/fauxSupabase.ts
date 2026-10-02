@@ -2,7 +2,8 @@ import type { BrowserContext, Page, Route } from '@playwright/test';
 
 // Supabase simulé par interception réseau, partagé par les parcours du compte (#343) et du défi par lien (#81).
 // Le build de test lit l'adresse simulée dans le stockage local (`e2e.supabase`, voir src/data/supabase.ts).
-// Auth : code à 6 chiffres (`/otp` puis `/verify`), le seul bon code est CODE. Tables : profiles, games, defis.
+// Auth : code à 6 chiffres (`/otp` puis `/verify`), le seul bon code est CODE. Tables : profiles, games, defis,
+// parties_perso (#358 : `enregistrer_parties_perso`, sans doublon, compte avec pseudo exigé).
 // Amis (#359) : `mes_amis`, `demander_ami`, `repondre_ami`, `retirer_ami`, `defier_ami`, mêmes règles et mêmes codes
 // d'erreur que supabase/migrations/20261002010100_amis.sql (sauf les limites de temps).
 
@@ -22,6 +23,7 @@ export function fauxServeur() {
   const games: Ligne[] = [];
   const defis: Ligne[] = [];
   const amities: { de: string; a: string; etat: 'pending' | 'accepted'; le: string }[] = [];
+  const partiesPerso: Ligne[] = [];
   const appels: string[] = [];
   const emailsEnvoyes: { email: string; type: string }[] = [];
   const autorisations: string[] = [];
@@ -183,6 +185,16 @@ export function fauxServeur() {
         return json(id);
       }
     }
+    if (chemin === '/rest/v1/rpc/enregistrer_parties_perso') {
+      // Comme le serveur : compte avec pseudo, clé unique par joueur, clés rendues (ajoutées ou déjà là).
+      if (!u || u.anonyme) return json({ code: 'JGC01', message: 'Crée ton compte' }, 400);
+      if (!profiles.find(x => x.id === u.id)?.username) return json({ code: 'JGP01', message: 'Choisis ton pseudo' }, 400);
+      const { p_parties } = req.postDataJSON() as { p_parties: Ligne[] };
+      for (const l of p_parties) {
+        if (!partiesPerso.some(x => x.user_id === u.id && x.cle === l.cle)) partiesPerso.push({ ...l, user_id: u.id });
+      }
+      return json(p_parties.map(l => l.cle));
+    }
     if (chemin.startsWith('/rest/v1/rpc/')) return json(null);
     if (chemin === '/functions/v1/game-action') {
       const { action, game_id, move } = req.postDataJSON() as { action: string; game_id: string; move: string };
@@ -206,7 +218,7 @@ export function fauxServeur() {
     }
     if (chemin.startsWith('/rest/v1/')) {
       const table = chemin.slice('/rest/v1/'.length);
-      let lignes: Ligne[] = table === 'games' ? games : table === 'defis' ? defis : table === 'profiles' ? profiles : [];
+      let lignes: Ligne[] = table === 'games' ? games : table === 'defis' ? defis : table === 'profiles' ? profiles : table === 'parties_perso' ? partiesPerso : [];
       for (const [cle, val] of url.searchParams) {
         if (val.startsWith('eq.')) lignes = lignes.filter(l => String(l[cle]) === val.slice(3));
         if (val.startsWith('neq.')) lignes = lignes.filter(l => String(l[cle]) !== val.slice(4));
@@ -215,7 +227,9 @@ export function fauxServeur() {
         if (cle === 'or') { const ids = [...val.matchAll(/eq\.([^,)]+)/g)].map(m => m[1]); lignes = lignes.filter(l => ids.includes(String(l.createur_id)) || ids.includes(String(l.invite_id))); }
       }
       // RLS simulée : profils visibles par tous ; parties et défis par leurs seuls joueurs.
-      if (table !== 'profiles') lignes = lignes.filter(l => !u ? false : [l.black_id, l.white_id, l.createur_id, l.invite_id].includes(u.id));
+      if (table === 'parties_perso') lignes = lignes.filter(l => !!u && !u.anonyme && l.user_id === u.id)
+        .sort((a, b) => Date.parse(String(b.joue_le)) - Date.parse(String(a.joue_le)));
+      else if (table !== 'profiles') lignes = lignes.filter(l => !u ? false : [l.black_id, l.white_id, l.createur_id, l.invite_id].includes(u.id));
       if (req.method() !== 'GET') return json(table === 'lesson_progress' ? [] : {});
       const objet = (req.headers()['accept'] ?? '').includes('vnd.pgrst.object');
       return json(objet ? lignes[0] ?? null : lignes);
@@ -229,13 +243,11 @@ export function fauxServeur() {
     profiles.push({ id, username: pseudo, rating: 1500, streak_days: 0, streak_last: null, streak_freezes: 0 });
     return v;
   }
-  /** Session d'un compte complet (e-mail et pseudo), à poser dans le stockage du navigateur (#359). */
-  function sessionCompte(email: string, pseudo: string, id: string) {
-    return session(compteExistant(email, pseudo, id));
-  }
   /** Compte Google que « Continuer avec Google » renverra (#354) ; `annule` : le joueur annule chez Google. */
   function compteGoogle(c: { email: string; nom: string; annule?: boolean }) { google = c; }
-  return { traiter, appels, games, defis, profiles, amities, emailsEnvoyes, sessionAnonyme, sessionCompte, compteExistant, compteGoogle, autorisations };
+  /** Session ouverte d'un compte complet (avec pseudo), à poser dans le stockage du navigateur (#367). */
+  function sessionCompte(email: string, pseudo: string, id: string) { return session(compteExistant(email, pseudo, id)); }
+  return { traiter, appels, games, defis, partiesPerso, profiles, emailsEnvoyes, sessionAnonyme, compteExistant, compteGoogle, sessionCompte, autorisations, amities };
 }
 
 export type FauxServeur = ReturnType<typeof fauxServeur>;

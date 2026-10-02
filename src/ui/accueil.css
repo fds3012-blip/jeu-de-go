@@ -161,6 +161,11 @@
 .feuille .seg { background: var(--bg); }
 .feuille .muted { margin: 0; }
 .feuille .btn.primary { margin-top: var(--space-3); }
+/* Audit du 02/10 (n° 5) : taille du plateau en tête de la feuille, libellé et choix sur une ligne quand ils tiennent. */
+.feuille-taille { display: flex; flex-wrap: wrap; align-items: center; gap: 4px var(--space-3); margin: 0 0 var(--space-1); }
+.feuille-taille h3 { flex: none; margin: 0; font-size: var(--fs-s); color: var(--muted); font-weight: var(--fw-bold); }
+.feuille-taille .seg { flex: 1 1 13rem; }
+.feuille-taille p { flex: 1 1 100%; }
 .feuille .deux { align-self: center; margin-top: calc(var(--relief) + 2px); }
 
 /* Carrousel : défilement horizontal à accroche, qui déborde jusqu'aux bords de la feuille. */

@@ -3,16 +3,14 @@
 import { recordFromOnlineGame, parseDead } from '../go/server';
 import { replay } from '../go/replay';
 import { newPosition, type Position } from '../go/rules';
-import { jetonDepuisLien, PARAM_DEFI, tempsRestant } from '../data/defi';
+import { tempsRestant } from '../data/defi';
 import type { Game } from '../data/games';
 import type { Defi } from '../data/defi';
 import { t } from '../content/i18n';
 
-/** Jeton du défi lu dans le fragment de l'adresse (`#defi=JETON`), ou null. */
-export function jetonDeLAdresse(hash: string): string | null {
-  const brut = hash.replace(/^#/, '');
-  return brut.startsWith(`${PARAM_DEFI}=`) ? jetonDepuisLien(brut) : null;
-}
+// Lecture du jeton dans l'adresse : src/data/defi.ts (#367 : importée au chargement sans tirer ce module, ses règles
+// et son rejeu, qui ne servent qu'aux écrans du défi et à « À faire », chargés à la demande).
+export { jetonDeLAdresse } from '../data/defi';
 
 export type Raison = 'temps' | 'abandon' | 'points' | 'egalite';
 
@@ -94,13 +92,18 @@ export function texteDelai(ms: number): string {
   return t('defi.delai.joursHeures', { jours: t('defi.delai.jours', { n: jours }), heures: t('defi.delai.heures', { n: heures }) });
 }
 
-/** Phrase d'état sous le plateau : à qui de jouer, et combien de temps il reste. */
-export function phraseEtat(v: VueDefi): string {
+/** Phrase d'état sous le plateau : à qui de jouer, et combien de temps il reste. `nom` : pseudo de l'ami, s'il est connu (#393). */
+export function phraseEtat(v: VueDefi, nom?: string | null): string {
   if (v.phase === 'attente') return t('defi.etat.attente');
-  if (v.phase === 'comptage') return v.proposeParAutre ? t('defi.etat.comptageAccepter') : v.proposeParMoi ? t('defi.etat.comptageAttente') : t('defi.etat.comptage');
+  if (v.phase === 'comptage') {
+    if (v.proposeParAutre) return nom ? t('defi.etat.comptageAccepterNom', { nom }) : t('defi.etat.comptageAccepter');
+    if (v.proposeParMoi) return nom ? t('defi.etat.comptageAttenteNom', { nom }) : t('defi.etat.comptageAttente');
+    return t('defi.etat.comptage');
+  }
   if (v.phase === 'fini') return phraseIssue(v.issue);
   const delai = v.restant === null ? '' : texteDelai(v.restant);
-  return v.aMoi ? t('defi.etat.aToi', { delai }) : t('defi.etat.aLui', { delai });
+  if (v.aMoi) return t('defi.etat.aToi', { delai });
+  return nom ? t('defi.etat.aLuiNom', { nom, delai }) : t('defi.etat.aLui', { delai });
 }
 
 /** Phrase de fin, du point de vue du joueur. */

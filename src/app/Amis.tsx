@@ -10,6 +10,7 @@ import { EVENTS, track } from '../data/analytics';
 import { useAmis } from './amisListe';
 import { fr } from '../ui/typo';
 import { t } from '../content/i18n';
+import { ta } from '../content/i18n/amis';
 
 interface Props {
   db: Db | null;
@@ -37,7 +38,7 @@ export function Amis({ db, onDefi }: Props) {
     return () => clearTimeout(fin);
   }, [aConfirmer]);
 
-  if (!db) return <p className="card muted">{fr(t('amis.indisponible'))}</p>;
+  if (!db) return <p className="card muted">{fr(t('erreur.serveur'))}</p>;
 
   async function ajouter(e: FormEvent) {
     e.preventDefault();
@@ -48,7 +49,7 @@ export function Amis({ db, onDefi }: Props) {
     setEnvoi(false);
     if (!r.ok) { setRetour({ ok: false, texte: r.error }); champ.current?.focus(); return; }
     if (r.value === 'amis') track(EVENTS.amiAjoute, { comment: 'croisee' });
-    setRetour({ ok: true, texte: t(r.value === 'amis' ? 'amis.devenusAmis' : 'amis.envoyee', { pseudo }) });
+    setRetour({ ok: true, texte: ta(r.value === 'amis' ? 'amis.devenusAmis' : 'amis.envoyee', { pseudo }) });
     setSaisie('');
     recharger();
   }
@@ -90,25 +91,25 @@ export function Amis({ db, onDefi }: Props) {
 
   const formulaire = (
     <form className={`amis-ajout${vide ? ' amis-ajout-vide' : ' card'}`} onSubmit={ajouter} noValidate>
-      {!vide && <p className="amis-ajout-titre" aria-hidden="true">{t('amis.ajouter.titre')}</p>}
-      <label className="sr-only" htmlFor={idChamp}>{t('amis.ajouter.label')}</label>
+      {!vide && <p className="amis-ajout-titre" aria-hidden="true">{ta('amis.ajouter.titre')}</p>}
+      <label className="sr-only" htmlFor={idChamp}>{ta('amis.ajouter.label')}</label>
       <div className="amis-ajout-ligne">
         <input ref={champ} id={idChamp} className="amis-champ" type="text" inputMode="text" autoComplete="off" autoCapitalize="off"
           autoCorrect="off" spellCheck={false} enterKeyHint="send" maxLength={25} value={saisie}
-          placeholder={t('amis.ajouter.placeholder')} aria-describedby={idAide} aria-invalid={retour && !retour.ok ? true : undefined}
+          placeholder={ta('amis.ajouter.placeholder')} aria-describedby={idAide} aria-invalid={retour && !retour.ok ? true : undefined}
           onChange={e => { setSaisie(e.target.value); if (retour && !retour.ok) setRetour(null); }} />
         {!vide && (
           <button type="submit" className="btn amis-ajouter" disabled={envoi || !online || !saisie.trim()} aria-busy={envoi}>
-            {t(envoi ? 'amis.ajouter.envoi' : 'amis.ajouter.bouton')}
+            {ta(envoi ? 'amis.ajouter.envoi' : 'amis.ajouter.bouton')}
           </button>
         )}
       </div>
       <p id={idAide} className={`amis-aide small${retour ? (retour.ok ? ' ok' : ' erreur') : ''}`} role={retour ? (retour.ok ? 'status' : 'alert') : undefined}>
-        {fr(retour ? retour.texte : t('amis.ajouter.aide'))}
+        {fr(retour ? retour.texte : ta('amis.ajouter.aide'))}
       </p>
       {vide && (
         <button type="submit" className="btn primary amis-cta" disabled={envoi || !online} aria-busy={envoi}>
-          {t(envoi ? 'amis.ajouter.envoi' : 'amis.ajouter.bouton')}
+          {ta(envoi ? 'amis.ajouter.envoi' : 'amis.ajouter.bouton')}
         </button>
       )}
     </form>
@@ -116,33 +117,33 @@ export function Amis({ db, onDefi }: Props) {
 
   return (
     <div className="amis" data-testid="amis" data-vide={vide || undefined}>
-      {!online && <p className="card small" role="status">{fr(t('amis.horsLigne'))}</p>}
+      {!online && <p className="card small" role="status">{fr(ta('amis.horsLigne'))}</p>}
       {vide ? (
         <div className="amis-vide">
           <span className="amis-pierres" aria-hidden="true"><span className="stone b" /><span className="stone w" /><span className="stone b" /></span>
-          <p className="amis-vide-titre">{t('amis.vide.titre')}</p>
-          <p className="amis-vide-texte">{fr(t('defi.amis.videTexte'))}</p>
+          <p className="amis-vide-titre">{ta('amis.vide.titre')}</p>
+          <p className="amis-vide-texte">{fr(ta('defi.amis.videTexte'))}</p>
         </div>
       ) : null}
       {vide && formulaire}
 
-      {liste.etat === 'chargement' && online && <p className="muted small" aria-busy="true">{t('amis.chargement')}</p>}
+      {liste.etat === 'chargement' && online && <p className="muted small" aria-busy="true">{ta('amis.chargement')}</p>}
       {liste.etat === 'erreur' && (
-        <p className="card small" role="alert">{fr(t('amis.erreur.chargement'))} <button type="button" className="lien" onClick={recharger}>{t('amis.reessayer')}</button></p>
+        <p className="card small" role="alert">{fr(ta('amis.erreur.chargement'))} <button type="button" className="lien" onClick={recharger}>{t('defi.reessayer')}</button></p>
       )}
 
       {groupes.recue.length > 0 && (
-        <Groupe titre={t('amis.recues.titre')} id="amis-recues">
+        <Groupe titre={ta('amis.recues.titre')} id="amis-recues">
           {groupes.recue.map(a => (
             <li key={a.pseudo} className="ami">
               <div className="ami-ligne">
                 <Initiale pseudo={a.pseudo} />
                 <span className="ami-texte"><b>{a.pseudo}</b></span>
                 <span className="ami-actions">
-                  <button type="button" className="lien ami-discret" disabled={occupe !== null} aria-label={t('amis.refuserAria', { pseudo: a.pseudo })}
-                    onClick={() => repondre(a.pseudo, false)}>{t('amis.refuser')}</button>
+                  <button type="button" className="lien ami-discret" disabled={occupe !== null} aria-label={ta('amis.refuserAria', { pseudo: a.pseudo })}
+                    onClick={() => repondre(a.pseudo, false)}>{ta('amis.refuser')}</button>
                   <button type="button" className="ami-pilule plein" disabled={occupe !== null} aria-busy={occupe === a.pseudo}
-                    aria-label={t('amis.accepterAria', { pseudo: a.pseudo })} onClick={() => repondre(a.pseudo, true)}>{t('amis.accepter')}</button>
+                    aria-label={ta('amis.accepterAria', { pseudo: a.pseudo })} onClick={() => repondre(a.pseudo, true)}>{ta('amis.accepter')}</button>
                 </span>
               </div>
               {erreurDe(a.pseudo)}
@@ -152,7 +153,7 @@ export function Amis({ db, onDefi }: Props) {
       )}
 
       {groupes.ami.length > 0 && (
-        <Groupe titre={t('amis.liste.titre')} id="amis-liste" pied={<p className="muted small amis-regle">{fr(t('defi.amis.regle'))}</p>}>
+        <Groupe titre={ta('amis.liste.titre')} id="amis-liste" pied={<p className="muted small amis-regle">{fr(ta('defi.amis.regle'))}</p>}>
           {groupes.ami.map(a => (
             <li key={a.pseudo} className="ami">
               <div className="ami-ligne">
@@ -160,15 +161,15 @@ export function Amis({ db, onDefi }: Props) {
                 <span className="ami-texte"><b>{a.pseudo}</b></span>
                 <span className="ami-actions">
                   <button type="button" className={`ami-retirer${aConfirmer === a.pseudo ? ' arme' : ''}`} disabled={occupe !== null}
-                    aria-label={t(aConfirmer === a.pseudo ? 'amis.retirerConfirmerAria' : 'amis.retirerAria', { pseudo: a.pseudo })}
+                    aria-label={ta(aConfirmer === a.pseudo ? 'amis.retirerConfirmerAria' : 'amis.retirerAria', { pseudo: a.pseudo })}
                     onClick={() => retirer(a.pseudo)}>
-                    {aConfirmer === a.pseudo ? fr(t('amis.retirerConfirmer'))
+                    {aConfirmer === a.pseudo ? fr(ta('amis.retirerConfirmer'))
                       : <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4.5 4.5l7 7M11.5 4.5l-7 7" /></svg>}
                   </button>
                   <button type="button" className="ami-pilule" disabled={occupe !== null || !online} aria-busy={occupe === a.pseudo}
-                    aria-label={t('defi.amis.defierAria', { pseudo: a.pseudo })} onClick={() => defier(a.pseudo)}>
+                    aria-label={ta('defi.amis.defierAria', { pseudo: a.pseudo })} onClick={() => defier(a.pseudo)}>
                     <span className="ami-pilule-pierres" aria-hidden="true"><span className="stone b" /><span className="stone w" /></span>
-                    {t(occupe === a.pseudo ? 'defi.amis.creation' : 'defi.amis.defier')}
+                    {ta(occupe === a.pseudo ? 'defi.amis.creation' : 'defi.amis.defier')}
                   </button>
                 </span>
               </div>
@@ -179,15 +180,15 @@ export function Amis({ db, onDefi }: Props) {
       )}
 
       {groupes.envoyee.length > 0 && (
-        <Groupe titre={t('amis.envoyees.titre')} id="amis-envoyees">
+        <Groupe titre={ta('amis.envoyees.titre')} id="amis-envoyees">
           {groupes.envoyee.map(a => (
             <li key={a.pseudo} className="ami">
               <div className="ami-ligne">
                 <Initiale pseudo={a.pseudo} />
-                <span className="ami-texte"><b>{a.pseudo}</b><small>{t('amis.attente')}</small></span>
+                <span className="ami-texte"><b>{a.pseudo}</b><small>{ta('amis.attente')}</small></span>
                 <span className="ami-actions">
-                  <button type="button" className="lien ami-discret" disabled={occupe !== null} aria-label={t('amis.annulerAria', { pseudo: a.pseudo })}
-                    onClick={() => agir(a.pseudo, () => retirerAmi(db, a.pseudo))}>{t('amis.annuler')}</button>
+                  <button type="button" className="lien ami-discret" disabled={occupe !== null} aria-label={ta('amis.annulerAria', { pseudo: a.pseudo })}
+                    onClick={() => agir(a.pseudo, () => retirerAmi(db, a.pseudo))}>{ta('amis.annuler')}</button>
                 </span>
               </div>
               {erreurDe(a.pseudo)}

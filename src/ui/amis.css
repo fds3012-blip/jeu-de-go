@@ -86,3 +86,16 @@
   .ami-retirer.arme { animation: ami-arme 160ms var(--ease) both; }
   @keyframes ami-arme { from { opacity: .4; transform: scale(.94); } }
 }
+
+/* #359 : « Mes parties » et « Mes amis » sur une seule ligne, en deux moitiés de 48 px (le Profil tient sans défiler). */
+.ligne.ligne-double { padding: 0; gap: 0; align-items: stretch; }
+.ligne-demi { flex: 1 1 0; min-width: 0; min-height: var(--cible-bouton); display: flex; align-items: center; gap: 10px;
+  padding: 4px var(--space-3) 4px var(--space-4); background: none; border: 0; color: var(--text); text-align: left; font: inherit; }
+.ligne-demi + .ligne-demi { box-shadow: inset 1px 0 0 var(--line); }
+.ligne-demi:active { background: var(--surface-2); }
+.ligne-demi:focus-visible { outline-offset: -3px; }
+.ligne-demi-texte { flex: 1; min-width: 0; display: grid; }
+.ligne-demi-texte .ligne-libelle { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ligne-demi-valeur { color: var(--muted); font-size: var(--fs-xs); line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ligne-demi-valeur .amis-demandes { color: var(--accent-texte); font-weight: var(--fw-bold); display: inline-flex; align-items: center; gap: 5px; }
+@media (max-width: 359px) { .ligne-demi > .ligne-icone { display: none; } .ligne-demi { padding-left: var(--space-3); } }
