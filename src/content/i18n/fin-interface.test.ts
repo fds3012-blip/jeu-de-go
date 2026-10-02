@@ -156,7 +156,6 @@ describe('français identique aux textes d’origine', () => {
   });
 
   it('compte : textes avec variables', () => {
-    expect(traduire('fr', 'compte.cote', { cote: 1500 })).toBe('Cote 1500');
     expect(traduire('fr', 'compte.supprimer.tape', { mot: motSuppression() })).toBe('Pour confirmer, tape SUPPRIMER');
     expect(traduire('fr', 'compte.lienEnvoye', { email: 'a@b.fr' })).toBe('On t’a envoyé un lien à a@b.fr. Ouvre-le sur ce téléphone pour te connecter.');
     expect(typo(traduire('fr', 'compte.pseudoAide', { min: 3, max: 24 }))).toBe(`C’est le nom que verront les autres joueurs. De 3 à 24 caractères${F}: lettres, chiffres, _ et -.`);

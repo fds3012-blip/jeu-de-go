@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  LECONS_ESSAI, PARTIES_ESSAI, decider, etatCompte, libreSansCompte, lireEssai, noterPartieTerminee, partiesRestantes, partiesTerminees,
+  LECONS_ESSAI, PARTIES_ESSAI, decider, etatCompte, libreSansCompte, lireEssai, noterFinDePartie, noterPartieTerminee, partiesRestantes, partiesTerminees,
 } from './essai';
 
 describe('essai sans compte (#343)', () => {
@@ -51,11 +51,38 @@ describe('essai sans compte (#343)', () => {
     expect(lireEssai({ terminees: -4 })).toEqual({ terminees: 0 });
     expect(lireEssai({ terminees: 2.7 })).toEqual({ terminees: 2 });
     const e = noterPartieTerminee(noterPartieTerminee({ terminees: 0 }));
-    expect(e).toEqual({ terminees: 2 });
+    expect(e).toEqual({ terminees: 2, suivi: true });
     expect(partiesTerminees(e, {})).toBe(2);
     expect(partiesTerminees({ terminees: 0 }, { pomme: { v: 2, d: 3 } })).toBe(5);
+    expect(lireEssai({ terminees: 2, suivi: true })).toEqual({ terminees: 2, suivi: true });
+    expect(lireEssai({ terminees: 2, suivi: 'oui' })).toEqual({ terminees: 2 });
     expect(partiesRestantes(1)).toBe(2);
     expect(partiesRestantes(7)).toBe(0);
+  });
+
+  it('recette du 02/10 : une partie finie sur un plateau presque vide ne consomme pas l’essai, même si le bilan la garde', () => {
+    // 1re partie : un coup puis deux passes, gagnée. Le bilan l'enregistre (victoire contre Pomme), pas l'essai.
+    let bilan: Record<string, { v: number; d: number }> = {};
+    let e = noterFinDePartie({ terminees: 0 }, bilan, false);
+    bilan = { pomme: { v: 1, d: 0 } };
+    expect(partiesTerminees(e, bilan)).toBe(0);
+    expect(decider({ quoi: 'partie' }, 'aucun', partiesTerminees(e, bilan))).toEqual({ ok: true });
+    // Puis 3 parties menées à leur terme : la 4e demande un compte.
+    for (let i = 0; i < PARTIES_ESSAI; i++) {
+      e = noterFinDePartie(lireEssai(JSON.parse(JSON.stringify(e))), bilan, true);
+      bilan = { pomme: { v: 1, d: i + 1 } };
+    }
+    expect(partiesTerminees(e, bilan)).toBe(3);
+    expect(decider({ quoi: 'partie' }, 'aucun', partiesTerminees(e, bilan))).toEqual({ ok: false, raison: 'parties' });
+  });
+
+  it('joueur d’avant #343 : le compteur part du bilan déjà joué, puis fait foi', () => {
+    const avant = { pomme: { v: 1, d: 1 } };
+    const e = noterFinDePartie({ terminees: 0 }, avant, true);
+    expect(e).toEqual({ terminees: 3, suivi: true });
+    expect(partiesTerminees(e, { pomme: { v: 1, d: 2 } })).toBe(3);
+    // Partie trop courte d'un tel joueur : rien de perdu, rien de compté.
+    expect(noterFinDePartie({ terminees: 0 }, avant, false)).toEqual({ terminees: 2, suivi: true });
   });
 
   it('état du compte : chargement, aucun, anonyme, sans pseudo, complet', () => {

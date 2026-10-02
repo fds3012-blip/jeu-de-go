@@ -26,7 +26,8 @@ html:has(dialog.aide[open]) { overflow: hidden; }
 .aide-tete h2 { margin: 0; font-family: var(--font-titre); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre); font-size: var(--fs-2xl); outline: none; }
 .aide-fermer { flex: none; }
 .aide-onglets { flex: none; margin: var(--space-2) var(--gouttiere) 0; }
-.aide-onglets button { font-size: var(--fs-s); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 6px; }
+/* Recette du 02/10 au soir : chaque onglet part de la largeur de son mot (« Questions » était coupé en 320 px). */
+.aide-onglets button { flex: 1 1 auto; font-size: var(--fs-s); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 6px; }
 .aide-onglets button[aria-selected="true"] { background: var(--text); color: var(--bg); font-weight: var(--fw-bold); }
 .aide-onglets button:focus-visible { outline: 3px solid var(--focus); outline-offset: -3px; }
 
