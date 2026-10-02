@@ -165,6 +165,15 @@ export async function lireDefi(db: Db, partieId: string): Promise<Result<EtatDef
   return { ok: true, value: { partie: partie.data, defi: defi.data, resultat: temps.data ?? partie.data.result } };
 }
 
+/**
+ * Pseudo d'un joueur (#393 : l'ami nommé dans la partie), lu sous la RLS existante (profils visibles par tous).
+ * null s'il n'en a pas, ou si la lecture échoue : l'écran garde alors « Ton ami ».
+ */
+export async function pseudoJoueur(db: Db, id: string): Promise<string | null> {
+  const { data, error } = await db.from('profiles').select('username').eq('id', id).maybeSingle();
+  return error ? null : data?.username ?? null;
+}
+
 /** Les défis du joueur (créés ou rejoints), du plus récent au plus ancien, avec leur partie. */
 export async function mesDefis(db: Db, userId: string): Promise<Result<EtatDefi[]>> {
   const defis = await db.from('defis').select('*').or(`createur_id.eq.${userId},invite_id.eq.${userId}`).order('cree_le', { ascending: false }).limit(20);

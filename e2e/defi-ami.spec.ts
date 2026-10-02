@@ -54,16 +54,19 @@ test('défier un ami : compte du créateur, lien avec son pseudo, l’ami crée 
   await creerCompte(b, 'ami@exemple.test', 'Ami_du_go');
 
   // Compte complet : il rejoint la partie et joue son premier coup, avec Noir.
-  await expect(b.getByText('Ton ami te défie ! Tu as les pierres noires : à toi de commencer.')).toBeVisible();
+  // #393 : l'ami est nommé par son pseudo (profil public), sur son bandeau et dans la phrase de Mochi.
+  await expect(b.getByText('Florian te défie ! Tu as les pierres noires : à toi de commencer.')).toBeVisible();
+  await expect(b.locator('.joueur').first()).toContainText('Florian');
   await expect(plateau(b)).toBeVisible();
   await jouer(b, 'E5');
   await expect(pierres(b, 'noir')).toHaveCount(1);
-  await expect(b.getByText(/Au tour de ton ami\. Il lui reste [23]\s+jours/)).toBeVisible();
+  await expect(b.getByText(/Au tour de Florian\. Il lui reste [23]\s+jours/)).toBeVisible();
   await expect(b.getByTestId('lier-email')).toHaveCount(0); // plus d'inscription après coup : il a déjà un compte
 
   // Téléphone 1 : le créateur retrouve la partie, c'est à lui de jouer.
   await a.getByRole('button', { name: /Partie du/ }).click();
   await expect(a.getByText(/À toi de jouer\. Il te reste [23]\s+jours/)).toBeVisible();
+  await expect(a.locator('.joueur').first()).toContainText('Ami_du_go');
   await expect(pierres(a, 'noir')).toHaveCount(1);
 
   expect(erreurs).toEqual([]);

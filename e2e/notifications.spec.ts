@@ -106,6 +106,8 @@ test('« Aujourd’hui » sous l’action principale est la liste « À faire »
   await page.getByTestId('tuile-defi').click();
   await expect(plateau(page)).toBeVisible();
   await expect(page.getByText(/À toi de jouer\. Il te reste/)).toBeVisible();
+  // #393 : dans la partie aussi, l'ami est nommé par son pseudo.
+  await expect(page.locator('.joueur').first()).toContainText('Léa');
 });
 
 test('la pastille arrive sans recharger quand l’ami joue', async ({ browser, baseURL }) => {
