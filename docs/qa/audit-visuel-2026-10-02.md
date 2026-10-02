@@ -1,5 +1,7 @@
 # Audit visuel et d'usage — 2 octobre 2026
 
+> Captures gardées dans le dépôt : 390 × 844 en français, clair et sombre (`docs/qa/captures/audit-02-10/*-390-*-fr.jpg`). Les autres tailles et langues se régénèrent avec `AUDIT_VISUEL=1 npx playwright test e2e/audit-visuel.spec.ts`.
+
 Périmètre : `origin/main` à `4ebc4e3` (#357, « Continuer avec Google »). Build `VITE_E2E=1`, servi par `vite preview` sur le port 5214, Chromium de `/opt/pw-browsers`, écran tactile. Chaque écran est capturé en **390 × 844** et **320 × 568**, **sombre et clair**, **français et anglais** : 4 configurations × 2 thèmes, 508 captures dans `docs/qa/captures/audit-02-10/` (nom : `NN-ecran-largeur-theme-langue.jpg`). Supabase est simulé (`e2e/fauxSupabase.ts`) pour les écrans de compte et de défi ; le reste tourne sans service de compte, donc sans limite d'essai.
 
 Méthode :
