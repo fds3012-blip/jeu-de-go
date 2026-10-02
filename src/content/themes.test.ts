@@ -29,7 +29,7 @@ describe('thèmes des problèmes (#200)', () => {
   });
 
   it('les leçons de capture, d’atari, de techniques et de vie et mort ont une série', () => {
-    expect(Object.keys(THEMES_DE_LECON).sort()).toEqual(['l1', 'l10', 'l11', 'l12', 'l2', 'l3', 'l5', 'l9']);
+    expect(Object.keys(THEMES_DE_LECON).sort()).toEqual(['l1', 'l10', 'l11', 'l12', 'l13', 'l2', 'l3', 'l5', 'l9']);
   });
 
   it('quelques classements de référence', () => {

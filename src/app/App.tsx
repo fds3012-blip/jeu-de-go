@@ -1,6 +1,6 @@
 import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 // Écrans chargés à la demande (perf, #323) : seul l'accueil est dans le JS initial.
-import { CreerCompte, DefiArrivee, DefiPartie, DefisEcran, Game, LearnHome, LessonPlayer, Placement, Profil, PseudoObligatoire, Puzzles, SeriePratique } from './ecrans';
+import { CreerCompte, DefiArrivee, DefiPartie, DefisEcran, Game, LearnHome, LessonPlayer, Placement, Profil, PseudoObligatoire, Puzzles, SeriePratique, apresPremierEcran } from './ecrans';
 import { CHAPITRES, LESSONS } from '../content/lessons';
 import { LESSONS_KEY, readLocal, writeLocal, useGelsServeur, useLessonProgress, useProfil, usePseudo, useSerie, useSession } from './hooks';
 import { supabase } from '../data/supabase';
@@ -20,7 +20,7 @@ import { COTE_KEY } from './coteJoueur';
 import { Accueil } from './Accueil';
 import { ALL_PUZZLES } from '../content/puzzles';
 import { parsePuzzles } from '../data/puzzles';
-import { EVENTS, track } from '../data/analytics';
+import { EVENTS, secondsSinceOpen, track, trackOnce } from '../data/analytics';
 import { estArriveeRappel, etatRappel } from './rappel';
 import { PARAM, PARAM_COURT, SERIE_KEY, numeroDuJour, numeroDuLien, problemeDuNumero, type Serie } from './goDuJour';
 import { battu, BILAN_KEY, dejaAffronte, enregistrer, fin, finTropTot, komiDepuisUrl, lireBilan, type Bilan, type Issue, type StatsPartie } from './bilan';
@@ -218,7 +218,9 @@ export function App() {
   const duJour = problemeDuNumero(PROBLEMES_LOCAUX, numeroJour);
   const duJourFait = goDuJourFaitAppareil(numeroJour);
   // #309 : « Rejouer » seulement après une partie finie contre cet adversaire.
-  const home = accueil(parties, done, { ...adv, fini: dejaAffronte(bilan, adv.id) }, settings.size, { numero: numeroJour, absence, duJourFait, titreDuJour: duJour?.title });
+  // Accueil v3 : un bilan contre l'ordi (appareil d'avant le compteur de parties, ou compteur abîmé) suffit à dire
+  // qu'il a déjà joué : pas d'accueil « premier lancement » pour lui.
+  const home = accueil({ ...parties, n: Math.max(parties.n, Object.keys(bilan).length > 0 ? 1 : 0) }, done, { ...adv, fini: dejaAffronte(bilan, adv.id) }, settings.size, { numero: numeroJour, absence, duJourFait, titreDuJour: duJour?.title });
   const flamme = etatFlamme(serie, duJourFait);
   // #308 : après le placement, la carte « Leçon » suit le chapitre conseillé.
   const leconConseillee = leconDeLAccueil(LESSONS, CHAPITRES, progress, placement);
@@ -520,11 +522,22 @@ export function App() {
         // Un seul appel à la fois (#236, N4) : pas de carte d'installation le jour où Mochi fait une annonce ;
         // quand elle se montre, la pastille « À faire » s'efface.
         installation={appel === 'installation' ? <ProposerInstallation moment="retour" /> : null}
+        // Accueil v3 : un défi d'un ami où c'est ton tour passe en premier dans « Aujourd'hui ».
+        defis={supabase ? { n: defisAJouer, ouvrir: () => { if (!garde({ quoi: 'defi' }, { quoi: 'defis' })) return; setDefi({ vue: 'liste' }); window.scrollTo({ top: 0 }); } } : undefined}
         onPlacement={proposerPlacement(parties.n, placement, ouverture.retours) ? ouvrirPlacement : undefined} />
     );
   }
 
   const accueilVisible = tab === 'jouer' && !playing && !enPlacement && !enDefi && !ecranPlein;
+  // Accueil v3 : `premier_ecran_vu`, une fois, quand l'accueil est affiché et utilisable (page chargée, polices prêtes).
+  // `nouveau` : tout premier lancement sur l'appareil (aucune partie, aucun retour). Dénominateur des 60 premières secondes.
+  const ecranVu = useRef(false);
+  useEffect(() => {
+    if (!accueilVisible || ecranVu.current) return;
+    ecranVu.current = true;
+    const nouveau = parties.n === 0 && ouverture.retours === 0;
+    apresPremierEcran(() => trackOnce(EVENTS.premierEcranVu, { secondes: secondsSinceOpen(), nouveau, appel: appel ?? 'aucun', variante: 'v3' }));
+  }, [accueilVisible, parties.n, ouverture.retours, appel]);
   // #213 : la flamme vue creuse s'allume au retour sur l'accueil, une fois, quand le Go du jour vient d'être fait.
   const flammeVue = useRef<typeof flamme>(null);
   const [allumage, setAllumage] = useState(false);
@@ -574,7 +587,8 @@ export function App() {
         {retourSerie !== null && annonceGel === null && !enPartie && !ecranPlein && (tab === 'jouer' || tab === 'problemes') && (
           <p className="gel-annonce retour-serie" role="status" data-testid="retour-serie"><Mochi size={30} />{fr(retourSerie)}</p>
         )}
-        {accueilVisible && <BarreNiveau />}
+        {/* Accueil v3 : pas de « Niveau 1 · 0 / 100 XP » avant le premier gain ; le Profil, lui, la montre toujours. */}
+        {accueilVisible && <BarreNiveau sansXpMasquee />}
         <Suspense fallback={null}>{screen}</Suspense>
       </main>
       <FeteNiveau celebrer={settings.celebrations} ecran={`${tab}|${playing}|${lessonId ?? ''}|${serie3 ? 'serie' : ''}|${vueProfil}`} />
