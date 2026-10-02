@@ -38,6 +38,17 @@ describe('à qui de jouer', () => {
     expect(createur).toMatchObject({ couleur: 2, aMoi: false });
     expect(sp(phraseEtat(ami))).toBe('À toi de jouer. Il te reste 2 jours et 2 h.');
     expect(sp(phraseEtat(createur))).toBe('Au tour de ton ami. Il lui reste 2 jours et 2 h.');
+    // #393 : le pseudo de l'ami, quand il est connu.
+    expect(sp(phraseEtat(createur, 'Lea_du_go'))).toBe('Au tour de Lea_du_go. Il lui reste 2 jours et 2 h.');
+    expect(sp(phraseEtat(ami, 'Florian'))).toBe('À toi de jouer. Il te reste 2 jours et 2 h.');
+  });
+
+  it('comptage : le pseudo de l’ami dans la proposition (#393)', () => {
+    const autre = vueDefi(partie({ moves: 'eett', counting: true, dead_proposed_by: BLANC }), defi(), NOIR, T0);
+    expect(phraseEtat(autre, 'Lea_du_go')).toBe('Lea_du_go propose ce compte. Tu es d’accord ?');
+    expect(phraseEtat(autre)).toBe('Ton ami propose ce compte. Tu es d’accord ?');
+    const moi = vueDefi(partie({ moves: 'eett', counting: true, dead_proposed_by: NOIR }), defi(), NOIR, T0);
+    expect(phraseEtat(moi, 'Lea_du_go')).toBe('Compte proposé. Lea_du_go doit l’accepter.');
   });
 
   it('après un coup de Noir, c’est à Blanc ; Noir a joué une fois', () => {
