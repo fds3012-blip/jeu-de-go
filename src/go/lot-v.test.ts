@@ -179,9 +179,12 @@ describe('lot V : identifiants, énoncés, thèmes, doublons, calendrier, migrat
     for (const t of ['filet', 'prise-en-retour', 'semeai', 'vie-mort']) expect(themes).toContain(t);
   });
 
-  it('le Go du jour garde son ordre : le lot V, d’un seul tenant, vient juste après le lot U et ferme le calendrier', () => {
+  it('le Go du jour garde son ordre : le lot V, d’un seul tenant, vient juste après le lot U et juste avant w01', () => {
     const ids = LOT_V.map(r => r.id);
-    expect(CALENDRIER_GO_DU_JOUR.slice(-ids.length)).toEqual(ids);
+    // Lot W (#16, leçons 14 à 16) ajouté après : le lot V reste d'un seul tenant, juste avant w01.
+    const debut = CALENDRIER_GO_DU_JOUR.indexOf('v01');
+    expect(CALENDRIER_GO_DU_JOUR.slice(debut, debut + ids.length)).toEqual(ids);
+    expect(CALENDRIER_GO_DU_JOUR[debut + ids.length]).toBe('w01');
     expect(CALENDRIER_GO_DU_JOUR.indexOf('v01')).toBe(CALENDRIER_GO_DU_JOUR.indexOf('u15') + 1);
   });
 
