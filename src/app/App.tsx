@@ -139,7 +139,7 @@ type VueDefi = { vue: 'liste' } | { vue: 'arrivee'; jeton: string; inviteur: str
 
 /** Ce que le joueur voulait faire quand l'écran « Crée ton compte » s'est ouvert : repris dès que son compte est complet. */
 type Reprise = { quoi: 'ordi'; contre: OpponentId } | { quoi: 'deux' } | { quoi: 'guidee' } | { quoi: 'lecon'; id: string }
-  | { quoi: 'defis' } | { quoi: 'placement' } | { quoi: 'importer' } | { quoi: 'problemes' };
+  | { quoi: 'defis' } | { quoi: 'placement' } | { quoi: 'importer' } | { quoi: 'problemes' } | { quoi: 'amis' };
 
 export function App() {
   const [tab, setTab] = useState<Tab>(PAGE_CONFIDENTIALITE || (RETOUR_GOOGLE?.profil && !ECRAN_COMPTE_AU_RETOUR && !DEFI_AU_RETOUR) ? 'profil'
@@ -395,6 +395,7 @@ export function App() {
     else if (r.quoi === 'defis') { setTab('jouer'); setDefi({ vue: 'liste' }); }
     else if (r.quoi === 'placement') ouvrirPlacement();
     else if (r.quoi === 'importer') { setTab('profil'); setVueProfil('importer'); }
+    else if (r.quoi === 'amis') { setTab('profil'); setVueProfil('amis'); }
     else setTab('problemes');
   };
   const etatAvant = useRef<EtatCompte | null>(null);
@@ -505,7 +506,13 @@ export function App() {
   } else if (tab === 'profil') {
     screen = <Profil vue={vueProfil} onVue={v => { if (v === 'importer' && !garde({ quoi: 'import' }, { quoi: 'importer' })) return; setVueProfil(v); }} settings={settings} set={set} profil={profil} serie={serie} record={recordSerie}
       parcours={{ lecons: { faites: done, total: LESSONS.length }, adversaires: OPPONENTS.length }}
-      placement={placement} onPlacement={ouvrirPlacement} />;
+      placement={placement} onPlacement={ouvrirPlacement}
+      // #359 : « Mes amis ». Sans compte complet, l'écran de compte s'ouvre puis revient ici ; « Défier » ouvre la partie.
+      amis={supabase ? {
+        db: supabase, compte: etat === 'complet',
+        onCompte: () => { garde({ quoi: 'en_ligne' }, { quoi: 'amis' }); },
+        onDefi: id => { setVueProfil('menu'); setTab('jouer'); setPlaying(false); setDefi({ vue: 'partie', id }); window.scrollTo({ top: 0 }); },
+      } : undefined} />;
   } else {
     const numero = numeroJour;
     const daily = duJour;

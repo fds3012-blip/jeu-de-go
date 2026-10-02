@@ -29,6 +29,9 @@ import { clePubliqueVapid, resumeRappel } from './rappel';
 import { ReglageRappel } from '../ui/ProposerRappel';
 import { LANGUES, langue, memoriserChoixLangue, t, type Langue } from '../content/i18n';
 import type { Placement } from './placement';
+import type { Db } from '../data/supabase';
+import { Amis } from './Amis';
+import { useDemandesRecues } from './amisListe';
 
 const SOLVED_KEY = 'go.problemes.v1';
 
@@ -54,7 +57,7 @@ function useDonnees(serie: number, record: number, parcours: Parcours) {
   return donnees;
 }
 
-export type VueProfil = 'menu' | 'reglages' | 'installer' | 'rappel' | 'compte' | 'conditions' | 'importer';
+export type VueProfil = 'menu' | 'reglages' | 'installer' | 'rappel' | 'compte' | 'conditions' | 'importer' | 'amis';
 
 // Libellés traduits (#167) : calculés à l'affichage, dans la langue de l'interface.
 const themes = () => [
@@ -85,6 +88,11 @@ interface Props {
   /** « Je sais déjà jouer » (#283) : niveau estimé (discret, une ligne) et placement à refaire. */
   placement?: Placement | null;
   onPlacement?: () => void;
+  /**
+   * « Mes amis » (#359) : service Supabase, compte complet (e-mail et pseudo) ou non, ouverture de l'écran de compte
+   * sinon, et partie créée par « Défier ». Absent sans service de compte : pas de ligne.
+   */
+  amis?: { db: Db; compte: boolean; onCompte: () => void; onDefi: (partieId: string) => void };
 }
 
 /** Sous-vue du Profil : « Retour » en haut, un titre, un contenu. */
@@ -100,11 +108,14 @@ function SousVue({ id, titre, onRetour, children }: { id: string; titre: string;
   );
 }
 
-export function Profil({ vue, onVue, settings, set, profil, serie, record = 0, parcours, placement, onPlacement }: Props) {
+export function Profil({ vue, onVue, settings, set, profil, serie, record = 0, parcours, placement, onPlacement, amis }: Props) {
   const retour = () => { onVue('menu'); window.scrollTo({ top: 0 }); };
   if (vue === 'conditions') return <Conditions onRetour={retour} />;
   // #286 : analyser une partie jouée ailleurs (SGF), action secondaire du Profil.
   if (vue === 'importer') return <ImportSgf onRetour={retour} pseudo={profil?.pseudo} confirmTouch={settings.confirmTouch} />;
+  if (vue === 'amis' && amis?.compte) {
+    return <SousVue id="amis-titre" titre={t('amis.titre')} onRetour={retour}><Amis db={amis.db} onDefi={amis.onDefi} /></SousVue>;
+  }
   if (vue === 'compte') return <SousVue id="compte-titre" titre={t('profil.compte')} onRetour={retour}><Account /></SousVue>;
   if (vue === 'reglages') return <SousVue id="reglages-titre" titre={t('profil.reglages')} onRetour={retour}><Reglages settings={settings} set={set} /></SousVue>;
   if (vue === 'rappel') {
@@ -122,7 +133,7 @@ export function Profil({ vue, onVue, settings, set, profil, serie, record = 0, p
     );
   }
 
-  return <Menu onVue={onVue} settings={settings} set={set} profil={profil} serie={serie} record={record} parcours={parcours} placement={placement} onPlacement={onPlacement} />;
+  return <Menu onVue={onVue} settings={settings} set={set} profil={profil} serie={serie} record={record} parcours={parcours} placement={placement} onPlacement={onPlacement} amis={amis} />;
 }
 
 /** Date courte du placement (« 28/09 »), dans la langue de l'interface. */
@@ -131,8 +142,10 @@ function dateCourte(iso: string): string {
   return Number.isNaN(d.getTime()) ? iso : d.toLocaleDateString(langue() === 'en' ? 'en-GB' : 'fr-FR', { day: '2-digit', month: '2-digit' });
 }
 
-function Menu({ onVue, profil, serie, record = 0, parcours, placement, onPlacement }: Omit<Props, 'vue'>) {
+function Menu({ onVue, profil, serie, record = 0, parcours, placement, onPlacement, amis }: Omit<Props, 'vue'>) {
   const id = identite(profil, serie);
+  // #359 : demandes d'ami reçues, en pastille sur la ligne « Mes amis ».
+  const demandes = useDemandesRecues(amis?.db ?? null, !!amis?.compte);
   const donnees = useDonnees(serie, record, parcours);
   // Ligne « Installer l'app » (#214) : tant que l'app est installable ici et pas installée.
   const proposerInstallation = installable(usePlateformeInstallation(), etatInstallation());
@@ -155,6 +168,12 @@ function Menu({ onVue, profil, serie, record = 0, parcours, placement, onPlaceme
       <VitrineBadges liste={donnees.badges} nouveaux={donnees.nouveaux} />
 
       <div className="lignes">
+        {amis && (
+          <LigneLien icone={<IconeReglage id="amis" />} libelle={t('amis.titre')}
+            valeur={!amis.compte ? t('amis.profil.sansCompte')
+              : demandes > 0 ? <span className="amis-demandes"><span className="amis-point" aria-hidden="true" />{t('amis.profil.demandes', { n: demandes })}</span> : undefined}
+            onClick={() => (amis.compte ? onVue('amis') : amis.onCompte())} />
+        )}
         {/* #283 : le kyu estimé ne s'affiche qu'ici, sur une ligne, avec sa date ; la ligne relance le placement. */}
         {onPlacement && (placement?.fait && placement.kyu !== null
           ? <LigneLien icone={<IconeReglage id="placement" />} libelle={t('placement.profil')} valeur={t('placement.profilValeur', { kyu: placement.kyu, date: dateCourte(placement.date) })} onClick={onPlacement} />

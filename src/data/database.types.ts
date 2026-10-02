@@ -87,6 +87,42 @@ export type Database = {
           },
         ]
       }
+      demandes_ami_journal: {
+        Row: {
+          demandeur_id: string
+          destinataire_id: string
+          envoyee_le: string
+          id: number
+        }
+        Insert: {
+          demandeur_id: string
+          destinataire_id: string
+          envoyee_le?: string
+          id?: never
+        }
+        Update: {
+          demandeur_id?: string
+          destinataire_id?: string
+          envoyee_le?: string
+          id?: never
+        }
+        Relationships: [
+          {
+            foreignKeyName: "demandes_ami_journal_demandeur_id_fkey"
+            columns: ["demandeur_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "demandes_ami_journal_destinataire_id_fkey"
+            columns: ["destinataire_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       defis: {
         Row: {
           cree_le: string
@@ -668,7 +704,9 @@ export type Database = {
           partie_id: string
         }[]
       }
+      defier_ami: { Args: { p_pseudo: string }; Returns: string }
       delete_my_account: { Args: never; Returns: undefined }
+      demander_ami: { Args: { p_pseudo: string }; Returns: string }
       enregistrer_abonnement_rappel: {
         Args: {
           p_auth: string
@@ -700,6 +738,7 @@ export type Database = {
         Returns: number
       }
       join_game: { Args: { p_code: string }; Returns: string }
+      joueur_par_pseudo: { Args: { p_pseudo: string }; Returns: string }
       jouer_coup_defi: {
         Args: {
           p_comptage?: boolean
@@ -709,6 +748,14 @@ export type Database = {
           p_partie: string
         }
         Returns: Json
+      }
+      mes_amis: {
+        Args: never
+        Returns: {
+          depuis: string
+          etat: string
+          pseudo: string
+        }[]
       }
       play_move: { Args: { p_game: string; p_move: string }; Returns: string }
       preparer_rattachement: { Args: never; Returns: string }
@@ -729,7 +776,12 @@ export type Database = {
         Returns: number
       }
       rejoindre_defi: { Args: { p_jeton: string }; Returns: string }
+      repondre_ami: {
+        Args: { p_accepter: boolean; p_pseudo: string }
+        Returns: string
+      }
       resign_game: { Args: { p_game: string }; Returns: string }
+      retirer_ami: { Args: { p_pseudo: string }; Returns: undefined }
       victoire_au_temps: { Args: { p_partie: string }; Returns: string }
     }
     Enums: {
