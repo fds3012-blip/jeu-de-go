@@ -24,9 +24,9 @@ test("un problème réussi fait monter l'XP sur l'accueil", async ({ page }) => 
   await preparer(page);
   await page.goto('/');
   const barre = page.getByTestId('barre-niveau');
-  await expect(barre).toContainText(/Niveau\s1/);
-  await expect(barre).toContainText(/0\s\/\s100\sXP/);
-  await expect(barre).toContainText('Kaya clair');
+  // Accueil v3 : sans XP, pas de barre (rien à lire avant la première pierre) ; elle arrive avec le premier gain.
+  await expect(page.locator('.cta')).toBeVisible();
+  await expect(barre).toHaveCount(0);
 
   await resoudreGoDuJour(page); // Go du jour : +20 XP, et +20 de bonus pour un premier problème (#162, #233)
   // Issue #162 : le gain se voit à la fin du problème.
@@ -36,7 +36,9 @@ test("un problème réussi fait monter l'XP sur l'accueil", async ({ page }) => 
   await expect(pastille).toContainText('dont +20 première fois');
   await page.screenshot({ path: 'docs/design/v2/captures/xp-pastille.png' });
   await nav(page).getByRole('button', { name: 'Jouer' }).click();
+  await expect(barre).toContainText(/Niveau\s1/);
   await expect(barre).toContainText(/40\s\/\s100\sXP/);
+  await expect(barre).toContainText('Kaya clair');
   await expect(page.getByRole('progressbar', { name: 'Niveau 1' })).toHaveAttribute('aria-valuenow', '40');
   // L'action principale reste visible sans défiler.
   await expect(page.locator('.cta-sceau')).toBeInViewport();

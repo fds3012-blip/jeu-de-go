@@ -23,7 +23,7 @@ for (const theme of ['dark', 'light'] as const) {
       const bulle = document.querySelector('.scene-bulle')!.getBoundingClientRect();
       const cta = document.querySelector('.cta')!.getBoundingClientRect();
       const nav = document.querySelector('nav')!.getBoundingClientRect();
-      return { zoneHaut: zone.top, zoneBas: zone.bottom, svgHaut: svg.top, svgBas: svg.bottom, bulleHaut: bulle.top, ctaBas: cta.bottom, navHaut: nav.top, ctaH: cta.height,
+      return { zoneHaut: zone.top, zoneBas: zone.bottom, svgHaut: svg.top, svgBas: svg.bottom, bulleHaut: bulle.top, bulleBas: bulle.bottom, ctaBas: cta.bottom, navHaut: nav.top, ctaH: cta.height,
         large: document.documentElement.scrollWidth, vue: window.innerWidth };
     });
     // Recadrage toléré : la marge du bois et la bande des coordonnées (moins d'une demi-case de chaque côté).
@@ -31,7 +31,8 @@ for (const theme of ['dark', 'light'] as const) {
     const demiCase = (g.svgBas - g.svgHaut) / 20;
     expect(g.svgHaut).toBeGreaterThanOrEqual(g.zoneHaut - demiCase);
     expect(g.svgBas).toBeLessThanOrEqual(g.zoneBas + demiCase);
-    expect(g.bulleHaut).toBeGreaterThanOrEqual(g.zoneBas);
+    // Accueil v3 : au premier lancement, la promesse de Mochi est au-dessus du goban ; elle ne le recouvre jamais.
+    expect(g.bulleBas <= g.zoneHaut || g.bulleHaut >= g.zoneBas).toBe(true);
     // Le bouton principal est au-dessus de la barre de navigation, sans défiler, et fait au moins 44 px.
     expect(g.ctaBas).toBeLessThanOrEqual(g.navHaut);
     expect(g.ctaH).toBeGreaterThanOrEqual(44);

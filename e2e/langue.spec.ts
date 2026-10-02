@@ -74,10 +74,10 @@ for (const largeur of [390, 320]) {
     await page.setViewportSize({ width: largeur, height: 844 });
     await page.goto('/?lang=en');
 
-    // Accueil d'un nouveau joueur : réplique de Pomme, explication du kyu, action principale, tuiles.
-    await expect(page.getByText('Shall we play together? I’ll explain everything.')).toBeVisible();
-    await expect(page.getByText(/^She’s learning, just like you\. Kyu is a rank/)).toBeVisible();
-    await expect(page.getByText('9 × 9 board, you’re Black')).toBeVisible();
+    // Accueil d'un nouveau joueur (v3) : promesse de Mochi, adversaire nommé sans rang, action principale, tuiles.
+    await expect(page.getByText('Learn Go by playing: I’ll explain every move.')).toBeVisible();
+    await expect(page.getByText(/your first opponent · 9\s×\s9/)).toBeVisible();
+    await expect(page.getByText(/kyu/)).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Change' })).toBeVisible();
     const cta = page.getByRole('button', { name: 'Play your first game against Pomme' });
     await expect(cta).toContainText('Play your first game');
@@ -351,7 +351,11 @@ for (const largeur of [390, 320]) {
     await expect(page.locator('.joueur[data-joueur="You"]')).toBeVisible();
     await expect(page.getByText(/^The goal: surround more territory than Pomme/)).toBeVisible();
     const actions = page.getByRole('toolbar', { name: 'Game actions' });
-    for (const nom of ['Hint', 'Who’s ahead?', 'Undo', 'Pass', 'Resign']) await expect(actions.getByRole('button', { name: nom, exact: true })).toBeVisible();
+    for (const nom of ['Hint', 'Who’s ahead?', 'Pass', 'More']) await expect(actions.getByRole('button', { name: nom, exact: true })).toBeVisible();
+    // Annuler et abandonner sont dans le menu « More » (v3).
+    await actions.getByRole('button', { name: 'More', exact: true }).click();
+    for (const nom of ['Undo', 'Resign']) await expect(actions.getByRole('button', { name: nom, exact: true })).toBeVisible();
+    await page.keyboard.press('Escape');
     await expect(actions.getByRole('button', { name: 'Hint' })).toHaveAccessibleDescription('3 hints left');
     await sansCoupePartie(page, largeur);
 

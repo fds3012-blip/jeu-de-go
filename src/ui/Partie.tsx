@@ -1,6 +1,6 @@
 // Composants de l'écran de partie (grammaire de chess.com) : bandeaux des joueurs avec leur couvercle,
 // liste des coups, barre d'avantage, coach Mochi et barre d'actions. Styles : partie.css.
-import { useEffect, useLayoutEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { IconeAction, type NomAction } from './IconesActions';
 import { PortraitMochi, type HumeurMochi } from './Portrait';
 import { Reflexion } from './Reflexion';
@@ -52,6 +52,7 @@ export function Bandeau({ nom, sousTitre, portrait, actif, captures, pierresPris
       </div>
       <span className="couvercle-zone">
         <Couvercle n={captures} pierres={pierresPrises} />
+        <small className="couvercle-legende" aria-hidden="true">{t('partie.prisonniers')}</small>
         {/* Décoratif : la phrase de Mochi dit déjà combien de pierres tu as prises. */}
         {gain && <span key={gain.k} className="gain-capture" aria-hidden="true">+{gain.n}</span>}
       </span>
@@ -79,12 +80,15 @@ export function ListeCoups({ coups, courant = coups.length - 1 }: { coups: strin
     if (li) el.scrollLeft = li.offsetLeft - (el.clientWidth - li.offsetWidth) / 2;
   }, [coups.length, courant]);
   return (
-    <ol ref={ref} className="coups" aria-label={t('partie.coupsJoues')}>
-      {coups.length === 0 && <li className="vide">{t('bilan.aucunCoup')}</li>}
-      {coups.map((m, i) => (
-        <li key={i} aria-current={i === courant ? 'step' : undefined}>{m}</li>
-      ))}
-    </ol>
+    <div className="coups-ruban">
+      <span className="coups-titre" aria-hidden="true">{t('partie.coupsJoues')}</span>
+      <ol ref={ref} className="coups" aria-label={t('partie.coupsJoues')}>
+        {coups.length === 0 && <li className="vide">{t('bilan.aucunCoup')}</li>}
+        {coups.map((m, i) => (
+          <li key={i} aria-current={i === courant ? 'step' : undefined}>{m}</li>
+        ))}
+      </ol>
+    </div>
   );
 }
 
@@ -144,7 +148,9 @@ export interface Action { label: string; icone: ReactNode; onClick: () => void; 
   /** #236 (N7) : `decision` (passer, abandonner) se range à droite, après un filet ; les autres sont des aides. */
   groupe?: 'aide' | 'decision';
   /** L'action qui décide de la partie (passer) : bouton plein, tout à droite, sous le pouce. */
-  principale?: boolean }
+  principale?: boolean;
+  /** Dans le menu « Plus » : le menu reste ouvert après l'appui (« Abandonner » passe à « Confirmer ? »). */
+  reste?: boolean }
 
 function Bouton({ a }: { a: Action }) {
   return (
@@ -156,12 +162,69 @@ function Bouton({ a }: { a: Action }) {
   );
 }
 
+/** Trois points de la famille « trait » (chevrons de la relecture) : l'icône du menu « Plus ». */
+const POINTS = <path d="M6 13h.01M13 13h.01M20 13h.01" />;
+
+/**
+ * Menu « Plus » de la barre d'actions (partie-ecran-v3) : un bouton ⋯ ouvre une petite feuille au-dessus de la barre,
+ * avec les actions rares (annuler, abandonner) et deux réglages. Il se ferme par Échap, par un toucher ailleurs,
+ * ou après une action qui ne demande pas de rester (`reste`). Rendu dans la barre : ses boutons restent dans la toolbar.
+ */
+function MenuPlus({ actions, label, reglages }: { actions: Action[]; label: string; reglages?: ReactNode }) {
+  const [ouvert, setOuvert] = useState(false);
+  const feuille = useRef<HTMLDivElement>(null);
+  const bouton = useRef<HTMLButtonElement>(null);
+  const id = useId();
+  useEffect(() => {
+    if (!ouvert) return;
+    feuille.current?.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus();
+    const clavier = (e: KeyboardEvent) => { if (e.key === 'Escape') { setOuvert(false); bouton.current?.focus(); } };
+    const dehors = (e: PointerEvent) => {
+      if (e.target instanceof Node && (feuille.current?.contains(e.target) || bouton.current?.contains(e.target))) return;
+      setOuvert(false);
+    };
+    document.addEventListener('keydown', clavier);
+    document.addEventListener('pointerdown', dehors, true);
+    return () => { document.removeEventListener('keydown', clavier); document.removeEventListener('pointerdown', dehors, true); };
+  }, [ouvert]);
+  return (
+    <>
+      <button ref={bouton} type="button" className={`plus${ouvert ? ' ouvert' : ''}`} aria-expanded={ouvert} aria-controls={id} data-action="plus"
+        onClick={() => setOuvert(o => !o)}>
+        <svg className="icone-trait" viewBox="0 0 26 26" aria-hidden="true">{POINTS}</svg><span>{label}</span>
+      </button>
+      {ouvert && (
+        <div ref={feuille} id={id} className="actions-menu" role="group" aria-label={label}>
+          {actions.map(a => (
+            <button key={a.label} type="button" className={`menu-ligne${a.danger ? ' danger' : ''}`} disabled={a.disabled} aria-description={a.description} data-action={a.action}
+              onClick={() => { a.onClick(); if (!a.reste) setOuvert(false); }}>
+              {a.icone}<span className="menu-libelle">{a.label}</span>
+            </button>
+          ))}
+          {reglages && <div className="menu-reglages">{reglages}</div>}
+        </div>
+      )}
+    </>
+  );
+}
+
+/** Un réglage du menu « Plus » : interrupteur (role switch) avec son libellé, 44 px. */
+export function Interrupteur({ label, actif, onChange }: { label: string; actif: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button type="button" role="switch" aria-checked={actif} className="menu-ligne menu-reglage" onClick={() => onChange(!actif)}>
+      <span className="menu-libelle">{label}</span>
+      <span className="menu-reglage-piste" aria-hidden="true"><i /></span>
+    </button>
+  );
+}
+
 /**
  * Barre d'actions fixe en bas de l'écran, à la place de la barre de navigation.
  * #236 (N7) : les aides (indice, qui mène, annuler) à gauche, les décisions à droite après un filet ;
  * « Passer », l'action qui finit la partie, en bouton plein tout à droite. Sans groupes : une seule rangée.
+ * `menu` (partie-ecran-v3) : au plus trois aides visibles, les actions rares derrière un bouton « Plus » (⋯).
  */
-export function BarreActions({ actions, label }: { actions: Action[]; label: string }) {
+export function BarreActions({ actions, label, menu }: { actions: Action[]; label: string; menu?: { label: string; actions: Action[]; reglages?: ReactNode } }) {
   const decisions = actions.filter(a => a.groupe === 'decision');
   if (!decisions.length) {
     return (
@@ -174,25 +237,26 @@ export function BarreActions({ actions, label }: { actions: Action[]; label: str
   // La principale en dernier : à droite, là où tombe le pouce ; l'ordre de lecture suit l'ordre visuel.
   const rangees = [...decisions.filter(a => !a.principale), ...decisions.filter(a => a.principale)];
   return (
-    <div className="actions actions-groupees" role="toolbar" aria-label={label}>
+    <div className={`actions actions-groupees${menu ? ' actions-menu-plus' : ''}`} role="toolbar" aria-label={label}>
       <div className="actions-aides">{aides.map(a => <Bouton key={a.label} a={a} />)}</div>
       <span className="actions-filet" aria-hidden="true" />
-      <div className="actions-decisions">{rangees.map(a => <Bouton key={a.label} a={a} />)}</div>
+      <div className="actions-decisions">
+        {rangees.map(a => <Bouton key={a.label} a={a} />)}
+        {menu && <MenuPlus actions={menu.actions} label={menu.label} reglages={menu.reglages} />}
+      </div>
     </div>
   );
 }
 
 /**
- * Indices restants (#35) : trois petites pierres collées à l'icône, pleines tant qu'il en reste.
- * Purement visuel : le nombre est dit par la description accessible du bouton.
+ * Indices restants (#35) : une pastille avec le nombre, posée sur le coin de l'icône (v3 : lisible d'un coup d'œil,
+ * à la place des trois mini-pierres). Purement visuelle : le nombre est dit par la description accessible du bouton.
  */
 export function CompteurIndices({ restants, total = 3, children }: { restants: number; total?: number; children: ReactNode }) {
   return (
-    <span className="compteur-indices" data-restants={restants}>
+    <span className="compteur-indices" data-restants={restants} data-total={total}>
       {children}
-      <span className="compteur-pierres" aria-hidden="true">
-        {Array.from({ length: total }, (_, i) => <i key={i} className={i < restants ? 'pleine' : undefined} />)}
-      </span>
+      <b className="compteur-badge" aria-hidden="true">{restants}</b>
     </span>
   );
 }

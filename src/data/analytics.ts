@@ -19,6 +19,9 @@ import {
 /** Événements suivis. Noms stables : ils servent aux entonnoirs et à la rétention dans PostHog. */
 export const EVENTS = {
   appOuverte: 'app_ouverte',
+  // Accueil affiché et utilisable (page chargée, polices prêtes), une fois (trackOnce). `nouveau` : premier lancement
+  // sur l'appareil (aucune partie, aucun retour) : dénominateur de l'entonnoir des 60 premières secondes, même sans accord.
+  premierEcranVu: 'premier_ecran_vu',
   premierePierre: 'premiere_pierre',
   partieTerminee: 'partie_terminee',
   // Première partie contre l'ordi menée jusqu'au score ou à l'abandon (une fois par appareil, via trackOnce ; #35).
