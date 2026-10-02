@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { bandeau, couvercle, jouer, jouerSuite, message, partieADeux, plateau } from './plateau';
+import { bandeau, couvercle, jouer, jouerSuite, message, ouvrirPlus, partieADeux, plateau } from './plateau';
 
 // Issue #40, phase 3 : écran de partie (grammaire de chess.com) à 390 × 844.
 
@@ -40,12 +40,20 @@ test('liste des coups, couvercle, atari et navigation masquée (partie à deux)'
   await expect(page.locator('.coups li[aria-current]')).toHaveCount(1);
   await expect(bandeau(page, 'Noir')).toHaveClass(/active/);
 
-  // Barre d'actions : cibles de 44 px au moins, et pas de défilement horizontal.
-  for (const nom of ['Indice', 'Qui mène', 'Annuler', 'Passer', 'Abandonner']) {
+  // Barre d'actions : cibles de 44 px au moins, et pas de défilement horizontal. Annuler et Abandonner sont dans le menu « Plus ».
+  for (const nom of ['Indice', 'Qui mène', 'Passer', 'Plus']) {
     const box = (await page.getByRole('toolbar', { name: 'Actions de la partie' }).getByRole('button', { name: nom }).boundingBox())!;
     expect(box.width).toBeGreaterThanOrEqual(44);
     expect(box.height).toBeGreaterThanOrEqual(44);
   }
+  const feuille = await ouvrirPlus(page);
+  for (const nom of ['Annuler', 'Abandonner']) {
+    const box = (await feuille.getByRole('button', { name: nom }).boundingBox())!;
+    expect(box.width).toBeGreaterThanOrEqual(44);
+    expect(box.height).toBeGreaterThanOrEqual(44);
+  }
+  await page.keyboard.press('Escape');
+  await expect(feuille).toHaveCount(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0);
   expect(erreurs).toEqual([]);
 });

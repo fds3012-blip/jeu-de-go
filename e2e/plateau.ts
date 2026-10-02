@@ -99,6 +99,30 @@ export function boutonPasser(page: Page): Locator {
   return page.getByRole('toolbar').getByRole('button', { name: 'Passer', exact: true });
 }
 
+/** Barre d'actions de la partie (en français ou en anglais). */
+export function barreActions(page: Page): Locator {
+  return page.getByRole('toolbar', { name: /^(Actions de la partie|Game actions)$/ });
+}
+
+/**
+ * Ouvre le menu « Plus » (⋯) de la barre d'actions (partie-ecran-v3 : annuler, abandonner et réglages y sont rangés)
+ * et renvoie sa feuille. S'il est déjà ouvert, le laisse ouvert.
+ */
+export async function ouvrirPlus(page: Page): Promise<Locator> {
+  const plus = barreActions(page).locator('[data-action="plus"]');
+  if ((await plus.getAttribute('aria-expanded')) !== 'true') await plus.click();
+  const feuille = barreActions(page).locator('.actions-menu');
+  await expect(feuille).toBeVisible();
+  return feuille;
+}
+
+/** « Abandonner » (dans le menu « Plus »), puis « Confirmer ? » : la partie est perdue par abandon. */
+export async function abandonner(page: Page): Promise<void> {
+  const feuille = await ouvrirPlus(page);
+  await feuille.getByRole('button', { name: /^(Abandonner|Resign)$/ }).click();
+  await feuille.getByRole('button', { name: /^(Confirmer|Confirm)/ }).click();
+}
+
 /** Coups joués de la partie en cours (liste « Coups joués » au-dessus du plateau, passes comprises). */
 export function coupsJoues(page: Page): Locator {
   return page.locator('ol.coups > li:not(.vide)');

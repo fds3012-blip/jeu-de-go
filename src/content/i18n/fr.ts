@@ -474,6 +474,8 @@ export const fr = {
   'conseil.aucun': 'Rien de sûr à te dire ici. À toi de jouer !',
   'conseil.cherche': 'Mochi regarde le plateau…',
   'partie.action.conseil': 'Conseil',
+  'partie.action.plus': 'Plus',
+  'partie.prisonniers': 'prisonniers',
   'quiMene.serre': "C'est serré.",
   'quiMene.noir': "Noir mène d'environ {n} points.",
   'quiMene.blanc': "Blanc mène d'environ {n} points.",
