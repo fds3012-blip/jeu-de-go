@@ -374,7 +374,8 @@ export function App() {
     // #358 : la partie (gardée pour la revue par l'écran de partie) rejoint « Mes parties ». Chargé à la demande :
     // l'accueil n'embarque pas la logique de l'historique (#323).
     const mode = playing === 'guidee' ? 'guidee' : playing === 'deux' ? 'deux' : 'ordi';
-    void import('./historique').then(h => h.garderDerniere(mode), () => { /* hors ligne sans le module : rattrapé à la lecture */ });
+    // Avec un compte, elle part aussi sur le compte (#358, suite).
+    void import('./historique').then(h => { h.garderDerniere(mode); synchroniserParties(); }, () => { /* hors ligne sans le module : rattrapé à la lecture */ });
     // Essai sans compte (#343) : chaque partie menée à son terme compte, sauf sur un plateau presque vide (#251).
     if (!finTropTot(stats)) setEssai(noterPartieTerminee(essai));
     if (playing !== 'ordi') return;
@@ -466,6 +467,19 @@ export function App() {
     window.scrollTo({ top: 0 });
   }, []);
   const online = useOnline();
+  // #358 : avec un compte complet (pseudo choisi), les parties de l'appareil partent sur le compte, en arrière-plan :
+  // à l'ouverture, à la connexion, à la création du compte (parties jouées pendant l'essai), au retour du réseau et
+  // après chaque partie. Un envoi raté est refait la fois suivante. Module chargé à la demande (#323).
+  const synchroniserParties = useCallback(() => {
+    const db = supabase;
+    if (!db || !compteId || !pseudo) return;
+    void import('../data/partiesPerso').then(m => m.synchroniser(db, compteId)).catch(() => undefined);
+  }, [compteId, pseudo]);
+  useEffect(() => {
+    if (!online) return;
+    const id = window.setTimeout(synchroniserParties, 1500); // après le premier écran
+    return () => window.clearTimeout(id);
+  }, [online, synchroniserParties]);
   /** Ouvre l'écran d'un élément « À faire » (#367), en un toucher, et le mesure. */
   function ouvrirAFaire(e: ElementAFaire, source: 'accueil' | 'onglet') {
     track(EVENTS.notificationOuverte, { type: e.genre, source, attente_h: e.attenteH ?? null });

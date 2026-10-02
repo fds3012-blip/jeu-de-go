@@ -1285,9 +1285,9 @@ export const fr = {
   'historique.taille': '{taille} × {taille}',
   'historique.ligneAria': '{nom}. {resultat}. {date}, plateau {taille} × {taille}.',
   'historique.retour': 'Retour à mes parties',
-  'defi.historique.chargement': 'Je cherche tes défis en ligne…',
-  'defi.historique.horsLigne': 'Hors ligne : tes défis en ligne reviendront avec le réseau.',
-  'defi.historique.erreur': 'Tes défis en ligne n’ont pas pu être lus. Réessaie plus tard.',
+  'defi.historique.chargement': 'Je cherche les parties de ton compte…',
+  'defi.historique.horsLigne': 'Hors ligne : les parties de ton compte reviendront avec le réseau.',
+  'defi.historique.erreur': 'Les parties de ton compte n’ont pas pu être lues. Réessaie plus tard.',
 
   // Robustesse (#325, point 4) : écran d'erreur (jamais d'écran blanc), bandeau hors ligne, mise à jour prête.
   'erreur.titre': 'Oups, ça n’a pas marché.',

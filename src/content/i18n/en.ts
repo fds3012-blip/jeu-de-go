@@ -1222,9 +1222,9 @@ export const en = {
   'historique.taille': '{taille} × {taille}',
   'historique.ligneAria': '{nom}. {resultat}. {date}, {taille} × {taille} board.',
   'historique.retour': 'Back to my games',
-  'defi.historique.chargement': 'Looking for your online challenges…',
-  'defi.historique.horsLigne': 'Offline: your online challenges will be back with the network.',
-  'defi.historique.erreur': 'Your online challenges could not be loaded. Try again later.',
+  'defi.historique.chargement': 'Looking for your account’s games…',
+  'defi.historique.horsLigne': 'Offline: your account’s games will be back with the network.',
+  'defi.historique.erreur': 'Your account’s games could not be loaded. Try again later.',
 
   // Robustesse (#325, point 4) : écran d'erreur, bandeau hors ligne, mise à jour prête.
   'erreur.titre': 'Oops, that didn’t work.',
