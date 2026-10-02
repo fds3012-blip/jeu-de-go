@@ -30,13 +30,13 @@ const T = {
   apprendre: /^(Apprendre|Learn)$/, problemes: /^(Problèmes|Puzzles)$/, profil: /^(Profil|Profile)$/, jouer: /^(Jouer|Play)$/,
   passer: /^(Passer|Pass)$/, passeGroupe: /^(Passer maintenant\s?\?|Pass now\?)$/, valider: /^(Valider le score|Confirm score)$/,
   resoudreJour: /^(Résoudre le Go du jour|Solve the Daily Go)$/,
-  resultat: /^(Voir le résultat|See the result)$/, retourBilan: /^(Retour au bilan|Back to the summary)$/, revoir: /^(Revoir ma partie|Review my game)$/, accueil: /^(Accueil|Home)$/,
+  resultat: /^(Voir le résultat|See the result)$/, retourBilan: /^(Retour au bilan|Back to results)$/, revoir: /^(Revoir ma partie|Review my game)$/, accueil: /^(Accueil|Home)$/,
   commencer: /^(Commencer|Start)$/, continuer: /^(Continuer|Continue)$/, terminer: /^(Terminer la leçon|Finish the lesson)$/,
   retourChemin: /^(Retour au chemin|Back to the path)$/, plus: /^(Plus|More)$/, abandonner: /^(Abandonner|Resign)$/, confirmer: /^(Confirmer|Confirm)/,
   email: /^(Ton adresse e-mail|Your email address)$/, age: /^(J’ai 15\s+ans ou plus|I’m 15 or older)/, code: /^(Code à 6 chiffres|6-digit code)$/,
   recevoir: /^(Recevoir mon code|Get my code)$/, pseudo: /^(Pseudo|Username)$/, monPseudo: /^(C’est mon pseudo|That’s my username)$/,
   aide: /^(Aide : règles et mots du go|Help: rules and Go words)$/, feuilleAide: /^(Aide|Help)$/, mots: /^(Mots|Words)$/,
-  chercher: /^(Chercher un mot|Search a word)$/, fermer: /^(Fermer|Close)$/, mesParties: /^(Mes parties|My games)/,
+  chercher: /^(Chercher un mot|Search for a word)$/, fermer: /^(Fermer|Close)$/, mesParties: /^(Mes parties|My games)/,
   envoyerLien: /^(Envoyer un lien|Send a link)$/, partieDu: /^(Partie du|Game of)/, probleme: /^(Problème|Puzzle) \d+/, tous: /^(Tous les problèmes|All puzzles)$/,
 };
 
@@ -88,9 +88,20 @@ async function jusquAuScore(page: Page, voir: (p: Page, e: string) => Promise<vo
     await expect.poll(async () => (await fin(page).count()) > 0 || (await boutonPasser(page).isEnabled().catch(() => false)), { timeout: 30_000 }).toBe(true);
   }
   await expect(fin(page).first()).toBeVisible({ timeout: 30_000 });
+  // Comptage automatique (#117) : la barre de comptage s'affiche pendant la recherche des pierres mortes, puis le récit
+  // arrive seul. Comptage manuel : « Valider le score » devient actif et attend le joueur.
+  const recit = page.locator('.recit');
   const valider = page.getByRole('button', { name: T.valider });
-  if (await valider.isVisible()) { await expect(valider).toBeEnabled({ timeout: 30_000 }); await voir(page, '04-comptage'); await valider.click(); }
-  await expect(page.locator('.recit')).toBeVisible({ timeout: 30_000 });
+  await expect.poll(async () => (await recit.isVisible()) || (await valider.isEnabled().catch(() => false)), { timeout: 30_000 }).toBe(true);
+  if (!(await recit.isVisible())) {
+    await page.waitForTimeout(300);
+    if (!(await recit.isVisible())) {
+      await expect(page.locator('.coach p[aria-live="polite"]')).not.toContainText(/Je cherche les pierres mortes|looking for dead stones/i);
+      await voir(page, '04-comptage');
+      await valider.click({ timeout: 3_000 }).catch(() => { /* récit arrivé entre-temps */ });
+    }
+  }
+  await expect(recit).toBeVisible({ timeout: 30_000 });
 }
 
 /** Partie contre l'ordi abandonnée tout de suite, depuis l'accueil (elle compte dans l'essai). */
@@ -130,6 +141,8 @@ function options(cfg: Config, baseURL: string | undefined, consentement: boolean
 
 async function ouvrir(browser: Browser, cfg: Config, baseURL: string | undefined, serveur: FauxServeur, consentement: boolean, erreurs: string[], nom: string) {
   const ctx = await browser.newContext(options(cfg, baseURL, consentement));
+  // Un libellé introuvable échoue vite, au lieu d'attendre la fin du test.
+  ctx.setDefaultTimeout(20_000);
   const page = await brancher(ctx, serveur);
   page.on('pageerror', e => erreurs.push(`[${nom}] ${e.message}`));
   return { ctx, page };

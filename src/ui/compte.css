@@ -93,7 +93,8 @@
 .case-age-ligne label { padding: 10px 0; line-height: 1.4; }
 .lien-texte { display: inline; min-height: 0; padding: 0; border: 0; background: none; color: inherit; font: inherit; font-weight: var(--fw-bold);
   text-decoration: underline; text-underline-offset: 2px; }
-.case-age-moins15 { justify-self: start; font-weight: var(--fw-medium); font-size: var(--fs-s); padding-left: 34px; }
+/* Recette du 02/10 au soir : `.lien` (app.css, chargé après) remettait 12 px ; le lien s'aligne sur le texte de la case. */
+.case-age .case-age-moins15 { justify-self: start; font-weight: var(--fw-medium); font-size: var(--fs-s); padding-left: 34px; }
 .case-age-detail { margin: 0 0 4px 34px; text-wrap: pretty; }
 .connexion-cta.inactif { opacity: .55; box-shadow: none; }
 

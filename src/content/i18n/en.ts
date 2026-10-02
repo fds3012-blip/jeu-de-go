@@ -760,7 +760,7 @@ export const en = {
   'revue.bilan.aucuneErreur': 'No mistakes, keep it up!',
   'gel.aucun': 'No streak freezes',
   'gel.reserve': { one: '{n} streak freeze saved', other: '{n} streak freezes saved' },
-  'lecon.pratique': 'Practice: 3 puzzles on this theme',
+  'lecon.pratique': 'Practice: 3 puzzles',
   'lecon.pratiqueAria': 'Practice: 3 puzzles on this theme, {themes}',
   'lecon.jouerContre': 'Play {nom}',
   'lecon.suivante': 'Next lesson',
