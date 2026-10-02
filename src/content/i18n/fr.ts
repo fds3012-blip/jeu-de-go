@@ -807,7 +807,7 @@ export const fr = {
   'gel.aucun': 'Aucun gel de série',
   'gel.reserve': { one: '{n} gel de série en réserve', other: '{n} gels de série en réserve' },
   // De la leçon à la pratique (#200) : fin de leçon, série de 3 problèmes du même thème, fin de chapitre.
-  'lecon.pratique': 'Entraîne-toi : 3 problèmes sur ce thème',
+  'lecon.pratique': 'Entraîne-toi : 3 problèmes',
   'lecon.pratiqueAria': 'Entraîne-toi : 3 problèmes sur ce thème, {themes}',
   'lecon.jouerContre': 'Joue contre {nom}',
   'lecon.suivante': 'Leçon suivante',
@@ -908,7 +908,6 @@ export const fr = {
   'compte.chargement': 'Chargement de ton compte…',
   'compte.chargementProfil': 'Chargement de ton profil…',
   'compte.deconnecter': 'Me déconnecter',
-  'compte.cote': 'Cote {cote}',
   'compte.changerPseudo': 'Changer de pseudo',
   'compte.supprimer': 'Supprimer mon compte',
   'compte.supprimer.titre': 'Supprimer ton compte ?',

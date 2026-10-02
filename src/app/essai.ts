@@ -40,24 +40,44 @@ export type Decision = { ok: true } | { ok: false; raison: Raison };
 export interface Essai {
   /** Parties terminées sur cet appareil depuis le début de l'essai. */
   terminees: number;
+  /**
+   * Vrai dès qu'une fin de partie a été notée par ce compteur : il fait foi, le bilan n'est plus relu.
+   * Absent : appareil d'avant #343, ou aucune partie finie depuis.
+   */
+  suivi?: true;
 }
+
+type Bilan = Readonly<Record<string, { v: number; d: number }>>;
 
 /** Relit l'essai gardé sur l'appareil, en ignorant ce qui est mal formé. */
 export function lireEssai(raw: unknown): Essai {
-  const n = Number((raw as { terminees?: unknown } | null)?.terminees);
-  return { terminees: Number.isFinite(n) && n > 0 ? Math.floor(n) : 0 };
+  const r = raw as { terminees?: unknown; suivi?: unknown } | null;
+  const n = Number(r?.terminees);
+  const terminees = Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
+  return r?.suivi === true ? { terminees, suivi: true } : { terminees };
 }
 
 /** Une partie de plus terminée (l'essai d'entrée n'est pas modifié). */
-export function noterPartieTerminee(e: Essai): Essai {
-  return { terminees: e.terminees + 1 };
+export function noterPartieTerminee(e: Essai, bilan: Bilan = {}): Essai {
+  return noterFinDePartie(e, bilan, true);
 }
 
 /**
- * Parties déjà terminées : le compteur de l'essai, ou le bilan contre l'ordi s'il est plus grand
- * (joueurs d'avant #343, dont les parties n'étaient pas encore comptées).
+ * Fin d'une partie. `compte` faux : partie finie sur un plateau presque vide (#251), qui ne consomme pas une partie
+ * d'essai. Recette du 02/10 au soir : le bilan contre l'ordi enregistre quand même cette partie ; tant que le compteur
+ * relisait le bilan, elle était donc comptée. Le compteur part du total déjà connu (bilan des joueurs d'avant #343
+ * compris), puis fait foi.
  */
-export function partiesTerminees(e: Essai, bilan: Readonly<Record<string, { v: number; d: number }>>): number {
+export function noterFinDePartie(e: Essai, bilan: Bilan, compte: boolean): Essai {
+  return { terminees: partiesTerminees(e, bilan) + (compte ? 1 : 0), suivi: true };
+}
+
+/**
+ * Parties déjà terminées : le compteur de l'essai s'il est suivi ; sinon le compteur ou le bilan contre l'ordi s'il est
+ * plus grand (joueurs d'avant #343, dont les parties n'étaient pas encore comptées).
+ */
+export function partiesTerminees(e: Essai, bilan: Bilan): number {
+  if (e.suivi) return e.terminees;
   const duBilan = Object.values(bilan).reduce((s, b) => s + b.v + b.d, 0);
   return Math.max(e.terminees, duBilan);
 }

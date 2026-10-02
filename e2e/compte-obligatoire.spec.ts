@@ -34,7 +34,8 @@ test('essai → 3e partie finie → « Crée ton compte » → code → pseudo �
   await expect(plateau(page)).toBeVisible();
   await abandonner(page);
   await expect(page.locator('.cta')).toHaveText(/Rejouer contre Pomme/);
-  expect(await page.evaluate(() => localStorage.getItem('go.essai.v1'))).toBe('{"terminees":3}');
+  // `suivi` (recette du 02/10 au soir) : le compteur fait foi, le bilan n'est plus relu.
+  expect(await page.evaluate(() => localStorage.getItem('go.essai.v1'))).toBe('{"terminees":3,"suivi":true}');
 
   // 4e partie : l'essai est fini.
   await page.locator('.cta').click();

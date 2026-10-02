@@ -32,9 +32,8 @@ test('flamme creuse et tuile « À faire », puis flamme pleine et « Fait » ap
   const tuile = page.getByRole('button', { name: /^Go du jour n°\s7 : .+\. À faire\.$/ });
   await expect(tuile).toBeVisible();
 
-  // La tuile mène au Go du jour ; on le résout.
+  // La tuile ouvre le Go du jour lui-même (recette du 02/10 au soir) ; on le résout.
   await tuile.click();
-  await page.getByRole('button', { name: 'Résoudre le Go du jour' }).click();
   await jouer(page, 'E5');
   await attendrePierre(page, 'E5', 'noir');
 

@@ -47,10 +47,15 @@ describe('aucune cote affichée dans les problèmes (#137)', () => {
   });
 
   it('les anciennes clés de cote n’existent plus', () => {
-    for (const k of ['pb.taCote', 'pb.pourTaCote', 'pb.coteLegende', 'pb.chargementCote', 'compte.cotes', 'erreur.cote']) {
+    for (const k of ['pb.taCote', 'pb.pourTaCote', 'pb.coteLegende', 'pb.chargementCote', 'compte.cotes', 'erreur.cote', 'compte.cote']) {
       expect(CATALOGUES.fr).not.toHaveProperty([k]);
       expect(CATALOGUES.en).not.toHaveProperty([k]);
     }
+  });
+
+  it('recette du 02/10 au soir : « Mon compte » n’affiche pas la cote non plus', () => {
+    const compte = readFileSync(new URL('../app/Account.tsx', import.meta.url), 'utf8');
+    expect(compte).not.toMatch(/\.rating\b/);
   });
 
   it('l’écran n’affiche ni la cote du serveur ni un écart de cote', () => {
