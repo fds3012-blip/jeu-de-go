@@ -74,7 +74,7 @@ export const fr = {
   'profil.celebrations': 'Célébrations',
   'profil.celebrationsAide': 'Confettis et carillon quand tu gagnes.',
   'profil.aide': 'Aide de Mochi',
-  'profil.aide.auto': 'Débutants',
+  'profil.aide.auto': 'Au début',
   'profil.aide.oui': 'Toujours',
   'profil.aide.non': 'Jamais',
   'profil.compte': 'Mon compte',

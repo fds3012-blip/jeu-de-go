@@ -63,7 +63,7 @@ const themes = () => [
   { valeur: 'auto', libelle: t('profil.theme.auto') },
 ] as const;
 
-// Aide de Mochi en partie (#35) : « Débutants » = contre Pomme et Caillou seulement (par défaut).
+// Aide de Mochi en partie (#35) : « Au début » = contre Pomme et Caillou seulement (par défaut).
 const aides = () => [
   { valeur: 'auto', libelle: t('profil.aide.auto') },
   { valeur: 'oui', libelle: t('profil.aide.oui') },
