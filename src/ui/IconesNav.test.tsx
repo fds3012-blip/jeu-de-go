@@ -118,7 +118,8 @@ describe('pastille « quelque chose t’attend » (#367)', () => {
     const html = renderToStaticMarkup(<BarreNav actif="profil" onChoisir={() => {}} pastilles={new Set<Onglet>(['jouer'])} />);
     const b = boutons(html);
     expect(b[0]).toContain('class="onglet-pastille" aria-hidden="true"');
-    expect(b[0]).toMatch(/>Jouer<\/span><span class="sr-only">, quelque chose t’attend<\/span>/);
+    expect(b[0]).toContain('aria-label="Jouer, quelque chose t’attend"');
+    expect(b[0]).toContain('>Jouer</span>');
     for (const x of b.slice(1)) expect(x).not.toContain('onglet-pastille');
   });
 

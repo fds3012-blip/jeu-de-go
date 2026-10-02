@@ -127,13 +127,12 @@ export function BarreNav({ actif, onChoisir, pastilles }: { actif: Onglet; onCho
         const pastille = pastilles?.has(o.id) ?? false;
         return (
           <button key={o.id} type="button" className={`onglet onglet-${o.id}`} aria-current={est ? 'page' : undefined} onClick={() => onChoisir(o.id)}
-            data-pastille={pastille || undefined}>
+            data-pastille={pastille || undefined} aria-label={pastille ? `${o.libelle}, ${t('aFaire.pastilleAria')}` : undefined}>
             <span className="onglet-icone">
               <IconeNav onglet={o.id} actif={est} />
               {pastille && <span className="onglet-pastille" aria-hidden="true" data-testid={`pastille-${o.id}`} />}
             </span>
             <span className="onglet-libelle">{o.libelle}</span>
-            {pastille && <span className="sr-only">{`, ${t('aFaire.pastilleAria')}`}</span>}
             <span className="onglet-point" aria-hidden="true" />
           </button>
         );
