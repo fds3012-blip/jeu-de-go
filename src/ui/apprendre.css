@@ -169,8 +169,10 @@
 /* Écran bas (320 × 568) : Mochi plus petit et texte un cran plus petit, pour que la consigne tienne au-dessus de la barre. */
 @media (max-height: 640px) {
   .lecteur:has(> .lecteur-mochi) { --mochi: 44px; }
-  .lecteur-mochi { padding-top: var(--space-2); }
-  .lecteur-mochi .bubble p { font-size: var(--fs-s); line-height: 1.4; padding: 8px 12px; }
+  /* Le plateau garde presque toute la largeur, mais laisse 300 px à la tête, à Mochi et à la barre. */
+  .lecteur:has(> .lecteur-mochi) > .board-wrap { width: min(100%, calc(100dvh - 300px)); margin-inline: auto; }
+  .lecteur-mochi { padding: 6px 0 0; }
+  .lecteur-mochi .bubble p { font-size: var(--fs-s); line-height: 1.35; padding: 7px 12px; }
   .lecteur:has(> .lecteur-mochi) > .notice { margin-block: 0 var(--space-1); padding-block: 6px; font-size: var(--fs-s); }
 }
 

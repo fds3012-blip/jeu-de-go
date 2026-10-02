@@ -112,9 +112,12 @@
   .creer-compte > .creer-gratuit, .creer-compte > .creer-plus-tard { order: 2; }
   .creer-garde { padding: 10px 14px; }
   .case-age { margin-top: 2px; }
+  .case-age-ligne label { padding: 8px 0 6px; line-height: 1.35; }
   /* Arrivée par un lien de défi : le plateau vide se range à côté du titre au lieu de le pousser. */
-  .defi-apercu { grid-template-columns: minmax(0, 1fr) auto; column-gap: var(--space-3); align-items: center; }
+  .defi-apercu { grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-2) var(--space-3); align-items: center; }
+  .defi-apercu > .card { padding: 12px 14px; }
   .defi-apercu > .creer-tete { grid-column: 1; justify-items: start; text-align: left; padding-top: 0; }
-  .defi-apercu > .defi-apercu-plateau { grid-column: 2; grid-row: 1; width: 92px; }
+  .defi-apercu > .defi-apercu-plateau { grid-column: 2; grid-row: 1; width: 64px; }
+  .defi-apercu .creer-raison { font-size: var(--fs-s); line-height: 1.35; }
   .defi-apercu > :not(.creer-tete):not(.defi-apercu-plateau) { grid-column: 1 / -1; }
 }

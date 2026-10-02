@@ -280,6 +280,9 @@ for (const cfg of CONFIGS) {
       await expect(page.getByRole('button', { name: T.pratique })).toBeVisible();
       await cap('10c-lecon-fin');
       await page.getByRole('button', { name: T.pratique }).click();
+      // Un niveau franchi a son écran à lui (« Niveau 2 ! »), qui repropose l'entraînement : on le passe.
+      await expect(plateau(page).or(page.getByRole('button', { name: T.pratique }))).toBeVisible();
+      if (!(await plateau(page).isVisible())) await page.getByRole('button', { name: T.pratique }).click();
       await expect(plateau(page)).toBeVisible();
       await cap('11-entrainement');
       await jouer(page, 'A1');
