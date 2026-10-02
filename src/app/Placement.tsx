@@ -5,10 +5,11 @@ import { useMemo, useRef, useState } from 'react';
 import type { Puzzle } from '../data/puzzles';
 import { checkAnswer, startOf } from '../data/puzzles';
 import { Board } from '../ui/Board';
-import { Bubble } from '../ui/Mochi';
-import { Verdict } from '../ui/Lecteur';
+import { ParoleMochi, Verdict } from '../ui/Lecteur';
 import { Sceau } from '../ui/Sceau';
-import { Portrait } from '../ui/Portrait';
+import { Portrait, PortraitMochi } from '../ui/Portrait';
+import { SceauLecon } from '../ui/SceauLecon';
+import { LESSONS } from '../content/lessons';
 import { fr } from '../ui/typo';
 import { playFail, playIllegal, playStone, playSuccess } from '../ui/sound';
 import { hapticFail, hapticIllegal, hapticStone, hapticSuccess } from '../ui/haptics';
@@ -97,12 +98,13 @@ function ProblemePlacement({ puzzle, rang, confirmTouch, dernier, onPasser, onSu
         </div>
         <button type="button" className="lien placement-passer" aria-label={t('placement.passerAria')} onClick={onPasser}>{t('placement.passer')}</button>
       </div>
-      <Bubble>
-        {rang === 1 && <>{fr(t('placement.intro'))}<br /></>}
-        {fr(`${puzzle.prompt} ${t(puzzle.toPlay === 1 ? 'pb.tuJoues.1' : 'pb.tuJoues.2')}`)}
-      </Bubble>
       <Board size={puzzle.size} board={board} toPlay={puzzle.toPlay} interactive={!coup} confirmTouch={confirmTouch} onPlay={onPlay} shake={shake}
         marks={{ targets: start.marked, ok: coup?.ok ? coup.p : undefined, last: coup && !coup.ok ? coup.p : undefined }} />
+      {/* Audit du 02/10 (n° 1) : la consigne sous le plateau, comme dans les problèmes et les leçons. */}
+      <ParoleMochi humeur={coup?.ok ? 'content' : 'neutre'}>
+        {rang === 1 && <>{fr(t('placement.intro'))}<br /></>}
+        {fr(`${puzzle.prompt} ${t(puzzle.toPlay === 1 ? 'pb.tuJoues.1' : 'pb.tuJoues.2')}`)}
+      </ParoleMochi>
       {coup && (
         <Verdict ton={coup.ok ? 'juste' : 'neutre'} cle={puzzle.id}
           actions={<button type="button" className="cta" onClick={() => onSuivant({ id: puzzle.id, difficulte: puzzle.difficulty, ok: coup.ok })}>
@@ -139,8 +141,16 @@ function Resultat({ fin, chapitre, onJouer, onLecons }: { fin: Fin; chapitre: st
     // Tout raté : pas de niveau annoncé, pas de reproche. La leçon 1, puis la partie.
     return (
       <section className="placement-fin" aria-labelledby="placement-titre" data-testid="placement-fin">
+        <PortraitMochi humeur="content" taille={88} decoratif className="placement-mochi" />
         <h2 id="placement-titre">{t('placement.basesTitre')}</h2>
         <p className="placement-phrase">{fr(t('placement.basesTexte'))}</p>
+        {/* Audit du 02/10 (n° 2) : ce qui attend, plutôt qu'un écran aux deux tiers vide. Trois sceaux, trois titres. */}
+        <div className="placement-programme">
+          <p id="placement-programme-titre">{t('placement.programme')}</p>
+          <ol aria-labelledby="placement-programme-titre">
+            {LESSONS.slice(0, 3).map(l => <li key={l.id}><SceauLecon id={l.id} taille={32} /><span>{fr(l.title)}</span></li>)}
+          </ol>
+        </div>
         <button type="button" className="cta" onClick={onLecons}>{t('placement.lecon1')}</button>
       </section>
     );

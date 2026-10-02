@@ -139,6 +139,9 @@
   --duree-pose: 160ms;        /* la pierre « tombe » dans l'onglet activé (1,15 → 1) */
   --duree-orbite: 1100ms;     /* un tour des deux pierres de l'indicateur d'attente */
 
+  /* Courbe d'avantage de la revue (audit du 02/10) : Blanc en haut, Noir en bas, trait jade, curseur or. */
+  --courbe-blanc: var(--papier); --courbe-noir: #221E1A; --courbe-cadre: var(--line); --courbe-ligne: var(--jade); --courbe-curseur: var(--or);
+
   color-scheme: dark;
 }
 
@@ -151,6 +154,7 @@
     --accent-trait: var(--jade-bord); --focus: var(--jade-bord);
     --onglet-jouer: var(--jade-bord); --onglet-apprendre: #A0680A; --onglet-problemes: var(--hanko); --onglet-profil: var(--indigo);
     --pierre-n-bord: rgba(28, 25, 22, 0);
+    --courbe-blanc: #FBF8F2; --courbe-noir: #3A332D; --courbe-cadre: #8A7E70; --courbe-ligne: var(--jade-bord); --courbe-curseur: #A86F00;
     --halo: radial-gradient(120% 420px at 50% -120px, rgba(239, 184, 74, .22), rgba(239, 184, 74, 0) 70%);
     --ombre-relief: 0 var(--relief) 0 var(--accent-bord), 0 14px 24px -14px rgba(30, 138, 95, .5);
     --ombre-plateau: 0 14px 28px -16px rgba(60, 40, 15, .45);
@@ -164,6 +168,7 @@
     --accent-trait: var(--jade-bord); --focus: var(--jade-bord);
     --onglet-jouer: var(--jade-bord); --onglet-apprendre: #A0680A; --onglet-problemes: var(--hanko); --onglet-profil: var(--indigo);
     --pierre-n-bord: rgba(28, 25, 22, 0);
+    --courbe-blanc: #FBF8F2; --courbe-noir: #3A332D; --courbe-cadre: #8A7E70; --courbe-ligne: var(--jade-bord); --courbe-curseur: #A86F00;
   --halo: radial-gradient(120% 420px at 50% -120px, rgba(239, 184, 74, .22), rgba(239, 184, 74, 0) 70%);
   --ombre-relief: 0 var(--relief) 0 var(--accent-bord), 0 14px 24px -14px rgba(30, 138, 95, .5);
   --ombre-plateau: 0 14px 28px -16px rgba(60, 40, 15, .45);

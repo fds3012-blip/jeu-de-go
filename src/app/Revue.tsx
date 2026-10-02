@@ -376,6 +376,8 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
       )}
       {sansKataGo && erreurs.length > 0 && <p className="revue-note">{fr(tr('revue.sansKataGo'))}</p>}
 
+      {/* Audit du 02/10 (n° 4) : une ligne dit ce que la courbe montre, pour un débutant. */}
+      <p className="revue-courbe-legende" aria-hidden="true">{fr(tr('revue.courbeLegende'))}</p>
       <figure className="revue-courbe">
         <svg viewBox={`0 0 ${L} ${H}`} preserveAspectRatio="none" role="img" aria-label={tr('revue.courbe')}
           onClick={e => { const r = e.currentTarget.getBoundingClientRect(); aller(Math.round(((e.clientX - r.left) / r.width) * n)); }}>
