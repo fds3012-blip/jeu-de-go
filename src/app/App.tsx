@@ -340,6 +340,10 @@ export function App() {
 
   function onResult(winner: 0 | 1 | 2, stats: StatsPartie) {
     setPartieFinie(true);
+    // #358 : la partie (gardée pour la revue par l'écran de partie) rejoint « Mes parties ». Chargé à la demande :
+    // l'accueil n'embarque pas la logique de l'historique (#323).
+    const mode = playing === 'guidee' ? 'guidee' : playing === 'deux' ? 'deux' : 'ordi';
+    void import('./historique').then(h => h.garderDerniere(mode), () => { /* hors ligne sans le module : rattrapé à la lecture */ });
     // Essai sans compte (#343) : chaque partie menée à son terme compte, sauf sur un plateau presque vide (#251).
     if (!finTropTot(stats)) setEssai(noterPartieTerminee(essai));
     if (playing !== 'ordi') return;
@@ -508,7 +512,8 @@ export function App() {
       } : undefined}
       jouer={{ nom: premier.nom, lancer: () => { setLessonId(null); setTab('jouer'); lancer('ordi', premier.id); } }} />;
   } else if (tab === 'apprendre') {
-    screen = <LearnHome progress={progress} onOpen={ouvrirLecon} sync={syncState} />;
+    screen = <LearnHome progress={progress} onOpen={ouvrirLecon} sync={syncState}
+      compteRequis={rang => !decider({ quoi: 'lecon', rang }, etat, terminees, !!supabase).ok} />;
   } else if (tab === 'problemes') {
     screen = <Puzzles db={supabase} userId={compteId} sessionLoading={session === undefined} confirmTouch={settings.confirmTouch} onCompte={() => go('profil')}
       essai={decider({ quoi: 'probleme' }, etat, terminees, !!supabase).ok ? undefined : () => { garde({ quoi: 'probleme' }, { quoi: 'problemes' }); }}
@@ -517,7 +522,8 @@ export function App() {
   } else if (tab === 'profil') {
     screen = <Profil vue={vueProfil} onVue={v => { if (v === 'importer' && !garde({ quoi: 'import' }, { quoi: 'importer' })) return; setVueProfil(v); }} settings={settings} set={set} profil={profil} serie={serie} record={recordSerie}
       parcours={{ lecons: { faites: done, total: LESSONS.length }, adversaires: OPPONENTS.length }}
-      placement={placement} onPlacement={ouvrirPlacement} />;
+      placement={placement} onPlacement={ouvrirPlacement}
+      onJouer={() => { go('jouer'); lancer('ordi'); }} db={supabase} userId={session?.user.id} />;
   } else {
     const numero = numeroJour;
     const daily = duJour;

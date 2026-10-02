@@ -50,6 +50,8 @@ C[florian_go: bonne partie !]
 async function ouvrirImport(page: Page) {
   await page.goto('/');
   await page.getByRole('button', { name: 'Profil' }).click();
+  // #358 : « Analyser une partie » est dans « Mes parties ».
+  await page.getByRole('button', { name: /^Mes parties/ }).click();
   await page.getByRole('button', { name: /Analyser une partie/ }).click();
   await expect(page.getByRole('heading', { level: 2, name: 'Analyser une partie' })).toBeVisible();
 }

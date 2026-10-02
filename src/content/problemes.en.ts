@@ -1278,4 +1278,59 @@ export const PROBLEMES_EN: Record<string, TexteProbleme> = {
     explanation: 'Superb! A3, on the edge, is the vital point: A2 can no longer become an eye, and only B1 is left. If you played A2 right away, White would capture your stone at A3, and A2 would become an eye again.',
     refutation: 'Not quite. White plays A3: A2 and B1 become two eyes. Its group is alive.',
   },
+  // Lot W (#16) : seki, ending the game, counting (lessons 14 to 16).
+  w01: {
+    title: 'Connect in the middle',
+    prompt: 'Save your marked stones with a seki (shared life).',
+    explanation: "Well done! F9 connects your three stones. They share two liberties with White, D9 and H9: whoever fills one puts itself in atari and gets captured. Nobody plays there: it's seki, everyone lives.",
+    refutation: 'Not quite. White plays F9: your stones stay cut in two, and White captures them.',
+  },
+  w02: {
+    title: 'Seki in the corner',
+    prompt: 'Save your marked stones with a seki (shared life).',
+    explanation: "Well done! B1 saves A1. Your stones and the white group share two liberties, B2 and C1: whoever fills one puts itself in atari. Nobody plays there: it's seki.",
+    refutation: 'Not quite. White plays B1: it captures A1, and its group lives.',
+  },
+  w03: {
+    title: 'Two shared liberties',
+    prompt: 'Save your marked stones with a seki (shared life).',
+    explanation: "Well done! B2 saves C2. Your stones and the white group share two liberties, A2 and B1: whoever fills one puts itself in atari. Nobody plays there: it's seki.",
+    refutation: 'Not quite. White plays B2: it captures C2, and its group lives.',
+  },
+  w04: {
+    title: 'Close against White',
+    prompt: 'Before passing: your border is still open. Close it without losing a point.',
+    explanation: 'Well done! E5 closes your border right against White: E4 stays in your territory. At E4, you would close it too, but E5 would become a neutral point (dame): one point less.',
+    refutation: 'Not quite. White plays E5, against your stones: your border closes at E4, and you lose at least one point.',
+  },
+  w05: {
+    title: 'Dame or border?',
+    prompt: 'One dame (neutral point) and one open border are left. Play the move that counts.',
+    explanation: 'Well done! E3 closes your border right against White: D3 stays yours. The dame at E7 is worth nothing to anyone: it gets filled at the end.',
+    refutation: 'Not quite. White plays E3, against your stones: your border closes at D3, and you lose at least one point. The dame at E7 is worth nothing.',
+  },
+  w06: {
+    title: 'Already dead',
+    prompt: 'The marked white stone is dead. One border is still open: play the biggest move.',
+    explanation: 'Well done! F4 closes your border right against White: F5 stays yours. A9 can no longer live: at the end, it is removed and becomes a prisoner, without spending a move.',
+    refutation: 'Not quite. White plays F4, against your stones: your border closes at F5, and you lose at least one point. A9 is already dead: no need to capture it.',
+  },
+  w07: {
+    title: 'The neutral point',
+    prompt: 'The game is over. Before counting, fill the only neutral point (dame).',
+    explanation: "Well done! E5 touches Black and White: it belongs to nobody. You fill it, and the count doesn't change: 31 points of territory each, plus komi for White.",
+    refutation: 'Not quite. This point is surrounded by one color only: it is territory. The dame touches both black and white stones.',
+  },
+  w08: {
+    title: 'The half point',
+    prompt: 'Komi: 6.5 points for White. Count carefully: only one move makes you win.',
+    explanation: 'Well done! After E6, you have 33 points of territory (J9 included, once removed) + 1 prisoner = 34. White has 27 + 6.5 = 33.5. You win by half a point. At F6, you only had 33: White won.',
+    refutation: 'Not quite. White plays E6: your border closes at F6, and you have 33 points at most. White has 27 + 6.5 = 33.5: White wins.',
+  },
+  w09: {
+    title: 'Seki points count for nobody',
+    prompt: 'Komi: 6.5 points for White. Count, seki included: only one move makes you win.',
+    explanation: 'Well done! G7 closes right against White: you have 25 points. B2 and C1, in the seki, belong to nobody. White has 18 + 6.5 = 24.5. You win by half a point. At F7, you only had 24.',
+    refutation: 'Not quite. White plays G7: your border closes at F7, and White wins. Never fill B2 or C1: in the seki, you would put yourself in atari.',
+  },
 };

@@ -73,84 +73,44 @@ export function actionsFin({ chapitre, pratique, suivante, jouer }: { chapitre: 
   return { principale, liens };
 }
 
-/** Écart entre deux lignes du goban dessiné sous le chemin, en px : une pierre tient pile sur une intersection. */
-export const LIGNE = 56;
-
-/** Géométrie du chemin de pierres posé sur les lignes d'un goban. Repère en px ; x compté depuis le milieu de l'écran. */
-export interface Trace {
-  /** Chaque pierre est sur une intersection : `col` en lignes depuis le milieu (négatif à gauche), x = col × LIGNE, y depuis le haut. */
-  pierres: { col: number; x: number; y: number }[];
-  hauteur: number;
-  /** Ligne (y) où le chemin tourne sous chaque pierre pour rejoindre la suivante : sous la rangée, jamais à travers son texte. */
-  virages: number[];
-  /** Tracé SVG (x relatif au milieu) qui suit les lignes du goban : descendre, tourner à angle droit, descendre. */
-  d: string;
-}
-
-/** Colonne de chaque pierre : le chemin passe d'un côté à l'autre, jamais deux fois au même endroit, et laisse la place d'un titre en face. */
-const COLS = [-2, 2, -1, 2, -2, 1];
-
-/** Morceau de tracé d'une pierre à la suivante, sur les lignes : descendre jusqu'à la ligne `tourne`, traverser, descendre. */
-function morceau(a: { x: number; y: number }, b: { x: number; y: number }, tourne: number): string {
-  return a.x === b.x ? `V${b.y}` : `V${tourne}H${b.x}V${b.y}`;
-}
+/** Point d'ancrage d'une pierre du chemin : x compté depuis le milieu de l'écran, y depuis le haut du chapitre. */
+export interface Ancre { x: number; y: number }
 
 /**
- * Place minimale, en px, entre le bas d'une rangée (titre, description, bouton) et la ligne du virage au-dessous.
- * 4 px (#232) : c'est l'écart réel des rangées de trois lignes à 390 px, où le chemin ne bouge pas.
+ * Colonne de chaque pierre du chemin, en « pas » depuis le milieu (négatif à gauche) : le chemin serpente,
+ * jamais deux pierres de suite du même côté, et laisse en face la place d'un titre.
  */
-export const MARGE_RANGEE = 4;
+export const COLONNES = [-1, 1, -0.6, 1, -1, 0.6];
+export const colonne = (i: number): number => COLONNES[i % COLONNES.length];
 
 /**
- * Place occupée par une rangée sous sa ligne du goban, en px (#232), à partir de sa boîte à l'écran (`haut`, `bas`)
- * et du diamètre de la pierre. La rangée est posée une demi-pierre au-dessus de sa ligne (CSS de `.pas`) :
- * la ligne est donc à `haut + pierre / 2`, même quand la pierre est dessinée plus bas, centrée sur un texte
- * plus haut qu'elle (police doublée : jusqu'à 110 px sous sa ligne). Mesurer depuis le centre de la pierre
- * oubliait ce décalage, et les rangées se chevauchaient.
+ * Tracé SVG d'une courbe lisse qui passe par chaque ancre, de haut en bas : entre deux pierres, un arc en S
+ * (tangentes verticales), comme un sentier qui serpente. Vide avec moins de deux points.
  */
-export function placeSousLigne(rangee: { haut: number; bas: number }, pierre: number): number {
-  return Math.ceil(rangee.bas - (rangee.haut + pierre / 2));
-}
-
-/** Plus petit multiple de LIGNE supérieur ou égal à `y` : la première ligne du goban à partir de `y`. */
-const ligneSous = (y: number) => Math.ceil(y / LIGNE) * LIGNE;
-
-/**
- * Chemin de pierres sur les lignes du goban : une pierre toutes les deux lignes, en alternant les côtés.
- * `encours` : indice de la leçon en cours ; elle a `apres` lignes de plus au-dessous, pour son bouton en relief.
- * `bas` (#169) : pour chaque rangée, la place qu'elle occupe sous sa ligne, en px (mesurée à l'écran, voir `placeSousLigne`).
- * Une rangée plus haute que l'écart prévu (titre sur plusieurs lignes au zoom 200 %) repousse la suivante
- * d'autant de lignes qu'il faut, et le virage passe sous elle. Sans mesure, ou si tout tient, rien ne change.
- */
-export function trace(n: number, { encours = -1, apres = 2, bas = [] as readonly number[] } = {}): Trace {
-  const pierres: Trace['pierres'] = [];
-  const virages: number[] = [];
-  let y = LIGNE;
-  for (let i = 0; i < n; i++) {
-    const col = COLS[i % COLS.length];
-    pierres.push({ col, x: col * LIGNE, y });
-    // Virage par défaut : la première ligne sous la pierre, ou juste au-dessus de la suivante sous la leçon en cours.
-    const ecart = 2 * LIGNE + (i === encours ? apres * LIGNE : 0);
-    const defaut = i === encours ? y + ecart - LIGNE : y + LIGNE;
-    const v = Math.max(defaut, ligneSous(y + (bas[i] ?? 0) + MARGE_RANGEE));
-    virages.push(v);
-    y = Math.max(y + ecart, v + LIGNE);
+export function courbe(points: readonly Ancre[]): string {
+  if (points.length < 2) return '';
+  const r = (n: number) => Math.round(n * 10) / 10;
+  let d = `M${r(points[0].x)} ${r(points[0].y)}`;
+  for (let i = 1; i < points.length; i++) {
+    const a = points[i - 1], b = points[i], my = (a.y + b.y) / 2;
+    d += a.x === b.x ? `L${r(b.x)} ${r(b.y)}` : `C${r(a.x)} ${r(my)} ${r(b.x)} ${r(my)} ${r(b.x)} ${r(b.y)}`;
   }
-  // Le goban s'arrête une ligne sous la dernière pierre ; il s'allonge si la dernière rangée dépasse la place
-  // qu'elle aurait au milieu du chemin. Dernière leçon en cours (#177, sept leçons) : sa place est toujours réservée,
-  // plus une ligne de marge, sinon son bouton en relief mord sur « Bientôt ».
-  const der = n - 1, place = (der === encours ? apres + 1 : 1) * LIGNE, rangee = (bas[der] ?? 0) + MARGE_RANGEE;
-  const hauteur = n ? pierres[der].y + (der === encours ? Math.max(place, ligneSous(rangee)) + LIGNE : rangee > place ? ligneSous(rangee) : LIGNE) : 0;
-  return { pierres, hauteur, virages, d: traceJusqua({ pierres, hauteur, virages, d: '' }, n - 1, true) };
+  return d;
 }
 
-/** Tracé partiel : du début du chemin jusqu'à la pierre d'indice `jusqua` (incluse). Vide si `jusqua` < 1, sauf `seul` (une pierre seule). */
-export function traceJusqua(t: Trace, jusqua: number, seul = false): string {
-  const p = t.pierres, k = Math.min(jusqua, p.length - 1);
-  if (k < 0 || (k < 1 && !seul)) return '';
-  let d = `M${p[0].x} ${p[0].y}`;
-  for (let i = 1; i <= k; i++) d += morceau(p[i - 1], p[i], t.virages[i - 1]);
-  return d;
+/** Durée annoncée d'une leçon, en minutes : une vingtaine de secondes par étape, jamais moins d'une minute. */
+export function dureeMinutes(etapes: number): number {
+  return Math.max(1, Math.round(etapes * 0.3));
+}
+
+/** Chapitres déjà fêtés sur le chemin (clé locale) : la fête de fin de chapitre ne se joue qu'une fois. */
+export const FETES_KEY = 'go.fetes-chapitres.v1';
+
+/** Chapitres entièrement faits qui n'ont pas encore eu leur fête, dans l'ordre du chemin. */
+export function chapitresAFeter(chapitres: { id: string; complet: boolean; lecons: Lesson[] }[], progression: Progression, fetes: readonly string[]): string[] {
+  return chapitres
+    .filter(c => c.complet && c.lecons.length > 0 && c.lecons.every(l => (progression[l.id] ?? 0) >= l.steps.length) && !fetes.includes(c.id))
+    .map(c => c.id);
 }
 
 /** Chapitres du programme (issue #16) annoncés, pas encore commencés (« Fin de partie et comptage » a ses deux premières leçons). */

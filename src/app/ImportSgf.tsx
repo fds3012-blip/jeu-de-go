@@ -8,6 +8,7 @@ import { useId, useRef, useState, type ChangeEvent } from 'react';
 import { Revue } from './Revue';
 import { readLocal } from './hooks';
 import { REVUE_KEY, type PartieGardee } from './revue';
+import { garderDerniere } from './historique';
 import { campDuPseudo, decoderSgf, importerSgf, MAX_COUPS, MAX_OCTETS, type Import } from '../go/importSgf';
 import { chargerSgfOgs, idPartieOgs, type RefusOgs } from '../go/ogs';
 import type { GameRecord } from '../go/sgf';
@@ -120,6 +121,8 @@ export function ImportSgf({ onRetour, pseudo, confirmTouch = false }: Props) {
     try {
       localStorage.setItem(REVUE_KEY, JSON.stringify({ sgf: lue.sgf, adversaire, date: new Date().toISOString(), importee: true, joueur } satisfies PartieGardee));
     } catch { /* stockage indisponible : la revue s'ouvre quand même */ }
+    // #358 : la partie importée rejoint aussi « Mes parties » (une même partie importée deux fois n'y est qu'une fois).
+    garderDerniere('import');
     aller({ nom: 'revue', lue, joueur });
   }
 
