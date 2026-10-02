@@ -272,19 +272,53 @@
 .mes-erreurs-contenu { max-width: var(--largeur-max); margin: 0 auto;
   padding: calc(var(--space-3) + env(safe-area-inset-top, 0px)) var(--gouttiere) calc(var(--space-6) + env(safe-area-inset-bottom, 0px)); }
 /* Problèmes par paliers (issue #93). */
-.problemes.avec-continuer { padding-bottom: calc(var(--cible-cta) + var(--relief) + var(--space-4)); }
 .du-jour-refaire { width: 100%; }
 /* Recette du 28/09 matin (#247) : le verbe « Problème suivant » ne passe jamais sur deux lignes ; seul le titre s'abrège. */
 .continuer { display: flex; align-items: center; justify-content: center; gap: 8px; white-space: nowrap; }
 .continuer-titre { font-weight: var(--fw-medium); opacity: .8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 /* #268 : le point médian est décoratif ; texte de remplacement vide, le nom accessible reste le texte lu à l'écran. */
 .continuer-titre::before { content: "· "; content: "· " / ""; }
-.btn.continuer { width: 100%; margin: 0 0 var(--space-2); background: var(--surface); }
-/* #196 : l'écran Problèmes ne montre que le palier en cours ; la grille est derrière « Tous les problèmes ». */
-.palier-en-cours { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-3); margin-top: var(--space-2);
-  padding: var(--space-3) var(--space-4); border-radius: 16px; background: var(--surface); }
-.palier-en-cours .palier-compte { margin: 0; flex: none; }
-.palier-surtitre { margin: 0 0 2px !important; text-transform: uppercase; letter-spacing: .06em; font-weight: var(--fw-bold); }
+.btn.continuer { width: 100%; margin: 0; background: var(--surface-2); }
+
+/* ---------- Palier en cours (#196, illustré pour #103) : le paysage, le nom, puis la carte « Continuer » ---------- */
+.palier-en-cours { margin-top: var(--space-2); border-radius: 20px; background: var(--surface); overflow: hidden; }
+.palier-en-cours .paysage { height: 92px; }
+.palier-en-cours-texte { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-3); padding: var(--space-2) var(--space-4) var(--space-3); }
+.palier-en-cours .palier-compte, .palier-tete .palier-compte { margin: 0; flex: none; }
+.palier-etat { display: flex; align-items: center; gap: var(--space-2); flex: none; }
+.palier-surtitre { margin: 0 0 1px !important; color: var(--muted); font-size: var(--fs-legende); font-weight: var(--fw-medium); }
+/* Le paysage : encre diluée pour les plans, or pour le soleil et le chemin, papier pour la neige et les nuages. */
+.paysage { display: block; width: 100%; height: 96px; }
+.paysage .py-soleil { fill: var(--recompense); opacity: .9; }
+.paysage .py-loin { fill: color-mix(in srgb, var(--text) 10%, transparent); }
+.paysage .py-pres { fill: color-mix(in srgb, var(--text) 20%, transparent); }
+.paysage .py-pin { fill: color-mix(in srgb, var(--text) 42%, transparent); }
+/* Nuages et neige en papier : clairs sur l'encre, un ton plus blanc que la tuile en mode Papier. */
+.paysage .py-nuage { fill: var(--blanc); opacity: .82; }
+.paysage .py-neige { fill: var(--blanc); opacity: .92; }
+.paysage .py-chemin { fill: none; stroke: var(--recompense); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 4 5; opacity: .85; }
+
+/* Carte « Continuer » (#103) : le prochain problème voilé à gauche, l'aide et la difficulté à droite, l'action dessous. */
+.continuer-carte { display: grid; grid-template-columns: 84px 1fr; column-gap: var(--space-4); align-items: center;
+  padding: var(--space-4) var(--space-4) var(--space-4); box-shadow: inset 0 1px 0 var(--line); }
+.problemes > section > .continuer-carte { border-radius: 20px; background: var(--surface); box-shadow: none; }
+.continuer-goban { position: relative; display: block; width: 84px; height: 84px; border-radius: 14px; overflow: hidden; cursor: pointer;
+  box-shadow: 0 3px 0 #7A4A1C, 0 12px 20px -12px rgba(0, 0, 0, .65); }
+.continuer-goban .mini-goban { width: 100%; height: 100%; border-radius: 0; box-shadow: none; filter: blur(1.1px) saturate(.9); transform: scale(1.06); }
+/* Voile d'encre : la position se devine, elle ne se lit pas. */
+.continuer-goban::after { content: ""; position: absolute; inset: 0; border-radius: 14px; box-shadow: inset 0 0 0 1.5px rgba(58, 41, 18, .35), inset 0 -22px 26px -10px rgba(28, 25, 22, .5); }
+.continuer-corps { min-width: 0; display: flex; flex-direction: column-reverse; gap: 4px; }
+.continuer-aide { margin: 0; color: var(--muted); font-size: var(--fs-s); line-height: 1.35; }
+.continuer-infos { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); margin: 0; font-size: var(--fs-m); }
+.continuer-infos .difficulte { font-size: var(--fs-m); color: var(--text); font-weight: var(--fw-medium); }
+.continuer-carte .continuer { grid-column: 1 / -1; margin-top: var(--space-3); }
+.continuer-carte .cta { position: static; transform: none; width: 100%; margin-bottom: var(--relief); }
+@media (prefers-reduced-motion: no-preference) { .continuer-carte .cta:active { transform: translateY(var(--relief)); } }
+.continuer-goban:active .mini-goban { transform: scale(1.02); }
+@media (max-width: 359px) {
+  .continuer-carte { grid-template-columns: 64px 1fr; }
+  .continuer-goban { width: 64px; height: 64px; }
+}
 .lien-tous { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; margin: var(--space-2) 0 0 -12px; }
 .tous-tete { display: flex; align-items: center; gap: 4px; margin: var(--space-2) 0 var(--space-3) -10px; }
 .tous-tete .retour { flex: none; width: var(--cible-min); height: var(--cible-min); margin: 0; padding: 0; display: grid; place-items: center; border: 0; border-radius: 50%; background: none; color: var(--text); }
@@ -294,7 +328,10 @@
 .problemes-tous .palier-prochain h3 { display: flex; align-items: center; gap: 6px; margin: 0 0 var(--space-2); font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: var(--fs-xl); color: var(--muted); }
 .palier-prochain .palier-verrou { margin: 0; }
 .palier { margin-top: var(--space-6); }
-.palier-tete { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); min-height: 40px; }
+/* #103 : en-tête illustré, le paysage du palier puis le nom ; la grille vient dessous, sur le fond. */
+.palier-tete { border-radius: 20px; background: var(--surface); overflow: hidden; margin-bottom: var(--space-4); }
+.palier-tete .paysage { height: 84px; }
+.palier-tete-texte { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-3); min-height: 40px; padding: var(--space-2) var(--space-4) var(--space-3); }
 .palier-nom h3 { display: flex; align-items: center; gap: 6px; margin: 0; font-family: var(--font-titre); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre); font-size: var(--fs-xl); line-height: 1.15; }
 .palier-nom small { display: block; margin-top: 2px; color: var(--muted); font-size: var(--fs-legende); }
 .palier-sceau { flex: none; }
@@ -309,18 +346,23 @@
 /* #324 : ici restait la fin de la règle `.montagne`, retirée avec la montagne (#138). Sans sélecteur, elle faisait
    ignorer la règle `.pastille-ok` qui suit (avertissement « css-syntax-error » au build). */
 
-/* Miniature réussie : un sceau jade net (fond, anneau, coche), lisible sans la couleur. */
-.pastille-ok { padding: 0; background: none; }
+/* Miniature réussie (#103) : un vrai tampon jade, carré arrondi posé de biais sur le coin, coche en papier ;
+   le goban prend un liseré jade. Lisible sans la couleur : la coche et l'étiquette « réussi » du nom accessible. */
+.pastille-ok { width: 36px; height: 36px; right: -8px; top: -8px; padding: 0; background: none; box-shadow: none; transform: rotate(-9deg);
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, .35)); }
 .pastille-ok .sceau-fond { fill: var(--jade); stroke: var(--jade-bord); stroke-width: 1.5; }
-.pastille-ok .sceau-anneau { fill: none; stroke: var(--encre-jade); stroke-width: 1.2; opacity: .55; }
-.pastille-ok svg .sceau-coche { fill: none; stroke: var(--encre-jade); stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round; }
+.pastille-ok .sceau-anneau { fill: none; stroke: var(--tampon-papier); stroke-width: 1.4; opacity: .8; }
+.pastille-ok svg .sceau-coche { fill: none; stroke: var(--tampon-papier); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.grille-pb button.reussi .mini-goban { box-shadow: 0 0 0 2px var(--jade-bord), 0 3px 0 #7A4A1C, 0 12px 20px -12px rgba(0, 0, 0, .65); }
+.grille-pb button.reussi b { color: var(--accent-texte); }
 
-/* Micro-fête du palier complet, une seule fois : le sceau se pose d'un coup, le drapeau flotte. */
+/* Fête du palier complet (#103), une seule fois : le soleil se lève sur le paysage, le sceau se pose, un liseré d'or. */
 @media (prefers-reduced-motion: no-preference) {
   .palier.fete .palier-sceau { display: inline-block; animation: sceau-pose 520ms cubic-bezier(.34, 1.56, .64, 1) 150ms both; }
-  .palier.fete .m-drapeau { transform-box: fill-box; }
-  .palier.fete .m-flamme { transform-box: fill-box; transform-origin: left center; animation: drapeau-flotte 700ms ease-in-out 2; }
+  .palier.fete .paysage .py-soleil { transform-box: fill-box; transform-origin: center; animation: soleil-leve 900ms cubic-bezier(.2, .8, .2, 1) both; }
+  .palier.fete .palier-tete { animation: or-lueur 1400ms ease-in-out 300ms both; }
 }
+@keyframes soleil-leve { from { transform: translateY(40px) scale(.8); opacity: 0; } to { transform: none; opacity: .9; } }
 @keyframes sceau-pose { 0% { transform: scale(1.4) rotate(-10deg); opacity: 0; } 60% { opacity: 1; } 100% { transform: none; } }
 @keyframes drapeau-flotte { 50% { transform: scaleX(.75) skewY(-8deg); } }
 @keyframes or-lueur { 0% { box-shadow: inset 0 0 0 2px transparent; } 40% { box-shadow: inset 0 0 0 2px var(--or); } 100% { box-shadow: inset 0 0 0 2px transparent; } }

@@ -26,6 +26,14 @@
 button.ligne:active { background: var(--surface-2); }
 button.ligne:focus-visible { outline-offset: -3px; }
 .ligne-texte { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+/* #103 : icône de la ligne, dans une pastille ; une famille, trait 1,8. */
+.ligne-icone { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 10px;
+  background: color-mix(in srgb, var(--text) 7%, transparent); color: var(--text); }
+.icone-reglage { display: block; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.icone-reglage .ir-plein { fill: currentColor; stroke: none; }
+/* Titre d'un groupe de réglages (#103). */
+.lignes-titre { margin: var(--space-4) 0 var(--space-2) var(--space-1); font-size: var(--fs-s); font-weight: var(--fw-bold); color: var(--muted); }
+.profil-reglages > .lignes-titre:first-child { margin-top: 0; }
 .ligne-libelle { font-weight: var(--fw-medium); line-height: 1.25; }
 .ligne > .ligne-libelle { flex: 1; min-width: 0; }
 .ligne-aide { color: var(--muted); font-size: var(--fs-xs); line-height: 1.3; }
@@ -34,6 +42,12 @@ button.ligne:focus-visible { outline-offset: -3px; }
 
 /* Choix segmenté dans une ligne : la ligne fait 48 px, chaque segment 44 px (cible tactile). */
 .ligne-choix { padding-right: 6px; padding-block: 1px; flex-wrap: wrap; row-gap: 0; }
+/* Avec une icône, le libellé cède plus tôt (4,5 em) : « Goban » et ses quatre pastilles tiennent sur une ligne en 390 ;
+   « Aide de Mochi » garde ses segments dessous, alignés à droite, comme au zoom 200 % (#121). */
+.ligne-choix > .ligne-icone { margin-block: 7px; }
+.ligne-choix > .ligne-icone + .ligne-libelle { min-width: 4.5em; }
+.ligne-icone { width: 28px; height: 28px; border-radius: 9px; }
+.ligne:has(> .ligne-icone) { gap: 10px; }
 /* Le libellé garde au moins 6 em : si les segments ne tiennent pas à côté (« Aide de Mochi en partie » sur
    iPhone SE), ils passent dessous, alignés à droite, au lieu d'écraser le libellé sur trois lignes. */
 .ligne-choix > .ligne-libelle { min-width: 6em; padding-block: var(--space-2); }
@@ -122,10 +136,15 @@ button.ligne:focus-visible { outline-offset: -3px; }
 /* #121 : la règle .stats d'app.css (chargée après) remet ces statistiques en rangée flex ; au zoom 200 %,
    les quatre ne tiennent pas sur une ligne : elles passent sur deux rangées au lieu d'élargir la carte. */
 .identite .stats { flex-wrap: wrap; min-width: 0; }
-.stat { display: grid; grid-template-columns: auto auto; justify-content: center; align-items: center; column-gap: 4px; row-gap: 1px; text-align: center; }
-.stat svg { display: block; width: 20px; height: 20px; }
+/* #103 : chaque statistique est un anneau (piste et arc d'or quand il y a un total, médaillon sinon), le chiffre dessous. */
+.stat { display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center; }
+.stat .stat-anneau { display: block; width: 46px; height: 46px; margin-bottom: 2px; }
+.stat-anneau .an-piste { fill: color-mix(in srgb, var(--text) 6%, transparent); stroke: color-mix(in srgb, var(--muted) 38%, transparent); stroke-width: 3; }
+.stat-anneau .an-arc { fill: none; stroke: var(--recompense); stroke-width: 3; stroke-linecap: round; }
+.stat-anneau.medaillon .an-piste { stroke: var(--recompense); stroke-width: 2.4; fill: color-mix(in srgb, var(--recompense) 12%, transparent); }
+.stat-problemes .stat-anneau.medaillon .an-piste { stroke: var(--jade-bord); fill: color-mix(in srgb, var(--jade) 14%, transparent); }
 .stat b { font-family: var(--font-titre); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre); font-size: 1.4rem; line-height: 1; font-variant-numeric: tabular-nums; }
-.stat span { grid-column: 1 / -1; color: var(--muted); font-size: 11.5px; line-height: 1.15; }
+.stat span { color: var(--muted); font-size: 11.5px; line-height: 1.15; }
 .p-noire { fill: var(--encre, #111); stroke: var(--papier); stroke-width: 1.2; }
 .p-blanche { fill: var(--papier); stroke: var(--encre, #111); stroke-width: 1.2; }
 .p-trait { fill: none; stroke: var(--jade-bord); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
@@ -137,7 +156,7 @@ button.ligne:focus-visible { outline-offset: -3px; }
 .profil .vitrine-tete { display: flex; align-items: baseline; justify-content: space-between; margin: 0 0 var(--space-1); font-size: var(--fs-m); }
 .vitrine-compte { color: var(--muted); font-family: var(--font-texte, inherit); font-weight: var(--fw-bold); font-size: var(--fs-s); font-variant-numeric: tabular-nums; }
 /* Colonnes de 44 px réparties sur toute la largeur : la rangée s'aligne sur le compteur « 4/7 » ; en 320 px, 5 puis 2. */
-.vitrine-grille { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, var(--cible-min)); justify-content: space-between; gap: 6px 4px; }
+.vitrine-grille { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 8px; }
 .badge-bouton { display: grid; place-items: center; width: var(--cible-min); height: var(--cible-min); padding: 0; border: 0; border-radius: 50%;
   background: none; color: inherit; transition: transform 140ms cubic-bezier(.23, 1, .32, 1); }
 .badge-bouton:active { transform: scale(.94); }
@@ -156,23 +175,34 @@ button.ligne:focus-visible { outline-offset: -3px; }
   to { opacity: 1; transform: none; }
 }
 
-.sceau-badge { display: block; }
-.sceau-badge .b-point { fill: currentColor; opacity: .55; }
-.sceau-badge.jade { color: var(--encre-jade); }
+/* Sceaux des badges (#103) : sept dessins différents. L'encre (jade, or, hanko) teinte le fond ; le motif est
+   en encre foncée (--s-encre), les détails clairs en papier (--s-papier). Éteint : fond de la tuile, pointillé, motif gris. */
+.sceau-badge { display: block; --s-encre: var(--encre-jade); --s-papier: var(--tampon-papier); filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .25)); }
 .sceau-badge.jade .b-fond { fill: var(--jade); stroke: var(--jade-bord); stroke-width: 1.5; }
-.sceau-badge.or { color: var(--encre-jade); }
 .sceau-badge.or .b-fond { fill: var(--or); stroke: #A0680A; stroke-width: 1.5; }
-.sceau-badge .b-anneau { fill: none; stroke: currentColor; stroke-width: 1.4; opacity: .7; }
-.sceau-badge .s-plein { fill: currentColor; }
-.sceau-badge .s-creux { fill: none; stroke: currentColor; stroke-width: 1.6; }
-.sceau-badge .s-trait { fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
-.sceau-badge .s-trait.fin { stroke-width: 1.5; }
-.sceau-badge .s-texte { fill: currentColor; text-anchor: middle; font-family: var(--font-titre); font-weight: 800; font-size: 12px; }
+.sceau-badge.hanko .b-fond { fill: var(--hanko); stroke: var(--tampon-encre); stroke-width: 1.5; --s-encre: var(--tampon-papier); }
+.sceau-badge.hanko { --s-encre: var(--tampon-papier); --s-papier: var(--tampon-encre); }
+.sceau-badge .b-anneau { fill: none; stroke: var(--s-papier); stroke-width: 1.4; opacity: .8; }
+.sceau-badge .s-plein { fill: var(--s-encre); }
+.sceau-badge .s-clair { fill: var(--s-papier); }
+.sceau-badge .s-trait { fill: none; stroke: var(--s-encre); stroke-linecap: round; stroke-linejoin: round; }
+.sceau-badge .s-ligne { fill: none; stroke: var(--s-encre); stroke-width: 1.3; opacity: .7; }
+.sceau-badge .s-pierre-n { fill: var(--s-encre); stroke: var(--s-papier); stroke-width: 1.2; }
+.sceau-badge .s-pierre-b { fill: var(--s-papier); stroke: var(--s-encre); stroke-width: 1.2; }
+.sceau-badge .s-cible { fill: none; stroke: var(--s-encre); stroke-width: 1.6; stroke-dasharray: 2.6 2; }
+.sceau-badge .s-coche { fill: none; stroke: var(--s-encre); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.sceau-badge .s-pastille { fill: var(--jade); stroke: var(--tampon-papier); stroke-width: 1.4; }
+.sceau-badge .s-coche-pastille { fill: none; stroke: var(--encre-jade); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.sceau-badge .s-texte { fill: var(--s-encre); text-anchor: middle; font-family: var(--font-titre); font-weight: 800; font-size: 17px; letter-spacing: -.02em; }
+.sceau-badge .s-texte-flamme { fill: var(--s-papier); font-size: 11px; }
 /* À gagner : sceau en creux, pointillé, gris. Il se lit comme « pas encore » sans compter sur la couleur. */
-.sceau-badge.eteint { color: var(--muted); }
+.sceau-badge.eteint { --s-encre: var(--muted); --s-papier: var(--surface); filter: none; }
 .sceau-badge.eteint .b-fond { fill: var(--surface); stroke: var(--muted); stroke-width: 1.2; stroke-dasharray: 3 3; }
-.sceau-badge.eteint .b-anneau { opacity: .35; }
-.sceau-badge.eteint .s-plein { opacity: .55; }
+.sceau-badge.eteint .b-anneau { stroke: var(--muted); opacity: .3; }
+.sceau-badge.eteint .s-plein, .sceau-badge.eteint .s-pierre-n, .sceau-badge.eteint .s-texte { opacity: .6; }
+.sceau-badge.eteint .s-clair, .sceau-badge.eteint .s-pierre-b { fill: color-mix(in srgb, var(--muted) 35%, var(--surface)); }
+.sceau-badge.eteint .s-pastille { fill: var(--surface-2); stroke: var(--muted); }
+.sceau-badge.eteint .s-coche-pastille { stroke: var(--muted); }
 
 /* ---------- Supprimer mon compte (#114) : discret, en bas de « Mon compte » ---------- */
 .btn-supprimer { display: block; width: 100%; min-height: 44px; margin-top: var(--space-4); padding: 0 var(--space-2);
