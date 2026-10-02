@@ -29,6 +29,8 @@ import { GUIDE_KEY, doitGuider, humeurMochi, pointsGuide, type Moment } from './
 import { t } from '../content/i18n';
 import { lireFile, retirerFete, useExercice } from '../ui/celebrations';
 import { niveauEnAttente } from '../ui/fileFetes';
+import { BoutonAide } from '../ui/BoutonAide';
+import { ficheDeLecon } from './glossaire';
 import '../ui/lecon.css';
 
 /** Fond du compteur de libertés, posé sur le bois comme les autres marques jade. */
@@ -188,6 +190,8 @@ export function LessonPlayer({ lesson, start, confirmTouch, progress = {}, celeb
         <Retour label={t('lecon.retourChemin')} onClick={onExit} />
         <h2 className="lecteur-titre"><SceauLecon id={lesson.id} taille={24} /><span>{fr(lesson.title)}</span></h2>
         <Etapes total={lesson.steps.length} faites={faites} />
+        {/* #362 : « ? » ouvre l'aide sur le mot que la leçon enseigne, sans quitter la leçon. */}
+        <BoutonAide depuis="lecon" {...ficheDeLecon(lesson.id)} />
       </div>
       {/* Zone souple : le plateau prend la place qui reste entre la barre et Mochi (iPhone SE compris). */}
       <div className={`lecteur-plateau${img?.atari.length ? ' demo-atari' : ''}`} data-demo={images ? (attente ? 'geste' : demoFinie ? 'finie' : 'en-cours') : undefined}

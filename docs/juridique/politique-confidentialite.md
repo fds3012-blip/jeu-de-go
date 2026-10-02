@@ -121,6 +121,7 @@ Ces données sont écrites dans le stockage local (`localStorage`) de ton naviga
 - ouverture de l'app : `app_ouverte` (avec « app installée ou non ») ;
 - parties : `premiere_pierre`, `partie_commencee`, `comptage_manuel`, `partie_terminee`, `premiere_partie_terminee` (taille, adversaire, nombre de coups, résultat, secondes écoulées) ;
 - conseil de Mochi : `conseil_demande` (type de conseil donné, numéro du coup, temps de calcul), `conseil_note` (conseil jugé utile ou non) ;
+- aide : `aide_ouverte` (rubrique ouverte, mot du glossaire ouvert d'emblée, écran d'où elle est ouverte ; jamais le texte cherché) ;
 - leçons : `lecon_commencee`, `lecon_terminee` ;
 - problèmes : `probleme_resolu`, `probleme_termine` (premier essai réussi ou non, cote estimée du joueur et difficulté du problème), `solution_vue`, `erreur_rejouee`, `erreur_maitrisee`, `revision_faite` ;
 - course aux problèmes : `course_terminee` (score, erreurs, durée, raison de la fin), `course_partagee` (score, meilleur score, partage ou copie) ;

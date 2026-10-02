@@ -29,6 +29,7 @@ import { clePubliqueVapid, resumeRappel } from './rappel';
 import { ReglageRappel } from '../ui/ProposerRappel';
 import { LANGUES, langue, memoriserChoixLangue, t, type Langue } from '../content/i18n';
 import type { Placement } from './placement';
+import { ouvrirAide } from './ouvrirAide';
 
 const SOLVED_KEY = 'go.problemes.v1';
 
@@ -160,6 +161,8 @@ function Menu({ onVue, profil, serie, record = 0, parcours, placement, onPlaceme
           ? <LigneLien icone={<IconeReglage id="placement" />} libelle={t('placement.profil')} valeur={t('placement.profilValeur', { kyu: placement.kyu, date: dateCourte(placement.date) })} onClick={onPlacement} />
           : <LigneLien icone={<IconeReglage id="placement" />} libelle={t(placement?.fait ? 'placement.profilRefaire' : 'placement.profilFaire')} onClick={onPlacement} />)}
         <LigneLien icone={<IconeReglage id="reglages" />} libelle={t('profil.reglages')} valeur={t('profil.reglagesResume')} onClick={() => onVue('reglages')} />
+        {/* #362 : l'aide (règles, comptage, mots du go) s'ouvre en feuille par-dessus le Profil. */}
+        <LigneLien icone={<IconeReglage id="regles" />} libelle={t('profil.aideJeu')} valeur={t('profil.aideJeuResume')} onClick={() => ouvrirAide({ fiche: 'regles', depuis: 'profil' })} />
         <LigneLien icone={<IconeReglage id="importer" />} libelle={t('profil.importer')} valeur={t('profil.importerResume')} onClick={() => onVue('importer')} />
         {/* #36 : rappel du Go du jour, dès que le rappel est configuré (clé publique VAPID). */}
         {clePubliqueVapid() !== '' && <LigneLien icone={<IconeReglage id="rappel" />} libelle={t('profil.rappel')} valeur={resumeRappel()} onClick={() => onVue('rappel')} />}
