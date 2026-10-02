@@ -444,6 +444,8 @@ export const en = {
   'conseil.aucun': 'Nothing sure to tell you here. Your move!',
   'conseil.cherche': 'Mochi is looking at the board…',
   'partie.action.conseil': 'Advice',
+  'partie.action.plus': 'More',
+  'partie.prisonniers': 'prisoners',
   'quiMene.serre': 'It’s close.',
   'quiMene.noir': 'Black leads by about {n} points.',
   'quiMene.blanc': 'White leads by about {n} points.',
