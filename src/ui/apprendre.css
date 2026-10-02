@@ -4,114 +4,135 @@
  * Un seul élément en relief par écran : le bouton principal.
  */
 
-/* ---------- Chapitre ---------- */
-.chapitre h2 { margin: 4px 0 2px; font-size: var(--fs-3xl); font-weight: var(--fw-titre); line-height: 1; }
-.chapitre p { margin: 6px 0 0; color: var(--muted); }
+/* ---------- Chapitre : emblème en kaya, titre, compte des leçons ---------- */
+.chapitre-chemin + .chapitre-chemin { margin-top: var(--space-8); }
+.chapitre { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: var(--space-3); align-items: center; margin: 2px 0 var(--space-4); }
+.chapitre > * { min-width: 0; overflow-wrap: anywhere; }
+.chapitre-embleme { grid-row: 1 / 4; align-self: start; margin-top: 2px; }
+.chapitre h2 { margin: 0; font-size: var(--fs-2xl); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre); line-height: 1.05; text-wrap: balance; }
+.chapitre p { margin: 3px 0 0; color: var(--muted); font-size: var(--fs-s); line-height: 1.35; }
+.chapitre-compte { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 8px; min-height: 24px;
+  font-size: var(--fs-legende); font-weight: var(--fw-bold); color: var(--muted); font-variant-numeric: tabular-nums; }
+/* Une mini-pierre par leçon : noire posée, cerclée de jade pour la prochaine, vide pour les autres. */
+.chapitre-pierres { display: inline-flex; gap: 5px; }
+.chapitre-pierres i { width: 10px; height: 10px; border-radius: 50%; box-sizing: border-box; border: 1.5px solid color-mix(in srgb, var(--text) 32%, transparent); }
+.chapitre-pierres .faite { border: 0; background: var(--matiere-noire); box-shadow: 0 0 0 1px var(--pierre-n-bord); }
+.chapitre-pierres .encours { border: 2px solid var(--accent-trait); }
+/* Chapitre terminé : le tampon d'or, la couleur des récompenses. */
+.chapitre-fete { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px 3px 7px; border-radius: var(--radius-pill);
+  background: var(--recompense); color: var(--on-accent); font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: var(--fs-legende); letter-spacing: 0; }
+.chapitre-fete svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 3.2; stroke-linecap: round; stroke-linejoin: round; }
 
-/* ---------- Chemin de pierres sur les lignes d'un goban (issue #54) ---------- */
+/* ---------- Le chemin : des pierres sur une courbe à l'encre, or là où tu es passé ---------- */
 /*
- * Chaque leçon est une pierre posée sur une intersection ; le chemin suit les lignes, à angle droit, comme un groupe relié.
- * Faite : ardoise pleine, la même matière que sur le goban (Board.tsx). En cours : la pierre tenue au-dessus du goban,
- * qui respire, avec le seul bouton en relief de l'écran. À venir : une pierre fantôme en pointillés.
+ * Chaque leçon est une pierre. Faite : ardoise pleine, cochée en jade. Prochaine : la carte de Mochi, avec le seul
+ * bouton en relief de l'écran. À venir : une pierre grise avec un petit cadenas. La courbe relie les pierres
+ * comme un sentier ; elle est dorée jusqu'à la prochaine leçon.
  */
-.gue { --pierre: 58px; position: relative; margin: var(--space-2) 0 var(--space-6); }
-.gue ol { list-style: none; margin: 0; padding: 0; }
-/* Les deux calques dessinés (lignes, chemin) : repère centré sur le milieu de l'écran, x en px depuis le milieu. */
-.gue > svg, .gue-goban > svg { position: absolute; left: 50%; top: 0; overflow: visible; pointer-events: none; }
-.gue > svg path, .gue-goban path { fill: none; }
+.gue { --pierre: 56px; position: relative; }
+.gue ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 26px; }
+.gue-trace { position: absolute; left: 50%; top: 0; overflow: visible; pointer-events: none; }
+.gue-trace path { fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-width: 4px; }
+.gue-route { stroke: color-mix(in srgb, var(--text) 20%, transparent); }
+.gue-parcouru { stroke: var(--or); }
 
-/* Lignes à l'encre, jusqu'aux bords de l'écran, qui s'effacent vers les côtés, le haut et le bas. */
-.gue-goban { position: absolute; inset: 0 calc(-1 * var(--gouttiere)); overflow: hidden; pointer-events: none;
-  -webkit-mask-image: linear-gradient(to right, transparent, #000 16%, #000 84%, transparent), linear-gradient(transparent, #000 56px, #000 calc(100% - 84px), transparent);
-  -webkit-mask-composite: source-in; mask-image: linear-gradient(to right, transparent, #000 16%, #000 84%, transparent), linear-gradient(transparent, #000 56px, #000 calc(100% - 84px), transparent);
-  mask-composite: intersect; }
-.gue-goban path { stroke: color-mix(in srgb, var(--text) 11%, transparent); stroke-width: 1px; }
-/* Le chemin : les mêmes lignes, repassées plus fort ; la partie parcourue en or, la couleur des récompenses. */
-.gue-route { stroke: color-mix(in srgb, var(--text) 26%, transparent); stroke-width: 2.5px; stroke-linejoin: round; }
-.gue-parcouru { stroke: var(--or); stroke-width: 3.5px; stroke-linejoin: round; stroke-linecap: round; }
-
-/* Une rangée par leçon : la pierre sur son intersection, le texte en face, du côté libre. */
-.pas { position: absolute; top: 0; display: flex; flex-direction: column; align-items: flex-start; transform: translateY(calc(var(--pierre) / -2)); }
-.pas.a-gauche { left: calc(50% + var(--x) - var(--pierre) / 2); right: 0; }
-.pas.a-droite { left: 0; right: calc(50% - var(--x) - var(--pierre) / 2); align-items: flex-end; }
-.pas-bouton { display: flex; align-items: center; gap: 12px; max-width: 100%; background: none; border: 0; padding: 0; color: inherit; text-align: left; border-radius: calc(var(--pierre) / 2); }
-.a-droite .pas-bouton { flex-direction: row-reverse; text-align: right; }
-.pas-texte { display: flex; align-items: flex-start; gap: 10px; min-width: 0; }
-/* #121 : au zoom 200 %, les mots longs passent à la ligne au lieu de sortir de l’écran. */
-.pas-texte > * { min-width: 0; overflow-wrap: anywhere; }
+.pas { position: relative; }
+.pas-encours { margin: 4px 0; }
+/* Une rangée : la pierre à sa colonne (--x depuis le milieu), le texte en face, du côté libre. */
+.pas-bouton { display: flex; align-items: center; gap: 12px; width: 100%; background: none; border: 0; padding: 0; color: inherit;
+  text-align: left; border-radius: 16px; min-height: var(--pierre); }
+.a-gauche .pas-bouton { padding-left: calc(50% + var(--x) - var(--pierre) / 2); }
+.a-droite .pas-bouton { flex-direction: row-reverse; text-align: right; padding-right: calc(50% - var(--x) - var(--pierre) / 2); }
+.pas-texte { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; }
 .a-droite .pas-texte { flex-direction: row-reverse; }
-.pas-texte .sceau { margin-top: 1px; }
-.sceau-pale > svg { opacity: .42; filter: saturate(.55); }
+/* #121 : au zoom 200 %, les mots longs passent à la ligne au lieu de sortir de l’écran. */
+/* break-word et non anywhere : la colonne ne rétrécit pas sous la largeur d'un mot (« Technique / s » à 320 px). */
+.pas-texte > * { min-width: 0; overflow-wrap: break-word; }
 .pas-texte b { display: block; font-family: var(--font-titre); font-weight: var(--fw-bold); letter-spacing: -0.01em; font-size: var(--fs-l); line-height: 1.2; text-wrap: balance; }
 .pas-texte small { display: block; text-wrap: balance; color: var(--muted); font-size: var(--fs-s); line-height: 1.3; margin-top: 2px; }
-.pas-avenir .pas-texte b { color: color-mix(in srgb, var(--text) 70%, var(--bg)); }
+.pas-avenir .pas-texte b { color: var(--muted); }
 
-/* Les pierres. Le dégradé et le reflet reprennent l'ardoise du goban (Board.tsx, go-n et go-nr). */
+/* Vignette : une tuile de kaya, posée sur la table comme un mini goban. */
+.vignette { display: inline-block; flex: none; border-radius: 20%; box-shadow: 0 1.5px 0 #7A4A1C, 0 8px 14px -9px rgba(0, 0, 0, .6); }
+.vignette > svg { display: block; }
+.vignette-pale { box-shadow: none; }
+.vignette-pale > svg { opacity: .5; filter: saturate(.25); }
+
+/* Les pierres. Faite : l'ardoise du goban (Board.tsx). À venir : un galet gris, pas encore joué. */
 .pierre-gue { position: relative; flex: none; width: var(--pierre); height: var(--pierre); border-radius: 50%; }
 .pas-faite .pierre-gue {
   background: radial-gradient(circle at 34% 26%, rgba(255, 255, 255, .34), rgba(255, 255, 255, 0) 24%),
-    radial-gradient(72% 72% at 36% 30%, #5b5f5d, #2e3130 18%, #151716 55%, #050606); }
-.pas-faite .pierre-gue { box-shadow: 0 7px 10px -5px rgba(0, 0, 0, .6), 0 1px 2px rgba(0, 0, 0, .35); }
-/*
- * En cours : la pierre n'est pas encore posée. Comme la pierre fantôme qui suit le doigt sur le goban,
- * elle est translucide, cerclée de jade, et respire. Elle devient pleine à la fin de la leçon.
- */
-.pas-encours .pierre-gue { background: var(--bg); }
-/*
- * Matière de la pierre fantôme. En sombre, une ardoise translucide se confondrait avec les pierres faites (noires pleines) :
- * on prend le coquillage (la pierre blanche du goban), translucide, qui s'allume sur le sumi. En clair, l'ardoise translucide suffit.
- */
-.gue { --fantome-matiere: radial-gradient(circle at 34% 26%, rgba(255, 255, 255, .9), rgba(255, 255, 255, 0) 30%),
-  radial-gradient(78% 78% at 38% 32%, #fff, #F3EEE3 55%, #DDD5C4 85%, #BDB3A0); --fantome-min: .3; --fantome-max: .46; }
-@media (prefers-color-scheme: light) {
-  :root:not([data-theme="dark"]) .gue { --fantome-matiere: radial-gradient(circle at 34% 26%, rgba(255, 255, 255, .34), rgba(255, 255, 255, 0) 24%),
-    radial-gradient(72% 72% at 36% 30%, #5b5f5d, #2e3130 18%, #151716 55%, #050606); --fantome-min: .42; --fantome-max: .62; }
-}
-:root[data-theme="light"] .gue { --fantome-matiere: radial-gradient(circle at 34% 26%, rgba(255, 255, 255, .34), rgba(255, 255, 255, 0) 24%),
-  radial-gradient(72% 72% at 36% 30%, #5b5f5d, #2e3130 18%, #151716 55%, #050606); --fantome-min: .42; --fantome-max: .62; }
-.pas-encours .pierre-gue::before { content: ""; position: absolute; inset: 0; border-radius: 50%;
-  background: var(--fantome-matiere); opacity: var(--fantome-max); }
-.pas-encours .pierre-gue::after { content: ""; position: absolute; inset: -7px; border-radius: 50%; border: 3px solid var(--accent-trait); }
-/* À venir : pierre fantôme en pointillés ; son fond cache les lignes pour qu'on lise « une place », pas « un trou ». */
-.pas-avenir .pierre-gue { background: color-mix(in srgb, var(--bg) 78%, transparent);
-  border: 2px dashed color-mix(in srgb, var(--text) 34%, transparent); }
+    radial-gradient(72% 72% at 36% 30%, #5b5f5d, #2e3130 18%, #151716 55%, #050606);
+  box-shadow: 0 0 0 1px var(--pierre-n-bord), 0 7px 10px -5px rgba(0, 0, 0, .6), 0 1px 2px rgba(0, 0, 0, .35); }
+.pas-avenir .pierre-gue {
+  background: radial-gradient(circle at 34% 26%, rgba(255, 255, 255, .18), rgba(255, 255, 255, 0) 26%),
+    radial-gradient(72% 72% at 36% 30%, color-mix(in srgb, var(--surface-2) 70%, var(--text)), var(--surface-2) 55%, color-mix(in srgb, var(--surface-2) 82%, #000));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 12%, transparent); }
+/* Pastille de la pierre : coche jade (faite) ou silhouette « compte » (#343), cerclée du fond pour se détacher. */
+.pierre-coche, .pierre-compte { position: absolute; right: 0; bottom: 0; display: grid; place-items: center; border-radius: 50%; box-shadow: 0 0 0 2.5px var(--bg); }
+.pierre-coche { width: 22px; height: 22px; background: var(--jade); }
+.pierre-coche svg { width: 12px; height: 12px; fill: none; stroke: var(--encre-jade); stroke-width: 3.2; stroke-linecap: round; stroke-linejoin: round; }
+.pierre-compte { width: 22px; height: 22px; background: var(--text); color: var(--bg); }
+.pierre-compte svg, .pas-compte svg { fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.pierre-compte svg { width: 13px; height: 13px; }
+/* Mention sous le titre : le mot dit le verrou, l'icône seule ne suffit pas. */
+.pas-compte { display: flex; width: fit-content; align-items: center; gap: 4px; margin-top: 4px; padding: 1px 8px 1px 5px; border-radius: var(--radius-pill);
+  background: var(--surface-2); color: var(--text); font-size: var(--fs-legende); font-weight: var(--fw-bold); line-height: 1.5; }
+.pas-compte svg { width: 13px; height: 13px; flex: none; }
+.a-droite .pas-compte { margin-left: auto; }
 
-/* Le bouton en relief de la leçon en cours, sous son titre. */
-.apprendre .cta-chemin { position: static; transform: none; width: auto; min-width: min(148px, 100%); /* #121 */ margin-top: var(--space-3); padding: 0 var(--space-6); }
-.a-gauche .cta-chemin, .a-droite .cta-chemin { max-width: calc(100% - var(--pierre) - 12px); padding-inline: clamp(8px, 8%, var(--space-6)); overflow-wrap: anywhere; } /* #121 : reste dans l’écran au zoom 200 % */
-.a-gauche .cta-chemin { margin-left: calc(var(--pierre) + 12px); }
-.a-droite .cta-chemin { margin-right: calc(var(--pierre) + 12px); }
-/* #121 : sous 320 px (zoom 200 %), à côté de la pierre il reste moins que les 148 px du bouton (min-width l'emporte
-   sur max-width) : le bouton passe sous la pierre, contre le bord de la rangée, au lieu de sortir de l'écran. */
+/* ---------- La prochaine leçon : Mochi la présente, une carte, le seul bouton en relief ---------- */
+.prochaine .bubble { margin: 0 0 var(--space-2); }
+.prochaine-carte { position: relative; padding: var(--space-4); border-radius: 20px; background: var(--surface);
+  box-shadow: 0 14px 30px -20px rgba(0, 0, 0, .65); }
+.prochaine-carte .pas-bouton { padding: 0; gap: var(--space-3); align-items: flex-start; min-height: 0; }
+.prochaine-carte .pas-texte { align-items: flex-start; }
+.prochaine-carte .pas-texte b { font-size: var(--fs-xl); letter-spacing: var(--tracking-titre); }
+.prochaine-carte .pas-texte small { font-size: var(--fs-corps-s); margin-top: 3px; }
+.prochaine-duree { display: inline-flex; align-items: center; gap: 5px; margin-top: 8px; font-size: var(--fs-legende); font-weight: var(--fw-bold); color: var(--accent-texte); }
+.prochaine-duree svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.apprendre .cta-chemin { position: static; transform: none; width: 100%; margin: var(--space-4) 0 var(--relief);
+  padding-inline: clamp(6px, 6%, var(--space-6)); overflow-wrap: anywhere; } /* #121 : reste lisible au zoom 200 % */
+.chemin-fini { margin: var(--space-6) 0; }
+
+/* Écrans étroits (320 à 389 px) : écarts et titres un peu plus serrés, pour qu'un mot ne se coupe jamais. */
+@media (max-width: 389px) {
+  .gue .pas-bouton { gap: 8px; }
+  .gue .pas-texte { gap: 8px; }
+  .gue .pas:not(.pas-encours) .pas-texte b { font-size: var(--fs-m); }
+}
+/* #121 : sous 320 px (zoom 200 %), le texte passe sous la pierre, sur toute la largeur de la rangée. */
 @media (max-width: 319px) {
-  .a-gauche .cta-chemin { margin-left: 0; }
-  .a-droite .cta-chemin { margin-right: 0; }
-  .a-gauche .cta-chemin, .a-droite .cta-chemin { max-width: 100%; }
-  /* #169 : à côté de la pierre, il restait une colonne de 50 px où les titres se coupaient au milieu des mots.
-     Le texte passe sous la pierre, sur toute la largeur de la rangée, avec un titre un peu plus petit ;
-     son fond cache les lignes du goban et le chemin qui passent derrière. trace() espace les rangées selon leur hauteur. */
   .pas-bouton, .a-droite .pas-bouton { flex-direction: column; align-items: flex-start; gap: 6px; }
   .a-droite .pas-bouton { align-items: flex-end; }
-  .pas-texte { padding: 2px 4px; margin-inline: -4px; border-radius: 6px; background: var(--bg); }
+  .pas-texte { max-width: 100%; padding: 2px 4px; border-radius: 6px; background: var(--bg); }
   .pas-texte > * { overflow-wrap: break-word; hyphens: auto; }
   .pas-texte b { font-size: var(--fs-m); }
   .pas-texte small { font-size: var(--fs-legende); }
+  .prochaine-carte .pas-bouton { flex-direction: row; }
+  .prochaine-carte { padding: var(--space-3); }
+  .prochaine-carte .pas-texte { background: none; padding: 0; }
 }
-.chemin-fini { margin: 0 0 var(--space-6); }
-.chemin-fini .cta-chemin { width: 100%; margin: 0; }
 
 @media (prefers-reduced-motion: no-preference) {
   /* Appui : la pierre s'enfonce un peu (transition, donc interruptible), le bouton de toute sa tranche. */
-  .pierre-gue { transition: transform 160ms var(--ease); }
-  .pas-bouton:active .pierre-gue { transform: scale(.96); }
+  .pierre-gue, .vignette { transition: transform 160ms var(--ease); }
+  .pas-bouton:not(:disabled):active .pierre-gue, .pas-bouton:active .vignette { transform: scale(.96); }
   .apprendre .cta-chemin:active { transform: translateY(var(--relief)); box-shadow: none; }
-  /* Seul mouvement spontané de l'écran : la pierre en cours respire (skill motion-design, « waiting/idle » : ±2 %, 3 s, sinus). */
-  .pas-encours .pierre-gue::before { animation: respire 3s cubic-bezier(.37, 0, .63, 1) infinite; }
+  /* Fête de chapitre : le tampon d'or se pose d'un coup, les mini-pierres suivent ; les confettis viennent de Confettis.tsx. */
+  [data-fete] .chapitre-fete { animation: tampon-chapitre 480ms 120ms cubic-bezier(.34, 1.56, .64, 1) both; }
+  [data-fete] .chapitre-pierres .faite { animation: pierre-saute 360ms cubic-bezier(.2, .8, .3, 1.2) both; }
+  [data-fete] .chapitre-pierres i:nth-child(2) { animation-delay: 40ms; } [data-fete] .chapitre-pierres i:nth-child(3) { animation-delay: 80ms; }
+  [data-fete] .chapitre-pierres i:nth-child(4) { animation-delay: 120ms; } [data-fete] .chapitre-pierres i:nth-child(5) { animation-delay: 160ms; }
+  [data-fete] .chapitre-pierres i:nth-child(6) { animation-delay: 200ms; } [data-fete] .chapitre-pierres i:nth-child(7) { animation-delay: 240ms; }
 }
-@keyframes respire { 0%, 100% { transform: scale(.98); opacity: var(--fantome-min); } 50% { transform: scale(1.02); opacity: var(--fantome-max); } }
+@keyframes tampon-chapitre { from { transform: scale(1.35) rotate(-6deg); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes pierre-saute { 50% { transform: translateY(-4px); } }
+/* Les confettis de la fête de chapitre : au-dessus de tout, sans prendre de toucher. */
+.chapitre-chemin .confettis { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 40; pointer-events: none; }
 
 /* ---------- Chapitres à venir : discrets, sans promesse de date ---------- */
-.a-venir { margin-top: var(--space-2); color: var(--muted); }
+.a-venir { margin-top: var(--space-8); color: var(--muted); }
 .a-venir h2 { margin: 0 0 4px; font-size: var(--fs-l); color: var(--muted); }
 .a-venir p { margin: 0 0 10px; font-size: var(--fs-s); }
 .a-venir ul { position: relative; list-style: none; margin: 0; padding: 0; }

@@ -747,6 +747,18 @@ export const fr = {
   'apprendre.commencer': 'Commencer',
   'apprendre.fin.lecon': 'Leçon terminée',
   'apprendre.fin.chapitre': 'Chapitre terminé',
+  // Chemin v3 : chapitres illustrés, carte de la prochaine leçon, Mochi, fête de chapitre.
+  'apprendre.chapitre.lecons': { one: '{n} leçon', other: '{n} leçons' },
+  'apprendre.chapitre.avancee': '{n} sur {total}',
+  'apprendre.duree': 'Environ {n} min',
+  'apprendre.pas.compte': ', avec un compte',
+  'apprendre.compte': 'Avec un compte',
+  'apprendre.mochi.debut': 'On commence ici. Deux minutes, et tu sais déjà capturer.',
+  'apprendre.mochi.reprendre': 'Tu l’avais commencée. On la finit ensemble ?',
+  'apprendre.mochi.suite': 'Bien joué ! Voici la suite.',
+  'apprendre.mochi.fini': 'Tu as tout fait. Reviens quand tu veux revoir une leçon.',
+  'apprendre.fete.titre': 'Chapitre terminé',
+  'apprendre.fete.aria': 'Chapitre terminé : {titre}',
   // Lecteur de leçon (src/app/Learn.tsx, src/ui/Lecteur.tsx)
   'lecon.terminer': 'Terminer la leçon',
   'lecon.libertes': { one: '{n} liberté', other: '{n} libertés' },
