@@ -103,7 +103,7 @@ export const EVENTS = {
   // Conseil de Mochi (#80) : phrase demandée (`modele`, `aucun` si rien de sûr), puis retour « utile / pas utile » (`utile`).
   conseilDemande: 'conseil_demande',
   conseilNote: 'conseil_note',
-  // Aide du joueur (#362) : `fiche` (`regles`, `compter`, `mots`), `mot` (mot du glossaire ouvert d'emblée, sinon vide),
+  // Aide du joueur (#362) : `fiche` (`regles`, `compter`, `mots`, `questions`), `mot` (mot du glossaire ouvert d'emblée, sinon vide),
   // `depuis` (`profil`, `lecon`, `probleme`, `partie`, `clavier`). Aucun texte cherché n'est envoyé.
   aideOuverte: 'aide_ouverte',
 } as const;

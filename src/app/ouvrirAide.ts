@@ -2,8 +2,7 @@
 // un écran appelle `ouvrirAide(...)`, App écoute et pose la feuille d'aide par-dessus l'écran, qui reste monté
 // (une partie en cours garde sa position, son chrono, son historique).
 //
-// Branchement prévu dans la partie (#381, menu « Plus » en refonte) : `<BoutonAide depuis="partie" fiche={...} />`
-// (src/ui/BoutonAide.tsx), avec la fiche « compter » pendant le comptage, « regles » sinon.
+// Dans la partie : `<BoutonAide depuis="partie" />` au bout du bandeau du haut (Game.tsx), fiche « compter » pendant le comptage.
 import type { Fiche, IdMot } from '../content/aide';
 
 /** D'où l'aide est ouverte : propriété `depuis` de l'événement `aide_ouverte`. */

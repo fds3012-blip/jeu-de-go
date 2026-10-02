@@ -18,6 +18,7 @@ import { carteTerritoire, conseilPasser, passerEnEvidence, coupsJoues, descripti
 import { messageComptage, modeComptage } from './partie';
 import { avanceBarre, avertirAvantPasse, frontieresAuPasse, frontieresVisibles, type AlerteFrontieres } from './partie';
 import '../ui/comptage.css';
+import { BoutonAide } from '../ui/BoutonAide';
 import { choisirReplique, DUREE_REPLIQUE, type Situation } from './repliques';
 import { FinPartie } from '../ui/FinPartie';
 import { ProposerInstallation } from '../ui/ProposerInstallation';
@@ -473,7 +474,9 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
         portrait={c === 2 && ai && guidee ? <PortraitMochi taille={44} decoratif />
           : c === 2 && ai ? <Portrait id={ai.id} taille={44} humeur={humeur.h} decoratif signature={false} />
           : c === 2 && portrait ? portrait : <Avatar couleur={c} initiale={initiale} />}
-        replique={c === 2 ? replique : null} avant={c === 2 ? retour : undefined} gain={gain} />
+        replique={c === 2 ? replique : null} avant={c === 2 ? retour : undefined} gain={gain}
+        // #362 : « ? » en haut à droite, sans quitter la partie ; pendant le comptage, il ouvre « Compter ».
+        apres={c === 2 && phase !== 'end' ? <BoutonAide depuis="partie" fiche={phase === 'score' ? 'compter' : 'regles'} className="joueur-aide" /> : undefined} />
     );
   };
 

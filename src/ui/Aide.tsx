@@ -2,7 +2,7 @@
 // Boîte de dialogue modale posée par-dessus l'écran, qui reste monté : fermer ramène exactement où l'on était
 // (partie, leçon, Profil). Chargée à la demande (App.tsx) : elle ne pèse rien tant qu'on ne l'ouvre pas.
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
-import { COMPTER, MOTS, REGLES, type Carte, type Fiche, type Schema } from '../content/aide';
+import { COMPTER, IDS_QUESTIONS, MOTS, REGLES, type Carte, type Fiche, type Schema } from '../content/aide';
 import { LESSONS } from '../content/lessons';
 import { langue, t } from '../content/i18n';
 import { fromRows } from '../go/position';
@@ -23,7 +23,7 @@ interface Props {
   leconCourante?: string | null;
 }
 
-const ONGLETS: Fiche[] = ['regles', 'compter', 'mots'];
+const ONGLETS: Fiche[] = ['regles', 'compter', 'mots', 'questions'];
 
 /** Texte d'une carte : clés `aide.regle.<id>` et `aide.compter.<id>` (toutes sans variable, vérifié par src/app/glossaire.test.ts). */
 const texte = (cle: string) => t(cle as 'aide.titre');
@@ -122,6 +122,25 @@ function Glossaire({ requete, setRequete, lien }: { requete: string; setRequete:
   );
 }
 
+/** Questions fréquentes (#362) : une question, une réponse courte ; rien à toucher. */
+function Questions() {
+  return (
+    <>
+      <p className="aide-intro">{fr(t('aide.questions.intro'))}</p>
+      <ul className="aide-mots aide-questions">
+        {IDS_QUESTIONS.map(q => (
+          <li key={q} className="aide-mot" data-question={q}>
+            <div className="aide-mot-texte">
+              <h3>{fr(t(`aide.question.${q}`))}</h3>
+              <p>{fr(t(`aide.question.${q}.reponse`))}</p>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </>
+  );
+}
+
 export default function Aide({ ouverture, onFermer, onLecon, leconCourante }: Props) {
   const ref = useRef<HTMLDialogElement>(null);
   const corps = useRef<HTMLDivElement>(null);
@@ -168,6 +187,7 @@ export default function Aide({ ouverture, onFermer, onLecon, leconCourante }: Pr
           {fiche === 'regles' && <Cartes cartes={REGLES} cle="regle" intro={t('aide.regles.intro')} lien={lien} />}
           {fiche === 'compter' && <Cartes cartes={COMPTER} cle="compter" intro={t('aide.compter.intro')} lien={lien} />}
           {fiche === 'mots' && <Glossaire requete={requete} setRequete={setRequete} lien={lien} />}
+          {fiche === 'questions' && <Questions />}
         </div>
       </div>
     </dialog>

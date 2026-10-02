@@ -40,6 +40,10 @@
 .joueur .retour { flex: none; width: var(--cible-min); height: var(--cible-min); margin: 0 -6px 0 -12px; border: 0; background: none; color: var(--muted);
   font-size: 30px; line-height: 1; display: grid; place-items: center; border-radius: 12px; }
 .joueur .retour:active { background: var(--surface); }
+/* #362 : le « ? » de l'aide ferme le bandeau du haut, collé au bord comme « ‹ » de l'autre côté. */
+.joueur .joueur-aide { margin: 0 -10px 0 -4px; }
+/* Zoom 200 % (195 px) : pas la place sur la ligne ; le « ? » passe dessous, à droite, plutôt que de faire défiler l'écran de côté. */
+@media (max-width: 299px) { .joueur:has(.joueur-aide) { flex-wrap: wrap; row-gap: 0; } .joueur .joueur-aide { margin: -6px -10px 0 auto; } }
 .portrait { position: relative; flex: none; width: 44px; height: 44px; display: grid; place-items: center; }
 .portrait .stone { width: 34px; height: 34px; }
 /* Au trait : un point jade posé sur le portrait (lisible quelle que soit la forme du portrait, sceau ou pierre).

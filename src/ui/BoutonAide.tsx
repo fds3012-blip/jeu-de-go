@@ -1,6 +1,5 @@
 // Bouton « ? » qui ouvre l'aide (issue #362) : rond, 44 px, discret. Sans action principale : il ne prend jamais l'or ni le jade.
-// Posé dans le lecteur de leçon ; à poser dans la barre du haut de la partie quand #381 aura fixé sa forme
-// (fiche « compter » pendant le comptage, « regles » sinon).
+// Posé dans le lecteur de leçon, le problème, le Profil et le bandeau du haut de la partie (fiche « compter » pendant le comptage).
 import { ouvrirAide, type Ouverture } from '../app/ouvrirAide';
 import { t } from '../content/i18n';
 import './bouton-aide.css';

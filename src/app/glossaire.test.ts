@@ -1,5 +1,5 @@
 // Aide du joueur (#362) : recherche du glossaire, textes FR et EN, et croisement avec les textes de l'interface.
-import { COMPTER, IDS_MOTS, MOTS, REGLES, type IdMot, type Schema } from '../content/aide';
+import { COMPTER, IDS_MOTS, IDS_QUESTIONS, MOTS, REGLES, type IdMot, type Schema } from '../content/aide';
 import { fr } from '../content/i18n/fr';
 import { en } from '../content/i18n/en';
 import { traduire, type Cle } from '../content/i18n';
@@ -61,6 +61,7 @@ describe('textes de l’aide (FR et EN)', () => {
       ...REGLES.flatMap(c => [`aide.regle.${c.id}`, `aide.regle.${c.id}.texte`]),
       ...COMPTER.flatMap(c => [`aide.compter.${c.id}`, `aide.compter.${c.id}.texte`]),
       ...MOTS.flatMap(m => [`aide.mot.${m.id}`, `aide.mot.${m.id}.def`]),
+      ...IDS_QUESTIONS.flatMap(q => [`aide.question.${q}`, `aide.question.${q}.reponse`]),
     ];
     for (const k of cles) {
       for (const cat of [fr, en] as Record<string, unknown>[]) {
