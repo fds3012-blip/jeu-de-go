@@ -9,7 +9,135 @@
     <link rel="icon" href="/icon.svg" type="image/svg+xml" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="apple-touch-icon" href="/icon-192.png" />
+    <!-- Écrans de lancement iOS (#406) : la première image de l'ouverture animée, générée par scripts/generate-icons.mjs. -->
+    <!--LANCEMENT-IOS-->
+    <link rel="apple-touch-startup-image" href="/lancement/iphone-375x667-sombre.png" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait) and (prefers-color-scheme: dark)" />
+    <link rel="apple-touch-startup-image" href="/lancement/iphone-375x667-clair.png" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait) and (prefers-color-scheme: light)" />
+    <link rel="apple-touch-startup-image" href="/lancement/iphone-375x812-sombre.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait) and (prefers-color-scheme: dark)" />
+    <link rel="apple-touch-startup-image" href="/lancement/iphone-375x812-clair.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait) and (prefers-color-scheme: light)" />
+    <link rel="apple-touch-startup-image" href="/lancement/iphone-390x844-sombre.png" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait) and (prefers-color-scheme: dark)" />
+    <link rel="apple-touch-startup-image" href="/lancement/iphone-390x844-clair.png" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait) and (prefers-color-scheme: light)" />
+    <link rel="apple-touch-startup-image" href="/lancement/iphone-393x852-sombre.png" media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait) and (prefers-color-scheme: dark)" />
+    <link rel="apple-touch-startup-image" href="/lancement/iphone-393x852-clair.png" media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait) and (prefers-color-scheme: light)" />
+    <link rel="apple-touch-startup-image" href="/lancement/iphone-402x874-sombre.png" media="(device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait) and (prefers-color-scheme: dark)" />
+    <link rel="apple-touch-startup-image" href="/lancement/iphone-402x874-clair.png" media="(device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait) and (prefers-color-scheme: light)" />
+    <link rel="apple-touch-startup-image" href="/lancement/iphone-414x896-sombre.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait) and (prefers-color-scheme: dark)" />
+    <link rel="apple-touch-startup-image" href="/lancement/iphone-414x896-clair.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait) and (prefers-color-scheme: light)" />
+    <link rel="apple-touch-startup-image" href="/lancement/iphone-428x926-sombre.png" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait) and (prefers-color-scheme: dark)" />
+    <link rel="apple-touch-startup-image" href="/lancement/iphone-428x926-clair.png" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait) and (prefers-color-scheme: light)" />
+    <link rel="apple-touch-startup-image" href="/lancement/iphone-430x932-sombre.png" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait) and (prefers-color-scheme: dark)" />
+    <link rel="apple-touch-startup-image" href="/lancement/iphone-430x932-clair.png" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait) and (prefers-color-scheme: light)" />
+    <link rel="apple-touch-startup-image" href="/lancement/iphone-440x956-sombre.png" media="(device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait) and (prefers-color-scheme: dark)" />
+    <link rel="apple-touch-startup-image" href="/lancement/iphone-440x956-clair.png" media="(device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait) and (prefers-color-scheme: light)" />
+    <!--/LANCEMENT-IOS-->
     <title>Go : apprendre et jouer</title>
+    <!--
+      Ouverture animée (#406), dessinée ici, avant React : CSS et SVG en ligne, aucun JS de l'app.
+      1. Première image : le logo deux pierres, en grand, comme l'écran de lancement natif (manifeste, images iOS).
+      2. Les pierres rapetissent et se posent sur un goban sous la lampe ; le nom « Go » apparaît en haut.
+      3. Dès que l'accueil est monté (et 0,7 s au plus tôt), fondu ; l'action principale et la barre arrivent d'abord,
+         puis le contenu, de haut en bas. Fini en 1,2 s environ ; un toucher la passe.
+      Version courte (logo, fondu) si l'app a été ouverte il y a moins de 10 min ; simple fondu de 150 ms en mouvements
+      réduits ; rien sur un lien de défi, un retour de connexion, un rechargement (dont « nouvelle version prête ») ni
+      dans les tests (navigator.webdriver, sauf `go.ouverture.e2e` = « 1 »). Tests : src/ouverture.test.ts, e2e/ouverture.spec.ts.
+    -->
+    <style>
+      :root { --ouv-fond: #1C1916; --ouv-encre: #F3EDE3; --ouv-lune: .22; }
+      @media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) { --ouv-fond: #EFE8DC; --ouv-encre: #1C1916; --ouv-lune: 0; } }
+      :root[data-theme="light"] { --ouv-fond: #EFE8DC; --ouv-encre: #1C1916; --ouv-lune: 0; }
+      #ouverture { display: none; position: fixed; inset: 0; z-index: 2147483000; overflow: hidden; contain: strict;
+        background: var(--halo, none) no-repeat, var(--ouv-fond); -webkit-tap-highlight-color: transparent; user-select: none;
+        transition: opacity 220ms var(--ease, cubic-bezier(.2, .8, .2, 1)), transform 280ms var(--ease, cubic-bezier(.2, .8, .2, 1)); }
+      html[data-ouverture] #ouverture { display: block; }
+      #ouverture > * { position: absolute; pointer-events: none; }
+      /* Couleur de l'écran natif (Android : fond du manifeste ; iOS : image claire ou sombre), qui s'efface vers le thème. */
+      .ouv-debut { display: none; inset: 0; background: #1C1916; }
+      [data-ouverture-debut="clair"] .ouv-debut { background: #EFE8DC; }
+      [data-ouverture-debut] .ouv-debut { display: block; }
+      .ouv-logo { left: 50%; top: 50%; width: 240px; height: 240px; margin: -120px 0 0 -120px; }
+      .ouv-logo .lune { stroke: #F3EDE3; stroke-opacity: var(--ouv-lune); }
+      .ouv-logo .detache { fill: var(--ouv-fond); }
+      .ouv-logo .detache-debut { display: none; fill: #1C1916; }
+      [data-ouverture-debut="clair"] .ouv-logo .detache-debut { fill: #EFE8DC; }
+      [data-ouverture-debut] .ouv-logo .detache-debut { display: inline; }
+      /* Android : l'écran natif de Chrome montre l'icône à 112 dp environ ; la première image part de cette taille. */
+      [data-ouverture-debut="android"] .ouv-logo { transform: scale(.47); }
+      /* La scène : seulement dans la version entière. */
+      .ouv-nom, .ouv-sol, .ouv-ombre { display: none; }
+      [data-ouverture="plein"] :is(.ouv-nom, .ouv-sol, .ouv-ombre) { display: block; }
+      .ouv-nom { left: 50%; top: max(16vh, calc(56px + env(safe-area-inset-top, 0px))); width: 114px; height: 64px; margin-left: -57px; fill: var(--ouv-encre); }
+      /* Point de pose des pierres : 12vh sous le centre. Le goban est centré un peu derrière, sous la lampe. */
+      .ouv-sol { left: 50%; top: calc(50% + 12vh - 36px); width: 0; height: 0; }
+      .ouv-plan { position: absolute; left: -220px; top: -220px; width: 440px; height: 440px; transform: perspective(900px) rotateX(60deg);
+        -webkit-mask-image: radial-gradient(closest-side, #000 22%, rgba(0, 0, 0, .55) 55%, transparent 82%);
+        mask-image: radial-gradient(closest-side, #000 22%, rgba(0, 0, 0, .55) 55%, transparent 82%); }
+      .ouv-ombre { left: 50%; top: calc(50% + 12vh); width: 150px; height: 30px; margin: -19px 0 0 -75px;
+        background: radial-gradient(closest-side, rgba(24, 14, 4, .55), rgba(24, 14, 4, 0)); }
+      [data-ouverture="plein"] .ouv-logo { animation: ouv-pose 440ms 120ms cubic-bezier(.77, 0, .175, 1) both; }
+      [data-ouverture="plein"] .ouv-sol { animation: ouv-sol 420ms 180ms var(--ease, cubic-bezier(.2, .8, .2, 1)) both; }
+      [data-ouverture="plein"] .ouv-ombre { animation: ouv-apparait 180ms 440ms ease-out both; }
+      [data-ouverture="plein"] .ouv-nom { animation: ouv-monte 300ms 320ms var(--ease, cubic-bezier(.2, .8, .2, 1)) both; }
+      :is([data-ouverture="plein"], [data-ouverture="court"]) :is(.ouv-debut, .detache-debut) { animation: ouv-efface 400ms 80ms ease-out both; }
+      @keyframes ouv-pose { to { transform: translateY(calc(12vh - 41px)) scale(.64); } }
+      @keyframes ouv-sol { from { opacity: 0; transform: translateY(40px) scale(.94); } }
+      @keyframes ouv-monte { from { opacity: 0; transform: translateY(10px); } }
+      @keyframes ouv-apparait { from { opacity: 0; } }
+      @keyframes ouv-efface { to { opacity: 0; } }
+      /* Fin : fondu (et léger recul de la scène dans la version entière). Un toucher accélère le fondu. */
+      html.ouv-fin #ouverture { opacity: 0; pointer-events: none; }
+      html[data-ouverture="plein"].ouv-fin #ouverture { transform: scale(1.03); }
+      html[data-ouverture="reduit"] #ouverture { transition: opacity 150ms ease-out; }
+      html.ouv-saute #ouverture { transition-duration: 120ms; }
+      /* Le toucher qui passe l'ouverture ne doit rien toucher dessous : elle le garde jusqu'à son « clic ». */
+      html.ouv-tenu #ouverture { pointer-events: auto; }
+      /* L'accueil se construit : l'action principale et la barre d'abord, puis le contenu de haut en bas. */
+      html[data-ouverture="plein"].ouv-fin :is(.nav, .cta) { animation: ouv-arrive 280ms var(--ease, cubic-bezier(.2, .8, .2, 1)) both; }
+      html[data-ouverture="plein"].ouv-fin :is(.app > :not(.accueil), .accueil > :not(.cta)) { animation: ouv-contenu 240ms 60ms var(--ease, cubic-bezier(.2, .8, .2, 1)) both; }
+      html[data-ouverture="plein"].ouv-fin .accueil > :nth-child(2):not(.cta) { animation-delay: 90ms; }
+      html[data-ouverture="plein"].ouv-fin .accueil > :nth-child(3):not(.cta) { animation-delay: 120ms; }
+      html[data-ouverture="plein"].ouv-fin .accueil > :nth-child(4):not(.cta) { animation-delay: 150ms; }
+      html[data-ouverture="plein"].ouv-fin .accueil > :nth-child(n + 5):not(.cta) { animation-delay: 180ms; }
+      @keyframes ouv-arrive { from { opacity: 0; translate: 0 16px; } }
+      @keyframes ouv-contenu { from { opacity: 0; translate: 0 6px; } }
+    </style>
+    <script>
+      // Décide de l'ouverture (#406) : 'plein', 'court', 'reduit' ou null (aucune). Pure : testée par src/ouverture.test.ts.
+      function modeOuverture(c) {
+        if (c.forcer === '0' || (c.webdriver && c.forcer !== '1') || c.cachee) return null;
+        // Lien de défi, retour de connexion (lien magique, Google) : l'écran attendu tout de suite.
+        if (/^#defi=/.test(c.adresse) || /(?:^|[#&?])(?:access_token|refresh_token|error_description|error_code|token_hash|code)=/.test(c.adresse)) return null;
+        // Rechargement (nouvelle version prête, langue, erreur), retour arrière, ou déjà vue dans cet onglet.
+        if (c.navigation === 'reload' || c.navigation === 'back_forward' || c.dejaVue) return null;
+        if (c.reduit) return 'reduit';
+        return c.maintenant - c.derniere < 600000 ? 'court' : 'plein';
+      }
+      (function () {
+        var h = document.documentElement;
+        var mm = function (q) { return !!(window.matchMedia && matchMedia(q).matches); };
+        var stock = function (nom) { try { return window[nom]; } catch (e) { return null; } };
+        var ls = stock('localStorage'), ss = stock('sessionStorage');
+        var lire = function (s, k) { try { return s ? s.getItem(k) : null; } catch (e) { return null; } };
+        var ecrire = function (s, k, v) { try { if (s) s.setItem(k, v); } catch (e) { /* stockage indisponible */ } };
+        // Thème choisi dans le Profil, posé avant le premier rendu (src/app/settings.ts fait de même ensuite).
+        try { var th = JSON.parse(lire(ls, 'go.settings.v1') || '{}').theme; if (th === 'dark' || th === 'light') h.setAttribute('data-theme', th); } catch (e) { /* réglage illisible */ }
+        var nav = performance.getEntriesByType ? performance.getEntriesByType('navigation')[0] : null;
+        var maintenant = Date.now();
+        var mode = modeOuverture({
+          webdriver: navigator.webdriver === true, forcer: lire(ls, 'go.ouverture.e2e'), cachee: document.visibilityState === 'hidden',
+          adresse: location.hash + location.search, navigation: nav ? nav.type : null, dejaVue: lire(ss, 'go.ouverture.vue') === '1',
+          reduit: mm('(prefers-reduced-motion: reduce)'), derniere: Number(lire(ls, 'go.ouverture.derniere')) || 0, maintenant: maintenant,
+        });
+        ecrire(ss, 'go.ouverture.vue', '1');
+        ecrire(ls, 'go.ouverture.derniere', String(maintenant));
+        if (!mode) return;
+        h.setAttribute('data-ouverture', mode);
+        // App installée : l'écran natif précède la page. iOS montre l'image de lancement claire ou sombre selon
+        // l'appareil ; Android (Chrome) peint le fond du manifeste (sombre) avec l'icône en petit.
+        var ios = navigator.standalone === true;
+        if (ios) h.setAttribute('data-ouverture-debut', mm('(prefers-color-scheme: dark)') ? 'sombre' : 'clair');
+        else if (mm('(display-mode: standalone)')) h.setAttribute('data-ouverture-debut', 'android');
+      })();
+    </script>
     <!-- Aperçu des liens partagés (issue #285) : image générée par scripts/generate-apercu.mjs. -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Jeu de go" />
@@ -31,6 +159,56 @@
   </head>
   <body>
     <div id="root"></div>
+    <div id="ouverture" aria-hidden="true" data-testid="ouverture">
+      <div class="ouv-debut"></div>
+      <!-- Le nom, en Bricolage Grotesque 800 vectorisée : jamais d'attente de police ni de saut de glyphes. -->
+      <svg class="ouv-nom" viewBox="40 -690 1260 710"><path d="M331 14Q250 14 185-23Q120-60 82-134Q45-209 45-322Q45-405 66-470Q88-535 131-580Q174-626 236-650Q299-674 381-674Q443-674 494-660Q544-646 581-620Q618-594 638-558Q659-522 660-477L508-430Q507-467 489-492Q471-517 441-530Q411-544 374-544Q322-544 286-520Q251-497 232-449Q214-401 214-329Q214-275 224-234Q235-194 256-167Q277-140 308-126Q338-113 380-113Q422-113 452-126Q483-139 501-166Q519-193 520-235H403V-349H680V-221V0H570L568-165H548Q531-107 504-67Q477-27 435-6Q393 14 331 14ZM1014 14Q934 14 872-17Q811-48 776-110Q741-172 741-265Q741-358 776-420Q811-481 873-512Q935-542 1015-542Q1095-542 1157-511Q1219-480 1254-418Q1289-357 1289-264Q1289-169 1253-107Q1217-45 1154-16Q1092 14 1014 14ZM1019-103Q1055-103 1079-120Q1103-136 1115-170Q1127-204 1127-254Q1127-307 1114-344Q1101-380 1076-400Q1050-419 1010-419Q976-419 952-402Q927-386 915-352Q903-318 903-267Q903-185 934-144Q964-103 1019-103Z"/></svg>
+      <!-- Le goban sous la lampe : un coin de kaya en perspective, 9 lignes, les hoshi ; il s'efface vers les bords. -->
+      <div class="ouv-sol"><svg class="ouv-plan" viewBox="0 0 440 440"><defs><radialGradient id="ouv-kaya"><stop offset="0" stop-color="#EDC27A"/><stop offset="1" stop-color="#C58D42"/></radialGradient></defs><rect width="440" height="440" fill="url(#ouv-kaya)"/><path d="M20 20H420M20 70H420M20 120H420M20 170H420M20 220H420M20 270H420M20 320H420M20 370H420M20 420H420M20 20V420M70 20V420M120 20V420M170 20V420M220 20V420M270 20V420M320 20V420M370 20V420M420 20V420" stroke="#3A2912" stroke-opacity=".75" stroke-width="2.2" fill="none"/><g fill="#3A2912"><circle cx="120" cy="120" r="5.5"/><circle cx="320" cy="120" r="5.5"/><circle cx="220" cy="220" r="5.5"/><circle cx="120" cy="320" r="5.5"/><circle cx="320" cy="320" r="5.5"/></g></svg></div>
+      <div class="ouv-ombre"></div>
+      <!-- Le logo #8 (public/icon.svg) : la noire devant, la blanche derrière, qui se touchent. -->
+      <svg class="ouv-logo" viewBox="0 0 512 512"><defs><radialGradient id="ouv-n" cx="36%" cy="30%" r="72%"><stop offset="0" stop-color="#6a6e6c"/><stop offset=".22" stop-color="#2e3130"/><stop offset=".6" stop-color="#151716"/><stop offset="1" stop-color="#050606"/></radialGradient><radialGradient id="ouv-b" cx="38%" cy="32%" r="78%"><stop offset="0" stop-color="#fff"/><stop offset=".55" stop-color="#F3EEE3"/><stop offset=".85" stop-color="#DDD5C4"/><stop offset="1" stop-color="#BDB3A0"/></radialGradient><radialGradient id="ouv-o"><stop offset=".6" stop-color="#000" stop-opacity=".55"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient></defs><circle cx="316" cy="248" r="96" fill="url(#ouv-o)"/><circle cx="306" cy="226" r="92" fill="url(#ouv-b)"/><circle cx="220" cy="308" r="112" fill="url(#ouv-o)"/><circle class="detache" cx="210" cy="292" r="106"/><circle class="detache-debut" cx="210" cy="292" r="106"/><circle class="lune" cx="210" cy="292" r="100" fill="url(#ouv-n)" stroke-width="3"/><ellipse cx="176" cy="252" rx="36" ry="24" fill="#fff" opacity=".22" transform="rotate(-30 176 252)"/></svg>
+    </div>
+    <script>
+      // Fin de l'ouverture (#406) : quand l'accueil est monté dans #root, et pas avant 0,7 s (version entière) ;
+      // un toucher n'attend plus. Filet : 4 s au plus, quoi qu'il arrive.
+      (function () {
+        var h = document.documentElement, el = document.getElementById('ouverture'), mode = h.getAttribute('data-ouverture');
+        if (!mode) { el.remove(); return; }
+        var duree = mode === 'plein' ? 700 : mode === 'court' ? 260 : 0;
+        var debut = performance.now(), monte = false, saute = false, fini = false, attente = 0;
+        requestAnimationFrame(function () { debut = performance.now(); });
+        function finir() {
+          if (fini) return;
+          fini = true;
+          h.classList.add('ouv-fin');
+          setTimeout(function () {
+            el.remove();
+            h.classList.remove('ouv-fin', 'ouv-saute', 'ouv-tenu');
+            h.removeAttribute('data-ouverture');
+            h.removeAttribute('data-ouverture-debut');
+          }, mode === 'plein' ? 520 : 240);
+        }
+        function essayer() {
+          if (!monte || fini) return;
+          var reste = saute ? 0 : duree - (performance.now() - debut);
+          clearTimeout(attente);
+          if (reste <= 0) finir(); else attente = setTimeout(finir, reste);
+        }
+        var root = document.getElementById('root');
+        var mo = new MutationObserver(function () { if (root.firstElementChild) { mo.disconnect(); monte = true; essayer(); } });
+        mo.observe(root, { childList: true });
+        var lacher = function () { h.classList.remove('ouv-tenu'); };
+        el.addEventListener('pointerdown', function () {
+          saute = true;
+          h.classList.add('ouv-saute', 'ouv-tenu');
+          setTimeout(lacher, 500); // glissé sans clic : on rend la main quand même
+          essayer();
+        });
+        el.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); setTimeout(lacher, 0); }, true);
+        setTimeout(function () { monte = true; saute = true; essayer(); }, 4000);
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
