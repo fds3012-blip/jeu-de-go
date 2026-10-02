@@ -9,14 +9,16 @@ import { jouer, plateau } from './plateau';
 // et 320 × 568, clair et sombre, français et anglais. Pour chaque écran : une capture par thème dans
 // docs/qa/captures/audit-02-10/, et des mesures (défilement horizontal, cibles sous 44 px, contraste des textes,
 // textes coupés, nombre d'actions principales) écrites dans AUDIT_VISUEL (dossier des mesures).
-// Lancement manuel seulement : AUDIT_VISUEL=<dossier des mesures> npx playwright test audit-visuel
+// Lancement manuel seulement : AUDIT_VISUEL=<dossier des mesures> npx playwright test audit-visuel --workers 1
+// AUDIT_ETAPES=01,04 : seulement ces étapes ; AUDIT_CAPTURES=<dossier relatif au dépôt> : autre dossier de captures.
 
 const DOSSIER_MESURES = process.env.AUDIT_VISUEL;
 test.skip(!DOSSIER_MESURES, 'Audit visuel : lancer avec AUDIT_VISUEL=<dossier>');
 test.describe.configure({ mode: 'serial' });
 
 const RACINE = fileURLToPath(new URL('..', import.meta.url));
-const CAPTURES = join(RACINE, 'docs', 'qa', 'captures', 'audit-02-10');
+// AUDIT_CAPTURES : autre dossier de captures (par ex. les captures « après » dans docs/design/captures/<branche>/).
+const CAPTURES = process.env.AUDIT_CAPTURES ? join(RACINE, process.env.AUDIT_CAPTURES) : join(RACINE, 'docs', 'qa', 'captures', 'audit-02-10');
 const SGF_9 = '(;GM[1]FF[4]SZ[9]KM[6.5]PB[florian_go]PW[Takumi88]RE[B+R];B[ee];W[cc];B[gc];W[ce];B[eg];W[cg];B[gg];W[dd];B[ed];W[ec];B[fc];W[eb];B[fb];W[dc];B[de];W[cd];B[df];W[cf];B[dg];W[dh];B[eh];W[ch])';
 
 type Langue = 'fr' | 'en';
@@ -37,7 +39,7 @@ async function mesurer(page: Page, ecran: string, theme: string, largeur: number
     };
     const texteDe = (el: Element) => ((el as HTMLElement).innerText || el.getAttribute('aria-label') || el.tagName).replace(/\s+/g, ' ').trim().slice(0, 50);
     // Zone active : la fenêtre modale ouverte, sinon la page entière (ce qui est sous une modale n'est pas évalué).
-    const modale = document.querySelector('dialog[open], [aria-modal="true"]');
+    const modale = [...document.querySelectorAll('dialog[open], [aria-modal="true"]')].find(vis) ?? null;
     const racine: ParentNode = modale ?? document;
     const dansModale = (el: Element) => !modale || modale.contains(el);
     const cibles = [...racine.querySelectorAll('button, a[href], input, [role="button"], [role="switch"], [role="tab"], select, textarea')]
@@ -58,7 +60,7 @@ async function mesurer(page: Page, ecran: string, theme: string, largeur: number
     const lum = ([r, g, b]: number[]) => { const f = (v: number) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }; return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b); };
     const compose = (dessus: number[], dessous: number[]) => { const a = dessus[3]; return [0, 1, 2].map(i => Math.round(dessus[i] * a + dessous[i] * (1 - a))).concat(1); };
     const fondDe = (el: Element): { fond: number[]; via: string; incertain: boolean } => {
-      let couches: number[][] = [];
+      const couches: number[][] = [];
       let incertain = false;
       let via = '';
       let e: Element | null = el;
@@ -122,7 +124,7 @@ async function capturer(page: Page, cfg: { largeur: number; langue: Langue }, ec
     await page.emulateMedia({ colorScheme: theme, reducedMotion: options.reduire === false ? 'no-preference' : 'reduce' });
     await page.waitForTimeout(250);
     const chemin = join(CAPTURES, `${ecran}-${cfg.largeur}-${theme === 'dark' ? 'sombre' : 'clair'}-${cfg.langue}.jpg`);
-    await page.screenshot({ path: chemin, type: 'jpeg', quality: 82, fullPage: !!options.pleine });
+    await page.screenshot({ path: chemin, type: 'jpeg', quality: 72, fullPage: !!options.pleine });
     try { mesures.push(await mesurer(page, ecran, theme, cfg.largeur)); } catch (e) { mesures.push({ ecran, theme, largeur: cfg.largeur, defilement: 0, cibles: [], principales: 0, contrastes: [], coupes: [], horsEcran: [], alertes: [`mesure impossible : ${String(e).slice(0, 120)}`] }); }
   }
   await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'reduce' });
@@ -143,7 +145,7 @@ async function etape(nom: string, mesures: Mesure[], cfg: { largeur: number }, p
 const T = {
   nonMerci: /^(Non merci|No thanks)$/, changer: /^(Changer|Change)$/, fermer: /^(Fermer|Close)$/,
   apprendre: /^(Apprendre|Learn)$/, problemes: /^(Problèmes|Puzzles)$/, profil: /^(Profil|Profile)$/,
-  passer: /^(Passer|Pass)$/, passeGroupe: /^(Passer maintenant ?\?|Pass now\?)$/, valider: /^(Valider le score|Confirm score)$/,
+  passer: /^(Passer|Pass)$/, passeGroupe: /^(Passer maintenant\s?\?|Pass now\?)$/, valider: /^(Valider le score|Confirm score)$/,
   revoir: /^(Revoir ma partie|Review my game)$/, terminer: /^(Terminer la leçon|Finish the lesson)$/, pratique: /^(Entraîne-toi|Practice)/,
   reprendre: /^(Reprendre la leçon|Resume the lesson)/, tous: /^(Tous les problèmes|All puzzles)$/, probleme: /^(Problème|Puzzle) \d+/,
   cestParti: /^(C’est parti|Start)$/, saisJouer: /^(Je sais déjà jouer|I already know how to play)$/, passerPlacement: /^(Passer le placement|Skip the placement)$/,
@@ -164,23 +166,23 @@ const boutonPasser = (page: Page) => barre(page).getByRole('button', { name: T.p
 async function passer(page: Page) {
   const avant = await page.locator('ol.coups > li:not(.vide)').count();
   const choix = page.getByRole('group', { name: T.passeGroupe });
-  const fin = page.locator('.recit, .barre-comptage');
-  await expect(boutonPasser(page)).toBeEnabled({ timeout: 15_000 });
+  const fin = page.locator('.recit, .barre-comptage').filter({ visible: true });
+  await expect(boutonPasser(page)).toBeEnabled({ timeout: 30_000 });
   await boutonPasser(page).click();
-  await expect.poll(async () => (await choix.count()) > 0 || (await page.locator('ol.coups > li:not(.vide)').count()) > avant || (await fin.count()) > 0, { timeout: 15_000 }).toBe(true);
+  await expect.poll(async () => (await choix.count()) > 0 || (await page.locator('ol.coups > li:not(.vide)').count()) > avant || (await fin.count()) > 0, { timeout: 30_000 }).toBe(true);
   if (await choix.count()) await choix.getByRole('button', { name: T.passer }).click();
 }
 
 async function jusquAuScore(page: Page, avantValidation: () => Promise<void>) {
-  const fin = page.locator('.recit, .barre-comptage');
-  for (let i = 0; i < 8 && !(await fin.first().isVisible()); i++) {
+  const fin = page.locator('.recit, .barre-comptage').filter({ visible: true });
+  for (let i = 0; i < 8 && !(await fin.count()); i++) {
     await passer(page);
-    await expect.poll(async () => (await fin.first().isVisible()) || (await boutonPasser(page).isEnabled().catch(() => false)), { timeout: 15_000 }).toBe(true);
+    await expect.poll(async () => (await fin.count()) > 0 || (await boutonPasser(page).isEnabled().catch(() => false)), { timeout: 30_000 }).toBe(true);
   }
-  await expect(fin.first()).toBeVisible({ timeout: 15_000 });
+  await expect(fin.first()).toBeVisible({ timeout: 30_000 });
   const valider = page.getByRole('button', { name: T.valider });
-  if (await valider.isVisible()) { await expect(valider).toBeEnabled({ timeout: 15_000 }); await avantValidation(); await valider.click(); }
-  await expect(page.locator('.recit')).toBeVisible({ timeout: 15_000 });
+  if (await valider.isVisible()) { await expect(valider).toBeEnabled({ timeout: 30_000 }); await avantValidation(); await valider.click(); }
+  await expect(page.locator('.recit')).toBeVisible({ timeout: 30_000 });
 }
 
 const CONFIGS: { largeur: number; hauteur: number; langue: Langue }[] = [
@@ -190,7 +192,7 @@ const CONFIGS: { largeur: number; hauteur: number; langue: Langue }[] = [
 
 for (const cfg of CONFIGS) {
   const options = (baseURL: string | undefined, consent: boolean) => ({
-    viewport: { width: cfg.largeur, height: cfg.hauteur }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, locale: cfg.langue === 'fr' ? 'fr-FR' : 'en-US',
+    viewport: { width: cfg.largeur, height: cfg.hauteur }, deviceScaleFactor: 1.5, isMobile: true, hasTouch: true, locale: cfg.langue === 'fr' ? 'fr-FR' : 'en-US',
     timezoneId: 'Europe/Paris', colorScheme: 'dark' as const, reducedMotion: 'reduce' as const, baseURL,
     storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [
       { name: 'go.langue.v1', value: JSON.stringify(cfg.langue) }, ...(consent ? [{ name: 'go.consentement.v1', value: 'refuse' }] : []),
@@ -234,12 +236,12 @@ for (const cfg of CONFIGS) {
       await expect(page.locator('.coach-intro')).toBeVisible();
       await cap('04-partie-debut');
       await jouer(page, 'E5');
-      await expect(boutonPasser(page)).toBeEnabled({ timeout: 15_000 });
+      await expect(boutonPasser(page)).toBeEnabled({ timeout: 30_000 });
       for (const c of ['C3', 'G7', 'C7', 'G3']) {
         const avant = await plateau(page).locator('g[data-pierre]').count();
         await jouer(page, c);
         if ((await plateau(page).locator('g[data-pierre]').count()) === avant) continue;
-        await expect(boutonPasser(page)).toBeEnabled({ timeout: 15_000 });
+        await expect(boutonPasser(page)).toBeEnabled({ timeout: 30_000 });
       }
       await cap('05-partie-milieu');
       await jusquAuScore(page, () => cap('06-comptage'));

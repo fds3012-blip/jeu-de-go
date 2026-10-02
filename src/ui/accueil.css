@@ -170,7 +170,8 @@
 
 /* Paliers : trois lignes de trois vignettes rondes. */
 .paliers { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 0; }
-.palier h3 { margin: 0; font-size: var(--fs-legende); color: var(--muted); font-weight: var(--fw-bold); text-transform: uppercase; letter-spacing: .06em; }
+/* Audit du 02/10 : plus de majuscules d'étiquette (direction v2, § 7) ; un titre court en bas de casse, en brume. */
+.palier h3 { margin: 0 0 2px; font-size: var(--fs-s); color: var(--muted); font-weight: var(--fw-bold); }
 .paliers .carrousel { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin: 0; padding: 0; overflow: visible; }
 .paliers .carte { width: 100%; min-height: 44px; padding: 10px 2px 4px; gap: 0; }
 .vignette { position: relative; display: inline-block; margin-bottom: 4px; line-height: 0; }
