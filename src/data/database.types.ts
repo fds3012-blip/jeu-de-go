@@ -402,6 +402,48 @@ export type Database = {
           },
         ]
       }
+      parties_perso: {
+        Row: {
+          adversaire: string | null
+          cle: string
+          cree_le: string
+          id: string
+          joue_le: string
+          joueur: number | null
+          mode: string
+          resultat: string | null
+          sgf: string
+          taille: number
+          user_id: string
+        }
+        Insert: {
+          adversaire?: string | null
+          cle: string
+          cree_le?: string
+          id?: string
+          joue_le: string
+          joueur?: number | null
+          mode: string
+          resultat?: string | null
+          sgf: string
+          taille: number
+          user_id: string
+        }
+        Update: {
+          adversaire?: string | null
+          cle?: string
+          cree_le?: string
+          id?: string
+          joue_le?: string
+          joueur?: number | null
+          mode?: string
+          resultat?: string | null
+          sgf?: string
+          taille?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -680,6 +722,7 @@ export type Database = {
         }
         Returns: string
       }
+      enregistrer_parties_perso: { Args: { p_parties: Json }; Returns: string[] }
       exiger_compte_avec_pseudo: { Args: never; Returns: string }
       find_match: { Args: { p_size: number }; Returns: string }
       finish_game_by_score: {
