@@ -30,6 +30,7 @@ import { registerSW } from './registerSW';
 import { captureError, EVENTS, initAnalytics, track } from './data/analytics';
 import { choisirLangue, langue } from './content/i18n';
 import { ecouterInstallation } from './app/installation';
+import { LimiteErreur } from './app/LimiteErreur';
 
 // Langue de l'interface (#167) : `<html lang>` suit la langue choisie au chargement.
 choisirLangue(langue());
@@ -48,9 +49,12 @@ function erreurDeTest() {
 erreurDeTest();
 window.addEventListener('hashchange', erreurDeTest);
 
+// Filet de sécurité global (#325, point 4) : un bogue hors des écrans montre l'écran d'erreur, jamais une page blanche.
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <LimiteErreur origine="global">
+      <App />
+    </LimiteErreur>
   </StrictMode>
 );
 
@@ -62,6 +66,9 @@ apresPremierEcran(() => {
   prechargerEcrans();
 });
 // Morceau JS introuvable (nouvelle version déployée pendant que l'app était ouverte) : on recharge une fois.
+// Sinon (déjà rechargé il y a moins d'une minute : le morceau manque vraiment, ou hors ligne sans cache), l'erreur
+// remonte à la limite d'erreur, qui montre l'écran d'erreur ; on la signale à Sentry sous `chargement`.
 window.addEventListener('vite:preloadError', event => {
   if (rechargerPourNouvelleVersion()) event.preventDefault();
+  else captureError(event.payload, { categorie: 'chargement', origine: 'prechargement' });
 });
