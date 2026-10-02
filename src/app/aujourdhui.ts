@@ -30,6 +30,12 @@ export interface ContexteDuJour {
 /** Ordre des tuiles de l'accueil, et laquelle est mise en avant. */
 export function ordreDuJour(c: ContexteDuJour): TuileDuJour[] {
   const tuiles: TuileDuJour[] = [];
+  if (c.premier) {
+    // Premier lancement : l'ordre d'origine (Go du jour, puis leçon), sans défi ni mise en avant.
+    if (c.goDuJour !== null) tuiles.push({ genre: 'goDuJour', enAvant: false });
+    if (c.lecon) tuiles.push({ genre: 'lecon', enAvant: false });
+    return tuiles;
+  }
   if (c.defis > 0) tuiles.push({ genre: 'defi', enAvant: true });
   const go = c.goDuJour !== null;
   if (go && c.goDuJour === 'aFaire') tuiles.push({ genre: 'goDuJour', enAvant: true });

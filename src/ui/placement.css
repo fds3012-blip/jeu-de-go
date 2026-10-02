@@ -10,6 +10,27 @@
 .placement-tete { margin-left: 0; }
 .placement-passer { flex: none; color: var(--muted); margin-right: -12px; }
 
+/* Repères d'étape : trois traits, ceux déjà joués pleins (jade). */
+.placement-etape { display: flex; align-items: center; gap: 8px; }
+.placement-reperes { display: inline-flex; gap: 3px; }
+.placement-reperes i { display: block; width: 14px; height: 4px; border-radius: 2px; background: color-mix(in srgb, var(--text) 22%, transparent); }
+.placement-reperes i.fait { background: var(--accent-trait); }
+/* Petit écran : la consigne de Mochi reste courte et le plateau garde sa place. */
+.placement .bubble p { font-size: var(--fs-corps-s); line-height: 1.4; padding: 8px 12px; }
+.placement .bubble { margin-bottom: 8px; }
+
+/* Échelle de kyu : une piste de 25 kyu (gauche) à 1 kyu (droite), ta pierre et le sceau de l'adversaire conseillé. */
+.placement-echelle { margin: var(--space-2) var(--space-3) 0; }
+.placement-piste { position: relative; height: 34px; margin: 0 14px; }
+.placement-piste::before { content: ''; position: absolute; left: -14px; right: -14px; top: 50%; height: 3px; margin-top: -1.5px; border-radius: 2px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--muted) 35%, transparent), var(--recompense)); }
+.placement-point { position: absolute; top: 50%; transform: translate(-50%, -50%); display: grid; place-items: center; line-height: 1; }
+.placement-point.adv { opacity: .9; }
+.placement-point.toi b { display: inline-block; padding: 5px 9px; border-radius: var(--radius-pill); background: var(--text); color: var(--bg);
+  font-family: var(--font-titre); font-size: var(--fs-legende); font-weight: var(--fw-titre); box-shadow: 0 2px 6px rgba(0, 0, 0, .3); }
+.placement-point.toi { z-index: 1; }
+.placement-bornes { display: flex; justify-content: space-between; margin-top: 2px; color: var(--muted); font-size: var(--fs-legende); }
+
 /* Résultat : une phrase forte, l'explication du kyu, l'adversaire conseillé, une seule action. */
 .placement-fin { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-6) 0 var(--space-4); text-align: center; }
 .placement-fin h2 { margin: 0; font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: var(--fs-3xl); line-height: 1.1; text-wrap: balance; }

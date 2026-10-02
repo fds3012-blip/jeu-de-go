@@ -90,7 +90,7 @@ export const fr = {
   // Accueil v3 : premier lancement épuré. Mochi fait la promesse en une phrase ; l'adversaire est nommé sans son rang.
   'accueil.promesse': 'Apprends le go en jouant : je t’explique chaque coup.',
   'accueil.premierAdversaire': 'ton premier adversaire',
-  'accueil.contre': '{role} · {taille} × {taille}',
+  'accueil.contre': '{role} · {taille}\u00A0×\u00A0{taille}',
   'accueil.aujourdhui': 'Aujourd’hui',
   'accueil.leconSuivante': 'Leçon suivante',
   'accueil.bulle.lecons': { one: 'Bravo pour ta première leçon ! On passe à une vraie partie ?', other: 'Bravo pour tes {n} leçons ! On passe à une vraie partie ?' },
@@ -880,6 +880,10 @@ export const fr = {
   'placement.kyu': 'Tu es environ {kyu} kyu.',
   'placement.kyuExplique': 'Le kyu est un niveau du go : on commence vers 30 kyu, et plus le nombre est petit, plus on est fort.',
   'placement.adversaire': '{nom} ({rang}) joue à peu près à ta hauteur.',
+  // Échelle de kyu sous le résultat (accueil v3) : bornes et repère « Toi ».
+  'placement.toi': 'Toi',
+  'placement.kyuDebutant': '25 kyu, débutant',
+  'placement.kyuFort': '1 kyu, fort',
   'placement.jouerContre': 'Joue contre {nom}',
   'placement.chapitre': 'Leçons conseillées : {titre}',
   'placement.basesTitre': 'On commence par les bases',
