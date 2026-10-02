@@ -7,7 +7,8 @@
 /* La leçon remplace la réserve de bas de page du bouton flottant : son bouton est dans la colonne. */
 .app:has(.lecteur-lecon) { padding-bottom: calc(var(--nav-h) + var(--space-2) + env(safe-area-inset-bottom, 0px)); }
 .lecteur-lecon { --mochi: 72px; display: flex; flex-direction: column; gap: var(--space-2);
-  min-height: calc(100dvh - var(--space-2) - var(--nav-h) - var(--space-2) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); }
+  /* Hauteur définie (pas un minimum) : c'est elle qui fait rétrécir le plateau sur un écran bas. */
+  height: calc(100dvh - var(--space-2) - var(--nav-h) - var(--space-2) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); }
 .lecteur-lecon:has(.verdict) { padding-bottom: 0; }
 @media (min-height: 760px) { .lecteur-lecon { --mochi: 96px; } }
 /* Écran étroit (320 px) : les points se serrent, le titre reste lisible. */
@@ -17,10 +18,12 @@
 .lecteur-lecon .lecteur-tete { margin-bottom: 0; }
 .lecteur-lecon .lecteur-titre { flex: 1; min-width: 0; margin: 0; font-size: var(--fs-m); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 8px; }
 .lecteur-lecon .lecteur-titre .sceau { flex: none; }
+.lecteur-lecon .lecteur-titre span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 
 /* Le plateau : carré de côté min(largeur, hauteur libre) grâce à une requête de conteneur. Plancher de 200 px : en dessous,
    la page défile. Plafond : sa largeur (la colonne, gouttières déduites), pour que la place en trop aille à Mochi, pas au vide. */
-.lecteur-lecon > .lecteur-plateau { flex: 1 1 0; min-height: 200px; max-height: calc(min(100vw, var(--largeur-max)) - 2 * var(--gouttiere) + 6px);
+.lecteur-lecon { --plateau-max: calc(min(100vw, var(--largeur-max)) - 2 * var(--gouttiere) + 6px); }
+.lecteur-lecon > .lecteur-plateau { flex: 0 1 var(--plateau-max); min-height: 200px; max-height: var(--plateau-max);
   container-type: size; display: flex; justify-content: center; align-items: flex-start; }
 .plateau-cadre { position: relative; width: min(100cqw, calc(100cqh - 6px)); max-width: 100%; }
 .plateau-cadre .board-wrap { width: 100%; }

@@ -186,7 +186,7 @@ export function LessonPlayer({ lesson, start, confirmTouch, progress = {}, celeb
     <div className="lecteur lecteur-lecon" data-moment={moment}>
       <div className="lecteur-tete">
         <Retour label={t('lecon.retourChemin')} onClick={onExit} />
-        <h2 className="lecteur-titre"><SceauLecon id={lesson.id} taille={24} />{fr(lesson.title)}</h2>
+        <h2 className="lecteur-titre"><SceauLecon id={lesson.id} taille={24} /><span>{fr(lesson.title)}</span></h2>
         <Etapes total={lesson.steps.length} faites={faites} />
       </div>
       {/* Zone souple : le plateau prend la place qui reste entre la barre et Mochi (iPhone SE compris). */}
