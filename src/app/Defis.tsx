@@ -23,6 +23,7 @@ import { EVENTS, track } from '../data/analytics';
 import { useOnline } from './hooks';
 import { phraseEtat, phraseIssue, resumeDefi, vueDefi } from './defiAmi';
 import { depuisDefi } from './historique';
+import { adversaireDe, lirePseudos, type Pseudos } from '../data/pseudos';
 import { libelleCoup } from './partie';
 import { Revue } from './Revue';
 import { LierEmail } from './Account';
@@ -87,14 +88,20 @@ interface EcranProps {
 export function DefisEcran({ db, userId, pseudo = null, onPartie }: EcranProps) {
   const online = useOnline();
   const [creation, setCreation] = useState<{ etat: 'repos' } | { etat: 'cours' } | { etat: 'erreur'; message: string } | { etat: 'pret'; lien: string; partage: Partage }>({ etat: 'repos' });
-  const [liste, setListe] = useState<{ etat: 'chargement' } | { etat: 'erreur' } | { etat: 'pret'; defis: EtatDefi[] }>({ etat: 'chargement' });
+  const [liste, setListe] = useState<{ etat: 'chargement' } | { etat: 'erreur' } | { etat: 'pret'; defis: EtatDefi[]; pseudos: Pseudos }>({ etat: 'chargement' });
   const [essai, setEssai] = useState(0);
+  // #400 : pseudos des amis, gardés d'une lecture à l'autre (un nouveau défi ne relit que le nouvel ami).
+  const pseudos = useRef<Pseudos>(new Map());
 
   useEffect(() => {
-    if (!db || !userId || !online) { setListe({ etat: 'pret', defis: [] }); return; }
+    if (!db || !userId || !online) { setListe({ etat: 'pret', defis: [], pseudos: pseudos.current }); return; }
     let vivant = true;
     setListe({ etat: 'chargement' });
-    mesDefis(db, userId).then(r => { if (vivant) setListe(r.ok ? { etat: 'pret', defis: r.value } : { etat: 'erreur' }); });
+    mesDefis(db, userId).then(async r => {
+      // Une seule lecture des profils pour toute la liste, avant d'afficher : le nom arrive avec la ligne.
+      if (r.ok) await lirePseudos(db, r.value.map(d => adversaireDe(d.partie, userId)), pseudos.current);
+      if (vivant) setListe(r.ok ? { etat: 'pret', defis: r.value, pseudos: pseudos.current } : { etat: 'erreur' });
+    });
     return () => { vivant = false; };
   }, [db, userId, online, essai]);
 
@@ -153,12 +160,19 @@ export function DefisEcran({ db, userId, pseudo = null, onPartie }: EcranProps) 
           <h2 id="defis-liste-titre">{t('defi.tesParties')}</h2>
           <ul>
             {vues.map(({ d, v }) => {
-              const r = resumeDefi(v);
+              // #400 : le pseudo de l'ami (« Ton ami » s'il n'en a pas) ; « Partie du… » tant que le lien n'est pas ouvert.
+              const ami = userId ? adversaireDe(d.partie, userId) : null;
+              const pseudo = ami && liste.etat === 'pret' ? liste.pseudos.get(ami) ?? null : null;
+              const nom = ami ? pseudo || t('defi.adversaire') : null;
+              const r = resumeDefi(v, pseudo);
+              const date = dateCourte(d.defi.cree_le);
               return (
                 <li key={d.defi.partie_id}>
                   <button type="button" className={`defi-ligne${r.aMoi ? ' a-moi' : ''}`} onClick={() => onPartie(d.defi.partie_id)}>
                     <span className="defi-ligne-texte">
-                      <b>{t('defi.liste.contre', { date: dateCourte(d.defi.cree_le) })}</b>
+                      {nom
+                        ? <span className="defi-ligne-haut"><b className="defi-ligne-nom">{nom}</b><span className="defi-ligne-date">{date}</span></span>
+                        : <b>{t('defi.liste.contre', { date })}</b>}
                       <small>{r.etat}</small>
                     </span>
                     {r.aMoi && <span className="defi-point" aria-hidden="true" />}
@@ -446,7 +460,7 @@ export function DefiPartie({ db, partieId, userId, anonyme, pseudo = null, confi
         )}
         {v.phase === 'fini' && (
           <div className="defi-fin">
-            <p className="defi-fin-titre" role="status">{fr(phraseIssue(v.issue))}</p>
+            <p className="defi-fin-titre" role="status">{fr(phraseIssue(v.issue, nomAmi))}</p>
             <button type="button" className="btn primary defis-cta" onClick={onAutre}>{t('defi.autre')}</button>
             {revue && <button type="button" className="lien" onClick={() => { setEnRevue(true); window.scrollTo?.({ top: 0 }); }}>{t('fin.revoir')}</button>}
             <button type="button" className="lien" onClick={onRetour}>{t('defi.retourAccueil')}</button>

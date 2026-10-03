@@ -107,7 +107,7 @@ test('deux comptes deviennent amis, puis l’un défie l’autre depuis « Mes a
   await capture(a.page, 'amis-liste-390-clair');
   await a.page.getByRole('navigation').getByRole('button', { name: /^Jouer/ }).click();
   await a.page.getByTestId('lien-defi').click();
-  await a.page.getByRole('button', { name: /Partie du/ }).click();
+  await a.page.getByRole('button', { name: /Bruno/ }).first().click();
   await expect(a.page.getByText('Bruno te défie ! Tu as les pierres noires : à toi de commencer.')).toBeVisible();
   await jouer(a.page, 'E5');
   await expect(pierres(a.page, 'noir')).toHaveCount(1);

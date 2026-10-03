@@ -13,6 +13,7 @@ import {
   portraitDe, type PartieHistorique,
 } from './historique';
 import { mesDefis } from '../data/defi';
+import { adversaireDe, lirePseudos } from '../data/pseudos';
 import type { Db } from '../data/supabase';
 import { Portrait, PortraitMochi } from '../ui/Portrait';
 import { Reflexion } from '../ui/Reflexion';
@@ -87,9 +88,18 @@ export function MesParties({ onRetour, onJouer, onImporter, db = null, userId, c
       void m.synchroniser(db, userId).catch(() => undefined);
       return r;
     });
-    Promise.all([mesDefis(db, userId), perso]).then(([d, p]) => {
+    // #400 : les pseudos des amis, en une seule lecture pour tous les défis, avant d'afficher (pas de « Ton ami » qui clignote).
+    const defis = mesDefis(db, userId).then(async d => {
+      const pseudos = d.ok ? await lirePseudos(db, d.value.map(x => adversaireDe(x.partie, userId))) : new Map<string, string | null>();
+      return { d, pseudos };
+    });
+    Promise.all([defis, perso]).then(([{ d, pseudos }, p]) => {
       if (!vivant) return;
-      if (d.ok) setDefis(d.value.flatMap(x => { const g = depuisDefi(x.partie, userId, x.resultat); return g ? [g] : []; }));
+      if (d.ok) setDefis(d.value.flatMap(x => {
+        const ami = adversaireDe(x.partie, userId);
+        const g = depuisDefi(x.partie, userId, x.resultat, ami ? pseudos.get(ami) : null);
+        return g ? [g] : [];
+      }));
       if (p.ok) setDuCompte(p.value);
       setEtat(d.ok && p.ok ? 'pret' : 'erreur');
     }, () => { if (vivant) setEtat('erreur'); });

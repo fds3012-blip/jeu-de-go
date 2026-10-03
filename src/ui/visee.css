@@ -1,0 +1,7 @@
+/* Plateau serré (#400) : 13 × 13 et plus dans un problème ou le Go du jour. Chargé avec l'écran des problèmes.
+   À 320 × 568, la règle générale (apprendre.css) garde 300 px de hauteur pour la tête, Mochi et la barre : le plateau
+   n'y fait que 268 px et les lignes 19 px l'une de l'autre. La consigne tient avec 280 px : le 13 × 13 prend toute la
+   largeur de la colonne (288 px, 20,4 px entre deux lignes). Le 9 × 9 garde sa taille. */
+@media (max-height: 640px) {
+  .lecteur[data-serre]:has(> .lecteur-mochi) > .board-wrap { width: min(100%, calc(100dvh - 280px)); }
+}

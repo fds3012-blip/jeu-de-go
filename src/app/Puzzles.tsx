@@ -9,6 +9,8 @@ import {
 } from '../data/puzzles';
 import { Board } from '../ui/Board';
 import { MiniGoban } from '../ui/MiniGoban';
+import { Visee } from '../ui/Visee';
+import { estSerre } from '../ui/plateauSerre';
 import { centreVertical } from '../ui/cadrage';
 import { C, M, viewBoxOf } from '../ui/boardArt';
 import { ParoleMochi, Retour, Verdict } from '../ui/Lecteur';
@@ -829,7 +831,7 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
   }
 
   return (
-    <div className="lecteur" data-probleme={puzzle.id}>
+    <div className="lecteur" data-probleme={puzzle.id} data-serre={estSerre(puzzle.size) || undefined}>
       <div className="lecteur-tete">
         <Retour label={retour ?? tr('pb.retour')} onClick={onExit} />
         <div className="lecteur-nom">
@@ -845,7 +847,9 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
       {duJour?.defiChange && <p className="notice" role="status">{fr(tr('pb.defiChange'))}</p>}
       {duJour?.archive !== undefined && <p className="notice" role="status">{fr(tr('pb.archive', { numero: duJour.archive }))}</p>}
       <Board size={puzzle.size} board={board} toPlay={puzzle.toPlay} interactive={!solvedNow && (!replay || replayDone) && (!refut || refut.vue)}
-        stonesTappable={!!refut || !!replay || !!apercu} confirmTouch={confirmTouch} onPlay={onPlay} shake={shake}
+        stonesTappable={!!refut || !!replay || !!apercu} onPlay={onPlay} shake={shake}
+        // #400 : en 13 × 13 et plus, une touche ratée coûterait l'essai : confirmation au doigt toujours, et visée.
+        confirmTouch={confirmTouch || estSerre(puzzle.size)} surFantome={estSerre(puzzle.size) ? q => <Visee p={q} size={puzzle.size} /> : undefined}
         marks={{
           targets: start.marked,
           last: refut ? (refut.vue ? refut.r.reponse : refut.r.faux) : apercu ? (apercu.vue && apercu.reponse !== null ? apercu.reponse : apercu.faux) : lastMove,

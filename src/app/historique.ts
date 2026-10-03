@@ -122,14 +122,17 @@ export interface LigneDefi {
   black_id: string | null; white_id: string | null; status: string; result: string | null; updated_at: string;
 }
 
-/** Défi par lien terminé → entrée d'historique, du point de vue de `userId`. `null` si la partie n'est pas lisible. */
-export function depuisDefi(g: LigneDefi, userId: string, resultat: string | null = g.result): PartieHistorique | null {
+/**
+ * Défi par lien terminé → entrée d'historique, du point de vue de `userId`. `null` si la partie n'est pas lisible.
+ * `adversaire` : pseudo de l'ami (#400), lu à part ; sans pseudo, la liste dit « Ton ami ».
+ */
+export function depuisDefi(g: LigneDefi, userId: string, resultat: string | null = g.result, adversaire?: string | null): PartieHistorique | null {
   const joueur: Color | null = g.black_id === userId ? 1 : g.white_id === userId ? 2 : null;
   if (!joueur || !(g.status === 'finished' || resultat)) return null;
   const rec = recordFromOnlineGame({ size: g.size, komi: Number(g.komi), rules: g.rules === 'chinese' ? 'chinese' : 'japanese', handicap: g.handicap, moves: g.moves });
   if (!rec) return null;
   const sgf = writeSgf({ ...rec, handicap: g.handicap || undefined, result: resultat ?? undefined });
-  return lireEntree({ id: `defi:${g.id}`, date: g.updated_at, sgf, mode: 'defi', taille: g.size, joueur, resultat: resultat ?? undefined });
+  return lireEntree({ id: `defi:${g.id}`, date: g.updated_at, sgf, mode: 'defi', taille: g.size, joueur, resultat: resultat ?? undefined, adversaire: adversaire ?? undefined });
 }
 
 /** Nombre de parties affichées dans « Mes parties » quand le serveur en ajoute (le serveur en garde 500 au plus). */

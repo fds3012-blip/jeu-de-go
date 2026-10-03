@@ -63,7 +63,8 @@ test('défier un ami : compte du créateur, lien avec son pseudo, l’ami crée 
   await expect(b.getByText(/Au tour de Florian\. Il lui reste [23]\s+jours/)).toBeVisible();
   await expect(b.getByTestId('lier-email')).toHaveCount(0); // plus d'inscription après coup : il a déjà un compte
 
-  // Téléphone 1 : le créateur retrouve la partie, c'est à lui de jouer.
+  // Téléphone 1 : le créateur retrouve la partie, c'est à lui de jouer. Sa liste a été lue avant l'arrivée de l'ami :
+  // la ligne dit encore « Partie du… » (#400 : le pseudo de l'ami s'y affiche à la lecture suivante, voir noms-adversaires.spec).
   await a.getByRole('button', { name: /Partie du/ }).click();
   await expect(a.getByText(/À toi de jouer\. Il te reste [23]\s+jours/)).toBeVisible();
   await expect(a.locator('.joueur').first()).toContainText('Ami_du_go');
@@ -111,7 +112,8 @@ test('ancienne partie sans compte : l’ami lie son e-mail par code, choisit son
   await page.getByRole('button', { name: 'C’est mon pseudo' }).click();
   // Compte complet, même identifiant : la liste des défis s'ouvre, la partie en cours y est, et il joue.
   await expect(page.getByRole('button', { name: 'Envoyer un lien' })).toBeVisible();
-  await page.getByRole('button', { name: /Partie du/ }).click();
+  // #400 : la ligne nomme l'adversaire ; le créateur de cette ancienne partie n'a pas de pseudo : « Ton ami ».
+  await page.getByRole('button', { name: /^Ton ami/ }).click();
   await expect(page.getByText(/À toi de jouer/)).toBeVisible();
   await expect(page.getByTestId('lier-email')).toHaveCount(0);
   await jouer(page, 'C3');

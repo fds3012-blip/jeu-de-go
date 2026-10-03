@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 /** Espaces insécables (« 2\u00a0jours ») lues comme des espaces. */
 const sp = (s: string) => s.replace(/\u00a0/g, ' ');
-import { aJouer, jetonDeLAdresse, lireResultat, phraseEtat, resumeDefi, texteDelai, vueDefi } from './defiAmi';
+import { aJouer, jetonDeLAdresse, lireResultat, phraseEtat, phraseIssue, resumeDefi, texteDelai, vueDefi } from './defiAmi';
 import type { Game } from '../data/games';
 import type { Defi } from '../data/defi';
 
@@ -72,6 +72,19 @@ describe('à qui de jouer', () => {
     const p = partie({ moves: 'eett', counting: true, dead_stones: 'ee', dead_proposed_by: BLANC });
     expect(vueDefi(p, defi(), NOIR, T0)).toMatchObject({ phase: 'comptage', proposeParAutre: true, proposeParMoi: false, mortes: [40] });
     expect(vueDefi(p, defi(), BLANC, T0)).toMatchObject({ proposeParMoi: true });
+  });
+
+  it('la ligne de la liste nomme l’ami quand son pseudo est connu (#400)', () => {
+    const aLui = vueDefi(partie({ moves: 'ee' }), defi(), NOIR, T0);
+    expect(resumeDefi(aLui, 'Lea_du_go')).toEqual({ etat: 'Au tour de Lea_du_go', aMoi: false });
+    expect(resumeDefi(aLui)).toEqual({ etat: 'Au tour de ton ami', aMoi: false });
+    // Ami qui a abandonné : « Tu as gagné : Lea_du_go a abandonné. » ; défaite aux points, l'ami est le sujet.
+    const abandon = vueDefi(partie({ moves: 'ee', status: 'finished', result: 'W+R' }), defi(), BLANC, T0);
+    expect(resumeDefi(abandon, 'Lea_du_go').etat).toBe('Tu as gagné : Lea_du_go a abandonné.');
+    expect(resumeDefi(abandon).etat).toBe('Tu as gagné : ton ami a abandonné.');
+    const points = vueDefi(partie({ moves: 'ee', status: 'finished', result: 'B+3.5' }), defi(), BLANC, T0);
+    expect(phraseIssue(points.issue, 'Lea_du_go')).toBe('Lea_du_go a gagné de 3,5 points.');
+    expect(phraseEtat(points, 'Lea_du_go')).toBe('Lea_du_go a gagné de 3,5 points.');
   });
 
   it('compte les défis à jouer', () => {

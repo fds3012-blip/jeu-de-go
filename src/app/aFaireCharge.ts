@@ -1,6 +1,7 @@
 // Notifications dans l'app (#367) : tout ce qui calcule « À faire », chargé à la demande, après le premier écran
 // (budget du JS initial, scripts/budget-bundle.mjs). Le crochet léger qui l'appelle : src/app/useAFaire.ts.
 import { mesDefis } from '../data/defi';
+import { lirePseudos } from '../data/pseudos';
 import { notificationsEnAttente, partiesNonVues } from '../data/notifications';
 import type { Db } from '../data/supabase';
 import type { DefiEnAttente } from './aFaire';
@@ -20,11 +21,7 @@ export async function chargerDefis(db: Db, userId: string, pseudos: Map<string, 
   if (!r.ok) return [];
   const nonVues = n.ok ? partiesNonVues(n.value) : null;
   const attente = defisEnAttente(r.value, userId);
-  const inconnus = [...new Set(attente.flatMap(x => x.adversaireId && !pseudos.has(x.adversaireId) ? [x.adversaireId] : []))];
-  if (inconnus.length) {
-    const p = await db.from('profiles').select('id, username').in('id', inconnus);
-    for (const id of inconnus) pseudos.set(id, (p.data ?? []).find(x => x.id === id)?.username ?? null);
-  }
+  await lirePseudos(db, attente.map(x => x.adversaireId), pseudos);
   return attente.map(({ adversaireId, ...x }) => ({
     ...x,
     adversaire: adversaireId ? pseudos.get(adversaireId) ?? null : null,
