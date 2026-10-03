@@ -18,7 +18,7 @@ export type CibleAFaire =
   | { ecran: 'defi'; partieId: string }
   | { ecran: 'goDuJour' }
   | { ecran: 'lecon'; id: string }
-  // #359 : la liste des amis (demandes reçues). Tant que l'écran n'existe pas, l'app ouvre le Profil.
+  // #359 : « Mes amis » (demandes reçues), sous-vue du Profil.
   | { ecran: 'amis' };
 
 export type GenreAFaire = 'defi' | 'serie' | 'goDuJour' | 'lecon' | 'ami';
@@ -65,7 +65,7 @@ export interface DonneesAFaire {
   goDuJour: { numero: number; titre: string } | null;
   /** Première leçon commencée et pas finie. */
   leconEnCours: { id: string; titre: string } | null;
-  /** #359 : demandes d'ami reçues. Absent tant que les amis ne sont pas branchés. */
+  /** #359 : demandes d'ami reçues (`mes_amis()`, lues par App.tsx). */
   demandesAmis?: number;
 }
 

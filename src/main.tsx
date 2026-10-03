@@ -21,6 +21,7 @@ import './ui/niveau.css';
 import './ui/placement.css';
 import './ui/defis.css';
 import './ui/compte.css';
+import './ui/amis.css';
 import { App } from './app/App';
 import { apresPremierEcran, prechargerEcrans, prechargerPartie, rechargerPourNouvelleVersion } from './app/ecrans';
 // Polices auto-hébergées (@fontsource, sous-ensemble latin) : avant les styles qui les utilisent.
