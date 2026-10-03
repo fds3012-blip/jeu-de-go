@@ -71,6 +71,7 @@
 .connexion-incident { display: grid; gap: 8px; padding: 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface-2, var(--bg)); }
 .connexion-incident p { margin: 0; text-wrap: pretty; }
 .connexion-incident .attention { color: var(--danger-texte); }
+.connexion-incident .btn.primary { width: 100%; min-height: 48px; font-size: var(--fs-m); }
 /* Mon compte : moyens de connexion (#411). */
 .moyens { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; }
 .moyens li { display: flex; align-items: center; gap: 10px; min-height: 44px; }
@@ -78,7 +79,7 @@
 .moyens .moyen-nom small { display: block; color: var(--muted); }
 .moyens .lien { min-height: 44px; }
 .moyens-info { margin: 8px 0 0; }
-.moyens-carte { margin-top: var(--space-3); }
+.card + .card.moyens-carte, .card.moyens-carte { margin-top: var(--space-3); border-radius: var(--radius); }
 .moyens-carte .connexion-info { margin: 6px 0 0; }
 .connexion-ou { display: flex; align-items: center; gap: 10px; margin: 8px 0 2px; }
 .connexion-ou::before, .connexion-ou::after { content: ''; flex: 1; height: 1px; background: var(--line); }

@@ -226,11 +226,13 @@ test('identité déjà reliée à un autre compte : avertissement, « Se connect
 
   await encadre.getByRole('button', { name: 'Se connecter à ce compte' }).click();
   // Compte existant, pseudo déjà choisi : pas d'écran de pseudo ; la partie sans compte est rattachée ; le défi est rejoint.
+  // (On attend le serveur d'abord : le petit plateau de l'aperçu du défi compte aussi comme un plateau.)
+  await expect.poll(() => serveur.autorisations).toEqual(['lier:google', 'google']);
+  await expect.poll(() => serveur.defis[0].invite_id).toBe(florian.id);
+  await expect.poll(() => serveur.games.find(x => x.id === enCours)?.black_id).toBe(florian.id);
+  await expect(page.getByTestId('defi-apercu')).toHaveCount(0);
   await expect(plateau(page)).toBeVisible();
   await expect(page.getByTestId('pseudo-obligatoire')).toHaveCount(0);
-  expect(serveur.autorisations).toEqual(['lier:google', 'google']);
-  await expect.poll(() => serveur.games.find(x => x.id === enCours)?.black_id).toBe(florian.id);
-  await expect.poll(() => serveur.defis[0].invite_id).toBe(florian.id);
   expect(erreurs).toEqual([]);
   await ctx.close();
 });

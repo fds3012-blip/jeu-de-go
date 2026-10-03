@@ -10,7 +10,7 @@
 // #411 : Google, Apple, Facebook au-dessus du code, dans le même ordre sur tous les écrans qui montent ce composant
 // (« Crée ton compte », « J'ai déjà un compte », arrivée par un lien de défi). Session sans compte : `linkIdentity` garde
 // son identifiant (parties et défis) ; si la liaison est fermée dans Supabase, connexion classique + rattachement (#355).
-import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import type { Db } from '../data/supabase';
 import { LONGUEUR_CODE, codeComplet, connexionSociale, envoyerCodeConnexion, lierSociale, nettoyerCode, sendMagicLink, verifierCode, type EchecEnvoi } from '../data/account';
 import { garderCodeRattachement, preparerRattachement } from '../data/rattachement';
@@ -62,6 +62,10 @@ export function ConnexionCode({ db, mode = 'connexion', envoyer, moment = 'profi
   useEffect(() => { if (annonce?.incident === 'email_pris') onSens?.('connecter'); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   /** Identité déjà reliée à un autre compte du jeu : encadré « Se connecter à ce compte ». */
   const [dejaLie, setDejaLie] = useState<Fournisseur | null>(annonce?.incident === 'deja_lie' ? annonce.fournisseur : null);
+  // L'encadré « déjà relié » s'ouvre au retour du fournisseur, parfois sous la ligne de flottaison : on l'amène au centre.
+  const versEncadre = useCallback((el: HTMLDivElement | null) => {
+    el?.scrollIntoView?.({ block: 'center', behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  }, []);
   /** Voie du dernier code envoyé : le renvoi et la vérification suivent la même. */
   const [voie, setVoie] = useState<Voie>(voieEnvoi('creer', anonyme));
   /** Vrai si l'adresse avait déjà un compte et que l'écran est passé tout seul en connexion. */
@@ -215,7 +219,7 @@ export function ConnexionCode({ db, mode = 'connexion', envoyer, moment = 'profi
 
   // #411 : identité déjà reliée à un autre compte du jeu. Une seule action : s'y connecter, en sachant ce qui reste ici.
   const encadreDejaLie = dejaLie && (
-    <div className="connexion-incident" role="alert" data-testid="deja-lie">
+    <div ref={versEncadre} className="connexion-incident" role="alert" data-testid="deja-lie">
       <p className="small"><b>{fr(t('connexion.sociale.dejaLie', { nom: NOM_FOURNISSEUR[dejaLie] }))}</b></p>
       {anonyme && <p className="small attention">{fr(t('connexion.sociale.dejaLieEssai'))}</p>}
       <button type="button" className="btn primary" disabled={vers !== null} aria-busy={vers === dejaLie} onClick={() => { void social(dejaLie, true); }}>

@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties, type FormEvent } from 'react';
+import { useCallback, useEffect, useState, type CSSProperties, type FormEvent } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import type { Db } from '../data/supabase';
 import { chargerSupabase, useSupabase } from '../data/client';
@@ -145,6 +145,10 @@ function MoyensConnexion({ db, userId }: { db: Db; userId: string }) {
   const [retrait, setRetrait] = useState<string | null>(null);
   const [contexte] = useState(contexteActuel);
   const [actifs] = useState(() => fournisseursActifs());
+  // L'encadré « déjà relié » s'ouvre au retour du fournisseur, parfois sous la ligne de flottaison : on l'amène au centre.
+  const versEncadre = useCallback((el: HTMLDivElement | null) => {
+    el?.scrollIntoView?.({ block: 'center', behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  }, []);
 
   useEffect(() => {
     let vivant = true;
@@ -206,7 +210,7 @@ function MoyensConnexion({ db, userId }: { db: Db; userId: string }) {
       )}
       {info && <p className="small connexion-info" role="status">{info}</p>}
       {dejaLie ? (
-        <div className="connexion-incident" role="alert" data-testid="deja-lie" style={{ marginTop: 10 }}>
+        <div ref={versEncadre} className="connexion-incident" role="alert" data-testid="deja-lie" style={{ marginTop: 10 }}>
           <p className="small"><b>{fr(t('connexion.sociale.dejaLie', { nom: NOM_FOURNISSEUR[dejaLie] }))}</b></p>
           <p className="small attention">{fr(t('connexion.sociale.dejaLieAutre'))}</p>
           <button type="button" className="btn primary" disabled={vers !== null} aria-busy={vers === dejaLie} onClick={() => { void seConnecterA(dejaLie); }}>
