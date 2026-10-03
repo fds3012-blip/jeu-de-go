@@ -28,7 +28,7 @@ describe('carte d’identité du Profil', () => {
     expect(identite(null, 4)).toEqual({ initiale: null, nom: 'Invité', detail: 'Sans compte, tout reste sur ce téléphone.', serie: 4 });
   });
   it('avec un compte : initiale, pseudo, ce que le compte garde, et série ; jamais la cote (#214)', () => {
-    expect(identite({ pseudo: 'élodie_go', cote: 1520 }, 3)).toEqual({ initiale: 'É', nom: 'élodie_go', detail: 'Ta série et tes leçons sont gardées sur ton compte.', serie: 3 });
+    expect(identite({ pseudo: 'élodie_go', cote: 1520 }, 3)).toEqual({ initiale: 'É', nom: 'élodie_go', detail: 'Progression gardée sur ton compte.', serie: 3 });
   });
   it('compte sans pseudo : pierre à la place de l’initiale', () => {
     expect(identite({ pseudo: null, cote: 1500 }, 0)).toMatchObject({ initiale: null, nom: 'Sans pseudo' });

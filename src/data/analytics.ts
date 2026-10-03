@@ -100,6 +100,10 @@ export const EVENTS = {
   defiCree: 'defi_cree',
   defiOuvert: 'defi_ouvert',
   defiInscription: 'defi_inscription',
+  // Amis (#359) : deux joueurs deviennent amis (`comment` : `acceptation` d'une demande reçue, `croisee` quand ta demande
+  // rejoint la sienne), puis défi lancé depuis « Mes amis », sans lien. Jamais le pseudo ni la partie.
+  amiAjoute: 'ami_ajoute',
+  defiDepuisProfil: 'defi_depuis_profil',
   // Conseil de Mochi (#80) : phrase demandée (`modele`, `aucun` si rien de sûr), puis retour « utile / pas utile » (`utile`).
   conseilDemande: 'conseil_demande',
   conseilNote: 'conseil_note',

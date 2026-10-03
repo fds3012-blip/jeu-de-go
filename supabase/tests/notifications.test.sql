@@ -199,23 +199,24 @@ select pg_temp.egal(pg_temp.temps_reel_voit(:chloe, 'defis', 'partie_id', :'part
 select pg_temp.egal(pg_temp.temps_reel_voit(:bruno, 'defis', 'partie_id', :'partie'), true, 'defis : chez un joueur');
 
 -- 11. Amis : une demande prévient le destinataire (une seule notification pour plusieurs demandes) ; quand plus
---     aucune n'attend, elle est dépassée.
+--     aucune n'attend, elle est dépassée. Depuis #359, les amis s'écrivent par les fonctions serveur seulement
+--     (demander_ami, repondre_ami, retirer_ami : 20261002010100_amis.sql).
 set local role authenticated;
 select pg_temp.connecte(:bruno);
-insert into public.friendships (requester_id, addressee_id) values (:bruno, :denis);
+select public.demander_ami('Denis');
 select pg_temp.connecte(:chloe);
-insert into public.friendships (requester_id, addressee_id) values (:chloe, :denis);
+select public.demander_ami('Denis');
 reset role;
 select pg_temp.egal(pg_temp.en_attente(:denis), 'ami:-', 'Denis : demandes d''ami');
 select pg_temp.egal(pg_temp.en_attente(:bruno), 'fin:' || left(:'partie', 4), 'Bruno : pas de notification d''ami');
 set local role authenticated;
 select pg_temp.connecte(:denis);
-update public.friendships set status = 'accepted' where requester_id = :bruno;
+select public.repondre_ami('Bruno', true);
 reset role;
 select pg_temp.egal(pg_temp.en_attente(:denis), 'ami:-', 'une demande attend encore');
 set local role authenticated;
 select pg_temp.connecte(:denis);
-delete from public.friendships where requester_id = :chloe;
+select public.repondre_ami('Chloe', false);
 reset role;
 select pg_temp.egal(pg_temp.en_attente(:denis), '', 'plus aucune demande : dépassée');
 
