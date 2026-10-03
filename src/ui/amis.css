@@ -1,0 +1,101 @@
+/* « Mes amis » (#359), sous-vue du Profil. Tokens seulement (tokens.css) : les deux thèmes suivent sans règle de plus.
+   Un seul bouton en relief : « Ajouter » quand la liste est vide. Sinon, les actions des lignes sont des pastilles. */
+
+.amis { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-4); }
+.amis > * { min-width: 0; }
+
+/* ---------- État vide : trois pierres, une phrase, le champ, l'action principale ---------- */
+.amis-vide { display: grid; justify-items: center; gap: var(--space-2); text-align: center; padding: var(--space-4) var(--space-2) 0; }
+.amis-pierres { display: flex; }
+.amis-pierres .stone { width: 44px; height: 44px; }
+.amis-pierres .stone + .stone { margin-left: -8px; }
+.amis-pierres .stone:nth-child(2) { transform: translateY(-6px); }
+.amis-vide-titre { margin: var(--space-2) 0 0; font-family: var(--font-titre); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre);
+  font-size: var(--fs-xl); line-height: var(--lh-titre); }
+.amis-vide-texte { margin: 0; color: var(--muted); max-width: 26em; text-wrap: pretty; line-height: 1.45; }
+
+/* ---------- Ajouter un ami ---------- */
+.amis-ajout { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-2); margin: 0; }
+.amis-ajout-titre { margin: 0; font-weight: var(--fw-bold); }
+.amis-ajout-ligne { display: flex; gap: var(--space-2); }
+.amis-champ { flex: 1; min-width: 0; min-height: var(--cible-bouton); box-sizing: border-box; padding: 0 14px; border-radius: var(--radius-s);
+  border: 1.5px solid var(--line); background: var(--bg); color: var(--text); font: inherit; font-size: var(--fs-m); }
+.amis-champ::placeholder { color: var(--muted); opacity: 1; }
+.amis-champ:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; border-color: transparent; }
+.amis-champ[aria-invalid="true"] { border-color: var(--danger-texte); }
+.amis-ajouter { flex: none; box-shadow: inset 0 0 0 1.5px var(--line); }
+.amis-aide { margin: 0; color: var(--muted); line-height: 1.4; text-wrap: pretty; }
+.amis-aide.ok { color: var(--accent-texte); font-weight: var(--fw-medium); }
+.amis-aide.erreur { color: var(--danger-texte); font-weight: var(--fw-medium); }
+.amis-ajout-vide { margin-top: var(--space-2); }
+.btn.primary.amis-cta { width: 100%; min-height: var(--cible-cta); font-size: var(--fs-cta); margin-top: var(--space-2); }
+
+/* ---------- Groupes et lignes ---------- */
+.amis-groupe .lignes-titre { margin-top: 0; }
+.amis-liste { list-style: none; margin: 0; padding: 0; background: var(--surface); border-radius: var(--radius); overflow: hidden; }
+.ami + .ami { box-shadow: inset 0 1px 0 var(--line); }
+/* Les actions passent sous le pseudo quand la place manque (320 px, demande reçue) : le pseudo reste lisible. */
+.ami-ligne { display: flex; flex-wrap: wrap; align-items: center; gap: 4px var(--space-3); min-height: 60px; padding: 6px 6px 6px var(--space-4); }
+.ami-initiale { flex: none; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%;
+  background: var(--surface-2); font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: var(--fs-m); }
+.ami-texte { flex: 1 1 6em; min-width: 0; display: grid; gap: 1px; }
+.ami-texte b { font-weight: var(--fw-bold); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ami-texte small { color: var(--muted); font-size: var(--fs-s); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ami-actions { flex: none; margin-left: auto; display: inline-flex; align-items: center; gap: 2px; }
+.lien.ami-discret { color: var(--muted); font-weight: var(--fw-medium); padding: 0 10px; text-decoration: none; }
+
+/* Pastille d'action (Défier, Accepter) : 44 px, contour jade, jamais en relief. */
+.ami-pilule { display: inline-flex; align-items: center; gap: 6px; min-height: var(--cible-min); min-width: var(--cible-min);
+  padding: 0 14px 0 10px; border: 0; border-radius: var(--radius-pill); background: none; color: var(--accent-texte); font: inherit;
+  font-weight: var(--fw-bold); white-space: nowrap; box-shadow: inset 0 0 0 1.5px var(--accent-trait); }
+.ami-pilule.plein { padding: 0 16px; background: var(--accent); color: var(--on-accent); box-shadow: none; }
+.ami-pilule-pierres { display: inline-flex; }
+.ami-pilule-pierres .stone { width: 14px; height: 14px; }
+.ami-pilule-pierres .stone + .stone { margin-left: -4px; }
+.ami-pilule:disabled, .ami-retirer:disabled, .ami-discret:disabled { opacity: .45; }
+.ami-pilule[aria-busy="true"] { opacity: 1; }
+.ami-pilule:not(.plein):active { background: color-mix(in srgb, var(--accent) 14%, transparent); }
+.ami-pilule.plein:active { background: var(--accent-press); }
+@media (hover: hover) and (pointer: fine) { .ami-pilule:not(.plein):hover { background: color-mix(in srgb, var(--accent) 10%, transparent); } }
+
+/* Retirer : une croix discrète ; au premier toucher, « Retirer ? » à confirmer (4 s). */
+.ami-retirer { display: inline-grid; place-items: center; min-height: var(--cible-min); min-width: var(--cible-min); padding: 0 8px;
+  border: 0; border-radius: var(--radius-pill); background: none; color: var(--muted); font: inherit; font-size: var(--fs-s);
+  font-weight: var(--fw-bold); white-space: nowrap; }
+.ami-retirer svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.ami-retirer.arme { color: var(--danger-texte); box-shadow: inset 0 0 0 1.5px currentColor; }
+.ami-retirer:active { background: var(--surface-2); }
+
+.ami-erreur { margin: 0; padding: 0 var(--space-4) var(--space-2) calc(var(--space-4) + 36px + var(--space-3)); color: var(--danger-texte); }
+.amis-regle { margin: var(--space-2) var(--space-1) 0; line-height: 1.4; text-wrap: pretty; }
+
+/* Petits écrans : les pierres de « Défier » cèdent leur place au texte. */
+@media (max-width: 359px) {
+  .ami-ligne { gap: var(--space-2); padding-left: var(--space-3); }
+  .ami-initiale { width: 32px; height: 32px; }
+  .ami-pilule-pierres { display: none; }
+  .ami-pilule { padding: 0 12px; }
+  .ami-erreur { padding-left: var(--space-3); }
+}
+
+/* La ligne « Mes amis » du Profil : point jade quand une demande attend. */
+.ligne-valeur .amis-demandes { color: var(--accent-texte); font-weight: var(--fw-bold); display: inline-flex; align-items: center; gap: 6px; }
+.amis-point { width: 9px; height: 9px; border-radius: 50%; background: var(--accent-trait); flex: none; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .ami-retirer.arme { animation: ami-arme 160ms var(--ease) both; }
+  @keyframes ami-arme { from { opacity: .4; transform: scale(.94); } }
+}
+
+/* #359 : « Mes parties » et « Mes amis » sur une seule ligne, en deux moitiés de 48 px (le Profil tient sans défiler). */
+.ligne.ligne-double { padding: 0; gap: 0; align-items: stretch; }
+.ligne-demi { flex: 1 1 0; min-width: 0; min-height: var(--cible-bouton); display: flex; align-items: center; gap: 10px;
+  padding: 4px var(--space-3) 4px var(--space-4); background: none; border: 0; color: var(--text); text-align: left; font: inherit; }
+.ligne-demi + .ligne-demi { box-shadow: inset 1px 0 0 var(--line); }
+.ligne-demi:active { background: var(--surface-2); }
+.ligne-demi:focus-visible { outline-offset: -3px; }
+.ligne-demi-texte { flex: 1; min-width: 0; display: grid; }
+.ligne-demi-texte .ligne-libelle { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ligne-demi-valeur { color: var(--muted); font-size: var(--fs-xs); line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ligne-demi-valeur .amis-demandes { color: var(--accent-texte); font-weight: var(--fw-bold); display: inline-flex; align-items: center; gap: 5px; }
+@media (max-width: 359px) { .ligne-demi > .ligne-icone { display: none; } .ligne-demi { padding-left: var(--space-3); } }

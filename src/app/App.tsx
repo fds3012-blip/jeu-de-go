@@ -50,6 +50,7 @@ import { ESSAI_KEY, decider, etatCompte, lireEssai, noterFinDePartie, partiesTer
 import { compteVientDEtreCree, moyenConnexion, noterConnexionParGoogle } from './entonnoir';
 import { annoncerMessage, definirRetour, erreurRetour, messageRetour, prendreRetour } from './connexionGoogle';
 import { useAFaire } from './useAFaire';
+import { useDemandesAmis } from './demandesAmis';
 import type { ElementAFaire } from './aFaire';
 import { LimiteErreur } from './LimiteErreur';
 import { BandeauHorsLigne, InviteMiseAJour } from '../ui/Bandeaux';
@@ -147,7 +148,7 @@ type VueDefi = { vue: 'liste' } | { vue: 'arrivee'; jeton: string; inviteur: str
 
 /** Ce que le joueur voulait faire quand l'écran « Crée ton compte » s'est ouvert : repris dès que son compte est complet. */
 type Reprise = { quoi: 'ordi'; contre: OpponentId } | { quoi: 'deux' } | { quoi: 'guidee' } | { quoi: 'lecon'; id: string }
-  | { quoi: 'defis' } | { quoi: 'placement' } | { quoi: 'importer' } | { quoi: 'problemes' };
+  | { quoi: 'defis' } | { quoi: 'placement' } | { quoi: 'importer' } | { quoi: 'problemes' } | { quoi: 'amis' };
 
 export function App() {
   const [tab, setTab] = useState<Tab>(PAGE_CONFIDENTIALITE || (RETOUR_GOOGLE?.profil && !ECRAN_COMPTE_AU_RETOUR && !DEFI_AU_RETOUR) ? 'profil'
@@ -255,16 +256,17 @@ export function App() {
   // Notifications dans l'app (#367) : ce qui t'attend (défis où c'est ton tour, série, Go du jour, leçon en cours).
   // Calcul chargé après le premier écran (useAFaire.ts). Défis relus à chaque changement d'écran ; pas pendant une
   // partie (l'écran du défi suit déjà la sienne en temps réel). Rien au tout premier lancement, sauf un ami qui attend.
-  // #359 (amis) : ajouter ici `demandesAmis` (demandes reçues, lues par `mes_amis()`), la source existe déjà (aFaire.ts).
-  const { defis: defisEnAttente, elements: aFaire, pastilles } = useAFaire(supabase, session?.user.id,
-    `${tab}|${defi?.vue ?? ''}|${enPlacement}|${lessonId ?? ''}`, !playing && defi?.vue !== 'partie', {
-      premier: home.nouveau, serie, duJourFait, goDuJour: duJour ? { numero: numeroJour, titre: duJour.title } : null,
-      lecons: LESSONS, progres: progress,
-    });
-  const defisAJouer = defisEnAttente.length;
   // Profil (issue #50) : sous-vue ouverte, et fenêtre de consentement fermée avec Échap pendant cette session.
   const [vueProfil, setVueProfil] = useState<VueProfil>(PAGE_CONFIDENTIALITE ? 'conditions'
     : RETOUR_GOOGLE?.profil && !ECRAN_COMPTE_AU_RETOUR && !DEFI_AU_RETOUR ? 'compte' : 'menu');
+  // #359 : demandes d'ami reçues (`mes_amis()`), relues à chaque changement d'écran : pastille du Profil et « À faire ».
+  const demandesAmis = useDemandesAmis(supabase, !!compteId && !playing, `${tab}|${vueProfil}`);
+  const { defis: defisEnAttente, elements: aFaire, pastilles } = useAFaire(supabase, session?.user.id,
+    `${tab}|${defi?.vue ?? ''}|${enPlacement}|${lessonId ?? ''}`, !playing && defi?.vue !== 'partie', {
+      premier: home.nouveau, serie, duJourFait, goDuJour: duJour ? { numero: numeroJour, titre: duJour.title } : null,
+      lecons: LESSONS, progres: progress, demandesAmis,
+    });
+  const defisAJouer = defisEnAttente.length;
   // En quittant la page publique de la politique, l'adresse redevient celle de l'app.
   useEffect(() => {
     if (vueProfil !== 'conditions' && /^\/confidentialite\/?$/.test(location.pathname)) {
@@ -444,6 +446,7 @@ export function App() {
     else if (r.quoi === 'defis') { setTab('jouer'); setDefi({ vue: 'liste' }); }
     else if (r.quoi === 'placement') ouvrirPlacement();
     else if (r.quoi === 'importer') { setTab('profil'); setVueProfil('importer'); }
+    else if (r.quoi === 'amis') { setTab('profil'); setVueProfil('amis'); }
     else setTab('problemes');
   };
   const etatAvant = useRef<EtatCompte | null>(null);
@@ -502,8 +505,8 @@ export function App() {
       setDefi({ vue: 'partie', id: c.partieId });
     } else if (c.ecran === 'goDuJour') go('problemes');
     else if (c.ecran === 'lecon') { go('apprendre'); ouvrirLecon(c.id); }
-    // #359 : la sous-vue des amis n'existe pas encore ; le Profil l'accueillera.
-    else go('profil');
+    // #359 : demandes d'ami reçues : l'écran « Mes amis » du Profil.
+    else { go('profil'); if (etat === 'complet') setVueProfil('amis'); }
   }
   /** Tuile de l'accueil touchée : mesurée si elle porte un élément « À faire » (#367). */
   function mesurerAccueil(...genres: ElementAFaire['genre'][]) {
@@ -601,7 +604,13 @@ export function App() {
     screen = <Profil vue={vueProfil} onVue={v => { if (v === 'importer' && !garde({ quoi: 'import' }, { quoi: 'importer' })) return; setVueProfil(v); }} settings={settings} set={set} profil={profil} serie={serie} record={recordSerie}
       parcours={{ lecons: { faites: done, total: LESSONS.length }, adversaires: OPPONENTS.length }}
       placement={placement} onPlacement={ouvrirPlacement}
-      onJouer={() => { go('jouer'); lancer('ordi'); }} db={supabase} userId={session?.user.id} />;
+      onJouer={() => { go('jouer'); lancer('ordi'); }} db={supabase} userId={session?.user.id}
+      // #359 : « Mes amis ». Sans compte complet, l'écran de compte s'ouvre puis revient ici ; « Défier » ouvre la partie.
+      amis={supabase ? {
+        db: supabase, compte: etat === 'complet', demandes: demandesAmis,
+        onCompte: () => { garde({ quoi: 'en_ligne' }, { quoi: 'amis' }); },
+        onDefi: id => { setVueProfil('menu'); setTab('jouer'); setPlaying(false); setDefi({ vue: 'partie', id }); window.scrollTo({ top: 0 }); },
+      } : undefined} />;
   } else {
     const numero = numeroJour;
     const daily = duJour;

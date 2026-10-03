@@ -6,6 +6,8 @@ import type { BrowserContext, Page, Route, WebSocketRoute } from '@playwright/te
 // notifications (#367), parties_perso (#358 : `enregistrer_parties_perso`, sans doublon, compte avec pseudo exigé).
 // Temps réel : le WebSocket de Supabase Realtime (protocole Phoenix, sérialisation 2.0.0) est simulé ; seules les
 // notifications sont poussées, à leur seul destinataire (RLS simulée).
+// Amis (#359) : `mes_amis`, `demander_ami`, `repondre_ami`, `retirer_ami`, `defier_ami`, mêmes règles et mêmes codes
+// d'erreur que supabase/migrations/20261002010100_amis.sql (sauf les limites de temps).
 
 export const SUPABASE = 'https://supabase.e2e.test';
 export const CODE = '123456';
@@ -27,6 +29,7 @@ export function fauxServeur() {
   const profiles: Ligne[] = [{ id: 'deja-la', username: 'Pris', rating: 1500, streak_days: 0, streak_last: null, streak_freezes: 0 }];
   const games: Ligne[] = [];
   const defis: Ligne[] = [];
+  const amities: { de: string; a: string; etat: 'pending' | 'accepted'; le: string }[] = [];
   const notifications: Ligne[] = [];
   const abonnes = new Set<Abonne>();
   let idNotif = 0;
@@ -197,6 +200,51 @@ export function fauxServeur() {
       }
       return json(d.partie_id);
     }
+    // Amis (#359) : refus avec les codes SQLSTATE du serveur.
+    if (chemin.startsWith('/rest/v1/rpc/') && /_amis?$/.test(chemin)) {
+      const nom = chemin.slice('/rest/v1/rpc/'.length);
+      const refus = (code: string) => json({ code, message: code, details: null, hint: null }, 400);
+      if (!u || u.anonyme) return refus('JGC01');
+      const moi = profiles.find(x => x.id === u.id);
+      if (!moi?.username) return refus('JGP01');
+      const corps = (req.postDataJSON() ?? {}) as { p_pseudo?: string; p_accepter?: boolean };
+      const pseudoDe = (id: string) => String(profiles.find(x => x.id === id)?.username ?? '');
+      const lien = (autre: string) => amities.find(f => (f.de === u.id && f.a === autre) || (f.de === autre && f.a === u.id));
+      if (nom === 'mes_amis') {
+        return json(amities.filter(f => f.de === u.id || f.a === u.id).map(f => {
+          const autre = f.de === u.id ? f.a : f.de;
+          return { pseudo: pseudoDe(autre), etat: f.etat === 'accepted' ? 'ami' : f.de === u.id ? 'envoyee' : 'recue', depuis: f.le };
+        }));
+      }
+      const cible = profiles.find(x => String(x.username ?? '').toLowerCase() === String(corps.p_pseudo ?? '').trim().toLowerCase());
+      if (!cible) return refus('JGA01');
+      const autre = String(cible.id);
+      const f = lien(autre);
+      if (nom === 'demander_ami') {
+        if (autre === u.id) return refus('JGA02');
+        if (f?.etat === 'accepted') return refus('JGA03');
+        if (f && f.de === u.id) return refus('JGA04');
+        if (f) { f.etat = 'accepted'; return json('amis'); }
+        amities.push({ de: u.id, a: autre, etat: 'pending', le: new Date().toISOString() });
+        return json('envoyee');
+      }
+      if (nom === 'repondre_ami') {
+        if (!f || f.etat !== 'pending' || f.de !== autre) return refus('JGA07');
+        if (corps.p_accepter) { f.etat = 'accepted'; return json('amis'); }
+        amities.splice(amities.indexOf(f), 1);
+        return json('refusee');
+      }
+      if (nom === 'retirer_ami') { if (f) amities.splice(amities.indexOf(f), 1); return json(null); }
+      if (nom === 'defier_ami') {
+        if (f?.etat !== 'accepted') return refus('JGA08');
+        const id = `22222222-2222-4222-8222-${String(games.length + 1).padStart(12, '0')}`;
+        games.push({ id, white_id: u.id, black_id: autre, created_by: u.id, size: 9, komi: 6.5, rules: 'japanese', handicap: 0, moves: '',
+          status: 'active', counting: false, dead_stones: null, dead_proposed_by: null, result: null, resumed_at: 0, prive: true, rated: false });
+        defis.push({ partie_id: id, jeton: `ami${games.length}`.padEnd(32, 'A'), createur_id: u.id, invite_id: autre, delai_coup: '3 days',
+          date_limite: new Date(Date.now() + 3 * 864e5).toISOString(), lien_expire_le: new Date().toISOString(), cree_le: new Date().toISOString() });
+        return json(id);
+      }
+    }
     if (chemin === '/rest/v1/rpc/marquer_notifications_lues') {
       if (!u) return json({ message: 'Connexion requise' }, 401);
       const { p_partie, p_type } = req.postDataJSON() as { p_partie?: string; p_type?: string };
@@ -221,7 +269,7 @@ export function fauxServeur() {
       const trait = (g.moves as string).length / 2 % 2 === 0 ? g.black_id : g.white_id;
       if (trait !== u.id) return json({ error: 'tour' }, 409);
       g.moves = (g.moves as string) + move;
-      defis[0].date_limite = new Date(Date.now() + 3 * 864e5).toISOString();
+      (defis.find(d => d.partie_id === game_id) ?? defis[0]).date_limite = new Date(Date.now() + 3 * 864e5).toISOString();
       // Déclencheur `notifier_partie` : ce qui attendait est dépassé, l'adversaire est prévenu.
       marquer(n => n.partie_id === g.id && (n.type === 'tour' || n.type === 'comptage'));
       notifier(u.id === g.black_id ? g.white_id : g.black_id, 'tour', String(g.id));
@@ -270,7 +318,7 @@ export function fauxServeur() {
   /** Session ouverte d'un compte complet (avec pseudo), à poser dans le stockage du navigateur (#367). */
   function sessionCompte(email: string, pseudo: string, id: string) { return session(compteExistant(email, pseudo, id)); }
   return { traiter, brancherTempsReel, notifier, appels, games, defis, notifications, partiesPerso, profiles, emailsEnvoyes, sessionAnonyme,
-    compteExistant, compteGoogle, sessionCompte, autorisations };
+    compteExistant, compteGoogle, sessionCompte, autorisations, amities };
 }
 
 export type FauxServeur = ReturnType<typeof fauxServeur>;
