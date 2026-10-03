@@ -35,7 +35,7 @@
       Ouverture animée (#406), dessinée ici, avant React : CSS et SVG en ligne, aucun JS de l'app.
       1. Première image : le logo deux pierres, en grand, comme l'écran de lancement natif (manifeste, images iOS).
       2. Les pierres rapetissent et se posent sur un goban sous la lampe ; le nom « Go » apparaît en haut.
-      3. Dès que l'accueil est monté (et 0,7 s au plus tôt), fondu ; l'action principale et la barre arrivent d'abord,
+      3. À 1 s pile (#406, demande de Florian : « une seconde en tout »), et seulement si l'accueil est monté, fondu ; l'action principale et la barre arrivent d'abord,
          puis le contenu, de haut en bas. Fini en 1,2 s environ ; un toucher la passe.
       Version courte (logo, fondu) si l'app a été ouverte il y a moins de 10 min ; simple fondu de 150 ms en mouvements
       réduits ; rien sur un lien de défi, un retour de connexion, un rechargement (dont « nouvelle version prête ») ni
@@ -73,10 +73,10 @@
         mask-image: radial-gradient(closest-side, #000 22%, rgba(0, 0, 0, .55) 55%, transparent 82%); }
       .ouv-ombre { left: 50%; top: calc(50% + 12vh); width: 150px; height: 30px; margin: -19px 0 0 -75px;
         background: radial-gradient(closest-side, rgba(24, 14, 4, .55), rgba(24, 14, 4, 0)); }
-      [data-ouverture="plein"] .ouv-logo { animation: ouv-pose 440ms 120ms cubic-bezier(.77, 0, .175, 1) both; }
-      [data-ouverture="plein"] .ouv-sol { animation: ouv-sol 420ms 180ms var(--ease, cubic-bezier(.2, .8, .2, 1)) both; }
-      [data-ouverture="plein"] .ouv-ombre { animation: ouv-apparait 180ms 440ms ease-out both; }
-      [data-ouverture="plein"] .ouv-nom { animation: ouv-monte 300ms 320ms var(--ease, cubic-bezier(.2, .8, .2, 1)) both; }
+      [data-ouverture="plein"] .ouv-logo { animation: ouv-pose 550ms 150ms cubic-bezier(.77, 0, .175, 1) both; }
+      [data-ouverture="plein"] .ouv-sol { animation: ouv-sol 500ms 220ms var(--ease, cubic-bezier(.2, .8, .2, 1)) both; }
+      [data-ouverture="plein"] .ouv-ombre { animation: ouv-apparait 200ms 560ms ease-out both; }
+      [data-ouverture="plein"] .ouv-nom { animation: ouv-monte 360ms 420ms var(--ease, cubic-bezier(.2, .8, .2, 1)) both; }
       :is([data-ouverture="plein"], [data-ouverture="court"]) :is(.ouv-debut, .detache-debut) { animation: ouv-efface 400ms 80ms ease-out both; }
       @keyframes ouv-pose { to { transform: translateY(calc(12vh - 41px)) scale(.64); } }
       @keyframes ouv-sol { from { opacity: 0; transform: translateY(40px) scale(.94); } }
@@ -170,20 +170,22 @@
       <svg class="ouv-logo" viewBox="0 0 512 512"><defs><radialGradient id="ouv-n" cx="36%" cy="30%" r="72%"><stop offset="0" stop-color="#6a6e6c"/><stop offset=".22" stop-color="#2e3130"/><stop offset=".6" stop-color="#151716"/><stop offset="1" stop-color="#050606"/></radialGradient><radialGradient id="ouv-b" cx="38%" cy="32%" r="78%"><stop offset="0" stop-color="#fff"/><stop offset=".55" stop-color="#F3EEE3"/><stop offset=".85" stop-color="#DDD5C4"/><stop offset="1" stop-color="#BDB3A0"/></radialGradient><radialGradient id="ouv-o"><stop offset=".6" stop-color="#000" stop-opacity=".55"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient></defs><circle cx="316" cy="248" r="96" fill="url(#ouv-o)"/><circle cx="306" cy="226" r="92" fill="url(#ouv-b)"/><circle cx="220" cy="308" r="112" fill="url(#ouv-o)"/><circle class="detache" cx="210" cy="292" r="106"/><circle class="detache-debut" cx="210" cy="292" r="106"/><circle class="lune" cx="210" cy="292" r="100" fill="url(#ouv-n)" stroke-width="3"/><ellipse cx="176" cy="252" rx="36" ry="24" fill="#fff" opacity=".22" transform="rotate(-30 176 252)"/></svg>
     </div>
     <script>
-      // Fin de l'ouverture (#406) : quand l'accueil est monté dans #root, et pas avant 0,7 s (version entière) ;
-      // un toucher n'attend plus. Filet : 4 s au plus, quoi qu'il arrive.
+      // Fin de l'ouverture (#406) : quand l'accueil est monté dans #root, et pas avant 1 s depuis la première image
+      // (version entière : la scène se pose en 0,8 s puis reste, calme) ; un toucher n'attend plus.
+      // Filet : 4 s au plus, quoi qu'il arrive.
       (function () {
         var h = document.documentElement, el = document.getElementById('ouverture'), mode = h.getAttribute('data-ouverture');
         if (!mode) { el.remove(); return; }
-        var duree = mode === 'plein' ? 700 : mode === 'court' ? 260 : 0;
+        var duree = mode === 'plein' ? 1000 : mode === 'court' ? 260 : 0;
         var debut = performance.now(), monte = false, saute = false, fini = false, attente = 0;
         requestAnimationFrame(function () { debut = performance.now(); });
         function finir() {
           if (fini) return;
           fini = true;
           h.classList.add('ouv-fin');
+          // L'ouverture part dès la fin de son fondu (220 ms) ; l'accueil finit de se construire ensuite.
+          setTimeout(function () { el.remove(); }, 240);
           setTimeout(function () {
-            el.remove();
             h.classList.remove('ouv-fin', 'ouv-saute', 'ouv-tenu');
             h.removeAttribute('data-ouverture');
             h.removeAttribute('data-ouverture-debut');

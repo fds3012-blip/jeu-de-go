@@ -50,15 +50,18 @@ async function finOuverture(page: Page): Promise<number | null> {
   }));
 }
 
-test('premier lancement : la scène se joue, puis l’accueil répond en moins de 1,5 s', async ({ page }) => {
+test('premier lancement : une seconde de scène, puis l’accueil répond', async ({ page }) => {
   await page.goto('/', { waitUntil: 'commit' });
   await page.waitForSelector('#ouverture');
   expect(await page.getAttribute('html', 'data-ouverture')).toBe('plein');
   await expect(page.locator('.ouv-nom')).toBeVisible();
   const [repond, fin] = await Promise.all([interactif(page), finOuverture(page)]);
+  // Demande de Florian : une seconde en tout, jamais coupée dès que l'accueil est prêt (il l'est bien avant ici).
+  // `repond` compte depuis le début de la navigation ; la seconde, depuis la première image.
+  expect(repond).toBeGreaterThanOrEqual(1000);
   expect(repond).toBeLessThan(1500);
   expect(fin).not.toBeNull();
-  expect(fin! - repond).toBeLessThan(800); // fondu et construction de l'accueil : 0,52 s
+  expect(fin! - repond).toBeLessThan(400); // l'ouverture part à la fin de son fondu (220 ms)
   // L'action principale reçoit le toucher (rien par-dessus), et la page ne garde aucune trace de l'ouverture.
   const cta = page.locator('.cta');
   await expect(cta).toBeVisible();
@@ -66,6 +69,23 @@ test('premier lancement : la scène se joue, puis l’accueil répond en moins d
   expect(recu).toBe(true);
   await expect(page.locator('html')).not.toHaveAttribute('data-ouverture');
   await expect(page.locator('html')).not.toHaveClass(/ouv-/);
+});
+
+test('la scène est encore là à 0,9 s, partie vers 1,2 s', async ({ page }) => {
+  await page.goto('/', { waitUntil: 'commit' });
+  await page.waitForSelector('#ouverture');
+  await page.locator('#root > *').first().waitFor({ state: 'attached' }); // accueil monté dessous
+  const a09 = await page.evaluate(() => new Promise<{ t: number; la: boolean; fondu: boolean }>(resolve => {
+    const lire = () => resolve({ t: performance.now(), la: !!document.getElementById('ouverture'), fondu: document.documentElement.classList.contains('ouv-fin') });
+    const reste = 900 - performance.now();
+    if (reste <= 0) lire(); else setTimeout(lire, reste);
+  }));
+  expect(a09.t).toBeLessThan(1000); // mesure prise avant la seconde, sinon le test ne prouve rien
+  expect(a09.la).toBe(true);
+  expect(a09.fondu).toBe(false);
+  const fin = await finOuverture(page);
+  expect(fin!).toBeLessThan(1600);
+  await expect(page.locator('.cta')).toBeVisible();
 });
 
 test('aucun décalage de mise en page à la fin de l’ouverture', async ({ page }) => {
@@ -93,7 +113,7 @@ test('un toucher la passe aussitôt', async ({ page }) => {
   // Le point touché est sur le goban de l'accueil, qui lance une partie : le toucher ne doit pas le traverser.
   await page.touchscreen.tap(195, 300);
   const [touche, repond] = await Promise.all([appui, interactif(page)]);
-  // Sans toucher : pas avant 0,7 s. Avec : le fondu part au même toucher (après les écouteurs de l'app, dont le
+  // Sans toucher : pas avant 1 s. Avec : le fondu part au même toucher (après les écouteurs de l'app, dont le
   // déblocage du son, qui passent avant : d'où la marge).
   expect(repond - touche).toBeLessThan(250);
   await finOuverture(page);
@@ -150,7 +170,7 @@ for (const theme of ['dark', 'light'] as const) {
     // 1. La scène : sans le JS de l'app, l'ouverture reste à l'écran.
     await page.route(/\/(assets\/index-[^/]*\.js|src\/main\.tsx)$/, r => r.abort());
     await page.goto('/');
-    for (const t of [0, 300, 700]) {
+    for (const t of [0, 400, 900]) {
       await page.evaluate(t => document.getAnimations().forEach(a => { a.pause(); a.currentTime = t; }), t);
       await page.screenshot({ path: `${DOSSIER}/${nom}-1-scene-${String(t).padStart(3, '0')}ms.jpg`, type: 'jpeg', quality: 80 });
     }
@@ -182,6 +202,6 @@ test('capture 320 × 568 (sombre)', async ({ page }) => {
   await page.emulateMedia({ colorScheme: 'dark' });
   await page.route(/\/(assets\/index-[^/]*\.js|src\/main\.tsx)$/, r => r.abort());
   await page.goto('/');
-  await page.evaluate(() => document.getAnimations().forEach(a => { a.pause(); a.currentTime = 700; }));
-  await page.screenshot({ path: `${DOSSIER}/sombre-320-scene-700ms.jpg`, type: 'jpeg', quality: 80 });
+  await page.evaluate(() => document.getAnimations().forEach(a => { a.pause(); a.currentTime = 900; }));
+  await page.screenshot({ path: `${DOSSIER}/sombre-320-scene-900ms.jpg`, type: 'jpeg', quality: 80 });
 });
