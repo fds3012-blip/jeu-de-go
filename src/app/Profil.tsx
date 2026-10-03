@@ -13,7 +13,7 @@ import { ORDRE_THEMES, THEMES_GOBAN } from '../ui/boardArt';
 import { identite, texteSerie } from './identite';
 import { inviterCompte } from './serieLocale';
 import { LigneBascules, LigneChoix, LigneIcone, LigneInterrupteur, LigneLien } from '../ui/Reglage';
-import { IconeReglage } from '../ui/IconesReglages';
+import { IconeReglage, type IconeReglageId } from '../ui/IconesReglages';
 import { hapticStone } from '../ui/haptics';
 import { playStone } from '../ui/sound';
 import { useEffect, useMemo, type ReactNode } from 'react';
@@ -32,6 +32,7 @@ import { clePubliqueVapid, resumeRappel } from './rappel';
 import { ReglageRappel } from '../ui/ProposerRappel';
 import { LANGUES, langue, memoriserChoixLangue, t, type Langue } from '../content/i18n';
 import type { Placement } from './placement';
+import { Amis } from './Amis';
 import { BoutonAide } from '../ui/BoutonAide';
 
 const SOLVED_KEY = 'go.problemes.v1';
@@ -58,7 +59,7 @@ function useDonnees(serie: number, record: number, parcours: Parcours) {
   return donnees;
 }
 
-export type VueProfil = 'menu' | 'reglages' | 'installer' | 'rappel' | 'compte' | 'conditions' | 'importer' | 'parties';
+export type VueProfil = 'menu' | 'reglages' | 'installer' | 'rappel' | 'compte' | 'conditions' | 'importer' | 'parties' | 'amis';
 
 // Libellés traduits (#167) : calculés à l'affichage, dans la langue de l'interface.
 const themes = () => [
@@ -89,6 +90,11 @@ interface Props {
   /** « Je sais déjà jouer » (#283) : niveau estimé (discret, une ligne) et placement à refaire. */
   placement?: Placement | null;
   onPlacement?: () => void;
+  /**
+   * « Mes amis » (#359) : service Supabase, compte complet (e-mail et pseudo) ou non, ouverture de l'écran de compte
+   * sinon, et partie créée par « Défier ». Absent sans service de compte : pas de ligne.
+   */
+  amis?: { db: Db; compte: boolean; demandes: number; onCompte: () => void; onDefi: (partieId: string) => void };
   /** « Mes parties » (#358) : état vide, « Joue ta première partie ». */
   onJouer?: () => void;
   /** « Mes parties » : défis par lien terminés, lus dans Supabase pour la session ouverte. */
@@ -109,7 +115,7 @@ function SousVue({ id, titre, onRetour, children }: { id: string; titre: string;
   );
 }
 
-export function Profil({ vue, onVue, settings, set, profil, serie, record = 0, parcours, placement, onPlacement, onJouer, db, userId }: Props) {
+export function Profil({ vue, onVue, settings, set, profil, serie, record = 0, parcours, placement, onPlacement, onJouer, db, userId, amis }: Props) {
   const retour = () => { onVue('menu'); window.scrollTo({ top: 0 }); };
   // #358 : toutes les parties terminées, et leur revue.
   // #286 : « Analyser une partie » est dans « Mes parties » depuis #358 (le Profil tient sans défiler) ; on y revient.
@@ -117,6 +123,9 @@ export function Profil({ vue, onVue, settings, set, profil, serie, record = 0, p
   if (vue === 'conditions') return <Conditions onRetour={retour} />;
   // #286 : analyser une partie jouée ailleurs (SGF), action secondaire du Profil.
   if (vue === 'importer') return <ImportSgf onRetour={() => { onVue('parties'); window.scrollTo({ top: 0 }); }} pseudo={profil?.pseudo} confirmTouch={settings.confirmTouch} />;
+  if (vue === 'amis' && amis?.compte) {
+    return <SousVue id="amis-titre" titre={t('amis.titre')} onRetour={retour}><Amis db={amis.db} onDefi={amis.onDefi} /></SousVue>;
+  }
   if (vue === 'compte') return <SousVue id="compte-titre" titre={t('profil.compte')} onRetour={retour}><Account /></SousVue>;
   if (vue === 'reglages') return <SousVue id="reglages-titre" titre={t('profil.reglages')} onRetour={retour}><Reglages settings={settings} set={set} /></SousVue>;
   if (vue === 'rappel') {
@@ -134,7 +143,7 @@ export function Profil({ vue, onVue, settings, set, profil, serie, record = 0, p
     );
   }
 
-  return <Menu onVue={onVue} settings={settings} set={set} profil={profil} serie={serie} record={record} parcours={parcours} placement={placement} onPlacement={onPlacement} userId={userId} />;
+  return <Menu onVue={onVue} settings={settings} set={set} profil={profil} serie={serie} record={record} parcours={parcours} placement={placement} onPlacement={onPlacement} userId={userId} amis={amis} />;
 }
 
 /** Date courte du placement (« 28/09 »), dans la langue de l'interface. */
@@ -143,9 +152,12 @@ function dateCourte(iso: string): string {
   return Number.isNaN(d.getTime()) ? iso : d.toLocaleDateString(langue() === 'en' ? 'en-GB' : 'fr-FR', { day: '2-digit', month: '2-digit' });
 }
 
-function Menu({ onVue, profil, serie, record = 0, parcours, placement, onPlacement, userId }: Omit<Props, 'vue'>) {
+function Menu({ onVue, profil, serie, record = 0, parcours, placement, onPlacement, userId, amis }: Omit<Props, 'vue'>) {
   const id = identite(profil, serie);
   const nParties = useMemo(() => historiqueAppareil().length, []);
+  const valeurParties = nParties ? t('historique.profilResume', { n: nParties }) : userId ? undefined : t('historique.profilVide');
+  // #359 : demandes d'ami reçues (lues par l'app, aussi pour la pastille de l'onglet).
+  const demandes = amis?.demandes ?? 0;
   const donnees = useDonnees(serie, record, parcours);
   // Ligne « Installer l'app » (#214) : tant que l'app est installable ici et pas installée.
   const proposerInstallation = installable(usePlateformeInstallation(), etatInstallation());
@@ -172,9 +184,17 @@ function Menu({ onVue, profil, serie, record = 0, parcours, placement, onPlaceme
       <VitrineBadges liste={donnees.badges} nouveaux={donnees.nouveaux} />
 
       <div className="lignes">
-        {/* #358 : tes parties passées, en tête : c'est la ligne qu'on rouvre le plus. « Analyser une partie » (#286) y est. */}
-        <LigneLien icone={<IconeReglage id="parties" />} libelle={t('historique.titre')}
-          valeur={nParties ? t('historique.profilResume', { n: nParties }) : userId ? undefined : t('historique.profilVide')} onClick={() => onVue('parties')} />
+        {/* #358 : tes parties passées, en tête : c'est la ligne qu'on rouvre le plus. « Analyser une partie » (#286) y est.
+            #359 : « Mes amis » partage cette ligne (deux moitiés) : le Profil tient toujours sans défiler en 390 × 844. */}
+        {amis ? (
+          <div className="ligne ligne-double">
+            <DemiLigne icone="parties" libelle={t('historique.titre')} valeur={valeurParties} onClick={() => onVue('parties')} />
+            <DemiLigne icone="amis" libelle={t('amis.titre')}
+              valeur={!amis.compte ? t('amis.profil.sansCompte')
+                : demandes > 0 ? <span className="amis-demandes"><span className="amis-point" aria-hidden="true" />{t('amis.profil.demandes', { n: demandes })}</span> : undefined}
+              onClick={() => (amis.compte ? onVue('amis') : amis.onCompte())} />
+          </div>
+        ) : <LigneLien icone={<IconeReglage id="parties" />} libelle={t('historique.titre')} valeur={valeurParties} onClick={() => onVue('parties')} />}
         {/* #283 : le kyu estimé ne s'affiche qu'ici, sur une ligne, avec sa date ; la ligne relance le placement. */}
         {onPlacement && (placement?.fait && placement.kyu !== null
           ? <LigneLien icone={<IconeReglage id="placement" />} libelle={t('placement.profil')} valeur={t('placement.profilValeur', { kyu: placement.kyu, date: dateCourte(placement.date) })} onClick={onPlacement} />
@@ -187,6 +207,19 @@ function Menu({ onVue, profil, serie, record = 0, parcours, placement, onPlaceme
         <LigneLien icone={<IconeReglage id="conditions" />} libelle={t('profil.conditions')} onClick={() => onVue('conditions')} />
       </div>
     </div>
+  );
+}
+
+/** Moitié d'une ligne du Profil (#359) : icône, libellé, valeur dessous, 48 px de haut. */
+function DemiLigne({ icone, libelle, valeur, onClick }: { icone: IconeReglageId; libelle: string; valeur?: ReactNode; onClick: () => void }) {
+  return (
+    <button type="button" className="ligne-demi" onClick={onClick}>
+      <LigneIcone><IconeReglage id={icone} /></LigneIcone>
+      <span className="ligne-demi-texte">
+        <span className="ligne-libelle">{libelle}</span>
+        {valeur && <span className="ligne-demi-valeur">{valeur}</span>}
+      </span>
+    </button>
   );
 }
 

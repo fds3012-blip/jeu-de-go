@@ -24,7 +24,7 @@ export const en = {
   'vitrine.prochain': 'Next badge: {nom}. {condition}',
   'vitrine.detailObtenu': 'Badge earned: {nom}',
   'vitrine.detailAGagner': '{nom}: {condition}',
-  'profil.connecteDetail': 'Your streak and lessons are saved to your account.',
+  'profil.connecteDetail': 'Progress saved to your account.',
   'compte.promesse': 'Your streak and lessons follow you on all your devices, and you can play online.',
   'compte.resteIci': 'Everything else (level, XP, badges, freezes) stays on this phone.',
   'compte.sansMotDePasse': 'No password: we email you a link.',
@@ -995,6 +995,8 @@ export const en = {
   'conditions.garde.compteTexte': 'your email, username, rating, streak, progress, badges and games (online, against the computer, imported), so you find them on all your devices. Stored by Supabase, in Paris.',
   'conditions.garde.defi': 'A friend challenges you, no account:',
   'conditions.garde.defiTexte': 'a session number, with no email or username, and your games together. Stored by Supabase, in Paris.',
+  'conditions.garde.amis': 'If you add friends:',
+  'conditions.garde.amisTexte': 'who asked whom, the answer and the date. Only the two of you see this link. Deleted if either of you removes it or deletes their account. Requests you send are logged for 30 days, to prevent abuse.',
   'conditions.garde.comptage': 'Anonymous counting:',
   'conditions.garde.comptageTexte': 'a few events (game played, lesson finished) with PostHog, in the European Union. No cookies and no link to your account: the random number changes every time you open the app. Along with your device and browser type. Your IP address isn’t kept, and it isn’t used to locate you.',
   'conditions.garde.oui': 'Only if you say yes:',
@@ -1281,6 +1283,10 @@ export const en = {
   'compte.age.moins15': 'Under 15?',
   'compte.age.moins15Detail': 'Show this screen to a parent. If they agree, tick the box together. You can also keep trying without an account: nothing leaves your phone.',
   'compte.pseudo.conseil': 'Everyone can see your nickname. Don’t use your real name.',
+  // Friends (#359).
+  'amis.titre': 'My friends',
+  'amis.profil.demandes': { one: '{n} request', other: '{n} requests' },
+  'amis.profil.sansCompte': 'With an account',
   // My games (#358)
   'defi.revueRetour': 'Back to the challenge',
   'historique.titre': 'My games',

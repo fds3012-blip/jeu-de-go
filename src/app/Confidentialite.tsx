@@ -83,6 +83,7 @@ export function Conditions({ onRetour }: { onRetour: () => void }) {
           {/* #354 : données reçues de Google (art. 14 RGPD), et comment retirer l'accès. */}
           <p data-testid="conditions-google"><strong>{fr(t('conditions.garde.google'))}</strong> {fr(t('conditions.garde.googleTexte'))}</p>
           <p><strong>{fr(t('conditions.garde.defi'))}</strong> {t('conditions.garde.defiTexte')}</p>
+          <p><strong>{fr(t('conditions.garde.amis'))}</strong> {fr(t('conditions.garde.amisTexte'))}</p>
           <p><strong>{fr(t('conditions.garde.comptage'))}</strong> {fr(t('conditions.garde.comptageTexte'))}</p>
           <p><strong>{fr(t('conditions.garde.oui'))}</strong> {fr(t('conditions.garde.ouiTexte'))}</p>
         </Repli>

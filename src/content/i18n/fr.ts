@@ -34,7 +34,7 @@ export const fr = {
   'vitrine.detailObtenu': 'Badge gagné : {nom}',
   'vitrine.detailAGagner': '{nom} : {condition}',
   // Joueur connecté (#214) : pas de cote dans le Profil, on dit ce qui est gardé
-  'profil.connecteDetail': 'Ta série et tes leçons sont gardées sur ton compte.',
+  'profil.connecteDetail': 'Progression gardée sur ton compte.',
   'compte.promesse': 'Ta série et tes leçons te suivent sur tous tes appareils, et tu joues en ligne.',
   'compte.resteIci': 'Le reste (niveau, XP, badges, gels) reste sur ce téléphone.',
   'compte.sansMotDePasse': 'Pas de mot de passe : on t’envoie un lien par e-mail.',
@@ -1054,6 +1054,8 @@ export const fr = {
   'conditions.garde.compteTexte': 'ton e-mail, ton pseudo, ta cote, ta série, ta progression, tes badges et tes parties (en ligne, contre l’ordi, importées), pour les retrouver sur tous tes appareils. Chez Supabase, à Paris.',
   'conditions.garde.defi': 'Un ami te défie, sans compte :',
   'conditions.garde.defiTexte': 'un numéro de session, sans e-mail ni pseudo, et vos parties. Chez Supabase, à Paris.',
+  'conditions.garde.amis': 'Si tu ajoutes des amis :',
+  'conditions.garde.amisTexte': 'qui a demandé qui, la réponse et la date. Seuls vous deux voyez ce lien. Effacé si l’un de vous le retire ou supprime son compte. Tes demandes envoyées sont notées 30 jours, pour éviter les abus.',
   'conditions.garde.comptage': 'Comptage anonyme :',
   'conditions.garde.comptageTexte': 'quelques événements (partie jouée, leçon finie) chez PostHog, dans l’Union européenne. Sans cookie ni lien avec ton compte : le numéro tiré au hasard change à chaque ouverture de l’app. Avec le type d’appareil et de navigateur. Ton adresse IP n’est pas gardée, et elle ne sert pas à te localiser.',
   'conditions.garde.oui': 'Seulement si tu dis oui :',
@@ -1345,6 +1347,10 @@ export const fr = {
   'compte.age.moins15': 'Tu as moins de 15 ans ?',
   'compte.age.moins15Detail': 'Montre cet écran à un parent. S’il est d’accord, coche la case avec lui. Tu peux aussi continuer l’essai sans compte : rien ne quitte ton téléphone.',
   'compte.pseudo.conseil': 'Ton pseudo est visible par tous. Évite ton vrai nom.',
+  // Amis (#359) : écran « Mes amis » du Profil. Les textes qui disent « défier » restent sous `defi.` (vocabulaire.test.ts).
+  'amis.titre': 'Mes amis',
+  'amis.profil.demandes': { one: '{n} demande', other: '{n} demandes' },
+  'amis.profil.sansCompte': 'Avec un compte',
   // Historique de mes parties (#358, src/app/MesParties.tsx, src/app/historique.ts)
   'defi.revueRetour': 'Retour au défi',
   'historique.titre': 'Mes parties',

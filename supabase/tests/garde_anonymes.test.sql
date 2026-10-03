@@ -78,8 +78,10 @@ set local role authenticated;
 
 -- 1. Un anonyme est refusé pour chaque action bloquée.
 select pg_temp.connecte(:bruno, true);
-select pg_temp.doit_refuser(format('insert into public.friendships (requester_id, addressee_id) values (%L, %L)', :bruno, :chloe), 'row-level security');
-select pg_temp.egal(pg_temp.lignes(format('update public.friendships set status = ''accepted'' where requester_id = %L', :alice)), 0::bigint, 'anonyme : acceptation d''ami refusée');
+-- Depuis #359, les demandes d'ami passent par des fonctions serveur (écriture directe fermée à tous).
+select pg_temp.doit_refuser(format('insert into public.friendships (requester_id, addressee_id) values (%L, %L)', :bruno, :chloe), 'permission denied');
+select pg_temp.doit_refuser('select public.demander_ami(''Chloe'')', 'Crée ton compte');
+select pg_temp.doit_refuser('select public.repondre_ami(''Alice'', true)', 'Crée ton compte');
 select pg_temp.doit_refuser(format('insert into public.puzzles (id, owner_id, size, setup, answers, difficulty) select ''anon-1'', %L, size, setup, answers, difficulty from public.puzzles where id = %L', :bruno, :'probleme'), 'row-level security');
 select pg_temp.doit_refuser(format('insert into public.games (black_id, created_by, size, status) values (%L, %L, 9, ''waiting'')', :bruno, :bruno), 'row-level security');
 select pg_temp.doit_refuser(format('insert into public.games (black_id, created_by, size, status, bot_id) values (%L, %L, 9, ''active'', ''debutant'')', :bruno, :bruno), 'row-level security');
@@ -145,7 +147,7 @@ select pg_temp.egal(public.rejoindre_defi(repeat('D', 32)), :'d1'::uuid, 'anonym
 
 -- 3. Un vrai compte garde toutes ses actions (avec le claim à false, puis sans claim).
 select pg_temp.connecte(:alice);
-select pg_temp.egal(pg_temp.lignes(format('insert into public.friendships (requester_id, addressee_id) values (%L, %L)', :alice, :chloe)), 1::bigint, 'compte : demande d''ami');
+select pg_temp.egal(public.demander_ami('Chloe'), 'envoyee', 'compte : demande d''ami (#359 : par la fonction serveur)');
 select pg_temp.egal(pg_temp.lignes(format('insert into public.puzzles (id, owner_id, size, setup, answers, difficulty) select ''alice-1'', %L, size, setup, answers, difficulty from public.puzzles where id = %L', :alice, :'probleme')), 1::bigint, 'compte : problème personnel');
 select pg_temp.egal(pg_temp.lignes('delete from public.puzzles where id = ''alice-1'''), 1::bigint, 'compte : suppression de son problème');
 select pg_temp.egal(pg_temp.lignes(format('insert into public.games (black_id, created_by, size, status) values (%L, %L, 9, ''waiting'')', :alice, :alice)), 1::bigint, 'compte : création de partie');
@@ -159,7 +161,7 @@ select pg_temp.egal(public.find_match(9::smallint), null::uuid, 'compte : entre 
 select pg_temp.egal(public.resign_game(:'classee'), 'W+R', 'compte : abandon d''une partie classée');
 select partie_id as defi_alice from public.creer_defi() \gset
 select pg_temp.connecte_sans_claim(:chloe);
-select pg_temp.egal(pg_temp.lignes(format('update public.friendships set status = ''accepted'' where requester_id = %L and addressee_id = %L', :alice, :chloe)), 1::bigint, 'compte sans claim : accepte un ami');
+select pg_temp.egal(public.repondre_ami('Alice', true), 'amis', 'compte sans claim : accepte un ami (#359 : par la fonction serveur)');
 select pg_temp.egal(public.join_game('CODE42'), :'parcode'::uuid, 'compte sans claim : rejoint par code');
 select pg_temp.egal(public.find_match(9::smallint) is not null, true, 'compte sans claim : trouve un adversaire');
 reset role;
