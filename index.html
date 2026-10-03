@@ -39,7 +39,7 @@
          puis le contenu, de haut en bas. Fini en 1,2 s environ ; un toucher la passe.
       Version courte (logo, fondu) si l'app a été ouverte il y a moins de 10 min ; simple fondu de 150 ms en mouvements
       réduits ; rien sur un lien de défi, un retour de connexion, un rechargement (dont « nouvelle version prête ») ni
-      dans les tests (navigator.webdriver, sauf `go.ouverture.e2e` = « 1 »). Tests : src/ouverture.test.ts, e2e/ouverture.spec.ts.
+      dans les tests (navigator.webdriver, sauf `e2e.ouverture` = « 1 »). Tests : src/ouverture.test.ts, e2e/ouverture.spec.ts.
     -->
     <style>
       :root { --ouv-fond: #1C1916; --ouv-encre: #F3EDE3; --ouv-lune: .22; }
@@ -123,7 +123,7 @@
         var nav = performance.getEntriesByType ? performance.getEntriesByType('navigation')[0] : null;
         var maintenant = Date.now();
         var mode = modeOuverture({
-          webdriver: navigator.webdriver === true, forcer: lire(ls, 'go.ouverture.e2e'), cachee: document.visibilityState === 'hidden',
+          webdriver: navigator.webdriver === true, forcer: lire(ls, 'e2e.ouverture'), cachee: document.visibilityState === 'hidden',
           adresse: location.hash + location.search, navigation: nav ? nav.type : null, dejaVue: lire(ss, 'go.ouverture.vue') === '1',
           reduit: mm('(prefers-reduced-motion: reduce)'), derniere: Number(lire(ls, 'go.ouverture.derniere')) || 0, maintenant: maintenant,
         });

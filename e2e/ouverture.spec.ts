@@ -1,12 +1,12 @@
 import { expect, test, type Page } from '@playwright/test';
 
 // Ouverture animée (#406, index.html). Les autres specs ne la voient pas (navigator.webdriver) ; celle-ci la demande
-// avec `go.ouverture.e2e` = « 1 », et repart d'un appareil où l'app n'a jamais été ouverte.
+// avec `e2e.ouverture` = « 1 », et repart d'un appareil où l'app n'a jamais été ouverte.
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
     if (sessionStorage.getItem('e2e.ouverture.init')) return; // une seule fois : les rechargements gardent l'état
     sessionStorage.setItem('e2e.ouverture.init', '1');
-    localStorage.setItem('go.ouverture.e2e', '1');
+    localStorage.setItem('e2e.ouverture', '1');
     localStorage.removeItem('go.ouverture.derniere');
   });
 });

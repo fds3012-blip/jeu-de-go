@@ -32,7 +32,8 @@ function sources(dir: string): string[] {
     return /\.(ts|tsx)$/.test(nom) && !/\.test\.tsx?$/.test(nom) ? [chemin] : [];
   });
 }
-const code = sources(join(racine, 'src')).map(f => ({ f: relative(racine, f), texte: readFileSync(f, 'utf8') }));
+// index.html compte aussi : son script en ligne (ouverture animée, #406) lit et écrit le stockage avant React.
+const code = [...sources(join(racine, 'src')), join(racine, 'index.html')].map(f => ({ f: relative(racine, f), texte: readFileSync(f, 'utf8') }));
 
 /** Clés de stockage local écrites en dur dans le code : 'go.xxx.v1', et les préfixes comme 'go.evenement.'. */
 function clesDuCode(): string[] {
