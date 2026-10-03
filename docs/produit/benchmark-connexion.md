@@ -2,7 +2,72 @@
 
 Agent : produit. Rédigé le 1er octobre 2026, sur `main` (après #343, compte obligatoire avec pseudo).
 Demande de Florian (01/10) : « pouvoir se connecter via Google, Apple ou autre ».
-Recommandation et réglages : `docs/growth/connexion-google-apple.md`.
+Recommandation et réglages : `docs/growth/connexion-google-apple.md` (Google, #354) et `docs/growth/connexion-sociale.md` (Google, Apple, Facebook, #411).
+
+> **Mise à jour du 3 octobre 2026 (issue #411, agent croissance).** Demande de Florian : « proposer la connexion via Google, Facebook, etc. ». La section 0 ci-dessous remplace la recommandation du 1er octobre sur Apple et Facebook ; les sections 1 à 8 restent l'analyse d'origine. Réglages pas à pas : `docs/growth/connexion-sociale.md`.
+
+## 0. Mise à jour du 3 octobre 2026 (#411)
+
+### 0.1 Méthode
+
+Recherche web du 03/10/2026, et **lecture du code source** quand il est public (OGS : dépôt `online-go/online-go.com`, commit du 01/10/2026 ; Lichess : dépôt `lichess-org/lila`, commit du 03/10/2026). Les pages d'aide de chess.com, lichess.org et online-go.com restent bloquées par notre réseau : ce qui en vient passe par les extraits des moteurs de recherche, marqué **(recherche)**. Ce qui n'a aucune source lisible est marqué **(à vérifier sur appareil)** : Florian peut le confirmer en 2 minutes sur son téléphone.
+
+### 0.2 Tableau
+
+Légende : G = Google, A = Apple, F = Facebook, X = Twitter/X, GH = GitHub, D = Discord, T = Twitch.
+
+| App | Moyens proposés | Ordre à l'écran | Passkey | Un geste (One Tap) | Lien ou code par e-mail | Progression d'un joueur sans compte |
+|---|---|---|---|---|---|---|
+| **chess.com** | E-mail + mot de passe, G, F, A ; D et T reliables au compte (pas pour s'inscrire) ; « connexion sans mot de passe » par le moyen relié **(recherche)** | « Continuer avec e-mail » puis G, A, F **(à vérifier sur appareil)** | Aucune trace publique | Non documenté | Non (mot de passe oublié par e-mail) | On joue contre l'ordi en invité ; l'historique invité n'est pas repris **(à vérifier)** |
+| **Lichess** | Pseudo + mot de passe ; connexion par lien e-mail (`LoginToken`) ; double authentification TOTP. **Aucun** fournisseur social, **aucune** passkey (aucun fichier WebAuthn ni OAuth client dans le code) | Formulaire unique | Non | Non | **Lien** par e-mail | Tout se joue sans compte ; les parties anonymes ne sont jamais rattachées à un compte |
+| **OGS** (online-go.com) | Pseudo + mot de passe, puis « Sign in with » **Google, Facebook, Twitter, Apple, GitHub** (code source, `SocialLoginButtons`) | Formulaire en haut ; boutons sociaux dessous, **dans cet ordre**, identiques sur Inscription et Connexion | Non | Non | Non | Regarder seulement ; un « utilisateur anonyme » existe côté code mais ne garde rien |
+| **Duolingo** | E-mail + mot de passe, G, F, A **(recherche)** | « Commencer » sans compte ; à la création, réseaux puis e-mail **(à vérifier)** | Aucune trace publique | Google One Tap sur Android **(à vérifier)** | Non | **Gardée** : la première leçon se fait sans compte, « Crée ton profil pour garder ta progression » la reprend |
+| **BadukPop** | Compte pour garder sa progression et l'abonnement ; boutons exacts non documentés publiquement | A sur iOS, G sur Android, puis e-mail **(à vérifier sur appareil)** | Inconnu | Inconnu | Inconnu | Gardée (leçons et problèmes faits avant le compte) **(à vérifier)** |
+| **Fox (野狐围棋)** | Identifiant Fox créé sur le site, compte **QQ** ou numéro de téléphone **(recherche)** | — | Non | Non | Non (SMS) | Pas de jeu sans compte |
+| **Tygem** | Identifiant + mot de passe **(à vérifier)** | — | Non | Non | Non | Pas de jeu sans compte |
+| **Vinted** (France) | **E-mail, Google, Facebook, Apple** (aide officielle) ; avertit : « utilise le même bouton à chaque fois, sinon tu crées un second compte » | Réseaux puis e-mail **(à vérifier sur appareil)** | Non documenté | Non | Non | Pas de compte, pas de vente |
+| **Leboncoin** (France) | E-mail + mot de passe ; **Google** ajouté en décembre 2024 (Android d'abord) **(recherche)** | — | Non documenté | Non | Non | Recherche libre sans compte |
+| **Too Good To Go** (France) | **E-mail, Apple, Facebook** (Google selon les versions) **(recherche)** | Réseaux puis e-mail **(à vérifier)** | Non | Non | **Lien** par e-mail, sans mot de passe **(à vérifier)** | Pas de commande sans compte |
+
+### 0.3 Ce qui change par rapport au 1er octobre
+
+1. **Facebook est encore là chez les apps grand public françaises** (Vinted, Too Good To Go) et chez les deux références du jeu en ligne (chess.com, OGS). Notre public débutant, plus âgé que celui des jeux vidéo et qui partage le jeu dans Messenger, l'a souvent. Le coût d'un bouton de plus est faible s'il reste sous Google et Apple, dans le même style que les autres. **Verdict révisé : Facebook oui, en troisième position, désactivable par son drapeau.**
+2. **Apple** : règle 4.8 de l'App Store **modifiée en janvier 2024**. « Sign in with Apple » n'est plus nommé : une app qui propose Google ou Facebook doit offrir **un service équivalent** qui (1) ne collecte que nom et e-mail, (2) permet de cacher son e-mail, (3) ne piste pas sans accord. Notre code par e-mail ne permet pas de cacher l'adresse : en pratique, **Apple reste la seule option sûre pour l'app iOS**. Sur le web, il sert les 30 à 35 % de joueurs sur iPhone en France. **Coût : Apple Developer Program, 99 € par an : décision de Florian.** Le bouton est prêt et caché tant que `VITE_AUTH_APPLE` n'est pas à 1.
+3. **Discord et X : non.** chess.com relie Discord et Twitch au compte, mais pour montrer son pseudo de streamer, pas pour s'inscrire ; OGS garde X et GitHub par héritage d'une communauté technique. Aucune app grand public française du panel ne les propose. À revoir si une communauté Discord du jeu se forme (le code accepte un fournisseur de plus en une ligne).
+4. **Passkeys : Supabase les prend en charge depuis peu, en « expérimental »** (supabase-js 2.105 et plus ; nous avons 2.117). Limites qui comptent pour nous : il faut **un compte déjà confirmé** pour enregistrer une passkey (pas d'inscription par passkey), une session sans compte ne peut pas en avoir, et la passkey est **liée au nom de domaine** (`jeu-de-go.vercel.app` aujourd'hui) : changer de domaine plus tard (un `jeudego.fr`) rendrait toutes les passkeys inutilisables. Aucun concurrent du panel ne les propose. **Verdict : plus tard**, une fois le domaine définitif choisi, en « Ajoute une passkey » dans Mon compte, pas sur l'écran d'inscription.
+5. **One Tap Google** : toujours la phase 2 de `docs/growth/connexion-google-apple.md` (pas de redirection, marche dans l'app installée sur iPhone), après mesure.
+6. **Personne ne garde le travail fait sans compte aussi bien que Duolingo** : chess.com et Lichess le perdent. Nous gardons l'essai sur l'appareil (repris à la création du compte) et, pour les anciennes sessions sans compte d'un défi, nous les **relions** au fournisseur choisi (`linkIdentity` : même identifiant, la partie suit), avec repli sur le rattachement par code (#355) si la liaison est fermée dans Supabase.
+7. **Navigateurs intégrés** : Facebook Login est refusé dans les WebView Android depuis le 5 octobre 2021 (annonce Meta), comme Google. La règle de #354 s'applique donc aux trois : boutons cachés dans Messenger, Instagram, TikTok et l'app installée sur iPhone ; le code par e-mail reste.
+
+### 0.4 Recommandation (#411)
+
+| Moyen | Position | Coût | État |
+|---|---|---|---|
+| Google | 1er | 0 € | Livré (#354), drapeau `VITE_AUTH_GOOGLE` |
+| Apple | 2e | **99 €/an (décision de Florian)** | Livré, caché : drapeau `VITE_AUTH_APPLE` |
+| Facebook | 3e | 0 € (app Meta, passage en « Live ») | Livré, caché : drapeau `VITE_AUTH_FACEBOOK` |
+| Code à 6 chiffres par e-mail | après « ou » | 0 € | En place (#343), marche partout |
+| Discord, X | — | 0 € | Non (benchmark) |
+| Passkey | Mon compte, plus tard | 0 € | Après le choix du domaine définitif |
+
+Tout passe par Supabase Auth (`signInWithOAuth`, `linkIdentity`, `unlinkIdentity`) : aucun service payant, aucun secret dans le dépôt.
+
+**Indicateur à faire bouger** : part des joueurs qui voient « Crée ton compte » (`essai_limite_atteinte`) et finissent avec un pseudo (`pseudo_choisi`), sur 14 jours, avant et après chaque activation ; répartition par `compte_methode.methode`. Cible : **+20 %** de comptes complets avec Google seul (#354), **+5 points** de plus avec Apple et Facebook. Garde-fou : la part `methode = code` ne doit pas chuter sans hausse du total (sinon les boutons détournent sans convertir). Rétention J7 des comptes créés par fournisseur, pour vérifier qu'un compte en un geste n'est pas un compte jetable.
+
+### 0.5 Sources (03/10/2026)
+
+- OGS, code source des boutons : https://github.com/online-go/online-go.com (`src/components/SocialLoginButtons`, `src/views/SignIn/SignIn.tsx`, `src/views/Register/Register.tsx`)
+- Lichess, code source : https://github.com/lichess-org/lila (`modules/security/src/main/LoginToken.scala` ; aucun fichier passkey ou WebAuthn)
+- chess.com, connexion par Google, Facebook ou Apple : https://support.chess.com/en/articles/15905869-i-signed-up-with-google-facebook-or-apple-how-do-i-log-in ; comptes reliés (Discord, Twitch) : https://support.chess.com/en/articles/8609484-how-do-i-change-my-connected-accounts-like-facebook-or-google
+- Duolingo : https://duolingoguides.com/duolingo-login/ (guide tiers)
+- BadukPop, fiche App Store : https://apps.apple.com/app/id1472684271
+- Fox et Tygem : https://gomagic.org/play-go-online/ ; https://lifein19x19.com/viewtopic.php?p=259042
+- Vinted, aide officielle : https://www.vinted.fr/help/104 et https://www.vinted.fr/help/315
+- Leboncoin, connexion Google : https://siecledigital.fr/2024/12/16/leboncoin-annonce-de-nombreuses-nouveautes-et-ambitionne-de-devenir-le-leader-du-e-commerce/
+- Too Good To Go : https://latestdeals.co.uk/guides/household-bills/too-good-to-go-app-how-to-get-cheap-food
+- Apple, règle 4.8 modifiée en janvier 2024 : https://developer.apple.com/app-store/review/guidelines/ ; https://gigazine.net/gsc_news/en/20240129-apple-sign-in-with-apple-remove ; https://developer.apple.com/forums/thread/765145
+- Meta, fin de Facebook Login dans les WebView Android : https://developers.facebook.com/blog/post/2021/06/28/deprecating-support-fb-login-authentication-android-embedded-browsers/ ; charte du bouton : https://developers.facebook.com/docs/facebook-login/userexperience
+- Supabase : passkeys (expérimental) https://supabase.com/docs/guides/auth/passkeys ; Facebook https://supabase.com/docs/guides/auth/social-login/auth-facebook ; liaison d'identités https://supabase.com/docs/guides/auth/auth-identity-linking ; sessions sans compte https://supabase.com/docs/guides/auth/auth-anonymous
 
 **Question permanente** : un débutant comprend-il l'écran de compte en 3 secondes, et un joueur de club y retrouve-t-il ses habitudes ?
 
