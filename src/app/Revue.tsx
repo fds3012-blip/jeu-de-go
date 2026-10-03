@@ -185,8 +185,10 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
     setI(k);
   }
   function rejouer() {
-    // Le goban montre le coup commenté : on rejoue depuis la position juste avant lui.
-    const h = rejouerDici(positions, Math.max(1, i), joueur ?? null);
+    // Le goban montre le coup commenté. Ton coup : on rejoue depuis la position juste avant lui. Coup de l'adversaire :
+    // juste après lui, quand c'est à toi (sinon on reculerait jusqu'à ton coup précédent).
+    const tonCoup = i > 0 && (!joueur || positions[i - 1].toPlay === joueur);
+    const h = rejouerDici(positions, tonCoup ? i : Math.min(n, i) + 1, joueur ?? null);
     track(EVENTS.revueRejouer, { coup: h.length - 1, cle: !!cle && i === cle.coup, perte: notes[i - 1] ? Math.round(notes[i - 1]!.perte) : null, taille: size, mode });
     onRejouer?.(h);
   }

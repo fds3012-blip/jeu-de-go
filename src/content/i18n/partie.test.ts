@@ -85,9 +85,9 @@ describe('français identique aux textes d’origine', () => {
   });
 
   it('revue, lecteur d’écran et pastille des gels', () => {
-    expect(NOTES.map(n => NOTE_INFO[n].libelle)).toEqual(['Brillant', 'Meilleur coup', 'Excellent', 'Bon', 'Solide', 'Imprécision', 'Erreur', 'Grosse erreur']);
+    expect(NOTES.map(n => NOTE_INFO[n].libelle)).toEqual(['Brillant', 'Meilleur coup', 'Excellent', 'Bon', 'Classique', 'Solide', 'Forcé', 'Imprécision', 'Erreur', 'Coup manqué', 'Gaffe']);
     expect(phraseNote({ coup: 3, couleur: 1, note: 'bon', perte: 0.4 })).toBe('Bon coup, à peine un point de moins que le meilleur.');
-    expect(phraseNote({ coup: 3, couleur: 1, note: 'grosse', perte: 7.2 })).toBe('Grosse erreur : environ 7 points de perdus.');
+    expect(phraseNote({ coup: 3, couleur: 1, note: 'grosse', perte: 7.2 })).toBe('Gaffe : environ 7 points de perdus.');
     for (const n of [0, 1, 2, 5]) expect(traduire('fr', n === 0 ? 'gel.aucun' : 'gel.reserve', { n })).toBe(libelleGels(n));
     expect(annonceConfirmation('D4')).toBe('D4 : appuie encore pour poser');
     const b = new Int8Array(N * N);
@@ -136,7 +136,7 @@ describe('en anglais', () => {
   });
 
   it('revue et lecteur d’écran', () => {
-    expect(NOTES.map(n => NOTE_INFO[n].libelle)).toEqual(['Brilliant', 'Best move', 'Excellent', 'Good', 'Solid', 'Inaccuracy', 'Mistake', 'Blunder']);
+    expect(NOTES.map(n => NOTE_INFO[n].libelle)).toEqual(['Brilliant', 'Best move', 'Excellent', 'Good', 'Standard', 'Solid', 'Forced', 'Inaccuracy', 'Mistake', 'Miss', 'Blunder']);
     expect(phraseNote({ coup: 3, couleur: 1, note: 'erreur', perte: 4 })).toBe('Mistake: about 4 points lost.');
     const b = new Int8Array(N * N);
     b[at('D4')] = 1; b[at('D5')] = 2; b[at('C4')] = 2; b[at('E4')] = 2;

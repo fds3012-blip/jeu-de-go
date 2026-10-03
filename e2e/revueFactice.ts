@@ -42,6 +42,24 @@ export async function preparerRevue(page: Page, { katago = true }: { katago?: bo
   }, { sgf: SGF_REVUE, katago });
 }
 
+/**
+ * Revue v3 (#405) : attend la fin de l'analyse (le bilan), puis « Démarrer le bilan ». `coup` : affiche ensuite
+ * ce coup en le touchant dans la bande des coups (0 : le début de la partie).
+ */
+export async function demarrerParcours(page: Page, coup?: number, timeout = 90_000) {
+  const demarrer = page.getByRole('button', { name: /^(Démarrer le bilan|Start review)$/ });
+  await expect(demarrer).toBeVisible({ timeout });
+  await demarrer.click();
+  await expect(page.locator('.parcours-bulle')).toBeVisible();
+  if (coup == null) return;
+  if (coup === 0) {
+    const precedent = page.getByRole('button', { name: /^(Coup précédent|Previous move)$/ });
+    while (await precedent.isEnabled()) await precedent.click();
+    return;
+  }
+  await page.getByRole('button', { name: new RegExp(`^(Coup|Move) ${coup},`) }).click();
+}
+
 /** Ouvre la revue de la partie gardée depuis Profil › Mes parties. */
 export async function ouvrirRevue(page: Page) {
   await page.goto('/');

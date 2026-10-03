@@ -220,12 +220,12 @@ describe('précision et bilan', () => {
   it('Mochi dit la note du coup affiché, en langage clair', () => {
     expect(phraseNote(nc(1, 1, 0, 'meilleur'))).toBe('Meilleur coup !');
     expect(phraseNote(nc(1, 1, 2.4, 'imprecision'))).toBe('Imprécision : environ 2 points de perdus.');
-    expect(phraseNote(nc(1, 1, 9, 'grosse'))).toBe('Grosse erreur : environ 9 points de perdus.');
+    expect(phraseNote(nc(1, 1, 9, 'grosse'))).toBe('Gaffe : environ 9 points de perdus.');
     expect(phraseNote(nc(1, 1, 0.8, 'bon'))).toBe('Bon coup, à peine un point de moins que le meilleur.');
     expect(phraseNote(nc(1, 1, 0.5, 'solide'))).toBe('Coup solide.');
   });
 
   it('chaque note a un symbole, pas seulement une couleur', () => {
-    expect(NOTES.map(n => NOTE_INFO[n].symbole)).toEqual(['!!', '★', '!', '✓', '✓', '?!', '?', '??']);
+    expect(NOTES.map(n => NOTE_INFO[n].symbole)).toEqual(['!!', '★', '!', '✓', '≡', '✓', '→', '?!', '?', '×', '??']);
   });
 });

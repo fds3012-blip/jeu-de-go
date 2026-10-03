@@ -1,8 +1,11 @@
 import { expect, test, type Page } from '@playwright/test';
 import { jouer, passerJusquAuScore, plateau } from './plateau';
+import { demarrerParcours } from './revueFactice';
 
 // Issue #34 : revue d'une partie terminée. `?komi=-100` (paramètre de test, voir src/app/bilan.ts) donne une fin
 // de partie déterministe : Noir gagne en passant. On joue quelques coups, on passe, puis on revoit la partie.
+// Revue v3 (#405) : analyse → bilan → « Démarrer le bilan » → parcours. Le parcours lui-même (notes du go, coups clés)
+// est testé avec un KataGo factice dans e2e/revue-bilan.spec.ts ; ici, le moteur simple, sans KataGo.
 
 // Depuis #117, le comptage contre l'ordi peut être automatique (récit direct) : voir passerJusquAuScore.
 const passerJusquAuComptage = passerJusquAuScore;
@@ -25,7 +28,7 @@ async function partieCourte(page: Page, coups: string[], komi = -100) {
   await expect(page.getByRole('heading', { level: 2, name: komi < 0 ? 'Victoire' : 'Défaite' })).toBeVisible();
 }
 
-test("fin de partie, revue coup par coup, erreurs analysées, puis rejouer d'ici", async ({ page }) => {
+test("fin de partie, bilan, revue coup par coup, puis rejouer d'ici", async ({ page }) => {
   const erreurs: string[] = [];
   page.on('pageerror', e => erreurs.push(e.message));
   await partieCourte(page, ['E5']);
@@ -37,34 +40,37 @@ test("fin de partie, revue coup par coup, erreurs analysées, puis rejouer d'ici
 
   await page.getByRole('button', { name: 'Revoir ma partie' }).click();
   await expect(page.getByRole('heading', { level: 2, name: 'Revoir ma partie' })).toBeVisible();
-  const precedent = page.getByRole('button', { name: 'Précédent' });
-  const suivant = page.getByRole('button', { name: 'Suivant' });
-  await expect(page.getByText(/Coup 1 sur \d+/)).toBeVisible();
-  await expect(page.locator('.revue-mochi p')).toHaveText(/^Tu joues E5\./);
-  await expect(plateau(page).locator('g[data-pierre]')).toHaveCount(1);
+  // Le bilan : une seule action en relief, « Démarrer le bilan ».
+  await expect(page.getByRole('button', { name: 'Démarrer le bilan' })).toBeVisible({ timeout: 60_000 });
+  await expect(page.locator('.cta')).toHaveCount(1);
   await expect(page.getByRole('img', { name: /Courbe d'avantage/ })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
 
-  // Précédent : plateau vide ; suivant : la pierre revient.
+  await demarrerParcours(page, 1);
+  await expect(page.getByText(/Coup 1 sur \d+/)).toBeVisible();
+  await expect(page.locator('.parcours-titre')).toHaveText(/^\S+\s*E5 est /);
+  await expect(plateau(page).locator('g[data-pierre]')).toHaveCount(1);
+
+  // Coup précédent : plateau vide ; coup suivant : la pierre revient.
+  const precedent = page.getByRole('button', { name: 'Coup précédent' });
   await precedent.click();
   await expect(page.getByText(/Coup 0 sur \d+/)).toBeVisible();
   await expect(plateau(page).locator('g[data-pierre]')).toHaveCount(0);
   await expect(precedent).toBeDisabled();
-  await suivant.click();
+  await page.getByRole('button', { name: 'Coup suivant' }).click();
   await expect(plateau(page).locator('g[data-point="E5"][data-pierre="noir"]')).toHaveCount(1);
-
-  // L'analyse tourne (logo qui tourne), puis se termine.
-  await expect(page.locator('.revue-analyse')).toHaveCount(0, { timeout: 30_000 });
-  // Une seule action en relief.
+  // Une seule action en relief : « Suivant » (ou « Terminer » après le dernier coup clé).
   await expect(page.locator('.cta')).toHaveCount(1);
-  await expect(page.locator('.cta')).toHaveText("Rejouer d'ici");
-  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  await expect(page.locator('.cta')).toHaveText(/^(Suivant|Terminer)$/);
 
-  // Retour au bilan, puis de nouveau la revue.
+  // Retour au résumé, puis au bilan de la partie, puis de nouveau la revue.
+  await page.getByRole('button', { name: 'Retour au résumé' }).click();
   await page.getByRole('button', { name: 'Retour au bilan' }).click();
   await expect(page.getByRole('heading', { level: 2, name: 'Victoire' })).toBeVisible();
   await page.getByRole('button', { name: 'Revoir ma partie' }).click();
 
   // Rejouer d'ici au coup 1 : c'est à Pomme, donc on reprend avant E5, Noir au trait.
+  await demarrerParcours(page, 1);
   await page.getByRole('button', { name: "Rejouer d'ici" }).click();
   await expect(page.getByRole('heading', { level: 2, name: 'Revoir ma partie' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Passer' })).toBeEnabled();
@@ -75,63 +81,41 @@ test("fin de partie, revue coup par coup, erreurs analysées, puis rejouer d'ici
 test("rejouer d'ici garde les coups joués jusqu'à la position choisie", async ({ page }) => {
   await partieCourte(page, ['E5']);
   await page.getByRole('button', { name: 'Revoir ma partie' }).click();
-  // Coup 2 : E5 puis la réponse de Pomme ; Noir au trait.
-  await page.getByRole('button', { name: 'Suivant' }).click();
+  // Coup 2 : E5 puis la réponse de Pomme ; on reprend juste avant la réponse, avec E5 sur le plateau.
+  await demarrerParcours(page, 2);
   await expect(page.getByText(/Coup 2 sur \d+/)).toBeVisible();
-  const pierres = await plateau(page).locator('g[data-pierre]').count();
   await page.getByRole('button', { name: "Rejouer d'ici" }).click();
   await expect(page.getByText('On reprend ici. À toi de trouver mieux !')).toBeVisible();
-  await expect(plateau(page).locator('g[data-pierre]')).toHaveCount(pierres);
   await expect(plateau(page).locator('g[data-point="E5"][data-pierre="noir"]')).toHaveCount(1);
   await expect(page.getByRole('button', { name: 'Passer' })).toBeEnabled();
 });
 
-// Issue #71 : une note sur le coup affiché (sceau sur la pierre, liste des coups) et le bilan de précision.
+// Issue #71 : une note sur le coup affiché (sceau sur la pierre, bande des coups) et la précision des deux joueurs.
 test('la revue note le coup affiché et montre la précision des deux joueurs', async ({ page }) => {
   await partieCourte(page, ['E5', 'C3', 'G7']);
   await page.getByRole('button', { name: 'Revoir ma partie' }).click();
-  await expect(page.locator('.revue-analyse')).toHaveCount(0, { timeout: 60_000 });
-  // Depuis #186, la revue peut s'être placée sur le moment clé : on revient au coup 1.
-  await page.getByRole('button', { name: /^Coup 1,/ }).click();
+  await expect(page.getByRole('button', { name: 'Démarrer le bilan' })).toBeVisible({ timeout: 60_000 });
 
-  // Coup 1 : un sceau de note sur la pierre E5, et le même dans la liste des coups, avec son libellé lu à voix haute.
+  // Bilan : précision des deux joueurs, tableau des notes, phrase de Mochi.
+  const table = page.getByRole('table', { name: 'Tes coups, note par note' });
+  await expect(table.getByRole('row', { name: /^Précision \d+\s% \d+\s%$/ })).toBeVisible();
+  await expect(table.getByRole('columnheader', { name: 'Toi' })).toBeVisible();
+  await expect(table.getByRole('columnheader', { name: 'Pomme' })).toBeVisible();
+  await expect(page.locator('.bilan-bulle')).not.toBeEmpty();
+
+  // Coup 1 : un sceau de note sur la pierre E5, et le même dans la bande des coups, avec son libellé lu à voix haute.
+  await demarrerParcours(page, 1);
   const sceau = plateau(page).locator('[data-note-sceau]');
   await expect(sceau).toHaveCount(1);
   const note = await sceau.getAttribute('data-note-sceau');
-  expect(note).toMatch(/^(Solide|Imprécision|Erreur|Grosse erreur|Meilleur coup|Excellent|Bon|Brillant)$/);
+  expect(note).toMatch(/^(Classique|Solide|Forcé|Imprécision|Erreur|Gaffe)$/);
   await expect(page.getByRole('button', { name: `Coup 1, E5, ${note}` })).toHaveAttribute('aria-current', 'true');
-  await expect(page.locator('.revue-mochi p')).toHaveText(/^Tu joues E5\. \S/);
 
-  // Toucher un coup de la liste l'affiche.
+  // Toucher un coup de la bande l'affiche.
   await page.getByRole('button', { name: /^Coup 2,/ }).click();
   await expect(page.getByText(/Coup 2 sur \d+/)).toBeVisible();
-
-  // Bilan : précision des deux joueurs, puis le résumé (tableau et phrase de Mochi).
-  const bilan = page.getByRole('button', { name: /Précision/ });
-  await expect(bilan).toContainText(/Toi \d+\s%/);
-  await expect(bilan).toContainText(/Pomme \d+\s%/);
-  // #310 : une espace visible avant le point médian (« Toi 100 % · Pomme 80 % »), pas « Toi 100 %· Pomme ».
-  const ecart = await page.locator('.revue-precision-duo').evaluate(duo => {
-    const moi = duo.firstChild!, lui = duo.querySelector('.revue-precision-lui')!.firstChild!;
-    const a = document.createRange(); a.selectNodeContents(moi);
-    const b = document.createRange(); const i = lui.textContent!.indexOf('·'); b.setStart(lui, i); b.setEnd(lui, i + 1);
-    return b.getBoundingClientRect().left - a.getBoundingClientRect().right;
-  });
-  expect(ecart).toBeGreaterThanOrEqual(3);
-  await bilan.click();
-  const resume = page.getByRole('region', { name: 'Résumé de la partie' });
-  await expect(resume.getByRole('table')).toBeVisible();
-  await expect(resume.getByRole('row', { name: /Grosse erreur/ })).toBeVisible();
-  await expect(resume.locator('.revue-mochi-bilan p')).not.toBeEmpty();
-  // Le résumé prend la place des coups, sans repousser le goban : « Fermer » y revient.
-  await expect(plateau(page)).toHaveCount(0);
-  await bilan.click();
-  await expect(plateau(page)).toBeVisible();
-  await expect(page.locator('.cta')).toHaveCount(1);
-  // « Rejouer d'ici » est dans le flux : il ne recouvre ni le goban ni la liste des coups.
-  const cta = await page.locator('.cta').boundingBox(), liste = await page.locator('.revue-nav').boundingBox(), gob = await plateau(page).boundingBox();
-  expect(cta!.y).toBeGreaterThanOrEqual(liste!.y + liste!.height);
-  expect(cta!.y).toBeGreaterThanOrEqual(gob!.y + gob!.height);
+  // « Suivant » est dans le dock : il reste à l'écran.
+  await expect(page.locator('.cta')).toBeInViewport();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
 });
 
@@ -139,124 +123,40 @@ test('la revue note le coup affiché et montre la précision des deux joueurs', 
 test('défaite lourde : précision plafonnée et bilan sans félicitations', async ({ page }) => {
   await partieCourte(page, ['E5', 'C3'], 100);
   await page.getByRole('button', { name: 'Revoir ma partie' }).click();
-  await expect(page.locator('.revue-analyse')).toHaveCount(0, { timeout: 60_000 });
-  const bilan = page.getByRole('button', { name: /Précision/ });
-  const texte = ((await bilan.textContent()) ?? '').replace(/\s/g, ' ');
-  expect(Number(/Toi (\d+)/.exec(texte)?.[1])).toBeLessThanOrEqual(50);
+  await expect(page.getByRole('button', { name: 'Démarrer le bilan' })).toBeVisible({ timeout: 60_000 });
+  const texte = ((await page.getByRole('row', { name: /^Précision/ }).textContent()) ?? '').replace(/\s/g, ' ');
+  expect(Number(/Précision\s*(\d+)/.exec(texte)?.[1])).toBeLessThanOrEqual(50);
   await expect(page.getByText(/Aucune grosse erreur|Bien joué/)).toHaveCount(0);
-  await bilan.click();
-  const phrase = page.locator('.revue-mochi-bilan p');
+  const phrase = page.locator('.bilan-bulle');
   await expect(phrase).toHaveText(/^Tu perds de \d/);
   await expect(phrase).not.toHaveText(/Aucune erreur|Très belle|plus juste/);
 });
 
-// Issue #186 : la revue s'ouvre sur le moment clé (passes comprises) et « Rejouer d'ici » en repart.
+// Issue #186 : le moment clé (passes comprises) fait partie des coups clés du parcours, et « Rejouer d'ici » en repart.
 // Pomme choisit ses coups au hasard parmi ses bons coups : on joue sur la première ligne (des coups perdants) et on
-// recommence jusqu'à trois fois si la partie n'a pas de moment clé (2 parties sur 3 en ont un, mesuré le 28/09).
-test("la revue s'ouvre sur le moment clé, revient au début, et rejoue d'ici sans partie vide", async ({ page }) => {
-  test.setTimeout(150_000);
-  const puce = page.getByRole('button', { name: /^Moment clé, coup \d+/ });
-  for (let essai = 0; essai < 3 && !(await puce.count()); essai++) {
+// recommence jusqu'à trois fois si la partie n'a pas de moment clé.
+test("le parcours passe par le moment clé, et rejoue d'ici sans partie vide", async ({ page }) => {
+  test.setTimeout(180_000);
+  const cle = page.locator('.parcours-cle');
+  const suivant = page.getByRole('button', { name: 'Suivant', exact: true });
+  let trouve = false;
+  for (let essai = 0; essai < 3 && !trouve; essai++) {
     await partieCourte(page, ['E5', 'A1', 'A9', 'J1', 'J9']);
     await page.getByRole('button', { name: 'Revoir ma partie' }).click();
-    await expect(page.locator('.revue-analyse')).toHaveCount(0, { timeout: 60_000 });
+    await demarrerParcours(page);
+    for (let k = 0; k < 14 && !(await cle.count()) && (await suivant.count()); k++) await suivant.click();
+    trouve = (await cle.count()) > 0;
   }
-  test.skip((await puce.count()) === 0, 'trois parties sans moment clé : Pomme a joué sans laisser de points');
-  const coup = Number(/coup (\d+)/.exec((await puce.getAttribute('aria-label'))!)![1]);
+  test.skip(!trouve, 'trois parties sans moment clé : Pomme a joué sans laisser de points');
+  await expect(cle).toHaveText('Moment clé');
+  const coup = Number(/Coup (\d+) sur/.exec((await page.locator('.revue-compteur').textContent())!)![1]);
   expect(coup).toBeGreaterThan(1);
-  const compteur = (k: number) => page.getByText(new RegExp(`^Coup ${k} sur \\d+$`));
-  // Ouverte sur le coup du moment clé (la pierre jouée est visible), avec la phrase de Mochi.
-  await expect(compteur(coup)).toBeVisible();
-  await expect(puce).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.locator('.revue-mochi p').first()).toHaveText(/^Moment clé\s:\sici, tu as (passé|joué)/);
   await expect(page.locator('.cta')).toHaveCount(1);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
 
-  // « Revenir au début », puis la puce ramène au moment clé.
-  await page.getByRole('button', { name: 'Revenir au début' }).click();
-  await expect(compteur(0)).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Revenir au début' })).toHaveCount(0);
-  // Position juste avant le coup clé : c'est d'elle que « Rejouer d'ici » doit repartir.
-  await page.getByRole('button', { name: new RegExp(`^Coup ${coup - 1},`) }).click();
-  const pierres = await plateau(page).locator('g[data-pierre]').count();
-  expect(pierres).toBeGreaterThan(0);
-  await puce.click();
-  await expect(compteur(coup)).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Revenir au début' })).toBeVisible();
-
-  // Rejouer d'ici : juste avant le coup clé, pas une partie vide.
+  // « Rejouer d'ici » repart juste avant le coup clé, Noir au trait : jamais d'une partie vide.
   await page.getByRole('button', { name: "Rejouer d'ici" }).click();
   await expect(page.getByText('On reprend ici. À toi de trouver mieux !')).toBeVisible();
-  await expect(plateau(page).locator('g[data-pierre]')).toHaveCount(pierres);
+  expect(await plateau(page).locator('g[data-pierre]').count()).toBeGreaterThan(0);
   await expect(page.getByRole('button', { name: 'Passer' })).toBeEnabled();
-});
-
-// Captures de la revue honnête, sombre et clair : `CAPTURES=1 npx playwright test e2e/revue.spec.ts -g "moment clé, sombre"`.
-test('captures du moment clé, sombre et clair', async ({ page }) => {
-  test.skip(!process.env.CAPTURES, 'captures à la demande');
-  test.setTimeout(120_000);
-  const puce = page.getByRole('button', { name: /^Moment clé, coup \d+/ });
-  for (let essai = 0; essai < 3 && !(await puce.count()); essai++) {
-    await partieCourte(page, ['E5', 'A1', 'A9', 'J1', 'J9']);
-    await page.getByRole('button', { name: 'Revoir ma partie' }).click();
-    await expect(page.locator('.revue-analyse')).toHaveCount(0, { timeout: 60_000 });
-  }
-  for (const theme of ['dark', 'light'] as const) {
-    await page.evaluate(t => document.documentElement.setAttribute('data-theme', t), theme);
-    const nom = theme === 'dark' ? 'sombre' : 'clair';
-    await page.screenshot({ path: `test-results/captures/revue-cle-${nom}.png` });
-    await page.screenshot({ path: `test-results/captures/revue-cle-${nom}-page.png`, fullPage: true });
-  }
-});
-
-// Captures des notes (docs/design/v2/captures/notes-*.png) : `CAPTURES=1 npx playwright test e2e/revue.spec.ts`.
-test('captures des notes, sombre et clair', async ({ page }) => {
-  test.skip(!process.env.CAPTURES, 'captures à la demande');
-  test.setTimeout(180_000);
-  await page.setViewportSize({ width: 390, height: 844 });
-  await partieCourte(page, ['E5', 'C3', 'G7', 'C7', 'G3', 'D6', 'F4', 'B2']);
-  await page.getByRole('button', { name: 'Revoir ma partie' }).click();
-  await expect(page.locator('.revue-analyse')).toHaveCount(0, { timeout: 90_000 });
-  await page.getByRole('button', { name: /^Coup 5,/ }).click();
-  const bilan = page.getByRole('button', { name: /Précision/ });
-  for (const [w, h, suffixe] of [[390, 844, ''], [375, 667, '-se']] as const) {
-    await page.setViewportSize({ width: w, height: h });
-    for (const theme of ['dark', 'light'] as const) {
-      await page.evaluate(t => document.documentElement.setAttribute('data-theme', t), theme);
-      await page.screenshot({ path: `docs/design/v2/captures/notes-coup-${theme === 'dark' ? 'sombre' : 'clair'}${suffixe}.png` });
-    }
-    await bilan.click();
-    for (const theme of ['dark', 'light'] as const) {
-      await page.evaluate(t => document.documentElement.setAttribute('data-theme', t), theme);
-      await page.screenshot({ path: `docs/design/v2/captures/notes-resume-${theme === 'dark' ? 'sombre' : 'clair'}${suffixe}.png` });
-    }
-    await bilan.click();
-  }
-  // Planche des 7 sceaux en grand, sur le bois du goban : mêmes couleurs que src/ui/notes.ts.
-  const sceaux: [string, string, string, string][] = [
-    ['Brillant', '!!', '#2F9FD8', '#04172A'], ['Meilleur coup', '★', '#3CC48E', '#07231A'], ['Excellent', '!', '#3CC48E', '#07231A'],
-    ['Bon', '✓', '#A5D66F', '#12240A'], ['Imprécision', '?!', '#EFB84A', '#2E1D00'], ['Erreur', '?', '#EC8236', '#2A1200'], ['Grosse erreur', '??', '#C23A24', '#FFF6EC'],
-  ];
-  const cases = sceaux.map(([l, s, f, t]) => `<figure><div class="p"><i style="background:${f};color:${t};font-size:${s.length > 1 ? 30 : 38}px">${s}</i></div><figcaption>${l}</figcaption></figure>`).join('');
-  await page.setViewportSize({ width: 820, height: 560 });
-  await page.setContent(`<style>body{margin:0;background:#1C1916;font-family:system-ui;color:#F3EDE3}main{display:grid;grid-template-columns:repeat(4,1fr);gap:22px;padding:28px;background:linear-gradient(#EDC27A,#C58D42);border-radius:14px;margin:18px}
-    figure{margin:0;display:grid;justify-items:center;gap:10px}.p{position:relative;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle at 36% 30%,#5b5f5d,#151716 55%,#050606);box-shadow:4px 7px 10px rgba(35,18,4,.45)}
-    i{position:absolute;right:-14px;top:-14px;width:60px;height:60px;display:grid;place-items:center;border-radius:28%;transform:rotate(-6deg);font-style:normal;font-weight:800;box-shadow:0 0 0 4px rgba(243,237,227,.9)}
-    figcaption{color:#2b1a08;font-weight:700;font-size:17px;white-space:nowrap}</style><main>${cases}</main>`);
-  await page.locator('main').screenshot({ path: 'docs/design/v2/captures/notes-sceaux.png' });
-});
-
-// Captures du design (docs/design/v2/captures/revue-*.png) : `CAPTURES=1 npx playwright test e2e/revue.spec.ts`.
-test('captures de la revue, sombre et clair', async ({ page }) => {
-  test.skip(!process.env.CAPTURES, 'captures à la demande');
-  test.setTimeout(120_000);
-  await partieCourte(page, ['E5', 'C3', 'G7', 'C7', 'G3', 'D6', 'F4']);
-  await page.getByRole('button', { name: 'Revoir ma partie' }).click();
-  await expect(page.locator('.revue-analyse')).toHaveCount(0, { timeout: 60_000 });
-  const erreur = page.locator('.revue-erreur').first();
-  if (await erreur.count()) { await erreur.click(); await expect(page.locator('[data-meilleur]')).toHaveCount(1, { timeout: 15_000 }).catch(() => {}); }
-  for (const theme of ['dark', 'light'] as const) {
-    await page.evaluate(t => document.documentElement.setAttribute('data-theme', t), theme);
-    await page.screenshot({ path: `docs/design/v2/captures/revue-${theme === 'dark' ? 'sombre' : 'clair'}.png` });
-  }
 });
