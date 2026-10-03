@@ -62,8 +62,8 @@
 .btn-fournisseur:not(:disabled):active { filter: brightness(.94); }
 .btn-fournisseur:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 /* Spécificité .btn.btn-xxx : le fond générique de .btn (app.css) ne doit jamais remplacer la couleur de la marque.
-   Case d’âge non cochée : bouton touchable, l'aide dit pourquoi. Atténué sans disparaître (le bord reste lisible en sombre). */
-.btn-fournisseur.inactif { opacity: .62; }
+   Case d'âge non cochée : les couleurs restent pleines (les chartes interdisent de les délaver) ; le bouton reste
+   touchable et l'aide sous la case dit pourquoi rien ne part (aria-disabled). */
 .btn.btn-google, .btn.btn-google:active { background: var(--google-fond); color: var(--google-texte); border: 1px solid var(--google-bord); }
 .btn.btn-apple, .btn.btn-apple:active { background: var(--apple-fond); color: var(--apple-texte); border: 1px solid var(--apple-bord); }
 .btn.btn-facebook, .btn.btn-facebook:active { background: #1877F2; color: #FFFFFF; border: 1px solid #1877F2; }
@@ -78,6 +78,8 @@
 .moyens .moyen-nom small { display: block; color: var(--muted); }
 .moyens .lien { min-height: 44px; }
 .moyens-info { margin: 8px 0 0; }
+.moyens-carte { margin-top: var(--space-3); }
+.moyens-carte .connexion-info { margin: 6px 0 0; }
 .connexion-ou { display: flex; align-items: center; gap: 10px; margin: 8px 0 2px; }
 .connexion-ou::before, .connexion-ou::after { content: ''; flex: 1; height: 1px; background: var(--line); }
 /* Code par e-mail en second moyen : bouton à contour, jamais plein. */

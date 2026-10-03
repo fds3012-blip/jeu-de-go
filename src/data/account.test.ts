@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { Db } from './supabase';
-import { codeComplet, confirmationValide, deleteMyAccount, envoyerCode, nettoyerCode, pseudoDisponible, verifierCode } from './account';
+import { codeComplet, confirmationValide, connexionSociale, deleteMyAccount, envoyerCode, lierSociale, moyensDuCompte, nettoyerCode, pseudoDisponible, retirerMoyen, verifierCode } from './account';
 
 function clientSimule(rpcError: { message: string } | null) {
   const rpc = vi.fn().mockResolvedValue({ data: null, error: rpcError });
@@ -109,5 +109,46 @@ describe('pseudoDisponible (#343)', () => {
     const c = profils([]);
     expect((await pseudoDisponible(c.db, 'é')).ok).toBe(false);
     expect(c.appels).toEqual([]);
+  });
+});
+
+describe('connexion sociale (#411)', () => {
+  const ident = (provider: string, email?: string) => ({ id: provider, identity_id: `id-${provider}`, user_id: 'u', provider, identity_data: { email } });
+
+  it('signInWithOAuth avec le fournisseur et l’adresse de retour ; erreur : phrase avec le nom', async () => {
+    const signInWithOAuth = vi.fn().mockResolvedValueOnce({ error: null }).mockResolvedValueOnce({ error: { status: 500 } });
+    const db = { auth: { signInWithOAuth } } as unknown as Db;
+    expect(await connexionSociale(db, 'facebook', 'https://jeu/')).toEqual({ ok: true, value: null });
+    expect(signInWithOAuth).toHaveBeenCalledWith({ provider: 'facebook', options: { redirectTo: 'https://jeu/' } });
+    expect(await connexionSociale(db, 'apple', 'https://jeu/')).toEqual({ ok: false, error: 'Apple n’a pas répondu. Reçois plutôt un code par e-mail.' });
+  });
+
+  it('linkIdentity ; liaison manuelle fermée dans Supabase : raison `fermee` (repli prévu)', async () => {
+    const linkIdentity = vi.fn().mockResolvedValueOnce({ error: null })
+      .mockResolvedValueOnce({ error: { code: 'manual_linking_disabled', status: 404 } })
+      .mockResolvedValueOnce({ error: { code: 'unexpected_failure', status: 500 } });
+    const db = { auth: { linkIdentity } } as unknown as Db;
+    expect(await lierSociale(db, 'google', 'https://jeu/')).toEqual({ ok: true, value: null });
+    expect(linkIdentity).toHaveBeenCalledWith({ provider: 'google', options: { redirectTo: 'https://jeu/' } });
+    expect(await lierSociale(db, 'google', 'https://jeu/')).toMatchObject({ ok: false, raison: 'fermee' });
+    const autre = await lierSociale(db, 'google', 'https://jeu/');
+    expect(autre.ok).toBe(false);
+    expect('raison' in autre && autre.raison).toBeFalsy();
+  });
+
+  it('moyens du compte : e-mail d’abord, puis Google, Apple, Facebook ; e-mail du fournisseur', async () => {
+    const getUserIdentities = vi.fn().mockResolvedValue({ data: { identities: [ident('facebook', 'f@x'), ident('github'), ident('email', 'e@x'), ident('google', 'g@x')] }, error: null });
+    const r = await moyensDuCompte({ auth: { getUserIdentities } } as unknown as Db);
+    expect(r.ok && r.value.map(m => [m.moyen, m.email])).toEqual([['email', 'e@x'], ['google', 'g@x'], ['facebook', 'f@x'], ['autre', null]]);
+  });
+
+  it('retirer : refus du dernier moyen, conflit d’adresse, succès', async () => {
+    const unlinkIdentity = vi.fn().mockResolvedValueOnce({ error: { code: 'single_identity_not_deletable' } })
+      .mockResolvedValueOnce({ error: { code: 'email_conflict_identity_not_deletable' } }).mockResolvedValueOnce({ error: null });
+    const db = { auth: { unlinkIdentity } } as unknown as Db;
+    const i = ident('google') as never;
+    expect(await retirerMoyen(db, i)).toEqual({ ok: false, error: 'Garde au moins un moyen pour te connecter.' });
+    expect(await retirerMoyen(db, i)).toEqual({ ok: false, error: 'Impossible de le retirer : l’adresse de ton compte en dépend.' });
+    expect(await retirerMoyen(db, i)).toEqual({ ok: true, value: null });
   });
 });

@@ -32,9 +32,9 @@ export const EVENTS = {
   // E-mail de connexion envoyé (code à 6 chiffres et lien, #343 ; `moyen` : `code`).
   lienConnexionEnvoye: 'lien_connexion_envoye',
   // Entonnoir essai → compte (#343). `essai_limite_atteinte` : écran « Crée ton compte » ouvert (`raison`, `parties`).
-  // `compte_cree` : connecté sans pseudo, donc nouveau compte (`moyen` : `code`, `lien` ou `google` ; `origine`).
+  // `compte_cree` : connecté sans pseudo, donc nouveau compte (`moyen` : `code`, `lien`, `google`, `apple` ou `facebook` ; `origine`).
   // `pseudo_choisi` : premier pseudo enregistré (remplace `inscription`) ; le compte est complet.
-  // `compte_methode` (#354) : moyen touché sur l'écran de compte (`methode` : `google` ou `code`, `navigateur_integre`).
+  // `compte_methode` (#354, #411) : moyen touché (`methode` : `google`, `apple`, `facebook` ou `code`, `navigateur_integre`).
   compteMethode: 'compte_methode',
   essaiLimiteAtteinte: 'essai_limite_atteinte',
   compteCree: 'compte_cree',

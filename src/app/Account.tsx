@@ -187,7 +187,7 @@ function MoyensConnexion({ db, userId }: { db: Db; userId: string }) {
   }
 
   return (
-    <section className="card" aria-labelledby="moyens-titre" data-testid="moyens-connexion">
+    <section className="card moyens-carte" aria-labelledby="moyens-titre" data-testid="moyens-connexion">
       <b id="moyens-titre">{t('compte.moyens.titre')}</b>
       {moyens && (
         <ul className="moyens">
@@ -204,6 +204,7 @@ function MoyensConnexion({ db, userId }: { db: Db; userId: string }) {
           ))}
         </ul>
       )}
+      {info && <p className="small connexion-info" role="status">{info}</p>}
       {dejaLie ? (
         <div className="connexion-incident" role="alert" data-testid="deja-lie" style={{ marginTop: 10 }}>
           <p className="small"><b>{fr(t('connexion.sociale.dejaLie', { nom: NOM_FOURNISSEUR[dejaLie] }))}</b></p>
@@ -220,7 +221,6 @@ function MoyensConnexion({ db, userId }: { db: Db; userId: string }) {
         </>
       )}
       <p className="small connexion-erreur moyens-info" role="alert">{erreur}</p>
-      {info && <p className="small connexion-info" role="status">{info}</p>}
     </section>
   );
 }
