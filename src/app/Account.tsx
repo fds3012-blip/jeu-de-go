@@ -2,13 +2,17 @@ import { useEffect, useState, type CSSProperties, type FormEvent } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import type { Db } from '../data/supabase';
 import { chargerSupabase, useSupabase } from '../data/client';
-import { motSuppression, confirmationValide, deleteMyAccount, fetchProfile, saveUsername, type Profile } from '../data/account';
+import { motSuppression, confirmationValide, connexionSociale, deleteMyAccount, fetchProfile, lierSociale, moyensDuCompte, retirerMoyen, saveUsername, type MoyenCompte, type Profile } from '../data/account';
 import { USERNAME_MAX, USERNAME_MIN, validateUsername } from '../data/username';
 import { EVENTS, identify, track } from '../data/analytics';
 import { compteDe, estAnonyme } from '../data/defi';
 import { ConnexionCode } from './Connexion';
 import type { Sens } from './connexionBascule';
 import { moyenConnexion } from './entonnoir';
+import { garderRetour, lireAnnonce, oublierAnnonce } from './connexionGoogle';
+import { NOM_FOURNISSEUR, fournisseursActifs, fournisseursVisibles, messageIncident, type Fournisseur } from './fournisseurs';
+import { contexteActuel } from './navigateurIntegre';
+import { BoutonsFournisseurs } from '../ui/BoutonFournisseur';
 import { fr } from '../ui/typo';
 import { t } from '../content/i18n';
 import '../ui/compte.css';
@@ -110,6 +114,7 @@ function Connected({ db }: { db: Db }) {
         </div>
         <SupprimerCompte db={db} />
       </div>
+      <MoyensConnexion db={db} userId={session.user.id} />
       {/* Audit du 02/10 (n° 2) : l'écran était aux deux tiers vide. Il redit ce que le compte garde (la même promesse
           qu'à la création, #214), sans action de plus. */}
       <section className="creer-garde compte-connecte-garde" aria-labelledby="compte-garde-titre">
@@ -120,6 +125,103 @@ function Connected({ db }: { db: Db }) {
         <p className="muted small creer-appareils">{fr(t('creer.garde.appareils'))}</p>
       </section>
     </>
+  );
+}
+
+/**
+ * Mon compte → « Tes moyens de connexion » (#411) : le code par e-mail et les fournisseurs reliés, « Retirer » s'il en
+ * reste un autre (Supabase refuse de retirer le dernier), puis les boutons des fournisseurs pas encore reliés
+ * (`linkIdentity`, même ordre que partout). Un fournisseur non réglé (drapeau absent) n'apparaît jamais.
+ */
+function MoyensConnexion({ db, userId }: { db: Db; userId: string }) {
+  const [annonce] = useState(() => { const a = lireAnnonce(); return a?.action === 'ajout' ? a : null; });
+  useEffect(() => { if (annonce) oublierAnnonce(); }, [annonce]);
+  const [moyens, setMoyens] = useState<MoyenCompte[] | null>(null);
+  const [cle, setCle] = useState(0);
+  const [erreur, setErreur] = useState(() => annonce?.incident && annonce.incident !== 'deja_lie' ? messageIncident(annonce.incident, annonce.fournisseur) : '');
+  const [info, setInfo] = useState(() => annonce && !annonce.incident ? t('compte.moyens.ajoute', { nom: NOM_FOURNISSEUR[annonce.fournisseur] }) : '');
+  const [dejaLie, setDejaLie] = useState<Fournisseur | null>(annonce?.incident === 'deja_lie' ? annonce.fournisseur : null);
+  const [vers, setVers] = useState<Fournisseur | null>(null);
+  const [retrait, setRetrait] = useState<string | null>(null);
+  const [contexte] = useState(contexteActuel);
+  const [actifs] = useState(() => fournisseursActifs());
+
+  useEffect(() => {
+    let vivant = true;
+    moyensDuCompte(db).then(r => {
+      if (!vivant) return;
+      if (r.ok) setMoyens(r.value); else setErreur(r.error);
+    });
+    return () => { vivant = false; };
+  }, [db, userId, cle]);
+
+  if (moyens === null && !erreur) return null;
+  const relies = new Set((moyens ?? []).map(m => m.moyen));
+  const aAjouter = fournisseursVisibles(contexte, actifs).filter(f => !relies.has(f));
+  const nomDe = (m: MoyenCompte) => m.moyen === 'email' ? t('compte.moyens.email') : m.moyen === 'autre' ? m.identite.provider : NOM_FOURNISSEUR[m.moyen];
+
+  async function ajouter(f: Fournisseur) {
+    if (vers) return;
+    setVers(f); setErreur(''); setInfo('');
+    track(EVENTS.compteMethode, { methode: f, navigateur_integre: contexte.integre });
+    garderRetour(undefined, undefined, { fournisseur: f, action: 'ajout' });
+    const r = await lierSociale(db, f, `${window.location.origin}/`);
+    if (!r.ok) { setVers(null); setErreur(r.error); }
+  }
+  /** L'identité est déjà à un autre compte du jeu : on s'y connecte (la session de ce compte-ci est remplacée). */
+  async function seConnecterA(f: Fournisseur) {
+    if (vers) return;
+    setVers(f); setErreur('');
+    garderRetour(undefined, undefined, { fournisseur: f, action: 'connexion' });
+    const r = await connexionSociale(db, f, `${window.location.origin}/`);
+    if (!r.ok) { setVers(null); setErreur(r.error); }
+  }
+  async function retirer(m: MoyenCompte) {
+    if (retrait) return;
+    setRetrait(m.identite.identity_id); setErreur(''); setInfo('');
+    const r = await retirerMoyen(db, m.identite);
+    setRetrait(null);
+    if (!r.ok) { setErreur(r.error); return; }
+    setInfo(t('compte.moyens.retire', { nom: nomDe(m) }));
+    setCle(c => c + 1);
+  }
+
+  return (
+    <section className="card" aria-labelledby="moyens-titre" data-testid="moyens-connexion">
+      <b id="moyens-titre">{t('compte.moyens.titre')}</b>
+      {moyens && (
+        <ul className="moyens">
+          {moyens.map(m => (
+            <li key={m.identite.identity_id} data-moyen={m.moyen}>
+              <span className="moyen-nom">{nomDe(m)}{m.email && <small>{m.email}</small>}</span>
+              {moyens.length > 1 && (
+                <button type="button" className="lien" aria-label={t('compte.moyens.retirerNom', { nom: nomDe(m) })}
+                  disabled={retrait !== null} aria-busy={retrait === m.identite.identity_id} onClick={() => { void retirer(m); }}>
+                  {t('compte.moyens.retirer')}
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+      {dejaLie ? (
+        <div className="connexion-incident" role="alert" data-testid="deja-lie" style={{ marginTop: 10 }}>
+          <p className="small"><b>{fr(t('connexion.sociale.dejaLie', { nom: NOM_FOURNISSEUR[dejaLie] }))}</b></p>
+          <p className="small attention">{fr(t('connexion.sociale.dejaLieAutre'))}</p>
+          <button type="button" className="btn primary" disabled={vers !== null} aria-busy={vers === dejaLie} onClick={() => { void seConnecterA(dejaLie); }}>
+            {vers === dejaLie ? t('connexion.avecAttente', { nom: NOM_FOURNISSEUR[dejaLie] }) : t('connexion.sociale.seConnecter')}
+          </button>
+          <button type="button" className="lien" onClick={() => setDejaLie(null)}>{t('compte.annuler')}</button>
+        </div>
+      ) : aAjouter.length > 0 && (
+        <>
+          <p className="muted small moyens-info">{fr(t('compte.moyens.ajouter'))}</p>
+          <BoutonsFournisseurs fournisseurs={aAjouter} enCours={vers} inactif={false} onChoisir={f => { void ajouter(f); }} />
+        </>
+      )}
+      <p className="small connexion-erreur moyens-info" role="alert">{erreur}</p>
+      {info && <p className="small connexion-info" role="status">{info}</p>}
+    </section>
   );
 }
 

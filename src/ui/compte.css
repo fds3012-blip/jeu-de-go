@@ -61,11 +61,12 @@
 .btn-fournisseur > svg { flex: none; }
 .btn-fournisseur:not(:disabled):active { filter: brightness(.94); }
 .btn-fournisseur:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
-/* Case d'âge non cochée : bouton touchable, l'aide dit pourquoi. Atténué sans disparaître (le bord reste lisible en sombre). */
+/* Spécificité .btn.btn-xxx : le fond générique de .btn (app.css) ne doit jamais remplacer la couleur de la marque.
+   Case d’âge non cochée : bouton touchable, l'aide dit pourquoi. Atténué sans disparaître (le bord reste lisible en sombre). */
 .btn-fournisseur.inactif { opacity: .62; }
-.btn-google { background: var(--google-fond); color: var(--google-texte); border: 1px solid var(--google-bord); }
-.btn-apple { background: var(--apple-fond); color: var(--apple-texte); border: 1px solid var(--apple-bord); }
-.btn-facebook { background: #1877F2; color: #FFFFFF; border: 1px solid #1877F2; }
+.btn.btn-google, .btn.btn-google:active { background: var(--google-fond); color: var(--google-texte); border: 1px solid var(--google-bord); }
+.btn.btn-apple, .btn.btn-apple:active { background: var(--apple-fond); color: var(--apple-texte); border: 1px solid var(--apple-bord); }
+.btn.btn-facebook, .btn.btn-facebook:active { background: #1877F2; color: #FFFFFF; border: 1px solid #1877F2; }
 /* Identité déjà reliée à un autre compte (#411) : explication, avertissement, puis « Se connecter à ce compte ». */
 .connexion-incident { display: grid; gap: 8px; padding: 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface-2, var(--bg)); }
 .connexion-incident p { margin: 0; text-wrap: pretty; }
