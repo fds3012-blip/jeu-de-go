@@ -1,17 +1,18 @@
 // Entonnoir essai → compte (#343) : `essai_limite_atteinte` → `lien_connexion_envoye` → `compte_cree` → `pseudo_choisi`.
 // Rien n'est écrit sur l'appareil : le moyen de connexion n'est gardé que pour la page ouverte (pour Google, la note
-// d'aller-retour de src/app/connexionGoogle.ts le rapporte au retour).
+// d'aller-retour de src/app/connexionGoogle.ts le rapporte au retour ; Apple et Facebook depuis #411).
 import type { EtatCompte } from './essai';
+import type { Fournisseur } from './fournisseurs';
 
-export type Moyen = 'code' | 'lien' | 'google';
+export type Moyen = 'code' | 'lien' | Fournisseur;
 let moyen: Moyen | null = null;
 
 /** Le code à 6 chiffres vient d'être accepté dans cette page. */
 export function noterConnexionParCode(): void { moyen = 'code'; }
-/** La page revient de Google (#354). */
-export function noterConnexionParGoogle(): void { moyen = 'google'; }
+/** La page revient de Google (#354), d'Apple ou de Facebook (#411). */
+export function noterConnexionPar(f: Fournisseur): void { moyen = f; }
 
-/** Moyen de la connexion en cours : le code tapé dans l'app, Google, sinon le lien de l'e-mail. */
+/** Moyen de la connexion en cours : le code tapé dans l'app, un fournisseur, sinon le lien de l'e-mail. */
 export const moyenConnexion = (): Moyen => moyen ?? 'lien';
 
 /**

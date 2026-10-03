@@ -1,5 +1,7 @@
 import type { Tables } from './database.types';
+import type { UserIdentity } from '@supabase/supabase-js';
 import type { Db } from './supabase';
+import { ORDRE_FOURNISSEURS, NOM_FOURNISSEUR, estFournisseur, type Fournisseur } from '../app/fournisseurs';
 import { usernameErrorFromDb, validateUsername } from './username';
 import { liveStreak } from './puzzles';
 import { t } from '../content/i18n';
@@ -60,14 +62,58 @@ export async function envoyerCodeConnexion(db: Db, email: string): Promise<Resul
 }
 
 /**
- * « Continuer avec Google » (#354) : part chez Google (redirection), qui revient sur `retour` avec la session dans le
- * fragment (flux implicite, lu par `detectSessionInUrl`). Même e-mail qu'un compte créé par code : même compte
- * (liaison automatique de Supabase). Seul l'e-mail sert : le nom et la photo de Google ne sont jamais utilisés.
+ * « Continuer avec Google / Apple / Facebook » (#354, #411) : part chez le fournisseur (redirection), qui revient sur
+ * `retour` avec la session dans le fragment (flux implicite, lu par `detectSessionInUrl`). Même e-mail vérifié qu'un
+ * compte existant : même compte (liaison automatique de Supabase). Seul l'e-mail sert : nom et photo jamais utilisés
+ * (et effacés par le serveur, migrations `minimisation_*`).
  */
-export async function connexionGoogle(db: Db, retour: string): Promise<Result<null>> {
-  const { error } = await db.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: retour } });
-  if (error) return { ok: false, error: t('connexion.google.erreur') };
+export async function connexionSociale(db: Db, fournisseur: Fournisseur, retour: string): Promise<Result<null>> {
+  const { error } = await db.auth.signInWithOAuth({ provider: fournisseur, options: { redirectTo: retour } });
+  if (error) return { ok: false, error: t('connexion.sociale.erreur', { nom: NOM_FOURNISSEUR[fournisseur] }) };
   return { ok: true, value: null };
+}
+
+/** Échec d'une liaison : `fermee` si la liaison manuelle n'est pas activée dans Supabase (repli : connexion classique). */
+export type EchecLiaison = { ok: false; error: string; raison?: 'fermee' };
+
+/**
+ * Relie un fournisseur au compte EN PLACE (`linkIdentity`, #411) : session sans compte d'un ancien défi (même identifiant,
+ * donc parties et défis gardés) ou compte complet qui ajoute un moyen (Mon compte). Demande « Manual linking » activé
+ * dans Supabase ; sinon `raison: 'fermee'`. L'identité déjà reliée à un autre compte revient en erreur dans l'adresse
+ * (`identity_already_exists`, src/app/fournisseurs.ts).
+ */
+export async function lierSociale(db: Db, fournisseur: Fournisseur, retour: string): Promise<Result<null> | EchecLiaison> {
+  const { error } = await db.auth.linkIdentity({ provider: fournisseur, options: { redirectTo: retour } });
+  if (!error) return { ok: true, value: null };
+  if ((error as ErreurAuth).code === 'manual_linking_disabled') return { ok: false, error: t('compte.moyens.ferme'), raison: 'fermee' };
+  return { ok: false, error: t('connexion.sociale.erreur', { nom: NOM_FOURNISSEUR[fournisseur] }) };
+}
+
+/** Un moyen de connexion du compte : `email` (code par e-mail) ou un fournisseur. */
+export interface MoyenCompte { identite: UserIdentity; moyen: 'email' | Fournisseur | 'autre'; email: string | null }
+
+/** Moyens de connexion du compte connecté (identités Supabase), e-mail d'abord puis dans l'ordre des boutons. */
+export async function moyensDuCompte(db: Db): Promise<Result<MoyenCompte[]>> {
+  const { data, error } = await db.auth.getUserIdentities();
+  if (error || !data) return { ok: false, error: t('compte.moyens.erreur') };
+  const rang = (m: MoyenCompte['moyen']) => m === 'email' ? -1 : m === 'autre' ? 99 : ORDRE_FOURNISSEURS.indexOf(m);
+  return { ok: true, value: data.identities.map(identite => {
+    const p = identite.provider;
+    const moyen: MoyenCompte['moyen'] = p === 'email' ? 'email' : estFournisseur(p) ? p : 'autre';
+    const e = identite.identity_data?.email;
+    return { identite, moyen, email: typeof e === 'string' ? e : null };
+  }).sort((a, b) => rang(a.moyen) - rang(b.moyen)) };
+}
+
+/** Retire un moyen (`unlinkIdentity`). Supabase refuse de retirer le dernier : il en faut toujours un. */
+export async function retirerMoyen(db: Db, identite: UserIdentity): Promise<Result<null>> {
+  const { error } = await db.auth.unlinkIdentity(identite);
+  if (!error) return { ok: true, value: null };
+  const code = (error as ErreurAuth).code;
+  if (code === 'single_identity_not_deletable') return { ok: false, error: t('compte.moyens.dernier') };
+  if (code === 'email_conflict_identity_not_deletable') return { ok: false, error: t('compte.moyens.conflit') };
+  if (code === 'manual_linking_disabled') return { ok: false, error: t('compte.moyens.ferme') };
+  return { ok: false, error: t('compte.moyens.erreur') };
 }
 
 /** Nombre de chiffres du code (réglage « Email OTP Length » de Supabase, à laisser à 6). */

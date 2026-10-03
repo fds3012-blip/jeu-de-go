@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { aideNavigateur, contexteNavigateur, googleVisible, lienChrome } from './navigateurIntegre';
+import { aideNavigateur, contexteNavigateur, lienChrome } from './navigateurIntegre';
+import { fournisseursVisibles, type Fournisseur } from './fournisseurs';
+
+const TOUS: Fournisseur[] = ['google', 'apple', 'facebook'];
+const googleVisible = (c: ReturnType<typeof contexteNavigateur>, active: boolean) => fournisseursVisibles(c, active ? TOUS : []).length === TOUS.length;
 
 // #354 : agents utilisateurs réels (relevés sur appareils et dans les journaux publics des éditeurs).
 const UA = {
@@ -22,7 +26,7 @@ const UA = {
   firefoxWindows: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:131.0) Gecko/20100101 Firefox/131.0',
 };
 
-describe('navigateurs intégrés : Google caché', () => {
+describe('navigateurs intégrés : fournisseurs cachés', () => {
   for (const nom of ['messengerIos', 'messengerAndroid', 'facebookIos', 'facebookAndroid', 'instagramIos', 'instagramAndroid', 'tiktokAndroid', 'tiktokIos', 'snapchatIos', 'lineAndroid'] as const) {
     it(nom, () => {
       const c = contexteNavigateur({ userAgent: UA[nom] });
@@ -33,7 +37,7 @@ describe('navigateurs intégrés : Google caché', () => {
   }
 });
 
-describe('navigateurs normaux : Google montré', () => {
+describe('navigateurs normaux : fournisseurs montrés', () => {
   for (const nom of ['safariIos', 'chromeIos', 'chromeAndroid', 'samsungAndroid', 'chromeMac', 'firefoxWindows'] as const) {
     it(nom, () => {
       const c = contexteNavigateur({ userAgent: UA[nom] });
@@ -65,9 +69,6 @@ describe('activation et sessions', () => {
   it('rien sans VITE_AUTH_GOOGLE, ni aide', () => {
     expect(googleVisible(contexteNavigateur({ userAgent: UA.chromeAndroid }), false)).toBe(false);
     expect(aideNavigateur(contexteNavigateur({ userAgent: UA.messengerIos }), false)).toBeNull();
-  });
-  it('ancienne session anonyme : pas de Google (il faudrait linkIdentity)', () => {
-    expect(googleVisible(contexteNavigateur({ userAgent: UA.chromeAndroid }), true, true)).toBe(false);
   });
 });
 

@@ -40,9 +40,11 @@ describe('boucle quotidienne : « série » et « Go du jour »', () => {
 
 describe('« Continuer » : un seul sens, l’étape suivante d’une leçon', () => {
   it('aucun autre bouton ne dit « Continuer »', () => {
-    // Seule exception : « Continuer avec Google », libellé imposé par la charte de Google (#354).
-    expect(avec(/^Continuer\b/)).toEqual(['apprendre.continuer', 'connexion.google']);
-    expect(traduire('fr', 'connexion.google')).toBe('Continuer avec Google');
+    // Seule exception : « Continuer avec Google / Apple / Facebook », libellés imposés par leurs chartes (#354, #411).
+    expect(avec(/^Continuer\b/)).toEqual(['apprendre.continuer', 'connexion.avec']);
+    expect(['Google', 'Apple', 'Facebook'].map(nom => traduire('fr', 'connexion.avec', { nom })))
+      .toEqual(['Continuer avec Google', 'Continuer avec Apple', 'Continuer avec Facebook']);
+    expect(traduire('en', 'connexion.avec', { nom: 'Apple' })).toBe('Continue with Apple');
   });
 
   it('les autres boutons disent leur action', () => {

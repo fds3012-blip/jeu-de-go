@@ -1,4 +1,4 @@
-// Connexion avec Google (#354, docs/growth/connexion-google-apple.md, 4.2 et 4.3). Google refuse la connexion dans
+// Connexion avec Google (#354), Apple et Facebook (#411, docs/growth/connexion-google-apple.md, 4.2 et 4.3). Google refuse la connexion dans
 // les navigateurs intégrés aux apps (erreur `disallowed_useragent`) : Messenger, Facebook, Instagram, TikTok, LINE,
 // Snapchat, et toute WebView Android (`; wv)`). Dans l'app installée sur l'écran d'accueil d'iPhone, la session
 // reviendrait dans Safari et pas dans l'app. Là, le bouton Google est caché et le code par e-mail est l'action
@@ -34,12 +34,10 @@ export function contexteNavigateur(a: Appareil): ContexteNavigateur {
   return { os, integre: INTEGRE.test(ua), appIos: ios && a.installee === true };
 }
 
-/** Le bouton Google est-il montré ? Il faut qu'il soit activé, un navigateur où Google marche, et pas d'ancienne session anonyme. */
-export function googleVisible(c: ContexteNavigateur, active: boolean, anonyme = false): boolean {
-  return active && !anonyme && !c.integre && !c.appIos;
-}
-
-/** Aide sous le code quand Google est caché par un navigateur intégré : ouvrir dans Chrome (Android) ou Safari (iPhone). */
+/**
+ * Aide sous le code quand les fournisseurs (Google, Apple, Facebook : src/app/fournisseurs.ts) sont cachés par un
+ * navigateur intégré : ouvrir dans Chrome (Android) ou Safari (iPhone). `active` : au moins un fournisseur réglé.
+ */
 export function aideNavigateur(c: ContexteNavigateur, active: boolean): 'android' | 'ios' | null {
   if (!active || !c.integre) return null;
   return c.os === 'android' ? 'android' : c.os === 'ios' ? 'ios' : null;
