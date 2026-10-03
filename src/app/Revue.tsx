@@ -58,6 +58,8 @@ interface Rejeu { pb: ErreurGardee; avant: Position; essais: number; faux: numbe
 const L = 300, H = 64; // courbe : repère du viewBox
 /** Notes de perte, pour lesquelles on cherche et montre le meilleur coup. */
 const PERTES: ReadonlySet<Note> = new Set(['imprecision', 'erreur', 'manque', 'grosse']);
+/** Notes qui peuvent devenir un problème à rejouer (#77, erreurs.ts) : leur bon coup reste caché jusqu'à un essai. */
+const PROBLEMES: ReadonlySet<Note> = new Set(['erreur', 'manque', 'grosse']);
 
 export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTouch = false, visites, retour, onImporter, source }: Props) {
   const { positions, komi, resultat } = useMemo(() => positionsDepuisSgf(sgf), [sgf]);
@@ -71,6 +73,8 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
   const [meilleurs, setMeilleurs] = useState<Record<number, number | null>>({});
   // « Rejoue cette erreur » (issue #77) : `null` hors rejeu.
   const [rejeu, setRejeu] = useState<Rejeu | null>(null);
+  // Erreurs dont le bon coup est dévoilé (après un essai ou « Voir le bon coup »), par numéro de coup.
+  const [devoilees, setDevoilees] = useState<ReadonlySet<number>>(() => new Set());
   const liste = useRef<HTMLOListElement>(null);
   // Analyse arrêtée par le joueur (#286) : les positions restantes n'ont pas d'estimation.
   const arretee = useRef(false);
@@ -218,8 +222,11 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
     }
     setRejeu({ ...rejeu, essais: rejeu.essais + 1, faux: apres ? null : p, n: rejeu.n + 1, apres });
   }
+  function devoiler(coup: number) { setDevoilees(d => new Set(d).add(coup)); }
   function finirRejeu() {
     const coup = rejeu?.pb.coup;
+    // Après un essai, réussi ou non, le parcours montre le bon coup.
+    if (coup != null && rejeu && rejeu.essais > 0) devoiler(coup);
     setRejeu(null);
     if (coup != null) setI(coup);
   }
@@ -280,7 +287,7 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
             <p className="bilan-proverbe-source">{fr(proverbe.source)}</p>
           </figure>
           <div className="bilan-avance" aria-live="polite">
-            <p className="bilan-avance-texte"><span>{fr(tr('bilan3.chargement'))}</span><b>{fr(`${pct} %`)}</b></p>
+            <p className="bilan-avance-texte"><span>{fr(tr('bilan3.chargement'))}</span><b>{fr(tr('bilan3.pourcent', { p: pct }))}</b></p>
             <div className="bilan-barre" role="progressbar" aria-label={tr('bilan3.progression')} aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}>
               <span style={{ transform: `scaleX(${pct / 100})` }} />
             </div>
@@ -334,8 +341,8 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
           <tbody>
             <tr className="bilan-precision" data-ligne="precision">
               <th scope="row">{tr('revue.precision')}</th>
-              <td><span className="bilan-score bilan-score-moi">{precMoi == null ? '–' : fr(`${precMoi} %`)}</span></td>
-              <td><span className="bilan-score">{precLui == null ? '–' : fr(`${precLui} %`)}</span></td>
+              <td><span className="bilan-score bilan-score-moi">{precMoi == null ? '–' : fr(tr('bilan3.pourcent', { p: precMoi }))}</span></td>
+              <td><span className="bilan-score">{precLui == null ? '–' : fr(tr('bilan3.pourcent', { p: precLui }))}</span></td>
             </tr>
             {lignes.map(l => (
               <tr key={l} data-ligne={l}>
@@ -361,7 +368,11 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
   const q = positions[i];
   const brute = i > 0 ? notes[i - 1] ?? null : null;
   // Pierre verte : le meilleur coup, seulement s'il est fiable (KataGo, et pas un coup de bord douteux).
-  const fantome = brute && PERTES.has(brute.note) && !(joueur && brute.couleur !== joueur)
+  const tienne = !!brute && !(joueur && brute.couleur !== joueur);
+  // #77, gardé en v3 : sur ton Erreur, Coup manqué ou Gaffe rejouable avec KataGo, le bon coup reste caché jusqu'à
+  // un essai ou « Voir le bon coup » (chercher soi-même d'abord). Tant que le conseil n'est pas arrivé, on le cache aussi.
+  const aTrouver = tienne && avecKataGo && !!brute && PROBLEMES.has(brute.note) && meilleurs[brute.coup] !== null && !devoilees.has(brute.coup);
+  const fantome = brute && tienne && PERTES.has(brute.note) && !aTrouver
     ? meilleurs[brute.coup] ?? (brute.meilleur != null && conseilFiable(positions[i - 1], brute.meilleur, brute.perte) ? brute.meilleur : null)
     : null;
   const note: CoupNote | null = brute && { ...brute, meilleur: fantome ?? undefined };
@@ -400,7 +411,7 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
               </p>
               <p className="parcours-detail">
                 {surCle && <b className="parcours-cle">{tr('parcours.cle')}</b>}
-                {fr(com.detail)}
+                {fr(aTrouver ? `${com.detail} ${tr('parcours.aTrouver')}` : com.detail)}
               </p>
             </>
           ) : <p className="parcours-detail">{fr(i === 0 ? tr('parcours.debut') : tr('revue.etiquette', { c: i, lieu: (q.lastMove ?? -1) < 0 ? tr('coup.passe') : toLabel(q.lastMove!, size) }))}</p>}
@@ -439,6 +450,9 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
           {peutRejouer && <button type="button" className="btn revue-probleme" onClick={() => rejouerErreur(note!.coup)}>{tr('revue.rejoueErreur')}</button>}
           {onRejouer && i > 0 && <button type="button" className="btn revue-rejouer" onClick={rejouer}>{tr('revue.rejouer')}</button>}
         </div>
+      )}
+      {aTrouver && peutRejouer && (
+        <button type="button" className="lien revue-voir" onClick={() => devoiler(note!.coup)}>{tr('revue.voirBonCoup')}</button>
       )}
 
       <p className="revue-courbe-legende" aria-hidden="true">{fr(tr('revue.courbeLegende'))}</p>

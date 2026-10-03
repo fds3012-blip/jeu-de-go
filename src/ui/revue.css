@@ -87,6 +87,8 @@
 .revue-mochi .parcours-fin { color: var(--muted); font-size: 14px; }
 .parcours-cle { display: inline-block; margin-right: 6px; padding: 0 6px; border-radius: 6px; background: var(--accent); color: var(--on-accent); font-size: 12px; line-height: 20px; vertical-align: 1px; }
 .parcours-secondaires { display: flex; gap: var(--space-2); }
+/* « Voir le bon coup » (#77) : lien secondaire centré, tant que le bon coup reste caché. */
+.revue-voir { display: block; min-height: var(--cible-min); margin: calc(var(--space-2) * -1) auto 0; }
 .parcours-secondaires .btn { flex: 1 1 0; min-width: 0; min-height: var(--cible-bouton); padding: 0 var(--space-2); border-color: var(--line); line-height: 1.2; }
 
 .revue-nav { display: flex; align-items: center; gap: var(--space-2); }

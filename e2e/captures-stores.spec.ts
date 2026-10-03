@@ -76,25 +76,20 @@ test('adversaires illustrés', async ({ page }) => {
 test('revue ouverte sur le moment clé', async ({ page }) => {
   test.setTimeout(300_000);
   await preparer(page, { 'go.intro-but.v1': true, 'go.parties.v1': { n: 4, ordi: 4 } });
-  // Même recette que e2e/revue.spec.ts (#186) : coups sur la première ligne, puis passes. Pomme joue un peu au
-  // hasard, donc on recommence (jusqu'à 5 fois) tant que la revue n'a pas de moment clé.
-  const puce = page.getByRole('button', { name: /^Moment clé, coup \d+/ });
-  for (let essai = 0; essai < 5 && !(await puce.count()); essai++) {
-    await page.goto('/?komi=-100');
-    await page.locator('.cta').click();
-    await expect(plateau(page)).toBeVisible();
-    const passer = page.getByRole('button', { name: 'Passer' });
-    for (const c of ['E5', 'A1', 'A9', 'J1', 'J9']) {
-      await expect(passer).toBeEnabled({ timeout: 10_000 });
-      await jouer(page, c);
-    }
+  // Même recette que e2e/revue.spec.ts (#186) : coups sur la première ligne, puis passes. Revue v3 (#405) : la capture
+  // montre le bilan de la partie (précision, notes du go, « Démarrer le bilan »).
+  await page.goto('/?komi=-100');
+  await page.locator('.cta').click();
+  await expect(plateau(page)).toBeVisible();
+  const passer = page.getByRole('button', { name: 'Passer' });
+  for (const c of ['E5', 'A1', 'A9', 'J1', 'J9']) {
     await expect(passer).toBeEnabled({ timeout: 10_000 });
-    await passerJusquAuScore(page);
-    await page.getByRole('button', { name: 'Revoir ma partie' }).click();
-    await expect(page.locator('.revue-analyse')).toHaveCount(0, { timeout: 60_000 });
+    await jouer(page, c);
   }
-  await expect(puce).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.locator('.revue-mochi p').first()).toHaveText(/^Moment clé/);
+  await expect(passer).toBeEnabled({ timeout: 10_000 });
+  await passerJusquAuScore(page);
+  await page.getByRole('button', { name: 'Revoir ma partie' }).click();
+  await expect(page.getByRole('button', { name: 'Démarrer le bilan' })).toBeVisible({ timeout: 60_000 });
   await page.evaluate(() => scrollTo(0, 0));
   await brute(page, '05-revue');
 });

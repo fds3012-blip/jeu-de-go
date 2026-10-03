@@ -10,6 +10,7 @@ const DOSSIER = 'docs/design/captures/revue-bilan-v3';
 
 async function capture(page: Page, nom: string) {
   if (!process.env.CAPTURES) return;
+  await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({ path: `${DOSSIER}/${nom}.jpg`, type: 'jpeg', quality: 80 });
 }
 
@@ -76,7 +77,10 @@ for (const [largeur, hauteur] of [[390, 844], [320, 568]] as const) {
       await suivant.click();
       await expect(bulle.locator('.parcours-titre')).toHaveText(/D6 est un coup manqué/);
       await expect(sceau).toHaveAttribute('data-note-sceau', 'Coup manqué');
-      // La pierre verte : E3, le coup qui punissait.
+      // Le bon coup reste caché tant que tu n'as pas cherché (#77) ; « Voir le bon coup » montre E3, la pierre verte.
+      await expect(bulle.locator('.parcours-detail')).toContainText('Tu peux trouver mieux');
+      await expect(plateau(page).locator('[data-meilleur]')).toHaveCount(0);
+      await page.getByRole('button', { name: 'Voir le bon coup' }).click();
       await expect(plateau(page).locator('[data-meilleur]')).toHaveCount(1);
       await expect(bulle.locator('.parcours-detail')).toContainText('E3');
       // L'avance après le coup, dite simplement.
