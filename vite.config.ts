@@ -1,3 +1,4 @@
+import { availableParallelism } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { configDefaults, defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
@@ -37,6 +38,9 @@ export default defineConfig({
     setupFiles: ['./src/content/anglais.setup.ts'],
     // Les tests Playwright (e2e/) ne passent pas par Vitest.
     exclude: [...configDefaults.exclude, 'e2e/**', '.claude/**'],
+    // #407 : un cœur reste au processus principal. Sinon, quand les tests lourds (moteur, preuves des lots) prennent
+    // tous les cœurs, il ne répond plus aux workers (« Timeout calling onTaskUpdate ») et un run vert échoue.
+    maxWorkers: Math.max(1, availableParallelism() - 1),
     // tokens.test.ts et IconesNav.test.tsx lisent le CSS des tokens et de la barre de navigation.
     css: { include: [/tokens\.css/, /nav\.css/] },
     // Couverture (npm run test:coverage) : module des règles uniquement.
