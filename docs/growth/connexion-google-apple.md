@@ -1,5 +1,7 @@
 # Connexion avec Google (et Apple plus tard) : recommandation et réglages (#354)
 
+> **Suite le 03/10/2026 (#411)** : Apple et Facebook sont livrés (cachés derrière `VITE_AUTH_APPLE` et `VITE_AUTH_FACEBOOK`), avec Mon compte (relier, retirer) et la liaison des anciennes sessions sans compte. Réglages pour les trois : `docs/growth/connexion-sociale.md`. Le point 5 de la section 1 (« ni Facebook ») est révisé dans `docs/produit/benchmark-connexion.md`, section 0.
+
 Pour Florian et l'équipe. Rédigé le 1er octobre 2026 par l'agent produit. Benchmark complet et sources : `docs/produit/benchmark-connexion.md`. Suite de `docs/growth/connexion-code.md` (code à 6 chiffres, #343).
 
 ## 1. La recommandation en 5 lignes
@@ -210,7 +212,7 @@ https://console.cloud.google.com/auth/audience : **Publier l'application**, puis
 3. **Client IDs** : l'ID client (7.3). **Client Secret** : le code secret (7.3).
 4. **Skip nonce check** : **désactivé**. **Save**.
 5. **Authentication**, **URL Configuration** : **Site URL** `https://jeu-de-go.vercel.app` (déjà fait pour le code). Dans **Redirect URLs**, ajoute `https://jeu-de-go.vercel.app/**`.
-6. **Authentication**, **Sign In / Providers** : laisse **Manual linking** désactivé (5.3).
+6. **Authentication**, **Sign In / Providers** : ~~laisse **Manual linking** désactivé (5.3)~~. **Remplacé le 03/10 (#411)** : active-le, voir `docs/growth/connexion-sociale.md`, étape 2.
 
 ### 7.5 bis Afficher le bouton (Vercel)
 

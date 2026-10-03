@@ -14,7 +14,10 @@ export const CODE = '123456';
 export const PARTIE = '11111111-1111-4111-8111-111111111111';
 export const JETON = 'Ab3_-xYz'.padEnd(32, 'Q');
 
-interface Utilisateur { id: string; anonyme: boolean; email?: string; nom?: string }
+interface Identite { identity_id: string; provider: string; email?: string }
+interface Utilisateur { id: string; anonyme: boolean; email?: string; nom?: string; identites?: Identite[] }
+/** Compte chez un fournisseur (#411) : `annule` : le joueur ferme la fenêtre du fournisseur. */
+interface CompteSocial { email: string; nom: string; annule?: boolean }
 type Ligne = Record<string, unknown>;
 /** Un abonné au temps réel : son jeton (donc son compte) et ses canaux, avec les filtres `postgres_changes` joints. */
 interface Abonne {
@@ -38,14 +41,25 @@ export function fauxServeur() {
   const appels: string[] = [];
   const emailsEnvoyes: { email: string; type: string }[] = [];
   const autorisations: string[] = [];
-  let google: { email: string; nom: string; annule?: boolean } | null = null;
+  /** Comptes que chaque fournisseur renverra (#354 : Google ; #411 : Apple, Facebook). */
+  const sociaux = new Map<string, CompteSocial>();
+  /** Identité d'un fournisseur (`google:a@b`) → son compte du jeu, comme `auth.identities`. */
+  const parIdentite = new Map<string, Utilisateur>();
+  /** « Manual linking » de Supabase (#411) : désactivé, `linkIdentity` est refusé. */
+  let liaisonManuelle = true;
+  let nIdentite = 0;
+  const codesRattachement = new Map<string, string>();
+  const identite = (provider: string, email?: string): Identite => ({ identity_id: `identite-${++nIdentite}`, provider, email });
 
   const jwt = (u: Utilisateur) => {
     const b64 = (o: object) => Buffer.from(JSON.stringify(o)).toString('base64url');
     return `${b64({ alg: 'HS256', typ: 'JWT' })}.${b64({ sub: u.id, role: 'authenticated', is_anonymous: u.anonyme, exp: Math.floor(Date.now() / 1000) + 3600, n: ++n })}.signature`;
   };
   const userJson = (u: Utilisateur) => ({ id: u.id, aud: 'authenticated', role: 'authenticated', is_anonymous: u.anonyme, email: u.email ?? '',
-    app_metadata: u.nom ? { provider: 'google' } : {}, user_metadata: u.nom ? { full_name: u.nom, name: u.nom, avatar_url: 'https://lh3.googleusercontent.com/a/photo' } : {}, identities: [], created_at: new Date().toISOString() });
+    app_metadata: u.identites?.[0] ? { provider: u.identites[0].provider } : {}, user_metadata: u.nom ? { full_name: u.nom, name: u.nom, avatar_url: 'https://lh3.googleusercontent.com/a/photo' } : {},
+    identities: (u.identites ?? []).map(i => ({ id: i.identity_id, identity_id: i.identity_id, user_id: u.id, provider: i.provider,
+      identity_data: { email: i.email, sub: i.identity_id }, created_at: new Date().toISOString(), last_sign_in_at: new Date().toISOString(), updated_at: new Date().toISOString() })),
+    created_at: new Date().toISOString() });
   const session = (u: Utilisateur) => {
     const token = jwt(u);
     jetons.set(token, u);
@@ -120,26 +134,74 @@ export function fauxServeur() {
     const u = qui(route);
 
     if (chemin === '/auth/v1/signup') return json({ message: 'Anonymous sign-ins are disabled' }, 422);
-    // #354 : « Continuer avec Google » simulé. Le navigateur arrive ici (redirection) ; on renvoie tout de suite vers
-    // `redirect_to`, avec la session dans le fragment (flux implicite) ou l'erreur d'une connexion annulée.
+    // #354, #411 : « Continuer avec Google / Apple / Facebook » simulé. `linkIdentity` demande d'abord l'adresse du
+    // fournisseur (JSON), avec la session en place ; refusé si la liaison manuelle est fermée, comme Supabase.
+    if (chemin === '/auth/v1/user/identities/authorize') {
+      if (!u) return json({ code: 401, error_code: 'no_authorization', msg: 'no session' }, 401);
+      if (!liaisonManuelle) return json({ code: 404, error_code: 'manual_linking_disabled', msg: 'Manual linking is disabled' }, 404);
+      const suite = new URL(`${SUPABASE}/auth/v1/authorize`);
+      suite.searchParams.set('provider', url.searchParams.get('provider') ?? '');
+      suite.searchParams.set('redirect_to', url.searchParams.get('redirect_to') ?? '/');
+      suite.searchParams.set('lier', u.id);
+      return json({ url: suite.toString() });
+    }
+    // Le navigateur arrive ici (redirection) ; on renvoie tout de suite vers `redirect_to`, avec la session dans le
+    // fragment (flux implicite) ou l'erreur : connexion annulée, identité déjà reliée à un autre compte.
     if (chemin === '/auth/v1/authorize') {
       const retour = url.searchParams.get('redirect_to') ?? '/';
-      autorisations.push(url.searchParams.get('provider') ?? '');
+      const provider = url.searchParams.get('provider') ?? '';
+      const lier = url.searchParams.get('lier');
+      autorisations.push(lier ? `lier:${provider}` : provider);
+      const social = sociaux.get(provider);
+      const erreur = (p: Record<string, string>) => new URLSearchParams(p).toString();
       let fragment: string;
-      if (!google || google.annule) fragment = 'error=access_denied&error_code=access_denied&error_description=The+user+denied+access';
+      if (!social || social.annule) fragment = erreur({ error: 'access_denied', error_code: 'access_denied', error_description: 'The user denied access' });
       else {
-        let v = parEmail.get(google.email);
-        if (!v) {
-          v = { id: '00000000-0000-4000-8000-000000000099', anonyme: false, email: google.email, nom: google.nom };
-          parEmail.set(google.email, v);
-          profiles.push({ id: v.id, username: null, rating: 1500, streak_days: 0, streak_last: null, streak_freezes: 0 });
-        } else v.nom = google.nom;
-        const ses = session(v);
-        fragment = new URLSearchParams({ access_token: ses.access_token, refresh_token: ses.refresh_token, expires_in: '3600',
-          expires_at: String(ses.expires_at), token_type: 'bearer', provider_token: 'jeton-google' }).toString();
+        const cle = `${provider}:${social.email}`;
+        const deja = parIdentite.get(cle);
+        let v: Utilisateur | undefined;
+        if (lier) {
+          v = [...jetons.values()].find(x => x.id === lier);
+          if (deja && deja.id !== lier) v = undefined;
+          else if (v && !deja) {
+            // Liaison : même identifiant (les parties d'une session sans compte restent à elle, donc au compte).
+            v.identites = [...(v.identites ?? []), identite(provider, social.email)];
+            v.email ??= social.email;
+            v.anonyme = false;
+            parIdentite.set(cle, v);
+            if (!parEmail.has(social.email)) parEmail.set(social.email, v);
+          }
+        } else {
+          // Connexion : identité connue, sinon liaison automatique au compte de même e-mail, sinon compte neuf.
+          v = deja ?? parEmail.get(social.email);
+          if (!v) {
+            v = { id: `00000000-0000-4000-8000-0000000000${provider === 'apple' ? '9a' : provider === 'facebook' ? '9f' : '99'}`,
+              anonyme: false, email: social.email, identites: [] };
+            parEmail.set(social.email, v);
+            profiles.push({ id: v.id, username: null, rating: 1500, streak_days: 0, streak_last: null, streak_freezes: 0 });
+          }
+          if (!deja) { v.identites = [...(v.identites ?? []), identite(provider, social.email)]; parIdentite.set(cle, v); }
+          v.nom = social.nom;
+        }
+        if (!v) fragment = erreur({ error: 'server_error', error_code: 'identity_already_exists', error_description: 'Identity is already linked to another user' });
+        else {
+          const ses = session(v);
+          fragment = new URLSearchParams({ access_token: ses.access_token, refresh_token: ses.refresh_token, expires_in: '3600',
+            expires_at: String(ses.expires_at), token_type: 'bearer', provider_token: `jeton-${provider}` }).toString();
+        }
       }
       return route.fulfill({ status: 200, contentType: 'text/html',
-        body: `<!doctype html><title>Google</title><script>location.replace(${JSON.stringify(`${retour}#${fragment}`)})</script>` });
+        body: `<!doctype html><title>${provider}</title><script>location.replace(${JSON.stringify(`${retour}#${fragment}`)})</script>` });
+    }
+    if (chemin.startsWith('/auth/v1/user/identities/') && req.method() === 'DELETE') {
+      if (!u) return json({ message: 'no session' }, 401);
+      const id = chemin.slice('/auth/v1/user/identities/'.length);
+      if ((u.identites ?? []).length <= 1) return json({ code: 422, error_code: 'single_identity_not_deletable', msg: 'User must have at least 1 identity after unlinking' }, 422);
+      const i = (u.identites ?? []).find(x => x.identity_id === id);
+      if (!i) return json({ code: 404, error_code: 'identity_not_found', msg: 'Identity not found' }, 404);
+      u.identites = u.identites!.filter(x => x !== i);
+      parIdentite.delete(`${i.provider}:${i.email}`);
+      return json({});
     }
     if (chemin === '/auth/v1/otp') {
       const { email, create_user } = req.postDataJSON() as { email: string; create_user?: boolean };
@@ -155,11 +217,12 @@ export function fauxServeur() {
         const lie = [...jetons.values()].find(x => x.email === email);
         if (!lie) return json({ message: 'no user' }, 403);
         lie.anonyme = false;
+        lie.identites = [...(lie.identites ?? []), identite('email', email)];
         return json(session(lie));
       }
       let v = parEmail.get(email);
       if (!v) {
-        v = { id: `00000000-0000-4000-8000-${String(parEmail.size + 1).padStart(12, '0')}`, anonyme: false, email };
+        v = { id: `00000000-0000-4000-8000-${String(parEmail.size + 1).padStart(12, '0')}`, anonyme: false, email, identites: [identite('email', email)] };
         parEmail.set(email, v);
         profiles.push({ id: v.id, username: null, rating: 1500, streak_days: 0, streak_last: null, streak_freezes: 0 });
       }
@@ -260,6 +323,23 @@ export function fauxServeur() {
       }
       return json(p_parties.map(l => l.cle));
     }
+    // #355 : rattachement d'une session sans compte, comme 20261002001100_rattacher_session_anonyme.sql (sans empreinte).
+    if (chemin === '/rest/v1/rpc/preparer_rattachement') {
+      if (!u?.anonyme) return json({ code: '42501', message: 'Réservé aux sessions sans compte' }, 403);
+      const code = `R${u.id.replace(/-/g, '')}`.slice(0, 32).padEnd(32, 'r');
+      codesRattachement.set(code, u.id);
+      return json(code);
+    }
+    if (chemin === '/rest/v1/rpc/rattacher_session_anonyme') {
+      const { p_code } = req.postDataJSON() as { p_code: string };
+      const ancien = codesRattachement.get(p_code);
+      if (!u || u.anonyme || !ancien) return json({ code: '22023', message: 'Code invalide' }, 400);
+      codesRattachement.delete(p_code);
+      let n = 0;
+      for (const g of games) for (const k of ['white_id', 'black_id', 'created_by'] as const) if (g[k] === ancien) { g[k] = u.id; n++; }
+      for (const d of defis) for (const k of ['createur_id', 'invite_id'] as const) if (d[k] === ancien) d[k] = u.id;
+      return json(n);
+    }
     if (chemin.startsWith('/rest/v1/rpc/')) return json(null);
     if (chemin === '/functions/v1/game-action') {
       const { action, game_id, move } = req.postDataJSON() as { action: string; game_id: string; move: string };
@@ -308,17 +388,28 @@ export function fauxServeur() {
   }
   /** Compte déjà créé (avec son pseudo), pour se connecter avec son adresse (#353). */
   function compteExistant(email: string, pseudo: string | null, id = '00000000-0000-4000-8000-0000000000ee') {
-    const v: Utilisateur = { id, anonyme: false, email };
+    const v: Utilisateur = { id, anonyme: false, email, identites: [identite('email', email)] };
     parEmail.set(email, v);
     profiles.push({ id, username: pseudo, rating: 1500, streak_days: 0, streak_last: null, streak_freezes: 0 });
     return v;
   }
   /** Compte Google que « Continuer avec Google » renverra (#354) ; `annule` : le joueur annule chez Google. */
-  function compteGoogle(c: { email: string; nom: string; annule?: boolean }) { google = c; }
+  function compteGoogle(c: CompteSocial) { sociaux.set('google', c); }
+  /** Compte que renverra Google, Apple ou Facebook (#411). */
+  function compteSocial(provider: 'google' | 'apple' | 'facebook', c: CompteSocial) { sociaux.set(provider, c); }
+  /** Identité déjà reliée à un compte du jeu (pour « déjà relié à un autre compte », #411). */
+  function relierIdentite(provider: string, email: string, v: Utilisateur) {
+    v.identites = [...(v.identites ?? []), identite(provider, email)];
+    parIdentite.set(`${provider}:${email}`, v);
+  }
+  /** « Manual linking » de Supabase ouvert ou fermé (#411). */
+  function liaison(ouverte: boolean) { liaisonManuelle = ouverte; }
+  /** Compte du jeu par son identifiant (vérifications des tests). */
+  const utilisateur = (id: string) => [...jetons.values(), ...parEmail.values()].find(x => x.id === id);
   /** Session ouverte d'un compte complet (avec pseudo), à poser dans le stockage du navigateur (#367). */
   function sessionCompte(email: string, pseudo: string, id: string) { return session(compteExistant(email, pseudo, id)); }
   return { traiter, brancherTempsReel, notifier, appels, games, defis, notifications, partiesPerso, profiles, emailsEnvoyes, sessionAnonyme,
-    compteExistant, compteGoogle, sessionCompte, autorisations, amities };
+    compteExistant, compteGoogle, compteSocial, relierIdentite, liaison, utilisateur, sessionCompte, autorisations, amities };
 }
 
 export type FauxServeur = ReturnType<typeof fauxServeur>;

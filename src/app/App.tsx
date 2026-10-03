@@ -47,8 +47,9 @@ import type { Puzzle } from '../data/puzzles';
 import { compteDe, estAnonyme } from '../data/defi';
 import { INVITEUR_AU_CHARGEMENT, JETON_AU_CHARGEMENT, ecouterJetonDefi } from './adresseDefi';
 import { ESSAI_KEY, decider, etatCompte, lireEssai, noterFinDePartie, partiesTerminees, type Acces, type EtatCompte, type Raison } from './essai';
-import { compteVientDEtreCree, moyenConnexion, noterConnexionParGoogle } from './entonnoir';
-import { annoncerMessage, definirRetour, erreurRetour, messageRetour, prendreRetour } from './connexionGoogle';
+import { compteVientDEtreCree, moyenConnexion, noterConnexionPar } from './entonnoir';
+import { aRattacher, annoncer, definirRetour, prendreRetour } from './connexionGoogle';
+import { incidentRetour } from './fournisseurs';
 import { useAFaire } from './useAFaire';
 import { useDemandesAmis } from './demandesAmis';
 import type { ElementAFaire } from './aFaire';
@@ -124,16 +125,21 @@ function noterRappelOuvert() {
 // de l'adresse par src/app/adresseDefi.ts, avant la mesure et tout événement (constat E14).
 const LIEN_DEFI = JETON_AU_CHARGEMENT;
 
-// « Continuer avec Google » (#354) : au retour de Google (même onglet), la note d'aller-retour dit où reprendre
-// (écran « Crée ton compte » et son action, défi ouvert par lien, ou Profil). Lue puis effacée une seule fois.
-// La session elle-même est lue dans l'adresse par Supabase (`detectSessionInUrl`).
+// « Continuer avec Google / Apple / Facebook » (#354, #411) : au retour (même onglet), la note d'aller-retour dit où
+// reprendre (écran « Crée ton compte » et son action, défi ouvert par lien, ou Profil) et ce qui était tenté. Lue puis
+// effacée une seule fois. La session elle-même est lue dans l'adresse par Supabase (`detectSessionInUrl`).
 const RETOUR_GOOGLE = typeof location !== 'undefined' ? prendreRetour() : null;
-// Erreur dans l'adresse seulement si la page revient de Google : un lien magique expiré porte aussi `#error=…`.
-const ERREUR_GOOGLE = RETOUR_GOOGLE && typeof location !== 'undefined' ? erreurRetour(location.hash, location.search) : null;
-if (ERREUR_GOOGLE) {
-  annoncerMessage(messageRetour(ERREUR_GOOGLE));
-  try { history.replaceState(history.state, '', location.pathname); } catch { /* adresse inchangée */ }
-} else if (RETOUR_GOOGLE) noterConnexionParGoogle();
+// Erreur dans l'adresse seulement si la page revient d'un fournisseur : un lien magique expiré porte aussi `#error=…`.
+const ERREUR_GOOGLE = RETOUR_GOOGLE && typeof location !== 'undefined' ? incidentRetour(location.hash, location.search) : null;
+if (RETOUR_GOOGLE) {
+  const fournisseur = RETOUR_GOOGLE.fournisseur ?? 'google';
+  const action = RETOUR_GOOGLE.action ?? 'connexion';
+  // Échec : l'écran de compte (ou Mon compte, pour un ajout) le dit. Ajout réussi : Mon compte le confirme.
+  if (ERREUR_GOOGLE || action === 'ajout') annoncer({ incident: ERREUR_GOOGLE, fournisseur, action });
+  if (ERREUR_GOOGLE) {
+    try { history.replaceState(history.state, '', location.pathname); } catch { /* adresse inchangée */ }
+  } else if (action !== 'ajout') noterConnexionPar(fournisseur);
+}
 const RAISONS: readonly Raison[] = ['parties', 'lecons', 'problemes', 'placement', 'import', 'defi', 'en_ligne'];
 const ECRAN_COMPTE_AU_RETOUR = RETOUR_GOOGLE?.raison && (RAISONS as readonly string[]).includes(RETOUR_GOOGLE.raison)
   ? { raison: RETOUR_GOOGLE.raison as Raison, reprise: RETOUR_GOOGLE.reprise as Reprise | null } : null;
@@ -189,6 +195,17 @@ export function App() {
   const session = useSession(client);
   // Une session anonyme (ouverte pour un défi, #81) compte comme « pas de compte » : ni synchronisation, ni cote, ni série serveur.
   const compteId = compteDe(session);
+  // #355, #411 : une session sans compte est passée à un compte existant (code, Google, Apple, Facebook) avec un code de
+  // rattachement tiré avant de partir : ses parties et défis passent à ce compte. Module chargé seulement dans ce cas.
+  useEffect(() => {
+    if (!compteId || !client || !aRattacher()) return;
+    void import('../data/rattachement').then(async m => {
+      const code = m.lireCodeRattachement();
+      if (!code) return;
+      m.oublierCodeRattachement();
+      await m.rattacherSessionAnonyme(client, code);
+    });
+  }, [compteId, client]);
   const [defi, setDefi] = useState<VueDefi | null>(LIEN_DEFI !== null ? { vue: 'arrivee', jeton: LIEN_DEFI, inviteur: INVITEUR_AU_CHARGEMENT }
     : DEFI_AU_RETOUR ? { vue: 'arrivee', ...DEFI_AU_RETOUR } : null);
   const { progress, state: syncState, record } = useLessonProgress(supabase, compteId);

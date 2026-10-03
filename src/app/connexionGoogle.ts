@@ -1,17 +1,19 @@
-// « Continuer avec Google » (#354, docs/growth/connexion-google-apple.md, phase 1 : redirection).
-// - Activation : variable publique VITE_AUTH_GOOGLE=1 (absente : rien n'apparaît). Build de test : `e2e.google`.
-// - Avant de partir chez Google, la page garde dans l'onglet (sessionStorage) ce que le joueur voulait faire :
-//   la raison de « Crée ton compte » et l'action à reprendre, le défi ouvert par lien, ou le Profil. Au retour (même
-//   onglet), l'app relit puis efface cette note : le pseudo est demandé s'il manque, puis l'action reprend.
-// - Google annulé ou en erreur : il revient avec `#error=…` ; l'écran de compte se rouvre avec une phrase claire.
-import { t } from '../content/i18n';
+// Aller-retour chez un fournisseur de connexion : Google (#354), Apple et Facebook (#411).
+// - Avant de partir, la page garde dans l'onglet (sessionStorage) ce que le joueur voulait faire : la raison de
+//   « Crée ton compte » et l'action à reprendre, le défi ouvert par lien, ou le Profil ; et quel fournisseur, pour
+//   quoi faire (`connexion`, `liaison` d'une ancienne session sans compte, `ajout` d'un moyen depuis Mon compte).
+//   Au retour (même onglet), l'app relit puis efface cette note : le pseudo est demandé s'il manque, puis l'action reprend.
+// - Retour en échec (`#error=…`) : l'écran de compte se rouvre avec une phrase claire (src/app/fournisseurs.ts, `Incident`).
+import { estFournisseur, type Fournisseur, type Incident } from './fournisseurs';
 
-/** Note gardée dans l'onglet le temps de l'aller-retour chez Google. */
+/** Note gardée dans l'onglet le temps de l'aller-retour. */
 export const RETOUR_CONNEXION_KEY = 'go.retour-connexion.v1';
 /** Au-delà, la note est ignorée (le joueur est revenu bien plus tard, par un autre chemin). */
 export const RETOUR_MAX_MS = 30 * 60 * 1000;
 
 export interface DefiEnAttente { jeton: string; inviteur: string | null }
+/** `connexion` : se connecter ou créer un compte ; `liaison` : relier à la session sans compte ; `ajout` : Mon compte. */
+export type ActionSociale = 'connexion' | 'liaison' | 'ajout';
 export interface RetourConnexion {
   /** Raison de l'écran « Crée ton compte » ouvert, et action à reprendre (forme de `Reprise` dans App.tsx). */
   raison: string | null;
@@ -20,22 +22,19 @@ export interface RetourConnexion {
   defi: DefiEnAttente | null;
   /** Connexion lancée depuis Profil → Mon compte. */
   profil: boolean;
-}
-
-/** Google est-il activé pour ce build ? */
-export function googleActive(env: { VITE_AUTH_GOOGLE?: string; VITE_E2E?: string } = import.meta.env): boolean {
-  if (env.VITE_AUTH_GOOGLE?.trim() === '1') return true;
-  if (!env.VITE_E2E) return false;
-  try { return localStorage.getItem('e2e.google') === '1'; } catch { return false; }
+  /** Fournisseur choisi (null : note d'avant #411, c'était Google). */
+  fournisseur?: Fournisseur | null;
+  action?: ActionSociale;
 }
 
 let courant: RetourConnexion = { raison: null, reprise: null, defi: null, profil: false };
-/** L'app dit, à chaque changement d'écran, où revenir si le joueur part chez Google. */
+/** L'app dit, à chaque changement d'écran, où revenir si le joueur part chez un fournisseur. */
 export function definirRetour(r: RetourConnexion): void { courant = r; }
 
-/** Écrit la note juste avant de partir chez Google. */
-export function garderRetour(stockage: Pick<Storage, 'setItem'> | null = sessionStorageSur(), maintenant = Date.now()): void {
-  try { stockage?.setItem(RETOUR_CONNEXION_KEY, JSON.stringify({ ...courant, quand: maintenant })); } catch { /* pas de stockage : retour à l'accueil */ }
+/** Écrit la note juste avant de partir. */
+export function garderRetour(stockage: Pick<Storage, 'setItem'> | null = sessionStorageSur(), maintenant = Date.now(),
+  quoi: { fournisseur: Fournisseur; action: ActionSociale } = { fournisseur: 'google', action: 'connexion' }): void {
+  try { stockage?.setItem(RETOUR_CONNEXION_KEY, JSON.stringify({ ...courant, ...quoi, quand: maintenant })); } catch { /* pas de stockage : retour à l'accueil */ }
 }
 
 /** Lit une note (validée) ; null si absente, abîmée ou trop vieille. */
@@ -48,7 +47,9 @@ export function lireRetour(brut: string | null, maintenant = Date.now()): Retour
       ? o.reprise as RetourConnexion['reprise'] : null;
     const d = o.defi as Partial<DefiEnAttente> | null | undefined;
     const defi = d && typeof d === 'object' && typeof d.jeton === 'string' ? { jeton: d.jeton, inviteur: typeof d.inviteur === 'string' ? d.inviteur : null } : null;
-    return { raison: typeof o.raison === 'string' ? o.raison : null, reprise, defi, profil: o.profil === true };
+    const action: ActionSociale = o.action === 'liaison' || o.action === 'ajout' ? o.action : 'connexion';
+    return { raison: typeof o.raison === 'string' ? o.raison : null, reprise, defi, profil: o.profil === true,
+      fournisseur: estFournisseur(o.fournisseur) ? o.fournisseur : 'google', action };
   } catch { return null; }
 }
 
@@ -62,30 +63,23 @@ export function prendreRetour(stockage: Pick<Storage, 'getItem' | 'removeItem'> 
   } catch { return null; }
 }
 
-/**
- * Retour de Google en échec : `#error=access_denied` (le joueur a annulé) ou une autre erreur. Supabase renvoie
- * l'erreur dans le fragment (flux implicite), parfois dans la requête. Null si l'adresse ne porte pas d'erreur.
- */
-export function erreurRetour(hash: string, search = ''): 'annule' | 'erreur' | null {
-  for (const brut of [hash.replace(/^#/, ''), search.replace(/^\?/, '')]) {
-    const p = new URLSearchParams(brut);
-    const e = p.get('error');
-    if (!e) continue;
-    return e === 'access_denied' ? 'annule' : 'erreur';
-  }
-  return null;
+/** Ce que le premier écran de compte affiché doit dire au retour (échec, ou moyen ajouté depuis Mon compte). */
+export interface Annonce { incident: Incident | null; fournisseur: Fournisseur; action: ActionSociale }
+
+let annonce: Annonce | null = null;
+/** Posée par App.tsx au chargement, lue par l'écran de compte (Connexion.tsx, Account.tsx). */
+export function annoncer(a: Annonce | null): void { annonce = a; }
+/** Lue au rendu sans l'effacer : un rendu abandonné par React (écran chargé à la demande) ne doit pas la perdre. */
+export function lireAnnonce(): Annonce | null { return annonce; }
+/** Effacée une fois l'écran vraiment affiché (dans un effet). */
+export function oublierAnnonce(): void { annonce = null; }
+
+/** Clé du code de rattachement (même valeur que CLE_RATTACHEMENT de src/data/rattachement.ts, vérifié par un test). */
+export const CLE_RATTACHEMENT_ATTENTE = 'go.rattachement.v1';
+/** Un code de rattachement attend-il (session sans compte passée à un compte existant, #355) ? Lu sans charger le module. */
+export function aRattacher(stockage: Pick<Storage, 'getItem'> | null = sessionStorageSur()): boolean {
+  try { return stockage?.getItem(CLE_RATTACHEMENT_ATTENTE) != null; } catch { return false; }
 }
-
-/** Phrase à montrer sur l'écran de compte après un retour en échec. */
-export const messageRetour = (e: 'annule' | 'erreur') => t(e === 'annule' ? 'connexion.google.annule' : 'connexion.google.erreur');
-
-let messageEnAttente: string | null = null;
-/** Message à montrer par le premier écran de connexion affiché (puis oublié). */
-export function annoncerMessage(m: string | null): void { messageEnAttente = m; }
-/** Lu au rendu sans l'effacer : un rendu abandonné par React (écran chargé à la demande) ne doit pas le perdre. */
-export function lireMessage(): string | null { return messageEnAttente; }
-/** Effacé une fois l'écran vraiment affiché (dans un effet). */
-export function oublierMessage(): void { messageEnAttente = null; }
 
 function sessionStorageSur(): Storage | null {
   try { return typeof sessionStorage === 'undefined' ? null : sessionStorage; } catch { return null; }

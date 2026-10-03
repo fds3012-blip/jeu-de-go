@@ -7,18 +7,23 @@
 //   `verifyOtp({ type: 'email_change' })`) : même identifiant, la partie en cours est gardée.
 // #353 : partout, un lien « J'ai déjà un compte » passe en connexion à un compte existant (`shouldCreateUser: false`),
 // et une liaison refusée (adresse déjà prise) y bascule toute seule (voir connexionBascule.ts).
-import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
+// #411 : Google, Apple, Facebook au-dessus du code, dans le même ordre sur tous les écrans qui montent ce composant
+// (« Crée ton compte », « J'ai déjà un compte », arrivée par un lien de défi). Session sans compte : `linkIdentity` garde
+// son identifiant (parties et défis) ; si la liaison est fermée dans Supabase, connexion classique + rattachement (#355).
+import { useCallback, useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import type { Db } from '../data/supabase';
-import { LONGUEUR_CODE, codeComplet, connexionGoogle, envoyerCodeConnexion, nettoyerCode, sendMagicLink, verifierCode, type EchecEnvoi } from '../data/account';
+import { LONGUEUR_CODE, codeComplet, connexionSociale, envoyerCodeConnexion, lierSociale, nettoyerCode, sendMagicLink, verifierCode, type EchecEnvoi } from '../data/account';
+import { garderCodeRattachement, preparerRattachement } from '../data/rattachement';
 import { garderMonCompte } from '../data/defi';
 import { isEmail } from '../data/username';
 import { EVENTS, track } from '../data/analytics';
 import { noterConnexionParCode } from './entonnoir';
 import { apresRefus, demandeAge, typeCode, voieEnvoi, type Sens, type Voie } from './connexionBascule';
 import { fr } from '../ui/typo';
-import { BoutonGoogle } from '../ui/BoutonGoogle';
-import { garderRetour, googleActive, lireMessage, oublierMessage } from './connexionGoogle';
-import { aideNavigateur, contexteActuel, googleVisible, lienChrome } from './navigateurIntegre';
+import { BoutonsFournisseurs } from '../ui/BoutonFournisseur';
+import { garderRetour, lireAnnonce, oublierAnnonce, type Annonce } from './connexionGoogle';
+import { NOM_FOURNISSEUR, fournisseursActifs, fournisseursVisibles, listeNoms, messageIncident, type Fournisseur } from './fournisseurs';
+import { aideNavigateur, contexteActuel, lienChrome } from './navigateurIntegre';
 import { t } from '../content/i18n';
 import '../ui/compte.css';
 
@@ -41,11 +46,26 @@ interface Props {
   onSens?: (sens: Sens) => void;
 }
 
+/** Annonce laissée par App.tsx au retour d'un fournisseur, pour cet écran (pas pour Mon compte, qui a la sienne). */
+function annonceDeConnexion(): Annonce | null {
+  const a = lireAnnonce();
+  return a && a.action !== 'ajout' && a.incident ? a : null;
+}
+
 export function ConnexionCode({ db, mode = 'connexion', envoyer, moment = 'profil', coups = null, onConnecte, onConditions, onSens }: Props) {
   const id = useId();
   const anonyme = mode === 'liaison';
   const [etape, setEtape] = useState<'email' | 'code'>('email');
-  const [sens, setSensLocal] = useState<Sens>('creer');
+  // #411 : retour d'un fournisseur en échec. Adresse déjà prise par un autre moyen : l'écran passe en « Connecte-toi ».
+  const [annonce] = useState(annonceDeConnexion);
+  const [sens, setSensLocal] = useState<Sens>(annonce?.incident === 'email_pris' ? 'connecter' : 'creer');
+  useEffect(() => { if (annonce?.incident === 'email_pris') onSens?.('connecter'); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  /** Identité déjà reliée à un autre compte du jeu : encadré « Se connecter à ce compte ». */
+  const [dejaLie, setDejaLie] = useState<Fournisseur | null>(annonce?.incident === 'deja_lie' ? annonce.fournisseur : null);
+  // L'encadré « déjà relié » s'ouvre au retour du fournisseur, parfois sous la ligne de flottaison : on l'amène au centre.
+  const versEncadre = useCallback((el: HTMLDivElement | null) => {
+    el?.scrollIntoView?.({ block: 'center', behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  }, []);
   /** Voie du dernier code envoyé : le renvoi et la vérification suivent la même. */
   const [voie, setVoie] = useState<Voie>(voieEnvoi('creer', anonyme));
   /** Vrai si l'adresse avait déjà un compte et que l'écran est passé tout seul en connexion. */
@@ -53,16 +73,16 @@ export function ConnexionCode({ db, mode = 'connexion', envoyer, moment = 'profi
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
-  // #354 : message laissé par un retour de Google annulé ou en erreur (une seule fois).
-  const [error, setError] = useState(() => lireMessage() ?? '');
-  useEffect(oublierMessage, []);
+  // Message laissé par un retour de fournisseur annulé ou en erreur (une seule fois).
+  const [error, setError] = useState(() => annonce?.incident && annonce.incident !== 'deja_lie' ? messageIncident(annonce.incident, annonce.fournisseur) : '');
+  useEffect(oublierAnnonce, []);
   const [info, setInfo] = useState('');
-  const [versGoogle, setVersGoogle] = useState(false);
-  // #354 : Google caché dans les navigateurs intégrés (Messenger, Instagram…), l'app iPhone et les anciennes sessions anonymes.
+  const [vers, setVers] = useState<Fournisseur | null>(null);
+  // Fournisseurs cachés dans les navigateurs intégrés (Messenger, Instagram…) et l'app installée sur iPhone.
   const [contexte] = useState(contexteActuel);
-  const active = googleActive();
-  const avecGoogle = googleVisible(contexte, active, anonyme);
-  const aide = anonyme ? null : aideNavigateur(contexte, active);
+  const [actifs] = useState(() => fournisseursActifs());
+  const visibles = fournisseursVisibles(contexte, actifs);
+  const aide = aideNavigateur(contexte, actifs.length > 0);
   const [attente, setAttente] = useState(0);
   const [age, setAge] = useState(false);
   const codeRef = useRef<HTMLInputElement>(null);
@@ -113,16 +133,31 @@ export function ConnexionCode({ db, mode = 'connexion', envoyer, moment = 'profi
     if (await demander(voieEnvoi(sens, anonyme))) { setCode(''); setInfo(''); setEtape('code'); }
   };
 
-  /** « Continuer avec Google » : case d'âge d'abord (création), puis aller-retour chez Google. */
-  async function google() {
-    if (busy || versGoogle) return;
-    if (demandeAge(sens) && !age) { setError(t('compte.age.aide')); return; }
-    setError(''); setVersGoogle(true);
-    track(EVENTS.compteMethode, { methode: 'google', navigateur_integre: contexte.integre });
-    garderRetour();
-    const r = await connexionGoogle(db, `${window.location.origin}/`);
-    // En cas de succès, le navigateur part chez Google : le bouton reste « Connexion avec Google… ».
-    if (!r.ok) { setVersGoogle(false); setError(r.error); }
+  /**
+   * « Continuer avec Google / Apple / Facebook » : case d'âge d'abord (création), puis aller-retour chez le fournisseur.
+   * Session sans compte qui crée son compte : `linkIdentity` (même identifiant, la partie suit). Liaison fermée dans
+   * Supabase, « J'ai déjà un compte », ou `versCompteExistant` (encadré « Se connecter à ce compte ») : connexion
+   * classique, avec un code de rattachement tiré avant de partir (src/data/rattachement.ts).
+   */
+  async function social(f: Fournisseur, versCompteExistant = false) {
+    if (busy || vers) return;
+    if (!versCompteExistant && demandeAge(sens) && !age) { setError(t('compte.age.aide')); return; }
+    setError(''); setVers(f);
+    track(EVENTS.compteMethode, { methode: f, navigateur_integre: contexte.integre });
+    const retour = `${window.location.origin}/`;
+    if (anonyme && sens === 'creer' && !versCompteExistant) {
+      garderRetour(undefined, undefined, { fournisseur: f, action: 'liaison' });
+      const r = await lierSociale(db, f, retour);
+      if (r.ok) return; // le navigateur part chez le fournisseur : le bouton reste « Connexion avec… »
+      if (!('raison' in r) || r.raison !== 'fermee') { setVers(null); setError(r.error); return; }
+    }
+    if (anonyme) {
+      const code = await preparerRattachement(db);
+      if (code.ok) garderCodeRattachement(code.value);
+    }
+    garderRetour(undefined, undefined, { fournisseur: f, action: 'connexion' });
+    const r = await connexionSociale(db, f, retour);
+    if (!r.ok) { setVers(null); setError(r.error); }
   }
 
   async function verifier(valeur: string) {
@@ -182,16 +217,29 @@ export function ConnexionCode({ db, mode = 'connexion', envoyer, moment = 'profi
     </>
   );
 
-  // #354 : Google en action principale, case d'âge au-dessus des deux moyens, le code par e-mail juste dessous.
-  if (avecGoogle) {
+  // #411 : identité déjà reliée à un autre compte du jeu. Une seule action : s'y connecter, en sachant ce qui reste ici.
+  const encadreDejaLie = dejaLie && (
+    <div ref={versEncadre} className="connexion-incident" role="alert" data-testid="deja-lie">
+      <p className="small"><b>{fr(t('connexion.sociale.dejaLie', { nom: NOM_FOURNISSEUR[dejaLie] }))}</b></p>
+      {anonyme && <p className="small attention">{fr(t('connexion.sociale.dejaLieEssai'))}</p>}
+      <button type="button" className="btn primary" disabled={vers !== null} aria-busy={vers === dejaLie} onClick={() => { void social(dejaLie, true); }}>
+        {vers === dejaLie ? t('connexion.avecAttente', { nom: NOM_FOURNISSEUR[dejaLie] }) : t('connexion.sociale.seConnecter')}
+      </button>
+      <button type="button" className="lien" onClick={() => setDejaLie(null)}>{t('compte.annuler')}</button>
+    </div>
+  );
+
+  // #354, #411 : fournisseurs en action principale (Google, Apple, Facebook), case d'âge au-dessus de tous les moyens,
+  // « ou », puis le code par e-mail.
+  if (visibles.length > 0) {
     return (
-      <form className="connexion" onSubmit={envoyerEmail} noValidate data-sens={sens} data-google="1">
-        {demandeAge(sens) && <CaseAge id={id} coche={age} onChange={v => { setAge(v); setError(''); }} onConditions={onConditions} />}
-        <BoutonGoogle onClick={() => { void google(); }} busy={versGoogle} inactif={!pret} />
+      <form className="connexion" onSubmit={envoyerEmail} noValidate data-sens={sens} data-fournisseurs={visibles.join(' ')}>
+        {demandeAge(sens) && !dejaLie && <CaseAge id={id} coche={age} onChange={v => { setAge(v); setError(''); }} onConditions={onConditions} />}
+        {encadreDejaLie || <BoutonsFournisseurs fournisseurs={visibles} enCours={vers} inactif={!pret} onChoisir={f => { void social(f); }} />}
         <p id={`${id}-erreur`} className="small connexion-erreur" role="alert">{error}</p>
         <p className="connexion-ou muted small" aria-hidden="true">{t('connexion.ou')}</p>
         {champEmail}
-        <button className={`btn connexion-cta secondaire${pret ? '' : ' inactif'}`} type="submit" disabled={busy || versGoogle} aria-disabled={!pret} aria-busy={busy}>
+        <button className={`btn connexion-cta secondaire${pret ? '' : ' inactif'}`} type="submit" disabled={busy || vers !== null} aria-disabled={!pret} aria-busy={busy}>
           {busy ? t('compte.envoi') : t('connexion.envoyer')}
         </button>
         {lienSens}
@@ -213,8 +261,8 @@ export function ConnexionCode({ db, mode = 'connexion', envoyer, moment = 'profi
         {busy ? t('compte.envoi') : sens === 'creer' && envoyer ? envoyer : t('connexion.envoyer')}
       </button>
       {/* #354 : navigateur intégré, Google y est bloqué. Android : lien vers Chrome ; iPhone : la consigne. */}
-      {aide === 'android' && <p className="small muted connexion-integre" data-testid="aide-navigateur"><a href={lienChrome(window.location.href)}>{t('connexion.integre.android')}</a></p>}
-      {aide === 'ios' && <p className="small muted connexion-integre" data-testid="aide-navigateur">{fr(t('connexion.integre.ios'))}</p>}
+      {aide === 'android' && <p className="small muted connexion-integre" data-testid="aide-navigateur"><a href={lienChrome(window.location.href)}>{t('connexion.integre.android', { noms: listeNoms(actifs, t('connexion.ou')) })}</a></p>}
+      {aide === 'ios' && <p className="small muted connexion-integre" data-testid="aide-navigateur">{fr(t('connexion.integre.ios', { noms: listeNoms(actifs, t('connexion.ou')) }))}</p>}
       {lienSens}
     </form>
   );
