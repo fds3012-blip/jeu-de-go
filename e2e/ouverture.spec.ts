@@ -144,7 +144,7 @@ test('rechargement (dont « nouvelle version prête ») : aucune ouverture ; ré
 const DOSSIER = 'docs/design/captures/ouverture-animee';
 for (const theme of ['dark', 'light'] as const) {
   const nom = theme === 'dark' ? 'sombre' : 'clair';
-  test(`captures de l'ouverture (${nom})`, async ({ page }) => {
+  test(`captures de l'ouverture (${nom})`, async ({ page, context }) => {
     test.skip(!process.env.CAPTURES, 'captures à la demande');
     await page.emulateMedia({ colorScheme: theme });
     // 1. La scène : sans le JS de l'app, l'ouverture reste à l'écran.
@@ -155,10 +155,13 @@ for (const theme of ['dark', 'light'] as const) {
       await page.screenshot({ path: `${DOSSIER}/${nom}-1-scene-${String(t).padStart(3, '0')}ms.jpg`, type: 'jpeg', quality: 80 });
     }
     await page.unroute(/\/(assets\/index-[^/]*\.js|src\/main\.tsx)$/);
-    // 2. La fin : l'accueil se construit, l'action principale d'abord.
-    await page.evaluate(() => { sessionStorage.removeItem('go.ouverture.vue'); localStorage.removeItem('go.ouverture.derniere'); });
-    await page.goto('/');
-    await page.waitForFunction(() => document.documentElement.classList.contains('ouv-fin'));
+    // 2. La fin, dans un nouvel onglet (lancement neuf) : l'accueil se construit, l'action principale d'abord.
+    await page.evaluate(() => localStorage.removeItem('go.ouverture.derniere'));
+    await page.close();
+    page = await context.newPage();
+    await page.emulateMedia({ colorScheme: theme });
+    await page.goto('/', { waitUntil: 'commit' });
+    await page.waitForFunction(() => document.documentElement.classList.contains('ouv-fin'), undefined, { polling: 10 });
     await page.evaluate(() => {
       document.querySelectorAll('.nav, .cta, .app > *, .accueil > *').forEach(e => getComputedStyle(e).opacity);
       const ouv = document.getElementById('ouverture')!;
@@ -168,16 +171,15 @@ for (const theme of ['dark', 'light'] as const) {
         if (cible && cible !== ouv && ouv.contains(cible)) a.finish(); else a.pause();
       });
     });
-    for (const t of [120, 420]) {
-      await page.evaluate(t => document.getAnimations().forEach(a => { if (a.playState === 'paused') a.currentTime = t; }), t);
-      await page.screenshot({ path: `${DOSSIER}/${nom}-2-accueil-${String(t).padStart(3, '0')}ms.jpg`, type: 'jpeg', quality: 80 });
-    }
+    await page.evaluate(() => document.getAnimations().forEach(a => a.finish()));
+    await page.screenshot({ path: `${DOSSIER}/${nom}-2-accueil.jpg`, type: 'jpeg', quality: 80 });
   });
 }
 
 test('capture 320 × 568 (sombre)', async ({ page }) => {
   test.skip(!process.env.CAPTURES, 'captures à la demande');
   await page.setViewportSize({ width: 320, height: 568 });
+  await page.emulateMedia({ colorScheme: 'dark' });
   await page.route(/\/(assets\/index-[^/]*\.js|src\/main\.tsx)$/, r => r.abort());
   await page.goto('/');
   await page.evaluate(() => document.getAnimations().forEach(a => { a.pause(); a.currentTime = 700; }));
