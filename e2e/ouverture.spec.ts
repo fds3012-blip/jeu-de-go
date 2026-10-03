@@ -4,12 +4,41 @@ import { expect, test, type Page } from '@playwright/test';
 // avec `e2e.ouverture` = « 1 », et repart d'un appareil où l'app n'a jamais été ouverte.
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
-    if (sessionStorage.getItem('e2e.ouverture.init')) return; // une seule fois : les rechargements gardent l'état
-    sessionStorage.setItem('e2e.ouverture.init', '1');
+    // Une seule fois par appareil (contexte) : rechargements et nouveaux onglets gardent l'état.
+    if (localStorage.getItem('e2e.ouverture.init')) return;
+    localStorage.setItem('e2e.ouverture.init', '1');
     localStorage.setItem('e2e.ouverture', '1');
     localStorage.removeItem('go.ouverture.derniere');
   });
 });
+
+/**
+ * Retarde le JS de l'app : l'ouverture reste à l'écran le temps de l'observer (sinon, en version courte ou en
+ * mouvements réduits, elle peut être partie avant la première vérification).
+ */
+async function retarderApp(page: Page, ms = 1200): Promise<void> {
+  await page.route(/\/(assets\/index-[^/]*\.js|src\/main\.tsx)$/, async r => { await new Promise(f => setTimeout(f, ms)); await r.continue(); });
+}
+
+/** Instant (ms depuis le début de la navigation) où #root reçoit l'app. */
+async function montage(page: Page): Promise<number> {
+  return page.evaluate(() => new Promise<number>(resolve => {
+    const root = document.getElementById('root')!;
+    if (root.firstElementChild) return resolve(performance.now());
+    const mo = new MutationObserver(() => { if (root.firstElementChild) { mo.disconnect(); resolve(performance.now()); } });
+    mo.observe(root, { childList: true });
+  }));
+}
+
+/** Instant (ms depuis le début de la navigation) où l'accueil répond : l'ouverture commence son fondu et laisse passer les touchers. */
+async function interactif(page: Page): Promise<number> {
+  return page.evaluate(() => new Promise<number>(resolve => {
+    const h = document.documentElement;
+    if (h.classList.contains('ouv-fin') || !document.getElementById('ouverture')) return resolve(performance.now());
+    const mo = new MutationObserver(() => { if (h.classList.contains('ouv-fin')) { mo.disconnect(); resolve(performance.now()); } });
+    mo.observe(h, { attributes: true, attributeFilter: ['class'] });
+  }));
+}
 
 /** Instant (ms depuis le début de la navigation) où l'ouverture quitte la page ; null si elle n'y était pas. */
 async function finOuverture(page: Page): Promise<number | null> {
@@ -26,9 +55,10 @@ test('premier lancement : la scène se joue, puis l’accueil répond en moins d
   await page.waitForSelector('#ouverture');
   expect(await page.getAttribute('html', 'data-ouverture')).toBe('plein');
   await expect(page.locator('.ouv-nom')).toBeVisible();
-  const fin = await finOuverture(page);
+  const [repond, fin] = await Promise.all([interactif(page), finOuverture(page)]);
+  expect(repond).toBeLessThan(1500);
   expect(fin).not.toBeNull();
-  expect(fin!).toBeLessThan(1500);
+  expect(fin! - repond).toBeLessThan(800); // fondu et construction de l'accueil : 0,52 s
   // L'action principale reçoit le toucher (rien par-dessus), et la page ne garde aucune trace de l'ouverture.
   const cta = page.locator('.cta');
   await expect(cta).toBeVisible();
@@ -58,20 +88,24 @@ test('aucun décalage de mise en page à la fin de l’ouverture', async ({ page
 test('un toucher la passe aussitôt', async ({ page }) => {
   await page.goto('/', { waitUntil: 'commit' });
   await page.waitForSelector('#ouverture');
-  await page.locator('#root > *').first().waitFor({ state: 'attached' });
-  const avant = await page.evaluate(() => performance.now());
-  const surveille = page.evaluate(() => new Promise<string>(r => setTimeout(() => r(location.href + '|' + document.querySelectorAll('.cta').length), 900)));
+  await montage(page);
+  const appui = page.evaluate(() => new Promise<number>(r => addEventListener('pointerdown', () => r(performance.now()), { capture: true, once: true })));
+  // Le point touché est sur le goban de l'accueil, qui lance une partie : le toucher ne doit pas le traverser.
   await page.touchscreen.tap(195, 300);
-  const fin = await finOuverture(page);
-  // Sans toucher : pas avant 0,7 s puis 0,52 s de fondu. Avec : fondu immédiat, retiré 0,52 s plus tard au plus.
-  expect(fin! - avant).toBeLessThan(700);
-  // Le toucher n'a rien déclenché dessous (le goban de l'accueil lance une partie) : on est toujours sur l'accueil.
-  expect((await surveille).endsWith('|1')).toBe(true);
+  const [touche, repond] = await Promise.all([appui, interactif(page)]);
+  // Sans toucher : pas avant 0,7 s. Avec : le fondu part au même toucher (après les écouteurs de l'app, dont le
+  // déblocage du son, qui passent avant : d'où la marge).
+  expect(repond - touche).toBeLessThan(250);
+  await finOuverture(page);
+  await page.waitForTimeout(300);
+  await expect(page.locator('main.app-home')).toHaveCount(1);
+  await expect(page.locator('main.app-partie')).toHaveCount(0);
   await expect(page.locator('.cta')).toBeVisible();
 });
 
 test('mouvements réduits : pas de scène, un simple fondu', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
+  await retarderApp(page);
   await page.goto('/', { waitUntil: 'commit' });
   await page.waitForSelector('#ouverture');
   expect(await page.getAttribute('html', 'data-ouverture')).toBe('reduit');
@@ -79,8 +113,9 @@ test('mouvements réduits : pas de scène, un simple fondu', async ({ page }) =>
   await expect(page.locator('.ouv-logo')).toBeVisible();
   const anims = await page.evaluate(() => document.getAnimations().filter(a => (a as CSSAnimation).animationName?.startsWith('ouv-')).length);
   expect(anims).toBe(0);
-  const fin = await finOuverture(page);
-  expect(fin!).toBeLessThan(1200);
+  const [monte, fin] = await Promise.all([montage(page), finOuverture(page)]);
+  // Fondu de 150 ms dès que l'accueil est là (retiré 240 ms après) : l'ouverture n'ajoute aucune attente.
+  expect(fin! - monte).toBeLessThan(400);
   await expect(page.locator('.cta')).toBeVisible();
 });
 
@@ -97,6 +132,7 @@ test('rechargement (dont « nouvelle version prête ») : aucune ouverture ; ré
   expect(await page.getAttribute('html', 'data-ouverture')).toBeNull();
   // Nouvel onglet (l'app fermée puis rouverte) quelques secondes après : la version courte.
   const autre = await context.newPage();
+  await retarderApp(autre);
   await autre.goto('/', { waitUntil: 'commit' });
   await autre.waitForSelector('#ouverture');
   expect(await autre.getAttribute('html', 'data-ouverture')).toBe('court');
