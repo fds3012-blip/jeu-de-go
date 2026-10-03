@@ -782,6 +782,7 @@ export const en = {
   'parcours.debut': 'Start of the game. Tap “Next” to see the first key move.',
   'parcours.avanceAria': { one: 'After this move, {nom} leads by {v} point', other: 'After this move, {nom} leads by {v} points' },
   'parcours.egalite': 'Even after this move',
+  'parcours.avanceToiAria': { one: 'After this move, you lead by {v} point', other: 'After this move, you lead by {v} points' },
   'parcours.titre.brillant': '{lieu} is brilliant',
   'parcours.titre.meilleur': '{lieu} is the best move',
   'parcours.titre.excellent': '{lieu} is excellent',

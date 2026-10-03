@@ -827,6 +827,7 @@ export const fr = {
   'parcours.debut': 'Début de la partie. Touche « Suivant » pour voir le premier coup clé.',
   'parcours.avanceAria': { one: 'Après ce coup, {nom} mène de {v} point', other: 'Après ce coup, {nom} mène de {v} points' },
   'parcours.egalite': 'Égalité après ce coup',
+  'parcours.avanceToiAria': { one: 'Après ce coup, tu mènes de {v} point', other: 'Après ce coup, tu mènes de {v} points' },
   'parcours.titre.brillant': '{lieu} est brillant',
   'parcours.titre.meilleur': '{lieu} est le meilleur coup',
   'parcours.titre.excellent': '{lieu} est excellent',
