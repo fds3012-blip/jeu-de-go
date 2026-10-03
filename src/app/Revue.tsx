@@ -258,7 +258,7 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
           <p>{fr(phrase)}</p>
         </div>
         {rejeu.apres
-          ? <div className="revue-collant"><button type="button" className="cta" onClick={finirRejeu}>{tr('revue.rejeu.retour')}</button></div>
+          ? <div className="dock revue-dock"><button type="button" className="cta" onClick={finirRejeu}>{tr('revue.rejeu.retour')}</button></div>
           : <button type="button" className="btn revue-probleme" onClick={finirRejeu}>{tr('revue.rejeu.retour')}</button>}
       </div>
     );
@@ -348,7 +348,7 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
         {!avecKataGo && <p className="revue-note">{fr(tr('bilan3.sansKataGo'))}</p>}
         {arret && <p className="revue-note revue-arretee">{fr(tr('import.arretee'))}</p>}
         {onImporter && <button type="button" className="lien revue-importer" onClick={onImporter}>{tr('import.autre')}</button>}
-        <div className="revue-collant">
+        <div className="dock revue-dock">
           <button type="button" className="cta" onClick={() => demarrer()} disabled={n < 1}>{tr('bilan3.demarrer')}</button>
         </div>
       </div>
@@ -442,7 +442,7 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
       <p className="revue-courbe-legende" aria-hidden="true">{fr(tr('revue.courbeLegende'))}</p>
       {courbeSvg(k => aller(k))}
 
-      <div className="revue-collant">
+      <div className="dock revue-dock">
         <button type="button" className="cta" onClick={suivant}>{tr(prochaine == null ? 'parcours.terminer' : 'parcours.suivant')}</button>
       </div>
     </div>

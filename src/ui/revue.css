@@ -12,12 +12,10 @@
 
 .revue-plateau { width: min(100%, 460px); margin: 0 auto; }
 
-/* Action principale collée en bas quand elle sortirait de l'écran, à sa place sinon : elle ne cache jamais le goban
-   quand il y a la place. Au-dessus de la barre du bas (Mes parties), ou du bord (écran de partie). */
-.revue-collant { position: sticky; bottom: calc(var(--nav-h, 74px) + env(safe-area-inset-bottom, 0px) + var(--space-2)); z-index: 5;
-  margin-top: auto; padding-top: var(--space-2); background: linear-gradient(to bottom, transparent, var(--bg) var(--space-3)); }
-.app-partie .revue-collant { bottom: calc(var(--space-3) + env(safe-area-inset-bottom, 0px)); }
-.revue-collant .cta { width: 100%; min-height: var(--cible-cta); font-size: var(--fs-cta, var(--fs-l)); }
+/* Action principale (« Démarrer le bilan », « Suivant ») : dans le dock fixe de l'app (app.css, .dock), au-dessus de
+   la barre du bas ; la page garde la place du dock pour que rien n'y reste caché. */
+.revue-bilan, .revue-parcours, .revue-rejeu { padding-bottom: calc(var(--cible-cta) + var(--relief) + var(--space-6) + env(safe-area-inset-bottom, 0px)); }
+.revue-dock .cta { min-height: var(--cible-cta); }
 
 /* ---------- 1. Attente : Mochi, un proverbe du go, la barre d'avancement ---------- */
 .bilan-attente { display: flex; flex-direction: column; align-items: center; gap: var(--space-5); padding: var(--space-6) 0 var(--space-4); text-align: center; }
@@ -53,6 +51,13 @@
 .bilan-score-moi { background: var(--papier); color: var(--sumi); box-shadow: inset 0 0 0 1.5px var(--line); }
 .revue-table-note { display: flex; align-items: center; gap: 10px; }
 .bilan-aide { margin-top: calc(var(--space-2) * -1); }
+/* 320 px : le tableau tient sans défiler (cellules et cases de précision plus serrées). */
+@media (max-width: 360px) {
+  .bilan-table th, .bilan-table td { padding: 0 4px; }
+  .bilan-table td { width: 26%; }
+  .bilan-score { min-width: 60px; padding: 0 6px; font-size: 18px; }
+  .revue-table-note { gap: 8px; }
+}
 
 /* Courbe d'avantage : Blanc en haut (papier), Noir en bas (sumi), ligne jade, coups clés en couleur de note. */
 /* Audit du 02/10 (n° 4) : couleurs en jetons (tokens.css, --courbe-*). En clair, le cadre et le trait passent au-dessus
@@ -124,7 +129,9 @@
 
 @media (prefers-reduced-motion: no-preference) {
   .bilan-barre span { transition: transform var(--duree-rapide) var(--ease); }
-  .revue-bilan, .revue-parcours { animation: revue-entree var(--duree-rapide) var(--ease) both; }
+  /* Opacité seule sur la page : une transformation ferait du conteneur le repère du dock fixe. */
+  .revue-bilan, .revue-parcours { animation: revue-fondu var(--duree-rapide) var(--ease); }
   .parcours-texte { animation: revue-entree var(--duree-rapide) var(--ease) both; }
 }
+@keyframes revue-fondu { from { opacity: 0; } }
 @keyframes revue-entree { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }

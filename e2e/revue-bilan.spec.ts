@@ -25,7 +25,7 @@ for (const [largeur, hauteur] of [[390, 844], [320, 568]] as const) {
       await page.setViewportSize({ width: largeur, height: hauteur });
       await page.emulateMedia({ colorScheme: theme });
       await preparerRevue(page);
-      await page.addInitScript(t => { document.documentElement.setAttribute('data-theme', t); }, theme);
+      await page.addInitScript(t => { document.addEventListener('DOMContentLoaded', () => document.documentElement.setAttribute('data-theme', t)); }, theme);
       const suffixe = `${largeur}-${theme === 'dark' ? 'sombre' : 'clair'}`;
       const avecCaptures = largeur === 390 || theme === 'dark';
 
