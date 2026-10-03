@@ -30,6 +30,10 @@
 .defis-liste li:last-child .defi-ligne { border-bottom-left-radius: var(--radius); border-bottom-right-radius: var(--radius); }
 .defi-ligne-texte { flex: 1; min-width: 0; display: grid; gap: 2px; }
 .defi-ligne-texte b { font-weight: var(--fw-bold); }
+/* #400 : le pseudo de l'ami en titre de la ligne, la date du défi à droite, en retrait. Un pseudo long est coupé (… ). */
+.defi-ligne-haut { display: flex; align-items: baseline; gap: var(--space-2); min-width: 0; }
+.defi-ligne-nom { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.defi-ligne-date { flex: none; margin-left: auto; color: var(--muted); font-size: var(--fs-s); font-variant-numeric: tabular-nums; }
 .defi-ligne-texte small { color: var(--muted); font-size: var(--fs-s); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .defi-ligne.a-moi small { color: var(--text); }
 .defi-point { flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--accent-trait); }

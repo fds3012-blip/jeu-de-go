@@ -112,15 +112,24 @@ test('la dernière partie gardée par une version d’avant #358 (à deux) appar
   await expect(page.getByText(/Coup 1 sur 3/)).toBeVisible();
 });
 
-test('un défi par lien terminé, lu sur le serveur, rejoint la liste et ouvre la revue avec le bon camp', async ({ browser, baseURL }) => {
+test('un défi par lien terminé, lu sur le serveur, rejoint la liste et ouvre la revue avec le bon camp et le pseudo de l’ami', async ({ browser, baseURL }) => {
   const serveur = fauxServeur();
-  // Ancienne session de défi : le joueur a Blanc ; son ami (Noir) a abandonné hier.
+  // Ancienne session de défi : le joueur a Blanc ; son ami Léa (Noir) a abandonné hier. Il y a 3 jours, un autre ami,
+  // sans pseudo, a gagné de 4,5 points.
   const session = serveur.sessionAnonyme();
   const hier = new Date(Date.now() - 864e5).toISOString();
+  const avant = new Date(Date.now() - 3 * 864e5).toISOString();
+  const AUTRE = '22222222-2222-4222-8222-222222222222';
   serveur.games.push({ id: PARTIE, white_id: session.user.id, black_id: 'ami', created_by: session.user.id, size: 9, komi: 6.5, rules: 'japanese', handicap: 0,
     moves: 'eeffgg', status: 'finished', counting: false, dead_stones: null, dead_proposed_by: null, result: 'W+R', resumed_at: 0, prive: true, rated: false, updated_at: hier });
   serveur.defis.push({ partie_id: PARTIE, jeton: JETON, createur_id: session.user.id, invite_id: 'ami', delai_coup: '3 days',
     date_limite: null, lien_expire_le: hier, cree_le: hier });
+  serveur.games.push({ id: AUTRE, white_id: session.user.id, black_id: 'ami-sans-pseudo', created_by: session.user.id, size: 9, komi: 6.5, rules: 'japanese', handicap: 0,
+    moves: 'eeffggtttt', status: 'finished', counting: false, dead_stones: null, dead_proposed_by: null, result: 'B+4.5', resumed_at: 0, prive: true, rated: false, updated_at: avant });
+  serveur.defis.push({ partie_id: AUTRE, jeton: 'Z'.repeat(32), createur_id: session.user.id, invite_id: 'ami-sans-pseudo', delai_coup: '3 days',
+    date_limite: null, lien_expire_le: avant, cree_le: avant });
+  serveur.profiles.push({ id: 'ami', username: 'Lea_du_go', rating: 1500, streak_days: 0, streak_last: null, streak_freezes: 0 });
+  serveur.profiles.push({ id: 'ami-sans-pseudo', username: null, rating: 1500, streak_days: 0, streak_last: null, streak_freezes: 0 });
   const ctx = await browser.newContext({
     viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, locale: 'fr-FR', baseURL,
     storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }] }] },
@@ -128,10 +137,16 @@ test('un défi par lien terminé, lu sur le serveur, rejoint la liste et ouvre l
   const page = await brancher(ctx, serveur, { 'sb-supabase-auth-token': JSON.stringify(session) });
   await page.goto('/');
   await ouvrirMesParties(page);
-  const ligne = page.locator('.mp-parties > li > button');
-  await expect(ligne).toHaveCount(1);
-  await expect(ligne).toHaveAccessibleName('Ton ami. Tu as gagné par abandon. Hier, plateau 9 × 9.');
-  await ligne.click();
+  const lignes = page.locator('.mp-parties > li > button');
+  await expect(lignes).toHaveCount(2);
+  // #400 : le pseudo de l'ami, lu sous la RLS (profils publics) ; sans pseudo, « Ton ami ».
+  await expect(lignes.first()).toHaveAccessibleName('Lea_du_go. Tu as gagné par abandon. Hier, plateau 9 × 9.');
+  await expect(lignes.first().locator('.mp-partie-nom')).toHaveText('Lea_du_go');
+  await expect(lignes.nth(1)).toHaveAccessibleName('Ton ami. Tu as perdu de 4,5 points. Il y a 3 jours, plateau 9 × 9.');
+  // Une seule lecture des profils pour toute la liste, pas une par ligne.
+  expect(serveur.appels.filter(a => a.startsWith('GET /rest/v1/profiles') && a.includes('username') && a.includes('in.'))).toHaveLength(1);
+  if (process.env.CAPTURES_400) await page.screenshot({ path: `${process.env.CAPTURES_400}/mes-parties-390-clair.jpg`, type: 'jpeg', quality: 80 });
+  await lignes.first().click();
   await expect(page.getByRole('heading', { level: 2, name: 'Revoir ma partie' })).toBeVisible();
   await demarrerParcours(page, 1);
   await expect(page.getByText(/Coup 1 sur 3/)).toBeVisible();

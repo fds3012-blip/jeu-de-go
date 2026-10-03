@@ -36,7 +36,7 @@ const T = {
   recevoir: /^(Recevoir mon code|Get my code)$/, pseudo: /^(Pseudo|Username)$/, monPseudo: /^(C’est mon pseudo|That’s my username)$/,
   aide: /^(Aide : règles et mots du go|Help: rules and Go words)$/, feuilleAide: /^(Aide|Help)$/, mots: /^(Mots|Words)$/,
   chercher: /^(Chercher un mot|Search for a word)$/, fermer: /^(Fermer|Close)$/, mesParties: /^(Mes parties|My games)/,
-  envoyerLien: /^(Envoyer un lien|Send a link)$/, partieDu: /^(Partie du|Game of)/, probleme: /^(Problème|Puzzle) \d+/, tous: /^(Tous les problèmes|All puzzles)$/,
+  envoyerLien: /^(Envoyer un lien|Send a link)$/, probleme: /^(Problème|Puzzle) \d+/, tous: /^(Tous les problèmes|All puzzles)$/,
 };
 
 /** Chaque écran du parcours : vérifications légères ; avec RECETTE_SOIR, capture sombre et clair et mesures. */
@@ -307,7 +307,8 @@ for (const cfg of CONFIGS) {
     await ami.ctx.close();
     await page.goto('/');
     await page.getByTestId('lien-defi').click();
-    await page.getByRole('button', { name: T.partieDu }).click();
+    // #400 : la ligne du défi porte le pseudo de l'ami (plus « Partie du… » une fois le lien ouvert).
+    await page.getByRole('button', { name: /^Ami_du_go/ }).click();
     await expect(plateau(page).locator('g[data-pierre="noir"]')).toHaveCount(1);
 
     // 11. Hors ligne : l'app se rouvre et ses onglets s'ouvrent.

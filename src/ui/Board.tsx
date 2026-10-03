@@ -47,6 +47,8 @@ interface Props {
   versCouvercles?: boolean;
   /** Noms lus dans les annonces (issue #116) : { 2: 'Pomme' } fait dire « Pomme a joué C3 » au lieu de « Blanc joue C3 ». */
   noms?: NomsCamps;
+  /** Dessin posé sur la grille, sous les pierres, quand une pierre fantôme est montrée (#400 : visée du plateau serré, src/ui/Visee.tsx, chargée avec son écran). */
+  surFantome?: (p: number) => ReactElement;
 }
 
 // Les fonctions pures du clavier et des annonces (issue #116) vivent dans boardA11y.ts.
@@ -104,7 +106,7 @@ function corps(c: number, p: number, size: number): ReactElement {
   return <use href={c === 1 ? '#go-noire' : `#go-blanche-${shellVariant(p, size)}`} />;
 }
 
-export function Board({ size, board, toPlay = 1, marks = {}, interactive = false, stonesTappable = false, confirmTouch = true, toucher = false, onPlay, shake, versCouvercles = false, noms }: Props) {
+export function Board({ size, board, toPlay = 1, marks = {}, interactive = false, stonesTappable = false, confirmTouch = true, toucher = false, onPlay, shake, versCouvercles = false, noms, surFantome }: Props) {
   const ref = useRef<SVGSVGElement>(null);
   const theme = useThemeGoban();
   const [ghost, setGhost] = useState(-1);
@@ -289,6 +291,7 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
         {cases}
         <image href={woodDataUrl(theme.id)} x={vb.min} y={vb.min} width={vb.span} height={vb.span} preserveAspectRatio="none" />
         {grid}
+        {ghostP >= 0 && surFantome?.(ghostP)}
         {stones}
         {leaving}
         {marks.ownerFondu ? <g className="territoire-fondu" data-qui-mene="">{owner}</g> : owner}

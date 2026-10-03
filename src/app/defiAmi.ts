@@ -100,27 +100,30 @@ export function phraseEtat(v: VueDefi, nom?: string | null): string {
     if (v.proposeParMoi) return nom ? t('defi.etat.comptageAttenteNom', { nom }) : t('defi.etat.comptageAttente');
     return t('defi.etat.comptage');
   }
-  if (v.phase === 'fini') return phraseIssue(v.issue);
+  if (v.phase === 'fini') return phraseIssue(v.issue, nom);
   const delai = v.restant === null ? '' : texteDelai(v.restant);
   if (v.aMoi) return t('defi.etat.aToi', { delai });
   return nom ? t('defi.etat.aLuiNom', { nom, delai }) : t('defi.etat.aLui', { delai });
 }
 
 /** Phrase de fin, du point de vue du joueur. */
-export function phraseIssue(issue: Issue | null): string {
+export function phraseIssue(issue: Issue | null, nom?: string | null): string {
   if (!issue) return t('defi.fin.terminee');
   if (issue.gagne === null) return issue.raison === 'egalite' ? t('defi.fin.egalite') : t('defi.fin.terminee');
   const cle = issue.gagne ? 'gagne' : 'perdu';
-  if (issue.raison === 'points') return t(issue.gagne ? 'defi.fin.gagne.points' : 'defi.fin.perdu.points', { marge: String(issue.marge ?? 0).replace('.', ',') });
-  return t(`defi.fin.${cle}.${issue.raison === 'temps' ? 'temps' : 'abandon'}`);
+  const marge = String(issue.marge ?? 0).replace('.', ',');
+  // #400 : l'ami nommé par son pseudo quand on le connaît (les phrases où il est le sujet).
+  if (issue.raison === 'points') return issue.gagne ? t('defi.fin.gagne.points', { marge }) : nom ? t('defi.fin.perdu.pointsNom', { nom, marge }) : t('defi.fin.perdu.points', { marge });
+  const raison = issue.raison === 'temps' ? 'temps' : 'abandon';
+  return issue.gagne && nom ? t(`defi.fin.gagne.${raison}Nom`, { nom }) : t(`defi.fin.${cle}.${raison}`);
 }
 
 /** Résumé d'une ligne de la liste « Tes défis ». */
-export function resumeDefi(v: VueDefi): { etat: string; aMoi: boolean } {
+export function resumeDefi(v: VueDefi, nom?: string | null): { etat: string; aMoi: boolean } {
   if (v.phase === 'attente') return { etat: t('defi.liste.attente'), aMoi: false };
-  if (v.phase === 'fini') return { etat: phraseIssue(v.issue), aMoi: false };
+  if (v.phase === 'fini') return { etat: phraseIssue(v.issue, nom), aMoi: false };
   if (v.phase === 'comptage') return { etat: t('defi.liste.comptage'), aMoi: !v.proposeParMoi };
-  return { etat: v.aMoi ? t('defi.liste.aToi', { delai: v.restant === null ? '' : texteDelai(v.restant) }) : t('defi.liste.aLui'), aMoi: v.aMoi };
+  return { etat: v.aMoi ? t('defi.liste.aToi', { delai: v.restant === null ? '' : texteDelai(v.restant) }) : (nom ? t('defi.liste.aLuiNom', { nom }) : t('defi.liste.aLui')), aMoi: v.aMoi };
 }
 
 /** Défis où c'est au joueur d'agir (jouer, ou répondre au comptage). */
