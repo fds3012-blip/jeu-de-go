@@ -264,6 +264,8 @@ for (const cfg of CONFIGS) {
     await expect(lignes.first()).toBeVisible();
     await voir(page, '19-mes-parties');
     await lignes.first().click();
+    // Revue v3 (#405) : le bilan de la partie s'ouvre d'abord, puis « Démarrer le bilan » montre le goban.
+    await page.getByRole('button', { name: /^(Démarrer le bilan|Start review)$/ }).click({ timeout: 90_000 });
     await expect(plateau(page)).toBeVisible({ timeout: 30_000 });
     await voir(page, '20-mes-parties-revue');
 

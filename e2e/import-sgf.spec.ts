@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { attendrePierre, jouer, plateau } from './plateau';
+import { demarrerParcours } from './revueFactice';
 
 // Issue #286 : analyser une partie jouée ailleurs (SGF). Profil → « Analyser une partie » → coller le SGF → choisir son camp
 // → revue → « Rejoue cette erreur ». KataGo est remplacé par l'analyseur factice de e2e/rejoue-erreur.spec.ts
@@ -114,10 +115,8 @@ test('import SGF : coller, choisir son camp, revue, rejouer une erreur', async (
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   await capturer(page, 'import-revue');
 
-  // L'erreur du coup 1 (E5, Grosse erreur) : « Rejoue cette erreur ».
-  const puce = page.locator('.revue-erreur', { hasText: 'Coup 1' });
-  if (await puce.count()) await puce.click();
-  else await page.locator('.revue-erreur-cle').click();
+  // L'erreur du coup 1 (E5, Gaffe) : « Rejoue cette erreur », dans le parcours (revue v3, #405).
+  await demarrerParcours(page, 1);
   await page.getByRole('button', { name: 'Rejoue cette erreur' }).first().click();
   await expect(page.getByRole('heading', { level: 2, name: 'Rejoue ton erreur' })).toBeVisible();
   await expect(plateau(page).locator('g[data-pierre]')).toHaveCount(0);
@@ -127,7 +126,8 @@ test('import SGF : coller, choisir son camp, revue, rejouer une erreur', async (
   await page.getByRole('button', { name: 'Retour à la revue' }).last().click();
   await expect(page.getByRole('heading', { level: 2, name: 'Revoir ma partie' })).toBeVisible();
 
-  // « ‹ » ramène à l'import, qui propose de revoir la dernière partie importée.
+  // « ‹ » ramène au résumé, puis à l'import, qui propose de revoir la dernière partie importée.
+  await page.getByRole('button', { name: 'Retour au résumé' }).click();
   await page.getByRole('button', { name: 'Retour à l’import' }).click();
   await expect(page.getByRole('button', { name: 'Revoir ta dernière partie importée' })).toBeVisible();
 
@@ -150,9 +150,9 @@ test('import SGF : 19 × 19 avec handicap, barre d’avancement et analyse annul
   await page.getByRole('button', { name: /Blanc\s*Soleil/ }).click();
   await page.getByRole('button', { name: 'Analyser la partie' }).click();
 
-  // L'analyse avance (barre), la partie reste lisible, et on peut l'arrêter.
-  await expect(page.getByRole('progressbar', { name: 'Avancement de l’analyse' })).toBeVisible();
-  await expect(plateau(page, 19).locator('g[data-pierre]')).not.toHaveCount(0);
+  // L'analyse avance (barre, avec un proverbe du go pendant l'attente, #405), et on peut l'arrêter.
+  await expect(page.getByRole('progressbar', { name: 'Analyse de la partie' })).toBeVisible();
+  await expect(page.getByText('Proverbe du go')).toBeVisible();
   const arreter = page.getByRole('button', { name: 'Arrêter l’analyse' });
   expect((await arreter.boundingBox())!.height).toBeGreaterThanOrEqual(44);
   await capturer(page, 'import-analyse-19');
@@ -184,13 +184,13 @@ test('import SGF : fichier 19 × 19 → revue ouverte sur le moment clé → « 
   await page.getByRole('button', { name: /Noir\s*Lea_75/ }).click();
   await page.getByRole('button', { name: 'Analyser la partie' }).click();
 
-  // Analyse finie : la revue s'ouvre d'elle-même sur le moment clé (coup 3, K10).
+  // Analyse finie : le bilan, puis le parcours ; le moment clé (coup 3, K10) en fait partie.
   await expect(page.getByRole('heading', { level: 2, name: 'Revoir ma partie' })).toBeVisible();
   await expect(page.locator('.revue-analyse')).toHaveCount(0, { timeout: 60_000 });
-  const cle = page.locator('.revue-erreur-cle');
-  await expect(cle).toHaveAttribute('aria-pressed', 'true');
-  await expect(cle).toHaveAccessibleName(/Moment clé, coup 3, 10 points perdus/);
+  await demarrerParcours(page, 3);
   await expect(page.getByText('Coup 3 sur 16')).toBeVisible();
+  await expect(page.locator('.parcours-cle')).toHaveText('Moment clé');
+  await expect(page.locator('.parcours-titre')).toHaveText(/K10 est une (erreur|gaffe)/);
   await capturer(page, 'import-fichier-cle');
 
   // « Rejoue cette erreur » : la position d'avant (Q16, D4) revient ; Q4, le meilleur coup, est accepté.

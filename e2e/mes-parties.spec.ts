@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { abandonner, jouer, passerJusquAuScore, plateau } from './plateau';
 import { brancher, fauxServeur, JETON, PARTIE } from './fauxSupabase';
+import { demarrerParcours } from './revueFactice';
 
 // Issue #358 : « Mes parties ». Chaque partie terminée est gardée sur l'appareil ; le Profil les liste, la plus
 // récente d'abord, avec l'adversaire, le résultat en mots, la date et la taille du plateau ; un toucher ouvre la revue.
@@ -77,10 +78,13 @@ test('trois parties contre l’ordi : toutes dans « Mes parties », avec le bon
   for (let i = 0; i < 3; i++) {
     await lignes.nth(i).click();
     await expect(page.getByRole('heading', { level: 2, name: 'Revoir ma partie' })).toBeVisible();
+    // Revue v3 (#405) : le bilan, puis « Démarrer le bilan » et le parcours.
+    await demarrerParcours(page, 1);
     await expect(page.getByText(/Coup 1 sur \d+/)).toBeVisible();
     await expect(plateau(page).locator('g[data-point="E5"][data-pierre="noir"]')).toHaveCount(1);
     // Pas de « Rejouer d'ici » depuis l'historique (l'écran de partie ne reprend pas encore une partie gardée).
     await expect(page.getByRole('button', { name: "Rejouer d'ici" })).toHaveCount(0);
+    await page.getByRole('button', { name: 'Retour au résumé' }).click();
     await page.getByRole('button', { name: 'Retour à mes parties' }).click();
     await expect(lignes).toHaveCount(3);
   }
@@ -104,6 +108,7 @@ test('la dernière partie gardée par une version d’avant #358 (à deux) appar
   await expect(ligne).toHaveAccessibleName('Partie à deux. Blanc gagne de 3,5 points. Il y a 2 jours, plateau 9 × 9.');
   await ligne.click();
   await expect(page.getByRole('heading', { level: 2, name: 'Revoir ma partie' })).toBeVisible();
+  await demarrerParcours(page, 1);
   await expect(page.getByText(/Coup 1 sur 3/)).toBeVisible();
 });
 
@@ -143,8 +148,10 @@ test('un défi par lien terminé, lu sur le serveur, rejoint la liste et ouvre l
   if (process.env.CAPTURES_400) await page.screenshot({ path: `${process.env.CAPTURES_400}/mes-parties-390-clair.jpg`, type: 'jpeg', quality: 80 });
   await lignes.first().click();
   await expect(page.getByRole('heading', { level: 2, name: 'Revoir ma partie' })).toBeVisible();
+  await demarrerParcours(page, 1);
   await expect(page.getByText(/Coup 1 sur 3/)).toBeVisible();
-  // Le joueur a Blanc : le premier coup est celui de son ami, nommé par son pseudo.
-  await expect(page.locator('.revue-mochi p')).toHaveText(/^Lea_du_go joue E5\./);
+  // Le joueur a Blanc : le premier coup est celui de son ami (Noir), et c'est Blanc qu'on suit dans le bilan.
+  await expect(page.locator('.parcours-titre')).toHaveText(/E5 est /);
+  await expect(page.locator('.parcours-detail')).not.toContainText(/^Tu /);
   await ctx.close();
 });

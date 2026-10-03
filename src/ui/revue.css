@@ -1,35 +1,99 @@
 /* Revue d'une partie (issue #34) : src/app/Revue.tsx. Design v2 (docs/design/v2/direction.md) :
-   sumi, jade, Bricolage ; une seule action en relief (« Rejouer d'ici »), cibles de 44 px. */
+   sumi, jade, Bricolage ; une seule action en relief par écran, cibles de 44 px.
+   Revue v3 « Bilan de la partie » (#405) : attente (proverbe, barre), bilan (précision, notes), parcours des coups clés. */
 .revue { display: flex; flex-direction: column; gap: var(--space-3); padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom, 0px)); }
 
 .revue-tete { display: flex; align-items: center; gap: var(--space-2); min-height: var(--cible-min); }
 .revue-tete .retour { flex: none; width: var(--cible-min); height: var(--cible-min); margin-left: -10px; display: grid; place-items: center;
   border: 0; border-radius: 50%; background: none; color: var(--text); font-size: 28px; line-height: 1; }
 .revue-tete .retour:active { background: var(--surface); }
-.revue-tete h2 { flex: 1; margin: 0; font-family: var(--font-titre); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre); font-size: 20px; }
-.revue-compteur { color: var(--muted); font-size: 14px; font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; }
+.revue-tete h2 { flex: 1; min-width: 0; margin: 0; font-family: var(--font-titre); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre); font-size: 20px; }
+.revue-compteur { color: var(--muted); font-size: 14px; font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; white-space: nowrap; }
 
 .revue-plateau { width: min(100%, 460px); margin: 0 auto; }
 
-/* Courbe d'avantage : Blanc en haut (papier), Noir en bas (sumi), ligne jade, erreurs en hanko. */
+/* Action principale (« Démarrer le bilan », « Suivant ») : dans le dock fixe de l'app (app.css, .dock), au-dessus de
+   la barre du bas ; la page garde la place du dock pour que rien n'y reste caché. */
+.revue-bilan, .revue-parcours, .revue-rejeu { padding-bottom: calc(var(--cible-cta) + var(--relief) + var(--space-6) + env(safe-area-inset-bottom, 0px)); }
+.revue-dock .cta { min-height: var(--cible-cta); }
+
+/* ---------- 1. Attente : Mochi, un proverbe du go, la barre d'avancement ---------- */
+.bilan-attente { display: flex; flex-direction: column; align-items: center; gap: var(--space-5); padding: var(--space-6) 0 var(--space-4); text-align: center; }
+.bilan-attente-mochi { display: grid; place-items: center; width: 112px; height: 112px; border-radius: 50%; background: var(--surface); }
+.bilan-proverbe { margin: 0; max-width: 32ch; display: grid; gap: var(--space-2); }
+.bilan-proverbe-titre { color: var(--accent-texte); font-size: var(--fs-s); font-weight: var(--fw-bold); letter-spacing: .06em; text-transform: uppercase; }
+.bilan-proverbe blockquote { margin: 0; font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: 22px; line-height: 1.3; letter-spacing: var(--tracking-titre); text-wrap: balance; }
+.bilan-proverbe-source { margin: 0; color: var(--muted); font-size: var(--fs-s); line-height: 1.35; }
+.bilan-avance { width: 100%; display: grid; gap: var(--space-2); }
+.bilan-avance-texte { display: flex; justify-content: space-between; gap: var(--space-2); margin: 0; color: var(--muted); font-size: 15px; }
+.bilan-avance-texte b { color: var(--text); font-variant-numeric: tabular-nums; }
+.bilan-barre { height: 12px; border-radius: var(--radius-pill); background: var(--surface-2); overflow: hidden; box-shadow: inset 0 0 0 1px var(--line); }
+.bilan-barre span { display: block; height: 100%; border-radius: inherit; background: var(--accent); transform-origin: left center; }
+.revue-arret { border-color: var(--line); }
+
+/* ---------- 2. Le bilan ---------- */
+.bilan-coach { display: flex; align-items: flex-start; gap: var(--space-3); }
+.bilan-bulle { position: relative; flex: 1; margin: 0; padding: var(--space-3); border-radius: 4px 14px 14px 14px; background: var(--surface); font-size: 15px; line-height: 1.4; }
+.bilan-table { width: 100%; border-collapse: collapse; font-size: 15px; font-variant-numeric: tabular-nums; }
+.bilan-table th, .bilan-table td { height: 38px; padding: 0 var(--space-2); }
+.bilan-table thead th { height: 34px; color: var(--muted); font-size: 14px; font-weight: var(--fw-bold); text-align: center; }
+.bilan-table tbody th { font-weight: 500; text-align: left; }
+.bilan-table td { width: 30%; text-align: center; font-weight: var(--fw-bold); color: var(--muted); }
+.bilan-table td.plein { color: var(--text); font-size: 17px; }
+.bilan-table tbody tr + tr { border-top: 1px solid var(--line); }
+.bilan-joueur { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bilan-pierre { width: 14px; height: 14px; }
+.bilan-precision th, .bilan-precision td { height: 60px; }
+.bilan-precision th { color: var(--muted); font-weight: var(--fw-bold); }
+.bilan-score { display: inline-grid; place-items: center; min-width: 76px; min-height: 42px; padding: 0 var(--space-2); border-radius: 10px;
+  background: var(--surface-2); color: var(--text); font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: 20px; }
+/* Ta précision : en relief, papier sur encre (comme la case blanche de chess.com), sans cote ni rang. */
+.bilan-score-moi { background: var(--papier); color: var(--sumi); box-shadow: inset 0 0 0 1.5px var(--line); }
+.revue-table-note { display: flex; align-items: center; gap: 10px; }
+.bilan-aide { margin-top: calc(var(--space-2) * -1); }
+/* 320 px : le tableau tient sans défiler (cellules et cases de précision plus serrées). */
+@media (max-width: 360px) {
+  .bilan-table th, .bilan-table td { padding: 0 4px; }
+  .bilan-table td { width: 26%; }
+  .bilan-score { min-width: 60px; padding: 0 6px; font-size: 18px; }
+  .revue-table-note { gap: 8px; }
+}
+
+/* Courbe d'avantage : Blanc en haut (papier), Noir en bas (sumi), ligne jade, coups clés en couleur de note. */
 /* Audit du 02/10 (n° 4) : couleurs en jetons (tokens.css, --courbe-*). En clair, le cadre et le trait passent au-dessus
    de 3:1 sur le washi (WCAG 1.4.11), et la part noire est une encre douce plutôt qu'un bloc noir pur. */
 .revue-courbe-legende { margin: 0 0 calc(var(--space-1) - var(--space-3)); color: var(--muted); font-size: var(--fs-s); line-height: 1.35; }
-.revue-courbe { margin: 0; border-radius: 10px; overflow: hidden; border: 1.5px solid var(--courbe-cadre); cursor: pointer; }
+.revue-courbe { position: relative; margin: 0; border-radius: 10px; overflow: hidden; border: 1.5px solid var(--courbe-cadre); cursor: pointer; }
 .revue-courbe svg { display: block; width: 100%; height: 64px; }
 .revue-courbe-blanc { fill: var(--courbe-blanc); }
 .revue-courbe-noir { fill: var(--courbe-noir); }
 .revue-courbe-milieu { stroke: var(--brume); stroke-opacity: .7; stroke-dasharray: 3 3; }
 .revue-courbe-ligne { fill: none; stroke: var(--courbe-ligne); stroke-width: 2.5; }
 .revue-courbe-curseur { stroke: var(--courbe-curseur); stroke-width: 2.5; }
-/* Point d'erreur (issue #71), posé sur la courbe, avec un liseré papier pour se détacher du sumi comme du papier. */
-.revue-courbe { position: relative; }
+/* Point d'un coup clé (issue #71), posé sur la courbe, avec un liseré papier pour se détacher du sumi comme du papier. */
 .revue-courbe-point { position: absolute; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%;
   box-shadow: 0 0 0 1.5px var(--papier), 0 0 0 2.5px rgba(28, 25, 22, .5); pointer-events: none; }
 
+/* ---------- 3. Le parcours ---------- */
+/* Bulle de Mochi au-dessus du goban : titre (sceau, « E5 est une erreur », avance), puis une phrase courte. */
+.parcours-bulle { min-height: 92px; }
+.parcours-texte { flex: 1; min-width: 0; display: grid; gap: 4px; }
+.parcours-titre { display: flex; align-items: center; gap: 8px; margin: 0; font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: 16px; line-height: 1.25; }
+.parcours-titre > span:not(.sceau-note):not(.parcours-avance) { flex: 1; min-width: 0; }
+.parcours-avance { flex: none; padding: 2px 8px; border-radius: var(--radius-pill); background: var(--papier); color: var(--sumi);
+  font-family: var(--font-ui); font-size: 13px; font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; box-shadow: inset 0 0 0 1px var(--line); }
+.parcours-avance.negatif { background: var(--sumi); color: var(--papier); box-shadow: inset 0 0 0 1px rgba(243, 237, 227, .35); }
+.revue-mochi .parcours-detail, .revue-mochi .parcours-fin { margin: 0; font-size: 15px; line-height: 1.4; }
+.revue-mochi .parcours-fin { color: var(--muted); font-size: 14px; }
+.parcours-cle { display: inline-block; margin-right: 6px; padding: 0 6px; border-radius: 6px; background: var(--accent); color: var(--on-accent); font-size: 12px; line-height: 20px; vertical-align: 1px; }
+.parcours-secondaires { display: flex; gap: var(--space-2); }
+/* « Voir le bon coup » (#77) : lien secondaire centré, tant que le bon coup reste caché. */
+.revue-voir { display: block; min-height: var(--cible-min); margin: calc(var(--space-2) * -1) auto 0; }
+.parcours-secondaires .btn { flex: 1 1 0; min-width: 0; min-height: var(--cible-bouton); padding: 0 var(--space-2); border-color: var(--line); line-height: 1.2; }
+
 .revue-nav { display: flex; align-items: center; gap: var(--space-2); }
 
-/* Liste des coups (issue #71) : défile horizontalement, chaque coup avec sa pierre et son sceau de note. */
+/* Bande des coups (issue #71) : défile horizontalement, chaque coup avec sa pierre et son sceau de note. */
 .revue-coups { flex: 1; min-width: 0; display: flex; gap: 4px; margin: 0; padding: 2px; list-style: none;
   overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none; -webkit-overflow-scrolling: touch;
   mask-image: linear-gradient(90deg, transparent, #000 12px, #000 calc(100% - 12px), transparent); }
@@ -43,83 +107,33 @@
 .revue-coup-lieu { color: var(--text); }
 .revue-coup-pierre { width: 10px; height: 10px; border-radius: 50%; flex: none; }
 .revue-coup-pierre.noire { background: radial-gradient(circle at 35% 30%, #5b5f5d, #151716 60%, #050606); box-shadow: 0 0 0 1px var(--pierre-n-bord); }
-.revue-coup-pierre.blanche { background: radial-gradient(circle at 38% 32%, #fff, #F3EEE3 55%, #BDB3A0); }
+.revue-coup-pierre.blanche { background: radial-gradient(circle at 38% 32%, #fff, #F3EEE3 55%, #BDB3A0); box-shadow: 0 0 0 1px var(--line); }
 .revue-coup-vide { width: 18px; height: 18px; flex: none; }
+.revue-pas { flex: none; width: var(--cible-bouton); min-height: var(--cible-bouton); padding: 0; display: grid; place-items: center; }
+.revue-pas svg { width: 22px; height: 22px; }
+.revue-pas:disabled { opacity: .4; }
 
 /* Sceau de note, en HTML : même grammaire que les sceaux (carré arrondi, cadre intérieur), légèrement de travers. */
 .sceau-note { flex: none; display: inline-grid; place-items: center; border-radius: 28%; transform: rotate(-6deg);
   font-family: var(--font-titre); font-weight: 800; line-height: 1; letter-spacing: -.04em;
   box-shadow: inset 0 0 0 1.5px rgba(255, 246, 236, .35); }
 
-/* Bilan de précision (issue #71) : une ligne sous l'en-tête, qui ouvre le résumé. */
-.revue-precision { display: flex; align-items: center; gap: var(--space-2); min-height: var(--cible-min); padding: 0 var(--space-3);
-  border: 0; border-radius: 14px; background: var(--surface); color: var(--text); text-align: left; font-size: 15px; }
-.revue-precision-texte { flex: 1; min-width: 0; display: flex; flex-direction: column; padding: 6px 0; }
-.revue-precision-titre { color: var(--muted); font-size: 13px; font-weight: var(--fw-bold); }
-/* Recette du 28/09 (#195) : en 320 px, « Toi 73 % · Pomme 100 % » était coupé (« Pomme 100… »). Le score de l'adversaire
-   passe à la ligne d'un bloc au lieu d'être tronqué ; chaque score reste sur une ligne (flex). */
-.revue-precision-duo { display: flex; flex-wrap: wrap; align-items: baseline; white-space: nowrap; font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: 17px; font-variant-numeric: tabular-nums; }
-.revue-precision-lui { color: var(--muted); font-weight: 600; white-space: nowrap; }
-.revue-precision-voir { color: var(--accent-texte); font-weight: var(--fw-bold); font-size: 14px; }
-.revue-precision-voir::after { content: ''; display: inline-block; width: 6px; height: 6px; margin-left: 6px; border: solid currentColor; border-width: 0 2px 2px 0; transform: translateY(-2px) rotate(45deg); }
-.revue-precision[aria-expanded="true"] .revue-precision-voir::after { transform: translateY(1px) rotate(-135deg); }
-
-.revue-resume { display: flex; flex-direction: column; gap: var(--space-3); }
-.revue-table { width: 100%; border-collapse: collapse; font-size: 15px; font-variant-numeric: tabular-nums; }
-.revue-table th, .revue-table td { height: 34px; padding: 0 var(--space-2); }
-.revue-table thead th { color: var(--muted); font-size: 13px; font-weight: var(--fw-bold); text-align: right; }
-.revue-table tbody th { font-weight: 500; text-align: left; }
-.revue-table-note { display: flex; align-items: center; gap: 10px; }
-.revue-table td { width: 64px; text-align: right; font-weight: var(--fw-bold); }
-.revue-table tbody tr + tr { border-top: 1px solid var(--line); }
-.revue-pas { flex: none; width: var(--cible-bouton); min-height: var(--cible-bouton); padding: 0; display: grid; place-items: center; }
-.revue-pas svg { width: 22px; height: 22px; }
-.revue-pas:disabled { opacity: .4; }
-
-.revue-analyse { display: flex; align-items: center; gap: var(--space-2); min-height: var(--cible-min); margin: 0; color: var(--muted); font-size: 15px; }
-
-.revue-erreurs { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); }
-.revue-erreur { min-height: var(--cible-bouton); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
-  border: 1.5px solid var(--line); border-radius: var(--radius-bouton); background: var(--surface); color: var(--text); font-size: 14px; }
-.revue-erreur b { font-weight: var(--fw-bold); }
-.revue-erreur span { color: var(--danger-texte); font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; }
-.revue-erreur.actif { border-color: var(--accent); background: var(--surface-2); }
-
 .revue-mochi { display: flex; align-items: flex-start; gap: var(--space-3); padding: var(--space-3); border-radius: 14px; background: var(--surface); }
-.revue-mochi p { margin: 0; font-size: 15px; line-height: 1.4; }
-/* « Rejoue cette erreur » (issue #77) : action secondaire, sous la phrase de Mochi. */
-.revue-probleme { display: block; width: 100%; min-height: var(--cible-bouton); margin-top: var(--space-2); border-color: var(--line); }
-/* « Voir le bon coup » : lien secondaire centré sous la phrase de Mochi, tant que le bon coup reste caché. */
-.revue-voir { display: block; margin: calc(var(--space-1) * -1) auto 0; }
+.revue-mochi > p { margin: 0; font-size: 15px; line-height: 1.4; }
+/* « Rejoue cette erreur » (issue #77) : action secondaire. */
+.revue-probleme { display: block; width: 100%; min-height: var(--cible-bouton); border-color: var(--line); }
+.revue-rejeu .revue-probleme { margin-top: var(--space-2); }
 /* Rejeu réussi : la bulle de Mochi prend la bordure d'accent (le texte dit aussi « Bravo », pas la couleur seule). */
 .revue-rejeu-ok { box-shadow: inset 0 0 0 2px var(--accent); }
 
-/* « Rejouer d'ici » dans le flux, sous la liste des coups : il ne recouvre jamais le goban ni la liste. */
-.app-partie .revue-dock, .revue-dock { position: static; left: auto; bottom: auto; transform: none; width: 100%; margin-bottom: var(--relief); }
-.revue-dock .cta { min-height: var(--cible-cta); }
+.revue-note { margin: 0 2px; color: var(--muted); font-size: 14px; line-height: 1.35; }
+.revue-importer { display: block; margin: 0 auto; }
 
 @media (prefers-reduced-motion: no-preference) {
-  .revue-erreur { transition: border-color var(--duree-rapide) var(--ease), background-color var(--duree-rapide) var(--ease); }
+  .bilan-barre span { transition: transform var(--duree-rapide) var(--ease); }
+  /* Opacité seule sur la page : une transformation ferait du conteneur le repère du dock fixe. */
+  .revue-bilan, .revue-parcours { animation: revue-fondu var(--duree-rapide) var(--ease); }
+  .parcours-texte { animation: revue-entree var(--duree-rapide) var(--ease) both; }
 }
-
-.revue-aucune { display: flex; align-items: center; min-height: var(--cible-min); margin: 0; font-weight: var(--fw-bold); color: var(--accent-texte); }
-.revue-note { margin: calc(var(--space-1) * -1) 2px 0; color: var(--muted); font-size: 14px; line-height: 1.35; }
-
-/* Revue honnête (issue #186). « Revenir au début » : action secondaire sous la phrase de Mochi, au moment clé. */
-.revue-debut { display: block; width: 100%; min-height: var(--cible-bouton); margin-top: calc(var(--space-1) * -1); border-color: var(--line); }
-/* Puce du moment clé : même forme que les erreurs, bordure d'accent pour la distinguer sans couleur seule (libellé « Moment clé »). */
-.revue-erreur-cle { border-color: var(--accent); }
-.revue-erreur-cle b { color: var(--accent-texte); }
-/* Défaite nette sans erreur isolée : ton neutre, pas le vert des félicitations. */
-.revue-aucune.revue-diffuses { font-weight: var(--fw-medium); color: var(--text); line-height: 1.35; }
-
-/* Partie importée (#286) : barre d'avancement de l'analyse, « Arrêter l'analyse », « Analyser une autre partie ». */
-.revue-avance { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
-.revue-avance .revue-analyse { flex: 1 1 100%; }
-.revue-barre { flex: 1 1 auto; min-width: 0; height: 8px; appearance: none; border: 0; border-radius: var(--radius-pill); background: var(--surface-2); overflow: hidden; }
-.revue-barre::-webkit-progress-bar { background: var(--surface-2); border-radius: var(--radius-pill); }
-.revue-barre::-webkit-progress-value { background: var(--accent); border-radius: var(--radius-pill); transition: width var(--duree-rapide) var(--ease); }
-.revue-barre::-moz-progress-bar { background: var(--accent); border-radius: var(--radius-pill); }
-.revue-arret { flex: none; border-color: var(--line); }
-.revue-importer { display: block; margin: var(--space-2) auto 0; }
-@media (prefers-reduced-motion: reduce) { .revue-barre::-webkit-progress-value { transition: none; } }
+@keyframes revue-fondu { from { opacity: 0; } }
+@keyframes revue-entree { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
