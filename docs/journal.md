@@ -638,3 +638,42 @@ Mandat de Florian (01/10) : « améliorer l'app visuellement, Apprendre comme le
 - Activer le rappel quotidien.
 - Décisions juridiques D1–D8.
 - Trancher : 3 ou 6 leçons gratuites ; Apple à 99 €/an ; « Cote 1500 » dans Mon compte ; « Analyser une partie » déplacée dans Mes parties.
+
+## 2026-10-04 : Mochi Go, connexion, cote visible, parties en direct, autonomie Supabase
+
+**Domaine et connexion**
+- Nom de domaine `mochi-go.app` acheté par Florian (9,99 $). Les e-mails partent par Resend, depuis `jeu@mochi-go.app`.
+- #414 (PR #415) : réglages de connexion versionnés dans `supabase/auth/`, appliqués par la CI (secret `SUPABASE_ACCESS_TOKEN`).
+  - Le code à 6 chiffres est dans l'objet de l'e-mail, en français, sous la marque Mochi Go.
+  - Florian a testé : l'e-mail arrive dans la boîte de réception, et la connexion avec Google marche.
+
+**Décisions de Florian**
+- Apple (99 €/an), questions juridiques D1–D8 et rappel quotidien : plus tard.
+- On garde 3 leçons gratuites.
+- La cote devient visible : un nombre comme sur chess.com, un grade kyu/dan, et des titres pour le top % (validé).
+- Les parties contre les IA ne comptent pas pour la cote.
+
+**Livraisons**
+- #416 (PR #418) : l'appli s'appelle Mochi Go et pointe vers mochi-go.app.
+  - Deux corrections pendant la revue : l'en-tête était 8 px trop haut (le Profil dépassait 844 px), et il débordait au zoom 200 %.
+- #417 (PR #419) : cote Glicko-2 calculée par le serveur.
+  - Barème : cote = 3000 − 100 × kyu.
+  - Départ choisi une seule fois. Affichage dans le Profil, en fin de partie et sur la carte de l'adversaire.
+  - Calcul vérifié en production sur l'exemple de Glickman (1464,05).
+- #421 (PR #422) : workflow « Appliquer une migration Supabase ».
+  - Garde-fous : rien qui efface des données, RLS exigé, SQL jamais affiché.
+  - Le connecteur Supabase ne bloque plus : les agents sont autonomes sur la base.
+- #360 (PR #420) : jouer en direct contre un humain.
+  - File d'attente et appariement par cote.
+  - Pendule tenue par le serveur, perte au temps et absence de 60 s constatées par le serveur.
+  - Bilan avec « +14 ». Migration appliquée par le workflow de #421.
+
+**Leçons**
+- Le disque du conteneur s'était rempli à cause de 30 anciens dossiers de travail d'agents : je les supprime après chaque fusion.
+- La CI de Playwright vérifie la hauteur (844 px) et le zoom 200 % : tout changement d'en-tête doit passer `profil`, `vivant` et `zoom`.
+
+**Suites**
+- Étape 2 de la cote : titres mensuels (Nyūshin … Shusetsu), à partir d'environ 200 joueurs actifs.
+- Une tâche `pg_cron` pour clore les parties en direct abandonnées.
+- Connexion avec Facebook (étapes de Florian).
+- Florian : supprimer la clé `sbp_` et changer la clé Resend, toutes deux collées dans la conversation.
