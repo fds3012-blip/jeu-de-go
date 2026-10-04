@@ -118,6 +118,18 @@ describe('contrat client ↔ serveur', () => {
     expect(lire(join(RACINE, 'supabase/functions/game-action/index.ts'))).toMatch(/action\s*===\s*'defi_coup'/);
   });
 
+  it('game-action, coup rapide (#425) : demande préalable gardée en cache, partie lue pendant la vérification du jeton', () => {
+    const index = lire(join(RACINE, 'supabase/functions/game-action/index.ts'));
+    expect(index).toMatch(/'Access-Control-Max-Age':\s*'86400'/);
+    const jeton = index.indexOf('admin.auth.getUser(token)');
+    expect(index.indexOf('const lectureDefi = defiReq ? lirePartieDefi(')).toBeGreaterThan(0);
+    expect(index.indexOf('const lectureDefi = defiReq ? lirePartieDefi(')).toBeLessThan(jeton);
+    expect(index.indexOf('const lecture = actionReq ? lirePartie(')).toBeLessThan(jeton);
+    // Le refus 401 reste avant toute utilisation de ce qui est lu.
+    expect(jeton).toBeLessThan(index.indexOf('await defiCoup('));
+    expect(jeton).toBeLessThan(index.indexOf('await lecture;'));
+  });
+
   it('les RPC appelées par les fonctions serveur (clé service) sont définies dans les migrations', () => {
     const src = fichiers(join(RACINE, 'supabase/functions'), f => f.endsWith('.ts')).map(lire).join('\n');
     const noms = [...src.matchAll(/\.rpc\(\s*'(\w+)'/g)].map(m => m[1]);
@@ -156,8 +168,9 @@ describe('contrat client ↔ serveur', () => {
   });
 
   it('temps réel : chaque table écoutée par le client est publiée (supabase_realtime) et lisible par RLS', () => {
-    const ecoutees = new Set(CLIENT.flatMap(f => [...lire(f).matchAll(/postgres_changes'[^)]*?table:\s*'(\w+)'/g)].map(m => m[1])));
-    expect([...ecoutees]).toEqual(expect.arrayContaining(['games', 'defis']));
+    // Écoute directe (`.on('postgres_changes', { table })`) ou par le suivi fiable de ./tempsReel.ts (#425 : `{ table, filtre }`).
+    const ecoutees = new Set(CLIENT.flatMap(f => [...lire(f).matchAll(/postgres_changes'[^)]*?table:\s*'(\w+)'|\{\s*table:\s*'(\w+)',\s*filtre:/g)].map(m => m[1] ?? m[2])));
+    expect([...ecoutees]).toEqual(expect.arrayContaining(['games', 'defis', 'parties_direct', 'notifications']));
     for (const table of ecoutees) {
       expect(SQL, `${table} écoutée mais absente de la publication supabase_realtime`).toMatch(new RegExp(`alter\\s+publication\\s+supabase_realtime\\s+add\\s+table\\s+[^;]*public\\.${table}\\b`, 'i'));
       expect(operationsPermises(table).has('select'), `${table} écoutée sans politique de lecture`).toBe(true);

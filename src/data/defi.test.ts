@@ -29,7 +29,7 @@ function client(o: Options = {}) {
   const invoke = vi.fn().mockResolvedValue(o.invoke ?? { data: { ok: true, game: { moves: 'ee' } }, error: null });
   const canal: { on: ReturnType<typeof vi.fn>; subscribe: ReturnType<typeof vi.fn> } = { on: vi.fn(() => canal), subscribe: vi.fn(() => canal) };
   const channel = vi.fn(() => canal);
-  const removeChannel = vi.fn();
+  const removeChannel = vi.fn(async () => 'ok');
   const db = { auth: { getSession, signInAnonymously, updateUser }, rpc, from, functions: { invoke }, channel, removeChannel } as unknown as Db;
   return { db, getSession, signInAnonymously, updateUser, rpc, from, invoke, channel, on: canal.on, removeChannel };
 }
@@ -227,13 +227,18 @@ describe('mesDefis', () => {
 });
 
 describe('abonnerDefi', () => {
-  it('suit la partie et la date limite, puis arrête le suivi', () => {
+  it('suit la partie et la date limite, donne la ligne reçue, puis arrête le suivi (#425)', () => {
     const c = client();
-    const onChange = vi.fn();
-    const arreter = abonnerDefi(c.db, PARTIE, onChange);
-    expect(c.channel).toHaveBeenCalledWith(`defi-${PARTIE}`);
-    expect(c.on).toHaveBeenCalledWith('postgres_changes', expect.objectContaining({ table: 'games', filter: `id=eq.${PARTIE}` }), onChange);
-    expect(c.on).toHaveBeenCalledWith('postgres_changes', expect.objectContaining({ table: 'defis', filter: `partie_id=eq.${PARTIE}` }), onChange);
+    const suivi = { surPartie: vi.fn(), surDefi: vi.fn(), rattraper: vi.fn() };
+    const arreter = abonnerDefi(c.db, PARTIE, suivi);
+    // Sujet unique (un nouvel abonnement ne récupère pas le canal en cours de fermeture).
+    expect(c.channel).toHaveBeenCalledWith(expect.stringMatching(new RegExp(`^defi-${PARTIE}-\\d+$`)));
+    expect(c.on).toHaveBeenCalledWith('postgres_changes', expect.objectContaining({ event: 'UPDATE', table: 'games', filter: `id=eq.${PARTIE}` }), expect.any(Function));
+    expect(c.on).toHaveBeenCalledWith('postgres_changes', expect.objectContaining({ event: 'UPDATE', table: 'defis', filter: `partie_id=eq.${PARTIE}` }), expect.any(Function));
+    const surGames = c.on.mock.calls.find(a => (a[1] as { table: string }).table === 'games')![2] as (p: unknown) => void;
+    surGames({ new: { id: PARTIE, moves: 'eecc' } });
+    expect(suivi.surPartie).toHaveBeenCalledWith({ id: PARTIE, moves: 'eecc' });
+    expect(suivi.rattraper).not.toHaveBeenCalled();
     arreter();
     expect(c.removeChannel).toHaveBeenCalledTimes(1);
   });
