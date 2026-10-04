@@ -1,0 +1,39 @@
+# Appliquer une migration Supabase depuis GitHub (#421), à la demande seulement.
+# Le connecteur Supabase des agents expire sur les migrations qui contiennent un `delete` ou un `drop function` :
+# ce workflow les applique par l'API d'administration, en une transaction, avec le secret SUPABASE_ACCESS_TOKEN.
+# Garde-fous dans scripts/appliquer-migration.mjs : rien qui efface des données, RLS obligatoire, SQL jamais affiché.
+name: Appliquer une migration Supabase
+on:
+  workflow_dispatch:
+    inputs:
+      fichier:
+        description: 'Fichier de supabase/migrations (ex. 20261004180100_partie_en_direct.sql)'
+        required: true
+        type: string
+
+concurrency:
+  group: appliquer-migration
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  appliquer:
+    name: Appliquer la migration
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Garde-fous
+        env:
+          FICHIER: ${{ inputs.fichier }}
+        run: node scripts/appliquer-migration.mjs verifier "$FICHIER"
+      - name: Appliquer en production
+        env:
+          FICHIER: ${{ inputs.fichier }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: node scripts/appliquer-migration.mjs appliquer "$FICHIER"
