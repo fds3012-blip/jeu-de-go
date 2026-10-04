@@ -1,5 +1,5 @@
 import { expect, test, type Browser, type Page } from '@playwright/test';
-import { abandonner, jouer, plateau } from './plateau';
+import { abandonner, choisirMode, jouer, plateau } from './plateau';
 import { brancher, CODE, creerCompte, fauxServeur, type FauxServeur } from './fauxSupabase';
 
 // Issue #358 (suite) : « Mes parties » sur le compte. Une partie jouée sur le téléphone A (pendant l'essai, puis avec
@@ -45,7 +45,8 @@ test('une partie jouée sur le téléphone A (essai, puis compte) se retrouve su
   expect(serveur.partiesPerso).toHaveLength(0);
 
   // 4e partie : l'essai est fini, il crée son compte. La partie d'essai part sur le compte, en arrière-plan.
-  await a.page.locator('.cta').click();
+  // #432 : la partie en ligne est l'action principale après la première partie ; l'ordi est une tuile.
+  await choisirMode(a.page, 'ordi');
   await expect(a.page.getByTestId('creer-compte')).toBeVisible();
   await creerCompte(a.page, 'alice@exemple.test', 'Alice');
   await expect.poll(() => serveur.partiesPerso.length, { timeout: 10_000 }).toBe(1);

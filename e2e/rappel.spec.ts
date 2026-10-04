@@ -1,6 +1,6 @@
 import { gunzipSync } from 'node:zlib';
 import { expect, test, type Page, type Request, type Route } from '@playwright/test';
-import { passer } from './plateau';
+import { choisirMode, passer } from './plateau';
 
 // Issue #36 : rappel quotidien du Go du jour par notification web.
 // Sans vraie base ni vrai service de notification : Supabase est simulé par interception réseau (adresse lue dans
@@ -116,7 +116,8 @@ async function preparer(page: Page, { compte = true, vapid = true, reponse = 'gr
 /** Une partie contre Pomme menée à son terme : deux passes sur plateau vide, défaite au komi. */
 async function finirUnePartie(page: Page) {
   await page.goto('/');
-  await page.locator('.cta').click();
+  // #432 : après la première partie, l'action principale est la partie en ligne ; l'ordi est une tuile.
+  await choisirMode(page, 'ordi');
   await expect(page.locator('svg.board[aria-label="Plateau de go 9 × 9"]')).toBeVisible();
   await passer(page);
   await expect(page.getByRole('heading', { level: 2, name: 'Défaite' })).toBeVisible({ timeout: 15_000 });
