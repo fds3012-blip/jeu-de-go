@@ -1,16 +1,19 @@
 import { gunzipSync } from 'node:zlib';
 import { expect, test, type Browser, type Page, type Request } from '@playwright/test';
-import { brancher, fauxServeur, type FauxServeur } from './fauxSupabase';
+import { brancher, CODE, fauxServeur, type FauxServeur } from './fauxSupabase';
 import { plateau } from './plateau';
 
 // Issue #429 : tous les modes de jeu se joignent depuis l'accueil en 1 toucher (bouton principal ou tuile), ou en 2
-// par « Plus », sans défiler. Le débutant garde l'ordi en action principale ; ensuite, la partie en ligne classée,
-// cote et grade visibles. Chaque choix envoie `mode_choisi` { mode, depuis, principal }.
+// par « Plus », sans défiler. #432 : la partie en ligne classée est l'action principale dès le début, cote et grade
+// visibles ; seul le tout premier lancement garde l'ordi (« Joue ta première partie »). Chaque choix envoie
+// `mode_choisi` { mode, depuis, principal }.
 
 const ANA = '00000000-0000-4000-8000-0000000000c1';
 const HOTE = 'https://posthog-e2e.test';
 type Mode = 'en_ligne' | 'ordi' | 'ami' | 'deux' | 'guidee';
 
+/** Tout premier lancement : aucune partie, aucune leçon. */
+const NOUVEAU = {};
 /** Débutant : une partie perdue contre Pomme, aucune leçon. */
 const DEBUTANT = { 'go.parties.v1': JSON.stringify({ n: 1, dernier: 'pomme', ordi: 1 }), 'go.bilan.v1': JSON.stringify({ pomme: { v: 0, d: 1 } }) };
 /** Confirmé : Pomme battue, trois premières leçons finies, Caillou en cours. */
@@ -63,9 +66,9 @@ async function arrive(page: Page, mode: Mode) {
   if (mode === 'ami') await expect(page.locator('header')).toContainText('Défier un ami');
 }
 
-test('chaque mode en 1 ou 2 touchers depuis l’accueil, sans défiler (débutant, puis confirmé)', async ({ browser, baseURL }) => {
-  test.setTimeout(90_000);
-  for (const [qui, stockage, principal] of [['débutant', DEBUTANT, 'ordi'], ['confirmé', CONFIRME, 'en_ligne']] as const) {
+test('chaque mode en 1 ou 2 touchers depuis l’accueil, sans défiler (premier lancement, débutant, confirmé)', async ({ browser, baseURL }) => {
+  test.setTimeout(120_000);
+  for (const [qui, stockage, principal] of [['premier lancement', NOUVEAU, 'ordi'], ['débutant', DEBUTANT, 'en_ligne'], ['confirmé', CONFIRME, 'en_ligne']] as const) {
     for (const mode of ['ordi', 'en_ligne', 'ami', 'deux', 'guidee'] as const) {
       const page = await telephone(browser, baseURL, stockage);
       await expect(page.locator('.cta'), qui).toHaveAttribute('data-mode', principal);
@@ -80,9 +83,10 @@ test('chaque mode en 1 ou 2 touchers depuis l’accueil, sans défiler (débutan
   }
 });
 
-test('débutant : l’ordi en action principale, « En ligne » et « Un ami » juste dessous, « Plus » pour le reste', async ({ browser, baseURL }) => {
-  const page = await telephone(browser, baseURL, DEBUTANT);
-  await expect(page.locator('.cta')).toHaveText('Rejouer contre Pomme');
+test('tout premier lancement : « Joue ta première partie » contre Pomme reste l’action principale, « En ligne » et « Un ami » juste dessous, « Plus » pour le reste', async ({ browser, baseURL }) => {
+  const page = await telephone(browser, baseURL, NOUVEAU);
+  await expect(page.locator('.cta')).toHaveText('Joue ta première partie');
+  await expect(page.locator('.cta')).toHaveAttribute('data-mode', 'ordi');
   const tuiles = page.getByTestId('modes').getByRole('button');
   await expect(tuiles).toHaveCount(3);
   await expect(tuiles.nth(0)).toHaveAccessibleName(/^En ligne\s: Partie classée, 15ᵉ\skyu · 1500\s\?$/);
@@ -100,8 +104,8 @@ test('débutant : l’ordi en action principale, « En ligne » et « Un ami » 
   await page.context().close();
 });
 
-test('confirmé : « Jouer en ligne » en action principale, grade et cote visibles, l’ordi et l’ami juste à côté', async ({ browser, baseURL }) => {
-  const page = await telephone(browser, baseURL, CONFIRME);
+for (const [qui, stockage, adversaire] of [['débutant', DEBUTANT, 'Pomme'], ['confirmé', CONFIRME, 'Caillou']] as const) test(`${qui} : « Jouer en ligne » en action principale, grade et cote visibles, l’ordi et l’ami juste à côté`, async ({ browser, baseURL }) => {
+  const page = await telephone(browser, baseURL, stockage);
   const cta = page.locator('.cta');
   await expect(cta).toHaveText('Jouer en ligne');
   await expect(cta).toHaveAccessibleName('Jouer en ligne, partie classée');
@@ -111,20 +115,29 @@ test('confirmé : « Jouer en ligne » en action principale, grade et cote visib
   await expect(classee).toContainText('Ta cote bouge à chaque partie.');
   const ordi = page.getByTestId('mode-ordi');
   await expect(ordi).toContainText('Contre l’ordi');
-  await expect(ordi).toContainText('Caillou');
+  await expect(ordi).toContainText(adversaire);
   await sansDefiler(page, 'mode-ordi');
   await ordi.click();
   await expect(plateau(page)).toBeVisible();
-  await expect(page.getByText(/Caillou/).first()).toBeVisible();
+  await expect(page.getByText(new RegExp(adversaire)).first()).toBeVisible();
   await page.context().close();
 });
 
-test('sans compte : la partie en ligne passe par « Crée ton compte », comme avant', async ({ browser, baseURL }) => {
-  const page = await telephone(browser, baseURL, CONFIRME, { compte: false });
+test('sans compte, dès la première partie : « Jouer en ligne » passe par « Crée ton compte », puis reprend', async ({ browser, baseURL }) => {
+  const page = await telephone(browser, baseURL, DEBUTANT, { compte: false });
   await expect(page.locator('.cta')).toHaveText('Jouer en ligne');
   await expect(page.getByTestId('classee')).toContainText('Ton compte garde ta cote.');
   await page.locator('.cta').click();
   await expect(page.getByTestId('creer-compte')).toHaveAttribute('data-raison', 'en_ligne');
+  // Code par e-mail, pseudo : la partie en ligne reprend d'elle-même (choix de la cadence).
+  await page.getByLabel('Ton adresse e-mail').fill('nouveau@exemple.test');
+  await page.getByRole('checkbox', { name: /J’ai 15\s+ans ou plus/ }).check();
+  await page.getByRole('button', { name: 'Recevoir mon code' }).click();
+  await page.getByLabel('Code à 6 chiffres').fill(CODE);
+  await page.getByRole('textbox', { name: 'Pseudo' }).fill('Joueur_1');
+  await expect(page.getByText('Joueur_1 est libre.')).toBeVisible();
+  await page.getByRole('button', { name: 'C’est mon pseudo' }).click();
+  await expect(page.getByTestId('direct-choix')).toBeVisible();
   await page.context().close();
 });
 

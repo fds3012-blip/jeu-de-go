@@ -107,7 +107,8 @@ async function jusquAuScore(page: Page, voir: (p: Page, e: string) => Promise<vo
 
 /** Partie contre l'ordi abandonnée tout de suite, depuis l'accueil (elle compte dans l'essai). */
 async function partieAbandonnee(page: Page) {
-  await page.locator('.cta').click();
+  // #432 : après la première partie, l'action principale est la partie en ligne ; l'ordi est une tuile.
+  await choisirMode(page, 'ordi');
   await expect(plateau(page)).toBeVisible();
   await expect(boutonPasser(page)).toBeEnabled({ timeout: 30_000 });
   await barre(page).locator('[data-action="plus"]').click();
@@ -229,7 +230,7 @@ for (const cfg of CONFIGS) {
     await page.goto('/');
     for (let i = 0; i < 3; i++) await partieAbandonnee(page);
     expect(await terminees()).toBe(3);
-    await page.locator('.cta').click();
+    await choisirMode(page, 'ordi');
     await expect(page.getByTestId('creer-compte')).toHaveAttribute('data-raison', 'parties');
     await expect(page.getByRole('navigation')).toHaveCount(0);
     await voir(page, '13-compte-4e-partie');
@@ -271,7 +272,7 @@ for (const cfg of CONFIGS) {
 
     // 9. Aide depuis une partie : « ? », un mot, fermer ; la partie est intacte.
     await page.goto('/');
-    // #429 : Pomme battue et premières leçons faites, l'action principale devient la partie en ligne ; l'ordi est une tuile.
+    // #432 : la partie en ligne est l'action principale dès le début ; l'ordi est une tuile.
     await choisirMode(page, 'ordi');
     await expect(boutonPasser(page)).toBeEnabled({ timeout: 30_000 });
     await jouer(page, 'C3');
