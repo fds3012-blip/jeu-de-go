@@ -301,15 +301,15 @@ export const fr = {
   'revision.serie': 'Pour garder ta série, fais chaque jour le Go du jour, une leçon ou une révision.',
 
   // Carte « Installe l'app » (#178)
-  'installer.titre': 'Garde le go sous la main',
-  'installer.texte': 'Ajoute l’app à ton écran d’accueil : elle s’ouvre en un geste, en plein écran.',
+  'installer.titre': 'Garde Mochi Go sous la main',
+  'installer.texte': 'Ajoute Mochi Go à ton écran d’accueil : il s’ouvre en un geste, en plein écran.',
   'installer.touche': 'Dans Safari, touche ',
   'installer.partager': 'Partager',
   'installer.choisis': 'Choisis ',
   'installer.ecranAccueil': 'Sur l’écran d’accueil',
   'installer.oui': 'Installer',
   'installer.plusTard': 'Plus tard',
-  'installer.texteCourt': 'Ajoute l’app à ton écran d’accueil : un geste pour revenir.',
+  'installer.texteCourt': 'Ajoute Mochi Go à ton écran d’accueil : un geste pour revenir.',
   'installer.comment': 'Comment faire ?',
 
   // Texte partagé du Go du jour (#75)
@@ -1174,7 +1174,7 @@ export const fr = {
   'defi.regle': 'Partie 9 × 9 en différé : chacun a 3 jours pour jouer son coup. Sans coup à temps, on perd au temps.',
   'defi.creer': 'Envoyer un lien',
   'defi.creation': 'Création du lien…',
-  'defi.partage.titre': 'Partie de go',
+  'defi.partage.titre': 'Partie de go sur Mochi Go',
   'defi.partage.texte': 'Je te défie au go ! Une partie 9 × 9, un coup quand tu veux (3 jours au plus).',
   'defi.lienPret': 'Lien prêt. Envoie-le à ton ami.',
   'defi.copie': 'Lien copié. Colle-le dans un message.',

@@ -169,7 +169,7 @@ describe('texte partagé', () => {
   it('sans spoiler : score, durée, meilleur score et le lien', () => {
     const p = texteCourse(14, 17);
     expect(p.texte).toBe('Course de go : 14 problèmes en 3 min · meilleur 17');
-    expect(p.url).toBe('https://jeu-de-go.vercel.app/');
+    expect(p.url).toBe('https://mochi-go.app/');
     expect(p.complet).toBe(`${p.texte}\n${p.url}`);
     expect(texteCourse(1, 1).texte).toBe('Course de go : 1 problème en 3 min · meilleur 1');
     expect(texteCourse(0, 0).texte).toBe('Course de go : 0 problème en 3 min');

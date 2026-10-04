@@ -11,7 +11,7 @@ test("les balises d'aperçu sont servies et l'image répond en 200", async ({ pa
   expect(await contenu('og:locale')).toBe('fr_FR');
   expect(await contenu('twitter:card')).toBe('summary_large_image');
   const image = await contenu('og:image');
-  expect(image).toBe('https://jeu-de-go.vercel.app/apercu.png');
+  expect(image).toBe('https://mochi-go.app/apercu.png');
 
   // Même chemin, servi par le build local.
   const rep = await request.get(new URL(image!).pathname);

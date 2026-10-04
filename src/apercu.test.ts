@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 const racine = fileURLToPath(new URL('..', import.meta.url));
 const html = readFileSync(`${racine}index.html`, 'utf8');
-const SITE = 'https://jeu-de-go.vercel.app';
+const SITE = 'https://mochi-go.app';
 
 /** Contenu de la balise `<meta property|name="cle" content="…">` (null si absente). */
 function meta(cle: string): string | null {

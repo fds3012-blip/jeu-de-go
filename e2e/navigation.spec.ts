@@ -15,7 +15,7 @@ test("première ouverture : l'accueil s'affiche en moins de 3 secondes", async (
   await expect(cta).toBeInViewport();
   expect(Date.now() - t0).toBeLessThan(3000);
 
-  await expect(page.getByRole('heading', { level: 1, name: 'Go' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Mochi Go' })).toBeVisible();
   // Les deux tuiles : problème du jour et leçon suivante.
   await expect(page.getByRole('button', { name: /^Go du jour n°\s\d+/ })).toBeVisible();
   await expect(page.getByRole('button', { name: /^Leçon 1 sur 16/ })).toBeVisible();

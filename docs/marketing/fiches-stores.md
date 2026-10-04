@@ -44,9 +44,11 @@ Chaque texte indique son nombre de caractères (espaces compris), compté par sc
 
 ## Nom et sous-titre
 
+L'appli s'appelle **Mochi Go** (#416) ; site : https://mochi-go.app. URL de la politique de confidentialité à donner aux stores : https://mochi-go.app/confidentialite.
+
 | Champ | Texte | Car. |
 |---|---|---|
-| Nom (Apple et Google) | Go : apprendre et jouer | 23 |
+| Nom (Apple et Google) | Mochi Go : apprendre le go | 26 |
 | Sous-titre (Apple) | Leçons jouables et IA gratuite | 30 |
 | Texte promotionnel (Apple) | 7 leçons où tu joues dès le premier écran. Plus de 100 problèmes prouvés. Et une revue qui va droit au moment clé de ta partie. | 127 |
 
@@ -165,11 +167,11 @@ Same rules: warm, direct ("you"), no false claims, no invented numbers, no compe
 
 | Field | Text | Chars |
 |---|---|---|
-| Name (Apple and Google) | Go: Learn and Play | 18 |
+| Name (Apple and Google) | Mochi Go: Learn Go | 18 |
 | Subtitle (Apple) | Playable lessons and free AI | 28 |
 | Promotional text (Apple) | 7 lessons where you play from the very first screen. Over 100 proven puzzles. And a game review that goes straight to the key moment. | 133 |
 
-"Go" alone is hard to find in English search. Alternative name to test: "Go: Learn Baduk and Weiqi" (25).
+"Go" alone is hard to find in English search. Alternative name to test: "Mochi Go: Learn Baduk, Weiqi" (28).
 
 ## Category
 

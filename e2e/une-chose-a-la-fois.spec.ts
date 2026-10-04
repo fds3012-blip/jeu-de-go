@@ -55,7 +55,7 @@ test.describe('N4 : un seul appel sur l’accueil', () => {
       Object.defineProperty(navigator, 'standalone', { configurable: true, value: false });
       window.addEventListener('beforeinstallprompt', e => e.stopImmediatePropagation(), { capture: true });
     });
-    const carte = (page: Page) => page.getByRole('complementary', { name: 'Garde le go sous la main' });
+    const carte = (page: Page) => page.getByRole('complementary', { name: 'Garde Mochi Go sous la main' });
     const retour = { 'go.retours.v1': JSON.stringify({ jour: 0, retours: 1 }), 'go.parties.v1': JSON.stringify({ n: 2, dernier: 'pomme', ordi: 2 }) };
 
     for (const theme of THEMES) {

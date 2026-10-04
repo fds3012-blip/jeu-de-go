@@ -15,7 +15,7 @@ Aucune adresse ni identité n'a été inventée. Tant que ces champs sont vides,
 1. **Responsable du traitement** : nom et prénom (personne physique) ou raison sociale et forme (société).
 2. **Adresse postale** du responsable du traitement.
 3. **Numéro SIREN / RCS** (si société ou entrepreneur individuel).
-4. **Adresse e-mail de contact « données personnelles »** (dédiée de préférence, par exemple une adresse sur le domaine du jeu).
+4. **Adresse e-mail de contact « données personnelles »** (dédiée de préférence, par exemple une adresse sur le domaine du jeu, `mochi-go.app`).
 5. **Délégué à la protection des données** : nom et contact, ou mention qu'aucun DPO n'est désigné (non obligatoire à ce stade, à confirmer par l'avocat).
 6. **Date d'entrée en vigueur** de la politique.
 7. **Durée de conservation des rapports de bugs** réglée dans Sentry.
