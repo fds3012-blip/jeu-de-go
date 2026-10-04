@@ -1,0 +1,53 @@
+# Réglages de connexion Supabase versionnés (#414) : supabase/auth/reglages.json et supabase/auth/modeles/*.html.
+# Sur une PR : compare le dépôt à la production (lecture seule, noms des clés seulement).
+# Sur main ou à la demande : applique les écarts par l'API d'administration, puis relit pour vérifier.
+# Secret GitHub SUPABASE_ACCESS_TOKEN (portée : projet jeu-de-go, Auth). Sans lui, les jobs sont sautés sans échec.
+# Aucun secret dans le dépôt : mot de passe SMTP et secrets des fournisseurs restent dans Supabase.
+name: Réglages de connexion Supabase
+on:
+  pull_request:
+    paths:
+      - 'supabase/auth/**'
+      - 'scripts/config-auth.mjs'
+      - '.github/workflows/config-auth.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/auth/**'
+      - 'scripts/config-auth.mjs'
+      - '.github/workflows/config-auth.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: config-auth-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  config:
+    name: Réglages de connexion
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Contrôle des fichiers
+        run: node scripts/config-auth.mjs verifier
+      - name: Comparer à la production
+        if: github.event_name == 'pull_request'
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          if [ -z "$SUPABASE_ACCESS_TOKEN" ]; then echo "::notice::Secret SUPABASE_ACCESS_TOKEN absent : comparaison sautée."; exit 0; fi
+          node scripts/config-auth.mjs comparer
+      - name: Appliquer en production
+        if: github.event_name != 'pull_request'
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          if [ -z "$SUPABASE_ACCESS_TOKEN" ]; then echo "::notice::Secret SUPABASE_ACCESS_TOKEN absent : rien appliqué."; exit 0; fi
+          node scripts/config-auth.mjs appliquer

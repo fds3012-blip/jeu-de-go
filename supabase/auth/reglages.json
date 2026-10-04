@@ -1,0 +1,12 @@
+{
+  "site_url": "https://mochi-go.app",
+  "uri_allow_list": "https://mochi-go.app/**,https://www.mochi-go.app/**,https://jeu-de-go.vercel.app/**,https://*-florians-projects-100ae27d.vercel.app/**,http://localhost:5173/**",
+  "mailer_otp_length": 6,
+  "mailer_otp_exp": 3600,
+  "rate_limit_email_sent": 100,
+  "smtp_admin_email": "jeu@mochi-go.app",
+  "smtp_sender_name": "Mochi Go",
+  "mailer_subjects_magic_link": "{{ .Token }} est ton code Mochi Go",
+  "mailer_subjects_confirmation": "{{ .Token }} est ton code pour créer ton compte Mochi Go",
+  "mailer_subjects_email_change": "{{ .Token }} est ton code pour garder ta partie"
+}
