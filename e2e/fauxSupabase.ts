@@ -5,8 +5,11 @@ import { parseActionRequest, planAction, type GameRow } from '../src/go/server';
 // Le build de test lit l'adresse simulée dans le stockage local (`e2e.supabase`, voir src/data/supabase.ts).
 // Auth : code à 6 chiffres (`/otp` puis `/verify`), le seul bon code est CODE. Tables : profiles, games, defis,
 // notifications (#367), parties_perso (#358 : `enregistrer_parties_perso`, sans doublon, compte avec pseudo exigé).
-// Temps réel : le WebSocket de Supabase Realtime (protocole Phoenix, sérialisation 2.0.0) est simulé ; seules les
-// notifications sont poussées, à leur seul destinataire (RLS simulée).
+// Temps réel : le WebSocket de Supabase Realtime (protocole Phoenix, sérialisation 2.0.0) est simulé. Sont poussées :
+// les notifications, à leur seul destinataire ; et (#425) les UPDATE de `games`, `defis` et `parties_direct`, aux seuls
+// joueurs de la partie (RLS simulée). `ralentirLectures(ms)` retarde les relectures (parties, pendule) : un coup qui
+// s'affiche quand même vite est arrivé par l'événement. `figerTempsReel()` simule la connexion à demi ouverte d'un
+// iPhone sorti de veille : plus rien ne passe, sans fermeture.
 // Amis (#359) : `mes_amis`, `demander_ami`, `repondre_ami`, `retirer_ami`, `defier_ami`, mêmes règles et mêmes codes
 // d'erreur que supabase/migrations/20261002010100_amis.sql (sauf les limites de temps).
 // Cote de jeu (#417) : `rating_history` (lu par son seul titulaire), `choisir_depart_cote` (mêmes valeurs et mêmes
@@ -30,6 +33,8 @@ type Ligne = Record<string, unknown>;
 /** Un abonné au temps réel : son jeton (donc son compte) et ses canaux, avec les filtres `postgres_changes` joints. */
 interface Abonne {
   ws: WebSocketRoute;
+  /** Connexion à demi ouverte (#425) : plus rien ne passe dans un sens ni dans l'autre, sans fermeture. */
+  fige?: boolean;
   canaux: Map<string, { joinRef: string; filtres: { id: number; event: string; table?: string; filter?: string }[]; jeton?: string }>;
 }
 
@@ -43,6 +48,9 @@ export function fauxServeur() {
   const amities: { de: string; a: string; etat: 'pending' | 'accepted'; le: string }[] = [];
   const notifications: Ligne[] = [];
   const abonnes = new Set<Abonne>();
+  let lenteur = 0;
+  /** Événements temps réel poussés (#425) : `table:id` et l'heure d'envoi. */
+  const pousses: { table: string; id: string; le: number }[] = [];
   let idNotif = 0;
   let idFiltre = 0;
   const partiesPerso: Ligne[] = [];
@@ -82,6 +90,7 @@ export function fauxServeur() {
   /** Pousse un changement de `notifications` aux abonnés qui le voient (RLS : le destinataire seul) et l'ont filtré. */
   function pousser(type: 'INSERT' | 'UPDATE', n: Ligne) {
     for (const a of abonnes) {
+      if (a.fige) continue;
       for (const [topic, c] of a.canaux) {
         if (jetons.get(c.jeton ?? '')?.id !== n.destinataire_id) continue;
         const ids = c.filtres.filter(f => f.table === 'notifications' && (f.event === '*' || f.event === type)
@@ -92,6 +101,37 @@ export function fauxServeur() {
           columns: [], record: n, old_record: type === 'UPDATE' ? { id: n.id } : undefined } }]));
       }
     }
+  }
+  /**
+   * Pousse un UPDATE de `games`, `defis` ou `parties_direct` (#425) aux abonnés qui voient la ligne (RLS : les joueurs
+   * de la partie) et ont un filtre `postgres_changes` qui la prend.
+   */
+  function pousserLigne(table: 'games' | 'defis' | 'parties_direct', ligne: Ligne) {
+    const id = String(table === 'games' ? ligne.id : ligne.partie_id);
+    const g = games.find(x => x.id === id);
+    if (!g) return;
+    const cle = table === 'games' ? 'id' : 'partie_id';
+    for (const a of abonnes) {
+      if (a.fige) continue;
+      for (const [topic, c] of a.canaux) {
+        const qui = jetons.get(c.jeton ?? '')?.id;
+        if (!qui || (qui !== g.black_id && qui !== g.white_id)) continue;
+        const ids = c.filtres.filter(f => f.table === table && (f.event === '*' || f.event === 'UPDATE') && (!f.filter || f.filter === `${cle}=eq.${id}`)).map(f => f.id);
+        if (!ids.length) continue;
+        pousses.push({ table, id, le: Date.now() });
+        a.ws.send(JSON.stringify([c.joinRef, null, topic, 'postgres_changes', { ids, data: {
+          schema: 'public', table, commit_timestamp: new Date().toISOString(), type: 'UPDATE', errors: null,
+          columns: [], record: { ...ligne }, old_record: { [cle]: id } } }]));
+      }
+    }
+  }
+  /** Après une écriture sur une partie : ses lignes `games`, `defis` et `parties_direct` changées sont poussées. */
+  function pousserPartie(g: Ligne, autres: { defi?: boolean; pendule?: boolean } = {}) {
+    pousserLigne('games', g);
+    const d = defis.find(x => x.partie_id === g.id);
+    if (autres.defi && d) pousserLigne('defis', d);
+    const p = pendules.find(x => x.partie_id === g.id);
+    if (autres.pendule && p) pousserLigne('parties_direct', p);
   }
   /** Comme le déclencheur `notifier` : une seule notification en attente par joueur, type et partie. */
   function notifier(destinataire: unknown, type: string, partie: string | null) {
@@ -114,6 +154,7 @@ export function fauxServeur() {
     abonnes.add(a);
     ws.onClose(() => abonnes.delete(a));
     ws.onMessage(brut => {
+      if (a.fige) return;
       const [joinRef, ref, topic, event, payload] = JSON.parse(String(brut)) as [string, string, string, string, Record<string, unknown>];
       const repondre = (response: unknown = {}) => ws.send(JSON.stringify([joinRef, ref, topic, 'phx_reply', { status: 'ok', response }]));
       if (event === 'heartbeat') return repondre();
@@ -142,6 +183,7 @@ export function fauxServeur() {
     Object.assign(g, { status: 'finished', result: resultat, counting: false });
     const p = pendules.find(x => x.partie_id === g.id);
     if (p) p.trait_depuis = null;
+    pousserPartie(g, { pendule: true });
     if (!g.rated || !/^[BW]\+/.test(resultat)) return;
     const gagnant = resultat.startsWith('B') ? g.black_id : g.white_id;
     for (const id of [g.black_id, g.white_id]) {
@@ -179,6 +221,9 @@ export function fauxServeur() {
     if (req.method() === 'OPTIONS') return json({});
     appels.push(`${req.method()} ${chemin}${url.search}`);
     const u = qui(route);
+    // #425 : relectures retardées (la partie, la pendule, le constat du temps), pas les écritures.
+    if (lenteur && ((req.method() === 'GET' && chemin === '/rest/v1/games') || chemin === '/rest/v1/rpc/pendule_direct'
+      || chemin === '/rest/v1/rpc/victoire_au_temps')) await new Promise(r => setTimeout(r, lenteur));
 
     if (chemin === '/auth/v1/signup') return json({ message: 'Anonymous sign-ins are disabled' }, 422);
     // #354, #411 : « Continuer avec Google / Apple / Facebook » simulé. `linkIdentity` demande d'abord l'adresse du
@@ -429,7 +474,7 @@ export function fauxServeur() {
       const g = games.find(x => x.id === p_partie);
       const p = pendules.find(x => x.partie_id === p_partie);
       if (!u || !g || !p || (g.black_id !== u.id && g.white_id !== u.id)) return json({ code: 'P0002', message: 'Partie introuvable' }, 400);
-      if (g.status === 'active') p[g.black_id === u.id ? 'noir_vu_le' : 'blanc_vu_le'] = new Date().toISOString();
+      if (g.status === 'active') { p[g.black_id === u.id ? 'noir_vu_le' : 'blanc_vu_le'] = new Date().toISOString(); pousserLigne('parties_direct', p); }
       constater(g);
       return json({ statut: g.status, resultat: g.result, coups: g.moves, comptage: g.counting, mortes: g.dead_stones, mortes_par: g.dead_proposed_by,
         ...p, maintenant: new Date().toISOString() });
@@ -459,6 +504,7 @@ export function fauxServeur() {
         Object.assign(partie, plan.patch);
         if (plan.patch.moves !== undefined) decompter(partie, avant);
         else if (reprise) { const p = pendules.find(x => x.partie_id === partie.id); if (p) p.trait_depuis = new Date().toISOString(); }
+        pousserPartie(partie, { pendule: true, defi: true });
         return json({ ok: true, game: partie });
       }
       const { action, game_id, move } = corps;
@@ -472,6 +518,7 @@ export function fauxServeur() {
       // Déclencheur `notifier_partie` : ce qui attendait est dépassé, l'adversaire est prévenu.
       marquer(n => n.partie_id === g.id && (n.type === 'tour' || n.type === 'comptage'));
       notifier(u.id === g.black_id ? g.white_id : g.black_id, 'tour', String(g.id));
+      pousserPartie(g, { defi: true });
       return json({ ok: true, game: g });
     }
     if (chemin === '/rest/v1/profiles' && req.method() === 'PATCH') {
@@ -529,7 +576,13 @@ export function fauxServeur() {
   const utilisateur = (id: string) => [...jetons.values(), ...parEmail.values()].find(x => x.id === id);
   /** Session ouverte d'un compte complet (avec pseudo), à poser dans le stockage du navigateur (#367). */
   function sessionCompte(email: string, pseudo: string, id: string) { return session(compteExistant(email, pseudo, id)); }
-  return { traiter, brancherTempsReel, notifier, appels, games, defis, notifications, partiesPerso, profiles, ratingHistory, emailsEnvoyes, sessionAnonyme, file, pendules,
+  /** Relectures retardées de `ms` (#425) ; 0 : sans retard. */
+  function ralentirLectures(ms: number) { lenteur = ms; }
+  /** Connexions temps réel ouvertes à cet instant figées (#425) : un iPhone qui sort de veille. */
+  function figerTempsReel() { for (const a of abonnes) a.fige = true; }
+  /** Canaux rejoints sur une connexion qui marche, dont le sujet commence par `prefixe` (`defi-`, `direct-`). */
+  const canauxActifs = (prefixe: string) => [...abonnes].filter(a => !a.fige).flatMap(a => [...a.canaux.keys()]).filter(t => t.startsWith(`realtime:${prefixe}`)).length;
+  return { traiter, brancherTempsReel, notifier, ralentirLectures, figerTempsReel, canauxActifs, pousses, pousserPartie, appels, games, defis, notifications, partiesPerso, profiles, ratingHistory, emailsEnvoyes, sessionAnonyme, file, pendules,
     compteExistant, compteGoogle, compteSocial, relierIdentite, liaison, utilisateur, sessionCompte, autorisations, amities };
 }
 

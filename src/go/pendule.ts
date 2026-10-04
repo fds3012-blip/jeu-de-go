@@ -138,6 +138,20 @@ export function cadran(e: EtatDirect, couleur: 1 | 2, maintenantServeur: number)
   return { ms: e.periodeMs - (dansPeriodes % e.periodeMs), periodes: r.periodes, byoyomi: true, tourne: true, tombe: false };
 }
 
+/**
+ * Pendule estimée juste après un coup, avant que le serveur l'envoie (#425) : le temps de réflexion est décompté sur
+ * la pendule de qui vient de jouer (`e.coups` : les coups AVANT ce coup), puis la pendule de l'autre part de
+ * `heureServeur`. Même calcul que le déclencheur `games_direct_pendule` ; la pendule du serveur remplace ensuite
+ * cette estimation. Pendule arrêtée (comptage, fin) : rien ne change.
+ */
+export function penduleApresCoup(e: EtatDirect, heureServeur: number): EtatDirect {
+  if (e.traitDepuis === null || e.statut !== 'active' || e.comptage) return e;
+  const qui = traitDe(e.coups) === 1 ? 'noir' : 'blanc';
+  const p = e[qui];
+  const r = penduleApres(p.ms, p.periodes, e.periodeMs, heureServeur - e.traitDepuis);
+  return { ...e, [qui]: { ...p, ms: r.mainMs, periodes: r.periodes }, traitDepuis: heureServeur };
+}
+
 /** « 9:58 », « 0:07 » ; au-delà d'une heure « 1:00:00 ». Arrondi à la seconde supérieure (0:00 seulement à zéro). */
 export function texteTemps(ms: number): string {
   const s = Math.max(0, Math.ceil(ms / 1000));

@@ -14,10 +14,10 @@ import { fromSgf, toSgf } from '../go/coords';
 import { groupAt } from '../go/rules';
 import { score } from '../go/score';
 import { deadToString, recordFromOnlineGame, validateMove } from '../go/server';
-import { CADENCE_DEFAUT, CADENCES, CADENCES_ORDRE, ATTENTE_MS, BATTEMENT_MS, RELECTURE_MS, ecartHorloge, texteTemps, type Cadence, type Cadran, type EtatDirect } from '../go/pendule';
+import { CADENCE_DEFAUT, CADENCES, CADENCES_ORDRE, ATTENTE_MS, BATTEMENT_MS, RELECTURE_MS, ecartHorloge, penduleApresCoup, texteTemps, type Cadence, type Cadran, type EtatDirect } from '../go/pendule';
 import { acceptScore, playMove, proposeDeadStones, resumeGame, type Game } from '../data/games';
 import {
-  abandonnerDirect, abonnerDirect, annulerAttente, avecEtat, chercherAdversaire, lirePartieDirect, lirePendule,
+  abandonnerDirect, abonnerDirect, annulerAttente, avecEtat, chercherAdversaire, fusionnerEtatPartie, fusionnerPendule, lirePartieDirect, lirePendule,
   type Regles, type RefusDirect, type Taille
 } from '../data/direct';
 import { pseudoJoueur } from '../data/defi';
@@ -245,8 +245,8 @@ function DirectPartie({ db, partieId, userId, confirmTouch, reglages, celebrer, 
   const charger = useCallback(async () => {
     const n = ++lecture.current;
     const [g, p] = await Promise.all([partie ? Promise.resolve(null) : lirePartieDirect(db, partieId), lirePendule(db, partieId)]);
-    if (n !== lecture.current) return; // une lecture plus récente est partie entre-temps
-    if (g && !g.ok) { setErreur(td(ERREURS[g.error])); return; }
+    // La ligne fixe (joueurs, taille) est gardée même d'une lecture dépassée : elle ne change pas pendant la partie.
+    if (g && !g.ok) { if (n === lecture.current) setErreur(td(ERREURS[g.error])); return; }
     if (g?.ok) {
       setPartie(g.value);
       const lui = g.value.black_id === userId ? g.value.white_id : g.value.black_id;
@@ -255,6 +255,7 @@ function DirectPartie({ db, partieId, userId, confirmTouch, reglages, celebrer, 
         void coteJoueur(db, lui).then(setCoteLui);
       }
     }
+    if (n !== lecture.current) return; // une lecture plus récente, ou un événement temps réel, est passé entre-temps
     if (!p.ok) { if (!etat) setErreur(td(ERREURS[p.error])); return; }
     setErreur(null);
     setEcart(ecartHorloge(p.value.etat.maintenant, p.value.envoi, p.value.reception));
@@ -266,14 +267,28 @@ function DirectPartie({ db, partieId, userId, confirmTouch, reglages, celebrer, 
   const relire = useCallback(() => { void chargerRef.current(); }, []);
 
   useEffect(() => { relire(); }, [relire]);
-  // Temps réel : coup de l'adversaire, pendule déplacée. Au retour du réseau ou de l'onglet aussi.
-  useEffect(() => abonnerDirect(db, partieId, relire), [db, partieId, relire]);
-  useEffect(() => {
-    const f = () => { if (document.visibilityState === 'visible') relire(); };
-    window.addEventListener('online', f);
-    document.addEventListener('visibilitychange', f);
-    return () => { window.removeEventListener('online', f); document.removeEventListener('visibilitychange', f); };
-  }, [relire]);
+  // Temps réel (#425) : la ligne reçue est appliquée tout de suite (coup de l'adversaire, pendule), sans relire. Une
+  // lecture partie avant l'événement est ignorée (`lecture`). Réabonnement et relecture au retour au premier plan ou
+  // du réseau : src/data/tempsReel.ts.
+  const ecartRef = useRef(ecart);
+  ecartRef.current = ecart;
+  // Avant la première lecture, un événement n'a rien à mettre à jour : il ne doit pas faire ignorer cette lecture.
+  const pret = useRef(false);
+  pret.current = etat !== null;
+  useEffect(() => abonnerDirect(db, partieId, {
+    surPartie: ligne => {
+      if (!pret.current) return;
+      lecture.current++;
+      setEtat(e => (e ? fusionnerEtatPartie(e, ligne, Date.now() + ecartRef.current) ?? e : e));
+      setMaintenant(Date.now());
+    },
+    surPendule: ligne => {
+      if (!pret.current) return;
+      lecture.current++;
+      setEtat(e => (e ? fusionnerPendule(e, ligne) : e));
+    },
+    rattraper: relire,
+  }), [db, partieId, relire]);
 
   const base = partie && etat ? avecEtat(partie, etat) : null;
   const heureServeur = maintenant + ecart;
@@ -353,14 +368,21 @@ function DirectPartie({ db, partieId, userId, confirmTouch, reglages, celebrer, 
     const local = record ? validateMove(record, coup) : null;
     if (local && !local.ok) { setRefus(messageRefus({ error: local.error, message: local.message })); return; }
     setEnvoi(true); setRefus(null);
+    // #425 : le coup, déjà vérifié ici avec les mêmes règles que le serveur, s'affiche tout de suite, et la pendule de
+    // l'adversaire part (estimation, remplacée par celle du serveur). Refusé par le serveur, il disparaît à la relecture.
+    const avant = etat.coups;
+    lecture.current++;
+    setEtat(e => (e && e.coups === avant ? { ...penduleApresCoup(e, Date.now() + ecart), coups: avant + coup } : e));
     const r = await playMove(db, partieId, coup);
     setEnvoi(false);
-    if (!r.ok) setRefus(r.error);
-    // Coup accepté : affiché tout de suite, la pendule est relue (le serveur a décompté le temps).
-    else if ('game' in r.value && typeof r.value.game.moves === 'string') {
-      const g = r.value.game;
-      setEtat({ ...etat, coups: g.moves ?? etat.coups, comptage: g.counting ?? etat.comptage, statut: (g.status as EtatDirect['statut']) ?? etat.statut, resultat: g.result ?? etat.resultat });
+    if (!r.ok) { setRefus(r.error); relire(); return; }
+    // Coup accepté : la ligne renvoyée par le serveur (comptage après deux passes), sauf si l'affichage est déjà plus loin.
+    if ('game' in r.value && typeof r.value.game.moves === 'string') {
+      const g = r.value.game as Record<string, unknown>;
+      lecture.current++;
+      setEtat(e => (e ? fusionnerEtatPartie(e, g, Date.now() + ecart) ?? e : e));
     }
+    // La pendule exacte arrive par le temps réel (ligne `parties_direct`) ; la relecture recale l'heure du serveur.
     relire();
   }
 

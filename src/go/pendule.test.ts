@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
-  ABSENCE_MS, CADENCE_DEFAUT, CADENCES, cadran, ecartHorloge, lireEtatDirect, penduleApres, texteTemps, traitDe, type EtatDirect
+  ABSENCE_MS, CADENCE_DEFAUT, CADENCES, cadran, ecartHorloge, lireEtatDirect, penduleApres, penduleApresCoup, texteTemps, traitDe, type EtatDirect
 } from './pendule';
 
 const migration = readFileSync(new URL('../../supabase/migrations/20261004180100_partie_en_direct.sql', import.meta.url), 'utf8');
@@ -76,5 +76,23 @@ describe('texte et lecture', () => {
   });
   it('écart d’horloge : latence comptée pour moitié', () => {
     expect(ecartHorloge(10_000, 1_000, 1_200)).toBe(8_900);
+  });
+});
+
+describe('pendule estimée juste après un coup (#425)', () => {
+  it('décompte la réflexion de qui a joué, et fait partir la pendule de l’autre', () => {
+    const e = penduleApresCoup(base, 1_007_000);
+    expect(e.noir).toEqual({ ms: 593_000, periodes: 3, vuLe: 0 });
+    expect(e.blanc).toEqual(base.blanc);
+    expect(e.traitDepuis).toBe(1_007_000);
+    // Le coup ajouté, c'est Blanc qui réfléchit.
+    expect(cadran({ ...e, coups: 'ee' }, 2, 1_009_000)).toMatchObject({ ms: 598_000, tourne: true });
+    expect(cadran({ ...e, coups: 'ee' }, 1, 1_009_000)).toMatchObject({ ms: 593_000, tourne: false });
+  });
+  it('byo-yomi : une période dépassée est perdue ; pendule arrêtée : rien ne change', () => {
+    const e = { ...base, coups: 'ee', blanc: { ms: 0, periodes: 3, vuLe: 0 } };
+    expect(penduleApresCoup(e, 1_045_000).blanc).toEqual({ ms: 0, periodes: 2, vuLe: 0 });
+    const arretee = { ...base, comptage: true, traitDepuis: null };
+    expect(penduleApresCoup(arretee, 2_000_000)).toBe(arretee);
   });
 });

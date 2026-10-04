@@ -14,7 +14,8 @@ import { fromSgf, toSgf } from '../go/coords';
 import { groupAt } from '../go/rules';
 import { score } from '../go/score';
 import { deadToString, recordFromOnlineGame, validateMove } from '../go/server';
-import { acceptScore, proposeDeadStones, resumeGame, type Game } from '../data/games';
+import { acceptScore, proposeDeadStones, resumeGame } from '../data/games';
+import { fusionnerPartie } from '../data/tempsReel';
 import {
   abandonnerDefi, abonnerDefi, creerDefi, FORMAT_JETON, jouerCoupDefi, lienDefi, lireDefi, mesDefis, messageRefus, ouvrirDefi, pseudoJoueur, type EtatDefi
 } from '../data/defi';
@@ -312,27 +313,65 @@ export function DefiPartie({ db, partieId, userId, anonyme, pseudo = null, confi
   // #417 : partie classée, cote et grade de l'adversaire sous son nom (lus une fois).
   const [coteAmi, setCoteAmi] = useState<{ cote: number; provisoire: boolean } | null>(null);
 
+  // #425 : numéro de la dernière lecture lancée, ou du dernier événement temps réel appliqué. Une lecture partie
+  // avant un événement plus récent est ignorée : elle n'efface pas un coup déjà affiché.
+  const version = useRef(0);
   const charger = useCallback(async () => {
+    const n = ++version.current;
     const r = await lireDefi(db, partieId);
     // L'ami est lu avant d'afficher la partie : son nom arrive en même temps que le plateau, sans « Ton ami » qui clignote.
     const ami = r.ok && userId ? (r.value.partie.black_id === userId ? r.value.partie.white_id : r.value.partie.black_id) : null;
     if (ami && !pseudosLus.current.has(ami)) pseudosLus.current.set(ami, await pseudoJoueur(db, ami));
     if (ami) setNomAmi(pseudosLus.current.get(ami) ?? null);
     if (ami && r.ok && r.value.partie.rated) void coteJoueur(db, ami).then(setCoteAmi);
+    if (n !== version.current) return;
     setMaintenant(Date.now());
     setEtat(prev => (r.ok ? { etat: 'pret', d: r.value } : prev.etat === 'pret' ? prev : { etat: 'erreur', message: r.error }));
   }, [db, partieId, userId]);
+  const chargerRef = useRef(charger);
+  chargerRef.current = charger;
+  // Après un événement : relecture complète en arrière-plan (notifications lues, victoire au temps), une seule pour
+  // les deux événements d'un même coup (`games` puis `defis`). Le coup, lui, est déjà affiché.
+  const relecture = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const relireBientot = useCallback(() => {
+    clearTimeout(relecture.current);
+    relecture.current = setTimeout(() => { void chargerRef.current(); }, 400);
+  }, []);
+  useEffect(() => () => clearTimeout(relecture.current), []);
 
   useEffect(() => { void charger(); }, [charger]);
-  // Temps réel : chaque coup de l'ami, ou nouvelle date limite, relit la partie. Au retour du réseau ou de l'onglet aussi.
-  useEffect(() => abonnerDefi(db, partieId, () => { void charger(); }), [db, partieId, charger]);
+  // Avant la première lecture, un événement n'a rien à mettre à jour : il ne doit pas faire ignorer cette lecture.
+  const pret = useRef(false);
+  pret.current = etat.etat === 'pret';
+  // Temps réel (#425) : le coup de l'ami est affiché dès l'événement, avec la ligne reçue (sans relire la base).
+  // Réabonnement et relecture au retour au premier plan ou du réseau : src/data/tempsReel.ts.
+  useEffect(() => abonnerDefi(db, partieId, {
+    surPartie: ligne => {
+      if (!pret.current) return;
+      version.current++;
+      setMaintenant(Date.now());
+      setEtat(prev => {
+        if (prev.etat !== 'pret') return prev;
+        const partie = fusionnerPartie(prev.d.partie, ligne);
+        if (!partie) return prev;
+        const resultat = typeof ligne.result === 'string' ? ligne.result : prev.d.resultat;
+        return { etat: 'pret', d: { ...prev.d, partie, resultat } };
+      });
+      relireBientot();
+    },
+    surDefi: ligne => {
+      if (!pret.current) return;
+      version.current++;
+      setEtat(prev => (prev.etat === 'pret' && ('date_limite' in ligne) && (ligne.date_limite === null || typeof ligne.date_limite === 'string')
+        ? { etat: 'pret', d: { ...prev.d, defi: { ...prev.d.defi, date_limite: ligne.date_limite } } } : prev));
+      relireBientot();
+    },
+    rattraper: () => { void chargerRef.current(); }
+  }), [db, partieId, relireBientot]);
   useEffect(() => {
-    const relire = () => { if (document.visibilityState === 'visible') void charger(); };
-    window.addEventListener('online', relire);
-    document.addEventListener('visibilitychange', relire);
     const tic = setInterval(() => setMaintenant(Date.now()), 60_000);
-    return () => { window.removeEventListener('online', relire); document.removeEventListener('visibilitychange', relire); clearInterval(tic); };
-  }, [charger]);
+    return () => clearInterval(tic);
+  }, []);
 
   const d = etat.etat === 'pret' ? etat.d : null;
   const v = useMemo(() => (d ? vueDefi(d.partie, d.defi, userId, maintenant, d.resultat) : null), [d, userId, maintenant]);
@@ -372,12 +411,26 @@ export function DefiPartie({ db, partieId, userId, anonyme, pseudo = null, confi
     const local = record ? validateMove(record, coup) : null;
     if (local && !local.ok) { setRefus(messageRefus({ error: local.error, message: local.message })); return; }
     setEnvoi(true); setRefus(null);
+    // #425 : le coup, déjà vérifié ici avec les mêmes règles que le serveur, s'affiche tout de suite (sans attendre la
+    // fonction serveur). Refusé par le serveur, il disparaît à la relecture.
+    const avant = partie.moves;
+    version.current++;
+    setEtat(prev => (prev.etat === 'pret' && prev.d.partie.moves === avant
+      ? { etat: 'pret', d: { ...prev.d, partie: { ...prev.d.partie, moves: avant + coup } } } : prev));
     const r = await jouerCoupDefi(db, partieId, coup);
     setEnvoi(false);
     if (!r.ok) { setRefus(r.error); void charger(); return; }
-    // Coup accepté : on l'affiche tout de suite, puis on relit la partie (date limite, comptage).
-    setEtat({ etat: 'pret', d: { ...d, partie: { ...d.partie, moves: d.partie.moves + coup, ...(r.value ?? {}) } as Game } });
-    void charger();
+    // Coup accepté : la ligne renvoyée par le serveur (comptage après deux passes), sauf si l'affichage est déjà plus loin.
+    if (r.value) {
+      const ligne = r.value as Record<string, unknown>;
+      version.current++;
+      setEtat(prev => {
+        if (prev.etat !== 'pret') return prev;
+        const p = fusionnerPartie(prev.d.partie, ligne);
+        return p ? { etat: 'pret', d: { ...prev.d, partie: p } } : prev;
+      });
+    }
+    relireBientot();
   }
 
   function toucher(p: number) {

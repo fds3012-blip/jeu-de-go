@@ -86,7 +86,7 @@ test('deux comptes se trouvent en moins de 10 s et jouent jusqu’au score ; « 
   await sansDebord(ana, 'partie 390 px');
   if (CAPTURES) await ana.screenshot({ path: `${CAPTURES}/direct-partie.jpg`, type: 'jpeg', quality: 60 });
 
-  // Ana joue E5 ; Bob le voit arriver (relecture), passe ; Ana passe : comptage.
+  // Ana joue E5 ; Bob le voit arriver (temps réel, #425), passe ; Ana passe : comptage.
   await jouer(ana, 'E5');
   await attendrePierre(bob, 'E5', 'noir');
   await expect(bob.getByText('À toi de jouer.')).toBeVisible();

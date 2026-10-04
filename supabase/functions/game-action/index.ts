@@ -12,7 +12,10 @@ import { estDemandeVersion, reponseVersion } from './go/contrat.ts';
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS'
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  // #425 : le navigateur garde la réponse à la demande préalable (OPTIONS) au lieu de la refaire avant chaque coup
+  // (un aller-retour de 110 à 180 ms de moins par coup). Safari plafonne à 10 min, Chrome à 2 h.
+  'Access-Control-Max-Age': '86400'
 };
 
 const json = (status: number, body: unknown) =>
@@ -41,6 +44,32 @@ Deno.serve(async (req: Request) => {
   if (!url || !serviceKey) return refuse(500, 'configuration', 'Serveur mal configuré.');
   const admin = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
 
+  // #425 : la partie est lue PENDANT la vérification du jeton (deux allers-retours en parallèle au lieu de deux de
+  // suite). Rien de ce qui est lu n'est utilisé ni renvoyé avant que le jeton soit vérifié. Les lectures ne rejettent
+  // jamais (une promesse rejetée et jamais attendue, après un refus 401, ferait tomber la fonction).
+  const lirePartieDefi = async (id: string) => {
+    try {
+      const [g, d] = await Promise.all([
+        admin.from('games').select(COLUMNS).eq('id', id).maybeSingle(),
+        admin.from('defis').select('partie_id').eq('partie_id', id).maybeSingle()
+      ]);
+      return { game: (g.data as GameRow | null) ?? null, estDefi: !!d.data, error: !!(g.error || d.error) };
+    } catch {
+      return { game: null, estDefi: false, error: true };
+    }
+  };
+  const lirePartie = async (id: string) => {
+    try {
+      return await admin.from('games').select(COLUMNS).eq('id', id).maybeSingle();
+    } catch {
+      return { data: null, error: { message: 'lecture' } };
+    }
+  };
+  const defiReq = (body as { action?: unknown } | null)?.action === 'defi_coup' ? parseDefiCoupRequest(body) : null;
+  const actionReq = defiReq ? null : parseActionRequest(body);
+  const lectureDefi = defiReq ? lirePartieDefi(defiReq.gameId) : null;
+  const lecture = actionReq ? lirePartie(actionReq.gameId) : null;
+
   const token = (req.headers.get('Authorization') ?? '').replace(/^Bearer\s+/i, '');
   const { data: auth, error: authError } = token ? await admin.auth.getUser(token) : { data: null, error: true };
   const userId = auth?.user?.id;
@@ -49,16 +78,11 @@ Deno.serve(async (req: Request) => {
   // Défi par lien (#81) : coup validé ici (règles du go), puis écrit par jouer_coup_defi (réservée à service_role).
   // Session anonyme acceptée : son jeton est un vrai jeton `authenticated`, vérifié ci-dessus par auth.getUser.
   if ((body as { action?: unknown } | null)?.action === 'defi_coup') {
-    const req = parseDefiCoupRequest(body);
-    if (!req) return refuse(400, 'format', 'Demande invalide.');
+    const req = defiReq;
+    if (!req || !lectureDefi) return refuse(400, 'format', 'Demande invalide.');
     const deps: DefiCoupDeps = {
-      async lirePartie(id) {
-        const [g, d] = await Promise.all([
-          admin.from('games').select(COLUMNS).eq('id', id).maybeSingle(),
-          admin.from('defis').select('partie_id').eq('partie_id', id).maybeSingle()
-        ]);
-        return { game: (g.data as GameRow | null) ?? null, estDefi: !!d.data, error: !!(g.error || d.error) };
-      },
+      // Première lecture : celle lancée avant la vérification du jeton.
+      lirePartie: id => (id === req.gameId ? lectureDefi : lirePartieDefi(id)),
       async jouerCoupDefi(args) {
         const { data, error } = await admin.rpc('jouer_coup_defi', args);
         return { data, error: error ? { code: error.code, message: error.message } : null };
@@ -72,10 +96,10 @@ Deno.serve(async (req: Request) => {
     return json(r.status, r.body);
   }
 
-  const action = parseActionRequest(body);
-  if (!action) return refuse(400, 'format', 'Demande invalide.');
+  const action = actionReq;
+  if (!action || !lecture) return refuse(400, 'format', 'Demande invalide.');
 
-  const { data: game, error: readError } = await admin.from('games').select(COLUMNS).eq('id', action.gameId).maybeSingle();
+  const { data: game, error: readError } = await lecture;
   if (readError) return refuse(500, 'lecture', 'Impossible de lire la partie.');
   if (!game) return refuse(404, 'introuvable', 'Partie introuvable.');
 
