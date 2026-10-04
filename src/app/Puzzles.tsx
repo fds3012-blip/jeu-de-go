@@ -38,7 +38,7 @@ import { goDuJourFaitAppareil, validerDefi } from './defiAppareil';
 import { RevisionDuJour } from '../ui/RevisionDuJour';
 import { noterRediteAppareil, repriseDeLeconFaite, suivreEnRevisionAppareil } from './rediteAppareil';
 // `t` désigne déjà un palier dans ce fichier : la traduction s'appelle `tr` (#167).
-import { t as tr } from '../content/i18n';
+import { t as tr } from '../content/i18n/secondaires';
 import { useExercice } from '../ui/celebrations';
 import { XpEnLigne } from '../ui/PastilleXp';
 import { COTE_KEY, nettoyerCote, noter, ouvrir, requalifierEnAide, type EtatCote } from './coteJoueur';

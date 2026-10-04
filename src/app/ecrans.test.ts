@@ -23,9 +23,20 @@ describe('écrans chargés à la demande', () => {
   it('les styles des écrans restent dans la feuille principale (importés par main.tsx avant App)', () => {
     const main = lire('../main.tsx');
     const avantApp = main.slice(0, main.indexOf("import { App } from './app/App';"));
-    for (const [ecran, css] of [['Game', 'comptage'], ['Game', 'revue'], ['Learn', 'apprendre'], ['Puzzles', 'course'], ['Profil', 'import'], ['Placement', 'placement']]) {
+    for (const [ecran, css] of [['Game', 'comptage'], ['Game', 'revue'], ['Learn', 'apprendre-partage'], ['Puzzles', 'course'], ['Profil', 'import'], ['Placement', 'placement']]) {
       expect(avantApp, `${ecran} : ${css}.css`).toContain(`import './ui/${css}.css';`);
     }
+  });
+
+  it("#433 : apprendre.css arrive avec les écrans Apprendre et Problèmes, ses règles partagées restent à sa place", () => {
+    const main = lire('../main.tsx');
+    expect(main).not.toContain("import './ui/apprendre.css';");
+    // Même place qu'avant : après revue.css, avant gel.css (ordre de la cascade inchangé).
+    expect(main.indexOf("import './ui/revue.css';")).toBeLessThan(main.indexOf("import './ui/apprendre-partage.css';"));
+    expect(main.indexOf("import './ui/apprendre-partage.css';")).toBeLessThan(main.indexOf("import './ui/gel.css';"));
+    expect(lire('./Learn.tsx')).toContain("import '../ui/apprendre.css';");
+    expect(lire('./Puzzles.tsx')).toContain("import '../ui/apprendre.css';");
+    expect(lire('../ui/Lecteur.tsx')).toContain("import './apprendre.css';");
   });
 });
 

@@ -7,7 +7,7 @@ import { Confettis } from './Confettis';
 import { mouvementsReduits, useDefilement } from './defilement';
 import { PastilleXp } from './PastilleXp';
 import { useFile } from './celebrations';
-import { t } from '../content/i18n';
+import { t } from '../content/i18n/secondaires';
 import './fin.css';
 
 interface Props {

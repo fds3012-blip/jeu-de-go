@@ -1,6 +1,6 @@
 // Rythme de la partie contre l'ordi (#187) : délai de réponse « humain » et phrases qui accompagnent la réponse.
 import type { Raison } from '../engine';
-import { t } from '../content/i18n';
+import { t } from '../content/i18n/secondaires';
 
 /**
  * Pomme « respire » : sa réponse arrive après un délai variable plutôt qu'en 350 ms fixes.

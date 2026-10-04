@@ -1,6 +1,6 @@
 // Recherche dans le glossaire et choix de la fiche d'aide (issue #362). Logique pure, sans React.
 import { AUSSI, COMPTER, MOTS, REGLES, type IdMot } from '../content/aide';
-import { traduire, type Langue } from '../content/i18n';
+import { traduire, type Langue } from '../content/i18n/secondaires';
 import { AIDE_DES_LECONS } from './ouvrirAide';
 
 export { ficheDeLecon } from './ouvrirAide';

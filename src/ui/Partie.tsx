@@ -5,7 +5,7 @@ import { IconeAction, type NomAction } from './IconesActions';
 import { PortraitMochi, type HumeurMochi } from './Portrait';
 import { Reflexion } from './Reflexion';
 import { fr } from './typo';
-import { t } from '../content/i18n';
+import { t } from '../content/i18n/secondaires';
 import './partie.css';
 
 /** Pierres capturées, rangées dans un couvercle en bois. `pierres` : couleur des pierres prises. */

@@ -13,15 +13,17 @@ import { LESSONS } from '../content/lessons';
 import { fr } from '../ui/typo';
 import { playFail, playIllegal, playStone, playSuccess } from '../ui/sound';
 import { hapticFail, hapticIllegal, hapticStone, hapticSuccess } from '../ui/haptics';
-import { t } from '../content/i18n';
+import { t } from '../content/i18n/secondaires';
 import type { Opponent } from '../engine';
 import { KYU_ANCRE, NB_PROBLEMES, adversaireConseille, bilanPlacement, choisirPlacement, kyuDuRang, type Bilan, type Essai } from './placement';
+import { PROBLEMES_LOCAUX } from '../content/problemesLocaux';
 import '../ui/placement.css';
 
 type Fin = { bilan: Bilan; adversaire: Opponent; essais: Essai[] };
 
 interface Props {
-  problemes: readonly Puzzle[];
+  /** Problèmes à piocher ; par défaut les problèmes locaux, chargés avec cet écran (#433). */
+  problemes?: readonly Puzzle[];
   adversaires: readonly Opponent[];
   confirmTouch: boolean;
   /** Titre du chapitre de leçons conseillé, selon le kyu (null : tout raté). */
@@ -37,7 +39,8 @@ interface Props {
 export function Placement(p: Props) {
   const [essais, setEssais] = useState<Essai[]>([]);
   const [fin, setFin] = useState<Fin | null>(null);
-  const pz = useMemo(() => (essais.length < NB_PROBLEMES ? choisirPlacement(p.problemes, essais) : undefined), [p.problemes, essais]);
+  const problemes = p.problemes ?? PROBLEMES_LOCAUX;
+  const pz = useMemo(() => (essais.length < NB_PROBLEMES ? choisirPlacement(problemes, essais) : undefined), [problemes, essais]);
 
   if (fin) return <Resultat fin={fin} chapitre={p.chapitre(fin.bilan.kyu)} onJouer={() => p.onJouer(fin.adversaire.id)} onLecons={() => p.onLecons(fin.bilan.kyu)} />;
   if (!pz) return null;

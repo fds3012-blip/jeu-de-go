@@ -9,7 +9,7 @@ import { readLocal, writeLocal } from './hooks';
 import { recompense } from './aide';
 import { gagnerXp } from './xp';
 import { noterRediteAppareil } from './rediteAppareil';
-import { t } from '../content/i18n';
+import { t } from '../content/i18n/secondaires';
 import { lireFile, retirerFete } from '../ui/celebrations';
 import { niveauEnAttente } from '../ui/fileFetes';
 import { NiveauAtteint } from '../ui/Niveau';

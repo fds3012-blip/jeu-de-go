@@ -20,6 +20,7 @@
     "icons": "node scripts/generate-icons.mjs",
     "apercu": "node scripts/generate-apercu.mjs",
     "fetch-model": "node scripts/fetch-model.mjs",
+    "go-du-jour": "MAJ_GO_DU_JOUR=1 vitest run outils/goDuJour.test.ts",
     "sync:functions": "node scripts/sync-functions.mjs"
   },
   "dependencies": {

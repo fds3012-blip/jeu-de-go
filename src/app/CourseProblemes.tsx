@@ -1,7 +1,7 @@
 // Course aux problèmes (issue #287) : consigne, course de 3 minutes (3 erreurs au plus), écran de fin.
 // Logique pure dans ./course.ts ; ici l'affichage, le minuteur et le stockage du meilleur score.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { t } from '../content/i18n';
+import { t } from '../content/i18n/secondaires';
 import { checkAnswer, startOf, type Puzzle } from '../data/puzzles';
 import { EVENTS, track } from '../data/analytics';
 import { Board } from '../ui/Board';

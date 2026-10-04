@@ -14,7 +14,7 @@ import { chargerSgfOgs, idPartieOgs, type RefusOgs } from '../go/ogs';
 import type { GameRecord } from '../go/sgf';
 import type { Color } from '../go/rules';
 import { EVENTS, track } from '../data/analytics';
-import { nombre, t } from '../content/i18n';
+import { nombre, t } from '../content/i18n/secondaires';
 import { fr } from '../ui/typo';
 import '../ui/import.css';
 

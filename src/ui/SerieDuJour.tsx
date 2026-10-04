@@ -4,7 +4,7 @@
 // Mouvements réduits : l'état final directement, sans animation ni confettis. Réglage « Célébrations » coupé : pareil,
 // et sans carillon.
 import { useEffect, useRef, useState } from 'react';
-import { t } from '../content/i18n';
+import { t } from '../content/i18n/secondaires';
 import type { Jalon } from '../app/jalonsSerie';
 import { Confettis } from './Confettis';
 import { mouvementsReduits } from './defilement';

@@ -3,7 +3,7 @@
 // dans le code ; aucun ne doit contenir « cote » (français) ni « rating » (anglais).
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { CATALOGUES, type Cle } from '../content/i18n';
+import { CATALOGUES, type Cle } from '../content/i18n/secondaires';
 
 /** Fichiers de l'écran Problèmes : écran, lecteur, sections du haut, messages d'erreur du chargement. */
 const FICHIERS = ['app/Puzzles.tsx', 'ui/RevisionDuJour.tsx', 'ui/MesErreurs.tsx', 'data/puzzles.ts', 'app/aide.ts'];

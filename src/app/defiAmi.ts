@@ -6,7 +6,7 @@ import { newPosition, type Position } from '../go/rules';
 import { tempsRestant } from '../data/defi';
 import type { Game } from '../data/games';
 import type { Defi } from '../data/defi';
-import { t } from '../content/i18n';
+import { t } from '../content/i18n/secondaires';
 
 // Lecture du jeton dans l'adresse : src/data/defi.ts (#367 : importée au chargement sans tirer ce module, ses règles
 // et son rejeu, qui ne servent qu'aux écrans du défi et à « À faire », chargés à la demande).

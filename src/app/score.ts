@@ -2,7 +2,7 @@
 // Logique pure : les étapes et leurs totaux viennent du comptage de src/go/score.ts, jamais d'un calcul à part.
 import { score, type Rules } from '../go/score';
 import type { Position } from '../go/rules';
-import { nombre, t } from '../content/i18n';
+import { nombre, t } from '../content/i18n/secondaires';
 
 /** Horloge du récit, en ms. Tout est fini à DUREE_RECIT (2,5 s ; l'issue demande moins de 4 s, pause de lecture comprise). */
 export const TEMPS = { territoire: 0, etalement: 1100, prisonniers: 1350, komi: 1800, resultat: 2250 } as const;

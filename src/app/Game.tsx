@@ -11,7 +11,7 @@ import { EVENTS, secondsSinceOpen, track, trackOnce } from '../data/analytics';
 import { gagnerXp, sourceXpPartie, type SourceXp } from './xp';
 import { useSupabase } from '../data/client';
 import { fr } from '../ui/typo';
-import { nombre as virgule, t as tr } from '../content/i18n';
+import { nombre as virgule, t as tr } from '../content/i18n/secondaires';
 import { useProfil } from './hooks';
 import { useStored } from './settings';
 import { carteTerritoire, conseilPasser, passerEnEvidence, coupsJoues, descriptionIndices, descriptionQuiMene, DUREE_QUI_MENE, indicesRestants, INDICES_PAR_PARTIE, libelleAvantage, libelleCoup, messageAtari, messageIndice, metEnAtari, nouveauxAtari, partNoir, phraseQuiMene, QUI_MENE_PAR_PARTIE, quiMeneDisponible, quiMeneRestants } from './partie';

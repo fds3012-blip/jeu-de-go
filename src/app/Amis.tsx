@@ -10,7 +10,7 @@ import { marquerLues } from '../data/notifications';
 import { EVENTS, track } from '../data/analytics';
 import { useAmis } from './amisListe';
 import { fr } from '../ui/typo';
-import { t } from '../content/i18n';
+import { t } from '../content/i18n/secondaires';
 import { ta } from '../content/i18n/amis';
 
 interface Props {

@@ -1,8 +1,11 @@
 // Aide du joueur (#362) : recherche du glossaire, textes FR et EN, et croisement avec les textes de l'interface.
 import { COMPTER, IDS_MOTS, IDS_QUESTIONS, MOTS, REGLES, type IdMot, type Schema } from '../content/aide';
-import { fr } from '../content/i18n/fr';
+import { fr as frAccueil } from '../content/i18n/fr';
+import { frEcrans } from '../content/i18n/frEcrans';
+// Tout le français (#433) : catalogue de l'accueil et des écrans secondaires.
+const fr = { ...frAccueil, ...frEcrans };
 import { en } from '../content/i18n/en';
-import { traduire, type Cle } from '../content/i18n';
+import { traduire, type Cle } from '../content/i18n/secondaires';
 import { LESSONS_FR } from '../content/lessons';
 import { LECONS_CITEES, chercherMots, ficheDeLecon, normaliser } from './glossaire';
 import { estRaccourciAide } from './ouvrirAide';

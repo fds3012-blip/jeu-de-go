@@ -4,7 +4,7 @@
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { COMPTER, IDS_QUESTIONS, MOTS, REGLES, type Carte, type Fiche, type Schema } from '../content/aide';
 import { LESSONS } from '../content/lessons';
-import { langue, t } from '../content/i18n';
+import { langue, t } from '../content/i18n/secondaires';
 import { fromRows } from '../go/position';
 import { fromLabel } from '../go/coords';
 import { score } from '../go/score';

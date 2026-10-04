@@ -32,7 +32,7 @@ import { libelleCoup } from './partie';
 import { Revue } from './Revue';
 import { texteAdversaire } from '../content/i18n/cote';
 import { td, type CleDirect } from '../content/i18n/direct';
-import { nombre, t } from '../content/i18n';
+import { nombre, t } from '../content/i18n/secondaires';
 import { fr } from '../ui/typo';
 import '../ui/defis.css';
 import '../ui/direct.css';

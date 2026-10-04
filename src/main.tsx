@@ -12,7 +12,8 @@ import './ui/fin.css';
 import './ui/installation.css';
 import './ui/conseil.css';
 import './ui/revue.css';
-import './ui/apprendre.css';
+// #433 : apprendre.css arrive avec les écrans Apprendre et Problèmes ; ses règles partagées restent ici, à sa place.
+import './ui/apprendre-partage.css';
 import './ui/gel.css';
 import './ui/pastille-xp.css';
 import './ui/course.css';

@@ -3,7 +3,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ALL_PUZZLES } from '../content/puzzles';
 import { parsePuzzles } from '../data/puzzles';
 import { choisirLangue } from '../content/i18n';
-import { fr as CATALOGUE_FR } from '../content/i18n/fr';
+import { fr as frAccueil } from '../content/i18n/fr';
+import { frEcrans } from '../content/i18n/frEcrans';
+const CATALOGUE_FR = { ...frAccueil, ...frEcrans };
 import { COTE_DEPART, ECART_CIBLE } from './coteJoueur';
 import {
   DUREE_COURSE, ERREURS_MAX, MEILLEUR_COURSE_KEY, PROBLEMES_MIN, apresCourse, commencer, departPour, dureeSecondes,

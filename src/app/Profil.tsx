@@ -30,7 +30,7 @@ import { ProposerInstallation, usePlateformeInstallation } from '../ui/ProposerI
 import { etatInstallation, installable } from './installation';
 import { clePubliqueVapid, resumeRappel } from './rappel';
 import { ReglageRappel } from '../ui/ProposerRappel';
-import { LANGUES, langue, memoriserChoixLangue, t, type Langue } from '../content/i18n';
+import { LANGUES, langue, memoriserChoixLangue, t, type Langue } from '../content/i18n/secondaires';
 import type { Placement } from './placement';
 import { Amis } from './Amis';
 import { BoutonAide } from '../ui/BoutonAide';

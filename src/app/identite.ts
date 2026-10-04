@@ -1,6 +1,6 @@
 // Carte d'identité du Profil (issue #50) : initiale, pseudo et série, en une ligne. Textes traduits (#167).
 // #214 : aucune cote affichée (décision de Florian) ; la ligne sous le pseudo dit ce que le compte garde.
-import { t } from '../content/i18n';
+import { t } from '../content/i18n/secondaires';
 
 export interface Identite {
   /** Initiale du pseudo, ou null : on montre alors une pierre noire. */

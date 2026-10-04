@@ -26,7 +26,7 @@ import { gagnerXp } from './xp';
 import { validerDefi } from './defiAppareil';
 import { actionsFin, etapes, finDeChapitre, finDeLecon, titreCourt, type ActionFin, type Progression } from './apprendre';
 import { GUIDE_KEY, doitGuider, humeurMochi, pointsGuide, type Moment } from './lecon';
-import { t } from '../content/i18n';
+import { t } from '../content/i18n/secondaires';
 import { lireFile, retirerFete, useExercice } from '../ui/celebrations';
 import { niveauEnAttente } from '../ui/fileFetes';
 import { BoutonAide } from '../ui/BoutonAide';

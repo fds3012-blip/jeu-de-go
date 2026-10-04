@@ -7,7 +7,7 @@
 // répond un serveur qui ne connaît pas l'action), appeler `messageSiServeurAncien(db, corps)` ; s'il renvoie un
 // texte, l'afficher à la place du refus. Le contrôle n'est fait qu'après un refus, jamais avant chaque coup : un
 // serveur à jour ne coûte aucun appel de plus.
-import { t } from '../content/i18n';
+import { t } from '../content/i18n/secondaires';
 import { CONTRAT_GAME_ACTION } from '../go/contrat';
 import type { Db } from './supabase';
 

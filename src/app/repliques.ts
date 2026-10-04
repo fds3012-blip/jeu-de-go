@@ -2,7 +2,7 @@
 // Pour l'instant les mêmes pour tous ; pour donner une voix à un adversaire, ajoute-le dans PERSONNELLES
 // (seules les situations fournies remplacent les répliques génériques).
 import type { OpponentId } from '../engine';
-import { t } from '../content/i18n';
+import { t } from '../content/i18n/secondaires';
 
 export type Situation =
   | 'captureSubie' // le joueur vient de lui prendre des pierres

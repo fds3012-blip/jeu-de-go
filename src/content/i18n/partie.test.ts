@@ -13,7 +13,7 @@ import { AUCUNE_ERREUR, NOTE_INFO, NOTES, PERTES_DIFFUSES, phraseNote, SANS_KATA
 import { libelleGels } from '../../app/gel';
 import { annonceAtari, annonceConfirmation, annonceCoup, nomIntersection } from '../../ui/boardA11y';
 import { fromLabel } from '../../go/coords';
-import { choisirLangue, nombre, traduire } from './index';
+import { choisirLangue, nombre, traduire } from './secondaires';
 
 const recit = (gagnant: 0 | 1 | 2, marge: number, deuxieme: Recit['deuxieme'] = { type: 'prisonniers', noir: 3, blanc: 1 }): Recit =>
   ({ territoire: [], territoireNoir: 0, territoireBlanc: 0, deuxieme, komi: 6.5, noir: 0, blanc: 0, gagnant, marge });

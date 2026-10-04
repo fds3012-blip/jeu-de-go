@@ -6,7 +6,7 @@ import { readSgf, writeSgf } from '../go/sgf';
 import { toLabel } from '../go/coords';
 import { initialPosition } from '../go/replay';
 import type { AnalyseRevue } from '../engine';
-import { nombre, t } from '../content/i18n';
+import { nombre, t } from '../content/i18n/secondaires';
 
 /** Dernière partie terminée, pour la revue (localStorage ; Supabase viendra plus tard). */
 export const REVUE_KEY = 'go.revue.v1';

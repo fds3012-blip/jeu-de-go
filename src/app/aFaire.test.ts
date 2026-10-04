@@ -7,7 +7,7 @@ import { defisEnAttente } from './defisAJouer';
 import { DELAI_COUP_MS as DELAI_SERVEUR } from '../data/defi';
 import type { Game } from '../data/games';
 import type { Defi, EtatDefi } from '../data/defi';
-import { traduire } from '../content/i18n';
+import { traduire } from '../content/i18n/secondaires';
 
 // Issue #367 : notifications dans l'app. Ce qui attend le joueur, sans le harceler.
 

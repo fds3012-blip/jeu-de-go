@@ -36,7 +36,7 @@ import type { Sens } from './connexionBascule';
 import type { EtatCompte } from './essai';
 import '../ui/compte.css';
 import { fr } from '../ui/typo';
-import { nombre, t } from '../content/i18n';
+import { nombre, t } from '../content/i18n/secondaires';
 import '../ui/defis.css';
 
 type Partage = 'partage' | 'copie' | 'manuel' | 'annule';

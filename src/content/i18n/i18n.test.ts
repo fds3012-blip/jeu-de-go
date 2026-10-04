@@ -1,6 +1,9 @@
 // Socle i18n (issue #167) : couverture des clés, textes non vides, variables, pluriels, choix de la langue.
-import { CATALOGUES, DETECTION_APPAREIL, LANGUES, LANGUE_KEY, choisirLangue, detecterLangue, langue, lireChoixLangue, memoriserChoixLangue, t, traduire, type Cle } from './index';
-import { fr } from './fr';
+import { CATALOGUES, DETECTION_APPAREIL, LANGUES, LANGUE_KEY, choisirLangue, detecterLangue, langue, lireChoixLangue, memoriserChoixLangue, t, traduire, type Cle } from './secondaires';
+import { fr as frAccueil } from './fr';
+import { frEcrans } from './frEcrans';
+// Tout le français (#433) : catalogue de l'accueil et des écrans secondaires.
+const fr = { ...frAccueil, ...frEcrans };
 import type { Catalogue } from './types';
 
 const cles = Object.keys(fr) as Cle[];

@@ -7,7 +7,10 @@ import {
 } from './amis';
 import { traduire } from '../content/i18n';
 import { CATALOGUE_AMIS, traduireAmis, type CleAmis } from '../content/i18n/amis';
-import { fr } from '../content/i18n/fr';
+import { fr as frAccueil } from '../content/i18n/fr';
+import { frEcrans } from '../content/i18n/frEcrans';
+// Tout le français (#433) : catalogue de l'accueil et des écrans secondaires.
+const fr = { ...frAccueil, ...frEcrans };
 
 /** Client Supabase simulé : seulement `rpc`, comme le reste de la couche amis. */
 function client(reponses: Record<string, { data: unknown; error: unknown }> = {}) {

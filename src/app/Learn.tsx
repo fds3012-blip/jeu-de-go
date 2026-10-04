@@ -8,7 +8,7 @@ import { Confettis } from '../ui/Confettis';
 import { fr } from '../ui/typo';
 import { readLocal, writeLocal, type SyncState } from './hooks';
 import { FETES_KEY, boutonChemin, chapitresAFeter, chapitresAVenir, colonne, courbe, dureeMinutes, etapes, type Ancre, type Etape, type Progression } from './apprendre';
-import { t } from '../content/i18n';
+import { t } from '../content/i18n/secondaires';
 import '../ui/apprendre.css';
 
 export { LessonPlayer, POSE_MS } from './Lecon';

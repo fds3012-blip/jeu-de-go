@@ -1,7 +1,7 @@
 // Revue v3 (#405) : ce que dit Mochi pendant le bilan. Logique pure, testée dans parcours.test.ts.
 import { toLabel } from '../go/coords';
 import type { Color, Position } from '../go/rules';
-import { nombre, t } from '../content/i18n';
+import { nombre, t } from '../content/i18n/secondaires';
 import type { CoupNote } from './notation';
 
 const pts = (n: number) => t('revue.points', { n: Math.max(1, Math.round(n)) });

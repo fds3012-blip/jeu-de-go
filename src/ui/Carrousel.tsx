@@ -6,7 +6,7 @@ import { useRef, useState, type KeyboardEvent } from 'react';
 import { Couronne, Portrait, palierDe, type PortraitId } from './Portrait';
 import { battuAccorde, type SceauId } from './sceaux';
 import { fr } from './typo';
-import { t } from '../content/i18n';
+import { t } from '../content/i18n/secondaires';
 
 export interface CarteAdversaire<I extends SceauId = SceauId> {
   id: I;

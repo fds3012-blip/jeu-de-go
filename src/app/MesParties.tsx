@@ -19,7 +19,7 @@ import { Portrait, PortraitMochi } from '../ui/Portrait';
 import { Reflexion } from '../ui/Reflexion';
 import { IconeReglage } from '../ui/IconesReglages';
 import { fr } from '../ui/typo';
-import { t } from '../content/i18n';
+import { t } from '../content/i18n/secondaires';
 import '../ui/historique.css';
 
 /** Visites de KataGo par position pour une partie importée : mêmes réglages que l'import (ImportSgf.tsx). */

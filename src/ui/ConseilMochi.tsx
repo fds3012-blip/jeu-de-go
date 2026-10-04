@@ -5,7 +5,7 @@ import { toLabel } from '../go/coords';
 import { C, M, viewBoxOf } from './boardArt';
 import { contour } from './conseilCalque';
 import { PortraitMochi } from './Portrait';
-import { t } from '../content/i18n';
+import { t } from '../content/i18n/secondaires';
 import { fr } from './typo';
 import './conseil.css';
 

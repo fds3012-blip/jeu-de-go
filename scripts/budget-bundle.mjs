@@ -4,8 +4,9 @@
 //
 // Lit dist/index.html, suit les imports statiques du JS d'entrée et mesure, compressé en gzip,
 // ce qu'un téléphone doit télécharger avant d'afficher l'accueil. Échoue si un budget est dépassé.
-// Le moteur KataGo, TensorFlow.js, PostHog, Sentry, supabase-js (`lib-donnees`, #401) et les écrans chargés à la demande
-// n'en font pas partie : si l'un d'eux entre dans le JS initial, le budget saute.
+// Le moteur KataGo, TensorFlow.js, PostHog, Sentry, supabase-js (`lib-donnees`, #401), les écrans chargés à la demande,
+// leurs textes (src/content/i18n/frEcrans.ts, #433) et les problèmes complets (src/content/puzzles.ts, #433) n'en font
+// pas partie : si l'un d'eux entre dans le JS initial, le budget saute. Détail : docs/architecture/chargement-initial.md.
 //
 // Relever un budget est une décision : dis pourquoi dans la PR.
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
@@ -16,8 +17,11 @@ const KO = 1024;
 export const BUDGETS = {
   // gzip ; 260 Ko le 29/09 après découpage par écran (314 Ko avant), 230 Ko le 30/09 sans l'anglais (#325),
   // 249 Ko le 02/10 ; 193 Ko avec supabase-js chargé à la demande (#401) : budget à 200 Ko, ≈ 7 Ko de marge.
-  jsInitial: 200 * KO,
-  cssInitial: 30 * KO, // gzip ; 22 Ko le 29/09
+  // 199,4 Ko le 04/10, puis ≈ 156 Ko avec le Go du jour léger et les textes des écrans secondaires à part (#433) :
+  // budget abaissé à 175 Ko (objectif de #433), ≈ 19 Ko de marge.
+  jsInitial: 175 * KO,
+  // gzip ; 22 Ko le 29/09, 29,0 Ko le 04/10, ≈ 24 Ko avec apprendre.css chargée avec ses écrans (#433) : budget à 26 Ko.
+  cssInitial: 26 * KO,
   polices: 80 * KO, // woff2 (déjà compressé) ; 70 Ko le 29/09
   morceauAlaDemande: 60 * KO, // gzip, chaque écran chargé à la demande
 };
@@ -67,6 +71,19 @@ function verifier(nom, taille, budget) {
 for (const f of [...initial].filter(f => /^assets\/lib-donnees-/.test(f))) {
   echec = true;
   lignes.push(`TROP ${f.replace('assets/', '')} dans le JS initial : importe le client par src/data/client.ts (useSupabase, chargerSupabase)`);
+}
+
+// #433 : textes des écrans secondaires et problèmes complets, jamais dans le JS initial. Repères : la première clé de
+// frEcrans.ts et une consigne de problème, absentes de l'accueil.
+const SRC = new URL('../src/', import.meta.url).pathname;
+const premiereCle = readFileSync(join(SRC, 'content/i18n/frEcrans.ts'), 'utf8').match(/^\s*'([^']+)':/m)?.[1];
+const REPERES = [
+  [premiereCle && `"${premiereCle}"`, 'textes des écrans secondaires (frEcrans.ts) : importe `t` de src/content/i18n/secondaires dans un écran chargé à la demande, pas dans l’accueil'],
+  ['La pierre blanche marquée', 'problèmes complets (src/content/puzzles.ts) : l’accueil lit le Go du jour léger (src/app/goDuJour.ts, problemeDuJour)'],
+];
+for (const [repere, quoi] of REPERES) {
+  const fautif = repere && [...initial].find(f => readFileSync(join(DIST, f), 'utf8').includes(repere));
+  if (fautif) { echec = true; lignes.push(`TROP ${quoi} : trouvés dans ${fautif.replace('assets/', '')}`); }
 }
 
 const jsInitial = [...initial].reduce((s, f) => s + gz(f), 0);
