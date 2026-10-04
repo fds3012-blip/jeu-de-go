@@ -61,19 +61,8 @@
   @keyframes defi-apparait { from { opacity: 0; transform: translateY(8px); } }
 }
 
-/* « Défier un ami » dans l'en-tête de l'accueil (#81) : pastille discrète, 44 px de haut, jamais un bouton plein. */
+/* En-tête de l'accueil : flamme et gel à droite. #429 : « Défier un ami » est devenu la tuile « Un ami » (accueil.css). */
 .entete-droite { display: inline-flex; align-items: center; gap: var(--space-2); min-width: 0; }
-.entete-defi { position: relative; display: inline-flex; align-items: center; gap: 6px; min-height: var(--cible-min); min-width: var(--cible-min);
-  padding: 0 12px 0 8px; border: 0; border-radius: var(--radius-pill); background: none; color: var(--text); font: inherit;
-  font-size: var(--fs-s); font-weight: var(--fw-bold); box-shadow: inset 0 0 0 1.5px var(--line); white-space: nowrap; }
-.entete-defi-pierres { display: inline-flex; }
-.entete-defi-pierres .stone { width: 14px; height: 14px; }
-.entete-defi-pierres .stone + .stone { margin-left: -4px; }
-.entete-defi-point { position: absolute; top: 6px; right: 6px; width: 9px; height: 9px; border-radius: 50%; background: var(--accent-trait); box-shadow: 0 0 0 2px var(--bg); }
-.entete-defi:active { background: var(--surface); }
-@media (hover: hover) and (pointer: fine) { .entete-defi:hover { background: var(--surface); } }
-/* Petits écrans : l'icône seule (le nom reste lu par le lecteur d'écran). */
-@media (max-width: 359px) { .entete-defi-texte { display: none; } .entete-defi { padding: 0 12px; } }
 
 /* Audit du 02/10 (n° 2) : état vide de « Tes parties contre tes amis ». Tuile en pointillés (direction v2 : ce qui viendra
    plus tard), un bout de goban et une phrase ; aucune action de plus. */

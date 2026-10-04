@@ -25,8 +25,8 @@
 
 /* ---------- Le goban d'accueil (issue #119 : une illustration, plus une seconde action) ---------- */
 /* Hauteur libre, jusqu'au plateau entier (carré : 100cqw). Aucun masque ni bulle par-dessus : les 9 lignes restent visibles.
-   S'il manque de la place, le plateau est centré et recadré en haut et en bas à parts égales. */
-.scene { position: relative; flex: 1 1 0; min-height: 200px; max-height: 100cqw; }
+   #429 : s'il manque de la hauteur (rangée des modes), le plateau rapetisse et se centre au lieu d'être recadré. */
+.scene { position: relative; flex: 1 1 0; min-height: 200px; max-height: 100cqw; container-type: size; }
 /* iPhone SE (320 × 568) : le goban cède un peu de hauteur pour que le bouton principal reste au-dessus de la barre du bas. */
 @media (max-height: 640px) { .scene { min-height: 168px; } }
 
@@ -41,8 +41,8 @@
 .reglage-contre h2 { margin: 0; font-size: var(--fs-l); font-weight: var(--fw-titre); }
 .reglage-contre span { color: var(--muted); font-size: var(--fs-s); }
 .reglage-premier .lien { margin-left: auto; }
-.scene-plateau { position: absolute; inset: 0; overflow: hidden; border-radius: var(--radius-plateau); cursor: pointer; }
-.scene-cadre { position: absolute; left: 0; right: 0; top: min(0px, calc(50% - 50cqw)); }
+.scene-plateau { position: absolute; inset: 0; cursor: pointer; }
+.scene-cadre { position: absolute; top: 0; left: 50%; width: min(100cqw, 100cqh); transform: translateX(-50%); overflow: hidden; border-radius: var(--radius-plateau); }
 .scene-cadre .board-wrap { box-shadow: none; margin-bottom: 0; }
 
 /* ---------- Adversaire : portrait, nom et réplique, sous le plateau ---------- */
@@ -69,6 +69,37 @@
 @media (prefers-reduced-motion: no-preference) {
   .accueil .cta:active { transform: translateY(var(--relief)); }
 }
+
+/* ---------- Modes de jeu (#429) : les autres façons de jouer, en un toucher, sous le bouton ---------- */
+/* Au trait (pas de fond, pas de relief) : des choix secondaires, distincts des cartes pleines d'« Aujourd'hui ». */
+.accueil .cta-sceau .icone-mode { flex: none; width: 28px; height: 28px; }
+.modes { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 5.5rem), 1fr)); gap: 8px; margin-top: calc(var(--space-2) + var(--relief)); }
+.mode { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: var(--cible-min); padding: 8px 6px 9px;
+  border: 0; border-radius: var(--radius); background: none; color: var(--text); font: inherit; text-align: center; box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--text) 22%, transparent); }
+.mode b { font-family: var(--font-titre); font-weight: var(--fw-bold); font-size: var(--fs-s); line-height: 1.2; }
+.mode small { color: var(--muted); font-size: var(--fs-legende); line-height: 1.25; overflow-wrap: anywhere; text-wrap: balance; }
+.mode-icone { display: inline-flex; align-items: center; justify-content: center; flex: none; color: var(--accent-texte); }
+.mode .mode-icone { height: 26px; margin-bottom: 3px; }
+.mode-pierres .stone { width: 18px; height: 18px; }
+.mode-pierres .stone + .stone { margin-left: -5px; }
+.mode:active, .plus-mode:active { background: var(--surface-2); }
+@media (hover: hover) and (pointer: fine) { .mode:hover { background: var(--surface); } .plus-mode:hover { background: var(--surface-2); } }
+/* Un ami attend ton coup : point d'or et « À toi de jouer », comme la tuile du défi. */
+.mode.a-jouer::after { content: ""; position: absolute; top: 8px; right: 8px; width: 9px; height: 9px; border-radius: 50%; background: var(--or); }
+.mode.a-jouer small { color: var(--recompense-texte); font-weight: var(--fw-bold); }
+/* Petite hauteur (iPhone SE) : pictogrammes et détails cèdent leur place, les noms restent (le détail reste lu par le lecteur d’écran). */
+@media (max-height: 640px) { .mode .mode-icone, .mode small { display: none; } .mode { padding-block: 6px; } }
+/* Partie en ligne en action principale : deux pierres et le grade à la place du portrait de l'adversaire. */
+.classee-pierres { display: inline-flex; flex: none; width: 48px; height: 48px; align-items: center; justify-content: center; border-radius: 50%; background: var(--surface-2); }
+.classee-pierres .stone { width: 20px; height: 20px; }
+.classee-pierres .stone + .stone { margin-left: -6px; }
+/* Feuille « Plus » : une ligne par mode, nom et phrase. */
+.plus-liste { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.plus-mode { display: flex; align-items: center; gap: 14px; width: 100%; min-height: 64px; padding: 10px 14px; border: 0; border-radius: var(--radius);
+  background: var(--bg); color: var(--text); font: inherit; text-align: left; }
+.plus-mode .mode-icone { width: 44px; height: 44px; border-radius: 50%; background: var(--surface-2); }
+.plus-mode b { display: block; font-family: var(--font-titre); font-weight: var(--fw-bold); font-size: var(--fs-m); line-height: 1.2; }
+.plus-mode small { display: block; margin-top: 2px; color: var(--muted); font-size: var(--fs-s); line-height: 1.35; }
 
 /* ---------- Deux tuiles de nature différente ---------- */
 .tuiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 9.5rem), 1fr)); /* #121 : une colonne quand la place manque */ gap: 10px; margin-top: calc(var(--space-3) + var(--relief)); }
@@ -166,7 +197,6 @@
 .feuille-taille h3 { flex: none; margin: 0; font-size: var(--fs-s); color: var(--muted); font-weight: var(--fw-bold); }
 .feuille-taille .seg { flex: 1 1 13rem; }
 .feuille-taille p { flex: 1 1 100%; }
-.feuille .deux { align-self: center; margin-top: calc(var(--relief) + 2px); }
 
 /* Carrousel : défilement horizontal à accroche, qui déborde jusqu'aux bords de la feuille. */
 .carrousel { display: flex; gap: 2px; list-style: none; margin: 0 calc(-1 * var(--gouttiere)); padding: 6px var(--gouttiere) 8px;
@@ -181,6 +211,7 @@
 .carte[aria-pressed="true"] { background: var(--surface-2); box-shadow: inset 0 0 0 2px var(--accent-trait); --sceau-socle: var(--surface-2); }
 .carte.verrou b { color: var(--muted); }
 .carte.verrou { cursor: not-allowed; }
+.carrousel-attente { min-height: 22rem; }
 .carrousel-legende { margin: 0; min-height: 2.8em; color: var(--muted); line-height: 1.4; }
 .carrousel-legende.alerte { color: var(--danger-texte); font-weight: var(--fw-bold); }
 

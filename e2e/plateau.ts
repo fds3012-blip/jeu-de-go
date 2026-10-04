@@ -66,10 +66,24 @@ export async function attendrePierre(page: Page, label: string, couleur: 'noir' 
   else await expect(ici.and(page.locator(`[data-pierre="${couleur}"]`))).toHaveCount(1);
 }
 
-/** Depuis l'accueil déjà affiché : « Changer », puis « Jouer à deux sur ce téléphone » (issue #40, phase 4). */
+/**
+ * Depuis l'accueil déjà affiché, choisit un mode de jeu (#429) : le bouton principal s'il porte ce mode, sinon sa tuile,
+ * sinon « Plus » puis la ligne du mode. Au plus deux touchers.
+ */
+export async function choisirMode(page: Page, mode: 'en_ligne' | 'ordi' | 'ami' | 'deux' | 'guidee'): Promise<void> {
+  const principal = page.locator(`.cta[data-mode="${mode}"]`);
+  const tuile = page.getByTestId(`mode-${mode}`);
+  await page.getByTestId('modes').waitFor();
+  if (await principal.count()) return principal.click();
+  if (await tuile.count()) return tuile.click();
+  await page.getByTestId('mode-plus').click();
+  const nom = mode === 'deux' ? 'Jouer à deux sur ce téléphone' : 'Partie guidée contre Mochi';
+  await page.getByRole('dialog', { name: 'Autres façons de jouer' }).getByRole('button', { name: new RegExp('^' + nom) }).click();
+}
+
+/** Depuis l'accueil déjà affiché : « Jouer à deux sur ce téléphone » (tuile, ou « Plus » avec les comptes ; #429). */
 export async function lancerADeux(page: Page): Promise<void> {
-  await page.getByRole('button', { name: 'Changer' }).click();
-  await page.getByRole('dialog', { name: 'Ton adversaire' }).getByRole('button', { name: 'Jouer à deux sur ce téléphone' }).click();
+  await choisirMode(page, 'deux');
 }
 
 /** Ouvre une partie à deux sur le même téléphone depuis l'accueil. */

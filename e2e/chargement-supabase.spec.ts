@@ -21,7 +21,7 @@ test('premier lancement : l’accueil s’affiche sans supabase-js, qui arrive a
   await page.goto('/');
   await expect(page.locator('main.app-home .cta').first()).toBeVisible();
   // « Défier un ami » ne l'attend pas : on sait sans lui que les comptes existent.
-  await expect(page.getByTestId('lien-defi')).toBeVisible();
+  await expect(page.getByTestId('mode-ami')).toBeVisible();
   const t = await instants(page);
   expect(t.load).toBeGreaterThan(0);
   expect(t.supabase).toBeGreaterThanOrEqual(t.load);

@@ -176,7 +176,7 @@ export const COTE_REGLES = 800;
 export const KYU_CLUB_MAX = 25;
 export const KYU_CLUB_MIN = 0;
 /** Grades proposés à « Je joue en club », du plus faible au plus fort (0 = 1er dan). */
-export const KYUS_CLUB: readonly number[] = Array.from({ length: KYU_CLUB_MAX - KYU_CLUB_MIN + 1 }, (_, i) => KYU_CLUB_MAX - i);
+export const KYUS_CLUB: readonly number[] = /* @__PURE__ */ Array.from({ length: KYU_CLUB_MAX - KYU_CLUB_MIN + 1 }, (_, i) => KYU_CLUB_MAX - i);
 /** Grade de club proposé par défaut. */
 export const KYU_CLUB_DEFAUT = 15;
 
