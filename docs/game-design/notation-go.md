@@ -18,6 +18,21 @@ Chaque coup est jugé par les points qu'il perd face au meilleur coup.
   au moins 8 visites par candidat). C'est bien moins bruité que la différence entre deux analyses.
 - Sans KataGo : chute de l'estimation du moteur simple, lissée (médiane sur 3 positions), plus petite des deux mesures.
 
+### Mesure douteuse : pas de note (#424)
+
+Partie réelle de l'issue #424 (sans KataGo) : « J8 coup solide » à côté de −87,5, une courbe qui saute de −88 à +74.
+- La revue charge KataGo même s'il n'a jamais servi sur l'appareil (téléchargement du réseau une seule fois, 45 s au
+  plus). Sinon, une phrase dit pourquoi : téléchargement impossible, appareil incompatible ou délai dépassé.
+- Le moteur simple estime en « mode estimation » : une zone ouverte de plus d'un tiers du plateau n'est le territoire
+  de personne, et un mur qui fait face à un espace ouvert n'est pas mort.
+- Estimation aberrante (écart de plus d'un tiers du plateau avec la médiane des 5 positions voisines) : ni montrée sur
+  la courbe et la pastille, ni notée.
+- Sans KataGo, pas de « Solide » quand les mesures se contredisent (brute ou lissée, un coup ou deux coups). Si la
+  réponse de l'adversaire prend au moins 3 pierres et que l'avance chute, la perte compte (J8 : Gaffe).
+- Aucune note « sans perte » (Solide, Bon, Classique…) quand la pastille d'avance chute de plus que le seuil
+  d'Imprécision pour le joueur qui vient de jouer : on ne note pas ce coup.
+- Sans KataGo, jamais « Très belle partie » dans le bilan.
+
 ## Seuils selon la taille du plateau
 
 Seuils de base (9 × 9), multipliés par le facteur de taille f = √(taille / 9) : 9 × 9 → 1 ; 13 × 13 → 1,2 ; 19 × 19 → 1,45.

@@ -119,11 +119,12 @@ describe('sans KataGo', () => {
     expect(n.every(x => x!.note === 'solide')).toBe(true);
   });
 
-  it('un pic isolé (bruit) est lissé : pas d’erreur', () => {
+  it('un pic isolé (bruit) est lissé : pas d’erreur, et pas de « Solide » non plus autour du pic (#424)', () => {
     // La position 3 est un pic à -9 : un seul tirage bruité, la courbe revient aussitôt.
     const an = [0, 0, 0, -9, 0, 0].map(simple);
     expect(lisser(an)).toEqual([0, 0, 0, 0, 0, 0]);
-    expect(noterCoups(h, an).map(x => x!.note)).toEqual(['solide', 'solide', 'solide', 'solide', 'solide']);
+    // Coups 3 et 4 : la mesure brute (9 points) et la mesure lissée (0) se contredisent. Pas de note plutôt qu'une fausse.
+    expect(noterCoups(h, an).map(x => x?.note ?? null)).toEqual(['solide', 'solide', null, null, 'solide']);
   });
 
   it('une vraie chute, qui dure, est notée au bon coup', () => {
