@@ -25,7 +25,7 @@ h1, h2, .big { font-family: var(--font-titre); letter-spacing: var(--tracking-ti
 .marque-mochi { grid-column: 2; align-self: end; font-size: var(--fs-legende); letter-spacing: .02em; line-height: 1; margin-bottom: 1px; }
 .marque-go { grid-column: 2; align-self: start; line-height: .9; }
 /* Hors accueil, la droite de l'en-tête est presque vide : « Mochi Go » sur une ligne, sans grandir l'en-tête (Profil tient en 844 px). */
-.app:not(.app-home) .top h1.marque { display: flex; align-items: center; gap: 0; }
+.app:not(.app-home) .top h1.marque { display: flex; flex-wrap: wrap; align-items: center; gap: 0; white-space: normal; min-width: 0; flex: 0 1 auto; }
 .app:not(.app-home) .marque-mochi { font-size: inherit; letter-spacing: inherit; line-height: inherit; margin: 0 .25em 0 0; }
 .app:not(.app-home) .marque-go { line-height: inherit; }
 .top p { margin: 0; color: var(--muted); font-size: var(--fs-s); }
