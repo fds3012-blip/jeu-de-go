@@ -11,7 +11,7 @@ self.onmessage = (e: MessageEvent<Demande>) => {
   const d = e.data;
   try {
     const r: Reponse = d.kind === 'dead' ? { id: d.id, move: -1, ...comptageAuto(d.pos) }
-      : d.kind === 'own' ? { id: d.id, move: -1, own: ownership(d.pos, { timeMs: d.timeMs }) }
+      : d.kind === 'own' ? { id: d.id, move: -1, own: ownership(d.pos, { timeMs: d.timeMs, estimation: true }) }
       : { id: d.id, ...chooseMoveDetail(d.pos, d.hasard === undefined ? d.niveau : { ...opponent(d.niveau), hasard: d.hasard }, d.opts) };
     (self as unknown as Worker).postMessage(r);
   } catch (err) {
