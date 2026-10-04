@@ -5,9 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#1C1916" media="(prefers-color-scheme: dark)" />
     <meta name="theme-color" content="#EFE8DC" media="(prefers-color-scheme: light)" />
-    <meta name="description" content="Apprends et joue au go : leçons interactives, parties à deux, IA KataGo bientôt." />
+    <meta name="description" content="Mochi Go : apprends et joue au go. Leçons interactives, problèmes, parties contre l’ordi ou tes amis." />
     <link rel="icon" href="/icon.svg" type="image/svg+xml" />
     <link rel="manifest" href="/manifest.webmanifest" />
+    <!-- Nom sous l'icône (iOS lit cette balise, pas le manifeste) : court, sinon il est coupé. -->
+    <meta name="apple-mobile-web-app-title" content="Mochi Go" />
+    <meta name="application-name" content="Mochi Go" />
     <link rel="apple-touch-icon" href="/icon-192.png" />
     <!-- Écrans de lancement iOS (#406) : la première image de l'ouverture animée, générée par scripts/generate-icons.mjs. -->
     <!--LANCEMENT-IOS-->
@@ -30,11 +33,11 @@
     <link rel="apple-touch-startup-image" href="/lancement/iphone-440x956-sombre.png" media="(device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait) and (prefers-color-scheme: dark)" />
     <link rel="apple-touch-startup-image" href="/lancement/iphone-440x956-clair.png" media="(device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait) and (prefers-color-scheme: light)" />
     <!--/LANCEMENT-IOS-->
-    <title>Go : apprendre et jouer</title>
+    <title>Mochi Go : apprendre et jouer au go</title>
     <!--
       Ouverture animée (#406), dessinée ici, avant React : CSS et SVG en ligne, aucun JS de l'app.
       1. Première image : le logo deux pierres, en grand, comme l'écran de lancement natif (manifeste, images iOS).
-      2. Les pierres rapetissent et se posent sur un goban sous la lampe ; le nom « Go » apparaît en haut.
+      2. Les pierres rapetissent et se posent sur un goban sous la lampe ; le nom « Mochi Go » apparaît en haut.
       3. À 1 s pile (#406, demande de Florian : « une seconde en tout »), et seulement si l'accueil est monté, fondu ; l'action principale et la barre arrivent d'abord,
          puis le contenu, de haut en bas. Fini en 1,2 s environ ; un toucher la passe.
       Version courte (logo, fondu) si l'app a été ouverte il y a moins de 10 min ; simple fondu de 150 ms en mouvements
@@ -65,7 +68,7 @@
       /* La scène : seulement dans la version entière. */
       .ouv-nom, .ouv-sol, .ouv-ombre { display: none; }
       [data-ouverture="plein"] :is(.ouv-nom, .ouv-sol, .ouv-ombre) { display: block; }
-      .ouv-nom { left: 50%; top: max(16vh, calc(56px + env(safe-area-inset-top, 0px))); width: 114px; height: 64px; margin-left: -57px; fill: var(--ouv-encre); }
+      .ouv-nom { left: 50%; top: max(16vh, calc(56px + env(safe-area-inset-top, 0px))); width: 256px; height: 45px; margin-left: -128px; fill: var(--ouv-encre); }
       /* Point de pose des pierres : 12vh sous le centre. Le goban est centré un peu derrière, sous la lampe. */
       .ouv-sol { left: 50%; top: calc(50% + 12vh - 36px); width: 0; height: 0; }
       .ouv-plan { position: absolute; left: -220px; top: -220px; width: 440px; height: 440px; transform: perspective(900px) rotateX(60deg);
@@ -140,13 +143,13 @@
     </script>
     <!-- Aperçu des liens partagés (issue #285) : image générée par scripts/generate-apercu.mjs. -->
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="Jeu de go" />
+    <meta property="og:site_name" content="Mochi Go" />
     <meta property="og:locale" content="fr_FR" />
     <meta property="og:locale:alternate" content="en_US" />
-    <meta property="og:url" content="https://jeu-de-go.vercel.app/" />
+    <meta property="og:url" content="https://mochi-go.app/" />
     <meta property="og:title" content="Go du jour : trouveras-tu le bon coup ?" />
     <meta property="og:description" content="Un défi de go par jour. Gratuit, sans compte : ta première pierre en 1 minute." />
-    <meta property="og:image" content="https://jeu-de-go.vercel.app/apercu.png" />
+    <meta property="og:image" content="https://mochi-go.app/apercu.png" />
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
@@ -154,7 +157,7 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Go du jour : trouveras-tu le bon coup ?" />
     <meta name="twitter:description" content="Un défi de go par jour. Gratuit, sans compte : ta première pierre en 1 minute." />
-    <meta name="twitter:image" content="https://jeu-de-go.vercel.app/apercu.png" />
+    <meta name="twitter:image" content="https://mochi-go.app/apercu.png" />
     <meta name="twitter:image:alt" content="Un goban avec quelques pierres et la question : trouveras-tu le bon coup ?" />
   </head>
   <body>
@@ -162,7 +165,7 @@
     <div id="ouverture" aria-hidden="true" data-testid="ouverture">
       <div class="ouv-debut"></div>
       <!-- Le nom, en Bricolage Grotesque 800 vectorisée : jamais d'attente de police ni de saut de glyphes. -->
-      <svg class="ouv-nom" viewBox="40 -690 1260 710"><path d="M331 14Q250 14 185-23Q120-60 82-134Q45-209 45-322Q45-405 66-470Q88-535 131-580Q174-626 236-650Q299-674 381-674Q443-674 494-660Q544-646 581-620Q618-594 638-558Q659-522 660-477L508-430Q507-467 489-492Q471-517 441-530Q411-544 374-544Q322-544 286-520Q251-497 232-449Q214-401 214-329Q214-275 224-234Q235-194 256-167Q277-140 308-126Q338-113 380-113Q422-113 452-126Q483-139 501-166Q519-193 520-235H403V-349H680V-221V0H570L568-165H548Q531-107 504-67Q477-27 435-6Q393 14 331 14ZM1014 14Q934 14 872-17Q811-48 776-110Q741-172 741-265Q741-358 776-420Q811-481 873-512Q935-542 1015-542Q1095-542 1157-511Q1219-480 1254-418Q1289-357 1289-264Q1289-169 1253-107Q1217-45 1154-16Q1092 14 1014 14ZM1019-103Q1055-103 1079-120Q1103-136 1115-170Q1127-204 1127-254Q1127-307 1114-344Q1101-380 1076-400Q1050-419 1010-419Q976-419 952-402Q927-386 915-352Q903-318 903-267Q903-185 934-144Q964-103 1019-103Z"/></svg>
+      <svg class="ouv-nom" viewBox="49 -770 4570 800"><path d="M69 0V-660H310L482-185H487L655-660H885V0H733L742-496H731L540 0H408L221-496H210L219 0ZM1260 14Q1180 14 1118-17Q1057-48 1022-110Q987-172 987-265Q987-358 1022-420Q1057-481 1119-512Q1181-542 1261-542Q1341-542 1403-511Q1465-480 1500-418Q1535-357 1535-264Q1535-169 1499-107Q1463-45 1400-16Q1338 14 1260 14ZM1265-103Q1301-103 1325-120Q1349-136 1361-170Q1373-204 1373-254Q1373-307 1360-344Q1347-380 1322-400Q1296-419 1256-419Q1222-419 1198-402Q1173-386 1161-352Q1149-318 1149-267Q1149-185 1180-144Q1210-103 1265-103ZM1878 14Q1810 14 1758-5Q1706-24 1671-60Q1636-95 1618-145Q1599-195 1599-257Q1599-321 1618-373Q1636-425 1671-463Q1706-501 1757-522Q1808-542 1874-542Q1940-542 1988-521Q2036-500 2066-462Q2097-424 2108-374L1959-324Q1956-357 1943-378Q1930-399 1910-408Q1889-418 1865-418Q1840-418 1821-408Q1802-398 1789-378Q1776-358 1769-330Q1762-301 1762-264Q1762-211 1776-176Q1789-140 1816-122Q1842-104 1880-104Q1919-104 1941-120Q1963-136 1973-160Q1983-183 1985-206L2125-175Q2121-138 2106-104Q2090-69 2060-42Q2030-16 1986-1Q1941 14 1878 14ZM2200 0V-336V-720H2361V-555Q2361-535 2360-514Q2358-492 2354-470Q2351-447 2348-424Q2344-401 2339-379H2363Q2377-428 2398-464Q2419-501 2453-522Q2487-542 2540-542Q2634-542 2680-476Q2727-411 2727-275V0H2565V-248Q2565-329 2542-370Q2518-410 2470-410Q2433-410 2409-387Q2385-364 2373-326Q2361-287 2361-240V0ZM2843 0V-528H3004V0ZM2924-602Q2878-602 2854-622Q2829-641 2829-677Q2829-715 2854-734Q2878-754 2924-754Q2971-754 2996-734Q3020-715 3020-678Q3020-641 2996-622Q2971-602 2924-602ZM3621 14Q3540 14 3475-23Q3410-60 3372-134Q3335-209 3335-322Q3335-405 3356-470Q3378-535 3421-580Q3464-626 3526-650Q3589-674 3671-674Q3733-674 3784-660Q3834-646 3871-620Q3908-594 3928-558Q3949-522 3950-477L3798-430Q3797-467 3779-492Q3761-517 3731-530Q3701-544 3664-544Q3612-544 3576-520Q3541-497 3522-449Q3504-401 3504-329Q3504-275 3514-234Q3525-194 3546-167Q3567-140 3598-126Q3628-113 3670-113Q3712-113 3742-126Q3773-139 3791-166Q3809-193 3810-235H3693V-349H3970V-221V0H3860L3858-165H3838Q3821-107 3794-67Q3767-27 3725-6Q3683 14 3621 14ZM4324 14Q4244 14 4182-17Q4121-48 4086-110Q4051-172 4051-265Q4051-358 4086-420Q4121-481 4183-512Q4245-542 4325-542Q4405-542 4467-511Q4529-480 4564-418Q4599-357 4599-264Q4599-169 4563-107Q4527-45 4464-16Q4402 14 4324 14ZM4329-103Q4365-103 4389-120Q4413-136 4425-170Q4437-204 4437-254Q4437-307 4424-344Q4411-380 4386-400Q4360-419 4320-419Q4286-419 4262-402Q4237-386 4225-352Q4213-318 4213-267Q4213-185 4244-144Q4274-103 4329-103Z"/></svg>
       <!-- Le goban sous la lampe : un coin de kaya en perspective, 9 lignes, les hoshi ; il s'efface vers les bords. -->
       <div class="ouv-sol"><svg class="ouv-plan" viewBox="0 0 440 440"><defs><radialGradient id="ouv-kaya"><stop offset="0" stop-color="#EDC27A"/><stop offset="1" stop-color="#C58D42"/></radialGradient></defs><rect width="440" height="440" fill="url(#ouv-kaya)"/><path d="M20 20H420M20 70H420M20 120H420M20 170H420M20 220H420M20 270H420M20 320H420M20 370H420M20 420H420M20 20V420M70 20V420M120 20V420M170 20V420M220 20V420M270 20V420M320 20V420M370 20V420M420 20V420" stroke="#3A2912" stroke-opacity=".75" stroke-width="2.2" fill="none"/><g fill="#3A2912"><circle cx="120" cy="120" r="5.5"/><circle cx="320" cy="120" r="5.5"/><circle cx="220" cy="220" r="5.5"/><circle cx="120" cy="320" r="5.5"/><circle cx="320" cy="320" r="5.5"/></g></svg></div>
       <div class="ouv-ombre"></div>

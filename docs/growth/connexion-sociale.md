@@ -1,5 +1,7 @@
 # Connexion avec Google, Apple et Facebook : réglages pas à pas (#411)
 
+> **Depuis #416**, l'appli s'appelle **Mochi Go** et sa production est `https://mochi-go.app`. Les adresses ci-dessous sont à jour. L'ancienne (`jeu-de-go.vercel.app`) reste dans les Redirect URLs de Supabase (`supabase/auth/reglages.json`) en secours : ne la retire pas tout de suite.
+
 Pour Florian. Rédigé le 3 octobre 2026 par l'agent croissance. Pourquoi ces trois-là, et pas Discord, X ou les passkeys : `docs/produit/benchmark-connexion.md`, section 0. Google seul (#354, plus détaillé sur l'écran de consentement) : `docs/growth/connexion-google-apple.md`, section 7.
 
 **Ce qui est déjà dans l'app** (livré, caché) : un bouton par fournisseur, à la charte de chaque marque, toujours dans le même ordre (**Google, Apple, Facebook**, puis « ou », puis le code par e-mail) sur « Crée ton compte », « J'ai déjà un compte », l'arrivée par un lien de défi, et **Profil, Mon compte** (relier un moyen de plus, ou en retirer un s'il en reste un autre). Chaque bouton n'apparaît que si **sa** variable Vercel vaut `1`. Rien ne change pour les joueurs tant que tu n'as pas fait l'étape Vercel.
@@ -12,9 +14,9 @@ Pour Florian. Rédigé le 3 octobre 2026 par l'agent croissance. Pourquoi ces tr
 |---|---|
 | Retour des fournisseurs vers Supabase (« Callback URL ») | `https://xjvsalkvpgcjrznznxoi.supabase.co/auth/v1/callback` |
 | Domaine Supabase | `xjvsalkvpgcjrznznxoi.supabase.co` |
-| Le jeu (production) | `https://jeu-de-go.vercel.app` |
-| Domaine du jeu | `jeu-de-go.vercel.app` |
-| Politique de confidentialité publique | `https://jeu-de-go.vercel.app/confidentialite` |
+| Le jeu (production) | `https://mochi-go.app` |
+| Domaine du jeu | `mochi-go.app` |
+| Politique de confidentialité publique | `https://mochi-go.app/confidentialite` |
 | Supabase, fournisseurs | https://supabase.com/dashboard/project/xjvsalkvpgcjrznznxoi/auth/providers |
 | Supabase, adresses de retour | https://supabase.com/dashboard/project/xjvsalkvpgcjrznznxoi/auth/url-configuration |
 
@@ -32,8 +34,8 @@ Pour Florian. Rédigé le 3 octobre 2026 par l'agent croissance. Pourquoi ces tr
 ## 2. Supabase : adresses de retour et liaison manuelle (une fois pour toutes)
 
 1. Ouvre https://supabase.com/dashboard/project/xjvsalkvpgcjrznznxoi/auth/url-configuration
-   - **Site URL** : `https://jeu-de-go.vercel.app` (normalement déjà en place).
-   - **Redirect URLs** : vérifie que `https://jeu-de-go.vercel.app/**` y est. Sinon : **Add URL**, colle-la, **Save**.
+   - **Site URL** : `https://mochi-go.app` (normalement déjà en place).
+   - **Redirect URLs** : vérifie que `https://mochi-go.app/**` y est. Sinon : **Add URL**, colle-la, **Save**.
    - Pour tester sur un déploiement Preview de Vercel : ajoute aussi l'adresse de ce Preview suivie de `/**` (par exemple `https://jeu-de-go-git-connexion-sociale-<ton-equipe>.vercel.app/**`).
 2. Ouvre https://supabase.com/dashboard/project/xjvsalkvpgcjrznznxoi/auth/providers
    - En haut de la page, **Allow manual linking** (« liaison manuelle ») : **active-le**, puis **Save**.
@@ -47,10 +49,10 @@ Si tu l'as déjà fait pour #354, passe à l'étape 4. Sinon, suis `docs/growth/
 
 1. https://console.cloud.google.com : **Nouveau projet** `Jeu de go`. **N'active aucune facturation.**
 2. **Écran de consentement** : https://console.cloud.google.com/auth/overview, **Commencer** ; nom `Jeu de go` ; audience **Externe**.
-   - **Branding** (https://console.cloud.google.com/auth/branding) : page d'accueil `https://jeu-de-go.vercel.app`, règles de confidentialité `https://jeu-de-go.vercel.app/confidentialite`, **domaines autorisés** `jeu-de-go.vercel.app` et `xjvsalkvpgcjrznznxoi.supabase.co`.
+   - **Branding** (https://console.cloud.google.com/auth/branding) : page d'accueil `https://mochi-go.app`, règles de confidentialité `https://mochi-go.app/confidentialite`, **domaines autorisés** `mochi-go.app` et `xjvsalkvpgcjrznznxoi.supabase.co`.
    - **Accès aux données** (https://console.cloud.google.com/auth/scopes) : seulement `openid`, `.../auth/userinfo.email`, `.../auth/userinfo.profile`.
 3. **Identifiants** (https://console.cloud.google.com/auth/clients) : **Créer un client**, type **Application Web**, nom `Jeu de go web`.
-   - **Origines JavaScript autorisées** : `https://jeu-de-go.vercel.app`
+   - **Origines JavaScript autorisées** : `https://mochi-go.app`
    - **URI de redirection autorisés** : `https://xjvsalkvpgcjrznznxoi.supabase.co/auth/v1/callback`
    - **Créer**. Note l'**ID client** et le **code secret** (le secret ne va que dans Supabase).
 4. **Publier** : https://console.cloud.google.com/auth/audience, **Publier l'application**, **En production**.
@@ -94,10 +96,10 @@ Il faut un compte Facebook personnel (le tien) ; l'app Meta est gratuite.
 
 | Champ | Valeur |
 |---|---|
-| Domaines de l'app (App Domains) | `jeu-de-go.vercel.app` |
-| URL de la politique de confidentialité | `https://jeu-de-go.vercel.app/confidentialite` |
-| URL des conditions de service | `https://jeu-de-go.vercel.app/confidentialite` (même page : conditions et confidentialité) |
-| Instructions de suppression des données (User data deletion → Data deletion instructions URL) | `https://jeu-de-go.vercel.app/confidentialite` (la page explique : Profil, Mon compte, Supprimer mon compte ; ou retirer Facebook dans Mon compte) |
+| Domaines de l'app (App Domains) | `mochi-go.app` |
+| URL de la politique de confidentialité | `https://mochi-go.app/confidentialite` |
+| URL des conditions de service | `https://mochi-go.app/confidentialite` (même page : conditions et confidentialité) |
+| Instructions de suppression des données (User data deletion → Data deletion instructions URL) | `https://mochi-go.app/confidentialite` (la page explique : Profil, Mon compte, Supprimer mon compte ; ou retirer Facebook dans Mon compte) |
 | Icône de l'app (1024 × 1024) | `public/icon-512.png` agrandi, ou l'icône du jeu en 1024 px |
 | Catégorie | **Jeux** (Games) |
 
@@ -162,7 +164,7 @@ Un bouton n'apparaît que si sa variable vaut `1`. **Allume un fournisseur seule
 
 ## 7. Vérifier (10 minutes, sur ton téléphone)
 
-1. **Chrome Android ou Safari iPhone**, fenêtre privée : ouvre `https://jeu-de-go.vercel.app`, joue jusqu'à « Crée ton compte ». Tu vois, dans l'ordre : la case d'âge, **Continuer avec Google**, **Continuer avec Apple** (si allumé), **Continuer avec Facebook**, « ou », ton e-mail, **Recevoir mon code**.
+1. **Chrome Android ou Safari iPhone**, fenêtre privée : ouvre `https://mochi-go.app`, joue jusqu'à « Crée ton compte ». Tu vois, dans l'ordre : la case d'âge, **Continuer avec Google**, **Continuer avec Apple** (si allumé), **Continuer avec Facebook**, « ou », ton e-mail, **Recevoir mon code**.
 2. Coche la case, touche **Continuer avec Facebook**, accepte chez Facebook : tu reviens sur **Choisis ton pseudo**, champ **vide** (jamais ton nom Facebook). Choisis-le : la partie démarre.
 3. **Profil → Mon compte** : la carte **Tes moyens de connexion** montre Facebook. Touche **Continuer avec Google** : Google est relié au **même** compte. **Retirer** Google : il disparaît ; le dernier moyen n'a pas de bouton « Retirer ».
 4. Recommence avec **Annuler** chez Facebook : retour sur « Crée ton compte » avec « Connexion annulée. Réessaie, ou reçois un code par e-mail. »

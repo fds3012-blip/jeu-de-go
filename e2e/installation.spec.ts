@@ -25,7 +25,7 @@ async function reussirGoDuJour(page: Page) {
   await expect(page.getByRole('button', { name: 'Partager' })).toBeVisible();
 }
 
-const carte = (page: Page) => page.getByRole('complementary', { name: 'Garde le go sous la main' });
+const carte = (page: Page) => page.getByRole('complementary', { name: 'Garde Mochi Go sous la main' });
 
 /** Jours d'ouverture déjà vus sur l'appareil (#214) : `retours` = jours distincts après le premier, le dernier la veille. */
 async function dejaVenu(page: Page, retours: number) {
@@ -192,7 +192,7 @@ test('Chrome : « Installer l’app » depuis le Profil ouvre l’invite', async
   await page.waitForFunction(() => document.readyState === 'complete');
   await ongletProfil(page).click();
   await page.getByRole('button', { name: 'Installer l’app' }).click();
-  await page.getByRole('complementary', { name: 'Garde le go sous la main' }).getByRole('button', { name: 'Installer' }).click();
+  await page.getByRole('complementary', { name: 'Garde Mochi Go sous la main' }).getByRole('button', { name: 'Installer' }).click();
   // Refusée dans l'invite : retour au Profil, sans repère « refusée » posé (c'est le joueur qui l'avait demandée).
   await expect(page.getByRole('heading', { name: 'Ton parcours' })).toBeVisible();
   expect(await page.evaluate(() => (window as unknown as { __invites: number }).__invites)).toBe(1);

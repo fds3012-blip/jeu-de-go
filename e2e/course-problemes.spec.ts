@@ -118,7 +118,7 @@ for (const largeur of [390, 320]) {
     await fin.getByRole('button', { name: 'Partager' }).click();
     await expect(fin.getByRole('button', { name: 'Copié !' })).toBeVisible();
     const copie = await page.evaluate(() => (window as unknown as { __copie: string }).__copie);
-    expect(copie).toBe('Course de go : 2 problèmes en 3 min · meilleur 2\nhttps://jeu-de-go.vercel.app/');
+    expect(copie).toBe('Course de go : 2 problèmes en 3 min · meilleur 2\nhttps://mochi-go.app/');
 
     // Rejouer relance une course neuve.
     await fin.getByRole('button', { name: 'Rejouer' }).click();
@@ -175,7 +175,7 @@ test('fin sur le temps : annonces toutes les 30 s, puis écran de fin et partage
 
   await fin.getByRole('button', { name: 'Partager' }).click();
   const copie = await page.evaluate(() => (window as unknown as { __copie: string }).__copie);
-  expect(copie).toBe('Course de go : 1 problème en 3 min · meilleur 17\nhttps://jeu-de-go.vercel.app/');
+  expect(copie).toBe('Course de go : 1 problème en 3 min · meilleur 17\nhttps://mochi-go.app/');
   // Sans spoiler : aucune coordonnée de coup.
   expect(copie.split('\n')[0]).not.toMatch(/\b[A-HJ-T]1?\d\b/);
 });

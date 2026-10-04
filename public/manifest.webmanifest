@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "Go : apprendre et jouer",
-  "short_name": "Go",
-  "description": "Apprends et joue au go : leçons interactives, problèmes et parties.",
+  "name": "Mochi Go : apprendre et jouer au go",
+  "short_name": "Mochi Go",
+  "description": "Apprends et joue au go avec Mochi Go : leçons interactives, problèmes et parties.",
   "lang": "fr",
   "dir": "ltr",
   "start_url": "/",

@@ -84,7 +84,7 @@ for (const largeur of [390, 320]) {
     expect((await cta.boundingBox())!.height).toBeGreaterThanOrEqual(44);
     await expect(page.getByRole('button', { name: /^Daily Go #\d+/ })).toBeVisible();
     await expect(page.getByRole('button', { name: /^Lesson 1 of \d+/ })).toBeVisible();
-    await expect(page.locator('header').getByText('Go', { exact: true })).toBeVisible();
+    await expect(page.locator('header').getByText('Mochi Go', { exact: true })).toBeVisible();
     await expect(page.getByText(/Joue|Plateau|Changer|Go du jour/)).toHaveCount(0);
     await sansDebordement(page);
     await sansCoupe(page, largeur);

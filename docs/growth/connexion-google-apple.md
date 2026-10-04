@@ -1,5 +1,7 @@
 # Connexion avec Google (et Apple plus tard) : recommandation et réglages (#354)
 
+> **Depuis #416**, l'appli s'appelle **Mochi Go** et sa production est `https://mochi-go.app`. Les adresses ci-dessous sont à jour. L'ancienne (`jeu-de-go.vercel.app`) reste dans les Redirect URLs de Supabase (`supabase/auth/reglages.json`) en secours : ne la retire pas tout de suite.
+
 > **Suite le 03/10/2026 (#411)** : Apple et Facebook sont livrés (cachés derrière `VITE_AUTH_APPLE` et `VITE_AUTH_FACEBOOK`), avec Mon compte (relier, retirer) et la liaison des anciennes sessions sans compte. Réglages pour les trois : `docs/growth/connexion-sociale.md`. Le point 5 de la section 1 (« ni Facebook ») est révisé dans `docs/produit/benchmark-connexion.md`, section 0.
 
 Pour Florian et l'équipe. Rédigé le 1er octobre 2026 par l'agent produit. Benchmark complet et sources : `docs/produit/benchmark-connexion.md`. Suite de `docs/growth/connexion-code.md` (code à 6 chiffres, #343).
@@ -160,7 +162,7 @@ Google (ou Apple) sait que le joueur s'est connecté au jeu, et quand. C'est leu
 - Section « Compte joueur » : ajouter « connexion avec Google (et Apple) : identifiant du compte, e-mail, nom et photo transmis par Google, que nous n'utilisons pas » et la source (art. 14 RGPD).
 - Section destinataires : Google (et Apple) comme services de connexion choisis par le joueur.
 - Comment retirer l'accès : myaccount.google.com, « Applications tierces » ; réglages de l'identifiant Apple.
-- Publier la politique à une **adresse publique** (par exemple `https://jeu-de-go.vercel.app/confidentialite`) : Google la demande pour l'écran de consentement et la vérification de la marque. Aujourd'hui elle n'existe que dans l'app (`src/app/Confidentialite.tsx`) : **tâche front**.
+- Publier la politique à une **adresse publique** (par exemple `https://mochi-go.app/confidentialite`) : Google la demande pour l'écran de consentement et la vérification de la marque. Aujourd'hui elle n'existe que dans l'app (`src/app/Confidentialite.tsx`) : **tâche front**.
 
 ### 6.5 Mineurs
 
@@ -170,7 +172,7 @@ Google (ou Apple) sait que le joueur s'est connecté au jeu, et quand. C'est leu
 
 ## 7. Étapes pour Florian : Google (environ 25 minutes, 0 €)
 
-Pré-requis : le compte Google avec lequel tu veux gérer le projet. Adresse de production : `https://jeu-de-go.vercel.app`. Projet Supabase : `jeu-de-go` (réf. `xjvsalkvpgcjrznznxoi`).
+Pré-requis : le compte Google avec lequel tu veux gérer le projet. Adresse de production : `https://mochi-go.app`. Projet Supabase : `jeu-de-go` (réf. `xjvsalkvpgcjrznznxoi`).
 
 **Ne fais les étapes 7.4 et 7.5 (activer Google dans Supabase) qu'une fois le bouton livré par le front** : sinon rien ne change pour les joueurs, mais c'est sans risque.
 
@@ -187,9 +189,9 @@ Pré-requis : le compte Google avec lequel tu veux gérer le projet. Adresse de 
 4. **Coordonnées** : ton adresse. Accepte le règlement des données utilisateur. **Créer**.
 5. **Branding** (https://console.cloud.google.com/auth/branding) :
    - Logo : `public/icon-512.png` réduit à 120 × 120 px (facultatif ; un logo déclenche la vérification de la marque, gratuite, quelques jours).
-   - Page d'accueil : `https://jeu-de-go.vercel.app`.
+   - Page d'accueil : `https://mochi-go.app`.
    - Règles de confidentialité et conditions : l'adresse publique de la politique quand le front l'aura publiée (6.4).
-   - **Domaines autorisés** : `jeu-de-go.vercel.app` et `xjvsalkvpgcjrznznxoi.supabase.co`. Si la console en refuse un, note le message et envoie-le-moi.
+   - **Domaines autorisés** : `mochi-go.app` et `xjvsalkvpgcjrznznxoi.supabase.co`. Si la console en refuse un, note le message et envoie-le-moi.
    - **Enregistrer**.
 6. **Accès aux données** (https://console.cloud.google.com/auth/scopes) : **Ajouter ou supprimer des champs d'application**, coche `openid`, `.../auth/userinfo.email`, `.../auth/userinfo.profile`. **Rien d'autre** (sinon Google exige une vérification longue). **Mettre à jour**, puis **Enregistrer**.
 
@@ -197,7 +199,7 @@ Pré-requis : le compte Google avec lequel tu veux gérer le projet. Adresse de 
 
 1. Ouvre https://console.cloud.google.com/auth/clients, **Créer un client**.
 2. Type : **Application Web**. Nom : `Jeu de go web`.
-3. **Origines JavaScript autorisées** : `https://jeu-de-go.vercel.app` (et `http://localhost:5173` pour les tests locaux).
+3. **Origines JavaScript autorisées** : `https://mochi-go.app` (et `http://localhost:5173` pour les tests locaux).
 4. **URI de redirection autorisés** : `https://xjvsalkvpgcjrznznxoi.supabase.co/auth/v1/callback` (copie-la plutôt depuis Supabase, étape 7.4, champ « Callback URL »).
 5. **Créer**. Copie l'**ID client** et le **code secret du client**. Le code secret ne va **que** dans Supabase : jamais dans le dépôt, un message ou un document.
 
@@ -211,7 +213,7 @@ https://console.cloud.google.com/auth/audience : **Publier l'application**, puis
 2. **Enable Sign in with Google** : activé.
 3. **Client IDs** : l'ID client (7.3). **Client Secret** : le code secret (7.3).
 4. **Skip nonce check** : **désactivé**. **Save**.
-5. **Authentication**, **URL Configuration** : **Site URL** `https://jeu-de-go.vercel.app` (déjà fait pour le code). Dans **Redirect URLs**, ajoute `https://jeu-de-go.vercel.app/**`.
+5. **Authentication**, **URL Configuration** : **Site URL** `https://mochi-go.app` (déjà fait pour le code). Dans **Redirect URLs**, ajoute `https://mochi-go.app/**`.
 6. **Authentication**, **Sign In / Providers** : ~~laisse **Manual linking** désactivé (5.3)~~. **Remplacé le 03/10 (#411)** : active-le, voir `docs/growth/connexion-sociale.md`, étape 2.
 
 ### 7.5 bis Afficher le bouton (Vercel)
@@ -251,7 +253,7 @@ Ne le fais **qu'après** 7.1 à 7.5 : sans Google activé dans Supabase, le bout
 - Retour à l'action demandée : note `go.retour-connexion.v1` dans l'onglet (sessionStorage, 30 min), `src/app/connexionGoogle.ts` : écran « Crée ton compte » et son action, défi ouvert par lien (rejoint une fois le compte complet), ou Profil. Annulé chez Google : « Connexion annulée. Réessaie, ou reçois un code par e-mail. »
 - Pseudo jamais pré-rempli (écran « Choisis ton pseudo » vide, testé avec un nom Google).
 - Mesure : `compte_methode` (`methode`, `navigateur_integre`) et `moyen: 'google'` sur `compte_cree` (plan de marquage et politique à jour).
-- Politique publique : **`https://jeu-de-go.vercel.app/confidentialite`** (réécriture dans `vercel.json`), avec le paragraphe « Si tu te connectes avec Google ». C'est l'adresse à donner à Google (7.2, Branding).
+- Politique publique : **`https://mochi-go.app/confidentialite`** (réécriture dans `vercel.json`), avec le paragraphe « Si tu te connectes avec Google ». C'est l'adresse à donner à Google (7.2, Branding).
 - Pas encore : preuve de la case d'âge côté serveur (D2, backend), effacement du nom et de la photo Google (6.1, backend + juridique), One Tap (phase 2), Apple.
 
 ## 9. Issues à créer après accord

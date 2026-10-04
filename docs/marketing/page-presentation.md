@@ -2,7 +2,7 @@
 
 Mise à jour du 28/09/2026 : mêmes faits que les fiches stores v2 (`docs/marketing/fiches-stores.md`). Aucun chiffre qui ne soit compté dans le dépôt.
 
-Page d'accueil publique du jeu (par exemple `jeu-de-go.vercel.app/decouvrir`, puis le futur domaine). Elle suit la règle du produit : comprise en 3 secondes, **un seul appel à l'action, « Jouer maintenant »**, répété à l'identique. Il ouvre l'app sur la première partie contre Pomme, sans compte.
+Page d'accueil publique du jeu (par exemple `mochi-go.app/decouvrir`). Elle suit la règle du produit : comprise en 3 secondes, **un seul appel à l'action, « Jouer maintenant »**, répété à l'identique. Il ouvre l'app sur la première partie contre Pomme, sans compte.
 
 Univers : Encre & Jade (`docs/design/v2/direction.md`). Fond encre, pierres réelles, un seul bouton jade en relief par écran visible, Mochi pour la voix.
 
@@ -79,7 +79,7 @@ Une partie se joue entièrement au clavier, avec des annonces pour le lecteur d'
 ## Règles de la page
 
 - Un seul bouton en relief visible à la fois ; tout le reste est en lien texte.
-- Balises pour le référencement : `<title>` « Apprendre le go en jouant, gratuit | Go : apprendre et jouer » ; `h1` = titre du héros ; FAQ balisée en `FAQPage` (schema.org) pour viser « c'est quoi le go », « règles du go », « apprendre le go ».
+- Balises pour le référencement : `<title>` « Apprendre le go en jouant, gratuit | Mochi Go » ; `h1` = titre du héros ; FAQ balisée en `FAQPage` (schema.org) pour viser « c'est quoi le go », « règles du go », « apprendre le go ».
 - Image de partage (Open Graph) : le goban du héros avec le titre.
 - Accessibilité : contraste AA, cibles de 44 px, animations coupées si mouvements réduits, sombre et clair.
 
