@@ -18,7 +18,8 @@ const DOSSIER = resolve(dirname(fileURLToPath(import.meta.url)), '../supabase/mi
 
 /** Ordres refusés : ils effacent des données ou retirent une protection. */
 export const INTERDITS = [
-  [/\btruncate\b/i, 'truncate'],
+  // Ordre `truncate` seulement (pas « revoke … truncate », qui retire un droit).
+  [/(^|;|\$\$)\s*truncate\b/im, 'truncate'],
   [/\bdrop\s+table\b/i, 'drop table'],
   [/\bdrop\s+schema\b/i, 'drop schema'],
   [/\bdrop\s+column\b/i, 'drop column'],
@@ -45,8 +46,11 @@ export function controler(fichier, sql) {
   if (!identite(fichier)) erreurs.push('nom de fichier attendu : AAAAMMJJHHMMSS_nom.sql');
   const code = sansCommentaires(sql);
   for (const [motif, nom] of INTERDITS) if (motif.test(code)) erreurs.push(`ordre interdit (suppression de données) : ${nom}`);
+  // Hors du corps des fonctions ($$ … $$), un `delete` efface des données tout de suite : refusé.
+  const horsFonctions = code.replace(/\$([a-z_]*)\$[\s\S]*?\$\1\$/gi, ' ');
+  if (/\bdelete\s+from\b/i.test(horsFonctions)) erreurs.push('ordre interdit (suppression de données) : delete hors fonction');
   const deletes = (code.match(/\bdelete\s+from\b/gi) ?? []).length;
-  if (deletes) avertissements.push(`${deletes} « delete from » (vérifie qu'ils sont dans des fonctions)`);
+  if (deletes) avertissements.push(`${deletes} « delete from » dans des fonctions (à relire)`);
   if (/\bcreate\s+table\b/i.test(code) && !/\benable\s+row\s+level\s+security\b/i.test(code)) {
     erreurs.push('nouvelle table sans « enable row level security »');
   }

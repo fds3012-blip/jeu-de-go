@@ -13,9 +13,13 @@ describe('appliquer une migration (#421)', () => {
 
   it('refuse ce qui efface des données ou retire le RLS', () => {
     for (const sql of ['truncate public.games;', 'drop table public.games;', 'alter table public.profiles drop column pseudo;',
-      'drop schema public cascade;', 'alter table public.games disable row level security;']) {
+      'drop schema public cascade;', 'delete from public.profiles;', 'alter table public.games disable row level security;']) {
       expect(controler(F, sql).erreurs.length, sql).toBeGreaterThan(0);
     }
+  });
+
+  it('permet de retirer le droit truncate', () => {
+    expect(controler(F, 'revoke insert, update, delete, truncate on public.t from authenticated;').erreurs).toEqual([]);
   });
 
   it('permet un delete dans une fonction, avec un avertissement', () => {
