@@ -55,6 +55,9 @@ export const EVENTS = {
   // « Rejoue tes erreurs » (issue #77) : une erreur de la revue rejouée comme problème (premier essai).
   // `source` : `revue` (« Rejoue cette erreur ») ou `problemes` (révision espacée, « Tes erreurs à rejouer »).
   erreurRejouee: 'erreur_rejouee',
+  // « Rejouer mes erreurs » du bilan (#428) : une erreur de la séance terminée, trouvée ou non. `trouvee`, `essais` (1 à 3 ;
+  // 0 si « Montre-moi le coup » avant tout essai), `note` (`grosse`, `erreur`, `manque`). Jamais le coup ni la partie.
+  revueErreurRejouee: 'revue_erreur_rejouee',
   // Erreur maîtrisée (issue #77) : deuxième réussite en révision, elle ne revient plus.
   erreurMaitrisee: 'erreur_maitrisee',
   // Série protégée (issue #76) : gel gagné tous les 7 jours de série, gel consommé par un jour manqué.

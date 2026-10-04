@@ -7,14 +7,15 @@
 import { EVENTS, track } from '../data/analytics';
 import { t } from '../content/i18n';
 
-export type SourceXp = 'probleme' | 'goDuJour' | 'revision' | 'lecon' | 'partie' | 'victoire';
+export type SourceXp = 'probleme' | 'goDuJour' | 'revision' | 'lecon' | 'partie' | 'victoire' | 'erreursRejouees';
 
 /**
  * XP gagnés par source. Une victoire compte la partie terminée (+15) et le bonus de victoire (+25).
  * Révision du jour (#233) : finie une fois par jour, elle fait vivre la série comme le Go du jour ; elle rapporte donc
  * autant que lui. Un défi du jour qui compte pour la série rapporte toujours quelque chose (docs/game-design/economie.md).
  */
-export const GAINS: Record<SourceXp, number> = { probleme: 10, goDuJour: 20, revision: 20, lecon: 30, partie: 15, victoire: 40 };
+// « Rejouer mes erreurs » (#428) : une séance finie rapporte comme un problème neuf, une seule fois par partie (rejouerErreurs.ts).
+export const GAINS: Record<SourceXp, number> = { probleme: 10, goDuJour: 20, revision: 20, lecon: 30, partie: 15, victoire: 40, erreursRejouees: 10 };
 
 /**
  * Courbe des niveaux. On commence au niveau 1 avec 0 XP.
@@ -90,9 +91,9 @@ export const recompensesDebloquees = (niveau: number) => RECOMPENSES.filter(r =>
  */
 export type Premiere = 'partie' | 'lecon' | 'probleme';
 export const BONUS_PREMIERE: Record<Premiere, number> = { partie: 20, lecon: 20, probleme: 20 };
-/** Le Go du jour et la révision sont des problèmes ; une victoire est une partie. */
+/** Le Go du jour, la révision et les erreurs rejouées (#428) sont des problèmes ; une victoire est une partie. */
 export const premiereDe = (source: SourceXp): Premiere =>
-  source === 'goDuJour' || source === 'revision' ? 'probleme' : source === 'victoire' ? 'partie' : source;
+  source === 'goDuJour' || source === 'revision' || source === 'erreursRejouees' ? 'probleme' : source === 'victoire' ? 'partie' : source;
 
 export interface Gain {
   source: SourceXp;

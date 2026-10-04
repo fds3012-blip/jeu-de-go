@@ -95,6 +95,22 @@ les Classiques, puis les Gaffes adverses, puis les plus petites pertes.
 Sur tes Erreurs, Coups manqués et Gaffes rejouables, le bon coup reste caché jusqu'à un essai (« Rejoue cette
 erreur ») ou « Voir le bon coup » (#77) : chercher soi-même d'abord.
 
+## Rejouer mes erreurs (#428)
+
+Avec KataGo seulement, le bilan propose « Rejouer mes erreurs (N) » (action principale ; « Démarrer le bilan » passe en
+secondaire). Code : `src/app/rejouerErreurs.ts` (logique, tests sur la partie #424), `src/app/RejouerErreurs.tsx`.
+- Erreurs choisies : tes Gaffes, Erreurs et Coups manqués dont la position d'avant a une analyse KataGo, avec un
+  premier choix exploré (8 visites au moins), légal et montrable (`conseilFiable`). Au plus 3, Gaffes d'abord, puis la
+  plus grosse perte. Écartée : une erreur qui ne change pas l'issue (plus de 15 points d'avance, ou de retard, ramenés
+  au 9 × 9, avec et sans elle).
+- Un essai est bon s'il est le premier choix de KataGo, ou un candidat exploré qui perd au plus le seuil « Bon »
+  (1,5 point en 9 × 9) : il serait noté Excellent ou Bon, jamais Imprécision. Un coup hors des candidats est jugé par
+  une recherche courte (32 visites) sur la position après lui et après le premier choix ; même seuil. Sans KataGo à ce
+  moment, Mochi dit qu'il ne peut pas juger et l'essai ne compte pas.
+- Trois essais (« Pas encore » deux fois), puis Mochi montre le coup en pierre fantôme. Une erreur pas trouvée rejoint
+  « Tes erreurs à rejouer » (#77). Fin : « 2 sur 3 trouvées », 10 XP une fois par partie, confettis si au moins une est
+  trouvée (jamais avec les mouvements réduits).
+
 ## Proverbes de l'écran d'attente
 
 Citations réelles, en français et en anglais (`src/content/i18n`, clés `proverbe.*`) :

@@ -44,8 +44,8 @@ describe('courbe des niveaux', () => {
 });
 
 describe('gains', () => {
-  it('barème : problème 10, Go du jour 20, révision du jour 20, leçon 30, partie 15, victoire 15 + 25', () => {
-    expect(GAINS).toEqual({ probleme: 10, goDuJour: 20, revision: 20, lecon: 30, partie: 15, victoire: 40 });
+  it('barème : problème 10, Go du jour 20, révision du jour 20, leçon 30, partie 15, victoire 15 + 25, erreurs rejouées 10', () => {
+    expect(GAINS).toEqual({ probleme: 10, goDuJour: 20, revision: 20, lecon: 30, partie: 15, victoire: 40, erreursRejouees: 10 });
   });
 
   it('#233 : chaque défi du jour qui fait vivre la série rapporte au moins autant que le Go du jour', () => {
