@@ -342,7 +342,7 @@ for (const cfg of CONFIGS) {
     let lien = '';
     await E('26-defi-creer', async () => {
       await a.goto('/');
-      await a.getByTestId('lien-defi').click();
+      await a.getByTestId('mode-ami').click();
       await expect(a.getByRole('button', { name: T.envoyerLien })).toBeVisible();
       await capA('26-defi-creer');
       await a.getByRole('button', { name: T.envoyerLien }).click();
@@ -374,7 +374,7 @@ for (const cfg of CONFIGS) {
     });
     await E('28c-defi-liste', async () => {
       await a.goto('/');
-      await a.getByTestId('lien-defi').click();
+      await a.getByTestId('mode-ami').click();
       await expect(a.getByRole('button', { name: T.partieDu })).toBeVisible();
       await capA('28c-defi-liste');
       await a.getByRole('button', { name: T.partieDu }).click();

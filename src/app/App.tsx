@@ -18,6 +18,7 @@ import { accueil, adversaireOuvert, echelle, introBut, INTRO_KEY, OUVERTS_D_OFFI
 import { PLACEMENT_KEY, chapitreConseille, coteApresPlacement, leconDeLAccueil, lirePlacement, ouvertsApresPlacement, proposerPlacement, type Placement as ResultatPlacement } from './placement';
 import { COTE_KEY } from './coteJoueur';
 import { Accueil } from './Accueil';
+import { LECONS_DEBUT, modesAccueil, type Depuis, type Mode } from './modes';
 import { ALL_PUZZLES } from '../content/puzzles';
 import { parsePuzzles } from '../data/puzzles';
 import { EVENTS, secondsSinceOpen, track, trackOnce } from '../data/analytics';
@@ -642,12 +643,26 @@ export function App() {
     const numero = numeroJour;
     const daily = duJour;
     const rangLecon = leconConseillee ? LESSONS.indexOf(leconConseillee) + 1 : 0;
+    // #429 : tous les modes en 1 toucher (ou 2 par « Plus ») ; le débutant garde l'ordi, ensuite la partie en ligne classée.
+    const modes = modesAccueil({
+      comptes: COMPTES, enLigne: online, pommeBattue: battu(bilan, OPPONENTS[0].id),
+      basesFaites: LESSONS.slice(0, LECONS_DEBUT).every(l => (progress[l.id] ?? 0) >= l.steps.length) || (placement?.fait === true && placement.kyu !== null),
+    });
+    const choisirMode = (m: Mode, depuis: Depuis) => {
+      track(EVENTS.modeChoisi, { mode: m, depuis, principal: m === modes.principal });
+      if (m === 'ordi') lancer('ordi');
+      else if (m === 'deux') lancer('deux');
+      else if (m === 'guidee') lancerGuidee();
+      // « Un humain, maintenant » (#360), avec un compte et un pseudo (sinon « Crée ton compte », puis reprise).
+      else if (m === 'en_ligne') { if (!garde({ quoi: 'en_ligne' }, { quoi: 'direct' })) return; setDefi(null); setDirect(true); window.scrollTo({ top: 0 }); }
+      // Défier un ami (#81) : la liste des défis et la création du lien.
+      else { if (!garde({ quoi: 'defi' }, { quoi: 'defis' })) return; setDefi({ vue: 'liste' }); window.scrollTo({ top: 0 }); }
+    };
     screen = (
       <Accueil adv={adv} battu={battu(bilan, adv.id)} textes={home} taille={settings.size} cartes={cartes}
         reglages={reglages} setReglages={setReglages} onTaille={n => set({ size: n })} onChoisir={setAdversaire}
-        onJouer={() => lancer('ordi')} onDeux={() => lancer('deux')} onGuidee={lancerGuidee}
-        // #360 : « Un humain, maintenant », avec un compte et un pseudo (sinon « Crée ton compte », puis reprise).
-        onDirect={COMPTES ? () => { if (!garde({ quoi: 'en_ligne' }, { quoi: 'direct' })) return; setDefi(null); setDirect(true); window.scrollTo({ top: 0 }); } : undefined}
+        modes={modes} onMode={choisirMode} compte={etat === 'complet'} defisAJouer={defisAJouer}
+        cote={etat === 'complet' && profil ? { cote: profil.cote, provisoire: profil.provisoire } : null}
         probleme={daily && { numero, titre: daily.title, rows: daily.rows, reussi: duJourFait, etat: etatTuile(appel, duJourFait) }}
         // #367 : « Aujourd'hui » est la liste « À faire » ; un toucher sur un élément en attente est mesuré.
         // Recette du 02/10 (S7) : Go du jour à faire → ouvert directement.
@@ -697,21 +712,12 @@ export function App() {
     <>
       <main className={`app${accueilVisible ? ' app-home' : ''}${enPartie ? ' app-partie' : ''}`}>
         {!enPartie && !ecranPlein && <header className="top">
-          {/* Marque (#416) : « Mochi » posé sur « Go », pour garder l'emprise de l'ancien titre ; la flamme, le gel et « Défier un ami » tiennent à 320 px. */}
+          {/* Marque (#416) : « Mochi » posé sur « Go », pour garder l'emprise de l'ancien titre ; la flamme et le gel tiennent à 320 px. */}
           <h1 className="marque"><span className="marque-mochi">Mochi</span>{' '}<span className="marque-go">Go</span></h1>
           {accueilVisible
             ? (
               <span className="entete-droite">
-                {/* « Défier un ami » (#81) : action secondaire, dans l'en-tête ; elle ne prend rien à la hauteur du goban. */}
-                {COMPTES && (
-                  <button type="button" className={`entete-defi${defisAJouer ? ' a-jouer' : ''}`} data-testid="lien-defi"
-                    aria-label={defisAJouer ? t('defi.accueil.aJouer', { n: defisAJouer }) : t('defi.accueil.lien')}
-                    onClick={() => { if (!garde({ quoi: 'defi' }, { quoi: 'defis' })) return; setDefi({ vue: 'liste' }); window.scrollTo({ top: 0 }); }}>
-                    <span className="entete-defi-pierres" aria-hidden="true"><span className="stone b" /><span className="stone w" /></span>
-                    <span className="entete-defi-texte" aria-hidden="true">{t('defi.accueil.lien')}</span>
-                    {defisAJouer > 0 && <span className="entete-defi-point" aria-hidden="true" />}
-                  </button>
-                )}
+                {/* #429 : « Défier un ami » a quitté l'en-tête pour la tuile « Un ami », sous le bouton principal. */}
                 {(flamme !== null || gels > 0) && (
                   <span className="serie-groupe">
                     {flamme !== null && <p className={`serie ${flamme}${allumage ? ' allumage' : ''}`} role="img" data-testid="flamme" data-etat={flamme}

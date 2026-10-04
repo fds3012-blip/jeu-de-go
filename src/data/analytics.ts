@@ -119,6 +119,9 @@ export const EVENTS = {
   // `raison` : points, abandon, temps, annulee ; `coups`). Jamais la partie ni l'adversaire.
   partieEnLigneCommencee: 'partie_en_ligne_commencee',
   partieEnLigneTerminee: 'partie_en_ligne_terminee',
+  // Modes de l'accueil (#429) : `mode` (en_ligne, ordi, ami, deux, guidee), `depuis` (bouton, plateau, tuile, plus,
+  // feuille : bouton de « Changer »), `principal` (le mode était l'action principale de l'accueil).
+  modeChoisi: 'mode_choisi',
 } as const;
 export type AnalyticsEvent = (typeof EVENTS)[keyof typeof EVENTS];
 export type Props = Record<string, string | number | boolean | null | undefined>;

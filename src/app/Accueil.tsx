@@ -4,18 +4,23 @@
 // sans son rang : rien à lire avant la première pierre (modèles : premier écran de chess.com et de Duolingo).
 // Retours : l'adversaire parle, le bouton propose la partie, et sous lui « Aujourd'hui » met en avant la bonne
 // chose à faire (défi où c'est ton tour, Go du jour à faire, leçon suivante ; src/app/aujourdhui.ts).
-import { useEffect, useRef, type ReactNode } from 'react';
+// #429 : tous les modes de jeu en 1 toucher, ou 2 par « Plus » : une rangée de tuiles sous le bouton (src/app/modes.ts).
+// Le débutant garde l'ordi en action principale ; ensuite, la partie en ligne classée, cote et grade visibles.
+import { Suspense, useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { Board } from '../ui/Board';
 import { Sceau } from '../ui/Sceau';
 import { Portrait } from '../ui/Portrait';
 import { Mochi } from '../ui/Mochi';
 import { MiniGoban } from '../ui/MiniGoban';
-import { CarrouselAdversaires, type CarteAdversaire } from '../ui/Carrousel';
+import type { CarteAdversaire } from '../ui/Carrousel';
+import { CarrouselAdversaires } from './ecrans';
 import type { Opponent } from '../engine';
 import type { Accueil as TextesAccueil } from './home';
 import { ordreDuJour, type TuileDuJour } from './aujourdhui';
 import { fr } from '../ui/typo';
-import { t } from '../content/i18n';
+import { langue, t } from '../content/i18n';
+import { gradeDe, texteGrade } from '../go/cote';
+import type { Depuis, Mode, ModesAccueil } from './modes';
 
 type Taille = 9 | 13 | 19;
 
@@ -39,12 +44,16 @@ interface Props {
   setReglages: (ouvert: boolean) => void;
   onTaille: (t: Taille) => void;
   onChoisir: (id: Opponent['id']) => void;
-  onJouer: () => void;
-  onDeux: () => void;
-  /** Partie guidée contre Mochi (#79), hors de l'échelle des adversaires. */
-  onGuidee?: () => void;
-  /** « Un humain, maintenant » (#360) : partie classée en direct ; absent sans comptes. */
-  onDirect?: () => void;
+  /** #429 : action principale, tuiles et « Plus » (src/app/modes.ts). */
+  modes: ModesAccueil;
+  /** Un mode choisi, et d'où (bouton, goban, tuile, « Plus », feuille « Changer ») : mesuré par `mode_choisi`. */
+  onMode: (mode: Mode, depuis: Depuis) => void;
+  /** Cote du joueur connecté (partie en ligne) ; null sans compte ou tant qu'elle n'est pas lue. */
+  cote?: { cote: number; provisoire: boolean } | null;
+  /** Compte complet : la partie en ligne mène droit à la recherche (sinon, « Crée ton compte » d'abord). */
+  compte?: boolean;
+  /** Défis d'amis où c'est ton tour : la tuile « Un ami » le dit. */
+  defisAJouer?: number;
   probleme?: TuileProbleme;
   onProbleme: () => void;
   /** Leçon suivante ; absente quand tout le chemin est fait. */
@@ -68,6 +77,10 @@ const PLATEAU_PREMIER: Record<Taille, Int8Array> = (() => {
   };
   return { 9: scene(9), 13: scene(13), 19: scene(19) };
 })();
+/** Cote affichée : « 1200 », ou « 1200 ? » tant qu'elle est provisoire (même écriture que src/content/i18n/cote.ts, hors du JS initial). */
+const texteCote = (c: { cote: number; provisoire: boolean }) => `${Math.round(c.cote)}${c.provisoire ? (langue() === 'fr' ? '\u00a0?' : '?') : ''}`;
+const texteGradeDe = (cote: number) => texteGrade(gradeDe(cote), langue());
+
 const AIDE_TAILLE = { 9: 'accueil.aideTaille.9', 13: 'accueil.aideTaille.13', 19: 'accueil.aideTaille.19' } as const satisfies Record<Taille, string>;
 
 export function Accueil(p: Props) {
@@ -78,6 +91,9 @@ export function Accueil(p: Props) {
   const defis = p.defis && p.defis.n > 0 ? p.defis : undefined;
   const tuiles = ordreDuJour({ premier, defis: defis?.n ?? 0, goDuJour: p.probleme ? (etat ?? 'neutre') : null, lecon: !!p.lecon });
   const enAvant = tuiles.some(x => x.enAvant);
+  const enLigne = p.modes.principal === 'en_ligne';
+  const cta = enLigne ? t('accueil.cta.enLigne') : textes.cta;
+  const [plusOuvert, setPlusOuvert] = useState(false);
 
   return (
     <div className={`accueil${premier ? ' accueil-premier' : ''}`} data-premier={premier || undefined}>
@@ -94,7 +110,7 @@ export function Accueil(p: Props) {
           Il reste touchable (même effet que le bouton), sans y inviter. */}
       <div className="scene">
         {/* Doublon tactile du bouton principal : masqué aux lecteurs d'écran, qui ont déjà le bouton. */}
-        <div className="scene-plateau" aria-hidden="true" data-testid="plateau-accueil" onClick={p.onJouer}>
+        <div className="scene-plateau" aria-hidden="true" data-testid="plateau-accueil" onClick={() => p.onMode(p.modes.principal, 'plateau')}>
           <div className="scene-cadre">
             <Board size={taille} board={premier ? PLATEAU_PREMIER[taille] : PLATEAUX[taille]} />
           </div>
@@ -113,29 +129,56 @@ export function Accueil(p: Props) {
         </div>
       ) : (
         <>
-          {/* L'adversaire parle sous le plateau : sa bulle ne cache plus aucune ligne. */}
-          <div className="adversaire">
-            <Portrait id={adv.id} taille={48} decoratif signature={false} />
-            <div className="adversaire-texte">
-              <div className="adversaire-identite">
-                <h2>{adv.nom}</h2>
-                <span>{adv.rang}</span>
+          {enLigne ? (
+            // #429 : partie en ligne en action principale. Ce qui se joue (la cote) à la place de l'adversaire de l'ordi.
+            <div className="adversaire classee" data-testid="classee">
+              <span className="classee-pierres" aria-hidden="true"><span className="stone b" /><span className="stone w" /></span>
+              <div className="adversaire-texte">
+                <div className="adversaire-identite">
+                  <h2>{p.cote ? texteGradeDe(p.cote.cote) : t('accueil.classee.titre')}</h2>
+                  {p.cote && <span data-testid="classee-cote">{texteCote(p.cote)}</span>}
+                </div>
+                <p className="scene-bulle">{fr(t(p.compte ? 'accueil.classee.bulle' : 'accueil.classee.sansCompte'))}</p>
               </div>
-              <p className="scene-bulle">{textes.bulle}</p>
             </div>
-          </div>
+          ) : (
+            // L'adversaire parle sous le plateau : sa bulle ne cache plus aucune ligne.
+            <div className="adversaire">
+              <Portrait id={adv.id} taille={48} decoratif signature={false} />
+              <div className="adversaire-texte">
+                <div className="adversaire-identite">
+                  <h2>{adv.nom}</h2>
+                  <span>{adv.rang}</span>
+                </div>
+                <p className="scene-bulle">{textes.bulle}</p>
+              </div>
+            </div>
+          )}
           <div className="reglage">
-            <span>{t('accueil.plateau', { taille })}</span>
+            <span>{t(enLigne ? 'accueil.plateauSeul' : 'accueil.plateau', { taille })}</span>
             <button className="lien" aria-haspopup="dialog" aria-expanded={p.reglages} onClick={() => p.setReglages(true)}>{t('accueil.changer')}</button>
           </div>
         </>
       )}
 
       {/* Libellé court (« Jouer contre Pomme ») : taille pleine ; long (première partie) : un cran plus petit, sur une ligne. */}
-      <button className={`cta cta-sceau${textes.cta.length <= 26 ? ' court' : ''}`} aria-label={textes.ctaNom} onClick={p.onJouer}>
-        <Sceau id={adv.id} taille={30} />{textes.cta}
+      <button className={`cta cta-sceau${cta.length <= 26 ? ' court' : ''}`} aria-label={enLigne ? t('accueil.cta.enLigneNom') : textes.ctaNom}
+        data-mode={p.modes.principal} onClick={() => p.onMode(p.modes.principal, 'bouton')}>
+        {enLigne ? <IconeMode mode="en_ligne" /> : <Sceau id={adv.id} taille={30} />}{cta}
       </button>
       {p.onPlacement && <button type="button" className="lien lien-placement" onClick={p.onPlacement}>{t('placement.lien')}</button>}
+
+      {/* #429 : les autres modes, en un toucher ; « Plus » pour le reste. Toujours dans le même ordre. */}
+      <div className="modes" data-testid="modes">
+        {p.modes.tuiles.map(m => <TuileMode key={m} mode={m} p={p} />)}
+        {p.modes.plus.length > 0 && (
+          <button type="button" className="mode" data-testid="mode-plus" aria-haspopup="dialog" aria-expanded={plusOuvert}
+            aria-label={t('mode.plus.aria')} onClick={() => setPlusOuvert(true)}>
+            <span className="mode-icone" aria-hidden="true"><IconeMode mode="plus" /></span>
+            <b>{t('mode.plus')}</b><small>{t('mode.plus.detail')}</small>
+          </button>
+        )}
+      </div>
 
       {/* Aujourd'hui : la bonne chose à faire en premier, mise en avant ; les autres tuiles suivent. */}
       {tuiles.length > 0 && (
@@ -148,6 +191,7 @@ export function Accueil(p: Props) {
       {p.installation}
 
       <Reglages {...p} />
+      {p.modes.plus.length > 0 && <FeuillePlus modes={p.modes.plus} ouvert={plusOuvert} setOuvert={setPlusOuvert} onMode={p.onMode} />}
     </div>
   );
 }
@@ -204,14 +248,9 @@ function Tuile({ tuile, p, etat, defis }: { tuile: TuileDuJour; p: Props; etat: 
 }
 
 /** Feuille « Changer » : carrousel des adversaires et taille du plateau, dans une boîte de dialogue modale native. */
-function Reglages({ adv, cartes, taille, reglages, setReglages, onTaille, onChoisir, onJouer, onDeux, onGuidee, onDirect, textes }: Props) {
+function Reglages({ adv, cartes, taille, reglages, setReglages, onTaille, onChoisir, onMode, textes }: Props) {
   const ref = useRef<HTMLDialogElement>(null);
-  useEffect(() => {
-    const d = ref.current;
-    if (!d) return;
-    if (reglages && !d.open) d.showModal?.();
-    if (!reglages && d.open) d.close();
-  }, [reglages]);
+  useDialogue(ref, reglages);
 
   return (
     <dialog ref={ref} className="feuille" aria-labelledby="feuille-titre" onClose={() => setReglages(false)}
@@ -232,11 +271,107 @@ function Reglages({ adv, cartes, taille, reglages, setReglages, onTaille, onChoi
             </div>
             <p id="feuille-taille-aide" className="muted small">{t(AIDE_TAILLE[taille])}</p>
           </div>
-          <CarrouselAdversaires cartes={cartes} choisi={adv.id} onChoisir={onChoisir} legende={t(`adv.${adv.id}.description`)} />
-          <button className="btn primary" aria-label={textes.ctaNom} onClick={onJouer}>{textes.cta}</button>
-          <button className="lien deux" onClick={onDeux}>{t('accueil.deux')}</button>
-          {onGuidee && <button className="lien deux" onClick={onGuidee}>{t('accueil.guidee')}</button>}
-          {onDirect && <button className="lien deux" data-testid="lien-direct" onClick={() => { setReglages(false); onDirect(); }}>{t('accueil.direct')}</button>}
+          {/* #429 : chargé avec la feuille (préchargé après le premier écran) ; la place est gardée pendant l'attente. */}
+          <Suspense fallback={<div className="carrousel-attente" aria-busy="true" />}>
+            <CarrouselAdversaires cartes={cartes} choisi={adv.id} onChoisir={onChoisir} legende={t(`adv.${adv.id}.description`)} />
+          </Suspense>
+          {/* #429 : « Changer » ne sert plus qu'à choisir l'adversaire et la taille ; les modes sont sur l'accueil. */}
+          <button className="btn primary" aria-label={textes.ctaNom} onClick={() => onMode('ordi', 'feuille')}>{textes.cta}</button>
+        </div>
+      )}
+    </dialog>
+  );
+}
+
+/** Ouvre ou ferme une boîte de dialogue modale native selon `ouvert`. */
+function useDialogue(ref: RefObject<HTMLDialogElement | null>, ouvert: boolean) {
+  useEffect(() => {
+    const d = ref.current;
+    if (!d) return;
+    if (ouvert && !d.open) d.showModal?.();
+    if (!ouvert && d.open) d.close();
+  }, [ref, ouvert]);
+}
+
+/** Pictogrammes des modes, au trait (24 × 24, couleur du texte) ; l'ordi et la partie guidée prennent un sceau. */
+function IconeMode({ mode }: { mode: Mode | 'plus' }) {
+  const trait = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round' } as const;
+  return (
+    <svg viewBox="0 0 24 24" width="24" height="24" focusable="false" aria-hidden="true" className="icone-mode">
+      {mode === 'en_ligne' && <><circle cx="12" cy="12" r="8.5" {...trait} /><path d="M3.5 12h17M12 3.5c-2.6 2.4-3.6 5.2-3.6 8.5s1 6.1 3.6 8.5M12 3.5c2.6 2.4 3.6 5.2 3.6 8.5s-1 6.1-3.6 8.5" {...trait} /></>}
+      {mode === 'deux' && <><rect x="6.5" y="2.5" width="11" height="19" rx="2.5" {...trait} /><circle cx="12" cy="8.5" r="2" fill="currentColor" /><circle cx="12" cy="15.5" r="2" {...trait} /></>}
+      {mode === 'plus' && <g fill="currentColor"><circle cx="5.5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="18.5" cy="12" r="2" /></g>}
+    </svg>
+  );
+}
+
+/** Une tuile de mode : pictogramme, nom du mode, détail (cote, adversaire en cours, défi qui attend). */
+function TuileMode({ mode, p }: { mode: Mode; p: Props }) {
+  const choisir = () => p.onMode(mode, 'tuile');
+  if (mode === 'en_ligne') {
+    const cote = p.cote && `${texteGradeDe(p.cote.cote)} · ${texteCote(p.cote)}`;
+    return (
+      <button type="button" className="mode" data-testid="mode-en_ligne" onClick={choisir}
+        aria-label={`${t('mode.enLigne')} : ${t('mode.enLigne.detail')}${cote ? `, ${cote}` : ''}`}>
+        <span className="mode-icone" aria-hidden="true"><IconeMode mode="en_ligne" /></span>
+        <b>{t('mode.enLigne')}</b>
+        <small>{cote ?? t('mode.enLigne.detail')}</small>
+      </button>
+    );
+  }
+  if (mode === 'ordi') {
+    return (
+      <button type="button" className="mode" data-testid="mode-ordi" aria-label={`${t('mode.ordi')} : ${p.textes.ctaNom}`} onClick={choisir}>
+        <span className="mode-icone" aria-hidden="true"><Sceau id={p.adv.id} taille={26} /></span>
+        <b>{t('mode.ordi')}</b><small>{p.adv.nom}</small>
+      </button>
+    );
+  }
+  if (mode === 'ami') {
+    const n = p.defisAJouer ?? 0;
+    return (
+      <button type="button" className={`mode${n ? ' a-jouer' : ''}`} data-testid="mode-ami" onClick={choisir}
+        aria-label={n ? t('defi.accueil.aJouer', { n }) : t('defi.accueil.lien')}>
+        <span className="mode-icone mode-pierres" aria-hidden="true"><span className="stone b" /><span className="stone w" /></span>
+        <b>{t('mode.ami')}</b><small>{n ? t('defi.accueil.tuileEtat') : t('mode.ami.detail')}</small>
+      </button>
+    );
+  }
+  return (
+    <button type="button" className="mode" data-testid={`mode-${mode}`} onClick={choisir}
+      aria-label={t(mode === 'deux' ? 'accueil.deux' : 'accueil.guidee')}>
+      <span className="mode-icone" aria-hidden="true">{mode === 'deux' ? <IconeMode mode="deux" /> : <Sceau id="mochi" taille={26} />}</span>
+      <b>{t(mode === 'deux' ? 'mode.deux' : 'mode.guidee')}</b><small>{t(mode === 'deux' ? 'mode.deux.detail' : 'mode.guidee.detail')}</small>
+    </button>
+  );
+}
+
+/** Feuille « Plus » : les modes qui ne tiennent pas dans la rangée (à deux, partie guidée), une ligne chacun. */
+function FeuillePlus({ modes, ouvert, setOuvert, onMode }: { modes: Mode[]; ouvert: boolean; setOuvert: (o: boolean) => void; onMode: Props['onMode'] }) {
+  const ref = useRef<HTMLDialogElement>(null);
+  useDialogue(ref, ouvert);
+  return (
+    <dialog ref={ref} className="feuille" aria-labelledby="plus-titre" data-testid="feuille-plus" onClose={() => setOuvert(false)}
+      onClick={e => { if (e.target === ref.current) setOuvert(false); }}>
+      {ouvert && (
+        <div className="feuille-corps">
+          <div className="feuille-tete">
+            <h2 id="plus-titre">{t('mode.plus.titre')}</h2>
+            <button className="lien" onClick={() => setOuvert(false)}>{t('accueil.fermer')}</button>
+          </div>
+          <ul className="plus-liste">
+            {modes.map(m => (
+              <li key={m}>
+                <button type="button" className="plus-mode" onClick={() => { setOuvert(false); onMode(m, 'plus'); }}>
+                  <span className="mode-icone" aria-hidden="true">{m === 'deux' ? <IconeMode mode="deux" /> : <Sceau id="mochi" taille={30} />}</span>
+                  <span>
+                    <b>{t(m === 'deux' ? 'accueil.deux' : 'accueil.guidee')}</b>
+                    <small>{t(m === 'deux' ? 'mode.deux.texte' : 'mode.guidee.texte')}</small>
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </dialog>

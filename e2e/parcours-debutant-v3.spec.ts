@@ -3,7 +3,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { brancher, CODE, fauxServeur, type FauxServeur } from './fauxSupabase';
 import { mesurer, type Mesure } from './mesures';
-import { jouer, plateau } from './plateau';
+import { choisirMode, jouer, plateau } from './plateau';
 
 // Parcours débutant v3 (recette du 02/10 au soir, docs/qa/recette-2026-10-02-soir.md) : les parcours clés d'un vrai
 // débutant enchaînés sur un même téléphone, Supabase simulé (e2e/fauxSupabase.ts), donc avec l'essai limité (#343).
@@ -271,7 +271,8 @@ for (const cfg of CONFIGS) {
 
     // 9. Aide depuis une partie : « ? », un mot, fermer ; la partie est intacte.
     await page.goto('/');
-    await page.locator('.cta').click();
+    // #429 : Pomme battue et premières leçons faites, l'action principale devient la partie en ligne ; l'ordi est une tuile.
+    await choisirMode(page, 'ordi');
     await expect(boutonPasser(page)).toBeEnabled({ timeout: 30_000 });
     await jouer(page, 'C3');
     await expect(boutonPasser(page)).toBeEnabled({ timeout: 30_000 });
@@ -289,7 +290,7 @@ for (const cfg of CONFIGS) {
 
     // 10. Défi par lien : le joueur (compte complet) envoie un lien ; l'ami crée son compte puis joue.
     await page.goto('/');
-    await page.getByTestId('lien-defi').click();
+    await page.getByTestId('mode-ami').click();
     await page.getByRole('button', { name: T.envoyerLien }).click();
     await expect(page.getByTestId('defi-lien')).toBeVisible();
     await voir(page, '23-defi-lien');
@@ -306,7 +307,7 @@ for (const cfg of CONFIGS) {
     await voir(ami.page, '25-defi-partie');
     await ami.ctx.close();
     await page.goto('/');
-    await page.getByTestId('lien-defi').click();
+    await page.getByTestId('mode-ami').click();
     // #400 : la ligne du défi porte le pseudo de l'ami (plus « Partie du… » une fois le lien ouvert).
     await page.getByRole('button', { name: /^Ami_du_go/ }).click();
     await expect(plateau(page).locator('g[data-pierre="noir"]')).toHaveCount(1);

@@ -67,8 +67,10 @@ test('« Changer » ouvre le choix de l’adversaire et de la taille', async ({ 
   await feuille.getByRole('button', { name: 'Caillou, 16 kyu' }).click();
   await feuille.getByRole('button', { name: '13 × 13' }).click();
   await expect(feuille.getByRole('button', { name: 'Caillou, 16 kyu' })).toHaveAttribute('aria-pressed', 'true');
+  // #429 : la feuille ne sert plus qu'à l'adversaire et à la taille ; les modes sont sur l'accueil.
+  await expect(feuille.getByRole('button', { name: /à deux|guidée|humain/i })).toHaveCount(0);
   // Cibles tactiles d'au moins 44 px dans la feuille.
-  for (const b of [feuille.getByRole('button', { name: 'Caillou, 16 kyu' }), feuille.getByRole('button', { name: 'Fermer' }), feuille.getByRole('button', { name: 'Jouer à deux sur ce téléphone' })]) {
+  for (const b of [feuille.getByRole('button', { name: 'Caillou, 16 kyu' }), feuille.getByRole('button', { name: 'Fermer' })]) {
     expect((await b.boundingBox())!.height).toBeGreaterThanOrEqual(44);
   }
   await feuille.getByRole('button', { name: 'Fermer' }).click();
