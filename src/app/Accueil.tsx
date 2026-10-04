@@ -43,6 +43,8 @@ interface Props {
   onDeux: () => void;
   /** Partie guidée contre Mochi (#79), hors de l'échelle des adversaires. */
   onGuidee?: () => void;
+  /** « Un humain, maintenant » (#360) : partie classée en direct ; absent sans comptes. */
+  onDirect?: () => void;
   probleme?: TuileProbleme;
   onProbleme: () => void;
   /** Leçon suivante ; absente quand tout le chemin est fait. */
@@ -202,7 +204,7 @@ function Tuile({ tuile, p, etat, defis }: { tuile: TuileDuJour; p: Props; etat: 
 }
 
 /** Feuille « Changer » : carrousel des adversaires et taille du plateau, dans une boîte de dialogue modale native. */
-function Reglages({ adv, cartes, taille, reglages, setReglages, onTaille, onChoisir, onJouer, onDeux, onGuidee, textes }: Props) {
+function Reglages({ adv, cartes, taille, reglages, setReglages, onTaille, onChoisir, onJouer, onDeux, onGuidee, onDirect, textes }: Props) {
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const d = ref.current;
@@ -234,6 +236,7 @@ function Reglages({ adv, cartes, taille, reglages, setReglages, onTaille, onChoi
           <button className="btn primary" aria-label={textes.ctaNom} onClick={onJouer}>{textes.cta}</button>
           <button className="lien deux" onClick={onDeux}>{t('accueil.deux')}</button>
           {onGuidee && <button className="lien deux" onClick={onGuidee}>{t('accueil.guidee')}</button>}
+          {onDirect && <button className="lien deux" data-testid="lien-direct" onClick={() => { setReglages(false); onDirect(); }}>{t('accueil.direct')}</button>}
         </div>
       )}
     </dialog>

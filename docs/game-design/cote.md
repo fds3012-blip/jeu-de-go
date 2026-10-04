@@ -62,7 +62,9 @@ Arrondis du serveur, repris à l'identique par `partieClassee` (`src/go/cote.ts`
 
 ## Appariement
 
-`find_match` apparie par la cote Glicko-2 : écart accepté = 100 + √(RD₁² + RD₂²) / 2 + 10 par seconde d'attente de l'autre joueur ; le plus proche en cote d'abord, puis le plus ancien dans la file. Deux nouveaux : environ 350 points ; deux joueurs sûrs (RD 60) : environ 140 points.
+`find_match` apparie par la cote Glicko-2 : écart accepté = 100 + √(RD₁² + RD₂²) / 2 + 10 par seconde d'attente ; le plus proche en cote d'abord, puis le plus ancien dans la file. Deux nouveaux : environ 350 points ; deux joueurs sûrs (RD 60) : environ 140 points.
+
+Depuis #360 (`docs/game-design/partie-en-direct.md`, migration `20261004180100_partie_en_direct.sql`), `find_match` apparie aussi par taille, temps de jeu et comptage, compte l'attente la plus longue des deux, et crée la partie classée en direct avec sa pendule tenue par le serveur. La perte au temps compte comme une défaite (`apply_game_rating`) ; une partie annulée avant que chacun ait joué ne compte pas.
 
 ## Affichage
 

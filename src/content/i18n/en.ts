@@ -113,6 +113,7 @@ export const en = {
   'accueil.aideTaille.19': 'The classic board of experienced players.',
   'accueil.deux': 'Play a friend on this phone',
   'accueil.guidee': 'Guided game against Mochi',
+  'accueil.direct': 'A human, right now',
   'guidee.bulle': 'Guided game: Mochi adjusts his strength to keep the game close. You’re Black.',
   'guidee.plusDoux': 'Mochi plays a little softer.',
   'guidee.plusFort': 'Mochi plays a little stronger.',

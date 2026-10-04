@@ -114,6 +114,11 @@ export const EVENTS = {
   // Aide du joueur (#362) : `fiche` (`regles`, `compter`, `mots`, `questions`), `mot` (mot du glossaire ouvert d'emblée, sinon vide),
   // `depuis` (`profil`, `lecon`, `probleme`, `partie`, `clavier`). Aucun texte cherché n'est envoyé.
   aideOuverte: 'aide_ouverte',
+  // Partie en direct contre un humain (#360) : adversaire trouvé (`taille`, `cadence`, `regles`, `attente_s` : délai
+  // d'appariement), puis partie finie (`taille`, `cadence`, `issue` : victoire, defaite, egalite, annulee ;
+  // `raison` : points, abandon, temps, annulee ; `coups`). Jamais la partie ni l'adversaire.
+  partieEnLigneCommencee: 'partie_en_ligne_commencee',
+  partieEnLigneTerminee: 'partie_en_ligne_terminee',
 } as const;
 export type AnalyticsEvent = (typeof EVENTS)[keyof typeof EVENTS];
 export type Props = Record<string, string | number | boolean | null | undefined>;

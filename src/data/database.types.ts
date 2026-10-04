@@ -404,25 +404,34 @@ export type Database = {
       }
       match_queue: {
         Row: {
+          cadence: string
           created_at: string
           rating: number
           rd: number
+          regles: string
           size: number
           user_id: string
+          vu_le: string
         }
         Insert: {
+          cadence?: string
           created_at?: string
           rating: number
           rd?: number
+          regles?: string
           size: number
           user_id: string
+          vu_le?: string
         }
         Update: {
+          cadence?: string
           created_at?: string
           rating?: number
           rd?: number
+          regles?: string
           size?: number
           user_id?: string
+          vu_le?: string
         }
         Relationships: [
           {
@@ -485,6 +494,65 @@ export type Database = {
             foreignKeyName: "notifications_partie_id_fkey"
             columns: ["partie_id"]
             isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      parties_direct: {
+        Row: {
+          blanc_ms: number
+          blanc_periodes: number
+          blanc_vu_le: string | null
+          cadence: string
+          comptage_depuis: string | null
+          cree_le: string
+          main_ms: number
+          noir_ms: number
+          noir_periodes: number
+          noir_vu_le: string | null
+          partie_id: string
+          periode_ms: number
+          periodes: number
+          trait_depuis: string | null
+        }
+        Insert: {
+          blanc_ms: number
+          blanc_periodes: number
+          blanc_vu_le?: string | null
+          cadence: string
+          comptage_depuis?: string | null
+          cree_le?: string
+          main_ms: number
+          noir_ms: number
+          noir_periodes: number
+          noir_vu_le?: string | null
+          partie_id: string
+          periode_ms: number
+          periodes: number
+          trait_depuis?: string | null
+        }
+        Update: {
+          blanc_ms?: number
+          blanc_periodes?: number
+          blanc_vu_le?: string | null
+          cadence?: string
+          comptage_depuis?: string | null
+          cree_le?: string
+          main_ms?: number
+          noir_ms?: number
+          noir_periodes?: number
+          noir_vu_le?: string | null
+          partie_id?: string
+          periode_ms?: number
+          periodes?: number
+          trait_depuis?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parties_direct_partie_id_fkey"
+            columns: ["partie_id"]
+            isOneToOne: true
             referencedRelation: "games"
             referencedColumns: ["id"]
           },
@@ -821,6 +889,14 @@ export type Database = {
           taille: number
         }[]
       }
+      cadence_direct: {
+        Args: { p_cadence: string }
+        Returns: {
+          main_ms: number
+          periode_ms: number
+          periodes: number
+        }[]
+      }
       choisir_depart_cote: {
         Args: { p_depart: string; p_kyu?: number }
         Returns: number
@@ -838,6 +914,11 @@ export type Database = {
       }
       defier_ami: { Args: { p_pseudo: string }; Returns: string }
       delete_my_account: { Args: never; Returns: undefined }
+      direct_constater: {
+        Args: { p_appelant: string; p_partie: string }
+        Returns: string
+      }
+      direct_en_cours: { Args: { p_uid: string }; Returns: string }
       demander_ami: { Args: { p_pseudo: string }; Returns: string }
       enregistrer_abonnement_rappel: {
         Args: {
@@ -852,7 +933,10 @@ export type Database = {
       }
       enregistrer_parties_perso: { Args: { p_parties: Json }; Returns: string[] }
       exiger_compte_avec_pseudo: { Args: never; Returns: string }
-      find_match: { Args: { p_size: number }; Returns: string }
+      find_match: {
+        Args: { p_cadence?: string; p_regles?: string; p_size: number }
+        Returns: string
+      }
       finish_game_by_score: {
         Args: {
           p_black: number
@@ -921,8 +1005,23 @@ export type Database = {
           pseudo: string
         }[]
       }
+      pendule_apres: {
+        Args: {
+          p_ecoule_ms: number
+          p_main_ms: number
+          p_periode_ms: number
+          p_periodes: number
+        }
+        Returns: {
+          main_ms: number
+          periodes: number
+          tombe: boolean
+        }[]
+      }
+      pendule_direct: { Args: { p_partie: string }; Returns: Json }
       play_move: { Args: { p_game: string; p_move: string }; Returns: string }
       preparer_rattachement: { Args: never; Returns: string }
+      quitter_file_attente: { Args: never; Returns: string }
       rattacher_session_anonyme: { Args: { p_code: string }; Returns: number }
       reclamer_rappels: {
         Args: { p_maintenant?: string }
