@@ -406,18 +406,21 @@ export type Database = {
         Row: {
           created_at: string
           rating: number
+          rd: number
           size: number
           user_id: string
         }
         Insert: {
           created_at?: string
           rating: number
+          rd?: number
           size: number
           user_id: string
         }
         Update: {
           created_at?: string
           rating?: number
+          rd?: number
           size?: number
           user_id?: string
         }
@@ -534,6 +537,14 @@ export type Database = {
           avatar_url: string | null
           conditions_acceptees_le: string | null
           conditions_version: string | null
+          cote_depart: string | null
+          cote_depart_kyu: number | null
+          cote_depart_le: string | null
+          cote_maj_le: string | null
+          cote_parties: number
+          cote_provisoire: boolean
+          cote_rd: number
+          cote_vol: number
           country: string | null
           created_at: string
           id: string
@@ -549,6 +560,14 @@ export type Database = {
           avatar_url?: string | null
           conditions_acceptees_le?: string | null
           conditions_version?: string | null
+          cote_depart?: string | null
+          cote_depart_kyu?: number | null
+          cote_depart_le?: string | null
+          cote_maj_le?: string | null
+          cote_parties?: number
+          cote_provisoire?: never
+          cote_rd?: number
+          cote_vol?: number
           country?: string | null
           created_at?: string
           id: string
@@ -564,6 +583,14 @@ export type Database = {
           avatar_url?: string | null
           conditions_acceptees_le?: string | null
           conditions_version?: string | null
+          cote_depart?: string | null
+          cote_depart_kyu?: number | null
+          cote_depart_le?: string | null
+          cote_maj_le?: string | null
+          cote_parties?: number
+          cote_provisoire?: never
+          cote_rd?: number
+          cote_vol?: number
           country?: string | null
           created_at?: string
           id?: string
@@ -716,24 +743,30 @@ export type Database = {
           created_at: string
           game_id: string | null
           id: number
+          ecart: number | null
           kind: string
           rating: number
+          rd: number | null
           user_id: string
         }
         Insert: {
           created_at?: string
+          ecart?: number | null
           game_id?: string | null
           id?: never
           kind: string
           rating: number
+          rd?: number | null
           user_id: string
         }
         Update: {
           created_at?: string
+          ecart?: number | null
           game_id?: string | null
           id?: never
           kind?: string
           rating?: number
+          rd?: number | null
           user_id?: string
         }
         Relationships: [
@@ -788,6 +821,14 @@ export type Database = {
           taille: number
         }[]
       }
+      choisir_depart_cote: {
+        Args: { p_depart: string; p_kyu?: number }
+        Returns: number
+      }
+      cote_rd_apres_absence: {
+        Args: { p_depuis: string; p_maintenant: string; p_rd: number; p_vol: number }
+        Returns: number
+      }
       creer_defi: {
         Args: never
         Returns: {
@@ -824,7 +865,33 @@ export type Database = {
         }
         Returns: string
       }
-      heure_rappel: { Args: { p_moment: string }; Returns: number }
+      glicko2: {
+        Args: {
+          p_adv_cotes: number[]
+          p_adv_rd: number[]
+          p_cote: number
+          p_rd: number
+          p_scores: number[]
+          p_vol: number
+        }
+        Returns: {
+          cote: number
+          rd: number
+          vol: number
+        }[]
+      }
+      glicko2_f: {
+        Args: {
+          p_a: number
+          p_delta: number
+          p_phi: number
+          p_tau: number
+          p_v: number
+          p_x: number
+        }
+        Returns: number
+      }
+      heure_rappel:{ Args: { p_moment: string }; Returns: number }
       marquer_notifications_lues: {
         Args: { p_partie?: string; p_type?: string }
         Returns: number

@@ -417,7 +417,6 @@ export const fr = {
   // Écran de partie : bandeaux, barre d'actions, comptage
   'partie.retourAccueil': "Retour à l'accueil",
   'partie.komi': 'komi {komi}',
-  'partie.noirCote': 'Noir, cote {cote}',
   'partie.joueEnPremier': 'joue en premier',
   'partie.auTrait': ', au trait',
   'partie.coupsJoues': 'Coups joués',

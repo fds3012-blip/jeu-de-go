@@ -27,6 +27,9 @@ import { adversaireDe, lirePseudos, type Pseudos } from '../data/pseudos';
 import { libelleCoup } from './partie';
 import { Revue } from './Revue';
 import { LierEmail } from './Account';
+import { GainCote, VocabulaireGrade } from '../ui/Cote';
+import { texteAdversaire } from '../content/i18n/cote';
+import { coteJoueur } from '../data/cote';
 import { ConnexionCode } from './Connexion';
 import type { Sens } from './connexionBascule';
 import type { EtatCompte } from './essai';
@@ -276,6 +279,8 @@ interface PartieProps {
   userId: string | undefined;
   /** Ancienne session anonyme (#81) : elle lie son e-mail avant de jouer le coup suivant (#343). */
   anonyme: boolean;
+  /** #417 : réglage « Célébrations » (confettis au changement de grade après une partie classée). */
+  celebrer?: boolean;
   /** Pseudo du joueur, mis dans le lien renvoyé. */
   pseudo?: string | null;
   confirmTouch: boolean;
@@ -290,7 +295,7 @@ interface PartieProps {
  * bandeau, le ruban des coups avec le « ? » de l'aide (#390), Mochi sous ton bandeau, « Passer » en bouton plein et
  * « Abandonner » rangé dans le menu « Plus ».
  */
-export function DefiPartie({ db, partieId, userId, anonyme, pseudo = null, confirmTouch, reglages, onRetour, onAutre }: PartieProps) {
+export function DefiPartie({ db, partieId, userId, anonyme, pseudo = null, confirmTouch, reglages, celebrer, onRetour, onAutre }: PartieProps) {
   const online = useOnline();
   const [etat, setEtat] = useState<{ etat: 'chargement' } | { etat: 'erreur'; message: string } | { etat: 'pret'; d: EtatDefi }>({ etat: 'chargement' });
   const [maintenant, setMaintenant] = useState(() => Date.now());
@@ -304,6 +309,8 @@ export function DefiPartie({ db, partieId, userId, anonyme, pseudo = null, confi
   // Pseudo de l'ami (#393), lu une fois dans son profil ; null : inconnu, l'écran dit « Ton ami ».
   const [nomAmi, setNomAmi] = useState<string | null>(null);
   const pseudosLus = useRef(new Map<string, string | null>());
+  // #417 : partie classée, cote et grade de l'adversaire sous son nom (lus une fois).
+  const [coteAmi, setCoteAmi] = useState<{ cote: number; provisoire: boolean } | null>(null);
 
   const charger = useCallback(async () => {
     const r = await lireDefi(db, partieId);
@@ -311,6 +318,7 @@ export function DefiPartie({ db, partieId, userId, anonyme, pseudo = null, confi
     const ami = r.ok && userId ? (r.value.partie.black_id === userId ? r.value.partie.white_id : r.value.partie.black_id) : null;
     if (ami && !pseudosLus.current.has(ami)) pseudosLus.current.set(ami, await pseudoJoueur(db, ami));
     if (ami) setNomAmi(pseudosLus.current.get(ami) ?? null);
+    if (ami && r.ok && r.value.partie.rated) void coteJoueur(db, ami).then(setCoteAmi);
     setMaintenant(Date.now());
     setEtat(prev => (r.ok ? { etat: 'pret', d: r.value } : prev.etat === 'pret' ? prev : { etat: 'erreur', message: r.error }));
   }, [db, partieId, userId]);
@@ -411,7 +419,9 @@ export function DefiPartie({ db, partieId, userId, anonyme, pseudo = null, confi
   const nomLui = nomAmi ?? t('defi.adversaire');
   const nom = (c: 1 | 2) => (c === moi ? t('defi.toi') : nomLui);
   const coups = (partie.moves.match(/../g) ?? []).map((m, i) => libelleCoup(i + 1, fromSgf(m, partie.size), partie.size));
-  const sousTitre = (c: 1 | 2) => (c === 1 ? t('defi.noir') : t('defi.blanc', { komi: nombre(Number(partie.komi)) }));
+  const sousTitreCouleur = (c: 1 | 2) => (c === 1 ? t('defi.noir') : t('defi.blanc', { komi: nombre(Number(partie.komi)) }));
+  // #417 : partie classée, le grade et la cote de l'adversaire à la place de sa couleur (sa pierre la montre déjà).
+  const sousTitre = (c: 1 | 2) => (c === lui && partie.rated && coteAmi ? texteAdversaire(coteAmi.cote, coteAmi.provisoire) : sousTitreCouleur(c));
   const bandeau = (c: 1 | 2, avant?: ReactNode) => (
     <Bandeau nom={nom(c)} sousTitre={sousTitre(c)} actif={v.phase === 'jeu' && v.trait === c} captures={v.pos.captures[c]}
       pierresPrises={c === 1 ? 'blanc' : 'noir'} portrait={<Avatar couleur={c} />} avant={avant} />
@@ -461,9 +471,12 @@ export function DefiPartie({ db, partieId, userId, anonyme, pseudo = null, confi
         {v.phase === 'fini' && (
           <div className="defi-fin">
             <p className="defi-fin-titre" role="status">{fr(phraseIssue(v.issue, nomAmi))}</p>
+            {/* #417 : partie classée entre humains, « +14 » et le grade ; jamais pour une partie non classée. */}
+            {partie.rated && userId && !anonyme && <GainCote db={db} gameId={partie.id} userId={userId} celebrer={celebrer} />}
             <button type="button" className="btn primary defis-cta" onClick={onAutre}>{t('defi.autre')}</button>
             {revue && <button type="button" className="lien" onClick={() => { setEnRevue(true); window.scrollTo?.({ top: 0 }); }}>{t('fin.revoir')}</button>}
             <button type="button" className="lien" onClick={onRetour}>{t('defi.retourAccueil')}</button>
+            {partie.rated && userId && !anonyme && <VocabulaireGrade />}
           </div>
         )}
         {proposerInscription && (

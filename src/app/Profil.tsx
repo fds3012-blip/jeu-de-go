@@ -34,6 +34,9 @@ import { LANGUES, langue, memoriserChoixLangue, t, type Langue } from '../conten
 import type { Placement } from './placement';
 import { Amis } from './Amis';
 import { BoutonAide } from '../ui/BoutonAide';
+import { CarteCote } from '../ui/Cote';
+import { grade, tc, texteCote } from '../content/i18n/cote';
+import type { ProfilJoueur } from './hooks';
 
 const SOLVED_KEY = 'go.problemes.v1';
 
@@ -59,7 +62,7 @@ function useDonnees(serie: number, record: number, parcours: Parcours) {
   return donnees;
 }
 
-export type VueProfil = 'menu' | 'reglages' | 'installer' | 'rappel' | 'compte' | 'conditions' | 'importer' | 'parties' | 'amis';
+export type VueProfil = 'menu' | 'reglages' | 'installer' | 'rappel' | 'compte' | 'conditions' | 'importer' | 'parties' | 'amis' | 'cote';
 
 // Libellés traduits (#167) : calculés à l'affichage, dans la langue de l'interface.
 const themes = () => [
@@ -81,7 +84,9 @@ interface Props {
   settings: Settings;
   set: (patch: Partial<Settings>) => void;
   /** Pseudo et cote du joueur connecté, null sans compte. */
-  profil: { pseudo: string | null; cote: number } | null;
+  profil: (Pick<ProfilJoueur, 'pseudo' | 'cote'> & Partial<ProfilJoueur>) | null;
+  /** #417 : le départ de la cote vient d'être choisi ; relire le profil. */
+  onProfilChange?: () => void;
   serie: number;
   /** Plus longue série connue (#212). */
   record?: number;
@@ -115,7 +120,7 @@ function SousVue({ id, titre, onRetour, children }: { id: string; titre: string;
   );
 }
 
-export function Profil({ vue, onVue, settings, set, profil, serie, record = 0, parcours, placement, onPlacement, onJouer, db, userId, amis }: Props) {
+export function Profil({ vue, onVue, settings, set, profil, serie, record = 0, parcours, placement, onPlacement, onJouer, db, userId, amis, onProfilChange }: Props) {
   const retour = () => { onVue('menu'); window.scrollTo({ top: 0 }); };
   // #358 : toutes les parties terminées, et leur revue.
   // #286 : « Analyser une partie » est dans « Mes parties » depuis #358 (le Profil tient sans défiler) ; on y revient.
@@ -125,6 +130,10 @@ export function Profil({ vue, onVue, settings, set, profil, serie, record = 0, p
   if (vue === 'importer') return <ImportSgf onRetour={() => { onVue('parties'); window.scrollTo({ top: 0 }); }} pseudo={profil?.pseudo} confirmTouch={settings.confirmTouch} />;
   if (vue === 'amis' && amis?.compte) {
     return <SousVue id="amis-titre" titre={t('amis.titre')} onRetour={retour}><Amis db={amis.db} onDefi={amis.onDefi} /></SousVue>;
+  }
+  // #417 : ta cote de jeu (parties classées entre humains), sa courbe de 30 jours et le point de départ.
+  if (vue === 'cote' && amis?.compte && userId) {
+    return <SousVue id="cote-titre" titre={tc('cote.titre')} onRetour={retour}><CarteCote db={amis.db} userId={userId} onChange={onProfilChange} /></SousVue>;
   }
   if (vue === 'compte') return <SousVue id="compte-titre" titre={t('profil.compte')} onRetour={retour}><Account /></SousVue>;
   if (vue === 'reglages') return <SousVue id="reglages-titre" titre={t('profil.reglages')} onRetour={retour}><Reglages settings={settings} set={set} /></SousVue>;
@@ -195,8 +204,18 @@ function Menu({ onVue, profil, serie, record = 0, parcours, placement, onPlaceme
               onClick={() => (amis.compte ? onVue('amis') : amis.onCompte())} />
           </div>
         ) : <LigneLien icone={<IconeReglage id="parties" />} libelle={t('historique.titre')} valeur={valeurParties} onClick={() => onVue('parties')} />}
-        {/* #283 : le kyu estimé ne s'affiche qu'ici, sur une ligne, avec sa date ; la ligne relance le placement. */}
-        {onPlacement && (placement?.fait && placement.kyu !== null
+        {/* #283 : le kyu estimé ne s'affiche qu'ici, sur une ligne, avec sa date ; la ligne relance le placement.
+            #417 : avec un compte complet, « Ta cote » partage cette ligne (deux moitiés) : le Profil tient toujours sans défiler. */}
+        {amis?.compte && profil && onPlacement ? (
+          <div className="ligne ligne-double">
+            <DemiLigne icone="cote" libelle={tc('cote.ligne')} testId="ligne-cote"
+              valeur={!profil.parties && !profil.depart ? tc('cote.ligneDepart') : `${grade(profil.cote)} · ${texteCote(profil.cote, profil.provisoire ?? true)}`}
+              onClick={() => onVue('cote')} />
+            <DemiLigne icone="placement" libelle={placement?.fait && placement.kyu !== null ? t('placement.profil') : tc('cote.lignePlacement')}
+              valeur={placement?.fait && placement.kyu !== null ? t('placement.profilValeur', { kyu: placement.kyu, date: dateCourte(placement.date) }) : undefined}
+              onClick={onPlacement} />
+          </div>
+        ) : onPlacement && (placement?.fait && placement.kyu !== null
           ? <LigneLien icone={<IconeReglage id="placement" />} libelle={t('placement.profil')} valeur={t('placement.profilValeur', { kyu: placement.kyu, date: dateCourte(placement.date) })} onClick={onPlacement} />
           : <LigneLien icone={<IconeReglage id="placement" />} libelle={t(placement?.fait ? 'placement.profilRefaire' : 'placement.profilFaire')} onClick={onPlacement} />)}
         <LigneLien icone={<IconeReglage id="reglages" />} libelle={t('profil.reglages')} valeur={t('profil.reglagesResume')} onClick={() => onVue('reglages')} />
@@ -211,9 +230,9 @@ function Menu({ onVue, profil, serie, record = 0, parcours, placement, onPlaceme
 }
 
 /** Moitié d'une ligne du Profil (#359) : icône, libellé, valeur dessous, 48 px de haut. */
-function DemiLigne({ icone, libelle, valeur, onClick }: { icone: IconeReglageId; libelle: string; valeur?: ReactNode; onClick: () => void }) {
+function DemiLigne({ icone, libelle, valeur, onClick, testId }: { icone: IconeReglageId; libelle: string; valeur?: ReactNode; onClick: () => void; testId?: string }) {
   return (
-    <button type="button" className="ligne-demi" onClick={onClick}>
+    <button type="button" className="ligne-demi" onClick={onClick} data-testid={testId}>
       <LigneIcone><IconeReglage id={icone} /></LigneIcone>
       <span className="ligne-demi-texte">
         <span className="ligne-libelle">{libelle}</span>

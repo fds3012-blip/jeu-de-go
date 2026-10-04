@@ -105,7 +105,8 @@ function Connected({ db }: { db: Db }) {
     <>
       <div className="card">
         <b style={{ fontSize: '1.2rem' }}>{profile.username}</b>
-        {/* Recette du 02/10 au soir : aucune cote affichée (décision de Florian) ; l'e-mail suffit sous le pseudo. */}
+        {/* Recette du 02/10 au soir : « Mon compte » n'affiche pas de cote ; l'e-mail suffit sous le pseudo.
+            La cote de jeu (#417, parties classées entre humains) se lit dans le Profil, ligne « Ta cote ». */}
         <p className="muted small" style={{ margin: '4px 0 0' }}>{session.user.email}</p>
         {/* Audit du 02/10 : deux boutons empilés, pleine largeur (« Changer de pseudo » ne passe plus sur deux lignes). */}
         <div className="compte-boutons">

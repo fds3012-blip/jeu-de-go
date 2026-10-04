@@ -124,22 +124,31 @@ export function prefersReducedMotion(): boolean {
   return typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 }
 
+/** Pseudo et cote de jeu du joueur connecté (#417 : Glicko-2, provisoire, parties classées, départ choisi). */
+export interface ProfilJoueur { pseudo: string | null; cote: number; provisoire: boolean; parties: number; depart: string | null }
+
 /**
  * Pseudo et cote du joueur connecté (null sans compte, hors ligne ou pendant le chargement).
- * `cle` : à changer pour relire le profil (pseudo qui vient d'être choisi, #343).
+ * `cle` : à changer pour relire le profil (pseudo qui vient d'être choisi, #343 ; départ de la cote, #417).
  */
-export function useProfil(db: Db | null, cle = 0): { pseudo: string | null; cote: number } | null {
+export function useProfil(db: Db | null, cle = 0): ProfilJoueur | null {
   const session = useSession(db);
   // Session anonyme (défi par lien, #81) : pas de compte, donc ni pseudo ni cote.
   const userId = compteDe(session);
-  const [profil, setProfil] = useState<{ id: string; pseudo: string | null; cote: number } | null>(null);
+  const [profil, setProfil] = useState<(ProfilJoueur & { id: string }) | null>(null);
   useEffect(() => {
     if (!db || !userId) return;
     let alive = true;
-    fetchProfile(db, userId).then(r => { if (alive && r.ok && r.value) setProfil({ id: userId, pseudo: r.value.username, cote: r.value.rating }); });
+    fetchProfile(db, userId).then(r => {
+      if (!alive || !r.ok || !r.value) return;
+      const p = r.value;
+      setProfil({ id: userId, pseudo: p.username, cote: p.rating, provisoire: p.cote_provisoire !== false, parties: p.cote_parties ?? 0, depart: p.cote_depart ?? null });
+    });
     return () => { alive = false; };
   }, [db, userId, cle]);
-  return profil && profil.id === userId ? { pseudo: profil.pseudo, cote: profil.cote } : null;
+  if (!profil || profil.id !== userId) return null;
+  const { id: _id, ...joueur } = profil;
+  return joueur;
 }
 
 /**

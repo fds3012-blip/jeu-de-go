@@ -1,0 +1,48 @@
+/* Cote de jeu (#417) : carte du Profil, choix du départ, gain en fin de partie classée. Rôles du thème seulement :
+   contraste AA vérifié par tokens.test.ts dans les deux modes. */
+.cote-carte { display: grid; gap: var(--space-3); }
+.cote-chiffre { margin: 0; display: flex; align-items: baseline; gap: var(--space-3); flex-wrap: wrap; }
+.cote-nombre { font-family: var(--font-titre); font-size: var(--fs-3xl); font-weight: var(--fw-titre); line-height: 1; font-variant-numeric: tabular-nums; }
+.cote-grade { font-size: var(--fs-l); font-weight: var(--fw-bold); color: var(--accent-texte); }
+.cote-vocabulaire { margin: 0; padding: var(--space-2) var(--space-3); border-radius: var(--radius-s); background: var(--surface-2); color: var(--text); }
+.cote-carte > p.muted { margin: 0; }
+
+.cote-courbe { margin: 0; display: grid; gap: var(--space-1); }
+.cote-courbe figcaption { margin: 0; }
+.cote-courbe svg { width: 100%; height: 64px; display: block; background: var(--surface); border-radius: var(--radius-s); }
+.cote-courbe-ligne { fill: none; stroke: var(--courbe-ligne); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+.cote-courbe-point { fill: var(--courbe-curseur); }
+.cote-courbe-vide { margin: 0; }
+
+.cote-depart { display: grid; gap: var(--space-2); padding: var(--space-3); border-radius: var(--radius); background: var(--surface); }
+.cote-depart h3 { margin: 0; font-size: var(--fs-m); }
+.cote-depart > p { margin: 0; }
+.cote-depart-choix { display: grid; gap: var(--space-2); }
+.cote-depart-option { min-height: var(--cible-bouton); display: flex; align-items: center; justify-content: space-between; gap: var(--space-2);
+  padding: var(--space-2) var(--space-3); border-radius: var(--radius-bouton); border: 2px solid var(--line); background: var(--bg);
+  color: var(--text); font: inherit; text-align: left; }
+.cote-depart-option[aria-pressed="true"] { border-color: var(--accent-texte); background: var(--surface-2); }
+.cote-depart-option[aria-pressed="true"] .cote-depart-libelle::before { content: "✓ "; color: var(--accent-texte); }
+.cote-depart-libelle { font-weight: var(--fw-bold); }
+.cote-depart-detail { color: var(--muted); font-size: var(--fs-xs); white-space: nowrap; }
+.cote-depart-grade { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.cote-depart-grade select { min-height: var(--cible-bouton); min-width: 9.5em; padding: 0 var(--space-2); border-radius: var(--radius-s);
+  border: 1px solid var(--line); background: var(--bg); color: var(--text); font: inherit; }
+.cote-depart-valider { width: 100%; }
+.cote-ok { margin: 0; color: var(--accent-texte); }
+.cote-refus { margin: 0; color: var(--danger-texte); }
+
+.cote-gain { display: grid; gap: var(--space-1); justify-items: center; text-align: center; }
+.cote-gain p { margin: 0; }
+.cote-gain-ligne { display: flex; align-items: baseline; gap: var(--space-2); flex-wrap: wrap; justify-content: center; }
+.cote-gain-ecart { font-family: var(--font-titre); font-size: var(--fs-2xl); font-weight: var(--fw-titre); font-variant-numeric: tabular-nums; min-width: 2.6em; }
+.cote-gain-ecart.plus { color: var(--accent-texte); }
+.cote-gain-ecart.moins, .cote-gain-ecart.nul { color: var(--text); }
+.cote-gain-nouvelle { color: var(--muted); }
+.cote-gain-grade { font-weight: var(--fw-bold); }
+.cote-gain-grade.monte { color: var(--recompense-texte, var(--accent-texte)); font-size: var(--fs-l); }
+.cote-gain.anime .cote-gain-grade.monte { animation: cote-grade-monte var(--duree-recompense, 400ms) var(--ease, ease-out) both; }
+@keyframes cote-grade-monte { from { opacity: 0; transform: translateY(6px) scale(.96); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .cote-gain.anime .cote-gain-grade.monte { animation: none; } }
+
+.adversaire-cote { color: var(--muted); }

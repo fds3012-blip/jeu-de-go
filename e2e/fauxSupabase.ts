@@ -8,6 +8,9 @@ import type { BrowserContext, Page, Route, WebSocketRoute } from '@playwright/te
 // notifications sont poussées, à leur seul destinataire (RLS simulée).
 // Amis (#359) : `mes_amis`, `demander_ami`, `repondre_ami`, `retirer_ami`, `defier_ami`, mêmes règles et mêmes codes
 // d'erreur que supabase/migrations/20261002010100_amis.sql (sauf les limites de temps).
+// Cote de jeu (#417) : `rating_history` (lu par son seul titulaire), `choisir_depart_cote` (mêmes valeurs et mêmes
+// codes que supabase/migrations/20261004120100_cote_glicko.sql). Le calcul Glicko-2 reste au serveur : un test sème
+// directement l'historique d'une partie classée (`ratingHistory`).
 
 export const SUPABASE = 'https://supabase.e2e.test';
 export const CODE = '123456';
@@ -38,6 +41,7 @@ export function fauxServeur() {
   let idNotif = 0;
   let idFiltre = 0;
   const partiesPerso: Ligne[] = [];
+  const ratingHistory: Ligne[] = [];
   const appels: string[] = [];
   const emailsEnvoyes: { email: string; type: string }[] = [];
   const autorisations: string[] = [];
@@ -340,6 +344,18 @@ export function fauxServeur() {
       for (const d of defis) for (const k of ['createur_id', 'invite_id'] as const) if (d[k] === ancien) d[k] = u.id;
       return json(n);
     }
+    if (chemin === '/rest/v1/rpc/choisir_depart_cote') {
+      const { p_depart, p_kyu } = req.postDataJSON() as { p_depart: string; p_kyu?: number };
+      const moi = profiles.find(x => x.id === u?.id);
+      if (!u || u.anonyme || !moi?.username) return json({ code: 'JGC01', message: 'Crée ton compte' }, 400);
+      const cote = p_depart === 'decouvre' && p_kyu == null ? 300 : p_depart === 'regles' && p_kyu == null ? 800
+        : p_depart === 'club' && Number.isInteger(p_kyu) && p_kyu! >= 0 && p_kyu! <= 25 ? 3000 - 100 * p_kyu! : null;
+      if (cote === null) return json({ code: 'JGR02', message: 'Choix de départ invalide' }, 400);
+      if (Number(moi.cote_parties ?? 0) > 0) return json({ code: 'JGR01', message: 'Ta cote est déjà lancée' }, 400);
+      Object.assign(moi, { rating: cote, cote_rd: 350, cote_provisoire: true, cote_depart: p_depart, cote_depart_kyu: p_depart === 'club' ? p_kyu : null });
+      ratingHistory.push({ user_id: u.id, kind: 'depart', rating: cote, rd: 350, ecart: null, game_id: null, created_at: new Date().toISOString() });
+      return json(cote);
+    }
     if (chemin.startsWith('/rest/v1/rpc/')) return json(null);
     if (chemin === '/functions/v1/game-action') {
       const { action, game_id, move } = req.postDataJSON() as { action: string; game_id: string; move: string };
@@ -367,18 +383,20 @@ export function fauxServeur() {
     if (chemin.startsWith('/rest/v1/')) {
       const table = chemin.slice('/rest/v1/'.length);
       let lignes: Ligne[] = table === 'games' ? games : table === 'defis' ? defis : table === 'profiles' ? profiles
-        : table === 'notifications' ? notifications : table === 'parties_perso' ? partiesPerso : [];
+        : table === 'notifications' ? notifications : table === 'parties_perso' ? partiesPerso : table === 'rating_history' ? ratingHistory : [];
       for (const [cle, val] of url.searchParams) {
         if (val.startsWith('eq.')) lignes = lignes.filter(l => String(l[cle]) === val.slice(3));
         if (val.startsWith('neq.')) lignes = lignes.filter(l => String(l[cle]) !== val.slice(4));
         if (val === 'is.null') lignes = lignes.filter(l => l[cle] === null || l[cle] === undefined);
         if (val.startsWith('ilike.')) { const motif = val.slice(6).replace(/\\(.)/g, '$1').toLowerCase(); lignes = lignes.filter(l => String(l[cle] ?? '').toLowerCase() === motif); }
+        if (val.startsWith('gte.')) lignes = lignes.filter(l => String(l[cle]) >= val.slice(4));
         if (val.startsWith('in.(')) { const ids = val.slice(4, -1).split(','); lignes = lignes.filter(l => ids.includes(String(l[cle]))); }
         if (cle === 'or') { const ids = [...val.matchAll(/eq\.([^,)]+)/g)].map(m => m[1]); lignes = lignes.filter(l => ids.includes(String(l.createur_id)) || ids.includes(String(l.invite_id))); }
       }
       // RLS simulée : profils visibles par tous ; parties et défis par leurs seuls joueurs ; notifications par leur destinataire.
       if (table === 'parties_perso') lignes = lignes.filter(l => !!u && !u.anonyme && l.user_id === u.id)
         .sort((a, b) => Date.parse(String(b.joue_le)) - Date.parse(String(a.joue_le)));
+      else if (table === 'rating_history') lignes = lignes.filter(l => !!u && l.user_id === u.id);
       else if (table !== 'profiles') lignes = lignes.filter(l => !u ? false : [l.black_id, l.white_id, l.createur_id, l.invite_id, l.destinataire_id].includes(u.id));
       if (req.method() !== 'GET') return json(table === 'lesson_progress' ? [] : {});
       const objet = (req.headers()['accept'] ?? '').includes('vnd.pgrst.object');
@@ -408,7 +426,7 @@ export function fauxServeur() {
   const utilisateur = (id: string) => [...jetons.values(), ...parEmail.values()].find(x => x.id === id);
   /** Session ouverte d'un compte complet (avec pseudo), à poser dans le stockage du navigateur (#367). */
   function sessionCompte(email: string, pseudo: string, id: string) { return session(compteExistant(email, pseudo, id)); }
-  return { traiter, brancherTempsReel, notifier, appels, games, defis, notifications, partiesPerso, profiles, emailsEnvoyes, sessionAnonyme,
+  return { traiter, brancherTempsReel, notifier, appels, games, defis, notifications, partiesPerso, profiles, ratingHistory, emailsEnvoyes, sessionAnonyme,
     compteExistant, compteGoogle, compteSocial, relierIdentite, liaison, utilisateur, sessionCompte, autorisations, amities };
 }
 
