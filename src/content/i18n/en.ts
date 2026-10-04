@@ -385,7 +385,6 @@ export const en = {
   'partie.reprend': 'Back to the game.',
   'partie.retourAccueil': 'Back to home',
   'partie.komi': 'komi {komi}',
-  'partie.noirCote': 'Black, rating {cote}',
   'partie.joueEnPremier': 'plays first',
   'partie.auTrait': ', to play',
   'partie.coupsJoues': 'Moves played',

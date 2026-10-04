@@ -469,7 +469,8 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   const bandeau = (c: 1 | 2, q: Position = pos, retour: ReactNode = retourAccueil, actif = phase === 'play' && q.toPlay === c, gain: { n: number; k: number } | null = null) => {
     let sousTitre: string;
     if (c === 2) sousTitre = ai ? ai.rang : tr('partie.komi', { komi: virgule(komi) });
-    else sousTitre = ai ? (profil ? tr('partie.noirCote', { cote: profil.cote }) : camp(1)) : tr('partie.joueEnPremier');
+    // Contre l'IA, la cote de jeu n'apparaît pas : ces parties ne la font pas bouger (décision de Florian, #417).
+    else sousTitre = ai ? camp(1) : tr('partie.joueEnPremier');
     const initiale = c === 1 && profil?.pseudo ? profil.pseudo[0] : undefined;
     return (
       <Bandeau nom={name(c)} sousTitre={sousTitre} actif={actif} captures={q.captures[c]} pierresPrises={c === 1 ? 'blanc' : 'noir'}
