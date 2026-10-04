@@ -9,7 +9,8 @@
 import { CODE_COMPTE_REQUIS, CODE_PSEUDO_REQUIS } from './compteRequis';
 import type { Game } from './games';
 import type { Db } from './supabase';
-import { lireEtatDirect, type Cadence, type EtatDirect } from '../go/pendule';
+import { suivreLignes } from './tempsReel';
+import { lireEtatDirect, penduleApresCoup, type Cadence, type EtatDirect } from '../go/pendule';
 
 export type Regles = 'japanese' | 'chinese';
 export type Taille = 9 | 13 | 19;
@@ -73,16 +74,70 @@ export function avecEtat(g: Game, e: EtatDirect): Game {
   return { ...g, moves: e.coups, counting: e.comptage, dead_stones: e.mortes, dead_proposed_by: e.mortesPar, status: e.statut, result: e.resultat };
 }
 
+/** Ce que l'écran d'une partie en direct fait des événements temps réel (#425). */
+export interface SuiviDirect {
+  /** Ligne `games` : coups, comptage, résultat. Affichée tout de suite, sans attendre la pendule. */
+  surPartie: (ligne: Record<string, unknown>) => void;
+  /** Ligne `parties_direct` : la pendule (temps restants, début du coup en cours, présence). */
+  surPendule: (ligne: Record<string, unknown>) => void;
+  /** Relecture complète (`pendule_direct`) : abonnement (re)confirmé, retour au premier plan ou du réseau. */
+  rattraper: () => void;
+}
+
 /**
  * Suit la partie en temps réel : coups (table `games`) et pendule (table `parties_direct`, lue par ses deux joueurs).
- * `onChange` est appelé à chaque changement ; l'écran relit alors la pendule. Renvoie la fonction qui arrête le suivi.
+ * #425 : la ligne reçue est appliquée telle quelle. Avant, chaque événement relançait `pendule_direct`, qui écrit la
+ * présence dans `parties_direct`, donc un nouvel événement chez les deux joueurs : une boucle de relectures.
+ * Renvoie la fonction qui arrête le suivi.
  */
-export function abonnerDirect(db: Db, partieId: string, onChange: () => void): () => void {
-  const canal = db.channel(`direct-${partieId}`)
-    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'games', filter: `id=eq.${partieId}` }, onChange)
-    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'parties_direct', filter: `partie_id=eq.${partieId}` }, onChange)
-    .subscribe();
-  return () => { void db.removeChannel(canal); };
+export function abonnerDirect(db: Db, partieId: string, suivi: SuiviDirect): () => void {
+  return suivreLignes(db, `direct-${partieId}`, [
+    { table: 'games', filtre: `id=eq.${partieId}`, surLigne: suivi.surPartie },
+    { table: 'parties_direct', filtre: `partie_id=eq.${partieId}`, surLigne: suivi.surPendule }
+  ], { rattraper: suivi.rattraper });
+}
+
+/**
+ * Applique à l'état affiché la pendule poussée par le temps réel (ligne `parties_direct`). Les colonnes absentes ou
+ * mal formées gardent leur valeur. L'heure du serveur (`maintenant`) reste celle de la dernière lecture.
+ */
+export function fusionnerPendule(e: EtatDirect, ligne: Record<string, unknown>): EtatDirect {
+  const entier = (v: unknown, d: number) => (typeof v === 'number' && Number.isFinite(v) ? v : d);
+  const date = (cle: string, d: number | null): number | null => {
+    if (!(cle in ligne)) return d;
+    const v = ligne[cle];
+    if (v === null) return null;
+    const t = typeof v === 'string' ? Date.parse(v) : NaN;
+    return Number.isNaN(t) ? d : t;
+  };
+  return {
+    ...e,
+    periodeMs: entier(ligne.periode_ms, e.periodeMs),
+    noir: { ms: entier(ligne.noir_ms, e.noir.ms), periodes: entier(ligne.noir_periodes, e.noir.periodes), vuLe: date('noir_vu_le', e.noir.vuLe) },
+    blanc: { ms: entier(ligne.blanc_ms, e.blanc.ms), periodes: entier(ligne.blanc_periodes, e.blanc.periodes), vuLe: date('blanc_vu_le', e.blanc.vuLe) },
+    traitDepuis: date('trait_depuis', e.traitDepuis),
+  };
+}
+
+/**
+ * Applique à l'état affiché la ligne `games` poussée par le temps réel ; null si elle a moins de coups que l'affichage
+ * (événement en retard, ou coup affiché d'avance chez qui joue). `heureServeur` : heure du serveur estimée par le client.
+ */
+export function fusionnerEtatPartie(e: EtatDirect, ligne: Record<string, unknown>, heureServeur: number): EtatDirect | null {
+  const coups = typeof ligne.moves === 'string' ? ligne.moves : e.coups;
+  if (coups.length < e.coups.length) return null;
+  const statut = ligne.status;
+  // Un coup de plus : la pendule de l'autre part tout de suite (estimation, remplacée par la ligne `parties_direct`).
+  const base = coups.length === e.coups.length + 2 ? penduleApresCoup(e, heureServeur) : e;
+  return {
+    ...base,
+    coups,
+    comptage: typeof ligne.counting === 'boolean' ? ligne.counting : e.comptage,
+    mortes: 'dead_stones' in ligne && (ligne.dead_stones === null || typeof ligne.dead_stones === 'string') ? ligne.dead_stones : e.mortes,
+    mortesPar: 'dead_proposed_by' in ligne && (ligne.dead_proposed_by === null || typeof ligne.dead_proposed_by === 'string') ? ligne.dead_proposed_by : e.mortesPar,
+    statut: statut === 'active' || statut === 'finished' || statut === 'aborted' || statut === 'waiting' ? statut : e.statut,
+    resultat: 'result' in ligne && (ligne.result === null || typeof ligne.result === 'string') ? ligne.result : e.resultat,
+  };
 }
 
 /** Abandonne la partie (le serveur compte la cote). Renvoie le résultat (`W+R` ou `B+R`). */

@@ -95,7 +95,8 @@ test('défi en v3 : abandonner passe par « Plus », puis « Confirmer ? »', as
   semerPartie(serveur);
   const page = await ouvrirPartie(browser, baseURL, serveur, 390, false);
   await abandonner(page);
-  expect(serveur.appels).toContain('POST /rest/v1/rpc/resign_game');
+  // La demande part après le toucher : on l'attend (sous charge, la vérification immédiate échouait parfois, #425).
+  await expect.poll(() => serveur.appels).toContain('POST /rest/v1/rpc/resign_game');
   await page.context().close();
 });
 

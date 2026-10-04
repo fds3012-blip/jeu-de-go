@@ -5,13 +5,15 @@
 // - `creer_defi` / `rejoindre_defi` / `victoire_au_temps` : fonctions SQL appelées en RPC ;
 // - les coups passent par la fonction serveur `game-action` (action `defi_coup`), qui valide les règles puis appelle
 //   `jouer_coup_defi` (réservée à la clé service) ;
-// - le temps réel suit la ligne de `games` (coups, comptage, résultat) et celle de `defis` (date limite).
+// - le temps réel suit la ligne de `games` (coups, comptage, résultat) et celle de `defis` (date limite) ; la ligne
+//   reçue est affichée telle quelle (#425, ./tempsReel.ts).
 // Écrans : src/app/Defis.tsx.
 import type { Session } from '@supabase/supabase-js';
 import { adresseDejaPrise, type EchecEnvoi, type Result } from './account';
 import type { Tables } from './database.types';
 import type { Game } from './games';
 import type { Db } from './supabase';
+import { suivreLignes } from './tempsReel';
 import { t } from '../content/i18n';
 
 export type Defi = Tables<'defis'>;
@@ -196,16 +198,26 @@ export async function mesDefis(db: Db, userId: string): Promise<Result<EtatDefi[
   };
 }
 
+/** Ce que l'écran d'un défi fait des événements temps réel (#425). */
+export interface SuiviDefi {
+  /** Ligne `games` poussée par le serveur : coups, comptage, résultat. À afficher telle quelle, sans relire. */
+  surPartie: (ligne: Record<string, unknown>) => void;
+  /** Ligne `defis` poussée par le serveur : date limite du coup en cours. */
+  surDefi: (ligne: Record<string, unknown>) => void;
+  /** Relecture complète : abonnement (re)confirmé, retour au premier plan ou du réseau. */
+  rattraper: () => void;
+}
+
 /**
- * Suit un défi en temps réel : coups et résultat (table `games`), date limite (table `defis`).
- * `onChange` est appelé à chaque changement ; l'écran relit alors le défi. Renvoie la fonction qui arrête le suivi.
+ * Suit un défi en temps réel : coups et résultat (table `games`), date limite (table `defis`). L'écran affiche la
+ * ligne reçue tout de suite (#425 : avant, chaque événement relançait deux allers-retours de lecture).
+ * Réabonnement et relecture au retour au premier plan : voir ./tempsReel.ts. Renvoie la fonction qui arrête le suivi.
  */
-export function abonnerDefi(db: Db, partieId: string, onChange: () => void): () => void {
-  const canal = db.channel(`defi-${partieId}`)
-    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'games', filter: `id=eq.${partieId}` }, onChange)
-    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'defis', filter: `partie_id=eq.${partieId}` }, onChange)
-    .subscribe();
-  return () => { void db.removeChannel(canal); };
+export function abonnerDefi(db: Db, partieId: string, suivi: SuiviDefi): () => void {
+  return suivreLignes(db, `defi-${partieId}`, [
+    { table: 'games', filtre: `id=eq.${partieId}`, surLigne: suivi.surPartie },
+    { table: 'defis', filtre: `partie_id=eq.${partieId}`, surLigne: suivi.surDefi }
+  ], { rattraper: suivi.rattraper });
 }
 
 /** Abandonne le défi (autorisé sans compte pour un défi). Renvoie le résultat (`W+R` ou `B+R`). */
