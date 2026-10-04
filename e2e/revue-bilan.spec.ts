@@ -121,7 +121,7 @@ test('sans KataGo : échelle réduite et honnête (ni Brillant, ni Meilleur coup
   const table = page.getByRole('table', { name: 'Tes coups, note par note' });
   await expect(table.getByRole('row', { name: /Brillant|Meilleur coup|Coup manqué|Excellent/ })).toHaveCount(0);
   await expect(table.getByRole('row', { name: /Classique/ })).toBeVisible();
-  await expect(page.getByText(/Sans KataGo, Mochi ne note que ce qui est sûr/)).toBeVisible();
+  await expect(page.getByText(/Mochi ne note que ce qui est sûr/)).toBeVisible();
   await demarrer.click();
   await expect(page.locator('.parcours-bulle .parcours-titre')).toHaveText(/C3 est un coup classique/);
   await expect(plateau(page).locator('[data-note-sceau]')).toHaveAttribute('data-note-sceau', 'Classique');

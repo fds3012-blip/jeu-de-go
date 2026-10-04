@@ -150,7 +150,7 @@ export function preloadKataGo(): void { getKataGo()?.start?.().catch(() => {}); 
 async function simpleAnalysis(pos: Position, o: AnalyzeOptions): Promise<Analysis> {
   const t0 = Date.now(), komi = o.komi ?? 6.5;
   const move = await simpleMove(pos, opponent('caillou'), { komi, timeMs: Math.min(o.timeMs ?? 600, 600) });
-  const own = await later(() => ownershipSimple(pos, { timeMs: 150 }));
+  const own = await later(() => ownershipSimple(pos, { timeMs: 150, estimation: true }));
   let black = -komi;
   for (const v of own) black += v;
   const lead = pos.toPlay === 1 ? black : -black, winrate = lead > 0 ? 0.6 : 0.4;
@@ -292,14 +292,58 @@ export async function analyseRevue(pos: Position, komi: number, opts: { visits?:
   return r && { lead: r.lead, engine: 'simple' };
 }
 
-/** Prépare KataGo pour la revue s'il est déjà chargé ou si son réseau est en cache (aucun téléchargement). */
-export async function preparerKataGo(): Promise<boolean> {
+/** Pourquoi la revue se fait sans KataGo (#424), pour le dire en une phrase. */
+export type RaisonSansKataGo = 'reseau' | 'appareil' | 'delai';
+export type PreparationKataGo = { pret: true } | { pret: false; raison: RaisonSansKataGo };
+
+/** Attente maximale du chargement de KataGo pour une revue : téléchargement (3,8 Mo, une seule fois) et démarrage. */
+export const DELAI_KATAGO_REVUE = 45_000;
+
+/**
+ * Build de test (VITE_E2E) seulement : la revue ne télécharge le réseau que si le test le demande
+ * (`window.__kataGoTelechargement`), pour que les autres parcours restent rapides et sans réseau.
+ */
+function telechargementPermis(): boolean {
+  if (import.meta.env.VITE_E2E && typeof window !== 'undefined') return !!(window as unknown as { __kataGoTelechargement?: boolean }).__kataGoTelechargement;
+  return true;
+}
+
+/** Classe l'erreur du chargement de KataGo : réseau (téléchargement), délai, ou appareil (Worker, backend, mémoire). */
+export function raisonSansKataGo(erreur: string | undefined): RaisonSansKataGo {
+  const e = (erreur ?? '').toLowerCase();
+  if (/délai|pas encore prêt|trop longue|timeout/.test(e)) return 'delai';
+  if (/téléchargement|fetch|network|load failed|réseau trop petit|failed to fetch|networkerror/.test(e)) return 'reseau';
+  return 'appareil';
+}
+
+/**
+ * Prépare KataGo pour la revue d'une partie. Issue #424 : avant, la revue ne prenait KataGo que s'il était déjà en
+ * mémoire ou en cache. Une partie entre amis (ou contre Pomme et Caillou, qui jouent sans KataGo) ne l'avait jamais
+ * chargé : la revue passait en silence au moteur simple, sur iPhone comme ailleurs. Désormais la revue télécharge
+ * le réseau s'il manque (3,8 Mo, une seule fois, puis cache), dans la limite de `delaiMs`. Sinon, la raison.
+ */
+export async function preparerKataGo(delaiMs = DELAI_KATAGO_REVUE): Promise<PreparationKataGo> {
   let k = kataGoRevue() ?? null;
-  if ((!k || k.info.state !== 'pret') && (await reseauEnCache())) {
-    k = getKataGo();
-    try { await k?.start?.(); } catch { /* KataGo indisponible */ }
-  }
-  return !!k && k.info.state === 'pret';
+  if (k && k.info.state === 'pret') return { pret: true };
+  if (!telechargementPermis() && !(await reseauEnCache())) return { pret: false, raison: 'reseau' };
+  k = k?.start ? k : getKataGo();
+  if (!k) return { pret: false, raison: 'appareil' };
+  if (k.info.state === 'indisponible') return { pret: false, raison: raisonSansKataGo(k.info.error) };
+  let delai: ReturnType<typeof setTimeout> | undefined;
+  try {
+    await Promise.race([
+      k.start?.(),
+      new Promise((_, rejeter) => { delai = setTimeout(() => rejeter(new Error('délai dépassé')), delaiMs); }),
+    ]);
+  } catch (e) {
+    // L'état a pu changer pendant l'attente (le chargement a échoué) : relu tel quel, sans le rétrécissement de TypeScript.
+    const info: KataGoInfo = k.info;
+    const erreur = info.state === 'indisponible' ? info.error : e instanceof Error ? e.message : String(e);
+    if (!warned) { warned = true; console.warn('KataGo indisponible pour la revue :', erreur); }
+    return { pret: false, raison: raisonSansKataGo(erreur) };
+  } finally { clearTimeout(delai); }
+  const info: KataGoInfo = k.info;
+  return info.state === 'pret' ? { pret: true } : { pret: false, raison: raisonSansKataGo(info.error) };
 }
 
 /** Vrai si le réseau KataGo est déjà dans le cache du navigateur (Cache API) : le charger ne télécharge rien. */

@@ -18,11 +18,11 @@ import { t as tr } from '../content/i18n';
 import { mouvementsReduits } from '../ui/defilement';
 import { toLabel } from '../go/coords';
 import { play, type Color, type Position } from '../go/rules';
-import { analyseRevue, meilleurCoup, preparerKataGo } from '../engine';
+import { analyseRevue, meilleurCoup, preparerKataGo, type RaisonSansKataGo } from '../engine';
 import { EVENTS, track } from '../data/analytics';
 import {
-  avanceFinale, candidatsBrillant, compteNotes, conseilFiable, courbe, courbeY, momentCle, NOTE_INFO, noterCoups, notesAvecCle,
-  phraseBilan, precisionHonnete, positionsDepuisSgf, rejouerDici, type AnalyseRevue, type Note,
+  avanceFinale, avancesAffichees, candidatsBrillant, compteNotes, conseilFiable, courbe, courbeY, momentCle, NOTE_INFO, noterCoups, notesAvecCle,
+  notesCoherentes, phraseBilan, precisionHonnete, positionsDepuisSgf, rejouerDici, type AnalyseRevue, type Note,
 } from './revue';
 import { candidatsUniques, classerCoups, confirmeUnique, coupsCles, lignesBilan, NOTES_COURBE, type CoupNote } from './notation';
 import { avanceVue, cleSuivante, commentaire, proverbePour } from './parcours';
@@ -79,16 +79,21 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
   // Analyse arrêtée par le joueur (#286) : les positions restantes n'ont pas d'estimation.
   const arretee = useRef(false);
   const [arret, setArret] = useState(false);
+  // #424 : KataGo en préparation (téléchargement du réseau la première fois), puis la raison s'il n'a pas pu servir.
+  const [prepare, setPrepare] = useState(true);
+  const [sansKataGo, setSansKataGo] = useState<RaisonSansKataGo | null>(null);
   const mode = visites ? 'import' : adversaire ? 'ordi' : 'deux';
   const analysees = analyses.length;
   const finie = analysees > n;
-  const avances = useMemo(() => analyses.map(a => a?.lead ?? null), [analyses]);
+  // #424 : courbe et pastille sans les estimations aberrantes du moteur simple.
+  const avances = useMemo(() => avancesAffichees(positions, analyses), [positions, analyses]);
   const cle = useMemo(() => (finie ? momentCle(positions, analyses, joueur) : null), [finie, positions, analyses, joueur]);
   // Notes de base (perte en points), accordées au moment clé, puis les notes du go (#405).
   const notes = useMemo<(CoupNote | null)[]>(() => {
     if (!finie) return [];
     const base = notesAvecCle(noterCoups(positions, analyses, confirmations), cle, analyses, size);
-    return classerCoups(positions, analyses, base, uniques);
+    // #424 : jamais « Solide » ou « Bon » à côté d'une avance qui s'effondre.
+    return notesCoherentes(classerCoups(positions, analyses, base, uniques), analyses, size);
   }, [finie, positions, analyses, confirmations, cle, size, uniques]);
   const cles = useMemo(() => coupsCles(notes, joueur, cle?.coup), [notes, joueur, cle]);
   const avanceNoir = finie ? avanceFinale(resultat, analyses[n]?.lead) : null;
@@ -103,7 +108,11 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
   useEffect(() => {
     let vivant = true;
     (async () => {
-      const kataGo = await preparerKataGo();
+      const prep = await preparerKataGo();
+      if (!vivant) return;
+      const kataGo = prep.pret;
+      setPrepare(false);
+      setSansKataGo(prep.pret ? null : prep.raison);
       const out: (AnalyseRevue | null)[] = [];
       for (const p of positions) {
         let a: AnalyseRevue | null;
@@ -288,6 +297,7 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
           </figure>
           <div className="bilan-avance" aria-live="polite">
             <p className="bilan-avance-texte"><span>{fr(tr('bilan3.chargement'))}</span><b>{fr(tr('bilan3.pourcent', { p: pct }))}</b></p>
+            {prepare && <p className="revue-note bilan-katago">{fr(tr('bilan3.kataGoCharge'))}</p>}
             <div className="bilan-barre" role="progressbar" aria-label={tr('bilan3.progression')} aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}>
               <span style={{ transform: `scaleX(${pct / 100})` }} />
             </div>
@@ -327,7 +337,7 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
         {tete(onRetour, retour ?? tr('revue.retour'))}
         <div className="bilan-coach">
           <Mochi size={48} />
-          <p className="bilan-bulle">{fr(phraseBilan(notes, moi, adversaire, { avanceNoir, size, cle }))}</p>
+          <p className="bilan-bulle">{fr(phraseBilan(notes, moi, adversaire, { avanceNoir, size, cle, sansKataGo: !avecKataGo }))}</p>
         </div>
         {courbeSvg(k => demarrer(Math.max(1, k)))}
         <table className="bilan-table" aria-label={tr('bilan3.tableau')}>
@@ -354,7 +364,7 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
           </tbody>
         </table>
         <p className="revue-note bilan-aide">{fr(tr('bilan3.precisionAide'))}</p>
-        {!avecKataGo && <p className="revue-note">{fr(tr('bilan3.sansKataGo'))}</p>}
+        {!avecKataGo && <p className="revue-note revue-sans-katago">{fr(tr(sansKataGo ? `bilan3.sansKataGo.${sansKataGo}` : 'bilan3.sansKataGo'))}</p>}
         {arret && <p className="revue-note revue-arretee">{fr(tr('import.arretee'))}</p>}
         {onImporter && <button type="button" className="lien revue-importer" onClick={onImporter}>{tr('import.autre')}</button>}
         <div className="dock revue-dock">

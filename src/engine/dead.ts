@@ -6,7 +6,15 @@
 import { groupAt, neighbors, type Color, type Position } from '../go/rules';
 import { isEye, rng, now, Sim } from './sim';
 
-export interface DeadOptions { seed?: number; playouts?: number; timeMs?: number; seuil?: number }
+export interface DeadOptions {
+  seed?: number; playouts?: number; timeMs?: number; seuil?: number;
+  /**
+   * Estimation en cours de partie (#424) : barre d'avantage, « Qui mène ? », revue sans KataGo. Les règles de
+   * territoire de `zones` sont pensées pour le comptage final ; en partie ouverte, elles donnaient tout le plateau
+   * à un camp (+73,5 après le premier coup, −88,5 puis +74,5 dans la partie de l'issue #424). Voir `zones`.
+   */
+  estimation?: boolean;
+}
 
 // Masque par case des couleurs qui peuvent y jouer dans les simulations (bit 1 Noir, bit 2 Blanc).
 // - Petite zone vide (7 cases ou moins) : les deux couleurs, c'est peut-être l'œil unique d'un groupe mort.
@@ -15,8 +23,11 @@ export interface DeadOptions { seed?: number; playouts?: number; timeMs?: number
 //   propres zones et les pierres adverses qui bordent la zone) : territoire de l'autre couleur, seule elle y joue.
 //   Les intrus ne peuvent plus s'échapper ; s'ils peuvent vivre, c'est dans leurs propres petites zones.
 // - Sinon (partie pas finie), les deux.
+// Mode estimation (#424) : une zone plus grande que le tiers du plateau (27 cases en 9 × 9) n'est pas encore un
+// territoire, c'est l'espace ouvert du milieu de partie ; et des pierres « enfermées » ne sont des intrus que si elles
+// sont peu nombreuses (au plus une pour 4 cases de la zone) : un mur qui fait face à un espace ouvert n'est pas mort.
 const PETITE_ZONE = 7;
-export function zones(pos: Position): Uint8Array {
+export function zones(pos: Position, estimation = false): Uint8Array {
   const { board, size } = pos, nb = neighbors(size), n = board.length;
   const id = new Int32Array(n).fill(-1), regions: { pts: number[]; border: number }[] = [];
   for (let p = 0; p < n; p++) {
@@ -35,18 +46,33 @@ export function zones(pos: Position): Uint8Array {
     regions.push({ pts, border });
   }
   const out = new Uint8Array(n).fill(3);
+  const maxTerritoire = estimation ? Math.max(PETITE_ZONE, Math.floor(n / 3)) : Infinity;
   regions.forEach(({ pts, border }, k) => {
     let m = 3;
-    if (pts.length > PETITE_ZONE) {
+    if (pts.length > PETITE_ZONE && pts.length <= maxTerritoire) {
       if (border === 1 || border === 2) m = border;
       else if (border === 3) {
         const enclosed = [false, isEnclosed(pos, id, regions, k, 1), isEnclosed(pos, id, regions, k, 2)];
-        if (enclosed[1] !== enclosed[2]) m = enclosed[1] ? 2 : 1;
+        if (enclosed[1] !== enclosed[2]) {
+          const intrus = (enclosed[1] ? 1 : 2) as Color;
+          if (!estimation || 4 * pierresAutour(pos, pts, intrus) <= pts.length) m = enclosed[1] ? 2 : 1;
+        }
       }
     }
     for (const q of pts) out[q] = m;
   });
   return out;
+}
+
+/** Nombre de pierres de couleur `c` dans les chaînes qui touchent la zone `pts`. */
+function pierresAutour(pos: Position, pts: number[], c: Color): number {
+  const { board, size } = pos, nb = neighbors(size), vu = new Uint8Array(board.length);
+  let total = 0;
+  for (const q of pts) for (const r of nb[q]) {
+    if (board[r] !== c || vu[r]) continue;
+    for (const s of groupAt(board, size, r).stones) { vu[s] = 1; total++; }
+  }
+  return total;
 }
 
 /** Vrai si les pierres de couleur `c` qui bordent la zone `k` n'ont pas d'autre issue (voir `zones`). */
@@ -73,7 +99,7 @@ function isEnclosed(pos: Position, id: Int32Array, regions: { pts: number[]; bor
 /** Propriété finale moyenne de chaque case, de -1 (Blanc) à +1 (Noir). */
 export function ownership(pos: Position, opts: DeadOptions = {}): Float32Array {
   const { size, board } = pos, n = size * size, sim = new Sim(size), rand = rng(opts.seed ?? 12345);
-  const own = new Int32Array(n), empties = new Int32Array(n), z = zones(pos);
+  const own = new Int32Array(n), empties = new Int32Array(n), z = zones(pos, opts.estimation);
   const max = opts.playouts ?? (size <= 9 ? 600 : size <= 13 ? 400 : 250), budget = opts.timeMs ?? (size <= 9 ? 200 : 700), t0 = now();
   let done = 0;
   while (done < max && (done < 40 || now() - t0 < budget)) {

@@ -23,17 +23,34 @@ const post = (r: KgResponse) => (self as unknown as Worker).postMessage(r);
 async function init(url: string, backends: Backend[] = BACKEND_ORDER) {
   const t0 = performance.now();
   const tf = await import('@tensorflow/tfjs');
-  const backend = await selectBackend(tf, {
+  const env = {
     hasWebGPU: typeof navigator !== 'undefined' && 'gpu' in navigator,
     loadWebGPU: () => import('@tensorflow/tfjs-backend-webgpu'),
     check: async () => { const t = tf.tidy(() => tf.add(tf.scalar(1), tf.scalar(2))); const v = (await t.data())[0]; t.dispose(); return v === 3; },
-  }, backends);
+  };
+  // Premier backend choisi avant le téléchargement : sans aucun backend, inutile de télécharger le réseau.
+  let backend: Backend = await selectBackend(tf, env, backends);
   const { bytes, fromCache } = await loadModelBytes(url, { fetch: u => fetch(u), caches: typeof caches !== 'undefined' ? caches : undefined });
-  net = new TfNet(tf, parseNet(await gunzip(bytes)));
-  // Préchauffage : compile les shaders pour éviter un premier coup lent.
+  const parsed = parseNet(await gunzip(bytes));
   const { newPosition } = await import('../../go/rules');
-  await search(net, newPosition(9), { visits: 2 });
-  return { backend, name: net.name, ms: performance.now() - t0, fromCache };
+  // #424 : un backend peut passer le petit calcul de contrôle puis échouer sur le vrai réseau (WebGPU récent de
+  // Safari, WebGL d'un Worker sans OffscreenCanvas). On essaie alors le suivant, jusqu'au CPU, au lieu d'abandonner.
+  const erreurs: string[] = [];
+  for (;;) {
+    try {
+      net = new TfNet(tf, parsed);
+      // Préchauffage : compile les shaders pour éviter un premier coup lent.
+      await search(net, newPosition(9), { visits: 2 });
+      return { backend, name: net.name, ms: performance.now() - t0, fromCache };
+    } catch (e) {
+      erreurs.push(`${backend}: ${e instanceof Error ? e.message : String(e)}`);
+      try { net?.dispose(); } catch { /* backend déjà cassé */ }
+      net = null;
+    }
+    const reste = backends.slice(backends.indexOf(backend) + 1);
+    if (!reste.length) throw new Error(`KataGo ne démarre sur aucun backend (${erreurs.join(' ; ')})`);
+    backend = await selectBackend(tf, env, reste);
+  }
 }
 
 self.onmessage = (e: MessageEvent<KgRequest>) => {

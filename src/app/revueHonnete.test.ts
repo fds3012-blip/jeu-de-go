@@ -132,14 +132,15 @@ describe('moment clé, passes comprises', () => {
     const h2 = partie(['A1', 'B1', 'E5', 'D5', 'G7', 'A2']);
     const brutes = noterCoups(h2, a);
     const cle = momentCle(h2, a, 1)!;
-    // Avant : le coup seul ne perd rien (« Solide »), toute la perte vient de la réponse de Pomme.
-    expect(brutes[4]).toMatchObject({ coup: 5, note: 'solide', perte: 0 });
+    // Le coup seul ne perd rien, toute la perte vient de la réponse de Pomme. Avant #424, la note de base disait
+    // « Solide » ; les deux mesures se contredisent, elle n'en donne plus (jamais « Solide » par défaut).
+    expect(brutes[4]).toBeNull();
     expect(precision(brutes, 1)).toBe(100);
     const notes = notesAvecCle(brutes, cle, a);
-    expect(notes[4]).toMatchObject({ coup: 5, note: 'erreur' });
+    expect(notes[4]).toMatchObject({ coup: 5, couleur: 1, note: 'erreur' });
     expect(notes[4]!.perte).toBeCloseTo(cle.perte);
     expect(precision(notes, 1)).toBeLessThan(100);
-    expect(compteNotes(notes, 1).solide).toBe(compteNotes(brutes, 1).solide - 1);
+    expect(compteNotes(notes, 1).solide).toBe(compteNotes(brutes, 1).solide);
     // Les autres coups ne bougent pas ; sans moment clé, rien ne change.
     expect(notes.filter((_, k) => k !== 4)).toEqual(brutes.filter((_, k) => k !== 4));
     expect(notesAvecCle(brutes, null, a)).toBe(brutes);

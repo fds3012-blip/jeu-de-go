@@ -286,6 +286,43 @@ export function lisser(analyses: (AnalyseRevue | null)[]): (number | null)[] {
   });
 }
 
+/**
+ * Estimation aberrante (#424) : le moteur simple s'écarte de plus d'un tiers du plateau (27 points en 9 × 9) de la
+ * médiane des cinq positions qui l'entourent. Un pic d'une ou deux positions (−88,5 et −87,5 entre 0 et +18,6 dans la
+ * partie de l'issue) disparaît ; une vraie bascule, qui dure (un groupe pris), garde la médiane de son côté.
+ * KataGo n'est jamais écarté : ses écarts d'un coup à l'autre sont mesurés dans sa recherche.
+ */
+export function aberrante(positions: Position[], analyses: (AnalyseRevue | null)[], i: number): boolean {
+  const a = analyses[i];
+  if (!a || a.engine !== 'simple' || !positions[i]) return false;
+  const voisines: number[] = [];
+  for (let j = i - 2; j <= i + 2; j++) { const v = analyses[j]; if (v && v.engine === a.engine) voisines.push(v.lead); }
+  if (voisines.length < 3) return false;
+  voisines.sort((x, y) => x - y);
+  const n = positions[i].size ** 2;
+  return Math.abs(a.lead - voisines[Math.floor(voisines.length / 2)]) > n / 3;
+}
+
+/** Avances à montrer (courbe, pastille) : sans les estimations aberrantes, remplacées par `null` (#424). */
+export function avancesAffichees(positions: Position[], analyses: (AnalyseRevue | null)[]): (number | null)[] {
+  return analyses.map((a, i) => (a && !aberrante(positions, analyses, i) ? a.lead : null));
+}
+
+/**
+ * Saut d'estimation plausible entre les positions `a` et `b` (#424) : aucune des deux n'est aberrante, et l'écart
+ * tient dans un tiers du plateau (27 points en 9 × 9), plus deux points par pierre prise entre les deux (la pierre
+ * quitte le plateau et compte comme prisonnier). Au-delà, c'est l'estimation qui a basculé, pas la partie : le moteur
+ * simple donnait −88,5 puis +74,5 en 9 × 9.
+ */
+export function sautPlausible(positions: Position[], analyses: (AnalyseRevue | null)[], a: number, b: number): boolean {
+  const x = analyses[a], y = analyses[b], pa = positions[a], pb = positions[b];
+  if (!x || !y || !pa || !pb) return false;
+  if (aberrante(positions, analyses, a) || aberrante(positions, analyses, b)) return false;
+  const n = pa.size * pa.size;
+  const prises = pb.captures[1] - pa.captures[1] + pb.captures[2] - pa.captures[2];
+  return Math.abs(y.lead - x.lead) <= n / 3 + 2 * prises;
+}
+
 /** Vrai si le coup `i` (hors du top 3 de KataGo) fait nettement mieux que son premier choix, selon l'analyse courte. */
 function pisteBrillant(positions: Position[], analyses: (AnalyseRevue | null)[], i: number): boolean {
   const avant = analyses[i - 1], apres = analyses[i], move = positions[i].lastMove ?? -1;
@@ -333,7 +370,25 @@ export function noterCoups(positions: Position[], analyses: (AnalyseRevue | null
         b = Math.max(b, s * (avant.lead - suite!.lead));
         l1 = s > 0 ? Math.min(l1, lisse[i + 1] ?? suite!.lead) : Math.max(l1, lisse[i + 1] ?? suite!.lead);
       }
-      const perte = finale || (move < 0 && !repond) ? 0 : Math.max(0, Math.min(b, s * (l0 - l1)));
+      const lissee = s * (l0 - l1);
+      // #424 : mesure douteuse, pas de note. Un saut d'estimation invraisemblable (rien de pris ne l'explique), ou
+      // deux mesures (brute et lissée) qui se contredisent : l'une dit « Solide », l'autre dit « Imprécision ».
+      if (!finale && !(move < 0 && !repond)) {
+        const fin = move < 0 && repond ? i + 1 : i;
+        if (!sautPlausible(positions, analyses, i - 1, fin) || (Math.min(b, lissee) <= S.solide && Math.max(b, lissee) > S.imprecision)) { out.push(null); continue; }
+      }
+      let perte = finale || (move < 0 && !repond) ? 0 : Math.max(0, Math.min(b, lissee));
+      // #424 : le moteur simple ne voit souvent la faute qu'après la réponse de l'adversaire (J8, puis Noir prend
+      // 8 pierres en E8). Chute nette après la réponse : si elle prend au moins 3 pierres, la perte est vérifiée sur le
+      // plateau et compte ; sinon, la mesure d'un coup et celle de deux coups se contredisent, pas de « Solide ».
+      if (move >= 0 && repond && sautPlausible(positions, analyses, i - 1, i + 1)) {
+        const deux = Math.min(s * (avant.lead - suite!.lead), s * (l0 - (lisse[i + 1] ?? suite!.lead)));
+        const adv = (3 - couleur) as Color, prises = positions[i + 1].captures[adv] - positions[i].captures[adv];
+        if (deux > S.imprecision) {
+          if (prises >= 3) perte = Math.max(perte, deux);
+          else if (perte <= S.solide) { out.push(null); continue; }
+        }
+      }
       const note: Note = perte <= S.solide ? 'solide' : perte <= S.imprecision ? 'imprecision' : perte <= S.erreur ? 'erreur' : 'grosse';
       out.push({ coup: i, couleur, note, perte });
       continue;
@@ -351,6 +406,26 @@ export function noterCoups(positions: Position[], analyses: (AnalyseRevue | null
     out.push({ coup: i, couleur, note, perte });
   }
   return out;
+}
+
+/** Notes qui disent « pas de perte » (ou presque) : elles ne doivent jamais côtoyer une avance qui s'effondre. */
+const SANS_PERTE: ReadonlySet<Note> = new Set(['brillant', 'meilleur', 'excellent', 'bon', 'classique', 'solide', 'force']);
+
+/**
+ * Accord des notes et de la pastille d'avance (#424). La pastille du parcours montre l'avance après le coup
+ * (`analyses[coup].lead`) : si elle chute, pour le joueur qui vient de jouer, de plus que le seuil d'Imprécision par
+ * rapport au coup d'avant, une note « Solide », « Bon » ou « Classique » la contredirait. Les deux mesures ne
+ * s'accordent pas : on ne note pas ce coup (règle d'or, aucune note fausse). Les notes de perte ne changent pas.
+ */
+export function notesCoherentes<T extends NoteCoup>(notes: (T | null)[], analyses: (AnalyseRevue | null)[], size = 9): (T | null)[] {
+  const S = seuilsSimple(size), K = seuilsKataGo(size);
+  return notes.map(n => {
+    if (!n || !SANS_PERTE.has(n.note)) return n;
+    const a = analyses[n.coup - 1], b = analyses[n.coup];
+    if (!a || !b) return n;
+    const chute = (n.couleur === 1 ? 1 : -1) * (a.lead - b.lead);
+    return chute > (b.engine === 'katago' ? K : S).imprecision ? null : n;
+  });
 }
 
 /** Perte plafonnée pour la précision : une seule catastrophe ne doit pas écraser toute la partie. */
@@ -446,6 +521,8 @@ export interface MomentCle {
   passe: boolean;
   /** Pierres prises par l'adversaire dans sa réponse. */
   prises: number;
+  /** Camp qui a joué ce coup (#424 : sert à le noter quand la note de base manquait). */
+  couleur?: Color;
 }
 
 /** Sous ces pertes, c'est du bruit : mêmes seuils que la note « Imprécision » de chaque moteur. */
@@ -473,10 +550,12 @@ export function momentCle(positions: Position[], analyses: (AnalyseRevue | null)
     if (passe && (rienAPrendre(positions[i - 1]) || !((positions[i + 1]?.lastMove ?? -1) >= 0))) continue;
     const a2 = analyses[i + 1];
     const bout = a2 && a2.engine === a0.engine && positions[i + 1] ? i + 1 : i;
+    // #424 : un saut d'estimation invraisemblable n'est pas un moment clé.
+    if (a0.engine === 'simple' && !sautPlausible(positions, analyses, i - 1, bout)) continue;
     const fin = analyses[bout]!, s = c === 1 ? 1 : -1, adv = (3 - c) as Color;
     const perte = Math.min(s * (a0.lead - fin.lead), s * ((lisse[i - 1] ?? a0.lead) - (lisse[bout] ?? fin.lead)));
     if (!(perte >= SEUIL_CLE[a0.engine] * facteurTaille(avant.size)) || (best && perte <= best.perte)) continue;
-    best = { coup: i, perte, passe, prises: positions[bout].captures[adv] - positions[i].captures[adv] };
+    best = { coup: i, perte, passe, prises: positions[bout].captures[adv] - positions[i].captures[adv], couleur: c };
   }
   return best;
 }
@@ -488,7 +567,9 @@ export function momentCle(positions: Position[], analyses: (AnalyseRevue | null)
  * plus forte) et la note qui va avec ; la précision et le résumé suivent. Les autres coups ne changent pas.
  */
 export function notesAvecCle(notes: (NoteCoup | null)[], cle: MomentCle | null, analyses: (AnalyseRevue | null)[], size = 9): (NoteCoup | null)[] {
-  const k = cle ? cle.coup - 1 : -1, n = notes[k];
+  const k = cle ? cle.coup - 1 : -1;
+  // #424 : sans note de base (les mesures d'un coup et de deux coups se contredisaient), le moment clé la donne.
+  const n: NoteCoup | null = notes[k] ?? (cle?.couleur && analyses[k] ? { coup: cle.coup, couleur: cle.couleur, note: 'solide', perte: 0 } : null);
   if (!cle || !n || n.perte >= cle.perte) return notes;
   const perte = cle.perte;
   let note: Note;
@@ -529,7 +610,11 @@ export function compteNotes(notes: (NoteCoup | null)[], couleur: Color): Record<
 }
 
 /** Contexte du bilan (issue #186) : avance finale de Noir (komi compris), taille du plateau, moment clé du joueur. */
-export interface ContexteBilan { avanceNoir?: number | null; size?: number; cle?: MomentCle | null }
+export interface ContexteBilan {
+  avanceNoir?: number | null; size?: number; cle?: MomentCle | null;
+  /** Revue faite avec le moteur simple (#424) : il ne voit pas les coups qui manquent le point chaud, pas de « Très belle partie ». */
+  sansKataGo?: boolean;
+}
 
 /** Écart final lisible : « 20,5 points ». */
 // Accord de « point » : pluriel au-delà de 1 (« 1,5 points »), comme le texte d'origine ; en anglais, l'écart d'une défaite nette dépasse toujours 1.
@@ -556,7 +641,7 @@ export function phraseBilan(notes: (NoteCoup | null)[], joueur: Color, adversair
     if (pire) return `${debut}${revoirPire(pire)}`;
     return `${debut}${t('revue.pertesDiffuses')}`;
   }
-  const debut = brillant || `${moi >= 85 ? t('revue.bilan.tresBelle')
+  const debut = brillant || `${moi >= 85 && !ctx.sansKataGo ? t('revue.bilan.tresBelle')
     : lui != null && moi > lui ? t('revue.bilan.plusJuste', { nom: adversaire ?? t('camp.blanc') })
     : moi >= 60 ? t('revue.bilan.correcte') : t('revue.bilan.difficile')} `;
   if (pire) return `${debut}${revoirPire(pire)}`;
