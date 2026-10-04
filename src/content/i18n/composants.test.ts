@@ -6,7 +6,7 @@ import { battuAccorde } from '../../ui/sceaux';
 import { textePartage } from '../../app/goDuJour';
 import { consigneErreur, titreErreur } from '../../app/erreurs';
 import { badges, statistiques, type Donnees } from '../../app/vitrine';
-import { choisirLangue, traduire } from './index';
+import { choisirLangue, traduire } from './secondaires';
 
 const vide: Donnees = { reussis: 0, serie: 0, parties: 0, bilan: {}, paliers: [] };
 const plein: Donnees = {

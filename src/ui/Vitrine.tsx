@@ -1,7 +1,7 @@
 // Profil vivant (issue #103) : statistiques en anneaux et vitrine de badges, sept sceaux dessinés, tous différents.
 import { useState, type CSSProperties, type ReactNode } from 'react';
 import type { Badge, BadgeId, Stat } from '../app/vitrine';
-import { t } from '../content/i18n';
+import { t } from '../content/i18n/secondaires';
 import { fr } from './typo';
 
 /** Icônes de la grammaire « deux pierres » : une pierre noire, une blanche, et un signe. 24 × 24. */

@@ -10,7 +10,7 @@ import { confirmationValide, motSuppression } from '../../data/account';
 import { usernameErrorFromDb, validateUsername } from '../../data/username';
 import { fromLabel } from '../../go/coords';
 import { fr as typo } from '../../ui/typo';
-import { CATALOGUES, choisirLangue, traduire, type Cle } from './index';
+import { CATALOGUES, choisirLangue, traduire, type Cle } from './secondaires';
 
 const F = ' ';
 const plein = (id: string) => LESSONS.find(l => l.id === id)!.steps.length;

@@ -24,7 +24,7 @@ import { BoutonsFournisseurs } from '../ui/BoutonFournisseur';
 import { garderRetour, lireAnnonce, oublierAnnonce, type Annonce } from './connexionGoogle';
 import { NOM_FOURNISSEUR, fournisseursActifs, fournisseursVisibles, listeNoms, messageIncident, type Fournisseur } from './fournisseurs';
 import { aideNavigateur, contexteActuel, lienChrome } from './navigateurIntegre';
-import { t } from '../content/i18n';
+import { t } from '../content/i18n/secondaires';
 import '../ui/compte.css';
 
 /** Délai avant de pouvoir redemander un code (limite de Supabase : un e-mail par minute et par adresse). */

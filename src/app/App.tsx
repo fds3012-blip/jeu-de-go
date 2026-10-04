@@ -19,11 +19,9 @@ import { PLACEMENT_KEY, chapitreConseille, coteApresPlacement, leconDeLAccueil, 
 import { COTE_KEY } from './coteJoueur';
 import { Accueil } from './Accueil';
 import { modesAccueil, type Depuis, type Mode } from './modes';
-import { ALL_PUZZLES } from '../content/puzzles';
-import { parsePuzzles } from '../data/puzzles';
 import { EVENTS, secondsSinceOpen, track, trackOnce } from '../data/analytics';
 import { estArriveeRappel, etatRappel } from './rappel';
-import { PARAM, PARAM_COURT, SERIE_KEY, numeroDuJour, numeroDuLien, problemeDuNumero, type Serie } from './goDuJour';
+import { PARAM, PARAM_COURT, SERIE_KEY, numeroDuJour, numeroDuLien, problemeDuJour, type Serie } from './goDuJour';
 import { battu, BILAN_KEY, dejaAffronte, enregistrer, fin, finTropTot, komiDepuisUrl, lireBilan, type Bilan, type Issue, type StatsPartie } from './bilan';
 import { fr } from '../ui/typo';
 import { Glacon } from '../ui/Glacon';
@@ -63,7 +61,8 @@ import { ecouterAide, estRaccourciAide, ficheDeLecon, ouvrirAide, type Ouverture
 // Aide (#362) : feuille chargée au premier « ? » (partie, leçon, problème, Profil) ou à la touche « ? ».
 const FeuilleAide = lazy(() => import('../ui/Aide'));
 
-const PROBLEMES_LOCAUX = parsePuzzles(ALL_PUZZLES);
+// #433 : problèmes complets chargés à la demande (placement, série de fin de leçon) ; l'accueil lit le Go du jour léger.
+const problemesLocaux = () => import('../content/problemesLocaux').then(m => m.PROBLEMES_LOCAUX);
 // Problèmes résolus et vus sur l'appareil : mêmes clés que SOLVED_KEY et VUS_KEY de Puzzles.tsx (vérifié par ecrans.test.ts),
 // recopiée ici pour que l'accueil n'embarque pas l'écran des problèmes.
 const SOLVED_KEY = 'go.problemes.v1';
@@ -264,7 +263,7 @@ export function App() {
   const [partieFinie, setPartieFinie] = useState(false);
   useExercice(tab === 'jouer' && !!playing && !partieFinie);
   const numeroJour = numeroDuJour(new Date());
-  const duJour = problemeDuNumero(PROBLEMES_LOCAUX, numeroJour);
+  const duJour = problemeDuJour(numeroJour);
   const duJourFait = goDuJourFaitAppareil(numeroJour);
   // #309 : « Rejouer » seulement après une partie finie contre cet adversaire.
   // Accueil v3 : un bilan contre l'ordi (appareil d'avant le compteur de parties, ou compteur abîmé) suffit à dire
@@ -580,7 +579,7 @@ export function App() {
       </>
     );
   } else if (tab === 'jouer' && enPlacement) {
-    screen = <Placement problemes={PROBLEMES_LOCAUX} adversaires={OPPONENTS} confirmTouch={settings.confirmTouch}
+    screen = <Placement adversaires={OPPONENTS} confirmTouch={settings.confirmTouch}
       chapitre={kyu => CHAPITRES[chapitreConseille(kyu, CHAPITRES.length)]?.titre ?? ''}
       onTermine={({ bilan: b, adversaire: a }) => {
         const r: ResultatPlacement = { fait: true, kyu: b.kyu, cote: b.cote, adversaire: a.id, date: new Date().toISOString().slice(0, 10) };
@@ -613,10 +612,12 @@ export function App() {
         themes: themes.map(th => t(`theme.${th}`)),
         ouvrir: () => {
           if (!garde({ quoi: 'probleme' })) return;
-          const s = serieDeLecon(lesson.id, PROBLEMES_LOCAUX, new Set(Object.keys(readLocal<Record<string, true>>(SOLVED_KEY, {}))),
-            // #237 : pas le même exercice que l'étape de leçon qui vient d'être jouée.
-            TAILLE_SERIE, p => estRedite(p, lesson));
-          if (s.length) { setSerie3(s); setLessonId(null); window.scrollTo({ top: 0 }); }
+          void problemesLocaux().then(problemes => {
+            const s = serieDeLecon(lesson.id, problemes, new Set(Object.keys(readLocal<Record<string, true>>(SOLVED_KEY, {}))),
+              // #237 : pas le même exercice que l'étape de leçon qui vient d'être jouée.
+              TAILLE_SERIE, p => estRedite(p, lesson));
+            if (s.length) { setSerie3(s); setLessonId(null); window.scrollTo({ top: 0 }); }
+          }).catch(() => { /* morceau introuvable (hors ligne sans cache) : on reste sur la fin de leçon */ });
         },
       } : undefined}
       jouer={{ nom: premier.nom, lancer: () => { setLessonId(null); setTab('jouer'); lancer('ordi', premier.id); } }} />;

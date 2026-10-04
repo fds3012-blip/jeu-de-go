@@ -1,5 +1,7 @@
 /*
  * Apprendre et Problèmes (issue #40, phase 6 ; direction docs/design/v2/direction.md).
+ * Chargée avec ces écrans (#433 : hors de la feuille principale). Une règle qui sert aussi ailleurs va dans
+ * apprendre-partage.css, importée par src/main.tsx à la place qu'avait cette feuille.
  * Le chemin de pierres de gué est la seule image forte de l'onglet Apprendre ; le goban du problème du jour, celle de Problèmes.
  * Un seul élément en relief par écran : le bouton principal.
  */
@@ -52,9 +54,7 @@
 .pas-texte small { display: block; text-wrap: balance; color: var(--muted); font-size: var(--fs-s); line-height: 1.3; margin-top: 2px; }
 .pas-avenir .pas-texte b { color: var(--muted); }
 
-/* Vignette : une tuile de kaya, posée sur la table comme un mini goban. */
-.vignette { display: inline-block; flex: none; border-radius: 20%; box-shadow: 0 1.5px 0 #7A4A1C, 0 8px 14px -9px rgba(0, 0, 0, .6); }
-.vignette > svg { display: block; }
+/* Vignette (.vignette, .vignette > svg) : apprendre-partage.css (#433), aussi lue par le carrousel de l'accueil. */
 .vignette-pale { box-shadow: none; }
 .vignette-pale > svg { opacity: .5; filter: saturate(.25); }
 
@@ -312,7 +312,7 @@
 .grille-pb { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr)); /* #121 */ gap: 20px 14px; }
 .grille-pb button { display: flex; flex-direction: column; align-items: stretch; gap: 4px; width: 100%; background: none; border: 0; padding: 0; text-align: left; border-radius: 14px; }
 .grille-goban { position: relative; display: block; margin-bottom: 6px; }
-.mini-goban { display: block; width: 100%; height: auto; aspect-ratio: 1; border-radius: 12px; box-shadow: 0 3px 0 #7A4A1C, 0 12px 20px -12px rgba(0, 0, 0, .65); }
+/* .mini-goban : apprendre-partage.css (#433), aussi lue par l'accueil et le Profil. */
 .grille-pb b { font-family: var(--font-titre); font-weight: var(--fw-bold); letter-spacing: -0.01em; font-size: var(--fs-m); line-height: 1.2; }
 .grille-pb button:active .mini-goban { transform: scale(.98); }
 .pastille-ok { position: absolute; right: -6px; top: -6px; width: 30px; height: 30px; padding: 5px; border-radius: 50%; background: var(--accent); color: var(--on-accent); box-shadow: 0 0 0 3px var(--bg); }
@@ -352,6 +352,10 @@
 .continuer-titre { max-width: 100%; font-weight: var(--fw-medium); font-size: var(--fs-s); white-space: normal; text-wrap: balance;
   display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
 .btn.continuer { width: 100%; margin: 0; background: var(--surface-2); }
+/* #433 : cette feuille arrive désormais après la feuille principale. À spécificité égale, .btn et .cta (app.css)
+   l'emportaient sur .continuer : on le redit ici pour garder le rendu à l'identique (pas de padding-block). */
+.btn.continuer, .cta.continuer { padding-block: 0; }
+.cta.continuer { line-height: 1.15; }
 
 /* ---------- Palier en cours (#196, illustré pour #103) : le paysage, le nom, puis la carte « Continuer » ---------- */
 .palier-en-cours { margin-top: var(--space-2); border-radius: 20px; background: var(--surface); overflow: hidden; }
@@ -396,6 +400,8 @@
 .tous-tete { display: flex; align-items: center; gap: 4px; margin: var(--space-2) 0 var(--space-3) -10px; }
 .tous-tete .retour { flex: none; width: var(--cible-min); height: var(--cible-min); margin: 0; padding: 0; display: grid; place-items: center; border: 0; border-radius: 50%; background: none; color: var(--text); }
 .tous-tete .retour:active { background: var(--surface); }
+/* #433 : .palier h3 (accueil.css, carrousel) suivait cette feuille et l'emportait sur .palier-nom h3 : rendu gardé. */
+.palier .palier-nom h3 { margin: 0 0 2px; font-size: var(--fs-s); font-weight: var(--fw-bold); }
 .problemes-tous .palier h3 { color: var(--text); text-transform: none; letter-spacing: var(--tracking-titre); font-size: var(--fs-xl); }
 .problemes .tous-tete h2 { margin: 0; font-family: var(--font-titre); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre); font-size: var(--fs-2xl); }
 .problemes-tous .palier-prochain h3 { display: flex; align-items: center; gap: 6px; margin: 0 0 var(--space-2); font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: var(--fs-xl); color: var(--muted); }
@@ -460,3 +466,9 @@
 .revision-faite .rv-fond { fill: var(--jade); stroke: var(--jade-bord); stroke-width: 1.5; }
 .revision-faite .rv-coche { fill: none; stroke: var(--encre-jade); stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round; }
 .revision-serie { margin: var(--space-2) 0 0; }
+
+/* #433 : cette feuille arrive après la feuille principale. placement.css la suivait et l'emportait à spécificité
+   égale sur l'en-tête et la bulle de Mochi du placement (même lecteur) : on le redit ici, rendu inchangé. */
+.lecteur-tete.placement-tete { margin-left: 0; }
+.placement .lecteur-mochi .bubble { margin-bottom: 8px; }
+.placement .lecteur-mochi .bubble p { font-size: var(--fs-corps-s); line-height: 1.4; padding: 8px 12px; }

@@ -1,7 +1,7 @@
 // Langage commun des lecteurs de leçon et de problème (issue #40, phase 6) :
 // barre du haut (retour, progression), feuille de verdict en bas (jade : juste, hanko : à revoir), coche qui se dessine.
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
-import { t } from '../content/i18n';
+import { t } from '../content/i18n/secondaires';
 import { etatsPoints } from '../app/lecon';
 import { mouvementsReduits, pasSansCoupure } from './defilement';
 import { PortraitMochi, type HumeurMochi } from './Portrait';

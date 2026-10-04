@@ -4,7 +4,7 @@ import { fromRows } from '../go/position';
 import { fromLabel, toLabel } from '../go/coords';
 import { boardKey, groupAt, newPosition, play, type Color, type Position } from '../go/rules';
 import { hasTwoEyes } from '../go/tactics';
-import { traduire } from '../content/i18n';
+import { traduire } from '../content/i18n/secondaires';
 
 /** Plateau `n` × `n` avec des pierres données en coordonnées affichées. */
 function plateau(n: number, noirs: string[], blancs: string[], trait: Color = 1): Position {

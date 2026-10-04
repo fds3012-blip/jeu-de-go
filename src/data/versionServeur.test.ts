@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { t } from '../content/i18n';
+import { t } from '../content/i18n/secondaires';
 import {
   CONTRAT_GAME_ACTION, etatServeur, lireContratServeur, messageSiServeurAncien, refusPeutVenirDUnServeurAncien, verifierServeur
 } from './versionServeur';

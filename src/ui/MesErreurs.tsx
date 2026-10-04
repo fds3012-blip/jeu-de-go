@@ -9,7 +9,7 @@ import { readLocal, writeLocal } from '../app/hooks';
 import { apresEssai, aRejouer, devientMaitrisee, ERREURS_KEY, lireErreurs, versProbleme, type ErreurGardee } from '../app/erreurs';
 import { MiniGoban } from './MiniGoban';
 import { fr } from './typo';
-import { t } from '../content/i18n';
+import { t } from '../content/i18n/secondaires';
 
 /** Ce que MesErreurs passe au lecteur de problème (PuzzlePlayer de Puzzles.tsx). */
 export interface LecteurProps {

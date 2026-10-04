@@ -1,7 +1,7 @@
 // Profil vivant (issue #103) : statistiques et badges déduits des données locales. Logique pure, sans React.
 import type { Bilan } from './bilan';
 import type { Palier } from './paliers';
-import { t } from '../content/i18n';
+import { t } from '../content/i18n/secondaires';
 
 /** Badges déjà gagnés sur cet appareil (issue #212) : un badge gagné n'est jamais retiré, même si sa condition ne tient plus. */
 export const BADGES_KEY = 'go.badges.v1';

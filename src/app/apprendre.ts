@@ -1,6 +1,6 @@
 // Onglet Apprendre (issue #40, phase 6) : logique pure du chemin des leçons, sans React.
 import type { Lesson } from '../content/lessons';
-import { t } from '../content/i18n';
+import { t } from '../content/i18n/secondaires';
 
 export type Progression = Record<string, number>;
 export type EtatPierre = 'faite' | 'encours' | 'avenir';

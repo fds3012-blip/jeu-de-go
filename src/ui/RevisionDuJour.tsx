@@ -14,7 +14,7 @@ import { validerDefi } from '../app/defiAppareil';
 import { gagnerXp } from '../app/xp';
 import { MiniGoban } from './MiniGoban';
 import { fr } from './typo';
-import { t } from '../content/i18n';
+import { t } from '../content/i18n/secondaires';
 
 /** Ce que la révision passe au lecteur de problème (PuzzlePlayer de Puzzles.tsx). `aide` : 0 sans aide (#197). */
 export interface LecteurRevisionProps {

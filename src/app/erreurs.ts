@@ -5,7 +5,7 @@ import type { AnalyseRevue } from '../engine';
 import type { Puzzle } from '../data/puzzles';
 import type { Color, Position } from '../go/rules';
 import { conseilFiable, VISITES_MIN, type Note } from './revue';
-import { t } from '../content/i18n';
+import { t } from '../content/i18n/secondaires';
 import { ECHEANCES } from './revision';
 
 export const ERREURS_KEY = 'go.erreurs.v1';

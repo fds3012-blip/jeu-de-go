@@ -14,7 +14,7 @@ import { hapticFail, hapticSuccess } from '../ui/haptics';
 import { mouvementsReduits } from '../ui/defilement';
 import { texteXp } from '../ui/gainXp';
 import { fr } from '../ui/typo';
-import { t as tr } from '../content/i18n';
+import { t as tr } from '../content/i18n/secondaires';
 import { play, type Color, type Position } from '../go/rules';
 import { analyseRevue } from '../engine';
 import { EVENTS, track } from '../data/analytics';

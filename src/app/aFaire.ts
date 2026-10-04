@@ -9,7 +9,7 @@
 // - le Go du jour sans série et la leçon en cours restent dans « Aujourd'hui » (tuiles de l'accueil, sous l'action
 //   principale : c'est la liste « À faire »), sans pastille ;
 // - la liste est courte (au plus `MAX_ELEMENTS`) ; sans rien en attente, aucune pastille, aucun texte.
-import { t } from '../content/i18n';
+import { t } from '../content/i18n/secondaires';
 import type { Onglet } from '../ui/onglets';
 import { texteDelai } from './defiAmi';
 

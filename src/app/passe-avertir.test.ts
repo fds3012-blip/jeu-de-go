@@ -1,7 +1,7 @@
 // Avant un passe trop tôt, Mochi prévient (#235).
 import { describe, expect, it } from 'vitest';
 import { avertirAvantPasse } from './partie';
-import { t } from '../content/i18n';
+import { t } from '../content/i18n/secondaires';
 import { partieAvancee } from '../go/frontieres';
 
 function plateau(rows: string[]): Int8Array {

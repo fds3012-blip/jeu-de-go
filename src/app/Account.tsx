@@ -14,7 +14,7 @@ import { NOM_FOURNISSEUR, fournisseursActifs, fournisseursVisibles, messageIncid
 import { contexteActuel } from './navigateurIntegre';
 import { BoutonsFournisseurs } from '../ui/BoutonFournisseur';
 import { fr } from '../ui/typo';
-import { t } from '../content/i18n';
+import { t } from '../content/i18n/secondaires';
 import '../ui/compte.css';
 
 const field: CSSProperties = {

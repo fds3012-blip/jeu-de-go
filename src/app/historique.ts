@@ -9,7 +9,7 @@ import { readSgf, writeSgf } from '../go/sgf';
 import { recordFromOnlineGame } from '../go/server';
 import type { Color } from '../go/rules';
 import { NOMS, type PortraitId } from '../ui/Portrait';
-import { langue, nombre, t } from '../content/i18n';
+import { langue, nombre, t } from '../content/i18n/secondaires';
 import { REVUE_KEY, type PartieGardee } from './revue';
 
 /** Parties gardées sur l'appareil (liste JSON, la plus récente d'abord). */

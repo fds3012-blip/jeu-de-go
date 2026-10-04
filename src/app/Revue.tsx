@@ -16,7 +16,7 @@ import { Icone } from '../ui/Partie';
 import { SceauNote } from '../ui/SceauNote';
 import { NOTE_ENCRE } from '../ui/notes';
 import { fr } from '../ui/typo';
-import { t as tr } from '../content/i18n';
+import { t as tr } from '../content/i18n/secondaires';
 import { mouvementsReduits } from '../ui/defilement';
 import { toLabel } from '../go/coords';
 import { play, type Color, type Position } from '../go/rules';

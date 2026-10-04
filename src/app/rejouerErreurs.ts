@@ -10,7 +10,7 @@
 //   position après le premier choix, avec le même nombre de visites ; même seuil. Sans KataGo, on ne juge pas.
 import { isLegal, type Color, type Position } from '../go/rules';
 import { toLabel } from '../go/coords';
-import { t } from '../content/i18n';
+import { t } from '../content/i18n/secondaires';
 import { conseilFiable, facteurTaille, seuilsKataGo, VISITES_MIN, type AnalyseRevue, type Note, type NoteCoup } from './revue';
 
 /** Notes qui se rejouent, de la plus grave à la moins grave (Coup manqué et Erreur se départagent par la perte). */

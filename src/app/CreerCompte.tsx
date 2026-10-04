@@ -15,7 +15,7 @@ import { moyenConnexion } from './entonnoir';
 import type { Raison } from './essai';
 import { Mochi } from '../ui/Mochi';
 import { fr } from '../ui/typo';
-import { t } from '../content/i18n';
+import { t } from '../content/i18n/secondaires';
 import '../ui/compte.css';
 
 function Coche() {

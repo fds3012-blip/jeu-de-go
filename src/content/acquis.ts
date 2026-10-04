@@ -1,7 +1,7 @@
 // Fin de leçon (issue #40, phase 6) : ce que le joueur sait faire maintenant, en une phrase.
 // Texte d'interface seulement : les positions et les réponses des leçons ne changent pas (content/lessons.fr.js).
 
-import { t } from './i18n';
+import { t } from './i18n/secondaires';
 
 /** Textes d'origine (français), comparés au catalogue par un test. */
 export const ACQUIS: Record<string, string> = {

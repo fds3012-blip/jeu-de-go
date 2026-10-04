@@ -5,7 +5,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { campsRecit, DUREE_RECIT, etatRecit, jetonsEtape, ligneDeuxieme, ligneKomi, ligneResultat, ligneTerritoire, PAUSE_LECTURE, type Recit } from '../app/score';
 import { fr } from './typo';
-import { nombre as virgule, t as tr } from '../content/i18n';
+import { nombre as virgule, t as tr } from '../content/i18n/secondaires';
 import './fin.css';
 
 interface Props {

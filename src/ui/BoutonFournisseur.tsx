@@ -7,7 +7,7 @@
 // Composant d'affichage seul : l'écran décide lesquels montrer (src/app/fournisseurs.ts) et dans quel ordre.
 import type { ReactElement } from 'react';
 import { NOM_FOURNISSEUR, type Fournisseur } from '../app/fournisseurs';
-import { t } from '../content/i18n';
+import { t } from '../content/i18n/secondaires';
 
 function LogoGoogle() {
   return (

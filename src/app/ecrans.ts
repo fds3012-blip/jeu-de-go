@@ -8,7 +8,8 @@
  * - Si un morceau manque (nouvelle version déployée pendant que l'app était ouverte), la page se recharge
  *   une fois pour prendre la nouvelle version, au lieu de laisser un écran vide.
  *
- * Les styles de ces écrans restent dans la feuille principale (voir src/main.tsx) : rendu inchangé.
+ * Les styles de ces écrans restent dans la feuille principale (voir src/main.tsx) : rendu inchangé. Exception (#433) :
+ * apprendre.css arrive avec Apprendre et Problèmes ; règles et précautions : docs/architecture/chargement-initial.md.
  */
 import { lazy, type ComponentType } from 'react';
 

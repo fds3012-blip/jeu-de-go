@@ -19,7 +19,7 @@
 import { toLabel } from '../go/coords';
 import { groupAt, neighbors, play, playSuperko, type Color, type Position } from '../go/rules';
 import { canEscape, captureWorks, defenceFails, hasTwoEyes } from '../go/tactics';
-import { langue as langueCourante, traduire, type Langue } from '../content/i18n';
+import { langue as langueCourante, traduire, type Langue } from '../content/i18n/secondaires';
 
 export type ModeleConseil = 'atari-joueur' | 'atari-adverse' | 'peu-de-libertes' | 'un-seul-oeil' | 'zone-a-defendre' | 'coup-a-eviter'
   | 'grand-coup' | 'coin-libre' | 'zone-a-prendre';

@@ -1,7 +1,10 @@
 // Charte du vocabulaire (issue #237, docs/design/vocabulaire.md) : un mot par objet, un sens par mot.
 // Ces tests lisent tout le catalogue français : un texte ajouté plus tard qui réintroduit un terme banni échoue ici.
-import { fr } from './fr';
-import { traduire, type Cle } from './index';
+import { fr as frAccueil } from './fr';
+import { frEcrans } from './frEcrans';
+// Tout le français (#433) : catalogue de l'accueil et des écrans secondaires.
+const fr = { ...frAccueil, ...frEcrans };
+import { traduire, type Cle } from './secondaires';
 import { statistiques, RECORD_MIN } from '../../app/vitrine';
 import { GENERIQUES } from '../../app/repliques';
 

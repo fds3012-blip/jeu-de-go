@@ -5,7 +5,7 @@ import { PALIERS } from '../../app/paliers';
 import { ILLEGAL_TEXT } from '../../data/puzzles';
 import { legendeSerie, niveau } from '../../app/problemes';
 import { accueil, introBut } from '../../app/home';
-import { choisirLangue, traduire } from './index';
+import { choisirLangue, traduire } from './secondaires';
 
 describe('français identique aux données d’origine', () => {
   it('phrase et description des 9 adversaires', () => {
