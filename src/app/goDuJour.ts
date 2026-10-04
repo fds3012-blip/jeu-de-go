@@ -6,7 +6,7 @@ import { t } from '../content/i18n';
 /** Jour de lancement : le Go du jour n° 1. */
 export const LANCEMENT = '2026-09-27';
 export const FUSEAU = 'Europe/Paris';
-export const URL_JEU = 'https://jeu-de-go.vercel.app/';
+export const URL_JEU = 'https://mochi-go.app/';
 export const PARAM = 'go-du-jour';
 /** Variante sans tiret, plus facile à taper à la main (`/?godujour=42`). */
 export const PARAM_COURT = 'godujour';

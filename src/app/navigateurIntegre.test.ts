@@ -74,7 +74,7 @@ describe('activation et sessions', () => {
 
 describe('lien vers Chrome (Android)', () => {
   it('intent:// avec repli sur la page, sans fragment', () => {
-    expect(lienChrome('https://jeu-de-go.vercel.app/?lang=en#acces')).toBe(
-      'intent://jeu-de-go.vercel.app/?lang=en#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=https%3A%2F%2Fjeu-de-go.vercel.app%2F%3Flang%3Den;end');
+    expect(lienChrome('https://mochi-go.app/?lang=en#acces')).toBe(
+      'intent://mochi-go.app/?lang=en#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=https%3A%2F%2Fmochi-go.app%2F%3Flang%3Den;end');
   });
 });

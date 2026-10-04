@@ -685,7 +685,8 @@ export function App() {
     <>
       <main className={`app${accueilVisible ? ' app-home' : ''}${enPartie ? ' app-partie' : ''}`}>
         {!enPartie && !ecranPlein && <header className="top">
-          <h1>Go</h1>
+          {/* Marque (#416) : « Mochi » posé sur « Go », pour garder l'emprise de l'ancien titre ; la flamme, le gel et « Défier un ami » tiennent à 320 px. */}
+          <h1 className="marque"><span className="marque-mochi">Mochi</span>{' '}<span className="marque-go">Go</span></h1>
           {accueilVisible
             ? (
               <span className="entete-droite">

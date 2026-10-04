@@ -66,12 +66,12 @@ test('le lien ouvre le Go du jour sans compte, on le résout, puis on le partage
   await partager.click();
 
   const partages = await page.evaluate(() => (window as unknown as { __partages: ShareData[] }).__partages);
-  expect(partages).toEqual([{ text: 'Go du jour n° 1 · résolu en 2 essais · série 1 🔥', url: 'https://jeu-de-go.vercel.app/?go-du-jour=1' }]);
+  expect(partages).toEqual([{ text: 'Go du jour n° 1 · résolu en 2 essais · série 1 🔥', url: 'https://mochi-go.app/?go-du-jour=1' }]);
   // Jamais la réponse.
   expect(JSON.stringify(partages)).not.toMatch(/E5/i);
 
   // Le lien partagé rouvre le même problème.
-  await page.goto(partages[0].url!.replace('https://jeu-de-go.vercel.app', ''));
+  await page.goto(partages[0].url!.replace('https://mochi-go.app', ''));
   await expect(page.getByText(/^Go du jour n°\s1$/)).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Capture la pierre' })).toBeVisible();
 });
@@ -84,7 +84,7 @@ test('sans Web Share API : copie dans le presse-papiers et « Copié ! »', asyn
   await page.getByRole('button', { name: 'Partager' }).click();
   await expect(page.getByText(/^Copié\s!$/)).toBeVisible();
   const copies = await page.evaluate(() => (window as unknown as { __copies: string[] }).__copies);
-  expect(copies).toEqual(['Go du jour n° 1 · résolu en 1 essai · série 1 🔥\nhttps://jeu-de-go.vercel.app/?go-du-jour=1']);
+  expect(copies).toEqual(['Go du jour n° 1 · résolu en 1 essai · série 1 🔥\nhttps://mochi-go.app/?go-du-jour=1']);
 });
 
 test('un lien d’un jour à venir ouvre celui d’aujourd’hui et le dit', async ({ page }) => {
@@ -131,7 +131,7 @@ test('résoudre, partager (texte copié), puis ouvrir le lien dans un nouveau co
   await pa.getByRole('button', { name: 'Partager' }).click();
   await expect(pa.getByText(/^Copié\s!$/)).toBeVisible();
   const [copie] = await pa.evaluate(() => (window as unknown as { __copies: string[] }).__copies);
-  expect(copie).toMatch(/^Go du jour n° 3 · résolu en 1 essai · série 1 🔥\nhttps:\/\/jeu-de-go\.vercel\.app\/\?go-du-jour=3$/);
+  expect(copie).toMatch(/^Go du jour n° 3 · résolu en 1 essai · série 1 🔥\nhttps:\/\/mochi-go\.app\/\?go-du-jour=3$/);
   // Aucune coordonnée (lettre A-T sans I suivie d'un numéro de ligne).
   expect(copie).not.toMatch(/\b[A-HJ-T](1[0-9]|[1-9])\b/);
   await a.close();
@@ -141,7 +141,7 @@ test('résoudre, partager (texte copié), puis ouvrir le lien dans un nouveau co
   const pb = await b.newPage();
   await pb.clock.setFixedTime(new Date('2026-09-30T10:00:00+02:00'));
   await pb.emulateMedia({ reducedMotion: 'reduce' });
-  const lien = copie.split('\n')[1].replace('https://jeu-de-go.vercel.app', '');
+  const lien = copie.split('\n')[1].replace('https://mochi-go.app', '');
   await pb.goto(lien);
   await expect(pb.getByText(/^Go du jour n°\s3$/)).toBeVisible();
   await expect(pb.locator('.lecteur-nom h2')).toHaveText(titre);

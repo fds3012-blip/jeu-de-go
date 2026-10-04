@@ -70,7 +70,7 @@ p { margin: 30px 0 0; font: 700 32px/1.3 'Zen', sans-serif; color: #EFE8DC; }
   filter: drop-shadow(0 26px 30px rgba(0,0,0,.6)); }
 </style></head><body>
 <div class="gauche">
-  <div class="marque">${logo}<span>Jeu de go</span></div>
+  <div class="marque">${logo}<span>Mochi Go</span></div>
   <h1>Trouveras-tu <em>le bon coup ?</em></h1>
   <p>Un défi par jour. Gratuit, sans compte.</p>
   <span class="pastille">Joue en 1 minute</span>
