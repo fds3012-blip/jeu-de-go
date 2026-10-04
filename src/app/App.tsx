@@ -549,7 +549,7 @@ export function App() {
     screen = <CreerCompte db={supabase} raison={ecranCompte.raison} anonyme={etat === 'anonyme'} onRetour={() => { setEcranCompte(null); window.scrollTo({ top: 0 }); }}
       onConditions={() => { go('profil'); setVueProfil('conditions'); }} />;
   } else if (enDefi && defi.vue === 'partie' && supabase) {
-    screen = <DefiPartie key={defi.id} db={supabase} partieId={defi.id} userId={session?.user.id} anonyme={estAnonyme(session)} pseudo={pseudo ?? null} confirmTouch={settings.confirmTouch} reglages={{ modifier: set }}
+    screen = <DefiPartie key={defi.id} db={supabase} partieId={defi.id} userId={session?.user.id} anonyme={estAnonyme(session)} pseudo={pseudo ?? null} confirmTouch={settings.confirmTouch} reglages={{ modifier: set }} celebrer={settings.celebrations}
       onRetour={quitterDefi} onAutre={() => { setDefi({ vue: 'liste' }); window.scrollTo({ top: 0 }); }} />;
   } else if (enDefi && defi.vue === 'arrivee') {
     screen = <DefiArrivee key={defi.jeton} db={supabase} jeton={defi.jeton} inviteur={defi.inviteur} compte={COMPTES ? etat : 'aucun'} onPartie={ouvrirDefiPartie} onAccueil={quitterDefi} />;
@@ -621,7 +621,7 @@ export function App() {
     screen = <Profil vue={vueProfil} onVue={v => { if (v === 'importer' && !garde({ quoi: 'import' }, { quoi: 'importer' })) return; setVueProfil(v); }} settings={settings} set={set} profil={profil} serie={serie} record={recordSerie}
       parcours={{ lecons: { faites: done, total: LESSONS.length }, adversaires: OPPONENTS.length }}
       placement={placement} onPlacement={ouvrirPlacement}
-      onJouer={() => { go('jouer'); lancer('ordi'); }} db={supabase} userId={session?.user.id}
+      onJouer={() => { go('jouer'); lancer('ordi'); }} db={supabase} userId={session?.user.id} onProfilChange={() => setClePseudo(c => c + 1)}
       // #359 : « Mes amis ». Sans compte complet, l'écran de compte s'ouvre puis revient ici ; « Défier » ouvre la partie.
       amis={supabase ? {
         db: supabase, compte: etat === 'complet', demandes: demandesAmis,

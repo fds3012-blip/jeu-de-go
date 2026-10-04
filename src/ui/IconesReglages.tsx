@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react';
 
 export type IconeReglageId =
-  | 'amis' | 'parties' | 'placement' | 'reglages' | 'importer' | 'rappel' | 'installer' | 'compte' | 'conditions'
+  | 'amis' | 'parties' | 'placement' | 'cote' | 'reglages' | 'importer' | 'rappel' | 'installer' | 'compte' | 'conditions'
   | 'langue' | 'theme' | 'goban' | 'confirmer' | 'sons' | 'celebrations' | 'aide';
 
 const TRACES: Record<IconeReglageId, ReactNode> = {
@@ -13,6 +13,8 @@ const TRACES: Record<IconeReglageId, ReactNode> = {
   amis: <><circle cx="9" cy="8.5" r="3.6" /><path d="M2.5 20a6.5 6.5 0 0 1 13 0" /><path d="M15.2 5.2a3.6 3.6 0 0 1 0 6.6M17.6 14.2A6.5 6.5 0 0 1 21.5 20" /></>,
   // Boussole : le placement trouve ton niveau de départ.
   placement: <><circle cx="12" cy="12" r="9" /><path d="m15.5 8.5-2 5-5 2 2-5Z" className="ir-plein" /></>,
+  // Courbe qui monte vers une pierre : ta cote de jeu (#417).
+  cote: <><path d="M3.5 18.5 9 13l3.5 3L19 9.5" /><path d="M3.5 21h17" /><circle cx="19" cy="7.5" r="2.4" className="ir-plein" /></>,
   reglages: <><path d="M4 7h10M18 7h2M4 17h4M12 17h8" /><circle cx="16" cy="7" r="2.2" /><circle cx="10" cy="17" r="2.2" /></>,
   // Loupe sur un coin de goban : analyser une partie.
   importer: <><path d="M4 4v10M4 4h10M4 9h8M9 4v8" /><circle cx="15" cy="15" r="4.2" /><path d="m18.2 18.2 2.8 2.8" /></>,
