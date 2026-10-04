@@ -35,10 +35,12 @@ interface BandeauProps {
   avant?: ReactNode;
   /** Pierres que ce joueur vient de prendre (#187) : un « +N » monte depuis le couvercle. `k` relance l'animation. */
   gain?: { n: number; k: number } | null;
+  /** Pendule de la partie en direct (#360), entre le nom et le couvercle. */
+  pendule?: ReactNode;
 }
 
 /** Bandeau d'un joueur : portrait, nom, rang, réplique éventuelle et couvercle. */
-export function Bandeau({ nom, sousTitre, portrait, actif, captures, pierresPrises, replique, avant, gain }: BandeauProps) {
+export function Bandeau({ nom, sousTitre, portrait, actif, captures, pierresPrises, replique, avant, gain, pendule }: BandeauProps) {
   return (
     <div className={`joueur${actif ? ' active' : ''}`} data-joueur={nom}>
       {avant}
@@ -50,6 +52,7 @@ export function Bandeau({ nom, sousTitre, portrait, actif, captures, pierresPris
         </div>
         <small>{sousTitre}{actif && <span className="sr-only">{t('partie.auTrait')}</span>}</small>
       </div>
+      {pendule}
       <span className="couvercle-zone">
         <Couvercle n={captures} pierres={pierresPrises} />
         <small className="couvercle-legende" aria-hidden="true">{t('partie.prisonniers')}</small>

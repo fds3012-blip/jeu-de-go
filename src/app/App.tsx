@@ -1,6 +1,6 @@
 import { Suspense, lazy, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 // Écrans chargés à la demande (perf, #323) : seul l'accueil est dans le JS initial.
-import { CreerCompte, DefiArrivee, DefiPartie, DefisEcran, Game, LearnHome, LessonPlayer, Placement, Profil, PseudoObligatoire, Puzzles, SeriePratique, apresPremierEcran } from './ecrans';
+import { CreerCompte, DefiArrivee, DefiPartie, DefisEcran, Direct, Game, LearnHome, LessonPlayer, Placement, Profil, PseudoObligatoire, Puzzles, SeriePratique, apresPremierEcran } from './ecrans';
 import { CHAPITRES, LESSONS } from '../content/lessons';
 import { LESSONS_KEY, readLocal, writeLocal, useGelsServeur, useLessonProgress, useOnline, useProfil, usePseudo, useSerie, useSession } from './hooks';
 import { COMPTES, chargerSupabase, useSupabase } from '../data/client';
@@ -154,7 +154,7 @@ type VueDefi = { vue: 'liste' } | { vue: 'arrivee'; jeton: string; inviteur: str
 
 /** Ce que le joueur voulait faire quand l'écran « Crée ton compte » s'est ouvert : repris dès que son compte est complet. */
 type Reprise = { quoi: 'ordi'; contre: OpponentId } | { quoi: 'deux' } | { quoi: 'guidee' } | { quoi: 'lecon'; id: string }
-  | { quoi: 'defis' } | { quoi: 'placement' } | { quoi: 'importer' } | { quoi: 'problemes' } | { quoi: 'amis' };
+  | { quoi: 'defis' } | { quoi: 'placement' } | { quoi: 'importer' } | { quoi: 'problemes' } | { quoi: 'amis' } | { quoi: 'direct' };
 
 export function App() {
   const [tab, setTab] = useState<Tab>(PAGE_CONFIDENTIALITE || (RETOUR_GOOGLE?.profil && !ECRAN_COMPTE_AU_RETOUR && !DEFI_AU_RETOUR) ? 'profil'
@@ -208,10 +208,12 @@ export function App() {
   }, [compteId, client]);
   const [defi, setDefi] = useState<VueDefi | null>(LIEN_DEFI !== null ? { vue: 'arrivee', jeton: LIEN_DEFI, inviteur: INVITEUR_AU_CHARGEMENT }
     : DEFI_AU_RETOUR ? { vue: 'arrivee', ...DEFI_AU_RETOUR } : null);
+  // « Un humain, maintenant » (#360) : partie en direct, du choix au bilan (écran src/app/Direct.tsx).
+  const [direct, setDirect] = useState(false);
   const { progress, state: syncState, record } = useLessonProgress(supabase, compteId);
   // Lien de défi ouvert alors que l'app est déjà ouverte (même onglet) : on part vers l'arrivée.
   useEffect(() => ecouterJetonDefi((jeton, inviteur) => {
-    setTab('jouer'); setPlaying(false); setLessonId(null); setEcranCompte(null); setDefi({ vue: 'arrivee', jeton, inviteur }); window.scrollTo({ top: 0 });
+    setTab('jouer'); setPlaying(false); setLessonId(null); setEcranCompte(null); setDirect(false); setDefi({ vue: 'arrivee', jeton, inviteur }); window.scrollTo({ top: 0 });
   }), []);
   const done = LESSONS.filter(l => (progress[l.id] ?? 0) >= l.steps.length).length;
   const lesson = LESSONS.find(l => l.id === lessonId);
@@ -450,7 +452,7 @@ export function App() {
   const go = (t: Tab) => {
     setDuJourDirect(false);
     if (t === 'problemes' && tab === 'problemes') setRacineProblemes(n => n + 1);
-    setDefi(null); setEcranCompte(null); setAnnonceGel(null); setRetourSerie(null); setEnPlacement(false); setTab(t); setPlaying(false); setLessonId(null); setSerie3(null); setVueProfil('menu'); window.scrollTo({ top: 0 });
+    setDefi(null); setDirect(false); setEcranCompte(null); setAnnonceGel(null); setRetourSerie(null); setEnPlacement(false); setTab(t); setPlaying(false); setLessonId(null); setSerie3(null); setVueProfil('menu'); window.scrollTo({ top: 0 });
   };
 
   // Reprise de l'action demandée, dès que le compte est complet ; `compte_cree` quand un compte sans pseudo apparaît.
@@ -464,6 +466,7 @@ export function App() {
     else if (r.quoi === 'placement') ouvrirPlacement();
     else if (r.quoi === 'importer') { setTab('profil'); setVueProfil('importer'); }
     else if (r.quoi === 'amis') { setTab('profil'); setVueProfil('amis'); }
+    else if (r.quoi === 'direct') { setTab('jouer'); setPlaying(false); setDefi(null); setDirect(true); }
     else setTab('problemes');
   };
   const etatAvant = useRef<EtatCompte | null>(null);
@@ -490,12 +493,14 @@ export function App() {
   }, [ecranCompte, defi, tab]);
 
   const enDefi = tab === 'jouer' && !playing && defi !== null;
-  // Défi ou « Crée ton compte » ouvert avant que le client Supabase soit là (#401) : on le charge sans attendre.
-  useEffect(() => { if (enDefi || ecranCompte) void chargerSupabase(); }, [enDefi, ecranCompte]);
-  const enPartie = (tab === 'jouer' && !!playing) || (enDefi && defi.vue === 'partie');
+  // #360 : partie en direct (choix, attente, partie) ; plein écran comme une partie, sans barre de navigation.
+  const enDirect = tab === 'jouer' && !playing && defi === null && direct;
+  // Défi, direct ou « Crée ton compte » ouvert avant que le client Supabase soit là (#401) : on le charge sans attendre.
+  useEffect(() => { if (enDefi || enDirect || ecranCompte) void chargerSupabase(); }, [enDefi, enDirect, ecranCompte]);
+  const enPartie = (tab === 'jouer' && !!playing) || (enDefi && defi.vue === 'partie') || enDirect;
   // Robustesse (#325) : écran d'erreur à la place d'un écran blanc ; « Retour à l'accueil » change d'onglet sans recharger.
   const versAccueil = useCallback(() => {
-    setDefi(null); setEcranCompte(null); setEnPlacement(false); setTab('jouer'); setPlaying(false); setLessonId(null); setSerie3(null); setVueProfil('menu');
+    setDefi(null); setDirect(false); setEcranCompte(null); setEnPlacement(false); setTab('jouer'); setPlaying(false); setLessonId(null); setSerie3(null); setVueProfil('menu');
     window.scrollTo({ top: 0 });
   }, []);
   const online = useOnline();
@@ -536,18 +541,23 @@ export function App() {
   const pseudoAChoisir = !!supabase && etat === 'sans_pseudo' && !!compteId;
   const ecranPlein = pseudoAChoisir || ecranCompte !== null;
   // Bandeau « Tu es hors ligne » : seulement là où le réseau sert (défi par lien, en ligne, compte et profil).
-  const ecranReseau = enDefi || tab === 'profil' || ecranPlein;
+  const ecranReseau = enDefi || enDirect || tab === 'profil' || ecranPlein;
   let screen;
   if (pseudoAChoisir && supabase && compteId) {
     screen = <PseudoObligatoire db={supabase} userId={compteId}
       onChoisi={p => { setPseudoChoisi({ id: compteId, pseudo: p }); setClePseudo(n => n + 1); }}
       onDeconnecter={() => { void supabase?.auth.signOut(); }} />;
-  } else if ((ecranCompte || enDefi) && client === undefined) {
+  } else if ((ecranCompte || enDefi || enDirect) && client === undefined) {
     // Client Supabase pas encore là (#401, chargé dès l'ouverture d'un lien de défi) : comme un écran à la demande.
     screen = null;
   } else if (ecranCompte && supabase) {
     screen = <CreerCompte db={supabase} raison={ecranCompte.raison} anonyme={etat === 'anonyme'} onRetour={() => { setEcranCompte(null); window.scrollTo({ top: 0 }); }}
       onConditions={() => { go('profil'); setVueProfil('conditions'); }} />;
+  } else if (enDirect) {
+    screen = supabase && compteId
+      ? <Direct db={supabase} userId={compteId} tailleDefaut={settings.size} confirmTouch={settings.confirmTouch} reglages={{ modifier: set }}
+        celebrer={settings.celebrations} onAccueil={() => { setDirect(false); window.scrollTo({ top: 0 }); }} />
+      : null;
   } else if (enDefi && defi.vue === 'partie' && supabase) {
     screen = <DefiPartie key={defi.id} db={supabase} partieId={defi.id} userId={session?.user.id} anonyme={estAnonyme(session)} pseudo={pseudo ?? null} confirmTouch={settings.confirmTouch} reglages={{ modifier: set }} celebrer={settings.celebrations}
       onRetour={quitterDefi} onAutre={() => { setDefi({ vue: 'liste' }); window.scrollTo({ top: 0 }); }} />;
@@ -636,6 +646,8 @@ export function App() {
       <Accueil adv={adv} battu={battu(bilan, adv.id)} textes={home} taille={settings.size} cartes={cartes}
         reglages={reglages} setReglages={setReglages} onTaille={n => set({ size: n })} onChoisir={setAdversaire}
         onJouer={() => lancer('ordi')} onDeux={() => lancer('deux')} onGuidee={lancerGuidee}
+        // #360 : « Un humain, maintenant », avec un compte et un pseudo (sinon « Crée ton compte », puis reprise).
+        onDirect={COMPTES ? () => { if (!garde({ quoi: 'en_ligne' }, { quoi: 'direct' })) return; setDefi(null); setDirect(true); window.scrollTo({ top: 0 }); } : undefined}
         probleme={daily && { numero, titre: daily.title, rows: daily.rows, reussi: duJourFait, etat: etatTuile(appel, duJourFait) }}
         // #367 : « Aujourd'hui » est la liste « À faire » ; un toucher sur un élément en attente est mesuré.
         // Recette du 02/10 (S7) : Go du jour à faire → ouvert directement.
@@ -657,7 +669,7 @@ export function App() {
     );
   }
 
-  const accueilVisible = tab === 'jouer' && !playing && !enPlacement && !enDefi && !ecranPlein;
+  const accueilVisible = tab === 'jouer' && !playing && !enPlacement && !enDefi && !enDirect && !ecranPlein;
   // Accueil v3 : `premier_ecran_vu`, une fois, quand l'accueil est affiché et utilisable (page chargée, polices prêtes).
   // `nouveau` : tout premier lancement sur l'appareil (aucune partie, aucun retour). Dénominateur des 60 premières secondes.
   const ecranVu = useRef(false);
@@ -735,7 +747,7 @@ export function App() {
         <Suspense fallback={null}>
           {/* Depuis une partie, pas de lien vers une leçon : on ne quitte pas la partie depuis l'aide. */}
           <FeuilleAide key={aide.n} ouverture={aide} onFermer={() => setAide(null)} leconCourante={lessonId}
-            onLecon={playing || enPlacement || defi !== null ? undefined : id => { setAide(null); ouvrirLecon(id); }} />
+            onLecon={playing || enPlacement || defi !== null || direct ? undefined : id => { setAide(null); ouvrirLecon(id); }} />
         </Suspense>
       )}
       <ConsentModal visible={fenetreVisible({ consent, ignoree: accordIgnore, enPartie: enPartie || (tab === 'problemes' && duJourOuvert), surConditions: tab === 'profil' && vueProfil === 'conditions' })}

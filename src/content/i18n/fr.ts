@@ -130,6 +130,7 @@ export const fr = {
   'accueil.deux': 'Jouer à deux sur ce téléphone',
   // Partie guidée (#79) : Mochi règle sa force tous les 10 coups pour garder la partie serrée.
   'accueil.guidee': 'Partie guidée contre Mochi',
+  'accueil.direct': 'Un humain, maintenant',
   'guidee.bulle': 'Partie guidée : Mochi règle sa force pour que la partie reste serrée. Tu as Noir.',
   'guidee.plusDoux': 'Mochi joue un peu plus doux.',
   'guidee.plusFort': 'Mochi joue un peu plus fort.',

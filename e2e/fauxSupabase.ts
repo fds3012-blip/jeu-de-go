@@ -1,4 +1,5 @@
 import type { BrowserContext, Page, Route, WebSocketRoute } from '@playwright/test';
+import { parseActionRequest, planAction, type GameRow } from '../src/go/server';
 
 // Supabase simulé par interception réseau, partagé par les parcours du compte (#343) et du défi par lien (#81).
 // Le build de test lit l'adresse simulée dans le stockage local (`e2e.supabase`, voir src/data/supabase.ts).
@@ -11,6 +12,10 @@ import type { BrowserContext, Page, Route, WebSocketRoute } from '@playwright/te
 // Cote de jeu (#417) : `rating_history` (lu par son seul titulaire), `choisir_depart_cote` (mêmes valeurs et mêmes
 // codes que supabase/migrations/20261004120100_cote_glicko.sql). Le calcul Glicko-2 reste au serveur : un test sème
 // directement l'historique d'une partie classée (`ratingHistory`).
+// Partie en direct (#360) : `find_match` (file par taille, cadence et comptage ; celui qui attendait prend Noir),
+// `quitter_file_attente`, `pendule_direct` (pendule simplifiée : temps décompté au coup, chute constatée à la lecture),
+// actions `move`, `propose_dead`, `accept`, `resume` de game-action par la vraie logique (`planAction`, src/go/server.ts),
+// `resign_game`. Fin classée : ±162 dans l'historique des deux joueurs, comme deux nouveaux (#417).
 
 export const SUPABASE = 'https://supabase.e2e.test';
 export const CODE = '123456';
@@ -42,6 +47,9 @@ export function fauxServeur() {
   let idFiltre = 0;
   const partiesPerso: Ligne[] = [];
   const ratingHistory: Ligne[] = [];
+  const file: { user: string; taille: number; cadence: string; regles: string }[] = [];
+  const pendules: Ligne[] = [];
+  let nDirect = 0;
   const appels: string[] = [];
   const emailsEnvoyes: { email: string; type: string }[] = [];
   const autorisations: string[] = [];
@@ -125,6 +133,41 @@ export function fauxServeur() {
     const u: Utilisateur = { id, anonyme: true };
     profiles.push({ id, username: null, rating: 1500, streak_days: 0, streak_last: null, streak_freezes: 0 });
     return session(u);
+  }
+
+  const CADENCES: Record<string, [number, number, number]> = { rapide: [300000, 3, 20000], normale: [600000, 3, 30000], lente: [1200000, 5, 30000] };
+  const directEnCours = (uid: string) => games.find(g => g.status === 'active' && pendules.some(p => p.partie_id === g.id) && (g.black_id === uid || g.white_id === uid));
+  /** Fin d'une partie classée en direct : résultat, pendule arrêtée, cote ±162 (deux nouveaux, #417). */
+  function finir(g: Ligne, resultat: string) {
+    Object.assign(g, { status: 'finished', result: resultat, counting: false });
+    const p = pendules.find(x => x.partie_id === g.id);
+    if (p) p.trait_depuis = null;
+    if (!g.rated || !/^[BW]\+/.test(resultat)) return;
+    const gagnant = resultat.startsWith('B') ? g.black_id : g.white_id;
+    for (const id of [g.black_id, g.white_id]) {
+      const ecart = id === gagnant ? 162 : -162;
+      ratingHistory.push({ user_id: id, kind: 'game', rating: 800 + ecart, ecart, rd: 290.32, game_id: g.id, created_at: new Date().toISOString() });
+    }
+  }
+  /** Constat de la chute (simplifié : sans absence) à la lecture de la pendule. */
+  function constater(g: Ligne) {
+    const p = pendules.find(x => x.partie_id === g.id);
+    if (!p || g.status !== 'active' || g.counting || !p.trait_depuis) return;
+    const noir = (String(g.moves).length / 2) % 2 === 0;
+    const ecoule = Date.now() - Date.parse(String(p.trait_depuis));
+    const ms = Number(noir ? p.noir_ms : p.blanc_ms), per = Number(noir ? p.noir_periodes : p.blanc_periodes);
+    if (ecoule >= ms + per * Number(p.periode_ms)) finir(g, noir ? 'W+T' : 'B+T');
+  }
+  /** Coup décompté sur la pendule de qui l'a joué (comme le déclencheur games_direct_pendule). */
+  function decompter(g: Ligne, avant: string) {
+    const p = pendules.find(x => x.partie_id === g.id);
+    if (!p || !p.trait_depuis) return;
+    const noir = (avant.length / 2) % 2 === 0;
+    const ecoule = Date.now() - Date.parse(String(p.trait_depuis));
+    const cle = noir ? 'noir_ms' : 'blanc_ms';
+    p[cle] = Math.max(0, Number(p[cle]) - ecoule);
+    p[noir ? 'noir_vu_le' : 'blanc_vu_le'] = new Date().toISOString();
+    p.trait_depuis = g.counting ? null : new Date().toISOString();
   }
 
   async function traiter(route: Route) {
@@ -356,9 +399,69 @@ export function fauxServeur() {
       ratingHistory.push({ user_id: u.id, kind: 'depart', rating: cote, rd: 350, ecart: null, game_id: null, created_at: new Date().toISOString() });
       return json(cote);
     }
+    if (chemin === '/rest/v1/rpc/find_match') {
+      const { p_size, p_cadence = 'normale', p_regles = 'japanese' } = req.postDataJSON() as { p_size: number; p_cadence?: string; p_regles?: string };
+      if (!u || u.anonyme) return json({ code: 'JGC01', message: 'Crée ton compte' }, 400);
+      if (!profiles.find(x => x.id === u.id)?.username) return json({ code: 'JGP01', message: 'Choisis ton pseudo' }, 400);
+      const enCours = directEnCours(u.id);
+      if (enCours) { file.splice(0, file.length, ...file.filter(f => f.user !== u.id)); return json(enCours.id); }
+      const autre = file.find(f => f.user !== u.id && f.taille === p_size && f.cadence === p_cadence && f.regles === p_regles);
+      if (autre) {
+        file.splice(0, file.length, ...file.filter(f => f.user !== u.id && f.user !== autre.user));
+        const id = `33333333-3333-4333-8333-${String(++nDirect).padStart(12, '0')}`;
+        games.push({ id, black_id: autre.user, white_id: u.id, created_by: u.id, bot_id: null, size: p_size, komi: 6.5, rules: p_regles, handicap: 0, moves: '',
+          status: 'active', counting: false, dead_stones: null, dead_proposed_by: null, result: null, resumed_at: 0, prive: false, rated: true, updated_at: new Date().toISOString() });
+        const [m, n, pm] = CADENCES[p_cadence];
+        pendules.push({ partie_id: id, cadence: p_cadence, main_ms: m, periodes: n, periode_ms: pm, noir_ms: m, blanc_ms: m, noir_periodes: n, blanc_periodes: n,
+          trait_depuis: new Date().toISOString(), comptage_depuis: null, noir_vu_le: null, blanc_vu_le: new Date().toISOString() });
+        return json(id);
+      }
+      if (!file.some(f => f.user === u.id)) file.push({ user: u.id, taille: p_size, cadence: p_cadence, regles: p_regles });
+      return json(null);
+    }
+    if (chemin === '/rest/v1/rpc/quitter_file_attente') {
+      if (!u) return json({ code: '42501', message: 'Connexion requise' }, 401);
+      file.splice(0, file.length, ...file.filter(f => f.user !== u.id));
+      return json(directEnCours(u.id)?.id ?? null);
+    }
+    if (chemin === '/rest/v1/rpc/pendule_direct') {
+      const { p_partie } = req.postDataJSON() as { p_partie: string };
+      const g = games.find(x => x.id === p_partie);
+      const p = pendules.find(x => x.partie_id === p_partie);
+      if (!u || !g || !p || (g.black_id !== u.id && g.white_id !== u.id)) return json({ code: 'P0002', message: 'Partie introuvable' }, 400);
+      if (g.status === 'active') p[g.black_id === u.id ? 'noir_vu_le' : 'blanc_vu_le'] = new Date().toISOString();
+      constater(g);
+      return json({ statut: g.status, resultat: g.result, coups: g.moves, comptage: g.counting, mortes: g.dead_stones, mortes_par: g.dead_proposed_by,
+        ...p, maintenant: new Date().toISOString() });
+    }
+    if (chemin === '/rest/v1/rpc/resign_game') {
+      const { p_game } = req.postDataJSON() as { p_game: string };
+      const g = games.find(x => x.id === p_game);
+      if (!u || !g || g.status !== 'active' || (g.black_id !== u.id && g.white_id !== u.id)) return json({ message: 'La partie n’est pas en cours' }, 400);
+      const resultat = g.black_id === u.id ? 'W+R' : 'B+R';
+      finir(g, resultat);
+      return json(resultat);
+    }
     if (chemin.startsWith('/rest/v1/rpc/')) return json(null);
     if (chemin === '/functions/v1/game-action') {
-      const { action, game_id, move } = req.postDataJSON() as { action: string; game_id: string; move: string };
+      const corps = req.postDataJSON() as { action: string; game_id: string; move: string; gameId?: string };
+      // Partie en direct (#360) : la même décision que la fonction serveur (planAction), écrite ici.
+      if (corps.action !== 'defi_coup' && u) {
+        const demande = parseActionRequest(corps);
+        const partie = demande && games.find(x => x.id === demande.gameId);
+        if (!demande || !partie) return json({ ok: false, error: 'format', message: 'Demande invalide.' }, 400);
+        constater(partie);
+        const plan = planAction(partie as unknown as GameRow, u.id, demande);
+        if (!plan.ok) return json({ ok: false, error: plan.error, message: plan.message }, plan.status);
+        if (plan.kind === 'finish') { finir(partie, plan.result); Object.assign(partie, { score_black: plan.black, score_white: plan.white }); return json({ ok: true, result: plan.result, black: plan.black, white: plan.white }); }
+        const avant = String(partie.moves);
+        const reprise = partie.counting && plan.patch.counting === false;
+        Object.assign(partie, plan.patch);
+        if (plan.patch.moves !== undefined) decompter(partie, avant);
+        else if (reprise) { const p = pendules.find(x => x.partie_id === partie.id); if (p) p.trait_depuis = new Date().toISOString(); }
+        return json({ ok: true, game: partie });
+      }
+      const { action, game_id, move } = corps;
       const g = games.find(x => x.id === game_id);
       if (action !== 'defi_coup' || !g || !u) return json({ error: 'format' }, 400);
       if (u.anonyme) return json({ error: 'connexion' }, 401);
@@ -426,7 +529,7 @@ export function fauxServeur() {
   const utilisateur = (id: string) => [...jetons.values(), ...parEmail.values()].find(x => x.id === id);
   /** Session ouverte d'un compte complet (avec pseudo), à poser dans le stockage du navigateur (#367). */
   function sessionCompte(email: string, pseudo: string, id: string) { return session(compteExistant(email, pseudo, id)); }
-  return { traiter, brancherTempsReel, notifier, appels, games, defis, notifications, partiesPerso, profiles, ratingHistory, emailsEnvoyes, sessionAnonyme,
+  return { traiter, brancherTempsReel, notifier, appels, games, defis, notifications, partiesPerso, profiles, ratingHistory, emailsEnvoyes, sessionAnonyme, file, pendules,
     compteExistant, compteGoogle, compteSocial, relierIdentite, liaison, utilisateur, sessionCompte, autorisations, amities };
 }
 
