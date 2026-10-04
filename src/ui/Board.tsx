@@ -277,7 +277,8 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
       })}
     </g>
   )) : null;
-  const ghostP = ghost >= 0 && !board[ghost] && ghost !== shaking ? ghost : -1;
+  // #428 : un plateau qui cesse d'être jouable (jugement en cours, coup montré) ne garde pas la pierre fantôme de la souris.
+  const ghostP = interactive && ghost >= 0 &&!board[ghost] && ghost !== shaking ? ghost : -1;
   const fantome = (p: number) => { const [x, y] = at(p); return { transform: `translate(${x.toFixed(2)} ${y.toFixed(2)})` }; };
 
   return (

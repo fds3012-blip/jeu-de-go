@@ -42,8 +42,11 @@ for (const [largeur, hauteur] of [[390, 844], [320, 568]] as const) {
       // 2. Le bilan : une seule action principale, la précision de chaque joueur, le décompte des notes du go.
       const demarrer = page.getByRole('button', { name: 'Démarrer le bilan' });
       await expect(demarrer).toBeVisible({ timeout: 30_000 });
+      // #428 : avec KataGo et des erreurs à rejouer, l'action principale est « Rejouer mes erreurs (2) » (F7 et D6) ;
+      // « Démarrer le bilan » reste là, en action secondaire.
       await expect(page.locator('.cta')).toHaveCount(1);
-      await expect(demarrer).toBeInViewport();
+      await expect(page.locator('.cta')).toHaveText('Rejouer mes erreurs (2)');
+      await expect(page.locator('.cta')).toBeInViewport();
       const table = page.getByRole('table', { name: 'Tes coups, note par note' });
       await expect(table.getByRole('columnheader', { name: 'Toi' })).toBeVisible();
       await expect(table.getByRole('columnheader', { name: 'Pomme' })).toBeVisible();

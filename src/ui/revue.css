@@ -58,6 +58,14 @@
   .bilan-score { min-width: 60px; padding: 0 6px; font-size: 18px; }
   .revue-table-note { gap: 8px; }
 }
+/* Zoom 200 % (195 px, #428 : le bilan porte « Rejouer mes erreurs ») : colonnes fixes, libellés qui passent à la ligne. */
+@media (max-width: 240px) {
+  .bilan-table { table-layout: fixed; font-size: 14px; }
+  .bilan-table td { width: 30%; }
+  .bilan-table tbody th { overflow-wrap: anywhere; }
+  .bilan-score { min-width: 0; width: 100%; padding: 0 2px; font-size: 16px; }
+  .revue-table-note { flex-wrap: wrap; gap: 4px; }
+}
 
 /* Courbe d'avantage : Blanc en haut (papier), Noir en bas (sumi), ligne jade, coups clés en couleur de note. */
 /* Audit du 02/10 (n° 4) : couleurs en jetons (tokens.css, --courbe-*). En clair, le cadre et le trait passent au-dessus
@@ -128,6 +136,8 @@
 
 .revue-note { margin: 0 2px; color: var(--muted); font-size: 14px; line-height: 1.35; }
 .revue-importer { display: block; margin: 0 auto; }
+/* #428 : avec des erreurs à rejouer, « Démarrer le bilan » passe en action secondaire, sous le tableau. */
+.bilan-parcours { display: block; width: 100%; min-height: var(--cible-bouton); border-color: var(--line); }
 
 @media (prefers-reduced-motion: no-preference) {
   .bilan-barre span { transition: transform var(--duree-rapide) var(--ease); }

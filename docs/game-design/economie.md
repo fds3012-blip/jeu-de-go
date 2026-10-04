@@ -29,6 +29,7 @@ Bonus « première fois » : +20 une fois par appareil, pour chacune des trois c
 | Partie de 10 coups ou moins | 0 | non | « Première partie » | — | `xp.ts` (`sourceXpPartie`) |
 | Partie à deux sur le même appareil | +15 | non | « Première partie » | — | `Game.tsx` |
 | « Rejouer d'ici » depuis la revue | 0 (C6) | non | — | — | `xp.ts` (`sourceXpPartie`) |
+| « Rejouer mes erreurs » fini (#428) | +10, une fois par partie (bonus « première fois » des problèmes) | non | — | — | `rejouerErreurs.ts` (`marquerPartie`), `RejouerErreurs.tsx` |
 | Quitter pendant le récit du score | XP créditée au départ (C5) | non | — | — | `Game.tsx` |
 | Rejouer une erreur (« Tes erreurs », #77), jusqu'à la maîtrise | **0** | non | non | calendrier espacé propre | `MesErreurs.tsx`, `redite*.ts` |
 | Revue d'une partie, import SGF et analyse KataGo (#286) | 0 | non | non | — | `Revue.tsx`, `ImportSgf.tsx` |

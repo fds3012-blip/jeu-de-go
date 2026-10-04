@@ -6,6 +6,8 @@
 // 3. Le parcours : Mochi ne commente que les coups clés (notation.ts, parcours.ts) ; sceau sur la pierre, meilleur coup
 //    en pierre fantôme jade, avance après le coup ; bande des coups à toucher ; « Suivant » en action principale.
 //    « Rejouer d'ici » (#34) et « Rejoue cette erreur » (#77) restent en actions secondaires.
+// 4. « Rejouer mes erreurs » (#428, RejouerErreurs.tsx) : avec KataGo, quand tu as des erreurs à rejouer, c'est l'action
+//    principale du bilan ; « Démarrer le bilan » passe en action secondaire. Sans KataGo, pas de bouton.
 // Logique pure : revue.ts (notes de base, précision, moment clé), notation.ts (notes du go), parcours.ts (phrases).
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Board } from '../ui/Board';
@@ -28,6 +30,8 @@ import { candidatsUniques, classerCoups, confirmeUnique, coupsCles, lignesBilan,
 import { avanceVue, cleSuivante, commentaire, proverbePour } from './parcours';
 import { readLocal, writeLocal } from './hooks';
 import { coupAccepte, creerErreur, ERREURS_KEY, garderRatee, lireErreurs, peutEnFaireUnProbleme, type ErreurGardee } from './erreurs';
+import { erreursARejouer, type ErreurARejouer } from './rejouerErreurs';
+import { RejouerErreurs } from './RejouerErreurs';
 import '../ui/revue.css';
 
 interface Props {
@@ -65,6 +69,8 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
   const { positions, komi, resultat } = useMemo(() => positionsDepuisSgf(sgf), [sgf]);
   const n = positions.length - 1, size = positions[0].size;
   const [etape, setEtape] = useState<'bilan' | 'parcours'>('bilan');
+  // « Rejouer mes erreurs » (#428) : la séance, figée au départ ; `null` hors séance.
+  const [seance, setSeance] = useState<ErreurARejouer[] | null>(null);
   const [i, setI] = useState(0);
   const [analyses, setAnalyses] = useState<(AnalyseRevue | null)[]>([]);
   const [confirmations, setConfirmations] = useState<Record<number, number>>({});
@@ -98,6 +104,8 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
   const cles = useMemo(() => coupsCles(notes, joueur, cle?.coup), [notes, joueur, cle]);
   const avanceNoir = finie ? avanceFinale(resultat, analyses[n]?.lead) : null;
   const proverbe = useMemo(() => proverbePour(sgf), [sgf]);
+  // #428 : erreurs à rejouer, seulement avec KataGo (rejouerErreurs.ts écarte toute position sans analyse KataGo).
+  const aRejouer = useMemo(() => (finie ? erreursARejouer(positions, analyses, notes, joueur) : []), [finie, positions, analyses, notes, joueur]);
   // Coups dont on cherche le meilleur coup avec KataGo (#34) : tes pertes parmi les coups clés.
   const aConseiller = useMemo(() => cles.filter(c => { const x = notes[c - 1]; return !!x && PERTES.has(x.note) && (!joueur || x.couleur === joueur); }), [cles, notes, joueur]);
 
@@ -253,6 +261,14 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
     </header>
   );
 
+  // ---------- « Rejouer mes erreurs » (#428) ----------
+  if (seance) {
+    return (
+      <RejouerErreurs sgf={sgf} positions={positions} komi={komi} analyses={analyses} erreurs={seance} joueur={joueur}
+        adversaire={adversaire} confirmTouch={confirmTouch} onRetour={() => { setSeance(null); window.scrollTo?.({ top: 0 }); }} />
+    );
+  }
+
   // ---------- « Rejoue cette erreur » (#77) ----------
   if (rejeu) {
     const pos = rejeu.apres ?? rejeu.avant;
@@ -366,9 +382,12 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
         <p className="revue-note bilan-aide">{fr(tr('bilan3.precisionAide'))}</p>
         {!avecKataGo && <p className="revue-note revue-sans-katago">{fr(tr(sansKataGo ? `bilan3.sansKataGo.${sansKataGo}` : 'bilan3.sansKataGo'))}</p>}
         {arret && <p className="revue-note revue-arretee">{fr(tr('import.arretee'))}</p>}
+        {aRejouer.length > 0 && <button type="button" className="btn bilan-parcours" onClick={() => demarrer()}>{tr('bilan3.demarrer')}</button>}
         {onImporter && <button type="button" className="lien revue-importer" onClick={onImporter}>{tr('import.autre')}</button>}
         <div className="dock revue-dock">
-          <button type="button" className="cta" onClick={() => demarrer()} disabled={n < 1}>{tr('bilan3.demarrer')}</button>
+          {aRejouer.length > 0
+            ? <button type="button" className="cta" onClick={() => { setSeance(aRejouer); window.scrollTo?.({ top: 0 }); }}>{tr('rejeu.bouton', { n: aRejouer.length })}</button>
+            : <button type="button" className="cta" onClick={() => demarrer()} disabled={n < 1}>{tr('bilan3.demarrer')}</button>}
         </div>
       </div>
     );
