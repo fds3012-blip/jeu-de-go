@@ -4,7 +4,9 @@ Jouer maintenant contre quelqu'un de son niveau : file d'attente, appariement pa
 
 ## Parcours
 
-1. Accueil → « Changer » → « Un humain, maintenant ». Sans compte ou sans pseudo : « Crée ton compte » (raison `en_ligne`), puis l'écran s'ouvre de lui-même.
+1. Accueil → « Jouer en ligne », l'action principale dès le début (#432 ; tuile « En ligne » au tout premier lancement, hors ligne, et absente sans comptes configurés). Sans compte ou sans pseudo : « Crée ton compte » (raison `en_ligne`), puis l'écran s'ouvre de lui-même.
+
+   Règle de l'action principale (`src/app/modes.ts`) : la partie en ligne classée, sauf hors ligne, sans Supabase, ou au tout premier lancement (aucune partie, aucune leçon), qui garde son propre écran « Joue ta première partie » contre Pomme. Avant #432, il fallait avoir battu Pomme et fini les 3 premières leçons (#429). « Contre l'ordi » est une tuile pour tous, avec l'adversaire en cours.
 2. Choix : taille (9 × 9, 13 × 13, 19 × 19), temps de jeu, comptage. Une action : « Trouver un adversaire ».
 3. Attente : Mochi dit « Je cherche quelqu'un de ton niveau… », le temps d'attente défile. Une action : « Annuler ».
 4. Partie : pseudo, grade et cote de l'adversaire, pendule de chacun dans son bandeau.

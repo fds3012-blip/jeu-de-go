@@ -5,7 +5,7 @@
 // Retours : l'adversaire parle, le bouton propose la partie, et sous lui « Aujourd'hui » met en avant la bonne
 // chose à faire (défi où c'est ton tour, Go du jour à faire, leçon suivante ; src/app/aujourdhui.ts).
 // #429 : tous les modes de jeu en 1 toucher, ou 2 par « Plus » : une rangée de tuiles sous le bouton (src/app/modes.ts).
-// Le débutant garde l'ordi en action principale ; ensuite, la partie en ligne classée, cote et grade visibles.
+// #432 : la partie en ligne classée en action principale dès le début (cote et grade visibles) ; l'ordi est une tuile.
 import { Suspense, useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { Board } from '../ui/Board';
 import { Sceau } from '../ui/Sceau';

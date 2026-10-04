@@ -18,7 +18,7 @@ import { accueil, adversaireOuvert, echelle, introBut, INTRO_KEY, OUVERTS_D_OFFI
 import { PLACEMENT_KEY, chapitreConseille, coteApresPlacement, leconDeLAccueil, lirePlacement, ouvertsApresPlacement, proposerPlacement, type Placement as ResultatPlacement } from './placement';
 import { COTE_KEY } from './coteJoueur';
 import { Accueil } from './Accueil';
-import { LECONS_DEBUT, modesAccueil, type Depuis, type Mode } from './modes';
+import { modesAccueil, type Depuis, type Mode } from './modes';
 import { EVENTS, secondsSinceOpen, track, trackOnce } from '../data/analytics';
 import { estArriveeRappel, etatRappel } from './rappel';
 import { PARAM, PARAM_COURT, SERIE_KEY, numeroDuJour, numeroDuLien, problemeDuJour, type Serie } from './goDuJour';
@@ -644,11 +644,8 @@ export function App() {
     const numero = numeroJour;
     const daily = duJour;
     const rangLecon = leconConseillee ? LESSONS.indexOf(leconConseillee) + 1 : 0;
-    // #429 : tous les modes en 1 toucher (ou 2 par « Plus ») ; le débutant garde l'ordi, ensuite la partie en ligne classée.
-    const modes = modesAccueil({
-      comptes: COMPTES, enLigne: online, pommeBattue: battu(bilan, OPPONENTS[0].id),
-      basesFaites: LESSONS.slice(0, LECONS_DEBUT).every(l => (progress[l.id] ?? 0) >= l.steps.length) || (placement?.fait === true && placement.kyu !== null),
-    });
+    // #429 : tous les modes en 1 toucher (ou 2 par « Plus ») ; #432 : la partie en ligne classée en action principale dès le début.
+    const modes = modesAccueil({ comptes: COMPTES, enLigne: online, premierLancement: home.nouveau });
     const choisirMode = (m: Mode, depuis: Depuis) => {
       track(EVENTS.modeChoisi, { mode: m, depuis, principal: m === modes.principal });
       if (m === 'ordi') lancer('ordi');
