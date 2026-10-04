@@ -1,6 +1,6 @@
 import { expect, test, type Browser, type Page } from '@playwright/test';
 import { brancher, fauxServeur, JETON, PARTIE, type FauxServeur } from './fauxSupabase';
-import { attendrePierre, jouer, plateau } from './plateau';
+import { attendrePierre, choisirMode, jouer, plateau } from './plateau';
 
 // Issue #425 : « le partage du coup est un peu lent ». Deux téléphones (deux contextes) sur le Supabase simulé
 // (e2e/fauxSupabase.ts). Les relectures (partie, pendule) sont retardées de 8 s : un coup qui s'affiche en moins
@@ -36,7 +36,7 @@ function semerDefi(serveur: FauxServeur) {
 
 async function ouvrirDefi(page: Page, ami: string) {
   await page.getByRole('navigation').getByRole('button', { name: /^Jouer/ }).click();
-  await page.getByTestId('lien-defi').click();
+  await page.getByTestId('mode-ami').click();
   await page.getByRole('button', { name: new RegExp(ami) }).first().click();
   await expect(plateau(page)).toBeVisible();
 }
@@ -133,8 +133,7 @@ test('partie en direct : coup affiché par l’événement, pendule à jour, pas
   const erreurs: string[] = [];
   for (const p of [ana, bob]) {
     p.on('pageerror', e => erreurs.push(e.message));
-    await p.getByRole('button', { name: 'Changer' }).click();
-    await p.getByRole('dialog', { name: 'Ton adversaire' }).getByRole('button', { name: 'Un humain, maintenant' }).click();
+    await choisirMode(p, 'en_ligne');
     await expect(p.getByTestId('direct-partie')).toBeVisible();
   }
   await expect.poll(() => serveur.canauxActifs('direct-')).toBe(2);

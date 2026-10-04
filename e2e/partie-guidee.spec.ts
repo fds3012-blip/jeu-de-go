@@ -1,16 +1,15 @@
 import { expect, test } from '@playwright/test';
-import { attendreReponse, coupsJoues, jouer, passerJusquAuScore, plateau } from './plateau';
+import { attendreReponse, choisirMode, coupsJoues, jouer, passerJusquAuScore, plateau } from './plateau';
 
 // Issue #79 : partie guidée contre Mochi, hors de l'échelle des adversaires. Mochi règle sa force tous les 10 coups
 // (logique testée dans src/engine/guidee.test.ts). Ici : on lance la partie, on dépasse le 10e coup (premier réglage),
 // on la termine, et le bilan des adversaires ne bouge pas.
 
-test('partie guidée : lancée depuis « Changer », jouée au-delà du 10e coup, terminée sans toucher au bilan', async ({ page }) => {
+test('partie guidée : lancée depuis l’accueil (#429), jouée au-delà du 10e coup, terminée sans toucher au bilan', async ({ page }) => {
   const erreurs: string[] = [];
   page.on('pageerror', e => erreurs.push(e.message));
   await page.goto('/');
-  await page.getByRole('button', { name: 'Changer' }).click();
-  await page.getByRole('dialog', { name: 'Ton adversaire' }).getByRole('button', { name: 'Partie guidée contre Mochi' }).click();
+  await choisirMode(page, 'guidee');
   await expect(plateau(page)).toBeVisible();
   await expect(page.getByText('Partie guidée : Mochi règle sa force pour que la partie reste serrée. Tu as Noir.')).toBeVisible();
 
@@ -38,8 +37,7 @@ test('partie guidée : lancée depuis « Changer », jouée au-delà du 10e coup
 test('partie guidée : le portrait est celui de Mochi, sans tampon « battue » à la fin', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/?komi=-100');
-  await page.getByRole('button', { name: 'Changer' }).click();
-  await page.getByRole('dialog', { name: 'Ton adversaire' }).getByRole('button', { name: 'Partie guidée contre Mochi' }).click();
+  await choisirMode(page, 'guidee');
   await expect(plateau(page)).toBeVisible();
   await expect(page.locator('[data-portrait="pomme"]')).toHaveCount(0);
   await expect(page.locator('[data-portrait="mochi"]:not(.coach-portrait)').first()).toBeVisible();

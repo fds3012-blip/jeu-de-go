@@ -43,7 +43,7 @@ async function ouvrir(browser: Browser, baseURL: string | undefined, serveur: Fa
   });
   const page = await brancher(ctx, serveur, { 'sb-supabase-auth-token': JSON.stringify(session), 'go.parties.v1': JSON.stringify({ n: 3 }) });
   await page.goto('/');
-  await page.getByTestId('lien-defi').click();
+  await page.getByTestId('mode-ami').click();
   await expect(page.getByRole('heading', { name: 'Tes parties' })).toBeVisible();
   return { ctx, page };
 }

@@ -86,6 +86,8 @@ for (const largeur of [390, 320]) {
     await expect(page.getByRole('button', { name: /^Lesson 1 of \d+/ })).toBeVisible();
     await expect(page.locator('header').getByText('Mochi Go', { exact: true })).toBeVisible();
     await expect(page.getByText(/Joue|Plateau|Changer|Go du jour/)).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Play a friend on this phone' })).toContainText('Two players');
+    await expect(page.getByRole('button', { name: 'Guided game against Mochi' })).toContainText('Guided');
     await sansDebordement(page);
     await sansCoupe(page, largeur);
     await page.screenshot({ path: `docs/localisation/captures/accueil-en-${largeur}.png` });
@@ -96,7 +98,8 @@ for (const largeur of [390, 320]) {
     await expect(feuille.getByText('Plays a bit at random. Perfect for your first game.')).toBeVisible();
     await expect(feuille.getByRole('heading', { name: 'Board size' })).toBeVisible();
     await expect(feuille.getByText('Short games, perfect for learning.')).toBeVisible();
-    await expect(feuille.getByRole('button', { name: 'Play a friend on this phone' })).toBeVisible();
+    // #429 : les modes sont sur l'accueil (tuiles), plus dans la feuille.
+    await expect(feuille.getByRole('button', { name: 'Play a friend on this phone' })).toHaveCount(0);
     await feuille.getByRole('button', { name: 'Close' }).click();
 
     // Problèmes : Go du jour, paliers, grille.

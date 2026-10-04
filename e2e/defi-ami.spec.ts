@@ -16,7 +16,7 @@ test('défier un ami : compte du créateur, lien avec son pseudo, l’ami crée 
   const serveur = fauxServeur();
   const erreurs: string[] = [];
 
-  // Téléphone 1 : le créateur, sans compte. « Défier un ami » reste un lien secondaire de l'accueil.
+  // Téléphone 1 : le créateur, sans compte. « Défier un ami » : la tuile « Un ami » sous le bouton principal (#429).
   const ctxA = await browser.newContext(options(baseURL));
   const a = await brancher(ctxA, serveur);
   a.on('pageerror', e => erreurs.push(e.message));
@@ -98,7 +98,7 @@ test('ancienne partie sans compte : l’ami lie son e-mail par code, choisit son
   const ctx = await browser.newContext(options(baseURL));
   const page = await brancher(ctx, serveur, { 'sb-supabase-auth-token': JSON.stringify(session) });
   await page.goto('/');
-  await page.getByTestId('lien-defi').click();
+  await page.getByTestId('mode-ami').click();
   // Session anonyme : l'écran propose de lier l'e-mail (même compte, la partie est gardée).
   await expect(page.getByTestId('creer-compte')).toHaveAttribute('data-raison', 'defi');
   await page.getByLabel('Ton adresse e-mail').fill('ancien@exemple.test');
@@ -130,6 +130,6 @@ test('lien abîmé : message clair tout de suite, sans demander de compte', asyn
   await expect(page.getByRole('alert')).toContainText(/introuvable/);
   await expect(page.getByTestId('defi-apercu')).toHaveCount(0);
   await page.getByRole('button', { name: 'Retour à l’accueil' }).click();
-  await expect(page.getByTestId('lien-defi')).toBeVisible();
+  await expect(page.getByTestId('mode-ami')).toBeVisible();
   await ctx.close();
 });

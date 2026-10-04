@@ -1,6 +1,6 @@
 import { expect, test, type Browser, type Locator, type Page } from '@playwright/test';
 import { brancher, fauxServeur, type FauxServeur } from './fauxSupabase';
-import { jouer, plateau, attendrePierre } from './plateau';
+import { choisirMode, jouer, plateau, attendrePierre } from './plateau';
 
 // Issue #360 : jouer en direct contre un humain. Deux téléphones (deux contextes) sur le même Supabase simulé
 // (e2e/fauxSupabase.ts) : ils se trouvent, jouent jusqu'au score, voient le « +162 » de la cote, « Rejouer » et
@@ -25,10 +25,9 @@ async function telephone(browser: Browser, baseURL: string | undefined, serveur:
   return page;
 }
 
-/** Accueil → « Changer » → « Un humain, maintenant ». */
+/** Accueil → « En ligne » (#429 : tuile, ou bouton principal du joueur confirmé). */
 async function ouvrirDirect(page: Page) {
-  await page.getByRole('button', { name: 'Changer' }).click();
-  await page.getByRole('dialog', { name: 'Ton adversaire' }).getByRole('button', { name: 'Un humain, maintenant' }).click();
+  await choisirMode(page, 'en_ligne');
 }
 
 async function sansDebord(page: Page, ecran: string) {
