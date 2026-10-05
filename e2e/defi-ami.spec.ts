@@ -35,7 +35,8 @@ test('défier un ami : compte du créateur, lien avec son pseudo, l’ami crée 
   await a.getByRole('button', { name: 'Envoyer un lien' }).click();
   await expect(a.getByText('Lien copié. Colle-le dans un message.')).toBeVisible();
   const adresse = await a.getByTestId('defi-lien').locator('input').inputValue();
-  expect(adresse).toBe(`${baseURL}/#defi=${JETON}&de=Florian`);
+  // #364 : lien court `/defi#JETON&de=Pseudo`, avec sa page d'aperçu ; l'app le remet à la forme `/#defi=…`.
+  expect(adresse).toBe(`${baseURL}/defi#${JETON}&de=Florian`);
   expect(serveur.appels).toContain('POST /rest/v1/rpc/creer_defi');
   expect(serveur.appels).not.toContain('POST /auth/v1/signup');
   expect(await a.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);

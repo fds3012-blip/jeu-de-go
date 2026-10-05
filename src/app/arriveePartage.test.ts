@@ -27,6 +27,6 @@ describe('arrivée par un lien partagé (#285)', () => {
   });
 
   it('arrivee_par_partage porte numero, lang et nouveau_joueur', () => {
-    expect(proprietesArrivee(3, 5, 'en', true)).toEqual({ numero: 3, numero_demande: 3, numero_du_jour: 5, lang: 'en', nouveau_joueur: true });
+    expect(proprietesArrivee(3, 5, 'en', true)).toEqual({ source: 'go_du_jour', numero: 3, numero_demande: 3, numero_du_jour: 5, lang: 'en', nouveau_joueur: true });
   });
 });

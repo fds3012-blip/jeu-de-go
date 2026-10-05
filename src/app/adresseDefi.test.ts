@@ -39,7 +39,7 @@ describe('le jeton quitte l’adresse', () => {
 describe('filet de sécurité avant envoi', () => {
   it('le lien du défi est bien nettoyé par urlSensible (PostHog et Sentry)', () => {
     const lien = lienDefi(JETON, 'https://go.exemple');
-    expect(nettoyerUrl(lien)).toBe('https://go.exemple/');
+    expect(nettoyerUrl(lien)).toBe('https://go.exemple/defi');
     const ev = posthogSansUrlSensible({ event: 'app_ouverte', properties: { $current_url: lien } });
     expect(JSON.stringify(ev)).not.toContain(JETON);
     const err = sentrySansUrlSensible({ request: { url: lien } });

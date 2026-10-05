@@ -142,6 +142,14 @@ export const EVENTS = {
   statistiquesOuvertes: 'statistiques_ouvertes',
   etudeOuverte: 'etude_ouverte',
   analyseDemandee: 'analyse_demandee',
+  // Partager une partie (#364) : feuille « Partager » du bilan ouverte (`mode` : ordi, deux, import ; `compte` : lien et
+  // défi possibles), partage fait (`objet` : lien, image, sgf, defi ; `moyen` : web_share, copie, manuel, telechargement),
+  // échec (`objet`, `raison` : compte, pseudo, jour, plein, illisible, reseau, canvas), lien retiré (`mode`). L'arrivée de
+  // l'ami : `arrivee_par_partage` avec `source` = `partie`. Jamais le lien, le jeton, la partie ni un pseudo.
+  partageOuvert: 'partage_ouvert',
+  partageEnvoye: 'partage_envoye',
+  partageEchoue: 'partage_echoue',
+  partageRetire: 'partage_retire',
 } as const;
 export type AnalyticsEvent = (typeof EVENTS)[keyof typeof EVENTS];
 export type Props = Record<string, string | number | boolean | null | undefined>;

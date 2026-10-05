@@ -1,8 +1,9 @@
-// Génère public/apercu.png (1200 × 630), l'image d'aperçu des liens partagés (Open Graph, issue #285).
+// Génère les images d'aperçu des liens partagés (1200 × 630, Open Graph) : public/apercu.png (Go du jour, issue #285)
+// et, depuis #364, ses variantes anglaise, défi par lien et partie partagée (pages d'aperçu : outils/apercus.ts).
 // Même approche que scripts/generate-icons.mjs : le Chromium de Playwright, aucune dépendance image en plus.
 // Logo à deux pierres (public/icon.svg), goban décoratif (aucun vrai problème : pas de spoiler) et phrase d'accroche,
 // aux couleurs Encre & Jade (src/ui/tokens.css). Textes en grand : l'aperçu WhatsApp fait environ 300 px de large.
-// Usage : node scripts/generate-apercu.mjs
+// Usage : node scripts/generate-apercu.mjs [nom…]   (sans nom : toutes ; ex. `apercu-defi apercu-defi-en`)
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { chromium } from '@playwright/test';
@@ -18,7 +19,7 @@ async function police(chemin) {
 const titre = await police('@fontsource-variable/bricolage-grotesque/files/bricolage-grotesque-latin-wght-normal.woff2');
 const texte = await police('@fontsource/zen-kaku-gothic-new/files/zen-kaku-gothic-new-latin-700-normal.woff2');
 
-// Goban 9 × 9 décoratif, dessiné en perspective légère à droite.
+// Goban 9 × 9 décoratif, dessiné en perspective légère à droite. `pierres` : [couleur, x, y] ; `cible` : anneau jade.
 const N = 9;
 const pas = 50;
 const marge = 30;
@@ -31,17 +32,14 @@ for (let i = 0; i < N; i++) {
 const hoshi = [
   [2, 2], [6, 2], [4, 4], [2, 6], [6, 6],
 ].map(([x, y]) => `<circle cx="${marge + x * pas}" cy="${marge + y * pas}" r="5" fill="#3A2912"/>`).join('');
-// Position de début de partie, sans enjeu tactique.
-const pierres = [
-  ['n', 2, 2], ['b', 6, 2], ['n', 6, 6], ['b', 2, 6], ['n', 4, 3], ['b', 5, 4],
-].map(([c, x, y]) => {
-  const cx = marge + x * pas;
-  const cy = marge + y * pas;
-  return `<circle cx="${cx + 3}" cy="${cy + 5}" r="23" fill="rgba(0,0,0,.35)"/><circle cx="${cx}" cy="${cy}" r="23" fill="url(#${c})"/>`;
-}).join('');
-// Le coup à trouver : un anneau jade sur un point vide, rien de plus.
-const cible = `<circle cx="${marge + 4 * pas}" cy="${marge + 5 * pas}" r="19" fill="none" stroke="#3CC48E" stroke-width="6"/>`;
-const goban = `<svg class="goban" viewBox="0 0 ${cote} ${cote}" xmlns="http://www.w3.org/2000/svg">
+function goban(pierres, cible) {
+  const dessin = pierres.map(([c, x, y]) => {
+    const cx = marge + x * pas;
+    const cy = marge + y * pas;
+    return `<circle cx="${cx + 3}" cy="${cy + 5}" r="23" fill="rgba(0,0,0,.35)"/><circle cx="${cx}" cy="${cy}" r="23" fill="url(#${c})"/>`;
+  }).join('');
+  const anneau = cible ? `<circle cx="${marge + cible[0] * pas}" cy="${marge + cible[1] * pas}" r="19" fill="none" stroke="#3CC48E" stroke-width="6"/>` : '';
+  return `<svg class="goban" viewBox="0 0 ${cote} ${cote}" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <radialGradient id="n" cx="36%" cy="30%" r="72%"><stop offset="0" stop-color="#6a6e6c"/><stop offset=".22" stop-color="#2e3130"/><stop offset=".6" stop-color="#151716"/><stop offset="1" stop-color="#050606"/></radialGradient>
     <radialGradient id="b" cx="38%" cy="32%" r="78%"><stop offset="0" stop-color="#fff"/><stop offset=".55" stop-color="#F3EEE3"/><stop offset=".85" stop-color="#DDD5C4"/><stop offset="1" stop-color="#BDB3A0"/></radialGradient>
@@ -49,10 +47,27 @@ const goban = `<svg class="goban" viewBox="0 0 ${cote} ${cote}" xmlns="http://ww
   </defs>
   <rect width="${cote}" height="${cote}" rx="14" fill="url(#k)"/>
   <path d="${lignes.join('')}" stroke="#3A2912" stroke-width="2.4"/>
-  ${hoshi}${pierres}${cible}
+  ${hoshi}${dessin}${anneau}
 </svg>`;
+}
 
-const html = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><style>
+// Go du jour : position de début de partie, sans enjeu tactique, et le coup à trouver (un anneau jade sur un point vide).
+const DEBUT = [['n', 2, 2], ['b', 6, 2], ['n', 6, 6], ['b', 2, 6], ['n', 4, 3], ['b', 5, 4]];
+// Défi : deux pierres face à face, au centre. Partie partagée : une fin de partie décorative, dernier coup cerclé.
+const FACE = [['n', 3, 4], ['b', 5, 4]];
+const FIN = [['n', 2, 2], ['b', 6, 2], ['n', 6, 6], ['b', 2, 6], ['n', 4, 3], ['b', 5, 4], ['n', 3, 5], ['b', 5, 6], ['n', 4, 5],
+  ['b', 6, 4], ['n', 2, 4], ['b', 4, 7], ['n', 3, 6], ['b', 7, 5]];
+
+const VARIANTES = {
+  apercu: { lang: 'fr', h1: 'Trouveras-tu <em>le bon coup ?</em>', p: 'Un défi par jour. Gratuit, sans compte.', pastille: 'Joue en 1 minute', pierres: DEBUT, cible: [4, 5] },
+  'apercu-en': { lang: 'en', h1: 'Can you find <em>the right move?</em>', p: 'One puzzle a day. Free, no account.', pastille: 'Play in 1 minute', pierres: DEBUT, cible: [4, 5] },
+  'apercu-defi': { lang: 'fr', h1: 'Un ami te <em>défie au go</em>', p: 'Partie 9 × 9, 3 jours par coup. Gratuit.', pastille: 'Joue ton premier coup', pierres: FACE },
+  'apercu-defi-en': { lang: 'en', h1: 'A friend <em>challenges you</em>', p: '9 × 9 game, 3 days per move. Free.', pastille: 'Play your first move', pierres: FACE },
+  'apercu-partie': { lang: 'fr', h1: 'Une partie <em>à revoir</em>', p: 'Coup par coup, sans compte. Gratuit.', pastille: 'Ouvre la revue', pierres: FIN, cible: [4, 5] },
+  'apercu-partie-en': { lang: 'en', h1: 'A game <em>to replay</em>', p: 'Move by move, no account. Free.', pastille: 'Open the review', pierres: FIN, cible: [4, 5] },
+};
+
+const page = (v) => `<!doctype html><html lang="${v.lang}"><head><meta charset="utf-8"><style>
 @font-face { font-family: 'Bricolage'; src: url(data:font/woff2;base64,${titre}) format('woff2'); font-weight: 200 800; }
 @font-face { font-family: 'Zen'; src: url(data:font/woff2;base64,${texte}) format('woff2'); font-weight: 700; }
 html, body { margin: 0; }
@@ -71,19 +86,24 @@ p { margin: 30px 0 0; font: 700 32px/1.3 'Zen', sans-serif; color: #EFE8DC; }
 </style></head><body>
 <div class="gauche">
   <div class="marque">${logo}<span>Mochi Go</span></div>
-  <h1>Trouveras-tu <em>le bon coup ?</em></h1>
-  <p>Un défi par jour. Gratuit, sans compte.</p>
-  <span class="pastille">Joue en 1 minute</span>
+  <h1>${v.h1}</h1>
+  <p>${v.p}</p>
+  <span class="pastille">${v.pastille}</span>
 </div>
-${goban}
+${goban(v.pierres, v.cible)}
 </body></html>`;
 
 const browser = await chromium.launch(
   process.env.PW_CHROMIUM_PATH ? { executablePath: process.env.PW_CHROMIUM_PATH } : {},
 );
-const page = await browser.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: 1 });
-await page.setContent(html);
-await page.evaluate(() => document.fonts.ready);
-await page.screenshot({ path: `${root}public/apercu.png`, omitBackground: false });
-console.log('public/apercu.png');
+const onglet = await browser.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: 1 });
+const noms = process.argv.slice(2).length ? process.argv.slice(2) : Object.keys(VARIANTES);
+for (const nom of noms) {
+  const v = VARIANTES[nom];
+  if (!v) throw new Error(`Variante inconnue : ${nom}`);
+  await onglet.setContent(page(v));
+  await onglet.evaluate(() => document.fonts.ready);
+  await onglet.screenshot({ path: `${root}public/${nom}.png`, omitBackground: false });
+  console.log(`public/${nom}.png`);
+}
 await browser.close();

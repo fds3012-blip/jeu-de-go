@@ -1,7 +1,14 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
-    { "source": "/confidentialite", "destination": "/index.html" }
+    { "source": "/confidentialite", "destination": "/index.html" },
+    { "source": "/j/:n(\\d{1,6})", "destination": "/j/:n/index.html" },
+    { "source": "/en/j/:n(\\d{1,6})", "destination": "/en/j/:n/index.html" },
+    { "source": "/defi", "destination": "/defi/index.html" },
+    { "source": "/en/defi", "destination": "/en/defi/index.html" },
+    { "source": "/partie", "destination": "/partie/index.html" },
+    { "source": "/en/partie", "destination": "/en/partie/index.html" },
+    { "source": "/en", "destination": "/index.html" }
   ],
   "headers": [
     {

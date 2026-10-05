@@ -4,7 +4,8 @@ import { parseActionRequest, planAction, type GameRow } from '../src/go/server';
 // Supabase simulé par interception réseau, partagé par les parcours du compte (#343) et du défi par lien (#81).
 // Le build de test lit l'adresse simulée dans le stockage local (`e2e.supabase`, voir src/data/supabase.ts).
 // Auth : code à 6 chiffres (`/otp` puis `/verify`), le seul bon code est CODE. Tables : profiles, games, defis,
-// notifications (#367), parties_perso (#358 : `enregistrer_parties_perso`, sans doublon, compte avec pseudo exigé).
+// notifications (#367), parties_perso (#358 : `enregistrer_parties_perso`, sans doublon, compte avec pseudo exigé),
+// parties partagées (#364 : `partager_partie`, `lire_partie_partagee` sans compte, `retirer_partie_partagee`).
 // Temps réel : le WebSocket de Supabase Realtime (protocole Phoenix, sérialisation 2.0.0) est simulé. Sont poussées :
 // les notifications, à leur seul destinataire ; et (#425) les UPDATE de `games`, `defis` et `parties_direct`, aux seuls
 // joueurs de la partie (RLS simulée). `ralentirLectures(ms)` retarde les relectures (parties, pendule) : un coup qui
@@ -61,6 +62,8 @@ export function fauxServeur() {
   let idNotif = 0;
   let idFiltre = 0;
   const partiesPerso: Ligne[] = [];
+  /** Parties partagées par lien (#364) : jeton, propriétaire, SGF minimal, camp, adversaire, moment clé. */
+  const partagees: Ligne[] = [];
   const ratingHistory: Ligne[] = [];
   const file: { user: string; taille: number; cadence: string; regles: string; depuis: number }[] = [];
   const pendules: Ligne[] = [];
@@ -454,6 +457,33 @@ export function fauxServeur() {
       }
       return json(p_parties.map(l => l.cle));
     }
+    // #364 : partie partagée par lien, comme 20261005213100_parties_partagees.sql (sans plafonds) : compte avec pseudo,
+    // SGF minimal (aucun nom, aucun commentaire), même partie = même jeton ; lecture sans compte par le seul jeton.
+    if (chemin === '/rest/v1/rpc/partager_partie') {
+      if (!u || u.anonyme) return json({ code: 'JGC01', message: 'Crée ton compte' }, 400);
+      if (!profiles.find(x => x.id === u.id)?.username) return json({ code: 'JGP01', message: 'Choisis ton pseudo' }, 400);
+      const a = req.postDataJSON() as { p_sgf: string; p_taille: number; p_joueur: number | null; p_adversaire: string | null; p_coup: number };
+      if (/(PB|PW|C|DT|PC|GC)\[/.test(a.p_sgf) || !a.p_sgf.includes(`SZ[${a.p_taille}]`)) return json({ code: '22023', message: 'Partie illisible' }, 400);
+      const deja = partagees.find(x => x.user_id === u.id && x.sgf === a.p_sgf);
+      if (deja) { Object.assign(deja, { coup: a.p_coup, joueur: a.p_joueur, adversaire: a.p_adversaire }); return json(deja.jeton); }
+      const jeton = `P${String(partagees.length + 1).padStart(3, '0')}`.padEnd(32, 'x');
+      partagees.push({ jeton, user_id: u.id, sgf: a.p_sgf, taille: a.p_taille, joueur: a.p_joueur, adversaire: a.p_adversaire, coup: a.p_coup });
+      return json(jeton);
+    }
+    if (chemin === '/rest/v1/rpc/lire_partie_partagee') {
+      const { p_jeton } = req.postDataJSON() as { p_jeton: string };
+      const l = partagees.find(x => x.jeton === p_jeton);
+      if (!l) return json([]);
+      const pseudo = profiles.find(x => x.id === l.user_id)?.username ?? null;
+      return json([{ sgf: l.sgf, taille: l.taille, joueur: l.joueur, adversaire: l.adversaire, coup: l.coup, pseudo, cree_le: new Date().toISOString() }]);
+    }
+    if (chemin === '/rest/v1/rpc/retirer_partie_partagee') {
+      if (!u) return json({ code: 'JGC01', message: 'Connexion requise' }, 400);
+      const { p_jeton } = req.postDataJSON() as { p_jeton: string };
+      const k = partagees.findIndex(x => x.jeton === p_jeton && x.user_id === u.id);
+      if (k >= 0) partagees.splice(k, 1);
+      return json(k >= 0);
+    }
     // #355 : rattachement d'une session sans compte, comme 20261002001100_rattacher_session_anonyme.sql (sans empreinte).
     if (chemin === '/rest/v1/rpc/preparer_rattachement') {
       if (!u?.anonyme) return json({ code: '42501', message: 'Réservé aux sessions sans compte' }, 403);
@@ -687,7 +717,7 @@ export function fauxServeur() {
   function figerTempsReel() { for (const a of abonnes) a.fige = true; }
   /** Canaux rejoints sur une connexion qui marche, dont le sujet commence par `prefixe` (`defi-`, `direct-`). */
   const canauxActifs = (prefixe: string) => [...abonnes].filter(a => !a.fige).flatMap(a => [...a.canaux.keys()]).filter(t => t.startsWith(`realtime:${prefixe}`)).length;
-  return { traiter, brancherTempsReel, notifier, fileLente, tacheLentes, avancerHorloge, ralentirLectures, figerTempsReel, canauxActifs, pousses, pousserPartie, appels, games, defis, notifications, partiesPerso, profiles, ratingHistory, emailsEnvoyes, sessionAnonyme, file, pendules,
+  return { traiter, brancherTempsReel, notifier, fileLente, tacheLentes, avancerHorloge, ralentirLectures, figerTempsReel, canauxActifs, pousses, pousserPartie, appels, games, defis, notifications, partiesPerso, partagees, profiles, ratingHistory, emailsEnvoyes, sessionAnonyme, file, pendules,
     compteExistant, compteGoogle, compteSocial, relierIdentite, liaison, utilisateur, sessionCompte, autorisations, amities };
 }
 

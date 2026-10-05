@@ -1,0 +1,56 @@
+/* Partage d'une partie (#364) : feuille « Partager » du bilan et écran de la partie partagée.
+   Chargée avec ces écrans (hors de la feuille principale : budget CSS initial). Couleurs : jetons de tokens.css
+   (clair et sombre), cibles de 44 px au moins, mouvements réduits respectés, tient à 320 px et au zoom 200 %. */
+
+/* Feuille : posée en bas, hauteur selon le contenu, défile si l'écran est court (zoom 200 %). */
+.partage { margin: auto auto 0; width: min(var(--largeur-max), 100%); max-width: 100%; max-height: 92dvh; padding: 0; border: 0;
+  overflow: auto; overscroll-behavior: contain; border-radius: 22px 22px 0 0; background: var(--bg); color: var(--text); }
+.partage::backdrop { background: var(--voile); }
+html:has(dialog.partage[open]) { overflow: hidden; }
+@media (prefers-reduced-motion: no-preference) {
+  .partage[open], .partage[open]::backdrop { transition: opacity var(--duree) var(--ease), transform var(--duree) var(--ease); }
+  @starting-style {
+    .partage[open] { opacity: 0; transform: translateY(48px); }
+    .partage[open]::backdrop { opacity: 0; }
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .partage[open], .partage[open]::backdrop { transition: opacity 120ms linear; }
+  @starting-style { .partage[open], .partage[open]::backdrop { opacity: 0; } }
+}
+.partage-feuille { display: flex; flex-direction: column; gap: var(--space-3);
+  padding: 0 var(--gouttiere) calc(var(--space-5) + env(safe-area-inset-bottom, 0px)); }
+.partage-feuille::before { content: ""; align-self: center; width: 40px; height: 4px; margin-top: 8px; border-radius: 2px; background: var(--line); }
+.partage-tete { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); margin-right: -12px; }
+.partage-tete h2 { margin: 0; font-family: var(--font-titre); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre);
+  font-size: var(--fs-2xl); outline: none; min-width: 0; overflow-wrap: anywhere; }
+.partage-fermer { flex: none; }
+.partage-choix-liste { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+.partage-choix { width: 100%; min-height: 64px; padding: var(--space-3) var(--space-4); display: flex; flex-direction: column;
+  align-items: flex-start; justify-content: center; gap: 2px; text-align: left; border-color: var(--line); }
+.partage-choix-titre { font-size: var(--fs-m); font-weight: var(--fw-bold); color: var(--text); }
+.partage-choix-aide { font-size: var(--fs-s); font-weight: var(--fw-regular); color: var(--muted); line-height: 1.35; }
+.partage-choix:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.partage-note, .partage-etat { margin: 0; font-size: var(--fs-s); color: var(--muted); line-height: 1.4; }
+.partage-etat:empty { display: none; }
+.partage-etat.erreur { color: var(--danger-texte); }
+.partage-lien-texte { width: 100%; min-width: 0; min-height: var(--cible-min); box-sizing: border-box; padding: 0 12px; border-radius: 12px;
+  border: 1.5px solid var(--line); background: var(--surface); color: var(--text); font: inherit; font-size: var(--fs-s); text-overflow: ellipsis; }
+.partage-prive { align-self: flex-start; margin-left: -12px; color: var(--muted); font-weight: var(--fw-medium); font-size: var(--fs-s); }
+
+/* Partie partagée : en-tête, Mochi, plateau, flèches ; l'action principale est dans le dock. */
+.partagee { display: flex; flex-direction: column; gap: var(--space-3);
+  padding-bottom: calc(var(--cible-cta) + var(--relief) + var(--space-6) + env(safe-area-inset-bottom, 0px)); }
+.partagee-tete h2 { margin: 0; font-family: var(--font-titre); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre);
+  font-size: var(--fs-2xl); overflow-wrap: anywhere; }
+.partagee-camps { margin: var(--space-1) 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-weight: var(--fw-bold); }
+.partagee-contre { color: var(--muted); padding: 0 4px; }
+.partagee-resultat { margin: 2px 0 0; color: var(--muted); }
+.partagee-mochi { display: flex; align-items: flex-start; gap: var(--space-3); }
+.partagee-mochi p { margin: 0; padding: var(--space-3) var(--space-4); border-radius: var(--radius); background: var(--surface); line-height: var(--lh-base); flex: 1; min-width: 0; }
+.partagee-compteur { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); font-weight: var(--fw-bold); }
+.partagee-nav { display: flex; justify-content: center; gap: var(--space-4); }
+.partagee-nav .revue-pas { min-width: var(--cible-bouton); min-height: var(--cible-bouton); }
+.partagee-secondaire { align-self: center; }
+.partagee-etat { align-items: center; padding-top: var(--space-6); }
+.partagee-etat .partagee-mochi { width: 100%; }
