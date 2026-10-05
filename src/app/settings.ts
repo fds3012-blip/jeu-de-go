@@ -4,15 +4,57 @@ import { lireXp, niveauDe, themeDebloque } from './xp';
 import { installAudioUnlock, setSoundEnabled } from '../ui/sound';
 import { setHapticsEnabled } from '../ui/haptics';
 import type { ReglageAide } from './partie';
+import type { Cadence } from '../go/pendule';
 
 // `aide` : « Aide de Mochi en partie » (#35). `auto` : contre Pomme et Caillou seulement.
 // `vibrations` : réglable à part du son (#165).
-export interface Settings { theme: 'auto' | 'dark' | 'light'; confirmTouch: boolean; size: 9 | 13 | 19; sound: boolean; vibrations: boolean; celebrations: boolean; aide: ReglageAide }
+// #365 (joueur de club) : `coordonnees` (lettres et chiffres autour du goban des parties et de la revue), `dernierCoup`
+// (rond sur la dernière pierre posée), `numerosRevue` (numéros des coups sur les pierres, en revue), `cadence` (temps
+// de jeu proposé d'abord pour une partie en direct), `serieVisible` (flamme, record et fêtes de série). Gardés sur
+// l'appareil seulement : aucun mécanisme de réglages de compte n'existe encore (voir docs/game-design/joueur-de-club.md).
+export interface Settings {
+  theme: 'auto' | 'dark' | 'light'; confirmTouch: boolean; size: 9 | 13 | 19; sound: boolean; vibrations: boolean; celebrations: boolean; aide: ReglageAide;
+  coordonnees: boolean; dernierCoup: boolean; numerosRevue: boolean; cadence: Cadence; serieVisible: boolean;
+}
 const KEY = 'go.settings.v1';
-const DEFAULTS: Settings = { theme: 'auto', confirmTouch: true, size: 9, sound: true, vibrations: true, celebrations: true, aide: 'auto' };
+const DEFAULTS: Settings = {
+  theme: 'auto', confirmTouch: true, size: 9, sound: true, vibrations: true, celebrations: true, aide: 'auto',
+  coordonnees: true, dernierCoup: true, numerosRevue: false, cadence: 'normale', serieVisible: true,
+};
+const CADENCES_CONNUES: readonly string[] = ['rapide', 'normale', 'lente'];
+
+/** Réglages lus, valeurs abîmées remplacées par celles par défaut (stockage modifié à la main, ancienne version). */
+export function lireSettings(brut: unknown): Settings {
+  const o = brut && typeof brut === 'object' ? (brut as Record<string, unknown>) : {};
+  const s = { ...DEFAULTS, ...o } as Settings;
+  for (const k of ['coordonnees', 'dernierCoup', 'numerosRevue', 'serieVisible'] as const) if (typeof s[k] !== 'boolean') s[k] = DEFAULTS[k];
+  if (!CADENCES_CONNUES.includes(s.cadence)) s.cadence = DEFAULTS.cadence;
+  return s;
+}
 
 function read(): Settings {
-  try { return { ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY) || '{}') }; } catch { return DEFAULTS; }
+  try { return lireSettings(JSON.parse(localStorage.getItem(KEY) || '{}')); } catch { return DEFAULTS; }
+}
+
+// --- Préférences de plateau et de série (#365), lues par les écrans sans passer de props ---
+/** Ce que les écrans de partie, de revue et d'étude lisent des réglages, sans que l'App le leur passe. */
+export type Preferences = Pick<Settings, 'coordonnees' | 'dernierCoup' | 'numerosRevue' | 'serieVisible' | 'cadence'>;
+let preferences: Preferences = extrairePreferences(read());
+const abonnesPrefs = new Set<() => void>();
+function extrairePreferences(s: Settings): Preferences {
+  return { coordonnees: s.coordonnees, dernierCoup: s.dernierCoup, numerosRevue: s.numerosRevue, serieVisible: s.serieVisible, cadence: s.cadence };
+}
+/** Publie les préférences (même objet tant que rien ne change : pas de rendu inutile). */
+function publierPreferences(s: Settings): void {
+  const p = extrairePreferences(s);
+  if ((Object.keys(p) as (keyof Preferences)[]).every(k => p[k] === preferences[k])) return;
+  preferences = p;
+  abonnesPrefs.forEach(fn => fn());
+}
+const abonnerPrefs = (fn: () => void) => { abonnesPrefs.add(fn); return () => { abonnesPrefs.delete(fn); }; };
+/** Préférences courantes, mises à jour dans tous les écrans quand les Réglages changent. */
+export function usePreferences(): Preferences {
+  return useSyncExternalStore(abonnerPrefs, () => preferences, () => preferences);
 }
 
 export function useSettings(): [Settings, (patch: Partial<Settings>) => void] {
@@ -25,6 +67,7 @@ export function useSettings(): [Settings, (patch: Partial<Settings>) => void] {
     setSoundEnabled(s.sound);
     if (s.sound) installAudioUnlock();
     setHapticsEnabled(s.vibrations);
+    publierPreferences(s);
   }, [s]);
   return [s, patch => setS(prev => ({ ...prev, ...patch }))];
 }

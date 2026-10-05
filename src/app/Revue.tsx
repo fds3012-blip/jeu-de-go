@@ -32,6 +32,8 @@ import { readLocal, writeLocal } from './hooks';
 import { coupAccepte, creerErreur, ERREURS_KEY, garderRatee, lireErreurs, peutEnFaireUnProbleme, type ErreurGardee } from './erreurs';
 import { erreursARejouer, type ErreurARejouer } from './rejouerErreurs';
 import { RejouerErreurs } from './RejouerErreurs';
+import { usePreferences } from './settings';
+import { numerosDesCoups } from '../go/numeros';
 import '../ui/revue.css';
 
 interface Props {
@@ -89,6 +91,8 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
   const [prepare, setPrepare] = useState(true);
   const [sansKataGo, setSansKataGo] = useState<RaisonSansKataGo | null>(null);
   const mode = visites ? 'import' : adversaire ? 'ordi' : 'deux';
+  // #365 : coordonnées, dernier coup et numéros des coups, selon les Réglages.
+  const prefs = usePreferences();
   const analysees = analyses.length;
   const finie = analysees > n;
   // #424 : courbe et pastille sans les estimations aberrantes du moteur simple.
@@ -449,7 +453,8 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
       </div>
 
       <div className="revue-plateau">
-        <Board size={size} board={q.board} marks={{ last: q.lastMove, meilleur: fantome ?? undefined, note: marqueNote }} />
+        <Board size={size} board={q.board} marks={{ last: prefs.dernierCoup ? q.lastMove : null, meilleur: fantome ?? undefined, note: marqueNote }}
+          coordonnees={prefs.coordonnees} numeros={prefs.numerosRevue ? numerosDesCoups(positions, i) : null} />
       </div>
 
       <div className="revue-nav">

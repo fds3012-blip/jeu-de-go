@@ -28,6 +28,7 @@ import { EVENTS, track } from '../data/analytics';
 import { compterEtape } from '../data/compteurs';
 import { messageRefus } from '../data/defi';
 import { useOnline } from './hooks';
+import { usePreferences } from './settings';
 import { PARAMS_DEFAUT, adversaireDuRepli, issueMesure, phraseDirect, phraseFinDirect, proposerRepli, texteCadence, vueDirect, type Params } from './direct';
 import { OPPONENTS, type OpponentId } from '../engine';
 import { depuisDefi } from './historique';
@@ -73,7 +74,9 @@ interface Props {
 /** « Un humain, maintenant » : du choix de la partie jusqu'au bilan. */
 export function Direct({ db, userId, cote, onRepli, partieInitiale, confirmTouch, reglages, celebrer, onAccueil }: Props) {
   // #436 : la file par défaut d'abord (9 × 9, normale, japonais), quelle que soit la taille choisie pour l'ordi.
-  const [params, setParams] = useState<Params>(partieInitiale?.demande ?? PARAMS_DEFAUT);
+  // #365 : le temps de jeu proposé d'abord vient des Réglages (« normale » par défaut, celle de la file par défaut).
+  const { cadence: cadenceReglee } = usePreferences();
+  const [params, setParams] = useState<Params>(partieInitiale?.demande ?? { ...PARAMS_DEFAUT, cadence: cadenceReglee });
   const [vue, setVue] = useState<Vue>(partieInitiale ? { vue: 'partie', id: partieInitiale.id, attenteS: null, demande: partieInitiale.demande } : { vue: 'choix' });
   const [erreur, setErreur] = useState<string | null>(null);
 
@@ -277,6 +280,7 @@ interface PartieProps {
 }
 
 function DirectPartie({ db, partieId, userId, demande, confirmTouch, reglages, celebrer, onAccueil, onRejouer }: PartieProps) {
+  const prefs = usePreferences(); // #365 : coordonnées et dernier coup
   const online = useOnline();
   const [partie, setPartie] = useState<Game | null>(null);
   const [etat, setEtat] = useState<EtatDirect | null>(null);
@@ -492,7 +496,7 @@ function DirectPartie({ db, partieId, userId, demande, confirmTouch, reglages, c
       <div className="partie-plateau">
         <Board size={partie.size} board={v.pos.board} toPlay={v.pos.toPlay} confirmTouch={confirmTouch}
           interactive={(v.aMoi && !envoi && online) || (enComptage && !envoi && !v.proposeParMoi)} stonesTappable={enComptage}
-          marks={{ last: v.pos.lastMove, owner: sc?.owner, dead: enComptage || v.phase === 'fini' ? mortesVues : undefined }}
+          coordonnees={prefs.coordonnees} marks={{ last: prefs.dernierCoup ? v.pos.lastMove : null, owner: sc?.owner, dead: enComptage || v.phase === 'fini' ? mortesVues : undefined }}
           onPlay={toucher} noms={{ [lui]: nom }} />
       </div>
       {bandeau(moi)}

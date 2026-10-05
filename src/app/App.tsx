@@ -296,7 +296,8 @@ export function App() {
   const demandesAmis = useDemandesAmis(supabase, !!compteId && !playing, `${tab}|${vueProfil}`);
   const { defis: defisEnAttente, elements: aFaire, pastilles } = useAFaire(supabase, session?.user.id,
     `${tab}|${defi?.vue ?? ''}|${enPlacement}|${lessonId ?? ''}`, !playing && defi?.vue !== 'partie', {
-      premier: home.nouveau, serie, duJourFait, goDuJour: duJour ? { numero: numeroJour, titre: duJour.title } : null,
+      // #365 : série masquée, pas de « Garde ta série » (le Go du jour reste proposé, calmement).
+      premier: home.nouveau, serie: settings.serieVisible ? serie : 0, duJourFait, goDuJour: duJour ? { numero: numeroJour, titre: duJour.title } : null,
       lecons: LESSONS, progres: progress, demandesAmis,
     });
   const defisAJouer = defisEnAttente.length;
@@ -315,7 +316,9 @@ export function App() {
   // #236 (N4) : un seul appel secondaire sur l'accueil (annonce de Mochi, carte d'installation ou « À faire »).
   const plateforme = usePlateformeInstallation();
   const [etatInstall] = useState(etatInstallation);
-  const annonceAccueil = annonceGel !== null || retourSerie !== null;
+  // #365 : « Montrer la série » éteint, la flamme, les gels et les annonces de série disparaissent ; le calcul continue.
+  const serieVisible = settings.serieVisible;
+  const annonceAccueil = serieVisible && (annonceGel !== null || retourSerie !== null);
   useEffect(() => { if (annonceAccueil) writeLocal(ANNONCE_DU_JOUR_KEY, numeroJour); }, [annonceAccueil, numeroJour]);
   const [jourAnnonce] = useState(() => lireJourAnnonce(readLocal<unknown>(ANNONCE_DU_JOUR_KEY, null)));
   const appel = appelSecondaire({
@@ -753,7 +756,7 @@ export function App() {
             ? (
               <span className="entete-droite">
                 {/* #429 : « Défier un ami » a quitté l'en-tête pour la tuile « Un ami », sous le bouton principal. */}
-                {(flamme !== null || gels > 0) && (
+                {serieVisible && (flamme !== null || gels > 0) && (
                   <span className="serie-groupe">
                     {flamme !== null && <p className={`serie ${flamme}${allumage ? ' allumage' : ''}`} role="img" data-testid="flamme" data-etat={flamme}
                       aria-label={t(flamme === 'pleine' ? 'entete.flammeFaite' : 'entete.flammeAFaire', { jours: t('profil.jours', { n: serie }) })}><Flamme />{serie}</p>}
@@ -764,10 +767,10 @@ export function App() {
             )
             : <p>{enDefi ? t('defi.titre') : tab === 'jouer' ? t('nav.jouer') : tab === 'apprendre' ? t('entete.apprendre') : tab === 'problemes' ? t('nav.problemes') : t('nav.profil')}</p>}
         </header>}
-        {annonceGel !== null && !enPartie && !ecranPlein && (tab === 'jouer' || tab === 'problemes') && (
+        {serieVisible && annonceGel !== null && !enPartie && !ecranPlein && (tab === 'jouer' || tab === 'problemes') && (
           <p className="gel-annonce" role="status"><Mochi size={30} />{fr(messageGel(annonceGel))}</p>
         )}
-        {retourSerie !== null && annonceGel === null && !enPartie && !ecranPlein && (tab === 'jouer' || tab === 'problemes') && (
+        {serieVisible && retourSerie !== null && annonceGel === null && !enPartie && !ecranPlein && (tab === 'jouer' || tab === 'problemes') && (
           <p className="gel-annonce retour-serie" role="status" data-testid="retour-serie"><Mochi size={30} />{fr(retourSerie)}</p>
         )}
         {/* Accueil v3 : pas de « Niveau 1 · 0 / 100 XP » avant le premier gain ; le Profil, lui, la montre toujours. */}

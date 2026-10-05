@@ -17,7 +17,7 @@ import { IconeReglage, type IconeReglageId } from '../ui/IconesReglages';
 import { hapticStone } from '../ui/haptics';
 import { playStone } from '../ui/sound';
 import { useEffect, useMemo, useRef, useSyncExternalStore, type ReactNode } from 'react';
-import { analyticsConfig, estEquipe, setEquipe, subscribeConsent } from '../data/analytics';
+import { EVENTS, analyticsConfig, estEquipe, setEquipe, subscribeConsent, track } from '../data/analytics';
 import { readLocal, writeLocal } from './hooks';
 import { BILAN_KEY, lireBilan } from './bilan';
 import { PARTIES_KEY, type Parties } from './home';
@@ -38,6 +38,11 @@ import { BoutonAide } from '../ui/BoutonAide';
 import { CarteCote } from '../ui/Cote';
 import { grade, tc, texteCote } from '../content/i18n/cote';
 import type { ProfilJoueur } from './hooks';
+import { tk } from '../content/i18n/club';
+import { Board } from '../ui/Board';
+import { CADENCES_ORDRE, CADENCES } from '../go/pendule';
+import '../ui/club.css';
+
 
 const SOLVED_KEY = 'go.problemes.v1';
 
@@ -162,8 +167,10 @@ function dateCourte(iso: string): string {
   return Number.isNaN(d.getTime()) ? iso : d.toLocaleDateString(langue() === 'en' ? 'en-GB' : 'fr-FR', { day: '2-digit', month: '2-digit' });
 }
 
-function Menu({ onVue, profil, serie, record = 0, parcours, placement, onPlacement, userId, amis }: Omit<Props, 'vue'>) {
-  const id = identite(profil, serie);
+function Menu({ onVue, settings, profil, serie, record = 0, parcours, placement, onPlacement, userId, amis }: Omit<Props, 'vue'>) {
+  // #365 : « Montrer la série » éteint, ni flamme, ni record, ni badge de série ; la série continue d'être comptée.
+  const serieVisible = settings.serieVisible;
+  const id = identite(profil, serieVisible ? serie : 0);
   const nParties = useMemo(() => historiqueAppareil().length, []);
   const valeurParties = nParties ? t('historique.profilResume', { n: nParties }) : userId ? undefined : t('historique.profilVide');
   // #359 : demandes d'ami reçues (lues par l'app, aussi pour la pastille de l'onglet).
@@ -183,15 +190,15 @@ function Menu({ onVue, profil, serie, record = 0, parcours, placement, onPlaceme
         <div className="identite-texte">
           <b>{id.nom}</b>
           {/* #161 : au 3e jour de série sans compte, la ligne sous « Invité » propose le compte ; l'action reste « Mon compte ». */}
-          <span>{inviterCompte(!!profil, id.serie) ? t('serie.invitation') : id.detail}</span>
+          <span>{serieVisible && inviterCompte(!!profil, id.serie) ? t('serie.invitation') : id.detail}</span>
         </div>
         {id.serie > 0 && <span className="identite-serie" role="img" aria-label={t('profil.serieAria', { jours: texteSerie(id.serie) })}>
           <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false"><path d="M8.6 1.2c.4 2.3 3.9 3.9 3.9 7.9A4.5 4.5 0 0 1 8 13.8a4.5 4.5 0 0 1-4.5-4.6c0-2 1-3.2 2-4 0 1.4.6 2.4 1.5 2.7C6.6 5.6 7.4 3 8.6 1.2Z" fill="currentColor" /></svg>{id.serie}
         </span>}
         <div className="identite-niveau"><BarreNiveau /></div>
-        <Statistiques stats={donnees.stats} />
+        <Statistiques stats={serieVisible ? donnees.stats : donnees.stats.filter(s => s.id !== 'record')} />
       </section>
-      <VitrineBadges liste={donnees.badges} nouveaux={donnees.nouveaux} />
+      <VitrineBadges liste={serieVisible ? donnees.badges : donnees.badges.filter(b => b.id !== 'serie-7')} nouveaux={donnees.nouveaux} />
 
       <div className="lignes">
         {/* #358 : tes parties passées, en tête : c'est la ligne qu'on rouvre le plus. « Analyser une partie » (#286) y est.
@@ -243,31 +250,86 @@ function DemiLigne({ icone, libelle, valeur, onClick, testId }: { icone: IconeRe
   );
 }
 
-/** Réglages (sous-vue depuis #214), groupés avec une icône par ligne (#103) : apparence, pendant la partie, sons et fêtes. */
+/**
+ * Réglages (sous-vue depuis #214), groupés avec une icône par ligne (#103) : apparence, plateau, pendant la partie,
+ * rythme, progression, sons et fêtes. #365 : un aperçu du goban en tête montre chaque changement de l'apparence et du
+ * plateau ; l'écran défile, groupé par titres. Chaque changement est mesuré (`reglage_change`, propriété `cle`).
+ */
 function Reglages({ settings, set }: Pick<Props, 'settings' | 'set'>) {
+  const regler = <K extends keyof Settings>(cle: K, valeur: Settings[K]) => {
+    set({ [cle]: valeur } as Partial<Settings>);
+    track(EVENTS.reglageChange, { cle, valeur: String(valeur) });
+  };
   return (
     <div className="profil profil-reglages">
+      <ApercuPlateau settings={settings} />
       <h3 className="lignes-titre">{t('profil.groupe.apparence')}</h3>
       <div className="lignes">
         <LigneLangue />
-        <LigneChoix icone={<IconeReglage id="theme" />} libelle={t('profil.theme')} options={themes()} valeur={settings.theme} onChange={v => set({ theme: v })} />
+        <LigneChoix icone={<IconeReglage id="theme" />} libelle={t('profil.theme')} options={themes()} valeur={settings.theme} onChange={v => regler('theme', v)} />
         <LigneGoban />
+      </div>
+      <h3 className="lignes-titre">{tk('reglages.groupe.plateau')}</h3>
+      <div className="lignes">
+        <LigneInterrupteur icone={<IconeReglage id="coordonnees" />} libelle={tk('reglages.coordonnees')} aide={tk('reglages.coordonneesAide')} actif={settings.coordonnees} onChange={v => regler('coordonnees', v)} />
+        <LigneInterrupteur icone={<IconeReglage id="dernier" />} libelle={tk('reglages.dernierCoup')} aide={tk('reglages.dernierCoupAide')} actif={settings.dernierCoup} onChange={v => regler('dernierCoup', v)} />
+        <LigneInterrupteur icone={<IconeReglage id="numeros" />} libelle={tk('reglages.numeros')} aide={tk('reglages.numerosAide')} actif={settings.numerosRevue} onChange={v => regler('numerosRevue', v)} />
       </div>
       <h3 className="lignes-titre">{t('profil.groupe.jeu')}</h3>
       <div className="lignes">
-        <LigneInterrupteur icone={<IconeReglage id="confirmer" />} libelle={t('profil.confirmer')} aide={t('profil.confirmerAide')} actif={settings.confirmTouch} onChange={v => set({ confirmTouch: v })} />
-        <LigneChoix icone={<IconeReglage id="aide" />} libelle={t('profil.aide')} options={aides()} valeur={settings.aide} onChange={a => set({ aide: a })} />
+        <LigneInterrupteur icone={<IconeReglage id="confirmer" />} libelle={t('profil.confirmer')} aide={t('profil.confirmerAide')} actif={settings.confirmTouch} onChange={v => regler('confirmTouch', v)} />
+        <LigneChoix icone={<IconeReglage id="aide" />} libelle={t('profil.aide')} options={aides()} valeur={settings.aide} onChange={a => regler('aide', a)} />
+      </div>
+      <h3 className="lignes-titre">{tk('reglages.groupe.rythme')}</h3>
+      <div className="lignes">
+        <LigneCadence valeur={settings.cadence} onChange={c => regler('cadence', c)} />
+      </div>
+      <h3 className="lignes-titre">{tk('reglages.groupe.progression')}</h3>
+      <div className="lignes">
+        <LigneInterrupteur icone={<IconeReglage id="serie" />} libelle={tk('reglages.serie')} aide={tk('reglages.serieAide')} actif={settings.serieVisible} onChange={v => regler('serieVisible', v)} />
       </div>
       <h3 className="lignes-titre">{t('profil.groupe.sons')}</h3>
       <div className="lignes">
         <LigneBascules icone={<IconeReglage id="sons" />} libelle={t('profil.sons')} bascules={[
           // #165 : un aperçu à l'allumage, le claquement de pierre ou une petite vibration.
-          { libelle: t('profil.son'), actif: settings.sound, onChange: v => { set({ sound: v }); if (v) setTimeout(() => playStone(40, 9), 0); } },
-          { libelle: t('profil.vibrations'), actif: settings.vibrations, onChange: v => { set({ vibrations: v }); if (v) setTimeout(hapticStone, 0); } },
+          { libelle: t('profil.son'), actif: settings.sound, onChange: v => { regler('sound', v); if (v) setTimeout(() => playStone(40, 9), 0); } },
+          { libelle: t('profil.vibrations'), actif: settings.vibrations, onChange: v => { regler('vibrations', v); if (v) setTimeout(hapticStone, 0); } },
         ]} />
-        <LigneInterrupteur icone={<IconeReglage id="celebrations" />} libelle={t('profil.celebrations')} aide={t('profil.celebrationsAide')} actif={settings.celebrations} onChange={v => set({ celebrations: v })} />
+        <LigneInterrupteur icone={<IconeReglage id="celebrations" />} libelle={t('profil.celebrations')} aide={t('profil.celebrationsAide')} actif={settings.celebrations} onChange={v => regler('celebrations', v)} />
       </div>
       <LigneVersion />
+    </div>
+  );
+}
+
+/** Position de l'aperçu (#365) : 9 × 9, six coups, le dernier en E5. Index y * 9 + x. */
+const APERCU_COUPS = [2 * 9 + 2, 6 * 9 + 6, 6 * 9 + 2, 2 * 9 + 6, 3 * 9 + 5, 4 * 9 + 4] as const;
+const APERCU_PLATEAU = (() => { const b = new Int8Array(81); APERCU_COUPS.forEach((p, i) => { b[p] = i % 2 ? 2 : 1; }); return b; })();
+const APERCU_NUMEROS: ReadonlyMap<number, number> = new Map(APERCU_COUPS.map((p, i) => [p, i + 1]));
+
+/** Aperçu du goban (#365) : thème, coordonnées, dernier coup et numéros, tels que les Réglages les donnent. */
+function ApercuPlateau({ settings }: { settings: Settings }) {
+  return (
+    <figure className="reglages-apercu" aria-label={tk('reglages.apercuAria')} data-testid="reglages-apercu">
+      <Board size={9} board={APERCU_PLATEAU} marks={{ last: settings.dernierCoup ? APERCU_COUPS[APERCU_COUPS.length - 1] : null }}
+        coordonnees={settings.coordonnees} numeros={settings.numerosRevue ? APERCU_NUMEROS : null} />
+      <figcaption className="muted small" aria-hidden="true">{tk('reglages.apercu')}</figcaption>
+    </figure>
+  );
+}
+
+/** Temps de jeu proposé d'abord pour une partie en ligne (#365) : 5, 10 ou 20 minutes chacun. */
+function LigneCadence({ valeur, onChange }: { valeur: Settings['cadence']; onChange: (c: Settings['cadence']) => void }) {
+  return (
+    <div className="ligne ligne-choix" role="group" aria-label={tk('reglages.cadence')}>
+      <LigneIcone><IconeReglage id="cadence" /></LigneIcone>
+      <span className="ligne-libelle" aria-hidden="true">{tk('reglages.cadence')}</span>
+      <span className="seg">
+        {CADENCES_ORDRE.map(c => (
+          <button type="button" key={c} aria-pressed={valeur === c} onClick={() => onChange(c)}
+            aria-label={tk('reglages.cadenceAria', { min: CADENCES[c].mainMs / 60_000 })}>{tk(`reglages.cadence.${c}`)}</button>
+        ))}
+      </span>
     </div>
   );
 }
