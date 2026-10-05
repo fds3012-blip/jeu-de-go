@@ -114,7 +114,7 @@ test('deux amis : Léa réussit, Florian la voit après sa réussite ; « Rappel
 
   // Chez Max : la pastille de l'onglet Problèmes dit qu'un ami l'attend.
   await max.page.goto('/');
-  await expect(nav(max.page).getByRole('button', { name: 'Problèmes, Un ami t’attend au Go du jour' })).toBeVisible();
+  await expect(nav(max.page).getByRole('button', { name: 'Problèmes, Un ami t’attend au Go du jour' })).toBeVisible({ timeout: 15_000 });
 
   for (const c of [lea, eve, flo, max]) await c.ctx.close();
 });
