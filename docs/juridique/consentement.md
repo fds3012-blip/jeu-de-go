@@ -107,3 +107,33 @@ La recommandation CNIL (2020-092) demande que refuser soit aussi simple qu'accep
 - `src/app/Confidentialite.tsx` : fenêtre réécrite, page Conditions avec deux interrupteurs.
 - Tests : `src/data/analytics.test.ts`, `e2e/confidentialite.spec.ts`.
 - Captures : `docs/design/v2/captures/consentement-v2-clair.png`, `consentement-v2-sombre.png`.
+
+## 8. Compteurs anonymes de la première visite (#437, 5 octobre 2026)
+
+**Le besoin.** Sur 30 jours, PostHog compte 24 « limite de l'essai atteinte » pour 2 comptes créés, mais l'entonnoir de la première visite reste aveugle : au niveau anonyme, l'identifiant de PostHog change à chaque ouverture, et rien ne relie la première pierre à la création du compte. Plutôt que d'élargir PostHog, on ajoute la mesure la plus pauvre possible : six totaux par jour.
+
+**Le dispositif** (`src/data/compteurs.ts`, migration `20261005120100_compteurs_entonnoir.sql`) :
+- Serveur : table `compteurs_entonnoir (jour, etape, n)`, une ligne par jour (Europe/Paris) et par étape, écrite seulement par la fonction `compter_etape(p_etape)` (`security definer`, liste blanche de six étapes, incrément atomique). La fonction ignore la session : elle ne lit ni `auth.uid()` ni le jeton. RLS sans politique : aucune lecture par l'app, lecture par la clé service seulement (tableau de bord SQL).
+- Appareil : un repère par étape, `go.entonnoir.<étape>`, dont la valeur est le mois de l'écriture (`AAAA-MM`). Il sert seulement à ne pas recompter l'étape. Pas d'identifiant, pas d'heure, rien de commun à deux étapes.
+- Requête : clé publique seule (`apikey`), `credentials: 'omit'` (aucun cookie), `referrerPolicy: 'no-referrer'` (pas d'adresse de page), corps `{ "p_etape": "…" }`. Envoyée après le premier écran, jamais attendue.
+
+**Confrontation aux conditions de l'exemption (section 2) :**
+
+| Condition CNIL | Ce que fait le dispositif | Appréciation |
+|---|---|---|
+| 1. Finalité unique : mesure d'audience pour l'éditeur | Totaux de l'entonnoir, lus par l'équipe seulement ; aucune autre utilisation, aucun tiers | Remplie |
+| 2. Statistiques anonymes seulement | Le serveur ne reçoit qu'un nom d'étape et ne garde qu'un total par jour. Aucun lien possible entre deux étapes d'un même appareil (pas d'identifiant, même commun) | Remplie. Les totaux ne sont pas des données personnelles |
+| 3. Ni suivi global, ni croisement, ni transmission | Aucun croisement avec PostHog, le compte ou la session (la fonction ne lit pas la session) | Remplie |
+| 4. Traceur de 13 mois au plus, non prolongé ; données 25 mois au plus | Le repère porte le mois de son écriture, n'est jamais réécrit tant qu'il est valide, est ignoré puis **effacé** au-delà de 13 mois (`purgerReperesExpires`, à chaque lancement) | Remplie pour le traceur. Les totaux, anonymes, ne sont pas soumis à la limite de 25 mois ; une purge à 25 mois reste possible si l'avocat le souhaite |
+| 5. IP non conservée | La table ne contient pas d'IP. La passerelle de Supabase journalise l'IP de toute requête (journaux techniques, durée selon l'offre) | **À valider** : même situation que n'importe quelle requête vers l'API ; journaux non utilisés pour la mesure (E23 de la politique) |
+| 6. Information et droit d'opposition | Politique (sections 2, 3.1, 3.3) et page Conditions de l'app (« Comptage anonyme » : une phrase ajoutée) ; l'interrupteur « Comptage anonyme des parties » coupe aussi les compteurs et **efface les repères** | Remplie |
+
+**Pourquoi un repère sur l'appareil plutôt que rien.** Sans lui, chaque étape serait recomptée à chaque ouverture (la première pierre de chaque partie, l'écran de chaque lancement) : les totaux ne mesureraient plus des appareils et l'entonnoir serait faux. Un repère par étape, sans identifiant, est le minimum pour compter « au plus une fois par appareil ». Il n'est **pas** strictement nécessaire au service demandé par le joueur : il relève de l'exemption de mesure d'audience, pas de l'exemption « service ». En navigation privée stricte (stockage refusé), rien n'est écrit : l'étape est comptée au plus une fois par page.
+
+**Seuls les nouveaux appareils.** `premier_ecran` n'est compté qu'au tout premier lancement (aucune partie, aucun jour de retour), et les étapes suivantes seulement sur un appareil dont le premier écran a été compté. Les joueurs d'avant #437 ne sont donc jamais comptés : pas de « première pierre » qui n'en est pas une.
+
+**Appareils de l'équipe.** `go.equipe.v1`, posé par un membre de l'équipe sur son propre appareil (`?equipe=1`, ou 7 touchers sur la version dans Profil > Réglages), coupe PostHog et les compteurs. C'est un choix de l'utilisateur de l'appareil, sans identifiant : aucune question de consentement. Sentry n'est pas concerné (il suit toujours l'accord).
+
+**Abus.** L'appel est ouvert à tous (clé publique) : n'importe qui peut ajouter 1. Faute d'identifiant (voulu), la limite ne peut pas viser un appelant. Deux plafonds par étape : **60 par minute** et **20 000 par jour** ; au-delà, l'appel est refusé sans erreur et compté dans `compteurs_entonnoir_fenetre.refus` (un jour pollué se voit). Ordre de grandeur actuel : quelques dizaines par jour. Plafonds à relever par migration si l'audience approche de 60 nouveaux joueurs par minute.
+
+**À valider par un avocat :** l'appréciation des conditions 4 et 5 ci-dessus, et l'ajout de ces compteurs à l'auto-évaluation CNIL prévue pour PostHog (E1).

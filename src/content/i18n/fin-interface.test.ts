@@ -90,7 +90,7 @@ const ORIGINAUX: [Cle, string, boolean?][] = [
   ['conditions.garde.defi', `Un ami te défie, sans compte${F}:`, true],
   ['conditions.garde.defiTexte', 'un numéro de session, sans e-mail ni pseudo, et vos parties. Chez Supabase, à Paris.'],
   ['conditions.garde.comptage', `Comptage anonyme${F}:`, true],
-  ['conditions.garde.comptageTexte', `quelques événements (partie jouée, leçon finie) chez PostHog, dans l’Union européenne. Sans cookie ni lien avec ton compte${F}: le numéro tiré au hasard change à chaque ouverture de l’app. Avec le type d’appareil et de navigateur. Ton adresse IP n’est pas gardée, et elle ne sert pas à te localiser.`, true],
+  ['conditions.garde.comptageTexte', `quelques événements (partie jouée, leçon finie) chez PostHog, dans l’Union européenne. Sans cookie ni lien avec ton compte${F}: le numéro tiré au hasard change à chaque ouverture de l’app. Avec le type d’appareil et de navigateur. Ton adresse IP n’est pas gardée, et elle ne sert pas à te localiser. Et, une fois par appareil, les étapes de ta première visite (première pierre, compte créé…) s’ajoutent à un simple total du jour, chez Supabase à Paris, sans rien qui te désigne.`, true],
   ['conditions.garde.oui', `Seulement si tu dis oui${F}:`, true],
   ['conditions.garde.ouiTexte', `les rapports de bug chez Sentry, et un numéro gardé sur ton téléphone pour voir si tu reviens jouer. Jamais ton e-mail ni tes coups. Tu changes d’avis${F}? Ce numéro est effacé.`, true],
   ['conditions.pourquoi', 'Pourquoi'],

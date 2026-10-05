@@ -730,3 +730,72 @@ Une seule métrique principale par test, fixée avant le lancement. Durée fixé
 
 - **Durée** : temps d'inclusion + 1 jour. Pour +5 points : 32 semaines à 100 nouveaux consentants par semaine, 4 semaines à 1 000, 2 semaines entières à 5 000. Au trafic actuel, impossible.
 - **Décision** : si J1 monte d'au moins 3 points sans falaise à la 4e partie, garder le komi 0,5, puis tester le nombre de parties (2, 3 ou 5). Si les victoires montent mais pas J1, le komi ne fait pas revenir : le garder pour le plaisir et chercher ailleurs le levier de J1. Si la 4e partie s'effondre, étaler la remontée (par exemple 0,5, puis 3,5, puis 6,5).
+
+## 9. Entonnoir de la première visite : compteurs anonymes (#437)
+
+**Pourquoi.** Sur 30 jours, PostHog compte 24 `essai_limite_atteinte` pour 2 `compte_cree`, mais sans accord il ne relie pas les étapes d'une même visite : l'entonnoir de la première session est aveugle. Les compteurs anonymes (`docs/data/plan-de-marquage.md`, « Compteurs anonymes de la première visite ») donnent, sans accord, le nombre d'**appareils neufs** qui franchissent chaque étape, par jour (heure de Paris).
+
+**Où.** Pas dans PostHog : dans Supabase (table `compteurs_entonnoir`, lisible seulement avec la clé service). À coller dans l'éditeur SQL du projet `jeu-de-go` (lecture seule) ; jour courant exclu (journée incomplète).
+
+**Indicateur servi** : nouveaux appareils par jour, part des nouveaux qui posent une pierre, qui finissent une partie, **mur du compte** (limite → compte créé). **Décision éclairée** : où se perd la première visite, et si la limite de l'essai fait créer des comptes ou fait partir (à croiser avec la répartition des raisons de `essai_limite_atteinte` dans PostHog).
+
+### 9.1 Entonnoir sur 7 et 30 jours
+
+```sql
+-- Entonnoir de la première visite (#437) : 7 et 30 derniers jours complets, heure de Paris.
+with aujourdhui as (
+  select (now() at time zone 'Europe/Paris')::date as j
+),
+fenetres(fenetre, jours) as (values ('7 jours', 7), ('30 jours', 30)),
+etapes(rang, etape) as (values
+  (1, 'premier_ecran'), (2, 'premiere_pierre'), (3, 'premiere_partie_finie'),
+  (4, 'limite_essai'), (5, 'compte_cree'), (6, 'premiere_partie_en_ligne')),
+totaux as (
+  select f.fenetre, f.jours, e.rang, e.etape, coalesce(sum(c.n), 0)::int as appareils
+  from fenetres f
+  cross join etapes e
+  cross join aujourdhui a
+  left join public.compteurs_entonnoir c
+    on c.etape = e.etape and c.jour >= a.j - f.jours and c.jour < a.j
+  group by f.fenetre, f.jours, e.rang, e.etape
+)
+select fenetre, rang, etape, appareils,
+  round(100.0 * appareils / nullif(first_value(appareils) over w, 0), 1) as pct_premier_ecran,
+  round(100.0 * appareils / nullif(lag(appareils) over w, 0), 1) as pct_etape_precedente
+from totaux
+window w as (partition by fenetre order by rang)
+order by jours, rang;
+```
+
+### 9.2 Par jour (30 jours), et jours plafonnés
+
+```sql
+-- Une ligne par jour, une colonne par étape (#437). `plafonne` : la journée a touché le plafond anti-abus.
+select c.jour,
+  sum(c.n) filter (where c.etape = 'premier_ecran') as premier_ecran,
+  sum(c.n) filter (where c.etape = 'premiere_pierre') as premiere_pierre,
+  sum(c.n) filter (where c.etape = 'premiere_partie_finie') as premiere_partie_finie,
+  sum(c.n) filter (where c.etape = 'limite_essai') as limite_essai,
+  sum(c.n) filter (where c.etape = 'compte_cree') as compte_cree,
+  sum(c.n) filter (where c.etape = 'premiere_partie_en_ligne') as premiere_partie_en_ligne,
+  bool_or(c.n >= 20000) as plafonne
+from public.compteurs_entonnoir c
+where c.jour >= (now() at time zone 'Europe/Paris')::date - 30
+group by c.jour
+order by c.jour desc;
+
+-- Appels refusés aujourd'hui (60 par minute ou 20 000 par jour, par étape) : un nombre non nul signale un abus.
+select etape, refus from public.compteurs_entonnoir_fenetre
+where refus > 0 and refus_jour = (now() at time zone 'Europe/Paris')::date
+order by refus desc;
+```
+
+### 9.3 Lire sans se tromper
+
+- **Des flux, pas des cohortes.** Les totaux d'une fenêtre comptent les étapes franchies **pendant** la fenêtre, pas le devenir des appareils arrivés pendant la fenêtre. Un appareil arrivé le 30 peut créer son compte le 2 : sur 7 jours, les étapes tardives sont sous-estimées en début de période et sur-estimées en fin. Lire les taux sur 30 jours ; sur 7 jours, regarder la tendance.
+- **L'ordre n'est pas strict.** `limite_essai` peut venir avant `premiere_partie_finie` (leçon 4, problème, défi par lien), et `compte_cree` sans `limite_essai` (compte créé depuis le Profil, défi par lien). `pct_etape_precedente` est une indication, pas une probabilité de passage. Seul `pct_premier_ecran` se lit toujours : « parmi les appareils neufs ».
+- **Appareils, pas joueurs.** Deux appareils, ou un navigateur dont on efface les données, comptent deux fois. Une navigation privée stricte recompte à chaque page. Les appareils qui s'opposent au comptage anonyme et ceux de l'équipe ne comptent pas (sous-estimation, à dire).
+- **Sous-estimation possible**, jamais de double compte : un envoi raté (hors ligne) est perdu.
+- **Comparer avec PostHog** : `essai_limite_atteinte` compte des **ouvertures** de l'écran (plusieurs par joueur, anciens joueurs compris) ; `limite_essai` compte des **appareils neufs**. Les deux ne doivent pas être égaux. Si `limite_essai` > `premier_ecran` sur une fenêtre longue, il y a un problème de comptage.
+- **Volumes.** Au trafic actuel (quelques nouveaux par jour), un taux sur 7 jours repose sur quelques dizaines d'appareils : intervalle de confiance de ± 15 à 20 points. Ne rien conclure sous 100 appareils au dénominateur ; dire « trop peu pour conclure ».
+- **Premiers jours.** Les compteurs ne voient que les appareils dont le **premier lancement** est postérieur au déploiement : pendant les 30 premiers jours, la fenêtre de 30 jours est incomplète.
