@@ -34,6 +34,16 @@ export interface TuileDefis { n: number; ouvrir: () => void;
   /** #367 : un seul défi en attente, adversaire connu : « Contre Léa » (la tuile ouvre alors la partie). */
   adversaire?: string | null }
 
+/** #440 : parties lentes, sur l'accueil : « À toi de jouer (N) » et la recherche en cours (ou l'adversaire trouvé). */
+export interface TuileLentes {
+  aJouer: number;
+  recherche: { trouvee: boolean } | null;
+  /** La partie (s'il n'y en a qu'une où c'est à toi), sinon l'écran des parties lentes. */
+  ouvrir: () => void;
+  /** Annule la recherche ; si l'adversaire est trouvé, ouvre la partie. */
+  quitter: () => void;
+}
+
 interface Props {
   adv: Opponent;
   battu: boolean;
@@ -60,6 +70,7 @@ interface Props {
   lecon?: TuileLecon;
   onLecon: () => void;
   defis?: TuileDefis;
+  lentes?: TuileLentes;
   /** Carte « Installe l'app » (#214), sous les tuiles, au 2e retour ; elle décide seule si elle se montre. */
   installation?: ReactNode;
   /** « Je sais déjà jouer » (#283) : lien discret sous le bouton, au premier lancement seulement. */
@@ -92,6 +103,8 @@ export function Accueil(p: Props) {
   const tuiles = ordreDuJour({ premier, defis: defis?.n ?? 0, goDuJour: p.probleme ? (etat ?? 'neutre') : null, lecon: !!p.lecon });
   const enAvant = tuiles.some(x => x.enAvant);
   const enLigne = p.modes.principal === 'en_ligne';
+  // #440 : point d'or sur « Jouer en ligne » (bouton ou tuile) quand une partie lente attend ton coup.
+  const lentesAJouer = p.lentes?.aJouer ?? 0;
   const cta = enLigne ? t('accueil.cta.enLigne') : textes.cta;
   const [plusOuvert, setPlusOuvert] = useState(false);
 
@@ -162,7 +175,7 @@ export function Accueil(p: Props) {
       )}
 
       {/* Libellé court (« Jouer contre Pomme ») : taille pleine ; long (première partie) : un cran plus petit, sur une ligne. */}
-      <button className={`cta cta-sceau${cta.length <= 26 ? ' court' : ''}`} aria-label={enLigne ? t('accueil.cta.enLigneNom') : textes.ctaNom}
+      <button className={`cta cta-sceau${cta.length <= 26 ? ' court' : ''}${enLigne && lentesAJouer ? ' a-jouer' : ''}`} aria-label={enLigne ? t('accueil.cta.enLigneNom') : textes.ctaNom}
         data-mode={p.modes.principal} onClick={() => p.onMode(p.modes.principal, 'bouton')}>
         {enLigne ? <IconeMode mode="en_ligne" /> : <Sceau id={adv.id} taille={30} />}{cta}
       </button>
@@ -180,6 +193,8 @@ export function Accueil(p: Props) {
         )}
       </div>
 
+      {p.lentes && (p.lentes.aJouer > 0 || p.lentes.recherche) && <TuilesLentes l={p.lentes} />}
+
       {/* Aujourd'hui : la bonne chose à faire en premier, mise en avant ; les autres tuiles suivent. */}
       {tuiles.length > 0 && (
         <div className={`tuiles${enAvant ? ' tuiles-jour' : ''}`}>
@@ -192,6 +207,39 @@ export function Accueil(p: Props) {
 
       <Reglages {...p} />
       {p.modes.plus.length > 0 && <FeuillePlus modes={p.modes.plus} ouvert={plusOuvert} setOuvert={setPlusOuvert} onMode={p.onMode} />}
+    </div>
+  );
+}
+
+/** #440 : « À toi de jouer (N) » (parties lentes), puis la recherche en cours, qu'on annule d'ici. */
+function TuilesLentes({ l }: { l: TuileLentes }) {
+  return (
+    <div className="tuiles tuiles-lentes">
+      {l.aJouer > 0 && (
+        <button className="tuile tuile-defi tuile-avant" onClick={l.ouvrir} data-testid="tuile-lente" aria-label={t('lente.accueil.aJouerAria', { n: l.aJouer })}>
+          <span className="tuile-pierres" aria-hidden="true"><span className="stone b" /><span className="stone w" /></span>
+          <span>
+            <small>{t('lente.accueil.tuile', { n: l.aJouer })}</small>
+            <b>{t('lente.accueil.aJouer', { n: l.aJouer })}</b>
+          </span>
+          <em className="tuile-etat" aria-hidden="true">{t('defi.accueil.tuileEtat')}</em>
+        </button>
+      )}
+      {l.recherche?.trouvee && (
+        <button className="tuile tuile-defi tuile-avant" onClick={l.quitter} data-testid="tuile-lente-trouvee">
+          <span className="tuile-pierres" aria-hidden="true"><span className="stone b" /><span className="stone w" /></span>
+          <span><small>{t('lente.accueil.recherche')}</small><b>{t('lente.accueil.trouve')}</b></span>
+          <em className="tuile-etat" aria-hidden="true">{t('lente.accueil.trouveEtat')}</em>
+        </button>
+      )}
+      {l.recherche && !l.recherche.trouvee && (
+        <div className="tuile tuile-recherche" data-testid="tuile-lente-recherche">
+          <button type="button" className="tuile-recherche-ouvrir" onClick={l.ouvrir}>
+            <small>{t('lente.accueil.recherche')}</small><b>{t('lente.accueil.rechercheEtat')}</b>
+          </button>
+          <button type="button" className="lien" onClick={l.quitter} aria-label={t('lente.accueil.annulerAria')}>{t('lente.accueil.annuler')}</button>
+        </div>
+      )}
     </div>
   );
 }
@@ -310,12 +358,13 @@ function TuileMode({ mode, p }: { mode: Mode; p: Props }) {
   const choisir = () => p.onMode(mode, 'tuile');
   if (mode === 'en_ligne') {
     const cote = p.cote && `${texteGradeDe(p.cote.cote)} · ${texteCote(p.cote)}`;
+    const aJouer = p.lentes?.aJouer ?? 0;
     return (
-      <button type="button" className="mode" data-testid="mode-en_ligne" onClick={choisir}
-        aria-label={`${t('mode.enLigne')} : ${t('mode.enLigne.detail')}${cote ? `, ${cote}` : ''}`}>
+      <button type="button" className={`mode${aJouer ? ' a-jouer' : ''}`} data-testid="mode-en_ligne" onClick={choisir}
+        aria-label={`${t('mode.enLigne')} : ${aJouer ? t('mode.enLigne.aJouer') : t('mode.enLigne.detail')}${cote ? `, ${cote}` : ''}`}>
         <span className="mode-icone" aria-hidden="true"><IconeMode mode="en_ligne" /></span>
         <b>{t('mode.enLigne')}</b>
-        <small>{cote ?? t('mode.enLigne.detail')}</small>
+        <small>{aJouer ? t('mode.enLigne.aJouer') : cote ?? t('mode.enLigne.detail')}</small>
       </button>
     );
   }
