@@ -24,6 +24,7 @@ import { pseudoJoueur } from '../data/defi';
 import { coteJoueur } from '../data/cote';
 import type { Db } from '../data/supabase';
 import { EVENTS, track } from '../data/analytics';
+import { compterEtape } from '../data/compteurs';
 import { messageRefus } from '../data/defi';
 import { useOnline } from './hooks';
 import { issueMesure, phraseDirect, phraseFinDirect, texteCadence, vueDirect } from './direct';
@@ -161,6 +162,7 @@ function Attente({ db, params, depuis, onTrouve, onAnnule }: {
         enAttente.current = false;
         const attenteS = Math.round((Date.now() - depuis) / 1000);
         track(EVENTS.partieEnLigneCommencee, { taille: params.taille, cadence: params.cadence, regles: params.regles, attente_s: attenteS });
+        compterEtape('premiere_partie_en_ligne');
         onTrouve(r.value, attenteS);
         return;
       }

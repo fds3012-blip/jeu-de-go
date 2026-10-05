@@ -16,7 +16,8 @@ import { LigneBascules, LigneChoix, LigneIcone, LigneInterrupteur, LigneLien } f
 import { IconeReglage, type IconeReglageId } from '../ui/IconesReglages';
 import { hapticStone } from '../ui/haptics';
 import { playStone } from '../ui/sound';
-import { useEffect, useMemo, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useSyncExternalStore, type ReactNode } from 'react';
+import { analyticsConfig, estEquipe, setEquipe, subscribeConsent } from '../data/analytics';
 import { readLocal, writeLocal } from './hooks';
 import { BILAN_KEY, lireBilan } from './bilan';
 import { PARTIES_KEY, type Parties } from './home';
@@ -266,7 +267,33 @@ function Reglages({ settings, set }: Pick<Props, 'settings' | 'set'>) {
         ]} />
         <LigneInterrupteur icone={<IconeReglage id="celebrations" />} libelle={t('profil.celebrations')} aide={t('profil.celebrationsAide')} actif={settings.celebrations} onChange={v => set({ celebrations: v })} />
       </div>
+      <LigneVersion />
     </div>
+  );
+}
+
+/** Touchers rapprochés (4 s au plus entre le premier et le dernier) qui basculent le drapeau de l'équipe. */
+const TOUCHERS_EQUIPE = 7;
+
+/**
+ * Version de l'app (#437), en bas des réglages. Réglage caché : 7 touchers rapprochés basculent le drapeau
+ * « appareil de l'équipe » (src/data/analytics.ts, `setEquipe`), qui coupe PostHog et les compteurs anonymes.
+ */
+function LigneVersion() {
+  const equipe = useSyncExternalStore(subscribeConsent, estEquipe, () => false);
+  const touchers = useRef<number[]>([]);
+  const toucher = () => {
+    const maintenant = Date.now();
+    touchers.current = [...touchers.current.filter(d => maintenant - d < 4000), maintenant];
+    if (touchers.current.length < TOUCHERS_EQUIPE) return;
+    touchers.current = [];
+    setEquipe(!estEquipe());
+  };
+  return (
+    <p className="profil-version">
+      <button type="button" data-testid="version-app" onClick={toucher}>{t('profil.version', { v: analyticsConfig().release.slice(0, 7) })}</button>
+      <span role="status">{equipe ? t('profil.equipe') : ''}</span>
+    </p>
   );
 }
 

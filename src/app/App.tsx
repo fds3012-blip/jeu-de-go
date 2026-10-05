@@ -20,6 +20,7 @@ import { COTE_KEY } from './coteJoueur';
 import { Accueil } from './Accueil';
 import { modesAccueil, type Depuis, type Mode } from './modes';
 import { EVENTS, secondsSinceOpen, track, trackOnce } from '../data/analytics';
+import { compterEtape } from '../data/compteurs';
 import { estArriveeRappel, etatRappel } from './rappel';
 import { PARAM, PARAM_COURT, SERIE_KEY, numeroDuJour, numeroDuLien, problemeDuJour, type Serie } from './goDuJour';
 import { battu, BILAN_KEY, dejaAffronte, enregistrer, fin, finTropTot, komiDepuisUrl, lireBilan, type Bilan, type Issue, type StatsPartie } from './bilan';
@@ -294,6 +295,10 @@ export function App() {
   }, [vueProfil]);
   // Installation (#214) : proposée sur l'accueil à partir du 2e retour (jour d'ouverture distinct), une seule fois.
   const [ouverture] = useState(() => noterOuverture(numeroDuJour(new Date())));
+  // #437 : compteur anonyme du premier écran (quel que soit l'écran : accueil, lien de défi…), au tout premier lancement.
+  // Lu au montage : une partie jouée ensuite ne change pas la réponse. L'envoi attend le premier écran.
+  const [nouvelAppareil] = useState(() => parties.n === 0 && ouverture.retours === 0);
+  useEffect(() => { compterEtape('premier_ecran', { nouveau: nouvelAppareil }); }, [nouvelAppareil]);
   // #236 (N4) : un seul appel secondaire sur l'accueil (annonce de Mochi, carte d'installation ou « À faire »).
   const plateforme = usePlateformeInstallation();
   const [etatInstall] = useState(etatInstallation);
@@ -329,6 +334,7 @@ export function App() {
     if (!COMPTES) return false;
     void chargerSupabase();
     track(EVENTS.essaiLimiteAtteinte, { raison: d.raison, parties: terminees });
+    compterEtape('limite_essai');
     setEcranCompte({ raison: d.raison, reprise });
     window.scrollTo({ top: 0 });
     return false;
@@ -473,6 +479,7 @@ export function App() {
   useEffect(() => {
     if (compteVientDEtreCree(etatAvant.current, etat)) {
       track(EVENTS.compteCree, { moyen: moyenConnexion(), origine: ecranCompte?.raison ?? (defi?.vue === 'arrivee' ? 'defi_arrivee' : 'profil') });
+      compterEtape('compte_cree');
     }
     etatAvant.current = etat;
     if (etat === 'complet' && ecranCompte) {

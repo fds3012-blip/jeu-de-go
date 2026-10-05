@@ -270,3 +270,7 @@ button.ligne:focus-visible { outline-offset: -3px; }
 .compte-garde svg { flex: none; margin-top: 1px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .compte-garde-oui svg { color: var(--accent-texte); stroke-width: 2.4; }
 .compte-garde-ici { color: var(--muted); }
+/* #437 : version de l'app, discrète, en bas des réglages (7 touchers : appareil de l'équipe). */
+.profil-version { margin: var(--space-4) 0 0; text-align: center; font-size: var(--fs-s); color: var(--muted); }
+.profil-version button { min-height: 44px; min-width: 44px; padding: 0 var(--space-3); border: 0; background: none; color: inherit; font: inherit; }
+.profil-version [role='status']:not(:empty) { display: block; }

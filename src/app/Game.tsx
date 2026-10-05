@@ -8,6 +8,7 @@ import { score } from '../go/score';
 import { toLabel } from '../go/coords';
 import { analyseConseil, bestMove, bestMoveExplique, estimateLead, estimateTerritoire, forceInitiale, niveauGuide, PERIODE_GUIDEE, proposeComptage, reglerForce, type Opponent } from '../engine';
 import { EVENTS, secondsSinceOpen, track, trackOnce } from '../data/analytics';
+import { compterEtape } from '../data/compteurs';
 import { gagnerXp, sourceXpPartie, type SourceXp } from './xp';
 import { useSupabase } from '../data/client';
 import { fr } from '../ui/typo';
@@ -321,7 +322,10 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     if (ai) { aRepondre.current = { capture: cap > 0, forcee: enAtari }; setFete(cap ? { len: history.length + 1, n: cap } : null); }
     setHistory([...history, r]);
     if (history.length === 1) track(EVENTS.partieCommencee, { mode: ai ? 'ordi' : 'deux', adversaire: ai?.id, taille: size });
-    if (history.length === 1) trackOnce(EVENTS.premierePierre, { secondes: secondsSinceOpen(), mode: ai ? 'ordi' : 'deux', adversaire: ai?.id, taille: size });
+    if (history.length === 1) {
+      trackOnce(EVENTS.premierePierre, { secondes: secondsSinceOpen(), mode: ai ? 'ordi' : 'deux', adversaire: ai?.id, taille: size });
+      compterEtape('premiere_pierre');
+    }
     if (ai) {
       if (cap) { repliquer('captureSubie'); reagir('surpris'); }
       else if (enAtari) repliquer('atariSubi');
@@ -508,7 +512,11 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   }, []);
 
   // Première partie contre l'ordi menée jusqu'au score ou à l'abandon : une seule fois par appareil (trackOnce, #35).
-  useEffect(() => { if (phase === 'end' && ai) trackOnce(EVENTS.premierePartieTerminee, { adversaire: ai.id, taille: size, coups: history.length - 1, fin: resigned ? 'abandon' : 'score', indices: indicesUtilises, secondes: secondsSinceOpen() }); }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (phase !== 'end' || !ai) return;
+    trackOnce(EVENTS.premierePartieTerminee, { adversaire: ai.id, taille: size, coups: history.length - 1, fin: resigned ? 'abandon' : 'score', indices: indicesUtilises, secondes: secondsSinceOpen() });
+    compterEtape('premiere_partie_finie');
+  }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Proposer d'installer l'app (#178) : après la toute première victoire contre l'ordi sur cet appareil, jamais pendant la partie.
   // Le repère n'est lu qu'une fois par fin de partie (le double effet du mode strict ne doit pas le consommer).

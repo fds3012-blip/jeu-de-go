@@ -289,6 +289,8 @@ export function setOpposition(oppose: boolean): void {
   ecrire(OPPOSITION_KEY, oppose ? '1' : null);
   memoryOpposition = oppose;
   if (oppose && getConsent() === 'accepte') { ecrire(CONSENT_KEY, 'refuse'); memoryConsent = 'refuse'; }
+  // #437 : s'opposer efface aussi les repères des compteurs anonymes (src/data/compteurs.ts).
+  if (oppose) effacerReperesEntonnoir();
   if (avant === 'complet' && niveau() !== 'complet') effacerTraces();
   listeners.forEach(fn => fn());
   appliquer();
@@ -353,7 +355,7 @@ function appliquer() {
 function loadPostHog(): Promise<PostHogLike | null> {
   if (phLoading) return phLoading;
   const c = analyticsConfig();
-  if (!c.posthogKey) return Promise.resolve(null);
+  if (!c.posthogKey || estEquipe()) return Promise.resolve(null);
   // Niveau anonyme (#325) : PostHog (≈ 100 Ko gzip) attend que l'accueil soit affiché, pour ne pas ralentir l'ouverture
   // sur un téléphone lent. Les événements gardent leur heure (`timestamp`) : rien n'est décalé. Avec accord : tout de suite.
   const attente = niveau() === 'complet' ? Promise.resolve() : premierEcran();
@@ -407,7 +409,7 @@ export function initAnalytics(): void {
 
 /** Envoie un événement, sauf opposition. Sans accord, il part sans identifiant persistant ni compte. */
 export function track(event: AnalyticsEvent, props?: Props): void {
-  if (!browser() || !analyticsConfig().posthogKey || niveau() === 'aucun') return;
+  if (!browser() || !analyticsConfig().posthogKey || niveau() === 'aucun' || estEquipe()) return;
   const at = new Date();
   void loadPostHog().then(ph => {
     if (!ph || niveau() === 'aucun') return;
@@ -492,8 +494,55 @@ export function secondsSinceOpen(): number {
   return typeof performance === 'undefined' ? 0 : Math.round(performance.now() / 1000);
 }
 
+/**
+ * Appareils de l'équipe (#437) : un drapeau local (`go.equipe.v1`, sans identifiant) coupe PostHog et les compteurs
+ * anonymes de l'entonnoir, pour ne pas compter nos propres essais. Posé par `?equipe=1` (retiré par `?equipe=0`) ou
+ * par 7 touchers sur la version, dans Profil > Réglages. Sentry n'est pas concerné (il suit toujours l'accord).
+ */
+export const EQUIPE_KEY = 'go.equipe.v1';
+let memoryEquipe = false;
+
+export function estEquipe(): boolean {
+  if (!browser()) return false;
+  return lire(EQUIPE_KEY) === '1' || memoryEquipe;
+}
+
+export function setEquipe(oui: boolean): void {
+  if (!browser()) return;
+  ecrire(EQUIPE_KEY, oui ? '1' : null);
+  memoryEquipe = oui;
+  listeners.forEach(fn => fn());
+}
+
+/** `?equipe=1` ou `?equipe=0` dans l'adresse : pose ou retire le drapeau, puis retire le paramètre de l'adresse. */
+export function lireEquipeDansAdresse(): void {
+  if (!browser()) return;
+  try {
+    const url = new URL(location.href);
+    const v = url.searchParams.get('equipe');
+    if (v !== '1' && v !== '0') return;
+    setEquipe(v === '1');
+    url.searchParams.delete('equipe');
+    history.replaceState(history.state, '', url.pathname + url.search + url.hash);
+  } catch { /* adresse illisible : rien */ }
+}
+
+/** Préfixe des repères « étape déjà comptée » des compteurs anonymes (#437, src/data/compteurs.ts). */
+export const ENTONNOIR_PREFIX = 'go.entonnoir.';
+
+/** Efface les repères des compteurs anonymes (opposition à la mesure). */
+export function effacerReperesEntonnoir(): void {
+  if (!browser()) return;
+  try {
+    const cles: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k?.startsWith(ENTONNOIR_PREFIX)) cles.push(k); }
+    cles.forEach(k => localStorage.removeItem(k));
+  } catch { /* stockage indisponible : rien à effacer */ }
+}
+
 /** Réservé aux tests. */
 export function _resetForTests(): void {
+  memoryEquipe = false;
   phLoading = null; seLoading = null; niveauPostHog = 'aucun'; userId = null; arreterFilet?.();
   memoryConsent = null; memoryOpposition = false; onceMemoire.clear(); listeners.clear();
 }
