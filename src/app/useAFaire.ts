@@ -1,10 +1,11 @@
 // Notifications dans l'app (#367) : crochet léger du JS initial. Le calcul (aFaire.ts) et la lecture des défis
 // (aFaireCharge.ts) arrivent après le premier écran, par import dynamique : l'accueil s'affiche sans les attendre,
 // les pastilles et la tuile du défi se posent un instant après (budget du JS initial, scripts/budget-bundle.mjs).
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Db } from '../data/supabase';
 import type { Onglet } from '../ui/onglets';
 import type { DefiEnAttente, DonneesAFaire, ElementAFaire } from './aFaire';
+import type { RechercheLente } from '../data/lente';
 import { useOnline } from './hooks';
 import { premierEcran } from '../premierEcran';
 
@@ -29,13 +30,20 @@ export interface EntreeAFaire extends Omit<DonneesAFaire, 'defis' | 'leconEnCour
  * Rien sans session, hors ligne ou inactif (pendant une partie) pour les défis.
  */
 export function useAFaire(db: Db | null, userId: string | undefined, cle: string, actif: boolean, entree: EntreeAFaire): {
-  defis: DefiEnAttente[]; elements: ElementAFaire[]; pastilles: ReadonlyMap<Onglet, string>; rappelGoDuJour: boolean;
+  defis: DefiEnAttente[]; elements: ElementAFaire[]; pastilles: ReadonlyMap<Onglet, string>;
+  /** #369 : un ami t'a rappelé le Go du jour aujourd'hui. */
+  rappelGoDuJour: boolean;
+  /** #440 : recherche de partie lente en cours, ou adversaire trouvé pendant l'absence. */
+  recherche: RechercheLente | null;
+  /** Relit tout de suite (après l'annulation d'une recherche, par exemple). */
+  relire: () => void;
 } {
   const online = useOnline();
   const [mod, setMod] = useState<Module | null>(null);
   const [defis, setDefis] = useState<DefiEnAttente[]>([]);
   // #369 : rappel du Go du jour d'un ami, lu avec les défis.
   const [rappel, setRappel] = useState(false);
+  const [recherche, setRecherche] = useState<RechercheLente | null>(null);
   const [tic, setTic] = useState(0);
   const pseudos = useRef(new Map<string, string | null>());
 
@@ -69,6 +77,7 @@ export function useAFaire(db: Db | null, userId: string | undefined, cle: string
     let vivant = true;
     mod.chargerAFaire(db, userId, pseudos.current).then(l => { if (vivant) { setDefis(l.defis); setRappel(l.rappelGoDuJour); } },
       () => { if (vivant) { setDefis([]); setRappel(false); } });
+    mod.chargerRecherche(db, userId).then(r => { if (vivant) setRecherche(r); }, () => { if (vivant) setRecherche(null); });
     return () => { vivant = false; };
   }, [mod, db, userId, online, actif, cle, tic]);
 
@@ -82,5 +91,6 @@ export function useAFaire(db: Db | null, userId: string | undefined, cle: string
     leconEnCours: mod.leconEnCours(lecons, progres),
   }) : [], [mod, premier, liste, serie, duJourFait, demandesAmis, rappelGoDuJour, numero, titreDuJour, lecons, progres]);
   const pastilles = useMemo(() => mod ? mod.ongletsAPastille(elements) : AUCUNE, [mod, elements]);
-  return { defis: liste, elements, pastilles, rappelGoDuJour };
+  const relire = useCallback(() => setTic(n => n + 1), []);
+  return { defis: liste, elements, pastilles, rappelGoDuJour, recherche: userId && online ? recherche : null, relire };
 }

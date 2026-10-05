@@ -178,6 +178,58 @@ export type Database = {
           },
         ]
       }
+      file_lente: {
+        Row: {
+          created_at: string
+          delai_jours: number
+          partie_id: string | null
+          rating: number
+          rd: number
+          size: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          delai_jours: number
+          partie_id?: string | null
+          rating: number
+          rd?: number
+          size: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          delai_jours?: number
+          partie_id?: string | null
+          rating?: number
+          rd?: number
+          size?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "file_lente_partie_id_fkey"
+            columns: ["partie_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "file_lente_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "leaderboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "file_lente_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       friendships: {
         Row: {
           addressee_id: string
@@ -943,6 +995,10 @@ export type Database = {
           periodes: number
         }[]
       }
+      chercher_partie_lente: {
+        Args: { p_delai_jours?: number; p_size?: number }
+        Returns: string
+      }
       choisir_depart_cote: {
         Args: { p_depart: string; p_kyu?: number }
         Returns: number
@@ -1043,6 +1099,18 @@ export type Database = {
       }
       join_game: { Args: { p_code: string }; Returns: string }
       joueur_par_pseudo: { Args: { p_pseudo: string }; Returns: string }
+      lente_apparier: {
+        Args: { p_present: boolean; p_uid: string }
+        Returns: string
+      }
+      lentes_en_cours: { Args: { p_uid: string }; Returns: number }
+      lentes_tache: {
+        Args: never
+        Returns: {
+          creees: number
+          finies: number
+        }[]
+      }
       jouer_coup_defi: {
         Args: {
           p_comptage?: boolean
@@ -1084,6 +1152,7 @@ export type Database = {
       play_move: { Args: { p_game: string; p_move: string }; Returns: string }
       preparer_rattachement: { Args: never; Returns: string }
       quitter_file_attente: { Args: never; Returns: string }
+      quitter_file_lente: { Args: never; Returns: string }
       rappeler_go_du_jour: { Args: { p_pseudo: string }; Returns: string }
       rattacher_session_anonyme: { Args: { p_code: string }; Returns: number }
       reclamer_rappels: {

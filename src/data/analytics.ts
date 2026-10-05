@@ -125,6 +125,12 @@ export const EVENTS = {
   // File vide (#436) : au bout de 25 s d'attente, Mochi propose une partie contre l'IA en restant dans la file.
   // `accepte` : vrai si le joueur joue contre l'IA, faux s'il préfère attendre ou annule. Jamais l'adversaire IA choisi.
   fileRepliIa: 'file_repli_ia',
+  // Parties lentes classées (#440) : adversaire trouvé (`taille`, `delai_jours` : 1 à 3, `attente_h` : heures de
+  // recherche, 0 si l'adversaire attendait), puis partie finie vue par le joueur (`taille`, `delai_jours`, `issue` :
+  // victoire, defaite, egalite, annulee ; `raison` : points, abandon, temps, annulee ; `coups`). Jamais la partie ni
+  // l'adversaire.
+  partieLenteCommencee: 'partie_lente_commencee',
+  partieLenteTerminee: 'partie_lente_terminee',
   // Modes de l'accueil (#429) : `mode` (en_ligne, ordi, ami, deux, guidee), `depuis` (bouton, plateau, tuile, plus,
   // feuille : bouton de « Changer »), `principal` (le mode était l'action principale de l'accueil).
   modeChoisi: 'mode_choisi',

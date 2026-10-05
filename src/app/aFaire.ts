@@ -47,6 +47,10 @@ export interface DefiEnAttente {
   restant: number | null;
   /** Le comptage attend sa réponse (et non un coup). */
   comptage: boolean;
+  /** #440 : partie lente classée (et non défi d'un ami). Absent : défi d'un ami. */
+  lente?: boolean;
+  /** Délai par coup (ms) : 3 jours pour un défi, 1 à 3 jours pour une partie lente (#440). Absent : 3 jours. */
+  delaiMs?: number;
   /**
    * Pas encore vu : une notification du serveur attend (table `notifications`, #367). Faux une fois la partie ouverte :
    * la ligne reste dans la liste, la pastille s'éteint. Absent (notifications illisibles) : compté comme nouveau.
@@ -94,7 +98,7 @@ export const sourceDefis: SourceAFaire = d => [...d.defis]
       : (x.adversaire ? t('aFaire.tourContre', { pseudo: x.adversaire }) : t('aFaire.tour')),
     detail: x.restant === null ? t('aFaire.tourDetail') : t('aFaire.tourDelai', { delai: texteDelai(x.restant) }),
     cible: { ecran: 'defi', partieId: x.partieId },
-    attenteH: x.restant === null ? null : Math.max(0, Math.round((DELAI_COUP_MS - x.restant) / HEURE * 10) / 10),
+    attenteH: x.restant === null ? null : Math.max(0, Math.round(((x.delaiMs ?? DELAI_COUP_MS) - x.restant) / HEURE * 10) / 10),
   }));
 
 /** Go du jour pas encore fait : une série en jeu passe en pastille ; sinon, une ligne calme. */

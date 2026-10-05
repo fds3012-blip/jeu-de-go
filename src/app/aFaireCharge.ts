@@ -1,12 +1,12 @@
 // Notifications dans l'app (#367) : tout ce qui calcule « À faire », chargé à la demande, après le premier écran
 // (budget du JS initial, scripts/budget-bundle.mjs). Le crochet léger qui l'appelle : src/app/useAFaire.ts.
 import { mesDefis } from '../data/defi';
+import { lireRecherche, type RechercheLente } from '../data/lente';
 import { lirePseudos } from '../data/pseudos';
-import { notificationsEnAttente, partiesNonVues } from '../data/notifications';
+import { notificationsEnAttente, partiesNonVues, rappelGoDuJour } from '../data/notifications';
 import type { Db } from '../data/supabase';
 import type { DefiEnAttente } from './aFaire';
 import { defisEnAttente } from './defisAJouer';
-import { rappelGoDuJour } from '../data/notifications';
 import { dateParis } from './goDuJour';
 
 export { elementsAFaire, leconEnCours, ongletsAPastille } from './aFaire';
@@ -39,4 +39,10 @@ export async function chargerAFaire(db: Db, userId: string, pseudos: Map<string,
     ...(nonVues ? { nouveau: nonVues.has(x.partieId) } : {}),
   }));
   return { defis, rappelGoDuJour: rappel };
+}
+
+/** #440 : la recherche de partie lente en cours (ou l'adversaire trouvé pendant l'absence), null sinon ou en erreur. */
+export async function chargerRecherche(db: Db, userId: string): Promise<RechercheLente | null> {
+  const r = await lireRecherche(db, userId);
+  return r.ok ? r.value : null;
 }
