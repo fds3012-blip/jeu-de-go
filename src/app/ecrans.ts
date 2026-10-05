@@ -61,6 +61,8 @@ const placement = charger(() => import('./Placement'));
 const defis = charger(() => import('./Defis'));
 const compte = charger(() => import('./CreerCompte'));
 const direct = charger(() => import('./Direct'));
+// #440 : parties lentes (la partie elle-même se joue dans l'écran du défi).
+const lentes = charger(() => import('./Lentes'));
 // #429 : le carrousel des adversaires ne sert qu'à la feuille « Changer » : hors du JS initial.
 const carrousel = charger(() => import('../ui/Carrousel'));
 
@@ -85,6 +87,7 @@ export const PseudoObligatoire = ecran(compte, 'PseudoObligatoire');
 export const Direct = ecran(direct, 'Direct');
 // #436 : la bande « Je cherche toujours un joueur » pendant la partie contre l'IA, avec l'écran du direct.
 export const VeilleFile = ecran(direct, 'VeilleFile');
+export const Lentes = ecran(lentes, 'Lentes');
 export const CarrouselAdversaires = ecran(carrousel, 'CarrouselAdversaires');
 
 /**
@@ -97,7 +100,7 @@ export function prechargerPartie(): void {
 
 /** Télécharge tous les écrans en tâche de fond. */
 export function prechargerEcrans(): void {
-  for (const f of [partie, problemes, lecons, profil, serie, placement, defis, compte, direct, carrousel]) f().catch(() => {});
+  for (const f of [partie, problemes, lecons, profil, serie, placement, defis, compte, direct, lentes, carrousel]) f().catch(() => {});
 }
 
 // Moment « après le premier écran » : src/premierEcran.ts (partagé avec PostHog, #325).
