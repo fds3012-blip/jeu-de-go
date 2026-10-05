@@ -1,6 +1,6 @@
 // Émulation entre amis (issue #369, décision du 05/10) : Go du jour entre amis, « Rappelle-lui », bilan de la semaine
 // et records de cote. Le serveur est la source de vérité de tout ce qui compare des joueurs
-// (supabase/migrations/20261005213100_emulation_amis.sql) : il compte les essais du Go du jour, ne rend que les amis
+// (supabase/migrations/20261005230100_emulation_amis.sql) : il compte les essais du Go du jour, ne rend que les amis
 // acceptés, jamais de cote d'un autre ni d'identifiant. Ce module ne fait qu'appeler et lire, en ignorant ce qui est
 // mal formé. Écrans : src/ui/AmisDuJour.tsx (feuille de réussite du Go du jour), src/app/Semaine.tsx (Profil),
 // src/ui/BilanSemaine.tsx (accueil du lundi), src/ui/Cote.tsx (records).

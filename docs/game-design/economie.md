@@ -108,7 +108,7 @@ Décision de Florian du 05/10 : de l'émulation qui marche dès 2 joueurs, et de
 - **Cibles** : 3 / 5 / 2 la première semaine. Ensuite, au moins ce que tu as fait la semaine d'avant, sans dépasser 7 / 15 / 5 : la cible suit ton rythme sans devenir une corvée. Après une semaine sans app, retour au départ (rien ne se perd).
 - **Gain** : +30 XP par objectif atteint (autant qu'une leçon), une seule fois par objectif et par semaine, soit 90 XP au plus par semaine : moins d'un sixième des ~600 XP d'une semaine à 10 minutes par jour (simulation ci-dessus). Pas de bonus « première fois » sur ce gain, pas de perte, pas de minuteur, pas de rappel insistant : l'objectif se lit dans Profil, « Ta semaine ».
 - **Bilan** : au premier passage de la semaine suivante, l'accueil montre une fois ce que tu as fait (et, avec un compte, tes amis battus et ta cote de la semaine, calculés par le serveur). Il ne revient pas avant la semaine d'après.
-- **Ce qui compare des joueurs** (Go du jour entre amis, amis battus, records de cote) est calculé par le serveur (`supabase/migrations/20261005213100_emulation_amis.sql`) ; les objectifs, personnels, restent sur l'appareil.
+- **Ce qui compare des joueurs** (Go du jour entre amis, amis battus, records de cote) est calculé par le serveur (`supabase/migrations/20261005230100_emulation_amis.sql`) ; les objectifs, personnels, restent sur l'appareil.
 
 ## 4. Suite
 - P10, P6, P12 : 2 à 5 lignes chacune dans les écrans des agents problèmes et partie. À prendre dans leur prochaine PR, avec la simulation relancée.

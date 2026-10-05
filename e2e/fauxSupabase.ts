@@ -29,7 +29,7 @@ import { parseActionRequest, planAction, type GameRow } from '../src/go/server';
 // Émulation entre amis (#369) : `noter_go_du_jour` (le numéro envoyé fait foi : l'horloge du navigateur est figée),
 // `classement_go_du_jour`, `rappeler_go_du_jour` (notification `go_du_jour`), `bilan_semaine` (toutes les parties finies
 // entre humains comptent pour la semaine en cours), `mes_records` (historique de cote du joueur). Mêmes règles et mêmes
-// codes que supabase/migrations/20261005213100_emulation_amis.sql (sauf les limites de temps).
+// codes que supabase/migrations/20261005230100_emulation_amis.sql (sauf les limites de temps).
 
 export const SUPABASE = 'https://supabase.e2e.test';
 export const CODE = '123456';

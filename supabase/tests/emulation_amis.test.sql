@@ -1,4 +1,4 @@
--- Tests rejouables de l'émulation entre amis (issue #369, migration 20261005213100_emulation_amis.sql). Tout se passe
+-- Tests rejouables de l'émulation entre amis (issue #369, migration 20261005230100_emulation_amis.sql). Tout se passe
 -- dans une transaction annulée à la fin : aucune donnée ne reste. Voir supabase/tests/LISEZMOI.md.
 -- Le jeton est simulé par request.jwt.claims (sub, role, is_anonymous), comme PostgREST.
 \set ON_ERROR_STOP 1

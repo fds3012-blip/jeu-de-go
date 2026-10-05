@@ -1,6 +1,6 @@
 // Records personnels de cote (issue #369) dans « Ta cote » (Profil) : meilleure cote atteinte après une partie classée,
 // avec sa date, et plus longue série de victoires classées (avec la série en cours). Calculés par le serveur
-// (`mes_records`, supabase/migrations/20261005213100_emulation_amis.sql) : le record ne descend jamais.
+// (`mes_records`, supabase/migrations/20261005230100_emulation_amis.sql) : le record ne descend jamais.
 import { useEffect, useState } from 'react';
 import { mesRecords, type Records as LesRecords } from '../data/emulation';
 import type { Db } from '../data/supabase';
