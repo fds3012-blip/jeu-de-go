@@ -36,7 +36,9 @@ import type { Sens } from './connexionBascule';
 import type { EtatCompte } from './essai';
 import '../ui/compte.css';
 import { fr } from '../ui/typo';
-import { nombre, t } from '../content/i18n/secondaires';
+import { langue, nombre, t } from '../content/i18n/secondaires';
+// #364 : lien court (`mochi-go.app/defi#…`), avec sa page d'aperçu.
+import { originePartage } from './partage';
 import '../ui/defis.css';
 
 type Partage = 'partage' | 'copie' | 'manuel' | 'annule';
@@ -118,7 +120,7 @@ export function DefisEcran({ db, userId, pseudo = null, onPartie }: EcranProps) 
     setCreation({ etat: 'cours' });
     const r = await creerDefi(db);
     if (!r.ok) { setCreation({ etat: 'erreur', message: r.error }); return; }
-    const lien = lienDefi(r.value.jeton, location.origin, pseudo);
+    const lien = lienDefi(r.value.jeton, originePartage(), pseudo, langue());
     const partage = await partager(lien);
     // Jamais le lien, le jeton ni la partie dans l'événement (constat E14).
     track(EVENTS.defiCree, { partage: partage === 'partage' ? 'web_share' : partage === 'copie' ? 'copie' : partage, anonyme: r.value.anonyme });
@@ -466,7 +468,7 @@ export function DefiPartie({ db, partieId, userId, anonyme, pseudo = null, confi
   }
 
   async function renvoyer() {
-    setLienCopie(await partager(lienDefi(d!.defi.jeton, location.origin, pseudo)));
+    setLienCopie(await partager(lienDefi(d!.defi.jeton, originePartage(), pseudo, langue())));
   }
 
   const nomLui = nomAmi ?? t('defi.adversaire');
@@ -510,7 +512,7 @@ export function DefiPartie({ db, partieId, userId, anonyme, pseudo = null, confi
         {v.phase === 'attente' && (
           <>
             <button type="button" className="btn primary defis-cta" onClick={renvoyer}>{t('defi.renvoyer')}</button>
-            {lienCopie && lienCopie !== 'partage' && lienCopie !== 'annule' && <CarteLien lien={lienDefi(d.defi.jeton, location.origin, pseudo)} partage={lienCopie} />}
+            {lienCopie && lienCopie !== 'partage' && lienCopie !== 'annule' && <CarteLien lien={lienDefi(d.defi.jeton, originePartage(), pseudo, langue())} partage={lienCopie} />}
           </>
         )}
         {enComptage && (

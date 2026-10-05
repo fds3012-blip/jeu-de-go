@@ -36,9 +36,12 @@ function client(o: Options = {}) {
 
 describe('lien du défi', () => {
   it('met le jeton dans le fragment, et le relit', () => {
+    // #364 : lien court, `/defi#JETON` (index.html le remet à la forme `/#defi=JETON`), `/en/defi#…` en anglais.
     const lien = lienDefi(JETON, 'https://go.exemple/');
-    expect(lien).toBe(`https://go.exemple/#defi=${JETON}`);
+    expect(lien).toBe(`https://go.exemple/defi#${JETON}`);
     expect(jetonDepuisLien(lien)).toBe(JETON);
+    expect(lienDefi(JETON, 'https://go.exemple', null, 'en')).toBe(`https://go.exemple/en/defi#${JETON}`);
+    expect(jetonDepuisLien(`https://go.exemple/#defi=${JETON}`)).toBe(JETON);
     expect(jetonDepuisLien(JETON)).toBe(JETON);
     // Ancienne forme, gardée pour les liens déjà partagés.
     expect(jetonDepuisLien(`https://go.exemple/defi#${JETON}`)).toBe(JETON);
@@ -46,13 +49,13 @@ describe('lien du défi', () => {
 
   it('ajoute le pseudo de qui invite après le jeton (#343), sans gêner la lecture du jeton', () => {
     const lien = lienDefi(JETON, 'https://go.exemple', 'Flo_rian');
-    expect(lien).toBe(`https://go.exemple/#defi=${JETON}&de=Flo_rian`);
+    expect(lien).toBe(`https://go.exemple/defi#${JETON}&de=Flo_rian`);
     expect(jetonDepuisLien(lien)).toBe(JETON);
     expect(inviteurDepuisLien(lien)).toBe('Flo_rian');
     expect(inviteurDepuisLien(`#defi=${JETON}`)).toBeNull();
     expect(inviteurDepuisLien(`#defi=${JETON}&de=<b>x</b>`)).toBeNull();
     // Un pseudo qui n'a pas la forme d'un pseudo n'entre pas dans le lien.
-    expect(lienDefi(JETON, 'https://go.exemple', 'é t')).toBe(`https://go.exemple/#defi=${JETON}`);
+    expect(lienDefi(JETON, 'https://go.exemple', 'é t')).toBe(`https://go.exemple/defi#${JETON}`);
   });
 
   it('refuse un jeton mal formé', () => {

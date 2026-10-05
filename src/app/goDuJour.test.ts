@@ -99,7 +99,8 @@ describe('série et texte de partage', () => {
   it('suit le format attendu, avec le lien', () => {
     const p = textePartage(1, 1, 3);
     expect(p.texte).toBe('Go du jour n° 1 · résolu en 1 essai · série 3 🔥');
-    expect(p.url).toBe('https://mochi-go.app/?go-du-jour=1');
+    // #364 : lien court, avec sa page d'aperçu au numéro du jour.
+    expect(p.url).toBe('https://mochi-go.app/j/1');
     expect(p.complet).toBe(`${p.texte}\n${p.url}`);
     expect(textePartage(42, 2, 7).texte).toBe('Go du jour n° 42 · résolu en 2 essais · série 7 🔥');
   });
