@@ -1,6 +1,6 @@
 import { Suspense, lazy, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 // Écrans chargés à la demande (perf, #323) : seul l'accueil est dans le JS initial.
-import { CreerCompte, DefiArrivee, DefiPartie, DefisEcran, Direct, Game, LearnHome, LessonPlayer, Placement, Profil, PseudoObligatoire, Puzzles, SeriePratique, apresPremierEcran } from './ecrans';
+import { CreerCompte, DefiArrivee, DefiPartie, DefisEcran, Direct, Game, LearnHome, LessonPlayer, Placement, Profil, PseudoObligatoire, Puzzles, SeriePratique, VeilleFile, apresPremierEcran } from './ecrans';
 import { CHAPITRES, LESSONS } from '../content/lessons';
 import { LESSONS_KEY, readLocal, writeLocal, useGelsServeur, useLessonProgress, useOnline, useProfil, usePseudo, useSerie, useSession } from './hooks';
 import { COMPTES, chargerSupabase, useSupabase } from '../data/client';
@@ -157,6 +157,14 @@ type VueDefi = { vue: 'liste' } | { vue: 'arrivee'; jeton: string; inviteur: str
 type Reprise = { quoi: 'ordi'; contre: OpponentId } | { quoi: 'deux' } | { quoi: 'guidee' } | { quoi: 'lecon'; id: string }
   | { quoi: 'defis' } | { quoi: 'placement' } | { quoi: 'importer' } | { quoi: 'problemes' } | { quoi: 'amis' } | { quoi: 'direct' };
 
+/** Réglages de la file d'attente du direct (#360, #436). */
+interface DemandeDirect { taille: 9 | 13 | 19; cadence: 'rapide' | 'normale' | 'lente'; regles: 'japanese' | 'chinese' }
+/**
+ * #436 : partie contre l'IA en attendant un humain. Le joueur reste dans la file (`veille`) ; l'IA garde son nom.
+ * `contre` : l'IA de l'échelle la plus proche de sa cote ; `depuis` : début de l'attente.
+ */
+interface Repli { contre: OpponentId; demande: DemandeDirect; depuis: number; veille: boolean }
+
 export function App() {
   const [tab, setTab] = useState<Tab>(PAGE_CONFIDENTIALITE || (RETOUR_GOOGLE?.profil && !ECRAN_COMPTE_AU_RETOUR && !DEFI_AU_RETOUR) ? 'profil'
     : LIEN_DU_JOUR !== null || ARRIVEE_RAPPEL ? 'problemes' : 'jouer');
@@ -211,6 +219,9 @@ export function App() {
     : DEFI_AU_RETOUR ? { vue: 'arrivee', ...DEFI_AU_RETOUR } : null);
   // « Un humain, maintenant » (#360) : partie en direct, du choix au bilan (écran src/app/Direct.tsx).
   const [direct, setDirect] = useState(false);
+  // #436 : partie en direct rejointe depuis la partie contre l'IA (ouverte tout de suite par l'écran du direct).
+  const [directRejoint, setDirectRejoint] = useState<{ id: string; demande: DemandeDirect } | null>(null);
+  const [repli, setRepli] = useState<Repli | null>(null);
   const { progress, state: syncState, record } = useLessonProgress(supabase, compteId);
   // Lien de défi ouvert alors que l'app est déjà ouverte (même onglet) : on part vers l'arrivée.
   useEffect(() => ecouterJetonDefi((jeton, inviteur) => {
@@ -237,7 +248,9 @@ export function App() {
   const placement = lirePlacement(placementBrut);
   const [enPlacement, setEnPlacement] = useState(false);
   const ouverts = ouvertsApresPlacement(OPPONENTS, placement, OUVERTS_D_OFFICE);
-  const adv = adversaireOuvert(OPPONENTS, bilan, adversaire, ouverts);
+  // #436 : pendant le repli, l'IA proposée par Mochi (la plus proche de la cote), même si l'échelle ne l'a pas encore ouverte.
+  const advRepli = repli ? OPPONENTS.find(o => o.id === repli.contre) : undefined;
+  const adv = advRepli ?? adversaireOuvert(OPPONENTS, bilan, adversaire, ouverts);
   const cartes = echelle(OPPONENTS, bilan, ouverts).map(e => ({ id: e.adv.id, nom: e.adv.nom, rang: e.adv.rang, battu: e.battu, ouvert: e.ouvert, requis: e.requis?.nom }));
   const serieServeur = useSerie(supabase, compteId);
   // Série protégée (issue #76) : les jours manqués consomment un gel dès l'ouverture, avant que Problèmes lise la série.
@@ -363,13 +376,16 @@ export function App() {
     window.scrollTo({ top: 0 });
   }
 
-  function lancer(mode: 'ordi' | 'deux', contre: OpponentId = adv.id) {
+  function lancer(mode: 'ordi' | 'deux', contre: OpponentId = adv.id, enAttente: Repli | null = null) {
     if (!garde({ quoi: 'partie' }, mode === 'ordi' ? { quoi: 'ordi', contre } : { quoi: 'deux' })) return;
+    // #436 : une autre partie que celle du repli met fin à l'attente (la bande rend la place dans la file).
+    setRepli(enAttente);
     // Première partie contre l'ordi : Mochi explique le but, une seule fois.
     const montrer = mode === 'ordi' && !introVue;
     setIntro(montrer);
     if (montrer) setIntroVue(true);
-    if (mode === 'ordi') setAdversaire(contre);
+    // Le repli ne change pas l'adversaire choisi sur l'échelle.
+    if (mode === 'ordi' && !enAttente) setAdversaire(contre);
     const rang = partiesOrdi(parties);
     const e = mode === 'ordi' ? equilibrage(rang) : { komi: KOMI_NORMAL, avantage: true };
     setReglage({ ...e, annonce: mode === 'ordi' ? annonceKomi(rang, komiCompte(e.komi)) : null });
@@ -446,7 +462,7 @@ export function App() {
           <Sceau id={f.cible as OpponentId} taille={30} />{f.cta}
         </button>
       ),
-      onAccueil: () => { setPlaying(false); setResultat(null); setIntro(false); window.scrollTo({ top: 0 }); },
+      onAccueil: () => { setPlaying(false); setResultat(null); setIntro(false); setRepli(null); window.scrollTo({ top: 0 }); },
     };
   }
 
@@ -458,7 +474,7 @@ export function App() {
   const go = (t: Tab) => {
     setDuJourDirect(false);
     if (t === 'problemes' && tab === 'problemes') setRacineProblemes(n => n + 1);
-    setDefi(null); setDirect(false); setEcranCompte(null); setAnnonceGel(null); setRetourSerie(null); setEnPlacement(false); setTab(t); setPlaying(false); setLessonId(null); setSerie3(null); setVueProfil('menu'); window.scrollTo({ top: 0 });
+    setDefi(null); setDirect(false); setRepli(null); setEcranCompte(null); setAnnonceGel(null); setRetourSerie(null); setEnPlacement(false); setTab(t); setPlaying(false); setLessonId(null); setSerie3(null); setVueProfil('menu'); window.scrollTo({ top: 0 });
   };
 
   // Reprise de l'action demandée, dès que le compte est complet ; `compte_cree` quand un compte sans pseudo apparaît.
@@ -507,7 +523,7 @@ export function App() {
   const enPartie = (tab === 'jouer' && !!playing) || (enDefi && defi.vue === 'partie') || enDirect;
   // Robustesse (#325) : écran d'erreur à la place d'un écran blanc ; « Retour à l'accueil » change d'onglet sans recharger.
   const versAccueil = useCallback(() => {
-    setDefi(null); setDirect(false); setEcranCompte(null); setEnPlacement(false); setTab('jouer'); setPlaying(false); setLessonId(null); setSerie3(null); setVueProfil('menu');
+    setDefi(null); setDirect(false); setRepli(null); setEcranCompte(null); setEnPlacement(false); setTab('jouer'); setPlaying(false); setLessonId(null); setSerie3(null); setVueProfil('menu');
     window.scrollTo({ top: 0 });
   }, []);
   const online = useOnline();
@@ -562,8 +578,11 @@ export function App() {
       onConditions={() => { go('profil'); setVueProfil('conditions'); }} />;
   } else if (enDirect) {
     screen = supabase && compteId
-      ? <Direct db={supabase} userId={compteId} tailleDefaut={settings.size} confirmTouch={settings.confirmTouch} reglages={{ modifier: set }}
-        celebrer={settings.celebrations} onAccueil={() => { setDirect(false); window.scrollTo({ top: 0 }); }} />
+      ? <Direct db={supabase} userId={compteId} confirmTouch={settings.confirmTouch} reglages={{ modifier: set }}
+        cote={profil?.cote ?? null} partieInitiale={directRejoint}
+        // #436 : au bout de 25 s, partie contre l'IA en attendant ; la file est gardée par la bande VeilleFile.
+        onRepli={(contre, demande, depuis) => { setDirect(false); setDirectRejoint(null); lancer('ordi', contre, { contre, demande, depuis, veille: true }); }}
+        celebrer={settings.celebrations} onAccueil={() => { setDirect(false); setDirectRejoint(null); window.scrollTo({ top: 0 }); }} />
       : null;
   } else if (enDefi && defi.vue === 'partie' && supabase) {
     screen = <DefiPartie key={defi.id} db={supabase} partieId={defi.id} userId={session?.user.id} anonyme={estAnonyme(session)} pseudo={pseudo ?? null} confirmTouch={settings.confirmTouch} reglages={{ modifier: set }} celebrer={settings.celebrations}
@@ -573,13 +592,24 @@ export function App() {
   } else if (enDefi) {
     screen = <DefisEcran db={supabase} userId={session === undefined ? undefined : session?.user.id ?? null} pseudo={pseudo ?? null} onPartie={ouvrirDefiPartie} />;
   } else if (enPartie) {
+    const enRepli = playing === 'ordi' && repli !== null;
     screen = (
       <>
-        <Game key={`${playing === 'ordi' ? adv.id : playing}-${partie}`} size={settings.size} komi={komiCompte(reglage.komi)} aiKomi={reglage.komi} avantage={reglage.avantage} accommodant={reglage.accommodant} confirmTouch={settings.confirmTouch}
+        {/* #436 : la recherche d'un humain continue pendant la partie contre l'IA (non classée). */}
+        {enRepli && repli.veille && supabase && (
+          <VeilleFile db={supabase} demande={repli.demande} depuis={repli.depuis}
+            onRejoindre={id => {
+              setDirectRejoint({ id, demande: repli.demande });
+              setRepli(null); setIntro(false); setPlaying(false); setResultat(null); setDefi(null); setDirect(true);
+              window.scrollTo({ top: 0 });
+            }}
+            onArret={() => setRepli(r => (r ? { ...r, veille: false } : r))} />
+        )}
+        <Game key={`${playing === 'ordi' ? adv.id : playing}-${partie}`} size={enRepli ? repli.demande.taille : settings.size} komi={komiCompte(reglage.komi)} aiKomi={reglage.komi} avantage={reglage.avantage} accommodant={reglage.accommodant} confirmTouch={settings.confirmTouch}
           opponent={playing === 'ordi' ? adv : playing === 'guidee' ? mochiGuide : undefined}
           guidee={playing === 'guidee' ? { depart: departGuide, onCran: setCranGuide } : undefined}
           intro={playing === 'guidee' ? <Bubble>{t('guidee.bulle')}</Bubble> : playing === 'ordi' && (intro || reglage.annonce) ? <Bubble>{intro ? introBut(adv.nom) : t('partie.bulle', { nom: adv.nom })}{reglage.annonce && <><br /><span className="annonce-komi">{reglage.annonce}</span></>}</Bubble> : undefined}
-          onExit={() => { setIntro(false); setPlaying(false); setResultat(null); }}
+          onExit={() => { setIntro(false); setPlaying(false); setResultat(null); setRepli(null); }}
           onImporter={() => { if (!garde({ quoi: 'import' }, { quoi: 'importer' })) return; setPlaying(false); setResultat(null); setTab('profil'); setVueProfil('importer'); window.scrollTo({ top: 0 }); }}
           onResult={onResult} fin={finEcran} celebrer={settings.celebrations} aide={aideActive(settings.aide, adv.id)} portrait={playing === 'ordi' ? <Sceau id={adv.id} taille={44} /> : undefined}
           reglages={{ son: settings.sound, modifier: set }} />

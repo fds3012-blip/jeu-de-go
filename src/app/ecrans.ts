@@ -83,6 +83,8 @@ export const DefiPartie = ecran(defis, 'DefiPartie');
 export const CreerCompte = ecran(compte, 'CreerCompte');
 export const PseudoObligatoire = ecran(compte, 'PseudoObligatoire');
 export const Direct = ecran(direct, 'Direct');
+// #436 : la bande « Je cherche toujours un joueur » pendant la partie contre l'IA, avec l'écran du direct.
+export const VeilleFile = ecran(direct, 'VeilleFile');
 export const CarrouselAdversaires = ecran(carrousel, 'CarrouselAdversaires');
 
 /**

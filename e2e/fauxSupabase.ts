@@ -15,7 +15,9 @@ import { parseActionRequest, planAction, type GameRow } from '../src/go/server';
 // Cote de jeu (#417) : `rating_history` (lu par son seul titulaire), `choisir_depart_cote` (mêmes valeurs et mêmes
 // codes que supabase/migrations/20261004120100_cote_glicko.sql). Le calcul Glicko-2 reste au serveur : un test sème
 // directement l'historique d'une partie classée (`ratingHistory`).
-// Partie en direct (#360) : `find_match` (file par taille, cadence et comptage ; celui qui attendait prend Noir),
+// Partie en direct (#360) : `find_match` (file par taille, cadence et comptage ; celui qui attendait prend Noir ;
+// #436 : après 30 s d'attente, les autres réglages sont acceptés, avec ceux de qui attendait le plus),
+// `refuser_partie_direct` (#436 : partie annulée tant que le joueur n'y a pas joué),
 // `quitter_file_attente`, `pendule_direct` (pendule simplifiée : temps décompté au coup, chute constatée à la lecture),
 // actions `move`, `propose_dead`, `accept`, `resume` de game-action par la vraie logique (`planAction`, src/go/server.ts),
 // `resign_game`. Fin classée : ±162 dans l'historique des deux joueurs, comme deux nouveaux (#417).
@@ -55,7 +57,7 @@ export function fauxServeur() {
   let idFiltre = 0;
   const partiesPerso: Ligne[] = [];
   const ratingHistory: Ligne[] = [];
-  const file: { user: string; taille: number; cadence: string; regles: string }[] = [];
+  const file: { user: string; taille: number; cadence: string; regles: string; depuis: number }[] = [];
   const pendules: Ligne[] = [];
   let nDirect = 0;
   const appels: string[] = [];
@@ -450,24 +452,47 @@ export function fauxServeur() {
       if (!profiles.find(x => x.id === u.id)?.username) return json({ code: 'JGP01', message: 'Choisis ton pseudo' }, 400);
       const enCours = directEnCours(u.id);
       if (enCours) { file.splice(0, file.length, ...file.filter(f => f.user !== u.id)); return json(enCours.id); }
-      const autre = file.find(f => f.user !== u.id && f.taille === p_size && f.cadence === p_cadence && f.regles === p_regles);
+      const memes = (f: { taille: number; cadence: string; regles: string }) => f.taille === p_size && f.cadence === p_cadence && f.regles === p_regles;
+      const moi = file.find(f => f.user === u.id && memes(f));
+      const maintenant = Date.now();
+      // #436 : mêmes réglages d'abord ; après 30 s d'attente (la plus longue des deux), les autres réglages aussi.
+      const candidats = file.filter(f => f.user !== u.id && (memes(f) || maintenant - Math.min(f.depuis, moi?.depuis ?? maintenant) >= 30_000));
+      const autre = candidats.find(memes) ?? candidats.sort((a, b) => a.depuis - b.depuis)[0];
       if (autre) {
         file.splice(0, file.length, ...file.filter(f => f.user !== u.id && f.user !== autre.user));
+        // Réglages de qui attendait depuis le plus longtemps.
+        const r = moi && moi.depuis < autre.depuis ? moi : autre;
         const id = `33333333-3333-4333-8333-${String(++nDirect).padStart(12, '0')}`;
-        games.push({ id, black_id: autre.user, white_id: u.id, created_by: u.id, bot_id: null, size: p_size, komi: 6.5, rules: p_regles, handicap: 0, moves: '',
+        games.push({ id, black_id: autre.user, white_id: u.id, created_by: u.id, bot_id: null, size: r.taille, komi: 6.5, rules: r.regles, handicap: 0, moves: '',
           status: 'active', counting: false, dead_stones: null, dead_proposed_by: null, result: null, resumed_at: 0, prive: false, rated: true, updated_at: new Date().toISOString() });
-        const [m, n, pm] = CADENCES[p_cadence];
-        pendules.push({ partie_id: id, cadence: p_cadence, main_ms: m, periodes: n, periode_ms: pm, noir_ms: m, blanc_ms: m, noir_periodes: n, blanc_periodes: n,
+        const [m, n, pm] = CADENCES[r.cadence];
+        pendules.push({ partie_id: id, cadence: r.cadence, main_ms: m, periodes: n, periode_ms: pm, noir_ms: m, blanc_ms: m, noir_periodes: n, blanc_periodes: n,
           trait_depuis: new Date().toISOString(), comptage_depuis: null, noir_vu_le: null, blanc_vu_le: new Date().toISOString() });
         return json(id);
       }
-      if (!file.some(f => f.user === u.id)) file.push({ user: u.id, taille: p_size, cadence: p_cadence, regles: p_regles });
+      if (!moi) {
+        file.splice(0, file.length, ...file.filter(f => f.user !== u.id));
+        file.push({ user: u.id, taille: p_size, cadence: p_cadence, regles: p_regles, depuis: maintenant });
+      }
       return json(null);
     }
     if (chemin === '/rest/v1/rpc/quitter_file_attente') {
       if (!u) return json({ code: '42501', message: 'Connexion requise' }, 401);
       file.splice(0, file.length, ...file.filter(f => f.user !== u.id));
       return json(directEnCours(u.id)?.id ?? null);
+    }
+    if (chemin === '/rest/v1/rpc/refuser_partie_direct') {
+      const { p_partie } = req.postDataJSON() as { p_partie: string };
+      const g = games.find(x => x.id === p_partie);
+      if (!u) return json({ code: '42501', message: 'Connexion requise' }, 401);
+      if (!g || !pendules.some(p => p.partie_id === p_partie) || (g.black_id !== u.id && g.white_id !== u.id)) return json({ code: 'P0002', message: 'Partie introuvable' }, 400);
+      file.splice(0, file.length, ...file.filter(f => f.user !== u.id));
+      if (g.status !== 'active' || String(g.moves).length >= (g.black_id === u.id ? 2 : 4)) return json(false);
+      Object.assign(g, { status: 'aborted', counting: false });
+      const p = pendules.find(x => x.partie_id === g.id);
+      if (p) p.trait_depuis = null;
+      pousserPartie(g, { pendule: true });
+      return json(true);
     }
     if (chemin === '/rest/v1/rpc/pendule_direct') {
       const { p_partie } = req.postDataJSON() as { p_partie: string };
