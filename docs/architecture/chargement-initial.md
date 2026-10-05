@@ -8,8 +8,9 @@ décision : dis pourquoi dans la PR.
 
 - `lib-react` (React, React DOM) : ≈ 67 Ko gzip, empreinte stable d'un déploiement à l'autre.
 - `index` : l'accueil, la barre de navigation, le plateau, les règles du go, le moteur simple de l'échelle, le
-  catalogue de textes **de l'accueil** (`src/content/i18n/fr.ts`), les leçons (`content/lessons.fr.js`, pour la carte
-  « Leçon » et le chemin conseillé) et le **Go du jour léger** (`src/content/goDuJour.gen.ts`).
+  catalogue de textes **de l'accueil** (`src/content/i18n/fr.ts`), l'**index léger des leçons**
+  (`src/content/leconsIndex.gen.ts` : titre et nombre d'étapes, pour la carte « Leçon » et le chemin conseillé) et le
+  **Go du jour léger** (`src/content/goDuJour.gen.ts`).
 - La feuille de style principale : tokens, accueil, navigation, et les styles des écrans importés par `src/main.tsx`.
 
 ## Ce qui arrive après le premier affichage
@@ -18,6 +19,7 @@ décision : dis pourquoi dans la PR.
 | --- | --- | --- |
 | Écrans (partie, leçons, problèmes, Profil, défis…) | `src/app/ecrans.ts` (`React.lazy`) | au premier affichage de l'écran ; tous préchargés après l'accueil (`prechargerEcrans`), la partie tout de suite (`prechargerPartie`) |
 | Textes des écrans secondaires (≈ 1 000 clés, ≈ 18 Ko gzip) | `src/content/i18n/frEcrans.ts`, morceau `secondaires` | avec le premier écran qui les importe |
+| Leçons complètes (positions, démonstrations, consignes : ≈ 9 Ko gzip, #16) | `src/content/lessons.ts`, `content/lessons.fr.js` | avec les écrans Apprendre, leçon, placement et aide |
 | Problèmes complets (consignes, explications : ≈ 26 Ko gzip) | `src/content/puzzles.ts`, `src/content/problemesLocaux.ts` | avec l'écran des problèmes, le placement, la série de fin de leçon |
 | `apprendre.css` (≈ 5 Ko gzip) | importée par `Learn.tsx`, `Puzzles.tsx`, `ui/Lecteur.tsx` | avec ces écrans |
 | supabase-js (`lib-donnees`) | `src/data/client.ts` | après le premier écran, ou tout de suite si la session l'exige (#401) |
@@ -47,6 +49,15 @@ visite : le hors-ligne ne dépend pas de l'ordre de navigation.
 `outils/goDuJour.test.ts` échoue tant que le fichier est en retard, et vérifie que l'accueil montre le même problème
 (numéro, titre, position, en français et en anglais) qu'avec la liste complète.
 
+### Index léger des leçons
+
+`src/content/leconsIndex.gen.ts` est généré depuis `content/lessons.fr.js` (id, titre, description, nombre d'étapes,
+chapitres) par `outils/leconsIndex.ts`. Après l'ajout ou la modification d'une leçon : `npm run index-lecons`.
+`outils/leconsIndex.test.ts` échoue tant que le fichier est en retard, et vérifie que l'accueil voit les mêmes leçons
+et chapitres (français et anglais) qu'avec le contenu complet. L'accueil (`src/app/App.tsx`) importe
+`src/content/leconsResume.ts`, jamais `src/content/lessons.ts` ; le lecteur de leçon retrouve la leçon complète par son
+identifiant.
+
 ### Styles des écrans
 
 Les styles importés par `src/main.tsx` restent dans la feuille principale, à leur place : l'ordre de la cascade ne
@@ -71,3 +82,10 @@ règles l'emportent désormais sur celles qui la suivaient. Avant de sortir une 
 | Accueil, retour et hors ligne | ≈ 0,3-0,4 s | inchangé (bruit de mesure) |
 
 Téléphone émulé : CPU 4× plus lent, 4G lente (`scripts/mesurer-perf.mjs`).
+
+## Mesures (05/10, #16)
+
+| | avant | après |
+| --- | --- | --- |
+| JS initial (gzip) | 157,0 Ko (16 leçons dans `index`) | 151,1 Ko avec 20 leçons (`index` 83,7 + `lib-react` 67,3) |
+| Morceau `lessons` (contenu complet des leçons) | dans `index` | 8,8 Ko, à la demande |

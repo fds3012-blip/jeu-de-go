@@ -39,7 +39,8 @@ const JADE_COMPTEUR = '#3CC48E';
 function lineOf(p: number, n: number) { const x = p % n, y = Math.floor(p / n); return Math.min(x, y, n - 1 - x, n - 1 - y); }
 
 interface PlayerProps {
-  lesson: Lesson;
+  /** Leçon à jouer : l'accueil ne connaît que son résumé (#16, src/content/leconsResume.ts), le lecteur prend la leçon complète. */
+  lesson: Pick<Lesson, 'id'>;
   start: number;
   confirmTouch: boolean;
   /** Progression de toutes les leçons, pour la rangée de pierres de la fin de leçon. */
@@ -56,7 +57,8 @@ interface PlayerProps {
   jouer?: { nom: string; lancer: () => void };
 }
 
-export function LessonPlayer({ lesson, start, confirmTouch, progress = {}, celebrer = true, onProgress, onExit, onNext, pratique, jouer }: PlayerProps) {
+export function LessonPlayer({ lesson: { id: leconId }, start, confirmTouch, progress = {}, celebrer = true, onProgress, onExit, onNext, pratique, jouer }: PlayerProps) {
+  const lesson = LESSONS.find(l => l.id === leconId)!;
   const [idx, setIdx] = useState(Math.min(start, lesson.steps.length - 1));
   const [answer, setAnswer] = useState<{ ok: boolean; p?: number; after?: Position; choice?: number; n: number } | null>(null);
   /** Choix faux déjà touchés au quiz (#198) : ils restent marqués, les autres restent touchables. */
