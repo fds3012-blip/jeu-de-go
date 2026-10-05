@@ -63,6 +63,8 @@ const compte = charger(() => import('./CreerCompte'));
 const direct = charger(() => import('./Direct'));
 // #429 : le carrousel des adversaires ne sert qu'à la feuille « Changer » : hors du JS initial.
 const carrousel = charger(() => import('../ui/Carrousel'));
+// #364 : partie partagée par lien (`/partie#JETON`), ouverte seulement par un lien : pas de préchargement.
+const partagee = charger(() => import('./PartiePartagee'));
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function ecran<M, K extends keyof M>(importer: () => Promise<M>, nom: K): M[K] extends ComponentType<any> ? M[K] : never {
@@ -86,6 +88,7 @@ export const Direct = ecran(direct, 'Direct');
 // #436 : la bande « Je cherche toujours un joueur » pendant la partie contre l'IA, avec l'écran du direct.
 export const VeilleFile = ecran(direct, 'VeilleFile');
 export const CarrouselAdversaires = ecran(carrousel, 'CarrouselAdversaires');
+export const PartiePartagee = ecran(partagee, 'PartiePartagee');
 
 /**
  * La partie est l'action principale de l'accueil : son code part tout de suite (≈ 20 Ko gzip avec la revue),

@@ -1,6 +1,6 @@
 import { Suspense, lazy, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 // Écrans chargés à la demande (perf, #323) : seul l'accueil est dans le JS initial.
-import { CreerCompte, DefiArrivee, DefiPartie, DefisEcran, Direct, Game, LearnHome, LessonPlayer, Placement, Profil, PseudoObligatoire, Puzzles, SeriePratique, VeilleFile, apresPremierEcran } from './ecrans';
+import { CreerCompte, DefiArrivee, DefiPartie, DefisEcran, Direct, Game, LearnHome, LessonPlayer, PartiePartagee, Placement, Profil, PseudoObligatoire, Puzzles, SeriePratique, VeilleFile, apresPremierEcran } from './ecrans';
 import { CHAPITRES, LESSONS } from '../content/lessons';
 import { LESSONS_KEY, readLocal, writeLocal, useGelsServeur, useLessonProgress, useOnline, useProfil, usePseudo, useSerie, useSession } from './hooks';
 import { COMPTES, chargerSupabase, useSupabase } from '../data/client';
@@ -46,6 +46,7 @@ import { estRedite } from '../content/redites';
 import type { Puzzle } from '../data/puzzles';
 import { compteDe, estAnonyme } from '../data/defi';
 import { INVITEUR_AU_CHARGEMENT, JETON_AU_CHARGEMENT, ecouterJetonDefi } from './adresseDefi';
+import { PARTIE_AU_CHARGEMENT, ecouterJetonPartie } from './adressePartie';
 import { ESSAI_KEY, decider, etatCompte, lireEssai, noterFinDePartie, partiesTerminees, type Acces, type EtatCompte, type Raison } from './essai';
 import { compteVientDEtreCree, moyenConnexion, noterConnexionPar } from './entonnoir';
 import { aRattacher, annoncer, definirRetour, prendreRetour } from './connexionGoogle';
@@ -125,6 +126,12 @@ function noterRappelOuvert() {
 // Défi par lien (issue #81) : `#defi=JETON` ouvre la partie proposée par un ami, sans compte. Le jeton est lu et retiré
 // de l'adresse par src/app/adresseDefi.ts, avant la mesure et tout événement (constat E14).
 const LIEN_DEFI = JETON_AU_CHARGEMENT;
+
+// Partie partagée (#364) : `#partie=JETON` ouvre la revue en lecture seule, sans compte. Le jeton est lu et retiré de
+// l'adresse par src/app/adressePartie.ts. L'ami qui n'a jamais joué sur cet appareil (lu au chargement) a une seule
+// action : « Joue ta première partie ».
+const NOUVEAU_PAR_PARTIE = PARTIE_AU_CHARGEMENT !== null
+  && jamaisJoue([PARTIES_KEY, LESSONS_KEY, SOLVED_KEY, VUS_KEY, SERIE_KEY, PLACEMENT_KEY].map(k => readLocal<unknown>(k, null)));
 
 // « Continuer avec Google / Apple / Facebook » (#354, #411) : au retour (même onglet), la note d'aller-retour dit où
 // reprendre (écran « Crée ton compte » et son action, défi ouvert par lien, ou Profil) et ce qui était tenté. Lue puis
@@ -217,6 +224,9 @@ export function App() {
   }, [compteId, client]);
   const [defi, setDefi] = useState<VueDefi | null>(LIEN_DEFI !== null ? { vue: 'arrivee', jeton: LIEN_DEFI, inviteur: INVITEUR_AU_CHARGEMENT }
     : DEFI_AU_RETOUR ? { vue: 'arrivee', ...DEFI_AU_RETOUR } : null);
+  // #364 : partie partagée ouverte par un lien (jeton), au-dessus de l'accueil ; `null` sinon.
+  const [partagee, setPartagee] = useState<string | null>(PARTIE_AU_CHARGEMENT);
+  const [nouveauPartagee, setNouveauPartagee] = useState(NOUVEAU_PAR_PARTIE);
   // « Un humain, maintenant » (#360) : partie en direct, du choix au bilan (écran src/app/Direct.tsx).
   const [direct, setDirect] = useState(false);
   // #436 : partie en direct rejointe depuis la partie contre l'IA (ouverte tout de suite par l'écran du direct).
@@ -225,7 +235,11 @@ export function App() {
   const { progress, state: syncState, record } = useLessonProgress(supabase, compteId);
   // Lien de défi ouvert alors que l'app est déjà ouverte (même onglet) : on part vers l'arrivée.
   useEffect(() => ecouterJetonDefi((jeton, inviteur) => {
-    setTab('jouer'); setPlaying(false); setLessonId(null); setEcranCompte(null); setDirect(false); setDefi({ vue: 'arrivee', jeton, inviteur }); window.scrollTo({ top: 0 });
+    setTab('jouer'); setPlaying(false); setLessonId(null); setEcranCompte(null); setDirect(false); setPartagee(null); setDefi({ vue: 'arrivee', jeton, inviteur }); window.scrollTo({ top: 0 });
+  }), []);
+  // Lien de partie partagée ouvert alors que l'app est déjà ouverte (#364).
+  useEffect(() => ecouterJetonPartie(jeton => {
+    setTab('jouer'); setPlaying(false); setLessonId(null); setEcranCompte(null); setDirect(false); setDefi(null); setNouveauPartagee(false); setPartagee(jeton); window.scrollTo({ top: 0 });
   }), []);
   const done = LESSONS.filter(l => (progress[l.id] ?? 0) >= l.steps.length).length;
   const lesson = LESSONS.find(l => l.id === lessonId);
@@ -474,7 +488,7 @@ export function App() {
   const go = (t: Tab) => {
     setDuJourDirect(false);
     if (t === 'problemes' && tab === 'problemes') setRacineProblemes(n => n + 1);
-    setDefi(null); setDirect(false); setRepli(null); setEcranCompte(null); setAnnonceGel(null); setRetourSerie(null); setEnPlacement(false); setTab(t); setPlaying(false); setLessonId(null); setSerie3(null); setVueProfil('menu'); window.scrollTo({ top: 0 });
+    setDefi(null); setDirect(false); setRepli(null); setEcranCompte(null); setAnnonceGel(null); setRetourSerie(null); setEnPlacement(false); setTab(t); setPlaying(false); setLessonId(null); setSerie3(null); setVueProfil('menu'); setPartagee(null); window.scrollTo({ top: 0 });
   };
 
   // Reprise de l'action demandée, dès que le compte est complet ; `compte_cree` quand un compte sans pseudo apparaît.
@@ -516,14 +530,16 @@ export function App() {
   }, [ecranCompte, defi, tab]);
 
   const enDefi = tab === 'jouer' && !playing && defi !== null;
+  // #364 : partie partagée, sur l'onglet Jouer, hors partie et hors défi.
+  const enPartagee = tab === 'jouer' && !playing && defi === null && !direct && partagee !== null;
   // #360 : partie en direct (choix, attente, partie) ; plein écran comme une partie, sans barre de navigation.
   const enDirect = tab === 'jouer' && !playing && defi === null && direct;
   // Défi, direct ou « Crée ton compte » ouvert avant que le client Supabase soit là (#401) : on le charge sans attendre.
-  useEffect(() => { if (enDefi || enDirect || ecranCompte) void chargerSupabase(); }, [enDefi, enDirect, ecranCompte]);
+  useEffect(() => { if (enDefi || enDirect || enPartagee || ecranCompte) void chargerSupabase(); }, [enDefi, enDirect, enPartagee, ecranCompte]);
   const enPartie = (tab === 'jouer' && !!playing) || (enDefi && defi.vue === 'partie') || enDirect;
   // Robustesse (#325) : écran d'erreur à la place d'un écran blanc ; « Retour à l'accueil » change d'onglet sans recharger.
   const versAccueil = useCallback(() => {
-    setDefi(null); setDirect(false); setRepli(null); setEcranCompte(null); setEnPlacement(false); setTab('jouer'); setPlaying(false); setLessonId(null); setSerie3(null); setVueProfil('menu');
+    setDefi(null); setDirect(false); setRepli(null); setEcranCompte(null); setEnPlacement(false); setTab('jouer'); setPlaying(false); setLessonId(null); setSerie3(null); setVueProfil('menu'); setPartagee(null);
     window.scrollTo({ top: 0 });
   }, []);
   const online = useOnline();
@@ -564,13 +580,13 @@ export function App() {
   const pseudoAChoisir = !!supabase && etat === 'sans_pseudo' && !!compteId;
   const ecranPlein = pseudoAChoisir || ecranCompte !== null;
   // Bandeau « Tu es hors ligne » : seulement là où le réseau sert (défi par lien, en ligne, compte et profil).
-  const ecranReseau = enDefi || enDirect || tab === 'profil' || ecranPlein;
+  const ecranReseau = enDefi || enDirect || enPartagee || tab === 'profil' || ecranPlein;
   let screen;
   if (pseudoAChoisir && supabase && compteId) {
     screen = <PseudoObligatoire db={supabase} userId={compteId}
       onChoisi={p => { setPseudoChoisi({ id: compteId, pseudo: p }); setClePseudo(n => n + 1); }}
       onDeconnecter={() => { void supabase?.auth.signOut(); }} />;
-  } else if ((ecranCompte || enDefi || enDirect) && client === undefined) {
+  } else if ((ecranCompte || enDefi || enDirect || enPartagee) && client === undefined) {
     // Client Supabase pas encore là (#401, chargé dès l'ouverture d'un lien de défi) : comme un écran à la demande.
     screen = null;
   } else if (ecranCompte && supabase) {
@@ -584,6 +600,9 @@ export function App() {
         onRepli={(contre, demande, depuis) => { setDirect(false); setDirectRejoint(null); lancer('ordi', contre, { contre, demande, depuis, veille: true }); }}
         celebrer={settings.celebrations} onAccueil={() => { setDirect(false); setDirectRejoint(null); window.scrollTo({ top: 0 }); }} />
       : null;
+  } else if (enPartagee && partagee !== null) {
+    screen = <PartiePartagee key={partagee} db={supabase} jeton={partagee} nouveau={nouveauPartagee} confirmTouch={settings.confirmTouch}
+      onJouer={() => { setPartagee(null); lancer('ordi'); }} onAccueil={() => { setPartagee(null); window.scrollTo({ top: 0 }); }} />;
   } else if (enDefi && defi.vue === 'partie' && supabase) {
     screen = <DefiPartie key={defi.id} db={supabase} partieId={defi.id} userId={session?.user.id} anonyme={estAnonyme(session)} pseudo={pseudo ?? null} confirmTouch={settings.confirmTouch} reglages={{ modifier: set }} celebrer={settings.celebrations}
       onRetour={quitterDefi} onAutre={() => { setDefi({ vue: 'liste' }); window.scrollTo({ top: 0 }); }} />;
@@ -719,7 +738,7 @@ export function App() {
     );
   }
 
-  const accueilVisible = tab === 'jouer' && !playing && !enPlacement && !enDefi && !enDirect && !ecranPlein;
+  const accueilVisible = tab === 'jouer' && !playing && !enPlacement && !enDefi && !enDirect && !enPartagee && !ecranPlein;
   // Accueil v3 : `premier_ecran_vu`, une fois, quand l'accueil est affiché et utilisable (page chargée, polices prêtes).
   // `nouveau` : tout premier lancement sur l'appareil (aucune partie, aucun retour). Dénominateur des 60 premières secondes.
   const ecranVu = useRef(false);
@@ -791,7 +810,7 @@ export function App() {
             onLecon={playing || enPlacement || defi !== null || direct ? undefined : id => { setAide(null); ouvrirLecon(id); }} />
         </Suspense>
       )}
-      <ConsentModal visible={fenetreVisible({ consent, ignoree: accordIgnore, enPartie: enPartie || (tab === 'problemes' && duJourOuvert), surConditions: tab === 'profil' && vueProfil === 'conditions' })}
+      <ConsentModal visible={fenetreVisible({ consent, ignoree: accordIgnore, enPartie: enPartie || enPartagee || (tab === 'problemes' && duJourOuvert), surConditions: tab === 'profil' && vueProfil === 'conditions' })}
         onConditions={() => { go('profil'); setVueProfil('conditions'); }} onIgnorer={() => setAccordIgnore(true)} />
 
     </>
