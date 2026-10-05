@@ -2,10 +2,12 @@
 import { recordFromOnlineGame, parseDead } from '../go/server';
 import { replay } from '../go/replay';
 import { newPosition, type Position } from '../go/rules';
-import { ABSENCE_MS, cadran, CADENCES, traitDe, type Cadence, type Cadran, type EtatDirect } from '../go/pendule';
+import { ABSENCE_MS, CADENCE_DEFAUT, cadran, CADENCES, traitDe, type Cadence, type Cadran, type EtatDirect } from '../go/pendule';
 import { lireResultat, type Issue } from './defiAmi';
 import type { Game } from '../data/games';
+import type { Regles, Taille } from '../data/direct';
 import { td } from '../content/i18n/direct';
+import { COTE_REGLES, coteDuGrade } from '../go/cote';
 
 export type PhaseDirect = 'jeu' | 'comptage' | 'fini' | 'annulee';
 
@@ -98,4 +100,43 @@ export function issueMesure(v: Pick<VueDirect, 'phase' | 'issue'>): 'victoire' |
   if (v.phase === 'annulee') return 'annulee';
   if (v.phase !== 'fini' || !v.issue) return null;
   return v.issue.gagne === null ? 'egalite' : v.issue.gagne ? 'victoire' : 'defaite';
+}
+
+// ---------- File jamais vide (#436) ----------
+
+/** Réglages demandés dans la file : taille, temps de jeu, comptage. */
+export interface Params { taille: Taille; cadence: Cadence; regles: Regles }
+/** File par défaut (#436) : 9 × 9, 10 min + 3 × 30 s, comptage japonais. Tout le monde y attend d'abord. */
+export const PARAMS_DEFAUT: Params = { taille: 9, cadence: CADENCE_DEFAUT, regles: 'japanese' };
+
+/** Au bout de 25 s d'attente, Mochi propose de jouer contre l'IA en restant dans la file. */
+export const REPLI_MS = 25_000;
+
+/** Cote d'un adversaire de l'échelle d'après son rang affiché : « 10 kyu » → 2000, « 1 dan » → 3000 (#417). */
+export function coteDuRang(rang: string): number | null {
+  const m = /^(\d+)\s*(kyu|dan)$/i.exec(rang.trim());
+  if (!m) return null;
+  return coteDuGrade({ sorte: m[2].toLowerCase() === 'dan' ? 'dan' : 'kyu', n: Number(m[1]) });
+}
+
+/**
+ * Adversaire IA du repli : celui de l'échelle dont le rang est le plus proche de la cote du joueur (à égalité, le plus
+ * faible). Sans cote connue, celle d'un joueur qui connaît les règles (800). Toujours un adversaire IA nommé comme tel.
+ */
+export function adversaireDuRepli<T extends { rang: string }>(adversaires: readonly T[], cote: number | null | undefined): T {
+  const c = typeof cote === 'number' && Number.isFinite(cote) ? cote : COTE_REGLES;
+  let meilleur = adversaires[0];
+  let ecart = Infinity;
+  for (const a of adversaires) {
+    const r = coteDuRang(a.rang);
+    if (r === null) continue;
+    const e = Math.abs(r - c);
+    if (e < ecart) { ecart = e; meilleur = a; }
+  }
+  return meilleur;
+}
+
+/** Proposer le repli : assez attendu, en ligne, et pas déjà répondu pendant cette attente. */
+export function proposerRepli(attenteMs: number, enLigne: boolean, repondu: boolean): boolean {
+  return enLigne && !repondu && attenteMs >= REPLI_MS;
 }

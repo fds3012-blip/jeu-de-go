@@ -2,6 +2,7 @@
 // Toute la sécurité est côté serveur (supabase/migrations/20261004180100_partie_en_direct.sql) :
 // - `find_match` : entre dans la file, ou crée la partie classée (taille, cadence, comptage, cote Glicko-2) ;
 // - `quitter_file_attente` : annule l'attente (rend la partie si un adversaire l'a déjà créée) ;
+// - `refuser_partie_direct` (#436) : refuse la partie trouvée pendant le repli contre l'IA, avant d'y avoir joué ;
 // - `pendule_direct` : signe de présence, constat de la perte au temps, état de la pendule et de la partie ;
 // - les coups, le comptage et l'acceptation passent par la fonction serveur `game-action` (src/data/games.ts),
 //   l'abandon par `resign_game`. La cote bouge une seule fois, par le serveur (`apply_game_rating`, #417).
@@ -47,6 +48,16 @@ export async function annulerAttente(db: Db): Promise<Result<string | null, Refu
   const { data, error } = await db.rpc('quitter_file_attente');
   if (error) return refus(error);
   return { ok: true, value: data ?? null };
+}
+
+/**
+ * Refuse une partie en direct trouvée pendant le repli contre l'IA (#436, « Rester ») : annulée par le serveur tant que
+ * le joueur n'y a pas joué (aucune cote ne bouge), et il sort de la file. Vrai si la partie a été annulée.
+ */
+export async function refuserPartieDirect(db: Db, partieId: string): Promise<Result<boolean, RefusDirect>> {
+  const { data, error } = await db.rpc('refuser_partie_direct', { p_partie: partieId });
+  if (error) return refus(error);
+  return { ok: true, value: data === true };
 }
 
 /** État de la partie lu avec l'heure du client à l'envoi et à la réception (pour caler la pendule affichée). */
