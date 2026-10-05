@@ -110,6 +110,12 @@ export const THEMES_DE_LECON: Readonly<Record<string, readonly Theme[]>> = {
   l14: ['seki'],
   l15: ['fin-de-partie'],
   l16: ['comptage'],
+  // #16 (05/10) : les formes d'yeux (l17) ont la série de vie et mort ; les bonnes formes (l18) et les pierres qui
+  // coupent (l19) celle de relier et couper ; relier et mourir (l20), la capture.
+  l17: ['vie-mort'],
+  l18: ['relier-couper'],
+  l19: ['relier-couper'],
+  l20: ['capture'],
 };
 
 /**

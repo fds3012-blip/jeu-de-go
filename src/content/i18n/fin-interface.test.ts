@@ -191,7 +191,7 @@ describe('en anglais', () => {
   });
 
   it('chemin, lecteur et fin de leçon', () => {
-    expect(chapitresAVenir()).toEqual(['Shape and tesuji, the clever moves', 'Opening on 19\u00A0×\u00A019']);
+    expect(chapitresAVenir()).toEqual(['Opening on 19\u00A0×\u00A019']);
     expect(boutonChemin(LESSONS, {})).toEqual({ texte: 'Start', verbe: 'Start', id: 'l1' });
     expect(boutonChemin(LESSONS, { l1: 1 })).toMatchObject({ verbe: 'Resume', texte: 'Resume the lesson: Libertés et capture' });
     expect(finDeLecon(LESSONS, 'l1').titre).toBe('Lesson complete');

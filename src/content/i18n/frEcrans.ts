@@ -784,6 +784,10 @@ export const frEcrans = {
   'acquis.l14': 'Tu reconnais un seki : personne n’attaque, ses points ne comptent pas.',
   'acquis.l15': 'Tu sais finir une partie : frontières fermées, dame, pierres mortes.',
   'acquis.l16': 'Tu sais compter une partie entière, pierres mortes et komi compris.',
+  'acquis.l17': 'Tu reconnais les formes d’yeux : le T, le carré, la grappe de cinq.',
+  'acquis.l18': 'Tu protèges un point de coupe et tu relies un bambou.',
+  'acquis.l19': 'Tu prends d’abord les pierres qui coupent tes groupes.',
+  'acquis.l20': 'Tu sais quand relier perd tout : mieux vaut abandonner la pierre.',
   'acquis.defaut': 'Une leçon de plus dans ta poche.',
   'lecteur.progression': 'Progression de la leçon',
   // #290 : sur un écran bas, l'explication du verdict est repliée pour laisser voir le plateau.

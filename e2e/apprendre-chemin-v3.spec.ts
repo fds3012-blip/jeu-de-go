@@ -38,9 +38,9 @@ test('premier lancement : Mochi présente la leçon 1, une seule action, les aut
   await expect(bases.getByText('7 leçons')).toBeVisible();
   await expect(bases.locator('.chapitre-pierres i')).toHaveCount(7);
   await expect(bases.locator('.chapitre-embleme .vignette')).toHaveCount(1);
-  // Une vignette distincte par leçon sur le chemin (16 leçons), plus celle de la carte et les emblèmes.
+  // Une vignette distincte par leçon sur le chemin (20 leçons), plus celle de la carte et les emblèmes.
   const ids = await page.locator('.gue .pas-texte .vignette').evaluateAll(els => els.map(e => e.getAttribute('data-vignette')));
-  expect(new Set(ids).size).toBe(16);
+  expect(new Set(ids).size).toBe(20);
   // Leçons suivantes : pierre grise, toujours touchables ; sans service de comptes, aucun verrou « compte ».
   const l2 = page.getByRole('button', { name: 'Leçon 2 : Atari : attaquer et se sauver' });
   await expect(l2).toHaveAttribute('data-etat', 'avenir');

@@ -38,8 +38,10 @@ for (const [largeur, hauteur, theme] of [[390, 844, 'light'], [320, 568, 'dark']
     await expect(page.getByRole('heading', { name: 'Fin de partie et comptage' })).toBeAttached();
     await expect(page.getByRole('button', { name: 'Leçon 13 : Le point vital, terminée' })).toBeAttached();
     await expect(page.getByRole('button', { name: 'Leçon 14 : Le seki, prochaine étape' })).toBeAttached();
-    await expect(page.getByRole('button', { name: 'Leçon 16 : Compter une partie' })).toBeAttached();
-    await expect(page.locator('.a-venir li')).toHaveText(['Formes et tesuji, les coups astucieux', 'Ouverture en 19\u00A0×\u00A019']);
+    // #16 (05/10) : les formes d'yeux (leçon 17) finissent « Vie et mort » ; compter une partie est 17e sur le chemin.
+    await expect(page.getByRole('button', { name: 'Leçon 17 : Compter une partie' })).toBeAttached();
+    // #16 (05/10) : « Formes et tesuji » a commencé (leçons 18 à 20) ; il ne reste que l'ouverture en 19 × 19.
+    await expect(page.locator('.a-venir li')).toHaveText(['Ouverture en 19\u00A0×\u00A019']);
     await sansDebordement(page, 'chemin');
     await page.locator('.cta-chemin').scrollIntoViewIfNeeded();
     await photo('0-chemin');

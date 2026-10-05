@@ -38,7 +38,8 @@ for (const largeur of [390, 320]) {
     await expect(page.getByRole('heading', { name: 'Vie et mort' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Leçon 9 : Le filet, terminée' })).toBeAttached();
     await expect(page.getByRole('button', { name: 'Leçon 12 : Le faux œil, prochaine étape' })).toBeAttached();
-    await expect(page.locator('.a-venir li')).toHaveText(['Formes et tesuji, les coups astucieux', 'Ouverture en 19\u00A0×\u00A019']);
+    // #16 (05/10) : « Formes et tesuji » a commencé (leçons 18 à 20) ; il ne reste que l'ouverture en 19 × 19.
+    await expect(page.locator('.a-venir li')).toHaveText(['Ouverture en 19\u00A0×\u00A019']);
     await sansDebordement(page, 'chemin');
     await page.locator('.cta-chemin').click();
 

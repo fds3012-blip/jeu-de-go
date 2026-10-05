@@ -45,7 +45,8 @@ describe('leçons 13 à 16 : place dans le programme (#16)', () => {
       expect(ACQUIS[id], id).toBeTruthy();
     }
     const c = Object.fromEntries(CHAPITRES.map(x => [x.id, x]));
-    expect(c.c4.lecons.map(l => l.id)).toEqual(['l12', 'l13', 'l14']);
+    // #16 (05/10) : les formes d'yeux (l17) ont rejoint « Vie et mort » après le seki.
+    expect(c.c4.lecons.map(l => l.id)).toEqual(['l12', 'l13', 'l14', 'l17']);
     expect(c.c5.titre).toBe('Fin de partie et comptage');
     expect(c.c5.lecons.map(l => l.id)).toEqual(['l15', 'l16']);
     expect([c.c4.complet, c.c5.complet]).toEqual([false, false]);

@@ -113,11 +113,10 @@ export function chapitresAFeter(chapitres: { id: string; complet: boolean; lecon
     .map(c => c.id);
 }
 
-/** Chapitres du programme (issue #16) annoncés, pas encore commencés (« Fin de partie et comptage » a ses deux premières leçons). */
+/** Chapitres du programme (issue #16) annoncés, pas encore commencés (« Formes et tesuji » a ses trois premières leçons). */
 export const CHAPITRES_A_VENIR = [
-  'Formes et tesuji, les coups astucieux',
   'Ouverture en 19\u00A0×\u00A019',
 ];
 
 /** Chapitres à venir dans la langue de l'interface (#167) ; en français, les textes ci-dessus (vérifié par un test). */
-export const chapitresAVenir = (): string[] => ([3, 4] as const).map(i => t(`apprendre.avenir.${i}`));
+export const chapitresAVenir = (): string[] => ([4] as const).map(i => t(`apprendre.avenir.${i}`));
