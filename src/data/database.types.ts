@@ -1038,6 +1038,7 @@ export type Database = {
         Args: { p_puzzle: string; p_solved: boolean }
         Returns: number
       }
+      refuser_partie_direct: { Args: { p_partie: string }; Returns: boolean }
       rejoindre_defi: { Args: { p_jeton: string }; Returns: string }
       repondre_ami: {
         Args: { p_accepter: boolean; p_pseudo: string }

@@ -48,3 +48,27 @@
 /* Un pseudo long (jusqu'à 24 caractères, sans espace) passe à la ligne au lieu de faire défiler l'écran. */
 .direct-partie .coach p, .direct-partie .defi-fin-titre { overflow-wrap: anywhere; }
 .direct-cadence .insecable { white-space: nowrap; }
+
+/* #436 : repli contre l'IA proposé par Mochi après 25 s d'attente. Une seule action principale. */
+.direct-repli { display: grid; gap: var(--space-2); justify-items: center; max-width: 26rem; text-align: center; }
+.direct-repli p { margin: 0; text-wrap: pretty; }
+.direct-repli .lien, .veille-file .lien { min-height: var(--cible-min); }
+.direct-reglages { margin: 0 0 var(--space-2); text-align: center; text-wrap: pretty; }
+
+/* Bande au-dessus de la partie contre l'IA : la recherche continue. Discrète, puis visible quand un joueur est prêt.
+   Jamais par-dessus le plateau : elle est dans le flux, la partie continue dessous. */
+.veille-file { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; min-width: 0;
+  margin: 0 0 var(--space-2); padding: 4px var(--space-3); border-radius: var(--radius-s);
+  background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); }
+.veille-file-texte { flex: 1 1 10rem; min-width: 0; margin: 0; }
+.veille-file-texte p { margin: 0; overflow-wrap: anywhere; }
+.veille-file-titre { font-weight: var(--fw-bold); }
+.veille-file.pret { box-shadow: inset 0 0 0 2px var(--text); padding: var(--space-2) var(--space-3); }
+.veille-file-actions { display: flex; gap: var(--space-2); flex: 1 1 100%; }
+.veille-file-actions .btn { flex: 1 1 0; min-height: var(--cible-min); }
+.veille-file-actions .btn:not(.primary) { box-shadow: inset 0 0 0 1.5px var(--line); }
+/* La colonne de la partie laisse la place de la bande : le plateau reste au-dessus de la barre d'actions. */
+.app-partie:has(.veille-file) { --veille-h: 96px; }
+.app-partie:has(.veille-file.pret) { --veille-h: 132px; }
+.app-partie:has(.veille-file) .partie {
+  min-height: calc(100dvh - var(--space-1) - 84px - var(--veille-h) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); }
