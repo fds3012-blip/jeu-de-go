@@ -42,6 +42,7 @@ import { originePartage } from './partage';
 import '../ui/defis.css';
 import { joursDuDelai } from '../data/lente';
 import { tl } from '../content/i18n/lente';
+import { useEchanges } from './echanges';
 
 type Partage = 'partage' | 'copie' | 'manuel' | 'annule';
 
@@ -402,6 +403,11 @@ export function DefiPartie({ db, partieId, userId, anonyme, pseudo = null, confi
   const cleMortes = d ? `${d.partie.moves}|${d.partie.dead_stones ?? ''}|${d.partie.counting}` : '';
   useEffect(() => { setMortes(null); }, [cleMortes]);
 
+  // #373 et #363 : « Dire » (messages prédéfinis, émotes), bulles près des noms, « Signaler ce joueur ». Pas pour une
+  // ancienne session anonyme, ni avant l'arrivée de l'ami.
+  const avecAmi = !!d && !!d.partie.black_id && !!d.partie.white_id;
+  const echanges = useEchanges({ db, partieId, userId, nom: nomAmi ?? t('defi.adversaire'), actif: avecAmi && !anonyme, online, mode: 'defi' });
+
   const retour = <button type="button" className="retour" onClick={onRetour} aria-label={t('defi.retour')}>‹</button>;
 
   if (!d || !v) {
@@ -500,7 +506,7 @@ export function DefiPartie({ db, partieId, userId, anonyme, pseudo = null, confi
   const sousTitre = (c: 1 | 2) => (c === lui && partie.rated && coteAmi ? texteAdversaire(coteAmi.cote, coteAmi.provisoire) : sousTitreCouleur(c));
   const bandeau = (c: 1 | 2, avant?: ReactNode) => (
     <Bandeau nom={nom(c)} sousTitre={sousTitre(c)} actif={v.phase === 'jeu' && v.trait === c} captures={v.pos.captures[c]}
-      pierresPrises={c === 1 ? 'blanc' : 'noir'} portrait={<Avatar couleur={c} />} avant={avant} />
+      pierresPrises={c === 1 ? 'blanc' : 'noir'} portrait={<Avatar couleur={c} />} avant={avant} bulle={c === lui ? echanges.bulleLui : echanges.bulleMoi} />
   );
 
   const bienvenue = v.phase === 'jeu' && v.couleur === 1 && v.mesCoups === 0 && v.aMoi;
@@ -559,6 +565,7 @@ export function DefiPartie({ db, partieId, userId, anonyme, pseudo = null, confi
             <button type="button" className="btn primary defis-cta" onClick={lente ? onAutreLente ?? onAutre : onAutre}>{lente ? tl('lente.autre') : t('defi.autre')}</button>
             {revue && <button type="button" className="lien" onClick={() => { setEnRevue(true); window.scrollTo?.({ top: 0 }); }}>{t('fin.revoir')}</button>}
             <button type="button" className="lien" onClick={onRetour}>{t('defi.retourAccueil')}</button>
+            {echanges.liensFin}
             {partie.rated && userId && !anonyme && <VocabulaireGrade />}
           </div>
         )}
@@ -570,18 +577,24 @@ export function DefiPartie({ db, partieId, userId, anonyme, pseudo = null, confi
       </div>
       <div className="partie-souffle" aria-hidden="true" />
       {v.phase === 'jeu' && (
-        // v3 (#384) : pas d'aide contre un ami ; « Passer » en bouton plein, « Abandonner » et le réglage dans « Plus ».
+        // v3 (#384) : pas d'aide de jeu contre un ami (#373 : seulement « Dire ») ; « Passer » en bouton plein, « Abandonner » et le réglage dans « Plus ».
         <BarreActions label={t('partie.actions')} actions={[
+          ...(echanges.action ? [echanges.action] : []),
           { label: t('partie.action.passer'), icone: <Icone nom="passer" />, onClick: () => { void envoyer('tt'); }, disabled: !v.aMoi || envoi || !online || anonyme, groupe: 'decision', principale: true },
         ]} menu={{
           label: t('partie.action.plus'),
           actions: [
             { label: abandon ? fr(t('partie.action.confirmer')) : t('partie.action.abandonner'), action: 'abandonner', icone: <Icone nom="abandonner" />,
               onClick: abandonner, danger: abandon, disabled: envoi || !online || anonyme, reste: true },
+            ...echanges.menu,
           ],
-          reglages: reglages ? <Interrupteur label={t('profil.confirmer')} actif={confirmTouch} onChange={c => reglages.modifier({ confirmTouch: c })} /> : undefined,
+          reglages: <>
+            {reglages && <Interrupteur label={t('profil.confirmer')} actif={confirmTouch} onChange={c => reglages.modifier({ confirmTouch: c })} />}
+            {echanges.reglage}
+          </>,
         }} />
       )}
+      {echanges.feuilles}
     </div>
   );
 }

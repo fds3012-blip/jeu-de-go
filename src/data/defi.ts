@@ -104,6 +104,8 @@ export async function ouvrirDefi(db: Db, jeton: string): Promise<Result<{ partie
   const session = await exigerCompte(db);
   if (!session.ok) return session;
   const { data, error } = await db.rpc('rejoindre_defi', { p_jeton: jeton });
+  // #363 : l'un des deux a bloqué l'autre. Le même refus dans les deux sens : le joueur bloqué n'en sait pas plus.
+  if (error?.code === 'JGB01') return echec(t('defi.erreur.indisponible'));
   if (error || !data) return echec(error?.message);
   // Le créateur qui rouvre son propre lien n'est pas un nouvel invité (mesure du coefficient viral).
   const ligne = await db.from('defis').select('createur_id').eq('partie_id', data).maybeSingle();

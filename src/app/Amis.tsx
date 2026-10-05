@@ -3,7 +3,7 @@
 // - Sinon : demandes reçues (Accepter / Refuser), tes amis (« Défier » crée la partie sans lien, puis l'ouvre avec
 //   l'écran du défi #81), demandes envoyées (Annuler). Le champ d'ajout passe alors en bas, en action secondaire.
 // Données et règles : src/data/amis.ts (le serveur fait foi : supabase/migrations/20261002010100_amis.sql).
-import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { useCallback, useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { defierAmi, demanderAmi, grouperAmis, repondreAmi, retirerAmi } from '../data/amis';
 import type { Db } from '../data/supabase';
 import { marquerLues } from '../data/notifications';
@@ -12,6 +12,9 @@ import { useAmis } from './amisListe';
 import { fr } from '../ui/typo';
 import { t } from '../content/i18n/secondaires';
 import { ta } from '../content/i18n/amis';
+import { FeuilleSignaler } from '../ui/Securite';
+import { debloquer, mesBlocages, type Blocage } from '../data/securite';
+import { tsec } from '../content/i18n/securite';
 
 interface Props {
   db: Db | null;
@@ -31,6 +34,14 @@ export function Amis({ db, onDefi }: Props) {
   const champ = useRef<HTMLInputElement>(null);
   const idChamp = useId();
   const idAide = useId();
+
+  // #363 : joueur à signaler (ou bloquer) depuis sa ligne, et joueurs bloqués (pour les débloquer).
+  const [aSignaler, setASignaler] = useState<string | null>(null);
+  const [blocages, setBlocages] = useState<Blocage[]>([]);
+  const chargerBlocages = useCallback(() => {
+    if (db) void mesBlocages(db).then(r => { if (r.ok) setBlocages(r.value); });
+  }, [db]);
+  useEffect(chargerBlocages, [chargerBlocages]);
 
   // #367 : la liste des amis ouverte, la notification « une demande d'ami t'attend » est vue (la demande, elle, reste).
   useEffect(() => { if (db) void marquerLues(db, { type: 'ami' }); }, [db]);
@@ -144,6 +155,7 @@ export function Amis({ db, onDefi }: Props) {
                 <Initiale pseudo={a.pseudo} />
                 <span className="ami-texte"><b>{a.pseudo}</b></span>
                 <span className="ami-actions">
+                  <BoutonSignaler pseudo={a.pseudo} disabled={occupe !== null} onClick={() => setASignaler(a.pseudo)} />
                   <button type="button" className="lien ami-discret" disabled={occupe !== null} aria-label={ta('amis.refuserAria', { pseudo: a.pseudo })}
                     onClick={() => repondre(a.pseudo, false)}>{ta('amis.refuser')}</button>
                   <button type="button" className="ami-pilule plein" disabled={occupe !== null} aria-busy={occupe === a.pseudo}
@@ -164,6 +176,7 @@ export function Amis({ db, onDefi }: Props) {
                 <Initiale pseudo={a.pseudo} />
                 <span className="ami-texte"><b>{a.pseudo}</b></span>
                 <span className="ami-actions">
+                  <BoutonSignaler pseudo={a.pseudo} disabled={occupe !== null} onClick={() => setASignaler(a.pseudo)} />
                   <button type="button" className={`ami-retirer${aConfirmer === a.pseudo ? ' arme' : ''}`} disabled={occupe !== null}
                     aria-label={ta(aConfirmer === a.pseudo ? 'amis.retirerConfirmerAria' : 'amis.retirerAria', { pseudo: a.pseudo })}
                     onClick={() => retirer(a.pseudo)}>
@@ -200,8 +213,29 @@ export function Amis({ db, onDefi }: Props) {
           ))}
         </Groupe>
       )}
+      {/* #363 : joueurs bloqués, pour revenir sur sa décision. Rien ne s'affiche tant qu'il n'y en a pas. */}
+      {blocages.length > 0 && (
+        <Groupe titre={tsec('bloquer.liste')} id="amis-bloques">
+          {blocages.map(b => (
+            <li key={b.pseudo} className="ami">
+              <div className="ami-ligne">
+                <Initiale pseudo={b.pseudo} />
+                <span className="ami-texte"><b>{b.pseudo}</b></span>
+                <span className="ami-actions">
+                  <button type="button" className="lien ami-discret" disabled={occupe !== null || !online} aria-label={tsec('bloquer.debloquerAria', { pseudo: b.pseudo })}
+                    onClick={() => agir(b.pseudo, async () => { const r = await debloquer(db, b.pseudo); chargerBlocages(); return r; })}>{tsec('bloquer.debloquer')}</button>
+                </span>
+              </div>
+              {erreurDe(b.pseudo)}
+            </li>
+          ))}
+        </Groupe>
+      )}
       {/* Avec des amis, la liste passe d'abord : ajouter devient une action secondaire, en bas. */}
       {!vide && liste.etat !== 'chargement' && formulaire}
+      <FeuilleSignaler db={db} ouvert={aSignaler !== null} onFermer={() => setASignaler(null)} compte online={online}
+        cible={{ type: 'joueur', nom: aSignaler ?? '', pseudo: aSignaler ?? '', depuis: 'amis' }}
+        onBloque={() => { recharger(); chargerBlocages(); }} />
     </div>
   );
 }
@@ -213,6 +247,15 @@ function Groupe({ titre, id, pied, children }: { titre: string; id: string; pied
       <ul className="amis-liste">{children}</ul>
       {pied}
     </section>
+  );
+}
+
+/** #363 : signaler (ou bloquer) ce joueur. Un petit drapeau, 44 px. */
+function BoutonSignaler({ pseudo, disabled, onClick }: { pseudo: string; disabled: boolean; onClick: () => void }) {
+  return (
+    <button type="button" className="ami-plus" disabled={disabled} aria-label={tsec('signaler.joueur', { nom: pseudo })} onClick={onClick} data-action="signaler">
+      <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 14.5V2.5M4 3c2-1 3.7 1 5.7 0s3-.5 3-.5v5.4s-1 .7-3 1.4S6 8.3 4 9.3" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+    </button>
   );
 }
 

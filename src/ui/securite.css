@@ -1,0 +1,70 @@
+/* Sécurité entre joueurs (#363, #373) : feuilles « Dire », « Signaler », « Nous écrire », bulle d'un message.
+   Chargée avec les écrans qui s'en servent (partie en ligne, défi, Profil, problèmes) : hors du CSS initial.
+   La feuille elle-même (.feuille, entrée, voile, mouvements réduits) vient de accueil.css. Cibles de 44 px au moins. */
+
+.feuille-securite .feuille-corps { gap: var(--space-3); }
+.feuille-securite p { margin: 0; }
+
+/* « Dire » : 6 messages sur deux colonnes, 4 émotes de Mochi sur une ligne. */
+.dire-messages { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); }
+.dire-message, .dire-emote { border: 0; border-radius: 14px; background: var(--surface-2); color: var(--text); font: inherit; cursor: pointer;
+  -webkit-tap-highlight-color: transparent; }
+.dire-message { min-height: 48px; padding: 8px 12px; font-weight: var(--fw-medium); line-height: 1.2; text-align: center; overflow-wrap: anywhere; }
+.dire-emotes { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.dire-emote { display: grid; place-items: center; width: 60px; height: 60px; padding: 0; }
+.dire-message:disabled, .dire-emote:disabled { opacity: .45; cursor: default; }
+.dire-message:not(:disabled):active, .dire-emote:not(:disabled):active { background: color-mix(in srgb, var(--accent) 18%, var(--surface-2)); }
+@media (hover: hover) and (pointer: fine) {
+  .dire-message:not(:disabled):hover, .dire-emote:not(:disabled):hover { background: color-mix(in srgb, var(--accent) 10%, var(--surface-2)); }
+}
+.dire-message:focus-visible, .dire-emote:focus-visible, .signaler-texte:focus-visible { outline: 2px solid var(--accent-trait); outline-offset: 2px; }
+.dire-etat { min-height: 1.4em; color: var(--muted); }
+.dire-etat.erreur, .signaler-erreur { color: var(--danger-texte); }
+.dire-reglage { border-top: 1px solid var(--line); padding-top: var(--space-2); }
+.feuille-securite .menu-reglage { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); width: 100%; min-height: 48px;
+  padding: 0; border: 0; background: none; color: var(--text); font: inherit; font-weight: var(--fw-medium); text-align: left; cursor: pointer; }
+.lien.lien-signaler, .lien.lien-discret { color: var(--muted); font-weight: var(--fw-medium); }
+.lien.lien-signaler { align-self: flex-start; margin-left: -12px; }
+
+/* Bulle d'un message en partie : la réplique de Pomme (partie.css), avec Mochi pour une émote. */
+.bulle-echange { flex: none; }
+.bulle-emote { display: inline-flex; align-items: center; padding: 2px 6px; }
+.bulle-emote .portrait { display: block; }
+
+/* « Signaler » et « Nous écrire » */
+.signaler-form { display: flex; flex-direction: column; gap: var(--space-2); }
+.signaler-choix { margin: 0; padding: 0; border: 0; min-width: 0; display: flex; flex-direction: column; }
+.signaler-choix legend, .signaler-label { padding: 0; margin-bottom: 2px; font-size: var(--fs-s); font-weight: var(--fw-bold); color: var(--muted); }
+.signaler-choix .seg { background: var(--bg); }
+.signaler-motif { display: flex; align-items: center; gap: var(--space-3); min-height: 44px; cursor: pointer; }
+.signaler-motif input, .signaler-bloquer input { flex: none; width: 22px; height: 22px; margin: 0; accent-color: var(--accent); }
+.signaler-texte { width: 100%; min-height: 64px; box-sizing: border-box; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px;
+  background: var(--bg); color: var(--text); font: inherit; font-size: 16px; line-height: 1.4; resize: vertical; }
+.signaler-aide { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px var(--space-3); }
+.signaler-compteur { font-variant-numeric: tabular-nums; }
+.signaler-bloquer { display: flex; align-items: flex-start; gap: var(--space-3); min-height: 44px; padding: var(--space-2) 0; cursor: pointer; }
+.signaler-bloquer input { margin-top: 1px; }
+.signaler-bloquer span { display: grid; gap: 2px; }
+.signaler-bloquer small { color: var(--muted); font-size: var(--fs-s); }
+.signaler-erreur:empty { display: none; }
+.signaler-form .btn.primary { margin-top: var(--space-1); }
+.signaler-seul { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0 var(--space-1); }
+.signaler-merci { display: flex; align-items: center; gap: var(--space-3); }
+.signaler-merci-titre { font-size: var(--fs-l); font-weight: var(--fw-bold); }
+
+/* Fin de partie : « Dire » et « Signaler ce joueur », discrets, sous les actions de fin. */
+.echanges-fin { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 var(--space-2); }
+
+/* « Mes amis » : bouton ⋯ d'un ami (signaler, bloquer) et joueurs bloqués. */
+.ami-plus { display: inline-grid; place-items: center; min-height: var(--cible-min); min-width: var(--cible-min); padding: 0; border: 0; border-radius: 10px;
+  background: none; color: var(--muted); cursor: pointer; }
+.ami-plus svg { width: 18px; height: 18px; }
+.ami-plus:active { background: var(--surface-2); }
+.ami-plus:disabled { opacity: .45; }
+
+/* Profil : « Nous écrire » à côté des conditions (la ligne double garde le Profil sans défilement). */
+.ligne-demi.ligne-ecrire { min-width: 0; }
+
+/* Problèmes : « Cette réponse me semble fausse », discret, sous le verdict. */
+.signaler-probleme { display: flex; justify-content: center; }
+.signaler-probleme .lien { font-size: var(--fs-s); }
