@@ -43,8 +43,9 @@ import { Board } from '../ui/Board';
 import { CADENCES_ORDRE, CADENCES } from '../go/pendule';
 import '../ui/club.css';
 
-// Joueur de club (#368) : sous-écran chargés à la demande, hors du morceau du Profil.
+// Joueur de club (#368, #372) : sous-écrans chargés à la demande, hors du morceau du Profil.
 const MesStatistiques = lazy(() => import('./Statistiques'));
+const Etude = lazy(() => import('./Etude'));
 
 const SOLVED_KEY = 'go.problemes.v1';
 
@@ -70,7 +71,7 @@ function useDonnees(serie: number, record: number, parcours: Parcours) {
   return donnees;
 }
 
-export type VueProfil = 'menu' | 'reglages' | 'installer' | 'rappel' | 'compte' | 'conditions' | 'importer' | 'parties' | 'amis' | 'cote' | 'stats';
+export type VueProfil = 'menu' | 'reglages' | 'installer' | 'rappel' | 'compte' | 'conditions' | 'importer' | 'parties' | 'amis' | 'cote' | 'stats' | 'etude';
 
 // Libellés traduits (#167) : calculés à l'affichage, dans la langue de l'interface.
 const themes = () => [
@@ -132,7 +133,7 @@ export function Profil({ vue, onVue, settings, set, profil, serie, record = 0, p
   const retour = () => { onVue('menu'); window.scrollTo({ top: 0 }); };
   // #358 : toutes les parties terminées, et leur revue.
   // #286 : « Analyser une partie » est dans « Mes parties » depuis #358 (le Profil tient sans défiler) ; on y revient.
-  if (vue === 'parties') return <MesParties onRetour={retour} onJouer={onJouer ?? retour} onImporter={() => onVue('importer')} db={db} userId={userId} confirmTouch={settings.confirmTouch} />;
+  if (vue === 'parties') return <MesParties onRetour={retour} onJouer={onJouer ?? retour} onImporter={() => onVue('importer')} onEtudier={() => onVue('etude')} db={db} userId={userId} confirmTouch={settings.confirmTouch} />;
   if (vue === 'conditions') return <Conditions onRetour={retour} />;
   // #286 : analyser une partie jouée ailleurs (SGF), action secondaire du Profil.
   if (vue === 'importer') return <ImportSgf onRetour={() => { onVue('parties'); window.scrollTo({ top: 0 }); }} pseudo={profil?.pseudo} confirmTouch={settings.confirmTouch} />;
@@ -151,6 +152,14 @@ export function Profil({ vue, onVue, settings, set, profil, serie, record = 0, p
         <Suspense fallback={<p className="muted" aria-busy="true">{tk('stats.chargement')}</p>}>
           <MesStatistiques db={compte ? amis!.db : null} userId={compte ? userId : undefined} onRevoir={() => { onVue('parties'); window.scrollTo({ top: 0 }); }} />
         </Suspense>
+      </SousVue>
+    );
+  }
+  // #372 : « Étudier une position » (goban libre, variantes, analyse KataGo à la demande).
+  if (vue === 'etude') {
+    return (
+      <SousVue id="etude-titre" titre={tk('etude.titre')} onRetour={() => { onVue('parties'); window.scrollTo({ top: 0 }); }}>
+        <Suspense fallback={<p className="muted" aria-busy="true">…</p>}><Etude confirmTouch={settings.confirmTouch} /></Suspense>
       </SousVue>
     );
   }
@@ -239,7 +248,8 @@ function Menu({ onVue, settings, profil, serie, record = 0, parcours, placement,
         ) : onPlacement && (placement?.fait && placement.kyu !== null
           ? <LigneLien icone={<IconeReglage id="placement" />} libelle={t('placement.profil')} valeur={t('placement.profilValeur', { kyu: placement.kyu, date: dateCourte(placement.date) })} onClick={onPlacement} />
           : <LigneLien icone={<IconeReglage id="placement" />} libelle={t(placement?.fait ? 'placement.profilRefaire' : 'placement.profilFaire')} onClick={onPlacement} />)}
-        {/* #368 : « Statistiques » partage la ligne des Réglages (deux moitiés) : le Profil tient toujours sans défiler. */}
+        {/* #368 : « Statistiques » partage la ligne des Réglages (deux moitiés) : le Profil tient toujours sans défiler.
+            #372 : « Étudier une position » est dans « Mes parties », à côté de « Analyser une partie jouée ailleurs ». */}
         <div className="ligne ligne-double">
           <DemiLigne icone="reglages" libelle={t('profil.reglages')} valeur={t('profil.reglagesResume')} onClick={() => onVue('reglages')} />
           <DemiLigne icone="stats" libelle={tk('stats.ligne')} valeur={tk('stats.ligneValeur')} testId="ligne-stats" onClick={() => onVue('stats')} />
