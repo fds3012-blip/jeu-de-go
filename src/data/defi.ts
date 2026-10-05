@@ -43,12 +43,14 @@ export const compteDe = (session: Session | null | undefined): string | undefine
   session && !estAnonyme(session) ? session.user.id : undefined;
 
 /**
- * Lien à partager. Le jeton est dans le fragment (`#`) de la page d'accueil : il n'est envoyé ni au serveur web
- * ni dans l'en-tête Referer, et aucune règle de réécriture n'est nécessaire chez l'hébergeur.
+ * Lien à partager, court (#364) : `https://mochi-go.app/defi#JETON&de=Pseudo` (`/en/defi#…` pour un joueur en
+ * anglais). Le jeton reste dans le fragment (`#`) : il n'est envoyé ni au serveur web ni dans l'en-tête Referer.
+ * La page `/defi` porte l'aperçu du défi (Open Graph, outils/apercus.ts) ; index.html remet l'adresse à la forme
+ * `/#defi=JETON` avant tout le reste. `jetonDepuisLien` lit les deux formes.
  */
-export function lienDefi(jeton: string, origine: string, pseudo?: string | null): string {
+export function lienDefi(jeton: string, origine: string, pseudo?: string | null, langue: 'fr' | 'en' = 'fr'): string {
   const de = pseudo && FORMAT_PSEUDO.test(pseudo) ? `&${PARAM_DE}=${pseudo}` : '';
-  return `${origine.replace(/\/+$/, '')}/#${PARAM_DEFI}=${jeton}${de}`;
+  return `${origine.replace(/\/+$/, '')}${langue === 'en' ? '/en' : ''}/${PARAM_DEFI}#${jeton}${de}`;
 }
 
 /**

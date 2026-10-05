@@ -104,6 +104,8 @@ export function textePartage(numero: number, essais: number, serie: number): Par
   const morceaux = [t('partage.numero', { numero }), t('partage.essais', { n })];
   if (serie > 0) morceaux.push(t('partage.serie', { serie }));
   const texte = morceaux.join(' · ');
-  const url = `${URL_JEU}?${PARAM}=${numero}`;
+  // Lien court (#285, #364) : `mochi-go.app/j/42`, avec sa page d'aperçu au numéro du jour (outils/apercus.ts) ; en
+  // anglais, `/en/j/42`. index.html le remet à la forme `/?go-du-jour=42` à l'ouverture.
+  const url = `${URL_JEU}${langue() === 'en' ? 'en/' : ''}j/${numero}`;
   return { texte, url, complet: `${texte}\n${url}` };
 }

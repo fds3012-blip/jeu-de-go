@@ -137,7 +137,9 @@
 .revue-note { margin: 0 2px; color: var(--muted); font-size: 14px; line-height: 1.35; }
 .revue-importer { display: block; margin: 0 auto; }
 /* #428 : avec des erreurs à rejouer, « Démarrer le bilan » passe en action secondaire, sous le tableau. */
-.bilan-parcours { display: block; width: 100%; min-height: var(--cible-bouton); border-color: var(--line); }
+.bilan-parcours, .bilan-partager { display: block; width: 100%; min-height: var(--cible-bouton); border-color: var(--line); }
+/* #364 : « Partager », action secondaire, sous le tableau (et sous « Démarrer le bilan » s'il y est). */
+.bilan-partager { margin-top: var(--space-2); }
 
 @media (prefers-reduced-motion: no-preference) {
   .bilan-barre span { transition: transform var(--duree-rapide) var(--ease); }

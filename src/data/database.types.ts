@@ -610,6 +610,42 @@ export type Database = {
           },
         ]
       }
+      parties_partagees: {
+        Row: {
+          adversaire: string | null
+          coup: number
+          cree_le: string
+          empreinte: string
+          jeton: string
+          joueur: number | null
+          sgf: string
+          taille: number
+          user_id: string
+        }
+        Insert: {
+          adversaire?: string | null
+          coup?: number
+          cree_le?: string
+          empreinte: string
+          jeton: string
+          joueur?: number | null
+          sgf: string
+          taille: number
+          user_id: string
+        }
+        Update: {
+          adversaire?: string | null
+          coup?: number
+          cree_le?: string
+          empreinte?: string
+          jeton?: string
+          joueur?: number | null
+          sgf?: string
+          taille?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       parties_perso: {
         Row: {
           adversaire: string | null
@@ -988,6 +1024,24 @@ export type Database = {
         Returns: string
       }
       enregistrer_parties_perso: { Args: { p_parties: Json }; Returns: string[] }
+      lire_partie_partagee: {
+        Args: { p_jeton: string }
+        Returns: {
+          adversaire: string | null
+          coup: number
+          cree_le: string
+          joueur: number | null
+          pseudo: string | null
+          sgf: string
+          taille: number
+        }[]
+      }
+      partager_partie: {
+        Args: { p_adversaire: string | null; p_coup: number; p_joueur: number | null; p_sgf: string; p_taille: number }
+        Returns: string
+      }
+      retirer_partie_partagee: { Args: { p_jeton: string }; Returns: boolean }
+      sgf_partageable: { Args: { p_sgf: string }; Returns: boolean }
       exiger_compte_avec_pseudo: { Args: never; Returns: string }
       find_match: {
         Args: { p_cadence?: string; p_regles?: string; p_size: number }
