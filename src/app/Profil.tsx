@@ -16,7 +16,7 @@ import { LigneBascules, LigneChoix, LigneIcone, LigneInterrupteur, LigneLien } f
 import { IconeReglage, type IconeReglageId } from '../ui/IconesReglages';
 import { hapticStone } from '../ui/haptics';
 import { playStone } from '../ui/sound';
-import { useEffect, useMemo, useRef, useSyncExternalStore, type ReactNode } from 'react';
+import { Suspense, lazy, useEffect, useMemo, useRef, useSyncExternalStore, type ReactNode } from 'react';
 import { EVENTS, analyticsConfig, estEquipe, setEquipe, subscribeConsent, track } from '../data/analytics';
 import { readLocal, writeLocal } from './hooks';
 import { BILAN_KEY, lireBilan } from './bilan';
@@ -43,6 +43,8 @@ import { Board } from '../ui/Board';
 import { CADENCES_ORDRE, CADENCES } from '../go/pendule';
 import '../ui/club.css';
 
+// Joueur de club (#368) : sous-écran chargés à la demande, hors du morceau du Profil.
+const MesStatistiques = lazy(() => import('./Statistiques'));
 
 const SOLVED_KEY = 'go.problemes.v1';
 
@@ -68,7 +70,7 @@ function useDonnees(serie: number, record: number, parcours: Parcours) {
   return donnees;
 }
 
-export type VueProfil = 'menu' | 'reglages' | 'installer' | 'rappel' | 'compte' | 'conditions' | 'importer' | 'parties' | 'amis' | 'cote';
+export type VueProfil = 'menu' | 'reglages' | 'installer' | 'rappel' | 'compte' | 'conditions' | 'importer' | 'parties' | 'amis' | 'cote' | 'stats';
 
 // Libellés traduits (#167) : calculés à l'affichage, dans la langue de l'interface.
 const themes = () => [
@@ -140,6 +142,17 @@ export function Profil({ vue, onVue, settings, set, profil, serie, record = 0, p
   // #417 : ta cote de jeu (parties classées entre humains), sa courbe de 30 jours et le point de départ.
   if (vue === 'cote' && amis?.compte && userId) {
     return <SousVue id="cote-titre" titre={tc('cote.titre')} onRetour={retour}><CarteCote db={amis.db} userId={userId} onChange={onProfilChange} /></SousVue>;
+  }
+  // #368 : « Mes statistiques » (cote sur 90 jours, précision, erreurs par phase, bilan). Action principale : revoir une partie.
+  if (vue === 'stats') {
+    const compte = !!amis?.compte && !!userId;
+    return (
+      <SousVue id="stats-titre" titre={tk('stats.titre')} onRetour={retour}>
+        <Suspense fallback={<p className="muted" aria-busy="true">{tk('stats.chargement')}</p>}>
+          <MesStatistiques db={compte ? amis!.db : null} userId={compte ? userId : undefined} onRevoir={() => { onVue('parties'); window.scrollTo({ top: 0 }); }} />
+        </Suspense>
+      </SousVue>
+    );
   }
   if (vue === 'compte') return <SousVue id="compte-titre" titre={t('profil.compte')} onRetour={retour}><Account /></SousVue>;
   if (vue === 'reglages') return <SousVue id="reglages-titre" titre={t('profil.reglages')} onRetour={retour}><Reglages settings={settings} set={set} /></SousVue>;
@@ -226,7 +239,11 @@ function Menu({ onVue, settings, profil, serie, record = 0, parcours, placement,
         ) : onPlacement && (placement?.fait && placement.kyu !== null
           ? <LigneLien icone={<IconeReglage id="placement" />} libelle={t('placement.profil')} valeur={t('placement.profilValeur', { kyu: placement.kyu, date: dateCourte(placement.date) })} onClick={onPlacement} />
           : <LigneLien icone={<IconeReglage id="placement" />} libelle={t(placement?.fait ? 'placement.profilRefaire' : 'placement.profilFaire')} onClick={onPlacement} />)}
-        <LigneLien icone={<IconeReglage id="reglages" />} libelle={t('profil.reglages')} valeur={t('profil.reglagesResume')} onClick={() => onVue('reglages')} />
+        {/* #368 : « Statistiques » partage la ligne des Réglages (deux moitiés) : le Profil tient toujours sans défiler. */}
+        <div className="ligne ligne-double">
+          <DemiLigne icone="reglages" libelle={t('profil.reglages')} valeur={t('profil.reglagesResume')} onClick={() => onVue('reglages')} />
+          <DemiLigne icone="stats" libelle={tk('stats.ligne')} valeur={tk('stats.ligneValeur')} testId="ligne-stats" onClick={() => onVue('stats')} />
+        </div>
         {/* #36 : rappel du Go du jour, dès que le rappel est configuré (clé publique VAPID). */}
         {clePubliqueVapid() !== '' && <LigneLien icone={<IconeReglage id="rappel" />} libelle={t('profil.rappel')} valeur={resumeRappel()} onClick={() => onVue('rappel')} />}
         {proposerInstallation && <LigneLien icone={<IconeReglage id="installer" />} libelle={t('profil.installer')} onClick={() => onVue('installer')} />}
