@@ -5,7 +5,7 @@
 /** Jour (numéro du Go du jour) où Mochi a fait une annonce sur l'accueil : ce jour-là, pas de carte d'installation. */
 export const ANNONCE_DU_JOUR_KEY = 'go.annonce-du-jour.v1';
 
-export type AppelSecondaire = 'annonce' | 'installation' | 'aFaire' | null;
+export type AppelSecondaire = 'annonce' | 'semaine' | 'installation' | 'aFaire' | null;
 
 export interface Contexte {
   /** Numéro du jour. */
@@ -20,16 +20,20 @@ export interface Contexte {
   jourAnnonce: number | null;
   /** La carte d'installation peut se proposer (moment « retour », plateforme, jamais montrée). */
   installation: boolean;
+  /** #369 : le bilan de la semaine passée attend (premier passage de la semaine, pas encore vu). */
+  semaine?: boolean;
 }
 
 /**
  * L'appel secondaire de l'accueil, un seul :
  * - une annonce de Mochi passe d'abord (elle ne revient pas) ;
+ * - #369 : puis le bilan de la semaine passée, une fois par semaine (il ne revient pas non plus) ;
  * - la carte d'installation, seulement un jour sans annonce ; elle prend la place de la pastille « À faire » ;
  * - sinon la pastille « À faire », mais jamais au tout premier lancement (elle vient après la première partie).
  */
 export function appelSecondaire(c: Contexte): AppelSecondaire {
   if (c.annonce) return 'annonce';
+  if (c.semaine && c.parties > 0) return 'semaine';
   if (c.installation && c.jourAnnonce !== c.jour) return 'installation';
   if (!c.duJourFait && c.parties > 0) return 'aFaire';
   return null;

@@ -47,3 +47,15 @@ describe("appel secondaire de l'accueil", () => {
     expect(lireJourAnnonce(null)).toBeNull();
   });
 });
+
+describe('#369 : bilan de la semaine passée', () => {
+  it('passe après une annonce de Mochi, avant la carte d’installation et « À faire » ; jamais au premier lancement', () => {
+    expect(appelSecondaire(ctx({ semaine: true }))).toBe('semaine');
+    expect(appelSecondaire(ctx({ semaine: true, installation: true }))).toBe('semaine');
+    expect(appelSecondaire(ctx({ semaine: true, annonce: true }))).toBe('annonce');
+    expect(appelSecondaire(ctx({ semaine: true, parties: 0 }))).toBeNull();
+    // Le bilan à l'écran : la tuile du Go du jour ne crie pas « À faire » en même temps.
+    expect(etatTuile('semaine', false)).toBeNull();
+    expect(etatTuile('semaine', true)).toBe('fait');
+  });
+});

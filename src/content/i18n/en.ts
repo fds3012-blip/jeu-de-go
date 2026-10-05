@@ -1431,5 +1431,6 @@ export const en = {
   'aFaire.lecon': 'Resume your lesson',
   'aFaire.amis': { one: '1 friend request', other: '{n} friend requests' },
   'aFaire.amisDetail': 'Answer whenever you like.',
+  'aFaire.rappelAmi': 'A friend is waiting for you on the Daily Go',
   'aFaire.pastilleAria': 'something’s waiting',
 } as const satisfies Catalogue;

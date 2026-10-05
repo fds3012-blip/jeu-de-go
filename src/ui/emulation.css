@@ -1,0 +1,93 @@
+/* Émulation entre amis (#369) : « Tes amis aujourd'hui » (feuille de réussite du Go du jour), « Ta semaine »
+   (Profil), bilan de la semaine passée (accueil) et records (Ta cote). Rôles du thème seulement (tokens.css) : les
+   deux modes suivent, contraste AA vérifié par tokens.test.ts. Chargé avec ces écrans, jamais dans le CSS initial.
+   Mouvement : la flèche du repli tourne, la carte du bilan se pose ; rien avec les mouvements réduits. */
+
+/* ---------- Tes amis aujourd'hui ---------- */
+.amis-jour { border-radius: var(--radius-s); background: color-mix(in srgb, var(--surface) 70%, transparent); }
+.amis-jour > summary { display: flex; align-items: center; gap: var(--space-2); min-height: var(--cible-min); padding: 0 var(--space-3);
+  list-style: none; cursor: pointer; border-radius: var(--radius-s); font-weight: var(--fw-bold); }
+.amis-jour > summary::-webkit-details-marker { display: none; }
+.amis-jour > summary:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.amis-jour-pierres { display: inline-flex; flex: none; }
+.amis-jour-pierres .stone { width: 14px; height: 14px; }
+.amis-jour-pierres .stone + .stone { margin-left: -4px; }
+.amis-jour-titre { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.amis-jour-compte { flex: none; color: var(--accent-texte); font-variant-numeric: tabular-nums; }
+.amis-jour-chevron { flex: none; fill: none; stroke: var(--muted); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.amis-jour[open] .amis-jour-chevron { transform: rotate(180deg); }
+.amis-jour-liste { list-style: none; margin: 0; padding: 0 var(--space-3) var(--space-2); max-height: 38vh; overflow-y: auto; }
+.amis-jour-ligne { display: flex; flex-wrap: wrap; align-items: center; gap: 2px var(--space-2); min-height: var(--cible-min); padding: 2px 0; }
+.amis-jour-ligne + .amis-jour-ligne { box-shadow: inset 0 1px 0 var(--line); }
+.amis-jour-nom { flex: 1 1 7em; min-width: 0; display: grid; }
+.amis-jour-nom b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: var(--fw-bold); }
+.amis-jour-nom small { color: var(--muted); font-size: var(--fs-s); }
+.amis-jour-ligne.moi .amis-jour-nom b { color: var(--muted); }
+.amis-jour-etat { flex: none; margin-left: auto; display: inline-flex; align-items: center; gap: 5px; color: var(--muted); font-size: var(--fs-s); font-weight: var(--fw-medium); }
+.amis-jour-etat.fait { color: var(--accent-texte); font-weight: var(--fw-bold); }
+.amis-jour-rappel { flex: none; margin-left: auto; min-height: var(--cible-min); min-width: var(--cible-min); padding: 0 14px; border: 0;
+  border-radius: var(--radius-pill); background: none; color: var(--accent-texte); font: inherit; font-weight: var(--fw-bold); white-space: nowrap;
+  box-shadow: inset 0 0 0 1.5px var(--accent-trait); }
+.amis-jour-rappel:disabled { opacity: .45; }
+.amis-jour-rappel[aria-busy="true"] { opacity: 1; }
+.amis-jour-rappel:active { background: color-mix(in srgb, var(--accent) 14%, transparent); }
+@media (hover: hover) and (pointer: fine) { .amis-jour-rappel:hover:not(:disabled) { background: color-mix(in srgb, var(--accent) 10%, transparent); } }
+.amis-jour-message { margin: 0; padding: 0 var(--space-3) var(--space-2); color: var(--text); }
+.amis-jour-note { margin: 0; text-align: center; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .amis-jour-chevron { transition: transform var(--duree) var(--ease); }
+  .amis-jour-rappel { transition: transform var(--duree-rapide) var(--ease), background-color var(--duree-rapide); }
+  .amis-jour-rappel:active { transform: scale(.97); }
+}
+
+/* ---------- Ta semaine (Profil) ---------- */
+.semaine { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-4); }
+.semaine > * { min-width: 0; }
+.semaine h3 { margin: 0; font-size: var(--fs-m); }
+.semaine-objectifs, .semaine-bilan { display: grid; gap: var(--space-2); }
+.semaine-aide { margin: 0; color: var(--muted); line-height: 1.4; text-wrap: pretty; }
+.objectifs { list-style: none; margin: 0; padding: 0; background: var(--surface); border-radius: var(--radius); overflow: hidden; }
+.objectif { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px var(--space-3);
+  min-height: 60px; padding: var(--space-2) var(--space-4); }
+.objectif + .objectif { box-shadow: inset 0 1px 0 var(--line); }
+.objectif-texte { font-weight: var(--fw-bold); min-width: 0; text-wrap: pretty; }
+.objectif-compte { font-variant-numeric: tabular-nums; color: var(--muted); font-weight: var(--fw-bold); white-space: nowrap; }
+.objectif.atteint .objectif-compte { color: var(--recompense-texte); display: inline-flex; align-items: center; gap: 4px; }
+.objectif-barre { grid-column: 1 / -1; height: 6px; border-radius: var(--radius-pill); background: var(--surface-2); overflow: hidden; }
+.objectif-barre > span { display: block; height: 100%; border-radius: inherit; background: var(--accent-trait); transform-origin: left center; }
+.objectif.atteint .objectif-barre > span { background: var(--recompense); }
+.semaine .btn.primary { width: 100%; }
+.semaine-fait { margin: 0; padding: var(--space-3) var(--space-4); border-radius: var(--radius); background: var(--surface); font-weight: var(--fw-bold); text-wrap: pretty; }
+
+.semaine-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(5.5em, 1fr)); gap: var(--space-2); margin: 0; }
+.semaine-stat { display: grid; justify-items: center; gap: 0; padding: var(--space-2) var(--space-1); border-radius: var(--radius-s); background: var(--surface); text-align: center; }
+.semaine-stat dt { order: 2; color: var(--muted); font-size: var(--fs-s); }
+.semaine-stat dd { order: 1; margin: 0; font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: var(--fs-xl); font-variant-numeric: tabular-nums; }
+.semaine-phrases { margin: 0; padding: 0; list-style: none; display: grid; gap: var(--space-1); }
+.semaine-phrases li { line-height: 1.4; text-wrap: pretty; }
+.semaine-phrases .or { color: var(--recompense-texte); font-weight: var(--fw-bold); }
+
+/* ---------- Bilan de la semaine passée (accueil) ---------- */
+.bilan-semaine { display: grid; gap: var(--space-2); padding: var(--space-3) var(--space-4); border-radius: var(--radius); background: var(--surface);
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--recompense) 45%, transparent); }
+.bilan-semaine-tete { display: flex; align-items: center; gap: var(--space-2); }
+.bilan-semaine-tete h2 { flex: 1; min-width: 0; margin: 0; font-size: var(--fs-l); }
+.bilan-semaine-tete .lien { flex: none; margin-right: calc(-1 * var(--space-2)); color: var(--muted); }
+.bilan-semaine p { margin: 0; line-height: 1.4; text-wrap: pretty; }
+.bilan-semaine .semaine-stats { grid-template-columns: repeat(auto-fit, minmax(4.8em, 1fr)); }
+.bilan-semaine .semaine-stat { background: var(--surface-2); }
+@media (prefers-reduced-motion: no-preference) {
+  .bilan-semaine { animation: bilan-pose 260ms var(--ease) both; }
+  @keyframes bilan-pose { from { opacity: 0; transform: translateY(8px); } }
+}
+
+/* ---------- Records (Ta cote) ---------- */
+.records { display: grid; gap: var(--space-2); padding: var(--space-3); border-radius: var(--radius); background: var(--surface); }
+.records h3 { margin: 0; font-size: var(--fs-m); }
+.records dl { margin: 0; display: grid; gap: var(--space-2); }
+.records-ligne { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px var(--space-3); }
+.records-ligne dt { color: var(--muted); }
+.records-ligne dd { margin: 0; font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; text-align: right; }
+.records-ligne dd small { display: block; color: var(--muted); font-weight: var(--fw-regular); font-size: var(--fs-s); }
+.records > p { margin: 0; }

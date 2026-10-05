@@ -67,6 +67,8 @@ export interface DonneesAFaire {
   leconEnCours: { id: string; titre: string } | null;
   /** #359 : demandes d'ami reçues (`mes_amis()`, lues par App.tsx). */
   demandesAmis?: number;
+  /** #369 : un ami t'a rappelé le Go du jour aujourd'hui (notification `go_du_jour`). */
+  rappelGoDuJour?: boolean;
 }
 
 /** Une source d'éléments : une fonction pure des données. Ajouter une source = l'ajouter à `SOURCES`. */
@@ -98,6 +100,11 @@ export const sourceDefis: SourceAFaire = d => [...d.defis]
 /** Go du jour pas encore fait : une série en jeu passe en pastille ; sinon, une ligne calme. */
 export const sourceDuJour: SourceAFaire = d => {
   if (d.duJourFait || !d.goDuJour) return [];
+  // #369 : un ami attend : pastille, comme une série en jeu (quelqu'un attend, et le rappel ne vaut qu'aujourd'hui).
+  if (d.rappelGoDuJour) {
+    return [{ id: 'rappel-ami', genre: 'goDuJour', onglet: 'problemes', pastille: true,
+      titre: t('aFaire.rappelAmi'), detail: t('aFaire.goDuJourDetail', { numero: d.goDuJour.numero, titre: d.goDuJour.titre }), cible: { ecran: 'goDuJour' } }];
+  }
   if (d.serie > 0) {
     return [{ id: 'serie', genre: 'serie', onglet: 'problemes', pastille: true,
       titre: t('aFaire.serie', { n: d.serie }), detail: t('aFaire.serieDetail'), cible: { ecran: 'goDuJour' } }];

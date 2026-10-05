@@ -29,11 +29,13 @@ export interface EntreeAFaire extends Omit<DonneesAFaire, 'defis' | 'leconEnCour
  * Rien sans session, hors ligne ou inactif (pendant une partie) pour les défis.
  */
 export function useAFaire(db: Db | null, userId: string | undefined, cle: string, actif: boolean, entree: EntreeAFaire): {
-  defis: DefiEnAttente[]; elements: ElementAFaire[]; pastilles: ReadonlyMap<Onglet, string>;
+  defis: DefiEnAttente[]; elements: ElementAFaire[]; pastilles: ReadonlyMap<Onglet, string>; rappelGoDuJour: boolean;
 } {
   const online = useOnline();
   const [mod, setMod] = useState<Module | null>(null);
   const [defis, setDefis] = useState<DefiEnAttente[]>([]);
+  // #369 : rappel du Go du jour d'un ami, lu avec les défis.
+  const [rappel, setRappel] = useState(false);
   const [tic, setTic] = useState(0);
   const pseudos = useRef(new Map<string, string | null>());
 
@@ -65,18 +67,20 @@ export function useAFaire(db: Db | null, userId: string | undefined, cle: string
   useEffect(() => {
     if (!mod || !db || !userId || !online || !actif) return;
     let vivant = true;
-    mod.chargerDefis(db, userId, pseudos.current).then(l => { if (vivant) setDefis(l); }, () => { if (vivant) setDefis([]); });
+    mod.chargerAFaire(db, userId, pseudos.current).then(l => { if (vivant) { setDefis(l.defis); setRappel(l.rappelGoDuJour); } },
+      () => { if (vivant) { setDefis([]); setRappel(false); } });
     return () => { vivant = false; };
   }, [mod, db, userId, online, actif, cle, tic]);
 
   const liste = userId && online ? defis : AUCUN;
+  const rappelGoDuJour = !!userId && online && rappel;
   const { lecons, progres, premier, serie, duJourFait, goDuJour, demandesAmis } = entree;
   const titreDuJour = goDuJour?.titre, numero = goDuJour?.numero;
   const elements = useMemo(() => mod ? mod.elementsAFaire({
-    premier, defis: liste, serie, duJourFait, demandesAmis,
+    premier, defis: liste, serie, duJourFait, demandesAmis, rappelGoDuJour,
     goDuJour: numero !== undefined && titreDuJour !== undefined ? { numero, titre: titreDuJour } : null,
     leconEnCours: mod.leconEnCours(lecons, progres),
-  }) : [], [mod, premier, liste, serie, duJourFait, demandesAmis, numero, titreDuJour, lecons, progres]);
+  }) : [], [mod, premier, liste, serie, duJourFait, demandesAmis, rappelGoDuJour, numero, titreDuJour, lecons, progres]);
   const pastilles = useMemo(() => mod ? mod.ongletsAPastille(elements) : AUCUNE, [mod, elements]);
-  return { defis: liste, elements, pastilles };
+  return { defis: liste, elements, pastilles, rappelGoDuJour };
 }

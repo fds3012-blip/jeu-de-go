@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 
 export type IconeReglageId =
   | 'amis' | 'parties' | 'placement' | 'cote' | 'reglages' | 'importer' | 'rappel' | 'installer' | 'compte' | 'conditions'
-  | 'langue' | 'theme' | 'goban' | 'confirmer' | 'sons' | 'celebrations' | 'aide';
+  | 'langue' | 'theme' | 'goban' | 'confirmer' | 'sons' | 'celebrations' | 'aide' | 'semaine';
 
 const TRACES: Record<IconeReglageId, ReactNode> = {
   // Flèche qui revient en arrière autour d'une pierre : tes parties passées (#358).
@@ -31,6 +31,8 @@ const TRACES: Record<IconeReglageId, ReactNode> = {
   sons: <><path d="M4 9.5v5h3.5L13 19V5L7.5 9.5Z" /><path d="M16.5 9a4.5 4.5 0 0 1 0 6M19.5 6.5a8 8 0 0 1 0 11" /></>,
   celebrations: <><path d="M12 3.5 14.4 9l5.6.6-4.2 3.9 1.2 5.7L12 16.3 7 19.2l1.2-5.7L4 9.6 9.6 9Z" /></>,
   // Mochi : la bulle du coach.
+  // Une page de calendrier cochée : tes objectifs de la semaine (#369).
+  semaine: <><rect x="3.5" y="5" width="17" height="15.5" rx="2.5" /><path d="M3.5 9.5h17M8 3v4M16 3v4" /><path d="m9 15 2.2 2.2L15.5 13" /></>,
   aide: <><path d="M5 5.5h14v10H11l-4.5 3.5V15.5H5Z" /><circle cx="9.5" cy="10.5" r="1" className="ir-plein" /><circle cx="14.5" cy="10.5" r="1" className="ir-plein" /></>,
 };
 

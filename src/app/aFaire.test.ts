@@ -186,3 +186,15 @@ describe('défis lus sous la RLS : où c’est ton tour', () => {
     expect(r).toMatchObject([{ partieId: 'e', comptage: true }]);
   });
 });
+
+describe('#369 : un ami te rappelle le Go du jour', () => {
+  it('pastille sur Problèmes tant que le Go du jour n’est pas fait, avant la série', () => {
+    const [e] = elementsAFaire(d({ duJourFait: false, serie: 4, rappelGoDuJour: true }));
+    expect(e).toMatchObject({ id: 'rappel-ami', genre: 'goDuJour', onglet: 'problemes', pastille: true, cible: { ecran: 'goDuJour' } });
+    expect(sp(e.titre)).toBe('Un ami t’attend au Go du jour');
+    expect(elementsAFaire(d({ duJourFait: true, rappelGoDuJour: true }))).toEqual([]);
+    expect(ongletsAPastille(elementsAFaire(d({ duJourFait: false, rappelGoDuJour: true }))).get('problemes')).toBe('Un ami t’attend au Go du jour');
+    // Au tout premier lancement, ce n'est pas un humain qui attend un coup : rien.
+    expect(elementsAFaire(d({ premier: true, duJourFait: false, rappelGoDuJour: true }))).toEqual([]);
+  });
+});

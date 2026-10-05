@@ -29,6 +29,7 @@ import {
 import { candidatsUniques, classerCoups, confirmeUnique, coupsCles, lignesBilan, NOTES_COURBE, type CoupNote } from './notation';
 import { avanceVue, cleSuivante, commentaire, proverbePour } from './parcours';
 import { readLocal, writeLocal } from './hooks';
+import { noterActivite } from './xp';
 import { coupAccepte, creerErreur, ERREURS_KEY, garderRatee, lireErreurs, peutEnFaireUnProbleme, type ErreurGardee } from './erreurs';
 import { erreursARejouer, type ErreurARejouer } from './rejouerErreurs';
 import { RejouerErreurs } from './RejouerErreurs';
@@ -233,6 +234,7 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
     const suite = ok ? play(avant, p) : null;
     const apres = suite && typeof suite === 'object' ? suite : null;
     if (rejeu.essais === 0) {
+      noterActivite('erreurs'); // #369 : objectif « erreurs rejouées » de la semaine
       track(EVENTS.erreurRejouee, { reussi: !!apres, source: 'revue', taille: size, coup: pb.coup, rates: 0, reponses: pb.reponses.length });
       // Ratée au premier essai : elle revient demain dans « Tes erreurs à rejouer ».
       if (!apres) writeLocal(ERREURS_KEY, garderRatee(lireErreurs(readLocal<unknown>(ERREURS_KEY, [])), pb, new Date()));

@@ -6,8 +6,9 @@
 // - le coût d'un niveau est plafonné : la progression ne devient jamais une corvée sans fin.
 import { EVENTS, track } from '../data/analytics';
 import { t } from '../content/i18n';
+import { noterSemaine, type Compteur } from './semaine';
 
-export type SourceXp = 'probleme' | 'goDuJour' | 'revision' | 'lecon' | 'partie' | 'victoire' | 'erreursRejouees';
+export type SourceXp = 'probleme' | 'goDuJour' | 'revision' | 'lecon' | 'partie' | 'victoire' | 'erreursRejouees' | 'objectif';
 
 /**
  * XP gagnés par source. Une victoire compte la partie terminée (+15) et le bonus de victoire (+25).
@@ -15,7 +16,8 @@ export type SourceXp = 'probleme' | 'goDuJour' | 'revision' | 'lecon' | 'partie'
  * autant que lui. Un défi du jour qui compte pour la série rapporte toujours quelque chose (docs/game-design/economie.md).
  */
 // « Rejouer mes erreurs » (#428) : une séance finie rapporte comme un problème neuf, une seule fois par partie (rejouerErreurs.ts).
-export const GAINS: Record<SourceXp, number> = { probleme: 10, goDuJour: 20, revision: 20, lecon: 30, partie: 15, victoire: 40, erreursRejouees: 10 };
+// Objectif de la semaine atteint (#369) : autant qu'une leçon, une fois par objectif et par semaine (semaine.ts).
+export const GAINS: Record<SourceXp, number> = { probleme: 10, goDuJour: 20, revision: 20, lecon: 30, partie: 15, victoire: 40, erreursRejouees: 10, objectif: 30 };
 
 /**
  * Courbe des niveaux. On commence au niveau 1 avec 0 XP.
@@ -92,8 +94,9 @@ export const recompensesDebloquees = (niveau: number) => RECOMPENSES.filter(r =>
 export type Premiere = 'partie' | 'lecon' | 'probleme';
 export const BONUS_PREMIERE: Record<Premiere, number> = { partie: 20, lecon: 20, probleme: 20 };
 /** Le Go du jour, la révision et les erreurs rejouées (#428) sont des problèmes ; une victoire est une partie. */
+/** Un objectif de la semaine (#369) n'a pas de bonus « première fois » : `gagnerXp` ne le lui donne jamais. */
 export const premiereDe = (source: SourceXp): Premiere =>
-  source === 'goDuJour' || source === 'revision' || source === 'erreursRejouees' ? 'probleme' : source === 'victoire' ? 'partie' : source;
+  source === 'goDuJour' || source === 'revision' || source === 'erreursRejouees' || source === 'objectif' ? 'probleme' : source === 'victoire' ? 'partie' : source;
 
 export interface Gain {
   source: SourceXp;
@@ -172,7 +175,7 @@ if (typeof window !== 'undefined') window.addEventListener('pagehide', envoyerAg
  */
 export function gagnerXp(source: SourceXp): Gain {
   const premieres = lirePremieres(), cat = premiereDe(source);
-  const g = appliquer(lireXp(), source, !premieres.has(cat));
+  const g = appliquer(lireXp(), source, source !== 'objectif' && !premieres.has(cat));
   try {
     localStorage.setItem(XP_KEY, JSON.stringify(g.apres));
     if (g.bonus) localStorage.setItem(PREMIERES_KEY, JSON.stringify([...premieres, cat]));
@@ -183,5 +186,26 @@ export function gagnerXp(source: SourceXp): Gain {
   minuterie = setTimeout(envoyerAgregat, DELAI_AGREGAT_MS);
   for (let n = g.niveauAvant + 1; n <= g.niveauApres; n++) track(EVENTS.niveauAtteint, { niveau: n, xp_total: g.apres, source, recompense: recompenseDuNiveau(n)?.id });
   ecouteurs.forEach(fn => fn(g));
+  const compteur = COMPTEUR_DE[source];
+  if (compteur) noterActivite(compteur);
+  if (source === 'goDuJour') noterActivite('goDuJour');
   return g;
+}
+
+/** Ce que compte chaque gain pour la semaine (#369). Les erreurs rejouées se comptent une à une (`noterActivite`). */
+const COMPTEUR_DE: Partial<Record<SourceXp, Compteur>> = {
+  partie: 'parties', victoire: 'parties', probleme: 'problemes', goDuJour: 'problemes', revision: 'problemes', lecon: 'lecons',
+};
+
+/**
+ * Une activité de la semaine (#369, src/app/semaine.ts) : partie en ligne finie, erreur rejouée… Les gains d'XP la
+ * notent d'eux-mêmes. Un objectif atteint à l'instant rapporte ses XP (une fois par semaine) et part en mesure.
+ */
+export function noterActivite(quoi: Compteur, n = 1): void {
+  let atteints: ReturnType<typeof noterSemaine> = [];
+  try { atteints = noterSemaine(quoi, n); } catch { /* horloge ou stockage illisible : rien à compter */ }
+  for (const o of atteints) {
+    track(EVENTS.objectifSemaineAtteint, { objectif: o });
+    gagnerXp('objectif');
+  }
 }
