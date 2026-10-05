@@ -1,6 +1,7 @@
 // Notifications dans l'app (#367) : tout ce qui calcule « À faire », chargé à la demande, après le premier écran
 // (budget du JS initial, scripts/budget-bundle.mjs). Le crochet léger qui l'appelle : src/app/useAFaire.ts.
 import { mesDefis } from '../data/defi';
+import { lireRecherche, type RechercheLente } from '../data/lente';
 import { lirePseudos } from '../data/pseudos';
 import { notificationsEnAttente, partiesNonVues } from '../data/notifications';
 import type { Db } from '../data/supabase';
@@ -27,4 +28,10 @@ export async function chargerDefis(db: Db, userId: string, pseudos: Map<string, 
     adversaire: adversaireId ? pseudos.get(adversaireId) ?? null : null,
     ...(nonVues ? { nouveau: nonVues.has(x.partieId) } : {}),
   }));
+}
+
+/** #440 : la recherche de partie lente en cours (ou l'adversaire trouvé pendant l'absence), null sinon ou en erreur. */
+export async function chargerRecherche(db: Db, userId: string): Promise<RechercheLente | null> {
+  const r = await lireRecherche(db, userId);
+  return r.ok ? r.value : null;
 }

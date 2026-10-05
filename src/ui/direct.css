@@ -72,3 +72,15 @@
 .app-partie:has(.veille-file.pret) { --veille-h: 132px; }
 .app-partie:has(.veille-file) .partie {
   min-height: calc(100dvh - var(--space-1) - 84px - var(--veille-h) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); }
+
+/* #440 : « En direct » ou « Partie lente », en tête des deux écrans. Deux boutons à bascule de 44 px. */
+.bascule-en-ligne { margin: 0; }
+.bascule-en-ligne button { flex: 1 1 0; min-width: 0; padding: 4px 8px; overflow-wrap: anywhere; }
+/* Parties lentes : recherche en cours ou adversaire trouvé ; point d'or sur les parties où c'est à toi. */
+.lente-recherche { display: grid; gap: var(--space-2); }
+.lente-recherche p { margin: 0; text-wrap: pretty; }
+.lente-recherche-tete { display: flex; align-items: center; gap: var(--space-2); min-width: 0; }
+.lente-recherche-titre { font-weight: var(--fw-bold); overflow-wrap: anywhere; }
+.lente-recherche .lien { justify-self: start; margin-left: -12px; }
+.lente-point { background: var(--or); }
+.lentes .defi-ligne-nom { overflow-wrap: anywhere; }
