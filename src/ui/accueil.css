@@ -254,3 +254,11 @@
 /* L'action principale reste visible en bas de la feuille, même quand la liste des adversaires défile (issue #102). */
 .feuille-corps > .btn.primary { position: sticky; bottom: var(--space-2); z-index: 1; box-shadow: 0 0 0 8px var(--surface), 0 -12px 16px 4px var(--surface); }
 .palier .carte small { line-height: 1.2; }
+/* #440 : parties lentes. Point d'or sur « Jouer en ligne » ; recherche en cours, annulable d'un toucher. */
+.accueil .cta.a-jouer { position: relative; inset: auto; }
+.accueil .cta.a-jouer::after { content: ""; position: absolute; top: 8px; right: 10px; width: 10px; height: 10px; border-radius: 50%; background: var(--or); box-shadow: 0 0 0 2px var(--accent); }
+.tuiles-lentes { margin-top: var(--space-3); }
+.tuile-recherche { grid-column: 1 / -1; gap: 4px; padding: 4px 4px 4px 12px; }
+.tuile-recherche-ouvrir { flex: 1; min-width: 0; min-height: var(--cible-min); display: grid; gap: 2px; padding: 0; border: 0; background: none; color: inherit; text-align: left; }
+.tuile-recherche-ouvrir b { overflow-wrap: anywhere; }
+.tuile-recherche .lien { flex: none; }

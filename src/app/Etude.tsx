@@ -154,6 +154,11 @@ export function Etude({ confirmTouch }: Props) {
         <div className="etude-seg" role="group" aria-label={tk('etude.taille')}>
           {TAILLES_ETUDE.map(s => <button type="button" key={s} aria-pressed={etude.size === s} onClick={() => taille(s)} aria-label={`${s} × ${s}`}>{s}</button>)}
         </div>
+        {/* Annuler et Revenir en haut, à côté de la taille : visibles sans défiler en 390 × 844, au-dessus du goban. */}
+        <div className="etude-actions">
+          <button type="button" className="btn" onClick={annuler} disabled={!histoire.length}>{tk('etude.annuler')}</button>
+          {etude.variante.length > 0 && <button type="button" className="btn" onClick={() => changer({ ...etude, variante: [] })}>{tk('etude.revenir')}</button>}
+        </div>
       </div>
       <div className="etude-outils etude-seg" role="group" aria-label={tk('etude.outils')}>
         {OUTILS.map(o => (
@@ -177,7 +182,8 @@ export function Etude({ confirmTouch }: Props) {
           <span id="etude-trait-aide" className="sr-only">{tk('etude.traitAide')}</span>
         </div>
       </div>
-      <p className="muted small" aria-live="polite">{fr(consigne)}</p>
+      {/* Un refus (ko, sans liberté) remplace la consigne, au même endroit : lu tout de suite, sans décaler le goban. */}
+      <p className={refus ? 'etude-refus small' : 'muted small'} role="status" data-testid="etude-consigne">{fr(refus ? refus.texte : consigne)}</p>
 
       <div className="etude-plateau">
         <Board size={etude.size} board={pos.board} toPlay={outil === 'jouer' ? pos.toPlay : outil === 'blanc' ? 2 : 1}
@@ -197,13 +203,6 @@ export function Etude({ confirmTouch }: Props) {
             })}
           </svg>
         )}
-      </div>
-      <div className="etude-ligne">
-        <p className="etude-refus small" role="status">{refus ? fr(refus.texte) : ''}</p>
-        <div className="etude-actions">
-          <button type="button" className="btn" onClick={annuler} disabled={!histoire.length}>{tk('etude.annuler')}</button>
-          {etude.variante.length > 0 && <button type="button" className="btn" onClick={() => changer({ ...etude, variante: [] })}>{tk('etude.revenir')}</button>}
-        </div>
       </div>
 
       <Resultat analyse={analyse} resultat={resultat} camp={camp(pos.toPlay)} taille={etude.size} onTelecharger={telecharger} />

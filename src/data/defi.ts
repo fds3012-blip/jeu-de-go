@@ -182,7 +182,7 @@ export async function pseudoJoueur(db: Db, id: string): Promise<string | null> {
 
 /** Les défis du joueur (créés ou rejoints), du plus récent au plus ancien, avec leur partie. */
 export async function mesDefis(db: Db, userId: string): Promise<Result<EtatDefi[]>> {
-  const defis = await db.from('defis').select('*').or(`createur_id.eq.${userId},invite_id.eq.${userId}`).order('cree_le', { ascending: false }).limit(20);
+  const defis = await db.from('defis').select('*').or(`createur_id.eq.${userId},invite_id.eq.${userId}`).order('cree_le', { ascending: false }).limit(40);
   if (defis.error) return echec(defis.error.message);
   const lignes = defis.data ?? [];
   if (!lignes.length) return { ok: true, value: [] };

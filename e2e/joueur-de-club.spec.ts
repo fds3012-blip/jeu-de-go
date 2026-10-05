@@ -277,6 +277,16 @@ test.describe('#372 Étudier une position', () => {
     await jouer(page, 'D5');
     await jouer(page, 'F4');
     await expect(svg.locator('[data-numero]')).toHaveCount(2);
+    // 390 × 844 : Annuler et Revenir se touchent sans défiler, au-dessus du goban et du bouton « Analyser ».
+    await page.evaluate(() => window.scrollTo(0, 0));
+    const cta = (await page.locator('.cta').boundingBox())!;
+    for (const nom of ['Annuler', 'Revenir']) {
+      const b = (await page.getByRole('button', { name: nom, exact: true }).boundingBox())!;
+      expect(b.height).toBeGreaterThanOrEqual(44);
+      expect(b.y + b.height, nom).toBeLessThanOrEqual(cta.y);
+    }
+    const plateauBas = (await svg.boundingBox())!;
+    expect(plateauBas.y + plateauBas.height, 'goban entier au-dessus d’« Analyser »').toBeLessThanOrEqual(cta.y + 2);
     // La position a changé : les conseils d'avant disparaissent.
     await expect(page.getByTestId('etude-candidats')).toHaveCount(0);
     await page.getByRole('button', { name: 'Revenir' }).click();

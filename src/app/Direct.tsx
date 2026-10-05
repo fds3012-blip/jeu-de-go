@@ -41,6 +41,8 @@ import { fr } from '../ui/typo';
 import '../ui/defis.css';
 import '../ui/direct.css';
 
+import { BasculeEnLigne, type FaconEnLigne } from './BasculeEnLigne';
+
 export { VeilleFile } from './VeilleFile';
 
 const TAILLES: readonly Taille[] = [9, 13, 19];
@@ -69,10 +71,12 @@ interface Props {
   /** Réglage « Célébrations » (confettis au changement de grade). */
   celebrer?: boolean;
   onAccueil: () => void;
+  /** #440 : « Partie lente » choisie dans la bascule en tête du choix. Sans elle, pas de bascule. */
+  onFacon?: (f: FaconEnLigne) => void;
 }
 
 /** « Un humain, maintenant » : du choix de la partie jusqu'au bilan. */
-export function Direct({ db, userId, cote, onRepli, partieInitiale, confirmTouch, reglages, celebrer, onAccueil }: Props) {
+export function Direct({ db, userId, cote, onRepli, partieInitiale, confirmTouch, reglages, celebrer, onAccueil, onFacon }: Props) {
   // #436 : la file par défaut d'abord (9 × 9, normale, japonais), quelle que soit la taille choisie pour l'ordi.
   // #365 : le temps de jeu proposé d'abord vient des Réglages (« normale » par défaut, celle de la file par défaut).
   const { cadence: cadenceReglee } = usePreferences();
@@ -105,7 +109,7 @@ export function Direct({ db, userId, cote, onRepli, partieInitiale, confirmTouch
       repli={contre && onRepli ? { nom: contre.nom, jouer: () => onRepli(contre.id, params, vue.depuis) } : null}
       onAnnule={message => { setErreur(message); setVue({ vue: 'choix' }); }} />;
   }
-  return <Choix params={params} onParams={setParams} erreur={erreur} onAccueil={onAccueil}
+  return <Choix params={params} onParams={setParams} erreur={erreur} onAccueil={onAccueil} onFacon={onFacon}
     onChercher={() => { setErreur(null); setVue({ vue: 'attente', depuis: Date.now() }); }} />;
 }
 
@@ -125,8 +129,9 @@ function Segment<T extends string | number>({ titre, valeurs, valeur, libelle, o
   );
 }
 
-function Choix({ params, onParams, erreur, onAccueil, onChercher }: {
+function Choix({ params, onParams, erreur, onAccueil, onChercher, onFacon }: {
   params: Params; onParams: (p: Params) => void; erreur: string | null; onAccueil: () => void; onChercher: () => void;
+  onFacon?: (f: FaconEnLigne) => void;
 }) {
   const online = useOnline();
   const c = CADENCES[params.cadence];
@@ -136,6 +141,7 @@ function Choix({ params, onParams, erreur, onAccueil, onChercher }: {
         <button type="button" className="retour" onClick={onAccueil} aria-label={td('direct.retour')}>‹</button>
         <h2>{td('direct.titre')}</h2>
       </div>
+      {onFacon && <BasculeEnLigne valeur="direct" onChoix={onFacon} />}
       <p className="direct-intro">{fr(td('direct.intro'))}</p>
       <p className="muted small direct-classee">{fr(td('direct.classee'))}</p>
       <Segment titre={td('direct.taille')} valeurs={TAILLES} valeur={params.taille} libelle={n => `${n} × ${n}`}

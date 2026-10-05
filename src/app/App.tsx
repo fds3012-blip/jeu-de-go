@@ -1,6 +1,6 @@
 import { Suspense, lazy, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 // Écrans chargés à la demande (perf, #323) : seul l'accueil est dans le JS initial.
-import { CreerCompte, DefiArrivee, DefiPartie, DefisEcran, Direct, Game, LearnHome, LessonPlayer, Placement, Profil, PseudoObligatoire, Puzzles, SeriePratique, VeilleFile, apresPremierEcran } from './ecrans';
+import { CreerCompte, DefiArrivee, DefiPartie, DefisEcran, Direct, Game, LearnHome, Lentes, LessonPlayer, Placement, Profil, PseudoObligatoire, Puzzles, SeriePratique, VeilleFile, apresPremierEcran } from './ecrans';
 import { CHAPITRES, LESSONS } from '../content/lessons';
 import { LESSONS_KEY, readLocal, writeLocal, useGelsServeur, useLessonProgress, useOnline, useProfil, usePseudo, useSerie, useSession } from './hooks';
 import { COMPTES, chargerSupabase, useSupabase } from '../data/client';
@@ -19,6 +19,8 @@ import { PLACEMENT_KEY, chapitreConseille, coteApresPlacement, leconDeLAccueil, 
 import { COTE_KEY } from './coteJoueur';
 import { Accueil } from './Accueil';
 import { modesAccueil, type Depuis, type Mode } from './modes';
+import { ecrireFaconEnLigne, lireFaconEnLigne } from './enLigne';
+import type { FaconEnLigne } from './BasculeEnLigne';
 import { EVENTS, secondsSinceOpen, track, trackOnce } from '../data/analytics';
 import { compterEtape } from '../data/compteurs';
 import { estArriveeRappel, etatRappel } from './rappel';
@@ -222,10 +224,12 @@ export function App() {
   // #436 : partie en direct rejointe depuis la partie contre l'IA (ouverte tout de suite par l'écran du direct).
   const [directRejoint, setDirectRejoint] = useState<{ id: string; demande: DemandeDirect } | null>(null);
   const [repli, setRepli] = useState<Repli | null>(null);
+  // #440 : parties lentes classées (écran src/app/Lentes.tsx ; la partie se joue dans l'écran du défi).
+  const [lente, setLente] = useState(false);
   const { progress, state: syncState, record } = useLessonProgress(supabase, compteId);
   // Lien de défi ouvert alors que l'app est déjà ouverte (même onglet) : on part vers l'arrivée.
   useEffect(() => ecouterJetonDefi((jeton, inviteur) => {
-    setTab('jouer'); setPlaying(false); setLessonId(null); setEcranCompte(null); setDirect(false); setDefi({ vue: 'arrivee', jeton, inviteur }); window.scrollTo({ top: 0 });
+    setTab('jouer'); setPlaying(false); setLessonId(null); setEcranCompte(null); setDirect(false); setLente(false); setDefi({ vue: 'arrivee', jeton, inviteur }); window.scrollTo({ top: 0 });
   }), []);
   const done = LESSONS.filter(l => (progress[l.id] ?? 0) >= l.steps.length).length;
   const lesson = LESSONS.find(l => l.id === lessonId);
@@ -294,13 +298,28 @@ export function App() {
     : RETOUR_GOOGLE?.profil && !ECRAN_COMPTE_AU_RETOUR && !DEFI_AU_RETOUR ? 'compte' : 'menu');
   // #359 : demandes d'ami reçues (`mes_amis()`), relues à chaque changement d'écran : pastille du Profil et « À faire ».
   const demandesAmis = useDemandesAmis(supabase, !!compteId && !playing, `${tab}|${vueProfil}`);
-  const { defis: defisEnAttente, elements: aFaire, pastilles } = useAFaire(supabase, session?.user.id,
-    `${tab}|${defi?.vue ?? ''}|${enPlacement}|${lessonId ?? ''}`, !playing && defi?.vue !== 'partie', {
+  const { defis: aJouerEnLigne, elements: aFaire, pastilles, recherche: rechercheLente, relire: relireAFaire } = useAFaire(supabase, session?.user.id,
+    `${tab}|${defi?.vue ?? ''}|${enPlacement}|${lessonId ?? ''}|${lente}`, !playing && defi?.vue !== 'partie', {
       // #365 : série masquée, pas de « Garde ta série » (le Go du jour reste proposé, calmement).
       premier: home.nouveau, serie: settings.serieVisible ? serie : 0, duJourFait, goDuJour: duJour ? { numero: numeroJour, titre: duJour.title } : null,
       lecons: LESSONS, progres: progress, demandesAmis,
     });
+  // #440 : défis d'amis d'un côté (tuile « Un ami »), parties lentes de l'autre (« À toi de jouer (N) », point d'or).
+  const defisEnAttente = aJouerEnLigne.filter(x => !x.lente);
+  const lentesEnAttente = aJouerEnLigne.filter(x => x.lente);
   const defisAJouer = defisEnAttente.length;
+  /**
+   * #440 : sort de la file lente (annulation, ou « adversaire trouvé » vu). Si une partie attendait, elle est rendue,
+   * et `partie_lente_commencee` est mesurée (une fois : la ligne n'existe plus ensuite).
+   */
+  const quitterRecherche = useCallback(async (db: NonNullable<typeof supabase>): Promise<string | null> => {
+    const r = rechercheLente;
+    const q = await import('../data/lente').then(m => m.quitterFileLente(db));
+    relireAFaire();
+    if (!q.ok || !q.value) return null;
+    if (r) track(EVENTS.partieLenteCommencee, { taille: r.taille, delai_jours: r.delai, attente_h: Math.max(0, Math.round((Date.now() - Date.parse(r.depuis)) / 360_000) / 10) });
+    return q.value;
+  }, [rechercheLente, relireAFaire]);
   // En quittant la page publique de la politique, l'adresse redevient celle de l'app.
   useEffect(() => {
     if (vueProfil !== 'conditions' && /^\/confidentialite\/?$/.test(location.pathname)) {
@@ -477,7 +496,7 @@ export function App() {
   const go = (t: Tab) => {
     setDuJourDirect(false);
     if (t === 'problemes' && tab === 'problemes') setRacineProblemes(n => n + 1);
-    setDefi(null); setDirect(false); setRepli(null); setEcranCompte(null); setAnnonceGel(null); setRetourSerie(null); setEnPlacement(false); setTab(t); setPlaying(false); setLessonId(null); setSerie3(null); setVueProfil('menu'); window.scrollTo({ top: 0 });
+    setDefi(null); setDirect(false); setLente(false); setRepli(null); setEcranCompte(null); setAnnonceGel(null); setRetourSerie(null); setEnPlacement(false); setTab(t); setPlaying(false); setLessonId(null); setSerie3(null); setVueProfil('menu'); window.scrollTo({ top: 0 });
   };
 
   // Reprise de l'action demandée, dès que le compte est complet ; `compte_cree` quand un compte sans pseudo apparaît.
@@ -491,7 +510,7 @@ export function App() {
     else if (r.quoi === 'placement') ouvrirPlacement();
     else if (r.quoi === 'importer') { setTab('profil'); setVueProfil('importer'); }
     else if (r.quoi === 'amis') { setTab('profil'); setVueProfil('amis'); }
-    else if (r.quoi === 'direct') { setTab('jouer'); setPlaying(false); setDefi(null); setDirect(true); }
+    else if (r.quoi === 'direct') ouvrirEnLigne();
     else setTab('problemes');
   };
   const etatAvant = useRef<EtatCompte | null>(null);
@@ -518,15 +537,29 @@ export function App() {
     });
   }, [ecranCompte, defi, tab]);
 
+  /** « Jouer en ligne » (#440) : la façon de jouer mémorisée, « En direct » ou « Partie lente ». */
+  function ouvrirEnLigne(f: FaconEnLigne = lireFaconEnLigne()) {
+    setTab('jouer'); setPlaying(false); setDefi(null); setDirect(f === 'direct'); setLente(f === 'lente'); window.scrollTo({ top: 0 });
+  }
+  /** Bascule « En direct » / « Partie lente » : mémorisée pour la prochaine fois. */
+  const changerFacon = (f: FaconEnLigne) => { ecrireFaconEnLigne(f); setDirectRejoint(null); ouvrirEnLigne(f); };
+  // #440 : la partie trouvée pendant l'absence est ouverte par un autre chemin (« À toi de jouer », la liste) :
+  // « Adversaire trouvé » est effacé de l'accueil, et le début de partie mesuré.
+  useEffect(() => {
+    const db = supabase;
+    if (db && rechercheLente?.partieId && defi?.vue === 'partie' && defi.id === rechercheLente.partieId) void quitterRecherche(db);
+  }, [supabase, defi, rechercheLente, quitterRecherche]);
   const enDefi = tab === 'jouer' && !playing && defi !== null;
   // #360 : partie en direct (choix, attente, partie) ; plein écran comme une partie, sans barre de navigation.
   const enDirect = tab === 'jouer' && !playing && defi === null && direct;
+  // #440 : parties lentes (liste, recherche) ; la partie elle-même passe par l'écran du défi.
+  const enLente = tab === 'jouer' && !playing && defi === null && !direct && lente;
   // Défi, direct ou « Crée ton compte » ouvert avant que le client Supabase soit là (#401) : on le charge sans attendre.
-  useEffect(() => { if (enDefi || enDirect || ecranCompte) void chargerSupabase(); }, [enDefi, enDirect, ecranCompte]);
+  useEffect(() => { if (enDefi || enDirect || enLente || ecranCompte) void chargerSupabase(); }, [enDefi, enDirect, enLente, ecranCompte]);
   const enPartie = (tab === 'jouer' && !!playing) || (enDefi && defi.vue === 'partie') || enDirect;
   // Robustesse (#325) : écran d'erreur à la place d'un écran blanc ; « Retour à l'accueil » change d'onglet sans recharger.
   const versAccueil = useCallback(() => {
-    setDefi(null); setDirect(false); setRepli(null); setEcranCompte(null); setEnPlacement(false); setTab('jouer'); setPlaying(false); setLessonId(null); setSerie3(null); setVueProfil('menu');
+    setDefi(null); setDirect(false); setLente(false); setRepli(null); setEcranCompte(null); setEnPlacement(false); setTab('jouer'); setPlaying(false); setLessonId(null); setSerie3(null); setVueProfil('menu');
     window.scrollTo({ top: 0 });
   }, []);
   const online = useOnline();
@@ -567,13 +600,13 @@ export function App() {
   const pseudoAChoisir = !!supabase && etat === 'sans_pseudo' && !!compteId;
   const ecranPlein = pseudoAChoisir || ecranCompte !== null;
   // Bandeau « Tu es hors ligne » : seulement là où le réseau sert (défi par lien, en ligne, compte et profil).
-  const ecranReseau = enDefi || enDirect || tab === 'profil' || ecranPlein;
+  const ecranReseau = enDefi || enDirect || enLente || tab === 'profil' || ecranPlein;
   let screen;
   if (pseudoAChoisir && supabase && compteId) {
     screen = <PseudoObligatoire db={supabase} userId={compteId}
       onChoisi={p => { setPseudoChoisi({ id: compteId, pseudo: p }); setClePseudo(n => n + 1); }}
       onDeconnecter={() => { void supabase?.auth.signOut(); }} />;
-  } else if ((ecranCompte || enDefi || enDirect) && client === undefined) {
+  } else if ((ecranCompte || enDefi || enDirect || enLente) && client === undefined) {
     // Client Supabase pas encore là (#401, chargé dès l'ouverture d'un lien de défi) : comme un écran à la demande.
     screen = null;
   } else if (ecranCompte && supabase) {
@@ -585,11 +618,18 @@ export function App() {
         cote={profil?.cote ?? null} partieInitiale={directRejoint}
         // #436 : au bout de 25 s, partie contre l'IA en attendant ; la file est gardée par la bande VeilleFile.
         onRepli={(contre, demande, depuis) => { setDirect(false); setDirectRejoint(null); lancer('ordi', contre, { contre, demande, depuis, veille: true }); }}
-        celebrer={settings.celebrations} onAccueil={() => { setDirect(false); setDirectRejoint(null); window.scrollTo({ top: 0 }); }} />
+        celebrer={settings.celebrations} onAccueil={() => { setDirect(false); setDirectRejoint(null); window.scrollTo({ top: 0 }); }}
+        onFacon={changerFacon} />
+      : null;
+  } else if (enLente) {
+    screen = supabase && compteId
+      ? <Lentes db={supabase} userId={compteId} onFacon={changerFacon} onPartie={ouvrirDefiPartie}
+        onAccueil={() => { setLente(false); window.scrollTo({ top: 0 }); }} />
       : null;
   } else if (enDefi && defi.vue === 'partie' && supabase) {
     screen = <DefiPartie key={defi.id} db={supabase} partieId={defi.id} userId={session?.user.id} anonyme={estAnonyme(session)} pseudo={pseudo ?? null} confirmTouch={settings.confirmTouch} reglages={{ modifier: set }} celebrer={settings.celebrations}
-      onRetour={quitterDefi} onAutre={() => { setDefi({ vue: 'liste' }); window.scrollTo({ top: 0 }); }} />;
+      onRetour={quitterDefi} onAutre={() => { setDefi({ vue: 'liste' }); window.scrollTo({ top: 0 }); }}
+      onAutreLente={() => { setDefi(null); setDirect(false); setLente(true); window.scrollTo({ top: 0 }); }} />;
   } else if (enDefi && defi.vue === 'arrivee') {
     screen = <DefiArrivee key={defi.jeton} db={supabase} jeton={defi.jeton} inviteur={defi.inviteur} compte={COMPTES ? etat : 'aucun'} onPartie={ouvrirDefiPartie} onAccueil={quitterDefi} />;
   } else if (enDefi) {
@@ -692,7 +732,8 @@ export function App() {
       else if (m === 'deux') lancer('deux');
       else if (m === 'guidee') lancerGuidee();
       // « Un humain, maintenant » (#360), avec un compte et un pseudo (sinon « Crée ton compte », puis reprise).
-      else if (m === 'en_ligne') { if (!garde({ quoi: 'en_ligne' }, { quoi: 'direct' })) return; setDefi(null); setDirect(true); window.scrollTo({ top: 0 }); }
+      // #440 : « En direct » ou « Partie lente », selon le dernier choix (mémorisé).
+      else if (m === 'en_ligne') { if (!garde({ quoi: 'en_ligne' }, { quoi: 'direct' })) return; ouvrirEnLigne(); }
       // Défier un ami (#81) : la liste des défis et la création du lien.
       else { if (!garde({ quoi: 'defi' }, { quoi: 'defis' })) return; setDefi({ vue: 'liste' }); window.scrollTo({ top: 0 }); }
     };
@@ -713,16 +754,33 @@ export function App() {
         // Accueil v3 : un défi d'un ami où c'est ton tour passe en premier dans « Aujourd'hui ».
         // #367 : un seul défi où c'est ton tour ? La tuile ouvre directement la partie, en un toucher.
         defis={COMPTES ? { n: defisAJouer, adversaire: defisAJouer === 1 ? defisEnAttente[0].adversaire : null, ouvrir: () => {
-          const seul = defisAJouer === 1 ? aFaire.find(e => e.genre === 'defi') : undefined;
+          const seul = defisAJouer === 1 ? aFaire.find(e => e.cible.ecran === 'defi' && e.cible.partieId === defisEnAttente[0].partieId) : undefined;
           if (seul) { ouvrirAFaire(seul, 'accueil'); return; }
           if (!garde({ quoi: 'defi' }, { quoi: 'defis' })) return;
           setDefi({ vue: 'liste' }); window.scrollTo({ top: 0 });
         } } : undefined}
-        onPlacement={proposerPlacement(parties.n, placement, ouverture.retours) ? ouvrirPlacement : undefined} />
+        onPlacement={proposerPlacement(parties.n, placement, ouverture.retours) ? ouvrirPlacement : undefined}
+        // #440 : parties lentes où c'est à toi (« À toi de jouer (N) », point d'or) et recherche en cours.
+        lentes={COMPTES && etat === 'complet' ? {
+          aJouer: lentesEnAttente.length,
+          // Partie trouvée où c'est déjà à toi : « À toi de jouer » suffit (une seule tuile pour la même partie).
+          recherche: rechercheLente && !lentesEnAttente.some(x => x.partieId === rechercheLente.partieId)
+            ? { trouvee: !!rechercheLente.partieId } : null,
+          ouvrir: () => {
+            const seul = lentesEnAttente.length === 1 ? aFaire.find(e => e.cible.ecran === 'defi' && e.cible.partieId === lentesEnAttente[0].partieId) : undefined;
+            if (seul) { ouvrirAFaire(seul, 'accueil'); return; }
+            ouvrirEnLigne('lente');
+          },
+          quitter: () => {
+            const db = supabase;
+            if (!db) return;
+            void quitterRecherche(db).then(id => { if (id) { go('jouer'); setDefi({ vue: 'partie', id }); } });
+          },
+        } : undefined} />
     );
   }
 
-  const accueilVisible = tab === 'jouer' && !playing && !enPlacement && !enDefi && !enDirect && !ecranPlein;
+  const accueilVisible = tab === 'jouer' && !playing && !enPlacement && !enDefi && !enDirect && !enLente && !ecranPlein;
   // Accueil v3 : `premier_ecran_vu`, une fois, quand l'accueil est affiché et utilisable (page chargée, polices prêtes).
   // `nouveau` : tout premier lancement sur l'appareil (aucune partie, aucun retour). Dénominateur des 60 premières secondes.
   const ecranVu = useRef(false);

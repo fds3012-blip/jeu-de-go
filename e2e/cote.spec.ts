@@ -121,7 +121,7 @@ test('Profil : cote sûre après des parties classées, courbe de 30 jours, dép
   await ctx.close();
 });
 
-/** Partie classée contre Léa (Noir), à moi de jouer (Blanc). */
+/** Partie classée contre Léa (Noir), à moi de jouer (Blanc) : une partie lente (#440), défi classé. */
 function semerPartieClassee(serveur: FauxServeur) {
   serveur.games.push({ id: PARTIE, white_id: MOI, black_id: LEA, created_by: MOI, size: 9, komi: 6.5, rules: 'japanese', handicap: 0,
     moves: 'eecggc', status: 'active', counting: false, dead_stones: null, dead_proposed_by: null, result: null, resumed_at: 0, prive: true, rated: true });
@@ -144,7 +144,8 @@ for (const reduit of [true, false]) {
     semerPartieClassee(serveur);
     const { ctx, page } = await telephone(browser, baseURL, serveur, { reduit, sombre: !reduit });
     await page.goto('/');
-    await page.getByTestId('tuile-defi').click();
+    // #440 : un défi classé est une partie lente : « À toi de jouer (1) » ouvre la partie.
+    await page.getByTestId('tuile-lente').click();
     await expect(plateau(page)).toBeVisible();
     // Carte de l'adversaire : sa couleur, son grade et sa cote.
     await expect(page.locator('.joueur').first()).toContainText('Lea_du_go');
