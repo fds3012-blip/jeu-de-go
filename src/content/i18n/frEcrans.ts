@@ -63,6 +63,9 @@ export const frEcrans = {
   'profil.vibrations': 'Vibrations',
   'profil.celebrations': 'Célébrations',
   'profil.celebrationsAide': 'Confettis et carillon quand tu gagnes.',
+  // #437 : version de l'app, en bas des réglages. 7 touchers : appareil de l'équipe (mesure coupée).
+  'profil.version': 'Version {v}',
+  'profil.equipe': 'Appareil de l’équipe : mesure coupée.',
   'profil.aide': 'Aide de Mochi',
   'profil.aide.auto': 'Au début',
   'profil.aide.oui': 'Toujours',

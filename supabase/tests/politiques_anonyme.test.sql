@@ -81,12 +81,12 @@ select pg_temp.egal((select username from public.profiles where id = :elise), 'E
 reset role;
 
 -- 3. Relevé de sécurité (advisors) : toute fonction security definer a search_path vide ; seule apercu_defi est
---    exécutable par anon ; aucune fonction de cote ou de purge n'est exécutable par authenticated.
+--    exécutable par anon (avec compter_etape depuis #437, compteurs anonymes) ; aucune fonction de cote ou de purge n'est exécutable par authenticated.
 select pg_temp.egal((select bool_and(p.proconfig[1] = 'search_path=""') from pg_proc p
   where p.pronamespace = 'public'::regnamespace and p.prosecdef), true, 'security definer : search_path vide');
 select pg_temp.egal((select string_agg(p.proname, ',' order by p.proname) from pg_proc p
   where p.pronamespace = 'public'::regnamespace and p.prosecdef
-    and has_function_privilege('anon', p.oid, 'execute')), 'apercu_defi', 'anon : apercu_defi seulement');
+    and has_function_privilege('anon', p.oid, 'execute')), 'apercu_defi,compter_etape', 'anon : apercu_defi et compter_etape seulement');
 select pg_temp.egal((select bool_or(has_function_privilege('authenticated', p.oid, 'execute')) from pg_proc p
   where p.pronamespace = 'public'::regnamespace
     and p.proname in ('apply_game_rating', 'finish_game_by_score', 'jouer_coup_defi', 'play_move', 'purger_anonymes_inactifs',

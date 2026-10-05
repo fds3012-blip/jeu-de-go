@@ -7,6 +7,7 @@
 //   (`refuser_partie_direct`, aucune cote ne bouge) et sort de la file.
 // La partie contre l'IA n'est jamais classée (#417) ; l'IA garde son nom et son portrait, jamais déguisée en humain.
 // Chargé à la demande avec l'écran du direct (src/app/ecrans.ts).
+import { compterEtape } from '../data/compteurs';
 import { useEffect, useRef, useState } from 'react';
 import { Mochi } from '../ui/Mochi';
 import { ATTENTE_MS } from '../go/pendule';
@@ -67,6 +68,7 @@ export function VeilleFile({ db, demande, depuis, onRejoindre, onArret }: Props)
     if (!pret) return;
     aRendre.current = { file: false, partie: null };
     track(EVENTS.partieEnLigneCommencee, { taille: demande.taille, cadence: demande.cadence, regles: demande.regles, attente_s: Math.round((Date.now() - depuis) / 1000) });
+    compterEtape('premiere_partie_en_ligne');
     onRejoindre(pret);
   }
 

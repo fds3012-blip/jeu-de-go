@@ -11,6 +11,7 @@ Issue #166. Source unique : `src/data/analytics.ts` (constante `EVENTS`). Un tes
 - **Propriétés ajoutées à chaque événement** : `version` (commit ou version), `environnement` (`production`, `preview`, `development`) et, depuis #166, `mesure` (`anonyme` ou `complet`) : le niveau au moment de l'envoi.
 - **`trackOnce`** : une fois par appareil avec accord (repère `go.evenement.<nom>` en localStorage), une fois par session sans accord.
 - **Aucune donnée personnelle** : pas d'e-mail, pas de pseudo, pas de texte libre. Les identifiants envoyés sont ceux du contenu (leçon, problème, adversaire).
+- **Appareils de l'équipe** (#437) : le drapeau local `go.equipe.v1` (posé par `?equipe=1`, retiré par `?equipe=0`, ou basculé par 7 touchers rapprochés sur la version, en bas de Profil > Réglages) coupe PostHog et les compteurs anonymes. À poser sur chaque appareil de l'équipe, navigateur par navigateur.
 - **Noms** : minuscules, tirets bas, en français. Stables : ne jamais renommer un événement déjà en production (les entonnoirs casseraient).
 
 ## Événements
@@ -78,11 +79,31 @@ Issue #166. Source unique : `src/data/analytics.ts` (constante `EVENTS`). Un tes
 
 `identify(id)` (`src/app/Account.tsx`) relie les événements au compte, seulement au niveau `complet`.
 
+## Compteurs anonymes de la première visite (#437, hors PostHog)
+
+Six totaux par jour, gardés dans Supabase (table `compteurs_entonnoir`, fonction `compter_etape`, code `src/data/compteurs.ts`). Ils partent **sans accord** (mesure d'audience exemptée, analyse : `docs/juridique/consentement.md`, section 8), sauf opposition ou appareil de l'équipe. Aucune propriété : le serveur ne reçoit que le nom de l'étape et garde `(jour, etape, n)`.
+
+- **Une fois par appareil** : repère `go.entonnoir.<étape>` (mois de l'écriture, 13 mois au plus). Navigation privée stricte : une fois par page.
+- **Nouveaux appareils seulement** : `premier_ecran` au tout premier lancement (aucune partie, aucun jour de retour), les autres étapes seulement si le premier écran de l'appareil a été compté. Les joueurs d'avant le déploiement n'entrent jamais.
+- **Envoi** après le premier écran, jamais attendu ; un échec réseau perd le compte (sous-estimation, jamais de double compte).
+- **Plafonds** (anti-abus) : 60 par minute et 20 000 par jour, par étape ; refus comptés dans `compteurs_entonnoir_fenetre.refus`.
+
+| Étape | Déclencheur (fichier) | Événement PostHog voisin | Indicateur servi |
+|---|---|---|---|
+| `premier_ecran` | Montage de l'app au tout premier lancement, quel que soit l'écran (accueil, lien de défi), envoyé après le premier écran (`src/app/App.tsx`) | `premier_ecran_vu` (`nouveau = true`, accueil seulement) | **Nouveaux appareils par jour** (dénominateur de l'entonnoir, et approximation des « nouveaux joueurs par semaine » sans accord) |
+| `premiere_pierre` | Premier coup d'une partie sur l'appareil, contre l'ordi ou à deux (`src/app/Game.tsx`) | `premiere_pierre` | Part des nouveaux appareils qui posent une pierre (pas « dans la minute » : aucune durée n'est envoyée) |
+| `premiere_partie_finie` | Première partie contre l'ordi finie, score ou abandon (`src/app/Game.tsx`) | `premiere_partie_terminee` | Activation : part des nouveaux appareils qui finissent une partie |
+| `limite_essai` | Premier écran « Crée ton compte » ouvert par une limite de l'essai (`src/app/App.tsx`, `garde`) | `essai_limite_atteinte` | **Mur du compte** : appareils qui touchent la limite |
+| `compte_cree` | Première session d'un compte sans pseudo sur l'appareil (`src/app/App.tsx`) | `compte_cree` | Conversion limite → compte, appareils neufs seulement |
+| `premiere_partie_en_ligne` | Premier adversaire trouvé en partie en direct (`src/app/Direct.tsx`) | `partie_en_ligne_commencee` | Part des nouveaux comptes qui jouent en ligne |
+
+Requêtes : `docs/data/tableaux-de-bord.md`, section 9.
+
 ## Indicateurs de la charte : ce qu'on mesure et ce qu'on ne mesure pas
 
 | Indicateur (cible à 6 mois) | Mesurable aujourd'hui ? | Pourquoi |
 |---|---|---|
-| Nouveaux joueurs par semaine (10 000) | **Partiellement** | Sans accord, chaque chargement de page a un identifiant neuf : on ne distingue pas un nouveau joueur d'un joueur qui revient. On ne compte les nouveaux que dans la population `complet` (première apparition d'une personne), ce qui sous-estime le total. En `anonyme`, `app_ouverte` donne un plafond (des visites, pas des joueurs). |
+| Nouveaux joueurs par semaine (10 000) | **Partiellement** | Sans accord, chaque chargement de page a un identifiant neuf : on ne distingue pas un nouveau joueur d'un joueur qui revient. On ne compte les nouveaux que dans la population `complet` (première apparition d'une personne), ce qui sous-estime le total. En `anonyme`, `app_ouverte` donne un plafond (des visites, pas des joueurs). Depuis #437, le compteur `premier_ecran` donne les **nouveaux appareils** sans accord (un joueur sur deux appareils compte deux fois ; un navigateur effacé recompte). |
 | Première pierre dans la minute (90 %) | **Oui, avec biais** | `premiere_pierre.secondes`. Sans accord, l'événement repart à chaque session : des joueurs qui reviennent entrent dans la mesure. `secondes` compte depuis l'ouverture de la page, pas depuis la toute première visite. Lecture fiable : filtrer sur `mesure = 'complet'`, ou accepter le biais et le dire. |
 | Rétention J1 / J7 / J30 (45 / 25 / 12 %) | **Seulement avec accord** | Il faut un identifiant persistant. Mesure limitée aux joueurs qui ont dit « Oui » : population auto-sélectionnée, probablement plus engagée. |
 | Parties terminées par joueur actif et par semaine (5) | **Partiellement** | Numérateur (`partie_terminee`) complet. Dénominateur (joueurs actifs distincts) fiable seulement en `complet`. Les parties en ligne ne sont pas encore marquées (pas d'écran). |

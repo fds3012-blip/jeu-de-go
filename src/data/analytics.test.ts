@@ -389,3 +389,40 @@ describe('filet du démarrage : erreur avant Sentry (#401)', () => {
     expect(sentry.captureException).not.toHaveBeenCalled();
   });
 });
+
+describe('appareil de l’équipe (#437)', () => {
+  it('le drapeau coupe PostHog, même avec accord ; le retirer le rétablit', async () => {
+    asBrowser(); withKeys();
+    A.setEquipe(true);
+    A.setConsent('accepte');
+    A.initAnalytics();
+    A.track(A.EVENTS.appOuverte);
+    A.trackOnce(A.EVENTS.premierePierre);
+    await flush(); await flush();
+    expect(posthog.init).not.toHaveBeenCalled();
+    expect(posthog.capture).not.toHaveBeenCalled();
+    expect(localStorage.getItem(A.EQUIPE_KEY)).toBe('1');
+    A.setEquipe(false);
+    A.track(A.EVENTS.appOuverte);
+    await vi.waitFor(() => expect(posthog.capture).toHaveBeenCalledWith('app_ouverte', expect.anything(), expect.anything()));
+  });
+
+  it('drapeau posé alors que PostHog tourne déjà : plus aucun envoi', async () => {
+    asBrowser(); withKeys();
+    A.track(A.EVENTS.appOuverte);
+    await vi.waitFor(() => expect(posthog.capture).toHaveBeenCalledTimes(1));
+    A.setEquipe(true);
+    A.track(A.EVENTS.partieTerminee);
+    await flush(); await flush();
+    expect(posthog.capture).toHaveBeenCalledTimes(1);
+  });
+
+  it('le drapeau prévient les abonnés (réglage caché du Profil)', () => {
+    asBrowser();
+    const vu = vi.fn();
+    A.subscribeConsent(vu);
+    A.setEquipe(true);
+    expect(A.estEquipe()).toBe(true);
+    expect(vu).toHaveBeenCalledTimes(1);
+  });
+});

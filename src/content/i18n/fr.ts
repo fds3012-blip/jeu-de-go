@@ -303,7 +303,7 @@ export const fr = {
   'conditions.garde.amis': 'Si tu ajoutes des amis :',
   'conditions.garde.amisTexte': 'qui a demandé qui, la réponse et la date. Seuls vous deux voyez ce lien. Effacé si l’un de vous le retire ou supprime son compte. Tes demandes envoyées sont notées 30 jours, pour éviter les abus.',
   'conditions.garde.comptage': 'Comptage anonyme :',
-  'conditions.garde.comptageTexte': 'quelques événements (partie jouée, leçon finie) chez PostHog, dans l’Union européenne. Sans cookie ni lien avec ton compte : le numéro tiré au hasard change à chaque ouverture de l’app. Avec le type d’appareil et de navigateur. Ton adresse IP n’est pas gardée, et elle ne sert pas à te localiser.',
+  'conditions.garde.comptageTexte': 'quelques événements (partie jouée, leçon finie) chez PostHog, dans l’Union européenne. Sans cookie ni lien avec ton compte : le numéro tiré au hasard change à chaque ouverture de l’app. Avec le type d’appareil et de navigateur. Ton adresse IP n’est pas gardée, et elle ne sert pas à te localiser. Et, une fois par appareil, les étapes de ta première visite (première pierre, compte créé…) s’ajoutent à un simple total du jour, chez Supabase à Paris, sans rien qui te désigne.',
   'conditions.garde.oui': 'Seulement si tu dis oui :',
   'conditions.garde.ouiTexte': 'les rapports de bug chez Sentry, et un numéro gardé sur ton téléphone pour voir si tu reviens jouer. Jamais ton e-mail ni tes coups. Tu changes d’avis ? Ce numéro est effacé.',
   'conditions.pourquoi': 'Pourquoi',

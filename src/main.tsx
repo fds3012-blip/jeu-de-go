@@ -29,7 +29,7 @@ import { apresPremierEcran, prechargerEcrans, prechargerPartie, rechargerPourNou
 import './ui/fonts.css';
 import './ui/app.css';
 import { registerSW } from './registerSW';
-import { captureError, ecouterErreursAvantSentry, EVENTS, initAnalytics, track } from './data/analytics';
+import { captureError, ecouterErreursAvantSentry, EVENTS, initAnalytics, lireEquipeDansAdresse, track } from './data/analytics';
 import { chargementUrgent, chargerSupabase } from './data/client';
 import { choisirLangue, langue } from './content/i18n';
 import { ecouterInstallation } from './app/installation';
@@ -40,6 +40,8 @@ choisirLangue(langue());
 
 // Invite d'installation de Chrome (#178) : capturée tôt, montrée seulement au bon moment.
 ecouterInstallation();
+// Appareil de l'équipe (#437) : `?equipe=1` coupe PostHog et les compteurs anonymes, avant tout envoi.
+lireEquipeDansAdresse();
 initAnalytics();
 // Erreurs non attrapées avant que Sentry soit chargé : mises en file, envoyées dès son arrivée (avec accord seulement).
 ecouterErreursAvantSentry();
