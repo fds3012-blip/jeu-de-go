@@ -1087,6 +1087,24 @@ export type Database = {
           },
         ]
       }
+      reglages_compte: {
+        Row: {
+          modifie_le: string
+          reglages: Json
+          user_id: string
+        }
+        Insert: {
+          modifie_le?: string
+          reglages?: Json
+          user_id: string
+        }
+        Update: {
+          modifie_le?: string
+          reglages?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
       signalements: {
         Row: {
           auteur_id: string | null
@@ -1282,6 +1300,7 @@ export type Database = {
         Returns: string
       }
       enregistrer_parties_perso: { Args: { p_parties: Json }; Returns: string[] }
+      enregistrer_reglages: { Args: { p_reglages: Json }; Returns: Json }
       lire_partie_partagee: {
         Args: { p_jeton: string }
         Returns: {
