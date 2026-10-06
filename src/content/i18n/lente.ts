@@ -45,6 +45,10 @@ const FR = {
   'lente.fin.perdu.temps': 'Perdu au temps : ton délai est passé sans ton coup.',
   'lente.autre': 'Nouvelle partie lente',
   'lente.retourParties': 'Mes parties lentes',
+  // #442 : parties laissées expirer. Plafond réduit pendant 30 jours, dit sans reproche.
+  'lente.plafond': 'Tu as laissé expirer plusieurs parties. Pendant 30 jours, tu peux en mener {n} à la fois. Finis-en une pour en commencer une autre.',
+  'lente.plafond.info': 'Tu as laissé expirer plusieurs parties. Pendant 30 jours, tu peux en mener {n} à la fois.',
+  'lente.plafond.prevenir': 'Si une autre partie expire, tu pourras en mener 5 à la fois pendant 30 jours.',
 } as const;
 
 export type CleLente = keyof typeof FR;
@@ -89,6 +93,9 @@ const EN: { readonly [K in CleLente]: string } = {
   'lente.fin.perdu.temps': 'Lost on time: your time ran out without a move.',
   'lente.autre': 'New correspondence game',
   'lente.retourParties': 'My correspondence games',
+  'lente.plafond': 'You let several games expire. For 30 days, you can play {n} at once. Finish one to start another.',
+  'lente.plafond.info': 'You let several games expire. For 30 days, you can play {n} at once.',
+  'lente.plafond.prevenir': 'If another game expires, you’ll be able to play 5 at once for 30 days.',
 };
 
 export const CATALOGUE_LENTE: Record<Langue, { readonly [K in CleLente]: string }> = { fr: FR, en: EN };

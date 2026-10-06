@@ -9,13 +9,15 @@
 // Web Share API d'abord ; repli : copie dans le presse-papiers, sinon lien à copier à la main, ou téléchargement.
 // Mesure : `partage_ouvert`, `partage_envoye` (objet, moyen), `partage_echoue` (objet, raison). Jamais le lien, le
 // jeton, la partie ni le pseudo.
+// Étude (#449, `etude`) : la même feuille depuis l'écran d'étude, sans « Défier un ami » : lien (`partager_etude`, même
+// adresse `mochi-go.app/partie#JETON`), image de la position (fin de la variante), fichier SGF. Mesure : `mode` = `etude`.
 import { useEffect, useId, useRef, useState } from 'react';
 import type { Color } from '../go/rules';
 import { positionsDepuisSgf } from './revue';
 import { useSupabase } from '../data/client';
 import { useOnline, usePseudo, useSession } from './hooks';
 import { compteDe, creerDefi, lienDefi } from '../data/defi';
-import { publierPartie, retirerPartie } from '../data/partage';
+import { publierEtude, publierPartie, retirerPartie } from '../data/partage';
 import { EVENTS, track } from '../data/analytics';
 import { langue } from '../content/i18n';
 import { tp, type ClePartage } from '../content/i18n/partage';
@@ -23,7 +25,7 @@ import { adversairePublic, lienPartie, nomFichierImage, nomFichierSgf, originePa
 import { fr } from '../ui/typo';
 import '../ui/partage.css';
 
-export type ModePartage = 'ordi' | 'deux' | 'import' | 'defi' | 'direct';
+export type ModePartage = 'ordi' | 'deux' | 'import' | 'defi' | 'direct' | 'etude';
 type Objet = 'lien' | 'image' | 'sgf' | 'defi';
 type Moyen = 'web_share' | 'copie' | 'manuel' | 'telechargement';
 
@@ -38,6 +40,13 @@ interface Props {
   mode: ModePartage;
   onFermer: () => void;
 }
+
+/** Textes propres à une étude (#449), à la place de ceux d'une partie. */
+const CLES_ETUDE: Partial<Record<ClePartage, ClePartage>> = {
+  'partage.titre': 'etude.titre', 'partage.lienAide': 'etude.lienAide', 'partage.image': 'etude.image', 'partage.compte': 'etude.compte',
+  'partage.prive': 'etude.prive', 'partage.priveFait': 'etude.priveFait', 'partage.erreur.jour': 'etude.erreur.jour',
+  'partage.erreur.plein': 'etude.erreur.plein', 'partage.erreur.illisible': 'etude.erreur.illisible', 'partage.titreLien': 'etude.titreLien',
+};
 
 type Etat = { quoi: 'repos' } | { quoi: 'cours'; objet: Objet } | { quoi: 'fait'; objet: Objet; moyen: Moyen | 'annule'; lien?: string }
   | { quoi: 'erreur'; cle: ClePartage } | { quoi: 'prive' };
@@ -91,7 +100,10 @@ export function PartagePartie({ sgf, joueur, adversaire, coup, mode, onFermer }:
   const lienDuDefi = useRef<string | null>(null);
   const compte = !!db && !!compteId && !!pseudo;
   const lang = langue();
-  const adv = adversairePublic(adversaire);
+  const etude = mode === 'etude';
+  const adv = etude ? null : adversairePublic(adversaire);
+  /** Texte de la feuille : celui de l'étude quand il existe. */
+  const tx = (cle: ClePartage, vars?: Record<string, string | number>) => tp((etude && CLES_ETUDE[cle]) || cle, vars);
 
   useEffect(() => {
     const d = ref.current;
@@ -116,7 +128,9 @@ export function PartagePartie({ sgf, joueur, adversaire, coup, mode, onFermer }:
       let pub;
       try { pub = sgfPublic(sgf); } catch { echec('lien', 'partage.erreur.illisible', 'illisible'); return; }
       if (!partageable(pub.sgf)) { echec('lien', 'partage.erreur.illisible', 'illisible'); return; }
-      const r = await publierPartie(db, { sgf: pub.sgf, taille: pub.taille, joueur, adversaire: adv, coup: Math.min(coup, pub.coups) });
+      const r = etude
+        ? await publierEtude(db, { sgf: pub.sgf, taille: pub.taille, coup: pub.coups })
+        : await publierPartie(db, { sgf: pub.sgf, taille: pub.taille, joueur, adversaire: adv, coup: Math.min(coup, pub.coups) });
       if (!r.ok) {
         const raison = r.raison ?? 'reseau';
         echec('lien', raison === 'jour' || raison === 'plein' || raison === 'illisible' ? `partage.erreur.${raison}` : 'partage.erreur.reseau', raison);
@@ -125,7 +139,8 @@ export function PartagePartie({ sgf, joueur, adversaire, coup, mode, onFermer }:
       jeton.current = r.value;
     }
     const url = lienPartie(jeton.current, lang, originePartage());
-    const moyen = await partagerLien(url, tp('partage.titreLien'), adv ? tp('partage.texte', { adversaire: adv }) : tp('partage.texteSans'));
+    const moyen = await partagerLien(url, tx('partage.titreLien'),
+      etude ? tp('etude.texte') : adv ? tp('partage.texte', { adversaire: adv }) : tp('partage.texteSans'));
     noter('lien', moyen);
     if (moyen === 'manuel' || moyen === 'copie') setEtat({ quoi: 'fait', objet: 'lien', moyen, lien: url });
   }
@@ -135,6 +150,16 @@ export function PartagePartie({ sgf, joueur, adversaire, coup, mode, onFermer }:
     setEtat({ quoi: 'cours', objet: 'image' });
     try {
       const { positions, resultat } = positionsDepuisSgf(sgf);
+      if (etude) {
+        // L'étude : le goban à la fin de la variante, qui joue ensuite ; ni résultat ni camps.
+        const n = positions.length - 1, p = positions[n];
+        const etiquette = n === 0 ? tp('image.etudeSans') : n === 1 ? tp('image.etude1') : tp('image.etude', { n });
+        const titre = tp('image.trait', { camp: tp(p.toPlay === 1 ? 'image.noir' : 'image.blanc') });
+        const { creerImage } = await import('./imagePartie');
+        const blob = await creerImage({ size: p.size, board: p.board, dernier: p.lastMove ?? null, coup: n, noir: '', blanc: '', langue: lang, etude: { etiquette, titre } });
+        noter('image', await partagerFichier(new File([blob], nomFichierImage('etude', new Date()), { type: 'image/png' }), tx('partage.titreLien')));
+        return;
+      }
       const k = Math.max(0, Math.min(coup, positions.length - 1));
       const montre = k > 0 ? k : positions.length - 1;
       const p = positions[montre];
@@ -152,8 +177,8 @@ export function PartagePartie({ sgf, joueur, adversaire, coup, mode, onFermer }:
     if (occupe) return;
     // La partie seule (coups, taille, komi, règles, handicap, résultat) et le nom des deux camps : ni commentaire ni date.
     let texte = sgf;
-    try { texte = sgfAvecCamps(sgfPublic(sgf).sgf, camps()); } catch { /* SGF illisible : le fichier tel quel */ }
-    const fichier = new File([texte], nomFichierSgf(adv, new Date()), { type: 'application/x-go-sgf' });
+    try { texte = etude ? sgfPublic(sgf).sgf : sgfAvecCamps(sgfPublic(sgf).sgf, camps()); } catch { /* SGF illisible : le fichier tel quel */ }
+    const fichier = new File([texte], nomFichierSgf(etude ? 'etude' : adv, new Date()), { type: 'application/x-go-sgf' });
     const url = URL.createObjectURL(fichier);
     const a = document.createElement('a');
     a.href = url; a.download = fichier.name; a.rel = 'noopener';
@@ -209,7 +234,7 @@ export function PartagePartie({ sgf, joueur, adversaire, coup, mode, onFermer }:
   const message = etat.quoi === 'fait'
     ? etat.moyen === 'copie' ? tp('partage.copie') : etat.moyen === 'manuel' ? tp('partage.copierManuel')
       : etat.moyen === 'telechargement' ? tp('partage.telecharge') : etat.moyen === 'web_share' ? tp('partage.envoye') : ''
-    : etat.quoi === 'erreur' ? tp(etat.cle) : etat.quoi === 'prive' ? tp('partage.priveFait') : '';
+    : etat.quoi === 'erreur' ? tx(etat.cle) : etat.quoi === 'prive' ? tx('partage.priveFait') : '';
   const enLigne = online;
 
   return (
@@ -217,23 +242,24 @@ export function PartagePartie({ sgf, joueur, adversaire, coup, mode, onFermer }:
       onClick={e => { if (e.target === ref.current) ref.current?.close(); }}>
       <div className="partage-feuille">
         <div className="partage-tete">
-          <h2 id={`${id}-titre`} tabIndex={-1}>{tp('partage.titre')}</h2>
+          <h2 id={`${id}-titre`} tabIndex={-1}>{tx('partage.titre')}</h2>
           <button type="button" className="lien partage-fermer" onClick={() => ref.current?.close()}>{tp('partage.fermer')}</button>
         </div>
         <ul className="partage-choix-liste">
-          {compte && enLigne && choix('lien', 'partage.lien', tp('partage.lienAide'), () => { void lien(); })}
-          {choix('image', 'partage.image', coup > 0 ? tp('partage.imageAide', { coup }) : tp('partage.imageAideDebut'), () => { void image(); })}
+          {compte && enLigne && choix('lien', 'partage.lien', tx('partage.lienAide'), () => { void lien(); })}
+          {choix('image', etude ? 'etude.image' : 'partage.image', etude ? tp(coup > 0 ? 'etude.imageAide' : 'etude.imageAideDebut')
+            : coup > 0 ? tp('partage.imageAide', { coup }) : tp('partage.imageAideDebut'), () => { void image(); })}
           {choix('sgf', 'partage.sgf', tp('partage.sgfAide'), () => { void fichierSgf(); })}
-          {compte && enLigne && choix('defi', 'partage.defi', tp('partage.defiAide'), () => { void defi(); })}
+          {!etude && compte && enLigne && choix('defi', 'partage.defi', tp('partage.defiAide'), () => { void defi(); })}
         </ul>
         {!enLigne && <p className="partage-note">{fr(tp('partage.horsLigne'))}</p>}
-        {enLigne && !!db && !compte && session !== undefined && (!compteId || pseudo !== undefined) && <p className="partage-note">{fr(tp('partage.compte'))}</p>}
+        {enLigne && !!db && !compte && session !== undefined && (!compteId || pseudo !== undefined) && <p className="partage-note">{fr(tx('partage.compte'))}</p>}
         <p className={`partage-etat${etat.quoi === 'erreur' ? ' erreur' : ''}`} role="status" aria-live="polite">{fr(message)}</p>
         {etat.quoi === 'fait' && etat.lien && (
           <input className="partage-lien-texte" readOnly value={etat.lien} aria-label={tp('partage.copier')} onFocus={e => e.currentTarget.select()} />
         )}
         {jeton.current && etat.quoi !== 'cours' && (
-          <button type="button" className="lien partage-prive" onClick={() => { void rendrePrive(); }}>{tp('partage.prive')}</button>
+          <button type="button" className="lien partage-prive" onClick={() => { void rendrePrive(); }}>{tx('partage.prive')}</button>
         )}
       </div>
     </dialog>

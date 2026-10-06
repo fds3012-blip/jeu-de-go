@@ -84,3 +84,11 @@
 .lente-recherche .lien { justify-self: start; margin-left: -12px; }
 .lente-point { background: var(--or); }
 .lentes .defi-ligne-nom { overflow-wrap: anywhere; }
+
+/* #442 : attente après des parties quittées. Carte calme (pas de rouge, pas d'alarme), l'heure du retour en évidence. */
+.direct-delai { display: grid; gap: var(--space-2); min-width: 0; text-align: left; }
+.direct-delai p { margin: 0; text-wrap: pretty; overflow-wrap: anywhere; }
+.direct-delai-tete { display: flex; align-items: center; gap: var(--space-2); min-width: 0; }
+.direct-delai-titre { font-weight: var(--fw-bold); }
+.direct-delai-temps { font-size: 1.125rem; font-variant-numeric: tabular-nums; }
+.direct-prevenir { margin: 0 0 var(--space-2); text-wrap: pretty; }

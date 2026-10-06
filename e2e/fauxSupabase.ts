@@ -1,5 +1,6 @@
 import type { BrowserContext, Page, Route, WebSocketRoute } from '@playwright/test';
 import { parseActionRequest, planAction, type GameRow } from '../src/go/server';
+import { fusionner, nettoyer } from '../src/app/reglagesCompte';
 
 // Supabase simulé par interception réseau, partagé par les parcours du compte (#343) et du défi par lien (#81).
 // Le build de test lit l'adresse simulée dans le stockage local (`e2e.supabase`, voir src/data/supabase.ts).
@@ -31,10 +32,18 @@ import { parseActionRequest, planAction, type GameRow } from '../src/go/server';
 // règles et mêmes codes que supabase/migrations/20261005220100_securite_signalements.sql, sauf la fin de partie depuis
 // plus de 10 minutes) ; les INSERT de `messages_partie` sont poussés aux deux joueurs, sauf à celui qui a bloqué
 // l'auteur ; `find_match` n'apparie jamais deux joueurs dont l'un a bloqué l'autre.
+// Abandons répétés (#442) : `etat_abandons`, refus de `find_match` pendant l'attente (JGD01, `details` = fin de
+// l'attente, `hint` = minutes), plafond réduit des parties lentes (JGL11). Mêmes seuils que
+// supabase/migrations/20261006150100_abandons_repetes.sql (sans la règle des 10 dernières parties ni les refus) : un
+// test note les parties quittées (`noterAbandon`) sur l'horloge du serveur (`avancerHorloge`) ; une partie lente
+// perdue au temps ou annulée est notée pour le joueur qui devait jouer.
 // Émulation entre amis (#369) : `noter_go_du_jour` (le numéro envoyé fait foi : l'horloge du navigateur est figée),
 // `classement_go_du_jour`, `rappeler_go_du_jour` (notification `go_du_jour`), `bilan_semaine` (toutes les parties finies
 // entre humains comptent pour la semaine en cours), `mes_records` (historique de cote du joueur). Mêmes règles et mêmes
 // codes que supabase/migrations/20261005230100_emulation_amis.sql (sauf les limites de temps).
+// Réglages du compte (#448) : `enregistrer_reglages`, « dernier changement gagne » clé par clé (à égalité, la valeur
+// gardée reste), vrai compte exigé ; liste blanche de supabase/migrations/20261006123100_reglages_compte.sql
+// (src/app/reglagesCompte.ts). `reglages` : réglages gardés par compte.
 
 export const SUPABASE = 'https://supabase.e2e.test';
 export const CODE = '123456';
@@ -82,6 +91,19 @@ export function fauxServeur() {
   /** Décalage de l'horloge du serveur (#440) : la perte au temps se joue en jours. */
   let decalage = 0;
   const maintenant = () => Date.now() + decalage;
+  /** Parties quittées (#442) : joueur, file, heure du serveur. */
+  const abandons: { user: string; file: 'direct' | 'lente'; le: number }[] = [];
+  /** Règle du direct : 3 → 5 min, 4 → 30 min, 5 et plus → 24 h, sur 7 jours, après la dernière partie quittée. */
+  function regleAbandons(uid: unknown) {
+    const miennes = abandons.filter(a => a.user === uid && a.file === 'direct' && a.le > maintenant() - 7 * 864e5);
+    const n = miennes.length;
+    const delai = n >= 5 ? 1440 : n === 4 ? 30 : n === 3 ? 5 : null;
+    const dernier = Math.max(0, ...miennes.map(a => a.le));
+    const jusqua = delai && dernier + delai * 60_000 > maintenant() ? dernier + delai * 60_000 : null;
+    const lentes = abandons.filter(a => a.user === uid && a.file === 'lente' && a.le > maintenant() - 30 * 864e5).length;
+    return { n, delai, jusqua, lentes, plafond: lentes >= 3 ? 2 : lentes === 2 ? 5 : 10 };
+  }
+  function noterAbandon(user: string, file: 'direct' | 'lente' = 'direct', ilYaMs = 0) { abandons.push({ user, file, le: maintenant() - ilYaMs }); }
   const appels: string[] = [];
   const emailsEnvoyes: { email: string; type: string }[] = [];
   const autorisations: string[] = [];
@@ -96,6 +118,8 @@ export function fauxServeur() {
   /** Go du jour par joueur (#369) : numéro, état, essais, ordre de réussite. */
   const goDuJour: { user: string; numero: number; etat: 'en_cours' | 'reussi' | 'vu'; essais: number; le: number }[] = [];
   const rappels: { de: string; a: string; numero: number }[] = [];
+  /** Réglages du compte (#448), par identifiant de compte. */
+  const reglages = new Map<string, Record<string, { v: unknown; t: number }>>();
   const identite = (provider: string, email?: string): Identite => ({ identity_id: `identite-${++nIdentite}`, provider, email });
 
   const jwt = (u: Utilisateur) => {
@@ -256,6 +280,8 @@ export function fauxServeur() {
     const coups = String(g.moves);
     let perdantNoir = (coups.length / 2) % 2 === 0;
     if (g.rated && g.counting && g.dead_proposed_by) perdantNoir = g.dead_proposed_by !== g.black_id;
+    // #442 : partie lente laissée expirer, notée pour qui devait jouer.
+    if (g.rated) noterAbandon(String(perdantNoir ? g.black_id : g.white_id), 'lente');
     if (g.rated && coups.length < 4) {
       Object.assign(g, { status: 'aborted', counting: false });
       pousserPartie(g);
@@ -558,6 +584,13 @@ export function fauxServeur() {
       const { p_partie, p_type } = req.postDataJSON() as { p_partie?: string; p_type?: string };
       return json(marquer(n => n.destinataire_id === u.id && (!p_partie || n.partie_id === p_partie) && (!p_type || n.type === p_type)));
     }
+    if (chemin === '/rest/v1/rpc/enregistrer_reglages') {
+      if (!u || u.anonyme) return json({ code: 'JGC01', message: 'Crée ton compte pour garder tes réglages' }, 400);
+      const { p_reglages } = req.postDataJSON() as { p_reglages: unknown };
+      const r = fusionner(nettoyer(p_reglages), reglages.get(u.id) ?? {});
+      reglages.set(u.id, r);
+      return json(r);
+    }
     if (chemin === '/rest/v1/rpc/enregistrer_parties_perso') {
       // Comme le serveur : compte avec pseudo, clé unique par joueur, clés rendues (ajoutées ou déjà là).
       if (!u || u.anonyme) return json({ code: 'JGC01', message: 'Crée ton compte' }, 400);
@@ -580,6 +613,27 @@ export function fauxServeur() {
       const jeton = `P${String(partagees.length + 1).padStart(3, '0')}`.padEnd(32, 'x');
       partagees.push({ jeton, user_id: u.id, sgf: a.p_sgf, taille: a.p_taille, joueur: a.p_joueur, adversaire: a.p_adversaire, coup: a.p_coup });
       return json(jeton);
+    }
+    // #449 : étude partagée, comme 20261006134900_etudes_partagees.sql (sans plafonds) : même table, `objet` = `etude`,
+    // 9, 13 ou 19 lignes, au moins une pierre ou un coup, sans résultat ; `lire_partage` rend aussi `objet`.
+    if (chemin === '/rest/v1/rpc/partager_etude') {
+      if (!u || u.anonyme) return json({ code: 'JGC01', message: 'Crée ton compte' }, 400);
+      if (!profiles.find(x => x.id === u.id)?.username) return json({ code: 'JGP01', message: 'Choisis ton pseudo' }, 400);
+      const a = req.postDataJSON() as { p_sgf: string; p_taille: number; p_coup: number };
+      if (/(PB|PW|C|DT|PC|GC|RE)\[/.test(a.p_sgf) || ![9, 13, 19].includes(a.p_taille) || !a.p_sgf.includes(`SZ[${a.p_taille}]`)
+        || !/(A[BW]\[[a-s]{2}\]|;[BW]\[)/.test(a.p_sgf)) return json({ code: '22023', message: 'Étude illisible' }, 400);
+      const deja = partagees.find(x => x.user_id === u.id && x.sgf === a.p_sgf && x.objet === 'etude');
+      if (deja) { deja.coup = a.p_coup; return json(deja.jeton); }
+      const jeton = `E${String(partagees.length + 1).padStart(3, '0')}`.padEnd(32, 'x');
+      partagees.push({ jeton, user_id: u.id, sgf: a.p_sgf, taille: a.p_taille, joueur: null, adversaire: null, coup: a.p_coup, objet: 'etude' });
+      return json(jeton);
+    }
+    if (chemin === '/rest/v1/rpc/lire_partage') {
+      const { p_jeton } = req.postDataJSON() as { p_jeton: string };
+      const l = partagees.find(x => x.jeton === p_jeton);
+      if (!l) return json([]);
+      const pseudo = profiles.find(x => x.id === l.user_id)?.username ?? null;
+      return json([{ objet: l.objet ?? 'partie', sgf: l.sgf, taille: l.taille, joueur: l.joueur, adversaire: l.adversaire, coup: l.coup, pseudo, cree_le: new Date().toISOString() }]);
     }
     if (chemin === '/rest/v1/rpc/lire_partie_partagee') {
       const { p_jeton } = req.postDataJSON() as { p_jeton: string };
@@ -630,6 +684,8 @@ export function fauxServeur() {
       if (!profiles.find(x => x.id === u.id)?.username) return json({ code: 'JGP01', message: 'Choisis ton pseudo' }, 400);
       const enCours = directEnCours(u.id);
       if (enCours) { file.splice(0, file.length, ...file.filter(f => f.user !== u.id)); return json(enCours.id); }
+      const regle = regleAbandons(u.id);
+      if (regle.jusqua) return json({ code: 'JGD01', message: 'Tu as quitté plusieurs parties.', details: new Date(regle.jusqua).toISOString().replace(/\.\d{3}Z$/, 'Z'), hint: String(regle.delai) }, 400);
       const memes = (f: { taille: number; cadence: string; regles: string }) => f.taille === p_size && f.cadence === p_cadence && f.regles === p_regles;
       const moi = file.find(f => f.user === u.id && memes(f));
       const maintenant = Date.now();
@@ -654,6 +710,13 @@ export function fauxServeur() {
       }
       return json(null);
     }
+    if (chemin === '/rest/v1/rpc/etat_abandons') {
+      if (!u) return json({ code: '42501', message: 'Connexion requise' }, 401);
+      const r = regleAbandons(u.id);
+      const prochain = r.n + 1 >= 5 ? 1440 : r.n + 1 === 4 ? 30 : r.n + 1 === 3 ? 5 : null;
+      return json({ direct_abandons: r.n, direct_jusqu_a: r.jusqua ? new Date(r.jusqua).toISOString() : null, direct_delai_min: r.delai,
+        direct_prochain_min: prochain, lentes_expirees: r.lentes, lentes_plafond: r.plafond, maintenant: new Date(maintenant()).toISOString() });
+    }
     if (chemin === '/rest/v1/rpc/chercher_partie_lente') {
       const { p_size = 9, p_delai_jours = 1 } = (req.postDataJSON() ?? {}) as { p_size?: number; p_delai_jours?: number };
       if (!u || u.anonyme) return json({ code: 'JGC01', message: 'Crée ton compte' }, 400);
@@ -661,8 +724,11 @@ export function fauxServeur() {
       if (!moi?.username) return json({ code: 'JGP01', message: 'Choisis ton pseudo' }, 400);
       if (![9, 13, 19].includes(p_size) || ![1, 2, 3].includes(p_delai_jours)) return json({ code: '22023', message: 'Invalide' }, 400);
       const enCours = (id: unknown) => games.filter(g => g.rated && g.status === 'active' && defis.some(d => d.partie_id === g.id) && (g.black_id === id || g.white_id === id)).length;
-      if (enCours(u.id) >= 10) return json({ code: 'JGL10', message: 'Tu as déjà 10 parties lentes en cours' }, 400);
-      const autre = fileLente.find(f => f.user_id !== u.id && f.partie_id === null && f.size === p_size && f.delai_jours === p_delai_jours && enCours(f.user_id) < 10 && !estBloque(String(u.id), String(f.user_id)));
+      const plafond = regleAbandons(u.id).plafond;
+      if (enCours(u.id) >= plafond) {
+        return json(plafond < 10 ? { code: 'JGL11', message: 'Plafond réduit', details: String(plafond) } : { code: 'JGL10', message: 'Tu as déjà 10 parties lentes en cours' }, 400);
+      }
+      const autre = fileLente.find(f => f.user_id !== u.id && f.partie_id === null && f.size === p_size && f.delai_jours === p_delai_jours && enCours(f.user_id) < regleAbandons(f.user_id).plafond && !estBloque(String(u.id), String(f.user_id)));
       fileLente.splice(0, fileLente.length, ...fileLente.filter(f => f.user_id !== u.id));
       if (!autre) {
         fileLente.push({ user_id: u.id, size: p_size, delai_jours: p_delai_jours, rating: moi.rating ?? 800, rd: 350, created_at: new Date(maintenant()).toISOString(), partie_id: null });
@@ -886,9 +952,9 @@ export function fauxServeur() {
   function figerTempsReel() { for (const a of abonnes) a.fige = true; }
   /** Canaux rejoints sur une connexion qui marche, dont le sujet commence par `prefixe` (`defi-`, `direct-`). */
   const canauxActifs = (prefixe: string) => [...abonnes].filter(a => !a.fige).flatMap(a => [...a.canaux.keys()]).filter(t => t.startsWith(`realtime:${prefixe}`)).length;
-  return { traiter, brancherTempsReel, notifier, fileLente, tacheLentes, avancerHorloge, ralentirLectures, figerTempsReel, canauxActifs, pousses, pousserPartie, appels, games, defis, notifications, partiesPerso, partagees, profiles, ratingHistory, emailsEnvoyes, sessionAnonyme, file, pendules,
+  return { traiter, brancherTempsReel, notifier, fileLente, tacheLentes, avancerHorloge, abandons, noterAbandon, ralentirLectures, figerTempsReel, canauxActifs, pousses, pousserPartie, appels, games, defis, notifications, partiesPerso, partagees, profiles, ratingHistory, emailsEnvoyes, sessionAnonyme, file, pendules,
     compteExistant, compteGoogle, compteSocial, relierIdentite, liaison, utilisateur, sessionCompte, autorisations, amities,
-    signalements, blocages, messagesPartie, goDuJour, rappels };
+    signalements, blocages, messagesPartie, goDuJour, rappels, reglages };
 }
 
 export type FauxServeur = ReturnType<typeof fauxServeur>;

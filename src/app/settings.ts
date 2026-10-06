@@ -3,6 +3,7 @@ import { themeGoban, type IdThemeGoban, type ThemeGoban } from '../ui/boardArt';
 import { lireXp, niveauDe, themeDebloque } from './xp';
 import { installAudioUnlock, setSoundEnabled } from '../ui/sound';
 import { setHapticsEnabled } from '../ui/haptics';
+import { noterReglage } from './reglagesDates';
 import type { ReglageAide } from './partie';
 import type { Cadence } from '../go/pendule';
 
@@ -11,13 +12,14 @@ import type { Cadence } from '../go/pendule';
 // #365 (joueur de club) : `coordonnees` (lettres et chiffres autour du goban des parties et de la revue), `dernierCoup`
 // (rond sur la dernière pierre posée), `numerosRevue` (numéros des coups sur les pierres, en revue), `cadence` (temps
 // de jeu proposé d'abord pour une partie en direct), `serieVisible` (flamme, record et fêtes de série). Gardés sur
-// l'appareil seulement : aucun mécanisme de réglages de compte n'existe encore (voir docs/game-design/joueur-de-club.md).
+// l'appareil ; avec un compte, aussi synchronisés entre ses appareils (#448, src/data/reglages.ts).
 export interface Settings {
   theme: 'auto' | 'dark' | 'light'; confirmTouch: boolean; size: 9 | 13 | 19; sound: boolean; vibrations: boolean; celebrations: boolean; aide: ReglageAide;
   coordonnees: boolean; dernierCoup: boolean; numerosRevue: boolean; cadence: Cadence; serieVisible: boolean;
 }
 const KEY = 'go.settings.v1';
-const DEFAULTS: Settings = {
+/** Valeurs par défaut (#448 : un réglage jamais changé n'est pas envoyé au serveur). */
+export const DEFAULTS: Settings = {
   theme: 'auto', confirmTouch: true, size: 9, sound: true, vibrations: true, celebrations: true, aide: 'auto',
   coordonnees: true, dernierCoup: true, numerosRevue: false, cadence: 'normale', serieVisible: true,
 };
@@ -57,10 +59,30 @@ export function usePreferences(): Preferences {
   return useSyncExternalStore(abonnerPrefs, () => preferences, () => preferences);
 }
 
+// Réglages partagés par tous les écrans (#448 : la synchronisation du compte les change aussi, sans passer par React).
+let courant: Settings = read();
+const abonnesSettings = new Set<() => void>();
+const abonnerSettings = (fn: () => void) => { abonnesSettings.add(fn); return () => { abonnesSettings.delete(fn); }; };
+
+/** Réglages courants (lecture hors React). */
+export const settingsCourants = (): Settings => courant;
+
+/**
+ * Change des réglages sans noter de date de changement : sert à la synchronisation du compte (#448), qui applique
+ * les valeurs reçues du serveur. Les changements du joueur passent par `useSettings`, qui note la date.
+ */
+export function appliquerSettings(patch: Partial<Settings>): void {
+  const s = lireSettings({ ...courant, ...patch });
+  if ((Object.keys(s) as (keyof Settings)[]).every(k => s[k] === courant[k])) return;
+  courant = s;
+  try { localStorage.setItem(KEY, JSON.stringify(s)); } catch { /* stockage indisponible */ }
+  publierPreferences(s);
+  abonnesSettings.forEach(fn => fn());
+}
+
 export function useSettings(): [Settings, (patch: Partial<Settings>) => void] {
-  const [s, setS] = useState<Settings>(read);
+  const s = useSyncExternalStore(abonnerSettings, settingsCourants, settingsCourants);
   useEffect(() => {
-    try { localStorage.setItem(KEY, JSON.stringify(s)); } catch { /* stockage indisponible */ }
     const root = document.documentElement;
     if (s.theme === 'auto') root.removeAttribute('data-theme'); else root.setAttribute('data-theme', s.theme);
     // Sons du goban (réglage « Sons ») : le contexte audio démarre au premier geste.
@@ -69,7 +91,11 @@ export function useSettings(): [Settings, (patch: Partial<Settings>) => void] {
     setHapticsEnabled(s.vibrations);
     publierPreferences(s);
   }, [s]);
-  return [s, patch => setS(prev => ({ ...prev, ...patch }))];
+  return [s, patch => {
+    // #448 : chaque réglage vraiment changé par le joueur est daté, pour la synchronisation entre ses appareils.
+    for (const k of Object.keys(patch) as (keyof Settings)[]) if (patch[k] !== undefined && patch[k] !== courant[k]) noterReglage(k);
+    appliquerSettings(patch);
+  }];
 }
 
 export function useStored<T>(key: string, initial: T): [T, (v: T) => void] {
@@ -90,7 +116,14 @@ export function lireThemeGoban(): IdThemeGoban {
   return themeDebloque(t.id, niveauDe(lireXp()).niveau) ? t.id : 'kaya';
 }
 
-export function choisirThemeGoban(id: IdThemeGoban): void {
+/** Lit le décor choisi tel qu'il est gardé (sans le contrôle du niveau) : sert à la synchronisation (#448). */
+export function themeGobanGarde(): IdThemeGoban | null {
+  try { const id = JSON.parse(localStorage.getItem(THEME_GOBAN_KEY) || 'null') as unknown; return typeof id === 'string' ? themeGoban(id).id : null; } catch { return null; }
+}
+
+/** Décor choisi dans le Profil. `noter` : faux quand il vient du serveur (#448), pour ne pas le dater de nouveau. */
+export function choisirThemeGoban(id: IdThemeGoban, noter = true): void {
+  if (noter) noterReglage('themeGoban');
   try { localStorage.setItem(THEME_GOBAN_KEY, JSON.stringify(id)); } catch { /* le choix reste pour la session */ }
   abonnesTheme.forEach(fn => fn());
 }

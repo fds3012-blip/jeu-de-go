@@ -15,6 +15,55 @@ export type Database = {
   }
   public: {
     Tables: {
+      abandons: {
+        Row: {
+          cree_le: string
+          file: string
+          id: number
+          joueur_id: string
+          motif: string
+          partie_id: string | null
+        }
+        Insert: {
+          cree_le?: string
+          file: string
+          id?: never
+          joueur_id: string
+          motif: string
+          partie_id?: string | null
+        }
+        Update: {
+          cree_le?: string
+          file?: string
+          id?: never
+          joueur_id?: string
+          motif?: string
+          partie_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "abandons_joueur_id_fkey"
+            columns: ["joueur_id"]
+            isOneToOne: false
+            referencedRelation: "leaderboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "abandons_joueur_id_fkey"
+            columns: ["joueur_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "abandons_partie_id_fkey"
+            columns: ["partie_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       abonnements_rappel: {
         Row: {
           auth: string
@@ -735,6 +784,7 @@ export type Database = {
           empreinte: string
           jeton: string
           joueur: number | null
+          objet: string
           sgf: string
           taille: number
           user_id: string
@@ -746,6 +796,7 @@ export type Database = {
           empreinte: string
           jeton: string
           joueur?: number | null
+          objet?: string
           sgf: string
           taille: number
           user_id: string
@@ -757,6 +808,7 @@ export type Database = {
           empreinte?: string
           jeton?: string
           joueur?: number | null
+          objet?: string
           sgf?: string
           taille?: number
           user_id?: string
@@ -1087,6 +1139,24 @@ export type Database = {
           },
         ]
       }
+      reglages_compte: {
+        Row: {
+          modifie_le: string
+          reglages: Json
+          user_id: string
+        }
+        Insert: {
+          modifie_le?: string
+          reglages?: Json
+          user_id: string
+        }
+        Update: {
+          modifie_le?: string
+          reglages?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
       signalements: {
         Row: {
           auteur_id: string | null
@@ -1200,6 +1270,15 @@ export type Database = {
       }
     }
     Functions: {
+      abandons_direct: {
+        Args: { p_uid: string }
+        Returns: {
+          abandons: number
+          delai: unknown
+          dernier: string
+          jusqu_a: string
+        }[]
+      }
       accepter_conditions: { Args: { p_version: string }; Returns: string }
       apply_game_rating: {
         Args: { p_game: string; p_loser: string; p_winner: string }
@@ -1269,6 +1348,8 @@ export type Database = {
         Returns: string
       }
       direct_en_cours: { Args: { p_uid: string }; Returns: string }
+      en_attente_abandons: { Args: { p_uid: string }; Returns: boolean }
+      etat_abandons: { Args: never; Returns: Json }
       demander_ami: { Args: { p_pseudo: string }; Returns: string }
       enregistrer_abonnement_rappel: {
         Args: {
@@ -1282,6 +1363,7 @@ export type Database = {
         Returns: string
       }
       enregistrer_parties_perso: { Args: { p_parties: Json }; Returns: string[] }
+      enregistrer_reglages: { Args: { p_reglages: Json }; Returns: Json }
       lire_partie_partagee: {
         Args: { p_jeton: string }
         Returns: {
@@ -1293,6 +1375,23 @@ export type Database = {
           sgf: string
           taille: number
         }[]
+      }
+      lire_partage: {
+        Args: { p_jeton: string }
+        Returns: {
+          adversaire: string | null
+          coup: number
+          cree_le: string
+          joueur: number | null
+          objet: string
+          pseudo: string | null
+          sgf: string
+          taille: number
+        }[]
+      }
+      partager_etude: {
+        Args: { p_coup: number; p_sgf: string; p_taille: number }
+        Returns: string
       }
       partager_partie: {
         Args: { p_adversaire: string | null; p_coup: number; p_joueur: number | null; p_sgf: string; p_taille: number }
@@ -1361,6 +1460,8 @@ export type Database = {
         Returns: string
       }
       lentes_en_cours: { Args: { p_uid: string }; Returns: number }
+      plafond_lentes: { Args: { p_uid: string }; Returns: number }
+      purger_abandons: { Args: never; Returns: number }
       lentes_tache: {
         Args: never
         Returns: {

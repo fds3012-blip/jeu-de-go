@@ -45,6 +45,18 @@ Table `file_lente`, à part de la file du direct (`match_queue`, purgée à 30 s
 - L'appariement se tente à chaque recherche, et par la tâche planifiée (deux joueurs qui attendent, devenus compatibles avec le temps, sont appariés sans revenir).
 - Couleurs tirées au sort. Le joueur absent garde la partie dans sa ligne (`partie_id`) : l'accueil dit « Adversaire trouvé ! » ; l'ouvrir efface la ligne (`quitter_file_lente`). Noir absent reçoit aussi la notification « À toi de jouer » (#367).
 
+## Parties laissées expirer (#442)
+
+Une partie lente dont le délai passe sans coup fait attendre l'adversaire des jours. Une seule, c'est la vie (vacances, oubli) ; plusieurs, c'est prendre plus de parties qu'on n'en peut mener. La règle réduit donc le **nombre de parties lentes à la fois**, jamais la cote.
+
+- **Compté** : délai dépassé par le joueur qui devait jouer (ou répondre au comptage) : perte au temps, ou partie annulée avant un coup chacun. **Pas compté** : abandon propre, compte accepté, défi entre amis.
+- **Fenêtre** : 30 jours glissants.
+- **Plafond de parties lentes en cours** : 0 ou 1 expirée → 10 (inchangé) ; 2 → 5 ; 3 et plus → 2. Les parties déjà en cours continuent ; seules les nouvelles recherches sont limitées (`chercher_partie_lente` refuse avec `JGL11`, `detail` = le plafond) et la file ne l'apparie pas au-delà (`lente_apparier`, redéfinie à partir de la forme de #363).
+- **Ce que voit le joueur** (écran Parties lentes) : à 1 partie expirée, « Si une autre partie expire, tu pourras en mener 5 à la fois pendant 30 jours. » ; au plafond réduit, « Tu as laissé expirer plusieurs parties. Pendant 30 jours, tu peux en mener 2 à la fois. » (avec « Finis-en une pour en commencer une autre. » quand il est atteint). Français et anglais (`src/content/i18n/lente.ts`).
+- Le direct et les parties lentes ont chacun leur compteur : une partie lente expirée n'ajoute pas d'attente au direct.
+
+Migration : `supabase/migrations/20261006150100_abandons_repetes.sql`. Règle du direct : `docs/game-design/partie-en-direct.md` (« Parties quittées »). Mesure : `lente_plafond_reduit` (`plafond`, `atteint`).
+
 ## Sécurité
 
 - Compte avec pseudo exigé (`exiger_compte_avec_pseudo`, JGC01 / JGP01).
@@ -64,4 +76,4 @@ Table `file_lente`, à part de la file du direct (`match_queue`, purgée à 30 s
 
 ## Tests
 
-`supabase/tests/parties_lentes.test.sql`, `src/app/lente.test.ts`, `src/data/lente.test.ts`, `e2e/parties-lentes.spec.ts` (deux téléphones, horloge du serveur simulée).
+`supabase/tests/parties_lentes.test.sql`, `supabase/tests/abandons_repetes.test.sql` (#442), `src/app/lente.test.ts`, `src/data/lente.test.ts`, `e2e/parties-lentes.spec.ts` (deux téléphones, horloge du serveur simulée).

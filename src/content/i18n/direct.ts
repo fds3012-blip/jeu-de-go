@@ -77,6 +77,15 @@ const FR = {
   'direct.rejouer': 'Rejouer',
   'direct.revoir': 'Revoir la partie',
   'direct.accueil': 'Retour à l’accueil',
+  // #442 : parties quittées à répétition. Dit sans reproche, avec l'heure du retour et une seule action.
+  'direct.erreur.attente': 'Tu as quitté plusieurs parties. Attends un peu avant de rejouer en direct.',
+  'direct.abandons.titre': 'Tu as quitté plusieurs parties.',
+  'direct.abandons.rejouer': 'Tu peux rejouer en direct dans {temps}.',
+  'direct.abandons.pourquoi': 'Quand une partie est quittée, l’adversaire attend pour rien. Ta cote, elle, ne bouge pas.',
+  'direct.abandons.regle': 'Trois parties quittées en 7 jours : 5 min d’attente. Puis 30 min, puis 24 h.',
+  'direct.abandons.ordi': 'Jouer contre l’ordi en attendant',
+  'direct.abandons.prevenir': 'Encore une partie quittée, et tu attendras {delai} avant de rejouer en direct. Si tu dois partir, abandonne : ça ne compte pas.',
+  'direct.veille.avertissement': 'Rester annule la partie de ce joueur. Refuser souvent compte comme quitter une partie.',
 } as const;
 
 export type CleDirect = keyof typeof FR;
@@ -154,6 +163,14 @@ const EN: { readonly [K in CleDirect]: string } = {
   'direct.rejouer': 'Play again',
   'direct.revoir': 'Review the game',
   'direct.accueil': 'Back to home',
+  'direct.erreur.attente': 'You left several games. Wait a little before playing live again.',
+  'direct.abandons.titre': 'You left several games.',
+  'direct.abandons.rejouer': 'You can play live again in {temps}.',
+  'direct.abandons.pourquoi': 'When a game is left, the opponent waits for nothing. Your rating doesn’t change.',
+  'direct.abandons.regle': 'Three games left in 7 days: a 5 min wait. Then 30 min, then 24 h.',
+  'direct.abandons.ordi': 'Play the computer meanwhile',
+  'direct.abandons.prevenir': 'Leave one more game and you’ll wait {delai} before playing live again. If you have to go, resign: that doesn’t count.',
+  'direct.veille.avertissement': 'Staying cancels this player’s game. Refusing often counts as leaving a game.',
 };
 
 export const CATALOGUE_DIRECT: Record<Langue, { readonly [K in CleDirect]: string }> = { fr: FR, en: EN };
