@@ -116,11 +116,11 @@ test('sans compte : leçons 1 à 3 libres, la leçon 4 porte le verrou « compte
   const carte = page.getByTestId('prochaine-lecon');
   await expect(carte.getByRole('button', { name: 'Leçon 3 : Techniques de capture, prochaine étape' })).toBeVisible();
   await expect(carte.locator('.pas-compte')).toHaveCount(0);
-  // Leçons 4 à 16 : verrou « compte », jamais désactivées.
+  // Leçons 4 à 20 : verrou « compte », jamais désactivées.
   const l4 = page.getByRole('button', { name: 'Leçon 4 : Le ko, avec un compte' });
   await expect(l4).toBeEnabled();
   await expect(l4).toHaveAttribute('data-compte', 'true');
-  await expect(page.locator('.pierre-compte')).toHaveCount(13);
+  await expect(page.locator('.pierre-compte')).toHaveCount(17);
   await expect(l4.getByText('Avec un compte')).toBeVisible();
   await sansDebord(page);
   await l4.scrollIntoViewIfNeeded();

@@ -938,7 +938,7 @@ export const en = {
   'apprendre.pas.faite': ', done',
   'apprendre.pas.encours': ', up next',
   'apprendre.bientot': 'Coming soon',
-  'apprendre.bientot.texte': 'Two more chapters are on the way, up to club player level.',
+  'apprendre.bientot.texte': 'One more chapter is on the way, and new lessons up to first dan.',
   'apprendre.avenir.3': 'Shape and tesuji, the clever moves',
   'apprendre.avenir.4': 'Opening on 19\u00A0×\u00A019',
   'apprendre.revoir': 'Review',

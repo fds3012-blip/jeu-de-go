@@ -735,7 +735,7 @@ export const frEcrans = {
   'apprendre.pas.faite': ', terminée',
   'apprendre.pas.encours': ', prochaine étape',
   'apprendre.bientot': 'Bientôt',
-  'apprendre.bientot.texte': 'Deux autres chapitres sont en préparation, jusqu’au niveau des joueurs de club.',
+  'apprendre.bientot.texte': 'Un autre chapitre est en préparation, et de nouvelles leçons jusqu’au premier dan.',
   'apprendre.avenir.3': 'Formes et tesuji, les coups astucieux',
   'apprendre.avenir.4': 'Ouverture en 19\u00A0×\u00A019',
   'apprendre.revoir': 'Revoir',

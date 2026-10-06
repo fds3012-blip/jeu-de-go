@@ -24,7 +24,7 @@ const ORIGINAUX: [Cle, string, boolean?][] = [
   ['apprendre.chapitre.termine', 'Chapitre terminé.'],
   ['apprendre.chapitre.suite', 'Tout est fait. La suite arrive bientôt.'],
   ['apprendre.bientot', 'Bientôt'],
-  ['apprendre.bientot.texte', 'Deux autres chapitres sont en préparation, jusqu’au niveau des joueurs de club.'],
+  ['apprendre.bientot.texte', 'Un autre chapitre est en préparation, et de nouvelles leçons jusqu’au premier dan.'],
   ['lecon.terminer', 'Terminer la leçon'],
   ['lecon.retourChemin', 'Retour au chemin'],
   ['lecon.taReponse', 'Ta réponse'],
