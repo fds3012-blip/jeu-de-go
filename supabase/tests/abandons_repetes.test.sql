@@ -114,10 +114,16 @@ begin
   execute 'set local role authenticated';
   perform pg_temp.connecte(p_a);
   if public.chercher_partie_lente() is not null then raise exception 'ÉCHEC lente : A ne devait pas trouver'; end if;
+  -- A attend depuis 24 heures : l'écart de cote accepté (+ 50 points par heure) couvre les cotes qui ont bougé plus haut
+  -- dans le test, au hasard des couleurs tirées par find_match. Sans cela, l'appariement échouait par l'écart de cote
+  -- (règle voulue de #440), pas par la règle testée ici.
+  execute 'reset role';
+  update public.file_lente set created_at = now() - interval '24 hours' where user_id = p_a;
+  execute 'set local role authenticated';
   perform pg_temp.connecte(p_b);
   v := public.chercher_partie_lente();
   execute 'reset role';
-  if v is null then raise exception 'ÉCHEC lente : pas de partie'; end if;
+  if v is null then raise exception 'ÉCHEC lente : pas de partie (file : %)', (select json_agg(q) from public.file_lente q); end if;
   perform set_config('request.jwt.claims', '{}', true);
   delete from public.file_lente where user_id in (p_a, p_b);
   return v;
@@ -361,7 +367,9 @@ select pg_temp.connecte(:fanny);
 select pg_temp.doit_refuser($$select public.chercher_partie_lente()$$, 'JGL11');
 reset role;
 -- La file ne l'apparie pas non plus (tâche planifiée) : sa ligne attend sans partie.
-insert into public.file_lente (user_id, size, delai_jours, rating, rd) values (:fanny, 9, 1, 800, 350);
+-- Ligne d'attente de 24 heures, à la vraie cote de Fanny : seul le plafond peut empêcher l'appariement (contrôle plus bas).
+insert into public.file_lente (user_id, size, delai_jours, rating, rd, created_at)
+  select id, 9, 1, rating, cote_rd, now() - interval '24 hours' from public.profiles where id = :fanny;
 set local role authenticated;
 select pg_temp.connecte(:karl);
 select pg_temp.egal(public.chercher_partie_lente(), null::uuid, 'Karl n''est pas apparié avec Fanny au plafond');
@@ -369,6 +377,12 @@ reset role;
 -- 30 jours plus tard : plafond rendu.
 update public.abandons set cree_le = now() - interval '31 days' where joueur_id = :fanny and file = 'lente';
 select pg_temp.egal(pg_temp.etat(:fanny) ->> 'lentes_plafond', '10', '30 jours plus tard : 10 au plus');
+-- Contrôle : plafond rendu, la tâche planifiée apparie maintenant Fanny et Karl (c'était bien le plafond qui bloquait).
+select set_config('request.jwt.claims', '{}', true);
+select public.lentes_tache();
+select pg_temp.egal((select count(*) from public.games g join public.defis d on d.partie_id = g.id
+  where g.status = 'active' and g.rated and :fanny in (g.black_id, g.white_id) and :karl in (g.black_id, g.white_id)), 1::bigint,
+  'plafond rendu : Fanny et Karl appariés par la tâche');
 -- Les parties lentes ne comptent pas pour le direct, et inversement.
 select pg_temp.egal(pg_temp.etat(:fanny) ->> 'direct_abandons', '1', 'Fanny : seule la partie en direct « jamais venue » compte au direct');
 
