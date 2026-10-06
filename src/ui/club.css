@@ -1,0 +1,91 @@
+/* Joueur de club (#365, #368, #372) : aperçu des réglages, « Mes statistiques », « Étudier une position ».
+   Chargée avec le Profil et ses sous-écrans (hors de la feuille initiale : budget CSS). Rôles du thème seulement :
+   contraste AA vérifié par tokens.test.ts dans les deux modes. */
+
+/* ---------- #365 : aperçu du goban en tête des Réglages ---------- */
+.reglages-apercu { margin: 0 0 var(--space-3); display: grid; justify-items: center; gap: var(--space-1); }
+.reglages-apercu .board-wrap { width: min(176px, 48vw); }
+.reglages-apercu figcaption { margin: 0; }
+
+/* ---------- #368 : Mes statistiques ---------- */
+.mstats { display: grid; gap: var(--space-3); padding-bottom: calc(var(--cible-cta) + var(--relief) + var(--space-5)); }
+.mstats p { margin: 0; }
+.mstats-mochi { display: flex; gap: var(--space-2); align-items: flex-start; }
+.mstats-bulle { flex: 1; min-width: 0; padding: var(--space-2) var(--space-3); border-radius: var(--radius); background: var(--surface-2); color: var(--text); }
+.mstats-carte { display: grid; gap: var(--space-2); padding: var(--space-3); border-radius: var(--radius); background: var(--surface); min-width: 0; }
+.mstats-carte h3 { margin: 0; font-size: var(--fs-m); }
+.mstats-grand { font-family: var(--font-titre); font-size: var(--fs-2xl); font-weight: var(--fw-titre); line-height: 1.1; font-variant-numeric: tabular-nums; }
+.mstats-cote-chiffre { display: flex; align-items: baseline; gap: var(--space-3); flex-wrap: wrap; }
+.mstats-cote-grade { font-weight: var(--fw-bold); color: var(--accent-texte); }
+.mstats-erreur { display: grid; gap: var(--space-2); justify-items: start; }
+
+.mstats-courbe { margin: 0; display: grid; gap: var(--space-1); }
+.mstats-courbe-cadre { position: relative; }
+.mstats-courbe svg { width: 100%; height: 88px; display: block; background: var(--bg); border-radius: var(--radius-s); }
+.mstats-courbe-ligne { fill: none; stroke: var(--courbe-ligne); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+.mstats-courbe-point { position: absolute; width: 9px; height: 9px; margin: -4.5px 0 0 -4.5px; border-radius: 50%; background: var(--courbe-curseur); }
+.mstats-courbe-borne { position: absolute; left: var(--space-2); font-size: var(--fs-xs); color: var(--muted); font-variant-numeric: tabular-nums; }
+.mstats-courbe-borne.haut { top: 2px; }
+.mstats-courbe-borne.bas { bottom: 2px; }
+
+.mstats-phases { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2); }
+.mstats-phases li { display: grid; grid-template-columns: minmax(6.5em, auto) 1fr 2.6em; align-items: center; gap: var(--space-2); }
+.mstats-phase-nom { font-size: var(--fs-s); }
+.mstats-phase-barre { height: 10px; border-radius: 5px; background: var(--surface-2); overflow: hidden; }
+.mstats-phase-barre span { display: block; height: 100%; border-radius: inherit; background: var(--muted); transform-origin: left center; }
+.mstats-phases li.faible .mstats-phase-barre span { background: var(--recompense); }
+.mstats-phases li.faible .mstats-phase-nom { font-weight: var(--fw-bold); }
+.mstats-phase-valeur { text-align: right; font-variant-numeric: tabular-nums; font-weight: var(--fw-bold); }
+/* Les barres poussent une fois à l'ouverture : elles montrent qu'on mesure, sans rien retarder (fixes en mouvements réduits). */
+@media (prefers-reduced-motion: no-preference) {
+  .mstats-phase-barre span { animation: stats-barre 420ms cubic-bezier(.2, .8, .2, 1) both; }
+  .mstats-phases li:nth-child(2) .mstats-phase-barre span { animation-delay: 50ms; }
+  .mstats-phases li:nth-child(3) .mstats-phase-barre span { animation-delay: 100ms; }
+}
+@keyframes stats-barre { from { transform: scaleX(0); } }
+
+.mstats-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; table-layout: fixed; }
+.mstats-table th, .mstats-table td { padding: var(--space-1) var(--space-1); text-align: right; font-size: var(--fs-s); overflow-wrap: anywhere; }
+.mstats-table th:first-child { text-align: left; width: 38%; }
+.mstats-table thead th { color: var(--muted); font-weight: var(--fw-normal, 400); font-size: var(--fs-xs); }
+.mstats-table tbody tr + tr { border-top: 1px solid var(--line); }
+.mstats-table + .mstats-table { margin-top: var(--space-2); }
+
+/* ---------- #372 : Étudier une position ---------- */
+.etude { display: grid; gap: var(--space-2); padding-bottom: calc(var(--cible-cta) + var(--relief) + var(--space-5)); }
+.etude p { margin: 0; }
+.etude-tete { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); flex-wrap: wrap; }
+.etude-tete h2 { margin: 0; font-size: var(--fs-l); }
+.etude-seg { display: flex; gap: var(--space-1); }
+.etude-seg button { min-height: var(--cible-bouton); min-width: var(--cible-bouton); display: inline-flex; align-items: center; justify-content: center;
+  gap: var(--space-1); padding: 0 var(--space-2); white-space: nowrap; border-radius: var(--radius-s); border: 2px solid var(--line);
+  background: var(--surface); color: var(--text); font: inherit; font-size: var(--fs-s); }
+.etude-seg button:active { background: var(--surface-2); }
+.etude-seg button[aria-pressed="true"] { border-color: var(--accent-texte); background: var(--surface-2); font-weight: var(--fw-bold); }
+.etude-outils { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.etude-outils button { padding: 0 var(--space-1); }
+.etude .stone { width: 16px; height: 16px; }
+.etude-trait { display: flex; align-items: center; gap: var(--space-2); }
+.etude-trait-libelle { font-size: var(--fs-s); color: var(--muted); }
+.etude-ligne { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); flex-wrap: wrap; }
+.etude-ligne .etude-actions { display: flex; gap: var(--space-1); flex-wrap: wrap; }
+.etude-actions .btn { padding: 0 var(--space-3); }
+.etude-plateau { position: relative; margin-inline: auto; width: 100%; }
+.etude-calque { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.etude-candidat circle { fill: var(--jade); fill-opacity: .6; stroke: var(--jade-bord); stroke-width: 2.4; }
+.etude-candidat text { fill: var(--encre-jade); font-weight: 800; font-family: var(--font-ui); }
+.etude-resultat { display: grid; gap: var(--space-1); padding: var(--space-2) var(--space-3); border-radius: var(--radius); background: var(--surface); }
+.etude-resultat ol { margin: 0; padding-left: 1.4em; font-size: var(--fs-s); }
+.etude-refus { color: var(--danger-texte); }
+.etude-sans-katago { display: grid; gap: var(--space-2); justify-items: start; padding: var(--space-2) var(--space-3); border-radius: var(--radius); background: var(--surface); }
+.etude-secondaires { display: flex; gap: var(--space-3); flex-wrap: wrap; justify-content: center; }
+.etude-secondaires .lien { min-height: var(--cible-bouton); }
+@media (prefers-reduced-motion: no-preference) {
+  .etude-candidat { animation: etude-candidat 220ms cubic-bezier(.2, .8, .2, 1) both; }
+}
+@keyframes etude-candidat { from { opacity: 0; } }
+
+/* « Étudier une position » sous « Analyser une partie jouée ailleurs », dans Mes parties (#372). */
+.mp-parties-importer.mp-parties-etude { margin-top: 0; }
+/* Zoom 200 % (≈ 195 px de large) : les quatre outils passent sur deux rangées, sans défilement de côté. */
+@media (max-width: 300px) { .etude-outils { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

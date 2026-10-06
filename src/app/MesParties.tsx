@@ -20,6 +20,7 @@ import { Reflexion } from '../ui/Reflexion';
 import { IconeReglage } from '../ui/IconesReglages';
 import { fr } from '../ui/typo';
 import { t } from '../content/i18n/secondaires';
+import { tk } from '../content/i18n/club';
 import '../ui/historique.css';
 
 /** Visites de KataGo par position pour une partie importée : mêmes réglages que l'import (ImportSgf.tsx). */
@@ -33,6 +34,8 @@ interface Props {
   onJouer: () => void;
   /** « Analyser une partie jouée ailleurs » (#286) : action secondaire, en bas de la liste. */
   onImporter?: () => void;
+  /** « Étudier une position » (#372) : action secondaire, sous « Analyser une partie jouée ailleurs ». */
+  onEtudier?: () => void;
   /** Client Supabase et identifiant de session : défis par lien terminés et parties du compte. Sans eux, l'appareil seulement. */
   db?: Db | null;
   userId?: string;
@@ -66,7 +69,7 @@ function SceauIssue({ p }: { p: PartieHistorique }) {
   );
 }
 
-export function MesParties({ onRetour, onJouer, onImporter, db = null, userId, confirmTouch = false }: Props) {
+export function MesParties({ onRetour, onJouer, onImporter, onEtudier, db = null, userId, confirmTouch = false }: Props) {
   const [appareil] = useState(historiqueAppareil);
   const [defis, setDefis] = useState<PartieHistorique[]>([]);
   const [duCompte, setDuCompte] = useState<PartieHistorique[]>([]);
@@ -122,10 +125,19 @@ export function MesParties({ onRetour, onJouer, onImporter, db = null, userId, c
     );
   }
 
-  const importer = onImporter && (
-    <button type="button" className="lien mp-parties-importer" onClick={onImporter}>
-      <IconeReglage id="importer" taille={20} />{t('historique.importer')}
-    </button>
+  const importer = (onImporter || onEtudier) && (
+    <>
+      {onImporter && (
+        <button type="button" className="lien mp-parties-importer" onClick={onImporter}>
+          <IconeReglage id="importer" taille={20} />{t('historique.importer')}
+        </button>
+      )}
+      {onEtudier && (
+        <button type="button" className="lien mp-parties-importer mp-parties-etude" onClick={onEtudier} data-testid="lien-etude">
+          <IconeReglage id="etude" taille={20} />{tk('etude.titre')}
+        </button>
+      )}
+    </>
   );
   const statut = etat === 'chargement' ? t('defi.historique.chargement') : etat === 'hors-ligne' ? t('defi.historique.horsLigne') : etat === 'erreur' ? t('defi.historique.erreur') : null;
 

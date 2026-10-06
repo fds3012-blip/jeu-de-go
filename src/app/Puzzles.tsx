@@ -23,6 +23,7 @@ import { EVENTS, track } from '../data/analytics';
 import { gagnerXp, sourceXpProbleme } from './xp';
 import { aideSuivante, recompense, refutation, reponseVue, toucherApresErreur, type NiveauAide, type Refutation } from './aide';
 import { prefersReducedMotion, readLocal, useOnline, writeLocal } from './hooks';
+import { usePreferences } from './settings';
 import { niveau, prochainAMesure } from './problemes';
 import { aContinuer, aSuivre, ordrePaliers, palierEnCours, paliers, paliersVisibles, type Palier } from './paliers';
 import { SceauLecon } from '../ui/SceauLecon';
@@ -622,6 +623,8 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
 }) {
   // #236 (N2) : un problème est un exercice ; aucune fête ne se pose sur sa consigne (l'XP se lit dans la feuille).
   useExercice(exercice);
+  // #365 : « Montrer la série » éteint, pas de série sur la réussite du Go du jour ni dans le partage.
+  const { serieVisible } = usePreferences();
   const start = useMemo(() => startOf(puzzle), [puzzle]);
   // Aide graduée (#197) : indice, puis réfutation, puis réponse.
   const [aide, setAide] = useState<NiveauAide>(0);
@@ -769,7 +772,7 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
   // « Partager » reste l'action secondaire, à plat : l'ami peut renvoyer le défi à son tour.
   const versLecon1 = apprendreBtn && duJour && <>
     {apprendreBtn}
-    <Partager numero={duJour.numero} essais={tries} serie={duJour.serie} />
+    <Partager numero={duJour.numero} essais={tries} serie={serieVisible ? duJour.serie : 0} />
     <div className="row liens-du-jour"><button className="lien" onClick={showLine}>{tr('pb.voirSuite')}</button></div>
   </>;
 
@@ -803,7 +806,7 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
       // Résolu après avoir vu la réponse (#197) : « Vu », sans XP ; la série du Go du jour tient quand même.
       <Verdict ton="neutre" actions={<>{apprendreBtn ?? suivantBtn}<button className="lien" onClick={showLine}>{tr('pb.voirSuite')}</button></>}>
         <p data-vu="">{fr(tr('pb.vuTexte'))}</p>
-        {duJour && <p className="verdict-cote">{fr(tr('pb.vuSerie'))}</p>}
+        {duJour && serieVisible && <p className="verdict-cote">{fr(tr('pb.vuSerie'))}</p>}
       </Verdict>
     ) : solvedNow ? (
       <Verdict ton="juste" cle={answer.n} actions={versLecon1 ?? (duJour
@@ -812,7 +815,7 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
             {duJour.archive !== undefined && onNext
               ? <button className="cta" onClick={onNext}>{tr('pb.duJourAujourdhui', { numero: duJour.archive })}</button>
               : suivantBtn}
-            <Partager numero={duJour.numero} essais={tries} serie={duJour.serie} />
+            <Partager numero={duJour.numero} essais={tries} serie={serieVisible ? duJour.serie : 0} />
             {duJour.gelGagne && (
               <p className={`gel-gagne${duJour.celebrer ? ' fete' : ''}`} role="status"><PierreGivree taille={18} />{fr(tr('pb.gelGagne'))}</p>
             )}
@@ -823,7 +826,7 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
         : <>{suivantBtn}<button className="lien" onClick={showLine}>{tr('pb.voirSuite')}</button></>)}>
         <p>{fr(answer.text)}</p><XpEnLigne anime={duJour?.celebrer ?? true} />
         {/* #214 : la série se lit sur la réussite (« 3 jours de série · À demain ») ; aux jalons 3, 7, 30, une petite fête. */}
-        {duJour && duJour.archive === undefined && <SerieDuJour jours={duJour.serie} jalon={duJour.jalon} celebrer={duJour.celebrer} />}
+        {duJour && duJour.archive === undefined && serieVisible && <SerieDuJour jours={duJour.serie} jalon={duJour.jalon} celebrer={duJour.celebrer} />}
       </Verdict>
     ) : (
       // Erreur (#237, N6) : pas de « Réessayer », le plateau reste jouable ; l'indice est un lien discret.

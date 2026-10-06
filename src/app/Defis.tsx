@@ -22,6 +22,7 @@ import {
 import type { Db } from '../data/supabase';
 import { EVENTS, track } from '../data/analytics';
 import { useOnline } from './hooks';
+import { usePreferences } from './settings';
 import { phraseEtat, phraseIssue, resumeDefi, vueDefi } from './defiAmi';
 import { depuisDefi } from './historique';
 import { adversaireDe, lirePseudos, type Pseudos } from '../data/pseudos';
@@ -306,6 +307,7 @@ interface PartieProps {
  * « Abandonner » rangé dans le menu « Plus ».
  */
 export function DefiPartie({ db, partieId, userId, anonyme, pseudo = null, confirmTouch, reglages, celebrer, onRetour, onAutre, onAutreLente }: PartieProps) {
+  const prefs = usePreferences(); // #365 : coordonnées et dernier coup
   const online = useOnline();
   const [etat, setEtat] = useState<{ etat: 'chargement' } | { etat: 'erreur'; message: string } | { etat: 'pret'; d: EtatDefi }>({ etat: 'chargement' });
   const [maintenant, setMaintenant] = useState(() => Date.now());
@@ -530,7 +532,7 @@ export function DefiPartie({ db, partieId, userId, anonyme, pseudo = null, confi
       <div className="partie-plateau">
         <Board size={partie.size} board={v.pos.board} toPlay={v.pos.toPlay} confirmTouch={confirmTouch}
           interactive={!anonyme && ((v.aMoi && !envoi && online) || (enComptage && !envoi && !v.proposeParMoi))} stonesTappable={enComptage}
-          marks={{ last: v.pos.lastMove, owner: sc?.owner, dead: enComptage || v.phase === 'fini' ? mortesVues : undefined }}
+          coordonnees={prefs.coordonnees} marks={{ last: prefs.dernierCoup ? v.pos.lastMove : null, owner: sc?.owner, dead: enComptage || v.phase === 'fini' ? mortesVues : undefined }}
           onPlay={toucher} noms={{ [lui]: nomLui }} />
       </div>
       {bandeau(moi)}

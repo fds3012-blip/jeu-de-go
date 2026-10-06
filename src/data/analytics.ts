@@ -134,6 +134,14 @@ export const EVENTS = {
   // Modes de l'accueil (#429) : `mode` (en_ligne, ordi, ami, deux, guidee), `depuis` (bouton, plateau, tuile, plus,
   // feuille : bouton de « Changer »), `principal` (le mode était l'action principale de l'accueil).
   modeChoisi: 'mode_choisi',
+  // Joueur de club (#365, #368, #372). Réglage changé (`cle` : nom du réglage, `valeur` : nouvelle valeur, jamais rien
+  // de personnel) ; « Mes statistiques » ouvert (`revues`, `parties` : nombres sur l'appareil, `compte`) ; « Étudier une
+  // position » ouvert (`taille`, `reprise` : étude gardée retrouvée) ; analyse demandée (`taille`, `pierres`,
+  // `variante` : coups joués après la position posée, `katago` : faux quand l'IA manque, `issue`).
+  reglageChange: 'reglage_change',
+  statistiquesOuvertes: 'statistiques_ouvertes',
+  etudeOuverte: 'etude_ouverte',
+  analyseDemandee: 'analyse_demandee',
   // Partager une partie (#364) : feuille « Partager » du bilan ouverte (`mode` : ordi, deux, import ; `compte` : lien et
   // défi possibles), partage fait (`objet` : lien, image, sgf, defi ; `moyen` : web_share, copie, manuel, telechargement),
   // échec (`objet`, `raison` : compte, pseudo, jour, plein, illisible, reseau, canvas), lien retiré (`mode`). L'arrivée de
