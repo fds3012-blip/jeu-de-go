@@ -52,7 +52,7 @@
 .mstats-table + .mstats-table { margin-top: var(--space-2); }
 
 /* ---------- #372 : Étudier une position ---------- */
-.etude { display: grid; gap: var(--space-2); padding-bottom: calc(var(--cible-cta) + var(--relief) + var(--space-5)); }
+.etude { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-2); padding-bottom: calc(var(--cible-cta) + var(--relief) + var(--space-5)); }
 .etude p { margin: 0; }
 .etude-tete { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); flex-wrap: wrap; }
 .etude-tete h2 { margin: 0; font-size: var(--fs-l); }
@@ -63,9 +63,12 @@
 .etude-seg button:active { background: var(--surface-2); }
 .etude-seg button[aria-pressed="true"] { border-color: var(--accent-texte); background: var(--surface-2); font-weight: var(--fw-bold); }
 .etude-outils { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+/* #449 : zoom 200 % (195 px) avec la police de repli, plus large : quatre outils de 44 px ne tiennent plus sur une
+   ligne ; deux par ligne plutôt qu'un débord horizontal. */
+@media (max-width: 260px) { .etude-outils { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .etude-outils button { padding: 0 var(--space-1); }
 .etude .stone { width: 16px; height: 16px; }
-.etude-trait { display: flex; align-items: center; gap: var(--space-2); }
+.etude-trait { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
 .etude-trait-libelle { font-size: var(--fs-s); color: var(--muted); }
 .etude-ligne { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); flex-wrap: wrap; }
 .etude-ligne .etude-actions { display: flex; gap: var(--space-1); flex-wrap: wrap; }

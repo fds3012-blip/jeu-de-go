@@ -146,6 +146,8 @@ export const EVENTS = {
   // défi possibles), partage fait (`objet` : lien, image, sgf, defi ; `moyen` : web_share, copie, manuel, telechargement),
   // échec (`objet`, `raison` : compte, pseudo, jour, plein, illisible, reseau, canvas), lien retiré (`mode`). L'arrivée de
   // l'ami : `arrivee_par_partage` avec `source` = `partie`. Jamais le lien, le jeton, la partie ni un pseudo.
+  // Étude partagée (#449) : mêmes événements avec `mode` = `etude` ; arrivée de l'ami : `source` = `etude` ; copie
+  // ouverte : `etude_ouverte` avec `copie` vrai.
   partageOuvert: 'partage_ouvert',
   partageEnvoye: 'partage_envoye',
   partageEchoue: 'partage_echoue',

@@ -6,8 +6,10 @@
 //   leurs chances de gain, et qui mène. Chaque conseil passe le filtre de la revue (`conseilFiable` : jamais un coup
 //   illégal ni un coup de première ligne sans raison). Sans KataGo en cache : « Télécharge l'IA », aucun conseil.
 // - L'étude est gardée sur l'appareil (go.etude.v1) et s'exporte en SGF (relu par « Analyser une partie »).
+// - Partager (#449) : la feuille de partage de #364 (lien `mochi-go.app/partie#JETON`, image, SGF), action secondaire.
+//   Une étude reçue par lien s'ouvre ici en copie (« Étudie-la avec Mochi ») ; l'étude d'avant revient avec « Annuler ».
 // Logique pure : src/go/etude.ts.
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type RefObject } from 'react';
+import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { Board } from '../ui/Board';
 import { C, M, viewBoxOf } from '../ui/boardArt';
 import { fr } from '../ui/typo';
@@ -16,7 +18,7 @@ import { toLabel } from '../go/coords';
 import { boardKey, type Color } from '../go/rules';
 import { numerosDesCoups } from '../go/numeros';
 import {
-  ETUDE_KEY, etudeVersSgf, etudeVide, jouerVariante, KOMI_ETUDE, lireEtude, pierresPosees, poser, positionsEtude, TAILLES_ETUDE,
+  ETUDE_KEY, etudeDepuisSgf, etudeVersSgf, etudeVide, jouerVariante, KOMI_ETUDE, lireEtude, pierresPosees, poser, positionsEtude, TAILLES_ETUDE,
   type Etude as EtatEtude, type Outil, type TailleEtude,
 } from '../go/etude';
 import { analyseEtude, preparerKataGo, type RaisonSansKataGo } from '../engine';
@@ -24,7 +26,10 @@ import { EVENTS, track } from '../data/analytics';
 import { conseilFiable } from './revue';
 import { readLocal, writeLocal } from './hooks';
 import { usePreferences } from './settings';
+import { copieEtudeEnAttente, oublierCopieEtude } from './copieEtude';
 import '../ui/club.css';
+
+const FeuillePartage = lazy(() => import('./PartagePartie').then(m => ({ default: m.PartagePartie })));
 
 /** Coups conseillés montrés au plus. */
 const CANDIDATS = 3;
@@ -45,9 +50,20 @@ interface Props {
 
 export function Etude({ confirmTouch }: Props) {
   const [reprise] = useState(() => lireEtude(readLocal<unknown>(ETUDE_KEY, null)));
-  const [etude, setEtude] = useState<EtatEtude>(() => reprise ?? etudeVide(9));
-  const [histoire, setHistoire] = useState<EtatEtude[]>([]);
-  const [outil, setOutil] = useState<Outil>(() => (reprise?.variante.length ? 'jouer' : 'noir'));
+  // #449 : copie d'une étude reçue par lien ; l'étude d'avant reste un « Annuler » plus loin.
+  const [copie] = useState(() => {
+    const c = copieEtudeEnAttente();
+    const e = c ? etudeDepuisSgf(c.sgf) : null;
+    return c && e ? { etude: e, pseudo: c.pseudo } : null;
+  });
+  const avant = copie && reprise && (pierresPosees(reprise) || reprise.variante.length) ? reprise : null;
+  const [etude, setEtude] = useState<EtatEtude>(() => copie?.etude ?? reprise ?? etudeVide(9));
+  const [histoire, setHistoire] = useState<EtatEtude[]>(() => (avant ? [avant] : []));
+  const [outil, setOutil] = useState<Outil>(() => ((copie?.etude ?? reprise)?.variante.length ? 'jouer' : 'noir'));
+  const [annonce, setAnnonce] = useState<string | null>(() => (copie
+    ? `${copie.pseudo ? tk('etude.copie', { pseudo: copie.pseudo }) : tk('etude.copieSans')}${avant ? ` ${tk('etude.copieAvant')}` : ''}`
+    : null));
+  const [partage, setPartage] = useState(false);
   const [refus, setRefus] = useState<{ texte: string; p: number; n: number } | null>(null);
   const [analyse, setAnalyse] = useState<Analyse | null>(null);
   const [export_, setExport] = useState(false);
@@ -57,7 +73,10 @@ export function Etude({ confirmTouch }: Props) {
   const cadre = useRef<HTMLDivElement>(null);
   const largeurMax = useGobanEntier(racine, cadre);
 
-  useEffect(() => { track(EVENTS.etudeOuverte, { taille: etude.size, reprise: !!reprise }); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (copie) oublierCopieEtude();
+    track(EVENTS.etudeOuverte, { taille: etude.size, reprise: !!reprise, copie: !!copie });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { writeLocal(ETUDE_KEY, { sgf: etudeVersSgf(etude) }); }, [etude]);
 
   const positions = useMemo(() => positionsEtude(etude), [etude]);
@@ -71,6 +90,7 @@ export function Etude({ confirmTouch }: Props) {
     setEtude(suivante);
     setRefus(null);
     setExport(false);
+    setAnnonce(null);
   }
   function refuser(texte: string, p: number) { setRefus(r => ({ texte, p, n: (r?.n ?? 0) + 1 })); }
 
@@ -92,6 +112,7 @@ export function Etude({ confirmTouch }: Props) {
     setHistoire(histoire.slice(0, -1));
     setEtude(h);
     setRefus(null);
+    setAnnonce(null);
   }
 
   async function analyser() {
@@ -146,8 +167,9 @@ export function Etude({ confirmTouch }: Props) {
   };
   const trait = (c: Color) => { if (c !== etude.trait) changer({ ...etude, trait: c, variante: [] }); };
 
-  const consigne = etude.variante.length ? tk('etude.consigne.variante', { n: etude.variante.length })
-    : outil === 'jouer' ? tk('etude.consigne.jouer') : tk('etude.consigne.poser');
+  const consigne = annonce ?? (etude.variante.length ? tk('etude.consigne.variante', { n: etude.variante.length })
+    : outil === 'jouer' ? tk('etude.consigne.jouer') : tk('etude.consigne.poser'));
+  const vide = !pierresPosees(etude) && !etude.variante.length;
   const camp = (c: Color) => tk(c === 1 ? 'etude.trait.noir' : 'etude.trait.blanc');
   const vb = viewBoxOf(etude.size);
 
@@ -211,9 +233,15 @@ export function Etude({ confirmTouch }: Props) {
       <Resultat analyse={analyse} resultat={resultat} camp={camp(pos.toPlay)} taille={etude.size} onTelecharger={telecharger} />
 
       <div className="etude-secondaires">
+        <button type="button" className="lien" onClick={() => setPartage(true)} disabled={vide} data-testid="etude-partager">{tk('etude.partager')}</button>
         <button type="button" className="lien" onClick={exporter}>{tk('etude.exporter')}</button>
-        <button type="button" className="lien" onClick={() => changer(etudeVide(etude.size))} disabled={!pierresPosees(etude) && !etude.variante.length}>{tk('etude.vider')}</button>
+        <button type="button" className="lien" onClick={() => changer(etudeVide(etude.size))} disabled={vide}>{tk('etude.vider')}</button>
       </div>
+      {partage && (
+        <Suspense fallback={null}>
+          <FeuillePartage sgf={etudeVersSgf(etude)} joueur={null} coup={etude.variante.length} mode="etude" onFermer={() => setPartage(false)} />
+        </Suspense>
+      )}
       <p className="muted small" role="status">{export_ ? tk('etude.exporte') : ''}</p>
       <p className="muted small">{fr(tk('etude.komi'))}</p>
 

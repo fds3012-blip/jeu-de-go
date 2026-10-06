@@ -735,6 +735,7 @@ export type Database = {
           empreinte: string
           jeton: string
           joueur: number | null
+          objet: string
           sgf: string
           taille: number
           user_id: string
@@ -746,6 +747,7 @@ export type Database = {
           empreinte: string
           jeton: string
           joueur?: number | null
+          objet?: string
           sgf: string
           taille: number
           user_id: string
@@ -757,6 +759,7 @@ export type Database = {
           empreinte?: string
           jeton?: string
           joueur?: number | null
+          objet?: string
           sgf?: string
           taille?: number
           user_id?: string
@@ -1312,6 +1315,23 @@ export type Database = {
           sgf: string
           taille: number
         }[]
+      }
+      lire_partage: {
+        Args: { p_jeton: string }
+        Returns: {
+          adversaire: string | null
+          coup: number
+          cree_le: string
+          joueur: number | null
+          objet: string
+          pseudo: string | null
+          sgf: string
+          taille: number
+        }[]
+      }
+      partager_etude: {
+        Args: { p_coup: number; p_sgf: string; p_taille: number }
+        Returns: string
       }
       partager_partie: {
         Args: { p_adversaire: string | null; p_coup: number; p_joueur: number | null; p_sgf: string; p_taille: number }

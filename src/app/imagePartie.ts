@@ -27,6 +27,8 @@ export interface DonneesImage {
   noir: string;
   blanc: string;
   langue: Langue;
+  /** Étude (#449) : ligne verte et grand texte à la place du moment clé et du résultat ; sans les deux camps. */
+  etude?: { etiquette: string; titre: string };
 }
 
 /** Phrase du résultat : « Noir gagne de 6,5 points », « Blanc gagne par abandon », « Égalité »… */
@@ -148,15 +150,15 @@ export function dessinerImage(ctx: CanvasRenderingContext2D, d: DonneesImage): v
 
   ctx.textBaseline = 'alphabetic';
   ctx.fillStyle = JADE; ctx.font = `800 30px ${TITRE}`;
-  ctx.fillText(d.coup > 0 ? t('image.cle', { coup: d.coup }) : t('image.fin'), gx, 214);
+  ctx.fillText(d.etude ? d.etude.etiquette : d.coup > 0 ? t('image.cle', { coup: d.coup }) : t('image.fin'), gx, 214);
 
   ctx.fillStyle = PAPIER; ctx.font = `800 54px ${TITRE}`;
-  const lignes = couper(s => ctx.measureText(s).width, texteResultat(d.resultat, d.langue), lg, 2);
+  const lignes = couper(s => ctx.measureText(s).width, d.etude ? d.etude.titre : texteResultat(d.resultat, d.langue), lg, 2);
   lignes.forEach((l, i) => ctx.fillText(l, gx, 280 + i * 60));
 
-  // Les deux camps : pierre et nom.
+  // Les deux camps : pierre et nom (pas pour une étude : personne ne joue contre personne).
   ctx.font = `700 30px ${TEXTE}`;
-  const camps: [1 | 2, string][] = [[1, d.noir], [2, d.blanc]];
+  const camps: [1 | 2, string][] = d.etude ? [] : [[1, d.noir], [2, d.blanc]];
   camps.forEach(([c, nom], i) => {
     const y = 420 + i * 56;
     pierre(ctx, gx + 16, y - 10, 16, c);

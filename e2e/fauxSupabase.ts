@@ -594,6 +594,27 @@ export function fauxServeur() {
       partagees.push({ jeton, user_id: u.id, sgf: a.p_sgf, taille: a.p_taille, joueur: a.p_joueur, adversaire: a.p_adversaire, coup: a.p_coup });
       return json(jeton);
     }
+    // #449 : étude partagée, comme 20261006134900_etudes_partagees.sql (sans plafonds) : même table, `objet` = `etude`,
+    // 9, 13 ou 19 lignes, au moins une pierre ou un coup, sans résultat ; `lire_partage` rend aussi `objet`.
+    if (chemin === '/rest/v1/rpc/partager_etude') {
+      if (!u || u.anonyme) return json({ code: 'JGC01', message: 'Crée ton compte' }, 400);
+      if (!profiles.find(x => x.id === u.id)?.username) return json({ code: 'JGP01', message: 'Choisis ton pseudo' }, 400);
+      const a = req.postDataJSON() as { p_sgf: string; p_taille: number; p_coup: number };
+      if (/(PB|PW|C|DT|PC|GC|RE)\[/.test(a.p_sgf) || ![9, 13, 19].includes(a.p_taille) || !a.p_sgf.includes(`SZ[${a.p_taille}]`)
+        || !/(A[BW]\[[a-s]{2}\]|;[BW]\[)/.test(a.p_sgf)) return json({ code: '22023', message: 'Étude illisible' }, 400);
+      const deja = partagees.find(x => x.user_id === u.id && x.sgf === a.p_sgf && x.objet === 'etude');
+      if (deja) { deja.coup = a.p_coup; return json(deja.jeton); }
+      const jeton = `E${String(partagees.length + 1).padStart(3, '0')}`.padEnd(32, 'x');
+      partagees.push({ jeton, user_id: u.id, sgf: a.p_sgf, taille: a.p_taille, joueur: null, adversaire: null, coup: a.p_coup, objet: 'etude' });
+      return json(jeton);
+    }
+    if (chemin === '/rest/v1/rpc/lire_partage') {
+      const { p_jeton } = req.postDataJSON() as { p_jeton: string };
+      const l = partagees.find(x => x.jeton === p_jeton);
+      if (!l) return json([]);
+      const pseudo = profiles.find(x => x.id === l.user_id)?.username ?? null;
+      return json([{ objet: l.objet ?? 'partie', sgf: l.sgf, taille: l.taille, joueur: l.joueur, adversaire: l.adversaire, coup: l.coup, pseudo, cree_le: new Date().toISOString() }]);
+    }
     if (chemin === '/rest/v1/rpc/lire_partie_partagee') {
       const { p_jeton } = req.postDataJSON() as { p_jeton: string };
       const l = partagees.find(x => x.jeton === p_jeton);
