@@ -2,6 +2,8 @@ import { expect, test, type Page } from '@playwright/test';
 import { attendrePierre, jouer } from './plateau';
 import { LESSONS_FR, type LessonStep } from '../src/content/lessons';
 import LOT_W from '../src/content/lots/w-seki-fin-compte';
+/** Rang d'une leçon sur le chemin (#16 : le programme grandit, les rangs ne sont plus figés). */
+const numero = (id: string) => LESSONS_FR.findIndex(l => l.id === id) + 1;
 
 // Issue #16 : la leçon 14 (le seki) se finit, puis sa série d'entraînement : les 3 problèmes de seki du lot W
 // (w01 à w03, prouvés par src/go/lot-w.test.ts), chacun avec une erreur d'abord (la réfutation), puis la réponse.
@@ -93,7 +95,7 @@ for (const [largeur, hauteur, theme] of [[390, 844, 'light'], [320, 568, 'dark']
     // Fin de la série : retour au chemin (un niveau franchi a d'abord son écran à lui).
     await page.locator('.verdict').getByRole('button', { name: 'Retour au chemin' }).click();
     const niveau = page.getByTestId('niveau-atteint');
-    const chemin = page.getByRole('button', { name: 'Leçon 14 : Le seki, terminée' });
+    const chemin = page.getByRole('button', { name: `Leçon ${numero('l14')} : Le seki, terminée` });
     await expect(niveau.or(chemin).first()).toBeAttached();
     if (await niveau.count()) await niveau.getByRole('button', { name: 'Retour au chemin' }).click();
     await expect(chemin).toBeAttached();

@@ -167,8 +167,8 @@ export const MOTS: Mot[] = [
   { id: 'filet', lecon: 'l9', schema: { rows: ['.......', '...X...', '.......', '.X.OX..', '...X...', '.......', '.......'], coup: 'C5', cibles: ['D4'], preuves: [{ filet: 'D4', coup: 'C5' }] } },
   { id: 'priseEnRetour', lecon: 'l10', schema: { rows: ['.....', '.....', 'XXXX.', 'OOOX.', '..OX.'], coup: 'B1', cibles: ['A2', 'B2', 'C2', 'C1'], preuves: [{ priseEnRetour: 'B1', prise: 'A1' }] } },
   { id: 'semeai', lecon: 'l11' },
-  { id: 'hane', schema: { rows: ['.....', '.....', '..XO.', '.....', '.....'], coup: 'D4', preuves: [{ hane: 'D4', de: 'C3', contre: 'D3' }, { permis: 'D4', par: 1 }] } },
-  { id: 'senteGote' },
+  { id: 'hane', lecon: 'l23', schema: { rows: ['.....', '.....', '..XO.', '.....', '.....'], coup: 'D4', preuves: [{ hane: 'D4', de: 'C3', contre: 'D3' }, { permis: 'D4', par: 1 }] } },
+  { id: 'senteGote', lecon: 'l22' },
   { id: 'tesuji', lecon: 'l10' },
   { id: 'joseki' },
 ];

@@ -2,6 +2,8 @@ import { expect, test, type Page } from '@playwright/test';
 import { jouer } from './plateau';
 import { LESSONS_FR, type LessonStep } from '../src/content/lessons';
 import { ACQUIS } from '../src/content/acquis';
+/** Rang d'une leçon sur le chemin (#16 : le programme grandit, les rangs ne sont plus figés). */
+const numero = (id: string) => LESSONS_FR.findIndex(l => l.id === id) + 1;
 
 // Issue #16 (05/10) : leçons 17 à 20 sur le chemin Apprendre, sans changer l'écran (seulement les données).
 // La leçon 20 (relier et mourir) se joue du début à la fin, avec une erreur à la question et au quiz, à 390 et à
@@ -36,9 +38,9 @@ for (const [largeur, hauteur, theme] of [[390, 844, 'light'], [320, 568, 'dark']
 
     // Le chemin : la leçon 17 finit « Vie et mort », le chapitre « Formes et tesuji » a ses trois leçons.
     await expect(page.getByRole('heading', { name: 'Formes et tesuji' })).toBeAttached();
-    await expect(page.getByRole('button', { name: 'Leçon 15 : Les formes d’yeux, terminée' })).toBeAttached();
-    await expect(page.getByRole('button', { name: 'Leçon 18 : Les bonnes formes, terminée' })).toBeAttached();
-    await expect(page.getByRole('button', { name: 'Leçon 20 : Relier et mourir, prochaine étape' })).toBeAttached();
+    await expect(page.getByRole('button', { name: `Leçon ${numero('l17')} : Les formes d’yeux, terminée` })).toBeAttached();
+    await expect(page.getByRole('button', { name: `Leçon ${numero('l18')} : Les bonnes formes, terminée` })).toBeAttached();
+    await expect(page.getByRole('button', { name: `Leçon ${numero('l20')} : Relier et mourir, prochaine étape` })).toBeAttached();
     await expect(page.locator('.a-venir li')).toHaveText(['Ouverture en 19 × 19']);
     await sansDebordement(page, 'chemin');
     await page.locator('.cta-chemin').scrollIntoViewIfNeeded();

@@ -49,8 +49,8 @@ describe('leçon 7 en anglais : komi et scores (#167)', () => {
 });
 
 describe('leçons en anglais : catalogue (#167)', () => {
-  it('les leçons 1 à 20 sont traduites, et chaque traduction vise une leçon existante', () => {
-    for (const id of ['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7', 'l8', 'l9', 'l10', 'l11', 'l12', 'l13', 'l14', 'l15', 'l16', 'l17', 'l18', 'l19', 'l20']) expect(Object.keys(EN)).toContain(id);
+  it('toutes les leçons sont traduites, et chaque traduction vise une leçon existante', () => {
+    for (const { id } of LESSONS_FR) expect(Object.keys(EN)).toContain(id);
     for (const c of CHAPITRES) expect(Object.keys(CHAPITRES_EN), c.id).toContain(c.id);
     for (const id of Object.keys(LESSONS_EN)) expect(LESSONS_FR.map(l => l.id)).toContain(id);
     for (const id of Object.keys(CHAPITRES_EN)) expect(CHAPITRES.map(c => c.id)).toContain(id);

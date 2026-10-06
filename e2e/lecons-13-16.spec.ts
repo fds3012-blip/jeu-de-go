@@ -4,6 +4,8 @@ import { jouer } from './plateau';
 import '../src/content/anglais.setup';
 import { LESSONS_FR, localiser, type LessonStep } from '../src/content/lessons';
 import { ACQUIS } from '../src/content/acquis';
+/** Rang d'une leçon sur le chemin (#16 : le programme grandit, les rangs ne sont plus figés). */
+const numero = (id: string) => LESSONS_FR.findIndex(l => l.id === id) + 1;
 
 // Issue #16 : les leçons 13 à 16 sont sur le chemin Apprendre, sans changer l'écran (seulement les données).
 // La leçon 14 (le seki) se joue du début à la fin, avec une erreur à chaque question, à 390 et à 320 px, en clair et en
@@ -36,10 +38,10 @@ for (const [largeur, hauteur, theme] of [[390, 844, 'light'], [320, 568, 'dark']
 
     // Le chemin : le nouveau chapitre et ses leçons ; « Bientôt » n'annonce plus que deux chapitres.
     await expect(page.getByRole('heading', { name: 'Fin de partie et comptage' })).toBeAttached();
-    await expect(page.getByRole('button', { name: 'Leçon 13 : Le point vital, terminée' })).toBeAttached();
-    await expect(page.getByRole('button', { name: 'Leçon 14 : Le seki, prochaine étape' })).toBeAttached();
+    await expect(page.getByRole('button', { name: `Leçon ${numero('l13')} : Le point vital, terminée` })).toBeAttached();
+    await expect(page.getByRole('button', { name: `Leçon ${numero('l14')} : Le seki, prochaine étape` })).toBeAttached();
     // #16 (05/10) : les formes d'yeux (leçon 17) finissent « Vie et mort » ; compter une partie est 17e sur le chemin.
-    await expect(page.getByRole('button', { name: 'Leçon 17 : Compter une partie' })).toBeAttached();
+    await expect(page.getByRole('button', { name: `Leçon ${numero('l16')} : Compter une partie` })).toBeAttached();
     // #16 (05/10) : « Formes et tesuji » a commencé (leçons 18 à 20) ; il ne reste que l'ouverture en 19 × 19.
     await expect(page.locator('.a-venir li')).toHaveText(['Ouverture en 19\u00A0×\u00A019']);
     await sansDebordement(page, 'chemin');
@@ -110,7 +112,7 @@ for (const [largeur, hauteur, theme] of [[390, 844, 'light'], [320, 568, 'dark']
     await sansDebordement(page, 'fin de leçon');
     await photo('6-fin');
     await page.getByRole('button', { name: 'Retour au chemin' }).click();
-    await expect(page.getByRole('button', { name: 'Leçon 14 : Le seki, terminée' })).toBeAttached();
+    await expect(page.getByRole('button', { name: `Leçon ${numero('l14')} : Le seki, terminée` })).toBeAttached();
   });
 }
 

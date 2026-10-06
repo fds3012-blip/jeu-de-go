@@ -116,14 +116,18 @@ export const THEMES_DE_LECON: Readonly<Record<string, readonly Theme[]>> = {
   l18: ['relier-couper'],
   l19: ['relier-couper'],
   l20: ['capture'],
-  // #16 (palier 21-30) : sente et gote (l23) et le hane au premier rang (l24) ont la série de fin de partie.
-  l23: ['fin-de-partie'],
+  // #16 (palier 21-30) : le manque de libertés (l21) a la série de capture, comme relier et mourir.
+  l21: ['capture'],
+  // #16 (palier 21-30) : sente et gote (l22) et le hane au premier rang (l23) ont la série de fin de partie.
+  l22: ['fin-de-partie'],
   // Le hane au premier rang : la même série que sente et gote.
-  l24: ['fin-de-partie'],
-  // Agrandir ou réduire (l25) : la série de vie et mort ; les groupes du coin (l26) y ajoutent le ko.
-  l25: ['vie-mort'],
+  l23: ['fin-de-partie'],
+  // Agrandir ou réduire (l24) : la série de vie et mort ; les groupes du coin (l25) y ajoutent le ko.
+  l24: ['vie-mort'],
   // Les groupes du coin : vie et mort, et le ko.
-  l26: ['vie-mort', 'ko'],
+  l25: ['vie-mort', 'ko'],
+  // #16 (palier 21-30) : la course avec un œil (l26) a la série de course aux libertés.
+  l26: ['semeai'],
 };
 
 /**

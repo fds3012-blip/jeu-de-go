@@ -2,6 +2,8 @@
 // Même exigence que les leçons 17 à 20 (src/go/lecons-17-20.test.ts) : les réponses acceptées sont exactement les coups qui
 // atteignent le but, chaque réfutation est rejouée, chaque démonstration montre ce que dit son texte, chaque chiffre est
 // recompté.
+// - Captures (manque de libertés, course avec un œil) : lecteur exact de src/go/lecteurs-lot-n.ts, sans ko (SANS_KO) : aucune réponse ne
+//   dépend d'un ko.
 // - Vie et mort (agrandir ou réduire) : preuve exhaustive de src/go/preuve-vie-mort.ts dans une zone fermée (vérifiée par
 //   defautsDeZone ; un ko n'est jamais compté comme une preuve).
 // - Fin de partie (sente et gote, hane au premier rang) : minimax exact de src/go/preuve-fin-de-partie.ts sur les endroits
@@ -14,7 +16,7 @@ import { fromRows } from './position';
 import { groupAt, isLegal, neighbors, play, type Position } from './rules';
 import { fromLabel, toLabel } from './coords';
 import { score } from './score';
-import { AVEC_KO, SANS_KO, captureEn, sauveEn } from './lecteurs-lot-n';
+import { AVEC_KO, SANS_KO, attackerCaptures, captureEn, defenderFails, sauveEn } from './lecteurs-lot-n';
 import { meilleursCoups, valeurExacte, valeursDesCoups } from './preuve-fin-de-partie';
 import { coupsGagnants, defautsDeZone, evaluer, issueApres, yeuxDuGroupe } from './preuve-vie-mort';
 
@@ -55,7 +57,9 @@ function ouverts(pos: Position): number[] {
   return out.sort((a, b) => a - b);
 }
 
-const IDS = ['l23', 'l24', 'l25', 'l26'];
+/** Délai des tests de minimax (fin de partie) : quelques secondes, davantage sur un processeur chargé. */
+const LENT = 60_000;
+const IDS = ['l21', 'l22', 'l23', 'l24', 'l25', 'l26'];
 const zoneDe = (ls: string) => ls.split(' ').map(at);
 
 describe('leçons 21 à 30 : place dans le programme (#16)', () => {
@@ -69,7 +73,10 @@ describe('leçons 21 à 30 : place dans le programme (#16)', () => {
   });
   it('sente et gote, puis le hane, prolongent « Fin de partie et comptage »', () => {
     const c = Object.fromEntries(CHAPITRES.map(x => [x.id, x]));
-    expect(c.c5.lecons.map(l => l.id)).toEqual(['l15', 'l16', 'l23', 'l24']);
+    expect(c.c6.lecons.map(l => l.id)).toEqual(['l18', 'l19', 'l20', 'l21']);
+    expect(c.c3.lecons.map(l => l.id)).toEqual(['l9', 'l10', 'l11', 'l26']);
+    expect(c.c4.lecons.map(l => l.id)).toEqual(['l12', 'l13', 'l14', 'l17', 'l24', 'l25']);
+    expect(c.c5.lecons.map(l => l.id)).toEqual(['l15', 'l16', 'l22', 'l23']);
     expect(LESSONS.map(l => l.id)).toEqual(CHAPITRES.flatMap(x => x.lecons.map(l => l.id)));
   });
   it('chaque consigne tient en 12 mots ; chaque geste « pose » est sur le point vert ; au plus une étape sans geste', () => {
@@ -82,13 +89,14 @@ describe('leçons 21 à 30 : place dans le programme (#16)', () => {
     }
   });
   it('vocabulaire nouveau expliqué à sa première apparition', () => {
-    expect(step<Info>('l23', 0).text).toMatch(/^Sente \(coup qui oblige à répondre\)/);
-    expect(step<Info>('l23', 2).text).toMatch(/^Gote \(coup qui ne menace rien\)/);
-    expect(step<Info>('l24', 0).text).toMatch(/^Hane \(coup qui contourne une pierre\)/);
+    expect(step<Info>('l21', 1).text).toMatch(/^Manque de libertés : relier le met en atari/);
+    expect(step<Info>('l22', 0).text).toMatch(/^Sente \(coup qui oblige à répondre\)/);
+    expect(step<Info>('l22', 2).text).toMatch(/^Gote \(coup qui ne menace rien\)/);
+    expect(step<Info>('l23', 0).text).toMatch(/^Hane \(coup qui contourne une pierre\)/);
     const avant = (id: string) => LESSONS.slice(0, LESSONS.findIndex(l => l.id === id))
       .flatMap(l => l.steps.flatMap(s => [s.text, 'ok' in s ? s.ok : '', 'no' in s ? s.no : ''])).join(' ');
-    expect(avant('l23')).not.toMatch(/\bsente\b|\bgote\b/i);
-    expect(avant('l24')).not.toMatch(/\bhane\b/i);
+    expect(avant('l22')).not.toMatch(/\bsente\b|\bgote\b/i);
+    expect(avant('l23')).not.toMatch(/\bhane\b/i);
   });
   it('chaque coup refusé avec une explication est légal, n’est pas une réponse acceptée, et reçoit son explication', () => {
     for (const id of IDS) lecon(id).steps.forEach(s => {
@@ -103,15 +111,70 @@ describe('leçons 21 à 30 : place dans le programme (#16)', () => {
   });
 });
 
-describe('leçon 23 : sente et gote', () => {
-  const S = step<Info>('l23', 0).rows;
+describe('leçon 21 : le manque de libertés', () => {
+  /** Chaînes blanches de la position (une pierre de chacune). */
+  const chaines = (pos: Position) => [...new Set(tous.filter(p => pos.board[p] === 2).map(p => Math.min(...groupAt(pos.board, N, p).stones)))];
+  const libsDe = (pos: Position, p: number) => groupAt(pos.board, N, p).liberties;
+
+  it('l21.1 : deux chaînes blanches reliées seulement par A2 ou B1 ; leur seule liberté extérieure est E1', () => {
+    const s = step<Info>('l21', 0);
+    const pos = avec(s.rows, 1);
+    expect(chaines(pos).map(lab).sort()).toEqual(['A1', 'B2']);
+    expect(labels(libsDe(pos, at('A1')))).toEqual(['A2', 'B1']);
+    expect(labels(libsDe(pos, at('C1')))).toEqual(['A2', 'B1', 'E1']);
+    const r = ok(play(pos, at('E1')));
+    expect(labels(libsDe(r, at('C1')))).toEqual(['A2', 'B1']);
+    expect(labels(images(s).at(-1)!.libs)).toEqual(['A2', 'B1']);
+    // Sans E1, relier en B1 laisse deux libertés (A2 et E1) : c'est E1 qui crée le manque de libertés.
+    expect(labels(libsDe(suite(pos, ['passe', 'B1']), at('B1')))).toEqual(['A2', 'E1']);
+  });
+
+  it('l21.2 et l21.3 : après E1, relier en A2 ou en B1 laisse une seule liberté ; Noir prend alors les six pierres', () => {
+    const r = ok(play(avec(step<Info>('l21', 1).rows, 1), at('E1')));
+    expect(fromRows(step<Quiz>('l21', 2).rows).pos.board).toEqual(r.board);
+    for (const [relie, prise] of [['B1', 'A2'], ['A2', 'B1']]) {
+      const w = ok(play(r, at(relie)));
+      expect(labels(libsDe(w, at(relie))), relie).toEqual([prise]);
+      expect(ok(play(w, at(prise))).captures[1], relie).toBe(6);
+    }
+    const q = step<Quiz>('l21', 2);
+    expect(q.choices[q.answer]).toBe(String(libsDe(ok(play(r, at('A2'))), at('A2')).size));
+    const im = images(step<Info>('l21', 1));
+    expect(labels(im.find(x => x.atari.length)!.atari)).toEqual(['A1', 'B1', 'B2', 'C1', 'C2', 'D1']);
+    expect(im.at(-1)!.board[at('C1')]).toBe(0);
+  });
+
+  for (const i of [0, 3]) it(`l21.${i + 1} : prendre tout le blanc en trois coups noirs, c’est exactement E1 ; ensuite chaque connexion met Blanc en atari`, () => {
+    const rows = lecon('l21').steps[i].rows;
+    const pos = avec(rows, 1);
+    const cibles = chaines(pos);
+    expect(cibles).toHaveLength(2);
+    const prend = tous.filter(p => isLegal(pos, p) && captureEn(pos, p, cibles, 3, SANS_KO));
+    expect(prend.map(lab)).toEqual(['E1']);
+    if (i === 3) expect(step<Move>('l21', 3).accept).toEqual(prend.map(lab));
+    // Aucun coup ne prend en deux coups : il faut d'abord boucher la liberté extérieure.
+    expect(tous.filter(p => isLegal(pos, p) && captureEn(pos, p, cibles, 2, SANS_KO))).toEqual([]);
+    const r = ok(play(pos, at('E1')));
+    const communs = [...libsDe(r, cibles[0])];
+    expect(communs).toHaveLength(2);
+    expect(labels(libsDe(r, cibles[1]))).toEqual(labels(communs));
+    for (const c of communs) {
+      const w = ok(play(r, c));
+      expect(libsDe(w, c).size, lab(c)).toBe(1);
+      expect(cibles.every(x => groupAt(w.board, N, c).stones.includes(x)), lab(c)).toBe(true);
+    }
+  });
+});
+
+describe('leçon 22 : sente et gote', () => {
+  const S = step<Info>('l22', 0).rows;
   const zone = ouverts(avec(S, 1));
 
   it('la partie est finie sauf deux endroits : E9-F9 en haut, E2-F2-F1 en bas', () => {
     expect(labels(zone)).toEqual(['E2', 'E9', 'F1', 'F2', 'F9']);
-  });
+  }, LENT);
 
-  it('l23.1 : l’atari E2 est le meilleur coup ; Blanc doit relier en F1, sinon il perd deux pierres et au moins 3 points', () => {
+  it('l22.1 : l’atari E2 est le meilleur coup ; Blanc doit relier en F1, sinon il perd deux pierres et au moins 3 points', () => {
     const pos = avec(S, 1);
     for (const regle of ['japanese', 'chinese'] as const) expect(meilleursCoups(pos, zone, { regle }).map(lab), regle).toEqual(['E2']);
     const r = ok(play(pos, at('E2')));
@@ -121,19 +184,19 @@ describe('leçon 23 : sente et gote', () => {
     for (const [m, x] of v) if (m !== at('F1')) expect(x - v.get(at('F1'))!, lab(m)).toBeGreaterThanOrEqual(3);
     // Si Blanc joue ailleurs, F1 prend D1 et E1.
     expect(captureEn(ok(play(r, -1)), at('F1'), [at('E1')], 1, SANS_KO)).toBe(true);
-    const im = images(step<Info>('l23', 0));
+    const im = images(step<Info>('l22', 0));
     expect(labels(im.find(x => x.atari.length)!.atari)).toEqual(['D1', 'E1']);
     expect(im.at(-1)!.board[at('F1')]).toBe(2);
-  });
+  }, LENT);
 
-  it('l23.2 : après l’échange, Noir a encore la main, et fermer le haut en E9 est son meilleur coup', () => {
+  it('l22.2 : après l’échange, Noir a encore la main, et fermer le haut en E9 est son meilleur coup', () => {
     const r = suite(avec(S, 1), ['E2', 'F1']);
     expect(r.toPlay).toBe(1);
     expect(meilleursCoups(r, zone).map(lab)).toEqual(['E9']);
-    expect(step<Info>('l23', 1).avant).toEqual([{ pose: 'E2', couleur: 'B' }, { pose: 'F1', couleur: 'W' }]);
-  });
+    expect(step<Info>('l22', 1).avant).toEqual([{ pose: 'E2', couleur: 'B' }, { pose: 'F1', couleur: 'W' }]);
+  }, LENT);
 
-  it('l23.3 : E9 ne menace rien ; Blanc répond ailleurs, en E2, et E9 d’abord coûte deux points', () => {
+  it('l22.3 : E9 ne menace rien ; Blanc répond ailleurs, en E2, et E9 d’abord coûte deux points', () => {
     const pos = avec(S, 1);
     const r = ok(play(pos, at('E9')));
     expect(meilleursCoups(r, zone).map(lab)).toEqual(['E2']);
@@ -141,11 +204,11 @@ describe('leçon 23 : sente et gote', () => {
       const v = valeursDesCoups(pos, zone, { regle });
       expect(v.get(at('E2'))! - v.get(at('E9'))!, regle).toBe(2);
     }
-    expect(images(step<Info>('l23', 2)).at(-1)!.board[at('E2')]).toBe(2);
-  });
+    expect(images(step<Info>('l22', 2)).at(-1)!.board[at('E2')]).toBe(2);
+  }, LENT);
 
-  it('l23.4 et l23.5 : en miroir, E1 est gote (Blanc joue ailleurs) ; seul E8 est le meilleur coup ; E1 d’abord perd deux points', () => {
-    const q = step<Quiz>('l23', 3), m = step<Move>('l23', 4);
+  it('l22.4 et l22.5 : en miroir, E1 est gote (Blanc joue ailleurs) ; seul E8 est le meilleur coup ; E1 d’abord perd deux points', () => {
+    const q = step<Quiz>('l22', 3), m = step<Move>('l22', 4);
     expect(q.rows).toEqual([...S].reverse());
     expect(m.rows).toEqual(q.rows);
     const pos = avec(m.rows, 1);
@@ -156,13 +219,14 @@ describe('leçon 23 : sente et gote', () => {
     const v = valeursDesCoups(pos, z);
     expect(v.get(at('E8'))! - v.get(at('E1'))!).toBe(2);
     expect(m.refus![0].no).toMatch(/Deux points de moins/);
-    // Sente : après E8, la seule bonne réponse de Blanc est de relier en F9.
+    // Sente : après E8, la seule bonne réponse de Blanc est de relier en F9 ; puis Noir ferme le bas en E1.
     expect(meilleursCoups(ok(play(pos, at('E8'))), z).map(lab)).toEqual(['F9']);
-  });
+    expect(meilleursCoups(suite(pos, ['E8', 'F9']), z).map(lab)).toEqual(['E1']);
+  }, LENT);
 });
 
-describe('leçon 24 : le hane au premier rang', () => {
-  const H = step<Info>('l24', 0).rows;
+describe('leçon 23 : le hane au premier rang', () => {
+  const H = step<Info>('l23', 0).rows;
   const surfaces = { regle: 'chinese' as const };
 
   it('seule la première ligne reste à jouer ; le hane E1 est le seul meilleur coup de Noir, D1 celui de Blanc', () => {
@@ -176,11 +240,11 @@ describe('leçon 24 : le hane au premier rang', () => {
     const noir = suite(pos, ['E1', 'F1', 'D1']), blanc = suite(avec(H, 2), ['D1', 'C1', 'E1']);
     expect(valeurExacte(noir, zone, surfaces)).toBe(valeurExacte(pos, zone, surfaces));
     expect(valeurExacte(blanc, zone, surfaces)).toBe(valeurExacte(avec(H, 2), zone, surfaces));
-    expect(images(step<Info>('l24', 0)).at(-1)!.board).toEqual(noir.board);
-  });
+    expect(images(step<Info>('l23', 0)).at(-1)!.board).toEqual(noir.board);
+  }, LENT);
 
-  it('l24.2 : après le blocage F1, E1 est en atari ; seul D1 la sauve, et Blanc finit avec un point de moins qu’après un simple blocage', () => {
-    const q = step<Move>('l24', 1);
+  it('l23.2 : après le blocage F1, E1 est en atari ; seul D1 la sauve, et Blanc finit avec un point de moins qu’après un simple blocage', () => {
+    const q = step<Move>('l23', 1);
     const pos = avec(q.rows, 1);
     expect(fromRows(q.rows).pos.board).toEqual(suite(avec(H, 1), ['E1', 'F1']).board);
     expect(labels(groupAt(pos.board, N, at('E1')).liberties)).toEqual(['D1']);
@@ -193,18 +257,18 @@ describe('leçon 24 : le hane au premier rang', () => {
     const hane = japonais(ok(play(pos, at('D1')))), bloc = japonais(suite(avec(H, 1), ['D1', 'E1']));
     expect(hane.blanc).toBe(bloc.blanc - 1);
     expect(hane.noir).toBe(bloc.noir);
-  });
+  }, LENT);
 
-  it('l24.3 : entre le hane de Noir et celui de Blanc, deux points d’écart (règle japonaise)', () => {
-    const q = step<Quiz>('l24', 2);
+  it('l23.3 : entre le hane de Noir et celui de Blanc, deux points d’écart (règle japonaise)', () => {
+    const q = step<Quiz>('l23', 2);
     const noir = japonais(suite(avec(H, 1), ['E1', 'F1', 'D1'])), blanc = japonais(suite(avec(H, 2), ['D1', 'C1', 'E1']));
     expect(noir.noir - blanc.noir).toBe(1);
     expect(blanc.blanc - noir.blanc).toBe(1);
     expect(q.choices[q.answer]).toBe(String((noir.noir - noir.blanc) - (blanc.noir - blanc.blanc)));
-  });
+  }, LENT);
 
-  it('l24.4 : en miroir, E1 est le seul meilleur coup ; bloquer en F1 donne un point de moins', () => {
-    const q = step<Move>('l24', 3);
+  it('l23.4 : en miroir, E1 est le seul meilleur coup ; bloquer en F1 donne un point de moins', () => {
+    const q = step<Move>('l23', 3);
     const pos = avec(q.rows, 1);
     const zone = ouverts(pos);
     expect(labels(zone)).toEqual(['D1', 'E1', 'F1', 'G1', 'H1', 'J1']);
@@ -212,17 +276,19 @@ describe('leçon 24 : le hane au premier rang', () => {
     const v = valeursDesCoups(pos, zone, surfaces);
     expect(v.get(at('F1'))!).toBeLessThan(v.get(at('E1'))!);
     const hane = japonais(suite(pos, ['E1', 'D1', 'F1'])), bloc = japonais(suite(pos, ['F1', 'E1']));
-    expect((hane.noir - hane.blanc) - (bloc.noir - bloc.blanc)).toBe(1);
+    // « Blanc recule d'un point » : Blanc a un point de moins, Noir autant.
+    expect(hane.blanc).toBe(bloc.blanc - 1);
+    expect(hane.noir).toBe(bloc.noir);
     expect(valeurExacte(suite(pos, ['E1', 'D1', 'F1']), zone, surfaces)).toBe(valeurExacte(pos, zone, surfaces));
-  });
+  }, LENT);
 });
 
-describe('leçon 25 : agrandir ou réduire', () => {
+describe('leçon 24 : agrandir ou réduire', () => {
   const ZONE = zoneDe('A2 B2 C2 D2 E2 F2 G2 A1 B1 C1 D1 E1 F1 G1');
   const A2 = at('A2');
 
-  it('l25.1 : E1, au bord de l’espace, est le seul coup qui vit ; ensuite A1-B1 et D1 font deux yeux', () => {
-    const s = step<Info>('l25', 0);
+  it('l24.1 : E1, au bord de l’espace, est le seul coup qui vit ; ensuite A1-B1 et D1 font deux yeux', () => {
+    const s = step<Info>('l24', 0);
     const pos = avec(s.rows, 1);
     expect(defautsDeZone(pos, A2, ZONE)).toEqual([]);
     expect(coupsGagnants(pos, A2, ZONE, 'vivre').map(lab)).toEqual(['E1']);
@@ -234,8 +300,8 @@ describe('leçon 25 : agrandir ou réduire', () => {
     for (const l of ['A1', 'B1']) expect(neighbors(N)[at(l)].every(v => r.board[v] === 1 || ['A1', 'B1'].includes(lab(v))), l).toBe(true);
   });
 
-  it('l25.2 : si Blanc joue E1 d’abord, c’est le seul coup qui tue ; Noir ne peut plus vivre', () => {
-    const s = step<Info>('l25', 1);
+  it('l24.2 : si Blanc joue E1 d’abord, c’est le seul coup qui tue ; Noir ne peut plus vivre', () => {
+    const s = step<Info>('l24', 1);
     const W = avec(s.rows, 2);
     expect(coupsGagnants(W, A2, ZONE, 'tuer').map(lab)).toEqual(['E1']);
     const r = ok(play(W, at('E1')));
@@ -246,8 +312,8 @@ describe('leçon 25 : agrandir ou réduire', () => {
     expect(images(s).at(-1)!.board[at('E1')]).toBe(2);
   });
 
-  it('l25.3 : couleurs inversées, seul E1 tue ; chaque coup à l’intérieur laisse Blanc vivre en prenant E1', () => {
-    const q = step<Move>('l25', 2);
+  it('l24.3 : couleurs inversées, seul E1 tue ; chaque coup à l’intérieur laisse Blanc vivre en prenant E1', () => {
+    const q = step<Move>('l24', 2);
     const { pos, marked } = fromRows(q.rows);
     const zone = zoneDe('C2 D2 E2 F2 G2 H2 J2 C1 D1 E1 F1 G1 H1 J1');
     expect(defautsDeZone(pos, marked[0], zone)).toEqual([]);
@@ -261,8 +327,8 @@ describe('leçon 25 : agrandir ou réduire', () => {
     }
   });
 
-  it('l25.4 : la même forme sur le bord droit ; seul J5 vit ; chaque coup dedans laisse Blanc tuer en J5', () => {
-    const q = step<Move>('l25', 3);
+  it('l24.4 : la même forme sur le bord droit ; seul J5 vit ; chaque coup dedans laisse Blanc tuer en J5', () => {
+    const q = step<Move>('l24', 3);
     const pos = avec(q.rows, 1);
     const zone = zoneDe('H9 H8 H7 H6 H5 H4 H3 J9 J8 J7 J6 J5 J4 J3');
     const H9 = at('H9');
@@ -277,12 +343,12 @@ describe('leçon 25 : agrandir ou réduire', () => {
   });
 });
 
-describe('leçon 26 : les groupes du coin', () => {
+describe('leçon 25 : les groupes du coin', () => {
   const ZONE = zoneDe('A2 B2 C2 D2 E2 A1 B1 C1 D1 E1');
   const B2 = at('B2');
 
-  it('l26.1 : A2, le point du coin, est le seul coup qui vit ; ensuite deux yeux (A1-B1 et D1)', () => {
-    const s = step<Info>('l26', 0);
+  it('l25.1 : A2, le point du coin, est le seul coup qui vit ; ensuite deux yeux (A1-B1 et D1)', () => {
+    const s = step<Info>('l25', 0);
     const pos = avec(s.rows, 1);
     expect(defautsDeZone(pos, B2, ZONE)).toEqual([]);
     expect(coupsGagnants(pos, B2, ZONE, 'vivre').map(lab)).toEqual(['A2']);
@@ -290,8 +356,8 @@ describe('leçon 26 : les groupes du coin', () => {
     expect(labels(images(s).at(-1)!.yeux)).toEqual(['A1', 'B1', 'D1']);
   });
 
-  it('l26.2 et l26.3 : si Blanc prend A2, Blanc ne peut pas tuer sans ko, Noir ne peut pas vivre sans ko ; A1 puis B1 fait le ko', () => {
-    const W = avec(step<Info>('l26', 1).rows, 2);
+  it('l25.2 et l25.3 : si Blanc prend A2, Blanc ne peut pas tuer sans ko, Noir ne peut pas vivre sans ko ; A1 puis B1 fait le ko', () => {
+    const W = avec(step<Info>('l25', 1).rows, 2);
     // Sans ko, personne ne gagne : la preuve ne compte jamais un ko.
     expect(coupsGagnants(W, B2, ZONE, 'tuer')).toEqual([]);
     expect(evaluer(W, B2, ZONE)).toBe(0);
@@ -305,18 +371,18 @@ describe('leçon 26 : les groupes du coin', () => {
     expect(ko.board[at('A1')]).toBe(0);
     expect(ko.ko).toBe(at('A1'));
     expect(play(ko, at('A1'))).toBe('ko');
-    const im = images(step<Info>('l26', 1));
+    const im = images(step<Info>('l25', 1));
     expect(im.at(-1)!.interdit).toBe(at('A1'));
     // Si Noir ne se bat pas pour le ko, Blanc remplit A1 et Noir meurt ; s'il reprend, B1 n'est qu'un faux œil.
     expect(evaluer(suite(ko, ['passe', 'A1']), B2, ZONE)).toBe(-1);
     const reprise = suite(ko, ['passe', 'passe', 'A1']);
     expect(yeuxDuGroupe(reprise, B2).find(e => e.point === at('B1'))?.vrai).toBe(false);
-    const q = step<Quiz>('l26', 2);
-    expect(q.choices[q.answer]).toBe('C’est un ko');
+    const q = step<Quiz>('l25', 2);
+    expect(q.choices[q.answer]).toBe('Un ko commence');
   });
 
-  it('l26.4 : tourné dans le coin en haut à droite, seul J8 vit ; H9 meurt, J9 donne un ko, F9 bouche l’œil', () => {
-    const q = step<Move>('l26', 3);
+  it('l25.4 : tourné dans le coin en haut à droite, seul J8 vit ; H9 meurt, J9 donne un ko, F9 bouche l’œil', () => {
+    const q = step<Move>('l25', 3);
     const pos = avec(q.rows, 1);
     const zone = zoneDe('E9 F9 G9 H9 J9 E8 F8 G8 H8 J8');
     const H8 = at('H8');
@@ -333,5 +399,56 @@ describe('leçon 26 : les groupes du coin', () => {
     expect(k.ko).toBe(at('J9'));
     expect(issueApres(pos, at('F9'), H8, zone)).toBe(-1);
     expect(q.refus!.map(r => r.points[0])).toEqual(['H9', 'J9', 'F9']);
+  });
+});
+
+
+describe('leçon 26 : la course avec un œil', () => {
+  /** Noir au trait joue `m` : il prend le groupe blanc en trois coups noirs au plus, et Blanc ne prend jamais le groupe noir. */
+  const gagne = (pos: Position, m: number, blanc: number, noir: number) =>
+    captureEn(pos, m, [blanc], 3, SANS_KO) && !attackerCaptures(ok(play(pos, m)), [noir], 3, SANS_KO);
+
+  it('l26.1 : un œil en A1 ; Blanc ne peut pas y jouer tant que Noir a une autre liberté', () => {
+    const s = step<Info>('l26', 0);
+    const pos = avec(s.rows, 2);
+    expect(labels(groupAt(pos.board, N, at('B2')).liberties)).toEqual(['A1', 'C1']);
+    expect(neighbors(N)[at('A1')].every(v => pos.board[v] === 1)).toBe(true);
+    expect(play(pos, at('A1'))).toBe('suicide');
+    expect(images(s).at(-1)!.interdit).toBe(at('A1'));
+    // Quand A1 est la dernière liberté, Blanc y joue et prend tout.
+    expect(ok(play(suite(pos, ['C1', 'passe']), at('A1'))).captures[2]).toBe(4);
+  });
+
+  it('l26.2 : Noir au trait gagne exactement en bouchant le dehors (E1 ou E2) ; C1 et A1 perdent', () => {
+    const s = step<Info>('l26', 1);
+    const pos = avec(s.rows, 1);
+    const D1 = at('D1'), B2 = at('B2');
+    expect(labels(groupAt(pos.board, N, D1).liberties)).toEqual(['C1', 'E1', 'E2']);
+    expect(tous.filter(p => isLegal(pos, p) && gagne(pos, p, D1, B2)).map(lab).sort()).toEqual(['E1', 'E2']);
+    for (const l of ['C1', 'A1']) expect(attackerCaptures(ok(play(pos, at(l))), [B2], 1, SANS_KO), l).toBe(true);
+    expect(labels(images(s).at(-1)!.libs)).toEqual(['C1', 'E1']);
+  });
+
+  it('l26.3 : si Blanc joue le premier, Blanc gagne : il bouche C1, puis prend dans l’œil', () => {
+    const q = step<Quiz>('l26', 2);
+    const W = avec(q.rows, 2);
+    expect(attackerCaptures(W, [at('B2')], 2, SANS_KO)).toBe(true);
+    expect(defenderFails(W, [at('D1')], 3, SANS_KO)).toBe(false);
+    const c1 = ok(play(W, at('C1')));
+    expect(labels(groupAt(c1.board, N, at('B2')).liberties)).toEqual(['A1']);
+    expect(groupAt(c1.board, N, at('D1')).liberties.size).toBe(2);
+    expect(q.choices[q.answer]).toBe('Blanc');
+  });
+
+  it('l26.4 : en miroir, seuls E1 et E2 gagnent ; G1 (liberté commune) et J1 (l’œil) mettent Noir en atari, Blanc prend', () => {
+    const q = step<Move>('l26', 3);
+    const pos = avec(q.rows, 1);
+    const F1 = at('F1'), H2 = at('H2');
+    expect(tous.filter(p => isLegal(pos, p) && gagne(pos, p, F1, H2)).map(lab).sort()).toEqual([...q.accept].sort());
+    for (const [l, prise] of [['G1', 'J1'], ['J1', 'G1']]) {
+      const r = ok(play(pos, at(l)));
+      expect(labels(groupAt(r.board, N, H2).liberties), l).toEqual([prise]);
+      expect(ok(play(r, at(prise))).board[H2], l).toBe(0);
+    }
   });
 });
