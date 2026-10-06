@@ -8,7 +8,7 @@ import { ACQUIS } from '../src/content/acquis';
 // 320 px, en clair et en sombre. Positions et réponses prouvées par src/go/lecons-17-20.test.ts.
 // Captures : seulement si CAPTURES_LECONS_17_20 donne un dossier (aucune capture versionnée).
 
-const norm = (s: string) => s.replace(/[  \s]+/g, ' ').trim();
+const norm = (s: string) => s.replace(/[\u00A0\u202F\s]+/g, ' ').trim();
 const L20 = LESSONS_FR.find(l => l.id === 'l20')!;
 const etape = <K extends LessonStep['kind']>(i: number) => L20.steps[i] as Extract<LessonStep, { kind: K }>;
 /** Toutes les leçons avant la 20 déjà faites : le bouton du chemin ouvre la leçon 20. */
