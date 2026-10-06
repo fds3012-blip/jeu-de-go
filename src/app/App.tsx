@@ -64,6 +64,7 @@ import '../ui/defis.css';
 import '../ui/robustesse.css';
 import { ecouterAide, estRaccourciAide, ficheDeLecon, ouvrirAide, type Ouverture } from './ouvrirAide';
 import { bilanAMontrer, etatSemaine } from './semaine';
+import { noterReglage } from './reglagesDates';
 
 // Aide (#362) : feuille chargée au premier « ? » (partie, leçon, problème, Profil) ou à la touche « ? ».
 const FeuilleAide = lazy(() => import('../ui/Aide'));
@@ -565,7 +566,7 @@ export function App() {
     setTab('jouer'); setPlaying(false); setDefi(null); setDirect(f === 'direct'); setLente(f === 'lente'); window.scrollTo({ top: 0 });
   }
   /** Bascule « En direct » / « Partie lente » : mémorisée pour la prochaine fois. */
-  const changerFacon = (f: FaconEnLigne) => { ecrireFaconEnLigne(f); setDirectRejoint(null); ouvrirEnLigne(f); };
+  const changerFacon = (f: FaconEnLigne) => { if (f !== lireFaconEnLigne()) noterReglage('enLigne'); ecrireFaconEnLigne(f); setDirectRejoint(null); ouvrirEnLigne(f); };
   // #440 : la partie trouvée pendant l'absence est ouverte par un autre chemin (« À toi de jouer », la liste) :
   // « Adversaire trouvé » est effacé de l'accueil, et le début de partie mesuré.
   useEffect(() => {
@@ -596,6 +597,18 @@ export function App() {
     if (!db || !compteId || !pseudo) return;
     void import('../data/partiesPerso').then(m => m.synchroniser(db, compteId)).catch(() => undefined);
   }, [supabase, compteId, pseudo]);
+  // #448 : avec un compte, les réglages se synchronisent entre ses appareils (dernier changement gagne, clé par clé).
+  // Module chargé à la demande, après le premier écran ; arrêté à la déconnexion.
+  useEffect(() => {
+    const db = supabase;
+    if (!db || !compteId) return;
+    let fini = false;
+    let arreter: (() => void) | undefined;
+    const id = window.setTimeout(() => {
+      void import('../data/reglages').then(m => { if (!fini) arreter = m.demarrerSynchroReglages(db); }).catch(() => undefined);
+    }, 1000);
+    return () => { fini = true; window.clearTimeout(id); arreter?.(); };
+  }, [supabase, compteId]);
   useEffect(() => {
     if (!online) return;
     const id = window.setTimeout(synchroniserParties, 1500); // après le premier écran

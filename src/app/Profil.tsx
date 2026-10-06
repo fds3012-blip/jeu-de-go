@@ -48,6 +48,7 @@ import { tk } from '../content/i18n/club';
 import { Board } from '../ui/Board';
 import { CADENCES_ORDRE, CADENCES } from '../go/pendule';
 import '../ui/club.css';
+import { noterReglage } from './reglagesDates';
 
 // Joueur de club (#368, #372) : sous-écrans chargés à la demande, hors du morceau du Profil.
 const MesStatistiques = lazy(() => import('./Statistiques'));
@@ -428,6 +429,7 @@ function LigneLangue() {
   const choisir = (l: Langue) => {
     if (l === actuelle) return;
     memoriserChoixLangue(l);
+    noterReglage('langue'); // #448 : synchronisée avec les autres appareils du compte
     location.reload();
   };
   return (

@@ -1,5 +1,6 @@
 import type { BrowserContext, Page, Route, WebSocketRoute } from '@playwright/test';
 import { parseActionRequest, planAction, type GameRow } from '../src/go/server';
+import { fusionner, nettoyer } from '../src/app/reglagesCompte';
 
 // Supabase simulé par interception réseau, partagé par les parcours du compte (#343) et du défi par lien (#81).
 // Le build de test lit l'adresse simulée dans le stockage local (`e2e.supabase`, voir src/data/supabase.ts).
@@ -35,6 +36,9 @@ import { parseActionRequest, planAction, type GameRow } from '../src/go/server';
 // `classement_go_du_jour`, `rappeler_go_du_jour` (notification `go_du_jour`), `bilan_semaine` (toutes les parties finies
 // entre humains comptent pour la semaine en cours), `mes_records` (historique de cote du joueur). Mêmes règles et mêmes
 // codes que supabase/migrations/20261005230100_emulation_amis.sql (sauf les limites de temps).
+// Réglages du compte (#448) : `enregistrer_reglages`, « dernier changement gagne » clé par clé (à égalité, la valeur
+// gardée reste), vrai compte exigé ; liste blanche de supabase/migrations/20261006123100_reglages_compte.sql
+// (src/app/reglagesCompte.ts). `reglages` : réglages gardés par compte.
 
 export const SUPABASE = 'https://supabase.e2e.test';
 export const CODE = '123456';
@@ -96,6 +100,8 @@ export function fauxServeur() {
   /** Go du jour par joueur (#369) : numéro, état, essais, ordre de réussite. */
   const goDuJour: { user: string; numero: number; etat: 'en_cours' | 'reussi' | 'vu'; essais: number; le: number }[] = [];
   const rappels: { de: string; a: string; numero: number }[] = [];
+  /** Réglages du compte (#448), par identifiant de compte. */
+  const reglages = new Map<string, Record<string, { v: unknown; t: number }>>();
   const identite = (provider: string, email?: string): Identite => ({ identity_id: `identite-${++nIdentite}`, provider, email });
 
   const jwt = (u: Utilisateur) => {
@@ -558,6 +564,13 @@ export function fauxServeur() {
       const { p_partie, p_type } = req.postDataJSON() as { p_partie?: string; p_type?: string };
       return json(marquer(n => n.destinataire_id === u.id && (!p_partie || n.partie_id === p_partie) && (!p_type || n.type === p_type)));
     }
+    if (chemin === '/rest/v1/rpc/enregistrer_reglages') {
+      if (!u || u.anonyme) return json({ code: 'JGC01', message: 'Crée ton compte pour garder tes réglages' }, 400);
+      const { p_reglages } = req.postDataJSON() as { p_reglages: unknown };
+      const r = fusionner(nettoyer(p_reglages), reglages.get(u.id) ?? {});
+      reglages.set(u.id, r);
+      return json(r);
+    }
     if (chemin === '/rest/v1/rpc/enregistrer_parties_perso') {
       // Comme le serveur : compte avec pseudo, clé unique par joueur, clés rendues (ajoutées ou déjà là).
       if (!u || u.anonyme) return json({ code: 'JGC01', message: 'Crée ton compte' }, 400);
@@ -909,7 +922,7 @@ export function fauxServeur() {
   const canauxActifs = (prefixe: string) => [...abonnes].filter(a => !a.fige).flatMap(a => [...a.canaux.keys()]).filter(t => t.startsWith(`realtime:${prefixe}`)).length;
   return { traiter, brancherTempsReel, notifier, fileLente, tacheLentes, avancerHorloge, ralentirLectures, figerTempsReel, canauxActifs, pousses, pousserPartie, appels, games, defis, notifications, partiesPerso, partagees, profiles, ratingHistory, emailsEnvoyes, sessionAnonyme, file, pendules,
     compteExistant, compteGoogle, compteSocial, relierIdentite, liaison, utilisateur, sessionCompte, autorisations, amities,
-    signalements, blocages, messagesPartie, goDuJour, rappels };
+    signalements, blocages, messagesPartie, goDuJour, rappels, reglages };
 }
 
 export type FauxServeur = ReturnType<typeof fauxServeur>;

@@ -47,7 +47,7 @@ update public.profiles set username = 'Alice' where id = 'aaaaaaaa-0000-4000-800
 
 -- 1. Les dix politiques existent toujours, restrictives, et lisent le jeton sous la forme reconnue par l'analyseur :
 --    « ( SELECT auth.jwt() … » et plus jamais « ( SELECT ((auth.jwt() ».
-select pg_temp.egal((select count(*) from pg_policy where polname like 'Anonyme : %'), 11::bigint, 'onze politiques Anonyme (dix + parties perso, #358)');
+select pg_temp.egal((select count(*) from pg_policy where polname like 'Anonyme : %'), 12::bigint, 'douze politiques Anonyme (dix + parties perso, #358, + réglages, #448)');
 select pg_temp.egal((select bool_and(not polpermissive) from pg_policy where polname like 'Anonyme : %'), true, 'toutes restrictives');
 select pg_temp.egal((select bool_and(
     coalesce(pg_get_expr(polqual, polrelid), '') !~ 'SELECT \(\(auth\.jwt'
@@ -57,7 +57,7 @@ select pg_temp.egal((select bool_and(
 -- Les commandes n'ont pas changé : insert, update, delete, all selon la politique.
 select pg_temp.egal((select string_agg(polname || ':' || polcmd::text, ',' order by polname) from pg_policy where polname like 'Anonyme : %'),
   'Anonyme : pas d''acceptation d''ami:w,Anonyme : pas de badge:a,Anonyme : pas de création de partie:a,Anonyme : pas de demande d''ami:a,'
-  'Anonyme : pas de parties perso:*,Anonyme : pas de problème personnel:a,Anonyme : pas de pseudo:w,Anonyme : pas de rappel:*,Anonyme : pas de suppression de problème:d,'
+  'Anonyme : pas de parties perso:*,Anonyme : pas de problème personnel:a,Anonyme : pas de pseudo:w,Anonyme : pas de rappel:*,Anonyme : pas de réglages:*,Anonyme : pas de suppression de problème:d,'
   'Anonyme : progression des leçons sur l''appareil:a,Anonyme : progression des leçons sur l''appareil (mise à jour):w',
   'commandes inchangées');
 
