@@ -58,4 +58,12 @@ export const MOTIFS: Record<string, Motif> = {
   l15: { noir: [[1, 0], [1, 1], [1, 3]], blanc: [[2, 0], [2, 1], [2, 2], [2, 3]], jade: [[1, 2]] },
   // Compter une partie : le territoire noir compté, avec une pierre blanche morte dedans.
   l16: { noir: [[1, 0], [1, 1], [1, 2], [1, 3]], blanc: [[0, 1], [2, 0], [2, 1], [2, 2], [2, 3]], cases: { couleur: 'or', points: [[0, 0], [0, 2], [0, 3]] } },
+  // Les formes d'yeux : un espace en T dans le groupe noir ; son centre, en jade, décide.
+  l17: { noir: [[0, 2], [2, 2], [1, 1], [3, 3]], jade: [[1, 3]] },
+  // Les bonnes formes : la bouche du tigre, trois pierres autour du point où Blanc serait aussitôt en atari.
+  l18: { noir: [[0, 1], [2, 1], [1, 2]], blanc: [[2, 2]], jade: [[1, 1]] },
+  // Les pierres qui coupent : la pierre blanche entre trois noires, et la quatrième qui la prend en jade.
+  l19: { noir: [[1, 0], [0, 1], [2, 1]], blanc: [[1, 1], [3, 3]], jade: [[1, 2]] },
+  // Relier et mourir : la chaîne blanche et sa pierre en atari ; relier ne lui laisse qu'une liberté.
+  l20: { noir: [[0, 1], [1, 1], [2, 1], [3, 2]], blanc: [[0, 2], [1, 2], [2, 2], [3, 3]], jade: [[2, 3]] },
 };

@@ -123,12 +123,35 @@ function motif(id: string, W: string, C: string): ReactElement {
       <path d="M66 31V45M59 38H73" stroke={W} strokeWidth="3.4" strokeLinecap="round" />
       <g fill={C} stroke={W} strokeWidth="2.6"><circle cx="40" cy="66" r="7.5" /><circle cx="60" cy="66" r="7.5" /></g>
     </>);
+    // Les formes d'yeux : un espace en T, trois points vides et le centre qui les touche tous.
+    case 'l17': return (<>
+      <path d="M28 62H72M50 62V38" stroke={W} strokeWidth="3" strokeLinecap="round" />
+      <g fill="none" stroke={W} strokeWidth="2.4"><circle cx="28" cy="62" r="5" /><circle cx="72" cy="62" r="5" /><circle cx="50" cy="36" r="5" /></g>
+      <circle cx="50" cy="62" r="10" fill={W} />
+    </>);
+    // Les bonnes formes : la bouche du tigre, trois pierres autour d'un point vide.
+    case 'l18': return (<>
+      <g fill={W}><circle cx="50" cy="30" r="9" /><circle cx="30" cy="52" r="9" /><circle cx="70" cy="52" r="9" /></g>
+      <circle cx="50" cy="52" r="4.5" fill="none" stroke={W} strokeWidth="2.2" />
+      <circle cx="50" cy="72" r="7" fill={C} stroke={W} strokeWidth="2.6" />
+    </>);
+    // Les pierres qui coupent : le diamant (ponnuki) qui reste après la prise.
+    case 'l19': return (<>
+      <path d="M50 30 30 50 50 70 70 50Z" stroke={W} strokeWidth="2.4" strokeLinejoin="round" fill="none" opacity=".8" />
+      <g fill={W}><circle cx="50" cy="28" r="8.5" /><circle cx="28" cy="50" r="8.5" /><circle cx="72" cy="50" r="8.5" /><circle cx="50" cy="72" r="8.5" /></g>
+    </>);
+    // Relier et mourir : trois pierres blanches reliées, toutes prises par une seule pierre noire.
+    case 'l20': return (<>
+      <path d="M26 46H74" stroke={W} strokeWidth="3" strokeLinecap="round" />
+      <g fill={C} stroke={W} strokeWidth="2.6"><circle cx="30" cy="46" r="8" /><circle cx="50" cy="46" r="8" /><circle cx="70" cy="46" r="8" /></g>
+      <circle cx="50" cy="70" r="9" fill={W} />
+    </>);
     default: return <circle cx="50" cy="50" r="14" fill={W} />;
   }
 }
 
 interface Props {
-  /** Identifiant de la leçon (l1 à l16). */
+  /** Identifiant de la leçon (l1 à l20). */
   id: string;
   /** Côté en pixels. */
   taille?: number;

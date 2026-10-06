@@ -1,7 +1,8 @@
 import { Suspense, lazy, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 // Écrans chargés à la demande (perf, #323) : seul l'accueil est dans le JS initial.
 import { CreerCompte, DefiArrivee, DefiPartie, DefisEcran, Direct, Game, LearnHome, Lentes, LessonPlayer, PartiePartagee, Placement, Profil, PseudoObligatoire, Puzzles, SeriePratique, VeilleFile, apresPremierEcran } from './ecrans';
-import { CHAPITRES, LESSONS } from '../content/lessons';
+// #16 : l'accueil ne lit que l'index léger des leçons ; leur contenu arrive avec les écrans Apprendre et leçon.
+import { CHAPITRES, LESSONS } from '../content/leconsResume';
 import { LESSONS_KEY, readLocal, writeLocal, useGelsServeur, useLessonProgress, useOnline, useProfil, usePseudo, useSerie, useSession } from './hooks';
 import { COMPTES, chargerSupabase, useSupabase } from '../data/client';
 import { useSettings, useStored } from './settings';
@@ -716,10 +717,12 @@ export function App() {
         themes: themes.map(th => t(`theme.${th}`)),
         ouvrir: () => {
           if (!garde({ quoi: 'probleme' })) return;
-          void problemesLocaux().then(problemes => {
+          // #16 : la leçon complète (ses positions) vient du contenu des leçons, déjà chargé avec l'écran de la leçon.
+          void Promise.all([problemesLocaux(), import('../content/lessons')]).then(([problemes, { LESSONS: completes }]) => {
+            const complete = completes.find(l => l.id === lesson.id)!;
             const s = serieDeLecon(lesson.id, problemes, new Set(Object.keys(readLocal<Record<string, true>>(SOLVED_KEY, {}))),
               // #237 : pas le même exercice que l'étape de leçon qui vient d'être jouée.
-              TAILLE_SERIE, p => estRedite(p, lesson));
+              TAILLE_SERIE, p => estRedite(p, complete));
             if (s.length) { setSerie3(s); setLessonId(null); window.scrollTo({ top: 0 }); }
           }).catch(() => { /* morceau introuvable (hors ligne sans cache) : on reste sur la fin de leçon */ });
         },

@@ -8,7 +8,8 @@ export const CHAPITRES_EN = {
   c2: { titre: 'Opening on 9 × 9', intro: 'Where to place your first stones.' },
   c3: { titre: 'Capturing and saving', intro: 'Traps to capture more stones.' },
   c4: { titre: 'Life and death', intro: 'When a group lives, and when it dies.' },
-  c5: { titre: 'Endgame and counting', intro: 'Finish cleanly, then count right.' }
+  c5: { titre: 'Endgame and counting', intro: 'Finish cleanly, then count right.' },
+  c6: { titre: 'Shape and tesuji', intro: 'Good shapes and the clever moves of Go.' }
 };
 
 const COLLEE = 'Right next to White, your stone makes White stronger. Leave some space.';
@@ -193,5 +194,47 @@ export const LESSONS_EN = {
       ok: '26 + 1 + 1 + 6.5 = 34.5.', no: 'Territory, prisoners, dead stone, then komi (6.5).' },
     { text: 'Black 34, White 34.5. Who wins?', choices: ['Black', 'White', 'Tie'],
       ok: 'White, by half a point. The half point of komi prevents ties.', no: '34.5 is more than 34.' }
+  ] },
+  l17: { title: 'Eye shapes', desc: 'The T, the box, the bulky five', steps: [
+    { text: 'T-shaped space: play the middle, at the green point. Three eyes!' },
+    { text: 'Your turn: kill the marked white group.',
+      ok: 'The middle of the T: White makes only one eye. Dead.', no: 'Look for the point touching the other three.',
+      refus: ['White takes the middle: two eyes.'] },
+    { text: 'Box of four. Black plays first: can it live?', choices: ['Yes', 'No'],
+      ok: 'No. After one move inside, White takes the vital point: one eye.', no: 'Play once inside: White takes the opposite corner, one eye.' },
+    { text: 'Bulky five: the vital point is the green point. Take it.' },
+    { text: 'Your turn: kill this white group of five points.',
+      ok: 'Vital point taken: White’s vital point is yours too.', no: 'Look for the point touching three empty points.',
+      refus: ['White takes the vital point: it lives.'] }
+  ] },
+  l18: { title: 'Good shape', desc: 'Tiger’s mouth and bamboo joint', steps: [
+    { text: 'Cutting point: White would split your stones there. Tap it.',
+      ok: 'Yes, D5: if White plays there, your two stones are cut.', no: 'Look for the empty point touching both your stones.' },
+    { text: 'Tiger’s mouth (three stones around an empty point): play the green point. White enters? Captured.' },
+    { text: 'Your turn: guard the cutting point with a tiger’s mouth.',
+      ok: 'If White cuts at C7, it’s in atari at once.', no: 'Play next to the cutting point C7, without filling it.',
+      refus: ['It connects, but it’s heavy. The tiger’s mouth connects from further away.'] },
+    { text: 'Bamboo joint: two gaps. White takes one? Take the other, green point.' },
+    { text: 'White enters your bamboo joint. Connect your marked stones.',
+      ok: 'Connected: a bamboo joint can never be cut.', no: 'Take the other gap of the bamboo joint.' }
+  ] },
+  l19: { title: 'Cutting stones', desc: 'Capture the ones that split your groups', steps: [
+    { text: 'This white stone cuts your stones. Capture it at the green point.' },
+    { text: 'Diamond (ponnuki): White can never enter. Your stones hold together.' },
+    { text: 'Two white stones in atari. Capture the cutting one.',
+      ok: 'Your marked stones hold together. White keeps a useless stone.', no: 'Look for the white stone between your marked stones.',
+      refus: ['It cuts nothing. White saves E6 and splits your stones.'] },
+    { text: 'Two stones on one side, one on the other. Which one?',
+      ok: 'The cutting stone is worth more than two useless ones.', no: 'Capture the stone that splits your marked stones.',
+      refus: ['Two prisoners, but White saves E6 and splits your stones.'] }
+  ] },
+  l20: { title: 'Connect and die', desc: 'When connecting saves nothing', steps: [
+    { text: 'Atari at the green point. White connects? Everything stays in atari.' },
+    { text: 'Capture everything at the green point: five stones for one.' },
+    { text: 'Your turn: capture the marked stones, even if White connects.',
+      ok: 'Connecting at F9 leaves one liberty: you capture everything.', no: 'Put the marked stones in atari, from the open side.',
+      refus: ['Atari from the wrong side: White captures your stone at G9.'] },
+    { text: 'After your atari at F1, should White connect?', choices: ['Yes', 'No, give up E1'],
+      ok: 'Right: connecting loses five stones, giving up loses only one.', no: 'Connecting leaves one liberty: White would lose five stones.' }
   ] }
 };

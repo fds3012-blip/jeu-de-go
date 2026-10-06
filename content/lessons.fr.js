@@ -1,4 +1,4 @@
-// Seize leçons interactives, positions vérifiées par un lecteur tactique.
+// Vingt leçons interactives, positions vérifiées par un lecteur tactique.
 // rows : plateau 9 × 9 ligne par ligne depuis le haut. X noir, O blanc, T pierre blanche visée, S pierre noire à sauver.
 // Coordonnées : lettres A à J sans I, lignes numérotées depuis le bas. accept: 'line3' = tout coup hors des deux premières lignes.
 const L_CAP1 = ['.........', '.........', '.........', '...X.....', '..XT.O...', '...X.....', '.........', '.........', '.........'];
@@ -68,13 +68,35 @@ const L_FIN_SANS = L_FIN_P.map((r, i) => (i === 7 ? '..X.XO...' : r));
 // Compter une partie : une morte de chaque côté (B2 blanche, H8 noire), une dame en E5. `SANS` : mortes retirées.
 const L_COMPTE_P = ['...XO.O..', '...XO.OX.', '...XO.OOO', '...XO....', '...X.O...', '....XO...', 'XXX.XO...', '.OX.XO...', '..X.XO...'];
 const L_COMPTE_SANS = L_COMPTE_P.map((r, i) => (i === 1 ? '...XO.O..' : i === 7 ? '..X.XO...' : r));
+// Leçons 17 à 20 (#16, décision du 05/10 : vers le niveau dan). Chaque position, chaque réponse acceptée, chaque
+// réfutation et chaque démonstration est prouvée par src/go/lecons-17-20.test.ts (preuve de vie et mort en zone fermée,
+// lecteur exact de capture). Les formes d'yeux (l17) finissent « Vie et mort » ; l18 à l20 ouvrent « Formes et tesuji ».
+// Formes d'yeux : espace en T (point vital au centre), carré de quatre (toujours mort), cinq en grappe (point vital B1/H1).
+const L_T_NOIR = [...V.slice(0, 5), 'OOOOOO...', 'XXXXXO...', 'XX.XXO...', 'X...XO...'];
+const L_T_BLANC = [...V.slice(0, 5), '...XXXXXX', '...XOOOOO', '...XOO.OO', '...XO...T'];
+const L_CARRE = [...V.slice(0, 5), 'OOOO.....', 'XXXO.....', '..XO.....', '..XO.....'];
+const L_GRAPPE_NOIR = [...V.slice(0, 5), 'OOOOO....', 'XXXOO....', '..XXO....', '...XO....'];
+const L_GRAPPE_BLANC = [...V.slice(0, 5), '....XXXXX', '....XXOOT', '....XOO..', '....XO...'];
+// Bonnes formes : point de coupe D5 (entre D4 et E5, à côté de E4), bouche du tigre ; puis le bambou.
+const L_COUPE = ['.........', '.........', '.........', '.........', '....X....', '...XO....', '.........', '.........', '.........'];
+const L_COUPE_Q = ['.........', '.........', '...S.....', '..SO.....', '.........', '.........', '.........', '.........', '.........'];
+const L_BAMBOU = ['.........', '.........', '.........', '..XX.....', '.........', '..XX.....', '.........', '.........', '.........'];
+const L_BAMBOU_Q = ['.........', '.........', '.........', '.........', '.....S.S.', '.....XOX.', '.........', '.........', '.........'];
+// Pierres qui coupent : E6 sépare D6, F6 et E7 ; la prendre fait un diamant (ponnuki). La queue (B3, puis B2 et C2) ne coupe rien.
+const L_COUPANTE = ['.........', '.........', '....X....', '...XOX...', '.........', '....O....', '.........', '.........', '.........'];
+const L_COUPANTE_Q = ['.........', '.........', '....X....', '...SOS...', '.........', '.X..O....', 'XO.......', '.X.......', '.........'];
+const L_COUPANTE_Q2 = ['.........', '.........', '....X....', '...SOS...', '.........', '....O....', '.XX......', 'XOO......', '.XX......'];
+// Relier et mourir (oiotoshi) : si Blanc relie E1 en D1, tout le groupe n'a plus qu'une liberté (C1).
+const L_RELIER = [...V.slice(0, 6), 'XXXX.....', 'XOOOX....', '.X..O....'];
+const L_RELIER_Q = ['...TT..X.', '...XXOOOX', '...XXXXXX', ...V.slice(0, 6)];
 export const CHAPITRES = [
   { id: 'c1', titre: 'Les bases', intro: 'Sept leçons courtes pour jouer ta première partie.', fin: 'Tu connais les règles du go.', lecons: ['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7'] },
   // Chapitre en cours d'écriture (`complet: false`) : sa dernière leçon ne ferme pas encore le chapitre.
   { id: 'c2', titre: 'Ouverture sur 9\u00A0×\u00A09', intro: 'Où poser tes premières pierres.', lecons: ['l8'], complet: false },
   { id: 'c3', titre: 'Capturer et sauver', intro: 'Des pièges pour prendre plus de pierres.', lecons: ['l9', 'l10', 'l11'], complet: false },
-  { id: 'c4', titre: 'Vie et mort', intro: 'Quand un groupe vit, quand il meurt.', lecons: ['l12', 'l13', 'l14'], complet: false },
-  { id: 'c5', titre: 'Fin de partie et comptage', intro: 'Finir proprement, puis compter juste.', lecons: ['l15', 'l16'], complet: false }
+  { id: 'c4', titre: 'Vie et mort', intro: 'Quand un groupe vit, quand il meurt.', lecons: ['l12', 'l13', 'l14', 'l17'], complet: false },
+  { id: 'c5', titre: 'Fin de partie et comptage', intro: 'Finir proprement, puis compter juste.', lecons: ['l15', 'l16'], complet: false },
+  { id: 'c6', titre: 'Formes et tesuji', intro: 'Les bonnes formes et les coups malins du go.', lecons: ['l18', 'l19', 'l20'], complet: false }
 ];
 export const LESSONS = [
   { id: 'l1', title: 'Libertés et capture', desc: 'La règle qui fait tout le jeu', steps: [
@@ -307,6 +329,23 @@ export const LESSONS = [
       ok: 'Deux libertés partagées : personne ne peut attaquer. C’est seki.', no: 'Garde deux libertés partagées avec Blanc.',
       refus: [{ points: ['C1', 'E1'], no: 'Là, tu te mets en atari : Blanc prend.' }] }
   ] },
+  { id: 'l17', title: 'Les formes d’yeux', desc: 'Le T, le carré, la grappe de cinq', steps: [
+    { kind: 'info', rows: L_T_NOIR, geste: { pose: 'C1' }, demo: [{ pose: 'C1', couleur: 'B' }, { yeux: ['B1', 'C2', 'D1'] }],
+      text: 'Espace en T : joue au centre, au point vert. Trois yeux !' },
+    { kind: 'move', rows: L_T_BLANC, accept: ['G1'],
+      text: 'À toi : tue le groupe blanc marqué.',
+      ok: 'Le centre du T : Blanc ne fera qu’un œil. Il est mort.', no: 'Cherche le point qui touche les trois autres.',
+      refus: [{ points: ['F1', 'H1', 'G2'], no: 'Blanc prend le centre : il a deux yeux.' }] },
+    { kind: 'quiz', rows: L_CARRE,
+      text: 'Carré de quatre. Noir joue le premier : peut-il vivre ?', choices: ['Oui', 'Non'], answer: 1,
+      ok: 'Non. Après un coup dedans, Blanc prend le point vital : un seul œil.', no: 'Joue un coup dedans : Blanc prend le coin opposé, un seul œil.' },
+    { kind: 'info', rows: L_GRAPPE_NOIR, geste: { pose: 'B1' }, demo: [{ pose: 'B1', couleur: 'B' }, { yeux: ['C1'] }, { zone: ['A1', 'A2', 'B2'] }],
+      text: 'Cinq en grappe : le point vital est au point vert. Prends-le.' },
+    { kind: 'move', rows: L_GRAPPE_BLANC, accept: ['H1'],
+      text: 'À toi : tue ce groupe blanc de cinq points.',
+      ok: 'Point vital pris : le point vital de Blanc est aussi le tien.', no: 'Cherche le point qui touche trois points vides.',
+      refus: [{ points: ['G1', 'J1', 'H2', 'J2'], no: 'Blanc prend le point vital : il vit.' }] }
+  ] },
   { id: 'l15', title: 'Finir la partie', desc: 'Dame, frontières, pierres mortes', steps: [
     { kind: 'info', rows: L_FIN_P, geste: { touche: ['E7'], no: 'Cherche le point vide entre Noir et Blanc.' }, demo: [{ zone: ['E7'] }],
       text: 'Dame (point neutre) : il touche Noir et Blanc. Touche-le.' },
@@ -342,5 +381,49 @@ export const LESSONS = [
     { kind: 'quiz', rows: L_COMPTE_SANS,
       text: 'Noir 34, Blanc 34,5. Qui gagne ?', choices: ['Noir', 'Blanc', 'Égalité'], answer: 1,
       ok: 'Blanc, d’un demi-point. Le demi-point du komi évite les égalités.', no: '34,5 est plus grand que 34.' }
+  ] },
+  { id: 'l18', title: 'Les bonnes formes', desc: 'Bouche du tigre et bambou', steps: [
+    { kind: 'touche', rows: L_COUPE, accept: ['D5'],
+      text: 'Point de coupe : Blanc y sépare tes pierres. Touche-le.',
+      ok: 'Oui, D5 : si Blanc y joue, tes deux pierres sont coupées.', no: 'Cherche le point vide qui touche tes deux pierres.' },
+    { kind: 'info', rows: L_COUPE, geste: { pose: 'C5' },
+      demo: [{ pose: 'C5', couleur: 'B' }, { pose: 'D5', couleur: 'W' }, { libs: 'D5' }, { pose: 'D6', couleur: 'B' }],
+      text: 'Bouche du tigre (trois pierres autour d’un vide) : pose au point vert. Blanc entre ? Pris.' },
+    { kind: 'move', rows: L_COUPE_Q, accept: ['B7', 'C8'],
+      text: 'À toi : protège le point de coupe par une bouche du tigre.',
+      ok: 'Si Blanc coupe en C7, il est aussitôt en atari.', no: 'Pose une pierre qui touche le point de coupe C7, sans le remplir.',
+      refus: [{ points: ['C7'], no: 'Ça relie, mais c’est lourd. La bouche du tigre relie de plus loin.' }] },
+    { kind: 'info', rows: L_BAMBOU, geste: { pose: 'D5' }, demo: [{ pose: 'C5', couleur: 'W' }, { pose: 'D5', couleur: 'B' }],
+      text: 'Bambou : deux passages. Blanc en prend un ? Prends l’autre au point vert.' },
+    { kind: 'move', rows: L_BAMBOU_Q, accept: ['G5'],
+      text: 'Blanc entre dans ton bambou. Relie tes pierres marquées.',
+      ok: 'Relié : un bambou ne se coupe jamais.', no: 'Prends l’autre passage du bambou.' }
+  ] },
+  { id: 'l19', title: 'Les pierres qui coupent', desc: 'Prends celles qui séparent tes groupes', steps: [
+    { kind: 'info', rows: L_COUPANTE, geste: { pose: 'E5' }, demo: [{ libs: 'E6' }, { pose: 'E5', couleur: 'B' }],
+      text: 'Cette pierre blanche coupe tes pierres. Prends-la au point vert.' },
+    { kind: 'info', rows: L_COUPANTE, avant: [{ pose: 'E5', couleur: 'B' }], demo: [{ zone: ['E6'] }, { interdit: 'E6', couleur: 'W' }],
+      text: 'Diamant (ponnuki) : Blanc ne peut plus entrer. Tes pierres tiennent ensemble.' },
+    { kind: 'move', rows: L_COUPANTE_Q, accept: ['E5'],
+      text: 'Deux pierres blanches en atari. Prends celle qui coupe.',
+      ok: 'Tes pierres marquées tiennent ensemble. Blanc n’a qu’une pierre inutile.', no: 'Cherche la pierre blanche entre tes pierres marquées.',
+      refus: [{ points: ['C3'], no: 'Elle ne coupe rien. Blanc sauve E6 et coupe tes pierres.' }] },
+    { kind: 'move', rows: L_COUPANTE_Q2, accept: ['E5'],
+      text: 'Deux pierres d’un côté, une de l’autre. Laquelle prendre ?',
+      ok: 'La pierre qui coupe vaut plus que deux pierres inutiles.', no: 'Prends la pierre qui sépare tes pierres marquées.',
+      refus: [{ points: ['D2'], no: 'Deux prisonniers, mais Blanc sauve E6 et coupe tes pierres.' }] }
+  ] },
+  { id: 'l20', title: 'Relier et mourir', desc: 'Quand se relier ne sauve rien', steps: [
+    { kind: 'info', rows: L_RELIER, geste: { pose: 'F1' }, demo: [{ pose: 'F1', couleur: 'B' }, { pose: 'D1', couleur: 'W' }, { libs: 'D1' }],
+      text: 'Atari au point vert. Blanc relie ? Tout reste en atari.' },
+    { kind: 'info', rows: L_RELIER, avant: [{ pose: 'F1', couleur: 'B' }, { pose: 'D1', couleur: 'W' }], geste: { pose: 'C1' }, demo: [{ pose: 'C1', couleur: 'B' }],
+      text: 'Prends tout au point vert : cinq pierres pour une.' },
+    { kind: 'move', rows: L_RELIER_Q, accept: ['C9'],
+      text: 'À toi : prends les pierres marquées, même si Blanc relie.',
+      ok: 'Relier en F9 ne laisse qu’une liberté : tu prends tout.', no: 'Mets les pierres marquées en atari, du côté du bord libre.',
+      refus: [{ points: ['F9'], no: 'Atari du mauvais côté : Blanc prend ta pierre en G9.' }] },
+    { kind: 'quiz', rows: L_RELIER,
+      text: 'Après ton atari en F1, Blanc doit-il relier ?', choices: ['Oui', 'Non, il abandonne E1'], answer: 1,
+      ok: 'Bien vu : relier perd cinq pierres, abandonner n’en perd qu’une.', no: 'Relier laisse une seule liberté : Blanc perdrait cinq pierres.' }
   ] }
 ];
