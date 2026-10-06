@@ -146,6 +146,44 @@ function motif(id: string, W: string, C: string): ReactElement {
       <g fill={C} stroke={W} strokeWidth="2.6"><circle cx="30" cy="46" r="8" /><circle cx="50" cy="46" r="8" /><circle cx="70" cy="46" r="8" /></g>
       <circle cx="50" cy="70" r="9" fill={W} />
     </>);
+    // Le manque de libertés : deux pierres qui se touchent presque, et la dernière liberté entre elles.
+    case 'l21': return (<>
+      <g fill={C} stroke={W} strokeWidth="2.6"><circle cx="32" cy="50" r="9" /><circle cx="68" cy="50" r="9" /></g>
+      <circle cx="50" cy="50" r="5" fill="none" stroke={W} strokeWidth="2.4" />
+      <g fill={W}><circle cx="32" cy="28" r="7" /><circle cx="68" cy="28" r="7" /><circle cx="50" cy="72" r="7" /></g>
+    </>);
+    // Sente et gote : la pierre qui garde la main, et la flèche de l'initiative.
+    case 'l22': return (<>
+      <circle cx="38" cy="50" r="12" fill={W} />
+      <path d="M56 50H76M68 41 77 50 68 59" stroke={W} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <circle cx="38" cy="74" r="7" fill={C} stroke={W} strokeWidth="2.6" />
+    </>);
+    // Le hane au premier rang : sur le bord, la pierre qui contourne.
+    case 'l23': return (<>
+      <path d="M22 74H78" stroke={W} strokeWidth="3" strokeLinecap="round" />
+      <circle cx="40" cy="52" r="9" fill={W} />
+      <circle cx="60" cy="52" r="9" fill={C} stroke={W} strokeWidth="2.6" />
+      <circle cx="60" cy="74" r="9" fill={W} />
+    </>);
+    // Agrandir ou réduire : un espace, et les deux flèches qui le poussent ou le serrent.
+    case 'l24': return (<>
+      <path d="M34 50H66" stroke={W} strokeWidth="3" strokeDasharray="4 5" strokeLinecap="round" />
+      <path d="M28 40 18 50 28 60M72 40 82 50 72 60" stroke={W} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <g fill={W}><circle cx="50" cy="30" r="7" /><circle cx="50" cy="70" r="7" /></g>
+    </>);
+    // Les groupes du coin : l'angle du goban et la pierre au point du coin.
+    case 'l25': return (<>
+      <path d="M26 24V76H76" stroke={W} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <circle cx="26" cy="58" r="8" fill={W} />
+      <g fill={C} stroke={W} strokeWidth="2.6"><circle cx="46" cy="58" r="7" /><circle cx="46" cy="76" r="7" /></g>
+    </>);
+    // La course avec un œil : deux groupes face à face ; l'œil noir, cerclé, compte en dernier.
+    case 'l26': return (<>
+      <g fill={W}><circle cx="30" cy="40" r="8" /><circle cx="46" cy="40" r="8" /><circle cx="46" cy="58" r="8" /></g>
+      <circle cx="30" cy="58" r="5" fill="none" stroke={W} strokeWidth="2.4" />
+      <g fill={C} stroke={W} strokeWidth="2.6"><circle cx="66" cy="40" r="8" /><circle cx="66" cy="58" r="8" /></g>
+      <path d="M30 76H70" stroke={W} strokeWidth="3" strokeLinecap="round" />
+    </>);
     default: return <circle cx="50" cy="50" r="14" fill={W} />;
   }
 }

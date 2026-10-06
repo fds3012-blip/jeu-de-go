@@ -47,9 +47,9 @@ describe('leçons 17 à 20 : place dans le programme (#16)', () => {
   });
   it('l17 finit « Vie et mort » ; l18 à l20 forment « Formes et tesuji », chapitre en cours d’écriture', () => {
     const c = Object.fromEntries(CHAPITRES.map(x => [x.id, x]));
-    expect(c.c4.lecons.map(l => l.id)).toEqual(['l12', 'l13', 'l14', 'l17']);
+    expect(c.c4.lecons.map(l => l.id).slice(0, 4)).toEqual(['l12', 'l13', 'l14', 'l17']);
     expect(c.c6.titre).toBe('Formes et tesuji');
-    expect(c.c6.lecons.map(l => l.id)).toEqual(['l18', 'l19', 'l20']);
+    expect(c.c6.lecons.map(l => l.id).slice(0, 3)).toEqual(['l18', 'l19', 'l20']);
     expect(c.c6.complet).toBe(false);
     // L'ordre des leçons suit celui du chemin : la leçon suivante est toujours la suivante sur le chemin.
     expect(LESSONS.map(l => l.id)).toEqual(CHAPITRES.flatMap(x => x.lecons.map(l => l.id)));

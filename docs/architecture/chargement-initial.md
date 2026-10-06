@@ -89,3 +89,4 @@ Téléphone émulé : CPU 4× plus lent, 4G lente (`scripts/mesurer-perf.mjs`).
 | --- | --- | --- |
 | JS initial (gzip) | 157,0 Ko (16 leçons dans `index`) | 151,1 Ko avec 20 leçons (`index` 83,7 + `lib-react` 67,3) |
 | Morceau `lessons` (contenu complet des leçons) | dans `index` | 8,8 Ko, à la demande |
+| Palier 21-30 (06/10) : 26 leçons | main : 155,0 Ko | 154,8 Ko ; morceau `lessons` 10,5 Ko, à la demande |

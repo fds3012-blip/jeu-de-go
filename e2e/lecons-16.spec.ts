@@ -4,6 +4,8 @@ import { jouer } from './plateau';
 import '../src/content/anglais.setup';
 import { LESSONS_FR, localiser, type LessonStep } from '../src/content/lessons';
 import { ACQUIS } from '../src/content/acquis';
+/** Rang d'une leçon sur le chemin (#16 : le programme grandit, les rangs ne sont plus figés). */
+const numero = (id: string) => LESSONS_FR.findIndex(l => l.id === id) + 1;
 
 // Issue #16 : les leçons 9 à 12 sont sur le chemin Apprendre, sans changer l'écran (seulement les données).
 // La leçon 12 (le faux œil) se joue du début à la fin, avec une erreur à chaque question, à 390 et à 320 px.
@@ -36,8 +38,8 @@ for (const largeur of [390, 320]) {
     // Le chemin : les nouveaux chapitres, leurs leçons ; « Bientôt » n'annonce plus que deux chapitres (#16, leçons 13 à 16).
     await expect(page.getByRole('heading', { name: 'Capturer et sauver' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Vie et mort' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Leçon 9 : Le filet, terminée' })).toBeAttached();
-    await expect(page.getByRole('button', { name: 'Leçon 12 : Le faux œil, prochaine étape' })).toBeAttached();
+    await expect(page.getByRole('button', { name: `Leçon ${numero('l9')} : Le filet, terminée` })).toBeAttached();
+    await expect(page.getByRole('button', { name: `Leçon ${numero('l12')} : Le faux œil, prochaine étape` })).toBeAttached();
     // #16 (05/10) : « Formes et tesuji » a commencé (leçons 18 à 20) ; il ne reste que l'ouverture en 19 × 19.
     await expect(page.locator('.a-venir li')).toHaveText(['Ouverture en 19\u00A0×\u00A019']);
     await sansDebordement(page, 'chemin');
@@ -101,7 +103,7 @@ for (const largeur of [390, 320]) {
     await expect(page.getByText(norm(ACQUIS.l12))).toBeVisible();
     await sansDebordement(page, 'fin de leçon');
     await page.getByRole('button', { name: 'Retour au chemin' }).click();
-    await expect(page.getByRole('button', { name: 'Leçon 12 : Le faux œil, terminée' })).toBeAttached();
+    await expect(page.getByRole('button', { name: `Leçon ${numero('l12')} : Le faux œil, terminée` })).toBeAttached();
   });
 }
 

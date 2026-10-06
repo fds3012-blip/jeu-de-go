@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { brancher, fauxServeur } from './fauxSupabase';
+import { LECONS_INDEX } from '../src/content/leconsIndex.gen';
 
 // Chemin Apprendre v3 (#40, mission du 1er octobre) : vignettes par leçon, chapitres illustrés, carte de la prochaine
 // leçon présentée par Mochi, courbe à l'encre dorée sur le parcours, pierres cochées, leçons suivantes verrouillées,
@@ -38,9 +39,9 @@ test('premier lancement : Mochi présente la leçon 1, une seule action, les aut
   await expect(bases.getByText('7 leçons')).toBeVisible();
   await expect(bases.locator('.chapitre-pierres i')).toHaveCount(7);
   await expect(bases.locator('.chapitre-embleme .vignette')).toHaveCount(1);
-  // Une vignette distincte par leçon sur le chemin (20 leçons), plus celle de la carte et les emblèmes.
+  // Une vignette distincte par leçon sur le chemin (toutes les leçons), plus celle de la carte et les emblèmes.
   const ids = await page.locator('.gue .pas-texte .vignette').evaluateAll(els => els.map(e => e.getAttribute('data-vignette')));
-  expect(new Set(ids).size).toBe(20);
+  expect(new Set(ids).size).toBe(LECONS_INDEX.length);
   // Leçons suivantes : pierre grise, toujours touchables ; sans service de comptes, aucun verrou « compte ».
   const l2 = page.getByRole('button', { name: 'Leçon 2 : Atari : attaquer et se sauver' });
   await expect(l2).toHaveAttribute('data-etat', 'avenir');
@@ -116,11 +117,11 @@ test('sans compte : leçons 1 à 3 libres, la leçon 4 porte le verrou « compte
   const carte = page.getByTestId('prochaine-lecon');
   await expect(carte.getByRole('button', { name: 'Leçon 3 : Techniques de capture, prochaine étape' })).toBeVisible();
   await expect(carte.locator('.pas-compte')).toHaveCount(0);
-  // Leçons 4 à 20 : verrou « compte », jamais désactivées.
+  // Leçons 4 et suivantes : verrou « compte », jamais désactivées.
   const l4 = page.getByRole('button', { name: 'Leçon 4 : Le ko, avec un compte' });
   await expect(l4).toBeEnabled();
   await expect(l4).toHaveAttribute('data-compte', 'true');
-  await expect(page.locator('.pierre-compte')).toHaveCount(17);
+  await expect(page.locator('.pierre-compte')).toHaveCount(LECONS_INDEX.length - 3);
   await expect(l4.getByText('Avec un compte')).toBeVisible();
   await sansDebord(page);
   await l4.scrollIntoViewIfNeeded();

@@ -104,7 +104,10 @@ describe('chapitres (#228)', () => {
     expect(CHAPITRES.flatMap(c => c.lecons)).toEqual(LESSONS);
   });
   it('« Les bases » (l1 à l7) est complet ; les chapitres 2 à 6 (ouverture, capturer et sauver, vie et mort, fin de partie, formes et tesuji) sont en cours d’écriture', () => {
-    expect(CHAPITRES.map(c => c.lecons.map(l => l.id))).toEqual([['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7'], ['l8'], ['l9', 'l10', 'l11'], ['l12', 'l13', 'l14', 'l17'], ['l15', 'l16'], ['l18', 'l19', 'l20']]);
+    // Chaque chapitre commence par ses leçons d'origine ; les chapitres 2 à 6 grandissent au fil du programme (#16).
+    const debuts = [['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7'], ['l8'], ['l9', 'l10', 'l11'], ['l12', 'l13', 'l14', 'l17'], ['l15', 'l16'], ['l18', 'l19', 'l20']];
+    expect(CHAPITRES.map(c => c.lecons.map(l => l.id).slice(0, debuts[CHAPITRES.indexOf(c)].length))).toEqual(debuts);
+    expect(CHAPITRES[0].lecons).toHaveLength(7);
     expect(CHAPITRES.map(c => c.complet)).toEqual([true, false, false, false, false, false]);
     expect(CHAPITRES[0].titre).toBe('Les bases');
   });

@@ -40,7 +40,7 @@ describe('leçons 9 à 12 : place dans le programme (#16)', () => {
     for (const id of ['l9', 'l10', 'l11', 'l12']) expect(lecon(id).steps.length).toBeLessThanOrEqual(6);
     const c = Object.fromEntries(CHAPITRES.map(x => [x.id, x]));
     expect(c.c3.titre).toBe('Capturer et sauver');
-    expect(c.c3.lecons.map(l => l.id)).toEqual(['l9', 'l10', 'l11']);
+    expect(c.c3.lecons.map(l => l.id).slice(0, 3)).toEqual(['l9', 'l10', 'l11']);
     expect(c.c4.titre).toBe('Vie et mort');
     // Le chapitre « Vie et mort » continue avec les leçons 13 et 14 (src/go/lecons-13-16.test.ts).
     expect(c.c4.lecons.map(l => l.id)[0]).toBe('l12');
