@@ -146,6 +146,31 @@ function motif(id: string, W: string, C: string): ReactElement {
       <g fill={C} stroke={W} strokeWidth="2.6"><circle cx="30" cy="46" r="8" /><circle cx="50" cy="46" r="8" /><circle cx="70" cy="46" r="8" /></g>
       <circle cx="50" cy="70" r="9" fill={W} />
     </>);
+    // Sente et gote : la pierre qui garde la main, et la flèche de l'initiative.
+    case 'l23': return (<>
+      <circle cx="38" cy="50" r="12" fill={W} />
+      <path d="M56 50H76M68 41 77 50 68 59" stroke={W} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <circle cx="38" cy="74" r="7" fill={C} stroke={W} strokeWidth="2.6" />
+    </>);
+    // Le hane au premier rang : sur le bord, la pierre qui contourne.
+    case 'l24': return (<>
+      <path d="M22 74H78" stroke={W} strokeWidth="3" strokeLinecap="round" />
+      <circle cx="40" cy="52" r="9" fill={W} />
+      <circle cx="60" cy="52" r="9" fill={C} stroke={W} strokeWidth="2.6" />
+      <circle cx="60" cy="74" r="9" fill={W} />
+    </>);
+    // Agrandir ou réduire : un espace, et les deux flèches qui le poussent ou le serrent.
+    case 'l25': return (<>
+      <path d="M34 50H66" stroke={W} strokeWidth="3" strokeDasharray="4 5" strokeLinecap="round" />
+      <path d="M28 40 18 50 28 60M72 40 82 50 72 60" stroke={W} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <g fill={W}><circle cx="50" cy="30" r="7" /><circle cx="50" cy="70" r="7" /></g>
+    </>);
+    // Les groupes du coin : l'angle du goban et la pierre au point du coin.
+    case 'l26': return (<>
+      <path d="M26 24V76H76" stroke={W} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <circle cx="26" cy="58" r="8" fill={W} />
+      <g fill={C} stroke={W} strokeWidth="2.6"><circle cx="46" cy="58" r="7" /><circle cx="46" cy="76" r="7" /></g>
+    </>);
     default: return <circle cx="50" cy="50" r="14" fill={W} />;
   }
 }

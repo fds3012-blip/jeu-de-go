@@ -788,6 +788,10 @@ export const frEcrans = {
   'acquis.l18': 'Tu protèges un point de coupe et tu relies un bambou.',
   'acquis.l19': 'Tu prends d’abord les pierres qui coupent tes groupes.',
   'acquis.l20': 'Tu sais quand relier perd tout : mieux vaut abandonner la pierre.',
+  'acquis.l23': 'Tu joues d’abord les coups sente, ceux qui obligent à répondre.',
+  'acquis.l24': 'Tu joues le hane au premier rang, puis tu relies ta pierre.',
+  'acquis.l25': 'Tu prends le point au bord de l’espace : pour vivre, ou pour tuer.',
+  'acquis.l26': 'Tu connais le point du coin, et tu sais qu’un ko n’est pas une vie.',
   'acquis.defaut': 'Une leçon de plus dans ta poche.',
   'lecteur.progression': 'Progression de la leçon',
   // #290 : sur un écran bas, l'explication du verdict est repliée pour laisser voir le plateau.

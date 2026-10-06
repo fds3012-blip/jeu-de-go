@@ -66,4 +66,12 @@ export const MOTIFS: Record<string, Motif> = {
   l19: { noir: [[1, 0], [0, 1], [2, 1]], blanc: [[1, 1], [3, 3]], jade: [[1, 2]] },
   // Relier et mourir : la chaîne blanche et sa pierre en atari ; relier ne lui laisse qu'une liberté.
   l20: { noir: [[0, 1], [1, 1], [2, 1], [3, 2]], blanc: [[0, 2], [1, 2], [2, 2], [3, 3]], jade: [[2, 3]] },
+  // Sente et gote : l'atari qui oblige Blanc à relier ; le jade, la réponse forcée.
+  l23: { coin: true, noir: [[0, 2], [1, 2], [2, 2]], blanc: [[1, 3], [2, 3], [3, 2]], jade: [[3, 3]] },
+  // Le hane au premier rang : la pierre noire contourne la pierre blanche par en dessous.
+  l24: { coin: true, noir: [[0, 2], [1, 2], [2, 3]], blanc: [[2, 2], [3, 2]], jade: [[1, 3]] },
+  // Agrandir ou réduire : le groupe noir sur le bord, et le point qui finit son espace, en jade.
+  l25: { coin: true, noir: [[0, 2], [1, 2], [2, 2], [1, 3]], blanc: [[0, 1], [1, 1], [2, 1], [3, 1], [3, 3]], jade: [[2, 3]] },
+  // Les groupes du coin : le point du coin, en jade, à côté du groupe noir.
+  l26: { coin: true, noir: [[1, 2], [2, 2], [3, 2], [1, 3]], blanc: [[0, 1], [1, 1], [2, 1]], jade: [[0, 2]] },
 };

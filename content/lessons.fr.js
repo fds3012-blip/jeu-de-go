@@ -1,4 +1,4 @@
-// Vingt leçons interactives, positions vérifiées par un lecteur tactique.
+// Leçons interactives (issue #16 : de 30 kyu vers le premier dan), positions vérifiées par le moteur de src/go.
 // rows : plateau 9 × 9 ligne par ligne depuis le haut. X noir, O blanc, T pierre blanche visée, S pierre noire à sauver.
 // Coordonnées : lettres A à J sans I, lignes numérotées depuis le bas. accept: 'line3' = tout coup hors des deux premières lignes.
 const L_CAP1 = ['.........', '.........', '.........', '...X.....', '..XT.O...', '...X.....', '.........', '.........', '.........'];
@@ -89,13 +89,34 @@ const L_COUPANTE_Q2 = ['.........', '.........', '....X....', '...SOS...', '....
 // Relier et mourir (oiotoshi) : si Blanc relie E1 en D1, tout le groupe n'a plus qu'une liberté (C1).
 const L_RELIER = [...V.slice(0, 6), 'XXXX.....', 'XOOOX....', '.X..O....'];
 const L_RELIER_Q = ['...TT..X.', '...XXOOOX', '...XXXXXX', ...V.slice(0, 6)];
+// Leçons 21 à 30 (#16, palier suivant). Chaque position, chaque réponse acceptée, chaque réfutation et chaque chiffre est
+// prouvé par src/go/lecons-21-30.test.ts (minimax exact de fin de partie, preuve de vie et mort en zone fermée, lecteur
+// exact de capture).
+// Sente et gote : partie finie sauf deux endroits. En bas, l'atari E2 oblige Blanc à relier en F1 (sente) ; en haut, E9
+// ferme la frontière sans rien menacer (gote). `MIROIR` : la même partie retournée de haut en bas, pour l'exercice.
+const L_SENTE = ['..XX..O..', ...Array(6).fill('..XXOOO..'), '..XX..O..', '..XOO.O..'];
+const L_SENTE_MIROIR = [...L_SENTE].reverse();
+// Hane au premier rang : murs fermés sur la 2e ligne, seule la 1re ligne reste à jouer. `APRES` : hane E1 et blocage F1.
+// `Q` : la même forme en miroir, Noir à droite.
+const L_HANE = [...Array(7).fill('...XO....'), 'XXXXOOOOO', '......O..'];
+const L_HANE_APRES = [...L_HANE.slice(0, 8), '....XOO..'];
+const L_HANE_Q = [...Array(7).fill('....OX...'), 'OOOOOXXXX', '..O......'];
+// Agrandir ou réduire : l'espace noir (A1-B1, D1) finit en E1, au contact de Blanc. Qui prend E1 décide : Noir y vit,
+// Blanc y tue. `Q` : couleurs inversées et retournées (Noir réduit de l'extérieur) ; `V` : la même forme sur le bord droit.
+const L_ESPACE = [...V.slice(0, 6), 'OOOOOOOO.', 'XXXXX..O.', '..X..O.O.'];
+const L_ESPACE_Q = [...V.slice(0, 6), '.XXXXXXXX', '.X..OOOOT', '.X.X..O..'];
+const L_ESPACE_V = ['......OX.', '......OX.', '......OXX', '......OX.', '......OX.', '......O.O', '......O..', '......OOO', '.........'];
+// Groupes du coin : l'espace A1-B1 et l'œil D1. A2, le point du coin, décide : Noir y vit ; si Blanc le prend, A1 puis la
+// prise en B1 font un ko. `Q` : la même forme tournée dans le coin en haut à droite (point du coin J8).
+const L_COIN = [...V.slice(0, 6), 'OOOOOO...', '.XXXXO...', '..X.XO...'];
+const L_COIN_Q = ['...OX.X..', '...OXXXX.', '...OOOOOO', ...V.slice(0, 6)];
 export const CHAPITRES = [
   { id: 'c1', titre: 'Les bases', intro: 'Sept leçons courtes pour jouer ta première partie.', fin: 'Tu connais les règles du go.', lecons: ['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7'] },
   // Chapitre en cours d'écriture (`complet: false`) : sa dernière leçon ne ferme pas encore le chapitre.
   { id: 'c2', titre: 'Ouverture sur 9\u00A0×\u00A09', intro: 'Où poser tes premières pierres.', lecons: ['l8'], complet: false },
   { id: 'c3', titre: 'Capturer et sauver', intro: 'Des pièges pour prendre plus de pierres.', lecons: ['l9', 'l10', 'l11'], complet: false },
-  { id: 'c4', titre: 'Vie et mort', intro: 'Quand un groupe vit, quand il meurt.', lecons: ['l12', 'l13', 'l14', 'l17'], complet: false },
-  { id: 'c5', titre: 'Fin de partie et comptage', intro: 'Finir proprement, puis compter juste.', lecons: ['l15', 'l16'], complet: false },
+  { id: 'c4', titre: 'Vie et mort', intro: 'Quand un groupe vit, quand il meurt.', lecons: ['l12', 'l13', 'l14', 'l17', 'l25', 'l26'], complet: false },
+  { id: 'c5', titre: 'Fin de partie et comptage', intro: 'Finir proprement, puis compter juste.', lecons: ['l15', 'l16', 'l23', 'l24'], complet: false },
   { id: 'c6', titre: 'Formes et tesuji', intro: 'Les bonnes formes et les coups malins du go.', lecons: ['l18', 'l19', 'l20'], complet: false }
 ];
 export const LESSONS = [
@@ -346,6 +367,39 @@ export const LESSONS = [
       ok: 'Point vital pris : le point vital de Blanc est aussi le tien.', no: 'Cherche le point qui touche trois points vides.',
       refus: [{ points: ['G1', 'J1', 'H2', 'J2'], no: 'Blanc prend le point vital : il vit.' }] }
   ] },
+  { id: 'l25', title: 'Agrandir ou réduire', desc: 'Le point au bord de l’espace', steps: [
+    { kind: 'info', rows: L_ESPACE, geste: { pose: 'E1' }, demo: [{ pose: 'E1', couleur: 'B' }, { yeux: ['A1', 'B1', 'D1'] }],
+      text: 'Prends le point vert, au bord : deux yeux, A1-B1 et D1.' },
+    { kind: 'info', rows: L_ESPACE, geste: { touche: ['E1'], no: 'Touche le point vide au bord de ton espace, contre Blanc.' },
+      demo: [{ pose: 'E1', couleur: 'W' }, { zone: ['A1', 'B1'] }],
+      text: 'Si Blanc y joue d’abord, ton espace rétrécit : un seul œil.' },
+    { kind: 'move', rows: L_ESPACE_Q, accept: ['E1'],
+      text: 'À toi : réduis ce groupe blanc depuis l’extérieur.',
+      ok: 'Réduit par le bord : Blanc n’a plus qu’un œil.', no: 'Cherche le point au bord de son espace, contre tes pierres.',
+      refus: [{ points: ['F1', 'H1', 'J1'], no: 'Trop tôt dedans : Blanc prend E1 et vit.' }] },
+    { kind: 'move', rows: L_ESPACE_V, accept: ['J5'],
+      text: 'À toi : agrandis ton espace pour vivre.',
+      ok: 'Le bord de ton espace est à toi : deux yeux.', no: 'Prends le point vide au bord de ton espace, contre Blanc.',
+      refus: [{ points: ['J9', 'J8', 'J6'], no: 'Dedans, tu remplis ton espace : Blanc prend J5.' }] }
+  ] },
+  { id: 'l26', title: 'Les groupes du coin', desc: 'Le point du coin, et le ko', steps: [
+    { kind: 'info', rows: L_COIN, geste: { pose: 'A2' }, demo: [{ pose: 'A2', couleur: 'B' }, { yeux: ['A1', 'B1', 'D1'] }],
+      text: 'Dans le coin, le point vert décide. Prends-le : deux yeux.' },
+    { kind: 'info', rows: L_COIN, geste: { pose: 'A1' },
+      demo: [{ pose: 'A2', couleur: 'W' }, { pose: 'A1', couleur: 'B' }, { pose: 'B1', couleur: 'W' }, { interdit: 'A1', couleur: 'B' }],
+      text: 'Blanc prend A2. Réponds au point vert : Blanc prend, c’est un ko.' },
+    { kind: 'quiz', rows: L_COIN,
+      text: 'Si Blanc joue A2 en premier, ton groupe vit-il ?', choices: ['Oui', 'Non', 'C’est un ko'], answer: 2,
+      ok: 'Un ko : tant qu’il dure, ton groupe n’est pas vivant.', no: 'Ni vivant ni mort d’avance : tout dépend du ko.' },
+    { kind: 'move', rows: L_COIN_Q, accept: ['J8'],
+      text: 'À toi : fais vivre ton groupe dans le coin.',
+      ok: 'Le point du coin est à toi : deux yeux.', no: 'Cherche le point du coin, sur le bord.',
+      refus: [
+        { points: ['H9'], no: 'Blanc prend J8 : un seul œil.' },
+        { points: ['J9'], no: 'Blanc prend J8 : c’est un ko.' },
+        { points: ['F9'], no: 'Tu bouches ton œil F9 : un seul œil reste.' }
+      ] }
+  ] },
   { id: 'l15', title: 'Finir la partie', desc: 'Dame, frontières, pierres mortes', steps: [
     { kind: 'info', rows: L_FIN_P, geste: { touche: ['E7'], no: 'Cherche le point vide entre Noir et Blanc.' }, demo: [{ zone: ['E7'] }],
       text: 'Dame (point neutre) : il touche Noir et Blanc. Touche-le.' },
@@ -381,6 +435,36 @@ export const LESSONS = [
     { kind: 'quiz', rows: L_COMPTE_SANS,
       text: 'Noir 34, Blanc 34,5. Qui gagne ?', choices: ['Noir', 'Blanc', 'Égalité'], answer: 1,
       ok: 'Blanc, d’un demi-point. Le demi-point du komi évite les égalités.', no: '34,5 est plus grand que 34.' }
+  ] },
+  { id: 'l23', title: 'Sente et gote', desc: 'Le coup qui oblige à répondre', steps: [
+    { kind: 'info', rows: L_SENTE, geste: { pose: 'E2' }, demo: [{ pose: 'E2', couleur: 'B' }, { atari: ['E1'] }, { pose: 'F1', couleur: 'W' }],
+      text: 'Sente (coup qui oblige à répondre) : atari au point vert. Blanc relie.' },
+    { kind: 'info', rows: L_SENTE, avant: [{ pose: 'E2', couleur: 'B' }, { pose: 'F1', couleur: 'W' }], geste: { pose: 'E9' }, demo: [{ pose: 'E9', couleur: 'B' }],
+      text: 'Tu gardes la main : ferme aussi le haut, au point vert.' },
+    { kind: 'info', rows: L_SENTE, geste: { pose: 'E9' }, demo: [{ pose: 'E9', couleur: 'B' }, { pose: 'E2', couleur: 'W' }],
+      text: 'Gote (coup qui ne menace rien) : pose au point vert. Blanc se relie en E2.' },
+    { kind: 'quiz', rows: L_SENTE_MIROIR,
+      text: 'Ici, ton coup en E1 : sente ou gote ?', choices: ['Sente', 'Gote'], answer: 1,
+      ok: 'Gote : il ne menace rien, Blanc peut jouer ailleurs.', no: 'Après E1, Blanc n’a rien à défendre : il joue ailleurs.' },
+    { kind: 'move', rows: L_SENTE_MIROIR, accept: ['E8'],
+      text: 'À toi : joue d’abord le coup sente.',
+      ok: 'Atari : Blanc doit relier, puis tu fermes aussi le bas.', no: 'Cherche l’atari : Blanc devra répondre.',
+      refus: [{ points: ['E1'], no: 'Gote d’abord : Blanc se relie en E8. Deux points de moins.' }] }
+  ] },
+  { id: 'l24', title: 'Le hane au premier rang', desc: 'Contourner, puis relier', steps: [
+    { kind: 'info', rows: L_HANE, geste: { pose: 'E1' }, demo: [{ pose: 'E1', couleur: 'B' }, { pose: 'F1', couleur: 'W' }, { pose: 'D1', couleur: 'B' }],
+      text: 'Hane (coup qui contourne une pierre) : pose au point vert. Blanc bloque, tu relies.' },
+    { kind: 'move', rows: L_HANE_APRES, accept: ['D1'],
+      text: 'Blanc bloque. Ta pierre est en atari : relie-la.',
+      ok: 'Reliée. Grâce au hane, Blanc a un point de moins.', no: 'Joue sur la dernière liberté de ta pierre E1.',
+      refus: [{ points: ['C1'], no: 'Blanc prend E1 en D1, et c’est un ko. Relie plutôt.' }] },
+    { kind: 'quiz', rows: L_HANE,
+      text: 'Ton hane, ou celui de Blanc en D1 : combien de points d’écart ?', choices: ['1', '2', '4'], answer: 1,
+      ok: 'Deux : un point de plus pour toi, un de moins pour Blanc.', no: 'Compte les deux suites : chacun y perd ou gagne un point.' },
+    { kind: 'move', rows: L_HANE_Q, accept: ['E1'],
+      text: 'À toi : joue le hane au premier rang.',
+      ok: 'Hane, puis tu relieras : Blanc recule d’un point.', no: 'Contourne la pierre blanche E2 par en dessous.',
+      refus: [{ points: ['F1'], no: 'Tu bloques chez toi : un point de moins qu’avec le hane.' }] }
   ] },
   { id: 'l18', title: 'Les bonnes formes', desc: 'Bouche du tigre et bambou', steps: [
     { kind: 'touche', rows: L_COUPE, accept: ['D5'],

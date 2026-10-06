@@ -195,6 +195,46 @@ export const LESSONS_EN = {
     { text: 'Black 34, White 34.5. Who wins?', choices: ['Black', 'White', 'Tie'],
       ok: 'White, by half a point. The half point of komi prevents ties.', no: '34.5 is more than 34.' }
   ] },
+  l25: { title: 'Enlarge or reduce', desc: 'The point at the edge of the space', steps: [
+    { text: 'Take the green point, at the edge: two eyes, A1-B1 and D1.' },
+    { text: 'If White plays there first, your space shrinks: one eye only.', geste: { no: 'Tap the empty point at your space’s edge, by White.' } },
+    { text: 'Your turn: reduce this white group from the outside.',
+      ok: 'Reduced from the edge: White has only one eye.', no: 'Look for the point at the edge of its space, next to your stones.',
+      refus: ['Too early inside: White takes E1 and lives.'] },
+    { text: 'Your turn: enlarge your space to live.',
+      ok: 'The edge of your space is yours: two eyes.', no: 'Take the empty point at the edge of your space, next to White.',
+      refus: ['Inside, you fill your own space: White takes J5.'] }
+  ] },
+  l26: { title: 'Corner groups', desc: 'The corner point, and the ko', steps: [
+    { text: 'In the corner, the green point decides. Take it: two eyes.' },
+    { text: 'White takes A2. Play the green point: White captures, a ko.' },
+    { text: 'If White plays A2 first, does your group live?', choices: ['Yes', 'No', 'It’s a ko'],
+      ok: 'A ko: while it lasts, your group is not alive.', no: 'Neither alive nor dead yet: it all depends on the ko.' },
+    { text: 'Your turn: make your group live in the corner.',
+      ok: 'The corner point is yours: two eyes.', no: 'Look for the corner point, on the edge.',
+      refus: ['White takes J8: only one eye.', 'White takes J8: it’s a ko.', 'You fill your eye F9: only one eye left.'] }
+  ] },
+  l23: { title: 'Sente and gote', desc: 'The move that demands an answer', steps: [
+    { text: 'Sente (a move that demands an answer): atari at the green point. White connects.' },
+    { text: 'You keep the initiative: close the top too, at the green point.' },
+    { text: 'Gote (a move that threatens nothing): play the green point. White connects at E2.' },
+    { text: 'Here, your move at E1: sente or gote?', choices: ['It’s sente', 'It’s gote'],
+      ok: 'Gote: it threatens nothing, White can play elsewhere.', no: 'After E1, White has nothing to defend: it plays elsewhere.' },
+    { text: 'Your turn: play the sente move first.',
+      ok: 'Atari: White must connect, then you close the bottom too.', no: 'Look for the atari: White will have to answer.',
+      refus: ['Gote first: White connects at E8. Two points less.'] }
+  ] },
+  l24: { title: 'First-line hane', desc: 'Bend around, then connect', steps: [
+    { text: 'Hane (a move that bends around a stone): play the green point. White blocks, you connect.' },
+    { text: 'White blocks. Your stone is in atari: connect it.',
+      ok: 'Connected. Thanks to the hane, White has one point less.', no: 'Play on the last liberty of your stone E1.',
+      refus: ['White captures E1 at D1, and it’s a ko. Connect instead.'] },
+    { text: 'Your hane, or White’s at D1: how many points apart?', choices: ['1', '2', '4'],
+      ok: 'Two: one more point for you, one less for White.', no: 'Count both sequences: each side wins or loses one point.' },
+    { text: 'Your turn: play the first-line hane.',
+      ok: 'Hane, then you will connect: White gives up one point.', no: 'Bend around the white stone E2 from below.',
+      refus: ['You block on your own side: one point less than the hane.'] }
+  ] },
   l17: { title: 'Eye shapes', desc: 'The T, the box, the bulky five', steps: [
     { text: 'T-shaped space: play the middle, at the green point. Three eyes!' },
     { text: 'Your turn: kill the marked white group.',

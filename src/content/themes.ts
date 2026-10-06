@@ -116,6 +116,14 @@ export const THEMES_DE_LECON: Readonly<Record<string, readonly Theme[]>> = {
   l18: ['relier-couper'],
   l19: ['relier-couper'],
   l20: ['capture'],
+  // #16 (palier 21-30) : sente et gote (l23) et le hane au premier rang (l24) ont la série de fin de partie.
+  l23: ['fin-de-partie'],
+  // Le hane au premier rang : la même série que sente et gote.
+  l24: ['fin-de-partie'],
+  // Agrandir ou réduire (l25) : la série de vie et mort ; les groupes du coin (l26) y ajoutent le ko.
+  l25: ['vie-mort'],
+  // Les groupes du coin : vie et mort, et le ko.
+  l26: ['vie-mort', 'ko'],
 };
 
 /**
