@@ -16,7 +16,7 @@ import { LigneBascules, LigneChoix, LigneIcone, LigneInterrupteur, LigneLien } f
 import { IconeReglage, type IconeReglageId } from '../ui/IconesReglages';
 import { hapticStone } from '../ui/haptics';
 import { playStone } from '../ui/sound';
-import { useEffect, useMemo, useRef, useSyncExternalStore, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { analyticsConfig, estEquipe, setEquipe, subscribeConsent } from '../data/analytics';
 import { readLocal, writeLocal } from './hooks';
 import { BILAN_KEY, lireBilan } from './bilan';
@@ -38,6 +38,8 @@ import { BoutonAide } from '../ui/BoutonAide';
 import { CarteCote } from '../ui/Cote';
 import { grade, tc, texteCote } from '../content/i18n/cote';
 import type { ProfilJoueur } from './hooks';
+import { FeuilleSignaler } from '../ui/Securite';
+import { tsec } from '../content/i18n/securite';
 
 const SOLVED_KEY = 'go.problemes.v1';
 
@@ -171,6 +173,8 @@ function Menu({ onVue, profil, serie, record = 0, parcours, placement, onPlaceme
   const donnees = useDonnees(serie, record, parcours);
   // Ligne « Installer l'app » (#214) : tant que l'app est installable ici et pas installée.
   const proposerInstallation = installable(usePlateformeInstallation(), etatInstallation());
+  // #363 : feuille « Nous écrire » (bug, idée, autre).
+  const [ecrire, setEcrire] = useState(false);
   return (
     <div className="profil">
       {/* #362 : « Aide » à droite du titre, sans prendre de hauteur (le Profil tient sans défiler en 390 × 844). */}
@@ -224,8 +228,15 @@ function Menu({ onVue, profil, serie, record = 0, parcours, placement, onPlaceme
         {clePubliqueVapid() !== '' && <LigneLien icone={<IconeReglage id="rappel" />} libelle={t('profil.rappel')} valeur={resumeRappel()} onClick={() => onVue('rappel')} />}
         {proposerInstallation && <LigneLien icone={<IconeReglage id="installer" />} libelle={t('profil.installer')} onClick={() => onVue('installer')} />}
         <LigneLien icone={<IconeReglage id="compte" />} libelle={t('profil.compte')} valeur={profil?.pseudo ?? (profil ? undefined : t('profil.seConnecter'))} onClick={() => onVue('compte')} />
-        <LigneLien icone={<IconeReglage id="conditions" />} libelle={t('profil.conditions')} onClick={() => onVue('conditions')} />
+        {/* #363 : « Nous écrire » partage la ligne des conditions (deux moitiés) : le Profil tient toujours sans défiler. */}
+        {amis ? (
+          <div className="ligne ligne-double">
+            <DemiLigne icone="ecrire" libelle={tsec('signaler.ecrire')} valeur={tsec('signaler.ecrireDetail')} testId="ligne-ecrire" onClick={() => setEcrire(true)} />
+            <DemiLigne icone="conditions" libelle={t('profil.conditions')} onClick={() => onVue('conditions')} />
+          </div>
+        ) : <LigneLien icone={<IconeReglage id="conditions" />} libelle={t('profil.conditions')} onClick={() => onVue('conditions')} />}
       </div>
+      {amis && <FeuilleSignaler db={amis.db} ouvert={ecrire} onFermer={() => setEcrire(false)} cible={{ type: 'ecrire' }} compte={amis.compte} onCompte={amis.onCompte} />}
     </div>
   );
 }

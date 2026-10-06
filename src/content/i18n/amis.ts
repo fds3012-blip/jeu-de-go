@@ -45,6 +45,7 @@ const FR = {
   'amis.erreur.aucuneDemande': 'Cette demande n’existe plus.',
   'amis.erreur.pasAmi': 'Ce joueur n’est plus dans tes amis.',
   'amis.erreur.tropDeParties': 'Vous avez déjà 3 parties en cours. Finis-en une d’abord.',
+  'amis.erreur.indisponible': 'Ce joueur n’est pas disponible.',
   'amis.erreur.compte': 'Crée ton compte et ton pseudo pour ajouter des amis.',
 } as const;
 
@@ -89,6 +90,7 @@ const EN: { readonly [K in CleAmis]: string } = {
   'amis.erreur.aucuneDemande': 'This request no longer exists.',
   'amis.erreur.pasAmi': 'This player is no longer your friend.',
   'amis.erreur.tropDeParties': 'You already have 3 games going. Finish one first.',
+  'amis.erreur.indisponible': 'This player isn’t available.',
   'amis.erreur.compte': 'Create your account and nickname to add friends.',
 };
 

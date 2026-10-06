@@ -358,6 +358,7 @@ export const fr = {
   'lente.accueil.annulerAria': 'Annuler la recherche de partie lente',
   'mode.enLigne.aJouer': 'À toi de jouer',
   'defi.erreur.introuvable': 'Ce défi est introuvable. Demande un nouveau lien à ton ami.',
+  'defi.erreur.indisponible': 'Ce défi n’est pas disponible pour toi.',
   'defi.erreur.emailPris': 'Cette adresse a déjà un compte. Utilise une autre adresse.',
   'defi.refus.connexion': 'Ta session a expiré. Recharge la page pour reprendre ta partie.',
   'defi.refus.format': 'Ce coup n’a pas pu être lu. Réessaie.',
