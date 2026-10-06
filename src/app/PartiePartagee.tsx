@@ -84,6 +84,8 @@ export function PartiePartagee({ db, jeton, nouveau, confirmTouch = false, onJou
     <div className="partagee partagee-etat">
       <div className="partagee-mochi">
         <Mochi size={56} />
+        {/* Textes neutres (#449) : tant que rien n'est lu, et pour un lien retiré (la ligne n'existe plus), on ne sait
+            pas si le lien montrait une partie ou une étude. */}
         <p aria-live="polite">{fr(tp(etat.quoi === 'chargement' ? 'vue.chargement' : etat.quoi === 'introuvable' ? 'vue.introuvable' : online ? 'vue.erreur' : 'vue.horsLigne'))}</p>
       </div>
       {etat.quoi === 'erreur' && online && <button type="button" className="btn" onClick={() => setEssai(n => n + 1)}>{tp('vue.reessayer')}</button>}
@@ -175,7 +177,7 @@ function VueEtude({ partie, onEtudier }: { partie: Partie; onEtudier: () => void
   if (!etude || !positions.length) {
     return (
       <div className="partagee partagee-etat">
-        <div className="partagee-mochi"><Mochi size={56} /><p>{fr(tp('vue.introuvable'))}</p></div>
+        <div className="partagee-mochi"><Mochi size={56} /><p>{fr(tp('vueEtude.introuvable'))}</p></div>
       </div>
     );
   }

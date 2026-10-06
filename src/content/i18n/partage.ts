@@ -49,11 +49,11 @@ const FR = {
   'image.alt': 'Plateau de go au moment clé de la partie, avec le résultat.',
   'vue.titre': 'Partie de {pseudo}',
   'vue.titreSans': 'Partie partagée',
-  'vue.chargement': 'Chargement de la partie…',
-  'vue.introuvable': 'Cette partie n’est plus partagée.',
-  'vue.erreur': 'Impossible de charger la partie. Vérifie ta connexion.',
+  'vue.chargement': 'Chargement…',
+  'vue.introuvable': 'Ce lien n’est plus partagé.',
+  'vue.erreur': 'Impossible d’ouvrir le lien. Vérifie ta connexion.',
   'vue.reessayer': 'Réessayer',
-  'vue.horsLigne': 'Hors ligne. Reconnecte-toi pour voir la partie.',
+  'vue.horsLigne': 'Hors ligne. Reconnecte-toi pour ouvrir le lien.',
   'vue.momentCle': 'Moment clé',
   'vue.compteur': 'Coup {i} sur {n}',
   'vue.debut': 'Début de la partie',
@@ -91,6 +91,7 @@ const FR = {
   'vueEtude.compteur': 'Variante : coup {i} sur {n}',
   'vueEtude.trait': 'Au trait : {camp}',
   'vueEtude.etudier': 'Étudie-la avec Mochi',
+  'vueEtude.introuvable': 'Cette étude n’est plus disponible.',
 };
 
 const EN: { readonly [K in keyof typeof FR]: string } = {
@@ -139,11 +140,11 @@ const EN: { readonly [K in keyof typeof FR]: string } = {
   'image.alt': 'Go board at the key moment of the game, with the result.',
   'vue.titre': '{pseudo}’s game',
   'vue.titreSans': 'Shared game',
-  'vue.chargement': 'Loading the game…',
-  'vue.introuvable': 'This game is no longer shared.',
-  'vue.erreur': 'Can’t load the game. Check your connection.',
+  'vue.chargement': 'Loading…',
+  'vue.introuvable': 'This link is no longer shared.',
+  'vue.erreur': 'Can’t open the link. Check your connection.',
   'vue.reessayer': 'Try again',
-  'vue.horsLigne': 'You’re offline. Reconnect to see the game.',
+  'vue.horsLigne': 'You’re offline. Reconnect to open the link.',
   'vue.momentCle': 'Key moment',
   'vue.compteur': 'Move {i} of {n}',
   'vue.debut': 'Start of the game',
@@ -180,6 +181,7 @@ const EN: { readonly [K in keyof typeof FR]: string } = {
   'vueEtude.compteur': 'Line: move {i} of {n}',
   'vueEtude.trait': 'To play: {camp}',
   'vueEtude.etudier': 'Study it with Mochi',
+  'vueEtude.introuvable': 'This study is no longer available.',
 };
 
 export type ClePartage = keyof typeof FR;

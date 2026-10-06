@@ -135,6 +135,8 @@ test('partager une étude → l’ami ouvre le lien sans compte → « Étudie-l
   await expect(feuille.getByText('Étude privée : le lien ne montre plus rien.')).toBeVisible();
   const c = await telephone(browser, baseURL, serveur, {});
   await c.page.goto(lien.replace(baseURL!, ''));
+  // Ligne retirée : rien ne dit plus si c'était une partie ou une étude ; texte neutre.
+  await expect(c.page.getByText('Ce lien n’est plus partagé.')).toBeVisible();
   await expect(c.page.locator('.cta')).toHaveText('Découvrir Mochi Go');
   expect(erreurs).toEqual([]);
   await Promise.all([a.ctx.close(), b.ctx.close(), c.ctx.close()]);
