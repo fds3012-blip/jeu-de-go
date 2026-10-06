@@ -29,11 +29,13 @@ import { compterEtape } from '../data/compteurs';
 import { messageRefus } from '../data/defi';
 import { useOnline } from './hooks';
 import { noterActivite } from './xp';
+import { usePreferences } from './settings';
 import { PARAMS_DEFAUT, adversaireDuRepli, issueMesure, phraseDirect, phraseFinDirect, proposerRepli, texteCadence, vueDirect, type Params } from './direct';
 import { OPPONENTS, type OpponentId } from '../engine';
 import { depuisDefi } from './historique';
 import { libelleCoup } from './partie';
 import { Revue } from './Revue';
+import { useEchanges } from './echanges';
 import { texteAdversaire } from '../content/i18n/cote';
 import { td, type CleDirect } from '../content/i18n/direct';
 import { nombre, t } from '../content/i18n/secondaires';
@@ -78,7 +80,9 @@ interface Props {
 /** « Un humain, maintenant » : du choix de la partie jusqu'au bilan. */
 export function Direct({ db, userId, cote, onRepli, partieInitiale, confirmTouch, reglages, celebrer, onAccueil, onFacon }: Props) {
   // #436 : la file par défaut d'abord (9 × 9, normale, japonais), quelle que soit la taille choisie pour l'ordi.
-  const [params, setParams] = useState<Params>(partieInitiale?.demande ?? PARAMS_DEFAUT);
+  // #365 : le temps de jeu proposé d'abord vient des Réglages (« normale » par défaut, celle de la file par défaut).
+  const { cadence: cadenceReglee } = usePreferences();
+  const [params, setParams] = useState<Params>(partieInitiale?.demande ?? { ...PARAMS_DEFAUT, cadence: cadenceReglee });
   const [vue, setVue] = useState<Vue>(partieInitiale ? { vue: 'partie', id: partieInitiale.id, attenteS: null, demande: partieInitiale.demande } : { vue: 'choix' });
   const [erreur, setErreur] = useState<string | null>(null);
 
@@ -284,6 +288,7 @@ interface PartieProps {
 }
 
 function DirectPartie({ db, partieId, userId, demande, confirmTouch, reglages, celebrer, onAccueil, onRejouer }: PartieProps) {
+  const prefs = usePreferences(); // #365 : coordonnées et dernier coup
   const online = useOnline();
   const [partie, setPartie] = useState<Game | null>(null);
   const [etat, setEtat] = useState<EtatDirect | null>(null);
@@ -395,6 +400,9 @@ function DirectPartie({ db, partieId, userId, demande, confirmTouch, reglages, c
     });
   }, [v, partie, etat]);
 
+  // #373 et #363 : « Dire » (messages prédéfinis, émotes), bulles près des noms, « Signaler ce joueur ».
+  const echanges = useEchanges({ db, partieId, userId, nom: nomLui ?? td('direct.adversaire'), actif: !!partie, online, mode: 'direct' });
+
   const retour = <button type="button" className="retour" onClick={onAccueil} aria-label={td('direct.retour')}>‹</button>;
   if (!base || !v || !etat || !partie) {
     return (
@@ -485,7 +493,7 @@ function DirectPartie({ db, partieId, userId, demande, confirmTouch, reglages, c
   const bandeau = (c: 1 | 2, avant?: ReactNode) => (
     <Bandeau nom={nomDe(c)} sousTitre={sousTitre(c)} actif={v.phase === 'jeu' && v.trait === c} captures={v.pos.captures[c]}
       pierresPrises={c === 1 ? 'blanc' : 'noir'} portrait={<Avatar couleur={c} />} avant={avant}
-      pendule={<Horloge c={v.cadrans[c]} nom={c === moi ? null : nom} />} />
+      pendule={<Horloge c={v.cadrans[c]} nom={c === moi ? null : nom} />} bulle={c === lui ? echanges.bulleLui : echanges.bulleMoi} />
   );
   const message = refus ?? (envoi ? td('direct.etat.envoi') : phraseDirect(v, nom, online));
   const fini = v.phase === 'fini' || v.phase === 'annulee';
@@ -501,7 +509,7 @@ function DirectPartie({ db, partieId, userId, demande, confirmTouch, reglages, c
       <div className="partie-plateau">
         <Board size={partie.size} board={v.pos.board} toPlay={v.pos.toPlay} confirmTouch={confirmTouch}
           interactive={(v.aMoi && !envoi && online) || (enComptage && !envoi && !v.proposeParMoi)} stonesTappable={enComptage}
-          marks={{ last: v.pos.lastMove, owner: sc?.owner, dead: enComptage || v.phase === 'fini' ? mortesVues : undefined }}
+          coordonnees={prefs.coordonnees} marks={{ last: prefs.dernierCoup ? v.pos.lastMove : null, owner: sc?.owner, dead: enComptage || v.phase === 'fini' ? mortesVues : undefined }}
           onPlay={toucher} noms={{ [lui]: nom }} />
       </div>
       {bandeau(moi)}
@@ -528,6 +536,7 @@ function DirectPartie({ db, partieId, userId, demande, confirmTouch, reglages, c
               onClick={() => onRejouer({ taille: partie.size as Taille, cadence, regles: rules })}>{td('direct.rejouer')}</button>
             {revue && <button type="button" className="lien" onClick={() => { setEnRevue(true); window.scrollTo?.({ top: 0 }); }}>{td('direct.revoir')}</button>}
             <button type="button" className="lien" onClick={onAccueil}>{td('direct.accueil')}</button>
+            {echanges.liensFin}
             {v.phase === 'fini' && partie.rated && <VocabulaireGrade />}
           </div>
         )}
@@ -535,16 +544,22 @@ function DirectPartie({ db, partieId, userId, demande, confirmTouch, reglages, c
       <div className="partie-souffle" aria-hidden="true" />
       {v.phase === 'jeu' && (
         <BarreActions label={t('partie.actions')} actions={[
+          ...(echanges.action ? [echanges.action] : []),
           { label: t('partie.action.passer'), icone: <Icone nom="passer" />, onClick: () => { void envoyer('tt'); }, disabled: !v.aMoi || envoi || !online, groupe: 'decision', principale: true },
         ]} menu={{
           label: t('partie.action.plus'),
           actions: [
             { label: abandon ? fr(t('partie.action.confirmer')) : t('partie.action.abandonner'), action: 'abandonner', icone: <Icone nom="abandonner" />,
               onClick: abandonner, danger: abandon, disabled: envoi || !online, reste: true },
+            ...echanges.menu,
           ],
-          reglages: reglages ? <Interrupteur label={t('profil.confirmer')} actif={confirmTouch} onChange={c => reglages.modifier({ confirmTouch: c })} /> : undefined,
+          reglages: <>
+            {reglages && <Interrupteur label={t('profil.confirmer')} actif={confirmTouch} onChange={c => reglages.modifier({ confirmTouch: c })} />}
+            {echanges.reglage}
+          </>,
         }} />
       )}
+      {echanges.feuilles}
     </div>
   );
 }

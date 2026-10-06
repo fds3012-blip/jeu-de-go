@@ -14,7 +14,7 @@ import { useSupabase } from '../data/client';
 import { fr } from '../ui/typo';
 import { nombre as virgule, t as tr } from '../content/i18n/secondaires';
 import { useProfil } from './hooks';
-import { useStored } from './settings';
+import { usePreferences, useStored } from './settings';
 import { carteTerritoire, conseilPasser, passerEnEvidence, coupsJoues, descriptionIndices, descriptionQuiMene, DUREE_QUI_MENE, indicesRestants, INDICES_PAR_PARTIE, libelleAvantage, libelleCoup, messageAtari, messageIndice, metEnAtari, nouveauxAtari, partNoir, phraseQuiMene, QUI_MENE_PAR_PARTIE, quiMeneDisponible, quiMeneRestants } from './partie';
 import { messageComptage, modeComptage } from './partie';
 import { avanceBarre, avertirAvantPasse, frontieresAuPasse, frontieresVisibles, type AlerteFrontieres } from './partie';
@@ -80,6 +80,8 @@ interface Props {
 }
 
 export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, onResult, fin, aiKomi = komi, portrait, celebrer = true, aide = true, avantage = true, accommodant = false, guidee, onImporter, reglages }: Props) {
+  // #365 : coordonnées et marque du dernier coup, selon les Réglages.
+  const prefs = usePreferences();
   const [history, setHistory] = useState<Position[]>(() => [newPosition(size)]);
   const [phase, setPhase] = useState<'play' | 'score' | 'end'>('play');
   const [dead, setDead] = useState<Set<number>>(new Set());
@@ -549,7 +551,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
       const ownerDelai = immediat ? undefined : new Map(recit.territoire.map(q => [q.p, q.delai]));
       const recitEl = (
         <RecitScore recit={recit} immediat={immediat} expliquerKomi={!komiExplique} adversaire={ai?.nom} onFini={finRecit}
-          fond={<Board size={size} board={pos.board} marks={{ owner: sc.owner, ownerDelai, dead, last: pos.lastMove }} />} />
+          fond={<Board size={size} board={pos.board} marks={{ owner: sc.owner, ownerDelai, dead, last: prefs.dernierCoup ? pos.lastMove : null }} coordonnees={prefs.coordonnees} />} />
       );
       if (autoCompte !== 'oui') return recitEl;
       // Comptage automatique (#117) : Mochi explique les pierres grisées, la correction reste possible.
@@ -566,7 +568,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     const bilanDeux = fr(tr('fin.bilanDeux', { n, plateau, noir: pos.captures[1], blanc: pos.captures[2] }));
     return (
       <FinPartie
-        fond={<Board size={size} board={pos.board} marks={{ owner: abandon ? undefined : sc.owner, dead, last: pos.lastMove }} />}
+        fond={<Board size={size} board={pos.board} marks={{ owner: abandon ? undefined : sc.owner, dead, last: prefs.dernierCoup ? pos.lastMove : null }} coordonnees={prefs.coordonnees} />}
         sceau={ai && guidee ? <PortraitMochi taille={108} decoratif humeur={gagne ? 'fier' : 'content'} />
           : ai ? <Portrait id={ai.id} taille={108} decoratif humeur={gagne ? 'surpris' : 'content'} /> : <span className={`fin-pierre ${winner === 1 ? 'b' : 'w'}`} aria-hidden="true" />}
         // Partie guidée : elle ne compte pas dans le bilan, personne n'est « battu ».
@@ -611,7 +613,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
       {ai && avantage && (!estimationKo || phase === 'score') && <BarreAvantage libelle={lead === null ? '' : libelleAvantage(lead)} part={lead === null ? 0.5 : partNoir(lead, size)} titre={phase === 'score' ? tr('partie.scoreCompte') : undefined} />}
       <div className="partie-plateau">
         <Board size={size} board={pos.board} toPlay={pos.toPlay} interactive={phase === 'score' || myTurn} stonesTappable={phase === 'score'} confirmTouch={confirmTouch}
-          marks={{ last: pos.lastMove, owner: phase === 'score' ? sc.owner : quiMeneVisible?.owner, ownerFondu: !!quiMeneVisible, dead, libs, zone, ouverts: phase === 'play' ? frontieresVisibles(frontieres, history.length, pos.board, size, !!ai) : undefined }} onPlay={onPlay} shake={shake} versCouvercles noms={ai ? { 2: ai.nom } : undefined} />
+          coordonnees={prefs.coordonnees} marks={{ last: prefs.dernierCoup ? pos.lastMove : null, owner: phase === 'score' ? sc.owner : quiMeneVisible?.owner, ownerFondu: !!quiMeneVisible, dead, libs, zone, ouverts: phase === 'play' ? frontieresVisibles(frontieres, history.length, pos.board, size, !!ai) : undefined }} onPlay={onPlay} shake={shake} versCouvercles noms={ai ? { 2: ai.nom } : undefined} />
         {conseilVisible && <CalqueConseil size={size} zone={conseilVisible.zone} point={conseilVisible.point} />}
         {quiMeneVisible && <p key={quiMeneVisible.n} className="qui-mene-phrase" aria-hidden="true">{fr(quiMeneVisible.phrase)}</p>}
         {/* Zones d'annonce permanentes (audit web, points 3 et 4) : seul leur texte change, pour être lues à coup sûr. */}

@@ -8,8 +8,9 @@
 //    « Rejouer d'ici » (#34) et « Rejoue cette erreur » (#77) restent en actions secondaires.
 // 4. « Rejouer mes erreurs » (#428, RejouerErreurs.tsx) : avec KataGo, quand tu as des erreurs à rejouer, c'est l'action
 //    principale du bilan ; « Démarrer le bilan » passe en action secondaire. Sans KataGo, pas de bouton.
+// 5. « Partager » (#364, PartagePartie.tsx) : action secondaire du bilan ; la feuille arrive au premier toucher.
 // Logique pure : revue.ts (notes de base, précision, moment clé), notation.ts (notes du go), parcours.ts (phrases).
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
 import { Board } from '../ui/Board';
 import { Mochi } from '../ui/Mochi';
 import { Icone } from '../ui/Partie';
@@ -33,7 +34,14 @@ import { noterActivite } from './xp';
 import { coupAccepte, creerErreur, ERREURS_KEY, garderRatee, lireErreurs, peutEnFaireUnProbleme, type ErreurGardee } from './erreurs';
 import { erreursARejouer, type ErreurARejouer } from './rejouerErreurs';
 import { RejouerErreurs } from './RejouerErreurs';
+import { usePreferences } from './settings';
+import { numerosDesCoups } from '../go/numeros';
+import { empreinte, erreursParPhaseDe, garderRevue } from './statsJoueur';
 import '../ui/revue.css';
+import { tp } from '../content/i18n/partage';
+
+// #364 : feuille « Partager » du bilan, chargée au premier toucher (image, lien, SGF, défi).
+const FeuillePartage = lazy(() => import('./PartagePartie').then(m => ({ default: m.PartagePartie })));
 
 interface Props {
   /** La partie, en SGF. */
@@ -55,6 +63,8 @@ interface Props {
   onImporter?: () => void;
   /** D'où vient la revue, pour la mesure (`revue_ouverte`) : `historique` depuis « Mes parties » (#358). */
   source?: 'historique';
+  /** « Partager » dans le bilan (#364) ; `false` pour une partie partagée par un autre joueur. */
+  partage?: boolean;
 }
 
 /** « Rejoue cette erreur » en cours : le problème, le nombre d'essais, le dernier coup faux, la réussite. */
@@ -66,7 +76,7 @@ const PERTES: ReadonlySet<Note> = new Set(['imprecision', 'erreur', 'manque', 'g
 /** Notes qui peuvent devenir un problème à rejouer (#77, erreurs.ts) : leur bon coup reste caché jusqu'à un essai. */
 const PROBLEMES: ReadonlySet<Note> = new Set(['erreur', 'manque', 'grosse']);
 
-export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTouch = false, visites, retour, onImporter, source }: Props) {
+export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTouch = false, visites, retour, onImporter, source, partage = true }: Props) {
   const { positions, komi, resultat } = useMemo(() => positionsDepuisSgf(sgf), [sgf]);
   const n = positions.length - 1, size = positions[0].size;
   const [etape, setEtape] = useState<'bilan' | 'parcours'>('bilan');
@@ -78,6 +88,8 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
   const [uniques, setUniques] = useState<ReadonlySet<number>>(() => new Set());
   // Meilleur coup par erreur, seulement s'il est fiable (conseilFiable) ; `null` : rien à montrer.
   const [meilleurs, setMeilleurs] = useState<Record<number, number | null>>({});
+  // #364 : feuille « Partager » ouverte.
+  const [partager, setPartager] = useState(false);
   // « Rejoue cette erreur » (issue #77) : `null` hors rejeu.
   const [rejeu, setRejeu] = useState<Rejeu | null>(null);
   // Erreurs dont le bon coup est dévoilé (après un essai ou « Voir le bon coup »), par numéro de coup.
@@ -90,6 +102,8 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
   const [prepare, setPrepare] = useState(true);
   const [sansKataGo, setSansKataGo] = useState<RaisonSansKataGo | null>(null);
   const mode = visites ? 'import' : adversaire ? 'ordi' : 'deux';
+  // #365 : coordonnées, dernier coup et numéros des coups, selon les Réglages.
+  const prefs = usePreferences();
   const analysees = analyses.length;
   const finie = analysees > n;
   // #424 : courbe et pastille sans les estimations aberrantes du moteur simple.
@@ -109,6 +123,15 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
   const aRejouer = useMemo(() => (finie ? erreursARejouer(positions, analyses, notes, joueur) : []), [finie, positions, analyses, notes, joueur]);
   // Coups dont on cherche le meilleur coup avec KataGo (#34) : tes pertes parmi les coups clés.
   const aConseiller = useMemo(() => cles.filter(c => { const x = notes[c - 1]; return !!x && PERTES.has(x.note) && (!joueur || x.couleur === joueur); }), [cles, notes, joueur]);
+
+  // #368 : une revue finie avec KataGo nourrit « Mes statistiques » (précision, erreurs par phase), sur l'appareil.
+  // Partie à deux (pas de joueur) ou analyse arrêtée : rien n'est gardé.
+  useEffect(() => {
+    if (!finie || !joueur || arret || !analyses.some(a => a?.engine === 'katago')) return;
+    const p = precisionHonnete(notes, joueur, avanceNoir, size);
+    if (p == null) return;
+    garderRevue({ cle: empreinte(sgf), date: new Date().toISOString(), taille: size, precision: p, erreurs: erreursParPhaseDe(notes, joueur, n, size) });
+  }, [finie, joueur, arret, analyses, notes, avanceNoir, size, sgf, n]);
 
   useEffect(() => { track(EVENTS.revueOuverte, { coups: n, taille: size, mode, ...(source ? { source } : {}) }); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -385,7 +408,14 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
         {!avecKataGo && <p className="revue-note revue-sans-katago">{fr(tr(sansKataGo ? `bilan3.sansKataGo.${sansKataGo}` : 'bilan3.sansKataGo'))}</p>}
         {arret && <p className="revue-note revue-arretee">{fr(tr('import.arretee'))}</p>}
         {aRejouer.length > 0 && <button type="button" className="btn bilan-parcours" onClick={() => demarrer()}>{tr('bilan3.demarrer')}</button>}
+        {/* #364 : partager la partie (lien de la revue, image du moment clé, SGF, défi), en action secondaire. */}
+        {partage && n >= 1 && <button type="button" className="btn bilan-partager" onClick={() => setPartager(true)}>{tp('partage.bouton')}</button>}
         {onImporter && <button type="button" className="lien revue-importer" onClick={onImporter}>{tr('import.autre')}</button>}
+        {partager && (
+          <Suspense fallback={null}>
+            <FeuillePartage sgf={sgf} joueur={joueur} adversaire={adversaire} coup={cle?.coup ?? 0} mode={mode} onFermer={() => setPartager(false)} />
+          </Suspense>
+        )}
         <div className="dock revue-dock">
           {aRejouer.length > 0
             ? <button type="button" className="cta" onClick={() => { setSeance(aRejouer); window.scrollTo?.({ top: 0 }); }}>{tr('rejeu.bouton', { n: aRejouer.length })}</button>
@@ -451,7 +481,8 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
       </div>
 
       <div className="revue-plateau">
-        <Board size={size} board={q.board} marks={{ last: q.lastMove, meilleur: fantome ?? undefined, note: marqueNote }} />
+        <Board size={size} board={q.board} marks={{ last: prefs.dernierCoup ? q.lastMove : null, meilleur: fantome ?? undefined, note: marqueNote }}
+          coordonnees={prefs.coordonnees} numeros={prefs.numerosRevue ? numerosDesCoups(positions, i) : null} />
       </div>
 
       <div className="revue-nav">

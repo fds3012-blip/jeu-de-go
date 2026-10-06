@@ -18,7 +18,10 @@
 -- - le numéro du Go du jour est celui du serveur (heure de Paris) : un essai d'un autre jour est refusé (JGJ01) ;
 -- - `go_du_jour_resultats` : RLS, chacun ne lit que ses lignes, aucune écriture directe ; `rappels_go_du_jour` :
 --   RLS sans politique, aucun droit (journal interne) ;
--- - les amis sont lus dans `friendships` (statut `accepted`) à chaque appel : un ami retiré disparaît aussitôt.
+-- - les amis sont lus dans `friendships` (statut `accepted`) à chaque appel : un ami retiré disparaît aussitôt ;
+-- - blocages (#363, `est_bloque` de 20261005220100_securite_signalements.sql) : bloquer retire déjà le lien d'amitié ;
+--   en plus, un joueur bloqué (dans un sens ou dans l'autre) n'apparaît jamais dans le classement ni dans le bilan, et
+--   ne peut pas être rappelé (JGA08), même si un lien d'amitié réapparaissait.
 -- Données : résultat du Go du jour gardé 35 jours (assez pour le bilan de la semaine précédente), rappels 30 jours,
 -- effacés avec le compte (cascade). Aucune donnée existante supprimée ; aucune cote touchée.
 --
@@ -159,6 +162,7 @@ begin
       select case when f.requester_id = v_uid then f.addressee_id else f.requester_id end as id
         from public.friendships f
         where f.status = 'accepted' and v_uid in (f.requester_id, f.addressee_id)
+          and not public.est_bloque(f.requester_id, f.addressee_id)
       union
       select v_uid
     )
@@ -194,7 +198,8 @@ begin
   end if;
   if not exists (select 1 from public.friendships
       where status = 'accepted'
-        and ((requester_id = v_uid and addressee_id = v_ami) or (requester_id = v_ami and addressee_id = v_uid))) then
+        and ((requester_id = v_uid and addressee_id = v_ami) or (requester_id = v_ami and addressee_id = v_uid)))
+     or public.est_bloque(v_uid, v_ami) then
     raise exception 'Ce joueur n''est pas dans tes amis' using errcode = 'JGA08';
   end if;
   -- Un rappel à la fois par joueur : la limite du jour ne se contourne pas en parallèle.
@@ -246,6 +251,7 @@ begin
     select case when f.requester_id = v_uid then f.addressee_id else f.requester_id end as id
       from public.friendships f
       where f.status = 'accepted' and v_uid in (f.requester_id, f.addressee_id)
+        and not public.est_bloque(f.requester_id, f.addressee_id)
   ),
   contre_amis as (
     select p.username as pseudo,

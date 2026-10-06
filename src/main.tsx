@@ -1,5 +1,7 @@
 // En premier : le jeton d'un défi par lien (#81) quitte l'adresse avant la mesure et tout événement (constat E14).
 import { JETON_AU_CHARGEMENT } from './app/adresseDefi';
+// De même pour le lien d'une partie partagée (#364, `#partie=JETON`).
+import { PARTIE_AU_CHARGEMENT } from './app/adressePartie';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 // Styles des écrans chargés à la demande (src/app/ecrans.ts) : importés ici, avant App et dans l'ordre
@@ -66,8 +68,8 @@ createRoot(document.getElementById('root')!).render(
 );
 
 // Client Supabase (#401) : hors du JS initial. Tout de suite si le premier écran en dépend (session sur l'appareil,
-// retour de connexion, lien de défi), sinon après le premier écran, avec les autres écrans.
-if (JETON_AU_CHARGEMENT !== null || chargementUrgent()) void chargerSupabase();
+// retour de connexion, lien de défi ou de partie partagée), sinon après le premier écran, avec les autres écrans.
+if (JETON_AU_CHARGEMENT !== null || PARTIE_AU_CHARGEMENT !== null || chargementUrgent()) void chargerSupabase();
 
 prechargerPartie();
 // Après le premier écran et ses polices (sinon, sur un réseau lent, ils se disputent la bande passante) :

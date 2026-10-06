@@ -3,6 +3,28 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <script>
+      // Liens courts partagés (#364, #285) : `/j/42`, `/defi#JETON`, `/partie#JETON` (et `/en/…`) ont leur propre page
+      // d'aperçu (outils/apercus.ts) mais c'est la même app. Avant tout le reste (ouverture, jeton du défi, mesure),
+      // l'adresse reprend sa forme habituelle : `/?go-du-jour=42`, `/#defi=JETON`, `/#partie=JETON`. Le jeton reste
+      // dans le fragment : jamais envoyé au serveur. Pure : testée par src/app/partage.test.ts.
+      function adresseCourte(chemin, recherche, fragment) {
+        var m = /^\/(?:en(?:\/|$))?(?:(j)\/(\d{1,6})|(defi|partie))?\/?$/.exec(chemin);
+        if (!m || chemin === '/') return null;
+        var r = recherche || '';
+        if (m[1]) return '/' + (r ? r + '&' : '?') + 'go-du-jour=' + m[2] + fragment;
+        if (!m[3]) return '/' + r + fragment;
+        var brut = fragment.replace(/^#/, '');
+        if (!brut) return '/' + r;
+        return '/' + r + '#' + (brut.indexOf(m[3] + '=') === 0 ? brut : m[3] + '=' + brut);
+      }
+      (function () {
+        try {
+          var a = adresseCourte(location.pathname, location.search, location.hash);
+          if (a) history.replaceState(history.state, '', a);
+        } catch (e) { /* adresse inchangée */ }
+      })();
+    </script>
     <meta name="theme-color" content="#1C1916" media="(prefers-color-scheme: dark)" />
     <meta name="theme-color" content="#EFE8DC" media="(prefers-color-scheme: light)" />
     <meta name="description" content="Mochi Go : apprends et joue au go. Leçons interactives, problèmes, parties contre l’ordi ou tes amis." />
@@ -107,8 +129,8 @@
       // Décide de l'ouverture (#406) : 'plein', 'court', 'reduit' ou null (aucune). Pure : testée par src/ouverture.test.ts.
       function modeOuverture(c) {
         if (c.forcer === '0' || (c.webdriver && c.forcer !== '1') || c.cachee) return null;
-        // Lien de défi, retour de connexion (lien magique, Google) : l'écran attendu tout de suite.
-        if (/^#defi=/.test(c.adresse) || /(?:^|[#&?])(?:access_token|refresh_token|error_description|error_code|token_hash|code)=/.test(c.adresse)) return null;
+        // Lien de défi ou de partie partagée (#364), retour de connexion (lien magique, Google) : l'écran attendu tout de suite.
+        if (/^#(?:defi|partie)=/.test(c.adresse) || /(?:^|[#&?])(?:access_token|refresh_token|error_description|error_code|token_hash|code)=/.test(c.adresse)) return null;
         // Rechargement (nouvelle version prête, langue, erreur), retour arrière, ou déjà vue dans cet onglet.
         if (c.navigation === 'reload' || c.navigation === 'back_forward' || c.dejaVue) return null;
         if (c.reduit) return 'reduit';

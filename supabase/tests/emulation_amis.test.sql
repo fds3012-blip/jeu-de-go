@@ -198,6 +198,27 @@ reset role;
 select pg_temp.egal((select count(*) from public.rappels_go_du_jour where envoye_le < now() - interval '30 days'), 0::bigint, 'rappels de plus de 30 jours effacés');
 set local role authenticated;
 
+-- 4 bis. Blocages (#363) : un ami bloqué disparaît du classement et ne peut plus être rappelé, dans les deux sens,
+--        même si un lien d'amitié réapparaissait (posé ici sans déclencheurs).
+select pg_temp.connecte(:gael);
+select pg_temp.egal(public.bloquer_joueur('Alice'), true, 'Gael bloque Alice');
+select pg_temp.egal(pg_temp.classement(), 'Gael:vu:-:true:false', 'Gael ne voit plus Alice');
+select pg_temp.doit_refuser('select public.rappeler_go_du_jour(''Alice'')', 'JGA08');
+select pg_temp.connecte(:alice);
+select pg_temp.egal(pg_temp.classement(), 'Bruno:reussi:2:false:true,Alice:reussi:3:true:false', 'Alice ne voit plus Gael (bloquée par lui)');
+select pg_temp.doit_refuser('select public.rappeler_go_du_jour(''Gael'')', 'JGA08');
+reset role;
+set local session_replication_role = replica;
+insert into public.friendships (requester_id, addressee_id, status) values (:gael, :alice, 'accepted');
+set local session_replication_role = origin;
+set local role authenticated;
+select pg_temp.connecte(:alice);
+select pg_temp.egal(pg_temp.classement(), 'Bruno:reussi:2:false:true,Alice:reussi:3:true:false', 'lien réapparu : toujours caché');
+select pg_temp.doit_refuser('select public.rappeler_go_du_jour(''Gael'')', 'JGA08');
+reset role;
+delete from public.friendships where requester_id = :gael and addressee_id = :alice;
+set local role authenticated;
+
 -- 5. Bilan de la semaine. Parties de cette semaine (heure de Paris) : Alice bat Bruno 2 fois, perd 1 fois contre lui,
 --    bat Eve (pas une amie) 1 fois ; une partie contre l'IA, une partie annulée et une partie en cours ne comptent pas ;
 --    une partie de la semaine dernière ne compte que dans le bilan précédent.
@@ -242,6 +263,18 @@ select pg_temp.egal(public.bilan_semaine() -> 'amis', jsonb_build_array(jsonb_bu
 select pg_temp.connecte(:eve);
 select pg_temp.egal(public.bilan_semaine() - 'semaine', jsonb_build_object('parties', 1, 'victoires', 0, 'parties_classees', 0,
   'cote_ecart', 0, 'go_du_jour', 1, 'amis', '[]'::jsonb), 'Eve : une partie, Alice jamais nommée (pas une amie)');
+
+-- 5 bis. Blocage : l'ami bloqué n'est plus nommé dans le bilan, même si un lien d'amitié réapparaissait.
+select pg_temp.connecte(:bruno);
+select public.bloquer_joueur('Alice');
+reset role;
+set local session_replication_role = replica;
+insert into public.friendships (requester_id, addressee_id, status) values (:alice, :bruno, 'accepted');
+set local session_replication_role = origin;
+set local role authenticated;
+select pg_temp.connecte(:alice);
+select pg_temp.egal(public.bilan_semaine() -> 'amis', '[]'::jsonb, 'Bruno bloque Alice : plus nommé dans son bilan');
+select pg_temp.egal((public.bilan_semaine() ->> 'parties')::int, 4, 'les parties restent comptées');
 
 -- 6. Records : meilleure cote et plus longue série de victoires classées. Alice : V (950), V (1000), V (1030), D (1010)
 --    → record 3 victoires de suite, série en cours 0, meilleure cote 1030 aujourd'hui.

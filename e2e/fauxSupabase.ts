@@ -4,7 +4,8 @@ import { parseActionRequest, planAction, type GameRow } from '../src/go/server';
 // Supabase simulé par interception réseau, partagé par les parcours du compte (#343) et du défi par lien (#81).
 // Le build de test lit l'adresse simulée dans le stockage local (`e2e.supabase`, voir src/data/supabase.ts).
 // Auth : code à 6 chiffres (`/otp` puis `/verify`), le seul bon code est CODE. Tables : profiles, games, defis,
-// notifications (#367), parties_perso (#358 : `enregistrer_parties_perso`, sans doublon, compte avec pseudo exigé).
+// notifications (#367), parties_perso (#358 : `enregistrer_parties_perso`, sans doublon, compte avec pseudo exigé),
+// parties partagées (#364 : `partager_partie`, `lire_partie_partagee` sans compte, `retirer_partie_partagee`).
 // Temps réel : le WebSocket de Supabase Realtime (protocole Phoenix, sérialisation 2.0.0) est simulé. Sont poussées :
 // les notifications, à leur seul destinataire ; et (#425) les UPDATE de `games`, `defis` et `parties_direct`, aux seuls
 // joueurs de la partie (RLS simulée). `ralentirLectures(ms)` retarde les relectures (parties, pendule) : un coup qui
@@ -26,6 +27,10 @@ import { parseActionRequest, planAction, type GameRow } from '../src/go/server';
 // de la partie (`defis.delai_coup`), perte au temps constatée au coup, à la lecture (`victoire_au_temps`) et par
 // `tacheLentes()` (la tâche pg_cron), sur une horloge du serveur qu'un test avance (`avancerHorloge`). Classée :
 // ±162 ; annulée sans cote si personne n'a vraiment joué.
+// Sécurité (#363, #373) : `signaler`, `bloquer_joueur`, `debloquer_joueur`, `mes_blocages`, `dire_en_partie` (mêmes
+// règles et mêmes codes que supabase/migrations/20261005220100_securite_signalements.sql, sauf la fin de partie depuis
+// plus de 10 minutes) ; les INSERT de `messages_partie` sont poussés aux deux joueurs, sauf à celui qui a bloqué
+// l'auteur ; `find_match` n'apparie jamais deux joueurs dont l'un a bloqué l'autre.
 // Émulation entre amis (#369) : `noter_go_du_jour` (le numéro envoyé fait foi : l'horloge du navigateur est figée),
 // `classement_go_du_jour`, `rappeler_go_du_jour` (notification `go_du_jour`), `bilan_semaine` (toutes les parties finies
 // entre humains comptent pour la semaine en cours), `mes_records` (historique de cote du joueur). Mêmes règles et mêmes
@@ -65,6 +70,8 @@ export function fauxServeur() {
   let idNotif = 0;
   let idFiltre = 0;
   const partiesPerso: Ligne[] = [];
+  /** Parties partagées par lien (#364) : jeton, propriétaire, SGF minimal, camp, adversaire, moment clé. */
+  const partagees: Ligne[] = [];
   const ratingHistory: Ligne[] = [];
   const file: { user: string; taille: number; cadence: string; regles: string; depuis: number }[] = [];
   const pendules: Ligne[] = [];
@@ -197,6 +204,32 @@ export function fauxServeur() {
   }
 
   const CADENCES: Record<string, [number, number, number]> = { rapide: [300000, 3, 20000], normale: [600000, 3, 30000], lente: [1200000, 5, 30000] };
+  // Sécurité (#363, #373)
+  const signalements: Ligne[] = [];
+  const blocages: { de: string; a: string; le: string }[] = [];
+  const messagesPartie: Ligne[] = [];
+  let idMessage = 0;
+  const estBloque = (x: string, y: string) => blocages.some(b => (b.de === x && b.a === y) || (b.de === y && b.a === x));
+  /** Pousse un INSERT de `messages_partie` aux joueurs de la partie (RLS : sauf à qui a bloqué l'auteur). */
+  function pousserMessage(m: Ligne) {
+    const g = games.find(x => x.id === m.partie_id);
+    if (!g) return;
+    for (const a of abonnes) {
+      if (a.fige) continue;
+      for (const [topic, c] of a.canaux) {
+        const qui = jetons.get(c.jeton ?? '')?.id;
+        if (!qui || (qui !== g.black_id && qui !== g.white_id)) continue;
+        if (qui !== m.auteur_id && blocages.some(b => b.de === qui && b.a === m.auteur_id)) continue;
+        const ids = c.filtres.filter(f => f.table === 'messages_partie' && (f.event === '*' || f.event === 'INSERT')
+          && (!f.filter || f.filter === `partie_id=eq.${String(m.partie_id)}`)).map(f => f.id);
+        if (!ids.length) continue;
+        pousses.push({ table: 'messages_partie', id: String(m.partie_id), le: Date.now() });
+        a.ws.send(JSON.stringify([c.joinRef, null, topic, 'postgres_changes', { ids, data: {
+          schema: 'public', table: 'messages_partie', commit_timestamp: new Date().toISOString(), type: 'INSERT', errors: null,
+          columns: [], record: { ...m } } }]));
+      }
+    }
+  }
   const directEnCours = (uid: string) => games.find(g => g.status === 'active' && pendules.some(p => p.partie_id === g.id) && (g.black_id === uid || g.white_id === uid));
   /** Fin d'une partie classée en direct : résultat, pendule arrêtée, cote ±162 (deux nouveaux, #417). */
   function finir(g: Ligne, resultat: string) {
@@ -453,7 +486,9 @@ export function fauxServeur() {
       if (!u || u.anonyme) return refus('JGC01');
       if (!profiles.find(x => x.id === u.id)?.username) return refus('JGP01');
       const corps = (req.postDataJSON() ?? {}) as { p_numero?: number; p_resultat?: string; p_pseudo?: string; p_precedente?: boolean };
-      const amisDe = (id: string) => amities.filter(f => f.etat === 'accepted' && (f.de === id || f.a === id)).map(f => (f.de === id ? f.a : f.de));
+      // Comme `est_bloque` (#363) : un ami bloqué, dans un sens ou dans l'autre, n'est plus listé ni rappelé.
+      const amisDe = (id: string) => amities.filter(f => f.etat === 'accepted' && (f.de === id || f.a === id)).map(f => (f.de === id ? f.a : f.de))
+        .filter(x => !blocages.some(b => (b.de === id && b.a === x) || (b.de === x && b.a === id)));
       const numeroDuJour = () => Math.max(0, ...goDuJour.filter(g => g.user === u.id).map(g => g.numero));
       if (nom === 'noter_go_du_jour') {
         if (!['rate', 'reussi', 'vu'].includes(String(corps.p_resultat))) return refus('JGJ04');
@@ -533,6 +568,33 @@ export function fauxServeur() {
       }
       return json(p_parties.map(l => l.cle));
     }
+    // #364 : partie partagée par lien, comme 20261005213100_parties_partagees.sql (sans plafonds) : compte avec pseudo,
+    // SGF minimal (aucun nom, aucun commentaire), même partie = même jeton ; lecture sans compte par le seul jeton.
+    if (chemin === '/rest/v1/rpc/partager_partie') {
+      if (!u || u.anonyme) return json({ code: 'JGC01', message: 'Crée ton compte' }, 400);
+      if (!profiles.find(x => x.id === u.id)?.username) return json({ code: 'JGP01', message: 'Choisis ton pseudo' }, 400);
+      const a = req.postDataJSON() as { p_sgf: string; p_taille: number; p_joueur: number | null; p_adversaire: string | null; p_coup: number };
+      if (/(PB|PW|C|DT|PC|GC)\[/.test(a.p_sgf) || !a.p_sgf.includes(`SZ[${a.p_taille}]`)) return json({ code: '22023', message: 'Partie illisible' }, 400);
+      const deja = partagees.find(x => x.user_id === u.id && x.sgf === a.p_sgf);
+      if (deja) { Object.assign(deja, { coup: a.p_coup, joueur: a.p_joueur, adversaire: a.p_adversaire }); return json(deja.jeton); }
+      const jeton = `P${String(partagees.length + 1).padStart(3, '0')}`.padEnd(32, 'x');
+      partagees.push({ jeton, user_id: u.id, sgf: a.p_sgf, taille: a.p_taille, joueur: a.p_joueur, adversaire: a.p_adversaire, coup: a.p_coup });
+      return json(jeton);
+    }
+    if (chemin === '/rest/v1/rpc/lire_partie_partagee') {
+      const { p_jeton } = req.postDataJSON() as { p_jeton: string };
+      const l = partagees.find(x => x.jeton === p_jeton);
+      if (!l) return json([]);
+      const pseudo = profiles.find(x => x.id === l.user_id)?.username ?? null;
+      return json([{ sgf: l.sgf, taille: l.taille, joueur: l.joueur, adversaire: l.adversaire, coup: l.coup, pseudo, cree_le: new Date().toISOString() }]);
+    }
+    if (chemin === '/rest/v1/rpc/retirer_partie_partagee') {
+      if (!u) return json({ code: 'JGC01', message: 'Connexion requise' }, 400);
+      const { p_jeton } = req.postDataJSON() as { p_jeton: string };
+      const k = partagees.findIndex(x => x.jeton === p_jeton && x.user_id === u.id);
+      if (k >= 0) partagees.splice(k, 1);
+      return json(k >= 0);
+    }
     // #355 : rattachement d'une session sans compte, comme 20261002001100_rattacher_session_anonyme.sql (sans empreinte).
     if (chemin === '/rest/v1/rpc/preparer_rattachement') {
       if (!u?.anonyme) return json({ code: '42501', message: 'Réservé aux sessions sans compte' }, 403);
@@ -572,7 +634,7 @@ export function fauxServeur() {
       const moi = file.find(f => f.user === u.id && memes(f));
       const maintenant = Date.now();
       // #436 : mêmes réglages d'abord ; après 30 s d'attente (la plus longue des deux), les autres réglages aussi.
-      const candidats = file.filter(f => f.user !== u.id && (memes(f) || maintenant - Math.min(f.depuis, moi?.depuis ?? maintenant) >= 30_000));
+      const candidats = file.filter(f => f.user !== u.id && !estBloque(u.id, f.user) && (memes(f) || maintenant - Math.min(f.depuis, moi?.depuis ?? maintenant) >= 30_000));
       const autre = candidats.find(memes) ?? candidats.sort((a, b) => a.depuis - b.depuis)[0];
       if (autre) {
         file.splice(0, file.length, ...file.filter(f => f.user !== u.id && f.user !== autre.user));
@@ -600,7 +662,7 @@ export function fauxServeur() {
       if (![9, 13, 19].includes(p_size) || ![1, 2, 3].includes(p_delai_jours)) return json({ code: '22023', message: 'Invalide' }, 400);
       const enCours = (id: unknown) => games.filter(g => g.rated && g.status === 'active' && defis.some(d => d.partie_id === g.id) && (g.black_id === id || g.white_id === id)).length;
       if (enCours(u.id) >= 10) return json({ code: 'JGL10', message: 'Tu as déjà 10 parties lentes en cours' }, 400);
-      const autre = fileLente.find(f => f.user_id !== u.id && f.partie_id === null && f.size === p_size && f.delai_jours === p_delai_jours && enCours(f.user_id) < 10);
+      const autre = fileLente.find(f => f.user_id !== u.id && f.partie_id === null && f.size === p_size && f.delai_jours === p_delai_jours && enCours(f.user_id) < 10 && !estBloque(String(u.id), String(f.user_id)));
       fileLente.splice(0, fileLente.length, ...fileLente.filter(f => f.user_id !== u.id));
       if (!autre) {
         fileLente.push({ user_id: u.id, size: p_size, delai_jours: p_delai_jours, rating: moi.rating ?? 800, rd: 350, created_at: new Date(maintenant()).toISOString(), partie_id: null });
@@ -664,6 +726,64 @@ export function fauxServeur() {
       const resultat = g.black_id === u.id ? 'W+R' : 'B+R';
       finir(g, resultat);
       return json(resultat);
+    }
+    // Sécurité (#363, #373) : mêmes règles et mêmes codes que la migration.
+    if (['/rest/v1/rpc/signaler', '/rest/v1/rpc/bloquer_joueur', '/rest/v1/rpc/debloquer_joueur', '/rest/v1/rpc/mes_blocages', '/rest/v1/rpc/dire_en_partie'].includes(chemin)) {
+      const corps = (req.postDataJSON() ?? {}) as Record<string, unknown>;
+      if (chemin === '/rest/v1/rpc/dire_en_partie') {
+        if (!u) return json({ code: '42501', message: 'Connexion requise' }, 401);
+        const codes = ['bonne_partie', 'bien_joue', 'merci', 'joli_coup', 'oups', 'a_la_prochaine', 'mochi_salut', 'mochi_content', 'mochi_fier', 'mochi_pensif'];
+        if (!codes.includes(String(corps.p_code))) return json({ code: 'JGM02', message: 'Message inconnu' }, 400);
+        const g = games.find(x => x.id === corps.p_partie);
+        if (!g || !g.black_id || !g.white_id || g.bot_id || (g.black_id !== u.id && g.white_id !== u.id)) return json({ code: 'P0002', message: 'Partie introuvable' }, 400);
+        const miens = messagesPartie.filter(m => m.partie_id === g.id && m.auteur_id === u.id);
+        if (miens.length >= 10) return json({ code: 'JGM01', message: '10 messages' }, 400);
+        if (miens.some(m => Date.now() - Date.parse(String(m.envoye_le)) < 3000)) return json({ code: 'JGM03', message: 'Trop vite' }, 400);
+        const autre = g.black_id === u.id ? g.white_id : g.black_id;
+        if (blocages.some(b => b.de === autre && b.a === u.id)) return json(true);
+        const m = { id: ++idMessage, partie_id: g.id, auteur_id: u.id, code: corps.p_code, envoye_le: new Date().toISOString() };
+        messagesPartie.push(m);
+        pousserMessage(m);
+        return json(true);
+      }
+      if (!u || u.anonyme) return json({ code: 'JGC01', message: 'Crée ton compte' }, 400);
+      if (!profiles.find(x => x.id === u.id)?.username) return json({ code: 'JGP01', message: 'Choisis ton pseudo' }, 400);
+      const parPseudo = (p: unknown) => profiles.find(x => typeof p === 'string' && String(x.username ?? '').toLowerCase() === p.toLowerCase())?.id as string | undefined;
+      const parPartie = (id: unknown) => {
+        const g = games.find(x => x.id === id);
+        if (!g || (g.black_id !== u.id && g.white_id !== u.id) || g.bot_id) return undefined;
+        return (g.black_id === u.id ? g.white_id : g.black_id) as string | undefined;
+      };
+      if (chemin === '/rest/v1/rpc/mes_blocages') {
+        return json(blocages.filter(b => b.de === u.id).map(b => ({ pseudo: profiles.find(x => x.id === b.a)?.username, depuis: b.le })));
+      }
+      if (chemin === '/rest/v1/rpc/debloquer_joueur') {
+        const cible = parPseudo(corps.p_pseudo);
+        const i = blocages.findIndex(b => b.de === u.id && b.a === cible);
+        if (i >= 0) blocages.splice(i, 1);
+        return json(i >= 0);
+      }
+      const visePersonne = chemin === '/rest/v1/rpc/bloquer_joueur' || corps.p_type === 'joueur';
+      const cible = !visePersonne ? undefined : corps.p_partie ? parPartie(corps.p_partie) : parPseudo(corps.p_pseudo);
+      if (visePersonne && !cible) return json(corps.p_partie ? { code: 'P0002', message: 'Partie introuvable' } : { code: 'JGA01', message: 'Aucun joueur' }, 400);
+      if (chemin === '/rest/v1/rpc/bloquer_joueur') {
+        if (cible === u.id) return json({ code: 'JGB02', message: 'Toi-même' }, 400);
+        if (!blocages.some(b => b.de === u.id && b.a === cible)) blocages.push({ de: u.id, a: cible!, le: new Date().toISOString() });
+        amities.splice(0, amities.length, ...amities.filter(f => !((f.de === u.id && f.a === cible) || (f.de === cible && f.a === u.id))));
+        return json(true);
+      }
+      // signaler
+      const type = String(corps.p_type);
+      if (signalements.filter(x => x.auteur_id === u.id).length >= 10) return json({ code: 'JGS01', message: '10 signalements' }, 400);
+      if (!['joueur', 'probleme', 'bug', 'idee', 'autre'].includes(type)) return json({ code: 'JGS02', message: 'Mal formé' }, 400);
+      const texte = typeof corps.p_texte === 'string' ? corps.p_texte.trim() : null;
+      if (texte && texte.length > 500) return json({ code: 'JGS02', message: 'Trop long' }, 400);
+      if (type === 'joueur' && cible === u.id) return json({ code: 'JGS03', message: 'Toi-même' }, 400);
+      if (['bug', 'idee', 'autre'].includes(type) && !texte) return json({ code: 'JGS02', message: 'Écris ton message' }, 400);
+      signalements.push({ id: signalements.length + 1, auteur_id: u.id, type, cible_joueur_id: type === 'joueur' ? cible : null,
+        partie_id: type === 'joueur' ? corps.p_partie ?? null : null, probleme_id: type === 'probleme' ? corps.p_probleme : null,
+        motif: corps.p_motif ?? null, texte, version_app: corps.p_version ?? null, contexte: corps.p_contexte ?? null, cree_le: new Date().toISOString() });
+      return json(true);
     }
     if (chemin.startsWith('/rest/v1/rpc/')) return json(null);
     if (chemin === '/functions/v1/game-action') {
@@ -766,8 +886,9 @@ export function fauxServeur() {
   function figerTempsReel() { for (const a of abonnes) a.fige = true; }
   /** Canaux rejoints sur une connexion qui marche, dont le sujet commence par `prefixe` (`defi-`, `direct-`). */
   const canauxActifs = (prefixe: string) => [...abonnes].filter(a => !a.fige).flatMap(a => [...a.canaux.keys()]).filter(t => t.startsWith(`realtime:${prefixe}`)).length;
-  return { traiter, brancherTempsReel, notifier, fileLente, tacheLentes, avancerHorloge, ralentirLectures, figerTempsReel, canauxActifs, pousses, pousserPartie, appels, games, defis, notifications, partiesPerso, profiles, ratingHistory, emailsEnvoyes, sessionAnonyme, file, pendules,
-    compteExistant, compteGoogle, compteSocial, relierIdentite, liaison, utilisateur, sessionCompte, autorisations, amities, goDuJour, rappels };
+  return { traiter, brancherTempsReel, notifier, fileLente, tacheLentes, avancerHorloge, ralentirLectures, figerTempsReel, canauxActifs, pousses, pousserPartie, appels, games, defis, notifications, partiesPerso, partagees, profiles, ratingHistory, emailsEnvoyes, sessionAnonyme, file, pendules,
+    compteExistant, compteGoogle, compteSocial, relierIdentite, liaison, utilisateur, sessionCompte, autorisations, amities,
+    signalements, blocages, messagesPartie, goDuJour, rappels };
 }
 
 export type FauxServeur = ReturnType<typeof fauxServeur>;

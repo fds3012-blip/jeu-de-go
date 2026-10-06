@@ -51,6 +51,7 @@ Table `file_lente`, à part de la file du direct (`match_queue`, purgée à 30 s
 - `file_lente` : RLS, chacun lit sa seule ligne ; aucune écriture directe.
 - Fonctions `security definer` à `search_path` vide ; `lente_apparier`, `lentes_en_cours`, `lentes_tache`, `defi_constater_temps` fermées à l'app (la tâche tourne sous le rôle `postgres`).
 - Aucune suppression de données hors de la file lente.
+- #363 : jamais apparié avec un joueur bloqué (dans un sens ou dans l’autre) ; `lente_apparier` est redéfinie dans `supabase/migrations/20261005220100_securite_signalements.sql`. « Dire » et « Signaler ce joueur » sont aussi dans une partie lente (écran du défi).
 
 ## Mesure
 

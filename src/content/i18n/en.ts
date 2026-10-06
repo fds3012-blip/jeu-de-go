@@ -1195,6 +1195,7 @@ export const en = {
   'defi.arrivee': 'Setting up your game…',
   'defi.erreur.chargement': 'Couldn’t load the game.',
   'defi.erreur.introuvable': 'This challenge can’t be found. Ask your friend for a new link.',
+  'defi.erreur.indisponible': 'This challenge isn’t available to you.',
   'defi.erreur.emailPris': 'This address already has an account. Use another address.',
   'defi.reessayer': 'Try again',
   'defi.horsLigne': 'Offline: the game will resume as soon as you’re back online.',

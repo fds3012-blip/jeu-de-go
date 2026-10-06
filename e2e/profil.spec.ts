@@ -72,8 +72,9 @@ test('réglages en lignes : thème segmenté, interrupteurs, cibles de 44 px', a
   await page.getByRole('button', { name: /^Réglages/ }).click();
   await expect(page.getByRole('heading', { name: 'Réglages' })).toBeVisible();
   for (const g of ['Thème', 'Goban', 'Sons', 'Aide de Mochi']) await expect(page.getByRole('group', { name: g })).toBeVisible();
-  const { scroll } = await page.evaluate(() => ({ scroll: document.documentElement.scrollHeight }));
-  expect(scroll).toBeLessThanOrEqual(844);
+  // #365 : les réglages du joueur de club s'ajoutent ; l'écran défile, groupé par titres, jamais de côté.
+  const { largeur } = await page.evaluate(() => ({ largeur: document.documentElement.scrollWidth }));
+  expect(largeur).toBeLessThanOrEqual(390);
   const theme = page.getByRole('group', { name: 'Thème' });
   await theme.getByRole('button', { name: 'Clair' }).click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');

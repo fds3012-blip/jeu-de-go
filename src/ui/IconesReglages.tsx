@@ -4,9 +4,16 @@ import type { ReactNode } from 'react';
 
 export type IconeReglageId =
   | 'amis' | 'parties' | 'placement' | 'cote' | 'reglages' | 'importer' | 'rappel' | 'installer' | 'compte' | 'conditions'
-  | 'langue' | 'theme' | 'goban' | 'confirmer' | 'sons' | 'celebrations' | 'aide' | 'semaine';
+  | 'langue' | 'theme' | 'goban' | 'confirmer' | 'sons' | 'celebrations' | 'aide'
+  | 'stats' | 'etude' | 'coordonnees' | 'dernier' | 'numeros' | 'cadence' | 'serie'
+  // #363 : « Nous écrire ».
+  | 'ecrire'
+  // #369 : « Ta semaine ».
+  | 'semaine';
 
 const TRACES: Record<IconeReglageId, ReactNode> = {
+  // Enveloppe : « Nous écrire » (#363).
+  ecrire: <><rect x="3" y="5.5" width="18" height="13" rx="2" /><path d="m3.8 7 8.2 6 8.2-6" /></>,
   // Flèche qui revient en arrière autour d'une pierre : tes parties passées (#358).
   parties: <><path d="M4.6 12.5a7.5 7.5 0 1 0 2.1-6.2" /><path d="M4.5 3.8v3.4h3.4" /><circle cx="12.2" cy="12.2" r="3" className="ir-plein" /></>,
   // Deux joueurs côte à côte : tes amis (#359).
@@ -33,7 +40,21 @@ const TRACES: Record<IconeReglageId, ReactNode> = {
   // Mochi : la bulle du coach.
   // Une page de calendrier cochée : tes objectifs de la semaine (#369).
   semaine: <><rect x="3.5" y="5" width="17" height="15.5" rx="2.5" /><path d="M3.5 9.5h17M8 3v4M16 3v4" /><path d="m9 15 2.2 2.2L15.5 13" /></>,
-  aide: <><path d="M5 5.5h14v10H11l-4.5 3.5V15.5H5Z" /><circle cx="9.5" cy="10.5" r="1" className="ir-plein" /><circle cx="14.5" cy="10.5" r="1" className="ir-plein" /></>,
+  aide: <><path d="M5 5.5h14v10H11l-4.5 3.5V15.5H5Z" /><circle cx="9.5" cy="10.5" r="1" className="ir-plein" /><circle cx="14.5" cy="10.5" r="1" className="ir-plein" /></>,  // Joueur de club (#365, #368, #372).
+  // Trois barres qui montent : tes statistiques.
+  stats: <><path d="M5 20V13M12 20V8M19 20V4" /><path d="M3.5 20.5h17" /></>,
+  // Une pierre et un crayon sur un coin de goban : étudier une position.
+  etude: <><path d="M3.5 20.5V8M3.5 20.5H16M3.5 14.5h12.5M9.5 20.5V8" /><circle cx="9.5" cy="14.5" r="2.6" className="ir-plein" /><path d="m14 10 6-6 1.5 1.5-6 6-2.2.7Z" /></>,
+  // A1 en coin : les coordonnées.
+  coordonnees: <><path d="M9 20.5V9h11.5" /><path d="M3.5 5 5 2.5 6.5 5M4 4.2h2" /><path d="M2.8 12.2 4 11v6" /></>,
+  // Une pierre cerclée : le dernier coup.
+  dernier: <><circle cx="12" cy="12" r="8" /><circle cx="12" cy="12" r="3" /></>,
+  // Une pierre numérotée : les numéros des coups.
+  numeros: <><circle cx="12" cy="12" r="8.5" /><path d="M10.4 9.4 12.4 8v8M10.4 16h4" /></>,
+  // Un sablier : le temps de jeu.
+  cadence: <><path d="M6.5 3.5h11M6.5 20.5h11M7.5 3.5c0 5 9 5 9 8.5s-9 3.5-9 8.5M16.5 3.5c0 5-9 5-9 8.5" /></>,
+  // La flamme de la série.
+  serie: <><path d="M12.6 3c.6 3.2 5.4 5.4 5.4 10.8A6.1 6.1 0 0 1 12 20a6.1 6.1 0 0 1-6-6.3c0-2.7 1.4-4.4 2.7-5.4 0 1.9.8 3.3 2 3.7C10 9.2 11 5.7 12.6 3Z" /></>,
 };
 
 export function IconeReglage({ id, taille = 20 }: { id: IconeReglageId; taille?: number }) {

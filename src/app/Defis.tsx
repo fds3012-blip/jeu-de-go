@@ -22,6 +22,7 @@ import {
 import type { Db } from '../data/supabase';
 import { EVENTS, track } from '../data/analytics';
 import { useOnline } from './hooks';
+import { usePreferences } from './settings';
 import { phraseEtat, phraseIssue, resumeDefi, vueDefi } from './defiAmi';
 import { depuisDefi } from './historique';
 import { adversaireDe, lirePseudos, type Pseudos } from '../data/pseudos';
@@ -36,10 +37,13 @@ import type { Sens } from './connexionBascule';
 import type { EtatCompte } from './essai';
 import '../ui/compte.css';
 import { fr } from '../ui/typo';
-import { nombre, t } from '../content/i18n/secondaires';
+import { langue, nombre, t } from '../content/i18n/secondaires';
+// #364 : lien court (`mochi-go.app/defi#…`), avec sa page d'aperçu.
+import { originePartage } from './partage';
 import '../ui/defis.css';
 import { joursDuDelai } from '../data/lente';
 import { tl } from '../content/i18n/lente';
+import { useEchanges } from './echanges';
 
 type Partage = 'partage' | 'copie' | 'manuel' | 'annule';
 
@@ -122,7 +126,7 @@ export function DefisEcran({ db, userId, pseudo = null, onPartie }: EcranProps) 
     setCreation({ etat: 'cours' });
     const r = await creerDefi(db);
     if (!r.ok) { setCreation({ etat: 'erreur', message: r.error }); return; }
-    const lien = lienDefi(r.value.jeton, location.origin, pseudo);
+    const lien = lienDefi(r.value.jeton, originePartage(), pseudo, langue());
     const partage = await partager(lien);
     // Jamais le lien, le jeton ni la partie dans l'événement (constat E14).
     track(EVENTS.defiCree, { partage: partage === 'partage' ? 'web_share' : partage === 'copie' ? 'copie' : partage, anonyme: r.value.anonyme });
@@ -303,6 +307,7 @@ interface PartieProps {
  * « Abandonner » rangé dans le menu « Plus ».
  */
 export function DefiPartie({ db, partieId, userId, anonyme, pseudo = null, confirmTouch, reglages, celebrer, onRetour, onAutre, onAutreLente }: PartieProps) {
+  const prefs = usePreferences(); // #365 : coordonnées et dernier coup
   const online = useOnline();
   const [etat, setEtat] = useState<{ etat: 'chargement' } | { etat: 'erreur'; message: string } | { etat: 'pret'; d: EtatDefi }>({ etat: 'chargement' });
   const [maintenant, setMaintenant] = useState(() => Date.now());
@@ -400,6 +405,11 @@ export function DefiPartie({ db, partieId, userId, anonyme, pseudo = null, confi
   const cleMortes = d ? `${d.partie.moves}|${d.partie.dead_stones ?? ''}|${d.partie.counting}` : '';
   useEffect(() => { setMortes(null); }, [cleMortes]);
 
+  // #373 et #363 : « Dire » (messages prédéfinis, émotes), bulles près des noms, « Signaler ce joueur ». Pas pour une
+  // ancienne session anonyme, ni avant l'arrivée de l'ami.
+  const avecAmi = !!d && !!d.partie.black_id && !!d.partie.white_id;
+  const echanges = useEchanges({ db, partieId, userId, nom: nomAmi ?? t('defi.adversaire'), actif: avecAmi && !anonyme, online, mode: 'defi' });
+
   const retour = <button type="button" className="retour" onClick={onRetour} aria-label={t('defi.retour')}>‹</button>;
 
   if (!d || !v) {
@@ -487,7 +497,7 @@ export function DefiPartie({ db, partieId, userId, anonyme, pseudo = null, confi
   }
 
   async function renvoyer() {
-    setLienCopie(await partager(lienDefi(d!.defi.jeton, location.origin, pseudo)));
+    setLienCopie(await partager(lienDefi(d!.defi.jeton, originePartage(), pseudo, langue())));
   }
 
   const nomLui = nomAmi ?? (partie.rated ? tl('lente.adversaire') : t('defi.adversaire'));
@@ -498,7 +508,7 @@ export function DefiPartie({ db, partieId, userId, anonyme, pseudo = null, confi
   const sousTitre = (c: 1 | 2) => (c === lui && partie.rated && coteAmi ? texteAdversaire(coteAmi.cote, coteAmi.provisoire) : sousTitreCouleur(c));
   const bandeau = (c: 1 | 2, avant?: ReactNode) => (
     <Bandeau nom={nom(c)} sousTitre={sousTitre(c)} actif={v.phase === 'jeu' && v.trait === c} captures={v.pos.captures[c]}
-      pierresPrises={c === 1 ? 'blanc' : 'noir'} portrait={<Avatar couleur={c} />} avant={avant} />
+      pierresPrises={c === 1 ? 'blanc' : 'noir'} portrait={<Avatar couleur={c} />} avant={avant} bulle={c === lui ? echanges.bulleLui : echanges.bulleMoi} />
   );
 
   const bienvenue = v.phase === 'jeu' && v.couleur === 1 && v.mesCoups === 0 && v.aMoi;
@@ -522,7 +532,7 @@ export function DefiPartie({ db, partieId, userId, anonyme, pseudo = null, confi
       <div className="partie-plateau">
         <Board size={partie.size} board={v.pos.board} toPlay={v.pos.toPlay} confirmTouch={confirmTouch}
           interactive={!anonyme && ((v.aMoi && !envoi && online) || (enComptage && !envoi && !v.proposeParMoi))} stonesTappable={enComptage}
-          marks={{ last: v.pos.lastMove, owner: sc?.owner, dead: enComptage || v.phase === 'fini' ? mortesVues : undefined }}
+          coordonnees={prefs.coordonnees} marks={{ last: prefs.dernierCoup ? v.pos.lastMove : null, owner: sc?.owner, dead: enComptage || v.phase === 'fini' ? mortesVues : undefined }}
           onPlay={toucher} noms={{ [lui]: nomLui }} />
       </div>
       {bandeau(moi)}
@@ -538,7 +548,7 @@ export function DefiPartie({ db, partieId, userId, anonyme, pseudo = null, confi
         {v.phase === 'attente' && (
           <>
             <button type="button" className="btn primary defis-cta" onClick={renvoyer}>{t('defi.renvoyer')}</button>
-            {lienCopie && lienCopie !== 'partage' && lienCopie !== 'annule' && <CarteLien lien={lienDefi(d.defi.jeton, location.origin, pseudo)} partage={lienCopie} />}
+            {lienCopie && lienCopie !== 'partage' && lienCopie !== 'annule' && <CarteLien lien={lienDefi(d.defi.jeton, originePartage(), pseudo, langue())} partage={lienCopie} />}
           </>
         )}
         {enComptage && (
@@ -557,6 +567,7 @@ export function DefiPartie({ db, partieId, userId, anonyme, pseudo = null, confi
             <button type="button" className="btn primary defis-cta" onClick={lente ? onAutreLente ?? onAutre : onAutre}>{lente ? tl('lente.autre') : t('defi.autre')}</button>
             {revue && <button type="button" className="lien" onClick={() => { setEnRevue(true); window.scrollTo?.({ top: 0 }); }}>{t('fin.revoir')}</button>}
             <button type="button" className="lien" onClick={onRetour}>{t('defi.retourAccueil')}</button>
+            {echanges.liensFin}
             {partie.rated && userId && !anonyme && <VocabulaireGrade />}
           </div>
         )}
@@ -568,18 +579,24 @@ export function DefiPartie({ db, partieId, userId, anonyme, pseudo = null, confi
       </div>
       <div className="partie-souffle" aria-hidden="true" />
       {v.phase === 'jeu' && (
-        // v3 (#384) : pas d'aide contre un ami ; « Passer » en bouton plein, « Abandonner » et le réglage dans « Plus ».
+        // v3 (#384) : pas d'aide de jeu contre un ami (#373 : seulement « Dire ») ; « Passer » en bouton plein, « Abandonner » et le réglage dans « Plus ».
         <BarreActions label={t('partie.actions')} actions={[
+          ...(echanges.action ? [echanges.action] : []),
           { label: t('partie.action.passer'), icone: <Icone nom="passer" />, onClick: () => { void envoyer('tt'); }, disabled: !v.aMoi || envoi || !online || anonyme, groupe: 'decision', principale: true },
         ]} menu={{
           label: t('partie.action.plus'),
           actions: [
             { label: abandon ? fr(t('partie.action.confirmer')) : t('partie.action.abandonner'), action: 'abandonner', icone: <Icone nom="abandonner" />,
               onClick: abandonner, danger: abandon, disabled: envoi || !online || anonyme, reste: true },
+            ...echanges.menu,
           ],
-          reglages: reglages ? <Interrupteur label={t('profil.confirmer')} actif={confirmTouch} onChange={c => reglages.modifier({ confirmTouch: c })} /> : undefined,
+          reglages: <>
+            {reglages && <Interrupteur label={t('profil.confirmer')} actif={confirmTouch} onChange={c => reglages.modifier({ confirmTouch: c })} />}
+            {echanges.reglage}
+          </>,
         }} />
       )}
+      {echanges.feuilles}
     </div>
   );
 }
