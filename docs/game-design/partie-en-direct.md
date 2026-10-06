@@ -65,6 +65,43 @@ Une attente sans nouvelles depuis 30 s (écran fermé) ou de plus de 10 minutes 
   - « Rester », ou quitter la partie contre l'IA sans répondre : `refuser_partie_direct` annule la partie en direct (statut `aborted`, aucune cote ne bouge), tant que le joueur n'y a pas joué, et le sort de la file. L'adversaire voit « Partie annulée : personne n'a vraiment joué. Ta cote ne bouge pas. » et peut « Rejouer ». Sans réponse ni départ (onglet en veille), la règle d'absence de 60 s l'annule de même.
 - La partie contre l'IA n'est jamais classée (#417) ; elle compte pour l'échelle comme toute partie contre l'ordi.
 
+## Parties quittées (#442)
+
+Quitter une partie en direct fait attendre l'adversaire pour rien et vide la file des joueurs fiables. La règle freine ceux qui le font souvent, jamais celui qui perd le réseau une fois. Elle ne coûte **jamais de cote en plus** : seulement un temps d'attente avant la prochaine recherche en direct. Migration : `supabase/migrations/20261006100100_abandons_repetes.sql`.
+
+**Ce qui compte comme une partie quittée** (journal `abandons`, écrit par le serveur seul) :
+
+| Cas | Compté ? |
+|---|---|
+| Perte au temps d'un joueur **absent** (aucun signe de vie depuis plus de 60 s quand elle est constatée) | Oui (« absence ») |
+| Partie annulée parce que le joueur qui devait jouer **n'est jamais venu** | Oui (« jamais venu ») ; l'autre joueur, non |
+| Partie trouvée puis refusée pendant le repli contre l'IA (« Rester », ou partie IA quittée sans répondre, #436) | Seulement **à partir du 3e refus** (« refus répété ») |
+| Abandon propre (« Abandonner ») | Non : c'est la bonne façon de partir |
+| Pendule tombée d'un joueur **présent** (il a donné signe de vie depuis moins de 60 s) | Non : il a joué lentement, il n'est pas parti |
+| Compte accepté, partie contre l'IA, défi entre amis | Non |
+
+**Compteur** : parties quittées des **7 derniers jours**, parmi les **10 dernières parties en direct** du joueur. Dix parties jouées jusqu'au bout effacent donc tout ; une partie quittée sort aussi du compte au bout de 7 jours.
+
+**Attente** (à partir de la dernière partie quittée) :
+
+| Parties quittées comptées | Attente avant de rejouer en direct |
+|---|---|
+| 0 à 2 | Aucune (déconnexion rare, imprévu) |
+| 3 | 5 minutes |
+| 4 | 30 minutes |
+| 5 et plus | 24 heures |
+
+Pourquoi ces nombres : deux imprévus par semaine ne doivent rien coûter (60 s de tolérance par partie, en plus) ; à la troisième, 5 minutes suffisent à dire « on l'a vu » sans punir ; la marche suivante (30 min, puis 24 h) ne touche que ceux qui recommencent juste après. Le délai part de la dernière partie quittée : il est prévisible et se lit d'un coup d'œil.
+
+**Pendant l'attente** : `find_match` refuse (code `JGD01`, `detail` = fin de l'attente, `hint` = minutes) ; personne n'est apparié avec ce joueur ; une partie en direct déjà en cours lui est toujours rendue. Les parties lentes, les défis entre amis et les parties contre l'ordi restent ouverts.
+
+**Ce que voit le joueur** (écran Direct, `src/app/Direct.tsx`) :
+
+- à 2 parties quittées, sous les réglages, sans bloquer : « Encore une partie quittée, et tu attendras 5 min avant de rejouer en direct. Si tu dois partir, abandonne : ça ne compte pas. » ;
+- pendant l'attente, à la place de « Trouver un adversaire » : « Tu as quitté plusieurs parties. » / « Tu peux rejouer en direct dans 4 min. » (compte à rebours calé sur l'heure du serveur) / « Quand une partie est quittée, l'adversaire attend pour rien. Ta cote, elle, ne bouge pas. » / la règle en une ligne. Une seule action : « Jouer contre l'ordi en attendant » (l'IA la plus proche de sa cote, partie non classée). À la fin de l'attente, l'écran relit l'état et « Trouver un adversaire » revient. Textes en français et en anglais (`src/content/i18n/direct.ts`).
+
+État lu par l'écran : `etat_abandons()` (compteur, fin de l'attente, délai de la prochaine, plafond des parties lentes, heure du serveur).
+
 ## Comptage
 
 Japonais par défaut, chinois en option au moment du choix. Deux joueurs aux comptages différents ne sont appariés qu'après 30 s d'attente (comptage de qui attendait le plus).
@@ -75,11 +112,12 @@ Japonais par défaut, chinois en option au moment du choix. Deux joueurs aux com
 - Table `parties_direct` (pendule) : RLS, lecture par les deux joueurs, aucune écriture directe ; publiée en temps réel.
 - Fonctions `security definer` à `search_path` vide ; `cadence_direct`, `pendule_apres`, `direct_constater`, `direct_en_cours` et le déclencheur sont fermés à l'app.
 - `refuser_partie_direct` (#436) : un des deux joueurs seulement, avant d'avoir joué ; fermée à anon.
+- #442 : table `abandons` (RLS : chacun lit ses lignes ; aucune écriture par l'app, seul le déclencheur `games_journal_abandons` écrit), gardée 90 jours (`purger_abandons`, chaque nuit) ; `abandons_direct`, `en_attente_abandons`, `plafond_lentes` fermées à l'app. Tests : `supabase/tests/abandons_repetes.test.sql`, `src/data/abandons.test.ts`, `e2e/abandons-repetes.spec.ts`.
 - Tests : `supabase/tests/partie_en_direct.test.sql`, `supabase/tests/file_jamais_vide.test.sql`, `src/app/fileJamaisVide.test.tsx`, `e2e/file-jamais-vide.spec.ts`, `src/go/pendule.test.ts`, `src/app/direct.test.ts`, `src/data/migrationDirect.test.ts`, `e2e/partie-en-direct.spec.ts` (deux téléphones).
 
 ## Mesure
 
-`partie_en_ligne_commencee` (`taille`, `cadence`, `regles`, `attente_s` : délai d'appariement, pour la médiane) et `partie_en_ligne_terminee` (`taille`, `cadence`, `issue`, `raison`, `coups`). Jamais la partie ni l'adversaire. #436 : `file_repli_ia` (`accepte` : partie contre l'IA lancée, ou « Continuer d'attendre » / « Annuler » pendant la proposition), une fois par attente. Une partie rejointe depuis le repli envoie aussi `partie_en_ligne_commencee` (avec `attente_s`).
+`partie_en_ligne_commencee` (`taille`, `cadence`, `regles`, `attente_s` : délai d'appariement, pour la médiane) et `partie_en_ligne_terminee` (`taille`, `cadence`, `issue`, `raison`, `coups`). Jamais la partie ni l'adversaire. #436 : `file_repli_ia` (`accepte` : partie contre l'IA lancée, ou « Continuer d'attendre » / « Annuler » pendant la proposition), une fois par attente. Une partie rejointe depuis le repli envoie aussi `partie_en_ligne_commencee` (avec `attente_s`). #442 : `file_delai_abandons` (`niveau` : 5, 30 ou 1440 min ; `abandons` ; `depuis` : ecran ou recherche), `file_delai_ordi` (« Jouer contre l'ordi en attendant »), `file_abandons_prevenu` (`prochain` : minutes).
 
 ## Limites connues
 

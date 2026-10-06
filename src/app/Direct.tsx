@@ -22,6 +22,7 @@ import {
   type Regles, type RefusDirect, type Taille
 } from '../data/direct';
 import { pseudoJoueur } from '../data/defi';
+import { etatAbandons, restantMs, texteDelai, texteRestant, type AttenteDirect, type EtatAbandons } from '../data/abandons';
 import { coteJoueur } from '../data/cote';
 import type { Db } from '../data/supabase';
 import { EVENTS, track } from '../data/analytics';
@@ -50,7 +51,8 @@ export { VeilleFile } from './VeilleFile';
 const TAILLES: readonly Taille[] = [9, 13, 19];
 const REGLES: readonly Regles[] = ['japanese', 'chinese'];
 const ERREURS: Record<RefusDirect, CleDirect> = {
-  compte: 'direct.erreur.compte', miseAJour: 'direct.erreur.miseAJour', introuvable: 'direct.erreur.introuvable', serveur: 'direct.erreur.serveur',
+  compte: 'direct.erreur.compte', miseAJour: 'direct.erreur.miseAJour', introuvable: 'direct.erreur.introuvable', attente: 'direct.erreur.attente',
+  serveur: 'direct.erreur.serveur',
 };
 
 
@@ -75,16 +77,33 @@ interface Props {
   onAccueil: () => void;
   /** #440 : « Partie lente » choisie dans la bascule en tête du choix. Sans elle, pas de bascule. */
   onFacon?: (f: FaconEnLigne) => void;
+  /** #442 : pendant l'attente après des parties quittées, partie contre l'IA la plus proche de la cote (non classée). */
+  onOrdi?: (contre: OpponentId, demande: Params) => void;
 }
 
 /** « Un humain, maintenant » : du choix de la partie jusqu'au bilan. */
-export function Direct({ db, userId, cote, onRepli, partieInitiale, confirmTouch, reglages, celebrer, onAccueil, onFacon }: Props) {
+export function Direct({ db, userId, cote, onRepli, partieInitiale, confirmTouch, reglages, celebrer, onAccueil, onFacon, onOrdi }: Props) {
   // #436 : la file par défaut d'abord (9 × 9, normale, japonais), quelle que soit la taille choisie pour l'ordi.
   // #365 : le temps de jeu proposé d'abord vient des Réglages (« normale » par défaut, celle de la file par défaut).
   const { cadence: cadenceReglee } = usePreferences();
   const [params, setParams] = useState<Params>(partieInitiale?.demande ?? { ...PARAMS_DEFAUT, cadence: cadenceReglee });
   const [vue, setVue] = useState<Vue>(partieInitiale ? { vue: 'partie', id: partieInitiale.id, attenteS: null, demande: partieInitiale.demande } : { vue: 'choix' });
   const [erreur, setErreur] = useState<string | null>(null);
+  // #442 : état des parties quittées (lu à l'ouverture et à la fin d'une attente) et attente en cours.
+  const [abandons, setAbandons] = useState<EtatAbandons | null>(null);
+  const [attente, setAttente] = useState<(AttenteDirect & { depuis: 'ecran' | 'recherche' }) | null>(null);
+  const [ecartServeur, setEcartServeur] = useState(0);
+  const relireAbandons = useCallback(() => etatAbandons(db).then(e => {
+    if (!e) return;
+    setAbandons(e); setEcartServeur(e.ecart);
+    setAttente(a => (e.attente ? { ...e.attente, depuis: a?.depuis ?? 'ecran' } : null));
+  }), [db]);
+  useEffect(() => { void relireAbandons(); }, [relireAbandons]);
+  // Appels stables : l'attente ne relance pas sa recherche à chaque rendu de cet écran.
+  const annule = useCallback((message: string | null) => { setErreur(message); setVue({ vue: 'choix' }); }, []);
+  const delai = useCallback((a: AttenteDirect) => {
+    setErreur(null); setAttente({ ...a, depuis: 'recherche' }); setVue({ vue: 'choix' }); void relireAbandons();
+  }, [relireAbandons]);
 
   // Partie en direct déjà en cours (onglet rouvert, retour de l'accueil) : on la retrouve, sans entrer dans la file.
   useEffect(() => {
@@ -109,9 +128,12 @@ export function Direct({ db, userId, cote, onRepli, partieInitiale, confirmTouch
     const contre = onRepli ? adversaireDuRepli(OPPONENTS, cote) : null;
     return <Attente db={db} params={params} depuis={vue.depuis} onTrouve={ouvrir}
       repli={contre && onRepli ? { nom: contre.nom, jouer: () => onRepli(contre.id, params, vue.depuis) } : null}
-      onAnnule={message => { setErreur(message); setVue({ vue: 'choix' }); }} />;
+      onAnnule={annule} onDelai={delai} />;
   }
+  const ordi = onOrdi ? adversaireDuRepli(OPPONENTS, cote) : null;
   return <Choix params={params} onParams={setParams} erreur={erreur} onAccueil={onAccueil} onFacon={onFacon}
+    abandons={abandons} attente={attente} ecartServeur={ecartServeur} onFinAttente={() => { setAttente(null); void relireAbandons(); }}
+    ordi={ordi && onOrdi ? () => onOrdi(ordi.id, params) : null}
     onChercher={() => { setErreur(null); setVue({ vue: 'attente', depuis: Date.now() }); }} />;
 }
 
@@ -131,12 +153,74 @@ function Segment<T extends string | number>({ titre, valeurs, valeur, libelle, o
   );
 }
 
-function Choix({ params, onParams, erreur, onAccueil, onChercher, onFacon }: {
+/**
+ * #442 : attente après des parties quittées. Dit pourquoi, sans reproche, et quand on peut rejouer (compte à rebours
+ * calé sur l'heure du serveur) ; une seule action : jouer contre l'ordi en attendant. À la fin, l'écran relit l'état.
+ */
+function DelaiAbandons({ attente, abandons, ecartServeur, onFin, ordi }: {
+  attente: AttenteDirect & { depuis: 'ecran' | 'recherche' }; abandons: number | null; ecartServeur: number; onFin: () => void; ordi: (() => void) | null;
+}) {
+  const [maintenant, setMaintenant] = useState(() => Date.now());
+  useEffect(() => {
+    const id = window.setInterval(() => setMaintenant(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  const restant = restantMs(attente, maintenant + ecartServeur);
+  const fin = useRef(onFin);
+  fin.current = onFin;
+  useEffect(() => { if (restant <= 0) fin.current(); }, [restant]);
+  // Mesure : une fois par attente (sa fin la désigne), jamais l'heure elle-même.
+  const mesuree = useRef(0);
+  useEffect(() => {
+    if (mesuree.current === attente.jusqua) return;
+    mesuree.current = attente.jusqua;
+    track(EVENTS.fileDelaiAbandons, { niveau: attente.delaiMin, abandons, depuis: attente.depuis });
+  }, [attente, abandons]);
+  return (
+    <div className="card direct-delai" data-testid="direct-delai">
+      <div className="direct-delai-tete">
+        <Mochi size={40} />
+        <p className="direct-delai-titre" role="status">{fr(td('direct.abandons.titre'))}</p>
+      </div>
+      <p className="direct-delai-temps">{fr(td('direct.abandons.rejouer', { temps: texteRestant(restant) }))}</p>
+      <p className="small">{fr(td('direct.abandons.pourquoi'))}</p>
+      <p className="muted small">{fr(td('direct.abandons.regle'))}</p>
+      {ordi && (
+        <button type="button" className="btn primary defis-cta"
+          onClick={() => { track(EVENTS.fileDelaiOrdi, { niveau: attente.delaiMin }); ordi(); }}>{td('direct.abandons.ordi')}</button>
+      )}
+    </div>
+  );
+}
+
+function Choix({ params, onParams, erreur, onAccueil, onChercher, onFacon, abandons, attente, ecartServeur, onFinAttente, ordi }: {
   params: Params; onParams: (p: Params) => void; erreur: string | null; onAccueil: () => void; onChercher: () => void;
   onFacon?: (f: FaconEnLigne) => void;
+  abandons: EtatAbandons | null; attente: (AttenteDirect & { depuis: 'ecran' | 'recherche' }) | null; ecartServeur: number; onFinAttente: () => void;
+  ordi: (() => void) | null;
 }) {
   const online = useOnline();
   const c = CADENCES[params.cadence];
+  // #442 : encore une partie quittée coûterait une attente : on le dit avant (une fois par écran dans la mesure).
+  const prochain = !attente && abandons && abandons.abandons >= 2 && abandons.prochainMin ? abandons.prochainMin : null;
+  const prevenu = useRef(false);
+  useEffect(() => {
+    if (!prochain || prevenu.current) return;
+    prevenu.current = true;
+    track(EVENTS.fileAbandonsPrevenu, { prochain });
+  }, [prochain]);
+  if (attente) {
+    return (
+      <div className="direct direct-choix" data-testid="direct-choix">
+        <div className="direct-tete">
+          <button type="button" className="retour" onClick={onAccueil} aria-label={td('direct.retour')}>‹</button>
+          <h2>{td('direct.titre')}</h2>
+        </div>
+        {onFacon && <BasculeEnLigne valeur="direct" onChoix={onFacon} />}
+        <DelaiAbandons attente={attente} abandons={abandons?.abandons ?? null} ecartServeur={ecartServeur} onFin={onFinAttente} ordi={ordi} />
+      </div>
+    );
+  }
   return (
     <div className="direct direct-choix" data-testid="direct-choix">
       <div className="direct-tete">
@@ -160,6 +244,7 @@ function Choix({ params, onParams, erreur, onAccueil, onChercher, onFacon }: {
       <Segment titre={td('direct.comptage')} valeurs={REGLES} valeur={params.regles} libelle={r => td(`direct.comptage.${r}`)}
         onChoix={regles => onParams({ ...params, regles })} aide={fr(td(`direct.comptage.aide.${params.regles}`))} />
       {!online && <p className="card small" role="status">{fr(td('direct.horsLigne'))}</p>}
+      {prochain && <p className="muted small direct-prevenir" data-testid="direct-prevenir">{fr(td('direct.abandons.prevenir', { delai: texteDelai(prochain) }))}</p>}
       {erreur && <p className="small defi-erreur" role="alert">{fr(erreur)}</p>}
       <button type="button" className="btn primary defis-cta" onClick={onChercher} disabled={!online}>{td('direct.chercher')}</button>
     </div>
@@ -167,8 +252,10 @@ function Choix({ params, onParams, erreur, onAccueil, onChercher, onFacon }: {
 }
 
 /** Attente : Mochi cherche ; la file est rappelée toutes les 2,5 s (le serveur garde la place et son ancienneté). */
-function Attente({ db, params, depuis, onTrouve, onAnnule, repli }: {
+function Attente({ db, params, depuis, onTrouve, onAnnule, onDelai, repli }: {
   db: Db; params: Params; depuis: number; onTrouve: (id: string, attenteS: number, demande: Params) => void; onAnnule: (message: string | null) => void;
+  /** #442 : le serveur refuse la recherche (parties quittées) : l'attente, avec sa fin. */
+  onDelai: (a: AttenteDirect) => void;
   /** #436 : l'IA proposée au bout de 25 s, et de quoi lancer la partie contre elle. */
   repli: { nom: string; jouer: () => void } | null;
 }) {
@@ -191,7 +278,11 @@ function Attente({ db, params, depuis, onTrouve, onAnnule, repli }: {
     const chercher = async () => {
       const r = await chercherAdversaire(db, params.taille, params.cadence, params.regles);
       if (!vivant) return;
-      if (!r.ok) { enAttente.current = false; onAnnule(td(ERREURS[r.error])); return; }
+      if (!r.ok) {
+        enAttente.current = false;
+        if (r.error === 'attente' && r.attente) onDelai(r.attente); else onAnnule(td(ERREURS[r.error]));
+        return;
+      }
       if (r.value) {
         enAttente.current = false;
         const attenteS = Math.round((Date.now() - depuis) / 1000);
@@ -204,7 +295,7 @@ function Attente({ db, params, depuis, onTrouve, onAnnule, repli }: {
     };
     void chercher();
     return () => { vivant = false; clearTimeout(minuterie); };
-  }, [db, params, depuis, online, onTrouve, onAnnule]);
+  }, [db, params, depuis, online, onTrouve, onAnnule, onDelai]);
   // L'écran quitte l'attente sans partie (retour, autre onglet) : la place dans la file est rendue.
   useEffect(() => () => { if (enAttente.current) void annulerAttente(db); }, [db]);
 

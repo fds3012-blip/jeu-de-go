@@ -640,6 +640,8 @@ export function App() {
         cote={profil?.cote ?? null} partieInitiale={directRejoint}
         // #436 : au bout de 25 s, partie contre l'IA en attendant ; la file est gardée par la bande VeilleFile.
         onRepli={(contre, demande, depuis) => { setDirect(false); setDirectRejoint(null); lancer('ordi', contre, { contre, demande, depuis, veille: true }); }}
+        // #442 : attente après des parties quittées : l'IA la plus proche de la cote, sans rester dans la file.
+        onOrdi={(contre, demande) => { setDirect(false); setDirectRejoint(null); lancer('ordi', contre, { contre, demande, depuis: Date.now(), veille: false }); }}
         celebrer={settings.celebrations} onAccueil={() => { setDirect(false); setDirectRejoint(null); window.scrollTo({ top: 0 }); }}
         onFacon={changerFacon} />
       : null;

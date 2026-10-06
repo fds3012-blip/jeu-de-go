@@ -8,6 +8,7 @@
 //   l'abandon par `resign_game`. La cote bouge une seule fois, par le serveur (`apply_game_rating`, #417).
 // Écran : src/app/Direct.tsx (chargé à la demande).
 import { CODE_COMPTE_REQUIS, CODE_PSEUDO_REQUIS } from './compteRequis';
+import { attenteDuRefus, CODE_ATTENTE_ABANDONS, type AttenteDirect } from './abandons';
 import type { Game } from './games';
 import type { Db } from './supabase';
 import { suivreLignes } from './tempsReel';
@@ -16,8 +17,11 @@ import { lireEtatDirect, penduleApresCoup, type Cadence, type EtatDirect } from 
 export type Regles = 'japanese' | 'chinese';
 export type Taille = 9 | 13 | 19;
 
-/** Refus connus, traduits par l'écran. `miseAJour` : le serveur n'a pas encore la nouvelle `find_match`. */
-export type RefusDirect = 'compte' | 'miseAJour' | 'introuvable' | 'serveur';
+/**
+ * Refus connus, traduits par l'écran. `miseAJour` : le serveur n'a pas encore la nouvelle `find_match`. `attente` (#442) :
+ * parties quittées à répétition, le joueur attend avant de rejouer en direct.
+ */
+export type RefusDirect = 'compte' | 'miseAJour' | 'introuvable' | 'attente' | 'serveur';
 
 export function refusDirect(erreur: unknown): RefusDirect {
   const code = (erreur as { code?: unknown } | null | undefined)?.code;
@@ -25,6 +29,7 @@ export function refusDirect(erreur: unknown): RefusDirect {
   // PostgREST : fonction inconnue avec ces paramètres (migration pas encore appliquée).
   if (code === 'PGRST202') return 'miseAJour';
   if (code === 'P0002') return 'introuvable';
+  if (code === CODE_ATTENTE_ABANDONS) return 'attente';
   return 'serveur';
 }
 
@@ -33,13 +38,17 @@ export type Result<T, E = RefusDirect> = { ok: true; value: T } | { ok: false; e
 
 const refus = (error: unknown): { ok: false; error: RefusDirect } => ({ ok: false, error: refusDirect(error) });
 
+/** Réponse de la recherche : la partie, ou un refus (avec l'attente, pour le refus `attente` de #442). */
+export type RechercheDirect = { ok: true; value: string | null } | { ok: false; error: RefusDirect; attente: AttenteDirect | null };
+
 /**
  * Cherche un adversaire. Renvoie l'identifiant de la partie dès qu'elle existe (créée par cet appel, par un adversaire
  * pendant l'attente, ou partie en direct déjà en cours), sinon null : le joueur attend, et rappelle cette fonction.
  */
-export async function chercherAdversaire(db: Db, taille: Taille, cadence: Cadence, regles: Regles): Promise<Result<string | null, RefusDirect>> {
+export async function chercherAdversaire(db: Db, taille: Taille, cadence: Cadence, regles: Regles): Promise<RechercheDirect> {
   const { data, error } = await db.rpc('find_match', { p_size: taille, p_cadence: cadence, p_regles: regles });
-  if (error) return refus(error);
+  // #442 : attente après des parties quittées, avec sa fin (heure du serveur) et son délai.
+  if (error) return { ...refus(error), attente: attenteDuRefus(error) };
   return { ok: true, value: data ?? null };
 }
 

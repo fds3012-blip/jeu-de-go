@@ -168,6 +168,16 @@ export const EVENTS = {
   rappelAmiEnvoye: 'rappel_ami_envoye',
   bilanSemaineVu: 'bilan_semaine_vu',
   objectifSemaineAtteint: 'objectif_semaine_atteint',
+  // Abandons répétés (#442). `file_delai_abandons` : attente avant de rejouer en direct montrée (`niveau` : 5, 30 ou
+  // 1440 minutes ; `abandons` : parties quittées qui comptent ; `depuis` : ecran à l'ouverture, recherche refusée
+  // par le serveur), une fois par attente. `file_delai_ordi` : « Jouer contre l'ordi en attendant » touché (`niveau`).
+  // `file_abandons_prevenu` : avertissement « encore une, et tu attendras » montré (`prochain` : minutes), une fois par
+  // écran. `lente_plafond_reduit` : plafond de parties lentes réduit montré (`plafond` : 5 ou 2 ; `atteint`). Jamais la
+  // partie, l'adversaire ni l'heure de fin de l'attente.
+  fileDelaiAbandons: 'file_delai_abandons',
+  fileDelaiOrdi: 'file_delai_ordi',
+  fileAbandonsPrevenu: 'file_abandons_prevenu',
+  lentePlafondReduit: 'lente_plafond_reduit',
 } as const;
 export type AnalyticsEvent = (typeof EVENTS)[keyof typeof EVENTS];
 export type Props = Record<string, string | number | boolean | null | undefined>;
