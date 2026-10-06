@@ -15,6 +15,55 @@ export type Database = {
   }
   public: {
     Tables: {
+      abandons: {
+        Row: {
+          cree_le: string
+          file: string
+          id: number
+          joueur_id: string
+          motif: string
+          partie_id: string | null
+        }
+        Insert: {
+          cree_le?: string
+          file: string
+          id?: never
+          joueur_id: string
+          motif: string
+          partie_id?: string | null
+        }
+        Update: {
+          cree_le?: string
+          file?: string
+          id?: never
+          joueur_id?: string
+          motif?: string
+          partie_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "abandons_joueur_id_fkey"
+            columns: ["joueur_id"]
+            isOneToOne: false
+            referencedRelation: "leaderboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "abandons_joueur_id_fkey"
+            columns: ["joueur_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "abandons_partie_id_fkey"
+            columns: ["partie_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       abonnements_rappel: {
         Row: {
           auth: string
@@ -1221,6 +1270,15 @@ export type Database = {
       }
     }
     Functions: {
+      abandons_direct: {
+        Args: { p_uid: string }
+        Returns: {
+          abandons: number
+          delai: unknown
+          dernier: string
+          jusqu_a: string
+        }[]
+      }
       accepter_conditions: { Args: { p_version: string }; Returns: string }
       apply_game_rating: {
         Args: { p_game: string; p_loser: string; p_winner: string }
@@ -1290,6 +1348,8 @@ export type Database = {
         Returns: string
       }
       direct_en_cours: { Args: { p_uid: string }; Returns: string }
+      en_attente_abandons: { Args: { p_uid: string }; Returns: boolean }
+      etat_abandons: { Args: never; Returns: Json }
       demander_ami: { Args: { p_pseudo: string }; Returns: string }
       enregistrer_abonnement_rappel: {
         Args: {
@@ -1400,6 +1460,8 @@ export type Database = {
         Returns: string
       }
       lentes_en_cours: { Args: { p_uid: string }; Returns: number }
+      plafond_lentes: { Args: { p_uid: string }; Returns: number }
+      purger_abandons: { Args: never; Returns: number }
       lentes_tache: {
         Args: never
         Returns: {

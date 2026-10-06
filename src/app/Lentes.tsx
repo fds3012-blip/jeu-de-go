@@ -7,12 +7,13 @@
 // - Dessous : « Tes parties lentes », d'abord celles où c'est à toi.
 // La partie se joue dans DefiPartie (src/app/Defis.tsx) : une partie lente est un défi classé.
 // Logique pure : src/app/lente.ts. Données : src/data/lente.ts. Chargé à la demande.
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Mochi } from '../ui/Mochi';
 import { BasculeEnLigne, type FaconEnLigne } from './BasculeEnLigne';
 import { chercherPartieLente, LENTE_DEFAUT, LENTES_MAX, lireRecherche, mesPartiesLentes, quitterFileLente,
   type DelaiJours, type RechercheLente, type RefusLente, type TailleLente } from '../data/lente';
 import { lirePseudos, type Pseudos } from '../data/pseudos';
+import { etatAbandons, type EtatAbandons } from '../data/abandons';
 import type { Db } from '../data/supabase';
 import { EVENTS, track } from '../data/analytics';
 import { useOnline } from './hooks';
@@ -29,7 +30,7 @@ const DELAIS: readonly DelaiJours[] = [1, 2, 3];
 /** Relecture de la recherche et des parties tant que l'écran est ouvert. */
 export const RELECTURE_LENTES_MS = 30_000;
 const ERREURS: Record<RefusLente, CleLente> = {
-  compte: 'lente.erreur.compte', limite: 'lente.limite', miseAJour: 'lente.erreur.miseAJour', serveur: 'lente.erreur.serveur',
+  compte: 'lente.erreur.compte', limite: 'lente.limite', plafond: 'lente.plafond', miseAJour: 'lente.erreur.miseAJour', serveur: 'lente.erreur.serveur',
 };
 const jours = (n: number) => t('defi.delai.jours', { n });
 
@@ -53,6 +54,13 @@ export function Lentes({ db, userId, onPartie, onFacon, onAccueil }: Props) {
   const [erreur, setErreur] = useState<string | null>(null);
   const [envoi, setEnvoi] = useState(false);
   const [tic, setTic] = useState(0);
+  // #442 : parties laissées expirer (30 jours) et plafond de parties en cours, relus avec la liste.
+  const [abandons, setAbandons] = useState<EtatAbandons | null>(null);
+  useEffect(() => {
+    let vivant = true;
+    void etatAbandons(db).then(e => { if (vivant && e) setAbandons(e); });
+    return () => { vivant = false; };
+  }, [db, tic]);
 
   const charger = useCallback(async (pseudos: Pseudos) => {
     const [r, p] = await Promise.all([lireRecherche(db, userId), mesPartiesLentes(db, userId)]);
@@ -85,7 +93,7 @@ export function Lentes({ db, userId, onPartie, onFacon, onAccueil }: Props) {
     setEnvoi(true); setErreur(null);
     const r = await chercherPartieLente(db, taille, delai);
     setEnvoi(false);
-    if (!r.ok) { setErreur(tl(ERREURS[r.error])); return; }
+    if (!r.ok) { setErreur(tl(ERREURS[r.error], { n: plafond < LENTES_MAX ? plafond : 2 })); if (r.error === 'plafond') setTic(n => n + 1); return; }
     if (r.value) { commencer(r.value, taille, delai, 0); return; }
     setTic(n => n + 1);
   }
@@ -103,7 +111,16 @@ export function Lentes({ db, userId, onPartie, onFacon, onAccueil }: Props) {
 
   const pret = etat.etat === 'pret' ? etat : null;
   const recherche = pret?.recherche ?? null;
-  const limite = !!pret && enCours(pret.lignes) >= LENTES_MAX;
+  const plafond = abandons?.lentesPlafond ?? LENTES_MAX;
+  const limite = !!pret && enCours(pret.lignes) >= plafond;
+  const reduit = plafond < LENTES_MAX;
+  // Mesure : plafond réduit montré, une fois par écran.
+  const plafondMesure = useRef(false);
+  useEffect(() => {
+    if (!reduit || !pret || plafondMesure.current) return;
+    plafondMesure.current = true;
+    track(EVENTS.lentePlafondReduit, { plafond, atteint: limite });
+  }, [reduit, pret, plafond, limite]);
 
   let haut: ReactNode;
   if (!pret) {
@@ -135,7 +152,9 @@ export function Lentes({ db, userId, onPartie, onFacon, onAccueil }: Props) {
         <Segment titre={tl('lente.taille')} valeurs={TAILLES} valeur={taille} libelle={n => `${n} × ${n}`} onChoix={setTaille} />
         <Segment titre={tl('lente.delai')} valeurs={DELAIS} valeur={delai} libelle={jours} onChoix={setDelai}
           aide={fr(tl('lente.delai.aide', { delai: jours(delai) }))} />
-        {limite && <p className="card small" role="status">{fr(tl('lente.limite'))}</p>}
+        {limite && <p className="card small" role="status" data-testid="lente-limite">{fr(tl(reduit ? 'lente.plafond' : 'lente.limite', { n: plafond }))}</p>}
+        {!limite && reduit && <p className="muted small" data-testid="lente-plafond">{fr(tl('lente.plafond.info', { n: plafond }))}</p>}
+        {!reduit && abandons?.lentesExpirees === 1 && <p className="muted small" data-testid="lente-prevenir">{fr(tl('lente.plafond.prevenir'))}</p>}
         {!online && <p className="card small" role="status">{fr(tl('lente.horsLigne'))}</p>}
         <button type="button" className="btn primary defis-cta" onClick={chercher} disabled={!online || envoi || limite} aria-busy={envoi}>
           {tl('lente.chercher')}
