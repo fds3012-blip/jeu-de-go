@@ -7,7 +7,7 @@
 //   illégal ni un coup de première ligne sans raison). Sans KataGo en cache : « Télécharge l'IA », aucun conseil.
 // - L'étude est gardée sur l'appareil (go.etude.v1) et s'exporte en SGF (relu par « Analyser une partie »).
 // Logique pure : src/go/etude.ts.
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { Board } from '../ui/Board';
 import { C, M, viewBoxOf } from '../ui/boardArt';
 import { fr } from '../ui/typo';
@@ -53,6 +53,9 @@ export function Etude({ confirmTouch }: Props) {
   const [export_, setExport] = useState(false);
   const prefs = usePreferences();
   const enCours = useRef(false);
+  const racine = useRef<HTMLDivElement>(null);
+  const cadre = useRef<HTMLDivElement>(null);
+  const largeurMax = useGobanEntier(racine, cadre);
 
   useEffect(() => { track(EVENTS.etudeOuverte, { taille: etude.size, reprise: !!reprise }); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { writeLocal(ETUDE_KEY, { sgf: etudeVersSgf(etude) }); }, [etude]);
@@ -149,7 +152,7 @@ export function Etude({ confirmTouch }: Props) {
   const vb = viewBoxOf(etude.size);
 
   return (
-    <div className="etude" data-testid="etude">
+    <div className="etude" data-testid="etude" ref={racine}>
       <div className="etude-ligne">
         <div className="etude-seg" role="group" aria-label={tk('etude.taille')}>
           {TAILLES_ETUDE.map(s => <button type="button" key={s} aria-pressed={etude.size === s} onClick={() => taille(s)} aria-label={`${s} × ${s}`}>{s}</button>)}
@@ -185,7 +188,7 @@ export function Etude({ confirmTouch }: Props) {
       {/* Un refus (ko, sans liberté) remplace la consigne, au même endroit : lu tout de suite, sans décaler le goban. */}
       <p className={refus ? 'etude-refus small' : 'muted small'} role="status" data-testid="etude-consigne">{fr(refus ? refus.texte : consigne)}</p>
 
-      <div className="etude-plateau">
+      <div className="etude-plateau" ref={cadre} style={largeurMax ? { width: `min(100%, ${largeurMax}px)` } : undefined}>
         <Board size={etude.size} board={pos.board} toPlay={outil === 'jouer' ? pos.toPlay : outil === 'blanc' ? 2 : 1}
           interactive stonesTappable={outil !== 'jouer'} confirmTouch={outil === 'jouer' && confirmTouch} onPlay={toucher}
           shake={refus ? { p: refus.p, n: refus.n } : null} coordonnees={prefs.coordonnees} numeros={numeros}
@@ -221,6 +224,35 @@ export function Etude({ confirmTouch }: Props) {
       </div>
     </div>
   );
+}
+
+/**
+ * Goban toujours entier au-dessus de l'action principale (« Analyser », fixe en bas), sans défiler : sa largeur est
+ * bornée par la place entre son bord haut et le haut du bouton. Les lignes d'outils peuvent passer sur deux rangées
+ * (police de repli, zoom, anglais, « Revenir » qui apparaît) : le goban rétrécit d'autant, rien ne passe dessous.
+ * Recalculé quand la page change de taille ou qu'une ligne au-dessus change de hauteur.
+ */
+function useGobanEntier(racine: RefObject<HTMLDivElement | null>, cadre: RefObject<HTMLDivElement | null>): number | null {
+  const [max, setMax] = useState<number | null>(null);
+  useLayoutEffect(() => {
+    const el = racine.current, plateau = cadre.current;
+    if (!el || !plateau) return;
+    const mesurer = () => {
+      const cta = el.querySelector<HTMLElement>('.etude-dock .cta');
+      if (!cta) return;
+      // Positions de la page tout en haut : le bouton est fixe, le goban suit le défilement.
+      const haut = plateau.getBoundingClientRect().top + window.scrollY;
+      const place = Math.floor(cta.getBoundingClientRect().top - haut - 4);
+      setMax(m => (place > 160 && place !== m ? place : m));
+    };
+    mesurer();
+    const obs = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(mesurer) : null;
+    for (const enfant of Array.from(el.children)) if (enfant !== plateau && !enfant.classList.contains('etude-dock')) obs?.observe(enfant);
+    window.addEventListener('resize', mesurer);
+    void document.fonts?.ready.then(mesurer);
+    return () => { obs?.disconnect(); window.removeEventListener('resize', mesurer); };
+  }, [racine, cadre]);
+  return max;
 }
 
 /** « 62 » (chances de gain en %), ou l'avance « +3 » si KataGo ne les donne pas. */

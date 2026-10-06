@@ -308,6 +308,29 @@ test.describe('#372 Étudier une position', () => {
     await expect(plateau(page).locator('[data-pierre]')).toHaveCount(5);
   });
 
+  test('police de repli (polices web bloquées) : goban entier au-dessus d’« Analyser », avant et après une variante', async ({ page }) => {
+    // Les polices de l'app peuvent manquer (CI, réseau lent) : les lignes d'outils ne doivent pas pousser le goban sous le bouton.
+    await page.route(/\.woff2?$/, r => r.abort());
+    await page.goto('/');
+    await ouvrirEtude(page);
+    const svg = plateau(page);
+    const entier = async (etat: string) => {
+      await page.evaluate(() => window.scrollTo(0, 0));
+      const cta = (await page.locator('.cta').boundingBox())!, g = (await svg.boundingBox())!;
+      expect(g.y + g.height, `goban entier au-dessus d’« Analyser » (${etat})`).toBeLessThanOrEqual(cta.y + 2);
+      for (const nom of ['Annuler', 'Revenir']) {
+        const b = page.getByRole('button', { name: nom, exact: true });
+        if (await b.count()) expect((await b.boundingBox())!.y + 44, nom).toBeLessThanOrEqual(cta.y);
+      }
+    };
+    await entier('vide');
+    await jouer(page, 'C3');
+    await page.getByRole('group', { name: 'Outil' }).getByRole('button', { name: 'Jouer' }).click();
+    for (const l of ['D5', 'F4', 'E6']) await jouer(page, l);
+    await expect(svg.locator('[data-numero]')).toHaveCount(3);
+    await entier('variante');
+  });
+
   test('sans KataGo en cache : l’écran propose le téléchargement et n’affiche aucun conseil', async ({ page }) => {
     await page.goto('/');
     await ouvrirEtude(page);
