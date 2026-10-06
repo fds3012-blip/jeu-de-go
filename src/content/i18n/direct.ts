@@ -85,6 +85,7 @@ const FR = {
   'direct.abandons.regle': 'Trois parties quittées en 7 jours : 5 min d’attente. Puis 30 min, puis 24 h.',
   'direct.abandons.ordi': 'Jouer contre l’ordi en attendant',
   'direct.abandons.prevenir': 'Encore une partie quittée, et tu attendras {delai} avant de rejouer en direct. Si tu dois partir, abandonne : ça ne compte pas.',
+  'direct.veille.avertissement': 'Rester annule la partie de ce joueur. Refuser souvent compte comme quitter une partie.',
 } as const;
 
 export type CleDirect = keyof typeof FR;
@@ -169,6 +170,7 @@ const EN: { readonly [K in CleDirect]: string } = {
   'direct.abandons.regle': 'Three games left in 7 days: a 5 min wait. Then 30 min, then 24 h.',
   'direct.abandons.ordi': 'Play the computer meanwhile',
   'direct.abandons.prevenir': 'Leave one more game and you’ll wait {delai} before playing live again. If you have to go, resign: that doesn’t count.',
+  'direct.veille.avertissement': 'Staying cancels this player’s game. Refusing often counts as leaving a game.',
 };
 
 export const CATALOGUE_DIRECT: Record<Langue, { readonly [K in CleDirect]: string }> = { fr: FR, en: EN };

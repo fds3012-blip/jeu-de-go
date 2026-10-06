@@ -1,4 +1,4 @@
--- Tests rejouables des abandons répétés (issue #442, migration 20261006100100_abandons_repetes.sql) : journal des
+-- Tests rejouables des abandons répétés (issue #442, migration 20261006150100_abandons_repetes.sql) : journal des
 -- parties quittées (absence, jamais venu, refus, délai d'une partie lente), seuil et délais du direct (5 min, 30 min,
 -- 24 h), levée du délai, abandon propre et chute de pendule d'un joueur présent non comptés, refus comptés à partir du
 -- troisième, dix parties jouées jusqu'au bout qui effacent tout, plafond réduit des parties lentes, RLS et droits.

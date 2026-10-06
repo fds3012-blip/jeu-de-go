@@ -55,7 +55,7 @@ Une partie lente dont le délai passe sans coup fait attendre l'adversaire des j
 - **Ce que voit le joueur** (écran Parties lentes) : à 1 partie expirée, « Si une autre partie expire, tu pourras en mener 5 à la fois pendant 30 jours. » ; au plafond réduit, « Tu as laissé expirer plusieurs parties. Pendant 30 jours, tu peux en mener 2 à la fois. » (avec « Finis-en une pour en commencer une autre. » quand il est atteint). Français et anglais (`src/content/i18n/lente.ts`).
 - Le direct et les parties lentes ont chacun leur compteur : une partie lente expirée n'ajoute pas d'attente au direct.
 
-Migration : `supabase/migrations/20261006100100_abandons_repetes.sql`. Règle du direct : `docs/game-design/partie-en-direct.md` (« Parties quittées »). Mesure : `lente_plafond_reduit` (`plafond`, `atteint`).
+Migration : `supabase/migrations/20261006150100_abandons_repetes.sql`. Règle du direct : `docs/game-design/partie-en-direct.md` (« Parties quittées »). Mesure : `lente_plafond_reduit` (`plafond`, `atteint`).
 
 ## Sécurité
 

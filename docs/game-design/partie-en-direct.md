@@ -67,7 +67,7 @@ Une attente sans nouvelles depuis 30 s (écran fermé) ou de plus de 10 minutes 
 
 ## Parties quittées (#442)
 
-Quitter une partie en direct fait attendre l'adversaire pour rien et vide la file des joueurs fiables. La règle freine ceux qui le font souvent, jamais celui qui perd le réseau une fois. Elle ne coûte **jamais de cote en plus** : seulement un temps d'attente avant la prochaine recherche en direct. Migration : `supabase/migrations/20261006100100_abandons_repetes.sql`.
+Quitter une partie en direct fait attendre l'adversaire pour rien et vide la file des joueurs fiables. La règle freine ceux qui le font souvent, jamais celui qui perd le réseau une fois. Elle ne coûte **jamais de cote en plus** : seulement un temps d'attente avant la prochaine recherche en direct. Migration : `supabase/migrations/20261006150100_abandons_repetes.sql`.
 
 **Ce qui compte comme une partie quittée** (journal `abandons`, écrit par le serveur seul) :
 

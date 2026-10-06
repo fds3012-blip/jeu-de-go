@@ -4,7 +4,8 @@
 // - « Je cherche toujours un joueur pour toi. » et « Ne plus chercher » ;
 // - un humain est trouvé : « Un joueur est prêt ! », « Rejoindre » ou « Rester ». Non bloquant : la partie contre l'IA
 //   continue dessous. « Rester » (ou quitter la partie IA sans répondre) annule la partie en direct par le serveur
-//   (`refuser_partie_direct`, aucune cote ne bouge) et sort de la file.
+//   (`refuser_partie_direct`, aucune cote ne bouge) et sort de la file. #442 : à partir du 3e refus, un refus compte
+//   comme une partie quittée ; la bande le dit sous « Rejoindre » / « Rester ».
 // La partie contre l'IA n'est jamais classée (#417) ; l'IA garde son nom et son portrait, jamais déguisée en humain.
 // Chargé à la demande avec l'écran du direct (src/app/ecrans.ts).
 import { compterEtape } from '../data/compteurs';
@@ -89,6 +90,8 @@ export function VeilleFile({ db, demande, depuis, onRejoindre, onArret }: Props)
         <div className="veille-file-texte" role="alert">
           <p className="veille-file-titre">{fr(td('direct.veille.pret'))}</p>
           <p className="small">{fr(td('direct.veille.pretDetail'))}</p>
+          {/* #442 : refuser souvent compte comme une partie quittée (à partir du 3e refus) : on le dit avant. */}
+          <p className="small muted" data-testid="veille-avertissement">{fr(td('direct.veille.avertissement'))}</p>
         </div>
         <div className="veille-file-actions">
           <button type="button" className="btn primary" onClick={rejoindre} disabled={envoi}>{td('direct.veille.rejoindre')}</button>

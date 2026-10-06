@@ -33,7 +33,7 @@ import { parseActionRequest, planAction, type GameRow } from '../src/go/server';
 // l'auteur ; `find_match` n'apparie jamais deux joueurs dont l'un a bloqué l'autre.
 // Abandons répétés (#442) : `etat_abandons`, refus de `find_match` pendant l'attente (JGD01, `details` = fin de
 // l'attente, `hint` = minutes), plafond réduit des parties lentes (JGL11). Mêmes seuils que
-// supabase/migrations/20261006100100_abandons_repetes.sql (sans la règle des 10 dernières parties ni les refus) : un
+// supabase/migrations/20261006150100_abandons_repetes.sql (sans la règle des 10 dernières parties ni les refus) : un
 // test note les parties quittées (`noterAbandon`) sur l'horloge du serveur (`avancerHorloge`) ; une partie lente
 // perdue au temps ou annulée est notée pour le joueur qui devait jouer.
 // Émulation entre amis (#369) : `noter_go_du_jour` (le numéro envoyé fait foi : l'horloge du navigateur est figée),

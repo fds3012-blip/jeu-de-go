@@ -95,6 +95,8 @@ test('un humain arrive pendant la partie contre l’IA : « Un joueur est prêt 
   await expect(bob.getByTestId('direct-partie')).toBeVisible();
   const bande = ana.getByTestId('veille-file');
   await expect(bande.getByRole('alert')).toContainText('Un joueur est prêt !', { timeout: 8_000 });
+  // #442 : refuser souvent compte comme une partie quittée : dit avant « Rester ».
+  await expect(bande.getByTestId('veille-avertissement')).toHaveText('Rester annule la partie de ce joueur. Refuser souvent compte comme quitter une partie.');
   await expect(bande.getByRole('button', { name: 'Rejoindre' })).toBeVisible();
   await expect(bande.getByRole('button', { name: 'Rester' })).toBeVisible();
   // Non bloquant : la partie contre l'IA reste là, dessous.

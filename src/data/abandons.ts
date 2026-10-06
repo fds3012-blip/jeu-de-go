@@ -1,5 +1,5 @@
 // Abandons répétés (issue #442) : parties en direct quittées et parties lentes laissées expirer.
-// Toute la règle est côté serveur (supabase/migrations/20261006100100_abandons_repetes.sql) :
+// Toute la règle est côté serveur (supabase/migrations/20261006150100_abandons_repetes.sql) :
 // - `etat_abandons` : compteur, fin de l'attente du direct, délai de la prochaine partie quittée, plafond des parties
 //   lentes, heure du serveur (l'écran calcule le temps restant avec l'heure du serveur, jamais avec la sienne seule) ;
 // - `find_match` refuse pendant l'attente (JGD01 : `details` = fin de l'attente en ISO 8601, `hint` = minutes) ;

@@ -53,7 +53,7 @@ describe('migration de la sécurité (#363, #373)', () => {
     // C'est la dernière définition : aucune migration plus récente ne la remplace sans la condition.
     const fichiers = readdirSync(dossier).filter(f => f.endsWith('.sql')).sort();
     const derniere = fichiers.filter(f => /function public\.(lente_apparier|find_match)\(/.test(readFileSync(resolve(dossier, f), 'utf8'))).at(-1);
-    // #442 (20261006100100_abandons_repetes.sql) les redéfinit à son tour : la condition de blocage doit y rester.
+    // #442 (20261006150100_abandons_repetes.sql) les redéfinit à son tour : la condition de blocage doit y rester.
     const texte = sansCommentaires(readFileSync(resolve(dossier, derniere!), 'utf8'));
     expect(texte).toMatch(/and not public\.est_bloque\(v_uid, q\.user_id\)/);
     expect(texte).toMatch(/and not public\.est_bloque\(p_uid, q\.user_id\)/);

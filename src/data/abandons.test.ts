@@ -7,7 +7,7 @@ import { CATALOGUE_DIRECT } from '../content/i18n/direct';
 import { CATALOGUE_LENTE } from '../content/i18n/lente';
 import type { Db } from './supabase';
 
-// Issue #442 : abandons répétés. La règle est au serveur (migration 20261006100100_abandons_repetes.sql, testée par
+// Issue #442 : abandons répétés. La règle est au serveur (migration 20261006150100_abandons_repetes.sql, testée par
 // supabase/tests/abandons_repetes.test.sql) ; ici, la lecture de ses réponses et les textes de l'écran.
 
 const MAINTENANT = '2026-10-06T18:00:00Z';
@@ -116,7 +116,7 @@ describe('textes', () => {
 });
 
 describe('migration', () => {
-  const sql = readFileSync(new URL('../../supabase/migrations/20261006100100_abandons_repetes.sql', import.meta.url), 'utf8');
+  const sql = readFileSync(new URL('../../supabase/migrations/20261006150100_abandons_repetes.sql', import.meta.url), 'utf8');
   it('redéfinit find_match en gardant le blocage (#363) et ajoute l’attente', () => {
     const corps = sql.slice(sql.indexOf('create or replace function public.find_match'));
     expect(corps).toContain('not public.est_bloque(v_uid, q.user_id)');
