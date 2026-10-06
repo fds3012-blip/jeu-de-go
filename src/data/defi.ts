@@ -43,12 +43,14 @@ export const compteDe = (session: Session | null | undefined): string | undefine
   session && !estAnonyme(session) ? session.user.id : undefined;
 
 /**
- * Lien à partager. Le jeton est dans le fragment (`#`) de la page d'accueil : il n'est envoyé ni au serveur web
- * ni dans l'en-tête Referer, et aucune règle de réécriture n'est nécessaire chez l'hébergeur.
+ * Lien à partager, court (#364) : `https://mochi-go.app/defi#JETON&de=Pseudo` (`/en/defi#…` pour un joueur en
+ * anglais). Le jeton reste dans le fragment (`#`) : il n'est envoyé ni au serveur web ni dans l'en-tête Referer.
+ * La page `/defi` porte l'aperçu du défi (Open Graph, outils/apercus.ts) ; index.html remet l'adresse à la forme
+ * `/#defi=JETON` avant tout le reste. `jetonDepuisLien` lit les deux formes.
  */
-export function lienDefi(jeton: string, origine: string, pseudo?: string | null): string {
+export function lienDefi(jeton: string, origine: string, pseudo?: string | null, langue: 'fr' | 'en' = 'fr'): string {
   const de = pseudo && FORMAT_PSEUDO.test(pseudo) ? `&${PARAM_DE}=${pseudo}` : '';
-  return `${origine.replace(/\/+$/, '')}/#${PARAM_DEFI}=${jeton}${de}`;
+  return `${origine.replace(/\/+$/, '')}${langue === 'en' ? '/en' : ''}/${PARAM_DEFI}#${jeton}${de}`;
 }
 
 /**
@@ -102,6 +104,8 @@ export async function ouvrirDefi(db: Db, jeton: string): Promise<Result<{ partie
   const session = await exigerCompte(db);
   if (!session.ok) return session;
   const { data, error } = await db.rpc('rejoindre_defi', { p_jeton: jeton });
+  // #363 : l'un des deux a bloqué l'autre. Le même refus dans les deux sens : le joueur bloqué n'en sait pas plus.
+  if (error?.code === 'JGB01') return echec(t('defi.erreur.indisponible'));
   if (error || !data) return echec(error?.message);
   // Le créateur qui rouvre son propre lien n'est pas un nouvel invité (mesure du coefficient viral).
   const ligne = await db.from('defis').select('createur_id').eq('partie_id', data).maybeSingle();
@@ -182,7 +186,7 @@ export async function pseudoJoueur(db: Db, id: string): Promise<string | null> {
 
 /** Les défis du joueur (créés ou rejoints), du plus récent au plus ancien, avec leur partie. */
 export async function mesDefis(db: Db, userId: string): Promise<Result<EtatDefi[]>> {
-  const defis = await db.from('defis').select('*').or(`createur_id.eq.${userId},invite_id.eq.${userId}`).order('cree_le', { ascending: false }).limit(20);
+  const defis = await db.from('defis').select('*').or(`createur_id.eq.${userId},invite_id.eq.${userId}`).order('cree_le', { ascending: false }).limit(40);
   if (defis.error) return echec(defis.error.message);
   const lignes = defis.data ?? [];
   if (!lignes.length) return { ok: true, value: [] };

@@ -125,9 +125,49 @@ export const EVENTS = {
   // File vide (#436) : au bout de 25 s d'attente, Mochi propose une partie contre l'IA en restant dans la file.
   // `accepte` : vrai si le joueur joue contre l'IA, faux s'il préfère attendre ou annule. Jamais l'adversaire IA choisi.
   fileRepliIa: 'file_repli_ia',
+  // Parties lentes classées (#440) : adversaire trouvé (`taille`, `delai_jours` : 1 à 3, `attente_h` : heures de
+  // recherche, 0 si l'adversaire attendait), puis partie finie vue par le joueur (`taille`, `delai_jours`, `issue` :
+  // victoire, defaite, egalite, annulee ; `raison` : points, abandon, temps, annulee ; `coups`). Jamais la partie ni
+  // l'adversaire.
+  partieLenteCommencee: 'partie_lente_commencee',
+  partieLenteTerminee: 'partie_lente_terminee',
   // Modes de l'accueil (#429) : `mode` (en_ligne, ordi, ami, deux, guidee), `depuis` (bouton, plateau, tuile, plus,
   // feuille : bouton de « Changer »), `principal` (le mode était l'action principale de l'accueil).
   modeChoisi: 'mode_choisi',
+  // Joueur de club (#365, #368, #372). Réglage changé (`cle` : nom du réglage, `valeur` : nouvelle valeur, jamais rien
+  // de personnel) ; « Mes statistiques » ouvert (`revues`, `parties` : nombres sur l'appareil, `compte`) ; « Étudier une
+  // position » ouvert (`taille`, `reprise` : étude gardée retrouvée) ; analyse demandée (`taille`, `pierres`,
+  // `variante` : coups joués après la position posée, `katago` : faux quand l'IA manque, `issue`).
+  reglageChange: 'reglage_change',
+  statistiquesOuvertes: 'statistiques_ouvertes',
+  etudeOuverte: 'etude_ouverte',
+  analyseDemandee: 'analyse_demandee',
+  // Partager une partie (#364) : feuille « Partager » du bilan ouverte (`mode` : ordi, deux, import ; `compte` : lien et
+  // défi possibles), partage fait (`objet` : lien, image, sgf, defi ; `moyen` : web_share, copie, manuel, telechargement),
+  // échec (`objet`, `raison` : compte, pseudo, jour, plein, illisible, reseau, canvas), lien retiré (`mode`). L'arrivée de
+  // l'ami : `arrivee_par_partage` avec `source` = `partie`. Jamais le lien, le jeton, la partie ni un pseudo.
+  partageOuvert: 'partage_ouvert',
+  partageEnvoye: 'partage_envoye',
+  partageEchoue: 'partage_echoue',
+  partageRetire: 'partage_retire',
+  // Sécurité entre joueurs (#363) : signalement envoyé (`type` : joueur, probleme, bug, idee, autre ; `motif` ; `depuis` :
+  // partie, amis, probleme, profil ; `bloque` : bloqué en même temps), joueur bloqué (`depuis`). Jamais le texte, le
+  // pseudo, la partie ni le problème.
+  signalementEnvoye: 'signalement_envoye',
+  joueurBloque: 'joueur_bloque',
+  // Messages en partie (#373) : `genre` (message, emote), `code` (message prédéfini), `mode` (direct, defi). Réglage
+  // « Messages de l'adversaire » (`coupes`, `depuis` : partie). Ni la partie ni l'adversaire.
+  messagePartieEnvoye: 'message_partie_envoye',
+  messagesAdversaireCoupes: 'messages_adversaire_coupes',
+  // Émulation entre amis (#369). `amis_du_jour_vus` : bloc « Tes amis aujourd'hui » montré sous la réussite du Go du
+  // jour (`amis` : amis listés, `reussis` : ceux qui l'ont fait), une fois par jour. `rappel_ami_envoye` : « Rappelle-lui »
+  // touché et accepté par le serveur. `bilan_semaine_vu` : bilan montré (`depuis` : accueil ou profil ; `parties`,
+  // `problemes`, `go_du_jour`, `amis` : amis nommés). `objectif_semaine_atteint` : `objectif` (parties, problemes,
+  // erreurs). Jamais de pseudo.
+  amisDuJourVus: 'amis_du_jour_vus',
+  rappelAmiEnvoye: 'rappel_ami_envoye',
+  bilanSemaineVu: 'bilan_semaine_vu',
+  objectifSemaineAtteint: 'objectif_semaine_atteint',
 } as const;
 export type AnalyticsEvent = (typeof EVENTS)[keyof typeof EVENTS];
 export type Props = Record<string, string | number | boolean | null | undefined>;

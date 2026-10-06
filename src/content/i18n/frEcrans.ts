@@ -1093,4 +1093,6 @@ export const frEcrans = {
   'aFaire.lecon': 'Reprends ta leçon',
   'aFaire.amis': { one: '1 demande d’ami', other: '{n} demandes d’ami' },
   'aFaire.amisDetail': 'Réponds quand tu veux.',
+  // #369 : un ami te rappelle le Go du jour (« Rappelle-lui »).
+  'aFaire.rappelAmi': 'Un ami t’attend au Go du jour',
 } as const;

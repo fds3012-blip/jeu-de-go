@@ -87,6 +87,53 @@ export type Database = {
           },
         ]
       }
+      blocages: {
+        Row: {
+          bloque_id: string
+          bloqueur_id: string
+          cree_le: string
+        }
+        Insert: {
+          bloque_id: string
+          bloqueur_id: string
+          cree_le?: string
+        }
+        Update: {
+          bloque_id?: string
+          bloqueur_id?: string
+          cree_le?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blocages_bloque_id_fkey"
+            columns: ["bloque_id"]
+            isOneToOne: false
+            referencedRelation: "leaderboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blocages_bloque_id_fkey"
+            columns: ["bloque_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blocages_bloqueur_id_fkey"
+            columns: ["bloqueur_id"]
+            isOneToOne: false
+            referencedRelation: "leaderboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blocages_bloqueur_id_fkey"
+            columns: ["bloqueur_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       demandes_ami_journal: {
         Row: {
           demandeur_id: string
@@ -178,6 +225,58 @@ export type Database = {
           },
         ]
       }
+      file_lente: {
+        Row: {
+          created_at: string
+          delai_jours: number
+          partie_id: string | null
+          rating: number
+          rd: number
+          size: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          delai_jours: number
+          partie_id?: string | null
+          rating: number
+          rd?: number
+          size: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          delai_jours?: number
+          partie_id?: string | null
+          rating?: number
+          rd?: number
+          size?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "file_lente_partie_id_fkey"
+            columns: ["partie_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "file_lente_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "leaderboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "file_lente_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       friendships: {
         Row: {
           addressee_id: string
@@ -227,6 +326,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      go_du_jour_resultats: {
+        Row: {
+          essais: number
+          etat: string
+          maj_le: string
+          numero: number
+          user_id: string
+        }
+        Insert: {
+          essais?: number
+          etat?: string
+          maj_le?: string
+          numero: number
+          user_id: string
+        }
+        Update: {
+          essais?: number
+          etat?: string
+          maj_le?: string
+          numero?: number
+          user_id?: string
+        }
+        Relationships: []
       }
       games: {
         Row: {
@@ -450,6 +573,52 @@ export type Database = {
           },
         ]
       }
+      messages_partie: {
+        Row: {
+          auteur_id: string
+          code: string
+          envoye_le: string
+          id: number
+          partie_id: string
+        }
+        Insert: {
+          auteur_id: string
+          code: string
+          envoye_le?: string
+          id?: never
+          partie_id: string
+        }
+        Update: {
+          auteur_id?: string
+          code?: string
+          envoye_le?: string
+          id?: never
+          partie_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_partie_auteur_id_fkey"
+            columns: ["auteur_id"]
+            isOneToOne: false
+            referencedRelation: "leaderboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_partie_auteur_id_fkey"
+            columns: ["auteur_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_partie_partie_id_fkey"
+            columns: ["partie_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           creee_le: string
@@ -557,6 +726,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      parties_partagees: {
+        Row: {
+          adversaire: string | null
+          coup: number
+          cree_le: string
+          empreinte: string
+          jeton: string
+          joueur: number | null
+          sgf: string
+          taille: number
+          user_id: string
+        }
+        Insert: {
+          adversaire?: string | null
+          coup?: number
+          cree_le?: string
+          empreinte: string
+          jeton: string
+          joueur?: number | null
+          sgf: string
+          taille: number
+          user_id: string
+        }
+        Update: {
+          adversaire?: string | null
+          coup?: number
+          cree_le?: string
+          empreinte?: string
+          jeton?: string
+          joueur?: number | null
+          sgf?: string
+          taille?: number
+          user_id?: string
+        }
+        Relationships: []
       }
       parties_perso: {
         Row: {
@@ -806,6 +1011,27 @@ export type Database = {
         }
         Relationships: []
       }
+      rappels_go_du_jour: {
+        Row: {
+          destinataire_id: string
+          envoye_le: string
+          expediteur_id: string
+          numero: number
+        }
+        Insert: {
+          destinataire_id: string
+          envoye_le?: string
+          expediteur_id: string
+          numero: number
+        }
+        Update: {
+          destinataire_id?: string
+          envoye_le?: string
+          expediteur_id?: string
+          numero?: number
+        }
+        Relationships: []
+      }
       rating_history: {
         Row: {
           created_at: string
@@ -861,6 +1087,93 @@ export type Database = {
           },
         ]
       }
+      signalements: {
+        Row: {
+          auteur_id: string | null
+          cible_joueur_id: string | null
+          contexte: Json | null
+          cree_le: string
+          id: number
+          motif: string | null
+          note_equipe: string | null
+          partie_id: string | null
+          probleme_id: string | null
+          statut: string
+          texte: string | null
+          traite_le: string | null
+          type: string
+          version_app: string | null
+        }
+        Insert: {
+          auteur_id?: string | null
+          cible_joueur_id?: string | null
+          contexte?: Json | null
+          cree_le?: string
+          id?: never
+          motif?: string | null
+          note_equipe?: string | null
+          partie_id?: string | null
+          probleme_id?: string | null
+          statut?: string
+          texte?: string | null
+          traite_le?: string | null
+          type: string
+          version_app?: string | null
+        }
+        Update: {
+          auteur_id?: string | null
+          cible_joueur_id?: string | null
+          contexte?: Json | null
+          cree_le?: string
+          id?: never
+          motif?: string | null
+          note_equipe?: string | null
+          partie_id?: string | null
+          probleme_id?: string | null
+          statut?: string
+          texte?: string | null
+          traite_le?: string | null
+          type?: string
+          version_app?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "signalements_auteur_id_fkey"
+            columns: ["auteur_id"]
+            isOneToOne: false
+            referencedRelation: "leaderboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "signalements_auteur_id_fkey"
+            columns: ["auteur_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "signalements_cible_joueur_id_fkey"
+            columns: ["cible_joueur_id"]
+            isOneToOne: false
+            referencedRelation: "leaderboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "signalements_cible_joueur_id_fkey"
+            columns: ["cible_joueur_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "signalements_partie_id_fkey"
+            columns: ["partie_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       leaderboard: {
@@ -870,6 +1183,18 @@ export type Database = {
           rank: number | null
           rating: number | null
           username: string | null
+        }
+        Relationships: []
+      }
+      signalements_a_revoir: {
+        Row: {
+          auteurs: number | null
+          cible_joueur_id: string | null
+          dernier: string | null
+          motifs: string[] | null
+          premier: string | null
+          pseudo: string | null
+          signalements: number | null
         }
         Relationships: []
       }
@@ -889,6 +1214,11 @@ export type Database = {
           taille: number
         }[]
       }
+      bilan_semaine: { Args: { p_precedente?: boolean }; Returns: Json }
+      bloquer_joueur: {
+        Args: { p_partie?: string; p_pseudo?: string }
+        Returns: boolean
+      }
       cadence_direct: {
         Args: { p_cadence: string }
         Returns: {
@@ -897,9 +1227,23 @@ export type Database = {
           periodes: number
         }[]
       }
+      chercher_partie_lente: {
+        Args: { p_delai_jours?: number; p_size?: number }
+        Returns: string
+      }
       choisir_depart_cote: {
         Args: { p_depart: string; p_kyu?: number }
         Returns: number
+      }
+      classement_go_du_jour: {
+        Args: never
+        Returns: {
+          essais: number | null
+          etat: string
+          moi: boolean
+          pseudo: string
+          rappele: boolean
+        }[]
       }
       cote_rd_apres_absence: {
         Args: { p_depuis: string; p_maintenant: string; p_rd: number; p_vol: number }
@@ -912,8 +1256,14 @@ export type Database = {
           partie_id: string
         }[]
       }
+      debloquer_joueur: { Args: { p_pseudo: string }; Returns: boolean }
       defier_ami: { Args: { p_pseudo: string }; Returns: string }
       delete_my_account: { Args: never; Returns: undefined }
+      dire_en_partie: {
+        Args: { p_code: string; p_partie: string }
+        Returns: boolean
+      }
+      direct_clore_abandonnees: { Args: never; Returns: number }
       direct_constater: {
         Args: { p_appelant: string; p_partie: string }
         Returns: string
@@ -932,6 +1282,25 @@ export type Database = {
         Returns: string
       }
       enregistrer_parties_perso: { Args: { p_parties: Json }; Returns: string[] }
+      lire_partie_partagee: {
+        Args: { p_jeton: string }
+        Returns: {
+          adversaire: string | null
+          coup: number
+          cree_le: string
+          joueur: number | null
+          pseudo: string | null
+          sgf: string
+          taille: number
+        }[]
+      }
+      partager_partie: {
+        Args: { p_adversaire: string | null; p_coup: number; p_joueur: number | null; p_sgf: string; p_taille: number }
+        Returns: string
+      }
+      retirer_partie_partagee: { Args: { p_jeton: string }; Returns: boolean }
+      sgf_partageable: { Args: { p_sgf: string }; Returns: boolean }
+      est_bloque: { Args: { p_a: string; p_b: string }; Returns: boolean }
       exiger_compte_avec_pseudo: { Args: never; Returns: string }
       find_match: {
         Args: { p_cadence?: string; p_regles?: string; p_size: number }
@@ -987,6 +1356,18 @@ export type Database = {
       }
       join_game: { Args: { p_code: string }; Returns: string }
       joueur_par_pseudo: { Args: { p_pseudo: string }; Returns: string }
+      lente_apparier: {
+        Args: { p_present: boolean; p_uid: string }
+        Returns: string
+      }
+      lentes_en_cours: { Args: { p_uid: string }; Returns: number }
+      lentes_tache: {
+        Args: never
+        Returns: {
+          creees: number
+          finies: number
+        }[]
+      }
       jouer_coup_defi: {
         Args: {
           p_comptage?: boolean
@@ -997,6 +1378,13 @@ export type Database = {
         }
         Returns: Json
       }
+      mes_blocages: {
+        Args: never
+        Returns: {
+          depuis: string
+          pseudo: string
+        }[]
+      }
       mes_amis: {
         Args: never
         Returns: {
@@ -1005,6 +1393,12 @@ export type Database = {
           pseudo: string
         }[]
       }
+      mes_records: { Args: never; Returns: Json }
+      noter_go_du_jour: {
+        Args: { p_numero: number; p_resultat: string }
+        Returns: string
+      }
+      numero_go_du_jour: { Args: { p_jour?: string }; Returns: number }
       pendule_apres: {
         Args: {
           p_ecoule_ms: number
@@ -1021,7 +1415,10 @@ export type Database = {
       pendule_direct: { Args: { p_partie: string }; Returns: Json }
       play_move: { Args: { p_game: string; p_move: string }; Returns: string }
       preparer_rattachement: { Args: never; Returns: string }
+      purger_securite: { Args: never; Returns: undefined }
       quitter_file_attente: { Args: never; Returns: string }
+      quitter_file_lente: { Args: never; Returns: string }
+      rappeler_go_du_jour: { Args: { p_pseudo: string }; Returns: string }
       rattacher_session_anonyme: { Args: { p_code: string }; Returns: number }
       reclamer_rappels: {
         Args: { p_maintenant?: string }
@@ -1046,6 +1443,19 @@ export type Database = {
       }
       resign_game: { Args: { p_game: string }; Returns: string }
       retirer_ami: { Args: { p_pseudo: string }; Returns: undefined }
+      signaler: {
+        Args: {
+          p_contexte?: Json
+          p_motif?: string
+          p_partie?: string
+          p_probleme?: string
+          p_pseudo?: string
+          p_texte?: string
+          p_type: string
+          p_version?: string
+        }
+        Returns: boolean
+      }
       victoire_au_temps: { Args: { p_partie: string }; Returns: string }
     }
     Enums: {

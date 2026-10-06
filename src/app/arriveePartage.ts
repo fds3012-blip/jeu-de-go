@@ -25,7 +25,10 @@ export function numeroOuvert(demande: number, jour: number): number {
   return demande >= 1 && demande < jour ? demande : jour;
 }
 
-/** Propriétés de `arrivee_par_partage` : `numero` ouvert, `lang` de l'interface et `nouveau_joueur`. */
+/**
+ * Propriétés de `arrivee_par_partage` : `numero` ouvert, `lang` de l'interface et `nouveau_joueur`. `source` (#364) :
+ * `go_du_jour` ici ; `partie` pour une partie partagée (src/app/PartiePartagee.tsx).
+ */
 export function proprietesArrivee(demande: number, jour: number, lang: Langue, nouveau: boolean) {
-  return { numero: numeroOuvert(demande, jour), numero_demande: demande, numero_du_jour: jour, lang, nouveau_joueur: nouveau };
+  return { source: 'go_du_jour', numero: numeroOuvert(demande, jour), numero_demande: demande, numero_du_jour: jour, lang, nouveau_joueur: nouveau };
 }

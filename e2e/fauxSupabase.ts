@@ -4,7 +4,8 @@ import { parseActionRequest, planAction, type GameRow } from '../src/go/server';
 // Supabase simulé par interception réseau, partagé par les parcours du compte (#343) et du défi par lien (#81).
 // Le build de test lit l'adresse simulée dans le stockage local (`e2e.supabase`, voir src/data/supabase.ts).
 // Auth : code à 6 chiffres (`/otp` puis `/verify`), le seul bon code est CODE. Tables : profiles, games, defis,
-// notifications (#367), parties_perso (#358 : `enregistrer_parties_perso`, sans doublon, compte avec pseudo exigé).
+// notifications (#367), parties_perso (#358 : `enregistrer_parties_perso`, sans doublon, compte avec pseudo exigé),
+// parties partagées (#364 : `partager_partie`, `lire_partie_partagee` sans compte, `retirer_partie_partagee`).
 // Temps réel : le WebSocket de Supabase Realtime (protocole Phoenix, sérialisation 2.0.0) est simulé. Sont poussées :
 // les notifications, à leur seul destinataire ; et (#425) les UPDATE de `games`, `defis` et `parties_direct`, aux seuls
 // joueurs de la partie (RLS simulée). `ralentirLectures(ms)` retarde les relectures (parties, pendule) : un coup qui
@@ -21,6 +22,19 @@ import { parseActionRequest, planAction, type GameRow } from '../src/go/server';
 // `quitter_file_attente`, `pendule_direct` (pendule simplifiée : temps décompté au coup, chute constatée à la lecture),
 // actions `move`, `propose_dead`, `accept`, `resume` de game-action par la vraie logique (`planAction`, src/go/server.ts),
 // `resign_game`. Fin classée : ±162 dans l'historique des deux joueurs, comme deux nouveaux (#417).
+// Parties lentes (#440) : `chercher_partie_lente` (mêmes taille et délai ; celui qui attendait prend Noir et garde la
+// partie dans sa ligne de `file_lente`), `quitter_file_lente`, lecture de `file_lente` (sa seule ligne), délai par coup
+// de la partie (`defis.delai_coup`), perte au temps constatée au coup, à la lecture (`victoire_au_temps`) et par
+// `tacheLentes()` (la tâche pg_cron), sur une horloge du serveur qu'un test avance (`avancerHorloge`). Classée :
+// ±162 ; annulée sans cote si personne n'a vraiment joué.
+// Sécurité (#363, #373) : `signaler`, `bloquer_joueur`, `debloquer_joueur`, `mes_blocages`, `dire_en_partie` (mêmes
+// règles et mêmes codes que supabase/migrations/20261005220100_securite_signalements.sql, sauf la fin de partie depuis
+// plus de 10 minutes) ; les INSERT de `messages_partie` sont poussés aux deux joueurs, sauf à celui qui a bloqué
+// l'auteur ; `find_match` n'apparie jamais deux joueurs dont l'un a bloqué l'autre.
+// Émulation entre amis (#369) : `noter_go_du_jour` (le numéro envoyé fait foi : l'horloge du navigateur est figée),
+// `classement_go_du_jour`, `rappeler_go_du_jour` (notification `go_du_jour`), `bilan_semaine` (toutes les parties finies
+// entre humains comptent pour la semaine en cours), `mes_records` (historique de cote du joueur). Mêmes règles et mêmes
+// codes que supabase/migrations/20261005230100_emulation_amis.sql (sauf les limites de temps).
 
 export const SUPABASE = 'https://supabase.e2e.test';
 export const CODE = '123456';
@@ -56,10 +70,18 @@ export function fauxServeur() {
   let idNotif = 0;
   let idFiltre = 0;
   const partiesPerso: Ligne[] = [];
+  /** Parties partagées par lien (#364) : jeton, propriétaire, SGF minimal, camp, adversaire, moment clé. */
+  const partagees: Ligne[] = [];
   const ratingHistory: Ligne[] = [];
   const file: { user: string; taille: number; cadence: string; regles: string; depuis: number }[] = [];
   const pendules: Ligne[] = [];
   let nDirect = 0;
+  /** File lente (#440), comme `public.file_lente`. */
+  const fileLente: Ligne[] = [];
+  let nLente = 0;
+  /** Décalage de l'horloge du serveur (#440) : la perte au temps se joue en jours. */
+  let decalage = 0;
+  const maintenant = () => Date.now() + decalage;
   const appels: string[] = [];
   const emailsEnvoyes: { email: string; type: string }[] = [];
   const autorisations: string[] = [];
@@ -71,6 +93,9 @@ export function fauxServeur() {
   let liaisonManuelle = true;
   let nIdentite = 0;
   const codesRattachement = new Map<string, string>();
+  /** Go du jour par joueur (#369) : numéro, état, essais, ordre de réussite. */
+  const goDuJour: { user: string; numero: number; etat: 'en_cours' | 'reussi' | 'vu'; essais: number; le: number }[] = [];
+  const rappels: { de: string; a: string; numero: number }[] = [];
   const identite = (provider: string, email?: string): Identite => ({ identity_id: `identite-${++nIdentite}`, provider, email });
 
   const jwt = (u: Utilisateur) => {
@@ -179,6 +204,32 @@ export function fauxServeur() {
   }
 
   const CADENCES: Record<string, [number, number, number]> = { rapide: [300000, 3, 20000], normale: [600000, 3, 30000], lente: [1200000, 5, 30000] };
+  // Sécurité (#363, #373)
+  const signalements: Ligne[] = [];
+  const blocages: { de: string; a: string; le: string }[] = [];
+  const messagesPartie: Ligne[] = [];
+  let idMessage = 0;
+  const estBloque = (x: string, y: string) => blocages.some(b => (b.de === x && b.a === y) || (b.de === y && b.a === x));
+  /** Pousse un INSERT de `messages_partie` aux joueurs de la partie (RLS : sauf à qui a bloqué l'auteur). */
+  function pousserMessage(m: Ligne) {
+    const g = games.find(x => x.id === m.partie_id);
+    if (!g) return;
+    for (const a of abonnes) {
+      if (a.fige) continue;
+      for (const [topic, c] of a.canaux) {
+        const qui = jetons.get(c.jeton ?? '')?.id;
+        if (!qui || (qui !== g.black_id && qui !== g.white_id)) continue;
+        if (qui !== m.auteur_id && blocages.some(b => b.de === qui && b.a === m.auteur_id)) continue;
+        const ids = c.filtres.filter(f => f.table === 'messages_partie' && (f.event === '*' || f.event === 'INSERT')
+          && (!f.filter || f.filter === `partie_id=eq.${String(m.partie_id)}`)).map(f => f.id);
+        if (!ids.length) continue;
+        pousses.push({ table: 'messages_partie', id: String(m.partie_id), le: Date.now() });
+        a.ws.send(JSON.stringify([c.joinRef, null, topic, 'postgres_changes', { ids, data: {
+          schema: 'public', table: 'messages_partie', commit_timestamp: new Date().toISOString(), type: 'INSERT', errors: null,
+          columns: [], record: { ...m } } }]));
+      }
+    }
+  }
   const directEnCours = (uid: string) => games.find(g => g.status === 'active' && pendules.some(p => p.partie_id === g.id) && (g.black_id === uid || g.white_id === uid));
   /** Fin d'une partie classée en direct : résultat, pendule arrêtée, cote ±162 (deux nouveaux, #417). */
   function finir(g: Ligne, resultat: string) {
@@ -193,6 +244,32 @@ export function fauxServeur() {
       ratingHistory.push({ user_id: id, kind: 'game', rating: 800 + ecart, ecart, rd: 290.32, game_id: g.id, created_at: new Date().toISOString() });
     }
   }
+  /** Délai par coup d'un défi en ms (« 1 day », « 3 days »). */
+  const delaiMs = (d: Ligne | undefined) => Number(/(\d+)\s*day/.exec(String(d?.delai_coup ?? '3 days'))?.[1] ?? 3) * 864e5;
+  /**
+   * Comme `defi_constater_temps` (#440) : délai passé, le joueur au trait perd ; partie classée : aussi au comptage (qui
+   * doit répondre), annulée sans cote avant un coup chacun, sinon cote comptée. Renvoie vrai si la partie a fini.
+   */
+  function constaterDefi(g: Ligne): boolean {
+    const d = defis.find(x => x.partie_id === g.id);
+    if (!d?.date_limite || Date.parse(String(d.date_limite)) >= maintenant() || g.status !== 'active' || (g.counting && !g.rated)) return false;
+    const coups = String(g.moves);
+    let perdantNoir = (coups.length / 2) % 2 === 0;
+    if (g.rated && g.counting && g.dead_proposed_by) perdantNoir = g.dead_proposed_by !== g.black_id;
+    if (g.rated && coups.length < 4) {
+      Object.assign(g, { status: 'aborted', counting: false });
+      pousserPartie(g);
+    } else finir(g, perdantNoir ? 'W+T' : 'B+T');
+    for (const id of [g.black_id, g.white_id]) notifier(id, 'fin', String(g.id));
+    return true;
+  }
+  /** La tâche pg_cron des parties lentes (#440) : pertes au temps. Renvoie le nombre de parties finies. */
+  function tacheLentes(): number {
+    return games.filter(g => g.rated && defis.some(d => d.partie_id === g.id)).filter(constaterDefi).length;
+  }
+  /** Avance l'horloge du serveur (#440). */
+  function avancerHorloge(ms: number) { decalage += ms; }
+
   /** Constat de la chute (simplifié : sans absence) à la lecture de la pendule. */
   function constater(g: Ligne) {
     const p = pendules.find(x => x.partie_id === g.id);
@@ -402,6 +479,80 @@ export function fauxServeur() {
         return json(id);
       }
     }
+    // Émulation entre amis (#369).
+    if (['noter_go_du_jour', 'classement_go_du_jour', 'rappeler_go_du_jour', 'bilan_semaine', 'mes_records'].some(n => chemin === `/rest/v1/rpc/${n}`)) {
+      const nom = chemin.slice('/rest/v1/rpc/'.length);
+      const refus = (code: string) => json({ code, message: code, details: null, hint: null }, 400);
+      if (!u || u.anonyme) return refus('JGC01');
+      if (!profiles.find(x => x.id === u.id)?.username) return refus('JGP01');
+      const corps = (req.postDataJSON() ?? {}) as { p_numero?: number; p_resultat?: string; p_pseudo?: string; p_precedente?: boolean };
+      // Comme `est_bloque` (#363) : un ami bloqué, dans un sens ou dans l'autre, n'est plus listé ni rappelé.
+      const amisDe = (id: string) => amities.filter(f => f.etat === 'accepted' && (f.de === id || f.a === id)).map(f => (f.de === id ? f.a : f.de))
+        .filter(x => !blocages.some(b => (b.de === id && b.a === x) || (b.de === x && b.a === id)));
+      const numeroDuJour = () => Math.max(0, ...goDuJour.filter(g => g.user === u.id).map(g => g.numero));
+      if (nom === 'noter_go_du_jour') {
+        if (!['rate', 'reussi', 'vu'].includes(String(corps.p_resultat))) return refus('JGJ04');
+        const numero = Number(corps.p_numero);
+        let g = goDuJour.find(x => x.user === u.id && x.numero === numero);
+        if (!g) { g = { user: u.id, numero, etat: 'en_cours', essais: 0, le: Date.now() }; goDuJour.push(g); }
+        if (g.etat === 'en_cours') {
+          g.essais = Math.min(99, g.essais + 1); g.le = Date.now();
+          if (corps.p_resultat !== 'rate') g.etat = corps.p_resultat as 'reussi' | 'vu';
+        }
+        if (g.etat !== 'en_cours') marquer(n => n.destinataire_id === u.id && n.type === 'go_du_jour');
+        return json(g.etat);
+      }
+      if (nom === 'classement_go_du_jour') {
+        const numero = Math.max(numeroDuJour(), ...goDuJour.map(g => g.numero));
+        const rang = (e: string) => (e === 'reussi' ? 0 : e === 'vu' ? 1 : 2);
+        const lignes = [...amisDe(u.id), u.id].flatMap(id => {
+          const p = profiles.find(x => x.id === id);
+          if (!p?.username) return [];
+          const g = goDuJour.find(x => x.user === id && x.numero === numero);
+          const etat = g && g.etat !== 'en_cours' ? g.etat : 'pas_encore';
+          return [{ pseudo: String(p.username), etat, essais: etat === 'reussi' ? g!.essais : null, moi: id === u.id,
+            rappele: rappels.some(r => r.de === u.id && r.a === id && r.numero === numero), le: g?.le ?? Infinity }];
+        });
+        lignes.sort((a, b) => rang(a.etat) - rang(b.etat) || (a.essais ?? 99) - (b.essais ?? 99) || a.le - b.le || a.pseudo.localeCompare(b.pseudo));
+        return json(lignes.map(({ le: _le, ...l }) => l));
+      }
+      if (nom === 'rappeler_go_du_jour') {
+        const cible = profiles.find(x => String(x.username ?? '').toLowerCase() === String(corps.p_pseudo ?? '').trim().toLowerCase());
+        if (!cible) return refus('JGA01');
+        const autre = String(cible.id);
+        if (autre === u.id) return refus('JGA02');
+        if (!amisDe(u.id).includes(autre)) return refus('JGA08');
+        const numero = Math.max(numeroDuJour(), ...goDuJour.map(g => g.numero));
+        if (goDuJour.some(g => g.user === autre && g.numero === numero && g.etat !== 'en_cours')) return refus('JGJ02');
+        if (rappels.some(r => r.de === u.id && r.a === autre && r.numero === numero)) return json('deja');
+        rappels.push({ de: u.id, a: autre, numero });
+        notifier(autre, 'go_du_jour', null);
+        return json('envoye');
+      }
+      if (nom === 'bilan_semaine') {
+        const lundi = (() => { const d = new Date(); d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7)); return d.toISOString().slice(0, 10); })();
+        if (corps.p_precedente) return json({ semaine: lundi, parties: 0, victoires: 0, parties_classees: 0, cote_ecart: 0, go_du_jour: 0, amis: [] });
+        const parties = games.filter(g => g.status === 'finished' && !g.bot_id && g.black_id && g.white_id && (g.black_id === u.id || g.white_id === u.id));
+        const gagne = (g: Ligne) => (String(g.result).startsWith('B+') && g.black_id === u.id) || (String(g.result).startsWith('W+') && g.white_id === u.id);
+        const amis = amisDe(u.id).flatMap(id => {
+          const contre = parties.filter(g => g.black_id === id || g.white_id === id);
+          return contre.length ? [{ pseudo: String(profiles.find(x => x.id === id)?.username), victoires: contre.filter(gagne).length, defaites: contre.filter(g => !gagne(g)).length }] : [];
+        }).sort((a, b) => b.victoires - a.victoires);
+        const classees = ratingHistory.filter(h => h.user_id === u.id && h.kind === 'game');
+        return json({ semaine: lundi, parties: parties.length, victoires: parties.filter(gagne).length, parties_classees: classees.length,
+          cote_ecart: classees.reduce((s, h) => s + Number(h.ecart ?? 0), 0), go_du_jour: goDuJour.filter(g => g.user === u.id && g.etat !== 'en_cours').length, amis: amis.slice(0, 5) });
+      }
+      // mes_records : victoire = points gagnés (Glicko-2 : une victoire fait toujours monter).
+      const h = ratingHistory.filter(x => x.user_id === u.id && x.kind === 'game').sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)));
+      let meilleure: Ligne | null = null, serie = 0, record = 0;
+      for (const x of h) {
+        if (!meilleure || Number(x.rating) > Number(meilleure.rating)) meilleure = x;
+        serie = Number(x.ecart) > 0 ? serie + 1 : 0;
+        record = Math.max(record, serie);
+      }
+      return json({ parties: h.length, meilleure_cote: meilleure ? meilleure.rating : null, meilleure_cote_le: meilleure ? String(meilleure.created_at).slice(0, 10) : null,
+        serie_victoires: record, serie_en_cours: serie });
+    }
     if (chemin === '/rest/v1/rpc/marquer_notifications_lues') {
       if (!u) return json({ message: 'Connexion requise' }, 401);
       const { p_partie, p_type } = req.postDataJSON() as { p_partie?: string; p_type?: string };
@@ -416,6 +567,33 @@ export function fauxServeur() {
         if (!partiesPerso.some(x => x.user_id === u.id && x.cle === l.cle)) partiesPerso.push({ ...l, user_id: u.id });
       }
       return json(p_parties.map(l => l.cle));
+    }
+    // #364 : partie partagée par lien, comme 20261005213100_parties_partagees.sql (sans plafonds) : compte avec pseudo,
+    // SGF minimal (aucun nom, aucun commentaire), même partie = même jeton ; lecture sans compte par le seul jeton.
+    if (chemin === '/rest/v1/rpc/partager_partie') {
+      if (!u || u.anonyme) return json({ code: 'JGC01', message: 'Crée ton compte' }, 400);
+      if (!profiles.find(x => x.id === u.id)?.username) return json({ code: 'JGP01', message: 'Choisis ton pseudo' }, 400);
+      const a = req.postDataJSON() as { p_sgf: string; p_taille: number; p_joueur: number | null; p_adversaire: string | null; p_coup: number };
+      if (/(PB|PW|C|DT|PC|GC)\[/.test(a.p_sgf) || !a.p_sgf.includes(`SZ[${a.p_taille}]`)) return json({ code: '22023', message: 'Partie illisible' }, 400);
+      const deja = partagees.find(x => x.user_id === u.id && x.sgf === a.p_sgf);
+      if (deja) { Object.assign(deja, { coup: a.p_coup, joueur: a.p_joueur, adversaire: a.p_adversaire }); return json(deja.jeton); }
+      const jeton = `P${String(partagees.length + 1).padStart(3, '0')}`.padEnd(32, 'x');
+      partagees.push({ jeton, user_id: u.id, sgf: a.p_sgf, taille: a.p_taille, joueur: a.p_joueur, adversaire: a.p_adversaire, coup: a.p_coup });
+      return json(jeton);
+    }
+    if (chemin === '/rest/v1/rpc/lire_partie_partagee') {
+      const { p_jeton } = req.postDataJSON() as { p_jeton: string };
+      const l = partagees.find(x => x.jeton === p_jeton);
+      if (!l) return json([]);
+      const pseudo = profiles.find(x => x.id === l.user_id)?.username ?? null;
+      return json([{ sgf: l.sgf, taille: l.taille, joueur: l.joueur, adversaire: l.adversaire, coup: l.coup, pseudo, cree_le: new Date().toISOString() }]);
+    }
+    if (chemin === '/rest/v1/rpc/retirer_partie_partagee') {
+      if (!u) return json({ code: 'JGC01', message: 'Connexion requise' }, 400);
+      const { p_jeton } = req.postDataJSON() as { p_jeton: string };
+      const k = partagees.findIndex(x => x.jeton === p_jeton && x.user_id === u.id);
+      if (k >= 0) partagees.splice(k, 1);
+      return json(k >= 0);
     }
     // #355 : rattachement d'une session sans compte, comme 20261002001100_rattacher_session_anonyme.sql (sans empreinte).
     if (chemin === '/rest/v1/rpc/preparer_rattachement') {
@@ -456,7 +634,7 @@ export function fauxServeur() {
       const moi = file.find(f => f.user === u.id && memes(f));
       const maintenant = Date.now();
       // #436 : mêmes réglages d'abord ; après 30 s d'attente (la plus longue des deux), les autres réglages aussi.
-      const candidats = file.filter(f => f.user !== u.id && (memes(f) || maintenant - Math.min(f.depuis, moi?.depuis ?? maintenant) >= 30_000));
+      const candidats = file.filter(f => f.user !== u.id && !estBloque(u.id, f.user) && (memes(f) || maintenant - Math.min(f.depuis, moi?.depuis ?? maintenant) >= 30_000));
       const autre = candidats.find(memes) ?? candidats.sort((a, b) => a.depuis - b.depuis)[0];
       if (autre) {
         file.splice(0, file.length, ...file.filter(f => f.user !== u.id && f.user !== autre.user));
@@ -475,6 +653,43 @@ export function fauxServeur() {
         file.push({ user: u.id, taille: p_size, cadence: p_cadence, regles: p_regles, depuis: maintenant });
       }
       return json(null);
+    }
+    if (chemin === '/rest/v1/rpc/chercher_partie_lente') {
+      const { p_size = 9, p_delai_jours = 1 } = (req.postDataJSON() ?? {}) as { p_size?: number; p_delai_jours?: number };
+      if (!u || u.anonyme) return json({ code: 'JGC01', message: 'Crée ton compte' }, 400);
+      const moi = profiles.find(x => x.id === u.id);
+      if (!moi?.username) return json({ code: 'JGP01', message: 'Choisis ton pseudo' }, 400);
+      if (![9, 13, 19].includes(p_size) || ![1, 2, 3].includes(p_delai_jours)) return json({ code: '22023', message: 'Invalide' }, 400);
+      const enCours = (id: unknown) => games.filter(g => g.rated && g.status === 'active' && defis.some(d => d.partie_id === g.id) && (g.black_id === id || g.white_id === id)).length;
+      if (enCours(u.id) >= 10) return json({ code: 'JGL10', message: 'Tu as déjà 10 parties lentes en cours' }, 400);
+      const autre = fileLente.find(f => f.user_id !== u.id && f.partie_id === null && f.size === p_size && f.delai_jours === p_delai_jours && enCours(f.user_id) < 10 && !estBloque(String(u.id), String(f.user_id)));
+      fileLente.splice(0, fileLente.length, ...fileLente.filter(f => f.user_id !== u.id));
+      if (!autre) {
+        fileLente.push({ user_id: u.id, size: p_size, delai_jours: p_delai_jours, rating: moi.rating ?? 800, rd: 350, created_at: new Date(maintenant()).toISOString(), partie_id: null });
+        return json(null);
+      }
+      const id = `44444444-4444-4444-8444-${String(++nLente).padStart(12, '0')}`;
+      games.push({ id, black_id: autre.user_id, white_id: u.id, created_by: u.id, bot_id: null, size: p_size, komi: 6.5, rules: 'japanese', handicap: 0, moves: '',
+        status: 'active', counting: false, dead_stones: null, dead_proposed_by: null, result: null, resumed_at: 0, prive: true, rated: true, updated_at: new Date().toISOString() });
+      defis.push({ partie_id: id, jeton: `lente${nLente}`.padEnd(32, 'L'), createur_id: u.id, invite_id: autre.user_id,
+        delai_coup: p_delai_jours === 1 ? '1 day' : `${p_delai_jours} days`, date_limite: new Date(maintenant() + p_delai_jours * 864e5).toISOString(),
+        lien_expire_le: new Date().toISOString(), cree_le: new Date().toISOString() });
+      autre.partie_id = id;
+      notifier(autre.user_id, 'tour', id);
+      return json(id);
+    }
+    if (chemin === '/rest/v1/rpc/quitter_file_lente') {
+      if (!u) return json({ code: '42501', message: 'Connexion requise' }, 401);
+      const ligne = fileLente.find(f => f.user_id === u.id);
+      fileLente.splice(0, fileLente.length, ...fileLente.filter(f => f.user_id !== u.id));
+      return json(ligne?.partie_id ?? null);
+    }
+    if (chemin === '/rest/v1/rpc/victoire_au_temps') {
+      const { p_partie } = req.postDataJSON() as { p_partie: string };
+      const g = games.find(x => x.id === p_partie);
+      if (!u || !g || !defis.some(d => d.partie_id === p_partie) || (g.black_id !== u.id && g.white_id !== u.id)) return json({ code: 'P0002', message: 'Défi introuvable' }, 400);
+      constaterDefi(g);
+      return json(g.result ?? null);
     }
     if (chemin === '/rest/v1/rpc/quitter_file_attente') {
       if (!u) return json({ code: '42501', message: 'Connexion requise' }, 401);
@@ -512,6 +727,64 @@ export function fauxServeur() {
       finir(g, resultat);
       return json(resultat);
     }
+    // Sécurité (#363, #373) : mêmes règles et mêmes codes que la migration.
+    if (['/rest/v1/rpc/signaler', '/rest/v1/rpc/bloquer_joueur', '/rest/v1/rpc/debloquer_joueur', '/rest/v1/rpc/mes_blocages', '/rest/v1/rpc/dire_en_partie'].includes(chemin)) {
+      const corps = (req.postDataJSON() ?? {}) as Record<string, unknown>;
+      if (chemin === '/rest/v1/rpc/dire_en_partie') {
+        if (!u) return json({ code: '42501', message: 'Connexion requise' }, 401);
+        const codes = ['bonne_partie', 'bien_joue', 'merci', 'joli_coup', 'oups', 'a_la_prochaine', 'mochi_salut', 'mochi_content', 'mochi_fier', 'mochi_pensif'];
+        if (!codes.includes(String(corps.p_code))) return json({ code: 'JGM02', message: 'Message inconnu' }, 400);
+        const g = games.find(x => x.id === corps.p_partie);
+        if (!g || !g.black_id || !g.white_id || g.bot_id || (g.black_id !== u.id && g.white_id !== u.id)) return json({ code: 'P0002', message: 'Partie introuvable' }, 400);
+        const miens = messagesPartie.filter(m => m.partie_id === g.id && m.auteur_id === u.id);
+        if (miens.length >= 10) return json({ code: 'JGM01', message: '10 messages' }, 400);
+        if (miens.some(m => Date.now() - Date.parse(String(m.envoye_le)) < 3000)) return json({ code: 'JGM03', message: 'Trop vite' }, 400);
+        const autre = g.black_id === u.id ? g.white_id : g.black_id;
+        if (blocages.some(b => b.de === autre && b.a === u.id)) return json(true);
+        const m = { id: ++idMessage, partie_id: g.id, auteur_id: u.id, code: corps.p_code, envoye_le: new Date().toISOString() };
+        messagesPartie.push(m);
+        pousserMessage(m);
+        return json(true);
+      }
+      if (!u || u.anonyme) return json({ code: 'JGC01', message: 'Crée ton compte' }, 400);
+      if (!profiles.find(x => x.id === u.id)?.username) return json({ code: 'JGP01', message: 'Choisis ton pseudo' }, 400);
+      const parPseudo = (p: unknown) => profiles.find(x => typeof p === 'string' && String(x.username ?? '').toLowerCase() === p.toLowerCase())?.id as string | undefined;
+      const parPartie = (id: unknown) => {
+        const g = games.find(x => x.id === id);
+        if (!g || (g.black_id !== u.id && g.white_id !== u.id) || g.bot_id) return undefined;
+        return (g.black_id === u.id ? g.white_id : g.black_id) as string | undefined;
+      };
+      if (chemin === '/rest/v1/rpc/mes_blocages') {
+        return json(blocages.filter(b => b.de === u.id).map(b => ({ pseudo: profiles.find(x => x.id === b.a)?.username, depuis: b.le })));
+      }
+      if (chemin === '/rest/v1/rpc/debloquer_joueur') {
+        const cible = parPseudo(corps.p_pseudo);
+        const i = blocages.findIndex(b => b.de === u.id && b.a === cible);
+        if (i >= 0) blocages.splice(i, 1);
+        return json(i >= 0);
+      }
+      const visePersonne = chemin === '/rest/v1/rpc/bloquer_joueur' || corps.p_type === 'joueur';
+      const cible = !visePersonne ? undefined : corps.p_partie ? parPartie(corps.p_partie) : parPseudo(corps.p_pseudo);
+      if (visePersonne && !cible) return json(corps.p_partie ? { code: 'P0002', message: 'Partie introuvable' } : { code: 'JGA01', message: 'Aucun joueur' }, 400);
+      if (chemin === '/rest/v1/rpc/bloquer_joueur') {
+        if (cible === u.id) return json({ code: 'JGB02', message: 'Toi-même' }, 400);
+        if (!blocages.some(b => b.de === u.id && b.a === cible)) blocages.push({ de: u.id, a: cible!, le: new Date().toISOString() });
+        amities.splice(0, amities.length, ...amities.filter(f => !((f.de === u.id && f.a === cible) || (f.de === cible && f.a === u.id))));
+        return json(true);
+      }
+      // signaler
+      const type = String(corps.p_type);
+      if (signalements.filter(x => x.auteur_id === u.id).length >= 10) return json({ code: 'JGS01', message: '10 signalements' }, 400);
+      if (!['joueur', 'probleme', 'bug', 'idee', 'autre'].includes(type)) return json({ code: 'JGS02', message: 'Mal formé' }, 400);
+      const texte = typeof corps.p_texte === 'string' ? corps.p_texte.trim() : null;
+      if (texte && texte.length > 500) return json({ code: 'JGS02', message: 'Trop long' }, 400);
+      if (type === 'joueur' && cible === u.id) return json({ code: 'JGS03', message: 'Toi-même' }, 400);
+      if (['bug', 'idee', 'autre'].includes(type) && !texte) return json({ code: 'JGS02', message: 'Écris ton message' }, 400);
+      signalements.push({ id: signalements.length + 1, auteur_id: u.id, type, cible_joueur_id: type === 'joueur' ? cible : null,
+        partie_id: type === 'joueur' ? corps.p_partie ?? null : null, probleme_id: type === 'probleme' ? corps.p_probleme : null,
+        motif: corps.p_motif ?? null, texte, version_app: corps.p_version ?? null, contexte: corps.p_contexte ?? null, cree_le: new Date().toISOString() });
+      return json(true);
+    }
     if (chemin.startsWith('/rest/v1/rpc/')) return json(null);
     if (chemin === '/functions/v1/game-action') {
       const corps = req.postDataJSON() as { action: string; game_id: string; move: string; gameId?: string };
@@ -536,10 +809,16 @@ export function fauxServeur() {
       const g = games.find(x => x.id === game_id);
       if (action !== 'defi_coup' || !g || !u) return json({ error: 'format' }, 400);
       if (u.anonyme) return json({ error: 'connexion' }, 401);
+      // #440 : délai dépassé : la perte au temps est enregistrée, le coup refusé (comme jouer_coup_defi).
+      if (constaterDefi(g)) return json({ ok: false, error: 'temps', message: 'Temps écoulé : la partie est finie.' }, 409);
+      if (g.status !== 'active') return json({ ok: false, error: 'terminee' }, 409);
       const trait = (g.moves as string).length / 2 % 2 === 0 ? g.black_id : g.white_id;
       if (trait !== u.id) return json({ error: 'tour' }, 409);
+      const deuxPasses = move === 'tt' && String(g.moves).endsWith('tt') && String(g.moves).length % 2 === 0;
       g.moves = (g.moves as string) + move;
-      (defis.find(d => d.partie_id === game_id) ?? defis[0]).date_limite = new Date(Date.now() + 3 * 864e5).toISOString();
+      if (deuxPasses) Object.assign(g, { counting: true, dead_stones: null, dead_proposed_by: null });
+      const dDefi = defis.find(d => d.partie_id === game_id) ?? defis[0];
+      dDefi.date_limite = new Date(maintenant() + delaiMs(dDefi)).toISOString();
       // Déclencheur `notifier_partie` : ce qui attendait est dépassé, l'adversaire est prévenu.
       marquer(n => n.partie_id === g.id && (n.type === 'tour' || n.type === 'comptage'));
       notifier(u.id === g.black_id ? g.white_id : g.black_id, 'tour', String(g.id));
@@ -557,7 +836,7 @@ export function fauxServeur() {
     }
     if (chemin.startsWith('/rest/v1/')) {
       const table = chemin.slice('/rest/v1/'.length);
-      let lignes: Ligne[] = table === 'games' ? games : table === 'defis' ? defis : table === 'profiles' ? profiles
+      let lignes: Ligne[] = table === 'games' ? games : table === 'defis' ? defis : table === 'profiles' ? profiles : table === 'file_lente' ? fileLente
         : table === 'notifications' ? notifications : table === 'parties_perso' ? partiesPerso : table === 'rating_history' ? ratingHistory : [];
       for (const [cle, val] of url.searchParams) {
         if (val.startsWith('eq.')) lignes = lignes.filter(l => String(l[cle]) === val.slice(3));
@@ -571,7 +850,7 @@ export function fauxServeur() {
       // RLS simulée : profils visibles par tous ; parties et défis par leurs seuls joueurs ; notifications par leur destinataire.
       if (table === 'parties_perso') lignes = lignes.filter(l => !!u && !u.anonyme && l.user_id === u.id)
         .sort((a, b) => Date.parse(String(b.joue_le)) - Date.parse(String(a.joue_le)));
-      else if (table === 'rating_history') lignes = lignes.filter(l => !!u && l.user_id === u.id);
+      else if (table === 'rating_history' || table === 'file_lente') lignes = lignes.filter(l => !!u && l.user_id === u.id);
       else if (table !== 'profiles') lignes = lignes.filter(l => !u ? false : [l.black_id, l.white_id, l.createur_id, l.invite_id, l.destinataire_id].includes(u.id));
       if (req.method() !== 'GET') return json(table === 'lesson_progress' ? [] : {});
       const objet = (req.headers()['accept'] ?? '').includes('vnd.pgrst.object');
@@ -607,8 +886,9 @@ export function fauxServeur() {
   function figerTempsReel() { for (const a of abonnes) a.fige = true; }
   /** Canaux rejoints sur une connexion qui marche, dont le sujet commence par `prefixe` (`defi-`, `direct-`). */
   const canauxActifs = (prefixe: string) => [...abonnes].filter(a => !a.fige).flatMap(a => [...a.canaux.keys()]).filter(t => t.startsWith(`realtime:${prefixe}`)).length;
-  return { traiter, brancherTempsReel, notifier, ralentirLectures, figerTempsReel, canauxActifs, pousses, pousserPartie, appels, games, defis, notifications, partiesPerso, profiles, ratingHistory, emailsEnvoyes, sessionAnonyme, file, pendules,
-    compteExistant, compteGoogle, compteSocial, relierIdentite, liaison, utilisateur, sessionCompte, autorisations, amities };
+  return { traiter, brancherTempsReel, notifier, fileLente, tacheLentes, avancerHorloge, ralentirLectures, figerTempsReel, canauxActifs, pousses, pousserPartie, appels, games, defis, notifications, partiesPerso, partagees, profiles, ratingHistory, emailsEnvoyes, sessionAnonyme, file, pendules,
+    compteExistant, compteGoogle, compteSocial, relierIdentite, liaison, utilisateur, sessionCompte, autorisations, amities,
+    signalements, blocages, messagesPartie, goDuJour, rappels };
 }
 
 export type FauxServeur = ReturnType<typeof fauxServeur>;

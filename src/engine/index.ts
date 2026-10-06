@@ -377,6 +377,31 @@ export async function meilleurCoup(pos: Position, komi: number): Promise<Conseil
 }
 
 /**
+ * Analyse d'une position posée à la main (#372, « Étudier une position »). KataGo seulement, jamais le moteur simple :
+ * ses conseils sont trop peu sûrs. KataGo est démarré s'il est en mémoire ou si son réseau est en cache ; sinon
+ * `katago: false`, et l'écran propose le téléchargement (`preparerKataGo`). Une seule recherche par appel (batterie).
+ * `lead` : avance de Noir, komi compris ; `coups` : les meilleurs coups pour le joueur au trait, du meilleur au moins
+ * bon, avec ses chances de gain (0 à 1) et son avance en points.
+ */
+export type AnalyseEtude =
+  | { katago: false }
+  | { katago: true; lead: number; coups: { move: number; winrate: number | null; lead: number }[] };
+export async function analyseEtude(pos: Position, komi: number, visites = 96): Promise<AnalyseEtude> {
+  let k = kataGoRevue() ?? null;
+  if ((!k || k.info.state !== 'pret') && (await reseauEnCache())) {
+    k = getKataGo();
+    try { await k?.start?.(); } catch { /* KataGo indisponible */ }
+  }
+  if (!k || k.info.state !== 'pret') return { katago: false };
+  const a = await k.analyze(pos, { komi, visits: visites, timeMs: visites * 30, maxMoves: 6 });
+  return {
+    katago: true,
+    lead: pos.toPlay === 1 ? a.lead : -a.lead,
+    coups: a.moves.map(m => ({ move: m.move, winrate: typeof m.winrate === 'number' ? m.winrate : null, lead: m.lead })),
+  };
+}
+
+/**
  * Analyse pour le Conseil de Mochi (#80) : ce que `conseil()` (src/engine/conseil.ts) attend de KataGo.
  * Deux recherches courtes (moins de 2 s en tout sur 9 × 9) : la position telle quelle (propriété, meilleurs coups)
  * et la même position avec l'adversaire au trait (propriété s'il jouait maintenant, sa menace).

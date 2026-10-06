@@ -37,10 +37,12 @@ interface BandeauProps {
   gain?: { n: number; k: number } | null;
   /** Pendule de la partie en direct (#360), entre le nom et le couvercle. */
   pendule?: ReactNode;
+  /** Message ou émote reçu en partie entre humains (#373), à la place de la réplique, près du nom. */
+  bulle?: ReactNode;
 }
 
 /** Bandeau d'un joueur : portrait, nom, rang, réplique éventuelle et couvercle. */
-export function Bandeau({ nom, sousTitre, portrait, actif, captures, pierresPrises, replique, avant, gain, pendule }: BandeauProps) {
+export function Bandeau({ nom, sousTitre, portrait, actif, captures, pierresPrises, replique, avant, gain, pendule, bulle }: BandeauProps) {
   return (
     <div className={`joueur${actif ? ' active' : ''}`} data-joueur={nom}>
       {avant}
@@ -49,6 +51,7 @@ export function Bandeau({ nom, sousTitre, portrait, actif, captures, pierresPris
         <div className="joueur-nom">
           <b>{nom}</b>
           {replique && <span key={replique.n} className="replique" role="status">{fr(replique.texte)}</span>}
+          {bulle}
         </div>
         <small>{sousTitre}{actif && <span className="sr-only">{t('partie.auTrait')}</span>}</small>
       </div>

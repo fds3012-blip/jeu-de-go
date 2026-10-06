@@ -46,7 +46,8 @@ describe('imports critiques du JS initial (#401, budget)', () => {
 
   it('le démarrage charge le client tout de suite seulement si le premier écran en dépend, sinon après', () => {
     const main = readFileSync(join(SRC, 'main.tsx'), 'utf8');
-    expect(main).toMatch(/if \(JETON_AU_CHARGEMENT !== null \|\| chargementUrgent\(\)\) void chargerSupabase\(\);/);
+    // #364 : un lien de partie partagée (`#partie=JETON`) demande aussi le client tout de suite.
+    expect(main).toMatch(/if \(JETON_AU_CHARGEMENT !== null \|\| PARTIE_AU_CHARGEMENT !== null \|\| chargementUrgent\(\)\) void chargerSupabase\(\);/);
     expect(main).toMatch(/apresPremierEcran\(\(\) => \{[^}]*void chargerSupabase\(\);/s);
     expect(main).toContain('ecouterErreursAvantSentry();');
   });

@@ -49,6 +49,10 @@ interface Props {
   noms?: NomsCamps;
   /** Dessin posé sur la grille, sous les pierres, quand une pierre fantôme est montrée (#400 : visée du plateau serré, src/ui/Visee.tsx, chargée avec son écran). */
   surFantome?: (p: number) => ReactElement;
+  /** #365 : `false` cache les lettres et chiffres autour du goban (réglage « Coordonnées »). Par défaut, ils sont là. */
+  coordonnees?: boolean;
+  /** #365 : numéro de coup écrit sur chaque pierre (réglage « Numéros des coups », en revue). Absent par défaut. */
+  numeros?: ReadonlyMap<number, number> | null;
 }
 
 // Les fonctions pures du clavier et des annonces (issue #116) vivent dans boardA11y.ts.
@@ -106,7 +110,7 @@ function corps(c: number, p: number, size: number): ReactElement {
   return <use href={c === 1 ? '#go-noire' : `#go-blanche-${shellVariant(p, size)}`} />;
 }
 
-export function Board({ size, board, toPlay = 1, marks = {}, interactive = false, stonesTappable = false, confirmTouch = true, toucher = false, onPlay, shake, versCouvercles = false, noms, surFantome }: Props) {
+export function Board({ size, board, toPlay = 1, marks = {}, interactive = false, stonesTappable = false, confirmTouch = true, toucher = false, onPlay, shake, versCouvercles = false, noms, surFantome, coordonnees = true, numeros }: Props) {
   const ref = useRef<SVGSVGElement>(null);
   const theme = useThemeGoban();
   const [ghost, setGhost] = useState(-1);
@@ -216,17 +220,17 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
         <path d={d} stroke={theme.ligne} strokeOpacity={0.78} strokeWidth={fin} fill="none" />
         <path d={dBord} stroke={theme.ligne} strokeOpacity={0.78} strokeWidth={bord} fill="none" strokeLinejoin="miter" />
         {hoshi(size).map(p => <circle key={p} cx={M + (p % size) * C} cy={M + Math.floor(p / size) * C} r={(size === 19 ? 2.3 : 3) * k} fill={theme.ligne} fillOpacity={0.85} />)}
-        <g className="coord" fontSize={fs} fill={theme.coord} fillOpacity={0.7} textAnchor="middle" dominantBaseline="central">
+        {coordonnees && <g className="coord" fontSize={fs} fill={theme.coord} fillOpacity={0.7} textAnchor="middle" dominantBaseline="central">
           {Array.from({ length: size }, (_, i) => (
             <g key={i}>
               <text x={M + i * C} y={lc}>{LETTERS[i]}</text>
               <text x={lc} y={M + i * C}>{size - i}</text>
             </g>
           ))}
-        </g>
+        </g>}
       </g>
     );
-  }, [size, theme]);
+  }, [size, theme, coordonnees]);
 
   const stones: ReactElement[] = [];
   for (let p = 0; p < board.length; p++) {
@@ -301,7 +305,18 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
         ))}</g> : null}
         {marks.libs?.filter(p => !board[p]).map(p => <circle key={`lb${p}`} className="liberte" cx={X(p)} cy={Y(p)} r={C * 0.15} fill={JADE} stroke={JADE_FONCE} strokeWidth={1.6} />)}
         {marks.targets?.filter(p => board[p]).map(p => { const [x, y] = at(p); return <circle key={`tg${p}`} data-cible="" cx={x} cy={y} r={C * 0.3} fill="none" stroke={HANKO} strokeWidth={2.6} strokeDasharray="5 3" />; })}
-        {last >= 0 ? (() => { const [x, y] = at(last); return <circle cx={x} cy={y} r={R * 0.3} fill="none" stroke={board[last] === 1 ? PAPIER : '#1a1a1a'} strokeWidth={2.4} data-dernier="" />; })() : null}
+        {numeros ? <g className="numeros" aria-hidden="true" textAnchor="middle" dominantBaseline="central" fontWeight={700} fontFamily="var(--font-ui, system-ui), system-ui, sans-serif">{[...numeros].filter(([p]) => board[p]).map(([p, n]) => {
+          // #365 : chiffres foncés sur les blanches, clairs sur les noires (contraste ≥ 4,5:1 sur chaque pierre).
+          const [x, y] = at(p), chiffres = String(n).length;
+          return <text key={`n${p}`} x={x} y={y} fontSize={R * (chiffres > 2 ? 0.78 : 0.95)} fill={board[p] === 1 ? PAPIER : '#1a1a1a'} data-numero={n}>{n}</text>;
+        })}</g> : null}
+        {last >= 0 ? (() => {
+          const [x, y] = at(last);
+          // Avec les numéros, le dernier coup est cerclé autour de la pierre (le centre porte son numéro).
+          return numeros?.has(last)
+            ? <circle cx={x} cy={y} r={R * 0.84} fill="none" stroke={board[last] === 1 ? PAPIER : '#1a1a1a'} strokeWidth={2.4} data-dernier="" />
+            : <circle cx={x} cy={y} r={R * 0.3} fill="none" stroke={board[last] === 1 ? PAPIER : '#1a1a1a'} strokeWidth={2.4} data-dernier="" />;
+        })() : null}
         {marks.zone != null && marks.zone >= 0 ? (() => {
           // Le cercle est décalé d'une demi-case selon le point : il entoure le coup sans le centrer.
           // Il reste à l'intérieur de la grille pour ne pas être coupé par le bord du plateau.

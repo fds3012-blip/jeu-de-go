@@ -25,7 +25,7 @@ import {
 } from './rejouerErreurs';
 import { creerErreur, ERREURS_KEY, garderRatee, lireErreurs } from './erreurs';
 import { readLocal, writeLocal } from './hooks';
-import { gagnerXp } from './xp';
+import { gagnerXp, noterActivite } from './xp';
 import { useSettings } from './settings';
 import '../ui/rejouer-erreurs.css';
 
@@ -71,6 +71,7 @@ export function RejouerErreurs({ sgf, positions, komi, analyses, erreurs, joueur
 
   function conclure(trouvee: boolean, n: number) {
     track(EVENTS.revueErreurRejouee, { trouvee, essais: n, note: e.note });
+    noterActivite('erreurs'); // #369 : objectif « erreurs rejouées » de la semaine
     setResultats(r => [...r, { coup: e.coup, note: e.note, trouvee, essais: n }]);
     // Pas trouvée : elle rejoint « Tes erreurs à rejouer » (révision espacée, #77) et revient demain.
     if (!trouvee) {

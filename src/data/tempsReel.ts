@@ -21,6 +21,8 @@ export interface Liaison {
   filtre: string;
   /** La ligne après modification, telle que le serveur l'a écrite (visible par ce joueur, RLS comprise). */
   surLigne: (ligne: Record<string, unknown>) => void;
+  /** Événement suivi : UPDATE par défaut ; INSERT pour une table où l'on ne fait qu'ajouter (#373 : messages en partie). */
+  evenement?: 'UPDATE' | 'INSERT';
 }
 
 export interface OptionsSuivi {
@@ -82,7 +84,7 @@ export function suivreLignes(db: Db, nom: string, liaisons: readonly Liaison[], 
     fermer();
     let c = db.channel(`${nom}-${++numero}`);
     for (const l of liaisons) {
-      c = c.on('postgres_changes', { event: 'UPDATE', schema: 'public', table: l.table, filter: l.filtre },
+      c = c.on('postgres_changes', { event: l.evenement ?? 'UPDATE', schema: 'public', table: l.table, filter: l.filtre },
         p => { if (!arrete && c === canal && p.new && typeof p.new === 'object') l.surLigne(p.new as Record<string, unknown>); });
     }
     canal = c;

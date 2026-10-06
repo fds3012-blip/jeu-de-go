@@ -7,7 +7,7 @@ Jouer maintenant contre quelqu'un de son niveau : file d'attente, appariement pa
 1. Accueil → « Jouer en ligne », l'action principale dès le début (#432 ; tuile « En ligne » au tout premier lancement, hors ligne, et absente sans comptes configurés). Sans compte ou sans pseudo : « Crée ton compte » (raison `en_ligne`), puis l'écran s'ouvre de lui-même.
 
    Règle de l'action principale (`src/app/modes.ts`) : la partie en ligne classée, sauf hors ligne, sans Supabase, ou au tout premier lancement (aucune partie, aucune leçon), qui garde son propre écran « Joue ta première partie » contre Pomme. Avant #432, il fallait avoir battu Pomme et fini les 3 premières leçons (#429). « Contre l'ordi » est une tuile pour tous, avec l'adversaire en cours.
-2. Choix : taille (9 × 9, 13 × 13, 19 × 19), temps de jeu, comptage. Une action : « Trouver un adversaire ». Depuis #436, l'écran part toujours de la file par défaut (9 × 9, normal, japonais), quelle que soit la taille réglée pour l'ordi.
+2. Choix (#440 : en tête, la bascule « En direct » / « Partie lente », mémorisée ; voir `docs/game-design/partie-lente.md`) : taille (9 × 9, 13 × 13, 19 × 19), temps de jeu, comptage. Une action : « Trouver un adversaire ». Depuis #436, l'écran part toujours de la file par défaut (9 × 9, normal, japonais), quelle que soit la taille réglée pour l'ordi.
 3. Attente : Mochi dit « Je cherche quelqu'un de ton niveau… », le temps d'attente défile. Une action : « Annuler ».
    Au bout de 25 s (#436) : « Personne de ton niveau pour l'instant. Joue contre Caillou en attendant : je te préviens si quelqu'un arrive. » L'IA est celle de l'échelle dont le rang est le plus proche de la cote du joueur (3000 − 100 × kyu ; sans cote, 800). Action principale « Jouer contre Caillou », lien « Continuer d'attendre ». Voir « Repli contre l'IA » plus bas.
 4. Partie : pseudo, grade et cote de l'adversaire, pendule de chacun dans son bandeau.
@@ -51,6 +51,7 @@ Calcul : `penduleApres` (`src/go/pendule.ts`) et `public.pendule_apres` (même c
 - même taille, même temps, même comptage : appariés tout de suite. Dès que l'un des deux attend depuis 30 s (la plus longue des deux attentes), les réglages peuvent différer : la partie prend la taille, le temps et le comptage de celui qui attendait depuis le plus longtemps. L'écran le dit avant le premier coup (« Ton adversaire attendait avant toi : la partie se joue en 13 × 13, 5 min + 3 × 20 s. ») ;
 - la cote, inchangée : écart accepté = 100 + √(RD₁² + RD₂²) / 2 + 10 points par seconde d'attente (la plus longue des deux). Le plus proche en cote d'abord, puis les mêmes réglages, puis le plus ancien dans la file ;
 - trouvé : partie classée (komi 6,5, handicap 0), couleurs tirées au sort, pendules pleines, celle de Noir part ;
+- jamais avec un joueur qu'on a bloqué, ou qui nous a bloqué (#363, `supabase/migrations/20261005220100_securite_signalements.sql`, qui redéfinit `find_match` à partir de la forme de #436, et `lente_apparier` de #440 pour les parties lentes) ;
 - pas trouvé : le joueur entre dans la file. Il rappelle `find_match` toutes les 2,5 s : il garde sa place et son ancienneté, et retrouve la partie dès qu'un adversaire l'a créée.
 
 Une attente sans nouvelles depuis 30 s (écran fermé) ou de plus de 10 minutes est retirée de la file. « Annuler » appelle `quitter_file_attente`, qui rend la partie si un adversaire vient de la créer : l'écran l'ouvre au lieu d'annuler.
@@ -82,5 +83,5 @@ Japonais par défaut, chinois en option au moment du choix. Deux joueurs aux com
 
 ## Limites connues
 
-- Sans tâche planifiée, une partie dont les deux joueurs sont partis reste « en cours » jusqu'au retour de l'un d'eux (son premier appel constate l'absence de l'autre).
-- Pas de spectateurs ni de discussion pour l'instant.
+- Depuis #363, la tâche pg_cron `clore-parties-direct-abandonnees` (chaque minute, `direct_clore_abandonnees`) applique la règle d'absence quand les deux joueurs sont partis depuis plus de 60 s : celui qui devait jouer perd au temps (partie annulée si chacun n'a pas joué) ; au comptage, celui qui est parti le premier perd. Avant, la partie restait « en cours » jusqu'au retour de l'un d'eux. Détail : `docs/produit/signalements-et-blocage.md`.
+- Pas de spectateurs. Pas de discussion libre : seulement des messages tout prêts et des émotes de Mochi (« Dire », #373), avec « Signaler » et « Bloquer » (#363).
