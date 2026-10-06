@@ -43,7 +43,14 @@ async function poserEtude(page: Page) {
 const copie = (page: Page) => page.evaluate(() => (window as unknown as { __copie?: string }).__copie ?? '');
 
 async function sansDefilementHorizontal(page: Page) {
-  expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0);
+  const m = await page.evaluate(() => {
+    const d = document.documentElement, l = d.clientWidth;
+    // Éléments dont le bord droit dépasse la page : dit quoi corriger quand le test échoue.
+    const fautifs = [...document.querySelectorAll('body *')].filter(e => e.getBoundingClientRect().right > l + 0.5)
+      .slice(-4).map(e => `${e.tagName.toLowerCase()}.${String(e.className).split(' ').join('.')} (${Math.round(e.getBoundingClientRect().right)} > ${l})`);
+    return { debord: d.scrollWidth - l, fautifs };
+  });
+  expect(m.debord, `défilement horizontal : ${m.fautifs.join(' ; ')}`).toBeLessThanOrEqual(0);
 }
 
 test('partager une étude → l’ami ouvre le lien sans compte → « Étudie-la avec Mochi » ouvre sa copie', async ({ browser, baseURL }) => {
@@ -174,6 +181,8 @@ test('sans compte : image et fichier SGF de l’étude, pas de lien ; zoom 200 %
   test.setTimeout(120_000);
   const serveur = fauxServeur();
   const a = await telephone(browser, baseURL, serveur, {}, { largeur: 195, hauteur: 422 });
+  // Polices web bloquées : la police de repli de la CI (plus large) ne doit rien faire déborder.
+  await a.page.route(/\.woff2?$/, r => r.abort());
   await ouvrirEtude(a.page);
   await poserEtude(a.page);
   await a.page.getByTestId('etude-partager').click();
