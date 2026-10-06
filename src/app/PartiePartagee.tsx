@@ -3,7 +3,9 @@
 // flèches, puis une seule action principale :
 // - jamais joué sur cet appareil : « Joue ta première partie » (comme l'accueil d'un premier lancement : contre l'ordi) ;
 // - déjà joueur : « Revois-la avec Mochi » (la revue complète, src/app/Revue.tsx, en lecture seule : sans partage).
-// Lecture par le seul jeton, côté serveur (`lire_partie_partagee`). Mesure : `arrivee_par_partage` (source `partie`).
+// Étude partagée (#449, même lien) : la position posée et sa variante (numérotée, rejouée avec les flèches), qui joue
+// ensuite, puis une seule action principale « Étudie-la avec Mochi » : une copie s'ouvre dans l'écran d'étude.
+// Lecture par le seul jeton, côté serveur (`lire_partage`). Mesure : `arrivee_par_partage` (source `partie` ou `etude`).
 import { useEffect, useMemo, useState } from 'react';
 import { Board } from '../ui/Board';
 import { Mochi } from '../ui/Mochi';
@@ -15,6 +17,9 @@ import { EVENTS, track } from '../data/analytics';
 import { langue } from '../content/i18n';
 import { tp } from '../content/i18n/partage';
 import { positionsDepuisSgf } from './revue';
+import { etudeDepuisSgf, positionsEtude } from '../go/etude';
+import { numerosDesCoups } from '../go/numeros';
+import type { CopieEtude } from './copieEtude';
 import { texteResultat } from './imagePartie';
 import { useOnline } from './hooks';
 import { Revue } from './Revue';
@@ -31,13 +36,15 @@ interface Props {
   onJouer: () => void;
   /** Lien inconnu ou retiré : découvrir l'app. */
   onAccueil: () => void;
+  /** Étude (#449) : « Étudie-la avec Mochi », la copie s'ouvre dans l'écran d'étude. */
+  onEtudier?: (copie: CopieEtude) => void;
 }
 
 type Etat = { quoi: 'chargement' } | { quoi: 'erreur' } | { quoi: 'introuvable' } | { quoi: 'prete'; partie: Partie };
 
 let arriveeNotee = false;
 
-export function PartiePartagee({ db, jeton, nouveau, confirmTouch = false, onJouer, onAccueil }: Props) {
+export function PartiePartagee({ db, jeton, nouveau, confirmTouch = false, onJouer, onAccueil, onEtudier }: Props) {
   const online = useOnline();
   const [etat, setEtat] = useState<Etat>({ quoi: 'chargement' });
   const [essai, setEssai] = useState(0);
@@ -55,7 +62,8 @@ export function PartiePartagee({ db, jeton, nouveau, confirmTouch = false, onJou
       if (suite.quoi !== 'erreur' && !arriveeNotee) {
         arriveeNotee = true;
         // Jamais le jeton, la partie ni le pseudo (constat E14).
-        track(EVENTS.arriveeParPartage, { source: 'partie', lang: langue(), nouveau_joueur: nouveau, trouvee: suite.quoi === 'prete' });
+        const source = suite.quoi === 'prete' && suite.partie.objet === 'etude' ? 'etude' : 'partie';
+        track(EVENTS.arriveeParPartage, { source, lang: langue(), nouveau_joueur: nouveau, trouvee: suite.quoi === 'prete' });
       }
     });
     return () => { vivant = false; };
@@ -65,6 +73,10 @@ export function PartiePartagee({ db, jeton, nouveau, confirmTouch = false, onJou
     const p = etat.partie;
     return <Revue sgf={p.sgf} joueur={p.joueur} adversaire={nomAdversaire(p)} confirmTouch={confirmTouch} partage={false}
       retour={tp('vue.retour')} onRetour={() => { setRevue(false); window.scrollTo?.({ top: 0 }); }} />;
+  }
+  if (etat.quoi === 'prete' && etat.partie.objet === 'etude' && onEtudier) {
+    const p = etat.partie;
+    return <VueEtude partie={p} onEtudier={() => onEtudier({ sgf: p.sgf, pseudo: p.pseudo })} />;
   }
   if (etat.quoi === 'prete') return <Vue partie={etat.partie} nouveau={nouveau} onJouer={onJouer} onRevue={() => { setRevue(true); window.scrollTo?.({ top: 0 }); }} />;
 
@@ -136,6 +148,72 @@ function Vue({ partie, nouveau, onJouer, onRevue }: { partie: Partie; nouveau: b
       {nouveau && <button type="button" className="lien partagee-secondaire" onClick={onRevue}>{tp('vue.analyser')}</button>}
       <div className="dock revue-dock">
         <button type="button" className="cta" onClick={nouveau ? onJouer : onRevue}>{tp(nouveau ? 'vue.jouer' : 'vue.analyser')}</button>
+      </div>
+    </div>
+  );
+}
+
+/** Étude partagée (#449) : la position posée, sa variante numérotée (rejouée avec les flèches), qui joue ensuite. */
+function VueEtude({ partie, onEtudier }: { partie: Partie; onEtudier: () => void }) {
+  const etude = useMemo(() => etudeDepuisSgf(partie.sgf), [partie.sgf]);
+  const positions = useMemo(() => (etude ? positionsEtude(etude) : []), [etude]);
+  const n = Math.max(0, positions.length - 1);
+  const [i, setI] = useState(n);
+  const aller = (k: number) => setI(Math.max(0, Math.min(n, k)));
+  const numeros = useMemo(() => (i > 0 ? numerosDesCoups(positions, i) : null), [positions, i]);
+
+  useEffect(() => {
+    const touche = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') aller(i - 1);
+      else if (e.key === 'ArrowRight') aller(i + 1);
+    };
+    window.addEventListener('keydown', touche);
+    return () => window.removeEventListener('keydown', touche);
+  });
+
+  // SGF illisible (ne devrait pas arriver : le serveur l'a vérifié) : rien à étudier, message d'introuvable.
+  if (!etude || !positions.length) {
+    return (
+      <div className="partagee partagee-etat">
+        <div className="partagee-mochi"><Mochi size={56} /><p>{fr(tp('vue.introuvable'))}</p></div>
+      </div>
+    );
+  }
+  const q = positions[i];
+  const camp = tp(q.toPlay === 1 ? 'image.noir' : 'image.blanc');
+
+  return (
+    <div className="partagee" data-testid="etude-partagee">
+      <header className="partagee-tete">
+        <h2>{partie.pseudo ? tp('vueEtude.titre', { pseudo: partie.pseudo }) : tp('vueEtude.titreSans')}</h2>
+        <p className="partagee-camps">
+          <span className={`revue-coup-pierre bilan-pierre ${q.toPlay === 1 ? 'noire' : 'blanche'}`} aria-hidden="true" />
+          {tp('vueEtude.trait', { camp })}
+        </p>
+      </header>
+
+      <div className="partagee-mochi">
+        <Mochi size={40} />
+        <p>{fr(tp(n > 0 ? 'vueEtude.mochi' : 'vueEtude.mochiSans'))}</p>
+      </div>
+
+      {n > 0 && (
+        <p className="partagee-compteur" aria-live="polite">
+          {i === 0 ? tp('vueEtude.depart') : tp('vueEtude.compteur', { i, n })}
+        </p>
+      )}
+      <div className="revue-plateau">
+        <Board size={q.size} board={q.board} marks={{ last: q.lastMove }} numeros={numeros} />
+      </div>
+      {n > 0 && (
+        <div className="partagee-nav">
+          <button type="button" className="btn revue-pas" onClick={() => aller(i - 1)} disabled={i <= 0} aria-label={tp('vue.precedent')}><Icone nom="precedent" /></button>
+          <button type="button" className="btn revue-pas" onClick={() => aller(i + 1)} disabled={i >= n} aria-label={tp('vue.suivant')}><Icone nom="suivant" /></button>
+        </div>
+      )}
+
+      <div className="dock revue-dock">
+        <button type="button" className="cta" onClick={onEtudier}>{tp('vueEtude.etudier')}</button>
       </div>
     </div>
   );

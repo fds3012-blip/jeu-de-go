@@ -118,6 +118,11 @@ const FR = {
   'etude.candidat': '{point} : {p} % de chances de gagner',
   'etude.komi': 'Komi 6,5 : les points donnés à Blanc, qui joue en second.',
   'etude.reprendre': 'Ton étude est gardée sur ce téléphone.',
+  // #449 : partager une étude ; copie ouverte depuis un lien partagé.
+  'etude.partager': 'Partager',
+  'etude.copie': 'Copie de l’étude de {pseudo}. Touche « Analyser ».',
+  'etude.copieSans': 'Copie de l’étude partagée. Touche « Analyser ».',
+  'etude.copieAvant': 'Ton étude d’avant revient avec « Annuler ».',
 } as const;
 
 export type CleClub = keyof typeof FR;
@@ -231,6 +236,10 @@ const EN: { readonly [K in CleClub]: string } = {
   'etude.candidat': '{point}: {p}% winning chances',
   'etude.komi': 'Komi 6.5: the points given to White, who plays second.',
   'etude.reprendre': 'Your study is kept on this phone.',
+  'etude.partager': 'Share',
+  'etude.copie': 'Copy of {pseudo}’s study. Tap “Analyze”.',
+  'etude.copieSans': 'Copy of the shared study. Tap “Analyze”.',
+  'etude.copieAvant': 'Your previous study comes back with “Undo”.',
 };
 
 export const CATALOGUE_CLUB: Record<Langue, { readonly [K in CleClub]: string }> = { fr: FR, en: EN };
