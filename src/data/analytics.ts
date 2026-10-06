@@ -150,6 +150,15 @@ export const EVENTS = {
   partageEnvoye: 'partage_envoye',
   partageEchoue: 'partage_echoue',
   partageRetire: 'partage_retire',
+  // Sécurité entre joueurs (#363) : signalement envoyé (`type` : joueur, probleme, bug, idee, autre ; `motif` ; `depuis` :
+  // partie, amis, probleme, profil ; `bloque` : bloqué en même temps), joueur bloqué (`depuis`). Jamais le texte, le
+  // pseudo, la partie ni le problème.
+  signalementEnvoye: 'signalement_envoye',
+  joueurBloque: 'joueur_bloque',
+  // Messages en partie (#373) : `genre` (message, emote), `code` (message prédéfini), `mode` (direct, defi). Réglage
+  // « Messages de l'adversaire » (`coupes`, `depuis` : partie). Ni la partie ni l'adversaire.
+  messagePartieEnvoye: 'message_partie_envoye',
+  messagesAdversaireCoupes: 'messages_adversaire_coupes',
 } as const;
 export type AnalyticsEvent = (typeof EVENTS)[keyof typeof EVENTS];
 export type Props = Record<string, string | number | boolean | null | undefined>;

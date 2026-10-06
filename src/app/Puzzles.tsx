@@ -1,4 +1,5 @@
 // Onglet Problèmes (issue #40, phase 6) : cote et série, problème du jour mis en scène, grille des problèmes de base.
+import { LienSignalerProbleme } from '../ui/Securite';
 import { BoutonAide } from '../ui/BoutonAide';
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import type { Db } from '../data/supabase';
@@ -223,6 +224,7 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
     const note = !estDuJour && !enArchive && !solved.has(open.id) && !vus[open.id];
     return (
       <PuzzlePlayer key={`${open.id}${enArchive ? '-archive' : ''}`} puzzle={open} rang={ordre.indexOf(open) + 1} confirmTouch={confirmTouch}
+        signaler={db && userId ? <LienSignalerProbleme db={db} probleme={open.id} onCompte={onCompte} /> : undefined}
         duJour={enArchive ? { numero: archive, serie: 0, defiChange: false, archive: numero, gelGagne: false, celebrer, jalon: null, apprendre: onApprendre }
           : estDuJour ? { numero, serie: serieVivante(serieDuJour, numero), defiChange, gelGagne, celebrer, jalon, apprendre: onApprendre } : undefined}
         rated={!!db && !!userId && online && !!stats && !stats.attempted.includes(open.id) && !solved.has(open.id)}
@@ -604,7 +606,7 @@ interface DuJourInfo {
 /** Temps pendant lequel la réponse de l'adversaire reste sur le plateau après une erreur (#237, N6). */
 const DUREE_ERREUR = 2200;
 
-export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPremierEssai, onAttempt, onSolved, onNext, onExit, onSolutionVue, retour, surtitre, exercice = true }: {
+export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPremierEssai, onAttempt, onSolved, onNext, onExit, onSolutionVue, retour, surtitre, exercice = true, signaler }: {
   puzzle: Puzzle; rang: number; duJour?: DuJourInfo; confirmTouch: boolean; rated: boolean;
   /** Premier essai joué (#284) : réussi ou non. Sert à la cote de « Continuer », jamais affichée. */
   onPremierEssai?: (ok: boolean) => void;
@@ -616,6 +618,8 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
   retour?: string; surtitre?: ReactNode;
   /** Faux quand l'exercice est fini alors que le lecteur reste affiché (dernier problème d'une série, #250 M9). */
   exercice?: boolean;
+  /** #363 : « Cette réponse me semble fausse », montré après un premier essai (ou la suite revue). */
+  signaler?: ReactNode;
 }) {
   // #236 (N2) : un problème est un exercice ; aucune fête ne se pose sur sa consigne (l'XP se lit dans la feuille).
   useExercice(exercice);
@@ -866,6 +870,7 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
         {fr(`${duJour?.apprendre ? `${tr('arrivee.premierCoup')} ` : ''}${puzzle.prompt} ${tr(puzzle.toPlay === 1 ? 'pb.tuJoues.1' : 'pb.tuJoues.2')}`)}
       </ParoleMochi>
       {verdict}
+      {signaler && (tries >= 1 || !!replay) && signaler}
     </div>
   );
 }

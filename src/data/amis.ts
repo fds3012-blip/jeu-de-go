@@ -34,6 +34,8 @@ export const CODES_AMIS = {
   JGA07: 'aucuneDemande',
   JGA08: 'pasAmi',
   JGA09: 'tropDeParties',
+  // #363 : l'un des deux a bloqué l'autre (même refus dans les deux sens).
+  JGB01: 'indisponible',
   [CODE_COMPTE_REQUIS]: 'compte',
   [CODE_PSEUDO_REQUIS]: 'compte',
 } as const;

@@ -51,6 +51,7 @@ Calcul : `penduleApres` (`src/go/pendule.ts`) et `public.pendule_apres` (même c
 - même taille, même temps, même comptage : appariés tout de suite. Dès que l'un des deux attend depuis 30 s (la plus longue des deux attentes), les réglages peuvent différer : la partie prend la taille, le temps et le comptage de celui qui attendait depuis le plus longtemps. L'écran le dit avant le premier coup (« Ton adversaire attendait avant toi : la partie se joue en 13 × 13, 5 min + 3 × 20 s. ») ;
 - la cote, inchangée : écart accepté = 100 + √(RD₁² + RD₂²) / 2 + 10 points par seconde d'attente (la plus longue des deux). Le plus proche en cote d'abord, puis les mêmes réglages, puis le plus ancien dans la file ;
 - trouvé : partie classée (komi 6,5, handicap 0), couleurs tirées au sort, pendules pleines, celle de Noir part ;
+- jamais avec un joueur qu'on a bloqué, ou qui nous a bloqué (#363, `supabase/migrations/20261005220100_securite_signalements.sql`, qui redéfinit `find_match` à partir de la forme de #436, et `lente_apparier` de #440 pour les parties lentes) ;
 - pas trouvé : le joueur entre dans la file. Il rappelle `find_match` toutes les 2,5 s : il garde sa place et son ancienneté, et retrouve la partie dès qu'un adversaire l'a créée.
 
 Une attente sans nouvelles depuis 30 s (écran fermé) ou de plus de 10 minutes est retirée de la file. « Annuler » appelle `quitter_file_attente`, qui rend la partie si un adversaire vient de la créer : l'écran l'ouvre au lieu d'annuler.
@@ -82,5 +83,5 @@ Japonais par défaut, chinois en option au moment du choix. Deux joueurs aux com
 
 ## Limites connues
 
-- Sans tâche planifiée, une partie dont les deux joueurs sont partis reste « en cours » jusqu'au retour de l'un d'eux (son premier appel constate l'absence de l'autre).
-- Pas de spectateurs ni de discussion pour l'instant.
+- Depuis #363, la tâche pg_cron `clore-parties-direct-abandonnees` (chaque minute, `direct_clore_abandonnees`) applique la règle d'absence quand les deux joueurs sont partis depuis plus de 60 s : celui qui devait jouer perd au temps (partie annulée si chacun n'a pas joué) ; au comptage, celui qui est parti le premier perd. Avant, la partie restait « en cours » jusqu'au retour de l'un d'eux. Détail : `docs/produit/signalements-et-blocage.md`.
+- Pas de spectateurs. Pas de discussion libre : seulement des messages tout prêts et des émotes de Mochi (« Dire », #373), avec « Signaler » et « Bloquer » (#363).
