@@ -12,11 +12,13 @@ import {
 import type { Db } from '../data/supabase';
 import { EVENTS, track } from '../data/analytics';
 import { tsec } from '../content/i18n/securite';
+import { noterReglage } from './reglagesDates';
 
-/** Réglage « Messages de l'adversaire » partagé par tous les écrans (gardé sur l'appareil). */
+/** Réglage « Messages de l'adversaire » partagé par tous les écrans (gardé sur l'appareil ; synchronisé avec un compte, #448). */
 export function useMessagesCoupes(): [boolean, (coupes: boolean, depuis: 'partie') => void] {
   const coupes = useSyncExternalStore(abonnerMessagesCoupes, lireMessagesCoupes, () => false);
   const changer = useCallback((c: boolean, depuis: 'partie') => {
+    if (c !== lireMessagesCoupes()) noterReglage('messagesCoupes');
     couperMessages(c);
     track(EVENTS.messagesAdversaireCoupes, { coupes: c, depuis });
   }, []);
