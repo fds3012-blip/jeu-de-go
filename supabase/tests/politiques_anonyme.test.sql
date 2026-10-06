@@ -47,7 +47,7 @@ update public.profiles set username = 'Alice' where id = 'aaaaaaaa-0000-4000-800
 
 -- 1. Les dix politiques existent toujours, restrictives, et lisent le jeton sous la forme reconnue par l'analyseur :
 --    « ( SELECT auth.jwt() … » et plus jamais « ( SELECT ((auth.jwt() ».
-select pg_temp.egal((select count(*) from pg_policy where polname like 'Anonyme : %'), 11::bigint, 'onze politiques Anonyme (dix + parties perso, #358)');
+select pg_temp.egal((select count(*) from pg_policy where polname like 'Anonyme : %'), 12::bigint, 'douze politiques Anonyme (dix + parties perso, #358, + réglages, #448)');
 select pg_temp.egal((select bool_and(not polpermissive) from pg_policy where polname like 'Anonyme : %'), true, 'toutes restrictives');
 select pg_temp.egal((select bool_and(
     coalesce(pg_get_expr(polqual, polrelid), '') !~ 'SELECT \(\(auth\.jwt'
@@ -57,7 +57,7 @@ select pg_temp.egal((select bool_and(
 -- Les commandes n'ont pas changé : insert, update, delete, all selon la politique.
 select pg_temp.egal((select string_agg(polname || ':' || polcmd::text, ',' order by polname) from pg_policy where polname like 'Anonyme : %'),
   'Anonyme : pas d''acceptation d''ami:w,Anonyme : pas de badge:a,Anonyme : pas de création de partie:a,Anonyme : pas de demande d''ami:a,'
-  'Anonyme : pas de parties perso:*,Anonyme : pas de problème personnel:a,Anonyme : pas de pseudo:w,Anonyme : pas de rappel:*,Anonyme : pas de suppression de problème:d,'
+  'Anonyme : pas de parties perso:*,Anonyme : pas de problème personnel:a,Anonyme : pas de pseudo:w,Anonyme : pas de rappel:*,Anonyme : pas de réglages:*,Anonyme : pas de suppression de problème:d,'
   'Anonyme : progression des leçons sur l''appareil:a,Anonyme : progression des leçons sur l''appareil (mise à jour):w',
   'commandes inchangées');
 
@@ -81,13 +81,13 @@ select pg_temp.egal((select username from public.profiles where id = :elise), 'E
 reset role;
 
 -- 3. Relevé de sécurité (advisors) : toute fonction security definer a search_path vide ; seule apercu_defi est
---    exécutable par anon (avec compter_etape depuis #437, compteurs anonymes, et lire_partie_partagee depuis #364 : lien de
+--    exécutable par anon (avec compter_etape depuis #437, compteurs anonymes, et lire_partie_partagee depuis #364, lire_partage depuis #449 : lien de
 --    revue lu par son seul jeton) ; aucune fonction de cote ou de purge n'est exécutable par authenticated.
 select pg_temp.egal((select bool_and(p.proconfig[1] = 'search_path=""') from pg_proc p
   where p.pronamespace = 'public'::regnamespace and p.prosecdef), true, 'security definer : search_path vide');
 select pg_temp.egal((select string_agg(p.proname, ',' order by p.proname) from pg_proc p
   where p.pronamespace = 'public'::regnamespace and p.prosecdef
-    and has_function_privilege('anon', p.oid, 'execute')), 'apercu_defi,compter_etape,lire_partie_partagee', 'anon : apercu_defi, compter_etape et lire_partie_partagee seulement');
+    and has_function_privilege('anon', p.oid, 'execute')), 'apercu_defi,compter_etape,lire_partage,lire_partie_partagee', 'anon : apercu_defi, compter_etape, lire_partage et lire_partie_partagee seulement');
 select pg_temp.egal((select bool_or(has_function_privilege('authenticated', p.oid, 'execute')) from pg_proc p
   where p.pronamespace = 'public'::regnamespace
     and p.proname in ('apply_game_rating', 'finish_game_by_score', 'jouer_coup_defi', 'play_move', 'purger_anonymes_inactifs',

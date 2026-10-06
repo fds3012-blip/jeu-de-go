@@ -14,7 +14,7 @@ Profil › Réglages, un seul écran qui défile, groupé par titres. Un aperçu
 | Temps de jeu en ligne | `cadence` | `normale` (10 min) | Temps proposé d'abord dans « Jouer en ligne ». « Normale » reste la file par défaut (#436). |
 | Montrer la série | `serieVisible` | oui | Éteint : ni flamme ni gels dans l'en-tête, ni annonce de série, ni « Garde ta série » dans « À faire », ni série sur la réussite du Go du jour et dans son partage, ni record ni badge « 7 jours » dans le Profil. La série continue d'être comptée. |
 
-Réglages gardés **sur l'appareil seulement** : aucun mécanisme de réglages de compte n'existe (pas de colonne `settings` dans `profiles`). Le suivi d'un appareil à l'autre demande une migration (colonne `settings jsonb` sur `profiles`, écrite par une fonction `security definer` qui valide les clés) : point ouvert.
+Réglages gardés sur l'appareil ; avec un compte, synchronisés entre ses appareils depuis #448 (table `reglages_compte`, lisible par son seul propriétaire, plutôt qu'une colonne de `profiles`, lisible par tous ; écrite par la fonction `enregistrer_reglages`, liste blanche de clés et de valeurs, « dernier changement gagne » clé par clé : `supabase/migrations/20261006123100_reglages_compte.sql`).
 
 Le goban partagé (`src/ui/Board.tsx`) reçoit deux options désactivées par défaut : `coordonnees` (vrai par défaut) et `numeros` (absent par défaut). Les écrans lisent les préférences par `usePreferences()` (`src/app/settings.ts`), sans prop à faire descendre.
 

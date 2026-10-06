@@ -784,6 +784,7 @@ export type Database = {
           empreinte: string
           jeton: string
           joueur: number | null
+          objet: string
           sgf: string
           taille: number
           user_id: string
@@ -795,6 +796,7 @@ export type Database = {
           empreinte: string
           jeton: string
           joueur?: number | null
+          objet?: string
           sgf: string
           taille: number
           user_id: string
@@ -806,6 +808,7 @@ export type Database = {
           empreinte?: string
           jeton?: string
           joueur?: number | null
+          objet?: string
           sgf?: string
           taille?: number
           user_id?: string
@@ -1136,6 +1139,24 @@ export type Database = {
           },
         ]
       }
+      reglages_compte: {
+        Row: {
+          modifie_le: string
+          reglages: Json
+          user_id: string
+        }
+        Insert: {
+          modifie_le?: string
+          reglages?: Json
+          user_id: string
+        }
+        Update: {
+          modifie_le?: string
+          reglages?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
       signalements: {
         Row: {
           auteur_id: string | null
@@ -1342,6 +1363,7 @@ export type Database = {
         Returns: string
       }
       enregistrer_parties_perso: { Args: { p_parties: Json }; Returns: string[] }
+      enregistrer_reglages: { Args: { p_reglages: Json }; Returns: Json }
       lire_partie_partagee: {
         Args: { p_jeton: string }
         Returns: {
@@ -1353,6 +1375,23 @@ export type Database = {
           sgf: string
           taille: number
         }[]
+      }
+      lire_partage: {
+        Args: { p_jeton: string }
+        Returns: {
+          adversaire: string | null
+          coup: number
+          cree_le: string
+          joueur: number | null
+          objet: string
+          pseudo: string | null
+          sgf: string
+          taille: number
+        }[]
+      }
+      partager_etude: {
+        Args: { p_coup: number; p_sgf: string; p_taille: number }
+        Returns: string
       }
       partager_partie: {
         Args: { p_adversaire: string | null; p_coup: number; p_joueur: number | null; p_sgf: string; p_taille: number }

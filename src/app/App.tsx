@@ -50,6 +50,7 @@ import type { Puzzle } from '../data/puzzles';
 import { compteDe, estAnonyme } from '../data/defi';
 import { INVITEUR_AU_CHARGEMENT, JETON_AU_CHARGEMENT, ecouterJetonDefi } from './adresseDefi';
 import { PARTIE_AU_CHARGEMENT, ecouterJetonPartie } from './adressePartie';
+import { deposerCopieEtude } from './copieEtude';
 import { ESSAI_KEY, decider, etatCompte, lireEssai, noterFinDePartie, partiesTerminees, type Acces, type EtatCompte, type Raison } from './essai';
 import { compteVientDEtreCree, moyenConnexion, noterConnexionPar } from './entonnoir';
 import { aRattacher, annoncer, definirRetour, prendreRetour } from './connexionGoogle';
@@ -63,6 +64,7 @@ import '../ui/defis.css';
 import '../ui/robustesse.css';
 import { ecouterAide, estRaccourciAide, ficheDeLecon, ouvrirAide, type Ouverture } from './ouvrirAide';
 import { bilanAMontrer, etatSemaine } from './semaine';
+import { noterReglage } from './reglagesDates';
 
 // Aide (#362) : feuille chargée au premier « ? » (partie, leçon, problème, Profil) ou à la touche « ? ».
 const FeuilleAide = lazy(() => import('../ui/Aide'));
@@ -233,6 +235,8 @@ export function App() {
   // #364 : partie partagée ouverte par un lien (jeton), au-dessus de l'accueil ; `null` sinon.
   const [partagee, setPartagee] = useState<string | null>(PARTIE_AU_CHARGEMENT);
   const [nouveauPartagee, setNouveauPartagee] = useState(NOUVEAU_PAR_PARTIE);
+  // #449 : copie d'une étude partagée ouverte ; la fenêtre de consentement attend la sortie de l'écran d'étude.
+  const [etudeRecue, setEtudeRecue] = useState(false);
   // « Un humain, maintenant » (#360) : partie en direct, du choix au bilan (écran src/app/Direct.tsx).
   const [direct, setDirect] = useState(false);
   // #436 : partie en direct rejointe depuis la partie contre l'IA (ouverte tout de suite par l'écran du direct).
@@ -562,7 +566,7 @@ export function App() {
     setTab('jouer'); setPlaying(false); setDefi(null); setDirect(f === 'direct'); setLente(f === 'lente'); window.scrollTo({ top: 0 });
   }
   /** Bascule « En direct » / « Partie lente » : mémorisée pour la prochaine fois. */
-  const changerFacon = (f: FaconEnLigne) => { ecrireFaconEnLigne(f); setDirectRejoint(null); ouvrirEnLigne(f); };
+  const changerFacon = (f: FaconEnLigne) => { if (f !== lireFaconEnLigne()) noterReglage('enLigne'); ecrireFaconEnLigne(f); setDirectRejoint(null); ouvrirEnLigne(f); };
   // #440 : la partie trouvée pendant l'absence est ouverte par un autre chemin (« À toi de jouer », la liste) :
   // « Adversaire trouvé » est effacé de l'accueil, et le début de partie mesuré.
   useEffect(() => {
@@ -593,6 +597,18 @@ export function App() {
     if (!db || !compteId || !pseudo) return;
     void import('../data/partiesPerso').then(m => m.synchroniser(db, compteId)).catch(() => undefined);
   }, [supabase, compteId, pseudo]);
+  // #448 : avec un compte, les réglages se synchronisent entre ses appareils (dernier changement gagne, clé par clé).
+  // Module chargé à la demande, après le premier écran ; arrêté à la déconnexion.
+  useEffect(() => {
+    const db = supabase;
+    if (!db || !compteId) return;
+    let fini = false;
+    let arreter: (() => void) | undefined;
+    const id = window.setTimeout(() => {
+      void import('../data/reglages').then(m => { if (!fini) arreter = m.demarrerSynchroReglages(db); }).catch(() => undefined);
+    }, 1000);
+    return () => { fini = true; window.clearTimeout(id); arreter?.(); };
+  }, [supabase, compteId]);
   useEffect(() => {
     if (!online) return;
     const id = window.setTimeout(synchroniserParties, 1500); // après le premier écran
@@ -652,7 +668,9 @@ export function App() {
       : null;
   } else if (enPartagee && partagee !== null) {
     screen = <PartiePartagee key={partagee} db={supabase} jeton={partagee} nouveau={nouveauPartagee} confirmTouch={settings.confirmTouch}
-      onJouer={() => { setPartagee(null); lancer('ordi'); }} onAccueil={() => { setPartagee(null); window.scrollTo({ top: 0 }); }} />;
+      onJouer={() => { setPartagee(null); lancer('ordi'); }} onAccueil={() => { setPartagee(null); window.scrollTo({ top: 0 }); }}
+      // #449 : étude partagée, « Étudie-la avec Mochi » ouvre sa copie dans l'écran d'étude.
+      onEtudier={copie => { deposerCopieEtude(copie); go('profil'); setVueProfil('etude'); setEtudeRecue(true); }} />;
   } else if (enDefi && defi.vue === 'partie' && supabase) {
     screen = <DefiPartie key={defi.id} db={supabase} partieId={defi.id} userId={session?.user.id} anonyme={estAnonyme(session)} pseudo={pseudo ?? null} confirmTouch={settings.confirmTouch} reglages={{ modifier: set }} celebrer={settings.celebrations}
       onRetour={quitterDefi} onAutre={() => { setDefi({ vue: 'liste' }); window.scrollTo({ top: 0 }); }}
@@ -887,7 +905,7 @@ export function App() {
             onLecon={playing || enPlacement || defi !== null || direct ? undefined : id => { setAide(null); ouvrirLecon(id); }} />
         </Suspense>
       )}
-      <ConsentModal visible={fenetreVisible({ consent, ignoree: accordIgnore, enPartie: enPartie || enPartagee || (tab === 'problemes' && duJourOuvert), surConditions: tab === 'profil' && vueProfil === 'conditions' })}
+      <ConsentModal visible={fenetreVisible({ consent, ignoree: accordIgnore, enPartie: enPartie || enPartagee || (tab === 'problemes' && duJourOuvert) || (etudeRecue && tab === 'profil' && vueProfil === 'etude'), surConditions: tab === 'profil' && vueProfil === 'conditions' })}
         onConditions={() => { go('profil'); setVueProfil('conditions'); }} onIgnorer={() => setAccordIgnore(true)} />
 
     </>

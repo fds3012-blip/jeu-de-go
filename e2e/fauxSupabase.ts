@@ -1,5 +1,6 @@
 import type { BrowserContext, Page, Route, WebSocketRoute } from '@playwright/test';
 import { parseActionRequest, planAction, type GameRow } from '../src/go/server';
+import { fusionner, nettoyer } from '../src/app/reglagesCompte';
 
 // Supabase simulé par interception réseau, partagé par les parcours du compte (#343) et du défi par lien (#81).
 // Le build de test lit l'adresse simulée dans le stockage local (`e2e.supabase`, voir src/data/supabase.ts).
@@ -40,6 +41,9 @@ import { parseActionRequest, planAction, type GameRow } from '../src/go/server';
 // `classement_go_du_jour`, `rappeler_go_du_jour` (notification `go_du_jour`), `bilan_semaine` (toutes les parties finies
 // entre humains comptent pour la semaine en cours), `mes_records` (historique de cote du joueur). Mêmes règles et mêmes
 // codes que supabase/migrations/20261005230100_emulation_amis.sql (sauf les limites de temps).
+// Réglages du compte (#448) : `enregistrer_reglages`, « dernier changement gagne » clé par clé (à égalité, la valeur
+// gardée reste), vrai compte exigé ; liste blanche de supabase/migrations/20261006123100_reglages_compte.sql
+// (src/app/reglagesCompte.ts). `reglages` : réglages gardés par compte.
 
 export const SUPABASE = 'https://supabase.e2e.test';
 export const CODE = '123456';
@@ -114,6 +118,8 @@ export function fauxServeur() {
   /** Go du jour par joueur (#369) : numéro, état, essais, ordre de réussite. */
   const goDuJour: { user: string; numero: number; etat: 'en_cours' | 'reussi' | 'vu'; essais: number; le: number }[] = [];
   const rappels: { de: string; a: string; numero: number }[] = [];
+  /** Réglages du compte (#448), par identifiant de compte. */
+  const reglages = new Map<string, Record<string, { v: unknown; t: number }>>();
   const identite = (provider: string, email?: string): Identite => ({ identity_id: `identite-${++nIdentite}`, provider, email });
 
   const jwt = (u: Utilisateur) => {
@@ -578,6 +584,13 @@ export function fauxServeur() {
       const { p_partie, p_type } = req.postDataJSON() as { p_partie?: string; p_type?: string };
       return json(marquer(n => n.destinataire_id === u.id && (!p_partie || n.partie_id === p_partie) && (!p_type || n.type === p_type)));
     }
+    if (chemin === '/rest/v1/rpc/enregistrer_reglages') {
+      if (!u || u.anonyme) return json({ code: 'JGC01', message: 'Crée ton compte pour garder tes réglages' }, 400);
+      const { p_reglages } = req.postDataJSON() as { p_reglages: unknown };
+      const r = fusionner(nettoyer(p_reglages), reglages.get(u.id) ?? {});
+      reglages.set(u.id, r);
+      return json(r);
+    }
     if (chemin === '/rest/v1/rpc/enregistrer_parties_perso') {
       // Comme le serveur : compte avec pseudo, clé unique par joueur, clés rendues (ajoutées ou déjà là).
       if (!u || u.anonyme) return json({ code: 'JGC01', message: 'Crée ton compte' }, 400);
@@ -600,6 +613,27 @@ export function fauxServeur() {
       const jeton = `P${String(partagees.length + 1).padStart(3, '0')}`.padEnd(32, 'x');
       partagees.push({ jeton, user_id: u.id, sgf: a.p_sgf, taille: a.p_taille, joueur: a.p_joueur, adversaire: a.p_adversaire, coup: a.p_coup });
       return json(jeton);
+    }
+    // #449 : étude partagée, comme 20261006134900_etudes_partagees.sql (sans plafonds) : même table, `objet` = `etude`,
+    // 9, 13 ou 19 lignes, au moins une pierre ou un coup, sans résultat ; `lire_partage` rend aussi `objet`.
+    if (chemin === '/rest/v1/rpc/partager_etude') {
+      if (!u || u.anonyme) return json({ code: 'JGC01', message: 'Crée ton compte' }, 400);
+      if (!profiles.find(x => x.id === u.id)?.username) return json({ code: 'JGP01', message: 'Choisis ton pseudo' }, 400);
+      const a = req.postDataJSON() as { p_sgf: string; p_taille: number; p_coup: number };
+      if (/(PB|PW|C|DT|PC|GC|RE)\[/.test(a.p_sgf) || ![9, 13, 19].includes(a.p_taille) || !a.p_sgf.includes(`SZ[${a.p_taille}]`)
+        || !/(A[BW]\[[a-s]{2}\]|;[BW]\[)/.test(a.p_sgf)) return json({ code: '22023', message: 'Étude illisible' }, 400);
+      const deja = partagees.find(x => x.user_id === u.id && x.sgf === a.p_sgf && x.objet === 'etude');
+      if (deja) { deja.coup = a.p_coup; return json(deja.jeton); }
+      const jeton = `E${String(partagees.length + 1).padStart(3, '0')}`.padEnd(32, 'x');
+      partagees.push({ jeton, user_id: u.id, sgf: a.p_sgf, taille: a.p_taille, joueur: null, adversaire: null, coup: a.p_coup, objet: 'etude' });
+      return json(jeton);
+    }
+    if (chemin === '/rest/v1/rpc/lire_partage') {
+      const { p_jeton } = req.postDataJSON() as { p_jeton: string };
+      const l = partagees.find(x => x.jeton === p_jeton);
+      if (!l) return json([]);
+      const pseudo = profiles.find(x => x.id === l.user_id)?.username ?? null;
+      return json([{ objet: l.objet ?? 'partie', sgf: l.sgf, taille: l.taille, joueur: l.joueur, adversaire: l.adversaire, coup: l.coup, pseudo, cree_le: new Date().toISOString() }]);
     }
     if (chemin === '/rest/v1/rpc/lire_partie_partagee') {
       const { p_jeton } = req.postDataJSON() as { p_jeton: string };
@@ -920,7 +954,7 @@ export function fauxServeur() {
   const canauxActifs = (prefixe: string) => [...abonnes].filter(a => !a.fige).flatMap(a => [...a.canaux.keys()]).filter(t => t.startsWith(`realtime:${prefixe}`)).length;
   return { traiter, brancherTempsReel, notifier, fileLente, tacheLentes, avancerHorloge, abandons, noterAbandon, ralentirLectures, figerTempsReel, canauxActifs, pousses, pousserPartie, appels, games, defis, notifications, partiesPerso, partagees, profiles, ratingHistory, emailsEnvoyes, sessionAnonyme, file, pendules,
     compteExistant, compteGoogle, compteSocial, relierIdentite, liaison, utilisateur, sessionCompte, autorisations, amities,
-    signalements, blocages, messagesPartie, goDuJour, rappels };
+    signalements, blocages, messagesPartie, goDuJour, rappels, reglages };
 }
 
 export type FauxServeur = ReturnType<typeof fauxServeur>;

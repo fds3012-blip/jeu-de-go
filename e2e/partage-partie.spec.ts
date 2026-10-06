@@ -99,7 +99,7 @@ test('lien de la revue : partagé depuis le bilan, ouvert par un ami sans compte
   await expect(feuille.getByText('Partie privée : le lien ne montre plus rien.')).toBeVisible();
   const c = await telephone(browser, baseURL, serveur, {});
   await c.page.goto(lien.replace(baseURL!, ''));
-  await expect(c.page.getByText('Cette partie n’est plus partagée.')).toBeVisible();
+  await expect(c.page.getByText('Ce lien n’est plus partagé.')).toBeVisible();
   await expect(c.page.locator('.cta')).toHaveText('Découvrir Mochi Go');
   expect(erreurs).toEqual([]);
   await Promise.all([a.ctx.close(), b.ctx.close(), c.ctx.close()]);
