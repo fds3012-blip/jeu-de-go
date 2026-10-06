@@ -159,6 +159,15 @@ export const EVENTS = {
   // « Messages de l'adversaire » (`coupes`, `depuis` : partie). Ni la partie ni l'adversaire.
   messagePartieEnvoye: 'message_partie_envoye',
   messagesAdversaireCoupes: 'messages_adversaire_coupes',
+  // Émulation entre amis (#369). `amis_du_jour_vus` : bloc « Tes amis aujourd'hui » montré sous la réussite du Go du
+  // jour (`amis` : amis listés, `reussis` : ceux qui l'ont fait), une fois par jour. `rappel_ami_envoye` : « Rappelle-lui »
+  // touché et accepté par le serveur. `bilan_semaine_vu` : bilan montré (`depuis` : accueil ou profil ; `parties`,
+  // `problemes`, `go_du_jour`, `amis` : amis nommés). `objectif_semaine_atteint` : `objectif` (parties, problemes,
+  // erreurs). Jamais de pseudo.
+  amisDuJourVus: 'amis_du_jour_vus',
+  rappelAmiEnvoye: 'rappel_ami_envoye',
+  bilanSemaineVu: 'bilan_semaine_vu',
+  objectifSemaineAtteint: 'objectif_semaine_atteint',
 } as const;
 export type AnalyticsEvent = (typeof EVENTS)[keyof typeof EVENTS];
 export type Props = Record<string, string | number | boolean | null | undefined>;

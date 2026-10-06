@@ -47,6 +47,8 @@ import { COTE_KEY, nettoyerCote, noter, ouvrir, requalifierEnAide, type EtatCote
 import { ChronoCourse, Course } from './CourseProblemes';
 import { lireMeilleurCourse } from './course';
 import { Paysage } from '../ui/Paysage';
+import { AmisDuJour } from '../ui/AmisDuJour';
+import { noterGoDuJour, type ResultatEssai } from '../data/emulation';
 
 const LOCAL_PUZZLES = parsePuzzles(ALL_PUZZLES);
 export const SOLVED_KEY = 'go.problemes.v1';
@@ -76,6 +78,8 @@ interface Props {
    * la course, la grille, la révision et « Tes erreurs à rejouer » appellent `essai`, qui ouvre « Crée ton compte ».
    */
   essai?: () => void;
+  /** #369 : un ami a rappelé le Go du jour (notification en attente) ; mesuré avec la réussite (`apres_rappel`). */
+  rappelAmi?: boolean;
 }
 
 /** Flamme de la série de jours, en or. */
@@ -99,7 +103,7 @@ function Difficulte({ d }: { d: number }) {
 }
 
 /** Onglet Problèmes : problème du jour, problèmes de base, cote problèmes et série de jours. */
-export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, lien = null, onDuJour, celebrer = true, racine = 0, onApprendre, essai, depuisRappel = false }: Props) {
+export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, lien = null, onDuJour, celebrer = true, racine = 0, onApprendre, essai, depuisRappel = false, rappelAmi = false }: Props) {
   /** Ouvre un problème ; hors Go du jour pendant l'essai sans compte, c'est « Crée ton compte » qui s'ouvre (#343). */
   const ouvrirProbleme = (id: string) => { if (essai && id !== daily?.id) essai(); else setOpenId(id); };
   // Go du jour (issue #75) : le même pour tous, choisi dans la liste publique des problèmes de base, en heure de Paris.
@@ -129,6 +133,17 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   // Course aux problèmes (#287) : consigne, course et fin, à la place de la liste.
   const [course, setCourse] = useState(false);
   const [statsTick, setStatsTick] = useState(0);
+  // #369 : essais du Go du jour d'aujourd'hui notés par le serveur, dans l'ordre (un envoi après l'autre), pour le
+  // classement entre amis. `envoiDuJour` : la réussite envoyée ; « Tes amis aujourd'hui » se lit après elle.
+  const fileEnvois = useRef<Promise<unknown>>(Promise.resolve());
+  const [envoiDuJour, setEnvoiDuJour] = useState<Promise<unknown> | null>(null);
+  const noterDuJour = (resultat: ResultatEssai) => {
+    const base = db;
+    if (!base || !userId || !online) return null;
+    const p = fileEnvois.current.then(() => noterGoDuJour(base, numero, resultat), () => noterGoDuJour(base, numero, resultat));
+    fileEnvois.current = p;
+    return p;
+  };
   // Onglet actif touché (R4) : retour à la liste, sans remonter l'écran (le lien partagé rouvrirait le Go du jour).
   const racineVue = useRef(racine);
   useEffect(() => {
@@ -226,7 +241,9 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
       <PuzzlePlayer key={`${open.id}${enArchive ? '-archive' : ''}`} puzzle={open} rang={ordre.indexOf(open) + 1} confirmTouch={confirmTouch}
         signaler={db && userId ? <LienSignalerProbleme db={db} probleme={open.id} onCompte={onCompte} /> : undefined}
         duJour={enArchive ? { numero: archive, serie: 0, defiChange: false, archive: numero, gelGagne: false, celebrer, jalon: null, apprendre: onApprendre }
-          : estDuJour ? { numero, serie: serieVivante(serieDuJour, numero), defiChange, gelGagne, celebrer, jalon, apprendre: onApprendre } : undefined}
+          : estDuJour ? { numero, serie: serieVivante(serieDuJour, numero), defiChange, gelGagne, celebrer, jalon, apprendre: onApprendre,
+            amis: db && userId && envoiDuJour ? <AmisDuJour db={db} numero={numero} apres={envoiDuJour} /> : null } : undefined}
+        onEssai={estDuJour ? ok => { if (!ok) noterDuJour('rate'); } : undefined}
         rated={!!db && !!userId && online && !!stats && !stats.attempted.includes(open.id) && !solved.has(open.id)}
         onPremierEssai={note ? ok => {
           // Mesure de « Continuer » (#284) : réussite au premier essai par tranche de cote. Cote avant l'essai, jamais affichée.
@@ -243,6 +260,8 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
         onSolved={(essais, aide) => {
           // #197 : résolu après avoir vu la réponse, c'est « Vu » : ni XP ni palier. La série du Go du jour tient quand même.
           const gain = recompense(aide, estDuJour);
+          // #369 : la réussite du jour part au serveur (classement entre amis), puis la liste des amis se lit.
+          if (estDuJour) { const p = noterDuJour(gain.statut === 'vu' ? 'vu' : 'reussi'); if (p) setEnvoiDuJour(p); }
           // #233 (P1) : le Go du jour rapporte une fois par jour, même s'il était déjà réussi dans la grille.
           const source = gain.xp ? sourceXpProbleme({ dejaReussi: solved.has(open.id), estDuJour, goDuJourDejaFait: goDuJourFaitAppareil(numero) }) : null;
           if (gain.xp && !solved.has(open.id)) track(EVENTS.problemeResolu, { probleme: open.id, du_jour: estDuJour });
@@ -254,7 +273,7 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
             setSerieDuJour(s);
             setJalon(jalonFranchi(avant, s, numero));
             if (gagne) { setGelGagne(true); setGels(lireReserveAppareil().gels); }
-            track(EVENTS.goDuJourResolu, { numero, essais, serie: s?.jours ?? 1, arrivee_par_lien: lien !== null, vu: gain.statut === 'vu' });
+            track(EVENTS.goDuJourResolu, { numero, essais, serie: s?.jours ?? 1, arrivee_par_lien: lien !== null, vu: gain.statut === 'vu', apres_rappel: rappelAmi });
           }
           if (gain.palier) markSolved(open.id); else markVu(open.id);
           // Raté au premier essai, puis trouvé seul, sans indice ni réponse : réussite avec aide, elle compte un peu (#284).
@@ -601,13 +620,17 @@ interface DuJourInfo {
   jalon: Jalon | null;
   /** #285 : joueur arrivé par un lien sans avoir jamais joué. Après le problème, une seule action : la leçon 1. */
   apprendre?: () => void;
+  /** #369 : « Tes amis aujourd'hui », sous les actions de la réussite (absent sans compte). */
+  amis?: ReactNode;
 }
 
 /** Temps pendant lequel la réponse de l'adversaire reste sur le plateau après une erreur (#237, N6). */
 const DUREE_ERREUR = 2200;
 
-export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPremierEssai, onAttempt, onSolved, onNext, onExit, onSolutionVue, retour, surtitre, exercice = true, signaler }: {
+export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPremierEssai, onEssai, onAttempt, onSolved, onNext, onExit, onSolutionVue, retour, surtitre, exercice = true, signaler }: {
   puzzle: Puzzle; rang: number; duJour?: DuJourInfo; confirmTouch: boolean; rated: boolean;
+  /** Chaque essai joué (coup légal), réussi ou non (#369 : essais du Go du jour comptés par le serveur). */
+  onEssai?: (ok: boolean) => void;
   /** Premier essai joué (#284) : réussi ou non. Sert à la cote de « Continuer », jamais affichée. */
   onPremierEssai?: (ok: boolean) => void;
   onAttempt: (ok: boolean) => Promise<{ ok: true; value: number } | { ok: false; error: string } | null>;
@@ -665,6 +688,7 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
     playStone(p, puzzle.size); hapticStone();
     if (ok) { playSuccess(); hapticSuccess(); } else { playFail(); hapticFail(); }
     setTries(tries + 1);
+    onEssai?.(ok);
     if (!ok) dernierFaux.current = p;
     setAnswer({ kind: r.kind, p, text: ok ? (puzzle.explanation ?? tr('pb.bonCoup')) : (puzzle.refutation ?? tr('pb.pasTout')), n });
     window.clearTimeout(timer.current);
@@ -804,7 +828,7 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
   } else if (answer) {
     verdict = solvedNow && vu ? (
       // Résolu après avoir vu la réponse (#197) : « Vu », sans XP ; la série du Go du jour tient quand même.
-      <Verdict ton="neutre" actions={<>{apprendreBtn ?? suivantBtn}<button className="lien" onClick={showLine}>{tr('pb.voirSuite')}</button></>}>
+      <Verdict ton="neutre" actions={<>{apprendreBtn ?? suivantBtn}<button className="lien" onClick={showLine}>{tr('pb.voirSuite')}</button>{duJour?.amis}</>}>
         <p data-vu="">{fr(tr('pb.vuTexte'))}</p>
         {duJour && serieVisible && <p className="verdict-cote">{fr(tr('pb.vuSerie'))}</p>}
       </Verdict>
@@ -822,6 +846,7 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
             <div className="row liens-du-jour">
               <button className="lien" onClick={showLine}>{tr('pb.voirSuite')}</button>
             </div>
+            {duJour.amis}
           </>
         : <>{suivantBtn}<button className="lien" onClick={showLine}>{tr('pb.voirSuite')}</button></>)}>
         <p>{fr(answer.text)}</p><XpEnLigne anime={duJour?.celebrer ?? true} />

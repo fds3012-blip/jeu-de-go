@@ -73,6 +73,8 @@ interface Props {
   lentes?: TuileLentes;
   /** Carte « Installe l'app » (#214), sous les tuiles, au 2e retour ; elle décide seule si elle se montre. */
   installation?: ReactNode;
+  /** #369 : bilan de la semaine passée, au même endroit, une fois par semaine (un seul appel secondaire à la fois). */
+  semaine?: ReactNode;
   /** « Je sais déjà jouer » (#283) : lien discret sous le bouton, au premier lancement seulement. */
   onPlacement?: () => void;
 }
@@ -203,6 +205,7 @@ export function Accueil(p: Props) {
         </div>
       )}
 
+      {p.semaine}
       {p.installation}
 
       <Reglages {...p} />

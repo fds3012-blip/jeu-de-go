@@ -35,6 +35,7 @@ Bonus « première fois » : +20 une fois par appareil, pour chacune des trois c
 | Revue d'une partie, import SGF et analyse KataGo (#286) | 0 | non | non | — | `Revue.tsx`, `ImportSgf.tsx` |
 | Premières parties à komi réduit (#160) | comme une partie | — | — | rend la 1re victoire possible, pas l'XP | `equilibrage.ts` |
 | Défi par lien (#81, phase 1 : serveur seulement) | pas encore branché | pas encore | — | — | `src/data/defi.ts` |
+| Objectif de la semaine atteint (#369) : parties terminées, problèmes réussis, erreurs rejouées | +30 par objectif, une fois par semaine (pas de bonus « première fois ») | non | non | cibles personnelles, voir plus bas | `semaine.ts`, `xp.ts` (`noterActivite`) |
 
 Paliers de niveau (`xp.ts`) : coût `min(1000, 100 × 1,25^(n−1))` arrondi à 5. Seuils cumulés : niveau 2 à 100 XP, 3 à 225, 4 à 380, 5 à 575, 6 à 820, 7 à 1 125, 8 à 1 505, 9 à 2 100, 10 à 2 845, 11 à 3 775, 12 à 4 775, puis +1 000 par niveau. Récompenses cosmétiques : Kaya clair (niveau 3), Ardoise (5), Coquillage doré (8). Rien après le niveau 8.
 
@@ -98,6 +99,16 @@ Classés du plus net au moins net. **C** = corrigé ; **P** = proposé. C1 à C6
 18. **P14 (nouveau). Le défi par lien arrive sans règle de gain.** Phase 1 livrée côté serveur (#81). À décider avant l'écran : une partie par lien finie rapporte +15 / +40 comme une partie ; jouer un coup dans un défi fait vivre la série (c'est un rendez-vous quotidien naturel, comme chez chess.com en partie par correspondance). Et un mot par objet : « défi » désigne déjà « un défi par jour » (`defi.ts`) ; appeler l'autre « partie par lien » dans l'interface.
 19. **P9. Contenu fini face à la courbe.** Les 8 leçons (260 XP, bonus compris) et les 183 problèmes (environ 1 850 XP) valent environ 2 100 XP : le niveau 9. Au-delà, seules les parties font monter. Il faut environ 5 problèmes neufs par jour pour que le joueur de 30 minutes n'en manque pas. À transmettre à l'agent contenu.
 20. **Tenu, rien à changer** : l'XP ne descend jamais (testé) ; le record non plus ; un badge gagné reste ; la course et le placement ne touchent ni la série ni l'XP, donc rien ne se perd ; le komi réduit ne change pas l'XP ; « Vu » ne rapporte pas d'XP mais garde la série du Go du jour ; aucun total dans les problèmes, aucune cote affichée ; aucun minuteur pour revenir chercher une récompense ; rien ne s'achète.
+
+## 3 bis. Objectifs de la semaine (#369, 05/10)
+
+Décision de Florian du 05/10 : de l'émulation qui marche dès 2 joueurs, et des objectifs personnels de la semaine.
+
+- **Trois objectifs** par semaine (lundi 0 h à dimanche 24 h, heure de Paris) : **terminer des parties** (contre l'ordi, à deux, guidée ou en ligne ; une partie de 10 coups ou moins ne compte pas, comme pour l'XP ; une partie en ligne annulée non plus), **réussir des problèmes** (problème neuf, Go du jour, révision du jour finie) et **rejouer des erreurs** (chaque erreur rejouée dans la revue, dans « Rejouer mes erreurs » ou dans « Tes erreurs à rejouer »).
+- **Cibles** : 3 / 5 / 2 la première semaine. Ensuite, au moins ce que tu as fait la semaine d'avant, sans dépasser 7 / 15 / 5 : la cible suit ton rythme sans devenir une corvée. Après une semaine sans app, retour au départ (rien ne se perd).
+- **Gain** : +30 XP par objectif atteint (autant qu'une leçon), une seule fois par objectif et par semaine, soit 90 XP au plus par semaine : moins d'un sixième des ~600 XP d'une semaine à 10 minutes par jour (simulation ci-dessus). Pas de bonus « première fois » sur ce gain, pas de perte, pas de minuteur, pas de rappel insistant : l'objectif se lit dans Profil, « Ta semaine ».
+- **Bilan** : au premier passage de la semaine suivante, l'accueil montre une fois ce que tu as fait (et, avec un compte, tes amis battus et ta cote de la semaine, calculés par le serveur). Il ne revient pas avant la semaine d'après.
+- **Ce qui compare des joueurs** (Go du jour entre amis, amis battus, records de cote) est calculé par le serveur (`supabase/migrations/20261005230100_emulation_amis.sql`) ; les objectifs, personnels, restent sur l'appareil.
 
 ## 4. Suite
 - P10, P6, P12 : 2 à 5 lignes chacune dans les écrans des agents problèmes et partie. À prendre dans leur prochaine PR, avec la simulation relancée.

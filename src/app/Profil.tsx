@@ -38,6 +38,10 @@ import { BoutonAide } from '../ui/BoutonAide';
 import { CarteCote } from '../ui/Cote';
 import { grade, tc, texteCote } from '../content/i18n/cote';
 import type { ProfilJoueur } from './hooks';
+import { Semaine } from './Semaine';
+import { etatSemaine, nombreAtteints } from './semaine';
+import { te } from '../content/i18n/emulation';
+import '../ui/emulation.css';
 import { FeuilleSignaler } from '../ui/Securite';
 import { tsec } from '../content/i18n/securite';
 import { tk } from '../content/i18n/club';
@@ -73,7 +77,7 @@ function useDonnees(serie: number, record: number, parcours: Parcours) {
   return donnees;
 }
 
-export type VueProfil = 'menu' | 'reglages' | 'installer' | 'rappel' | 'compte' | 'conditions' | 'importer' | 'parties' | 'amis' | 'cote' | 'stats' | 'etude';
+export type VueProfil = 'menu' | 'reglages' | 'installer' | 'rappel' | 'compte' | 'conditions' | 'importer' | 'parties' | 'amis' | 'cote' | 'stats' | 'etude' | 'semaine';
 
 // Libellés traduits (#167) : calculés à l'affichage, dans la langue de l'interface.
 const themes = () => [
@@ -116,6 +120,8 @@ interface Props {
   /** « Mes parties » : défis par lien terminés, lus dans Supabase pour la session ouverte. */
   db?: Db | null;
   userId?: string;
+  /** « Ta semaine » (#369) : l'objectif « problèmes » mène à l'onglet Problèmes. */
+  onProblemes?: () => void;
 }
 
 /** Sous-vue du Profil : « Retour » en haut, un titre, un contenu. */
@@ -131,7 +137,7 @@ function SousVue({ id, titre, onRetour, children }: { id: string; titre: string;
   );
 }
 
-export function Profil({ vue, onVue, settings, set, profil, serie, record = 0, parcours, placement, onPlacement, onJouer, db, userId, amis, onProfilChange }: Props) {
+export function Profil({ vue, onVue, settings, set, profil, serie, record = 0, parcours, placement, onPlacement, onJouer, db, userId, amis, onProfilChange, onProblemes }: Props) {
   const retour = () => { onVue('menu'); window.scrollTo({ top: 0 }); };
   // #358 : toutes les parties terminées, et leur revue.
   // #286 : « Analyser une partie » est dans « Mes parties » depuis #358 (le Profil tient sans défiler) ; on y revient.
@@ -145,6 +151,15 @@ export function Profil({ vue, onVue, settings, set, profil, serie, record = 0, p
   // #417 : ta cote de jeu (parties classées entre humains), sa courbe de 30 jours et le point de départ.
   if (vue === 'cote' && amis?.compte && userId) {
     return <SousVue id="cote-titre" titre={tc('cote.titre')} onRetour={retour}><CarteCote db={amis.db} userId={userId} onChange={onProfilChange} /></SousVue>;
+  }
+  // #369 : tes objectifs de la semaine et ce que tu as fait depuis lundi (avec un compte : tes amis battus, ta cote).
+  if (vue === 'semaine') {
+    return (
+      <SousVue id="semaine-titre" titre={te('semaine.titre')} onRetour={retour}>
+        <Semaine db={amis?.compte ? amis.db : null}
+          actions={{ parties: onJouer ?? retour, problemes: onProblemes ?? retour, erreurs: () => { onVue('parties'); window.scrollTo({ top: 0 }); } }} />
+      </SousVue>
+    );
   }
   // #368 : « Mes statistiques » (cote sur 90 jours, précision, erreurs par phase, bilan). Action principale : revoir une partie.
   if (vue === 'stats') {
@@ -202,6 +217,7 @@ function Menu({ onVue, settings, profil, serie, record = 0, parcours, placement,
   const donnees = useDonnees(serie, record, parcours);
   // Ligne « Installer l'app » (#214) : tant que l'app est installable ici et pas installée.
   const proposerInstallation = installable(usePlateformeInstallation(), etatInstallation());
+  const atteints = useMemo(() => nombreAtteints(etatSemaine().courante), []);
   // #363 : feuille « Nous écrire » (bug, idée, autre).
   const [ecrire, setEcrire] = useState(false);
   return (
@@ -252,16 +268,21 @@ function Menu({ onVue, settings, profil, serie, record = 0, parcours, placement,
         ) : onPlacement && (placement?.fait && placement.kyu !== null
           ? <LigneLien icone={<IconeReglage id="placement" />} libelle={t('placement.profil')} valeur={t('placement.profilValeur', { kyu: placement.kyu, date: dateCourte(placement.date) })} onClick={onPlacement} />
           : <LigneLien icone={<IconeReglage id="placement" />} libelle={t(placement?.fait ? 'placement.profilRefaire' : 'placement.profilFaire')} onClick={onPlacement} />)}
-        {/* #368 : « Statistiques » partage la ligne des Réglages (deux moitiés) : le Profil tient toujours sans défiler.
+        {/* #368 : « Statistiques » ; #369 : « Ta semaine » : les deux lectures de ta progression partagent une ligne (deux
+            moitiés) ; « Réglages » rejoint « Mon compte » plus bas : le Profil tient toujours sans défiler en 390 × 844.
             #372 : « Étudier une position » est dans « Mes parties », à côté de « Analyser une partie jouée ailleurs ». */}
         <div className="ligne ligne-double">
-          <DemiLigne icone="reglages" libelle={t('profil.reglages')} valeur={t('profil.reglagesResume')} onClick={() => onVue('reglages')} />
+          <DemiLigne icone="semaine" libelle={te('semaine.ligne')} valeur={te('semaine.ligneValeur', { n: atteints })} onClick={() => onVue('semaine')} testId="ligne-semaine" />
           <DemiLigne icone="stats" libelle={tk('stats.ligne')} valeur={tk('stats.ligneValeur')} testId="ligne-stats" onClick={() => onVue('stats')} />
         </div>
         {/* #36 : rappel du Go du jour, dès que le rappel est configuré (clé publique VAPID). */}
         {clePubliqueVapid() !== '' && <LigneLien icone={<IconeReglage id="rappel" />} libelle={t('profil.rappel')} valeur={resumeRappel()} onClick={() => onVue('rappel')} />}
         {proposerInstallation && <LigneLien icone={<IconeReglage id="installer" />} libelle={t('profil.installer')} onClick={() => onVue('installer')} />}
-        <LigneLien icone={<IconeReglage id="compte" />} libelle={t('profil.compte')} valeur={profil?.pseudo ?? (profil ? undefined : t('profil.seConnecter'))} onClick={() => onVue('compte')} />
+        {/* #369 : « Réglages » et « Mon compte » partagent une ligne (deux moitiés, ce qui te concerne toi et l'app). */}
+        <div className="ligne ligne-double">
+          <DemiLigne icone="reglages" libelle={t('profil.reglages')} valeur={t('profil.reglagesResume')} onClick={() => onVue('reglages')} />
+          <DemiLigne icone="compte" libelle={t('profil.compte')} valeur={profil?.pseudo ?? (profil ? undefined : t('profil.seConnecter'))} onClick={() => onVue('compte')} />
+        </div>
         {/* #363 : « Nous écrire » partage la ligne des conditions (deux moitiés) : le Profil tient toujours sans défiler. */}
         {amis ? (
           <div className="ligne ligne-double">

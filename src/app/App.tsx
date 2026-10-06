@@ -61,9 +61,12 @@ import { BandeauHorsLigne, InviteMiseAJour } from '../ui/Bandeaux';
 import '../ui/defis.css';
 import '../ui/robustesse.css';
 import { ecouterAide, estRaccourciAide, ficheDeLecon, ouvrirAide, type Ouverture } from './ouvrirAide';
+import { bilanAMontrer, etatSemaine } from './semaine';
 
 // Aide (#362) : feuille chargée au premier « ? » (partie, leçon, problème, Profil) ou à la touche « ? ».
 const FeuilleAide = lazy(() => import('../ui/Aide'));
+// #369 : bilan de la semaine passée, sur l'accueil, une fois par semaine ; chargé seulement ce jour-là.
+const CarteBilanSemaine = lazy(() => import('../ui/BilanSemaine').then(m => ({ default: m.BilanSemaine })));
 
 // #433 : problèmes complets chargés à la demande (placement, série de fin de leçon) ; l'accueil lit le Go du jour léger.
 const problemesLocaux = () => import('../content/problemesLocaux').then(m => m.PROBLEMES_LOCAUX);
@@ -312,7 +315,7 @@ export function App() {
     : RETOUR_GOOGLE?.profil && !ECRAN_COMPTE_AU_RETOUR && !DEFI_AU_RETOUR ? 'compte' : 'menu');
   // #359 : demandes d'ami reçues (`mes_amis()`), relues à chaque changement d'écran : pastille du Profil et « À faire ».
   const demandesAmis = useDemandesAmis(supabase, !!compteId && !playing, `${tab}|${vueProfil}`);
-  const { defis: aJouerEnLigne, elements: aFaire, pastilles, recherche: rechercheLente, relire: relireAFaire } = useAFaire(supabase, session?.user.id,
+  const { defis: aJouerEnLigne, elements: aFaire, pastilles, rappelGoDuJour, recherche: rechercheLente, relire: relireAFaire } = useAFaire(supabase, session?.user.id,
     `${tab}|${defi?.vue ?? ''}|${enPlacement}|${lessonId ?? ''}|${lente}`, !playing && defi?.vue !== 'partie', {
       // #365 : série masquée, pas de « Garde ta série » (le Go du jour reste proposé, calmement).
       premier: home.nouveau, serie: settings.serieVisible ? serie : 0, duJourFait, goDuJour: duJour ? { numero: numeroJour, titre: duJour.title } : null,
@@ -354,8 +357,10 @@ export function App() {
   const annonceAccueil = serieVisible && (annonceGel !== null || retourSerie !== null);
   useEffect(() => { if (annonceAccueil) writeLocal(ANNONCE_DU_JOUR_KEY, numeroJour); }, [annonceAccueil, numeroJour]);
   const [jourAnnonce] = useState(() => lireJourAnnonce(readLocal<unknown>(ANNONCE_DU_JOUR_KEY, null)));
+  // #369 : bilan de la semaine passée, lu une fois à l'ouverture (la carte le marque vu dès qu'elle s'affiche).
+  const [bilanPasse, setBilanPasse] = useState(() => bilanAMontrer(etatSemaine()));
   const appel = appelSecondaire({
-    jour: numeroJour, parties: parties.n, duJourFait, annonce: annonceAccueil, jourAnnonce,
+    jour: numeroJour, parties: parties.n, duJourFait, annonce: annonceAccueil, jourAnnonce, semaine: bilanPasse !== null,
     installation: estMomentRetour(ouverture) && doitProposer({ plateforme, etat: etatInstall, moment: 'retour', enPartie: false }),
   });
   const [accordIgnore, setAccordIgnore] = useState(false);
@@ -726,13 +731,14 @@ export function App() {
   } else if (tab === 'problemes') {
     screen = <Puzzles db={supabase} userId={compteId} sessionLoading={session === undefined} confirmTouch={settings.confirmTouch} onCompte={() => go('profil')}
       essai={decider({ quoi: 'probleme' }, etat, terminees, COMPTES).ok ? undefined : () => { garde({ quoi: 'probleme' }, { quoi: 'problemes' }); }}
-      lien={LIEN_DU_JOUR} depuisRappel={ARRIVEE_RAPPEL || duJourDirect} onDuJour={setDuJourOuvert} celebrer={settings.celebrations} racine={racineProblemes}
+      lien={LIEN_DU_JOUR} depuisRappel={ARRIVEE_RAPPEL || duJourDirect} onDuJour={setDuJourOuvert} celebrer={settings.celebrations} racine={racineProblemes} rappelAmi={rappelGoDuJour}
       onApprendre={versLecon1 && LESSONS[0] ? () => { setVersLecon1(false); go('apprendre'); setLessonId(LESSONS[0].id); } : undefined} />;
   } else if (tab === 'profil') {
     screen = <Profil vue={vueProfil} onVue={v => { if (v === 'importer' && !garde({ quoi: 'import' }, { quoi: 'importer' })) return; setVueProfil(v); }} settings={settings} set={set} profil={profil} serie={serie} record={recordSerie}
       parcours={{ lecons: { faites: done, total: LESSONS.length }, adversaires: OPPONENTS.length }}
       placement={placement} onPlacement={ouvrirPlacement}
       onJouer={() => { go('jouer'); lancer('ordi'); }} db={supabase} userId={session?.user.id} onProfilChange={() => setClePseudo(c => c + 1)}
+      onProblemes={() => go('problemes')}
       // #359 : « Mes amis ». Sans compte complet, l'écran de compte s'ouvre puis revient ici ; « Défier » ouvre la partie.
       amis={supabase ? {
         db: supabase, compte: etat === 'complet', demandes: demandesAmis,
@@ -770,6 +776,11 @@ export function App() {
         // Un seul appel à la fois (#236, N4) : pas de carte d'installation le jour où Mochi fait une annonce ;
         // quand elle se montre, la pastille « À faire » s'efface.
         installation={appel === 'installation' ? <ProposerInstallation moment="retour" /> : null}
+        semaine={appel === 'semaine' && bilanPasse ? (
+          <Suspense fallback={null}>
+            <CarteBilanSemaine semaine={bilanPasse} db={etat === 'complet' ? supabase : null} onFermer={() => setBilanPasse(null)} />
+          </Suspense>
+        ) : null}
         // Accueil v3 : un défi d'un ami où c'est ton tour passe en premier dans « Aujourd'hui ».
         // #367 : un seul défi où c'est ton tour ? La tuile ouvre directement la partie, en un toucher.
         defis={COMPTES ? { n: defisAJouer, adversaire: defisAJouer === 1 ? defisEnAttente[0].adversaire : null, ouvrir: () => {

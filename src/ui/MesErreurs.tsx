@@ -5,6 +5,7 @@
 import { useEffect, useMemo, useState, type ComponentType } from 'react';
 import type { Puzzle } from '../data/puzzles';
 import { EVENTS, track } from '../data/analytics';
+import { noterActivite } from '../app/xp';
 import { readLocal, writeLocal } from '../app/hooks';
 import { apresEssai, aRejouer, devientMaitrisee, ERREURS_KEY, lireErreurs, versProbleme, type ErreurGardee } from '../app/erreurs';
 import { MiniGoban } from './MiniGoban';
@@ -37,6 +38,7 @@ export function MesErreurs({ confirmTouch, Lecteur }: { confirmTouch: boolean; L
     const suite = apresEssai(avant, e.id, reussi, new Date());
     writeLocal(ERREURS_KEY, suite);
     setListe(suite);
+    noterActivite('erreurs'); // #369 : objectif « erreurs rejouées » de la semaine
     track(EVENTS.erreurRejouee, { reussi, source: 'problemes', taille: e.size, coup: e.coup, rates: gardee.rates, reponses: e.reponses.length });
     if (devientMaitrisee(gardee, reussi)) track(EVENTS.erreurMaitrisee, { taille: e.size, coup: e.coup, rates: gardee.rates });
   }

@@ -13,6 +13,7 @@ import { langue } from '../content/i18n';
 import { fr } from './typo';
 import { mouvementsReduits, useDefilement } from './defilement';
 import { Confettis } from './Confettis';
+import { Records } from './Records';
 import './cote.css';
 
 /** Kyu et dan expliqués une fois (#417) : la phrase s'affiche tant qu'elle n'a pas été vue. */
@@ -95,6 +96,8 @@ export function CarteCote({ db, userId, onChange }: { db: Db; userId: string; on
       {vocabulaire && <p className="cote-vocabulaire small" data-testid="cote-vocabulaire">{fr(tc('cote.vocabulaire'))}</p>}
       {cote.provisoire && <p className="muted small">{fr(tc('cote.provisoire'))}</p>}
       <Courbe points={courbe} actuelle={cote.cote} />
+      {/* #369 : records personnels (meilleure cote, plus longue série de victoires), dès la première partie classée. */}
+      {cote.parties > 0 && <Records db={db} />}
       {cote.parties === 0
         ? <ChoixDepart db={db} actuel={cote} onChoisi={() => { setCle(c => c + 1); onChange?.(); }} />
         : cote.depart && <p className="muted small">{fr(tc('cote.depart.fige'))}</p>}

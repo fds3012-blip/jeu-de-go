@@ -44,8 +44,8 @@ describe('courbe des niveaux', () => {
 });
 
 describe('gains', () => {
-  it('barème : problème 10, Go du jour 20, révision du jour 20, leçon 30, partie 15, victoire 15 + 25, erreurs rejouées 10', () => {
-    expect(GAINS).toEqual({ probleme: 10, goDuJour: 20, revision: 20, lecon: 30, partie: 15, victoire: 40, erreursRejouees: 10 });
+  it('barème : problème 10, Go du jour 20, révision du jour 20, leçon 30, partie 15, victoire 15 + 25, erreurs rejouées 10, objectif de la semaine 30', () => {
+    expect(GAINS).toEqual({ probleme: 10, goDuJour: 20, revision: 20, lecon: 30, partie: 15, victoire: 40, erreursRejouees: 10, objectif: 30 });
   });
 
   it('#233 : chaque défi du jour qui fait vivre la série rapporte au moins autant que le Go du jour', () => {
@@ -200,5 +200,36 @@ describe('sourceXpPartie (#233, P4 et P5)', () => {
     const apres = lireXp();
     for (let i = 0; i < 5; i++) { const r = sourceXpPartie({ coups: 30, contreOrdi: true, gagne: true, reprise: true }); if (r) gagnerXp(r); }
     expect(lireXp()).toBe(apres);
+  });
+});
+
+describe('objectifs de la semaine (#369)', () => {
+  beforeEach(() => { localStorage.clear(); track.mockClear(); vi.useFakeTimers(); vi.setSystemTime(new Date('2026-10-05T12:00:00+02:00')); });
+  afterEach(() => { vi.useRealTimers(); });
+
+  it('un objectif atteint rapporte 30 XP une seule fois, sans bonus « première fois »', () => {
+    const { noterActivite } = xp;
+    expect(appliquer(0, 'objectif', true).points).toBe(GAINS.objectif + BONUS_PREMIERE.probleme); // le calcul pur l'accepterait…
+    for (let i = 0; i < 2; i++) noterActivite('erreurs'); // …mais gagnerXp ne le donne jamais : 2 erreurs = objectif atteint
+    expect(lireXp()).toBe(30);
+    expect(track).toHaveBeenCalledWith('objectif_semaine_atteint', { objectif: 'erreurs' });
+    for (let i = 0; i < 5; i++) noterActivite('erreurs');
+    expect(lireXp()).toBe(30);
+    expect(lirePremieres().size).toBe(0);
+  });
+
+  it('les gains d’XP comptent pour la semaine : 3 parties atteignent l’objectif des parties', () => {
+    for (let i = 0; i < 3; i++) gagnerXp('partie');
+    // 3 × 15, +20 la première partie, +30 l'objectif atteint.
+    expect(lireXp()).toBe(45 + 20 + 30);
+    const etat = JSON.parse(localStorage.getItem('go.semaine.v1') ?? '{}');
+    expect(etat.courante.compte.parties).toBe(3);
+    expect(etat.courante.atteints).toEqual(['parties']);
+  });
+
+  it('le Go du jour compte comme un problème et comme un Go du jour ; une leçon comme une leçon', () => {
+    gagnerXp('goDuJour'); gagnerXp('lecon'); gagnerXp('objectif');
+    const etat = JSON.parse(localStorage.getItem('go.semaine.v1') ?? '{}');
+    expect(etat.courante.compte).toEqual({ parties: 0, problemes: 1, erreurs: 0, goDuJour: 1, lecons: 1 });
   });
 });

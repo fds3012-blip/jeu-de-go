@@ -31,6 +31,10 @@ import { parseActionRequest, planAction, type GameRow } from '../src/go/server';
 // règles et mêmes codes que supabase/migrations/20261005220100_securite_signalements.sql, sauf la fin de partie depuis
 // plus de 10 minutes) ; les INSERT de `messages_partie` sont poussés aux deux joueurs, sauf à celui qui a bloqué
 // l'auteur ; `find_match` n'apparie jamais deux joueurs dont l'un a bloqué l'autre.
+// Émulation entre amis (#369) : `noter_go_du_jour` (le numéro envoyé fait foi : l'horloge du navigateur est figée),
+// `classement_go_du_jour`, `rappeler_go_du_jour` (notification `go_du_jour`), `bilan_semaine` (toutes les parties finies
+// entre humains comptent pour la semaine en cours), `mes_records` (historique de cote du joueur). Mêmes règles et mêmes
+// codes que supabase/migrations/20261005230100_emulation_amis.sql (sauf les limites de temps).
 
 export const SUPABASE = 'https://supabase.e2e.test';
 export const CODE = '123456';
@@ -89,6 +93,9 @@ export function fauxServeur() {
   let liaisonManuelle = true;
   let nIdentite = 0;
   const codesRattachement = new Map<string, string>();
+  /** Go du jour par joueur (#369) : numéro, état, essais, ordre de réussite. */
+  const goDuJour: { user: string; numero: number; etat: 'en_cours' | 'reussi' | 'vu'; essais: number; le: number }[] = [];
+  const rappels: { de: string; a: string; numero: number }[] = [];
   const identite = (provider: string, email?: string): Identite => ({ identity_id: `identite-${++nIdentite}`, provider, email });
 
   const jwt = (u: Utilisateur) => {
@@ -472,6 +479,80 @@ export function fauxServeur() {
         return json(id);
       }
     }
+    // Émulation entre amis (#369).
+    if (['noter_go_du_jour', 'classement_go_du_jour', 'rappeler_go_du_jour', 'bilan_semaine', 'mes_records'].some(n => chemin === `/rest/v1/rpc/${n}`)) {
+      const nom = chemin.slice('/rest/v1/rpc/'.length);
+      const refus = (code: string) => json({ code, message: code, details: null, hint: null }, 400);
+      if (!u || u.anonyme) return refus('JGC01');
+      if (!profiles.find(x => x.id === u.id)?.username) return refus('JGP01');
+      const corps = (req.postDataJSON() ?? {}) as { p_numero?: number; p_resultat?: string; p_pseudo?: string; p_precedente?: boolean };
+      // Comme `est_bloque` (#363) : un ami bloqué, dans un sens ou dans l'autre, n'est plus listé ni rappelé.
+      const amisDe = (id: string) => amities.filter(f => f.etat === 'accepted' && (f.de === id || f.a === id)).map(f => (f.de === id ? f.a : f.de))
+        .filter(x => !blocages.some(b => (b.de === id && b.a === x) || (b.de === x && b.a === id)));
+      const numeroDuJour = () => Math.max(0, ...goDuJour.filter(g => g.user === u.id).map(g => g.numero));
+      if (nom === 'noter_go_du_jour') {
+        if (!['rate', 'reussi', 'vu'].includes(String(corps.p_resultat))) return refus('JGJ04');
+        const numero = Number(corps.p_numero);
+        let g = goDuJour.find(x => x.user === u.id && x.numero === numero);
+        if (!g) { g = { user: u.id, numero, etat: 'en_cours', essais: 0, le: Date.now() }; goDuJour.push(g); }
+        if (g.etat === 'en_cours') {
+          g.essais = Math.min(99, g.essais + 1); g.le = Date.now();
+          if (corps.p_resultat !== 'rate') g.etat = corps.p_resultat as 'reussi' | 'vu';
+        }
+        if (g.etat !== 'en_cours') marquer(n => n.destinataire_id === u.id && n.type === 'go_du_jour');
+        return json(g.etat);
+      }
+      if (nom === 'classement_go_du_jour') {
+        const numero = Math.max(numeroDuJour(), ...goDuJour.map(g => g.numero));
+        const rang = (e: string) => (e === 'reussi' ? 0 : e === 'vu' ? 1 : 2);
+        const lignes = [...amisDe(u.id), u.id].flatMap(id => {
+          const p = profiles.find(x => x.id === id);
+          if (!p?.username) return [];
+          const g = goDuJour.find(x => x.user === id && x.numero === numero);
+          const etat = g && g.etat !== 'en_cours' ? g.etat : 'pas_encore';
+          return [{ pseudo: String(p.username), etat, essais: etat === 'reussi' ? g!.essais : null, moi: id === u.id,
+            rappele: rappels.some(r => r.de === u.id && r.a === id && r.numero === numero), le: g?.le ?? Infinity }];
+        });
+        lignes.sort((a, b) => rang(a.etat) - rang(b.etat) || (a.essais ?? 99) - (b.essais ?? 99) || a.le - b.le || a.pseudo.localeCompare(b.pseudo));
+        return json(lignes.map(({ le: _le, ...l }) => l));
+      }
+      if (nom === 'rappeler_go_du_jour') {
+        const cible = profiles.find(x => String(x.username ?? '').toLowerCase() === String(corps.p_pseudo ?? '').trim().toLowerCase());
+        if (!cible) return refus('JGA01');
+        const autre = String(cible.id);
+        if (autre === u.id) return refus('JGA02');
+        if (!amisDe(u.id).includes(autre)) return refus('JGA08');
+        const numero = Math.max(numeroDuJour(), ...goDuJour.map(g => g.numero));
+        if (goDuJour.some(g => g.user === autre && g.numero === numero && g.etat !== 'en_cours')) return refus('JGJ02');
+        if (rappels.some(r => r.de === u.id && r.a === autre && r.numero === numero)) return json('deja');
+        rappels.push({ de: u.id, a: autre, numero });
+        notifier(autre, 'go_du_jour', null);
+        return json('envoye');
+      }
+      if (nom === 'bilan_semaine') {
+        const lundi = (() => { const d = new Date(); d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7)); return d.toISOString().slice(0, 10); })();
+        if (corps.p_precedente) return json({ semaine: lundi, parties: 0, victoires: 0, parties_classees: 0, cote_ecart: 0, go_du_jour: 0, amis: [] });
+        const parties = games.filter(g => g.status === 'finished' && !g.bot_id && g.black_id && g.white_id && (g.black_id === u.id || g.white_id === u.id));
+        const gagne = (g: Ligne) => (String(g.result).startsWith('B+') && g.black_id === u.id) || (String(g.result).startsWith('W+') && g.white_id === u.id);
+        const amis = amisDe(u.id).flatMap(id => {
+          const contre = parties.filter(g => g.black_id === id || g.white_id === id);
+          return contre.length ? [{ pseudo: String(profiles.find(x => x.id === id)?.username), victoires: contre.filter(gagne).length, defaites: contre.filter(g => !gagne(g)).length }] : [];
+        }).sort((a, b) => b.victoires - a.victoires);
+        const classees = ratingHistory.filter(h => h.user_id === u.id && h.kind === 'game');
+        return json({ semaine: lundi, parties: parties.length, victoires: parties.filter(gagne).length, parties_classees: classees.length,
+          cote_ecart: classees.reduce((s, h) => s + Number(h.ecart ?? 0), 0), go_du_jour: goDuJour.filter(g => g.user === u.id && g.etat !== 'en_cours').length, amis: amis.slice(0, 5) });
+      }
+      // mes_records : victoire = points gagnés (Glicko-2 : une victoire fait toujours monter).
+      const h = ratingHistory.filter(x => x.user_id === u.id && x.kind === 'game').sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)));
+      let meilleure: Ligne | null = null, serie = 0, record = 0;
+      for (const x of h) {
+        if (!meilleure || Number(x.rating) > Number(meilleure.rating)) meilleure = x;
+        serie = Number(x.ecart) > 0 ? serie + 1 : 0;
+        record = Math.max(record, serie);
+      }
+      return json({ parties: h.length, meilleure_cote: meilleure ? meilleure.rating : null, meilleure_cote_le: meilleure ? String(meilleure.created_at).slice(0, 10) : null,
+        serie_victoires: record, serie_en_cours: serie });
+    }
     if (chemin === '/rest/v1/rpc/marquer_notifications_lues') {
       if (!u) return json({ message: 'Connexion requise' }, 401);
       const { p_partie, p_type } = req.postDataJSON() as { p_partie?: string; p_type?: string };
@@ -807,7 +888,7 @@ export function fauxServeur() {
   const canauxActifs = (prefixe: string) => [...abonnes].filter(a => !a.fige).flatMap(a => [...a.canaux.keys()]).filter(t => t.startsWith(`realtime:${prefixe}`)).length;
   return { traiter, brancherTempsReel, notifier, fileLente, tacheLentes, avancerHorloge, ralentirLectures, figerTempsReel, canauxActifs, pousses, pousserPartie, appels, games, defis, notifications, partiesPerso, partagees, profiles, ratingHistory, emailsEnvoyes, sessionAnonyme, file, pendules,
     compteExistant, compteGoogle, compteSocial, relierIdentite, liaison, utilisateur, sessionCompte, autorisations, amities,
-    signalements, blocages, messagesPartie };
+    signalements, blocages, messagesPartie, goDuJour, rappels };
 }
 
 export type FauxServeur = ReturnType<typeof fauxServeur>;

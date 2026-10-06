@@ -327,6 +327,30 @@ export type Database = {
           },
         ]
       }
+      go_du_jour_resultats: {
+        Row: {
+          essais: number
+          etat: string
+          maj_le: string
+          numero: number
+          user_id: string
+        }
+        Insert: {
+          essais?: number
+          etat?: string
+          maj_le?: string
+          numero: number
+          user_id: string
+        }
+        Update: {
+          essais?: number
+          etat?: string
+          maj_le?: string
+          numero?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       games: {
         Row: {
           analysis: Json | null
@@ -987,6 +1011,27 @@ export type Database = {
         }
         Relationships: []
       }
+      rappels_go_du_jour: {
+        Row: {
+          destinataire_id: string
+          envoye_le: string
+          expediteur_id: string
+          numero: number
+        }
+        Insert: {
+          destinataire_id: string
+          envoye_le?: string
+          expediteur_id: string
+          numero: number
+        }
+        Update: {
+          destinataire_id?: string
+          envoye_le?: string
+          expediteur_id?: string
+          numero?: number
+        }
+        Relationships: []
+      }
       rating_history: {
         Row: {
           created_at: string
@@ -1169,6 +1214,7 @@ export type Database = {
           taille: number
         }[]
       }
+      bilan_semaine: { Args: { p_precedente?: boolean }; Returns: Json }
       bloquer_joueur: {
         Args: { p_partie?: string; p_pseudo?: string }
         Returns: boolean
@@ -1188,6 +1234,16 @@ export type Database = {
       choisir_depart_cote: {
         Args: { p_depart: string; p_kyu?: number }
         Returns: number
+      }
+      classement_go_du_jour: {
+        Args: never
+        Returns: {
+          essais: number | null
+          etat: string
+          moi: boolean
+          pseudo: string
+          rappele: boolean
+        }[]
       }
       cote_rd_apres_absence: {
         Args: { p_depuis: string; p_maintenant: string; p_rd: number; p_vol: number }
@@ -1337,6 +1393,12 @@ export type Database = {
           pseudo: string
         }[]
       }
+      mes_records: { Args: never; Returns: Json }
+      noter_go_du_jour: {
+        Args: { p_numero: number; p_resultat: string }
+        Returns: string
+      }
+      numero_go_du_jour: { Args: { p_jour?: string }; Returns: number }
       pendule_apres: {
         Args: {
           p_ecoule_ms: number
@@ -1356,6 +1418,7 @@ export type Database = {
       purger_securite: { Args: never; Returns: undefined }
       quitter_file_attente: { Args: never; Returns: string }
       quitter_file_lente: { Args: never; Returns: string }
+      rappeler_go_du_jour: { Args: { p_pseudo: string }; Returns: string }
       rattacher_session_anonyme: { Args: { p_code: string }; Returns: number }
       reclamer_rappels: {
         Args: { p_maintenant?: string }

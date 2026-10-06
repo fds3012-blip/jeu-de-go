@@ -9,13 +9,14 @@
 import type { Result } from './account';
 import type { Db } from './supabase';
 
-export const TYPES_NOTIFICATION = ['tour', 'comptage', 'fin', 'ami'] as const;
+// #369 : `go_du_jour`, un ami te rappelle le Go du jour (sans partie).
+export const TYPES_NOTIFICATION = ['tour', 'comptage', 'fin', 'ami', 'go_du_jour'] as const;
 export type TypeNotification = (typeof TYPES_NOTIFICATION)[number];
 
 export interface NotificationEnAttente {
   id: number;
   type: TypeNotification;
-  /** Partie visée (défi), null pour une demande d'ami. */
+  /** Partie visée (défi), null pour une demande d'ami ou un rappel du Go du jour. */
   partieId: string | null;
   creeeLe: string;
 }
@@ -39,6 +40,14 @@ export async function notificationsEnAttente(db: Db, userId: string): Promise<Re
 /** Parties qui ont une notification en attente (tour ou comptage) : ce que le joueur n'a pas encore vu. */
 export function partiesNonVues(liste: readonly NotificationEnAttente[]): Set<string> {
   return new Set(liste.flatMap(n => (n.type === 'tour' || n.type === 'comptage') && n.partieId ? [n.partieId] : []));
+}
+
+/**
+ * #369 : un ami t'a rappelé le Go du jour aujourd'hui (heure de Paris) et tu ne l'as pas encore fait (le serveur lit
+ * le rappel dès ta réussite). Un rappel d'un autre jour ne compte plus.
+ */
+export function rappelGoDuJour(liste: readonly NotificationEnAttente[], aujourdhui: string, jourDe: (iso: string) => string): boolean {
+  return liste.some(n => n.type === 'go_du_jour' && jourDe(n.creeeLe) === aujourdhui);
 }
 
 /**
