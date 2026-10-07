@@ -7,13 +7,25 @@ test("première ouverture : l'accueil s'affiche en moins de 3 secondes", async (
   const erreurs: string[] = [];
   page.on('pageerror', (e) => erreurs.push(e.message));
 
-  const t0 = Date.now();
+  // #467 : l'instant où l'action principale apparaît est relevé dans la page, depuis le début de la navigation
+  // (ce que voit le joueur), plus par l'horloge de Playwright : sous charge, ses allers-retours ajoutaient du temps.
+  await page.addInitScript(() => {
+    const w = window as unknown as { __ctaVisible?: number };
+    const voir = () => {
+      const cta = document.querySelector('.cta');
+      if (w.__ctaVisible === undefined && cta && cta.getBoundingClientRect().height > 0) { w.__ctaVisible = performance.now(); mo.disconnect(); }
+    };
+    const mo = new MutationObserver(voir);
+    mo.observe(document, { childList: true, subtree: true });
+  });
   await page.goto('/');
   // L'action principale de l'accueil est visible et utilisable.
   const cta = page.locator('.cta');
-  await expect(cta).toBeVisible({ timeout: 3000 });
+  await expect(cta).toBeVisible();
   await expect(cta).toBeInViewport();
-  expect(Date.now() - t0).toBeLessThan(3000);
+  const visible = await page.evaluate(() => (window as unknown as { __ctaVisible?: number }).__ctaVisible);
+  expect(visible, 'instant d’apparition relevé').toBeDefined();
+  expect(visible!).toBeLessThan(3000);
 
   await expect(page.getByRole('heading', { level: 1, name: 'Mochi Go' })).toBeVisible();
   // Les deux tuiles : problème du jour et leçon suivante.

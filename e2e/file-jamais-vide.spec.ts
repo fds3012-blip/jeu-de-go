@@ -6,7 +6,9 @@ import { choisirMode, plateau } from './plateau';
 // la plus proche de la cote du joueur, en restant dans la file. Un humain arrive pendant cette partie : « Un joueur est
 // prêt ! », « Rejoindre » ou « Rester ». Supabase simulé (e2e/fauxSupabase.ts) ; les règles du serveur (30 s,
 // réglages de qui attendait le plus, refus sans cote) sont testées par supabase/tests/file_jamais_vide.test.sql.
-// Ces parcours attendent vraiment 25 s : pas d'horloge simulée, la file et la présence restent celles de l'app.
+// L'horloge de la page est celle de Playwright (`page.clock`, #467) : elle avance au rythme réel, sauf quand le test
+// la fait sauter de 23 s puis de 2 s. La file, la présence et leurs minuteurs restent ceux de l'app ; seul le temps
+// d'attente réel disparaît (ces parcours attendaient vraiment 25 s chacun, au bord du délai de 30 s sous charge).
 
 const ANA = '00000000-0000-4000-8000-0000000000c1';
 const BOB = '00000000-0000-4000-8000-0000000000c2';
@@ -20,6 +22,7 @@ async function telephone(browser: Browser, baseURL: string | undefined, serveur:
   const stockage: Record<string, string> = { 'go.parties.v1': JSON.stringify({ n: 3 }) };
   stockage['sb-supabase-auth-token'] = JSON.stringify(serveur.sessionCompte(qui.email, qui.pseudo, qui.id));
   const page = await brancher(ctx, serveur, stockage);
+  await page.clock.install();
   await page.goto('/');
   return page;
 }
@@ -39,10 +42,15 @@ async function repliAccepte(ana: Page, serveur: FauxServeur): Promise<string> {
   await expect(choix.getByRole('button', { name: 'Japonais' })).toHaveAttribute('aria-pressed', 'true');
   await choix.getByRole('button', { name: 'Trouver un adversaire' }).click();
   await expect(ana.getByText('Je cherche quelqu’un de ton niveau…')).toBeVisible();
-  // Rien avant 25 s.
-  await ana.waitForTimeout(20_000);
-  await expect(ana.getByTestId('direct-repli')).toHaveCount(0);
+  // Rien avant 25 s : 23 s plus tard (horloge de la page avancée d'un coup), toujours pas de proposition…
   const repli = ana.getByTestId('direct-repli');
+  await ana.clock.fastForward(23_000);
+  // … une fois l'écran remis à jour avec ces 23 s (le compteur d'attente se relit chaque seconde).
+  await ana.clock.fastForward(1_000);
+  await expect(ana.getByText('Je cherche quelqu’un de ton niveau…')).toBeVisible();
+  await expect(repli).toHaveCount(0);
+  // … puis, passé 25 s, Mochi propose l'IA.
+  await ana.clock.fastForward(2_000);
   await expect(repli).toBeVisible({ timeout: 10_000 });
   await expect(repli.getByRole('status')).toHaveText(/^Personne de ton niveau pour l’instant\. Joue contre \S+ en attendant\s?: je te préviens si quelqu’un arrive\.$/);
   const nom = /Joue contre (\S+) en attendant/.exec((await repli.getByRole('status').textContent()) ?? '')![1];
