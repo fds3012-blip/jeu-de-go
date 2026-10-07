@@ -1,0 +1,30 @@
+/* Problèmes par thème (#471) : vignettes à plat (actions secondaires), deux colonnes dès 320 px. */
+.themes { margin-top: var(--space-6); }
+.themes h3 { margin: 0 0 var(--space-3); font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: var(--fs-l);
+  letter-spacing: var(--tracking-titre); }
+.themes-grille { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
+.theme-carte { display: grid; grid-template-columns: 36px minmax(0, 1fr); grid-template-rows: auto 1fr auto; column-gap: var(--space-3);
+  row-gap: var(--space-2); align-items: center; align-content: start; width: 100%; height: 100%; min-height: 88px; padding: var(--space-3);
+  background: var(--surface); color: var(--text); border: 1.5px solid var(--line); border-radius: var(--radius);
+  text-align: left; font: inherit; cursor: pointer; transition: background-color var(--duree-rapide) var(--ease); }
+.theme-carte:active { background: var(--surface-2); }
+.theme-carte:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.theme-motif { width: 36px; }
+.theme-motif .mini-goban { border-radius: 8px; box-shadow: 0 2px 0 #7A4A1C; }
+.theme-carte b { font-size: var(--fs-m); line-height: 1.2; overflow-wrap: anywhere; }
+/* La phrase prend toute la largeur de la vignette, sous le motif et le nom : deux lignes au plus à 390 px. */
+.theme-carte small { grid-column: 1 / -1; align-self: start; color: var(--muted); font-size: var(--fs-legende); line-height: 1.3; }
+/* Le record se lit en or, sous la vignette : un record de ce mode, jamais un total (#137). */
+.theme-record { grid-column: 1 / -1; justify-self: start; padding: 2px 8px; border-radius: 999px;
+  background: color-mix(in srgb, var(--or) 16%, transparent); color: var(--recompense-texte); font-size: var(--fs-legende);
+  font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; }
+
+/* Lecteur : « Capturer » puis la pastille des réussites d'affilée, chiffres à chasse fixe (rien ne bouge). */
+.theme-surtitre { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.theme-affilee { display: inline-flex; align-items: center; gap: 6px; padding: 1px 8px; border-radius: 999px; background: var(--surface-2);
+  color: var(--text); font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; }
+.theme-affilee.record { background: color-mix(in srgb, var(--or) 18%, transparent); color: var(--recompense-texte); }
+/* Nouveau record : rare, la pastille se pose (opacité et échelle, 200 ms). Mouvements réduits : --duree vaut 0 (tokens.css). */
+.theme-affilee.record { animation: theme-record var(--duree) cubic-bezier(.23, 1, .32, 1) both; }
+@keyframes theme-record { from { opacity: 0; transform: scale(.94); } }
+@media (prefers-reduced-motion: reduce) { .theme-affilee.record { animation: none; } }

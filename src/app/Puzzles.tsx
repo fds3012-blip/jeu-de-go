@@ -51,6 +51,8 @@ import { lireMeilleurCourse } from './course';
 import { Paysage } from '../ui/Paysage';
 import { AmisDuJour } from '../ui/AmisDuJour';
 import { noterGoDuJour, type ResultatEssai } from '../data/emulation';
+import { SERIES_THEMES_KEY, nettoyerSeries, noterSerie, prochainDeSerie, seriesDisponibles, type EtatSeriesThemes, type SerieTheme } from './seriesThemes';
+import { SurtitreTheme, VignettesThemes } from '../ui/SeriesThemes';
 
 const LOCAL_PUZZLES = parsePuzzles(ALL_PUZZLES);
 export const SOLVED_KEY = 'go.problemes.v1';
@@ -134,6 +136,10 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   const [tous, setTous] = useState(false);
   // Course aux problèmes (#287) : consigne, course et fin, à la place de la liste.
   const [course, setCourse] = useState(false);
+  // Problèmes par thème (#471) : série ouverte, réussites d'affilée et record de chaque série (sur l'appareil).
+  const [serieTheme, setSerieTheme] = useState<SerieTheme | null>(null);
+  const [etatThemes, setEtatThemes] = useState<EtatSeriesThemes>(() => nettoyerSeries(readLocal<unknown>(SERIES_THEMES_KEY, null)));
+  const [recordTheme, setRecordTheme] = useState(false);
   const [statsTick, setStatsTick] = useState(0);
   // #369 : essais du Go du jour d'aujourd'hui notés par le serveur, dans l'ordre (un envoi après l'autre), pour le
   // classement entre amis. `envoiDuJour` : la réussite envoyée ; « Tes amis aujourd'hui » se lit après elle.
@@ -151,7 +157,7 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   useEffect(() => {
     if (racineVue.current === racine) return;
     racineVue.current = racine;
-    setOpenId(null); setTous(false); setCourse(false);
+    setOpenId(null); setTous(false); setCourse(false); setSerieTheme(null);
   }, [racine]);
 
   // Problèmes : la base pour un joueur connecté (RLS), la copie locale sinon.
@@ -224,6 +230,22 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   // « Continuer » à ta mesure (#284) : ni le Go du jour ni la Révision du jour (réussis, vus) n'y entrent.
   const aMesure = (eviter: string | undefined) =>
     prochainAMesure(list, cote, { aReviser, goDuJour: daily?.id, jour: numero, eviter, alea: () => tirage });
+  // #471 : le prochain problème d'une série, à ta mesure, comme « Continuer » (le Go du jour n'y entre pas).
+  const deSerie = (serie: SerieTheme, eviter: string | undefined) =>
+    prochainDeSerie(list, serie, cote, { reussis: aReviser, goDuJour: daily?.id, jour: numero, eviter, alea: () => tirage });
+  const series = useMemo(() => seriesDisponibles(list, daily?.id), [list, daily?.id]);
+  const ouvrirSerie = (serie: SerieTheme) => {
+    if (essai) { essai(); return; }
+    const premier = deSerie(serie, dernierRef.current);
+    if (!premier) return;
+    track(EVENTS.themeOuvert, { theme: serie });
+    setSerieTheme(serie); setRecordTheme(false); setOpenId(premier.id); window.scrollTo({ top: 0 });
+  };
+  const noterTheme = (serie: SerieTheme, ok: boolean) => {
+    const r = noterSerie(etatThemes, serie, ok);
+    setEtatThemes(r.etat); writeLocal(SERIES_THEMES_KEY, r.etat);
+    setRecordTheme(r.nouveauRecord || (ok && recordTheme));
+  };
   const open = list.find(p => p.id === openId) ?? (daily && openId === daily.id ? daily : pzArchive && openId === pzArchive.id ? pzArchive : undefined);
   const duJourOuvert = !!open && (open.id === daily?.id || archive !== null);
   // Un problème ouvert hors Go du jour devient la référence du prochain choix (jamais deux fois de suite, pas de saut).
@@ -239,13 +261,17 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
     // Go du jour d'un autre jour (lien partagé ancien) : ni série ni XP du jour ; ensuite, celui d'aujourd'hui.
     const enArchive = archive !== null && open.id === pzArchive?.id;
     // #284 : le suivant est choisi à ta mesure ; tout réussi, la série infinie de #147 prend le relais.
+    // #471 : dans une série par thème, le suivant reste dans la série.
+    const enSerie = !enArchive && serieTheme !== null && open.id !== daily?.id ? serieTheme : null;
     const nextPz = enArchive && daily && !goDuJourFaitAppareil(numero) ? daily
+      : enSerie ? deSerie(enSerie, open.id)
       : aMesure(open.id) ?? aSuivre(tiers, open, solved);
     const estDuJour = !enArchive && open.id === daily?.id;
     // Seul le premier essai d'un problème jamais réussi ni vu compte pour la cote ; ni le Go du jour ni un lien partagé.
     const note = !estDuJour && !enArchive && !solved.has(open.id) && !vus[open.id];
     return (
       <PuzzlePlayer key={`${open.id}${enArchive ? '-archive' : ''}`} puzzle={open} rang={ordre.indexOf(open) + 1} confirmTouch={confirmTouch}
+        surtitre={enSerie ? <SurtitreTheme serie={enSerie} affilee={etatThemes[enSerie]?.affilee ?? 0} record={recordTheme} /> : undefined}
         signaler={db && userId ? <LienSignalerProbleme db={db} probleme={open.id} onCompte={onCompte} /> : undefined}
         duJour={enArchive ? { numero: archive, serie: 0, defiChange: false, archive: numero, gelGagne: false, celebrer, jalon: null, apprendre: onApprendre }
           : estDuJour ? { numero, serie: serieVivante(serieDuJour, numero), defiChange, gelGagne, celebrer, jalon, apprendre: onApprendre,
@@ -255,9 +281,11 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
         onPremierEssai={ok => {
           // #469 : raté au premier essai, il entre dans la révision espacée (« Révisions du jour », J+1).
           if (!ok && !enArchive) noterProblemeRate(open.id);
+          // #471 : premier essai dans une série par thème, réussi ou non : réussites d'affilée et record.
+          if (enSerie) noterTheme(enSerie, ok);
           if (!note) return;
           // Mesure de « Continuer » (#284) : réussite au premier essai par tranche de cote. Cote avant l'essai, jamais affichée.
-          track(EVENTS.problemeTermine, { probleme: open.id, cote_joueur: Math.round(cote.cote), cote_probleme: open.difficulty, premier_essai_reussi: ok });
+          track(EVENTS.problemeTermine, { probleme: open.id, cote_joueur: Math.round(cote.cote), cote_probleme: open.difficulty, premier_essai_reussi: ok, ...(enSerie ? { theme: enSerie } : {}) });
           majCote(c => noter(c, open, ok ? 'premier' : 'rate', numero));
         }}
         onAttempt={async ok => {
@@ -298,7 +326,7 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
         }}
         onSolutionVue={essais => track(EVENTS.solutionVue, { probleme: open.id, du_jour: estDuJour, essais })}
         onNext={nextPz ? () => { if (essai && nextPz.id !== daily?.id) { essai(); return; } setArchive(null); setOpenId(nextPz.id); window.scrollTo({ top: 0 }); } : undefined}
-        onExit={() => { setArchive(null); setOpenId(null); }} />
+        onExit={() => { setArchive(null); setOpenId(null); setSerieTheme(null); }} />
     );
   }
 
@@ -404,6 +432,8 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
         )}
         {!enCours && prochainPz && <Continuer pz={prochainPz} principal={duJourFait} onOpen={() => ouvrirProbleme(prochainPz.id)} />}
         <CarteCourse onOpen={() => { if (essai) { essai(); return; } setCourse(true); window.scrollTo({ top: 0 }); }} />
+        {/* #471 : séries par thème, à plat ; seulement celles qui ont assez de problèmes. */}
+        <VignettesThemes series={series} etat={etatThemes} onOuvrir={ouvrirSerie} />
         <button className="lien lien-tous" onClick={() => { if (essai) { essai(); return; } setTous(true); window.scrollTo({ top: 0 }); }}>
           {tr('pb.tous')}
           <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path d="m9 5 7 7-7 7" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>

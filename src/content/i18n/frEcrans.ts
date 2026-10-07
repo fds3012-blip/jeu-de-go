@@ -216,6 +216,23 @@ export const frEcrans = {
   // Arrivée par un lien partagé, pour qui n'a jamais joué (#285)
   'arrivee.premierCoup': 'Premier coup au go ? Touche le plateau.',
   'arrivee.apprendre': 'Apprends à jouer en 2 minutes',
+  // Problèmes par thème (#471, src/app/seriesThemes.ts et src/ui/SeriesThemes.tsx)
+  'themes.titre': 'Par thème',
+  'themes.nom.capturer': 'Capturer',
+  'themes.nom.sauver': 'Sauver',
+  'themes.nom.vie-mort': 'Vie et mort',
+  'themes.nom.relier-couper': 'Relier et couper',
+  'themes.nom.fin-de-partie': 'Fin de partie',
+  'themes.nom.tesuji': 'Tesuji',
+  'themes.texte.capturer': 'Prends les pierres qui ne peuvent plus fuir.',
+  'themes.texte.sauver': 'Mets ta pierre à l’abri.',
+  'themes.texte.vie-mort': 'Deux yeux pour vivre.',
+  'themes.texte.relier-couper': 'Garde tes pierres ensemble.',
+  'themes.texte.fin-de-partie': 'Ferme tes frontières.',
+  'themes.texte.tesuji': 'Le tesuji : le coup malin qui change tout.',
+  'themes.record': 'Record : {n}',
+  'themes.affilee': { one: '{n} d’affilée', other: '{n} d’affilée' },
+  'themes.nouveauRecord': 'Record !',
   // Course aux problèmes (#287, src/app/course.ts et src/app/CourseProblemes.tsx)
   'course.carte.titre': 'Course : 3 minutes',
   'course.carte.texte': 'Un maximum de problèmes. À la 3e erreur, la course s’arrête.',

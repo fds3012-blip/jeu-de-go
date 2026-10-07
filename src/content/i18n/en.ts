@@ -349,6 +349,23 @@ export const en = {
   // Arrival from a shared link, for someone who has never played (#285)
   'arrivee.premierCoup': 'First move in Go? Tap the board.',
   'arrivee.apprendre': 'Learn to play in 2 minutes',
+  // Puzzles by theme (#471)
+  'themes.titre': 'By theme',
+  'themes.nom.capturer': 'Capture',
+  'themes.nom.sauver': 'Save',
+  'themes.nom.vie-mort': 'Life and death',
+  'themes.nom.relier-couper': 'Connect and cut',
+  'themes.nom.fin-de-partie': 'Endgame',
+  'themes.nom.tesuji': 'Tesuji',
+  'themes.texte.capturer': 'Take stones that can’t run anymore.',
+  'themes.texte.sauver': 'Get your stone to safety.',
+  'themes.texte.vie-mort': 'Two eyes to live.',
+  'themes.texte.relier-couper': 'Keep your stones together.',
+  'themes.texte.fin-de-partie': 'Close your borders.',
+  'themes.texte.tesuji': 'A tesuji: the clever move that changes everything.',
+  'themes.record': 'Best: {n}',
+  'themes.affilee': { one: '{n} in a row', other: '{n} in a row' },
+  'themes.nouveauRecord': 'New best!',
   // Puzzle rush (#287)
   'course.carte.titre': 'Rush: 3 minutes',
   'course.carte.texte': 'As many puzzles as you can. Your 3rd mistake ends the rush.',
