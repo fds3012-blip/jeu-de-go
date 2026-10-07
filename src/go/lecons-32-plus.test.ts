@@ -12,10 +12,11 @@ import { imagesDemo, mots } from '../content/demo';
 import { ACQUIS } from '../content/acquis';
 import { THEMES_DE_LECON } from '../content/themes';
 import { fromRows } from './position';
-import { isLegal, neighbors, play, type Position } from './rules';
+import { groupAt, isLegal, neighbors, play, type Position } from './rules';
 import { fromLabel, toLabel } from './coords';
 import { score } from './score';
 import { meilleursCoups, valeursDesCoups } from './preuve-fin-de-partie';
+import { defautsConnexion, evaluerConnexion, issueConnexion } from './preuve-connexion';
 
 const N = 9;
 const at = (l: string) => fromLabel(l, N);
@@ -35,6 +36,7 @@ const suite = (pos: Position, coups: string[]) => coups.reduce((p, c) => ok(play
 /** Noir moins Blanc, règle japonaise (territoire et prisonniers), sans komi. */
 const japonais = (pos: Position) => { const s = score(pos, 0, 'japanese'); return s.black - s.white; };
 const surfaces = { regle: 'chinese' as const };
+const groupAtLibs = (pos: Position, p: number) => groupAt(pos.board, N, p).liberties;
 
 /** Endroits encore ouverts : les points vides dont la région vide touche les deux couleurs. */
 function ouverts(pos: Position): number[] {
@@ -57,7 +59,7 @@ function ouverts(pos: Position): number[] {
 }
 
 const LENT = 60_000;
-const IDS = ['l32'];
+const IDS = ['l32', 'l33'];
 
 describe('leçons 32 et suivantes : place dans le programme (#16)', () => {
   it('chaque leçon a 4 à 6 étapes, sa phrase de fin et sa série de pratique', () => {
@@ -68,9 +70,10 @@ describe('leçons 32 et suivantes : place dans le programme (#16)', () => {
       expect(THEMES_DE_LECON[id]?.length, id).toBeGreaterThan(0);
     }
   });
-  it('la valeur d’un coup prolonge « Fin de partie et comptage »', () => {
+  it('la valeur d’un coup prolonge « Fin de partie et comptage », le watari « Formes et tesuji »', () => {
     const c = Object.fromEntries(CHAPITRES.map(x => [x.id, x]));
     expect(c.c5.lecons.map(l => l.id)).toEqual(['l15', 'l16', 'l22', 'l23', 'l32']);
+    expect(c.c6.lecons.map(l => l.id)).toEqual(['l18', 'l19', 'l20', 'l21', 'l33']);
     expect(LESSONS.map(l => l.id)).toEqual(CHAPITRES.flatMap(x => x.lecons.map(l => l.id)));
   });
   it('chaque consigne tient en 12 mots ; chaque geste « pose » est sur le point vert ; au plus une étape sans geste', () => {
@@ -143,4 +146,56 @@ describe('leçon 32 : la valeur d’un coup', () => {
     expect(japonais(suite(pos, ['E9', 'F9', 'D9'])) - japonais(suite(pos, ['passe', 'D9', 'C9', 'E9']))).toBe(2);
     expect(japonais(suite(pos, ['E1', 'passe'])) - japonais(suite(pos, ['passe', 'E1']))).toBe(4);
   }, LENT);
+});
+
+describe('leçon 33 : relier par en dessous (watari)', () => {
+  const W = step<Info>('l33', 0).rows;
+  /** Zone : les deux premières rangées, de A à F (sous le mur blanc, jusqu'au mur noir G). */
+  const ZONE = [7, 8].flatMap(y => [0, 1, 2, 3, 4, 5].map(x => y * N + x));
+  const ZONE_M = ZONE.map(p => Math.floor(p / N) * N + (N - 1 - (p % N)));
+  const B2 = at('B2'), G2 = at('G2');
+  /** Coups de Noir (dans la zone) qui relient à coup sûr, sans ko. */
+  const relient = (pos: Position, a: number, b: number, zone: number[]) =>
+    zone.filter(p => !pos.board[p] && issueConnexion(pos, p, a, b, zone) === 1).map(lab).sort();
+
+  it('la zone est fermée : rien ne se décide hors des deux premières rangées', () => {
+    expect(defautsConnexion(avec(W, 1), B2, G2, ZONE)).toEqual([]);
+    expect(defautsConnexion(avec(step<Move>('l33', 3).rows, 1), at('H2'), at('C2'), ZONE_M)).toEqual([]);
+  });
+
+  it('l33.1 : E1, sous la pierre blanche, est le seul coup qui relie ; si Blanc joue d’abord, il coupe', () => {
+    const pos = avec(W, 1);
+    expect(relient(pos, B2, G2, ZONE)).toEqual(['E1']);
+    expect(evaluerConnexion(avec(W, 2), B2, G2, ZONE)).toBe(-1);
+    expect(images(step<Info>('l33', 0)).at(-1)!.board[at('E1')]).toBe(1);
+  });
+
+  it('l33.2 : après E1, Blanc coupe en D1 ; D2 le met en atari, et seul D2 relie', () => {
+    const s = step<Info>('l33', 1);
+    expect(s.avant).toEqual([{ pose: 'E1', couleur: 'B' }]);
+    const r = suite(avec(W, 1), ['E1', 'D1']);
+    expect(relient(r, B2, G2, ZONE)).toEqual(['D2']);
+    const d2 = ok(play(r, at('D2')));
+    expect(labels(groupAtLibs(d2, at('D1')))).toEqual(['C1']);
+    expect(images(s).at(-1)!.board).toEqual(d2.board);
+  });
+
+  it('l33.3 : après E1 et la coupe D2, seul D1 relie ; C1 laisse Blanc couper en D1 ; ensuite C1 blanc serait en atari', () => {
+    const m = step<Move>('l33', 2);
+    const pos = avec(m.rows, 1);
+    expect(pos.board).toEqual(suite(avec(W, 1), ['E1', 'D2']).board);
+    expect(relient(pos, B2, G2, ZONE)).toEqual(m.accept);
+    const c1 = ok(play(pos, at('C1')));
+    expect(issueConnexion(c1, at('D1'), B2, G2, ZONE)).toBe(-1);
+    const c1blanc = suite(pos, ['D1', 'C1']);
+    expect(labels(groupAtLibs(c1blanc, at('C1')))).toEqual(['B1']);
+  });
+
+  it('l33.4 : en miroir, seul E1 relie ; F2 laisse Blanc bloquer en E1', () => {
+    const m = step<Move>('l33', 3);
+    expect(m.rows).toEqual(W.map(r => [...r].reverse().join('')));
+    const pos = avec(m.rows, 1), H2 = at('H2'), C2 = at('C2');
+    expect(relient(pos, H2, C2, ZONE_M)).toEqual(m.accept);
+    expect(issueConnexion(ok(play(pos, at('F2'))), at('E1'), H2, C2, ZONE_M)).toBe(-1);
+  });
 });

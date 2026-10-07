@@ -34,6 +34,7 @@ export const LECONS_INDEX: readonly (readonly [id: string, titre: string, desc: 
   ["l19", "Les pierres qui coupent", "Prends celles qui séparent tes groupes", 4],
   ["l20", "Relier et mourir", "Quand se relier ne sauve rien", 4],
   ["l21", "Le manque de libertés", "Quand relier met en atari", 4],
+  ["l33", "Relier par en dessous", "Le watari, au premier rang", 4],
 ];
 
 // prettier-ignore
@@ -43,5 +44,5 @@ export const CHAPITRES_INDEX: readonly { id: string; titre: string; intro: strin
   { id: "c3", titre: "Capturer et sauver", intro: "Des pièges pour prendre plus de pierres.", complet: false, lecons: ["l9","l10","l11","l26"] },
   { id: "c4", titre: "Vie et mort", intro: "Quand un groupe vit, quand il meurt.", complet: false, lecons: ["l12","l13","l14","l17","l24","l25"] },
   { id: "c5", titre: "Fin de partie et comptage", intro: "Finir proprement, puis compter juste.", complet: false, lecons: ["l15","l16","l22","l23","l32"] },
-  { id: "c6", titre: "Formes et tesuji", intro: "Les bonnes formes et les coups malins du go.", complet: false, lecons: ["l18","l19","l20","l21"] },
+  { id: "c6", titre: "Formes et tesuji", intro: "Les bonnes formes et les coups malins du go.", complet: false, lecons: ["l18","l19","l20","l21","l33"] },
 ];

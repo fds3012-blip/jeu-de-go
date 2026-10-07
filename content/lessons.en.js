@@ -278,6 +278,16 @@ export const LESSONS_EN = {
     { text: 'Your turn: fill its outside liberty. It can’t connect anymore.',
       ok: 'Connecting would put it in atari: White is captured.', no: 'Look for White’s only liberty outside its shape.' }
   ] },
+  l33: { title: 'Connecting underneath', desc: 'The watari, on the first line', steps: [
+    { text: 'Watari (connecting underneath): slide under the white stone, at the green point.' },
+    { text: 'White cuts at D1? Play the green point: it’s in atari.' },
+    { text: 'White cuts at D2. Connect your stones on the first line.',
+      ok: 'Connected: if White plays C1, it’s in atari at once.', no: 'Play next to your stone E1, under the cut.',
+      refus: ['White plays D1: your stones stay cut apart.'] },
+    { text: 'Your turn: connect your stones underneath.',
+      ok: 'Watari: White can’t cut without being captured.', no: 'Slide along the first line, under the white stone.',
+      refus: ['White blocks at E1: your stones stay cut apart.'] }
+  ] },
   l22: { title: 'Sente and gote', desc: 'The move that demands an answer', steps: [
     { text: 'Sente (a move that demands an answer): atari at the green point. White connects.' },
     { text: 'You keep the initiative: close the top too, at the green point.' },

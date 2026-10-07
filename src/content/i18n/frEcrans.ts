@@ -511,6 +511,8 @@ export const frEcrans = {
   'aide.mot.tsuke.def': 'Un coup au contact : la pierre touche une pierre adverse seule. Contre une approche, il sert souvent à garder le coin.',
   'aide.mot.kosumi': 'Kosumi',
   'aide.mot.kosumi.def': 'Un pas en diagonale depuis sa propre pierre, sans toucher l’adversaire. Les deux pierres sont presque reliées.',
+  'aide.mot.watari': 'Watari',
+  'aide.mot.watari.def': 'Relier deux de ses groupes par le premier rang, sous une pierre adverse. Si l’adversaire coupe, il manque de libertés.',
   'profil.aideJeu': 'Aide',
   // Revue (src/app/Revue.tsx, src/app/revue.ts)
   'revue.retour': 'Retour au bilan',
@@ -811,6 +813,7 @@ export const frEcrans = {
   'acquis.l30': 'Tu bloques le san-san, puis tu barres la route à Blanc.',
   'acquis.l31': 'Tu réponds au kakari sur ton 3-4, puis tu t’étends.',
   'acquis.l32': 'Tu comptes ce que vaut un coup, et tu joues le plus grand.',
+  'acquis.l33': 'Tu relies tes pierres par en dessous, au premier rang.',
   'acquis.defaut': 'Une leçon de plus dans ta poche.',
   'lecteur.progression': 'Progression de la leçon',
   // #290 : sur un écran bas, l'explication du verdict est repliée pour laisser voir le plateau.

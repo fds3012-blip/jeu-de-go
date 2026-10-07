@@ -165,6 +165,14 @@ function motif(id: string, W: string, C: string): ReactElement {
       <circle cx="60" cy="52" r="9" fill={C} stroke={W} strokeWidth="2.6" />
       <circle cx="60" cy="74" r="9" fill={W} />
     </>);
+    // Relier par en dessous : le bord, deux pierres noires et le pont qui passe sous la pierre blanche.
+    case 'l33': return (<>
+      <path d="M22 76H78" stroke={W} strokeWidth="3" strokeLinecap="round" />
+      <circle cx="30" cy="54" r="8" fill={W} />
+      <circle cx="70" cy="54" r="8" fill={W} />
+      <circle cx="50" cy="46" r="8" fill={C} stroke={W} strokeWidth="2.6" />
+      <path d="M34 64Q50 74 66 64" stroke={W} strokeWidth="3" strokeLinecap="round" fill="none" />
+    </>);
     // La valeur d'un coup : une balance, deux plateaux inégaux.
     case 'l32': return (<>
       <path d="M50 26V70M30 74H70M28 40H72" stroke={W} strokeWidth="3" strokeLinecap="round" fill="none" />

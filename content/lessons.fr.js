@@ -152,6 +152,12 @@ const COLLEE = 'Collée à ta pierre, elle n’entoure presque rien de plus.';
 // `Q` : la même partie retournée de haut en bas, pour l'exercice.
 const L_VALEUR = ['.XOO.O...', '.XXXXO...', ...Array(5).fill('...XO....'), 'XXXXOOOOO', '......O..'];
 const L_VALEUR_Q = [...L_VALEUR].reverse();
+// Relier par en dessous (watari) : tes pierres A2-C2 et ton mur G sont séparés par la pierre blanche E2. E1, sous elle,
+// relie : si Blanc coupe en D1, D2 le met en atari ; s'il coupe en D2, D1 relie. `D2` : la position après E1 et la coupe
+// D2. `M` : la même forme en miroir, de l'autre côté.
+const L_WATARI = [...V.slice(0, 5), '......X..', 'OOOOOOX..', 'XXX.O.X..', '.....XX..'];
+const L_WATARI_D2 = [...V.slice(0, 5), '......X..', 'OOOOOOX..', 'XXXOO.X..', '....XXX..'];
+const L_WATARI_M = L_WATARI.map(r => [...r].reverse().join(''));
 export const CHAPITRES = [
   { id: 'c1', titre: 'Les bases', intro: 'Sept leçons courtes pour jouer ta première partie.', fin: 'Tu connais les règles du go.', lecons: ['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7'] },
   // Chapitre en cours d'écriture (`complet: false`) : sa dernière leçon ne ferme pas encore le chapitre.
@@ -159,7 +165,7 @@ export const CHAPITRES = [
   { id: 'c3', titre: 'Capturer et sauver', intro: 'Des pièges pour prendre plus de pierres.', lecons: ['l9', 'l10', 'l11', 'l26'], complet: false },
   { id: 'c4', titre: 'Vie et mort', intro: 'Quand un groupe vit, quand il meurt.', lecons: ['l12', 'l13', 'l14', 'l17', 'l24', 'l25'], complet: false },
   { id: 'c5', titre: 'Fin de partie et comptage', intro: 'Finir proprement, puis compter juste.', lecons: ['l15', 'l16', 'l22', 'l23', 'l32'], complet: false },
-  { id: 'c6', titre: 'Formes et tesuji', intro: 'Les bonnes formes et les coups malins du go.', lecons: ['l18', 'l19', 'l20', 'l21'], complet: false }
+  { id: 'c6', titre: 'Formes et tesuji', intro: 'Les bonnes formes et les coups malins du go.', lecons: ['l18', 'l19', 'l20', 'l21', 'l33'], complet: false }
 ];
 export const LESSONS = [
   { id: 'l1', title: 'Libertés et capture', desc: 'La règle qui fait tout le jeu', steps: [
@@ -675,5 +681,20 @@ export const LESSONS = [
     { kind: 'move', rows: L_MANQUE_Q, accept: ['E1'],
       text: 'À toi : bouche sa liberté extérieure. Il ne pourra plus relier.',
       ok: 'Relier le mettrait en atari : Blanc est pris.', no: 'Cherche la seule liberté de Blanc hors de sa forme.' }
+  ] },
+  { id: 'l33', title: 'Relier par en dessous', desc: 'Le watari, au premier rang', steps: [
+    { kind: 'info', rows: L_WATARI, geste: { pose: 'E1' }, demo: [{ pose: 'E1', couleur: 'B' }],
+      text: 'Watari (relier par en dessous) : glisse sous la pierre blanche, au point vert.' },
+    { kind: 'info', rows: L_WATARI, avant: [{ pose: 'E1', couleur: 'B' }], geste: { pose: 'D2' },
+      demo: [{ pose: 'D1', couleur: 'W' }, { pose: 'D2', couleur: 'B' }, { atari: ['D1'] }],
+      text: 'Blanc coupe en D1 ? Pose au point vert : il est en atari.' },
+    { kind: 'move', rows: L_WATARI_D2, accept: ['D1'],
+      text: 'Blanc coupe en D2. Relie tes pierres au premier rang.',
+      ok: 'Relié : s’il joue C1, il est aussitôt en atari.', no: 'Joue à côté de ta pierre E1, sous la coupe.',
+      refus: [{ points: ['C1'], no: 'Blanc joue en D1 : tes pierres restent coupées.' }] },
+    { kind: 'move', rows: L_WATARI_M, accept: ['E1'],
+      text: 'À toi : relie tes pierres par en dessous.',
+      ok: 'Watari : Blanc ne peut plus couper sans être pris.', no: 'Glisse au premier rang, sous la pierre blanche.',
+      refus: [{ points: ['F2'], no: 'Blanc bloque en E1 : tes pierres restent coupées.' }] }
   ] }
 ];
