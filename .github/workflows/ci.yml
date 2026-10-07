@@ -3,6 +3,8 @@ on:
   push:
     branches: [main]
   pull_request:
+  # Lancement à la main (onglet Actions ou API), par ex. pour mesurer une branche sans PR (#467).
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -12,12 +14,13 @@ jobs:
   verifier:
     name: Lint, types, tests, build
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
       - run: npm install --no-audit --no-fund
       - run: npm run lint
       - run: npm run typecheck
@@ -58,22 +61,79 @@ jobs:
         run: |
           git diff --exit-code -- supabase/functions || { echo "::error::Copie périmée : lance npm run sync:functions et committe."; exit 1; }
 
-  e2e:
-    name: Playwright (mobile)
-    needs: verifier
+  # Playwright en 4 lots parallèles (#467), lancés en même temps que « Lint, types, tests, build » (plus de `needs`) :
+  # la CI passe de 15-20 min à moins de 8. Chaque lot construit l'app (webServer) et écrit un rapport « blob ».
+  e2e-lots:
+    name: Playwright, lot ${{ matrix.lot }}/4
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
+    # Image officielle de Playwright : Chromium et ses bibliothèques système (polices comprises) déjà installés.
+    # L'installation par apt prenait de 15 s à près de 5 min selon le miroir (#467) ; l'image se télécharge en
+    # une demi-minute environ, et l'environnement est le même à chaque passage. Sa version suit @playwright/test
+    # (contrôlée à la première étape).
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-noble
+      options: --ipc=host
+    strategy:
+      fail-fast: false
+      matrix:
+        lot: [1, 2, 3, 4]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
+      - name: Image Playwright à la version de package-lock.json
+        run: |
+          v=$(node -p "require('./package-lock.json').packages['node_modules/@playwright/test'].version")
+          if [ "$v" != "1.63.0" ]; then
+            echo "::error::@playwright/test est en $v : mets à jour l'image mcr.microsoft.com/playwright:v$v-noble dans .github/workflows/ci.yml."
+            exit 1
+          fi
       - run: npm install --no-audit --no-fund
-      - run: npx playwright install --with-deps chromium
-      - run: npm run test:e2e
+      - run: npx playwright test --shard=${{ matrix.lot }}/4
       - uses: actions/upload-artifact@v4
-        if: failure()
+        if: ${{ !cancelled() }}
+        with:
+          name: blob-report-${{ matrix.lot }}
+          path: blob-report/
+          retention-days: 2
+          if-no-files-found: ignore
+
+  # Statut unique et lisible : ce job garde le nom « Playwright (mobile) » (scripts d'attente, protection de branche
+  # éventuelle). Il fusionne les rapports des 4 lots (rapport HTML + annotations GitHub) et échoue si un lot échoue.
+  e2e:
+    name: Playwright (mobile)
+    needs: e2e-lots
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm install --no-audit --no-fund
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: blob-report-*
+          path: all-blob-reports
+          merge-multiple: true
+      - name: Rapport fusionné
+        if: hashFiles('all-blob-reports/*.zip') != ''
+        env:
+          PLAYWRIGHT_HTML_OPEN: never
+        run: npx playwright merge-reports --reporter=github,html ./all-blob-reports
+      - uses: actions/upload-artifact@v4
+        if: hashFiles('playwright-report/index.html') != ''
         with:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
+      - name: Tous les lots au vert
+        if: needs.e2e-lots.result != 'success'
+        run: |
+          echo "::error::Au moins un lot Playwright a échoué ou a été annulé (résultat : ${{ needs.e2e-lots.result }})."
+          exit 1

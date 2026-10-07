@@ -23,7 +23,9 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
-  reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',
+  // En CI, la suite tourne en 4 lots (`--shard`, #467) : chaque lot écrit un rapport « blob », que le job
+  // « Playwright (mobile) » fusionne (`playwright merge-reports --reporter=github,html`). `dot` garde un journal court.
+  reporter: process.env.CI ? [['dot'], ['blob']] : 'list',
   use: {
     baseURL: `http://localhost:${PORT}`,
     trace: 'on-first-retry',

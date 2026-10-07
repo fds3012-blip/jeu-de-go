@@ -237,8 +237,14 @@ test.describe('#368 Mes statistiques', () => {
     await page.getByTestId('ligne-stats').click();
     await expect(page.getByTestId('stats-cote')).toContainText('1520');
     await page.getByRole('button', { name: 'Retour' }).click();
+    // #467 : le menu du Profil fini de charger (ses demandes au serveur comprises) et la ligne déjà à l'écran AVANT
+    // de couper le réseau. Coupé en plein chargement, le clic suivant restait parfois bloqué (CI, suite complète).
+    const ligne = page.getByTestId('ligne-stats');
+    await expect(ligne).toBeVisible();
+    await page.waitForLoadState('networkidle');
+    await ligne.scrollIntoViewIfNeeded();
     await ctx.setOffline(true);
-    await page.getByTestId('ligne-stats').click();
+    await ligne.click();
     await expect(page.getByText(/^Hors ligne\s: seules les parties de ce téléphone comptent\.$/)).toBeVisible();
     await expect(page.getByTestId('stats-precision')).toHaveText(/^81\s%$/);
     const { largeur } = await page.evaluate(() => ({ largeur: document.documentElement.scrollWidth }));
