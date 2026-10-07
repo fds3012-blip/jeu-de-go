@@ -221,7 +221,8 @@ export function modeComptage(contreOrdi: boolean, incertains: readonly number[])
 
 /** Message de Mochi à l'entrée du comptage manuel. `fin` : phrase de fin de partie (« Deux passes… »). */
 export function messageComptage(fin: string, morts: number, incertain: boolean): string {
-  if (incertain) return `${t('partie.mortes.explication')} ${t('partie.mortes.doute')}`;
+  // #466 : rien n'est grisé ? On ne parle pas de « pierres grisées » : le joueur les cherchait sur le plateau.
+  if (incertain) return morts ? `${t('partie.mortes.explication')} ${t('partie.mortes.doute')}` : t('partie.mortes.doute');
   if (morts) return `${t('partie.mortes.explication')} ${t('partie.mortes.toucher')}`;
   return t('partie.mortes.aucune', { fin });
 }

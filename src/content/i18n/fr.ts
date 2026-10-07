@@ -62,7 +62,7 @@ export const fr = {
   'accueil.tuileAriaSimple': 'Go du jour n° {numero} : {titre}.',
   'entete.flammeAFaire': 'Série de {jours}. Go du jour à faire aujourd’hui.',
   'entete.flammeFaite': 'Série de {jours}. Go du jour fait aujourd’hui.',
-  'accueil.introBut': 'Le but : entourer plus de territoire que {nom}, et capturer ses pierres en leur retirant leurs libertés (les cases vides qui les touchent).',
+  'accueil.introBut': 'Touche un croisement des lignes pour poser ta pierre. Le but : entourer plus de territoire que {nom}.',
   'accueil.plateau': 'Plateau {taille} × {taille}, tu as Noir',
   'accueil.changer': 'Changer',
   'accueil.goDuJour': 'Go du jour',
@@ -199,7 +199,7 @@ export const fr = {
   'partie.mortes.toucher': 'Touche un groupe pour corriger.',
   'partie.mortes.aucune': '{fin} Aucune pierre morte. Si un groupe ne peut plus vivre, touche-le pour le compter comme prisonnier.',
   // Annonce du komi (src/app/equilibrage.ts)
-  'komi.premiere': 'Le komi, ce sont des points donnés à Blanc parce que Noir commence. Pour tes premières parties, il est de {k}.',
+  'komi.premiere': 'Le komi : des points donnés à Blanc, qui joue en second. Pour tes premières parties, il est de {k}.',
   'komi.derniere': 'Dernière partie avec un komi de {k} point.',
   'komi.encore': 'Cette partie encore, le komi est de {k} point.',
   'komi.normal': 'Le komi passe à {k} points, sa valeur habituelle.',
@@ -227,6 +227,7 @@ export const fr = {
   'lecon.revois': 'Revois ta partie : tu trouveras le coup qui a tout changé.',
   'lecon.komi': 'Sans le komi, les {komi} points donnés à Blanc qui joue en second, tu gagnais !',
   'lecon.perduDePeu': 'Perdu de peu. La prochaine fois sera la bonne !',
+  'lecon.territoireZero': 'Ton territoire compte 0 : tes pierres ne fermaient aucun espace. Avant de passer, relie-les jusqu’aux bords.',
   // #251 : partie finie sur un plateau presque vide (bilan.ts, finTropTot).
   'lecon.finTotKomi': "Le plateau était presque vide : Blanc gagne grâce au komi, les points donnés à Blanc parce que Noir joue en premier. Joue plus longtemps pour entourer du territoire.",
   'lecon.finTot': 'Le plateau était presque vide. Joue plus longtemps pour entourer du territoire.',

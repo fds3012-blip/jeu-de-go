@@ -57,8 +57,10 @@ describe('accueil', () => {
     }
     const but = introBut('Pomme');
     expect(but).toMatch(/territoire que Pomme/);
-    expect(but).toMatch(/libertés/);
-    expect(phrases(but)).toBe(1);
+    // #466 : le geste d'abord (« Touche… »), puis le but ; rien d'autre à lire avant la première pierre.
+    expect(but).toMatch(/^Touche un croisement des lignes pour poser ta pierre\./);
+    expect(phrases(but)).toBe(2);
+    expect(but.split(/\s+/).length).toBeLessThanOrEqual(20);
   });
 });
 
