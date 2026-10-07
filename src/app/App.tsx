@@ -66,6 +66,7 @@ import '../ui/robustesse.css';
 import { ecouterAide, estRaccourciAide, ficheDeLecon, ouvrirAide, type Ouverture } from './ouvrirAide';
 import { bilanAMontrer, etatSemaine } from './semaine';
 import { noterReglage } from './reglagesDates';
+import { titreEcran, type EcranTitre } from './titreEcran';
 
 // Aide (#362) : feuille chargée au premier « ? » (partie, leçon, problème, Profil) ou à la touche « ? ».
 const FeuilleAide = lazy(() => import('../ui/Aide'));
@@ -252,6 +253,9 @@ export function App() {
   const [etudeRecue, setEtudeRecue] = useState(false);
   // « Un humain, maintenant » (#360) : partie en direct, du choix au bilan (écran src/app/Direct.tsx).
   const [direct, setDirect] = useState(false);
+  // #465 : le direct passe en plein écran seulement pour la partie elle-même (et son bilan) ; le choix et l'attente
+  // gardent l'en-tête et la barre du bas, comme les parties lentes. Écrit par l'écran du direct (`onPlein`).
+  const [directPlein, setDirectPlein] = useState(false);
   // #436 : partie en direct rejointe depuis la partie contre l'IA (ouverte tout de suite par l'écran du direct).
   const [directRejoint, setDirectRejoint] = useState<{ id: string; demande: DemandeDirect } | null>(null);
   const [repli, setRepli] = useState<Repli | null>(null);
@@ -576,7 +580,7 @@ export function App() {
 
   /** « Jouer en ligne » (#440) : la façon de jouer mémorisée, « En direct » ou « Partie lente ». */
   function ouvrirEnLigne(f: FaconEnLigne = lireFaconEnLigne()) {
-    setTab('jouer'); setPlaying(false); setDefi(null); setDirect(f === 'direct'); setLente(f === 'lente'); window.scrollTo({ top: 0 });
+    setTab('jouer'); setPlaying(false); setDefi(null); setDirect(f === 'direct'); setDirectPlein(false); setLente(f === 'lente'); window.scrollTo({ top: 0 });
   }
   /** Bascule « En direct » / « Partie lente » : mémorisée pour la prochaine fois. */
   const changerFacon = (f: FaconEnLigne) => { if (f !== lireFaconEnLigne()) noterReglage('enLigne'); ecrireFaconEnLigne(f); setDirectRejoint(null); ouvrirEnLigne(f); };
@@ -589,13 +593,14 @@ export function App() {
   const enDefi = tab === 'jouer' && !playing && defi !== null;
   // #364 : partie partagée, sur l'onglet Jouer, hors partie et hors défi.
   const enPartagee = tab === 'jouer' && !playing && defi === null && !direct && !lente && partagee !== null;
-  // #360 : partie en direct (choix, attente, partie) ; plein écran comme une partie, sans barre de navigation.
+  // #360 : partie en direct (choix, attente, partie). #465 : seule la partie est en plein écran, sans barre de navigation ;
+  // le choix et l'attente gardent l'en-tête et la barre du bas (règle : docs/ux/navigation.md).
   const enDirect = tab === 'jouer' && !playing && defi === null && direct;
   // #440 : parties lentes (liste, recherche) ; la partie elle-même passe par l'écran du défi.
   const enLente = tab === 'jouer' && !playing && defi === null && !direct && lente;
   // Défi, direct ou « Crée ton compte » ouvert avant que le client Supabase soit là (#401) : on le charge sans attendre.
   useEffect(() => { if (enDefi || enDirect || enLente || enPartagee || ecranCompte) void chargerSupabase(); }, [enDefi, enDirect, enLente, enPartagee, ecranCompte]);
-  const enPartie = (tab === 'jouer' && !!playing) || (enDefi && defi.vue === 'partie') || enDirect;
+  const enPartie = (tab === 'jouer' && !!playing) || (enDefi && defi.vue === 'partie') || (enDirect && directPlein);
   // Robustesse (#325) : écran d'erreur à la place d'un écran blanc ; « Retour à l'accueil » change d'onglet sans recharger.
   const versAccueil = useCallback(() => {
     setDefi(null); setDirect(false); setLente(false); setRepli(null); setEcranCompte(null); setEnPlacement(false); setTab('jouer'); setPlaying(false); setLessonId(null); setSerie3(null); setVueProfil('menu'); setPartagee(null);
@@ -672,7 +677,7 @@ export function App() {
         // #442 : attente après des parties quittées : l'IA la plus proche de la cote, sans rester dans la file.
         onOrdi={(contre, demande) => { setDirect(false); setDirectRejoint(null); lancer('ordi', contre, { contre, demande, depuis: Date.now(), veille: false }); }}
         celebrer={settings.celebrations} onAccueil={() => { setDirect(false); setDirectRejoint(null); window.scrollTo({ top: 0 }); }}
-        onFacon={changerFacon} />
+        onFacon={changerFacon} onPlein={setDirectPlein} />
       : null;
   } else if (enLente) {
     screen = supabase && compteId
@@ -701,7 +706,7 @@ export function App() {
           <VeilleFile db={supabase} demande={repli.demande} depuis={repli.depuis}
             onRejoindre={id => {
               setDirectRejoint({ id, demande: repli.demande });
-              setRepli(null); setIntro(false); setPlaying(false); setResultat(null); setDefi(null); setDirect(true);
+              setRepli(null); setIntro(false); setPlaying(false); setResultat(null); setDefi(null); setDirect(true); setDirectPlein(true);
               window.scrollTo({ top: 0 });
             }}
             onArret={() => setRepli(r => (r ? { ...r, veille: false } : r))} />
@@ -850,6 +855,17 @@ export function App() {
   }
 
   const accueilVisible = tab === 'jouer' && !playing && !enPlacement && !enDefi && !enDirect && !enLente && !enPartagee && !ecranPlein;
+  // #465 (WCAG 2.4.2) : le titre de l'onglet du navigateur suit l'écran affiché.
+  const leconOuverte = leconEssai ?? lesson;
+  const ecranTitre: EcranTitre = ecranPlein ? { quoi: 'compte' }
+    : enDirect ? { quoi: 'direct' } : enLente ? { quoi: 'lente' } : enPartagee ? { quoi: 'partagee' }
+      : enDefi ? { quoi: defi.vue === 'partie' ? 'enLigne' : 'defi' }
+        : tab === 'jouer' && playing ? { quoi: 'partie', contre: playing === 'deux' ? null : playing === 'guidee' ? mochiGuide.nom : adv.nom, guidee: playing === 'guidee' }
+          : tab === 'jouer' ? (enPlacement ? { quoi: 'placement' } : { quoi: 'accueil' })
+            : tab === 'apprendre' && leconOuverte && !serie3 ? { quoi: 'lecon', titre: leconOuverte.title }
+              : { quoi: 'onglet', onglet: tab };
+  const titreDocument = titreEcran(ecranTitre);
+  useEffect(() => { document.title = titreDocument; }, [titreDocument]);
   // Accueil v3 : `premier_ecran_vu`, une fois, quand l'accueil est affiché et utilisable (page chargée, polices prêtes).
   // `nouveau` : tout premier lancement sur l'appareil (aucune partie, aucun retour). Dénominateur des 60 premières secondes.
   const ecranVu = useRef(false);

@@ -5,7 +5,7 @@
 // - Partie : plateau, pendule tenue par le serveur, pseudo, grade et cote de l'adversaire ; à la fin, « +14 » (#417),
 //   « Rejouer » et « Revoir la partie ».
 // Logique pure : src/app/direct.ts et src/go/pendule.ts. Données : src/data/direct.ts. Chargé à la demande (#323).
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Board } from '../ui/Board';
 import { Mochi } from '../ui/Mochi';
 import { Avatar, Bandeau, BarreActions, Coach, Icone, Interrupteur, ListeCoups } from '../ui/Partie';
@@ -79,15 +79,23 @@ interface Props {
   onFacon?: (f: FaconEnLigne) => void;
   /** #442 : pendant l'attente après des parties quittées, partie contre l'IA la plus proche de la cote (non classée). */
   onOrdi?: (contre: OpponentId, demande: Params) => void;
+  /**
+   * #465 : vrai pendant la partie (et son bilan), faux pendant le choix et l'attente. L'app masque alors l'en-tête et
+   * la barre du bas, comme pour toute partie ; le choix et l'attente les gardent (docs/ux/navigation.md).
+   */
+  onPlein?: (plein: boolean) => void;
 }
 
 /** « Un humain, maintenant » : du choix de la partie jusqu'au bilan. */
-export function Direct({ db, userId, cote, onRepli, partieInitiale, confirmTouch, reglages, celebrer, onAccueil, onFacon, onOrdi }: Props) {
+export function Direct({ db, userId, cote, onRepli, partieInitiale, confirmTouch, reglages, celebrer, onAccueil, onFacon, onOrdi, onPlein }: Props) {
   // #436 : la file par défaut d'abord (9 × 9, normale, japonais), quelle que soit la taille choisie pour l'ordi.
   // #365 : le temps de jeu proposé d'abord vient des Réglages (« normale » par défaut, celle de la file par défaut).
   const { cadence: cadenceReglee } = usePreferences();
   const [params, setParams] = useState<Params>(partieInitiale?.demande ?? { ...PARAMS_DEFAUT, cadence: cadenceReglee });
   const [vue, setVue] = useState<Vue>(partieInitiale ? { vue: 'partie', id: partieInitiale.id, attenteS: null, demande: partieInitiale.demande } : { vue: 'choix' });
+  // Avant la peinture : l'en-tête et la barre du bas ne clignotent pas au passage du choix à la partie.
+  const plein = vue.vue === 'partie';
+  useLayoutEffect(() => { onPlein?.(plein); }, [plein, onPlein]);
   const [erreur, setErreur] = useState<string | null>(null);
   // #442 : état des parties quittées (lu à l'ouverture et à la fin d'une attente) et attente en cours.
   const [abandons, setAbandons] = useState<EtatAbandons | null>(null);

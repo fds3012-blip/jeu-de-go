@@ -14,6 +14,15 @@ html:has(.nav) { scroll-padding-bottom: calc(max(var(--nav-h), 3.75rem) + env(sa
 .nav .onglet { padding-inline: 2px; }
 /* Zoom 200 % et petits écrans (#121) : le libellé se tronque proprement au lieu de déborder de l'onglet. */
 .onglet-libelle { max-width: 100%; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* #465 : onglet trop étroit pour le nom entier (zoom 200 %, texte agrandi) : libellé court (« Appr. », « Probl. »).
+   Mesuré sur l'onglet lui-même, en em : la règle suit aussi bien la largeur de l'écran que la taille du texte.
+   Le nom entier reste dans la page, hors de la vue : le lecteur d'écran le lit. Repli : l'ellipse ci-dessus. */
+.nav .onglet { container-type: inline-size; }
+.onglet-court { display: none; }
+@container (max-width: 5.4em) {
+  .onglet-long { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .onglet-court { display: inline; }
+}
 .nav .onglet[aria-current="page"] { color: var(--text); font-weight: var(--fw-bold); }
 /* Point indicateur : une petite pierre de la couleur de l'onglet, sous le libellé. Place réservée : rien ne bouge d'un onglet à l'autre. */
 .onglet-point { width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: 0; flex: none; }

@@ -159,6 +159,9 @@
 .lecteur-tete { display: flex; align-items: center; gap: 10px; min-height: 48px; margin: 0 0 4px -10px; }
 .lecteur-tete .retour { flex: none; width: var(--cible-min); height: var(--cible-min); display: grid; place-items: center; border: 0; border-radius: 50%; background: none; color: var(--text); }
 .lecteur-tete .retour:active { background: var(--surface); }
+/* #465 (audit #461, E) : les deux retraits optiques (−10 px ici, −8 px dans profil.css) sortaient le bouton de 2 px à
+   gauche de l'écran, à toutes les largeurs. Il s'arrête maintenant au bord (gouttière de 16 px), cible de 44 px entière. */
+.lecteur-tete .retour { margin-left: -6px; }
 /* Points d'étapes (R2) : aucun chiffre. Faite : jade plein ; en cours : cerclée de jade, comme la pierre tenue au-dessus
    du goban ; à venir : un point discret. */
 .etapes { flex: none; display: flex; align-items: center; gap: 7px; min-height: var(--cible-min); padding-right: 2px; }

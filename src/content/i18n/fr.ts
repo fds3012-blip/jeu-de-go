@@ -9,12 +9,28 @@ export const fr = {
   'nav.apprendre': 'Apprendre',
   'nav.problemes': 'Problèmes',
   'nav.profil': 'Profil',
+  // #465 : libellés courts de la barre du bas, quand l'onglet est trop étroit (zoom 200 %). Début du nom entier.
+  'nav.court.apprendre': 'Appr.',
+  'nav.court.problemes': 'Probl.',
   // Rien de gagné ne se perd (#212) : retour après une série perdue, sans reproche. {jours} et {record} : « 7 jours ».
   'serie.perdueRecord': 'Content de te revoir ! Ta série de {jours} est dans ton record. On en commence une nouvelle ?',
   'serie.perdue': 'Content de te revoir ! Ton record reste {record}. On commence une nouvelle série ?',
   'profil.jours': { one: '{n} jour', other: '{n} jours' },
   'profil.conditions': 'Conditions et confidentialité',
   'profil.retour': 'Retour',
+
+  // #465 (WCAG 2.4.2) : titre de l'onglet du navigateur, selon l'écran affiché. {ecran} : le nom de l'écran.
+  'titre.app': 'Mochi Go : apprendre et jouer au go',
+  'titre.ecran': '{ecran} · Mochi Go',
+  'titre.partie': 'Partie contre {nom}',
+  'titre.partieDeux': 'Partie à deux',
+  'titre.guidee': 'Partie guidée',
+  'titre.direct': 'En direct',
+  'titre.lente': 'Partie lente',
+  'titre.enLigne': 'Partie en ligne',
+  'titre.partagee': 'Partie partagée',
+  'titre.placement': 'Ton niveau de départ',
+  'titre.compte': 'Ton compte',
 
   // En-tête (App.tsx)
   'entete.apprendre': 'Le chemin des leçons',

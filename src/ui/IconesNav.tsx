@@ -134,7 +134,15 @@ export function BarreNav({ actif, onChoisir, pastilles }: { actif: Onglet; onCho
               <IconeNav onglet={o.id} actif={est} />
               {pastille && <span className="onglet-pastille" aria-hidden="true" data-testid={`pastille-${o.id}`} />}
             </span>
-            <span className="onglet-libelle">{o.libelle}</span>
+            {/* #465 : nom entier, ou libellé court quand l'onglet est trop étroit (nav.css) ; le lecteur d'écran lit le nom entier. */}
+            {o.court === o.libelle
+              ? <span className="onglet-libelle">{o.libelle}</span>
+              : (
+                <span className="onglet-libelle">
+                  <span className="onglet-long">{o.libelle}</span>
+                  <span className="onglet-court" aria-hidden="true">{o.court}</span>
+                </span>
+              )}
             <span className="onglet-point" aria-hidden="true" />
           </button>
         );
