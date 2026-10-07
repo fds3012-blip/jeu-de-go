@@ -1,5 +1,7 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { CHAPITRES } from '../src/content/lessons';
+import { CHAPITRES, LESSONS_FR, type LessonStep } from '../src/content/lessons';
+import { jouer } from './plateau';
+import { motsEntiers, toucherAction } from './lecteur';
 
 // Issue #121 : zoom 200 % et reflow (WCAG 1.4.4 et 1.4.10).
 // - 195 × 422 : un iPhone de 390 px zoomé à 200 % ;
@@ -240,4 +242,51 @@ for (const [largeur, hauteur, police] of [[195, 422, false], [320, 640, false], 
       });
     }
   });
+}
+
+// #458 : le lecteur de leçons au zoom 200 % (195 px) et en 320 px, avec et sans les polices web (la CI n'a que la police
+// de repli, plus large). Chaque étape se joue, la bulle de Mochi ne coupe aucun mot, et « Continuer » se touche au doigt
+// au-dessus de la barre du bas (avant, à 195 px, il restait dessous même la page défilée tout en bas).
+const norme = (s: string) => s.replace(/[\u00A0\u202F\s]+/g, ' ').trim();
+async function jouerEtape(page: Page, s: LessonStep, n: number) {
+  const zone = page.locator('.lecteur-plateau');
+  if (s.kind === 'info') {
+    if (s.geste) {
+      await expect(zone).toHaveAttribute('data-demo', 'geste');
+      await jouer(page, 'pose' in s.geste ? s.geste.pose : s.geste.touche[0], n);
+    }
+    if (s.demo) await expect(zone).toHaveAttribute('data-demo', 'finie');
+    return;
+  }
+  if (s.kind === 'quiz') await page.locator('.choix').getByRole('button', { name: s.choices[s.answer], exact: true }).click();
+  else await jouer(page, (s.accept as string[])[0], n);
+  await expect(page.locator('.mochi-bulle.verdict-juste')).toBeVisible();
+}
+for (const [id, nom] of [['l1', '9 × 9'], ['l29', '13 × 13'], ['l31', '19 × 19 cadré']] as const) {
+  for (const cas of [{ l: 195, h: 422, polices: false }, { l: 195, h: 422, polices: true }, { l: 320, h: 640, polices: false }]) {
+    test(`#458 leçon ${id} (${nom}) à ${cas.l} px${cas.polices ? '' : ', polices bloquées'} : « Continuer » au doigt, mots entiers`, async ({ page }) => {
+      const lecon = LESSONS_FR.find(l => l.id === id)!;
+      const avant = Object.fromEntries(LESSONS_FR.slice(0, LESSONS_FR.indexOf(lecon)).map(l => [l.id, l.steps.length]));
+      if (!cas.polices) await page.route(/\.(woff2?|ttf|otf)(\?|$)/, r => r.abort());
+      await page.setViewportSize({ width: cas.l, height: cas.h });
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+      await page.addInitScript(p => localStorage.setItem('go.lecons.v1', JSON.stringify(p)), avant);
+      await page.goto('/');
+      await onglet(page, 'Apprendre').click();
+      await page.locator('.cta-chemin').scrollIntoViewIfNeeded();
+      await page.locator('.cta-chemin').click();
+      const n = lecon.taille ?? lecon.steps[0].rows.length;
+      for (const [i, s] of lecon.steps.entries()) {
+        const ecran = `${id} ${cas.l} px, étape ${i + 1}`;
+        await expect(page.locator('.mochi-bulle p')).toHaveText(norme(s.text));
+        await motsEntiers(page, `${ecran} (consigne)`);
+        await jouerEtape(page, s, n);
+        await motsEntiers(page, `${ecran} (après)`);
+        await sansDebord(page, ecran);
+        const derniere = i === lecon.steps.length - 1;
+        await toucherAction(page, derniere ? 'Terminer la leçon' : 'Continuer', ecran);
+      }
+      await expect(page.getByRole('heading', { name: 'Leçon terminée' })).toBeVisible();
+    });
+  }
 }

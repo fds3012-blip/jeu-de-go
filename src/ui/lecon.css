@@ -5,10 +5,16 @@
  */
 
 /* La leçon remplace la réserve de bas de page du bouton flottant : son bouton est dans la colonne. */
-.app:has(.lecteur-lecon) { padding-bottom: calc(var(--nav-h) + var(--space-2) + env(safe-area-inset-bottom, 0px)); }
+.app:has(.lecteur-lecon) { padding-bottom: 0; }
 .lecteur-lecon { --mochi: 72px; display: flex; flex-direction: column; gap: var(--space-2);
   /* Hauteur définie (pas un minimum) : c'est elle qui fait rétrécir le plateau sur un écran bas. */
-  height: calc(100dvh - var(--space-2) - var(--nav-h) - var(--space-2) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); }
+  height: calc(100dvh - var(--space-2) - env(safe-area-inset-top, 0px)); }
+/* #458 : la réserve de la barre du bas est le dernier élément de la colonne, pas le bas de page de .app. Au zoom 200 %
+   (195 × 422), le plateau bute sur son plancher et la colonne déborde de sa hauteur : un débord ignore le padding du
+   parent, et « Continuer » finissait sous la barre. La réserve, elle, déborde avec la colonne et compte dans la hauteur
+   de la page : on peut toujours faire défiler l'action au-dessus de la barre (zone sûre comprise). Hauteur de la barre
+   suivie quand le texte est agrandi (3.75rem = 60 px en taille normale, comme nav.css). */
+.lecteur-lecon::after { content: ''; flex: none; height: calc(max(var(--nav-h), 3.75rem) + env(safe-area-inset-bottom, 0px)); }
 .lecteur-lecon:has(.verdict) { padding-bottom: 0; }
 @media (min-height: 760px) { .lecteur-lecon { --mochi: 96px; } }
 /* Écran étroit (320 px) : les points se serrent, le titre reste lisible. */
@@ -64,7 +70,17 @@
 .mochi-zone .mochi-portrait { flex: none; width: var(--mochi) !important; height: var(--mochi) !important; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, .22)); }
 .lecteur-lecon .mochi-bulle { position: static; flex: 1; min-width: 0; min-height: var(--mochi); display: flex; gap: 10px; align-items: center; margin: 0; padding: 10px 14px;
   background: var(--surface); border-radius: var(--radius-xs) var(--radius) var(--radius) var(--radius); box-shadow: none; z-index: auto; }
-.lecteur-lecon .mochi-bulle p { flex: 1; margin: 0; padding: 0; background: none; border-radius: 0; line-height: 1.45; font-weight: var(--fw-medium); }
+.lecteur-lecon .mochi-bulle p { flex: 1; min-width: 0; margin: 0; padding: 0; background: none; border-radius: 0; line-height: 1.45; font-weight: var(--fw-medium);
+  /* #458 : retour à la ligne entre les mots ; un mot n'est coupé que s'il est seul plus large que la bulle. Pas de césure. */
+  overflow-wrap: break-word; hyphens: manual; }
+/* #458 : très étroit (zoom 200 % d'un téléphone, 195 px), Mochi à côté de la bulle ne lui laissait qu'un mot par ligne.
+   Mochi, plus petit, passe au-dessus et la bulle prend toute la largeur. */
+@media (max-width: 279px) {
+  .lecteur-lecon { --mochi: 44px; }
+  .mochi-zone { flex-direction: column; align-items: stretch; justify-content: center; gap: var(--space-1); }
+  .mochi-zone .mochi-portrait { align-self: flex-start; }
+  .lecteur-lecon .mochi-bulle { flex: none; min-height: 0; padding: 10px 12px; }
+}
 .lecteur-lecon .mochi-bulle .marque { flex: none; }
 .lecteur-lecon .mochi-bulle.verdict-juste { background: color-mix(in srgb, var(--jade) 18%, var(--surface)); }
 .lecteur-lecon .mochi-bulle.verdict-revoir, .lecteur-lecon .mochi-bulle.choix-aide { background: color-mix(in srgb, var(--hanko) 14%, var(--surface)); }
