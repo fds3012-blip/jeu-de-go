@@ -28,7 +28,8 @@ test('erreur à rejouer : la section apparaît, on résout, elle disparaît', as
 
   const section = page.getByRole('heading', { name: /Tes erreurs à rejouer/ });
   await expect(section).toBeVisible();
-  await expect(page.getByLabel('1 à rejouer')).toBeVisible();
+  await expect(page.locator('.mes-erreurs-compteur')).toBeVisible();
+  await expect(page.locator('.mes-erreurs-compteur .sr-only')).toHaveText('1 à rejouer');
 
   await page.getByRole('button', { name: 'Rejouer : Ta partie contre Pomme, coup 14' }).click();
   await expect(page.getByRole('dialog')).toBeVisible();

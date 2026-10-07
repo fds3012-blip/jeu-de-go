@@ -87,7 +87,7 @@ for (const [largeur, hauteur] of [[390, 844], [320, 568]] as const) {
       await expect(plateau(page).locator('[data-meilleur]')).toHaveCount(1);
       await expect(bulle.locator('.parcours-detail')).toContainText('E3');
       // L'avance après le coup, dite simplement.
-      await expect(bulle.locator('.parcours-avance')).toHaveAttribute('aria-label', /^Après ce coup, tu mènes de 5 points$/);
+      await expect(bulle.locator('.parcours-avance .sr-only')).toHaveText(/^Après ce coup, tu mènes de 5 points$/);
       if (avecCaptures) await capture(page, `3-parcours-manque-${suffixe}`);
       await suivant.click();
       await expect(bulle.locator('.parcours-titre')).toHaveText(/F7 est une erreur/);

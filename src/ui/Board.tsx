@@ -237,7 +237,9 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
       <path d={dBord} stroke={theme.ligne} strokeOpacity={0.78} strokeWidth={bord} fill="none" strokeLinejoin="miter" />
       {hoshi(size).map(p => <circle key={p} cx={M + (p % size) * C} cy={M + Math.floor(p / size) * C} r={(size === 19 && !f ? 2.3 : 3) * k} fill={theme.ligne} fillOpacity={0.85} />)}
     </>;
-    const coords = coordonnees ? <g className="coord" fontSize={fs} fill={theme.coord} fillOpacity={0.7} textAnchor="middle" dominantBaseline="central">
+    // #461 : encre pleine (à 70 %, les lettres tombaient à 2,4:1 sur le bord vignetté du kaya) ; liseré sous l'encre si le thème en a un.
+    const lisere = theme.coordLisere ? { stroke: theme.coordLisere, strokeWidth: 3 * k, strokeLinejoin: 'round' as const, paintOrder: 'stroke' } : {};
+    const coords = coordonnees ? <g className="coord" fontSize={fs} fill={theme.coord} {...lisere} textAnchor="middle" dominantBaseline="central">
       {Array.from({ length: size }, (_, i) => (
         <g key={i}>
           {i >= de && i < a && <text x={M + i * C} y={ly}>{LETTERS[i]}</text>}
