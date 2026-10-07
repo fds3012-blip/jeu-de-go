@@ -35,6 +35,8 @@ import { Portrait, PortraitMochi, type Humeur } from '../ui/Portrait';
 
 /** Durée d'une réaction du portrait de l'adversaire (content, surpris), en millisecondes. */
 const DUREE_HUMEUR = 1500;
+/** #466 : coups de la partie (les deux camps) pendant lesquels Mochi dit « Touche encore » sur la pierre fantôme. */
+const COUPS_AIDE_FANTOME = 6;
 import { battuAccorde } from '../ui/sceaux';
 import type { StatsPartie } from './bilan';
 import { Revue } from './Revue';
@@ -85,6 +87,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   const [history, setHistory] = useState<Position[]>(() => [newPosition(size)]);
   const [phase, setPhase] = useState<'play' | 'score' | 'end'>('play');
   const [dead, setDead] = useState<Set<number>>(new Set());
+  const [fantome, setFantome] = useState(-1);
   const [msg, setMsg] = useState(ai ? tr('partie.debut.ordi', { nom: ai.nom }) : tr('partie.debut.deux'));
   // « Abandonner » armé (#audit-wig, point 3) : valable pour l'état courant de l'historique seulement, sans minuterie.
   // Un coup joué le désarme ; l'état est annoncé par une zone polie permanente (voir plus bas).
@@ -427,6 +430,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     const resultat = () => onResult?.(egalite ? 0 : winner, {
       coups: history.length - 1, capturesMoi: pos.captures[1], capturesAdv: pos.captures[2], atarisSubis: atarisSubis.current,
       abandon, marge: abandon ? 0 : sc.margin, komi, pierres: pos.board.reduce((n, c) => n + (c ? 1 : 0), 0),
+      ...(abandon ? {} : { territoire: sc.territory[1] }),
     });
     resultatDiffere.current = differe ? resultat : null;
     if (!differe) resultat();
@@ -600,10 +604,13 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   // Ta capture reste affichée pendant que Pomme réfléchit (#187) : le « Bravo » ne s'efface qu'à sa réponse.
   const feteVisible = fete && fete.len === history.length && phase === 'play' ? fete : null;
   const pense = phase === 'play' && thinking && !!ai && !feteVisible;
-  const messageCoach = pense && ai ? tr('partie.reflechit', { nom: ai.nom }) : msg;
+  // #466 : premier toucher au doigt pendant les premiers coups : Mochi dit qu'il faut toucher encore (la pierre fantôme
+  // n'est pas une pierre refusée). Plus loin dans la partie, le geste est connu : la phrase du coup reste.
+  const aideFantome = fantome >= 0 && phase === 'play' && myTurn && !pense && history.length - 1 < COUPS_AIDE_FANTOME;
+  const messageCoach = pense && ai ? tr('partie.reflechit', { nom: ai.nom }) : aideFantome ? tr('partie.toucheEncore', { point: toLabel(fantome, size) }) : msg;
   const quitter = demandeQuitter && quitterDemandeConfirmation;
   const avertissementPasse = phase === 'play' && myTurn && avertiPasse === history.length && !quitter;
-  const montrerIntro = intro && history.length === 1 && phase === 'play' && !avertissementPasse && !quitter;
+  const montrerIntro = intro && history.length === 1 && phase === 'play' && !avertissementPasse && !quitter && !aideFantome;
 
   return (
     <div className="partie">
@@ -615,7 +622,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
       {ai && avantage && (!estimationKo || phase === 'score') && <BarreAvantage libelle={lead === null ? '' : libelleAvantage(lead)} part={lead === null ? 0.5 : partNoir(lead, size)} titre={phase === 'score' ? tr('partie.scoreCompte') : undefined} />}
       <div className="partie-plateau">
         <Board size={size} board={pos.board} toPlay={pos.toPlay} interactive={phase === 'score' || myTurn} stonesTappable={phase === 'score'} confirmTouch={confirmTouch}
-          coordonnees={prefs.coordonnees} marks={{ last: prefs.dernierCoup ? pos.lastMove : null, owner: phase === 'score' ? sc.owner : quiMeneVisible?.owner, ownerFondu: !!quiMeneVisible, dead, libs, zone, ouverts: phase === 'play' ? frontieresVisibles(frontieres, history.length, pos.board, size, !!ai) : undefined }} onPlay={onPlay} shake={shake} versCouvercles noms={ai ? { 2: ai.nom } : undefined} />
+          coordonnees={prefs.coordonnees} marks={{ last: prefs.dernierCoup ? pos.lastMove : null, owner: phase === 'score' ? sc.owner : quiMeneVisible?.owner, ownerFondu: !!quiMeneVisible, dead, libs, zone, ouverts: phase === 'play' ? frontieresVisibles(frontieres, history.length, pos.board, size, !!ai) : undefined }} onPlay={onPlay} onFantome={setFantome} shake={shake} versCouvercles noms={ai ? { 2: ai.nom } : undefined} />
         {conseilVisible && <CalqueConseil size={size} zone={conseilVisible.zone} point={conseilVisible.point} />}
         {quiMeneVisible && <p key={quiMeneVisible.n} className="qui-mene-phrase" aria-hidden="true">{fr(quiMeneVisible.phrase)}</p>}
         {/* Zones d'annonce permanentes (audit web, points 3 et 4) : seul leur texte change, pour être lues à coup sûr. */}
@@ -670,7 +677,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
         }} />
       ) : (
         <>
-          <p className="comptage">{fr(tr('partie.comptage', { noir: name(1), pn: virgule(sc.black), blanc: name(2), pb: virgule(sc.white) }))}</p>
+          <p className="comptage">{fr(tr(dead.size ? 'partie.comptage' : 'partie.comptageSansMortes', { noir: name(1), pn: virgule(sc.black), blanc: name(2), pb: virgule(sc.white) }))}</p>
           <div className="barre-comptage" role="toolbar" aria-label={tr('partie.comptageAria')}>
             <button className="btn" onClick={() => { resume(); setMsg(tr('partie.reprend')); }}>{tr('partie.reprendre')}</button>
             <button className="btn primary" onClick={() => finish(sc.winner, false)} disabled={finding}>{tr('partie.valider')}</button>

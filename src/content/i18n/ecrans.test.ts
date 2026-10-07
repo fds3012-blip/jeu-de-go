@@ -45,7 +45,7 @@ describe('accueil', () => {
     expect(accueil({ n: 0 }, 3, pomme, 9).bulle).toBe('Bravo pour tes 3 leçons ! On passe à une vraie partie ?');
     expect(accueil({ n: 2, dernier: 'pomme' }, 0, pomme, 13)).toMatchObject({ cta: 'Rejouer contre Pomme', bulle: 'Te revoilà ! On rejoue sur le 13 × 13 ?' });
     expect(accueil({ n: 2, dernier: 'caillou' }, 0, pomme, 9)).toMatchObject({ cta: 'Jouer contre Pomme', bulle: 'Une partie sur le 9 × 9 ? Je t’attends.' });
-    expect(introBut('Pomme')).toMatch(/^Le but\u202F: entourer plus de territoire que Pomme/);
+    expect(introBut('Pomme')).toMatch(/^Touche un croisement des lignes pour poser ta pierre\. Le but\u202F: entourer plus de territoire que Pomme/);
   });
 
   it('en anglais, sans espace fine avant la ponctuation', () => {
@@ -53,6 +53,6 @@ describe('accueil', () => {
     expect(accueil({ n: 0 }, 0, pomme, 9)).toEqual({ nouveau: true, cta: 'Play your first game', ctaNom: 'Play your first game against Pomme', bulle: 'Learn Go by playing: I’ll explain every move.' });
     expect(accueil({ n: 0 }, 2, pomme, 9).bulle).toBe('Well done on your 2 lessons! Ready for a real game?');
     expect(accueil({ n: 2, dernier: 'pomme' }, 0, pomme, 19)).toMatchObject({ cta: 'Play Pomme again', bulle: 'You’re back! Another game on the 19 × 19?' });
-    expect(introBut('Pomme')).toMatch(/^The goal: surround more territory than Pomme/);
+    expect(introBut('Pomme')).toMatch(/^Tap where two lines cross to place your stone\. The goal: surround more territory than Pomme/);
   });
 });

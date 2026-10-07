@@ -81,7 +81,9 @@ test('au doigt, il faut toucher deux fois pour confirmer un coup', async ({ page
   // Première touche : pierre fantôme seulement, rien n'est joué.
   await expect(fantome(page)).toHaveCount(1);
   await expect(pierres(page, 'noir')).toHaveCount(0);
-  await expect(message(page)).toHaveText(debut!);
+  // #466 : Mochi dit de toucher encore (premiers coups de la partie).
+  expect(debut).not.toBe('');
+  await expect(message(page)).toHaveText('Touche encore pour poser ta pierre en E5.');
 
   // Toucher une autre intersection déplace la pierre fantôme sans jouer.
   await toucher(page, 'D4');

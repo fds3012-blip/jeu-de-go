@@ -54,6 +54,8 @@ export interface StatsPartie {
   komi: number;
   /** Pierres sur le plateau à la fin (#251). Absent : inconnu, on ne présume pas d'un plateau vide. */
   pierres?: number;
+  /** #466 : points de territoire de Noir (toi, contre l'ordi) au comptage. Absent : abandon, ou inconnu. */
+  territoire?: number;
 }
 
 /**
@@ -119,6 +121,8 @@ export function leconMochi(issue: Issue, s: StatsPartie, adv: string, suivant?: 
   if (s.capturesAdv >= 3) return { texte: t('lecon.prises', { adv, n: s.capturesAdv }), lecon: 'l2' };
   if (s.atarisSubis >= 2) return { texte: t('lecon.atariSubis', { n: s.atarisSubis }), lecon: 'l2' };
   if (s.abandon) return { texte: t('lecon.revois') };
+  // #466 : 0 point de territoire (frontières ouvertes) : « Perdu de peu » ne disait pas pourquoi le score était nul.
+  if (s.territoire === 0) return { texte: t('lecon.territoireZero') };
   if (s.marge < s.komi) return { texte: t('lecon.komi', { komi: nombre(s.komi) }) };
   if (s.marge <= 10) return { texte: t('lecon.perduDePeu') };
   return { texte: t('lecon.territoireAdv', { adv }), lecon: 'l6' };

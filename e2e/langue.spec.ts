@@ -352,7 +352,7 @@ for (const largeur of [390, 320]) {
     const grille = page.getByRole('grid', { name: 'Go board 9 × 9' });
     await expect(grille).toBeVisible();
     await expect(page.locator('.joueur[data-joueur="You"]')).toBeVisible();
-    await expect(page.getByText(/^The goal: surround more territory than Pomme/)).toBeVisible();
+    await expect(page.getByText(/The goal: surround more territory than Pomme/)).toBeVisible();
     const actions = page.getByRole('toolbar', { name: 'Game actions' });
     for (const nom of ['Hint', 'Who’s ahead?', 'Pass', 'More']) await expect(actions.getByRole('button', { name: nom, exact: true })).toBeVisible();
     // Annuler et abandonner sont dans le menu « More » (v3).
