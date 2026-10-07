@@ -142,7 +142,7 @@ test.describe('très petite hauteur (320 × 568)', () => {
     const texte = intro.locator('p');
     const komi = page.locator('.annonce-komi');
     // L'explication du komi et le but du jeu restent entiers.
-    await expect(komi).toContainText('Le komi, ce sont des points donnés à Blanc parce que Noir commence.');
+    await expect(komi).toContainText(/Le komi\s: des points donnés à Blanc, qui joue en second\./);
     await expect(intro).toContainText('Le but : entourer plus de territoire');
     const [bulle, jeu, barre] = await Promise.all([
       intro.boundingBox(), plateau(page).boundingBox(), page.getByRole('toolbar', { name: 'Actions de la partie' }).boundingBox(),

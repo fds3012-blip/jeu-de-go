@@ -51,13 +51,17 @@ describe('français identique aux textes d’origine', () => {
     expect(phraseQuiMene(-7.6, 'katago')).toBe("Blanc mène d'environ 8 points.");
     expect(messageComptage('Deux passes : la partie est finie.', 0, false)).toBe('Deux passes : la partie est finie. Aucune pierre morte. Si un groupe ne peut plus vivre, touche-le pour le compter comme prisonnier.');
     expect(messageComptage('x', 2, false)).toBe(`${EXPLICATION_MORTES} Touche un groupe pour corriger.`);
+    // #466 : aucune pierre grisée, mais un doute : on ne parle pas de « pierres grisées ».
+    expect(messageComptage('x', 0, true)).toBe(traduire('fr', 'partie.mortes.doute'));
+    expect(messageComptage('x', 0, true)).not.toContain('grisées');
+    expect(messageComptage('x', 2, true)).toBe(`${EXPLICATION_MORTES} ${traduire('fr', 'partie.mortes.doute')}`);
     for (const s of Object.keys(GENERIQUES) as Situation[]) expect(repliques('pomme', s)).toEqual(GENERIQUES[s]);
     expect([0, 1, 2, 3].map(n => traduire('fr', 'partie.ordiCapture', { nom: 'Pomme', n, point: 'D4' })))
       .toEqual(['Pomme capture 0 pierre en D4.', 'Pomme capture 1 pierre en D4.', 'Pomme capture 2 pierres en D4.', 'Pomme capture 3 pierres en D4.']);
   });
 
   it('annonce du komi', () => {
-    expect(annonceKomi(0, 0.5)).toBe('Le komi, ce sont des points donnés à Blanc parce que Noir commence. Pour tes premières parties, il est de 0,5.');
+    expect(annonceKomi(0, 0.5)).toBe('Le komi\u202f: des points donnés à Blanc, qui joue en second. Pour tes premières parties, il est de 0,5.');
     expect(annonceKomi(1, 0.5)).toBe('Cette partie encore, le komi est de 0,5 point.');
     expect(annonceKomi(2, 0.5)).toBe('Dernière partie avec un komi de 0,5 point.');
     expect(annonceKomi(3, 6.5)).toBe('Le komi passe à 6,5 points, sa valeur habituelle.');
@@ -108,7 +112,7 @@ describe('en anglais', () => {
     expect(messageAtari(false)).toBe('Atari! Your group has only one liberty left. Save it or strike back.');
     expect([0, 1, 2].map(descriptionIndices)).toEqual(['No more hints this game', '1 hint left', '2 hints left']);
     expect([1, 2].map(descriptionQuiMene)).toEqual(['1 more time this game', '2 more times this game']);
-    expect(annonceKomi(0, 0.5)).toBe('Komi is points given to White because Black plays first. For your first games, it’s 0.5.');
+    expect(annonceKomi(0, 0.5)).toBe('Komi: points given to White, who plays second. For your first games, it’s 0.5.');
   });
 
   it('répliques : 15 caractères au plus, comme en français', () => {

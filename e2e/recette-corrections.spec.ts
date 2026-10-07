@@ -27,7 +27,7 @@ for (const [largeur, hauteur] of [[375, 667], [320, 640], [320, 568]] as const) 
       await page.locator('.cta').click();
       const intro = page.locator('.coach-intro');
       await expect(intro).toContainText(/Le but\s: entourer plus de territoire que Pomme/);
-      await expect(page.locator('.annonce-komi')).toContainText('Le komi, ce sont des points donnés à Blanc');
+      await expect(page.locator('.annonce-komi')).toContainText(/Le komi\s: des points donnés à Blanc/);
       const [bulle, barre] = await Promise.all([intro.boundingBox(), page.getByRole('toolbar', { name: 'Actions de la partie' }).boundingBox()]);
       expect(bulle!.y).toBeGreaterThanOrEqual(0);
       expect(bulle!.y + bulle!.height).toBeLessThanOrEqual(barre!.y + 1);

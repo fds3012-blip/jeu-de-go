@@ -49,6 +49,12 @@ interface Props {
   noms?: NomsCamps;
   /** Dessin posé sur la grille, sous les pierres, quand une pierre fantôme est montrée (#400 : visée du plateau serré, src/ui/Visee.tsx, chargée avec son écran). */
   surFantome?: (p: number) => ReactElement;
+  /**
+   * #466 : la pierre fantôme d'un premier toucher (au doigt ou au clavier) attend la seconde touche. Appelé avec le
+   * point quand elle apparaît, et avec -1 quand elle disparaît (pierre posée, autre point, survol de la souris).
+   * L'écran de partie y dit « Touche encore… » : sans consigne, un débutant croyait sa pierre refusée.
+   */
+  onFantome?: (p: number) => void;
   /** #365 : `false` cache les lettres et chiffres autour du goban (réglage « Coordonnées »). Par défaut, ils sont là. */
   coordonnees?: boolean;
   /** #365 : numéro de coup écrit sur chaque pierre (réglage « Numéros des coups », en revue). Absent par défaut. */
@@ -120,10 +126,16 @@ function corps(c: number, p: number, size: number): ReactElement {
   return <use href={c === 1 ? '#go-noire' : `#go-blanche-${shellVariant(p, size)}`} />;
 }
 
-export function Board({ size, board, toPlay = 1, marks = {}, interactive = false, stonesTappable = false, confirmTouch = true, toucher = false, onPlay, shake, versCouvercles = false, noms, surFantome, coordonnees = true, numeros, fenetre }: Props) {
+export function Board({ size, board, toPlay = 1, marks = {}, interactive = false, stonesTappable = false, confirmTouch = true, toucher = false, onPlay, shake, versCouvercles = false, noms, surFantome, onFantome, coordonnees = true, numeros, fenetre }: Props) {
   const ref = useRef<SVGSVGElement>(null);
   const theme = useThemeGoban();
-  const [ghost, setGhost] = useState(-1);
+  const [ghost, setGhostEtat] = useState(-1);
+  // #466 : pierre fantôme qui attend une seconde touche (doigt, clavier), à distinguer du survol de la souris.
+  const [aConfirmer, setAConfirmer] = useState(false);
+  const setGhost = (p: number, confirmer = false) => {
+    setGhostEtat(p); setAConfirmer(confirmer && p >= 0);
+    if (onFantome && (confirmer || p < 0) && (p !== ghost || confirmer !== aConfirmer)) onFantome(confirmer ? p : -1);
+  };
   // Un plateau jouable (onPlay fourni) est une grille : un seul arrêt de tabulation, curseur aux flèches.
   // Le rôle reste stable pendant le tour de l'adversaire (interactive passe à false) pour ne pas perdre le focus.
   const jouable = !!onPlay;
@@ -184,7 +196,7 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
     const p = pointFrom(e);
     if (p < 0) return;
     if (board[p] && !stonesTappable) return;
-    if (!board[p] && confirmTouch && e.pointerType !== 'mouse' && ghost !== p) { setGhost(p); return; }
+    if (!board[p] && confirmTouch && e.pointerType !== 'mouse' && ghost !== p) { setGhost(p, true); return; }
     setGhost(-1);
     onPlay(p);
   }
@@ -204,7 +216,7 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
     if (!interactive || !onPlay) return;
     if (board[cur] && !stonesTappable) { setAnnonce(t('plateau.occupe', { point: toLabel(cur, size) })); return; }
     // « Confirmer au doigt » : le premier appui montre la pierre fantôme, le second la pose.
-    if (!board[cur] && confirmTouch && ghost !== cur) { setGhost(cur); setAnnonce(annonceConfirmation(toLabel(cur, size), toucher)); return; }
+    if (!board[cur] && confirmTouch && ghost !== cur) { setGhost(cur, true); setAnnonce(annonceConfirmation(toLabel(cur, size), toucher)); return; }
     setGhost(-1);
     onPlay(cur);
   }
@@ -385,7 +397,7 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
             <rect x={X(cur) - C * 0.48} y={Y(cur) - C * 0.48} width={C * 0.96} height={C * 0.96} rx={C * 0.2} stroke={CURSEUR.anneau} strokeWidth={3} />
           </g>
         ) : null}
-        {ghostP >= 0 ? <g {...fantome(ghostP)} opacity={0.5} data-fantome="" aria-hidden="true">{corps(toPlay, ghostP, size)}</g> : null}
+        {ghostP >= 0 ? <g {...fantome(ghostP)} opacity={0.5} data-fantome="" data-confirmer={aConfirmer || undefined} className={aConfirmer ? 'fantome-attend' : undefined} aria-hidden="true">{corps(toPlay, ghostP, size)}</g> : null}
         {shaking >= 0 && !board[shaking] ? (
           <g key={`tr${shakeSeen}`} {...fantome(shaking)} opacity={0.5} aria-hidden="true"><g className="tremble">{corps(toPlay, shaking, size)}</g></g>
         ) : null}

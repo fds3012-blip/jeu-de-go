@@ -103,6 +103,15 @@ describe('leçon de Mochi', () => {
     expect(leconMochi('defaite', stats({ marge: 8.5 }), 'Pomme').lecon).toBeUndefined();
     expect(leconMochi('defaite', stats({ marge: 25.5 }), 'Pomme')).toMatchObject({ lecon: 'l6' });
   });
+
+  it('#466 : territoire à 0 (frontières ouvertes) : Mochi dit pourquoi, pas « perdu de peu »', () => {
+    const l = leconMochi('defaite', stats({ coups: 16, pierres: 14, marge: 0.5, komi: 0.5, territoire: 0 }), 'Pomme');
+    expect(l.texte).toBe('Ton territoire compte 0 : tes pierres ne fermaient aucun espace. Avant de passer, relie-les jusqu’aux bords.');
+    expect(l.texte).not.toContain('de peu');
+    // Du territoire, même peu : la phrase habituelle reste ; inconnu (abandon) : rien ne change.
+    expect(leconMochi('defaite', stats({ marge: 4.5, territoire: 3 }), 'Pomme').texte).not.toContain('compte 0');
+    expect(leconMochi('defaite', stats({ marge: 4.5 }), 'Pomme').texte).not.toContain('compte 0');
+  });
 });
 
 describe('fin sur un plateau presque vide (#251, M4)', () => {
