@@ -53,6 +53,9 @@ test('trois parties quittées : prévenu à la deuxième, attente de 5 min à la
   const choix = ana.getByTestId('direct-choix');
   await expect(ana.getByTestId('direct-prevenir')).toHaveText(
     'Encore une partie quittée, et tu attendras 5 min avant de rejouer en direct. Si tu dois partir, abandonne : ça ne compte pas.');
+  // #460 : un encadré au-dessus du bouton, en couleur de texte (en petit gris, il passait inaperçu).
+  await expect(ana.getByTestId('direct-prevenir')).toHaveClass(/\bcard\b/);
+  await expect(ana.getByTestId('direct-prevenir')).not.toHaveClass(/\bmuted\b/);
   await expect(choix.locator('.btn.primary')).toHaveCount(1);
   await expect(choix.getByRole('button', { name: 'Trouver un adversaire' })).toBeEnabled();
 

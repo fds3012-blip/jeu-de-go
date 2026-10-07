@@ -86,10 +86,23 @@ export function PartiePartagee({ db, jeton, nouveau, confirmTouch = false, onJou
         <Mochi size={56} />
         {/* Textes neutres (#449) : tant que rien n'est lu, et pour un lien retiré (la ligne n'existe plus), on ne sait
             pas si le lien montrait une partie ou une étude. */}
-        <p aria-live="polite">{fr(tp(etat.quoi === 'chargement' ? 'vue.chargement' : etat.quoi === 'introuvable' ? 'vue.introuvable' : online ? 'vue.erreur' : 'vue.horsLigne'))}</p>
+        <p aria-live="polite">
+          {fr(tp(etat.quoi === 'chargement' ? 'vue.chargement' : etat.quoi === 'introuvable' ? 'vue.introuvable' : online ? 'vue.erreur' : 'vue.horsLigne'))}
+          {etat.quoi === 'introuvable' && <span className="partagee-aide">{fr(tp('vue.introuvableAide'))}</span>}
+        </p>
       </div>
       {etat.quoi === 'erreur' && online && <button type="button" className="btn" onClick={() => setEssai(n => n + 1)}>{tp('vue.reessayer')}</button>}
       {etat.quoi === 'introuvable' && <div className="dock"><button type="button" className="cta" onClick={onAccueil}>{tp('vue.accueil')}</button></div>}
+    </div>
+  );
+}
+
+/** Coup précédent et coup suivant (44 px chacun ; aussi aux flèches du clavier). */
+function Fleches({ i, n, aller }: { i: number; n: number; aller: (k: number) => void }) {
+  return (
+    <div className="partagee-nav">
+      <button type="button" className="btn revue-pas" onClick={() => aller(i - 1)} disabled={i <= 0} aria-label={tp('vue.precedent')}><Icone nom="precedent" /></button>
+      <button type="button" className="btn revue-pas" onClick={() => aller(i + 1)} disabled={i >= n} aria-label={tp('vue.suivant')}><Icone nom="suivant" /></button>
     </div>
   );
 }
@@ -135,16 +148,17 @@ function Vue({ partie, nouveau, onJouer, onRevue }: { partie: Partie; nouveau: b
         <p>{fr(tp(nouveau ? 'vue.mochiNouveau' : 'vue.mochiJoueur'))}</p>
       </div>
 
-      <p className="partagee-compteur" aria-live="polite">
-        {i === cle && cle > 0 && <b className="parcours-cle">{tp('vue.momentCle')}</b>}
-        {i === 0 ? tp('vue.debut') : tp('vue.compteur', { i, n })}
-      </p>
+      {/* #460 : le compteur et ses flèches au-dessus du plateau, visibles sans défiler à 390 × 844 (sous le plateau,
+          le bouton principal du bas les recouvrait à moitié). */}
+      <div className="partagee-lecture">
+        <p className="partagee-compteur" aria-live="polite">
+          {i === cle && cle > 0 && <b className="parcours-cle">{tp('vue.momentCle')}</b>}
+          {i === 0 ? tp('vue.debut') : tp('vue.compteur', { i, n })}
+        </p>
+        <Fleches i={i} n={n} aller={aller} />
+      </div>
       <div className="revue-plateau">
         <Board size={q.size} board={q.board} marks={{ last: q.lastMove }} />
-      </div>
-      <div className="partagee-nav">
-        <button type="button" className="btn revue-pas" onClick={() => aller(i - 1)} disabled={i <= 0} aria-label={tp('vue.precedent')}><Icone nom="precedent" /></button>
-        <button type="button" className="btn revue-pas" onClick={() => aller(i + 1)} disabled={i >= n} aria-label={tp('vue.suivant')}><Icone nom="suivant" /></button>
       </div>
 
       {nouveau && <button type="button" className="lien partagee-secondaire" onClick={onRevue}>{tp('vue.analyser')}</button>}
@@ -200,19 +214,16 @@ function VueEtude({ partie, onEtudier }: { partie: Partie; onEtudier: () => void
       </div>
 
       {n > 0 && (
-        <p className="partagee-compteur" aria-live="polite">
-          {i === 0 ? tp('vueEtude.depart') : tp('vueEtude.compteur', { i, n })}
-        </p>
+        <div className="partagee-lecture">
+          <p className="partagee-compteur" aria-live="polite">
+            {i === 0 ? tp('vueEtude.depart') : tp('vueEtude.compteur', { i, n })}
+          </p>
+          <Fleches i={i} n={n} aller={aller} />
+        </div>
       )}
       <div className="revue-plateau">
         <Board size={q.size} board={q.board} marks={{ last: q.lastMove }} numeros={numeros} />
       </div>
-      {n > 0 && (
-        <div className="partagee-nav">
-          <button type="button" className="btn revue-pas" onClick={() => aller(i - 1)} disabled={i <= 0} aria-label={tp('vue.precedent')}><Icone nom="precedent" /></button>
-          <button type="button" className="btn revue-pas" onClick={() => aller(i + 1)} disabled={i >= n} aria-label={tp('vue.suivant')}><Icone nom="suivant" /></button>
-        </div>
-      )}
 
       <div className="dock revue-dock">
         <button type="button" className="cta" onClick={onEtudier}>{tp('vueEtude.etudier')}</button>

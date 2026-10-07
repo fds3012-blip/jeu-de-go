@@ -161,15 +161,20 @@ export function FeuilleSignaler({ db, ouvert, onFermer, cible, compte, onCompte,
   const [bloquerAussi, setBloquerAussi] = useState(false);
   const [envoi, setEnvoi] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
+  // #460 : l'erreur s'affiche à côté du champ à corriger (motif ou message), qui reçoit le focus ; les autres en bas.
+  const [champ, setChamp] = useState<'motif' | 'texte' | null>(null);
   const [fait, setFait] = useState<{ signale: boolean; bloque: boolean } | null>(null);
   const idTexte = useId();
   const idAide = useId();
   const idMotif = useId();
+  const idErreurTexte = useId();
+  const refMotifs = useRef<HTMLFieldSetElement>(null);
+  const refTexte = useRef<HTMLTextAreaElement>(null);
 
   // Chaque ouverture repart d'une feuille vierge.
   useEffect(() => {
     if (!ouvert) return;
-    setMotif(null); setSujet('bug'); setTexte(''); setBloquerAussi(false); setErreur(null); setFait(null); setEnvoi(false);
+    setMotif(null); setSujet('bug'); setTexte(''); setBloquerAussi(false); setErreur(null); setChamp(null); setFait(null); setEnvoi(false);
   }, [ouvert]);
 
   const titre = cible.type === 'joueur' ? tsec('signaler.joueurTitre', { nom: cible.nom })
@@ -190,7 +195,7 @@ export function FeuilleSignaler({ db, ouvert, onFermer, cible, compte, onCompte,
 
   async function bloquerSeul() {
     if (!db || !cibleBlocage || envoi) return;
-    setEnvoi(true); setErreur(null);
+    setEnvoi(true); setErreur(null); setChamp(null);
     const r = await bloquer(db, cibleBlocage);
     setEnvoi(false);
     if (!r.ok) { setErreur(r.error); return; }
@@ -202,13 +207,21 @@ export function FeuilleSignaler({ db, ouvert, onFermer, cible, compte, onCompte,
   async function envoyer(e: FormEvent) {
     e.preventDefault();
     if (!db || envoi) return;
-    if (cible.type !== 'ecrire' && !motif) { setErreur(tsec('signaler.choisirMotif')); return; }
-    if (cible.type === 'ecrire' && !texte.trim()) { setErreur(tsec('signaler.ecrisMessage')); return; }
+    if (cible.type !== 'ecrire' && !motif) {
+      setErreur(tsec('signaler.choisirMotif')); setChamp('motif');
+      refMotifs.current?.querySelector('input')?.focus();
+      return;
+    }
+    if (cible.type === 'ecrire' && !texte.trim()) {
+      setErreur(tsec('signaler.ecrisMessage')); setChamp('texte');
+      refTexte.current?.focus();
+      return;
+    }
     const demande: Demande = cible.type === 'joueur'
       ? { type: 'joueur', motif: motif as MotifJoueur, texte, partie: cible.partie, pseudo: cible.partie ? undefined : cible.pseudo ?? cible.nom }
       : cible.type === 'probleme' ? { type: 'probleme', motif: motif as MotifProbleme, texte, probleme: cible.probleme }
         : { type: sujet, texte };
-    setEnvoi(true); setErreur(null);
+    setEnvoi(true); setErreur(null); setChamp(null);
     const r = await signaler(db, demande, { version: analyticsConfig().release, ecran: ECRAN[cible.type] });
     if (!r.ok) { setEnvoi(false); setErreur(r.error); return; }
     let bloque = false;
@@ -257,19 +270,23 @@ export function FeuilleSignaler({ db, ouvert, onFermer, cible, compte, onCompte,
             </div>
           </fieldset>
         ) : (
-          <fieldset className="signaler-choix" aria-describedby={erreur && !motif ? idMotif : undefined}>
+          <fieldset ref={refMotifs} className="signaler-choix" aria-describedby={champ === 'motif' ? idMotif : undefined}>
             <legend>{tsec('signaler.motif')}</legend>
+            {champ === 'motif' && erreur && <p id={idMotif} className="small signaler-erreur" role="alert">{fr(erreur)}</p>}
             {motifs.map(m => (
               <label key={m} className="signaler-motif">
-                <input type="radio" name="motif" value={m} checked={motif === m} onChange={() => { setMotif(m); setErreur(null); }} />
+                <input type="radio" name="motif" value={m} checked={motif === m} aria-invalid={champ === 'motif' || undefined}
+                  onChange={() => { setMotif(m); setErreur(null); setChamp(null); }} />
                 <span>{fr(tsec(`signaler.motif.${m}` as Parameters<typeof tsec>[0]))}</span>
               </label>
             ))}
           </fieldset>
         )}
         <label className="signaler-label" htmlFor={idTexte}>{libelleTexte}</label>
-        <textarea id={idTexte} className="signaler-texte" rows={cible.type === 'ecrire' ? 4 : 2} maxLength={TEXTE_MAX} value={texte}
-          aria-describedby={idAide} required={cible.type === 'ecrire'} onChange={e => { setTexte(e.target.value); if (erreur) setErreur(null); }} />
+        <textarea ref={refTexte} id={idTexte} className="signaler-texte" rows={cible.type === 'ecrire' ? 4 : 2} maxLength={TEXTE_MAX} value={texte}
+          aria-describedby={champ === 'texte' ? `${idErreurTexte} ${idAide}` : idAide} aria-invalid={champ === 'texte' || undefined}
+          required={cible.type === 'ecrire'} onChange={e => { setTexte(e.target.value); if (erreur) { setErreur(null); setChamp(null); } }} />
+        {champ === 'texte' && erreur && <p id={idErreurTexte} className="small signaler-erreur" role="alert">{fr(erreur)}</p>}
         <p id={idAide} className="muted small signaler-aide">
           <span>{fr(tsec('signaler.aideTexte'))}</span>
           <span className="signaler-compteur" aria-hidden="true">{tsec('signaler.compteur', { n: texte.length })}</span>
@@ -280,7 +297,7 @@ export function FeuilleSignaler({ db, ouvert, onFermer, cible, compte, onCompte,
             <span><b>{tsec('bloquer.aussi', { nom: joueur.nom })}</b><small>{fr(tsec('bloquer.aussiAide'))}</small></span>
           </label>
         )}
-        <p id={idMotif} className="small signaler-erreur" role="alert">{erreur ? fr(erreur) : !online ? fr(tsec('erreur.horsLigne')) : ''}</p>
+        {!champ && (erreur || !online) && <p className="small signaler-erreur" role="alert">{erreur ? fr(erreur) : fr(tsec('erreur.horsLigne'))}</p>}
         <button type="submit" className="btn primary" disabled={envoi || !online} aria-busy={envoi}>{tsec(envoi ? 'signaler.envoi' : 'signaler.envoyer')}</button>
         {joueur && (
           <p className="signaler-seul">

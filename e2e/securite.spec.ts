@@ -78,6 +78,8 @@ test('« Bien joué » arrive chez l’adversaire en moins de 5 s et s’efface 
   await expect(feuille.locator('.dire-message')).toHaveCount(6);
   await expect(feuille.locator('.dire-emote')).toHaveCount(4);
   await expect(feuille.locator('textarea, input[type="text"]')).toHaveCount(0);
+  // #460 : le réglage dit ce qui arrive si on le coupe (il est allumé à l'ouverture).
+  await expect(feuille.getByText('Coupe-les : tu ne verras plus ses messages ni ses émotes.')).toBeVisible();
   await cibles44(feuille, 'feuille Dire 390 px');
   await capture(ana, '01-feuille-dire');
 
@@ -135,6 +137,12 @@ test('signaler l’adversaire depuis la partie et le bloquer : le serveur a la p
   await expect(feuille.locator('.btn.primary')).toHaveCount(1);
   await feuille.getByRole('button', { name: 'Envoyer' }).click();
   await expect(feuille.getByRole('alert')).toHaveText('Choisis ce qui ne va pas.');
+  // #460 : l'erreur est dans le groupe des motifs (sous son titre, pas en bas de la feuille), qui la décrit ; le focus
+  // va au premier motif.
+  const motifs = feuille.getByRole('group', { name: 'Ce qui ne va pas' });
+  await expect(motifs.getByRole('alert')).toHaveText('Choisis ce qui ne va pas.');
+  await expect(motifs).toHaveAccessibleDescription('Choisis ce qui ne va pas.');
+  await expect(motifs.getByRole('radio').first()).toBeFocused();
   await feuille.getByRole('radio', { name: 'Il fait exprès de gâcher la partie' }).check();
   await feuille.getByLabel('Un détail ? (facultatif)').fill('Il joue au hasard.');
   await feuille.getByRole('checkbox', { name: /Bloquer aussi Ana/ }).check();
@@ -180,6 +188,11 @@ test('« Nous écrire » depuis le Profil, en 320 px, en sombre et zoomé à 200
   // Message obligatoire.
   await feuille.getByRole('button', { name: 'Envoyer' }).click();
   await expect(feuille.getByRole('alert')).toHaveText('Écris ton message.');
+  // #460 : le champ à corriger est marqué, décrit par l'erreur, et reçoit le focus.
+  const champ = feuille.getByLabel('Ton message');
+  await expect(champ).toHaveAttribute('aria-invalid', 'true');
+  await expect(champ).toBeFocused();
+  await expect(champ).toHaveAccessibleDescription(/^Écris ton message\./);
   await feuille.getByLabel('Ton message').fill('Un mode zen sans pendule, ce serait chouette.');
   await expect(feuille.getByText('45 / 500')).toBeVisible();
   await cibles44(feuille, 'Nous écrire 320 px');
