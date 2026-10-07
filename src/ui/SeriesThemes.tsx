@@ -33,6 +33,8 @@ export function VignettesThemes({ series, etat, onOuvrir }: {
   return (
     <section className="themes" aria-labelledby="themes-titre">
       <h3 id="themes-titre">{t('themes.titre')}</h3>
+      {/* Le mot « tesuji » est expliqué ici, une fois (CLAUDE.md, règle 5) : les vignettes restent sur une ligne. */}
+      {series.includes('tesuji') && <p className="themes-aide">{fr(t('themes.aide'))}</p>}
       <ul className="themes-grille">
         {series.map(s => {
           const record = etat[s]?.record ?? 0;
@@ -41,9 +43,10 @@ export function VignettesThemes({ series, etat, onOuvrir }: {
               {/* #268 (WCAG 2.5.3) : le nom accessible est le texte visible, le nom de la série d'abord. */}
               <button type="button" className="theme-carte" data-theme={s} onClick={() => onOuvrir(s)}>
                 <span className="theme-motif" aria-hidden="true"><MiniGoban rows={MOTIFS[s]} /></span>
-                <b>{t(`themes.nom.${s}`)}</b>
-                <small>{fr(t(`themes.texte.${s}`))}</small>
-                {record > 0 && <span className="theme-record">{fr(t('themes.record', { n: record }))}</span>}
+                <span className="theme-nom">
+                  <b>{t(`themes.nom.${s}`)}</b>
+                  {record > 0 && <span className="theme-record">{fr(t('themes.record', { n: record }))}</span>}
+                </span>
               </button>
             </li>
           );

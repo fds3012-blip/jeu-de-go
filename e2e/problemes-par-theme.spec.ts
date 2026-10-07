@@ -103,6 +103,23 @@ test('nouveau record : la pastille le dit', async ({ page }) => {
   await expect(affilee(page)).toHaveClass(/record/);
 });
 
+// Page courte (au plus deux écrans, comme e2e/problemes.spec.ts), avec des records sur toutes les vignettes.
+for (const largeur of [390, 320]) {
+  for (const theme of ['dark', 'light'] as const) {
+    test(`${largeur} px, ${theme === 'dark' ? 'sombre' : 'clair'} : les vignettes gardent la page sous deux écrans`, async ({ page }) => {
+      await page.setViewportSize({ width: largeur, height: 844 });
+      await page.addInitScript(() => localStorage.setItem('go.series-themes.v1', JSON.stringify(Object.fromEntries(
+        ['capturer', 'sauver', 'vie-mort', 'relier-couper', 'tesuji'].map(s => [s, { affilee: 0, record: 12 }])))));
+      await ouvrirProblemes(page);
+      await page.emulateMedia({ colorScheme: theme, reducedMotion: 'reduce' });
+      expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeLessThanOrEqual(2 * 844 - 80);
+      const { sw, cw } = await page.evaluate(() => ({ sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth }));
+      expect(sw).toBeLessThanOrEqual(cw);
+      for (const h of await page.locator('.theme-carte').evaluateAll(els => els.map(e => e.getBoundingClientRect().height))) expect(h).toBeGreaterThanOrEqual(44);
+    });
+  }
+}
+
 // Captures de revue (390 × 844, sombre et clair), hors CI : CAPTURES=dossier npx playwright test problemes-par-theme.
 test('captures de revue', async ({ page }) => {
   test.skip(!process.env.CAPTURES, 'seulement à la demande');
