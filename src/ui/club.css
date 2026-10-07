@@ -68,6 +68,8 @@
 @media (max-width: 260px) { .etude-outils { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .etude-outils button { padding: 0 var(--space-1); }
 .etude .stone { width: 16px; height: 16px; }
+/* #460 : un liseré pour que la pierre noire se voie en sombre et la blanche en clair, sur les boutons d'outil. */
+.etude-seg .stone { box-shadow: 0 0 0 1px color-mix(in srgb, var(--text) 40%, transparent); }
 .etude-trait { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
 .etude-trait-libelle { font-size: var(--fs-s); color: var(--muted); }
 .etude-ligne { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); flex-wrap: wrap; }

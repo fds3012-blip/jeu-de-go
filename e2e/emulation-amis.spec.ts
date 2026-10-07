@@ -223,6 +223,24 @@ test('accueil : le bilan de la semaine passée se montre une fois, puis plus ava
   await ctx.close();
 });
 
+test('bilan de la semaine au zoom 200 % (195 px), polices bloquées : « Fermer » passe sous le titre, rien ne déborde', async ({ browser, baseURL }) => {
+  // #460 : la carte faisait 247 px de large (titre, Mochi et « Fermer » sur une ligne qui ne se coupait pas).
+  const serveur = fauxServeur();
+  const { ctx, page } = await telephone(browser, baseURL, serveur, { largeur: 195, compte: ['flo@exemple.test', 'Florian', FLO],
+    stockage: { 'go.semaine.v1': JSON.stringify({ courante: semaine(lundiParis(-1), { parties: 4, problemes: 7, goDuJour: 3 }, ['parties']), precedente: null, bilanVu: null }) } });
+  await page.route(/\.(woff2?|ttf|otf)(\?|$)/, r => r.abort());
+  await page.goto('/');
+  const carte = page.getByTestId('bilan-semaine');
+  await carte.scrollIntoViewIfNeeded();
+  await expect(carte).toBeVisible();
+  await sansDebordement(page);
+  const fermer = carte.getByRole('button', { name: 'Fermer le bilan de la semaine' });
+  const b = (await fermer.boundingBox())!, c = (await carte.boundingBox())!;
+  expect(b.x + b.width).toBeLessThanOrEqual(c.x + c.width + 0.5);
+  expect(b.height).toBeGreaterThanOrEqual(44);
+  await ctx.close();
+});
+
 test('Ta cote : records personnels (meilleure cote, plus longue série de victoires)', async ({ browser, baseURL }) => {
   const serveur = fauxServeur();
   const { ctx, page } = await telephone(browser, baseURL, serveur, { compte: ['flo@exemple.test', 'Florian', FLO] });

@@ -73,7 +73,9 @@ button.ligne:focus-visible { outline-offset: -3px; }
 /* ---------- Sous-vues (Mon compte, Conditions) ---------- */
 .retour { display: inline-flex; align-items: center; gap: 2px; margin: -6px 0 0 -8px; padding: 0 12px 0 4px; font-weight: var(--fw-medium); }
 .retour svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.sous-vue h2 { margin: var(--space-2) 0 var(--space-4); font-size: var(--fs-2xl); font-weight: var(--fw-titre); }
+.sous-vue h2 { margin: var(--space-2) 0 var(--space-4); font-size: var(--fs-2xl); font-weight: var(--fw-titre); overflow-wrap: break-word; }
+/* #460 : au zoom 200 % (195 px), « Mes statistiques » débordait avec la police de repli : titre plus petit, mots entiers. */
+@media (max-width: 259px) { .sous-vue h2 { font-size: var(--fs-xl); } }
 .conditions-texte { margin-top: var(--space-6); }
 .conditions-texte h3 { margin: 0; font-size: var(--fs-m); font-weight: var(--fw-bold); }
 .conditions-texte p { margin: 4px 0 0; line-height: 1.5; }

@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { expect, test, type Browser, type Page } from '@playwright/test';
 import { brancher, fauxServeur, JETON, type FauxServeur } from './fauxSupabase';
 import { jouer, plateau } from './plateau';
+import { fleches } from './partageFleches';
 
 // Issue #449 : partager une étude (goban libre de #372) avec la feuille de partage de #364. Le lien
 // (`/partie#JETON`, même aperçu) ouvre chez l'ami, sans compte, la position et sa variante ; une seule action
@@ -104,6 +105,7 @@ test('partager une étude → l’ami ouvre le lien sans compte → « Étudie-l
   expect(new URL(b.page.url()).hash).toBe('');
   await expect(b.page.getByText('Variante : coup 2 sur 2')).toBeVisible();
   await expect(b.page.getByText('Au trait : Noir')).toBeVisible();
+  await fleches(b.page);
   const svg = plateau(b.page);
   await expect(svg.locator('[data-pierre]')).toHaveCount(7);
   await expect(svg.locator('[data-numero]')).toHaveCount(2);

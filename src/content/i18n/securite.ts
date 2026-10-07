@@ -26,7 +26,7 @@ const FR = {
   'dire.bulleAria': '{nom} dit : {message}',
   'dire.moiAria': 'Tu dis : {message}',
   'dire.reglage': 'Messages de l’adversaire',
-  'dire.reglageAide': 'Coupés, tu ne vois plus ses messages ni ses émotes.',
+  'dire.reglageAide': 'Coupe-les : tu ne verras plus ses messages ni ses émotes.',
   'dire.coupes': 'Messages de l’adversaire coupés.',
   'dire.restants': '{n} messages restants dans cette partie.',
   // Signaler et bloquer (#363)
@@ -114,7 +114,7 @@ const EN: { readonly [K in CleSecurite]: string } = {
   'dire.bulleAria': '{nom} says: {message}',
   'dire.moiAria': 'You say: {message}',
   'dire.reglage': 'Opponent’s messages',
-  'dire.reglageAide': 'Off: you no longer see their messages or emotes.',
+  'dire.reglageAide': 'Turn them off: you won’t see their messages or emotes.',
   'dire.coupes': 'Opponent’s messages are off.',
   'dire.restants': '{n} messages left in this game.',
   'signaler.joueur': 'Report {nom}',
