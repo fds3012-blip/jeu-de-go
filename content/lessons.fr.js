@@ -119,10 +119,18 @@ const L_COIN_Q = ['...OX.X..', '...OXXXX.', '...OOOOOO', ...V.slice(0, 6)];
 // du dehors, E1 et E2. Noir au trait gagne en bouchant le dehors d'abord ; Blanc au trait gagne. `Q` : la même course en miroir.
 const L_OEIL = [...V.slice(0, 5), 'OOOXXXX..', 'OOOXXXX..', 'XXXO.X...', '.X.O.X...'];
 const L_OEIL_Q = [...V.slice(0, 5), '..XXXXOOO', '..XXXXOOO', '...X.OXXX', '...X.O.X.'];
+// Leçon 27 (#16, palier 27-30) : attaquer et défendre. Jugement de stratégie : KataGo (réseau g170 b6c96, komi 6,5, règle
+// japonaise) le mesure, avec huit graines (les huit symétries du plateau). Preuves figées dans
+// src/go/attaque-defense.fixture.ts, rejouées par src/go/lecons-27-30.test.ts (sans le modèle).
+// `FAIBLE` : la pierre blanche F3, seule entre C3 et G3 ; F4 lui ferme le centre, et c'est aussi là que Blanc sort.
+// `COTE` : la même idée sur le côté droit (G4 entre G3 et G7). `SORS` : couleurs inversées, ta pierre F3 sort vers le centre.
+const L_FAIBLE = [...V.slice(0, 2), '..O...O..', ...V.slice(0, 3), '..X..TX..', ...V.slice(0, 2)];
+const L_COTE = [...V.slice(0, 2), '..O...X..', ...V.slice(0, 2), '......T..', '..O...X..', ...V.slice(0, 2)];
+const L_SORS = [...V.slice(0, 2), '..O...X..', ...V.slice(0, 3), '..O..SO..', ...V.slice(0, 2)];
 export const CHAPITRES = [
   { id: 'c1', titre: 'Les bases', intro: 'Sept leçons courtes pour jouer ta première partie.', fin: 'Tu connais les règles du go.', lecons: ['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7'] },
   // Chapitre en cours d'écriture (`complet: false`) : sa dernière leçon ne ferme pas encore le chapitre.
-  { id: 'c2', titre: 'Ouverture sur 9\u00A0×\u00A09', intro: 'Où poser tes premières pierres.', lecons: ['l8'], complet: false },
+  { id: 'c2', titre: 'Ouverture sur 9\u00A0×\u00A09', intro: 'Où poser tes premières pierres.', lecons: ['l8', 'l27'], complet: false },
   { id: 'c3', titre: 'Capturer et sauver', intro: 'Des pièges pour prendre plus de pierres.', lecons: ['l9', 'l10', 'l11', 'l26'], complet: false },
   { id: 'c4', titre: 'Vie et mort', intro: 'Quand un groupe vit, quand il meurt.', lecons: ['l12', 'l13', 'l14', 'l17', 'l24', 'l25'], complet: false },
   { id: 'c5', titre: 'Fin de partie et comptage', intro: 'Finir proprement, puis compter juste.', lecons: ['l15', 'l16', 'l22', 'l23'], complet: false },
@@ -267,6 +275,23 @@ export const LESSONS = [
         { points: ['F3', 'G2', 'G4', 'H3', 'F7', 'G6', 'G8', 'H7'], no: 'Collée à Blanc, ta pierre le renforce. Laisse de l’espace.' },
         { points: ['B3', 'C2', 'C4', 'D3', 'B7', 'C6', 'C8', 'D7'], no: 'Trop serrée : laisse un point libre entre tes pierres.' },
         { points: lignes12(['F3', 'G2', 'G4', 'H3', 'F7', 'G6', 'G8', 'H7', 'B3', 'C2', 'C4', 'D3', 'B7', 'C6', 'C8', 'D7']), ...BAS }
+      ] }
+  ] },
+  { id: 'l27', title: 'Attaquer et défendre', desc: 'La route du centre', steps: [
+    { kind: 'info', rows: L_FAIBLE, geste: { pose: 'F4' }, demo: [{ pose: 'F4', couleur: 'B' }],
+      text: 'Pierre faible (seule chez l’adversaire) : ferme-lui le centre au point vert.' },
+    { kind: 'info', rows: L_FAIBLE, geste: { touche: ['F4'], no: 'Touche le point entre sa pierre et le centre.' }, demo: [{ pose: 'F4', couleur: 'W' }],
+      text: 'Si Blanc joue d’abord, il sort par ce même point. Touche-le.' },
+    { kind: 'move', rows: L_COTE, accept: ['F4'],
+      text: 'À toi : attaque la pierre marquée. Ferme-lui le centre.',
+      ok: 'Bien : sa route vers le centre est fermée.', no: 'Joue entre la pierre marquée et le centre.',
+      refus: [{ points: ['G5'], no: 'Tu la bloques le long du bord : elle sort par F4.' }] },
+    { kind: 'move', rows: L_SORS, accept: ['F4', 'D4'],
+      text: 'Ta pierre marquée est faible. Sors-la vers le centre.',
+      ok: 'Bien : ta pierre prend la route du centre.', no: 'Éloigne ta pierre du bord, vers le centre.',
+      refus: [
+        { points: ['E3'], no: 'Sur la 3e ligne, tu rampes au lieu de sortir vers le centre.' },
+        { points: ['F2'], no: 'Vers le bord, tu rapetisses : Blanc te ferme le centre en F6.' }
       ] }
   ] },
   { id: 'l9', title: 'Le filet', desc: 'Enfermer une pierre sans la toucher', steps: [

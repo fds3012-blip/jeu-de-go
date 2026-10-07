@@ -128,6 +128,8 @@ export const THEMES_DE_LECON: Readonly<Record<string, readonly Theme[]>> = {
   l25: ['vie-mort', 'ko'],
   // #16 (palier 21-30) : la course avec un œil (l26) a la série de course aux libertés.
   l26: ['semeai'],
+  // #16 (palier 27-30) : attaquer et défendre (l27) ferme la sortie vers le centre (série du bord), en début de partie.
+  l27: ['bord', 'ouverture'],
 };
 
 /**
