@@ -2,7 +2,7 @@
 // Index léger des leçons (#16) : id, titre, description et nombre d’étapes, puis les chapitres. Le contenu complet
 // (positions, démonstrations, consignes) reste dans content/lessons.fr.js, chargé avec les écrans qui l’affichent.
 // prettier-ignore
-export const LECONS_INDEX: readonly (readonly [id: string, titre: string, desc: string, etapes: number])[] = [
+export const LECONS_INDEX: readonly (readonly [id: string, titre: string, desc: string, etapes: number, taille?: 13 | 19])[] = [
   ["l1", "Libertés et capture", "La règle qui fait tout le jeu", 6],
   ["l2", "Atari : attaquer et se sauver", "Quand il ne reste qu'une liberté", 6],
   ["l3", "Techniques de capture", "Double atari, bord et échelle", 8],

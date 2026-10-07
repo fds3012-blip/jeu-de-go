@@ -5,7 +5,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { LESSONS, chapitreDe, explicationRefus, type Lesson } from '../content/lessons';
 import { acquis } from '../content/acquis';
 import { Board, type BoardMarks } from '../ui/Board';
-import { C, M, viewBoxOf } from '../ui/boardArt';
+import { C, M, vueDe, type FenetrePlateau } from '../ui/boardArt';
+import { LIGNES_CONFORT, fenetreDe, lignesVisibles } from '../content/cadreLecon';
 import { CASE_MS, TEMPS_MS, imageDuGeste, imagesDemo, type DemoImage } from '../content/demo';
 import { PortraitMochi } from '../ui/Portrait';
 import { SceauLecon } from '../ui/SceauLecon';
@@ -55,10 +56,12 @@ interface PlayerProps {
   pratique?: { themes: string[]; ouvrir: () => void };
   /** Fin de chapitre (#200) : lance une partie contre le premier adversaire. */
   jouer?: { nom: string; lancer: () => void };
+  /** Leçon complète hors du catalogue (#454 : leçon d'essai des grands plateaux, derrière un paramètre de test). */
+  lecon?: Lesson;
 }
 
-export function LessonPlayer({ lesson: { id: leconId }, start, confirmTouch, progress = {}, celebrer = true, onProgress, onExit, onNext, pratique, jouer }: PlayerProps) {
-  const lesson = LESSONS.find(l => l.id === leconId)!;
+export function LessonPlayer({ lesson: { id: leconId }, start, confirmTouch, progress = {}, celebrer = true, onProgress, onExit, onNext, pratique, jouer, lecon }: PlayerProps) {
+  const lesson = lecon ?? LESSONS.find(l => l.id === leconId)!;
   const [idx, setIdx] = useState(Math.min(start, lesson.steps.length - 1));
   const [answer, setAnswer] = useState<{ ok: boolean; p?: number; after?: Position; choice?: number; n: number } | null>(null);
   /** Choix faux déjà touchés au quiz (#198) : ils restent marqués, les autres restent touchables. */
@@ -69,6 +72,11 @@ export function LessonPlayer({ lesson: { id: leconId }, start, confirmTouch, pro
   useExercice(true);
   const step = lesson.steps[idx];
   const { pos, marked } = useMemo(() => fromRows(step.rows), [step]);
+  // #454 : 9, 13 ou 19 lignes (celles de la position), et la zone montrée si l'étape est cadrée.
+  const n = pos.size;
+  const fen = useMemo(() => fenetreDe(step.cadre, n), [step, n]);
+  // Intersections plus petites que sur le 9 × 9 entier : la seconde touche de confirmation est toujours demandée.
+  const confirmer = confirmTouch || lignesVisibles(n, fen) > LIGNES_CONFORT;
   const owner = useMemo(() => (step.kind === 'quiz' && step.terr ? score(pos, 0, 'japanese').owner : undefined), [step, pos]);
   const derniere = idx === lesson.steps.length - 1;
   // Démonstration (#101) : un temps toutes les 600 ms ; mouvements réduits : l'état final d'emblée.
@@ -88,11 +96,11 @@ export function LessonPlayer({ lesson: { id: leconId }, start, confirmTouch, pro
     if (!images || temps >= limite) return;
     const m = window.setTimeout(() => {
       const suivant = images[temps + 1];
-      if (suivant.derniere != null && suivant.derniere !== images[temps].derniere) { playStone(suivant.derniere, 9); }
+      if (suivant.derniere != null && suivant.derniere !== images[temps].derniere) { playStone(suivant.derniere, n); }
       setTemps(temps + 1);
     }, TEMPS_MS);
     return () => window.clearTimeout(m);
-  }, [images, temps, limite]);
+  }, [images, temps, limite, n]);
 
   // Événement d'entonnoir (#198) : leçons terminées ÷ leçons commencées.
   useEffect(() => {
@@ -100,7 +108,7 @@ export function LessonPlayer({ lesson: { id: leconId }, start, confirmTouch, pro
   }, [lesson.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Guidage (R2) : la toute première étape interactive, un halo discret sur le point à toucher, une seule fois par appareil.
-  const guide = useMemo(() => pointsGuide(step, attente), [step, attente]);
+  const guide = useMemo(() => pointsGuide(step, attente, n), [step, attente, n]);
   // Étape guidée : la première qui a un point à montrer ; la clé est posée dès qu'elle s'affiche, les suivantes n'ont rien.
   const [guidee, setGuidee] = useState(-1);
   useEffect(() => {
@@ -126,7 +134,7 @@ export function LessonPlayer({ lesson: { id: leconId }, start, confirmTouch, pro
   function onGeste(p: number) {
     if (!geste || !images) return;
     const bons = 'pose' in geste ? [geste.pose] : geste.touche;
-    if (!bons.map(a => fromLabel(a, 9)).includes(p)) {
+    if (!bons.map(a => fromLabel(a, n)).includes(p)) {
       playFail(); hapticFail();
       setRate(r => ({ p, n: (r?.n ?? 0) + 1 }));
       return;
@@ -134,7 +142,7 @@ export function LessonPlayer({ lesson: { id: leconId }, start, confirmTouch, pro
     gesteA.current = Date.now();
     setRate(null);
     setGesteFait(true);
-    if ('pose' in geste) { playStone(p, 9); hapticStone(); } else hapticStone();
+    if ('pose' in geste) { playStone(p, n); hapticStone(); } else hapticStone();
     const suite = 'pose' in geste ? pause + 1 : pause;
     setTemps(reduit ? images.length - 1 : suite);
   }
@@ -142,14 +150,14 @@ export function LessonPlayer({ lesson: { id: leconId }, start, confirmTouch, pro
     if (attente) { onGeste(p); return; }
     if (answer?.ok) return;
     // Question « touche » : on désigne un point, sans poser de pierre.
-    if (step.kind === 'touche') { hapticStone(); repondre(step.accept.map(a => fromLabel(a, 9)).includes(p), { p }); return; }
+    if (step.kind === 'touche') { hapticStone(); repondre(step.accept.map(a => fromLabel(a, n)).includes(p), { p }); return; }
     if (step.kind !== 'move') return;
     const r = play(pos, p);
     if (typeof r === 'string') return;
-    const ok = step.accept === 'line3' ? lineOf(p, 9) >= 2
+    const ok = step.accept === 'line3' ? lineOf(p, n) >= 2
       : step.accept === 'terrB' ? score(pos, 0, 'japanese').owner[p] === 1
-      : step.accept.map(a => fromLabel(a, 9)).includes(p);
-    playStone(p, 9); hapticStone();
+      : step.accept.map(a => fromLabel(a, n)).includes(p);
+    playStone(p, n); hapticStone();
     repondre(ok, { p, after: ok ? r : undefined });
   }
 
@@ -162,12 +170,12 @@ export function LessonPlayer({ lesson: { id: leconId }, start, confirmTouch, pro
   const board = img ? img.board : answer?.ok && answer.after ? answer.after.board : pos.board;
   const faites = idx + (answer?.ok ? 1 : 0);
   // En attente du geste « pose » : seul le point à jouer est vert (le compteur de libertés reste).
-  const vert = attente && geste && 'pose' in geste ? [fromLabel(geste.pose, 9)] : null;
+  const vert = attente && geste && 'pose' in geste ? [fromLabel(geste.pose, n)] : null;
   const cta = <button className="cta" onClick={next}>{t(derniere ? 'lecon.terminer' : 'apprendre.continuer')}</button>;
   const marks: BoardMarks = img
-    ? { libs: vert ?? [...img.libs, ...img.yeux], targets: img.atari, mistake: attente && rate ? rate.p : img.interdit, last: img.derniere ?? null, ...territoire(img.terr, reduit),
+    ? { libs: vert ?? [...img.libs, ...img.yeux], targets: img.atari, mistake: attente && rate ? rate.p : img.interdit, last: img.derniere ?? null, ...territoire(img.terr, reduit, n),
         note: img.compteur ? { p: img.compteur.p, fond: JADE_COMPTEUR, texte: '#0B2A1D', symbole: String(img.compteur.n), libelle: t('lecon.libertes', { n: img.compteur.n }), cle: `${idx}-${temps}` } : undefined }
-    : { libs: step.kind === 'info' || step.kind === 'move' ? (step.libs ?? (step.kind === 'move' ? step.aide : undefined))?.map(l => fromLabel(l, 9)) : undefined, targets: marked, owner,
+    : { libs: step.kind === 'info' || step.kind === 'move' ? (step.libs ?? (step.kind === 'move' ? step.aide : undefined))?.map(l => fromLabel(l, n)) : undefined, targets: marked, owner,
         ok: answer?.ok ? answer.p : undefined, mistake: answer && !answer.ok ? answer.p : undefined, last: answer?.ok ? answer.p : null };
 
   // Ce que Mochi dit, et avec quelle tête. Le geste raté et l'erreur se corrigent sur le plateau, sans bouton.
@@ -178,7 +186,7 @@ export function LessonPlayer({ lesson: { id: leconId }, start, confirmTouch, pro
   if (attente && rate && geste) parole = 'pose' in geste ? t('lecon.poseVert') : geste.no;
   else if (answer && step.kind !== 'info') {
     parole = answer.ok ? step.ok
-      : t('lecon.essaieEncore', { no: step.kind === 'move' && answer.p != null ? explicationRefus(step, toLabel(answer.p, 9)) : step.no });
+      : t('lecon.essaieEncore', { no: step.kind === 'move' && answer.p != null ? explicationRefus(step, toLabel(answer.p, n)) : step.no });
   } else parole = step.text;
   // Les verdicts d'un coup ou d'un point touché gardent leur nom de feuille (`verdict`) : les parcours e2e les lisent.
   const verdict = !!answer && step.kind !== 'info' && !quizFaux;
@@ -199,9 +207,9 @@ export function LessonPlayer({ lesson: { id: leconId }, start, confirmTouch, pro
       <div className={`lecteur-plateau${img?.atari.length ? ' demo-atari' : ''}`} data-demo={images ? (attente ? 'geste' : demoFinie ? 'finie' : 'en-cours') : undefined}
         onClick={images && !demoFinie && temps < limite ? () => { if (Date.now() - gesteA.current > 400) setTemps(limite); } : undefined}>
         <div className="plateau-cadre">
-          <Board size={9} board={board} interactive={attente || ((step.kind === 'move' || step.kind === 'touche') && !answer?.ok)} confirmTouch={confirmTouch}
+          <Board size={n} fenetre={fen} board={board} interactive={attente || ((step.kind === 'move' || step.kind === 'touche') && !answer?.ok)} confirmTouch={confirmer}
             toucher={step.kind === 'touche' || (attente && !!geste && 'touche' in geste)} stonesTappable={attente && !!geste && 'touche' in geste} onPlay={onPlay} marks={marks} />
-          <Halos guide={halo} juste={answer?.ok && answer.p != null ? { p: answer.p, n: answer.n } : null} reduit={reduit} />
+          <Halos guide={halo} juste={answer?.ok && answer.p != null ? { p: answer.p, n: answer.n } : null} reduit={reduit} size={n} fenetre={fen} />
         </div>
       </div>
       {img?.terr && <Compteur cle={`${idx}-${temps}`} n={img.terr.points.length} reduit={reduit} />}
@@ -243,12 +251,12 @@ export function LessonPlayer({ lesson: { id: leconId }, start, confirmTouch, pro
  * Calque posé sur le plateau (même viewBox que Board.tsx, comme le conseil de Mochi) : le halo de guidage de la
  * première étape interactive, et l'anneau de jade qui s'ouvre autour d'une bonne réponse. Muet, sans toucher.
  */
-function Halos({ guide, juste, reduit }: { guide: number[]; juste: { p: number; n: number } | null; reduit: boolean }) {
+function Halos({ guide, juste, reduit, size, fenetre }: { guide: number[]; juste: { p: number; n: number } | null; reduit: boolean; size: number; fenetre: FenetrePlateau | null }) {
   if (!guide.length && (!juste || reduit)) return null;
-  const vb = viewBoxOf(9);
-  const cx = (p: number) => M + (p % 9) * C, cy = (p: number) => M + Math.floor(p / 9) * C;
+  const vb = vueDe(size, fenetre);
+  const cx = (p: number) => M + (p % size) * C, cy = (p: number) => M + Math.floor(p / size) * C;
   return (
-    <svg className="halos" viewBox={`${vb.min} ${vb.min} ${vb.span} ${vb.span}`} aria-hidden="true" focusable="false" data-guide={guide.length ? guide.map(p => toLabel(p, 9)).join(' ') : undefined}>
+    <svg className="halos" viewBox={`${vb.x} ${vb.y} ${vb.span} ${vb.span}`} aria-hidden="true" focusable="false" data-guide={guide.length ? guide.map(p => toLabel(p, size)).join(' ') : undefined}>
       {guide.map(p => <circle key={p} className="halo-guide" cx={cx(p)} cy={cy(p)} r={C * 0.7} />)}
       {juste && !reduit && <circle key={juste.n} className="halo-juste" cx={cx(juste.p)} cy={cy(juste.p)} r={C * 0.62} />}
     </svg>
@@ -256,9 +264,9 @@ function Halos({ guide, juste, reduit }: { guide: number[]; juste: { p: number; 
 }
 
 /** Territoire d'une démonstration : les carrés se colorent case par case (`ownerDelai`), ou d'emblée en mouvements réduits. */
-function territoire(terr: DemoImage['terr'], reduit: boolean): Pick<BoardMarks, 'owner' | 'ownerDelai'> {
+function territoire(terr: DemoImage['terr'], reduit: boolean, size: number): Pick<BoardMarks, 'owner' | 'ownerDelai'> {
   if (!terr) return {};
-  const owner = new Int8Array(81);
+  const owner = new Int8Array(size * size);
   for (const p of terr.points) owner[p] = terr.couleur;
   return { owner, ownerDelai: reduit ? undefined : new Map(terr.points.map((p, i) => [p, i * CASE_MS])) };
 }

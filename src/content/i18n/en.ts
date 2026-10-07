@@ -955,6 +955,8 @@ export const en = {
   'apprendre.duree': 'About {n} min',
   'apprendre.pas.compte': ', needs an account',
   'apprendre.compte': 'With an account',
+  // #454 : leçon sur un grand plateau, annoncée sous son titre.
+  'apprendre.taille': '{n} × {n}',
   'apprendre.mochi.debut': 'Start here. Two minutes, and you can already capture.',
   'apprendre.mochi.reprendre': 'You had started it. Let’s finish it together?',
   'apprendre.mochi.suite': 'Nice work! Here comes the next one.',

@@ -23,10 +23,11 @@ export async function point(page: Page, label: string, taille = 9): Promise<{ x:
   await svg.scrollIntoViewIfNeeded();
   const box = await svg.boundingBox();
   if (!box) throw new Error('Plateau introuvable');
-  // viewBox « min min étendue min » : une bande de coordonnées déborde en haut et à gauche (min < 0).
-  const [min, , w] = (await svg.getAttribute('viewBox'))!.split(' ').map(Number);
+  // viewBox « x y étendue étendue » : une bande de coordonnées déborde en haut et à gauche (x, y < 0) ; sur un plateau
+  // cadré (#454), x et y sont ceux du coin de la zone montrée.
+  const [x0, y0, w] = (await svg.getAttribute('viewBox'))!.split(' ').map(Number);
   const { cx, cy } = centre(label, taille);
-  return { x: box.x + ((cx - min) * box.width) / w, y: box.y + ((cy - min) * box.height) / w };
+  return { x: box.x + ((cx - x0) * box.width) / w, y: box.y + ((cy - y0) * box.height) / w };
 }
 
 /** Pose une pierre à la souris (pas de seconde touche de confirmation à la souris). */
