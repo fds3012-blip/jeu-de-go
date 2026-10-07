@@ -67,6 +67,13 @@ jobs:
     name: Playwright, lot ${{ matrix.lot }}/4
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    # Image officielle de Playwright : Chromium et ses bibliothèques système (polices comprises) déjà installés.
+    # L'installation par apt prenait de 15 s à près de 5 min selon le miroir (#467) ; l'image se télécharge en
+    # une demi-minute environ, et l'environnement est le même à chaque passage. Sa version suit @playwright/test
+    # (contrôlée à la première étape).
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-noble
+      options: --ipc=host
     strategy:
       fail-fast: false
       matrix:
@@ -77,25 +84,14 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      - name: Image Playwright à la version de package-lock.json
+        run: |
+          v=$(node -p "require('./package-lock.json').packages['node_modules/@playwright/test'].version")
+          if [ "$v" != "1.63.0" ]; then
+            echo "::error::@playwright/test est en $v : mets à jour l'image mcr.microsoft.com/playwright:v$v-noble dans .github/workflows/ci.yml."
+            exit 1
+          fi
       - run: npm install --no-audit --no-fund
-      # Chromium en cache, clé = version de @playwright/test (le navigateur attendu change avec elle).
-      - name: Version de Playwright
-        id: pw
-        run: echo "version=$(node -p "require('./package-lock.json').packages['node_modules/@playwright/test'].version")" >> "$GITHUB_OUTPUT"
-      - uses: actions/cache@v4
-        id: navigateurs
-        with:
-          path: ~/.cache/ms-playwright
-          key: ms-playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
-      # Bibliothèques système de Chromium (apt). `apt-get update` lisait aussi les dépôts tiers de l'image (Microsoft,
-      # Azure…) : 15 s à plus de 2 min selon les passages. Seuls les dépôts Ubuntu restent (machine jetable).
-      - name: Dépôts apt d'Ubuntu seulement
-        run: sudo find /etc/apt/sources.list.d -type f ! -name 'ubuntu.sources' -print -delete
-      - if: steps.navigateurs.outputs.cache-hit != 'true'
-        run: npx playwright install --with-deps chromium
-      # Navigateur en cache : seules les bibliothèques système restent à installer.
-      - if: steps.navigateurs.outputs.cache-hit == 'true'
-        run: npx playwright install-deps chromium
       - run: npx playwright test --shard=${{ matrix.lot }}/4
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
