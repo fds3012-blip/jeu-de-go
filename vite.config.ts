@@ -5,12 +5,14 @@ import react from '@vitejs/plugin-react';
 import { precacheSw } from './outils/pwa';
 import { prechargerAnglais } from './outils/prechargerAnglais';
 import { pagesApercu } from './outils/apercus';
+import { pagesReferencement } from './outils/referencement/pages';
 
 export default defineConfig({
   // precacheSw : liste des fichiers du service worker, injectée dans dist/sw.js (outils/pwa.ts).
   // prechargerAnglais : pour un joueur en anglais, ses textes (#325) partent en même temps que le JS d'entrée.
   // pagesApercu : une page d'aperçu (Open Graph) par lien court partagé, copie de dist/index.html (#285, #364).
-  plugins: [react(), precacheSw(), prechargerAnglais(), pagesApercu()],
+  // pagesReferencement : pages statiques indexées (/apprendre-le-go…), sitemap.xml et robots.txt, sans le JS de l'app (#472).
+  plugins: [react(), precacheSw(), prechargerAnglais(), pagesApercu(), pagesReferencement()],
   build: {
     rollupOptions: {
       output: {
