@@ -5,7 +5,7 @@
 // Chaque étape : { text, ok?, no?, choices?, geste: { no }?, refus: [no, …]? }, dans l'ordre des étapes françaises.
 export const CHAPITRES_EN = {
   c1: { titre: 'The basics', intro: 'Seven short lessons to play your first game.', fin: 'You know the rules of Go.' },
-  c2: { titre: 'Opening on 9 × 9', intro: 'Where to place your first stones.' },
+  c2: { titre: 'The opening', intro: 'Where to place your first stones.' },
   c3: { titre: 'Capturing and saving', intro: 'Traps to capture more stones.' },
   c4: { titre: 'Life and death', intro: 'When a group lives, and when it dies.' },
   c5: { titre: 'Endgame and counting', intro: 'Finish cleanly, then count right.' },
@@ -13,6 +13,7 @@ export const CHAPITRES_EN = {
 };
 
 const COLLEE = 'Right next to White, your stone makes White stronger. Leave some space.';
+const STUCK = 'Stuck to your own stone, it surrounds almost nothing more.';
 const BAS = 'On the first two lines, early in the game, your stone surrounds little.';
 
 export const LESSONS_EN = {
@@ -108,6 +109,38 @@ export const LESSONS_EN = {
       ok: 'Nice extension: on the 3rd line, with no stone right next to it.',
       no: 'Stay on the 3rd line, two or three points from one of your stones.',
       refus: [COLLEE, 'Too tight: leave a free point between your stones.', BAS] }
+  ] },
+  l29: { title: 'The opening on 13\u00A0×\u00A013', desc: 'Corners, then sides, then center', steps: [
+    { text: 'Corners first: play the green point. Each player takes a corner.' },
+    { text: 'Your turn: take a free corner.',
+      ok: 'Good: a corner is held with few stones.', no: 'Aim for an empty corner, on the 3rd or 4th line.',
+      refus: [STUCK] },
+    { text: 'For Black: K4, a free corner, or E4, next to D4?', choices: ['K4', 'E4'],
+      ok: 'K4: a whole corner. E4 adds almost nothing to D4.', no: 'Stuck to D4, the stone at E4 surrounds few new points.' },
+    { text: 'Then the sides, the center last. Play the green point.' },
+    { text: 'Corners are closed. Your turn: take a big point on a side.',
+      ok: 'Good: a big point, on the 3rd or 4th line.', no: 'Look for a free side, on the 3rd or 4th line.',
+      refus: [STUCK] }
+  ] },
+  l30: { title: 'The san-san', desc: 'When White slides under your star point', steps: [
+    { text: 'San-san (the 3-3 point): White slides under your hoshi (star point). Block at the green point.' },
+    { text: 'Your turn: White invades at the san-san. Block it.',
+      ok: 'Good: your stone touches White’s and bars the way.', no: 'Put your stone against White’s: at D3 or at C4.',
+      refus: ['From underneath, you block nothing: White moves ahead.', 'Too far from White’s stone: White moves one step ahead.'] },
+    { text: 'White crawls upward. Bar the way at the green point.' },
+    { text: 'Your turn: White crawls along the edge. Bar the way.',
+      ok: 'Good: White stays shut in the corner.', no: 'Play in front of White’s leading stone, not underneath it.',
+      refus: ['From the inside, you bar nothing: White gets out over the top.', 'Stuck to your hoshi: White passes in front and gets out.'] }
+  ] },
+  l31: { title: 'The 3-4 point and the approach', desc: 'The kakari and its answers', steps: [
+    { text: 'Play a 3-4 point (komoku: 3rd line from one edge, 4th from the other) at the green point. White approaches: kakari.' },
+    { text: 'Tsuke (a contact move): attach underneath at the green point. White stands up.' },
+    { text: 'Your turn: tsuke, kosumi (one diagonal step) or pincer (attack from afar).',
+      ok: 'Good: that is one of the classic answers to the kakari.', no: 'Tsuke: under White’s stone. Kosumi: diagonal from yours.',
+      refus: ['On the 2nd line, your stone protects nothing.', STUCK] },
+    { text: 'White stood up. Extend along the edge.',
+      ok: 'Good: your stones gain room on the side.', no: 'Go up along the left edge, without touching White.',
+      refus: ['Too slow: White takes the side before you.', 'White cuts at D4: your stones are split.', 'Too far: White cuts your stones, or slides underneath.'] }
   ] },
   l9: { title: 'The net', desc: 'Trap a stone without touching it', steps: [
     { text: 'Atari at the green point? It runs to a white stone: safe.' },

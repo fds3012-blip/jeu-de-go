@@ -137,6 +137,7 @@ export const IDS_MOTS = [
   'liberte', 'atari', 'groupe', 'prisonnier', 'suicide', 'ko', 'superko', 'oeil', 'fauxOeil', 'pointVital', 'seki',
   'territoire', 'dame', 'pierresMortes', 'komi', 'passe', 'handicap', 'hoshi', 'kyuDan',
   'doubleAtari', 'echelle', 'filet', 'priseEnRetour', 'semeai', 'hane', 'senteGote', 'tesuji', 'joseki',
+  'sanSan', 'komoku', 'kakari', 'tsuke', 'kosumi',
 ] as const;
 export type IdMot = (typeof IDS_MOTS)[number];
 
@@ -171,6 +172,12 @@ export const MOTS: Mot[] = [
   { id: 'senteGote', lecon: 'l22' },
   { id: 'tesuji', lecon: 'l10' },
   { id: 'joseki' },
+  // #16 : vocabulaire des leçons de joseki (l30, l31).
+  { id: 'sanSan', lecon: 'l30' },
+  { id: 'komoku', lecon: 'l31' },
+  { id: 'kakari', lecon: 'l31' },
+  { id: 'tsuke', lecon: 'l31' },
+  { id: 'kosumi', lecon: 'l31' },
 ];
 
 /**
@@ -184,6 +191,7 @@ export const AUSSI: Record<'fr' | 'en', Partial<Record<IdMot, string[]>>> = {
     pierresMortes: ['mort', 'morte'], passe: ['passer'], kyuDan: ['kyu', 'dan', 'grade', 'niveau', 'rang'],
     echelle: ['shicho'], filet: ['geta'], priseEnRetour: ['snapback'], semeai: ['course aux libertés'],
     senteGote: ['sente', 'gote', 'initiative'], territoire: ['points', 'compter'], komi: ['points'],
+    sanSan: ['3-3', 'san san', 'invasion'], komoku: ['3-4'], kakari: ['approche'], tsuke: ['contact', 'coller'], kosumi: ['diagonale'],
   },
   en: {
     liberte: ['liberties'], groupe: ['chain', 'string'], prisonnier: ['capture', 'captures'],
@@ -191,6 +199,7 @@ export const AUSSI: Record<'fr' | 'en', Partial<Record<IdMot, string[]>>> = {
     pierresMortes: ['dead'], passe: ['passing'], kyuDan: ['kyu', 'dan', 'rank', 'grade'],
     echelle: ['shicho'], filet: ['geta'], priseEnRetour: ['snapback'], semeai: ['capturing race'],
     senteGote: ['sente', 'gote', 'initiative'], territoire: ['points', 'scoring'], komi: ['points'],
+    sanSan: ['3-3', 'san san', 'invasion'], komoku: ['3-4'], kakari: ['approach'], tsuke: ['contact', 'attach'], kosumi: ['diagonal'],
   },
 };
 

@@ -92,7 +92,7 @@ for (const theme of ['dark', 'light'] as const) {
     // #309 : la partie contre Renard n'est pas finie, l'accueil ne dit pas « Rejouer ». Une seule action principale.
     await expect(page.locator('.cta')).toHaveCount(1);
     await expect(page.locator('.cta')).toHaveText('Jouer contre Renard');
-    // #308 : la carte « Leçon » suit le chapitre conseillé (Ouverture sur 9 × 9), pas la leçon 1 des débutants.
+    // #308 : la carte « Leçon » suit le chapitre conseillé (L’ouverture), pas la leçon 1 des débutants.
     const carte = page.locator('.tuile-lecon');
     await expect(carte).toContainText(/Leçon \d+ sur \d+/);
     await expect(carte).not.toContainText('Leçon 1 sur');

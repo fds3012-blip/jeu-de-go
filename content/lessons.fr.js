@@ -1,4 +1,5 @@
 // Leçons interactives (issue #16 : de 30 kyu vers le premier dan), positions vérifiées par le moteur de src/go.
+import { plateau } from './plateau.js';
 // rows : plateau 9 × 9 ligne par ligne depuis le haut. X noir, O blanc, T pierre blanche visée, S pierre noire à sauver.
 // Coordonnées : lettres A à J sans I, lignes numérotées depuis le bas. accept: 'line3' = tout coup hors des deux premières lignes.
 const L_CAP1 = ['.........', '.........', '.........', '...X.....', '..XT.O...', '...X.....', '.........', '.........', '.........'];
@@ -127,10 +128,26 @@ const L_OEIL_Q = [...V.slice(0, 5), '..XXXXOOO', '..XXXXOOO', '...X.OXXX', '...X
 const L_FAIBLE = [...V.slice(0, 2), '..O...O..', ...V.slice(0, 3), '..X..TX..', ...V.slice(0, 2)];
 const L_COTE = [...V.slice(0, 2), '..O...X..', ...V.slice(0, 2), '......T..', '..O...X..', ...V.slice(0, 2)];
 const L_SORS = [...V.slice(0, 2), '..O...X..', ...V.slice(0, 3), '..O..SO..', ...V.slice(0, 2)];
+// Ouverture en 13 × 13 et joseki en 19 × 19 (#16, après #454) : positions écrites avec plateau() (coordonnées affichées).
+// Le jugement (meilleur coup, réponses acceptées, coups refusés) vient de KataGo, figé dans src/go/preuves-katago.json
+// et rejoué par src/go/lecons-ouverture.test.ts (seuils et méthode : src/go/preuvesKataGo.ts).
+// 13 × 13 : `TROIS` deux coins pris ; `PARA` quatre hoshi ; `BORDS` quatre coins fermés, il reste les bords.
+const TROIS = plateau(13, { X: ['D4'], O: ['K10'] });
+const PARA = plateau(13, { X: ['D4', 'K4'], O: ['D10', 'K10'] });
+const BORDS = plateau(13, { X: ['C4', 'D3', 'L10', 'K11'], O: ['K3', 'L4', 'D11', 'C10'] });
+// 19 × 19, coin bas gauche cadré ; les trois autres coins sont occupés (invisibles dans le cadre).
+// San-san : `SS` hoshi D4 et une pierre noire K3 sur le bord du bas ; `SSM` la même idée retournée sur la diagonale du coin.
+const SS = { X: ['D4', 'K3', 'Q4'], O: ['Q16', 'D16'] };
+const SSM = { X: ['D4', 'C10', 'D16'], O: ['Q16', 'Q4'] };
+// 3-4 : `K34` les autres coins ; `K34M` les mêmes, retournés sur la diagonale du coin bas gauche.
+const K34 = { X: ['Q4'], O: ['Q16', 'D16'] };
+const K34M = { X: ['D16'], O: ['Q16', 'Q4'] };
+const ajoute = (base, x = [], o = []) => plateau(19, { X: [...base.X, ...x], O: [...base.O, ...o] });
+const COLLEE = 'Collée à ta pierre, elle n’entoure presque rien de plus.';
 export const CHAPITRES = [
   { id: 'c1', titre: 'Les bases', intro: 'Sept leçons courtes pour jouer ta première partie.', fin: 'Tu connais les règles du go.', lecons: ['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7'] },
   // Chapitre en cours d'écriture (`complet: false`) : sa dernière leçon ne ferme pas encore le chapitre.
-  { id: 'c2', titre: 'Ouverture sur 9\u00A0×\u00A09', intro: 'Où poser tes premières pierres.', lecons: ['l8', 'l27'], complet: false },
+  { id: 'c2', titre: 'L’ouverture', intro: 'Où poser tes premières pierres.', lecons: ['l8', 'l27', 'l29', 'l30', 'l31'], complet: false },
   { id: 'c3', titre: 'Capturer et sauver', intro: 'Des pièges pour prendre plus de pierres.', lecons: ['l9', 'l10', 'l11', 'l26'], complet: false },
   { id: 'c4', titre: 'Vie et mort', intro: 'Quand un groupe vit, quand il meurt.', lecons: ['l12', 'l13', 'l14', 'l17', 'l24', 'l25'], complet: false },
   { id: 'c5', titre: 'Fin de partie et comptage', intro: 'Finir proprement, puis compter juste.', lecons: ['l15', 'l16', 'l22', 'l23'], complet: false },
@@ -292,6 +309,69 @@ export const LESSONS = [
       refus: [
         { points: ['E3'], no: 'Sur la 3e ligne, tu rampes au lieu de sortir vers le centre.' },
         { points: ['F2'], no: 'Vers le bord, tu rapetisses : Blanc te ferme le centre en F6.' }
+      ] }
+  ] },
+  { id: 'l29', title: 'L’ouverture en 13\u00A0×\u00A013', desc: 'Coins, puis bords, puis centre', taille: 13, steps: [
+    { kind: 'info', rows: plateau(13), geste: { pose: 'D4' },
+      demo: [{ pose: 'D4', couleur: 'B' }, { pose: 'K10', couleur: 'W' }, { pose: 'K4', couleur: 'B' }, { pose: 'D10', couleur: 'W' }],
+      text: 'Coins d’abord : pose au point vert. Chacun prend un coin.' },
+    { kind: 'move', rows: TROIS, accept: ['K4', 'L4', 'K3', 'D10', 'C10', 'D11'],
+      text: 'À toi : prends un coin libre.',
+      ok: 'Bien : un coin se garde avec peu de pierres.', no: 'Vise un coin vide, sur la 3e ou la 4e ligne.',
+      refus: [{ points: ['E4', 'D5', 'D3'], no: COLLEE }] },
+    { kind: 'quiz', rows: TROIS,
+      text: 'Pour Noir : K4, un coin libre, ou E4, collé à D4 ?', choices: ['K4', 'E4'], answer: 0,
+      ok: 'K4 : tout un coin. E4 n’ajoute presque rien à D4.', no: 'Collée à D4, la pierre E4 entoure peu de points neufs.' },
+    { kind: 'info', rows: PARA, geste: { pose: 'C7' }, demo: [{ pose: 'C7', couleur: 'B' }],
+      text: 'Puis les bords, le centre en dernier. Pose au point vert.' },
+    { kind: 'move', rows: BORDS, accept: ['C8', 'C7', 'H3', 'G3', 'F11', 'G11', 'L6', 'L7'],
+      text: 'Coins fermés. À toi : prends un grand point sur un bord.',
+      ok: 'Bien : un grand point, sur la 3e ou la 4e ligne.', no: 'Cherche un bord libre, sur la 3e ou la 4e ligne.',
+      refus: [{ points: ['C5', 'D4', 'E3', 'L9', 'K10', 'J11'], no: COLLEE }] }
+  ] },
+  { id: 'l30', title: 'Le san-san', desc: 'Quand Blanc entre sous ton hoshi', taille: 19, steps: [
+    { kind: 'info', rows: ajoute(SS), cadre: 'bas-gauche', geste: { pose: 'D3' },
+      demo: [{ pose: 'C3', couleur: 'W' }, { pose: 'D3', couleur: 'B' }],
+      text: 'San-san (point 3-3) : Blanc entre sous ton hoshi (point étoile). Bloque au point vert.' },
+    { kind: 'move', rows: ajoute(SSM, [], ['C3']), cadre: 'bas-gauche', accept: ['D3', 'C4'],
+      text: 'À toi : Blanc entre au san-san. Bloque-le.',
+      ok: 'Bien : ta pierre touche la sienne et lui barre la route.', no: 'Pose ta pierre contre la sienne : en D3 ou en C4.',
+      refus: [
+        { points: ['C2', 'D2', 'B3'], no: 'Par en dessous, tu ne bloques rien : Blanc avance.' },
+        { points: ['E4', 'D5'], no: 'Trop loin de sa pierre : Blanc avance d’un pas.' }
+      ] },
+    { kind: 'info', rows: ajoute(SS), cadre: 'bas-gauche', avant: [{ pose: 'C3', couleur: 'W' }, { pose: 'D3', couleur: 'B' }],
+      geste: { pose: 'D5' }, demo: [{ pose: 'C4', couleur: 'W' }, { pose: 'D5', couleur: 'B' }],
+      text: 'Blanc rampe vers le haut. Barre-lui la route au point vert.' },
+    { kind: 'move', rows: ajoute(SSM, ['C4'], ['C3', 'D3']), cadre: 'bas-gauche', accept: ['E4', 'E3', 'F3'],
+      text: 'À toi : Blanc rampe le long du bord. Barre-lui la route.',
+      ok: 'Bien : Blanc reste enfermé dans le coin.', no: 'Joue devant sa pierre de tête, sans la toucher par dessous.',
+      refus: [
+        { points: ['D2', 'E2'], no: 'Par l’intérieur, tu ne barres rien : Blanc sort par-dessus.' },
+        { points: ['D5'], no: 'Collée à ton hoshi : Blanc passe devant toi et sort.' }
+      ] }
+  ] },
+  { id: 'l31', title: 'Le 3-4 et l’approche', desc: 'Le kakari et ses réponses', taille: 19, steps: [
+    { kind: 'info', rows: ajoute(K34), cadre: 'bas-gauche', geste: { pose: 'C4' },
+      demo: [{ pose: 'C4', couleur: 'B' }, { pose: 'E3', couleur: 'W' }],
+      text: 'Pose un 3-4 (komoku : 3e ligne d’un bord, 4e de l’autre) au point vert. Blanc approche : kakari.' },
+    { kind: 'info', rows: ajoute(K34, ['C4'], ['E3']), cadre: 'bas-gauche', geste: { pose: 'D3' },
+      demo: [{ pose: 'D3', couleur: 'B' }, { pose: 'E4', couleur: 'W' }],
+      text: 'Tsuke (coup au contact) : colle-toi dessous au point vert. Blanc monte.' },
+    { kind: 'move', rows: ajoute(K34M, ['D3'], ['C5']), cadre: 'bas-gauche', accept: ['C4', 'E4', 'C9'],
+      text: 'À toi : tsuke, kosumi (un pas en diagonale) ou pince (attaque de loin).',
+      ok: 'Bien : c’est une des réponses classiques au kakari.', no: 'Tsuke : sous sa pierre. Kosumi : en diagonale de la tienne.',
+      refus: [
+        { points: ['B5'], no: 'Sur la 2e ligne, ta pierre ne protège rien.' },
+        { points: ['C3'], no: COLLEE }
+      ] },
+    { kind: 'move', rows: ajoute(K34, ['C4', 'D3'], ['E3', 'E4']), cadre: 'bas-gauche', accept: ['D6', 'C6', 'C7', 'D5'],
+      text: 'Blanc a monté. Étends-toi le long du bord.',
+      ok: 'Bien : tes pierres gagnent de la place sur le côté.', no: 'Monte le long du bord gauche, sans toucher Blanc.',
+      refus: [
+        { points: ['D4', 'C3'], no: 'Trop lent : Blanc prend le côté avant toi.' },
+        { points: ['E5'], no: 'Blanc coupe en D4 : tes pierres sont séparées.' },
+        { points: ['F4'], no: 'Trop loin : Blanc coupe tes pierres, ou glisse dessous.' }
       ] }
   ] },
   { id: 'l9', title: 'Le filet', desc: 'Enfermer une pierre sans la toucher', steps: [

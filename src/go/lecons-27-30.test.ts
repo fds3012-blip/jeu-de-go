@@ -55,14 +55,14 @@ const justes = (p: PreuveKataGo) => evalues(p).filter(c =>
   premiers(p).every(x => x === c) || pertes(p, c).every(x => x <= TOLERANCE));
 
 describe('leçon 27 : place dans le programme (#16)', () => {
-  it('4 à 6 étapes, phrase de fin, série de pratique ; ouvre la suite de « Ouverture sur 9 × 9 »', () => {
+  it('4 à 6 étapes, phrase de fin, série de pratique ; suit la leçon 8 dans « L’ouverture »', () => {
     for (const id of IDS) {
       expect(lecon(id).steps.length, id).toBeGreaterThanOrEqual(4);
       expect(lecon(id).steps.length, id).toBeLessThanOrEqual(6);
       expect(ACQUIS[id], id).toBeTruthy();
       expect(THEMES_DE_LECON[id]?.length, id).toBeGreaterThan(0);
     }
-    expect(CHAPITRES.find(c => c.id === 'c2')!.lecons.map(l => l.id)).toEqual(['l8', 'l27']);
+    expect(CHAPITRES.find(c => c.id === 'c2')!.lecons.map(l => l.id).slice(0, 2)).toEqual(['l8', 'l27']);
     expect(LESSONS.map(l => l.id)).toEqual(CHAPITRES.flatMap(x => x.lecons.map(l => l.id)));
   });
   it('chaque consigne tient en 12 mots ; chaque geste « pose » est sur le point vert ; au plus une étape sans geste', () => {

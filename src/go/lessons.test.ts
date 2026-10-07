@@ -39,11 +39,13 @@ describe('leçons : forme des positions', () => {
     for (const l of LESSONS) expect(l.steps.length).toBeGreaterThanOrEqual(2);
   });
   for (const { id, s } of all) {
-    it(`${id} : plateau 9 × 9 valide, sans groupe sans liberté`, () => {
-      expect(s.rows).toHaveLength(N);
-      for (const row of s.rows) expect(row).toMatch(/^[.XOTS]{9}$/);
+    // #16 : les leçons d'ouverture et de joseki sont sur 13 × 13 ou 19 × 19 (`taille`), les autres sur 9 × 9.
+    const n = LESSONS.find(l => l.id === id.split('.')[0])!.taille ?? N;
+    it(`${id} : plateau ${n} × ${n} valide, sans groupe sans liberté`, () => {
+      expect(s.rows).toHaveLength(n);
+      for (const row of s.rows) expect(row).toMatch(new RegExp(`^[.XOTS]{${n}}$`));
       const { pos } = fromRows(s.rows);
-      for (let p = 0; p < N * N; p++) if (pos.board[p]) expect(libs(pos, p).size).toBeGreaterThan(0);
+      for (let p = 0; p < n * n; p++) if (pos.board[p]) expect(groupAt(pos.board, n, p).liberties.size).toBeGreaterThan(0);
     });
   }
 });

@@ -3,7 +3,7 @@ import { jouer } from './plateau';
 import { LESSONS_FR, type LessonStep } from '../src/content/lessons';
 import { ACQUIS } from '../src/content/acquis';
 
-// Issue #16 (palier 27-30) : la leçon 27 (attaquer et défendre) rejoint « Ouverture sur 9 × 9 », sans changer l'écran.
+// Issue #16 (palier 27-30) : la leçon 27 (attaquer et défendre) rejoint « L’ouverture », sans changer l'écran.
 // Elle se joue du début à la fin, avec une erreur au geste et à chaque exercice, à 390 et à 320 px, en clair et en sombre.
 // Positions et réponses prouvées par src/go/lecons-27-30.test.ts (preuves KataGo figées).
 // Captures : seulement si CAPTURES_LECONS_27_30 donne un dossier (aucune capture versionnée).
@@ -35,8 +35,8 @@ for (const [largeur, hauteur, theme] of [[390, 844, 'light'], [320, 568, 'dark']
     await page.goto('/');
     await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
 
-    // Le chemin : la leçon 27 suit « Les premiers coups », dans « Ouverture sur 9 × 9 ».
-    await expect(page.getByRole('heading', { name: 'Ouverture sur 9\u00A0×\u00A09' })).toBeAttached();
+    // Le chemin : la leçon 27 suit « Les premiers coups », dans « L’ouverture ».
+    await expect(page.getByRole('heading', { name: 'L’ouverture' })).toBeAttached();
     await expect(page.getByRole('button', { name: `Leçon ${numero('l8')} : Les premiers coups, terminée` })).toBeAttached();
     await expect(page.getByRole('button', { name: `Leçon ${numero('l27')} : Attaquer et défendre, prochaine étape` })).toBeAttached();
     await sansDebordement(page, 'chemin');

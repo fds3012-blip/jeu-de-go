@@ -22,6 +22,7 @@
     "fetch-model": "node scripts/fetch-model.mjs",
     "go-du-jour": "MAJ_GO_DU_JOUR=1 vitest run outils/goDuJour.test.ts",
     "index-lecons": "MAJ_INDEX_LECONS=1 vitest run outils/leconsIndex.test.ts",
+    "preuves-katago": "vite-node outils/preuvesKataGo.ts",
     "sync:functions": "node scripts/sync-functions.mjs"
   },
   "dependencies": {

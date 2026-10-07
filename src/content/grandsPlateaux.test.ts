@@ -152,8 +152,9 @@ describe('leçons d’essai (#454) : 13 × 13 entier et cadré, 19 × 19 cadré'
 });
 
 describe('non-régression : les leçons 9 × 9 ne changent pas (#454)', () => {
-  it('aucune leçon du chemin n’a de taille ni de cadre : 9 × 9 entier', () => {
-    for (const l of LESSONS_FR) {
+  it('une leçon du chemin sans taille est en 9 × 9 entier, sans cadre (#16 : seules l29, l30 et l31 ont une taille)', () => {
+    expect(LESSONS_FR.filter(l => l.taille).map(l => l.id)).toEqual(['l29', 'l30', 'l31']);
+    for (const l of LESSONS_FR.filter(x => !x.taille)) {
       expect(l.taille ?? 9, l.id).toBe(9);
       for (const s of l.steps) {
         expect(s.cadre, l.id).toBeUndefined();
