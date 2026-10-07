@@ -38,6 +38,8 @@ import { lireReserveAppareil } from './gelAppareil';
 import { inviterCompte, serieAffichee } from './serieLocale';
 import { goDuJourFaitAppareil, validerDefi } from './defiAppareil';
 import { RevisionDuJour } from '../ui/RevisionDuJour';
+import { problemesSuivis } from './revisionEspacee';
+import { lireEtatAppareil, noterProblemeRate } from './revisionsAppareil';
 import { noterRediteAppareil, repriseDeLeconFaite, suivreEnRevisionAppareil } from './rediteAppareil';
 // `t` désigne déjà un palier dans ce fichier : la traduction s'appelle `tr` (#167).
 import { t as tr } from '../content/i18n/secondaires';
@@ -193,6 +195,11 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   // Révision du jour (#251, M2) : les problèmes réussis et ceux vus avec la réponse ; ces derniers à part, pour le libellé.
   const vusSeuls = useMemo(() => new Set(Object.keys(vus).filter(id => !solved.has(id))), [vus, solved]);
   const aReviser = useMemo(() => new Set([...solved, ...vusSeuls]), [solved, vusSeuls]);
+  // #469 : un problème raté au premier essai est suivi par la révision espacée (« Révisions du jour ») : la Révision
+  // du jour (#199) ne le prend pas en plus. Relu au retour à la liste (`openId`).
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- relecture voulue à chaque retour à la liste
+  const suivisFile = useMemo(() => problemesSuivis(lireEtatAppareil()), [openId]);
+  const reussisRevision = useMemo(() => new Set([...aReviser].filter(id => !suivisFile.has(id))), [aReviser, suivisFile]);
 
   const tiers = useMemo(() => paliers(list, solved), [list, solved]);
   // Palier complet : une micro-fête en or, une seule fois par palier (réglage Célébrations et mouvements réduits respectés).
@@ -245,11 +252,14 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
             amis: db && userId && envoiDuJour ? <AmisDuJour db={db} numero={numero} apres={envoiDuJour} /> : null } : undefined}
         onEssai={estDuJour ? ok => { if (!ok) noterDuJour('rate'); } : undefined}
         rated={!!db && !!userId && online && !!stats && !stats.attempted.includes(open.id) && !solved.has(open.id)}
-        onPremierEssai={note ? ok => {
+        onPremierEssai={ok => {
+          // #469 : raté au premier essai, il entre dans la révision espacée (« Révisions du jour », J+1).
+          if (!ok && !enArchive) noterProblemeRate(open.id);
+          if (!note) return;
           // Mesure de « Continuer » (#284) : réussite au premier essai par tranche de cote. Cote avant l'essai, jamais affichée.
           track(EVENTS.problemeTermine, { probleme: open.id, cote_joueur: Math.round(cote.cote), cote_probleme: open.difficulty, premier_essai_reussi: ok });
           majCote(c => noter(c, open, ok ? 'premier' : 'rate', numero));
-        } : undefined}
+        }}
         onAttempt={async ok => {
           if (!db || !userId) return null;
           const r = await recordPuzzleAttempt(db, open.id, ok);
@@ -368,7 +378,7 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
 
       {/* Révision du jour (#199) : problèmes déjà réussis, repris à J+1, J+3, J+7. Depuis #251 (M2), aussi ceux
           vus avec la réponse : « Retente-le plus tard » (pb.vuTexte), c'est la révision qui le repropose. */}
-      {!essai && <RevisionDuJour liste={list} reussis={aReviser} vus={vusSeuls} confirmTouch={confirmTouch} Lecteur={PuzzlePlayer} onSerie={setSerieDuJour} />}
+      {!essai && <RevisionDuJour liste={list} reussis={reussisRevision} vus={vusSeuls} confirmTouch={confirmTouch} Lecteur={PuzzlePlayer} onSerie={setSerieDuJour} />}
 
       {/* Un seul « Problème suivant », le palier en cours sans total, la grille derrière un lien discret (#196). */}
       <section aria-labelledby="paliers-titre">
@@ -627,7 +637,7 @@ interface DuJourInfo {
 /** Temps pendant lequel la réponse de l'adversaire reste sur le plateau après une erreur (#237, N6). */
 const DUREE_ERREUR = 2200;
 
-export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPremierEssai, onEssai, onAttempt, onSolved, onNext, onExit, onSolutionVue, retour, surtitre, exercice = true, signaler }: {
+export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPremierEssai, onEssai, onAttempt, onSolved, onNext, onExit, onSolutionVue, retour, surtitre, suivant, exercice = true, signaler }: {
   puzzle: Puzzle; rang: number; duJour?: DuJourInfo; confirmTouch: boolean; rated: boolean;
   /** Chaque essai joué (coup légal), réussi ou non (#369 : essais du Go du jour comptés par le serveur). */
   onEssai?: (ok: boolean) => void;
@@ -639,6 +649,8 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
   onSolutionVue?: (essais: number) => void;
   /** Série de fin de leçon (#200) : libellé du retour (« Retour au chemin ») et surtitre (« Entraînement » et ses points). */
   retour?: string; surtitre?: ReactNode;
+  /** #469 : libellé du bouton qui mène à la suite (« Révision suivante », « Voir mon bilan ») ; « Problème suivant » sinon. */
+  suivant?: string;
   /** Faux quand l'exercice est fini alors que le lecteur reste affiché (dernier problème d'une série, #250 M9). */
   exercice?: boolean;
   /** #363 : « Cette réponse me semble fausse », montré après un premier essai (ou la suite revue). */
@@ -790,7 +802,7 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
   const lastMove = replay && frames ? frames[replay.frame].lastMove : solvedNow ? answer.p : null;
   const replayDone = !!replay && replay.frame === replay.total;
 
-  const suivantBtn = <button className="cta" onClick={onNext ?? onExit}>{onNext ? tr('pb.suivant') : retour ?? tr('pb.retour')}</button>;
+  const suivantBtn = <button className="cta" onClick={onNext ?? onExit}>{onNext ? suivant ?? tr('pb.suivant') : retour ?? tr('pb.retour')}</button>;
   // #285 : arrivé par un lien sans avoir jamais joué, une seule action après le problème, vers la leçon 1.
   const apprendreBtn = duJour?.apprendre ? <button className="cta vers-lecon-1" onClick={duJour.apprendre}>{tr('arrivee.apprendre')}</button> : null;
   // « Partager » reste l'action secondaire, à plat : l'ami peut renvoyer le défi à son tour.

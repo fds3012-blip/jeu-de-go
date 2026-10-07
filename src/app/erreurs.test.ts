@@ -127,11 +127,12 @@ describe('liste et répétition espacée', () => {
     expect(aRejouer(r, new Date(2026, 8, 28, 0, 5)).map(x => x.id)).toEqual(['e1', 'e2']);
   });
 
-  it('erreur ratée dans la revue : elle revient à J+1, puis J+3, puis J+7, jusqu’à deux réussites', () => {
+  it('erreur ratée dans la revue (#469) : J+1, puis J+3, J+7, J+14, J+30 ; un échec renvoie à J+1', () => {
     const j0 = new Date(2026, 8, 28, 22, 0);
     let l = garderRatee([], e(1), j0);
     expect(l[0].prochain).toBe('2026-09-29');
     expect(l[0].rates).toBe(1);
+    expect(l[0].maj).toBe(j0.getTime());
     expect(aRejouer(l, j0)).toEqual([]);
     // J+1 : ratée encore, elle revient le lendemain.
     const j1 = new Date(2026, 8, 29, 9, 0);
@@ -144,24 +145,34 @@ describe('liste et répétition espacée', () => {
     expect(devientMaitrisee(l[0], true)).toBe(false);
     l = apresEssai(l, 'e1', true, j2);
     expect(l[0].prochain).toBe('2026-10-03');
+    expect(l[0].reussites).toBe(1);
     expect(aRejouer(l, new Date(2026, 9, 2, 23, 0))).toEqual([]);
-    // Ratée après une réussite : retour à J+1, la réussite est gardée ; la suivante vise J+7.
+    // Ratée après une réussite : retour à J+1, au pied de l'échelle.
     const j5 = new Date(2026, 9, 3, 9, 0);
     l = apresEssai(l, 'e1', false, j5);
     expect(l[0].prochain).toBe('2026-10-04');
-    expect(l[0].reussites).toBe(1);
-    // 2e réussite : maîtrisée, elle sort de la liste.
+    expect(l[0].reussites).toBe(0);
+    // Cinq réussites d'affilée : J+3, J+7, J+14, J+30, puis maîtrisée.
+    let d = new Date(2026, 9, 4, 9, 0);
+    const ecarts: string[] = [];
+    for (let i = 0; i < 4; i++) {
+      l = apresEssai(l, 'e1', true, d);
+      ecarts.push(l[0].prochain);
+      const [y, m, j] = l[0].prochain.split('-').map(Number);
+      d = new Date(y, m - 1, j, 9, 0);
+    }
+    expect(ecarts).toEqual(['2026-10-07', '2026-10-14', '2026-10-28', '2026-11-27']);
     expect(devientMaitrisee(l[0], true)).toBe(true);
-    expect(apresEssai(l, 'e1', true, new Date(2026, 9, 4, 9, 0))).toEqual([]);
+    expect(apresEssai(l, 'e1', true, d)).toEqual([]);
     expect(dansJours(j0, 7)).toBe('2026-10-05');
   });
 
-  it('la même erreur ratée de nouveau repart de J+1 sans perdre ses réussites', () => {
+  it('la même erreur ratée de nouveau repart de J+1, au pied de l’échelle', () => {
     const j0 = new Date(2026, 8, 28, 22, 0);
-    const l = [{ ...e(1), reussites: 1, rates: 2, prochain: '2026-10-10' }];
+    const l = [{ ...e(1), reussites: 3, rates: 2, prochain: '2026-10-10' }];
     const r = garderRatee(l, e(1), j0);
     expect(r).toHaveLength(1);
-    expect(r[0]).toMatchObject({ prochain: '2026-09-29', rates: 3, reussites: 1 });
+    expect(r[0]).toMatchObject({ prochain: '2026-09-29', rates: 3, reussites: 0 });
   });
 
   it('jours locaux, fin de mois comprise', () => {

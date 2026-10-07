@@ -6,15 +6,21 @@ import type { Puzzle } from '../data/puzzles';
 import type { Color, Position } from '../go/rules';
 import { conseilFiable, VISITES_MIN, type Note } from './revue';
 import { t } from '../content/i18n/secondaires';
-import { ECHEANCES } from './revision';
+import { ACQUIS, ERREURS_KEY, apresEchec, apresEssai as essaiSuivi, dansJours, jour, type Suivi } from './revisionEspacee';
 
-export const ERREURS_KEY = 'go.erreurs.v1';
+export { dansJours, jour };
+
+// La clé vit dans revisionEspacee.ts (#469) : l'accueil compte les erreurs dues sans charger ce module.
+export { ERREURS_KEY };
 /** Au plus 30 problèmes : les plus anciens sont remplacés en premier. */
 export const MAX_ERREURS = 30;
 /** Un coup est accepté s'il perd moins de 1 point par rapport au meilleur, selon KataGo (issue #77). */
 export const MARGE_EQUIVALENT = 1;
-/** Deux réussites en révision : l'erreur est maîtrisée et ne revient plus. */
-export const REUSSITES_MAITRISE = 2;
+/**
+ * Révision espacée (#469, src/app/revisionEspacee.ts) : J+1, J+3, J+7, J+14, J+30. Réussie à J+30 (5e réussite
+ * d'affilée), l'erreur est maîtrisée et ne revient plus.
+ */
+export const REUSSITES_MAITRISE = ACQUIS;
 
 export interface ErreurGardee {
   id: string;
@@ -24,8 +30,10 @@ export interface ErreurGardee {
   prochain: string;
   /** Nombre d'échecs. */
   rates: number;
-  /** Réussites en révision (absent dans les anciennes listes : 0). À 2, l'erreur est maîtrisée. */
+  /** Réussites d'affilée en révision : la marche atteinte (absent dans les anciennes listes : 0). À 5, l'erreur est maîtrisée. */
   reussites?: number;
+  /** Date du dernier changement (ms) : avec un compte, le plus récent gagne entre deux appareils (#469). */
+  maj?: number;
   size: 9 | 13 | 19;
   rows: string[];
   toPlay: Color;
@@ -40,17 +48,6 @@ export interface ErreurGardee {
 /** Vrai si ce coup peut devenir un problème : Erreur ou Grosse erreur, avec un meilleur coup fiable. */
 export function peutEnFaireUnProbleme(note: Note | null | undefined, meilleur: number | null | undefined): boolean {
   return (note === 'erreur' || note === 'manque' || note === 'grosse') && meilleur != null && meilleur >= 0;
-}
-
-/** Jour local au format AAAA-MM-JJ. */
-export function jour(d: Date): string {
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
-}
-
-/** Jour `n` jours après `d` (heure locale). */
-export function dansJours(d: Date, n: number): string {
-  return jour(new Date(d.getFullYear(), d.getMonth(), d.getDate() + n));
 }
 
 /** Lendemain du jour `d`. */
@@ -143,28 +140,33 @@ export function coupAccepte(e: Pick<ErreurGardee, 'reponses'>, p: number): boole
   return p >= 0 && e.reponses.includes(p);
 }
 
-/**
- * Erreur ratée au premier essai dans la revue : elle rejoint la révision espacée et revient demain (J+1).
- * La même position déjà gardée repart aussi de J+1, sans perdre ses réussites.
- */
-export function garderRatee(liste: ErreurGardee[], e: ErreurGardee, maintenant: Date): ErreurGardee[] {
-  const ancienne = liste.find(x => x.id === e.id);
-  return ajouter(liste, { ...e, prochain: dansJours(maintenant, ECHEANCES[0]), rates: (ancienne?.rates ?? 0) + 1, reussites: ancienne?.reussites ?? 0 });
+/** Place de l'erreur dans le calendrier de la révision espacée (#469). */
+export function suiviErreur(e: Pick<ErreurGardee, 'prochain' | 'reussites' | 'rates' | 'maj' | 'creeLe'>): Suivi {
+  return { etape: Math.min(ACQUIS - 1, e.reussites ?? 0), prochain: e.prochain, echecs: e.rates, maj: e.maj ?? (Date.parse(e.creeLe) || 0) };
 }
 
 /**
- * Après un essai en révision (même calendrier que la Révision du jour, revision.ts) :
- * - raté : elle revient le lendemain (J+1) ;
- * - réussi : elle revient plus tard, J+3 après la 1re réussite, J+7 après la 2e ;
- *   à REUSSITES_MAITRISE réussites, elle est maîtrisée et sort de la liste.
+ * Erreur ratée au premier essai (revue, « Rejouer mes erreurs ») : elle entre dans la révision espacée et revient
+ * demain (J+1). La même position déjà gardée repart aussi de J+1, au pied de l'échelle (#469 : un échec renvoie à J+1).
+ */
+export function garderRatee(liste: ErreurGardee[], e: ErreurGardee, maintenant: Date): ErreurGardee[] {
+  const ancienne = liste.find(x => x.id === e.id);
+  const s = apresEchec({ echecs: ancienne?.rates ?? 0 }, maintenant);
+  return ajouter(liste, { ...e, prochain: s.prochain!, rates: s.echecs, reussites: 0, maj: s.maj });
+}
+
+/**
+ * Après un essai en révision (#469, src/app/revisionEspacee.ts) :
+ * - raté : elle revient le lendemain (J+1), au pied de l'échelle ;
+ * - réussi : elle monte d'une marche, J+3, puis J+7, J+14, J+30 ;
+ *   réussie à J+30 (REUSSITES_MAITRISE réussites d'affilée), elle est maîtrisée et sort de la liste.
  */
 export function apresEssai(liste: ErreurGardee[], id: string, reussi: boolean, maintenant: Date): ErreurGardee[] {
   return liste.flatMap(e => {
     if (e.id !== id) return [e];
-    if (!reussi) return [{ ...e, prochain: dansJours(maintenant, ECHEANCES[0]), rates: e.rates + 1 }];
-    const reussites = (e.reussites ?? 0) + 1;
-    if (reussites >= REUSSITES_MAITRISE) return [];
-    return [{ ...e, reussites, prochain: dansJours(maintenant, ECHEANCES[Math.min(reussites, ECHEANCES.length - 1)]) }];
+    const s = essaiSuivi(suiviErreur(e), reussi, maintenant);
+    if (s.prochain === null) return [];
+    return [{ ...e, prochain: s.prochain, reussites: s.etape, rates: s.echecs, maj: s.maj }];
   });
 }
 

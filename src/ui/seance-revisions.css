@@ -1,0 +1,23 @@
+/* Séance « Révisions du jour » (#469) : src/app/SeanceRevisions.tsx. Le lecteur de problème et l'écran de fin de
+   « Rejouer mes erreurs » (rejouer-erreurs.css) font l'essentiel ; ici, seulement les points de la séance et l'échelle
+   des intervalles. Aucun mouvement propre : les pastilles de fin s'animent déjà (mouvements réduits respectés). */
+.seance-en-cours > .etapes { justify-content: center; min-height: 24px; margin: 0 0 calc(-1 * var(--space-2)); }
+
+.seance-echelle { display: grid; gap: var(--space-2); width: 100%; margin-top: var(--space-2); }
+/* Cinq marches reliées par un trait : J+1 → J+30. Elles passent à la ligne au zoom 200 % ou à 320 px. */
+.seance-echelle ol { position: relative; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.seance-echelle li { display: flex; align-items: center; gap: 6px; }
+.seance-echelle li + li::before { content: ""; width: 10px; height: 2px; border-radius: 1px; background: var(--line); }
+.seance-echelle span { display: inline-grid; place-items: center; min-width: 44px; padding: 4px 8px; border-radius: var(--radius-pill);
+  background: var(--surface-2); color: var(--text); font-size: var(--fs-legende); font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.seance-echelle p { margin: 0; max-width: 34ch; justify-self: center; text-align: center; text-wrap: balance; }
+.seance-vide .rejeu-fin-phrase { max-width: 28ch; }
+
+/* En-tête du lecteur : pas de difficulté (une erreur de partie n'en a pas de vraie) ; l'aide « ? » se range à droite.
+   Sous 360 px (320 px, zoom 200 %), le titre passe sur sa propre ligne au lieu d'être écrasé entre les boutons. */
+.seance-en-cours .lecteur-tete .difficulte { display: none; }
+.seance-en-cours .lecteur-tete .bouton-aide { margin-left: auto; }
+@media (max-width: 359px) {
+  .seance-en-cours .lecteur-tete { flex-wrap: wrap; row-gap: 0; }
+  .seance-en-cours .lecteur-nom { order: 3; flex: 1 1 100%; padding-left: 10px; }
+}
