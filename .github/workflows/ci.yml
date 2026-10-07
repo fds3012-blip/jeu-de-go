@@ -87,6 +87,10 @@ jobs:
         with:
           path: ~/.cache/ms-playwright
           key: ms-playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
+      # Bibliothèques système de Chromium (apt). `apt-get update` lisait aussi les dépôts tiers de l'image (Microsoft,
+      # Azure…) : 15 s à plus de 2 min selon les passages. Seuls les dépôts Ubuntu restent (machine jetable).
+      - name: Dépôts apt d'Ubuntu seulement
+        run: sudo find /etc/apt/sources.list.d -type f ! -name 'ubuntu.sources' -print -delete
       - if: steps.navigateurs.outputs.cache-hit != 'true'
         run: npx playwright install --with-deps chromium
       # Navigateur en cache : seules les bibliothèques système restent à installer.
