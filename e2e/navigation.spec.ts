@@ -1,5 +1,6 @@
-import { expect, test } from '@playwright/test';
-import { lancerADeux } from './plateau';
+import { expect, test, type Browser, type Page } from '@playwright/test';
+import { brancher, fauxServeur, type FauxServeur } from './fauxSupabase';
+import { choisirMode, lancerADeux } from './plateau';
 
 // Issue #7 : première ouverture et navigation entre les onglets (viewport iPhone 390 × 844).
 
@@ -120,4 +121,80 @@ test('les quatre onglets affichent leur libellé en entier', async ({ page }) =>
     const tronque = await l.evaluate(e => e.scrollWidth > e.clientWidth || e.clientWidth === 0);
     expect(tronque).toBe(false);
   }
+});
+
+// #465 : règle de navigation (docs/ux/navigation.md). Les écrans de choix et d'attente du jeu en ligne gardent
+// l'en-tête et la barre du bas, comme l'accueil ; la partie en direct est en plein écran. La bascule « En direct » /
+// « Partie lente » ne fait ni apparaître ni disparaître l'en-tête. Le titre de l'onglet suit l'écran (WCAG 2.4.2).
+async function telephone(browser: Browser, baseURL: string | undefined, serveur: FauxServeur, qui: { email: string; pseudo: string; id: string }): Promise<Page> {
+  const ctx = await browser.newContext({
+    viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true, locale: 'fr-FR', baseURL, reducedMotion: 'reduce',
+    storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }] }] },
+  });
+  const page = await brancher(ctx, serveur, {
+    'go.parties.v1': JSON.stringify({ n: 3 }), 'sb-supabase-auth-token': JSON.stringify(serveur.sessionCompte(qui.email, qui.pseudo, qui.id)),
+  });
+  await page.goto('/');
+  return page;
+}
+async function chrome(page: Page, visible: boolean, ecran: string) {
+  await expect(page.locator('header.top'), `${ecran} : en-tête`).toHaveCount(visible ? 1 : 0);
+  await expect(page.getByRole('navigation', { name: 'Navigation principale' }), `${ecran} : barre du bas`).toHaveCount(visible ? 1 : 0);
+}
+
+test('#465 : en ligne, le choix et l’attente gardent l’en-tête et la barre du bas ; la partie en direct est en plein écran', async ({ browser, baseURL }) => {
+  test.setTimeout(60_000);
+  const serveur = fauxServeur();
+  const ana = await telephone(browser, baseURL, serveur, { email: 'ana.nav@exemple.test', pseudo: 'Ana', id: '00000000-0000-4000-8000-0000000465a1' });
+  const bob = await telephone(browser, baseURL, serveur, { email: 'bob.nav@exemple.test', pseudo: 'Bob', id: '00000000-0000-4000-8000-0000000465b2' });
+  await expect(ana).toHaveTitle('Mochi Go : apprendre et jouer au go');
+
+  await choisirMode(ana, 'en_ligne');
+  const bascule = ana.getByTestId('bascule-en-ligne');
+  await bascule.getByRole('button', { name: 'En direct' }).click();
+  await expect(ana.getByTestId('direct-choix')).toBeVisible();
+  await chrome(ana, true, 'Direct, choix');
+  await expect(ana).toHaveTitle('En direct · Mochi Go');
+  await expect(ana.getByRole('navigation').getByRole('button', { name: 'Jouer' })).toHaveAttribute('aria-current', 'page');
+
+  // La bascule ne change ni l'en-tête ni la barre, dans un sens comme dans l'autre.
+  await bascule.getByRole('button', { name: 'Partie lente' }).click();
+  await expect(ana.getByTestId('lentes')).toBeVisible();
+  await chrome(ana, true, 'Parties lentes');
+  await expect(ana).toHaveTitle('Partie lente · Mochi Go');
+  await ana.getByTestId('bascule-en-ligne').getByRole('button', { name: 'En direct' }).click();
+  await expect(ana.getByTestId('direct-choix')).toBeVisible();
+  await chrome(ana, true, 'Direct, retour de la bascule');
+
+  // Attente : en-tête et barre restent ; la barre du bas permet de partir (la place dans la file est rendue).
+  await ana.getByRole('button', { name: 'Trouver un adversaire' }).click();
+  await expect(ana.getByTestId('direct-attente')).toBeVisible();
+  await chrome(ana, true, 'Direct, attente');
+
+  // Partie : plein écran, chez les deux joueurs.
+  await choisirMode(bob, 'en_ligne');
+  await bob.getByRole('button', { name: 'Trouver un adversaire' }).click();
+  await expect(ana.getByTestId('direct-partie')).toBeVisible();
+  await expect(bob.getByTestId('direct-partie')).toBeVisible();
+  await chrome(ana, false, 'Direct, partie (Ana)');
+  await chrome(bob, false, 'Direct, partie (Bob)');
+  await expect(ana.getByRole('heading', { level: 1, name: 'Mochi Go' })).toBeAttached();
+});
+
+test('#465 : le titre de l’onglet suit l’écran', async ({ page }) => {
+  await page.goto('/');
+  await expect(page).toHaveTitle('Mochi Go : apprendre et jouer au go');
+  const nav = page.getByRole('navigation', { name: 'Navigation principale' });
+  await nav.getByRole('button', { name: 'Apprendre' }).click();
+  await expect(page).toHaveTitle('Apprendre · Mochi Go');
+  await page.getByRole('button', { name: /^Leçon 1 :/ }).first().click();
+  await expect(page).toHaveTitle(/^.+ · Mochi Go$/);
+  await expect(page).not.toHaveTitle('Apprendre · Mochi Go');
+  await nav.getByRole('button', { name: 'Problèmes' }).click();
+  await expect(page).toHaveTitle('Problèmes · Mochi Go');
+  await nav.getByRole('button', { name: 'Profil' }).click();
+  await expect(page).toHaveTitle('Profil · Mochi Go');
+  await nav.getByRole('button', { name: 'Jouer' }).click();
+  await lancerADeux(page);
+  await expect(page).toHaveTitle('Partie à deux · Mochi Go');
 });

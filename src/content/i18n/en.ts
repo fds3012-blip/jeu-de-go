@@ -8,6 +8,8 @@ export const en = {
   'nav.apprendre': 'Learn',
   'nav.problemes': 'Puzzles',
   'nav.profil': 'Profile',
+  'nav.court.apprendre': 'Learn',
+  'nav.court.problemes': 'Puzz.',
 
   'profil.aria': 'Your profile',
   'profil.invite': 'Guest',
@@ -72,6 +74,17 @@ export const en = {
   'profil.retour': 'Back',
 
   'entete.apprendre': 'Your lesson path',
+  'titre.app': 'Mochi Go: learn and play go',
+  'titre.ecran': '{ecran} · Mochi Go',
+  'titre.partie': 'Game against {nom}',
+  'titre.partieDeux': 'Two-player game',
+  'titre.guidee': 'Guided game',
+  'titre.direct': 'Live',
+  'titre.lente': 'Correspondence game',
+  'titre.enLigne': 'Online game',
+  'titre.partagee': 'Shared game',
+  'titre.placement': 'Your starting level',
+  'titre.compte': 'Your account',
 
   'accueil.cta.premiere': 'Play your first game',
   'accueil.cta.premiereNom': 'Play your first game against {nom}',

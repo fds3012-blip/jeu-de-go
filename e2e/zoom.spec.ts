@@ -92,6 +92,31 @@ async function cheminLisible(page: Page, ecran: string) {
   expect(r.soucis, `${ecran} : chemin illisible`).toEqual([]);
 }
 
+/**
+ * #465 : libellés de la barre du bas jamais coupés par « … ». Trop étroit pour le nom entier, l'onglet montre le
+ * libellé court (« Appr. »), et son nom accessible reste le nom entier.
+ */
+async function libellesEntiers(page: Page, ecran: string) {
+  const r = await page.evaluate(() => [...document.querySelectorAll<HTMLElement>('.nav .onglet')].map(b => {
+    const visibles = [...b.querySelectorAll<HTMLElement>('.onglet-libelle, .onglet-long, .onglet-court')]
+      .filter(e => e.getClientRects().length > 0 && e.getBoundingClientRect().width > 1);
+    return {
+      coupes: visibles.filter(e => e.scrollWidth > e.clientWidth + 1).map(e => e.textContent),
+      lu: visibles.map(e => e.textContent).filter(Boolean),
+    };
+  }));
+  expect(r.flatMap(o => o.coupes), `${ecran} : libellés de la barre du bas coupés`).toEqual([]);
+  for (const o of r) expect(o.lu.length, `${ecran} : un libellé visible par onglet`).toBeGreaterThan(0);
+  for (const n of ['Jouer', 'Apprendre', 'Problèmes', 'Profil']) await expect(onglet(page, n)).toHaveAccessibleName(n);
+}
+
+/** #465 (audit #461, E) : le bouton « Retour » du lecteur reste entier dans l'écran. */
+async function retourDansLEcran(page: Page, ecran: string) {
+  const b = (await page.locator('.lecteur-tete .retour').first().boundingBox())!;
+  expect(b.x, `${ecran} : « Retour » sort à gauche de l'écran`).toBeGreaterThanOrEqual(0);
+  expect(Math.round(b.width), `${ecran} : « Retour » de 44 px`).toBeGreaterThanOrEqual(44);
+}
+
 const onglet = (page: Page, nom: string) =>
   page.getByRole('navigation', { name: 'Navigation principale' }).getByRole('button', { name: nom });
 
@@ -114,6 +139,7 @@ for (const c of CAS) {
       const boites = [];
       for (const n of ['Jouer', 'Apprendre', 'Problèmes', 'Profil']) boites.push((await onglet(page, n).boundingBox())!);
       for (let i = 1; i < boites.length; i++) expect(boites[i].x, 'onglets de la barre du bas qui se chevauchent').toBeGreaterThanOrEqual(boites[i - 1].x + boites[i - 1].width - 1);
+      await libellesEntiers(page, 'Accueil');
 
       await onglet(page, 'Problèmes').click();
       await page.waitForTimeout(300);
@@ -138,6 +164,7 @@ for (const c of CAS) {
       await page.getByRole('button', { name: 'Commencer' }).click();
       await expect(page.getByRole('progressbar', { name: 'Progression de la leçon' })).toBeVisible();
       await sansDebord(page, 'Leçon 1');
+      await retourDansLEcran(page, 'Leçon 1');
     });
 
     // #177 : sept leçons dans « Les bases » ; la septième et ses choix longs tiennent dans la largeur.
