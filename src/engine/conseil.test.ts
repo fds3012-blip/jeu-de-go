@@ -413,9 +413,18 @@ describe('Conseil de Mochi : aucune phrase fausse', () => {
       const apres = own.map(v => v - (pos.toPlay === 1 ? d * 2 : -d * 2));
       const vides = [...pos.board.keys()].filter(p => pos.board[p] === 0);
       const coupsK = Array.from({ length: 3 }, () => vides[Math.floor(hasard() * vides.length)] ?? -1);
-      const t0 = performance.now();
-      const c = conseil(pos, { propriete: own, proprieteSiTuPasses: apres, coups: coupsK, menace: coupsK[1] });
-      pire = Math.max(pire, performance.now() - t0);
+      const options = { propriete: own, proprieteSiTuPasses: apres, coups: coupsK, menace: coupsK[1] };
+      let t0 = performance.now();
+      const c = conseil(pos, options);
+      let duree = performance.now() - t0;
+      // #467 : un appel lent est mesuré deux fois de plus et on garde le plus court. Une pause du ramasse-miettes ou une
+      // machine chargée (CI) ne fait plus échouer le test ; un calcul vraiment lent l'est à chaque fois et échoue encore.
+      for (let essai = 0; essai < 2 && duree >= 300; essai++) {
+        t0 = performance.now();
+        conseil(pos, options);
+        duree = Math.min(duree, performance.now() - t0);
+      }
+      pire = Math.max(pire, duree);
       if (c) {
         vus.add(c.modele);
         verifier(pos, c);

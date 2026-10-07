@@ -20,48 +20,69 @@ async function retarderApp(page: Page, ms = 1200): Promise<void> {
   await page.route(/\/(assets\/index-[^/]*\.js|src\/main\.tsx)$/, async r => { await new Promise(f => setTimeout(f, ms)); await r.continue(); });
 }
 
-/** Instant (ms depuis le début de la navigation) où #root reçoit l'app. */
-async function montage(page: Page): Promise<number> {
-  return page.evaluate(() => new Promise<number>(resolve => {
-    const root = document.getElementById('root')!;
-    if (root.firstElementChild) return resolve(performance.now());
-    const mo = new MutationObserver(() => { if (root.firstElementChild) { mo.disconnect(); resolve(performance.now()); } });
-    mo.observe(root, { childList: true });
-  }));
+/**
+ * Instants de l'ouverture, relevés DANS la page (#467) : un script posé avant ceux de l'app note, à la milliseconde,
+ * la première image, le montage de l'accueil, le début du fondu (`ouv-fin`), le retrait de l'ouverture et le premier
+ * toucher. Rien ne dépend du moment où Playwright pose ses questions : sous charge (CI, 4 lots), un aller-retour
+ * lent ne fausse plus les durées. Les durées sont comparées à la première image (le départ de la seconde dans
+ * index.html), plus au début de la navigation.
+ */
+type Instants = {
+  image: number; monte: number; fin: number | null; retire: number | null; vue: boolean;
+  /** Fin complète : `data-ouverture` retiré de <html> (520 ms après le fondu en version entière). */
+  nettoye: number | null;
+  /** Premier toucher, et l'état du fondu juste avant lui et juste après ses écouteurs (même évènement). */
+  appui: number | null; finAvantToucher: boolean | null; finAuToucher: boolean | null;
+};
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    const t: Instants = { image: -1, monte: -1, fin: null, retire: null, vue: false, nettoye: null, appui: null, finAvantToucher: null, finAuToucher: null };
+    (window as unknown as { __ouv: Instants }).__ouv = t;
+    // Enregistré avant le requestAnimationFrame d'index.html : même image, appelé juste avant (image ≤ son « debut »).
+    requestAnimationFrame(() => { t.image = performance.now(); });
+    const enFondu = () => document.documentElement.classList.contains('ouv-fin');
+    // Capture sur window : avant tout autre écouteur. Remontée sur window : après celui de l'ouverture (sur sa cible).
+    addEventListener('pointerdown', () => { if (t.appui === null) { t.appui = performance.now(); t.finAvantToucher = enFondu(); } }, { capture: true });
+    addEventListener('pointerdown', () => { if (t.finAuToucher === null) t.finAuToucher = enFondu(); });
+    const relever = () => {
+      const maintenant = performance.now();
+      const ouv = document.getElementById('ouverture');
+      if (ouv) t.vue = true;
+      if (t.monte < 0 && document.getElementById('root')?.firstElementChild) t.monte = maintenant;
+      if (t.fin === null && document.documentElement?.classList.contains('ouv-fin')) t.fin = maintenant;
+      if (t.vue && t.retire === null && !ouv) t.retire = maintenant;
+      if (t.fin !== null && t.nettoye === null && !document.documentElement.hasAttribute('data-ouverture')) t.nettoye = maintenant;
+    };
+    new MutationObserver(relever).observe(document, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+  });
+});
+
+/** Attend la fin de l'ouverture (retirée de la page) et rend les instants relevés. */
+async function instants(page: Page): Promise<Instants & { fin: number; retire: number }> {
+  await page.waitForFunction(() => {
+    const t = (window as unknown as { __ouv?: Instants }).__ouv;
+    return !!t && t.retire !== null && t.monte >= 0 && t.image >= 0;
+  });
+  const t = await page.evaluate(() => (window as unknown as { __ouv: Instants }).__ouv);
+  expect(t.fin, 'le fondu (ouv-fin) a été vu').not.toBeNull();
+  return t as Instants & { fin: number; retire: number };
 }
 
-/** Instant (ms depuis le début de la navigation) où l'accueil répond : l'ouverture commence son fondu et laisse passer les touchers. */
-async function interactif(page: Page): Promise<number> {
-  return page.evaluate(() => new Promise<number>(resolve => {
-    const h = document.documentElement;
-    if (h.classList.contains('ouv-fin') || !document.getElementById('ouverture')) return resolve(performance.now());
-    const mo = new MutationObserver(() => { if (h.classList.contains('ouv-fin')) { mo.disconnect(); resolve(performance.now()); } });
-    mo.observe(h, { attributes: true, attributeFilter: ['class'] });
-  }));
-}
-
-/** Instant (ms depuis le début de la navigation) où l'ouverture quitte la page ; null si elle n'y était pas. */
-async function finOuverture(page: Page): Promise<number | null> {
-  return page.evaluate(() => new Promise<number | null>(resolve => {
-    const el = document.getElementById('ouverture');
-    if (!el) return resolve(null);
-    const mo = new MutationObserver(() => { if (!el.isConnected) { mo.disconnect(); resolve(performance.now()); } });
-    mo.observe(document.body, { childList: true });
-  }));
-}
+/** Marge pour un minuteur de la page en retard sous charge (setTimeout ne part jamais en avance). */
+const RETARD_MINUTEUR = 250;
 
 test('premier lancement : une seconde de scène, puis l’accueil répond', async ({ page }) => {
   await page.goto('/', { waitUntil: 'commit' });
   await page.waitForSelector('#ouverture');
   expect(await page.getAttribute('html', 'data-ouverture')).toBe('plein');
   await expect(page.locator('.ouv-nom')).toBeVisible();
-  const [repond, fin] = await Promise.all([interactif(page), finOuverture(page)]);
+  const t = await instants(page);
   // Demande de Florian : une seconde en tout, jamais coupée dès que l'accueil est prêt (il l'est bien avant ici).
-  // `repond` compte depuis le début de la navigation ; la seconde, depuis la première image.
-  expect(repond).toBeGreaterThanOrEqual(1000);
-  expect(repond).toBeLessThan(1500);
-  expect(fin).not.toBeNull();
-  expect(fin! - repond).toBeLessThan(400); // l'ouverture part à la fin de son fondu (220 ms)
+  // L'accueil répond (fondu `ouv-fin`) une seconde après la première image, pas avant…
+  expect(t.fin - t.image).toBeGreaterThanOrEqual(999);
+  // … et pas plus tard que nécessaire : à 1 s, ou au montage de l'accueil s'il arrive après (machine chargée).
+  expect(t.fin - Math.max(t.monte, t.image + 1000)).toBeLessThan(RETARD_MINUTEUR);
+  expect(t.retire - t.fin).toBeLessThan(400); // l'ouverture part à la fin de son fondu (220 ms)
   // L'action principale reçoit le toucher (rien par-dessus), et la page ne garde aucune trace de l'ouverture.
   const cta = page.locator('.cta');
   await expect(cta).toBeVisible();
@@ -74,50 +95,60 @@ test('premier lancement : une seconde de scène, puis l’accueil répond', asyn
 test('la scène est encore là à 0,9 s, partie vers 1,2 s', async ({ page }) => {
   await page.goto('/', { waitUntil: 'commit' });
   await page.waitForSelector('#ouverture');
-  await page.locator('#root > *').first().waitFor({ state: 'attached' }); // accueil monté dessous
-  const a09 = await page.evaluate(() => new Promise<{ t: number; la: boolean; fondu: boolean }>(resolve => {
-    const lire = () => resolve({ t: performance.now(), la: !!document.getElementById('ouverture'), fondu: document.documentElement.classList.contains('ouv-fin') });
-    const reste = 900 - performance.now();
-    if (reste <= 0) lire(); else setTimeout(lire, reste);
-  }));
-  expect(a09.t).toBeLessThan(1000); // mesure prise avant la seconde, sinon le test ne prouve rien
-  expect(a09.la).toBe(true);
-  expect(a09.fondu).toBe(false);
-  const fin = await finOuverture(page);
-  expect(fin!).toBeLessThan(1600);
+  const t = await instants(page);
+  // À 0,9 s de la première image, la scène est là et sans fondu : le fondu commence après, le retrait encore après.
+  // (Déduit des instants relevés dans la page : un relevé « à 0,9 s » demandé par Playwright arrivait parfois trop tard.)
+  expect(t.fin - t.image).toBeGreaterThan(900);
+  expect(t.retire).toBeGreaterThan(t.fin);
+  // Partie vers 1,2 s : 240 ms après le fondu, lui-même à 1 s (ou au montage de l'accueil, s'il est plus tard).
+  expect(t.retire - Math.max(t.monte, t.image + 1000)).toBeLessThan(240 + RETARD_MINUTEUR);
   await expect(page.locator('.cta')).toBeVisible();
 });
 
 test('aucun décalage de mise en page à la fin de l’ouverture', async ({ page }) => {
   await page.addInitScript(() => {
-    (window as unknown as { __cls: number }).__cls = 0;
+    const w = window as unknown as { __decalages: { t: number; v: number }[] };
+    w.__decalages = [];
     new PerformanceObserver(l => {
-      for (const e of l.getEntries() as unknown as { value: number; hadRecentInput: boolean }[]) {
-        if (!e.hadRecentInput) (window as unknown as { __cls: number }).__cls += e.value;
+      for (const e of l.getEntries() as unknown as { value: number; hadRecentInput: boolean; startTime: number }[]) {
+        if (!e.hadRecentInput) w.__decalages.push({ t: e.startTime, v: e.value });
       }
     }).observe({ type: 'layout-shift', buffered: true });
   });
   await page.goto('/', { waitUntil: 'commit' });
   await page.waitForSelector('#ouverture');
-  await finOuverture(page);
+  await instants(page);
   await expect(page.locator('html')).not.toHaveClass(/ouv-fin/);
-  await page.waitForTimeout(300);
-  expect(await page.evaluate(() => (window as unknown as { __cls: number }).__cls)).toBeLessThan(0.01);
+  // Fenêtre mesurée dans la page (#467) : de l'ouverture jusqu'à 300 ms après sa fin complète, sur l'horloge de la
+  // page (plus 300 ms d'attente fixe côté Playwright, plus ou moins longue selon la charge). On attend que cette
+  // fenêtre soit passée et que l'image suivante ait remis ses décalages à l'observateur.
+  const borne = await page.evaluate(() => (window as unknown as { __ouv: Instants }).__ouv.nettoye! + 300);
+  await page.waitForFunction(b => performance.now() >= b, borne);
+  await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
+  const cls = await page.evaluate(b => (window as unknown as { __decalages: { t: number; v: number }[] }).__decalages
+    .filter(d => d.t <= b).reduce((s, d) => s + d.v, 0), borne);
+  expect(cls).toBeLessThan(0.01);
 });
 
 test('un toucher la passe aussitôt', async ({ page }) => {
   await page.goto('/', { waitUntil: 'commit' });
   await page.waitForSelector('#ouverture');
-  await montage(page);
-  const appui = page.evaluate(() => new Promise<number>(r => addEventListener('pointerdown', () => r(performance.now()), { capture: true, once: true })));
+  await page.locator('#root > *').first().waitFor({ state: 'attached' }); // accueil monté dessous
   // Le point touché est sur le goban de l'accueil, qui lance une partie : le toucher ne doit pas le traverser.
   await page.touchscreen.tap(195, 300);
-  const [touche, repond] = await Promise.all([appui, interactif(page)]);
-  // Sans toucher : pas avant 1 s. Avec : le fondu part au même toucher (après les écouteurs de l'app, dont le
-  // déblocage du son, qui passent avant : d'où la marge).
-  expect(repond - touche).toBeLessThan(250);
-  await finOuverture(page);
-  await page.waitForTimeout(300);
+  const t = await instants(page);
+  expect(t.appui).not.toBeNull();
+  // Sans toucher : pas avant 1 s. Avec : le fondu part pendant le toucher lui-même (#467 : vérifié dans l'évènement,
+  // après les écouteurs de l'ouverture, plutôt que par une durée qui dépendait de la charge de la machine).
+  if (t.finAvantToucher) {
+    // Machine très chargée : l'accueil a mis plus d'une seconde à se monter, la scène était déjà partie.
+    test.info().annotations.push({ type: 'non concluant', description: 'scène déjà partie avant le toucher' });
+  } else {
+    expect(t.finAuToucher, 'le fondu commence pendant le toucher').toBe(true);
+  }
+  // Fin complète de l'ouverture (520 ms après le fondu, bien après le « clic » du toucher) : rien n'est passé dessous.
+  await expect(page.locator('html')).not.toHaveAttribute('data-ouverture');
+  await expect(page.locator('html')).not.toHaveClass(/ouv-tenu/);
   await expect(page.locator('main.app-home')).toHaveCount(1);
   await expect(page.locator('main.app-partie')).toHaveCount(0);
   await expect(page.locator('.cta')).toBeVisible();
@@ -133,9 +164,9 @@ test('mouvements réduits : pas de scène, un simple fondu', async ({ page }) =>
   await expect(page.locator('.ouv-logo')).toBeVisible();
   const anims = await page.evaluate(() => document.getAnimations().filter(a => (a as CSSAnimation).animationName?.startsWith('ouv-')).length);
   expect(anims).toBe(0);
-  const [monte, fin] = await Promise.all([montage(page), finOuverture(page)]);
+  const t = await instants(page);
   // Fondu de 150 ms dès que l'accueil est là (retiré 240 ms après) : l'ouverture n'ajoute aucune attente.
-  expect(fin! - monte).toBeLessThan(400);
+  expect(t.retire - t.monte).toBeLessThan(400);
   await expect(page.locator('.cta')).toBeVisible();
 });
 

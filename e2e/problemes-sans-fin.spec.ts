@@ -26,7 +26,8 @@ test('tout résolu : « Problème suivant » de la liste ouvre un problème, et 
   await expect(page.locator('[data-palier-en-cours]')).toContainText(/\d+\sréussis/);
   await expect(page.getByText(/\d+\s\/\s\d+/)).toHaveCount(0);
   await continuer.click();
-  await expect(plateau(page)).toBeVisible();
+  // L'écran du problème est chargé à la demande : sous charge (CI), plus de 5 s parfois (#467).
+  await expect(plateau(page)).toBeVisible({ timeout: 15_000 });
 
   // Retour à la liste, puis le problème b1 : la bonne réponse est E5.
   await page.goto('/');
