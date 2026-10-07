@@ -110,6 +110,12 @@ export const EVENTS = {
   // Conseil de Mochi (#80) : phrase demandée (`modele`, `aucun` si rien de sûr), puis retour « utile / pas utile » (`utile`).
   conseilDemande: 'conseil_demande',
   conseilNote: 'conseil_note',
+  // Coach Mochi en partie contre l'IA (#470) : bulle montrée (`type` : atari, un-oeil, prise-ratee, zone-libre ; `numero` :
+  // 1 à 3 dans la partie ; `coup`, `taille`, `adversaire`), puis coach coupé ou rallumé (`depuis` : bulle, partie, reglages ;
+  // `bulles` : bulles déjà vues dans la partie, absent depuis les réglages). Jamais la position.
+  coachBulle: 'coach_bulle',
+  coachCoupe: 'coach_coupe',
+  coachActive: 'coach_active',
   // Notifications dans l'app (#367) : un élément « À faire » touché. `type` : defi, serie, goDuJour, lecon, ami ;
   // `source` : accueil (tuile d'« Aujourd'hui »), onglet (onglet à pastille) ; `attente_h` (défi) :
   // heures depuis le coup de l'adversaire, pour le délai médian de réponse.

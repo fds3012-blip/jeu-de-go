@@ -182,6 +182,13 @@ export async function bestMove(pos: Position, niveau: OpponentId | Opponent, opt
  * par l'écran. `opts.accommodant` (3 premières parties) : l'ordi passe dès que les frontières sont fermées.
  */
 export async function bestMoveExplique(pos: Position, niveau: OpponentId | Opponent, opts: EngineOptions = {}): Promise<CoupExplique> {
+  // Tests de bout en bout seulement (build VITE_E2E ; la condition disparaît en production) : coups de l'ordi écrits
+  // d'avance dans `window.__coupsOrdi` (index y * N + x), joués dans l'ordre tant qu'ils sont légaux (e2e/coach-mochi.spec.ts).
+  if (import.meta.env.VITE_E2E && typeof window !== 'undefined') {
+    const prevus = (window as unknown as { __coupsOrdi?: number[] }).__coupsOrdi;
+    const m = prevus?.shift();
+    if (m !== undefined && isLegalMove(pos, m)) return { move: m, raison: null };
+  }
   const lvl = typeof niveau === 'string' ? opponent(niveau) : niveau;
   let coup: CoupExplique | null = null;
   const k = lvl.katago ? getKataGo() : null;
