@@ -308,6 +308,14 @@ export const LESSONS_EN = {
       ok: 'Cut on the first line: E2 and D1 answer each other.', no: 'Cut on the first line, under the passage at E2.',
       refus: ['White answers at E1: you can’t cut without a ko.'] }
   ] },
+  l36: { title: 'Cut, then retake', desc: 'The first-line cut', steps: [
+    { text: 'White wants to pass at C1. Cut first at the green point.' },
+    { text: 'White connects at C1? Atari at the green point: five stones.' },
+    { text: 'White captures B1? Retake at the green point: snapback, six stones.' },
+    { text: 'Your turn: stop White from passing under your stone.',
+      ok: 'Cut: connecting means atari, capturing ends in a snapback.', no: 'Cut on the first line, at the end of the white stones.',
+      refus: ['White takes H1: you can’t cut without a ko.'] }
+  ] },
   l22: { title: 'Sente and gote', desc: 'The move that demands an answer', steps: [
     { text: 'Sente (a move that demands an answer): atari at the green point. White connects.' },
     { text: 'You keep the initiative: close the top too, at the green point.' },

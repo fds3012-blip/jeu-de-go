@@ -179,6 +179,13 @@ function motif(id: string, W: string, C: string): ReactElement {
       <circle cx="50" cy="46" r="8" fill={C} stroke={W} strokeWidth="2.6" />
       <path d="M34 64Q50 74 66 64" stroke={W} strokeWidth="3" strokeLinecap="round" fill="none" />
     </>);
+    // Couper, puis reprendre : la pierre de la coupe, et la flèche qui revient la reprendre.
+    case 'l36': return (<>
+      <path d="M22 76H78" stroke={W} strokeWidth="3" strokeLinecap="round" />
+      <circle cx="40" cy="62" r="9" fill={W} />
+      <circle cx="62" cy="40" r="8" fill={C} stroke={W} strokeWidth="2.6" />
+      <path d="M54 30A16 16 0 1 0 64 54" stroke={W} strokeWidth="3" strokeLinecap="round" fill="none" />
+    </>);
     // Couper par en dessous : le bord, et la barre qui ferme le passage du premier rang.
     case 'l35': return (<>
       <path d="M22 76H78" stroke={W} strokeWidth="3" strokeLinecap="round" />

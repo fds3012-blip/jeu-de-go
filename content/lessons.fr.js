@@ -168,6 +168,10 @@ const L_WATARI_M = L_WATARI.map(r => [...r].reverse().join(''));
 // `M` : la même forme en miroir.
 const L_DESSOUS = [...V.slice(0, 5), '......O..', 'XXXXXXO..', 'OOOO.XO..', '......O..'];
 const L_DESSOUS_M = L_DESSOUS.map(r => [...r].reverse().join(''));
+// Couper, puis reprendre : les pierres blanches A2-C2 et D1 veulent passer. Seul B1 coupe. Si Blanc relie en C1, E1 le met
+// en atari ; s'il prend B1 en A1, tu reprends en B1 : prise en retour de six pierres. `M` : la même forme en miroir.
+const L_REPRISE = [...V.slice(0, 5), '......O..', 'XXXXXXO..', 'OOOX..O..', '...O..O..'];
+const L_REPRISE_M = L_REPRISE.map(r => [...r].reverse().join(''));
 export const CHAPITRES = [
   { id: 'c1', titre: 'Les bases', intro: 'Sept leçons courtes pour jouer ta première partie.', fin: 'Tu connais les règles du go.', lecons: ['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7'] },
   // Chapitre en cours d'écriture (`complet: false`) : sa dernière leçon ne ferme pas encore le chapitre.
@@ -175,7 +179,7 @@ export const CHAPITRES = [
   { id: 'c3', titre: 'Capturer et sauver', intro: 'Des pièges pour prendre plus de pierres.', lecons: ['l9', 'l10', 'l11', 'l26'], complet: false },
   { id: 'c4', titre: 'Vie et mort', intro: 'Quand un groupe vit, quand il meurt.', lecons: ['l12', 'l13', 'l14', 'l17', 'l24', 'l25'], complet: false },
   { id: 'c5', titre: 'Fin de partie et comptage', intro: 'Finir proprement, puis compter juste.', lecons: ['l15', 'l16', 'l22', 'l23', 'l32', 'l33'], complet: false },
-  { id: 'c6', titre: 'Formes et tesuji', intro: 'Les bonnes formes et les coups malins du go.', lecons: ['l18', 'l19', 'l20', 'l21', 'l34', 'l35'], complet: false }
+  { id: 'c6', titre: 'Formes et tesuji', intro: 'Les bonnes formes et les coups malins du go.', lecons: ['l18', 'l19', 'l20', 'l21', 'l34', 'l35', 'l36'], complet: false }
 ];
 export const LESSONS = [
   { id: 'l1', title: 'Libertés et capture', desc: 'La règle qui fait tout le jeu', steps: [
@@ -737,5 +741,19 @@ export const LESSONS = [
       text: 'À toi : empêche Blanc de relier ses pierres.',
       ok: 'Coupé au premier rang : E2 et D1 se répondent.', no: 'Coupe au premier rang, sous le passage E2.',
       refus: [{ points: ['E2', 'D1'], no: 'Blanc répond en E1 : tu ne coupes plus sans ko.' }] }
+  ] },
+  { id: 'l36', title: 'Couper, puis reprendre', desc: 'La coupe au premier rang', steps: [
+    { kind: 'info', rows: L_REPRISE, geste: { pose: 'B1' }, demo: [{ pose: 'B1', couleur: 'B' }],
+      text: 'Blanc veut passer en C1. Coupe d’abord au point vert.' },
+    { kind: 'info', rows: L_REPRISE, avant: [{ pose: 'B1', couleur: 'B' }], geste: { pose: 'E1' },
+      demo: [{ pose: 'C1', couleur: 'W' }, { pose: 'E1', couleur: 'B' }, { atari: ['C1'] }],
+      text: 'Blanc relie en C1 ? Atari au point vert : cinq pierres en danger.' },
+    { kind: 'info', rows: L_REPRISE, avant: [{ pose: 'B1', couleur: 'B' }, { pose: 'C1', couleur: 'W' }, { pose: 'E1', couleur: 'B' }],
+      geste: { pose: 'B1' }, demo: [{ pose: 'A1', couleur: 'W' }, { pose: 'B1', couleur: 'B' }],
+      text: 'Blanc prend B1 ? Reprends au point vert : prise en retour, six pierres.' },
+    { kind: 'move', rows: L_REPRISE_M, accept: ['H1'],
+      text: 'À toi : empêche Blanc de passer sous ta pierre.',
+      ok: 'Coupé : relier le mettrait en atari, prendre finit en prise en retour.', no: 'Coupe au premier rang, au bout des pierres blanches.',
+      refus: [{ points: ['E1', 'G1'], no: 'Blanc prend H1 : tu ne coupes plus sans ko.' }] }
   ] }
 ];

@@ -59,7 +59,7 @@ function ouverts(pos: Position): number[] {
 }
 
 const LENT = 60_000;
-const IDS = ['l32', 'l33', 'l34', 'l35'];
+const IDS = ['l32', 'l33', 'l34', 'l35', 'l36'];
 
 describe('leçons 32 et suivantes : place dans le programme (#16)', () => {
   it('chaque leçon a 4 à 6 étapes, sa phrase de fin et sa série de pratique', () => {
@@ -73,7 +73,7 @@ describe('leçons 32 et suivantes : place dans le programme (#16)', () => {
   it('la valeur d’un coup et le sente avant le gote prolongent « Fin de partie et comptage », le watari « Formes et tesuji »', () => {
     const c = Object.fromEntries(CHAPITRES.map(x => [x.id, x]));
     expect(c.c5.lecons.map(l => l.id)).toEqual(['l15', 'l16', 'l22', 'l23', 'l32', 'l33']);
-    expect(c.c6.lecons.map(l => l.id)).toEqual(['l18', 'l19', 'l20', 'l21', 'l34', 'l35']);
+    expect(c.c6.lecons.map(l => l.id)).toEqual(['l18', 'l19', 'l20', 'l21', 'l34', 'l35', 'l36']);
     expect(LESSONS.map(l => l.id)).toEqual(CHAPITRES.flatMap(x => x.lecons.map(l => l.id)));
   });
   it('chaque consigne tient en 12 mots ; chaque geste « pose » est sur le point vert ; au plus une étape sans geste', () => {
@@ -298,5 +298,57 @@ describe('leçon 35 : couper par en dessous', () => {
     const e1 = ok(play(pos, at('E1')));
     expect(coupent(ok(play(e1, at('E2'))), H2, C2, ZONE_M)).toEqual(['D1']);
     expect(coupent(ok(play(e1, at('D1'))), H2, C2, ZONE_M)).toEqual(['E2']);
+  });
+});
+
+describe('leçon 36 : couper, puis reprendre', () => {
+  const R = step<Info>('l36', 0).rows;
+  const ZONE = [7, 8].flatMap(y => [0, 1, 2, 3, 4, 5].map(x => y * N + x));
+  const ZONE_M = ZONE.map(p => Math.floor(p / N) * N + (N - 1 - (p % N)));
+  const B2 = at('B2'), G2 = at('G2');
+  const coupent = (pos: Position, a: number, b: number, zone: number[]) =>
+    zone.filter(p => !pos.board[p] && issueConnexion(pos, p, a, b, zone) === -1).map(lab).sort();
+
+  it('la zone est fermée ; Blanc au trait passe', () => {
+    expect(defautsConnexion(avec(R, 1), B2, G2, ZONE)).toEqual([]);
+    expect(defautsConnexion(avec(step<Move>('l36', 3).rows, 1), at('H2'), at('C2'), ZONE_M)).toEqual([]);
+    expect(evaluerConnexion(avec(R, 2), B2, G2, ZONE)).toBe(1);
+  });
+
+  it('l36.1 : B1 est le seul coup qui coupe ; ensuite, toute réponse blanche reste coupée', () => {
+    const pos = avec(R, 1);
+    expect(coupent(pos, B2, G2, ZONE)).toEqual(['B1']);
+    expect(evaluerConnexion(ok(play(pos, at('B1'))), B2, G2, ZONE)).toBe(-1);
+    expect(images(step<Info>('l36', 0)).at(-1)!.board[at('B1')]).toBe(1);
+  });
+
+  it('l36.2 : Blanc relie en C1 ; E1 est la seule coupe, et met cinq pierres blanches en atari', () => {
+    const r = suite(avec(R, 1), ['B1', 'C1']);
+    expect(coupent(r, B2, G2, ZONE)).toEqual(['E1']);
+    const e1 = ok(play(r, at('E1')));
+    const g = groupAt(e1.board, N, at('C1'));
+    expect(g.stones.length).toBe(5);
+    expect(labels(g.liberties)).toEqual(['A1']);
+    const s = step<Info>('l36', 1);
+    expect(images(s).at(-1)!.board).toEqual(e1.board);
+    expect(labels(images(s).at(-1)!.atari)).toEqual(labels(g.stones));
+  });
+
+  it('l36.3 : Blanc prend B1 en A1 ; Noir reprend en B1 et prend six pierres (prise en retour)', () => {
+    const a1 = suite(avec(R, 1), ['B1', 'C1', 'E1', 'A1']);
+    expect(a1.board[at('B1')]).toBe(0);
+    expect(a1.ko).toBe(-1);
+    const r = ok(play(a1, at('B1')));
+    expect(r.captures[1] - a1.captures[1]).toBe(6);
+    const s = step<Info>('l36', 2);
+    expect(images(s).at(-1)!.board).toEqual(r.board);
+  });
+
+  it('l36.4 : en miroir, seul H1 coupe ; après E1 ou G1, Blanc prend H1 et Noir ne coupe plus sans ko', () => {
+    const m = step<Move>('l36', 3);
+    expect(m.rows).toEqual(R.map(r => [...r].reverse().join('')));
+    const pos = avec(m.rows, 1), H2 = at('H2'), C2 = at('C2');
+    expect(coupent(pos, H2, C2, ZONE_M)).toEqual(m.accept);
+    for (const l of m.refus![0].points) expect(coupent(suite(pos, [l, 'H1']), H2, C2, ZONE_M), l).toEqual([]);
   });
 });

@@ -1014,6 +1014,7 @@ export const en = {
   'acquis.l32': 'You count what a move is worth, and play the biggest one.',
   'acquis.l33': 'You play sente first, even when it is smaller.',
   'acquis.l34': 'You connect your stones underneath, along the first line.',
+  'acquis.l36': 'You cut on the first line, and finish with a snapback.',
   'acquis.l35': 'You cut, on the first line, stones that try to pass underneath.',
   'acquis.defaut': 'One more lesson in your pocket.',
   'lecteur.progression': 'Lesson progress',

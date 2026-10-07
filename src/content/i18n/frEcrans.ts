@@ -815,6 +815,7 @@ export const frEcrans = {
   'acquis.l32': 'Tu comptes ce que vaut un coup, et tu joues le plus grand.',
   'acquis.l33': 'Tu joues le sente d’abord, même s’il est plus petit.',
   'acquis.l34': 'Tu relies tes pierres par en dessous, au premier rang.',
+  'acquis.l36': 'Tu coupes au premier rang, et tu finis par une prise en retour.',
   'acquis.l35': 'Tu coupes au premier rang les pierres qui veulent passer dessous.',
   'acquis.defaut': 'Une leçon de plus dans ta poche.',
   'lecteur.progression': 'Progression de la leçon',
