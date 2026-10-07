@@ -165,6 +165,12 @@ function motif(id: string, W: string, C: string): ReactElement {
       <circle cx="60" cy="52" r="9" fill={C} stroke={W} strokeWidth="2.6" />
       <circle cx="60" cy="74" r="9" fill={W} />
     </>);
+    // La valeur d'un coup : une balance, deux plateaux inégaux.
+    case 'l32': return (<>
+      <path d="M50 26V70M30 74H70M28 40H72" stroke={W} strokeWidth="3" strokeLinecap="round" fill="none" />
+      <circle cx="30" cy="54" r="10" fill={W} />
+      <circle cx="70" cy="50" r="6" fill={C} stroke={W} strokeWidth="2.6" />
+    </>);
     // Agrandir ou réduire : un espace, et les deux flèches qui le poussent ou le serrent.
     case 'l24': return (<>
       <path d="M34 50H66" stroke={W} strokeWidth="3" strokeDasharray="4 5" strokeLinecap="round" />

@@ -1009,6 +1009,7 @@ export const en = {
   'acquis.l29': 'You play the corners, then the sides, without crowding your stones.',
   'acquis.l30': 'You block the 3-3 invasion, then bar White’s way.',
   'acquis.l31': 'You answer the approach on your 3-4 point, then extend.',
+  'acquis.l32': 'You count what a move is worth, and play the biggest one.',
   'acquis.defaut': 'One more lesson in your pocket.',
   'lecteur.progression': 'Lesson progress',
   'lecteur.lireExplication': 'Read the explanation',

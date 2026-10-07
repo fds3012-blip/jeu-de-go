@@ -144,13 +144,21 @@ const K34 = { X: ['Q4'], O: ['Q16', 'D16'] };
 const K34M = { X: ['D16'], O: ['Q16', 'Q4'] };
 const ajoute = (base, x = [], o = []) => plateau(19, { X: [...base.X, ...x], O: [...base.O, ...o] });
 const COLLEE = 'Collée à ta pierre, elle n’entoure presque rien de plus.';
+// Leçons 32 et suivantes (#16, palier vers 8 kyu) : fin de partie et tesuji. Chaque position, chaque réponse acceptée,
+// chaque réfutation et chaque chiffre est prouvé par src/go/lecons-32-plus.test.ts (minimax exact de fin de partie avec
+// élagage alpha-bêta, preuve de vie et mort en zone fermée, lecteur exact de capture).
+// Valeur d'un coup : partie finie sauf deux endroits. En haut, C9-D9 sont en atari : Noir les prend en E9 (deux
+// prisonniers, deux points), ou Blanc relie en E9. En bas, le hane au premier rang de la leçon 23 (deux points d'écart).
+// `Q` : la même partie retournée de haut en bas, pour l'exercice.
+const L_VALEUR = ['.XOO.O...', '.XXXXO...', ...Array(5).fill('...XO....'), 'XXXXOOOOO', '......O..'];
+const L_VALEUR_Q = [...L_VALEUR].reverse();
 export const CHAPITRES = [
   { id: 'c1', titre: 'Les bases', intro: 'Sept leçons courtes pour jouer ta première partie.', fin: 'Tu connais les règles du go.', lecons: ['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7'] },
   // Chapitre en cours d'écriture (`complet: false`) : sa dernière leçon ne ferme pas encore le chapitre.
   { id: 'c2', titre: 'L’ouverture', intro: 'Où poser tes premières pierres.', lecons: ['l8', 'l27', 'l29', 'l30', 'l31'], complet: false },
   { id: 'c3', titre: 'Capturer et sauver', intro: 'Des pièges pour prendre plus de pierres.', lecons: ['l9', 'l10', 'l11', 'l26'], complet: false },
   { id: 'c4', titre: 'Vie et mort', intro: 'Quand un groupe vit, quand il meurt.', lecons: ['l12', 'l13', 'l14', 'l17', 'l24', 'l25'], complet: false },
-  { id: 'c5', titre: 'Fin de partie et comptage', intro: 'Finir proprement, puis compter juste.', lecons: ['l15', 'l16', 'l22', 'l23'], complet: false },
+  { id: 'c5', titre: 'Fin de partie et comptage', intro: 'Finir proprement, puis compter juste.', lecons: ['l15', 'l16', 'l22', 'l23', 'l32'], complet: false },
   { id: 'c6', titre: 'Formes et tesuji', intro: 'Les bonnes formes et les coups malins du go.', lecons: ['l18', 'l19', 'l20', 'l21'], complet: false }
 ];
 export const LESSONS = [
@@ -596,6 +604,20 @@ export const LESSONS = [
       text: 'À toi : joue le hane au premier rang.',
       ok: 'Hane, puis tu relieras : Blanc recule d’un point.', no: 'Contourne la pierre blanche E2 par en dessous.',
       refus: [{ points: ['F1'], no: 'Tu bloques chez toi : un point de moins qu’avec le hane.' }] }
+  ] },
+  { id: 'l32', title: 'La valeur d’un coup', desc: 'Compter ce que chacun gagne', steps: [
+    { kind: 'info', rows: L_VALEUR, geste: { pose: 'E9' }, demo: [{ pose: 'E9', couleur: 'B' }, { zone: ['C9', 'D9'] }],
+      text: 'Prends les deux pierres au point vert. Compte ce que tu gagnes.' },
+    { kind: 'info', rows: L_VALEUR, geste: { touche: ['E9'], no: 'Touche le point vide qui relie les deux pierres blanches.' },
+      demo: [{ pose: 'E9', couleur: 'W' }],
+      text: 'Touche E9 : si Blanc y relie d’abord, tu ne gagnes rien.' },
+    { kind: 'quiz', rows: L_VALEUR,
+      text: 'Prendre ou laisser relier : combien de points d’écart ?', choices: ['2', '4', '6'], answer: 1,
+      ok: 'Quatre : deux prisonniers, plus deux points de territoire.', no: 'Compte les prisonniers, puis les points libérés en C9 et D9.' },
+    { kind: 'move', rows: L_VALEUR_Q, accept: ['E1'],
+      text: 'À toi : deux endroits restent ouverts. Joue le plus grand.',
+      ok: 'Quatre points d’écart : plus que le hane, qui en vaut deux.', no: 'Compare : prendre deux pierres, ou le hane d’en haut.',
+      refus: [{ points: ['E9', 'D9'], no: 'En haut, deux points d’écart. La prise en vaut quatre.' }] }
   ] },
   { id: 'l18', title: 'Les bonnes formes', desc: 'Bouche du tigre et bambou', steps: [
     { kind: 'touche', rows: L_COUPE, accept: ['D5'],

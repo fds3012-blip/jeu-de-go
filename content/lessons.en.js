@@ -288,6 +288,16 @@ export const LESSONS_EN = {
       ok: 'Atari: White must connect, then you close the bottom too.', no: 'Look for the atari: White will have to answer.',
       refus: ['Gote first: White connects at E8. Two points less.'] }
   ] },
+  l32: { title: 'What a move is worth', desc: 'Count what each side gains', steps: [
+    { text: 'Capture the two stones at the green point. Count what you gain.' },
+    { text: 'Tap E9: if White connects there first, you gain nothing.',
+      geste: { no: 'Tap the empty point that connects the two white stones.' } },
+    { text: 'Capture or let White connect: how many points apart?', choices: ['2', '4', '6'],
+      ok: 'Four: two prisoners, plus two points of territory.', no: 'Count the prisoners, then the points freed at C9 and D9.' },
+    { text: 'Your turn: two places are still open. Play the biggest.',
+      ok: 'Four points apart: more than the hane, worth two.', no: 'Compare: capturing two stones, or the hane at the top.',
+      refus: ['At the top, two points apart. The capture is worth four.'] }
+  ] },
   l23: { title: 'First-line hane', desc: 'Bend around, then connect', steps: [
     { text: 'Hane (a move that bends around a stone): play the green point. White blocks, you connect.' },
     { text: 'White blocks. Your stone is in atari: connect it.',
