@@ -318,7 +318,7 @@ export const LESSONS = [
     { kind: 'move', rows: TROIS, accept: ['K4', 'L4', 'K3', 'D10', 'C10', 'D11'],
       text: 'À toi : prends un coin libre.',
       ok: 'Bien : un coin se garde avec peu de pierres.', no: 'Vise un coin vide, sur la 3e ou la 4e ligne.',
-      refus: [{ points: ['E4', 'D5', 'C4', 'D3'], no: COLLEE }] },
+      refus: [{ points: ['E4', 'D5', 'D3'], no: COLLEE }] },
     { kind: 'quiz', rows: TROIS,
       text: 'Pour Noir : K4, un coin libre, ou E4, collé à D4 ?', choices: ['K4', 'E4'], answer: 0,
       ok: 'K4 : tout un coin. E4 n’ajoute presque rien à D4.', no: 'Collée à D4, la pierre E4 entoure peu de points neufs.' },
@@ -337,7 +337,7 @@ export const LESSONS = [
       text: 'À toi : Blanc entre au san-san. Bloque-le.',
       ok: 'Bien : ta pierre touche la sienne et lui barre la route.', no: 'Pose ta pierre contre la sienne : en D3 ou en C4.',
       refus: [
-        { points: ['C2', 'D2', 'B3', 'B4'], no: 'Par en dessous, tu ne bloques rien : Blanc avance.' },
+        { points: ['C2', 'D2', 'B3'], no: 'Par en dessous, tu ne bloques rien : Blanc avance.' },
         { points: ['E4', 'D5'], no: 'Trop loin de sa pierre : Blanc avance d’un pas.' }
       ] },
     { kind: 'info', rows: ajoute(SS), cadre: 'bas-gauche', avant: [{ pose: 'C3', couleur: 'W' }, { pose: 'D3', couleur: 'B' }],
@@ -358,12 +358,12 @@ export const LESSONS = [
     { kind: 'info', rows: ajoute(K34, ['C4'], ['E3']), cadre: 'bas-gauche', geste: { pose: 'D3' },
       demo: [{ pose: 'D3', couleur: 'B' }, { pose: 'E4', couleur: 'W' }],
       text: 'Tsuke (coup au contact) : colle-toi dessous au point vert. Blanc monte.' },
-    { kind: 'move', rows: ajoute(K34M, ['D3'], ['C5']), cadre: 'bas-gauche', accept: ['C4', 'E4'],
-      text: 'À toi : tsuke dessous, ou kosumi (un pas en diagonale).',
-      ok: 'Bien : c’est une des deux réponses classiques.', no: 'Tsuke : sous sa pierre. Kosumi : en diagonale de la tienne.',
+    { kind: 'move', rows: ajoute(K34M, ['D3'], ['C5']), cadre: 'bas-gauche', accept: ['C4', 'E4', 'C9'],
+      text: 'À toi : tsuke, kosumi (un pas en diagonale) ou pince (attaque de loin).',
+      ok: 'Bien : c’est une des réponses classiques au kakari.', no: 'Tsuke : sous sa pierre. Kosumi : en diagonale de la tienne.',
       refus: [
         { points: ['B5'], no: 'Sur la 2e ligne, ta pierre ne protège rien.' },
-        { points: ['C3', 'D4'], no: COLLEE }
+        { points: ['C3'], no: COLLEE }
       ] },
     { kind: 'move', rows: ajoute(K34, ['C4', 'D3'], ['E3', 'E4']), cadre: 'bas-gauche', accept: ['D6', 'C6', 'C7', 'D5'],
       text: 'Blanc a monté. Étends-toi le long du bord.',
@@ -371,7 +371,7 @@ export const LESSONS = [
       refus: [
         { points: ['D4', 'C3'], no: 'Trop lent : Blanc prend le côté avant toi.' },
         { points: ['E5'], no: 'Blanc coupe en D4 : tes pierres sont séparées.' },
-        { points: ['F4'], no: 'Trop loin : Blanc glisse en D2, sous tes pierres.' }
+        { points: ['F4'], no: 'Trop loin : Blanc coupe tes pierres, ou glisse dessous.' }
       ] }
   ] },
   { id: 'l9', title: 'Le filet', desc: 'Enfermer une pierre sans la toucher', steps: [

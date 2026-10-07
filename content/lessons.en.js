@@ -135,12 +135,12 @@ export const LESSONS_EN = {
   l31: { title: 'The 3-4 point and the approach', desc: 'The kakari and its answers', steps: [
     { text: 'Play a 3-4 point (komoku: 3rd line from one edge, 4th from the other) at the green point. White approaches: kakari.' },
     { text: 'Tsuke (a contact move): attach underneath at the green point. White stands up.' },
-    { text: 'Your turn: tsuke underneath, or kosumi (one diagonal step).',
-      ok: 'Good: that is one of the two classic answers.', no: 'Tsuke: under White’s stone. Kosumi: diagonal from yours.',
+    { text: 'Your turn: tsuke, kosumi (one diagonal step) or pincer (attack from afar).',
+      ok: 'Good: that is one of the classic answers to the kakari.', no: 'Tsuke: under White’s stone. Kosumi: diagonal from yours.',
       refus: ['On the 2nd line, your stone protects nothing.', STUCK] },
     { text: 'White stood up. Extend along the edge.',
       ok: 'Good: your stones gain room on the side.', no: 'Go up along the left edge, without touching White.',
-      refus: ['Too slow: White takes the side before you.', 'White cuts at D4: your stones are split.', 'Too far: White slides in at D2, under your stones.'] }
+      refus: ['Too slow: White takes the side before you.', 'White cuts at D4: your stones are split.', 'Too far: White cuts your stones, or slides underneath.'] }
   ] },
   l9: { title: 'The net', desc: 'Trap a stone without touching it', steps: [
     { text: 'Atari at the green point? It runs to a white stone: safe.' },

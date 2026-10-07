@@ -108,7 +108,8 @@ for (const largeur of [390, 320]) {
 }
 
 test('?lang=en, 320 px : les nouveaux chapitres et la leçon 9 s’affichent en anglais', async ({ page }) => {
-  const avant = Object.fromEntries(LESSONS_FR.filter(l => Number(l.id.slice(1)) < 9 || l.id === 'l27').map(l => [l.id, l.steps.length]));
+  // Toutes les leçons rangées avant la 9 sur le chemin (chapitres 1 et 2, dont l27 et l29 à l31) sont faites.
+  const avant = Object.fromEntries(LESSONS_FR.slice(0, LESSONS_FR.findIndex(l => l.id === 'l9')).map(l => [l.id, l.steps.length]));
   await page.addInitScript(p => localStorage.setItem('go.lecons.v1', JSON.stringify(p)), avant);
   await page.setViewportSize({ width: 320, height: 844 });
   await page.emulateMedia({ reducedMotion: 'reduce' });

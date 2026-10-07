@@ -47,7 +47,13 @@ preuves.reglages = REGLAGES;
 const enregistrer = (retirer: string[] = []) => {
   const disque: Preuves | null = existsSync(FIXTURE) ? JSON.parse(readFileSync(FIXTURE, 'utf8')) : null;
   if (disque && JSON.stringify(disque.reglages) === JSON.stringify(REGLAGES)) {
-    for (const [k, v] of Object.entries(disque.positions)) if (!(k in preuves.positions)) preuves.positions[k] = v;
+    for (const [k, v] of Object.entries(disque.positions)) {
+      const ici = preuves.positions[k];
+      if (!ici) { preuves.positions[k] = v; continue; }
+      // Même position analysée des deux côtés : on garde chaque coup jugé, d'où qu'il vienne.
+      for (const [m, vals] of Object.entries(v.coups)) if (!ici.coups[m]) { ici.coups[m] = vals; (ici.repliques ??= {})[m] = v.repliques?.[m] ?? []; }
+      if (ici.racines.length < v.racines.length) ici.racines = v.racines;
+    }
   }
   for (const k of retirer) delete preuves.positions[k];
   const triees = Object.fromEntries(Object.entries(preuves.positions).sort(([a], [b]) => a.localeCompare(b)));

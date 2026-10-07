@@ -73,6 +73,7 @@ describe('leçons d’ouverture et de joseki : forme (#16)', () => {
     expect(premier(/kakari/i)).toMatch(/Blanc approche : kakari/);
     expect(premier(/tsuke/i)).toMatch(/Tsuke \(coup au contact\)/);
     expect(premier(/kosumi/i)).toMatch(/kosumi \(un pas en diagonale\)/);
+    expect(premier(/pince/i)).toMatch(/pince \(attaque de loin\)/);
     for (const m of ['sanSan', 'komoku', 'kakari', 'tsuke', 'kosumi', 'hoshi']) expect(MOTS.some(x => x.id === m), m).toBe(true);
   });
   it('les exercices en miroir : même forme que la démonstration, retournée sur la diagonale du coin', () => {
@@ -80,7 +81,7 @@ describe('leçons d’ouverture et de joseki : forme (#16)', () => {
     const miroir = (l: string) => { const x = fromLabel(l, 19) % 19, y = 19 - Math.floor(fromLabel(l, 19) / 19); return `${'ABCDEFGHJKLMNOPQRST'[y - 1]}${x + 1}`; };
     expect(miroir('D5')).toBe('E4');
     expect((lecon('l30').steps[3] as Move).accept).toEqual(['D5', 'C5', 'C6'].map(miroir));
-    expect((lecon('l31').steps[2] as Move).accept).toEqual(['D3', 'D5'].map(miroir));
+    expect((lecon('l31').steps[2] as Move).accept).toEqual(['D3', 'D5', 'J3'].map(miroir));
   });
 });
 
