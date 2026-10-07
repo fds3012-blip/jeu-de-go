@@ -1,0 +1,19 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`partie réelle (#424, 9 × 9) rejouée coup par coup : chaque moment dit est vrai > relève les moments attendus de cette partie 1`] = `
+[
+  "6:zone-libre",
+  "8:zone-libre",
+  "20:atari",
+  "22:atari",
+  "32:prise-ratee",
+  "34:prise-ratee",
+  "36:prise-ratee",
+  "38:prise-ratee",
+  "40:prise-ratee",
+  "42:prise-ratee",
+  "44:prise-ratee",
+  "46:prise-ratee",
+  "48:prise-ratee",
+]
+`;
