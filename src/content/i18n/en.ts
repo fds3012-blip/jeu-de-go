@@ -855,6 +855,7 @@ export const en = {
   'bilan3.tableau': 'Your moves, by rating',
   'bilan3.sansKataGo': 'Without KataGo, Mochi only rates what is sure: no Brilliant, no Best move, no Miss.',
   'bilan3.kataGoCharge': 'Mochi is getting KataGo ready, just once (4 MB).',
+  'bilan3.kataGoProgression': '{recu} / {total} MB',
   'bilan3.sansKataGo.reseau': 'KataGo could not be downloaded (connection): Mochi only rates what is sure.',
   'bilan3.sansKataGo.appareil': 'KataGo cannot run on this device: Mochi only rates what is sure.',
   'bilan3.sansKataGo.delai': 'KataGo took too long to start: Mochi only rates what is sure.',

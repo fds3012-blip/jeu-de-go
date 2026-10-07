@@ -1,0 +1,24 @@
+Réseau g170-b6c96-s175395328-d26788732 (fichier g170-b6c96-s175395328-d26788732.f5d32604.bin.gz)
+Source : https://github.com/lightvector/KataGo/blob/master/cpp/tests/models/g170-b6c96-s175395328-d26788732.bin.gz
+SHA-256 : f5d32604e3675c480c7c8f6aa579a1ea857135628a0afccc8fa56330fbacd38d (fichier identique, seul le nom change)
+Licence : celle du dépôt KataGo (fichier LICENSE, licence de type MIT, « all OTHER content in this repo »), reproduite ci-dessous.
+
+----------------------------------------
+
+Copyright 2025 David J Wu ("lightvector") and/or other authors of the content in this repository.
+(See 'CONTRIBUTORS' file for a list of authors as well as other indirect contributors).
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+associated documentation files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge, publish, distribute,
+sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or
+substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
+NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

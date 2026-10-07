@@ -13,7 +13,9 @@ import { gagnerXp, sourceXpPartie, type SourceXp } from './xp';
 import { useSupabase } from '../data/client';
 import { fr } from '../ui/typo';
 import { nombre as virgule, t as tr } from '../content/i18n/secondaires';
-import { useProfil } from './hooks';
+import { readLocal, useProfil } from './hooks';
+import { PARTIES_KEY, type Parties } from './home';
+import { prechargerApresPartie } from '../engine';
 import { usePreferences, useStored } from './settings';
 import { carteTerritoire, conseilPasser, passerEnEvidence, coupsJoues, descriptionIndices, descriptionQuiMene, DUREE_QUI_MENE, indicesRestants, INDICES_PAR_PARTIE, libelleAvantage, libelleCoup, messageAtari, messageIndice, metEnAtari, nouveauxAtari, partNoir, phraseQuiMene, QUI_MENE_PAR_PARTIE, quiMeneDisponible, quiMeneRestants } from './partie';
 import { messageComptage, modeComptage } from './partie';
@@ -490,6 +492,9 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
 
   // Mesure : une partie terminée (score validé ou abandon). Ajout isolé pour faciliter les fusions.
   useEffect(() => { if (phase === 'end') track(EVENTS.partieTerminee, { mode: ai ? 'ordi' : 'deux', adversaire: ai?.id, taille: size, coups: history.length - 1, fin: resigned ? 'abandon' : 'score', gagnant: (resigned ? 3 - resigned : sc.winner) === 1 ? 'noir' : 'blanc' }); }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
+  // #475 : la revue est la suite la plus probable. Préchargement discret du réseau KataGo, seulement si les règles
+  // de src/engine/katago/prechargement.ts le permettent (pas à la première partie, pas en données mobiles). Ajout isolé.
+  useEffect(() => { if (phase === 'end') void prechargerApresPartie(readLocal<Parties>(PARTIES_KEY, { n: 0 }).n); }, [phase]);
   // Progression (issue #109) : la partie terminée rapporte de l'XP, une victoire contre l'ordi davantage
   // (au moins 10 coups : un abandon immédiat ne rapporte rien ; une partie reprise depuis la revue, rien : #233, P5).
   // L'XP est acquise dès que le résultat est connu (#233, P4) : si le joueur quitte pendant le récit du score,

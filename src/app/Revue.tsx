@@ -39,6 +39,7 @@ import { numerosDesCoups } from '../go/numeros';
 import { empreinte, erreursParPhaseDe, garderRevue } from './statsJoueur';
 import '../ui/revue.css';
 import { tp } from '../content/i18n/partage';
+import { useProgressionKataGo } from './progressionKataGo';
 
 // #364 : feuille « Partager » du bilan, chargée au premier toucher (image, lien, SGF, défi).
 const FeuillePartage = lazy(() => import('./PartagePartie').then(m => ({ default: m.PartagePartie })));
@@ -100,6 +101,8 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
   const [arret, setArret] = useState(false);
   // #424 : KataGo en préparation (téléchargement du réseau la première fois), puis la raison s'il n'a pas pu servir.
   const [prepare, setPrepare] = useState(true);
+  // #475 : « 2,1 / 3,8 Mo » pendant le téléchargement du réseau (rien s'il vient du cache).
+  const telechargement = useProgressionKataGo(prepare);
   const [sansKataGo, setSansKataGo] = useState<RaisonSansKataGo | null>(null);
   const mode = visites ? 'import' : adversaire ? 'ordi' : 'deux';
   // #365 : coordonnées, dernier coup et numéros des coups, selon les Réglages.
@@ -339,6 +342,8 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
           <div className="bilan-avance" aria-live="polite">
             <p className="bilan-avance-texte"><span>{fr(tr('bilan3.chargement'))}</span><b>{fr(tr('bilan3.pourcent', { p: pct }))}</b></p>
             {prepare && <p className="revue-note bilan-katago">{fr(tr('bilan3.kataGoCharge'))}</p>}
+            {/* Valeur qui change vite : visible, pas lue à voix haute (la phrase ci-dessus l'est). */}
+            {prepare && telechargement && <p className="revue-note bilan-katago-progression" aria-hidden="true" data-testid="katago-progression">{tr('bilan3.kataGoProgression', telechargement)}</p>}
             <div className="bilan-barre" role="progressbar" aria-label={tr('bilan3.progression')} aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}>
               <span style={{ transform: `scaleX(${pct / 100})` }} />
             </div>
