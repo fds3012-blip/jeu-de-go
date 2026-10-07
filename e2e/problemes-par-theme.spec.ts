@@ -99,7 +99,7 @@ test('nouveau record : la pastille le dit', async ({ page }) => {
   const r = REPONSES.get(id)!;
   await expect(plateau(page, r.taille)).toBeVisible();
   await jouer(page, r.coups[0], r.taille);
-  await expect(affilee(page)).toHaveText(/3 d’affilée\s*Record !/);
+  await expect(affilee(page)).toHaveText(/3 d’affilée\s*Record\u202F!/);
   await expect(affilee(page)).toHaveClass(/record/);
 });
 
