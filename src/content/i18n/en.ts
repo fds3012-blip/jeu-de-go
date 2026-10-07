@@ -1005,6 +1005,7 @@ export const en = {
   'acquis.l24': 'You take the point at the edge of the space: to live, or to kill.',
   'acquis.l25': 'You know the corner point, and that a ko is not life.',
   'acquis.l26': 'With an eye, you fill the outside liberties first.',
+  'acquis.l27': 'You attack a weak stone from the center side, and run yours there.',
   'acquis.l29': 'You play the corners, then the sides, without crowding your stones.',
   'acquis.l30': 'You block the 3-3 invasion, then bar White’s way.',
   'acquis.l31': 'You answer the approach on your 3-4 point, then extend.',

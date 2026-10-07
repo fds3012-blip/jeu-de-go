@@ -77,6 +77,8 @@ export const MOTIFS: Record<string, Motif> = {
   // Les groupes du coin : le point du coin, en jade, à côté du groupe noir.
   l25: { coin: true, noir: [[1, 2], [2, 2], [3, 2], [1, 3]], blanc: [[0, 1], [1, 1], [2, 1]], jade: [[0, 2]] },
   // La course avec un œil : le groupe noir et son œil dans le coin, en or ; le jade, une liberté du dehors.
+  // Attaquer et défendre : la pierre blanche seule entre deux pierres noires ; le jade, le point qui ferme le centre.
+  l27: { noir: [[0, 2], [3, 2]], blanc: [[2, 2]], jade: [[2, 1]] },
   l26: { coin: true, noir: [[0, 2], [1, 2], [2, 2], [1, 3]], blanc: [[3, 2], [3, 3]], or: [[0, 3]], jade: [[3, 1]] },
   // L'ouverture en 13 × 13 : deux coins pris, les deux autres libres ; le jade, un coin à prendre.
   l29: { noir: [[0, 3]], blanc: [[3, 0]], jade: [[3, 3], [0, 0]] },

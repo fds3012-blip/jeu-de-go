@@ -184,6 +184,13 @@ function motif(id: string, W: string, C: string): ReactElement {
       <g fill={C} stroke={W} strokeWidth="2.6"><circle cx="66" cy="40" r="8" /><circle cx="66" cy="58" r="8" /></g>
       <path d="M30 76H70" stroke={W} strokeWidth="3" strokeLinecap="round" />
     </>);
+    // Attaquer et défendre : la pierre faible contre le bord, et la flèche vers le centre, barrée.
+    case 'l27': return (<>
+      <path d="M22 76H78" stroke={W} strokeWidth="3" strokeLinecap="round" />
+      <circle cx="50" cy="62" r="9" fill={C} stroke={W} strokeWidth="2.6" />
+      <path d="M50 48V24M41 32 50 23 59 32" stroke={W} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <circle cx="50" cy="40" r="7" fill={W} />
+    </>);
     // L'ouverture en 13 × 13 : le plateau et ses quatre coins, pris un à un.
     case 'l29': return (<>
       <rect x="26" y="26" width="48" height="48" rx="2" stroke={W} strokeWidth="3" fill="none" />

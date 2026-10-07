@@ -326,5 +326,16 @@ export const LESSONS_EN = {
     { text: 'Your turn: win the race. Keep your eye for last.',
       ok: 'Outside first: White can’t touch your eye.', no: 'Fill a White liberty that doesn’t touch your group.',
       refus: ['Shared liberty: you put yourself in atari, White captures at J1.', 'You fill your eye: White captures at G1.'] }
+  ] },
+  l27: { title: 'Attack and defend', desc: 'The road to the center', steps: [
+    { text: 'Weak stone (alone in enemy area): close its way to the center, at the green point.' },
+    { text: 'If White plays first, it escapes at this same point. Tap it.',
+      geste: { no: 'Tap the point between its stone and the center.' } },
+    { text: 'Your turn: attack the marked stone. Close its way to the center.',
+      ok: 'Good: its road to the center is closed.', no: 'Play between the marked stone and the center.',
+      refus: ['You block it along the edge: it gets out at F4.'] },
+    { text: 'Your marked stone is weak. Run it toward the center.',
+      ok: 'Good: your stone takes the road to the center.', no: 'Move your stone away from the edge, toward the center.',
+      refus: ['On the 3rd line, you crawl instead of running to the center.', 'Toward the edge, you shrink: White closes the center at F6.'] }
   ] }
 };

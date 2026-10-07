@@ -1,4 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
+import { CHAPITRES } from '../src/content/lessons';
 
 // Issue #121 : zoom 200 % et reflow (WCAG 1.4.4 et 1.4.10).
 // - 195 × 422 : un iPhone de 390 px zoomé à 200 % ;
@@ -144,7 +145,8 @@ for (const c of CAS) {
       await page.goto('/');
       await onglet(page, 'Apprendre').click();
       await expect(page.locator('[data-chapitre="c1"] .gue li')).toHaveCount(7);
-      await expect(page.locator('[data-chapitre="c2"] .gue li')).toHaveCount(1);
+      // #16 : le chapitre 2 grandit (l8, puis l27…) : autant de pierres que de leçons.
+      await expect(page.locator('[data-chapitre="c2"] .gue li')).toHaveCount(CHAPITRES.find(x => x.id === 'c2')!.lecons.length);
       await sansDebord(page, 'Apprendre (7 leçons)');
       const cta = page.getByRole('button', { name: 'Reprendre la leçon : Compter les points' });
       await boutonLibre(cta, 'Apprendre (leçon 7)');

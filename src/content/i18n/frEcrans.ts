@@ -806,6 +806,7 @@ export const frEcrans = {
   'acquis.l24': 'Tu prends le point au bord de l’espace : pour vivre, ou pour tuer.',
   'acquis.l25': 'Tu connais le point du coin, et tu sais qu’un ko n’est pas une vie.',
   'acquis.l26': 'Avec un œil, tu bouches d’abord les libertés du dehors.',
+  'acquis.l27': 'Tu attaques une pierre faible côté centre, et tu y sors la tienne.',
   'acquis.l29': 'Tu joues les coins, puis les bords, sans coller tes pierres.',
   'acquis.l30': 'Tu bloques le san-san, puis tu barres la route à Blanc.',
   'acquis.l31': 'Tu réponds au kakari sur ton 3-4, puis tu t’étends.',
