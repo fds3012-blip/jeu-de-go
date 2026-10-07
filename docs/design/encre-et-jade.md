@@ -108,13 +108,13 @@ Le fichier CSS et les variables Figma portent les mêmes noms. `src/ui/tokens.te
 | `--accent-bord` | #1E8A5F | #1E8A5F | tranche du bouton en relief |
 | `--accent-press` | #34B07F | #34B07F | bouton principal pressé (mouvements réduits) |
 | `--on-accent` | #07231A | #07231A | texte posé sur jade ou sur or |
-| `--accent-texte` | #3CC48E | #17744D | jade utilisé comme texte |
+| `--accent-texte` | #3CC48E | #126541 | jade utilisé comme texte (foncé d’un cran en #465 : 5:1 ou plus sur tous les fonds clairs, halo compris) |
 | `--accent-trait` | #3CC48E | #1E8A5F | soulignés, point « à toi de jouer » |
 | `--danger` | #D2432C | #D2432C | sceaux, pastilles, bordures d'alerte |
 | `--on-danger` | #FFFFFF | #FFFFFF | texte posé sur hanko |
 | `--danger-texte` | #EC735A | #B23520 | hanko utilisé comme texte |
 | `--recompense` | #EFB84A | #EFB84A | fond des badges et séries |
-| `--recompense-texte` | #EFB84A | #8A5A00 | or utilisé comme texte |
+| `--recompense-texte` | #EFB84A | #7A5000 | or utilisé comme texte (foncé d’un cran en #465, même marge) |
 | `--focus` | #3CC48E | #1E8A5F | contour de focus clavier |
 | `--halo` | or à 11 % | or à 22 % | halo de lampe (dégradé radial sur `body`) |
 | `--ombre-relief` | tranche + halo jade | tranche + halo jade | ombre du bouton principal |

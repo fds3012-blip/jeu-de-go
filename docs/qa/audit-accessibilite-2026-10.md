@@ -47,6 +47,15 @@ Conditions : build `VITE_E2E=1` de la branche `a11y-461`, Chromium, 390 × 844 (
 | F | Feuilles modales | Le Tab sort de la feuille vers l'interface du navigateur avant d'y revenir. C'est le comportement natif de `<dialog>` en modal : rien n'est atteignable sous la feuille. | 2.4.3 | 0 | Pas un défaut. |
 | G | Tous | VoiceOver (iOS) et TalkBack (Android) réels non testés, en particulier la lecture du plateau-grille et le débit des annonces pendant une partie rapide. | 4.1.2, 4.1.3 | — | Demande un appareil. À faire lors de la recette Capacitor. |
 
+## Suite : points A à E corrigés (#465)
+
+- **A** : `--accent-texte` #126541 et `--recompense-texte` #7A5000 en clair : 5,2:1 ou plus sur tous les fonds clairs, haut du halo et `--surface-2` compris (`src/ui/tokens.test.ts`). Le sombre ne change pas.
+- **B** : un onglet trop étroit pour son nom entier montre « Appr. » ou « Probl. » (« Puzz. » en anglais) ; le nom accessible reste le nom entier. La bascule est une requête `@container` en em sur l'onglet (`src/ui/nav.css`).
+- **C** : sous-titres des lignes doubles du Profil et titre du Go du jour de l'accueil : retour à la ligne au lieu de « … ». « Précision, erreurs, bilan » devient « Précision, erreurs » : il était déjà coupé en 390 px ordinaire.
+- **D** : titre de l'onglet par écran (`src/app/titreEcran.ts`).
+- **E** : « Retour » du lecteur de leçon et de problème à −6 px au lieu de −8 px : entier dans l'écran à toutes les largeurs (il sortait de 2 px aussi en 320 px et en police doublée).
+- En plus : au zoom 200 %, le grade de l'accueil (« 15e kyu ») se coupait au milieu du mot.
+
 ## Tests ajoutés
 
 - `e2e/a11y-axe.spec.ts` (15 tests, environ 40 s) : axe sur les écrans clés en clair et en sombre ; coordonnées lisibles sur les 4 bois (au pixel) ; partie et Profil/Réglages à 195 px avec les polices web bloquées ; flèches de la revue. `AXE_INCOMPLETS=1` affiche aussi ce qu'axe ne sait pas trancher.

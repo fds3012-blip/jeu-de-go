@@ -150,7 +150,7 @@
   :root:not([data-theme="dark"]) {
     --bg: #EFE8DC; --surface: #FBF8F2; --surface-2: #E6DDCF; --line: #D8CDBC; --barre: #F7F2E9;
     --text: #1C1916; --muted: #675D53;
-    --accent-texte: #17744D; --danger-texte: #B23520; --recompense-texte: #8A5A00;
+    --accent-texte: #126541; --danger-texte: #B23520; --recompense-texte: #7A5000;
     --accent-trait: var(--jade-bord); --focus: var(--jade-bord);
     --onglet-jouer: var(--jade-bord); --onglet-apprendre: #A0680A; --onglet-problemes: var(--hanko); --onglet-profil: var(--indigo);
     --pierre-n-bord: rgba(28, 25, 22, 0);
@@ -164,7 +164,7 @@
 :root[data-theme="light"] {
   --bg: #EFE8DC; --surface: #FBF8F2; --surface-2: #E6DDCF; --line: #D8CDBC; --barre: #F7F2E9;
   --text: #1C1916; --muted: #675D53;
-  --accent-texte: #17744D; --danger-texte: #B23520; --recompense-texte: #8A5A00;
+  --accent-texte: #126541; --danger-texte: #B23520; --recompense-texte: #7A5000;
     --accent-trait: var(--jade-bord); --focus: var(--jade-bord);
     --onglet-jouer: var(--jade-bord); --onglet-apprendre: #A0680A; --onglet-problemes: var(--hanko); --onglet-profil: var(--indigo);
     --pierre-n-bord: rgba(28, 25, 22, 0);

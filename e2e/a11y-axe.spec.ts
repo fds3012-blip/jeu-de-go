@@ -1,7 +1,8 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { brancher, fauxServeur } from './fauxSupabase';
-import { jouer, ouvrirPlus, passerJusquAuScore, plateau } from './plateau';
+import { choisirMode, jouer, ouvrirPlus, passerJusquAuScore, plateau } from './plateau';
+import { GO_DU_JOUR } from '../src/content/goDuJour.gen';
 import { demarrerParcours, ouvrirRevue, preparerRevue } from './revueFactice';
 
 // #461 : audit WCAG 2.1 AA outillé. axe-core (règles wcag2a, wcag2aa, wcag21a, wcag21aa) passe sur chaque écran clé
@@ -311,4 +312,55 @@ test('revue : les flèches coup précédent / suivant sont des chevrons au trait
     expect(s.fill).toBe('none');
     expect(s.stroke).toBe(s.texte);
   }
+});
+
+// #465 : jouer en ligne. Le choix et l'attente du direct, et les parties lentes, gardent l'en-tête et la barre du bas.
+test('axe : jouer en ligne (direct : choix et attente ; parties lentes)', async ({ context }) => {
+  const serveur = fauxServeur();
+  const page = await brancher(context, serveur, {
+    'go.parties.v1': JSON.stringify({ n: 3 }),
+    'sb-supabase-auth-token': JSON.stringify(serveur.sessionCompte('ana.axe@exemple.test', 'Ana', '00000000-0000-4000-8000-0000000465c3')),
+  });
+  await page.goto('/');
+  await choisirMode(page, 'en_ligne');
+  const bascule = page.getByTestId('bascule-en-ligne');
+  await bascule.getByRole('button', { name: 'En direct' }).click();
+  await expect(page.getByTestId('direct-choix')).toBeVisible();
+  await verifier(page, 'En direct, choix');
+  await bascule.getByRole('button', { name: 'Partie lente' }).click();
+  await expect(page.getByTestId('lentes')).toBeVisible();
+  await verifier(page, 'Parties lentes');
+  await page.getByTestId('bascule-en-ligne').getByRole('button', { name: 'En direct' }).click();
+  await page.getByRole('button', { name: 'Trouver un adversaire' }).click();
+  await expect(page.getByTestId('direct-attente')).toBeVisible();
+  await verifier(page, 'En direct, attente');
+});
+
+// #465 (audit #461, C) : espacement du texte forcé (WCAG 1.4.12). Aucun texte coupé par « … » (ellipse ou nombre de
+// lignes limité), sur l'accueil (avec chacun des titres du Go du jour) et sur le Profil.
+const ESPACEMENT = `*, *::before, *::after { line-height: 1.5 !important; letter-spacing: .12em !important; word-spacing: .16em !important; }
+  p { margin-bottom: 2em !important; }`;
+async function textesCoupes(page: Page): Promise<string[]> {
+  return page.evaluate(() => [...document.querySelectorAll<HTMLElement>('body *')].filter(e => {
+    if (!e.getClientRects().length || e.closest('[aria-hidden="true"], .sr-only, svg')) return false;
+    const s = getComputedStyle(e);
+    if (s.textOverflow === 'ellipsis' && e.scrollWidth > e.clientWidth + 1) return true;
+    return s.webkitLineClamp !== 'none' && s.webkitLineClamp !== '' && e.scrollHeight > e.clientHeight + 1;
+  }).map(e => `${e.tagName.toLowerCase()}.${String(e.className).split(' ')[0]} « ${(e.textContent ?? '').trim().slice(0, 40)} »`));
+}
+test('espacement du texte forcé (1.4.12) : accueil et Profil sans texte coupé', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.locator('.cta')).toBeVisible();
+  await page.addStyleTag({ content: ESPACEMENT });
+  expect(await textesCoupes(page), 'Accueil').toEqual([]);
+  // Tous les titres du Go du jour, posés tour à tour dans la tuile (le titre du jour change chaque jour).
+  const titre = page.locator('.tuile-probleme b');
+  for (const [, t] of GO_DU_JOUR) {
+    await titre.evaluate((b, x) => { b.textContent = x; }, t);
+    expect(await textesCoupes(page), `Accueil, Go du jour « ${t} »`).toEqual([]);
+  }
+  await nav(page, 'Profil').click();
+  await expect(page.getByRole('button', { name: /^Réglages/ })).toBeVisible();
+  await page.addStyleTag({ content: ESPACEMENT });
+  expect(await textesCoupes(page), 'Profil').toEqual([]);
 });

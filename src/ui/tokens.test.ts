@@ -122,6 +122,22 @@ describe('tokens Encre & Jade', () => {
     for (const theme of [dark, light]) expect(theme['--halo']).toMatch(/^radial-gradient\(.*rgba\(239, 184, 74/);
   });
 
+  // #465 (audit #461, point A) : le jade et l'or en texte gardent une marge (5:1) en clair, sur tous les fonds de
+  // l'app, y compris le haut du halo, où l'or du halo (22 %) assombrit le papier : c'est là qu'ils tombaient à 4,5:1.
+  it('garde une marge au-dessus de 4,5:1 pour le jade et l\'or en texte, en clair', () => {
+    const halo = light['--halo'].match(/rgba\((\d+), (\d+), (\d+), \.(\d+)\)/)!;
+    const a = Number(`0.${halo[4]}`);
+    const bg = resolve(light, '--bg');
+    const melange = '#' + [1, 3, 5].map((i, k) => Math.round(parseInt(bg.slice(i, i + 2), 16) * (1 - a) + Number(halo[k + 1]) * a)
+      .toString(16).padStart(2, '0')).join('');
+    for (const fg of ['--accent-texte', '--recompense-texte']) {
+      for (const fond of [bg, melange, ...['--surface', '--surface-2', '--barre'].map(f => resolve(light, f))]) {
+        const r = contrast(resolve(light, fg), fond);
+        expect(r, `${fg} sur ${fond} = ${r.toFixed(2)}`).toBeGreaterThanOrEqual(5);
+      }
+    }
+  });
+
   it('définit le mode clair de la même façon (préférence système et choix manuel)', () => {
     expect(lightMedia).toEqual(lightAttr);
   });
