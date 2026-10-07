@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { jouer, plateau } from './plateau';
+import { motsEntiers, toucherAction } from './lecteur';
 import { LESSONS_FR, type LessonStep } from '../src/content/lessons';
 import { ACQUIS } from '../src/content/acquis';
 
@@ -14,10 +15,9 @@ const DOSSIER = process.env.CAPTURES_LECONS_OUVERTURE;
 const avant = (id: string) => Object.fromEntries(LESSONS_FR.slice(0, LESSONS_FR.findIndex(l => l.id === id)).map(l => [l.id, l.steps.length]));
 const etape = <K extends LessonStep['kind']>(id: string, i: number) => LESSONS_FR.find(l => l.id === id)!.steps[i] as Extract<LessonStep, { kind: K }>;
 
-async function sansDebordement(page: Page, ecran: string, textes = true) {
+async function sansDebordement(page: Page, ecran: string) {
   const { large, fenetre } = await page.evaluate(() => ({ large: document.documentElement.scrollWidth, fenetre: innerWidth }));
   expect(large, `défilement horizontal : ${ecran}`).toBeLessThanOrEqual(fenetre);
-  if (!textes) return;
   for (const b of await page.locator('.bubble p, .verdict').all()) {
     const { sw, cw } = await b.evaluate(e => ({ sw: e.scrollWidth, cw: e.clientWidth }));
     expect(sw, `texte coupé : ${ecran}`).toBeLessThanOrEqual(cw);
@@ -25,15 +25,13 @@ async function sansDebordement(page: Page, ecran: string, textes = true) {
 }
 
 /**
- * Bouton d'action. Au zoom 200 % (195 px), la barre de navigation du bas recouvre le bouton « Continuer » du lecteur
- * (défaut du lecteur, signalé dans la PR) : on l'active au clavier, comme le ferait un joueur qui zoome.
+ * Bouton d'action. Au zoom 200 % (195 px), on le touche au doigt, la page défilée tout en bas, au-dessus de la barre
+ * du bas (#458 : avant, la barre le recouvrait et ces parcours passaient par le clavier).
  */
-let auClavier = false;
+let auDoigt = false;
 async function appuyer(page: Page, nom: string) {
-  const b = page.getByRole('button', { name: nom });
-  if (!auClavier) return b.click();
-  await b.focus();
-  await page.keyboard.press('Enter');
+  if (auDoigt) return toucherAction(page, nom, `200 % « ${nom} »`);
+  return page.getByRole('button', { name: nom }).click();
 }
 
 async function ouvrir(page: Page, id: string, titre: string) {
@@ -135,14 +133,17 @@ for (const [largeur, hauteur, theme] of [[390, 844, 'light'], [320, 568, 'dark']
 
 // Zoom 200 % : 195 px de large, polices web bloquées (police de repli plus large, comme en CI).
 for (const [nom, jouerLecon] of [['l29', l29], ['l31', l31]] as const) {
-  test(`${nom} au zoom 200 %, polices bloquées : rien ne déborde, la leçon se joue`, async ({ page }) => {
+  test(`${nom} au zoom 200 %, polices bloquées : rien ne déborde, mots entiers, la leçon se joue au doigt`, async ({ page }) => {
     await page.route(/\.(woff2?|ttf|otf)(\?|$)/, r => r.abort());
     await page.setViewportSize({ width: 195, height: 422 });
     await page.emulateMedia({ reducedMotion: 'reduce' });
-    auClavier = true;
+    auDoigt = true;
     try {
-      // Au zoom 200 %, seul le défilement horizontal est vérifié : la bulle du lecteur coupe ses mots à 195 px (signalé).
-      await jouerLecon(page, n => sansDebordement(page, `200 % ${n}`, false));
-    } finally { auClavier = false; }
+      // #458 : la bulle passe à la ligne entre les mots, sans en couper aucun (sauf sur l'écran de fin, sans bulle).
+      await jouerLecon(page, async n => {
+        await sansDebordement(page, `200 % ${n}`);
+        if (await page.locator('.mochi-bulle p').count()) await motsEntiers(page, `200 % ${n}`);
+      });
+    } finally { auDoigt = false; }
   });
 }
