@@ -32,7 +32,7 @@ en 6 chapitres. Ce document dit ce qui existe, comment chaque leçon est vérifi
   montre ce que dit le texte.
 - Tests : `src/go/lessons.test.ts` (forme), `src/go/demos.test.ts` (12 mots, légalité), `src/go/lecons-16.test.ts`
   (l9 à l12), `src/go/lecons-13-16.test.ts`, `src/go/lecons-17-20.test.ts`, `src/go/lecons-21-30.test.ts`,
-  `src/go/lecons-27-30.test.ts`, `src/go/lecons-ouverture.test.ts` (l29 à l31), `src/content/lessons.en.test.ts`. Les tests qui comptent les leçons n'ont plus de nombre figé.
+  `src/go/lecons-27-30.test.ts`, `src/go/lecons-ouverture.test.ts` (l29 à l31), `src/go/lecons-32-plus.test.ts` (l32 à l36), `src/content/lessons.en.test.ts`. Les tests qui comptent les leçons n'ont plus de nombre figé.
 - KataGo : les positions de leçon sont des formes locales prouvées exactement par le moteur ; KataGo sert aux
   positions d'ouverture et de fin de partie quand une preuve exacte n'est pas possible (lot X, 13 × 13), et aux
   jugements de stratégie (l27). Pour une leçon : réseau g170 b6c96, komi 6,5, règle japonaise, huit graines (les huit
@@ -53,7 +53,7 @@ Le contenu des leçons n'est plus dans le JS initial : l'accueil lit l'index gé
 (titre et nombre d'étapes). Après l'ajout ou la modification d'une leçon : `npm run index-lecons`
 (détail : `docs/architecture/chargement-initial.md`).
 
-## Ce qui existe (30 leçons)
+## Ce qui existe (35 leçons)
 
 | Chapitre | Leçon | Titre | Niveau visé |
 | --- | --- | --- | --- |
@@ -72,14 +72,19 @@ Le contenu des leçons n'est plus dans le JS initial : l'accueil lit l'index gé
 | 5. Fin de partie et comptage | l15, l16 | Finir la partie, compter une partie | 15 kyu |
 | | **l22** | **Sente et gote** : le coup qui oblige à répondre ; le sente d'abord | 13 → 11 kyu |
 | | **l23** | **Le hane au premier rang** : contourner, relier ; deux points d'écart | 12 → 10 kyu |
+| | **l32** | **La valeur d'un coup** : compter les deux suites (prendre ou laisser relier : quatre points d'écart) ; le plus grand d'abord | 11 → 9 kyu |
+| | **l33** | **Le sente avant le gote** : l'atari qui oblige d'abord, la prise ensuite ; l'inverse coûte deux points | 10 → 9 kyu |
 | 6. Formes et tesuji | l18 | Les bonnes formes : point de coupe, bouche du tigre, bambou | 14 → 12 kyu |
 | | l19 | Les pierres qui coupent : prendre la pierre qui sépare, le diamant (ponnuki) | 13 → 11 kyu |
 | | l20 | Relier et mourir (oiotoshi) : quand relier ne sauve rien | 12 → 10 kyu |
 | | **l21** | **Le manque de libertés** : boucher la liberté du dehors ; relier met en atari | 11 → 10 kyu |
+| | **l34** | **Relier par en dessous** (watari) : glisser au premier rang sous la pierre adverse ; chaque coupe manque de libertés | 10 → 8 kyu |
+| | **l35** | **Couper par en dessous** : bloquer le premier rang (pas le 2e) ; ensuite deux points se répondent | 10 → 8 kyu |
+| | **l36** | **Couper, puis reprendre** : la coupe au premier rang ; relier met en atari, prendre finit en prise en retour | 9 → 8 kyu |
 
 Les identifiants restent stables (la progression des joueurs y est attachée) ; l'ordre du chemin est celui des
 chapitres, et `content/lessons.fr.js` suit cet ordre (l27, puis l29 à l31 sont rangées après l8, l26 après l11, l24 et l25 après l17, l22 et l23 après
-l16).
+l16 ; l32 et l33 après l23, l34 à l36 après l21).
 
 Preuves du palier 21-30 (`src/go/lecons-21-30.test.ts`) :
 
@@ -96,6 +101,19 @@ Preuves du palier 21-30 (`src/go/lecons-21-30.test.ts`) :
 | l31 Le 3-4 et l'approche | KataGo figé : E3 (kakari), D3 (tsuke), E4 (Blanc monte) premiers choix ; réponse : C4 en tête, kosumi E4 et pince C9 acceptés, 2e ligne refusée à 5,6 pt, pierre collée à 2,7 pt ; extension : D6 en tête, C6, C7, D5 acceptés, refus à 3,6 pt ou plus, « Blanc coupe en D4 » est la réplique de KataGo dans les quatre graines |
 | l26 La course avec un œil | Lecteur exact sans ko : seuls les coups du dehors gagnent ; liberté commune et œil mettent Noir en atari ; Blanc au trait gagne |
 
+Preuves des leçons 32 à 36 (`src/go/lecons-32-plus.test.ts`) :
+
+| Leçon | Méthode de preuve |
+| --- | --- |
+| l32 La valeur d'un coup | Minimax exact (`src/go/preuve-fin-de-partie.ts`, désormais avec élagage alpha-bêta : mêmes valeurs, neuf fois plus rapide) : la prise E9 seul meilleur coup (compte par surfaces) ; règle japonaise sur les suites montrées : prendre ou laisser relier, 4 points d'écart ; le hane, 2 ; exercice retourné : E1 seul meilleur coup, le haut perd au moins 2 points |
+| l33 Le sente avant le gote | Minimax exact : l'atari E2 seul meilleur coup (règles japonaise et par surfaces) ; F1 seule réponse de Blanc (tout autre coup perd au moins 2 points), puis E9 ; la prise d'abord laisse Blanc jouer E2 : 2 points de moins (japonais et surfaces) ; exercice retourné : E8 seul |
+| l34 Relier par en dessous | Recherche exhaustive « relier ou couper » en zone fermée (`src/go/preuve-connexion.ts` : relié = même chaîne sur le plateau, coupé = chaîne prise, un ko n'est jamais une preuve ; zone vérifiée par `defautsConnexion`) : E1 seul coup qui relie, Blanc au trait coupe ; coupe D1 → D2 seul, D1 en atari ; coupe D2 → D1 seul, C1 laisse Blanc couper ; miroir : E1 seul, F2 laisse Blanc bloquer en E1 |
+| l35 Couper par en dessous | Même recherche : E1 seul coup qui coupe ; E2 (le blocage naturel) laisse Blanc répondre en E1, plus aucune coupe sans ko ; après E1, E2 et F1 sont chacun la seule coupe quand Blanc prend l'autre ; miroir prouvé de même |
+| l36 Couper, puis reprendre | Même recherche : B1 seul coup qui coupe ; si Blanc relie en C1, E1 seule coupe (cinq pierres en atari) ; si Blanc prend B1 en A1, la reprise en B1 prend six pierres, sans ko ; miroir : H1 seul, E1 et G1 laissent Blanc prendre H1 |
+
+Parcours : `e2e/lecons-32-plus.spec.ts` (l34 jouée en entier, un coup refusé à chaque exercice, 390 px clair, 320 px
+sombre, et au zoom 200 % entièrement au doigt, mots entiers dans la bulle).
+
 ## La suite prévue (vers 5 kyu, puis le premier dan)
 
 Écartées de ce palier, faute de preuve honnête ou de position lisible :
@@ -104,13 +122,17 @@ Preuves du palier 21-30 (`src/go/lecons-21-30.test.ts`) :
 | --- | --- | --- |
 | Le jeté | Deuxième recherche (07/10), plus large, sans résultat lisible. Jeté strict : une pierre seule, sans voisine noire, une liberté, que Blanc prend sans ko ; seul coup gagnant avec et sans ko ; pas de prise en retour. Course aux libertés sur le gabarit de la leçon 11 (énumération complète, 59 049 positions) : 25 trouvées, toutes où le jeté met aussi une autre pierre en atari, avec des pierres blanches éparses ; sans le critère strict, les 43 trouvées dépendaient d'un ko interdit. Course dans le coin (19 683 positions) et course tirée au hasard sur 3 × 8 (vingt minutes de tirages) : aucune. Jeté au bord menant à l'oiotoshi (3 × 7, tirages au hasard, une heure de calcul) : 3, dont une prise en retour et deux de 26 pierres, illisibles. Jeté puis échelle ou filet au centre (trois pierres en ligne, deux pierres, bouche du tigre ; plus d'un million de tirages) : aucune | Une forme choisie à la main dans un recueil (nid de grue sur un plus grand plateau), prouvée par le lecteur ; ou un lecteur de leçon 13 × 13 |
 | Le hoshi et l'approche, avec le glissement | Réponses au kakari sur un hoshi : KataGo (g170) les juge à moins de 2 points les unes des autres et à égalité avec jouer ailleurs ; après le glissement de Blanc sous le coin, aucune suite n'a d'écart net | Un réseau plus fort ou plus de visites, ou une position où l'écart est net |
+| Le double sente | Recherche exhaustive de formes 2 × 4 au premier rang (6 561 positions, minimax exact) : aucune forme où le coup de chaque camp est sente et seul meilleur ; la recherche plus large a épuisé la mémoire du conteneur (plus de 4 Go par processus) | Une forme tirée d'un recueil, vérifiée par le minimax ; ou un minimax à mémoire bornée |
+| Le saut du singe | Sur 9 × 9, le compte par surfaces met le saut à égalité avec quatre autres coups (aucun seul meilleur coup) ; le compte japonais ne se prouve pas quand une pierre entre chez l'adversaire | Un bord de 13 × 13 cadré et un minimax plus rapide, ou KataGo multi-graines |
+| Le placement (oki) pour tuer | Recherche de groupes sur la 2e ligne (vie et mort exacte) : les seuls coups uniques trouvés sont des réductions par le bord (déjà la leçon 24) ou le point vital de trois (leçon 13) ; aucun placement lisible et seul gagnant | Une forme de recueil (le 2-1, la grappe de six), prouvée en zone fermée |
+| Le sente inverse | Dans la position essayée, la prise gote valait plus que d'empêcher le sente blanc : rien à enseigner sans écart net | Une position où le sente adverse menace davantage |
 | Le san-san : de quel côté bloquer | Bloquer du côté de ses pierres ne gagne que 0,9 point environ : pas assez pour refuser l'autre côté | Une position plus marquée (deux pierres sur un côté), vérifiée de la même façon |
 
 KataGo (`npm run fetch-model`) tourne en local dans ce conteneur : 0,5 s par visite en 9 × 9 sur le processeur seul,
 22 ms avec TensorFlow natif (`@tensorflow/tfjs-node`, installé hors du dépôt pour la leçon 27). Il reste disponible pour
 ces leçons quand le lecteur saura afficher un plus grand plateau.
 
-Palier de l'issue #16 : 30 leçons publiées (l1 à l27, l29 à l31 ; l28 est réservé au jeté) ; 100 problèmes vérifiés.
+Palier de l'issue #16 : 35 leçons publiées (l1 à l27, l29 à l36 ; l28 est réservé au jeté) ; 100 problèmes vérifiés.
 
 ## Grands plateaux (#454)
 
