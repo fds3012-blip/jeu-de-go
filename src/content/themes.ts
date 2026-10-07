@@ -140,6 +140,8 @@ export const THEMES_DE_LECON: Readonly<Record<string, readonly Theme[]>> = {
   l33: ['fin-de-partie'],
   // Relier par en dessous (l34) : la série de relier et couper.
   l34: ['relier-couper'],
+  // Couper par en dessous (l35) : la même série.
+  l35: ['relier-couper'],
 };
 
 /**

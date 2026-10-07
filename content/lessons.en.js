@@ -299,6 +299,15 @@ export const LESSONS_EN = {
       ok: 'Watari: White can’t cut without being captured.', no: 'Slide along the first line, under the white stone.',
       refus: ['White blocks at E1: your stones stay cut apart.'] }
   ] },
+  l35: { title: 'Cutting underneath', desc: 'Block the first line', steps: [
+    { text: 'White wants to pass underneath. Cut it at the green point.' },
+    { text: 'White pushes at E2? Block at the green point: it stays cut.' },
+    { text: 'After E1, White plays F1. Where do you cut?', choices: ['E2', 'D1'],
+      ok: 'E2: E2 and F1 answer each other, White can’t pass.', no: 'Block the other passage, above your stone E1.' },
+    { text: 'Your turn: stop White from connecting its stones.',
+      ok: 'Cut on the first line: E2 and D1 answer each other.', no: 'Cut on the first line, under the passage at E2.',
+      refus: ['White answers at E1: you can’t cut without a ko.'] }
+  ] },
   l22: { title: 'Sente and gote', desc: 'The move that demands an answer', steps: [
     { text: 'Sente (a move that demands an answer): atari at the green point. White connects.' },
     { text: 'You keep the initiative: close the top too, at the green point.' },

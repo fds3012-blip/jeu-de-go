@@ -179,6 +179,14 @@ function motif(id: string, W: string, C: string): ReactElement {
       <circle cx="50" cy="46" r="8" fill={C} stroke={W} strokeWidth="2.6" />
       <path d="M34 64Q50 74 66 64" stroke={W} strokeWidth="3" strokeLinecap="round" fill="none" />
     </>);
+    // Couper par en dessous : le bord, et la barre qui ferme le passage du premier rang.
+    case 'l35': return (<>
+      <path d="M22 76H78" stroke={W} strokeWidth="3" strokeLinecap="round" />
+      <circle cx="32" cy="54" r="8" fill={C} stroke={W} strokeWidth="2.6" />
+      <circle cx="68" cy="54" r="8" fill={C} stroke={W} strokeWidth="2.6" />
+      <circle cx="50" cy="66" r="8" fill={W} />
+      <path d="M50 30V48" stroke={W} strokeWidth="3.5" strokeLinecap="round" />
+    </>);
     // La valeur d'un coup : une balance, deux plateaux inégaux.
     case 'l32': return (<>
       <path d="M50 26V70M30 74H70M28 40H72" stroke={W} strokeWidth="3" strokeLinecap="round" fill="none" />

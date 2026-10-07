@@ -59,7 +59,7 @@ function ouverts(pos: Position): number[] {
 }
 
 const LENT = 60_000;
-const IDS = ['l32', 'l33', 'l34'];
+const IDS = ['l32', 'l33', 'l34', 'l35'];
 
 describe('leçons 32 et suivantes : place dans le programme (#16)', () => {
   it('chaque leçon a 4 à 6 étapes, sa phrase de fin et sa série de pratique', () => {
@@ -73,7 +73,7 @@ describe('leçons 32 et suivantes : place dans le programme (#16)', () => {
   it('la valeur d’un coup et le sente avant le gote prolongent « Fin de partie et comptage », le watari « Formes et tesuji »', () => {
     const c = Object.fromEntries(CHAPITRES.map(x => [x.id, x]));
     expect(c.c5.lecons.map(l => l.id)).toEqual(['l15', 'l16', 'l22', 'l23', 'l32', 'l33']);
-    expect(c.c6.lecons.map(l => l.id)).toEqual(['l18', 'l19', 'l20', 'l21', 'l34']);
+    expect(c.c6.lecons.map(l => l.id)).toEqual(['l18', 'l19', 'l20', 'l21', 'l34', 'l35']);
     expect(LESSONS.map(l => l.id)).toEqual(CHAPITRES.flatMap(x => x.lecons.map(l => l.id)));
   });
   it('chaque consigne tient en 12 mots ; chaque geste « pose » est sur le point vert ; au plus une étape sans geste', () => {
@@ -251,5 +251,52 @@ describe('leçon 34 : relier par en dessous (watari)', () => {
     const pos = avec(m.rows, 1), H2 = at('H2'), C2 = at('C2');
     expect(relient(pos, H2, C2, ZONE_M)).toEqual(m.accept);
     expect(issueConnexion(ok(play(pos, at('F2'))), at('E1'), H2, C2, ZONE_M)).toBe(-1);
+  });
+});
+
+describe('leçon 35 : couper par en dessous', () => {
+  const D = step<Info>('l35', 0).rows;
+  const ZONE = [7, 8].flatMap(y => [0, 1, 2, 3, 4, 5].map(x => y * N + x));
+  const ZONE_M = ZONE.map(p => Math.floor(p / N) * N + (N - 1 - (p % N)));
+  const B2 = at('B2'), G2 = at('G2');
+  /** Coups noirs (dans la zone) qui coupent à coup sûr les pierres blanches a et b, sans ko. */
+  const coupent = (pos: Position, a: number, b: number, zone: number[]) =>
+    zone.filter(p => !pos.board[p] && issueConnexion(pos, p, a, b, zone) === -1).map(lab).sort();
+
+  it('la zone est fermée ; Blanc au trait relie (par F1)', () => {
+    expect(defautsConnexion(avec(D, 1), B2, G2, ZONE)).toEqual([]);
+    expect(defautsConnexion(avec(step<Move>('l35', 3).rows, 1), at('H2'), at('C2'), ZONE_M)).toEqual([]);
+    expect(evaluerConnexion(avec(D, 2), B2, G2, ZONE)).toBe(1);
+  });
+
+  it('l35.1 : E1 est le seul coup qui coupe ; E2, le blocage naturel, laisse Blanc répondre en E1 sans coupe possible', () => {
+    const pos = avec(D, 1);
+    expect(coupent(pos, B2, G2, ZONE)).toEqual(['E1']);
+    const e2 = suite(pos, ['E2', 'E1']);
+    expect(coupent(e2, B2, G2, ZONE)).toEqual([]);
+    expect(images(step<Info>('l35', 0)).at(-1)!.board[at('E1')]).toBe(1);
+  });
+
+  it('l35.2 et l35.3 : après E1, E2 et F1 se répondent : chacun coupe si Blanc prend l’autre, et seulement lui', () => {
+    const e1 = ok(play(avec(D, 1), at('E1')));
+    expect(evaluerConnexion(e1, B2, G2, ZONE)).toBe(-1);
+    expect(coupent(ok(play(e1, at('E2'))), B2, G2, ZONE)).toEqual(['F1']);
+    expect(coupent(ok(play(e1, at('F1'))), B2, G2, ZONE)).toEqual(['E2']);
+    const s = step<Info>('l35', 1);
+    expect(s.avant).toEqual([{ pose: 'E1', couleur: 'B' }]);
+    expect(images(s).at(-1)!.board).toEqual(suite(e1, ['E2', 'F1']).board);
+    const q = step<Quiz>('l35', 2);
+    expect(q.choices[q.answer]).toBe('E2');
+  });
+
+  it('l35.4 : en miroir, seul E1 coupe ; E2 ou D1, Blanc répond en E1 et Noir ne coupe plus sans ko', () => {
+    const m = step<Move>('l35', 3);
+    expect(m.rows).toEqual(D.map(r => [...r].reverse().join('')));
+    const pos = avec(m.rows, 1), H2 = at('H2'), C2 = at('C2');
+    expect(coupent(pos, H2, C2, ZONE_M)).toEqual(m.accept);
+    for (const l of m.refus![0].points) expect(coupent(suite(pos, [l, 'E1']), H2, C2, ZONE_M), l).toEqual([]);
+    const e1 = ok(play(pos, at('E1')));
+    expect(coupent(ok(play(e1, at('E2'))), H2, C2, ZONE_M)).toEqual(['D1']);
+    expect(coupent(ok(play(e1, at('D1'))), H2, C2, ZONE_M)).toEqual(['E2']);
   });
 });

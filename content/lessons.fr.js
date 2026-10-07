@@ -163,6 +163,11 @@ const L_ORDRE_Q = [...L_ORDRE].reverse();
 const L_WATARI = [...V.slice(0, 5), '......X..', 'OOOOOOX..', 'XXX.O.X..', '.....XX..'];
 const L_WATARI_D2 = [...V.slice(0, 5), '......X..', 'OOOOOOX..', 'XXXOO.X..', '....XXX..'];
 const L_WATARI_M = L_WATARI.map(r => [...r].reverse().join(''));
+// Couper par en dessous : les pierres blanches A2-D2 veulent rejoindre le mur blanc G par le premier rang. Seul E1 coupe ;
+// ensuite E2 et F1 se répondent. E2, le blocage naturel, laisse Blanc répondre en E1 : plus de coupe sans ko.
+// `M` : la même forme en miroir.
+const L_DESSOUS = [...V.slice(0, 5), '......O..', 'XXXXXXO..', 'OOOO.XO..', '......O..'];
+const L_DESSOUS_M = L_DESSOUS.map(r => [...r].reverse().join(''));
 export const CHAPITRES = [
   { id: 'c1', titre: 'Les bases', intro: 'Sept leçons courtes pour jouer ta première partie.', fin: 'Tu connais les règles du go.', lecons: ['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7'] },
   // Chapitre en cours d'écriture (`complet: false`) : sa dernière leçon ne ferme pas encore le chapitre.
@@ -170,7 +175,7 @@ export const CHAPITRES = [
   { id: 'c3', titre: 'Capturer et sauver', intro: 'Des pièges pour prendre plus de pierres.', lecons: ['l9', 'l10', 'l11', 'l26'], complet: false },
   { id: 'c4', titre: 'Vie et mort', intro: 'Quand un groupe vit, quand il meurt.', lecons: ['l12', 'l13', 'l14', 'l17', 'l24', 'l25'], complet: false },
   { id: 'c5', titre: 'Fin de partie et comptage', intro: 'Finir proprement, puis compter juste.', lecons: ['l15', 'l16', 'l22', 'l23', 'l32', 'l33'], complet: false },
-  { id: 'c6', titre: 'Formes et tesuji', intro: 'Les bonnes formes et les coups malins du go.', lecons: ['l18', 'l19', 'l20', 'l21', 'l34'], complet: false }
+  { id: 'c6', titre: 'Formes et tesuji', intro: 'Les bonnes formes et les coups malins du go.', lecons: ['l18', 'l19', 'l20', 'l21', 'l34', 'l35'], complet: false }
 ];
 export const LESSONS = [
   { id: 'l1', title: 'Libertés et capture', desc: 'La règle qui fait tout le jeu', steps: [
@@ -718,5 +723,19 @@ export const LESSONS = [
       text: 'À toi : relie tes pierres par en dessous.',
       ok: 'Watari : Blanc ne peut plus couper sans être pris.', no: 'Glisse au premier rang, sous la pierre blanche.',
       refus: [{ points: ['F2'], no: 'Blanc bloque en E1 : tes pierres restent coupées.' }] }
+  ] },
+  { id: 'l35', title: 'Couper par en dessous', desc: 'Bloquer le premier rang', steps: [
+    { kind: 'info', rows: L_DESSOUS, geste: { pose: 'E1' }, demo: [{ pose: 'E1', couleur: 'B' }],
+      text: 'Blanc veut passer par en dessous. Coupe-le au point vert.' },
+    { kind: 'info', rows: L_DESSOUS, avant: [{ pose: 'E1', couleur: 'B' }], geste: { pose: 'F1' },
+      demo: [{ pose: 'E2', couleur: 'W' }, { pose: 'F1', couleur: 'B' }],
+      text: 'Blanc pousse en E2 ? Bloque au point vert : il reste coupé.' },
+    { kind: 'quiz', rows: L_DESSOUS,
+      text: 'Après E1, Blanc joue F1. Où coupes-tu ?', choices: ['E2', 'D1'], answer: 0,
+      ok: 'E2 : E2 et F1 se répondent, Blanc ne passe pas.', no: 'Bloque l’autre passage, au-dessus de ta pierre E1.' },
+    { kind: 'move', rows: L_DESSOUS_M, accept: ['E1'],
+      text: 'À toi : empêche Blanc de relier ses pierres.',
+      ok: 'Coupé au premier rang : E2 et D1 se répondent.', no: 'Coupe au premier rang, sous le passage E2.',
+      refus: [{ points: ['E2', 'D1'], no: 'Blanc répond en E1 : tu ne coupes plus sans ko.' }] }
   ] }
 ];
