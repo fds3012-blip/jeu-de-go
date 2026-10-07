@@ -1,6 +1,6 @@
-import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent, type ReactElement } from 'react';
+import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent, type ReactElement, type ReactNode } from 'react';
 import { LETTERS, toLabel } from '../go/coords';
-import { C, M, R, R_NOIR, VARIANTES_COQUILLAGE, coordCenter, diffBoards, hoshi, jitter, shellStriae, shellVariant, viewBoxOf, woodDataUrl, type ThemeGoban } from './boardArt';
+import { C, M, R, R_NOIR, VARIANTES_COQUILLAGE, coordCenter, dansFenetre, diffBoards, hoshi, jitter, shellStriae, shellVariant, vueDe, woodDataUrl, type FenetrePlateau, type ThemeGoban } from './boardArt';
 import { useThemeGoban } from '../app/settings';
 import { t } from '../content/i18n';
 import { CURSEUR, TOUCHE_LIRE, annonceApresCoup, annonceConfirmation, deplacerCurseur, lirePlateau, nomIntersection, type NomsCamps } from './boardA11y';
@@ -53,6 +53,11 @@ interface Props {
   coordonnees?: boolean;
   /** #365 : numéro de coup écrit sur chaque pierre (réglage « Numéros des coups », en revue). Absent par défaut. */
   numeros?: ReadonlyMap<number, number> | null;
+  /**
+   * #454 : cadrage sur une zone (un coin d'un 19 × 19, en leçon). Seules les intersections de la fenêtre sont montrées,
+   * touchables et parcourues au clavier ; coordonnées et hoshi restent ceux du vrai plateau. Absent par défaut : tout le plateau.
+   */
+  fenetre?: FenetrePlateau | null;
 }
 
 // Les fonctions pures du clavier et des annonces (issue #116) vivent dans boardA11y.ts.
@@ -105,12 +110,17 @@ function defsDe(t: ThemeGoban): ReactElement {
   return d;
 }
 
+/** Contenu du bois : tel quel sans fenêtre (rendu d'avant #454), sinon coupé au bord de la zone montrée. */
+function Cadre({ clip, children }: { clip: string | null; children: ReactNode }) {
+  return clip ? <g clipPath={clip} data-cadre="">{children}</g> : <>{children}</>;
+}
+
 /** Corps d'une pierre (sans ombre), centré sur (0, 0). */
 function corps(c: number, p: number, size: number): ReactElement {
   return <use href={c === 1 ? '#go-noire' : `#go-blanche-${shellVariant(p, size)}`} />;
 }
 
-export function Board({ size, board, toPlay = 1, marks = {}, interactive = false, stonesTappable = false, confirmTouch = true, toucher = false, onPlay, shake, versCouvercles = false, noms, surFantome, coordonnees = true, numeros }: Props) {
+export function Board({ size, board, toPlay = 1, marks = {}, interactive = false, stonesTappable = false, confirmTouch = true, toucher = false, onPlay, shake, versCouvercles = false, noms, surFantome, coordonnees = true, numeros, fenetre }: Props) {
   const ref = useRef<SVGSVGElement>(null);
   const theme = useThemeGoban();
   const [ghost, setGhost] = useState(-1);
@@ -125,9 +135,10 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
   // pour qu'une même phrase redemandée (« Lire le plateau » deux fois) soit relue.
   const [annonce, setAnnonceEtat] = useState({ texte: '', n: 0 });
   const setAnnonce = (texte: string) => setAnnonceEtat(a => ({ texte, n: a.n + 1 }));
-  const cur = curseur < size * size ? curseur : (size >> 1) * size + (size >> 1);
+  const vb = vueDe(size, fenetre), fen = vb.fenetre;
+  const milieu = fen ? (fen.y + (fen.k >> 1)) * size + fen.x + (fen.k >> 1) : (size >> 1) * size + (size >> 1);
+  const cur = curseur < size * size && dansFenetre(curseur, size, fen) ? curseur : milieu;
   const last = marks.last != null && marks.last >= 0 && board[marks.last] ? marks.last : -1;
-  const vb = viewBoxOf(size);
   const X = (p: number) => M + (p % size) * C, Y = (p: number) => M + Math.floor(p / size) * C;
   // Position affichée d'une pierre : intersection + micro-décalage déterministe.
   const at = (p: number): [number, number] => { const [dx, dy] = jitter(p, size); return [X(p) + dx, Y(p) + dy]; };
@@ -161,9 +172,10 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
 
   function pointFrom(e: PointerEvent): number {
     const r = ref.current!.getBoundingClientRect();
-    const sx = vb.min + ((e.clientX - r.left) * vb.span) / r.width, sy = vb.min + ((e.clientY - r.top) * vb.span) / r.height;
+    const sx = vb.x + ((e.clientX - r.left) * vb.span) / r.width, sy = vb.y + ((e.clientY - r.top) * vb.span) / r.height;
     const i = Math.round((sx - M) / C), j = Math.round((sy - M) / C);
     if (i < 0 || j < 0 || i >= size || j >= size) return -1;
+    if (!dansFenetre(j * size + i, size, fen)) return -1;
     if (Math.hypot(sx - (M + i * C), sy - (M + j * C)) > C * 0.6) return -1;
     return j * size + i;
   }
@@ -179,7 +191,7 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
   function onKey(e: KeyboardEvent) {
     if (!jouable) return;
     setClavier(true);
-    const n = deplacerCurseur(cur, e.key, size);
+    const n = deplacerCurseur(cur, e.key, size, fen);
     if (n != null) {
       e.preventDefault();
       // La case est annoncée dans la zone polie : VoiceOver iOS ne suit pas toujours aria-activedescendant dans un SVG.
@@ -209,28 +221,34 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
   }
 
   // Grille, hoshi et coordonnées : ne dépendent que de la taille et du thème du goban.
+  const fx0 = fen?.x ?? -1, fy0 = fen?.y ?? -1, fk = fen?.k ?? 0;
   const grid = useMemo(() => {
-    const k = viewBoxOf(size).span / 358, lc = coordCenter(size); // unités du viewBox par pixel CSS pour un plateau de 358 px (iPhone 390)
+    const f = fk ? { x: fx0, y: fy0, k: fk } : null, v = vueDe(size, f);
+    const k = v.span / 358; // unités du viewBox par pixel CSS pour un plateau de 358 px (iPhone 390)
+    // Cadré (#454) : lettres et chiffres au milieu de leur bande, hors du bois coupé ; seulement ceux de la fenêtre.
+    const lx = f ? v.x + v.bande / 2 : coordCenter(size), ly = f ? v.y + v.bande / 2 : coordCenter(size);
+    const de = f ? f.x : 0, a = f ? f.x + f.k : size, deY = f ? f.y : 0, aY = f ? f.y + f.k : size;
     const fin = 0.85 * k, bord = 1.5 * k, fs = 11 * k, e = M + (size - 1) * C;
     let d = '';
     const dBord = `M${M} ${M}H${e}V${e}H${M}Z`;
     for (let i = 1; i < size - 1; i++) { const q = M + i * C; d += `M${M} ${q}H${e}M${q} ${M}V${e}`; }
-    return (
-      <g aria-hidden="true">
-        <path d={d} stroke={theme.ligne} strokeOpacity={0.78} strokeWidth={fin} fill="none" />
-        <path d={dBord} stroke={theme.ligne} strokeOpacity={0.78} strokeWidth={bord} fill="none" strokeLinejoin="miter" />
-        {hoshi(size).map(p => <circle key={p} cx={M + (p % size) * C} cy={M + Math.floor(p / size) * C} r={(size === 19 ? 2.3 : 3) * k} fill={theme.ligne} fillOpacity={0.85} />)}
-        {coordonnees && <g className="coord" fontSize={fs} fill={theme.coord} fillOpacity={0.7} textAnchor="middle" dominantBaseline="central">
-          {Array.from({ length: size }, (_, i) => (
-            <g key={i}>
-              <text x={M + i * C} y={lc}>{LETTERS[i]}</text>
-              <text x={lc} y={M + i * C}>{size - i}</text>
-            </g>
-          ))}
-        </g>}
-      </g>
-    );
-  }, [size, theme, coordonnees]);
+    const lignes = <>
+      <path d={d} stroke={theme.ligne} strokeOpacity={0.78} strokeWidth={fin} fill="none" />
+      <path d={dBord} stroke={theme.ligne} strokeOpacity={0.78} strokeWidth={bord} fill="none" strokeLinejoin="miter" />
+      {hoshi(size).map(p => <circle key={p} cx={M + (p % size) * C} cy={M + Math.floor(p / size) * C} r={(size === 19 && !f ? 2.3 : 3) * k} fill={theme.ligne} fillOpacity={0.85} />)}
+    </>;
+    const coords = coordonnees ? <g className="coord" fontSize={fs} fill={theme.coord} fillOpacity={0.7} textAnchor="middle" dominantBaseline="central">
+      {Array.from({ length: size }, (_, i) => (
+        <g key={i}>
+          {i >= de && i < a && <text x={M + i * C} y={ly}>{LETTERS[i]}</text>}
+          {i >= deY && i < aY && <text x={lx} y={M + i * C}>{size - i}</text>}
+        </g>
+      ))}
+    </g> : null;
+    // Sans fenêtre, le dessin est celui d'avant #454 : un seul groupe, coordonnées comprises.
+    if (!f) return { lignes: <g aria-hidden="true">{lignes}{coords}</g>, coords: null };
+    return { lignes: <g aria-hidden="true">{lignes}</g>, coords: <g aria-hidden="true" data-coords-fenetre="">{coords}</g> };
+  }, [size, theme, coordonnees, fx0, fy0, fk]);
 
   const stones: ReactElement[] = [];
   for (let p = 0; p < board.length; p++) {
@@ -248,7 +266,7 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
   const leaving = fx.leaving.filter(l => !board[l.p]).map((l, i) => {
     const [x, y] = at(l.p);
     // Vers le couvercle : jusqu'au bord du plateau (au-delà, le bois coupe la pierre), en s'effaçant.
-    const dy = l.c === 1 ? vb.min - y : vb.min + vb.span - y;
+    const dy = l.c === 1 ? vb.y - y : vb.y + vb.span - y;
     const style = versCouvercles ? { animationDelay: `${i * 30}ms`, '--dy': `${dy.toFixed(1)}px` } as CSSProperties : { animationDelay: `${i * 30}ms` };
     return (
       <g key={`x${fx.n}-${l.p}`} transform={`translate(${x.toFixed(2)} ${y.toFixed(2)})`} aria-hidden="true">
@@ -272,9 +290,11 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
   }
 
   const idCase = (p: number) => `${uid}-c${p}`;
-  const cases = jouable ? Array.from({ length: size }, (_, y) => (
+  const lignesCases = fen ? Array.from({ length: fen.k }, (_, i) => fen.y + i) : Array.from({ length: size }, (_, i) => i);
+  const colonnesCases = fen ? Array.from({ length: fen.k }, (_, i) => fen.x + i) : lignesCases;
+  const cases = jouable ? lignesCases.map(y => (
     <g key={`r${y}`} role="row">
-      {Array.from({ length: size }, (_, x) => {
+      {colonnesCases.map(x => {
         const p = y * size + x;
         return <rect key={p} id={idCase(p)} role="gridcell" aria-label={nomIntersection(p, board, size, last)} aria-selected={p === cur}
           x={X(p) - C / 2} y={Y(p) - C / 2} width={C} height={C} fill="none" pointerEvents="none" />;
@@ -287,15 +307,18 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
 
   return (
     <div className="board-wrap">
-      <svg ref={ref} className="board" viewBox={`${vb.min} ${vb.min} ${vb.span} ${vb.span}`} role={jouable ? 'grid' : 'img'} aria-label={t('plateau.aria', { size })}
-        tabIndex={jouable ? 0 : undefined} aria-describedby={jouable ? `${uid}-aide` : undefined} aria-activedescendant={jouable ? idCase(cur) : undefined} aria-rowcount={jouable ? size : undefined} aria-colcount={jouable ? size : undefined}
+      <svg ref={ref} className="board" viewBox={`${vb.x} ${vb.y} ${vb.span} ${vb.span}`} role={jouable ? 'grid' : 'img'} aria-label={t('plateau.aria', { size })}
+        data-fenetre={fen ? `${toLabel(fen.y * size + fen.x, size)}:${toLabel((fen.y + fen.k - 1) * size + fen.x + fen.k - 1, size)}` : undefined}
+        tabIndex={jouable ? 0 : undefined} aria-describedby={jouable ? `${uid}-aide` : undefined} aria-activedescendant={jouable ? idCase(cur) : undefined} aria-rowcount={jouable ? (fen?.k ?? size) : undefined} aria-colcount={jouable ? (fen?.k ?? size) : undefined}
         onKeyDown={jouable ? onKey : undefined} onFocus={jouable ? () => setFocus(true) : undefined} onBlur={jouable ? () => setFocus(false) : undefined}
         onPointerDown={jouable ? () => setClavier(false) : undefined}
         onPointerUp={onUp} onPointerMove={onMove} onPointerLeave={onLeave}>
         {defsDe(theme)}
         {cases}
-        <image href={woodDataUrl(theme.id)} x={vb.min} y={vb.min} width={vb.span} height={vb.span} preserveAspectRatio="none" />
-        {grid}
+        <image href={woodDataUrl(theme.id)} x={vb.x} y={vb.y} width={vb.span} height={vb.span} preserveAspectRatio="none" />
+        {fen ? <><defs><clipPath id={`${uid}-fenetre`}><rect x={fen.x * C} y={fen.y * C} width={vb.span - vb.bande} height={vb.span - vb.bande} /></clipPath></defs>{grid.coords}</> : null}
+        <Cadre clip={fen ? `url(#${uid}-fenetre)` : null}>
+        {grid.lignes}
         {ghostP >= 0 && surFantome?.(ghostP)}
         {stones}
         {leaving}
@@ -364,6 +387,7 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
         {shaking >= 0 && !board[shaking] ? (
           <g key={`tr${shakeSeen}`} {...fantome(shaking)} opacity={0.5} aria-hidden="true"><g className="tremble">{corps(toPlay, shaking, size)}</g></g>
         ) : null}
+        </Cadre>
       </svg>
       {jouable ? (
         <>

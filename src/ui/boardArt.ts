@@ -42,6 +42,39 @@ export function viewBoxOf(size: number): { min: number; span: number } {
   const e = coordBand(size);
   return { min: -e, span: boardWidth(size) + e };
 }
+/**
+ * Cadrage du plateau sur une zone (#454 : un coin d'un 19 × 19 lu sur téléphone). Fenêtre carrée de `k` intersections
+ * à partir de la colonne `x` et de la ligne `y` (depuis le haut), comme src/ui/cadrage.ts.
+ */
+export interface FenetrePlateau { x: number; y: number; k: number }
+
+/**
+ * Bande des coordonnées d'un plateau cadré : plus large que `coordBand`, car les lettres et les chiffres sont posés
+ * hors du bois coupé (une pierre de la ligne voisine, coupée par le cadre, ne passe jamais dessous).
+ */
+export const BANDE_FENETRE = C * 0.55;
+
+/** Partie visible du plateau, en unités du viewBox : coin haut gauche (`x`, `y`), côté `span`, bande des coordonnées. */
+export interface VuePlateau { x: number; y: number; span: number; bande: number; fenetre: FenetrePlateau | null }
+
+/**
+ * viewBox du plateau. Sans fenêtre (ou une fenêtre qui couvre tout le plateau), c'est exactement `viewBoxOf`.
+ * Avec une fenêtre : le carré du bois autour des intersections de la fenêtre (marge M de chaque côté, comme un plateau
+ * de `k` lignes), plus la bande des coordonnées en haut et à gauche.
+ */
+export function vueDe(size: number, fenetre?: FenetrePlateau | null): VuePlateau {
+  const f = fenetre && fenetre.k < size ? fenetre : null;
+  if (!f) { const e = coordBand(size); return { x: -e, y: -e, span: boardWidth(size) + e, bande: e, fenetre: null }; }
+  return { x: f.x * C - BANDE_FENETRE, y: f.y * C - BANDE_FENETRE, span: boardWidth(f.k) + BANDE_FENETRE, bande: BANDE_FENETRE, fenetre: f };
+}
+
+/** L'intersection `p` est-elle dans la fenêtre (toujours vrai sans fenêtre) ? */
+export function dansFenetre(p: number, size: number, f: FenetrePlateau | null | undefined): boolean {
+  if (!f) return p >= 0 && p < size * size;
+  const x = p % size, y = Math.floor(p / size);
+  return x >= f.x && x < f.x + f.k && y >= f.y && y < f.y + f.k;
+}
+
 /** Centre des coordonnées : à mi-chemin entre le bord du bois et le bord des pierres de la première ligne. */
 export function coordCenter(size: number): number {
   return (-coordBand(size) + (M - R_NOIR)) / 2;

@@ -92,3 +92,9 @@ KataGo (`npm run fetch-model`) tourne en local dans ce conteneur (0,3 s par posi
 TensorFlow natif) : il reste disponible pour ces leçons quand le lecteur saura afficher un plus grand plateau.
 
 Palier de l'issue #16 : 26 leçons publiées ; 100 problèmes vérifiés. Prochain palier : 30 leçons (les quatre ci-dessus).
+
+## Grands plateaux (#454)
+
+Le lecteur de leçons accepte maintenant le 13 × 13 et le 19 × 19, avec un cadrage sur un coin. Format (`taille`,
+`cadre`, `plateau()`), conseils de lisibilité et étapes de publication : `docs/architecture/lecons-grands-plateaux.md`.
+Les leçons d'ouverture 13 × 13 et de joseki peuvent s'écrire dans ce format.

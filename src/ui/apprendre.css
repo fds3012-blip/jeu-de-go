@@ -80,6 +80,10 @@
   background: var(--surface-2); color: var(--text); font-size: var(--fs-legende); font-weight: var(--fw-bold); line-height: 1.5; }
 .pas-compte svg { width: 13px; height: 13px; flex: none; }
 .a-droite .pas-compte { margin-left: auto; }
+/* #454 : taille d'un grand plateau (« 19 × 19 ») sous le titre ; texte plein, pas de couleur seule. */
+.pas-taille { display: block; width: fit-content; margin-top: 4px; padding: 0 8px; border-radius: var(--radius-pill); border: 1px solid var(--line);
+  color: var(--text); font-size: var(--fs-legende); font-weight: var(--fw-bold); line-height: 1.5; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.a-droite .pas-taille { margin-left: auto; }
 
 /* ---------- La prochaine leçon : Mochi la présente, une carte, le seul bouton en relief ---------- */
 .prochaine .bubble { margin: 0 0 var(--space-2); }

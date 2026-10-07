@@ -18,18 +18,20 @@ export const TOUCHE_LIRE = 'l';
 export const CURSEUR = { lisere: '#0B1A14', anneau: '#4CD39B' } as const;
 
 /** Nouvelle position du curseur après une touche, ou null si la touche ne déplace pas le curseur. */
-export function deplacerCurseur(p: number, touche: string, size: number): number | null {
-  const x = p % size, y = Math.floor(p / size), fin = size - 1;
-  const en = (nx: number, ny: number) => Math.max(0, Math.min(fin, ny)) * size + Math.max(0, Math.min(fin, nx));
+export function deplacerCurseur(p: number, touche: string, size: number, fenetre?: { x: number; y: number; k: number } | null): number | null {
+  const x = p % size, y = Math.floor(p / size);
+  // #454 : sur un plateau cadré, le curseur reste dans la zone montrée.
+  const x0 = fenetre?.x ?? 0, y0 = fenetre?.y ?? 0, x1 = fenetre ? fenetre.x + fenetre.k - 1 : size - 1, y1 = fenetre ? fenetre.y + fenetre.k - 1 : size - 1;
+  const en = (nx: number, ny: number) => Math.max(y0, Math.min(y1, ny)) * size + Math.max(x0, Math.min(x1, nx));
   switch (touche) {
     case 'ArrowLeft': return en(x - 1, y);
     case 'ArrowRight': return en(x + 1, y);
     case 'ArrowUp': return en(x, y - 1);
     case 'ArrowDown': return en(x, y + 1);
-    case 'Home': return en(0, y);
-    case 'End': return en(fin, y);
-    case 'PageUp': return en(x, 0);
-    case 'PageDown': return en(x, fin);
+    case 'Home': return en(x0, y);
+    case 'End': return en(x1, y);
+    case 'PageUp': return en(x, y0);
+    case 'PageDown': return en(x, y1);
     default: return null;
   }
 }

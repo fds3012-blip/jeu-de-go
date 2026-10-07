@@ -42,8 +42,6 @@ export interface DemoImage {
   terr?: { couleur: 1 | 2; points: number[] };
 }
 
-const N = 9;
-const at = (l: string) => fromLabel(l, N);
 const couleur = (c: 'B' | 'W') => (c === 'B' ? 1 : 2) as 1 | 2;
 
 /**
@@ -71,6 +69,9 @@ export function imageDuGeste(rows: string[], demo: DemoTemps[], avant: DemoTemps
 }
 
 function suiteDemo(rows: string[], demo: DemoTemps[], avant: DemoTemps[]): { images: DemoImage[]; debuts: number[] } {
+  // Taille du plateau : celle de la position (#454 : 9, 13 ou 19 lignes).
+  const N = rows.length;
+  const at = (l: string) => fromLabel(l, N);
   let pos: Position = fromRows(rows).pos;
   let suivi = -1, derniere: number | undefined;
   let yeux: number[] = [];

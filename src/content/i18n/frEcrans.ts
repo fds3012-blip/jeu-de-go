@@ -754,6 +754,8 @@ export const frEcrans = {
   'apprendre.duree': 'Environ {n} min',
   'apprendre.pas.compte': ', avec un compte',
   'apprendre.compte': 'Avec un compte',
+  // #454 : leçon sur un grand plateau, annoncée sous son titre.
+  'apprendre.taille': '{n} × {n}',
   'apprendre.mochi.debut': 'On commence ici. Deux minutes, et tu sais déjà capturer.',
   'apprendre.mochi.reprendre': 'Tu l’avais commencée. On la finit ensemble ?',
   'apprendre.mochi.suite': 'Bien joué ! Voici la suite.',

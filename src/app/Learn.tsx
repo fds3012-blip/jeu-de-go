@@ -96,8 +96,13 @@ export function LearnHome({ progress, onOpen, sync = 'local', compteRequis = () 
 /** Nom accessible d'une pierre du chemin : rang, titre, état, et « avec un compte » si elle en demande un. */
 function nomPas(e: Etape, compte = false): string {
   const etat = (e.etat === 'faite' ? t('apprendre.pas.faite') : e.etat === 'encours' ? t('apprendre.pas.encours') : '') + (compte ? t('apprendre.pas.compte') : '');
-  return t('apprendre.pas', { rang: e.rang, titre: e.lecon.title, etat });
+  const taille = e.lecon.taille && e.lecon.taille !== 9 ? `, ${t('apprendre.taille', { n: e.lecon.taille })}` : '';
+  return t('apprendre.pas', { rang: e.rang, titre: e.lecon.title + taille, etat });
 }
+
+/** #454 : « 19 × 19 » sous le titre d'une leçon sur un grand plateau ; rien pour le 9 × 9. */
+const MentionTaille = ({ taille }: { taille?: number }) =>
+  taille && taille !== 9 ? <span className="pas-taille" data-taille={taille}>{t('apprendre.taille', { n: taille })}</span> : null;
 
 /**
  * Carte de la prochaine leçon : Mochi la présente, la vignette et le titre disent de quoi il s'agit,
@@ -122,6 +127,7 @@ function CarteProchaine({ etape, bouton, mochi, onOpen, refCarte, compteRequis }
             <span>
               <b>{fr(l.title)}</b>
               <small>{fr(l.desc)}</small>
+              <MentionTaille taille={l.taille} />
               <span className="prochaine-duree"><Horloge />{t('apprendre.duree', { n: dureeMinutes(l.steps.length) })}</span>
               {compte && <MentionCompte />}
             </span>
@@ -227,7 +233,7 @@ function CheminChapitre({ chapitre, liste, k, carte, fete, onFeteFinie, onOpen, 
                   </span>
                   <span className="pas-texte" aria-hidden="true">
                     <VignetteLecon id={e.lecon.id} taille={44} pale={avenir} />
-                    <span><b>{fr(e.lecon.title)}</b><small>{fr(e.lecon.desc)}</small>{compte && <MentionCompte />}</span>
+                    <span><b>{fr(e.lecon.title)}</b><small>{fr(e.lecon.desc)}</small><MentionTaille taille={e.lecon.taille} />{compte && <MentionCompte />}</span>
                   </span>
                 </button>
               </li>
