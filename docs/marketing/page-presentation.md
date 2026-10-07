@@ -90,3 +90,22 @@ Une partie se joue entièrement au clavier, avec des annonces pour le lecteur d'
 | Page de présentation | 0 € (Vercel déjà en place) | 40 % des visiteurs cliquent sur « Jouer maintenant » | PostHog : vues de la page et clic (événement à ajouter côté page, `cta_jouer_clique`) rapportés à `app_ouverte` |
 | Encart Go du jour | 0 € | 10 % des visiteurs ouvrent le Go du jour | `arrivee_par_partage` et ouvertures de `?go-du-jour=N` |
 | FAQ balisée | 0 € | Page dans le top 10 Google pour « apprendre le go » en 3 mois | Google Search Console, position moyenne et clics |
+
+## Pages de référencement (#472, 08/10/2026)
+
+Quatre pages statiques, générées au build par `outils/referencement/pages.ts` (textes : `outils/referencement/textes.ts`), sans le JS de l'app :
+
+| Page | Requête visée |
+|---|---|
+| `/apprendre-le-go` | apprendre le go, jeu de go gratuit |
+| `/regles-du-go` | règles du go, comment jouer au go |
+| `/en/learn-go` | learn go, go game for beginners |
+| `/en/go-rules` | go rules, how to play go |
+
+Chacune : un h1, les règles en 5 points, une démo de capture jouable (3 défis, 2,7 Ko gzip, version sans JS), une FAQ visible et balisée (`FAQPage`), `WebApplication`, canonical, hreflang fr/en, Open Graph (images `apercu.png` et `apercu-en.png`). Un seul bouton : « Jouer maintenant », vers `/?lang=…&utm_source=mochi-go&utm_medium=page&utm_campaign=<page>`. `sitemap.xml` et `robots.txt` sont produits au même moment. Les chiffres (nombre de leçons, plus de 100 problèmes, 9 adversaires) sont vérifiés par `outils/referencement/pages.test.ts`.
+
+| Action | Coût | Indicateur visé | Mesure |
+|---|---|---|---|
+| 4 pages de référencement | 0 € (fichiers statiques sur Vercel) | Top 10 Google sur « apprendre le go » et « règles du go » en 3 mois ; 1 000 visites organiques par mois à 6 mois | Google Search Console : impressions, clics, position par requête et par page |
+| Bouton « Jouer maintenant » | 0 € | 30 % des visiteurs ouvrent l'app | PostHog : `app_ouverte` avec `utm_campaign` (apprendre-le-go, regles-du-go, learn-go, go-rules), rapporté aux clics de Search Console |
+| Démo jouable | 0 € | La moitié des ouvertures de l'app depuis ces pages vont jusqu'à la leçon 1 | PostHog : entonnoir `app_ouverte` (utm_campaign) puis `lecon_commencee` |
