@@ -796,6 +796,7 @@ export const frEcrans = {
   'acquis.l24': 'Tu prends le point au bord de l’espace : pour vivre, ou pour tuer.',
   'acquis.l25': 'Tu connais le point du coin, et tu sais qu’un ko n’est pas une vie.',
   'acquis.l26': 'Avec un œil, tu bouches d’abord les libertés du dehors.',
+  'acquis.l27': 'Tu attaques une pierre faible côté centre, et tu y sors la tienne.',
   'acquis.defaut': 'Une leçon de plus dans ta poche.',
   'lecteur.progression': 'Progression de la leçon',
   // #290 : sur un écran bas, l'explication du verdict est repliée pour laisser voir le plateau.

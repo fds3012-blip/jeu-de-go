@@ -32,9 +32,16 @@ en 6 chapitres. Ce document dit ce qui existe, comment chaque leçon est vérifi
   montre ce que dit le texte.
 - Tests : `src/go/lessons.test.ts` (forme), `src/go/demos.test.ts` (12 mots, légalité), `src/go/lecons-16.test.ts`
   (l9 à l12), `src/go/lecons-13-16.test.ts`, `src/go/lecons-17-20.test.ts`, `src/go/lecons-21-30.test.ts`,
-  `src/content/lessons.en.test.ts`. Les tests qui comptent les leçons n'ont plus de nombre figé.
+  `src/go/lecons-27-30.test.ts`, `src/content/lessons.en.test.ts`. Les tests qui comptent les leçons n'ont plus de nombre figé.
 - KataGo : les positions de leçon sont des formes locales prouvées exactement par le moteur ; KataGo sert aux
-  positions d'ouverture et de fin de partie quand une preuve exacte n'est pas possible (lot X, 13 × 13).
+  positions d'ouverture et de fin de partie quand une preuve exacte n'est pas possible (lot X, 13 × 13), et aux
+  jugements de stratégie (l27). Pour une leçon : réseau g170 b6c96, komi 6,5, règle japonaise, huit graines (les huit
+  symétries du plateau ; la recherche est déterministe), 800 visites ou plus à la racine, chaque coup candidat joué puis
+  évalué (400 visites, 1 600 pour les coups serrés). Une réponse acceptée est le premier choix dans les huit graines, ou à
+  moins d'un point du meilleur coup dans les huit ; un coup refusé avec une explication perd au moins 3 points dans
+  chaque graine, et la réponse adverse qu'annonce l'explication est le premier choix dans chaque graine. Les résultats
+  sont figés (`src/go/attaque-defense.fixture.ts`) et rejoués par les tests sans le modèle ; `KATAGO_L27=1` relance le
+  réseau.
 
 ## Chargement
 
@@ -42,12 +49,13 @@ Le contenu des leçons n'est plus dans le JS initial : l'accueil lit l'index gé
 (titre et nombre d'étapes). Après l'ajout ou la modification d'une leçon : `npm run index-lecons`
 (détail : `docs/architecture/chargement-initial.md`).
 
-## Ce qui existe (26 leçons)
+## Ce qui existe (27 leçons)
 
 | Chapitre | Leçon | Titre | Niveau visé |
 | --- | --- | --- | --- |
 | 1. Les bases | l1 à l7 | Libertés, atari, techniques de capture, ko, deux yeux, territoire, compter | 30 → 25 kyu |
 | 2. Ouverture sur 9 × 9 | l8 | Les premiers coups | 25 → 20 kyu |
+| | **l27** | **Attaquer et défendre** : fermer le centre à une pierre faible ; sortir la sienne vers le centre | 12 → 10 kyu |
 | 3. Capturer et sauver | l9 à l11 | Filet, prise en retour, course aux libertés | 20 → 17 kyu |
 | | **l26** | **La course avec un œil** : l'œil se remplit en dernier, le dehors d'abord | 14 → 12 kyu |
 | 4. Vie et mort | l12, l13, l14 | Faux œil, point vital, seki | 18 → 15 kyu |
@@ -63,7 +71,7 @@ Le contenu des leçons n'est plus dans le JS initial : l'accueil lit l'index gé
 | | **l21** | **Le manque de libertés** : boucher la liberté du dehors ; relier met en atari | 11 → 10 kyu |
 
 Les identifiants restent stables (la progression des joueurs y est attachée) ; l'ordre du chemin est celui des
-chapitres, et `content/lessons.fr.js` suit cet ordre (l26 est rangée après l11, l24 et l25 après l17, l22 et l23 après
+chapitres, et `content/lessons.fr.js` suit cet ordre (l27 est rangée après l8, l26 après l11, l24 et l25 après l17, l22 et l23 après
 l16).
 
 Preuves du palier 21-30 (`src/go/lecons-21-30.test.ts`) :
@@ -75,23 +83,24 @@ Preuves du palier 21-30 (`src/go/lecons-21-30.test.ts`) :
 | l23 Le hane au premier rang | Minimax exact par surfaces (hane seul meilleur coup des deux côtés, suites de la leçon optimales), lecteur avec ko pour « relie », score() japonais : 2 points d'écart, 1 point pour le blocage |
 | l24 Agrandir ou réduire | Preuve de vie et mort en zone fermée : un seul coup vit, le même seul coup tue ; chaque placement intérieur échoue |
 | l25 Les groupes du coin | Preuve de vie et mort : A2 seul coup qui vit ; si Blanc le prend, personne ne gagne sans ko, et le ko est rejoué (prise, reprise interdite, faux œil) |
+| l27 Attaquer et défendre | KataGo figé (`src/go/lecons-27-30.test.ts`) : F4 premier choix dans les huit graines (attaque, côté) ; Blanc au trait, F4 meilleur coup évalué dans les huit graines (premier choix dans sept, la recherche ne départage pas la huitième) ; défense : F4 et D4 exactement ; refus (G5, E3, F2) à au moins 3 points |
 | l26 La course avec un œil | Lecteur exact sans ko : seuls les coups du dehors gagnent ; liberté commune et œil mettent Noir en atari ; Blanc au trait gagne |
 
 ## La suite prévue (vers 5 kyu, puis le premier dan)
 
-Écartées de ce palier, faute de preuve honnête dans le lecteur actuel :
+Écartées de ce palier, faute de preuve honnête ou de position lisible :
 
 | Leçon prévue | Pourquoi elle attend | Ce qu'il faut pour la livrer |
 | --- | --- | --- |
-| Le jeté | La recherche exhaustive d'un jeté qui fait un faux œil (coin, 3 × 4 points) n'a rien trouvé ; les jetés trouvés sur le bord (2 × 6, 2 × 7) et examinés finissent en prise en retour, déjà la leçon 10 | Une forme plus grande (3 × 6) et une recherche plus longue, ou un jeté de course aux libertés prouvé par le lecteur |
+| Le jeté | Deuxième recherche (07/10), plus large, sans résultat lisible. Jeté strict : une pierre seule, sans voisine noire, une liberté, que Blanc prend sans ko ; seul coup gagnant avec et sans ko ; pas de prise en retour. Course aux libertés sur le gabarit de la leçon 11 (énumération complète, 59 049 positions) : 25 trouvées, toutes où le jeté met aussi une autre pierre en atari, avec des pierres blanches éparses ; sans le critère strict, les 43 trouvées dépendaient d'un ko interdit. Course dans le coin (19 683 positions) et course tirée au hasard sur 3 × 8 (vingt minutes de tirages) : aucune. Jeté au bord menant à l'oiotoshi (3 × 7, tirages au hasard, une heure de calcul) : 3, dont une prise en retour et deux de 26 pierres, illisibles. Jeté puis échelle ou filet au centre (trois pierres en ligne, deux pierres, bouche du tigre ; plus d'un million de tirages) : aucune | Une forme choisie à la main dans un recueil (nid de grue sur un plus grand plateau), prouvée par le lecteur ; ou un lecteur de leçon 13 × 13 |
 | Ouverture sur 13 × 13 | Le lecteur de leçon est en 9 × 9 (`src/app/Lecon.tsx`, `src/content/demo.ts`) | Lecteur à taille variable (autre périmètre), puis preuve KataGo comme le lot X |
 | Joseki simples | Un joseki se joue sur un grand plateau ; le lecteur de leçon est en 9 × 9 | Lecteur 13 × 13 ou 19 × 19, puis suites vérifiées par KataGo jusqu'au bout |
-| Attaquer et défendre | Jugement de stratégie : seul KataGo peut le mesurer ; aucune position n'a encore été choisie et vérifiée avec assez de visites | Positions choisies avec KataGo à plusieurs centaines de visites, et des marges nettes entre la réponse et les erreurs |
 
-KataGo (`npm run fetch-model`) tourne en local dans ce conteneur (0,3 s par position en 9 × 9 à 1 visite, sans
-TensorFlow natif) : il reste disponible pour ces leçons quand le lecteur saura afficher un plus grand plateau.
+KataGo (`npm run fetch-model`) tourne en local dans ce conteneur : 0,5 s par visite en 9 × 9 sur le processeur seul,
+22 ms avec TensorFlow natif (`@tensorflow/tfjs-node`, installé hors du dépôt pour la leçon 27). Il reste disponible pour
+ces leçons quand le lecteur saura afficher un plus grand plateau.
 
-Palier de l'issue #16 : 26 leçons publiées ; 100 problèmes vérifiés. Prochain palier : 30 leçons (les quatre ci-dessus).
+Palier de l'issue #16 : 27 leçons publiées ; 100 problèmes vérifiés. Prochain palier : 30 leçons (les trois ci-dessus).
 
 ## Grands plateaux (#454)
 

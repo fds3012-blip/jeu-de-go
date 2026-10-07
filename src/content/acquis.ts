@@ -31,9 +31,10 @@ export const ACQUIS: Record<string, string> = {
   l24: 'Tu prends le point au bord de l’espace : pour vivre, ou pour tuer.',
   l25: 'Tu connais le point du coin, et tu sais qu’un ko n’est pas une vie.',
   l26: 'Avec un œil, tu bouches d’abord les libertés du dehors.',
+  l27: 'Tu attaques une pierre faible côté centre, et tu y sors la tienne.',
 };
 
-const IDS = ['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7', 'l8', 'l9', 'l10', 'l11', 'l12', 'l13', 'l14', 'l15', 'l16', 'l17', 'l18', 'l19', 'l20', 'l21', 'l22', 'l23', 'l24', 'l25', 'l26'] as const;
+const IDS = ['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7', 'l8', 'l9', 'l10', 'l11', 'l12', 'l13', 'l14', 'l15', 'l16', 'l17', 'l18', 'l19', 'l20', 'l21', 'l22', 'l23', 'l24', 'l25', 'l26', 'l27'] as const;
 const connu = (id: string): id is (typeof IDS)[number] => (IDS as readonly string[]).includes(id);
 
 /** Phrase de fin d'une leçon dans la langue de l'interface (#167) ; une phrase générale si la leçon n'en a pas. */
