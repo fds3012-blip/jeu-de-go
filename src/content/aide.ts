@@ -137,7 +137,7 @@ export const IDS_MOTS = [
   'liberte', 'atari', 'groupe', 'prisonnier', 'suicide', 'ko', 'superko', 'oeil', 'fauxOeil', 'pointVital', 'seki',
   'territoire', 'dame', 'pierresMortes', 'komi', 'passe', 'handicap', 'hoshi', 'kyuDan',
   'doubleAtari', 'echelle', 'filet', 'priseEnRetour', 'semeai', 'hane', 'senteGote', 'tesuji', 'joseki',
-  'sanSan', 'komoku', 'kakari', 'tsuke', 'kosumi',
+  'sanSan', 'komoku', 'kakari', 'tsuke', 'kosumi', 'watari',
 ] as const;
 export type IdMot = (typeof IDS_MOTS)[number];
 
@@ -178,6 +178,8 @@ export const MOTS: Mot[] = [
   { id: 'kakari', lecon: 'l31' },
   { id: 'tsuke', lecon: 'l31' },
   { id: 'kosumi', lecon: 'l31' },
+  // #16 : relier par en dessous (l34).
+  { id: 'watari', lecon: 'l34' },
 ];
 
 /**
@@ -192,6 +194,7 @@ export const AUSSI: Record<'fr' | 'en', Partial<Record<IdMot, string[]>>> = {
     echelle: ['shicho'], filet: ['geta'], priseEnRetour: ['snapback'], semeai: ['course aux libertés'],
     senteGote: ['sente', 'gote', 'initiative'], territoire: ['points', 'compter'], komi: ['points'],
     sanSan: ['3-3', 'san san', 'invasion'], komoku: ['3-4'], kakari: ['approche'], tsuke: ['contact', 'coller'], kosumi: ['diagonale'],
+    watari: ['relier par en dessous', 'premier rang'],
   },
   en: {
     liberte: ['liberties'], groupe: ['chain', 'string'], prisonnier: ['capture', 'captures'],
@@ -200,6 +203,7 @@ export const AUSSI: Record<'fr' | 'en', Partial<Record<IdMot, string[]>>> = {
     echelle: ['shicho'], filet: ['geta'], priseEnRetour: ['snapback'], semeai: ['capturing race'],
     senteGote: ['sente', 'gote', 'initiative'], territoire: ['points', 'scoring'], komi: ['points'],
     sanSan: ['3-3', 'san san', 'invasion'], komoku: ['3-4'], kakari: ['approach'], tsuke: ['contact', 'attach'], kosumi: ['diagonal'],
+    watari: ['connect underneath', 'bridge', 'first line'],
   },
 };
 

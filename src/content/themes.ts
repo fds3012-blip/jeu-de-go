@@ -134,6 +134,16 @@ export const THEMES_DE_LECON: Readonly<Record<string, readonly Theme[]>> = {
   l29: ['ouverture'],
   l30: ['ouverture'],
   l31: ['ouverture'],
+  // #16 (leçons 32 et suivantes) : la valeur d'un coup (l32) a la série de fin de partie.
+  l32: ['fin-de-partie'],
+  // Le sente avant le gote (l33) : la série de fin de partie.
+  l33: ['fin-de-partie'],
+  // Relier par en dessous (l34) : la série de relier et couper.
+  l34: ['relier-couper'],
+  // Couper par en dessous (l35) : la même série.
+  l35: ['relier-couper'],
+  // Couper, puis reprendre (l36) : relier et couper, et la prise en retour.
+  l36: ['relier-couper', 'prise-en-retour'],
 };
 
 /**

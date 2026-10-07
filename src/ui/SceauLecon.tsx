@@ -165,6 +165,41 @@ function motif(id: string, W: string, C: string): ReactElement {
       <circle cx="60" cy="52" r="9" fill={C} stroke={W} strokeWidth="2.6" />
       <circle cx="60" cy="74" r="9" fill={W} />
     </>);
+    // Le sente avant le gote : la flèche du coup qui passe d'abord, puis la grande prise.
+    case 'l33': return (<>
+      <path d="M30 34H58M50 26 58 34 50 42" stroke={W} strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <circle cx="36" cy="62" r="8" fill={W} />
+      <circle cx="64" cy="62" r="12" fill={C} stroke={W} strokeWidth="2.6" />
+    </>);
+    // Relier par en dessous : le bord, deux pierres noires et le pont qui passe sous la pierre blanche.
+    case 'l34': return (<>
+      <path d="M22 76H78" stroke={W} strokeWidth="3" strokeLinecap="round" />
+      <circle cx="30" cy="54" r="8" fill={W} />
+      <circle cx="70" cy="54" r="8" fill={W} />
+      <circle cx="50" cy="46" r="8" fill={C} stroke={W} strokeWidth="2.6" />
+      <path d="M34 64Q50 74 66 64" stroke={W} strokeWidth="3" strokeLinecap="round" fill="none" />
+    </>);
+    // Couper, puis reprendre : la pierre de la coupe, et la flèche qui revient la reprendre.
+    case 'l36': return (<>
+      <path d="M22 76H78" stroke={W} strokeWidth="3" strokeLinecap="round" />
+      <circle cx="40" cy="62" r="9" fill={W} />
+      <circle cx="62" cy="40" r="8" fill={C} stroke={W} strokeWidth="2.6" />
+      <path d="M54 30A16 16 0 1 0 64 54" stroke={W} strokeWidth="3" strokeLinecap="round" fill="none" />
+    </>);
+    // Couper par en dessous : le bord, et la barre qui ferme le passage du premier rang.
+    case 'l35': return (<>
+      <path d="M22 76H78" stroke={W} strokeWidth="3" strokeLinecap="round" />
+      <circle cx="32" cy="54" r="8" fill={C} stroke={W} strokeWidth="2.6" />
+      <circle cx="68" cy="54" r="8" fill={C} stroke={W} strokeWidth="2.6" />
+      <circle cx="50" cy="66" r="8" fill={W} />
+      <path d="M50 30V48" stroke={W} strokeWidth="3.5" strokeLinecap="round" />
+    </>);
+    // La valeur d'un coup : une balance, deux plateaux inégaux.
+    case 'l32': return (<>
+      <path d="M50 26V70M30 74H70M28 40H72" stroke={W} strokeWidth="3" strokeLinecap="round" fill="none" />
+      <circle cx="30" cy="54" r="10" fill={W} />
+      <circle cx="70" cy="50" r="6" fill={C} stroke={W} strokeWidth="2.6" />
+    </>);
     // Agrandir ou réduire : un espace, et les deux flèches qui le poussent ou le serrent.
     case 'l24': return (<>
       <path d="M34 50H66" stroke={W} strokeWidth="3" strokeDasharray="4 5" strokeLinecap="round" />

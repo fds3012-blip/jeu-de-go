@@ -73,10 +73,10 @@ describe('leçons 21 à 30 : place dans le programme (#16)', () => {
   });
   it('sente et gote, puis le hane, prolongent « Fin de partie et comptage »', () => {
     const c = Object.fromEntries(CHAPITRES.map(x => [x.id, x]));
-    expect(c.c6.lecons.map(l => l.id)).toEqual(['l18', 'l19', 'l20', 'l21']);
+    expect(c.c6.lecons.map(l => l.id).slice(0, 4)).toEqual(['l18', 'l19', 'l20', 'l21']);
     expect(c.c3.lecons.map(l => l.id)).toEqual(['l9', 'l10', 'l11', 'l26']);
     expect(c.c4.lecons.map(l => l.id)).toEqual(['l12', 'l13', 'l14', 'l17', 'l24', 'l25']);
-    expect(c.c5.lecons.map(l => l.id)).toEqual(['l15', 'l16', 'l22', 'l23']);
+    expect(c.c5.lecons.map(l => l.id).slice(0, 4)).toEqual(['l15', 'l16', 'l22', 'l23']);
     expect(LESSONS.map(l => l.id)).toEqual(CHAPITRES.flatMap(x => x.lecons.map(l => l.id)));
   });
   it('chaque consigne tient en 12 mots ; chaque geste « pose » est sur le point vert ; au plus une étape sans geste', () => {

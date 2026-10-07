@@ -144,14 +144,42 @@ const K34 = { X: ['Q4'], O: ['Q16', 'D16'] };
 const K34M = { X: ['D16'], O: ['Q16', 'Q4'] };
 const ajoute = (base, x = [], o = []) => plateau(19, { X: [...base.X, ...x], O: [...base.O, ...o] });
 const COLLEE = 'Collée à ta pierre, elle n’entoure presque rien de plus.';
+// Leçons 32 et suivantes (#16, palier vers 8 kyu) : fin de partie et tesuji. Chaque position, chaque réponse acceptée,
+// chaque réfutation et chaque chiffre est prouvé par src/go/lecons-32-plus.test.ts (minimax exact de fin de partie avec
+// élagage alpha-bêta, preuve de vie et mort en zone fermée, lecteur exact de capture).
+// Valeur d'un coup : partie finie sauf deux endroits. En haut, C9-D9 sont en atari : Noir les prend en E9 (deux
+// prisonniers, deux points), ou Blanc relie en E9. En bas, le hane au premier rang de la leçon 23 (deux points d'écart).
+// `Q` : la même partie retournée de haut en bas, pour l'exercice.
+const L_VALEUR = ['.XOO.O...', '.XXXXO...', ...Array(5).fill('...XO....'), 'XXXXOOOOO', '......O..'];
+const L_VALEUR_Q = [...L_VALEUR].reverse();
+// Le sente avant le gote : en bas, l'atari E2 de la leçon 22 (sente : il menace deux pierres) ; en haut, la pierre D9 en
+// atari, que Noir prend en E9 (gote, deux points d'écart). Le sente d'abord : Blanc relie, puis tu prends. `Q` : la même
+// partie retournée de haut en bas.
+const L_ORDRE = ['.XXO.O...', '.XXXXO...', ...Array(5).fill('..XXOOO..'), '..XX..O..', '..XOO.O..'];
+const L_ORDRE_Q = [...L_ORDRE].reverse();
+// Relier par en dessous (watari) : tes pierres A2-C2 et ton mur G sont séparés par la pierre blanche E2. E1, sous elle,
+// relie : si Blanc coupe en D1, D2 le met en atari ; s'il coupe en D2, D1 relie. `D2` : la position après E1 et la coupe
+// D2. `M` : la même forme en miroir, de l'autre côté.
+const L_WATARI = [...V.slice(0, 5), '......X..', 'OOOOOOX..', 'XXX.O.X..', '.....XX..'];
+const L_WATARI_D2 = [...V.slice(0, 5), '......X..', 'OOOOOOX..', 'XXXOO.X..', '....XXX..'];
+const L_WATARI_M = L_WATARI.map(r => [...r].reverse().join(''));
+// Couper par en dessous : les pierres blanches A2-D2 veulent rejoindre le mur blanc G par le premier rang. Seul E1 coupe ;
+// ensuite E2 et F1 se répondent. E2, le blocage naturel, laisse Blanc répondre en E1 : plus de coupe sans ko.
+// `M` : la même forme en miroir.
+const L_DESSOUS = [...V.slice(0, 5), '......O..', 'XXXXXXO..', 'OOOO.XO..', '......O..'];
+const L_DESSOUS_M = L_DESSOUS.map(r => [...r].reverse().join(''));
+// Couper, puis reprendre : les pierres blanches A2-C2 et D1 veulent passer. Seul B1 coupe. Si Blanc relie en C1, E1 le met
+// en atari ; s'il prend B1 en A1, tu reprends en B1 : prise en retour de six pierres. `M` : la même forme en miroir.
+const L_REPRISE = [...V.slice(0, 5), '......O..', 'XXXXXXO..', 'OOOX..O..', '...O..O..'];
+const L_REPRISE_M = L_REPRISE.map(r => [...r].reverse().join(''));
 export const CHAPITRES = [
   { id: 'c1', titre: 'Les bases', intro: 'Sept leçons courtes pour jouer ta première partie.', fin: 'Tu connais les règles du go.', lecons: ['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7'] },
   // Chapitre en cours d'écriture (`complet: false`) : sa dernière leçon ne ferme pas encore le chapitre.
   { id: 'c2', titre: 'L’ouverture', intro: 'Où poser tes premières pierres.', lecons: ['l8', 'l27', 'l29', 'l30', 'l31'], complet: false },
   { id: 'c3', titre: 'Capturer et sauver', intro: 'Des pièges pour prendre plus de pierres.', lecons: ['l9', 'l10', 'l11', 'l26'], complet: false },
   { id: 'c4', titre: 'Vie et mort', intro: 'Quand un groupe vit, quand il meurt.', lecons: ['l12', 'l13', 'l14', 'l17', 'l24', 'l25'], complet: false },
-  { id: 'c5', titre: 'Fin de partie et comptage', intro: 'Finir proprement, puis compter juste.', lecons: ['l15', 'l16', 'l22', 'l23'], complet: false },
-  { id: 'c6', titre: 'Formes et tesuji', intro: 'Les bonnes formes et les coups malins du go.', lecons: ['l18', 'l19', 'l20', 'l21'], complet: false }
+  { id: 'c5', titre: 'Fin de partie et comptage', intro: 'Finir proprement, puis compter juste.', lecons: ['l15', 'l16', 'l22', 'l23', 'l32', 'l33'], complet: false },
+  { id: 'c6', titre: 'Formes et tesuji', intro: 'Les bonnes formes et les coups malins du go.', lecons: ['l18', 'l19', 'l20', 'l21', 'l34', 'l35', 'l36'], complet: false }
 ];
 export const LESSONS = [
   { id: 'l1', title: 'Libertés et capture', desc: 'La règle qui fait tout le jeu', steps: [
@@ -597,6 +625,37 @@ export const LESSONS = [
       ok: 'Hane, puis tu relieras : Blanc recule d’un point.', no: 'Contourne la pierre blanche E2 par en dessous.',
       refus: [{ points: ['F1'], no: 'Tu bloques chez toi : un point de moins qu’avec le hane.' }] }
   ] },
+  { id: 'l32', title: 'La valeur d’un coup', desc: 'Compter ce que chacun gagne', steps: [
+    { kind: 'info', rows: L_VALEUR, geste: { pose: 'E9' }, demo: [{ pose: 'E9', couleur: 'B' }, { zone: ['C9', 'D9'] }],
+      text: 'Prends les deux pierres au point vert. Compte ce que tu gagnes.' },
+    { kind: 'info', rows: L_VALEUR, geste: { touche: ['E9'], no: 'Touche le point vide qui relie les deux pierres blanches.' },
+      demo: [{ pose: 'E9', couleur: 'W' }],
+      text: 'Touche E9 : si Blanc y relie d’abord, tu ne gagnes rien.' },
+    { kind: 'quiz', rows: L_VALEUR,
+      text: 'Prendre ou laisser relier : combien de points d’écart ?', choices: ['2', '4', '6'], answer: 1,
+      ok: 'Quatre : deux prisonniers, plus deux points de territoire.', no: 'Compte les prisonniers, puis les points libérés en C9 et D9.' },
+    { kind: 'move', rows: L_VALEUR_Q, accept: ['E1'],
+      text: 'À toi : deux endroits restent ouverts. Joue le plus grand.',
+      ok: 'Quatre points d’écart : plus que le hane, qui en vaut deux.', no: 'Compare : prendre deux pierres, ou le hane d’en haut.',
+      refus: [{ points: ['E9', 'D9'], no: 'En haut, deux points d’écart. La prise en vaut quatre.' }] }
+  ] },
+  { id: 'l33', title: 'Le sente avant le gote', desc: 'Même petit, le sente passe d’abord', steps: [
+    { kind: 'info', rows: L_ORDRE, geste: { pose: 'E2' }, demo: [{ pose: 'E2', couleur: 'B' }, { atari: ['E1'] }, { pose: 'F1', couleur: 'W' }],
+      text: 'Deux endroits ouverts. D’abord l’atari au point vert : Blanc doit relier.' },
+    { kind: 'info', rows: L_ORDRE, avant: [{ pose: 'E2', couleur: 'B' }, { pose: 'F1', couleur: 'W' }], geste: { pose: 'E9' },
+      demo: [{ pose: 'E9', couleur: 'B' }, { zone: ['D9'] }],
+      text: 'Tu as encore la main : prends la pierre au point vert.' },
+    { kind: 'quiz', rows: L_ORDRE,
+      text: 'Si tu prends d’abord en E9, où joue Blanc ?', choices: ['E2', 'F1'], answer: 0,
+      ok: 'E2 : il sauve ses deux pierres. Ton sente est perdu.', no: 'Blanc n’a plus rien à défendre en F1 : il joue E2.' },
+    { kind: 'quiz', rows: L_ORDRE,
+      text: 'Sente d’abord, ou prise d’abord : combien de points d’écart ?', choices: ['0', '2', '4'], answer: 1,
+      ok: 'Deux : avec le sente d’abord, tu as les deux endroits.', no: 'Compare : le sente d’abord te donne aussi la prise.' },
+    { kind: 'move', rows: L_ORDRE_Q, accept: ['E8'],
+      text: 'À toi : deux endroits ouverts. Joue dans le bon ordre.',
+      ok: 'Sente d’abord : Blanc relie, puis tu prends la pierre.', no: 'Cherche le coup qui oblige Blanc à répondre.',
+      refus: [{ points: ['E1'], no: 'La prise d’abord : Blanc sauve ses pierres en E8. Deux points de moins.' }] }
+  ] },
   { id: 'l18', title: 'Les bonnes formes', desc: 'Bouche du tigre et bambou', steps: [
     { kind: 'touche', rows: L_COUPE, accept: ['D5'],
       text: 'Point de coupe : Blanc y sépare tes pierres. Touche-le.',
@@ -653,5 +712,48 @@ export const LESSONS = [
     { kind: 'move', rows: L_MANQUE_Q, accept: ['E1'],
       text: 'À toi : bouche sa liberté extérieure. Il ne pourra plus relier.',
       ok: 'Relier le mettrait en atari : Blanc est pris.', no: 'Cherche la seule liberté de Blanc hors de sa forme.' }
+  ] },
+  { id: 'l34', title: 'Relier par en dessous', desc: 'Le watari, au premier rang', steps: [
+    { kind: 'info', rows: L_WATARI, geste: { pose: 'E1' }, demo: [{ pose: 'E1', couleur: 'B' }],
+      text: 'Watari (relier par en dessous) : glisse sous la pierre blanche, au point vert.' },
+    { kind: 'info', rows: L_WATARI, avant: [{ pose: 'E1', couleur: 'B' }], geste: { pose: 'D2' },
+      demo: [{ pose: 'D1', couleur: 'W' }, { pose: 'D2', couleur: 'B' }, { atari: ['D1'] }],
+      text: 'Blanc coupe en D1 ? Pose au point vert : il est en atari.' },
+    { kind: 'move', rows: L_WATARI_D2, accept: ['D1'],
+      text: 'Blanc coupe en D2. Relie tes pierres au premier rang.',
+      ok: 'Relié : s’il joue C1, il est aussitôt en atari.', no: 'Joue à côté de ta pierre E1, sous la coupe.',
+      refus: [{ points: ['C1'], no: 'Blanc joue en D1 : tes pierres restent coupées.' }] },
+    { kind: 'move', rows: L_WATARI_M, accept: ['E1'],
+      text: 'À toi : relie tes pierres par en dessous.',
+      ok: 'Watari : Blanc ne peut plus couper sans être pris.', no: 'Glisse au premier rang, sous la pierre blanche.',
+      refus: [{ points: ['F2'], no: 'Blanc bloque en E1 : tes pierres restent coupées.' }] }
+  ] },
+  { id: 'l35', title: 'Couper par en dessous', desc: 'Bloquer le premier rang', steps: [
+    { kind: 'info', rows: L_DESSOUS, geste: { pose: 'E1' }, demo: [{ pose: 'E1', couleur: 'B' }],
+      text: 'Blanc veut passer par en dessous. Coupe-le au point vert.' },
+    { kind: 'info', rows: L_DESSOUS, avant: [{ pose: 'E1', couleur: 'B' }], geste: { pose: 'F1' },
+      demo: [{ pose: 'E2', couleur: 'W' }, { pose: 'F1', couleur: 'B' }],
+      text: 'Blanc pousse en E2 ? Bloque au point vert : il reste coupé.' },
+    { kind: 'quiz', rows: L_DESSOUS,
+      text: 'Après E1, Blanc joue F1. Où coupes-tu ?', choices: ['E2', 'D1'], answer: 0,
+      ok: 'E2 : E2 et F1 se répondent, Blanc ne passe pas.', no: 'Bloque l’autre passage, au-dessus de ta pierre E1.' },
+    { kind: 'move', rows: L_DESSOUS_M, accept: ['E1'],
+      text: 'À toi : empêche Blanc de relier ses pierres.',
+      ok: 'Coupé au premier rang : E2 et D1 se répondent.', no: 'Coupe au premier rang, sous le passage E2.',
+      refus: [{ points: ['E2', 'D1'], no: 'Blanc répond en E1 : tu ne coupes plus sans ko.' }] }
+  ] },
+  { id: 'l36', title: 'Couper, puis reprendre', desc: 'La coupe au premier rang', steps: [
+    { kind: 'info', rows: L_REPRISE, geste: { pose: 'B1' }, demo: [{ pose: 'B1', couleur: 'B' }],
+      text: 'Blanc veut passer en C1. Coupe d’abord au point vert.' },
+    { kind: 'info', rows: L_REPRISE, avant: [{ pose: 'B1', couleur: 'B' }], geste: { pose: 'E1' },
+      demo: [{ pose: 'C1', couleur: 'W' }, { pose: 'E1', couleur: 'B' }, { atari: ['C1'] }],
+      text: 'Blanc relie en C1 ? Atari au point vert : cinq pierres en danger.' },
+    { kind: 'info', rows: L_REPRISE, avant: [{ pose: 'B1', couleur: 'B' }, { pose: 'C1', couleur: 'W' }, { pose: 'E1', couleur: 'B' }],
+      geste: { pose: 'B1' }, demo: [{ pose: 'A1', couleur: 'W' }, { pose: 'B1', couleur: 'B' }],
+      text: 'Blanc prend B1 ? Reprends au point vert : prise en retour, six pierres.' },
+    { kind: 'move', rows: L_REPRISE_M, accept: ['H1'],
+      text: 'À toi : empêche Blanc de passer sous ta pierre.',
+      ok: 'Coupé : relier le mettrait en atari, prendre finit en prise en retour.', no: 'Coupe au premier rang, au bout des pierres blanches.',
+      refus: [{ points: ['E1', 'G1'], no: 'Blanc prend H1 : tu ne coupes plus sans ko.' }] }
   ] }
 ];

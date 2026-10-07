@@ -278,6 +278,44 @@ export const LESSONS_EN = {
     { text: 'Your turn: fill its outside liberty. It can’t connect anymore.',
       ok: 'Connecting would put it in atari: White is captured.', no: 'Look for White’s only liberty outside its shape.' }
   ] },
+  l33: { title: 'Sente before gote', desc: 'Even when smaller, sente comes first', steps: [
+    { text: 'Two open places. Atari first, at the green point: White must connect.' },
+    { text: 'You still have the move: capture the stone at the green point.' },
+    { text: 'If you capture first at E9, where does White play?', choices: ['E2', 'F1'],
+      ok: 'E2: it saves its two stones. Your sente is lost.', no: 'White has nothing to defend at F1: it plays E2.' },
+    { text: 'Sente first, or capture first: how many points apart?', choices: ['0', '2', '4'],
+      ok: 'Two: with sente first, you get both places.', no: 'Compare: sente first also gives you the capture.' },
+    { text: 'Your turn: two open places. Play them in the right order.',
+      ok: 'Sente first: White connects, then you capture the stone.', no: 'Look for the move that forces White to answer.',
+      refus: ['Capture first: White saves its stones at E8. Two points less.'] }
+  ] },
+  l34: { title: 'Connecting underneath', desc: 'The watari, on the first line', steps: [
+    { text: 'Watari (connecting underneath): slide under the white stone, at the green point.' },
+    { text: 'White cuts at D1? Play the green point: it’s in atari.' },
+    { text: 'White cuts at D2. Connect your stones on the first line.',
+      ok: 'Connected: if White plays C1, it’s in atari at once.', no: 'Play next to your stone E1, under the cut.',
+      refus: ['White plays D1: your stones stay cut apart.'] },
+    { text: 'Your turn: connect your stones underneath.',
+      ok: 'Watari: White can’t cut without being captured.', no: 'Slide along the first line, under the white stone.',
+      refus: ['White blocks at E1: your stones stay cut apart.'] }
+  ] },
+  l35: { title: 'Cutting underneath', desc: 'Block the first line', steps: [
+    { text: 'White wants to pass underneath. Cut it at the green point.' },
+    { text: 'White pushes at E2? Block at the green point: it stays cut.' },
+    { text: 'After E1, White plays F1. Where do you cut?', choices: ['E2', 'D1'],
+      ok: 'E2: E2 and F1 answer each other, White can’t pass.', no: 'Block the other passage, above your stone E1.' },
+    { text: 'Your turn: stop White from connecting its stones.',
+      ok: 'Cut on the first line: E2 and D1 answer each other.', no: 'Cut on the first line, under the passage at E2.',
+      refus: ['White answers at E1: you can’t cut without a ko.'] }
+  ] },
+  l36: { title: 'Cut, then retake', desc: 'The first-line cut', steps: [
+    { text: 'White wants to pass at C1. Cut first at the green point.' },
+    { text: 'White connects at C1? Atari at the green point: five stones.' },
+    { text: 'White captures B1? Retake at the green point: snapback, six stones.' },
+    { text: 'Your turn: stop White from passing under your stone.',
+      ok: 'Cut: connecting means atari, capturing ends in a snapback.', no: 'Cut on the first line, at the end of the white stones.',
+      refus: ['White takes H1: you can’t cut without a ko.'] }
+  ] },
   l22: { title: 'Sente and gote', desc: 'The move that demands an answer', steps: [
     { text: 'Sente (a move that demands an answer): atari at the green point. White connects.' },
     { text: 'You keep the initiative: close the top too, at the green point.' },
@@ -287,6 +325,16 @@ export const LESSONS_EN = {
     { text: 'Your turn: play the sente move first.',
       ok: 'Atari: White must connect, then you close the bottom too.', no: 'Look for the atari: White will have to answer.',
       refus: ['Gote first: White connects at E8. Two points less.'] }
+  ] },
+  l32: { title: 'What a move is worth', desc: 'Count what each side gains', steps: [
+    { text: 'Capture the two stones at the green point. Count what you gain.' },
+    { text: 'Tap E9: if White connects there first, you gain nothing.',
+      geste: { no: 'Tap the empty point that connects the two white stones.' } },
+    { text: 'Capture or let White connect: how many points apart?', choices: ['2', '4', '6'],
+      ok: 'Four: two prisoners, plus two points of territory.', no: 'Count the prisoners, then the points freed at C9 and D9.' },
+    { text: 'Your turn: two places are still open. Play the biggest.',
+      ok: 'Four points apart: more than the hane, worth two.', no: 'Compare: capturing two stones, or the hane at the top.',
+      refus: ['At the top, two points apart. The capture is worth four.'] }
   ] },
   l23: { title: 'First-line hane', desc: 'Bend around, then connect', steps: [
     { text: 'Hane (a move that bends around a stone): play the green point. White blocks, you connect.' },

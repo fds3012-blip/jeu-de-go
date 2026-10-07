@@ -22,22 +22,42 @@ export interface OptionsFin {
   regle?: Rules;
 }
 
+/** Bornes connues de la valeur d'une position (à profondeur et coupure fixées) et le meilleur coup trouvé. */
+interface Entree { bas: number; haut: number; coup: number }
+
+/**
+ * Minimax à profondeur bornée, avec élagage alpha-bêta (#16, leçons 32 et suivantes). La valeur rendue à la racine,
+ * fenêtre pleine, est exactement celle du minimax simple : l'élagage ne coupe que des coups qui ne peuvent pas changer le
+ * choix. La table garde, pour chaque position (profondeur restante comprise), un encadrement de sa valeur.
+ */
 function borne(pos: Position, zone: readonly number[], prof: number, coupure: number, regle: Rules,
-  memo: Map<string, number>, passes: number): number {
+  table: Map<string, Entree>, passes: number, alpha = -Infinity, beta = Infinity): number {
   if (passes >= 2) { const s = score(pos, 0, regle); return s.black - s.white; }
   if (prof === 0) return coupure;
   const cle = `${prof}|${pos.toPlay}${passes}${pos.ko}:${pos.board.join('')}`;
-  const connu = memo.get(cle);
-  if (connu !== undefined) return connu;
-  const max = pos.toPlay === 1;
-  let best = max ? -Infinity : Infinity;
-  for (const z of [...zone.filter(p => pos.board[p] === 0), -1]) {
+  const connu = table.get(cle);
+  if (connu) {
+    if (connu.bas === connu.haut || connu.bas >= beta) return connu.bas;
+    if (connu.haut <= alpha) return connu.haut;
+    alpha = Math.max(alpha, connu.bas);
+    beta = Math.min(beta, connu.haut);
+  }
+  const a0 = alpha, b0 = beta, max = pos.toPlay === 1;
+  const coups = [...zone.filter(p => pos.board[p] === 0), -1];
+  if (connu && connu.coup !== undefined && coups.includes(connu.coup)) coups.unshift(...coups.splice(coups.indexOf(connu.coup), 1));
+  let best = max ? -Infinity : Infinity, meilleur = -1;
+  for (const z of coups) {
     const r = play(pos, z);
     if (typeof r === 'string') continue;
-    const v = borne(r, zone, prof - 1, coupure, regle, memo, z < 0 ? passes + 1 : 0);
-    if (max ? v > best : v < best) best = v;
+    const v = borne(r, zone, prof - 1, coupure, regle, table, z < 0 ? passes + 1 : 0, alpha, beta);
+    if (max ? v > best : v < best) { best = v; meilleur = z; }
+    if (max) alpha = Math.max(alpha, best); else beta = Math.min(beta, best);
+    if (alpha >= beta) break;
   }
-  memo.set(cle, best);
+  // Fail-soft : sous la fenêtre, `best` est un majorant ; au-dessus, un minorant ; dedans, la valeur exacte.
+  const bas = Math.max(connu?.bas ?? -Infinity, best <= a0 ? -Infinity : best);
+  const haut = Math.min(connu?.haut ?? Infinity, best >= b0 ? Infinity : best);
+  table.set(cle, { bas, haut, coup: meilleur });
   return best;
 }
 
