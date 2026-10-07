@@ -25,17 +25,22 @@ Au 07/10, `main` n'a ni protection de branche ni ruleset : aucun statut n'est ex
 Avant : `Lint, types, tests, build` (3 à 4 min) **puis** Playwright sur une seule machine (10 à 15 min de tests,
 plus 1,5 min d'installation) : 15 à 20 min de bout en bout, un passage annulé à la limite de 20 min.
 
-Après : les 4 lots partent en même temps que `Lint, types, tests, build` (plus de `needs`), environ 4 min de tests
-chacun ; la fusion prend une demi-minute. Environ 6 min de bout en bout. Le prix : un lot tourne même si le lint
-échoue (minutes de CI, pas de temps d'attente).
+Après : les 4 lots partent en même temps que `Lint, types, tests, build` (plus de `needs`), 3,5 à 4,5 min de tests
+chacun ; la fusion prend une demi-minute. Mesuré le 07/10 : 6 min 15 s, 7 min, 9 min 55 s (apt lent, voir plus bas),
+puis 6 min 04 s avec l'image Playwright. Le prix : un lot tourne même si le lint échoue (minutes de CI, pas de temps
+d'attente).
 
 Délais par job : 20 min (vérifications), 25 min (chaque lot), 10 min (fusion) : quatre à cinq fois la durée normale.
 
-## Caches
+## Caches et navigateur
 
-- npm : `actions/setup-node` avec `cache: npm` (clé : `package-lock.json`).
-- Chromium : `~/.cache/ms-playwright`, clé `ms-playwright-<OS>-<version de @playwright/test lue dans package-lock.json>`.
-  Cache trouvé : seules les bibliothèques système s'installent (`playwright install-deps chromium`).
+- npm : `actions/setup-node` avec `cache: npm` (clé : `package-lock.json`), dans tous les jobs qui installent.
+- Chromium : les lots tournent dans l'image officielle `mcr.microsoft.com/playwright:v<version>-noble` (Chromium, ses
+  bibliothèques système et les polices déjà installés ; 26 s pour démarrer le conteneur). Un premier essai mettait
+  `~/.cache/ms-playwright` en cache (clé : version de `@playwright/test`), mais les bibliothèques système passaient
+  encore par apt : de 13 s à 4 min 46 s selon le miroir, même en retirant les dépôts tiers. L'image supprime apt.
+- **Monter Playwright** : changer la version de l'image dans `ci.yml` (deux endroits : `image:` et le contrôle
+  « Image Playwright à la version de package-lock.json », qui échoue avec la marche à suivre sinon).
 
 ## Tests lents ou instables (#467)
 
