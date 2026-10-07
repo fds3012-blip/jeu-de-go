@@ -167,7 +167,8 @@ export function Etude({ confirmTouch }: Props) {
   };
   const trait = (c: Color) => { if (c !== etude.trait) changer({ ...etude, trait: c, variante: [] }); };
 
-  const consigne = annonce ?? (etude.variante.length ? tk('etude.consigne.variante', { n: etude.variante.length })
+  const consigne = annonce ?? (etude.variante.length === 1 ? tk('etude.consigne.variante1')
+    : etude.variante.length ? tk('etude.consigne.variante', { n: etude.variante.length })
     : outil === 'jouer' ? tk('etude.consigne.jouer') : tk('etude.consigne.poser'));
   const vide = !pierresPosees(etude) && !etude.variante.length;
   const camp = (c: Color) => tk(c === 1 ? 'etude.trait.noir' : 'etude.trait.blanc');

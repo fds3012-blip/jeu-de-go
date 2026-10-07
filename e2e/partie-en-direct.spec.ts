@@ -12,7 +12,7 @@ const BOB = '00000000-0000-4000-8000-0000000000c2';
 const CAPTURES = process.env.CAPTURES_360; // ex. /tmp/captures-360
 
 async function telephone(browser: Browser, baseURL: string | undefined, serveur: FauxServeur, qui: { email: string; pseudo: string; id: string } | null,
-  o: { largeur?: number; hauteur?: number; sombre?: boolean } = {}): Promise<Page> {
+  o: { largeur?: number; hauteur?: number; sombre?: boolean; polices?: boolean; texte200?: boolean } = {}): Promise<Page> {
   const ctx = await browser.newContext({
     viewport: { width: o.largeur ?? 390, height: o.hauteur ?? 844 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true, locale: 'fr-FR', baseURL,
     colorScheme: o.sombre ? 'dark' : 'light', reducedMotion: 'reduce',
@@ -21,6 +21,8 @@ async function telephone(browser: Browser, baseURL: string | undefined, serveur:
   const stockage: Record<string, string> = { 'go.parties.v1': JSON.stringify({ n: 3 }) };
   if (qui) stockage['sb-supabase-auth-token'] = JSON.stringify(serveur.sessionCompte(qui.email, qui.pseudo, qui.id));
   const page = await brancher(ctx, serveur, stockage);
+  if (o.polices === false) await page.route(/\.(woff2?|ttf|otf)(\?|$)/, r => r.abort());
+  if (o.texte200) await page.addInitScript(() => { document.addEventListener('DOMContentLoaded', () => { document.documentElement.style.fontSize = '200%'; }); });
   await page.goto('/');
   return page;
 }
@@ -165,8 +167,11 @@ test('sans compte : « Crée ton compte » d’abord', async ({ browser, baseURL
   expect(serveur.appels.some(a => a.includes('find_match'))).toBe(false);
 });
 
-for (const cas of [{ largeur: 320, hauteur: 640, sombre: true }, { largeur: 195, hauteur: 422, sombre: false }]) {
-  test(`choix, attente et partie à ${cas.largeur} px${cas.sombre ? ', sombre' : ''} : sans débord, cibles de 44 px`, async ({ browser, baseURL }) => {
+// #460 : au zoom 200 % et avec le texte agrandi à 200 %, polices web bloquées (la police de repli est plus large), le
+// bandeau de l'adversaire au trait (pseudo, grade, pendule, prisonniers) faisait défiler l'écran de côté.
+for (const cas of [{ largeur: 320, hauteur: 640, sombre: true }, { largeur: 195, hauteur: 422, sombre: false, polices: false },
+  { largeur: 390, hauteur: 844, sombre: false, polices: false, texte200: true }]) {
+  test(`choix, attente et partie à ${cas.largeur} px${cas.sombre ? ', sombre' : ''}${cas.texte200 ? ', texte à 200 %' : ''}${cas.polices === false ? ', polices bloquées' : ''} : sans débord, cibles de 44 px`, async ({ browser, baseURL }) => {
     test.setTimeout(60_000);
     const serveur = fauxServeur();
     const ana = await telephone(browser, baseURL, serveur, { email: 'ana@exemple.test', pseudo: 'Ana', id: ANA }, cas);
@@ -185,6 +190,10 @@ for (const cas of [{ largeur: 320, hauteur: 640, sombre: true }, { largeur: 195,
     await expect(ana.getByTestId('direct-partie')).toBeVisible();
     await expect(plateau(ana)).toBeVisible();
     await sansDebord(ana, 'partie');
+    // Ana joue : c'est au tour de Bob, son bandeau (le plus chargé) passe au trait.
+    await jouer(ana, 'E5');
+    await expect(ana.getByText(/^Au tour de Bob_le_long_pseudo/).first()).toBeVisible();
+    await sansDebord(ana, 'partie, au tour de l’adversaire');
     if (CAPTURES && cas.largeur === 320) await ana.screenshot({ path: `${CAPTURES}/direct-partie-320-sombre.jpg`, type: 'jpeg', quality: 60 });
   });
 }

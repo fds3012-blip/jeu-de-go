@@ -179,7 +179,7 @@ test.describe('#368 Mes statistiques', () => {
       { user_id: MOI, kind: 'game', rating: 1520, ecart: 32, game_id: 'g2', created_at: jour(2) },
     );
     const ctx = await browser.newContext({
-      viewport: { width: largeur, height: largeur === 320 ? 568 : 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, locale: 'fr-FR', baseURL,
+      viewport: { width: largeur, height: largeur === 320 ? 568 : largeur < 300 ? 422 : 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, locale: 'fr-FR', baseURL,
       colorScheme: sombre ? 'dark' : 'light', reducedMotion: 'reduce',
       storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }] }] },
     });
@@ -246,6 +246,20 @@ test.describe('#368 Mes statistiques', () => {
     await ctx.setOffline(false);
     await ctx.close();
   });
+
+  test('zoom 200 % (195 px), polices web bloquées : le titre tient, sans défilement de côté', async ({ browser, baseURL }) => {
+    // #460 : « Mes statistiques », en police de repli et à 28,8 px, débordait de 23 px.
+    const { ctx, page } = await telephone(browser, baseURL, false, 195);
+    await page.route(/\.(woff2?|ttf|otf)(\?|$)/, r => r.abort());
+    await page.goto('/');
+    await nav(page, 'Profil');
+    await page.getByTestId('ligne-stats').click();
+    await expect(page.getByTestId('stats-cote')).toContainText('1520');
+    const titre = page.getByRole('heading', { name: 'Mes statistiques' });
+    expect(await titre.evaluate(h => h.scrollWidth <= h.clientWidth)).toBe(true);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(195);
+    await ctx.close();
+  });
 });
 
 test.describe('#372 Étudier une position', () => {
@@ -275,8 +289,11 @@ test.describe('#372 Étudier une position', () => {
 
     await outils.getByRole('button', { name: 'Jouer' }).click();
     await jouer(page, 'D5');
+    // #460 : « 1 coup », au singulier.
+    await expect(page.getByTestId('etude-consigne')).toHaveText('Variante : 1 coup.');
     await jouer(page, 'F4');
     await expect(svg.locator('[data-numero]')).toHaveCount(2);
+    await expect(page.getByTestId('etude-consigne')).toHaveText('Variante : 2 coups.');
     // 390 × 844 : Annuler et Revenir se touchent sans défiler, au-dessus du goban et du bouton « Analyser ».
     await page.evaluate(() => window.scrollTo(0, 0));
     const cta = (await page.locator('.cta').boundingBox())!;

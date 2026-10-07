@@ -69,10 +69,11 @@
 .semaine-phrases .or { color: var(--recompense-texte); font-weight: var(--fw-bold); }
 
 /* ---------- Bilan de la semaine passée (accueil) ---------- */
-.bilan-semaine { display: grid; gap: var(--space-2); padding: var(--space-3) var(--space-4); border-radius: var(--radius); background: var(--surface);
+.bilan-semaine { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-2); padding: var(--space-3) var(--space-4); border-radius: var(--radius); background: var(--surface);
   box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--recompense) 45%, transparent); }
-.bilan-semaine-tete { display: flex; align-items: center; gap: var(--space-2); }
-.bilan-semaine-tete h2 { flex: 1; min-width: 0; margin: 0; font-size: var(--fs-l); }
+/* #460 : au zoom 200 % (195 px), « Fermer » passe sous le titre au lieu de pousser la carte hors de l'écran. */
+.bilan-semaine-tete { display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--space-2); }
+.bilan-semaine-tete h2 { flex: 1 1 8rem; min-width: 0; margin: 0; font-size: var(--fs-l); overflow-wrap: break-word; }
 .bilan-semaine-tete .lien { flex: none; margin-right: calc(-1 * var(--space-2)); color: var(--muted); }
 .bilan-semaine p { margin: 0; line-height: 1.4; text-wrap: pretty; }
 .bilan-semaine .semaine-stats { grid-template-columns: repeat(auto-fit, minmax(4.8em, 1fr)); }

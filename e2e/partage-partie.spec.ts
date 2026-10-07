@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { expect, test, type Browser, type Page } from '@playwright/test';
 import { brancher, fauxServeur, JETON, type FauxServeur } from './fauxSupabase';
 import { plateau } from './plateau';
+import { fleches } from './partageFleches';
 import { ouvrirRevue, preparerRevue } from './revueFactice';
 
 // Issue #364 (« partager pour recruter ») : depuis le bilan, « Partager » ouvre une feuille : lien vers la revue en
@@ -82,6 +83,9 @@ test('lien de la revue : partagé depuis le bilan, ouvert par un ami sans compte
   await expect(b.page.getByText('Noir gagne de 1,5 point')).toBeVisible();
   // Partie sans prise : autant de pierres que de coups joués (passes exclues).
   await expect(plateau(b.page).locator('g[data-pierre]')).toHaveCount(Math.min(coup, 14));
+  // #460 : à 390 × 844, les flèches se touchent sans défiler (sous le plateau, le bouton du bas les recouvrait), et leurs
+  // chevrons sont tracés au trait (remplis de noir, ils disparaissaient en sombre).
+  await fleches(b.page);
   await b.page.getByRole('button', { name: 'Coup suivant' }).click();
   await expect(b.page.getByText(`Coup ${coup + 1} sur 16`)).toBeVisible();
   // Aucune fenêtre avant son premier geste, une seule action en relief.
@@ -100,6 +104,8 @@ test('lien de la revue : partagé depuis le bilan, ouvert par un ami sans compte
   const c = await telephone(browser, baseURL, serveur, {});
   await c.page.goto(lien.replace(baseURL!, ''));
   await expect(c.page.getByText('Ce lien n’est plus partagé.')).toBeVisible();
+  // #460 : l'état vide dit pourquoi, en une phrase.
+  await expect(c.page.getByText('Son auteur l’a peut-être retiré, ou le lien est incomplet.')).toBeVisible();
   await expect(c.page.locator('.cta')).toHaveText('Découvrir Mochi Go');
   expect(erreurs).toEqual([]);
   await Promise.all([a.ctx.close(), b.ctx.close(), c.ctx.close()]);

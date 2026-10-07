@@ -244,7 +244,7 @@ function Choix({ params, onParams, erreur, onAccueil, onChercher, onFacon, aband
       <Segment titre={td('direct.comptage')} valeurs={REGLES} valeur={params.regles} libelle={r => td(`direct.comptage.${r}`)}
         onChoix={regles => onParams({ ...params, regles })} aide={fr(td(`direct.comptage.aide.${params.regles}`))} />
       {!online && <p className="card small" role="status">{fr(td('direct.horsLigne'))}</p>}
-      {prochain && <p className="muted small direct-prevenir" data-testid="direct-prevenir">{fr(td('direct.abandons.prevenir', { delai: texteDelai(prochain) }))}</p>}
+      {prochain && <p className="card small direct-prevenir" data-testid="direct-prevenir">{fr(td('direct.abandons.prevenir', { delai: texteDelai(prochain) }))}</p>}
       {erreur && <p className="small defi-erreur" role="alert">{fr(erreur)}</p>}
       <button type="button" className="btn primary defis-cta" onClick={onChercher} disabled={!online}>{td('direct.chercher')}</button>
     </div>
