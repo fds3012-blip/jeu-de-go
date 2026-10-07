@@ -42,6 +42,10 @@ import type { StatsPartie } from './bilan';
 import { Revue } from './Revue';
 import { resultatSgf, REVUE_KEY, sgfDepuisHistorique, type PartieGardee } from './revue';
 import { delaiReponse, messageContinue } from './rythme';
+// Coach Mochi (#470) : moments clés vérifiés par src/go/coach.ts, 3 bulles au plus par partie.
+import { calqueCoach, choisirMoment, etatCoachInitial, noterMoment, phraseCoach, proprietesBulle, type MomentCoach } from './coach';
+import type { ReglageCoach } from './settings';
+import { BulleCoach } from '../ui/BulleCoach';
 
 // Textes de l'écran passés par `tr` (#167) : français d'origine dans src/content/i18n/fr.ts.
 const REFUS = { occupe: null, ko: 'partie.refus.ko', suicide: 'partie.refus.suicide', 'hors-plateau': null } as const;
@@ -78,10 +82,15 @@ interface Props {
    */
   guidee?: { depart: number; onCran?: (cran: number) => void };
   /** Réglages du menu « Plus » de la barre d'actions (partie-ecran-v3) : confirmation au doigt et sons, sans quitter la partie. */
-  reglages?: { son: boolean; modifier: (patch: { confirmTouch?: boolean; sound?: boolean }) => void };
+  reglages?: { son: boolean; modifier: (patch: { confirmTouch?: boolean; sound?: boolean; coach?: ReglageCoach }) => void };
+  /**
+   * Coach Mochi (#470) : actif dans cette partie (voir coachActif, settings.ts). Absent : pas de coach (partie à deux,
+   * partie guidée), ni d'interrupteur dans le menu « Plus ».
+   */
+  coach?: boolean;
 }
 
-export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, onResult, fin, aiKomi = komi, portrait, celebrer = true, aide = true, avantage = true, accommodant = false, guidee, onImporter, reglages }: Props) {
+export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, onResult, fin, aiKomi = komi, portrait, celebrer = true, aide = true, avantage = true, accommodant = false, guidee, onImporter, reglages, coach }: Props) {
   // #365 : coordonnées et marque du dernier coup, selon les Réglages.
   const prefs = usePreferences();
   const [history, setHistory] = useState<Position[]>(() => [newPosition(size)]);
@@ -113,6 +122,11 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   const [conseilVu, setConseilVu] = useState<{ len: number; zone: number[]; point: number | null; modele: ModeleConseil; phrase: string; note: 'utile' | 'pas-utile' | null } | null>(null);
   const [conseilCalcul, setConseilCalcul] = useState(false);
   const [conseilsUtilises, setConseilsUtilises] = useState(0);
+  // Coach Mochi (#470) : ce qu'il a déjà dit dans la partie, et la bulle valable pour un seul état de l'historique.
+  const coachEtat = useRef(etatCoachInitial());
+  const [coachVu, setCoachVu] = useState<{ len: number; moment: MomentCoach; phrase: string } | null>(null);
+  const coachRef = useRef(coach);
+  coachRef.current = coach;
   const [cherche, setCherche] = useState(false);
   // Indices donnés dans cette partie : limités à 3 contre l'ordi (#35), illimités à deux.
   const [indicesUtilises, setIndicesUtilises] = useState(0);
@@ -249,7 +263,20 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
         const continue_ = pos.lastMove === -1 && raison ? messageContinue(ai.nom, raison) : null;
         const c = cap || alerte || continue_ ? null : conseilPasser(ai.nom, aide, false, r.board);
         if (c) setConseilPasserA(history.length + 1);
-        const rappel = ` ${tr(frontieresVisibles(frontieres, history.length + 1, r.board, size, true) ? 'partie.frontieres' : 'partie.aToi')}`;
+        const ouvertesVues = frontieresVisibles(frontieres, history.length + 1, r.board, size, true);
+        const rappel = ` ${tr(ouvertesVues ? 'partie.frontieres' : 'partie.aToi')}`;
+        // Coach (#470) : seulement quand Mochi n'a rien d'autre à dire (pas de prise, d'alerte, de passe ni de frontières).
+        const parleCoach = coachRef.current && !cap && !alerte && !continue_ && !c && !ouvertesVues;
+        const moment = parleCoach && history.length >= 2
+          ? choisirMoment({ avantToi: history[history.length - 2], apresToi: pos, apresIa: r, moi: 1, len: history.length + 1 }, coachEtat.current) : null;
+        if (moment) {
+          coachEtat.current = noterMoment(coachEtat.current, moment, history.length + 1);
+          const phrase = phraseCoach(moment, size);
+          setCoachVu({ len: history.length + 1, moment, phrase });
+          setMsg(phrase);
+          track(EVENTS.coachBulle, proprietesBulle(moment, { numero: coachEtat.current.bulles, coup: history.length, taille: size, adversaire: ai.id }));
+          return;
+        }
         setMsg(cap ? tr('partie.ordiCapture', { nom: ai.nom, n: cap, point: toLabel(m, size) }) : alerte ?? continue_ ?? c ?? `${tr('partie.ordiJoue', { nom: ai.nom, point: toLabel(m, size) })}${rappel}`);
       }
     });
@@ -380,6 +407,12 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
       setMsg(ai ? messageIndice(indicesRestants(indicesUtilises + 1)) : messageIndice(1));
     }, () => { setCherche(false); setMsg(tr('partie.indice.erreur')); });
   }
+  // Coach (#470) : coupé depuis sa bulle ou depuis le menu « Plus » (réglage gardé), rallumé depuis le menu.
+  function basculerCoach(actif: boolean, depuis: 'bulle' | 'partie') {
+    reglages?.modifier({ coach: actif ? 'oui' : 'non' });
+    track(actif ? EVENTS.coachActive : EVENTS.coachCoupe, { depuis, bulles: coachEtat.current.bulles });
+    if (!actif && coachVu) { setCoachVu(null); setMsg(tr('coach.coupe')); }
+  }
   // « Qui mène ? » (#94) : l'estimation tourne dans un Worker (KataGo s'il est prêt, sinon le moteur simple).
   // Contre l'ordi : 3 fois par partie et seulement si l'aide de Mochi est active. À deux : illimité.
   const avecQuiMene = quiMeneDisponible(!!ai, aide);
@@ -458,12 +491,14 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   }
   /** « Rejouer d'ici » (revue) : la partie reprend, contre le même adversaire, depuis la position choisie. */
   function rejouer(h: Position[]) {
+    coachEtat.current = etatCoachInitial(); setCoachVu(null);
     token.current++; atarisSubis.current = 0; setIndicesUtilises(0); setQuiMeneUtilises(0); setQuiMene(null); setConseilsUtilises(0); setConseilVu(null);
     reprise.current = h.length > 1;
     setHistory(h); resume(); setResigned(0); setThinking(false); setRelecture(null); setSgf(null);
     setMsg(tr(h.length > 1 ? (ai ? 'partie.reprise.ordi' : 'partie.reprise.deux') : ai ? 'partie.nouvelle.ordi' : 'partie.nouvelle.deux'));
   }
   function restart() {
+    coachEtat.current = etatCoachInitial(); setCoachVu(null);
     token.current++; atarisSubis.current = 0; setIndicesUtilises(0); setQuiMeneUtilises(0); setQuiMene(null); setConseilsUtilises(0); setConseilVu(null);
     reprise.current = false;
     setHistory([newPosition(size)]); resume(); setResigned(0); setThinking(false); setRelecture(null);
@@ -601,6 +636,9 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   const libs = atari && atari.len === history.length && phase === 'play' ? atari.libs : undefined;
   const zone = indice && indice.len === history.length && phase === 'play' ? indice.p : undefined;
   const conseilVisible = conseilVu && conseilVu.len === history.length && phase === 'play' ? conseilVu : null;
+  // Bulle du coach (#470) : pour la position où elle est née, jamais pendant que l'IA réfléchit.
+  const coachVisible = coach && coachVu && coachVu.len === history.length && phase === 'play' && !thinking && msg === coachVu.phrase ? coachVu : null;
+  const calque = coachVisible && !conseilVisible ? calqueCoach(coachVisible.moment, pos) : null;
   // Ta capture reste affichée pendant que Pomme réfléchit (#187) : le « Bravo » ne s'efface qu'à sa réponse.
   const feteVisible = fete && fete.len === history.length && phase === 'play' ? fete : null;
   const pense = phase === 'play' && thinking && !!ai && !feteVisible;
@@ -624,6 +662,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
         <Board size={size} board={pos.board} toPlay={pos.toPlay} interactive={phase === 'score' || myTurn} stonesTappable={phase === 'score'} confirmTouch={confirmTouch}
           coordonnees={prefs.coordonnees} marks={{ last: prefs.dernierCoup ? pos.lastMove : null, owner: phase === 'score' ? sc.owner : quiMeneVisible?.owner, ownerFondu: !!quiMeneVisible, dead, libs, zone, ouverts: phase === 'play' ? frontieresVisibles(frontieres, history.length, pos.board, size, !!ai) : undefined }} onPlay={onPlay} onFantome={setFantome} shake={shake} versCouvercles noms={ai ? { 2: ai.nom } : undefined} />
         {conseilVisible && <CalqueConseil size={size} zone={conseilVisible.zone} point={conseilVisible.point} />}
+        {calque && <CalqueConseil size={size} zone={calque.zone} point={calque.point} />}
         {quiMeneVisible && <p key={quiMeneVisible.n} className="qui-mene-phrase" aria-hidden="true">{fr(quiMeneVisible.phrase)}</p>}
         {/* Zones d'annonce permanentes (audit web, points 3 et 4) : seul leur texte change, pour être lues à coup sûr. */}
         <p className="sr-only" role="status" data-annonce="qui-mene">{quiMeneVisible ? fr(quiMeneVisible.phrase) : ''}</p>
@@ -636,7 +675,9 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
         {intro && phase === 'play' && <div className="coach-intro" aria-hidden={!montrerIntro || undefined} data-cache={!montrerIntro || undefined}>{intro}</div>}
         {!montrerIntro && !avertissementPasse && !quitter && conseilVisible && !pense && messageCoach === conseilVisible.phrase
           && <BulleConseil phrase={conseilVisible.phrase} cle={conseilVisible.len} note={conseilVisible.note} onNote={noterConseil} />}
-        {!montrerIntro && !avertissementPasse && !quitter && !(conseilVisible && !pense && messageCoach === conseilVisible.phrase) && <Coach cle={messageCoach} attente={pense}
+        {!montrerIntro && !avertissementPasse && !quitter && coachVisible && !pense
+          && <BulleCoach phrase={coachVisible.phrase} cle={coachVisible.len} onCouper={() => basculerCoach(false, 'bulle')} />}
+        {!montrerIntro && !avertissementPasse && !quitter && !(coachVisible && !pense) && !(conseilVisible && !pense && messageCoach === conseilVisible.phrase) && <Coach cle={messageCoach} attente={pense}
           humeur={pense ? 'pensif' : feteVisible || humeur.h === 'surpris' ? 'content' : 'neutre'}>{fr(messageCoach)}</Coach>}
         {/* Avant un passe trop tôt (#235) : la bulle et ses deux choix montent au-dessus de ton bandeau, rien ne bouge. */}
         {avertissementPasse && (
@@ -673,6 +714,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
           reglages: reglages ? <>
             <Interrupteur label={tr('profil.confirmer')} actif={confirmTouch} onChange={v => reglages.modifier({ confirmTouch: v })} />
             <Interrupteur label={tr('profil.sons')} actif={reglages.son} onChange={v => reglages.modifier({ sound: v })} />
+            {coach !== undefined && <Interrupteur label={tr('coach.reglage')} actif={coach} onChange={v => basculerCoach(v, 'partie')} />}
           </> : undefined,
         }} />
       ) : (
