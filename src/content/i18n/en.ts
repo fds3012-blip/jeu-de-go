@@ -404,6 +404,8 @@ export const en = {
   'partie.reprise.deux': 'Picking up from here.',
   'partie.nouvelle.ordi': 'New game: you’re Black, your turn.',
   'partie.nouvelle.deux': 'New game: Black starts.',
+  'partie.titreAria': 'Game against {nom}',
+  'partie.titreAriaDeux': 'Two-player game',
   'partie.reflechit': '{nom} is thinking…',
   'partie.reprend': 'Back to the game.',
   'partie.retourAccueil': 'Back to home',

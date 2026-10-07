@@ -88,7 +88,7 @@ test('téléchargement impossible : une phrase le dit, et aucune note ne contred
   await expect(bulle.locator('.parcours-titre')).toContainText('J8');
   await expect(page.getByRole('button', { name: /^Coup 28, J8, Gaffe$/ })).toBeVisible();
   await expect(bulle.locator('.parcours-detail')).not.toContainText('Mochi ne voit pas de perte');
-  const avance = await bulle.locator('.parcours-avance').textContent();
+  const avance = await bulle.locator('.parcours-avance > [aria-hidden]').textContent();
   expect(Math.abs(Number((avance ?? '0').replace('−', '-').replace(',', '.')))).toBeLessThan(40);
   await capture(page, '5-j8-gaffe');
 
@@ -99,7 +99,7 @@ test('téléchargement impossible : une phrase le dit, et aucune note ne contred
     const coup = Number((await b.getAttribute('aria-label'))!.match(/^Coup (\d+)/)![1]);
     const lire = async (k: number) => {
       await page.getByRole('button', { name: new RegExp(`^Coup ${k},`) }).click();
-      const t = await bulle.locator('.parcours-avance').textContent({ timeout: 2000 }).catch(() => null);
+      const t = await bulle.locator('.parcours-avance > [aria-hidden]').textContent({ timeout: 2000 }).catch(() => null);
       return t == null ? null : Number(t.replace('−', '-').replace(',', '.'));
     };
     const avant = coup > 1 ? await lire(coup - 1) : 0, apres = await lire(coup);

@@ -607,6 +607,8 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
 
   return (
     <div className="partie">
+      {/* #461 : un titre pour situer l'écran (navigation par titres du lecteur d'écran) ; l'écran le montre déjà par le bandeau. */}
+      <h2 className="sr-only">{ai ? tr('partie.titreAria', { nom: name(2) }) : tr('partie.titreAriaDeux')}</h2>
       {bandeau(2)}
       {/* #362 : « ? » au bout du ruban des coups, sans quitter la partie ; pendant le comptage, il ouvre « Compter ». */}
       <ListeCoups coups={coups} apres={<BoutonAide depuis="partie" fiche={phase === 'score' ? 'compter' : 'regles'} className="ruban-aide" />} />

@@ -140,9 +140,15 @@ export interface ThemeGoban {
   fin: [number, number, number, number, number];
   large: [number, number, number, number, number];
   vignette: string;
-  /** Encre des lignes, des hoshi et des coordonnées. */
+  /** Encre des lignes et des hoshi. */
   ligne: string;
+  /**
+   * Encre des coordonnées, pleine (#461) : au moins 4,5:1 sur le bois du bord, vignettage compris (mesuré au pixel par
+   * e2e/a11y-axe.spec.ts). Sur un bois de luminance moyenne (ardoise), ni le noir ni le blanc n'y arrivent : les lettres
+   * sont alors cernées d'un liseré `coordLisere` (posé sous l'encre), et c'est contre lui que se mesure le contraste.
+   */
   coord: string;
+  coordLisere?: string;
   /** Dégradé des pierres blanches (4 arrêts) et couleur des stries sombres. */
   blanche: [string, string, string, string];
   strie: string;
@@ -152,25 +158,25 @@ export const THEMES_GOBAN: Record<IdThemeGoban, ThemeGoban> = {
   kaya: {
     id: 'kaya', nom: 'Kaya', fond: ['#EDC27A', '#DDA95C', '#C58D42'],
     fin: [0.52, 0.30, 0.10, 0.8, -0.34], large: [0.62, 0.38, 0.14, 0.55, -0.24], vignette: '#3C1E05',
-    ligne: '#2b1a08', coord: '#4a2f10', blanche: ['#fff', '#F3EEE3', '#DDD5C4', '#BDB3A0'], strie: '#8C7B5E',
+    ligne: '#2b1a08', coord: '#1f1206', blanche: ['#fff', '#F3EEE3', '#DDD5C4', '#BDB3A0'], strie: '#8C7B5E',
   },
   // Bois plus pâle, veinage discret : les pierres blanches ressortent par leur ombre et leur liseré.
   'kaya-clair': {
     id: 'kaya-clair', nom: 'Kaya clair', fond: ['#F6DDAA', '#EDCB8C', '#DDB272'],
     fin: [0.62, 0.42, 0.18, 0.55, -0.26], large: [0.70, 0.50, 0.24, 0.4, -0.18], vignette: '#4A2A0A',
-    ligne: '#2b1a08', coord: '#3f280c', blanche: ['#fff', '#F3EEE3', '#DDD5C4', '#BDB3A0'], strie: '#8C7B5E',
+    ligne: '#2b1a08', coord: '#2b1a08', blanche: ['#fff', '#F3EEE3', '#DDD5C4', '#BDB3A0'], strie: '#8C7B5E',
   },
   // Ardoise gris-bleu de luminance moyenne : lignes sombres, et les deux couleurs de pierres gardent 3:1 avec le fond.
   ardoise: {
     id: 'ardoise', nom: 'Ardoise', fond: ['#8B96A0', '#7C8792', '#66717C'],
     fin: [0.30, 0.34, 0.38, 0.5, -0.2], large: [0.40, 0.45, 0.50, 0.45, -0.18], vignette: '#10161C',
-    ligne: '#0e1318', coord: '#0e1318', blanche: ['#fff', '#F4F4F1', '#DCDDDA', '#B4B8BA'], strie: '#6E7A84',
+    ligne: '#0e1318', coord: '#0e1318', coordLisere: '#B3BBC3', blanche: ['#fff', '#F4F4F1', '#DCDDDA', '#B4B8BA'], strie: '#6E7A84',
   },
   // Pierres blanches nacrées et dorées, sur le kaya habituel.
   'coquillage-dore': {
     id: 'coquillage-dore', nom: 'Coquillage doré', fond: ['#EDC27A', '#DDA95C', '#C58D42'],
     fin: [0.52, 0.30, 0.10, 0.8, -0.34], large: [0.62, 0.38, 0.14, 0.55, -0.24], vignette: '#3C1E05',
-    ligne: '#2b1a08', coord: '#4a2f10', blanche: ['#FFFBEF', '#F7EBCB', '#E6CF97', '#C4A462'], strie: '#9A7A35',
+    ligne: '#2b1a08', coord: '#1f1206', blanche: ['#FFFBEF', '#F7EBCB', '#E6CF97', '#C4A462'], strie: '#9A7A35',
   },
 };
 

@@ -462,11 +462,12 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
                 {note && <SceauNote note={note.note} taille={22} />}
                 <span>{fr(com.titre)}</span>
                 {avance && (
-                  <span className={`parcours-avance${avance.valeur < 0 ? ' negatif' : ''}`}
-                    aria-label={avance.valeur === 0 ? tr('parcours.egalite') : avance.valeur > 0 && adversaire
+                  // #461 : un aria-label sur un simple <span> est ignoré (rôle générique) : la phrase passe en texte caché.
+                  <span className={`parcours-avance${avance.valeur < 0 ? ' negatif' : ''}`}>
+                    <span aria-hidden="true">{avance.texte}</span>
+                    <span className="sr-only">{avance.valeur === 0 ? tr('parcours.egalite') : avance.valeur > 0 && adversaire
                       ? tr('parcours.avanceToiAria', { n: avance.valeur, v: avance.texte.slice(1) })
-                      : tr('parcours.avanceAria', { nom: nomAvance, n: Math.abs(avance.valeur), v: avance.texte.replace(/^[+−]/, '') })}>
-                    {avance.texte}
+                      : tr('parcours.avanceAria', { nom: nomAvance, n: Math.abs(avance.valeur), v: avance.texte.replace(/^[+−]/, '') })}</span>
                   </span>
                 )}
               </p>
