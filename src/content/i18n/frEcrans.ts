@@ -349,6 +349,18 @@ export const frEcrans = {
   'conseil.note.utile': 'Utile',
   'conseil.note.pasUtile': 'Pas utile',
   'conseil.note.merci': 'Merci pour ton avis !',
+  // Coach Mochi pendant les parties contre l'IA (#470) : 3 bulles au plus par partie, phrases vérifiées par src/go/coach.ts.
+  'coach.atari': "Atari en {point} : ton groupe n'a plus qu'une liberté (un point libre à côté). Sans réponse, il peut être pris.",
+  'coach.unOeil': "Ton groupe en {point} n'a qu'un œil (un trou fermé par tes pierres). Il en faut deux pour vivre : il est en danger.",
+  'coach.priseRatee': { one: "Au coup d'avant, tu pouvais prendre une pierre en {point} : elle n'avait plus qu'une liberté.", other: "Au coup d'avant, tu pouvais prendre {n} pierres en {point} : elles n'avaient plus qu'une liberté." },
+  'coach.zoneLibre': 'Le coin {ou} est encore tout vide. Une pierre là-bas peut y prendre beaucoup de place.',
+  'coach.couper': 'Couper le coach',
+  'coach.coupe': 'D’accord, je me tais. Tu peux me rallumer dans « Plus ».',
+  'coach.reglage': 'Coach Mochi',
+  'profil.coach': 'Coach Mochi en partie',
+  'profil.coach.auto': 'Au début',
+  'profil.coach.oui': 'Toujours',
+  'profil.coach.non': 'Jamais',
   // Limite de l'offre gratuite (préparée, pas active : voir CONSEILS_GRATUITS_PAR_PARTIE).
   'conseil.limite': 'Mochi a donné tous ses conseils pour cette partie.',
   'conseil.aucun': 'Rien de sûr à te dire ici. À toi de jouer !',

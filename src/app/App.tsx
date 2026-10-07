@@ -7,7 +7,7 @@ import { ERREURS_KEY, EVENEMENT_REVISIONS, REVISIONS_KEY, compterDus } from './r
 import { CHAPITRES, LESSONS } from '../content/leconsResume';
 import { LESSONS_KEY, readLocal, writeLocal, useGelsServeur, useLessonProgress, useOnline, useProfil, usePseudo, useSerie, useSession } from './hooks';
 import { COMPTES, chargerSupabase, useSupabase } from '../data/client';
-import { useSettings, useStored } from './settings';
+import { coachActif, useSettings, useStored } from './settings';
 import { aideActive } from './partie';
 import { Bubble } from '../ui/Mochi';
 import { Sceau } from '../ui/Sceau';
@@ -745,7 +745,9 @@ export function App() {
           onExit={() => { setIntro(false); setPlaying(false); setResultat(null); setRepli(null); }}
           onImporter={() => { if (!garde({ quoi: 'import' }, { quoi: 'importer' })) return; setPlaying(false); setResultat(null); setTab('profil'); setVueProfil('importer'); window.scrollTo({ top: 0 }); }}
           onResult={onResult} fin={finEcran} celebrer={settings.celebrations} aide={aideActive(settings.aide, adv.id)} portrait={playing === 'ordi' ? <Sceau id={adv.id} taille={44} /> : undefined}
-          reglages={{ son: settings.sound, modifier: set }} />
+          reglages={{ son: settings.sound, modifier: set }}
+          // Coach Mochi (#470) : contre l'IA de l'échelle seulement, 10 premières parties par défaut.
+          coach={playing === 'ordi' ? coachActif(settings.coach, parties.n) : undefined} />
       </>
     );
   } else if (tab === 'jouer' && seanceRevisions) {

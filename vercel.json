@@ -8,6 +8,10 @@
     { "source": "/en/defi", "destination": "/en/defi/index.html" },
     { "source": "/partie", "destination": "/partie/index.html" },
     { "source": "/en/partie", "destination": "/en/partie/index.html" },
+    { "source": "/apprendre-le-go", "destination": "/apprendre-le-go/index.html" },
+    { "source": "/regles-du-go", "destination": "/regles-du-go/index.html" },
+    { "source": "/en/learn-go", "destination": "/en/learn-go/index.html" },
+    { "source": "/en/go-rules", "destination": "/en/go-rules/index.html" },
     { "source": "/en", "destination": "/index.html" }
   ],
   "headers": [

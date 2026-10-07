@@ -15,6 +15,7 @@ export const CLES_REGLAGES: Readonly<Record<string, (v: unknown) => boolean>> = 
   theme: parmi('auto', 'dark', 'light'),
   size: parmi(9, 13, 19),
   aide: parmi('auto', 'oui', 'non'),
+  coach: parmi('auto', 'oui', 'non'), // #470 (supabase/migrations/20261007223000_reglages_coach.sql)
   cadence: parmi('rapide', 'normale', 'lente'),
   confirmTouch: booleen,
   sound: booleen,
