@@ -35,7 +35,8 @@ function finir(pos: Position, id: OpponentId, accommodant: boolean, seed: number
 const DEUX_A_FERMER = '9 × 9 : groupe blanc à un seul œil, noir vivant à deux yeux chez Blanc';
 const NEUF = CAS.filter(c => c.rows.length === 9 && c.nom !== DEUX_A_FERMER);
 
-describe('passer finit la partie (#185)', () => {
+// #467 : parties finies par le moteur simple, ~1 s par test au calme ; délai relevé (5 s par défaut) pour une machine chargée.
+describe('passer finit la partie (#185)', { timeout: 30_000 }, () => {
   afterEach(() => setKataGo(undefined));
 
   for (const accommodant of [true, false]) {
