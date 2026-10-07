@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { CATALOGUES, type Cle } from '../content/i18n/secondaires';
 
 /** Fichiers de l'écran Problèmes : écran, lecteur, sections du haut, messages d'erreur du chargement. */
-const FICHIERS = ['app/Puzzles.tsx', 'ui/RevisionDuJour.tsx', 'ui/MesErreurs.tsx', 'data/puzzles.ts', 'app/aide.ts'];
+const FICHIERS = ['app/Puzzles.tsx', 'ui/RevisionDuJour.tsx', 'ui/MesErreurs.tsx', 'data/puzzles.ts', 'app/aide.ts', 'ui/SeriesThemes.tsx'];
 const sources = FICHIERS.map(f => readFileSync(new URL(`../${f}`, import.meta.url), 'utf8'));
 const toutes = Object.keys(CATALOGUES.fr) as Cle[];
 

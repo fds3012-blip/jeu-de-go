@@ -89,6 +89,9 @@ export const EVENTS = {
   // Course aux problèmes (#287) : fin d'une course (score, erreurs, durée, raison) et partage du score.
   courseTerminee: 'course_terminee',
   coursePartagee: 'course_partagee',
+  // Problèmes par thème (#471) : une série ouverte (`theme` : capturer, sauver, vie-mort, relier-couper, fin-de-partie,
+  // tesuji). Les premiers essais d'une série portent `theme` dans `probleme_termine`. Jamais le record ni les réussites.
+  themeOuvert: 'theme_ouvert',
   // « Je sais déjà jouer » (#283) : placement commencé, terminé (`kyu`, null si tout raté), passé (`etape` : 0 à 3).
   placementCommence: 'placement_commence',
   placementTermine: 'placement_termine',
