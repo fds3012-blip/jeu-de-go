@@ -180,6 +180,17 @@ export const EVENTS = {
   fileDelaiOrdi: 'file_delai_ordi',
   fileAbandonsPrevenu: 'file_abandons_prevenu',
   lentePlafondReduit: 'lente_plafond_reduit',
+  // Révision espacée (#469). `revision_carte_vue` : carte « Révisions du jour (N) » montrée sur l'accueil, une fois par
+  // ouverture de l'app (`n` : éléments de la séance, 5 au plus). `revision_seance_commencee` : séance ouverte
+  // (`elements`, `erreurs`, `problemes`, `retard_max` en jours, `compte`). `revision_element` : premier essai d'un
+  // élément (`genre` : erreur ou probleme, `reussi`, `etape` avant l'essai, 0 à 4, `retard` en jours).
+  // `revision_seance_terminee` : dernier élément fait (`elements`, `reussis`, `xp`). `revision_seance_quittee` : retour
+  // avant la fin (`faits`, `elements`). Jamais la position, le coup, le problème ni l'adversaire.
+  revisionCarteVue: 'revision_carte_vue',
+  revisionSeanceCommencee: 'revision_seance_commencee',
+  revisionElement: 'revision_element',
+  revisionSeanceTerminee: 'revision_seance_terminee',
+  revisionSeanceQuittee: 'revision_seance_quittee',
 } as const;
 export type AnalyticsEvent = (typeof EVENTS)[keyof typeof EVENTS];
 export type Props = Record<string, string | number | boolean | null | undefined>;

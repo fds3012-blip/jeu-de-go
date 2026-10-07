@@ -1157,6 +1157,45 @@ export type Database = {
         }
         Relationships: []
       }
+      revisions: {
+        Row: {
+          cle: string
+          contenu: Json | null
+          cree_le: string
+          echecs: number
+          etape: number
+          genre: string
+          maj: number
+          modifie_le: string
+          prochain: string | null
+          user_id: string
+        }
+        Insert: {
+          cle: string
+          contenu?: Json | null
+          cree_le?: string
+          echecs?: number
+          etape: number
+          genre: string
+          maj: number
+          modifie_le?: string
+          prochain?: string | null
+          user_id: string
+        }
+        Update: {
+          cle?: string
+          contenu?: Json | null
+          cree_le?: string
+          echecs?: number
+          etape?: number
+          genre?: string
+          maj?: number
+          modifie_le?: string
+          prochain?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       signalements: {
         Row: {
           auteur_id: string | null
@@ -1363,6 +1402,7 @@ export type Database = {
         Returns: string
       }
       enregistrer_parties_perso: { Args: { p_parties: Json }; Returns: string[] }
+      echanger_revisions: { Args: { p_elements: Json }; Returns: Json }
       enregistrer_reglages: { Args: { p_reglages: Json }; Returns: Json }
       lire_partie_partagee: {
         Args: { p_jeton: string }

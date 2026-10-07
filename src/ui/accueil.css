@@ -141,6 +141,8 @@
 .tuile-defi .tuile-pierres .stone.w { margin-left: -6px; }
 .tuile-defi .tuile-etat { background: var(--or); color: #2A1D05; }
 .tuile-defi:not(.tuile-avant) .tuile-etat { display: none; }
+/* #469 : « Révisions du jour (N) », carte secondaire : un pictogramme jade sur fond discret, jamais en avant. */
+.tuile-revisions-icone { display: grid; place-items: center; flex: none; width: 44px; height: 44px; border-radius: 8px; background: var(--surface-2); color: var(--accent-texte); }
 
 /* ---------- Série de jours (en haut à droite) ---------- */
 .top .serie { display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px 6px 10px; border-radius: var(--radius-pill);
