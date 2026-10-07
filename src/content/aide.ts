@@ -178,8 +178,8 @@ export const MOTS: Mot[] = [
   { id: 'kakari', lecon: 'l31' },
   { id: 'tsuke', lecon: 'l31' },
   { id: 'kosumi', lecon: 'l31' },
-  // #16 : relier par en dessous (l33).
-  { id: 'watari', lecon: 'l33' },
+  // #16 : relier par en dessous (l34).
+  { id: 'watari', lecon: 'l34' },
 ];
 
 /**

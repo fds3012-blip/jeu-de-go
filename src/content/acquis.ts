@@ -36,10 +36,11 @@ export const ACQUIS: Record<string, string> = {
   l30: 'Tu bloques le san-san, puis tu barres la route à Blanc.',
   l31: 'Tu réponds au kakari sur ton 3-4, puis tu t’étends.',
   l32: 'Tu comptes ce que vaut un coup, et tu joues le plus grand.',
-  l33: 'Tu relies tes pierres par en dessous, au premier rang.',
+  l33: 'Tu joues le sente d’abord, même s’il est plus petit.',
+  l34: 'Tu relies tes pierres par en dessous, au premier rang.',
 };
 
-const IDS = ['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7', 'l8', 'l9', 'l10', 'l11', 'l12', 'l13', 'l14', 'l15', 'l16', 'l17', 'l18', 'l19', 'l20', 'l21', 'l22', 'l23', 'l24', 'l25', 'l26', 'l27', 'l29', 'l30', 'l31', 'l32', 'l33'] as const;
+const IDS = ['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7', 'l8', 'l9', 'l10', 'l11', 'l12', 'l13', 'l14', 'l15', 'l16', 'l17', 'l18', 'l19', 'l20', 'l21', 'l22', 'l23', 'l24', 'l25', 'l26', 'l27', 'l29', 'l30', 'l31', 'l32', 'l33', 'l34'] as const;
 const connu = (id: string): id is (typeof IDS)[number] => (IDS as readonly string[]).includes(id);
 
 /** Phrase de fin d'une leçon dans la langue de l'interface (#167) ; une phrase générale si la leçon n'en a pas. */

@@ -88,6 +88,8 @@ export const MOTIFS: Record<string, Motif> = {
   l31: { coin: true, noir: [[2, 0]], hoshi: [[3, 0]], jade: [[3, 1]] },
   // La valeur d'un coup : deux pierres blanches en atari dans le mur noir ; le jade, la prise.
   // Relier par en dessous : deux pierres noires séparées par une blanche ; le jade, le premier rang dessous.
-  l33: { coin: true, noir: [[0, 2], [3, 3]], blanc: [[1, 1], [2, 1], [3, 1], [2, 2]], jade: [[2, 3]] },
+  // Le sente avant le gote : l'atari qui oblige Blanc à relier (jade), avant la prise.
+  l33: { coin: true, noir: [[0, 2], [1, 2], [0, 3]], blanc: [[1, 3], [2, 3], [3, 2]], jade: [[2, 2]] },
+  l34: { coin: true, noir: [[0, 2], [3, 3]], blanc: [[1, 1], [2, 1], [3, 1], [2, 2]], jade: [[2, 3]] },
   l32: { coin: true, noir: [[0, 2], [1, 2], [2, 2], [0, 3]], blanc: [[1, 3], [2, 3], [3, 2]], jade: [[3, 3]] },
 };

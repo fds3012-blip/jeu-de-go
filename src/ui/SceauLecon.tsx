@@ -165,8 +165,14 @@ function motif(id: string, W: string, C: string): ReactElement {
       <circle cx="60" cy="52" r="9" fill={C} stroke={W} strokeWidth="2.6" />
       <circle cx="60" cy="74" r="9" fill={W} />
     </>);
-    // Relier par en dessous : le bord, deux pierres noires et le pont qui passe sous la pierre blanche.
+    // Le sente avant le gote : la flèche du coup qui passe d'abord, puis la grande prise.
     case 'l33': return (<>
+      <path d="M30 34H58M50 26 58 34 50 42" stroke={W} strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <circle cx="36" cy="62" r="8" fill={W} />
+      <circle cx="64" cy="62" r="12" fill={C} stroke={W} strokeWidth="2.6" />
+    </>);
+    // Relier par en dessous : le bord, deux pierres noires et le pont qui passe sous la pierre blanche.
+    case 'l34': return (<>
       <path d="M22 76H78" stroke={W} strokeWidth="3" strokeLinecap="round" />
       <circle cx="30" cy="54" r="8" fill={W} />
       <circle cx="70" cy="54" r="8" fill={W} />

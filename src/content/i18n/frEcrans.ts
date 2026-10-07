@@ -813,7 +813,8 @@ export const frEcrans = {
   'acquis.l30': 'Tu bloques le san-san, puis tu barres la route à Blanc.',
   'acquis.l31': 'Tu réponds au kakari sur ton 3-4, puis tu t’étends.',
   'acquis.l32': 'Tu comptes ce que vaut un coup, et tu joues le plus grand.',
-  'acquis.l33': 'Tu relies tes pierres par en dessous, au premier rang.',
+  'acquis.l33': 'Tu joues le sente d’abord, même s’il est plus petit.',
+  'acquis.l34': 'Tu relies tes pierres par en dessous, au premier rang.',
   'acquis.defaut': 'Une leçon de plus dans ta poche.',
   'lecteur.progression': 'Progression de la leçon',
   // #290 : sur un écran bas, l'explication du verdict est repliée pour laisser voir le plateau.

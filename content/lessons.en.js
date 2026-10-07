@@ -278,7 +278,18 @@ export const LESSONS_EN = {
     { text: 'Your turn: fill its outside liberty. It can’t connect anymore.',
       ok: 'Connecting would put it in atari: White is captured.', no: 'Look for White’s only liberty outside its shape.' }
   ] },
-  l33: { title: 'Connecting underneath', desc: 'The watari, on the first line', steps: [
+  l33: { title: 'Sente before gote', desc: 'Even when smaller, sente comes first', steps: [
+    { text: 'Two open places. Atari first, at the green point: White must connect.' },
+    { text: 'You still have the move: capture the stone at the green point.' },
+    { text: 'If you capture first at E9, where does White play?', choices: ['E2', 'F1'],
+      ok: 'E2: it saves its two stones. Your sente is lost.', no: 'White has nothing to defend at F1: it plays E2.' },
+    { text: 'Sente first, or capture first: how many points apart?', choices: ['0', '2', '4'],
+      ok: 'Two: with sente first, you get both places.', no: 'Compare: sente first also gives you the capture.' },
+    { text: 'Your turn: two open places. Play them in the right order.',
+      ok: 'Sente first: White connects, then you capture the stone.', no: 'Look for the move that forces White to answer.',
+      refus: ['Capture first: White saves its stones at E8. Two points less.'] }
+  ] },
+  l34: { title: 'Connecting underneath', desc: 'The watari, on the first line', steps: [
     { text: 'Watari (connecting underneath): slide under the white stone, at the green point.' },
     { text: 'White cuts at D1? Play the green point: it’s in atari.' },
     { text: 'White cuts at D2. Connect your stones on the first line.',
