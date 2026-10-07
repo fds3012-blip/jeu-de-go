@@ -78,4 +78,10 @@ export const MOTIFS: Record<string, Motif> = {
   l25: { coin: true, noir: [[1, 2], [2, 2], [3, 2], [1, 3]], blanc: [[0, 1], [1, 1], [2, 1]], jade: [[0, 2]] },
   // La course avec un œil : le groupe noir et son œil dans le coin, en or ; le jade, une liberté du dehors.
   l26: { coin: true, noir: [[0, 2], [1, 2], [2, 2], [1, 3]], blanc: [[3, 2], [3, 3]], or: [[0, 3]], jade: [[3, 1]] },
+  // L'ouverture en 13 × 13 : deux coins pris, les deux autres libres ; le jade, un coin à prendre.
+  l29: { noir: [[0, 3]], blanc: [[3, 0]], jade: [[3, 3], [0, 0]] },
+  // Le san-san : le hoshi noir, la pierre blanche au 3-3 dessous ; le jade, le blocage.
+  l30: { coin: true, noir: [[3, 0]], blanc: [[2, 1]], jade: [[3, 1]] },
+  // Le 3-4 et l'approche : la pierre noire au 3-4, le hoshi voisin ; le jade, le tsuke dessous.
+  l31: { coin: true, noir: [[2, 0]], hoshi: [[3, 0]], jade: [[3, 1]] },
 };

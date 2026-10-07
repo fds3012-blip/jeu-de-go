@@ -158,7 +158,7 @@ for (const c of CAS) {
         return bientot.y - (bas.y + bas.height);
       }, { message: 'bouton de la leçon 7 sur « Bientôt »' }).toBeGreaterThanOrEqual(0);
       await expect.poll(async () => {
-        const bas = (await cta.boundingBox())!, chap2 = (await page.getByRole('heading', { name: 'Ouverture sur 9 × 9' }).boundingBox())!;
+        const bas = (await cta.boundingBox())!, chap2 = (await page.getByRole('heading', { name: 'L’ouverture' }).boundingBox())!;
         return chap2.y - (bas.y + bas.height);
       }, { message: 'bouton de la leçon 7 sur le chapitre 2' }).toBeGreaterThanOrEqual(0);
       // #232 : aussi avec la police doublée (les rangées 2/3, 3/4 et 6/7 du chapitre 1 se chevauchaient).

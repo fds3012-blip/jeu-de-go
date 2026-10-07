@@ -325,7 +325,7 @@ test('leçon 8 : bien commencer sur 9 × 9, du chemin à la fin de leçon', asyn
   await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
   // Les bases finies ; le chapitre 2 s'ouvre sous elles, la leçon 8 est la prochaine étape.
   await expect(page.getByText('Chapitre terminé. Tu connais les règles du go !')).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Ouverture sur 9 × 9' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'L’ouverture' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Leçon 8 : Les premiers coups, prochaine étape' })).toBeVisible();
   await expect(page.locator('.cta')).toHaveCount(1);
   await page.getByRole('button', { name: 'Commencer la leçon : Les premiers coups' }).click();

@@ -90,4 +90,19 @@ Elles ne s'ouvrent que dans un build de test (`VITE_E2E=1`) ou de développement
 5. Prouver les réponses : les tests de forme passent d'eux-mêmes (`src/content/grandsPlateaux.test.ts`) ; le jugement
    (meilleur coup d'ouverture, suite de joseki) se vérifie avec KataGo, comme les leçons 9 × 9.
 
+## Preuves KataGo (#16)
+
+Les leçons publiées sur grand plateau (l29 l'ouverture en 13 × 13, l30 le san-san, l31 le 3-4 et l'approche) sont
+jugées par KataGo, une fois, puis le jugement est rejoué en CI sans le modèle :
+
+- `src/go/preuvesKataGo.ts` : quoi juger (`CONTROLES` : démonstrations, exercices, questions « lequel »), les réglages
+  (réseau g170 b6c96, komi 6,5, règle japonaise, 800 visites à la racine et 400 après chaque coup, 4 symétries) et les
+  seuils (`TOLERANCE`, `MARGE`, `TOLERANCE_DEMO`). La recherche est déterministe : les symétries du plateau (rotation,
+  miroir) servent de graines, comme dans KataGo ;
+- `npm run preuves-katago [-- l30]` (`outils/preuvesKataGo.ts`) : calcule et fige `src/go/preuves-katago.json`.
+  Réseau : `npm run fetch-model`. TensorFlow natif conseillé (`TFJS_NODE_DIR`, un dossier où `@tensorflow/tfjs-node`
+  est installé) : environ une heure pour les trois leçons, sinon des heures ;
+- `src/go/lecons-ouverture.test.ts` : rejoue le jugement. Une position de leçon modifiée sans nouvelle analyse fait
+  échouer le test (la position n'est plus dans la fixture).
+
 Non prévu pour l'instant : un cadre rectangulaire (un bord entier), et un passage animé d'une zone à l'autre.

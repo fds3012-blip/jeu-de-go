@@ -184,6 +184,25 @@ function motif(id: string, W: string, C: string): ReactElement {
       <g fill={C} stroke={W} strokeWidth="2.6"><circle cx="66" cy="40" r="8" /><circle cx="66" cy="58" r="8" /></g>
       <path d="M30 76H70" stroke={W} strokeWidth="3" strokeLinecap="round" />
     </>);
+    // L'ouverture en 13 × 13 : le plateau et ses quatre coins, pris un à un.
+    case 'l29': return (<>
+      <rect x="26" y="26" width="48" height="48" rx="2" stroke={W} strokeWidth="3" fill="none" />
+      <g fill={W}><circle cx="36" cy="64" r="7" /><circle cx="64" cy="64" r="7" /></g>
+      <g fill={C} stroke={W} strokeWidth="2.6"><circle cx="36" cy="36" r="6.5" /><circle cx="64" cy="36" r="6.5" /></g>
+    </>);
+    // Le san-san : l'angle du goban, le hoshi noir, et la pierre blanche glissée au 3-3 dessous.
+    case 'l30': return (<>
+      <path d="M26 24V76H78" stroke={W} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <circle cx="58" cy="44" r="9" fill={W} />
+      <circle cx="44" cy="58" r="8" fill={C} stroke={W} strokeWidth="2.6" />
+    </>);
+    // Le 3-4 et l'approche : la pierre noire au 3-4, la pierre blanche qui s'approche, et la flèche du kakari.
+    case 'l31': return (<>
+      <path d="M26 24V76H78" stroke={W} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <circle cx="40" cy="46" r="8.5" fill={W} />
+      <circle cx="66" cy="60" r="8" fill={C} stroke={W} strokeWidth="2.6" />
+      <path d="M58 56 50 52" stroke={W} strokeWidth="3" strokeLinecap="round" />
+    </>);
     default: return <circle cx="50" cy="50" r="14" fill={W} />;
   }
 }

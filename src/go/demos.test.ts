@@ -23,7 +23,8 @@ describe('démonstrations : légalité', () => {
       const images = imagesDemo(s.rows, s.demo!, s.avant);
       expect(images.length).toBeGreaterThan(1);
       // Chaque pose est un coup légal depuis l'image précédente (imagesDemo lève sinon) ; on rejoue pour le prouver.
-      for (const t of s.demo!) if ('pose' in t) expect(t.pose).toMatch(/^[A-HJ][1-9]$/);
+      // #16 : les leçons de 13 × 13 et 19 × 19 nomment leurs points sur leur plateau (A à T sans I, 1 à 19).
+      for (const t of s.demo!) if ('pose' in t) expect(fromLabel(t.pose, s.rows.length), t.pose).toBeGreaterThanOrEqual(0);
     });
   });
   it('imagesDemo refuse une zone sur une pierre (#228)', () => {
@@ -160,12 +161,13 @@ describe('gestes : l’élève joue dans la démonstration (#198)', () => {
       const im = imagesDemo(s.rows, s.demo!, s.avant);
       const k = imageDuGeste(s.rows, s.demo!, s.avant, g);
       const attente = im[k];
-      expect(attente.board[at(g.pose)]).toBe(0);
+      const ici = (l: string) => fromLabel(l, s.rows.length);
+      expect(attente.board[ici(g.pose)]).toBe(0);
       // Le coup de l'élève, rejoué avec src/go depuis l'image d'attente, donne l'image suivante de la démonstration.
-      const r = play({ ...fromRows(s.rows).pos, board: attente.board.slice(), toPlay: 1, ko: -1 }, at(g.pose));
+      const r = play({ ...fromRows(s.rows).pos, board: attente.board.slice(), toPlay: 1, ko: -1 }, ici(g.pose));
       if (typeof r === 'string') throw new Error(r);
       expect(r.board).toEqual(im[k + 1].board);
-      expect(im[k + 1].derniere).toBe(at(g.pose));
+      expect(im[k + 1].derniere).toBe(ici(g.pose));
       expect(s.text).toContain('point vert');
     });
     else it(`${id} : on touche avant la démonstration, et l’aide tient en 12 mots`, () => {
