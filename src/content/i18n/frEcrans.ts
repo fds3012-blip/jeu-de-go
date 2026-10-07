@@ -281,6 +281,8 @@ export const frEcrans = {
   'partie.reprise.deux': 'On reprend ici.',
   'partie.nouvelle.ordi': 'Nouvelle partie : tu as Noir, à toi.',
   'partie.nouvelle.deux': 'Nouvelle partie : Noir commence.',
+  'partie.titreAria': 'Partie contre {nom}',
+  'partie.titreAriaDeux': 'Partie à deux',
   'partie.reflechit': '{nom} réfléchit…',
   'partie.reprend': 'La partie reprend.',
   // Écran de partie : bandeaux, barre d'actions, comptage

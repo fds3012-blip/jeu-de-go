@@ -894,6 +894,8 @@ export function App() {
             )
             : <p>{enDefi ? t('defi.titre') : tab === 'jouer' ? t('nav.jouer') : tab === 'apprendre' ? t('entete.apprendre') : tab === 'problemes' ? t('nav.problemes') : t('nav.profil')}</p>}
         </header>}
+        {/* #461 : sans en-tête (partie, fin de partie, écrans de compte), le titre de l'app reste pour les lecteurs d'écran. */}
+        {(enPartie || ecranPlein) && <h1 className="sr-only">Mochi Go</h1>}
         {serieVisible && annonceGel !== null && !enPartie && !ecranPlein && (tab === 'jouer' || tab === 'problemes') && (
           <p className="gel-annonce" role="status"><Mochi size={30} />{fr(messageGel(annonceGel))}</p>
         )}

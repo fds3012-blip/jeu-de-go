@@ -38,7 +38,7 @@
 .signaler-choix .seg { background: var(--bg); }
 .signaler-motif { display: flex; align-items: center; gap: var(--space-3); min-height: 44px; cursor: pointer; }
 .signaler-motif input, .signaler-bloquer input { flex: none; width: 22px; height: 22px; margin: 0; accent-color: var(--accent); }
-.signaler-texte { width: 100%; min-height: 64px; box-sizing: border-box; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px;
+.signaler-texte { width: 100%; min-height: 64px; box-sizing: border-box; padding: 10px 12px; border: 1.5px solid var(--line); border-radius: 12px;
   background: var(--bg); color: var(--text); font: inherit; font-size: 16px; line-height: 1.4; resize: vertical; }
 .signaler-aide { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px var(--space-3); }
 .signaler-compteur { font-variant-numeric: tabular-nums; }
@@ -47,6 +47,9 @@
 .signaler-bloquer span { display: grid; gap: 2px; }
 .signaler-bloquer small { color: var(--muted); font-size: var(--fs-s); }
 .signaler-erreur:empty { display: none; }
+/* #460 : l'erreur sous le titre du groupe de motifs, ou sous le message ; le champ à corriger est cerné. */
+.signaler-choix .signaler-erreur, .signaler-texte + .signaler-erreur { margin: 0 0 2px; font-weight: var(--fw-bold); }
+.signaler-texte[aria-invalid='true'] { border-color: var(--danger-texte); }
 .signaler-form .btn.primary { margin-top: var(--space-1); }
 .signaler-seul { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0 var(--space-1); }
 .signaler-merci { display: flex; align-items: center; gap: var(--space-3); }

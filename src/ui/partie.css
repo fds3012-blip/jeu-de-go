@@ -237,6 +237,27 @@
   .actions-menu-plus button.decider { min-width: 60px; padding-inline: 6px; }
   .actions button.plus { width: 44px; min-width: 44px; max-width: 44px; }
 }
+/* #461 : zoom 200 % (fenêtre de moins de 300 px CSS). Trois aides, « Passer » et « Plus » ne tiennent pas sur une ligne :
+   les libellés se chevauchaient et « Indice » sortait à gauche, sous 44 px de large. La barre passe sur deux rangées
+   (les aides, puis les décisions), chaque cible garde 44 px, et la page réserve la hauteur de la seconde rangée. */
+@media (max-width: 299px) {
+  .actions-menu-plus { flex-wrap: wrap; row-gap: 0; padding-inline: 2px; }
+  .actions-menu-plus .actions-aides { flex: 1 0 100%; gap: 0; }
+  .actions-menu-plus .actions-aides button { max-width: none; min-width: 44px; padding-inline: 2px; font-size: .75rem; }
+  .actions-menu-plus .actions-filet { display: none; }
+  .actions-menu-plus .actions-decisions { flex: 1 0 100%; justify-content: center; }
+  .actions-menu-plus button { min-height: 52px; }
+  .app.app-partie:has(.actions-menu-plus) { padding-bottom: calc(118px + env(safe-area-inset-bottom, 0px)); }
+  /* Bandeaux des joueurs : le mot « prisonniers » (déjà caché aux lecteurs d'écran, le couvercle dit son compte) laisse
+     la place au nom ; si le nom n'a pas 52 px, le couvercle passe sous lui, à droite ; le rang passe à la ligne au lieu
+     d'être coupé. */
+  .joueur { gap: 6px; flex-wrap: wrap; row-gap: 2px; }
+  .joueur-texte { min-width: 52px; }
+  .joueur .couvercle-zone { margin-left: auto; }
+  .joueur .couvercle-legende { display: none; }
+  .joueur-nom b { font-size: 16px; }
+  .joueur-texte small { white-space: normal; }
+}
 /* La feuille du menu : posée au-dessus de la barre, à droite, et elle s'ouvre depuis le bouton (origine en bas à droite). */
 .actions-menu { position: absolute; right: 8px; bottom: calc(100% + 8px); z-index: 30; width: min(260px, calc(100vw - 16px)); padding: 6px;
   border-radius: var(--radius); background: var(--surface); box-shadow: 0 0 0 1px var(--line), 0 18px 40px -16px rgba(0, 0, 0, .7); transform-origin: 90% 100%; }

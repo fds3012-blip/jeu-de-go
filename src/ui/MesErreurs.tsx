@@ -64,7 +64,7 @@ export function MesErreurs({ confirmTouch, Lecteur }: { confirmTouch: boolean; L
   return (
     <section aria-labelledby="erreurs-titre" className="mes-erreurs">
       <h2 id="erreurs-titre" className="titre-pierres">
-        {t('erreurs.titre')} <span className="mes-erreurs-compteur" aria-label={t('erreurs.compteurAria', { n: aJouer.length })}>{aJouer.length}</span>
+        {t('erreurs.titre')} <span className="mes-erreurs-compteur"><span aria-hidden="true">{aJouer.length}</span><span className="sr-only">{t('erreurs.compteurAria', { n: aJouer.length })}</span></span>
       </h2>
       <p className="muted small bases-aide">{fr(t('erreurs.aide'))}</p>
       <ul className="grille-pb">

@@ -45,6 +45,13 @@
   .direct-partie .couvercle-zone { display: none; }
   .direct-partie .joueur { gap: 6px; }
 }
+/* #460 : nom, pendule et prisonniers ne tiennent pas toujours sur une ligne (zoom 200 %, texte agrandi, polices de
+   repli) : la pendule passe alors à la ligne, à droite, au lieu d'écraser le nom ou de faire défiler l'écran. */
+.direct-partie .joueur { flex-wrap: wrap; row-gap: 4px; }
+.direct-partie .joueur-texte { flex-basis: 4rem; }
+.direct-partie .direct-pendule { margin-left: auto; }
+/* Le « , au trait » réservé au lecteur d'écran restait placé au bout de la ligne coupée et élargissait la page à 195 px. */
+.direct-partie .joueur small { position: relative; }
 /* Un pseudo long (jusqu'à 24 caractères, sans espace) passe à la ligne au lieu de faire défiler l'écran. */
 .direct-partie .coach p, .direct-partie .defi-fin-titre { overflow-wrap: anywhere; }
 .direct-cadence .insecable { white-space: nowrap; }
@@ -91,4 +98,5 @@
 .direct-delai-tete { display: flex; align-items: center; gap: var(--space-2); min-width: 0; }
 .direct-delai-titre { font-weight: var(--fw-bold); }
 .direct-delai-temps { font-size: 1.125rem; font-variant-numeric: tabular-nums; }
-.direct-prevenir { margin: 0 0 var(--space-2); text-wrap: pretty; }
+/* #460 : prévenu avant de chercher, dans un encadré calme juste au-dessus du bouton (en petit gris, on ne le lisait pas). */
+.direct-prevenir { margin: 0; text-wrap: pretty; }

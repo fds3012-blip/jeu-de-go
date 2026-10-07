@@ -47,7 +47,8 @@ describe('thèmes du goban (#109)', () => {
         expect(contraste(t.ligne, bois)).toBeGreaterThanOrEqual(3); // élément graphique : 3:1
         expect(contraste(NOIRE, bois)).toBeGreaterThanOrEqual(3);
       }
-      expect(contraste(t.coord, t.fond[1])).toBeGreaterThanOrEqual(4.5); // texte des coordonnées
+      // Texte des coordonnées, posé sur le bord du bois (#461) : encre pleine contre le bois du bord, ou contre son liseré.
+      expect(contraste(t.coord, t.coordLisere ?? t.fond[2])).toBeGreaterThanOrEqual(4.5);
       expect(contraste(t.blanche[1], NOIRE)).toBeGreaterThanOrEqual(3); // noire contre blanche
       // Pierre blanche sur le bois : son ombre portée brun foncé la détache (comme sur le kaya d'origine),
       // et cette ombre tient 3:1 contre la pierre.

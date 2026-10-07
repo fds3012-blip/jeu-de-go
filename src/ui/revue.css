@@ -118,7 +118,8 @@
 .revue-coup-pierre.blanche { background: radial-gradient(circle at 38% 32%, #fff, #F3EEE3 55%, #BDB3A0); box-shadow: 0 0 0 1px var(--line); }
 .revue-coup-vide { width: 18px; height: 18px; flex: none; }
 .revue-pas { flex: none; width: var(--cible-bouton); min-height: var(--cible-bouton); padding: 0; display: grid; place-items: center; }
-.revue-pas svg { width: 22px; height: 22px; }
+/* #461 : chevrons au trait, de la couleur du texte (sans ces règles, un triangle noir plein, invisible en sombre). */
+.revue-pas svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 .revue-pas:disabled { opacity: .4; }
 
 /* Sceau de note, en HTML : même grammaire que les sceaux (carré arrondi, cadre intérieur), légèrement de travers. */
