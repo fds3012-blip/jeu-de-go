@@ -12,6 +12,7 @@ import { Sceau } from '../ui/Sceau';
 import { CRAN_DEPART, cranDuNiveau, niveauGuide, OPPONENTS, type OpponentId } from '../engine';
 import { ConsentModal } from './Confidentialite';
 import type { VueProfil } from './Profil';
+import type { Lesson } from '../content/lessons';
 import { langue, t } from '../content/i18n';
 import { jamaisJoue, proprietesArrivee } from './arriveePartage';
 import { fenetreVisible, useConsentement } from './consentement';
@@ -92,6 +93,10 @@ function Flamme() {
 // qu'aux tests de bout en bout et n'est lu que dans un build de test (VITE_E2E, voir playwright.config.ts).
 const KOMI_TEST = import.meta.env.VITE_E2E && typeof location !== 'undefined' ? komiDepuisUrl(location.search, NaN) : NaN;
 const komiCompte = (k: number) => (Number.isNaN(KOMI_TEST) ? k : KOMI_TEST);
+
+// #454 : leçons d'essai des grands plateaux (content/lessons.essai.js), hors du chemin. `?lecon-essai=13` ou `=19` les ouvre,
+// seulement dans un build de test ou de développement : en production, ce code et le contenu d'essai disparaissent.
+const LECON_ESSAI = (import.meta.env.VITE_E2E || import.meta.env.DEV) && typeof location !== 'undefined' ? new URLSearchParams(location.search).get('lecon-essai') : null;
 
 type Tab = Onglet;
 
@@ -192,6 +197,14 @@ export function App() {
   const [playing, setPlaying] = useState<false | 'ordi' | 'deux' | 'guidee'>(false);
   const [adversaire, setAdversaire] = useStored<OpponentId>('go.adversaire.v1', 'pomme');
   const [lessonId, setLessonId] = useState<string | null>(null);
+  const [leconEssai, setLeconEssai] = useState<Lesson | null>(null);
+  useEffect(() => {
+    if (!(import.meta.env.VITE_E2E || import.meta.env.DEV) || !LECON_ESSAI) return;
+    void import('../../content/lessons.essai.js').then(m => {
+      const l = (m.LECONS_ESSAI as unknown as Lesson[]).find(x => x.id === `essai-${LECON_ESSAI}`);
+      if (l) { setLeconEssai(l); setTab('apprendre'); }
+    });
+  }, []);
   // Aide ouverte (#362) : la feuille se pose par-dessus l'écran, qui reste monté (partie et leçon intactes).
   const [aide, setAide] = useState<(Ouverture & { n: number }) | null>(null);
   useEffect(() => ecouterAide(o => {
@@ -722,6 +735,9 @@ export function App() {
       }}
       onJouer={id => { setEnPlacement(false); lancer('ordi', id); }}
       onLecons={ouvrirLeconsConseillees} />;
+  } else if (tab === 'apprendre' && leconEssai) {
+    screen = <LessonPlayer key={leconEssai.id} lesson={leconEssai} lecon={leconEssai} start={0} confirmTouch={settings.confirmTouch} celebrer={false}
+      onProgress={() => {}} onExit={() => { setLeconEssai(null); window.scrollTo({ top: 0 }); }} />;
   } else if (tab === 'apprendre' && serie3) {
     screen = <SeriePratique problemes={serie3} confirmTouch={settings.confirmTouch} celebrer={settings.celebrations} onFin={() => { setSerie3(null); window.scrollTo({ top: 0 }); }} />;
   } else if (tab === 'apprendre' && lesson) {

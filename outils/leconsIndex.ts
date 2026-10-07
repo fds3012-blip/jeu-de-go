@@ -5,7 +5,7 @@
 // Régénérer après l'ajout ou la modification d'une leçon : `npm run index-lecons` (outils/leconsIndex.test.ts le
 // rappelle sinon).
 
-interface LeconSource { id: string; title: string; desc: string; steps: readonly unknown[] }
+interface LeconSource { id: string; title: string; desc: string; taille?: number; steps: readonly unknown[] }
 interface ChapitreSource { id: string; titre: string; intro: string; fin?: string; complet?: boolean; lecons: readonly string[] }
 
 /** Contenu de src/content/leconsIndex.gen.ts : une ligne par leçon, dans l'ordre de content/lessons.fr.js. */
@@ -18,8 +18,9 @@ export function genererIndexLecons(lecons: readonly LeconSource[], chapitres: re
     '// Index léger des leçons (#16) : id, titre, description et nombre d’étapes, puis les chapitres. Le contenu complet',
     '// (positions, démonstrations, consignes) reste dans content/lessons.fr.js, chargé avec les écrans qui l’affichent.',
     '// prettier-ignore',
-    'export const LECONS_INDEX: readonly (readonly [id: string, titre: string, desc: string, etapes: number])[] = [',
-    ...lecons.map(l => `  [${j(l.id)}, ${j(l.title)}, ${j(l.desc)}, ${l.steps.length}],`),
+    // #454 : la taille du plateau n'est écrite que pour une leçon sur 13 × 13 ou 19 × 19 (9 × 9 par défaut).
+    'export const LECONS_INDEX: readonly (readonly [id: string, titre: string, desc: string, etapes: number, taille?: 13 | 19])[] = [',
+    ...lecons.map(l => `  [${j(l.id)}, ${j(l.title)}, ${j(l.desc)}, ${l.steps.length}${l.taille && l.taille !== 9 ? `, ${l.taille}` : ''}],`),
     '];',
     '',
     '// prettier-ignore',

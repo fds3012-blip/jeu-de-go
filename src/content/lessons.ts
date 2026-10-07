@@ -3,9 +3,17 @@ import { CHAPITRES as RAW_CHAPITRES, LESSONS as RAW } from '../../content/lesson
 import { anglais } from './anglais';
 import { langue, type Langue } from './i18n';
 import type { DemoTemps, Geste } from './demo';
+import type { Cadre, TailleLecon } from './cadreLecon';
 export type { DemoTemps, Geste } from './demo';
+export type { Cadre, TailleLecon } from './cadreLecon';
 
-export type LessonStep =
+/**
+ * Commun à toutes les étapes (#454). La taille du plateau est celle de `rows` (9, 13 ou 19 lignes) ; `cadre` montre
+ * seulement une zone (un coin d'un 19 × 19, par exemple). Sans `cadre`, tout le plateau.
+ */
+interface Plateau { cadre?: Cadre }
+
+export type LessonStep = Plateau & (
   /** `demo` (issue #101) : temps joués un par un, animés, depuis `rows`. Sans ce champ, l'image est immobile. */
   /** `avant` : temps déjà vus à l'étape précédente, rejoués sans image (pour garder par exemple le point de ko). */
   /** `geste` (#198) : la démonstration attend que l'élève pose la pierre ou touche le point, puis se joue. */
@@ -20,10 +28,11 @@ export type LessonStep =
    * Question à choix. `compte` (#177) : « combien de points pour Noir / Blanc ? » ; la bonne réponse est le score
    * de src/go (règle japonaise) avec ce komi et ces prisonniers (Noir, Blanc), vérifié par src/go/lessons.test.ts.
    */
-  | { kind: 'quiz'; rows: string[]; terr?: boolean; compte?: Compte; text: string; choices: string[]; answer: number; ok: string; no: string };
+  | { kind: 'quiz'; rows: string[]; terr?: boolean; compte?: Compte; text: string; choices: string[]; answer: number; ok: string; no: string });
 export interface Refus { points: string[]; no: string }
 export interface Compte { pour: 'B' | 'W'; komi: number; prises?: [number, number] }
-export interface Lesson { id: string; title: string; desc: string; steps: LessonStep[] }
+/** `taille` (#454) : plateau de la leçon (9 par défaut), annoncé sur le chemin ; chaque étape a des `rows` de cette taille. */
+export interface Lesson { id: string; title: string; desc: string; taille?: TailleLecon; steps: LessonStep[] }
 
 /** Leçons d'origine, en français : positions, réponses, démonstrations et gestes font foi. */
 export const LESSONS_FR = RAW as unknown as Lesson[];
