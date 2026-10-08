@@ -44,6 +44,8 @@ export interface TuileLentes {
   ouvrir: () => void;
   /** Annule la recherche ; si l'adversaire est trouvé, ouvre la partie. */
   quitter: () => void;
+  /** #498 : l'annulation a échoué (hors ligne : refaite au retour de la connexion). */
+  erreur?: 'hors-ligne' | 'erreur' | null;
 }
 
 interface Props {
@@ -261,6 +263,11 @@ function TuilesLentes({ l }: { l: TuileLentes }) {
           </button>
           <button type="button" className="lien" onClick={l.quitter} aria-label={t('lente.accueil.annulerAria')}>{t('lente.accueil.annuler')}</button>
         </div>
+      )}
+      {l.recherche && l.erreur && (
+        <p className="muted small tuiles-lentes-erreur" role="status" data-testid="lente-quitter-erreur">
+          {fr(t(l.erreur === 'hors-ligne' ? 'lente.accueil.quitterHorsLigne' : 'lente.accueil.quitterErreur'))}
+        </p>
       )}
     </div>
   );

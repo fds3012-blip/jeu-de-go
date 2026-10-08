@@ -6,6 +6,7 @@ import { ERREURS_KEY, EVENEMENT_REVISIONS, REVISIONS_KEY, compterDus } from './r
 // #16 : l'accueil ne lit que l'index léger des leçons ; leur contenu arrive avec les écrans Apprendre et leçon.
 import { CHAPITRES, LESSONS } from '../content/leconsResume';
 import { LESSONS_KEY, readLocal, writeLocal, useGelsServeur, useLessonProgress, useOnline, useProfil, usePseudo, useSerie, useSession } from './hooks';
+import { auRetourEnLigne, tenterQuitter } from './quitterFile';
 import { COMPTES, chargerSupabase, useSupabase } from '../data/client';
 import { coachActif, useSettings, useStored } from './settings';
 import { aideActive } from './partie';
@@ -365,14 +366,28 @@ export function App() {
    * #440 : sort de la file lente (annulation, ou « adversaire trouvé » vu). Si une partie attendait, elle est rendue,
    * et `partie_lente_commencee` est mesurée (une fois : la ligne n'existe plus ensuite).
    */
+  // #498 : hors ligne, l'annulation échouait en silence (rejet non géré de `import()`) : message, puis nouvel essai au retour.
+  const [quitterEchec, setQuitterEchec] = useState<'hors-ligne' | 'erreur' | null>(null);
   const quitterRecherche = useCallback(async (db: NonNullable<typeof supabase>): Promise<string | null> => {
     const r = rechercheLente;
-    const q = await import('../data/lente').then(m => m.quitterFileLente(db));
+    const q = await tenterQuitter(() => import('../data/lente').then(m => m.quitterFileLente(db)), () => typeof navigator === 'undefined' || navigator.onLine !== false);
+    if (q.etat !== 'fait') { setQuitterEchec(q.etat); return null; }
+    setQuitterEchec(null);
     relireAFaire();
-    if (!q.ok || !q.value) return null;
+    if (!q.partieId) return null;
     if (r) track(EVENTS.partieLenteCommencee, { taille: r.taille, delai_jours: r.delai, attente_h: Math.max(0, Math.round((Date.now() - Date.parse(r.depuis)) / 360_000) / 10) });
-    return q.value;
+    return q.partieId;
   }, [rechercheLente, relireAFaire]);
+  /** Depuis l'accueil : annule la recherche, ou ouvre la partie trouvée. */
+  const quitterDepuisAccueil = useCallback((db: NonNullable<typeof supabase>) => {
+    void quitterRecherche(db).then(id => { if (id) { go('jouer'); setDefi({ vue: 'partie', id }); } });
+  }, [quitterRecherche]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Hors ligne : l'annulation est refaite d'elle-même au retour de la connexion.
+  useEffect(() => {
+    const db = supabase;
+    if (quitterEchec !== 'hors-ligne' || !db) return;
+    return auRetourEnLigne(() => quitterDepuisAccueil(db));
+  }, [quitterEchec, supabase, quitterDepuisAccueil]);
   // En quittant la page publique de la politique, l'adresse redevient celle de l'app.
   useEffect(() => {
     if (vueProfil !== 'conditions' && /^\/confidentialite\/?$/.test(location.pathname)) {
@@ -886,8 +901,9 @@ export function App() {
           quitter: () => {
             const db = supabase;
             if (!db) return;
-            void quitterRecherche(db).then(id => { if (id) { go('jouer'); setDefi({ vue: 'partie', id }); } });
+            quitterDepuisAccueil(db);
           },
+          erreur: quitterEchec,
         } : undefined} />
     );
   }

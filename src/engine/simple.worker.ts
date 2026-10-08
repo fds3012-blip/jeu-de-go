@@ -6,14 +6,17 @@ import type { Position } from '../go/rules';
 
 export type Tache = { kind: 'move'; pos: Position; niveau: OpponentId; opts: EngineOptions; hasard?: number } | { kind: 'dead'; pos: Position } | { kind: 'own'; pos: Position; timeMs?: number }
   // #486 : preuve bornée des groupes incertains au comptage des premières parties.
-  | { kind: 'trancher'; pos: Position; comptage: ComptageAuto };
+  | { kind: 'trancher'; pos: Position; comptage: ComptageAuto }
+  // #498 : le Worker répond-il encore (retour au premier plan après une mise en veille) ?
+  | { kind: 'ping' };
 export type Demande = Tache & { id: number };
 export interface Reponse { id: number; move: number; raison?: Raison | null; dead?: number[]; incertains?: number[]; own?: Float32Array; tranche?: Tranche; error?: string }
 
 self.onmessage = (e: MessageEvent<Demande>) => {
   const d = e.data;
   try {
-    const r: Reponse = d.kind === 'dead' ? { id: d.id, move: -1, ...comptageAuto(d.pos) }
+    const r: Reponse = d.kind === 'ping' ? { id: d.id, move: -1 }
+      : d.kind === 'dead' ? { id: d.id, move: -1, ...comptageAuto(d.pos) }
       : d.kind === 'trancher' ? { id: d.id, move: -1, tranche: trancherParPreuve(d.pos, d.comptage) }
       : d.kind === 'own' ? { id: d.id, move: -1, own: ownership(d.pos, { timeMs: d.timeMs, estimation: true }) }
       : { id: d.id, ...chooseMoveDetail(d.pos, d.hasard === undefined ? d.niveau : { ...opponent(d.niveau), hasard: d.hasard }, d.opts) };

@@ -96,8 +96,15 @@ export class TfNet implements Evaluator {
       const own = this.conv(v1, V.ownership);
       return { pol, pass, val, sc, own };
     });
-    const [pol, pass, val, sc, own] = await Promise.all([out.pol.data(), out.pass.data(), out.val.data(), out.sc.data(), out.own.data()]);
-    tf.dispose([out.pol, out.pass, out.val, out.sc, out.own]);
+    // #498 : tenseurs libérés même si une lecture échoue (contexte GPU perdu, Worker en veille). Avant, chaque échec
+    // laissait les cinq sorties en mémoire du GPU.
+    let lus: TF.TypedArray[];
+    try {
+      lus = await Promise.all([out.pol.data<'float32'>(), out.pass.data<'float32'>(), out.val.data<'float32'>(), out.sc.data<'float32'>(), out.own.data<'float32'>()]);
+    } finally {
+      tf.dispose([out.pol, out.pass, out.val, out.sc, out.own]);
+    }
+    const [pol, pass, val, sc, own] = lus;
     const n = size * size, ch = P.p2.outC, policy = new Float32Array(n + 1);
     // Plusieurs canaux de politique (réseaux récents) : on garde le premier, la politique principale.
     for (let i = 0; i < n; i++) policy[i] = pol[i * ch];

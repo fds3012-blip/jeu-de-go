@@ -7,7 +7,8 @@
 // dans un Web Worker ; s'il ne démarre pas (pas de Worker, pas de backend, réseau introuvable),
 // ils se replient sur le moteur simple, sans rien casser.
 import { chooseMove, chooseMoveDetail, gainDuCoup, isLegalMove, OPPONENTS, opponent, raisonFrontiere, raisonPoints, reponseAccommodante, SEUIL_POINTS, type CoupExplique, type EngineOptions, type KataGoLevel, type Opponent, type OpponentId, type Raison, type Style } from './simple';
-import { comptageSur, trancherParPreuve, type Tranche } from './comptageSur';
+import { comptageSur, PREUVE, trancherParPreuve, type Tranche } from './comptageSur';
+import { delaiAnalyse, delaiPing, delaiTache, DelaiDepasse, echelleDelais, estDelaiDepasse, estMoteurBloque, MoteurBloque, reglerEchelleDelais, sousDelai } from './delais';
 import { comptageAuto, deadStones, groupesIncertains, ownership as ownershipSimple, type ComptageAuto, type DeadOptions } from './dead';
 import type { Position } from '../go/rules';
 import type { Rules } from '../go/score';
@@ -27,36 +28,150 @@ export { SEUIL_POINTS, gainDuCoup };
 export type { CoupExplique, Raison };
 // Fin de partie (#159) : points encore à fermer, coup qui en ferme un, avance comptée comme au comptage.
 export { avanceEstimee, coupDeFermeture, frontieresOuvertes, mortesSelonPropriete, partieAvancee };
+// Délais maximaux des demandes au moteur (#498).
+export { DelaiDepasse, MoteurBloque, estDelaiDepasse, estMoteurBloque, reglerEchelleDelais };
 export type { ComptageAuto, Opponent, OpponentId, EngineOptions, DeadOptions, KataGoLevel, Style, Analysis, AnalyzeOptions, MoveInfo, KataGoInfo };
 
 // ---------- Moteur simple dans son Worker ----------
 // Deux Workers indépendants : l'un pour les coups et les pierres mortes, l'autre pour l'estimation d'avantage
 // affichée pendant la partie, pour que l'estimation ne retarde jamais la réponse de l'adversaire.
+// #498 : chaque demande a un délai maximal (src/engine/delais.ts). iOS peut tuer un Worker sans événement `error` :
+// au-delà du délai, le Worker est relancé et la demande refaite une fois (`demander`) ; sinon `MoteurBloque`, et
+// l'écran prend son filet (coup de secours, comptage manuel). Après deux relances de suite sans réponse, le Worker est
+// abandonné pour la session : le calcul se fait sur le fil principal, comme sans Worker.
 let nextId = 1;
-function canal() {
-  let worker: Worker | null = null, broken = false;
-  const pending = new Map<number, (r: Reponse) => void>();
-  function getWorker(): Worker | null {
-    if (broken || typeof Worker === 'undefined') return null;
+
+/** Ce dont un canal a besoin d'un Worker (un faux suffit dans les tests). */
+export interface WorkerSimple {
+  postMessage(d: Demande): void;
+  onmessage: ((e: MessageEvent<Reponse>) => void) | null;
+  onerror: ((e: unknown) => void) | null;
+  terminate(): void;
+}
+
+export interface Canal {
+  /** Envoie une demande ; `null` si le Worker est indisponible. Au-delà de `delaiMs` : `DelaiDepasse`, et le Worker est relancé. */
+  envoyer(d: Tache, delaiMs: number): Promise<Reponse> | null;
+  /** Vrai si le Worker répond (ou s'il n'y en a pas encore) ; sinon il est relancé. */
+  verifier(): Promise<boolean>;
+  /** Demandes sans réponse (tests, diagnostic). */
+  enAttente(): number;
+}
+
+/** Relances de suite sans aucune réponse au-delà desquelles le Worker est abandonné pour la session. */
+export const RELANCES_AVANT_ABANDON = 2;
+
+function workerSimpleParDefaut(): WorkerSimple | null {
+  if (typeof Worker === 'undefined') return null;
+  surveillerVeille();
+  return new Worker(new URL('./simple.worker.ts', import.meta.url), { type: 'module' }) as unknown as WorkerSimple;
+}
+
+export function creerCanal(fabrique: () => WorkerSimple | null = workerSimpleParDefaut): Canal {
+  let worker: WorkerSimple | null = null, broken = false, relances = 0;
+  type Attente = { resolve: (r: Reponse) => void; reject: (e: Error) => void; minuterie: ReturnType<typeof setTimeout> };
+  const pending = new Map<number, Attente>();
+  function relancer(raison: string) {
+    worker?.terminate();
+    worker = null;
+    for (const a of pending.values()) { clearTimeout(a.minuterie); a.reject(new DelaiDepasse(raison)); }
+    pending.clear();
+    if (++relances >= RELANCES_AVANT_ABANDON) broken = true;
+  }
+  function getWorker(): WorkerSimple | null {
+    if (broken) return null;
     if (!worker) {
       try {
-        worker = new Worker(new URL('./simple.worker.ts', import.meta.url), { type: 'module' });
-        worker.onmessage = (e: MessageEvent<Reponse>) => { pending.get(e.data.id)?.(e.data); pending.delete(e.data.id); };
-        worker.onerror = () => { broken = true; worker?.terminate(); worker = null; for (const [id, cb] of pending) cb({ id, move: Number.NaN, error: 'worker' }); pending.clear(); };
+        const w = fabrique();
+        if (!w) { broken = true; return null; }
+        w.onmessage = (e: MessageEvent<Reponse>) => {
+          const a = pending.get(e.data.id);
+          if (!a) return; // réponse arrivée après le délai : ignorée
+          pending.delete(e.data.id); clearTimeout(a.minuterie); relances = 0;
+          a.resolve(e.data);
+        };
+        w.onerror = () => {
+          broken = true; w.terminate(); if (worker === w) worker = null;
+          for (const [id, a] of pending) { clearTimeout(a.minuterie); a.resolve({ id, move: Number.NaN, error: 'worker' }); }
+          pending.clear();
+        };
+        worker = w;
       } catch { broken = true; return null; }
     }
     return worker;
   }
-  /** Envoie une demande au Worker ; `null` s'il est indisponible. */
-  return (d: Tache): Promise<Reponse> | null => {
+  function envoyer(d: Tache, delaiMs: number): Promise<Reponse> | null {
     const w = getWorker();
     if (!w) return null;
     const id = nextId++;
-    return new Promise<Reponse>(resolve => { pending.set(id, resolve); w.postMessage({ ...d, id } satisfies Demande); });
-  };
+    return new Promise<Reponse>((resolve, reject) => {
+      const minuterie = setTimeout(() => {
+        const a = pending.get(id);
+        if (!a) return;
+        pending.delete(id);
+        a.reject(new DelaiDepasse(`moteur simple : pas de réponse en ${delaiMs} ms (${d.kind})`));
+        relancer('Worker relancé');
+      }, delaiMs);
+      pending.set(id, { resolve, reject, minuterie });
+      try { w.postMessage({ ...d, id } satisfies Demande); } catch (e) { pending.delete(id); clearTimeout(minuterie); reject(e instanceof Error ? e : new Error(String(e))); }
+    });
+  }
+  async function verifier(): Promise<boolean> {
+    if (!worker) return true;
+    const q = envoyer({ kind: 'ping' }, delaiPing());
+    if (!q) return true;
+    try { await q; return true; } catch { return false; }
+  }
+  return { envoyer, verifier, enAttente: () => pending.size };
 }
-const ask = canal();
-const askEstimation = canal();
+
+// Build de test (VITE_E2E) seulement : délais raccourcis (`window.__echelleDelaisMoteur`, e2e/moteur-bloque.spec.ts).
+// En production, la condition disparaît au build.
+if (import.meta.env.VITE_E2E && typeof window !== 'undefined') {
+  const e = (window as unknown as { __echelleDelaisMoteur?: unknown }).__echelleDelaisMoteur;
+  if (typeof e === 'number') reglerEchelleDelais(e);
+}
+
+let ask = creerCanal();
+let askEstimation = creerCanal();
+
+/** Tests seulement : remplace les Workers du moteur simple (coups et comptage, estimation). */
+export function _remplacerWorkersSimples(fabrique?: () => WorkerSimple | null) {
+  ask = creerCanal(fabrique);
+  askEstimation = creerCanal(fabrique);
+}
+
+/**
+ * Demande au Worker, avec un délai maximal. Délai dépassé : le Worker est relancé et la demande refaite une fois ;
+ * encore sans réponse : `MoteurBloque`. `null` si le Worker est indisponible (l'appelant calcule alors lui-même).
+ */
+async function demander(c: Canal, d: Tache, delaiMs: number): Promise<Reponse | null> {
+  for (let essai = 0; ; essai++) {
+    const q = c.envoyer(d, delaiMs);
+    if (!q) return null;
+    try { return await q; } catch (e) {
+      if (!estDelaiDepasse(e)) throw e;
+      if (essai > 0) throw new MoteurBloque(`moteur simple bloqué (${d.kind})`);
+    }
+  }
+}
+
+// Retour au premier plan après une mise en veille (#498) : les Workers répondent-ils encore ? Sinon, relancés.
+let veilleSurveillee = false;
+function surveillerVeille() {
+  if (veilleSurveillee || typeof document === 'undefined') return;
+  veilleSurveillee = true;
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') void verifierMoteurs(); });
+}
+
+/** Vérifie que les Workers du moteur (simple et KataGo) répondent ; ceux qui ne répondent plus sont relancés. */
+export async function verifierMoteurs(): Promise<{ coups: boolean; estimation: boolean; katago: boolean }> {
+  const k = katago;
+  const [coups, estimation, kg] = await Promise.all([
+    ask.verifier(), askEstimation.verifier(), k?.verifier ? k.verifier().catch(() => false) : Promise.resolve(true),
+  ]);
+  return { coups, estimation, katago: kg };
+}
 
 // #474 : une exception de `f` rejette la promesse. Avant, elle sortait du minuteur (erreur non attrapée) et la promesse
 // restait en attente pour toujours : l'ordi « réfléchissait » sans fin, le comptage restait sur « Je cherche… ».
@@ -72,10 +187,9 @@ async function simpleMoveDetail(pos: Position, lvl: Opponent, opts: EngineOption
   const niveau: OpponentId = lvl.katago ? 'caillou' : lvl.id;
   // Mochi (#79) : ses crans plus doux que Pomme changent seulement `hasard`, qu'on transmet aussi.
   const hasard = !lvl.katago && lvl.hasard !== opponent(lvl.id).hasard ? lvl.hasard : undefined;
-  const q = ask({ kind: 'move', pos, niveau, opts: { timeMs: lvl.timeMs, playouts: lvl.playouts, ...opts }, ...(hasard === undefined ? {} : { hasard }) });
-  if (!q) return sync();
-  const r = await q;
-  return Number.isNaN(r.move) ? sync() : { move: r.move, raison: r.raison ?? null };
+  const budget = opts.timeMs ?? lvl.timeMs;
+  const r = await demander(ask, { kind: 'move', pos, niveau, opts: { timeMs: lvl.timeMs, playouts: lvl.playouts, ...opts }, ...(hasard === undefined ? {} : { hasard }) }, delaiTache(budget, pos.size));
+  return !r || Number.isNaN(r.move) ? sync() : { move: r.move, raison: r.raison ?? null };
 }
 
 async function simpleMove(pos: Position, lvl: Opponent, opts: EngineOptions): Promise<number> {
@@ -84,8 +198,7 @@ async function simpleMove(pos: Position, lvl: Opponent, opts: EngineOptions): Pr
 
 /** Pierres mortes proposées à l'entrée du comptage, calculées sans bloquer l'interface. */
 export async function proposeDead(pos: Position): Promise<number[]> {
-  const q = ask({ kind: 'dead', pos });
-  const r = q && (await q);
+  const r = await demander(ask, { kind: 'dead', pos }, delaiComptage(pos.size));
   return r?.dead ?? later(() => deadStones(pos));
 }
 
@@ -97,19 +210,21 @@ export async function proposeDead(pos: Position): Promise<number[]> {
  * DELAI_PREUVE_MS d'attente : au-delà, le doute reste.
  */
 export async function proposeComptage(pos: Position, komi: number, opts: { sur?: boolean } = {}): Promise<ComptageAuto & { prouves?: number }> {
-  const q = ask({ kind: 'dead', pos });
-  const r = q && (await q);
+  const r = await demander(ask, { kind: 'dead', pos }, delaiComptage(pos.size));
   const base: ComptageAuto = r?.dead && r.incertains ? { dead: r.dead, incertains: r.incertains } : await later(() => comptageAuto(pos));
   const avis = await avisKataGo(pos, komi, base);
   return opts.sur ? comptageSur(pos, avis, await trancher(pos, avis)) : avis;
 }
+
+/** Délai de la recherche des pierres mortes : le comptage automatique tient en 0,2 à 0,7 s, plusieurs passes. */
+const delaiComptage = (size: number) => delaiTache(2000, size);
 
 /** Incertains de `base`, plus les désaccords de KataGo s'il est déjà chargé. */
 async function avisKataGo(pos: Position, komi: number, base: ComptageAuto): Promise<ComptageAuto> {
   const k = katago ?? null;
   if (!k || k.info.state !== 'pret' || !pos.board.some(v => v)) return base;
   try {
-    const a = await k.analyze(pos, { komi, visits: 16, timeMs: 800 });
+    const a = await analyserGarde(k, pos, { komi, visits: 16, timeMs: 800 });
     const incertains = new Set([...base.incertains, ...groupesIncertains(pos, base.dead, [a.ownership])]);
     return { dead: base.dead, incertains: [...incertains].sort((x, y) => x - y) };
   } catch { return base; }
@@ -124,7 +239,8 @@ async function trancher(pos: Position, c: ComptageAuto): Promise<Tranche> {
   if (!pos.board.some(v => v)) return rien;
   let minuterie: ReturnType<typeof setTimeout> | undefined;
   const delai = new Promise<Tranche>(resolve => { minuterie = setTimeout(() => resolve(rien), DELAI_PREUVE_MS); });
-  const q = ask({ kind: 'trancher', pos, comptage: c });
+  // Délai propre (#498) : sans lui, une demande à un Worker mort restait en attente pour toujours.
+  const q = ask.envoyer({ kind: 'trancher', pos, comptage: c }, delaiTache(PREUVE.timeMs, pos.size));
   const calcul = q ? q.then(r => r.tranche ?? rien) : later(() => trancherParPreuve(pos, c));
   try { return await Promise.race([calcul.catch(() => rien), delai]); } finally { clearTimeout(minuterie); }
 }
@@ -132,7 +248,14 @@ async function trancher(pos: Position, c: ComptageAuto): Promise<Tranche> {
 // ---------- KataGo ----------
 /** Ce qu'il faut pour analyser avec KataGo ; remplaçable dans les tests. */
 export interface KataGoBackend {
-  analyze(pos: Position, opts: AnalyzeOptions): Promise<Analysis>; info: KataGoInfo; start?(): Promise<void>;
+  /** `delaiMs` (#498) : délai maximal de l'analyse, au-delà duquel elle échoue avec `DelaiDepasse`. */
+  analyze(pos: Position, opts: AnalyzeOptions, delaiMs?: number): Promise<Analysis>; info: KataGoInfo; start?(): Promise<void>;
+  /** #498 : arrête le Worker (tué, gelé) ; le prochain appel le redémarre. */
+  relancer?(): void;
+  /** #498 : KataGo ne répond plus, même relancé : indisponible pour la session (sauf `relancer`). */
+  abandonner?(raison: string): void;
+  /** #498 : vrai si le Worker répond ; sinon il est relancé. */
+  verifier?(): Promise<boolean>;
   /** Préchargement discret (#475) : réseau en cache, sans démarrer KataGo. */
   precharger?(): Promise<boolean>;
   /** Suit les changements d'état et la progression du téléchargement. */
@@ -141,6 +264,32 @@ export interface KataGoBackend {
 
 let katago: KataGoBackend | null | undefined;
 let warned = false;
+
+/** Marge du filet extérieur quand KataGo démarre encore : le client attend son chargement jusqu'à 15 s. */
+const MARGE_DEMARRAGE_MS = 20_000;
+
+/**
+ * Analyse KataGo avec un délai maximal (#498), adapté aux visites, au temps et à la taille du plateau. Délai dépassé :
+ * Worker relancé, nouvel essai une fois ; encore rien : KataGo est abandonné pour la session et `MoteurBloque` est levé.
+ * Le filet extérieur (`sousDelai`) couvre aussi un remplaçant qui ignorerait `delaiMs` (tests).
+ */
+async function analyserGarde(k: KataGoBackend, pos: Position, opts: AnalyzeOptions): Promise<Analysis> {
+  const delai = delaiAnalyse(opts, pos.size);
+  for (let essai = 0; ; essai++) {
+    const filet = delai + Math.round(echelleDelais() * (1000 + (k.info.state === 'pret' ? 0 : MARGE_DEMARRAGE_MS)));
+    try {
+      return await sousDelai(k.analyze(pos, opts, delai), filet, 'analyse trop longue');
+    } catch (e) {
+      if (!estDelaiDepasse(e)) throw e;
+      if (essai > 0) {
+        const raison = 'analyse trop longue : KataGo ne répond plus, même relancé';
+        k.abandonner?.(raison);
+        throw new MoteurBloque(raison);
+      }
+      k.relancer?.();
+    }
+  }
+}
 
 function modelUrl(): string {
   // Écrit en toutes lettres pour que Vite remplace la variable au build.
@@ -172,6 +321,7 @@ const memoBackend = {
 function getKataGo(): KataGoBackend | null {
   if (katago !== undefined) return katago;
   if (typeof Worker === 'undefined') return (katago = null);
+  surveillerVeille();
   katago = new KataGoClient({
     urls: modelUrls(),
     // Empreinte vérifiée seulement pour notre réseau : une autre adresse (`VITE_KATAGO_MODEL_URL`) peut servir un autre fichier.
@@ -202,6 +352,15 @@ function kataGoRevue(): KataGoBackend | null | undefined {
 /** État de KataGo (chargement, backend choisi, erreur). */
 export function kataGoInfo(): KataGoInfo { return getKataGo()?.info ?? { state: 'indisponible', error: 'Web Workers indisponibles' }; }
 
+/**
+ * « Réessayer » après un KataGo bloqué (#498) : arrête son Worker et le rend à nouveau utilisable ; le prochain
+ * `preparerKataGo` le redémarre (réseau lu du cache).
+ */
+export function relancerKataGo(): void {
+  const k = kataGoRevue() ?? getKataGo();
+  k?.relancer?.();
+}
+
 /** Démarre le chargement de KataGo en avance (téléchargement du réseau, choix du backend). */
 export function preloadKataGo(): void { getKataGo()?.start?.().catch(() => {}); }
 
@@ -220,7 +379,7 @@ async function simpleAnalysis(pos: Position, o: AnalyzeOptions): Promise<Analysi
 export async function analyze(pos: Position, options: AnalyzeOptions = {}): Promise<Analysis> {
   const k = getKataGo();
   if (k) {
-    try { return await k.analyze(pos, { visits: 64, ...options }); } catch { /* repli ci-dessous */ }
+    try { return await analyserGarde(k, pos, { visits: 64, ...options }); } catch { /* repli ci-dessous */ }
   }
   return simpleAnalysis(pos, options);
 }
@@ -254,7 +413,7 @@ export async function bestMoveExplique(pos: Position, niveau: OpponentId | Oppon
   if (lvl.katago && k) {
     try {
       // Plafond de 1,8 s par coup : l'objectif est une réponse en moins de 2 s.
-      const a = await k.analyze(pos, { komi: opts.komi ?? 6.5, visits: lvl.katago.visits, timeMs: opts.timeMs ?? 1800 });
+      const a = await analyserGarde(k, pos, { komi: opts.komi ?? 6.5, visits: lvl.katago.visits, timeMs: opts.timeMs ?? 1800 });
       // Graine fixée (tests) : tirage reproductible. Sinon, vrai hasard.
       // La graine est mélangée : xorshift démarre mal sur les petites graines (premiers tirages proches de 0).
       const rand = opts.seed !== undefined ? rng(Math.imul(opts.seed ^ 0x9e3779b9, 0x85ebca6b)) : Math.random;
@@ -304,12 +463,12 @@ async function proprieteEstimee(pos: Position, komi: number, opts: OptionsEstima
   const k = opts.kataGo === false ? null : kataGoRevue() ?? null;
   if (k && k.info.state === 'pret') {
     try {
-      const a = await k.analyze(pos, { komi, visits: 16, timeMs: 600, regles: opts.rules ?? 'japanese' });
+      const a = await analyserGarde(k, pos, { komi, visits: 16, timeMs: 600, regles: opts.rules ?? 'japanese' });
       return { own: a.ownership, engine: 'katago' };
     } catch { /* repli ci-dessous */ }
   }
-  const q = askEstimation({ kind: 'own', pos, timeMs: pos.size <= 9 ? 150 : 400 });
-  const r = q && (await q);
+  const timeMs = pos.size <= 9 ? 150 : 400;
+  const r = await demander(askEstimation, { kind: 'own', pos, timeMs }, delaiTache(timeMs, pos.size));
   return r?.own ? { own: Float32Array.from(r.own), engine: 'simple' } : null;
 }
 
@@ -350,9 +509,13 @@ export async function analyseRevue(pos: Position, komi: number, opts: { visits?:
   if (k && k.info.state === 'pret') {
     try {
       const visits = opts.visits ?? 32;
-      const a = await k.analyze(pos, { komi, visits, timeMs: visits * 40, maxMoves: 6 });
+      const a = await analyserGarde(k, pos, { komi, visits, timeMs: visits * 40, maxMoves: 6 });
       return { lead: pos.toPlay === 1 ? a.lead : -a.lead, engine: 'katago', coups: a.moves.map(m => ({ move: m.move, visits: m.visits, lead: m.lead })) };
-    } catch { return null; }
+    } catch (e) {
+      // #498 : KataGo ne répond plus : l'écran le dit et propose de réessayer, au lieu d'attendre position après position.
+      if (estMoteurBloque(e)) throw e;
+      return null;
+    }
   }
   const r = await estimateLead(pos, komi, { kataGo: false });
   return r && { lead: r.lead, engine: 'simple' };
@@ -394,6 +557,8 @@ export async function preparerKataGo(delaiMs = DELAI_KATAGO_REVUE): Promise<Prep
   if (!telechargementPermis() && !(await reseauEnCache())) return { pret: false, raison: 'reseau' };
   k = k?.start ? k : getKataGo();
   if (!k) return { pret: false, raison: 'appareil' };
+  // #498 : abandonné après un délai dépassé (Worker tué, gelé) : passager, on le relance pour cette nouvelle demande.
+  if (k.info.state === 'indisponible' && raisonSansKataGo(k.info.error) === 'delai') k.relancer?.();
   if (k.info.state === 'indisponible') return { pret: false, raison: raisonSansKataGo(k.info.error) };
   let delai: ReturnType<typeof setTimeout> | undefined;
   try {
@@ -484,7 +649,7 @@ export async function meilleurCoup(pos: Position, komi: number): Promise<Conseil
   }
   if (!k || k.info.state !== 'pret') return { katago: false };
   try {
-    const a = await k.analyze(pos, { komi, visits: 48, timeMs: 1200 });
+    const a = await analyserGarde(k, pos, { komi, visits: 48, timeMs: 1200 });
     const b = a.moves[0];
     return b ? { katago: true, move: b.move, lead: b.lead } : { katago: true, move: null, lead: a.lead };
   } catch { return { katago: false }; }
@@ -507,7 +672,7 @@ export async function analyseEtude(pos: Position, komi: number, visites = 96): P
     try { await k?.start?.(); } catch { /* KataGo indisponible */ }
   }
   if (!k || k.info.state !== 'pret') return { katago: false };
-  const a = await k.analyze(pos, { komi, visits: visites, timeMs: visites * 30, maxMoves: 6 });
+  const a = await analyserGarde(k, pos, { komi, visits: visites, timeMs: visites * 30, maxMoves: 6 });
   return {
     katago: true,
     lead: pos.toPlay === 1 ? a.lead : -a.lead,
@@ -528,9 +693,9 @@ export async function analyseConseil(pos: Position, komi: number): Promise<Analy
   if (!k || k.info.state !== 'pret') return null;
   try {
     const opts = { komi, visits: 24, timeMs: 800, maxMoves: 5 };
-    const a = await k.analyze(pos, opts);
+    const a = await analyserGarde(k, pos, opts);
     const eux: Position = { ...pos, toPlay: (3 - pos.toPlay) as 1 | 2, ko: -1, lastMove: -1 };
-    const b = await k.analyze(eux, opts);
+    const b = await analyserGarde(k, eux, opts);
     return { propriete: a.ownership, coups: a.moves.map(m => m.move), proprieteSiTuPasses: b.ownership, menace: b.moves[0]?.move ?? -1 };
   } catch { return null; }
 }

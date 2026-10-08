@@ -301,3 +301,4 @@ html:has(.accord[open]) .app.app-home {
   html:has(.accord[open]) .app.app-home {
     padding-bottom: calc(max(max(var(--nav-h), 3.75rem) + var(--space-3), var(--accord-h, 160px) + var(--space-2)) + env(safe-area-inset-bottom, 0px)); }
 }
+.tuiles-lentes-erreur { grid-column: 1 / -1; margin: 0; } /* #498 : annulation hors ligne */
