@@ -7,8 +7,11 @@
  * - Navigation : réseau d'abord (toujours la dernière version en ligne), repli sur la page en cache (hors ligne).
  * - Fichiers statiques de même origine : cache d'abord. Ceux hors de la liste (KataGo et TensorFlow.js,
  *   PostHog, Sentry) vont dans un cache d'exécution borné, gardé d'une version à l'autre.
+ *   #475 : ce cache est tenu du plus ancien usage au plus récent (une entrée relue repasse en tête) : le code
+ *   de TensorFlow.js, qui sert à chaque démarrage de KataGo, n'en sort plus au fil des déploiements.
  * - Jamais mis en cache ici : autres origines (Supabase, PostHog, Sentry), requêtes non GET,
- *   et le réseau KataGo (*.bin.gz), géré à part par le moteur.
+ *   et le réseau KataGo (*.bin.gz, servi depuis /reseaux/), géré à part par le moteur dans le cache
+ *   `katago-reseaux-v1` (src/engine/katago/loader.ts), qu'aucune activation n'efface.
  */
 // Remplacée au build (outils/pwa.ts). En dev, le service worker n'est pas enregistré (src/registerSW.ts).
 const BUILD = { version: 'dev', precache: ['/', '/manifest.webmanifest', '/icon.svg', '/icon-192.png', '/icon-512.png'] };
@@ -53,9 +56,11 @@ function isStatic(url) {
   return immuable(url.pathname) || PRECACHE.has(url.pathname) || /\.(png|svg|webp|woff2?)$/.test(url.pathname);
 }
 
-/** Cache d'exécution borné : les plus anciennes entrées partent d'abord. */
-async function garder(req, res) {
+/** Cache d'exécution borné : les entrées les moins récemment utilisées partent d'abord. */
+async function garder(req, res, dejaLa = false) {
   const cache = await caches.open(RUNTIME);
+  // Relue : retirée puis remise, elle passe en fin de liste (les clés suivent l'ordre d'insertion).
+  if (dejaLa) await cache.delete(req, { ignoreVary: true });
   await cache.put(req, res);
   const cles = await cache.keys();
   await Promise.all(cles.slice(0, Math.max(0, cles.length - RUNTIME_MAX)).map((k) => cache.delete(k)));
@@ -88,8 +93,9 @@ self.addEventListener('fetch', (event) => {
       // ignoreVary : la copie mise en cache à l'installation a été demandée sans en-tête Origin, alors que
       // les scripts `crossorigin` l'envoient ; avec `Vary: Origin`, elle ne serait jamais retrouvée hors ligne.
       // Sans risque ici : ces fichiers ne dépendent pas des en-têtes de la requête.
-      caches.match(req, { ignoreVary: true }).then(
-        (hit) =>
+      caches.match(req, { ignoreVary: true }).then((hit) => {
+        if (hit && !PRECACHE.has(url.pathname)) event.waitUntil(garder(req, hit.clone(), true).catch(() => {}));
+        return (
           hit ||
           fetch(req).then((res) => {
             if (res.ok) {
@@ -98,8 +104,9 @@ self.addEventListener('fetch', (event) => {
               else event.waitUntil(garder(req, copy));
             }
             return res;
-          }),
-      ),
+          })
+        );
+      }),
     );
   }
 });

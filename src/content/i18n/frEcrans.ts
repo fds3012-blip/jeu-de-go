@@ -696,6 +696,8 @@ export const frEcrans = {
   'bilan3.tableau': 'Tes coups, note par note',
   'bilan3.sansKataGo': 'Sans KataGo, Mochi ne note que ce qui est sûr : ni Brillant, ni Meilleur coup, ni Coup manqué.',
   'bilan3.kataGoCharge': 'Mochi prépare KataGo, une seule fois (4 Mo).',
+  // #475 : progression du téléchargement du réseau KataGo, en mégaoctets.
+  'bilan3.kataGoProgression': '{recu} / {total} Mo',
   'bilan3.sansKataGo.reseau': 'KataGo n’a pas pu se télécharger (connexion) : Mochi ne note que ce qui est sûr.',
   'bilan3.sansKataGo.appareil': 'KataGo ne peut pas tourner sur cet appareil : Mochi ne note que ce qui est sûr.',
   'bilan3.sansKataGo.delai': 'KataGo a mis trop de temps à démarrer : Mochi ne note que ce qui est sûr.',

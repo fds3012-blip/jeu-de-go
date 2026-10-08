@@ -12,21 +12,28 @@ Il n'y a aucun coût serveur : le calcul se fait sur l'appareil du joueur.
 | `features.ts` | Entrées du réseau (22 plans, 19 valeurs globales) depuis une `Position` |
 | `search.ts` | Recherche PUCT compacte : `search(evaluator, position, options)` |
 | `choose.ts` | Choix du coup d'un niveau : tolérance de perte en points, style |
-| `loader.ts` | Choix du backend (WebGPU, puis WebGL, puis CPU) et cache du réseau (Cache API) |
+| `loader.ts` | Choix du backend (WebGPU, puis WebGL, puis CPU), téléchargement (repli, progression, empreinte) et cache du réseau (Cache API) |
+| `prechargement.ts` | Règle du préchargement après une partie (données mobiles), backend mémorisé, affichage en Mo (#475) |
 | `worker.ts` | Le Web Worker : importe TensorFlow.js dynamiquement, hors du bundle principal |
 | `client.ts` | Pilote du Worker côté page, avec délais et état (`inactif`, `chargement`, `pret`, `indisponible`) |
 | `fakeNet.ts` | Petit réseau factice au bon format, pour les tests |
 
 L'API publique est dans `src/engine/index.ts` : `bestMove(position, niveau)`, `analyze(position, options)`,
-`ownership(position)`, `preloadKataGo()`, `kataGoInfo()`.
+`ownership(position)`, `preloadKataGo()`, `kataGoInfo()`, `ecouterKataGo(f)` (état et progression du téléchargement),
+`prechargerApresPartie(partiesLancees)` (préchargement discret, #475).
 
 ## Réseau
 
-- Par défaut : `https://raw.githubusercontent.com/lightvector/KataGo/master/cpp/tests/models/g170-b6c96-s175395328-d26788732.bin.gz`
-  (3,8 Mo, servi avec `Access-Control-Allow-Origin: *`, vérifié le 27/09/2026). `media.katagotraining.org` n'a pas pu être vérifié.
-- Pour l'héberger avec l'app : `npm run fetch-model` (écrit dans `public/models/`, ignoré par git), puis
-  `VITE_KATAGO_MODEL_URL=/models/g170-b6c96-s175395328-d26788732.bin.gz` dans Vercel.
-- Le réseau n'est jamais commité. Il est téléchargé une fois puis lu depuis le cache `katago-reseaux-v1`.
+- Servi par l'app depuis #475 : `public/reseaux/g170-b6c96-s175395328-d26788732.f5d32604.bin.gz` (empreinte SHA-256 dans
+  le nom, cache d'un an dans vercel.json), 3,8 Mo. Versionné dans le dépôt, avec sa licence (`LICENSE-KataGo.txt`).
+- Repli : la copie du dépôt KataGo (`raw.githubusercontent.com/lightvector/KataGo/master/cpp/tests/models/…`), l'adresse
+  par défaut avant #475. L'empreinte est vérifiée dans les deux cas.
+- `VITE_KATAGO_MODEL_URL` remplace notre adresse (sans vérification d'empreinte : ce peut être un autre réseau).
+- Le réseau est téléchargé une fois puis lu depuis le cache `katago-reseaux-v1`. Jamais sans action du joueur ou sans
+  le contexte de préchargement décrit dans `prechargement.ts` (règle des données mobiles).
+- Tests avec le vrai réseau : `npm run fetch-model` le recopie dans `public/models/` (ignoré par git), ce qui active
+  `real.test.ts`, `e2e/revue-katago.spec.ts` et les autres tests facultatifs.
+- Mesures avant/après et limites iOS : `docs/qa/katago-demarrage-475.md`.
 
 ## Repli
 

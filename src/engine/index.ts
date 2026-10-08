@@ -16,7 +16,8 @@ import type { Demande, Reponse, Tache } from './simple.worker';
 import { KataGoClient, type KataGoInfo } from './katago/client';
 import { choisirCoup } from './katago/choose';
 import { rng } from './sim';
-import { CACHE_NAME, DEFAULT_MODEL_URL } from './katago/loader';
+import { CACHE_NAME, DEFAULT_MODEL_URL, LEGACY_MODEL_URL, MODEL_SHA256, MODEL_SHA256_DECOMPRESSE, type Backend } from './katago/loader';
+import { DELAI_PRECHARGEMENT_MS, decisionPrechargement, ecrireMemo, lireMemo, MEMO_BACKEND_KEY, type DecisionPrechargement, type InfoConnexion } from './katago/prechargement';
 import type { Analysis, AnalyzeOptions, MoveInfo } from './katago/search';
 
 export { OPPONENTS, opponent, chooseMove, chooseMoveDetail, deadStones, ownershipSimple };
@@ -106,7 +107,13 @@ export async function proposeComptage(pos: Position, komi: number): Promise<Comp
 
 // ---------- KataGo ----------
 /** Ce qu'il faut pour analyser avec KataGo ; remplaçable dans les tests. */
-export interface KataGoBackend { analyze(pos: Position, opts: AnalyzeOptions): Promise<Analysis>; info: KataGoInfo; start?(): Promise<void> }
+export interface KataGoBackend {
+  analyze(pos: Position, opts: AnalyzeOptions): Promise<Analysis>; info: KataGoInfo; start?(): Promise<void>;
+  /** Préchargement discret (#475) : réseau en cache, sans démarrer KataGo. */
+  precharger?(): Promise<boolean>;
+  /** Suit les changements d'état et la progression du téléchargement. */
+  ecouter?(f: (i: KataGoInfo) => void): () => void;
+}
 
 let katago: KataGoBackend | null | undefined;
 let warned = false;
@@ -116,11 +123,37 @@ function modelUrl(): string {
   return (import.meta.env.VITE_KATAGO_MODEL_URL as string | undefined) || DEFAULT_MODEL_URL;
 }
 
+/**
+ * Adresses du réseau, dans l'ordre (#475) : notre copie (mochi-go.app/reseaux/…, ou `VITE_KATAGO_MODEL_URL`),
+ * puis la copie du dépôt KataGo si la nôtre ne répond pas. Absolues : le Worker et le cache les comparent telles quelles.
+ */
+export function modelUrls(): string[] {
+  const base = typeof location !== 'undefined' ? location.href : 'http://localhost/';
+  return [...new Set([modelUrl(), LEGACY_MODEL_URL].map(u => new URL(u, base).href))];
+}
+
+/** Backend mémorisé dans le stockage de l'appareil (#475) ; sans stockage, rien n'est retenu. */
+const memoBackend = {
+  lire(): Backend | null {
+    try { return lireMemo(localStorage.getItem(MEMO_BACKEND_KEY), navigator.userAgent, Date.now()); } catch { return null; }
+  },
+  ecrire(b: Backend | null) {
+    try {
+      if (b) localStorage.setItem(MEMO_BACKEND_KEY, ecrireMemo(b, navigator.userAgent, Date.now()));
+      else localStorage.removeItem(MEMO_BACKEND_KEY);
+    } catch { /* stockage indisponible */ }
+  },
+};
+
 function getKataGo(): KataGoBackend | null {
   if (katago !== undefined) return katago;
   if (typeof Worker === 'undefined') return (katago = null);
   katago = new KataGoClient({
-    url: new URL(modelUrl(), typeof location !== 'undefined' ? location.href : 'http://localhost/').href,
+    urls: modelUrls(),
+    // Empreinte vérifiée seulement pour notre réseau : une autre adresse (`VITE_KATAGO_MODEL_URL`) peut servir un autre fichier.
+    ...(import.meta.env.VITE_KATAGO_MODEL_URL ? {} : { sha256: [MODEL_SHA256, MODEL_SHA256_DECOMPRESSE] }),
+    telechargement: telechargementPermis,
+    memo: memoBackend,
     makeWorker: () => new Worker(new URL('./katago/worker.ts', import.meta.url), { type: 'module' }) as never,
   });
   return katago;
@@ -359,10 +392,58 @@ export async function preparerKataGo(delaiMs = DELAI_KATAGO_REVUE): Promise<Prep
 export async function reseauEnCache(): Promise<boolean> {
   try {
     if (typeof caches === 'undefined') return false;
-    const url = new URL(modelUrl(), typeof location !== 'undefined' ? location.href : 'http://localhost/').href;
-    return !!(await (await caches.open(CACHE_NAME)).match(url));
+    const cache = await caches.open(CACHE_NAME);
+    // Notre copie ou l'ancienne (raw.githubusercontent.com, avant #475) : l'une ou l'autre suffit.
+    for (const url of modelUrls()) if (await cache.match(url)) return true;
+    return false;
   } catch { return false; }
 }
+
+/**
+ * Suit l'état de KataGo pour un écran (#475) : progression du téléchargement (« 2,1 / 3,8 Mo »), puis prêt ou non.
+ * Appelle `f` tout de suite avec l'état actuel. Renvoie de quoi se désabonner.
+ */
+export function ecouterKataGo(f: (i: KataGoInfo) => void): () => void {
+  const k = kataGoRevue() ?? getKataGo();
+  f(k?.info ?? kataGoInfo());
+  return k?.ecouter?.(f) ?? (() => {});
+}
+
+let prechargementTente = false;
+
+/** Ce que le navigateur dit de la connexion (Chrome, Android) ; `null` s'il ne dit rien (Safari, Firefox). */
+function connexion(): InfoConnexion | null {
+  try {
+    const c = (navigator as unknown as { connection?: InfoConnexion }).connection;
+    return c ? { saveData: c.saveData, type: c.type, effectiveType: c.effectiveType } : null;
+  } catch { return null; }
+}
+
+/**
+ * Préchargement discret après la fin d'une partie (#475) : règles dans src/engine/katago/prechargement.ts
+ * (pas à la première partie, pas en données mobiles ni en économie de données si le navigateur le dit).
+ * Attend `DELAI_PRECHARGEMENT_MS` (le récit du score passe d'abord), puis décide. Une seule tentative par session.
+ */
+export function prechargerApresPartie(partiesLancees: number, delaiMs = DELAI_PRECHARGEMENT_MS): Promise<DecisionPrechargement> {
+  if (prechargementTente) return Promise.resolve({ ok: false, raison: 'deja-en-route' });
+  prechargementTente = true;
+  return new Promise(resolve => {
+    setTimeout(async () => {
+      const k = getKataGo();
+      if (!k?.precharger) { resolve({ ok: false, raison: 'deja-en-route' }); return; }
+      const d = decisionPrechargement({
+        partiesLancees, connexion: connexion(), enCache: await reseauEnCache(), etat: k.info.state,
+        visible: typeof document === 'undefined' || document.visibilityState !== 'hidden',
+      });
+      // Build de test : jamais de téléchargement que le test n'a pas demandé.
+      if (d.ok && telechargementPermis()) void k.precharger();
+      resolve(d);
+    }, delaiMs);
+  });
+}
+
+/** Tests seulement : permet une nouvelle tentative de préchargement. */
+export function _reinitialiserPrechargement() { prechargementTente = false; }
 
 /**
  * Conseil de KataGo pour la revue d'une partie (issue #34). Jamais le moteur simple : ses conseils sont trop peu sûrs

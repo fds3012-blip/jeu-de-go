@@ -86,3 +86,9 @@ window.addEventListener('vite:preloadError', event => {
   if (rechargerPourNouvelleVersion()) event.preventDefault();
   else captureError(event.payload, { categorie: 'chargement', origine: 'prechargement' });
 });
+
+// Build de test seulement (VITE_E2E) : e2e/katago-demarrage.spec.ts mesure le démarrage de KataGo (#475) en
+// appelant le moteur directement. En production, la condition disparaît au build, avec l'import.
+if (import.meta.env.VITE_E2E) {
+  (window as unknown as { __moteurE2E?: unknown }).__moteurE2E = () => Promise.all([import('./engine'), import('./go/rules')]);
+}
