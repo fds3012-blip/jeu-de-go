@@ -284,6 +284,11 @@
 .actions button.decider { margin: 6px 0; min-height: 52px; background: var(--surface-2); font-weight: var(--fw-bold);
   box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--text) 45%, transparent); }
 .actions button.decider:disabled { background: none; box-shadow: inset 0 0 0 1.5px var(--line); font-weight: var(--fw-medium); }
+/* #487 (P10) : tant que la partie n'est pas mûre (src/app/partie.ts, passerDiscret), « Passer » perd son fond plein :
+   même place, même taille, le contour reste (non-texte au moins 3:1) et le texte garde la couleur du texte (AA). Seul le
+   fond change quand il redevient plein (une fois par partie, sans mouvement : permis en mouvements réduits). */
+.actions button.decider.discret { background: none; font-weight: var(--fw-medium); }
+.actions button.decider { transition: background-color var(--duree) var(--ease); }
 /* Mis en évidence (#120) : Mochi conseille de passer, le bouton prend le style primaire jade jusqu'au prochain coup. */
 .actions button.evidence { position: relative; background: var(--accent); color: var(--on-accent); font-weight: var(--fw-bold); }
 @media (prefers-reduced-motion: no-preference) {
