@@ -82,7 +82,7 @@ describe('reglerForce : règles de base', () => {
   it('emprunte les réglages des niveaux de l’échelle, sous le nom de Mochi', () => {
     expect(niveauGuide(0).id).toBe('pomme');
     expect(niveauGuide(0).hasard).toBeGreaterThan(niveauGuide(2).hasard); // plus doux que Pomme
-    expect(niveauGuide(2)).toMatchObject({ id: 'pomme', hasard: 0.3 });
+    expect(niveauGuide(2)).toMatchObject({ id: 'pomme', hasard: 0.65 });
     expect(niveauGuide(CRAN_MAX).katago?.visits).toBe(200);
     expect(niveauGuide(3).nom).toBe('Mochi');
   });
