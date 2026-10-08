@@ -28,6 +28,7 @@ import { readLocal, writeLocal } from './hooks';
 import { usePreferences } from './settings';
 import { copieEtudeEnAttente, oublierCopieEtude } from './copieEtude';
 import '../ui/club.css';
+import { useProgressionKataGo } from './progressionKataGo';
 
 const FeuillePartage = lazy(() => import('./PartagePartie').then(m => ({ default: m.PartagePartie })));
 
@@ -294,6 +295,8 @@ function texteCandidat(c: { winrate: number | null; lead: number }): string {
 function Resultat({ analyse, resultat, camp, taille, onTelecharger }: {
   analyse: Analyse | null; resultat: Extract<Analyse, { etat: 'pret' }> | null; camp: string; taille: number; onTelecharger: () => void;
 }) {
+  // #475 : « 2,1 / 3,8 Mo » sur le bouton pendant le téléchargement.
+  const progression = useProgressionKataGo(analyse?.etat === 'sans-katago' && analyse.telechargement);
   if (!analyse || analyse.etat === 'attente') return null;
   if (analyse.etat === 'sans-katago') {
     return (
@@ -301,7 +304,7 @@ function Resultat({ analyse, resultat, camp, taille, onTelecharger }: {
         <p>{fr(tk(analyse.raison ? `etude.sansKataGo.${analyse.raison}` : 'etude.sansKataGo'))}</p>
         {analyse.raison !== 'appareil' && (
           <button type="button" className="btn" onClick={onTelecharger} disabled={analyse.telechargement}>
-            {analyse.telechargement ? tk('etude.telechargement') : tk('etude.telecharger')}
+            {analyse.telechargement ? (progression ? tk('etude.telechargementProgression', { ...progression }) : tk('etude.telechargement')) : tk('etude.telecharger')}
           </button>
         )}
       </div>
