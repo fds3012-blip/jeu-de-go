@@ -72,6 +72,7 @@ function ouverts(pos: Position): number[] {
 /** Pour chaque problème : la zone ouverte, l'écart minimal prouvé, les chaînes en atari au départ (le sujet). */
 const SPEC: Record<string, { zone: string[]; ecart: number; sujet?: string[] }> = {
   y01: { zone: ['A1', 'B1', 'C1', 'D1'], ecart: 2 },
+  y02: { zone: ['E9', 'E8', 'A1', 'B1', 'C1'], ecart: 2, sujet: ['C9', 'D9'] },
 };
 
 /** Valeur exacte (surfaces) de chaque premier coup de Noir : tous les coups légaux, passe comprise. */
@@ -228,3 +229,17 @@ describe('lot Y : les chiffres et les suites des textes (règle japonaise)', () 
     expect(japonais(suite(pos, ['passe', 'D1', 'C1']))).toBe(japonais(d1) - 1);
   });
 });
+
+describe('lot Y : y02', () => {
+  it('y02 : E9 prend C9 et D9 (4 points : 2 prisonniers, 2 de territoire) ; bloquer en C1 ne vaut qu’un point', () => {
+    const p = pz('y02'), { pos } = startOf(p);
+    const e9 = suite(pos, ['E9']);
+    expect(e9.captures[1]).toBe(2);
+    for (const l of ['C9', 'D9']) expect(score(e9, 0, 'japanese').owner[at(l)], l).toBe(1);
+    expect(japonais(e9) - japonais(suite(pos, ['passe', 'E9']))).toBe(4);
+    expect(japonais(suite(pos, ['C1'])) - japonais(suite(pos, ['passe', 'C1', 'B1']))).toBe(1);
+    // Les suites du texte : la prise, puis Blanc C1 et Noir B1 ; contre le blocage C1, puis Blanc relie en E9.
+    expect(japonais(suite(pos, ['E9', 'C1', 'B1'])) - japonais(suite(pos, ['C1', 'E9']))).toBe(3);
+  });
+});
+

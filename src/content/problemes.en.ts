@@ -1388,4 +1388,10 @@ export const PROBLEMES_EN: Record<string, TexteProbleme> = {
     explanation: 'Well done! D1 blocks right against the white stone: A1, B1 and C1 stay yours. At C1, you would step back: White would move in to D1, and you would have one point less.',
     refutation: 'Not quite. White plays D1: it moves in along the first line, your border steps back to C1, and you lose at least one point.',
   },
+  y02: {
+    title: 'Biggest first',
+    prompt: 'Two places are still open, at the top and at the bottom. Play the biggest move.',
+    explanation: 'Well done! E9 captures C9 and D9: 2 prisoners, and those two points become your territory. That makes 4 points. At the bottom, if White moves in to C1 and you block at B1, you lose only one point.',
+    refutation: 'Not quite. White plays E9: it connects its two stones, and you gain nothing at the top. Capturing them was worth 4 points, blocking at the bottom only one.',
+  },
 };
