@@ -3,6 +3,8 @@
 import type { Catalogue } from './types';
 
 export const en = {
+  // Page description (meta tag, #473).
+  'meta.description': 'Mochi Go: learn and play Go. Interactive lessons, puzzles, games against the computer or your friends.',
   'nav.aria': 'Main navigation',
   'nav.jouer': 'Play',
   'nav.apprendre': 'Learn',

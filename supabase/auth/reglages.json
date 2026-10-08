@@ -6,7 +6,7 @@
   "rate_limit_email_sent": 100,
   "smtp_admin_email": "jeu@mochi-go.app",
   "smtp_sender_name": "Mochi Go",
-  "mailer_subjects_magic_link": "{{ .Token }} est ton code Mochi Go",
-  "mailer_subjects_confirmation": "{{ .Token }} est ton code pour créer ton compte Mochi Go",
-  "mailer_subjects_email_change": "{{ .Token }} est ton code pour garder ta partie"
+  "mailer_subjects_magic_link": "{{ if eq (printf \"%v\" .Data.langue) \"en\" }}{{ .Token }} is your Mochi Go code{{ else }}{{ .Token }} est ton code Mochi Go{{ end }}",
+  "mailer_subjects_confirmation": "{{ if eq (printf \"%v\" .Data.langue) \"en\" }}{{ .Token }} is your code to create your Mochi Go account{{ else }}{{ .Token }} est ton code pour créer ton compte Mochi Go{{ end }}",
+  "mailer_subjects_email_change": "{{ if eq (printf \"%v\" .Data.langue) \"en\" }}{{ .Token }} is your code to keep your game{{ else }}{{ .Token }} est ton code pour garder ta partie{{ end }}"
 }

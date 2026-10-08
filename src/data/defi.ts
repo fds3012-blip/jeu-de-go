@@ -9,12 +9,13 @@
 //   reçue est affichée telle quelle (#425, ./tempsReel.ts).
 // Écrans : src/app/Defis.tsx.
 import type { Session } from '@supabase/supabase-js';
-import { adresseDejaPrise, type EchecEnvoi, type Result } from './account';
+import { adresseDejaPrise, donneesLangue, type EchecEnvoi, type Result } from './account';
 import type { Tables } from './database.types';
 import type { Game } from './games';
 import type { Db } from './supabase';
 import { suivreLignes } from './tempsReel';
 import { t } from '../content/i18n';
+import { messageServeur } from '../content/i18n/refus';
 
 export type Defi = Tables<'defis'>;
 
@@ -120,11 +121,12 @@ export type CodeRefus = (typeof CODES_REFUS)[number];
 /** Réponse de `game-action` pour l'action `defi_coup`. */
 type ReponseCoup = { ok: true; game?: Partial<Game> } | { ok?: false; error?: string; message?: string; resultat?: string };
 
-/** Message clair (FR/EN) d'un refus : d'abord le code connu, sinon le message du serveur, sinon un message générique. */
+/** Message clair (FR/EN) d'un refus : d'abord le code connu, sinon le message du serveur (traduit par son code hors du français), sinon un message générique. */
 export function messageRefus(corps: { error?: unknown; message?: unknown } | null | undefined): string {
   const code = corps?.error;
   if (typeof code === 'string' && (CODES_REFUS as readonly string[]).includes(code)) return t(`defi.refus.${code as CodeRefus}`);
-  if (typeof corps?.message === 'string' && corps.message) return corps.message;
+  // Autres codes (superko, conflit…) : texte du code hors du français, message du serveur en français (#473).
+  if ((typeof corps?.message === 'string' && corps.message) || typeof code === 'string') return messageServeur(code, corps?.message);
   return t('erreur.serveur');
 }
 
@@ -243,7 +245,8 @@ export function tempsRestant(dateLimite: string | null, maintenant = Date.now())
  * cours est donc gardée. Supabase envoie un e-mail avec un code (`verifyOtp` de type `email_change`) et un lien.
  */
 export async function garderMonCompte(db: Db, email: string, redirection: string): Promise<Result<null> | EchecEnvoi> {
-  const { error } = await db.auth.updateUser({ email: email.trim() }, { emailRedirectTo: redirection });
+  // #473 : la langue de l'interface choisit celle de l'e-mail (supabase/auth/modeles/email_change.html).
+  const { error } = await db.auth.updateUser({ email: email.trim(), data: donneesLangue() }, { emailRedirectTo: redirection });
   if (!error) return { ok: true, value: null };
   // #353 : l'adresse a déjà un compte. L'écran bascule vers la connexion à ce compte (raison `pris`).
   if (adresseDejaPrise(error)) return { ok: false, error: t('defi.erreur.emailPris'), raison: 'pris' };
