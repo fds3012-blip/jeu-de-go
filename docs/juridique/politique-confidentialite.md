@@ -59,7 +59,7 @@ Ces données sont écrites dans le stockage local (`localStorage`) de ton naviga
 | Réglages | `go.settings.v1`, `go.themeGoban.v1`, `go.langue.v1` | Thème, taille du plateau, son, vibrations, fêtes, aide, confirmation du coup, décor du plateau, langue de l’interface choisie dans le Profil (`"fr"` ou `"en"`) |
 | Façon de jouer en ligne | `go.enLigne.v1` | « En direct » ou « Partie lente » (`"direct"` ou `"lente"`) : « Jouer en ligne » rouvre ton dernier choix |
 | Dates des réglages | `go.reglages.dates.v1` | Pour chaque réglage changé sur cet appareil (ou reçu de ton compte) : la date du changement. Sert, avec un compte, à garder le dernier changement quand tes appareils ne sont pas d'accord (#448). Aucune autre donnée |
-| Choix sur la mesure | `go.consentement.v1`, `go.mesure.opposition.v1` | Ta réponse à la fenêtre (« Oui » ou « Non merci ») et ton opposition au comptage anonyme |
+| Choix sur la mesure | `go.consentement.v1`, `go.mesure.opposition.v1` | Ta réponse au bandeau de consentement (« Oui, j'aide » ou « Non merci ») et ton opposition au comptage anonyme |
 | Repères d'événements | `go.evenement.<nom>` (par exemple `go.evenement.premiere_pierre`) | « Déjà envoyé une fois » pour certains événements. **Écrits seulement si tu as dit « Oui »** |
 | Étapes de la première visite déjà comptées | `go.entonnoir.<étape>` (par exemple `go.entonnoir.premiere_pierre`) | Le mois où l'étape a été ajoutée au total du jour (par exemple `2026-10`), pour ne la compter qu'une fois (section 3.3, « Compteurs de la première visite »). Aucun identifiant. Écrit même sans ton « Oui » (mesure d'audience exemptée), jamais si tu t'opposes au comptage anonyme ; **effacé si tu t'y opposes**, et au bout de 13 mois |
 | Appareil de l'équipe | `go.equipe.v1` | Seulement sur les appareils de l'équipe du jeu, posé par elle (réglage caché) : coupe le comptage anonyme et les compteurs, pour ne pas compter nos propres essais. Absent chez les joueurs |
@@ -138,7 +138,7 @@ Ces données sont écrites dans le stockage local (`localStorage`) de ton naviga
 
 | Niveau | Quand | Ce qui part |
 |---|---|---|
-| **Anonyme** | Par défaut, dès l'ouverture de l'app, **avant même ta réponse à la fenêtre**, et si tu réponds « Non merci » | Les événements ci-dessous, avec un identifiant tiré au hasard **gardé en mémoire seulement** : il change à chaque ouverture de l'app. Rien n'est écrit sur l'appareil. Pas de profil, jamais ton compte. |
+| **Anonyme** | Par défaut, dès l'ouverture de l'app, **avant même ta réponse au bandeau de consentement**, et si tu réponds « Non merci » | Les événements ci-dessous, avec un identifiant tiré au hasard **gardé en mémoire seulement** : il change à chaque ouverture de l'app. Rien n'est écrit sur l'appareil. Pas de profil, jamais ton compte. |
 | **Complet** | Seulement après « Oui » | Les mêmes événements, avec un identifiant tiré au hasard **gardé sur l'appareil**, et, si tu es connecté, l'identifiant technique de ton compte (jamais ton e-mail ni ton pseudo). |
 | **Aucun** | Si tu t'opposes au comptage anonyme (interrupteur dans Profil, Conditions et confidentialité) | Rien. PostHog n'est pas chargé. S'opposer retire aussi ton « Oui ». |
 
@@ -198,7 +198,7 @@ Aucun événement ne contient ton e-mail, ton pseudo, tes coups, le jeton d'un d
 |---|---|---|---|
 | Message et pile d'erreur, version de l'app, navigateur et système, adresse de la page concernée, identifiant technique du compte si tu es connecté, et le fil des dernières actions techniques avant l'erreur, que Sentry note par défaut (pages visitées, éléments touchés, adresses des requêtes au serveur, messages de la console). Jamais ton e-mail (`sendDefaultPii: false`). | Corriger les plantages | Consentement | **[À COMPLÉTER PAR FLORIAN : durée réglée dans Sentry, 30 ou 90 jours selon l'offre]** |
 
-Sans ton « Oui », Sentry n'est pas chargé ; si tu retires ton accord, il est arrêté.
+Sans ton « Oui », Sentry n'est pas chargé ; si tu retires ton accord, il est arrêté. Tant que tu n'as pas répondu au bandeau (ou si tu le fermes avec Échap), c'est comme un refus : rien de tout cela n'est chargé.
 
 ### 3.5 Hébergement (Vercel)
 
