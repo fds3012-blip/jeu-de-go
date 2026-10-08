@@ -18,7 +18,8 @@ test('défier un ami : compte du créateur, lien avec son pseudo, l’ami crée 
 
   // Téléphone 1 : le créateur, sans compte. « Défier un ami » : la tuile « Un ami » sous le bouton principal (#429).
   const ctxA = await browser.newContext(options(baseURL));
-  const a = await brancher(ctxA, serveur);
+  // #487 : le créateur a déjà posé une pierre (accueil complet, tuile « Un ami »).
+  const a = await brancher(ctxA, serveur, { 'go.premiere-pierre.v1': 'true' });
   a.on('pageerror', e => erreurs.push(e.message));
   await a.goto('/');
   const lien = a.getByRole('button', { name: 'Défier un ami' });
@@ -97,7 +98,8 @@ test('ancienne partie sans compte : l’ami lie son e-mail par code, choisit son
   serveur.defis.push({ partie_id: PARTIE, jeton: JETON, createur_id: 'createur', invite_id: session.user.id, delai_coup: '3 days',
     date_limite: new Date(Date.now() + 2 * 864e5).toISOString(), lien_expire_le: new Date(Date.now() + 7 * 864e5).toISOString(), cree_le: new Date().toISOString() });
   const ctx = await browser.newContext(options(baseURL));
-  const page = await brancher(ctx, serveur, { 'sb-supabase-auth-token': JSON.stringify(session) });
+  // #487 : l'ami a déjà joué (une pierre posée) : accueil complet.
+  const page = await brancher(ctx, serveur, { 'sb-supabase-auth-token': JSON.stringify(session), 'go.premiere-pierre.v1': 'true' });
   await page.goto('/');
   await page.getByTestId('mode-ami').click();
   // Session anonyme : l'écran propose de lier l'e-mail (même compte, la partie est gardée).
@@ -131,6 +133,8 @@ test('lien abîmé : message clair tout de suite, sans demander de compte', asyn
   await expect(page.getByRole('alert')).toContainText(/introuvable/);
   await expect(page.getByTestId('defi-apercu')).toHaveCount(0);
   await page.getByRole('button', { name: 'Retour à l’accueil' }).click();
-  await expect(page.getByTestId('mode-ami')).toBeVisible();
+  // #487 : appareil neuf, aucune pierre posée : l'accueil n'a qu'une action, « Joue ta première partie ».
+  await expect(page.locator('.accueil[data-epure] .cta')).toHaveText('Joue ta première partie');
+  await expect(page.getByTestId('mode-ami')).toHaveCount(0);
   await ctx.close();
 });

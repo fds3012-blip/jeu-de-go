@@ -253,6 +253,28 @@ export function avertirAvantPasse(o: { contreOrdi: boolean; aide: boolean; premi
   return !partieAvancee(o.board) || frontieresOuvertes(o.board, o.size).length >= o.size;
 }
 
+/** #487 (P10) : part du plateau couverte de pierres au-delà de laquelle « Passer » reprend son fond plein quoi qu'il arrive. */
+export const PASSER_PLEIN_PIERRES = 0.6;
+
+/**
+ * « Passer » sans fond plein (bouton secondaire, #487, P10) tant que la partie n'est pas mûre. Au coup 0, le seul
+ * bouton plein de la barre ne doit pas être celui qui finit la partie. Il reprend son fond plein dès que :
+ * - l'adversaire vient de passer (passer à ton tour finit la partie : c'est le bon moment) ;
+ * - Mochi conseille de passer (`evidence`, #120 : il passe alors en jade) ;
+ * - la partie est mûre selon la règle même de l'avertissement de Mochi (#235, `avertirAvantPasse`) : un quart du
+ *   plateau couvert et moins de `size` points de frontière ouverte. La barre ne dit donc jamais « passe » pendant que
+ *   Mochi dirait « il reste de la place » ;
+ * - ou, en filet, 60 % du plateau couvert de pierres (frontières brouillées par des groupes morts encore sur le plateau).
+ * Le bouton reste à la même place, de la même taille (44 px et plus), avec son contour et son texte au contraste AA.
+ */
+export function passerDiscret(o: { board: Int8Array; size: number; adversairePasse: boolean; evidence: boolean }): boolean {
+  if (o.adversairePasse || o.evidence) return false;
+  let pierres = 0;
+  for (const v of o.board) if (v) pierres++;
+  if (pierres >= PASSER_PLEIN_PIERRES * o.board.length) return false;
+  return !partieAvancee(o.board) || frontieresOuvertes(o.board, o.size).length >= o.size;
+}
+
 /** Alerte donnée au passe : longueur de l'historique juste après le passe, et points montrés. */
 export interface AlerteFrontieres { len: number; points: number[] }
 
