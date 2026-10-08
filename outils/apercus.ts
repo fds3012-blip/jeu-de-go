@@ -46,7 +46,7 @@ const ALT_JOUR = {
 /** Aperçus fixes : accueil anglais, défi par lien et partie partagée (ou étude, même lien), en français et en anglais. */
 export const APERCUS_FIXES: readonly Apercu[] = [
   { chemin: 'en', langue: 'en', titre: 'Mochi Go: learn Go by playing', image: 'apercu-accueil-en.png',
-    description: 'Beginners welcome: lessons, puzzles, games against the computer or your friends. Free, no ads.',
+    description: 'Free, no ads. Beginners welcome: lessons, puzzles, games against the computer or your friends.',
     imageAlt: 'Mochi, the little coach cat, next to a go board: learn Go by playing, beginners welcome.' },
   { chemin: 'defi', langue: 'fr', titre: 'Un ami te défie au go', image: 'apercu-defi.png',
     description: 'Partie 9 × 9, 3 jours par coup. Gratuit : ouvre le lien et joue ton premier coup.',
