@@ -1,4 +1,4 @@
-import { Suspense, lazy, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 // Écrans chargés à la demande (perf, #323) : seul l'accueil est dans le JS initial.
 import { CreerCompte, DefiArrivee, DefiPartie, DefisEcran, Direct, Game, LearnHome, Lentes, LessonPlayer, PartiePartagee, Placement, Profil, PseudoObligatoire, Puzzles, SeriePratique, VeilleFile, apresPremierEcran } from './ecrans';
 import { SeanceRevisions, prechargerRevisions } from './ecrans';
@@ -24,6 +24,7 @@ import { PLACEMENT_KEY, chapitreConseille, coteApresPlacement, leconDeLAccueil, 
 import { COTE_KEY } from './coteJoueur';
 import { Accueil } from './Accueil';
 import { modesAccueil, type Depuis, type Mode } from './modes';
+import { abonnerPierre, accueilEpure, lireRepere, pierreDejaPosee } from './premierePierre';
 import { ecrireFaconEnLigne, lireFaconEnLigne } from './enLigne';
 import type { FaconEnLigne } from './BasculeEnLigne';
 import { EVENTS, secondsSinceOpen, track, trackOnce } from '../data/analytics';
@@ -336,6 +337,10 @@ export function App() {
   // Accueil v3 : un bilan contre l'ordi (appareil d'avant le compteur de parties, ou compteur abîmé) suffit à dire
   // qu'il a déjà joué : pas d'accueil « premier lancement » pour lui.
   const home = accueil({ ...parties, n: Math.max(parties.n, Object.keys(bilan).length > 0 ? 1 : 0) }, done, { ...adv, fini: dejaAffronte(bilan, adv.id) }, settings.size, { numero: numeroJour, absence, duJourFait, titreDuJour: duJour?.title });
+  // #487 : tout premier lancement et aucune pierre posée (partie, leçon, problème, placement) : accueil épuré.
+  const reperePierre = useSyncExternalStore(abonnerPierre, lireRepere, () => false);
+  const epure = accueilEpure({ nouveau: home.nouveau,
+    pierre: !home.nouveau || pierreDejaPosee(reperePierre, [LESSONS_KEY, SOLVED_KEY, VUS_KEY, SERIE_KEY, PLACEMENT_KEY].map(k => readLocal<unknown>(k, null))) });
   const flamme = etatFlamme(serie, duJourFait);
   // #308 : après le placement, la carte « Leçon » suit le chapitre conseillé.
   const leconConseillee = leconDeLAccueil(LESSONS, CHAPITRES, progress, placement);
@@ -853,7 +858,7 @@ export function App() {
       else { if (!garde({ quoi: 'defi' }, { quoi: 'defis' })) return; setDefi({ vue: 'liste' }); window.scrollTo({ top: 0 }); }
     };
     screen = (
-      <Accueil adv={adv} battu={battu(bilan, adv.id)} textes={home} taille={settings.size} cartes={cartes}
+      <Accueil adv={adv} battu={battu(bilan, adv.id)} textes={home} taille={settings.size} cartes={cartes} epure={epure}
         reglages={reglages} setReglages={setReglages} onTaille={n => set({ size: n })} onChoisir={setAdversaire}
         modes={modes} onMode={choisirMode} compte={etat === 'complet'} defisAJouer={defisAJouer}
         cote={etat === 'complet' && profil ? { cote: profil.cote, provisoire: profil.provisoire } : null}
@@ -931,7 +936,7 @@ export function App() {
     if (!accueilVisible || ecranVu.current) return;
     ecranVu.current = true;
     const nouveau = parties.n === 0 && ouverture.retours === 0;
-    apresPremierEcran(() => trackOnce(EVENTS.premierEcranVu, { secondes: secondsSinceOpen(), nouveau, appel: appel ?? 'aucun', variante: 'v3' }));
+    apresPremierEcran(() => trackOnce(EVENTS.premierEcranVu, { secondes: secondsSinceOpen(), nouveau, appel: appel ?? 'aucun', variante: 'v4' }));
   }, [accueilVisible, parties.n, ouverture.retours, appel]);
   // #213 : la flamme vue creuse s'allume au retour sur l'accueil, une fois, quand le Go du jour vient d'être fait.
   const flammeVue = useRef<typeof flamme>(null);

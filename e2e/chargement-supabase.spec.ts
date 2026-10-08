@@ -17,7 +17,8 @@ async function instants(page: Page): Promise<{ supabase: number; load: number }>
 
 test('premier lancement : l’accueil s’affiche sans supabase-js, qui arrive après', async ({ browser, baseURL }) => {
   const ctx = await browser.newContext({ baseURL, viewport: { width: 390, height: 844 }, locale: 'fr-FR' });
-  const page = await brancher(ctx, fauxServeur(), { 'go.consentement.v1': 'refuse' });
+  // #487 : première pierre déjà posée (leçon commencée), sinon l'accueil n'a pas encore de tuiles.
+  const page = await brancher(ctx, fauxServeur(), { 'go.consentement.v1': 'refuse', 'go.premiere-pierre.v1': 'true' });
   await page.goto('/');
   await expect(page.locator('main.app-home .cta').first()).toBeVisible();
   // « Défier un ami » ne l'attend pas : on sait sans lui que les comptes existent.

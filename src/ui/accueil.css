@@ -113,6 +113,14 @@
      tiennent en deux lignes ; en 320 px, avec l'espacement du texte forcé ou au zoom, la tuile grandit et le goban
      d'accueil, qui suit la place restante, rétrécit. */
   overflow-wrap: break-word; }
+/* #487 (P12) : en demi-largeur (deux tuiles côte à côte, 390 px), un titre du Go du jour prenait 3 ou 4 lignes
+   (« Remonte vers le centre », « Donne une pierre, prends-en trois ») : la tuile grandissait jusqu'à passer sous la barre
+   du bas, titre coupé au premier écran. Dans cette demi-tuile étroite, le mini-goban laisse sa place au titre : deux
+   lignes au plus, hauteur inchangée. Il reste sur la tuile mise en avant, et quand la tuile prend toute la largeur
+   (une colonne sous 314 px de contenu, ou assez de place au-delà de 480 px). */
+@container (min-width: 314px) and (max-width: 480px) {
+  .tuile-probleme:not(.tuile-avant) .mini-plateau { display: none; }
+}
 /* Leçon suivante : « à faire plus tard », en pointillés. */
 /* #213 : état du Go du jour, en pastille dans le coin. « À faire » : or, comme la flamme creuse ; « Fait » : jade. */
 .tuile-probleme { position: relative; }
@@ -268,4 +276,29 @@
 .tuile-recherche-ouvrir { flex: 1; min-width: 0; min-height: var(--cible-min); display: grid; gap: 2px; padding: 0; border: 0; background: none; color: inherit; text-align: left; }
 .tuile-recherche-ouvrir b { overflow-wrap: anywhere; }
 .tuile-recherche .lien { flex: none; }
+
+/* ---------- #487 : retour à l'accueil après la toute première pierre ---------- */
+/* Une seule fois par appareil : les modes et les tuiles, cachés avant la première pierre, arrivent en fondu sous le
+   bouton (il ne bouge pas), l'un après l'autre. Mouvements réduits : un simple fondu, sans déplacement. */
+@keyframes accueil-revele { from { opacity: 0; transform: translateY(6px); } }
+@keyframes accueil-revele-fondu { from { opacity: 0; } }
+@media (prefers-reduced-motion: no-preference) {
+  .accueil-revele .modes, .accueil-revele .tuiles { animation: accueil-revele var(--duree) var(--ease) both; }
+  .accueil-revele .tuiles { animation-delay: 60ms; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .accueil-revele .modes, .accueil-revele .tuiles { animation: accueil-revele-fondu 200ms ease both; }
+}
+
+/* ---------- #487 : l'action principale au-dessus du bandeau de consentement (#485) ---------- */
+/* Sans tuiles (accueil épuré), le goban prenait toute la hauteur et poussait « Joue ta première partie » sous le
+   bandeau. Tant que le bandeau est ouvert, la colonne de l'accueil s'arrête au-dessus de lui, avec 8 px d'air : le goban,
+   qui suit la place restante, rapetisse. Le bandeau lui-même n'est pas touché (profil.css). Écrans bas : le bandeau
+   couvre la barre du bas ; ailleurs, il se pose au-dessus d'elle. */
+html:has(.accord[open]) .app.app-home {
+  padding-bottom: calc(max(var(--nav-h), 3.75rem) + var(--space-2) + var(--accord-h, 160px) + var(--space-2) + env(safe-area-inset-bottom, 0px)); }
+@media (max-height: 640px) {
+  html:has(.accord[open]) .app.app-home {
+    padding-bottom: calc(max(max(var(--nav-h), 3.75rem) + var(--space-3), var(--accord-h, 160px) + var(--space-2)) + env(safe-area-inset-bottom, 0px)); }
+}
 .tuiles-lentes-erreur { grid-column: 1 / -1; margin: 0; } /* #498 : annulation hors ligne */

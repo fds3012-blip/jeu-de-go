@@ -157,13 +157,15 @@ export interface Action { label: string; icone: ReactNode; onClick: () => void; 
   groupe?: 'aide' | 'decision';
   /** L'action qui décide de la partie (passer) : bouton plein, tout à droite, sous le pouce. */
   principale?: boolean;
+  /** #487 : l'action principale sans fond plein (contour seul), tant qu'il est trop tôt pour elle ; même place, même taille. */
+  discret?: boolean;
   /** Dans le menu « Plus » : le menu reste ouvert après l'appui (« Abandonner » passe à « Confirmer ? »). */
   reste?: boolean }
 
 function Bouton({ a }: { a: Action }) {
   return (
     <button type="button" onClick={a.onClick} disabled={a.disabled}
-      className={[a.principale && 'decider', a.danger && 'danger', a.evidence && !a.disabled && 'evidence', a.evidence && a.pulse && !a.disabled && 'pulse'].filter(Boolean).join(' ') || undefined}
+      className={[a.principale && 'decider', a.principale && a.discret && 'discret', a.danger && 'danger', a.evidence && !a.disabled && 'evidence', a.evidence && a.pulse && !a.disabled && 'pulse'].filter(Boolean).join(' ') || undefined}
       aria-description={a.description} data-action={a.action}>
       {a.icone}<span>{a.label}</span>
     </button>

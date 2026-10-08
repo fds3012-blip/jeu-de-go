@@ -2,6 +2,7 @@ import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type K
 import { LETTERS, toLabel } from '../go/coords';
 import { C, M, R, R_NOIR, VARIANTES_COQUILLAGE, coordCenter, dansFenetre, diffBoards, hoshi, jitter, shellStriae, shellVariant, vueDe, woodDataUrl, type FenetrePlateau, type ThemeGoban } from './boardArt';
 import { useThemeGoban } from '../app/settings';
+import { noterPierrePosee } from '../app/premierePierre';
 import { t } from '../content/i18n';
 import { CURSEUR, TOUCHE_LIRE, annonceApresCoup, annonceConfirmation, deplacerCurseur, lirePlateau, nomIntersection, type NomsCamps } from './boardA11y';
 import './board.css';
@@ -198,6 +199,8 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
     if (board[p] && !stonesTappable) return;
     if (!board[p] && confirmTouch && e.pointerType !== 'mouse' && ghost !== p) { setGhost(p, true); return; }
     setGhost(-1);
+    // #487 : la première pierre posée sur l'appareil (partie, leçon, problème…) complète l'accueil.
+    if (!board[p]) noterPierrePosee();
     onPlay(p);
   }
   function onKey(e: KeyboardEvent) {
@@ -218,6 +221,7 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
     // « Confirmer au doigt » : le premier appui montre la pierre fantôme, le second la pose.
     if (!board[cur] && confirmTouch && ghost !== cur) { setGhost(cur, true); setAnnonce(annonceConfirmation(toLabel(cur, size), toucher)); return; }
     setGhost(-1);
+    if (!board[cur]) noterPierrePosee();
     onPlay(cur);
   }
   function lire() { setAnnonce(lirePlateau(board, size)); }
