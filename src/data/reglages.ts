@@ -14,6 +14,7 @@
 // - la langue reçue d'un autre appareil s'applique à la prochaine ouverture (changer de langue recharge la page).
 import type { Json } from './database.types';
 import type { Db } from './supabase';
+import { garderLangueDesEmails } from './account';
 import { couperMessages, messagesCoupes } from './securite';
 import { aAppliquer, CLES_REGLAGES, entreesLocales, nettoyer, type Reglages } from '../app/reglagesCompte';
 import { ecouterReglages, ecrireDatesReglages, lireDatesReglages } from '../app/reglagesDates';
@@ -103,6 +104,8 @@ export function demarrerSynchroReglages(db: Db): () => void {
   window.addEventListener('online', enLigne);
   document.addEventListener('visibilitychange', auRetour);
   void synchroniser();
+  // #473 : la langue de l'interface suit dans les e-mails de connexion de ce compte.
+  void garderLangueDesEmails(db);
   return () => {
     actif = false;
     clearTimeout(minuterie);

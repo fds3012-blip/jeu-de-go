@@ -4,6 +4,7 @@
 import type { Tables } from './database.types';
 import type { Result } from './account';
 import { t } from '../content/i18n';
+import { messageServeur } from '../content/i18n/refus';
 import type { Db } from './supabase';
 
 export type Game = Tables<'games'>;
@@ -22,13 +23,16 @@ export type GameActionResponse =
 
 const FALLBACK = () => t('erreur.serveur');
 
-/** Lit le message d'erreur renvoyé par la fonction (corps JSON `{ message }`), sinon un message générique. */
+/**
+ * Message d'erreur renvoyé par la fonction (corps JSON `{ error, message }`), sinon un message générique. Le message
+ * du serveur est en français : dans une autre langue, on affiche le texte de son code (#473, src/content/i18n/refus.ts).
+ */
 export async function errorMessage(error: unknown): Promise<string> {
   const ctx = (error as { context?: unknown } | null)?.context;
   if (ctx && typeof (ctx as Response).json === 'function') {
     try {
-      const body = (await (ctx as Response).json()) as { message?: unknown };
-      if (typeof body.message === 'string' && body.message) return body.message;
+      const body = (await (ctx as Response).json()) as { error?: unknown; message?: unknown };
+      if ((typeof body.message === 'string' && body.message) || typeof body.error === 'string') return messageServeur(body.error, body.message);
     } catch {
       // corps illisible : message générique
     }
@@ -39,7 +43,7 @@ export async function errorMessage(error: unknown): Promise<string> {
 export async function gameAction(db: Db, body: GameAction): Promise<Result<GameActionResponse & { ok: true }>> {
   const { data, error } = await db.functions.invoke<GameActionResponse>('game-action', { body });
   if (error) return { ok: false, error: await errorMessage(error) };
-  if (!data || !data.ok) return { ok: false, error: data?.message ?? FALLBACK() };
+  if (!data || !data.ok) return { ok: false, error: data ? messageServeur(data.error, data.message) : FALLBACK() };
   return { ok: true, value: data };
 }
 

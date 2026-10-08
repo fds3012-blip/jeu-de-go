@@ -35,10 +35,16 @@ let courante: Langue = langueAuChargement();
 /** Langue de l'interface. */
 export const langue = (): Langue => courante;
 
-/** Change la langue (tests, futur réglage du Profil) et met à jour `<html lang>`. */
+/** Manifeste de la PWA par langue (#473) : nom et description proposés à l'installation. */
+export const MANIFESTES: Record<Langue, string> = { fr: '/manifest.webmanifest', en: '/manifest.en.webmanifest' };
+
+/** Change la langue (tests, futur réglage du Profil) et met à jour `<html lang>`, le manifeste et la description. */
 export function choisirLangue(l: Langue): void {
   courante = l;
-  if (typeof document !== 'undefined') document.documentElement.lang = l;
+  if (typeof document === 'undefined') return;
+  document.documentElement.lang = l;
+  document.querySelector('link[rel="manifest"]')?.setAttribute('href', MANIFESTES[l]);
+  document.querySelector('meta[name="description"]')?.setAttribute('content', traduire(l, 'meta.description'));
 }
 
 const regles = new Map<Langue, Intl.PluralRules>();

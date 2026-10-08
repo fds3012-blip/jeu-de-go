@@ -4,7 +4,7 @@ import type { Db } from './supabase';
 import { ORDRE_FOURNISSEURS, NOM_FOURNISSEUR, estFournisseur, type Fournisseur } from '../app/fournisseurs';
 import { usernameErrorFromDb, validateUsername } from './username';
 import { liveStreak } from './puzzles';
-import { t } from '../content/i18n';
+import { langue, t } from '../content/i18n';
 
 export type Profile = Tables<'profiles'>;
 export type Result<T> = { ok: true; value: T } | { ok: false; error: string };
@@ -17,12 +17,32 @@ export type Result<T> = { ok: true; value: T } | { ok: false; error: string };
 export async function sendMagicLink(db: Db, email: string): Promise<Result<null>> {
   const { error } = await db.auth.signInWithOtp({
     email: email.trim(),
-    options: { emailRedirectTo: window.location.origin, shouldCreateUser: true }
+    // #473 : langue des e-mails (supabase/auth/modeles lisent `.Data.langue`), gardée à la création du compte.
+    options: { emailRedirectTo: window.location.origin, shouldCreateUser: true, data: donneesLangue() }
   });
   if (error) return { ok: false, error: t(error.status === 429 ? 'erreur.tropDEssais' : 'erreur.envoiLien') };
   return { ok: true, value: null };
 }
 export const envoyerCode = sendMagicLink;
+
+/**
+ * Langue des e-mails de connexion (#473) : les modèles Supabase (supabase/auth/modeles) écrivent en anglais si
+ * `user_metadata.langue` vaut `en`, sinon en français. Seule donnée ajoutée : la langue de l'interface.
+ */
+export const donneesLangue = (): { langue: 'fr' | 'en' } => ({ langue: langue() });
+
+/**
+ * Compte déjà créé (#473) : si la langue de l'interface a changé depuis, on la garde pour ses prochains e-mails.
+ * Rien à faire sans session ni si elle est déjà la bonne ; une erreur ne bloque rien (les e-mails restent en français).
+ */
+export async function garderLangueDesEmails(db: Db): Promise<void> {
+  try {
+    const { data } = await db.auth.getSession();
+    const user = data.session?.user;
+    if (!user || user.is_anonymous || (user.user_metadata as { langue?: unknown } | undefined)?.langue === langue()) return;
+    await db.auth.updateUser({ data: donneesLangue() });
+  } catch { /* hors ligne : on réessaiera à la prochaine ouverture */ }
+}
 
 /** Erreur d'auth telle que renvoyée par supabase-js (AuthApiError) : seuls ces champs servent. */
 export interface ErreurAuth { status?: number; code?: string; message?: string }

@@ -4,6 +4,8 @@
 
 export const fr = {
   // Barre de navigation du bas (#51)
+  // Description de la page (balise meta, #473), même texte que index.html en français.
+  'meta.description': 'Mochi Go : apprends et joue au go. Leçons interactives, problèmes, parties contre l’ordi ou tes amis.',
   'nav.aria': 'Navigation principale',
   'nav.jouer': 'Jouer',
   'nav.apprendre': 'Apprendre',

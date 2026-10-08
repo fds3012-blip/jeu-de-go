@@ -1,6 +1,15 @@
+{{ if eq (printf "%v" .Data.langue) "en" }}
+<h2>Welcome to Mochi Go!</h2>
+<p>Enter this code in the game to create your account:</p>
+<p style="font-size:32px;font-weight:bold;letter-spacing:6px;margin:16px 0">{{ .Token }}</p>
+<p>It works for 1 hour. Then you pick your username.</p>
+<p>You can also <a href="{{ .ConfirmationURL }}">create your account with this link</a>, on the phone you play on.</p>
+<p style="color:#777">Didn’t ask for this? Ignore this email: no account is created without this code.</p>
+{{ else }}
 <h2>Bienvenue sur Mochi Go !</h2>
 <p>Tape ce code dans le jeu pour créer ton compte :</p>
 <p style="font-size:32px;font-weight:bold;letter-spacing:6px;margin:16px 0">{{ .Token }}</p>
 <p>Il marche pendant 1 heure. Ensuite, tu choisis ton pseudo.</p>
 <p>Tu peux aussi <a href="{{ .ConfirmationURL }}">créer ton compte avec ce lien</a>, sur le téléphone où tu joues.</p>
 <p style="color:#777">Tu n’as rien demandé ? Ignore cet e-mail : aucun compte n’est créé sans ce code.</p>
+{{ end }}
