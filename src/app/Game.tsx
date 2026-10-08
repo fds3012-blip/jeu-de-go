@@ -42,6 +42,7 @@ import type { StatsPartie } from './bilan';
 import { Revue } from './Revue';
 import { resultatSgf, REVUE_KEY, sgfDepuisHistorique, type PartieGardee } from './revue';
 import { delaiReponse, messageContinue } from './rythme';
+import { comptageDeSecours, coupDeSecours } from './secoursOrdi';
 // Coach Mochi (#470) : moments clés vérifiés par src/go/coach.ts, 3 bulles au plus par partie.
 import { calqueCoach, choisirMoment, etatCoachInitial, noterMoment, phraseCoach, proprietesBulle, type MomentCoach } from './coach';
 import type { ReglageCoach } from './settings';
@@ -240,7 +241,9 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     const cible = delaiReponse({ hasard: Math.random(), ...aRepondre.current, e2e: !!import.meta.env.VITE_E2E });
     // Passes du joueur (Noir) depuis le début : en partie accommodante, l'ordi passe dès la deuxième (#235).
     const passesJoueur = history.filter((h, i) => i > 0 && h.lastMove === -1 && h.toPlay === 2).length;
-    bestMoveExplique(pos, guidee ? niveauGuide(force.current.cran) : ai.id, { komi: aiKomi, accommodant, passesJoueur }).then(async ({ move: m, raison }) => {
+    // #474 : moteur en échec (exception, Worker tombé) : coup de secours, la partie ne reste jamais bloquée.
+    bestMoveExplique(pos, guidee ? niveauGuide(force.current.cran) : ai.id, { komi: aiKomi, accommodant, passesJoueur })
+      .catch((e: unknown) => coupDeSecours(pos, e)).then(async ({ move: m, raison }) => {
       const wait = cible - (Date.now() - t0);
       if (wait > 0) await new Promise(r => setTimeout(r, wait));
       if (t !== token.current) return;
@@ -310,10 +313,12 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   function enterScore(p: Position, fin: string) {
     const t = ++scoreToken.current;
     setPhase('score'); setDead(new Set()); setFinding(true); setMsg(tr('partie.chercheMortes', { fin }));
-    proposeComptage(p, komi).then(({ dead: d, incertains }) => {
+    // #474 : comptage en échec : rien de proposé, le joueur marque les pierres mortes (jamais « Je cherche… » sans fin).
+    proposeComptage(p, komi).catch((e: unknown) => comptageDeSecours(e)).then(r => {
+      const { dead: d, incertains } = r;
       if (t !== scoreToken.current) return;
       setFinding(false); setDead(new Set(d));
-      if (modeComptage(!!ai, incertains) === 'auto') setAutoCompte('calcule');
+      if (!('secours' in r) && modeComptage(!!ai, incertains) === 'auto') setAutoCompte('calcule');
       else track(EVENTS.comptageManuel, { mode: ai ? 'ordi' : 'deux', adversaire: ai?.id, taille: size, mortes: d.length, incertains: incertains.length });
       // Recette du 02/10 au soir : aussi en comptage manuel, où « Je cherche les pierres mortes… » restait affiché
       // pendant que le joueur devait vérifier les pierres grisées puis valider.
