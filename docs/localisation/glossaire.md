@@ -160,8 +160,56 @@ Principes :
 - Conditions : « saisir la CNIL » devient *contact the CNIL, the French data protection authority* (sigle inconnu hors de France).
 - « Pomme continue : il reste un point à prendre en E4 » : *Pomme keeps playing: there’s still one point to take at E4*. La raison vient du moteur par une clé et des paramètres (point, nombre).
 - Gel : « Ton gel a protégé ta série de 12 jours ! » : *Your freeze protected your 12-day streak!*
-- Problèmes en anglais (#167) : catalogue local `src/content/problemes.en.ts`, indexé par id, sans migration. Il remplace titre, consigne, explication et réfutation par-dessus le français, que le problème vienne de Supabase ou des lots (`parsePuzzle`). Les 171 problèmes locaux sont traduits (lot R compris) et relus ; un problème ajouté plus tard reste en français tant qu'il n'a pas d'entrée. Coordonnées et nombres vérifiés par `src/content/problemes.en.test.ts`. L’e2e `langue-parcours.spec.ts` retire encore le contenu des problèmes avant de chercher des mots français (utile pour les futurs problèmes non traduits).
-- Leçons 1 à 8 et chapitres traduits (`content/lessons.en.js`, textes seulement ; positions et réponses reprises du français, vérifiées par `src/content/lessons.en.test.ts`, nombres compris). « point vert » : *green point* ; « Touche » : *Tap* ; « À toi » : *Your turn*. Titre « Le ko » : *Ko*.
+- Problèmes en anglais (#167) : catalogue local `src/content/problemes.en.ts`, indexé par id, sans migration. Il remplace titre, consigne, explication et réfutation par-dessus le français, que le problème vienne de Supabase ou des lots (`parsePuzzle`). Les 231 problèmes sont traduits (état du 08/10/2026, #473 : autant que dans la table `puzzles`) ; un problème ajouté plus tard reste en français tant qu'il n'a pas d'entrée, et `src/content/anglais-complet.test.ts` échoue. Coordonnées et nombres vérifiés par `src/content/problemes.en.test.ts`. L’e2e `langue-parcours.spec.ts` retire encore le contenu des problèmes avant de chercher des mots français.
+- Les 35 leçons (l1 à l36, sans l28) et les 6 chapitres sont traduits (`content/lessons.en.js`, textes seulement ; positions et réponses reprises du français, vérifiées par `src/content/lessons.en.test.ts`, nombres compris). « point vert » : *green point* ; « Touche » : *Tap* ; « À toi » : *Your turn*. Titre « Le ko » : *Ko*.
+
+## Ajouts de la version anglaise complète (#473, 08/10/2026)
+
+Termes des leçons 9 à 36 et des écrans arrivés depuis (coach, révisions, thèmes, parties en ligne). Usage vérifié sur
+Sensei's Library et dans les publications AGA / BGA.
+
+| Français | Anglais retenu | Remarques |
+|---|---|---|
+| point de coupe | cutting point | |
+| bouche du tigre | tiger’s mouth | Sensei's Library. |
+| nœud de bambou | bamboo joint | |
+| diamant (ponnuki) | ponnuki (diamond) | *ponnuki* est l'usage ; *diamond* aide l'enfant. |
+| pierres qui coupent | cutting stones | |
+| manque de libertés | shortage of liberties | *damezumari* entre joueurs. |
+| relier et mourir | connect and die | Titre de leçon (oiotoshi). |
+| watari (relier par en dessous) | connecting underneath (watari) | |
+| coupe au premier rang | first-line cut | |
+| hane au premier rang | first-line hane | |
+| agrandir, réduire (l'espace d'yeux) | enlarge, reduce (the eye space) | |
+| san-san (3-3) | san-san (the 3-3 point) | |
+| komoku (3-4) | 3-4 point (komoku) | |
+| kakari (approche) | approach (kakari) | |
+| tsuke, kosumi, pince | tsuke (contact move), kosumi (diagonal move), pincer | |
+| ce que vaut un coup | what a move is worth | Valeur en points (yose). |
+| sente d'abord | sente before gote | |
+| pierre faible | weak stone | |
+| forme d'œil : T, carré, grappe de cinq | T shape, box of four, bulky five | |
+| coach Mochi (bulles en partie) | Mochi coach | Réglage : *Mochi coach in games* (*At first / Always / Never*). |
+| séance de révisions (révision espacée) | Today’s reviews (spaced review) | Vocabulaire des apps de cartes (Anki). Voir « À signaler ». |
+| Mes erreurs (à rejouer) | Your mistakes to replay | |
+| problèmes par thème | By theme | Thèmes : *Capture, Save, Life and death, Connect and cut, Endgame, Tesuji*. |
+| record d'un thème (à la suite) | Best: n, n in a row | |
+| course (3 minutes) | Rush | |
+| partie lente | correspondence game | Terme établi (OGS, KGS, IGS). |
+| « Un humain, maintenant » (direct) | A human, right now | |
+| cadence | time control | Byo-yomi gardé. |
+| ami, défier un ami | friend, challenge a friend | |
+| coup classique (revue) | Standard | Pas *Book* (échecs) : pas de bibliothèque d'ouvertures au go. |
+| refus du serveur (coup interdit, partie changée…) | Illegal move…, The game changed in the meantime… | Traduits par leur code, côté app (`src/content/i18n/refus.ts`). |
+
+### À signaler (#473)
+
+- « Revue » (de partie) et « révisions » (séance espacée) sont deux mots en français, mais *review* sert aux deux en
+  anglais (*Review my game*, *Today’s reviews*). Les écrans ne se croisent pas et chacun a son titre ; à reprendre si
+  des testeurs anglophones confondent (piste : *Today’s practice*).
+- « Point vital pris : le point vital de Blanc est aussi le tien » (l17) : proverbe (*your opponent’s vital point is your
+  vital point*) ; l'anglais garde la forme courte de la leçon.
+- Les e-mails de connexion suivent la langue de l'interface (`user_metadata.langue`, modèles `supabase/auth/modeles`).
 
 ## Leçons en anglais : choix de vocabulaire (#167, relecture)
 

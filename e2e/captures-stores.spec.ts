@@ -117,8 +117,9 @@ function police(): string {
   return readFileSync(f).toString('base64');
 }
 
-// Seulement en français : l'interface anglaise n'est pas complète (DETECTION_APPAREIL = false, src/content/i18n).
-// Une capture anglaise montrerait des écrans en français sous une légende anglaise. Les légendes anglaises sont prêtes.
+// Seulement en français pour l'instant. L'interface anglaise est complète depuis #473 et vérifiée à 390 et 320 px
+// (e2e/anglais-ecrans.spec.ts) ; reste à jouer les écrans bruts avec `?lang=en` et des sélecteurs anglais (les aides
+// d'e2e/plateau.ts, comme passerJusquAuScore, cherchent « Passer » et « Valider le score »). Légendes anglaises prêtes.
 for (const langue of ['fr'] as const) {
   test(`composition des 6 captures (${langue})`, async ({ page }) => {
     // 430 × 932 à ×3 = 1290 × 2796, format iPhone 6,7 pouces accepté par App Store Connect.
