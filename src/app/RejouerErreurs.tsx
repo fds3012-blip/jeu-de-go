@@ -20,8 +20,8 @@ import { analyseRevue } from '../engine';
 import { EVENTS, track } from '../data/analytics';
 import { NOTE_INFO, type AnalyseRevue } from './revue';
 import {
-  consigne, ESSAIS, idPartie, jugerEssai, jugerParRecherche, lireParties, marquerPartie, phraseFin, phraseMontre, phrasePasEncore,
-  phraseTrouve, score, titreFin, VISITES_JUGE, XP_REJEU_KEY, type ErreurARejouer, type Jugement, type ResultatRejeu,
+  consigne, ESSAIS, idPartie, jugerEssai, jugerParRecherche, lireParties, marquerPartie, phraseFin, phraseMontrePourquoi, phrasePasEncore,
+  phraseTrouvePourquoi, score, titreFin, VISITES_JUGE, XP_REJEU_KEY, type ErreurARejouer, type Jugement, type ResultatRejeu,
 } from './rejouerErreurs';
 import { creerErreur } from './erreurs';
 import { garderErreurRatee } from './revisionsAppareil';
@@ -191,8 +191,9 @@ export function RejouerErreurs({ sgf, positions, komi, analyses, erreurs, joueur
   }
 
   // ---------- Une erreur à rejouer ----------
-  const phrase = etat === 'trouve' && jugement ? phraseTrouve(jugement, e, size)
-    : etat === 'montre' ? phraseMontre(e, size)
+  // #492 : le pourquoi, vérifié par le calcul, avec la réponse montrée et après un coup trouvé.
+  const phrase = etat === 'trouve' && jugement ? phraseTrouvePourquoi(jugement, e, avant, pose?.lastMove ?? e.meilleur)
+    : etat === 'montre' ? phraseMontrePourquoi(e, avant)
     : etat === 'juge' ? tr('rejeu.juge')
     : inconnu ? tr('rejeu.inconnu')
     : essais > 0 ? phrasePasEncore(essais)
