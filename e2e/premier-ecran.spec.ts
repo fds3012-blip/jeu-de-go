@@ -177,3 +177,29 @@ for (const largeur of [390, 320] as const) {
     }
   });
 }
+
+// Bandeau de consentement (#485) au tout premier écran : sans tuiles, le goban ne doit plus pousser l'action principale
+// dessous. « Joue ta première partie » reste entière au-dessus du bandeau, avec 8 px d'air au moins.
+test.describe('au-dessus du bandeau de consentement', () => {
+  test.use({ storageState: { cookies: [], origins: [] } });
+  for (const [largeur, hauteur] of [[320, 568], [360, 640], [375, 667], [390, 844], [412, 915]] as const) {
+    test(`${largeur} × ${hauteur} : « jouer » entier au-dessus du bandeau, sombre et clair, fr et en`, async ({ page }) => {
+      await page.setViewportSize({ width: largeur, height: hauteur });
+      for (const theme of THEMES) {
+        await page.emulateMedia({ colorScheme: theme, reducedMotion: 'reduce' });
+        for (const adresse of ['/', '/?lang=en']) {
+          await page.goto(adresse);
+          const accord = page.locator('.accord[open]');
+          await expect(accord).toBeVisible();
+          await expect(page.locator('.accueil[data-epure]')).toBeVisible();
+          await accord.evaluate(el => Promise.all(el.getAnimations({ subtree: true }).map(a => a.finished)));
+          const m = await page.evaluate(() => ({
+            cta: document.querySelector('.cta')!.getBoundingClientRect().bottom,
+            bandeau: document.querySelector('.accord')!.getBoundingClientRect().top,
+          }));
+          expect(m.bandeau - m.cta, `${nomTheme(theme)} ${adresse} ${JSON.stringify(m)}`).toBeGreaterThanOrEqual(8);
+        }
+      }
+    });
+  }
+});

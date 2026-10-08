@@ -289,3 +289,15 @@
 @media (prefers-reduced-motion: reduce) {
   .accueil-revele .modes, .accueil-revele .tuiles { animation: accueil-revele-fondu 200ms ease both; }
 }
+
+/* ---------- #487 : l'action principale au-dessus du bandeau de consentement (#485) ---------- */
+/* Sans tuiles (accueil épuré), le goban prenait toute la hauteur et poussait « Joue ta première partie » sous le
+   bandeau. Tant que le bandeau est ouvert, la colonne de l'accueil s'arrête au-dessus de lui, avec 8 px d'air : le goban,
+   qui suit la place restante, rapetisse. Le bandeau lui-même n'est pas touché (profil.css). Écrans bas : le bandeau
+   couvre la barre du bas ; ailleurs, il se pose au-dessus d'elle. */
+html:has(.accord[open]) .app.app-home {
+  padding-bottom: calc(max(var(--nav-h), 3.75rem) + var(--space-2) + var(--accord-h, 160px) + var(--space-2) + env(safe-area-inset-bottom, 0px)); }
+@media (max-height: 640px) {
+  html:has(.accord[open]) .app.app-home {
+    padding-bottom: calc(max(max(var(--nav-h), 3.75rem) + var(--space-3), var(--accord-h, 160px) + var(--space-2)) + env(safe-area-inset-bottom, 0px)); }
+}
