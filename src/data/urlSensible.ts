@@ -118,6 +118,7 @@ export interface EvenementSentry {
   transaction?: string;
   tags?: Record<string, unknown>;
   extra?: Record<string, unknown>;
+  user?: { id?: unknown; [k: string]: unknown };
 }
 export interface BreadcrumbSentry {
   category?: string;
@@ -143,7 +144,8 @@ export function sentryBreadcrumbSansUrlSensible<B extends BreadcrumbSentry | nul
 }
 
 /**
- * `beforeSend` Sentry : `request.url` (adresse de la page), `query_string` (retiré), en-tête Referer,
+ * `beforeSend` Sentry : `request.url` (adresse de la page), `query_string` et cookies (retirés), en-tête Referer,
+ * utilisateur réduit à son identifiant (#474),
  * messages d'erreur, et breadcrumbs déjà attachés (filet si `beforeBreadcrumb` n'a pas vu passer l'un d'eux).
  */
 export function sentrySansUrlSensible<E extends EvenementSentry | null>(ev: E): E {
@@ -151,6 +153,7 @@ export function sentrySansUrlSensible<E extends EvenementSentry | null>(ev: E): 
   if (ev.request) {
     if (typeof ev.request.url === 'string') ev.request.url = nettoyerUrl(ev.request.url);
     delete ev.request.query_string;
+    delete ev.request.cookies;
     const h = ev.request.headers;
     if (h) for (const k of Object.keys(h)) if (/^referr?er$/i.test(k)) h[k] = nettoyerUrl(h[k]);
   }
@@ -160,5 +163,10 @@ export function sentrySansUrlSensible<E extends EvenementSentry | null>(ev: E): 
   if (ev.breadcrumbs) ev.breadcrumbs = ev.breadcrumbs.map(b => sentryBreadcrumbSansUrlSensible(b));
   if (ev.tags) ev.tags = nettoyerProprietes(ev.tags);
   if (ev.extra) ev.extra = nettoyerProprietes(ev.extra);
+  // #474 : du joueur, seul l'identifiant de compte (pseudonyme, avec accord) part. Ni IP, ni e-mail, ni pseudo, ni lieu.
+  if (ev.user) {
+    if (typeof ev.user.id === 'string' && ev.user.id) ev.user = { id: ev.user.id };
+    else delete ev.user;
+  }
   return ev;
 }

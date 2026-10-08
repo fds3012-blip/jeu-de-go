@@ -47,6 +47,20 @@ export async function rattacherSessionAnonyme(db: Db, code: string): Promise<Res
   return { ok: true, value: typeof data === 'number' ? data : 0 };
 }
 
+/**
+ * Au retour sur le vrai compte : présente le code gardé, s'il y en a un. #474 : le code n'est oublié qu'après un
+ * rattachement réussi. Avant, il était effacé AVANT l'appel : un réseau coupé à ce moment-là, et les parties de la
+ * session sans compte ne rejoignaient jamais le compte. En cas d'échec, le prochain chargement réessaie
+ * (le code reste valable 15 minutes). `null` : aucun code à présenter.
+ */
+export async function rattacherCodeGarde(db: Db, stockage: Storage | null = stockageSession()): Promise<Result<number> | null> {
+  const code = lireCodeRattachement(stockage);
+  if (!code) return null;
+  const r = await rattacherSessionAnonyme(db, code);
+  if (r.ok) oublierCodeRattachement(stockage);
+  return r;
+}
+
 /** Garde le code sur l'appareil le temps de créer ou retrouver le compte (stockage de session, jamais localStorage). */
 export function garderCodeRattachement(code: string, stockage: Storage | null = stockageSession(), maintenant = Date.now()): void {
   if (!stockage || !FORMAT_CODE_RATTACHEMENT.test(code)) return;

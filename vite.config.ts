@@ -6,14 +6,21 @@ import { precacheSw } from './outils/pwa';
 import { prechargerAnglais } from './outils/prechargerAnglais';
 import { pagesApercu } from './outils/apercus';
 import { pagesReferencement } from './outils/referencement/pages';
+import { pluginsSentry, sourcemapVite } from './outils/sentrySourcemaps';
+
+// Plugin Sentry (#474) : chargé seulement avec SENTRY_AUTH_TOKEN (Vercel) ; sinon, liste vide.
+const sentry = await pluginsSentry(process.env);
 
 export default defineConfig({
   // precacheSw : liste des fichiers du service worker, injectée dans dist/sw.js (outils/pwa.ts).
   // prechargerAnglais : pour un joueur en anglais, ses textes (#325) partent en même temps que le JS d'entrée.
   // pagesApercu : une page d'aperçu (Open Graph) par lien court partagé, copie de dist/index.html (#285, #364).
   // pagesReferencement : pages statiques indexées (/apprendre-le-go…), sitemap.xml et robots.txt, sans le JS de l'app (#472).
-  plugins: [react(), precacheSw(), prechargerAnglais(), pagesApercu(), pagesReferencement()],
+  // pluginsSentry (#474) : avec SENTRY_AUTH_TOKEN seulement (Vercel), envoie les source maps à Sentry puis les efface de dist/.
+  plugins: [react(), precacheSw(), prechargerAnglais(), pagesApercu(), pagesReferencement(), ...sentry],
   build: {
+    // Source maps « cachées » (#474) : produites seulement pour Sentry (jeton présent), jamais référencées ni publiées.
+    sourcemap: sourcemapVite(process.env),
     rollupOptions: {
       output: {
         // Bibliothèques à part : leur empreinte ne change pas quand le code de l'app change,

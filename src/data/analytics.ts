@@ -454,9 +454,24 @@ function loadPostHog(): Promise<PostHogLike | null> {
   return phLoading;
 }
 
-/** Réglages Sentry communs : pas de données personnelles, adresses nettoyées (request.url, breadcrumbs ; E14). */
+/**
+ * Réglages Sentry communs : pas de données personnelles, adresses nettoyées (request.url, breadcrumbs ; E14).
+ *
+ * #474 : depuis @sentry/react 11, `sendDefaultPii` n'est plus lu. C'est `dataCollection` qui décide, et `userInfo` vaut
+ * `true` par défaut : le SDK demandait à Sentry de déduire l'IP du joueur (`sdk.settings.infer_ip: 'auto'`), qui était
+ * conservée dans chaque événement (vu le 27/09 sur JEU-DE-GO-WEB-1). `userInfo: false` envoie `infer_ip: 'never'`.
+ * `sendDefaultPii` reste pour une éventuelle version antérieure du SDK.
+ */
+export const SENTRY_DATA_COLLECTION: Readonly<Record<string, unknown>> = {
+  userInfo: false,
+  cookies: false,
+  urlQueryParams: false,
+  httpBodies: [],
+  stackFrameVariables: false,
+};
 export const SENTRY_OPTIONS: Readonly<Record<string, unknown>> = {
   sendDefaultPii: false,
+  dataCollection: SENTRY_DATA_COLLECTION,
   beforeSend: sentrySansUrlSensible,
   beforeBreadcrumb: sentryBreadcrumbSansUrlSensible,
 };
@@ -527,8 +542,8 @@ export interface ContexteErreur {
 }
 
 /**
- * Signale une erreur à Sentry, seulement si le joueur a accepté. Jamais de donnée personnelle : `sendDefaultPii` est
- * désactivé et `beforeSend` nettoie adresses et messages (src/data/urlSensible.ts) ; les étiquettes sont des mots fixes.
+ * Signale une erreur à Sentry, seulement si le joueur a accepté. Jamais de donnée personnelle : `dataCollection` coupe
+ * l'IP et les cookies (SENTRY_OPTIONS) et `beforeSend` nettoie adresses et messages (src/data/urlSensible.ts) ; les étiquettes sont des mots fixes.
  */
 export function captureError(error: unknown, contexte?: ContexteErreur): void {
   if (!browser() || !analyticsConfig().sentryDsn || niveau() !== 'complet') return;

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   CLE_RATTACHEMENT, DUREE_CODE_MS, FORMAT_CODE_RATTACHEMENT, garderCodeRattachement, lireCodeRattachement,
-  oublierCodeRattachement, preparerRattachement, rattacherSessionAnonyme
+  oublierCodeRattachement, preparerRattachement, rattacherCodeGarde, rattacherSessionAnonyme
 } from './rattachement';
 import type { Db } from './supabase';
 
@@ -86,5 +86,29 @@ describe('code gardé sur l’appareil', () => {
     expect(FORMAT_CODE_RATTACHEMENT.test(CODE)).toBe(true);
     expect(FORMAT_CODE_RATTACHEMENT.test(CODE + 'a')).toBe(false);
     expect(FORMAT_CODE_RATTACHEMENT.test('abc+defghijklmnopqrstuvwxyz01234')).toBe(false);
+  });
+});
+
+// #474 : le code était effacé avant l'appel. Réseau coupé à ce moment-là : les parties sans compte étaient perdues.
+describe('rattacherCodeGarde (#474)', () => {
+  it('reproduction : réseau coupé pendant le rattachement, le code reste pour le prochain chargement', async () => {
+    const s = memoire();
+    garderCodeRattachement(CODE, s);
+    const { db: d } = db({ data: null, error: { message: 'TypeError: Failed to fetch' } });
+    expect(await rattacherCodeGarde(d, s)).toMatchObject({ ok: false });
+    expect(lireCodeRattachement(s)).toBe(CODE);
+  });
+  it('rattachement réussi : le code est oublié', async () => {
+    const s = memoire();
+    garderCodeRattachement(CODE, s);
+    const { db: d, rpc } = db({ data: 2, error: null });
+    expect(await rattacherCodeGarde(d, s)).toEqual({ ok: true, value: 2 });
+    expect(rpc).toHaveBeenCalledWith('rattacher_session_anonyme', { p_code: CODE });
+    expect(s.getItem(CLE_RATTACHEMENT)).toBeNull();
+  });
+  it('aucun code : aucun appel', async () => {
+    const { db: d, rpc } = db({ data: 0, error: null });
+    expect(await rattacherCodeGarde(d, memoire())).toBeNull();
+    expect(rpc).not.toHaveBeenCalled();
   });
 });
