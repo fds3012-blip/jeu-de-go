@@ -4,7 +4,8 @@
 import type { AnalyseRevue } from '../engine';
 import type { Puzzle, PourquoiProbleme } from '../data/puzzles';
 import { fromRows } from '../go/position';
-import { cadresPourquoi, confirmationPourquoi, textePourquoi, type Contexte } from './pourquoi';
+import { cadresPourquoi, confirmationPourquoi, textePourquoi, type Contexte, type FaitsKataGo } from './pourquoi';
+import { faitsKataGo, lireFaits } from './faitsKataGo';
 import type { Color, Position } from '../go/rules';
 import { conseilFiable, VISITES_MIN, type Note } from './revue';
 import { t } from '../content/i18n/secondaires';
@@ -47,6 +48,11 @@ export interface ErreurGardee {
   adversaire?: string;
   /** Points perdus par le coup joué, selon KataGo (#492 : « environ 6 points »). Absent dans les anciennes listes. */
   perte?: number;
+  /**
+   * #497 : faits de KataGo (variante principale du bon coup, riposte adverse, zone comparée). Absents dans les anciennes
+   * listes et pour une erreur venue d'un autre appareil (le serveur ne les garde pas) : on explique alors comme avant.
+   */
+  kataGo?: FaitsKataGo;
 }
 
 /** Vrai si ce coup peut devenir un problème : Erreur ou Grosse erreur, avec un meilleur coup fiable. */
@@ -99,6 +105,8 @@ export interface Source {
   meilleur: number | null | undefined;
   perte: number;
   analyse?: AnalyseRevue | null;
+  /** #497 : analyse de la position après le coup joué (riposte de l'adversaire, propriété). */
+  analyseApres?: AnalyseRevue | null;
   adversaire?: string;
 }
 
@@ -116,6 +124,7 @@ export function creerErreur(s: Source, maintenant: Date): ErreurGardee | null {
   if (!peutEnFaireUnProbleme(s.note, s.meilleur)) return null;
   const meilleur = s.meilleur!;
   const rows = rangees(s.avant), toPlay = s.avant.toPlay;
+  const kataGo = faitsKataGo(s.avant, meilleur, s.joue, s.analyse, s.analyseApres);
   return {
     id: `erreur-${hache(`${rows.join('/')}|${toPlay}`)}`,
     creeLe: maintenant.toISOString(),
@@ -125,6 +134,7 @@ export function creerErreur(s: Source, maintenant: Date): ErreurGardee | null {
     reponses: [meilleur, ...equivalents(s.avant, meilleur, s.analyse, s.joue, s.perte)],
     joue: s.joue, coup: s.coup, adversaire: s.adversaire,
     ...(Number.isFinite(s.perte) && s.perte > 0 ? { perte: Math.round(s.perte * 10) / 10 } : {}),
+    ...(kataGo ? { kataGo } : {}),
   };
 }
 
@@ -195,7 +205,7 @@ export function consigneErreur(e: Pick<ErreurGardee, 'reponses'>): string {
  * réponse ; courte confirmation après une réussite, pour chaque coup accepté ; suite illustrée et croix sur le coup joué.
  */
 export function pourquoiErreur(e: ErreurGardee): PourquoiProbleme {
-  const ctx: Contexte = { avant: fromRows(e.rows, e.toPlay).pos, bon: e.reponses[0], joue: e.joue, perte: e.perte };
+  const ctx: Contexte = { avant: fromRows(e.rows, e.toPlay).pos, bon: e.reponses[0], joue: e.joue, perte: e.perte, kataGo: e.kataGo };
   const base = t(e.reponses.length > 1 ? 'erreurs.bravoParmi' : 'erreurs.bravoKataGo');
   const bravos: Record<number, string> = {};
   for (const p of e.reponses) {
@@ -217,12 +227,21 @@ export function versProbleme(e: ErreurGardee): Puzzle {
   };
 }
 
-/** Relit la liste gardée, en écartant ce qui est mal formé. */
+/**
+ * Relit la liste gardée, en écartant ce qui est mal formé. #497 : les faits de KataGo mal formés sont retirés seuls
+ * (l'erreur reste, expliquée comme avant) ; une entrée sans eux (gardée avant #497) se relit telle quelle.
+ */
 export function lireErreurs(brut: unknown): ErreurGardee[] {
   if (!Array.isArray(brut)) return [];
   return brut.filter((e): e is ErreurGardee => !!e && typeof e === 'object'
     && typeof e.id === 'string' && typeof e.prochain === 'string' && typeof e.creeLe === 'string'
     && (e.size === 9 || e.size === 13 || e.size === 19) && Array.isArray(e.rows) && e.rows.length === e.size
     && (e.toPlay === 1 || e.toPlay === 2) && Array.isArray(e.reponses) && e.reponses.length > 0
-    && e.reponses.every((p: unknown) => typeof p === 'number' && p >= 0 && p < e.size * e.size));
+    && e.reponses.every((p: unknown) => typeof p === 'number' && p >= 0 && p < e.size * e.size))
+    .map(e => {
+      if (!('kataGo' in e)) return e;
+      const { kataGo: brutKataGo, ...reste } = e;
+      const kataGo = lireFaits(brutKataGo, e.size);
+      return kataGo ? { ...reste, kataGo } : reste;
+    });
 }

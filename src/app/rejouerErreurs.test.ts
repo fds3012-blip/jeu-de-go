@@ -150,7 +150,11 @@ describe('phrases de Mochi et fin de séance', () => {
     expect(montre(23)).toBe('G7 prend une pierre blanche. Après ton coup en D9, elle restait sur le plateau. Écart : environ 13 points selon KataGo.');
     expect(montre(47)).toBe('G5 coupe (sépare) les pierres blanches : elles ne peuvent plus se relier en G5. Après ta passe, Blanc pouvait les relier là. Écart : environ 7 points selon KataGo.');
     expect(montre(20, 2)).toBe('F6 relie tes pierres : elles forment un seul groupe. Après ton coup en D7, Noir pouvait couper (séparer tes pierres) en F6. Écart : environ 11 points selon KataGo.');
-    expect(montre(15)).toBe('Selon KataGo, F6 gardait environ 19 points de plus que ton coup en B6. Aucune pierre n’est en atari ici : l’écart ne vient pas d’une prise immédiate.');
+    // #497 : sans motif tactique, le fait de KataGo : dans l'analyse de la position après B6 (coup 15), son premier
+    // choix pour Blanc, bien exploré, est F6, le bon coup de Noir.
+    expect(a[15]!.coups![0].move).toBe(fromLabel('F6', 9));
+    expect(a[15]!.coups![0].visits).toBeGreaterThanOrEqual(8);
+    expect(montre(15)).toBe('Après ton coup en B6, le meilleur coup de Blanc selon KataGo était justement F6 : c’est un point important pour les deux camps. Écart : environ 19 points selon KataGo.');
     expect(montre(7)).toBe('Selon KataGo, E5 gardait environ 8 points de plus que ton coup en B4. Compare les deux coups sur le plateau.');
   });
 

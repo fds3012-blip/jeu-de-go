@@ -10,7 +10,8 @@
 //   position après le premier choix, avec le même nombre de visites ; même seuil. Sans KataGo, on ne juge pas.
 import { isLegal, type Color, type Position } from '../go/rules';
 import { toLabel } from '../go/coords';
-import { confirmationPourquoi, expliquer, textePourquoi } from './pourquoi';
+import { confirmationPourquoi, expliquer, textePourquoi, type FaitsKataGo } from './pourquoi';
+import { faitsKataGo } from './faitsKataGo';
 import { t } from '../content/i18n/secondaires';
 import { conseilFiable, facteurTaille, seuilsKataGo, VISITES_MIN, type AnalyseRevue, type Note, type NoteCoup } from './revue';
 
@@ -46,6 +47,8 @@ export interface ErreurARejouer {
   joue: number;
   /** Premier choix de KataGo dans la position d'avant (index interne, jamais une passe). */
   meilleur: number;
+  /** #497 : faits de KataGo (variante principale, riposte, zone), pour expliquer le bon coup. */
+  kataGo?: FaitsKataGo;
 }
 
 /**
@@ -68,7 +71,8 @@ export function erreursARejouer(
     if (!conseilFiable(avant, premier.move, n.perte)) continue;
     const jouee = PARTIE_JOUEE * facteurTaille(avant.size), avecJoue = premier.lead - n.perte;
     if (Math.min(premier.lead, avecJoue) >= jouee || Math.max(premier.lead, avecJoue) <= -jouee) continue;
-    out.push({ coup: n.coup, note: n.note, perte: n.perte, couleur: n.couleur, joue, meilleur: premier.move, rang: RANG[n.note] });
+    const kataGo = faitsKataGo(avant, premier.move, joue, a, analyses[n.coup]);
+    out.push({ coup: n.coup, note: n.note, perte: n.perte, couleur: n.couleur, joue, meilleur: premier.move, ...(kataGo ? { kataGo } : {}), rang: RANG[n.note] });
   }
   return out
     .sort((x, y) => x.rang - y.rang || y.perte - x.perte || x.coup - y.coup)
@@ -154,14 +158,14 @@ export function phraseMontre(e: ErreurARejouer, size: number): string {
  * KataGo : F5. » d'abord.
  */
 export function phraseMontrePourquoi(e: ErreurARejouer, avant: Position): string {
-  const { texte, ecart } = textePourquoi({ avant, bon: e.meilleur, joue: e.joue, perte: e.perte });
+  const { texte, ecart } = textePourquoi({ avant, bon: e.meilleur, joue: e.joue, perte: e.perte, kataGo: e.kataGo });
   return [e.perte > 0 ? null : t('rejeu.voici', { point: toLabel(e.meilleur, avant.size) }), texte, ecart].filter(Boolean).join(' ');
 }
 
 /** #492 : après un bon essai, la phrase de Mochi, puis le motif vérifié du coup trouvé s'il y en a un. */
 export function phraseTrouvePourquoi(j: Extract<Jugement, { verdict: 'bon' }>, e: ErreurARejouer, avant: Position, p: number): string {
-  const debut = phraseTrouve(j, e, avant.size), m = expliquer(avant, p, e.joue).motif;
-  const motif = m ? confirmationPourquoi({ avant, bon: e.meilleur, joue: e.joue, perte: e.perte }, p) : null;
+  const debut = phraseTrouve(j, e, avant.size), x = expliquer(avant, p, e.joue, p === e.meilleur ? e.kataGo : undefined);
+  const motif = x.motif || x.formes?.length ? confirmationPourquoi({ avant, bon: e.meilleur, joue: e.joue, perte: e.perte, kataGo: e.kataGo }, p) : null;
   return motif ? `${debut} ${motif}` : debut;
 }
 

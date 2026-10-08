@@ -76,7 +76,7 @@ export function RejouerErreurs({ sgf, positions, komi, analyses, erreurs, joueur
     setResultats(r => [...r, { coup: e.coup, note: e.note, trouvee, essais: n }]);
     // Pas trouvée : elle rejoint « Tes erreurs à rejouer » (révision espacée, #77) et revient demain.
     if (!trouvee) {
-      const pb = creerErreur({ avant, joue: e.joue, coup: e.coup, note: e.note, meilleur: e.meilleur, perte: e.perte, analyse: analyses[e.coup - 1], adversaire }, new Date());
+      const pb = creerErreur({ avant, joue: e.joue, coup: e.coup, note: e.note, meilleur: e.meilleur, perte: e.perte, analyse: analyses[e.coup - 1], analyseApres: analyses[e.coup], adversaire }, new Date());
       if (pb) garderErreurRatee(pb); // #469 : révision espacée, comptée sur l'accueil
     }
   }
