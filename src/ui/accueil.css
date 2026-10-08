@@ -268,3 +268,4 @@
 .tuile-recherche-ouvrir { flex: 1; min-width: 0; min-height: var(--cible-min); display: grid; gap: 2px; padding: 0; border: 0; background: none; color: inherit; text-align: left; }
 .tuile-recherche-ouvrir b { overflow-wrap: anywhere; }
 .tuile-recherche .lien { flex: none; }
+.tuiles-lentes-erreur { grid-column: 1 / -1; margin: 0; } /* #498 : annulation hors ligne */
