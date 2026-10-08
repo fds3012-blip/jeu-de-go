@@ -307,6 +307,8 @@ describe('adresses sensibles jamais envoyées (E14)', () => {
     expect(options.beforeSend).toBe(sentrySansUrlSensible);
     expect(options.beforeBreadcrumb).toBe(sentryBreadcrumbSansUrlSensible);
     expect(options.sendDefaultPii).toBe(false);
+    // #474 : SDK 11, l'IP n'est coupée que par `dataCollection.userInfo`.
+    expect(options.dataCollection).toMatchObject({ userInfo: false, cookies: false });
   });
 });
 
