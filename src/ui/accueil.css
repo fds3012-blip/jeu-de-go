@@ -113,6 +113,11 @@
      tiennent en deux lignes ; en 320 px, avec l'espacement du texte forcé ou au zoom, la tuile grandit et le goban
      d'accueil, qui suit la place restante, rétrécit. */
   overflow-wrap: break-word; }
+/* #487 (P12) : en demi-largeur (390 px), un titre du Go du jour prenait 3 ou 4 lignes (« Remonte vers le centre »,
+   « Donne une pierre, prends-en trois ») : la tuile grandissait jusqu'à passer sous la barre du bas, titre coupé au
+   premier écran. Quand la tuile du Go du jour n'est pas mise en avant, les tuiles passent sur une colonne : titre en
+   une ou deux lignes, tuile de hauteur stable. */
+.tuiles:has(> .tuile-probleme:not(.tuile-avant)) { grid-template-columns: minmax(0, 1fr); }
 /* Leçon suivante : « à faire plus tard », en pointillés. */
 /* #213 : état du Go du jour, en pastille dans le coin. « À faire » : or, comme la flamme creuse ; « Fait » : jade. */
 .tuile-probleme { position: relative; }
