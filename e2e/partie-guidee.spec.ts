@@ -22,6 +22,9 @@ test('partie guidée : lancée depuis l’accueil (#429), jouée au-delà du 10e
     expect(await attendreReponse(page, avant)).toBe(false);
   }
   expect(await coupsJoues(page).count()).toBeGreaterThanOrEqual(12);
+  // Le premier réglage suit l'estimation (Worker) d'une position d'au moins 10 coups. Sous charge, elle arrivait
+  // parfois après les passes, et le réglage n'avait jamais lieu (#467) : on attend qu'il soit fait avant de finir.
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('go.guidee.v1')), { timeout: 15_000 }).toMatch(/^\d+$/);
 
   await passerJusquAuScore(page);
   await expect(page.locator('.fin-bilan')).toContainText('Partie guidée : elle ne compte pas dans ton bilan.');

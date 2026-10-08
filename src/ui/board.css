@@ -42,7 +42,10 @@
   .board .territoire-fondu { animation: go-fondu 150ms var(--ease) both; }
   /* Frontières ouvertes (#159) : les points apparaissent en fondu, 200 ms, sans rebond (marque discrète). */
   .board .frontieres { animation: go-fondu 200ms var(--ease) both; }
+  /* #466 : la pierre fantôme qui attend la seconde touche respire doucement (mouvements réduits : elle reste fixe). */
+  .board .fantome-attend { animation: go-attend 900ms ease-in-out infinite alternate; }
 }
+@keyframes go-attend { from { opacity: .45; } to { opacity: .8; } }
 @keyframes go-fondu { from { opacity: 0; } to { opacity: 1; } }
 @keyframes go-territoire { from { transform: scale(.4); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes go-liberte { 0% { transform: scale(.4); opacity: 0; } 35% { transform: scale(1.7); opacity: 1; } 60% { transform: scale(.9); opacity: .55; } to { transform: none; opacity: 1; } }

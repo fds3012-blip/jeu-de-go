@@ -89,6 +89,9 @@ export const EVENTS = {
   // Course aux problèmes (#287) : fin d'une course (score, erreurs, durée, raison) et partage du score.
   courseTerminee: 'course_terminee',
   coursePartagee: 'course_partagee',
+  // Problèmes par thème (#471) : une série ouverte (`theme` : capturer, sauver, vie-mort, relier-couper, fin-de-partie,
+  // tesuji). Les premiers essais d'une série portent `theme` dans `probleme_termine`. Jamais le record ni les réussites.
+  themeOuvert: 'theme_ouvert',
   // « Je sais déjà jouer » (#283) : placement commencé, terminé (`kyu`, null si tout raté), passé (`etape` : 0 à 3).
   placementCommence: 'placement_commence',
   placementTermine: 'placement_termine',
@@ -110,6 +113,12 @@ export const EVENTS = {
   // Conseil de Mochi (#80) : phrase demandée (`modele`, `aucun` si rien de sûr), puis retour « utile / pas utile » (`utile`).
   conseilDemande: 'conseil_demande',
   conseilNote: 'conseil_note',
+  // Coach Mochi en partie contre l'IA (#470) : bulle montrée (`type` : atari, un-oeil, prise-ratee, zone-libre ; `numero` :
+  // 1 à 3 dans la partie ; `coup`, `taille`, `adversaire`), puis coach coupé ou rallumé (`depuis` : bulle, partie, reglages ;
+  // `bulles` : bulles déjà vues dans la partie, absent depuis les réglages). Jamais la position.
+  coachBulle: 'coach_bulle',
+  coachCoupe: 'coach_coupe',
+  coachActive: 'coach_active',
   // Notifications dans l'app (#367) : un élément « À faire » touché. `type` : defi, serie, goDuJour, lecon, ami ;
   // `source` : accueil (tuile d'« Aujourd'hui »), onglet (onglet à pastille) ; `attente_h` (défi) :
   // heures depuis le coup de l'adversaire, pour le délai médian de réponse.
@@ -180,6 +189,17 @@ export const EVENTS = {
   fileDelaiOrdi: 'file_delai_ordi',
   fileAbandonsPrevenu: 'file_abandons_prevenu',
   lentePlafondReduit: 'lente_plafond_reduit',
+  // Révision espacée (#469). `revision_carte_vue` : carte « Révisions du jour (N) » montrée sur l'accueil, une fois par
+  // ouverture de l'app (`n` : éléments de la séance, 5 au plus). `revision_seance_commencee` : séance ouverte
+  // (`elements`, `erreurs`, `problemes`, `retard_max` en jours, `compte`). `revision_element` : premier essai d'un
+  // élément (`genre` : erreur ou probleme, `reussi`, `etape` avant l'essai, 0 à 4, `retard` en jours).
+  // `revision_seance_terminee` : dernier élément fait (`elements`, `reussis`, `xp`). `revision_seance_quittee` : retour
+  // avant la fin (`faits`, `elements`). Jamais la position, le coup, le problème ni l'adversaire.
+  revisionCarteVue: 'revision_carte_vue',
+  revisionSeanceCommencee: 'revision_seance_commencee',
+  revisionElement: 'revision_element',
+  revisionSeanceTerminee: 'revision_seance_terminee',
+  revisionSeanceQuittee: 'revision_seance_quittee',
 } as const;
 export type AnalyticsEvent = (typeof EVENTS)[keyof typeof EVENTS];
 export type Props = Record<string, string | number | boolean | null | undefined>;

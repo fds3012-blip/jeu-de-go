@@ -4,6 +4,8 @@
 
 export const fr = {
   // Barre de navigation du bas (#51)
+  // Description de la page (balise meta, #473), même texte que index.html en français.
+  'meta.description': 'Mochi Go : apprends et joue au go. Leçons interactives, problèmes, parties contre l’ordi ou tes amis.',
   'nav.aria': 'Navigation principale',
   'nav.jouer': 'Jouer',
   'nav.apprendre': 'Apprendre',
@@ -31,6 +33,7 @@ export const fr = {
   'titre.partagee': 'Partie partagée',
   'titre.placement': 'Ton niveau de départ',
   'titre.compte': 'Ton compte',
+  'titre.revisions': 'Révisions du jour',
 
   // En-tête (App.tsx)
   'entete.apprendre': 'Le chemin des leçons',
@@ -46,6 +49,9 @@ export const fr = {
   'accueil.contre': '{role} · {taille}\u00A0×\u00A0{taille}',
   'accueil.aujourdhui': 'Aujourd’hui',
   'accueil.leconSuivante': 'Leçon suivante',
+  // #469 : révision espacée, carte secondaire dans « Aujourd'hui ».
+  'accueil.revisions.titre': 'Révisions du jour ({n})',
+  'accueil.revisions.detail': 'Erreurs et problèmes ratés',
   'accueil.bulle.lecons': { one: 'Bravo pour ta première leçon ! On passe à une vraie partie ?', other: 'Bravo pour tes {n} leçons ! On passe à une vraie partie ?' },
   'accueil.bulle.rejouer': 'Te revoilà ! On rejoue sur le {plateau} ?',
   'accueil.bulle.jouer': 'Une partie sur le {plateau} ? Je t’attends.',
@@ -62,7 +68,7 @@ export const fr = {
   'accueil.tuileAriaSimple': 'Go du jour n° {numero} : {titre}.',
   'entete.flammeAFaire': 'Série de {jours}. Go du jour à faire aujourd’hui.',
   'entete.flammeFaite': 'Série de {jours}. Go du jour fait aujourd’hui.',
-  'accueil.introBut': 'Le but : entourer plus de territoire que {nom}, et capturer ses pierres en leur retirant leurs libertés (les cases vides qui les touchent).',
+  'accueil.introBut': 'Touche un croisement des lignes pour poser ta pierre. Le but : entourer plus de territoire que {nom}.',
   'accueil.plateau': 'Plateau {taille} × {taille}, tu as Noir',
   'accueil.changer': 'Changer',
   'accueil.goDuJour': 'Go du jour',
@@ -199,7 +205,7 @@ export const fr = {
   'partie.mortes.toucher': 'Touche un groupe pour corriger.',
   'partie.mortes.aucune': '{fin} Aucune pierre morte. Si un groupe ne peut plus vivre, touche-le pour le compter comme prisonnier.',
   // Annonce du komi (src/app/equilibrage.ts)
-  'komi.premiere': 'Le komi, ce sont des points donnés à Blanc parce que Noir commence. Pour tes premières parties, il est de {k}.',
+  'komi.premiere': 'Le komi : des points donnés à Blanc, qui joue en second. Pour tes premières parties, il est de {k}.',
   'komi.derniere': 'Dernière partie avec un komi de {k} point.',
   'komi.encore': 'Cette partie encore, le komi est de {k} point.',
   'komi.normal': 'Le komi passe à {k} points, sa valeur habituelle.',
@@ -227,6 +233,7 @@ export const fr = {
   'lecon.revois': 'Revois ta partie : tu trouveras le coup qui a tout changé.',
   'lecon.komi': 'Sans le komi, les {komi} points donnés à Blanc qui joue en second, tu gagnais !',
   'lecon.perduDePeu': 'Perdu de peu. La prochaine fois sera la bonne !',
+  'lecon.territoireZero': 'Ton territoire compte 0 : tes pierres ne fermaient aucun espace. Avant de passer, relie-les jusqu’aux bords.',
   // #251 : partie finie sur un plateau presque vide (bilan.ts, finTropTot).
   'lecon.finTotKomi': "Le plateau était presque vide : Blanc gagne grâce au komi, les points donnés à Blanc parce que Noir joue en premier. Joue plus longtemps pour entourer du territoire.",
   'lecon.finTot': 'Le plateau était presque vide. Joue plus longtemps pour entourer du territoire.',

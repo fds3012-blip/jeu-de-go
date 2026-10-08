@@ -34,6 +34,24 @@ describe('réglages de connexion Supabase (#414)', () => {
     expect(r.mailer_templates_confirmation_content).toMatch(/pseudo/);
   });
 
+  it('#473 : chaque e-mail et chaque objet existe en anglais (user_metadata.langue = en) et en français, code dans les deux', () => {
+    // Condition sûre même sans `langue` (comptes créés avant #473) : printf rend « <no value> », donc le français.
+    // Rendu vérifié avec text/template et html/template de Go (moteur des modèles Supabase) : en, fr, vide, absent.
+    const SI = '{{ if eq (printf "%v" .Data.langue) "en" }}';
+    for (const cle of ['mailer_subjects_magic_link', 'mailer_subjects_confirmation', 'mailer_subjects_email_change',
+      'mailer_templates_magic_link_content', 'mailer_templates_confirmation_content', 'mailer_templates_email_change_content']) {
+      const v = r[cle];
+      expect(v.startsWith(SI), cle).toBe(true);
+      expect(v.trim().endsWith('{{ end }}'), cle).toBe(true);
+      const [anglais, francais] = v.slice(SI.length, v.trim().length - '{{ end }}'.length).split('{{ else }}');
+      expect(francais, cle).toBeDefined();
+      for (const branche of [anglais, francais]) expect(branche, cle).toContain('{{ .Token }}');
+      expect(anglais, cle).not.toMatch(/[àâçéèêîôûœ]|\b(ton|ta|tes|tu|code pour)\b/i);
+      expect(francais, cle).toMatch(/\b(ton|ta|tu)\b/);
+      if (cle.includes('content')) for (const branche of [anglais, francais]) expect(branche, cle).toContain('{{ .ConfirmationURL }}');
+    }
+  });
+
   it('les écarts ne donnent que des noms de clés, jamais de valeurs', () => {
     expect(ecarts({ a: 1, b: 'x' }, { a: 1, b: 'y', smtp_pass: 'secret' })).toEqual(['b']);
   });

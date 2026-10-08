@@ -200,7 +200,7 @@ describe('garderMonCompte', () => {
   it('relie l’e-mail à la session anonyme', async () => {
     const c = client();
     expect(await garderMonCompte(c.db, ' ami@exemple.test ', 'https://go.exemple')).toEqual({ ok: true, value: null });
-    expect(c.updateUser).toHaveBeenCalledWith({ email: 'ami@exemple.test' }, { emailRedirectTo: 'https://go.exemple' });
+    expect(c.updateUser).toHaveBeenCalledWith({ email: 'ami@exemple.test', data: { langue: 'fr' } }, { emailRedirectTo: 'https://go.exemple' });
   });
 });
 

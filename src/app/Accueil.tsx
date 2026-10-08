@@ -77,6 +77,8 @@ interface Props {
   semaine?: ReactNode;
   /** « Je sais déjà jouer » (#283) : lien discret sous le bouton, au premier lancement seulement. */
   onPlacement?: () => void;
+  /** #469 : « Révisions du jour (N) », carte secondaire dans « Aujourd'hui » (absente s'il n'y a rien à revoir). */
+  revisions?: { n: number; ouvrir: () => void };
 }
 
 const PLATEAUX: Record<Taille, Int8Array> = { 9: new Int8Array(81), 13: new Int8Array(169), 19: new Int8Array(361) };
@@ -108,6 +110,7 @@ export function Accueil(p: Props) {
   // #440 : point d'or sur « Jouer en ligne » (bouton ou tuile) quand une partie lente attend ton coup.
   const lentesAJouer = p.lentes?.aJouer ?? 0;
   const cta = enLigne ? t('accueil.cta.enLigne') : textes.cta;
+  const revisions = !premier && p.revisions && p.revisions.n > 0 ? p.revisions : undefined;
   const [plusOuvert, setPlusOuvert] = useState(false);
 
   return (
@@ -198,10 +201,12 @@ export function Accueil(p: Props) {
       {p.lentes && (p.lentes.aJouer > 0 || p.lentes.recherche) && <TuilesLentes l={p.lentes} />}
 
       {/* Aujourd'hui : la bonne chose à faire en premier, mise en avant ; les autres tuiles suivent. */}
-      {tuiles.length > 0 && (
+      {(tuiles.length > 0 || revisions) && (
         <div className={`tuiles${enAvant ? ' tuiles-jour' : ''}`}>
           {enAvant && <p className="tuiles-titre">{t('accueil.aujourdhui')}</p>}
           {tuiles.map(tu => <Tuile key={tu.genre} tuile={tu} p={p} etat={etat} defis={defis} />)}
+          {/* #469 : jamais en avant (une seule action principale) ; elle suit les tuiles du jour. */}
+          {revisions && <TuileRevisions r={revisions} />}
         </div>
       )}
 
@@ -294,6 +299,28 @@ function Tuile({ tuile, p, etat, defis }: { tuile: TuileDuJour; p: Props; etat: 
         <b>{p.lecon?.titre ?? t('accueil.revoirChemin')}</b>
       </span>
       {tuile.enAvant && <em className="tuile-etat" aria-hidden="true">{t('accueil.leconSuivante')}</em>}
+    </button>
+  );
+}
+
+/**
+ * #469 : « Révisions du jour (N) ». Le nom accessible est le texte visible (WCAG 2.5.3) : le titre d'abord, le détail
+ * ensuite. Pictogramme : une flèche qui revient sur une pierre (ce qui revient au bon moment).
+ */
+function TuileRevisions({ r }: { r: { n: number; ouvrir: () => void } }) {
+  return (
+    <button type="button" className="tuile tuile-revisions" data-testid="tuile-revisions" onClick={r.ouvrir}>
+      <span className="tuile-revisions-icone" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="24" height="24" focusable="false">
+          <path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+          <path d="M17.6 3.4v3.6h-3.6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          <circle cx="12" cy="12" r="3.2" fill="currentColor" />
+        </svg>
+      </span>
+      <span>
+        <b>{t('accueil.revisions.titre', { n: r.n })}</b>
+        <small>{t('accueil.revisions.detail')}</small>
+      </span>
     </button>
   );
 }

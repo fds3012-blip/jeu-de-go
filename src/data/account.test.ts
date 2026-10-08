@@ -78,7 +78,7 @@ describe('connexion par code (#343)', () => {
     vi.stubGlobal('window', { location: { origin: 'https://go.exemple' } });
     await envoyerCode(c.db, ' ami@exemple.test ');
     vi.unstubAllGlobals();
-    expect(c.signInWithOtp).toHaveBeenCalledWith({ email: 'ami@exemple.test', options: { emailRedirectTo: 'https://go.exemple', shouldCreateUser: true } });
+    expect(c.signInWithOtp).toHaveBeenCalledWith({ email: 'ami@exemple.test', options: { emailRedirectTo: 'https://go.exemple', shouldCreateUser: true, data: { langue: 'fr' } } });
   });
 });
 

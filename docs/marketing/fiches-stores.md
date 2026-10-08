@@ -1,6 +1,6 @@
-# Fiches App Store et Google Play (v2, #208)
+# Fiches App Store et Google Play (v3, #473 ; v2 : #208)
 
-Textes prêts à coller dans App Store Connect et la Play Console, en français puis en anglais. Version 2, mise à jour le 28/09/2026 après la nuit du 27 au 28 (v1 : #112). L'app sortira sur les stores avec Capacitor ; ces fiches décrivent uniquement ce qui existe dans la PWA de `main` à cette date.
+Textes prêts à coller dans App Store Connect et la Play Console, en français puis en anglais. Version 3, mise à jour le 08/10/2026 avec la version anglaise complète (#473) ; version 2 du 28/09/2026 (#208), v1 : #112. L'app sortira sur les stores avec Capacitor ; ces fiches décrivent uniquement ce qui existe dans la PWA de `main` à cette date.
 
 ## Ce qui a changé depuis la v1
 
@@ -12,6 +12,19 @@ Textes prêts à coller dans App Store Connect et la Play Console, en français 
 | (rien) | Première victoire possible : komi de 0,5 annoncé pour les 3 premières parties | #160, `src/app/equilibrage.ts`, `e2e/premiere-victoire.spec.ts` |
 | « Grandes cibles, mouvements réduits » | Plus : partie jouable au clavier avec annonces pour lecteur d'écran, zoom 200 % | #116, #121, `e2e/clavier.spec.ts`, `e2e/zoom.spec.ts` |
 | Série protégée pour un compte | Série dès le premier jour, même sans compte, avec gel | #161, `src/app/gelAppareil.ts` |
+
+## Ce qui a changé en v3 (08/10/2026, #473)
+
+Les faits de la v2 étaient dépassés. Chiffres recomptés dans le dépôt le 08/10/2026 :
+
+| v2 (28/09) | v3 (08/10) | Preuve dans le dépôt |
+|---|---|---|
+| 7 leçons | 35 leçons en 6 chapitres, sur 9 × 9, 13 × 13 et 19 × 19 | `content/lessons.fr.js` (l1 à l36, sans l28), `src/content/lessons.en.test.ts` |
+| « Plus de 100 problèmes » | Plus de 200 problèmes prouvés (231), classés par thème | `ALL_PUZZLES` (231, autant que la table `puzzles`), #471 |
+| « Tu joues sans créer de compte » | **Faux depuis #343** : sans compte, 3 parties d'essai, les leçons 1 à 3 et le Go du jour ; ensuite un compte gratuit | `creer.raison.parties`, #343 |
+| (rien) | Mochi coach en partie, révisions espacées des erreurs, Rush de 3 minutes | #470, #469, `course.*` |
+| Parties en ligne « pas encore » | Parties avec tes amis par un lien, 3 jours par coup (le direct existe, non mis en avant) | #81, #359, #440 |
+| Fiche anglaise « pas avant l'interface » | Interface, leçons, problèmes, e-mails et rappels en anglais | #473, `src/content/anglais-complet.test.ts` |
 
 ## Limites de caractères (vérifiées le 27/09/2026)
 
@@ -33,10 +46,11 @@ Chaque texte indique son nombre de caractères (espaces compris), compté par sc
 
 - Tutoiement, phrases courtes, chaleureux (charte, CLAUDE.md règle 5). Anglais : termes du glossaire `docs/localisation/glossaire.md` (*Puzzles*, *Daily Go*, *streak*, *freeze*, *Game review*, *Who's ahead?*).
 - Aucune promesse que l'app ne tient pas. Pas de « n° 1 », « meilleure app », « le plus fort ». Aucun nom de concurrent (Apple le refuse aussi).
-- Aucun chiffre inventé. Les seuls chiffres sont comptés dans le dépôt : 7 leçons, plus de 100 problèmes (117 aujourd'hui ; on écrit « plus de 100 » pour ne pas changer la fiche à chaque lot), 9 adversaires, komi de 0,5 pour 3 parties, zoom 200 %. Pas de nombre de joueurs, pas de note, pas d'avis tant qu'ils n'existent pas.
+- Aucun chiffre inventé. Les seuls chiffres sont comptés dans le dépôt : 35 leçons, plus de 200 problèmes (231 aujourd'hui ; on écrit « plus de 200 » pour ne pas changer la fiche à chaque lot), 9 adversaires, komi de 0,5 pour 3 parties, zoom 200 %. Pas de nombre de joueurs, pas de note, pas d'avis tant qu'ils n'existent pas.
 - « Hors ligne » : vrai une fois le réseau de KataGo téléchargé et mis en cache. On écrit « même hors ligne, une fois l'IA téléchargée », jamais « sans connexion » tout court.
 - « Gratuit » : vrai aujourd'hui. On n'écrit pas « toujours gratuit » : un Premium est à l'étude (charte).
-- Ce que l'on ne dit pas encore : parties en ligne classées, Premium, coach Claude, plateau 19 × 19 contre toute l'échelle, « interface en anglais » (voir la note de la partie anglaise).
+- Ce que l'on ne dit pas encore : Premium, cote affichée comme argument, « jouer contre des inconnus » en avant (le direct existe, mais dépend du nombre de joueurs en ligne).
+- Le compte : ne jamais écrire « sans compte » tout court (#343). On dit ce qui est ouvert sans compte : 3 parties, les leçons 1 à 3, le Go du jour.
 
 ---
 
@@ -50,7 +64,7 @@ L'appli s'appelle **Mochi Go** (#416) ; site : https://mochi-go.app. URL de la p
 |---|---|---|
 | Nom (Apple et Google) | Mochi Go : apprendre le go | 26 |
 | Sous-titre (Apple) | Leçons jouables et IA gratuite | 30 |
-| Texte promotionnel (Apple) | 7 leçons où tu joues dès le premier écran. Plus de 100 problèmes prouvés. Et une revue qui va droit au moment clé de ta partie. | 127 |
+| Texte promotionnel (Apple) | 35 leçons où tu joues dès le premier écran. Plus de 200 problèmes prouvés. Et Mochi qui t'explique tes coups pendant la partie. | 127 |
 
 Variante de sous-titre à tester (Product Page Optimization) : « Le jeu de go, pas à pas » (23, sous-titre v1).
 
@@ -62,9 +76,9 @@ Variante de sous-titre à tester (Product Page Optimization) : « Le jeu de go, 
 
 ## Description courte (Google Play)
 
-> Apprends le go en jouant : 7 leçons, 100+ problèmes, une IA forte. Sans pub.
+> Apprends le go en jouant : 35 leçons, 200+ problèmes, une IA forte. Sans pub.
 
-(76 caractères)
+(77 caractères)
 
 ## Mots-clés (App Store)
 
@@ -80,36 +94,40 @@ baduk,weiqi,igo,goban,échecs,stratégie,plateau,réflexion,tsumego,règles,déb
 Le go se joue depuis plus de 2 500 ans. Les règles tiennent en une minute. Ici, tu les découvres en jouant.
 
 TU JOUES DÈS LE PREMIER ÉCRAN
-7 leçons courtes, avec Mochi. Pas de page à lire : dès le premier écran, tu poses ta pierre et tu vois ce qui se passe. Chaque mot du go (atari, ko, komi) est expliqué la première fois qu'il apparaît. La dernière leçon t'apprend à compter les points.
+35 leçons courtes, avec Mochi, en 6 chapitres : les bases, l'ouverture, capturer et sauver, la vie et la mort, la fin de partie, la forme. Pas de page à lire : tu poses ta pierre et tu vois ce qui se passe. Chaque mot du go (atari, ko, komi) est expliqué la première fois qu'il apparaît.
+
+MOCHI T'ACCOMPAGNE EN PARTIE
+Pendant tes premières parties, Mochi te prévient quand ton groupe est en atari ou qu'une prise t'a échappé. Il ne joue jamais à ta place, et tu peux le faire taire.
 
 TA PREMIÈRE VICTOIRE EST POSSIBLE
-Ta première partie se joue contre Pomme, qui débute comme toi, sur un petit plateau 9 × 9. Pour tes 3 premières parties, le komi (les points donnés à Blanc parce que Noir commence) est de 0,5 au lieu de 6,5. Mochi te le dit, puis le komi habituel revient.
+Ta première partie se joue contre Pomme, qui débute comme toi, sur un petit plateau 9 × 9. Pour tes 3 premières parties, le komi (les points donnés à Blanc, qui joue en second) est de 0,5 au lieu de 6,5.
 
-PLUS DE 100 PROBLÈMES, SANS FIN
-Capturer, sauver, relier, faire deux yeux. Chaque solution est prouvée contre toutes les défenses : si ta réponse est bonne, elle marche vraiment. Après chaque problème, un autre t'attend.
+PLUS DE 200 PROBLÈMES, PAR THÈME
+Capturer, sauver, vie et mort, relier et couper, fin de partie, tesuji. Chaque solution est prouvée contre toutes les défenses : si ta réponse est bonne, elle marche vraiment. Tes erreurs reviennent au bon moment, pour que ça reste.
 
 LE GO DU JOUR ET TA SÉRIE
-Un même problème pour tout le monde, chaque jour. Résous-le, ta série commence dès le premier jour, sans compte. Partage ton résultat sans dévoiler la réponse. Un jour manqué ? Un gel peut protéger ta série.
+Un même problème pour tout le monde, chaque jour. Partage ton résultat sans dévoiler la réponse. Un jour manqué ? Un gel peut protéger ta série.
 
-9 ADVERSAIRES ILLUSTRÉS
-De Pomme (20 kyu) à Sensei (1 dan). Chacun a son portrait et son caractère. Bats-le, et le suivant s'ouvre.
+9 ADVERSAIRES, ET TES AMIS
+De Pomme (20 kyu) à Sensei (1 dan), chacun avec son portrait et son caractère. Défie aussi tes amis par un lien, à ton rythme : 3 jours par coup.
 
 UNE IA FORTE, SUR TON APPAREIL
-Les adversaires les plus forts sont joués par KataGo, une IA de go open source. Elle tourne sur ton téléphone, gratuitement, même hors ligne une fois l'IA téléchargée.
+Les adversaires les plus forts sont joués par KataGo, une IA de go open source. Elle tourne sur ton téléphone, même hors ligne une fois l'IA téléchargée.
 
 UNE REVUE HONNÊTE
-À la fin, la revue va droit au moment clé : le coup qui t'a coûté le plus, avec les points perdus. Rejoue-le depuis cette position. Pas de faux compliment : si tu as perdu, Mochi te montre où. En pleine partie, « Qui mène ? » te montre les territoires.
+À la fin, la revue va droit au moment clé : le coup qui t'a coûté le plus, avec les points perdus. Rejoue-le depuis cette position. Pas de faux compliment.
 
 POUR TOUT LE MONDE
 - Gratuit et sans publicité.
-- Tu joues sans créer de compte.
+- Essaie sans compte : 3 parties, les 3 premières leçons et le Go du jour. Ensuite, un compte gratuit garde ta progression.
 - Partie jouable au clavier, annonces pour lecteur d'écran, zoom à 200 %.
 - Mode sombre et mode clair, grandes cibles tactiles, mouvements réduits respectés.
+- En français et en anglais.
 
 Tu joues aux échecs ou aux jeux de société ? Le go va te plaire. Pose ta première pierre.
 ```
 
-(2 073 caractères, loin des 4 000.)
+(2 285 caractères, loin des 4 000.)
 
 ## Les 6 captures d'écran
 
@@ -125,7 +143,7 @@ Le script est `e2e/captures-stores.spec.ts`. Il est ignoré en CI sans la variab
 
 | # | Fichier | Écran montré | Légende | Mots |
 |---|---|---|---|---|
-| 1 | `01-accueil.jpg` | Accueil d'un nouveau joueur : Pomme, bouton unique « Joue ta première partie », Go du jour et « Leçon 1 sur 7 » | Apprends le go en jouant | 5 |
+| 1 | `01-accueil.jpg` | Accueil d'un nouveau joueur : Pomme, bouton unique « Joue ta première partie », Go du jour et première leçon | Apprends le go en jouant | 5 |
 | 2 | `02-lecon.jpg` | Leçon 1, premier écran : la pierre vient d'être posée, ses 4 libertés s'allument | Tu joues dès le premier écran | 6 |
 | 3 | `03-premiere-partie.jpg` | Première partie contre Pomme : Mochi dit le but et annonce le komi de 0,5 | Ta première victoire est possible | 5 |
 | 4 | `04-adversaires.jpg` | Les 9 adversaires illustrés, Pomme et Caillou battus | Neuf adversaires, à ton rythme | 5 |
@@ -144,24 +162,25 @@ Apple (champ « Nouveautés ») et Google (500 caractères max) :
 
 ```
 Bienvenue ! Voici la première version :
-- 7 leçons où tu joues dès le premier écran ;
-- plus de 100 problèmes prouvés ;
-- le Go du jour et ta série, même sans compte ;
-- 9 adversaires, de Pomme à Sensei ;
-- une première victoire possible (komi réduit) ;
+- 35 leçons où tu joues dès le premier écran ;
+- plus de 200 problèmes prouvés, par thème ;
+- Mochi qui t'explique tes coups en partie ;
+- le Go du jour et ta série ;
+- 9 adversaires, de Pomme à Sensei, et tes amis ;
 - une revue qui va droit au moment clé.
 Gratuit, sans publicité. Bonne première pierre !
 ```
 
-(342 caractères.)
+(345 caractères.)
 
 ---
 
 # English
 
-Same rules: warm, direct ("you"), no false claims, no invented numbers, no competitor names. Terms from the glossary.
-
-**Note avant publication** : l'interface anglaise n'est pas complète (`DETECTION_APPAREIL = false` dans `src/content/i18n/index.ts` : accueil, Problèmes, barre du bas, en-têtes et Profil sont traduits ; leçons, partie et revue pas encore). Tant que c'est le cas, on ne publie pas la fiche anglaise, ou on ajoute en tête de la description : « The interface is in French for now; English is coming. » Pour la même raison, aucune capture anglaise n'est produite : elle montrerait des écrans en français sous une légende anglaise. Les légendes sont prêtes ci-dessous ; les captures se feront avec `?lang=en` quand les écrans seront traduits.
+Same rules: warm, direct ("you"), no false claims, no invented numbers, no competitor names. Terms from the glossary
+(`docs/localisation/glossaire.md`). Version 3 (#473): the whole app is now in English (interface, 35 lessons, 231
+puzzles, Mochi's coach, emails, reminders), so this listing can be published. Device language is detected
+(`DETECTION_APPAREIL = true`), and it can be changed in Profile.
 
 ## Name and subtitle
 
@@ -169,7 +188,7 @@ Same rules: warm, direct ("you"), no false claims, no invented numbers, no compe
 |---|---|---|
 | Name (Apple and Google) | Mochi Go: Learn Go | 18 |
 | Subtitle (Apple) | Playable lessons and free AI | 28 |
-| Promotional text (Apple) | 7 lessons where you play from the very first screen. Over 100 proven puzzles. And a game review that goes straight to the key moment. | 133 |
+| Promotional text (Apple) | 35 lessons where you play from the very first screen. Over 200 proven puzzles. And Mochi explains your moves during the game. | 125 |
 
 "Go" alone is hard to find in English search. Alternative name to test: "Mochi Go: Learn Baduk, Weiqi" (28).
 
@@ -181,9 +200,9 @@ Same rules: warm, direct ("you"), no false claims, no invented numbers, no compe
 
 ## Short description (Google Play)
 
-> Learn Go by playing: 7 lessons, 100+ puzzles and a strong AI. Free, no ads.
+> Learn Go by playing: 35 lessons, 200+ puzzles and a strong AI. Free, no ads.
 
-(75 characters)
+(76 characters)
 
 ## Keywords (App Store)
 
@@ -199,42 +218,50 @@ baduk,weiqi,igo,board game,chess,strategy,tsumego,puzzle,rules,beginner,katago,A
 Go has been played for over 2,500 years. The rules take a minute. Here, you learn them by playing.
 
 PLAY FROM THE VERY FIRST SCREEN
-7 short lessons with Mochi. No pages to read: from the first screen, you place your stone and see what happens. Every Go word (atari, ko, komi) is explained the first time it shows up. The last lesson teaches you how to count the score.
+35 short lessons with Mochi, in 6 chapters: the basics, the opening, capturing and saving, life and death, the endgame, good shape. No pages to read: you place your stone and see what happens. Every Go word (atari, ko, komi) is explained the first time it shows up.
+
+MOCHI HAS YOUR BACK DURING THE GAME
+In your first games, Mochi tells you when your group is in atari or when you missed a capture. Mochi never plays for you, and you can turn the coach off.
 
 YOUR FIRST WIN IS WITHIN REACH
-Your first game is against Pomme, a beginner like you, on a small 9 × 9 board. For your first 3 games, komi (the points given to White because Black plays first) is 0.5 instead of 6.5. Mochi tells you, then the usual komi comes back.
+Your first game is against Pomme, a beginner like you, on a small 9 × 9 board. For your first 3 games, komi (the points given to White, who plays second) is 0.5 instead of 6.5.
 
-OVER 100 PUZZLES, NO END IN SIGHT
-Capture, escape, connect, make two eyes. Every solution is proven against every defense: if your answer is right, it really works. After each puzzle, another one is waiting.
+OVER 200 PUZZLES, BY THEME
+Capture, save, life and death, connect and cut, endgame, tesuji. Every solution is proven against every defense: if your answer is right, it really works. Your mistakes come back at the right time, so they stick.
 
 DAILY GO AND YOUR STREAK
-One puzzle for everyone, every day. Solve it and your streak starts on day one, no account needed. Share your result without spoiling the answer. Missed a day? A freeze can protect your streak.
+One puzzle for everyone, every day. Share your result without spoiling the answer. Missed a day? A freeze can protect your streak.
 
-9 ILLUSTRATED OPPONENTS
-From Pomme (20 kyu) to Sensei (1 dan). Each one has a portrait and a personality. Beat one, and the next one opens up.
+9 OPPONENTS, AND YOUR FRIENDS
+From Pomme (20 kyu) to Sensei (1 dan), each with a portrait and a personality. Challenge your friends with a link too, at your own pace: 3 days per move.
 
 A STRONG AI, ON YOUR DEVICE
-The strongest opponents are played by KataGo, an open-source Go AI. It runs on your phone, for free, even offline once the AI is downloaded.
+The strongest opponents are played by KataGo, an open-source Go AI. It runs on your phone, even offline once the AI is downloaded.
 
 AN HONEST GAME REVIEW
-After the game, the review goes straight to the key moment: the move that cost you the most, with the points lost. Replay it from that position. No fake praise: if you lost, Mochi shows you where. Mid-game, "Who's ahead?" shows you the territories.
+After the game, the review goes straight to the key moment: the move that cost you the most, with the points lost. Replay it from that position. No fake praise.
 
 FOR EVERYONE
 - Free, with no ads.
-- Play without creating an account.
+- Try it without an account: 3 games, the first 3 lessons and the Daily Go. Then a free account keeps your progress.
 - Play with the keyboard, with screen reader announcements, and zoom up to 200%.
 - Dark and light modes, large touch targets, reduced motion respected.
+- In English and French.
 
 Do you play chess or board games? You'll love Go. Place your first stone.
 ```
 
-(1 947 characters.)
+(2 128 characters.)
 
-## The 6 screenshots (captions ready, images after the English UI)
+## The 6 screenshots
+
+Captions below. Images: same screens as the French set, with `?lang=en` (`e2e/captures-stores.spec.ts`, French only
+for now: add `en` to its loop, then save to `docs/marketing/stores/captures/en/`). The English screens were checked on
+08/10/2026 at 390 and 320 px, dark and light (`e2e/anglais-ecrans.spec.ts`): nothing overflows or gets cut.
 
 | # | Screen | Caption | Words |
 |---|---|---|---|
-| 1 | Home: Pomme, single button "Play your first game", Daily Go, "Lesson 1 of 7" | Learn Go by playing | 4 |
+| 1 | Home: Pomme, single button "Play your first game", Daily Go, first lesson | Learn Go by playing | 4 |
 | 2 | Lesson 1, first screen: stone placed, its 4 liberties light up | Play from the very first screen | 6 |
 | 3 | First game vs Pomme: Mochi explains the goal and the 0.5 komi | Your first win is within reach | 6 |
 | 4 | The 9 illustrated opponents, Pomme and Caillou beaten | Nine opponents, at your pace | 5 |
@@ -245,16 +272,16 @@ Do you play chess or board games? You'll love Go. Place your first stone.
 
 ```
 Welcome! Here's our first version:
-- 7 lessons where you play from the very first screen;
-- over 100 proven puzzles;
-- Daily Go and your streak, even without an account;
-- 9 opponents, from Pomme to Sensei;
-- a first win within reach (reduced komi);
+- 35 lessons where you play from the very first screen;
+- over 200 proven puzzles, by theme;
+- Mochi explains your moves during the game;
+- Daily Go and your streak;
+- 9 opponents, from Pomme to Sensei, and your friends;
 - a game review that goes straight to the key moment.
 Free, no ads. Enjoy your first stone!
 ```
 
-(341 characters.)
+(347 characters.)
 
 ---
 
@@ -262,7 +289,7 @@ Free, no ads. Enjoy your first stone!
 
 | Action | Coût | Indicateur visé | Mesure |
 |---|---|---|---|
-| Fiches v2 FR, puis EN quand l'interface anglaise est complète | 0 € (temps interne) | Conversion de la fiche (vues vers installations) : viser 30 % sur l'App Store | App Store Connect > Analytics ; Play Console > Acquisition de la fiche |
+| Fiches v3 FR et EN (interface anglaise complète, #473) | 0 € (temps interne) | Conversion de la fiche (vues vers installations) : viser 30 % sur l'App Store | App Store Connect > Analytics ; Play Console > Acquisition de la fiche |
 | Test du sous-titre v2 contre v1 (A/B) | 0 € | + 10 % de conversion relative | « Product Page Optimization » (Apple), « Tests de fiche » (Google), 2 semaines par test |
 | Captures 1 et 2 en tête (premier geste) | 0 € | Part des installations qui posent une première pierre dans la minute : 90 % (charte) | PostHog, événement `premiere_pierre` (propriété secondes) |
 | Capture 3 et texte « première victoire » | 0 € | Part des 3 premières parties gagnées, puis rétention J1 (45 %, charte) | PostHog : résultat des parties contre l'ordi (rang 0 à 2), cohortes J1 |

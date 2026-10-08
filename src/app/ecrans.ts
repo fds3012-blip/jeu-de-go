@@ -67,6 +67,8 @@ const lentes = charger(() => import('./Lentes'));
 const carrousel = charger(() => import('../ui/Carrousel'));
 // #364 : partie partagée par lien (`/partie#JETON`), ouverte seulement par un lien : pas de préchargement.
 const partagee = charger(() => import('./PartiePartagee'));
+// #469 : séance « Révisions du jour », ouverte depuis la carte de l'accueil.
+const revisions = charger(() => import('./SeanceRevisions'));
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function ecran<M, K extends keyof M>(importer: () => Promise<M>, nom: K): M[K] extends ComponentType<any> ? M[K] : never {
@@ -92,6 +94,7 @@ export const VeilleFile = ecran(direct, 'VeilleFile');
 export const Lentes = ecran(lentes, 'Lentes');
 export const CarrouselAdversaires = ecran(carrousel, 'CarrouselAdversaires');
 export const PartiePartagee = ecran(partagee, 'PartiePartagee');
+export const SeanceRevisions = ecran(revisions, 'SeanceRevisions');
 
 /**
  * La partie est l'action principale de l'accueil : son code part tout de suite (≈ 20 Ko gzip avec la revue),
@@ -99,6 +102,11 @@ export const PartiePartagee = ecran(partagee, 'PartiePartagee');
  */
 export function prechargerPartie(): void {
   partie().catch(() => {});
+}
+
+/** #469 : la séance des révisions, préchargée quand la carte « Révisions du jour » est sur l'accueil. */
+export function prechargerRevisions(): void {
+  revisions().catch(() => {});
 }
 
 /** Télécharge tous les écrans en tâche de fond. */

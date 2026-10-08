@@ -16,12 +16,25 @@ import type { Cadence } from '../go/pendule';
 export interface Settings {
   theme: 'auto' | 'dark' | 'light'; confirmTouch: boolean; size: 9 | 13 | 19; sound: boolean; vibrations: boolean; celebrations: boolean; aide: ReglageAide;
   coordonnees: boolean; dernierCoup: boolean; numerosRevue: boolean; cadence: Cadence; serieVisible: boolean;
+  /** Coach Mochi pendant les parties contre l'IA (#470). Voir `coachActif`. */
+  coach: ReglageCoach;
+}
+
+/** Coach Mochi (#470) : `auto` = pendant les 10 premières parties (par défaut), `oui` = toujours, `non` = jamais. */
+export type ReglageCoach = 'auto' | 'oui' | 'non';
+/** Parties pendant lesquelles le coach est actif par défaut. */
+export const PARTIES_AVEC_COACH = 10;
+/** Le coach parle-t-il dans cette partie ? `partiesJouees` : parties déjà finies sur l'appareil (compteur de l'accueil). */
+export function coachActif(reglage: ReglageCoach | undefined, partiesJouees: number): boolean {
+  if (reglage === 'oui') return true;
+  if (reglage === 'non') return false;
+  return partiesJouees < PARTIES_AVEC_COACH;
 }
 const KEY = 'go.settings.v1';
 /** Valeurs par défaut (#448 : un réglage jamais changé n'est pas envoyé au serveur). */
 export const DEFAULTS: Settings = {
   theme: 'auto', confirmTouch: true, size: 9, sound: true, vibrations: true, celebrations: true, aide: 'auto',
-  coordonnees: true, dernierCoup: true, numerosRevue: false, cadence: 'normale', serieVisible: true,
+  coordonnees: true, dernierCoup: true, numerosRevue: false, cadence: 'normale', serieVisible: true, coach: 'auto',
 };
 const CADENCES_CONNUES: readonly string[] = ['rapide', 'normale', 'lente'];
 
@@ -31,6 +44,7 @@ export function lireSettings(brut: unknown): Settings {
   const s = { ...DEFAULTS, ...o } as Settings;
   for (const k of ['coordonnees', 'dernierCoup', 'numerosRevue', 'serieVisible'] as const) if (typeof s[k] !== 'boolean') s[k] = DEFAULTS[k];
   if (!CADENCES_CONNUES.includes(s.cadence)) s.cadence = DEFAULTS.cadence;
+  if (!(['auto', 'oui', 'non'] as unknown[]).includes(s.coach)) s.coach = DEFAULTS.coach;
   return s;
 }
 

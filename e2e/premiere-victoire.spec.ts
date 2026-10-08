@@ -12,7 +12,7 @@ test('première partie : komi 0,5 annoncé et expliqué, pas de barre d’avanta
 
   // Mochi dit le but, puis explique le komi en une phrase.
   const annonce = page.locator('.annonce-komi');
-  await expect(annonce).toHaveText('Le komi, ce sont des points donnés à Blanc parce que Noir commence. Pour tes premières parties, il est de 0,5.');
+  await expect(annonce).toHaveText(/^Le komi\s: des points donnés à Blanc, qui joue en second\. Pour tes premières parties, il est de 0,5\.$/);
   await expect(page.getByText(/Le but\s: entourer plus de territoire que Pomme/)).toBeVisible();
   await expect(page.locator('.avantage')).toHaveCount(0);
 
@@ -29,7 +29,7 @@ test('première partie : komi 0,5 annoncé et expliqué, pas de barre d’avanta
   // #251 : cette partie finie sur un plateau vide ne compte pas parmi les 3 parties à komi réduit.
   // La partie suivante est encore la « première » : komi 0,5 expliqué, sans barre d'avantage. Le but n'est pas redit.
   await page.locator('.cta').click();
-  await expect(annonce).toHaveText('Le komi, ce sont des points donnés à Blanc parce que Noir commence. Pour tes premières parties, il est de 0,5.');
+  await expect(annonce).toHaveText(/^Le komi\s: des points donnés à Blanc, qui joue en second\. Pour tes premières parties, il est de 0,5\.$/);
   await expect(page.getByText(/Le but\s: entourer/)).toHaveCount(0);
   await expect(page.locator('.avantage')).toHaveCount(0);
   const parties = await page.evaluate(() => JSON.parse(localStorage.getItem('go.parties.v1') ?? '{}'));

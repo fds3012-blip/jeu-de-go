@@ -29,9 +29,9 @@ import {
 } from './revue';
 import { candidatsUniques, classerCoups, confirmeUnique, coupsCles, lignesBilan, NOTES_COURBE, type CoupNote } from './notation';
 import { avanceVue, cleSuivante, commentaire, proverbePour } from './parcours';
-import { readLocal, writeLocal } from './hooks';
 import { noterActivite } from './xp';
-import { coupAccepte, creerErreur, ERREURS_KEY, garderRatee, lireErreurs, peutEnFaireUnProbleme, type ErreurGardee } from './erreurs';
+import { coupAccepte, creerErreur, peutEnFaireUnProbleme, type ErreurGardee } from './erreurs';
+import { garderErreurRatee } from './revisionsAppareil';
 import { erreursARejouer, type ErreurARejouer } from './rejouerErreurs';
 import { RejouerErreurs } from './RejouerErreurs';
 import { usePreferences } from './settings';
@@ -263,7 +263,8 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
       noterActivite('erreurs'); // #369 : objectif « erreurs rejouées » de la semaine
       track(EVENTS.erreurRejouee, { reussi: !!apres, source: 'revue', taille: size, coup: pb.coup, rates: 0, reponses: pb.reponses.length });
       // Ratée au premier essai : elle revient demain dans « Tes erreurs à rejouer ».
-      if (!apres) writeLocal(ERREURS_KEY, garderRatee(lireErreurs(readLocal<unknown>(ERREURS_KEY, [])), pb, new Date()));
+      // #469 : elle entre dans la révision espacée (J+1), comptée sur l'accueil et gardée sur le compte.
+      if (!apres) garderErreurRatee(pb);
     }
     setRejeu({ ...rejeu, essais: rejeu.essais + 1, faux: apres ? null : p, n: rejeu.n + 1, apres });
   }

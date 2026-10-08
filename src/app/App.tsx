@@ -1,11 +1,13 @@
 import { Suspense, lazy, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 // Écrans chargés à la demande (perf, #323) : seul l'accueil est dans le JS initial.
 import { CreerCompte, DefiArrivee, DefiPartie, DefisEcran, Direct, Game, LearnHome, Lentes, LessonPlayer, PartiePartagee, Placement, Profil, PseudoObligatoire, Puzzles, SeriePratique, VeilleFile, apresPremierEcran } from './ecrans';
+import { SeanceRevisions, prechargerRevisions } from './ecrans';
+import { ERREURS_KEY, EVENEMENT_REVISIONS, REVISIONS_KEY, compterDus } from './revisionEspacee';
 // #16 : l'accueil ne lit que l'index léger des leçons ; leur contenu arrive avec les écrans Apprendre et leçon.
 import { CHAPITRES, LESSONS } from '../content/leconsResume';
 import { LESSONS_KEY, readLocal, writeLocal, useGelsServeur, useLessonProgress, useOnline, useProfil, usePseudo, useSerie, useSession } from './hooks';
 import { COMPTES, chargerSupabase, useSupabase } from '../data/client';
-import { useSettings, useStored } from './settings';
+import { coachActif, useSettings, useStored } from './settings';
 import { aideActive } from './partie';
 import { Bubble } from '../ui/Mochi';
 import { Sceau } from '../ui/Sceau';
@@ -290,6 +292,17 @@ export function App() {
   const [placementBrut, setPlacementBrut] = useStored<unknown>(PLACEMENT_KEY, null);
   const placement = lirePlacement(placementBrut);
   const [enPlacement, setEnPlacement] = useState(false);
+  // #469 : séance « Révisions du jour » ouverte, et éléments dus (recomptés après chaque essai et à chaque écran).
+  const [seanceRevisions, setSeanceRevisions] = useState(false);
+  const [cleRevisions, setCleRevisions] = useState(0);
+  useEffect(() => {
+    const f = () => setCleRevisions(n => n + 1);
+    window.addEventListener(EVENEMENT_REVISIONS, f);
+    return () => window.removeEventListener(EVENEMENT_REVISIONS, f);
+  }, []);
+  const revisionsDues = useMemo(() => compterDus(readLocal<unknown>(ERREURS_KEY, []), readLocal<unknown>(REVISIONS_KEY, null), new Date()),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- relecture voulue après un essai (événement) et à chaque écran
+    [cleRevisions, tab, seanceRevisions]);
   const ouverts = ouvertsApresPlacement(OPPONENTS, placement, OUVERTS_D_OFFICE);
   // #436 : pendant le repli, l'IA proposée par Mochi (la plus proche de la cote), même si l'échelle ne l'a pas encore ouverte.
   const advRepli = repli ? OPPONENTS.find(o => o.id === repli.contre) : undefined;
@@ -538,6 +551,7 @@ export function App() {
     setDuJourDirect(false);
     if (t === 'problemes' && tab === 'problemes') setRacineProblemes(n => n + 1);
     setDefi(null); setDirect(false); setLente(false); setRepli(null); setEcranCompte(null); setAnnonceGel(null); setRetourSerie(null); setEnPlacement(false); setTab(t); setPlaying(false); setLessonId(null); setSerie3(null); setVueProfil('menu'); setPartagee(null); window.scrollTo({ top: 0 });
+    setSeanceRevisions(false); // #469
   };
 
   // Reprise de l'action demandée, dès que le compte est complet ; `compte_cree` quand un compte sans pseudo apparaît.
@@ -604,9 +618,22 @@ export function App() {
   // Robustesse (#325) : écran d'erreur à la place d'un écran blanc ; « Retour à l'accueil » change d'onglet sans recharger.
   const versAccueil = useCallback(() => {
     setDefi(null); setDirect(false); setLente(false); setRepli(null); setEcranCompte(null); setEnPlacement(false); setTab('jouer'); setPlaying(false); setLessonId(null); setSerie3(null); setVueProfil('menu'); setPartagee(null);
+    setSeanceRevisions(false); // #469
     window.scrollTo({ top: 0 });
   }, []);
   const online = useOnline();
+  // #469 : avec un compte, la file de révision espacée se synchronise entre ses appareils (le plus récent gagne, élément
+  // par élément). Module chargé à la demande, après le premier écran ; arrêté à la déconnexion. Sans compte : l'appareil.
+  useEffect(() => {
+    const db = supabase;
+    if (!db || !compteId) return;
+    let fini = false;
+    let arreter: (() => void) | undefined;
+    const id = window.setTimeout(() => {
+      void import('../data/revisions').then(m => { if (!fini) arreter = m.demarrerSynchroRevisions(db); }).catch(() => undefined);
+    }, 1200);
+    return () => { fini = true; window.clearTimeout(id); arreter?.(); };
+  }, [supabase, compteId]);
   // #358 : avec un compte complet (pseudo choisi), les parties de l'appareil partent sur le compte, en arrière-plan :
   // à l'ouverture, à la connexion, à la création du compte (parties jouées pendant l'essai), au retour du réseau et
   // après chaque partie. Un envoi raté est refait la fois suivante. Module chargé à la demande (#323).
@@ -718,9 +745,15 @@ export function App() {
           onExit={() => { setIntro(false); setPlaying(false); setResultat(null); setRepli(null); }}
           onImporter={() => { if (!garde({ quoi: 'import' }, { quoi: 'importer' })) return; setPlaying(false); setResultat(null); setTab('profil'); setVueProfil('importer'); window.scrollTo({ top: 0 }); }}
           onResult={onResult} fin={finEcran} celebrer={settings.celebrations} aide={aideActive(settings.aide, adv.id)} portrait={playing === 'ordi' ? <Sceau id={adv.id} taille={44} /> : undefined}
-          reglages={{ son: settings.sound, modifier: set }} />
+          reglages={{ son: settings.sound, modifier: set }}
+          // Coach Mochi (#470) : contre l'IA de l'échelle seulement, 10 premières parties par défaut.
+          coach={playing === 'ordi' ? coachActif(settings.coach, parties.n) : undefined} />
       </>
     );
+  } else if (tab === 'jouer' && seanceRevisions) {
+    // #469 : séance « Révisions du jour » (5 éléments au plus), ouverte depuis la carte de l'accueil.
+    screen = <SeanceRevisions confirmTouch={settings.confirmTouch} celebrer={settings.celebrations} compte={!!compteId}
+      onFin={() => { setSeanceRevisions(false); window.scrollTo({ top: 0 }); }} />;
   } else if (tab === 'jouer' && enPlacement) {
     screen = <Placement adversaires={OPPONENTS} confirmTouch={settings.confirmTouch}
       chapitre={kyu => CHAPITRES[chapitreConseille(kyu, CHAPITRES.length)]?.titre ?? ''}
@@ -834,6 +867,8 @@ export function App() {
           setDefi({ vue: 'liste' }); window.scrollTo({ top: 0 });
         } } : undefined}
         onPlacement={proposerPlacement(parties.n, placement, ouverture.retours) ? ouvrirPlacement : undefined}
+        // #469 : « Révisions du jour (N) », carte secondaire dans « Aujourd'hui » (jamais au premier lancement).
+        revisions={revisionsDues > 0 && !home.nouveau ? { n: revisionsDues, ouvrir: () => { setSeanceRevisions(true); window.scrollTo({ top: 0 }); } } : undefined}
         // #440 : parties lentes où c'est à toi (« À toi de jouer (N) », point d'or) et recherche en cours.
         lentes={COMPTES && etat === 'complet' ? {
           aJouer: lentesEnAttente.length,
@@ -854,17 +889,26 @@ export function App() {
     );
   }
 
-  const accueilVisible = tab === 'jouer' && !playing && !enPlacement && !enDefi && !enDirect && !enLente && !enPartagee && !ecranPlein;
+  const accueilVisible = tab === 'jouer' && !playing && !enPlacement && !enDefi && !enDirect && !enLente && !enPartagee && !ecranPlein && !seanceRevisions;
   // #465 (WCAG 2.4.2) : le titre de l'onglet du navigateur suit l'écran affiché.
   const leconOuverte = leconEssai ?? lesson;
   const ecranTitre: EcranTitre = ecranPlein ? { quoi: 'compte' }
     : enDirect ? { quoi: 'direct' } : enLente ? { quoi: 'lente' } : enPartagee ? { quoi: 'partagee' }
       : enDefi ? { quoi: defi.vue === 'partie' ? 'enLigne' : 'defi' }
         : tab === 'jouer' && playing ? { quoi: 'partie', contre: playing === 'deux' ? null : playing === 'guidee' ? mochiGuide.nom : adv.nom, guidee: playing === 'guidee' }
-          : tab === 'jouer' ? (enPlacement ? { quoi: 'placement' } : { quoi: 'accueil' })
+          : tab === 'jouer' ? (enPlacement ? { quoi: 'placement' } : seanceRevisions ? { quoi: 'revisions' } : { quoi: 'accueil' })
             : tab === 'apprendre' && leconOuverte && !serie3 ? { quoi: 'lecon', titre: leconOuverte.title }
               : { quoi: 'onglet', onglet: tab };
   const titreDocument = titreEcran(ecranTitre);
+  // #469 : carte « Révisions du jour » montrée : mesurée une fois par ouverture ; la séance se précharge.
+  const revisionVue = useRef(false);
+  useEffect(() => {
+    if (!accueilVisible || home.nouveau || revisionsDues === 0) return;
+    prechargerRevisions();
+    if (revisionVue.current) return;
+    revisionVue.current = true;
+    track(EVENTS.revisionCarteVue, { n: revisionsDues });
+  }, [accueilVisible, revisionsDues, home.nouveau]);
   useEffect(() => { document.title = titreDocument; }, [titreDocument]);
   // Accueil v3 : `premier_ecran_vu`, une fois, quand l'accueil est affiché et utilisable (page chargée, polices prêtes).
   // `nouveau` : tout premier lancement sur l'appareil (aucune partie, aucun retour). Dénominateur des 60 premières secondes.

@@ -1,0 +1,21 @@
+{
+  "id": "/",
+  "name": "Mochi Go: learn and play Go",
+  "short_name": "Mochi Go",
+  "description": "Learn and play Go with Mochi Go: interactive lessons, puzzles and games.",
+  "lang": "en",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1C1916",
+  "theme_color": "#1C1916",
+  "categories": ["games", "education"],
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

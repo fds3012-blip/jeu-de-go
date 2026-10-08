@@ -94,6 +94,13 @@ const aides = () => [
   { valeur: 'non', libelle: t('profil.aide.non') },
 ] as const;
 
+// Coach Mochi en partie (#470) : « 10 premières parties » par défaut.
+const coachs = () => [
+  { valeur: 'auto', libelle: t('profil.coach.auto') },
+  { valeur: 'oui', libelle: t('profil.coach.oui') },
+  { valeur: 'non', libelle: t('profil.coach.non') },
+] as const;
+
 interface Props {
   vue: VueProfil;
   onVue: (v: VueProfil) => void;
@@ -339,6 +346,8 @@ function Reglages({ settings, set }: Pick<Props, 'settings' | 'set'>) {
       <div className="lignes">
         <LigneInterrupteur icone={<IconeReglage id="confirmer" />} libelle={t('profil.confirmer')} aide={t('profil.confirmerAide')} actif={settings.confirmTouch} onChange={v => regler('confirmTouch', v)} />
         <LigneChoix icone={<IconeReglage id="aide" />} libelle={t('profil.aide')} options={aides()} valeur={settings.aide} onChange={a => regler('aide', a)} />
+        <LigneChoix icone={<IconeReglage id="aide" />} libelle={t('profil.coach')} options={coachs()} valeur={settings.coach}
+          onChange={c => { regler('coach', c); track(c === 'non' ? EVENTS.coachCoupe : EVENTS.coachActive, { depuis: 'reglages', valeur: c }); }} />
       </div>
       <h3 className="lignes-titre">{tk('reglages.groupe.rythme')}</h3>
       <div className="lignes">

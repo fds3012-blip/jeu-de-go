@@ -55,7 +55,7 @@ describe('équilibrage des premières parties contre l’ordi (#160)', () => {
   });
 
   it('annonce : le komi est expliqué la première fois, puis rappelé, puis son retour à 6,5 est dit', () => {
-    expect(annonceKomi(0, 0.5)).toBe(`Le komi, ce sont des points donnés à Blanc parce que Noir commence. Pour tes premières parties, il est de 0,5.`);
+    expect(annonceKomi(0, 0.5)).toBe(`Le komi\u202f: des points donnés à Blanc, qui joue en second. Pour tes premières parties, il est de 0,5.`);
     expect(annonceKomi(1, 0.5)).toBe('Cette partie encore, le komi est de 0,5 point.');
     expect(annonceKomi(2, 0.5)).toBe('Dernière partie avec un komi de 0,5 point.');
     expect(annonceKomi(3, 6.5)).toBe('Le komi passe à 6,5 points, sa valeur habituelle.');

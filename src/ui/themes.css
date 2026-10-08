@@ -1,0 +1,28 @@
+/* Problèmes par thème (#471) : vignettes à plat (actions secondaires), deux colonnes dès 320 px. */
+.themes { margin-top: var(--space-5); }
+.themes h3 { margin: 0; font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: var(--fs-l); letter-spacing: var(--tracking-titre); }
+.themes-aide { margin: 2px 0 0; color: var(--muted); font-size: var(--fs-legende); line-height: 1.3; }
+/* Page courte (au plus deux écrans, e2e/problemes.spec.ts) : une ligne par vignette, cible tactile de 52 px. */
+.themes-grille { list-style: none; margin: var(--space-3) 0 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); }
+.theme-carte { display: flex; align-items: center; gap: var(--space-2); width: 100%; height: 100%; min-height: 52px; padding: var(--space-2) var(--space-3) var(--space-2) var(--space-2);
+  background: var(--surface); color: var(--text); border: 1.5px solid var(--line); border-radius: var(--radius-s);
+  text-align: left; font: inherit; cursor: pointer; transition: background-color var(--duree-rapide) var(--ease); }
+.theme-carte:active { background: var(--surface-2); }
+.theme-carte:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.theme-motif { flex: none; width: 32px; }
+.theme-motif .mini-goban { border-radius: 7px; box-shadow: 0 2px 0 #7A4A1C; }
+.theme-nom { display: flex; flex-direction: column; min-width: 0; }
+.theme-nom b { font-size: var(--fs-s); line-height: 1.2; overflow-wrap: anywhere; }
+/* Le record se lit en or, sous le nom : un record de ce mode, jamais un total (#137). */
+.theme-record { color: var(--recompense-texte); font-size: var(--fs-legende); font-weight: var(--fw-bold); line-height: 1.25;
+  font-variant-numeric: tabular-nums; }
+
+/* Lecteur : « Capturer » puis la pastille des réussites d'affilée, chiffres à chasse fixe (rien ne bouge). */
+.theme-surtitre { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.theme-affilee { display: inline-flex; align-items: center; gap: 6px; padding: 1px 8px; border-radius: 999px; background: var(--surface-2);
+  color: var(--text); font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; }
+.theme-affilee.record { background: color-mix(in srgb, var(--or) 18%, transparent); color: var(--recompense-texte); }
+/* Nouveau record : rare, la pastille se pose (opacité et échelle, 200 ms). Mouvements réduits : --duree vaut 0 (tokens.css). */
+.theme-affilee.record { animation: theme-record var(--duree) cubic-bezier(.23, 1, .32, 1) both; }
+@keyframes theme-record { from { opacity: 0; transform: scale(.94); } }
+@media (prefers-reduced-motion: reduce) { .theme-affilee.record { animation: none; } }

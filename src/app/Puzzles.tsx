@@ -38,6 +38,8 @@ import { lireReserveAppareil } from './gelAppareil';
 import { inviterCompte, serieAffichee } from './serieLocale';
 import { goDuJourFaitAppareil, validerDefi } from './defiAppareil';
 import { RevisionDuJour } from '../ui/RevisionDuJour';
+import { problemesSuivis } from './revisionEspacee';
+import { lireEtatAppareil, noterProblemeRate } from './revisionsAppareil';
 import { noterRediteAppareil, repriseDeLeconFaite, suivreEnRevisionAppareil } from './rediteAppareil';
 // `t` désigne déjà un palier dans ce fichier : la traduction s'appelle `tr` (#167).
 import { t as tr } from '../content/i18n/secondaires';
@@ -49,6 +51,8 @@ import { lireMeilleurCourse } from './course';
 import { Paysage } from '../ui/Paysage';
 import { AmisDuJour } from '../ui/AmisDuJour';
 import { noterGoDuJour, type ResultatEssai } from '../data/emulation';
+import { SERIES_THEMES_KEY, nettoyerSeries, noterSerie, prochainDeSerie, seriesDisponibles, type EtatSeriesThemes, type SerieTheme } from './seriesThemes';
+import { SurtitreTheme, VignettesThemes } from '../ui/SeriesThemes';
 
 const LOCAL_PUZZLES = parsePuzzles(ALL_PUZZLES);
 export const SOLVED_KEY = 'go.problemes.v1';
@@ -132,6 +136,10 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   const [tous, setTous] = useState(false);
   // Course aux problèmes (#287) : consigne, course et fin, à la place de la liste.
   const [course, setCourse] = useState(false);
+  // Problèmes par thème (#471) : série ouverte, réussites d'affilée et record de chaque série (sur l'appareil).
+  const [serieTheme, setSerieTheme] = useState<SerieTheme | null>(null);
+  const [etatThemes, setEtatThemes] = useState<EtatSeriesThemes>(() => nettoyerSeries(readLocal<unknown>(SERIES_THEMES_KEY, null)));
+  const [recordTheme, setRecordTheme] = useState(false);
   const [statsTick, setStatsTick] = useState(0);
   // #369 : essais du Go du jour d'aujourd'hui notés par le serveur, dans l'ordre (un envoi après l'autre), pour le
   // classement entre amis. `envoiDuJour` : la réussite envoyée ; « Tes amis aujourd'hui » se lit après elle.
@@ -149,7 +157,7 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   useEffect(() => {
     if (racineVue.current === racine) return;
     racineVue.current = racine;
-    setOpenId(null); setTous(false); setCourse(false);
+    setOpenId(null); setTous(false); setCourse(false); setSerieTheme(null);
   }, [racine]);
 
   // Problèmes : la base pour un joueur connecté (RLS), la copie locale sinon.
@@ -193,6 +201,11 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   // Révision du jour (#251, M2) : les problèmes réussis et ceux vus avec la réponse ; ces derniers à part, pour le libellé.
   const vusSeuls = useMemo(() => new Set(Object.keys(vus).filter(id => !solved.has(id))), [vus, solved]);
   const aReviser = useMemo(() => new Set([...solved, ...vusSeuls]), [solved, vusSeuls]);
+  // #469 : un problème raté au premier essai est suivi par la révision espacée (« Révisions du jour ») : la Révision
+  // du jour (#199) ne le prend pas en plus. Relu au retour à la liste (`openId`).
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- relecture voulue à chaque retour à la liste
+  const suivisFile = useMemo(() => problemesSuivis(lireEtatAppareil()), [openId]);
+  const reussisRevision = useMemo(() => new Set([...aReviser].filter(id => !suivisFile.has(id))), [aReviser, suivisFile]);
 
   const tiers = useMemo(() => paliers(list, solved), [list, solved]);
   // Palier complet : une micro-fête en or, une seule fois par palier (réglage Célébrations et mouvements réduits respectés).
@@ -217,6 +230,22 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   // « Continuer » à ta mesure (#284) : ni le Go du jour ni la Révision du jour (réussis, vus) n'y entrent.
   const aMesure = (eviter: string | undefined) =>
     prochainAMesure(list, cote, { aReviser, goDuJour: daily?.id, jour: numero, eviter, alea: () => tirage });
+  // #471 : le prochain problème d'une série, à ta mesure, comme « Continuer » (le Go du jour n'y entre pas).
+  const deSerie = (serie: SerieTheme, eviter: string | undefined) =>
+    prochainDeSerie(list, serie, cote, { reussis: aReviser, goDuJour: daily?.id, jour: numero, eviter, alea: () => tirage });
+  const series = useMemo(() => seriesDisponibles(list, daily?.id), [list, daily?.id]);
+  const ouvrirSerie = (serie: SerieTheme) => {
+    if (essai) { essai(); return; }
+    const premier = deSerie(serie, dernierRef.current);
+    if (!premier) return;
+    track(EVENTS.themeOuvert, { theme: serie });
+    setSerieTheme(serie); setRecordTheme(false); setOpenId(premier.id); window.scrollTo({ top: 0 });
+  };
+  const noterTheme = (serie: SerieTheme, ok: boolean) => {
+    const r = noterSerie(etatThemes, serie, ok);
+    setEtatThemes(r.etat); writeLocal(SERIES_THEMES_KEY, r.etat);
+    setRecordTheme(r.nouveauRecord || (ok && recordTheme));
+  };
   const open = list.find(p => p.id === openId) ?? (daily && openId === daily.id ? daily : pzArchive && openId === pzArchive.id ? pzArchive : undefined);
   const duJourOuvert = !!open && (open.id === daily?.id || archive !== null);
   // Un problème ouvert hors Go du jour devient la référence du prochain choix (jamais deux fois de suite, pas de saut).
@@ -232,24 +261,33 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
     // Go du jour d'un autre jour (lien partagé ancien) : ni série ni XP du jour ; ensuite, celui d'aujourd'hui.
     const enArchive = archive !== null && open.id === pzArchive?.id;
     // #284 : le suivant est choisi à ta mesure ; tout réussi, la série infinie de #147 prend le relais.
+    // #471 : dans une série par thème, le suivant reste dans la série.
+    const enSerie = !enArchive && serieTheme !== null && open.id !== daily?.id ? serieTheme : null;
     const nextPz = enArchive && daily && !goDuJourFaitAppareil(numero) ? daily
+      : enSerie ? deSerie(enSerie, open.id)
       : aMesure(open.id) ?? aSuivre(tiers, open, solved);
     const estDuJour = !enArchive && open.id === daily?.id;
     // Seul le premier essai d'un problème jamais réussi ni vu compte pour la cote ; ni le Go du jour ni un lien partagé.
     const note = !estDuJour && !enArchive && !solved.has(open.id) && !vus[open.id];
     return (
       <PuzzlePlayer key={`${open.id}${enArchive ? '-archive' : ''}`} puzzle={open} rang={ordre.indexOf(open) + 1} confirmTouch={confirmTouch}
+        surtitre={enSerie ? <SurtitreTheme serie={enSerie} affilee={etatThemes[enSerie]?.affilee ?? 0} record={recordTheme} /> : undefined}
         signaler={db && userId ? <LienSignalerProbleme db={db} probleme={open.id} onCompte={onCompte} /> : undefined}
         duJour={enArchive ? { numero: archive, serie: 0, defiChange: false, archive: numero, gelGagne: false, celebrer, jalon: null, apprendre: onApprendre }
           : estDuJour ? { numero, serie: serieVivante(serieDuJour, numero), defiChange, gelGagne, celebrer, jalon, apprendre: onApprendre,
             amis: db && userId && envoiDuJour ? <AmisDuJour db={db} numero={numero} apres={envoiDuJour} /> : null } : undefined}
         onEssai={estDuJour ? ok => { if (!ok) noterDuJour('rate'); } : undefined}
         rated={!!db && !!userId && online && !!stats && !stats.attempted.includes(open.id) && !solved.has(open.id)}
-        onPremierEssai={note ? ok => {
+        onPremierEssai={ok => {
+          // #469 : raté au premier essai, il entre dans la révision espacée (« Révisions du jour », J+1).
+          if (!ok && !enArchive) noterProblemeRate(open.id);
+          // #471 : premier essai dans une série par thème, réussi ou non : réussites d'affilée et record.
+          if (enSerie) noterTheme(enSerie, ok);
+          if (!note) return;
           // Mesure de « Continuer » (#284) : réussite au premier essai par tranche de cote. Cote avant l'essai, jamais affichée.
-          track(EVENTS.problemeTermine, { probleme: open.id, cote_joueur: Math.round(cote.cote), cote_probleme: open.difficulty, premier_essai_reussi: ok });
+          track(EVENTS.problemeTermine, { probleme: open.id, cote_joueur: Math.round(cote.cote), cote_probleme: open.difficulty, premier_essai_reussi: ok, ...(enSerie ? { theme: enSerie } : {}) });
           majCote(c => noter(c, open, ok ? 'premier' : 'rate', numero));
-        } : undefined}
+        }}
         onAttempt={async ok => {
           if (!db || !userId) return null;
           const r = await recordPuzzleAttempt(db, open.id, ok);
@@ -288,7 +326,7 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
         }}
         onSolutionVue={essais => track(EVENTS.solutionVue, { probleme: open.id, du_jour: estDuJour, essais })}
         onNext={nextPz ? () => { if (essai && nextPz.id !== daily?.id) { essai(); return; } setArchive(null); setOpenId(nextPz.id); window.scrollTo({ top: 0 }); } : undefined}
-        onExit={() => { setArchive(null); setOpenId(null); }} />
+        onExit={() => { setArchive(null); setOpenId(null); setSerieTheme(null); }} />
     );
   }
 
@@ -368,7 +406,7 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
 
       {/* Révision du jour (#199) : problèmes déjà réussis, repris à J+1, J+3, J+7. Depuis #251 (M2), aussi ceux
           vus avec la réponse : « Retente-le plus tard » (pb.vuTexte), c'est la révision qui le repropose. */}
-      {!essai && <RevisionDuJour liste={list} reussis={aReviser} vus={vusSeuls} confirmTouch={confirmTouch} Lecteur={PuzzlePlayer} onSerie={setSerieDuJour} />}
+      {!essai && <RevisionDuJour liste={list} reussis={reussisRevision} vus={vusSeuls} confirmTouch={confirmTouch} Lecteur={PuzzlePlayer} onSerie={setSerieDuJour} />}
 
       {/* Un seul « Problème suivant », le palier en cours sans total, la grille derrière un lien discret (#196). */}
       <section aria-labelledby="paliers-titre">
@@ -394,6 +432,8 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
         )}
         {!enCours && prochainPz && <Continuer pz={prochainPz} principal={duJourFait} onOpen={() => ouvrirProbleme(prochainPz.id)} />}
         <CarteCourse onOpen={() => { if (essai) { essai(); return; } setCourse(true); window.scrollTo({ top: 0 }); }} />
+        {/* #471 : séries par thème, à plat ; seulement celles qui ont assez de problèmes. */}
+        <VignettesThemes series={series} etat={etatThemes} onOuvrir={ouvrirSerie} />
         <button className="lien lien-tous" onClick={() => { if (essai) { essai(); return; } setTous(true); window.scrollTo({ top: 0 }); }}>
           {tr('pb.tous')}
           <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path d="m9 5 7 7-7 7" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
@@ -627,7 +667,7 @@ interface DuJourInfo {
 /** Temps pendant lequel la réponse de l'adversaire reste sur le plateau après une erreur (#237, N6). */
 const DUREE_ERREUR = 2200;
 
-export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPremierEssai, onEssai, onAttempt, onSolved, onNext, onExit, onSolutionVue, retour, surtitre, exercice = true, signaler }: {
+export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPremierEssai, onEssai, onAttempt, onSolved, onNext, onExit, onSolutionVue, retour, surtitre, suivant, exercice = true, signaler }: {
   puzzle: Puzzle; rang: number; duJour?: DuJourInfo; confirmTouch: boolean; rated: boolean;
   /** Chaque essai joué (coup légal), réussi ou non (#369 : essais du Go du jour comptés par le serveur). */
   onEssai?: (ok: boolean) => void;
@@ -639,6 +679,8 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
   onSolutionVue?: (essais: number) => void;
   /** Série de fin de leçon (#200) : libellé du retour (« Retour au chemin ») et surtitre (« Entraînement » et ses points). */
   retour?: string; surtitre?: ReactNode;
+  /** #469 : libellé du bouton qui mène à la suite (« Révision suivante », « Voir mon bilan ») ; « Problème suivant » sinon. */
+  suivant?: string;
   /** Faux quand l'exercice est fini alors que le lecteur reste affiché (dernier problème d'une série, #250 M9). */
   exercice?: boolean;
   /** #363 : « Cette réponse me semble fausse », montré après un premier essai (ou la suite revue). */
@@ -790,7 +832,7 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
   const lastMove = replay && frames ? frames[replay.frame].lastMove : solvedNow ? answer.p : null;
   const replayDone = !!replay && replay.frame === replay.total;
 
-  const suivantBtn = <button className="cta" onClick={onNext ?? onExit}>{onNext ? tr('pb.suivant') : retour ?? tr('pb.retour')}</button>;
+  const suivantBtn = <button className="cta" onClick={onNext ?? onExit}>{onNext ? suivant ?? tr('pb.suivant') : retour ?? tr('pb.retour')}</button>;
   // #285 : arrivé par un lien sans avoir jamais joué, une seule action après le problème, vers la leçon 1.
   const apprendreBtn = duJour?.apprendre ? <button className="cta vers-lecon-1" onClick={duJour.apprendre}>{tr('arrivee.apprendre')}</button> : null;
   // « Partager » reste l'action secondaire, à plat : l'ami peut renvoyer le défi à son tour.

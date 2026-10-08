@@ -23,7 +23,8 @@ import {
   consigne, ESSAIS, idPartie, jugerEssai, jugerParRecherche, lireParties, marquerPartie, phraseFin, phraseMontre, phrasePasEncore,
   phraseTrouve, score, titreFin, VISITES_JUGE, XP_REJEU_KEY, type ErreurARejouer, type Jugement, type ResultatRejeu,
 } from './rejouerErreurs';
-import { creerErreur, ERREURS_KEY, garderRatee, lireErreurs } from './erreurs';
+import { creerErreur } from './erreurs';
+import { garderErreurRatee } from './revisionsAppareil';
 import { readLocal, writeLocal } from './hooks';
 import { gagnerXp, noterActivite } from './xp';
 import { useSettings } from './settings';
@@ -76,7 +77,7 @@ export function RejouerErreurs({ sgf, positions, komi, analyses, erreurs, joueur
     // Pas trouvée : elle rejoint « Tes erreurs à rejouer » (révision espacée, #77) et revient demain.
     if (!trouvee) {
       const pb = creerErreur({ avant, joue: e.joue, coup: e.coup, note: e.note, meilleur: e.meilleur, perte: e.perte, analyse: analyses[e.coup - 1], adversaire }, new Date());
-      if (pb) writeLocal(ERREURS_KEY, garderRatee(lireErreurs(readLocal<unknown>(ERREURS_KEY, [])), pb, new Date()));
+      if (pb) garderErreurRatee(pb); // #469 : révision espacée, comptée sur l'accueil
     }
   }
 
