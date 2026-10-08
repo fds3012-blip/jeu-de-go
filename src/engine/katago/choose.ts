@@ -3,6 +3,7 @@
 import { neighbors, type Position } from '../../go/rules';
 import { candidates, type KataGoLevel, type Style } from '../simple';
 import type { Analysis, MoveInfo } from './search';
+import { plausibles } from '../ouverture';
 
 /** Bonus multiplicatif d'un coup selon le style (1 = neutre). */
 export function styleBonus(pos: Position, move: number, style: Style): number {
@@ -52,12 +53,13 @@ const PRIOR_MIN = 0.001;
 /**
  * Coup tiré selon la politique du réseau, avec une température (#179) : une erreur « humaine », plausible.
  * Jamais la passe, jamais dans ses propres yeux, jamais en auto-atari sans capture (`candidates`), et jamais un
- * coup que le réseau juge absurde (politique sous `PRIOR_MIN`), sauf s'il ne reste rien d'autre.
+ * coup que le réseau juge absurde (politique sous `PRIOR_MIN`), sauf s'il ne reste rien d'autre. Ni, comme le
+ * moteur simple (#488), un coup hors des coups plausibles : 3e–4e ligne à l'ouverture, pas de 1re ligne sans raison.
  * Sans politique (moteur ancien ou de secours) : les priors de l'analyse, sinon un candidat uniforme.
  * -1 si aucun coup ne convient.
  */
 export function coupSelonPolitique(a: Analysis, pos: Position, temperature = 1, rand: () => number = Math.random): number {
-  const cands = candidates(pos, false).map(c => c.move);
+  const cands = plausibles(pos, candidates(pos, false).map(c => c.move), m => m);
   if (!cands.length) return -1;
   const priors = new Map<number, number>();
   if (a.policy && a.policy.length === pos.size * pos.size + 1) for (const m of cands) priors.set(m, a.policy[m]);
