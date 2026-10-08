@@ -289,6 +289,3 @@
 @media (prefers-reduced-motion: reduce) {
   .accueil-revele .modes, .accueil-revele .tuiles { animation: accueil-revele-fondu 200ms ease both; }
 }
-/* #487 : accueil épuré sur un grand écran (390 × 844) : la place laissée par les tuiles se partage au-dessus et
-   au-dessous, au lieu d'un vide sous le lien qui faisait croire à un écran pas fini. En 320 × 568, rien ne change. */
-.accueil[data-epure] { justify-content: center; }
