@@ -691,6 +691,8 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
   // #365 : « Montrer la série » éteint, pas de série sur la réussite du Go du jour ni dans le partage.
   const { serieVisible } = usePreferences();
   const start = useMemo(() => startOf(puzzle), [puzzle]);
+  // « Voir la suite » : la suite du problème ; pour une erreur de partie (#492), la suite qui illustre le pourquoi.
+  const cadres = useMemo(() => puzzle.pourquoi?.cadres() ?? solutionFrames(puzzle).map(pos => ({ pos, legende: '', croix: undefined as number | undefined })), [puzzle]);
   // Aide graduée (#197) : indice, puis réfutation, puis réponse.
   const [aide, setAide] = useState<NiveauAide>(0);
   const [refut, setRefut] = useState<{ r: Refutation; vue: boolean } | null>(null);
@@ -732,7 +734,7 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
     setTries(tries + 1);
     onEssai?.(ok);
     if (!ok) dernierFaux.current = p;
-    setAnswer({ kind: r.kind, p, text: ok ? (puzzle.explanation ?? tr('pb.bonCoup')) : (puzzle.refutation ?? tr('pb.pasTout')), n });
+    setAnswer({ kind: r.kind, p, text: ok ? (puzzle.pourquoi?.bravos[p] ?? puzzle.explanation ?? tr('pb.bonCoup')) : (puzzle.refutation ?? tr('pb.pasTout')), n });
     window.clearTimeout(timer.current);
     if (ok) { setApercu(null); setBoard(r.after.board); onSolved(tries + 1, aide); }
     else montrerErreur(p, r.after.board);
@@ -746,7 +748,7 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
   }
 
   function showLine() {
-    const frames = solutionFrames(puzzle);
+    const frames = cadres.map(c => c.pos);
     window.clearTimeout(timer.current);
     if (prefersReducedMotion()) {
       setBoard(frames[frames.length - 1].board);
@@ -760,7 +762,8 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
       i++;
       setBoard(frames[i].board);
       setReplay({ frame: i, total: frames.length - 1 });
-      if (i < frames.length - 1) timer.current = window.setTimeout(stepOnce, 800);
+      // Suite expliquée (#492) : une légende par position, le temps de la lire.
+      if (i < frames.length - 1) timer.current = window.setTimeout(stepOnce, puzzle.pourquoi ? 1600 : 800);
     };
     timer.current = window.setTimeout(stepOnce, 500);
   }
@@ -828,8 +831,8 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
     : null;
   const vu = reponseVue(aide);
 
-  const frames = replay ? solutionFrames(puzzle) : null;
-  const lastMove = replay && frames ? frames[replay.frame].lastMove : solvedNow ? answer.p : null;
+  const cadre = replay ? cadres[replay.frame] : null;
+  const lastMove = cadre ? cadre.pos.lastMove : solvedNow ? answer.p : null;
   const replayDone = !!replay && replay.frame === replay.total;
 
   const suivantBtn = <button className="cta" onClick={onNext ?? onExit}>{onNext ? suivant ?? tr('pb.suivant') : retour ?? tr('pb.retour')}</button>;
@@ -845,10 +848,16 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
   let verdict = null;
   if (replay) {
     verdict = (
-      <Verdict ton="neutre" actions={solvedNow
+      // #492 : la feuille se remesure à la fin de la suite (l'explication est plus longue que « Coup 1 sur 4 »).
+      <Verdict ton="neutre" cle={replayDone ? 'fin' : 'suite'} actions={solvedNow
         ? <>{apprendreBtn ?? suivantBtn}<button className="lien" onClick={showLine} disabled={!replayDone}>{tr('pb.revoirSuite')}</button></>
         : <button className="lien" onClick={showLine} disabled={!replayDone}>{tr('pb.revoirSuite')}</button>}>
-        <p>{replayDone ? tr(solvedNow ? 'pb.suiteFinie' : 'pb.suiteFinieVu') : tr('pb.suiteCoup', { n: replay.frame, total: replay.total })}</p>
+        {replayDone && puzzle.pourquoi ? <>
+          {/* #492 : pourquoi la réponse est la bonne, vérifié par le calcul ; la croix marque le coup joué dans la partie. */}
+          <p data-pourquoi="">{fr(puzzle.pourquoi.texte)}</p>
+          {puzzle.pourquoi.ecart && <p className="muted small" data-ecart="">{fr(puzzle.pourquoi.ecart)}</p>}
+          {cadre?.croix != null && <p className="muted small pourquoi-croix"><span aria-hidden="true" className="pourquoi-croix-signe">×</span>{fr(tr('pq.croix'))}</p>}
+        </> : <p>{replayDone ? tr(solvedNow ? 'pb.suiteFinie' : 'pb.suiteFinieVu') : cadre?.legende ? fr(cadre.legende) : tr('pb.suiteCoup', { n: replay.frame, total: replay.total })}</p>}
       </Verdict>
     );
   } else if (refut) {
@@ -928,7 +937,7 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
           targets: start.marked,
           last: refut ? (refut.vue ? refut.r.reponse : refut.r.faux) : apercu ? (apercu.vue && apercu.reponse !== null ? apercu.reponse : apercu.faux) : lastMove,
           ok: solvedNow && !replay ? answer.p : undefined,
-          mistake: refut ? refut.r.faux : answer && answer.kind === 'wrong' && !replay ? answer.p : undefined,
+          mistake: refut ? refut.r.faux : answer && answer.kind === 'wrong' && !replay ? answer.p : cadre?.croix,
           // Indice : zone entourée autour du bon coup, tant que le problème n'est pas résolu.
           zone: aide >= 1 && !solvedNow && !replay && !refut ? puzzle.answers[0] : undefined
         }} />

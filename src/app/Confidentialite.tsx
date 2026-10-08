@@ -1,15 +1,15 @@
-import { useEffect, useRef, type KeyboardEvent, type ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { setConsent, setOpposition } from '../data/analytics';
 import { useConsentement, useOpposition } from './consentement';
-import { Sceau } from '../ui/Sceau';
 import { LigneInterrupteur } from '../ui/Reglage';
 import { fr } from '../ui/typo';
 import { t } from '../content/i18n';
 
 /**
- * Fenêtre de consentement (issue #50) : posée une seule fois, au premier lancement.
- * Boîte de dialogue modale native : le reste de la page est inerte ; Tab tourne dans la fenêtre.
- * Échap ferme sans choix (`onIgnorer`) : elle reviendra au prochain lancement.
+ * Consentement (issue #50, forme revue en #485) : bandeau bas compact, non modal, au premier lancement.
+ * L'accueil reste visible et utilisable dessous (« jouer » n'est jamais caché) ; sans réponse, rien de non essentiel
+ * n'est chargé (src/data/analytics.ts). Le focus va au titre à l'ouverture, sans être piégé : Tab ressort vers la page.
+ * Échap (focus dans le bandeau) ferme sans choix (`onIgnorer`) : il reviendra au prochain lancement.
  */
 export function ConsentModal({ visible, onConditions, onIgnorer }: { visible: boolean; onConditions: () => void; onIgnorer: () => void }) {
   const ref = useRef<HTMLDialogElement>(null);
@@ -17,44 +17,41 @@ export function ConsentModal({ visible, onConditions, onIgnorer }: { visible: bo
     const d = ref.current;
     if (!d) return;
     if (visible && !d.open) {
-      d.showModal?.();
+      d.show?.();
       // Focus sur le titre : lu en premier par les lecteurs d'écran, sans mettre en avant un des deux choix.
-      d.querySelector<HTMLElement>('#accord-titre')?.focus();
+      d.querySelector<HTMLElement>('#accord-titre')?.focus({ preventScroll: true });
     }
     if (!visible && d.open) d.close();
   }, [visible]);
 
-  // Focus piégé : Tab et Maj+Tab tournent entre le premier et le dernier bouton de la fenêtre.
-  const piege = (e: KeyboardEvent<HTMLDialogElement>) => {
-    if (e.key !== 'Tab' || !ref.current) return;
-    const cibles = [...ref.current.querySelectorAll<HTMLElement>('button, a[href]')];
-    if (!cibles.length) return;
-    const premier = cibles[0], dernier = cibles[cibles.length - 1];
-    const actif = document.activeElement as HTMLElement | null;
-    const dedans = !!actif && cibles.includes(actif);
-    // Depuis le titre (focus d'ouverture) ou hors des boutons : on repart du premier ou du dernier.
-    if (e.shiftKey && (actif === premier || !dedans)) { e.preventDefault(); dernier.focus(); }
-    else if (!e.shiftKey && (actif === dernier || !dedans)) { e.preventDefault(); premier.focus(); }
-  };
+  // Hauteur du bandeau en variable CSS : la page garde de quoi défiler au-dessus (profil.css, `--accord-h`).
+  useEffect(() => {
+    const d = ref.current;
+    if (!d || !visible || typeof ResizeObserver === 'undefined') return;
+    const racine = document.documentElement;
+    const ro = new ResizeObserver(() => racine.style.setProperty('--accord-h', `${Math.ceil(d.offsetHeight)}px`));
+    ro.observe(d);
+    return () => { ro.disconnect(); racine.style.removeProperty('--accord-h'); };
+  }, [visible]);
 
   return (
-    <dialog ref={ref} className="accord" aria-modal="true" aria-labelledby="accord-titre" aria-describedby="accord-texte"
-      // Échap : `cancel`, ou directement `close` quand le navigateur saute `cancel` (aucun geste avant).
-      // Une fermeture que l'app n'a pas demandée (visible encore vrai) vaut « pas de choix ».
-      onCancel={e => { e.preventDefault(); onIgnorer(); }} onClose={() => { if (visible) onIgnorer(); }} onKeyDown={piege}>
+    <dialog ref={ref} className="accord" aria-labelledby="accord-titre" aria-describedby="accord-texte"
+      // Non modal : le navigateur ne gère pas Échap, on le fait ici. Une fermeture que l'app n'a pas demandée vaut « pas de choix ».
+      onKeyDown={e => { if (e.key === 'Escape') { e.preventDefault(); onIgnorer(); } }} onClose={() => { if (visible) onIgnorer(); }}>
       {/* Contenu toujours rendu : la sortie en fondu garde le texte visible jusqu'au bout. */}
       <div className="accord-corps">
-        <Sceau id="mochi" taille={48} />
-        <h2 id="accord-titre" tabIndex={-1}>{fr(t('accord.titre'))}</h2>
-        <p id="accord-texte">{t('accord.texte')}</p>
-        <p className="accord-note">{t('accord.note')}</p>
-        <button type="button" className="lien accord-conditions" onClick={onConditions}>{t('accord.lire')}</button>
+        {/* Titre et texte sur une même ligne de lecture : le bandeau tient en quatre lignes à 320 px. */}
+        <div className="accord-message">
+          <h2 id="accord-titre" tabIndex={-1}>{fr(t('accord.titre'))}</h2>{' '}
+          <p id="accord-texte">{t('accord.texte')} {t('accord.note')}</p>
+        </div>
         {/* Deux choix de même taille et de même poids : aucun n'est mis en avant (issue #64, CNIL). */}
         <div className="accord-actions">
+          <button type="button" className="lien accord-conditions" onClick={onConditions}>{t('accord.lire')}</button>
           <button type="button" className="btn accord-choix" onClick={() => setConsent('accepte')}>{t('accord.oui')}</button>
           <button type="button" className="btn accord-choix" onClick={() => setConsent('refuse')}>{t('accord.non')}</button>
         </div>
-        </div>
+      </div>
     </dialog>
   );
 }

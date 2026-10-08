@@ -78,10 +78,12 @@ describe('passer finit la partie (#185)', { timeout: 30_000 }, () => {
     const r = chooseMoveDetail(lire(ATARI, 2), 'pomme', { seed: 1, timeMs: 50 });
     expect(r.move).toBe(4 * 9 + 4);
     expect(r.raison).toMatchObject({ motif: 'frontiere', texte: 'il reste une frontière à fermer en E5' });
-    // Accommodant (#235) : c'est un trou dans SA frontière (la pierre noire en atari chez elle), elle le ferme aussi.
-    const a = chooseMoveDetail(lire(ATARI, 2), 'pomme', { seed: 1, timeMs: 50, accommodant: true });
+    // Accommodant (#235) : c'est un trou dans SA frontière (la pierre noire en atari chez lui), Caillou le ferme aussi.
+    const a = chooseMoveDetail(lire(ATARI, 2), 'caillou', { seed: 1, timeMs: 50, accommodant: true });
     expect(a.move).toBe(4 * 9 + 4);
     expect(a.raison).toMatchObject({ motif: 'frontiere', texte: 'il reste un trou dans sa frontière en E5' });
+    // Pomme (#488) : dans tes premières parties, elle passe quand tu passes, sans fermer de trou.
+    expect(chooseMoveDetail(lire(ATARI, 2), 'pomme', { seed: 1, timeMs: 50, accommodant: true }).move).toBe(-1);
   });
 
   it('début de partie : accommodant, l’ordi passe toujours ; plateau vide, il passe aussi sinon', () => {

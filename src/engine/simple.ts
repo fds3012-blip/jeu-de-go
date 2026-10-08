@@ -8,6 +8,7 @@ import { toLabel } from '../go/coords';
 import { traduire } from '../content/i18n';
 import { deadStones } from './dead';
 import { isEye, now, rng, Sim } from './sim';
+import { plausibles } from './ouverture';
 
 export { isEye };
 
@@ -46,6 +47,17 @@ export interface Opponent {
   heuristiques: boolean; // priorité aux captures et aux sauvetages
   /** Ne passe pas tant qu'une frontière reste ouverte : il la ferme d'abord (#159). */
   fermeFrontieres?: boolean;
+  /**
+   * Coups plausibles seulement (#488, src/engine/ouverture.ts) : 3e–4e ligne à l'ouverture, pas de 1re ligne sans raison.
+   * Absent ou vrai : actif. `false` : ancien comportement (sert de témoin aux mesures).
+   */
+  ouverture?: boolean;
+  /**
+   * Parties accommodantes (#235) : après la passe du joueur, ferme une brèche de sa frontière. Absent ou vrai : oui.
+   * `false` (Pomme, #488) : elle passe toujours quand tu passes. Depuis le filtre des coups plausibles, elle laisse plus
+   * souvent un trou au bord de sa zone ; le fermer après ta passe lui rapportait 9,3 points en moyenne au 40e coup.
+   */
+  fermeBreche?: boolean;
   /** Présent : ce niveau joue avec KataGo (réseau g170-b6c96). */
   katago?: KataGoLevel;
 }
@@ -59,7 +71,10 @@ const repli = { playouts: 20000, timeMs: 800, hasard: 0, heuristiques: true, fer
  * Mesures : docs/game-design/equilibrage.md.
  */
 export const OPPONENTS: Opponent[] = [
-  { id: 'pomme', nom: 'Pomme', rang: '20 kyu', phrase: 'Elle apprend comme toi.', description: 'Joue un peu au hasard. Parfait pour ta première partie.', playouts: 250, timeMs: 150, hasard: 0.3, heuristiques: false, fermeFrontieres: true },
+  // Pomme : hasard 0,65 depuis #488 (0,3 avant). Le filtre des coups plausibles (ouverture.ts) lui retire ses pires coups ;
+  // ce hasard plus haut la garde aussi battable qu'avant. Et elle passe toujours quand tu passes en début de parcours
+  // (`fermeBreche: false`) : docs/game-design/ouverture-pomme-2026-10-08.md.
+  { id: 'pomme', nom: 'Pomme', rang: '20 kyu', phrase: 'Elle apprend comme toi.', description: 'Joue un peu au hasard. Parfait pour ta première partie.', playouts: 250, timeMs: 150, hasard: 0.65, heuristiques: false, fermeFrontieres: true, fermeBreche: false },
   { id: 'caillou', nom: 'Caillou', rang: '16 kyu', phrase: 'Il capture tout ce qui traîne.', description: 'Capture dès que tu le laisses faire. Protège bien tes pierres.', playouts: 20000, timeMs: 600, hasard: 0, heuristiques: true, fermeFrontieres: true },
   { id: 'bambou', nom: 'Bambou', rang: '13 kyu', phrase: 'Il plie, mais ne rompt jamais.', description: 'Joue solide et relie ses pierres. Cherche ses points faibles.', ...repli, hasard: 0.7, katago: { visits: 4, tolerance: 12, style: 'solide', temperature: 1.5 } },
   { id: 'renard', nom: 'Renard', rang: '10 kyu', phrase: "Il coupe dès que tu t'étires trop.", description: 'Aime couper et attaquer. Garde tes groupes bien reliés.', ...repli, hasard: 0.35, katago: { visits: 8, tolerance: 8, style: 'agressif', temperature: 1.5 } },
@@ -132,10 +147,10 @@ export function raisonBreche(point: number, size: number): Raison {
 
 /**
  * Réponse accommodante à la passe du joueur (#235) : passe, sauf une brèche dans sa propre frontière à la première passe.
- * Début de partie ou niveau qui ne ferme pas ses frontières : passe tout de suite.
+ * Début de partie, niveau qui ne ferme pas ses frontières ou ses brèches (Pomme, #488) : passe tout de suite.
  */
 export function reponseAccommodante(pos: Position, lvl: Opponent, opts: EngineOptions, mortes: () => Iterable<number>, prefer: readonly number[] = []): CoupExplique {
-  if (!lvl.fermeFrontieres || !partieAvancee(pos.board) || (opts.passesJoueur ?? 1) >= 2) return { move: -1, raison: null };
+  if (!lvl.fermeFrontieres || lvl.fermeBreche === false || !partieAvancee(pos.board) || (opts.passesJoueur ?? 1) >= 2) return { move: -1, raison: null };
   const b = brecheAFermer(pos, mortes(), prefer);
   return b < 0 ? { move: -1, raison: null } : { move: b, raison: raisonBreche(b, pos.size) };
 }
@@ -293,8 +308,10 @@ export function chooseMoveDetail(pos: Position, niveau: OpponentId | Opponent, o
     }
   }
 
-  const cands = candidates(pos, lvl.heuristiques);
-  if (!cands.length) return passer();
+  const tous = candidates(pos, lvl.heuristiques);
+  if (!tous.length) return passer();
+  // Pas de coup au bord sans raison (#488) : ni les simulations ni le hasard ne choisissent hors des coups plausibles.
+  const cands = lvl.ouverture === false ? tous : plausibles(pos, tous, a => a.move);
 
   const size = pos.size, sim = new Sim(size), empties = new Int32Array(size * size);
   const budget = opts.timeMs ?? lvl.timeMs, maxPlayouts = opts.playouts ?? lvl.playouts, t0 = now();

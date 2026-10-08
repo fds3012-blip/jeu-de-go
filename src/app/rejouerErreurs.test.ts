@@ -7,7 +7,7 @@ import { classerCoups } from './notation';
 import { KATAGO_424, SGF_424 } from './partie424.fixture';
 import {
   consigne, ESSAIS, erreursARejouer, idPartie, jugerEssai, jugerParRecherche, marquerPartie, MAX_ERREURS_REJOUEES, MAX_PARTIES_XP,
-  phraseFin, phraseMontre, phrasePasEncore, phraseTrouve, score, titreFin, type ErreurARejouer,
+  phraseFin, phraseMontre, phraseMontrePourquoi, phrasePasEncore, phraseTrouve, score, titreFin, type ErreurARejouer,
 } from './rejouerErreurs';
 
 const { positions } = positionsDepuisSgf(SGF_424);
@@ -139,6 +139,19 @@ describe('phrases de Mochi et fin de séance', () => {
     expect(phrasePasEncore(1)).toBe('Pas encore. Encore 2 essais.');
     expect(phrasePasEncore(2)).toBe('Pas encore. Dernier essai.');
     expect(phraseMontre(erreur(27), 9)).toBe('Voici le coup de KataGo : F5. Il valait 11 points de plus que B8.');
+  });
+
+  it('#492 : le pourquoi sur la vraie partie, vérifié par le calcul (sortie d’atari, prise, coupe, connexion, sans motif)', () => {
+    const montre = (coup: number, camp: 1 | 2 = 1) => {
+      const e = erreursARejouer(positions, a, notes, camp, 50).find(x => x.coup === coup)!;
+      return phraseMontrePourquoi(e, positions[coup - 1]);
+    };
+    expect(montre(25)).toBe('F5 sort ta pierre de l’atari (il ne lui restait qu’une liberté) : elle a maintenant 3 libertés. Après ton coup en C9, Blanc pouvait prendre une de tes pierres en F5. Écart : environ 19 points selon KataGo.');
+    expect(montre(23)).toBe('G7 prend une pierre blanche. Après ton coup en D9, elle restait sur le plateau. Écart : environ 13 points selon KataGo.');
+    expect(montre(47)).toBe('G5 coupe (sépare) les pierres blanches : elles ne peuvent plus se relier en G5. Après ta passe, Blanc pouvait les relier là. Écart : environ 7 points selon KataGo.');
+    expect(montre(20, 2)).toBe('F6 relie tes pierres : elles forment un seul groupe. Après ton coup en D7, Noir pouvait couper (séparer tes pierres) en F6. Écart : environ 11 points selon KataGo.');
+    expect(montre(15)).toBe('Selon KataGo, F6 gardait environ 19 points de plus que ton coup en B6. Aucune pierre n’est en atari ici : l’écart ne vient pas d’une prise immédiate.');
+    expect(montre(7)).toBe('Selon KataGo, E5 gardait environ 8 points de plus que ton coup en B4. Compare les deux coups sur le plateau.');
   });
 
   it('« 2 sur 3 trouvées », et une fin qui parle toujours de ce que le joueur emporte', () => {

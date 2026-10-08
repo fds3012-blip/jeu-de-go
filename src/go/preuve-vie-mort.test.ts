@@ -179,3 +179,20 @@ describe('preuve-vie-mort : prudence', () => {
     expect(defautsDeZone(f.pos, f.cible, f.zone).length).toBeGreaterThan(0);
   });
 });
+
+describe('preuve-vie-mort : budget de positions (#486)', () => {
+  const rows = [E, E, E, E, E, E, 'XXXXXXX..', 'XOOOOOX..', 'XO...OX..'];
+  it('budget épuisé : non résolu, jamais une fausse preuve', () => {
+    const f = forme(rows, ['C1', 'D1', 'E1'], 'B1', 1);
+    expect(evaluer(f.pos, f.cible, f.zone)).toBe(-1);
+    expect(evaluer(f.pos, f.cible, f.zone, { budget: 1 })).toBe(0);
+    expect(evaluer(f.pos, f.cible, f.zone, { budget: 10_000 })).toBe(-1);
+    const b = forme(rows, ['C1', 'D1', 'E1'], 'B1', 2);
+    expect(evaluer(b.pos, b.cible, b.zone)).toBe(1);
+    // Quel que soit le budget, la réponse est la vraie valeur ou « non résolu ».
+    for (let n = 1; n <= 40; n++) {
+      expect([0, -1]).toContain(evaluer(f.pos, f.cible, f.zone, { budget: n }));
+      expect([0, 1]).toContain(evaluer(b.pos, b.cible, b.zone, { budget: n }));
+    }
+  });
+});

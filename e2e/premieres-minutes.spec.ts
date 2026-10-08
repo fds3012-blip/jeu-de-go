@@ -124,8 +124,13 @@ test('4. fin de partie : un territoire à 0 est expliqué par Mochi, pas « perd
   const fin = page.locator('section.fin');
   await expect(fin.getByRole('heading', { level: 2 })).toBeVisible();
   const defaite = /Défaite/.test(await fin.getByRole('heading', { level: 2 }).innerText());
-  if (defaite && toiSansTerritoire) {
+  // Une leçon plus urgente passe avant (bilan.ts, leconMochi : fin trop tôt, pierres prises, atari subis) : Mochi
+  // propose alors d'ouvrir une leçon. Depuis #488, Pomme joue plus près des pierres du joueur : ce cas arrive.
+  const leconPlusUrgente = (await fin.getByRole('button', { name: 'Ouvrir la leçon' }).count()) > 0;
+  if (defaite && toiSansTerritoire && !leconPlusUrgente) {
     await expect(fin).toContainText('Ton territoire compte 0 : tes pierres ne fermaient aucun espace.');
+    await expect(fin).not.toContainText('Perdu de peu');
+  } else if (defaite && toiSansTerritoire) {
     await expect(fin).not.toContainText('Perdu de peu');
   } else {
     await expect(fin).not.toContainText('Ton territoire compte 0');

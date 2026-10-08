@@ -31,6 +31,12 @@ export type But = 'vivre' | 'tuer';
 export interface OptionsVieMort {
   /** Nombre maximal de coups (passes comprises) joués par la recherche. 30 par défaut. */
   profondeur?: number;
+  /**
+   * Nombre maximal de positions examinées (#486, comptage en fin de partie : la recherche ne doit jamais s'emballer).
+   * Au-delà, chaque position restante vaut 0 (« non résolu ») : comme la profondeur, la borne empêche une preuve, elle
+   * n'en fabrique jamais. Sans borne par défaut (problèmes vérifiés hors ligne).
+   */
+  budget?: number;
 }
 
 const verdictDe = (v: Issue): Verdict => (v === 1 ? 'vivant' : v === -1 ? 'mort' : 'non-resolu');
@@ -114,12 +120,13 @@ function attaquantBloque(pos: Position, zone: readonly number[], a: number): boo
 export function evaluer(pos: Position, cible: number, zone: readonly number[], opts: OptionsVieMort = {}): Issue {
   const d = pos.board[cible];
   if (d === 0) return -1;
-  const a = 3 - d, prof = opts.profondeur ?? 30;
+  const a = 3 - d, prof = opts.profondeur ?? 30, budget = opts.budget ?? Infinity;
+  let vues = 0;
   const decisif = new Map<string, Issue>(), nul = new Map<string, number>(), enCours = new Set<string>();
   const rec = (p: Position, passes: number, reste: number): Issue => {
     if (p.board[cible] !== d) return -1;
     if (hasTwoEyes(p, cible) || attaquantBloque(p, zone, a)) return 1;
-    if (passes >= 2 || reste === 0) return 0;
+    if (passes >= 2 || reste === 0 || ++vues > budget) return 0;
     const cle = `${p.toPlay}${passes}${p.ko}:${p.board.join('')}`;
     const connu = decisif.get(cle);
     if (connu !== undefined) return connu;

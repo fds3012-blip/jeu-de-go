@@ -106,7 +106,7 @@ La recommandation CNIL (2020-092) demande que refuser soit aussi simple qu'accep
 - `src/data/analytics.ts` : trois niveaux (`aucun`, `anonyme`, `complet`), réglages `POSTHOG_ANONYME` et `POSTHOG_COMPLET`, `setOpposition`.
 - `src/app/Confidentialite.tsx` : fenêtre réécrite, page Conditions avec deux interrupteurs.
 - Tests : `src/data/analytics.test.ts`, `e2e/confidentialite.spec.ts`.
-- Captures : `docs/design/v2/captures/consentement-v2-clair.png`, `consentement-v2-sombre.png`.
+- Captures : `docs/design/v2/captures/consentement-v2-clair.png`, `consentement-v2-sombre.png` (fenêtre d'avant #485).
 
 ## 8. Compteurs anonymes de la première visite (#437, 5 octobre 2026)
 
@@ -137,3 +137,37 @@ La recommandation CNIL (2020-092) demande que refuser soit aussi simple qu'accep
 **Abus.** L'appel est ouvert à tous (clé publique) : n'importe qui peut ajouter 1. Faute d'identifiant (voulu), la limite ne peut pas viser un appelant. Deux plafonds par étape : **60 par minute** et **20 000 par jour** ; au-delà, l'appel est refusé sans erreur et compté dans `compteurs_entonnoir_fenetre.refus` (un jour pollué se voit). Ordre de grandeur actuel : quelques dizaines par jour. Plafonds à relever par migration si l'audience approche de 60 nouveaux joueurs par minute.
 
 **À valider par un avocat :** l'appréciation des conditions 4 et 5 ci-dessus, et l'ajout de ces compteurs à l'auto-évaluation CNIL prévue pour PostHog (E1).
+
+## 9. Bandeau bas compact au premier écran (#485, 8 octobre 2026)
+
+**Le constat (#466, P8).** La fenêtre modale de #64 (58 mots, boutons compris) couvrait l'accueil au tout premier écran et cachait l'action principale « Joue ta première partie ». Le joueur devait lire avant de jouer.
+
+**La nouvelle forme.** Un bandeau bas, non modal, sans voile (`ConsentModal` dans `src/app/Confidentialite.tsx`, styles dans `src/ui/profil.css`) :
+- posé au-dessus de la barre de navigation ; sur les écrans bas (hauteur ≤ 640 px, par exemple 320 × 568), il se pose sur la barre du bas plutôt que sur le bouton « jouer » ;
+- l'accueil reste visible et utilisable : on peut jouer sans répondre. Le bandeau se retire pendant une partie et revient à l'accueil, comme avant ;
+- la page garde de quoi défiler au-dessus du bandeau (rien n'est caché pour de bon).
+
+**Le texte (fr, 24 mots titre compris, 51 avant ; 29 avec les boutons, 58 avant) :**
+
+> **Tu m'aides à chasser les bugs ?** Si oui, on reçoit les rapports de bug et on voit si tu reviens. Change d'avis dans Profil.
+> [Détails] [Oui, j'aide] [Non merci]
+
+En anglais : « **Will you help us catch bugs?** If yes, we get bug reports and see if you come back. Change your mind in Profile. [Details] [Yes, I'll help] [No thanks] ».
+
+**Ce qui a été retiré du bandeau, et où le trouver.** « Jamais ton e-mail ni tes coups » et « Sans ton accord, on compte juste les parties » sont dans la page Conditions (« Seulement si tu dis oui », « Comptage anonyme »), ouverte par « Détails ». La mesure exemptée n'a pas à figurer dans le bandeau : la CNIL demande qu'elle soit mentionnée dans la politique, avec un droit d'opposition (section 2). Coût possible : un peu moins de réassurance au moment du choix, donc un taux d'accord à surveiller (`docs/data/plan-de-marquage.md`).
+
+**Confrontation aux lignes directrices et à la recommandation CNIL de 2020 (délibérations 2020-091 et 2020-092) :**
+
+| Exigence | Bandeau #485 | Appréciation |
+|---|---|---|
+| Refuser aussi simple qu'accepter, au même niveau | « Oui, j'aide » et « Non merci » côte à côte, même classe, même taille, même style calculé (testé : `e2e/consentement-bandeau.spec.ts`, `e2e/confidentialite.spec.ts`). Focus d'ouverture sur le titre, aucun choix mis en avant | Rempli |
+| Pas de case pré-cochée, le silence ne vaut pas accord | Aucune case. Sans réponse (on joue, on ferme avec Échap), rien de non essentiel n'est chargé : le chargement de Sentry et du suivi détaillé n'a pas changé (`src/data/analytics.ts`) | Rempli |
+| Finalités claires avant le choix | « rapports de bug » (Sentry) et « on voit si tu reviens » (identifiant persistant, lien avec le compte). Détail par finalité dans Conditions | Rempli. **À valider** : le lien de l'identifiant avec le compte n'est dit que dans Conditions (« un numéro gardé sur ton téléphone… »). Un avocat peut juger que « on voit si tu reviens » suffit au premier niveau, la recommandation admettant une information en deux niveaux |
+| Lien vers le détail | « Détails » (44 px) ouvre la page Conditions et confidentialité ; le bandeau revient au retour | Rempli |
+| Retrait aussi simple que l'accord, et information sur le retrait avant le choix (art. 7.3 RGPD) | « Change d'avis dans Profil » dans le bandeau ; un interrupteur dans Profil, Conditions et confidentialité | Rempli |
+| Durée de conservation du choix | Inchangée (`go.consentement.v1`, sans limite) | **À valider** : la CNIL recommande de garder le choix pendant une durée limitée, puis de redemander (6 mois cités comme bonne pratique). Hors du périmètre de #485 |
+| Mineurs | Inchangé : sous 15 ans, le consentement est fragile ; seuls Sentry et le suivi détaillé en dépendent | Inchangé (section 1) |
+
+**Accessibilité.** Boîte de dialogue **non modale** (`<dialog>` ouverte par `show()`) : la page n'est pas rendue inerte ; nom = titre, description = texte. Le focus va au titre à l'ouverture (lu en premier), Tab parcourt Détails, Oui, Non puis ressort vers la page ; Échap, focus dans le bandeau, ferme sans choix (il revient au lancement suivant). Cibles de 44 px, contrastes AA en clair et en sombre, mouvements réduits : simple fondu.
+
+**Fichiers.** `src/app/Confidentialite.tsx`, `src/ui/profil.css`, `src/content/i18n/fr.ts`, `src/content/i18n/en.ts` ; tests : `src/app/consentement.test.ts` (longueur, finalités, retrait, tutoiement), `e2e/consentement-bandeau.spec.ts`, `e2e/confidentialite.spec.ts`.
