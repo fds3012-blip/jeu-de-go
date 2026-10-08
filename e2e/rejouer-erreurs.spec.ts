@@ -95,7 +95,9 @@ for (const theme of ['light', 'dark'] as const) {
     await expect(phrase).toHaveText('Pas encore. Dernier essai.');
     await jouer(page, 'F7');
     // Troisième essai raté : Mochi montre le coup de KataGo, en pierre fantôme, et la croix sur ton coup.
-    await expect(phrase).toHaveText(/^Voici le coup de KataGo\s:\sF5\. Il valait \d+\spoints de plus que F7\.$/);
+    // #492 : le pourquoi, vérifié par le calcul ; ici aucun motif tactique sûr, donc la phrase générale chiffrée,
+    // qui nomme le coup de KataGo (pierre fantôme) et le tien (croix).
+    await expect(phrase).toHaveText(/^Selon KataGo, F5 gardait environ \d+\spoints de plus que ton coup en F7\. Aucune pierre n’est en atari ici\s: l’écart ne vient pas d’une prise immédiate\.$/);
     await expect(plateau(page).locator('[data-meilleur]')).toHaveCount(1);
     await expect(page.locator('.cta')).toHaveText('Erreur suivante');
     await ctaLibre(page, 'coup montré');

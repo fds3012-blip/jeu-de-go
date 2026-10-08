@@ -149,12 +149,13 @@ export function phraseMontre(e: ErreurARejouer, size: number): string {
 }
 
 /**
- * #492 : quand Mochi montre le coup, il dit pourquoi : « Voici le coup de KataGo : E4. » puis l'explication vérifiée
- * par le calcul (src/app/pourquoi.ts) et l'écart chiffré.
+ * #492 : quand Mochi montre le coup (pierre fantôme, croix sur le coup joué), il dit pourquoi : l'explication vérifiée
+ * par le calcul (src/app/pourquoi.ts), qui nomme le coup, puis l'écart chiffré. Sans écart connu, « Voici le coup de
+ * KataGo : F5. » d'abord.
  */
 export function phraseMontrePourquoi(e: ErreurARejouer, avant: Position): string {
   const { texte, ecart } = textePourquoi({ avant, bon: e.meilleur, joue: e.joue, perte: e.perte });
-  return [t('rejeu.voici', { point: toLabel(e.meilleur, avant.size) }), texte, ecart].filter(Boolean).join(' ');
+  return [e.perte > 0 ? null : t('rejeu.voici', { point: toLabel(e.meilleur, avant.size) }), texte, ecart].filter(Boolean).join(' ');
 }
 
 /** #492 : après un bon essai, la phrase de Mochi, puis le motif vérifié du coup trouvé s'il y en a un. */
