@@ -306,7 +306,7 @@ see the French section above.
 | 2 | `02-coach.jpg` | Mochi points out a missed capture at E4 and shows the point on the board | Mochi coaches you as you play | 6 |
 | 3 | `03-lecons.jpg` | Lesson 1: stone placed, its 4 liberties light up, Mochi explains | 35 lessons to play, not to read | 7 |
 | 4 | `04-problemes.jpg` | Puzzles screen: 3-minute Rush, "By theme" series (Capture, Save, Life and death, Connect and cut, Tesuji) | Over 200 puzzles, by theme | 5 |
-| 5 | `05-revue.jpg` | Game review: "D6 is a missed move", the points lost, and the right move (E3, the green stone) | A review that explains your moves | 6 |
+| 5 | `05-revue.jpg` | Game review: "D6 is a miss", the points lost, and the better move (E3, the green stone); "Replay this mistake" | A review that explains your moves | 6 |
 | 6 | `06-ami.jpg` | Game with a friend (Lea) through a link: "Your move. You have 2 days and 1 hour left." | Challenge a friend with a link | 6 |
 
 ## What's New in version 1.0
