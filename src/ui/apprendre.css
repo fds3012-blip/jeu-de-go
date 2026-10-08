@@ -217,6 +217,10 @@
 .verdict-texte { display: flex; gap: 12px; align-items: flex-start; }
 .verdict-texte p { margin: 0; line-height: 1.4; font-weight: var(--fw-medium); }
 .verdict-texte .marque { margin-top: -2px; }
+/* #492 : légende de la croix (coup joué dans la partie), même rouge que la croix du plateau. */
+.verdict-texte p + p { margin-top: 6px; }
+.pourquoi-croix { display: flex; align-items: center; gap: 6px; }
+.pourquoi-croix-signe { color: var(--danger); font-weight: var(--fw-bold, 700); font-size: 1.25em; line-height: 1; }
 /* #290 : écran bas, explication longue. Deux lignes visibles et « Lire l'explication » ; le texte entier reste lu
    par le lecteur d'écran (le repli est seulement visuel). */
 .verdict[data-compact] .verdict-texte > div > p:first-child { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }

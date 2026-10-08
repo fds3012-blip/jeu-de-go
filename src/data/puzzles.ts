@@ -27,6 +27,22 @@ export interface Puzzle {
   /** Texte affiché après une erreur (`setup.refutation`), null s'il n'y en a pas. */
   refutation: string | null;
   difficulty: number;
+  /** Problème tiré d'une erreur de partie (#492) : pourquoi la réponse est la bonne. */
+  pourquoi?: PourquoiProbleme;
+}
+
+/** Pourquoi la réponse est la bonne (#492, src/app/pourquoi.ts) : chaque affirmation est vérifiée par le calcul. */
+export interface PourquoiProbleme {
+  /** Une ou deux phrases, montrées avec la réponse. */
+  texte: string;
+  /** « Écart : environ 6 points selon KataGo. », quand le texte ne le dit pas déjà. */
+  ecart: string | null;
+  /** Courte confirmation après une réussite, par coup accepté. */
+  bravos: Record<number, string>;
+  /** Coup joué dans la partie, marqué d'une croix à côté de la réponse (-1 : passe, pas de croix). */
+  joue: number;
+  /** Suite qui illustre l'explication (« Revoir la suite »), avec une légende par position. */
+  cadres: () => { pos: Position; legende: string; croix?: number }[];
 }
 
 const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);

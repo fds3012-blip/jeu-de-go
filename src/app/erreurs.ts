@@ -2,7 +2,9 @@
 // devient un problème gardé sur l'appareil (localStorage). Logique pure, testée dans erreurs.test.ts.
 // Règle d'or : jamais de problème faux. Sans conseil fiable (conseilFiable), pas de problème.
 import type { AnalyseRevue } from '../engine';
-import type { Puzzle } from '../data/puzzles';
+import type { Puzzle, PourquoiProbleme } from '../data/puzzles';
+import { fromRows } from '../go/position';
+import { cadresPourquoi, confirmationPourquoi, textePourquoi, type Contexte } from './pourquoi';
 import type { Color, Position } from '../go/rules';
 import { conseilFiable, VISITES_MIN, type Note } from './revue';
 import { t } from '../content/i18n/secondaires';
@@ -43,6 +45,8 @@ export interface ErreurGardee {
   joue: number;
   coup: number;
   adversaire?: string;
+  /** Points perdus par le coup joué, selon KataGo (#492 : « environ 6 points »). Absent dans les anciennes listes. */
+  perte?: number;
 }
 
 /** Vrai si ce coup peut devenir un problème : Erreur ou Grosse erreur, avec un meilleur coup fiable. */
@@ -120,6 +124,7 @@ export function creerErreur(s: Source, maintenant: Date): ErreurGardee | null {
     size, rows, toPlay,
     reponses: [meilleur, ...equivalents(s.avant, meilleur, s.analyse, s.joue, s.perte)],
     joue: s.joue, coup: s.coup, adversaire: s.adversaire,
+    ...(Number.isFinite(s.perte) && s.perte > 0 ? { perte: Math.round(s.perte * 10) / 10 } : {}),
   };
 }
 
@@ -185,6 +190,21 @@ export function consigneErreur(e: Pick<ErreurGardee, 'reponses'>): string {
   return t(e.reponses.length > 1 ? 'erreurs.consigneMieux' : 'erreurs.consigneKataGo');
 }
 
+/**
+ * Pourquoi la réponse est la bonne (#492) : explication vérifiée par le calcul (src/app/pourquoi.ts), montrée avec la
+ * réponse ; courte confirmation après une réussite, pour chaque coup accepté ; suite illustrée et croix sur le coup joué.
+ */
+export function pourquoiErreur(e: ErreurGardee): PourquoiProbleme {
+  const ctx: Contexte = { avant: fromRows(e.rows, e.toPlay).pos, bon: e.reponses[0], joue: e.joue, perte: e.perte };
+  const base = t(e.reponses.length > 1 ? 'erreurs.bravoParmi' : 'erreurs.bravoKataGo');
+  const bravos: Record<number, string> = {};
+  for (const p of e.reponses) {
+    const pourquoi = confirmationPourquoi(ctx, p);
+    bravos[p] = pourquoi ? `${base} ${pourquoi}` : base;
+  }
+  return { ...textePourquoi(ctx), bravos, joue: e.joue, cadres: () => cadresPourquoi(ctx) };
+}
+
 /** Problème pour le lecteur existant. */
 export function versProbleme(e: ErreurGardee): Puzzle {
   return {
@@ -193,6 +213,7 @@ export function versProbleme(e: ErreurGardee): Puzzle {
     explanation: t(e.reponses.length > 1 ? 'erreurs.bravoParmi' : 'erreurs.bravoKataGo'),
     refutation: t('erreurs.refutation'),
     difficulty: 600,
+    pourquoi: pourquoiErreur(e),
   };
 }
 

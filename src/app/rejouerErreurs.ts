@@ -10,6 +10,7 @@
 //   position après le premier choix, avec le même nombre de visites ; même seuil. Sans KataGo, on ne juge pas.
 import { isLegal, type Color, type Position } from '../go/rules';
 import { toLabel } from '../go/coords';
+import { confirmationPourquoi, expliquer, textePourquoi } from './pourquoi';
 import { t } from '../content/i18n/secondaires';
 import { conseilFiable, facteurTaille, seuilsKataGo, VISITES_MIN, type AnalyseRevue, type Note, type NoteCoup } from './revue';
 
@@ -145,6 +146,22 @@ export function phrasePasEncore(essais: number): string {
 export function phraseMontre(e: ErreurARejouer, size: number): string {
   const point = toLabel(e.meilleur, size), lieu = e.joue < 0 ? t('rejeu.taPasse') : toLabel(e.joue, size);
   return `${t('rejeu.voici', { point })} ${t('rejeu.valait', { pts: pts(e.perte), lieu })}`;
+}
+
+/**
+ * #492 : quand Mochi montre le coup, il dit pourquoi : « Voici le coup de KataGo : E4. » puis l'explication vérifiée
+ * par le calcul (src/app/pourquoi.ts) et l'écart chiffré.
+ */
+export function phraseMontrePourquoi(e: ErreurARejouer, avant: Position): string {
+  const { texte, ecart } = textePourquoi({ avant, bon: e.meilleur, joue: e.joue, perte: e.perte });
+  return [t('rejeu.voici', { point: toLabel(e.meilleur, avant.size) }), texte, ecart].filter(Boolean).join(' ');
+}
+
+/** #492 : après un bon essai, la phrase de Mochi, puis le motif vérifié du coup trouvé s'il y en a un. */
+export function phraseTrouvePourquoi(j: Extract<Jugement, { verdict: 'bon' }>, e: ErreurARejouer, avant: Position, p: number): string {
+  const debut = phraseTrouve(j, e, avant.size), m = expliquer(avant, p, e.joue).motif;
+  const motif = m ? confirmationPourquoi({ avant, bon: e.meilleur, joue: e.joue, perte: e.perte }, p) : null;
+  return motif ? `${debut} ${motif}` : debut;
 }
 
 /** Titre de l'écran de fin : « 2 sur 3 trouvées ». */
