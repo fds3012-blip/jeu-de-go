@@ -4,6 +4,7 @@ import { brancher, fauxServeur, JETON, type FauxServeur } from './fauxSupabase';
 import { plateau } from './plateau';
 import { fleches } from './partageFleches';
 import { ouvrirRevue, preparerRevue } from './revueFactice';
+import { numeroAu } from '../outils/apercus';
 
 // Issue #364 (« partager pour recruter ») : depuis le bilan, « Partager » ouvre une feuille : lien vers la revue en
 // lecture seule (compte avec pseudo), image du moment clé, fichier SGF, défi par lien. L'ami ouvre le lien sans compte
@@ -201,13 +202,15 @@ test('défier un ami depuis le bilan : le lien court ouvre directement le défi 
 });
 
 test('aperçus riches : chaque lien court a sa page et son image (sans serveur)', async ({ request }) => {
+  // Go du jour d'aujourd'hui : toujours dans la fenêtre générée au build (de J−30 à J+45, outils/apercus.ts).
+  const n = numeroAu(new Date());
   const contenu = (html: string, cle: string) => new RegExp(`<meta\\s+(?:property|name)="${cle}"\\s+content="([^"]*)"`).exec(html)?.[1];
   for (const [chemin, titre, image] of [
     ['/defi', 'Un ami te défie au go', '/apercu-defi.png'],
     ['/en/defi', 'A friend challenges you to a game of go', '/apercu-defi-en.png'],
     ['/partie', 'Une partie de go à revoir', '/apercu-partie.png'],
-    ['/j/2', 'Go du jour n° 2 : trouveras-tu le bon coup ?', '/apercu.png'],
-    ['/en/j/2', 'Daily go #2: can you find the right move?', '/apercu-en.png'],
+    [`/j/${n}`, `Go du jour n° ${n} : trouveras-tu le bon coup ?`, '/apercu.png'],
+    [`/en/j/${n}`, `Daily go #${n}: can you find the right move?`, '/apercu-en.png'],
   ] as const) {
     const rep = await request.get(chemin);
     expect(rep.status(), chemin).toBe(200);

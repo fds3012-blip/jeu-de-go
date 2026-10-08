@@ -5,12 +5,13 @@
 // lien court a donc sa page : une copie de dist/index.html (la même app, octet pour octet hors des balises d'aperçu),
 // servie par une réécriture de vercel.json. Aucune fonction serveur, aucun coût : des fichiers statiques.
 //
+// - `/en` : l'accueil en anglais, même promesse que `/` (index.html) et même image avec Mochi, en anglais (#489) ;
 // - `/defi`, `/en/defi` : « Un ami te défie au go » (le jeton est dans le fragment : jamais lu par le serveur) ;
 // - `/partie`, `/en/partie` : « Une partie de go à revoir » ;
 // - `/j/N`, `/en/j/N` : « Go du jour n° N », du jour J−30 au jour J+45 (date du build) ; au-delà, `404.html`, la même app
 //   avec l'aperçu général. Le problème n'est jamais lisible sur l'image (pas de spoiler) ;
 // - `404.html` : toute adresse inconnue ouvre l'app (aperçu général), au lieu de la page 404 de l'hébergeur.
-// Ces pages portent `noindex` : seule `/` est indexée (référencement).
+// Ces pages portent `noindex` et pas de lien canonique : seules `/` et les pages de référencement sont indexées.
 // index.html remet l'adresse à sa forme habituelle avant tout le reste (fonction `adresseCourte`).
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -42,8 +43,11 @@ const ALT_JOUR = {
   en: 'A go board with a few stones and the question: can you find the right move?',
 };
 
-/** Aperçus fixes : défi par lien et partie partagée, en français et en anglais. */
+/** Aperçus fixes : accueil anglais, défi par lien et partie partagée (ou étude, même lien), en français et en anglais. */
 export const APERCUS_FIXES: readonly Apercu[] = [
+  { chemin: 'en', langue: 'en', titre: 'Mochi Go: learn Go by playing', image: 'apercu-accueil-en.png',
+    description: 'Free, no ads. Beginners welcome: lessons, puzzles, games against the computer or your friends.',
+    imageAlt: 'Mochi, the little coach cat, next to a go board: learn Go by playing, beginners welcome.' },
   { chemin: 'defi', langue: 'fr', titre: 'Un ami te défie au go', image: 'apercu-defi.png',
     description: 'Partie 9 × 9, 3 jours par coup. Gratuit : ouvre le lien et joue ton premier coup.',
     imageAlt: 'Deux pierres de go face à face et l’invitation : un ami te défie.' },
@@ -104,7 +108,8 @@ export function pageApercu(html: string, a: Apercu | null): string {
     ] as const) h = remplacer(h, cle, v);
     if (a.langue === 'en') h = h.replace('<html lang="fr">', '<html lang="en">');
   }
-  // Une seule page indexée (`/`) : les pages d'aperçu et la 404 ne font pas de doublons pour les moteurs.
+  // Pages d'aperçu et 404 non indexées : pas de doublon de `/` pour les moteurs, donc pas de lien canonique vers elle.
+  h = h.replace(/\n\s*<link rel="canonical"[^>]*>/, '');
   return h.replace('<meta name="description"', '<meta name="robots" content="noindex" />\n    <meta name="description"');
 }
 

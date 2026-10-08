@@ -84,7 +84,7 @@ describe('le débutant passe tôt (#235)', () => {
     expect(chooseMoveDetail(pos, 'pomme', { seed: 1, accommodant: true }).move).toBe(-1);
   });
 
-  it('un trou dans sa frontière : Pomme le ferme, puis elle passe', () => {
+  it('un trou dans sa frontière : Caillou le ferme, puis il passe ; Pomme passe tout de suite (#488)', () => {
     // Mur blanc en colonne F avec un trou en F5 ; mur noir en colonne D. Le côté droit n'est à Blanc que si F5 est fermé.
     const rows = [
       '...XXO...',
@@ -100,14 +100,16 @@ describe('le débutant passe tôt (#235)', () => {
     const pos = lire(rows, 2);
     const f5 = 4 * 9 + 5;
     expect(brecheAFermer(pos)).toBe(f5);
-    const r = chooseMoveDetail(pos, 'pomme', { seed: 1, accommodant: true, passesJoueur: 1 });
+    const r = chooseMoveDetail(pos, 'caillou', { seed: 1, accommodant: true, passesJoueur: 1, playouts: 2000 });
     expect(r.move).toBe(f5);
     expect(r.raison?.texte).toBe('il reste un trou dans sa frontière en F5');
-    // Deuxième passe du joueur : Pomme passe, même s'il restait autre chose à fermer.
-    expect(chooseMoveDetail(pos, 'pomme', { seed: 1, accommodant: true, passesJoueur: 2 }).move).toBe(-1);
-    // Après la fermeture, plus de trou chez elle : elle passe.
+    // Deuxième passe du joueur : il passe, même s'il restait autre chose à fermer.
+    expect(chooseMoveDetail(pos, 'caillou', { seed: 1, accommodant: true, passesJoueur: 2, playouts: 2000 }).move).toBe(-1);
+    // Après la fermeture, plus de trou chez lui : il passe.
     const ferme = play(play(pos, f5) as Position, -1) as Position;
-    expect(chooseMoveDetail(ferme, 'pomme', { seed: 1, accommodant: true, passesJoueur: 1 }).move).toBe(-1);
+    expect(chooseMoveDetail(ferme, 'caillou', { seed: 1, accommodant: true, passesJoueur: 1, playouts: 2000 }).move).toBe(-1);
+    // Pomme (#488, `fermeBreche: false`) : dans tes premières parties, elle passe dès que tu passes, trou ou pas.
+    expect(chooseMoveDetail(pos, 'pomme', { seed: 1, accommodant: true, passesJoueur: 1 }).move).toBe(-1);
   });
 
   it('le trou du joueur ne la concerne pas : elle ne le bouche pas', () => {

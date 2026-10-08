@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { newPosition } from '../go/rules';
 import { score } from '../go/score';
-import { annonceKomi, equilibrage, KOMI_DEBUTANT, KOMI_NORMAL, PARTIES_KOMI_DEBUTANT, PARTIES_SANS_BARRE_AVANTAGE, partiesOrdi, rendrePartieOrdi } from './equilibrage';
+import { annonceKomi, comptageSurActif, equilibrage, PARTIES_COMPTAGE_SUR, KOMI_DEBUTANT, KOMI_NORMAL, PARTIES_KOMI_DEBUTANT, PARTIES_SANS_BARRE_AVANTAGE, partiesOrdi, rendrePartieOrdi } from './equilibrage';
 
 const FINE = ' ';
 
@@ -71,5 +71,12 @@ describe('équilibrage des premières parties contre l’ordi (#160)', () => {
     expect(s.winner).toBe(2);
     expect(s.margin).toBe(0.5);
     expect(s.white - s.black).toBe(KOMI_DEBUTANT);
+  });
+});
+
+describe('comptage sûr (#486)', () => {
+  it('actif pendant les 3 premières parties terminées, plus ensuite', () => {
+    expect([0, 1, 2, 3, 4].map(comptageSurActif)).toEqual([true, true, true, false, false]);
+    expect(PARTIES_COMPTAGE_SUR).toBe(3);
   });
 });

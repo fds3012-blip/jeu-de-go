@@ -10,6 +10,7 @@ Tenu par l'agent `game-designer`. Issue #179. Mesures du 28/09/2026. Voir aussi 
 - **Aucune constante de la table ne corrige le mur.** Même réduit à 1 visite et 30 points de tolérance, Bambou gagne 4 sur 4 contre Caillou : le réseau seul est bien plus fort que le Monte-Carlo. Il faut une part de hasard pour les niveaux KataGo, ce qui demande du code. C'est la proposition P1 (mesurée ci-dessous). Aucun réglage n'a été modifié dans cette PR.
 - **Mise à jour (mur de Bambou, P1b en place)** : `bestMove` applique maintenant `hasard` aux niveaux KataGo. Le coup est tiré selon la politique du réseau, avec une température. Réglage retenu : Bambou 0,7 (T = 1,5), Renard 0,35 (T = 1,5). Mesures sur 16 à 32 parties par marche : Caillou → Bambou **26 / 32** (81 %, +45 points au lieu de +71), Bambou → Renard **12 / 16** (75 %), Renard → Rivière **13 / 16** (81 %). Le mur est cassé. Détail dans « P1 en place » ci-dessous.
 - Mesures brutes (une ligne par partie, avec les réglages essayés) : `equilibrage-mesures.jsonl`.
+- **Mise à jour du 08/10 (#488)** : Pomme et Caillou ne jouent plus de coups au bord sans raison (filtre `src/engine/ouverture.ts`). Pomme passe à `hasard` 0,65 pour garder sa force, les crans de Mochi à 0,9 et 0,8. Caillou → Pomme : 12 / 12 avant et après, écart +20 → +39. Détail : `ouverture-pomme-2026-10-08.md`.
 
 Indicateurs visés : progression dans l'échelle (part des joueurs qui battent Bambou, Rivière, Sensei), parties terminées par semaine (5, charte), rétention J7 (25 %, charte).
 

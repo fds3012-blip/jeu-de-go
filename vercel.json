@@ -12,7 +12,7 @@
     { "source": "/regles-du-go", "destination": "/regles-du-go/index.html" },
     { "source": "/en/learn-go", "destination": "/en/learn-go/index.html" },
     { "source": "/en/go-rules", "destination": "/en/go-rules/index.html" },
-    { "source": "/en", "destination": "/index.html" }
+    { "source": "/en", "destination": "/en/index.html" }
   ],
   "headers": [
     {

@@ -91,14 +91,18 @@ interface Props {
    * partie guidée), ni d'interrupteur dans le menu « Plus ».
    */
   coach?: boolean;
+  /** Comptage sûr (#486, 3 premières parties terminées) : contre l'ordi, Mochi marque seul les pierres mortes sûres. */
+  comptageSur?: boolean;
 }
 
-export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, onResult, fin, aiKomi = komi, portrait, celebrer = true, aide = true, avantage = true, accommodant = false, guidee, onImporter, reglages, coach }: Props) {
+export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, onResult, fin, aiKomi = komi, portrait, celebrer = true, aide = true, avantage = true, accommodant = false, guidee, onImporter, reglages, coach, comptageSur = false }: Props) {
   // #365 : coordonnées et marque du dernier coup, selon les Réglages.
   const prefs = usePreferences();
   const [history, setHistory] = useState<Position[]>(() => [newPosition(size)]);
   const [phase, setPhase] = useState<'play' | 'score' | 'end'>('play');
   const [dead, setDead] = useState<Set<number>>(new Set());
+  // #486 : fixé au début de la partie (le compteur de parties finies change à la fin de celle-ci).
+  const [sur] = useState(() => !!ai && comptageSur);
   const [fantome, setFantome] = useState(-1);
   const [msg, setMsg] = useState(ai ? tr('partie.debut.ordi', { nom: ai.nom }) : tr('partie.debut.deux'));
   // « Abandonner » armé (#audit-wig, point 3) : valable pour l'état courant de l'historique seulement, sans minuterie.
@@ -316,12 +320,12 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     const t = ++scoreToken.current;
     setPhase('score'); setDead(new Set()); setFinding(true); setMsg(tr('partie.chercheMortes', { fin }));
     // #474 : comptage en échec : rien de proposé, le joueur marque les pierres mortes (jamais « Je cherche… » sans fin).
-    proposeComptage(p, komi).catch((e: unknown) => comptageDeSecours(e)).then(r => {
+    proposeComptage(p, komi, { sur }).catch((e: unknown) => comptageDeSecours(e)).then(r => {
       const { dead: d, incertains } = r;
       if (t !== scoreToken.current) return;
       setFinding(false); setDead(new Set(d));
       if (!('secours' in r) && modeComptage(!!ai, incertains) === 'auto') setAutoCompte('calcule');
-      else track(EVENTS.comptageManuel, { mode: ai ? 'ordi' : 'deux', adversaire: ai?.id, taille: size, mortes: d.length, incertains: incertains.length });
+      else track(EVENTS.comptageManuel, { mode: ai ? 'ordi' : 'deux', adversaire: ai?.id, taille: size, mortes: d.length, incertains: incertains.length, premieres: sur, prouves: 'prouves' in r ? r.prouves ?? 0 : 0 });
       // Recette du 02/10 au soir : aussi en comptage manuel, où « Je cherche les pierres mortes… » restait affiché
       // pendant que le joueur devait vérifier les pierres grisées puis valider.
       setMsg(messageComptage(fin, d.length, incertains.length > 0));
@@ -608,7 +612,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
         <div className="recit-auto">
           {recitEl}
           <aside className="comptage-auto" aria-label={tr('partie.mortes.aria')}>
-            {dead.size > 0 && <p>{fr(tr('partie.mortes.explication'))}</p>}
+            {dead.size > 0 && <p>{fr(tr(sur ? 'partie.mortes.auto' : 'partie.mortes.explication'))}</p>}
             <button type="button" className="lien lien-discret" onClick={corriger}>{tr('partie.mortes.corriger')}</button>
           </aside>
         </div>

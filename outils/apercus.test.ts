@@ -61,7 +61,7 @@ describe("pages d'aperçu des liens courts", () => {
     expect(meta(page, 'og:locale')).toBe('en_US');
     expect(meta(page, 'robots')).toBe('noindex');
     expect(page).toContain('<html lang="en">');
-    const sansMeta = (h: string) => h.replace(/<meta[^>]*>/g, '').replace(/<html lang="\w+">/, '').replace(/\s+/g, ' ');
+    const sansMeta = (h: string) => h.replace(/<meta[^>]*>|<link rel="canonical"[^>]*>/g, '').replace(/<html lang="\w+">/, '').replace(/\s+/g, ' ');
     expect(sansMeta(page)).toBe(sansMeta(html));
     // Le jour : son numéro dans le titre, jamais la position du problème (pas de spoiler : image commune).
     const jour = pageApercu(html, apercuJour(42, 'fr'));
@@ -72,6 +72,15 @@ describe("pages d'aperçu des liens courts", () => {
     expect(meta(p404, 'og:title')).toBe(meta(html, 'og:title'));
     expect(meta(p404, 'robots')).toBe('noindex');
     expect(meta(html, 'robots')).toBeNull();
+    // Pages non indexées : aucun lien canonique (seul index.html en porte un, vers `/`).
+    expect(html).toContain('<link rel="canonical" href="https://mochi-go.app/" />');
+    expect(page).not.toContain('rel="canonical"');
+    expect(p404).not.toContain('rel="canonical"');
+    // L'accueil anglais (`/en`) : la même promesse, en anglais.
+    const en = pageApercu(html, APERCUS_FIXES.find(x => x.chemin === 'en')!);
+    expect(meta(en, 'og:url')).toBe(`${SITE}/en`);
+    expect(meta(en, 'og:image')).toBe(`${SITE}/apercu-accueil-en.png`);
+    expect(meta(en, 'og:title')).toBe('Mochi Go: learn Go by playing');
   });
 
   it('les textes sont échappés', () => {
@@ -84,13 +93,14 @@ describe("pages d'aperçu des liens courts", () => {
     try {
       writeFileSync(join(dossier, 'index.html'), html);
       const ecrits = ecrireApercus(dossier, new Date('2026-10-05T12:00:00+02:00'));
-      expect(ecrits).toEqual(expect.arrayContaining(['defi/index.html', 'en/partie/index.html', 'j/9/index.html', 'en/j/54/index.html', '404.html']));
+      expect(ecrits).toEqual(expect.arrayContaining(['en/index.html', 'defi/index.html', 'en/partie/index.html', 'j/9/index.html', 'en/j/54/index.html', '404.html']));
       expect(meta(readFileSync(join(dossier, 'j/9/index.html'), 'utf8'), 'og:url')).toBe(`${SITE}/j/9`);
     } finally { rmSync(dossier, { recursive: true, force: true }); }
   });
 
   it('vercel.json sert chaque lien court par sa page (aucune fonction serveur)', () => {
     const r = new Map(vercel.rewrites.map(x => [x.source, x.destination]));
+    expect(r.get('/en')).toBe('/en/index.html');
     expect(r.get('/defi')).toBe('/defi/index.html');
     expect(r.get('/en/defi')).toBe('/en/defi/index.html');
     expect(r.get('/partie')).toBe('/partie/index.html');

@@ -44,6 +44,13 @@ export interface Equilibrage {
 /** Premières parties contre l'ordi où il passe quand tu passes (#185) : le même « camp » de 3 parties que le komi. */
 export const PARTIES_ACCOMMODANTES = 3;
 
+/**
+ * Comptage sûr (#486) : pendant les 3 premières parties terminées sur l'appareil, Mochi marque tout seul les pierres
+ * mortes contre l'ordi, seulement quand c'est sûr (voir src/engine/comptageSur.ts). `terminees` : parties déjà finies.
+ */
+export const PARTIES_COMPTAGE_SUR = 3;
+export const comptageSurActif = (terminees: number) => terminees < PARTIES_COMPTAGE_SUR;
+
 export function equilibrage(rang: number): Equilibrage {
   return {
     komi: rang < PARTIES_KOMI_DEBUTANT ? KOMI_DEBUTANT : KOMI_NORMAL,

@@ -42,7 +42,7 @@ import { messageGel } from './gel';
 import { goDuJourFaitAppareil } from './defiAppareil';
 import { BarreNav, type Onglet } from '../ui/IconesNav';
 import { BarreNiveau, FeteNiveau } from '../ui/Niveau';
-import { annonceKomi, equilibrage, KOMI_NORMAL, partiesOrdi, rendrePartieOrdi, type Equilibrage } from './equilibrage';
+import { annonceKomi, comptageSurActif, equilibrage, KOMI_NORMAL, partiesOrdi, rendrePartieOrdi, type Equilibrage } from './equilibrage';
 import { AnnonceXp } from '../ui/PastilleXp';
 import { useExercice } from '../ui/celebrations';
 import { ProposerInstallation, usePlateformeInstallation } from '../ui/ProposerInstallation';
@@ -748,7 +748,9 @@ export function App() {
           onResult={onResult} fin={finEcran} celebrer={settings.celebrations} aide={aideActive(settings.aide, adv.id)} portrait={playing === 'ordi' ? <Sceau id={adv.id} taille={44} /> : undefined}
           reglages={{ son: settings.sound, modifier: set }}
           // Coach Mochi (#470) : contre l'IA de l'échelle seulement, 10 premières parties par défaut.
-          coach={playing === 'ordi' ? coachActif(settings.coach, parties.n) : undefined} />
+          coach={playing === 'ordi' ? coachActif(settings.coach, parties.n) : undefined}
+          // #486 : comptage sûr pendant les 3 premières parties terminées sur l'appareil.
+          comptageSur={comptageSurActif(terminees)} />
       </>
     );
   } else if (tab === 'jouer' && seanceRevisions) {
