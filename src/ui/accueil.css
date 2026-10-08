@@ -268,3 +268,16 @@
 .tuile-recherche-ouvrir { flex: 1; min-width: 0; min-height: var(--cible-min); display: grid; gap: 2px; padding: 0; border: 0; background: none; color: inherit; text-align: left; }
 .tuile-recherche-ouvrir b { overflow-wrap: anywhere; }
 .tuile-recherche .lien { flex: none; }
+
+/* ---------- #487 : retour à l'accueil après la toute première pierre ---------- */
+/* Une seule fois par appareil : les modes et les tuiles, cachés avant la première pierre, arrivent en fondu sous le
+   bouton (il ne bouge pas), l'un après l'autre. Mouvements réduits : un simple fondu, sans déplacement. */
+@keyframes accueil-revele { from { opacity: 0; transform: translateY(6px); } }
+@keyframes accueil-revele-fondu { from { opacity: 0; } }
+@media (prefers-reduced-motion: no-preference) {
+  .accueil-revele .modes, .accueil-revele .tuiles { animation: accueil-revele var(--duree) var(--ease) both; }
+  .accueil-revele .tuiles { animation-delay: 60ms; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .accueil-revele .modes, .accueil-revele .tuiles { animation: accueil-revele-fondu 200ms ease both; }
+}

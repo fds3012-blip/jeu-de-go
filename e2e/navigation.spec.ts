@@ -29,7 +29,11 @@ test("première ouverture : l'accueil s'affiche en moins de 3 secondes", async (
   expect(visible!).toBeLessThan(3000);
 
   await expect(page.getByRole('heading', { level: 1, name: 'Mochi Go' })).toBeVisible();
-  // Les deux tuiles : problème du jour et leçon suivante.
+  // #487 : tout premier lancement, aucune pierre posée : pas encore de tuiles, une seule action.
+  await expect(page.locator('.accueil[data-epure]')).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Go du jour n°\s\d+/ })).toHaveCount(0);
+  // Dès qu'une pierre est posée (repère de l'appareil), les deux tuiles : problème du jour et leçon suivante.
+  await page.evaluate(() => { localStorage.setItem('go.premiere-pierre.v1', 'true'); window.dispatchEvent(new Event('go:premiere-pierre')); });
   await expect(page.getByRole('button', { name: /^Go du jour n°\s\d+/ })).toBeVisible();
   await expect(page.getByRole('button', { name: /^Leçon 1 sur \d+/ })).toBeVisible();
   // Pas de défilement horizontal sur un écran de téléphone.

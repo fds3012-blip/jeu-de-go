@@ -352,6 +352,11 @@ test('espacement du texte forcé (1.4.12) : accueil et Profil sans texte coupé'
   await page.goto('/');
   await expect(page.locator('.cta')).toBeVisible();
   await page.addStyleTag({ content: ESPACEMENT });
+  // #487 : tout premier lancement (accueil épuré), puis l'accueil complet dès qu'une pierre est posée.
+  await expect(page.locator('.accueil[data-epure]')).toBeVisible();
+  expect(await textesCoupes(page), 'Accueil épuré').toEqual([]);
+  await page.evaluate(() => { localStorage.setItem('go.premiere-pierre.v1', 'true'); window.dispatchEvent(new Event('go:premiere-pierre')); });
+  await expect(page.locator('.tuile-probleme')).toBeVisible();
   expect(await textesCoupes(page), 'Accueil').toEqual([]);
   // Tous les titres du Go du jour, posés tour à tour dans la tuile (le titre du jour change chaque jour).
   const titre = page.locator('.tuile-probleme b');
