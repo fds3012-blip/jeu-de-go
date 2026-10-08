@@ -10,7 +10,7 @@ import { partieAvancee } from '../go/frontieres';
 /**
  * Coups d'ouverture de l'ordi, par taille de plateau : tant qu'il a posé moins de pierres que ça, il ne joue que
  * dans la zone d'ouverture (ZONE_OUVERTURE). 9 × 9 : ses 3 premiers coups ; 13 × 13 : 4 ; 19 × 19 : 6.
- * Indicateur visé : part des premiers coups de Pomme sur la 1re ou la 2e ligne (0 %, contre 59 % avant).
+ * Indicateur visé : part des premiers coups de Pomme sur la 1re ou la 2e ligne (0 %, contre 67,5 % avant sur 240 parties).
  */
 export const COUPS_OUVERTURE: Readonly<Record<number, number>> = { 9: 3, 13: 4, 19: 6 };
 
