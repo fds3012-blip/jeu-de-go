@@ -163,24 +163,26 @@
         else if (mm('(display-mode: standalone)')) h.setAttribute('data-ouverture-debut', 'android');
       })();
     </script>
-    <!-- Aperçu des liens partagés (issue #285) : image générée par scripts/generate-apercu.mjs. -->
+    <!-- Aperçu des liens partagés (#285, #489) : la promesse générale, avec Mochi (scripts/generate-apercu.mjs).
+         Les liens courts (/defi, /partie, /j/N, /en…) ont leur propre page d'aperçu : outils/apercus.ts. -->
+    <link rel="canonical" href="https://mochi-go.app/" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Mochi Go" />
     <meta property="og:locale" content="fr_FR" />
     <meta property="og:locale:alternate" content="en_US" />
     <meta property="og:url" content="https://mochi-go.app/" />
-    <meta property="og:title" content="Go du jour : trouveras-tu le bon coup ?" />
-    <meta property="og:description" content="Un défi de go par jour. Gratuit, sans compte : ta première pierre en 1 minute." />
-    <meta property="og:image" content="https://mochi-go.app/apercu.png" />
+    <meta property="og:title" content="Mochi Go : apprends le go en jouant" />
+    <meta property="og:description" content="Gratuit, sans pub. Débutants bienvenus : leçons, problèmes, parties contre l’ordi ou tes amis." />
+    <meta property="og:image" content="https://mochi-go.app/apercu-accueil.png" />
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Un goban avec quelques pierres et la question : trouveras-tu le bon coup ?" />
+    <meta property="og:image:alt" content="Mochi, le petit chat coach, à côté d’un goban : apprends le go en jouant, débutants bienvenus." />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Go du jour : trouveras-tu le bon coup ?" />
-    <meta name="twitter:description" content="Un défi de go par jour. Gratuit, sans compte : ta première pierre en 1 minute." />
-    <meta name="twitter:image" content="https://mochi-go.app/apercu.png" />
-    <meta name="twitter:image:alt" content="Un goban avec quelques pierres et la question : trouveras-tu le bon coup ?" />
+    <meta name="twitter:title" content="Mochi Go : apprends le go en jouant" />
+    <meta name="twitter:description" content="Gratuit, sans pub. Débutants bienvenus : leçons, problèmes, parties contre l’ordi ou tes amis." />
+    <meta name="twitter:image" content="https://mochi-go.app/apercu-accueil.png" />
+    <meta name="twitter:image:alt" content="Mochi, le petit chat coach, à côté d’un goban : apprends le go en jouant, débutants bienvenus." />
   </head>
   <body>
     <div id="root"></div>

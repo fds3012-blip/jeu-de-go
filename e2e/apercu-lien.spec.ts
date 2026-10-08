@@ -5,13 +5,14 @@ import { attendrePierre, jouer, plateau } from './plateau';
 test.use({ storageState: { cookies: [], origins: [] } });
 
 test("les balises d'aperçu sont servies et l'image répond en 200", async ({ page, request }) => {
+  // Lien `/?go-du-jour=1` (forme longue) : l'aperçu général de l'accueil (#489) ; les liens courts `/j/N` ont le leur.
   await page.goto('/?go-du-jour=1');
   const contenu = (cle: string) => page.locator(`meta[property="${cle}"], meta[name="${cle}"]`).getAttribute('content');
-  expect(await contenu('og:title')).toBe('Go du jour : trouveras-tu le bon coup ?');
+  expect(await contenu('og:title')).toBe('Mochi Go : apprends le go en jouant');
   expect(await contenu('og:locale')).toBe('fr_FR');
   expect(await contenu('twitter:card')).toBe('summary_large_image');
   const image = await contenu('og:image');
-  expect(image).toBe('https://mochi-go.app/apercu.png');
+  expect(image).toBe('https://mochi-go.app/apercu-accueil.png');
 
   // Même chemin, servi par le build local.
   const rep = await request.get(new URL(image!).pathname);
