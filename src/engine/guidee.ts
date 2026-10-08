@@ -24,10 +24,12 @@ export const PAUSE_INVERSION = 1;
  * Crans de force de Mochi, du plus doux au plus fort. Les deux premiers sont plus doux que Pomme (plus de coups au
  * hasard) : pour ramener une partie qu'il mène, Mochi doit pouvoir jouer moins bien que le joueur le plus faible,
  * pas seulement aussi mal. Ensuite, les 9 niveaux de l'échelle, de Pomme (20 kyu) à Sensei (1 dan).
+ * #488 : avec le filtre des coups plausibles, 0,9 et 0,8 jouent comme les anciens 0,7 et 0,5 (21 / 40 chacun,
+ * docs/game-design/ouverture-pomme-2026-10-08.md).
  */
 export const CRANS: readonly Opponent[] = [
-  { ...OPPONENTS[0], hasard: 0.7 },
-  { ...OPPONENTS[0], hasard: 0.5 },
+  { ...OPPONENTS[0], hasard: 0.9 },
+  { ...OPPONENTS[0], hasard: 0.8 },
   ...OPPONENTS,
 ];
 export const CRAN_MIN = 0;

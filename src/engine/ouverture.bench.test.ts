@@ -3,7 +3,8 @@
 //   OUVERTURE_BENCH=1 npx vitest run src/engine/ouverture.bench.test.ts
 // Variables : OUVERTURE_PARTIES (défaut 40 par paire), OUVERTURE_CAILLOU (parties Caillou contre Pomme, défaut 12),
 // OUVERTURE_SORTIE (fichier JSON, une ligne par série), OUVERTURE_POMME (réglages essayés pour Pomme, JSON),
-// OUVERTURE_QUAND (« avant » ou « apres » : une seule des deux séries contre les débutants).
+// OUVERTURE_QUAND (« avant » ou « apres » : une seule des deux séries contre les débutants),
+// OUVERTURE_DEBUTANTS (indices des débutants simulés, ex. « 0,2 »), OUVERTURE_GRAINE (défaut 4880).
 // Pomme joue avec un nombre fixe de simulations (250, sans plafond de temps) : les séries sont reproductibles.
 import { appendFileSync } from 'node:fs';
 import { describe, it } from 'vitest';
@@ -39,10 +40,12 @@ const moteur = (nom: string, lvl: Opponent, opts: { timeMs?: number; playouts?: 
   nom,
   coup: (pos, graine) => chooseMoveDetail(pos, lvl, { komi: KOMI, seed: graine, timeMs: SANS_LIMITE, ...opts }).move,
 });
+const GRAINE = Number(process.env.OUVERTURE_GRAINE ?? 4880);
 const DEBUTANTS: Joueur[] = [
   auHasard,
   moteur('débutant Mochi doux (hasard 0,5)', { ...OPPONENTS[0], hasard: 0.5, ouverture: false }),
   moteur('débutant de la force de l’ancienne Pomme', { ...OPPONENTS[0], ouverture: false }),
+  moteur('débutant Mochi très doux (hasard 0,7)', { ...OPPONENTS[0], hasard: 0.7, ouverture: false }),
 ];
 
 interface Partie { gagnant: Color; marge: number; coups: number; premiers: number[] }
@@ -80,18 +83,27 @@ function resume(nom: string, parties: Partie[], fort: Color) {
   };
 }
 
+/** Rend la main à Vitest entre deux parties (sinon ses messages internes expirent pendant les longues séries). */
+const pause = () => new Promise(r => setTimeout(r, 0));
+async function serie(n: number, f: (i: number) => Partie): Promise<Partie[]> {
+  const out: Partie[] = [];
+  for (let i = 0; i < n; i++) { out.push(f(i)); await pause(); }
+  return out;
+}
+
 function ecrire(r: object) {
   console.info(JSON.stringify(r));
   if (process.env.OUVERTURE_SORTIE) appendFileSync(process.env.OUVERTURE_SORTIE, JSON.stringify({ ...r, date: '2026-10-08' }) + '\n');
 }
 
 describe.skipIf(!actif)('banc #488 : ouverture de Pomme', () => {
-  it('débutants simulés contre Pomme, avant / après (9 × 9, komi 0,5)', () => {
-    for (const d of DEBUTANTS) {
+  it('débutants simulés contre Pomme, avant / après (9 × 9, komi 0,5)', async () => {
+    const choix = process.env.OUVERTURE_DEBUTANTS?.split(',').map(Number);
+    for (const d of DEBUTANTS.filter((_, i) => !choix || choix.includes(i))) {
       for (const [quand, lvl] of Object.entries(POMME)) {
         if (process.env.OUVERTURE_QUAND && process.env.OUVERTURE_QUAND !== quand) continue;
-        const ps = Array.from({ length: PARTIES }, (_, i) => partie(d, pommeJoueur(lvl), 9, 4880 + i));
-        ecrire({ ...resume(`${d.nom} contre Pomme (${quand})`, ps, 2), reglages: quand === 'apres' ? process.env.OUVERTURE_POMME ?? 'actuel' : 'sans filtre' });
+        const ps = await serie(PARTIES, i => partie(d, pommeJoueur(lvl), 9, GRAINE + i));
+        ecrire({ ...resume(`${d.nom} contre Pomme (${quand})`, ps, 2), reglages: quand === 'apres' ? process.env.OUVERTURE_POMME ?? 'actuel' : 'sans filtre', graine: GRAINE });
       }
     }
   }, 3_600_000);
@@ -114,15 +126,17 @@ describe.skipIf(!actif)('banc #488 : ouverture de Pomme', () => {
     }
   }, 3_600_000);
 
-  it('Caillou contre Pomme, avant / après (proxy de l’échelle, 9 × 9) et premiers coups de Caillou', () => {
+  it('Caillou contre Pomme, avant / après (proxy de l’échelle, 9 × 9) et premiers coups de Caillou', async () => {
     for (const quand of ['avant', 'apres'] as const) {
       const caillou = moteur('caillou', CAILLOU[quand], { timeMs: OPPONENTS[1].timeMs });
       const pomme = pommeJoueur(POMME[quand]);
       // Couleurs alternées ; on compte les victoires de Caillou, et les premiers coups de celui qui a Blanc.
-      const ps = Array.from({ length: PARTIES_CAILLOU }, (_, i) => {
+      const blancs: string[] = [];
+      const ps = (await serie(PARTIES_CAILLOU, i => {
         const caillouNoir = i % 2 === 0, p = partie(caillouNoir ? caillou : pomme, caillouNoir ? pomme : caillou, 9, 7000 + i);
-        return { ...p, gagnant: (p.gagnant === (caillouNoir ? 1 : 2) ? 2 : 1) as Color, blancEst: caillouNoir ? 'pomme' : 'caillou' };
-      });
+        blancs.push(caillouNoir ? 'pomme' : 'caillou');
+        return { ...p, gagnant: (p.gagnant === (caillouNoir ? 1 : 2) ? 2 : 1) as Color };
+      })).map((p, i) => ({ ...p, blancEst: blancs[i] }));
       ecrire(resume(`Caillou contre Pomme (${quand}), victoires de Caillou`, ps, 2));
       ecrire(resume(`Premiers coups de Caillou en Blanc (${quand})`, ps.filter(p => p.blancEst === 'caillou'), 2));
     }

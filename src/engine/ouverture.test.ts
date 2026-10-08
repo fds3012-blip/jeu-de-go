@@ -2,7 +2,9 @@
 // sans raison. Mesures et réglages : docs/game-design/ouverture-pomme-2026-10-08.md.
 import { describe, expect, it } from 'vitest';
 import { newPosition, play, type Color, type Position } from '../go/rules';
+import { score } from '../go/score';
 import { chooseMove, opponent, type Opponent } from './simple';
+import { deadStones } from './dead';
 import { CRANS } from './guidee';
 import { COUPS_OUVERTURE, coupPlausible, coupsTactiques, enOuverture, ligne, plausibles, ZONE_OUVERTURE } from './ouverture';
 import { isEye, rng } from './sim';
@@ -67,25 +69,25 @@ describe('aucun premier coup au bord (#488)', () => {
     const l = premiersCoups(opponent('pomme'), 9, 100, 3, 60);
     expect(l).toHaveLength(300);
     expect(l.filter(x => x <= 2)).toEqual([]);
-  });
+  }, 60_000);
 
   it('Pomme, 13 × 13 : ses 4 premiers coups sur la 3e ou la 4e ligne, sur 120 tirages', () => {
     const l = premiersCoups(opponent('pomme'), 13, 30, 4, 60);
     expect(l.filter(x => x !== 3 && x !== 4)).toEqual([]);
-  });
+  }, 60_000);
 
-  it('crans de Mochi plus doux que Pomme (hasard 0,7 et 0,5) : pas de premier coup au bord non plus', () => {
+  it('crans de Mochi plus doux que Pomme (hasard 0,9 et 0,8) : pas de premier coup au bord non plus', () => {
     for (const cran of CRANS.slice(0, 2)) expect(premiersCoups(cran, 9, 50, 3, 60).filter(x => x <= 2)).toEqual([]);
-  });
+  }, 60_000);
 
   it('Caillou, 9 × 9 : ses 3 premiers coups hors des deux premières lignes', () => {
     expect(premiersCoups(opponent('caillou'), 9, 8, 3, 1500).filter(x => x <= 2)).toEqual([]);
-  });
+  }, 60_000);
 
   it('témoin : sans le filtre, Pomme jouait au bord (le test mesure bien quelque chose)', () => {
     const l = premiersCoups({ ...opponent('pomme'), ouverture: false }, 9, 100, 3, 60);
     expect(l.filter(x => x <= 2).length).toBeGreaterThan(60);
-  });
+  }, 60_000);
 });
 
 describe('pas de 1re ligne sans raison', () => {
@@ -138,4 +140,32 @@ describe('pas de 1re ligne sans raison', () => {
     // Zone d'ouverture vide mais 2e ligne libre : la règle d'après l'ouverture s'applique.
     expect(plausibles(pos, [0, 10], m => m)).toEqual([10]);
   });
+});
+
+describe('Pomme reste aussi battable (#488)', () => {
+  /**
+   * Proxy du banc (ouverture.bench.test.ts) : un débutant simulé de la force de l'ancienne Pomme (hasard 0,3, sans filtre)
+   * joue Noir contre Pomme, komi 0,5 (premières parties). Avant #488, Pomme gagnait 35 parties sur 80 (44 %) ; avec le
+   * filtre et hasard 0,65, 34 sur 80 (42 %). Ici 16 parties à graines fixes : Pomme doit en gagner entre 3 et 10
+   * (cible 65-80 % des marches de l'échelle pour le plus fort : Pomme ne doit jamais devenir une marche).
+   */
+  it('16 parties contre l’ancienne Pomme : Pomme en gagne entre 3 et 10', async () => {
+    const ancienne: Opponent = { ...opponent('pomme'), hasard: 0.3, ouverture: false };
+    let gagnees = 0;
+    for (let g = 0; g < 16; g++) {
+      let pos = newPosition(9), passes = 0;
+      for (let n = 0; n < 200 && passes < 2; n++) {
+        const lvl = pos.toPlay === 1 ? ancienne : opponent('pomme');
+        let m = chooseMove(pos, lvl, { seed: (4880 + g) * 1000 + n, timeMs: SANS_LIMITE, playouts: 250, komi: 0.5, accommodant: pos.toPlay === 2 });
+        if (m >= 0 && typeof play(pos, m) === 'string') m = -1;
+        passes = m < 0 ? passes + 1 : 0;
+        pos = m < 0 ? { ...pos, ko: -1, toPlay: (3 - pos.toPlay) as Color, lastMove: -1 } : (play(pos, m) as Position);
+      }
+      if (score(pos, 0.5, 'chinese', new Set(deadStones(pos, { seed: 4880 + g, playouts: 400, timeMs: SANS_LIMITE }))).winner === 2) gagnees++;
+      await new Promise(r => setTimeout(r, 0));
+    }
+    console.info(`[#488] Pomme gagne ${gagnees} parties sur 16 contre l’ancienne Pomme`);
+    expect(gagnees).toBeGreaterThanOrEqual(3);
+    expect(gagnees).toBeLessThanOrEqual(10);
+  }, 120_000);
 });

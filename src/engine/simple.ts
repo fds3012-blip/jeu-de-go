@@ -65,7 +65,9 @@ const repli = { playouts: 20000, timeMs: 800, hasard: 0, heuristiques: true, fer
  * Mesures : docs/game-design/equilibrage.md.
  */
 export const OPPONENTS: Opponent[] = [
-  { id: 'pomme', nom: 'Pomme', rang: '20 kyu', phrase: 'Elle apprend comme toi.', description: 'Joue un peu au hasard. Parfait pour ta première partie.', playouts: 250, timeMs: 150, hasard: 0.3, heuristiques: false, fermeFrontieres: true },
+  // Pomme : hasard 0,65 depuis #488 (0,3 avant). Le filtre des coups plausibles (ouverture.ts) lui retire ses pires coups ;
+  // ce hasard plus haut la garde aussi battable qu'avant (docs/game-design/ouverture-pomme-2026-10-08.md).
+  { id: 'pomme', nom: 'Pomme', rang: '20 kyu', phrase: 'Elle apprend comme toi.', description: 'Joue un peu au hasard. Parfait pour ta première partie.', playouts: 250, timeMs: 150, hasard: 0.65, heuristiques: false, fermeFrontieres: true },
   { id: 'caillou', nom: 'Caillou', rang: '16 kyu', phrase: 'Il capture tout ce qui traîne.', description: 'Capture dès que tu le laisses faire. Protège bien tes pierres.', playouts: 20000, timeMs: 600, hasard: 0, heuristiques: true, fermeFrontieres: true },
   { id: 'bambou', nom: 'Bambou', rang: '13 kyu', phrase: 'Il plie, mais ne rompt jamais.', description: 'Joue solide et relie ses pierres. Cherche ses points faibles.', ...repli, hasard: 0.7, katago: { visits: 4, tolerance: 12, style: 'solide', temperature: 1.5 } },
   { id: 'renard', nom: 'Renard', rang: '10 kyu', phrase: "Il coupe dès que tu t'étires trop.", description: 'Aime couper et attaquer. Garde tes groupes bien reliés.', ...repli, hasard: 0.35, katago: { visits: 8, tolerance: 8, style: 'agressif', temperature: 1.5 } },

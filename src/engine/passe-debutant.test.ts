@@ -51,20 +51,30 @@ function partie(plis: number, seed: number, accommodant = true) {
   return { passes, coupsGratuits, avant, apres: avanceBlanc(pos, seed), ouverts: frontieresOuvertes(pos.board, 9).length };
 }
 
+/** Gain maximal (points) d'un trou fermé après une passe du joueur, partie par partie, et en moyenne (#488). */
+const GAIN_MAX_BRECHE = 25;
+const GAIN_MOYEN_BRECHE = 8;
+
 describe('le débutant passe tôt (#235)', () => {
   it('parties scriptées : au plus 2 passes, et Pomme ne gagne presque rien pendant les passes', () => {
-    const lignes: string[] = [];
+    const lignes: string[] = [], gains: number[] = [];
     for (const plis of [24, 32, 40]) {
       for (const seed of [1, 2, 3, 4]) {
         const p = partie(plis, seed);
         lignes.push(`${plis} coups, graine ${seed} : ${p.passes} passes, ${p.coupsGratuits} coup(s) de Pomme, écart ${p.avant} → ${p.apres}`);
         expect(p.passes, lignes.at(-1)).toBeLessThanOrEqual(2);
         expect(p.coupsGratuits).toBeLessThanOrEqual(1);
-        // Un trou fermé ne rapporte que la zone qu'il protège : quelques points, jamais une invasion.
-        expect(p.apres - p.avant, lignes.at(-1)).toBeLessThanOrEqual(12);
+        // Un trou fermé ne rapporte que la zone qu'il protège, jamais une invasion. Depuis #488, Pomme ne joue plus la
+        // 1re ligne sans raison : un trou au bord de sa zone peut protéger une grande zone (et lever le doute sur des
+        // pierres mortes) : jusqu'à 25 points mesurés sur 30 parties (avant : 11 au plus), surtout quand le joueur passe
+        // tard (40 coups : 9,3 points en moyenne, contre 4,3). Voir docs/game-design/ouverture-pomme-2026-10-08.md.
+        expect(p.apres - p.avant, lignes.at(-1)).toBeLessThanOrEqual(GAIN_MAX_BRECHE);
+        gains.push(p.apres - p.avant);
       }
     }
     console.log(lignes.join('\n'));
+    // Moyenne : quelques points (sur 30 parties, 3,4 avant #488, 4,5 après ; ici 5,7 sur ces 12 parties).
+    expect(gains.reduce((s, g) => s + g, 0) / gains.length).toBeLessThanOrEqual(GAIN_MOYEN_BRECHE);
   }, 120_000);
 
   it('plateau ouvert partout : Pomme ne joue pas chez le joueur', () => {
