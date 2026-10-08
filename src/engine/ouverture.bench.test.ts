@@ -23,7 +23,9 @@ const MAX_COUPS = 200;
 const SANS_LIMITE = 600_000;
 
 const pommeReglee: Opponent = { ...OPPONENTS[0], ...(JSON.parse(process.env.OUVERTURE_POMME ?? '{}') as Partial<Opponent>) };
-const POMME = { avant: { ...OPPONENTS[0], ouverture: false }, apres: pommeReglee };
+/** Pomme d'avant #488 : hasard 0,3, sans filtre. */
+const ANCIENNE_POMME: Opponent = { ...OPPONENTS[0], hasard: 0.3, ouverture: false };
+const POMME = { avant: ANCIENNE_POMME, apres: pommeReglee };
 const CAILLOU = { avant: { ...OPPONENTS[1], ouverture: false }, apres: OPPONENTS[1] };
 
 /** Débutants simulés (Noir). Tous gardent l'ancien comportement : le témoin ne bouge pas entre avant et après. */
@@ -44,7 +46,7 @@ const GRAINE = Number(process.env.OUVERTURE_GRAINE ?? 4880);
 const DEBUTANTS: Joueur[] = [
   auHasard,
   moteur('débutant Mochi doux (hasard 0,5)', { ...OPPONENTS[0], hasard: 0.5, ouverture: false }),
-  moteur('débutant de la force de l’ancienne Pomme', { ...OPPONENTS[0], ouverture: false }),
+  moteur('débutant de la force de l’ancienne Pomme', ANCIENNE_POMME),
   moteur('débutant Mochi très doux (hasard 0,7)', { ...OPPONENTS[0], hasard: 0.7, ouverture: false }),
 ];
 
