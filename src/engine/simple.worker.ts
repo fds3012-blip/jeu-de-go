@@ -1,16 +1,20 @@
 // Web Worker : fait réfléchir le moteur simple sans bloquer l'interface (coup à jouer, pierres mortes, propriété).
 import { chooseMoveDetail, opponent, type EngineOptions, type OpponentId, type Raison } from './simple';
-import { comptageAuto, ownership } from './dead';
+import { comptageAuto, ownership, type ComptageAuto } from './dead';
+import { trancherParPreuve, type Tranche } from './comptageSur';
 import type { Position } from '../go/rules';
 
-export type Tache = { kind: 'move'; pos: Position; niveau: OpponentId; opts: EngineOptions; hasard?: number } | { kind: 'dead'; pos: Position } | { kind: 'own'; pos: Position; timeMs?: number };
+export type Tache = { kind: 'move'; pos: Position; niveau: OpponentId; opts: EngineOptions; hasard?: number } | { kind: 'dead'; pos: Position } | { kind: 'own'; pos: Position; timeMs?: number }
+  // #486 : preuve bornée des groupes incertains au comptage des premières parties.
+  | { kind: 'trancher'; pos: Position; comptage: ComptageAuto };
 export type Demande = Tache & { id: number };
-export interface Reponse { id: number; move: number; raison?: Raison | null; dead?: number[]; incertains?: number[]; own?: Float32Array; error?: string }
+export interface Reponse { id: number; move: number; raison?: Raison | null; dead?: number[]; incertains?: number[]; own?: Float32Array; tranche?: Tranche; error?: string }
 
 self.onmessage = (e: MessageEvent<Demande>) => {
   const d = e.data;
   try {
     const r: Reponse = d.kind === 'dead' ? { id: d.id, move: -1, ...comptageAuto(d.pos) }
+      : d.kind === 'trancher' ? { id: d.id, move: -1, tranche: trancherParPreuve(d.pos, d.comptage) }
       : d.kind === 'own' ? { id: d.id, move: -1, own: ownership(d.pos, { timeMs: d.timeMs, estimation: true }) }
       : { id: d.id, ...chooseMoveDetail(d.pos, d.hasard === undefined ? d.niveau : { ...opponent(d.niveau), hasard: d.hasard }, d.opts) };
     (self as unknown as Worker).postMessage(r);

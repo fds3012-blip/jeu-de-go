@@ -120,7 +120,7 @@ export function deadStones(pos: Position, opts: DeadOptions = {}): number[] {
 }
 
 /** Groupes de la position, sans ceux qui ont deux vrais yeux (vivants sans discussion). */
-function groupesDiscutables(pos: Position): { c: Color; stones: number[] }[] {
+export function groupesDiscutables(pos: Position): { c: Color; stones: number[] }[] {
   const { board, size } = pos, seen = new Uint8Array(board.length), out: { c: Color; stones: number[] }[] = [];
   for (let p = 0; p < board.length; p++) {
     if (!board[p] || seen[p]) continue;

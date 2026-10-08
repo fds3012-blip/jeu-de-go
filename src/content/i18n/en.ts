@@ -536,6 +536,7 @@ export const en = {
   'quiMene.plusDisponible': 'Not available anymore this game',
   'quiMene.encore': { one: '{n} more time this game', other: '{n} more times this game' },
   'partie.mortes.explication': 'Grayed-out stones are dead: they can’t live anymore, so they count as prisoners.',
+  'partie.mortes.auto': 'I counted for you: grayed-out stones can’t live anymore, so they become prisoners.',
   'partie.mortes.corriger': 'Fix dead stones',
   'partie.mortes.doute': 'I’m not sure about some groups. Tap a group if it’s dead, tap it again if it’s alive.',
   'partie.mortes.toucher': 'Tap a group to fix it.',

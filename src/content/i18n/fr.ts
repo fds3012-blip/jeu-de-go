@@ -201,6 +201,8 @@ export const fr = {
   'quiMene.plusDisponible': 'Plus disponible pour cette partie',
   'quiMene.encore': { one: 'Encore {n} fois dans cette partie', other: 'Encore {n} fois dans cette partie' },
   'partie.mortes.explication': 'Les pierres grisées sont mortes : elles ne peuvent plus vivre, elles comptent comme prisonniers.',
+  // #486 : comptage automatique sûr des 3 premières parties.
+  'partie.mortes.auto': "J'ai compté pour toi : les pierres grisées ne peuvent plus vivre, elles deviennent des prisonniers.",
   'partie.mortes.doute': "Je ne suis pas sûr pour certains groupes. Touche un groupe s'il est mort, touche-le encore s'il est vivant.",
   'partie.mortes.toucher': 'Touche un groupe pour corriger.',
   'partie.mortes.aucune': '{fin} Aucune pierre morte. Si un groupe ne peut plus vivre, touche-le pour le compter comme prisonnier.',
