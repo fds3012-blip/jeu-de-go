@@ -306,9 +306,10 @@ export const fr = {
   'pseudo.erreur': 'Impossible d’enregistrer ton pseudo. Réessaie.',
   // Consentement et conditions (src/app/Confidentialite.tsx). « : » et « ? » : espace fine posée par fr().
   'accord.titre': 'Tu m’aides à chasser les bugs ?',
-  'accord.texte': 'Si le jeu plante chez toi, l’équipe reçoit un rapport et répare plus vite. Elle voit aussi si tu reviens jouer, pour garder ce qui te plaît. Jamais ton e-mail ni tes coups.',
-  'accord.note': 'Sans ton accord, on compte juste les parties, sans savoir qui joue.',
-  'accord.lire': 'Lire les conditions',
+  // #485 : bandeau bas compact (24 mots avec le titre, 51 avant ; 29 avec les boutons, 58 avant). Finalités, retrait et lien vers le détail ; la réassurance est dans Conditions.
+  'accord.texte': 'Si oui, on reçoit les rapports de bug et on voit si tu reviens.',
+  'accord.note': 'Change d’avis dans Profil.',
+  'accord.lire': 'Détails',
   'accord.oui': 'Oui, j’aide',
   'accord.non': 'Non merci',
   'conditions.bugs': 'Rapports de bugs et suivi détaillé',
