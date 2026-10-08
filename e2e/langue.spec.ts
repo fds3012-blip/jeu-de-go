@@ -82,6 +82,12 @@ for (const largeur of [390, 320]) {
     const cta = page.getByRole('button', { name: 'Play your first game against Pomme' });
     await expect(cta).toContainText('Play your first game');
     expect((await cta.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+    // #487 : pas de tuiles avant la toute première pierre ; elles arrivent dès qu'une pierre est posée.
+    await expect(page.getByRole('button', { name: 'I already know how to play' })).toBeVisible();
+    await expect(page.getByRole('button', { name: /^Daily Go #\d+/ })).toHaveCount(0);
+    await sansDebordement(page);
+    await sansCoupe(page, largeur);
+    await page.evaluate(() => { localStorage.setItem('go.premiere-pierre.v1', 'true'); window.dispatchEvent(new Event('go:premiere-pierre')); });
     await expect(page.getByRole('button', { name: /^Daily Go #\d+/ })).toBeVisible();
     await expect(page.getByRole('button', { name: /^Lesson 1 of \d+/ })).toBeVisible();
     await expect(page.locator('header').getByText('Mochi Go', { exact: true })).toBeVisible();
