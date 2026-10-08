@@ -56,8 +56,10 @@ function canal() {
 const ask = canal();
 const askEstimation = canal();
 
+// #474 : une exception de `f` rejette la promesse. Avant, elle sortait du minuteur (erreur non attrapée) et la promesse
+// restait en attente pour toujours : l'ordi « réfléchissait » sans fin, le comptage restait sur « Je cherche… ».
 function later<T>(f: () => T): Promise<T> {
-  return new Promise(resolve => setTimeout(() => resolve(f()), 0));
+  return new Promise((resolve, reject) => setTimeout(() => { try { resolve(f()); } catch (e) { reject(e); } }, 0));
 }
 
 async function simpleMoveDetail(pos: Position, lvl: Opponent, opts: EngineOptions): Promise<CoupExplique> {
