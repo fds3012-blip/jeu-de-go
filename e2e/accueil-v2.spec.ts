@@ -80,6 +80,8 @@ test('pas de défilement horizontal à 390 px, carrousel ouvert compris', async 
 });
 
 test('les tuiles mènent au problème du jour et à la leçon suivante', async ({ page }) => {
+  // #487 : les tuiles apparaissent dès la première pierre posée (repère de l'appareil).
+  await page.addInitScript(() => localStorage.setItem('go.premiere-pierre.v1', 'true'));
   await page.goto('/');
   await page.getByRole('button', { name: /^Go du jour n°\s\d+/ }).click();
   await expect(page.getByRole('navigation').getByRole('button', { name: 'Problèmes' })).toHaveAttribute('aria-current', 'page');

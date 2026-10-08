@@ -21,8 +21,8 @@ import { t as tr } from '../content/i18n/secondaires';
 import { mouvementsReduits } from '../ui/defilement';
 import { toLabel } from '../go/coords';
 import { play, type Color, type Position } from '../go/rules';
-import { analyseRevue, meilleurCoup, preparerKataGo, type RaisonSansKataGo } from '../engine';
-import { EVENTS, track } from '../data/analytics';
+import { analyseRevue, estMoteurBloque, meilleurCoup, preparerKataGo, relancerKataGo, type RaisonSansKataGo } from '../engine';
+import { captureError, EVENTS, track } from '../data/analytics';
 import {
   avanceFinale, avancesAffichees, candidatsBrillant, compteNotes, conseilFiable, courbe, courbeY, momentCle, NOTE_INFO, noterCoups, notesAvecCle,
   notesCoherentes, phraseBilan, precisionHonnete, positionsDepuisSgf, rejouerDici, type AnalyseRevue, type Note,
@@ -104,6 +104,10 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
   // #475 : « 2,1 / 3,8 Mo » pendant le téléchargement du réseau (rien s'il vient du cache).
   const telechargement = useProgressionKataGo(prepare);
   const [sansKataGo, setSansKataGo] = useState<RaisonSansKataGo | null>(null);
+  // #498 : le moteur ne répond plus (Worker tué ou gelé, même relancé) : message et « Réessayer », jamais une barre figée.
+  const [bloque, setBloque] = useState(false);
+  const [essai, setEssai] = useState(0);
+  const faites = useRef<(AnalyseRevue | null)[]>([]);
   const mode = visites ? 'import' : adversaire ? 'ordi' : 'deux';
   // #365 : coordonnées, dernier coup et numéros des coups, selon les Réglages.
   const prefs = usePreferences();
@@ -148,12 +152,22 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
       const kataGo = prep.pret;
       setPrepare(false);
       setSansKataGo(prep.pret ? null : prep.raison);
-      const out: (AnalyseRevue | null)[] = [];
-      for (const p of positions) {
+      // Nouvel essai (#498) : on reprend où l'analyse s'était arrêtée, sauf si le moteur change (deux moteurs ne se
+      // comparent pas) : sans KataGo cette fois, tout est refait avec le moteur simple.
+      const out: (AnalyseRevue | null)[] = kataGo ? [...faites.current] : [];
+      if (!kataGo) setAnalyses([]);
+      for (const p of positions.slice(out.length)) {
         let a: AnalyseRevue | null;
-        try { a = await analyseRevue(p, komi, { kataGo, visits: visites }); } catch { a = null; }
+        try { a = await analyseRevue(p, komi, { kataGo, visits: visites }); } catch (e) {
+          if (estMoteurBloque(e)) {
+            if (vivant) { faites.current = out; setBloque(true); captureError(e, { categorie: 'rendu', origine: 'revue' }); }
+            return;
+          }
+          a = null;
+        }
         if (!vivant || arretee.current) return;
         out.push(a);
+        faites.current = out;
         setAnalyses([...out]);
       }
       // Brillant : chaque candidat est revu par une analyse cinq fois plus longue. Sans confirmation, pas de Brillant.
@@ -172,7 +186,15 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
       }
     })();
     return () => { vivant = false; };
-  }, [positions, komi, visites, size]);
+  }, [positions, komi, visites, size, essai]);
+
+  /** « Réessayer » (#498) : KataGo est relancé (réseau lu du cache), puis l'analyse reprend. */
+  function reessayer() {
+    relancerKataGo();
+    setBloque(false);
+    setPrepare(true);
+    setEssai(e => e + 1);
+  }
 
   /** « Arrêter l'analyse » (#286) : la revue se contente des positions déjà analysées. */
   function arreter() {
@@ -340,6 +362,12 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
             <blockquote>{fr(`« ${proverbe.texte} »`)}</blockquote>
             <p className="bilan-proverbe-source">{fr(proverbe.source)}</p>
           </figure>
+          {bloque ? (
+            <div className="bilan-avance revue-bloque" role="alert" data-testid="revue-bloque">
+              <p className="bilan-avance-texte"><span>{fr(tr('bilan3.bloque'))}</span></p>
+              <button type="button" className="btn primary revue-reessayer" onClick={reessayer}>{tr('bilan3.reessayer')}</button>
+            </div>
+          ) : (
           <div className="bilan-avance" aria-live="polite">
             <p className="bilan-avance-texte"><span>{fr(tr('bilan3.chargement'))}</span><b>{fr(tr('bilan3.pourcent', { p: pct }))}</b></p>
             {prepare && <p className="revue-note bilan-katago">{fr(tr('bilan3.kataGoCharge'))}</p>}
@@ -349,6 +377,7 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
               <span style={{ transform: `scaleX(${pct / 100})` }} />
             </div>
           </div>
+          )}
           {visites != null && <button type="button" className="btn revue-arret" onClick={arreter}>{tr('import.arreter')}</button>}
         </div>
       </div>

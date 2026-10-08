@@ -382,6 +382,8 @@ export const fr = {
   'lente.accueil.trouveEtat': 'Ouvre ta partie',
   'lente.accueil.annuler': 'Annuler',
   'lente.accueil.annulerAria': 'Annuler la recherche de partie lente',
+  'lente.accueil.quitterHorsLigne': 'Pas de connexion. Je le ferai dès ton retour en ligne.',
+  'lente.accueil.quitterErreur': 'Ça n’a pas marché. Réessaie dans un instant.',
   'mode.enLigne.aJouer': 'À toi de jouer',
   'defi.erreur.introuvable': 'Ce défi est introuvable. Demande un nouveau lien à ton ami.',
   'defi.erreur.indisponible': 'Ce défi n’est pas disponible pour toi.',

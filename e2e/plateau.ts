@@ -74,7 +74,14 @@ export async function attendrePierre(page: Page, label: string, couleur: 'noir' 
 export async function choisirMode(page: Page, mode: 'en_ligne' | 'ordi' | 'ami' | 'deux' | 'guidee'): Promise<void> {
   const principal = page.locator(`.cta[data-mode="${mode}"]`);
   const tuile = page.getByTestId(`mode-${mode}`);
-  await page.getByTestId('modes').waitFor();
+  await page.locator('.cta').waitFor();
+  // #487 : avant la toute première pierre, l'accueil n'a que « Joue ta première partie » (contre l'ordi). Pour un autre
+  // mode, le parcours part d'un appareil où une pierre a déjà été posée (repère go.premiere-pierre.v1, comme après une
+  // leçon) : l'accueil complet revient sans recharger, par l'événement que le plateau envoie à la première pierre.
+  if (mode !== 'ordi' && await page.locator('.accueil[data-epure]').count()) {
+    await page.evaluate(() => { localStorage.setItem('go.premiere-pierre.v1', 'true'); window.dispatchEvent(new Event('go:premiere-pierre')); });
+  }
+  if (mode !== 'ordi' || !(await principal.count())) await page.getByTestId('modes').waitFor();
   if (await principal.count()) return principal.click();
   if (await tuile.count()) return tuile.click();
   await page.getByTestId('mode-plus').click();

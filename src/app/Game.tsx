@@ -19,7 +19,7 @@ import { prechargerApresPartie } from '../engine';
 import { usePreferences, useStored } from './settings';
 import { carteTerritoire, conseilPasser, passerEnEvidence, coupsJoues, descriptionIndices, descriptionQuiMene, DUREE_QUI_MENE, indicesRestants, INDICES_PAR_PARTIE, libelleAvantage, libelleCoup, messageAtari, messageIndice, metEnAtari, nouveauxAtari, partNoir, phraseQuiMene, QUI_MENE_PAR_PARTIE, quiMeneDisponible, quiMeneRestants } from './partie';
 import { messageComptage, modeComptage } from './partie';
-import { avanceBarre, avertirAvantPasse, frontieresAuPasse, frontieresVisibles, type AlerteFrontieres } from './partie';
+import { avanceBarre, avertirAvantPasse, frontieresAuPasse, frontieresVisibles, passerDiscret, type AlerteFrontieres } from './partie';
 import '../ui/comptage.css';
 import { BoutonAide } from '../ui/BoutonAide';
 import { choisirReplique, DUREE_REPLIQUE, type Situation } from './repliques';
@@ -662,6 +662,10 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   const messageCoach = pense && ai ? tr('partie.reflechit', { nom: ai.nom }) : aideFantome ? tr('partie.toucheEncore', { point: toLabel(fantome, size) }) : msg;
   const quitter = demandeQuitter && quitterDemandeConfirmation;
   const avertissementPasse = phase === 'play' && myTurn && avertiPasse === history.length && !quitter;
+  // #487 (P10) : « Passer » sans fond plein tant que la partie n'est pas mûre (src/app/partie.ts, passerDiscret).
+  const passerMisEnEvidence = passerEnEvidence(aide && !!ai, myTurn, pos.lastMove === -1, conseilPasserA, history.length);
+  // Calcul léger (un parcours du plateau), après les retours anticipés : pas de hook ici.
+  const passerSecondaire = phase === 'play' && passerDiscret({ board: pos.board, size, adversairePasse: pos.lastMove === -1, evidence: passerMisEnEvidence });
   const montrerIntro = intro && history.length === 1 && phase === 'play' && !avertissementPasse && !quitter && !aideFantome;
 
   return (
@@ -718,7 +722,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
             onClick: quiMeneToucher, disabled: !quiMeneVisible && (quiMeneCalcul || quiMeneReste <= 0),
             description: ai ? descriptionQuiMene(quiMeneReste) : undefined }] : []),
           { label: tr('partie.action.passer'), icone: <Icone nom="passer" />, onClick: pass, disabled: !myTurn, groupe: 'decision', principale: true,
-            evidence: passerEnEvidence(aide && !!ai, myTurn, pos.lastMove === -1, conseilPasserA, history.length), pulse: celebrer && !mouvementsReduits() },
+            evidence: passerMisEnEvidence, discret: passerSecondaire, pulse: celebrer && !mouvementsReduits() },
         ]} menu={{
           label: tr('partie.action.plus'),
           actions: [

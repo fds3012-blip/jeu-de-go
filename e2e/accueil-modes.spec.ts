@@ -7,13 +7,16 @@ import { plateau } from './plateau';
 // par « Plus », sans défiler. #432 : la partie en ligne classée est l'action principale dès le début, cote et grade
 // visibles ; seul le tout premier lancement garde l'ordi (« Joue ta première partie »). Chaque choix envoie
 // `mode_choisi` { mode, depuis, principal }.
+// #487 : avant la toute première pierre posée sur l'appareil, l'accueil n'a que « Joue ta première partie » (tuiles
+// cachées, e2e/premier-ecran.spec.ts). Le « premier lancement » de ces parcours a déjà posé une pierre (leçon 1 ouverte,
+// pas finie) : c'est l'écran où les tuiles apparaissent pour la première fois.
 
 const ANA = '00000000-0000-4000-8000-0000000000c1';
 const HOTE = 'https://posthog-e2e.test';
 type Mode = 'en_ligne' | 'ordi' | 'ami' | 'deux' | 'guidee';
 
-/** Tout premier lancement : aucune partie, aucune leçon. */
-const NOUVEAU = {};
+/** Premier lancement : aucune partie, aucune leçon finie, mais une première pierre posée (#487). */
+const NOUVEAU = { 'go.premiere-pierre.v1': 'true' };
 /** Débutant : une partie perdue contre Pomme, aucune leçon. */
 const DEBUTANT = { 'go.parties.v1': JSON.stringify({ n: 1, dernier: 'pomme', ordi: 1 }), 'go.bilan.v1': JSON.stringify({ pomme: { v: 0, d: 1 } }) };
 /** Confirmé : Pomme battue, trois premières leçons finies, Caillou en cours. */
@@ -68,7 +71,7 @@ async function arrive(page: Page, mode: Mode) {
 
 test('chaque mode en 1 ou 2 touchers depuis l’accueil, sans défiler (premier lancement, débutant, confirmé)', async ({ browser, baseURL }) => {
   test.setTimeout(120_000);
-  for (const [qui, stockage, principal] of [['premier lancement', NOUVEAU, 'ordi'], ['débutant', DEBUTANT, 'en_ligne'], ['confirmé', CONFIRME, 'en_ligne']] as const) {
+  for (const [qui, stockage, principal] of [['premier lancement après la première pierre', NOUVEAU, 'ordi'], ['débutant', DEBUTANT, 'en_ligne'], ['confirmé', CONFIRME, 'en_ligne']] as const) {
     for (const mode of ['ordi', 'en_ligne', 'ami', 'deux', 'guidee'] as const) {
       const page = await telephone(browser, baseURL, stockage);
       await expect(page.locator('.cta'), qui).toHaveAttribute('data-mode', principal);
@@ -83,7 +86,7 @@ test('chaque mode en 1 ou 2 touchers depuis l’accueil, sans défiler (premier 
   }
 });
 
-test('tout premier lancement : « Joue ta première partie » contre Pomme reste l’action principale, « En ligne » et « Un ami » juste dessous, « Plus » pour le reste', async ({ browser, baseURL }) => {
+test('premier lancement, première pierre posée : « Joue ta première partie » contre Pomme reste l’action principale, « En ligne » et « Un ami » juste dessous, « Plus » pour le reste', async ({ browser, baseURL }) => {
   const page = await telephone(browser, baseURL, NOUVEAU);
   await expect(page.locator('.cta')).toHaveText('Joue ta première partie');
   await expect(page.locator('.cta')).toHaveAttribute('data-mode', 'ordi');
@@ -184,6 +187,8 @@ test.describe('mesure', () => {
       Object.defineProperty(Navigator.prototype, 'webdriver', { get: () => false });
       Object.defineProperty(Navigator.prototype, 'userAgentData', { get: () => undefined });
     }, HOTE);
+    // #487 : une pierre déjà posée (sinon l'accueil n'a que le bouton principal).
+    await page.addInitScript(() => localStorage.setItem('go.premiere-pierre.v1', 'true'));
     await page.goto('/');
     // Sans comptes dans ce build : « À deux » est une tuile, en un toucher.
     await page.getByTestId('mode-deux').click();

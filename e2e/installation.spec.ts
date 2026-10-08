@@ -27,11 +27,15 @@ async function reussirGoDuJour(page: Page) {
 
 const carte = (page: Page) => page.getByRole('complementary', { name: 'Garde Mochi Go sous la main' });
 
-/** Jours d'ouverture déjà vus sur l'appareil (#214) : `retours` = jours distincts après le premier, le dernier la veille. */
+/**
+ * Jours d'ouverture déjà vus sur l'appareil (#214) : `retours` = jours distincts après le premier, le dernier la veille.
+ * #487 : ce joueur a déjà posé une pierre (sinon l'accueil, épuré, ne montre aucune carte secondaire).
+ */
 async function dejaVenu(page: Page, retours: number) {
   await page.addInitScript(r => {
     if (sessionStorage.getItem('retours-semes')) return;
     sessionStorage.setItem('retours-semes', '1');
+    localStorage.setItem('go.premiere-pierre.v1', 'true');
     localStorage.setItem('go.retours.v1', JSON.stringify({ jour: 0, retours: r }));
   }, retours);
 }

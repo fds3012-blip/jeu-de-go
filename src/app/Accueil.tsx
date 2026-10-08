@@ -6,6 +6,8 @@
 // chose à faire (défi où c'est ton tour, Go du jour à faire, leçon suivante ; src/app/aujourdhui.ts).
 // #429 : tous les modes de jeu en 1 toucher, ou 2 par « Plus » : une rangée de tuiles sous le bouton (src/app/modes.ts).
 // #432 : la partie en ligne classée en action principale dès le début (cote et grade visibles) ; l'ordi est une tuile.
+// #487 : avant la toute première pierre posée (`epure`, src/app/premierePierre.ts), ni tuiles de modes ni cartes
+// secondaires : la promesse, le goban, l'adversaire, le bouton et « Je sais déjà jouer ». Tout revient dès la première pierre.
 import { Suspense, useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { Board } from '../ui/Board';
 import { Sceau } from '../ui/Sceau';
@@ -42,6 +44,8 @@ export interface TuileLentes {
   ouvrir: () => void;
   /** Annule la recherche ; si l'adversaire est trouvé, ouvre la partie. */
   quitter: () => void;
+  /** #498 : l'annulation a échoué (hors ligne : refaite au retour de la connexion). */
+  erreur?: 'hors-ligne' | 'erreur' | null;
 }
 
 interface Props {
@@ -79,7 +83,12 @@ interface Props {
   onPlacement?: () => void;
   /** #469 : « Révisions du jour (N) », carte secondaire dans « Aujourd'hui » (absente s'il n'y a rien à revoir). */
   revisions?: { n: number; ouvrir: () => void };
+  /** #487 : tout premier lancement, aucune pierre posée : une seule action, rien d'autre à choisir. */
+  epure?: boolean;
 }
+
+/** #487 : l'accueil a été montré épuré pendant cette session ; au retour après la première pierre, les tuiles arrivent en fondu. */
+let vuEpure = false;
 
 const PLATEAUX: Record<Taille, Int8Array> = { 9: new Int8Array(81), 13: new Int8Array(169), 19: new Int8Array(361) };
 /** Premier lancement : quelques pierres au centre, pour que le goban ressemble à une partie (illustration seulement). */
@@ -112,9 +121,13 @@ export function Accueil(p: Props) {
   const cta = enLigne ? t('accueil.cta.enLigne') : textes.cta;
   const revisions = !premier && p.revisions && p.revisions.n > 0 ? p.revisions : undefined;
   const [plusOuvert, setPlusOuvert] = useState(false);
+  const epure = !!p.epure;
+  // Lu une fois au montage : les tuiles révélées après la première pierre arrivent une seule fois en fondu.
+  const [revele] = useState(() => !epure && vuEpure);
+  useEffect(() => { vuEpure = epure; }, [epure]);
 
   return (
-    <div className={`accueil${premier ? ' accueil-premier' : ''}`} data-premier={premier || undefined}>
+    <div className={`accueil${premier ? ' accueil-premier' : ''}${revele ? ' accueil-revele' : ''}`} data-premier={premier || undefined} data-epure={epure || undefined}>
       {/* Premier lancement : la promesse, en une phrase, par Mochi. Elle porte la classe de la réplique (`scene-bulle`) :
           c'est la seule voix de l'écran, et elle invite à la même action que le bouton. */}
       {premier && (
@@ -186,35 +199,38 @@ export function Accueil(p: Props) {
       </button>
       {p.onPlacement && <button type="button" className="lien lien-placement" onClick={p.onPlacement}>{t('placement.lien')}</button>}
 
-      {/* #429 : les autres modes, en un toucher ; « Plus » pour le reste. Toujours dans le même ordre. */}
-      <div className="modes" data-testid="modes">
-        {p.modes.tuiles.map(m => <TuileMode key={m} mode={m} p={p} />)}
-        {p.modes.plus.length > 0 && (
-          <button type="button" className="mode" data-testid="mode-plus" aria-haspopup="dialog" aria-expanded={plusOuvert}
-            aria-label={t('mode.plus.aria')} onClick={() => setPlusOuvert(true)}>
-            <span className="mode-icone" aria-hidden="true"><IconeMode mode="plus" /></span>
-            <b>{t('mode.plus')}</b><small>{t('mode.plus.detail')}</small>
-          </button>
-        )}
-      </div>
-
-      {p.lentes && (p.lentes.aJouer > 0 || p.lentes.recherche) && <TuilesLentes l={p.lentes} />}
-
-      {/* Aujourd'hui : la bonne chose à faire en premier, mise en avant ; les autres tuiles suivent. */}
-      {(tuiles.length > 0 || revisions) && (
-        <div className={`tuiles${enAvant ? ' tuiles-jour' : ''}`}>
-          {enAvant && <p className="tuiles-titre">{t('accueil.aujourdhui')}</p>}
-          {tuiles.map(tu => <Tuile key={tu.genre} tuile={tu} p={p} etat={etat} defis={defis} />)}
-          {/* #469 : jamais en avant (une seule action principale) ; elle suit les tuiles du jour. */}
-          {revisions && <TuileRevisions r={revisions} />}
+      {/* #487 : avant la première pierre, rien d'autre à choisir que la partie (et « Je sais déjà jouer »). */}
+      {!epure && <>
+        {/* #429 : les autres modes, en un toucher ; « Plus » pour le reste. Toujours dans le même ordre. */}
+        <div className="modes" data-testid="modes">
+          {p.modes.tuiles.map(m => <TuileMode key={m} mode={m} p={p} />)}
+          {p.modes.plus.length > 0 && (
+            <button type="button" className="mode" data-testid="mode-plus" aria-haspopup="dialog" aria-expanded={plusOuvert}
+              aria-label={t('mode.plus.aria')} onClick={() => setPlusOuvert(true)}>
+              <span className="mode-icone" aria-hidden="true"><IconeMode mode="plus" /></span>
+              <b>{t('mode.plus')}</b><small>{t('mode.plus.detail')}</small>
+            </button>
+          )}
         </div>
-      )}
 
-      {p.semaine}
-      {p.installation}
+        {p.lentes && (p.lentes.aJouer > 0 || p.lentes.recherche) && <TuilesLentes l={p.lentes} />}
+
+        {/* Aujourd'hui : la bonne chose à faire en premier, mise en avant ; les autres tuiles suivent. */}
+        {(tuiles.length > 0 || revisions) && (
+          <div className={`tuiles${enAvant ? ' tuiles-jour' : ''}`}>
+            {enAvant && <p className="tuiles-titre">{t('accueil.aujourdhui')}</p>}
+            {tuiles.map(tu => <Tuile key={tu.genre} tuile={tu} p={p} etat={etat} defis={defis} />)}
+            {/* #469 : jamais en avant (une seule action principale) ; elle suit les tuiles du jour. */}
+            {revisions && <TuileRevisions r={revisions} />}
+          </div>
+        )}
+
+        {p.semaine}
+        {p.installation}
+      </>}
 
       <Reglages {...p} />
-      {p.modes.plus.length > 0 && <FeuillePlus modes={p.modes.plus} ouvert={plusOuvert} setOuvert={setPlusOuvert} onMode={p.onMode} />}
+      {!epure && p.modes.plus.length > 0 && <FeuillePlus modes={p.modes.plus} ouvert={plusOuvert} setOuvert={setPlusOuvert} onMode={p.onMode} />}
     </div>
   );
 }
@@ -247,6 +263,11 @@ function TuilesLentes({ l }: { l: TuileLentes }) {
           </button>
           <button type="button" className="lien" onClick={l.quitter} aria-label={t('lente.accueil.annulerAria')}>{t('lente.accueil.annuler')}</button>
         </div>
+      )}
+      {l.recherche && l.erreur && (
+        <p className="muted small tuiles-lentes-erreur" role="status" data-testid="lente-quitter-erreur">
+          {fr(t(l.erreur === 'hors-ligne' ? 'lente.accueil.quitterHorsLigne' : 'lente.accueil.quitterErreur'))}
+        </p>
       )}
     </div>
   );

@@ -89,6 +89,8 @@ function numeroDuJour(): number {
 
 test('R-S7 : la tuile « Go du jour · À faire » ouvre le problème lui-même ; « Fait », elle mène à l’onglet Problèmes', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
+  // #487 : les tuiles apparaissent dès la première pierre posée sur l'appareil.
+  await page.addInitScript(() => localStorage.setItem('go.premiere-pierre.v1', 'true'));
   await page.goto('/');
   await page.locator('.tuile-probleme').click();
   await expect(page.getByRole('grid', { name: /^Plateau de go/ }).or(page.getByRole('img', { name: /^Plateau de go/ }))).toBeVisible();

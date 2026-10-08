@@ -730,6 +730,9 @@ export const frEcrans = {
   'note.phrase.force': 'Coup forcé : il fallait répondre.',
   'note.phrase.manque': "Coup manqué : l'adversaire venait de se tromper. Environ {pts} de perdus.",
   'bilan3.chargement': 'Mochi relit ta partie…',
+  // #498 : KataGo (ou le moteur) ne répond plus pendant la revue : jamais une barre qui n'avance plus.
+  'bilan3.bloque': 'L’analyse ne répond plus. Ton téléphone a peut-être mis Mochi en pause.',
+  'bilan3.reessayer': 'Réessayer',
   'bilan3.progression': 'Analyse de la partie',
   'bilan3.pourcent': '{p} %',
   'bilan3.proverbe': 'Proverbe du go',
