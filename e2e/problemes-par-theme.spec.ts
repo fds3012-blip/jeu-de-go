@@ -44,13 +44,12 @@ async function rater(page: Page, id: string) {
 test('séries par thème : vignettes à plat, réussites d’affilée et record', async ({ page }) => {
   await ouvrirProblemes(page);
 
-  // Cinq séries ; la fin de partie (6 problèmes) attend d'en avoir assez. Le Go du jour reste la seule action en relief.
+  // Six séries : la fin de partie a ses 8 problèmes depuis le lot Y (#500). Le Go du jour reste la seule action en relief.
   const cartes = page.locator('.theme-carte');
-  await expect(cartes).toHaveCount(5);
-  for (const nom of ['Capturer', 'Sauver', 'Vie et mort', 'Relier et couper', 'Tesuji']) {
+  await expect(cartes).toHaveCount(6);
+  for (const nom of ['Capturer', 'Sauver', 'Vie et mort', 'Relier et couper', 'Fin de partie', 'Tesuji']) {
     await expect(page.getByRole('button', { name: new RegExp(`^${nom}`) })).toBeVisible();
   }
-  await expect(page.getByRole('button', { name: /^Fin de partie/ })).toHaveCount(0);
   await expect(page.locator('.problemes .cta')).toHaveCount(1);
   for (const box of await cartes.evaluateAll(els => els.map(e => e.getBoundingClientRect().height))) expect(box).toBeGreaterThanOrEqual(44);
   const { sw, cw } = await page.evaluate(() => ({ sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth }));
@@ -103,13 +102,31 @@ test('nouveau record : la pastille le dit', async ({ page }) => {
   await expect(affilee(page)).toHaveClass(/record/);
 });
 
+// #500 : la série « Fin de partie » s'ouvre, reste dans ses thèmes (finir la partie, compter) et se réussit.
+test('série Fin de partie : ouverte, dans le thème, réussie', async ({ page }) => {
+  await ouvrirProblemes(page);
+  await page.getByRole('button', { name: /^Fin de partie/ }).click();
+  await expect(lecteur(page).locator('.lecteur-nom small')).toContainText('Fin de partie');
+  await expect(affilee(page)).toHaveText(/^0 d’affilée/);
+  const id = (await lecteur(page).getAttribute('data-probleme'))!;
+  expect(['fin-de-partie', 'comptage']).toContain(THEME_DU_PROBLEME[id]);
+  const r = REPONSES.get(id)!;
+  await expect(plateau(page, r.taille)).toBeVisible();
+  await jouer(page, r.coups[0], r.taille);
+  await expect(affilee(page)).toHaveText(/^1 d’affilée/);
+  await page.locator('.verdict').getByRole('button', { name: 'Problème suivant' }).click();
+  await expect(lecteur(page)).not.toHaveAttribute('data-probleme', id);
+  const second = (await lecteur(page).getAttribute('data-probleme'))!;
+  expect(['fin-de-partie', 'comptage']).toContain(THEME_DU_PROBLEME[second]);
+});
+
 // Page courte (au plus deux écrans, comme e2e/problemes.spec.ts), avec des records sur toutes les vignettes.
 for (const largeur of [390, 320]) {
   for (const theme of ['dark', 'light'] as const) {
     test(`${largeur} px, ${theme === 'dark' ? 'sombre' : 'clair'} : les vignettes gardent la page sous deux écrans`, async ({ page }) => {
       await page.setViewportSize({ width: largeur, height: 844 });
       await page.addInitScript(() => localStorage.setItem('go.series-themes.v1', JSON.stringify(Object.fromEntries(
-        ['capturer', 'sauver', 'vie-mort', 'relier-couper', 'tesuji'].map(s => [s, { affilee: 0, record: 12 }])))));
+        ['capturer', 'sauver', 'vie-mort', 'relier-couper', 'fin-de-partie', 'tesuji'].map(s => [s, { affilee: 0, record: 12 }])))));
       await ouvrirProblemes(page);
       await page.emulateMedia({ colorScheme: theme, reducedMotion: 'reduce' });
       expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeLessThanOrEqual(2 * 844 - 80);

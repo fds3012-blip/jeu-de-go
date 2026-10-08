@@ -1382,4 +1382,28 @@ export const PROBLEMES_EN: Record<string, TexteProbleme> = {
     explanation: 'Well done! The bottom left corner was open: it’s the biggest point. With your G4 stone, you start to surround the bottom. The 3-3, 3-4 and 4-4 points are all good there.',
     refutation: 'Not quite. White then takes the bottom left corner, the biggest point, and your G4 stone is left alone. Play in the open corner first, on the 3rd or 4th line.',
   },
+  y01: {
+    title: 'Block on the first line',
+    prompt: 'White has come down to E1, on the first line. Close your border without losing a point.',
+    explanation: 'Well done! D1 blocks right against the white stone: A1, B1 and C1 stay yours. At C1, you would step back: White would move in to D1, and you would have one point less.',
+    refutation: 'Not quite. White plays D1: it moves in along the first line, your border steps back to C1, and you lose at least one point.',
+  },
+  y02: {
+    title: 'Biggest first',
+    prompt: 'Two places are still open, at the top and at the bottom. Play the biggest move.',
+    explanation: 'Well done! E9 captures C9 and D9: 2 prisoners, and those two points become your territory. That makes 4 points. At the bottom, if White moves in to C1 and you block at B1, you lose only one point.',
+    refutation: 'Not quite. White plays E9: it connects its two stones, and you gain nothing at the top. Capturing them was worth 4 points, blocking at the bottom only one.',
+  },
+  y03: {
+    title: 'No need to connect',
+    prompt: 'Your stones D6 and E5 touch diagonally. Do you need to connect at D5? Play the move that gains the most.',
+    explanation: "Well done! F1 goes around the white stone F2 along the first line: it's a hane. White blocks at G1, you connect at E1, and White's territory loses one point. D5 is already in your territory: playing there would cost you one point, and White would play F1 first.",
+    refutation: 'Not quite. White plays F1: White is the one moving in along the first line, and you lose at least one point.',
+  },
+  y04: {
+    title: 'Sente first',
+    prompt: 'Two places are open, in the middle and on the right. Which one do you play first?',
+    explanation: 'Well done! H6 puts J6 and J7 in atari (one liberty left): White must connect at J5. This move is sente: it forces White to answer, and you play again. Then you close at E7. E7 first was gote (White did not have to answer): White would play H6, and you would lose 2 points.',
+    refutation: 'Not quite. White plays H6: it saves its stones J6 and J7, and you lose at least two points.',
+  },
 };

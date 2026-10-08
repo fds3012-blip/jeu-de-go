@@ -87,9 +87,11 @@ describe('lot X : identifiants, énoncés, thèmes, séries, doublons, calendrie
     expect(serie('l8', ['x04', 'w07', 'x05'])).toEqual(['x06', 'x07', 'x08']);
   });
 
-  it('le Go du jour garde son ordre : le lot X, d’un seul tenant, vient juste après le lot W et ferme le calendrier', () => {
+  // #500 : le lot Y (fin de partie) vient après lui et ferme désormais le calendrier (vérifié par src/go/lot-y.test.ts).
+  it('le Go du jour garde son ordre : le lot X, d’un seul tenant, vient juste après le lot W', () => {
     const ids = LOT_X.map(r => r.id);
-    expect(CALENDRIER_GO_DU_JOUR.slice(-ids.length)).toEqual(ids);
+    const debut = CALENDRIER_GO_DU_JOUR.indexOf('x01');
+    expect(CALENDRIER_GO_DU_JOUR.slice(debut, debut + ids.length)).toEqual(ids);
     expect(CALENDRIER_GO_DU_JOUR.indexOf('x01')).toBe(CALENDRIER_GO_DU_JOUR.indexOf('w09') + 1);
   });
 
