@@ -7,6 +7,7 @@
 // dans un Web Worker ; s'il ne démarre pas (pas de Worker, pas de backend, réseau introuvable),
 // ils se replient sur le moteur simple, sans rien casser.
 import { chooseMove, chooseMoveDetail, gainDuCoup, isLegalMove, OPPONENTS, opponent, raisonFrontiere, raisonPoints, reponseAccommodante, SEUIL_POINTS, type CoupExplique, type EngineOptions, type KataGoLevel, type Opponent, type OpponentId, type Raison, type Style } from './simple';
+import { comptageSur, trancherParPreuve, type Tranche } from './comptageSur';
 import { comptageAuto, deadStones, groupesIncertains, ownership as ownershipSimple, type ComptageAuto, type DeadOptions } from './dead';
 import type { Position } from '../go/rules';
 import type { Rules } from '../go/score';
@@ -91,11 +92,20 @@ export async function proposeDead(pos: Position): Promise<number[]> {
 /**
  * Comptage automatique (#117) : pierres mortes et groupes incertains. Simulations dans le Worker, plus l'avis
  * de KataGo s'il est déjà chargé (on ne télécharge rien pour ça) : un désaccord rend le groupe incertain.
+ * `opts.sur` (#486, 3 premières parties) : les groupes discutables à petit enclos passent par une preuve exacte et
+ * bornée (voir comptageSur.ts), qui l'emporte ; les incertains qu'elle ne tranche pas ne sont plus proposés morts. Jamais plus de
+ * DELAI_PREUVE_MS d'attente : au-delà, le doute reste.
  */
-export async function proposeComptage(pos: Position, komi: number): Promise<ComptageAuto> {
+export async function proposeComptage(pos: Position, komi: number, opts: { sur?: boolean } = {}): Promise<ComptageAuto & { prouves?: number }> {
   const q = ask({ kind: 'dead', pos });
   const r = q && (await q);
   const base: ComptageAuto = r?.dead && r.incertains ? { dead: r.dead, incertains: r.incertains } : await later(() => comptageAuto(pos));
+  const avis = await avisKataGo(pos, komi, base);
+  return opts.sur ? comptageSur(pos, avis, await trancher(pos, avis)) : avis;
+}
+
+/** Incertains de `base`, plus les désaccords de KataGo s'il est déjà chargé. */
+async function avisKataGo(pos: Position, komi: number, base: ComptageAuto): Promise<ComptageAuto> {
   const k = katago ?? null;
   if (!k || k.info.state !== 'pret' || !pos.board.some(v => v)) return base;
   try {
@@ -103,6 +113,20 @@ export async function proposeComptage(pos: Position, komi: number): Promise<Comp
     const incertains = new Set([...base.incertains, ...groupesIncertains(pos, base.dead, [a.ownership])]);
     return { dead: base.dead, incertains: [...incertains].sort((x, y) => x - y) };
   } catch { return base; }
+}
+
+/** Attente maximale de la preuve des groupes incertains (#486). La preuve elle-même est bornée (PREUVE.timeMs). */
+export const DELAI_PREUVE_MS = 2000;
+
+/** Preuve des groupes discutables, dans le Worker (sinon différée sur le fil principal) ; rien de tranché en cas d'échec. */
+async function trancher(pos: Position, c: ComptageAuto): Promise<Tranche> {
+  const rien: Tranche = { morts: [], vivants: [] };
+  if (!pos.board.some(v => v)) return rien;
+  let minuterie: ReturnType<typeof setTimeout> | undefined;
+  const delai = new Promise<Tranche>(resolve => { minuterie = setTimeout(() => resolve(rien), DELAI_PREUVE_MS); });
+  const q = ask({ kind: 'trancher', pos, comptage: c });
+  const calcul = q ? q.then(r => r.tranche ?? rien) : later(() => trancherParPreuve(pos, c));
+  try { return await Promise.race([calcul.catch(() => rien), delai]); } finally { clearTimeout(minuterie); }
 }
 
 // ---------- KataGo ----------
