@@ -73,6 +73,7 @@ function ouverts(pos: Position): number[] {
 const SPEC: Record<string, { zone: string[]; ecart: number; sujet?: string[] }> = {
   y01: { zone: ['A1', 'B1', 'C1', 'D1'], ecart: 2 },
   y02: { zone: ['E9', 'E8', 'A1', 'B1', 'C1'], ecart: 2, sujet: ['C9', 'D9'] },
+  y03: { zone: ['A1', 'B1', 'C1', 'D1', 'E1', 'F1', 'G1'], ecart: 2 },
 };
 
 /** Valeur exacte (surfaces) de chaque premier coup de Noir : tous les coups légaux, passe comprise. */
@@ -240,6 +241,26 @@ describe('lot Y : y02', () => {
     expect(japonais(suite(pos, ['C1'])) - japonais(suite(pos, ['passe', 'C1', 'B1']))).toBe(1);
     // Les suites du texte : la prise, puis Blanc C1 et Noir B1 ; contre le blocage C1, puis Blanc relie en E9.
     expect(japonais(suite(pos, ['E9', 'C1', 'B1'])) - japonais(suite(pos, ['C1', 'E9']))).toBe(3);
+  });
+});
+
+describe('lot Y : y03', () => {
+  it('y03 : le hane F1, Blanc G1, Noir E1 (atari) ; le territoire blanc perd un point ; D5 est noir, y jouer coûte un point', () => {
+    const p = pz('y03'), { pos } = startOf(p);
+    // Après le blocage G1, F1 n'a plus qu'une liberté, E1 : Noir relie.
+    expect([...groupAt(suite(pos, ['F1', 'G1']).board, N, at('F1')).liberties].map(lab)).toEqual(['E1']);
+    const hane = suite(pos, ['F1', 'G1', 'E1']);
+    expect(ouverts(hane)).toEqual([]);
+    // Bloquer sans contourner (E1, puis Blanc F1) : même territoire noir, un point de plus pour Blanc.
+    const bloque = suite(pos, ['E1', 'F1']);
+    expect(ouverts(bloque)).toEqual([]);
+    const s = score(hane, 0, 'japanese'), b = score(bloque, 0, 'japanese');
+    expect(s.territory[1]).toBe(b.territory[1]);
+    expect(b.territory[2] - s.territory[2]).toBe(1);
+    // D5 : territoire noir ; y jouer coûte un point, puis Blanc joue F1 : deux points de moins que le hane.
+    expect(score(pos, 0, 'japanese').owner[at('D5')]).toBe(1);
+    expect(japonais(suite(pos, ['D5']))).toBe(japonais(pos) - 1);
+    expect(japonais(hane) - japonais(suite(pos, ['D5', 'F1', 'E1']))).toBe(2);
   });
 });
 

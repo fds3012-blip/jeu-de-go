@@ -1394,4 +1394,10 @@ export const PROBLEMES_EN: Record<string, TexteProbleme> = {
     explanation: 'Well done! E9 captures C9 and D9: 2 prisoners, and those two points become your territory. That makes 4 points. At the bottom, if White moves in to C1 and you block at B1, you lose only one point.',
     refutation: 'Not quite. White plays E9: it connects its two stones, and you gain nothing at the top. Capturing them was worth 4 points, blocking at the bottom only one.',
   },
+  y03: {
+    title: 'No need to connect',
+    prompt: 'Your stones D6 and E5 touch diagonally. Do you need to connect at D5? Play the move that gains the most.',
+    explanation: "Well done! F1 goes around the white stone F2 along the first line: it's a hane. White blocks at G1, you connect at E1, and White's territory loses one point. D5 is already in your territory: playing there would cost you one point, and White would play F1 first.",
+    refutation: 'Not quite. White plays F1: White is the one moving in along the first line, and you lose at least one point.',
+  },
 };
