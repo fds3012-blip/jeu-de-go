@@ -265,6 +265,7 @@ export const frEcrans = {
   'pq.doubleAtari.1': '{bon} met {n} pierres noires en atari, dans deux groupes séparés : c’est un double atari.',
   'pq.doubleAtari.2': '{bon} met {n} pierres blanches en atari, dans deux groupes séparés : c’est un double atari.',
   'pb.reponseVue': 'Voilà la réponse : {point}.',
+  'pb.reponseVueParmi': 'Voilà une des bonnes réponses : {point}.',
   'pq.entree': '{apres}, le meilleur coup de {adv} selon KataGo, {point}, entrait dans cette zone.',
   'pq.cadre.riposte': 'Selon KataGo, {adv} répond en {point}.',
   'pq.cadre.suite': 'Suite de KataGo : {camp} en {point}.',

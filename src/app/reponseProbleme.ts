@@ -22,7 +22,7 @@ export function sansFelicitations(texte: string | null | undefined): string | nu
 
 /** Ce que dit la feuille quand la réponse d'un problème classique a été montrée. */
 export function texteReponseVue(pz: Puzzle): string {
-  const bon = pz.line[0] ?? pz.answers[0], debut = t('pb.reponseVue', { point: toLabel(bon, pz.size) });
+  const bon = pz.line[0] ?? pz.answers[0], debut = t(pz.answers.length > 1 ? 'pb.reponseVueParmi' : 'pb.reponseVue', { point: toLabel(bon, pz.size) });
   const texte = sansFelicitations(pz.explanation);
   if (texte) return `${debut} ${texte}`;
   const avant = startOf(pz).pos, m = motifSeul(avant, bon);

@@ -385,6 +385,7 @@ export const en = {
   'pq.doubleAtari.1': '{bon} puts {n} black stones in atari, in two separate groups: it’s a double atari.',
   'pq.doubleAtari.2': '{bon} puts {n} white stones in atari, in two separate groups: it’s a double atari.',
   'pb.reponseVue': 'Here’s the answer: {point}.',
+  'pb.reponseVueParmi': 'Here’s one of the right answers: {point}.',
   'pq.entree': '{apres}, KataGo’s best move for {adv}, {point}, went into that area.',
   'pq.cadre.riposte': 'According to KataGo, {adv} answers at {point}.',
   'pq.cadre.suite': 'KataGo’s line: {camp} at {point}.',
