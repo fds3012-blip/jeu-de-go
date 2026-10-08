@@ -1,0 +1,11 @@
+-- Issue #500, lot Y : problèmes de fin de partie (yose) pour la série « Fin de partie » des problèmes par thème (#471),
+-- qui attendait d'en avoir 8. 9 × 9, Noir au trait, difficulté 650 à 800 (ouverts à un débutant).
+-- Problèmes communs (owner_id null), tous prouvés par src/go/lot-y.test.ts : minimax exact de src/go/preuve-fin-de-partie.ts
+-- (alpha-bêta, bornes basse et haute égales) sur les endroits encore ouverts, en comptage par surfaces ; la réponse est le
+-- seul meilleur coup, avec l'écart annoncé ; les chiffres des textes sont recomptés en règle japonaise.
+-- Même contenu que src/content/lots/y-fin-de-partie.ts. Insertion seule : aucun problème existant n'est touché.
+-- setup.refutation : texte affiché après une erreur.
+-- La table puzzles garde sa RLS (activée dans 20260926235308_progression_problemes_lecons_badges).
+insert into public.puzzles (id, owner_id, size, setup, answers, title, prompt, explanation, difficulty) values
+ ('y01', null, 9, '{"rows":["...XO....","...XO....","...XO....","...XO....","...XO....","...XO....","...XO....","XXXXOOOOO","....O...."],"toPlay":"B","refutation":"Pas tout à fait. Blanc joue D1 : il avance sur le premier rang, ta frontière recule en C1, et tu perds au moins un point."}', array['D1'], 'Bloque au premier rang', 'Blanc est descendu en E1, sur le premier rang. Ferme ta frontière sans perdre de point.', 'Bravo ! D1 bloque au contact de la pierre blanche : A1, B1 et C1 restent à toi. En C1, tu reculais : Blanc avançait en D1, et tu avais un point de moins.', 650)
+on conflict (id) do nothing;
