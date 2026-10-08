@@ -239,12 +239,8 @@ export function App() {
   // rattachement tiré avant de partir : ses parties et défis passent à ce compte. Module chargé seulement dans ce cas.
   useEffect(() => {
     if (!compteId || !client || !aRattacher()) return;
-    void import('../data/rattachement').then(async m => {
-      const code = m.lireCodeRattachement();
-      if (!code) return;
-      m.oublierCodeRattachement();
-      await m.rattacherSessionAnonyme(client, code);
-    });
+    // #474 : code gardé jusqu'au succès ; module introuvable (hors ligne) : on réessaiera au prochain chargement.
+    void import('../data/rattachement').then(m => m.rattacherCodeGarde(client)).catch(() => null);
   }, [compteId, client]);
   const [defi, setDefi] = useState<VueDefi | null>(LIEN_DEFI !== null ? { vue: 'arrivee', jeton: LIEN_DEFI, inviteur: INVITEUR_AU_CHARGEMENT }
     : DEFI_AU_RETOUR ? { vue: 'arrivee', ...DEFI_AU_RETOUR } : null);
