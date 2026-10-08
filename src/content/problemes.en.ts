@@ -1400,4 +1400,10 @@ export const PROBLEMES_EN: Record<string, TexteProbleme> = {
     explanation: "Well done! F1 goes around the white stone F2 along the first line: it's a hane. White blocks at G1, you connect at E1, and White's territory loses one point. D5 is already in your territory: playing there would cost you one point, and White would play F1 first.",
     refutation: 'Not quite. White plays F1: White is the one moving in along the first line, and you lose at least one point.',
   },
+  y04: {
+    title: 'Sente first',
+    prompt: 'Two places are open, in the middle and on the right. Which one do you play first?',
+    explanation: 'Well done! H6 puts J6 and J7 in atari (one liberty left): White must connect at J5. This move is sente: it forces White to answer, and you play again. Then you close at E7. E7 first was gote (White did not have to answer): White would play H6, and you would lose 2 points.',
+    refutation: 'Not quite. White plays H6: it saves its stones J6 and J7, and you lose at least two points.',
+  },
 };

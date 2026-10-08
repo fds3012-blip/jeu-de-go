@@ -237,4 +237,5 @@ export const GO_DU_JOUR: readonly (readonly [id: string, titre: string, rows: re
   ["y01", "Bloque au premier rang", ["...XO....","...XO....","...XO....","...XO....","...XO....","...XO....","...XO....","XXXXOOOOO","....O...."]],
   ["y02", "Le plus gros d’abord", [".XOO.O...",".XXX.O...","..XOOO...","..XO.....","..XO.....","..XO.....","..XO.....","XXXOOOOOO","...O....."]],
   ["y03", "Pas besoin de relier", ["...XO....","...XO....","...XO....","...XO....","....XO...","....XO...","....XO...","XXXXXOOOO",".......O."]],
+  ["y04", "Le sente d’abord", ["....X....","...X.XXXX","XXXX.XXXO","OOOOOOO.O","......O..","......OOO",".........",".........","........."]],
 ];

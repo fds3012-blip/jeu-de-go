@@ -67,7 +67,7 @@ const PAR_THEME: Record<Theme, readonly string[]> = {
   // Lot W (#16) : les séries des leçons 14 à 16.
   seki: ['w01', 'w02', 'w03'],
   // Lot Y (#500) : la série « Fin de partie » des problèmes par thème (#471).
-  'fin-de-partie': ['w04', 'w05', 'w06', 'y01', 'y02', 'y03'],
+  'fin-de-partie': ['w04', 'w05', 'w06', 'y01', 'y02', 'y03', 'y04'],
   comptage: ['w07', 'w08', 'w09'],
   // Lot X (#16) : les séries des leçons 4 (ko), 6 et 8 (ouverture).
   ko: ['x01', 'x02', 'x03'],

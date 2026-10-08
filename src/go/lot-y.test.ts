@@ -23,7 +23,7 @@ import { memePosition, positionsDeLecon } from '../content/redites';
 import { THEME_DU_PROBLEME, THEMES_DE_LECON, serieDeLecon } from '../content/themes';
 import { PROBLEMES_EN } from '../content/problemes.en';
 import { parsePuzzles, startOf, type Puzzle } from '../data/puzzles';
-import { problemesDe, seriesDisponibles } from '../app/seriesThemes';
+import { MIN_PAR_SERIE, problemesDe, seriesDisponibles } from '../app/seriesThemes';
 import { fromLabel, toLabel } from './coords';
 import { plainKey, symmetries } from './lecteurs-lot-e';
 import { legalMoves } from './lecteurs-lot-d';
@@ -69,11 +69,15 @@ function ouverts(pos: Position): number[] {
   return out.sort((a, b) => a - b);
 }
 
-/** Pour chaque problème : la zone ouverte, l'écart minimal prouvé, les chaînes en atari au départ (le sujet). */
-const SPEC: Record<string, { zone: string[]; ecart: number; sujet?: string[] }> = {
+/**
+ * Pour chaque problème : la zone ouverte, l'écart minimal prouvé, les chaînes en atari au départ (le sujet), et la perte
+ * minimale (surfaces) après une erreur et la réplique de la réfutation (1 par défaut ; « au moins deux points » : 2).
+ */
+const SPEC: Record<string, { zone: string[]; ecart: number; sujet?: string[]; perte?: number }> = {
   y01: { zone: ['A1', 'B1', 'C1', 'D1'], ecart: 2 },
   y02: { zone: ['E9', 'E8', 'A1', 'B1', 'C1'], ecart: 2, sujet: ['C9', 'D9'] },
   y03: { zone: ['A1', 'B1', 'C1', 'D1', 'E1', 'F1', 'G1'], ecart: 2 },
+  y04: { zone: ['E8', 'E7', 'H6', 'H5', 'J5'], ecart: 2, perte: 2 },
 };
 
 /** Valeur exacte (surfaces) de chaque premier coup de Noir : tous les coups légaux, passe comprise. */
@@ -131,7 +135,8 @@ describe('lot Y : identifiants, énoncés, thème, série, doublons, calendrier,
     const banque = parsePuzzles(ALL_PUZZLES);
     expect(problemesDe(banque, 'fin-de-partie').map(p => p.id).sort())
       .toEqual(['w04', 'w05', 'w06', 'w07', 'w08', 'w09', ...LOT_Y.map(r => r.id)].sort());
-    if (LOT_Y.length >= 2) expect(seriesDisponibles(banque)).toContain('fin-de-partie');
+    expect(problemesDe(banque, 'fin-de-partie').length).toBeGreaterThanOrEqual(MIN_PAR_SERIE);
+    expect(seriesDisponibles(banque)).toContain('fin-de-partie');
   });
 
   it('le Go du jour garde son ordre : le lot Y, d’un seul tenant, vient juste après le lot X et ferme le calendrier', () => {
@@ -204,14 +209,15 @@ describe('lot Y : la réponse est le seul meilleur coup (minimax exact, comptage
       for (const [m, x] of v) if (!p.answers.includes(m)) expect(best - x, lab(m)).toBeGreaterThanOrEqual(SPEC[p.id].ecart);
     }, 120_000);
 
-    it(`${p.id} : après chaque erreur, Blanc joue ${lab(p.answers[0])} et Noir finit au moins un point plus bas`, () => {
+    const perte = SPEC[p.id].perte ?? 1;
+    it(`${p.id} : après chaque erreur, Blanc joue ${lab(p.answers[0])} et Noir finit au moins ${perte} point(s) plus bas`, () => {
       const { pos, zone, proprio, best } = valeursDe(p);
       const a = p.answers[0];
       for (const m of legalMoves(pos).filter(x => !p.answers.includes(x))) {
         // Une pierre jetée chez Blanc est morte : retirée, c'est une passe.
         const r = ok(play(pos, m >= 0 && !zone.includes(m) && proprio[m] === 2 ? -1 : m));
         const w = ok(play(r, a));
-        expect(valeurExacte(w, zone, { ...surfaces, profondeur: 14 }), lab(m)).toBeLessThanOrEqual(best - 1);
+        expect(valeurExacte(w, zone, { ...surfaces, profondeur: 14 }), lab(m)).toBeLessThanOrEqual(best - perte);
       }
     }, 120_000);
   }
@@ -261,6 +267,29 @@ describe('lot Y : y03', () => {
     expect(score(pos, 0, 'japanese').owner[at('D5')]).toBe(1);
     expect(japonais(suite(pos, ['D5']))).toBe(japonais(pos) - 1);
     expect(japonais(hane) - japonais(suite(pos, ['D5', 'F1', 'E1']))).toBe(2);
+  });
+});
+
+describe('lot Y : y04', () => {
+  it('y04 : H6 met J6-J7 en atari (sente) ; Blanc doit relier en J5 ; puis E7 ; E7 d’abord (gote) coûte 2 points', () => {
+    const p = pz('y04'), { pos } = startOf(p);
+    const h6 = suite(pos, ['H6']);
+    expect([...groupAt(h6.board, N, at('J6')).liberties].map(lab)).toEqual(['J5']);
+    // Sente : la seule réponse de Blanc est J5 (minimax exact) ; s'il joue ailleurs, Noir prend deux pierres.
+    const zone = ouverts(pos);
+    const v = valeursDesCoups(h6, zone, surfaces);
+    const pire = Math.min(...v.values());
+    expect([...v].filter(([, x]) => x === pire).map(([m]) => lab(m))).toEqual(['J5']);
+    for (const [m, x] of v) if (m !== at('J5')) expect(x - pire, lab(m)).toBeGreaterThanOrEqual(2);
+    expect(suite(pos, ['H6', 'passe', 'J5']).captures[1]).toBe(2);
+    // Après J5, Noir rejoue et ferme en E7 : le meilleur coup (E8 vaut autant en surfaces, un point de moins en japonais).
+    const j5 = suite(pos, ['H6', 'J5']);
+    expect(j5.toPlay).toBe(1);
+    expect(japonais(suite(pos, ['H6', 'J5', 'E7'])) - japonais(suite(pos, ['H6', 'J5', 'E8']))).toBe(1);
+    expect(ouverts(suite(pos, ['H6', 'J5', 'E7'])).map(lab)).toEqual(['H5']);
+    // Gote : E7 d'abord, Blanc H6 ; deux points de moins (règle japonaise).
+    expect(japonais(suite(pos, ['H6', 'J5', 'E7'])) - japonais(suite(pos, ['E7', 'H6']))).toBe(2);
+    expect(ouverts(suite(pos, ['E7', 'H6']))).toEqual([]);
   });
 });
 

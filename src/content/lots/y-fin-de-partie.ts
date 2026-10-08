@@ -38,6 +38,14 @@ const LOT_Y: PuzzleRow[] = [
     prompt: 'Tes pierres D6 et E5 se touchent en diagonale. Faut-il relier en D5 ? Joue le coup qui rapporte le plus.',
     explanation: 'Bravo ! F1 contourne la pierre blanche F2 par le premier rang : c’est un hane. Blanc bloque en G1, tu relies en E1, et son territoire perd un point. D5 est déjà dans ton territoire : y jouer te coûterait un point, et Blanc jouerait F1 avant toi.'
   },
+  {
+    id: 'y04', size: 9, difficulty: 800, answers: ['H6'],
+    setup: { rows: ['....X....', '...X.XXXX', 'XXXX.XXXO', 'OOOOOOO.O', '......O..', '......OOO', '.........', '.........', '.........'], toPlay: 'B',
+      refutation: 'Pas tout à fait. Blanc joue H6 : il sauve ses pierres J6 et J7, et tu perds au moins deux points.' },
+    title: 'Le sente d’abord',
+    prompt: 'Deux endroits sont ouverts, au milieu et à droite. Lequel joues-tu d’abord ?',
+    explanation: 'Bravo ! H6 met J6 et J7 en atari (une seule liberté) : Blanc doit relier en J5. Ce coup est sente : il oblige Blanc à répondre, et tu rejoues. Tu fermes ensuite en E7. E7 d’abord était gote (Blanc n’avait pas à répondre) : il jouait H6, et tu perdais 2 points.'
+  },
 ];
 
 export default LOT_Y;
