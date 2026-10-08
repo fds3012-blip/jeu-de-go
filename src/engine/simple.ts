@@ -8,6 +8,7 @@ import { toLabel } from '../go/coords';
 import { traduire } from '../content/i18n';
 import { deadStones } from './dead';
 import { isEye, now, rng, Sim } from './sim';
+import { plausibles } from './ouverture';
 
 export { isEye };
 
@@ -46,6 +47,11 @@ export interface Opponent {
   heuristiques: boolean; // priorité aux captures et aux sauvetages
   /** Ne passe pas tant qu'une frontière reste ouverte : il la ferme d'abord (#159). */
   fermeFrontieres?: boolean;
+  /**
+   * Coups plausibles seulement (#488, src/engine/ouverture.ts) : 3e–4e ligne à l'ouverture, pas de 1re ligne sans raison.
+   * Absent ou vrai : actif. `false` : ancien comportement (sert de témoin aux mesures).
+   */
+  ouverture?: boolean;
   /** Présent : ce niveau joue avec KataGo (réseau g170-b6c96). */
   katago?: KataGoLevel;
 }
@@ -293,8 +299,10 @@ export function chooseMoveDetail(pos: Position, niveau: OpponentId | Opponent, o
     }
   }
 
-  const cands = candidates(pos, lvl.heuristiques);
-  if (!cands.length) return passer();
+  const tous = candidates(pos, lvl.heuristiques);
+  if (!tous.length) return passer();
+  // Pas de coup au bord sans raison (#488) : ni les simulations ni le hasard ne choisissent hors des coups plausibles.
+  const cands = lvl.ouverture === false ? tous : plausibles(pos, tous, a => a.move);
 
   const size = pos.size, sim = new Sim(size), empties = new Int32Array(size * size);
   const budget = opts.timeMs ?? lvl.timeMs, maxPlayouts = opts.playouts ?? lvl.playouts, t0 = now();
