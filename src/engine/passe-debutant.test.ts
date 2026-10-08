@@ -51,30 +51,20 @@ function partie(plis: number, seed: number, accommodant = true) {
   return { passes, coupsGratuits, avant, apres: avanceBlanc(pos, seed), ouverts: frontieresOuvertes(pos.board, 9).length };
 }
 
-/** Gain maximal (points) d'un trou fermé après une passe du joueur, partie par partie, et en moyenne (#488). */
-const GAIN_MAX_BRECHE = 25;
-const GAIN_MOYEN_BRECHE = 8;
-
 describe('le débutant passe tôt (#235)', () => {
   it('parties scriptées : au plus 2 passes, et Pomme ne gagne presque rien pendant les passes', () => {
-    const lignes: string[] = [], gains: number[] = [];
+    const lignes: string[] = [];
     for (const plis of [24, 32, 40]) {
       for (const seed of [1, 2, 3, 4]) {
         const p = partie(plis, seed);
         lignes.push(`${plis} coups, graine ${seed} : ${p.passes} passes, ${p.coupsGratuits} coup(s) de Pomme, écart ${p.avant} → ${p.apres}`);
         expect(p.passes, lignes.at(-1)).toBeLessThanOrEqual(2);
         expect(p.coupsGratuits).toBeLessThanOrEqual(1);
-        // Un trou fermé ne rapporte que la zone qu'il protège, jamais une invasion. Depuis #488, Pomme ne joue plus la
-        // 1re ligne sans raison : un trou au bord de sa zone peut protéger une grande zone (et lever le doute sur des
-        // pierres mortes) : jusqu'à 25 points mesurés sur 30 parties (avant : 11 au plus), surtout quand le joueur passe
-        // tard (40 coups : 9,3 points en moyenne, contre 4,3). Voir docs/game-design/ouverture-pomme-2026-10-08.md.
-        expect(p.apres - p.avant, lignes.at(-1)).toBeLessThanOrEqual(GAIN_MAX_BRECHE);
-        gains.push(p.apres - p.avant);
+        // Un trou fermé ne rapporte que la zone qu'il protège : quelques points, jamais une invasion.
+        expect(p.apres - p.avant, lignes.at(-1)).toBeLessThanOrEqual(12);
       }
     }
     console.log(lignes.join('\n'));
-    // Moyenne : quelques points (sur 30 parties, 3,4 avant #488, 4,5 après ; ici 5,7 sur ces 12 parties).
-    expect(gains.reduce((s, g) => s + g, 0) / gains.length).toBeLessThanOrEqual(GAIN_MOYEN_BRECHE);
   }, 120_000);
 
   it('plateau ouvert partout : Pomme ne joue pas chez le joueur', () => {
@@ -94,7 +84,7 @@ describe('le débutant passe tôt (#235)', () => {
     expect(chooseMoveDetail(pos, 'pomme', { seed: 1, accommodant: true }).move).toBe(-1);
   });
 
-  it('un trou dans sa frontière : Pomme le ferme, puis elle passe', () => {
+  it('un trou dans sa frontière : Caillou le ferme, puis il passe ; Pomme passe tout de suite (#488)', () => {
     // Mur blanc en colonne F avec un trou en F5 ; mur noir en colonne D. Le côté droit n'est à Blanc que si F5 est fermé.
     const rows = [
       '...XXO...',
@@ -110,14 +100,16 @@ describe('le débutant passe tôt (#235)', () => {
     const pos = lire(rows, 2);
     const f5 = 4 * 9 + 5;
     expect(brecheAFermer(pos)).toBe(f5);
-    const r = chooseMoveDetail(pos, 'pomme', { seed: 1, accommodant: true, passesJoueur: 1 });
+    const r = chooseMoveDetail(pos, 'caillou', { seed: 1, accommodant: true, passesJoueur: 1, playouts: 2000 });
     expect(r.move).toBe(f5);
     expect(r.raison?.texte).toBe('il reste un trou dans sa frontière en F5');
-    // Deuxième passe du joueur : Pomme passe, même s'il restait autre chose à fermer.
-    expect(chooseMoveDetail(pos, 'pomme', { seed: 1, accommodant: true, passesJoueur: 2 }).move).toBe(-1);
-    // Après la fermeture, plus de trou chez elle : elle passe.
+    // Deuxième passe du joueur : il passe, même s'il restait autre chose à fermer.
+    expect(chooseMoveDetail(pos, 'caillou', { seed: 1, accommodant: true, passesJoueur: 2, playouts: 2000 }).move).toBe(-1);
+    // Après la fermeture, plus de trou chez lui : il passe.
     const ferme = play(play(pos, f5) as Position, -1) as Position;
-    expect(chooseMoveDetail(ferme, 'pomme', { seed: 1, accommodant: true, passesJoueur: 1 }).move).toBe(-1);
+    expect(chooseMoveDetail(ferme, 'caillou', { seed: 1, accommodant: true, passesJoueur: 1, playouts: 2000 }).move).toBe(-1);
+    // Pomme (#488, `fermeBreche: false`) : dans tes premières parties, elle passe dès que tu passes, trou ou pas.
+    expect(chooseMoveDetail(pos, 'pomme', { seed: 1, accommodant: true, passesJoueur: 1 }).move).toBe(-1);
   });
 
   it('le trou du joueur ne la concerne pas : elle ne le bouche pas', () => {
