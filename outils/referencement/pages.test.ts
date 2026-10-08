@@ -87,9 +87,14 @@ describe('pages', () => {
       expect(alt['x-default']).toBe(url(p.langue === 'en' ? p.chemin : p.traduction));
       expect(meta(h, 'og:url')).toBe(url(p.chemin));
       expect(meta(h, 'og:title')).toBe(titre);
-      expect(meta(h, 'og:image')).toBe(`${SITE}/${p.langue === 'en' ? 'apercu-en.png' : 'apercu.png'}`);
-      expect(existsSync(new URL(`../../public/${p.langue === 'en' ? 'apercu-en.png' : 'apercu.png'}`, import.meta.url))).toBe(true);
+      expect(meta(h, 'og:image')).toBe(`${SITE}/${p.langue === 'en' ? 'apercu-accueil-en.png' : 'apercu-accueil.png'}`);
+      expect(existsSync(new URL(`../../public/${p.langue === 'en' ? 'apercu-accueil-en.png' : 'apercu-accueil.png'}`, import.meta.url))).toBe(true);
       expect(meta(h, 'twitter:card')).toBe('summary_large_image');
+      // Aperçu du lien partagé (#489) : description courte (WhatsApp coupe au-delà de 110 caractères), comptée.
+      const apercu = meta(h, 'og:description')!;
+      expect(apercu.length, apercu).toBeLessThanOrEqual(110);
+      expect(apercu).not.toContain('{');
+      expect(meta(h, 'twitter:description')).toBe(apercu);
       expect(h).not.toContain('noindex');
       // Polices de l'app préchargées (titre et texte), affichées sans saut de mise en page.
       expect(attr(h, /<link rel="preload" href="([^"]+)" as="font"/g)).toEqual(['/assets/b.woff2', '/assets/z4.woff2']);
@@ -171,7 +176,7 @@ describe('sitemap, robots.txt et vercel.json', () => {
 
   it('chaque page est servie par une réécriture de vercel.json, l’app et les liens courts ne changent pas', () => {
     for (const p of PAGES) expect(reecrire(`/${p.chemin}`, vercel.rewrites)).toBe(`/${p.chemin}/index.html`);
-    expect(reecrire('/en', vercel.rewrites)).toBe('/index.html');
+    expect(reecrire('/en', vercel.rewrites)).toBe('/en/index.html');
     expect(reecrire('/j/12', vercel.rewrites)).toBe('/j/12/index.html');
     expect(reecrire('/apprendre', vercel.rewrites)).toBeNull();
   });

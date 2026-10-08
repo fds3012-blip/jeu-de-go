@@ -30,7 +30,10 @@ export interface Page {
   /** Nom de la campagne dans le lien « Jouer maintenant » (utm_campaign, lu par PostHog dans l'app). */
   campagne: string;
   titre: string;
+  /** Description pour les moteurs (100 à 160 caractères). */
   description: string;
+  /** Description de l'aperçu du lien partagé (og:description, 110 caractères au plus : WhatsApp coupe au-delà, #489). */
+  apercu: string;
   h1: string;
   chapo: string;
   /** Sections avant la démo, puis après. */
@@ -94,7 +97,7 @@ export const COMMUN: Record<Langue, Commun> = {
     piedApprendre: 'Apprendre le go',
     confidentialite: 'Confidentialité',
     credits: 'Les adversaires les plus forts sont joués par KataGo, une IA de go open source. Moteur adapté de web-katrain (licence MIT).',
-    imageAlt: 'Un goban avec quelques pierres et la question : trouveras-tu le bon coup ?',
+    imageAlt: 'Mochi, le petit chat coach, à côté d’un goban : apprends le go en jouant, débutants bienvenus.',
     demo: {
       defis: [
         { titre: 'Capture la pierre blanche', consigne: 'Les points vides à côté d’une pierre sont ses libertés. La pierre blanche n’en a plus qu’une : joue dessus.', bravo: 'Capturée ! Une pierre sans liberté quitte le plateau.' },
@@ -133,7 +136,7 @@ export const COMMUN: Record<Langue, Commun> = {
     piedApprendre: 'Learn Go',
     confidentialite: 'Privacy',
     credits: 'The strongest opponents are played by KataGo, an open-source Go AI. Engine adapted from web-katrain (MIT license).',
-    imageAlt: 'A go board with a few stones and the question: can you find the right move?',
+    imageAlt: 'Mochi, the little coach cat, next to a go board: learn Go by playing, beginners welcome.',
     demo: {
       defis: [
         { titre: 'Capture the white stone', consigne: 'The empty points next to a stone are its liberties. The white stone has only one left: play on it.', bravo: 'Captured! A stone with no liberties leaves the board.' },
@@ -183,6 +186,7 @@ export const PAGES: readonly Page[] = [
     campagne: 'apprendre-le-go',
     titre: 'Apprendre le go gratuitement, en jouant | Mochi Go',
     description: 'Apprends le jeu de go en jouant : les règles en 5 points, une capture à essayer tout de suite, puis {lecons} leçons et plus de 100 problèmes. Gratuit.',
+    apercu: 'Débutants bienvenus : les règles en 5 points, {lecons} leçons, plus de 100 problèmes. Gratuit, sans pub.',
     h1: 'Apprends le go en jouant, gratuitement',
     chapo: 'Le go se joue depuis plus de 2 500 ans, et ses règles tiennent en une minute. Essaie ci-dessous, puis continue avec Mochi : {lecons} leçons où tu poses ta pierre dès le premier écran.',
     avant: [],
@@ -231,6 +235,7 @@ export const PAGES: readonly Page[] = [
     campagne: 'regles-du-go',
     titre: 'Règles du go : le jeu expliqué simplement | Mochi Go',
     description: 'Les règles du jeu de go en 5 points, avec des schémas : libertés, capture, atari, ko, fin de partie et comptage. Et une capture à essayer tout de suite.',
+    apercu: 'Les règles du go en 5 points, avec des schémas. Et une capture à essayer tout de suite.',
     h1: 'Les règles du go, simplement',
     chapo: 'Deux joueurs, un plateau, des pierres noires et blanches. Voici tout ce qu’il faut savoir pour jouer ta première partie, en 5 points.',
     avant: [
@@ -286,6 +291,7 @@ export const PAGES: readonly Page[] = [
     campagne: 'learn-go',
     titre: 'Learn Go for free, by playing | Mochi Go',
     description: 'Learn the game of Go by playing: the rules in 5 points, a capture to try right now, then {lecons} lessons and over 100 puzzles. Free, no ads.',
+    apercu: 'Beginners welcome: the rules in 5 points, {lecons} lessons, over 100 puzzles. Free, no ads.',
     h1: 'Learn Go by playing, for free',
     chapo: 'Go has been played for more than 2,500 years, and its rules fit in a minute. Try it below, then carry on with Mochi: {lecons} lessons where you place your stone from the very first screen.',
     avant: [],
@@ -334,6 +340,7 @@ export const PAGES: readonly Page[] = [
     campagne: 'go-rules',
     titre: 'Go rules: the game explained simply | Mochi Go',
     description: 'The rules of Go in 5 points, with diagrams: liberties, capture, atari, ko, the end of the game and scoring. And a capture to try right now.',
+    apercu: 'The rules of Go in 5 points, with diagrams. And a capture to try right now.',
     h1: 'The rules of Go, simply',
     chapo: 'Two players, a board, black and white stones. Here is everything you need to play your first game, in 5 points.',
     avant: [

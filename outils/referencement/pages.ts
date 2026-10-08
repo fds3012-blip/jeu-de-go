@@ -206,9 +206,11 @@ export function pageHtml(p: Page, o: Options): string {
   if (!autre) throw new Error(`Traduction absente : ${p.traduction}`);
   const fr = p.langue === 'fr' ? p : autre;
   const en = p.langue === 'en' ? p : autre;
-  const image = p.langue === 'en' ? 'apercu-en.png' : 'apercu.png';
+  // Même aperçu que l'accueil (#489) : la promesse générale avec Mochi, pas la question du Go du jour.
+  const image = p.langue === 'en' ? 'apercu-accueil-en.png' : 'apercu-accueil.png';
   const titre = echapper(remplir(p.titre));
   const description = echapper(remplir(p.description));
+  const apercu = echapper(remplir(p.apercu));
   const app = echapper(lienApp(p));
   const premier = demo.plateauDe(demo.DEFIS[0]);
   const regles = PAGES.find(x => x.langue === p.langue && x.chemin !== p.chemin && /regles|rules/.test(x.chemin)) ?? p;
@@ -244,7 +246,7 @@ ${[o.polices.titre, o.polices.texte].filter(Boolean).map(f => `<link rel="preloa
 <meta property="og:locale:alternate" content="${p.langue === 'en' ? 'fr_FR' : 'en_US'}">
 <meta property="og:url" content="${url(p.chemin)}">
 <meta property="og:title" content="${titre}">
-<meta property="og:description" content="${description}">
+<meta property="og:description" content="${apercu}">
 <meta property="og:image" content="${SITE}/${image}">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
@@ -252,7 +254,7 @@ ${[o.polices.titre, o.polices.texte].filter(Boolean).map(f => `<link rel="preloa
 <meta property="og:image:alt" content="${echapper(c.imageAlt)}">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="${titre}">
-<meta name="twitter:description" content="${description}">
+<meta name="twitter:description" content="${apercu}">
 <meta name="twitter:image" content="${SITE}/${image}">
 <meta name="twitter:image:alt" content="${echapper(c.imageAlt)}">
 <script type="application/ld+json">${jsonInline(donneesStructurees(p))}</script>
