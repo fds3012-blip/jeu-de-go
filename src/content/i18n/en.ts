@@ -1314,6 +1314,8 @@ export const en = {
   'lente.accueil.trouveEtat': 'Open your game',
   'lente.accueil.annuler': 'Cancel',
   'lente.accueil.annulerAria': 'Cancel the correspondence game search',
+  'lente.accueil.quitterHorsLigne': 'No connection. I’ll do it as soon as you’re back online.',
+  'lente.accueil.quitterErreur': 'That didn’t work. Try again in a moment.',
   'mode.enLigne.aJouer': 'Your move',
   'defi.accueil.tuileEtat': 'Your move',
   'defi.accueil.tuileAria': { one: 'A friend’s challenge, your move.', other: '{n} friends’ challenges, your move.' },
