@@ -939,6 +939,8 @@ export const en = {
   'note.phrase.force': 'Forced move: you had to answer.',
   'note.phrase.manque': 'Miss: your opponent had just made a mistake. About {pts} lost.',
   'bilan3.chargement': 'Mochi is reading your game…',
+  'bilan3.bloque': 'The analysis stopped responding. Your phone may have paused Mochi.',
+  'bilan3.reessayer': 'Try again',
   'bilan3.progression': 'Game analysis',
   'bilan3.pourcent': '{p}%',
   'bilan3.proverbe': 'Go proverb',

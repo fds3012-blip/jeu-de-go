@@ -13,7 +13,9 @@ export interface SourceReseau { urls: string[]; sha256?: string | string[]; tele
 export type KgRequest =
   | ({ id: number; type: 'init'; backends?: Backend[] } & SourceReseau)
   | ({ id: number; type: 'precharger' } & SourceReseau)
-  | { id: number; type: 'analyze'; pos: Position; opts: AnalyzeOptions };
+  | { id: number; type: 'analyze'; pos: Position; opts: AnalyzeOptions }
+  // #498 : le Worker répond-il encore ? Répondu tout de suite, hors de la file.
+  | { id: number; type: 'ping' };
 
 /** Durées du démarrage (ms) : TensorFlow.js et backend, réseau (cache ou téléchargement), lecture et préchauffage. */
 export interface EtapesDemarrage { backend: number; reseau: number; demarrage: number }
@@ -23,6 +25,7 @@ export type KgResponse =
   | { id: number; type: 'progress'; recu: number; total: number }
   | { id: number; type: 'precharge'; fromCache: boolean; ms: number }
   | { id: number; type: 'analysis'; analysis: Analysis }
+  | { id: number; type: 'pong' }
   | { id: number; type: 'error'; error: string };
 
 let net: TfNet | null = null;
@@ -103,6 +106,7 @@ async function precharger(id: number, src: SourceReseau) {
 
 self.onmessage = (e: MessageEvent<KgRequest>) => {
   const m = e.data;
+  if (m.type === 'ping') { post({ id: m.id, type: 'pong' }); return; }
   // Une requête à la fois : le GPU n'aime pas les évaluations entremêlées.
   queue = queue.then(async () => {
     try {
