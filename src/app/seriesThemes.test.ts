@@ -46,8 +46,9 @@ describe('séries par thème (#471) : regroupement des thèmes existants', () =>
     for (const s of dispo) expect(problemesDe(BANQUE, s).length, s).toBeGreaterThanOrEqual(MIN_PAR_SERIE);
     for (const s of SERIES_THEMES.filter(s => !dispo.includes(s))) expect(problemesDe(BANQUE, s).length, s).toBeLessThan(MIN_PAR_SERIE);
     expect(dispo).toEqual(SERIES_THEMES.filter(s => dispo.includes(s)));
-    // Banque du 07/10 : la fin de partie n'a que 6 problèmes (lot W), elle attend d'en avoir 8.
-    expect(dispo).toEqual(['capturer', 'sauver', 'vie-mort', 'relier-couper', 'tesuji']);
+    // Banque du 08/10 (#500) : avec le lot Y, la fin de partie atteint 8 problèmes ; les six séries sont affichées.
+    expect(dispo).toEqual(['capturer', 'sauver', 'vie-mort', 'relier-couper', 'fin-de-partie', 'tesuji']);
+    expect(problemesDe(BANQUE, 'fin-de-partie').length).toBeGreaterThanOrEqual(MIN_PAR_SERIE);
   });
 
   it('le Go du jour ne compte pas et ne se joue pas dans une série', () => {
