@@ -32,7 +32,9 @@ async function aideComplete(page: Page) {
 
   // 3. La réponse.
   await page.getByRole('button', { name: 'Voir la réponse' }).click();
-  await expect(page.getByText('Voilà la réponse. Rejoue-la pour la retenir.')).toBeVisible();
+  // #497 : la réponse vient avec son pourquoi (b1 n'a pas de texte de solution : fait calculé par les règles).
+  await expect(page.locator('[data-pourquoi-probleme]')).toHaveText(/^Voilà la réponse\s:\sE5\. E5 prend une pierre blanche\.$/);
+  await expect(page.getByText(/Rejoue-la pour la retenir/)).toHaveCount(0);
   await attendrePierre(page, 'E5', 'noir');
   // Pas de « Réessayer » : toucher la pierre montrée remet la position de départ, puis on rejoue le coup.
   await expect(page.getByRole('button', { name: 'Réessayer' })).toHaveCount(0);

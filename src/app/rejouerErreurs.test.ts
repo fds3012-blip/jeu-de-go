@@ -2,6 +2,7 @@
 // (Florian a Noir), analysée par KataGo (réseau g170-b6c96, 32 visites, partie424.fixture.ts).
 import { describe, expect, it } from 'vitest';
 import { fromLabel, toLabel } from '../go/coords';
+import { groupAt, play } from '../go/rules';
 import { momentCle, noterCoups, notesAvecCle, notesCoherentes, positionsDepuisSgf, type AnalyseRevue } from './revue';
 import { classerCoups } from './notation';
 import { KATAGO_424, SGF_424 } from './partie424.fixture';
@@ -150,7 +151,13 @@ describe('phrases de Mochi et fin de séance', () => {
     expect(montre(23)).toBe('G7 prend une pierre blanche. Après ton coup en D9, elle restait sur le plateau. Écart : environ 13 points selon KataGo.');
     expect(montre(47)).toBe('G5 coupe (sépare) les pierres blanches : elles ne peuvent plus se relier en G5. Après ta passe, Blanc pouvait les relier là. Écart : environ 7 points selon KataGo.');
     expect(montre(20, 2)).toBe('F6 relie tes pierres : elles forment un seul groupe. Après ton coup en D7, Noir pouvait couper (séparer tes pierres) en F6. Écart : environ 11 points selon KataGo.');
-    expect(montre(15)).toBe('Selon KataGo, F6 gardait environ 19 points de plus que ton coup en B6. Aucune pierre n’est en atari ici : l’écart ne vient pas d’une prise immédiate.');
+    // #497 : sans motif tactique, un fait de forme vérifié par les règles. Après B6, Blanc pouvait jouer D5 (relié à D6
+    // et E6, le groupe garde D7 et F6) : E5 et D4 restent séparés de C5, et aucun coup noir ne les relie. Après F6, ce
+    // même coup en D5 laisserait le groupe blanc D6, E6, D5 avec la seule liberté D7.
+    const avant = positions[14], apresB6 = play(avant, p('B6')) as typeof avant, apresF6 = play(avant, p('F6')) as typeof avant;
+    expect(groupAt((play(apresB6, p('D5')) as typeof avant).board, 9, p('D5')).liberties.size).toBe(2);
+    expect([...groupAt((play(apresF6, p('D5')) as typeof avant).board, 9, p('D5')).liberties]).toEqual([p('D7')]);
+    expect(montre(15)).toBe('Après ton coup en B6, Blanc pouvait couper en D5 : tes pierres restaient séparées. Après F6, une pierre blanche en D5 serait tout de suite en atari. Écart : environ 19 points selon KataGo.');
     expect(montre(7)).toBe('Selon KataGo, E5 gardait environ 8 points de plus que ton coup en B4. Compare les deux coups sur le plateau.');
   });
 

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { fromRows } from '../go/position';
-import { fromLabel } from '../go/coords';
+import { fromLabel, toLabel } from '../go/coords';
+import { FLORIAN_APRES, FLORIAN_AVANT } from './florian497.fixture';
 import { checkAnswer } from '../data/puzzles';
 import {
   ajouter, apresEssai, aRejouer, consigneErreur, coupAccepte, creerErreur, dansJours, devientMaitrisee, equivalents, garderRatee,
@@ -211,4 +212,68 @@ describe('acceptation : tout coup qui perd moins de 1 point', () => {
       expect(coupAccepte(e, -1)).toBe(false);
     });
   }
+});
+
+describe('#497 : faits de KataGo gardés avec l’erreur (position de Florian, vraie analyse)', () => {
+  const N = 9, F = (l: string) => fromLabel(l, N);
+  const rows = ['.........', '.........', '......X..', '.........', '...O.....', '.........', '..X......', '..O......', '.........'];
+  // Noir C3 et G7, Blanc D5 et C2 : la position de Florian (Caillou, coup 5). Contrôle des rangées.
+  const pos = fromRows(rows, 1).pos;
+  const source = (): Source => ({
+    avant: pos, joue: F('C4'), coup: 5, note: 'erreur', meilleur: F('D3'), perte: 4, analyse: FLORIAN_AVANT, analyseApres: FLORIAN_APRES, adversaire: 'Caillou',
+  });
+
+  it('la position est bien celle de Florian', () => {
+    expect([F('C3'), F('G7')].every(p => pos.board[p] === 1)).toBe(true);
+    expect([F('D5'), F('C2')].every(p => pos.board[p] === 2)).toBe(true);
+  });
+
+  it('la variante principale, la riposte et la zone sont gardées, et survivent au stockage', () => {
+    const e = creerErreur(source(), MAINTENANT)!;
+    expect(e.kataGo?.suite?.map(p => toLabel(p, N))).toEqual(['D3', 'F4', 'D7', 'C7']);
+    expect(e.kataGo?.riposte?.map(p => toLabel(p, N))).toEqual(['E3', 'E4', 'D4']);
+    expect(e.kataGo?.zone).toMatchObject({ region: 'bas', gain: 4.2, total: 3 });
+    expect(lireErreurs(JSON.parse(JSON.stringify([e])))).toEqual([e]);
+  });
+
+  it('« Revoir la suite » suit KataGo : ton coup, sa riposte pour Blanc, puis le bon coup et sa variante', () => {
+    const pb = versProbleme(creerErreur(source(), MAINTENANT)!);
+    const cadres = pb.pourquoi!.cadres();
+    expect(cadres.map(c => c.legende)).toEqual([
+      'La position de ta partie.', 'Ton coup dans la partie : C4.', 'Selon KataGo, Blanc répond en E3.', 'Suite de KataGo : Noir en E4.',
+      'Suite de KataGo : Blanc en D4.', 'Retour à la position de ta partie.', 'Le bon coup : D3.', 'Suite de KataGo : Blanc en F4.',
+      'Suite de KataGo : Noir en D7.', 'Suite de KataGo : Blanc en C7.',
+    ]);
+    // Chaque plateau est la position jouée : la riposte E3 est blanche, la variante finit sur C7 blanc.
+    expect(cadres[2].pos.board[F('E3')]).toBe(2);
+    expect(cadres[9].pos.board[F('C7')]).toBe(2);
+    // Croix sur C4 (encore vide) à partir du bon coup ; zone en carrés sur le dernier plateau.
+    expect(cadres.slice(6).every(c => c.croix === F('C4'))).toBe(true);
+    expect(cadres[9].zone?.map(p => toLabel(p, N))).toEqual(['D4', 'E3', 'D2', 'E2', 'F2', 'C1', 'D1', 'E1']);
+    expect(pb.pourquoi!.texte).toBe('Selon KataGo, l’écart se fait en bas du plateau : avec D3, cette zone vaut environ 4 points de plus pour toi. Après ton coup en C4, le meilleur coup de Blanc selon KataGo, E3, entrait dans cette zone.');
+    expect(pb.pourquoi!.ecart).toBe('Écart : environ 4 points selon KataGo.');
+  });
+
+  it('rétrocompatible : une erreur gardée avant #497 (sans faits) se relit telle quelle et s’explique comme avant', () => {
+    const ancienne = { ...creerErreur(source(), MAINTENANT)!, perte: 5.6 };
+    delete ancienne.kataGo;
+    const [relue] = lireErreurs(JSON.parse(JSON.stringify([ancienne])));
+    expect(relue).toEqual(ancienne);
+    expect(relue).not.toHaveProperty('kataGo');
+    const pb = versProbleme(relue);
+    expect(pb.pourquoi!.texte).toBe('Selon KataGo, D3 gardait environ 6 points de plus que ton coup en C4. Aucune pierre n’est en atari ici : l’écart ne vient pas d’une prise immédiate.');
+    expect(pb.pourquoi!.cadres().map(c => c.legende)).toEqual(['La position de ta partie.', 'Le bon coup : D3.']);
+  });
+
+  it('des faits mal formés sont retirés seuls : l’erreur reste', () => {
+    const e = { ...creerErreur(source(), MAINTENANT)!, kataGo: { suite: 'D3', zone: { region: 'bas', gain: 'beaucoup' } } };
+    const [relue] = lireErreurs(JSON.parse(JSON.stringify([e])));
+    expect(relue.id).toBe(e.id);
+    expect(relue).not.toHaveProperty('kataGo');
+  });
+
+  it('sans analyse après le coup joué : seulement la variante (la zone et la riposte en ont besoin)', () => {
+    const e = creerErreur({ ...source(), analyseApres: null }, MAINTENANT)!;
+    expect(Object.keys(e.kataGo!)).toEqual(['suite']);
+  });
 });

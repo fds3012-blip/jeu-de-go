@@ -270,7 +270,7 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
     const avant = positions[coup - 1], nt = notes[coup - 1];
     const pb = creerErreur({
       avant, joue: positions[coup].lastMove ?? -1, coup, note: nt?.note,
-      meilleur: meilleurs[coup], perte: nt?.perte ?? 0, analyse: analyses[coup - 1], adversaire,
+      meilleur: meilleurs[coup], perte: nt?.perte ?? 0, analyse: analyses[coup - 1], analyseApres: analyses[coup], adversaire,
     }, new Date());
     if (!pb) return;
     setRejeu({ pb, avant, essais: 0, faux: null, n: 0, apres: null });
