@@ -7,7 +7,7 @@ import { features } from './features';
 import { CACHE_NAME, loadModelBytes, selectBackend, type TfBackendApi } from './loader';
 import { TfNet, type Evaluator, type NetOutput } from './net';
 import { gunzip, isGzip, parseNet } from './parse';
-import { search } from './search';
+import { PV_MAX, search } from './search';
 import type { KgRequest, KgResponse } from './worker';
 
 const i9 = (x: number, y: number) => y * 9 + x;
@@ -150,6 +150,26 @@ describe('recherche PUCT', () => {
     const pos = jouer(newPosition(9), [i9(4, 4)]);
     const a = await search(scripted(i9(4, 4)), pos, { visits: 20 });
     expect(a.moves[0].move).not.toBe(i9(4, 4));
+  });
+  it('#497 : variante principale légale, qui commence par le coup, et propriété après le meilleur coup', async () => {
+    const a = await search(scripted(i9(4, 4)), newPosition(9), { visits: 40, komi: 7 });
+    const pv = a.moves[0].pv!;
+    expect(pv[0]).toBe(a.moves[0].move);
+    expect(pv.length).toBeGreaterThan(1);
+    expect(pv.length).toBeLessThanOrEqual(PV_MAX);
+    // Chaque coup de la variante se joue, l'un après l'autre.
+    let pos = newPosition(9);
+    for (const m of pv) {
+      const r = m < 0 ? { ...pos, toPlay: (3 - pos.toPlay) as 1 | 2, ko: -1, lastMove: -1 } : play(pos, m);
+      expect(typeof r).not.toBe('string');
+      pos = r as typeof pos;
+    }
+    // Coups jamais visités : pas de variante.
+    expect(a.moves.filter(m => m.visits === 0).every(m => m.pv === undefined)).toBe(true);
+    // Après le coup de Noir, Blanc est au trait : le réseau scripté (logits +0,5 pour le joueur au trait) donne Blanc.
+    expect(a.ownershipApres).toHaveLength(81);
+    expect(a.ownershipApres![0]).toBeLessThan(0);
+    expect(a.ownership[0]).toBeGreaterThan(0);
   });
   it('respecte le budget de temps', async () => {
     const a = await search(scripted(0), newPosition(9), { visits: 1e6, timeMs: 30 });

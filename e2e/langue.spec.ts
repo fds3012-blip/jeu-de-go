@@ -335,7 +335,7 @@ for (const largeur of [390, 320]) {
 // Étape 4 : écran de partie, récit du score, fin de partie et revue. `?komi=-100` (paramètre de test) : Noir gagne en passant.
 const PARTIE = '.actions button > span:last-child, .joueur-nom b, .joueur small, .barre-comptage .btn, .recit-etapes li, .camp-nom, .recit-continuer, '
   + '.fin-titre, .fin-marge, .fin-bilan, .fin-mochi p, .fin-action .cta, .fin-liens button, '
-  + '.revue-tete h2, .revue-compteur, .bilan-table th, .bilan-score, .revue-dock .cta, .parcours-titre, .parcours-secondaires .btn';
+  + '.revue-tete h2, .revue-compteur, .bilan-table th, .bilan-score, .revue-dock .cta, .revue-dock .btn, .parcours-titre, .parcours-secondaires .btn';
 
 async function sansCoupePartie(page: Page, largeur: number) {
   const coupes = await page.evaluate(sel => [...document.querySelectorAll<HTMLElement>(sel)]

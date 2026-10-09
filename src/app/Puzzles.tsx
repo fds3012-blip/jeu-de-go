@@ -21,6 +21,7 @@ import { playBadge, playFail, playIllegal, playStone, playSuccess } from '../ui/
 import { hapticBadge, hapticFail, hapticIllegal, hapticStone, hapticSuccess } from '../ui/haptics';
 import { EVENTS, track } from '../data/analytics';
 import { gagnerXp, sourceXpProbleme } from './xp';
+import { texteReponseVue } from './reponseProbleme';
 import { aideSuivante, recompense, refutation, reponseVue, toucherApresErreur, type NiveauAide, type Refutation } from './aide';
 import { prefersReducedMotion, readLocal, useOnline, writeLocal } from './hooks';
 import { usePreferences } from './settings';
@@ -692,7 +693,7 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
   const { serieVisible } = usePreferences();
   const start = useMemo(() => startOf(puzzle), [puzzle]);
   // « Voir la suite » : la suite du problème ; pour une erreur de partie (#492), la suite qui illustre le pourquoi.
-  const cadres = useMemo(() => puzzle.pourquoi?.cadres() ?? solutionFrames(puzzle).map(pos => ({ pos, legende: '', croix: undefined as number | undefined })), [puzzle]);
+  const cadres = useMemo(() => puzzle.pourquoi?.cadres() ?? solutionFrames(puzzle).map(pos => ({ pos, legende: '', croix: undefined as number | undefined, zone: undefined as number[] | undefined })), [puzzle]);
   // Aide graduée (#197) : indice, puis réfutation, puis réponse.
   const [aide, setAide] = useState<NiveauAide>(0);
   const [refut, setRefut] = useState<{ r: Refutation; vue: boolean } | null>(null);
@@ -857,7 +858,11 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
           <p data-pourquoi="">{fr(puzzle.pourquoi.texte)}</p>
           {puzzle.pourquoi.ecart && <p className="muted small" data-ecart="">{fr(puzzle.pourquoi.ecart)}</p>}
           {cadre?.croix != null && <p className="muted small pourquoi-croix"><span aria-hidden="true" className="pourquoi-croix-signe">×</span>{fr(tr('pq.croix'))}</p>}
-        </> : <p>{replayDone ? tr(solvedNow ? 'pb.suiteFinie' : 'pb.suiteFinieVu') : cadre?.legende ? fr(cadre.legende) : tr('pb.suiteCoup', { n: replay.frame, total: replay.total })}</p>}
+          {cadre?.zone?.length ? <p className="muted small" data-zone="">{fr(tr('pq.zoneCarres'))}</p> : null}
+        </> : replayDone && !solvedNow
+          // #497 : réponse montrée d'un problème classique : pourquoi c'est la réponse (texte de solution, ou fait calculé).
+          ? <p data-pourquoi-probleme="">{fr(texteReponseVue(puzzle))}</p>
+          : <p>{replayDone ? tr('pb.suiteFinie') : cadre?.legende ? fr(cadre.legende) : tr('pb.suiteCoup', { n: replay.frame, total: replay.total })}</p>}
       </Verdict>
     );
   } else if (refut) {
@@ -939,7 +944,9 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
           ok: solvedNow && !replay ? answer.p : undefined,
           mistake: refut ? refut.r.faux : answer && answer.kind === 'wrong' && !replay ? answer.p : cadre?.croix,
           // Indice : zone entourée autour du bon coup, tant que le problème n'est pas résolu.
-          zone: aide >= 1 && !solvedNow && !replay && !refut ? puzzle.answers[0] : undefined
+          zone: aide >= 1 && !solvedNow && !replay && !refut ? puzzle.answers[0] : undefined,
+          // #497 : zone où se fait l'écart selon KataGo, en carrés de ta couleur, à la fin de « Revoir la suite ».
+          owner: replayDone && cadre?.zone?.length ? carresZone(cadre.zone, puzzle.size, puzzle.toPlay) : undefined,
         }} />
       {/* Audit du 02/10 (n° 1) : la consigne sous le plateau, à la place du vide ; le verdict arrive au même endroit. */}
       <ParoleMochi humeur={solvedNow ? 'content' : answer?.kind === 'wrong' ? 'pensif' : 'neutre'}>
@@ -949,4 +956,11 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
       {signaler && (tries >= 1 || !!replay) && signaler}
     </div>
   );
+}
+
+/** Carrés de territoire (#497) : les intersections de la zone, dans la couleur du joueur. */
+function carresZone(points: number[], size: number, couleur: 1 | 2): Int8Array {
+  const o = new Int8Array(size * size);
+  for (const p of points) o[p] = couleur;
+  return o;
 }

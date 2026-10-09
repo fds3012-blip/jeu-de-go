@@ -16,6 +16,17 @@
    la barre du bas ; la page garde la place du dock pour que rien n'y reste caché. */
 .revue-bilan, .revue-parcours, .revue-rejeu { padding-bottom: calc(var(--cible-cta) + var(--relief) + var(--space-6) + env(safe-area-inset-bottom, 0px)); }
 .revue-dock .cta { min-height: var(--cible-cta); }
+/* #503 : deux actions dans la barre du bas, côte à côte (une seule ligne : la barre garde sa hauteur). « Suivant »,
+   en relief, prend la plus grande part ; « Rejoue cette erreur » reste à plat, à sa hauteur, et passe sur deux lignes
+   si l'écran est étroit plutôt que d'être coupé. */
+.revue-dock-double { grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); align-items: start; gap: var(--space-2); }
+.revue-dock-double .revue-probleme { min-height: var(--cible-cta); padding: 0 var(--space-2); line-height: 1.2; text-wrap: balance;
+  background: var(--surface); border-color: var(--line); }
+/* Fond de la barre : la page ne se lit plus entre les deux boutons ni dessous ; un fondu court au-dessus. La barre du
+   bas (z-index 20) passe devant le débord. */
+.revue-dock-double::before { content: ""; position: absolute; z-index: -1; left: 50%; width: 100vw; transform: translateX(-50%);
+  top: calc(var(--space-4) * -1); bottom: -24px; pointer-events: none;
+  background: linear-gradient(to bottom, transparent, var(--bg) var(--space-4)); }
 
 /* ---------- 1. Attente : Mochi, un proverbe du go, la barre d'avancement ---------- */
 .bilan-attente { display: flex; flex-direction: column; align-items: center; gap: var(--space-5); padding: var(--space-6) 0 var(--space-4); text-align: center; }
@@ -95,8 +106,8 @@
 .revue-mochi .parcours-fin { color: var(--muted); font-size: 14px; }
 .parcours-cle { display: inline-block; margin-right: 6px; padding: 0 6px; border-radius: 6px; background: var(--accent); color: var(--on-accent); font-size: 12px; line-height: 20px; vertical-align: 1px; }
 .parcours-secondaires { display: flex; gap: var(--space-2); }
-/* « Voir le bon coup » (#77) : lien secondaire centré, tant que le bon coup reste caché. */
-.revue-voir { display: block; min-height: var(--cible-min); margin: calc(var(--space-2) * -1) auto 0; }
+/* « Voir le bon coup » (#77) : lien discret dans la bulle de Mochi, aligné sur son texte (#503). */
+.parcours-bulle .revue-voir { display: inline-flex; align-items: center; min-height: var(--cible-min); margin: var(--space-1) 0 calc(var(--space-2) * -1) -12px; }
 .parcours-secondaires .btn { flex: 1 1 0; min-width: 0; min-height: var(--cible-bouton); padding: 0 var(--space-2); border-color: var(--line); line-height: 1.2; }
 
 .revue-nav { display: flex; align-items: center; gap: var(--space-2); }

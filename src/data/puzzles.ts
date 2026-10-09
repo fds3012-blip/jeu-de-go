@@ -42,7 +42,7 @@ export interface PourquoiProbleme {
   /** Coup joué dans la partie, marqué d'une croix à côté de la réponse (-1 : passe, pas de croix). */
   joue: number;
   /** Suite qui illustre l'explication (« Revoir la suite »), avec une légende par position. */
-  cadres: () => { pos: Position; legende: string; croix?: number }[];
+  cadres: () => { pos: Position; legende: string; croix?: number; zone?: number[] }[];
 }
 
 const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);

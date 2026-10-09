@@ -270,7 +270,7 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
     const avant = positions[coup - 1], nt = notes[coup - 1];
     const pb = creerErreur({
       avant, joue: positions[coup].lastMove ?? -1, coup, note: nt?.note,
-      meilleur: meilleurs[coup], perte: nt?.perte ?? 0, analyse: analyses[coup - 1], adversaire,
+      meilleur: meilleurs[coup], perte: nt?.perte ?? 0, analyse: analyses[coup - 1], analyseApres: analyses[coup], adversaire,
     }, new Date());
     if (!pb) return;
     setRejeu({ pb, avant, essais: 0, faux: null, n: 0, apres: null });
@@ -513,6 +513,10 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
             </>
           ) : <p className="parcours-detail">{fr(i === 0 ? tr('parcours.debut') : tr('revue.etiquette', { c: i, lieu: (q.lastMove ?? -1) < 0 ? tr('coup.passe') : toLabel(q.lastMove!, size) }))}</p>}
           {i > 0 && prochaine == null && <p className="parcours-fin">{fr(tr('parcours.fin'))}</p>}
+          {/* #503 : « Voir le bon coup » sous la phrase de Mochi qui invite à chercher, plus sous la bande des coups. */}
+          {aTrouver && peutRejouer && (
+            <button type="button" className="lien revue-voir" onClick={() => devoiler(note!.coup)}>{tr('revue.voirBonCoup')}</button>
+          )}
         </div>
       </div>
 
@@ -543,20 +547,19 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
         <button type="button" className="btn revue-pas" onClick={() => aller(i + 1)} disabled={i >= n} aria-label={tr('parcours.coupSuivant')}><Icone nom="suivant" /></button>
       </div>
 
-      {(onRejouer || peutRejouer) && (
+      {onRejouer && i > 0 && (
         <div className="parcours-secondaires">
-          {peutRejouer && <button type="button" className="btn revue-probleme" onClick={() => rejouerErreur(note!.coup)}>{tr('revue.rejoueErreur')}</button>}
-          {onRejouer && i > 0 && <button type="button" className="btn revue-rejouer" onClick={rejouer}>{tr('revue.rejouer')}</button>}
+          <button type="button" className="btn revue-rejouer" onClick={rejouer}>{tr('revue.rejouer')}</button>
         </div>
-      )}
-      {aTrouver && peutRejouer && (
-        <button type="button" className="lien revue-voir" onClick={() => devoiler(note!.coup)}>{tr('revue.voirBonCoup')}</button>
       )}
 
       <p className="revue-courbe-legende" aria-hidden="true">{fr(tr('revue.courbeLegende'))}</p>
       {courbeSvg(k => aller(k))}
 
-      <div className="dock revue-dock">
+      {/* #503 : « Rejoue cette erreur » rejoint « Suivant » dans la barre du bas : les deux se voient d'un coup d'œil, sans
+          défiler ni se recouvrir. « Suivant » reste la seule action en relief. */}
+      <div className={`dock revue-dock${peutRejouer ? ' revue-dock-double' : ''}`}>
+        {peutRejouer && <button type="button" className="btn revue-probleme" onClick={() => rejouerErreur(note!.coup)}>{tr('revue.rejoueErreur')}</button>}
         <button type="button" className="cta" onClick={suivant}>{tr(prochaine == null ? 'parcours.terminer' : 'parcours.suivant')}</button>
       </div>
     </div>

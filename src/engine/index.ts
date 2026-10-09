@@ -503,14 +503,26 @@ export async function estimateTerritoire(pos: Position, komi: number, opts: Opti
  * Avec KataGo : ses candidats (avance pour le joueur au trait), du meilleur au moins bon. Sinon, l'estimation
  * du moteur simple, sans candidats (on ne connaît pas le meilleur coup). `null` si aucune estimation possible.
  */
-export interface AnalyseRevue { lead: number; engine: 'katago' | 'simple'; coups?: { move: number; visits: number; lead: number }[] }
+export interface AnalyseRevue {
+  lead: number; engine: 'katago' | 'simple';
+  /** Candidats de KataGo ; `pv` : variante principale qui commence par ce coup (#497), absente si le coup n'a pas été visité. */
+  coups?: { move: number; visits: number; lead: number; pv?: number[] }[];
+  /** #497 : propriété estimée par KataGo dans cette position, de -1 (Blanc) à +1 (Noir). */
+  own?: Float32Array;
+  /** #497 : propriété estimée par KataGo après son premier choix (`coups[0]`), de -1 (Blanc) à +1 (Noir). */
+  ownApres?: Float32Array;
+}
 export async function analyseRevue(pos: Position, komi: number, opts: { visits?: number; kataGo?: boolean } = {}): Promise<AnalyseRevue | null> {
   const k = opts.kataGo === false ? null : kataGoRevue() ?? null;
   if (k && k.info.state === 'pret') {
     try {
       const visits = opts.visits ?? 32;
       const a = await analyserGarde(k, pos, { komi, visits, timeMs: visits * 40, maxMoves: 6 });
-      return { lead: pos.toPlay === 1 ? a.lead : -a.lead, engine: 'katago', coups: a.moves.map(m => ({ move: m.move, visits: m.visits, lead: m.lead })) };
+      return {
+        lead: pos.toPlay === 1 ? a.lead : -a.lead, engine: 'katago',
+        coups: a.moves.map(m => ({ move: m.move, visits: m.visits, lead: m.lead, ...(m.pv ? { pv: m.pv } : {}) })),
+        ...(a.ownership ? { own: a.ownership } : {}), ...(a.ownershipApres ? { ownApres: a.ownershipApres } : {}),
+      };
     } catch (e) {
       // #498 : KataGo ne répond plus : l'écran le dit et propose de réessayer, au lieu d'attendre position après position.
       if (estMoteurBloque(e)) throw e;
