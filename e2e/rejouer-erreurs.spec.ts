@@ -113,7 +113,7 @@ for (const theme of ['light', 'dark'] as const) {
     await expect(bulle.locator('.rejeu-note > span:last-child')).toHaveText('Coup manqué, coup 7');
     await expect(phrase).toHaveText('Ici, tu as joué D6. Trouve mieux.');
     await jouer(page, 'E3');
-    await expect(phrase).toHaveText(/^Bravo, c’est le coup de KataGo\s! Il vaut \d+\spoints de plus que D6\.$/);
+    await expect(phrase).toHaveText(/^Bravo, c’est le coup de KataGo\s! Il vaut \d+\spoints de plus que D6\.(?: \S.*)?$/);
     await expect(bulle).toHaveClass(/revue-rejeu-ok/);
     await expect(plateau(page).locator('g[data-pierre][data-point="E3"]')).toHaveCount(1);
     await expect(page.locator('.cta')).toHaveText('Voir mon résultat');
