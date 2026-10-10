@@ -169,6 +169,11 @@ export const EVENTS = {
   partageEnvoye: 'partage_envoye',
   partageEchoue: 'partage_echoue',
   partageRetire: 'partage_retire',
+  // Partager l'app elle-même (#521) : `depuis` (profil, victoire, lecon, record), `methode` (natif : feuille du
+  // téléphone ; copie : lien copié), `abandon` (vrai : feuille native fermée sans envoyer). Invitation discrète montrée
+  // à un moment fort : `app_partage_proposee` (`depuis`). Jamais le texte, le lien, ni à qui il part.
+  appPartagee: 'app_partagee',
+  appPartageProposee: 'app_partage_proposee',
   // Sécurité entre joueurs (#363) : signalement envoyé (`type` : joueur, probleme, bug, idee, autre ; `motif` ; `depuis` :
   // partie, amis, probleme, profil ; `bloque` : bloqué en même temps), joueur bloqué (`depuis`). Jamais le texte, le
   // pseudo, la partie ni le problème.

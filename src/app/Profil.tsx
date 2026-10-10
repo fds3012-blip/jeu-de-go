@@ -51,6 +51,7 @@ import { Board } from '../ui/Board';
 import { CADENCES_ORDRE, CADENCES } from '../go/pendule';
 import '../ui/club.css';
 import { noterReglage } from './reglagesDates';
+import { BoutonPartagerApp } from '../ui/PartagerApp';
 
 // Joueur de club (#368, #372) : sous-écrans chargés à la demande, hors du morceau du Profil.
 const MesStatistiques = lazy(() => import('./Statistiques'));
@@ -232,6 +233,9 @@ function Menu({ onVue, settings, profil, serie, record = 0, parcours, placement,
       {/* #362 : « Aide » à droite du titre, sans prendre de hauteur (le Profil tient sans défiler en 390 × 844). */}
       <div className="profil-titre-ligne">
         <h2 className="profil-titre">{t('profil.parcours')}</h2>
+        {/* #521 : « Partager Mochi Go », toujours là, à côté de « Aide » (même place sans hauteur : le Profil tient sans
+            défiler). Feuille du téléphone, sinon lien copié. */}
+        <BoutonPartagerApp />
         <BoutonAide depuis="profil" fiche="regles" libelle={t('profil.aideJeu')} />
       </div>
       <section className="identite" aria-label={t('profil.aria')}>
