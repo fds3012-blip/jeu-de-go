@@ -1,6 +1,7 @@
 /*
  * Lecteur de leçon v3 (recette du 30/09, R2 ; direction docs/design/v2/direction.md).
- * De haut en bas : la barre (retour, titre, points d'étapes), le plateau, Mochi qui parle, puis une seule action en relief.
+ * De haut en bas : la barre (retour, points d'étapes au-dessus du titre), le plateau, Mochi qui parle juste dessous, puis
+ * une seule action en relief, en bas.
  * Tout tient dans l'écran sans défiler, à 390 × 844 comme à 320 × 568 : le plateau prend la place qui reste.
  */
 
@@ -17,22 +18,25 @@
 .lecteur-lecon::after { content: ''; flex: none; height: calc(max(var(--nav-h), 3.75rem) + env(safe-area-inset-bottom, 0px)); }
 .lecteur-lecon:has(.verdict) { padding-bottom: 0; }
 @media (min-height: 760px) { .lecteur-lecon { --mochi: 96px; } }
-/* Écran étroit (320 px) : les points se serrent, le titre reste lisible. */
-@media (max-width: 359px) { .lecteur-lecon .etapes { gap: 5px; } .lecteur-lecon .etapes span { width: 8px; height: 8px; } .lecteur-lecon .lecteur-titre { font-size: var(--fs-s); } }
-
-/* Barre : retour, titre de la leçon sur une ligne, points d'étapes à droite. */
+/* Barre (passe design #509, point 9) : retour, sceau de la leçon, puis le bloc du nom, comme l'en-tête d'un problème :
+   la ligne fine au-dessus (les points d'étapes), le titre dessous, à l'encre du texte. Les points ne prennent plus la
+   largeur du titre : il tient sur une ligne à 390 px (« Libertés et capture ») et sur deux au plus à 320 px, jamais
+   coupé (#362). Le « ? » de l'aide ferme la barre. */
 .lecteur-lecon .lecteur-tete { margin-bottom: 0; }
-.lecteur-lecon .lecteur-titre { flex: 1; min-width: 0; margin: 0; font-size: var(--fs-m); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 8px; }
-.lecteur-lecon .lecteur-titre .sceau { flex: none; }
-.lecteur-lecon .lecteur-titre span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-/* #362 : le « ? » de l'aide ferme la barre. Le titre passe sur 2 lignes plutôt que d'être coupé (« Techniques de / capture ») ;
-   2 lignes tiennent dans les 48 px de la barre. En 320 px, le sceau de la leçon s'efface pour laisser la place au titre. */
-.lecteur-lecon .lecteur-titre > span:not([data-lecon]) { white-space: normal; line-height: 1.15; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow-wrap: break-word; hyphens: auto; }
+.lecteur-lecon .lecteur-sceau { flex: none; }
+.lecteur-nom-lecon { display: flex; flex-direction: column; gap: var(--space-1); }
+.lecteur-nom-lecon .etapes { min-height: 0; gap: 5px; padding: 0; }
+.lecteur-nom-lecon .etapes span { width: 7px; height: 7px; }
+.lecteur-lecon .lecteur-titre { margin: 0; font-family: var(--font-titre); font-size: var(--fs-l); font-weight: var(--fw-titre);
+  letter-spacing: var(--tracking-titre); line-height: var(--lh-titre); color: var(--text); }
+.lecteur-lecon .lecteur-titre > span { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden;
+  text-wrap: balance; overflow-wrap: break-word; hyphens: manual; }
 .lecteur-lecon .lecteur-tete .bouton-aide { margin-right: -10px; }
-@media (max-width: 359px) { .lecteur-lecon .lecteur-titre .sceau { display: none; } }
+/* Écran étroit (320 px) : le sceau s'efface pour laisser la place au titre. */
+@media (max-width: 359px) { .lecteur-lecon .lecteur-sceau { display: none; } }
 
 /* Le plateau : carré de côté min(largeur, hauteur libre) grâce à une requête de conteneur. Plancher de 200 px : en dessous,
-   la page défile. Plafond : sa largeur (la colonne, gouttières déduites), pour que la place en trop aille à Mochi, pas au vide. */
+   la page défile. Plafond : sa largeur (la colonne, gouttières déduites) ; la place en trop passe sous la bulle de Mochi. */
 .lecteur-lecon { --plateau-max: calc(min(100vw, var(--largeur-max)) - 2 * var(--gouttiere) + 6px); }
 .lecteur-lecon > .lecteur-plateau { flex: 0 1 var(--plateau-max); min-height: 200px; max-height: var(--plateau-max);
   container-type: size; display: flex; justify-content: center; align-items: flex-start; }
@@ -43,7 +47,7 @@
 /* Calque des halos, posé sur le bois (même viewBox que Board.tsx), sous aucun toucher. */
 .halos { position: absolute; inset: 0 0 5px; width: 100%; height: calc(100% - 5px); pointer-events: none; z-index: 2; overflow: visible; }
 /* Guidage de la toute première étape (une fois) : un anneau de jade qui respire autour du point à toucher. */
-.halo-guide { fill: rgba(60, 196, 142, .18); stroke: var(--jade); stroke-width: 3; transform-box: fill-box; transform-origin: center; }
+.halo-guide { fill: color-mix(in srgb, var(--jade) 18%, transparent); stroke: var(--jade); stroke-width: 3; transform-box: fill-box; transform-origin: center; }
 /* Bonne réponse : un anneau de jade s'ouvre autour de la pierre posée, 300 ms, puis disparaît. */
 .halo-juste { fill: none; stroke: var(--jade); stroke-width: 4; opacity: 0; transform-box: fill-box; transform-origin: center; }
 @media (prefers-reduced-motion: no-preference) {
@@ -56,7 +60,7 @@
 /* Démonstration (#101) : « Revoir » rejoue ; l'atari clignote (pas en mouvements réduits). */
 .lecteur-lecon .revoir { min-height: 44px; min-width: 44px; }
 .lecteur-lecon .revoir:disabled { visibility: hidden; }
-.lecteur-lecon > .demo-compteur { flex: none; margin: 0; text-align: center; font-family: var(--font-titre); font-size: 1.1rem; line-height: 1.2; }
+.lecteur-lecon > .demo-compteur { flex: none; margin: 0; text-align: center; font-family: var(--font-titre); font-size: var(--fs-l); line-height: 1.2; }
 .demo-compteur b { font-size: 1.6rem; font-variant-numeric: tabular-nums; }
 @media (prefers-reduced-motion: no-preference) {
   .demo-atari .board [data-cible] { animation: demo-atari 600ms steps(2, jump-none) infinite alternate; }
@@ -64,8 +68,11 @@
 @keyframes demo-atari { from { opacity: 1; } to { opacity: .15; } }
 
 /* ---------- Mochi parle : portrait, puis la bulle (consigne, bravo en jade, erreur douce en hanko) ---------- */
-/* La zone prend la hauteur qui reste sous le plateau ; Mochi et sa bulle s'y tiennent au milieu, l'action reste en bas. */
-.mochi-zone { flex: 1 0 auto; display: flex; gap: var(--space-3); align-items: center; }
+/* Passe design #509 (point 9) : la bulle suit le plateau (12 px, gap compris) au lieu de flotter au milieu de la place
+   libre ; cette place passe sous elle, au-dessus de l'action, qui reste en bas sous le pouce (comme .partie-souffle). */
+.mochi-zone { flex: none; display: flex; gap: var(--space-3); align-items: center; }
+/* Écran bas (568 px) : le plateau y cède déjà de la hauteur ; il ne la perd pas pour ces 4 px. */
+@media (min-height: 641px) { .mochi-zone { margin-top: var(--space-1); } }
 @media (min-height: 760px) { .lecteur-lecon .mochi-bulle p { font-size: var(--fs-l); } }
 .mochi-zone .mochi-portrait { flex: none; width: var(--mochi) !important; height: var(--mochi) !important; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, .22)); }
 .lecteur-lecon .mochi-bulle { position: static; flex: 1; min-width: 0; min-height: var(--mochi); display: flex; gap: 10px; align-items: center; margin: 0; padding: 10px 14px;
@@ -115,7 +122,7 @@
 }
 
 /* ---------- Une seule action, au bas de la colonne, sous le pouce ; sa place est réservée (rien ne saute) ---------- */
-.lecon-actions { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); min-height: calc(var(--cible-cta) + var(--relief)); }
+.lecon-actions { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); min-height: calc(var(--cible-cta) + var(--relief)); margin-top: auto; }
 .lecteur-lecon .cta { position: static; transform: none; width: 100%; margin-bottom: var(--relief); }
 @media (prefers-reduced-motion: no-preference) {
   .lecteur-lecon .cta { animation: bulle-entre 200ms var(--ease) both; }

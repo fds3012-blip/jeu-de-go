@@ -16,7 +16,7 @@ const LOT_N: PuzzleRow[] = [
     setup: { rows: [E, E, '..X...O..', '....X....', '...XTX...', '...XOX...', '..O......', E, E], toPlay: 'B',
       refutation: "Pas tout à fait. Les deux pierres blanches n'ont qu'une liberté, E3. Si tu joues ailleurs, Blanc s'allonge en E3 et retrouve trois libertés." },
     title: 'Deux pierres d’un coup',
-    prompt: 'Capture la pierre marquée en un coup.',
+    prompt: 'Capture les deux pierres blanches en un coup.',
     explanation: "Bravo ! Les pierres E5 et E4 se touchent : elles forment une chaîne. Une chaîne partage ses libertés, les points vides juste à côté. Il n'en reste qu'une, E3 : la chaîne est en atari. Tu la remplis et tu captures les deux pierres."
   },
   {
