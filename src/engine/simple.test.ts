@@ -19,7 +19,7 @@ describe('moteur simple', () => {
   });
 
   it('capture une pierre en atari évidente', () => {
-    // La pierre blanche en E5 n'a plus qu'une liberté, en F5.
+    // La pierre blanche en E5 n’a plus qu’une liberté, en F5.
     const { pos } = fromRows(['.........', '.........', '.........', '....X....', '...XO....', '....X....', '.........', '.........', '.........'], 1);
     for (const seed of [1, 2, 3]) expect(chooseMove(pos, 'caillou', { seed, ...FIXE })).toBe(at('F5'));
   }, 20000);

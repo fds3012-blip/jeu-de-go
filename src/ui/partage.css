@@ -34,7 +34,7 @@ html:has(dialog.partage[open]) { overflow: hidden; }
 .partage-note, .partage-etat { margin: 0; font-size: var(--fs-s); color: var(--muted); line-height: 1.4; }
 .partage-etat:empty { display: none; }
 .partage-etat.erreur { color: var(--danger-texte); }
-.partage-lien-texte { width: 100%; min-width: 0; min-height: var(--cible-min); box-sizing: border-box; padding: 0 12px; border-radius: 12px;
+.partage-lien-texte { width: 100%; min-width: 0; min-height: var(--cible-min); box-sizing: border-box; padding: 0 12px; border-radius: var(--radius-s);
   border: 1.5px solid var(--line); background: var(--surface); color: var(--text); font: inherit; font-size: var(--fs-s); text-overflow: ellipsis; }
 .partage-prive { align-self: flex-start; margin-left: -12px; color: var(--muted); font-weight: var(--fw-medium); font-size: var(--fs-s); }
 

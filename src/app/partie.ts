@@ -82,8 +82,8 @@ export function aideActive(reglage: ReglageAide | undefined, id: string): boolea
 }
 
 // Constantes de ce fichier : le texte français d'origine (tests) ; l'interface passe par `t` (#167).
-export const ALERTE_ATARI = "Atari ! Ton groupe n'a plus qu'une liberté. Sauve-le ou contre-attaque.";
-export const EXPLICATION_ATARI = "Atari : il ne reste qu'une liberté, la pierre peut être prise au prochain coup.";
+export const ALERTE_ATARI = "Atari ! Ton groupe n’a plus qu’une liberté. Sauve-le ou contre-attaque.";
+export const EXPLICATION_ATARI = "Atari : il ne reste qu’une liberté, la pierre peut être prise au prochain coup.";
 
 /** Message du coach quand un de tes groupes est mis en atari ; la première fois, le mot est expliqué. */
 export function messageAtari(premiereFois: boolean): string {
@@ -97,7 +97,7 @@ export function messageAtari(premiereFois: boolean): string {
 export const PASSER_KEY = 'go.passer-explique.v1';
 /** Part du plateau occupée à partir de laquelle on le dit « presque plein ». */
 export const SEUIL_PRESQUE_PLEIN = 0.6;
-export const EXPLICATION_PASSER = "Passer, c'est laisser ton tour sans poser de pierre.";
+export const EXPLICATION_PASSER = "Passer, c’est laisser ton tour sans poser de pierre.";
 
 /** Le plateau est-il presque plein (pierres sur au moins SEUIL_PRESQUE_PLEIN des intersections) ? */
 export function presquePlein(board: Int8Array): boolean {
@@ -139,7 +139,7 @@ export function passerEnEvidence(aide: boolean, monTour: boolean, adversairePass
 
 /** Nombre d'indices par partie contre l'ordi. */
 export const INDICES_PAR_PARTIE = 3;
-export const PLUS_D_INDICE = "Plus d'indice pour cette partie. À toi de jouer !";
+export const PLUS_D_INDICE = "Plus d’indice pour cette partie. À toi de jouer !";
 
 /** Indices restants après `utilises` indices (jamais négatif). */
 export function indicesRestants(utilises: number): number {
@@ -164,7 +164,7 @@ export function descriptionIndices(restants: number): string {
 export const QUI_MENE_PAR_PARTIE = 3;
 /** Durée d'affichage de la carte, en millisecondes. */
 export const DUREE_QUI_MENE = 3000;
-export const SERRE = "C'est serré.";
+export const SERRE = "C’est serré.";
 /** Écart sous lequel on dit « C'est serré » : 2 points avec KataGo, 5 avec l'estimation simple, moins sûre. */
 export const SEUIL_SERRE = { katago: 2, simple: 5 } as const;
 
@@ -208,7 +208,7 @@ export function carteTerritoire(own: ArrayLike<number>, seuil = 0.4): Int8Array 
 
 export const EXPLICATION_MORTES = 'Les pierres grisées sont mortes : elles ne peuvent plus vivre, elles comptent comme prisonniers.';
 export const CORRIGER_MORTES = 'Corriger les pierres mortes';
-export const DOUTE_MORTES = "Je ne suis pas sûr pour certains groupes. Touche un groupe s'il est mort, touche-le encore s'il est vivant.";
+export const DOUTE_MORTES = "Je ne suis pas sûr pour certains groupes. Touche un groupe s’il est mort, touche-le encore s’il est vivant.";
 
 /**
  * Après deux passes : `auto` = on va droit au récit du score avec les pierres mortes marquées ; `manuel` = phase

@@ -36,7 +36,7 @@ describe('français identique aux textes d’origine', () => {
 
   it('carrousel et tampon des battus', () => {
     expect(['0', '1', '2'].map(p => traduire('fr', `carrousel.palier.${p as '0' | '1' | '2'}`))).toEqual(['Premiers pas', 'Ça se corse', 'Les maîtres']);
-    expect(traduire('fr', 'carrousel.verrou', { requis: 'Pomme', nom: 'Caillou' })).toBe("Bats d'abord Pomme pour affronter Caillou.");
+    expect(traduire('fr', 'carrousel.verrou', { requis: 'Pomme', nom: 'Caillou' })).toBe("Bats d’abord Pomme pour affronter Caillou.");
     expect(battuAccorde('pomme')).toBe('battue');
     expect(battuAccorde('tigre')).toBe('battu');
   });

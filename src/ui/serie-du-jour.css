@@ -16,7 +16,7 @@
 /* ---------- Jalon : la flamme porte le chiffre, le titre en Bricolage ---------- */
 .jalon { display: flex; align-items: center; gap: var(--space-3); margin: var(--space-2) 0 0; }
 .jalon-flamme { position: relative; flex: none; display: grid; place-items: center; width: 56px; height: 56px; }
-.jalon-flamme .flamme-serie { filter: drop-shadow(0 2px 0 color-mix(in srgb, #A0680A 70%, transparent)); }
+.jalon-flamme .flamme-serie { filter: drop-shadow(0 2px 0 color-mix(in srgb, var(--or-fonce) 70%, transparent)); }
 /* Le chiffre est posé dans le bas de la flamme, à l'encre (lisible sur l'or dans les deux modes). */
 .jalon-flamme b { position: absolute; left: 0; right: 0; bottom: 9px; text-align: center; color: var(--encre-jade);
   font-family: var(--font-titre); font-weight: 800; font-size: 17px; line-height: 1; font-variant-numeric: tabular-nums; }

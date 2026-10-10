@@ -43,9 +43,9 @@
 /* Calque des halos, posé sur le bois (même viewBox que Board.tsx), sous aucun toucher. */
 .halos { position: absolute; inset: 0 0 5px; width: 100%; height: calc(100% - 5px); pointer-events: none; z-index: 2; overflow: visible; }
 /* Guidage de la toute première étape (une fois) : un anneau de jade qui respire autour du point à toucher. */
-.halo-guide { fill: rgba(60, 196, 142, .18); stroke: #3CC48E; stroke-width: 3; transform-box: fill-box; transform-origin: center; }
+.halo-guide { fill: rgba(60, 196, 142, .18); stroke: var(--jade); stroke-width: 3; transform-box: fill-box; transform-origin: center; }
 /* Bonne réponse : un anneau de jade s'ouvre autour de la pierre posée, 300 ms, puis disparaît. */
-.halo-juste { fill: none; stroke: #3CC48E; stroke-width: 4; opacity: 0; transform-box: fill-box; transform-origin: center; }
+.halo-juste { fill: none; stroke: var(--jade); stroke-width: 4; opacity: 0; transform-box: fill-box; transform-origin: center; }
 @media (prefers-reduced-motion: no-preference) {
   .halo-guide { animation: halo-respire 1.6s cubic-bezier(.37, 0, .63, 1) infinite; }
   .halo-juste { animation: halo-ouvre 300ms cubic-bezier(.2, .8, .2, 1) both; }

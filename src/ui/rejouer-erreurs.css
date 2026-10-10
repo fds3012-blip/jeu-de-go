@@ -12,7 +12,7 @@
 .rejeu-fin-carte { display: flex; flex-direction: column; align-items: center; gap: var(--space-3); padding: var(--space-5) var(--space-4); border-radius: 18px;
   background: var(--halo), var(--surface); text-align: center; }
 .rejeu-fin-mochi { display: grid; place-items: center; width: 112px; height: 112px; border-radius: 50%; background: var(--bg); }
-.rejeu-fin-titre { margin: 0; font-family: var(--font-titre); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre); font-size: 28px; line-height: 1.15; overflow-wrap: anywhere; }
+.rejeu-fin-titre { margin: 0; font-family: var(--font-titre); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre); font-size: var(--fs-display-m); line-height: 1.15; overflow-wrap: anywhere; }
 .rejeu-fin-pastilles { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
 .rejeu-fin-pastilles li { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; }
 .rejeu-fin-pastilles svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }

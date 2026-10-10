@@ -5,7 +5,7 @@
 .coach-conseil { gap: 8px; padding-right: 6px; }
 .conseil-note { display: flex; gap: 2px; flex: none; }
 .conseil-note-btn {
-  display: grid; place-items: center; width: 44px; height: 44px; min-width: 44px; padding: 0; border: 0; border-radius: 12px;
+  display: grid; place-items: center; width: 44px; height: 44px; min-width: 44px; padding: 0; border: 0; border-radius: var(--radius-s);
   background: transparent; color: var(--text); cursor: pointer;
 }
 .conseil-note-btn .icone-trait { width: 24px; height: 24px; }

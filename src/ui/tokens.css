@@ -27,6 +27,13 @@
   --indigo: #2F4B8A;       /* deuxième encre des sceaux (Renard, Rivière, Tigre) et sceau du joueur */
   --tampon-encre: #B23520; /* encre du tampon « BATTUE » et de la pastille de série */
   --tampon-papier: #F7E9DA;/* papier du tampon, cadre des sceaux dessinés */
+  --or-fonce: #A0680A;     /* or lisible sur papier : onglet Apprendre (clair), tranche des sceaux d'or */
+  --bois-tranche: #7A4A1C; /* tranche des mini-gobans et vignettes (matière, pas un relief d'action) */
+  /* Texte posé sur une bulle papier (--papier), identique dans les deux modes : bulle de la vedette (accueil). */
+  --sur-papier: #1B1A18;
+  --sur-papier-texte: #3A342D;
+  --sur-papier-doux: #5E5448;
+  --sur-papier-alerte: #A52A17;
 
   /* Matière des pierres hors goban (avatar, couvercle, fin de partie, barre) : mêmes dégradés que Board.tsx,
      reflet en haut à gauche (docs/design/v2/identite.md, règle 3). */
@@ -97,6 +104,12 @@
   --fs-2xl: 1.8rem;    /* 28,8 px : chiffres forts (cote, score) */
   --fs-3xl: 2rem;      /* 32 px : titre d'écran */
   --fs-cta: 1.25rem;   /* 20 px : bouton principal (Bricolage 800) */
+  --fs-mini: .75rem;   /* 12 px : pastilles, étiquettes sous une vignette */
+  /* Chiffres et titres d'affichage (Bricolage 800), propres à un moment : fin de partie, revue, tampon. */
+  --fs-display-s: 22px;  /* proverbe de l'attente, titre de bulle forte */
+  --fs-display-m: 28px;  /* résultat d'une séance, précision de la revue */
+  --fs-display-l: 44px;  /* titre de victoire sur petit écran */
+  --fs-display-xl: 56px; /* « Victoire » */
   --lh-base: 1.5;
   --lh-titre: 1.15;
 
@@ -118,6 +131,7 @@
   --radius-bouton: 16px;  /* boutons */
   --radius: 16px;         /* tuiles */
   --radius-pill: 999px;   /* pastilles, badges */
+  --radius-feuille: 22px; /* haut des feuilles qui montent du bas */
 
   /* ---------- Tailles ---------- */
   --cible-min: 44px;      /* cible tactile minimale (WCAG 2.5.5) */
@@ -152,9 +166,9 @@
     --text: #1C1916; --muted: #675D53;
     --accent-texte: #126541; --danger-texte: #B23520; --recompense-texte: #7A5000;
     --accent-trait: var(--jade-bord); --focus: var(--jade-bord);
-    --onglet-jouer: var(--jade-bord); --onglet-apprendre: #A0680A; --onglet-problemes: var(--hanko); --onglet-profil: var(--indigo);
+    --onglet-jouer: var(--jade-bord); --onglet-apprendre: var(--or-fonce); --onglet-problemes: var(--hanko); --onglet-profil: var(--indigo);
     --pierre-n-bord: rgba(28, 25, 22, 0);
-    --courbe-blanc: #FBF8F2; --courbe-noir: #3A332D; --courbe-cadre: #8A7E70; --courbe-ligne: var(--jade-bord); --courbe-curseur: #A86F00;
+    --courbe-blanc: #FBF8F2; --courbe-noir: #7A7068; --courbe-cadre: #8A7E70; --courbe-ligne: var(--jade-bord); --courbe-curseur: #A86F00;
     --halo: radial-gradient(120% 420px at 50% -120px, rgba(239, 184, 74, .22), rgba(239, 184, 74, 0) 70%);
     --ombre-relief: 0 var(--relief) 0 var(--accent-bord), 0 14px 24px -14px rgba(30, 138, 95, .5);
     --ombre-plateau: 0 14px 28px -16px rgba(60, 40, 15, .45);
@@ -165,10 +179,10 @@
   --bg: #EFE8DC; --surface: #FBF8F2; --surface-2: #E6DDCF; --line: #D8CDBC; --barre: #F7F2E9;
   --text: #1C1916; --muted: #675D53;
   --accent-texte: #126541; --danger-texte: #B23520; --recompense-texte: #7A5000;
-    --accent-trait: var(--jade-bord); --focus: var(--jade-bord);
-    --onglet-jouer: var(--jade-bord); --onglet-apprendre: #A0680A; --onglet-problemes: var(--hanko); --onglet-profil: var(--indigo);
-    --pierre-n-bord: rgba(28, 25, 22, 0);
-    --courbe-blanc: #FBF8F2; --courbe-noir: #3A332D; --courbe-cadre: #8A7E70; --courbe-ligne: var(--jade-bord); --courbe-curseur: #A86F00;
+  --accent-trait: var(--jade-bord); --focus: var(--jade-bord);
+  --onglet-jouer: var(--jade-bord); --onglet-apprendre: var(--or-fonce); --onglet-problemes: var(--hanko); --onglet-profil: var(--indigo);
+  --pierre-n-bord: rgba(28, 25, 22, 0);
+  --courbe-blanc: #FBF8F2; --courbe-noir: #7A7068; --courbe-cadre: #8A7E70; --courbe-ligne: var(--jade-bord); --courbe-curseur: #A86F00;
   --halo: radial-gradient(120% 420px at 50% -120px, rgba(239, 184, 74, .22), rgba(239, 184, 74, 0) 70%);
   --ombre-relief: 0 var(--relief) 0 var(--accent-bord), 0 14px 24px -14px rgba(30, 138, 95, .5);
   --ombre-plateau: 0 14px 28px -16px rgba(60, 40, 15, .45);

@@ -6,7 +6,7 @@
 /* ---------- Carte d'identité ---------- */
 .identite { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); background: var(--surface); border-radius: var(--radius); }
 .identite .avatar, .identite .stone { width: 44px; height: 44px; flex: none; }
-.identite .avatar { font-size: 22px; background: var(--surface-2); }
+.identite .avatar { font-size: var(--fs-display-s); background: var(--surface-2); }
 .identite-texte { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .identite-texte b { font-family: var(--font-titre); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre); font-size: var(--fs-xl); line-height: 1.15;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -118,7 +118,7 @@ html:has(.accord[open]) body { padding-bottom: calc(var(--accord-h, 160px) + var
 /* « Détails » à gauche, puis les deux choix identiques (issue #64, CNIL) : même taille, même forme, même couleur. */
 .accord-actions { display: grid; grid-template-columns: auto repeat(2, minmax(0, 1fr)); align-items: center; gap: var(--space-2); }
 .accord .accord-conditions { margin-left: -12px; padding: 0 10px; font-size: var(--fs-s); }
-.accord .accord-choix { width: 100%; min-height: var(--cible-min); padding: 2px var(--space-2); border-radius: 12px; font-size: var(--fs-s); line-height: 1.2;
+.accord .accord-choix { width: 100%; min-height: var(--cible-min); padding: 2px var(--space-2); border-radius: var(--radius-s); font-size: var(--fs-s); line-height: 1.2;
   background: var(--surface-2); color: var(--text); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--muted) 70%, transparent); }
 
 /* Entrée et sortie (vue une fois) : le bandeau monte de 16 px en fondu, 200 ms, courbe de sortie des jetons. */
@@ -190,7 +190,7 @@ html:has(.accord[open]) body { padding-bottom: calc(var(--accord-h, 160px) + var
    en encre foncée (--s-encre), les détails clairs en papier (--s-papier). Éteint : fond de la tuile, pointillé, motif gris. */
 .sceau-badge { display: block; --s-encre: var(--encre-jade); --s-papier: var(--tampon-papier); filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .25)); }
 .sceau-badge.jade .b-fond { fill: var(--jade); stroke: var(--jade-bord); stroke-width: 1.5; }
-.sceau-badge.or .b-fond { fill: var(--or); stroke: #A0680A; stroke-width: 1.5; }
+.sceau-badge.or .b-fond { fill: var(--or); stroke: var(--or-fonce); stroke-width: 1.5; }
 .sceau-badge.hanko .b-fond { fill: var(--hanko); stroke: var(--tampon-encre); stroke-width: 1.5; --s-encre: var(--tampon-papier); }
 .sceau-badge.hanko { --s-encre: var(--tampon-papier); --s-papier: var(--tampon-encre); }
 .sceau-badge .b-anneau { fill: none; stroke: var(--s-papier); stroke-width: 1.4; opacity: .8; }
@@ -248,7 +248,7 @@ html:has(.accord[open]) body { padding-bottom: calc(var(--accord-h, 160px) + var
 .pastille[aria-disabled="true"] .pastille-bois { filter: grayscale(.85) brightness(.9); opacity: .55; }
 /* #461 : « Niv. 3 » en 12 px gras (10 px se lisait mal), posé à cheval sur le bas de la pastille. */
 .pastille-niveau { position: absolute; bottom: -3px; left: 50%; transform: translateX(-50%); padding: 1px 5px; border-radius: var(--radius-pill);
-  background: var(--surface-2); color: var(--text); font-size: .75rem; font-weight: var(--fw-bold); line-height: 1.25; white-space: nowrap;
+  background: var(--surface-2); color: var(--text); font-size: var(--fs-mini); font-weight: var(--fw-bold); line-height: 1.25; white-space: nowrap;
   box-shadow: 0 0 0 1px var(--line); }
 @media (hover: hover) { .pastille:not([aria-disabled="true"]):hover .pastille-bois { transform: scale(1.06); } }
 .pastille:not([aria-disabled="true"]):active .pastille-bois { transform: scale(.94); }

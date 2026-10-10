@@ -5,10 +5,10 @@
 
 .revue-tete { display: flex; align-items: center; gap: var(--space-2); min-height: var(--cible-min); }
 .revue-tete .retour { flex: none; width: var(--cible-min); height: var(--cible-min); margin-left: -10px; display: grid; place-items: center;
-  border: 0; border-radius: 50%; background: none; color: var(--text); font-size: 28px; line-height: 1; }
+  border: 0; border-radius: 50%; background: none; color: var(--text); font-size: var(--fs-display-m); line-height: 1; }
 .revue-tete .retour:active { background: var(--surface); }
-.revue-tete h2 { flex: 1; min-width: 0; margin: 0; font-family: var(--font-titre); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre); font-size: 20px; }
-.revue-compteur { color: var(--muted); font-size: 14px; font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.revue-tete h2 { flex: 1; min-width: 0; margin: 0; font-family: var(--font-titre); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre); font-size: var(--fs-xl); }
+.revue-compteur { color: var(--muted); font-size: var(--fs-s); font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; white-space: nowrap; }
 
 .revue-plateau { width: min(100%, 460px); margin: 0 auto; }
 
@@ -33,10 +33,10 @@
 .bilan-attente-mochi { display: grid; place-items: center; width: 112px; height: 112px; border-radius: 50%; background: var(--surface); }
 .bilan-proverbe { margin: 0; max-width: 32ch; display: grid; gap: var(--space-2); }
 .bilan-proverbe-titre { color: var(--accent-texte); font-size: var(--fs-s); font-weight: var(--fw-bold); letter-spacing: .06em; text-transform: uppercase; }
-.bilan-proverbe blockquote { margin: 0; font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: 22px; line-height: 1.3; letter-spacing: var(--tracking-titre); text-wrap: balance; }
+.bilan-proverbe blockquote { margin: 0; font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: var(--fs-display-s); line-height: 1.3; letter-spacing: var(--tracking-titre); text-wrap: balance; }
 .bilan-proverbe-source { margin: 0; color: var(--muted); font-size: var(--fs-s); line-height: 1.35; }
 .bilan-avance { width: 100%; display: grid; gap: var(--space-2); }
-.bilan-avance-texte { display: flex; justify-content: space-between; gap: var(--space-2); margin: 0; color: var(--muted); font-size: 15px; }
+.bilan-avance-texte { display: flex; justify-content: space-between; gap: var(--space-2); margin: 0; color: var(--muted); font-size: var(--fs-corps-s); }
 .bilan-avance-texte b { color: var(--text); font-variant-numeric: tabular-nums; }
 .bilan-barre { height: 12px; border-radius: var(--radius-pill); background: var(--surface-2); overflow: hidden; box-shadow: inset 0 0 0 1px var(--line); }
 .bilan-barre span { display: block; height: 100%; border-radius: inherit; background: var(--accent); transform-origin: left center; }
@@ -44,10 +44,10 @@
 
 /* ---------- 2. Le bilan ---------- */
 .bilan-coach { display: flex; align-items: flex-start; gap: var(--space-3); }
-.bilan-bulle { position: relative; flex: 1; margin: 0; padding: var(--space-3); border-radius: 4px 14px 14px 14px; background: var(--surface); font-size: 15px; line-height: 1.4; }
-.bilan-table { width: 100%; border-collapse: collapse; font-size: 15px; font-variant-numeric: tabular-nums; }
+.bilan-bulle { position: relative; flex: 1; margin: 0; padding: var(--space-3); border-radius: 4px 14px 14px 14px; background: var(--surface); font-size: var(--fs-corps-s); line-height: 1.4; }
+.bilan-table { width: 100%; border-collapse: collapse; font-size: var(--fs-corps-s); font-variant-numeric: tabular-nums; }
 .bilan-table th, .bilan-table td { height: 38px; padding: 0 var(--space-2); }
-.bilan-table thead th { height: 34px; color: var(--muted); font-size: 14px; font-weight: var(--fw-bold); text-align: center; }
+.bilan-table thead th { height: 34px; color: var(--muted); font-size: var(--fs-s); font-weight: var(--fw-bold); text-align: center; }
 .bilan-table tbody th { font-weight: 500; text-align: left; }
 .bilan-table td { width: 30%; text-align: center; font-weight: var(--fw-bold); color: var(--muted); }
 .bilan-table td.plein { color: var(--text); font-size: 17px; }
@@ -57,7 +57,7 @@
 .bilan-precision th, .bilan-precision td { height: 60px; }
 .bilan-precision th { color: var(--muted); font-weight: var(--fw-bold); }
 .bilan-score { display: inline-grid; place-items: center; min-width: 76px; min-height: 42px; padding: 0 var(--space-2); border-radius: 10px;
-  background: var(--surface-2); color: var(--text); font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: 20px; }
+  background: var(--surface-2); color: var(--text); font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: var(--fs-xl); }
 /* Ta précision : en relief, papier sur encre (comme la case blanche de chess.com), sans cote ni rang. */
 .bilan-score-moi { background: var(--papier); color: var(--sumi); box-shadow: inset 0 0 0 1.5px var(--line); }
 .revue-table-note { display: flex; align-items: center; gap: 10px; }
@@ -71,10 +71,10 @@
 }
 /* Zoom 200 % (195 px, #428 : le bilan porte « Rejouer mes erreurs ») : colonnes fixes, libellés qui passent à la ligne. */
 @media (max-width: 240px) {
-  .bilan-table { table-layout: fixed; font-size: 14px; }
+  .bilan-table { table-layout: fixed; font-size: var(--fs-s); }
   .bilan-table td { width: 30%; }
   .bilan-table tbody th { overflow-wrap: anywhere; }
-  .bilan-score { min-width: 0; width: 100%; padding: 0 2px; font-size: 16px; }
+  .bilan-score { min-width: 0; width: 100%; padding: 0 2px; font-size: var(--fs-m); }
   .revue-table-note { flex-wrap: wrap; gap: 4px; }
 }
 
@@ -97,14 +97,14 @@
 /* Bulle de Mochi au-dessus du goban : titre (sceau, « E5 est une erreur », avance), puis une phrase courte. */
 .parcours-bulle { min-height: 92px; }
 .parcours-texte { flex: 1; min-width: 0; display: grid; gap: 4px; }
-.parcours-titre { display: flex; align-items: center; gap: 8px; margin: 0; font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: 16px; line-height: 1.25; }
+.parcours-titre { display: flex; align-items: center; gap: 8px; margin: 0; font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: var(--fs-m); line-height: 1.25; }
 .parcours-titre > span:not(.sceau-note):not(.parcours-avance) { flex: 1; min-width: 0; }
 .parcours-avance { flex: none; padding: 2px 8px; border-radius: var(--radius-pill); background: var(--papier); color: var(--sumi);
-  font-family: var(--font-ui); font-size: 13px; font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; box-shadow: inset 0 0 0 1px var(--line); }
+  font-family: var(--font-ui); font-size: var(--fs-legende); font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; box-shadow: inset 0 0 0 1px var(--line); }
 .parcours-avance.negatif { background: var(--sumi); color: var(--papier); box-shadow: inset 0 0 0 1px rgba(243, 237, 227, .35); }
-.revue-mochi .parcours-detail, .revue-mochi .parcours-fin { margin: 0; font-size: 15px; line-height: 1.4; }
-.revue-mochi .parcours-fin { color: var(--muted); font-size: 14px; }
-.parcours-cle { display: inline-block; margin-right: 6px; padding: 0 6px; border-radius: 6px; background: var(--accent); color: var(--on-accent); font-size: 12px; line-height: 20px; vertical-align: 1px; }
+.revue-mochi .parcours-detail, .revue-mochi .parcours-fin { margin: 0; font-size: var(--fs-corps-s); line-height: 1.4; }
+.revue-mochi .parcours-fin { color: var(--muted); font-size: var(--fs-s); }
+.parcours-cle { display: inline-block; margin-right: 6px; padding: 0 6px; border-radius: 6px; background: var(--accent); color: var(--on-accent); font-size: var(--fs-mini); line-height: 20px; vertical-align: 1px; }
 .parcours-secondaires { display: flex; gap: var(--space-2); }
 /* « Voir le bon coup » (#77) : lien discret dans la bulle de Mochi, aligné sur son texte (#503). */
 .parcours-bulle .revue-voir { display: inline-flex; align-items: center; min-height: var(--cible-min); margin: var(--space-1) 0 calc(var(--space-2) * -1) -12px; }
@@ -119,7 +119,7 @@
 .revue-coups::-webkit-scrollbar { display: none; }
 .revue-coups li { flex: none; scroll-snap-align: center; }
 .revue-coup { min-height: var(--cible-min); min-width: var(--cible-min); display: flex; align-items: center; gap: 5px; padding: 0 8px;
-  border: 0; border-radius: 12px; background: none; color: var(--muted); font-size: 14px; font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; }
+  border: 0; border-radius: var(--radius-s); background: none; color: var(--muted); font-size: var(--fs-s); font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; }
 .revue-coup[aria-current="true"] { background: var(--surface-2); color: var(--text); box-shadow: inset 0 0 0 1.5px var(--or); }
 /* Audit du 02/10 : sans opacité, le numéro passe AA en clair (brume sur washi : 3,5:1 avec, 5,6:1 sans). */
 .revue-coup-num { font-weight: 500; }
@@ -139,14 +139,14 @@
   box-shadow: inset 0 0 0 1.5px rgba(255, 246, 236, .35); }
 
 .revue-mochi { display: flex; align-items: flex-start; gap: var(--space-3); padding: var(--space-3); border-radius: 14px; background: var(--surface); }
-.revue-mochi > p { margin: 0; font-size: 15px; line-height: 1.4; }
+.revue-mochi > p { margin: 0; font-size: var(--fs-corps-s); line-height: 1.4; }
 /* « Rejoue cette erreur » (issue #77) : action secondaire. */
 .revue-probleme { display: block; width: 100%; min-height: var(--cible-bouton); border-color: var(--line); }
 .revue-rejeu .revue-probleme { margin-top: var(--space-2); }
 /* Rejeu réussi : la bulle de Mochi prend la bordure d'accent (le texte dit aussi « Bravo », pas la couleur seule). */
 .revue-rejeu-ok { box-shadow: inset 0 0 0 2px var(--accent); }
 
-.revue-note { margin: 0 2px; color: var(--muted); font-size: 14px; line-height: 1.35; }
+.revue-note { margin: 0 2px; color: var(--muted); font-size: var(--fs-s); line-height: 1.35; }
 .revue-importer { display: block; margin: 0 auto; }
 /* #428 : avec des erreurs à rejouer, « Démarrer le bilan » passe en action secondaire, sous le tableau. */
 .bilan-parcours, .bilan-partager { display: block; width: 100%; min-height: var(--cible-bouton); border-color: var(--line); }

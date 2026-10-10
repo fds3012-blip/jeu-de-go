@@ -237,14 +237,14 @@
 /* Grand portrait de l'adversaire choisi et sa bulle. */
 .choix-vedette { display: flex; align-items: center; gap: 14px; margin: 0 0 4px; }
 .vedette-portrait { filter: drop-shadow(0 8px 14px rgba(0, 0, 0, .28)); }
-.vedette-bulle { position: relative; flex: 1; min-width: 0; padding: 10px 12px; border-radius: 16px; background: var(--papier); color: #1B1A18;
+.vedette-bulle { position: relative; flex: 1; min-width: 0; padding: 10px 12px; border-radius: var(--radius); background: var(--papier); color: var(--sur-papier);
   box-shadow: 0 0 0 1px var(--line); }
 .vedette-bulle::before { content: ""; position: absolute; left: -6px; top: 50%; width: 12px; height: 12px; margin-top: -6px; background: inherit;
   transform: rotate(45deg); border-radius: 2px; box-shadow: -1px 1px 0 0 var(--line); }
 .vedette-bulle b { position: relative; font-family: var(--font-titre); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre); font-size: var(--fs-corps); }
-.vedette-bulle b small { font-weight: 400; color: #5E5448; font-size: var(--fs-legende); margin-left: 4px; }
-.vedette-bulle p { position: relative; margin: 2px 0 0; font-size: var(--fs-corps-s); line-height: 1.35; min-height: 2.7em; color: #3A342D; }
-.vedette-bulle p.alerte { color: #A52A17; font-weight: var(--fw-bold); }
+.vedette-bulle b small { font-weight: 400; color: var(--sur-papier-doux); font-size: var(--fs-legende); margin-left: 4px; }
+.vedette-bulle p { position: relative; margin: 2px 0 0; font-size: var(--fs-corps-s); line-height: 1.35; min-height: 2.7em; color: var(--sur-papier-texte); }
+.vedette-bulle p.alerte { color: var(--sur-papier-alerte); font-weight: var(--fw-bold); }
 @media (prefers-reduced-motion: no-preference) {
   .vedette-portrait { animation: vedette-entree 420ms cubic-bezier(.34, 1.56, .64, 1) both; }
 }

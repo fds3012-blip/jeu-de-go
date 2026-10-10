@@ -39,12 +39,12 @@ describe("indices limités contre l'ordi (#35)", () => {
     expect(messageIndice(2)).not.toContain(PLUS_D_INDICE);
     expect(messageIndice(1)).not.toContain(PLUS_D_INDICE);
     expect(messageIndice(0)).toMatch(/^Regarde dans le cercle vert/);
-    expect(messageIndice(0)).toContain("Plus d'indice pour cette partie. À toi de jouer !");
+    expect(messageIndice(0)).toContain("Plus d’indice pour cette partie. À toi de jouer !");
   });
   it("décrit le nombre restant pour les lecteurs d'écran", () => {
     expect(descriptionIndices(3)).toBe('3 indices restants');
     expect(descriptionIndices(1)).toBe('1 indice restant');
-    expect(descriptionIndices(0)).toBe("Plus d'indice pour cette partie");
+    expect(descriptionIndices(0)).toBe("Plus d’indice pour cette partie");
   });
 });
 
@@ -85,8 +85,8 @@ describe("aide de Mochi : alerte d'atari (#35)", () => {
 
   it('message : avec explication la première fois, sans ensuite', () => {
     expect(messageAtari(true)).toBe(`${ALERTE_ATARI} ${EXPLICATION_ATARI}`);
-    expect(messageAtari(false)).toBe("Atari ! Ton groupe n'a plus qu'une liberté. Sauve-le ou contre-attaque.");
-    expect(messageAtari(true)).toContain("Atari : il ne reste qu'une liberté, la pierre peut être prise au prochain coup.");
+    expect(messageAtari(false)).toBe("Atari ! Ton groupe n’a plus qu’une liberté. Sauve-le ou contre-attaque.");
+    expect(messageAtari(true)).toContain("Atari : il ne reste qu’une liberté, la pierre peut être prise au prochain coup.");
   });
 
   it('active par défaut contre Pomme et Caillou seulement, et réglable', () => {

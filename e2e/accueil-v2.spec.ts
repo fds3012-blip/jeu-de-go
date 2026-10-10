@@ -32,7 +32,7 @@ test('le carrousel ne laisse pas choisir un adversaire verrouillé', async ({ pa
   const bambou = carrousel.getByRole('button', { name: 'Bambou, 13 kyu, verrouillé' });
   await expect(bambou).toHaveAttribute('aria-disabled', 'true');
   await bambou.click({ force: true });
-  await expect(feuille.getByText(/Bats d'abord Caillou/)).toBeVisible();
+  await expect(feuille.getByText(/Bats d’abord Caillou/)).toBeVisible();
   await expect(bambou).toHaveAttribute('aria-pressed', 'false');
   await expect(carrousel.getByRole('button', { name: 'Pomme, 20 kyu' })).toHaveAttribute('aria-pressed', 'true');
 
@@ -61,7 +61,7 @@ test('battre Caillou ouvre Bambou, et un choix verrouillé retombe sur l’adver
   await expect(carrousel.getByRole('button', { name: 'Caillou, 16 kyu, battu', exact: true })).toBeVisible();
   await expect(carrousel.getByRole('button', { name: 'Bambou, 13 kyu', exact: true })).toBeVisible();
   await carrousel.getByRole('button', { name: 'Renard, 10 kyu, verrouillé' }).click({ force: true });
-  await expect(page.getByText(/Bats d'abord Bambou/)).toBeVisible();
+  await expect(page.getByText(/Bats d’abord Bambou/)).toBeVisible();
 });
 
 test('pas de défilement horizontal à 390 px, carrousel ouvert compris', async ({ page }) => {

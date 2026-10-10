@@ -8,7 +8,7 @@ Mode de revue : **DÉGRADÉ, un seul contexte.** La critique d'Impeccable demand
 
 1. L'identité Encre & Jade tient partout : le goban, le bouton en relief, les sceaux et la fin de partie sont au niveau. Aucun contraste sous AA, aucune cible sous 44 px hors plateau, aucun défilement horizontal, aucune erreur JavaScript, sur 3 configurations × 2 thèmes.
 2. Les défauts graves sont des **collisions avec les éléments fixes**. Dans la revue, « Démarrer le bilan » est tranché par le dock. À la fin de « Rejouer mes erreurs », deux montants d'XP se contredisent (+60 et +30), et la pastille d'XP couvre le logo.
-3. Le système dérive. On compte 2 rendus de Mochi mêlés sans règle, 3 grammaires d'en-tête, 6 styles de bouton « retour », 225 couleurs hexadécimales et 90 tailles de police écrites en dur hors `tokens.css`, et 47 rayons hors de la grille.
+3. Le système dérive. On compte 2 rendus de Mochi mêlés sans règle, 3 grammaires d'en-tête, 6 styles de bouton « retour », 100 couleurs hexadécimales (hors commentaires) et 90 tailles de police écrites en dur hors `tokens.css`, et 47 rayons hors de la grille.
 4. Sur 320 × 568, le plateau de partie tombe à 220 px, et le bandeau de consentement cache « Je sais déjà jouer ». Sur 390 × 844, la leçon et les écrans de fin laissent de grands vides sans intention.
 5. Six lots indépendants sont proposés, dont un pour les textes et les jetons, à fusionner en premier. Trois points relèvent d'une **décision de Florian**.
 
@@ -41,7 +41,7 @@ Les intersections du plateau des pages SEO mesurent 38 px, comme prévu par la b
 |---|---|---|---|
 | 1 | Accessibilité | 3 | AA tenu partout. Les actions secondaires passent sous le dock fixe (revue) ou sous le bandeau (320) : WCAG 2.4.11. |
 | 2 | Performance | 3 | La barre de niveau anime `width` et `left` (500 ms, `niveau.css`). Le reste anime `transform` et `opacity`. |
-| 3 | Thèmes | 2 | Les jetons existent et le mode clair est soigné. Mais on compte 225 hex et 90 tailles de police en dur, et la bulle de la vedette a 4 couleurs en dur. |
+| 3 | Thèmes | 2 | Les jetons existent et le mode clair est soigné. Mais on compte 100 hex (hors commentaires) et 90 tailles de police en dur, et la bulle de la vedette a 4 couleurs en dur. |
 | 4 | Responsive | 3 | Pas de débordement. Plateau à 220 px en 320 × 568, et vides sans intention en 390 × 844. |
 | 5 | Intégrité | 3 | Le système est propre à l'app. Il dérive sur Mochi, sur les en-têtes et sur le bouton retour. |
 | **Total** | | **14/20** | **Bon** : il faut renforcer les thèmes et la cohérence. |
@@ -106,7 +106,7 @@ Gravité : 4 bloque · 3 majeur, gêne nette · 2 mineur, incohérence visible �
 | 8 | 2 | Réglages | « Sons : Son / Vibrations » sont deux bascules indépendantes (`LigneBascules`) dessinées comme un choix segmenté : quand les deux sont actives, les deux segments sont noirs et on croit à un bug du choix unique. | `22b-reglages-page-390-clair-fr` | `src/app/Profil.tsx`, l. 362 : deux `LigneInterrupteur` (« Sons », « Vibrations »), comme « Célébrations ». `LigneBascules` (`src/ui/Reglage.tsx`) n'a alors plus d'usage : à retirer. | L2 |
 | 9 | 2 | Leçon | 150 px de vide entre le plateau et la bulle de Mochi : la consigne flotte au milieu du bas de l'écran. Le titre « Libertés et capture » passe sur 2 lignes, en brume, à côté de la progression. | `15-lecon` (sombre et clair) | `src/ui/apprendre.css` (`.lecteur`) : la bulle suit le plateau (`margin-top: var(--space-3)`), et l'espace libre passe sous la bulle (même principe que `.partie-souffle`). `.lecteur-tete` : titre sur une ligne, `text-overflow: ellipsis`, couleur `var(--text)`. | L5 |
 | 10 | 2 | Accueil, adversaires, partie, Problèmes | « 20 kyu », « 16 kyu », « 30 à 25 kyu » s'affichent dès le premier écran, sans explication (CLAUDE.md, règle 5). | `11-accueil-complet`, `12-adversaires`, `16-problemes` | `src/app/Accueil.tsx` (feuille « Ton adversaire ») : une ligne sous la taille du plateau, « Le kyu, c'est le niveau : plus le nombre est petit, plus c'est fort. » Clés FR et EN dans `src/content/i18n/frEcrans.ts` et `en.ts`. | L4 |
-| 11 | 2 | Système | **Jetons contournés** : 225 couleurs hex et 90 tailles de police en dur hors `tokens.css` (`revue.css` 21 tailles, `fin.css` 14, `apprendre.css` 39 hex, `accueil.css` 27, `profil.css` 26, `partie.css` 25), et 47 rayons hors de la grille (6, 7, 8, 9, 10, 11, 14, 18, 20, 22 px). | `grep` dans `src/ui/*.css` | `src/ui/tokens.css` : ajouter `--bois-tranche: #7A4A1C` (5 mini-gobans), `--sur-papier`, `--sur-papier-doux`, `--sur-papier-alerte` (bulle de la vedette, `accueil.css` l. 241 à 247), `--fs-display-s` (22 px), `--fs-display-m` (28 px), `--fs-display-l` (44 px), `--fs-display-xl` (56 px), `--radius-feuille: 22px`. Puis chaque lot remplace dans ses propres fichiers. Corriger aussi l'indentation du bloc `:root[data-theme="light"]` (l. 168 à 171), qui duplique le bloc `@media` : à factoriser. | L6, puis chaque lot |
+| 11 | 2 | Système | **Jetons contournés** : 100 couleurs hex et 90 tailles de police en dur hors `tokens.css`, commentaires exclus (`revue.css` 21 tailles, `fin.css` 14 ; hex : `compte.css` 21, dont les couleurs de marque Google, Apple et Facebook à garder, `partie.css` 19, `gel.css` 12, `apprendre.css` 11). Le premier relevé (225) comptait aussi les numéros d'issue des commentaires (« #121 »), et 47 rayons hors de la grille (6, 7, 8, 9, 10, 11, 14, 18, 20, 22 px). | `grep` dans `src/ui/*.css` | `src/ui/tokens.css` : ajouter `--bois-tranche: #7A4A1C` (5 mini-gobans), `--sur-papier`, `--sur-papier-doux`, `--sur-papier-alerte` (bulle de la vedette, `accueil.css` l. 241 à 247), `--fs-display-s` (22 px), `--fs-display-m` (28 px), `--fs-display-l` (44 px), `--fs-display-xl` (56 px), `--radius-feuille: 22px`. Puis chaque lot remplace dans ses propres fichiers. Corriger aussi l'indentation du bloc `:root[data-theme="light"]` (l. 168 à 171), qui duplique le bloc `@media` : à factoriser. | L6, puis chaque lot |
 | 12 | 2 | Premier lancement 320 | Le bandeau de consentement couvre « Je sais déjà jouer » (on n'en voit que les points de soulignement). | `01-bandeau-consentement-320-clair-fr` | `src/ui/accueil.css`, l. 299 à 302 : `.app-home:has(.accord)` réserve `--accord-h`, mais le lien reste dessous en 568 px. Sous `max-height:600px`, mettre « Je sais déjà jouer » sur la même ligne que « Changer », ou réduire le goban d'accueil de 40 px tant que le bandeau est là. | L4 |
 | 13 | 2 | Série par thème | Le titre dit « Deux pierres d'un coup », Mochi dit « Capture la pierre marquée », et une seule pierre est marquée. | `17b-serie-theme-verdict` | **À signaler à l'agent du contenu** (règle d'or : aucun conseil faux). Pas de lot design. | — |
 | 14 | 2 | Revue, bilan | Le tableau a 9 catégories de coups (Brillant à Gaffe), la grille de chess.com : 9 lignes pour un débutant de 3 parties. | `09b-revue-bilan-page` | `src/app/Revue.tsx` : pendant les 10 premières parties, 3 lignes (« Bons coups », « Imprécisions », « Erreurs »), puis « Tout voir ». **Décision de Florian** (ce choix reprend chess.com). | L1 |
@@ -137,6 +137,34 @@ Les fichiers sont disjoints d'un lot à l'autre, sauf `tokens.css`, qui n'est to
 | **L5** | Apprendre et Problèmes | 9, remplacement de `#7A4A1C` et des rayons (11), en-tête des problèmes sur 2 lignes (tableau par écran) | `src/app/Lecon.tsx`, `src/app/Learn.tsx`, `src/app/Puzzles.tsx`, `src/ui/apprendre.css`, `src/ui/lecon.css`, `src/ui/apprendre-partage.css`, `src/ui/themes.css`, `src/ui/course.css` |
 
 Le point 13 (énoncé de problème) va à l'agent du contenu. Les points 4, 5 et 14 attendent une décision de Florian avant d'être livrés : le reste de leur lot peut avancer.
+
+## Étape 2 : lot L6 livré (jetons et textes)
+
+**Après la fusion de `main` (#510)**, le constat n° 1 **existe encore**. #510 a mis « Rejoue cette erreur » à côté de « Suivant » dans le parcours, avec un fond plein et un fondu sous la barre (`.revue-dock-double::before`). Mais le **bilan** garde son dock simple : « Démarrer le bilan » reste tranché entre « Rejouer mes erreurs (2) » et la barre du bas (captures `09-revue-bilan`, avant et après L6). Le correctif proposé tient toujours, et il peut reprendre le fond de #510 : `.revue-dock::before`, avec le même dégradé. Il reste dans le lot L1.
+
+Ce qui change :
+- **Jetons** (`src/ui/tokens.css`) :
+  - nouveaux jetons `--or-fonce`, `--bois-tranche`, `--sur-papier`, `--sur-papier-texte`, `--sur-papier-doux`, `--sur-papier-alerte`, `--fs-mini`, `--fs-display-s/m/l/xl` et `--radius-feuille` ;
+  - les deux blocs du mode clair sont réindentés ;
+  - l'or foncé de l'onglet Apprendre passe par `--or-fonce`.
+- **Valeurs en dur remplacées par un jeton de même valeur**, dans 21 fichiers CSS, commentaires exclus :
+  - 81 remplacements : tailles de police, rayons de 12, 16, 22 et 999 px, et 18 couleurs (tranche des mini-gobans, kaya, jade, or foncé, bulle de la vedette) ;
+  - en dur, les couleurs passent de 100 à 85, et les tailles de police de 90 à 48 ;
+  - non touchés : les couleurs de marque (`compte.css`), la matière des pierres et les tailles sans jeton équivalent.
+- **Seuls écarts de rendu** : 14 px devient `--fs-s` (0,88 rem, soit 14,08 px), et les valeurs en px passent en rem. Les rem suivent la taille du texte choisie par le joueur, ce qui est voulu. Au rendu par défaut, l'écart reste sous le pixel : la page entière de la revue gagne 2 px de hauteur.
+- **Courbe de la revue en mode clair** : la part noire passe de `#3A332D` à `#7A7068`. C'est une encre diluée, et non plus un bloc presque noir. Elle reste à 4,7:1 environ contre la part blanche.
+- **Apostrophes typographiques** dans `src/content/i18n/fr.ts` et `frEcrans.ts`, sur 42 entrées affichées. Les constantes d'origine que les tests comparent au catalogue suivent : `app/partie.ts`, `app/score.ts` et les phrases des adversaires dans `engine/simple.ts`. Les attentes des tests Vitest et e2e sont mises à jour.
+  - Sont gardés à l'identique les 4 noms accessibles jamais affichés (`partie.retourAccueil`, `serie.progression`, `revue.courbe`, `conseil.note.question`), que les parcours e2e citent.
+  - Un test (`vocabulaire.test.ts`, « typographie ») empêche le retour de l'apostrophe droite dans le catalogue français.
+  - **Reste hors L6** : les textes des leçons et des problèmes (`src/content/*.ts`, agent du contenu) et les chaînes écrites dans les écrans.
+- **Libellé de l'accueil** : « ton premier adversaire · 9 × 9 » devient « Ton premier adversaire, sur 9 × 9 » (en anglais, « Your first opponent, on 9 × 9 »).
+
+**Vérification visuelle** : les 39 états ont été capturés avant et après L6, dans les 3 configurations et les 2 thèmes (310 captures), puis comparés pixel à pixel.
+- 224 captures sont identiques.
+- Les écarts voulus : le libellé de l'accueil (`01`, `02`), la courbe en clair (`09`, `09c`) et les apostrophes (bulle du coach `08`, fin `07`).
+- Les autres écarts viennent du hasard du jeu, pas du style : coups de Pomme (`05`, `06`, `06b`, `07`), réplique de Pomme (`08`), problème tiré au sort (`16b`, `20b`).
+- Écarts sous le pixel : les tailles de 14 px dans la revue (`09`, `09b`, +2 px de hauteur de page).
+- Aucun autre changement n'a été vu.
 
 ## Rendu générique (`redesign-skill`, craft-floor)
 

@@ -45,7 +45,7 @@ test('fin de partie : le récit du score, puis le résultat, sans toucher', asyn
   await expect(recit).toContainText('+1 prisonnier pour Noir');
   await expect(recit).toContainText('+6,5 komi pour Blanc');
   // Première fois : le komi est expliqué.
-  await expect(recit).toContainText("Le komi compense l'avantage de Noir, qui joue en premier.");
+  await expect(recit).toContainText("Le komi compense l’avantage de Noir, qui joue en premier.");
   // Puis l'écran de fin, tel qu'avant, sans toucher.
   await page.clock.runFor(1200);
   await expect(page.getByRole('heading', { level: 2, name: 'Noir gagne' })).toBeVisible();
@@ -178,7 +178,7 @@ for (const largeur of [390, 320] as const) {
         await page.clock.runFor(200);
         await expect(etape(2)).toHaveClass(/\bvu\b/);
         await expect(etape(2)).toContainText('+6,5 komi pour Blanc');
-        await expect(etape(2)).toContainText("Le komi compense l'avantage de Noir");
+        await expect(etape(2)).toContainText("Le komi compense l’avantage de Noir");
         await expect(recit.locator('.camp').last().locator('.recit-jeton')).toHaveText('+ 6,5');
         await page.clock.runFor(300);
         await expect(blanc).toHaveText('33,5');

@@ -12,7 +12,7 @@ import { fromLabel } from '../src/go/coords';
 const NOIR = ['D9', 'D8', 'D7', 'A6', 'B6', 'C6', 'D6', 'G9', 'G8', 'G7', 'G6', 'G5', 'G4', 'G3', 'G2', 'G1'];
 const BLANC = ['C9', 'C8', 'C7', 'B7', 'A7', 'H9', 'H8', 'H7', 'H6', 'H5', 'H4', 'H3', 'H2', 'H1'];
 const MORTES = ['C9', 'C8', 'C7', 'B7', 'A7'];
-const PHRASE = "J'ai compté pour toi : les pierres grisées ne peuvent plus vivre, elles deviennent des prisonniers.";
+const PHRASE = "J’ai compté pour toi : les pierres grisées ne peuvent plus vivre, elles deviennent des prisonniers.";
 
 async function preparer(page: Page, stockage: Record<string, string>) {
   // Après ses 14 coups, Pomme passe.

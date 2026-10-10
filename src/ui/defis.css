@@ -17,7 +17,7 @@
 
 /* Lien créé : lisible, sélectionnable, jamais plus large que l'écran. */
 .defi-lien { display: grid; gap: var(--space-2); }
-.defi-lien-texte { width: 100%; min-width: 0; min-height: var(--cible-min); box-sizing: border-box; padding: 0 12px; border-radius: 12px;
+.defi-lien-texte { width: 100%; min-width: 0; min-height: var(--cible-min); box-sizing: border-box; padding: 0 12px; border-radius: var(--radius-s);
   border: 1.5px solid var(--line); background: var(--bg); color: var(--text); font: inherit; font-size: var(--fs-s);
   text-overflow: ellipsis; }
 

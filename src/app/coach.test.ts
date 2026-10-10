@@ -67,17 +67,17 @@ describe('choisirMoment', () => {
 describe('phrases (tutoiement, vocabulaire expliqué)', () => {
   it('atari : la liberté est expliquée', () => {
     const m = choisirMoment(atariEtPrise, etatCoachInitial())!;
-    expect(phraseCoach(m, 9, 'fr')).toBe("Atari en A1 : ton groupe n'a plus qu'une liberté (un point libre à côté). Sans réponse, il peut être pris.");
+    expect(phraseCoach(m, 9, 'fr')).toBe("Atari en A1 : ton groupe n’a plus qu’une liberté (un point libre à côté). Sans réponse, il peut être pris.");
     expect(phraseCoach(m, 9, 'en')).toContain('Atari at A1: your group');
   });
   it('prise ratée : accord au singulier et au pluriel', () => {
     const m = choisirMoment(priseSeule, etatCoachInitial())!;
-    expect(phraseCoach(m, 9, 'fr')).toBe("Au coup d'avant, tu pouvais prendre une pierre en E4 : elle n'avait plus qu'une liberté.");
-    expect(phraseCoach({ type: 'prise-ratee', point: 0, pierres: [1, 2] }, 9, 'fr')).toBe("Au coup d'avant, tu pouvais prendre 2 pierres en A9 : elles n'avaient plus qu'une liberté.");
+    expect(phraseCoach(m, 9, 'fr')).toBe("Au coup d’avant, tu pouvais prendre une pierre en E4 : elle n’avait plus qu’une liberté.");
+    expect(phraseCoach({ type: 'prise-ratee', point: 0, pierres: [1, 2] }, 9, 'fr')).toBe("Au coup d’avant, tu pouvais prendre 2 pierres en A9 : elles n’avaient plus qu’une liberté.");
   });
   it('un seul œil : le mot œil est expliqué', () => {
     expect(phraseCoach({ type: 'un-oeil', repere: fromLabel('A2', 9), pierres: [], oeil: [] }, 9, 'fr'))
-      .toBe("Ton groupe en A2 n'a qu'un œil (un trou fermé par tes pierres). Il en faut deux pour vivre : il est en danger.");
+      .toBe("Ton groupe en A2 n’a qu’un œil (un trou fermé par tes pierres). Il en faut deux pour vivre : il est en danger.");
   });
   it('zone libre : le coin est nommé', () => {
     expect(phraseCoach({ type: 'zone-libre', coin: 'bg', zone: [] }, 9, 'fr')).toBe('Le coin en bas à gauche est encore tout vide. Une pierre là-bas peut y prendre beaucoup de place.');

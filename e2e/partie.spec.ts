@@ -20,7 +20,7 @@ test('liste des coups, couvercle, atari et navigation masquée (partie à deux)'
 
   // Blanc E5 entouré par D5, F5 et E6 : atari, la dernière liberté (E4) est montrée.
   await jouerSuite(page, ['E5', 'F5', 'A1', 'E6']);
-  await expect(message(page)).toHaveText(/^Atari\s! Un groupe blanc n'a plus qu'une liberté/);
+  await expect(message(page)).toHaveText(/^Atari\s! Un groupe blanc n’a plus qu’une liberté/);
   await expect(coups).toHaveCount(5);
 
   // Blanc joue ailleurs, Noir prend en E4 : la pierre part dans le couvercle de Noir.

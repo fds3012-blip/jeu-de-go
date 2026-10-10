@@ -82,8 +82,8 @@ test('trois parties contre l’ordi : toutes dans « Mes parties », avec le bon
     await demarrerParcours(page, 1);
     await expect(page.getByText(/Coup 1 sur \d+/)).toBeVisible();
     await expect(plateau(page).locator('g[data-point="E5"][data-pierre="noir"]')).toHaveCount(1);
-    // Pas de « Rejouer d'ici » depuis l'historique (l'écran de partie ne reprend pas encore une partie gardée).
-    await expect(page.getByRole('button', { name: "Rejouer d'ici" })).toHaveCount(0);
+    // Pas de « Rejouer d’ici » depuis l'historique (l'écran de partie ne reprend pas encore une partie gardée).
+    await expect(page.getByRole('button', { name: 'Rejouer d’ici' })).toHaveCount(0);
     await page.getByRole('button', { name: 'Retour au résumé' }).click();
     await page.getByRole('button', { name: 'Retour à mes parties' }).click();
     await expect(lignes).toHaveCount(3);
