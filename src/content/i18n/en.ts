@@ -283,6 +283,8 @@ export const en = {
   'recompense.goban': 'the “{nom}” board',
   'recompense.pierres': 'the “{nom}” stones',
   'xp.bonus': 'incl. +{bonus} first time',
+  'xp.objectif': 'incl. +{objectif} weekly goal',
+  'xp.bonusObjectif': 'incl. +{bonus} first time and +{objectif} weekly goal',
 
   'carrousel.palier.0': 'First steps',
   'carrousel.palier.1': 'Getting tougher',

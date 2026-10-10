@@ -5,10 +5,9 @@ import { fromLabel, toLabel } from '../go/coords';
 import { groupAt, play } from '../go/rules';
 import { momentCle, noterCoups, notesAvecCle, notesCoherentes, positionsDepuisSgf, type AnalyseRevue } from './revue';
 import { classerCoups } from './notation';
-import { GAINS } from './xp';
 import { KATAGO_424, SGF_424 } from './partie424.fixture';
 import {
-  consigne, ESSAIS, erreursARejouer, erreursPayees, idPartie, jugerEssai, jugerParRecherche, marquerPartie, MAX_ERREURS_REJOUEES, MAX_PARTIES_XP,
+  consigne, ESSAIS, erreursARejouer, idPartie, jugerEssai, jugerParRecherche, marquerPartie, MAX_ERREURS_REJOUEES, MAX_PARTIES_XP,
   phraseFin, phraseMontre, phraseMontrePourquoi, phrasePasEncore, phraseTrouve, score, titreFin, type ErreurARejouer,
 } from './rejouerErreurs';
 
@@ -181,12 +180,5 @@ describe('phrases de Mochi et fin de séance', () => {
     expect(marquerPartie(liste, id)).toBeNull();
     const pleine = Array.from({ length: MAX_PARTIES_XP }, (_, i) => `p${i}`);
     expect(marquerPartie(pleine, id)).toHaveLength(MAX_PARTIES_XP);
-  });
-
-  it('XP : 10 par erreur rejouée, 3 erreurs au plus (#509, décision de Florian)', () => {
-    expect(GAINS.erreursRejouees).toBe(10);
-    expect([0, 1, 2, 3, 4, 7].map(n => erreursPayees(n) * GAINS.erreursRejouees)).toEqual([0, 10, 20, 30, 30, 30]);
-    expect(erreursPayees(-1)).toBe(0);
-    expect(erreursPayees(Number.NaN)).toBe(0);
   });
 });

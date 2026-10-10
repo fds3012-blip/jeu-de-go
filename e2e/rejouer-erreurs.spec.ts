@@ -127,14 +127,13 @@ for (const theme of ['light', 'dark'] as const) {
     await expect(pastilles.nth(0)).toHaveAttribute('aria-label', 'Coup 9 : pas trouvé');
     await expect(pastilles.nth(1)).toHaveAttribute('aria-label', 'Coup 7 : trouvé');
     await expect(page.locator('.rejeu-fin-phrase')).toHaveText('Chaque coup trouvé, c’est un réflexe de plus pour ta prochaine partie.');
-    // #509 (L1, n° 2) : un seul montant, dans la carte : tout ce que la séance a rapporté (10 XP par erreur rejouée, bonus
-    // « première fois », objectif de la semaine), égal au gain de la barre d'XP. Aucune pastille globale par-dessus le logo.
-    const montant = page.locator('.rejeu-fin-xp b');
-    await expect(montant).toHaveText(/^\+\d+\sXP$/);
+    await expect(page.locator('.rejeu-fin-xp')).toHaveText(/^\+\d+\sXP$/);
     await expect(page.getByTestId('confettis')).toHaveCount(1);
-    const xpApres = await page.evaluate(() => Number(localStorage.getItem('go.xp.v1')));
-    expect(xpApres).toBeGreaterThan(xpAvant);
-    await expect(montant).toHaveText(new RegExp(`^\\+${xpApres - xpAvant}\\sXP$`));
+    expect(await page.evaluate(() => Number(localStorage.getItem('go.xp.v1')))).toBeGreaterThan(xpAvant);
+    // #509 (L1, n° 2) : un seul montant, celui de la barre d'XP, détaillé sous la pastille ; rien ne flotte sur le logo.
+    const gain = await page.evaluate(() => Number(localStorage.getItem('go.xp.v1'))) - xpAvant;
+    await expect(page.locator('.rejeu-fin-xp')).toHaveText(new RegExp(`^\\+${gain}\\sXP$`));
+    await expect(page.locator('.rejeu-fin-detail')).toHaveText(/^dont \+20 première fois/);
     await expect(page.locator('.annonce-xp [data-testid="pastille-xp"]')).toHaveCount(0);
     await expect(page.locator('.cta')).toHaveText('Retour au bilan');
     await ctaLibre(page, 'fin');

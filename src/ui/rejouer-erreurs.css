@@ -27,17 +27,16 @@
 /* Pas trouvée : un simple point creux de 12 px (le libellé dit « pas trouvé »), qui ne ressemble pas à un bouton éteint. */
 .rejeu-fin-pastilles .ratee::before { content: ""; width: 12px; height: 12px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--muted); }
 .rejeu-fin-phrase { margin: 0; max-width: 32ch; font-size: var(--fs-m); line-height: 1.45; text-wrap: balance; }
-.rejeu-fin-xp { display: inline-flex; flex-wrap: wrap; justify-content: center; align-items: baseline; column-gap: var(--space-2); margin: 0; padding: 4px 14px;
-  border-radius: var(--radius-pill); background: var(--recompense); color: var(--encre-jade); font-variant-numeric: tabular-nums; }
-.rejeu-fin-xp b { font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: var(--fs-l); }
-/* Part du bonus « première fois » : le même montant que la barre d'XP, expliqué au même endroit. */
-.rejeu-fin-xp small { font-size: var(--fs-s); font-weight: var(--fw-bold); }
+.rejeu-fin-xp { margin: 0; padding: 4px 14px; border-radius: var(--radius-pill); background: var(--recompense); color: var(--encre-jade);
+  font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: var(--fs-l); font-variant-numeric: tabular-nums; }
+/* Ce qui compose le total (bonus « première fois », objectif de la semaine) : le même montant que la barre d'XP, expliqué. */
+.rejeu-fin-detail { margin: calc(var(--space-1) * -1) 0 0; max-width: 34ch; color: var(--muted); font-size: var(--fs-s); line-height: 1.35; text-wrap: balance; }
 /* Écran court (320 × 568) : la pastille d'XP, seul endroit où se lit le gain, tient au-dessus de la barre sans défiler.
-   Mochi rapetisse (72 px), la colonne se resserre. */
+   Mochi rapetisse (56 px), la colonne se resserre. */
 @media (max-height: 700px) {
-  .rejeu-fin-carte { gap: var(--space-2); padding-block: 0; }
-  .rejeu-fin-mochi { width: 72px; height: 72px; }
-  .rejeu-fin-mochi > * { transform: scale(.7); }
+  .rejeu-fin-carte { gap: 6px; padding-block: 0; }
+  .rejeu-fin-mochi { width: 56px; height: 56px; background: none; }
+  .rejeu-fin-mochi > * { transform: scale(.55); }
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -51,7 +50,7 @@
   /* Coup trouvé : la coche se trace pendant que sa pastille se pose (même délai, posé en ligne sur le li). */
   .rejeu-fin-pastilles .trouvee svg { animation-delay: inherit; }
   .rejeu-fin-pastilles .trouvee path { stroke-dasharray: 1; animation: rejeu-coche 240ms var(--ease) both; animation-delay: inherit; }
-  .rejeu-fin-xp { animation: rejeu-pose 260ms var(--ease) 360ms both; }
+  .rejeu-fin-xp, .rejeu-fin-detail { animation: rejeu-pose 260ms var(--ease) 360ms both; }
 }
 @keyframes rejeu-eclat { 0% { box-shadow: inset 0 0 0 2px var(--accent), 0 0 0 0 rgba(60, 196, 142, .45); } 100% { box-shadow: inset 0 0 0 2px var(--accent), 0 0 0 10px rgba(60, 196, 142, 0); } }
 @keyframes rejeu-pose { from { opacity: 0; transform: scale(.94); } to { opacity: 1; transform: none; } }
