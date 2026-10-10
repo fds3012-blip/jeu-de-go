@@ -101,7 +101,7 @@ function ProblemePlacement({ puzzle, rang, confirmTouch, dernier, onPasser, onSu
         </div>
         <button type="button" className="lien placement-passer" aria-label={t('placement.passerAria')} onClick={onPasser}>{t('placement.passer')}</button>
       </div>
-      <Board size={puzzle.size} board={board} toPlay={puzzle.toPlay} interactive={!coup} confirmTouch={confirmTouch} onPlay={onPlay} shake={shake}
+      <Board lieu="placement" size={puzzle.size} board={board} toPlay={puzzle.toPlay} interactive={!coup} confirmTouch={confirmTouch} onPlay={onPlay} shake={shake}
         marks={{ targets: start.marked, ok: coup?.ok ? coup.p : undefined, last: coup && !coup.ok ? coup.p : undefined }} />
       {/* Audit du 02/10 (n° 1) : la consigne sous le plateau, comme dans les problèmes et les leçons. */}
       <ParoleMochi humeur={coup?.ok ? 'content' : 'neutre'}>

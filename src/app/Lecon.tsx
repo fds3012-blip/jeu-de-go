@@ -212,7 +212,7 @@ export function LessonPlayer({ lesson: { id: leconId }, start, confirmTouch, pro
       <div className={`lecteur-plateau${img?.atari.length ? ' demo-atari' : ''}`} data-demo={images ? (attente ? 'geste' : demoFinie ? 'finie' : 'en-cours') : undefined}
         onClick={images && !demoFinie && temps < limite ? () => { if (Date.now() - gesteA.current > 400) setTemps(limite); } : undefined}>
         <div className="plateau-cadre">
-          <Board size={n} fenetre={fen} board={board} interactive={attente || ((step.kind === 'move' || step.kind === 'touche') && !answer?.ok)} confirmTouch={confirmer}
+          <Board lieu="lecon" size={n} fenetre={fen} board={board} interactive={attente || ((step.kind === 'move' || step.kind === 'touche') && !answer?.ok)} confirmTouch={confirmer}
             toucher={step.kind === 'touche' || (attente && !!geste && 'touche' in geste)} stonesTappable={attente && !!geste && 'touche' in geste} onPlay={onPlay} marks={marks} />
           <Halos guide={halo} juste={answer?.ok && answer.p != null ? { p: answer.p, n: answer.n } : null} reduit={reduit} size={n} fenetre={fen} />
         </div>

@@ -742,14 +742,16 @@ Une seule métrique principale par test, fixée avant le lancement. Durée fixé
 ### 9.1 Entonnoir sur 7 et 30 jours
 
 ```sql
--- Entonnoir de la première visite (#437) : 7 et 30 derniers jours complets, heure de Paris.
+-- Entonnoir de la première visite (#437, étapes 2 à 4 depuis #519) : 7 et 30 derniers jours complets, heure de Paris.
+-- `pct_premier_geste` : dénominateur humain (#519) ; à lire seulement sur des jours entièrement postérieurs au déploiement.
 with aujourdhui as (
   select (now() at time zone 'Europe/Paris')::date as j
 ),
 fenetres(fenetre, jours) as (values ('7 jours', 7), ('30 jours', 30)),
 etapes(rang, etape) as (values
-  (1, 'premier_ecran'), (2, 'premiere_pierre'), (3, 'premiere_partie_finie'),
-  (4, 'limite_essai'), (5, 'compte_cree'), (6, 'premiere_partie_en_ligne')),
+  (1, 'premier_ecran'), (2, 'premier_geste'), (3, 'partie_ouverte'), (4, 'premier_toucher_plateau'),
+  (5, 'premiere_pierre'), (6, 'premiere_partie_finie'),
+  (7, 'limite_essai'), (8, 'compte_cree'), (9, 'premiere_partie_en_ligne')),
 totaux as (
   select f.fenetre, f.jours, e.rang, e.etape, coalesce(sum(c.n), 0)::int as appareils
   from fenetres f
@@ -761,6 +763,8 @@ totaux as (
 )
 select fenetre, rang, etape, appareils,
   round(100.0 * appareils / nullif(first_value(appareils) over w, 0), 1) as pct_premier_ecran,
+  round(100.0 * appareils / nullif(max(appareils) filter (where etape = 'premier_geste') over (partition by fenetre), 0), 1)
+    as pct_premier_geste,  -- objectif « première pierre » : 60 % sur cette base (rapport #499)
   round(100.0 * appareils / nullif(lag(appareils) over w, 0), 1) as pct_etape_precedente
 from totaux
 window w as (partition by fenetre order by rang)
@@ -773,6 +777,9 @@ order by jours, rang;
 -- Une ligne par jour, une colonne par étape (#437). `plafonne` : la journée a touché le plafond anti-abus.
 select c.jour,
   sum(c.n) filter (where c.etape = 'premier_ecran') as premier_ecran,
+  sum(c.n) filter (where c.etape = 'premier_geste') as premier_geste,
+  sum(c.n) filter (where c.etape = 'partie_ouverte') as partie_ouverte,
+  sum(c.n) filter (where c.etape = 'premier_toucher_plateau') as premier_toucher_plateau,
   sum(c.n) filter (where c.etape = 'premiere_pierre') as premiere_pierre,
   sum(c.n) filter (where c.etape = 'premiere_partie_finie') as premiere_partie_finie,
   sum(c.n) filter (where c.etape = 'limite_essai') as limite_essai,
@@ -798,4 +805,6 @@ order by refus desc;
 - **Sous-estimation possible**, jamais de double compte : un envoi raté (hors ligne) est perdu.
 - **Comparer avec PostHog** : `essai_limite_atteinte` compte des **ouvertures** de l'écran (plusieurs par joueur, anciens joueurs compris) ; `limite_essai` compte des **appareils neufs**. Les deux ne doivent pas être égaux. Si `limite_essai` > `premier_ecran` sur une fenêtre longue, il y a un problème de comptage.
 - **Volumes.** Au trafic actuel (quelques nouveaux par jour), un taux sur 7 jours repose sur quelques dizaines d'appareils : intervalle de confiance de ± 15 à 20 points. Ne rien conclure sous 100 appareils au dénominateur ; dire « trop peu pour conclure ».
+- **Robots (#519).** Avant #519, environ 87 % des `premier_ecran` étaient des robots (`docs/data/mesure-lancement-2026-10.md`). Depuis, les navigateurs pilotés (`navigator.webdriver`) ne comptent plus rien, mais un robot qui masque ce drapeau compte encore `premier_ecran`. **Lire les taux sur `premier_geste`** (première interaction réelle) : c'est le dénominateur humain. La rupture de série de `premier_ecran` au déploiement de #519 est attendue : ne pas la lire comme une chute d'audience.
+- **Première pierre où qu'elle soit (#519).** `premiere_pierre` compte depuis #519 la première pierre en partie, en leçon, en problème ou au placement (avant : en partie seulement). Hausse attendue au déploiement, sans lien avec le produit. `premier_toucher_plateau` sans `premiere_pierre` : le joueur a vu la pierre fantôme sans la confirmer (#466).
 - **Premiers jours.** Les compteurs ne voient que les appareils dont le **premier lancement** est postérieur au déploiement : pendant les 30 premiers jours, la fenêtre de 30 jours est incomplète.

@@ -7,7 +7,17 @@
 //
 // Un appareil d'avant ce repère (parties, leçons, problèmes, série ou placement déjà gardés) compte comme « pierre
 // posée » : un joueur qui revient ne perd jamais ses tuiles.
+//
+// Mesure (#519) : le plateau signale aussi chaque pierre posée et chaque premier toucher avec son lieu (`pierrePosee`,
+// `toucherPlateau`). Le compteur anonyme `premiere_pierre` (src/data/compteurs.ts) part donc où que la pierre soit posée,
+// et l'événement PostHog `premiere_pierre` porte `lieu`. La partie (src/app/Game.tsx) garde son propre envoi PostHog,
+// plus riche (mode, adversaire, taille), avec `lieu: 'partie'`.
 import { jamaisJoue } from './arriveePartage';
+import { compterEtape } from '../data/compteurs';
+import { EVENTS, secondsSinceOpen, trackOnce } from '../data/analytics';
+
+/** Où le plateau est posé. `autre` : étude, revue, et tout plateau qui ne le dit pas. Jamais plus précis que ça. */
+export type LieuPierre = 'partie' | 'en_ligne' | 'lecon' | 'probleme' | 'placement' | 'autre';
 
 /** `true` dès la première pierre posée sur cet appareil. Aucune autre donnée. */
 export const PREMIERE_PIERRE_KEY = 'go.premiere-pierre.v1';
@@ -49,6 +59,27 @@ export function noterPierrePosee(stockage: Stockage | null = stockageParDefaut()
   deja = true;
   try { stockage?.setItem(PREMIERE_PIERRE_KEY, 'true'); } catch { /* repère gardé en mémoire seulement */ }
   try { window.dispatchEvent(new Event(EVENEMENT_PREMIERE_PIERRE)); } catch { /* hors navigateur */ }
+}
+
+/**
+ * Pierre posée par le joueur sur un point vide (appelé par le plateau à chaque pose ; seul le premier appel compte) :
+ * compteur anonyme `premiere_pierre` (une fois par appareil neuf), événement PostHog `premiere_pierre` avec `lieu` (une fois
+ * par session sans accord ; la partie l'envoie elle-même), puis le repère de l'accueil.
+ */
+export function pierrePosee(lieu: LieuPierre): void {
+  compterEtape('premiere_pierre');
+  if (lieu !== 'partie') trackOnce(EVENTS.premierePierre, { secondes: secondsSinceOpen(), lieu });
+  noterPierrePosee();
+}
+
+/**
+ * Premier toucher d'un point vide d'un plateau jouable (pierre fantôme montrée, ou pierre posée d'un coup) : compteur
+ * anonyme `premier_toucher_plateau` et événement PostHog du même nom (`secondes`, `lieu`). Sépare « n'a jamais touché le
+ * plateau » de « a vu la pierre fantôme sans la confirmer » (#466).
+ */
+export function toucherPlateau(lieu: LieuPierre): void {
+  compterEtape('premier_toucher_plateau');
+  trackOnce(EVENTS.premierToucherPlateau, { secondes: secondsSinceOpen(), lieu });
 }
 
 /** Abonnement pour `useSyncExternalStore` : relit le repère à la première pierre. */

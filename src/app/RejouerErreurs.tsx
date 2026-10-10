@@ -230,7 +230,7 @@ export function RejouerErreurs({ sgf, positions, komi, analyses, erreurs, joueur
         </div>
       </div>
       <div className="revue-plateau">
-        <Board size={size} board={board.board} toPlay={avant.toPlay} interactive={etat === 'cherche'} confirmTouch={confirmTouch}
+        <Board lieu="probleme" size={size} board={board.board} toPlay={avant.toPlay} interactive={etat === 'cherche'} confirmTouch={confirmTouch}
           onPlay={p => { void essayer(p); }} marks={marks} shake={faux != null && etat === 'cherche' ? { p: faux, n: secousse } : null} />
       </div>
       {etat === 'cherche' && (

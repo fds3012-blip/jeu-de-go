@@ -535,7 +535,7 @@ export function DefiPartie({ db, partieId, userId, anonyme, pseudo = null, confi
       {/* #390 : « ? » au bout du ruban des coups, sans quitter la partie ; pendant le comptage, il ouvre « Compter ». */}
       <ListeCoups coups={coups} apres={<BoutonAide depuis="partie" fiche={enComptage ? 'compter' : 'regles'} className="ruban-aide" />} />
       <div className="partie-plateau">
-        <Board size={partie.size} board={v.pos.board} toPlay={v.pos.toPlay} confirmTouch={confirmTouch}
+        <Board lieu="en_ligne" size={partie.size} board={v.pos.board} toPlay={v.pos.toPlay} confirmTouch={confirmTouch}
           interactive={!anonyme && ((v.aMoi && !envoi && online) || (enComptage && !envoi && !v.proposeParMoi))} stonesTappable={enComptage}
           coordonnees={prefs.coordonnees} marks={{ last: prefs.dernierCoup ? v.pos.lastMove : null, owner: sc?.owner, dead: enComptage || v.phase === 'fini' ? mortesVues : undefined }}
           onPlay={toucher} noms={{ [lui]: nomLui }} />

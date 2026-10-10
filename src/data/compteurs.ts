@@ -10,11 +10,19 @@
  * - sur l'appareil, un repère par étape (`go.entonnoir.<étape>` = mois où elle a été comptée, `AAAA-MM`), sans
  *   identifiant, valable 13 mois au plus (jamais prolongé, effacé ensuite), pour ne compter chaque étape qu'une fois ;
  * - le joueur peut s'y opposer (page Conditions) : rien n'est compté, les repères sont effacés ;
- * - appareils de l'équipe (`estEquipe`), previews et développement local : rien n'est compté.
+ * - appareils de l'équipe (`estEquipe`), previews et développement local : rien n'est compté ;
+ * - navigateurs pilotés (`navigator.webdriver === true` : Puppeteer, Playwright, Selenium) : rien n'est compté (#519,
+ *   environ 87 % des premiers écrans comptés du 05 au 09/10 étaient des robots : docs/data/mesure-lancement-2026-10.md).
+ *   Les tests e2e se présentent comme un navigateur ordinaire (e2e/compteurs-entonnoir.spec.ts) : aucun passe-droit ici.
  *
  * Seuls les appareils neufs entrent dans l'entonnoir : `premier_ecran` n'est compté qu'au tout premier lancement, et
  * les étapes suivantes seulement sur un appareil dont le premier écran a été compté (pas les joueurs d'avant #437).
  * L'envoi attend le premier écran (`apresPremierEcran`) et n'est jamais attendu : un échec est silencieux.
+ *
+ * Étapes ajoutées par #519 (migration 20261010180000) : `premier_geste` (première interaction réelle, src/app/premierGeste.ts :
+ * dénominateur humain, les robots qui masquent `webdriver` ne touchent rien), `partie_ouverte` (écran de partie monté),
+ * `premier_toucher_plateau` (premier toucher d'un point vide, fantôme compris). `premiere_pierre` compte désormais la
+ * première pierre où qu'elle soit posée (partie, leçon, problème, placement : src/app/premierePierre.ts).
  */
 import { apresPremierEcran } from '../premierEcran';
 import { analyticsConfig, ENTONNOIR_PREFIX, estEquipe, getOpposition } from './analytics';
@@ -22,6 +30,7 @@ import { configSupabase, envDeTest } from './client';
 
 export const ETAPES = [
   'premier_ecran', 'premiere_pierre', 'premiere_partie_finie', 'limite_essai', 'compte_cree', 'premiere_partie_en_ligne',
+  'premier_geste', 'partie_ouverte', 'premier_toucher_plateau',
 ] as const;
 export type Etape = (typeof ETAPES)[number];
 
@@ -71,12 +80,17 @@ export function purgerReperesExpires(maintenant = new Date()): void {
   } catch { /* stockage indisponible : rien à purger */ }
 }
 
+/** Navigateur piloté par un programme (WebDriver, CDP) : il le déclare dans `navigator.webdriver`. */
+export function estPilote(): boolean {
+  try { return typeof navigator !== 'undefined' && navigator.webdriver === true; } catch { return false; }
+}
+
 /**
- * Mesure possible : navigateur, site de production (les previews Vercel et le développement local partagent la base :
- * ils ne comptent pas ; les builds e2e, oui, vers leur faux serveur), pas d'opposition, pas un appareil de l'équipe.
+ * Mesure possible : navigateur non piloté, site de production (les previews Vercel et le développement local partagent
+ * la base : ils ne comptent pas ; les builds e2e, oui, vers leur faux serveur), pas d'opposition, pas un appareil de l'équipe.
  */
 function permis(): boolean {
-  if (typeof window === 'undefined' || typeof fetch !== 'function') return false;
+  if (typeof window === 'undefined' || typeof fetch !== 'function' || estPilote()) return false;
   if (analyticsConfig().environment !== 'production' && !import.meta.env.VITE_E2E) return false;
   return !getOpposition() && !estEquipe();
 }

@@ -601,7 +601,7 @@ function DirectPartie({ db, partieId, userId, demande, confirmTouch, reglages, c
       {bandeau(lui, retour)}
       <ListeCoups coups={coups} apres={<BoutonAide depuis="partie" fiche={enComptage ? 'compter' : 'regles'} className="ruban-aide" />} />
       <div className="partie-plateau">
-        <Board size={partie.size} board={v.pos.board} toPlay={v.pos.toPlay} confirmTouch={confirmTouch}
+        <Board lieu="en_ligne" size={partie.size} board={v.pos.board} toPlay={v.pos.toPlay} confirmTouch={confirmTouch}
           interactive={(v.aMoi && !envoi && online) || (enComptage && !envoi && !v.proposeParMoi)} stonesTappable={enComptage}
           coordonnees={prefs.coordonnees} marks={{ last: prefs.dernierCoup ? v.pos.lastMove : null, owner: sc?.owner, dead: enComptage || v.phase === 'fini' ? mortesVues : undefined }}
           onPlay={toucher} noms={{ [lui]: nom }} />

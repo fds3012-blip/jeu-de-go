@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import * as A from './analytics';
 import { _reinitialiserCompteurs, compterEtape, dejaComptee, DUREE_REPERE_MOIS, ETAPES, purgerReperesExpires, repereValide } from './compteurs';
@@ -178,12 +178,44 @@ describe('compteurs anonymes de l’entonnoir (#437)', () => {
     expect(stockage.getItem('go.settings.v1')).toBe('{}');
   });
 
-  it('mêmes étapes que la liste blanche de la migration', () => {
-    const sql = readFileSync(resolve(__dirname, '../../supabase/migrations/20261005120100_compteurs_entonnoir.sql'), 'utf8');
-    const liste = /p_etape not in \(([^)]*)\)/.exec(sql)![1];
-    expect(liste.match(/'([a-z_]+)'/g)!.map(s => s.slice(1, -1))).toEqual([...ETAPES]);
+  it('mêmes étapes que la liste blanche de la dernière migration (fonction et contrainte, #519)', () => {
+    // La dernière migration qui redéfinit `compter_etape` fait foi.
+    const dossier = resolve(__dirname, '../../supabase/migrations');
+    const derniere = readdirSync(dossier).filter(f => f.endsWith('.sql')).sort()
+      .filter(f => /create or replace function public\.compter_etape\(/.test(readFileSync(resolve(dossier, f), 'utf8'))).pop()!;
+    expect(derniere).toBe('20261010180000_entonnoir_etapes.sql');
+    const sql = readFileSync(resolve(dossier, derniere), 'utf8');
+    const noms = (texte: string) => texte.match(/'([a-z_]+)'/g)!.map(x => x.slice(1, -1));
+    expect(noms(/p_etape not in \(([^)]*)\)/.exec(sql)![1])).toEqual([...ETAPES]);
+    expect(noms(/check \(etape in \(([^)]*)\)\)/.exec(sql)![1])).toEqual([...ETAPES]);
     expect(sql).toMatch(/security definer\s+set search_path = ''/);
     expect(sql).toMatch(/grant execute on function public\.compter_etape\(text\) to anon, authenticated;/);
-    expect(sql).not.toMatch(/create policy/i);
+    expect(sql).not.toMatch(/create policy|disable row level security|\bdelete from\b|\btruncate\b|drop table/i);
+  });
+
+  it('navigateur piloté (navigator.webdriver) : rien n’est compté ni posé (#519)', async () => {
+    navigateur();
+    vi.stubGlobal('navigator', { webdriver: true });
+    compterEtape('premier_ecran', { nouveau: true });
+    compterEtape('premier_geste');
+    await flush();
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(stockage.length).toBe(0);
+    // Navigateur ordinaire : compté.
+    vi.stubGlobal('navigator', { webdriver: false });
+    compterEtape('premier_ecran', { nouveau: true });
+    await flush();
+    expect(etapesEnvoyees()).toEqual(['premier_ecran']);
+  });
+
+  it('nouvelles étapes (#519) : seulement après le premier écran de l’appareil, une fois chacune', async () => {
+    navigateur();
+    compterEtape('premier_geste');
+    await flush();
+    expect(fetchMock).not.toHaveBeenCalled();
+    compterEtape('premier_ecran', { nouveau: true });
+    for (let i = 0; i < 2; i++) for (const e of ['premier_geste', 'partie_ouverte', 'premier_toucher_plateau'] as const) compterEtape(e);
+    await flush();
+    expect(etapesEnvoyees()).toEqual(['premier_ecran', 'premier_geste', 'partie_ouverte', 'premier_toucher_plateau']);
   });
 });
