@@ -13,7 +13,12 @@
 .conseil-note-btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 1px; }
 .conseil-merci { flex: none; max-width: 96px; font-size: var(--fs-corps-s); line-height: 1.25; color: var(--text); }
 
+/* Le calque apparaît en fondu ; la cible se resserre sur son point (une fois par conseil, 220 ms, sortie douce).
+   Mouvements réduits : tout est là d'emblée. */
+.calque-conseil .conseil-cible { transform-box: fill-box; transform-origin: center; }
 @media (prefers-reduced-motion: no-preference) {
-  .calque-conseil { animation: calque-conseil-entre 180ms ease-out; }
+  .calque-conseil { animation: calque-conseil-entre 180ms var(--ease) both; }
+  .calque-conseil .conseil-cible { animation: conseil-cible-entre 220ms var(--ease) both; }
   @keyframes calque-conseil-entre { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes conseil-cible-entre { from { opacity: 0; transform: scale(1.35); } to { opacity: 1; transform: none; } }
 }
