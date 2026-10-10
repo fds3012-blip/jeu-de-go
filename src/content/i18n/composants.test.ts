@@ -59,7 +59,7 @@ describe('français identique aux textes d’origine', () => {
     const p0 = { lecons: { faites: 0, total: 7 }, adversaires: 9 }, p2 = { lecons: { faites: 2, total: 7 }, adversaires: 9 };
     expect(statistiques(vide, p0).map(s => s.legende)).toEqual(['jour de série', 'leçon finie', 'adversaire battu', 'problème réussi']);
     expect(statistiques({ ...vide, reussis: 1, serie: 1, parties: 1 }, p0).map(s => s.legende)).toEqual(['jour de série', 'leçon finie', 'adversaire battu', 'problème réussi']);
-    expect(statistiques({ ...plein, serie: 7, bilan: { pomme: { v: 1, d: 0 }, caillou: { v: 2, d: 0 } } }, p2).map(s => s.legende)).toEqual(['jours, ton record', 'leçons finies', 'adversaires battus', 'problèmes réussis']);
+    expect(statistiques({ ...plein, serie: 7, bilan: { pomme: { v: 1, d: 0 }, caillou: { v: 2, d: 0 } } }, p2).map(s => s.legende)).toEqual(['jours, ta série record', 'leçons finies', 'adversaires battus', 'problèmes réussis']);
     expect(badges(vide).map(b => [b.id, b.nom, b.condition])).toEqual([
       ['premiere-partie', 'Première partie', 'Joue contre l’ordi.'],
       ['premier-probleme', 'Premier problème', 'Réussis un problème.'],

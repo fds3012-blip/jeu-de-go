@@ -4,9 +4,6 @@
 .revue { display: flex; flex-direction: column; gap: var(--space-3); padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom, 0px)); }
 
 .revue-tete { display: flex; align-items: center; gap: var(--space-2); min-height: var(--cible-min); }
-.revue-tete .retour { flex: none; width: var(--cible-min); height: var(--cible-min); margin-left: -10px; display: grid; place-items: center;
-  border: 0; border-radius: 50%; background: none; color: var(--text); font-size: var(--fs-display-m); line-height: 1; }
-.revue-tete .retour:active { background: var(--surface); }
 .revue-tete h2 { flex: 1; min-width: 0; margin: 0; font-family: var(--font-titre); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre); font-size: var(--fs-xl); }
 .revue-compteur { color: var(--muted); font-size: var(--fs-s); font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; white-space: nowrap; }
 

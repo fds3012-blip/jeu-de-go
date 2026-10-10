@@ -71,8 +71,10 @@ button.ligne:focus-visible { outline-offset: -3px; }
 }
 
 /* ---------- Sous-vues (Mon compte, Conditions) ---------- */
-.retour { display: inline-flex; align-items: center; gap: 2px; margin: -6px 0 0 -8px; padding: 0 12px 0 4px; font-weight: var(--fw-medium); }
-.retour svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+/* #509 (L2) : la barre « ‹ titre » commune (app.css) ouvre chaque sous-vue ; le contenu respire dessous. */
+.sous-vue > .ecran-tete { margin-bottom: var(--space-4); }
+/* Pseudo long sous « Mon compte » : une ligne, coupée en fin (le pseudo entier est le titre de la sous-vue). */
+.ligne-demi-valeur.une-ligne { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; overflow-wrap: normal; }
 .sous-vue h2 { margin: var(--space-2) 0 var(--space-4); font-size: var(--fs-2xl); font-weight: var(--fw-titre); overflow-wrap: break-word; }
 /* #460 : au zoom 200 % (195 px), « Mes statistiques » débordait avec la police de repli : titre plus petit, mots entiers. */
 @media (max-width: 259px) { .sous-vue h2 { font-size: var(--fs-xl); } }
