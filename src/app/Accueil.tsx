@@ -8,6 +8,7 @@
 // #432 : la partie en ligne classée en action principale dès le début (cote et grade visibles) ; l'ordi est une tuile.
 // #487 : avant la toute première pierre posée (`epure`, src/app/premierePierre.ts), ni tuiles de modes ni cartes
 // secondaires : la promesse, le goban, l'adversaire, le bouton et « Je sais déjà jouer ». Tout revient dès la première pierre.
+// #509 (L4) : le mot « kyu » expliqué dans la feuille « Ton adversaire », là où l'on choisit un adversaire par son grade.
 import { Suspense, useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { Board } from '../ui/Board';
 import { Sceau } from '../ui/Sceau';
@@ -370,6 +371,8 @@ function Reglages({ adv, cartes, taille, reglages, setReglages, onTaille, onChoi
             </div>
             <p id="feuille-taille-aide" className="muted small">{t(AIDE_TAILLE[taille])}</p>
           </div>
+          {/* #509 (L4, n° 10) : les adversaires se choisissent par leur grade (« 20 kyu ») ; le mot est expliqué juste avant. */}
+          <p className="feuille-kyu muted small" data-testid="feuille-kyu">{fr(t('accueil.kyu'))}</p>
           {/* #429 : chargé avec la feuille (préchargé après le premier écran) ; la place est gardée pendant l'attente. */}
           <Suspense fallback={<div className="carrousel-attente" aria-busy="true" />}>
             <CarrouselAdversaires cartes={cartes} choisi={adv.id} onChoisir={onChoisir} legende={t(`adv.${adv.id}.description`)} />

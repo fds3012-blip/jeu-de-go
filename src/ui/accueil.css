@@ -172,7 +172,7 @@
 
 /* ---------- Feuille « Changer » : boîte de dialogue en bas d'écran ---------- */
 .feuille { margin: auto auto 0; width: min(var(--largeur-max), 100%); max-width: 100%; max-height: 92dvh; padding: 0; border: 0; overflow: auto;
-  border-radius: 22px 22px 0 0; background: var(--surface); color: var(--text); padding-bottom: env(safe-area-inset-bottom, 0px); --sceau-socle: var(--surface); }
+  border-radius: var(--radius-feuille) var(--radius-feuille) 0 0; background: var(--surface); color: var(--text); padding-bottom: env(safe-area-inset-bottom, 0px); --sceau-socle: var(--surface); }
 .feuille::backdrop { background: var(--voile); }
 /* Entrée par transition (interruptible) et sortie courte : la transition appliquée est celle de l'état d'arrivée. */
 @media (prefers-reduced-motion: no-preference) {
@@ -245,10 +245,12 @@
 .vedette-bulle b small { font-weight: 400; color: var(--sur-papier-doux); font-size: var(--fs-legende); margin-left: 4px; }
 .vedette-bulle p { position: relative; margin: 2px 0 0; font-size: var(--fs-corps-s); line-height: 1.35; min-height: 2.7em; color: var(--sur-papier-texte); }
 .vedette-bulle p.alerte { color: var(--sur-papier-alerte); font-weight: var(--fw-bold); }
+/* #509 (L4, n° 22) : le portrait n'entre qu'au changement d'adversaire (`data-nouveau`, posé par le carrousel), jamais à
+   l'ouverture de la feuille. Réponse à un toucher, donc courte, avec un rebond léger. Mouvements réduits : rien ne bouge. */
 @media (prefers-reduced-motion: no-preference) {
-  .vedette-portrait { animation: vedette-entree 420ms cubic-bezier(.34, 1.56, .64, 1) both; }
+  .choix-vedette[data-nouveau] .vedette-portrait { animation: vedette-entree 280ms cubic-bezier(.34, 1.3, .64, 1) both; }
 }
-@keyframes vedette-entree { from { opacity: 0; transform: translateY(8px) scale(.86); } }
+@keyframes vedette-entree { from { opacity: 0; transform: translateY(6px) scale(.94); } }
 
 /* Paliers : trois lignes de trois vignettes rondes. */
 .paliers { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 0; }
@@ -301,4 +303,9 @@ html:has(.accord[open]) .app.app-home {
   html:has(.accord[open]) .app.app-home {
     padding-bottom: calc(max(max(var(--nav-h), 3.75rem) + var(--space-3), var(--accord-h, 160px) + var(--space-2)) + env(safe-area-inset-bottom, 0px)); }
 }
+/* #509 (L4, n° 12) : en 320 × 568 et en 375 × 667, le goban gardait son plancher (168 ou 200 px) et « Je sais déjà
+   jouer » passait sous le bandeau (on n'en voyait que le soulignement). Tant que le bandeau est ouvert, le plancher du
+   goban (une illustration) descend à 120 px : le lien reste entier au-dessus du bandeau. Sur un grand écran, rien ne
+   change (le goban a déjà plus que son plancher). Il retrouve sa taille dès le choix fait. */
+html:has(.accord[open]) .scene { min-height: 120px; }
 .tuiles-lentes-erreur { grid-column: 1 / -1; margin: 0; } /* #498 : annulation hors ligne */

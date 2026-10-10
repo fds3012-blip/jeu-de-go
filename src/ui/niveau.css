@@ -20,12 +20,20 @@
 .niveau { display: grid; grid-template-columns: auto 1fr; align-items: center; column-gap: 10px; row-gap: 2px; margin: 0 0 6px; }
 .niveau-texte { display: flex; align-items: baseline; gap: 6px; margin: 0; font-size: .82rem; color: var(--muted); white-space: nowrap; }
 .niveau-texte b { color: var(--recompense-texte); font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: .95rem; }
-/* La piste est une ligne du goban ; la pierre noire y avance. */
-.niveau-piste { position: relative; height: 14px; }
-.niveau-piste::before { content: ''; position: absolute; inset: 6px 0; border-radius: 2px; background: color-mix(in srgb, var(--muted) 35%, transparent); }
-.niveau-plein { position: absolute; left: 0; top: 6px; height: 2px; border-radius: 2px; background: var(--recompense); transition: width .5s cubic-bezier(.22, 1, .36, 1); }
-.niveau-pierre { position: absolute; top: 0; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; background: var(--matiere-noire);
-  box-shadow: 0 0 0 1.5px var(--recompense), 0 2px 4px rgba(0, 0, 0, .45); transition: left .5s cubic-bezier(.22, 1, .36, 1); }
+/* La piste est une ligne du goban ; la pierre noire y avance (`--p`, de 0 à 1, posé par Niveau.tsx).
+   #509 (L4, n° 16) : une jauge, pas un curseur réglable. Pierre de 10 px sans liseré, et le mouvement passe par
+   `transform` (plus de `width` ni de `left`). Le rail fait la largeur de la ligne ; la piste, qui déborde de 5 px de
+   chaque côté pour la demi-pierre, coupe ce qui dépasse (pas de défilement horizontal à 100 %). */
+.niveau-piste { position: relative; height: 14px; margin-inline: -5px; padding-inline: 5px; overflow: hidden; }
+.niveau-piste::before { content: ''; position: absolute; inset: 6px 5px; border-radius: 2px; background: color-mix(in srgb, var(--muted) 35%, transparent); }
+.niveau-plein, .niveau-rail { position: absolute; left: 5px; right: 5px; }
+.niveau-plein { top: 6px; height: 2px; border-radius: 2px; background: var(--recompense); transform: scaleX(var(--p, 0)); transform-origin: left; }
+.niveau-rail { top: 0; bottom: 0; transform: translateX(calc(var(--p, 0) * 100%)); }
+.niveau-pierre { position: absolute; top: 2px; left: -5px; width: 10px; height: 10px; border-radius: 50%; background: var(--matiere-noire);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .4); }
+@media (prefers-reduced-motion: no-preference) {
+  .niveau-plein, .niveau-rail { transition: transform 500ms var(--ease); }
+}
 .niveau-suite { grid-column: 1 / -1; margin: 0; font-size: var(--fs-mini); color: var(--muted); }
 
 /* ---------- Célébration : carte en haut d'écran, pour ne jamais cacher l'action principale de fin (Partager, Suivant) ---------- */
@@ -48,5 +56,4 @@
 @keyframes fete-pose { from { opacity: 0; transform: scale(.6); } }
 @media (prefers-reduced-motion: reduce) {
   .fete-niveau.anime button, .fete-niveau.anime .fete-pierre { animation: none; }
-  .niveau-plein, .niveau-pierre { transition: none; }
 }

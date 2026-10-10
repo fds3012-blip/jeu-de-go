@@ -73,7 +73,6 @@ export const frEcrans = {
   'profil.compte': 'Mon compte',
   'profil.seConnecter': 'Se connecter',
   'accueil.bulle.duJour': 'Nouveau Go du jour : {titre}. Tu le tentes, puis on joue ?',
-  'accueil.kyu': 'Le kyu est un niveau : plus il est petit, plus on est fort.',
   'guidee.plusDoux': 'Mochi joue un peu plus doux.',
   'guidee.plusFort': 'Mochi joue un peu plus fort.',
 
