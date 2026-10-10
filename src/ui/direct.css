@@ -1,12 +1,6 @@
 /* Partie en direct (#360) : choix, attente, pendule. Tokens seulement (tokens.css) : clair et sombre suivent. */
 
 .direct { display: grid; gap: var(--space-3); padding-top: var(--space-2); }
-.direct-tete { display: flex; align-items: center; gap: var(--space-2); min-width: 0; }
-.direct-tete h2 { margin: 0; min-width: 0; font-family: var(--font-titre); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre);
-  font-size: var(--fs-l); line-height: var(--lh-titre); text-wrap: balance; }
-.direct-tete .retour { flex: none; width: var(--cible-min); height: var(--cible-min); margin-left: -12px; border: 0; border-radius: 50%;
-  background: none; color: var(--muted); font-size: 30px; line-height: 1; }
-.direct-tete .retour:active { background: var(--surface); }
 .direct-intro { margin: 0; text-wrap: pretty; }
 .direct-classee { margin: -8px 0 0; }
 .direct-choix-groupe { display: grid; gap: 6px; min-width: 0; }

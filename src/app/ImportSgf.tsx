@@ -4,6 +4,7 @@
 // erreurs, « Rejoue cette erreur »). Rien ne part à nos serveurs : la partie est gardée sur l'appareil (REVUE_KEY).
 // Un lien OGS est demandé à OGS directement depuis l'appareil (src/go/ogs.ts) ; en cas de refus, on propose le fichier.
 // Logique pure : src/go/importSgf.ts.
+import { EnteteEcran } from '../ui/BoutonRetour';
 import { useId, useRef, useState, type ChangeEvent } from 'react';
 import { Revue } from './Revue';
 import { readLocal } from './hooks';
@@ -142,10 +143,7 @@ export function ImportSgf({ onRetour, pseudo, confirmTouch = false }: Props) {
     const resume = [t('import.resume', { taille: partie.size, n: coups, komi: nombre(partie.komi) }), partie.handicap ? t('import.handicap', { h: partie.handicap }) : null].filter(Boolean).join(' · ');
     return (
       <section className="sous-vue import" aria-labelledby={`${ids}-camp`}>
-        <button type="button" className="back retour" onClick={() => aller({ nom: 'saisie' })}>
-          <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M10 3.5 5.5 8 10 12.5" /></svg>{t('profil.retour')}
-        </button>
-        <h2 id={`${ids}-camp`}>{t('import.camp.titre')}</h2>
+        <EnteteEcran id={`${ids}-camp`} titre={t('import.camp.titre')} retour={t('profil.retour')} onRetour={() => aller({ nom: 'saisie' })} />
         <p className="import-resume">{fr(resume)}</p>
         <div className="import-camps" role="group" aria-label={t('import.camp.titre')}>
           {([1, 2] as const).map(c => {
@@ -173,10 +171,7 @@ export function ImportSgf({ onRetour, pseudo, confirmTouch = false }: Props) {
   const derniere = derniereImportee();
   return (
     <section className="sous-vue import" aria-labelledby={`${ids}-titre`}>
-      <button type="button" className="back retour" onClick={onRetour}>
-        <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M10 3.5 5.5 8 10 12.5" /></svg>{t('profil.retour')}
-      </button>
-      <h2 id={`${ids}-titre`}>{t('import.titre')}</h2>
+      <EnteteEcran id={`${ids}-titre`} titre={t('import.titre')} retour={t('profil.retour')} onRetour={onRetour} />
       <p className="import-intro">{fr(t('import.intro'))}</p>
       <label className="btn import-fichier">
         <input ref={fichier} className="sr-only" type="file" accept=".sgf,application/x-go-sgf,text/plain" onChange={choisirFichier} disabled={ogsEnCours} />

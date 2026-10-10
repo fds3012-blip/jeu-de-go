@@ -739,7 +739,7 @@ export function App() {
   } else if (enDefi && defi.vue === 'arrivee') {
     screen = <DefiArrivee key={defi.jeton} db={supabase} jeton={defi.jeton} inviteur={defi.inviteur} compte={COMPTES ? etat : 'aucun'} onPartie={ouvrirDefiPartie} onAccueil={quitterDefi} />;
   } else if (enDefi) {
-    screen = <DefisEcran db={supabase} userId={session === undefined ? undefined : session?.user.id ?? null} pseudo={pseudo ?? null} onPartie={ouvrirDefiPartie} />;
+    screen = <DefisEcran db={supabase} userId={session === undefined ? undefined : session?.user.id ?? null} pseudo={pseudo ?? null} onPartie={ouvrirDefiPartie} onRetour={quitterDefi} />;
   } else if (enPartie) {
     const enRepli = playing === 'ordi' && repli !== null;
     screen = (
@@ -958,20 +958,20 @@ export function App() {
         {!enPartie && !ecranPlein && <header className="top">
           {/* Marque (#416) : « Mochi » posé sur « Go », pour garder l'emprise de l'ancien titre ; la flamme et le gel tiennent à 320 px. */}
           <h1 className="marque"><span className="marque-mochi">Mochi</span>{' '}<span className="marque-go">Go</span></h1>
-          {accueilVisible
-            ? (
-              <span className="entete-droite">
-                {/* #429 : « Défier un ami » a quitté l'en-tête pour la tuile « Un ami », sous le bouton principal. */}
-                {serieVisible && (flamme !== null || gels > 0) && (
-                  <span className="serie-groupe">
-                    {flamme !== null && <p className={`serie ${flamme}${allumage ? ' allumage' : ''}`} role="img" data-testid="flamme" data-etat={flamme}
-                      aria-label={t(flamme === 'pleine' ? 'entete.flammeFaite' : 'entete.flammeAFaire', { jours: t('profil.jours', { n: serie }) })}><Flamme />{serie}</p>}
-                    <Glacon gels={gels} />
-                  </span>
-                )}
-              </span>
-            )
-            : <p>{enDefi ? t('defi.titre') : tab === 'jouer' ? t('nav.jouer') : tab === 'apprendre' ? t('entete.apprendre') : tab === 'problemes' ? t('nav.problemes') : t('nav.profil')}</p>}
+          {/* #509 (L2, constat 6) : hors accueil, plus le nom de l'onglet à droite : la barre du bas le dit déjà. Un écran
+              de tâche a sa barre « ‹ titre », qui remplace ce logo (app.css). */}
+          {accueilVisible && (
+            <span className="entete-droite">
+              {/* #429 : « Défier un ami » a quitté l'en-tête pour la tuile « Un ami », sous le bouton principal. */}
+              {serieVisible && (flamme !== null || gels > 0) && (
+                <span className="serie-groupe">
+                  {flamme !== null && <p className={`serie ${flamme}${allumage ? ' allumage' : ''}`} role="img" data-testid="flamme" data-etat={flamme}
+                    aria-label={t(flamme === 'pleine' ? 'entete.flammeFaite' : 'entete.flammeAFaire', { jours: t('profil.jours', { n: serie }) })}><Flamme />{serie}</p>}
+                  <Glacon gels={gels} />
+                </span>
+              )}
+            </span>
+          )}
         </header>}
         {/* #461 : sans en-tête (partie, fin de partie, écrans de compte), le titre de l'app reste pour les lecteurs d'écran. */}
         {(enPartie || ecranPlein) && <h1 className="sr-only">Mochi Go</h1>}

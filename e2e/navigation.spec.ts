@@ -53,7 +53,7 @@ test('navigation entre les onglets Jouer, Apprendre, Problèmes et Profil', asyn
   await onglet('Apprendre').click();
   await expect(onglet('Apprendre')).toHaveAttribute('aria-current', 'page');
   await expect(onglet('Jouer')).not.toHaveAttribute('aria-current', 'page');
-  await expect(page.getByText('Le chemin des leçons')).toBeVisible();
+  // #509 (L2) : l'en-tête ne répète plus le nom de l'onglet ; le chemin des leçons se reconnaît à son contenu.
   await expect(page.getByRole('button', { name: /^Leçon 1 :/ })).toBeVisible();
 
   await onglet('Problèmes').click();
@@ -158,6 +158,10 @@ test('#465 : en ligne, le choix et l’attente gardent l’en-tête et la barre 
   await bascule.getByRole('button', { name: 'En direct' }).click();
   await expect(ana.getByTestId('direct-choix')).toBeVisible();
   await chrome(ana, true, 'Direct, choix');
+  // #509 (L2) : écran de tâche : la barre « ‹ titre » remplace le logo (le h1 reste pour les lecteurs d'écran).
+  await expect(ana.locator('.ecran-tete')).toBeVisible();
+  expect(await ana.locator('header.top').evaluate(e => e.getBoundingClientRect().height)).toBeLessThanOrEqual(1);
+  await expect(ana.getByRole('heading', { level: 1, name: 'Mochi Go' })).toBeAttached();
   await expect(ana).toHaveTitle('En direct · Mochi Go');
   await expect(ana.getByRole('navigation').getByRole('button', { name: 'Jouer' })).toHaveAttribute('aria-current', 'page');
 

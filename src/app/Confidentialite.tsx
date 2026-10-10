@@ -1,4 +1,5 @@
 import { useEffect, useRef, type ReactNode } from 'react';
+import { EnteteEcran } from '../ui/BoutonRetour';
 import { setConsent, setOpposition } from '../data/analytics';
 import { useConsentement, useOpposition } from './consentement';
 import { LigneInterrupteur } from '../ui/Reglage';
@@ -62,10 +63,7 @@ export function Conditions({ onRetour }: { onRetour: () => void }) {
   const oppose = useOpposition();
   return (
     <section className="sous-vue" aria-labelledby="conditions-titre">
-      <button type="button" className="back retour" onClick={onRetour}>
-        <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M10 3.5 5.5 8 10 12.5" /></svg>{t('profil.retour')}
-      </button>
-      <h2 id="conditions-titre">{t('profil.conditions')}</h2>
+      <EnteteEcran id="conditions-titre" titre={t('profil.conditions')} retour={t('profil.retour')} onRetour={onRetour} />
       <div className="lignes">
         <LigneInterrupteur libelle={t('conditions.bugs')} aide={t('conditions.bugsAide')}
           actif={consent === 'accepte'} onChange={v => setConsent(v ? 'accepte' : 'refuse')} />

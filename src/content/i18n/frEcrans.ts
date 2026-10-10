@@ -37,7 +37,7 @@ export const frEcrans = {
   'profil.parcours': 'Ton parcours',
   'profil.reglagesResume': 'Thème, sons…',
   'profil.installer': 'Installer l’app',
-  'profil.recordLegende': { one: 'jour, ton record', other: 'jours, ton record' },
+  'profil.recordLegende': { one: 'jour, ta série record', other: 'jours, ta série record' },
   'profil.sansPseudo': 'Sans pseudo',
   'profil.cote': 'Cote {cote}',
   'profil.serieAria': 'Série de {jours}',

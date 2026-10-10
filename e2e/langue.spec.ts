@@ -45,11 +45,11 @@ for (const largeur of [390, 320]) {
     const theme = page.getByRole('group', { name: 'Theme' });
     for (const nom of ['Dark', 'Light', 'Auto']) await expect(theme.getByRole('button', { name: nom })).toBeVisible();
     for (const nom of [/^Confirm moves/, /^Celebrations/]) await expect(page.getByRole('switch', { name: nom })).toBeVisible();
-    const sons = page.getByRole('group', { name: 'Sounds' });
-    for (const nom of ['Sound', 'Vibration']) await expect(sons.getByRole('button', { name: nom, exact: true })).toBeVisible();
+    for (const nom of ['Sounds', 'Vibration']) await expect(page.getByRole('switch', { name: nom, exact: true })).toBeVisible();
     await expect(page.getByRole('group', { name: 'Mochi’s help' }).getByRole('button', { name: 'At first' })).toBeVisible();
     await expect(page.getByText('Réglages')).toHaveCount(0);
-    await expect(page.locator('header').getByText('Profile', { exact: true })).toBeVisible();
+    // #509 (L2) : la sous-vue a sa barre « ‹ titre » ; le nom de l'onglet n'est plus répété dans l'en-tête.
+    await expect(page.getByRole('heading', { level: 2, name: 'Settings' })).toBeVisible();
     await sansDebordement(page);
   });
 }
@@ -110,7 +110,7 @@ for (const largeur of [390, 320]) {
 
     // Problèmes : Go du jour, paliers, grille.
     await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: 'Puzzles' }).click();
-    await expect(page.locator('header').getByText('Puzzles', { exact: true })).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: 'Puzzles' })).toHaveAttribute('aria-current', 'page');
     await expect(page.getByRole('heading', { name: /^Daily Go #\d+$/ })).toBeVisible();
     await expect(page.getByText('The same puzzle for everyone, today.')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Solve the Daily Go' })).toHaveText('Solve');

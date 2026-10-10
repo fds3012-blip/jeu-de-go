@@ -37,7 +37,7 @@ export const en = {
   'profil.installer': 'Install the app',
   'serie.perdueRecord': 'Good to see you! Your streak of {jours} is now your record. Shall we start a new one?',
   'serie.perdue': 'Good to see you! Your record is still {record}. Shall we start a new streak?',
-  'profil.recordLegende': { one: 'day, your record', other: 'days, your record' },
+  'profil.recordLegende': { one: 'day, your record streak', other: 'days, your record streak' },
   'profil.sansPseudo': 'No username',
   'profil.cote': 'Rating {cote}',
   'profil.jours': { one: '{n} day', other: '{n} days' },
