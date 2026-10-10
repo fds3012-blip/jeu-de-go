@@ -37,7 +37,7 @@ export const en = {
   'profil.installer': 'Install the app',
   'serie.perdueRecord': 'Good to see you! Your streak of {jours} is now your record. Shall we start a new one?',
   'serie.perdue': 'Good to see you! Your record is still {record}. Shall we start a new streak?',
-  'profil.recordLegende': { one: 'day, your record', other: 'days, your record' },
+  'profil.recordLegende': { one: 'day, your record streak', other: 'days, your record streak' },
   'profil.sansPseudo': 'No username',
   'profil.cote': 'Rating {cote}',
   'profil.jours': { one: '{n} day', other: '{n} days' },
@@ -283,6 +283,8 @@ export const en = {
   'recompense.goban': 'the “{nom}” board',
   'recompense.pierres': 'the “{nom}” stones',
   'xp.bonus': 'incl. +{bonus} first time',
+  'xp.objectif': 'incl. +{objectif} weekly goal',
+  'xp.bonusObjectif': 'incl. +{bonus} first time and +{objectif} weekly goal',
 
   'carrousel.palier.0': 'First steps',
   'carrousel.palier.1': 'Getting tougher',

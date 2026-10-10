@@ -36,24 +36,6 @@ export function LigneChoix<T extends string>({ libelle, options, valeur, onChang
   );
 }
 
-/**
- * Ligne de bascules indépendantes (#165) : même allure que le choix segmenté, mais chaque segment
- * s'allume ou s'éteint seul (`aria-pressed`). Sert à « Son » et « Vibrations » sur une seule ligne.
- */
-export function LigneBascules({ libelle, bascules, icone }: {
-  libelle: string; bascules: readonly { libelle: string; actif: boolean; onChange: (v: boolean) => void }[]; icone?: ReactNode;
-}) {
-  return (
-    <div className="ligne ligne-choix ligne-bascules" role="group" aria-label={libelle}>
-      {icone && <LigneIcone>{icone}</LigneIcone>}
-      <span className="ligne-libelle" aria-hidden="true">{libelle}</span>
-      <span className="seg">
-        {bascules.map(b => <button type="button" key={b.libelle} aria-pressed={b.actif} onClick={() => b.onChange(!b.actif)}>{b.libelle}</button>)}
-      </span>
-    </div>
-  );
-}
-
 /** Ligne qui ouvre une sous-vue : libellé, valeur éventuelle, chevron. */
 export function LigneLien({ libelle, valeur, onClick, icone }: { libelle: string; valeur?: ReactNode; onClick: () => void; icone?: ReactNode }) {
   return (

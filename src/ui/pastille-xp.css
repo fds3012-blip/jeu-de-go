@@ -9,6 +9,12 @@
 /* Conteneur global : en haut, centré, sous l'encoche. Ne capte aucun toucher. */
 .annonce-xp { position: fixed; z-index: 59; left: 0; right: 0; top: calc(12px + env(safe-area-inset-top, 0px));
   display: flex; justify-content: center; padding: 0 16px; pointer-events: none; }
+/* #509 (L1, n° 2) : sur les écrans de la revue (bilan, parcours, « Rejouer mes erreurs », révisions), le haut est pris
+   par le logo « Mochi Go » et l'en-tête (titre, compteur) : la pastille les couvrait. Elle se pose juste au-dessus de la
+   barre d'action, dans le fondu du voile (revue.css), près du geste qui l'a gagnée. Les fins de séance affichent leur
+   XP dans la carte : la pastille n'y vient plus. */
+:root:has(.revue-dock) .annonce-xp { top: auto;
+  bottom: calc(74px + var(--cible-cta) + var(--relief) + var(--space-3) + env(safe-area-inset-bottom, 0px)); }
 /* #236 (N2) : pendant un exercice, l'XP se lit dans la feuille de réussite, sous le « Bravo », à plat (sans ombre). */
 .xp-en-ligne { margin: 6px 0 0; }
 .xp-en-ligne .pastille-xp { box-shadow: none; }

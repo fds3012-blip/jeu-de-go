@@ -130,6 +130,11 @@ for (const theme of ['light', 'dark'] as const) {
     await expect(page.locator('.rejeu-fin-xp')).toHaveText(/^\+\d+\sXP$/);
     await expect(page.getByTestId('confettis')).toHaveCount(1);
     expect(await page.evaluate(() => Number(localStorage.getItem('go.xp.v1')))).toBeGreaterThan(xpAvant);
+    // #509 (L1, n° 2) : un seul montant, celui de la barre d'XP, détaillé sous la pastille ; rien ne flotte sur le logo.
+    const gain = await page.evaluate(() => Number(localStorage.getItem('go.xp.v1'))) - xpAvant;
+    await expect(page.locator('.rejeu-fin-xp')).toHaveText(new RegExp(`^\\+${gain}\\sXP$`));
+    await expect(page.locator('.rejeu-fin-detail')).toHaveText(/^dont \+20 première fois/);
+    await expect(page.locator('.annonce-xp [data-testid="pastille-xp"]')).toHaveCount(0);
     await expect(page.locator('.cta')).toHaveText('Retour au bilan');
     await ctaLibre(page, 'fin');
     await sansDebord(page, 'fin');

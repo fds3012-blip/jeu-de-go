@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 
 export type IconeReglageId =
   | 'amis' | 'parties' | 'placement' | 'cote' | 'reglages' | 'importer' | 'rappel' | 'installer' | 'compte' | 'conditions'
-  | 'langue' | 'theme' | 'goban' | 'confirmer' | 'sons' | 'celebrations' | 'aide'
+  | 'langue' | 'theme' | 'goban' | 'confirmer' | 'sons' | 'vibrations' | 'celebrations' | 'aide'
   | 'stats' | 'etude' | 'coordonnees' | 'dernier' | 'numeros' | 'cadence' | 'serie'
   // #363 : « Nous écrire ».
   | 'ecrire'
@@ -36,6 +36,8 @@ const TRACES: Record<IconeReglageId, ReactNode> = {
   // Le doigt qui pose, et le point d'appui.
   confirmer: <><path d="M9 11V5.5a2 2 0 0 1 4 0V11M13 10.5a2 2 0 0 1 4 0V12M17 12a2 2 0 0 1 4 0v3.5a6 6 0 0 1-6 6h-2.5a6 6 0 0 1-5-2.7L5 14.6a1.9 1.9 0 0 1 3.1-2.2L9 13.5" /></>,
   sons: <><path d="M4 9.5v5h3.5L13 19V5L7.5 9.5Z" /><path d="M16.5 9a4.5 4.5 0 0 1 0 6M19.5 6.5a8 8 0 0 1 0 11" /></>,
+  // Téléphone et ses deux traits de vibration (#509, L2 : « Vibrations » a sa propre ligne).
+  vibrations: <><rect x="7.5" y="3.5" width="9" height="17" rx="2" /><path d="M11 17h2M4 9v6M20 9v6" /></>,
   celebrations: <><path d="M12 3.5 14.4 9l5.6.6-4.2 3.9 1.2 5.7L12 16.3 7 19.2l1.2-5.7L4 9.6 9.6 9Z" /></>,
   // Mochi : la bulle du coach.
   // Une page de calendrier cochée : tes objectifs de la semaine (#369).

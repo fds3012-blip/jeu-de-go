@@ -157,11 +157,11 @@
 .app:has(.lecteur) .top { display: none; }
 .app:has(.lecteur) { padding-top: var(--space-2); }
 .lecteur-tete { display: flex; align-items: center; gap: 10px; min-height: 48px; margin: 0 0 4px -10px; }
-.lecteur-tete .retour { flex: none; width: var(--cible-min); height: var(--cible-min); display: grid; place-items: center; border: 0; border-radius: 50%; background: none; color: var(--text); }
-.lecteur-tete .retour:active { background: var(--surface); }
-/* #465 (audit #461, E) : les deux retraits optiques (−10 px ici, −8 px dans profil.css) sortaient le bouton de 2 px à
-   gauche de l'écran, à toutes les largeurs. Il s'arrête maintenant au bord (gouttière de 16 px), cible de 44 px entière. */
+/* Retour : style commun (app.css, #509 L2). Ces barres portent déjà un retrait de 10 px : ici, seulement le complément.
+   #465 (audit #461, E) : dans le lecteur, le bouton s'arrête au bord de l'écran (−16 px au total), cible de 44 px entière ;
+   la barre tient ainsi à 195 px (zoom 200 %). */
 .lecteur-tete .retour { margin-left: -6px; }
+.tous-tete .retour { margin-left: 0; }
 /* Points d'étapes (R2) : aucun chiffre. Faite : jade plein ; en cours : cerclée de jade, comme la pierre tenue au-dessus
    du goban ; à venir : un point discret. */
 .etapes { flex: none; display: flex; align-items: center; gap: 7px; min-height: var(--cible-min); padding-right: 2px; }
@@ -417,8 +417,6 @@
 }
 .lien-tous { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; margin: var(--space-2) 0 0 -12px; }
 .tous-tete { display: flex; align-items: center; gap: 4px; margin: var(--space-2) 0 var(--space-3) -10px; }
-.tous-tete .retour { flex: none; width: var(--cible-min); height: var(--cible-min); margin: 0; padding: 0; display: grid; place-items: center; border: 0; border-radius: 50%; background: none; color: var(--text); }
-.tous-tete .retour:active { background: var(--surface); }
 /* #433 : .palier h3 (accueil.css, carrousel) suivait cette feuille et l'emportait sur .palier-nom h3 : rendu gardé. */
 .palier .palier-nom h3 { margin: 0 0 2px; font-size: var(--fs-s); font-weight: var(--fw-bold); }
 .problemes-tous .palier h3 { color: var(--text); text-transform: none; letter-spacing: var(--tracking-titre); font-size: var(--fs-xl); }

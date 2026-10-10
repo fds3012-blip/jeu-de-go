@@ -66,7 +66,7 @@ async function arrive(page: Page, mode: Mode) {
   if (mode === 'guidee') await expect(page.getByText(/^Partie guidée : Mochi règle sa force/)).toBeVisible();
   if (mode === 'deux') await expect(page.getByText(/Noir commence/)).toBeVisible();
   if (mode === 'en_ligne') await expect(page.getByTestId('direct-choix')).toBeVisible();
-  if (mode === 'ami') await expect(page.locator('header')).toContainText('Défier un ami');
+  if (mode === 'ami') await expect(page.getByRole('heading', { level: 2, name: 'Défier un ami' })).toBeVisible();
 }
 
 test('chaque mode en 1 ou 2 touchers depuis l’accueil, sans défiler (premier lancement, débutant, confirmé)', async ({ browser, baseURL }) => {

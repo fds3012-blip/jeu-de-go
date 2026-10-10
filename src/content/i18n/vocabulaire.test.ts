@@ -31,8 +31,8 @@ describe('boucle quotidienne : « série » et « Go du jour »', () => {
     const legende = (serie: number, record?: number) => statistiques({ ...vide, serie, record }, p)[0].legende;
     expect(legende(0)).toBe('jour de série');
     expect(legende(1, 1)).toBe('jour de série');
-    expect(legende(2)).toBe('jours, ton record');
-    expect(legende(0, 7)).toBe('jours, ton record');
+    expect(legende(2)).toBe('jours, ta série record');
+    expect(legende(0, 7)).toBe('jours, ta série record');
     expect(avec(/jours? de record/i)).toEqual([]);
   });
 

@@ -10,6 +10,7 @@ import { Board } from '../ui/Board';
 import { MiniGoban } from '../ui/MiniGoban';
 import { Avatar, Bandeau, BarreActions, Coach, Icone, Interrupteur, ListeCoups } from '../ui/Partie';
 import { BoutonAide } from '../ui/BoutonAide';
+import { BoutonRetour, EnteteEcran } from '../ui/BoutonRetour';
 import { fromSgf, toSgf } from '../go/coords';
 import { groupAt } from '../go/rules';
 import { score } from '../go/score';
@@ -92,10 +93,12 @@ interface EcranProps {
   /** Pseudo du joueur : il est mis dans le lien, pour que l'ami sache qui le défie (#343). */
   pseudo?: string | null;
   onPartie: (id: string) => void;
+  /** #509 (L2) : barre « ‹ Défier un ami », retour à l'accueil. */
+  onRetour?: () => void;
 }
 
 /** « Défier un ami » : créer un lien, puis retrouver ses parties contre des amis. */
-export function DefisEcran({ db, userId, pseudo = null, onPartie }: EcranProps) {
+export function DefisEcran({ db, userId, pseudo = null, onPartie, onRetour }: EcranProps) {
   const online = useOnline();
   const [creation, setCreation] = useState<{ etat: 'repos' } | { etat: 'cours' } | { etat: 'erreur'; message: string } | { etat: 'pret'; lien: string; partage: Partage }>({ etat: 'repos' });
   const [liste, setListe] = useState<{ etat: 'chargement' } | { etat: 'erreur' } | { etat: 'pret'; defis: EtatDefi[]; pseudos: Pseudos }>({ etat: 'chargement' });
@@ -117,8 +120,9 @@ export function DefisEcran({ db, userId, pseudo = null, onPartie }: EcranProps) 
     return () => { vivant = false; };
   }, [db, userId, online, essai]);
 
+  const tete = onRetour ? <EnteteEcran titre={t('defi.titre')} retour={t('defi.retour')} onRetour={onRetour} /> : null;
   if (!db) {
-    return <div className="defis"><p className="card muted">{fr(t('defi.indisponible'))}</p></div>;
+    return <div className="defis">{tete}<p className="card muted">{fr(t('defi.indisponible'))}</p></div>;
   }
 
   async function creer() {
@@ -137,6 +141,7 @@ export function DefisEcran({ db, userId, pseudo = null, onPartie }: EcranProps) 
   const vues = liste.etat === 'pret' ? liste.defis.map(d => ({ d, v: vueDefi(d.partie, d.defi, userId ?? undefined) })) : [];
   return (
     <div className="defis">
+      {tete}
       <div className="defis-tete">
         <DeuxPierres />
         <p className="defis-intro">{fr(t('defi.intro'))}</p>
@@ -410,7 +415,7 @@ export function DefiPartie({ db, partieId, userId, anonyme, pseudo = null, confi
   const avecAmi = !!d && !!d.partie.black_id && !!d.partie.white_id;
   const echanges = useEchanges({ db, partieId, userId, nom: nomAmi ?? t('defi.adversaire'), actif: avecAmi && !anonyme, online, mode: 'defi' });
 
-  const retour = <button type="button" className="retour" onClick={onRetour} aria-label={t('defi.retour')}>‹</button>;
+  const retour = <BoutonRetour label={t('defi.retour')} onClick={onRetour} />;
 
   if (!d || !v) {
     return (

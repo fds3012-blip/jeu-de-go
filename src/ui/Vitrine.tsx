@@ -3,6 +3,7 @@ import { useState, type CSSProperties, type ReactNode } from 'react';
 import type { Badge, BadgeId, Stat } from '../app/vitrine';
 import { t } from '../content/i18n/secondaires';
 import { fr } from './typo';
+import { entier } from './entier';
 
 /** Icônes de la grammaire « deux pierres » : une pierre noire, une blanche, et un signe. 24 × 24. */
 const ICONES: Record<Stat['id'], ReactNode> = {
@@ -51,7 +52,7 @@ export function Statistiques({ stats }: { stats: Stat[] }) {
       {stats.map(s => (
         <li key={s.id} className={`stat stat-${s.id}`}>
           <Anneau s={s} />
-          <b>{s.valeur}{s.total !== undefined && <small aria-hidden="true">/{s.total}</small>}</b>
+          <b>{entier(s.valeur)}{s.total !== undefined && <small aria-hidden="true">/{s.total}</small>}</b>
           <span>{s.legende}</span>
           {s.total !== undefined && <small className="sr-only"> {t('stats.sur', { total: s.total })}</small>}
         </li>
