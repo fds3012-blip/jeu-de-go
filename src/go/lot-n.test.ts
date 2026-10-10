@@ -40,6 +40,11 @@ const ok = (r: Position | string): Position => { if (typeof r === 'string') thro
 const seq = (pos: Position, ...moves: string[]) => moves.reduce((q, m) => ok(play(q, m === 'passe' ? -1 : at(m))), pos);
 const libsOf = (pos: Position, l: string) => [...groupAt(pos.board, 9, at(l)).liberties].map(label).sort();
 const rowsOf = (setup: unknown) => (setup as { rows: string[] }).rows;
+// Passe design #509 (constat 13) : 20261010120000_n01_consigne corrige ensuite la seule consigne de n01 (une seule
+// pierre est marquée, il faut en prendre deux). L'insertion du lot porte la consigne d'avant, refaite ici.
+const N01_SQL = readFileSync(resolve(__dirname, '../../supabase/migrations/20261010120000_n01_consigne.sql'), 'utf8');
+const N01_AVANT = 'Capture la pierre marquée en un coup.';
+const avantN01 = <T extends { id: string; prompt?: string | null }>(r: T): T => (r.id === 'n01' ? { ...r, prompt: N01_AVANT } : r);
 
 type Objectif = { kind: 'capture'; k: number } | { kind: 'sauver' };
 /** Objectif annoncé par l'énoncé. */
@@ -118,10 +123,26 @@ describe('lot N : identifiants, doublons, migration (issue #136)', () => {
     expect(sql).toMatch(/on conflict \(id\) do nothing/i);
     expect(sql.match(/\('n\d\d', null, 9,/g)).toHaveLength(LOT_N.length);
     const q = (s: string) => s.replace(/'/g, "''");
-    // Textes corrigés depuis par 20260928233100_textes_problemes (#282) : on compare au texte d'avant, refait par avantMiseAJour.
-    for (const row of LOT_N.map(r => avantMiseAJour(r))) {
+    // Textes corrigés depuis par 20260928233100_textes_problemes (#282), puis par 20261010120000_n01_consigne (#509) :
+    // on compare au texte d'avant, refait par avantMiseAJour et avantN01 (la correction la plus récente d'abord).
+    for (const row of LOT_N.map(r => avantMiseAJour(avantN01(r)))) {
       expect(sql).toContain(`('${row.id}', null, 9, '${q(JSON.stringify(row.setup))}', array[${row.answers.map(a => `'${a}'`).join(',')}], '${q(row.title!)}', '${q(row.prompt!)}', '${q(row.explanation!)}', ${row.difficulty})`);
     }
+  });
+});
+
+describe('lot N : consigne de n01 corrigée (passe design #509, constat 13)', () => {
+  const n01 = LOT_N.find(r => r.id === 'n01')!;
+  it('la migration ne fait que remplacer la consigne de n01 par celle du fichier', () => {
+    const code = N01_SQL.split('\n').filter(l => !l.trimStart().startsWith('--')).join('\n').trim();
+    expect(code).toBe(`update public.puzzles set prompt = '${n01.prompt!.replace(/'/g, "''")}' where id = 'n01';`);
+    expect(n01.prompt).not.toBe(N01_AVANT);
+  });
+  it('la consigne dit ce que fait la réponse : E3 prend les deux pierres blanches, une seule est marquée', () => {
+    expect(n01.prompt).toBe('Capture les deux pierres blanches en un coup.');
+    const { pos, marked } = startOf(pz('n01'));
+    expect(marked.map(label)).toEqual(['E5']);
+    expect(seq(pos, 'E3').captures[1]).toBe(2);
   });
 });
 

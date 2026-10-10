@@ -12,7 +12,7 @@ export const PROBLEMES_EN: Record<string, TexteProbleme> = {
   },
   n01: {
     title: 'Two stones at once',
-    prompt: 'Capture the marked stone in one move.',
+    prompt: 'Capture both white stones in one move.',
     explanation: "Well done! The stones at E5 and E4 are side by side: they form a chain. A chain shares its liberties, the empty points right next to it. Only one is left, E3: the chain is in atari. You fill it and capture both stones.",
     refutation: 'Not quite. The two white stones have only one liberty, E3. If you play elsewhere, White extends to E3 and gets three liberties back.',
   },

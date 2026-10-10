@@ -46,7 +46,7 @@
 .course-score { justify-self: end; display: inline-flex; align-items: baseline; gap: 6px; }
 .course-score-legende { color: var(--muted); font-size: var(--fs-legende); font-weight: var(--fw-bold); }
 .course-score-chiffre { display: inline-block; min-width: 2ch; text-align: right; font-family: var(--font-titre); font-weight: var(--fw-titre);
-  font-size: 1.75rem; line-height: 1; font-variant-numeric: tabular-nums; color: var(--accent-texte); }
+  font-size: var(--fs-display-m); line-height: 1; font-variant-numeric: tabular-nums; color: var(--accent-texte); }
 
 .course-pastilles { display: inline-flex; gap: 8px; }
 .course-pastilles span { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--muted); display: grid; place-items: center; }

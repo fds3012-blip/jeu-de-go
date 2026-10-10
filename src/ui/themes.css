@@ -13,7 +13,7 @@
 .theme-carte:active { background: var(--surface-2); }
 .theme-carte:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .theme-motif { flex: none; width: 32px; }
-.theme-motif .mini-goban { border-radius: 7px; box-shadow: 0 2px 0 var(--bois-tranche); }
+.theme-motif .mini-goban { border-radius: var(--radius-xs); box-shadow: 0 2px 0 var(--bois-tranche); }
 .theme-nom { display: flex; flex-direction: column; min-width: 0; }
 .theme-nom b { font-size: var(--fs-s); line-height: 1.2; overflow-wrap: anywhere; }
 /* Le record se lit en or, sous le nom : un record de ce mode, jamais un total (#137). */

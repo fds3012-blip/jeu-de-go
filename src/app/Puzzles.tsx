@@ -102,7 +102,7 @@ function Difficulte({ d }: { d: number }) {
   return (
     <span className="difficulte">
       <span className="crans" aria-hidden="true">{[1, 2, 3].map(i => <i key={i} className={i <= n.crans ? 'plein' : undefined} />)}</span>
-      {tr(`pb.difficulte.${n.crans}`)}
+      <span className="difficulte-mot">{tr(`pb.difficulte.${n.crans}`)}</span>
     </span>
   );
 }
@@ -922,13 +922,17 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
     <div className="lecteur" data-probleme={puzzle.id} data-serre={estSerre(puzzle.size) || undefined}>
       <div className="lecteur-tete">
         <Retour label={retour ?? tr('pb.retour')} onClick={onExit} />
+        {/* Passe design #509 : la difficulté rejoint la ligne fine du surtitre ; le titre garde toute la largeur entre le
+            retour et le « ? » (une ligne à 390 px au lieu de deux, deux au lieu de trois à 320 px). */}
         <div className="lecteur-nom">
-          {duJour
-            ? <small className="entete-du-jour">{tr('accueil.goDuJour')} <b className="numero-du-jour">{tr('pb.numero', { numero: duJour.numero })}</b></small>
-            : <small>{surtitre ?? tr('pb.probleme', { n: rang })}</small>}
+          <div className="lecteur-surtitre">
+            {duJour
+              ? <small className="entete-du-jour">{tr('accueil.goDuJour')} <b className="numero-du-jour">{tr('pb.numero', { numero: duJour.numero })}</b></small>
+              : <small>{surtitre ?? tr('pb.probleme', { n: rang })}</small>}
+            <Difficulte d={puzzle.difficulty} />
+          </div>
           <h2>{puzzle.title}</h2>
         </div>
-        <Difficulte d={puzzle.difficulty} />
         {/* #362 : « ? » ouvre les mots du go (atari, échelle, œil…) sans quitter le problème. */}
         <BoutonAide depuis="probleme" fiche="mots" />
       </div>

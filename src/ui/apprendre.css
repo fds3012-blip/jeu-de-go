@@ -87,7 +87,7 @@
 
 /* ---------- La prochaine leçon : Mochi la présente, une carte, le seul bouton en relief ---------- */
 .prochaine .bubble { margin: 0 0 var(--space-2); }
-.prochaine-carte { position: relative; padding: var(--space-4); border-radius: 20px; background: var(--surface);
+.prochaine-carte { position: relative; padding: var(--space-4); border-radius: var(--radius); background: var(--surface);
   box-shadow: 0 14px 30px -20px rgba(0, 0, 0, .65); }
 .prochaine-carte .pas-bouton { padding: 0; gap: var(--space-3); align-items: flex-start; min-height: 0; }
 .prochaine-carte .pas-texte { align-items: flex-start; }
@@ -109,7 +109,7 @@
 @media (max-width: 319px) {
   .pas-bouton, .a-droite .pas-bouton { flex-direction: column; align-items: flex-start; gap: 6px; }
   .a-droite .pas-bouton { align-items: flex-end; }
-  .pas-texte { max-width: 100%; padding: 2px 4px; border-radius: 6px; background: var(--bg); }
+  .pas-texte { max-width: 100%; padding: 2px 4px; border-radius: var(--radius-xs); background: var(--bg); }
   .pas-texte > * { overflow-wrap: break-word; hyphens: auto; }
   .pas-texte b { font-size: var(--fs-m); }
   .pas-texte small { font-size: var(--fs-legende); }
@@ -169,11 +169,18 @@
 .etapes span.faite { background: var(--accent); }
 .etapes span.encours { background: transparent; box-shadow: inset 0 0 0 2px var(--accent-trait); }
 @media (prefers-reduced-motion: no-preference) { .etapes span { transition: background-color 300ms var(--ease), box-shadow 300ms var(--ease); } }
-.lecteur-titre { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; font-size: var(--fs-m); font-weight: var(--fw-bold); color: var(--muted); letter-spacing: -0.01em; }
 .lecteur-nom { flex: 1; min-width: 0; }
 .lecteur-nom small { display: block; color: var(--muted); font-size: var(--fs-legende); line-height: 1.2; }
-.lecteur-nom h2 { margin: 0; font-size: var(--fs-xl); font-weight: var(--fw-titre); line-height: 1.15; }
-.lecteur-tete .difficulte { flex: none; }
+.lecteur-nom h2 { margin: 0; font-size: var(--fs-xl); font-weight: var(--fw-titre); line-height: var(--lh-titre); text-wrap: balance; }
+/* Passe design #509 : en-tête d'un problème sur deux lignes, la ligne fine (surtitre, puis la difficulté au bout) et le
+   titre dessous, sur toute la largeur entre le retour et le « ? ». Faute de place, la difficulté passe à la ligne. */
+.lecteur-surtitre { display: flex; flex-wrap: wrap; align-items: center; gap: 2px var(--space-3); min-width: 0; }
+.lecteur-surtitre .difficulte { flex: none; margin-left: auto; font-size: var(--fs-legende); line-height: 1.2; }
+/* 320 px, série par thème (« Capturer », la pastille d'affilée) : le mot de la difficulté passerait seul à la ligne.
+   Les trois pierres restent à l'écran, le mot reste lu par le lecteur d'écran. */
+@media (max-width: 359px) {
+  .lecteur-surtitre:has(.theme-affilee) .difficulte-mot { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}
 .lecteur:has(.verdict) { padding-bottom: max(120px, var(--verdict-h, 0px)); }
 
 /* Audit du 02/10 (n° 1) : problème, Go du jour, entraînement, placement. Plus de vide sous le plateau : la colonne prend
@@ -207,7 +214,7 @@
 /* Feuille de verdict : posée sur la barre de navigation, pleine largeur, contenu dans la colonne. */
 .verdict { position: fixed; left: 0; right: 0; bottom: calc(var(--nav-h) + 1px + env(safe-area-inset-bottom, 0px)); z-index: 15;
   padding: 14px max(var(--gouttiere), calc((100% - var(--largeur-max)) / 2 + var(--gouttiere))) 16px;
-  background: var(--surface); border-radius: 20px 20px 0 0; box-shadow: 0 -12px 28px -14px rgba(0, 0, 0, .55); }
+  background: var(--surface); border-radius: var(--radius-feuille) var(--radius-feuille) 0 0; box-shadow: 0 -12px 28px -14px rgba(0, 0, 0, .55); }
 /* #268 (WCAG 2.4.11) : feuille ouverte, un élément amené à l'écran par le focus s'arrête au-dessus d'elle, pas dessous.
    --verdict-h-page est posée sur <html> par Verdict (Lecteur.tsx) ; 240 px tant qu'elle n'est pas mesurée.
    `:root` et non `html` : cette règle l'emporte sur `html:has(.nav)` (nav.css), quel que soit l'ordre des feuilles. */
@@ -268,7 +275,7 @@
 .marque-revoir circle { fill: var(--hanko); }
 .marque .trait { fill: none; stroke-width: 3.4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 0; }
 .marque-juste .trait { stroke: var(--encre-jade); }
-.marque-revoir .trait { stroke: #fff; }
+.marque-revoir .trait { stroke: var(--blanc); }
 @media (prefers-reduced-motion: no-preference) {
   .marque .trait { animation: dessine 340ms 60ms cubic-bezier(.3, .7, .3, 1) both; }
 }
@@ -279,7 +286,7 @@
 .palmares > div { display: flex; flex-direction: column; }
 .chiffre { display: flex; align-items: center; gap: 2px; font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: 3.25rem;
   line-height: .95; letter-spacing: -0.035em; font-variant-numeric: tabular-nums; }
-.chiffre.attente { width: 3.4ch; height: .9em; border-radius: 10px; background: var(--surface); }
+.chiffre.attente { width: 3.4ch; height: .9em; border-radius: var(--radius-s); background: var(--surface); }
 .legende { color: var(--muted); font-size: var(--fs-s); margin-top: 4px; }
 .palmares-serie { align-items: flex-end; }
 .palmares > .palmares-serie:only-child { grid-column: 2; }
@@ -295,11 +302,11 @@
 .problemes h2 { margin: var(--space-6) 0 10px; }
 .problemes section:first-of-type h2 { margin-top: var(--space-4); }
 /* Chargement : l'emplacement du problème du jour, avec les deux pierres qui tournent (nav.css). */
-.problemes-chargement { height: 420px; border-radius: 20px; background: color-mix(in srgb, var(--surface) 60%, var(--bg));
+.problemes-chargement { height: 420px; border-radius: var(--radius); background: color-mix(in srgb, var(--surface) 60%, var(--bg));
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-3); color: var(--muted); font-size: var(--fs-s); }
 
 /* ---------- Problème du jour mis en scène ---------- */
-.du-jour { background: var(--surface); border-radius: 20px; overflow: hidden; }
+.du-jour { background: var(--surface); border-radius: var(--radius); overflow: hidden; }
 .du-jour-plateau { position: relative; height: 188px; overflow: hidden; container-type: inline-size; cursor: pointer;
   -webkit-mask-image: linear-gradient(#000 72%, transparent); mask-image: linear-gradient(#000 72%, transparent); }
 /* Goban entier (carré, 100cqw de haut), décalé pour que les pierres soient au milieu de la fenêtre, sans montrer le vide au-dessus ou en dessous. */
@@ -321,7 +328,7 @@
 /* ---------- Grille des problèmes de base : la position est l'image ---------- */
 .bases-aide { margin: 0 0 var(--space-4); }
 .grille-pb { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr)); /* #121 */ gap: 20px 14px; }
-.grille-pb button { display: flex; flex-direction: column; align-items: stretch; gap: 4px; width: 100%; background: none; border: 0; padding: 0; text-align: left; border-radius: 14px; }
+.grille-pb button { display: flex; flex-direction: column; align-items: stretch; gap: 4px; width: 100%; background: none; border: 0; padding: 0; text-align: left; border-radius: var(--radius-s); }
 .grille-goban { position: relative; display: block; margin-bottom: 6px; }
 /* .mini-goban : apprendre-partage.css (#433), aussi lue par l'accueil et le Profil. */
 .grille-pb b { font-family: var(--font-titre); font-weight: var(--fw-bold); letter-spacing: -0.01em; font-size: var(--fs-m); line-height: 1.2; }
@@ -347,7 +354,7 @@
 
 /* ---------- Tes erreurs à rejouer (issue #77) ---------- */
 .mes-erreurs-compteur { display: inline-flex; align-items: center; justify-content: center; min-width: 28px; height: 28px; padding: 0 8px;
-  border-radius: 14px; background: var(--text); color: var(--bg); font-size: var(--fs-s); font-weight: var(--fw-bold); letter-spacing: 0; }
+  border-radius: var(--radius-pill); background: var(--text); color: var(--bg); font-size: var(--fs-s); font-weight: var(--fw-bold); letter-spacing: 0; }
 /* #293 : une seule erreur reste une vignette, comme les autres problèmes, au lieu d'un grand plateau pleine largeur. */
 .mes-erreurs .grille-pb { grid-template-columns: repeat(auto-fill, minmax(min(100%, 8rem), 1fr)); }
 .mes-erreurs-ecran { position: fixed; inset: 0; z-index: 30; background: var(--bg); overflow-y: auto; overscroll-behavior: contain; }
@@ -369,7 +376,7 @@
 .cta.continuer { line-height: 1.15; }
 
 /* ---------- Palier en cours (#196, illustré pour #103) : le paysage, le nom, puis la carte « Continuer » ---------- */
-.palier-en-cours { margin-top: var(--space-2); border-radius: 20px; background: var(--surface); overflow: hidden; }
+.palier-en-cours { margin-top: var(--space-2); border-radius: var(--radius); background: var(--surface); overflow: hidden; }
 .palier-en-cours .paysage { height: 92px; }
 .palier-en-cours-texte { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-3); padding: var(--space-2) var(--space-4) var(--space-3); }
 .palier-en-cours .palier-compte, .palier-tete .palier-compte { margin: 0; flex: none; }
@@ -389,12 +396,13 @@
 /* Carte « Continuer » (#103) : le prochain problème voilé à gauche, l'aide et la difficulté à droite, l'action dessous. */
 .continuer-carte { display: grid; grid-template-columns: 84px 1fr; column-gap: var(--space-4); align-items: center;
   padding: var(--space-4) var(--space-4) var(--space-4); box-shadow: inset 0 1px 0 var(--line); }
-.problemes > section > .continuer-carte { border-radius: 20px; background: var(--surface); box-shadow: none; }
-.continuer-goban { position: relative; display: block; width: 84px; height: 84px; border-radius: 14px; overflow: hidden; cursor: pointer;
+.problemes > section > .continuer-carte { border-radius: var(--radius); background: var(--surface); box-shadow: none; }
+.continuer-goban { position: relative; display: block; width: 84px; height: 84px; border-radius: var(--radius-s); overflow: hidden; cursor: pointer;
   box-shadow: 0 3px 0 var(--bois-tranche), 0 12px 20px -12px rgba(0, 0, 0, .65); }
 .continuer-goban .mini-goban { width: 100%; height: 100%; border-radius: 0; box-shadow: none; filter: blur(1.1px) saturate(.9); transform: scale(1.06); }
 /* Voile d'encre : la position se devine, elle ne se lit pas. */
-.continuer-goban::after { content: ""; position: absolute; inset: 0; border-radius: 14px; box-shadow: inset 0 0 0 1.5px rgba(58, 41, 18, .35), inset 0 -22px 26px -10px rgba(28, 25, 22, .5); }
+.continuer-goban::after { content: ""; position: absolute; inset: 0; border-radius: var(--radius-s);
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--grille) 35%, transparent), inset 0 -22px 26px -10px color-mix(in srgb, var(--sumi) 50%, transparent); }
 .continuer-corps { min-width: 0; display: flex; flex-direction: column-reverse; gap: 4px; }
 .continuer-aide { margin: 0; color: var(--muted); font-size: var(--fs-s); line-height: 1.35; }
 .continuer-infos { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); margin: 0; font-size: var(--fs-m); }
@@ -417,7 +425,7 @@
 .palier-prochain .palier-verrou { margin: 0; }
 .palier { margin-top: var(--space-6); }
 /* #103 : en-tête illustré, le paysage du palier puis le nom ; la grille vient dessous, sur le fond. */
-.palier-tete { border-radius: 20px; background: var(--surface); overflow: hidden; margin-bottom: var(--space-4); }
+.palier-tete { border-radius: var(--radius); background: var(--surface); overflow: hidden; margin-bottom: var(--space-4); }
 .palier-tete .paysage { height: 84px; }
 .palier-tete-texte { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-3); min-height: 40px; padding: var(--space-2) var(--space-4) var(--space-3); }
 .palier-nom h3 { display: flex; align-items: center; gap: 6px; margin: 0; font-family: var(--font-titre); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre); font-size: var(--fs-xl); line-height: 1.15; }
@@ -460,7 +468,7 @@
   background: var(--surface); color: var(--text); text-align: left; font: inherit; cursor: pointer; }
 .revision-carte:active { background: color-mix(in srgb, var(--surface) 85%, var(--text)); }
 .revision-goban { flex: none; width: 64px; }
-.revision-goban .mini-goban { border-radius: 8px; box-shadow: 0 2px 0 var(--bois-tranche); }
+.revision-goban .mini-goban { border-radius: var(--radius-plateau); box-shadow: 0 2px 0 var(--bois-tranche); }
 .revision-texte { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
 .revision-texte b { font-family: var(--font-titre); font-weight: var(--fw-bold); font-size: var(--fs-m); line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .revision-texte small { color: var(--muted); font-size: var(--fs-s); }
