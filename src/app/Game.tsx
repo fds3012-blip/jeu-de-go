@@ -25,6 +25,7 @@ import { BoutonAide } from '../ui/BoutonAide';
 import { choisirReplique, DUREE_REPLIQUE, type Situation } from './repliques';
 import { FinPartie } from '../ui/FinPartie';
 import { ProposerInstallation } from '../ui/ProposerInstallation';
+import { InviterApp } from '../ui/PartagerApp';
 import { doitProposer, etatInstallation, noterVictoire, plateformeCourante } from './installation';
 import { ProposerRappel } from '../ui/ProposerRappel';
 import { RecitScore } from '../ui/RecitScore';
@@ -644,6 +645,10 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
           {premiereVictoire && gagne ? <ProposerInstallation moment="premiere_victoire" /> : null}
           <ProposerRappel partieFinie={!!ai}
             autreCarte={premiereVictoire && gagne && doitProposer({ plateforme: plateformeCourante(), etat: etatInstallation(), moment: 'premiere_victoire', enPartie: false })} />
+          {/* #521 : après une victoire contre l'ordi (pas la partie guidée), l'invitation à partager l'app, en dernier dans
+              la file : jamais avec une autre proposition (installation, rappel), jamais avant la 2e partie finie, au plus
+              une fois par semaine (src/app/partageApp.ts). */}
+          {ai && gagne && !guidee ? <InviterApp depuis="victoire" file /> : null}
         </>}
       />
     );

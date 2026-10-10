@@ -54,6 +54,7 @@ import { AmisDuJour } from '../ui/AmisDuJour';
 import { noterGoDuJour, type ResultatEssai } from '../data/emulation';
 import { SERIES_THEMES_KEY, nettoyerSeries, noterSerie, prochainDeSerie, seriesDisponibles, type EtatSeriesThemes, type SerieTheme } from './seriesThemes';
 import { SurtitreTheme, VignettesThemes } from '../ui/SeriesThemes';
+import { InviterApp } from '../ui/PartagerApp';
 
 const LOCAL_PUZZLES = parsePuzzles(ALL_PUZZLES);
 export const SOLVED_KEY = 'go.problemes.v1';
@@ -273,6 +274,9 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
     return (
       <PuzzlePlayer key={`${open.id}${enArchive ? '-archive' : ''}`} puzzle={open} rang={ordre.indexOf(open) + 1} confirmTouch={confirmTouch}
         surtitre={enSerie ? <SurtitreTheme serie={enSerie} affilee={etatThemes[enSerie]?.affilee ?? 0} record={recordTheme} /> : undefined}
+        // #521 : un record de série par thème est un moment fort : invitation discrète à partager l'app (règle et plafond :
+        // src/app/partageApp.ts).
+        invitation={enSerie && recordTheme ? <InviterApp depuis="record" /> : undefined}
         signaler={db && userId ? <LienSignalerProbleme db={db} probleme={open.id} onCompte={onCompte} /> : undefined}
         duJour={enArchive ? { numero: archive, serie: 0, defiChange: false, archive: numero, gelGagne: false, celebrer, jalon: null, apprendre: onApprendre }
           : estDuJour ? { numero, serie: serieVivante(serieDuJour, numero), defiChange, gelGagne, celebrer, jalon, apprendre: onApprendre,
@@ -668,7 +672,7 @@ interface DuJourInfo {
 /** Temps pendant lequel la réponse de l'adversaire reste sur le plateau après une erreur (#237, N6). */
 const DUREE_ERREUR = 2200;
 
-export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPremierEssai, onEssai, onAttempt, onSolved, onNext, onExit, onSolutionVue, retour, surtitre, suivant, exercice = true, signaler }: {
+export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPremierEssai, onEssai, onAttempt, onSolved, onNext, onExit, onSolutionVue, retour, surtitre, suivant, exercice = true, signaler, invitation }: {
   puzzle: Puzzle; rang: number; duJour?: DuJourInfo; confirmTouch: boolean; rated: boolean;
   /** Chaque essai joué (coup légal), réussi ou non (#369 : essais du Go du jour comptés par le serveur). */
   onEssai?: (ok: boolean) => void;
@@ -686,6 +690,8 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
   exercice?: boolean;
   /** #363 : « Cette réponse me semble fausse », montré après un premier essai (ou la suite revue). */
   signaler?: ReactNode;
+  /** #521 : invitation discrète à partager l'app, sous la réussite (nouveau record d'une série par thème). */
+  invitation?: ReactNode;
 }) {
   // #236 (N2) : un problème est un exercice ; aucune fête ne se pose sur sa consigne (l'XP se lit dans la feuille).
   useExercice(exercice);
@@ -904,7 +910,7 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
             </div>
             {duJour.amis}
           </>
-        : <>{suivantBtn}<button className="lien" onClick={showLine}>{tr('pb.voirSuite')}</button></>)}>
+        : <>{suivantBtn}<button className="lien" onClick={showLine}>{tr('pb.voirSuite')}</button>{invitation}</>)}>
         <p>{fr(answer.text)}</p><XpEnLigne anime={duJour?.celebrer ?? true} />
         {/* #214 : la série se lit sur la réussite (« 3 jours de série · À demain ») ; aux jalons 3, 7, 30, une petite fête. */}
         {duJour && duJour.archive === undefined && serieVisible && <SerieDuJour jours={duJour.serie} jalon={duJour.jalon} celebrer={duJour.celebrer} />}

@@ -14,6 +14,7 @@ import { Confettis } from '../ui/Confettis';
 import { Etapes, Marque, Retour } from '../ui/Lecteur';
 import { NiveauAtteint } from '../ui/Niveau';
 import { XpEnLigne } from '../ui/PastilleXp';
+import { InviterApp } from '../ui/PartagerApp';
 import { fr } from '../ui/typo';
 import { fromRows } from '../go/position';
 import { play, type Position } from '../go/rules';
@@ -376,6 +377,8 @@ function FinLecon({ lesson, progress, celebrer, onNext, onExit, pratique, jouer 
         {bouton(principale, 'cta')}
         {liens.map(a => bouton(a, 'lien'))}
       </div>
+      {/* #521 : invitation discrète à partager l'app, sous les actions (règle : src/app/partageApp.ts). */}
+      <InviterApp depuis="lecon" />
       {gerbe && <Confettis origine={gerbe} onFin={() => setGerbe(null)} />}
     </div>
   );

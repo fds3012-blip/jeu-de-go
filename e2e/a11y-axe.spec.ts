@@ -152,6 +152,42 @@ test('axe : Problèmes, un problème et son verdict, Go du jour', async ({ page 
   await verifier(page, 'Go du jour');
 });
 
+// #521 : « Partager Mochi Go » (Profil, état « Lien copié ») et l'invitation discrète de fin de partie et de fin de leçon.
+test('axe : partager l’app (Profil, lien copié ; invitation après une victoire et en fin de leçon)', async ({ page, context }) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'share', { configurable: true, value: undefined });
+    const vrai = performance.now.bind(performance);
+    performance.now = () => vrai() + 90_000;
+    if (sessionStorage.getItem('pret-521')) return;
+    sessionStorage.setItem('pret-521', '1');
+    localStorage.setItem('go.parties.v1', JSON.stringify({ n: 2, ordi: 2, dernier: 'pomme' }));
+    localStorage.setItem('go.intro-but.v1', 'true');
+    localStorage.setItem('go.premiere-victoire.v1', '1');
+    localStorage.setItem('go.lecons.v1', JSON.stringify({ l1: 5 }));
+  });
+  await page.goto('/');
+  await nav(page, 'Profil').click();
+  await page.getByTestId('partager-app-profil').click();
+  await expect(page.getByTestId('partager-app-profil')).toHaveText('Lien copié');
+  await verifier(page, 'Profil, lien copié');
+
+  await page.goto('/?komi=-100');
+  await page.locator('.cta').click();
+  await passerJusquAuScore(page);
+  await expect(page.getByTestId('inviter-app')).toBeVisible({ timeout: 15_000 });
+  await verifier(page, 'Fin de partie, invitation à partager');
+
+  await page.evaluate(() => localStorage.removeItem('go.invitation-app.v1'));
+  await page.goto('/');
+  await nav(page, 'Apprendre').click();
+  await page.getByRole('button', { name: /^Reprendre la leçon/ }).click();
+  await jouer(page, 'E4');
+  await page.getByRole('button', { name: 'Terminer la leçon' }).click();
+  await expect(page.getByTestId('inviter-app')).toBeVisible();
+  await verifier(page, 'Fin de leçon, invitation à partager');
+});
+
 test('axe : Profil, Réglages, Mon compte (sans compte), Conditions', async ({ page }) => {
   await page.goto('/');
   await nav(page, 'Profil').click();

@@ -1,0 +1,46 @@
+/* Partager l'app (#521) : bouton du Profil et invitation discrète des moments forts.
+   Chargée avec ces écrans (hors de la feuille principale : budget CSS initial). Jetons de tokens.css (clair et sombre),
+   cibles de 44 px au moins, aucune animation (rien à réduire), tient à 320 px et au zoom 200 %. */
+.partager-app-icone { fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+
+/* Invitation : tuile secondaire, bordure en pointillés (direction v2, « à faire plus tard »), jamais en relief. */
+.partager-app { width: 100%; box-sizing: border-box; margin-top: var(--space-4); padding: var(--space-3) var(--space-4);
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--space-2) var(--space-3);
+  border: 1.5px dashed var(--line); border-radius: var(--radius); color: var(--text); text-align: center; }
+.partager-app > p { margin: 0; flex: 1 1 12em; color: var(--muted); font-size: var(--fs-s); line-height: 1.4; }
+.btn.partager-app-bouton { flex: none; max-width: 100%; min-height: var(--cible-min); display: inline-flex; align-items: center;
+  justify-content: center; gap: var(--space-2); padding: 0 var(--space-4); color: var(--text); white-space: normal; }
+
+/* Copie impossible : le lien, à copier à la main. */
+.partager-app-manuel { width: 100%; text-align: left; }
+.partager-app-manuel p { margin: 0 0 var(--space-1); font-size: var(--fs-s); color: var(--muted); }
+.partager-app-manuel input { width: 100%; min-width: 0; min-height: var(--cible-min); box-sizing: border-box; padding: 0 12px;
+  border-radius: var(--radius-s); border: 1.5px solid var(--line); background: var(--surface); color: var(--text); font: inherit; font-size: var(--fs-s); }
+
+/* Lecon : l'invitation sous les actions, dans la colonne de la fin de leçon. */
+.fin-lecon .partager-app { margin-top: var(--space-5); }
+
+/* Problème réussi (record d'une série par thème) : la feuille de réussite est posée sur le plateau ; l'invitation n'y
+   ajoute qu'un bouton secondaire, comme « Partager » du Go du jour, pour ne pas la faire grandir. */
+.verdict .partager-app { margin: 0; padding: 0; border: 0; }
+.verdict .partager-app > p { display: none; }
+.verdict .btn.partager-app-bouton { width: 100%; }
+
+/* Profil : « Partager » à droite du titre, avant « Aide », même pastille (sans fond, 44 px de haut, rien en relief). */
+.profil .profil-titre-ligne { flex-wrap: wrap; }
+.partager-app-profil { flex: none; margin: -12px 0 -12px auto; min-width: var(--cible-min); height: var(--cible-min);
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 0 12px 0 10px; border: 0;
+  border-radius: var(--radius-pill); background: none; color: var(--text); font: inherit; font-size: var(--fs-s);
+  font-weight: var(--fw-bold); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.partager-app-profil .partager-app-icone { width: 20px; height: 20px; color: var(--muted); stroke-width: 2; }
+.partager-app-profil.copie .partager-app-icone { color: var(--accent-texte); }
+.partager-app-profil:hover .partager-app-icone { color: var(--text); }
+.partager-app-profil:active { background: var(--surface); }
+.partager-app-profil:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.profil .profil-titre-ligne .partager-app-profil + .bouton-aide { margin-left: 0; }
+.profil-titre-ligne .partager-app-manuel { flex-basis: 100%; margin-top: var(--space-2); }
+/* Petit écran : l'icône seule (le titre et « Aide » gardent leur place). */
+@media (max-width: 359px) {
+  .partager-app-profil { padding: 0; }
+  .partager-app-profil-texte { display: none; }
+}

@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { jouer, plateau } from './plateau';
+import { jouer, passerJusquAuScore, plateau } from './plateau';
 import { demarrerParcours, ouvrirRevue, preparerRevue } from './revueFactice';
 
 // Issue #503 : sur les écrans à barre fixe en bas (revue : bilan et parcours, « Rejouer mes erreurs », problèmes,
@@ -115,6 +115,35 @@ for (const [l, h] of ECRANS) {
       await page.getByRole('button', { name: 'Terminer la leçon' }).click();
       await expect(page.getByRole('heading', { name: 'Leçon terminée' })).toBeVisible();
       await aucunBoutonRecouvert(page, `fin de leçon ${taille}`);
+    });
+
+    // #521 : l'invitation à partager l'app (3e partie finie, visite de plus d'une minute) ne recouvre rien, et rien ne
+    // la recouvre : fin de partie gagnée, puis fin de leçon.
+    test(`invitation à partager l'app : victoire et fin de leçon (${taille})`, async ({ page }) => {
+      await page.addInitScript(() => {
+        const vrai = performance.now.bind(performance);
+        performance.now = () => vrai() + 90_000;
+        if (sessionStorage.getItem('pret-521')) return;
+        sessionStorage.setItem('pret-521', '1');
+        localStorage.setItem('go.parties.v1', JSON.stringify({ n: 2, ordi: 2, dernier: 'pomme' }));
+        localStorage.setItem('go.intro-but.v1', 'true');
+        localStorage.setItem('go.premiere-victoire.v1', '1');
+        localStorage.setItem('go.lecons.v1', JSON.stringify({ l1: 5 }));
+      });
+      await page.goto('/?komi=-100');
+      await page.locator('.cta').click();
+      await passerJusquAuScore(page);
+      await expect(page.getByTestId('inviter-app')).toBeVisible({ timeout: 15_000 });
+      await aucunBoutonRecouvert(page, `victoire et invitation ${taille}`);
+      // Le plafond (une fois par semaine) est remis à zéro pour revoir l'invitation en fin de leçon.
+      await page.evaluate(() => localStorage.removeItem('go.invitation-app.v1'));
+      await page.goto('/');
+      await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
+      await page.getByRole('button', { name: /^Reprendre la leçon/ }).click();
+      await jouer(page, 'E4');
+      await page.getByRole('button', { name: 'Terminer la leçon' }).click();
+      await expect(page.getByTestId('inviter-app')).toBeVisible();
+      await aucunBoutonRecouvert(page, `fin de leçon et invitation ${taille}`);
     });
   });
 }
