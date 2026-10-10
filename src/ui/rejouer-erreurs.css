@@ -7,20 +7,38 @@
 .rejeu-phrase { margin: 0; font-size: var(--fs-corps-s); line-height: 1.4; overflow-wrap: anywhere; }
 .rejeu-montre { display: block; margin: 0 auto; color: var(--muted); }
 
-/* Fin : « 2 sur 3 trouvées ». */
-.rejeu-fin { padding-bottom: calc(var(--cible-cta) + var(--relief) + var(--space-6) + env(safe-area-inset-bottom, 0px)); }
-.rejeu-fin-carte { display: flex; flex-direction: column; align-items: center; gap: var(--space-3); padding: var(--space-5) var(--space-4); border-radius: 18px;
-  background: var(--halo), var(--surface); text-align: center; }
-.rejeu-fin-mochi { display: grid; place-items: center; width: 112px; height: 112px; border-radius: 50%; background: var(--bg); }
+/* Fin : « 2 sur 3 trouvées ».
+   #509 (L1, n° 20) : plus de carte dans une carte. Le résultat se pose sur la page, sous le seul halo d'or, et la colonne
+   se centre dans la hauteur libre entre l'en-tête et la barre du bas (au lieu de laisser 330 px de vide dessous).
+   La hauteur réservée : le haut de l'app (marge et logo, 96 px environ), la marge basse de .app (150 px). */
+.rejeu-fin { min-height: calc(100dvh - 96px - 150px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(var(--cible-cta) + var(--relief) + var(--space-6) + env(safe-area-inset-bottom, 0px)); }
+.rejeu-fin-carte { position: relative; isolation: isolate; display: flex; flex-direction: column; align-items: center; gap: var(--space-3);
+  margin-block: auto; padding: var(--space-5) var(--space-4); text-align: center; }
+/* Le halo s'efface vers les bords (masque elliptique) : aucune arête de boîte ne se lit sur la page. */
+.rejeu-fin-carte::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: var(--halo);
+  -webkit-mask-image: radial-gradient(closest-side, #000 55%, transparent); mask-image: radial-gradient(closest-side, #000 55%, transparent); }
+.rejeu-fin-mochi { display: grid; place-items: center; width: 112px; height: 112px; border-radius: 50%; background: var(--surface); }
 .rejeu-fin-titre { margin: 0; font-family: var(--font-titre); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre); font-size: var(--fs-display-m); line-height: 1.15; overflow-wrap: anywhere; }
 .rejeu-fin-pastilles { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
 .rejeu-fin-pastilles li { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; }
 .rejeu-fin-pastilles svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
 .rejeu-fin-pastilles .trouvee { background: var(--accent); color: var(--on-accent); box-shadow: inset 0 0 0 2px var(--accent-trait); }
-.rejeu-fin-pastilles .ratee { background: var(--surface-2); color: var(--muted); box-shadow: inset 0 0 0 2px var(--line); }
+/* Pas trouvée : un simple point creux de 12 px (le libellé dit « pas trouvé »), qui ne ressemble pas à un bouton éteint. */
+.rejeu-fin-pastilles .ratee::before { content: ""; width: 12px; height: 12px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--muted); }
 .rejeu-fin-phrase { margin: 0; max-width: 32ch; font-size: var(--fs-m); line-height: 1.45; text-wrap: balance; }
-.rejeu-fin-xp { margin: 0; padding: 4px 14px; border-radius: var(--radius-pill); background: var(--recompense); color: var(--encre-jade);
-  font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: var(--fs-l); font-variant-numeric: tabular-nums; }
+.rejeu-fin-xp { display: inline-flex; flex-wrap: wrap; justify-content: center; align-items: baseline; column-gap: var(--space-2); margin: 0; padding: 4px 14px;
+  border-radius: var(--radius-pill); background: var(--recompense); color: var(--encre-jade); font-variant-numeric: tabular-nums; }
+.rejeu-fin-xp b { font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: var(--fs-l); }
+/* Part du bonus « première fois » : le même montant que la barre d'XP, expliqué au même endroit. */
+.rejeu-fin-xp small { font-size: var(--fs-s); font-weight: var(--fw-bold); }
+/* Écran court (320 × 568) : la pastille d'XP, seul endroit où se lit le gain, tient au-dessus de la barre sans défiler.
+   Mochi rapetisse (72 px), la colonne se resserre. */
+@media (max-height: 700px) {
+  .rejeu-fin-carte { gap: var(--space-2); padding-block: 0; }
+  .rejeu-fin-mochi { width: 72px; height: 72px; }
+  .rejeu-fin-mochi > * { transform: scale(.7); }
+}
 
 @media (prefers-reduced-motion: no-preference) {
   /* La phrase de Mochi change à chaque essai : un court fondu levé dit « nouvelle réponse ». */
@@ -30,8 +48,12 @@
   /* Fin : le score se pose, puis chaque pastille, l'une après l'autre (délais posés en ligne, 70 ms d'écart). */
   .rejeu-fin-titre { animation: rejeu-pose 260ms var(--ease) 60ms both; }
   .rejeu-fin-pastilles li { animation: rejeu-pastille 220ms var(--ease-pose) both; }
+  /* Coup trouvé : la coche se trace pendant que sa pastille se pose (même délai, posé en ligne sur le li). */
+  .rejeu-fin-pastilles .trouvee svg { animation-delay: inherit; }
+  .rejeu-fin-pastilles .trouvee path { stroke-dasharray: 1; animation: rejeu-coche 240ms var(--ease) both; animation-delay: inherit; }
   .rejeu-fin-xp { animation: rejeu-pose 260ms var(--ease) 360ms both; }
 }
 @keyframes rejeu-eclat { 0% { box-shadow: inset 0 0 0 2px var(--accent), 0 0 0 0 rgba(60, 196, 142, .45); } 100% { box-shadow: inset 0 0 0 2px var(--accent), 0 0 0 10px rgba(60, 196, 142, 0); } }
 @keyframes rejeu-pose { from { opacity: 0; transform: scale(.94); } to { opacity: 1; transform: none; } }
+@keyframes rejeu-coche { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
 @keyframes rejeu-pastille { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: none; } }

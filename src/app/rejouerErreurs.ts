@@ -182,8 +182,14 @@ export function phraseFin(s: { trouvees: number; total: number }): string {
 }
 
 // ---------- XP : une fois par partie ----------
-// Rejouer ses erreurs est un effort réel (comme un problème) : 10 XP à la fin de la séance, une seule fois par partie
-// (sinon, rejouer la même revue en boucle rapporterait sans fin, voir « Rejouer d'ici », economie.md C6).
+// Rejouer ses erreurs est un effort réel (comme un problème) : 10 XP par erreur rejouée (GAINS.erreursRejouees, xp.ts),
+// 3 erreurs au plus, crédités à la fin de la séance, une seule fois par partie (sinon, rejouer la même revue en boucle
+// rapporterait sans fin, voir « Rejouer d'ici », economie.md C6). Décision de Florian (#509, lot L1).
+
+/** Nombre d'erreurs qui rapportent leurs 10 XP : celles rejouées dans la séance, 3 au plus. */
+export function erreursPayees(rejouees: number): number {
+  return Math.max(0, Math.min(MAX_ERREURS_REJOUEES, Math.floor(rejouees) || 0));
+}
 
 export const XP_REJEU_KEY = 'go.revue.rejeuXp.v1';
 /** Au plus 100 parties gardées : les plus anciennes sortent en premier. */

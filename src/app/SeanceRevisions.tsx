@@ -18,9 +18,11 @@ import { gagnerXp, noterActivite } from './xp';
 import { Mochi } from '../ui/Mochi';
 import { Confettis } from '../ui/Confettis';
 import { Etapes } from '../ui/Lecteur';
+import { lireFile, marquerXpVue, useExercice } from '../ui/celebrations';
 import { mouvementsReduits } from '../ui/defilement';
 import { texteXp } from '../ui/gainXp';
 import { fr } from '../ui/typo';
+import { t as tg } from '../content/i18n';
 import { t } from '../content/i18n/secondaires';
 import '../ui/rejouer-erreurs.css';
 import '../ui/seance-revisions.css';
@@ -55,9 +57,12 @@ export function SeanceRevisions({ confirmTouch, celebrer, compte, onFin }: Props
   const [k, setK] = useState(0);
   const [resultats, setResultats] = useState<Resultat[]>([]);
   const [fin, setFin] = useState(false);
-  const [xp, setXp] = useState<number | null>(null);
+  // XP de la séance, lue dans la carte de fin (#509, L1 n° 2 : un seul montant, pas de pastille globale par-dessus).
+  const [xp, setXp] = useState<{ points: number; bonus: number } | null>(null);
   const [gerbe, setGerbe] = useState(false);
   const fini = useRef(false);
+  // La séance reste un exercice jusqu'à ce que la carte de fin ait pris l'XP (voir RejouerErreurs.tsx).
+  useExercice(exercices.length > 0 && xp === null);
 
   useEffect(() => {
     window.scrollTo?.({ top: 0 });
@@ -87,7 +92,10 @@ export function SeanceRevisions({ confirmTouch, celebrer, compte, onFin }: Props
     const etat = prendreXp(lireEtatAppareil(), new Date());
     let points = 0;
     if (etat) { ecrireEtatAppareil(etat); points = gagnerXp('revision').points; }
-    setXp(points);
+    // Pendant l'exercice, les gains s'additionnent dans la file (`enLigne`) : c'est ce montant que la carte affiche.
+    const enLigne = lireFile().enLigne;
+    marquerXpVue();
+    setXp({ points: enLigne?.points ?? points, bonus: enLigne?.bonus ?? 0 });
     setFin(true);
     const reussis = resultats.filter(r => r.reussi).length;
     track(EVENTS.revisionSeanceTerminee, { elements: exercices.length, reussis, xp: points });
@@ -133,14 +141,14 @@ export function SeanceRevisions({ confirmTouch, celebrer, compte, onFin }: Props
               return (
                 <li key={x.element.cle} className={ok ? 'trouvee' : 'ratee'} style={{ animationDelay: `${120 + i * 70}ms` }}
                   aria-label={`${x.puzzle.title} : ${t(ok ? 'seance.trouve' : 'seance.rate')}`}>
-                  <svg viewBox="0 0 24 24" aria-hidden="true">{ok ? <path d="M6 12.5l4 4 8-9" /> : <path d="M8 12h8" />}</svg>
+                  {ok && <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12.5l4 4 8-9" pathLength={1} /></svg>}
                 </li>
               );
             })}
           </ol>
           <p className="rejeu-fin-phrase">{fr(t(phrase))}</p>
-          {xp != null && (xp > 0
-            ? <p className="rejeu-fin-xp"><b>{texteXp(xp)}</b></p>
+          {xp != null && (xp.points > 0
+            ? <p className="rejeu-fin-xp"><b>{texteXp(xp.points)}</b>{xp.bonus > 0 && <small>{tg('xp.bonus', { bonus: xp.bonus })}</small>}</p>
             : <p className="revue-note">{fr(t('seance.xpDejaPris'))}</p>)}
           <Echelle />
         </section>

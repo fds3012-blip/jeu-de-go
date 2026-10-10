@@ -1,7 +1,8 @@
 // « Rejouer mes erreurs » (#428), sur le modèle du « Retry » de chess.com. Ouvert depuis le bilan de la revue
 // (Revue.tsx), seulement avec KataGo. Pour chaque erreur (rejouerErreurs.ts), de la plus grave à la moins grave :
 // la position d'avant, « Ici, tu as joué B8. Trouve mieux. », trois essais, puis le coup de KataGo en pierre fantôme.
-// Fin : « 2 sur 3 trouvées », XP (une fois par partie) et une petite fête si au moins une erreur est trouvée.
+// Fin : « 2 sur 3 trouvées », XP (10 par erreur rejouée, une fois par partie) et une petite fête si au moins une erreur
+// est trouvée. L'XP se lit dans la carte de fin, et nulle part ailleurs (#509, lot L1).
 // Moments forts (skill peak-end-rule) : le coup trouvé (bulle jade, la pierre se pose, vibration de réussite) et la fin,
 // qui parle toujours de ce que le joueur emporte, jamais de ce qu'il a raté.
 import { useEffect, useRef, useState } from 'react';
@@ -9,18 +10,19 @@ import { Board } from '../ui/Board';
 import { Mochi } from '../ui/Mochi';
 import { SceauNote } from '../ui/SceauNote';
 import { Confettis } from '../ui/Confettis';
-import { useExercice } from '../ui/celebrations';
+import { lireFile, marquerXpVue, useExercice } from '../ui/celebrations';
 import { hapticFail, hapticSuccess } from '../ui/haptics';
 import { mouvementsReduits } from '../ui/defilement';
 import { texteXp } from '../ui/gainXp';
 import { fr } from '../ui/typo';
+import { t } from '../content/i18n';
 import { t as tr } from '../content/i18n/secondaires';
 import { play, type Color, type Position } from '../go/rules';
 import { analyseRevue } from '../engine';
 import { EVENTS, track } from '../data/analytics';
 import { NOTE_INFO, type AnalyseRevue } from './revue';
 import {
-  consigne, ESSAIS, idPartie, jugerEssai, jugerParRecherche, lireParties, marquerPartie, phraseFin, phraseMontrePourquoi, phrasePasEncore,
+  consigne, erreursPayees, ESSAIS, idPartie, jugerEssai, jugerParRecherche, lireParties, marquerPartie, phraseFin, phraseMontrePourquoi, phrasePasEncore,
   phraseTrouvePourquoi, score, titreFin, VISITES_JUGE, XP_REJEU_KEY, type ErreurARejouer, type Jugement, type ResultatRejeu,
 } from './rejouerErreurs';
 import { creerErreur } from './erreurs';
@@ -57,7 +59,8 @@ export function RejouerErreurs({ sgf, positions, komi, analyses, erreurs, joueur
   const [pose, setPose] = useState<Position | null>(null);
   const [resultats, setResultats] = useState<ResultatRejeu[]>([]);
   const [fin, setFin] = useState(false);
-  const [xp, setXp] = useState<number | null>(null);
+  // XP de la séance, lue dans la carte de fin ; `deja` : cette partie a déjà rapporté son XP.
+  const [xp, setXp] = useState<{ points: number; bonus: number; deja: boolean } | null>(null);
   const [gerbe, setGerbe] = useState(false);
   const [{ celebrations }] = useSettings();
   // Jeton de l'essai en cours : une recherche lente arrivée après un changement d'erreur est ignorée.
@@ -65,7 +68,10 @@ export function RejouerErreurs({ sgf, positions, komi, analyses, erreurs, joueur
   // Analyse de la position après le coup de KataGo, par erreur : une seule recherche, même si on juge plusieurs essais.
   const apresMeilleur = useRef(new Map<number, Promise<AnalyseRevue | null>>());
   const xpDonne = useRef(false);
-  useExercice(!fin);
+  // #509 (L1, n° 2) : la séance reste un exercice jusqu'à ce que la carte de fin ait pris l'XP. Tout ce qu'elle a rapporté
+  // (erreurs rejouées, bonus « première fois », objectif de la semaine atteint en route) s'y lit en un seul montant ;
+  // la pastille globale ne le répète pas par-dessus le logo. Le niveau franchi, lui, se fête ensuite (file des fêtes).
+  useExercice(xp === null);
 
   const e = erreurs[k], avant = positions[e.coup - 1];
   const toi = !!joueur && e.couleur === joueur && !!adversaire;
@@ -139,15 +145,22 @@ export function RejouerErreurs({ sgf, positions, komi, analyses, erreurs, joueur
     window.scrollTo?.({ top: 0 });
   }
 
-  // Fin de séance : XP une fois par partie, puis la fête (si au moins une erreur trouvée, célébrations activées,
-  // mouvements non réduits).
+  // Fin de séance : 10 XP par erreur rejouée (3 au plus), une fois par partie, puis la fête (si au moins une erreur
+  // trouvée, célébrations activées, mouvements non réduits).
   const s = score(resultats);
   useEffect(() => {
     if (!fin || xpDonne.current) return;
     xpDonne.current = true;
     const liste = marquerPartie(lireParties(readLocal<unknown>(XP_REJEU_KEY, [])), idPartie(sgf));
-    if (liste) { writeLocal(XP_REJEU_KEY, liste); setXp(gagnerXp('erreursRejouees').points); }
-    else setXp(0);
+    let repli = 0;
+    if (liste) {
+      writeLocal(XP_REJEU_KEY, liste);
+      for (let i = 0; i < erreursPayees(resultats.length); i++) repli += gagnerXp('erreursRejouees').points;
+    }
+    // Pendant l'exercice, les gains s'additionnent dans la file (`enLigne`) : c'est ce montant que la carte affiche.
+    const enLigne = lireFile().enLigne;
+    marquerXpVue();
+    setXp({ points: enLigne?.points ?? repli, bonus: enLigne?.bonus ?? 0, deja: !liste });
     if (s.trouvees > 0 && celebrations && !mouvementsReduits()) setGerbe(true);
   }, [fin]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -171,16 +184,16 @@ export function RejouerErreurs({ sgf, positions, komi, analyses, erreurs, joueur
             {resultats.map((r, i) => (
               <li key={r.coup} className={r.trouvee ? 'trouvee' : 'ratee'} style={{ animationDelay: `${120 + i * 70}ms` }}
                 aria-label={tr(r.trouvee ? 'rejeu.trouvee' : 'rejeu.ratee', { coup: r.coup })}>
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  {r.trouvee ? <path d="M6 12.5l4 4 8-9" /> : <path d="M8 12h8" />}
-                </svg>
+                {/* Trouvée : une coche ; pas trouvée : un simple point creux (rejouer-erreurs.css), pas un bouton. */}
+                {r.trouvee && <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12.5l4 4 8-9" pathLength={1} /></svg>}
               </li>
             ))}
           </ol>
           <p className="rejeu-fin-phrase">{fr(phraseFin(s))}</p>
-          {xp != null && (xp > 0
-            ? <p className="rejeu-fin-xp"><b>{texteXp(xp)}</b></p>
-            : <p className="revue-note">{fr(tr('rejeu.xpDeja'))}</p>)}
+          {xp && xp.points > 0 && (
+            <p className="rejeu-fin-xp"><b>{texteXp(xp.points)}</b>{xp.bonus > 0 && <small>{t('xp.bonus', { bonus: xp.bonus })}</small>}</p>
+          )}
+          {xp?.deja && <p className="revue-note">{fr(tr('rejeu.xpDeja'))}</p>}
         </section>
         {gerbe && <Confettis duree={1200} onFin={() => setGerbe(false)} />}
         <div className="dock revue-dock">
