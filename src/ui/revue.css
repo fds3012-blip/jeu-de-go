@@ -13,17 +13,20 @@
    la barre du bas ; la page garde la place du dock pour que rien n'y reste caché. */
 .revue-bilan, .revue-parcours, .revue-rejeu { padding-bottom: calc(var(--cible-cta) + var(--relief) + var(--space-6) + env(safe-area-inset-bottom, 0px)); }
 .revue-dock .cta { min-height: var(--cible-cta); }
+/* #509 (L1, n° 1) : fond plein sous la barre, comme #510 l'avait posé pour le parcours. Sans lui, la page se lisait
+   entre le bouton et la barre du bas (« Démarrer le bilan » et « Partager » tranchés sous « Rejouer mes erreurs (2) »).
+   Un fondu court au-dessus, puis le fond jusqu'en bas de l'écran ; la barre du bas (z-index 20) passe devant le débord.
+   Bilan, parcours, rejeu de la revue, « Rejouer mes erreurs » et révisions du jour. Aucun mouvement : un voile fixe. */
+.revue-dock::before { content: ""; position: absolute; z-index: -1; left: 50%; width: 100vw; transform: translateX(-50%);
+  top: calc(var(--space-6) * -1); bottom: calc(-74px - env(safe-area-inset-bottom, 0px)); pointer-events: none;
+  background: linear-gradient(to bottom, transparent, var(--bg) var(--space-6)); }
 /* #503 : deux actions dans la barre du bas, côte à côte (une seule ligne : la barre garde sa hauteur). « Suivant »,
    en relief, prend la plus grande part ; « Rejoue cette erreur » reste à plat, à sa hauteur, et passe sur deux lignes
    si l'écran est étroit plutôt que d'être coupé. */
 .revue-dock-double { grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); align-items: start; gap: var(--space-2); }
 .revue-dock-double .revue-probleme { min-height: var(--cible-cta); padding: 0 var(--space-2); line-height: 1.2; text-wrap: balance;
   background: var(--surface); border-color: var(--line); }
-/* Fond de la barre : la page ne se lit plus entre les deux boutons ni dessous ; un fondu court au-dessus. La barre du
-   bas (z-index 20) passe devant le débord. */
-.revue-dock-double::before { content: ""; position: absolute; z-index: -1; left: 50%; width: 100vw; transform: translateX(-50%);
-  top: calc(var(--space-4) * -1); bottom: -24px; pointer-events: none;
-  background: linear-gradient(to bottom, transparent, var(--bg) var(--space-4)); }
+/* Fond de la barre : celui de toutes les barres de la revue (.revue-dock::before, plus haut). */
 
 /* ---------- 1. Attente : Mochi, un proverbe du go, la barre d'avancement ---------- */
 .bilan-attente { display: flex; flex-direction: column; align-items: center; gap: var(--space-5); padding: var(--space-6) 0 var(--space-4); text-align: center; }

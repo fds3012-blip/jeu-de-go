@@ -32,6 +32,7 @@ import { mouvementsReduits } from '../ui/defilement';
 import { conseil as conseilMochi, phraseConseil, type ModeleConseil } from '../engine/conseil';
 import { conseilsRestants, proprietesDemande, proprietesNote } from './conseilMochi';
 import { BulleConseil, CalqueConseil } from '../ui/ConseilMochi';
+import { score as scoreAffiche } from '../ui/score';
 import { recitScore } from './score';
 import { Portrait, PortraitMochi, type Humeur } from '../ui/Portrait';
 
@@ -679,8 +680,8 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
       <div className="partie-plateau">
         <Board size={size} board={pos.board} toPlay={pos.toPlay} interactive={phase === 'score' || myTurn} stonesTappable={phase === 'score'} confirmTouch={confirmTouch}
           coordonnees={prefs.coordonnees} marks={{ last: prefs.dernierCoup ? pos.lastMove : null, owner: phase === 'score' ? sc.owner : quiMeneVisible?.owner, ownerFondu: !!quiMeneVisible, dead, libs, zone, ouverts: phase === 'play' ? frontieresVisibles(frontieres, history.length, pos.board, size, !!ai) : undefined }} onPlay={onPlay} onFantome={setFantome} shake={shake} versCouvercles noms={ai ? { 2: ai.nom } : undefined} />
-        {conseilVisible && <CalqueConseil size={size} zone={conseilVisible.zone} point={conseilVisible.point} />}
-        {calque && <CalqueConseil size={size} zone={calque.zone} point={calque.point} />}
+        {conseilVisible && <CalqueConseil size={size} zone={conseilVisible.zone} point={conseilVisible.point} board={pos.board} eviter={conseilVisible.modele === 'coup-a-eviter'} />}
+        {calque && <CalqueConseil size={size} zone={calque.zone} point={calque.point} board={pos.board} />}
         {quiMeneVisible && <p key={quiMeneVisible.n} className="qui-mene-phrase" aria-hidden="true">{fr(quiMeneVisible.phrase)}</p>}
         {/* Zones d'annonce permanentes (audit web, points 3 et 4) : seul leur texte change, pour être lues à coup sûr. */}
         <p className="sr-only" role="status" data-annonce="qui-mene">{quiMeneVisible ? fr(quiMeneVisible.phrase) : ''}</p>
@@ -737,7 +738,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
         }} />
       ) : (
         <>
-          <p className="comptage">{fr(tr(dead.size ? 'partie.comptage' : 'partie.comptageSansMortes', { noir: name(1), pn: virgule(sc.black), blanc: name(2), pb: virgule(sc.white) }))}</p>
+          <p className="comptage">{fr(tr(dead.size ? 'partie.comptage' : 'partie.comptageSansMortes', { noir: name(1), pn: scoreAffiche(sc.black), blanc: name(2), pb: scoreAffiche(sc.white) }))}</p>
           <div className="barre-comptage" role="toolbar" aria-label={tr('partie.comptageAria')}>
             <button className="btn" onClick={() => { resume(); setMsg(tr('partie.reprend')); }}>{tr('partie.reprendre')}</button>
             <button className="btn primary" onClick={() => finish(sc.winner, false)} disabled={finding}>{tr('partie.valider')}</button>
