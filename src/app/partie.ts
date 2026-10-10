@@ -67,19 +67,8 @@ export function metEnAtari(r: Position, m: number): boolean {
   return m >= 0 && neighbors(size)[m].some(q => r.board[q] === 3 - c && groupAt(r.board, size, q).liberties.size === 1);
 }
 
-// Aide de Mochi en partie (#35) : alerte d'atari contre les adversaires débutants.
-
-/** Réglage « Aide de Mochi en partie » : `auto` = seulement contre les débutants (Pomme, Caillou). */
-export type ReglageAide = 'auto' | 'oui' | 'non';
-/** Adversaires contre lesquels l'aide est active par défaut. À partir de Bambou (13 kyu), elle est coupée. */
-export const ADVERSAIRES_DEBUTANTS: readonly string[] = ['pomme', 'caillou'];
-
-/** L'aide de Mochi est-elle active contre l'adversaire `id` ? */
-export function aideActive(reglage: ReglageAide | undefined, id: string): boolean {
-  if (reglage === 'oui') return true;
-  if (reglage === 'non') return false;
-  return ADVERSAIRES_DEBUTANTS.includes(id);
-}
+// Aide de Mochi en partie (#35) : dans ./aideMochi.ts, lue par l'accueil sans le reste de ce fichier (#513).
+export { ADVERSAIRES_DEBUTANTS, aideActive, type ReglageAide } from './aideMochi';
 
 // Constantes de ce fichier : le texte français d'origine (tests) ; l'interface passe par `t` (#167).
 export const ALERTE_ATARI = "Atari ! Ton groupe n’a plus qu’une liberté. Sauve-le ou contre-attaque.";

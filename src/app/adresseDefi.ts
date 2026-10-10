@@ -4,7 +4,7 @@
 // la mesure ne soit chargée et avant tout événement. Il fait de même quand un lien est ouvert dans un onglet déjà
 // ouvert (`hashchange`), et prévient l'app par `ecouterJetonDefi`. Le filet avant envoi (fragment et paramètres
 // sensibles retirés des adresses envoyées à PostHog et Sentry) est src/data/urlSensible.ts (#336) : pas de doublon ici.
-import { inviteurDepuisLien, jetonDeLAdresse } from '../data/defi';
+import { inviteurDepuisLien, jetonDeLAdresse } from '../data/defiLien';
 
 type Emplacement = Pick<Location, 'hash' | 'pathname' | 'search'>;
 type Historique = Pick<History, 'replaceState' | 'state'>;

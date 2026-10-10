@@ -2,11 +2,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import type { Db } from '../data/supabase';
 import { sessionProbable } from '../data/client';
-import { fetchGels, fetchProfile, fetchStreak } from '../data/account';
+import { fetchGels, fetchProfile, fetchStreak } from '../data/lectureProfil';
 import { importerSerieAppareil, serieAEnvoyer } from '../data/serieServeur';
 import { LANCEMENT, SERIE_KEY, numeroDuJour } from './goDuJour';
 import { cleanProgress, mergeProgress, supabaseProgressStore, syncProgress, type Progress } from '../data/progress';
-import { compteDe } from '../data/defi';
+import { compteDe } from '../data/defiLien';
 
 /**
  * Session Supabase : undefined pendant le chargement, null sans connexion.

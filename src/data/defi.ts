@@ -8,7 +8,6 @@
 // - le temps réel suit la ligne de `games` (coups, comptage, résultat) et celle de `defis` (date limite) ; la ligne
 //   reçue est affichée telle quelle (#425, ./tempsReel.ts).
 // Écrans : src/app/Defis.tsx.
-import type { Session } from '@supabase/supabase-js';
 import { adresseDejaPrise, donneesLangue, type EchecEnvoi, type Result } from './account';
 import type { Tables } from './database.types';
 import type { Game } from './games';
@@ -19,64 +18,14 @@ import { messageServeur } from '../content/i18n/refus';
 
 export type Defi = Tables<'defis'>;
 
-/** Jeton du lien : 24 octets aléatoires en base64url (32 caractères). */
-export const FORMAT_JETON = /^[A-Za-z0-9_-]{32}$/;
+// Liens et sessions (#513) : dans ./defiLien.ts, lus par l'accueil sans le reste de ce fichier (RPC, temps réel).
+export { compteDe, estAnonyme, FORMAT_JETON, inviteurDepuisLien, jetonDeLAdresse, jetonDepuisLien, lienDefi, PARAM_DE, PARAM_DEFI } from './defiLien';
+import { FORMAT_JETON } from './defiLien';
 
 /** Délai par coup (le serveur fait foi : `defis.delai_coup`). */
 export const DELAI_COUP_MS = 3 * 24 * 60 * 60 * 1000;
 
-/** Paramètre du fragment de l'adresse : `https://…/#defi=JETON`. */
-export const PARAM_DEFI = 'defi';
-/** Pseudo de qui invite, dans le fragment après le jeton : `#defi=JETON&de=Pseudo` (#343). */
-export const PARAM_DE = 'de';
-const FORMAT_PSEUDO = /^[A-Za-z0-9_-]{3,24}$/;
-
 const echec = (message?: string | null): { ok: false; error: string } => ({ ok: false, error: message || t('erreur.serveur') });
-
-/**
- * Session d'un vrai compte ? Une session anonyme (ouverte pour un défi) compte comme « pas de compte » partout
- * ailleurs : pas de synchronisation des leçons, pas de cote, pas de pseudo (le serveur les refuse de toute façon).
- */
-export const estAnonyme = (session: Session | null | undefined): boolean => session?.user.is_anonymous === true;
-
-/** Identifiant du compte, ou undefined sans compte ou avec une session anonyme. */
-export const compteDe = (session: Session | null | undefined): string | undefined =>
-  session && !estAnonyme(session) ? session.user.id : undefined;
-
-/**
- * Lien à partager, court (#364) : `https://mochi-go.app/defi#JETON&de=Pseudo` (`/en/defi#…` pour un joueur en
- * anglais). Le jeton reste dans le fragment (`#`) : il n'est envoyé ni au serveur web ni dans l'en-tête Referer.
- * La page `/defi` porte l'aperçu du défi (Open Graph, outils/apercus.ts) ; index.html remet l'adresse à la forme
- * `/#defi=JETON` avant tout le reste. `jetonDepuisLien` lit les deux formes.
- */
-export function lienDefi(jeton: string, origine: string, pseudo?: string | null, langue: 'fr' | 'en' = 'fr'): string {
-  const de = pseudo && FORMAT_PSEUDO.test(pseudo) ? `&${PARAM_DE}=${pseudo}` : '';
-  return `${origine.replace(/\/+$/, '')}${langue === 'en' ? '/en' : ''}/${PARAM_DEFI}#${jeton}${de}`;
-}
-
-/**
- * Pseudo de qui invite, lu dans le lien (`&de=Pseudo`) ; null s'il manque ou n'a pas la forme d'un pseudo.
- * Il ne sert qu'à l'accueil de l'ami, avant son compte ; la partie affiche ensuite le pseudo lu en base.
- */
-export function inviteurDepuisLien(lien: string): string | null {
-  const fragment = lien.includes('#') ? lien.slice(lien.indexOf('#') + 1) : lien;
-  const de = fragment.split('&').find(p => p.startsWith(`${PARAM_DE}=`))?.slice(PARAM_DE.length + 1) ?? '';
-  return FORMAT_PSEUDO.test(de) ? de : null;
-}
-
-/** Lit le jeton d'un lien de défi (`#defi=JETON`, l'ancien `/defi#JETON`, ou le jeton seul) ; null sinon. */
-export function jetonDepuisLien(lien: string): string | null {
-  let brut = lien.includes('#') ? lien.slice(lien.indexOf('#') + 1) : lien;
-  if (brut.startsWith(`${PARAM_DEFI}=`)) brut = brut.slice(PARAM_DEFI.length + 1);
-  const jeton = brut.split('&')[0].trim();
-  return FORMAT_JETON.test(jeton) ? jeton : null;
-}
-
-/** Jeton du défi lu dans le fragment de l'adresse (`#defi=JETON`), ou null. */
-export function jetonDeLAdresse(hash: string): string | null {
-  const brut = hash.replace(/^#/, '');
-  return brut.startsWith(`${PARAM_DEFI}=`) ? jetonDepuisLien(brut) : null;
-}
 
 /**
  * Session d'un vrai compte, exigée pour créer ou rejoindre un défi (#343). Aucune session anonyme n'est plus ouverte :

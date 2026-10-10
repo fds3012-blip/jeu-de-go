@@ -2,7 +2,7 @@
 // Tous les 10 coups, l'écart estimé (KataGo, sinon le moteur simple) règle son « cran » de force :
 // il mène de plus de 15 points, il joue plus doux ; il est mené de plus de 15 points, il se renforce.
 // Logique pure, sans moteur : testée par simulation dans guidee.test.ts.
-import { OPPONENTS, type Opponent } from './simple';
+import { OPPONENTS, type Opponent } from './adversaires';
 
 /** Coups (des deux joueurs) entre deux réglages de force. */
 export const PERIODE_GUIDEE = 10;
