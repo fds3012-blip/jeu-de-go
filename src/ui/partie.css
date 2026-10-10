@@ -38,7 +38,7 @@
 /* ---------- Bandeaux des joueurs ---------- */
 .joueur { display: flex; align-items: center; gap: 10px; min-height: 60px; padding: 6px 0; }
 .joueur .retour { flex: none; width: var(--cible-min); height: var(--cible-min); margin: 0 -6px 0 -12px; border: 0; background: none; color: var(--muted);
-  font-size: 30px; line-height: 1; display: grid; place-items: center; border-radius: 12px; }
+  font-size: 30px; line-height: 1; display: grid; place-items: center; border-radius: var(--radius-s); }
 .joueur .retour:active { background: var(--surface); }
 .portrait { position: relative; flex: none; width: 44px; height: 44px; display: grid; place-items: center; }
 .portrait .stone { width: 34px; height: 34px; }
@@ -77,7 +77,7 @@
 }
 
 /* ---------- Couvercle : bois foncé en creux, pierres prises empilées ---------- */
-.couvercle { flex: none; display: inline-flex; align-items: center; gap: 6px; min-width: 52px; height: 30px; padding: 0 11px 0 7px; border-radius: 999px;
+.couvercle { flex: none; display: inline-flex; align-items: center; gap: 6px; min-width: 52px; height: 30px; padding: 0 11px 0 7px; border-radius: var(--radius-pill);
   background: radial-gradient(ellipse at 50% 30%, #6b4a28, #3a2714); color: #F3E3C8;
   box-shadow: inset 0 2px 3px rgba(0, 0, 0, .5), inset 0 -1px 0 rgba(255, 220, 170, .12);
   font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: var(--fs-corps-s); font-variant-numeric: tabular-nums; }
@@ -107,7 +107,7 @@
 .coups::-webkit-scrollbar { display: none; }
 /* Rien à faire défiler avant le premier coup : pas de fondu, « Aucun coup joué » se lit en entier. */
 .coups:has(> .vide) { -webkit-mask-image: none; mask-image: none; }
-.coups li { flex: none; padding: 2px 7px; border-radius: 999px; line-height: 18px; }
+.coups li { flex: none; padding: 2px 7px; border-radius: var(--radius-pill); line-height: 18px; }
 .coups li[aria-current] { color: var(--text); background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--line); }
 .coups .vide { padding-left: 0; font-weight: var(--fw-medium); }
 
@@ -126,7 +126,7 @@
 .partie-plateau { margin: 0 calc(4px - var(--gouttiere)); position: relative; }
 /* « Qui mène ? » (#94) : la phrase se pose en haut du goban, sans décaler la mise en page. */
 .qui-mene-phrase { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); z-index: 3; margin: 0; max-width: calc(100% - 24px);
-  padding: 6px 14px; border-radius: 999px; background: var(--surface); color: var(--text); border: 1px solid var(--line);
+  padding: 6px 14px; border-radius: var(--radius-pill); background: var(--surface); color: var(--text); border: 1px solid var(--line);
   box-shadow: 0 2px 10px rgba(0, 0, 0, .25); font-size: var(--fs-legende); font-weight: var(--fw-bold); white-space: nowrap; pointer-events: none; }
 @media (prefers-reduced-motion: no-preference) {
   .qui-mene-phrase { animation: go-fondu 150ms var(--ease) both; }
@@ -177,7 +177,7 @@
 /* ---------- Barre d'actions fixe ---------- */
 .actions { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; display: flex; justify-content: center; background: var(--barre); border-top: 1px solid var(--line);
   padding: 4px 4px env(safe-area-inset-bottom, 0px); }
-.actions button { flex: 1; max-width: 140px; min-height: 64px; border: 0; background: none; color: var(--text); border-radius: 12px;
+.actions button { flex: 1; max-width: 140px; min-height: 64px; border: 0; background: none; color: var(--text); border-radius: var(--radius-s);
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: var(--fs-legende); font-weight: var(--fw-medium); }
 /* Cinq actions (#94) : chaque libellé tient sur une ligne, même sur un iPhone SE (375 px). */
 .actions button > span:last-child { white-space: nowrap; }
@@ -232,7 +232,7 @@
 .actions button.plus.ouvert { background: var(--surface-2); }
 @media (min-width: 300px) and (max-width: 374px) {
   .actions-menu-plus { gap: 2px; padding-inline: 2px; }
-  .actions-menu-plus button { font-size: .75rem; }
+  .actions-menu-plus button { font-size: var(--fs-mini); }
   .actions-menu-plus .actions-aides button { padding-inline: 2px; }
   .actions-menu-plus button.decider { min-width: 60px; padding-inline: 6px; }
   .actions button.plus { width: 44px; min-width: 44px; max-width: 44px; }
@@ -243,7 +243,7 @@
 @media (max-width: 299px) {
   .actions-menu-plus { flex-wrap: wrap; row-gap: 0; padding-inline: 2px; }
   .actions-menu-plus .actions-aides { flex: 1 0 100%; gap: 0; }
-  .actions-menu-plus .actions-aides button { max-width: none; min-width: 44px; padding-inline: 2px; font-size: .75rem; }
+  .actions-menu-plus .actions-aides button { max-width: none; min-width: 44px; padding-inline: 2px; font-size: var(--fs-mini); }
   .actions-menu-plus .actions-filet { display: none; }
   .actions-menu-plus .actions-decisions { flex: 1 0 100%; justify-content: center; }
   .actions-menu-plus button { min-height: 52px; }
@@ -255,7 +255,7 @@
   .joueur-texte { min-width: 52px; }
   .joueur .couvercle-zone { margin-left: auto; }
   .joueur .couvercle-legende { display: none; }
-  .joueur-nom b { font-size: 16px; }
+  .joueur-nom b { font-size: var(--fs-m); }
   .joueur-texte small { white-space: normal; }
 }
 /* La feuille du menu : posée au-dessus de la barre, à droite, et elle s'ouvre depuis le bouton (origine en bas à droite). */
@@ -269,7 +269,7 @@
 .actions .menu-ligne.danger { color: var(--danger-texte); font-weight: var(--fw-bold); }
 .menu-reglages { margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--line); }
 /* Réglage : piste et pastille (même dessin que l'interrupteur du Profil, en 40 × 24). */
-.menu-reglage-piste { position: relative; flex: none; width: 40px; height: 24px; border-radius: 999px; background: var(--surface-2);
+.menu-reglage-piste { position: relative; flex: none; width: 40px; height: 24px; border-radius: var(--radius-pill); background: var(--surface-2);
   box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--muted) 70%, transparent); }
 .menu-reglage-piste i { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: var(--muted); }
 .menu-reglage[aria-checked="true"] .menu-reglage-piste { background: var(--accent); box-shadow: inset 0 0 0 1.5px var(--accent-bord); }
@@ -314,7 +314,7 @@
 /* Indices restants (#35, v3) : une pastille jade avec le nombre sur le coin de l'icône ; la hauteur du bouton ne bouge pas.
    Jade et encre jade : 9:1 dans les deux modes. À zéro, ou bouton désactivé, elle passe à l'encre brume. */
 .compteur-indices { position: relative; display: inline-flex; }
-.compteur-badge { position: absolute; top: -6px; right: -10px; min-width: 17px; height: 17px; padding: 0 4px; border-radius: 999px; box-sizing: border-box;
+.compteur-badge { position: absolute; top: -6px; right: -10px; min-width: 17px; height: 17px; padding: 0 4px; border-radius: var(--radius-pill); box-sizing: border-box;
   background: var(--accent); color: var(--on-accent); box-shadow: 0 0 0 2px var(--barre);
   font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: 11px; line-height: 17px; text-align: center; font-variant-numeric: tabular-nums; }
 .compteur-indices[data-restants="0"] .compteur-badge, .actions button:disabled .compteur-badge { background: var(--surface-2); color: var(--muted); }
@@ -364,7 +364,7 @@
 /* v3 : le couvercle dit ce qu'il contient, en un mot, pour les débutants. */
 .couvercle-legende { color: var(--muted); font-size: 11px; line-height: 1; font-weight: var(--fw-medium); letter-spacing: .01em; }
 .gain-capture { position: absolute; left: 50%; bottom: calc(100% + 2px); transform: translateX(-50%); pointer-events: none; opacity: 0;
-  padding: 3px 9px; border-radius: 999px; background: var(--accent); color: var(--on-accent); box-shadow: 0 4px 10px -4px rgba(0, 0, 0, .45);
+  padding: 3px 9px; border-radius: var(--radius-pill); background: var(--accent); color: var(--on-accent); box-shadow: 0 4px 10px -4px rgba(0, 0, 0, .45);
   font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: var(--fs-l); line-height: 1; font-variant-numeric: tabular-nums; white-space: nowrap; }
 @media (prefers-reduced-motion: reduce) { .gain-capture { display: none; } }
 

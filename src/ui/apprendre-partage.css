@@ -5,6 +5,6 @@
  * arrive avec les écrans Apprendre et Problèmes.
  */
 /* Vignette : une tuile de kaya, posée sur la table comme un mini goban. */
-.vignette { display: inline-block; flex: none; border-radius: 20%; box-shadow: 0 1.5px 0 #7A4A1C, 0 8px 14px -9px rgba(0, 0, 0, .6); }
+.vignette { display: inline-block; flex: none; border-radius: 20%; box-shadow: 0 1.5px 0 var(--bois-tranche), 0 8px 14px -9px rgba(0, 0, 0, .6); }
 .vignette > svg { display: block; }
-.mini-goban { display: block; width: 100%; height: auto; aspect-ratio: 1; border-radius: 12px; box-shadow: 0 3px 0 #7A4A1C, 0 12px 20px -12px rgba(0, 0, 0, .65); }
+.mini-goban { display: block; width: 100%; height: auto; aspect-ratio: 1; border-radius: var(--radius-s); box-shadow: 0 3px 0 var(--bois-tranche), 0 12px 20px -12px rgba(0, 0, 0, .65); }

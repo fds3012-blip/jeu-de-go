@@ -46,9 +46,9 @@ describe('français identique aux textes d’origine', () => {
     expect(messageAtari(true)).toBe(`${ALERTE_ATARI} ${EXPLICATION_ATARI}`);
     expect(messagePasser('Pomme', true)).toBe(`Pomme passe. Plus rien à gagner ? Passe aussi, et on compte. ${EXPLICATION_PASSER}`);
     expect(messageIndice(0)).toBe(`Regarde dans le cercle vert : il y a un bon coup. ${PLUS_D_INDICE}`);
-    expect([0, 1, 2].map(descriptionIndices)).toEqual(["Plus d'indice pour cette partie", '1 indice restant', '2 indices restants']);
+    expect([0, 1, 2].map(descriptionIndices)).toEqual(["Plus d’indice pour cette partie", '1 indice restant', '2 indices restants']);
     expect([0, 1, 3].map(descriptionQuiMene)).toEqual(['Plus disponible pour cette partie', 'Encore 1 fois dans cette partie', 'Encore 3 fois dans cette partie']);
-    expect(phraseQuiMene(-7.6, 'katago')).toBe("Blanc mène d'environ 8 points.");
+    expect(phraseQuiMene(-7.6, 'katago')).toBe("Blanc mène d’environ 8 points.");
     expect(messageComptage('Deux passes : la partie est finie.', 0, false)).toBe('Deux passes : la partie est finie. Aucune pierre morte. Si un groupe ne peut plus vivre, touche-le pour le compter comme prisonnier.');
     expect(messageComptage('x', 2, false)).toBe(`${EXPLICATION_MORTES} Touche un groupe pour corriger.`);
     // #466 : aucune pierre grisée, mais un doute : on ne parle pas de « pierres grisées ».
@@ -81,10 +81,10 @@ describe('français identique aux textes d’origine', () => {
     expect(texteCoups(0, 0)).toBe('Aucun coup joué, aucune pierre capturée.');
     expect(texteCoups(1, 1)).toBe('1 coup, 1 pierre capturée.');
     expect(fin(LISTE[0], 'victoire', stats, { pomme: { v: 1, d: 0 } }, LISTE)).toEqual({
-      mochi: "Tes 3 captures ont fait la différence. Caillou t'attend : prêt ?", cta: 'Défier Caillou', cible: 'caillou',
+      mochi: "Tes 3 captures ont fait la différence. Caillou t’attend : prêt ?", cta: 'Défier Caillou', cible: 'caillou',
       bilan: { texte: '34 coups, 3 pierres capturées. Ton bilan contre Pomme : ', gras: '1 victoire' },
     });
-    expect(leconMochi('defaite', { ...stats, capturesAdv: 4 }, 'Pomme').texte).toBe("Pomme a pris 4 pierres. La leçon sur l'atari t'apprend à les sauver.");
+    expect(leconMochi('defaite', { ...stats, capturesAdv: 4 }, 'Pomme').texte).toBe("Pomme a pris 4 pierres. La leçon sur l’atari t’apprend à les sauver.");
     expect(leconMochi('defaite', { ...stats, marge: 3 }, 'Pomme').texte).toBe('Sans le komi, les 6,5 points donnés à Blanc qui joue en second, tu gagnais !');
   });
 

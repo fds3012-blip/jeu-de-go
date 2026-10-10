@@ -76,7 +76,7 @@ for (const largeur of [390, 320]) {
 
     // Accueil d'un nouveau joueur (v3) : promesse de Mochi, adversaire nommé sans rang, action principale, tuiles.
     await expect(page.getByText('Learn Go by playing: I’ll explain every move.')).toBeVisible();
-    await expect(page.getByText(/your first opponent · 9\s×\s9/)).toBeVisible();
+    await expect(page.getByText(/Your first opponent, on 9\s×\s9/)).toBeVisible();
     await expect(page.getByText(/kyu/)).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Change' })).toBeVisible();
     const cta = page.getByRole('button', { name: 'Play your first game against Pomme' });

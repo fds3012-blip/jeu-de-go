@@ -69,3 +69,11 @@ describe('ton juste', () => {
     expect(avec(/tu es sûr|déjà fini/i)).toEqual([]);
   });
 });
+
+describe('typographie (#509, lot L6)', () => {
+  // Noms accessibles seuls (aria-label), jamais affichés : gardés tels quels, les parcours e2e les citent.
+  const NOMS_ACCESSIBLES = ['conseil.note.question', 'partie.retourAccueil', 'revue.courbe', 'serie.progression'];
+  it('apostrophe typographique (’) entre deux lettres, jamais l’apostrophe droite', () => {
+    expect(avec(/\p{L}'\p{L}/u).filter(k => !NOMS_ACCESSIBLES.includes(k))).toEqual([]);
+  });
+});

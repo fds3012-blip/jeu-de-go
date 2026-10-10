@@ -13,7 +13,7 @@
 .theme-carte:active { background: var(--surface-2); }
 .theme-carte:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .theme-motif { flex: none; width: 32px; }
-.theme-motif .mini-goban { border-radius: 7px; box-shadow: 0 2px 0 #7A4A1C; }
+.theme-motif .mini-goban { border-radius: 7px; box-shadow: 0 2px 0 var(--bois-tranche); }
 .theme-nom { display: flex; flex-direction: column; min-width: 0; }
 .theme-nom b { font-size: var(--fs-s); line-height: 1.2; overflow-wrap: anywhere; }
 /* Le record se lit en or, sous le nom : un record de ce mode, jamais un total (#137). */
@@ -22,7 +22,7 @@
 
 /* Lecteur : « Capturer » puis la pastille des réussites d'affilée, chiffres à chasse fixe (rien ne bouge). */
 .theme-surtitre { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
-.theme-affilee { display: inline-flex; align-items: center; gap: 6px; padding: 1px 8px; border-radius: 999px; background: var(--surface-2);
+.theme-affilee { display: inline-flex; align-items: center; gap: 6px; padding: 1px 8px; border-radius: var(--radius-pill); background: var(--surface-2);
   color: var(--text); font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; }
 .theme-affilee.record { background: color-mix(in srgb, var(--or) 18%, transparent); color: var(--recompense-texte); }
 /* Nouveau record : rare, la pastille se pose (opacité et échelle, 200 ms). Mouvements réduits : --duree vaut 0 (tokens.css). */

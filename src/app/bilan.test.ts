@@ -38,7 +38,7 @@ describe('écran de fin', () => {
     const f = fin(pomme, 'victoire', stats({ capturesMoi: 3 }), { pomme: { v: 1, d: 0 } }, OPPONENTS);
     expect(f.cta).toBe('Défier Caillou');
     expect(f.cible).toBe('caillou');
-    expect(f.mochi).toContain("Caillou t'attend");
+    expect(f.mochi).toContain("Caillou t’attend");
     expect(f.lecon).toBeUndefined();
     expect(`${f.bilan.texte}${f.bilan.gras}.`).toBe('34 coups, 3 pierres capturées. Ton bilan contre Pomme : 1 victoire.');
   });
@@ -81,8 +81,8 @@ describe('phrases du bilan', () => {
 describe('leçon de Mochi', () => {
   it('victoire : dit ce qui a marché, puis le suivant', () => {
     expect(leconMochi('victoire', stats({ capturesMoi: 4, capturesAdv: 1 }), 'Pomme', 'Caillou').texte)
-      .toBe("Tes 4 captures ont fait la différence. Caillou t'attend : prêt ?");
-    expect(leconMochi('victoire', stats({ coups: 40 }), 'Pomme', 'Caillou').texte).toContain("Aucune de tes pierres n'a été prise");
+      .toBe("Tes 4 captures ont fait la différence. Caillou t’attend : prêt ?");
+    expect(leconMochi('victoire', stats({ coups: 40 }), 'Pomme', 'Caillou').texte).toContain("Aucune de tes pierres n’a été prise");
     expect(leconMochi('victoire', stats({ coups: 5, marge: 2.5 }), 'Pomme').texte).toBe('Gagné de peu : chaque point a compté. Personne ne te résiste ici.');
     expect(leconMochi('victoire', stats({ coups: 0, marge: 93.5 }), 'Pomme', 'Caillou').texte).toContain('Victoire nette');
     expect(leconMochi('victoire', stats({ coups: 12, marge: 12.5 }), 'Pomme', 'Caillou').texte).toContain('plus de territoire que Pomme');
@@ -93,7 +93,7 @@ describe('leçon de Mochi', () => {
     expect(tot.texte).toContain('Tu as abandonné tôt');
     expect(tot.lecon).toBeUndefined();
     const prises = leconMochi('defaite', stats({ capturesAdv: 5 }), 'Caillou');
-    expect(prises).toEqual({ texte: "Caillou a pris 5 pierres. La leçon sur l'atari t'apprend à les sauver.", lecon: 'l2' });
+    expect(prises).toEqual({ texte: "Caillou a pris 5 pierres. La leçon sur l’atari t’apprend à les sauver.", lecon: 'l2' });
     expect(leconMochi('defaite', stats({ atarisSubis: 3 }), 'Caillou').lecon).toBe('l2');
     expect(leconMochi('defaite', stats({ abandon: true, coups: 40, marge: 0 }), 'Caillou').texte).toContain('Revois ta partie');
   });

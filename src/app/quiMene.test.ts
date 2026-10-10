@@ -4,17 +4,17 @@ import { carteTerritoire, descriptionQuiMene, DUREE_QUI_MENE, phraseQuiMene, QUI
 // « Qui mène ? » (#94) : phrase, compteur, réglage de l'aide et carte des territoires.
 describe('phraseQuiMene', () => {
   it('annonce le camp qui mène et un écart arrondi, avec KataGo', () => {
-    expect(phraseQuiMene(4.2, 'katago')).toBe("Noir mène d'environ 4 points.");
-    expect(phraseQuiMene(-12.6, 'katago')).toBe("Blanc mène d'environ 13 points.");
-    expect(phraseQuiMene(2, 'katago')).toBe("Noir mène d'environ 2 points.");
+    expect(phraseQuiMene(4.2, 'katago')).toBe("Noir mène d’environ 4 points.");
+    expect(phraseQuiMene(-12.6, 'katago')).toBe("Blanc mène d’environ 13 points.");
+    expect(phraseQuiMene(2, 'katago')).toBe("Noir mène d’environ 2 points.");
   });
   it("dit « C'est serré » sous 2 points avec KataGo", () => {
     for (const l of [0, 1.9, -1.5, 0.4]) expect(phraseQuiMene(l, 'katago')).toBe(SERRE);
   });
   it("est plus prudent avec l'estimation simple : jamais un chiffre sous 5 points", () => {
     for (const l of [0, 2, -3, 4.9, -4.9]) expect(phraseQuiMene(l, 'simple')).toBe(SERRE);
-    expect(phraseQuiMene(8.4, 'simple')).toBe("Noir mène d'environ 8 points.");
-    expect(phraseQuiMene(-6, 'simple')).toBe("Blanc mène d'environ 6 points.");
+    expect(phraseQuiMene(8.4, 'simple')).toBe("Noir mène d’environ 8 points.");
+    expect(phraseQuiMene(-6, 'simple')).toBe("Blanc mène d’environ 6 points.");
   });
   it("dit « C'est serré » pour une valeur absurde", () => {
     expect(phraseQuiMene(Number.NaN, 'katago')).toBe(SERRE);

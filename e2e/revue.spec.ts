@@ -69,9 +69,9 @@ test("fin de partie, bilan, revue coup par coup, puis rejouer d'ici", async ({ p
   await expect(page.getByRole('heading', { level: 2, name: 'Victoire' })).toBeVisible();
   await page.getByRole('button', { name: 'Revoir ma partie' }).click();
 
-  // Rejouer d'ici au coup 1 : c'est à Pomme, donc on reprend avant E5, Noir au trait.
+  // Rejouer d’ici au coup 1 : c'est à Pomme, donc on reprend avant E5, Noir au trait.
   await demarrerParcours(page, 1);
-  await page.getByRole('button', { name: "Rejouer d'ici" }).click();
+  await page.getByRole('button', { name: 'Rejouer d’ici' }).click();
   await expect(page.getByRole('heading', { level: 2, name: 'Revoir ma partie' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Passer' })).toBeEnabled();
   await expect(plateau(page).locator('g[data-pierre]')).toHaveCount(0);
@@ -84,7 +84,7 @@ test("rejouer d'ici garde les coups joués jusqu'à la position choisie", async 
   // Coup 2 : E5 puis la réponse de Pomme ; on reprend juste avant la réponse, avec E5 sur le plateau.
   await demarrerParcours(page, 2);
   await expect(page.getByText(/Coup 2 sur \d+/)).toBeVisible();
-  await page.getByRole('button', { name: "Rejouer d'ici" }).click();
+  await page.getByRole('button', { name: 'Rejouer d’ici' }).click();
   await expect(page.getByText('On reprend ici. À toi de trouver mieux !')).toBeVisible();
   await expect(plateau(page).locator('g[data-point="E5"][data-pierre="noir"]')).toHaveCount(1);
   await expect(page.getByRole('button', { name: 'Passer' })).toBeEnabled();
@@ -132,7 +132,7 @@ test('défaite lourde : précision plafonnée et bilan sans félicitations', asy
   await expect(phrase).not.toHaveText(/Aucune erreur|Très belle|plus juste/);
 });
 
-// Issue #186 : le moment clé (passes comprises) fait partie des coups clés du parcours, et « Rejouer d'ici » en repart.
+// Issue #186 : le moment clé (passes comprises) fait partie des coups clés du parcours, et « Rejouer d’ici » en repart.
 // Pomme choisit ses coups au hasard parmi ses bons coups : on joue sur la première ligne (des coups perdants) et on
 // recommence jusqu'à trois fois si la partie n'a pas de moment clé.
 test("le parcours passe par le moment clé, et rejoue d'ici sans partie vide", async ({ page }) => {
@@ -154,8 +154,8 @@ test("le parcours passe par le moment clé, et rejoue d'ici sans partie vide", a
   await expect(page.locator('.cta')).toHaveCount(1);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
 
-  // « Rejouer d'ici » repart juste avant le coup clé, Noir au trait : jamais d'une partie vide.
-  await page.getByRole('button', { name: "Rejouer d'ici" }).click();
+  // « Rejouer d’ici » repart juste avant le coup clé, Noir au trait : jamais d'une partie vide.
+  await page.getByRole('button', { name: 'Rejouer d’ici' }).click();
   await expect(page.getByText('On reprend ici. À toi de trouver mieux !')).toBeVisible();
   expect(await plateau(page).locator('g[data-pierre]').count()).toBeGreaterThan(0);
   await expect(page.getByRole('button', { name: 'Passer' })).toBeEnabled();

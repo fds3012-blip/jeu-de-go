@@ -30,6 +30,6 @@
   border: solid var(--accent-texte); border-width: 0 2.5px 2.5px 0; transform: rotate(45deg); }
 .import-camp-texte { display: flex; flex-direction: column; min-width: 0; }
 .import-camp-texte b { font-weight: var(--fw-bold); }
-.import-camp-nom { color: var(--muted); font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.import-camp-nom { color: var(--muted); font-size: var(--fs-s); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .import .cta:disabled { opacity: .45; cursor: default; }
 @media (prefers-reduced-motion: reduce) { .import-camp { transition: none; } }

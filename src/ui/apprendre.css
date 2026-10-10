@@ -42,7 +42,7 @@
 .pas-encours { margin: 4px 0; }
 /* Une rangée : la pierre à sa colonne (--x depuis le milieu), le texte en face, du côté libre. */
 .pas-bouton { display: flex; align-items: center; gap: 12px; width: 100%; background: none; border: 0; padding: 0; color: inherit;
-  text-align: left; border-radius: 16px; min-height: var(--pierre); }
+  text-align: left; border-radius: var(--radius); min-height: var(--pierre); }
 .a-gauche .pas-bouton { padding-left: calc(50% + var(--x) - var(--pierre) / 2); }
 .a-droite .pas-bouton { flex-direction: row-reverse; text-align: right; padding-right: calc(50% - var(--x) - var(--pierre) / 2); }
 .pas-texte { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; }
@@ -335,7 +335,7 @@
 /* ---------- Go du jour (issue #75) : numéro en Bricolage, « Partager » en action secondaire ---------- */
 .numero-du-jour { font-family: var(--font-titre); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre); color: var(--text); font-variant-numeric: tabular-nums; }
 .entete-du-jour { font-size: .9rem; }
-.entete-du-jour .numero-du-jour { font-size: 1rem; }
+.entete-du-jour .numero-du-jour { font-size: var(--fs-m); }
 .verdict .btn.partager { width: 100%; color: var(--text); display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); }
 .partager svg { fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
 .partage-etat { margin: 0; min-height: 1.3em; text-align: center; font-weight: var(--fw-bold); font-size: var(--fs-s); }
@@ -391,7 +391,7 @@
   padding: var(--space-4) var(--space-4) var(--space-4); box-shadow: inset 0 1px 0 var(--line); }
 .problemes > section > .continuer-carte { border-radius: 20px; background: var(--surface); box-shadow: none; }
 .continuer-goban { position: relative; display: block; width: 84px; height: 84px; border-radius: 14px; overflow: hidden; cursor: pointer;
-  box-shadow: 0 3px 0 #7A4A1C, 0 12px 20px -12px rgba(0, 0, 0, .65); }
+  box-shadow: 0 3px 0 var(--bois-tranche), 0 12px 20px -12px rgba(0, 0, 0, .65); }
 .continuer-goban .mini-goban { width: 100%; height: 100%; border-radius: 0; box-shadow: none; filter: blur(1.1px) saturate(.9); transform: scale(1.06); }
 /* Voile d'encre : la position se devine, elle ne se lit pas. */
 .continuer-goban::after { content: ""; position: absolute; inset: 0; border-radius: 14px; box-shadow: inset 0 0 0 1.5px rgba(58, 41, 18, .35), inset 0 -22px 26px -10px rgba(28, 25, 22, .5); }
@@ -443,7 +443,7 @@
 .pastille-ok .sceau-fond { fill: var(--jade); stroke: var(--jade-bord); stroke-width: 1.5; }
 .pastille-ok .sceau-anneau { fill: none; stroke: var(--tampon-papier); stroke-width: 1.4; opacity: .8; }
 .pastille-ok svg .sceau-coche { fill: none; stroke: var(--tampon-papier); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
-.grille-pb button.reussi .mini-goban { box-shadow: 0 0 0 2px var(--jade-bord), 0 3px 0 #7A4A1C, 0 12px 20px -12px rgba(0, 0, 0, .65); }
+.grille-pb button.reussi .mini-goban { box-shadow: 0 0 0 2px var(--jade-bord), 0 3px 0 var(--bois-tranche), 0 12px 20px -12px rgba(0, 0, 0, .65); }
 .grille-pb button.reussi b { color: var(--accent-texte); }
 
 /* Fête du palier complet (#103), une seule fois : le soleil se lève sur le paysage, le sceau se pose, un liseré d'or. */
@@ -458,11 +458,11 @@
 @keyframes or-lueur { 0% { box-shadow: inset 0 0 0 2px transparent; } 40% { box-shadow: inset 0 0 0 2px var(--or); } 100% { box-shadow: inset 0 0 0 2px transparent; } }
 
 /* ---------- Révision du jour (issue #199) : une seule carte, le prochain exercice, sans total ---------- */
-.revision-carte { display: flex; align-items: center; gap: var(--space-3); width: 100%; min-height: 88px; padding: var(--space-3); border: 0; border-radius: 16px;
+.revision-carte { display: flex; align-items: center; gap: var(--space-3); width: 100%; min-height: 88px; padding: var(--space-3); border: 0; border-radius: var(--radius);
   background: var(--surface); color: var(--text); text-align: left; font: inherit; cursor: pointer; }
 .revision-carte:active { background: color-mix(in srgb, var(--surface) 85%, var(--text)); }
 .revision-goban { flex: none; width: 64px; }
-.revision-goban .mini-goban { border-radius: 8px; box-shadow: 0 2px 0 #7A4A1C; }
+.revision-goban .mini-goban { border-radius: 8px; box-shadow: 0 2px 0 var(--bois-tranche); }
 .revision-texte { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
 .revision-texte b { font-family: var(--font-titre); font-weight: var(--fw-bold); font-size: var(--fs-m); line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .revision-texte small { color: var(--muted); font-size: var(--fs-s); }
@@ -472,7 +472,7 @@
   .revision-carte { transition: transform 160ms cubic-bezier(.23, 1, .32, 1); }
   .revision-carte:active { transform: scale(.98); transition-duration: 80ms; }
 }
-.revision-faite { display: flex; align-items: center; gap: var(--space-3); margin: 0; padding: var(--space-3) var(--space-4); border-radius: 16px; background: var(--surface); font-weight: var(--fw-bold); }
+.revision-faite { display: flex; align-items: center; gap: var(--space-3); margin: 0; padding: var(--space-3) var(--space-4); border-radius: var(--radius); background: var(--surface); font-weight: var(--fw-bold); }
 .revision-faite svg { flex: none; }
 .revision-faite .rv-fond { fill: var(--jade); stroke: var(--jade-bord); stroke-width: 1.5; }
 .revision-faite .rv-coche { fill: none; stroke: var(--encre-jade); stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round; }

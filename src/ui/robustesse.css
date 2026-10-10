@@ -12,7 +12,7 @@
 .ecran-erreur-actions .lien { min-height: var(--cible-min); }
 
 /* ---------- Bandeaux discrets ---------- */
-.bandeau { display: flex; align-items: center; gap: 10px; margin: 0 0 var(--space-3); padding: 8px 12px; border-radius: 12px;
+.bandeau { display: flex; align-items: center; gap: 10px; margin: 0 0 var(--space-3); padding: 8px 12px; border-radius: var(--radius-s);
   font-size: var(--fs-s); color: var(--text); background: var(--surface); }
 .bandeau svg { flex: none; }
 .bandeau-hors-ligne { color: var(--muted); }

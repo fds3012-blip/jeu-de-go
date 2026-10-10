@@ -207,9 +207,9 @@ describe('précision et bilan', () => {
 
   it('phrase de Mochi : cite la plus grosse erreur du joueur', () => {
     const n = [nc(1, 1, 0.2), nc(2, 2, 3), nc(3, 1, 7, 'grosse'), nc(4, 2, 1), nc(5, 1, 4, 'erreur')];
-    expect(phraseBilan(n, 1, 'Pomme')).toBe("Partie difficile, ça arrive. Ton coup 3 t'a coûté 7 points : va le revoir.");
+    expect(phraseBilan(n, 1, 'Pomme')).toBe("Partie difficile, ça arrive. Ton coup 3 t’a coûté 7 points : va le revoir.");
     const m = [nc(1, 1, 0), nc(2, 2, 0.5), nc(3, 1, 5, 'erreur'), nc(4, 2, 0.5), nc(5, 1, 0)];
-    expect(phraseBilan(m, 1, 'Pomme')).toBe("Partie correcte. Ton coup 3 t'a coûté 5 points : va le revoir.");
+    expect(phraseBilan(m, 1, 'Pomme')).toBe("Partie correcte. Ton coup 3 t’a coûté 5 points : va le revoir.");
   });
 
   it('phrase de Mochi : félicite sans erreur, et compare à l’adversaire', () => {

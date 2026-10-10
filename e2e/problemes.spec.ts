@@ -30,7 +30,7 @@ test('problèmes sans compte : erreur, bonne réponse, suite et problème suivan
   expect(miniatures).toBeGreaterThan(0);
   expect(miniatures).toBe(await page.getByRole('group', { name: /^Débutant/ }).locator('[data-probleme]').count());
 
-  // Le problème b1 (par son titre, les lots de #91 s'intercalent par difficulté) : la pierre blanche D5 n'a plus qu'une liberté, en E5.
+  // Le problème b1 (par son titre, les lots de #91 s'intercalent par difficulté) : la pierre blanche D5 n’a plus qu’une liberté, en E5.
   await page.getByRole('button', { name: /^Problème \d+ : Capture la pierre/ }).click();
   await expect(plateau(page)).toBeVisible();
 

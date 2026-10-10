@@ -58,12 +58,12 @@ describe('noms lus', () => {
   });
 
   it("annonce l'atari des pierres voisines du coup", () => {
-    // Blanc joue D5 : la pierre noire D4 n'a plus qu'une liberté, en D3.
+    // Blanc joue D5 : la pierre noire D4 n’a plus qu’une liberté, en D3.
     const b1 = fromRows(['.........', '.........', '.........', '.........', '...O.....', '..OXO....', '.........', '.........', '.........']).pos.board;
-    expect(annonceAtari(b1, at('D5'), N)).toBe("Atari : ta pierre D4 n'a plus qu'une liberté, en D3.");
+    expect(annonceAtari(b1, at('D5'), N)).toBe("Atari : ta pierre D4 n’a plus qu’une liberté, en D3.");
     // Noir met en atari deux pierres de Pomme.
     const b3 = fromRows(['.........', '.........', '.........', '...X.....', '..XOOX...', '...XX....', '.........', '.........', '.........']).pos.board;
-    expect(annonceAtari(b3, at('F5'), N, { 2: 'Pomme' })).toBe("Atari : les pierres D5, E5 de Pomme n'ont plus qu'une liberté, en E6.");
+    expect(annonceAtari(b3, at('F5'), N, { 2: 'Pomme' })).toBe("Atari : les pierres D5, E5 de Pomme n’ont plus qu’une liberté, en E6.");
     // Intersection vide, ou groupe voisin avec deux libertés : chaîne vide.
     expect(annonceAtari(b1, at('A1'), N)).toBe('');
     expect(annonceAtari(b3, at('C6'), N)).toBe('');

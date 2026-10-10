@@ -56,10 +56,10 @@ describe('annonce après un coup', () => {
   });
 
   it("le coup de l'adversaire nommé, sa prise, puis l'atari", () => {
-    // Blanc (Pomme) joue D5 : la pierre noire D4 n'a plus qu'une liberté, en D3.
+    // Blanc (Pomme) joue D5 : la pierre noire D4 n’a plus qu’une liberté, en D3.
     const b = fromRows(['.........', '.........', '.........', '.........', '...O.....', '..OXO....', '.........', '.........', '.........']).pos.board;
     expect(annonceApresCoup(b, at('D5'), 1, N, { 2: 'Pomme' }))
-      .toBe("Pomme a joué D5 et prend 1 pierre. Atari : ta pierre D4 n'a plus qu'une liberté, en D3.");
+      .toBe("Pomme a joué D5 et prend 1 pierre. Atari : ta pierre D4 n’a plus qu’une liberté, en D3.");
   });
 });
 

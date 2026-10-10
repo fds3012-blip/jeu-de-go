@@ -133,7 +133,7 @@ export function ligneKomi(komi: number, c: Camps = campsRecit()): string {
   return t('recit.komi', { signe: komi < 0 ? '−' : '+', v: nombre(Math.abs(komi)), pour: dans(c, 2) });
 }
 
-export const EXPLICATION_KOMI = "Le komi compense l'avantage de Noir, qui joue en premier.";
+export const EXPLICATION_KOMI = "Le komi compense l’avantage de Noir, qui joue en premier.";
 
 /** « Noir gagne de 2,5 points » à deux ; contre l'ordi « Tu gagnes de 3,5 points ! » ou « Pomme gagne de 2,5 points ». */
 export function ligneResultat(r: Recit, c: Camps = campsRecit()): string {

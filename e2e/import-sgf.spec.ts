@@ -109,8 +109,8 @@ test('import SGF : coller, choisir son camp, revue, rejouer une erreur', async (
   const gardee = await page.evaluate(() => JSON.parse(localStorage.getItem('go.revue.v1') ?? 'null'));
   expect(gardee).toMatchObject({ importee: true, joueur: 1, adversaire: 'Takumi88' });
   expect(gardee.sgf).not.toContain('bonne partie');
-  // Pas de « Rejouer d'ici » pour une partie importée ; l'import reste accessible en action secondaire.
-  await expect(page.getByRole('button', { name: "Rejouer d'ici" })).toHaveCount(0);
+  // Pas de « Rejouer d’ici » pour une partie importée ; l'import reste accessible en action secondaire.
+  await expect(page.getByRole('button', { name: 'Rejouer d’ici' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Analyser une autre partie' })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   await capturer(page, 'import-revue');

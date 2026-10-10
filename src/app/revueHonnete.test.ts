@@ -100,7 +100,7 @@ describe('moment clé, passes comprises', () => {
     expect(note.perte).toBeCloseTo(5);
     expect(note.note).toBe('erreur');
   });
-  it("« Rejouer d'ici » au moment clé repart de la position d'avant la passe, pas d'une partie vide", () => {
+  it("« Rejouer d’ici » au moment clé repart de la position d'avant la passe, pas d'une partie vide", () => {
     const cle = momentCle(h, a, 1)!;
     const reprise = rejouerDici(h, cle.coup, 1);
     expect(reprise).toHaveLength(5);
@@ -168,18 +168,18 @@ describe('bilan honnête', () => {
   });
   it('défaite nette avec un moment clé : il est cité', () => {
     const t = phraseBilan(zero, 1, 'Pomme', { avanceNoir: -61.5, size: 9, cle: { coup: 26, perte: 12.4, passe: true, prises: 6 } });
-    expect(t).toBe("Tu perds de 61,5 points. Ta passe au coup 26 t'a coûté 12 points : rejoue-le.");
+    expect(t).toBe("Tu perds de 61,5 points. Ta passe au coup 26 t’a coûté 12 points : rejoue-le.");
   });
   it('défaite nette : la plus grosse erreur notée si elle dépasse le moment clé', () => {
     const n = [...zero, { coup: 43, couleur: 1, perte: 9, note: 'grosse' } as NoteCoup];
     expect(phraseBilan(n, 1, 'Pomme', { avanceNoir: -8, size: 9, cle: { coup: 20, perte: 5, passe: false, prises: 0 } }))
-      .toBe("Tu perds de 8 points. Ton coup 43 t'a coûté 9 points : va le revoir.");
+      .toBe("Tu perds de 8 points. Ton coup 43 t’a coûté 9 points : va le revoir.");
   });
   it('victoire de 1,5 : le bilan habituel', () => {
     expect(phraseBilan(zero, 1, 'Pomme', { avanceNoir: 1.5, size: 9 })).toBe('Très belle partie, tu as joué juste. Aucune erreur, continue comme ça !');
   });
   it('partie serrée perdue de 2,5 : pas de plafond, mais le moment clé remplace « aucune erreur »', () => {
     expect(phraseBilan(zero, 1, 'Pomme', { avanceNoir: -2.5, size: 9, cle: { coup: 12, perte: 4.2, passe: false, prises: 0 } }))
-      .toBe("Très belle partie, tu as joué juste. Ton coup 12 t'a coûté 4 points : va le revoir.");
+      .toBe("Très belle partie, tu as joué juste. Ton coup 12 t’a coûté 4 points : va le revoir.");
   });
 });

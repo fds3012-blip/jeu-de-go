@@ -78,7 +78,7 @@ describe('grossesErreurs', () => {
 
   it("phrase de Mochi : l'adversaire capture juste après", () => {
     const c = partie(['A9', 'B9', 'E5', 'A8']);
-    expect(phraseErreur({ coup: 3, perte: 3 }, c, null)).toBe("Après ce coup, l'adversaire capture une pierre. Tu perds environ 3 points.");
+    expect(phraseErreur({ coup: 3, perte: 3 }, c, null)).toBe("Après ce coup, l’adversaire capture une pierre. Tu perds environ 3 points.");
   });
 });
 

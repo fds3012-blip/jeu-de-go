@@ -60,7 +60,7 @@ test('le ko : reprise immédiate refusée, permise après un coup ailleurs', asy
 
   // Blanc tente de reprendre tout de suite en D5.
   await jouer(page, 'D5');
-  await expect(message(page)).toHaveText("Ko : tu ne peux pas reprendre tout de suite, joue d'abord ailleurs.");
+  await expect(message(page)).toHaveText("Ko : tu ne peux pas reprendre tout de suite, joue d’abord ailleurs.");
   await attendrePierre(page, 'D5', null);
   await attendrePierre(page, 'E5', 'noir');
   await expect(bandeau(page, 'Blanc')).toHaveClass(/active/);
