@@ -29,6 +29,7 @@ import { ecrireFaconEnLigne, lireFaconEnLigne } from './enLigne';
 import type { FaconEnLigne } from './BasculeEnLigne';
 import { EVENTS, secondsSinceOpen, track, trackOnce } from '../data/analytics';
 import { compterEtape } from '../data/compteurs';
+import { ecouterPremierGeste } from './premierGeste';
 import { estArriveeRappel, etatRappel } from './rappel';
 import { PARAM, PARAM_COURT, SERIE_KEY, numeroDuJour, numeroDuLien, problemeDuJour, type Serie } from './goDuJour';
 import { battu, BILAN_KEY, dejaAffronte, enregistrer, fin, finTropTot, komiDepuisUrl, lireBilan, type Bilan, type Issue, type StatsPartie } from './bilan';
@@ -400,6 +401,8 @@ export function App() {
   // Lu au montage : une partie jouée ensuite ne change pas la réponse. L'envoi attend le premier écran.
   const [nouvelAppareil] = useState(() => parties.n === 0 && ouverture.retours === 0);
   useEffect(() => { compterEtape('premier_ecran', { nouveau: nouvelAppareil }); }, [nouvelAppareil]);
+  // #519 : premier geste réel (toucher, clic, touche) : dénominateur humain de l'entonnoir, les robots ne touchent rien.
+  useEffect(() => ecouterPremierGeste(nouvelAppareil), [nouvelAppareil]);
   // #236 (N4) : un seul appel secondaire sur l'accueil (annonce de Mochi, carte d'installation ou « À faire »).
   const plateforme = usePlateformeInstallation();
   const [etatInstall] = useState(etatInstallation);

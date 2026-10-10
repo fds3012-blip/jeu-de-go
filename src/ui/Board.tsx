@@ -2,7 +2,7 @@ import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type K
 import { LETTERS, toLabel } from '../go/coords';
 import { C, M, R, R_NOIR, VARIANTES_COQUILLAGE, coordCenter, dansFenetre, diffBoards, hoshi, jitter, shellStriae, shellVariant, vueDe, woodDataUrl, type FenetrePlateau, type ThemeGoban } from './boardArt';
 import { useThemeGoban } from '../app/settings';
-import { noterPierrePosee } from '../app/premierePierre';
+import { noterPierrePosee, pierrePosee, toucherPlateau, type LieuPierre } from '../app/premierePierre';
 import { t } from '../content/i18n';
 import { CURSEUR, TOUCHE_LIRE, annonceApresCoup, annonceConfirmation, deplacerCurseur, lirePlateau, nomIntersection, type NomsCamps } from './boardA11y';
 import './board.css';
@@ -65,6 +65,8 @@ interface Props {
    * touchables et parcourues au clavier ; coordonnées et hoshi restent ceux du vrai plateau. Absent par défaut : tout le plateau.
    */
   fenetre?: FenetrePlateau | null;
+  /** #519 : lieu du plateau pour la mesure (première pierre, premier toucher). Par défaut `autre`. */
+  lieu?: LieuPierre;
 }
 
 // Les fonctions pures du clavier et des annonces (issue #116) vivent dans boardA11y.ts.
@@ -127,7 +129,7 @@ function corps(c: number, p: number, size: number): ReactElement {
   return <use href={c === 1 ? '#go-noire' : `#go-blanche-${shellVariant(p, size)}`} />;
 }
 
-export function Board({ size, board, toPlay = 1, marks = {}, interactive = false, stonesTappable = false, confirmTouch = true, toucher = false, onPlay, shake, versCouvercles = false, noms, surFantome, onFantome, coordonnees = true, numeros, fenetre }: Props) {
+export function Board({ size, board, toPlay = 1, marks = {}, interactive = false, stonesTappable = false, confirmTouch = true, toucher = false, onPlay, shake, versCouvercles = false, noms, surFantome, onFantome, coordonnees = true, numeros, fenetre, lieu = 'autre' }: Props) {
   const ref = useRef<SVGSVGElement>(null);
   const theme = useThemeGoban();
   const [ghost, setGhostEtat] = useState(-1);
@@ -197,10 +199,12 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
     const p = pointFrom(e);
     if (p < 0) return;
     if (board[p] && !stonesTappable) return;
+    // #519 : premier toucher d'un point vide (fantôme ou pierre), compté une fois.
+    if (!board[p]) toucherPlateau(lieu);
     if (!board[p] && confirmTouch && e.pointerType !== 'mouse' && ghost !== p) { setGhost(p, true); return; }
     setGhost(-1);
-    // #487 : la première pierre posée sur l'appareil (partie, leçon, problème…) complète l'accueil.
-    if (!board[p]) noterPierrePosee();
+    // #487 : la première pierre posée sur l'appareil (partie, leçon, problème…) complète l'accueil ; #519 : et se mesure.
+    if (!board[p]) poser();
     onPlay(p);
   }
   function onKey(e: KeyboardEvent) {
@@ -218,12 +222,15 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
     e.preventDefault();
     if (!interactive || !onPlay) return;
     if (board[cur] && !stonesTappable) { setAnnonce(t('plateau.occupe', { point: toLabel(cur, size) })); return; }
+    if (!board[cur]) toucherPlateau(lieu);
     // « Confirmer au doigt » : le premier appui montre la pierre fantôme, le second la pose.
     if (!board[cur] && confirmTouch && ghost !== cur) { setGhost(cur, true); setAnnonce(annonceConfirmation(toLabel(cur, size), toucher)); return; }
     setGhost(-1);
-    if (!board[cur]) noterPierrePosee();
+    if (!board[cur]) poser();
     onPlay(cur);
   }
+  // Une question « touche le point » ne pose pas de pierre : elle complète l'accueil (#487) sans se compter comme pierre.
+  function poser() { if (toucher) noterPierrePosee(); else pierrePosee(lieu); }
   function lire() { setAnnonce(lirePlateau(board, size)); }
   function onMove(e: PointerEvent) {
     if (!interactive || e.pointerType !== 'mouse') return;

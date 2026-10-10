@@ -210,6 +210,8 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     if (!ai) return;
     setReplique(r => ({ texte: choisirReplique(ai.id, s, r?.texte), n: (r?.n ?? 0) + 1 }));
   }
+  // #519 : écran de partie ouvert sur un appareil neuf (compteur anonyme, une fois) : entre « premier écran » et « pierre ».
+  useEffect(() => { compterEtape('partie_ouverte'); }, []);
   // La réplique s'efface au bout de 3 s.
   useEffect(() => {
     if (humeur.h === 'neutre') return;
@@ -367,8 +369,8 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     setHistory([...history, r]);
     if (history.length === 1) track(EVENTS.partieCommencee, { mode: ai ? 'ordi' : 'deux', adversaire: ai?.id, taille: size });
     if (history.length === 1) {
-      trackOnce(EVENTS.premierePierre, { secondes: secondsSinceOpen(), mode: ai ? 'ordi' : 'deux', adversaire: ai?.id, taille: size });
-      compterEtape('premiere_pierre');
+      // Le compteur anonyme `premiere_pierre` part du plateau (src/app/premierePierre.ts, #519), où que soit la pierre.
+      trackOnce(EVENTS.premierePierre, { secondes: secondsSinceOpen(), lieu: 'partie', mode: ai ? 'ordi' : 'deux', adversaire: ai?.id, taille: size });
     }
     if (ai) {
       if (cap) { repliquer('captureSubie'); reagir('surpris'); }
@@ -678,7 +680,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
       <ListeCoups coups={coups} apres={<BoutonAide depuis="partie" fiche={phase === 'score' ? 'compter' : 'regles'} className="ruban-aide" />} />
       {ai && avantage && (!estimationKo || phase === 'score') && <BarreAvantage libelle={lead === null ? '' : libelleAvantage(lead)} part={lead === null ? 0.5 : partNoir(lead, size)} titre={phase === 'score' ? tr('partie.scoreCompte') : undefined} />}
       <div className="partie-plateau">
-        <Board size={size} board={pos.board} toPlay={pos.toPlay} interactive={phase === 'score' || myTurn} stonesTappable={phase === 'score'} confirmTouch={confirmTouch}
+        <Board lieu="partie" size={size} board={pos.board} toPlay={pos.toPlay} interactive={phase === 'score' || myTurn} stonesTappable={phase === 'score'} confirmTouch={confirmTouch}
           coordonnees={prefs.coordonnees} marks={{ last: prefs.dernierCoup ? pos.lastMove : null, owner: phase === 'score' ? sc.owner : quiMeneVisible?.owner, ownerFondu: !!quiMeneVisible, dead, libs, zone, ouverts: phase === 'play' ? frontieresVisibles(frontieres, history.length, pos.board, size, !!ai) : undefined }} onPlay={onPlay} onFantome={setFantome} shake={shake} versCouvercles noms={ai ? { 2: ai.nom } : undefined} />
         {conseilVisible && <CalqueConseil size={size} zone={conseilVisible.zone} point={conseilVisible.point} board={pos.board} eviter={conseilVisible.modele === 'coup-a-eviter'} />}
         {calque && <CalqueConseil size={size} zone={calque.zone} point={calque.point} board={pos.board} />}

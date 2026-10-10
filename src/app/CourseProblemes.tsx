@@ -191,7 +191,7 @@ function EnCourse({ etat, setEtat, liste, confirmTouch, onFin, onExit }: {
         <>
           <Bubble>{fr(`${pz.prompt} ${t(pz.toPlay === 1 ? 'pb.tuJoues.1' : 'pb.tuJoues.2')}`)}</Bubble>
           <div className={`course-plateau${retour ? (retour.ok ? ' juste' : ' faux') : ''}`}>
-            <Board key={pz.id} size={pz.size} board={board} toPlay={pz.toPlay} interactive={!retour && !etat.fin}
+            <Board lieu="probleme" key={pz.id} size={pz.size} board={board} toPlay={pz.toPlay} interactive={!retour && !etat.fin}
               confirmTouch={confirmTouch || estSerre(pz.size)} surFantome={estSerre(pz.size) ? q => <Visee p={q} size={pz.size} /> : undefined} onPlay={onPlay} shake={shake}
               marks={{ targets: depart.marked, last: retour?.p ?? null, ok: retour?.ok ? retour.p : undefined, mistake: retour && !retour.ok ? retour.p : undefined }} />
           </div>

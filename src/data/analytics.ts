@@ -22,7 +22,15 @@ export const EVENTS = {
   // Accueil affiché et utilisable (page chargée, polices prêtes), une fois (trackOnce). `nouveau` : premier lancement
   // sur l'appareil (aucune partie, aucun retour) : dénominateur de l'entonnoir des 60 premières secondes, même sans accord.
   premierEcranVu: 'premier_ecran_vu',
+  // Première pierre de la session (sans accord) ou de l'appareil (avec accord), où qu'elle soit posée (#519) : `lieu`
+  // (`partie`, `en_ligne`, `lecon`, `probleme`, `placement`, `autre`), `secondes` ; en partie, aussi `mode`, `adversaire`, `taille`.
   premierePierre: 'premiere_pierre',
+  // Première interaction réelle de la page (#519) : premier `pointerdown` ou `keydown` émis par une personne (`isTrusted`).
+  // `secondes`, `nouveau`. Dénominateur humain des 60 premières secondes (un robot qui charge la page ne touche rien).
+  premierGeste: 'premier_geste',
+  // Premier toucher d'un point vide d'un plateau jouable (#519) : pierre fantôme montrée ou pierre posée. `secondes`, `lieu`.
+  // Abandon entre le fantôme et la pierre : `premier_toucher_plateau` sans `premiere_pierre` dans la session.
+  premierToucherPlateau: 'premier_toucher_plateau',
   partieTerminee: 'partie_terminee',
   // Première partie contre l'ordi menée jusqu'au score ou à l'abandon (une fois par appareil, via trackOnce ; #35).
   premierePartieTerminee: 'premiere_partie_terminee',

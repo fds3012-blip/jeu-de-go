@@ -4,9 +4,14 @@ import { abandonner, choisirMode, jouer, plateau } from './plateau';
 
 // #437 : compteurs anonymes de la première visite (src/data/compteurs.ts, fonction `compter_etape`). Supabase est
 // simulé (e2e/fauxSupabase.ts) ; on lit les appels `compter_etape` envoyés par chaque téléphone.
-// Une première session compte chacune des six étapes une seule fois ; le drapeau de l'équipe coupe tout.
+// Une première session compte chacune des neuf étapes une seule fois ; le drapeau de l'équipe coupe tout.
+// #519 : un navigateur piloté (`navigator.webdriver`, comme celui de Playwright) ne compte rien. Les téléphones des tests
+// se déclarent donc navigateur ordinaire (`humain`) ; le dernier test garde le drapeau et vérifie que rien ne part.
 
-const ETAPES = ['premier_ecran', 'premiere_pierre', 'premiere_partie_finie', 'limite_essai', 'compte_cree', 'premiere_partie_en_ligne'];
+// Ordre d'une première session : écran, geste (toucher « Joue ta première partie »), partie ouverte, plateau touché
+// (pierre fantôme), pierre, partie finie, limite, compte, partie en ligne.
+const ETAPES = ['premier_ecran', 'premier_geste', 'partie_ouverte', 'premier_toucher_plateau', 'premiere_pierre',
+  'premiere_partie_finie', 'limite_essai', 'compte_cree', 'premiere_partie_en_ligne'];
 const HOTE_POSTHOG = 'https://posthog-e2e.test';
 
 interface Envoi { etape: string; autorisation: string | undefined; referer: string | undefined; cookie: string | undefined }
@@ -22,9 +27,16 @@ function ecouter(page: Page): Envoi[] {
   return envois;
 }
 
-async function telephone(browser: Browser, baseURL: string | undefined, serveur: FauxServeur, stockage: Record<string, string> = {}): Promise<Page> {
+/** Navigateur ordinaire : `navigator.webdriver` faux, comme chez un joueur (sinon rien n'est compté, #519). */
+async function humain(page: Page): Promise<Page> {
+  await page.addInitScript(() => { Object.defineProperty(Navigator.prototype, 'webdriver', { get: () => false }); });
+  return page;
+}
+
+async function telephone(browser: Browser, baseURL: string | undefined, serveur: FauxServeur, stockage: Record<string, string> = {}, pilote = false): Promise<Page> {
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, locale: 'fr-FR', baseURL, reducedMotion: 'reduce' });
-  return brancher(ctx, serveur, { 'go.consentement.v1': 'refuse', ...stockage });
+  const page = await brancher(ctx, serveur, { 'go.consentement.v1': 'refuse', ...stockage });
+  return pilote ? page : humain(page);
 }
 
 const etapes = (e: Envoi[]) => e.map(x => x.etape);
@@ -49,11 +61,13 @@ test('première session : chaque étape comptée une seule fois, sans session ni
   await expect(page.locator('.cta')).toHaveText('Joue ta première partie');
   await expect.poll(() => etapes(envois)).toEqual(['premier_ecran']);
 
-  // 2. Première pierre, puis 3. première partie finie (abandon).
+  // 2. Premier geste (le toucher du bouton), partie ouverte, plateau touché, première pierre, puis première partie finie.
   await page.locator('.cta').click();
   await expect(plateau(page)).toBeVisible();
+  await expect.poll(() => etapes(envois)).toEqual(['premier_ecran', 'premier_geste', 'partie_ouverte']);
   await jouer(page, 'E5');
   await expect.poll(() => etapes(envois)).toContain('premiere_pierre');
+  expect(etapes(envois).slice(3, 5)).toEqual(['premier_toucher_plateau', 'premiere_pierre']);
   await abandonner(page);
   await expect.poll(() => etapes(envois)).toContain('premiere_partie_finie');
 
@@ -136,7 +150,7 @@ for (const equipe of [true, false]) {
     await jouer(page, 'E5');
     await abandonner(page);
     if (!equipe) {
-      await expect.poll(() => etapes(envois)).toEqual(['premier_ecran', 'premiere_pierre', 'premiere_partie_finie']);
+      await expect.poll(() => etapes(envois)).toEqual(['premier_ecran', 'premier_geste', 'partie_ouverte', 'premier_toucher_plateau', 'premiere_pierre', 'premiere_partie_finie']);
       await expect.poll(() => posthog.length, { timeout: 15_000 }).toBeGreaterThan(0);
       return;
     }
@@ -148,6 +162,36 @@ for (const equipe of [true, false]) {
     expect(await page.evaluate(() => Object.keys(localStorage).filter(k => k.startsWith('go.entonnoir.')))).toEqual([]);
   });
 }
+
+test('navigateur piloté (navigator.webdriver) : rien n’est compté ni posé sur l’appareil (#519)', async ({ browser, baseURL }) => {
+  const serveur = fauxServeur();
+  const page = await telephone(browser, baseURL, serveur, {}, true);
+  const envois = ecouter(page);
+  await page.goto('/');
+  expect(await page.evaluate(() => navigator.webdriver)).toBe(true);
+  await expect(page.locator('.cta')).toHaveText('Joue ta première partie');
+  await page.locator('.cta').click();
+  await expect(plateau(page)).toBeVisible();
+  await jouer(page, 'E5');
+  await page.waitForTimeout(1500);
+  expect(envois).toEqual([]);
+  expect(await page.evaluate(() => Object.keys(localStorage).filter(k => k.startsWith('go.entonnoir.')))).toEqual([]);
+});
+
+// Première pierre hors partie (#519) : en leçon, elle compte aussi (avant, seulement en partie).
+test('première pierre posée en leçon : comptée comme première pierre, sans partie ouverte', async ({ browser, baseURL }) => {
+  const serveur = fauxServeur();
+  // Leçon 1 entamée sur cet appareil (étape 5 : capturer), mais aucune partie ni aucun retour : appareil neuf.
+  const page = await telephone(browser, baseURL, serveur, { 'go.lecons.v1': JSON.stringify({ l1: 5 }) });
+  const envois = ecouter(page);
+  await page.goto('/');
+  await expect.poll(() => etapes(envois)).toEqual(['premier_ecran']);
+  await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
+  await page.getByRole('button', { name: 'Reprendre la leçon : Libertés et capture' }).click();
+  await jouer(page, 'E4');
+  await expect.poll(() => etapes(envois)).toContain('premiere_pierre');
+  expect(etapes(envois)).toEqual(['premier_ecran', 'premier_geste', 'premier_toucher_plateau', 'premiere_pierre']);
+});
 
 test('réglage caché : 7 touchers sur la version, dans Profil > Réglages, posent puis retirent le drapeau', async ({ browser, baseURL }) => {
   const serveur = fauxServeur();

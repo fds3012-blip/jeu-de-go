@@ -938,7 +938,7 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
       </div>
       {duJour?.defiChange && <p className="notice" role="status">{fr(tr('pb.defiChange'))}</p>}
       {duJour?.archive !== undefined && <p className="notice" role="status">{fr(tr('pb.archive', { numero: duJour.archive }))}</p>}
-      <Board size={puzzle.size} board={board} toPlay={puzzle.toPlay} interactive={!solvedNow && (!replay || replayDone) && (!refut || refut.vue)}
+      <Board lieu="probleme" size={puzzle.size} board={board} toPlay={puzzle.toPlay} interactive={!solvedNow && (!replay || replayDone) && (!refut || refut.vue)}
         stonesTappable={!!refut || !!replay || !!apercu} onPlay={onPlay} shake={shake}
         // #400 : en 13 × 13 et plus, une touche ratée coûterait l'essai : confirmation au doigt toujours, et visée.
         confirmTouch={confirmTouch || estSerre(puzzle.size)} surFantome={estSerre(puzzle.size) ? q => <Visee p={q} size={puzzle.size} /> : undefined}
