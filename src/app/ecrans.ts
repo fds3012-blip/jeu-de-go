@@ -69,6 +69,8 @@ const carrousel = charger(() => import('../ui/Carrousel'));
 const partagee = charger(() => import('./PartiePartagee'));
 // #469 : séance « Révisions du jour », ouverte depuis la carte de l'accueil.
 const revisions = charger(() => import('./SeanceRevisions'));
+// #523 : introduction des règles (« Tu connais le go ? », « Revoir les règles »), préchargée quand la question est posée.
+const intro = charger(() => import('./IntroRegles'));
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function ecran<M, K extends keyof M>(importer: () => Promise<M>, nom: K): M[K] extends ComponentType<any> ? M[K] : never {
@@ -95,6 +97,7 @@ export const Lentes = ecran(lentes, 'Lentes');
 export const CarrouselAdversaires = ecran(carrousel, 'CarrouselAdversaires');
 export const PartiePartagee = ecran(partagee, 'PartiePartagee');
 export const SeanceRevisions = ecran(revisions, 'SeanceRevisions');
+export const IntroRegles = ecran(intro, 'IntroRegles');
 
 /**
  * La partie est l'action principale de l'accueil : son code part tout de suite (≈ 20 Ko gzip avec la revue),
@@ -109,9 +112,14 @@ export function prechargerRevisions(): void {
   revisions().catch(() => {});
 }
 
+/** #523 : l'introduction des règles, préchargée pendant que « Tu connais le go ? » attend sa réponse. */
+export function prechargerIntro(): void {
+  intro().catch(() => {});
+}
+
 /** Télécharge tous les écrans en tâche de fond. */
 export function prechargerEcrans(): void {
-  for (const f of [partie, problemes, lecons, profil, serie, placement, defis, compte, direct, lentes, carrousel]) f().catch(() => {});
+  for (const f of [partie, problemes, lecons, profil, serie, placement, defis, compte, direct, lentes, carrousel, intro]) f().catch(() => {});
 }
 
 // Moment « après le premier écran » : src/premierEcran.ts (partagé avec PostHog, #325).

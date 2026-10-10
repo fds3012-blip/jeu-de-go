@@ -104,6 +104,14 @@ export const EVENTS = {
   placementCommence: 'placement_commence',
   placementTermine: 'placement_termine',
   placementSaute: 'placement_saute',
+  // « Tu connais le go ? » (#523), au tout premier lancement. `connait_go` : `reponse` (`jamais`, `un_peu`, `sait`,
+  // `plus_tard`). Introduction des règles : écran affiché (`intro_regles_etape` : `index` 1 à 8), fin atteinte
+  // (`intro_regles_finie` : `passees`, écrans passés par « Je sais »), sortie avant la fin (`intro_regles_quittee` :
+  // `index` de l'écran quitté). Les trois portent `parcours` (`complete`, `express` ; pas `version`, propriété commune à tous les événements) et `depuis` (`accueil`, `apprendre`, `aide`).
+  connaitGo: 'connait_go',
+  introReglesEtape: 'intro_regles_etape',
+  introReglesFinie: 'intro_regles_finie',
+  introReglesQuittee: 'intro_regles_quittee',
   // Import d'une partie SGF (#286). `source` : `fichier`, `texte` ou `ogs` (lien de partie OGS).
   // Commencé (bouton « Lire la partie » ou fichier choisi), réussi (`octets`, `coups`, `taille`, `handicap`), refusé (`raison`, `coup`).
   importSgfCommence: 'import_sgf_commence',

@@ -34,6 +34,11 @@
 .promesse { display: flex; align-items: center; gap: 12px; margin: 0 0 var(--space-3); }
 .promesse .sceau { flex: none; }
 .promesse .scene-bulle { margin: 0; font-size: var(--fs-l); line-height: 1.3; font-weight: var(--fw-bold); text-wrap: balance; }
+/* #523 : « Tu connais le go ? », centrée dans la hauteur libre, au-dessus du bandeau de consentement s'il est là. */
+.question-go { margin: auto 0; display: flex; flex-direction: column; align-items: center; gap: var(--space-2); text-align: center; }
+.question-go h2 { margin: var(--space-1) 0 0; }
+.question-go p { margin: 0 0 var(--space-2); color: var(--muted); }
+.question-go-reponses { display: grid; gap: var(--space-2); width: 100%; max-width: 22rem; }
 /* L'adversaire sur une ligne, sans rang ni paragraphe : nom en titre, rôle en gris, « Changer » à droite. */
 .reglage-premier { gap: 10px; margin-top: var(--space-3); }
 .reglage-premier .portrait { flex: none; filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .25)); }

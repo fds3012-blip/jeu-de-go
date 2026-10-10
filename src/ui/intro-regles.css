@@ -1,0 +1,5 @@
+/* #523 : fin de l'introduction des règles (src/app/IntroRegles.tsx), chargée avec elle. Le reste vient de lecon.css. */
+/* Huit notions sur la rangée : un pas plus serré que celui des leçons, pour tenir dans 320 px sans déborder. */
+.fin-intro .fin-gue { --pas: 34px; }
+.fin-intro .fin-gue i { width: 28px; height: 28px; }
+.fin-intro .portrait { filter: drop-shadow(0 8px 14px rgba(0, 0, 0, .25)); }

@@ -365,6 +365,16 @@ export const fr = {
   'raison.points': { one: 'il reste un point à prendre en {point}', other: 'il reste {n} points à prendre en {point}' },
   // « Je sais déjà jouer » (#283) : placement en 3 problèmes, niveau de départ en kyu.
   'placement.lien': 'Je sais déjà jouer',
+  // #523 : « Tu connais le go ? », au tout premier lancement (src/app/QuestionGo.tsx). Trois réponses de même poids.
+  'connait.titre': 'Tu connais le go ?',
+  'connait.texte': 'Je m’adapte à ta réponse.',
+  'connait.jamais': 'Jamais joué',
+  'connait.unPeu': 'Un peu',
+  'connait.sait': 'Je sais jouer',
+  'connait.plusTard': 'Plus tard',
+  // Titre de l'introduction des règles (lecteur, onglet du navigateur).
+  'intro.titre': 'Les règles du go',
+  'intro.titreExpress': 'Rappel des règles',
   // Nom accessible d'un portrait selon son humeur (src/ui/Portrait.tsx)
   'portrait.content': '{nom}, content',
   'portrait.surpris': '{nom}, surpris',
