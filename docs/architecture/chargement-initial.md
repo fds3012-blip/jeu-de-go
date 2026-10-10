@@ -69,6 +69,27 @@ règles l'emportent désormais sur celles qui la suivaient. Avant de sortir une 
 2. Comparer les styles calculés avant et après sur toute la suite e2e (états finaux de chaque test) ; corriger
    chaque écart par une règle explicite, commentée `#433` (exemple : `.btn.continuer` dans `apprendre.css`).
 
+### Modules partagés entre l'accueil et un écran (#513)
+
+Rollup garde dans le JS initial **tout ce qu'un écran utilise** d'un module que l'accueil importe aussi, même si
+l'accueil n'en lit qu'une constante. Exemple du 10/10 : `OPPONENTS` (dans `src/engine/simple.ts`) tirait tout le
+moteur simple (Monte-Carlo, filtre d'ouverture, pierres mortes) dans le JS initial ; `compteDe` (dans
+`src/data/defi.ts`) tirait les RPC des défis et le temps réel. Règle : quand l'accueil n'a besoin que d'une petite
+partie d'un module lourd, mets cette partie dans un module à part, sans les imports lourds, et importe-la depuis là
+dans l'accueil. Le module d'origine la réexporte : les écrans ne changent pas.
+
+| Partie légère (JS initial) | Module lourd (avec ses écrans) |
+| --- | --- |
+| `src/engine/adversaires.ts` (`OPPONENTS`, `opponent`, types) | `src/engine/simple.ts` (+ `sim`, `dead`, `ouverture`, `go/score`) |
+| `src/data/defiLien.ts` (`compteDe`, `estAnonyme`, liens de défi) | `src/data/defi.ts` (+ `tempsReel`, `i18n/refus`) |
+| `src/data/lectureProfil.ts` (`fetchProfile`, `fetchStreak`, `fetchGels`) | `src/data/account.ts` (+ `username`) |
+| `src/app/aideMochi.ts` (`aideActive`, `ReglageAide`) | `src/app/partie.ts` (coach, comptage, indices ; + `go/frontieres`) |
+
+Pour trouver les suivants : un plugin `generateBundle` temporaire (hors du dépôt) qui écrit `chunk.modules` (taille
+rendue de chaque module par morceau), puis, pour chaque module du JS initial, les noms importés par des modules qui
+n'y sont pas. Restent candidats (10/10) : `src/ui/sound.ts` (objet `synth` entier), `src/ui/Portrait.tsx`,
+`src/app/revisionEspacee.ts`, `src/app/rappel.ts`, `src/app/xp.ts`, `src/app/semaine.ts`.
+
 ## Mesures (04/10, #433)
 
 | | avant | après |
@@ -91,3 +112,13 @@ Téléphone émulé : CPU 4× plus lent, 4G lente (`scripts/mesurer-perf.mjs`).
 | Morceau `lessons` (contenu complet des leçons) | dans `index` | 8,8 Ko, à la demande |
 | Palier 21-30 (06/10) : 26 leçons | main : 155,0 Ko | 154,8 Ko ; morceau `lessons` 10,5 Ko, à la demande |
 | Leçon 27 (07/10) : 27 leçons | main : 154,8 Ko (26 leçons) | 155,3 Ko |
+
+## Mesures (10/10, #513)
+
+| | avant | après |
+| --- | --- | --- |
+| JS initial (gzip), `npm run build` (celui de la CI) | 161,4 Ko (`index` 94,0 + `lib-react` 67,3) | 151,0 Ko (`index` 83,7 + `lib-react` 67,3) |
+| JS initial (gzip), `VITE_E2E=1 npm run build` | 171,0 Ko | 165,9 Ko |
+
+Les ≈ 171 Ko signalés dans #513 venaient d'un build e2e (`VITE_E2E=1`) : `src/main.tsx` y expose le moteur et les
+règles aux tests (`__moteurE2E`), ce qui ajoute ≈ 10 Ko. Le budget se lit sur le build normal, comme en CI.

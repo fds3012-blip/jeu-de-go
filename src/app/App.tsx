@@ -9,7 +9,7 @@ import { LESSONS_KEY, readLocal, writeLocal, useGelsServeur, useLessonProgress, 
 import { auRetourEnLigne, tenterQuitter } from './quitterFile';
 import { COMPTES, chargerSupabase, useSupabase } from '../data/client';
 import { coachActif, useSettings, useStored } from './settings';
-import { aideActive } from './partie';
+import { aideActive } from './aideMochi';
 import { Bubble } from '../ui/Mochi';
 import { Sceau } from '../ui/Sceau';
 import { CRAN_DEPART, cranDuNiveau, niveauGuide, OPPONENTS, type OpponentId } from '../engine';
@@ -52,7 +52,7 @@ import { ANNONCE_DU_JOUR_KEY, appelSecondaire, etatTuile, lireJourAnnonce } from
 import { TAILLE_SERIE, THEMES_DE_LECON, serieDeLecon } from '../content/themes';
 import { estRedite } from '../content/redites';
 import type { Puzzle } from '../data/puzzles';
-import { compteDe, estAnonyme } from '../data/defi';
+import { compteDe, estAnonyme } from '../data/defiLien';
 import { INVITEUR_AU_CHARGEMENT, JETON_AU_CHARGEMENT, ecouterJetonDefi } from './adresseDefi';
 import { PARTIE_AU_CHARGEMENT, ecouterJetonPartie } from './adressePartie';
 import { deposerCopieEtude } from './copieEtude';

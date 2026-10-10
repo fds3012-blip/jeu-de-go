@@ -4,7 +4,7 @@ import { lireXp, niveauDe, themeDebloque } from './xp';
 import { installAudioUnlock, setSoundEnabled } from '../ui/sound';
 import { setHapticsEnabled } from '../ui/haptics';
 import { noterReglage } from './reglagesDates';
-import type { ReglageAide } from './partie';
+import type { ReglageAide } from './aideMochi';
 import type { Cadence } from '../go/pendule';
 
 // `aide` : « Aide de Mochi en partie » (#35). `auto` : contre Pomme et Caillou seulement.
