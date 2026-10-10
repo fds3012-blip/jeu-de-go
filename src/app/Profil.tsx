@@ -12,7 +12,9 @@ import { lireXp, niveauDe, niveauRequis, themeDebloque } from './xp';
 import { ORDRE_THEMES, THEMES_GOBAN } from '../ui/boardArt';
 import { identite, texteSerie } from './identite';
 import { inviterCompte } from './serieLocale';
-import { LigneBascules, LigneChoix, LigneIcone, LigneInterrupteur, LigneLien } from '../ui/Reglage';
+import { LigneChoix, LigneIcone, LigneInterrupteur, LigneLien } from '../ui/Reglage';
+import { EnteteEcran } from '../ui/BoutonRetour';
+import { entier } from '../ui/entier';
 import { IconeReglage, type IconeReglageId } from '../ui/IconesReglages';
 import { hapticStone } from '../ui/haptics';
 import { playStone } from '../ui/sound';
@@ -132,14 +134,11 @@ interface Props {
   onProblemes?: () => void;
 }
 
-/** Sous-vue du Profil : « Retour » en haut, un titre, un contenu. */
+/** Sous-vue du Profil : la barre « ‹ titre » (#509, L2), puis un contenu. */
 function SousVue({ id, titre, onRetour, children }: { id: string; titre: string; onRetour: () => void; children: ReactNode }) {
   return (
     <section className="sous-vue" aria-labelledby={id}>
-      <button type="button" className="back retour" onClick={onRetour}>
-        <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M10 3.5 5.5 8 10 12.5" /></svg>{t('profil.retour')}
-      </button>
-      <h2 id={id}>{titre}</h2>
+      <EnteteEcran id={id} titre={titre} retour={t('profil.retour')} onRetour={onRetour} />
       {children}
     </section>
   );
@@ -243,7 +242,7 @@ function Menu({ onVue, settings, profil, serie, record = 0, parcours, placement,
           <span>{serieVisible && inviterCompte(!!profil, id.serie) ? t('serie.invitation') : id.detail}</span>
         </div>
         {id.serie > 0 && <span className="identite-serie" role="img" aria-label={t('profil.serieAria', { jours: texteSerie(id.serie) })}>
-          <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false"><path d="M8.6 1.2c.4 2.3 3.9 3.9 3.9 7.9A4.5 4.5 0 0 1 8 13.8a4.5 4.5 0 0 1-4.5-4.6c0-2 1-3.2 2-4 0 1.4.6 2.4 1.5 2.7C6.6 5.6 7.4 3 8.6 1.2Z" fill="currentColor" /></svg>{id.serie}
+          <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false"><path d="M8.6 1.2c.4 2.3 3.9 3.9 3.9 7.9A4.5 4.5 0 0 1 8 13.8a4.5 4.5 0 0 1-4.5-4.6c0-2 1-3.2 2-4 0 1.4.6 2.4 1.5 2.7C6.6 5.6 7.4 3 8.6 1.2Z" fill="currentColor" /></svg>{entier(id.serie)}
         </span>}
         <div className="identite-niveau"><BarreNiveau /></div>
         <Statistiques stats={serieVisible ? donnees.stats : donnees.stats.filter(s => s.id !== 'record')} />
@@ -289,7 +288,8 @@ function Menu({ onVue, settings, profil, serie, record = 0, parcours, placement,
         {/* #369 : « Réglages » et « Mon compte » partagent une ligne (deux moitiés, ce qui te concerne toi et l'app). */}
         <div className="ligne ligne-double">
           <DemiLigne icone="reglages" libelle={t('profil.reglages')} valeur={t('profil.reglagesResume')} onClick={() => onVue('reglages')} />
-          <DemiLigne icone="compte" libelle={t('profil.compte')} valeur={profil?.pseudo ?? (profil ? undefined : t('profil.seConnecter'))} onClick={() => onVue('compte')} />
+          {/* #509 (L2, constat 23) : un pseudo long tient sur une ligne, coupé en fin (« … ») et non au milieu d'un mot. */}
+          <DemiLigne icone="compte" libelle={t('profil.compte')} valeur={profil?.pseudo ?? (profil ? undefined : t('profil.seConnecter'))} uneLigne={!!profil?.pseudo} onClick={() => onVue('compte')} />
         </div>
         {/* #363 : « Nous écrire » partage la ligne des conditions (deux moitiés) : le Profil tient toujours sans défiler. */}
         {amis ? (
@@ -305,13 +305,13 @@ function Menu({ onVue, settings, profil, serie, record = 0, parcours, placement,
 }
 
 /** Moitié d'une ligne du Profil (#359) : icône, libellé, valeur dessous, 48 px de haut. */
-function DemiLigne({ icone, libelle, valeur, onClick, testId }: { icone: IconeReglageId; libelle: string; valeur?: ReactNode; onClick: () => void; testId?: string }) {
+function DemiLigne({ icone, libelle, valeur, onClick, testId, uneLigne }: { icone: IconeReglageId; libelle: string; valeur?: ReactNode; onClick: () => void; testId?: string; uneLigne?: boolean }) {
   return (
     <button type="button" className="ligne-demi" onClick={onClick} data-testid={testId}>
       <LigneIcone><IconeReglage id={icone} /></LigneIcone>
       <span className="ligne-demi-texte">
         <span className="ligne-libelle">{libelle}</span>
-        {valeur && <span className="ligne-demi-valeur">{valeur}</span>}
+        {valeur && <span className={`ligne-demi-valeur${uneLigne ? ' une-ligne' : ''}`}>{valeur}</span>}
       </span>
     </button>
   );
@@ -359,11 +359,12 @@ function Reglages({ settings, set }: Pick<Props, 'settings' | 'set'>) {
       </div>
       <h3 className="lignes-titre">{t('profil.groupe.sons')}</h3>
       <div className="lignes">
-        <LigneBascules icone={<IconeReglage id="sons" />} libelle={t('profil.sons')} bascules={[
-          // #165 : un aperçu à l'allumage, le claquement de pierre ou une petite vibration.
-          { libelle: t('profil.son'), actif: settings.sound, onChange: v => { regler('sound', v); if (v) setTimeout(() => playStone(40, 9), 0); } },
-          { libelle: t('profil.vibrations'), actif: settings.vibrations, onChange: v => { regler('vibrations', v); if (v) setTimeout(hapticStone, 0); } },
-        ]} />
+        {/* #509 (L2, constat 8) : deux réglages indépendants, donc deux interrupteurs (plus un faux choix segmenté).
+            #165 : un aperçu à l'allumage, le claquement de pierre ou une petite vibration. */}
+        <LigneInterrupteur icone={<IconeReglage id="sons" />} libelle={t('profil.sons')} actif={settings.sound}
+          onChange={v => { regler('sound', v); if (v) setTimeout(() => playStone(40, 9), 0); }} />
+        <LigneInterrupteur icone={<IconeReglage id="vibrations" />} libelle={t('profil.vibrations')} actif={settings.vibrations}
+          onChange={v => { regler('vibrations', v); if (v) setTimeout(hapticStone, 0); }} />
         <LigneInterrupteur icone={<IconeReglage id="celebrations" />} libelle={t('profil.celebrations')} aide={t('profil.celebrationsAide')} actif={settings.celebrations} onChange={v => regler('celebrations', v)} />
       </div>
       <LigneVersion />

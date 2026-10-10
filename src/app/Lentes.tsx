@@ -9,6 +9,7 @@
 // Logique pure : src/app/lente.ts. Données : src/data/lente.ts. Chargé à la demande.
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Mochi } from '../ui/Mochi';
+import { EnteteEcran } from '../ui/BoutonRetour';
 import { BasculeEnLigne, type FaconEnLigne } from './BasculeEnLigne';
 import { chercherPartieLente, LENTE_DEFAUT, LENTES_MAX, lireRecherche, mesPartiesLentes, quitterFileLente,
   type DelaiJours, type RechercheLente, type RefusLente, type TailleLente } from '../data/lente';
@@ -165,10 +166,7 @@ export function Lentes({ db, userId, onPartie, onFacon, onAccueil }: Props) {
 
   return (
     <div className="direct lentes" data-testid="lentes">
-      <div className="direct-tete">
-        <button type="button" className="retour" onClick={onAccueil} aria-label={tl('lente.retour')}>‹</button>
-        <h2>{tl('lente.titre')}</h2>
-      </div>
+      <EnteteEcran titre={tl('lente.titre')} retour={tl('lente.retour')} onRetour={onAccueil} />
       <BasculeEnLigne valeur="lente" onChoix={onFacon} />
       {haut}
       {erreur && <p className="small defi-erreur" role="alert">{fr(erreur)}</p>}

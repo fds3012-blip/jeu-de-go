@@ -7,16 +7,8 @@ import { mouvementsReduits, pasSansCoupure } from './defilement';
 import { PortraitMochi, type HumeurMochi } from './Portrait';
 import './apprendre.css';
 
-/** Bouton retour, rond, en haut à gauche. Le libellé dit où il mène. */
-export function Retour({ label, onClick }: { label: string; onClick: () => void }) {
-  return (
-    <button className="retour" aria-label={label} onClick={onClick}>
-      <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false">
-        <path d="M15 5 8 12l7 7" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    </button>
-  );
-}
+/** Bouton retour, rond, en haut à gauche. Le libellé dit où il mène. Le bouton unique de l'app (#509, L2). */
+export { BoutonRetour as Retour } from './BoutonRetour';
 
 /**
  * Points d'étapes (recette du 30/09, R2) : un point par étape, jade quand elle est faite, cerclé pour celle en cours.

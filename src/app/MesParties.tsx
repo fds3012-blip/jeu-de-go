@@ -5,6 +5,7 @@
 // ensuite de Supabase (lecture sous RLS : seulement les parties du joueur), avec les parties gardées sur le compte
 // (`parties_perso`, src/data/partiesPerso.ts) : un nouvel appareil retrouve celles des autres. À l'ouverture, les
 // parties de l'appareil qui ne sont pas encore sur le compte y partent en arrière-plan. Logique pure : historique.ts.
+import { EnteteEcran } from '../ui/BoutonRetour';
 import { useEffect, useMemo, useState } from 'react';
 import { Revue } from './Revue';
 import { useOnline } from './hooks';
@@ -143,10 +144,7 @@ export function MesParties({ onRetour, onJouer, onImporter, onEtudier, db = null
 
   return (
     <section className="sous-vue mes-parties" aria-labelledby="mes-parties-titre">
-      <button type="button" className="back retour" onClick={onRetour}>
-        <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M10 3.5 5.5 8 10 12.5" /></svg>{t('profil.retour')}
-      </button>
-      <h2 id="mes-parties-titre">{t('historique.titre')}</h2>
+      <EnteteEcran id="mes-parties-titre" titre={t('historique.titre')} retour={t('profil.retour')} onRetour={onRetour} />
 
       {liste.length === 0 && etat !== 'chargement' ? (
         <div className="mp-parties-vide">

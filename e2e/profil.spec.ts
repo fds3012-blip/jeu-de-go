@@ -49,7 +49,7 @@ test('Ton parcours : niveau et XP, record, leçons, adversaires battus, problèm
   const stats = page.getByRole('list', { name: 'Tes statistiques' });
   const lignes = stats.getByRole('listitem');
   await expect(lignes).toHaveCount(4);
-  await expect(lignes.nth(0)).toHaveText(/^7\s*jours, ton record$/);
+  await expect(lignes.nth(0)).toHaveText(/^7\s*jours, ta série record$/);
   await expect(lignes.nth(1)).toHaveText(/^2\/(\d+)\s*leçons finies sur \1$/); // le total suit le nombre de leçons (8 depuis #228)
   await expect(lignes.nth(2)).toHaveText(/^2\/9\s*adversaires battus sur 9$/);
   await expect(lignes.nth(3)).toHaveText(/^3\s*problèmes réussis$/); // sans total : les problèmes n'ont pas de fin
@@ -71,7 +71,7 @@ test('réglages en lignes : thème segmenté, interrupteurs, cibles de 44 px', a
   // #214 : une ligne « Réglages » ouvre la sous-vue ; tous les réglages d'avant y sont.
   await page.getByRole('button', { name: /^Réglages/ }).click();
   await expect(page.getByRole('heading', { name: 'Réglages' })).toBeVisible();
-  for (const g of ['Thème', 'Goban', 'Sons', 'Aide de Mochi']) await expect(page.getByRole('group', { name: g })).toBeVisible();
+  for (const g of ['Thème', 'Goban', 'Aide de Mochi']) await expect(page.getByRole('group', { name: g })).toBeVisible();
   // #365 : les réglages du joueur de club s'ajoutent ; l'écran défile, groupé par titres, jamais de côté.
   const { largeur } = await page.evaluate(() => ({ largeur: document.documentElement.scrollWidth }));
   expect(largeur).toBeLessThanOrEqual(390);
@@ -88,20 +88,19 @@ test('réglages en lignes : thème segmenté, interrupteurs, cibles de 44 px', a
   }
   for (const b of await theme.getByRole('button').all()) expect((await b.boundingBox())!.height).toBeGreaterThanOrEqual(44);
 
-  // #165 : son et vibrations sur une seule ligne, réglables séparément.
-  const sons = page.getByRole('group', { name: 'Sons' });
-  const son = sons.getByRole('button', { name: 'Son', exact: true }), vib = sons.getByRole('button', { name: 'Vibrations' });
+  // #165 : son et vibrations réglables séparément. #509 (L2) : deux interrupteurs, plus un faux choix segmenté.
+  const son = page.getByRole('switch', { name: 'Sons', exact: true }), vib = page.getByRole('switch', { name: 'Vibrations', exact: true });
   for (const b of [son, vib]) {
-    await expect(b).toHaveAttribute('aria-pressed', 'true');
+    await expect(b).toHaveAttribute('aria-checked', 'true');
     const box = (await b.boundingBox())!;
     expect(box.height).toBeGreaterThanOrEqual(44); expect(box.width).toBeGreaterThanOrEqual(44);
   }
   await vib.click();
-  await expect(vib).toHaveAttribute('aria-pressed', 'false');
-  await expect(son).toHaveAttribute('aria-pressed', 'true');
+  await expect(vib).toHaveAttribute('aria-checked', 'false');
+  await expect(son).toHaveAttribute('aria-checked', 'true');
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('go.settings.v1')!))).toMatchObject({ sound: true, vibrations: false });
   await vib.click();
-  await expect(vib).toHaveAttribute('aria-pressed', 'true');
+  await expect(vib).toHaveAttribute('aria-checked', 'true');
 
   // Retour ramène à « Ton parcours » ; « Mon compte » ouvre une sous-vue, Retour ramène au Profil.
   await page.getByRole('button', { name: 'Retour' }).click();

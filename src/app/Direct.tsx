@@ -10,6 +10,7 @@ import { Board } from '../ui/Board';
 import { Mochi } from '../ui/Mochi';
 import { Avatar, Bandeau, BarreActions, Coach, Icone, Interrupteur, ListeCoups } from '../ui/Partie';
 import { BoutonAide } from '../ui/BoutonAide';
+import { BoutonRetour, EnteteEcran } from '../ui/BoutonRetour';
 import { GainCote, VocabulaireGrade } from '../ui/Cote';
 import { fromSgf, toSgf } from '../go/coords';
 import { groupAt } from '../go/rules';
@@ -220,10 +221,7 @@ function Choix({ params, onParams, erreur, onAccueil, onChercher, onFacon, aband
   if (attente) {
     return (
       <div className="direct direct-choix" data-testid="direct-choix">
-        <div className="direct-tete">
-          <button type="button" className="retour" onClick={onAccueil} aria-label={td('direct.retour')}>‹</button>
-          <h2>{td('direct.titre')}</h2>
-        </div>
+        <EnteteEcran titre={td('direct.titre')} retour={td('direct.retour')} onRetour={onAccueil} />
         {onFacon && <BasculeEnLigne valeur="direct" onChoix={onFacon} />}
         <DelaiAbandons attente={attente} abandons={abandons?.abandons ?? null} ecartServeur={ecartServeur} onFin={onFinAttente} ordi={ordi} />
       </div>
@@ -231,10 +229,7 @@ function Choix({ params, onParams, erreur, onAccueil, onChercher, onFacon, aband
   }
   return (
     <div className="direct direct-choix" data-testid="direct-choix">
-      <div className="direct-tete">
-        <button type="button" className="retour" onClick={onAccueil} aria-label={td('direct.retour')}>‹</button>
-        <h2>{td('direct.titre')}</h2>
-      </div>
+      <EnteteEcran titre={td('direct.titre')} retour={td('direct.retour')} onRetour={onAccueil} />
       {onFacon && <BasculeEnLigne valeur="direct" onChoix={onFacon} />}
       <p className="direct-intro">{fr(td('direct.intro'))}</p>
       <p className="muted small direct-classee">{fr(td('direct.classee'))}</p>
@@ -502,7 +497,7 @@ function DirectPartie({ db, partieId, userId, demande, confirmTouch, reglages, c
   // #373 et #363 : « Dire » (messages prédéfinis, émotes), bulles près des noms, « Signaler ce joueur ».
   const echanges = useEchanges({ db, partieId, userId, nom: nomLui ?? td('direct.adversaire'), actif: !!partie, online, mode: 'direct' });
 
-  const retour = <button type="button" className="retour" onClick={onAccueil} aria-label={td('direct.retour')}>‹</button>;
+  const retour = <BoutonRetour label={td('direct.retour')} onClick={onAccueil} />;
   if (!base || !v || !etat || !partie) {
     return (
       <div className="partie defi-partie defi-partie-charge">
