@@ -1,32 +1,48 @@
 // Conseil de Mochi (#80) : le calque qui montre la zone sur le plateau, et la bulle avec le retour « utile / pas utile ».
 // Le calque est un SVG séparé, posé exactement sur le plateau (même viewBox que src/ui/Board.tsx), sans toucher à Board :
 // il ne capte aucun geste (les touches passent au plateau) et il est muet pour les lecteurs d'écran (la phrase suffit).
+// Passe design #509 (point 3) : un repère net sur le point à jouer, un halo autour des pierres, jamais de voile dessus.
 import { toLabel } from '../go/coords';
-import { C, M, viewBoxOf } from './boardArt';
-import { contour } from './conseilCalque';
+import { C, M, R, viewBoxOf } from './boardArt';
+import { reperes } from './conseilCalque';
 import { PortraitMochi } from './Portrait';
 import { t } from '../content/i18n/secondaires';
 import { fr } from './typo';
 import './conseil.css';
 
 // Couleurs posées sur le bois : les mêmes en mode sombre et clair (le goban ne change pas), comme l'indice de Board.tsx.
-const JADE = '#3CC48E', JADE_FONCE = '#155E40';
+// Le jade foncé dessous garde chaque trait lisible sur le bois clair, l'ardoise et les pierres blanches.
+const JADE = '#3CC48E', JADE_FONCE = '#155E40', HANKO = '#D2432C', PAPIER = '#F3EDE3';
 
-/** Calque du conseil : cases de la zone teintées de jade, contour en tirets, et le point nommé cerclé. */
-export function CalqueConseil({ size, zone, point }: { size: number; zone: readonly number[]; point: number | null }) {
-  const vb = viewBoxOf(size), d = C / 2;
-  const chemin = contour(zone, size).map(([a, b, c, e]) => `M${a} ${b}L${c} ${e}`).join('');
+/**
+ * Calque du conseil : anneau en tirets sur le point à jouer (une croix si la phrase dit de l'éviter), halo de 2 px
+ * autour des pierres concernées, petite pastille sur les autres points vides de la zone.
+ */
+export function CalqueConseil({ size, zone, point, board, eviter = false }:
+  { size: number; zone: readonly number[]; point: number | null; board: ArrayLike<number>; eviter?: boolean }) {
+  const vb = viewBoxOf(size), { cible, halos, points } = reperes(zone, point, board);
+  const X = (p: number) => M + (p % size) * C, Y = (p: number) => M + Math.floor(p / size) * C;
   return (
     <svg className="calque-conseil" viewBox={`${vb.min} ${vb.min} ${vb.span} ${vb.span}`} aria-hidden="true" focusable="false"
       data-conseil={zone.map(p => toLabel(p, size)).join(' ')} data-point={point === null ? undefined : toLabel(point, size)}>
-      <g fill={JADE} fillOpacity={0.2}>
-        {zone.map(p => <rect key={p} x={M + (p % size) * C - d} y={M + Math.floor(p / size) * C - d} width={C} height={C} />)}
+      <g fill="none" data-halo="">
+        {halos.map(p => (
+          <g key={p}>
+            <circle cx={X(p)} cy={Y(p)} r={R + 2.6} stroke={JADE_FONCE} strokeOpacity={0.3} strokeWidth={4} />
+            <circle cx={X(p)} cy={Y(p)} r={R + 2.6} stroke={JADE} strokeOpacity={0.85} strokeWidth={2} />
+          </g>
+        ))}
       </g>
-      <path d={chemin} fill="none" stroke={JADE_FONCE} strokeWidth={5} strokeOpacity={0.5} strokeLinecap="round" />
-      <path d={chemin} fill="none" stroke={JADE} strokeWidth={3} strokeDasharray="7 5" strokeLinecap="round" />
-      {point !== null && (
-        <circle cx={M + (point % size) * C} cy={M + Math.floor(point / size) * C} r={C * 0.56} fill="none" stroke={JADE} strokeWidth={3.2} />
-      )}
+      {points.map(p => <circle key={p} cx={X(p)} cy={Y(p)} r={C * 0.13} fill={JADE} stroke={JADE_FONCE} strokeWidth={1.6} />)}
+      {cible !== null && (eviter ? (() => {
+        const x = X(cible), y = Y(cible), d = `M${x - 8} ${y - 8}L${x + 8} ${y + 8}M${x + 8} ${y - 8}L${x - 8} ${y + 8}`;
+        return <g className="conseil-cible" fill="none" strokeLinecap="round" data-eviter=""><path d={d} stroke={PAPIER} strokeOpacity={0.85} strokeWidth={7} /><path d={d} stroke={HANKO} strokeWidth={4} /></g>;
+      })() : (
+        <g className="conseil-cible" fill="none" data-cible="">
+          <circle cx={X(cible)} cy={Y(cible)} r={R * 0.86} stroke={JADE_FONCE} strokeOpacity={0.6} strokeWidth={6} pathLength={100} strokeDasharray="6.5 3.5" />
+          <circle cx={X(cible)} cy={Y(cible)} r={R * 0.86} stroke={JADE} strokeWidth={3.6} pathLength={100} strokeDasharray="6.5 3.5" />
+        </g>
+      ))}
     </svg>
   );
 }
