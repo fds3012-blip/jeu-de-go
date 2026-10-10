@@ -32,10 +32,13 @@ export function CarrouselAdversaires<I extends SceauId>({ cartes, choisi, onChoi
   const zone = useRef<HTMLUListElement>(null);
   const [message, setMessage] = useState('');
   const actuel = cartes.find(c => c.id === choisi) ?? cartes[0];
+  // #509 (L4, n° 22) : l'adversaire montré à l'ouverture ne s'anime pas ; seul un nouveau choix fait entrer le portrait.
+  const [nouveau, setNouveau] = useState(false);
 
   function toucher(c: CarteAdversaire<I>) {
     if (!c.ouvert) { setMessage(fr(t('carrousel.verrou', { requis: c.requis ?? t('carrousel.precedent'), nom: c.nom }))); return; }
     setMessage('');
+    if (c.id !== choisi) setNouveau(true);
     onChoisir(c.id);
   }
 
@@ -54,8 +57,8 @@ export function CarrouselAdversaires<I extends SceauId>({ cartes, choisi, onChoi
   return (
     <>
       {actuel && actuel.id !== 'mochi' && (
-        <div className="choix-vedette">
-          {/* La clé relance l'entrée avec rebond à chaque nouveau choix. */}
+        <div className="choix-vedette" data-nouveau={nouveau || undefined}>
+          {/* La clé relance l'entrée à chaque nouveau choix (accueil.css, `[data-nouveau]`). */}
           <Portrait key={actuel.id} id={actuel.id as PortraitId} taille={104} decoratif className="vedette-portrait" />
           <div className="vedette-bulle">
             <b>{actuel.nom} <small>{actuel.rang}</small></b>

@@ -82,6 +82,8 @@ export const fr = {
   'accueil.aideTaille.9': 'Parties courtes, idéal pour apprendre.',
   'accueil.aideTaille.13': 'Une partie de taille moyenne.',
   'accueil.aideTaille.19': 'Le plateau classique des joueurs confirmés.',
+  // #509 (L4) : le mot « kyu » expliqué là où les adversaires se choisissent par leur grade.
+  'accueil.kyu': 'Le kyu, c’est le grade au go : plus le nombre est petit, plus ton adversaire est fort.',
   'accueil.deux': 'Jouer à deux sur ce téléphone',
   // Partie guidée (#79) : Mochi règle sa force tous les 10 coups pour garder la partie serrée.
   'accueil.guidee': 'Partie guidée contre Mochi',

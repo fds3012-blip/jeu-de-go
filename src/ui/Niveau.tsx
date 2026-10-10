@@ -1,5 +1,5 @@
 // Progression (issue #109) : barre de niveau de l'accueil et célébration de niveau franchi.
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { abonnerXp, libelleRecompense, lireXp, niveauDe, prochaineRecompense, recompenseDuNiveau } from '../app/xp';
 import { mouvementsReduits } from './defilement';
 import { terminerFete, useFile } from './celebrations';
@@ -34,9 +34,11 @@ export function BarreNiveau({ sansXpMasquee = false }: { sansXpMasquee?: boolean
         <span>{t('niveau.xp', { dans, besoin })}</span>
       </p>
       <div className="niveau-piste" role="progressbar" aria-label={t('niveau.aria', { niveau })} aria-valuemin={0} aria-valuemax={besoin} aria-valuenow={dans}
-        aria-valuetext={t('niveau.valeur', { dans, besoin, suivant: niveau + 1 })}>
-        <span className="niveau-plein" style={{ width: `${part}%` }} />
-        <span className="niveau-pierre" style={{ left: `${part}%` }} />
+        aria-valuetext={t('niveau.valeur', { dans, besoin, suivant: niveau + 1 })}
+        // #509 (L4) : la part faite en variable CSS, que la ligne et la pierre suivent par transform (niveau.css).
+        style={{ '--p': part / 100 } as CSSProperties}>
+        <span className="niveau-plein" />
+        <span className="niveau-rail"><span className="niveau-pierre" /></span>
       </div>
       {suivante && <p className="niveau-suite">{fr(t('niveau.suite', { niveau: suivante.niveau, recompense: libelleRecompense(suivante) }))}</p>}
     </div>
