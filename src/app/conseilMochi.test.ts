@@ -1,7 +1,6 @@
-// Conseil de Mochi (#80) : limite gratuite préparée (pas active), propriétés des événements, contour du calque.
+// Conseil de Mochi (#80) : limite gratuite préparée (pas active), propriétés des événements (repères du calque : src/ui/conseilCalque.test.ts).
 import { describe, expect, it } from 'vitest';
 import { CONSEILS_GRATUITS_PAR_PARTIE, conseilsRestants, proprietesDemande, proprietesNote } from './conseilMochi';
-import { contour } from '../ui/conseilCalque';
 import { EVENTS } from '../data/analytics';
 
 describe('limite gratuite du conseil', () => {
@@ -34,11 +33,4 @@ describe('événements du conseil', () => {
   it('conseil_note : utile ou non, par modèle', () => {
     expect(proprietesNote('coup-a-eviter', false, { taille: 13, adversaire: 'pomme' })).toEqual({ modele: 'coup-a-eviter', utile: false, taille: 13, adversaire: 'pomme' });
   });
-});
-
-describe('calque du conseil : contour de la zone', () => {
-  it('un point seul : quatre côtés', () => expect(contour([40], 9)).toHaveLength(4));
-  it('deux points voisins : six côtés (le côté commun disparaît)', () => expect(contour([40, 41], 9)).toHaveLength(6));
-  it('un carré 2 × 2 : huit côtés', () => expect(contour([40, 41, 49, 50], 9)).toHaveLength(8));
-  it('le bord du plateau n’est pas un voisin : pas de fuite d’une ligne à l’autre', () => expect(contour([8, 9], 9)).toHaveLength(8));
 });
