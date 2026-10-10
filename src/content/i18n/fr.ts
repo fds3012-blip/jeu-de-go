@@ -154,6 +154,8 @@ export const fr = {
   'recompense.goban': 'le goban « {nom} »',
   'recompense.pierres': 'les pierres « {nom} »',
   'xp.bonus': 'dont +{bonus} première fois',
+  'xp.objectif': 'dont +{objectif} objectif de la semaine',
+  'xp.bonusObjectif': 'dont +{bonus} première fois et +{objectif} objectif de la semaine',
   'sceau.battu': 'battu',
   'sceau.battue': 'battue',
 
