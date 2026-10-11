@@ -23,6 +23,8 @@ import { PROBLEMES_EN } from './problemes.en';
 import { ACQUIS } from './acquis';
 import { TEXTES as RAPPELS } from '../../supabase/functions/envoyer-rappels/logique';
 import { MOVE_ERROR_MESSAGES } from '../go/server';
+import { DECOUVERTE_FR } from './decouverte.fr';
+import { DECOUVERTE_EN } from './decouverte.en';
 
 type Brut = Record<string, unknown>;
 const textes = (v: unknown): string[] => (typeof v === 'string' ? [v] : Object.values(v as Record<string, string>));
@@ -40,6 +42,8 @@ const CATALOGUES: [string, Brut, Brut][] = [
   ['partage', CATALOGUE_PARTAGE.fr, CATALOGUE_PARTAGE.en],
   ['securite', CATALOGUE_SECURITE.fr, CATALOGUE_SECURITE.en],
   ['refus du serveur', CATALOGUE_REFUS.fr, CATALOGUE_REFUS.en],
+  // #524 : partie de découverte (scénario prouvé par src/content/decouverte.test.ts).
+  ['découverte', DECOUVERTE_FR, DECOUVERTE_EN],
 ];
 
 /**
