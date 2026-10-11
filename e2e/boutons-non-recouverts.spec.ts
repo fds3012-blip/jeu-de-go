@@ -125,9 +125,11 @@ for (const [l, h] of ECRANS) {
       await ouvrirDepuisApprendre(page);
       await aucunBoutonRecouvert(page, `découverte, consigne ${taille}`);
       await avancerJusqua(page, 'mort');
-      await jouer(page, 'D3');
       await expect(page.locator('.decouverte .cta')).toBeVisible();
       await aucunBoutonRecouvert(page, `découverte, groupe mort ${taille}`);
+      await jouer(page, 'D3');
+      await expect(page.locator('.decouverte .verdict-revoir')).toBeVisible();
+      await aucunBoutonRecouvert(page, `découverte, coup inutile ${taille}`);
       await page.locator('.decouverte .cta').click();
       await surMoment(page, 'passer');
       await aucunBoutonRecouvert(page, `découverte, passer ${taille}`);

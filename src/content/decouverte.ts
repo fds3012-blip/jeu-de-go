@@ -45,8 +45,11 @@ export type Moment =
   | (Base & { type: 'essai'; points: string[]; refus: 'ko' | 'suicide' })
   /** Mochi explique, « Continuer ». */
   | (Base & { type: 'info' })
-  /** Passer (le bouton « Passer » est l'action principale). Fin de la partie : deux passes de suite. */
-  | (Base & { type: 'passe' })
+  /**
+   * Passer (le bouton « Passer » est l'action principale). `reponse` : Mochi passe aussi, la partie s'arrête.
+   * Un coup dans son propre territoire a son explication (`<id>.territoire`) : il coûte 1 point.
+   */
+  | (Base & { type: 'passe'; reponse?: 'passe' })
   /** Une étape du comptage, « Continuer ». */
   | (Base & { type: 'compte'; vue: VueComptage });
 
@@ -89,10 +92,11 @@ export const SCENARIO: Moment[] = [
   { id: 'yeux2', notion: 'yeux', type: 'info' },
   // 12. Frontière ouverte : F9 touche la pierre G9 de Mochi.
   { id: 'frontiere', notion: 'frontiere', type: 'coup', attendu: 'F9', reponse: 'E3', bravo: true },
-  // 13. Groupe mort : la pierre E3 ne peut ni sortir ni faire deux yeux.
-  { id: 'mort', notion: 'mort', type: 'coup', attendu: 'D3', reponse: 'passe', cibles: ['E3'], bravo: true },
-  // 14. Passer : deux passes de suite, la partie s'arrête.
-  { id: 'passer', notion: 'passer', type: 'passe' },
+  // 13. Groupe mort : la pierre E3 ne peut ni sortir ni faire deux yeux. On n'y répond pas : on passe (rien d'utile
+  // ailleurs, toutes les frontières sont fermées). Un coup contre elle, dans son territoire, coûterait 1 point.
+  { id: 'mort', notion: 'mort', type: 'passe', reponse: 'passe', cibles: ['E3'] },
+  // 14. Passer : Mochi passe aussi ; deux passes de suite, la partie s'arrête.
+  { id: 'passer', notion: 'passer', type: 'info' },
   // 15. Comptage (règle japonaise) : territoire + prisonniers ; komi pour Blanc.
   { id: 'compte', notion: 'comptage', type: 'compte', vue: 'mortes', cibles: MORTES },
   { id: 'compte2', notion: 'comptage', type: 'compte', vue: 'territoire' },
@@ -115,7 +119,7 @@ const point = (s: string) => (s === 'passe' ? -1 : fromLabel(s, TAILLE));
 /** Coups joués par un moment (le joueur, puis Mochi). Un essai, une info, un compte n'en jouent aucun. */
 export function coupsDu(m: Moment): string[] {
   if (m.type === 'coup') return [m.attendu, m.reponse];
-  if (m.type === 'passe') return ['passe'];
+  if (m.type === 'passe') return m.reponse ? ['passe', m.reponse] : ['passe'];
   return [];
 }
 

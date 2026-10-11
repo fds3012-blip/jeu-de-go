@@ -107,11 +107,11 @@ describe('écran (premier rendu)', () => {
     const html = rendu();
     expect(html.match(/class="cta"/g)).toHaveLength(1);
     expect(html).toContain('>Continuer</button>');
-    expect(html).toContain('Tu en as 38.');
+    expect(html).toContain('Tu en as 39.');
   });
 
-  it('passer : l’action principale est « Passer »', () => {
-    stock.set(DECOUVERTE_KEY, JSON.stringify({ etape: SCENARIO.findIndex(m => m.id === 'passer'), fini: false }));
+  it('pierre morte : on n’y répond pas, l’action principale est « Passer »', () => {
+    stock.set(DECOUVERTE_KEY, JSON.stringify({ etape: SCENARIO.findIndex(m => m.id === 'mort'), fini: false }));
     const html = rendu();
     expect(html.match(/class="cta"/g)).toHaveLength(1);
     expect(html).toContain('data-action="passer"');

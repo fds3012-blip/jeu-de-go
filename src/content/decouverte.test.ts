@@ -9,7 +9,7 @@ import { fromLabel, toLabel } from '../go/coords';
 import { groupAt, neighbors, play, type Position } from '../go/rules';
 import { score } from '../go/score';
 import { frontieresOuvertes } from '../go/frontieres';
-import { canEscape, captureWorks, hasTwoEyes } from '../go/tactics';
+import { canEscape, captureWorks, defenceFails, hasTwoEyes } from '../go/tactics';
 import { KOMI_NORMAL } from '../app/equilibrage';
 
 const P = (s: string) => fromLabel(s, TAILLE);
@@ -35,12 +35,13 @@ const mortes = new Set(MORTES.map(P));
 const compte = score(finale, KOMI_NORMAL, 'japanese', mortes);
 
 describe('partie de découverte : le scénario', () => {
-  it('se rejoue en entier, Noir et Blanc à tour de rôle, et finit par deux passes (Blanc, puis Noir)', () => {
+  it('se rejoue en entier, Noir et Blanc à tour de rôle, et finit par deux passes (Noir, puis Blanc)', () => {
     const coups = SCENARIO.flatMap(coupsDu);
-    expect(coups.length % 2).toBe(1); // Noir commence et finit (sa passe)
+    expect(coups.length % 2).toBe(0); // Noir commence, Blanc finit (sa passe)
     expect(coups.slice(-2)).toEqual(['passe', 'passe']);
+    expect(coups.slice(0, -2)).not.toContain('passe'); // aucune autre passe avant la fin
     expect(finale.lastMove).toBe(-1);
-    expect(finale.toPlay).toBe(2);
+    expect(finale.toPlay).toBe(1);
     // Une seule partie : chaque moment repart exactement de la fin du précédent.
     // Pendant la partie (avant le comptage), c'est toujours à Noir, le joueur, d'agir.
     for (let i = 0; i < SCENARIO.length; i++) {
@@ -77,6 +78,7 @@ describe('partie de découverte : le scénario', () => {
       m.id,
       ...(m.type === 'coup' || m.type === 'essai' || m.type === 'passe' ? [`${m.id}.non`] : []),
       ...(m.type === 'coup' && m.bravo ? [`${m.id}.bravo`] : []),
+      ...(m.type === 'passe' ? [`${m.id}.territoire`] : []),
       ...(m.type === 'coup' ? (m.erreurs ?? []).map(e => `${m.id}.non.${e}`) : []),
     ]);
     for (const k of attendues) { expect(texte(k), k).toBeTruthy(); expect(anglais(k), k).toBeTruthy(); }
@@ -284,48 +286,70 @@ describe('partie de découverte : chaque affirmation de Mochi', () => {
     for (const q of ouverts) if (q !== P('F9')) expect(apres.owner[q], toLabel(q, TAILLE)).toBe(1);
   });
 
-  it('13. groupe mort : bloquée, la pierre ne peut plus sortir (à côté, aucune liberté), ne fait pas deux yeux, et peut être prise', () => {
-    const p = avant('mort');
+  it('13. groupe mort : Mochi joue chez le joueur ; sans réponse, la pierre ne sort pas et ne fait pas deux yeux ; y répondre coûte 1 point', () => {
+    const i = indexDe('mort'), p = avant('mort');
     expect(p.lastMove).toBe(P('E3'));
-    const r = jouer(p, 'D3');
-    expect(libertes(r, 'E3')).toEqual(['E4']);
-    expect(play(r, P('E4'))).toBe('suicide'); // « à côté, elle n'aurait aucune liberté »
-    expect(canEscape(r, P('E3'))).toBe(false);
-    expect(hasTwoEyes(r, P('E3'))).toBe(false);
-    // Elle reste morte jusqu'au bout : Mochi passe, le joueur passe, et elle est retirée au comptage.
-    expect(finale.board[P('E3')]).toBe(2);
-    expect(canEscape({ ...finale, toPlay: 2 }, P('E3'))).toBe(false);
-    expect(compte.owner[P('E3')]).toBe(1);
-  });
-
-  it('14. passer : quand Mochi passe, toutes les frontières sont fermées ; deux passes de suite finissent la partie', () => {
-    const p = avant('passer');
-    expect(p.lastMove).toBe(-1); // Mochi vient de passer
+    expect(SCENARIO[i]).toMatchObject({ type: 'passe', reponse: 'passe' });
+    // « Elle ne peut ni sortir… » : la zone vide autour d'elle n'est bordée que de pierres noires (et d'elle-même).
+    const nb = neighbors(TAILLE), vu = new Set<number>([P('E3')]), pile = [P('E3')], bords = new Set<number>();
+    while (pile.length) for (const r of nb[pile.pop()!]) {
+      if (vu.has(r)) continue;
+      if (p.board[r] === 0) { vu.add(r); pile.push(r); } else if (r !== P('E3')) bords.add(p.board[r]);
+    }
+    expect([...bords]).toEqual([1]);
+    // « … ni faire deux yeux : elle est morte. » Blanc joue en premier : toutes ses défenses échouent (lecteur de capture).
+    const blanc = { ...p, toPlay: 2 as const };
+    expect(defenceFails(blanc, P('E3'), 14)).toBe(true);
+    expect(hasTwoEyes(p, P('E3'))).toBe(false);
+    // « Rien d'autre à fermer : passe. » : aucune frontière ouverte, la pierre morte retirée.
     expect(frontieresOuvertes(p.board, TAILLE, mortes)).toEqual([]);
-    expect(finale.lastMove).toBe(-1);
+    // « Pas besoin de répondre » : un coup noir dans son territoire coûte exactement 1 point (puis deux passes).
+    const fin = jouer(jouer(p, 'passe'), 'passe');
+    const base = score(fin, KOMI_NORMAL, 'japanese', mortes);
+    let essais = 0;
+    for (let q = 0; q < TAILLE * TAILLE; q++) {
+      if (base.owner[q] !== 1 || p.board[q] !== 0) continue; // le point de la pierre morte est occupé
+      const r = play(p, q);
+      expect(typeof r, toLabel(q, TAILLE)).not.toBe('string');
+      const f = jouer(jouer(r as Position, 'passe'), 'passe');
+      const s = score(f, KOMI_NORMAL, 'japanese', new Set([...mortes].filter(x => f.board[x] === 2)));
+      expect((s.black - s.white) - (base.black - base.white), toLabel(q, TAILLE)).toBe(-1);
+      essais++;
+    }
+    expect(essais).toBe(38);
+    expect(texte('mort.territoire')).toContain('1 point');
+    expect(texte('mort')).not.toMatch(/bloque/i);
   });
 
-  it('15. comptage (règle japonaise, komi de l’app) : 38 + 6 = 44 contre 11 + 1 + 6,5 = 18,5 ; victoire de 25,5', () => {
+  it('14. passer : Noir passe, Mochi passe aussi ; deux passes de suite finissent la partie, la pierre morte reste sur le plateau', () => {
+    expect(SCENARIO[indexDe('passer')].type).toBe('info');
+    expect(finale.lastMove).toBe(-1);
+    expect(finale.board[P('E3')]).toBe(2);
+    expect(compte.owner[P('E3')]).toBe(1);
+    expect(frontieresOuvertes(finale.board, TAILLE, mortes)).toEqual([]);
+  });
+
+  it('15. comptage (règle japonaise, komi de l’app) : 39 + 6 = 45 contre 11 + 1 + 6,5 = 18,5 ; victoire de 26,5', () => {
     expect(KOMI_NORMAL).toBe(6.5);
-    expect(compte.territory[1]).toBe(38);
+    expect(compte.territory[1]).toBe(39);
     expect(finale.captures[1]).toBe(5);
     expect(mortes.size).toBe(1);
-    expect(compte.black).toBe(44);
+    expect(compte.black).toBe(45);
     expect(compte.territory[2]).toBe(11);
     expect(finale.captures[2]).toBe(1);
     expect(compte.white).toBe(18.5);
     expect(compte.winner).toBe(1);
-    expect(compte.margin).toBe(25.5);
+    expect(compte.margin).toBe(26.5);
     expect(compte.seki).toEqual([]);
     // Les nombres des textes sont ceux du moteur, en français et en anglais.
-    expect(texte('compte2')).toContain('38');
-    expect(texte('compte3')).toMatch(/5 .*1 .*6\. 38 \+ 6 = 44/);
+    expect(texte('compte2')).toContain('39');
+    expect(texte('compte3')).toMatch(/5 .*1 .*6\. 39 \+ 6 = 45/);
     expect(texte('compte4')).toMatch(/11 .*12/);
     expect(texte('compte5')).toMatch(/6,5 .*12 \+ 6,5 = 18,5/);
-    expect(texte('compte6')).toMatch(/44 contre 18,5 .*25,5/);
-    expect(anglais('compte3')).toMatch(/5 .*1 .*6\. 38 \+ 6 = 44/);
+    expect(texte('compte6')).toMatch(/45 contre 18,5 .*26,5/);
+    expect(anglais('compte3')).toMatch(/5 .*1 .*6\. 39 \+ 6 = 45/);
     expect(anglais('compte5')).toMatch(/6\.5 .*12 \+ 6\.5 = 18\.5/);
-    expect(anglais('compte6')).toMatch(/44 to 18\.5.*25\.5/);
+    expect(anglais('compte6')).toMatch(/45 to 18\.5.*26\.5/);
     // Toutes les frontières sont fermées et aucun seki : le comptage ne laisse aucun point en suspens.
     expect(frontieresOuvertes(finale.board, TAILLE, mortes)).toEqual([]);
   });

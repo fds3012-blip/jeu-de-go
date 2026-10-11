@@ -104,31 +104,37 @@ for (const largeur of [390, 320] as const) {
     await capture(page, '12-frontiere');
     await faireMoment(page, SCENARIO.findIndex(m => m.id === 'frontiere'));
 
-    // 13. Groupe mort, 14. passer : un coup au lieu de passer est expliqué.
-    await jouer(page, 'D3');
+    // 13. Groupe mort : on n'y répond pas. Un coup contre elle, dans son territoire, coûte 1 point : Mochi le dit.
+    await surMoment(page, 'mort');
     await expect(bulle(page)).toContainText('elle est morte');
+    await expect(bulle(page)).toContainText('Pas besoin de répondre');
+    await expect(page.locator('.decouverte .cta')).toHaveText('Passer');
     await capture(page, '13-mort');
-    await page.locator('.decouverte .cta').click();
-    await surMoment(page, 'passer');
-    await jouer(page, 'A1');
-    await expect(bulle(page)).toContainText('touche « Passer »'.replace('« ', '« ').replace(' »', ' »'));
-    await expect(pierres(page, 'noir')).toHaveCount(19);
-    await capture(page, '14-passer');
+    await jouer(page, 'D3');
+    await expect(bulle(page)).toContainText('te coûte même 1 point');
+    await attendrePierre(page, 'D3', null);
+    await expect(pierres(page, 'noir')).toHaveCount(18);
+    await capture(page, '13-mort-erreur');
+    // 14. Passer : Mochi passe aussi, la partie s'arrête.
     await page.getByRole('button', { name: 'Passer', exact: true }).click();
+    await surMoment(page, 'passer');
+    await expect(bulle(page)).toContainText('Je passe aussi');
+    await capture(page, '14-passer');
+    await page.locator('.decouverte .cta').click();
 
     // 15. Comptage pas à pas : pierre morte, territoire, prisonniers, Blanc, komi, résultat.
     await surMoment(page, 'compte');
     await expect(notions(page)).toHaveText('15 / 15 notions');
     await page.locator('.decouverte .cta').click();
     await surMoment(page, 'compte2');
-    await expect(bulle(page)).toContainText('Tu en as 38.');
+    await expect(bulle(page)).toContainText('Tu en as 39.');
     await capture(page, '15-territoire');
     for (const id of ['compte3', 'compte4', 'compte5']) { await page.locator('.decouverte .cta').click(); await surMoment(page, id); }
     await expect(page.locator('.decouverte .cta')).toHaveText('Voir le résultat');
     await capture(page, '15-komi');
     await page.locator('.decouverte .cta').click();
     await surMoment(page, 'compte6');
-    await expect(bulle(page)).toContainText('tu gagnes de 25,5 points');
+    await expect(bulle(page)).toContainText('tu gagnes de 26,5 points');
     await capture(page, '15-resultat');
     await page.locator('.decouverte .cta').click();
 

@@ -128,7 +128,13 @@ export function PartieDecouverte({ onFin, onQuitter }: { onFin: () => void; onQu
       erreur(p, `${m.id}.non` as CleDecouverte);
       return;
     }
-    if (m.type === 'passe') { erreur(p, 'passer.non'); return; }
+    if (m.type === 'passe') {
+      // Un coup dans son propre territoire (pierres mortes retirées) ne rapporte rien : il coûte 1 point (prouvé par
+      // src/content/decouverte.test.ts). Ailleurs, le rappel du moment.
+      const chezToi = score(pos, KOMI_NORMAL, 'japanese', new Set(points(MORTES))).owner[p] === 1;
+      erreur(p, `${m.id}.${chezToi ? 'territoire' : 'non'}` as CleDecouverte);
+      return;
+    }
     if (m.type !== 'coup') return;
     const r = play(pos, p);
     if (typeof r === 'string') {

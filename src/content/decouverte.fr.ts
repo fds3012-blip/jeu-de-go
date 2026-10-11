@@ -104,19 +104,18 @@ export const DECOUVERTE_FR = {
   'frontiere.bravo': 'Fermée ! Tous ces points sont maintenant ton territoire.',
   'frontiere.non': 'Ferme ta frontière sur le point marqué, à côté de ma pierre.',
   // 13. Groupe mort.
-  'mort': 'Je tente une pierre chez toi. Bloque-la sur le point marqué.',
-  'mort.bravo': 'Ma pierre ne peut plus sortir ni faire deux yeux : elle est morte. Pas besoin de la capturer.',
-  'mort.non': 'Pour cette partie, bloque ma pierre sur le point marqué.',
+  'mort': 'Je tente une pierre chez toi. Elle ne peut ni sortir ni faire deux yeux : elle est morte. Pas besoin de répondre : elle sortira au comptage. Passe.',
+  'mort.territoire': 'Ce coup ne rapporte rien : dans ton territoire, il te coûte même 1 point. Passe plutôt.',
+  'mort.non': 'Pas besoin de répondre à ma pierre morte. Toutes tes frontières sont fermées : touche « Passer ».',
   // 14. Passer.
-  'passer': 'Je passe : pour moi, la partie est finie. Tes frontières sont fermées : passe aussi. Deux passes, et la partie s’arrête.',
-  'passer.non': 'Plus besoin de poser de pierre : touche « Passer ».',
+  'passer': 'Je passe aussi. Deux passes de suite : la partie est finie. On compte !',
   // 15. Compter (règle japonaise).
   'compte': 'On compte. D’abord, les pierres mortes sortent du plateau : ma pierre chez toi devient ton prisonnier.',
-  'compte2': 'Ton territoire : les points libres entourés par tes seules pierres. Tu en as 38.',
-  'compte3': 'Tes prisonniers : 5 capturés et 1 pierre morte, donc 6. 38 + 6 = 44 points.',
+  'compte2': 'Ton territoire : les points libres entourés par tes seules pierres. Tu en as 39.',
+  'compte3': 'Tes prisonniers : 5 capturés et 1 pierre morte, donc 6. 39 + 6 = 45 points.',
   'compte4': 'Mon territoire : 11 points. Plus mon prisonnier : 12.',
   'compte5': 'Noir commence, c’est un avantage : Blanc reçoit 6,5 points, le komi. 12 + 6,5 = 18,5 pour moi.',
-  'compte6': '44 contre 18,5 : tu gagnes de 25,5 points ! Le demi-point du komi évite toute égalité.',
+  'compte6': '45 contre 18,5 : tu gagnes de 26,5 points ! Le demi-point du komi évite toute égalité.',
 } as const;
 
 export type CleDecouverte = keyof typeof DECOUVERTE_FR;
