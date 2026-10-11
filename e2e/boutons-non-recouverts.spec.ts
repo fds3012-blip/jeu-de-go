@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { jouer, passerJusquAuScore, plateau } from './plateau';
 import { demarrerParcours, ouvrirRevue, preparerRevue } from './revueFactice';
+import { avancerJusqua, ouvrirDepuisApprendre, surMoment } from './decouverte';
 
 // Issue #503 : sur les écrans à barre fixe en bas (revue : bilan et parcours, « Rejouer mes erreurs », problèmes,
 // leçons), aucun bouton visible n'est recouvert par un élément fixe. Pour chaque bouton : on l'amène au milieu de
@@ -115,6 +116,29 @@ for (const [l, h] of ECRANS) {
       await page.getByRole('button', { name: 'Terminer la leçon' }).click();
       await expect(page.getByRole('heading', { name: 'Leçon terminée' })).toBeVisible();
       await aucunBoutonRecouvert(page, `fin de leçon ${taille}`);
+    });
+
+    // #524 : partie de découverte, aux moments où une action s'ajoute au plateau (bravo, passer, comptage, fin).
+    test(`partie de découverte : consigne, bravo, passer, comptage, fin (${taille})`, async ({ page }) => {
+      test.setTimeout(120_000);
+      await page.goto('/');
+      await ouvrirDepuisApprendre(page);
+      await aucunBoutonRecouvert(page, `découverte, consigne ${taille}`);
+      await avancerJusqua(page, 'mort');
+      await expect(page.locator('.decouverte .cta')).toBeVisible();
+      await aucunBoutonRecouvert(page, `découverte, groupe mort ${taille}`);
+      await jouer(page, 'D3');
+      await expect(page.locator('.decouverte .verdict-revoir')).toBeVisible();
+      await aucunBoutonRecouvert(page, `découverte, coup inutile ${taille}`);
+      await page.locator('.decouverte .cta').click();
+      await surMoment(page, 'passer');
+      await aucunBoutonRecouvert(page, `découverte, passer ${taille}`);
+      await avancerJusqua(page, 'compte5');
+      await aucunBoutonRecouvert(page, `découverte, komi ${taille}`);
+      await avancerJusqua(page, 'compte6');
+      await page.locator('.decouverte .cta').click();
+      await expect(page.getByTestId('fin-decouverte')).toBeVisible();
+      await aucunBoutonRecouvert(page, `découverte, fin ${taille}`);
     });
 
     // #521 : l'invitation à partager l'app (3e partie finie, visite de plus d'une minute) ne recouvre rien, et rien ne

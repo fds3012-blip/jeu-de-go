@@ -882,6 +882,13 @@ export const frEcrans = {
   'apprendre.chapitre.lecons': { one: '{n} leçon', other: '{n} leçons' },
   'apprendre.chapitre.avancee': '{n} sur {total}',
   'apprendre.duree': 'Environ {n} min',
+  'apprendre.decouverte': 'Partie de découverte',
+  'apprendre.decouverte.texte': 'Une vraie partie contre Mochi, commentée : les 15 notions du go, une à une.',
+  'apprendre.decouverte.nouvelle': 'Jouer',
+  'apprendre.decouverte.encours': 'Reprendre',
+  'apprendre.decouverte.finie': 'Rejouer',
+  'apprendre.decouverte.aria': 'Partie de découverte : une vraie partie contre Mochi, commentée. {etat}',
+  'apprendre.decouverte.faite': 'Faite',
   'apprendre.pas.compte': ', avec un compte',
   'apprendre.compte': 'Avec un compte',
   // #454 : leçon sur un grand plateau, annoncée sous son titre.

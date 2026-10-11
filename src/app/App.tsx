@@ -1,6 +1,7 @@
 import { Suspense, lazy, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 // Écrans chargés à la demande (perf, #323) : seul l'accueil est dans le JS initial.
-import { CreerCompte, DefiArrivee, DefiPartie, DefisEcran, Direct, Game, LearnHome, Lentes, LessonPlayer, PartiePartagee, Placement, Profil, PseudoObligatoire, Puzzles, SeriePratique, VeilleFile, apresPremierEcran } from './ecrans';
+import { CreerCompte, DefiArrivee, DefiPartie, DefisEcran, Direct, Game, LearnHome, Lentes, LessonPlayer, PartieDecouverte, PartiePartagee, Placement, Profil, PseudoObligatoire, Puzzles, SeriePratique, VeilleFile, apresPremierEcran } from './ecrans';
+import { DECOUVERTE_KEY, etatDecouverte } from './decouverteEtat';
 import { SeanceRevisions, prechargerRevisions } from './ecrans';
 import { IntroRegles, prechargerIntro } from './ecrans';
 import { ERREURS_KEY, EVENEMENT_REVISIONS, REVISIONS_KEY, compterDus } from './revisionEspacee';
@@ -26,7 +27,7 @@ import { COTE_KEY } from './coteJoueur';
 import { Accueil } from './Accueil';
 import { modesAccueil, type Depuis, type Mode } from './modes';
 import { abonnerPierre, accueilEpure, lireRepere, pierreDejaPosee } from './premierePierre';
-import { CONNAIT_GO_KEY, doitDemander, lireReponse, suiteDe, type ChoixGo, type DepuisIntro, type VersionIntro } from './connaitGo';
+import { CONNAIT_GO_KEY, doitDemander, lireReponse, ongletApresDecouverte, suiteDe, type ChoixGo, type DepuisIntro, type OrigineDecouverte, type VersionIntro } from './connaitGo';
 import { QuestionGo } from './QuestionGo';
 import { ecrireFaconEnLigne, lireFaconEnLigne } from './enLigne';
 import type { FaconEnLigne } from './BasculeEnLigne';
@@ -207,6 +208,8 @@ export function App() {
   const [adversaire, setAdversaire] = useStored<OpponentId>('go.adversaire.v1', 'pomme');
   const [lessonId, setLessonId] = useState<string | null>(null);
   const [leconEssai, setLeconEssai] = useState<Lesson | null>(null);
+  // #524 : partie de découverte ouverte (Apprendre, modes de l'accueil), et d'où ; 'intro' (#523) : après l'introduction des règles, sa fin ramène à l'accueil.
+  const [decouverte, setDecouverte] = useState<false | OrigineDecouverte>(false);
   useEffect(() => {
     if (!(import.meta.env.VITE_E2E || import.meta.env.DEV) || !LECON_ESSAI) return;
     void import('../../content/lessons.essai.js').then(m => {
@@ -465,6 +468,16 @@ export function App() {
     setTab('apprendre'); setLessonId(id); window.scrollTo({ top: 0 });
   }
 
+  /**
+   * #524 : partie de découverte, libre comme les premières leçons (aucun compte demandé). Seule porte vers elle, depuis
+   * Apprendre, l'accueil (mode « Découverte ») et la fin de l'introduction des règles (#523, `apresIntro` : « Jouer avec
+   * Mochi », « Partie de découverte avec Mochi »). Après l'introduction, sa fin ramène à l'accueil ; sinon au chemin.
+   */
+  function ouvrirDecouverte(apresIntro = false) {
+    setPlaying(false); setLessonId(null); setSerie3(null); setEnPlacement(false); setSeanceRevisions(false); setIntroRegles(null);
+    setDecouverte(apresIntro ? 'intro' : 'chemin'); window.scrollTo({ top: 0 });
+  }
+
   function ouvrirPlacement() {
     if (!garde({ quoi: 'placement' }, { quoi: 'placement' })) return;
     track(EVENTS.placementCommence, { refait: placement !== null });
@@ -525,16 +538,6 @@ export function App() {
   /** #523 : ouvre l'introduction des règles (complète ou express), depuis l'accueil, Apprendre ou l'aide. */
   function ouvrirIntro(version: VersionIntro, depuis: DepuisIntro) {
     setLessonId(null); setSerie3(null); setIntroRegles({ version, depuis }); window.scrollTo({ top: 0 });
-  }
-
-  /**
-   * #523 → #524 : la PARTIE DE DÉCOUVERTE, à la fin de l'introduction des règles (« Jouer avec Mochi », « Partie de
-   * découverte avec Mochi »). Seule porte vers elle : quand #524 sera fusionnée, rebrancher ici, et seulement ici, l'écran
-   * `src/app/PartieDecouverte.tsx` (props `{ onFin, onQuitter }`). D'ici là : la partie guidée existante contre Mochi.
-   */
-  function ouvrirDecouverte() {
-    setIntroRegles(null); setTab('jouer');
-    lancerGuidee();
   }
 
   /** Réponse à « Tu connais le go ? » : gardée sur l'appareil (sauf « Plus tard »), puis l'écran qui lui va. */
@@ -610,6 +613,7 @@ export function App() {
     if (t === 'problemes' && tab === 'problemes') setRacineProblemes(n => n + 1);
     setDefi(null); setDirect(false); setLente(false); setRepli(null); setEcranCompte(null); setAnnonceGel(null); setRetourSerie(null); setEnPlacement(false); setTab(t); setPlaying(false); setLessonId(null); setSerie3(null); setVueProfil('menu'); setPartagee(null); window.scrollTo({ top: 0 });
     setSeanceRevisions(false); // #469
+    setDecouverte(false); // #524
   };
 
   // Reprise de l'action demandée, dès que le compte est complet ; `compte_cree` quand un compte sans pseudo apparaît.
@@ -786,7 +790,7 @@ export function App() {
   } else if (introRegles && !playing) {
     // #523 : introduction des règles. Sortie : là où elle a été ouverte (accueil, Apprendre, aide).
     screen = <IntroRegles key={`${introRegles.version}-${introRegles.depuis}`} version={introRegles.version} depuis={introRegles.depuis} confirmTouch={settings.confirmTouch}
-      onDecouverte={ouvrirDecouverte}
+      onDecouverte={() => ouvrirDecouverte(true)}
       contre={{ nom: OPPONENTS[0].nom, lancer: () => { setIntroRegles(null); setTab('jouer'); lancer('ordi', OPPONENTS[0].id); } }}
       onQuitter={() => { setIntroRegles(null); window.scrollTo({ top: 0 }); }} />;
   } else if (enPartie) {
@@ -817,6 +821,11 @@ export function App() {
           comptageSur={comptageSurActif(terminees)} />
       </>
     );
+  } else if (decouverte) {
+    // #524 : la fin mène au chemin des leçons (la suite naturelle) ; quitter ramène là où l'on était.
+    // #523 : ouverte à la fin de l'introduction des règles, sa fin ramène à l'accueil.
+    screen = <PartieDecouverte onFin={() => { const o = decouverte; setDecouverte(false); setTab(ongletApresDecouverte(o || 'chemin')); window.scrollTo({ top: 0 }); }}
+      onQuitter={() => { setDecouverte(false); window.scrollTo({ top: 0 }); }} />;
   } else if (tab === 'jouer' && seanceRevisions) {
     // #469 : séance « Révisions du jour » (5 éléments au plus), ouverte depuis la carte de l'accueil.
     screen = <SeanceRevisions confirmTouch={settings.confirmTouch} celebrer={settings.celebrations} compte={!!compteId}
@@ -871,6 +880,7 @@ export function App() {
       jouer={{ nom: premier.nom, lancer: () => { setLessonId(null); setTab('jouer'); lancer('ordi', premier.id); } }} />;
   } else if (tab === 'apprendre') {
     screen = <LearnHome progress={progress} onOpen={ouvrirLecon} sync={syncState} onRegles={() => ouvrirIntro('complete', 'apprendre')}
+      decouverte={{ etat: etatDecouverte(readLocal<unknown>(DECOUVERTE_KEY, null)), ouvrir: () => ouvrirDecouverte() }}
       compteRequis={rang => !decider({ quoi: 'lecon', rang }, etat, terminees, COMPTES).ok} />;
   } else if (tab === 'problemes') {
     screen = <Puzzles db={supabase} userId={compteId} sessionLoading={session === undefined} confirmTouch={settings.confirmTouch} onCompte={() => go('profil')}
@@ -900,6 +910,7 @@ export function App() {
       if (m === 'ordi') lancer('ordi');
       else if (m === 'deux') lancer('deux');
       else if (m === 'guidee') lancerGuidee();
+      else if (m === 'decouverte') ouvrirDecouverte();
       // « Un humain, maintenant » (#360), avec un compte et un pseudo (sinon « Crée ton compte », puis reprise).
       // #440 : « En direct » ou « Partie lente », selon le dernier choix (mémorisé).
       else if (m === 'en_ligne') { if (!garde({ quoi: 'en_ligne' }, { quoi: 'direct' })) return; ouvrirEnLigne(); }
@@ -957,12 +968,12 @@ export function App() {
     );
   }
 
-  const accueilVisible = tab === 'jouer' && !playing && !enPlacement && !enDefi && !enDirect && !enLente && !enPartagee && !ecranPlein && !seanceRevisions && !introRegles;
+  const accueilVisible = tab === 'jouer' && !playing && !enPlacement && !enDefi && !enDirect && !enLente && !enPartagee && !ecranPlein && !seanceRevisions && !decouverte && !introRegles;
   // #465 (WCAG 2.4.2) : le titre de l'onglet du navigateur suit l'écran affiché.
   const leconOuverte = leconEssai ?? lesson;
   const ecranTitre: EcranTitre = ecranPlein ? { quoi: 'compte' }
     : introRegles && !playing ? { quoi: 'lecon', titre: t(introRegles.version === 'express' ? 'intro.titreExpress' : 'intro.titre') }
-    : enDirect ? { quoi: 'direct' } : enLente ? { quoi: 'lente' } : enPartagee ? { quoi: 'partagee' }
+    : enDirect ? { quoi: 'direct' } : enLente ? { quoi: 'lente' } : enPartagee ? { quoi: 'partagee' } : decouverte && !enPartie ? { quoi: 'decouverte' }
       : enDefi ? { quoi: defi.vue === 'partie' ? 'enLigne' : 'defi' }
         : tab === 'jouer' && playing ? { quoi: 'partie', contre: playing === 'deux' ? null : playing === 'guidee' ? mochiGuide.nom : adv.nom, guidee: playing === 'guidee' }
           : tab === 'jouer' ? (enPlacement ? { quoi: 'placement' } : seanceRevisions ? { quoi: 'revisions' } : { quoi: 'accueil' })
@@ -1042,7 +1053,7 @@ export function App() {
           <Suspense fallback={null}>{screen}</Suspense>
         </LimiteErreur>
       </main>
-      <FeteNiveau celebrer={settings.celebrations} ecran={`${tab}|${playing}|${lessonId ?? ''}|${serie3 ? 'serie' : ''}|${vueProfil}`} />
+      <FeteNiveau celebrer={settings.celebrations} ecran={`${tab}|${playing}|${lessonId ?? ''}|${serie3 ? 'serie' : ''}|${vueProfil}|${decouverte ? 'decouverte' : ''}`} />
       <AnnonceXp celebrer={settings.celebrations} />
       {/* Pendant une partie, comme chez chess.com : pas de barre de navigation, « ‹ » ramène à l'accueil. */}
       {!enPartie && !ecranPlein && <BarreNav actif={tab} pastilles={pastilles}

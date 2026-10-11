@@ -4,6 +4,7 @@ import { brancher, fauxServeur } from './fauxSupabase';
 import { choisirMode, jouer, ouvrirPlus, passerJusquAuScore, plateau } from './plateau';
 import { GO_DU_JOUR } from '../src/content/goDuJour.gen';
 import { demarrerParcours, ouvrirRevue, preparerRevue } from './revueFactice';
+import { avancerJusqua, ouvrirDepuisApprendre, surMoment } from './decouverte';
 
 // #461 : audit WCAG 2.1 AA outillé. axe-core (règles wcag2a, wcag2aa, wcag21a, wcag21aa) passe sur chaque écran clé
 // des parcours principaux, en sombre puis en clair. Aucune violation tolérée : un écran qui régresse casse la CI.
@@ -408,4 +409,26 @@ test('espacement du texte forcé (1.4.12) : accueil et Profil sans texte coupé'
   await expect(page.getByRole('button', { name: /^Réglages/ })).toBeVisible();
   await page.addStyleTag({ content: ESPACEMENT });
   expect(await textesCoupes(page), 'Profil').toEqual([]);
+});
+
+test('axe : partie de découverte (#524) : Apprendre, consigne, erreur, frontière, comptage, fin', async ({ page }) => {
+  test.setTimeout(180_000);
+  await page.goto('/');
+  await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
+  await expect(page.getByTestId('carte-decouverte')).toBeVisible();
+  await verifier(page, 'Apprendre avec la découverte');
+  await ouvrirDepuisApprendre(page);
+  await verifier(page, 'Découverte : consigne');
+  await jouer(page, 'A1');
+  await expect(page.locator('.decouverte .verdict-revoir')).toBeVisible();
+  await verifier(page, 'Découverte : erreur');
+  await avancerJusqua(page, 'frontiere');
+  await verifier(page, 'Découverte : frontière ouverte');
+  await avancerJusqua(page, 'compte2');
+  await surMoment(page, 'compte2');
+  await verifier(page, 'Découverte : territoire');
+  await avancerJusqua(page, 'compte6');
+  await page.locator('.decouverte .cta').click();
+  await expect(page.getByTestId('fin-decouverte')).toBeVisible();
+  await verifier(page, 'Découverte : fin');
 });

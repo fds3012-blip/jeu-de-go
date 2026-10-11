@@ -37,6 +37,13 @@ export const EVENTS = {
   // Leçon ouverte (#198) : dénominateur de l'entonnoir des leçons (`lecon_terminee` / `lecon_commencee`).
   leconCommencee: 'lecon_commencee',
   leconTerminee: 'lecon_terminee',
+  // Partie de découverte (#524) : notion atteinte (`index` : 1 à 15, `concept` : poser, libertes, atari, capture, sauver,
+  // couper, echelle, relier, territoire, ko, yeux, frontiere, mort, passer, comptage ; `reprise` : reprise après un
+  // départ), partie menée jusqu'au comptage (`premiere` : première fois sur l'appareil), partie quittée (`concept`,
+  // `index` : où le joueur s'arrête). Jamais un coup ni une position.
+  decouverteEtape: 'decouverte_etape',
+  decouverteFinie: 'decouverte_finie',
+  decouverteQuittee: 'decouverte_quittee',
   // E-mail de connexion envoyé (code à 6 chiffres et lien, #343 ; `moyen` : `code`).
   lienConnexionEnvoye: 'lien_connexion_envoye',
   // Entonnoir essai → compte (#343). `essai_limite_atteinte` : écran « Crée ton compte » ouvert (`raison`, `parties`).
@@ -156,7 +163,7 @@ export const EVENTS = {
   // l'adversaire.
   partieLenteCommencee: 'partie_lente_commencee',
   partieLenteTerminee: 'partie_lente_terminee',
-  // Modes de l'accueil (#429) : `mode` (en_ligne, ordi, ami, deux, guidee), `depuis` (bouton, plateau, tuile, plus,
+  // Modes de l'accueil (#429) : `mode` (en_ligne, ordi, ami, deux, guidee, decouverte : #524), `depuis` (bouton, plateau, tuile, plus,
   // feuille : bouton de « Changer »), `principal` (le mode était l'action principale de l'accueil).
   modeChoisi: 'mode_choisi',
   // Joueur de club (#365, #368, #372). Réglage changé (`cle` : nom du réglage, `valeur` : nouvelle valeur, jamais rien

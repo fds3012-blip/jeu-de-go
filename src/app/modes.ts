@@ -9,12 +9,13 @@
 //   y est pour tous, avec l'adversaire en cours) ;
 // - au-delà de trois tuiles, les derniers modes passent sous « Plus ».
 
-export type Mode = 'en_ligne' | 'ordi' | 'ami' | 'deux' | 'guidee';
+export type Mode = 'en_ligne' | 'ordi' | 'ami' | 'deux' | 'guidee' | 'decouverte';
 /** D'où vient le choix (propriété `depuis` de `mode_choisi`). */
 export type Depuis = 'bouton' | 'plateau' | 'tuile' | 'plus' | 'feuille';
 
 /** Ordre fixe des modes : la place d'une tuile ne change pas d'un jour à l'autre. */
-export const ORDRE_MODES: readonly Mode[] = ['en_ligne', 'ordi', 'ami', 'deux', 'guidee'];
+// #524 : la partie de découverte (commentée par Mochi) se range à côté de la partie guidée.
+export const ORDRE_MODES: readonly Mode[] = ['en_ligne', 'ordi', 'ami', 'deux', 'guidee', 'decouverte'];
 /** Tuiles au plus sous le bouton, « Plus » compris : trois tiennent côte à côte en 320 px. */
 export const TUILES_MAX = 3;
 

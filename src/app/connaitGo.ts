@@ -44,3 +44,11 @@ export function suiteDe(r: ReponseGo): { ecran: 'intro'; version: VersionIntro }
   if (r === 'un_peu') return { ecran: 'intro', version: 'express' };
   return { ecran: 'accueil' };
 }
+
+/** D'où la partie de découverte (#524) est ouverte : le chemin (Apprendre, modes de l'accueil) ou la fin de l'introduction. */
+export type OrigineDecouverte = 'chemin' | 'intro';
+
+/** Onglet où ramène la fin de la partie de découverte : l'accueil après l'introduction des règles, le chemin sinon (#524). */
+export function ongletApresDecouverte(o: OrigineDecouverte): 'jouer' | 'apprendre' {
+  return o === 'intro' ? 'jouer' : 'apprendre';
+}

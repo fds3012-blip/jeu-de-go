@@ -5,6 +5,8 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page, type Request } from '@playwright/test';
 import { mesurer } from './mesures';
 import { attendrePierre, jouer, plateau, toucher } from './plateau';
+import { faireMoment, surMoment } from './decouverte';
+import { SCENARIO } from '../src/content/decouverte';
 
 // #523 : au tout premier lancement, « Tu connais le go ? » avec Mochi et trois réponses de même poids, plus « Plus tard ».
 // « Jamais joué » → introduction interactive des règles (8 écrans, un geste chacun, aide après un mauvais geste), puis la
@@ -233,14 +235,20 @@ test.describe('les trois réponses', () => {
     await expect(bulle(page)).toContainText('Noir gagne de 1,5 point');
     await action(page, 'Terminer').click();
 
-    // Fin : une seule action, la partie de découverte (aujourd'hui la partie guidée contre Mochi, #524 à venir).
+    // Fin : une seule action, la partie de découverte (#524), au premier moment de son scénario.
     await expect(page.getByTestId('fin-intro')).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Tu connais les règles !' })).toBeFocused();
     await expect(page.locator('.cta')).toHaveCount(1);
     await capture(page, 'intro-fin-clair');
     await page.getByRole('button', { name: 'Jouer avec Mochi' }).click();
-    await expect(plateau(page)).toBeVisible();
-    expect(await page.title()).toMatch(/Mochi/);
+    await surMoment(page, SCENARIO[0].id);
+    expect(await page.title()).toContain('Partie de découverte');
+    await capture(page, 'decouverte-apres-intro-clair');
+    // Jouée jusqu'au bout : sa fin ramène à l'accueil (et non au chemin des leçons, comme depuis Apprendre).
+    for (let i = 0; i < SCENARIO.length; i++) await faireMoment(page, i);
+    await page.getByTestId('fin-decouverte').locator('.cta').click();
+    await expect(page.locator('.accueil')).toBeVisible();
+    await expect(question(page)).toHaveCount(0);
     expect(erreurs).toEqual([]);
     await ctx.close();
   });
@@ -271,6 +279,24 @@ test.describe('les trois réponses', () => {
     await page.getByRole('button', { name: 'Jouer contre Pomme' }).click();
     await expect(plateau(page)).toBeVisible();
     expect(await page.title()).toMatch(/Pomme/);
+    await ctx.close();
+  });
+
+  test('« Un peu » : « Partie de découverte avec Mochi », l’action principale de la fin, ouvre la partie de découverte', async ({ browser, baseURL }) => {
+    const ctx = await browser.newContext({ ...SANS_REPONSE(baseURL!), viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
+    const page = await ctx.newPage();
+    await page.goto('/');
+    await reponse(page, 'Un peu').click();
+    for (let i = 1; i <= 8; i++) {
+      await expect(page.locator('.etapes')).toHaveAttribute('aria-valuenow', String(i - 1));
+      await page.getByTestId('je-sais').click();
+    }
+    await page.getByRole('button', { name: 'Partie de découverte avec Mochi' }).click();
+    await surMoment(page, SCENARIO[0].id);
+    // Quitter ramène à l'accueil (là d'où l'on venait), sans reposer la question.
+    await page.getByRole('button', { name: 'Quitter la partie de découverte' }).click();
+    await expect(page.locator('.accueil')).toBeVisible();
+    await expect(question(page)).toHaveCount(0);
     await ctx.close();
   });
 
