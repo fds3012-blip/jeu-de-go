@@ -132,7 +132,7 @@ test('un défi par lien terminé, lu sur le serveur, rejoint la liste et ouvre l
   serveur.profiles.push({ id: 'ami-sans-pseudo', username: null, rating: 1500, streak_days: 0, streak_last: null, streak_freezes: 0 });
   const ctx = await browser.newContext({
     viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, locale: 'fr-FR', baseURL,
-    storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }] }] },
+    storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }, { name: 'go.connait-go.v1', value: '"sait"' }] }] },
   });
   const page = await brancher(ctx, serveur, { 'sb-supabase-auth-token': JSON.stringify(session) });
   await page.goto('/');

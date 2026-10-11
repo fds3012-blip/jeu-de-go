@@ -181,7 +181,7 @@ test.describe('#368 Mes statistiques', () => {
     const ctx = await browser.newContext({
       viewport: { width: largeur, height: largeur === 320 ? 568 : largeur < 300 ? 422 : 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, locale: 'fr-FR', baseURL,
       colorScheme: sombre ? 'dark' : 'light', reducedMotion: 'reduce',
-      storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }] }] },
+      storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }, { name: 'go.connait-go.v1', value: '"sait"' }] }] },
     });
     const d = new Date().toISOString();
     const page = await brancher(ctx, serveur, {

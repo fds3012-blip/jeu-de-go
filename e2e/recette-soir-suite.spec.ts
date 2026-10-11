@@ -306,7 +306,7 @@ async function avecServeur(browser: Browser, baseURL: string | undefined, largeu
   const ctx = await browser.newContext({
     viewport: { width: largeur, height: hauteur }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, locale: 'fr-FR', baseURL,
     colorScheme: 'light', reducedMotion: 'reduce', timezoneId: 'Europe/Paris',
-    storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }] }] },
+    storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }, { name: 'go.connait-go.v1', value: '"sait"' }] }] },
   });
   const page = await brancher(ctx, serveur, stockage);
   return { page, serveur };

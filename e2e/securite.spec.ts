@@ -17,7 +17,7 @@ async function telephone(browser: Browser, baseURL: string | undefined, serveur:
   const ctx = await browser.newContext({
     viewport: { width: o.largeur ?? 390, height: o.hauteur ?? 844 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true, locale: 'fr-FR', baseURL,
     colorScheme: o.sombre ? 'dark' : 'light', reducedMotion: 'reduce',
-    storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }] }] },
+    storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }, { name: 'go.connait-go.v1', value: '"sait"' }] }] },
   });
   const page = await brancher(ctx, serveur, {
     'go.parties.v1': JSON.stringify({ n: 3 }),

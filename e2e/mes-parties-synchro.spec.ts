@@ -10,7 +10,7 @@ const CAPTURES = process.env.CAPTURES_358;
 function telephone(browser: Browser, baseURL: string | undefined, serveur: FauxServeur, stockage: Record<string, string>, colorScheme: 'light' | 'dark' = 'light') {
   return browser.newContext({
     viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, locale: 'fr-FR', baseURL, colorScheme,
-    storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }] }] },
+    storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }, { name: 'go.connait-go.v1', value: '"sait"' }] }] },
   }).then(ctx => brancher(ctx, serveur, stockage).then(page => ({ ctx, page })));
 }
 

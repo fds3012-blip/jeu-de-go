@@ -8,7 +8,8 @@ const FOND = '#3CC48E', TRAIT = '#1E8A5F', PAPIER = '#F7E9DA';
 /** Pictogramme de chaque leçon, dessiné avec le vocabulaire du go qu'elle enseigne. */
 function motif(id: string, W: string, C: string): ReactElement {
   switch (id) {
-    // Libertés et capture : une pierre et ses quatre libertés, sur les lignes.
+    // Libertés et capture : une pierre et ses quatre libertés, sur les lignes. #523 : même sceau pour l'introduction des règles.
+    case 'intro-regles': case 'intro-express':
     case 'l1': return (<>
       <path d="M50 26V74M26 50H74" stroke={W} strokeWidth="3" strokeLinecap="round" />
       <circle cx="50" cy="50" r="12.5" fill={W} />

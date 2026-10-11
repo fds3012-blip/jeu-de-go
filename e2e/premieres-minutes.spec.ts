@@ -142,7 +142,7 @@ test('4. fin de partie : un territoire à 0 est expliqué par Mochi, pas « perd
 test('5. limite de l’essai : ce qui reste ouvert sans compte est dit, et c’est vrai', async ({ browser, baseURL }) => {
   const serveur = fauxServeur();
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, locale: 'fr-FR', baseURL,
-    storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }] }] } });
+    storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }, { name: 'go.connait-go.v1', value: '"sait"' }] }] } });
   const page = await brancher(ctx, serveur, { 'go.essai.v1': JSON.stringify({ terminees: 3, suivi: true }), 'go.parties.v1': JSON.stringify({ n: 3, ordi: 3, dernier: 'pomme' }) });
   await page.goto('/');
   await choisirMode(page, 'ordi');

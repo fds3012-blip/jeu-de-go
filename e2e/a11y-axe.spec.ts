@@ -58,6 +58,10 @@ test.describe('premier lancement', () => {
     await verifier(page, 'Consentement');
     await page.getByRole('button', { name: 'Non merci' }).click();
 
+    // #523 : la question « Tu connais le go ? », puis l'accueil épuré par « Je sais jouer ».
+    await expect(page.getByRole('region', { name: 'Tu connais le go ?' })).toBeVisible();
+    await verifier(page, 'Tu connais le go ?');
+    await page.getByRole('button', { name: 'Je sais jouer' }).click();
     await expect(page.locator('.cta')).toBeVisible();
     await verifier(page, 'Accueil (premier lancement)');
 
@@ -213,7 +217,7 @@ test('axe : créer un compte, connexion, code, pseudo, Mon compte connecté', as
   const serveur = fauxServeur();
   const ctx = await browser.newContext({
     viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, locale: 'fr-FR', baseURL, colorScheme: 'dark', reducedMotion: 'reduce',
-    storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }] }] },
+    storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }, { name: 'go.connait-go.v1', value: '"sait"' }] }] },
   });
   // Trois parties d'essai jouées : la suivante demande un compte.
   const page = await brancher(ctx, serveur, { 'go.essai.v1': JSON.stringify({ terminees: 3 }) });

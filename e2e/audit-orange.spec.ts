@@ -66,7 +66,7 @@ test.describe('320 × 568', () => {
 
   test('« Crée ton compte » : le champ et l’action principale sont visibles sans défiler', async ({ browser, baseURL }) => {
     const ctx = await browser.newContext({ viewport: { width: 320, height: 568 }, baseURL, locale: 'fr-FR',
-      storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }] }] } });
+      storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }, { name: 'go.connait-go.v1', value: '"sait"' }] }] } });
     const page = await brancher(ctx, fauxServeur(), { 'go.essai.v1': JSON.stringify({ terminees: 3 }) });
     await page.goto('/');
     await page.locator('.cta').click();

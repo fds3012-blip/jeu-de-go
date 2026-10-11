@@ -15,6 +15,8 @@ test('la fenêtre apparaît une fois, Accepter, rechargement : absente', async (
   await fenetre(page).getByRole('button', { name: 'Oui, j’aide' }).click();
   await expect(fenetre(page)).toBeHidden();
   expect(await page.evaluate(() => localStorage.getItem('go.consentement.v1'))).toBe('accepte');
+  // #523 : la question du premier lancement, répondue : l'accueil d'avant.
+  await page.getByRole('button', { name: 'Je sais jouer' }).click();
 
   await page.reload();
   await expect(page.locator('.cta')).toBeVisible();
@@ -103,6 +105,8 @@ test('aucune requête de suivi sans consentement, conditions accessibles depuis 
   await expect(fenetre(page)).toBeVisible();
   await page.keyboard.press('Escape'); // pas de choix
   await expect(fenetre(page)).toBeHidden();
+  // #523 : répondre à « Tu connais le go ? » n'envoie rien non plus sans consentement.
+  await page.getByRole('button', { name: 'Je sais jouer' }).click();
   await page.locator('.cta').click();
   const plateau = page.locator('svg.board[aria-label="Plateau de go 9 × 9"]');
   // L'écran de partie est chargé à la demande (#323) : on attend son plateau avant de le mesurer.

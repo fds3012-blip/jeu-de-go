@@ -18,7 +18,7 @@ async function telephone(browser: Browser, baseURL: string | undefined, serveur:
   const ctx = await browser.newContext({
     viewport: { width: o.largeur ?? 390, height: o.hauteur ?? 844 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true, locale: 'fr-FR', baseURL,
     colorScheme: o.sombre ? 'dark' : 'light', reducedMotion: 'reduce', acceptDownloads: true,
-    storageState: { cookies: [], origins: o.consentement === false ? [] : [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }] }] },
+    storageState: { cookies: [], origins: o.consentement === false ? [] : [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }, { name: 'go.connait-go.v1', value: '"sait"' }] }] },
   });
   return { ctx, page: await brancher(ctx, serveur, stockage) };
 }
@@ -155,7 +155,7 @@ test('fichier SGF : téléchargé hors ligne, il se réimporte sans erreur', asy
 
   // Réimport dans « Analyser une partie » (Profil › Mes parties), sur un appareil sans comptes configurés.
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, locale: 'fr-FR', baseURL,
-    storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }] }] } });
+    storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }, { name: 'go.connait-go.v1', value: '"sait"' }] }] } });
   const page = await ctx.newPage();
   await page.goto('/');
   await page.getByRole('button', { name: 'Profil' }).click();
