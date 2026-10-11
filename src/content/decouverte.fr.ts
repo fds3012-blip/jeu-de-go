@@ -34,11 +34,11 @@ export const DECOUVERTE_FR = {
   'notion.passer': 'Passer',
   'notion.comptage': 'Compter',
   // 1. Poser une pierre.
-  'poser': 'On joue une vraie partie. Tu as Noir, tu commences. Pose ta pierre là où deux lignes se croisent : touche le point marqué, au centre.',
+  'poser': 'Tu as Noir, tu commences. Pose ta pierre là où deux lignes se croisent : touche le point marqué.',
   'poser.bravo': 'Bien posée ! Une pierre posée ne bouge plus.',
   'poser.non': 'Pour cette partie, pose ta pierre au point marqué, au centre.',
   // 2. Libertés.
-  'libertes': 'Je pose ma pierre contre la tienne. Les points verts sont ses libertés : les points libres qui la touchent. Elle en a 3. Joue sur le point marqué.',
+  'libertes': 'Ma pierre touche la tienne. Les points verts sont ses libertés : elle en a 3. Joue sur le point marqué.',
   'libertes.bravo': 'Tu lui as pris une liberté : il ne lui en reste que 2.',
   'libertes.non': 'Ce point ne touche pas ma pierre. Joue sur le point marqué.',
   'libertes.non.C5': 'Bien vu, c’est aussi une de ses libertés. Pour cette partie, joue sur le point marqué.',
@@ -49,8 +49,8 @@ export const DECOUVERTE_FR = {
   'atari.non': 'Ce point ne touche pas ma pierre. Joue sur le point marqué.',
   'atari.non.C5': 'Ça la met aussi en atari ! Pour cette partie, joue sur le point marqué.',
   // 4. Capturer.
-  'capture': 'Je pourrais sauver ma pierre en jouant sur sa dernière liberté. Je préfère jouer ailleurs. Joue sur cette liberté : tu la captures.',
-  'capture.bravo': 'Capturée ! Ma pierre sort du plateau : c’est ton prisonnier. À la fin, chaque prisonnier te rapporte 1 point.',
+  'capture': 'Je pourrais la sauver en jouant sur sa dernière liberté. Je joue ailleurs. Prends-la : joue sur cette liberté.',
+  'capture.bravo': 'Capturée ! Elle sort du plateau : c’est ton prisonnier, 1 point pour toi à la fin.',
   'capture.non': 'Ma pierre a encore sa liberté. Joue dessus pour la capturer : c’est le point marqué.',
   // 5. Se sauver.
   'sauver': 'Je m’approche de ta pierre. Glisse une pierre entre mes deux pierres marquées, sur le point marqué.',
@@ -67,15 +67,15 @@ export const DECOUVERTE_FR = {
   'echelle': 'Je m’allonge : j’ai 2 libertés. Remets-moi en atari sur le point marqué, pour me pousser contre tes pierres.',
   'echelle.non': 'Pour cette partie, remets-moi en atari sur le point marqué.',
   'echelle.non.E6': 'Atari aussi, mais je m’allonge vers le haut et j’ai 3 libertés : je m’échappe.',
-  'echelle2': 'Je m’allonge encore… et je n’ai toujours qu’une liberté. Tu me poursuis en zigzag, toujours en atari : c’est l’échelle. Capture mes pierres !',
+  'echelle2': 'Je m’allonge… toujours une seule liberté. Tu me poursuis en zigzag : c’est l’échelle. Capture mes pierres !',
   'echelle2.bravo': '3 pierres capturées ! Tu as maintenant 4 prisonniers.',
   'echelle2.non': 'Mes pierres ont encore une liberté : joue dessus pour les capturer.',
   // 8. Relier.
-  'relier': 'Tes deux pierres marquées se touchent par un coin. J’ai pris un des deux points qui les relient. Relie-les par l’autre, sur le point marqué.',
-  'relier.bravo': 'Reliées ! Des pierres qui se touchent par un côté forment un groupe : elles partagent leurs libertés.',
+  'relier': 'J’ai pris un des deux points qui relient tes pierres marquées. Relie-les par l’autre, sur le point marqué.',
+  'relier.bravo': 'Reliées ! Elles forment un groupe et partagent leurs libertés.',
   'relier.non': 'Si je joue sur le point marqué, tes deux pierres marquées sont coupées. Relie-les là.',
   // 9. Territoire.
-  'territoire': 'Le but du go : entourer plus de points libres que l’autre. Ces points sont ton territoire. Construis ton mur sur le point marqué.',
+  'territoire': 'Le but du go : entourer plus de points libres que l’autre. C’est ton territoire. Monte ton mur sur le point marqué.',
   'territoire.non': 'Pour cette partie, construis ton mur sur le point marqué.',
   'territoire2': 'Mon territoire est à droite, le tien à gauche. Continue ton mur en bas.',
   'territoire2.non': 'Pour cette partie, continue ton mur sur le point marqué.',
@@ -88,34 +88,34 @@ export const DECOUVERTE_FR = {
   'ko.non': 'Pour cette partie, joue sur le point marqué.',
   'ko2': 'Je capture ta pierre. Essaie de reprendre la mienne tout de suite : touche le point marqué.',
   'ko2.non': 'Touche le point marqué, là où était ta pierre.',
-  'ko3': 'Interdit : c’est le ko. Sans cette règle, on se reprendrait la même pierre sans fin. Joue d’abord ailleurs : ta pierre marquée est en atari, sauve-la.',
+  'ko3': 'Interdit : c’est le ko, sinon on se reprendrait la pierre sans fin. Joue d’abord ailleurs : sauve ta pierre marquée.',
   'ko3.non': 'Sauve d’abord ta pierre marquée : allonge-toi sur sa liberté.',
   'ko4': 'Tu as joué ailleurs : maintenant, tu as le droit de reprendre ! Joue sur le point marqué.',
-  'ko4.bravo': 'Repris ! Ma pierre du coin est de nouveau en atari, et moi, je n’ai pas le droit de reprendre tout de suite.',
+  'ko4.bravo': 'Repris ! À mon tour, je n’ai pas le droit de reprendre tout de suite.',
   'ko4.non': 'Reprends ma pierre : joue sur le point marqué.',
   'ko5': 'Je sauve ma pierre. Ferme le ko : joue sur le point marqué. Plus personne ne pourra reprendre.',
   'ko5.non': 'Pour cette partie, ferme le ko sur le point marqué.',
   // 11. Deux yeux.
-  'yeux': 'Mon groupe à droite a deux yeux : deux points libres entourés par mes seules pierres. Essaie de jouer dans l’un d’eux.',
+  'yeux': 'Mon groupe a deux yeux : deux points libres entourés par mes seules pierres. Essaie de jouer dans l’un d’eux.',
   'yeux.non': 'Touche un des deux yeux marqués.',
-  'yeux2': 'Interdit : ta pierre n’aurait aucune liberté, et elle ne capturerait rien. Un groupe qui a deux yeux ne peut jamais être capturé : il est vivant.',
+  'yeux2': 'Interdit : ta pierre n’aurait aucune liberté. Avec deux yeux, un groupe ne peut jamais être capturé : il est vivant.',
   // 12. Frontières.
-  'frontiere': 'Regarde les points rouges : ta frontière est ouverte en haut, à côté de ma pierre. Tant qu’elle reste ouverte, ces points ne comptent pour personne. Ferme-la !',
+  'frontiere': 'Les points rouges : ta frontière est ouverte en haut, contre ma pierre. Ouverte, ces points ne comptent pour personne. Ferme-la !',
   'frontiere.bravo': 'Fermée ! Tous ces points sont maintenant ton territoire.',
   'frontiere.non': 'Ferme ta frontière sur le point marqué, à côté de ma pierre.',
   // 13. Groupe mort.
   'mort': 'Je tente une pierre chez toi. Bloque-la sur le point marqué.',
-  'mort.bravo': 'Ma pierre ne peut plus sortir : à côté, elle n’aurait aucune liberté. Elle ne fera jamais deux yeux : elle est morte. Pas besoin de la capturer : à la fin, elle comptera comme ton prisonnier.',
+  'mort.bravo': 'Ma pierre ne peut plus sortir ni faire deux yeux : elle est morte. Pas besoin de la capturer.',
   'mort.non': 'Pour cette partie, bloque ma pierre sur le point marqué.',
   // 14. Passer.
-  'passer': 'Je passe : pour moi, la partie est finie. Tes frontières sont toutes fermées : passe à ton tour. Deux passes de suite, et la partie s’arrête.',
+  'passer': 'Je passe : pour moi, la partie est finie. Tes frontières sont fermées : passe aussi. Deux passes, et la partie s’arrête.',
   'passer.non': 'Plus besoin de poser de pierre : touche « Passer ».',
   // 15. Compter (règle japonaise).
   'compte': 'On compte. D’abord, les pierres mortes sortent du plateau : ma pierre chez toi devient ton prisonnier.',
   'compte2': 'Ton territoire : les points libres entourés par tes seules pierres. Tu en as 38.',
   'compte3': 'Tes prisonniers : 5 capturés et 1 pierre morte, donc 6. 38 + 6 = 44 points.',
   'compte4': 'Mon territoire : 11 points. Plus mon prisonnier : 12.',
-  'compte5': 'Noir commence : c’est un avantage. Pour compenser, Blanc reçoit 6,5 points : le komi. 12 + 6,5 = 18,5 pour moi.',
+  'compte5': 'Noir commence, c’est un avantage : Blanc reçoit 6,5 points, le komi. 12 + 6,5 = 18,5 pour moi.',
   'compte6': '44 contre 18,5 : tu gagnes de 25,5 points ! Le demi-point du komi évite toute égalité.',
 } as const;
 

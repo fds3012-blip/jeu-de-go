@@ -53,7 +53,9 @@ export function PartieDecouverte({ onFin, onQuitter }: { onFin: () => void; onQu
   const [reglages] = useState(settingsCourants);
   // Une phrase de reprise, seulement sur le premier moment montré après un départ en cours de partie.
   const [reprise, setReprise] = useState(depart.etape > 0);
-  useExercice(!fini);
+  // Comme une leçon (#236) : toute la partie, écran de fin compris, est un exercice. L'XP se lit sur l'écran de fin ;
+  // la fête d'un niveau franchi attend qu'on le quitte.
+  useExercice(true);
   const m = SCENARIO[i];
   const { pos, dernier } = useMemo(() => positionAvant(i), [i]);
 

@@ -71,7 +71,7 @@ export async function attendrePierre(page: Page, label: string, couleur: 'noir' 
  * Depuis l'accueil déjà affiché, choisit un mode de jeu (#429) : le bouton principal s'il porte ce mode, sinon sa tuile,
  * sinon « Plus » puis la ligne du mode. Au plus deux touchers.
  */
-export async function choisirMode(page: Page, mode: 'en_ligne' | 'ordi' | 'ami' | 'deux' | 'guidee'): Promise<void> {
+export async function choisirMode(page: Page, mode: 'en_ligne' | 'ordi' | 'ami' | 'deux' | 'guidee' | 'decouverte'): Promise<void> {
   const principal = page.locator(`.cta[data-mode="${mode}"]`);
   const tuile = page.getByTestId(`mode-${mode}`);
   await page.locator('.cta').waitFor();
@@ -85,7 +85,7 @@ export async function choisirMode(page: Page, mode: 'en_ligne' | 'ordi' | 'ami' 
   if (await principal.count()) return principal.click();
   if (await tuile.count()) return tuile.click();
   await page.getByTestId('mode-plus').click();
-  const nom = mode === 'deux' ? 'Jouer à deux sur ce téléphone' : 'Partie guidée contre Mochi';
+  const nom = mode === 'deux' ? 'Jouer à deux sur ce téléphone' : mode === 'decouverte' ? 'Partie de découverte avec Mochi' : 'Partie guidée contre Mochi';
   await page.getByRole('dialog', { name: 'Autres façons de jouer' }).getByRole('button', { name: new RegExp('^' + nom) }).click();
 }
 
