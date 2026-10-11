@@ -9,7 +9,7 @@ import { mesurer } from './mesures';
 // #523 : « Tu connais le go ? » déjà répondue (« Je sais jouer ») : ces parcours testent le bandeau sur l'accueil épuré,
 // sans réponse au consentement. La question elle-même, avec le bandeau, à 320 et 390 px : e2e/connait-go.spec.ts.
 const stockage = (baseURL: string) => ({ cookies: [], origins: [{ origin: baseURL, localStorage: [{ name: 'go.connait-go.v1', value: '"sait"' }] }] });
-test.use({ storageState: async ({ baseURL }, use) => { await use(stockage(baseURL!)); } });
+test.use({ storageState: async ({ baseURL }, fournir) => { await fournir(stockage(baseURL!)); } });
 
 const CAPTURES = process.env.CAPTURES_485;
 const bandeau = (page: Page, nom: string | RegExp = 'Tu m’aides à chasser les bugs ?') => page.getByRole('dialog', { name: nom });
