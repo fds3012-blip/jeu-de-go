@@ -190,8 +190,20 @@ test.describe('au-dessus du bandeau de consentement', () => {
         await page.emulateMedia({ colorScheme: theme, reducedMotion: 'reduce' });
         for (const adresse of ['/', '/?lang=en']) {
           await page.goto(adresse);
+          await page.evaluate(() => localStorage.removeItem('go.connait-go.v1'));
+          await page.reload();
           const accord = page.locator('.accord[open]');
           await expect(accord).toBeVisible();
+          // #523 : d'abord « Tu connais le go ? » : ses quatre boutons entiers au-dessus du bandeau, puis « Je sais jouer ».
+          await accord.evaluate(el => Promise.all(el.getAnimations({ subtree: true }).map(a => a.finished)));
+          const q = await page.evaluate(() => ({
+            bas: Math.max(...[...document.querySelectorAll('.question-go button')].map(b => b.getBoundingClientRect().bottom)),
+            n: document.querySelectorAll('.question-go button').length,
+            bandeau: document.querySelector('.accord')!.getBoundingClientRect().top,
+          }));
+          expect(q.n, `${nomTheme(theme)} ${adresse}`).toBe(4);
+          expect(q.bandeau - q.bas, `${nomTheme(theme)} ${adresse} question ${JSON.stringify(q)}`).toBeGreaterThanOrEqual(0);
+          await page.locator('.question-go [data-reponse="sait"]').click();
           await expect(page.locator('.accueil[data-epure]')).toBeVisible();
           await accord.evaluate(el => Promise.all(el.getAnimations({ subtree: true }).map(a => a.finished)));
           const m = await page.evaluate(() => ({

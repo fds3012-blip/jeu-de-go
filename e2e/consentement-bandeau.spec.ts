@@ -6,7 +6,10 @@ import { mesurer } from './mesures';
 // #485 : au tout premier écran, le consentement est un bandeau bas compact et non modal.
 // L'action principale (« Joue ta première partie ») reste visible et utilisable ; refuser est aussi simple qu'accepter ;
 // sans réponse, rien de non essentiel n'est chargé. Captures facultatives : CAPTURES_485=<dossier>.
-test.use({ storageState: { cookies: [], origins: [] } });
+// #523 : « Tu connais le go ? » déjà répondue (« Je sais jouer ») : ces parcours testent le bandeau sur l'accueil épuré,
+// sans réponse au consentement. La question elle-même, avec le bandeau, à 320 et 390 px : e2e/connait-go.spec.ts.
+const stockage = (baseURL: string) => ({ cookies: [], origins: [{ origin: baseURL, localStorage: [{ name: 'go.connait-go.v1', value: '"sait"' }] }] });
+test.use({ storageState: async ({ baseURL }, use) => { await use(stockage(baseURL!)); } });
 
 const CAPTURES = process.env.CAPTURES_485;
 const bandeau = (page: Page, nom: string | RegExp = 'Tu m’aides à chasser les bugs ?') => page.getByRole('dialog', { name: nom });
@@ -83,7 +86,7 @@ test('« jouer » se touche sans répondre : la partie démarre, sans suivi, et 
 
 test('Non merci : refus enregistré, bandeau parti pour de bon ; Oui : accord enregistré', async ({ browser, baseURL }) => {
   for (const [choix, valeur] of [['Non merci', 'refuse'], ['Oui, j’aide', 'accepte']] as const) {
-    const ctx = await browser.newContext({ baseURL, storageState: { cookies: [], origins: [] }, viewport: { width: 390, height: 844 } });
+    const ctx = await browser.newContext({ baseURL, storageState: stockage(baseURL!), viewport: { width: 390, height: 844 } });
     const page = await ctx.newPage();
     await page.goto('/');
     await bandeau(page).getByRole('button', { name: choix }).click();
@@ -133,7 +136,7 @@ test('mouvements réduits : simple fondu, sans glissement ; sinon le bandeau mon
 });
 
 test('anglais : même bandeau, mêmes choix', async ({ browser, baseURL }) => {
-  const ctx = await browser.newContext({ baseURL, locale: 'en-US', storageState: { cookies: [], origins: [] }, viewport: { width: 320, height: 568 } });
+  const ctx = await browser.newContext({ baseURL, locale: 'en-US', storageState: stockage(baseURL!), viewport: { width: 320, height: 568 } });
   const page = await ctx.newPage();
   await page.goto('/');
   const d = bandeau(page, 'Will you help us catch bugs?');
