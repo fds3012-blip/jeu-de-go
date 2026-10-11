@@ -59,9 +59,15 @@ interface PlayerProps {
   jouer?: { nom: string; lancer: () => void };
   /** Leçon complète hors du catalogue (#454 : leçon d'essai des grands plateaux, derrière un paramètre de test). */
   lecon?: Lesson;
+  /**
+   * #523 : parcours hors du chemin (introduction des règles). Ni mesure de leçon, ni XP, ni défi du jour, ni écran de fin
+   * de leçon : `onFin` reçoit le nombre d'écrans passés par « Je sais ». `onEtape` : écran affiché (index depuis 0).
+   * `passer` : libellé du lien « Je sais », qui passe l'écran (rappel express) ; absent, aucun écran ne se passe.
+   */
+  parcours?: { retour: string; terminer: string; passer?: { libelle: string; aria: string }; onEtape: (i: number) => void; onFin: (passees: number) => void };
 }
 
-export function LessonPlayer({ lesson: { id: leconId }, start, confirmTouch, progress = {}, celebrer = true, onProgress, onExit, onNext, pratique, jouer, lecon }: PlayerProps) {
+export function LessonPlayer({ lesson: { id: leconId }, start, confirmTouch, progress = {}, celebrer = true, onProgress, onExit, onNext, pratique, jouer, lecon, parcours }: PlayerProps) {
   const lesson = lecon ?? LESSONS.find(l => l.id === leconId)!;
   const [idx, setIdx] = useState(Math.min(start, lesson.steps.length - 1));
   const [answer, setAnswer] = useState<{ ok: boolean; p?: number; after?: Position; choice?: number; n: number } | null>(null);
@@ -103,8 +109,12 @@ export function LessonPlayer({ lesson: { id: leconId }, start, confirmTouch, pro
     return () => window.clearTimeout(m);
   }, [images, temps, limite, n]);
 
-  // Événement d'entonnoir (#198) : leçons terminées ÷ leçons commencées.
+  // #523 : écran affiché d'un parcours hors du chemin (introduction des règles), mesuré par son propre événement.
+  const passees = useRef(0);
+  useEffect(() => { parcours?.onEtape(idx); }, [idx]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Événement d'entonnoir (#198) : leçons terminées ÷ leçons commencées. Pas pour un parcours hors du chemin.
   useEffect(() => {
+    if (parcours) return;
     track(EVENTS.leconCommencee, { lecon: lesson.id, rang: LESSONS.indexOf(lesson) + 1, etape: Math.min(start, lesson.steps.length - 1) + 1 });
   }, [lesson.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -119,6 +129,7 @@ export function LessonPlayer({ lesson: { id: leconId }, start, confirmTouch, pro
 
   function next() {
     onProgress(idx + 1);
+    if (derniere && parcours) { parcours.onFin(passees.current); return; }
     if (derniere) {
       track(EVENTS.leconTerminee, { lecon: lesson.id, rang: LESSONS.indexOf(lesson) + 1 });
       validerDefi('lecon'); // #199 : une leçon terminée est le défi du jour (série de l'appareil, SERIE_UN_DEFI)
@@ -154,7 +165,8 @@ export function LessonPlayer({ lesson: { id: leconId }, start, confirmTouch, pro
     if (step.kind === 'touche') { hapticStone(); repondre(step.accept.map(a => fromLabel(a, n)).includes(p), { p }); return; }
     if (step.kind !== 'move') return;
     const r = play(pos, p);
-    if (typeof r === 'string') return;
+    // Coup interdit (suicide, ko) : silencieux, sauf si l'étape l'explique (#523 : « en A1, ta pierre n'aurait aucune liberté »).
+    if (typeof r === 'string') { if (step.refus?.some(x => x.points.includes(toLabel(p, n)))) repondre(false, { p }); return; }
     const ok = step.accept === 'line3' ? lineOf(p, n) >= 2
       : step.accept === 'terrB' ? score(pos, 0, 'japanese').owner[p] === 1
       : step.accept.map(a => fromLabel(a, n)).includes(p);
@@ -172,7 +184,7 @@ export function LessonPlayer({ lesson: { id: leconId }, start, confirmTouch, pro
   const faites = idx + (answer?.ok ? 1 : 0);
   // En attente du geste « pose » : seul le point à jouer est vert (le compteur de libertés reste).
   const vert = attente && geste && 'pose' in geste ? [fromLabel(geste.pose, n)] : null;
-  const cta = <button className="cta" onClick={next}>{t(derniere ? 'lecon.terminer' : 'apprendre.continuer')}</button>;
+  const cta = <button className="cta" onClick={next}>{derniere ? parcours?.terminer ?? t('lecon.terminer') : t('apprendre.continuer')}</button>;
   const marks: BoardMarks = img
     ? { libs: vert ?? [...img.libs, ...img.yeux], targets: img.atari, mistake: attente && rate ? rate.p : img.interdit, last: img.derniere ?? null, ...territoire(img.terr, reduit, n),
         note: img.compteur ? { p: img.compteur.p, fond: JADE_COMPTEUR, texte: '#0B2A1D', symbole: String(img.compteur.n), libelle: t('lecon.libertes', { n: img.compteur.n }), cle: `${idx}-${temps}` } : undefined }
@@ -198,7 +210,7 @@ export function LessonPlayer({ lesson: { id: leconId }, start, confirmTouch, pro
   return (
     <div className="lecteur lecteur-lecon" data-moment={moment}>
       <div className="lecteur-tete">
-        <Retour label={t('lecon.retourChemin')} onClick={onExit} />
+        <Retour label={parcours?.retour ?? t('lecon.retourChemin')} onClick={onExit} />
         {/* Passe design #509 (point 9) : même grammaire que l'en-tête d'un problème, la ligne fine (les points d'étapes)
             au-dessus du titre, qui garde ainsi toute la largeur et l'encre du texte. */}
         <SceauLecon id={lesson.id} taille={32} className="lecteur-sceau" />
@@ -245,6 +257,11 @@ export function LessonPlayer({ lesson: { id: leconId }, start, confirmTouch, pro
 
       <div className="lecon-actions">
         {action}
+        {/* #523 (rappel express) : « Je sais » passe l'écran, tant qu'il n'est pas réussi. */}
+        {parcours?.passer && !action && (
+          <button type="button" className="lien" data-testid="je-sais" aria-label={parcours.passer.aria}
+            onClick={() => { passees.current += 1; next(); }}>{parcours.passer.libelle}</button>
+        )}
         {images && images.length > 1 && !attente && (
           <button className="lien revoir" disabled={!demoFinie} onClick={() => setTemps(0)}>{t('apprendre.revoir')}</button>
         )}

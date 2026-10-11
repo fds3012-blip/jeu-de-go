@@ -15,7 +15,7 @@ async function telephone(browser: Browser, baseURL: string | undefined, serveur:
   const ctx = await browser.newContext({
     viewport: { width: o.largeur ?? 390, height: o.hauteur ?? 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true,
     locale: o.locale ?? 'fr-FR', baseURL, colorScheme: o.sombre ? 'dark' : 'light',
-    storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }] }] },
+    storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }, { name: 'go.connait-go.v1', value: '"sait"' }] }] },
   });
   // #487 : ces joueurs ont déjà posé une pierre (accueil complet, tuile « Un ami »).
   const page = await brancher(ctx, serveur, { 'go.premiere-pierre.v1': 'true', ...(session ? { 'sb-supabase-auth-token': JSON.stringify(session) } : {}) });

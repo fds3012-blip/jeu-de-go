@@ -21,6 +21,8 @@ interface Props {
   onLecon?: (id: string) => void;
   /** Leçon en cours : son propre lien n'est pas proposé. */
   leconCourante?: string | null;
+  /** #523 : « Revoir les règles en jouant » (l'introduction interactive). Absent pendant une partie, comme `onLecon`. */
+  onRegles?: () => void;
 }
 
 const ONGLETS: Fiche[] = ['regles', 'compter', 'mots', 'questions'];
@@ -141,7 +143,7 @@ function Questions() {
   );
 }
 
-export default function Aide({ ouverture, onFermer, onLecon, leconCourante }: Props) {
+export default function Aide({ ouverture, onFermer, onLecon, leconCourante, onRegles }: Props) {
   const ref = useRef<HTMLDialogElement>(null);
   const corps = useRef<HTMLDivElement>(null);
   const id = useId();
@@ -184,6 +186,9 @@ export default function Aide({ ouverture, onFermer, onLecon, leconCourante }: Pr
           ))}
         </div>
         <div ref={corps} className="aide-corps" role="tabpanel" id={`${id}-panneau`} aria-labelledby={`${id}-${fiche}`} data-fiche={fiche}>
+          {fiche === 'regles' && onRegles && (
+            <button type="button" className="btn aide-revoir-regles" data-testid="aide-revoir-regles" onClick={onRegles}>{t('aide.revoirRegles')}</button>
+          )}
           {fiche === 'regles' && <Cartes cartes={REGLES} cle="regle" intro={t('aide.regles.intro')} lien={lien} />}
           {fiche === 'compter' && <Cartes cartes={COMPTER} cle="compter" intro={t('aide.compter.intro')} lien={lien} />}
           {fiche === 'mots' && <Glossaire requete={requete} setRequete={setRequete} lien={lien} />}

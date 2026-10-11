@@ -32,7 +32,8 @@ export default defineConfig({
     locale: 'fr-FR',
     // Fenêtre de consentement (issue #50) : déjà répondue pour les parcours qui ne la testent pas.
     // e2e/confidentialite.spec.ts repart d'un stockage vide pour la tester.
-    storageState: { cookies: [], origins: [{ origin: `http://localhost:${PORT}`, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }] }] },
+    // #523 : « Tu connais le go ? » aussi, par « Je sais jouer » (le parcours d'avant) ; e2e/connait-go.spec.ts la teste.
+    storageState: { cookies: [], origins: [{ origin: `http://localhost:${PORT}`, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }, { name: 'go.connait-go.v1', value: '"sait"' }] }] },
   },
   projects: [
     {

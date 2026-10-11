@@ -102,7 +102,8 @@ for (const cfg of CONFIGS) {
     viewport: { width: cfg.largeur, height: cfg.hauteur }, deviceScaleFactor: 1.5, isMobile: true, hasTouch: true, locale: cfg.langue === 'fr' ? 'fr-FR' : 'en-US',
     timezoneId: 'Europe/Paris', colorScheme: 'dark' as const, reducedMotion: 'reduce' as const, baseURL,
     storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [
-      { name: 'go.langue.v1', value: JSON.stringify(cfg.langue) }, ...(consent ? [{ name: 'go.consentement.v1', value: 'refuse' }] : []),
+      // #523 : « Tu connais le go ? » déjà répondue (« Je sais jouer ») ; elle a son parcours, e2e/connait-go.spec.ts.
+      { name: 'go.langue.v1', value: JSON.stringify(cfg.langue) }, { name: 'go.connait-go.v1', value: '"sait"' }, ...(consent ? [{ name: 'go.consentement.v1', value: 'refuse' }] : []),
     ] }] },
   });
   const mesures: Mesure[] = [];
@@ -234,7 +235,7 @@ for (const cfg of CONFIGS) {
     });
     // 6. Placement « Je sais déjà jouer » (accueil d'un joueur qui n'a pas encore joué).
     await E('16-placement', async () => {
-      await page.evaluate(() => { const l = localStorage.getItem('go.langue.v1'); localStorage.clear(); localStorage.setItem('go.consentement.v1', 'refuse'); if (l) localStorage.setItem('go.langue.v1', l); });
+      await page.evaluate(() => { const l = localStorage.getItem('go.langue.v1'); localStorage.clear(); localStorage.setItem('go.consentement.v1', 'refuse'); localStorage.setItem('go.connait-go.v1', '"sait"'); if (l) localStorage.setItem('go.langue.v1', l); });
       await page.goto('/');
       await page.getByRole('button', { name: T.saisJouer }).click();
       await expect(page.locator('.placement')).toBeVisible();

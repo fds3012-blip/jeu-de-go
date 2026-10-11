@@ -21,7 +21,7 @@ async function ciblesDe44(page: Page, zone: string) {
 test('essai → 3e partie finie → « Crée ton compte » → code → pseudo → la partie démarre', async ({ browser, baseURL }) => {
   const serveur = fauxServeur();
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, locale: 'fr-FR', baseURL,
-    storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }] }] } });
+    storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }, { name: 'go.connait-go.v1', value: '"sait"' }] }] } });
   // 2 parties d'essai déjà finies sur ce téléphone.
   const page = await brancher(ctx, serveur, { 'go.essai.v1': JSON.stringify({ terminees: 2 }) });
   const erreurs: string[] = [];
@@ -111,7 +111,7 @@ test('essai → 3e partie finie → « Crée ton compte » → code → pseudo �
 test('leçon 4 et problèmes : compte demandé ; le Go du jour reste libre (320 px, sombre)', async ({ browser, baseURL }) => {
   const serveur = fauxServeur();
   const ctx = await browser.newContext({ viewport: { width: 320, height: 640 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, locale: 'fr-FR', baseURL,
-    colorScheme: 'dark', storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }] }] } });
+    colorScheme: 'dark', storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }, { name: 'go.connait-go.v1', value: '"sait"' }] }] } });
   const page = await brancher(ctx, serveur);
   await page.goto('/');
   await page.getByRole('button', { name: 'Problèmes' }).click();
@@ -145,7 +145,7 @@ test('leçon 4 et problèmes : compte demandé ; le Go du jour reste libre (320 
 test('code à 6 chiffres : champ, renvoi et retour à l’adresse (320 px, clair)', async ({ browser, baseURL }) => {
   const serveur = fauxServeur();
   const ctx = await browser.newContext({ viewport: { width: 320, height: 640 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, locale: 'fr-FR', baseURL,
-    colorScheme: 'light', storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }] }] } });
+    colorScheme: 'light', storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }, { name: 'go.connait-go.v1', value: '"sait"' }] }] } });
   const page = await brancher(ctx, serveur, { 'go.essai.v1': JSON.stringify({ terminees: 3 }) });
   await page.goto('/');
   await page.locator('.cta').click();

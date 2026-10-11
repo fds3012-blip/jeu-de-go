@@ -109,7 +109,7 @@ test('chapitre fini : tampon d’or, confettis une seule fois, la suite s’ouvr
 // le verrou « compte » (silhouette + « Avec un compte ») ; les toucher ouvre la création de compte.
 test('sans compte : leçons 1 à 3 libres, la leçon 4 porte le verrou « compte » et ouvre la création de compte', async ({ browser, baseURL }) => {
   const ctx = await browser.newContext({ viewport: { width: 320, height: 640 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, locale: 'fr-FR', baseURL,
-    colorScheme: 'light', reducedMotion: 'reduce', storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }] }] } });
+    colorScheme: 'light', reducedMotion: 'reduce', storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }, { name: 'go.connait-go.v1', value: '"sait"' }] }] } });
   const page = await brancher(ctx, fauxServeur(), { 'go.lecons.v1': JSON.stringify(DEUX) });
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();

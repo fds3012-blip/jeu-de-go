@@ -83,3 +83,5 @@ html:has(dialog.aide[open]) { overflow: hidden; }
    du plateau, assez grandes pour qu'une phrase qui cite « C3 » se retrouve à l'œil (≈ 13 px dans une carte, 10 px à droite d'un mot). */
 .aide-schema .board .coord { font-size: var(--fs-corps-s); } /* encre pleine (#461) : 4,5:1 sur le bois */
 .aide-mot .aide-schema .board .coord { font-size: 19px; }
+/* #523 : « Revoir les règles en jouant », en tête des règles. */
+.aide-revoir-regles { width: 100%; margin: 0 0 var(--space-3); }

@@ -36,10 +36,12 @@ function phraseMochi(liste: Etape[], iEnCours: number): string {
  * `compteRequis` (#343) : vrai si la leçon de ce rang (0 = leçon 1) demande un compte. Sans compte, les leçons 1 à 3 sont libres ;
  * les suivantes restent touchables, portent le verrou « compte », et `onOpen` ouvre la création de compte (garde d'App.tsx).
  */
-export function LearnHome({ progress, onOpen, sync = 'local', compteRequis = () => false, decouverte }: {
+export function LearnHome({ progress, onOpen, sync = 'local', compteRequis = () => false, decouverte, onRegles }: {
   progress: Progression; onOpen: (id: string) => void; sync?: SyncState; compteRequis?: (rang: number) => boolean;
   /** #524 : la partie de découverte, en tête du chapitre « Les bases » (état gardé sur l'appareil, ouverture). */
   decouverte?: { etat: EtatDecouverte; ouvrir: () => void };
+  /** #523 : « Revoir les règles » (l'introduction interactive), en tête de « Les bases », avant la partie de découverte. */
+  onRegles?: () => void;
 }) {
   const liste = etapes(LESSONS, progress);
   const iEnCours = liste.findIndex(e => e.etat === 'encours');
@@ -81,7 +83,8 @@ export function LearnHome({ progress, onOpen, sync = 'local', compteRequis = () 
         <CheminChapitre key={c.id} chapitre={c} liste={liste.filter(e => c.lecons.includes(e.lecon))} k={k}
           entree={i === 0 && decouverte ? <CarteDecouverte {...decouverte} /> : null}
           carte={iEnCours >= 0 && c.lecons.includes(liste[iEnCours].lecon) ? prochaine : null}
-          fete={fete === c.id} onFeteFinie={() => setFete(null)} onOpen={onOpen} compteRequis={compteRequis} />
+          fete={fete === c.id} onFeteFinie={() => setFete(null)} onOpen={onOpen} compteRequis={compteRequis}
+          regles={c === CHAPITRES[0] ? onRegles : undefined} />
       ))}
 
       {iEnCours < 0 && <div className="chemin-fini">{prochaine}</div>}
@@ -174,11 +177,13 @@ function phraseChapitre(c: Chapitre, faites: number): string {
 }
 
 /** Chemin d'un chapitre : en-tête illustré, puis ses pierres sur une courbe, la prochaine leçon en carte. */
-function CheminChapitre({ chapitre, liste, k, carte, fete, onFeteFinie, onOpen, compteRequis, entree }: {
+function CheminChapitre({ chapitre, liste, k, carte, fete, onFeteFinie, onOpen, compteRequis, entree, regles }: {
   chapitre: Chapitre; liste: Etape[]; k: number; carte: ReactNode; fete: boolean; onFeteFinie: () => void; onOpen: (id: string) => void;
   /** #524 : ce qui se pose entre l'en-tête du chapitre et son chemin (la partie de découverte, pour « Les bases »). */
   entree?: ReactNode;
   compteRequis: (rang: number) => boolean;
+  /** #523 : « Revoir les règles », dans l'en-tête de « Les bases » (donc avant `entree`). */
+  regles?: () => void;
 }) {
   const iEnCours = liste.findIndex(e => e.etat === 'encours');
   const faites = liste.filter(e => e.etat === 'faite').length;
@@ -238,6 +243,12 @@ function CheminChapitre({ chapitre, liste, k, carte, fete, onFeteFinie, onOpen, 
             ? <span className="chapitre-fete" role="img" aria-label={fr(t('apprendre.fete.aria', { titre: chapitre.titre }))}><Coche />{t('apprendre.fete.titre')}</span>
             : <span>{faites > 0 ? t('apprendre.chapitre.avancee', { n: faites, total: n }) : t('apprendre.chapitre.lecons', { n })}</span>}
         </div>
+        {/* #523 : l'introduction interactive des règles, à revoir quand on veut (secondaire : la carte de la leçon reste l'action). */}
+        {regles && (
+          <button type="button" className="btn chapitre-regles" data-testid="revoir-regles" onClick={regles}>
+            {t('apprendre.revoirRegles')}<small>{t('apprendre.revoirReglesDetail')}</small>
+          </button>
+        )}
       </header>
 
       {entree}

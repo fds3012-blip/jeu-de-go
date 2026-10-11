@@ -165,6 +165,11 @@ for (const cfg of CONFIGS) {
     await expect(page.getByRole('dialog')).toBeVisible();
     await voir(page, '01-consentement');
     await page.getByRole('button', { name: T.nonMerci }).click();
+    // #523 : « Tu connais le go ? » (mesurée comme les autres écrans). Ce parcours garde le chemin de l'accueil épuré :
+    // « Plus tard » ; l'introduction des règles a le sien (e2e/connait-go.spec.ts).
+    await expect(page.locator('.question-go')).toBeVisible();
+    await voir(page, '01b-question');
+    await page.locator('.question-go [data-reponse="plus_tard"]').click();
     await expect(page.locator('.cta')).toHaveText(T.premiere);
     await voir(page, '02-accueil');
 

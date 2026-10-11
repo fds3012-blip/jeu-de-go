@@ -23,7 +23,7 @@ async function telephone(browser: Browser, baseURL: string | undefined, serveur:
   const ctx = await browser.newContext({
     viewport: { width: largeur, height: largeur === 320 ? 568 : 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, locale: 'fr-FR', baseURL,
     colorScheme: o.sombre ? 'dark' : 'light', reducedMotion: 'reduce',
-    storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }] }] },
+    storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }, { name: 'go.connait-go.v1', value: '"sait"' }] }] },
   });
   const stockage: Record<string, string> = { 'go.parties.v1': JSON.stringify({ n: 3 }), ...o.stockage };
   if (o.compte && serveur) stockage['sb-supabase-auth-token'] = JSON.stringify(serveur.sessionCompte(...o.compte));

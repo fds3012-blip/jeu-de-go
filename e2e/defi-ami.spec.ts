@@ -9,7 +9,7 @@ import { jouer, pierres, plateau } from './plateau';
 const CAPTURES = process.env.CAPTURES_343;
 const options = (baseURL: string | undefined, largeur = 390) => ({
   viewport: { width: largeur, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, locale: 'fr-FR', baseURL,
-  storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }] }] },
+  storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }, { name: 'go.connait-go.v1', value: '"sait"' }] }] },
 });
 
 test('défier un ami : compte du créateur, lien avec son pseudo, l’ami crée son compte puis joue', async ({ browser, baseURL }) => {

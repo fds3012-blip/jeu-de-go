@@ -10,7 +10,7 @@ const ID = '00000000-0000-4000-8000-0000000004a8';
 async function telephone(browser: Browser, baseURL: string | undefined, serveur: FauxServeur, session: unknown, stockage: Record<string, unknown> = {}) {
   const ctx = await browser.newContext({
     viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, locale: 'fr-FR', baseURL, colorScheme: 'light',
-    storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }] }] },
+    storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }, { name: 'go.connait-go.v1', value: '"sait"' }] }] },
   });
   const brut = Object.fromEntries(Object.entries({ 'go.parties.v1': { n: 3 }, ...stockage }).map(([k, v]) => [k, JSON.stringify(v)]));
   const page = await brancher(ctx, serveur, { 'sb-supabase-auth-token': JSON.stringify(session), ...brut });

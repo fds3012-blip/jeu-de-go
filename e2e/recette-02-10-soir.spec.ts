@@ -49,7 +49,7 @@ for (const [langue, nom] of [['fr', /^Entraîne-toi\s:\s3 problèmes/], ['en', /
 
 test('R-S5 : « Tu as moins de 15 ans ? » s’aligne sur le texte de la case d’âge', async ({ browser, baseURL }) => {
   const ctx = await browser.newContext({ viewport: { width: 320, height: 568 }, isMobile: true, hasTouch: true, locale: 'fr-FR', baseURL,
-    storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }] }] } });
+    storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }, { name: 'go.connait-go.v1', value: '"sait"' }] }] } });
   const page = await brancher(ctx, fauxServeur(), { 'go.essai.v1': JSON.stringify({ terminees: 3 }) });
   await page.goto('/');
   await page.locator('.cta').click();

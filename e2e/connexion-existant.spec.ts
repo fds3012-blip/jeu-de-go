@@ -9,7 +9,7 @@ import { plateau } from './plateau';
 const CAPTURES = process.env.CAPTURES_353;
 const options = (baseURL: string | undefined, largeur: number, locale = 'fr-FR', colorScheme: 'light' | 'dark' = 'light') => ({
   viewport: { width: largeur, height: largeur === 320 ? 640 : 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, locale, baseURL, colorScheme,
-  storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }] }] },
+  storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }, { name: 'go.connait-go.v1', value: '"sait"' }] }] },
 });
 
 async function sansDefilementHorizontal(page: Page) {
