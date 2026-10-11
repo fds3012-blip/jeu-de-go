@@ -403,6 +403,8 @@ function IconeMode({ mode }: { mode: Mode | 'plus' }) {
       {mode === 'en_ligne' && <><circle cx="12" cy="12" r="8.5" {...trait} /><path d="M3.5 12h17M12 3.5c-2.6 2.4-3.6 5.2-3.6 8.5s1 6.1 3.6 8.5M12 3.5c2.6 2.4 3.6 5.2 3.6 8.5s-1 6.1-3.6 8.5" {...trait} /></>}
       {mode === 'deux' && <><rect x="6.5" y="2.5" width="11" height="19" rx="2.5" {...trait} /><circle cx="12" cy="8.5" r="2" fill="currentColor" /><circle cx="12" cy="15.5" r="2" {...trait} /></>}
       {mode === 'plus' && <g fill="currentColor"><circle cx="5.5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="18.5" cy="12" r="2" /></g>}
+      {/* #524 : un coin de goban, une pierre noire et une blanche : la partie de découverte. */}
+      {mode === 'decouverte' && <><path d="M4 8h16M4 16h16M8 4v16M16 4v16" {...trait} /><circle cx="8" cy="8" r="3.2" fill="currentColor" /><circle cx="16" cy="16" r="3.2" {...trait} fill="var(--bg)" /></>}
     </svg>
   );
 }
@@ -441,15 +443,23 @@ function TuileMode({ mode, p }: { mode: Mode; p: Props }) {
     );
   }
   return (
-    <button type="button" className="mode" data-testid={`mode-${mode}`} onClick={choisir}
-      aria-label={t(mode === 'deux' ? 'accueil.deux' : 'accueil.guidee')}>
-      <span className="mode-icone" aria-hidden="true">{mode === 'deux' ? <IconeMode mode="deux" /> : <Sceau id="mochi" taille={26} />}</span>
-      <b>{t(mode === 'deux' ? 'mode.deux' : 'mode.guidee')}</b><small>{t(mode === 'deux' ? 'mode.deux.detail' : 'mode.guidee.detail')}</small>
+    <button type="button" className="mode" data-testid={`mode-${mode}`} onClick={choisir} aria-label={t(TEXTES_MODE[mode].nom)}>
+      <span className="mode-icone" aria-hidden="true">{mode === 'guidee' ? <Sceau id="mochi" taille={26} /> : <IconeMode mode={mode} />}</span>
+      <b>{t(TEXTES_MODE[mode].court)}</b><small>{t(TEXTES_MODE[mode].detail)}</small>
     </button>
   );
 }
 
-/** Feuille « Plus » : les modes qui ne tiennent pas dans la rangée (à deux, partie guidée), une ligne chacun. */
+/** Textes des modes rangés en tuile simple ou sous « Plus » : nom complet (lu), nom court, détail, phrase de la feuille. */
+const TEXTES_MODE = {
+  deux: { nom: 'accueil.deux', court: 'mode.deux', detail: 'mode.deux.detail', texte: 'mode.deux.texte' },
+  guidee: { nom: 'accueil.guidee', court: 'mode.guidee', detail: 'mode.guidee.detail', texte: 'mode.guidee.texte' },
+  decouverte: { nom: 'accueil.decouverte', court: 'mode.decouverte', detail: 'mode.decouverte.detail', texte: 'mode.decouverte.texte' },
+} as const satisfies Record<string, Record<'nom' | 'court' | 'detail' | 'texte', Parameters<typeof t>[0]>>;
+type ModeSimple = keyof typeof TEXTES_MODE;
+const estSimple = (m: Mode): m is ModeSimple => m in TEXTES_MODE;
+
+/** Feuille « Plus » : les modes qui ne tiennent pas dans la rangée (à deux, partie guidée, découverte), une ligne chacun. */
 function FeuillePlus({ modes, ouvert, setOuvert, onMode }: { modes: Mode[]; ouvert: boolean; setOuvert: (o: boolean) => void; onMode: Props['onMode'] }) {
   const ref = useRef<HTMLDialogElement>(null);
   useDialogue(ref, ouvert);
@@ -463,13 +473,13 @@ function FeuillePlus({ modes, ouvert, setOuvert, onMode }: { modes: Mode[]; ouve
             <button className="lien" onClick={() => setOuvert(false)}>{t('accueil.fermer')}</button>
           </div>
           <ul className="plus-liste">
-            {modes.map(m => (
+            {modes.filter(estSimple).map(m => (
               <li key={m}>
                 <button type="button" className="plus-mode" onClick={() => { setOuvert(false); onMode(m, 'plus'); }}>
-                  <span className="mode-icone" aria-hidden="true">{m === 'deux' ? <IconeMode mode="deux" /> : <Sceau id="mochi" taille={30} />}</span>
+                  <span className="mode-icone" aria-hidden="true">{m === 'guidee' ? <Sceau id="mochi" taille={30} /> : <IconeMode mode={m} />}</span>
                   <span>
-                    <b>{t(m === 'deux' ? 'accueil.deux' : 'accueil.guidee')}</b>
-                    <small>{t(m === 'deux' ? 'mode.deux.texte' : 'mode.guidee.texte')}</small>
+                    <b>{t(TEXTES_MODE[m].nom)}</b>
+                    <small>{t(TEXTES_MODE[m].texte)}</small>
                   </span>
                 </button>
               </li>

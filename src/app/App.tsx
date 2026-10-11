@@ -1,6 +1,7 @@
 import { Suspense, lazy, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 // Écrans chargés à la demande (perf, #323) : seul l'accueil est dans le JS initial.
-import { CreerCompte, DefiArrivee, DefiPartie, DefisEcran, Direct, Game, LearnHome, Lentes, LessonPlayer, PartiePartagee, Placement, Profil, PseudoObligatoire, Puzzles, SeriePratique, VeilleFile, apresPremierEcran } from './ecrans';
+import { CreerCompte, DefiArrivee, DefiPartie, DefisEcran, Direct, Game, LearnHome, Lentes, LessonPlayer, PartieDecouverte, PartiePartagee, Placement, Profil, PseudoObligatoire, Puzzles, SeriePratique, VeilleFile, apresPremierEcran } from './ecrans';
+import { DECOUVERTE_KEY, etatDecouverte } from './decouverteEtat';
 import { SeanceRevisions, prechargerRevisions } from './ecrans';
 import { ERREURS_KEY, EVENEMENT_REVISIONS, REVISIONS_KEY, compterDus } from './revisionEspacee';
 // #16 : l'accueil ne lit que l'index léger des leçons ; leur contenu arrive avec les écrans Apprendre et leçon.
@@ -204,6 +205,8 @@ export function App() {
   const [adversaire, setAdversaire] = useStored<OpponentId>('go.adversaire.v1', 'pomme');
   const [lessonId, setLessonId] = useState<string | null>(null);
   const [leconEssai, setLeconEssai] = useState<Lesson | null>(null);
+  // #524 : partie de découverte ouverte (depuis Apprendre ou la feuille des modes de l'accueil).
+  const [decouverte, setDecouverte] = useState(false);
   useEffect(() => {
     if (!(import.meta.env.VITE_E2E || import.meta.env.DEV) || !LECON_ESSAI) return;
     void import('../../content/lessons.essai.js').then(m => {
@@ -455,6 +458,12 @@ export function App() {
     setTab('apprendre'); setLessonId(id); window.scrollTo({ top: 0 });
   }
 
+  /** #524 : partie de découverte, libre comme les premières leçons (aucun compte demandé). */
+  function ouvrirDecouverte() {
+    setPlaying(false); setLessonId(null); setSerie3(null); setEnPlacement(false); setSeanceRevisions(false);
+    setDecouverte(true); window.scrollTo({ top: 0 });
+  }
+
   function ouvrirPlacement() {
     if (!garde({ quoi: 'placement' }, { quoi: 'placement' })) return;
     track(EVENTS.placementCommence, { refait: placement !== null });
@@ -571,6 +580,7 @@ export function App() {
     if (t === 'problemes' && tab === 'problemes') setRacineProblemes(n => n + 1);
     setDefi(null); setDirect(false); setLente(false); setRepli(null); setEcranCompte(null); setAnnonceGel(null); setRetourSerie(null); setEnPlacement(false); setTab(t); setPlaying(false); setLessonId(null); setSerie3(null); setVueProfil('menu'); setPartagee(null); window.scrollTo({ top: 0 });
     setSeanceRevisions(false); // #469
+    setDecouverte(false); // #524
   };
 
   // Reprise de l'action demandée, dès que le compte est complet ; `compte_cree` quand un compte sans pseudo apparaît.
@@ -771,6 +781,10 @@ export function App() {
           comptageSur={comptageSurActif(terminees)} />
       </>
     );
+  } else if (decouverte) {
+    // #524 : la fin mène au chemin des leçons (la suite naturelle) ; quitter ramène là où l'on était.
+    screen = <PartieDecouverte onFin={() => { setDecouverte(false); setTab('apprendre'); window.scrollTo({ top: 0 }); }}
+      onQuitter={() => { setDecouverte(false); window.scrollTo({ top: 0 }); }} />;
   } else if (tab === 'jouer' && seanceRevisions) {
     // #469 : séance « Révisions du jour » (5 éléments au plus), ouverte depuis la carte de l'accueil.
     screen = <SeanceRevisions confirmTouch={settings.confirmTouch} celebrer={settings.celebrations} compte={!!compteId}
@@ -825,6 +839,7 @@ export function App() {
       jouer={{ nom: premier.nom, lancer: () => { setLessonId(null); setTab('jouer'); lancer('ordi', premier.id); } }} />;
   } else if (tab === 'apprendre') {
     screen = <LearnHome progress={progress} onOpen={ouvrirLecon} sync={syncState}
+      decouverte={{ etat: etatDecouverte(readLocal<unknown>(DECOUVERTE_KEY, null)), ouvrir: ouvrirDecouverte }}
       compteRequis={rang => !decider({ quoi: 'lecon', rang }, etat, terminees, COMPTES).ok} />;
   } else if (tab === 'problemes') {
     screen = <Puzzles db={supabase} userId={compteId} sessionLoading={session === undefined} confirmTouch={settings.confirmTouch} onCompte={() => go('profil')}
@@ -854,6 +869,7 @@ export function App() {
       if (m === 'ordi') lancer('ordi');
       else if (m === 'deux') lancer('deux');
       else if (m === 'guidee') lancerGuidee();
+      else if (m === 'decouverte') ouvrirDecouverte();
       // « Un humain, maintenant » (#360), avec un compte et un pseudo (sinon « Crée ton compte », puis reprise).
       // #440 : « En direct » ou « Partie lente », selon le dernier choix (mémorisé).
       else if (m === 'en_ligne') { if (!garde({ quoi: 'en_ligne' }, { quoi: 'direct' })) return; ouvrirEnLigne(); }
@@ -911,11 +927,11 @@ export function App() {
     );
   }
 
-  const accueilVisible = tab === 'jouer' && !playing && !enPlacement && !enDefi && !enDirect && !enLente && !enPartagee && !ecranPlein && !seanceRevisions;
+  const accueilVisible = tab === 'jouer' && !playing && !enPlacement && !enDefi && !enDirect && !enLente && !enPartagee && !ecranPlein && !seanceRevisions && !decouverte;
   // #465 (WCAG 2.4.2) : le titre de l'onglet du navigateur suit l'écran affiché.
   const leconOuverte = leconEssai ?? lesson;
   const ecranTitre: EcranTitre = ecranPlein ? { quoi: 'compte' }
-    : enDirect ? { quoi: 'direct' } : enLente ? { quoi: 'lente' } : enPartagee ? { quoi: 'partagee' }
+    : enDirect ? { quoi: 'direct' } : enLente ? { quoi: 'lente' } : enPartagee ? { quoi: 'partagee' } : decouverte && !enPartie ? { quoi: 'decouverte' }
       : enDefi ? { quoi: defi.vue === 'partie' ? 'enLigne' : 'defi' }
         : tab === 'jouer' && playing ? { quoi: 'partie', contre: playing === 'deux' ? null : playing === 'guidee' ? mochiGuide.nom : adv.nom, guidee: playing === 'guidee' }
           : tab === 'jouer' ? (enPlacement ? { quoi: 'placement' } : seanceRevisions ? { quoi: 'revisions' } : { quoi: 'accueil' })
@@ -993,7 +1009,7 @@ export function App() {
           <Suspense fallback={null}>{screen}</Suspense>
         </LimiteErreur>
       </main>
-      <FeteNiveau celebrer={settings.celebrations} ecran={`${tab}|${playing}|${lessonId ?? ''}|${serie3 ? 'serie' : ''}|${vueProfil}`} />
+      <FeteNiveau celebrer={settings.celebrations} ecran={`${tab}|${playing}|${lessonId ?? ''}|${serie3 ? 'serie' : ''}|${vueProfil}|${decouverte ? 'decouverte' : ''}`} />
       <AnnonceXp celebrer={settings.celebrations} />
       {/* Pendant une partie, comme chez chess.com : pas de barre de navigation, « ‹ » ramène à l'accueil. */}
       {!enPartie && !ecranPlein && <BarreNav actif={tab} pastilles={pastilles}

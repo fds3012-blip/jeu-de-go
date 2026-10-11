@@ -20,6 +20,8 @@ Bonus « première fois » : +20 une fois par appareil, pour chacune des trois c
 | Révision du jour finie (3 problèmes réussis ou « Vu », J+1, J+3, J+7) | +20, une fois par jour (C1) | **oui** | non | un « Vu » réussi en révision **reste « Vu »** (voir P6) | `RevisionDuJour.tsx`, `revision.ts` |
 | Leçon terminée, 1re fois | +30 | **oui** | non (aucun badge de leçon) | chemin des leçons | `Learn.tsx` |
 | Leçon rejouée jusqu'au bout | 0 | **oui** | non | non | `Learn.tsx` |
+| Partie de découverte (#524) menée jusqu'au comptage, 1re fois | +30 (comme une leçon ; + le bonus « première leçon » s'il n'est pas déjà pris) | non | non | non | `PartieDecouverte.tsx` |
+| Partie de découverte rejouée | 0 | non | non | non | `PartieDecouverte.tsx` |
 | Série d'entraînement après une leçon (3 problèmes, #200) | +10 par problème neuf | non | comme un problème | compte pour le palier | `SeriePratique.tsx` |
 | Course aux problèmes (3 min, 3 erreurs, #287) | **0** | **non** | non | meilleur score gardé ; ne touche ni la cote, ni les réussis | `course.ts`, `CourseProblemes.tsx` |
 | « Je sais déjà jouer » : placement en 3 problèmes (#283) | 0 | non | non | cote de départ, adversaires ouverts jusqu'au conseillé, leçon conseillée | `placement.ts` |

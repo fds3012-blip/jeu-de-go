@@ -9,6 +9,7 @@ import { fr } from '../ui/typo';
 import { readLocal, writeLocal, type SyncState } from './hooks';
 import { FETES_KEY, boutonChemin, chapitresAFeter, chapitresAVenir, colonne, courbe, dureeMinutes, etapes, type Ancre, type Etape, type Progression } from './apprendre';
 import { t } from '../content/i18n/secondaires';
+import type { EtatDecouverte } from './decouverteEtat';
 import '../ui/apprendre.css';
 
 export { LessonPlayer, POSE_MS } from './Lecon';
@@ -35,8 +36,10 @@ function phraseMochi(liste: Etape[], iEnCours: number): string {
  * `compteRequis` (#343) : vrai si la leçon de ce rang (0 = leçon 1) demande un compte. Sans compte, les leçons 1 à 3 sont libres ;
  * les suivantes restent touchables, portent le verrou « compte », et `onOpen` ouvre la création de compte (garde d'App.tsx).
  */
-export function LearnHome({ progress, onOpen, sync = 'local', compteRequis = () => false }: {
+export function LearnHome({ progress, onOpen, sync = 'local', compteRequis = () => false, decouverte }: {
   progress: Progression; onOpen: (id: string) => void; sync?: SyncState; compteRequis?: (rang: number) => boolean;
+  /** #524 : la partie de découverte, en tête du chapitre « Les bases » (état gardé sur l'appareil, ouverture). */
+  decouverte?: { etat: EtatDecouverte; ouvrir: () => void };
 }) {
   const liste = etapes(LESSONS, progress);
   const iEnCours = liste.findIndex(e => e.etat === 'encours');
@@ -74,8 +77,9 @@ export function LearnHome({ progress, onOpen, sync = 'local', compteRequis = () 
   return (
     <div className="apprendre">
       {/* #228 : un chemin par chapitre, l'un sous l'autre ; une seule carte en relief, celle de la prochaine leçon. */}
-      {CHAPITRES.map(c => (
+      {CHAPITRES.map((c, i) => (
         <CheminChapitre key={c.id} chapitre={c} liste={liste.filter(e => c.lecons.includes(e.lecon))} k={k}
+          entree={i === 0 && decouverte ? <CarteDecouverte {...decouverte} /> : null}
           carte={iEnCours >= 0 && c.lecons.includes(liste[iEnCours].lecon) ? prochaine : null}
           fete={fete === c.id} onFeteFinie={() => setFete(null)} onOpen={onOpen} compteRequis={compteRequis} />
       ))}
@@ -139,6 +143,29 @@ function CarteProchaine({ etape, bouton, mochi, onOpen, refCarte, compteRequis }
   );
 }
 
+/**
+ * #524 : la partie de découverte, en tête des bases. Tuile secondaire (une seule action en relief par écran : la
+ * prochaine leçon) : un coin de goban, le nom, la promesse, et ce que fait le toucher (jouer, reprendre, rejouer).
+ */
+function CarteDecouverte({ etat, ouvrir }: { etat: EtatDecouverte; ouvrir: () => void }) {
+  const verbe = t(`apprendre.decouverte.${etat}`);
+  return (
+    <button type="button" className="carte-decouverte" data-etat={etat} data-testid="carte-decouverte" onClick={ouvrir}
+      aria-label={fr(t('apprendre.decouverte.aria', { etat: etat === 'finie' ? `${t('apprendre.decouverte.faite')}. ${verbe}` : verbe }))}>
+      <svg className="carte-decouverte-goban" viewBox="0 0 48 48" width="48" height="48" aria-hidden="true" focusable="false">
+        <rect x="1" y="1" width="46" height="46" rx="8" className="goban-bois" />
+        <path d="M10 1v46M24 1v46M38 1v46M1 10h46M1 24h46M1 38h46" className="goban-ligne" />
+        <circle cx="24" cy="24" r="6.5" className="goban-noire" /><circle cx="10" cy="24" r="6.5" className="goban-blanche" />
+      </svg>
+      <span className="carte-decouverte-texte" aria-hidden="true">
+        <b>{t('apprendre.decouverte')}</b>
+        <small>{fr(t('apprendre.decouverte.texte'))}</small>
+      </span>
+      <span className="carte-decouverte-etat" aria-hidden="true">{etat === 'finie' && <Coche />}{verbe}</span>
+    </button>
+  );
+}
+
 /** Phrase sous le titre d'un chapitre : son intro, ou la fin (« la suite arrive » pour un chapitre en cours d'écriture). */
 function phraseChapitre(c: Chapitre, faites: number): string {
   if (faites < c.lecons.length) return c.intro;
@@ -147,8 +174,10 @@ function phraseChapitre(c: Chapitre, faites: number): string {
 }
 
 /** Chemin d'un chapitre : en-tête illustré, puis ses pierres sur une courbe, la prochaine leçon en carte. */
-function CheminChapitre({ chapitre, liste, k, carte, fete, onFeteFinie, onOpen, compteRequis }: {
+function CheminChapitre({ chapitre, liste, k, carte, fete, onFeteFinie, onOpen, compteRequis, entree }: {
   chapitre: Chapitre; liste: Etape[]; k: number; carte: ReactNode; fete: boolean; onFeteFinie: () => void; onOpen: (id: string) => void;
+  /** #524 : ce qui se pose entre l'en-tête du chapitre et son chemin (la partie de découverte, pour « Les bases »). */
+  entree?: ReactNode;
   compteRequis: (rang: number) => boolean;
 }) {
   const iEnCours = liste.findIndex(e => e.etat === 'encours');
@@ -210,6 +239,8 @@ function CheminChapitre({ chapitre, liste, k, carte, fete, onFeteFinie, onOpen, 
             : <span>{faites > 0 ? t('apprendre.chapitre.avancee', { n: faites, total: n }) : t('apprendre.chapitre.lecons', { n })}</span>}
         </div>
       </header>
+
+      {entree}
 
       <div className="gue">
         <svg className="gue-trace" width="1" height={ancres.hauteur} aria-hidden="true" focusable="false">

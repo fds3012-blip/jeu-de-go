@@ -1,0 +1,13 @@
+/*
+ * Partie de découverte (#524) : chargée avec son écran (src/app/PartieDecouverte.tsx), jamais dans la feuille principale.
+ * Le reste vient du lecteur de leçon (lecon.css) : même barre, même plateau, même Mochi, même action en relief.
+ * Ici, seulement la progression par notions, posée au-dessus du nom de la notion en cours.
+ */
+.decouverte-progres { display: flex; align-items: center; gap: var(--space-2); }
+/* Une barre fine, jade, et « 3 / 15 notions » en légende : on sait où on en est sans compter des points. */
+.decouverte-barre { flex: 0 1 112px; height: 6px; border-radius: 999px; overflow: hidden; background: color-mix(in srgb, var(--text) 16%, transparent); }
+.decouverte-barre i { display: block; height: 100%; border-radius: inherit; background: var(--accent); }
+@media (prefers-reduced-motion: no-preference) { .decouverte-barre i { transition: width 300ms var(--ease); } }
+.decouverte-progres small { color: var(--muted); font-size: var(--fs-legende); line-height: 1.2; font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* Les phrases de Mochi sont un peu plus longues qu'en leçon : la taille courante, même sur un grand écran. */
+.decouverte .mochi-bulle p { font-size: var(--fs-m); }

@@ -134,6 +134,9 @@ describe('partie de découverte : chaque affirmation de Mochi', () => {
 
   it('5. se sauver : la pierre glissée entre deux pierres est mise en atari ; allongée, elle a 3 libertés ; sinon, prise', () => {
     const p = avant('sauver');
+    expect(p.board[P('F5')]).toBe(2);
+    expect(p.board[P('G4')]).toBe(2);
+    expect(p.board[P('G5')]).toBe(0);
     expect(neighbors(TAILLE)[P('G5')]).toEqual(expect.arrayContaining([P('F5'), P('G4')]));
     expect(neighbors(TAILLE)[P('F5')]).toContain(P('E5')); // « Je m'approche de ta pierre »
     const q = avant('sauver2');
