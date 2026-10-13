@@ -86,7 +86,8 @@ select pg_temp.egal(public.choisir_depart_cote('club', 0), 3000, 'club 1er dan :
 select pg_temp.egal(public.choisir_depart_cote('club', 25), 500, 'club 25e kyu : 500');
 -- Tant qu'aucune partie classée n'est comptée, le départ se change encore.
 select pg_temp.egal(public.choisir_depart_cote('regles'), 800, 'je connais les règles : 800');
-select pg_temp.egal((select (cote_depart, cote_depart_kyu, rating) from public.profiles where id = :alice), row('regles'::text, null::smallint, 800), 'départ gardé');
+-- D4 (#530) : le départ, détail privé de la cote, se lit par mon_profil() (le titulaire seul).
+select pg_temp.egal((select (cote_depart, cote_depart_kyu, rating) from public.mon_profil()), row('regles'::text, null::smallint, 800), 'départ gardé');
 select pg_temp.egal((select count(*)::integer from public.rating_history where user_id = :alice and kind = 'depart'), 5, 'départs dans l''historique (lus par RLS)');
 -- Aucune écriture directe de la cote, même sur son propre profil.
 select pg_temp.doit_refuser(format('update public.profiles set rating = 3800 where id = %L', :alice), 'permission denied');

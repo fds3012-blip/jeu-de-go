@@ -1,5 +1,5 @@
 // Pseudos des adversaires (#400) : « Mes parties », la liste « Tes parties » des défis et « À faire » nomment l'ami au
-// lieu de « Ton ami ». Lecture sous la RLS existante (profils visibles par tous, migration des profils) : une seule
+// lieu de « Ton ami ». Lecture sous la RLS (D4, #530 : pseudo lisible par les joueurs connectés, colonne publique) : une seule
 // requête pour toute la liste (`in`), jamais une par ligne. Module à part de defi.ts, qui est dans le JS initial :
 // celui-ci n'est chargé qu'avec les écrans qui l'utilisent.
 import type { Db } from './supabase';

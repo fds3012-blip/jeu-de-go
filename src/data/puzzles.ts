@@ -140,7 +140,8 @@ export interface PuzzleStats { rating: number; streak: number; freezes: number; 
 /** Cote problèmes, série de jours et problèmes déjà tentés du joueur connecté. */
 export async function fetchPuzzleStats(db: Db, userId: string): Promise<Result<PuzzleStats>> {
   const [profile, attempts] = await Promise.all([
-    db.from('profiles').select('puzzle_rating, streak_days, streak_last, streak_freezes').eq('id', userId).maybeSingle(),
+    // D4 (#530) : cote des problèmes et série sont privées : lues par mon_profil() (le joueur connecté seul).
+    db.rpc('mon_profil').select('puzzle_rating, streak_days, streak_last, streak_freezes').maybeSingle(),
     db.from('puzzle_attempts').select('puzzle_id, solved').eq('user_id', userId)
   ]);
   if (profile.error || attempts.error || !profile.data) return { ok: false, error: t('erreur.reussis') };
