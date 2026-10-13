@@ -232,9 +232,9 @@ export function SceauBadge({ id, obtenu, taille = 52 }: { id: BadgeId; obtenu: b
 export function VitrineBadges({ liste, nouveaux = [] }: { liste: Badge[]; nouveaux?: readonly string[] }) {
   const n = liste.filter(b => b.obtenu).length;
   const [choisi, setChoisi] = useState<BadgeId | null>(null);
-  // #529 : 21 badges. Repliée, la vitrine montre les gagnés et les 4 prochains ; « Voir les 21 badges » ouvre le reste.
+  // #529 : 21 badges. Repliée, une rangée de 6 sceaux (vitrineRepliee) et « +N » qui ouvre le reste.
   const [tous, setTous] = useState(false);
-  const visibles = tous ? liste : vitrineRepliee(liste);
+  const visibles = tous ? liste : vitrineRepliee(liste, nouveaux);
   const repliable = visibles.length < liste.length || tous;
   const b = (choisi && liste.find(x => x.id === choisi))
     || liste.find(x => x.obtenu && nouveaux.includes(x.id)) || null;
@@ -260,14 +260,19 @@ export function VitrineBadges({ liste, nouveaux = [] }: { liste: Badge[]; nouvea
             </button>
           </li>
         ))}
+        {/* #529 : le dernier rond de la grille ouvre ou replie la vitrine (« +15 » : badges cachés). Il prend la place
+            d'un sceau, pas une ligne de plus : le Profil tient toujours sans défiler (#50). */}
+        {repliable && (
+          <li className="vitrine-plus">
+            <button type="button" className="badge-bouton vitrine-tous" aria-expanded={tous}
+              aria-label={tous ? t('vitrine.moins') : t('vitrine.tous', { n: liste.length })}
+              onClick={() => { setTous(x => !x); setChoisi(null); }}>
+              <span aria-hidden="true">{tous ? '−' : `+${liste.length - visibles.length}`}</span>
+            </button>
+          </li>
+        )}
       </ul>
       <p className="vitrine-detail" aria-live="polite">{fr(detail)}</p>
-      {repliable && (
-        <button type="button" className="lien vitrine-tous" aria-expanded={tous}
-          onClick={() => { setTous(x => !x); setChoisi(null); }}>
-          {tous ? t('vitrine.moins') : t('vitrine.tous', { n: liste.length })}
-        </button>
-      )}
     </section>
   );
 }

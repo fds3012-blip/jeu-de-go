@@ -157,13 +157,25 @@ export function badges(d: Donnees, gagnes: readonly string[] = []): Badge[] {
   return [...tous.filter(b => b.obtenu), ...tous.filter(b => !b.obtenu)];
 }
 
-/** Badges à gagner montrés dans la vitrine repliée (#529) : les suivants du parcours, pas les 21 d'un coup. */
-export const A_GAGNER_VISIBLES = 4;
+/**
+ * Vitrine repliée (#529) : une seule rangée, comme la vitrine de 7 d'avant. Le Profil tient sans défiler (#50) et une
+ * rangée de 390 px porte 7 ronds de 44 px : 6 sceaux et le rond « +N » qui ouvre les 21.
+ */
+export const PLACES_REPLIEE = 6;
+/** Toujours au moins 2 badges à gagner en vue : le but suivant reste visible (effet de gradient). */
+export const A_GAGNER_MIN = 2;
 
-/** Vitrine repliée : tous les badges gagnés, puis les `A_GAGNER_VISIBLES` prochains. */
-export function vitrineRepliee(liste: readonly Badge[], n = A_GAGNER_VISIBLES): Badge[] {
-  const obtenus = liste.filter(b => b.obtenu);
-  return [...obtenus, ...liste.filter(b => !b.obtenu).slice(0, n)];
+/**
+ * Sceaux de la vitrine repliée, dans l'ordre du parcours : les prochains à gagner (au moins `A_GAGNER_MIN`), et parmi
+ * les gagnés, ceux gagnés depuis la dernière visite d'abord (ils s'impriment), puis les plus avancés du parcours.
+ */
+export function vitrineRepliee(liste: readonly Badge[], nouveaux: readonly string[] = [], places = PLACES_REPLIEE): Badge[] {
+  const obtenus = liste.filter(b => b.obtenu), aGagner = liste.filter(b => !b.obtenu);
+  const nG = Math.min(aGagner.length, Math.max(A_GAGNER_MIN, places - obtenus.length));
+  const nO = Math.min(obtenus.length, places - nG);
+  const ordre = [...obtenus.filter(b => nouveaux.includes(b.id)), ...[...obtenus].reverse().filter(b => !nouveaux.includes(b.id))];
+  const gardes = new Set(ordre.slice(0, nO).map(b => b.id));
+  return [...obtenus.filter(b => gardes.has(b.id)), ...aGagner.slice(0, nG)];
 }
 
 /** Ajoute aux badges gagnés ceux obtenus maintenant. Rend la même liste si rien n'a changé (pas d'écriture inutile). */

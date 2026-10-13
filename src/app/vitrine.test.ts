@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { A_GAGNER_VISIBLES, BADGES, BADGES_SERIE, DU_MOMENT, FAMILLE, SEUILS_BADGES, adversairesBattus, badges, memoriser, statistiques, victoires, vitrineRepliee, type Donnees } from './vitrine';
+import { A_GAGNER_MIN, PLACES_REPLIEE, BADGES, BADGES_SERIE, DU_MOMENT, FAMILLE, SEUILS_BADGES, adversairesBattus, badges, memoriser, statistiques, victoires, vitrineRepliee, type Donnees } from './vitrine';
 import { traduire } from '../content/i18n/secondaires';
 
 const vide: Donnees = { reussis: 0, serie: 0, parties: 0, bilan: {}, paliers: [] };
@@ -101,13 +101,19 @@ describe('badges élargis (#529)', () => {
     }
   });
 
-  it('vitrine repliée : les gagnés, puis les 4 prochains dans l’ordre du parcours', () => {
-    const r = vitrineRepliee(badges(vide));
-    expect(r.map(x => x.id)).toEqual(['premiere-partie', 'premier-probleme', 'premiere-lecon', 'victoire-pomme']);
-    expect(A_GAGNER_VISIBLES).toBe(4);
-    const r2 = vitrineRepliee(badges({ ...vide, reussis: 12 }));
-    expect(r2.filter(x => x.obtenu).map(x => x.id)).toEqual(['premier-probleme', 'dix-problemes']);
-    expect(r2).toHaveLength(2 + A_GAGNER_VISIBLES);
+  it('vitrine repliée : une rangée de 6, au moins 2 à gagner, les nouveaux toujours en vue', () => {
+    expect(PLACES_REPLIEE).toBe(6);
+    expect(vitrineRepliee(badges(vide)).map(x => x.id)).toEqual(['premiere-partie', 'premier-probleme', 'premiere-lecon', 'victoire-pomme', 'premiere-course', 'dix-problemes']);
+    const deux = vitrineRepliee(badges({ ...vide, reussis: 12 }));
+    expect(deux.map(x => x.id)).toEqual(['premier-probleme', 'dix-problemes', 'premiere-partie', 'premiere-lecon', 'victoire-pomme', 'premiere-course']);
+    // Beaucoup de gagnés : les plus avancés du parcours, et les 2 prochains à gagner.
+    const riche: Donnees = { ...vide, reussis: 60, record: 8, parties: 3, lecons: 2, course: 3, bilan: { pomme: { v: 1, d: 0 } }, tailles: [13], revues: 1 };
+    const r = vitrineRepliee(badges(riche));
+    expect(r).toHaveLength(PLACES_REPLIEE);
+    expect(r.filter(x => !x.obtenu)).toHaveLength(A_GAGNER_MIN);
+    expect(r.filter(x => x.obtenu).map(x => x.id)).toEqual(['serie-7', 'goban-13', 'premiere-revue', 'cinquante-problemes']);
+    // Un badge gagné depuis la dernière visite reste en vue pour s'imprimer.
+    expect(vitrineRepliee(badges(riche), ['premiere-partie']).map(x => x.id)).toContain('premiere-partie');
   });
 
   it('les badges de série se cachent avec la série (#365)', () => {
