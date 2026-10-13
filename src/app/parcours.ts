@@ -3,6 +3,7 @@ import { toLabel } from '../go/coords';
 import type { Color, Position } from '../go/rules';
 import { nombre, t } from '../content/i18n/secondaires';
 import type { CoupNote } from './notation';
+import { categorieDe } from './categoriesRevue';
 
 const pts = (n: number) => t('revue.points', { n: Math.max(1, Math.round(n)) });
 
@@ -12,12 +13,15 @@ export interface Commentaire { titre: string; detail: string }
 /**
  * Commentaire d'un coup noté. `toi` : le coup est celui du joueur (contre l'ordi) ; `nom` : l'autre camp
  * (l'ordi quand c'est son coup, sinon l'adversaire du joueur). `prisesApres` et la pierre verte viennent de la note.
+ * `simple` (#527, jusqu'à 15 kyu) : le titre dit la catégorie (bon coup, coup imprécis, erreur) ; le détail ne change pas.
  */
-export function commentaire(n: CoupNote, positions: Position[], o: { toi: boolean; nom: string }): Commentaire {
+export function commentaire(n: CoupNote, positions: Position[], o: { toi: boolean; nom: string; simple?: boolean }): Commentaire {
   const avant = positions[n.coup - 1], apres = positions[n.coup], size = avant.size, m = apres.lastMove ?? -1;
   const lieu = m < 0 ? t('parcours.passer') : toLabel(m, size);
   const point = n.meilleur != null && n.meilleur >= 0 ? toLabel(n.meilleur, size) : null;
-  const titre = n.passeTot ? t('parcours.titre.passeTot') : t(`parcours.titre.${n.note}`, { lieu });
+  const titre = n.passeTot ? t('parcours.titre.passeTot')
+    : o.simple ? t(`parcours.titreCategorie.${categorieDe(n, size)}`, { lieu })
+    : t(`parcours.titre.${n.note}`, { lieu });
   const perte = o.toi ? t('detail.perteToi', { pts: pts(n.perte) }) : t('detail.perteLui', { nom: o.nom, pts: pts(n.perte) });
   const mieux = point ? ` ${t('detail.mieux', { point })}` : '';
   const phrases: string[] = [];

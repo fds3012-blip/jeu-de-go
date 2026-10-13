@@ -16,6 +16,7 @@ import {
 import { mesDefis } from '../data/defi';
 import { adversaireDe, lirePseudos } from '../data/pseudos';
 import type { Db } from '../data/supabase';
+import { Mochi } from '../ui/Mochi';
 import { Portrait, PortraitMochi } from '../ui/Portrait';
 import { Reflexion } from '../ui/Reflexion';
 import { IconeReglage } from '../ui/IconesReglages';
@@ -148,7 +149,7 @@ export function MesParties({ onRetour, onJouer, onImporter, onEtudier, db = null
 
       {liste.length === 0 && etat !== 'chargement' ? (
         <div className="mp-parties-vide">
-          <PortraitMochi taille={112} humeur="content" decoratif />
+          <Mochi size={112} />
           <h3>{t('historique.vide.titre')}</h3>
           <p>{fr(t('historique.vide.texte'))}</p>
           {statut && <p className="mp-parties-statut" role="status">{fr(statut)}</p>}

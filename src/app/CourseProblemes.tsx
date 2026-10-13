@@ -189,7 +189,7 @@ function EnCourse({ etat, setEtat, liste, confirmTouch, onFin, onExit }: {
       <p className="sr-only" aria-live="polite">{reponse}</p>
       {pz && board && depart && (
         <>
-          <Bubble>{fr(`${pz.prompt} ${t(pz.toPlay === 1 ? 'pb.tuJoues.1' : 'pb.tuJoues.2')}`)}</Bubble>
+          <Bubble voix="coach">{fr(`${pz.prompt} ${t(pz.toPlay === 1 ? 'pb.tuJoues.1' : 'pb.tuJoues.2')}`)}</Bubble>
           <div className={`course-plateau${retour ? (retour.ok ? ' juste' : ' faux') : ''}`}>
             <Board lieu="probleme" key={pz.id} size={pz.size} board={board} toPlay={pz.toPlay} interactive={!retour && !etat.fin}
               confirmTouch={confirmTouch || estSerre(pz.size)} surFantome={estSerre(pz.size) ? q => <Visee p={q} size={pz.size} /> : undefined} onPlay={onPlay} shake={shake}
