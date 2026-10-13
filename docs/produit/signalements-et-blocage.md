@@ -91,6 +91,13 @@ where id = <id>;
 
 **Notification de l'équipe** : pas d'e-mail automatique pour l'instant (décision à prendre avec Florian, issue #363 : e-mail par fonction serveur ou lecture quotidienne). D'ici là, consulter la requête 2 chaque jour ouvré.
 
+## Modération par l'équipe (#531)
+
+- **Alerte** : chaque matin, un e-mail à l'équipe s'il y a du nouveau (nombre de signalements par type, joueurs signalés par au moins deux comptes, pseudos à revoir), jamais le texte d'un signalement ni un pseudo. Sans e-mail configuré : vue `moderation_a_faire` dans Supabase.
+- **Suspendre** (éditeur SQL) : `select public.suspendre_joueur('Pseudo', 7, 'Insultes répétées en partie');` (`null` à la place de 7 : sans fin). Le joueur ne peut plus chercher de partie (direct ou lente), défier, rejoindre un défi, demander un ami ni envoyer de message ; il lit « Ton compte est suspendu : rien en ligne pour l'instant. L'ordi, les leçons et les problèmes restent ouverts. » Ses parties en cours se finissent. Les autres joueurs lisent « Ce joueur n'est pas disponible », comme pour un blocage. Lever : `select public.lever_suspension('Pseudo');`.
+- **Pseudo** : les mots interdits (FR et EN) sont refusés à la saisie. Un pseudo déjà pris avant la règle apparaît dans la vue `pseudos_a_revoir` ; le changer : `select public.renommer_pseudo('Ancien', 'Nouveau');` (ou `null` : « Joueur-xxxxxx »).
+- Chaque action est notée dans `journal_moderation` (12 mois). Détail et procédures : `docs/architecture/securite.md`.
+
 ## Parties en direct abandonnées (tâche planifiée)
 
 pg_cron est installé sur le projet (version 1.6.4, vérifié en lecture seule le 05/10 ; tâches existantes : `purger-anonymes-inactifs`, `purger-notifications`). La migration ajoute :

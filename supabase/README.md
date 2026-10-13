@@ -74,3 +74,10 @@ Table `abonnements_rappel` (migration `20261001000100_abonnements_rappel`), fonc
 
 - `enregistrer_abonnement_rappel` (joueur avec compte, anonyme refusé) inscrit l'appareil ; `reclamer_rappels` (clé service seulement) choisit les rappels dus et les marque envoyés : un par jour au plus, jamais la nuit.
 - La fonction lit `VAPID_CLE_PUBLIQUE`, `VAPID_CLE_PRIVEE`, `VAPID_SUJET` et `RAPPELS_SECRET` dans son environnement ; elle se déploie avec `--no-verify-jwt` (accès contrôlé par `RAPPELS_SECRET`). Logique testée par Vitest (`src/data/envoyerRappels.test.ts`).
+
+## Modération et alerte à l'équipe (issue #531)
+
+Migration `20261013120100_moderation` : mots interdits dans les pseudos (refus JGP02), suspension de compte (refus JGU01 en file, défi, demande d'ami et message), journal des actions de l'équipe, résumé des signalements. Fonction `supabase/functions/alerte-signalements` (résumé quotidien par Resend, en nombres seulement), tâche pg_cron hors des migrations (`supabase/planification/alerte-signalements.sql`). Rien n'est appliqué ni déployé par ce dépôt : étapes, secrets et commandes de l'équipe dans `docs/architecture/securite.md`.
+
+- `suspendre_joueur`, `lever_suspension`, `renommer_pseudo`, `reclamer_resume_signalements` : rôle de service (ou éditeur SQL) seulement.
+- La fonction lit `RESEND_API_KEY`, `ALERTE_EMAIL`, `ALERTE_SECRET` (et `ALERTE_EXPEDITEUR`, facultatif) ; elle se déploie sans vérification du JWT (fichier `.sans-jwt`, lu par le workflow de déploiement, comme `envoyer-rappels`). Logique testée par Vitest (`src/data/alerteSignalements.test.ts`).
