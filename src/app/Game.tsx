@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Board } from '../ui/Board';
 import { Avatar, Bandeau, BarreActions, BarreAvantage, ChoixMochi, Coach, CompteurIndices, Icone, Interrupteur, ListeCoups } from '../ui/Partie';
-import { groupAt, newPosition, play, type Position } from '../go/rules';
+import { groupAt, handicapPoints, newPosition, play, type Position } from '../go/rules';
 import { playAtari, playCapture, playDefeat, playIllegal, playStone, playVictory } from '../ui/sound';
 import { hapticAtari, hapticCapture, hapticDefeat, hapticIllegal, hapticStone, hapticVictory } from '../ui/haptics';
-import { score } from '../go/score';
+import { handicapDe, score, type Rules } from '../go/score';
 import { toLabel } from '../go/coords';
-import { analyseConseil, bestMove, bestMoveExplique, estimateLead, estimateTerritoire, forceInitiale, niveauGuide, PERIODE_GUIDEE, proposeComptage, reglerForce, type Opponent } from '../engine';
+import { analyseConseil, bestMove, bestMoveExplique, estimateLead, estimateTerritoire, forceInitiale, niveauGuide, PERIODE_GUIDEE, proposeComptage, reglerForce, moteurDeLaPartie, type Opponent } from '../engine';
 import { EVENTS, secondsSinceOpen, track, trackOnce } from '../data/analytics';
 import { compterEtape } from '../data/compteurs';
 import { gagnerXp, sourceXpPartie, type SourceXp } from './xp';
@@ -44,7 +44,7 @@ const COUPS_AIDE_FANTOME = 6;
 import { battuAccorde } from '../ui/sceaux';
 import type { StatsPartie } from './bilan';
 import { Revue } from './Revue';
-import { resultatSgf, REVUE_KEY, sgfDepuisHistorique, type PartieGardee } from './revue';
+import { positionsDepuisSgf, resultatSgf, REVUE_KEY, sgfDepuisHistorique, type PartieGardee } from './revue';
 import { delaiReponse, messageContinue } from './rythme';
 import { comptageDeSecours, coupDeSecours } from './secoursOrdi';
 // Coach Mochi (#470) : moments clés vérifiés par src/go/coach.ts, 3 bulles au plus par partie.
@@ -95,18 +95,40 @@ interface Props {
   coach?: boolean;
   /** Comptage sûr (#486, 3 premières parties terminées) : contre l'ordi, Mochi marque seul les pierres mortes sûres. */
   comptageSur?: boolean;
+  /**
+   * #528 : réglages avancés de la partie. `regles` : règle de comptage (japonaise par défaut) ; `handicap` : 2 à 9 pierres
+   * noires posées aux points habituels (`handicapPoints`), Blanc commence. Absents : la partie d'avant #528.
+   */
+  regles?: Rules;
+  handicap?: number;
+  /** #528 : partie interrompue à reprendre (SGF gardé par `garder`) ; ignorée si elle ne se relit pas. */
+  reprise?: string;
+  /** #528 : appelée à chaque coup avec la partie en cours (au moins un coup du joueur), puis `null` quand elle finit ou qu'on la quitte. */
+  garder?: (partie: { sgf: string; coups: number } | null) => void;
 }
 
-export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, onResult, fin, aiKomi = komi, portrait, celebrer = true, aide = true, avantage = true, accommodant = false, guidee, onImporter, reglages, coach, comptageSur = false }: Props) {
+export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, onResult, fin, aiKomi = komi, portrait, celebrer = true, aide = true, avantage = true, accommodant = false, guidee, onImporter, reglages, coach, comptageSur = false, regles = 'japanese', handicap = 0, reprise: partieReprise, garder }: Props) {
   // #365 : coordonnées et marque du dernier coup, selon les Réglages.
   const prefs = usePreferences();
-  const [history, setHistory] = useState<Position[]>(() => [newPosition(size)]);
+  // #528 : position de départ, pierres de handicap comprises (Blanc commence alors).
+  const depart = () => newPosition(size, handicap >= 2 ? handicapPoints(size, handicap) : []);
+  // #528 : partie interrompue reprise là où elle s'était arrêtée (même plateau, au moins un coup), sinon une partie neuve.
+  const [repriseLue] = useState<Position[] | null>(() => {
+    if (!partieReprise) return null;
+    try { const { positions } = positionsDepuisSgf(partieReprise); return positions[0].size === size && positions.length > 1 ? positions : null; } catch { return null; }
+  });
+  const [history, setHistory] = useState<Position[]>(() => repriseLue ?? [depart()]);
   const [phase, setPhase] = useState<'play' | 'score' | 'end'>('play');
   const [dead, setDead] = useState<Set<number>>(new Set());
   // #486 : fixé au début de la partie (le compteur de parties finies change à la fin de celle-ci).
   const [sur] = useState(() => !!ai && comptageSur);
   const [fantome, setFantome] = useState(-1);
-  const [msg, setMsg] = useState(ai ? tr('partie.debut.ordi', { nom: ai.nom }) : tr('partie.debut.deux'));
+  const [msg, setMsg] = useState(() => repriseLue ? tr('partie.reprise.encours') : messageDebut());
+  /** Phrase du début de partie : avec un handicap, Blanc commence, et on le dit (#528). */
+  function messageDebut(): string {
+    if (handicap >= 2) return ai ? tr('partie.debut.handicap', { nom: ai.nom, n: handicap }) : tr('partie.debut.deuxHandicap', { n: handicap });
+    return ai ? tr('partie.debut.ordi', { nom: ai.nom }) : tr('partie.debut.deux');
+  }
   // « Abandonner » armé (#audit-wig, point 3) : valable pour l'état courant de l'historique seulement, sans minuterie.
   // Un coup joué le désarme ; l'état est annoncé par une zone polie permanente (voir plus bas).
   const [resignArmAt, setResignArmAt] = useState<number | null>(null);
@@ -158,7 +180,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
       setConseilVu({ len, zone: c.zone, point: c.point, modele: c.modele, phrase, note: null });
       setMsg(phrase);
     };
-    analyseConseil(p, komi).then(finir, () => finir(null));
+    analyseConseil(p, komiMoteur).then(finir, () => finir(null));
   }
   function noterConseil(utile: boolean) {
     if (!conseilVu || conseilVu.note) return;
@@ -193,6 +215,13 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   const [relecture, setRelecture] = useState<number | null>(null);
   const [sgf, setSgf] = useState<string | null>(null);
   const pos = history[history.length - 1];
+  // #528 : handicap de la partie (lu sur sa position de départ, reprise comprise) et komi vu par les moteurs : en règle
+  // chinoise, la compensation du handicap s'y ajoute (KataGo compte de la même façon, voir compensationHandicap).
+  const hcp = handicapDe(history[0]);
+  const { komi: komiMoteur, rules: reglesIa } = moteurDeLaPartie(komi, regles, hcp);
+  const aiKomiMoteur = moteurDeLaPartie(aiKomi, regles, hcp).komi;
+  // Longueur d'historique avant le premier coup du joueur : 2 quand l'ordi joue Blanc et commence (handicap).
+  const debutJoueur = ai && history[0].toPlay === 2 ? 2 : 1;
   // Position affichée, lue par les réponses asynchrones (conseil de Mochi) : une réponse d'une autre position est ignorée.
   const posAffichee = useRef(pos);
   posAffichee.current = pos;
@@ -202,7 +231,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   // #268 : le bouton retour a demandé « Tu quittes la partie ? » (partie en cours, au moins un coup joué).
   const [demandeQuitter, setDemandeQuitter] = useState(false);
   const retourRef = useRef<HTMLButtonElement>(null);
-  const sc = useMemo(() => score(pos, komi, 'japanese', dead), [pos, komi, dead]);
+  const sc = useMemo(() => score(pos, komi, regles, dead, hcp), [pos, komi, dead, regles, hcp]);
   const aiTurn = !!ai && phase === 'play' && pos.toPlay === 2;
   const myTurn = !ai || (pos.toPlay === 1 && !thinking);
   const coups = useMemo(() => coupsJoues(history).map((m, i) => libelleCoup(i + 1, m, size)), [history, size]);
@@ -252,7 +281,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     // Passes du joueur (Noir) depuis le début : en partie accommodante, l'ordi passe dès la deuxième (#235).
     const passesJoueur = history.filter((h, i) => i > 0 && h.lastMove === -1 && h.toPlay === 2).length;
     // #474 : moteur en échec (exception, Worker tombé) : coup de secours, la partie ne reste jamais bloquée.
-    bestMoveExplique(pos, guidee ? niveauGuide(force.current.cran) : ai.id, { komi: aiKomi, accommodant, passesJoueur })
+    bestMoveExplique(pos, guidee ? niveauGuide(force.current.cran) : ai.id, { komi: aiKomiMoteur, accommodant, passesJoueur, ...(reglesIa ? { rules: reglesIa } : {}) })
       .catch((e: unknown) => coupDeSecours(pos, e)).then(async ({ move: m, raison }) => {
       const wait = cible - (Date.now() - t0);
       if (wait > 0) await new Promise(r => setTimeout(r, wait));
@@ -300,7 +329,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   useEffect(() => {
     if (!ai || phase !== 'play') return;
     let alive = true;
-    estimateLead(pos, komi, { kataGo: pos.toPlay === 1 }).then(e => {
+    estimateLead(pos, komiMoteur, { kataGo: pos.toPlay === 1, rules: regles }).then(e => {
       if (!alive) return;
       if (e) setEstimation({ pos, lead: e.lead });
       else setEstimationKo(true);
@@ -324,7 +353,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     const t = ++scoreToken.current;
     setPhase('score'); setDead(new Set()); setFinding(true); setMsg(tr('partie.chercheMortes', { fin }));
     // #474 : comptage en échec : rien de proposé, le joueur marque les pierres mortes (jamais « Je cherche… » sans fin).
-    proposeComptage(p, komi, { sur }).catch((e: unknown) => comptageDeSecours(e)).then(r => {
+    proposeComptage(p, komiMoteur, { sur }).catch((e: unknown) => comptageDeSecours(e)).then(r => {
       const { dead: d, incertains } = r;
       if (t !== scoreToken.current) return;
       setFinding(false); setDead(new Set(d));
@@ -368,8 +397,10 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     if (!ai && enAtari) hapticAtari();
     if (ai) { aRepondre.current = { capture: cap > 0, forcee: enAtari }; setFete(cap ? { len: history.length + 1, n: cap } : null); }
     setHistory([...history, r]);
-    if (history.length === 1) track(EVENTS.partieCommencee, { mode: ai ? 'ordi' : 'deux', adversaire: ai?.id, taille: size });
-    if (history.length === 1) {
+    // Premier coup du joueur (#528 : après le premier coup de l'ordi quand il commence, avec un handicap).
+    const premierCoup = history.length === debutJoueur;
+    if (premierCoup) track(EVENTS.partieCommencee, { mode: ai ? 'ordi' : 'deux', adversaire: ai?.id, taille: size, regles, handicap: hcp });
+    if (premierCoup) {
       // Le compteur anonyme `premiere_pierre` part du plateau (src/app/premierePierre.ts, #519), où que soit la pierre.
       trackOnce(EVENTS.premierePierre, { secondes: secondsSinceOpen(), lieu: 'partie', mode: ai ? 'ordi' : 'deux', adversaire: ai?.id, taille: size });
     }
@@ -412,7 +443,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     const len = history.length;
     setCherche(true);
     setMsg(tr('partie.indice.cherche'));
-    bestMove(pos, 'caillou', { komi }).then(m => {
+    bestMove(pos, 'caillou', { komi: komiMoteur, ...(reglesIa ? { rules: reglesIa } : {}) }).then(m => {
       setCherche(false);
       if (len !== history.length) return;
       if (m < 0) { setMsg(tr('partie.indice.aucun')); return; }
@@ -440,7 +471,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     const len = history.length;
     setQuiMeneCalcul(true);
     // KataGo cherche peut-être le coup de l'ordi : on ne le ralentit pas pendant son tour.
-    estimateTerritoire(pos, komi, { kataGo: !thinking }).then(e => {
+    estimateTerritoire(pos, komiMoteur, { kataGo: !thinking, rules: regles }).then(e => {
       setQuiMeneCalcul(false);
       if (len !== history.length) return;
       if (!e) { setMsg(tr('partie.quiMene.erreur')); return; }
@@ -472,7 +503,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     setPhase('end'); setRelecture(null); setRecitFini(abandon);
     // La partie est gardée en SGF sur ce téléphone, pour la revue (Supabase viendra plus tard).
     // Résultat exact (RE) : la revue connaît l'écart, komi compris (#187).
-    const texte = sgfDepuisHistorique(history, komi, { noir: ai ? tr('camp.toi') : tr('camp.noir'), blanc: ai?.nom ?? tr('camp.blanc'), resultat: resultatSgf(egalite ? 0 : winner, abandon, sc.margin) });
+    const texte = sgfDepuisHistorique(history, komi, { noir: ai ? tr('camp.toi') : tr('camp.noir'), blanc: ai?.nom ?? tr('camp.blanc'), resultat: resultatSgf(egalite ? 0 : winner, abandon, sc.margin) }, regles);
     setSgf(texte);
     try { localStorage.setItem(REVUE_KEY, JSON.stringify({ sgf: texte, adversaire: ai?.id, date: new Date().toISOString() } satisfies PartieGardee)); } catch { /* stockage indisponible */ }
     const resultat = () => onResult?.(egalite ? 0 : winner, {
@@ -516,20 +547,22 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     coachEtat.current = etatCoachInitial(); setCoachVu(null);
     token.current++; atarisSubis.current = 0; setIndicesUtilises(0); setQuiMeneUtilises(0); setQuiMene(null); setConseilsUtilises(0); setConseilVu(null);
     reprise.current = false;
-    setHistory([newPosition(size)]); resume(); setResigned(0); setThinking(false); setRelecture(null);
-    setMsg(tr(ai ? 'partie.nouvelle.ordi' : 'partie.nouvelle.deux'));
+    setHistory([depart()]); resume(); setResigned(0); setThinking(false); setRelecture(null);
+    setMsg(handicap >= 2 ? messageDebut() : tr(ai ? 'partie.nouvelle.ordi' : 'partie.nouvelle.deux'));
   }
 
   const name = (c: 1 | 2) => (ai ? (c === 1 ? tr('camp.toi') : ai.nom) : camp(c));
   // #268 : quitter une partie en cours (au moins un coup, pas finie) la perd ; Mochi demande d'abord, avec la bulle du passe.
   // Sans coup joué, ou partie finie (l'écran de fin a son propre retour), on sort tout de suite.
-  const quitterDemandeConfirmation = phase !== 'end' && history.length > 1;
+  const quitterDemandeConfirmation = phase !== 'end' && history.length > debutJoueur;
   const retourAccueil = <button ref={retourRef} type="button" className="retour" onClick={() => (quitterDemandeConfirmation ? setDemandeQuitter(true) : onExit())} aria-label={tr('partie.retourAccueil')}>‹</button>;
   // En relecture, on montre la position `q` et « ‹ » ramène au bilan.
   const bandeau = (c: 1 | 2, q: Position = pos, retour: ReactNode = retourAccueil, actif = phase === 'play' && q.toPlay === c, gain: { n: number; k: number } | null = null) => {
     let sousTitre: string;
     if (c === 2) sousTitre = ai ? ai.rang : tr('partie.komi', { komi: virgule(komi) });
     // Contre l'IA, la cote de jeu n'apparaît pas : ces parties ne la font pas bouger (décision de Florian, #417).
+    // #528 : avec un handicap, Noir ne joue pas en premier : le bandeau dit ses pierres d'avance.
+    else if (hcp) sousTitre = ai ? `${camp(1)} · ${tr('partie.handicapCourt', { n: hcp })}` : tr('partie.handicapCourt', { n: hcp });
     else sousTitre = ai ? camp(1) : tr('partie.joueEnPremier');
     const initiale = c === 1 && profil?.pseudo ? profil.pseudo[0] : undefined;
     return (
@@ -544,6 +577,13 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
 
   // Mesure : une partie terminée (score validé ou abandon). Ajout isolé pour faciliter les fusions.
   useEffect(() => { if (phase === 'end') track(EVENTS.partieTerminee, { mode: ai ? 'ordi' : 'deux', adversaire: ai?.id, taille: size, coups: history.length - 1, fin: resigned ? 'abandon' : 'score', gagnant: (resigned ? 3 - resigned : sc.winner) === 1 ? 'noir' : 'blanc' }); }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
+  // #528 : la partie en cours est gardée à chaque coup (dès le premier coup du joueur), puis oubliée quand elle finit.
+  useEffect(() => {
+    if (!garder) return;
+    if (phase === 'end') { garder(null); return; }
+    if (history.length <= debutJoueur) return;
+    garder({ sgf: sgfDepuisHistorique(history, komi, {}, regles), coups: history.length - 1 });
+  }, [history, phase]); // eslint-disable-line react-hooks/exhaustive-deps
   // #475 : la revue est la suite la plus probable. Préchargement discret du réseau KataGo, seulement si les règles
   // de src/engine/katago/prechargement.ts le permettent (pas à la première partie, pas en données mobiles). Ajout isolé.
   useEffect(() => { if (phase === 'end') void prechargerApresPartie(readLocal<Parties>(PARTIES_KEY, { n: 0 }).n); }, [phase]);
@@ -603,7 +643,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     const plateau = `${size} × ${size}`;
     const n = history.length - 1;
     if (!abandon && !recitFini) {
-      const recit = recitScore(pos, komi, 'japanese', dead);
+      const recit = recitScore(pos, komi, regles, dead, hcp);
       const immediat = !celebrer || mouvementsReduits();
       const ownerDelai = immediat ? undefined : new Map(recit.territoire.map(q => [q.p, q.delai]));
       const recitEl = (
@@ -674,7 +714,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   const passerMisEnEvidence = passerEnEvidence(aide && !!ai, myTurn, pos.lastMove === -1, conseilPasserA, history.length);
   // Calcul léger (un parcours du plateau), après les retours anticipés : pas de hook ici.
   const passerSecondaire = phase === 'play' && passerDiscret({ board: pos.board, size, adversairePasse: pos.lastMove === -1, evidence: passerMisEnEvidence });
-  const montrerIntro = intro && history.length === 1 && phase === 'play' && !avertissementPasse && !quitter && !aideFantome;
+  const montrerIntro = intro && history.length <= debutJoueur && phase === 'play' && !avertissementPasse && !quitter && !aideFantome;
 
   return (
     <div className="partie">
@@ -713,7 +753,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
         {/* Quitter une partie en cours (#268) : même bulle ; « Jouer encore » (principal) prend le focus, rien n'est perdu. */}
         {quitter && (
           <ChoixMochi nom="quitter" focus question={fr(tr('partie.quitter.avertir'))} aria={tr('partie.quitter.aria')}
-            agir={{ label: tr('partie.quitter.confirmer'), onClick: onExit }} rester={{ label: tr('partie.quitter.continuer'), onClick: () => { setDemandeQuitter(false); retourRef.current?.focus(); } }} />
+            agir={{ label: tr('partie.quitter.confirmer'), onClick: () => { garder?.(null); onExit(); } }} rester={{ label: tr('partie.quitter.continuer'), onClick: () => { setDemandeQuitter(false); retourRef.current?.focus(); } }} />
         )}
       </div>
       <div className="partie-souffle" aria-hidden="true" />

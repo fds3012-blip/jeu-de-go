@@ -72,6 +72,30 @@ test.describe('premier lancement', () => {
   });
 });
 
+// #528 : « Réglages de la partie » ouverts dans la feuille « Changer » (handicap choisi : komi grisé), puis la tuile
+// « Reprendre ta partie » d'une partie interrompue.
+test('axe : réglages de la partie (feuille « Changer ») et tuile « Reprendre ta partie »', async ({ page }) => {
+  await page.goto('/');
+  await page.evaluate(() => {
+    localStorage.setItem('go.parties.v1', JSON.stringify({ n: 3, ordi: 3, dernier: 'pomme' }));
+    localStorage.setItem('go.intro-but.v1', 'true');
+    localStorage.setItem('go.premiere-pierre.v1', 'true');
+  });
+  await page.reload();
+  await page.getByRole('button', { name: 'Changer' }).click();
+  await page.getByTestId('reglages-partie-ouvrir').click();
+  await page.getByRole('button', { name: 'Une pierre de handicap en plus' }).click();
+  await expect(page.getByTestId('rp-handicap-valeur')).toHaveText('2 pierres');
+  await verifier(page, 'Feuille « Changer », réglages de la partie');
+  await page.getByRole('dialog').getByRole('button', { name: /contre Pomme$/ }).click();
+  await expect(plateau(page)).toBeVisible();
+  await jouer(page, 'E5');
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('go.partie.encours.v1'))).not.toBeNull();
+  await page.reload();
+  await expect(page.getByTestId('tuile-reprise')).toBeVisible();
+  await verifier(page, 'Accueil avec « Reprendre ta partie »');
+});
+
 test('axe : accueil d’un joueur qui revient (Aujourd’hui) et feuille « Plus » des modes', async ({ context }) => {
   // Les modes en ligne (et donc « Plus ») n'existent qu'avec un serveur : Supabase simulé.
   const page = await brancher(context, fauxServeur(), {
