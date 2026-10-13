@@ -58,6 +58,8 @@ export interface Commun {
   piedRegles: string;
   piedApprendre: string;
   confidentialite: string;
+  /** #530 : lien du pied vers les mentions légales. */
+  mentionsLegales: string;
   credits: string;
   imageAlt: string;
   /** Textes de la démo interactive (outils/referencement/demo.js). */
@@ -96,6 +98,7 @@ export const COMMUN: Record<Langue, Commun> = {
     piedRegles: 'Les règles du go',
     piedApprendre: 'Apprendre le go',
     confidentialite: 'Confidentialité',
+    mentionsLegales: 'Mentions légales',
     credits: 'Les adversaires les plus forts sont joués par KataGo, une IA de go open source. Moteur adapté de web-katrain (licence MIT).',
     imageAlt: 'Mochi, le petit chat coach, à côté d’un goban : apprends le go en jouant, débutants bienvenus.',
     demo: {
@@ -135,6 +138,7 @@ export const COMMUN: Record<Langue, Commun> = {
     piedRegles: 'Go rules',
     piedApprendre: 'Learn Go',
     confidentialite: 'Privacy',
+    mentionsLegales: 'Legal notice',
     credits: 'The strongest opponents are played by KataGo, an open-source Go AI. Engine adapted from web-katrain (MIT license).',
     imageAlt: 'Mochi, the little coach cat, next to a go board: learn Go by playing, beginners welcome.',
     demo: {

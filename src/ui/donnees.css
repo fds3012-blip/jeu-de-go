@@ -1,0 +1,24 @@
+/* « Mes données » et « Mentions légales » (#530). Chargée avec le Profil, hors de la feuille initiale.
+   Tokens seulement (tokens.css) : sombre et clair suivent sans règle de plus. Une seule action en relief. */
+
+.donnees, .mentions { display: grid; gap: var(--space-3); max-width: 34rem; }
+.donnees p, .mentions p { margin: 0; line-height: 1.5; }
+.donnees-intro, .mentions-intro { font-weight: var(--fw-medium); }
+.donnees-contenu { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; line-height: 1.45; }
+.donnees-action { width: 100%; margin-top: var(--space-2); }
+.donnees-statut { min-height: 1.5em; font-weight: var(--fw-bold); }
+.donnees-statut.erreur { color: var(--danger-texte); }
+.donnees-note { color: var(--muted); font-size: var(--fs-s); }
+.donnees-mentions, .lien-texte { justify-self: start; padding: 0; text-decoration: underline; text-underline-offset: .15em; }
+.lien-texte { display: inline; min-height: 0; min-width: 0; color: var(--accent-texte); font: inherit; font-weight: var(--fw-bold);
+  padding: 10px 0; margin: -10px 0; }
+
+.mentions-section { display: grid; gap: 6px; }
+.mentions-section h3 { margin: var(--space-2) 0 0; font-size: var(--fs-m); font-weight: var(--fw-bold); }
+.mentions a { color: var(--accent-texte); text-underline-offset: .15em; }
+.mentions-maj { color: var(--muted); font-size: var(--fs-s); }
+
+/* Champ que l'éditeur doit encore remplir : visible au premier coup d'œil, sans couleur seule (étiquette et cadre). */
+.a-completer { background: none; color: var(--danger-texte); border: 1.5px dashed currentColor; border-radius: var(--radius-xs);
+  padding: 0 4px; font-weight: var(--fw-bold); box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+.a-completer-etiquette { text-transform: uppercase; font-size: .8em; letter-spacing: .04em; }

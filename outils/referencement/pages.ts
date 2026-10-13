@@ -12,6 +12,7 @@ import { transformWithEsbuild, type Plugin } from 'vite';
 import { SITE } from '../apercus';
 import { LECONS_INDEX } from '../../src/content/leconsIndex.gen';
 import { COMMUN, LEGENDES, PAGES, type Langue, type Page } from './textes';
+import { ADRESSE_MENTIONS, MENTIONS, champsACompleter, morceaux } from '../../src/content/mentionsLegales';
 
 const SOURCE_DEMO = new URL('./demo.js', import.meta.url);
 
@@ -291,12 +292,78 @@ ${p.faq.map(f => `<h3>${echapper(f.q)}</h3>\n<p>${f.r}</p>`).join('\n')}
 <li><a href="/${apprendre.chemin}">${echapper(c.piedApprendre)}</a></li>
 <li><a href="/${regles.chemin}">${echapper(c.piedRegles)}</a></li>
 <li><a href="/confidentialite">${echapper(c.confidentialite)}</a></li>
+<li><a href="${ADRESSE_MENTIONS[p.langue]}">${echapper(c.mentionsLegales)}</a></li>
 </ul>
 <p>${echapper(c.credits)}</p>
 </footer>
 </div>
 <script type="application/json" id="demo-textes">${jsonInline(c.demo)}</script>
 <script>${o.demoJs}</script>
+</body>
+</html>
+`;
+}
+
+/** Paragraphe des mentions légales en HTML : champs à compléter surlignés, liens. */
+export function paragrapheMentions(texte: string, l: Langue): string {
+  const etiquette = MENTIONS[l].aCompleter;
+  return morceaux(texte).map(m => 'texte' in m ? echapper(m.texte)
+    : 'aCompleter' in m ? `<mark class="a-completer"><span class="a-completer-etiquette">${echapper(etiquette)} :</span> ${echapper(m.aCompleter)}</mark>`
+    : `<a href="${echapper(m.adresse)}"${m.adresse.startsWith('http') ? ' rel="noopener"' : ''}>${echapper(m.lien)}</a>`).join('');
+}
+
+const CSS_MENTIONS = `main>section{margin:32px 0}h2{font-size:1.25rem}main p{margin:0 0 8px}
+.a-completer{background:none;color:#EC735A;border:1.5px dashed currentColor;border-radius:4px;padding:0 4px;font-weight:700;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.a-completer-etiquette{text-transform:uppercase;font-size:.8em;letter-spacing:.04em}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]) .a-completer{color:#B23520}}:root[data-theme="light"] .a-completer{color:#B23520}`;
+
+/**
+ * Page statique des mentions légales (#530), FR (`/mentions-legales/`) ou EN (`/en/legal-notice/`), même texte que
+ * l'écran de l'app (src/content/mentionsLegales.ts). Sans JS de l'app. Tant qu'un champ reste à compléter : noindex.
+ */
+export function pageMentions(l: Langue, polices: Polices): string {
+  const m = MENTIONS[l];
+  const c = COMMUN[l];
+  const autre: Langue = l === 'fr' ? 'en' : 'fr';
+  const apprendre = PAGES.find(x => x.langue === l && /apprendre|learn/.test(x.chemin));
+  const regles = PAGES.find(x => x.langue === l && /regles|rules/.test(x.chemin));
+  const incomplet = champsACompleter(l).length > 0;
+  return `<!doctype html>
+<html lang="${l}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>${echapper(m.titre)} · Mochi Go</title>
+<meta name="description" content="${echapper(m.intro)}">
+${incomplet ? '<meta name="robots" content="noindex">\n' : ''}<link rel="canonical" href="${SITE}${ADRESSE_MENTIONS[l]}">
+<link rel="alternate" hreflang="fr" href="${SITE}${ADRESSE_MENTIONS.fr}">
+<link rel="alternate" hreflang="en" href="${SITE}${ADRESSE_MENTIONS.en}">
+<meta name="theme-color" content="#1C1916" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#EFE8DC" media="(prefers-color-scheme: light)">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<script>${TETE}</script>
+<style>${fontFaces(polices)}${CSS.trim()}${CSS_MENTIONS}</style>
+</head>
+<body>
+<a class="saut" href="#contenu">${echapper(c.sauter)}</a>
+<div class="page">
+<header class="entete">
+<a class="marque" href="${l === 'en' ? '/?lang=en' : '/'}" aria-label="${echapper(c.accueil)}"><img src="/icon.svg" width="32" height="32" alt="">Mochi Go</a>
+<a class="langue" href="${ADRESSE_MENTIONS[autre]}" hreflang="${autre}" lang="${autre}">${echapper(c.autreLangue)}</a>
+</header>
+<main id="contenu">
+<h1>${echapper(m.titre)}</h1>
+<p class="chapo">${echapper(m.intro)}</p>
+${m.sections.map(s => `<section id="${s.id}" aria-labelledby="${s.id}-titre"><h2 id="${s.id}-titre">${echapper(s.titre)}</h2>\n${s.paragraphes.map(p => `<p>${paragrapheMentions(p, l)}</p>`).join('\n')}</section>`).join('\n')}
+<p class="mention">${paragrapheMentions(m.miseAJour, l)}</p>
+</main>
+<footer class="pied">
+<ul>
+${apprendre ? `<li><a href="/${apprendre.chemin}">${echapper(c.piedApprendre)}</a></li>\n` : ''}${regles ? `<li><a href="/${regles.chemin}">${echapper(c.piedRegles)}</a></li>\n` : ''}<li><a href="/confidentialite${l === 'en' ? '?lang=en' : ''}">${echapper(c.confidentialite)}</a></li>
+<li><a href="${ADRESSE_MENTIONS[l]}" aria-current="page">${echapper(c.mentionsLegales)}</a></li>
+</ul>
+</footer>
+</div>
 </body>
 </html>
 `;
@@ -342,6 +409,8 @@ export async function ecrireReferencement(dossier: string): Promise<string[]> {
     ecrits.push(chemin);
   };
   for (const p of PAGES) ecrire(`${p.chemin}/index.html`, pageHtml(p, o));
+  // #530 : mentions légales, servies sans réécriture (adresse finie par « / » : le fichier index.html du dossier).
+  for (const l of ['fr', 'en'] as const) ecrire(`${ADRESSE_MENTIONS[l].slice(1)}index.html`, pageMentions(l, o.polices));
   ecrire('sitemap.xml', sitemap());
   ecrire('robots.txt', robots());
   return ecrits;
