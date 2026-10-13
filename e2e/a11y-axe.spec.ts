@@ -89,7 +89,9 @@ test('axe : réglages de la partie (feuille « Changer ») et tuile « Reprendre
   await verifier(page, 'Feuille « Changer », réglages de la partie');
   await page.getByRole('dialog').getByRole('button', { name: /contre Pomme$/ }).click();
   await expect(plateau(page)).toBeVisible();
-  await jouer(page, 'E5');
+  // Avec le handicap, Pomme joue d'abord (peut-être au centre) : on attend son coup, puis on joue un point libre.
+  await expect(page.locator('g[data-pierre="blanc"]')).toHaveCount(1, { timeout: 10_000 });
+  await jouer(page, (await page.locator('g[data-point="E5"][data-pierre]').count()) ? 'D5' : 'E5');
   await expect.poll(() => page.evaluate(() => localStorage.getItem('go.partie.encours.v1'))).not.toBeNull();
   await page.reload();
   await expect(page.getByTestId('tuile-reprise')).toBeVisible();

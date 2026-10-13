@@ -4,6 +4,16 @@ import { attendrePierre, jouer, passerJusquAuScore, pierres, plateau } from './p
 // #528 (reprend #361 et #15) : partie contre l'ordi complète. Les « Réglages de la partie » (handicap, komi, comptage)
 // sont repliés dans la feuille « Changer » ; une partie interrompue se reprend depuis l'accueil.
 
+/** Joue sur le premier point libre de la liste (l'ordi a pu en prendre un) ; renvoie le point joué. */
+async function jouerLibre(page: Page, points: string[]): Promise<string> {
+  for (const p of points) {
+    if (await page.locator(`g[data-point="${p}"][data-pierre]`).count()) continue;
+    await jouer(page, p);
+    return p;
+  }
+  throw new Error('aucun point libre');
+}
+
 const lire = (page: Page, cle: string) => page.evaluate(k => JSON.parse(localStorage.getItem(k) ?? 'null'), cle);
 
 test('réglages repliés par défaut ; partie à 4 pierres en comptage chinois jusqu’au comptage, SGF avec HA, AB et RU', async ({ page }) => {
@@ -48,7 +58,8 @@ test('réglages repliés par défaut ; partie à 4 pierres en comptage chinois j
   await expect(page.locator('.joueur[data-joueur="Toi"]')).toContainText('handicap 4');
 
   // Une partie en cours est gardée dès ton premier coup.
-  await jouer(page, 'E5');
+  // Pomme a peut-être pris le centre : on joue sur le premier point libre.
+  await jouerLibre(page, ['E5', 'D5', 'F5']);
   await expect.poll(async () => (await lire(page, 'go.partie.encours.v1'))?.handicap).toBe(4);
 
   await passerJusquAuScore(page);
@@ -78,9 +89,10 @@ test('reprise : fermer l’onglet en pleine partie, rouvrir, « Reprendre ta par
   await expect(page.getByTestId('tuile-reprise')).toHaveCount(0);
   await page.locator('.cta').click();
   await expect(plateau(page)).toBeVisible();
-  for (const p of ['C3', 'G7']) {
+  const noires: string[] = [];
+  for (const choix of [['C3', 'D3'], ['G7', 'F7', 'G6']]) {
     const avant = await pierres(page, 'blanc').count();
-    await jouer(page, p);
+    noires.push(await jouerLibre(page, choix));
     await expect(pierres(page, 'blanc')).toHaveCount(avant + 1, { timeout: 10_000 });
   }
   const blanches = await page.locator('g[data-pierre="blanc"]').evaluateAll(g => g.map(e => e.getAttribute('data-point')).sort());
@@ -99,11 +111,11 @@ test('reprise : fermer l’onglet en pleine partie, rouvrir, « Reprendre ta par
 
   await expect(plateau(p2)).toBeVisible();
   await expect(p2.getByText('On reprend ta partie là où tu l’avais laissée.')).toBeVisible();
-  for (const p of ['C3', 'G7']) await attendrePierre(p2, p, 'noir');
+  for (const p of noires) await attendrePierre(p2, p, 'noir');
   for (const p of blanches) await attendrePierre(p2, p!, 'blanc');
-  // Reprendre ne relance pas une partie : le compteur des parties contre l'ordi ne bouge pas.
-  expect(await lire(p2, 'go.parties.v1')).toMatchObject({ n: 3, ordi: 3 });
-  await jouer(p2, 'C7');
+  // Reprendre ne relance pas une partie : le compteur des parties contre l'ordi (4 depuis le lancement) ne bouge pas.
+  expect(await lire(p2, 'go.parties.v1')).toMatchObject({ n: 4, ordi: 4 });
+  await jouerLibre(p2, ['C7', 'D7', 'B7']);
   await expect(pierres(p2, 'blanc')).toHaveCount(3, { timeout: 10_000 });
   await expect.poll(async () => (await lire(p2, 'go.partie.encours.v1'))?.coups).toBe(6);
 
