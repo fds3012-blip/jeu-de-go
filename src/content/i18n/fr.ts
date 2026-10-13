@@ -298,6 +298,7 @@ export const fr = {
   // Erreurs du serveur (src/data)
   'erreur.tropDEssais': 'Trop d’essais. Attends une minute et réessaie.',
   'erreur.envoiLien': 'Impossible d’envoyer le lien. Vérifie ton adresse.',
+  'connexion.captcha.echec': 'La vérification anti-robot n’a pas marché. Recharge la page, puis réessaie.',
   'erreur.profil': 'Impossible de charger ton profil.',
   'erreur.serie': 'Impossible de charger ta série.',
   'erreur.gels': 'Impossible de charger tes gels.',

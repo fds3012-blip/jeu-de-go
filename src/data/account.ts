@@ -2,6 +2,7 @@ import type { UserIdentity } from '@supabase/supabase-js';
 import type { Db } from './supabase';
 import { ORDRE_FOURNISSEURS, NOM_FOURNISSEUR, estFournisseur, type Fournisseur } from '../app/fournisseurs';
 import { usernameErrorFromDb, validateUsername } from './username';
+import { refusCaptcha } from './turnstile';
 import { langue, t } from '../content/i18n';
 
 export type { Profile, Result } from './lectureProfil';
@@ -12,13 +13,14 @@ import type { Profile, Result } from './lectureProfil';
  * (`{{ .Token }}` dans le modèle Supabase, docs/growth/connexion-code.md) à saisir dans l'app, et garde le lien
  * comme second moyen. Le code marche là où le lien échoue : navigateur intégré de Messenger ou WhatsApp, app installée.
  */
-export async function sendMagicLink(db: Db, email: string): Promise<Result<null>> {
+export async function sendMagicLink(db: Db, email: string, captcha?: string | null): Promise<Result<null>> {
   const { error } = await db.auth.signInWithOtp({
     email: email.trim(),
     // #473 : langue des e-mails (supabase/auth/modeles lisent `.Data.langue`), gardée à la création du compte.
-    options: { emailRedirectTo: window.location.origin, shouldCreateUser: true, data: donneesLangue() }
+    // #531 : jeton Turnstile, seulement si le captcha est actif (src/data/turnstile.ts).
+    options: { emailRedirectTo: window.location.origin, shouldCreateUser: true, data: donneesLangue(), ...(captcha ? { captchaToken: captcha } : {}) }
   });
-  if (error) return { ok: false, error: t(error.status === 429 ? 'erreur.tropDEssais' : 'erreur.envoiLien') };
+  if (error) return { ok: false, error: messageEnvoi(error) };
   return { ok: true, value: null };
 }
 export const envoyerCode = sendMagicLink;
@@ -69,14 +71,21 @@ export type EchecEnvoi = { ok: false; error: string; raison?: 'pris' | 'inconnu'
  * « Aucun compte avec cette adresse. Crée ton compte. » La session en place (anonyme comprise) n'est pas touchée :
  * seule la vérification du code la remplace.
  */
-export async function envoyerCodeConnexion(db: Db, email: string): Promise<Result<null> | EchecEnvoi> {
+export async function envoyerCodeConnexion(db: Db, email: string, captcha?: string | null): Promise<Result<null> | EchecEnvoi> {
   const { error } = await db.auth.signInWithOtp({
     email: email.trim(),
-    options: { emailRedirectTo: window.location.origin, shouldCreateUser: false }
+    options: { emailRedirectTo: window.location.origin, shouldCreateUser: false, ...(captcha ? { captchaToken: captcha } : {}) }
   });
   if (!error) return { ok: true, value: null };
   if (aucunCompte(error)) return { ok: false, error: t('connexion.inconnu'), raison: 'inconnu' };
-  return { ok: false, error: t(error.status === 429 ? 'erreur.tropDEssais' : 'erreur.envoiLien') };
+  return { ok: false, error: messageEnvoi(error) };
+}
+
+/** Message d'un envoi de code refusé : trop d'essais, captcha (#531), ou échec d'envoi. */
+function messageEnvoi(error: ErreurAuth): string {
+  if (error.status === 429) return t('erreur.tropDEssais');
+  if (refusCaptcha(error)) return t('connexion.captcha.echec');
+  return t('erreur.envoiLien');
 }
 
 /**

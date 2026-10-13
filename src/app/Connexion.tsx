@@ -25,6 +25,8 @@ import { garderRetour, lireAnnonce, oublierAnnonce, type Annonce } from './conne
 import { NOM_FOURNISSEUR, fournisseursActifs, fournisseursVisibles, listeNoms, messageIncident, type Fournisseur } from './fournisseurs';
 import { aideNavigateur, contexteActuel, lienChrome } from './navigateurIntegre';
 import { t } from '../content/i18n/secondaires';
+import { Captcha } from '../ui/Captcha';
+import { turnstileActif } from '../data/turnstile';
 import '../ui/compte.css';
 
 /** Délai avant de pouvoir redemander un code (limite de Supabase : un e-mail par minute et par adresse). */
@@ -86,6 +88,11 @@ export function ConnexionCode({ db, mode = 'connexion', envoyer, moment = 'profi
   const [attente, setAttente] = useState(0);
   const [age, setAge] = useState(false);
   const codeRef = useRef<HTMLInputElement>(null);
+  // #531 : captcha Turnstile devant l'envoi du code, seulement si la clé du site existe. Jeton à usage unique.
+  const [captcha] = useState(turnstileActif);
+  const [jeton, setJeton] = useState<string | null>(null);
+  const [cleCaptcha, setCleCaptcha] = useState(0);
+  const widget = captcha && <Captcha cle={cleCaptcha} onJeton={setJeton} onErreur={() => setError(t('connexion.captcha.echec'))} libelle={t('connexion.captcha.aria')} />;
 
   // Compte à rebours du renvoi, une seconde à la fois.
   useEffect(() => {
@@ -101,9 +108,10 @@ export function ConnexionCode({ db, mode = 'connexion', envoyer, moment = 'profi
   }
 
   const envoyerPar = (v: Voie) => v === 'liaison' ? garderMonCompte(db, email, window.location.origin)
-    : v === 'connexion' ? envoyerCodeConnexion(db, email) : sendMagicLink(db, email);
+    : v === 'connexion' ? envoyerCodeConnexion(db, email, jeton) : sendMagicLink(db, email, jeton);
 
   async function demander(v: Voie): Promise<boolean> {
+    if (captcha && v !== 'liaison' && !jeton) { setError(t('connexion.captcha.attente')); return false; }
     setBusy(true); setError('');
     let voieFaite = v;
     let r = await envoyerPar(v);
@@ -114,6 +122,8 @@ export function ConnexionCode({ db, mode = 'connexion', envoyer, moment = 'profi
       r = await envoyerCodeConnexion(db, email);
       if (r.ok) { setBascule(true); setSensLocal('connecter'); onSens?.('connecter'); }
     }
+    // #531 : le jeton a servi (ou a été refusé) : le widget en prépare un autre pour le prochain envoi.
+    if (captcha) { setJeton(null); setCleCaptcha(n => n + 1); }
     setBusy(false);
     if (!r.ok) { setError(r.error); return false; }
     setVoie(voieFaite);
@@ -189,6 +199,7 @@ export function ConnexionCode({ db, mode = 'connexion', envoyer, moment = 'profi
           }} />
         <p id={`${id}-erreur`} className="small connexion-erreur" role="alert">{error}</p>
         <button className="btn primary connexion-cta" type="submit" disabled={busy} aria-busy={busy}>{t(busy ? 'connexion.code.verification' : 'connexion.code.valider')}</button>
+        {widget}
         <div className="connexion-liens">
           <button type="button" className="lien" disabled={busy || attente > 0}
             onClick={async () => { if (await demander(voie)) { setInfo(t('connexion.code.renvoye')); setCode(''); } }}>
@@ -239,6 +250,7 @@ export function ConnexionCode({ db, mode = 'connexion', envoyer, moment = 'profi
         <p id={`${id}-erreur`} className="small connexion-erreur" role="alert">{error}</p>
         <p className="connexion-ou muted small" aria-hidden="true">{t('connexion.ou')}</p>
         {champEmail}
+        {widget}
         <button className={`btn connexion-cta secondaire${pret ? '' : ' inactif'}`} type="submit" disabled={busy || vers !== null} aria-disabled={!pret} aria-busy={busy}>
           {busy ? t('compte.envoi') : t('connexion.envoyer')}
         </button>
@@ -255,6 +267,7 @@ export function ConnexionCode({ db, mode = 'connexion', envoyer, moment = 'profi
       {demandeAge(sens)
         ? <CaseAge id={id} coche={age} onChange={v => { setAge(v); setError(''); }} onConditions={onConditions} />
         : anonyme && <p className="muted small connexion-partie">{fr(t('connexion.partieSansCompte'))}</p>}
+      {widget}
       <p id={`${id}-erreur`} className="small connexion-erreur" role="alert">{error}</p>
       {/* Inactif tant que la case n'est pas cochée, mais touchable : l'aide dit alors pourquoi (juridique #343, section 3). */}
       <button className={`btn primary connexion-cta${pret ? '' : ' inactif'}`} type="submit" disabled={busy} aria-disabled={!pret} aria-busy={busy}>
