@@ -24,7 +24,8 @@ import { readLocal, writeLocal } from './hooks';
 import { BILAN_KEY, lireBilan } from './bilan';
 import { PARTIES_KEY, type Parties } from './home';
 import { paliers } from './paliers';
-import { BADGES_KEY, badges, lireBadges, memoriser, statistiques, type Parcours } from './vitrine';
+import { BADGES_KEY, BADGES_SERIE, badges, lireBadges, memoriser, statistiques, type Parcours } from './vitrine';
+import { donneesBadgesAppareil } from './badgesAppareil';
 import { ALL_PUZZLES } from '../content/puzzles';
 import { parsePuzzles } from '../data/puzzles';
 import { Statistiques, VitrineBadges } from '../ui/Vitrine';
@@ -69,7 +70,7 @@ function useDonnees(serie: number, record: number, parcours: Parcours) {
     const reussis = new Set(Object.keys(readLocal<Record<string, true>>(SOLVED_KEY, {}) ?? {}));
     const parties = readLocal<Parties>(PARTIES_KEY, { n: 0 })?.n ?? 0;
     const bilan = lireBilan(readLocal<unknown>(BILAN_KEY, {}));
-    const d = { reussis: reussis.size, serie, record, parties, bilan, paliers: paliers(parsePuzzles(ALL_PUZZLES), reussis) };
+    const d = { reussis: reussis.size, serie, record, parties, bilan, paliers: paliers(parsePuzzles(ALL_PUZZLES), reussis), lecons: faites, ...donneesBadgesAppareil() };
     const gagnes = lireBadges(readLocal<unknown>(BADGES_KEY, []));
     const liste = badges(d, gagnes);
     const apres = memoriser(gagnes, liste);
@@ -251,7 +252,7 @@ function Menu({ onVue, settings, profil, serie, record = 0, parcours, placement,
         <div className="identite-niveau"><BarreNiveau /></div>
         <Statistiques stats={serieVisible ? donnees.stats : donnees.stats.filter(s => s.id !== 'record')} />
       </section>
-      <VitrineBadges liste={serieVisible ? donnees.badges : donnees.badges.filter(b => b.id !== 'serie-7')} nouveaux={donnees.nouveaux} />
+      <VitrineBadges liste={serieVisible ? donnees.badges : donnees.badges.filter(b => !BADGES_SERIE.has(b.id))} nouveaux={donnees.nouveaux} />
 
       <div className="lignes">
         {/* #358 : tes parties passées, en tête : c'est la ligne qu'on rouvre le plus. « Analyser une partie » (#286) y est.

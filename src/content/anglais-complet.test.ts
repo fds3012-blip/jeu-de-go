@@ -52,7 +52,7 @@ const CATALOGUES: [string, Brut, Brut][] = [
  */
 const INVARIABLES = new Set(['mochi', 'go', 'kaya', 'xp', 'capture', 'atari', 'double', 'seki', 'ko', 'komi', 'superko', 'suicide',
   'handicap', 'hane', 'tesuji', 'joseki', 'français', 'english', 'auto', 'version', 'novice', 'score', 'excellent', 'pts',
-  'point', 'points', 'ogs', 'fox', 'kgs', 'placement', 'normal', 'long', 'min', 's', 'messages']);
+  'point', 'points', 'ogs', 'fox', 'kgs', 'placement', 'normal', 'long', 'min', 's', 'messages', 'jade']);
 const invariable = (v: unknown) => textes(v).every(s => s.replace(/\{\w+\}/g, ' ').toLowerCase().split(/[^\p{L}]+/u).filter(Boolean).every(m => INVARIABLES.has(m)));
 
 /** Lettres françaises interdites dans l'anglais, hors noms propres (Rivière, Français) et mots repris tels quels. */
