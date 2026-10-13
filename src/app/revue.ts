@@ -3,6 +3,7 @@
 // estime l'avance de Noir après chaque coup, puis montre les plus grosses erreurs du joueur.
 import { groupAt, isLegal, neighbors, newPosition, play, type Color, type Position } from '../go/rules';
 import { readSgf, writeSgf } from '../go/sgf';
+import { compensationHandicap, handicapDe, type Rules } from '../go/score';
 import { toLabel } from '../go/coords';
 import { initialPosition } from '../go/replay';
 import type { AnalyseRevue } from '../engine';
@@ -26,19 +27,29 @@ export function resultatSgf(gagnant: 0 | 1 | 2, abandon: boolean, marge: number)
   return `${gagnant === 1 ? 'B' : 'W'}+${abandon ? 'R' : String(Math.abs(marge))}`;
 }
 
-/** SGF de la partie, tiré de l'historique des positions (Noir commence, `tt` = passe) ; `resultat` : propriété RE. */
-export function sgfDepuisHistorique(history: Position[], komi: number, noms: { noir?: string; blanc?: string; resultat?: string } = {}): string {
-  const size = history[0].size;
+/**
+ * SGF de la partie, tiré de l'historique des positions (`tt` = passe) ; `resultat` : propriété RE.
+ * #528 : pierres de handicap de la position de départ en AB, avec HA (Blanc commence alors), et règle de comptage (RU).
+ */
+export function sgfDepuisHistorique(history: Position[], komi: number, noms: { noir?: string; blanc?: string; resultat?: string } = {}, regles: Rules = 'japanese'): string {
+  const depart = history[0], size = depart.size;
+  const setupBlack: number[] = [], setupWhite: number[] = [];
+  depart.board.forEach((v, p) => { if (v === 1) setupBlack.push(p); else if (v === 2) setupWhite.push(p); });
+  const handicap = handicapDe(depart);
   const moves: { color: Color; p: number }[] = [];
   for (let i = 1; i < history.length; i++) moves.push({ color: history[i - 1].toPlay, p: history[i].lastMove ?? -1 });
-  return writeSgf({ size, komi, rules: 'japanese', black: noms.noir, white: noms.blanc, result: noms.resultat, setupBlack: [], setupWhite: [], moves });
+  // Trait de départ écrit seulement s'il diffère de la lecture par défaut (Blanc après des pierres noires seules, sinon Noir).
+  const implicite = setupBlack.length && !setupWhite.length ? 2 : 1;
+  return writeSgf({ size, komi, rules: regles, black: noms.noir, white: noms.blanc, result: noms.resultat, setupBlack, setupWhite, moves,
+    ...(handicap ? { handicap } : {}), ...(depart.toPlay !== implicite ? { toPlay: depart.toPlay } : {}) });
 }
 
 /**
  * Positions successives rejouées depuis le SGF (index 0 : position de départ, pierres de handicap comprises, #286).
- * S'arrête au premier coup illégal.
+ * S'arrête au premier coup illégal. #528 : `rules` (RU), `handicap` (pierres noires de départ, Blanc au trait) et
+ * `komi` compté : le komi du fichier, plus la compensation du handicap en règle chinoise (ce que voient KataGo et le score).
  */
-export function positionsDepuisSgf(sgf: string): { positions: Position[]; komi: number; resultat?: string } {
+export function positionsDepuisSgf(sgf: string): { positions: Position[]; komi: number; komiSgf: number; rules: Rules; handicap: number; resultat?: string } {
   const g = readSgf(sgf);
   const positions: Position[] = [initialPosition(g) ?? newPosition(g.size)];
   for (const m of g.moves) {
@@ -47,7 +58,8 @@ export function positionsDepuisSgf(sgf: string): { positions: Position[]; komi: 
     if (typeof r === 'string') break;
     positions.push(r);
   }
-  return { positions, komi: g.komi, resultat: g.result };
+  const handicap = handicapDe(positions[0]);
+  return { positions, komi: g.komi + compensationHandicap(g.rules, handicap), komiSgf: g.komi, rules: g.rules, handicap, resultat: g.result };
 }
 
 export interface Erreur {

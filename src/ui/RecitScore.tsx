@@ -3,7 +3,7 @@
 // Chaque temps écrit son propre total. 2,5 s ; un toucher saute au résultat (l'écran de fin).
 // Même fond que FinPartie (plateau sous un voile) : quand le récit cède la place, seul le bas de l'écran change.
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { campsRecit, DUREE_RECIT, etatRecit, jetonsEtape, ligneDeuxieme, ligneKomi, ligneResultat, ligneTerritoire, PAUSE_LECTURE, type Recit } from '../app/score';
+import { campsRecit, DUREE_RECIT, etatRecit, jetonsEtape, ligneCompensation, ligneDeuxieme, ligneKomi, ligneResultat, ligneTerritoire, PAUSE_LECTURE, type Recit } from '../app/score';
 import { fr } from './typo';
 import { nombre as virgule, t as tr } from '../content/i18n/secondaires';
 import './fin.css';
@@ -97,6 +97,7 @@ export function RecitScore({ fond, recit, immediat, expliquerKomi, adversaire, o
             <li className={vu(3)}>
               {fr(ligneKomi(recit.komi, camps))}
               {expliquerKomi && recit.komi !== 0 && <span className="recit-explication">{fr(tr('recit.explicationKomi'))}</span>}
+              {!!recit.compensation && <span className="recit-explication">{fr(ligneCompensation(recit, camps) ?? '')}</span>}
             </li>
             <li className={`${vu(4)} recit-resultat`}>{fr(ligneResultat(recit, camps))}</li>
           </ol>

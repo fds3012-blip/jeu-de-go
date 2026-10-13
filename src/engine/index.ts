@@ -11,7 +11,7 @@ import { comptageSur, PREUVE, trancherParPreuve, type Tranche } from './comptage
 import { delaiAnalyse, delaiPing, delaiTache, DelaiDepasse, echelleDelais, estDelaiDepasse, estMoteurBloque, MoteurBloque, reglerEchelleDelais, sousDelai } from './delais';
 import { comptageAuto, deadStones, groupesIncertains, ownership as ownershipSimple, type ComptageAuto, type DeadOptions } from './dead';
 import type { Position } from '../go/rules';
-import type { Rules } from '../go/score';
+import { compensationHandicap, type Rules } from '../go/score';
 import { avanceEstimee, mortesSelonPropriete } from '../go/estimation';
 import { coupDeFermeture, frontieresOuvertes, partieAvancee } from '../go/frontieres';
 import type { Demande, Reponse, Tache } from './simple.worker';
@@ -389,6 +389,26 @@ export async function ownership(pos: Position, options: AnalyzeOptions = {}): Pr
   return (await analyze(pos, { visits: 1, ...options })).ownership;
 }
 
+/**
+ * #528 : règle de comptage à donner à KataGo (coups de l'ordi, revue). Celle de la partie dès qu'elle change quelque
+ * chose (règle chinoise, ou handicap : en japonais, les pierres posées ne comptent pas comme surface) ; sinon `undefined`,
+ * et KataGo garde sa règle historique : l'équilibrage des parties par défaut (Pomme, première victoire) ne bouge pas.
+ * Le komi passé avec elle est le komi compté (compensation du handicap comprise en chinois, `compensationHandicap`).
+ */
+export function reglesMoteur(rules: Rules, handicap: number): Rules | undefined {
+  return rules === 'chinese' || handicap >= 2 ? rules : undefined;
+}
+
+/**
+ * #528 : ce que les moteurs reçoivent pour une partie (coups de l'ordi, indice, estimation, « Qui mène ? », comptage) :
+ * le komi compté, compensation du handicap comprise en chinois, et la règle à donner à KataGo (`reglesMoteur`).
+ * Les pierres de handicap, elles, sont déjà sur le plateau de la position.
+ */
+export function moteurDeLaPartie(komi: number, rules: Rules, handicap: number): { komi: number; rules?: Rules } {
+  const r = reglesMoteur(rules, handicap);
+  return { komi: komi + compensationHandicap(rules, handicap), ...(r ? { rules: r } : {}) };
+}
+
 /** Coup de l'adversaire `niveau` pour le joueur au trait. Ne renvoie jamais un coup illégal (sinon passe). */
 export async function bestMove(pos: Position, niveau: OpponentId | Opponent, opts: EngineOptions = {}): Promise<number> {
   return (await bestMoveExplique(pos, niveau, opts)).move;
@@ -413,7 +433,7 @@ export async function bestMoveExplique(pos: Position, niveau: OpponentId | Oppon
   if (lvl.katago && k) {
     try {
       // Plafond de 1,8 s par coup : l'objectif est une réponse en moins de 2 s.
-      const a = await analyserGarde(k, pos, { komi: opts.komi ?? 6.5, visits: lvl.katago.visits, timeMs: opts.timeMs ?? 1800 });
+      const a = await analyserGarde(k, pos, { komi: opts.komi ?? 6.5, visits: lvl.katago.visits, timeMs: opts.timeMs ?? 1800, ...(opts.rules ? { regles: opts.rules } : {}) });
       // Graine fixée (tests) : tirage reproductible. Sinon, vrai hasard.
       // La graine est mélangée : xorshift démarre mal sur les petites graines (premiers tirages proches de 0).
       const rand = opts.seed !== undefined ? rng(Math.imul(opts.seed ^ 0x9e3779b9, 0x85ebca6b)) : Math.random;
@@ -512,12 +532,12 @@ export interface AnalyseRevue {
   /** #497 : propriété estimée par KataGo après son premier choix (`coups[0]`), de -1 (Blanc) à +1 (Noir). */
   ownApres?: Float32Array;
 }
-export async function analyseRevue(pos: Position, komi: number, opts: { visits?: number; kataGo?: boolean } = {}): Promise<AnalyseRevue | null> {
+export async function analyseRevue(pos: Position, komi: number, opts: { visits?: number; kataGo?: boolean; rules?: Rules } = {}): Promise<AnalyseRevue | null> {
   const k = opts.kataGo === false ? null : kataGoRevue() ?? null;
   if (k && k.info.state === 'pret') {
     try {
       const visits = opts.visits ?? 32;
-      const a = await analyserGarde(k, pos, { komi, visits, timeMs: visits * 40, maxMoves: 6 });
+      const a = await analyserGarde(k, pos, { komi, visits, timeMs: visits * 40, maxMoves: 6, ...(opts.rules ? { regles: opts.rules } : {}) });
       return {
         lead: pos.toPlay === 1 ? a.lead : -a.lead, engine: 'katago',
         coups: a.moves.map(m => ({ move: m.move, visits: m.visits, lead: m.lead, ...(m.pv ? { pv: m.pv } : {}) })),
@@ -529,7 +549,7 @@ export async function analyseRevue(pos: Position, komi: number, opts: { visits?:
       return null;
     }
   }
-  const r = await estimateLead(pos, komi, { kataGo: false });
+  const r = await estimateLead(pos, komi, { kataGo: false, ...(opts.rules ? { rules: opts.rules } : {}) });
   return r && { lead: r.lead, engine: 'simple' };
 }
 

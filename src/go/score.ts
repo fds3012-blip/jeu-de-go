@@ -10,6 +10,28 @@ export interface Score {
   winner: 1 | 2;
   margin: number;
   seki: number[]; // pierres en seki (vie commune), après retrait des pierres mortes
+  /** Points donnés à Blanc pour les pierres de handicap (règle chinoise seulement, voir `compensationHandicap`). */
+  compensation: number;
+}
+
+/**
+ * Nombre de pierres de handicap d'une position de départ : pierres noires seulement, Blanc au trait (0 sinon).
+ * Une seule pierre noire n'est pas un handicap au sens du comptage : on renvoie alors 0.
+ */
+export function handicapDe(depart: Position): number {
+  if (depart.toPlay !== 2) return 0;
+  let noires = 0;
+  for (const v of depart.board) { if (v === 2) return 0; if (v === 1) noires++; }
+  return noires >= 2 ? noires : 0;
+}
+
+/**
+ * Compensation du handicap (#528). En comptage par zone (règle chinoise), chaque pierre de handicap reste sur le plateau
+ * et compte pour Noir : Blanc reçoit 1 point par pierre de handicap (règle chinoise et KataGo, `whiteHandicapBonus = N`).
+ * En comptage japonais (territoire et prisonniers), les pierres posées ne comptent pas : aucune compensation.
+ */
+export function compensationHandicap(rules: Rules, handicap: number): number {
+  return rules === 'chinese' && handicap >= 2 ? handicap : 0;
 }
 
 /**
@@ -35,8 +57,9 @@ export function findSeki(board: Int8Array, size: number): Set<number> {
  * Compte la position. `dead` marque les pierres mortes retirées avant le comptage.
  * Japonais : territoire + prisonniers (dont pierres mortes) ; les yeux d'un groupe en seki ne comptent pas.
  * Chinois : pierres vivantes + territoire (les yeux en seki comptent). Les points neutres (dame, libertés partagées) ne comptent jamais.
+ * `handicap` : pierres de handicap de la partie ; en chinois, Blanc reçoit en plus `compensationHandicap` points.
  */
-export function score(pos: Position, komi: number, rules: Rules, dead: Set<number> = new Set()): Score {
+export function score(pos: Position, komi: number, rules: Rules, dead: Set<number> = new Set(), handicap = 0): Score {
   const { size } = pos, nb = neighbors(size);
   const board = pos.board.slice();
   const prisoners: [number, number, number] = [0, pos.captures[1], pos.captures[2]];
@@ -68,7 +91,8 @@ export function score(pos: Position, komi: number, rules: Rules, dead: Set<numbe
     }
   }
   const black = rules === 'japanese' ? territory[1] + prisoners[1] : territory[1] + stones[1];
-  const white = (rules === 'japanese' ? territory[2] + prisoners[2] : territory[2] + stones[2]) + komi;
+  const compensation = compensationHandicap(rules, handicap);
+  const white = (rules === 'japanese' ? territory[2] + prisoners[2] : territory[2] + stones[2]) + komi + compensation;
   const winner = black > white ? 1 : 2;
-  return { black, white, territory, owner, winner, margin: Math.abs(black - white), seki: [...seki].sort((a, b) => a - b) };
+  return { black, white, territory, owner, winner, margin: Math.abs(black - white), seki: [...seki].sort((a, b) => a - b), compensation };
 }
