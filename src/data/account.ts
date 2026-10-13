@@ -166,15 +166,24 @@ export async function verifierCode(db: Db, email: string, code: string, type: 'e
  * lisibles par tous (RLS « Profils visibles par tous ») ; `_` est un joker de ILIKE, il est donc échappé.
  * La base revérifie à l'enregistrement : ceci n'est qu'une aide à la saisie.
  */
-export async function pseudoDisponible(db: Db, pseudo: string, userId?: string): Promise<Result<boolean>> {
+export async function pseudoDisponible(db: Db, pseudo: string, userId?: string): Promise<Result<boolean> | PseudoInterdit> {
   const check = validateUsername(pseudo);
   if (!check.ok) return check;
   let requete = db.from('profiles').select('id').ilike('username', check.value.replace(/[\\%_]/g, c => `\\${c}`));
   if (userId) requete = requete.neq('id', userId);
-  const { data, error } = await requete.limit(1);
+  // #531 : mots interdits, demandés en même temps. Serveur sans la fonction ou réseau coupé : on n'en dit rien ici,
+  // l'enregistrement revérifie (JGP02).
+  const [{ data, error }, autorise] = await Promise.all([
+    requete.limit(1),
+    (async () => await db.rpc('pseudo_autorise', { p_pseudo: check.value }))().catch(() => ({ data: null, error: true })),
+  ]);
+  if (!autorise.error && autorise.data === false) return { ok: false, error: t('pseudo.interdit'), raison: 'interdit' };
   if (error) return { ok: false, error: t('pseudo.erreur') };
   return { ok: true, value: (data ?? []).length === 0 };
 }
+
+/** #531 : pseudo refusé par le serveur (mot interdit), dit pendant la saisie. */
+export type PseudoInterdit = { ok: false; error: string; raison: 'interdit' };
 
 // Lecture du profil, de la série et des gels : dans ./lectureProfil.ts, lue par l'accueil sans le reste de ce fichier (#513).
 export { fetchGels, fetchProfile, fetchStreak } from './lectureProfil';

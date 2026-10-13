@@ -42,6 +42,7 @@ export const CODES_SECURITE = {
   JGM02: 'malForme',
   JGM03: 'tropVite',
   JGM04: 'partieFinie',
+  JGU01: 'suspendu',
   JGA01: 'introuvable',
   P0002: 'introuvable',
   [CODE_COMPTE_REQUIS]: 'compte',

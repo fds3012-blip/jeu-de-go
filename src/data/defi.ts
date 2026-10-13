@@ -21,6 +21,7 @@ export type Defi = Tables<'defis'>;
 // Liens et sessions (#513) : dans ./defiLien.ts, lus par l'accueil sans le reste de ce fichier (RPC, temps réel).
 export { compteDe, estAnonyme, FORMAT_JETON, inviteurDepuisLien, jetonDeLAdresse, jetonDepuisLien, lienDefi, PARAM_DE, PARAM_DEFI } from './defiLien';
 import { FORMAT_JETON } from './defiLien';
+import { estSuspendu } from './suspension';
 
 /** Délai par coup (le serveur fait foi : `defis.delai_coup`). */
 export const DELAI_COUP_MS = 3 * 24 * 60 * 60 * 1000;
@@ -44,6 +45,7 @@ export async function creerDefi(db: Db): Promise<Result<{ partieId: string; jeto
   if (!session.ok) return session;
   const { data, error } = await db.rpc('creer_defi');
   const ligne = data?.[0];
+  if (estSuspendu(error)) return echec(t('defi.erreur.suspendu'));
   if (error || !ligne) return echec(error?.message);
   return { ok: true, value: { partieId: ligne.partie_id, jeton: ligne.jeton, anonyme: session.value.anonyme } };
 }
@@ -56,6 +58,8 @@ export async function ouvrirDefi(db: Db, jeton: string): Promise<Result<{ partie
   const { data, error } = await db.rpc('rejoindre_defi', { p_jeton: jeton });
   // #363 : l'un des deux a bloqué l'autre. Le même refus dans les deux sens : le joueur bloqué n'en sait pas plus.
   if (error?.code === 'JGB01') return echec(t('defi.erreur.indisponible'));
+  // #531 : compte suspendu par l'équipe.
+  if (estSuspendu(error)) return echec(t('defi.erreur.suspendu'));
   if (error || !data) return echec(error?.message);
   // Le créateur qui rouvre son propre lien n'est pas un nouvel invité (mesure du coefficient viral).
   const ligne = await db.from('defis').select('createur_id').eq('partie_id', data).maybeSingle();

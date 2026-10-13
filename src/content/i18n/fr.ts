@@ -315,6 +315,7 @@ export const fr = {
   'pseudo.pris': 'Ce pseudo est déjà pris. Essaie-en un autre.',
   'pseudo.invalide': 'Ce pseudo n’est pas valide.',
   'pseudo.erreur': 'Impossible d’enregistrer ton pseudo. Réessaie.',
+  'pseudo.interdit': 'Ce pseudo n’est pas accepté. Choisis-en un autre, sans gros mot ni nom de l’équipe.',
   // Consentement et conditions (src/app/Confidentialite.tsx). « : » et « ? » : espace fine posée par fr().
   'accord.titre': 'Tu m’aides à chasser les bugs ?',
   // #485 : bandeau bas compact (24 mots avec le titre, 51 avant ; 29 avec les boutons, 58 avant). Finalités, retrait et lien vers le détail ; la réassurance est dans Conditions.
@@ -406,6 +407,7 @@ export const fr = {
   'mode.enLigne.aJouer': 'À toi de jouer',
   'defi.erreur.introuvable': 'Ce défi est introuvable. Demande un nouveau lien à ton ami.',
   'defi.erreur.indisponible': 'Ce défi n’est pas disponible pour toi.',
+  'defi.erreur.suspendu': 'Ton compte est suspendu : rien en ligne pour l’instant. L’ordi, les leçons et les problèmes restent ouverts.',
   'defi.erreur.emailPris': 'Cette adresse a déjà un compte. Utilise une autre adresse.',
   'defi.refus.connexion': 'Ta session a expiré. Recharge la page pour reprendre ta partie.',
   'defi.refus.format': 'Ce coup n’a pas pu être lu. Réessaie.',

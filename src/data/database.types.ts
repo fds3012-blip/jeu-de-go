@@ -1556,6 +1556,7 @@ export type Database = {
       pendule_direct: { Args: { p_partie: string }; Returns: Json }
       play_move: { Args: { p_game: string; p_move: string }; Returns: string }
       preparer_rattachement: { Args: never; Returns: string }
+      pseudo_autorise: { Args: { p_pseudo: string }; Returns: boolean }
       purger_securite: { Args: never; Returns: undefined }
       quitter_file_attente: { Args: never; Returns: string }
       quitter_file_lente: { Args: never; Returns: string }

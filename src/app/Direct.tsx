@@ -53,7 +53,7 @@ const TAILLES: readonly Taille[] = [9, 13, 19];
 const REGLES: readonly Regles[] = ['japanese', 'chinese'];
 const ERREURS: Record<RefusDirect, CleDirect> = {
   compte: 'direct.erreur.compte', miseAJour: 'direct.erreur.miseAJour', introuvable: 'direct.erreur.introuvable', attente: 'direct.erreur.attente',
-  serveur: 'direct.erreur.serveur',
+  suspendu: 'direct.erreur.suspendu', serveur: 'direct.erreur.serveur',
 };
 
 

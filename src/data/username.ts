@@ -4,6 +4,9 @@
 
 import { t } from '../content/i18n';
 
+/** Refus du serveur : le pseudo contient un mot interdit (supabase/migrations/20261013120100_moderation.sql). */
+export const CODE_PSEUDO_INTERDIT = 'JGP02';
+
 export const USERNAME_MIN = 3;
 export const USERNAME_MAX = 24;
 const PATTERN = /^[A-Za-z0-9_-]+$/;
@@ -26,6 +29,8 @@ export function validateUsername(raw: string): UsernameCheck {
 export function usernameErrorFromDb(code: string | undefined): string {
   if (code === '23505') return t('pseudo.pris');
   if (code === '23514') return t('pseudo.invalide');
+  // #531 : mot interdit (insulte, haine, sexe, nom de l'équipe), refusé par le serveur.
+  if (code === CODE_PSEUDO_INTERDIT) return t('pseudo.interdit');
   return t('pseudo.erreur');
 }
 
