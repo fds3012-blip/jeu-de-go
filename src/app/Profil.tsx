@@ -24,12 +24,13 @@ import { hapticStone } from '../ui/haptics';
 import { playStone } from '../ui/sound';
 import { Suspense, lazy, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { EVENTS, analyticsConfig, estEquipe, setEquipe, subscribeConsent, track } from '../data/analytics';
-import { readLocal, writeLocal } from './hooks';
+import { readLocal } from './hooks';
 import { BILAN_KEY, lireBilan } from './bilan';
 import { PARTIES_KEY, type Parties } from './home';
 import { paliers } from './paliers';
 import { BADGES_KEY, BADGES_SERIE, badges, lireBadges, memoriser, statistiques, type Parcours } from './vitrine';
 import { donneesBadgesAppareil } from './badgesAppareil';
+import { noterBadges } from './badgesGagnes';
 import { ALL_PUZZLES } from '../content/puzzles';
 import { parsePuzzles } from '../data/puzzles';
 import { Statistiques, VitrineBadges } from '../ui/Vitrine';
@@ -83,7 +84,8 @@ function useDonnees(serie: number, record: number, parcours: Parcours) {
     const nouveaux = apres.filter(id => !gagnes.includes(id));
     return { stats: statistiques(d, { lecons: { faites, total }, adversaires }), badges: liste, gagnes, apres, nouveaux };
   }, [serie, record, faites, total, adversaires]);
-  useEffect(() => { if (donnees.apres !== donnees.gagnes) writeLocal(BADGES_KEY, donnees.apres); }, [donnees]);
+  // #544 : noterBadges garde les nouveaux badges et envoie `badge_gagne` une fois pour chacun.
+  useEffect(() => { if (donnees.nouveaux.length) noterBadges(donnees.nouveaux); }, [donnees]);
   return donnees;
 }
 

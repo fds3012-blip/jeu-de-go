@@ -109,3 +109,38 @@ describe('niveauEnAttente (#236, fin de série)', () => {
     expect(niveauEnAttente(retirer(ajouter(FILE_VIDE, niveau(2)), 'niveau'))).toBeNull();
   });
 });
+
+describe('fin de partie : niveau gagné par l’XP de la partie (#544)', () => {
+  // Partie en cours (exercice), puis l'XP de la partie franchit un niveau à l'écran de fin.
+  const finDePartie = () => {
+    let e = exercice(FILE_VIDE, true);
+    e = ajouter(e, xp(35, 20));
+    e = ajouter(e, niveau(2));
+    return avancer(exercice(e, false));
+  };
+
+  it("l'écran de fin lit l'XP à sa place et la libère : « Niveau 2 ! » vient aussitôt, une fois", () => {
+    let e = finDePartie();
+    expect(e.actif).toEqual(xp(35, 20));
+    e = avancer(terminer(e, 'xp')); // FinPartie : XP gardée dans l'écran, son tour s'arrête
+    expect(e.actif).toEqual(niveau(2));
+    e = avancer(terminer(e, 'niveau'));
+    expect(e.actif).toBeNull();
+    expect(niveauEnAttente(e)).toBeNull();
+  });
+
+  it("sans cela, une partie relancée pendant la pastille renvoyait la fête à la fin de la suivante (le défaut)", () => {
+    let e = exercice(finDePartie(), true); // « Rejouer » touché pendant les 2,4 s de la pastille
+    expect(e.actif).toBeNull();
+    expect(niveauEnAttente(e)).toBe(2);
+    e = avancer(exercice(ajouter(e, xp(15)), false));
+    expect(e.actif).toEqual(xp(15));
+    expect(e.attente).toEqual([niveau(2)]);
+  });
+
+  it('FinPartie termine bien le tour de l’XP dès qu’il la lit', async () => {
+    const { readFileSync } = await import('node:fs');
+    const source = readFileSync(new URL('./FinPartie.tsx', import.meta.url), 'utf8');
+    expect(source).toMatch(/setXp\(\{ points: actif\.points, bonus: actif\.bonus \}\);\s*terminerFete\('xp'\);/);
+  });
+});

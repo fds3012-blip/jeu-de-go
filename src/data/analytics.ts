@@ -83,6 +83,9 @@ export const EVENTS = {
   // Progression (issue #109) : XP gagnés (agrégés sur quelques secondes) et niveau franchi.
   xpGagne: 'xp_gagne',
   niveauAtteint: 'niveau_atteint',
+  // #544 : badge obtenu (gagné sur le moment, ou constaté à l'ouverture du Profil), une fois par badge et par appareil.
+  // Seule propriété : `badge`, l'identifiant du badge (`premiere-partie`, `serie-7`…).
+  badgeGagne: 'badge_gagne',
   // Plan de marquage (issue #166). Chaque partie commencée (premier coup joué) : dénominateur du taux de parties finies.
   partieCommencee: 'partie_commencee',
   // #528 : partie interrompue contre l'ordi reprise depuis l'accueil (`adversaire`, `taille`, `coups`, `handicap`, `regles`,

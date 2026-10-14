@@ -102,6 +102,16 @@ describe('finalScore', () => {
     expect(finalScore(r, [40], 6.5, 'japanese')).toMatchObject({ ok: true, result: 'W+7.5', dead: [40] });
     expect(finalScore(r, [40], 7, 'chinese')).toMatchObject({ ok: true, result: 'W+7' });
   });
+  it('handicap (#544) : en chinois, Blanc reçoit 1 point par pierre de handicap, comme en partie locale', () => {
+    // 2 pierres de handicap, Blanc joue au centre (pierre morte), puis deux passes.
+    const r = recordFromOnlineGame({ size: 9, komi: 0.5, rules: 'chinese', handicap: 2, moves: 'eetttt' })!;
+    // Chinois : Noir a toute la zone (81), Blanc 0,5 de komi + 2 de compensation.
+    expect(finalScore(r, [40], 0.5, 'chinese')).toMatchObject({ ok: true, black: 81, white: 2.5, result: 'B+78.5' });
+    // Japonais : 79 points de territoire + 1 prisonnier pour Noir, aucune compensation pour Blanc.
+    expect(finalScore(r, [40], 0.5, 'japanese')).toMatchObject({ ok: true, black: 80, white: 0.5, result: 'B+79.5' });
+    // Sans handicap, rien ne change en chinois.
+    expect(finalScore(game('tttt', { rules: 'chinese', komi: 7 }), [], 7, 'chinese')).toMatchObject({ white: 7, result: 'W+7' });
+  });
   it('refuse des pierres mortes invalides ou un historique illégal', () => {
     expect(finalScore(game('eetttt'), [0], 6.5, 'japanese')).toEqual({ ok: false, error: 'pierres-mortes' });
     expect(finalScore(game('eeee'), [], 6.5, 'japanese')).toEqual({ ok: false, error: 'partie-invalide' });
@@ -179,6 +189,13 @@ describe('planAction (fonction serveur)', () => {
     expect(planAction(proposed, B, act('accept'))).toEqual({
       ok: true, kind: 'finish', expect: { moves: 'eetttt', counting: true, dead_stones: 'ee' }, result: 'W+7.5', black: 0, white: 7.5
     });
+  });
+
+  it('handicap en règle chinoise (#544) : le résultat écrit compte la compensation de Blanc', () => {
+    // 2 pierres de handicap : Blanc commence (ee), Noir passe, Blanc passe ; Blanc propose sa pierre morte, Noir accepte.
+    const hc = row({ rules: 'chinese', komi: '0.5', handicap: 2, moves: 'eetttt', counting: true, dead_stones: 'ee', dead_proposed_by: W });
+    expect(planAction(hc, B, act('accept'))).toMatchObject({ ok: true, kind: 'finish', result: 'B+78.5', black: 81, white: 2.5 });
+    expect(planAction({ ...hc, rules: 'japanese' }, B, act('accept'))).toMatchObject({ ok: true, kind: 'finish', result: 'B+79.5', black: 80, white: 0.5 });
   });
 
   it('reprend la partie : le comptage est annulé', () => {

@@ -438,7 +438,7 @@ export function DefiPartie({ db, partieId, userId, anonyme, pseudo = null, confi
   const lui = (3 - moi) as 1 | 2;
   const enComptage = v.phase === 'comptage';
   const mortesVues = mortes ?? new Set(v.mortes);
-  const sc = enComptage || (v.phase === 'fini' && v.issue?.raison === 'points') ? score(v.pos, Number(partie.komi), partie.rules === 'chinese' ? 'chinese' : 'japanese', mortesVues) : null;
+  const sc = enComptage || (v.phase === 'fini' && v.issue?.raison === 'points') ? score(v.pos, Number(partie.komi), partie.rules === 'chinese' ? 'chinese' : 'japanese', mortesVues, partie.handicap ?? 0) : null;
   const inchangee = mortes === null;
 
   async function envoyer(coup: string) {
