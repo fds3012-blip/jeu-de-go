@@ -25,6 +25,7 @@ import { fr } from '../ui/typo';
 import { langue, nombre, t } from '../content/i18n';
 import { gradeDe, texteGrade } from '../go/cote';
 import type { Depuis, Mode, ModesAccueil } from './modes';
+import { besoinReseau } from './horsLigne';
 
 type Taille = 9 | 13 | 19;
 
@@ -91,6 +92,8 @@ interface Props {
   reglagesPartie?: { valeur: ValeurReglages; changer: (r: ValeurReglages, cle: 'handicap' | 'komi' | 'regles' | 'retablir') => void; komiAuto: number };
   /** #528 : partie interrompue contre l'ordi : la tuile « Reprendre ta partie » (jamais au premier lancement épuré). */
   reprise?: TuileReprise;
+  /** #538 : hors ligne, les tuiles qui ont besoin du réseau (en ligne, un ami, défis, parties lentes) sont grisées, avec la raison. */
+  horsLigne?: boolean;
 }
 
 /** #528 : partie contre l'ordi interrompue (fermeture, veille, rechargement), à reprendre où elle s'est arrêtée. */
@@ -224,7 +227,7 @@ export function Accueil(p: Props) {
 
         {p.reprise && <TuileReprendre r={p.reprise} />}
 
-        {p.lentes && (p.lentes.aJouer > 0 || p.lentes.recherche) && <TuilesLentes l={p.lentes} />}
+        {p.lentes && (p.lentes.aJouer > 0 || p.lentes.recherche) && <TuilesLentes l={p.lentes} horsLigne={!!p.horsLigne} />}
 
         {/* Aujourd'hui : la bonne chose à faire en premier, mise en avant ; les autres tuiles suivent. */}
         {(tuiles.length > 0 || revisions) && (
@@ -264,17 +267,19 @@ function TuileReprendre({ r }: { r: TuileReprise }) {
 }
 
 /** #440 : « À toi de jouer (N) » (parties lentes), puis la recherche en cours, qu'on annule d'ici. */
-function TuilesLentes({ l }: { l: TuileLentes }) {
+function TuilesLentes({ l, horsLigne }: { l: TuileLentes; horsLigne: boolean }) {
   return (
     <div className="tuiles tuiles-lentes">
       {l.aJouer > 0 && (
-        <button className="tuile tuile-defi tuile-avant" onClick={l.ouvrir} data-testid="tuile-lente" aria-label={t('lente.accueil.aJouerAria', { n: l.aJouer })}>
+        <button className={`tuile tuile-defi tuile-avant${horsLigne ? ' indispo' : ''}`} onClick={horsLigne ? undefined : l.ouvrir} data-testid="tuile-lente"
+          aria-disabled={horsLigne || undefined}
+          aria-label={horsLigne ? t('horsLigne.tuileAria', { nom: t('lente.accueil.aJouer', { n: l.aJouer }) }) : t('lente.accueil.aJouerAria', { n: l.aJouer })}>
           <span className="tuile-pierres" aria-hidden="true"><span className="stone b" /><span className="stone w" /></span>
           <span>
             <small>{t('lente.accueil.tuile', { n: l.aJouer })}</small>
             <b>{t('lente.accueil.aJouer', { n: l.aJouer })}</b>
           </span>
-          <em className="tuile-etat" aria-hidden="true">{t('defi.accueil.tuileEtat')}</em>
+          <em className="tuile-etat" aria-hidden="true">{t(horsLigne ? 'horsLigne.tuile' : 'defi.accueil.tuileEtat')}</em>
         </button>
       )}
       {l.recherche?.trouvee && (
@@ -304,9 +309,11 @@ function TuilesLentes({ l }: { l: TuileLentes }) {
 function Tuile({ tuile, p, etat, defis }: { tuile: TuileDuJour; p: Props; etat: 'fait' | 'aFaire' | null; defis?: TuileDefis }) {
   const avant = tuile.enAvant ? ' tuile-avant' : '';
   if (tuile.genre === 'defi' && defis) {
+    const off = !!p.horsLigne;
     return (
-      <button className={`tuile tuile-defi${avant}`} onClick={defis.ouvrir} data-testid="tuile-defi"
-        aria-label={defis.adversaire
+      <button className={`tuile tuile-defi${avant}${off ? ' indispo' : ''}`} onClick={off ? undefined : defis.ouvrir} data-testid="tuile-defi"
+        aria-disabled={off || undefined}
+        aria-label={off ? t('horsLigne.tuileAria', { nom: t('defi.accueil.tuile', { n: defis.n }) }) : defis.adversaire
           ? `${t('defi.accueil.tuile', { n: 1 })}, ${t('aFaire.contre', { pseudo: defis.adversaire })}, ${t('defi.accueil.tuileEtat')}.`
           : t('defi.accueil.tuileAria', { n: defis.n })}>
         <span className="tuile-pierres" aria-hidden="true"><span className="stone b" /><span className="stone w" /></span>
@@ -314,7 +321,7 @@ function Tuile({ tuile, p, etat, defis }: { tuile: TuileDuJour; p: Props; etat: 
           <small>{t('defi.accueil.tuile', { n: defis.n })}</small>
           <b>{defis.adversaire ? t('aFaire.contre', { pseudo: defis.adversaire }) : t('defi.accueil.tuileEtat')}</b>
         </span>
-        <em className="tuile-etat" aria-hidden="true">{t('defi.accueil.tuileEtat')}</em>
+        <em className="tuile-etat" aria-hidden="true">{t(off ? 'horsLigne.tuile' : 'defi.accueil.tuileEtat')}</em>
       </button>
     );
   }
@@ -462,6 +469,18 @@ function IconeMode({ mode }: { mode: Mode | 'plus' }) {
 /** Une tuile de mode : pictogramme, nom du mode, détail (cote, adversaire en cours, défi qui attend). */
 function TuileMode({ mode, p }: { mode: Mode; p: Props }) {
   const choisir = () => p.onMode(mode, 'tuile');
+  // #538 : hors ligne, la tuile reste à sa place (rien ne saute), grisée, et dit pourquoi au lieu d'échouer.
+  if (p.horsLigne && besoinReseau(mode)) {
+    const nom = t(mode === 'en_ligne' ? 'mode.enLigne' : 'mode.ami');
+    return (
+      <button type="button" className="mode indispo" data-testid={`mode-${mode}`} aria-disabled="true" aria-label={t('horsLigne.tuileAria', { nom })}>
+        <span className="mode-icone" aria-hidden="true">
+          {mode === 'en_ligne' ? <IconeMode mode="en_ligne" /> : <span className="mode-pierres"><span className="stone b" /><span className="stone w" /></span>}
+        </span>
+        <b>{nom}</b><small>{t('horsLigne.tuile')}</small>
+      </button>
+    );
+  }
   if (mode === 'en_ligne') {
     const cote = p.cote && `${texteGradeDe(p.cote.cote)} · ${texteCote(p.cote)}`;
     const aJouer = p.lentes?.aJouer ?? 0;

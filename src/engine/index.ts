@@ -18,9 +18,13 @@ import type { Demande, Reponse, Tache } from './simple.worker';
 import { KataGoClient, type KataGoInfo } from './katago/client';
 import { choisirCoup } from './katago/choose';
 import { rng } from './sim';
-import { CACHE_NAME, DEFAULT_MODEL_URL, LEGACY_MODEL_URL, MODEL_SHA256, MODEL_SHA256_DECOMPRESSE, type Backend } from './katago/loader';
+import { CACHE_NAME, MODEL_SHA256, MODEL_SHA256_DECOMPRESSE, type Backend } from './katago/loader';
 import { DELAI_PRECHARGEMENT_MS, decisionPrechargement, ecrireMemo, lireMemo, MEMO_BACKEND_KEY, type DecisionPrechargement, type InfoConnexion } from './katago/prechargement';
 import type { Analysis, AnalyzeOptions, MoveInfo } from './katago/search';
+import { modelUrls, reseauEnCache } from './katago/cacheReseau';
+
+// Adresses du réseau et lecture du cache : src/engine/katago/cacheReseau.ts (#538, hors du client KataGo).
+export { modelUrls, reseauEnCache };
 
 export { OPPONENTS, opponent, chooseMove, chooseMoveDetail, deadStones, ownershipSimple };
 // Réponse à la passe du joueur (#185) : seuil de points, gain d'un coup, raison affichable.
@@ -289,20 +293,6 @@ async function analyserGarde(k: KataGoBackend, pos: Position, opts: AnalyzeOptio
       k.relancer?.();
     }
   }
-}
-
-function modelUrl(): string {
-  // Écrit en toutes lettres pour que Vite remplace la variable au build.
-  return (import.meta.env.VITE_KATAGO_MODEL_URL as string | undefined) || DEFAULT_MODEL_URL;
-}
-
-/**
- * Adresses du réseau, dans l'ordre (#475) : notre copie (mochi-go.app/reseaux/…, ou `VITE_KATAGO_MODEL_URL`),
- * puis la copie du dépôt KataGo si la nôtre ne répond pas. Absolues : le Worker et le cache les comparent telles quelles.
- */
-export function modelUrls(): string[] {
-  const base = typeof location !== 'undefined' ? location.href : 'http://localhost/';
-  return [...new Set([modelUrl(), LEGACY_MODEL_URL].map(u => new URL(u, base).href))];
 }
 
 /** Backend mémorisé dans le stockage de l'appareil (#475) ; sans stockage, rien n'est retenu. */
@@ -609,17 +599,6 @@ export async function preparerKataGo(delaiMs = DELAI_KATAGO_REVUE): Promise<Prep
   return info.state === 'pret' ? { pret: true } : { pret: false, raison: raisonSansKataGo(info.error) };
 }
 
-/** Vrai si le réseau KataGo est déjà dans le cache du navigateur (Cache API) : le charger ne télécharge rien. */
-export async function reseauEnCache(): Promise<boolean> {
-  try {
-    if (typeof caches === 'undefined') return false;
-    const cache = await caches.open(CACHE_NAME);
-    // Notre copie ou l'ancienne (raw.githubusercontent.com, avant #475) : l'une ou l'autre suffit.
-    for (const url of modelUrls()) if (await cache.match(url)) return true;
-    return false;
-  } catch { return false; }
-}
-
 /**
  * Suit l'état de KataGo pour un écran (#475) : progression du téléchargement (« 2,1 / 3,8 Mo »), puis prêt ou non.
  * Appelle `f` tout de suite avec l'état actuel. Renvoie de quoi se désabonner.
@@ -661,6 +640,34 @@ export function prechargerApresPartie(partiesLancees: number, delaiMs = DELAI_PR
       resolve(d);
     }, delaiMs);
   });
+}
+
+/**
+ * #538 : « Télécharger l'IA maintenant » (Réglages). Le joueur l'a demandé : aucune des règles du préchargement discret
+ * (données mobiles, première partie) ne s'applique. Met le réseau et le code de TensorFlow.js en cache, sans démarrer
+ * KataGo. Vrai quand le réseau est bien en cache à la fin. KataGo déjà en mémoire sans réseau en cache (après « Libérer
+ * la place ») : il est arrêté d'abord, sinon le préchargement ne ferait rien.
+ */
+export async function telechargerIA(): Promise<boolean> {
+  const k = getKataGo();
+  if (!k?.precharger) return false;
+  if (await reseauEnCache()) return true;
+  if (k.info.state !== 'inactif') k.relancer?.();
+  const ok = await k.precharger();
+  return ok && (await reseauEnCache());
+}
+
+/**
+ * #538 : « Libérer la place » (Réglages) : efface le réseau KataGo du cache de l'appareil (3,8 Mo). KataGo déjà en
+ * mémoire reste utilisable jusqu'à la fermeture de l'app ; ensuite, il faudra le retélécharger. Vrai si c'est fait.
+ */
+export async function libererIA(): Promise<boolean> {
+  try {
+    if (typeof caches === 'undefined') return false;
+    const cache = await caches.open(CACHE_NAME);
+    for (const url of modelUrls()) await cache.delete(url);
+    return !(await reseauEnCache());
+  } catch { return false; }
 }
 
 /** Tests seulement : permet une nouvelle tentative de préchargement. */

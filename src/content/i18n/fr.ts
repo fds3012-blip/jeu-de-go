@@ -497,7 +497,13 @@ export const fr = {
   'erreur.accueil': 'Retour à l’accueil',
   'erreur.aria': 'Erreur',
   'horsLigne.bandeau': 'Tu es hors ligne',
-  'horsLigne.detail': 'Ce qui est sur ton téléphone reste jouable.',
+  // #538 : deux bandeaux. Écran qui a besoin du réseau : ce qui marche quand même. Accueil : ce qui marche, d'abord.
+  'horsLigne.detail': 'Cet écran a besoin d’internet. L’ordi, les leçons et les problèmes marchent sans.',
+  'horsLigne.accueil': 'Hors ligne',
+  'horsLigne.accueilDetail': 'Tu peux jouer contre l’ordi, faire les leçons et les problèmes.',
+  // Tuiles de l'accueil grisées hors ligne (#538) : la raison, à la place du détail.
+  'horsLigne.tuile': 'Il faut internet',
+  'horsLigne.tuileAria': '{nom} : il faut internet, indisponible hors ligne',
   'miseAJour.prete': 'Mise à jour prête',
   'miseAJour.recharger': 'Recharger',
   'miseAJour.plusTard': 'Plus tard',

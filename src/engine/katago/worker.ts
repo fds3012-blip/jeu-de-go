@@ -100,7 +100,10 @@ async function init(id: number, src: SourceReseau, backends: Backend[] = BACKEND
  */
 async function precharger(id: number, src: SourceReseau) {
   const t0 = performance.now();
-  const [r] = await Promise.all([telecharger(id, src), import('@tensorflow/tfjs')]);
+  // #538 : le code du backend WebGPU aussi (quand l'appareil l'a), pour que KataGo démarre ensuite sans réseau.
+  // Importé seulement (le backend s'enregistre), jamais choisi ici : aucun GPU réservé.
+  const gpu = typeof navigator !== 'undefined' && 'gpu' in navigator ? import('@tensorflow/tfjs-backend-webgpu').catch(() => null) : null;
+  const [r] = await Promise.all([telecharger(id, src), import('@tensorflow/tfjs'), gpu]);
   return { fromCache: r.fromCache, ms: performance.now() - t0 };
 }
 

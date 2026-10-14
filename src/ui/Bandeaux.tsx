@@ -1,7 +1,8 @@
 /**
  * Bandeaux discrets de la coquille (robustesse, #325) :
- * - « Tu es hors ligne » : le même, sur tous les écrans qui ont besoin du réseau (défi, en ligne, compte) ;
- *   ce qui marche hors ligne (partie contre l'ordi, leçons, problèmes du téléphone) reste jouable, sans bandeau.
+ * - « Tu es hors ligne » : le même, sur tous les écrans qui ont besoin du réseau (défi, en ligne, compte), avec ce qui
+ *   marche quand même. #538 : sur l'accueil, « Hors ligne » et ce que tu peux faire (l'ordi, les leçons, les problèmes).
+ *   Partie, leçon, problème : ça marche, sans bandeau. Il apparaît sans animation (mouvements réduits ou non).
  * - « Mise à jour prête, recharger » : quand une nouvelle version est arrivée pendant que l'app était ouverte
  *   (src/app/miseAJour.ts). Jamais au milieu d'une partie : l'écran décide quand le montrer (`visible`).
  * Styles : src/ui/robustesse.css.
@@ -21,11 +22,13 @@ function IconeHorsLigne() {
   );
 }
 
-export function BandeauHorsLigne() {
+export function BandeauHorsLigne({ ou = 'reseau' }: { ou?: 'accueil' | 'reseau' }) {
+  const accueil = ou === 'accueil';
   return (
-    <p className="bandeau bandeau-hors-ligne" role="status" data-testid="bandeau-hors-ligne">
+    <p className="bandeau bandeau-hors-ligne" role="status" data-testid="bandeau-hors-ligne" data-ou={ou}>
       <IconeHorsLigne />
-      <span><b>{t('horsLigne.bandeau')}</b><span className="bandeau-detail"> {t('horsLigne.detail')}</span></span>
+      <span><b>{t(accueil ? 'horsLigne.accueil' : 'horsLigne.bandeau')}</b>
+        <span className="bandeau-detail"> {t(accueil ? 'horsLigne.accueilDetail' : 'horsLigne.detail')}</span></span>
     </p>
   );
 }
