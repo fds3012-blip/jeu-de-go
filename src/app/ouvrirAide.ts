@@ -8,7 +8,8 @@ import type { Fiche, IdMot } from '../content/aide';
 /** D'où l'aide est ouverte : propriété `depuis` de l'événement `aide_ouverte`. */
 export type Depuis = 'profil' | 'lecon' | 'probleme' | 'partie' | 'clavier';
 
-export interface Ouverture { fiche: Fiche; mot?: IdMot; depuis: Depuis }
+/** `avis` (#537) : la fiche « Questions » s'ouvre sur le formulaire de retours (« Nous écrire » sans compte). */
+export interface Ouverture { fiche: Fiche; mot?: IdMot; depuis: Depuis; avis?: boolean }
 
 type Ecoute = (o: Ouverture) => void;
 const ecoutes = new Set<Ecoute>();

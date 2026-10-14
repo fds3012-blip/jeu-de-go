@@ -1,0 +1,36 @@
+/* Formulaire de retours en 3 questions (#537). Chargé avec le formulaire (Retours.tsx, à la demande) : hors du CSS initial.
+   Couleurs : jetons de tokens.css (contraste AA en sombre et en clair). Cibles de 44 px au moins. */
+
+.retours { display: flex; flex-direction: column; gap: var(--space-3); }
+.retours p { margin: 0; }
+.retours-tete { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.retours-tete h3 { margin: 0; font-family: var(--font-titre); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre);
+  font-size: var(--fs-xl); line-height: var(--lh-titre); outline: none; }
+.retours-tete .lien { flex: none; margin-right: -12px; }
+
+.retours-question { margin: 0; padding: var(--space-3) var(--space-4); border: 0; min-width: 0; border-radius: var(--radius);
+  background: var(--surface); display: flex; flex-direction: column; gap: var(--space-2); }
+.retours-question legend, .retours-libelle { float: left; width: 100%; padding: 0; font-weight: var(--fw-bold); line-height: var(--lh-titre); }
+.retours-question legend + * { clear: both; }
+
+.retours-choix-ligne { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.retours-choix { display: flex; align-items: center; gap: var(--space-2); min-height: 44px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.retours-choix-ligne .retours-choix { flex: 1 1 auto; justify-content: center; padding: 0 var(--space-3); border-radius: var(--radius-s);
+  background: var(--surface-2); }
+.retours-choix-ligne .retours-choix:has(input:checked) { box-shadow: inset 0 0 0 2px var(--accent-trait); font-weight: var(--fw-bold); }
+.retours-choix input { flex: none; width: 22px; height: 22px; margin: 0; accent-color: var(--accent); }
+.retours-choix input:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+.retours-texte { width: 100%; min-height: 88px; box-sizing: border-box; padding: 10px 12px; border: 1.5px solid var(--line); border-radius: var(--radius-s);
+  background: var(--bg); color: var(--text); font: inherit; font-size: max(16px, var(--fs-m)); line-height: 1.4; resize: vertical; }
+.retours-texte:focus-visible { outline: 3px solid var(--focus); outline-offset: 1px; }
+.retours-aide { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px var(--space-3); }
+.retours-compteur { font-variant-numeric: tabular-nums; }
+
+.retours-erreur { color: var(--danger-texte); font-weight: var(--fw-bold); }
+.retours-choix input[aria-invalid='true'] { outline: 2px solid var(--danger-texte); outline-offset: 2px; }
+.retours .btn.primary { align-self: stretch; }
+
+.retours-merci { outline: none; }
+.retours-merci-tete { display: flex; align-items: center; gap: var(--space-3); }
+.retours-merci-titre { font-size: var(--fs-l); font-weight: var(--fw-bold); }

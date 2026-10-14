@@ -1,7 +1,7 @@
 // Feuille d'aide (issue #362) : règles en 5 cartes, « Comment on compte ? », glossaire cherchable.
 // Boîte de dialogue modale posée par-dessus l'écran, qui reste monté : fermer ramène exactement où l'on était
 // (partie, leçon, Profil). Chargée à la demande (App.tsx) : elle ne pèse rien tant qu'on ne l'ouvre pas.
-import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
+import { Suspense, lazy, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { COMPTER, IDS_QUESTIONS, MOTS, REGLES, type Carte, type Fiche, type Schema } from '../content/aide';
 import { LESSONS } from '../content/lessons';
 import { langue, t } from '../content/i18n/secondaires';
@@ -13,7 +13,12 @@ import type { Ouverture } from '../app/ouvrirAide';
 import { Board, type BoardMarks } from './Board';
 import { fr } from './typo';
 import { ADRESSE_MENTIONS, tdon } from '../content/i18n/donnees';
+import { tret } from '../content/i18n/retours';
+import { ADRESSE_CONTACT } from '../data/retours';
 import './aide.css';
+
+// #537 : formulaire de retours en 3 questions, chargé seulement quand on l'ouvre (avec son CSS).
+const Retours = lazy(() => import('./Retours'));
 
 interface Props {
   ouverture: Ouverture;
@@ -125,8 +130,14 @@ function Glossaire({ requete, setRequete, lien }: { requete: string; setRequete:
   );
 }
 
-/** Questions fréquentes (#362) : une question, une réponse courte ; rien à toucher. */
-function Questions() {
+/** Phrase avec l'adresse de contact en lien (`{adresse}`). */
+function AvecContact({ texte }: { texte: string }) {
+  const [avant, apres = ''] = fr(texte).split('{adresse}');
+  return <>{avant}<a href={`mailto:${ADRESSE_CONTACT}`}>{ADRESSE_CONTACT}</a>{apres}</>;
+}
+
+/** Questions fréquentes (#362) : une question, une réponse courte ; rien à toucher. #537 : puis « Ton avis compte » et le contact. */
+function Questions({ onAvis }: { onAvis: () => void }) {
   return (
     <>
       <p className="aide-intro">{fr(t('aide.questions.intro'))}</p>
@@ -142,6 +153,12 @@ function Questions() {
       </ul>
       {/* #530 : qui publie et héberge l'app (page statique, même texte que dans le Profil). */}
       <p className="aide-intro aide-mentions"><a href={ADRESSE_MENTIONS[langue()]}>{tdon('donnees.mentions')}</a></p>
+      <section className="aide-avis" aria-labelledby="aide-avis-titre">
+        <h3 id="aide-avis-titre">{tret('entree.titre')}</h3>
+        <p className="muted">{fr(tret('entree.texte'))}</p>
+        <button type="button" className="btn" data-testid="aide-donner-avis" onClick={onAvis}>{tret('entree.action')}</button>
+        <p className="small" data-testid="aide-contact"><AvecContact texte={tret('contact.texte')} /></p>
+      </section>
     </>
   );
 }
@@ -152,6 +169,8 @@ export default function Aide({ ouverture, onFermer, onLecon, leconCourante, onRe
   const id = useId();
   const [fiche, setFiche] = useState<Fiche>(ouverture.fiche);
   const [requete, setRequete] = useState(ouverture.mot ? t(`aide.mot.${ouverture.mot}`) : '');
+  // #537 : formulaire de retours ouvert dans la fiche « Questions » (d'emblée depuis « Nous écrire » sans compte).
+  const [avis, setAvis] = useState(!!ouverture.avis);
 
   useEffect(() => {
     const d = ref.current;
@@ -195,7 +214,12 @@ export default function Aide({ ouverture, onFermer, onLecon, leconCourante, onRe
           {fiche === 'regles' && <Cartes cartes={REGLES} cle="regle" intro={t('aide.regles.intro')} lien={lien} />}
           {fiche === 'compter' && <Cartes cartes={COMPTER} cle="compter" intro={t('aide.compter.intro')} lien={lien} />}
           {fiche === 'mots' && <Glossaire requete={requete} setRequete={setRequete} lien={lien} />}
-          {fiche === 'questions' && <Questions />}
+          {fiche === 'questions' && !avis && <Questions onAvis={() => { setAvis(true); corps.current?.scrollTo?.({ top: 0 }); }} />}
+          {fiche === 'questions' && avis && (
+            <Suspense fallback={<p className="aide-intro" aria-busy="true">…</p>}>
+              <Retours depuis={ouverture.avis ? 'profil' : 'aide'} onRetour={() => { setAvis(false); corps.current?.scrollTo?.({ top: 0 }); }} />
+            </Suspense>
+          )}
         </div>
       </div>
     </dialog>
