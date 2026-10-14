@@ -63,18 +63,28 @@ const PAR_THEME: Record<Theme, readonly string[]> = {
     'v14', 'v15', 'v16',
     // Lot Z (#539) : points miai, grappe de cinq, six du coin.
     'z01', 'z03', 'z05', 'z09', 'z10', 'z15',
+    // Lot AA (#548) : vie et mort qui se lit en 3 à 5 coups (point vital et suites miai, agrandir l’espace).
+    'aa05', 'aa06', 'aa08', 'aa10', 'aa11', 'aa13', 'aa15', 'aa16', 'aa18', 'aa19',
   ],
   semeai: ['a14', 'd05', 'd07', 'd08', 'd09', 'd10', 'd11', 'd12', 'd13', 'f02', 'f08', 'f09', 'f10', 'f11', 'f12', 'o03', 'o10', 'v13',
     // Lot Z (#539) : libertés communes, yeux dans la course.
     'z02', 'z06', 'z07', 'z11', 'z13', 'z14'],
-  'prise-en-retour': ['c4', 'j02', 'j03', 'o02', 'o05', 'o07', 'p03', 'v09', 'v12'],
+  'prise-en-retour': ['c4', 'j02', 'j03', 'o02', 'o05', 'o07', 'p03', 'v09', 'v12',
+    // Lot AA (#548) : se mettre en atari exprès, puis reprendre.
+    'aa02', 'aa07'],
   // Lot W (#16) : les séries des leçons 14 à 16.
-  seki: ['w01', 'w02', 'w03'],
+  seki: ['w01', 'w02', 'w03',
+    // Lot AA (#548) : seki dans le coin, au bord, contre un carré.
+    'aa04', 'aa09', 'aa14'],
   // Lot Y (#500) : la série « Fin de partie » des problèmes par thème (#471).
-  'fin-de-partie': ['w04', 'w05', 'w06', 'y01', 'y02', 'y03', 'y04', 'z04', 'z08', 'z12'],
+  'fin-de-partie': ['w04', 'w05', 'w06', 'y01', 'y02', 'y03', 'y04', 'z04', 'z08', 'z12',
+    // Lot AA (#548) : le hane au premier rang avant les dames.
+    'aa03'],
   comptage: ['w07', 'w08', 'w09'],
   // Lot X (#16) : les séries des leçons 4 (ko), 6 et 8 (ouverture).
-  ko: ['x01', 'x02', 'x03'],
+  ko: ['x01', 'x02', 'x03',
+    // Lot AA (#548) : fermer un ko en fin de partie, vivre ou tuer par un ko.
+    'aa01', 'aa12', 'aa17', 'aa20'],
   ouverture: ['x04', 'x05', 'x06', 'x07', 'x08'],
 };
 
