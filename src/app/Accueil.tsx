@@ -474,8 +474,8 @@ function TuileMode({ mode, p }: { mode: Mode; p: Props }) {
     const nom = t(mode === 'en_ligne' ? 'mode.enLigne' : 'mode.ami');
     return (
       <button type="button" className="mode indispo" data-testid={`mode-${mode}`} aria-disabled="true" aria-label={t('horsLigne.tuileAria', { nom })}>
-        <span className="mode-icone" aria-hidden="true">
-          {mode === 'en_ligne' ? <IconeMode mode="en_ligne" /> : <span className="mode-pierres"><span className="stone b" /><span className="stone w" /></span>}
+        <span className={`mode-icone${mode === 'ami' ? ' mode-pierres' : ''}`} aria-hidden="true">
+          {mode === 'en_ligne' ? <IconeMode mode="en_ligne" /> : <><span className="stone b" /><span className="stone w" /></>}
         </span>
         <b>{nom}</b><small>{t('horsLigne.tuile')}</small>
       </button>

@@ -30,9 +30,9 @@ export default function RepliHorsLigne({ nom, caillou, onCaillou, onPlusTard }: 
         <div className="feuille-tete">
           <h2 id="repli-hl-titre">{thl('repli.titre', { nom })}</h2>
         </div>
-        <p id="repli-hl-texte">{fr(thl('repli.texte'))}</p>
+        <p id="repli-hl-texte" style={{ margin: 0 }}>{fr(thl('repli.texte'))}</p>
         <p className="muted small">{fr(thl('repli.astuce'))}</p>
-        <button type="button" className="btn primary" autoFocus onClick={choisir(onCaillou)}>
+        <button type="button" className="btn primary" style={{ gap: 10 }} autoFocus onClick={choisir(onCaillou)}>
           <Portrait id={caillou} taille={28} decoratif signature={false} />{thl('repli.caillou')}
         </button>
         <button type="button" className="lien" onClick={choisir(onPlusTard)}>{thl('repli.plusTard')}</button>
