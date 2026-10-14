@@ -7,8 +7,20 @@
 import { EVENTS, track } from '../data/analytics';
 import { t } from '../content/i18n';
 import { noterSemaine, type Compteur } from './semaine';
+import { validerDefi } from './defiAppareil';
+import { numeroDuJour } from './goDuJour';
+import { readLocal, writeLocal } from './hooks';
+import { gagnerBadge } from './badgesGagnes';
 
-export type SourceXp = 'probleme' | 'goDuJour' | 'revision' | 'lecon' | 'partie' | 'victoire' | 'erreursRejouees' | 'objectif';
+export type SourceXp = 'probleme' | 'goDuJour' | 'revision' | 'lecon' | 'partie' | 'victoire' | 'erreursRejouees' | 'objectif' | 'course';
+
+/**
+ * Course aux problèmes (#529, P10 de docs/game-design/economie.md) : XP d'une course finie avec au moins un problème juste,
+ * une seule fois par jour. Autant qu'une partie terminée : 3 minutes d'effort réel. Les courses suivantes du jour ne
+ * rapportent rien (le record à battre suffit, et la course en boucle ne devient pas une ferme à XP).
+ * INTERRUPTEUR A/B (docs/data/tableaux-de-bord.md, 8.4) : 0 rend la règle d'avant #529 (la course ne rapporte rien).
+ */
+export const XP_COURSE = 15;
 
 /**
  * XP gagnés par source. Une victoire compte la partie terminée (+15) et le bonus de victoire (+25).
@@ -17,7 +29,7 @@ export type SourceXp = 'probleme' | 'goDuJour' | 'revision' | 'lecon' | 'partie'
  */
 // « Rejouer mes erreurs » (#428) : une séance finie rapporte comme un problème neuf, une seule fois par partie (rejouerErreurs.ts).
 // Objectif de la semaine atteint (#369) : autant qu'une leçon, une fois par objectif et par semaine (semaine.ts).
-export const GAINS: Record<SourceXp, number> = { probleme: 10, goDuJour: 20, revision: 20, lecon: 30, partie: 15, victoire: 40, erreursRejouees: 10, objectif: 30 };
+export const GAINS: Record<SourceXp, number> = { probleme: 10, goDuJour: 20, revision: 20, lecon: 30, partie: 15, victoire: 40, erreursRejouees: 10, objectif: 30, course: XP_COURSE };
 
 /**
  * Courbe des niveaux. On commence au niveau 1 avec 0 XP.
@@ -66,12 +78,20 @@ export function niveauDe(xp: number): Niveau {
   return { niveau, dans: reste, besoin: cout(niveau) };
 }
 
-export interface Recompense { niveau: number; id: 'kaya-clair' | 'ardoise' | 'coquillage-dore'; nom: string; genre: 'goban' | 'pierres' }
-/** Récompenses cosmétiques, débloquées par niveau. Elles se choisissent dans le Profil (thème du goban, src/ui/boardArt.ts). */
+export interface Recompense { niveau: number; id: 'kaya-clair' | 'ardoise' | 'coquillage-dore' | 'cerisier' | 'jade' | 'kaya-ancien'; nom: string; genre: 'goban' | 'pierres' }
+/**
+ * Récompenses cosmétiques, débloquées par niveau. Elles se choisissent dans le Profil (thème du goban, src/ui/boardArt.ts).
+ * #529 : trois de plus après le niveau 8 (P7 de docs/game-design/economie.md). Simulation (economie.test.ts) : le joueur
+ * de 10 minutes par jour passe le niveau 10 à J31, le 12 à J51, le 15 à J87 ; celui de 30 minutes à J14, J23 et J42. Il
+ * reste donc quelque chose à gagner au deuxième et au troisième mois.
+ */
 export const RECOMPENSES: readonly Recompense[] = [
   { niveau: 3, id: 'kaya-clair', nom: 'Kaya clair', genre: 'goban' },
   { niveau: 5, id: 'ardoise', nom: 'Ardoise', genre: 'goban' },
   { niveau: 8, id: 'coquillage-dore', nom: 'Coquillage doré', genre: 'pierres' },
+  { niveau: 10, id: 'cerisier', nom: 'Cerisier', genre: 'goban' },
+  { niveau: 12, id: 'jade', nom: 'Jade', genre: 'pierres' },
+  { niveau: 15, id: 'kaya-ancien', nom: 'Kaya ancien', genre: 'goban' },
 ];
 
 /** « le goban « Kaya clair » », dans la langue de l'interface (#167). */
@@ -94,9 +114,11 @@ export const recompensesDebloquees = (niveau: number) => RECOMPENSES.filter(r =>
 export type Premiere = 'partie' | 'lecon' | 'probleme';
 export const BONUS_PREMIERE: Record<Premiere, number> = { partie: 20, lecon: 20, probleme: 20 };
 /** Le Go du jour, la révision et les erreurs rejouées (#428) sont des problèmes ; une victoire est une partie. */
-/** Un objectif de la semaine (#369) n'a pas de bonus « première fois » : `gagnerXp` ne le lui donne jamais. */
+/** Un objectif de la semaine (#369) et la course (#529) n'ont pas de bonus « première fois » : `gagnerXp` ne le leur donne jamais. */
 export const premiereDe = (source: SourceXp): Premiere =>
-  source === 'goDuJour' || source === 'revision' || source === 'erreursRejouees' || source === 'objectif' ? 'probleme' : source === 'victoire' ? 'partie' : source;
+  source === 'goDuJour' || source === 'revision' || source === 'erreursRejouees' || source === 'objectif' || source === 'course' ? 'probleme' : source === 'victoire' ? 'partie' : source;
+/** Sources sans bonus « première fois » : gains de rythme (objectif de la semaine), ou effort déjà payé ailleurs (course). */
+export const SANS_PREMIERE: ReadonlySet<SourceXp> = new Set<SourceXp>(['objectif', 'course']);
 
 export interface Gain {
   source: SourceXp;
@@ -175,7 +197,7 @@ if (typeof window !== 'undefined') window.addEventListener('pagehide', envoyerAg
  */
 export function gagnerXp(source: SourceXp): Gain {
   const premieres = lirePremieres(), cat = premiereDe(source);
-  const g = appliquer(lireXp(), source, source !== 'objectif' && !premieres.has(cat));
+  const g = appliquer(lireXp(), source, !SANS_PREMIERE.has(source) && !premieres.has(cat));
   try {
     localStorage.setItem(XP_KEY, JSON.stringify(g.apres));
     if (g.bonus) localStorage.setItem(PREMIERES_KEY, JSON.stringify([...premieres, cat]));
@@ -189,7 +211,46 @@ export function gagnerXp(source: SourceXp): Gain {
   const compteur = COMPTEUR_DE[source];
   if (compteur) noterActivite(compteur);
   if (source === 'goDuJour') noterActivite('goDuJour');
+  // #529 (P2) : une partie terminée qui rapporte de l'XP (plus de 10 coups, pas une reprise) fait vivre la série du jour,
+  // comme le Go du jour, une leçon ou la révision. Derrière l'interrupteur A/B `SERIE_UN_DEFI` (defi.ts).
+  if (source === 'partie' || source === 'victoire') {
+    try { validerDefi('partie'); } catch { /* horloge ou stockage illisible : la série attendra */ }
+  }
   return g;
+}
+
+/**
+ * Source d'XP d'une course finie (#529), ou `null`. Il faut au moins un problème juste, et aucune course payée ce jour-là
+ * (`dernierJour` : numéro du dernier jour payé, `numero` : aujourd'hui). Avec `XP_COURSE` à 0 (témoin A/B), jamais.
+ */
+export function sourceXpCourse(o: { score: number; dernierJour: number | null; numero: number; gain?: number }): SourceXp | null {
+  if ((o.gain ?? XP_COURSE) <= 0 || o.score < 1 || o.dernierJour === o.numero) return null;
+  return 'course';
+}
+
+/**
+ * Partie en ligne finie (#529) : elle fait vivre la série du jour comme une partie contre l'ordi (plus de 10 coups,
+ * pas une partie annulée), et donne les badges « Première partie en ligne » et « Victoire classée ». Pas d'XP : la cote
+ * de jeu est déjà la récompense des parties classées (#417), et l'XP en ligne ouvrirait une ferme à parties.
+ */
+export function finirPartieEnLigne(o: { issue: 'victoire' | 'defaite' | 'egalite' | 'annulee'; classee: boolean; coups: number }): void {
+  if (o.issue === 'annulee') return;
+  gagnerBadge('premiere-en-ligne');
+  if (o.issue === 'victoire' && o.classee) gagnerBadge('victoire-classee');
+  if (o.coups >= 10) { try { validerDefi('partie'); } catch { /* stockage illisible */ } }
+}
+
+/** Numéro du jour (Go du jour, heure de Paris) de la dernière course qui a rapporté de l'XP sur cet appareil. */
+export const COURSE_XP_KEY = 'go.course-xp.v1';
+
+/** Course finie (#529) : crédite son XP si c'est la première course payante du jour. Rend le gain, ou `null`. */
+export function crediterCourse(score: number, maintenant: Date = new Date()): Gain | null {
+  const numero = numeroDuJour(maintenant);
+  const brut = readLocal<unknown>(COURSE_XP_KEY, null);
+  const source = sourceXpCourse({ score, dernierJour: Number.isInteger(brut) ? (brut as number) : null, numero });
+  if (!source) return null;
+  writeLocal(COURSE_XP_KEY, numero);
+  return gagnerXp(source);
 }
 
 /** Ce que compte chaque gain pour la semaine (#369). Les erreurs rejouées se comptent une à une (`noterActivite`). */
@@ -207,5 +268,6 @@ export function noterActivite(quoi: Compteur, n = 1): void {
   for (const o of atteints) {
     track(EVENTS.objectifSemaineAtteint, { objectif: o });
     gagnerXp('objectif');
+    gagnerBadge('objectif-semaine'); // #529 : badge « Objectif de la semaine », gagné sur le moment
   }
 }

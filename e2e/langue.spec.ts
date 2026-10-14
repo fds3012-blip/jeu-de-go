@@ -301,7 +301,8 @@ for (const largeur of [390, 320]) {
     await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: 'Profile' }).click();
     const stats = page.getByRole('list', { name: 'Your stats' });
     for (const legende of ['day streak', 'lessons done', 'opponent beaten', 'puzzles solved']) await expect(stats.getByText(legende, { exact: true })).toBeVisible();
-    const vitrine = page.getByRole('region', { name: /^Badges, \d of 7$/ });
+    const vitrine = page.getByRole('region', { name: /^Badges, \d+ of 21$/ });
+    await vitrine.getByRole('button', { name: 'See all 21 badges' }).click();
     await expect(vitrine.getByRole('button', { name: 'Pomme beaten: earned' })).toBeVisible();
     await expect(vitrine.getByRole('button', { name: 'First game: earned' })).toBeVisible();
     await expect(vitrine.getByRole('button', { name: '7-day streak: not earned yet. Keep a 7-day streak.' })).toHaveCount(1);

@@ -290,7 +290,7 @@ test('axe : créer un compte, connexion, code, pseudo, Mon compte connecté', as
 // Coordonnées du plateau (#461) : axe ne mesure pas un texte SVG posé sur une image (le bois). On mesure au pixel : le
 // bois sous chaque lettre (lettres masquées le temps de la capture, gardée en mémoire), contre l'encre du thème, ou
 // contre son liseré s'il en a un. WCAG 1.4.3 : 4,5:1 (les lettres font 12 px).
-for (const theme of ['kaya', 'kaya-clair', 'ardoise', 'coquillage-dore']) {
+for (const theme of ['kaya', 'kaya-clair', 'ardoise', 'coquillage-dore', 'cerisier', 'jade', 'kaya-ancien']) {
   test(`coordonnées lisibles sur le bois « ${theme} » (4,5:1, mesuré au pixel)`, async ({ page }) => {
     await page.addInitScript(t => { localStorage.setItem('go.xp.v1', '99999'); localStorage.setItem('go.themeGoban.v1', JSON.stringify(t)); }, theme);
     await page.goto('/?go-du-jour=1');

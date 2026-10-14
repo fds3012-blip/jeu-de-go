@@ -40,7 +40,9 @@ test('profil vivant : statistiques et badges déduits des données locales, sans
   const vitrine = page.getByRole('region', { name: /^Badges/ });
   await expect(vitrine.getByRole('button', { name: 'Pomme battue : obtenu' })).toBeVisible();
   await expect(vitrine.getByRole('button', { name: 'Première partie : obtenu' })).toBeVisible();
-  await expect(vitrine.getByRole('button', { name: /^7 jours de série : à gagner/ })).toHaveCount(1);
+  // #529 : repliée, une rangée de 6 sceaux (les gagnés, puis les prochains) et « +15 » pour voir les 21.
+  await expect(vitrine.getByRole('button', { name: /^Première leçon : à gagner/ })).toHaveCount(1);
+  await expect(vitrine.getByRole('button', { name: 'Voir les 21 badges' })).toHaveText('+15');
 
   if (CAPTURES) await page.screenshot({ path: 'test-results/profil-plein.png', fullPage: true });
   const { scroll, largeur } = await page.evaluate(() => ({ scroll: document.documentElement.scrollHeight, largeur: document.documentElement.scrollWidth }));

@@ -177,6 +177,9 @@ html:has(.accord[open]) body { padding-bottom: calc(var(--accord-h, 160px) + var
 .badge-bouton[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent-bord); }
 .badge-bouton:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .vitrine-detail { margin: var(--space-1) 0 0; min-height: 2.7em; color: var(--muted); font-size: var(--fs-s); line-height: 1.35; }
+/* #529 : ouvrir ou replier la vitrine (21 badges). Un rond de 44 px à la suite des sceaux, « +15 » en toutes lettres. */
+.vitrine-tous span { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; border: 1.5px solid var(--line);
+  background: var(--surface); color: var(--text); font-weight: var(--fw-bold); font-size: var(--fs-s); font-variant-numeric: tabular-nums; }
 @media (prefers-reduced-motion: reduce) { .badge-bouton { transition: none; } .badge-bouton:active { transform: none; } }
 /* Gagné depuis la dernière visite : le sceau s'imprime une fois, comme un tampon (décalé de 60 ms par rang). */
 @media (prefers-reduced-motion: no-preference) {
@@ -231,7 +234,7 @@ html:has(.accord[open]) body { padding-bottom: calc(var(--accord-h, 160px) + var
 .btn.btn-danger { background: var(--bg); color: var(--danger-texte); border-color: var(--danger-texte); }
 .btn.btn-danger:disabled { opacity: .45; }
 
-/* ---------- Thème du goban (#109) : quatre pastilles de 44 px sur une ligne ---------- */
+/* ---------- Thème du goban (#109) : sept pastilles de 44 px depuis #529, sur une ou deux rangées ---------- */
 .ligne-goban { min-height: 48px; }
 .ligne-goban > .ligne-libelle { padding-block: 0; }
 .ligne-goban .pastilles { display: flex; gap: 4px; margin-left: auto; }

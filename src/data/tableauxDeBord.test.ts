@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { EVENTS } from './analytics';
 import { SERIE_UN_DEFI } from '../app/defi';
+import { XP_COURSE } from '../app/xp';
 import { POMME_RESPIRE } from '../app/rythme';
 import { KOMI_DEBUTANT, KOMI_NORMAL, PARTIES_KOMI_DEBUTANT } from '../app/equilibrage';
 
@@ -74,7 +75,7 @@ describe('docs/data/tableaux-de-bord.md', () => {
 
   it('chaque test A/B a son protocole complet', () => {
     const tests = section(tableaux, '## 8. Tests A/B').split(/\n### 8\.\d /).slice(1);
-    expect(tests.length).toBe(3);
+    expect(tests.length).toBe(4);
     for (const t of tests) {
       for (const rubrique of ['**Hypothèse**', '**Métrique principale**', '**Garde-fous**', '**Taille**', '**Durée**', '**Décision**']) {
         expect(t, `${t.split('\n')[0]} : ${rubrique}`).toContain(rubrique);
@@ -87,8 +88,10 @@ describe('interrupteurs des tests A/B (section 8)', () => {
   it('existent dans le code et sont allumés, comme le dit le document', () => {
     expect(tableaux).toContain('`SERIE_UN_DEFI`');
     expect(tableaux).toContain('`POMME_RESPIRE`');
+    expect(tableaux).toContain('`XP_COURSE`');
     expect(SERIE_UN_DEFI).toBe(true);
     expect(POMME_RESPIRE).toBe(true);
+    expect(XP_COURSE).toBe(15);
   });
 
   it('le komi décrit est celui du code (0,5 pour 3 parties, puis 6,5)', () => {

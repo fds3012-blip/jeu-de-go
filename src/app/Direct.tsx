@@ -30,7 +30,7 @@ import { EVENTS, track } from '../data/analytics';
 import { compterEtape } from '../data/compteurs';
 import { messageRefus } from '../data/defi';
 import { useOnline } from './hooks';
-import { noterActivite } from './xp';
+import { finirPartieEnLigne, noterActivite } from './xp';
 import { usePreferences } from './settings';
 import { PARAMS_DEFAUT, adversaireDuRepli, issueMesure, phraseDirect, phraseFinDirect, proposerRepli, texteCadence, vueDirect, type Params } from './direct';
 import { OPPONENTS, type OpponentId } from '../engine';
@@ -488,6 +488,7 @@ function DirectPartie({ db, partieId, userId, demande, confirmTouch, reglages, c
     finMesuree.current = true;
     // #369 : une partie en ligne finie compte pour l'objectif « parties » de la semaine (pas une partie annulée).
     if (issue !== 'annulee') noterActivite('parties');
+    finirPartieEnLigne({ issue, classee: !!partie.rated, coups: (etat?.coups.length ?? 0) / 2 }); // #529 : série et badges
     track(EVENTS.partieEnLigneTerminee, {
       taille: partie.size, cadence: etat?.cadence ?? null, issue,
       raison: v.phase === 'annulee' ? 'annulee' : v.issue?.raison ?? null, coups: (etat?.coups.length ?? 0) / 2,
