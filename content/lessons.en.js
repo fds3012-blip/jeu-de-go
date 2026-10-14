@@ -397,5 +397,18 @@ export const LESSONS_EN = {
     { text: 'White took a miai point. Your turn to live.',
       ok: 'Miai: White took H1, you take J2. Two eyes.', no: 'Your eye at E1 is safe. Where is the second one?',
       refus: ['White takes J2: you have only one eye left.'] }
+  ] },
+  l38: { title: 'Playing elsewhere', desc: 'A small threat can wait', steps: [
+    { text: 'Tenuki (playing elsewhere): White pushes at E1, capture at the green point.' },
+    { text: 'Tap D1: if you block there, White connects at E9.',
+      geste: { no: 'Tap the point where you would block White, on the first line.' } },
+    { text: 'Capture or block: how many points apart?', choices: ['1', '3', '5'],
+      ok: 'Three: the capture is worth four points, the block only one.', no: 'Count: the capture is worth four points, the block only one.' },
+    { text: 'Your turn: White pushes at E9. Play the biggest move.',
+      ok: 'Tenuki: the threat is worth one point, your capture four.', no: 'Don’t follow White: look for the biggest move.',
+      refus: ['You block one point, and White connects at E1: three less.'] },
+    { text: 'White pushes at J5. Do you answer, or play elsewhere?',
+      ok: 'Elsewhere: you capture two stones, and the threat stays small.', no: 'The threat is worth one point. Look for something bigger.',
+      refus: ['You block one point, and White connects at A5: three less.'] }
   ] }
 };

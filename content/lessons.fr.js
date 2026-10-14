@@ -180,13 +180,19 @@ const L_REPRISE_M = L_REPRISE.map(r => [...r].reverse().join(''));
 const L_MIAI = [...V.slice(0, 6), 'OOOOOOO..', '.XXXXXO..', '...X.XO..'];
 const L_MIAI_D1 = [...V.slice(0, 6), 'OOOOOOO..', '.XXXXXO..', '.X.O.XO..'];
 const L_MIAI_M = [...V.slice(0, 6), '..OOOOOOO', '..OXXXXX.', '..OX.X.O.'];
+// Jouer ailleurs (tenuki) : Blanc est descendu en E1 ; le suivre en D1 ne vaut qu'un point, la prise E9 en vaut quatre.
+// Noir prend, Blanc avance en D1, Noir bloque en C1. `Q` : la même partie retournée de haut en bas ; `R` : retournée sur
+// la diagonale (lignes et colonnes échangées).
+const L_AILLEURS = ['.XOO.O...', '.XXXXO...', ...Array(5).fill('...XO....'), 'XXXXOOOOO', '....O....'];
+const L_AILLEURS_Q = [...L_AILLEURS].reverse();
+const L_AILLEURS_R = L_AILLEURS.map((_, y) => L_AILLEURS.map(r => r[y]).join(''));
 export const CHAPITRES = [
   { id: 'c1', titre: 'Les bases', intro: 'Sept leçons courtes pour jouer ta première partie.', fin: 'Tu connais les règles du go.', lecons: ['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7'] },
   // Chapitre en cours d'écriture (`complet: false`) : sa dernière leçon ne ferme pas encore le chapitre.
   { id: 'c2', titre: 'L’ouverture', intro: 'Où poser tes premières pierres.', lecons: ['l8', 'l27', 'l29', 'l30', 'l31'], complet: false },
   { id: 'c3', titre: 'Capturer et sauver', intro: 'Des pièges pour prendre plus de pierres.', lecons: ['l9', 'l10', 'l11', 'l26'], complet: false },
   { id: 'c4', titre: 'Vie et mort', intro: 'Quand un groupe vit, quand il meurt.', lecons: ['l12', 'l13', 'l14', 'l17', 'l24', 'l25', 'l37'], complet: false },
-  { id: 'c5', titre: 'Fin de partie et comptage', intro: 'Finir proprement, puis compter juste.', lecons: ['l15', 'l16', 'l22', 'l23', 'l32', 'l33'], complet: false },
+  { id: 'c5', titre: 'Fin de partie et comptage', intro: 'Finir proprement, puis compter juste.', lecons: ['l15', 'l16', 'l22', 'l23', 'l32', 'l33', 'l38'], complet: false },
   { id: 'c6', titre: 'Formes et tesuji', intro: 'Les bonnes formes et les coups malins du go.', lecons: ['l18', 'l19', 'l20', 'l21', 'l34', 'l35', 'l36'], complet: false }
 ];
 export const LESSONS = [
@@ -680,6 +686,24 @@ export const LESSONS = [
       text: 'À toi : deux endroits ouverts. Joue dans le bon ordre.',
       ok: 'Sente d’abord : Blanc relie, puis tu prends la pierre.', no: 'Cherche le coup qui oblige Blanc à répondre.',
       refus: [{ points: ['E1'], no: 'La prise d’abord : Blanc sauve ses pierres en E8. Deux points de moins.' }] }
+  ] },
+  { id: 'l38', title: 'Jouer ailleurs', desc: 'Une petite menace peut attendre', steps: [
+    { kind: 'info', rows: L_AILLEURS, geste: { pose: 'E9' }, demo: [{ pose: 'E9', couleur: 'B' }, { pose: 'D1', couleur: 'W' }, { pose: 'C1', couleur: 'B' }],
+      text: 'Tenuki (jouer ailleurs) : Blanc avance en E1, prends au point vert.' },
+    { kind: 'info', rows: L_AILLEURS, geste: { touche: ['D1'], no: 'Touche le point où tu bloquerais Blanc, sur le premier rang.' },
+      demo: [{ pose: 'D1', couleur: 'B' }, { pose: 'E9', couleur: 'W' }],
+      text: 'Touche D1 : si tu bloques là, Blanc relie en E9.' },
+    { kind: 'quiz', rows: L_AILLEURS,
+      text: 'Prendre ou bloquer : combien de points d’écart ?', choices: ['1', '3', '5'], answer: 1,
+      ok: 'Trois : la prise vaut quatre points, le blocage un seul.', no: 'Compte : la prise vaut quatre points, le blocage un seul.' },
+    { kind: 'move', rows: L_AILLEURS_Q, accept: ['E1'],
+      text: 'À toi : Blanc avance en E9. Joue le plus gros.',
+      ok: 'Tenuki : sa menace ne vaut qu’un point, ta prise quatre.', no: 'Ne suis pas Blanc : cherche le plus gros coup.',
+      refus: [{ points: ['D9'], no: 'Tu bloques un point, et Blanc relie en E1 : trois de moins.' }] },
+    { kind: 'move', rows: L_AILLEURS_R, accept: ['A5'],
+      text: 'Blanc avance en J5. Réponds-tu, ou joues-tu ailleurs ?',
+      ok: 'Ailleurs : tu prends deux pierres, et sa menace reste petite.', no: 'Sa menace vaut un point. Cherche plus gros.',
+      refus: [{ points: ['J6'], no: 'Tu bloques un point, et Blanc relie en A5 : trois de moins.' }] }
   ] },
   { id: 'l18', title: 'Les bonnes formes', desc: 'Bouche du tigre et bambou', steps: [
     { kind: 'touche', rows: L_COUPE, accept: ['D5'],

@@ -147,6 +147,8 @@ export const THEMES_DE_LECON: Readonly<Record<string, readonly Theme[]>> = {
   l36: ['relier-couper', 'prise-en-retour'],
   // #539 : les points miai (l37).
   l37: ['vie-mort'],
+  // #539 : jouer ailleurs (l38).
+  l38: ['fin-de-partie'],
 };
 
 /**

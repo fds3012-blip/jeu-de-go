@@ -252,6 +252,12 @@ function motif(id: string, W: string, C: string): ReactElement {
       <circle cx="32" cy="62" r="9" fill={C} stroke={W} strokeWidth="2.6" />
       <circle cx="68" cy="62" r="9" fill={C} stroke={W} strokeWidth="2.6" />
     </>);
+    // Jouer ailleurs : une flèche qui part de côté, vers la pierre à prendre.
+    case 'l38': return (<>
+      <circle cx="34" cy="64" r="8" fill={W} />
+      <path d="M40 52Q50 30 64 32M58 26 64 32 58 38" stroke={W} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <circle cx="68" cy="58" r="10" fill={C} stroke={W} strokeWidth="2.6" />
+    </>);
     default: return <circle cx="50" cy="50" r="14" fill={W} />;
   }
 }

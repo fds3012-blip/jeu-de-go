@@ -113,7 +113,7 @@ const JARGON: [RegExp, IdMot][] = [
   [/prisonnier/i, 'prisonnier'], [/\bpass(e|es|er|é|ez)\b/i, 'passe'], [/semeai|course aux libert/i, 'semeai'], [/échelle/i, 'echelle'],
   [/\bfilet\b/i, 'filet'], [/prise en retour/i, 'priseEnRetour'], [/pierres? mortes?/i, 'pierresMortes'], [/\bdame\b|point neutre/i, 'dame'],
   [/suicide/i, 'suicide'], [/\bgroupes?\b/i, 'groupe'], [/point vital/i, 'pointVital'],
-  [/san-san/i, 'sanSan'], [/komoku/i, 'komoku'], [/kakari/i, 'kakari'], [/\btsuke\b/i, 'tsuke'], [/kosumi/i, 'kosumi'], [/watari/i, 'watari'], [/\bmiai\b/i, 'miai'],
+  [/san-san/i, 'sanSan'], [/komoku/i, 'komoku'], [/kakari/i, 'kakari'], [/\btsuke\b/i, 'tsuke'], [/kosumi/i, 'kosumi'], [/watari/i, 'watari'], [/tenuki/i, 'tenuki'], [/\bmiai\b/i, 'miai'],
 ];
 
 describe('chaque mot du go employé dans l’interface a sa définition (#362)', () => {

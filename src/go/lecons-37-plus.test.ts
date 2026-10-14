@@ -11,7 +11,9 @@ import { imagesDemo, mots } from '../content/demo';
 import { ACQUIS } from '../content/acquis';
 import { THEMES_DE_LECON } from '../content/themes';
 import { fromRows } from './position';
-import { isLegal, play, type Position } from './rules';
+import { isLegal, neighbors, play, type Position } from './rules';
+import { score } from './score';
+import { meilleursCoups, valeursDesCoups } from './preuve-fin-de-partie';
 import { fromLabel, toLabel } from './coords';
 import { coupsGagnants, defautsDeZone, evaluer, yeuxDuGroupe } from './preuve-vie-mort';
 
@@ -30,8 +32,32 @@ const avec = (rows: string[], toPlay: 1 | 2) => fromRows(rows, toPlay).pos;
 /** Joue une suite de coups (étiquettes ou « passe »), en alternant à partir du camp au trait. */
 const suite = (pos: Position, coups: string[]) => coups.reduce((p, c) => ok(play(p, at(c))), pos);
 
+/** Noir moins Blanc, règle japonaise (territoire et prisonniers), sans komi. */
+const japonais = (pos: Position) => { const s = score(pos, 0, 'japanese'); return s.black - s.white; };
+const surfaces = { regle: 'chinese' as const };
+
+/** Endroits encore ouverts : les points vides dont la région vide touche les deux couleurs. */
+function ouverts(pos: Position): number[] {
+  const nb = neighbors(N), vu = new Set<number>(), out: number[] = [];
+  for (let p = 0; p < N * N; p++) {
+    if (pos.board[p] || vu.has(p)) continue;
+    const region: number[] = [], pile = [p], bord = new Set<number>();
+    vu.add(p);
+    while (pile.length) {
+      const q = pile.pop()!;
+      region.push(q);
+      for (const r of nb[q]) {
+        if (pos.board[r]) bord.add(pos.board[r]);
+        else if (!vu.has(r)) { vu.add(r); pile.push(r); }
+      }
+    }
+    if (bord.size === 2) out.push(...region);
+  }
+  return out.sort((a, b) => a - b);
+}
+
 const LENT = 60_000;
-const IDS = ['l37'];
+const IDS = ['l37', 'l38'];
 
 describe('leçons 37 et suivantes : place dans le programme (#539)', () => {
   it('chaque leçon a 4 à 6 étapes, sa phrase de fin et sa série de pratique', () => {
@@ -42,8 +68,9 @@ describe('leçons 37 et suivantes : place dans le programme (#539)', () => {
       expect(THEMES_DE_LECON[id]?.length, id).toBeGreaterThan(0);
     }
   });
-  it('les points miai ferment « Vie et mort » ; l’ordre du chemin suit les chapitres', () => {
+  it('les points miai ferment « Vie et mort », jouer ailleurs « Fin de partie » ; l’ordre du chemin suit les chapitres', () => {
     const c = Object.fromEntries(CHAPITRES.map(x => [x.id, x]));
+    expect(c.c5.lecons.map(l => l.id)).toEqual(['l15', 'l16', 'l22', 'l23', 'l32', 'l33', 'l38']);
     expect(c.c4.lecons.map(l => l.id)).toEqual(['l12', 'l13', 'l14', 'l17', 'l24', 'l25', 'l37']);
     expect(LESSONS.map(l => l.id)).toEqual(CHAPITRES.flatMap(x => x.lecons.map(l => l.id)));
   });
@@ -139,4 +166,56 @@ describe('leçon 37 : les points miai', () => {
       expect(labels(coupsGagnants(ok(play(pos, at(l))), H2, ZONE_M, 'tuer')), l).toContain('J2');
     }
   }, LENT);
+});
+
+describe('leçon 38 : jouer ailleurs (tenuki)', () => {
+  const T = step<Info>('l38', 0).rows;
+  /** Les trois présentations de la même partie : telle quelle (Noir prend en E9), retournée (E1), sur la diagonale (A5). */
+  const CAS = [
+    { rows: T, prise: 'E9', bloque: 'D1', recule: 'C1' },
+    { rows: step<Move>('l38', 3).rows, prise: 'E1', bloque: 'D9', recule: 'C9' },
+    { rows: step<Move>('l38', 4).rows, prise: 'A5', bloque: 'J6', recule: 'J7' },
+  ];
+
+  it('les exercices sont la même partie, retournée de haut en bas, puis sur la diagonale', () => {
+    expect(CAS[1].rows).toEqual([...T].reverse());
+    expect(CAS[2].rows).toEqual(T.map((_, y) => T.map(r => r[y]).join('')));
+  });
+
+  for (const [i, c] of CAS.entries()) {
+    it(`${['l38.1', 'l38.4', 'l38.5'][i]} : deux endroits ouverts ; la prise ${c.prise} est le seul meilleur coup ; suivre Blanc en ${c.bloque} perd au moins 4 points (surfaces)`, () => {
+      const pos = avec(c.rows, 1), z = ouverts(pos);
+      expect(z).toHaveLength(5);
+      expect(meilleursCoups(pos, z, surfaces).map(lab)).toEqual([c.prise]);
+      const v = valeursDesCoups(pos, z, surfaces);
+      for (const [m, x] of v) if (m !== at(c.prise)) expect(v.get(at(c.prise))! - x, lab(m)).toBeGreaterThanOrEqual(4);
+      if (i > 0) {
+        const m = step<Move>('l38', i + 2);
+        expect(m.accept).toEqual([c.prise]);
+        expect(m.refus![0].points).toEqual([c.bloque]);
+        // La réfutation : après le blocage, Blanc relie à l'endroit de la prise (meilleur coup exact de Blanc).
+        expect(meilleursCoups(ok(play(pos, at(c.bloque))), z, surfaces).map(lab)).toContain(c.prise);
+      }
+    }, LENT);
+
+    it(`${['l38.1 à l38.3', 'l38.4', 'l38.5'][i]} : règle japonaise sur les suites montrées : prendre puis reculer, contre bloquer et laisser relier : 3 points`, () => {
+      const pos = avec(c.rows, 1);
+      const prise = suite(pos, [c.prise, c.bloque, c.recule]), bloque = suite(pos, [c.bloque, c.prise]);
+      expect(ouverts(prise)).toEqual([]);
+      expect(ouverts(bloque)).toEqual([]);
+      expect(prise.captures[1]).toBe(2);
+      expect(japonais(prise) - japonais(bloque)).toBe(3);
+      // La prise vaut 4 points (2 prisonniers, 2 de territoire) ; Blanc qui avance d'un pas, un seul.
+      expect(japonais(suite(pos, [c.prise, 'passe'])) - japonais(suite(pos, ['passe', c.prise]))).toBe(4);
+      expect(japonais(suite(pos, [c.bloque, 'passe'])) - japonais(suite(pos, ['passe', c.bloque, c.recule]))).toBe(1);
+    });
+  }
+
+  it('l38.1 et l38.2 : les démonstrations finissent sur ces suites ; le quiz donne l’écart compté', () => {
+    const pos = avec(T, 1);
+    expect(images(step<Info>('l38', 0)).at(-1)!.board).toEqual(suite(pos, ['E9', 'D1', 'C1']).board);
+    expect(images(step<Info>('l38', 1)).at(-1)!.board).toEqual(suite(pos, ['D1', 'E9']).board);
+    const q = step<Quiz>('l38', 2);
+    expect(q.choices[q.answer]).toBe(String(japonais(suite(pos, ['E9', 'D1', 'C1'])) - japonais(suite(pos, ['D1', 'E9']))));
+  });
 });

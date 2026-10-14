@@ -45,6 +45,7 @@ export const AIDE_DES_LECONS: Record<string, { fiche: Fiche; mot?: IdMot }> = {
   l14: { fiche: 'mots', mot: 'seki' }, l15: { fiche: 'mots', mot: 'dame' }, l16: { fiche: 'compter' },
   l30: { fiche: 'mots', mot: 'sanSan' }, l31: { fiche: 'mots', mot: 'kakari' },
   l34: { fiche: 'mots', mot: 'watari' },
+  l38: { fiche: 'mots', mot: 'tenuki' },
   l37: { fiche: 'mots', mot: 'miai' },
 };
 
