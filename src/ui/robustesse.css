@@ -18,8 +18,8 @@
 .bandeau-hors-ligne { color: var(--muted); }
 .bandeau-hors-ligne b { color: var(--text); font-weight: var(--fw-bold); }
 /* Écran étroit (320 px) : le détail saute, le bandeau tient sur une ligne. */
-/* #538 : sur l'accueil, le détail (ce qui marche hors ligne) reste : c'est le message. */
-@media (max-width: 359px) { .bandeau-hors-ligne:not([data-ou=accueil]) .bandeau-detail { display: none; } }
+/* #538 : sur l'accueil, le détail (ce qui marche hors ligne) reste à 320 px : c'est le message (classe `bandeau-suite`, pas cachée). */
+@media (max-width: 359px) { .bandeau-detail { display: none; } }
 
 .bandeau-mise-a-jour { background: color-mix(in srgb, var(--accent) 14%, var(--surface)); padding-right: 4px; }
 .bandeau-mise-a-jour .bandeau-texte { flex: 1; font-weight: var(--fw-medium); }

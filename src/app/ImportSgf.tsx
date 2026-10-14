@@ -17,6 +17,7 @@ import type { Color } from '../go/rules';
 import { EVENTS, track } from '../data/analytics';
 import { nombre, t } from '../content/i18n/secondaires';
 import { fr } from '../ui/typo';
+// #538 : styles de l'écran, chargés avec lui (morceau du Profil) ; plus dans le CSS initial (src/main.tsx).
 import '../ui/import.css';
 
 /** Visites de KataGo par position : limitées en 19 × 19 pour qu'une partie de 200 coups tienne en moins de 3 minutes. */

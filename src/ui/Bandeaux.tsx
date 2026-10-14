@@ -28,7 +28,7 @@ export function BandeauHorsLigne({ ou = 'reseau' }: { ou?: 'accueil' | 'reseau' 
     <p className="bandeau bandeau-hors-ligne" role="status" data-testid="bandeau-hors-ligne" data-ou={ou}>
       <IconeHorsLigne />
       <span><b>{t(accueil ? 'horsLigne.accueil' : 'horsLigne.bandeau')}</b>
-        <span className="bandeau-detail"> {t(accueil ? 'horsLigne.accueilDetail' : 'horsLigne.detail')}</span></span>
+        <span className={accueil ? 'bandeau-suite' : 'bandeau-detail'}> {t(accueil ? 'horsLigne.accueilDetail' : 'horsLigne.detail')}</span></span>
     </p>
   );
 }

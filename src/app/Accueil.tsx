@@ -99,6 +99,14 @@ interface Props {
 /** #528 : partie contre l'ordi interrompue (fermeture, veille, rechargement), à reprendre où elle s'est arrêtée. */
 export interface TuileReprise { id: Opponent['id']; nom: string; taille: Taille; coups: number; ouvrir: () => void }
 
+/**
+ * #538 : tuile qui a besoin du réseau, hors ligne : trait clair (le pointillé dit déjà « leçon »), pictogramme éteint,
+ * pastille neutre. En style en ligne : ces tuiles ne s'affichent que hors ligne, le CSS initial n'a pas à les porter.
+ */
+const INDISPO = { background: 'none', boxShadow: 'inset 0 0 0 1px var(--line)', cursor: 'default' } as const;
+const ETEINT = { filter: 'grayscale(1)', opacity: 0.45 } as const;
+const ETAT_INDISPO = { display: 'inline-flex', background: 'var(--surface-2)', color: 'var(--muted)' } as const;
+
 /** #487 : l'accueil a été montré épuré pendant cette session ; au retour après la première pierre, les tuiles arrivent en fondu. */
 let vuEpure = false;
 
@@ -272,14 +280,15 @@ function TuilesLentes({ l, horsLigne }: { l: TuileLentes; horsLigne: boolean }) 
     <div className="tuiles tuiles-lentes">
       {l.aJouer > 0 && (
         <button className={`tuile tuile-defi tuile-avant${horsLigne ? ' indispo' : ''}`} onClick={horsLigne ? undefined : l.ouvrir} data-testid="tuile-lente"
+          style={horsLigne ? INDISPO : undefined}
           aria-disabled={horsLigne || undefined}
           aria-label={horsLigne ? t('horsLigne.tuileAria', { nom: t('lente.accueil.aJouer', { n: l.aJouer }) }) : t('lente.accueil.aJouerAria', { n: l.aJouer })}>
-          <span className="tuile-pierres" aria-hidden="true"><span className="stone b" /><span className="stone w" /></span>
+          <span className="tuile-pierres" aria-hidden="true" style={horsLigne ? ETEINT : undefined}><span className="stone b" /><span className="stone w" /></span>
           <span>
             <small>{t('lente.accueil.tuile', { n: l.aJouer })}</small>
             <b>{t('lente.accueil.aJouer', { n: l.aJouer })}</b>
           </span>
-          <em className="tuile-etat" aria-hidden="true">{t(horsLigne ? 'horsLigne.tuile' : 'defi.accueil.tuileEtat')}</em>
+          <em className="tuile-etat" aria-hidden="true" style={horsLigne ? ETAT_INDISPO : undefined}>{t(horsLigne ? 'horsLigne.tuile' : 'defi.accueil.tuileEtat')}</em>
         </button>
       )}
       {l.recherche?.trouvee && (
@@ -312,16 +321,17 @@ function Tuile({ tuile, p, etat, defis }: { tuile: TuileDuJour; p: Props; etat: 
     const off = !!p.horsLigne;
     return (
       <button className={`tuile tuile-defi${avant}${off ? ' indispo' : ''}`} onClick={off ? undefined : defis.ouvrir} data-testid="tuile-defi"
+        style={off ? INDISPO : undefined}
         aria-disabled={off || undefined}
         aria-label={off ? t('horsLigne.tuileAria', { nom: t('defi.accueil.tuile', { n: defis.n }) }) : defis.adversaire
           ? `${t('defi.accueil.tuile', { n: 1 })}, ${t('aFaire.contre', { pseudo: defis.adversaire })}, ${t('defi.accueil.tuileEtat')}.`
           : t('defi.accueil.tuileAria', { n: defis.n })}>
-        <span className="tuile-pierres" aria-hidden="true"><span className="stone b" /><span className="stone w" /></span>
+        <span className="tuile-pierres" aria-hidden="true" style={off ? ETEINT : undefined}><span className="stone b" /><span className="stone w" /></span>
         <span>
           <small>{t('defi.accueil.tuile', { n: defis.n })}</small>
           <b>{defis.adversaire ? t('aFaire.contre', { pseudo: defis.adversaire }) : t('defi.accueil.tuileEtat')}</b>
         </span>
-        <em className="tuile-etat" aria-hidden="true">{t(off ? 'horsLigne.tuile' : 'defi.accueil.tuileEtat')}</em>
+        <em className="tuile-etat" aria-hidden="true" style={off ? ETAT_INDISPO : undefined}>{t(off ? 'horsLigne.tuile' : 'defi.accueil.tuileEtat')}</em>
       </button>
     );
   }
@@ -473,8 +483,8 @@ function TuileMode({ mode, p }: { mode: Mode; p: Props }) {
   if (p.horsLigne && besoinReseau(mode)) {
     const nom = t(mode === 'en_ligne' ? 'mode.enLigne' : 'mode.ami');
     return (
-      <button type="button" className="mode indispo" data-testid={`mode-${mode}`} aria-disabled="true" aria-label={t('horsLigne.tuileAria', { nom })}>
-        <span className={`mode-icone${mode === 'ami' ? ' mode-pierres' : ''}`} aria-hidden="true">
+      <button type="button" className="mode indispo" data-testid={`mode-${mode}`} aria-disabled="true" aria-label={t('horsLigne.tuileAria', { nom })} style={INDISPO}>
+        <span className={`mode-icone${mode === 'ami' ? ' mode-pierres' : ''}`} aria-hidden="true" style={ETEINT}>
           {mode === 'en_ligne' ? <IconeMode mode="en_ligne" /> : <><span className="stone b" /><span className="stone w" /></>}
         </span>
         <b>{nom}</b><small>{t('horsLigne.tuile')}</small>
