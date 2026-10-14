@@ -4,7 +4,8 @@
 // - Un seul essai par problème, sans indice : juste, le score monte ; faux, une erreur de plus.
 // - Aucun total de problèmes affiché (décision #137, règle de Florian) : le meilleur score est un record
 //   personnel de ce mode, gardé sur l'appareil sous MEILLEUR_COURSE_KEY (cité dans la politique de confidentialité).
-// - La course ne touche ni la cote du joueur, ni les problèmes réussis, ni la série.
+// - La course ne touche ni la cote du joueur, ni les problèmes réussis, ni la série. Depuis #529, la première course du
+//   jour avec au moins un problème juste rapporte de l'XP (xp.ts, `crediterCourse`).
 import { t } from '../content/i18n/secondaires';
 import { ECART_CIBLE } from './coteJoueur';
 import { URL_JEU } from './goDuJour';

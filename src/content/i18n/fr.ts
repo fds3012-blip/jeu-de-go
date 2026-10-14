@@ -147,6 +147,9 @@ export const fr = {
   'theme.kaya-clair': 'Kaya clair',
   'theme.ardoise': 'Ardoise',
   'theme.coquillage-dore': 'Coquillage doré',
+  'theme.cerisier': 'Cerisier',
+  'theme.jade': 'Jade',
+  'theme.kaya-ancien': 'Kaya ancien',
 
   // Niveau et XP (#109, #162) : barre de l'accueil, fête de niveau, pastille
   'niveau.barre': 'Niveau {niveau}',

@@ -30,7 +30,7 @@ export const CLES_REGLAGES: Readonly<Record<string, (v: unknown) => boolean>> = 
   langue: parmi('fr', 'en'),
   enLigne: parmi('direct', 'lente'),
   messagesCoupes: booleen,
-  themeGoban: parmi('kaya', 'kaya-clair', 'ardoise', 'coquillage-dore'),
+  themeGoban: parmi('kaya', 'kaya-clair', 'ardoise', 'coquillage-dore', 'cerisier', 'jade', 'kaya-ancien'),
 };
 
 /** Le serveur refuse une date plus d'un jour dans le futur. */
