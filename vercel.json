@@ -12,6 +12,14 @@
     { "source": "/regles-du-go", "destination": "/regles-du-go/index.html" },
     { "source": "/en/learn-go", "destination": "/en/learn-go/index.html" },
     { "source": "/en/go-rules", "destination": "/en/go-rules/index.html" },
+    { "source": "/go-pour-joueurs-echecs", "destination": "/go-pour-joueurs-echecs/index.html" },
+    { "source": "/en/go-for-chess-players", "destination": "/en/go-for-chess-players/index.html" },
+    { "source": "/hikaru-no-go", "destination": "/hikaru-no-go/index.html" },
+    { "source": "/en/hikaru-no-go", "destination": "/en/hikaru-no-go/index.html" },
+    { "source": "/go-pour-enfants", "destination": "/go-pour-enfants/index.html" },
+    { "source": "/en/go-for-kids", "destination": "/en/go-for-kids/index.html" },
+    { "source": "/vocabulaire-du-go", "destination": "/vocabulaire-du-go/index.html" },
+    { "source": "/en/go-terms", "destination": "/en/go-terms/index.html" },
     { "source": "/en", "destination": "/en/index.html" }
   ],
   "headers": [

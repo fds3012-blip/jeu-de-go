@@ -6,6 +6,8 @@
 //
 // Les champs `html` sont du HTML écrit ici (liens, gras) ; tout le reste est du texte, échappé par pages.ts.
 
+import { PAGES_VENIR } from './textesVenir';
+
 export type Langue = 'fr' | 'en';
 
 export interface Section {
@@ -29,6 +31,8 @@ export interface Page {
   traduction: string;
   /** Nom de la campagne dans le lien « Jouer maintenant » (utm_campaign, lu par PostHog dans l'app). */
   campagne: string;
+  /** Libellé court du lien vers cette page, dans le pied des autres pages de la même langue (#537). */
+  pied: string;
   titre: string;
   /** Description pour les moteurs (100 à 160 caractères). */
   description: string;
@@ -182,12 +186,13 @@ const REGLES_COURTES_EN = `<ol class="regles">
 <li><strong>When both players pass, you count.</strong> Each player scores their territory (the empty points they surround) plus their prisoners. White gets komi, usually 6.5 points, because Black played first. The higher total wins.</li>
 </ol>`;
 
-export const PAGES: readonly Page[] = [
+const PAGES_REFERENCEMENT: readonly Page[] = [
   {
     chemin: 'apprendre-le-go',
     langue: 'fr',
     traduction: 'en/learn-go',
     campagne: 'apprendre-le-go',
+    pied: 'Apprendre le go',
     titre: 'Apprendre le go gratuitement, en jouant | Mochi Go',
     description: 'Apprends le jeu de go en jouant : les règles en 5 points, une capture à essayer tout de suite, puis {lecons} leçons et plus de 100 problèmes. Gratuit.',
     apercu: 'Gratuit, sans pub. Débutants bienvenus : les règles en 5 points, {lecons} leçons, plus de 100 problèmes.',
@@ -237,6 +242,7 @@ export const PAGES: readonly Page[] = [
     langue: 'fr',
     traduction: 'en/go-rules',
     campagne: 'regles-du-go',
+    pied: 'Les règles du go',
     titre: 'Règles du go : le jeu expliqué simplement | Mochi Go',
     description: 'Les règles du jeu de go en 5 points, avec des schémas : libertés, capture, atari, ko, fin de partie et comptage. Et une capture à essayer tout de suite.',
     apercu: 'Les règles du go en 5 points, avec des schémas. Et une capture à essayer tout de suite.',
@@ -293,6 +299,7 @@ export const PAGES: readonly Page[] = [
     langue: 'en',
     traduction: 'apprendre-le-go',
     campagne: 'learn-go',
+    pied: 'Learn Go',
     titre: 'Learn Go for free, by playing | Mochi Go',
     description: 'Learn the game of Go by playing: the rules in 5 points, a capture to try right now, then {lecons} lessons and over 100 puzzles. Free, no ads.',
     apercu: 'Free, no ads. Beginners welcome: the rules in 5 points, {lecons} lessons, over 100 puzzles.',
@@ -342,6 +349,7 @@ export const PAGES: readonly Page[] = [
     langue: 'en',
     traduction: 'regles-du-go',
     campagne: 'go-rules',
+    pied: 'Go rules',
     titre: 'Go rules: the game explained simply | Mochi Go',
     description: 'The rules of Go in 5 points, with diagrams: liberties, capture, atari, ko, the end of the game and scoring. And a capture to try right now.',
     apercu: 'The rules of Go in 5 points, with diagrams. And a capture to try right now.',
@@ -394,6 +402,9 @@ export const PAGES: readonly Page[] = [
     ],
   },
 ];
+
+/** Toutes les pages : référencement (#472), puis pages d'entrée par cible (#537, textesVenir.ts). */
+export const PAGES: readonly Page[] = [...PAGES_REFERENCEMENT, ...PAGES_VENIR];
 
 /** Légendes des schémas (pages.ts, SCHEMAS). */
 export const LEGENDES: Record<Langue, Record<'libertes' | 'ko', string>> = {

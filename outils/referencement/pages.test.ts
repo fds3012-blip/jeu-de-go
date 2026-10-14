@@ -6,9 +6,10 @@ import { join } from 'node:path';
 import { gzipSync } from 'node:zlib';
 import { describe, expect, it } from 'vitest';
 import { reecrire, SITE } from '../apercus';
-import { chargerDemo, demoMinifiee, donneesStructurees, ecrireReferencement, lienApp, pageHtml, pageMentions, robots, sitemap, url } from './pages';
+import { chargerDemo, chargerRelais, demoMinifiee, relaisMinifie, donneesStructurees, ecrireReferencement, lienApp, pageHtml, pageMentions, robots, sitemap, url } from './pages';
 import { ADRESSE_MENTIONS, MENTIONS, champsACompleter } from '../../src/content/mentionsLegales';
 import { COMMUN, PAGES } from './textes';
+import { MOTS_VOCABULAIRE, mot } from './textesVenir';
 import { LECONS_INDEX } from '../../src/content/leconsIndex.gen';
 import { ALL_PUZZLES } from '../../src/content/puzzles';
 import { OPPONENTS } from '../../src/engine/simple';
@@ -16,7 +17,7 @@ import { LESSONS_EN } from '../../content/lessons.en.js';
 
 const demo = chargerDemo();
 const vercel = JSON.parse(readFileSync(new URL('../../vercel.json', import.meta.url), 'utf8')) as { rewrites: { source: string; destination: string }[] };
-const options = { polices: { titre: '/assets/b.woff2', texte: '/assets/z4.woff2', gras: '/assets/z7.woff2' }, demoJs: await demoMinifiee() };
+const options = { polices: { titre: '/assets/b.woff2', texte: '/assets/z4.woff2', gras: '/assets/z7.woff2' }, demoJs: await demoMinifiee(), relaisJs: await relaisMinifie() };
 const html = Object.fromEntries(PAGES.map(p => [p.chemin, pageHtml(p, options)]));
 
 const attr = (h: string, re: RegExp) => [...h.matchAll(re)].map(m => m[1]);
@@ -61,8 +62,11 @@ describe('démo de capture', () => {
 });
 
 describe('pages', () => {
-  it('quatre pages, en paires fr/en', () => {
-    expect(PAGES.map(p => p.chemin)).toEqual(['apprendre-le-go', 'regles-du-go', 'en/learn-go', 'en/go-rules']);
+  it('douze pages, en paires fr/en : référencement (#472), puis pages d’entrée par cible (#537)', () => {
+    expect(PAGES.map(p => p.chemin)).toEqual(['apprendre-le-go', 'regles-du-go', 'en/learn-go', 'en/go-rules',
+      'go-pour-joueurs-echecs', 'en/go-for-chess-players', 'hikaru-no-go', 'en/hikaru-no-go',
+      'go-pour-enfants', 'en/go-for-kids', 'vocabulaire-du-go', 'en/go-terms']);
+    expect(new Set(PAGES.map(p => p.campagne)).size, 'une campagne par page').toBe(PAGES.length);
     for (const p of PAGES) {
       const t = PAGES.find(x => x.chemin === p.traduction)!;
       expect(t.traduction).toBe(p.chemin);
@@ -145,8 +149,79 @@ describe('pages', () => {
     expect(html['regles-du-go'].match(/<figure class="schema">/g)).toHaveLength(2);
   });
 
+  it('le pied mène aux autres pages de la même langue, jamais à la page elle-même ni à l’autre langue', () => {
+    for (const p of PAGES) {
+      const pied = /<footer class="pied">([\s\S]*?)<\/footer>/.exec(html[p.chemin])![1];
+      const liens = attr(pied, /<a href="([^"]+)"/g);
+      const attendus = PAGES.filter(x => x.langue === p.langue && x.chemin !== p.chemin).map(x => `/${x.chemin}`);
+      expect(liens.slice(0, attendus.length)).toEqual(attendus);
+      expect(liens).not.toContain(`/${p.chemin}`);
+    }
+  });
+
   it('pages légères : moins de 15 Ko compressées, tout compris sauf les polices', () => {
     for (const p of PAGES) expect(gzipSync(html[p.chemin]).length, p.chemin).toBeLessThan(15 * 1024);
+  });
+});
+
+// #537 : un visiteur arrivé avec ses propres UTM les garde en cliquant « Jouer maintenant ».
+describe('relais des UTM (#537)', () => {
+  const { relayerUtm } = chargerRelais();
+  const bouton = '/?lang=fr&utm_source=mochi-go&utm_medium=page&utm_campaign=go-echecs';
+
+  it('sans UTM à l’arrivée (ou source invalide) : le lien du bouton ne change pas', () => {
+    expect(relayerUtm(bouton, '')).toBe(bouton);
+    expect(relayerUtm(bouton, '?ref=x')).toBe(bouton);
+    expect(relayerUtm(bouton, '?utm_source=%3Cscript%3E')).toBe(bouton);
+    expect(relayerUtm(bouton, `?utm_source=${'a'.repeat(65)}`)).toBe(bouton);
+  });
+
+  it('avec UTM : ceux de l’arrivée remplacent ceux de la page, qui passe en utm_content ; la langue reste', () => {
+    expect(relayerUtm(bouton, '?utm_source=reddit&utm_medium=social&utm_campaign=lancement'))
+      .toBe('/?lang=fr&utm_source=reddit&utm_medium=social&utm_campaign=lancement&utm_content=go-echecs');
+    // utm_content de l'arrivée gardé ; valeur invalide ignorée ; seulement la source : pas de medium ni de campagne inventés.
+    expect(relayerUtm(bouton, '?utm_source=club&utm_content=affiche-lyon&utm_term=a%20b'))
+      .toBe('/?lang=fr&utm_source=club&utm_content=affiche-lyon');
+  });
+
+  it('inliné dans chaque page, après les boutons, sans pouvoir fermer sa balise', async () => {
+    const js = await relaisMinifie();
+    expect(js).not.toMatch(/<\/script/i);
+    for (const p of PAGES) {
+      const h = html[p.chemin];
+      expect(h).toContain(`<script>${js}</script>`);
+      expect(h.lastIndexOf('class="cta"')).toBeLessThan(h.indexOf(`<script>${js}</script>`));
+    }
+  });
+});
+
+// #537 : le vocabulaire reprend le glossaire de l'app, sans renvoi à un schéma absent de la page.
+describe('vocabulaire du go (#537)', () => {
+  it('chaque mot existe dans le glossaire de l’app, dans les deux langues, sans coordonnée ni « Ici »', () => {
+    for (const l of ['fr', 'en'] as const) {
+      for (const id of Object.values(MOTS_VOCABULAIRE).flat()) {
+        const { nom, def } = mot(l, id);
+        expect(nom, id).toBeTruthy();
+        expect(def, `${l} ${id}`).not.toMatch(/\b[A-HJ-T](?:1[0-9]|[1-9])\b|\b(?:Ici|Here)\b/);
+        expect(def.length, `${l} ${id}`).toBeGreaterThan(20);
+      }
+    }
+  });
+
+  it('la page liste chaque mot (dt) avec sa définition, et la FAQ reprend les mêmes définitions', () => {
+    const n = Object.values(MOTS_VOCABULAIRE).flat().length + 2; // + goban et pierre
+    for (const [chemin, l] of [['vocabulaire-du-go', 'fr'], ['en/go-terms', 'en']] as const) {
+      const h = html[chemin];
+      expect(h.match(/<dt>/g)).toHaveLength(n);
+      expect(h).toContain(`<dt>${mot(l, 'atari').nom}</dt><dd>${mot(l, 'atari').def}</dd>`);
+      const p = PAGES.find(x => x.chemin === chemin)!;
+      expect(p.faq.find(f => /atari/i.test(f.q))!.r).toBe(mot(l, 'atari').def);
+    }
+  });
+
+  it('Hikaru no Go : la page dit qu’elle n’a aucun lien avec la série', () => {
+    expect(html['hikaru-no-go']).toContain('aucun lien avec la série');
+    expect(html['en/hikaru-no-go']).toContain('no link with the series');
   });
 });
 

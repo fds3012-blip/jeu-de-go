@@ -88,3 +88,10 @@ html:has(dialog.aide[open]) { overflow: hidden; }
 /* #530 : lien « Mentions légales » sous les questions fréquentes, cible de 44 px. */
 .aide-mentions { margin-top: var(--space-4); }
 .aide-mentions a { display: inline-flex; align-items: center; min-height: var(--cible-min); color: var(--accent-texte); font-weight: var(--fw-bold); }
+
+/* #537 : « Ton avis compte » au bas de la fiche « Questions » : un bloc discret, un bouton secondaire, le contact. */
+.aide-avis { margin-top: var(--space-6); padding: var(--space-4); border-radius: var(--radius); background: var(--surface);
+  display: flex; flex-direction: column; gap: var(--space-2); }
+.aide-avis h3 { margin: 0; font-family: var(--font-titre); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre); font-size: var(--fs-l); line-height: var(--lh-titre); }
+.aide-avis p { margin: 0; line-height: var(--lh-base); }
+.aide-avis .btn { align-self: flex-start; }

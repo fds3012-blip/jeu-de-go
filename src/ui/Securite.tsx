@@ -9,6 +9,8 @@ import { EMOTES, MESSAGES, MOTIFS_JOUEUR, MOTIFS_PROBLEME, TEXTE_MAX, bloquer, e
 import type { Db } from '../data/supabase';
 import { EVENTS, analyticsConfig, track } from '../data/analytics';
 import { tsec } from '../content/i18n/securite';
+import { tret } from '../content/i18n/retours';
+import { ouvrirAide } from '../app/ouvrirAide';
 import './securite.css';
 
 /** Ouvre ou ferme une boîte de dialogue modale native selon `ouvert`. */
@@ -187,6 +189,11 @@ export function FeuilleSignaler({ db, ouvert, onFermer, cible, compte, onCompte,
       <Feuille ouvert={ouvert} onFermer={onFermer} titre={titre} testId="feuille-signaler">
         <p>{fr(tsec('signaler.compte'))}</p>
         {onCompte && <button type="button" className="btn primary" onClick={() => { onFermer(); onCompte(); }}>{tsec('signaler.compteAction')}</button>}
+        {/* #537 : sans compte, « Nous écrire » propose aussi le formulaire de retours en 3 questions (dans l'aide). */}
+        {cible.type === 'ecrire' && (
+          <button type="button" className="btn" data-testid="ecrire-donner-avis"
+            onClick={() => { onFermer(); ouvrirAide({ fiche: 'questions', depuis: 'profil', avis: true }); }}>{tret('entree.action')}</button>
+        )}
       </Feuille>
     );
   }

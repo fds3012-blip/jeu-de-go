@@ -197,6 +197,9 @@ export const EVENTS = {
   // pseudo, la partie ni le problème.
   signalementEnvoye: 'signalement_envoye',
   joueurBloque: 'joueur_bloque',
+  // Retours en 3 questions (#537) : envoi accepté par le serveur. `conseil` (oui, peut_etre, non), `source` (ami, reseau,
+  // club, recherche, autre, ou null), `texte` (vrai : une réponse libre), `depuis` (aide, profil). Jamais le texte.
+  retourEnvoye: 'retour_envoye',
   // Messages en partie (#373) : `genre` (message, emote), `code` (message prédéfini), `mode` (direct, defi). Réglage
   // « Messages de l'adversaire » (`coupes`, `depuis` : partie). Ni la partie ni l'adversaire.
   messagePartieEnvoye: 'message_partie_envoye',

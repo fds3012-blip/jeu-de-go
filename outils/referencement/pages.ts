@@ -1,10 +1,11 @@
-// Pages de référencement (#472) : `/apprendre-le-go`, `/regles-du-go`, `/en/learn-go`, `/en/go-rules`, plus
+// Pages de référencement (#472) : `/apprendre-le-go`, `/regles-du-go`, `/en/learn-go`, `/en/go-rules`, et les pages
+// d'entrée par cible (#537, textesVenir.ts : joueurs d'échecs, Hikaru no Go, enfants, vocabulaire), plus
 // `sitemap.xml` et `robots.txt`, écrits dans dist/ au build. HTML statique et léger, sans le JS de l'app : du texte vrai
 // (outils/referencement/textes.ts), une mini démo de capture (demo.js, inlinée et minifiée, jamais dans le bundle de
 // l'app) avec sa version sans JS, et une seule action principale, « Jouer maintenant », qui ouvre l'app.
 // Polices : les fichiers de l'app (dist/assets, empreinte dans le nom), partagés avec elle : déjà en cache à l'ouverture.
 // Aucune mesure sur ces pages (aucune donnée personnelle) : le lien « Jouer maintenant » porte utm_campaign, que
-// PostHog lit à l'ouverture de l'app. Servies par les réécritures de vercel.json (testées par pages.test.ts).
+// PostHog lit à l'ouverture de l'app ; un visiteur arrivé avec ses propres UTM les garde (relais-utm.js). Servies par les réécritures de vercel.json (testées par pages.test.ts).
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { createContext, runInContext } from 'node:vm';
@@ -15,6 +16,20 @@ import { COMMUN, LEGENDES, PAGES, type Langue, type Page } from './textes';
 import { ADRESSE_MENTIONS, MENTIONS, champsACompleter, morceaux } from '../../src/content/mentionsLegales';
 
 const SOURCE_DEMO = new URL('./demo.js', import.meta.url);
+const SOURCE_RELAIS = new URL('./relais-utm.js', import.meta.url);
+
+/** relais-utm.js exécuté dans Node (#537), pour les tests. */
+export function chargerRelais(): { relayerUtm(href: string, search: string): string } {
+  const ctx = createContext({ URLSearchParams });
+  runInContext(readFileSync(SOURCE_RELAIS, 'utf8'), ctx);
+  return ctx as unknown as { relayerUtm(href: string, search: string): string };
+}
+
+/** relais-utm.js minifié, tel qu'inliné dans les pages. */
+export async function relaisMinifie(): Promise<string> {
+  const r = await transformWithEsbuild(readFileSync(SOURCE_RELAIS, 'utf8'), 'relais-utm.js', { minify: true, target: 'es2017', format: 'iife' });
+  return r.code.trim();
+}
 
 /** Fonctions de demo.js, exécutées dans Node pour dessiner les gobans de la version sans JS (et pour les tests). */
 export interface Demo {
@@ -183,6 +198,10 @@ figcaption{margin-top:8px;color:var(--muted);font-size:.875rem}
 .pied ul{list-style:none;display:flex;flex-wrap:wrap;gap:0 20px;padding:0;margin:0 0 8px}
 .pied a{display:inline-flex;align-items:center;min-height:44px}
 .pied p{margin:0}
+.glossaire{margin:0}
+.glossaire dt{font:700 1.0625rem/1.35 var(--font-ui);margin:18px 0 2px}
+.glossaire dt:first-child{margin-top:0}
+.glossaire dd{margin:0}
 `;
 
 // `optional` : jamais de saut de mise en page quand la police arrive (Lighthouse : CLS 0,1 à 0,2 avec `swap`). Préchargées,
@@ -196,7 +215,7 @@ function fontFaces(p: Polices): string {
 /** Script de tête : `js` sur <html> (démo à la place de la figure sans JS) et thème choisi dans le Profil de l'app. */
 const TETE = `(function(h){h.className='js';try{var t=JSON.parse(localStorage.getItem('go.settings.v1')||'{}').theme;if(t==='dark'||t==='light')h.setAttribute('data-theme',t)}catch(e){}})(document.documentElement)`;
 
-export interface Options { polices: Polices; demoJs: string }
+export interface Options { polices: Polices; demoJs: string; relaisJs: string }
 
 /** HTML complet d'une page. */
 export function pageHtml(p: Page, o: Options): string {
@@ -214,8 +233,8 @@ export function pageHtml(p: Page, o: Options): string {
   const apercu = echapper(remplir(p.apercu));
   const app = echapper(lienApp(p));
   const premier = demo.plateauDe(demo.DEFIS[0]);
-  const regles = PAGES.find(x => x.langue === p.langue && x.chemin !== p.chemin && /regles|rules/.test(x.chemin)) ?? p;
-  const apprendre = PAGES.find(x => x.langue === p.langue && /apprendre|learn/.test(x.chemin)) ?? p;
+  // #537 : le pied mène aux autres pages de la même langue (maillage interne pour les moteurs).
+  const voisines = PAGES.filter(x => x.langue === p.langue && x.chemin !== p.chemin);
   const sectionDemo = `<section id="demo" class="demo" aria-labelledby="demo-titre">
 <h2 id="demo-titre">${echapper(c.demoTitre)}</h2>
 <p>${echapper(c.demoIntro)}</p>
@@ -289,9 +308,8 @@ ${p.faq.map(f => `<h3>${echapper(f.q)}</h3>\n<p>${f.r}</p>`).join('\n')}
 </main>
 <footer class="pied">
 <ul>
-<li><a href="/${apprendre.chemin}">${echapper(c.piedApprendre)}</a></li>
-<li><a href="/${regles.chemin}">${echapper(c.piedRegles)}</a></li>
-<li><a href="/confidentialite">${echapper(c.confidentialite)}</a></li>
+${voisines.map(x => `<li><a href="/${x.chemin}">${echapper(x.pied)}</a></li>`).join('\n')}
+<li><a href="/confidentialite${p.langue === 'en' ? '?lang=en' : ''}">${echapper(c.confidentialite)}</a></li>
 <li><a href="${ADRESSE_MENTIONS[p.langue]}">${echapper(c.mentionsLegales)}</a></li>
 </ul>
 <p>${echapper(c.credits)}</p>
@@ -299,6 +317,7 @@ ${p.faq.map(f => `<h3>${echapper(f.q)}</h3>\n<p>${f.r}</p>`).join('\n')}
 </div>
 <script type="application/json" id="demo-textes">${jsonInline(c.demo)}</script>
 <script>${o.demoJs}</script>
+<script>${o.relaisJs}</script>
 </body>
 </html>
 `;
@@ -400,7 +419,7 @@ Sitemap: ${SITE}/sitemap.xml
 
 /** Écrit les pages, le sitemap et robots.txt dans `dossier` (dist/). */
 export async function ecrireReferencement(dossier: string): Promise<string[]> {
-  const o: Options = { polices: trouverPolices(dossier), demoJs: await demoMinifiee() };
+  const o: Options = { polices: trouverPolices(dossier), demoJs: await demoMinifiee(), relaisJs: await relaisMinifie() };
   const ecrits: string[] = [];
   const ecrire = (chemin: string, contenu: string) => {
     const f = join(dossier, chemin);
