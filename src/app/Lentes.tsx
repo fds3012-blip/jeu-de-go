@@ -31,7 +31,7 @@ const DELAIS: readonly DelaiJours[] = [1, 2, 3];
 /** Relecture de la recherche et des parties tant que l'écran est ouvert. */
 export const RELECTURE_LENTES_MS = 30_000;
 const ERREURS: Record<RefusLente, CleLente> = {
-  compte: 'lente.erreur.compte', limite: 'lente.limite', plafond: 'lente.plafond', miseAJour: 'lente.erreur.miseAJour', serveur: 'lente.erreur.serveur',
+  compte: 'lente.erreur.compte', limite: 'lente.limite', plafond: 'lente.plafond', miseAJour: 'lente.erreur.miseAJour', suspendu: 'lente.erreur.suspendu', serveur: 'lente.erreur.serveur',
 };
 const jours = (n: number) => t('defi.delai.jours', { n });
 

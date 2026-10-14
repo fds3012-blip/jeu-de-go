@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { jouer, passerJusquAuScore, plateau } from './plateau';
-import { demarrerParcours } from './revueFactice';
+import { COTE_JOUEUR_FORT, demarrerParcours } from './revueFactice';
 
 // Issue #34 : revue d'une partie terminée. `?komi=-100` (paramètre de test, voir src/app/bilan.ts) donne une fin
 // de partie déterministe : Noir gagne en passant. On joue quelques coups, on passe, puis on revoit la partie.
@@ -92,6 +92,8 @@ test("rejouer d'ici garde les coups joués jusqu'à la position choisie", async 
 
 // Issue #71 : une note sur le coup affiché (sceau sur la pierre, bande des coups) et la précision des deux joueurs.
 test('la revue note le coup affiché et montre la précision des deux joueurs', async ({ page }) => {
+  // #527 : notes détaillées (joueur de 10 kyu) ; en 3 catégories pour un débutant, voir e2e/decisions-527.spec.ts.
+  await page.addInitScript(c => localStorage.setItem('go.cote-joueur.v1', JSON.stringify(c)), COTE_JOUEUR_FORT);
   await partieCourte(page, ['E5', 'C3', 'G7']);
   await page.getByRole('button', { name: 'Revoir ma partie' }).click();
   await expect(page.getByRole('button', { name: 'Démarrer le bilan' })).toBeVisible({ timeout: 60_000 });

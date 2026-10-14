@@ -46,6 +46,7 @@ const FR = {
   'amis.erreur.pasAmi': 'Ce joueur n’est plus dans tes amis.',
   'amis.erreur.tropDeParties': 'Vous avez déjà 3 parties en cours. Finis-en une d’abord.',
   'amis.erreur.indisponible': 'Ce joueur n’est pas disponible.',
+  'amis.erreur.suspendu': 'Ton compte est suspendu : rien en ligne pour l’instant. L’ordi, les leçons et les problèmes restent ouverts.',
   'amis.erreur.compte': 'Crée ton compte et ton pseudo pour ajouter des amis.',
 } as const;
 
@@ -91,6 +92,7 @@ const EN: { readonly [K in CleAmis]: string } = {
   'amis.erreur.pasAmi': 'This player is no longer your friend.',
   'amis.erreur.tropDeParties': 'You already have 3 games going. Finish one first.',
   'amis.erreur.indisponible': 'This player isn’t available.',
+  'amis.erreur.suspendu': 'Your account is suspended: nothing online for now. The computer, lessons and puzzles are still open.',
   'amis.erreur.compte': 'Create your account and nickname to add friends.',
 };
 

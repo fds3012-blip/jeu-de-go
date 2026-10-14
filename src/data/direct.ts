@@ -8,6 +8,7 @@
 //   l'abandon par `resign_game`. La cote bouge une seule fois, par le serveur (`apply_game_rating`, #417).
 // Écran : src/app/Direct.tsx (chargé à la demande).
 import { CODE_COMPTE_REQUIS, CODE_PSEUDO_REQUIS } from './compteRequis';
+import { CODE_SUSPENDU } from './suspension';
 import { attenteDuRefus, CODE_ATTENTE_ABANDONS, type AttenteDirect } from './abandons';
 import type { Game } from './games';
 import type { Db } from './supabase';
@@ -21,11 +22,13 @@ export type Taille = 9 | 13 | 19;
  * Refus connus, traduits par l'écran. `miseAJour` : le serveur n'a pas encore la nouvelle `find_match`. `attente` (#442) :
  * parties quittées à répétition, le joueur attend avant de rejouer en direct.
  */
-export type RefusDirect = 'compte' | 'miseAJour' | 'introuvable' | 'attente' | 'serveur';
+export type RefusDirect = 'compte' | 'miseAJour' | 'introuvable' | 'attente' | 'suspendu' | 'serveur';
 
 export function refusDirect(erreur: unknown): RefusDirect {
   const code = (erreur as { code?: unknown } | null | undefined)?.code;
   if (code === CODE_COMPTE_REQUIS || code === CODE_PSEUDO_REQUIS) return 'compte';
+  // #531 : compte suspendu par l'équipe.
+  if (code === CODE_SUSPENDU) return 'suspendu';
   // PostgREST : fonction inconnue avec ces paramètres (migration pas encore appliquée).
   if (code === 'PGRST202') return 'miseAJour';
   if (code === 'P0002') return 'introuvable';

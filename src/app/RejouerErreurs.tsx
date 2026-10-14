@@ -7,7 +7,7 @@
 // qui parle toujours de ce que le joueur emporte, jamais de ce qu'il a raté.
 import { useEffect, useRef, useState } from 'react';
 import { Board } from '../ui/Board';
-import { Mochi } from '../ui/Mochi';
+import { PortraitMochi } from '../ui/Portrait';
 import { SceauNote } from '../ui/SceauNote';
 import { Confettis } from '../ui/Confettis';
 import { marquerXpVue, useExercice } from '../ui/celebrations';
@@ -21,7 +21,8 @@ import { t as tr } from '../content/i18n/secondaires';
 import { play, type Color, type Position } from '../go/rules';
 import { analyseRevue } from '../engine';
 import { EVENTS, track } from '../data/analytics';
-import { NOTE_INFO, type AnalyseRevue } from './revue';
+import type { AnalyseRevue } from './revue';
+import { affichageNote, revueSimpleAppareil } from './categoriesRevue';
 import {
   consigne, ESSAIS, idPartie, jugerEssai, jugerParRecherche, lireParties, marquerPartie, phraseFin, phraseMontrePourquoi, phrasePasEncore,
   phraseTrouvePourquoi, score, titreFin, VISITES_JUGE, XP_REJEU_KEY, type ErreurARejouer, type Jugement, type ResultatRejeu,
@@ -51,6 +52,8 @@ type Etat = 'cherche' | 'juge' | 'trouve' | 'montre';
 export function RejouerErreurs({ sgf, positions, komi, analyses, erreurs, joueur, adversaire, confirmTouch = false, onRetour }: Props) {
   const size = positions[0].size;
   const [k, setK] = useState(0);
+  // #527 : jusqu'à 15 kyu, la catégorie (Erreur, Coup imprécis) plutôt que la note détaillée, comme le bilan.
+  const [simple] = useState(revueSimpleAppareil);
   const [etat, setEtat] = useState<Etat>('cherche');
   const [essais, setEssais] = useState(0);
   const [faux, setFaux] = useState<number | null>(null);
@@ -175,7 +178,7 @@ export function RejouerErreurs({ sgf, positions, komi, analyses, erreurs, joueur
       <div className="revue rejeu-fin">
         {tete()}
         <section className="rejeu-fin-carte" aria-labelledby="rejeu-fin-titre">
-          <div className="rejeu-fin-mochi"><Mochi size={84} /></div>
+          <div className="rejeu-fin-mochi"><PortraitMochi humeur={s.trouvees > 0 ? 'fier' : 'content'} taille={84} decoratif /></div>
           <h3 id="rejeu-fin-titre" className="rejeu-fin-titre">{fr(titreFin(s))}</h3>
           <ol className="rejeu-fin-pastilles" aria-label={tr('rejeu.resultats')}>
             {resultats.map((r, i) => (
@@ -215,16 +218,17 @@ export function RejouerErreurs({ sgf, positions, komi, analyses, erreurs, joueur
       ? { meilleur: e.meilleur, mistake: e.joue >= 0 ? e.joue : undefined, last: avant.lastMove }
       : { last: avant.lastMove, mistake: faux ?? undefined };
   const derniere = k + 1 >= erreurs.length;
+  const vue = affichageNote(e, size, simple);
 
   return (
     <div className="revue revue-rejeu rejeu-erreurs" data-etat={etat}>
       {tete(tr('rejeu.compteur', { i: k + 1, n: erreurs.length }))}
       <div className={`revue-mochi rejeu-bulle${etat === 'trouve' ? ' revue-rejeu-ok' : ''}`}>
-        <Mochi size={40} />
+        <PortraitMochi humeur={etat === 'trouve' ? 'content' : 'neutre'} taille={40} decoratif />
         <div className="rejeu-texte">
           <p className="rejeu-note">
-            <SceauNote note={e.note} taille={20} />
-            <span>{tr('rejeu.noteCoup', { note: NOTE_INFO[e.note].libelle, coup: e.coup })}</span>
+            <SceauNote note={vue.sceau} taille={20} />
+            <span>{tr('rejeu.noteCoup', { note: vue.libelle, coup: e.coup })}</span>
           </p>
           <p key={`${k}-${etat}-${essais}-${inconnu}`} className="rejeu-phrase" aria-live="polite">{fr(phrase)}</p>
         </div>

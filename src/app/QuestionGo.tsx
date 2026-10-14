@@ -7,7 +7,7 @@
 // la page garde sous elle la place du bandeau (accueil.css, `--accord-h`) : rien ne se recouvre, à 320 px comme à 390 px.
 // Lecteurs d'écran : une région nommée par la question (titre de niveau 2) ; le bandeau, s'il est là, garde le focus
 // d'arrivée (#485), puis Tab mène à ses choix et à la page.
-import { PortraitMochi } from '../ui/Portrait';
+import { Mochi } from '../ui/Mochi';
 import { fr } from '../ui/typo';
 import { t } from '../content/i18n';
 import type { ChoixGo } from './connaitGo';
@@ -15,7 +15,7 @@ import type { ChoixGo } from './connaitGo';
 export function QuestionGo({ onChoisir }: { onChoisir: (c: ChoixGo) => void }) {
   return (
     <section className="question-go" aria-labelledby="question-go-titre" data-testid="question-go">
-      <PortraitMochi taille={72} decoratif />
+      <Mochi size={72} />
       <h2 id="question-go-titre">{fr(t('connait.titre'))}</h2>
       <p>{fr(t('connait.texte'))}</p>
       <div className="question-go-reponses" role="group" aria-labelledby="question-go-titre">

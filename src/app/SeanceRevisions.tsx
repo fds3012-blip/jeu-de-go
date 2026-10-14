@@ -17,6 +17,7 @@ import { ecrireEtatAppareil, fileAppareil, lireErreursAppareil, lireEtatAppareil
 import { gagnerXp, noterActivite } from './xp';
 import { validerDefi } from './defiAppareil';
 import { Mochi } from '../ui/Mochi';
+import { PortraitMochi } from '../ui/Portrait';
 import { Confettis } from '../ui/Confettis';
 import { Etapes } from '../ui/Lecteur';
 import { marquerXpVue, useExercice } from '../ui/celebrations';
@@ -139,7 +140,7 @@ export function SeanceRevisions({ confirmTouch, celebrer, compte, onFin }: Props
       <div className="revue seance-revisions rejeu-fin">
         <Tete onRetour={onFin} />
         <section className="rejeu-fin-carte" aria-labelledby="seance-fin-titre">
-          <div className="rejeu-fin-mochi"><Mochi size={84} /></div>
+          <div className="rejeu-fin-mochi"><PortraitMochi humeur={reussis > 0 ? 'fier' : 'content'} taille={84} decoratif /></div>
           <h3 id="seance-fin-titre" className="rejeu-fin-titre">{fr(t('seance.finTitre', { n: reussis, total }))}</h3>
           <ol className="rejeu-fin-pastilles" aria-label={t('seance.titre')}>
             {exercices.map((x, i) => {

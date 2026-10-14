@@ -44,6 +44,9 @@ import { fusionner, nettoyer } from '../src/app/reglagesCompte';
 // Réglages du compte (#448) : `enregistrer_reglages`, « dernier changement gagne » clé par clé (à égalité, la valeur
 // gardée reste), vrai compte exigé ; liste blanche de supabase/migrations/20261006123100_reglages_compte.sql
 // (src/app/reglagesCompte.ts). `reglages` : réglages gardés par compte.
+// Modération (#531) : `suspendus` (identifiants de comptes suspendus) : files, défis, amis et messages refusés avec
+// JGU01 (détail : fin de la suspension), comme supabase/migrations/20261014001100_moderation.sql ; pseudos interdits
+// (`pseudo_autorise`, refus JGP02 à l'enregistrement) sur une courte liste d'exemples (la vraie liste est au serveur).
 
 export const SUPABASE = 'https://supabase.e2e.test';
 export const CODE = '123456';
@@ -120,6 +123,10 @@ export function fauxServeur() {
   const rappels: { de: string; a: string; numero: number }[] = [];
   /** Réglages du compte (#448), par identifiant de compte. */
   const reglages = new Map<string, Record<string, { v: unknown; t: number }>>();
+  /** #531 : comptes suspendus par l'équipe. */
+  const suspendus = new Set<string>();
+  const FONCTIONS_SUSPENDUES = ['find_match', 'chercher_partie_lente', 'creer_defi', 'rejoindre_defi', 'defier_ami', 'demander_ami', 'dire_en_partie'];
+  const pseudoInterdit = (p: string) => /connard|salope|fuck/i.test(p) || /^(admin|mochi)$/i.test(p);
   const identite = (provider: string, email?: string): Identite => ({ identity_id: `identite-${++nIdentite}`, provider, email });
 
   const jwt = (u: Utilisateur) => {
@@ -326,6 +333,14 @@ export function fauxServeur() {
     if (req.method() === 'OPTIONS') return json({});
     appels.push(`${req.method()} ${chemin}${url.search}`);
     const u = qui(route);
+    // #531 : compte suspendu, refusé avant toute autre règle (déclencheurs du serveur).
+    if (u && suspendus.has(u.id) && FONCTIONS_SUSPENDUES.some(f => chemin === `/rest/v1/rpc/${f}`)) {
+      return json({ code: 'JGU01', message: 'Ton compte est suspendu', details: '2026-10-20T08:00:00Z', hint: null }, 400);
+    }
+    if (chemin === '/rest/v1/rpc/pseudo_autorise') {
+      const { p_pseudo } = req.postDataJSON() as { p_pseudo: string };
+      return json(!pseudoInterdit(p_pseudo));
+    }
     // #425 : relectures retardées (la partie, la pendule, le constat du temps), pas les écritures.
     if (lenteur && ((req.method() === 'GET' && chemin === '/rest/v1/games') || chemin === '/rest/v1/rpc/pendule_direct'
       || chemin === '/rest/v1/rpc/victoire_au_temps')) await new Promise(r => setTimeout(r, lenteur));
@@ -917,6 +932,7 @@ export function fauxServeur() {
       const p = profiles.find(x => x.id === id);
       if (!u || u.anonyme || !p || u.id !== id) return json({ code: '42501', message: 'denied' }, 403);
       if (profiles.some(x => x.id !== id && String(x.username ?? '').toLowerCase() === username.toLowerCase())) return json({ code: '23505', message: 'duplicate' }, 409);
+      if (pseudoInterdit(username)) return json({ code: 'JGP02', message: 'Ce pseudo n’est pas accepté' }, 400);
       p.username = username;
       return json(p);
     }
@@ -976,7 +992,7 @@ export function fauxServeur() {
   const canauxActifs = (prefixe: string) => [...abonnes].filter(a => !a.fige).flatMap(a => [...a.canaux.keys()]).filter(t => t.startsWith(`realtime:${prefixe}`)).length;
   return { traiter, brancherTempsReel, notifier, fileLente, tacheLentes, avancerHorloge, abandons, noterAbandon, ralentirLectures, figerTempsReel, canauxActifs, pousses, pousserPartie, appels, games, defis, notifications, partiesPerso, partagees, profiles, ratingHistory, emailsEnvoyes, sessionAnonyme, file, pendules,
     compteExistant, compteGoogle, compteSocial, relierIdentite, liaison, utilisateur, sessionCompte, autorisations, amities,
-    signalements, blocages, messagesPartie, goDuJour, rappels, reglages };
+    signalements, blocages, messagesPartie, goDuJour, rappels, reglages, suspendus };
 }
 
 export type FauxServeur = ReturnType<typeof fauxServeur>;
