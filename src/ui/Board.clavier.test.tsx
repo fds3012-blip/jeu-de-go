@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { fromLabel } from '../go/coords';
 import { fromRows } from '../go/position';
 import { Board } from './Board';
-import { annonceAtari, annonceConfirmation, annonceCoup, deplacerCurseur, nomIntersection } from './boardA11y';
+import { annonceAtari, annonceConfirmation, annonceCoup, deplacerCurseur, focusAuClavier, nomIntersection } from './boardA11y';
 
 // Issue #116 : le goban se joue au clavier et se lit au lecteur d'écran.
 const N = 9;
@@ -93,6 +93,16 @@ describe('noms lus', () => {
     expect(html).not.toContain('tabindex');
     expect(html).not.toContain('gridcell');
     expect(html).not.toContain('lire-plateau');
+  });
+});
+
+describe('curseur caché à la souris et au doigt', () => {
+  it('suit :focus-visible', () => {
+    expect(focusAuClavier({ matches: s => s === ':focus-visible' })).toBe(true);
+    expect(focusAuClavier({ matches: () => false })).toBe(false);
+  });
+  it('se montre si le navigateur ne connaît pas :focus-visible', () => {
+    expect(focusAuClavier({ matches: () => { throw new SyntaxError(':focus-visible'); } })).toBe(true);
   });
 });
 

@@ -4,7 +4,7 @@ import { C, M, R, R_NOIR, VARIANTES_COQUILLAGE, coordCenter, dansFenetre, diffBo
 import { useThemeGoban } from '../app/settings';
 import { noterPierrePosee, pierrePosee, toucherPlateau, type LieuPierre } from '../app/premierePierre';
 import { t } from '../content/i18n';
-import { CURSEUR, TOUCHE_LIRE, annonceApresCoup, annonceConfirmation, deplacerCurseur, lirePlateau, nomIntersection, type NomsCamps } from './boardA11y';
+import { CURSEUR, TOUCHE_LIRE, annonceApresCoup, annonceConfirmation, deplacerCurseur, focusAuClavier, lirePlateau, nomIntersection, type NomsCamps } from './boardA11y';
 import './board.css';
 
 export interface BoardMarks {
@@ -335,7 +335,7 @@ export function Board({ size, board, toPlay = 1, marks = {}, interactive = false
       <svg ref={ref} className="board" viewBox={`${vb.x} ${vb.y} ${vb.span} ${vb.span}`} role={jouable ? 'grid' : 'img'} aria-label={t('plateau.aria', { size })}
         data-fenetre={fen ? `${toLabel(fen.y * size + fen.x, size)}:${toLabel((fen.y + fen.k - 1) * size + fen.x + fen.k - 1, size)}` : undefined}
         tabIndex={jouable ? 0 : undefined} aria-describedby={jouable ? `${uid}-aide` : undefined} aria-activedescendant={jouable ? idCase(cur) : undefined} aria-rowcount={jouable ? (fen?.k ?? size) : undefined} aria-colcount={jouable ? (fen?.k ?? size) : undefined}
-        onKeyDown={jouable ? onKey : undefined} onFocus={jouable ? () => setFocus(true) : undefined} onBlur={jouable ? () => setFocus(false) : undefined}
+        onKeyDown={jouable ? onKey : undefined} onFocus={jouable ? e => { setFocus(true); setClavier(focusAuClavier(e.currentTarget)); } : undefined} onBlur={jouable ? () => setFocus(false) : undefined}
         onPointerDown={jouable ? () => setClavier(false) : undefined}
         onPointerUp={onUp} onPointerMove={onMove} onPointerLeave={onLeave}>
         {defsDe(theme)}

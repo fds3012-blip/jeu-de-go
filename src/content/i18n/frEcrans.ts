@@ -565,6 +565,9 @@ export const frEcrans = {
   'aide.question.horsLigne.reponse': 'Oui, une fois l’appli ouverte une première fois : l’ordi, les leçons et les problèmes tournent sur ton téléphone. Pour Bambou et les plus forts, télécharge l’IA dans Profil, Réglages. Les parties en ligne et contre tes amis demandent internet.',
   'aide.question.supprimer': 'Comment supprimer mon compte ?',
   'aide.question.supprimer.reponse': 'Profil, puis Mon compte, puis « Supprimer mon compte ». C’est définitif : ton profil, ton pseudo, ta progression et ton e-mail sont effacés.',
+  // #116 : le plateau au clavier et au lecteur d'écran, avec la touche L (« Lire le plateau »).
+  'aide.question.clavier': 'Je peux jouer au clavier ?',
+  'aide.question.clavier.reponse': 'Oui. Appuie sur Tab jusqu’au plateau, puis sur les flèches pour choisir un point. Entrée ou Espace pose ta pierre. La touche L lit le plateau, ligne par ligne. Avec un lecteur d’écran, chaque case et chaque coup sont annoncés.',
   'aide.regles.intro': 'Le go en 5 idées. Tout le reste en découle.',
   'aide.compter.intro': 'À la fin, qui a gagné ? Voici comment on compte.',
   'aide.mots.chercher': 'Chercher un mot',
