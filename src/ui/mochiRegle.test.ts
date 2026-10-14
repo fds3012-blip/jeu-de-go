@@ -26,6 +26,7 @@ const REGLE: Record<string, Usage> = {
   'src/app/VeilleFile.tsx': { sceau: 2, portrait: 0, pourquoi: 'en ligne : attente dans la file' },
   'src/ui/BilanSemaine.tsx': { sceau: 1, portrait: 0, pourquoi: 'carte de l’accueil (la semaine), pas une partie' },
   'src/ui/EcranErreur.tsx': { sceau: 1, portrait: 0, pourquoi: 'écran d’erreur' },
+  'src/ui/Retours.tsx': { sceau: 1, portrait: 0, pourquoi: 'ton avis en 3 questions : « Merci ! » (confirmation)' },
   // ---------- Portrait seul : Mochi parle de ta partie ou de ton exercice ----------
   'src/app/CourseProblemes.tsx': { sceau: 0, portrait: 1, pourquoi: 'problèmes : énoncé' },
   'src/app/Game.tsx': { sceau: 0, portrait: 3, pourquoi: 'partie guidée (Mochi joue Blanc), fin de partie guidée, bouton « Conseil »' },
