@@ -1506,7 +1506,7 @@ export const PROBLEMES_EN: Record<string, TexteProbleme> = {
   aa02: {
     title: 'One stone for six',
     prompt: 'Capture the marked stones in two moves or fewer.',
-    explanation: 'Well done! C1 puts itself in atari on purpose. If White captures it at D1, its stones have only one liberty left, C1: you play there again and capture 6. That’s a snapback. Otherwise, you capture at D1. D1 first didn’t work: White captured at C1 and connected to B1.',
+    explanation: 'Well done! C1 puts itself in atari (one liberty left) on purpose. If White captures it at D1, its stones have only one liberty left, C1: you play there again and capture 6. That’s a snapback. Otherwise, you capture at D1. D1 first didn’t work: White captured at C1 and connected to B1.',
     refutation: 'Not quite. White plays C1, and you can no longer capture its stones right away. If you played A1, White doesn’t even need to answer.',
   },
   aa03: {
@@ -1536,7 +1536,7 @@ export const PROBLEMES_EN: Record<string, TexteProbleme> = {
   aa07: {
     title: 'Throw yourself in',
     prompt: 'Capture the marked stones in two moves or fewer.',
-    explanation: 'Well done! H3 throws itself between the white stones: they have only one liberty left, J3. If White captures your stone at J3, only H3 is left: you play there again and capture 5 stones. That’s a snapback. At J3 first, White connected everything at H3.',
+    explanation: 'Well done! H3 throws itself between the white stones: they have only one liberty left, J3. If White plays J3 and captures your stone at H3, only H3 is left: you play there again and capture 5 stones. That’s a snapback. At J3 first, White connected everything at H3.',
     refutation: 'Not quite. White plays H3: it connects its stones to H2 and H1, and you can no longer capture them right away.',
   },
   aa08: {
@@ -1558,7 +1558,7 @@ export const PROBLEMES_EN: Record<string, TexteProbleme> = {
     refutation: 'Not quite. White plays A3, and you can no longer capture the group.',
   },
   aa11: {
-    title: 'After White’s hane',
+    title: 'At the heart of the space',
     prompt: 'Black to play and kill. White just played C1.',
     explanation: 'Well done! B2 is the vital point of the white space. If White plays A2, you answer B1; if White plays B1, you answer A2. White never makes two eyes.',
     refutation: 'Not quite. White plays B2, and you can no longer capture the group.',

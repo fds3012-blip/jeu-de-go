@@ -29,7 +29,7 @@ const LOT_AA: PuzzleRow[] = [
       refutation: 'Pas tout à fait. Blanc joue C1, et tu ne peux plus prendre ses pierres tout de suite. Si tu as joué A1, il n’a même pas besoin de répondre.' },
     title: 'Une pierre pour six',
     prompt: 'Capture les pierres marquées en deux coups au plus.',
-    explanation: 'Bravo ! C1 se met en atari exprès. Si Blanc la prend en D1, ses pierres n’ont plus qu’une liberté, C1 : tu y rejoues et tu en prends 6. C’est une prise en retour. Sinon, tu prends en D1. D1 d’abord ne marchait pas : Blanc prenait en C1 et se reliait à B1.'
+    explanation: 'Bravo ! C1 se met en atari (une seule liberté) exprès. Si Blanc la prend en D1, ses pierres n’ont plus qu’une liberté, C1 : tu y rejoues et tu en prends 6. C’est une prise en retour. Sinon, tu prends en D1. D1 d’abord ne marchait pas : Blanc prenait en C1 et se reliait à B1.'
   },
   {
     id: 'aa03', size: 9, difficulty: 900, answers: ['E1'],
@@ -69,7 +69,7 @@ const LOT_AA: PuzzleRow[] = [
       refutation: 'Pas tout à fait. Blanc joue H3 : il relie ses pierres à H2 et H1, et tu ne peux plus les prendre tout de suite.' },
     title: 'Jette-toi dedans',
     prompt: 'Capture les pierres marquées en deux coups au plus.',
-    explanation: 'Bravo ! H3 se jette entre les pierres blanches : elles n’ont plus qu’une liberté, J3. Si Blanc prend ta pierre en J3, il ne lui reste que H3 : tu y rejoues et tu prends 5 pierres. C’est une prise en retour. En J3 d’abord, Blanc reliait tout en H3.'
+    explanation: 'Bravo ! H3 se jette entre les pierres blanches : elles n’ont plus qu’une liberté, J3. Si Blanc joue J3 et prend ta pierre H3, il ne lui reste que H3 : tu y rejoues et tu prends 5 pierres. C’est une prise en retour. En J3 d’abord, Blanc reliait tout en H3.'
   },
   {
     id: 'aa08', size: 9, difficulty: 1000, answers: ['C9'],
@@ -99,7 +99,7 @@ const LOT_AA: PuzzleRow[] = [
     id: 'aa11', size: 9, difficulty: 1100, answers: ['B2'],
     setup: { rows: ['.........', '.........', '.........', '.........', '.........', 'XXXXX....', 'TOOOX....', '...OX....', '..O.X....'], toPlay: 'B',
       refutation: 'Pas tout à fait. Blanc joue B2, et tu ne peux plus prendre son groupe.' },
-    title: 'Après le hane blanc',
+    title: 'Au cœur de l’espace',
     prompt: 'Noir joue et tue. Blanc vient de jouer C1.',
     explanation: 'Bravo ! B2 est le point vital de l’espace blanc. Si Blanc joue A2, tu réponds B1 ; s’il joue B1, tu réponds A2. Il ne fait jamais deux yeux.'
   },
