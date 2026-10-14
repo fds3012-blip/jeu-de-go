@@ -6,7 +6,7 @@ import { PortraitMochi } from './Portrait';
 import { Confettis } from './Confettis';
 import { mouvementsReduits, useDefilement } from './defilement';
 import { PastilleXp } from './PastilleXp';
-import { useFile } from './celebrations';
+import { terminerFete, useFile } from './celebrations';
 import { t } from '../content/i18n/secondaires';
 import './fin.css';
 
@@ -45,9 +45,16 @@ export function FinPartie({ fond, sceau, tampon, titre, marge, texteMarge, sousT
   const v = useDefilement(marge ?? 0, 600, !reduit && marge != null);
   // Recette du 02/10 au soir (L5) : l'XP de la partie se posait en haut de l'écran, sur la ligne des lettres du plateau.
   // Elle se lit ici, sous le résultat, et y reste (l'annonce flottante s'efface quand cet écran est là : fin.css).
+  // #544 : l'XP lue ici reste à l'écran ; son tour dans la file s'arrête donc tout de suite. Avant, la fête « Niveau N ! »
+  // attendait les 2,4 s de la pastille flottante (que cet écran n'affiche pas) : un toucher sur « Rejouer » ou
+  // « Défier… » pendant ce temps relançait une partie, et la fête restait en file jusqu'à la fin de la suivante.
   const actif = useFile().actif;
   const [xp, setXp] = useState<{ points: number; bonus: number } | null>(null);
-  useEffect(() => { if (actif?.genre === 'xp') setXp({ points: actif.points, bonus: actif.bonus }); }, [actif]);
+  useEffect(() => {
+    if (actif?.genre !== 'xp') return;
+    setXp({ points: actif.points, bonus: actif.bonus });
+    terminerFete('xp');
+  }, [actif]);
 
   // Le lecteur d'écran annonce le résultat : le focus va au titre.
   useEffect(() => { titreRef.current?.focus({ preventScroll: true }); }, []);
