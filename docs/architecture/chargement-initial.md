@@ -22,6 +22,7 @@ décision : dis pourquoi dans la PR.
 | Leçons complètes (positions, démonstrations, consignes : ≈ 9 Ko gzip, #16) | `src/content/lessons.ts`, `content/lessons.fr.js` | avec les écrans Apprendre, leçon, placement et aide |
 | Problèmes complets (consignes, explications : ≈ 26 Ko gzip) | `src/content/puzzles.ts`, `src/content/problemesLocaux.ts` | avec l'écran des problèmes, le placement, la série de fin de leçon |
 | `apprendre.css` (≈ 5 Ko gzip) | importée par `Learn.tsx`, `Puzzles.tsx`, `ui/Lecteur.tsx` | avec ces écrans |
+| `import.css` (≈ 1 Ko gzip, #538) | importée par `ImportSgf.tsx` (morceau du Profil) | avec le Profil ; le style des tuiles grisées hors ligne est en ligne dans `Accueil.tsx` |
 | supabase-js (`lib-donnees`) | `src/data/client.ts` | après le premier écran, ou tout de suite si la session l'exige (#401) |
 | PostHog, Sentry | `src/data/analytics.ts` | après le premier écran (#325) |
 | Textes anglais | `src/content/anglaisContenu.ts` | avant l'accueil, seulement pour un joueur en anglais (#325) |

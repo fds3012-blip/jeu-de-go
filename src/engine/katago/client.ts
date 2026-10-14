@@ -210,7 +210,10 @@ export class KataGoClient {
         return false;
       }
     })();
-    return this.prechargeEnCours;
+    // #538 : terminé, un nouvel appel recommence (« Réessayer », ou téléchargement après « Libérer la place »).
+    const enCours = this.prechargeEnCours;
+    void enCours.finally(() => { if (this.prechargeEnCours === enCours) this.prechargeEnCours = null; });
+    return enCours;
   }
 
   /** Lance le chargement (idempotent). Peut être appelé tôt, par exemple au choix de l'adversaire. */
