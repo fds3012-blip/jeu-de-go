@@ -31,7 +31,7 @@ async function ecranCompte(browser: Browser, baseURL: string | undefined, serveu
   const violations: string[] = [];
   page.on('console', m => { if (/Content Security Policy|Refused to/i.test(m.text())) violations.push(m.text()); });
   const otp: Record<string, unknown>[] = [];
-  page.on('request', (r: Request) => { if (r.url().endsWith('/auth/v1/otp')) otp.push(r.postDataJSON()); });
+  page.on('request', (r: Request) => { if (/\/auth\/v1\/otp(\?|$)/.test(r.url()) && r.method() === 'POST') otp.push(r.postDataJSON()); });
   await page.goto('/');
   await page.locator('.cta').click();
   await expect(page.getByRole('heading', { name: 'Crée ton compte' })).toBeVisible();
@@ -52,7 +52,7 @@ test('sans clé : ni script de Cloudflare, ni widget, la demande de code part sa
   await expect(page.getByLabel('Code à 6 chiffres')).toBeVisible();
   expect(scripts).toEqual([]);
   expect(otp).toHaveLength(1);
-  expect(otp[0].gotrue_meta_security).toBeUndefined();
+  expect((otp[0].gotrue_meta_security as { captcha_token?: string } | undefined)?.captcha_token).toBeUndefined();
 });
 
 test('avec clé : un jeton par envoi (code, puis renvoi), sous la CSP, et le compte se crée', async ({ browser, baseURL }) => {
@@ -90,7 +90,7 @@ test('avec clé, jeton pas encore là : phrase claire, rien n’est envoyé', as
 test('avec clé, jeton refusé par Supabase (captcha_failed) : phrase claire, nouveau jeton pour réessayer', async ({ browser, baseURL }) => {
   const serveur = fauxServeur();
   const { page, otp } = await ecranCompte(browser, baseURL, serveur, '1x00000000000000000000AA');
-  await page.route('**/auth/v1/otp', route => route.fulfill({ status: 400, contentType: 'application/json',
+  await page.route(/\/auth\/v1\/otp(\?|$)/, route => route.fulfill({ status: 400, contentType: 'application/json',
     headers: { 'access-control-allow-origin': '*' },
     body: JSON.stringify({ code: 400, error_code: 'captcha_failed', msg: 'captcha protection: request disallowed (invalid-input-response)' }) }));
   await expect(page.getByTestId('captcha')).toContainText('Turnstile w1');
