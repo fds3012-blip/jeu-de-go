@@ -27,6 +27,8 @@ export interface Recit {
   /** Deuxième temps : prisonniers (japonais) ou pierres vivantes (chinois). */
   deuxieme: { type: 'prisonniers' | 'pierres'; noir: number; blanc: number };
   komi: number;
+  /** #528 : points de compensation du handicap pour Blanc (règle chinoise seulement), comptés avec le komi. */
+  compensation?: number;
   noir: number;
   blanc: number;
   gagnant: 0 | 1 | 2;
@@ -34,19 +36,19 @@ export interface Recit {
 }
 
 /** Construit le récit à partir du comptage de src/go (mêmes règles, mêmes pierres mortes). */
-export function recitScore(pos: Position, komi: number, rules: Rules = 'japanese', dead: Set<number> = new Set()): Recit {
-  const sc = score(pos, komi, rules, dead);
+export function recitScore(pos: Position, komi: number, rules: Rules = 'japanese', dead: Set<number> = new Set(), handicap = 0): Recit {
+  const sc = score(pos, komi, rules, dead, handicap);
   const pts: { p: number; c: 1 | 2 }[] = [];
   for (let p = 0; p < sc.owner.length; p++) if (sc.owner[p] === 1 || sc.owner[p] === 2) pts.push({ p, c: sc.owner[p] as 1 | 2 });
   const pas = pts.length > 1 ? Math.min(40, TEMPS.etalement / (pts.length - 1)) : 0;
   const territoire = pts.map((t, i) => ({ ...t, delai: Math.round(TEMPS.territoire + i * pas) }));
   // Le deuxième temps se déduit du total de src/go : ce qui n'est pas territoire (ni komi) est prisonnier ou pierre vivante.
-  const noir2 = sc.black - sc.territory[1], blanc2 = sc.white - komi - sc.territory[2];
+  const noir2 = sc.black - sc.territory[1], blanc2 = sc.white - komi - sc.compensation - sc.territory[2];
   const marge = sc.black === sc.white ? 0 : sc.margin;
   return {
     territoire, territoireNoir: sc.territory[1], territoireBlanc: sc.territory[2],
     deuxieme: { type: rules === 'japanese' ? 'prisonniers' : 'pierres', noir: noir2, blanc: blanc2 },
-    komi, noir: sc.black, blanc: sc.white, gagnant: marge === 0 ? 0 : sc.winner, marge,
+    komi, compensation: sc.compensation, noir: sc.black, blanc: sc.white, gagnant: marge === 0 ? 0 : sc.winner, marge,
   };
 }
 
@@ -81,7 +83,7 @@ export function etatRecit(r: Recit, t: number): EtatRecit {
 /** Jetons qui rejoignent les camps à l'étape 2 (prisonniers) ou 3 (komi) ; 0 : pas de jeton pour ce camp. */
 export function jetonsEtape(r: Recit, etape: number): Totaux {
   if (etape === 2) return { noir: r.deuxieme.noir, blanc: r.deuxieme.blanc };
-  if (etape === 3) return { noir: 0, blanc: r.komi };
+  if (etape === 3) return { noir: 0, blanc: r.komi + (r.compensation ?? 0) };
   return { noir: 0, blanc: 0 };
 }
 
@@ -131,6 +133,11 @@ export function ligneDeuxieme(r: Recit, c: Camps = campsRecit()): string {
 export function ligneKomi(komi: number, c: Camps = campsRecit()): string {
   if (!komi) return t('recit.pasDeKomi');
   return t('recit.komi', { signe: komi < 0 ? '−' : '+', v: nombre(Math.abs(komi)), pour: dans(c, 2) });
+}
+
+/** #528 : « +4 pour Blanc : 1 point par pierre de handicap (règle chinoise) » ; null sans compensation. */
+export function ligneCompensation(r: Recit, c: Camps = campsRecit()): string | null {
+  return r.compensation ? t('recit.compensation', { v: nombre(r.compensation), pour: dans(c, 2) }) : null;
 }
 
 export const EXPLICATION_KOMI = "Le komi compense l’avantage de Noir, qui joue en premier.";

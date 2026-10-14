@@ -16,6 +16,7 @@ describe('thèmes du goban (#109)', () => {
   it('chaque bois a sa propre texture, calculée une seule fois', () => {
     const urls = ORDRE_THEMES.map(id => woodDataUrl(id));
     expect(new Set(urls.slice(0, 3)).size).toBe(3); // kaya, kaya clair, ardoise : trois bois différents
+    expect(new Set([urls[0], urls[4], urls[6]]).size).toBe(3); // #529 : cerisier et kaya ancien, deux bois de plus
     expect(woodDataUrl('ardoise')).toBe(urls[2]);
     expect(decodeURIComponent(urls[2])).toContain(THEMES_GOBAN.ardoise.fond[1]);
   });
@@ -29,11 +30,11 @@ describe('thèmes du goban (#109)', () => {
     for (const r of RECOMPENSES) expect(ORDRE_THEMES).toContain(r.id);
   });
 
-  it('déverrouillage : kaya dès le niveau 1, kaya clair au 3, ardoise au 5, coquillage doré au 8', () => {
-    expect(ORDRE_THEMES.map(niveauRequis)).toEqual([1, 3, 5, 8]);
+  it('déverrouillage : kaya dès le niveau 1, kaya clair au 3, ardoise au 5, coquillage doré au 8, puis 10, 12, 15 (#529)', () => {
+    expect(ORDRE_THEMES.map(niveauRequis)).toEqual([1, 3, 5, 8, 10, 12, 15]);
     const niv = (xp: number) => niveauDe(xp).niveau;
     expect(themeDebloque('kaya', niv(0))).toBe(true);
-    for (const [id, n] of [['kaya-clair', 3], ['ardoise', 5], ['coquillage-dore', 8]] as const) {
+    for (const [id, n] of [['kaya-clair', 3], ['ardoise', 5], ['coquillage-dore', 8], ['cerisier', 10], ['jade', 12], ['kaya-ancien', 15]] as const) {
       expect(themeDebloque(id, niv(seuil(n) - 1))).toBe(false);
       expect(themeDebloque(id, niv(seuil(n)))).toBe(true);
     }

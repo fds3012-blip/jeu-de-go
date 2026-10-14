@@ -72,6 +72,32 @@ test.describe('premier lancement', () => {
   });
 });
 
+// #528 : « Réglages de la partie » ouverts dans la feuille « Changer » (handicap choisi : komi grisé), puis la tuile
+// « Reprendre ta partie » d'une partie interrompue.
+test('axe : réglages de la partie (feuille « Changer ») et tuile « Reprendre ta partie »', async ({ page }) => {
+  await page.goto('/');
+  await page.evaluate(() => {
+    localStorage.setItem('go.parties.v1', JSON.stringify({ n: 3, ordi: 3, dernier: 'pomme' }));
+    localStorage.setItem('go.intro-but.v1', 'true');
+    localStorage.setItem('go.premiere-pierre.v1', 'true');
+  });
+  await page.reload();
+  await page.getByRole('button', { name: 'Changer' }).click();
+  await page.getByTestId('reglages-partie-ouvrir').click();
+  await page.getByRole('button', { name: 'Une pierre de handicap en plus' }).click();
+  await expect(page.getByTestId('rp-handicap-valeur')).toHaveText('2 pierres');
+  await verifier(page, 'Feuille « Changer », réglages de la partie');
+  await page.getByRole('dialog').getByRole('button', { name: /contre Pomme$/ }).click();
+  await expect(plateau(page)).toBeVisible();
+  // Avec le handicap, Pomme joue d'abord (peut-être au centre) : on attend son coup, puis on joue un point libre.
+  await expect(page.locator('g[data-pierre="blanc"]')).toHaveCount(1, { timeout: 10_000 });
+  await jouer(page, (await page.locator('g[data-point="E5"][data-pierre]').count()) ? 'D5' : 'E5');
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('go.partie.encours.v1'))).not.toBeNull();
+  await page.reload();
+  await expect(page.getByTestId('tuile-reprise')).toBeVisible();
+  await verifier(page, 'Accueil avec « Reprendre ta partie »');
+});
+
 test('axe : accueil d’un joueur qui revient (Aujourd’hui) et feuille « Plus » des modes', async ({ context }) => {
   // Les modes en ligne (et donc « Plus ») n'existent qu'avec un serveur : Supabase simulé.
   const page = await brancher(context, fauxServeur(), {
@@ -264,7 +290,7 @@ test('axe : créer un compte, connexion, code, pseudo, Mon compte connecté', as
 // Coordonnées du plateau (#461) : axe ne mesure pas un texte SVG posé sur une image (le bois). On mesure au pixel : le
 // bois sous chaque lettre (lettres masquées le temps de la capture, gardée en mémoire), contre l'encre du thème, ou
 // contre son liseré s'il en a un. WCAG 1.4.3 : 4,5:1 (les lettres font 12 px).
-for (const theme of ['kaya', 'kaya-clair', 'ardoise', 'coquillage-dore']) {
+for (const theme of ['kaya', 'kaya-clair', 'ardoise', 'coquillage-dore', 'cerisier', 'jade', 'kaya-ancien']) {
   test(`coordonnées lisibles sur le bois « ${theme} » (4,5:1, mesuré au pixel)`, async ({ page }) => {
     await page.addInitScript(t => { localStorage.setItem('go.xp.v1', '99999'); localStorage.setItem('go.themeGoban.v1', JSON.stringify(t)); }, theme);
     await page.goto('/?go-du-jour=1');

@@ -16,12 +16,13 @@ import { Portrait } from '../ui/Portrait';
 import { Mochi } from '../ui/Mochi';
 import { MiniGoban } from '../ui/MiniGoban';
 import type { CarteAdversaire } from '../ui/Carrousel';
-import { CarrouselAdversaires } from './ecrans';
+import { CarrouselAdversaires, ReglagesPartie } from './ecrans';
+import { estDefaut, komiDeLaPartie, type ReglagesPartie as ValeurReglages } from './reglagesPartie';
 import type { Opponent } from '../engine';
 import type { Accueil as TextesAccueil } from './home';
 import { ordreDuJour, type TuileDuJour } from './aujourdhui';
 import { fr } from '../ui/typo';
-import { langue, t } from '../content/i18n';
+import { langue, nombre, t } from '../content/i18n';
 import { gradeDe, texteGrade } from '../go/cote';
 import type { Depuis, Mode, ModesAccueil } from './modes';
 
@@ -86,7 +87,14 @@ interface Props {
   revisions?: { n: number; ouvrir: () => void };
   /** #487 : tout premier lancement, aucune pierre posée : une seule action, rien d'autre à choisir. */
   epure?: boolean;
+  /** #528 : « Réglages de la partie » (handicap, komi, comptage), groupe replié de la feuille « Changer ». */
+  reglagesPartie?: { valeur: ValeurReglages; changer: (r: ValeurReglages, cle: 'handicap' | 'komi' | 'regles' | 'retablir') => void; komiAuto: number };
+  /** #528 : partie interrompue contre l'ordi : la tuile « Reprendre ta partie » (jamais au premier lancement épuré). */
+  reprise?: TuileReprise;
 }
+
+/** #528 : partie contre l'ordi interrompue (fermeture, veille, rechargement), à reprendre où elle s'est arrêtée. */
+export interface TuileReprise { id: Opponent['id']; nom: string; taille: Taille; coups: number; ouvrir: () => void }
 
 /** #487 : l'accueil a été montré épuré pendant cette session ; au retour après la première pierre, les tuiles arrivent en fondu. */
 let vuEpure = false;
@@ -214,6 +222,8 @@ export function Accueil(p: Props) {
           )}
         </div>
 
+        {p.reprise && <TuileReprendre r={p.reprise} />}
+
         {p.lentes && (p.lentes.aJouer > 0 || p.lentes.recherche) && <TuilesLentes l={p.lentes} />}
 
         {/* Aujourd'hui : la bonne chose à faire en premier, mise en avant ; les autres tuiles suivent. */}
@@ -232,6 +242,23 @@ export function Accueil(p: Props) {
 
       <Reglages {...p} />
       {!epure && p.modes.plus.length > 0 && <FeuillePlus modes={p.modes.plus} ouvert={plusOuvert} setOuvert={setPlusOuvert} onMode={p.onMode} />}
+    </div>
+  );
+}
+
+/** #528 : « Reprendre ta partie » : la partie interrompue contre l'ordi, en tuile (le bouton principal ne change pas). */
+function TuileReprendre({ r }: { r: TuileReprise }) {
+  const v = { nom: r.nom, taille: r.taille, n: r.coups };
+  return (
+    <div className="tuiles">
+      <button type="button" className="tuile tuile-defi tuile-avant" onClick={r.ouvrir} data-testid="tuile-reprise" aria-label={t('accueil.reprise.aria', v)}>
+        <span className="tuile-pierres" aria-hidden="true"><Sceau id={r.id} taille={36} /></span>
+        <span>
+          <small>{t('accueil.reprise.detail', v)}</small>
+          <b>{t('accueil.reprise.titre')}</b>
+        </span>
+        <em className="tuile-etat" aria-hidden="true">{t('accueil.reprise.etat')}</em>
+      </button>
     </div>
   );
 }
@@ -348,9 +375,18 @@ function TuileRevisions({ r }: { r: { n: number; ouvrir: () => void } }) {
 }
 
 /** Feuille « Changer » : carrousel des adversaires et taille du plateau, dans une boîte de dialogue modale native. */
-function Reglages({ adv, cartes, taille, reglages, setReglages, onTaille, onChoisir, onMode, textes }: Props) {
+function Reglages({ adv, cartes, taille, reglages, setReglages, onTaille, onChoisir, onMode, textes, reglagesPartie }: Props) {
   const ref = useRef<HTMLDialogElement>(null);
   useDialogue(ref, reglages);
+  // #528 : « Réglages de la partie », replié à chaque ouverture de la feuille : le débutant ne le voit pas.
+  const [avances, setAvances] = useState(false);
+  useEffect(() => { if (!reglages) setAvances(false); }, [reglages]);
+  const rp = reglagesPartie?.valeur;
+  const resume = rp && !estDefaut(rp) ? t('partie.reglages.resume', {
+    h: rp.handicap >= 2 ? rp.handicap : t('partie.reglages.handicap.aucun').toLowerCase(),
+    k: nombre(komiDeLaPartie(rp, reglagesPartie.komiAuto)),
+    r: t(`partie.reglages.regles.${rp.regles}`).toLowerCase(),
+  }) : null;
 
   return (
     <dialog ref={ref} className="feuille" aria-labelledby="feuille-titre" onClose={() => setReglages(false)}
@@ -377,6 +413,20 @@ function Reglages({ adv, cartes, taille, reglages, setReglages, onTaille, onChoi
           <Suspense fallback={<div className="carrousel-attente" aria-busy="true" />}>
             <CarrouselAdversaires cartes={cartes} choisi={adv.id} onChoisir={onChoisir} legende={t(`adv.${adv.id}.description`)} />
           </Suspense>
+          {reglagesPartie && (
+            <div className="feuille-avances">
+              <button type="button" className="lien feuille-avances-bouton" aria-expanded={avances} aria-controls={avances ? 'reglages-partie' : undefined}
+                data-testid="reglages-partie-ouvrir" onClick={() => setAvances(o => !o)}>
+                {t('partie.reglages.titre')}<span aria-hidden="true">{avances ? ' ▴' : ' ▾'}</span>
+              </button>
+              {resume && <p className="muted small" data-testid="reglages-partie-resume">{fr(resume)}</p>}
+              {avances && (
+                <Suspense fallback={<p className="muted small" aria-busy="true">{t('partie.reglages.chargement')}</p>}>
+                  <ReglagesPartie valeur={reglagesPartie.valeur} onChange={reglagesPartie.changer} />
+                </Suspense>
+              )}
+            </div>
+          )}
           {/* #429 : « Changer » ne sert plus qu'à choisir l'adversaire et la taille ; les modes sont sur l'accueil. */}
           <button className="btn primary" aria-label={textes.ctaNom} onClick={() => onMode('ordi', 'feuille')}>{textes.cta}</button>
         </div>

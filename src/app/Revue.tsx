@@ -23,7 +23,7 @@ import { t as tr } from '../content/i18n/secondaires';
 import { mouvementsReduits } from '../ui/defilement';
 import { toLabel } from '../go/coords';
 import { play, type Color, type Position } from '../go/rules';
-import { analyseRevue, estMoteurBloque, meilleurCoup, preparerKataGo, relancerKataGo, type RaisonSansKataGo } from '../engine';
+import { analyseRevue, estMoteurBloque, meilleurCoup, preparerKataGo, reglesMoteur, relancerKataGo, type RaisonSansKataGo } from '../engine';
 import { captureError, EVENTS, track } from '../data/analytics';
 import {
   avanceFinale, avancesAffichees, candidatsBrillant, compteNotes, conseilFiable, courbe, courbeY, momentCle, NOTE_INFO, noterCoups, notesAvecCle,
@@ -81,7 +81,9 @@ const PERTES: ReadonlySet<Note> = new Set(['imprecision', 'erreur', 'manque', 'g
 const PROBLEMES: ReadonlySet<Note> = new Set(['erreur', 'manque', 'grosse']);
 
 export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTouch = false, visites, retour, onImporter, source, partage = true }: Props) {
-  const { positions, komi, resultat } = useMemo(() => positionsDepuisSgf(sgf), [sgf]);
+  // #528 : komi compté (compensation du handicap comprise en chinois) et règle de la partie, pour KataGo.
+  const { positions, komi, resultat, rules: reglesSgf, handicap } = useMemo(() => positionsDepuisSgf(sgf), [sgf]);
+  const regles = reglesMoteur(reglesSgf, handicap);
   const n = positions.length - 1, size = positions[0].size;
   const [etape, setEtape] = useState<'bilan' | 'parcours'>('bilan');
   // « Rejouer mes erreurs » (#428) : la séance, figée au départ ; `null` hors séance.
@@ -164,7 +166,7 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
       if (!kataGo) setAnalyses([]);
       for (const p of positions.slice(out.length)) {
         let a: AnalyseRevue | null;
-        try { a = await analyseRevue(p, komi, { kataGo, visits: visites }); } catch (e) {
+        try { a = await analyseRevue(p, komi, { kataGo, visits: visites, rules: regles }); } catch (e) {
           if (estMoteurBloque(e)) {
             if (vivant) { faites.current = out; setBloque(true); captureError(e, { categorie: 'rendu', origine: 'revue' }); }
             return;
@@ -180,19 +182,19 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
       // Partie importée : pas de confirmation (analyse déjà longue sur mobile), donc pas de Brillant.
       if (visites) return;
       for (const k of candidatsBrillant(positions, out)) {
-        const a = await analyseRevue(positions[k], komi, { visits: 160 }).catch(() => null);
+        const a = await analyseRevue(positions[k], komi, { visits: 160, rules: regles }).catch(() => null);
         if (!vivant) return;
         if (a?.engine === 'katago') setConfirmations(c => ({ ...c, [k]: positions[k - 1].toPlay === 1 ? a.lead : -a.lead }));
       }
       // #405 : Brillant « seul bon coup » : la position d'avant est revue plus longuement, le coup doit rester seul en tête.
       for (const k of candidatsUniques(positions, out)) {
-        const a = await analyseRevue(positions[k - 1], komi, { visits: 160 }).catch(() => null);
+        const a = await analyseRevue(positions[k - 1], komi, { visits: 160, rules: regles }).catch(() => null);
         if (!vivant) return;
         if (confirmeUnique(a, positions[k].lastMove ?? -1, size)) setUniques(u => new Set(u).add(k));
       }
     })();
     return () => { vivant = false; };
-  }, [positions, komi, visites, size, essai]);
+  }, [positions, komi, visites, size, essai, regles]);
 
   /** « Réessayer » (#498) : KataGo est relancé (réseau lu du cache), puis l'analyse reprend. */
   function reessayer() {

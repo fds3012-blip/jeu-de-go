@@ -20,7 +20,8 @@ describe('français identique aux textes d’origine', () => {
   it('noms des thèmes du goban et des récompenses', () => {
     for (const id of ORDRE_THEMES) expect(traduire('fr', `theme.${id}`)).toBe(THEMES_GOBAN[id].nom);
     for (const r of RECOMPENSES) expect(traduire('fr', `theme.${r.id}`)).toBe(r.nom);
-    expect(RECOMPENSES.map(libelleRecompense)).toEqual(['le goban « Kaya clair »', 'le goban « Ardoise »', 'les pierres « Coquillage doré »']);
+    expect(RECOMPENSES.map(libelleRecompense)).toEqual(['le goban « Kaya clair »', 'le goban « Ardoise »', 'les pierres « Coquillage doré »',
+      'le goban « Cerisier »', 'les pierres « Jade »', 'le goban « Kaya ancien »']);
   });
 
   it('barre de niveau, fête et pastille', () => {
@@ -60,7 +61,10 @@ describe('français identique aux textes d’origine', () => {
     expect(statistiques(vide, p0).map(s => s.legende)).toEqual(['jour de série', 'leçon finie', 'adversaire battu', 'problème réussi']);
     expect(statistiques({ ...vide, reussis: 1, serie: 1, parties: 1 }, p0).map(s => s.legende)).toEqual(['jour de série', 'leçon finie', 'adversaire battu', 'problème réussi']);
     expect(statistiques({ ...plein, serie: 7, bilan: { pomme: { v: 1, d: 0 }, caillou: { v: 2, d: 0 } } }, p2).map(s => s.legende)).toEqual(['jours, ta série record', 'leçons finies', 'adversaires battus', 'problèmes réussis']);
-    expect(badges(vide).map(b => [b.id, b.nom, b.condition])).toEqual([
+    // Les sept badges d'origine gardent leurs textes ; #529 en ajoute quatorze (vitrine.test.ts).
+    const textes = badges(vide).map(b => [b.id, b.nom, b.condition]);
+    expect(textes).toHaveLength(21);
+    for (const ligne of [
       ['premiere-partie', 'Première partie', 'Joue contre l’ordi.'],
       ['premier-probleme', 'Premier problème', 'Réussis un problème.'],
       ['victoire-pomme', 'Pomme battue', 'Bats Pomme ou plus fort.'],
@@ -68,8 +72,8 @@ describe('français identique aux textes d’origine', () => {
       ['dix-problemes', '10 problèmes', 'Réussis 10 problèmes.'],
       ['palier-novice', 'Palier Novice', 'Finis le palier Novice.'],
       ['serie-7', '7 jours de série', 'Garde ta série 7 jours.'],
-    ]);
-    expect(badges(plein).every(b => b.obtenu)).toBe(true);
+    ]) expect(textes).toContainEqual(ligne);
+    expect(badges(plein).filter(b => ['premiere-partie', 'premier-probleme', 'victoire-pomme', 'palier-debutant', 'dix-problemes', 'palier-novice', 'serie-7'].includes(b.id)).every(b => b.obtenu)).toBe(true);
     expect(traduire('fr', 'vitrine.aGagner', { nom: 'Pomme battue', condition: 'Bats Pomme ou plus fort.' })).toBe('Pomme battue : à gagner. Bats Pomme ou plus fort.');
   });
 });

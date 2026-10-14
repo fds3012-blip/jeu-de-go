@@ -15,6 +15,7 @@ import { readLocal, writeLocal } from './hooks';
 import { INTERVALLES, prendreXp, retard, seance, type ElementFile } from './revisionEspacee';
 import { ecrireEtatAppareil, fileAppareil, lireErreursAppareil, lireEtatAppareil, noterErreur, noterProblemeRevu } from './revisionsAppareil';
 import { gagnerXp, noterActivite } from './xp';
+import { validerDefi } from './defiAppareil';
 import { Mochi } from '../ui/Mochi';
 import { PortraitMochi } from '../ui/Portrait';
 import { Confettis } from '../ui/Confettis';
@@ -84,7 +85,10 @@ export function SeanceRevisions({ confirmTouch, celebrer, compte, onFin }: Props
     if (element.genre === 'erreur') {
       const { avant, maitrisee } = noterErreur(element.ref, reussi, maintenant);
       noterActivite('erreurs'); // #369 : objectif « erreurs rejouées » de la semaine
-      if (maitrisee && avant) track(EVENTS.erreurMaitrisee, { taille: avant.size, coup: avant.coup, rates: avant.rates });
+      if (maitrisee && avant) {
+        track(EVENTS.erreurMaitrisee, { taille: avant.size, coup: avant.coup, rates: avant.rates });
+        gagnerXp('erreursRejouees'); // #529 (P12) : une erreur maîtrisée rapporte comme un problème neuf
+      }
     } else noterProblemeRevu(element.ref, reussi, maintenant);
     setResultats(r => (r.some(y => y.cle === element.cle) ? r : [...r, { cle: element.cle, reussi }]));
   }
@@ -95,6 +99,8 @@ export function SeanceRevisions({ confirmTouch, celebrer, compte, onFin }: Props
     const etat = prendreXp(lireEtatAppareil(), new Date());
     let points = 0;
     if (etat) { ecrireEtatAppareil(etat); points = gagnerXp('revision').points; }
+    // #529 : la séance finie est la révision du jour, elle fait vivre la série comme l'ancienne carte (RevisionDuJour).
+    if (resultats.length) { try { validerDefi('revision'); } catch { /* stockage illisible */ } }
     // Tout ce que la séance a rapporté : la carte l'affiche, la pastille ne le répète pas.
     marquerXpVue();
     setXp({ ...gains.current });
