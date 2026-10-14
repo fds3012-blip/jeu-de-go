@@ -96,4 +96,6 @@ export const MOTIFS: Record<string, Motif> = {
   l33: { coin: true, noir: [[0, 2], [1, 2], [0, 3]], blanc: [[1, 3], [2, 3], [3, 2]], jade: [[2, 2]] },
   l34: { coin: true, noir: [[0, 2], [3, 3]], blanc: [[1, 1], [2, 1], [3, 1], [2, 2]], jade: [[2, 3]] },
   l32: { coin: true, noir: [[0, 2], [1, 2], [2, 2], [0, 3]], blanc: [[1, 3], [2, 3], [3, 2]], jade: [[3, 3]] },
+  // Les points miai : un œil sûr (or) et deux points pour le deuxième (jade).
+  l37: { coin: true, noir: [[1, 2], [2, 2], [3, 2], [1, 3], [3, 3]], or: [[2, 3]], jade: [[0, 2], [0, 3]] },
 };

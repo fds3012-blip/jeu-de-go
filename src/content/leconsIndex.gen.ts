@@ -25,6 +25,7 @@ export const LECONS_INDEX: readonly (readonly [id: string, titre: string, desc: 
   ["l17", "Les formes d’yeux", "Le T, le carré, la grappe de cinq", 5],
   ["l24", "Agrandir ou réduire", "Le point au bord de l’espace", 4],
   ["l25", "Les groupes du coin", "Le point du coin, et le ko", 4],
+  ["l37", "Les points miai", "Deux points pour un même œil", 5],
   ["l15", "Finir la partie", "Dame, frontières, pierres mortes", 6],
   ["l16", "Compter une partie", "Mortes, territoire, prisonniers, komi", 6],
   ["l22", "Sente et gote", "Le coup qui oblige à répondre", 5],
@@ -45,7 +46,7 @@ export const CHAPITRES_INDEX: readonly { id: string; titre: string; intro: strin
   { id: "c1", titre: "Les bases", intro: "Sept leçons courtes pour jouer ta première partie.", fin: "Tu connais les règles du go.", complet: true, lecons: ["l1","l2","l3","l4","l5","l6","l7"] },
   { id: "c2", titre: "L’ouverture", intro: "Où poser tes premières pierres.", complet: false, lecons: ["l8","l27","l29","l30","l31"] },
   { id: "c3", titre: "Capturer et sauver", intro: "Des pièges pour prendre plus de pierres.", complet: false, lecons: ["l9","l10","l11","l26"] },
-  { id: "c4", titre: "Vie et mort", intro: "Quand un groupe vit, quand il meurt.", complet: false, lecons: ["l12","l13","l14","l17","l24","l25"] },
+  { id: "c4", titre: "Vie et mort", intro: "Quand un groupe vit, quand il meurt.", complet: false, lecons: ["l12","l13","l14","l17","l24","l25","l37"] },
   { id: "c5", titre: "Fin de partie et comptage", intro: "Finir proprement, puis compter juste.", complet: false, lecons: ["l15","l16","l22","l23","l32","l33"] },
   { id: "c6", titre: "Formes et tesuji", intro: "Les bonnes formes et les coups malins du go.", complet: false, lecons: ["l18","l19","l20","l21","l34","l35","l36"] },
 ];

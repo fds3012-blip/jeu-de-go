@@ -246,6 +246,12 @@ function motif(id: string, W: string, C: string): ReactElement {
       <circle cx="66" cy="60" r="8" fill={C} stroke={W} strokeWidth="2.6" />
       <path d="M58 56 50 52" stroke={W} strokeWidth="3" strokeLinecap="round" />
     </>);
+    // Les points miai : deux points jumeaux, reliés par une balance égale.
+    case 'l37': return (<>
+      <path d="M28 44H72M50 30V44" stroke={W} strokeWidth="3" strokeLinecap="round" fill="none" />
+      <circle cx="32" cy="62" r="9" fill={C} stroke={W} strokeWidth="2.6" />
+      <circle cx="68" cy="62" r="9" fill={C} stroke={W} strokeWidth="2.6" />
+    </>);
     default: return <circle cx="50" cy="50" r="14" fill={W} />;
   }
 }

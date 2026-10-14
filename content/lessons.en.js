@@ -385,5 +385,17 @@ export const LESSONS_EN = {
     { text: 'Your marked stone is weak. Run it toward the center.',
       ok: 'Good: your stone takes the road to the center.', no: 'Move your stone away from the edge, toward the center.',
       refus: ['On the 3rd line, you crawl instead of running to the center.', 'Toward the edge, you shrink: White closes the center at F6.'] }
+  ] },
+  l37: { title: 'Miai points', desc: 'Two points for the same eye', steps: [
+    { text: 'Miai (two points worth the same): White takes A2, you the green point.' },
+    { text: 'White takes B1? Take the other one, the green point: you live.' },
+    { text: 'White plays elsewhere. Must you add a stone here?', choices: ['Yes', 'No'],
+      ok: 'No: A2 and B1 are miai. Answer only if White takes one.', no: 'If White takes one of the two points, you take the other: your group already lives.' },
+    { text: 'White just took D1. Take the other miai point.',
+      ok: 'The corner gives you your second eye: you live.', no: 'You have two places for an eye: White took one.',
+      refus: ['White plays A2: you have only one eye left.'] },
+    { text: 'White took a miai point. Your turn to live.',
+      ok: 'Miai: White took H1, you take J2. Two eyes.', no: 'Your eye at E1 is safe. Where is the second one?',
+      refus: ['White takes J2: you have only one eye left.'] }
   ] }
 };

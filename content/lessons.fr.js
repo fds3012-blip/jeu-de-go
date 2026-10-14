@@ -172,12 +172,20 @@ const L_DESSOUS_M = L_DESSOUS.map(r => [...r].reverse().join(''));
 // en atari ; s'il prend B1 en A1, tu reprends en B1 : prise en retour de six pierres. `M` : la même forme en miroir.
 const L_REPRISE = [...V.slice(0, 5), '......O..', 'XXXXXXO..', 'OOOX..O..', '...O..O..'];
 const L_REPRISE_M = L_REPRISE.map(r => [...r].reverse().join(''));
+// Leçons 37 et suivantes (#539, vers 5 kyu). Chaque position, chaque réponse acceptée, chaque réfutation et chaque chiffre
+// est prouvé par src/go/lecons-37-plus.test.ts (preuve de vie et mort en zone fermée, minimax exact de fin de partie).
+// Les points miai : un œil sûr en E1 ; le deuxième se fait en A2 ou en B1. Si Blanc prend l'un, Noir prend l'autre ; si Blanc
+// joue ailleurs, Noir n'a rien à ajouter. `D1` : Blanc a pris D1 (point vital de C1-D1-E1), le coin A2 reste ; `M` : la
+// première forme en miroir, Blanc a pris H1.
+const L_MIAI = [...V.slice(0, 6), 'OOOOOOO..', '.XXXXXO..', '...X.XO..'];
+const L_MIAI_D1 = [...V.slice(0, 6), 'OOOOOOO..', '.XXXXXO..', '.X.O.XO..'];
+const L_MIAI_M = [...V.slice(0, 6), '..OOOOOOO', '..OXXXXX.', '..OX.X.O.'];
 export const CHAPITRES = [
   { id: 'c1', titre: 'Les bases', intro: 'Sept leçons courtes pour jouer ta première partie.', fin: 'Tu connais les règles du go.', lecons: ['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7'] },
   // Chapitre en cours d'écriture (`complet: false`) : sa dernière leçon ne ferme pas encore le chapitre.
   { id: 'c2', titre: 'L’ouverture', intro: 'Où poser tes premières pierres.', lecons: ['l8', 'l27', 'l29', 'l30', 'l31'], complet: false },
   { id: 'c3', titre: 'Capturer et sauver', intro: 'Des pièges pour prendre plus de pierres.', lecons: ['l9', 'l10', 'l11', 'l26'], complet: false },
-  { id: 'c4', titre: 'Vie et mort', intro: 'Quand un groupe vit, quand il meurt.', lecons: ['l12', 'l13', 'l14', 'l17', 'l24', 'l25'], complet: false },
+  { id: 'c4', titre: 'Vie et mort', intro: 'Quand un groupe vit, quand il meurt.', lecons: ['l12', 'l13', 'l14', 'l17', 'l24', 'l25', 'l37'], complet: false },
   { id: 'c5', titre: 'Fin de partie et comptage', intro: 'Finir proprement, puis compter juste.', lecons: ['l15', 'l16', 'l22', 'l23', 'l32', 'l33'], complet: false },
   { id: 'c6', titre: 'Formes et tesuji', intro: 'Les bonnes formes et les coups malins du go.', lecons: ['l18', 'l19', 'l20', 'l21', 'l34', 'l35', 'l36'], complet: false }
 ];
@@ -558,6 +566,23 @@ export const LESSONS = [
         { points: ['J9'], no: 'Blanc prend J8 : c’est un ko.' },
         { points: ['F9'], no: 'Tu bouches ton œil F9 : un seul œil reste.' }
       ] }
+  ] },
+  { id: 'l37', title: 'Les points miai', desc: 'Deux points pour un même œil', steps: [
+    { kind: 'info', rows: L_MIAI, geste: { pose: 'B1' }, demo: [{ pose: 'A2', couleur: 'W' }, { pose: 'B1', couleur: 'B' }, { yeux: ['C1', 'E1'] }],
+      text: 'Miai (deux points qui se valent) : Blanc prend A2, toi le point vert.' },
+    { kind: 'info', rows: L_MIAI, geste: { pose: 'A2' }, demo: [{ pose: 'B1', couleur: 'W' }, { pose: 'A2', couleur: 'B' }],
+      text: 'Blanc prend B1 ? Prends l’autre, au point vert : tu vis.' },
+    { kind: 'quiz', rows: L_MIAI,
+      text: 'Blanc joue ailleurs. Dois-tu ajouter une pierre ici ?', choices: ['Oui', 'Non'], answer: 1,
+      ok: 'Non : A2 et B1 sont miai. Tu répondras seulement si Blanc en prend un.', no: 'Si Blanc prend un des deux points, tu prends l’autre : ton groupe vit déjà.' },
+    { kind: 'move', rows: L_MIAI_D1, accept: ['A2'],
+      text: 'Blanc vient de prendre D1. Prends l’autre point miai.',
+      ok: 'Le coin te donne ton deuxième œil : tu vis.', no: 'Tu as deux endroits pour un œil : Blanc en a pris un.',
+      refus: [{ points: ['A1', 'C1', 'E1'], no: 'Blanc joue A2 : il ne te reste qu’un œil.' }] },
+    { kind: 'move', rows: L_MIAI_M, accept: ['J2'],
+      text: 'Blanc a pris un point miai. À toi de vivre.',
+      ok: 'Miai : Blanc a pris H1, tu prends J2. Deux yeux.', no: 'Ton œil E1 est sûr. Où se fait le deuxième ?',
+      refus: [{ points: ['J1', 'E1'], no: 'Blanc prend J2 : il ne te reste qu’un œil.' }] }
   ] },
   { id: 'l15', title: 'Finir la partie', desc: 'Dame, frontières, pierres mortes', steps: [
     { kind: 'info', rows: L_FIN_P, geste: { touche: ['E7'], no: 'Cherche le point vide entre Noir et Blanc.' }, demo: [{ zone: ['E7'] }],

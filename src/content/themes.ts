@@ -145,6 +145,8 @@ export const THEMES_DE_LECON: Readonly<Record<string, readonly Theme[]>> = {
   l35: ['relier-couper'],
   // Couper, puis reprendre (l36) : relier et couper, et la prise en retour.
   l36: ['relier-couper', 'prise-en-retour'],
+  // #539 : les points miai (l37).
+  l37: ['vie-mort'],
 };
 
 /**
