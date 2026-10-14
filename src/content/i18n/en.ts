@@ -788,6 +788,8 @@ export const en = {
   'aide.question.horsLigne.reponse': 'Yes, once you’ve opened the app once: the computer, lessons and puzzles run on your phone. For Bambou and the stronger ones, download the AI in Profile, Settings. Online games and games with your friends need the internet.',
   'aide.question.supprimer': 'How do I delete my account?',
   'aide.question.supprimer.reponse': 'Profile, then My account, then “Delete my account”. It’s permanent: your profile, nickname, progress and email are erased.',
+  'aide.question.clavier': 'Can I play with a keyboard?',
+  'aide.question.clavier.reponse': 'Yes. Press Tab until you reach the board, then use the arrow keys to pick a point. Enter or Space places your stone. The L key reads the board, row by row. With a screen reader, each point and each move is announced.',
   'aide.regles.intro': 'Go in 5 ideas. Everything else follows from them.',
   'aide.compter.intro': 'At the end, who won? Here is how we count.',
   'aide.mots.chercher': 'Search for a word',
