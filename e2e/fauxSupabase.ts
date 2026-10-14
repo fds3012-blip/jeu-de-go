@@ -851,6 +851,26 @@ export function fauxServeur() {
         motif: corps.p_motif ?? null, texte, version_app: corps.p_version ?? null, contexte: corps.p_contexte ?? null, cree_le: new Date().toISOString() });
       return json(true);
     }
+    // D4 (#530) : son profil entier, pour le joueur connecté seul.
+    if (chemin === '/rest/v1/rpc/mon_profil') {
+      const miens = u ? profiles.filter(x => x.id === u.id) : [];
+      const objet = (req.headers()['accept'] ?? '').includes('vnd.pgrst.object');
+      return json(objet ? miens[0] ?? null : miens);
+    }
+    // #530 : export de mes données (une version courte de supabase/migrations/20261013210200_export_donnees.sql).
+    if (chemin === '/rest/v1/rpc/exporter_mes_donnees') {
+      if (!u) return json({ code: 'JGC01', message: 'Connecte-toi pour télécharger tes données.' }, 400);
+      // Plafond de 3 par heure : le 4e appel est refusé (JGX01, minutes à attendre en indice).
+      if (appels.filter(a => a.startsWith('POST /rest/v1/rpc/exporter_mes_donnees')).length > 3) return json({ code: 'JGX01', message: 'Plafond', hint: '42' }, 400);
+      const moi = profiles.find(x => x.id === u.id);
+      return json({
+        format: 'mochi-go.mes-donnees', version: 1, genere_le: new Date().toISOString(),
+        compte: { id: u.id, email: u.email ?? null, sans_compte: u.anonyme },
+        profil: moi ? { ...moi, id: undefined } : null,
+        parties_en_ligne: games.filter(g => g.black_id === u.id || g.white_id === u.id).map(g => ({ id: g.id, taille: g.size, resultat: g.result ?? null })),
+        parties_enregistrees: partiesPerso.filter(x => x.user_id === u.id).map(x => ({ ...x, user_id: undefined })),
+      });
+    }
     if (chemin.startsWith('/rest/v1/rpc/')) return json(null);
     if (chemin === '/functions/v1/game-action') {
       const corps = req.postDataJSON() as { action: string; game_id: string; move: string; gameId?: string };
@@ -913,7 +933,9 @@ export function fauxServeur() {
         if (val.startsWith('in.(')) { const ids = val.slice(4, -1).split(','); lignes = lignes.filter(l => ids.includes(String(l[cle]))); }
         if (cle === 'or') { const ids = [...val.matchAll(/eq\.([^,)]+)/g)].map(m => m[1]); lignes = lignes.filter(l => ids.includes(String(l.createur_id)) || ids.includes(String(l.invite_id))); }
       }
-      // RLS simulée : profils visibles par tous ; parties et défis par leurs seuls joueurs ; notifications par leur destinataire.
+      // RLS simulée : profils lisibles par les joueurs connectés seulement (D4, #530 : un visiteur est refusé, comme
+      // anon sans droit sur la table) ; parties et défis par leurs seuls joueurs ; notifications par leur destinataire.
+      if (table === 'profiles' && !u) return json({ code: '42501', message: 'permission denied for table profiles' }, 401);
       if (table === 'parties_perso') lignes = lignes.filter(l => !!u && !u.anonyme && l.user_id === u.id)
         .sort((a, b) => Date.parse(String(b.joue_le)) - Date.parse(String(a.joue_le)));
       else if (table === 'rating_history' || table === 'file_lente') lignes = lignes.filter(l => !!u && l.user_id === u.id);

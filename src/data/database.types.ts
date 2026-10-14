@@ -1519,6 +1519,19 @@ export type Database = {
         }
         Returns: Json
       }
+      // #530 (D4) : son profil entier, pour son seul titulaire (les autres ne lisent que les colonnes publiques).
+      mon_profil: {
+        Args: never
+        Returns: Database["public"]["Tables"]["profiles"]["Row"][]
+        SetofOptions: {
+          from: "*"
+          to: "profiles"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      // #530 : export de mes données (art. 15 et 20 RGPD), un JSON ; JGX01 au-delà de 3 par heure.
+      exporter_mes_donnees: { Args: never; Returns: Json }
       mes_blocages: {
         Args: never
         Returns: {

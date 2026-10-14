@@ -165,3 +165,27 @@ describe('politique de confidentialité et code', () => {
     expect(partieJoueurs).toContain(`${max} en attente au plus`);
   });
 });
+
+// #530 : droit d'accès et portabilité dans l'app, profils fermés aux visiteurs (D4), mentions légales.
+describe('mes données, profils et mentions légales (#530)', () => {
+  const droits = entre(politique, '## 6. ', '## 7. ');
+  const autres = entre(politique, '**Ce que les autres voient**', '## 5. ');
+  it('la section 6 dit comment télécharger ses données, ce que le fichier contient et ce qu’il exclut', () => {
+    expect(droits).toContain('Télécharger tes données depuis l\'app');
+    expect(droits).toContain('`exporter_mes_donnees`');
+    expect(droits).toMatch(/SGF/);
+    expect(droits).toMatch(/3 téléchargements par heure/);
+    expect(droits).toMatch(/ni\*\* ta session de connexion/);
+  });
+  it('la section 3.2 cite le journal des exports et sa durée', () => {
+    expect(entre(politique, '### 3.2 ', '### 3.3 ')).toMatch(/Téléchargement de tes données.*`exports_donnees`.*24 heures/s);
+  });
+  it('la section 4 ne dit plus que les profils sont lisibles sans connexion (D4)', () => {
+    expect(autres).not.toMatch(/même sans être connecté/);
+    expect(autres).toMatch(/seulement pour les joueurs connectés/);
+    expect(autres).toMatch(/que par toi/);
+  });
+  it('les mentions légales sont citées pour les joueurs', () => {
+    expect(partieJoueurs).toContain('/mentions-legales/');
+  });
+});

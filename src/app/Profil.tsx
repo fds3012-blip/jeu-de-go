@@ -3,6 +3,10 @@
 // les réglages passent derrière une ligne « Réglages » (sous-vue), comme chez chess.com ; ligne « Installer l'app ».
 import { Account } from './Account';
 import { Conditions } from './Confidentialite';
+import { MesDonnees } from './MesDonnees';
+import { MentionsLegales } from './MentionsLegales';
+import { MENTIONS } from '../content/mentionsLegales';
+import { tdon } from '../content/i18n/donnees';
 import { ImportSgf } from './ImportSgf';
 import { MesParties } from './MesParties';
 import { historiqueAppareil } from './historique';
@@ -82,7 +86,9 @@ function useDonnees(serie: number, record: number, parcours: Parcours) {
   return donnees;
 }
 
-export type VueProfil = 'menu' | 'reglages' | 'installer' | 'rappel' | 'compte' | 'conditions' | 'importer' | 'parties' | 'amis' | 'cote' | 'stats' | 'etude' | 'semaine';
+export type VueProfil = 'menu' | 'reglages' | 'installer' | 'rappel' | 'compte' | 'conditions' | 'importer' | 'parties' | 'amis' | 'cote' | 'stats' | 'etude' | 'semaine'
+  // #530 : « Mes données » (export) et « Mentions légales », ouvertes depuis Conditions et confidentialité ou Mon compte.
+  | 'donnees' | 'mentions';
 
 // Libellés traduits (#167) : calculés à l'affichage, dans la langue de l'interface.
 const themes = () => [
@@ -147,11 +153,29 @@ function SousVue({ id, titre, onRetour, children }: { id: string; titre: string;
 }
 
 export function Profil({ vue, onVue, settings, set, profil, serie, record = 0, parcours, placement, onPlacement, onJouer, db, userId, amis, onProfilChange, onProblemes }: Props) {
+  const origine = useRef<VueProfil>('conditions');
   const retour = () => { onVue('menu'); window.scrollTo({ top: 0 }); };
   // #358 : toutes les parties terminées, et leur revue.
   // #286 : « Analyser une partie » est dans « Mes parties » depuis #358 (le Profil tient sans défiler) ; on y revient.
   if (vue === 'parties') return <MesParties onRetour={retour} onJouer={onJouer ?? retour} onImporter={() => onVue('importer')} onEtudier={() => onVue('etude')} db={db} userId={userId} confirmTouch={settings.confirmTouch} />;
-  if (vue === 'conditions') return <Conditions onRetour={retour} />;
+  // #530 : « Mes données » et « Mentions légales » reviennent là d'où on les a ouvertes (Conditions ou Mon compte).
+  const ouvrir = (v: VueProfil) => { if (vue !== 'donnees' && vue !== 'mentions') origine.current = vue; onVue(v); window.scrollTo({ top: 0 }); };
+  const revenir = () => { onVue(origine.current === 'compte' ? 'compte' : 'conditions'); window.scrollTo({ top: 0 }); };
+  if (vue === 'conditions') {
+    return (
+      <Conditions onRetour={retour}
+        lignes={<LigneLien icone={<IconeReglage id="compte" />} libelle={tdon('donnees.ligne')} valeur={tdon('donnees.ligneDetail')} onClick={() => ouvrir('donnees')} />}
+        pied={<button type="button" className="lien conditions-mentions" onClick={() => ouvrir('mentions')}>{tdon('donnees.mentions')}</button>} />
+    );
+  }
+  if (vue === 'donnees') return <SousVue id="donnees-titre" titre={tdon('donnees.titre')} onRetour={revenir}><MesDonnees onMentions={() => ouvrir('mentions')} /></SousVue>;
+  if (vue === 'mentions') {
+    return (
+      <SousVue id="mentions-titre" titre={MENTIONS[langue()].titre} onRetour={revenir}>
+        <MentionsLegales onConditions={() => { origine.current = 'conditions'; onVue('conditions'); window.scrollTo({ top: 0 }); }} />
+      </SousVue>
+    );
+  }
   // #286 : analyser une partie jouée ailleurs (SGF), action secondaire du Profil.
   if (vue === 'importer') return <ImportSgf onRetour={() => { onVue('parties'); window.scrollTo({ top: 0 }); }} pseudo={profil?.pseudo} confirmTouch={settings.confirmTouch} />;
   if (vue === 'amis' && amis?.compte) {
@@ -189,7 +213,7 @@ export function Profil({ vue, onVue, settings, set, profil, serie, record = 0, p
       </SousVue>
     );
   }
-  if (vue === 'compte') return <SousVue id="compte-titre" titre={t('profil.compte')} onRetour={retour}><Account /></SousVue>;
+  if (vue === 'compte') return <SousVue id="compte-titre" titre={t('profil.compte')} onRetour={retour}><Account onMesDonnees={() => ouvrir('donnees')} /></SousVue>;
   if (vue === 'reglages') return <SousVue id="reglages-titre" titre={t('profil.reglages')} onRetour={retour}><Reglages settings={settings} set={set} /></SousVue>;
   if (vue === 'rappel') {
     return (

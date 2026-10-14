@@ -54,7 +54,8 @@ export function lireMaCote(l: unknown): MaCote | null {
 export async function chargerMaCote(db: Db, userId: string, maintenant = Date.now()): Promise<Result<{ cote: MaCote; courbe: PointCourbe[] }>> {
   const depuis = new Date(maintenant - JOURS_COURBE * 864e5).toISOString();
   const [p, h] = await Promise.all([
-    db.from('profiles').select('rating, cote_provisoire, cote_parties, cote_depart, cote_depart_kyu').eq('id', userId).maybeSingle(),
+    // D4 (#530) : parties classées et point de départ sont privés : lus par mon_profil() (le joueur connecté seul).
+    db.rpc('mon_profil').select('rating, cote_provisoire, cote_parties, cote_depart, cote_depart_kyu').maybeSingle(),
     db.from('rating_history').select('rating, created_at').eq('user_id', userId).in('kind', ['game', 'depart'])
       .gte('created_at', depuis).order('created_at', { ascending: true }).limit(200),
   ]);

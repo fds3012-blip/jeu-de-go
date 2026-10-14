@@ -63,7 +63,8 @@ select pg_temp.connecte(:alice);
 select pg_temp.doit_refuser_code($$select public.accepter_conditions('v1')$$, '22023');
 select pg_temp.doit_refuser_code($$select public.accepter_conditions('30/09/2026')$$, '22023');
 select pg_temp.doit_refuser_code($$select public.accepter_conditions(null)$$, '22023');
-select pg_temp.egal((select count(*) from public.profiles where conditions_version is not null), 0::bigint, 'aucune preuve après les refus');
+-- D4 (#530) : la preuve est privée : Alice la lit par mon_profil() ; le décompte de tous se fait hors rôle.
+select pg_temp.egal((select count(*) from public.mon_profil() where conditions_version is not null), 0::bigint, 'aucune preuve après les refus');
 
 -- 3. Le client ne peut pas écrire la preuve directement (droit de colonne absent), ni la version ni la date.
 select pg_temp.doit_refuser_code($$update public.profiles set conditions_version = '2026-09-30' where id = 'aaaaaaaa-0000-4000-8000-000000000001'$$, '42501');
@@ -74,21 +75,21 @@ select pg_temp.egal((select username from public.profiles where id = :alice), 'A
 
 -- 4. Alice accepte : date et version gardées ; la fonction renvoie la date gardée.
 select public.accepter_conditions('2026-09-30') as premiere \gset
-select pg_temp.egal((select conditions_version from public.profiles where id = :alice), '2026-09-30', 'version gardée');
-select pg_temp.egal((select conditions_acceptees_le from public.profiles where id = :alice), :'premiere'::timestamptz, 'date gardée = date renvoyée');
+select pg_temp.egal((select conditions_version from public.mon_profil()), '2026-09-30', 'version gardée');
+select pg_temp.egal((select conditions_acceptees_le from public.mon_profil()), :'premiere'::timestamptz, 'date gardée = date renvoyée');
 
 -- 5. Même version acceptée à nouveau (par exemple à une reconnexion) : la première date fait preuve, elle ne bouge pas.
 select pg_temp.egal(public.accepter_conditions('2026-09-30'), :'premiere'::timestamptz, 'même version : première date gardée');
 
 -- 6. Nouvelle version des conditions : la preuve est remplacée (date et version).
-select pg_temp.egal((select conditions_version from public.profiles where id = :alice), '2026-09-30', 'avant la nouvelle version');
+select pg_temp.egal((select conditions_version from public.mon_profil()), '2026-09-30', 'avant la nouvelle version');
 select public.accepter_conditions('2027-01-15') as seconde \gset
-select pg_temp.egal((select conditions_version from public.profiles where id = :alice), '2027-01-15', 'nouvelle version gardée');
+select pg_temp.egal((select conditions_version from public.mon_profil()), '2027-01-15', 'nouvelle version gardée');
 select pg_temp.egal((:'seconde'::timestamptz >= :'premiere'::timestamptz), true, 'nouvelle date postérieure ou égale');
 
 -- 7. Alice n'écrit que pour elle : le profil de Bruno n'a pas bougé.
-select pg_temp.egal((select conditions_version from public.profiles where id = :bruno), null::text, 'profil d''un autre intact');
 reset role;
+select pg_temp.egal((select conditions_version from public.profiles where id = :bruno), null::text, 'profil d''un autre intact');
 
 -- 8. Structure : la fonction est security definer à search_path vide, fermée à anon et service_role, ouverte à authenticated ;
 --    les deux colonnes vont ensemble ; RLS toujours active sur profiles.

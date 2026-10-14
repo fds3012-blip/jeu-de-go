@@ -14,6 +14,9 @@ import { NOM_FOURNISSEUR, fournisseursActifs, fournisseursVisibles, messageIncid
 import { contexteActuel } from './navigateurIntegre';
 import { BoutonsFournisseurs } from '../ui/BoutonFournisseur';
 import { fr } from '../ui/typo';
+import { LigneLien } from '../ui/Reglage';
+import { IconeReglage } from '../ui/IconesReglages';
+import { tdon } from '../content/i18n/donnees';
 import { t } from '../content/i18n/secondaires';
 import '../ui/compte.css';
 
@@ -30,7 +33,7 @@ const clientSimule = {
 } as unknown as Db;
 
 /** Carte « Ton compte » de l'onglet Profil : connexion par lien e-mail, pseudo, déconnexion. */
-export function Account({ db: dbFourni }: { db?: Db | null }) {
+export function Account({ db: dbFourni, onMesDonnees }: { db?: Db | null; onMesDonnees?: () => void }) {
   const charge = useSupabase(); // client chargé à la demande (#401)
   const db = dbFourni === undefined ? charge : dbFourni;
   useEffect(() => { if (db === undefined) void chargerSupabase(); }, [db]);
@@ -48,10 +51,10 @@ export function Account({ db: dbFourni }: { db?: Db | null }) {
       </div>
     );
   }
-  return <Connected db={db} />;
+  return <Connected db={db} onMesDonnees={onMesDonnees} />;
 }
 
-function Connected({ db }: { db: Db }) {
+function Connected({ db, onMesDonnees }: { db: Db; onMesDonnees?: () => void }) {
   const [session, setSession] = useState<Session | null | undefined>(undefined);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [error, setError] = useState('');
@@ -116,6 +119,12 @@ function Connected({ db }: { db: Db }) {
         <SupprimerCompte db={db} />
       </div>
       <MoyensConnexion db={db} userId={session.user.id} />
+      {/* #530 : « Mes données » (copie de tout ce que le serveur et l'appareil gardent), à côté de la suppression. */}
+      {onMesDonnees && (
+        <div className="lignes compte-donnees">
+          <LigneLien icone={<IconeReglage id="compte" />} libelle={tdon('donnees.ligne')} valeur={tdon('donnees.ligneDetail')} onClick={onMesDonnees} />
+        </div>
+      )}
       {/* Audit du 02/10 (n° 2) : l'écran était aux deux tiers vide. Il redit ce que le compte garde (la même promesse
           qu'à la création, #214), sans action de plus. */}
       <section className="creer-garde compte-connecte-garde" aria-labelledby="compte-garde-titre">

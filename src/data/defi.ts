@@ -127,7 +127,7 @@ export async function lireDefi(db: Db, partieId: string): Promise<Result<EtatDef
 }
 
 /**
- * Pseudo d'un joueur (#393 : l'ami nommé dans la partie), lu sous la RLS existante (profils visibles par tous).
+ * Pseudo d'un joueur (#393 : l'ami nommé dans la partie), lu sous la RLS (D4, #530 : pseudo lisible par les joueurs connectés, colonne publique).
  * null s'il n'en a pas, ou si la lecture échoue : l'écran garde alors « Ton ami ».
  */
 export async function pseudoJoueur(db: Db, id: string): Promise<string | null> {

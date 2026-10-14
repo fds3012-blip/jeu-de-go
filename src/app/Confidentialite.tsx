@@ -57,8 +57,12 @@ export function ConsentModal({ visible, onConditions, onIgnorer }: { visible: bo
   );
 }
 
-/** Page « Conditions et confidentialité » : l'interrupteur pour changer d'avis, puis les données collectées. */
-export function Conditions({ onRetour }: { onRetour: () => void }) {
+/**
+ * Page « Conditions et confidentialité » : l'interrupteur pour changer d'avis, puis les données collectées.
+ * #530 : `lignes` (« Mes données ») et `pied` (« Mentions légales ») viennent du Profil, chargé à la demande : leurs
+ * textes ne pèsent pas dans le JS initial, où ce module se trouve (bandeau de consentement).
+ */
+export function Conditions({ onRetour, lignes, pied }: { onRetour: () => void; lignes?: ReactNode; pied?: ReactNode }) {
   const consent = useConsentement();
   const oppose = useOpposition();
   return (
@@ -69,6 +73,7 @@ export function Conditions({ onRetour }: { onRetour: () => void }) {
           actif={consent === 'accepte'} onChange={v => setConsent(v ? 'accepte' : 'refuse')} />
         <LigneInterrupteur libelle={t('conditions.comptage')} aide={t('conditions.comptageAide')}
           actif={!oppose} onChange={v => setOpposition(!v)} />
+        {lignes}
       </div>
       <div className="conditions-texte">
         <p className="conditions-intro">{t('conditions.intro')}</p>
@@ -96,12 +101,13 @@ export function Conditions({ onRetour }: { onRetour: () => void }) {
         </Repli>
         <Repli titre={t('conditions.droits')}>
           <p>{t('conditions.droits.1')}</p>
-          <p>{t('conditions.droits.2')}</p>
+          <p>{fr(t('conditions.droits.2'))}</p>
           <p>{fr(t('conditions.droits.3'))}</p>
           <p>{fr(t('conditions.droits.4'))}</p>
           {/* Aucune adresse inventée : le contact sera ajouté par l'éditeur (docs/juridique/politique-confidentialite.md). */}
           <p className="conditions-contact">{fr(t('conditions.contact'))}</p>
         </Repli>
+        {pied}
       </div>
     </section>
   );

@@ -6,6 +6,7 @@ import { langue, t } from '../content/i18n';
 
 export type { Profile, Result } from './lectureProfil';
 import type { Profile, Result } from './lectureProfil';
+import { fetchProfile } from './lectureProfil';
 
 /**
  * Envoie l'e-mail de connexion (crée le compte s'il n'existe pas). Depuis #343, il porte un code à 6 chiffres
@@ -162,8 +163,8 @@ export async function verifierCode(db: Db, email: string, code: string, type: 'e
 }
 
 /**
- * Pseudo libre ? Même règle que l'index unique de la base (sans tenir compte des majuscules). Les profils sont
- * lisibles par tous (RLS « Profils visibles par tous ») ; `_` est un joker de ILIKE, il est donc échappé.
+ * Pseudo libre ? Même règle que l'index unique de la base (sans tenir compte des majuscules). Les pseudos sont
+ * lisibles par les joueurs connectés (RLS « Profils visibles par les joueurs connectés », D4) ; `_` est un joker de ILIKE, il est donc échappé.
  * La base revérifie à l'enregistrement : ceci n'est qu'une aide à la saisie.
  */
 export async function pseudoDisponible(db: Db, pseudo: string, userId?: string): Promise<Result<boolean>> {
@@ -183,9 +184,12 @@ export { fetchGels, fetchProfile, fetchStreak } from './lectureProfil';
 export async function saveUsername(db: Db, userId: string, raw: string): Promise<Result<Profile>> {
   const check = validateUsername(raw);
   if (!check.ok) return check;
-  const { data, error } = await db.from('profiles').update({ username: check.value }).eq('id', userId).select('*').single();
+  // D4 (#530) : pas de `select('*')` en retour (colonnes privées fermées) : le profil est relu par mon_profil().
+  const { error } = await db.from('profiles').update({ username: check.value }).eq('id', userId);
   if (error) return { ok: false, error: usernameErrorFromDb(error.code) };
-  return { ok: true, value: data };
+  const relu = await fetchProfile(db, userId);
+  if (!relu.ok || !relu.value) return { ok: false, error: usernameErrorFromDb(undefined) };
+  return { ok: true, value: relu.value };
 }
 
 /** Mot à taper pour confirmer la suppression du compte (#114). */
