@@ -42,7 +42,8 @@ function fauxServeur() {
     appels.push({ chemin: url.pathname + url.search, methode: req.method(), corps });
     if (url.pathname === '/auth/v1/user') return json(utilisateur());
     if (url.pathname === '/rest/v1/rpc/enregistrer_abonnement_rappel') return json('bbbbbbbb-0000-4000-8000-000000000009');
-    if (url.pathname === '/rest/v1/profiles') {
+    // D4 (#530) : son profil entier se lit par mon_profil (colonnes privées fermées sur la table).
+    if (url.pathname === '/rest/v1/profiles' || url.pathname === '/rest/v1/rpc/mon_profil') {
       const ligne = { id: JOUEUR, username: 'Alice', rating: 800, puzzle_rating: 800, streak_days: 0, streak_last: null, gels: 0 };
       return json((req.headers()['accept'] ?? '').includes('vnd.pgrst.object') ? ligne : [ligne]);
     }

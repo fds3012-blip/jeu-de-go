@@ -42,14 +42,14 @@ test('avec un compte : Profil › Conditions › Mes données, un fichier JSON d
   const erreurs: string[] = [];
   page.on('pageerror', e => erreurs.push(e.message));
   await ouvrirMesDonnees(page);
-  await expect(page.getByText(/Avec ton compte : ton profil, tes parties \(au format SGF\)/)).toBeVisible();
+  await expect(page.getByText(/Avec ton compte\s:\ston profil, tes parties \(au format SGF\)/)).toBeVisible();
   // Une seule action en relief, de 44 px au moins.
   const action = page.getByRole('button', { name: 'Télécharger mes données' });
   await expect(page.locator('.sous-vue .btn.primary, .sous-vue .cta')).toHaveCount(1);
   expect((await action.boundingBox())!.height).toBeGreaterThanOrEqual(44);
 
   const f = await telecharger(page);
-  await expect(page.getByRole('status')).toContainText(/C’est fait : mochi-go-mes-donnees-.*\.json est dans tes téléchargements\./);
+  await expect(page.locator('.donnees-statut')).toContainText(/C’est fait\s:\smochi-go-mes-donnees-.*\.json est dans tes téléchargements\./);
   expect(f.app).toBe('Mochi Go');
   expect(f.a_lire).toMatch(/serveur.*appareil/);
   expect(f.serveur.format).toBe('mochi-go.mes-donnees');
@@ -68,7 +68,7 @@ test('avec un compte : Profil › Conditions › Mes données, un fichier JSON d
   await telecharger(page);
   await telecharger(page);
   await page.getByRole('button', { name: 'Télécharger mes données' }).click();
-  await expect(page.getByRole('status')).toHaveText('Tu as déjà téléchargé tes données 3 fois en une heure. Réessaie dans 42 min.');
+  await expect(page.locator('.donnees-statut')).toHaveText('Tu as déjà téléchargé tes données 3 fois en une heure. Réessaie dans 42 min.');
 
   expect(erreurs).toEqual([]);
   await ctx.close();
@@ -78,7 +78,7 @@ test('sans compte : le fichier contient seulement l’appareil, sans appel au se
   const serveur = fauxServeur();
   const { ctx, page } = await telephone(browser, baseURL, serveur, { sombre: true, largeur: 320 });
   await ouvrirMesDonnees(page);
-  await expect(page.getByText('Sans compte, tout est sur ton appareil : le fichier contient ce qu’il garde.')).toBeVisible();
+  await expect(page.getByText(/Sans compte, tout est sur ton appareil\s:\sle fichier contient ce qu’il garde\./)).toBeVisible();
   const f = await telecharger(page);
   expect(f.serveur).toBeNull();
   expect(f.appareil.stockage_local['go.parties.v1']).toEqual({ n: 3 });
