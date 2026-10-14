@@ -61,13 +61,17 @@ const PAR_THEME: Record<Theme, readonly string[]> = {
     't02', 't03', 't04', 't05', 't06',
     'u08', 'u09', 'u10', 'u11', 'u12', 'u13', 'u14', 'u15',
     'v14', 'v15', 'v16',
+    // Lot Z (#539) : points miai, grappe de cinq, six du coin.
+    'z01', 'z03', 'z05', 'z09', 'z10', 'z15',
   ],
-  semeai: ['a14', 'd05', 'd07', 'd08', 'd09', 'd10', 'd11', 'd12', 'd13', 'f02', 'f08', 'f09', 'f10', 'f11', 'f12', 'o03', 'o10', 'v13'],
+  semeai: ['a14', 'd05', 'd07', 'd08', 'd09', 'd10', 'd11', 'd12', 'd13', 'f02', 'f08', 'f09', 'f10', 'f11', 'f12', 'o03', 'o10', 'v13',
+    // Lot Z (#539) : libertés communes, yeux dans la course.
+    'z02', 'z06', 'z07', 'z11', 'z13', 'z14'],
   'prise-en-retour': ['c4', 'j02', 'j03', 'o02', 'o05', 'o07', 'p03', 'v09', 'v12'],
   // Lot W (#16) : les séries des leçons 14 à 16.
   seki: ['w01', 'w02', 'w03'],
   // Lot Y (#500) : la série « Fin de partie » des problèmes par thème (#471).
-  'fin-de-partie': ['w04', 'w05', 'w06', 'y01', 'y02', 'y03', 'y04'],
+  'fin-de-partie': ['w04', 'w05', 'w06', 'y01', 'y02', 'y03', 'y04', 'z04', 'z08', 'z12'],
   comptage: ['w07', 'w08', 'w09'],
   // Lot X (#16) : les séries des leçons 4 (ko), 6 et 8 (ouverture).
   ko: ['x01', 'x02', 'x03'],
@@ -145,6 +149,14 @@ export const THEMES_DE_LECON: Readonly<Record<string, readonly Theme[]>> = {
   l35: ['relier-couper'],
   // Couper, puis reprendre (l36) : relier et couper, et la prise en retour.
   l36: ['relier-couper', 'prise-en-retour'],
+  // #539 : les points miai (l37).
+  l37: ['vie-mort'],
+  // #539 : jouer ailleurs (l38).
+  l38: ['fin-de-partie'],
+  // #539 : les libertés communes (l39).
+  l39: ['semeai'],
+  // #539 : les yeux dans la course (l40).
+  l40: ['semeai'],
 };
 
 /**

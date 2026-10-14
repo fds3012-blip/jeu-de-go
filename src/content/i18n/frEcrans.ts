@@ -662,6 +662,10 @@ export const frEcrans = {
   'aide.mot.kosumi.def': 'Un pas en diagonale depuis sa propre pierre, sans toucher l’adversaire. Les deux pierres sont presque reliées.',
   'aide.mot.watari': 'Watari',
   'aide.mot.watari.def': 'Relier deux de ses groupes par le premier rang, sous une pierre adverse. Si l’adversaire coupe, il manque de libertés.',
+  'aide.mot.tenuki': 'Tenuki',
+  'aide.mot.tenuki.def': 'Jouer ailleurs au lieu de répondre au dernier coup de l’adversaire. Bon quand sa menace est plus petite que ton coup.',
+  'aide.mot.miai': 'Miai',
+  'aide.mot.miai.def': 'Deux points qui se valent. Si l’adversaire en prend un, tu prends l’autre : inutile d’y jouer avant.',
   'profil.aideJeu': 'Aide',
   // Revue (src/app/Revue.tsx, src/app/revue.ts)
   'revue.retour': 'Retour au bilan',
@@ -988,6 +992,10 @@ export const frEcrans = {
   'acquis.l34': 'Tu relies tes pierres par en dessous, au premier rang.',
   'acquis.l36': 'Tu coupes au premier rang, et tu finis par une prise en retour.',
   'acquis.l35': 'Tu coupes au premier rang les pierres qui veulent passer dessous.',
+  'acquis.l37': 'Tu reconnais deux points miai : si Blanc en prend un, tu prends l’autre.',
+  'acquis.l38': 'Tu ne suis pas une petite menace : tu joues ailleurs, plus gros.',
+  'acquis.l39': 'Dans une course, tu bouches le dehors d’abord, la liberté commune en dernier.',
+  'acquis.l40': 'Dans une course, ton œil se bouche en dernier : tu bouches le dehors d’abord.',
   'acquis.defaut': 'Une leçon de plus dans ta poche.',
   'lecteur.progression': 'Progression de la leçon',
   // #290 : sur un écran bas, l'explication du verdict est repliée pour laisser voir le plateau.

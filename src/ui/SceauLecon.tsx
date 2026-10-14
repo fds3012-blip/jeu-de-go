@@ -246,6 +246,30 @@ function motif(id: string, W: string, C: string): ReactElement {
       <circle cx="66" cy="60" r="8" fill={C} stroke={W} strokeWidth="2.6" />
       <path d="M58 56 50 52" stroke={W} strokeWidth="3" strokeLinecap="round" />
     </>);
+    // Les points miai : deux points jumeaux, reliés par une balance égale.
+    case 'l37': return (<>
+      <path d="M28 44H72M50 30V44" stroke={W} strokeWidth="3" strokeLinecap="round" fill="none" />
+      <circle cx="32" cy="62" r="9" fill={C} stroke={W} strokeWidth="2.6" />
+      <circle cx="68" cy="62" r="9" fill={C} stroke={W} strokeWidth="2.6" />
+    </>);
+    // Jouer ailleurs : une flèche qui part de côté, vers la pierre à prendre.
+    case 'l38': return (<>
+      <circle cx="34" cy="64" r="8" fill={W} />
+      <path d="M40 52Q50 30 64 32M58 26 64 32 58 38" stroke={W} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <circle cx="68" cy="58" r="10" fill={C} stroke={W} strokeWidth="2.6" />
+    </>);
+    // Les libertés communes : deux pierres face à face, le point qu'elles se partagent au milieu.
+    case 'l39': return (<>
+      <circle cx="30" cy="56" r="10" fill={W} />
+      <circle cx="70" cy="56" r="10" fill={C} stroke={W} strokeWidth="2.6" />
+      <path d="M44 56H56M50 34V44" stroke={W} strokeWidth="3" strokeLinecap="round" fill="none" />
+    </>);
+    // Les yeux dans la course : deux yeux face à face, et la flèche du dehors.
+    case 'l40': return (<>
+      <circle cx="30" cy="58" r="10" fill="none" stroke={W} strokeWidth="3" />
+      <circle cx="70" cy="58" r="10" fill={C} stroke={W} strokeWidth="2.6" />
+      <path d="M50 26V44M42 36 50 44 58 36" stroke={W} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+    </>);
     default: return <circle cx="50" cy="50" r="14" fill={W} />;
   }
 }

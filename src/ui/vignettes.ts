@@ -96,4 +96,12 @@ export const MOTIFS: Record<string, Motif> = {
   l33: { coin: true, noir: [[0, 2], [1, 2], [0, 3]], blanc: [[1, 3], [2, 3], [3, 2]], jade: [[2, 2]] },
   l34: { coin: true, noir: [[0, 2], [3, 3]], blanc: [[1, 1], [2, 1], [3, 1], [2, 2]], jade: [[2, 3]] },
   l32: { coin: true, noir: [[0, 2], [1, 2], [2, 2], [0, 3]], blanc: [[1, 3], [2, 3], [3, 2]], jade: [[3, 3]] },
+  // Les points miai : un œil sûr (or) et deux points pour le deuxième (jade).
+  l37: { coin: true, noir: [[1, 2], [2, 2], [3, 2], [1, 3], [3, 3]], or: [[2, 3]], jade: [[0, 2], [0, 3]] },
+  // Jouer ailleurs : la pierre blanche qui avance en bas, et la prise (jade) ailleurs.
+  l38: { coin: true, noir: [[0, 1], [1, 1], [2, 2], [1, 3]], blanc: [[2, 3], [3, 2], [1, 0]], jade: [[2, 0]] },
+  // Les libertés communes : deux groupes face à face, la liberté commune (or) et le dehors à boucher (jade).
+  l39: { coin: true, noir: [[0, 2], [1, 2], [0, 3]], blanc: [[2, 2], [3, 2], [2, 3]], or: [[1, 3]], jade: [[3, 3]] },
+  // Les yeux dans la course : un œil de chaque côté (or), le dehors de Blanc à boucher (jade).
+  l40: { coin: true, noir: [[0, 2], [1, 2], [1, 3]], blanc: [[2, 2], [3, 2], [3, 3]], or: [[0, 3], [2, 3]], jade: [[3, 1]] },
 };

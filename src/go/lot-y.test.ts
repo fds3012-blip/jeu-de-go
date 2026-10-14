@@ -131,19 +131,20 @@ describe('lot Y : identifiants, énoncés, thème, série, doublons, calendrier,
     }
   });
 
-  it('la série « Fin de partie » réunit le lot W (finir, compter) et ce lot', () => {
+  it('la série « Fin de partie » réunit le lot W (finir, compter), ce lot et le lot Z (jouer ailleurs, #539)', () => {
     const banque = parsePuzzles(ALL_PUZZLES);
     expect(problemesDe(banque, 'fin-de-partie').map(p => p.id).sort())
-      .toEqual(['w04', 'w05', 'w06', 'w07', 'w08', 'w09', ...LOT_Y.map(r => r.id)].sort());
+      .toEqual(['w04', 'w05', 'w06', 'w07', 'w08', 'w09', ...LOT_Y.map(r => r.id), 'z04', 'z08', 'z12'].sort());
     expect(problemesDe(banque, 'fin-de-partie').length).toBeGreaterThanOrEqual(MIN_PAR_SERIE);
     expect(seriesDisponibles(banque)).toContain('fin-de-partie');
   });
 
-  it('le Go du jour garde son ordre : le lot Y, d’un seul tenant, vient juste après le lot X et ferme le calendrier', () => {
+  it('le Go du jour garde son ordre : le lot Y, d’un seul tenant, vient juste après le lot X ; le lot Z (#539) le suit', () => {
     const ids = LOT_Y.map(r => r.id);
     const debut = CALENDRIER_GO_DU_JOUR.indexOf('y01');
-    expect(CALENDRIER_GO_DU_JOUR.slice(-ids.length)).toEqual(ids);
+    expect(CALENDRIER_GO_DU_JOUR.slice(debut, debut + ids.length)).toEqual(ids);
     expect(debut).toBe(CALENDRIER_GO_DU_JOUR.indexOf('x08') + 1);
+    expect(CALENDRIER_GO_DU_JOUR[debut + ids.length]).toBe('z01');
   });
 
   it('aucun doublon : ni identifiant, ni position (à une rotation ou un miroir près, marques ignorées)', () => {

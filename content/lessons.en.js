@@ -385,5 +385,56 @@ export const LESSONS_EN = {
     { text: 'Your marked stone is weak. Run it toward the center.',
       ok: 'Good: your stone takes the road to the center.', no: 'Move your stone away from the edge, toward the center.',
       refus: ['On the 3rd line, you crawl instead of running to the center.', 'Toward the edge, you shrink: White closes the center at F6.'] }
+  ] },
+  l37: { title: 'Miai points', desc: 'Two points for the same eye', steps: [
+    { text: 'Miai (two points worth the same): White takes A2, you the green point.' },
+    { text: 'White takes B1? Take the other one, the green point: you live.' },
+    { text: 'White plays elsewhere. Must you add a stone here?', choices: ['Yes', 'No'],
+      ok: 'No: A2 and B1 are miai. Answer only if White takes one.', no: 'If White takes one of the two points, you take the other: your group already lives.' },
+    { text: 'White just took D1. Take the other miai point.',
+      ok: 'The corner gives you your second eye: you live.', no: 'You have two places for an eye: White took one.',
+      refus: ['White plays A2: you have only one eye left.'] },
+    { text: 'White took a miai point. Your turn to live.',
+      ok: 'Miai: White took H1, you take J2. Two eyes.', no: 'Your eye at E1 is safe. Where is the second one?',
+      refus: ['White takes J2: you have only one eye left.'] }
+  ] },
+  l38: { title: 'Playing elsewhere', desc: 'A small threat can wait', steps: [
+    { text: 'Tenuki (playing elsewhere): White pushes at E1, capture at the green point.' },
+    { text: 'Tap D1: if you block there, White connects at E9.',
+      geste: { no: 'Tap the point where you would block White, on the first line.' } },
+    { text: 'Capture or block: how many points apart?', choices: ['1', '3', '5'],
+      ok: 'Three: the capture is worth four points, the block only one.', no: 'Count: the capture is worth four points, the block only one.' },
+    { text: 'Your turn: White pushes at E9. Play the biggest move.',
+      ok: 'Tenuki: the threat is worth one point, your capture four.', no: 'Don’t follow White: look for the biggest move.',
+      refus: ['You block one point, and White connects at E1: three less.'] },
+    { text: 'White pushes at J5. Do you answer, or play elsewhere?',
+      ok: 'Elsewhere: you capture two stones, and the threat stays small.', no: 'The threat is worth one point. Look for something bigger.',
+      refus: ['You block one point, and White connects at A5: three less.'] }
+  ] },
+  l39: { title: 'Shared liberties', desc: 'Outside first, the middle last', steps: [
+    { text: 'Shared liberty (yours and White’s): tap it.',
+      geste: { no: 'Tap the empty point touching both your group and White’s.' } },
+    { text: 'First fill White’s outside liberty, at the green point.' },
+    { text: 'And if you fill E1 first, who wins?', choices: ['You', 'White'],
+      ok: 'White: E1 takes a liberty from you too. White captures at A2.', no: 'E1 is your liberty too: you put yourself in atari, White captures at A2.' },
+    { text: 'Your turn: win the race. Start from the outside.',
+      ok: 'Outside first: the shared liberty comes last.', no: 'Fill a White liberty that doesn’t touch your group.',
+      refus: ['Shared liberty: you lose one too, and White wins.', 'That’s your own liberty: White wins the race.'] },
+    { text: 'Your turn: capture these white stones in the race.',
+      ok: 'Outside first, then E1: you capture the whole group.', no: 'Look for White’s liberty far from your group.',
+      refus: ['Shared liberty: now you are in atari, White captures at J2.'] }
+  ] },
+  l40: { title: 'Eyes in a race', desc: 'An eye is filled last', steps: [
+    { text: 'Your eye at B1: White can only fill it last.',
+      geste: { no: 'Tap the empty point surrounded by your group.' } },
+    { text: 'One eye each: first fill White’s outside liberty, the green point.' },
+    { text: 'And if White plays first, who wins?', choices: ['You', 'White'],
+      ok: 'White: it fills A2, and you are the one captured.', no: 'White fills A2 first: you keep your eye, White keeps its eye and J2.' },
+    { text: 'Your turn: one eye each, two outside liberties. Win the race.',
+      ok: 'J2, then J1: its eye at G1 will be filled last.', no: 'Fill a White liberty, on the side where your stone holds.',
+      refus: ['Your stone at J1 has one liberty: White captures it at J2.', 'That’s your own liberty: you no longer win the race.', 'You fill your own eye: White wins the race.'] },
+    { text: 'White has an eye, you don’t. Win the race.',
+      ok: 'White only has its eye left: fill the shared liberty right away.', no: 'White has no outside liberty. Look for the one you share.',
+      refus: ['That’s your own liberty: you no longer win the race.'] }
   ] }
 };
