@@ -521,7 +521,7 @@ function DirectPartie({ db, partieId, userId, demande, confirmTouch, reglages, c
   const enComptage = v.phase === 'comptage';
   const mortesVues = mortes ?? new Set(v.mortes);
   const rules = partie.rules === 'chinese' ? 'chinese' : 'japanese';
-  const sc = enComptage || (v.phase === 'fini' && v.issue?.raison === 'points') ? score(v.pos, Number(partie.komi), rules, mortesVues) : null;
+  const sc = enComptage || (v.phase === 'fini' && v.issue?.raison === 'points') ? score(v.pos, Number(partie.komi), rules, mortesVues, partie.handicap ?? 0) : null;
   const inchangee = mortes === null;
 
   async function envoyer(coup: string) {

@@ -138,13 +138,17 @@ export function formatResult(winner: 0 | 1 | 2, margin: number): string {
   return `${winner === 1 ? 'B' : 'W'}+${Number(margin.toFixed(1))}`;
 }
 
-/** Score final après retrait des pierres mortes (score.ts), avec le komi et les règles de la partie. */
+/**
+ * Score final après retrait des pierres mortes (score.ts), avec le komi et les règles de la partie.
+ * Handicap (#544) : les pierres posées au départ (`setupBlack`) sont passées à `score`, qui donne à Blanc
+ * 1 point par pierre de handicap en règle chinoise, comme pour une partie locale (#528). Rien en règle japonaise.
+ */
 export function finalScore(record: GameRecord, dead: readonly number[], komi: number, rules: Rules): FinalScore {
   const r = replay(record, { superko: usesSuperko(record.rules) });
   if (!r.ok) return { ok: false, error: 'partie-invalide' };
   const d = normalizeDead(r.pos, dead);
   if (!d) return { ok: false, error: 'pierres-mortes' };
-  const s = score(r.pos, komi, rules, new Set(d));
+  const s = score(r.pos, komi, rules, new Set(d), record.setupBlack.length);
   const margin = Math.abs(s.black - s.white);
   const winner: 0 | 1 | 2 = margin < 1e-9 ? 0 : s.black > s.white ? 1 : 2;
   return { ok: true, result: formatResult(winner, margin), black: s.black, white: s.white, winner, margin: winner ? margin : 0, dead: d };
