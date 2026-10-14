@@ -9,10 +9,12 @@
 // 4. « Rejouer mes erreurs » (#428, RejouerErreurs.tsx) : avec KataGo, quand tu as des erreurs à rejouer, c'est l'action
 //    principale du bilan ; « Démarrer le bilan » passe en action secondaire. Sans KataGo, pas de bouton.
 // 5. « Partager » (#364, PartagePartie.tsx) : action secondaire du bilan ; la feuille arrive au premier toucher.
+// 6. #527 : jusqu'à 15 kyu (cote interne, jamais affichée), 3 catégories au lieu des notes détaillées : tableau, sceaux,
+//    titres du parcours (categoriesRevue.ts, où le regroupement est documenté).
 // Logique pure : revue.ts (notes de base, précision, moment clé), notation.ts (notes du go), parcours.ts (phrases).
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
 import { Board } from '../ui/Board';
-import { Mochi } from '../ui/Mochi';
+import { PortraitMochi } from '../ui/Portrait';
 import { Icone } from '../ui/Partie';
 import { SceauNote } from '../ui/SceauNote';
 import { NOTE_ENCRE } from '../ui/notes';
@@ -29,6 +31,7 @@ import {
 } from './revue';
 import { candidatsUniques, classerCoups, confirmeUnique, coupsCles, lignesBilan, NOTES_COURBE, type CoupNote } from './notation';
 import { avanceVue, cleSuivante, commentaire, proverbePour } from './parcours';
+import { affichageNote, CATEGORIES, compteCategories, revueSimpleAppareil, SCEAU_CATEGORIE } from './categoriesRevue';
 import { noterActivite } from './xp';
 import { coupAccepte, creerErreur, peutEnFaireUnProbleme, type ErreurGardee } from './erreurs';
 import { garderErreurRatee } from './revisionsAppareil';
@@ -93,6 +96,9 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
   const [meilleurs, setMeilleurs] = useState<Record<number, number | null>>({});
   // #364 : feuille « Partager » ouverte.
   const [partager, setPartager] = useState(false);
+  // #527 : revue en 3 catégories jusqu'à 15 kyu. Lu une fois : la revue ne change pas de grille en cours de route.
+  const [simple] = useState(revueSimpleAppareil);
+  const affiche = (nt: CoupNote) => affichageNote(nt, size, simple);
   // « Rejoue cette erreur » (issue #77) : `null` hors rejeu.
   const [rejeu, setRejeu] = useState<Rejeu | null>(null);
   // Erreurs dont le bon coup est dévoilé (après un essai ou « Voir le bon coup »), par numéro de coup.
@@ -341,7 +347,7 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
             shake={rejeu.faux != null ? { p: rejeu.faux, n: rejeu.n } : null} />
         </div>
         <div className={`revue-mochi${rejeu.apres ? ' revue-rejeu-ok' : ''}`} aria-live="polite">
-          <Mochi size={40} />
+          <PortraitMochi humeur={rejeu.apres ? 'content' : 'neutre'} taille={40} decoratif />
           <p>{fr(phrase)}</p>
         </div>
         {rejeu.apres
@@ -358,7 +364,7 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
       <div className="revue revue-attente">
         {tete(onRetour, retour ?? tr('revue.retour'))}
         <div className="bilan-attente revue-analyse">
-          <div className="bilan-attente-mochi"><Mochi size={84} /></div>
+          <div className="bilan-attente-mochi"><PortraitMochi humeur="pensif" taille={84} decoratif /></div>
           <figure className="bilan-proverbe">
             <figcaption className="bilan-proverbe-titre">{tr('bilan3.proverbe')}</figcaption>
             <blockquote>{fr(`« ${proverbe.texte} »`)}</blockquote>
@@ -399,7 +405,7 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
       {/* Points des coups clés, en HTML : ronds même quand la courbe s'étire. */}
       {notes.map(nt => nt && NOTES_COURBE.has(nt.note) && cles.includes(nt.coup) && avances[nt.coup] != null ? (
         <span key={nt.coup} className="revue-courbe-point" data-note={nt.note} aria-hidden="true"
-          style={{ left: `${(x(nt.coup) / L) * 100}%`, top: `${(courbeY(avances[nt.coup]!, H, size) / H) * 100}%`, background: NOTE_ENCRE[nt.note].fond }} />
+          style={{ left: `${(x(nt.coup) / L) * 100}%`, top: `${(courbeY(avances[nt.coup]!, H, size) / H) * 100}%`, background: NOTE_ENCRE[affiche(nt).sceau].fond }} />
       ) : null)}
     </figure>
   );
@@ -409,16 +415,18 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
     const precMoi = precisionHonnete(notes, moi, avanceNoir, size), precLui = precisionHonnete(notes, lui, avanceNoir, size);
     const cMoi = compteNotes(notes, moi), cLui = compteNotes(notes, lui);
     const lignes = lignesBilan(avecKataGo).filter(l => cMoi[l] + cLui[l] > 0 || (avecKataGo && l === 'brillant'));
+    // #527 : les 3 catégories, toujours toutes les trois (un « – » dit aussi quelque chose), chacune avec sa définition.
+    const kMoi = compteCategories(notes, moi, size), kLui = compteCategories(notes, lui, size);
     const pierre = (c: Color) => <span className={`revue-coup-pierre bilan-pierre ${c === 1 ? 'noire' : 'blanche'}`} aria-hidden="true" />;
     return (
       <div className="revue revue-bilan">
         {tete(onRetour, retour ?? tr('revue.retour'))}
         <div className="bilan-coach">
-          <Mochi size={48} />
+          <PortraitMochi taille={48} decoratif />
           <p className="bilan-bulle">{fr(phraseBilan(notes, moi, adversaire, { avanceNoir, size, cle, sansKataGo: !avecKataGo }))}</p>
         </div>
         {courbeSvg(k => demarrer(Math.max(1, k)))}
-        <table className="bilan-table" aria-label={tr('bilan3.tableau')}>
+        <table className="bilan-table" aria-label={tr('bilan3.tableau')} data-grille={simple ? 'categories' : 'notes'}>
           <thead>
             <tr>
               <th scope="col"><span className="sr-only">{tr('revue.note')}</span></th>
@@ -432,7 +440,17 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
               <td><span className="bilan-score bilan-score-moi">{precMoi == null ? '–' : fr(tr('bilan3.pourcent', { p: precMoi }))}</span></td>
               <td><span className="bilan-score">{precLui == null ? '–' : fr(tr('bilan3.pourcent', { p: precLui }))}</span></td>
             </tr>
-            {lignes.map(l => (
+            {simple ? CATEGORIES.map(c => (
+              <tr key={c} data-categorie={c}>
+                <th scope="row">
+                  <span className="revue-table-note"><SceauNote note={SCEAU_CATEGORIE[c]} taille={24} />
+                    <span className="bilan-categorie">{tr(`categorie.${c}`)}<small>{tr(`categorie.aide.${c}`)}</small></span>
+                  </span>
+                </th>
+                <td className={kMoi[c] ? 'plein' : undefined}>{kMoi[c] || '–'}</td>
+                <td className={kLui[c] ? 'plein' : undefined}>{kLui[c] || '–'}</td>
+              </tr>
+            )) : lignes.map(l => (
               <tr key={l} data-ligne={l}>
                 <th scope="row"><span className="revue-table-note"><SceauNote note={l} taille={24} />{NOTE_INFO[l].libelle}</span></th>
                 <td className={cMoi[l] ? 'plein' : undefined}>{cMoi[l] || '–'}</td>
@@ -477,13 +495,14 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
   const toi = !!adversaire && !!note && note.couleur === moi;
   // Contre l'ordi : son nom (auteur du coup, ou celui qui pouvait punir) ; à deux : le camp qui a joué.
   const auteur = note ? adversaire ?? tr(note.couleur === 1 ? 'camp.noir' : 'camp.blanc') : '';
-  const com = note ? commentaire(note, positions, { toi, nom: auteur }) : null;
+  const com = note ? commentaire(note, positions, { toi, nom: auteur, simple }) : null;
   const avance = i > 0 ? avanceVue(avances[i], moi) : null;
   const surCle = !!cle && i === cle.coup;
   const prochaine = cleSuivante(cles, i);
   const peutRejouer = !!note && !(joueur && note.couleur !== joueur) && peutEnFaireUnProbleme(note.note, meilleurs[note.coup]);
-  const marqueNote = note && q.lastMove != null && q.lastMove >= 0
-    ? { p: q.lastMove, ...NOTE_ENCRE[note.note], symbole: NOTE_INFO[note.note].symbole, libelle: NOTE_INFO[note.note].libelle, cle: i } : undefined;
+  const vue = note ? affiche(note) : null;
+  const marqueNote = vue && q.lastMove != null && q.lastMove >= 0
+    ? { p: q.lastMove, ...NOTE_ENCRE[vue.sceau], symbole: NOTE_INFO[vue.sceau].symbole, libelle: vue.libelle, cle: i } : undefined;
   const nomAvance = avance && avance.valeur !== 0 ? (avance.valeur > 0 ? nomMoi : nomLui) : '';
 
   return (
@@ -491,12 +510,12 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
       {tete(() => { setEtape('bilan'); window.scrollTo?.({ top: 0 }); }, tr('parcours.retour'), tr('revue.compteur', { i, n }))}
 
       <div className="parcours-bulle revue-mochi" data-note={note?.note} aria-live="polite">
-        <Mochi size={44} />
+        <PortraitMochi taille={44} decoratif />
         <div key={i} className="parcours-texte">
           {com ? (
             <>
               <p className="parcours-titre">
-                {note && <SceauNote note={note.note} taille={22} />}
+                {vue && <SceauNote note={vue.sceau} taille={22} />}
                 <span>{fr(com.titre)}</span>
                 {avance && (
                   // #461 : un aria-label sur un simple <span> est ignoré (rôle générique) : la phrase passe en texte caché.
@@ -533,14 +552,15 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
           {positions.slice(1).map((p, k) => {
             const c = k + 1, nt = notes[k], m = p.lastMove ?? -1;
             const lieu = m < 0 ? tr('coup.passe') : toLabel(m, size);
-            const etiquette = `${tr('revue.etiquette', { c, lieu })}${nt ? `, ${NOTE_INFO[nt.note].libelle}` : ''}`;
+            const vu = nt ? affiche(nt) : null;
+            const etiquette = `${tr('revue.etiquette', { c, lieu })}${vu ? `, ${vu.libelle}` : ''}`;
             return (
               <li key={c}>
                 <button type="button" className={`revue-coup${cles.includes(c) ? ' cle' : ''}`} aria-current={c === i ? 'true' : undefined} aria-label={etiquette} onClick={() => aller(c)}>
                   <span className="revue-coup-num">{c}</span>
                   <span className={`revue-coup-pierre ${positions[k].toPlay === 1 ? 'noire' : 'blanche'}`} aria-hidden="true" />
                   <span className="revue-coup-lieu">{lieu}</span>
-                  {nt ? <SceauNote note={nt.note} taille={18} /> : <span className="revue-coup-vide" aria-hidden="true" />}
+                  {vu ? <SceauNote note={vu.sceau} taille={18} /> : <span className="revue-coup-vide" aria-hidden="true" />}
                 </button>
               </li>
             );

@@ -1,7 +1,13 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
 import { SGF_424 } from '../src/app/partie424.fixture';
-import { demarrerParcours, ouvrirRevue } from './revueFactice';
+import { COTE_JOUEUR_FORT, demarrerParcours, ouvrirRevue } from './revueFactice';
+
+// #527 : ces parcours vérifient les notes détaillées (Gaffe, Solide…) : le joueur est fort (10 kyu). La revue en
+// 3 catégories des débutants est vérifiée par e2e/decisions-527.spec.ts.
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(c => localStorage.setItem('go.cote-joueur.v1', JSON.stringify(c)), COTE_JOUEUR_FORT);
+});
 
 // Issue #424 : la revue de la partie entre amis de Florian (9 × 9, B+17,5) s'est faite « Sans KataGo » sur iPhone.
 // Cause : la revue ne prenait KataGo que s'il était déjà en cache ; une partie entre amis ne l'avait jamais chargé.

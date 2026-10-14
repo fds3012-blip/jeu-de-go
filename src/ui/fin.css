@@ -45,7 +45,7 @@
 /* L'or ne sert qu'aux récompenses : le bilan n'est doré qu'après une victoire. */
 .fin-bilan b.or { color: var(--recompense-texte); }
 
-/* Mochi tire la leçon : son sceau jade et une phrase, sans bulle (la barre du coach n'est plus là). */
+/* Mochi tire la leçon : son portrait (il parle de ta partie, #527) et une phrase, sans bulle (la barre du coach n'est plus là). */
 .fin-mochi { display: flex; align-items: flex-start; gap: var(--space-3); width: 100%; margin-top: var(--space-4); text-align: left; font-size: var(--fs-corps-s); line-height: 1.4; }
 .fin-mochi p { margin: 0; }
 .fin-mochi .lien { margin-left: -12px; min-height: var(--cible-min); }
