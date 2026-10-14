@@ -240,6 +240,34 @@ test('axe : Profil, Réglages, Mon compte (sans compte), Conditions', async ({ p
   await verifier(page, 'Conditions et confidentialité');
 });
 
+// #538 : hors ligne clair. Accueil avec les comptes (bandeau, « En ligne » et « Un ami » grisés), feuille de repli vers
+// Caillou, et « L'IA sur ton téléphone » dans les trois états (hors ligne, à télécharger, prête).
+test('axe : hors ligne (accueil, repli vers Caillou) et l’IA sur ton téléphone', async ({ context }) => {
+  const page = await brancher(context, fauxServeur(), {
+    'go.premiere-pierre.v1': 'true', 'go.parties.v1': JSON.stringify({ n: 1, ordi: 1, dernier: 'pomme' }), 'go.intro-but.v1': 'true',
+    'go.bilan.v1': JSON.stringify({ pomme: { v: 1, d: 0 }, caillou: { v: 1, d: 0 } }), 'go.adversaire.v1': '"bambou"',
+  });
+  await page.addInitScript(() => { (window as unknown as { __kataGoTelechargement: boolean }).__kataGoTelechargement = true; });
+  await page.goto('/');
+  await page.waitForFunction(async () => !!(await navigator.serviceWorker.ready).active && !!navigator.serviceWorker.controller, null, { timeout: 20_000 });
+  await context.setOffline(true);
+  await page.reload();
+  await expect(page.getByTestId('mode-en_ligne')).toHaveAttribute('aria-disabled', 'true');
+  await verifier(page, 'Accueil hors ligne');
+  await page.locator('.cta').click();
+  await expect(page.getByTestId('repli-hors-ligne')).toBeVisible();
+  await verifier(page, 'Feuille « Bambou a besoin de l’IA »');
+  await page.getByRole('button', { name: 'Plus tard' }).click();
+  await nav(page, 'Profil').click();
+  await page.getByRole('button', { name: /^Réglages/ }).click();
+  await expect(page.getByTestId('reglage-ia')).toHaveAttribute('data-etat', 'hors-ligne');
+  await verifier(page, 'Réglages, IA hors ligne');
+  await context.setOffline(false);
+  await page.getByTestId('ia-telecharger').click();
+  await expect(page.getByTestId('reglage-ia')).toHaveAttribute('data-etat', 'prete', { timeout: 30_000 });
+  await verifier(page, 'Réglages, IA prête');
+});
+
 test('axe : créer un compte, connexion, code, pseudo, Mon compte connecté', async ({ browser, baseURL }) => {
   const serveur = fauxServeur();
   const ctx = await browser.newContext({

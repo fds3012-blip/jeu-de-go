@@ -1685,7 +1685,7 @@ export const en = {
   'horsLigne.accueil': 'Offline',
   'horsLigne.accueilDetail': 'You can play the computer, do lessons and puzzles.',
   'horsLigne.tuile': 'Needs internet',
-  'horsLigne.tuileAria': '{nom}: needs internet, unavailable offline',
+  'horsLigne.tuileAria': '{nom}: needs internet',
   'miseAJour.prete': 'Update ready',
   'miseAJour.recharger': 'Reload',
   'miseAJour.plusTard': 'Later',

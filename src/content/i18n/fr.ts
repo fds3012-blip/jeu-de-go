@@ -503,7 +503,7 @@ export const fr = {
   'horsLigne.accueilDetail': 'Tu peux jouer contre l’ordi, faire les leçons et les problèmes.',
   // Tuiles de l'accueil grisées hors ligne (#538) : la raison, à la place du détail.
   'horsLigne.tuile': 'Il faut internet',
-  'horsLigne.tuileAria': '{nom} : il faut internet, indisponible hors ligne',
+  'horsLigne.tuileAria': '{nom} : il faut internet',
   'miseAJour.prete': 'Mise à jour prête',
   'miseAJour.recharger': 'Recharger',
   'miseAJour.plusTard': 'Plus tard',
