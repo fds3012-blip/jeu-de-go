@@ -53,7 +53,7 @@ Le contenu des leçons n'est plus dans le JS initial : l'accueil lit l'index gé
 (titre et nombre d'étapes). Après l'ajout ou la modification d'une leçon : `npm run index-lecons`
 (détail : `docs/architecture/chargement-initial.md`).
 
-## Ce qui existe (35 leçons)
+## Ce qui existe (39 leçons)
 
 | Chapitre | Leçon | Titre | Niveau visé |
 | --- | --- | --- | --- |
@@ -65,15 +65,19 @@ Le contenu des leçons n'est plus dans le JS initial : l'accueil lit l'index gé
 | | **l31** | **Le 3-4 et l'approche** (19 × 19, coin cadré) : komoku, kakari ; répondre par tsuke, kosumi ou pince, puis s'étendre | 14 → 11 kyu |
 | 3. Capturer et sauver | l9 à l11 | Filet, prise en retour, course aux libertés | 20 → 17 kyu |
 | | **l26** | **La course avec un œil** : l'œil se remplit en dernier, le dehors d'abord | 14 → 12 kyu |
+| | **l39** | **Les libertés communes** : boucher le dehors d'abord ; la liberté commune retire aussi une liberté à soi | 10 → 8 kyu |
+| | **l40** | **Les yeux dans la course** : un œil chacun, le dehors d'abord ; J1 qui se fait prendre ; contre un œil sans dehors, la commune tout de suite | 8 → 6 kyu |
 | 4. Vie et mort | l12, l13, l14 | Faux œil, point vital, seki | 18 → 15 kyu |
 | | l17 | Les formes d'yeux : le T, le carré de quatre, la grappe de cinq | 15 → 12 kyu |
 | | **l24** | **Agrandir ou réduire** : le point au bord de l'espace (vivre, tuer de l'extérieur) | 13 → 11 kyu |
 | | **l25** | **Les groupes du coin** : le point du coin, et le ko (jamais compté comme une vie) | 12 → 10 kyu |
+| | **l37** | **Les points miai** : deux points pour un même œil ; si Blanc en prend un, l'autre ; rien à ajouter sinon | 10 → 8 kyu |
 | 5. Fin de partie et comptage | l15, l16 | Finir la partie, compter une partie | 15 kyu |
 | | **l22** | **Sente et gote** : le coup qui oblige à répondre ; le sente d'abord | 13 → 11 kyu |
 | | **l23** | **Le hane au premier rang** : contourner, relier ; deux points d'écart | 12 → 10 kyu |
 | | **l32** | **La valeur d'un coup** : compter les deux suites (prendre ou laisser relier : quatre points d'écart) ; le plus grand d'abord | 11 → 9 kyu |
 | | **l33** | **Le sente avant le gote** : l'atari qui oblige d'abord, la prise ensuite ; l'inverse coûte deux points | 10 → 9 kyu |
+| | **l38** | **Jouer ailleurs** (tenuki) : une menace d'un point attend ; la prise vaut quatre, l'écart trois | 9 → 7 kyu |
 | 6. Formes et tesuji | l18 | Les bonnes formes : point de coupe, bouche du tigre, bambou | 14 → 12 kyu |
 | | l19 | Les pierres qui coupent : prendre la pierre qui sépare, le diamant (ponnuki) | 13 → 11 kyu |
 | | l20 | Relier et mourir (oiotoshi) : quand relier ne sauve rien | 12 → 10 kyu |
@@ -84,7 +88,7 @@ Le contenu des leçons n'est plus dans le JS initial : l'accueil lit l'index gé
 
 Les identifiants restent stables (la progression des joueurs y est attachée) ; l'ordre du chemin est celui des
 chapitres, et `content/lessons.fr.js` suit cet ordre (l27, puis l29 à l31 sont rangées après l8, l26 après l11, l24 et l25 après l17, l22 et l23 après
-l16 ; l32 et l33 après l23, l34 à l36 après l21).
+l16 ; l32 et l33 après l23, l34 à l36 après l21 ; l39 et l40 après l26, l37 après l25, l38 après l33).
 
 Preuves du palier 21-30 (`src/go/lecons-21-30.test.ts`) :
 
@@ -114,6 +118,37 @@ Preuves des leçons 32 à 36 (`src/go/lecons-32-plus.test.ts`) :
 Parcours : `e2e/lecons-32-plus.spec.ts` (l34 jouée en entier, un coup refusé à chaque exercice, 390 px clair, 320 px
 sombre, et au zoom 200 % entièrement au doigt, mots entiers dans la bulle).
 
+Preuves des leçons 37 à 40 (#539, `src/go/lecons-37-plus.test.ts`) :
+
+| Leçon | Méthode de preuve |
+| --- | --- |
+| l37 Les points miai | Preuve de vie et mort en zone fermée : Blanc au trait ne tue pas ; A2 et B1 sont les deux seuls coups blancs qui obligent Noir à répondre, chacun appelle l'autre ; Blanc A2 puis Noir B1 : deux vrais yeux C1 et E1 ; exercices : A2 seul après D1, J2 seul après H1 (miroir), chaque refus et la passe laissent Blanc tuer ; G1 (miroir) ne mène qu'à un ko, refusé sans être cité |
+| l38 Jouer ailleurs | Minimax exact par surfaces : la prise seul meilleur coup dans les trois présentations (telle quelle, retournée, sur la diagonale), tout autre coup perd au moins 4 points, Blanc relie après le blocage ; règle japonaise sur les suites montrées : 3 points d'écart (la prise 4, la menace 1) |
+| l39 Les libertés communes | Recherche exacte de course (`src/go/preuve-course.ts` : prise = gagné ou perdu ; double passe, ko ou profondeur = non résolu ; zone fermée vérifiée par `defautsCourse`, chaînes voisines et liberté qui relierait au dehors comprises) : J2 seul gagne, Blanc au trait gagne, E1 d'abord met Noir en atari ; exercices : J1 ou J2 exactement, A2 seul en miroir |
+| l40 Les yeux dans la course | Même recherche : J2 seul gagne, Blanc au trait gagne en A2 ; un œil et deux libertés dehors chacun : J2 seul, J1 se fait prendre en J2, D1 (son propre œil) perd ; contre un œil sans liberté dehors : F1, la liberté commune, seul gagne |
+
+Lot Z (15 problèmes, 1200 à 1600, `src/content/lots/z-club.ts`, `src/go/lot-z.test.ts`, migration
+`20261014120000_lot_z`) : points miai, grappe de cinq et six du coin (vie et mort en zone fermée), courses avec libertés
+communes et yeux (recherche exacte de course), jouer ailleurs (minimax exact). Chaque coup légal de Noir est jugé ; la
+réplique de chaque réfutation est rejouée ; z15 : A2 et B1 ne laissent qu'un ko, jamais compté comme une preuve.
+
+Écartées en #539, faute de preuve lisible :
+
+- **Le placement (oki)**, nouvelle recherche : 4,7 millions de tirages de groupes blancs d'une seule chaîne dans le coin
+  (5 à 9 points d'espace, jusqu'à deux pierres dedans), puis des espaces de 7 à 11 points ; toutes les formes où un seul coup intérieur tue, et où c'est aussi le seul
+  coup qui fait vivre, sont la grappe de cinq (l17) ou le point vital de trois (l13). Le six en rectangle du coin tue en B2,
+  mais deux erreurs y mènent à un ko : gardé comme problème (z15), pas comme leçon.
+- **Grand œil contre petit œil** : dans les formes essayées (un œil de trois contre un œil d'un point, une liberté
+  commune), la recherche exacte donne la course au grand œil même quand Blanc joue le premier ; aucun exercice où un seul coup gagne et parle de la taille de l'œil (les coups
+  uniques trouvés sont le point vital de l'œil, déjà l13).
+- **Le hane au deuxième rang** et **le sente inverse** (forme de l22 retournée, plus un hane de l23) : plusieurs meilleurs
+  coups à égalité en comptage par surfaces, ou un meilleur coup différent selon la règle de comptage.
+- **Réduire puis tuer** (hane de bord, puis point vital) : recherche sur des groupes du deuxième rang, aucune forme où le
+  second coup est intérieur et seul.
+
+Parcours : `e2e/lecons-37-plus.spec.ts` (l39 jouée en entier, un mauvais choix au quiz, un coup refusé à chaque exercice ;
+390 px clair, 320 px sombre, zoom 200 % au doigt ; le chemin montre l37, l38 et l40 à leur place).
+
 ## La suite prévue (vers 5 kyu, puis le premier dan)
 
 Écartées de ce palier, faute de preuve honnête ou de position lisible :
@@ -133,6 +168,7 @@ KataGo (`npm run fetch-model`) tourne en local dans ce conteneur : 0,5 s par vis
 ces leçons quand le lecteur saura afficher un plus grand plateau.
 
 Palier de l'issue #16 : 35 leçons publiées (l1 à l27, l29 à l36 ; l28 est réservé au jeté) ; 100 problèmes vérifiés.
+Palier de l'issue #539 : 39 leçons (l37 à l40 en plus), lot Z de 15 problèmes.
 
 ## Grands plateaux (#454)
 
