@@ -172,13 +172,40 @@ const L_DESSOUS_M = L_DESSOUS.map(r => [...r].reverse().join(''));
 // en atari ; s'il prend B1 en A1, tu reprends en B1 : prise en retour de six pierres. `M` : la même forme en miroir.
 const L_REPRISE = [...V.slice(0, 5), '......O..', 'XXXXXXO..', 'OOOX..O..', '...O..O..'];
 const L_REPRISE_M = L_REPRISE.map(r => [...r].reverse().join(''));
+// Leçons 37 et suivantes (#539, vers 5 kyu). Chaque position, chaque réponse acceptée, chaque réfutation et chaque chiffre
+// est prouvé par src/go/lecons-37-plus.test.ts (preuve de vie et mort en zone fermée, minimax exact de fin de partie).
+// Les points miai : un œil sûr en E1 ; le deuxième se fait en A2 ou en B1. Si Blanc prend l'un, Noir prend l'autre ; si Blanc
+// joue ailleurs, Noir n'a rien à ajouter. `D1` : Blanc a pris D1 (point vital de C1-D1-E1), le coin A2 reste ; `M` : la
+// première forme en miroir, Blanc a pris H1.
+const L_MIAI = [...V.slice(0, 6), 'OOOOOOO..', '.XXXXXO..', '...X.XO..'];
+const L_MIAI_D1 = [...V.slice(0, 6), 'OOOOOOO..', '.XXXXXO..', '.X.O.XO..'];
+const L_MIAI_M = [...V.slice(0, 6), '..OOOOOOO', '..OXXXXX.', '..OX.X.O.'];
+// Jouer ailleurs (tenuki) : Blanc est descendu en E1 ; le suivre en D1 ne vaut qu'un point, la prise E9 en vaut quatre.
+// Noir prend, Blanc avance en D1, Noir bloque en C1. `Q` : la même partie retournée de haut en bas ; `R` : retournée sur
+// la diagonale (lignes et colonnes échangées).
+const L_AILLEURS = ['.XOO.O...', '.XXXXO...', ...Array(5).fill('...XO....'), 'XXXXOOOOO', '....O....'];
+const L_AILLEURS_Q = [...L_AILLEURS].reverse();
+const L_AILLEURS_R = L_AILLEURS.map((_, y) => L_AILLEURS.map(r => r[y]).join(''));
+// Les libertés communes : ni œil ni liberté en trop. Chaque groupe a une liberté dehors (A2 pour Noir, J2 pour Blanc) et
+// une liberté commune, E1. Qui bouche d'abord le dehors de l'autre gagne ; boucher E1 retire aussi une liberté à soi.
+// `Q` : deux libertés dehors chacun (A2-B2, J1-J2), E1 commune ; `M` : la première course en miroir.
+const L_COMMUNE = [...V.slice(0, 6), 'OOOOXXXXX', '.XXXOOOO.', 'XXXX.OOOO'];
+const L_COMMUNE_Q = [...V.slice(0, 6), 'OOOOXXXXX', '..XXOOOO.', 'XXXX.OOO.'];
+const L_COMMUNE_M = L_COMMUNE.map(r => [...r].reverse().join(''));
+// Les yeux dans la course : un œil chacun (B1 pour Noir, H1 pour Blanc) et une liberté dehors (A2, J2). Un œil se bouche
+// en dernier : qui bouche d'abord le dehors de l'autre gagne. `Q` : un œil chacun (D1, G1) et deux libertés dehors ; J1
+// d'abord laisse une pierre en atari. `C` : Blanc a un œil (H1), Noir aucun, et plus aucune liberté de Blanc dehors : la
+// liberté commune F1 se bouche tout de suite.
+const L_YEUX_COURSE = [...V.slice(0, 6), 'OOOOOXXXX', '.XXXXOOO.', 'X.XXXOO.O'];
+const L_YEUX_COURSE_Q = [...V.slice(0, 6), 'OOOOOXXXX', '.XXXXOOO.', '.XX.XO.O.'];
+const L_YEUX_COURSE_C = [...V.slice(0, 6), 'OOOOOXXXX', '.XXXXOOOO', '.XXXX.O.O'];
 export const CHAPITRES = [
   { id: 'c1', titre: 'Les bases', intro: 'Sept leçons courtes pour jouer ta première partie.', fin: 'Tu connais les règles du go.', lecons: ['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7'] },
   // Chapitre en cours d'écriture (`complet: false`) : sa dernière leçon ne ferme pas encore le chapitre.
   { id: 'c2', titre: 'L’ouverture', intro: 'Où poser tes premières pierres.', lecons: ['l8', 'l27', 'l29', 'l30', 'l31'], complet: false },
-  { id: 'c3', titre: 'Capturer et sauver', intro: 'Des pièges pour prendre plus de pierres.', lecons: ['l9', 'l10', 'l11', 'l26'], complet: false },
-  { id: 'c4', titre: 'Vie et mort', intro: 'Quand un groupe vit, quand il meurt.', lecons: ['l12', 'l13', 'l14', 'l17', 'l24', 'l25'], complet: false },
-  { id: 'c5', titre: 'Fin de partie et comptage', intro: 'Finir proprement, puis compter juste.', lecons: ['l15', 'l16', 'l22', 'l23', 'l32', 'l33'], complet: false },
+  { id: 'c3', titre: 'Capturer et sauver', intro: 'Des pièges pour prendre plus de pierres.', lecons: ['l9', 'l10', 'l11', 'l26', 'l39', 'l40'], complet: false },
+  { id: 'c4', titre: 'Vie et mort', intro: 'Quand un groupe vit, quand il meurt.', lecons: ['l12', 'l13', 'l14', 'l17', 'l24', 'l25', 'l37'], complet: false },
+  { id: 'c5', titre: 'Fin de partie et comptage', intro: 'Finir proprement, puis compter juste.', lecons: ['l15', 'l16', 'l22', 'l23', 'l32', 'l33', 'l38'], complet: false },
   { id: 'c6', titre: 'Formes et tesuji', intro: 'Les bonnes formes et les coups malins du go.', lecons: ['l18', 'l19', 'l20', 'l21', 'l34', 'l35', 'l36'], complet: false }
 ];
 export const LESSONS = [
@@ -455,6 +482,51 @@ export const LESSONS = [
         { points: ['J1'], no: 'Tu bouches ton œil : Blanc prend en G1.' }
       ] }
   ] },
+  { id: 'l39', title: 'Les libertés communes', desc: 'Le dehors d’abord, le milieu en dernier', steps: [
+    { kind: 'info', rows: L_COMMUNE, geste: { touche: ['E1'], no: 'Touche le point vide qui touche ton groupe et celui de Blanc.' },
+      demo: [{ libs: 'B2' }, { libs: 'G2' }],
+      text: 'Liberté commune (à toi et à Blanc) : touche-la.' },
+    { kind: 'info', rows: L_COMMUNE, geste: { pose: 'J2' },
+      demo: [{ pose: 'J2', couleur: 'B' }, { pose: 'A2', couleur: 'W' }, { pose: 'E1', couleur: 'B' }],
+      text: 'Bouche d’abord sa liberté du dehors, au point vert.' },
+    { kind: 'quiz', rows: L_COMMUNE,
+      text: 'Et si tu bouches E1 d’abord, qui gagne ?', choices: ['Toi', 'Blanc'], answer: 1,
+      ok: 'Blanc : E1 t’enlève aussi une liberté. Il prend en A2.', no: 'E1 est aussi ta liberté : tu te mets en atari, Blanc prend en A2.' },
+    { kind: 'move', rows: L_COMMUNE_Q, accept: ['J1', 'J2'],
+      text: 'À toi : gagne la course. Commence par le dehors.',
+      ok: 'Le dehors d’abord : la liberté commune servira en dernier.', no: 'Bouche une liberté de Blanc qui ne touche pas ton groupe.',
+      refus: [
+        { points: ['E1'], no: 'Liberté commune : tu en perds une aussi, et Blanc gagne.' },
+        { points: ['A2', 'B2'], no: 'C’est ta propre liberté : Blanc gagne la course.' }
+      ] },
+    { kind: 'move', rows: L_COMMUNE_M, accept: ['A2'],
+      text: 'À toi : prends ces pierres blanches dans la course.',
+      ok: 'Dehors d’abord, puis E1 : tu prends tout le groupe.', no: 'Cherche la liberté de Blanc loin de ton groupe.',
+      refus: [{ points: ['E1'], no: 'Liberté commune : te voilà en atari, Blanc prend en J2.' }] }
+  ] },
+  { id: 'l40', title: 'Les yeux dans la course', desc: 'L’œil se bouche en dernier', steps: [
+    { kind: 'info', rows: L_YEUX_COURSE, geste: { touche: ['B1'], no: 'Touche le point vide entouré par ton groupe.' },
+      demo: [{ libs: 'C2' }],
+      text: 'Ton œil B1 : Blanc ne peut le boucher qu’en dernier.' },
+    { kind: 'info', rows: L_YEUX_COURSE, geste: { pose: 'J2' },
+      demo: [{ pose: 'J2', couleur: 'B' }, { pose: 'A2', couleur: 'W' }, { pose: 'H1', couleur: 'B' }],
+      text: 'Un œil chacun : bouche d’abord son dehors, au point vert.' },
+    { kind: 'quiz', rows: L_YEUX_COURSE,
+      text: 'Et si Blanc joue d’abord, qui gagne ?', choices: ['Toi', 'Blanc'], answer: 1,
+      ok: 'Blanc : il bouche A2, et c’est toi qui es pris.', no: 'Blanc bouche A2 le premier : il te reste ton œil, lui son œil et J2.' },
+    { kind: 'move', rows: L_YEUX_COURSE_Q, accept: ['J2'],
+      text: 'À toi : un œil chacun, deux libertés dehors. Gagne la course.',
+      ok: 'J2, puis J1 : son œil G1 se bouchera en dernier.', no: 'Bouche une liberté de Blanc, du côté où ta pierre tient.',
+      refus: [
+        { points: ['J1'], no: 'Ta pierre J1 n’a qu’une liberté : Blanc la prend en J2.' },
+        { points: ['A2', 'A1'], no: 'C’est ta propre liberté : tu ne gagnes plus la course.' },
+        { points: ['D1'], no: 'Tu bouches ton œil : Blanc gagne la course.' }
+      ] },
+    { kind: 'move', rows: L_YEUX_COURSE_C, accept: ['F1'],
+      text: 'Blanc a un œil, pas toi. Gagne la course.',
+      ok: 'Blanc n’a plus que son œil : la liberté commune se bouche tout de suite.', no: 'Blanc n’a plus de liberté dehors. Cherche celle que vous partagez.',
+      refus: [{ points: ['A2', 'A1'], no: 'C’est ta propre liberté : tu ne gagnes plus la course.' }] }
+  ] },
   { id: 'l12', title: 'Le faux œil', desc: 'Un œil qui ne compte pas', steps: [
     { kind: 'info', rows: L_FAUX, geste: { touche: ['D1', 'E1'], no: 'Touche une des deux pierres noires de droite.' },
       demo: [{ yeux: ['A1', 'C1'] }, { libs: 'D1' }],
@@ -559,6 +631,23 @@ export const LESSONS = [
         { points: ['F9'], no: 'Tu bouches ton œil F9 : un seul œil reste.' }
       ] }
   ] },
+  { id: 'l37', title: 'Les points miai', desc: 'Deux points pour un même œil', steps: [
+    { kind: 'info', rows: L_MIAI, geste: { pose: 'B1' }, demo: [{ pose: 'A2', couleur: 'W' }, { pose: 'B1', couleur: 'B' }, { yeux: ['C1', 'E1'] }],
+      text: 'Miai (deux points qui se valent) : Blanc prend A2, toi le point vert.' },
+    { kind: 'info', rows: L_MIAI, geste: { pose: 'A2' }, demo: [{ pose: 'B1', couleur: 'W' }, { pose: 'A2', couleur: 'B' }],
+      text: 'Blanc prend B1 ? Prends l’autre, au point vert : tu vis.' },
+    { kind: 'quiz', rows: L_MIAI,
+      text: 'Blanc joue ailleurs. Dois-tu ajouter une pierre ici ?', choices: ['Oui', 'Non'], answer: 1,
+      ok: 'Non : A2 et B1 sont miai. Tu répondras seulement si Blanc en prend un.', no: 'Si Blanc prend un des deux points, tu prends l’autre : ton groupe vit déjà.' },
+    { kind: 'move', rows: L_MIAI_D1, accept: ['A2'],
+      text: 'Blanc vient de prendre D1. Prends l’autre point miai.',
+      ok: 'Le coin te donne ton deuxième œil : tu vis.', no: 'Tu as deux endroits pour un œil : Blanc en a pris un.',
+      refus: [{ points: ['A1', 'C1', 'E1'], no: 'Blanc joue A2 : il ne te reste qu’un œil.' }] },
+    { kind: 'move', rows: L_MIAI_M, accept: ['J2'],
+      text: 'Blanc a pris un point miai. À toi de vivre.',
+      ok: 'Miai : Blanc a pris H1, tu prends J2. Deux yeux.', no: 'Ton œil E1 est sûr. Où se fait le deuxième ?',
+      refus: [{ points: ['J1', 'E1'], no: 'Blanc prend J2 : il ne te reste qu’un œil.' }] }
+  ] },
   { id: 'l15', title: 'Finir la partie', desc: 'Dame, frontières, pierres mortes', steps: [
     { kind: 'info', rows: L_FIN_P, geste: { touche: ['E7'], no: 'Cherche le point vide entre Noir et Blanc.' }, demo: [{ zone: ['E7'] }],
       text: 'Dame (point neutre) : il touche Noir et Blanc. Touche-le.' },
@@ -655,6 +744,24 @@ export const LESSONS = [
       text: 'À toi : deux endroits ouverts. Joue dans le bon ordre.',
       ok: 'Sente d’abord : Blanc relie, puis tu prends la pierre.', no: 'Cherche le coup qui oblige Blanc à répondre.',
       refus: [{ points: ['E1'], no: 'La prise d’abord : Blanc sauve ses pierres en E8. Deux points de moins.' }] }
+  ] },
+  { id: 'l38', title: 'Jouer ailleurs', desc: 'Une petite menace peut attendre', steps: [
+    { kind: 'info', rows: L_AILLEURS, geste: { pose: 'E9' }, demo: [{ pose: 'E9', couleur: 'B' }, { pose: 'D1', couleur: 'W' }, { pose: 'C1', couleur: 'B' }],
+      text: 'Tenuki (jouer ailleurs) : Blanc avance en E1, prends au point vert.' },
+    { kind: 'info', rows: L_AILLEURS, geste: { touche: ['D1'], no: 'Touche le point où tu bloquerais Blanc, sur le premier rang.' },
+      demo: [{ pose: 'D1', couleur: 'B' }, { pose: 'E9', couleur: 'W' }],
+      text: 'Touche D1 : si tu bloques là, Blanc relie en E9.' },
+    { kind: 'quiz', rows: L_AILLEURS,
+      text: 'Prendre ou bloquer : combien de points d’écart ?', choices: ['1', '3', '5'], answer: 1,
+      ok: 'Trois : la prise vaut quatre points, le blocage un seul.', no: 'Compte : la prise vaut quatre points, le blocage un seul.' },
+    { kind: 'move', rows: L_AILLEURS_Q, accept: ['E1'],
+      text: 'À toi : Blanc avance en E9. Joue le plus gros.',
+      ok: 'Tenuki : sa menace ne vaut qu’un point, ta prise quatre.', no: 'Ne suis pas Blanc : cherche le plus gros coup.',
+      refus: [{ points: ['D9'], no: 'Tu bloques un point, et Blanc relie en E1 : trois de moins.' }] },
+    { kind: 'move', rows: L_AILLEURS_R, accept: ['A5'],
+      text: 'Blanc avance en J5. Réponds-tu, ou joues-tu ailleurs ?',
+      ok: 'Ailleurs : tu prends deux pierres, et sa menace reste petite.', no: 'Sa menace vaut un point. Cherche plus gros.',
+      refus: [{ points: ['J6'], no: 'Tu bloques un point, et Blanc relie en A5 : trois de moins.' }] }
   ] },
   { id: 'l18', title: 'Les bonnes formes', desc: 'Bouche du tigre et bambou', steps: [
     { kind: 'touche', rows: L_COUPE, accept: ['D5'],
