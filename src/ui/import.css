@@ -1,11 +1,12 @@
-/* Analyser une partie SGF (#286). Une seule action en relief (le bouton fixé en bas), le reste en secondaire. */
+/* Analyser une partie SGF (#286). Chargée avec l'écran (ImportSgf.tsx, morceau du Profil), hors du CSS initial (#538). Une seule action en relief (le bouton fixé en bas), le reste en secondaire. */
 .import { padding-bottom: calc(var(--cible-cta) + var(--space-8)); }
 .import-intro, .import-resume { margin: 0 0 var(--space-4); color: var(--text); font-size: var(--fs-base); line-height: var(--lh-base); }
 .import-resume { font-variant-numeric: tabular-nums; font-weight: var(--fw-medium); }
 .import-aide { margin: var(--space-3) 2px 0; color: var(--muted); font-size: var(--fs-corps-s, 14px); line-height: 1.4; }
 
 /* Fichier : bouton secondaire pleine largeur ; le vrai champ reste accessible au clavier (focus visible sur le libellé). */
-.import-fichier { display: flex; align-items: center; justify-content: center; width: 100%; border-color: var(--line); cursor: pointer; }
+/* Pas de `border-color` : `.btn` (app.css) la rendait transparente, et cette feuille arrive maintenant après elle (#538). */
+.import-fichier { display: flex; align-items: center; justify-content: center; width: 100%; cursor: pointer; }
 .import-fichier:active { background: var(--surface-2); }
 .import-fichier:focus-within { outline: 3px solid var(--focus); outline-offset: 2px; }
 .import-ou { display: block; margin: var(--space-4) 2px var(--space-2); color: var(--muted); font-size: var(--fs-corps-s, 14px); }

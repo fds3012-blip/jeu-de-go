@@ -181,5 +181,34 @@ for (const [l, h] of ECRANS) {
       await expect(page.getByTestId('inviter-app')).toBeVisible();
       await aucunBoutonRecouvert(page, `fin de leçon et invitation ${taille}`);
     });
+
+    // #538 : hors ligne, l'accueil (bandeau, tuiles grisées), la feuille « Bambou a besoin de l'IA », et l'IA dans les Réglages.
+    test(`hors ligne : accueil, feuille de repli, Réglages de l'IA (${taille})`, async ({ page, context }) => {
+      await page.addInitScript(() => {
+        if (sessionStorage.getItem('e2e.stocke')) return;
+        sessionStorage.setItem('e2e.stocke', '1');
+        localStorage.setItem('go.premiere-pierre.v1', 'true');
+        localStorage.setItem('go.bilan.v1', JSON.stringify({ pomme: { v: 1, d: 0 }, caillou: { v: 1, d: 0 } }));
+        localStorage.setItem('go.adversaire.v1', '"bambou"');
+      });
+      await page.goto('/');
+      await page.waitForFunction(async () => !!(await navigator.serviceWorker.ready).active && !!navigator.serviceWorker.controller, null, { timeout: 20_000 });
+      await context.setOffline(true);
+      await page.reload();
+      await expect(page.getByTestId('bandeau-hors-ligne')).toBeVisible();
+      await aucunBoutonRecouvert(page, `accueil hors ligne ${taille}`);
+      await page.locator('.cta').click();
+      await expect(page.getByTestId('repli-hors-ligne')).toBeVisible();
+      await aucunBoutonRecouvert(page, `feuille de repli ${taille}`, 'dialog[open]');
+      await page.getByRole('button', { name: 'Plus tard' }).click();
+      await page.getByRole('navigation').getByRole('button', { name: 'Profil' }).click();
+      await page.getByRole('button', { name: /^Réglages/ }).click();
+      await expect(page.getByTestId('reglage-ia')).toHaveAttribute('data-etat', 'hors-ligne');
+      await page.getByTestId('reglage-ia').scrollIntoViewIfNeeded();
+      await aucunBoutonRecouvert(page, `Réglages, IA hors ligne ${taille}`);
+      await context.setOffline(false);
+      await expect(page.getByTestId('ia-telecharger')).toBeVisible();
+      await aucunBoutonRecouvert(page, `Réglages, IA à télécharger ${taille}`);
+    });
   });
 }

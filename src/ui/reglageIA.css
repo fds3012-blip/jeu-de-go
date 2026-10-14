@@ -1,0 +1,16 @@
+/* « L'IA sur ton téléphone » (#538), Profil › Réglages. Chargée avec le Profil (hors du CSS initial).
+   Rôles de tokens.css seulement : clair et sombre suivent. */
+.ligne-ia { align-items: flex-start; padding-block: 10px; }
+.ligne-ia .ligne-icone { margin-top: 2px; }
+.ia-progression { display: flex; align-items: center; gap: var(--space-2); margin-top: 8px; }
+.ia-barre { position: relative; flex: 1; height: 6px; border-radius: var(--radius-pill); background: var(--surface-2); overflow: hidden; }
+/* La barre avance par transformation (pas de mise en page) ; la valeur ne change qu'au dixième de Mo. */
+.ia-barre > span { position: absolute; inset: 0; background: var(--accent); transform-origin: left; transform: scaleX(0);
+  transition: transform 200ms var(--ease, ease-out); }
+/* Sans taille connue : un tiers de barre, fixe (pas de va-et-vient qui tourne sans fin). */
+.ia-barre[data-indetermine] > span { transform: scaleX(.33); opacity: .6; }
+.ia-octets { flex: none; color: var(--muted); font-size: var(--fs-xs); font-variant-numeric: tabular-nums; }
+.ligne-ia-action { justify-content: center; color: var(--accent-texte); font-weight: var(--fw-bold); }
+.ligne-ia-action.discret { color: var(--text); font-weight: var(--fw-medium); }
+.reglage-ia-aide { margin: var(--space-2) var(--space-1) 0; }
+@media (prefers-reduced-motion: reduce) { .ia-barre > span { transition: none; } }

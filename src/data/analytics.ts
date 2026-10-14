@@ -237,6 +237,15 @@ export const EVENTS = {
   // Mes données (#530) : « Télécharger mes données » touché. `compte` (vrai : données du compte lues sur le serveur),
   // `resultat` (ok, limite : plafond de 3 par heure, serveur, hors_ligne). Jamais le contenu du fichier ni sa taille.
   donneesTelechargees: 'donnees_telechargees',
+  // Hors ligne clair (#538). `hors_ligne_detecte` : bandeau hors ligne montré, une fois par session (`ecran` : accueil ou
+  // reseau, `ia` : l'IA est sur le téléphone). `katago_telecharge` : « Télécharger l'IA maintenant » (Réglages) terminé
+  // (`depuis` : reglages, `resultat` : ok ou echec, `secondes`). `katago_libere` : « Libérer la place » (aucune propriété).
+  // `repli_hors_ligne` : hors ligne, sans IA, partie demandée contre un adversaire KataGo (`adversaire`, `choix` :
+  // caillou ou plus_tard). Jamais de position, ni de taille de fichier, ni d'adresse.
+  horsLigneDetecte: 'hors_ligne_detecte',
+  katagoTelecharge: 'katago_telecharge',
+  katagoLibere: 'katago_libere',
+  repliHorsLigne: 'repli_hors_ligne',
 } as const;
 export type AnalyticsEvent = (typeof EVENTS)[keyof typeof EVENTS];
 export type Props = Record<string, string | number | boolean | null | undefined>;

@@ -562,7 +562,7 @@ export const frEcrans = {
   'aide.question.gel': 'À quoi sert un gel ?',
   'aide.question.gel.reponse': 'Un gel protège ta série un jour où tu ne joues pas. Il s’utilise tout seul. Tu en gagnes un tous les 7 jours de série, 2 au plus en réserve.',
   'aide.question.horsLigne': 'Ça marche sans internet ?',
-  'aide.question.horsLigne.reponse': 'Oui, une fois l’appli ouverte une première fois : l’ordi, les leçons et les problèmes tournent sur ton téléphone. Les parties en ligne, contre tes amis, demandent internet.',
+  'aide.question.horsLigne.reponse': 'Oui, une fois l’appli ouverte une première fois : l’ordi, les leçons et les problèmes tournent sur ton téléphone. Pour Bambou et les plus forts, télécharge l’IA dans Profil, Réglages. Les parties en ligne et contre tes amis demandent internet.',
   'aide.question.supprimer': 'Comment supprimer mon compte ?',
   'aide.question.supprimer.reponse': 'Profil, puis Mon compte, puis « Supprimer mon compte ». C’est définitif : ton profil, ton pseudo, ta progression et ton e-mail sont effacés.',
   'aide.regles.intro': 'Le go en 5 idées. Tout le reste en découle.',

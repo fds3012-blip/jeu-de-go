@@ -57,6 +57,7 @@ import { CADENCES_ORDRE, CADENCES } from '../go/pendule';
 import '../ui/club.css';
 import { noterReglage } from './reglagesDates';
 import { BoutonPartagerApp } from '../ui/PartagerApp';
+import { ReglageIA } from '../ui/ReglageIA';
 
 // Joueur de club (#368, #372) : sous-écrans chargés à la demande, hors du morceau du Profil.
 const MesStatistiques = lazy(() => import('./Statistiques'));
@@ -378,6 +379,8 @@ function Reglages({ settings, set }: Pick<Props, 'settings' | 'set'>) {
         <LigneChoix icone={<IconeReglage id="aide" />} libelle={t('profil.coach')} options={coachs()} valeur={settings.coach}
           onChange={c => { regler('coach', c); track(c === 'non' ? EVENTS.coachCoupe : EVENTS.coachActive, { depuis: 'reglages', valeur: c }); }} />
       </div>
+      {/* #538 : l'IA sur le téléphone, prête pour le hors ligne (état, téléchargement, place libérée). */}
+      <ReglageIA />
       <h3 className="lignes-titre">{tk('reglages.groupe.rythme')}</h3>
       <div className="lignes">
         <LigneCadence valeur={settings.cadence} onChange={c => regler('cadence', c)} />

@@ -18,6 +18,7 @@
 .bandeau-hors-ligne { color: var(--muted); }
 .bandeau-hors-ligne b { color: var(--text); font-weight: var(--fw-bold); }
 /* Écran étroit (320 px) : le détail saute, le bandeau tient sur une ligne. */
+/* #538 : sur l'accueil, le détail (ce qui marche hors ligne) reste à 320 px : c'est le message (classe `bandeau-suite`, pas cachée). */
 @media (max-width: 359px) { .bandeau-detail { display: none; } }
 
 .bandeau-mise-a-jour { background: color-mix(in srgb, var(--accent) 14%, var(--surface)); padding-right: 4px; }

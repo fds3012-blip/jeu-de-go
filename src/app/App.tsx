@@ -15,6 +15,8 @@ import { aideActive } from './aideMochi';
 import { Bubble } from '../ui/Mochi';
 import { Sceau } from '../ui/Sceau';
 import { CRAN_DEPART, cranDuNiveau, niveauGuide, OPPONENTS, type OpponentId } from '../engine';
+import { reseauEnCache } from '../engine/katago/cacheReseau';
+import { bandeauReseau, proposerRepli, REPLI_HORS_LIGNE } from './horsLigne';
 import { ConsentModal } from './Confidentialite';
 import type { VueProfil } from './Profil';
 import type { Lesson } from '../content/lessons';
@@ -82,6 +84,8 @@ import { titreEcran, type EcranTitre } from './titreEcran';
 
 // Aide (#362) : feuille chargée au premier « ? » (partie, leçon, problème, Profil) ou à la touche « ? ».
 const FeuilleAide = lazy(() => import('../ui/Aide'));
+// #538 : hors ligne, sans l'IA, partie demandée contre Bambou ou plus fort : Caillou proposé (feuille chargée à la demande).
+const RepliHorsLigne = lazy(() => import('../ui/RepliHorsLigne'));
 // #369 : bilan de la semaine passée, sur l'accueil, une fois par semaine ; chargé seulement ce jour-là.
 const CarteBilanSemaine = lazy(() => import('../ui/BilanSemaine').then(m => ({ default: m.BilanSemaine })));
 
@@ -509,6 +513,11 @@ export function App() {
   }
 
   function lancer(mode: 'ordi' | 'deux', contre: OpponentId = adv.id, enAttente: Repli | null = null) {
+    // #538 : hors ligne et sans l'IA sur le téléphone, un adversaire KataGo ne pourrait pas jouer à sa force : Caillou proposé.
+    if (mode === 'ordi' && !enAttente && proposerRepli({ katago: !!OPPONENTS.find(o => o.id === contre)?.katago, enLigne: online, iaDispo: iaHorsLigne })) {
+      setRepliHorsLigne(contre);
+      return;
+    }
     if (!garde({ quoi: 'partie' }, mode === 'ordi' ? { quoi: 'ordi', contre } : { quoi: 'deux' })) return;
     // #436 : une autre partie que celle du repli met fin à l'attente (la bande rend la place dans la file).
     setRepli(enAttente);
@@ -731,6 +740,15 @@ export function App() {
     window.scrollTo({ top: 0 });
   }, []);
   const online = useOnline();
+  // #538 : hors ligne, l'IA (KataGo) est-elle sur le téléphone ? Relu à chaque coupure ; null tant que ce n'est pas lu.
+  const [iaHorsLigne, setIaHorsLigne] = useState<boolean | null>(null);
+  const [repliHorsLigne, setRepliHorsLigne] = useState<OpponentId | null>(null);
+  useEffect(() => {
+    if (online) return;
+    let vivant = true;
+    void reseauEnCache().then(v => { if (vivant) setIaHorsLigne(v); });
+    return () => { vivant = false; };
+  }, [online]);
   // #469 : avec un compte, la file de révision espacée se synchronise entre ses appareils (le plus récent gagne, élément
   // par élément). Module chargé à la demande, après le premier écran ; arrêté à la déconnexion. Sans compte : l'appareil.
   useEffect(() => {
@@ -791,8 +809,10 @@ export function App() {
   // #343 : pseudo obligatoire juste après la première connexion, avant tout le reste ; puis « Crée ton compte ».
   const pseudoAChoisir = !!supabase && etat === 'sans_pseudo' && !!compteId;
   const ecranPlein = pseudoAChoisir || ecranCompte !== null;
-  // Bandeau « Tu es hors ligne » : seulement là où le réseau sert (défi par lien, en ligne, compte et profil).
-  const ecranReseau = enDefi || enDirect || enLente || enPartagee || tab === 'profil' || ecranPlein;
+  // Bandeau « Tu es hors ligne » : seulement là où le réseau sert (défi par lien, en ligne, compte, amis, cote).
+  // #538 : le reste du Profil (parcours, réglages, l'IA) marche hors ligne : pas de bandeau qui dirait le contraire.
+  const ecranReseau = enDefi || enDirect || enLente || enPartagee || ecranPlein
+    || (tab === 'profil' && (vueProfil === 'compte' || vueProfil === 'amis' || vueProfil === 'cote'));
   let screen;
   if (pseudoAChoisir && supabase && compteId) {
     screen = <PseudoObligatoire db={supabase} userId={compteId}
@@ -979,7 +999,7 @@ export function App() {
         reprise={partieEnCours && !epure ? { id: partieEnCours.adversaire as OpponentId, nom: OPPONENTS.find(o => o.id === partieEnCours.adversaire)?.nom ?? '',
           taille: partieEnCours.taille, coups: partieEnCours.coups, ouvrir: reprendre } : undefined}
         reglages={reglages} setReglages={setReglages} onTaille={n => set({ size: n })} onChoisir={setAdversaire}
-        modes={modes} onMode={choisirMode} compte={etat === 'complet'} defisAJouer={defisAJouer}
+        modes={modes} onMode={choisirMode} compte={etat === 'complet'} defisAJouer={defisAJouer} horsLigne={!online}
         cote={etat === 'complet' && profil ? { cote: profil.cote, provisoire: profil.provisoire } : null}
         probleme={daily && { numero, titre: daily.title, rows: daily.rows, reussi: duJourFait, etat: etatTuile(appel, duJourFait) }}
         // #367 : « Aujourd'hui » est la liste « À faire » ; un toucher sur un élément en attente est mesuré.
@@ -1039,6 +1059,14 @@ export function App() {
             : tab === 'apprendre' && leconOuverte && !serie3 ? { quoi: 'lecon', titre: leconOuverte.title }
               : { quoi: 'onglet', onglet: tab };
   const titreDocument = titreEcran(ecranTitre);
+  // #538 : bandeau hors ligne : sur l'accueil (ce qui marche), sur les écrans qui ont besoin du réseau ; mesuré une fois par session.
+  const bandeau = bandeauReseau({ enLigne: online, accueil: accueilVisible && !questionGo, ecranReseau });
+  const horsLigneVu = useRef(false);
+  useEffect(() => {
+    if (!bandeau || horsLigneVu.current) return;
+    horsLigneVu.current = true;
+    track(EVENTS.horsLigneDetecte, { ecran: bandeau, ia: iaHorsLigne === true });
+  }, [bandeau, iaHorsLigne]);
   // #469 : carte « Révisions du jour » montrée : mesurée une fois par ouverture ; la séance se précharge.
   const revisionVue = useRef(false);
   useEffect(() => {
@@ -1107,7 +1135,7 @@ export function App() {
         {accueilVisible && <BarreNiveau sansXpMasquee />}
         {/* Nouvelle version prête : jamais pendant une partie (ordi, à deux, guidée, défi). */}
         <InviteMiseAJour visible={!enPartie} />
-        {!online && ecranReseau && <BandeauHorsLigne />}
+        {bandeau && <BandeauHorsLigne ou={bandeau} />}
         <LimiteErreur origine="ecran" onAccueil={versAccueil}>
           <Suspense fallback={null}>{screen}</Suspense>
         </LimiteErreur>
@@ -1117,6 +1145,13 @@ export function App() {
       {/* Pendant une partie, comme chez chess.com : pas de barre de navigation, « ‹ » ramène à l'accueil. */}
       {!enPartie && !ecranPlein && <BarreNav actif={tab} pastilles={pastilles}
         onChoisir={o => { const e = aFaire.find(x => x.pastille && x.onglet === o); if (e) ouvrirAFaire(e, 'onglet'); go(o); }} />}
+      {repliHorsLigne && (
+        <Suspense fallback={null}>
+          <RepliHorsLigne nom={OPPONENTS.find(o => o.id === repliHorsLigne)?.nom ?? ''} caillou={REPLI_HORS_LIGNE}
+            onCaillou={() => { track(EVENTS.repliHorsLigne, { adversaire: repliHorsLigne, choix: 'caillou' }); setRepliHorsLigne(null); lancer('ordi', REPLI_HORS_LIGNE); }}
+            onPlusTard={() => { track(EVENTS.repliHorsLigne, { adversaire: repliHorsLigne, choix: 'plus_tard' }); setRepliHorsLigne(null); }} />
+        </Suspense>
+      )}
       {aide && (
         <Suspense fallback={null}>
           {/* Depuis une partie, pas de lien vers une leçon : on ne quitte pas la partie depuis l'aide. */}

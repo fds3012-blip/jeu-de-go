@@ -3,7 +3,8 @@ import { lancerADeux, plateau } from './plateau';
 
 // Robustesse (#325, point 4) : jamais d'écran blanc ni d'erreur brute.
 // 1. Un écran chargé à la demande qui n'arrive pas : écran d'erreur avec Mochi, « Réessayer », retour à l'accueil.
-// 2. Hors ligne : bandeau « Tu es hors ligne » sur les écrans qui ont besoin du réseau, pas sur ceux qui marchent sans.
+// 2. Hors ligne : bandeau « Tu es hors ligne » sur les écrans qui ont besoin du réseau, « Hors ligne, tu peux… » sur
+//    l'accueil (#538), rien sur ceux qui marchent sans.
 // 3. Nouvelle version : invite « Mise à jour prête », jamais pendant une partie.
 
 const NAV = (page: Page) => page.getByRole('navigation', { name: 'Navigation principale' });
@@ -68,29 +69,31 @@ test.describe('écran manquant', () => {
   });
 });
 
-test('hors ligne : bandeau sur le Profil (compte), rien sur l’accueil ni dans Apprendre, et il disparaît au retour du réseau', async ({ page, context }) => {
+test('hors ligne : bandeau « ce qui marche » sur l’accueil, rien dans Apprendre ni dans le Profil, et il disparaît au retour du réseau', async ({ page, context }) => {
   await page.goto('/');
   await expect(page.locator('.cta')).toBeVisible();
   await attendreServiceWorker(page);
 
   await context.setOffline(true);
   const bandeau = page.getByTestId('bandeau-hors-ligne');
-  // L'accueil marche hors ligne : pas de bandeau.
+  // #538 : l'accueil dit ce qui marche sans réseau, et garde son action principale.
   await expect(page.locator('.cta')).toBeVisible();
-  await expect(bandeau).toHaveCount(0);
-  // Le Profil (compte, synchronisation) a besoin du réseau : bandeau discret, écran toujours là.
+  await expect(bandeau).toBeVisible();
+  await expect(bandeau).toHaveAttribute('data-ou', 'accueil');
+  await expect(bandeau).toContainText('Hors ligne');
+  await expect(bandeau).toContainText('Tu peux jouer contre l’ordi, faire les leçons et les problèmes.');
+  // Le Profil (parcours, réglages, l'IA) marche hors ligne : pas de bandeau qui dirait le contraire.
   await NAV(page).getByRole('button', { name: 'Profil' }).click();
   await expect(page.getByRole('heading', { name: 'Ton parcours' })).toBeVisible();
-  await expect(bandeau).toBeVisible();
-  await expect(bandeau).toContainText('Tu es hors ligne');
+  await expect(bandeau).toHaveCount(0);
   // Apprendre marche hors ligne : pas de bandeau.
   await NAV(page).getByRole('button', { name: 'Apprendre' }).click();
   await expect(page.getByRole('button', { name: /^Leçon 1 :/ })).toBeVisible();
   await expect(bandeau).toHaveCount(0);
 
   await context.setOffline(false);
-  await NAV(page).getByRole('button', { name: 'Profil' }).click();
-  await expect(page.getByRole('heading', { name: 'Ton parcours' })).toBeVisible();
+  await NAV(page).getByRole('button', { name: 'Jouer' }).click();
+  await expect(page.locator('.cta')).toBeVisible();
   await expect(bandeau).toHaveCount(0);
 });
 
@@ -159,8 +162,7 @@ test('captures : bandeau hors ligne et mise à jour prête, clair et sombre, 390
       await attendreServiceWorker(page);
       await page.evaluate(() => navigator.serviceWorker.dispatchEvent(new Event('controllerchange')));
       await context.setOffline(true);
-      await NAV(page).getByRole('button', { name: 'Profil' }).click();
-      await expect(page.getByRole('heading', { name: 'Ton parcours' })).toBeVisible();
+      // #538 : le bandeau de l'accueil (ce qui marche hors ligne).
       await expect(page.getByTestId('bandeau-hors-ligne')).toBeVisible();
       await expect(page.getByTestId('invite-mise-a-jour')).toBeVisible();
       await page.screenshot({ path: `${DOSSIER}/bandeaux-${nom}.png` });

@@ -19,7 +19,6 @@ import './ui/apprendre-partage.css';
 import './ui/gel.css';
 import './ui/pastille-xp.css';
 import './ui/course.css';
-import './ui/import.css';
 import './ui/niveau.css';
 import './ui/placement.css';
 import './ui/defis.css';

@@ -23,7 +23,7 @@ describe('écrans chargés à la demande', () => {
   it('les styles des écrans restent dans la feuille principale (importés par main.tsx avant App)', () => {
     const main = lire('../main.tsx');
     const avantApp = main.slice(0, main.indexOf("import { App } from './app/App';"));
-    for (const [ecran, css] of [['Game', 'comptage'], ['Game', 'revue'], ['Learn', 'apprendre-partage'], ['Puzzles', 'course'], ['Profil', 'import'], ['Placement', 'placement']]) {
+    for (const [ecran, css] of [['Game', 'comptage'], ['Game', 'revue'], ['Learn', 'apprendre-partage'], ['Puzzles', 'course'], ['Placement', 'placement']]) {
       expect(avantApp, `${ecran} : ${css}.css`).toContain(`import './ui/${css}.css';`);
     }
   });
@@ -37,6 +37,15 @@ describe('écrans chargés à la demande', () => {
     expect(lire('./Learn.tsx')).toContain("import '../ui/apprendre.css';");
     expect(lire('./Puzzles.tsx')).toContain("import '../ui/apprendre.css';");
     expect(lire('../ui/Lecteur.tsx')).toContain("import './apprendre.css';");
+  });
+
+  it('#538 : import.css arrive avec l’écran d’import (morceau du Profil), sans règle que app.css écrasait avant', () => {
+    expect(lire('../main.tsx')).not.toContain("import './ui/import.css';");
+    expect(lire('./ImportSgf.tsx')).toContain("import '../ui/import.css';");
+    // Chargée après app.css désormais : une `border-color` sur `.import-fichier` passerait devant celle de `.btn`.
+    const regle = lire('../ui/import.css').match(/\.import-fichier \{([^}]*)\}/)?.[1];
+    expect(regle).toBeDefined();
+    expect(regle).not.toMatch(/border/);
   });
 });
 
