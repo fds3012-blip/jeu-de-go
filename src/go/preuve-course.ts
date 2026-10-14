@@ -12,7 +12,8 @@
 // ce qui ne peut qu'empêcher une preuve. La restriction des coups à la zone suppose que rien ne se joue ailleurs :
 // `defautsCourse` vérifie que les chaînes `a` et `b` ont toutes leurs libertés dans la zone, et que toute autre chaîne
 // au contact de la zone a soit toutes ses libertés dans la zone (son sort se lit entièrement dedans), soit au moins deux
-// libertés hors de la zone (aucun coup de la zone ne peut la prendre).
+// libertés hors de la zone (aucun coup de la zone ne peut la prendre). Les chaînes voisines de `a` et de `b` sont
+// vérifiées de même, même loin de la zone.
 import { groupAt, neighbors, play, type Position } from './rules';
 
 export type Issue = -1 | 0 | 1;
@@ -29,8 +30,11 @@ export function defautsCourse(pos: Position, a: number, b: number, zone: readonl
   const out: string[] = [], nb = neighbors(pos.size), dans = new Set(zone), vu = new Set<number>();
   if (!pos.board[a] || !pos.board[b] || pos.board[a] === pos.board[b]) return ['a et b doivent être des pierres de couleurs opposées'];
   const ga = new Set(groupAt(pos.board, pos.size, a).stones), gb = new Set(groupAt(pos.board, pos.size, b).stones);
+  // Chaînes à vérifier : celles qui touchent la zone, et celles qui touchent `a` ou `b` (une voisine prise de l'extérieur
+  // donnerait une liberté que la zone ne voit pas).
   const bord = new Set<number>([a, b]);
   for (const z of zone) { bord.add(z); for (const r of nb[z]) bord.add(r); }
+  for (const s of [...ga, ...gb]) for (const r of nb[s]) bord.add(r);
   for (const p of bord) {
     if (!pos.board[p] || vu.has(p)) continue;
     const g = groupAt(pos.board, pos.size, p);
