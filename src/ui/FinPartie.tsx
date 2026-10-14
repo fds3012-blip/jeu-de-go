@@ -2,7 +2,7 @@
 // Le plateau final, avec ses territoires, sert de fond sous un voile ; par-dessus, une seule colonne centrée :
 // sceau (et tampon « BATTU » qui s'imprime), titre, écart, bilan en une phrase, leçon de Mochi, un bouton en relief.
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Mochi } from './Mochi';
+import { PortraitMochi } from './Portrait';
 import { Confettis } from './Confettis';
 import { mouvementsReduits, useDefilement } from './defilement';
 import { PastilleXp } from './PastilleXp';
@@ -83,7 +83,7 @@ export function FinPartie({ fond, sceau, tampon, titre, marge, texteMarge, sousT
         <p className="fin-bilan">{bilan}</p>
         {mochi && (
           <div className="fin-mochi">
-            <Mochi size={44} />
+            <PortraitMochi taille={44} decoratif />
             <div>{mochi}</div>
           </div>
         )}

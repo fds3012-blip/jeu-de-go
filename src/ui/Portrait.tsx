@@ -2,7 +2,7 @@
 // aplats + trait d'encre arrondi, un reflet clair, fond teinté selon le palier des sceaux
 // (vermillon : Pomme, Caillou, Bambou ; indigo : Renard, Rivière, Tigre ; noir et or : Montagne, Dragon, Sensei).
 // L'humeur change surtout les yeux et la bouche. Le sceau de l'adversaire signe le portrait, en bas à droite.
-import type { ReactElement } from 'react';
+import { useId, type ReactElement } from 'react';
 import { t } from '../content/i18n';
 import { Sceau } from './Sceau';
 import type { SceauId } from './sceaux';
@@ -216,7 +216,9 @@ export function Portrait({ id, humeur = 'neutre', taille = 44, rond = false, dec
   const f = FOND[PALIER[id]];
   const signe = signature ?? taille >= 72;
   const titre = humeur === 'content' || humeur === 'surpris' ? t(`portrait.${humeur}`, { nom: NOMS[id] }) : NOMS[id];
-  const clip = `portrait-clip-${id}-${rond ? 'r' : 'c'}`;
+  // Identifiant propre à chaque portrait (#527) : un même identifiant partagé faisait disparaître tous les portraits dès
+  // que le premier de la page était masqué (visibility: hidden, comme la bulle d'intro après le premier coup).
+  const clip = `portrait-clip-${id}-${rond ? 'r' : 'c'}-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`;
   const forme = rond
     ? <circle cx="50" cy="50" r="48" />
     : <rect x="2" y="2" width="96" height="96" rx="21" />;
@@ -300,14 +302,15 @@ function dessinMochi(h: HumeurMochi): ReactElement {
 /** Portrait de Mochi, le coach. */
 export function PortraitMochi({ humeur = 'neutre', taille = 44, decoratif = false, className }: { humeur?: HumeurMochi; taille?: number; decoratif?: boolean; className?: string }) {
   const titre = `Mochi${humeur === 'neutre' ? '' : `, ${humeur}`}`;
+  const clip = `portrait-clip-mochi-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`;
   return (
     <span className={['portrait', 'portrait-mochi', className].filter(Boolean).join(' ')} data-portrait="mochi" data-humeur={humeur}
       style={{ width: taille, height: taille }}>
       <svg viewBox="0 0 100 100" width="100%" height="100%" focusable="false"
         {...(decoratif ? { 'aria-hidden': true } : { role: 'img', 'aria-label': titre })}>
         {!decoratif && <title>{titre}</title>}
-        <defs><clipPath id="portrait-clip-mochi"><rect x="2" y="2" width="96" height="96" rx="21" /></clipPath></defs>
-        <g clipPath="url(#portrait-clip-mochi)">
+        <defs><clipPath id={clip}><rect x="2" y="2" width="96" height="96" rx="21" /></clipPath></defs>
+        <g clipPath={`url(#${clip})`}>
           <rect width="100" height="100" fill={PAPIER} />
           {dessinMochi(humeur)}
         </g>

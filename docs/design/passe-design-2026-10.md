@@ -138,6 +138,11 @@ Les fichiers sont disjoints d'un lot à l'autre, sauf `tokens.css`, qui n'est to
 
 Le point 13 (énoncé de problème) va à l'agent du contenu. Les points 4, 5 et 14 attendent une décision de Florian avant d'être livrés : le reste de leur lot peut avancer.
 
+**Décisions de Florian, livrées par #527** :
+- Point 5 : le **sceau** pour les messages d'interface (bandeaux, aides, états vides, confirmations, accueil), le **portrait** quand Mochi parle de ta partie ou de ton exercice. Règle dans `.claude/skills/personnages-go/SKILL.md`, figée écran par écran par `src/ui/mochiRegle.test.ts`.
+- Point 14 : revue en **3 catégories** (bon coup, coup imprécis, erreur) jusqu'à 15 kyu inclus (cote interne, jamais affichée), notes détaillées au-delà. Regroupement documenté dans `src/app/categoriesRevue.ts`.
+- Point 4 : en 320 × 568, plateau de **260 px** (contre 220), sans défilement en partie ni au comptage. En 375 × 667, plateau inchangé (327 px) et plus de défilement (37 px avant, bulle sous la barre d'actions).
+
 ## Étape 2 : lot L6 livré (jetons et textes)
 
 **Après la fusion de `main` (#510)**, le constat n° 1 **existe encore**. #510 a mis « Rejoue cette erreur » à côté de « Suivant » dans le parcours, avec un fond plein et un fondu sous la barre (`.revue-dock-double::before`). Mais le **bilan** garde son dock simple : « Démarrer le bilan » reste tranché entre « Rejouer mes erreurs (2) » et la barre du bas (captures `09-revue-bilan`, avant et après L6). Le correctif proposé tient toujours, et il peut reprendre le fond de #510 : `.revue-dock::before`, avec le même dégradé. Il reste dans le lot L1.

@@ -7,6 +7,7 @@
 // Logique pure : statsJoueur.ts ; lectures : src/data/statsJoueur.ts.
 import { useEffect, useMemo, useState } from 'react';
 import { Mochi } from '../ui/Mochi';
+import { PortraitMochi } from '../ui/Portrait';
 import { fr } from '../ui/typo';
 import { tk, nombreClub } from '../content/i18n/club';
 import { grade, texteCote } from '../content/i18n/cote';
@@ -72,7 +73,8 @@ export function MesStatistiques({ db = null, userId, onRevoir }: Props) {
   return (
     <div className="mstats" data-testid="stats">
       <div className="mstats-mochi">
-        <Mochi size={40} />
+        {/* #527 : Mochi parle de tes parties (le portrait) ; rien encore à en dire, c'est un état vide (le sceau). */}
+        {faible || precision || bilan.total ? <PortraitMochi taille={40} decoratif /> : <Mochi size={40} />}
         <p className="mstats-bulle">{fr(phrase)}</p>
       </div>
       {etat === 'chargement' && <p className="muted small" role="status" aria-busy="true">{tk('stats.chargement')}</p>}

@@ -10,12 +10,20 @@ import { expect, type Page } from '@playwright/test';
 export const SGF_REVUE = '(;GM[1]FF[4]CA[UTF-8]SZ[9]KM[6.5]RU[Japanese]PB[Toi]PW[Pomme]RE[B+1.5]'
   + ';B[cg];W[gc];B[gg];W[cc];B[ee];W[ec];B[dd];W[eg];B[fc];W[fe];B[df];W[cf];B[bd];W[eb];B[tt];W[tt])';
 
-/** Garde la partie de la revue sur l'appareil (une seule fois), et installe le KataGo factice. */
-export async function preparerRevue(page: Page, { katago = true }: { katago?: boolean } = {}) {
-  await page.addInitScript(({ sgf, katago }) => {
+/** Cote interne d'un joueur de 10 kyu (src/app/placement.ts, kyuDeCote) : il voit les notes détaillées de la revue. */
+export const COTE_JOUEUR_FORT = { cote: 1225, essais: 40, serie: 0, jour: 0, vusDuJour: [] };
+
+/**
+ * Garde la partie de la revue sur l'appareil (une seule fois), et installe le KataGo factice. #527 : par défaut, le
+ * joueur est fort (10 kyu) et voit les notes détaillées (Brillant à Gaffe) ; `debutant` : pas de cote gardée, donc
+ * 25 kyu, et la revue en 3 catégories (bon coup, coup imprécis, erreur).
+ */
+export async function preparerRevue(page: Page, { katago = true, debutant = false }: { katago?: boolean; debutant?: boolean } = {}) {
+  await page.addInitScript(({ sgf, katago, cote }) => {
     if (!sessionStorage.getItem('revue-semee')) {
       sessionStorage.setItem('revue-semee', '1');
       localStorage.setItem('go.revue.v1', JSON.stringify({ sgf, adversaire: 'pomme', date: new Date(Date.now() - 3_600_000).toISOString() }));
+      if (cote) localStorage.setItem('go.cote-joueur.v1', JSON.stringify(cote));
     }
     if (!katago) return;
     const i = (s: string) => (s.charCodeAt(1) - 97) * 9 + (s.charCodeAt(0) - 97);
@@ -39,7 +47,7 @@ export async function preparerRevue(page: Page, { katago = true }: { katago?: bo
         return { ...base, lead: s * L[k], moves };
       },
     };
-  }, { sgf: SGF_REVUE, katago });
+  }, { sgf: SGF_REVUE, katago, cote: debutant ? null : COTE_JOUEUR_FORT });
 }
 
 /**

@@ -45,6 +45,28 @@ Skill écrite pour ce projet. Elle s'appuie sur `illustration-style` et sur `doc
 - Un seul personnage mis en avant par écran.
 - Avec les mouvements réduits, aucun rebond à l'entrée.
 
+## Mochi : sceau ou portrait
+Règle validée par Florian (issue #527). Mochi a deux visages. On choisit selon ce dont il parle.
+
+- **Sceau jade** (`<Mochi>`, `<Bubble voix="interface">`) : l'app te parle.
+  - Bandeaux (série gelée, retour de série).
+  - Aides et explications d'un écran (chemin des leçons, lien partagé).
+  - États vides et attentes (aucune partie, rien à réviser, file d'attente, chargement, erreur).
+  - Confirmations (compte créé, signalement envoyé).
+  - Accueil et premier lancement (« Tu connais le go ? »), icônes de mode.
+- **Portrait** (`<PortraitMochi>`, `<Bubble voix="coach">`) : Mochi parle de ta partie ou de ton exercice.
+  - Coach en partie, bulle d'intro de la partie (but, komi), conseil.
+  - Revue : analyse, bilan, parcours, « Rejoue cette erreur ».
+  - Fin de partie (la leçon de Mochi) et bilan de séance.
+  - « Rejouer mes erreurs », leçon, problèmes, placement.
+  - Partie de découverte, introduction des règles.
+- Le portrait porte une humeur : `pensif` pendant une analyse, `content` après un coup trouvé, `fier` en fin de série réussie. Le sceau n'en a pas.
+- Deux cas à part :
+  - Mochi adversaire d'une partie guidée (bandeau, Mes parties) : portrait, comme les autres adversaires.
+  - Émotes en ligne : le joueur envoie une humeur de Mochi, donc le portrait.
+- Dans le doute : si la phrase cite un coup, une pierre ou un résultat du joueur, c'est le portrait.
+- La règle est figée écran par écran par `src/ui/mochiRegle.test.ts`. Un nouvel écran avec Mochi s'y ajoute.
+
 ## À ne pas faire
 - Pas de dégradés multiples.
 - Pas de visages réalistes.

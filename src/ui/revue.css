@@ -61,6 +61,11 @@
 /* Ta précision : en relief, papier sur encre (comme la case blanche de chess.com), sans cote ni rang. */
 .bilan-score-moi { background: var(--papier); color: var(--sumi); box-shadow: inset 0 0 0 1.5px var(--line); }
 .revue-table-note { display: flex; align-items: center; gap: 10px; }
+/* #527 : revue en 3 catégories (jusqu'à 15 kyu) : le nom de la catégorie, et sa définition dessous, en légende. */
+.bilan-table tr[data-categorie] > * { height: 52px; }
+.bilan-table[data-grille="categories"] td { width: 22%; }
+.bilan-categorie { display: grid; gap: 1px; min-width: 0; line-height: 1.25; }
+.bilan-categorie small { color: var(--muted); font-size: var(--fs-legende); font-weight: var(--fw-medium); }
 .bilan-aide { margin-top: calc(var(--space-2) * -1); }
 /* 320 px : le tableau tient sans défiler (cellules et cases de précision plus serrées). */
 @media (max-width: 360px) {
