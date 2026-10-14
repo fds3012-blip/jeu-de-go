@@ -49,6 +49,9 @@ import { goDuJourFaitAppareil } from './defiAppareil';
 import { BarreNav, type Onglet } from '../ui/IconesNav';
 import { BarreNiveau, FeteNiveau } from '../ui/Niveau';
 import { annonceKomi, comptageSurActif, equilibrage, KOMI_NORMAL, partiesOrdi, rendrePartieOrdi, type Equilibrage } from './equilibrage';
+import { estDefaut, HANDICAP_EXPLIQUE_KEY as HANDICAP_KEY, komiDeLaPartie, lireReglagesPartie, REGLAGES_PARTIE_KEY, type ReglagesPartie } from './reglagesPartie';
+import { garderPartieEnCours, lirePartieEnCoursAppareil, oublierPartieEnCours } from './partieEnCours';
+import type { Rules } from '../go/score';
 import { AnnonceXp } from '../ui/PastilleXp';
 import { useExercice } from '../ui/celebrations';
 import { ProposerInstallation, usePlateformeInstallation } from '../ui/ProposerInstallation';
@@ -290,6 +293,12 @@ export function App() {
   // Équilibrage de la partie contre l'ordi en cours (#160) et son annonce du komi par Mochi.
   const [reglage, setReglage] = useState<Equilibrage & { annonce: string | null }>({ komi: KOMI_NORMAL, avantage: true, annonce: null });
   const [reglages, setReglages] = useState(false);
+  // #528 : réglages avancés (handicap, komi, comptage) choisis dans la feuille « Changer » ; ceux de la partie en cours,
+  // et la partie interrompue à reprendre (SGF et taille).
+  const [reglagesPartieBrut, setReglagesPartie] = useStored<unknown>(REGLAGES_PARTIE_KEY, null);
+  const reglagesPartie = lireReglagesPartie(reglagesPartieBrut);
+  const [handicapExplique, setHandicapExplique] = useStored<boolean>(HANDICAP_KEY, false);
+  const [partieReglee, setPartieReglee] = useState<{ regles: Rules; handicap: number; reprise?: string; taille?: 9 | 13 | 19 }>({ regles: 'japanese', handicap: 0 });
   const [bilanBrut, setBilan] = useStored<Bilan>(BILAN_KEY, {});
   const bilan = lireBilan(bilanBrut);
   // Un adversaire verrouillé (choisi avant l'arrivée des verrous) laisse place à celui qu'il faut battre d'abord.
@@ -312,6 +321,11 @@ export function App() {
   // #436 : pendant le repli, l'IA proposée par Mochi (la plus proche de la cote), même si l'échelle ne l'a pas encore ouverte.
   const advRepli = repli ? OPPONENTS.find(o => o.id === repli.contre) : undefined;
   const adv = advRepli ?? adversaireOuvert(OPPONENTS, bilan, adversaire, ouverts);
+  // #528 : partie interrompue contre l'ordi, relue à chaque retour à l'accueil ; proposée si son adversaire est toujours ouvert.
+  const partieEnCours = useMemo(() => {
+    const p = lirePartieEnCoursAppareil(OPPONENTS.map(o => o.id));
+    return p && adversaireOuvert(OPPONENTS, bilan, p.adversaire, ouverts).id === p.adversaire ? p : null;
+  }, [playing, tab]); // eslint-disable-line react-hooks/exhaustive-deps -- relue quand on revient à l'accueil
   const cartes = echelle(OPPONENTS, bilan, ouverts).map(e => ({ id: e.adv.id, nom: e.adv.nom, rang: e.adv.rang, battu: e.battu, ouvert: e.ouvert, requis: e.requis?.nom }));
   const serieServeur = useSerie(supabase, compteId);
   // Série protégée (issue #76) : les jours manqués consomment un gel dès l'ouverture, avant que Problèmes lise la série.
@@ -506,7 +520,21 @@ export function App() {
     if (mode === 'ordi' && !enAttente) setAdversaire(contre);
     const rang = partiesOrdi(parties);
     const e = mode === 'ordi' ? equilibrage(rang) : { komi: KOMI_NORMAL, avantage: true };
-    setReglage({ ...e, annonce: mode === 'ordi' ? annonceKomi(rang, komiCompte(e.komi)) : null });
+    // #528 : réglages avancés (pas pendant le repli du direct). Inchangés, la partie est exactement celle d'avant.
+    const rp: ReglagesPartie = enAttente ? lireReglagesPartie(null) : reglagesPartie;
+    const handicap = rp.handicap, avecReglages = !estDefaut(rp);
+    let annonce: string | null = null;
+    if (mode === 'ordi' && !avecReglages) annonce = annonceKomi(rang, komiCompte(e.komi));
+    else if (mode === 'ordi' && handicap >= 2) {
+      // Mochi explique le mot « handicap » la première fois, puis le rappelle d'une phrase.
+      const nom = OPPONENTS.find(o => o.id === contre)?.nom ?? adv.nom;
+      annonce = fr(t(handicapExplique ? 'handicap.encore' : 'handicap.premiere', { n: handicap, nom }));
+      if (!handicapExplique) setHandicapExplique(true);
+    }
+    setReglage({ ...e, komi: komiDeLaPartie(rp, e.komi), annonce });
+    setPartieReglee({ regles: rp.regles, handicap });
+    // Une nouvelle partie contre l'ordi remplace la partie interrompue (une seule partie gardée à la fois).
+    if (mode === 'ordi') oublierPartieEnCours();
     setParties({ n: parties.n + 1, dernier: mode === 'ordi' ? contre : parties.dernier, ordi: rang + (mode === 'ordi' ? 1 : 0) });
     setReglages(false);
     setResultat(null);
@@ -526,12 +554,30 @@ export function App() {
     setDepartGuide(typeof cranGuide === 'number' && Number.isFinite(cranGuide) ? cranGuide : cranDuNiveau(Math.max(0, oppIndex)));
     setIntro(false);
     setReglage({ komi: KOMI_NORMAL, avantage: true, accommodant: true, annonce: null });
+    setPartieReglee({ regles: 'japanese', handicap: 0 });
     setParties({ ...parties, n: parties.n + 1 });
     setReglages(false);
     setResultat(null);
     setPartieFinie(false);
     setPartie(partie + 1);
     setPlaying('guidee');
+    window.scrollTo({ top: 0 });
+  }
+
+  /**
+   * #528 : reprend la partie interrompue contre l'ordi, avec son adversaire, sa taille, son komi, sa règle et son
+   * équilibrage d'origine. Elle a déjà été comptée au lancement : le compteur de parties ne bouge pas.
+   */
+  function reprendre() {
+    const p = partieEnCours;
+    if (!p || !garde({ quoi: 'partie' }, { quoi: 'ordi', contre: p.adversaire as OpponentId })) return;
+    track(EVENTS.partieReprise, { adversaire: p.adversaire, taille: p.taille, coups: p.coups, handicap: p.handicap, regles: p.regles,
+      heures: Math.max(0, Math.round((Date.now() - Date.parse(p.date)) / 360_000) / 10) });
+    setRepli(null); setIntro(false);
+    setAdversaire(p.adversaire as OpponentId);
+    setReglage({ komi: p.aiKomi, avantage: p.avantage, accommodant: p.accommodant, annonce: null });
+    setPartieReglee({ regles: p.regles, handicap: p.handicap, reprise: p.sgf, taille: p.taille });
+    setReglages(false); setResultat(null); setPartieFinie(false); setPartie(partie + 1); setPlaying('ordi');
     window.scrollTo({ top: 0 });
   }
 
@@ -807,7 +853,7 @@ export function App() {
             }}
             onArret={() => setRepli(r => (r ? { ...r, veille: false } : r))} />
         )}
-        <Game key={`${playing === 'ordi' ? adv.id : playing}-${partie}`} size={enRepli ? repli.demande.taille : settings.size} komi={komiCompte(reglage.komi)} aiKomi={reglage.komi} avantage={reglage.avantage} accommodant={reglage.accommodant} confirmTouch={settings.confirmTouch}
+        <Game key={`${playing === 'ordi' ? adv.id : playing}-${partie}`} size={enRepli ? repli.demande.taille : partieReglee.taille ?? settings.size} komi={komiCompte(reglage.komi)} aiKomi={reglage.komi} avantage={reglage.avantage} accommodant={reglage.accommodant} confirmTouch={settings.confirmTouch}
           opponent={playing === 'ordi' ? adv : playing === 'guidee' ? mochiGuide : undefined}
           guidee={playing === 'guidee' ? { depart: departGuide, onCran: setCranGuide } : undefined}
           intro={playing === 'guidee' ? <Bubble>{t('guidee.bulle')}</Bubble> : playing === 'ordi' && (intro || reglage.annonce) ? <Bubble>{intro ? introBut(adv.nom) : t('partie.bulle', { nom: adv.nom })}{reglage.annonce && <><br /><span className="annonce-komi">{reglage.annonce}</span></>}</Bubble> : undefined}
@@ -818,7 +864,14 @@ export function App() {
           // Coach Mochi (#470) : contre l'IA de l'échelle seulement, 10 premières parties par défaut.
           coach={playing === 'ordi' ? coachActif(settings.coach, parties.n) : undefined}
           // #486 : comptage sûr pendant les 3 premières parties terminées sur l'appareil.
-          comptageSur={comptageSurActif(terminees)} />
+          comptageSur={comptageSurActif(terminees)}
+          // #528 : règle, handicap, partie reprise ; la partie contre l'ordi (hors repli) est gardée à chaque coup.
+          regles={partieReglee.regles} handicap={partieReglee.handicap} reprise={partieReglee.reprise}
+          garder={playing === 'ordi' && !enRepli ? g => {
+            if (!g) { oublierPartieEnCours(); return; }
+            garderPartieEnCours({ v: 1, sgf: g.sgf, adversaire: adv.id, taille: partieReglee.taille ?? settings.size, komi: komiCompte(reglage.komi), aiKomi: reglage.komi,
+              regles: partieReglee.regles, handicap: partieReglee.handicap, avantage: reglage.avantage, accommodant: !!reglage.accommodant, coups: g.coups, date: new Date().toISOString() });
+          } : undefined} />
       </>
     );
   } else if (decouverte) {
@@ -919,6 +972,12 @@ export function App() {
     };
     screen = questionGo ? <QuestionGo onChoisir={choisirGo} /> : (
       <Accueil adv={adv} battu={battu(bilan, adv.id)} textes={home} taille={settings.size} cartes={cartes} epure={epure}
+        reglagesPartie={{ valeur: reglagesPartie, komiAuto: equilibrage(partiesOrdi(parties)).komi, changer: (r, cle) => {
+          setReglagesPartie(r);
+          track(EVENTS.reglageChange, { cle: `partie_${cle}`, valeur: cle === 'retablir' ? 'defaut' : String(r[cle]) });
+        } }}
+        reprise={partieEnCours && !epure ? { id: partieEnCours.adversaire as OpponentId, nom: OPPONENTS.find(o => o.id === partieEnCours.adversaire)?.nom ?? '',
+          taille: partieEnCours.taille, coups: partieEnCours.coups, ouvrir: reprendre } : undefined}
         reglages={reglages} setReglages={setReglages} onTaille={n => set({ size: n })} onChoisir={setAdversaire}
         modes={modes} onMode={choisirMode} compte={etat === 'complet'} defisAJouer={defisAJouer}
         cote={etat === 'complet' && profil ? { cote: profil.cote, provisoire: profil.provisoire } : null}

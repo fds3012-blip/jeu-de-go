@@ -85,6 +85,9 @@ export const EVENTS = {
   niveauAtteint: 'niveau_atteint',
   // Plan de marquage (issue #166). Chaque partie commencée (premier coup joué) : dénominateur du taux de parties finies.
   partieCommencee: 'partie_commencee',
+  // #528 : partie interrompue contre l'ordi reprise depuis l'accueil (`adversaire`, `taille`, `coups`, `handicap`, `regles`,
+  // `heures` : temps écoulé depuis le dernier coup gardé, à 0,1 h près). Jamais les coups.
+  partieReprise: 'partie_reprise',
   // Deux passes, puis comptage manuel (pierres mortes à corriger à la main) : part des fins de partie qui perdent le joueur (#159).
   comptageManuel: 'comptage_manuel',
   // Proposer d'installer l'app (#178) : carte montrée (une fois, après une première victoire ou à l'accueil du 2e retour depuis #214 ; `profil` : ligne du Profil), puis installation acceptée.
