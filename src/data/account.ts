@@ -2,6 +2,7 @@ import type { UserIdentity } from '@supabase/supabase-js';
 import type { Db } from './supabase';
 import { ORDRE_FOURNISSEURS, NOM_FOURNISSEUR, estFournisseur, type Fournisseur } from '../app/fournisseurs';
 import { usernameErrorFromDb, validateUsername } from './username';
+import { refusCaptcha } from './turnstile';
 import { langue, t } from '../content/i18n';
 
 export type { Profile, Result } from './lectureProfil';
@@ -13,13 +14,14 @@ import { fetchProfile } from './lectureProfil';
  * (`{{ .Token }}` dans le modèle Supabase, docs/growth/connexion-code.md) à saisir dans l'app, et garde le lien
  * comme second moyen. Le code marche là où le lien échoue : navigateur intégré de Messenger ou WhatsApp, app installée.
  */
-export async function sendMagicLink(db: Db, email: string): Promise<Result<null>> {
+export async function sendMagicLink(db: Db, email: string, captcha?: string | null): Promise<Result<null>> {
   const { error } = await db.auth.signInWithOtp({
     email: email.trim(),
     // #473 : langue des e-mails (supabase/auth/modeles lisent `.Data.langue`), gardée à la création du compte.
-    options: { emailRedirectTo: window.location.origin, shouldCreateUser: true, data: donneesLangue() }
+    // #531 : jeton Turnstile, seulement si le captcha est actif (src/data/turnstile.ts).
+    options: { emailRedirectTo: window.location.origin, shouldCreateUser: true, data: donneesLangue(), ...(captcha ? { captchaToken: captcha } : {}) }
   });
-  if (error) return { ok: false, error: t(error.status === 429 ? 'erreur.tropDEssais' : 'erreur.envoiLien') };
+  if (error) return { ok: false, error: messageEnvoi(error) };
   return { ok: true, value: null };
 }
 export const envoyerCode = sendMagicLink;
@@ -70,14 +72,21 @@ export type EchecEnvoi = { ok: false; error: string; raison?: 'pris' | 'inconnu'
  * « Aucun compte avec cette adresse. Crée ton compte. » La session en place (anonyme comprise) n'est pas touchée :
  * seule la vérification du code la remplace.
  */
-export async function envoyerCodeConnexion(db: Db, email: string): Promise<Result<null> | EchecEnvoi> {
+export async function envoyerCodeConnexion(db: Db, email: string, captcha?: string | null): Promise<Result<null> | EchecEnvoi> {
   const { error } = await db.auth.signInWithOtp({
     email: email.trim(),
-    options: { emailRedirectTo: window.location.origin, shouldCreateUser: false }
+    options: { emailRedirectTo: window.location.origin, shouldCreateUser: false, ...(captcha ? { captchaToken: captcha } : {}) }
   });
   if (!error) return { ok: true, value: null };
   if (aucunCompte(error)) return { ok: false, error: t('connexion.inconnu'), raison: 'inconnu' };
-  return { ok: false, error: t(error.status === 429 ? 'erreur.tropDEssais' : 'erreur.envoiLien') };
+  return { ok: false, error: messageEnvoi(error) };
+}
+
+/** Message d'un envoi de code refusé : trop d'essais, captcha (#531), ou échec d'envoi. */
+function messageEnvoi(error: ErreurAuth): string {
+  if (error.status === 429) return t('erreur.tropDEssais');
+  if (refusCaptcha(error)) return t('connexion.captcha.echec');
+  return t('erreur.envoiLien');
 }
 
 /**
@@ -167,15 +176,24 @@ export async function verifierCode(db: Db, email: string, code: string, type: 'e
  * lisibles par les joueurs connectés (RLS « Profils visibles par les joueurs connectés », D4) ; `_` est un joker de ILIKE, il est donc échappé.
  * La base revérifie à l'enregistrement : ceci n'est qu'une aide à la saisie.
  */
-export async function pseudoDisponible(db: Db, pseudo: string, userId?: string): Promise<Result<boolean>> {
+export async function pseudoDisponible(db: Db, pseudo: string, userId?: string): Promise<Result<boolean> | PseudoInterdit> {
   const check = validateUsername(pseudo);
   if (!check.ok) return check;
   let requete = db.from('profiles').select('id').ilike('username', check.value.replace(/[\\%_]/g, c => `\\${c}`));
   if (userId) requete = requete.neq('id', userId);
-  const { data, error } = await requete.limit(1);
+  // #531 : mots interdits, demandés en même temps. Serveur sans la fonction ou réseau coupé : on n'en dit rien ici,
+  // l'enregistrement revérifie (JGP02).
+  const [{ data, error }, autorise] = await Promise.all([
+    requete.limit(1),
+    (async () => await db.rpc('pseudo_autorise', { p_pseudo: check.value }))().catch(() => ({ data: null, error: true })),
+  ]);
+  if (!autorise.error && autorise.data === false) return { ok: false, error: t('pseudo.interdit'), raison: 'interdit' };
   if (error) return { ok: false, error: t('pseudo.erreur') };
   return { ok: true, value: (data ?? []).length === 0 };
 }
+
+/** #531 : pseudo refusé par le serveur (mot interdit), dit pendant la saisie. */
+export type PseudoInterdit = { ok: false; error: string; raison: 'interdit' };
 
 // Lecture du profil, de la série et des gels : dans ./lectureProfil.ts, lue par l'accueil sans le reste de ce fichier (#513).
 export { fetchGels, fetchProfile, fetchStreak } from './lectureProfil';

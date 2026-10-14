@@ -87,6 +87,7 @@ const FR = {
   'erreur.partieFinie': 'La partie est finie depuis trop longtemps.',
   'erreur.introuvable': 'Joueur ou partie introuvable.',
   'erreur.compte': 'Crée ton compte pour faire ça.',
+  'erreur.suspendu': 'Ton compte est suspendu : rien en ligne pour l’instant. L’ordi, les leçons et les problèmes restent ouverts.',
   'erreur.serveur': 'Le serveur ne répond pas. Réessaie dans un instant.',
   'erreur.horsLigne': 'Hors ligne. Reconnecte-toi pour envoyer.',
 };
@@ -173,6 +174,7 @@ const EN: { readonly [K in CleSecurite]: string } = {
   'erreur.partieFinie': 'This game ended too long ago.',
   'erreur.introuvable': 'Player or game not found.',
   'erreur.compte': 'Create your account to do this.',
+  'erreur.suspendu': 'Your account is suspended: nothing online for now. The computer, lessons and puzzles are still open.',
   'erreur.serveur': 'The server isn’t answering. Try again in a moment.',
   'erreur.horsLigne': 'Offline. Reconnect to send.',
 };

@@ -86,7 +86,9 @@ export function PseudoObligatoire({ db, userId, onChoisi, onDeconnecter }: { db:
     const minuteur = setTimeout(() => {
       pseudoDisponible(db, check.value, userId).then(r => {
         if (!vivant) return;
-        setDispo(!r.ok ? { etat: 'inconnu' } : r.value ? { etat: 'libre', pseudo: check.value } : { etat: 'pris' });
+        // #531 : mot interdit, dit tout de suite (même présentation qu'un format refusé).
+        setDispo(!r.ok ? ('raison' in r ? { etat: 'invalide', message: r.error } : { etat: 'inconnu' })
+          : r.value ? { etat: 'libre', pseudo: check.value } : { etat: 'pris' });
       }, () => { if (vivant) setDispo({ etat: 'inconnu' }); });
     }, ATTENTE_VERIFICATION_MS);
     return () => { vivant = false; clearTimeout(minuteur); };

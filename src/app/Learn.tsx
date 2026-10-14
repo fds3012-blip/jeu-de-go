@@ -126,7 +126,7 @@ function CarteProchaine({ etape, bouton, mochi, onOpen, refCarte, compteRequis }
   const l = etape.lecon, compte = compteRequis(etape.rang - 1);
   return (
     <div className="prochaine" ref={refCarte as React.RefObject<HTMLDivElement>} data-testid="prochaine-lecon">
-      <Bubble>{fr(mochi)}</Bubble>
+      <Bubble voix="interface">{fr(mochi)}</Bubble>
       <div className="prochaine-carte">
         <button className="pas-bouton" data-etat={etape.etat} data-compte={compte || undefined} aria-label={nomPas(etape, compte)} onClick={() => onOpen(l.id)}>
           <span className="pas-texte" aria-hidden="true">

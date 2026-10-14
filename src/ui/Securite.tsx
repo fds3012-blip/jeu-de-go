@@ -2,6 +2,7 @@
 // et émotes de Mochi), bulle d'un message en partie. Feuilles en bas d'écran (boîte de dialogue native, comme
 // « Changer » de l'accueil) : une seule action principale chacune. Données : src/data/securite.ts. Styles : securite.css.
 import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode, type RefObject } from 'react';
+import { Mochi } from './Mochi';
 import { PortraitMochi, type HumeurMochi } from './Portrait';
 import { fr } from './typo';
 import { EMOTES, MESSAGES, MOTIFS_JOUEUR, MOTIFS_PROBLEME, TEXTE_MAX, bloquer, estEmote, signaler, type CodeMessage, type Demande, type MotifJoueur, type MotifProbleme } from '../data/securite';
@@ -240,7 +241,7 @@ export function FeuilleSignaler({ db, ouvert, onFermer, cible, compte, onCompte,
     return (
       <Feuille ouvert={ouvert} onFermer={onFermer} titre={titre} testId="feuille-signaler">
         <div className="signaler-merci" role="status">
-          <PortraitMochi humeur="content" taille={56} decoratif />
+          <Mochi size={56} />
           <div>
             {fait.signale && <p className="signaler-merci-titre">{tsec('signaler.merci')}</p>}
             {fait.signale && <p className="muted small">{fr(tsec('signaler.merciDetail'))}</p>}

@@ -36,6 +36,8 @@ export const CODES_AMIS = {
   JGA09: 'tropDeParties',
   // #363 : l'un des deux a bloqué l'autre (même refus dans les deux sens).
   JGB01: 'indisponible',
+  // #531 : compte suspendu par l'équipe.
+  JGU01: 'suspendu',
   [CODE_COMPTE_REQUIS]: 'compte',
   [CODE_PSEUDO_REQUIS]: 'compte',
 } as const;
