@@ -77,7 +77,7 @@ Table `abonnements_rappel` (migration `20261001000100_abonnements_rappel`), fonc
 
 ## Modération et alerte à l'équipe (issue #531)
 
-Migration `20261013120100_moderation` : mots interdits dans les pseudos (refus JGP02), suspension de compte (refus JGU01 en file, défi, demande d'ami et message), journal des actions de l'équipe, résumé des signalements. Fonction `supabase/functions/alerte-signalements` (résumé quotidien par Resend, en nombres seulement), tâche pg_cron hors des migrations (`supabase/planification/alerte-signalements.sql`). Rien n'est appliqué ni déployé par ce dépôt : étapes, secrets et commandes de l'équipe dans `docs/architecture/securite.md`.
+Migration `20261014001100_moderation` : mots interdits dans les pseudos (refus JGP02), suspension de compte (refus JGU01 en file, défi, demande d'ami et message), journal des actions de l'équipe, résumé des signalements. Fonction `supabase/functions/alerte-signalements` (résumé quotidien par Resend, en nombres seulement), tâche pg_cron hors des migrations (`supabase/planification/alerte-signalements.sql`). Rien n'est appliqué ni déployé par ce dépôt : étapes, secrets et commandes de l'équipe dans `docs/architecture/securite.md`.
 
 - `suspendre_joueur`, `lever_suspension`, `renommer_pseudo`, `reclamer_resume_signalements` : rôle de service (ou éditeur SQL) seulement.
 - La fonction lit `RESEND_API_KEY`, `ALERTE_EMAIL`, `ALERTE_SECRET` (et `ALERTE_EXPEDITEUR`, facultatif) ; elle se déploie sans vérification du JWT (fichier `.sans-jwt`, lu par le workflow de déploiement, comme `envoyer-rappels`). Logique testée par Vitest (`src/data/alerteSignalements.test.ts`).

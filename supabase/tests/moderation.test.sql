@@ -1,4 +1,4 @@
--- Tests rejouables de la modération (issue #531, migration 20261013120100_moderation.sql) : pseudos interdits (sans
+-- Tests rejouables de la modération (issue #531, migration 20261014001100_moderation.sql) : pseudos interdits (sans
 -- faux positifs grossiers), suspension (files, défis, amis, messages ; l'adversaire lit JGB01), fonctions de l'équipe
 -- réservées au rôle de service, journal, résumé des signalements, purges, droits.
 -- Transaction annulée à la fin : aucune donnée ne reste. Voir supabase/tests/LISEZMOI.md.

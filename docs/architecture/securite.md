@@ -2,7 +2,7 @@
 
 Trois protections : modération côté serveur, en-têtes de sécurité, captcha prêt. Aucun secret dans le dépôt.
 
-## 1. Modération (migration `20261013120100_moderation.sql`)
+## 1. Modération (migration `20261014001100_moderation.sql`)
 
 À appliquer à la main, après relecture (elle n'est pas appliquée par la CI). Elle ne redéfinit aucune fonction d'un autre chantier : tout passe par des déclencheurs et des fonctions nouvelles, `security definer` à `search_path` vide. Aucune donnée existante n'est supprimée ni modifiée. Tests : `bash supabase/tests/lancer.sh` (`moderation.test.sql`).
 

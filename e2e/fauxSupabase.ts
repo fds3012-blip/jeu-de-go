@@ -45,7 +45,7 @@ import { fusionner, nettoyer } from '../src/app/reglagesCompte';
 // gardée reste), vrai compte exigé ; liste blanche de supabase/migrations/20261006123100_reglages_compte.sql
 // (src/app/reglagesCompte.ts). `reglages` : réglages gardés par compte.
 // Modération (#531) : `suspendus` (identifiants de comptes suspendus) : files, défis, amis et messages refusés avec
-// JGU01 (détail : fin de la suspension), comme supabase/migrations/20261013120100_moderation.sql ; pseudos interdits
+// JGU01 (détail : fin de la suspension), comme supabase/migrations/20261014001100_moderation.sql ; pseudos interdits
 // (`pseudo_autorise`, refus JGP02 à l'enregistrement) sur une courte liste d'exemples (la vraie liste est au serveur).
 
 export const SUPABASE = 'https://supabase.e2e.test';

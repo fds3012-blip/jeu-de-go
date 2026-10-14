@@ -8,7 +8,7 @@
 // - jamais de texte libre de signalement ni de pseudo dans l'e-mail : des nombres, et un lien vers Supabase, où
 //   l'équipe lit le détail (connectée à son compte).
 
-/** Résumé rendu par `reclamer_resume_signalements` (supabase/migrations/20261013120100_moderation.sql). */
+/** Résumé rendu par `reclamer_resume_signalements` (supabase/migrations/20261014001100_moderation.sql). */
 export interface Resume {
   depuis: string;
   jusqua: string;

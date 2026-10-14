@@ -4,7 +4,7 @@
 
 import { t } from '../content/i18n';
 
-/** Refus du serveur : le pseudo contient un mot interdit (supabase/migrations/20261013120100_moderation.sql). */
+/** Refus du serveur : le pseudo contient un mot interdit (supabase/migrations/20261014001100_moderation.sql). */
 export const CODE_PSEUDO_INTERDIT = 'JGP02';
 
 export const USERNAME_MIN = 3;

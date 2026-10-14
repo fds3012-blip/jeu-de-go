@@ -1,4 +1,4 @@
-// Compte suspendu par l'équipe (#531, supabase/migrations/20261013120100_moderation.sql). Le serveur refuse avec le
+// Compte suspendu par l'équipe (#531, supabase/migrations/20261014001100_moderation.sql). Le serveur refuse avec le
 // code JGU01 les files d'attente (direct et lente), les défis, les demandes d'ami et les messages en partie ; le
 // détail porte la fin de la suspension (ISO 8601, vide si elle est sans fin). L'adversaire d'un joueur suspendu lit
 // le refus habituel « Ce joueur n'est pas disponible » (JGB01) : rien n'est dit de la suspension d'un autre.
