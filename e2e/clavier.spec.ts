@@ -1,6 +1,6 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { fromLabel, toLabel } from '../src/go/coords';
-import { attendrePierre, attendreReponse, boutonPasser, coupsJoues, pierres } from './plateau';
+import { attendrePierre, attendreReponse, boutonPasser, coupsJoues, jouer, pierres } from './plateau';
 
 // Issue #116 : une partie contre Pomme jouée uniquement au clavier, annonces du lecteur d'écran comprises.
 
@@ -163,4 +163,20 @@ test('curseur clavier : visible en mode sombre et clair, sans animation si les m
     expect(await grille(page).evaluate(el => el.getAnimations({ subtree: true }).length)).toBe(0);
     await page.locator('.partie-plateau').screenshot({ path: `test-results/curseur-clavier-${colorScheme}.png` });
   }
+});
+
+test('curseur caché à la souris (:focus-visible), montré dès une flèche', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/');
+  await page.locator('.cta').click();
+  const curseur = grille(page).locator('[data-curseur]');
+  // Un clic pose la pierre et donne le focus au plateau, sans anneau jade.
+  await jouer(page, 'C3');
+  await attendrePierre(page, 'C3', 'noir');
+  await expect(grille(page)).toBeFocused();
+  await expect(curseur).toHaveCount(0);
+  // Une flèche montre le curseur, et la case est annoncée.
+  await page.keyboard.press('ArrowLeft');
+  await expect(curseur).toHaveCount(1);
+  await expect(annonce(page)).toHaveText(/^[A-J][1-9], (vide|pierre)/);
 });

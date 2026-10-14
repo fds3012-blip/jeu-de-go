@@ -17,6 +17,15 @@ export const TOUCHE_LIRE = 'l';
  */
 export const CURSEUR = { lisere: '#0B1A14', anneau: '#4CD39B' } as const;
 
+/**
+ * Le curseur se montre-t-il à l'arrivée du focus ? Oui si le navigateur juge le focus « visible » (:focus-visible :
+ * Tab, ou focus donné par le code après une touche du clavier) ; non après un clic ou un toucher. Un navigateur
+ * qui ne connaît pas :focus-visible montre le curseur : mieux vaut un anneau de trop qu'un clavier perdu.
+ */
+export function focusAuClavier(el: { matches(selecteur: string): boolean }): boolean {
+  try { return el.matches(':focus-visible'); } catch { return true; }
+}
+
 /** Nouvelle position du curseur après une touche, ou null si la touche ne déplace pas le curseur. */
 export function deplacerCurseur(p: number, touche: string, size: number, fenetre?: { x: number; y: number; k: number } | null): number | null {
   const x = p % size, y = Math.floor(p / size);

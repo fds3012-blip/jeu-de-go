@@ -86,16 +86,19 @@ test('depuis le comptage : un toucher ouvre « Comment on compte ? », un touche
   await expect(coupsJoues(page)).toHaveCount(avant.coups);
 });
 
-test('questions fréquentes : compte, série, gel, hors ligne, supprimer mon compte', async ({ page }) => {
+test('questions fréquentes : compte, série, gel, hors ligne, clavier, supprimer mon compte', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Profil' }).click();
   await page.getByRole('button', { name: 'Aide', exact: true }).click();
   const aide = feuille(page);
   await aide.getByRole('tab', { name: 'Questions' }).click();
   const questions = aide.locator('[data-question]');
-  await expect(questions).toHaveCount(5);
+  await expect(questions).toHaveCount(6);
   await expect(aide.getByRole('heading', { name: /À quoi sert un gel/ })).toBeVisible();
   await expect(aide.locator('[data-question="supprimer"]')).toContainText('Mon compte');
+  // #116 : la touche L (« Lire le plateau ») est documentée.
+  await expect(aide.getByRole('heading', { name: 'Je peux jouer au clavier ?' })).toBeVisible();
+  await expect(aide.locator('[data-question="clavier"]')).toContainText('La touche L lit le plateau');
 });
 
 test('titre de leçon lisible en 320 px malgré le « ? »', async ({ page }) => {
