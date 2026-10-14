@@ -64,6 +64,8 @@
 .course-resultat { display: flex; flex-direction: column; align-items: center; margin-top: var(--space-6); text-align: center; }
 .course-resultat-chiffre { font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: 5rem; line-height: 1; letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums; color: var(--text); }
+.course-xp:not(:empty) { margin-top: var(--space-3); }
+.course-xp .pastille-xp { box-shadow: none; }
 .course-resultat-legende { margin-top: var(--space-1); color: var(--muted); font-size: var(--fs-l); font-weight: var(--fw-bold); }
 .course-nouveau { margin: var(--space-4) 0 0; padding: var(--space-2) var(--space-4); border-radius: var(--radius-pill);
   background: var(--recompense); color: var(--encre-jade); font-weight: var(--fw-bold); }

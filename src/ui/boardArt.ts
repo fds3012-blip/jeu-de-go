@@ -130,7 +130,7 @@ export function shellStriae(variant: number): Strie[] {
  * (src/app/xp.ts, RECOMPENSES). Un thème règle la teinte du bois, l'encre des lignes et la nacre des pierres blanches.
  * Le goban ne change pas avec le mode sombre ou clair de l'interface : un thème a les mêmes couleurs dans les deux.
  */
-export type IdThemeGoban = 'kaya' | 'kaya-clair' | 'ardoise' | 'coquillage-dore';
+export type IdThemeGoban = 'kaya' | 'kaya-clair' | 'ardoise' | 'coquillage-dore' | 'cerisier' | 'jade' | 'kaya-ancien';
 export interface ThemeGoban {
   id: IdThemeGoban;
   nom: string;
@@ -178,9 +178,29 @@ export const THEMES_GOBAN: Record<IdThemeGoban, ThemeGoban> = {
     fin: [0.52, 0.30, 0.10, 0.8, -0.34], large: [0.62, 0.38, 0.14, 0.55, -0.24], vignette: '#3C1E05',
     ligne: '#2b1a08', coord: '#1f1206', blanche: ['#FFFBEF', '#F7EBCB', '#E6CF97', '#C4A462'], strie: '#9A7A35',
   },
+  // #529, récompenses d'après le niveau 8 (niveaux 10, 12 et 15). Même grammaire : un bois, ou des pierres sur le kaya.
+  // Cerisier (niveau 10) : bois rosé, veinage roux serré. Lignes 5,9:1 au bord le plus sombre.
+  cerisier: {
+    id: 'cerisier', nom: 'Cerisier', fond: ['#E8B48C', '#DA9F78', '#C4865F'],
+    fin: [0.55, 0.22, 0.12, 0.7, -0.3], large: [0.62, 0.28, 0.16, 0.5, -0.22], vignette: '#3D140A',
+    ligne: '#2a0f06', coord: '#1f0a04', blanche: ['#fff', '#F3EEE3', '#DDD5C4', '#BDB3A0'], strie: '#8C7B5E',
+  },
+  // Jade (niveau 12) : pierres blanches teintées de jade, stries vertes, sur le kaya habituel (le jade de l'interface).
+  jade: {
+    id: 'jade', nom: 'Jade', fond: ['#EDC27A', '#DDA95C', '#C58D42'],
+    fin: [0.52, 0.30, 0.10, 0.8, -0.34], large: [0.62, 0.38, 0.14, 0.55, -0.24], vignette: '#3C1E05',
+    ligne: '#2b1a08', coord: '#1f1206', blanche: ['#F6FFF9', '#E3F2E8', '#C5DDCD', '#98B9A4'], strie: '#5D876C',
+  },
+  // Kaya ancien (niveau 15) : le kaya patiné d'un goban centenaire, plus sombre et plus chaud. Les coordonnées sont cernées
+  // d'un liseré clair, comme sur l'ardoise : sur ce bois, l'encre seule tient 4,2:1 au bord (moins que les 4,5:1 du texte).
+  'kaya-ancien': {
+    id: 'kaya-ancien', nom: 'Kaya ancien', fond: ['#CF9A58', '#B98143', '#9C6A33'],
+    fin: [0.40, 0.22, 0.06, 0.85, -0.32], large: [0.48, 0.28, 0.08, 0.6, -0.24], vignette: '#2A1203',
+    ligne: '#140902', coord: '#120902', coordLisere: '#E8CB98', blanche: ['#fff', '#F3EEE3', '#DDD5C4', '#BDB3A0'], strie: '#8C7B5E',
+  },
 };
 
-export const ORDRE_THEMES: readonly IdThemeGoban[] = ['kaya', 'kaya-clair', 'ardoise', 'coquillage-dore'];
+export const ORDRE_THEMES: readonly IdThemeGoban[] = ['kaya', 'kaya-clair', 'ardoise', 'coquillage-dore', 'cerisier', 'jade', 'kaya-ancien'];
 
 export function themeGoban(id: string | null | undefined): ThemeGoban {
   return THEMES_GOBAN[id as IdThemeGoban] ?? THEMES_GOBAN.kaya;

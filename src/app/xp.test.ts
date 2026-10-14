@@ -44,8 +44,8 @@ describe('courbe des niveaux', () => {
 });
 
 describe('gains', () => {
-  it('barème : problème 10, Go du jour 20, révision du jour 20, leçon 30, partie 15, victoire 15 + 25, erreurs rejouées 10, objectif de la semaine 30', () => {
-    expect(GAINS).toEqual({ probleme: 10, goDuJour: 20, revision: 20, lecon: 30, partie: 15, victoire: 40, erreursRejouees: 10, objectif: 30 });
+  it('barème : problème 10, Go du jour 20, révision du jour 20, leçon 30, partie 15, victoire 15 + 25, erreurs rejouées 10, objectif de la semaine 30, course 15 (#529)', () => {
+    expect(GAINS).toEqual({ probleme: 10, goDuJour: 20, revision: 20, lecon: 30, partie: 15, victoire: 40, erreursRejouees: 10, objectif: 30, course: 15 });
   });
 
   it('#233 : chaque défi du jour qui fait vivre la série rapporte au moins autant que le Go du jour', () => {
@@ -81,12 +81,16 @@ describe('gains', () => {
     for (const s of Object.keys(GAINS) as (keyof typeof GAINS)[]) expect(appliquer(500, s).apres).toBeGreaterThan(500);
   });
 
-  it('récompenses cosmétiques aux niveaux 3, 5 et 8', () => {
+  it('récompenses cosmétiques aux niveaux 3, 5, 8, puis 10, 12 et 15 (#529)', () => {
     expect(recompenseDuNiveau(3)?.nom).toBe('Kaya clair');
     expect(recompenseDuNiveau(5)?.nom).toBe('Ardoise');
     expect(recompenseDuNiveau(8)?.nom).toBe('Coquillage doré');
     expect(prochaineRecompense(1)?.niveau).toBe(3);
-    expect(prochaineRecompense(8)).toBeUndefined();
+    expect(prochaineRecompense(8)?.niveau).toBe(10);
+    expect(recompenseDuNiveau(10)?.nom).toBe('Cerisier');
+    expect(recompenseDuNiveau(12)?.nom).toBe('Jade');
+    expect(recompenseDuNiveau(15)?.nom).toBe('Kaya ancien');
+    expect(prochaineRecompense(15)).toBeUndefined();
   });
 });
 

@@ -1,6 +1,6 @@
-// Profil vivant (issue #103) : statistiques en anneaux et vitrine de badges, sept sceaux dessinés, tous différents.
+// Profil vivant (issue #103) : statistiques en anneaux et vitrine de badges, 21 sceaux dessinés (#529), tous différents.
 import { useState, type CSSProperties, type ReactNode } from 'react';
-import type { Badge, BadgeId, Stat } from '../app/vitrine';
+import { vitrineRepliee, type Badge, type BadgeId, type Stat } from '../app/vitrine';
 import { t } from '../content/i18n/secondaires';
 import { fr } from './typo';
 import { entier } from './entier';
@@ -61,16 +61,37 @@ export function Statistiques({ stats }: { stats: Stat[] }) {
   );
 }
 
-/** Encre et forme de chaque sceau : jade rond pour les premières fois, or carré pour les paliers et les jalons, hanko pour la victoire. */
+/**
+ * Encre et forme de chaque sceau, par famille (#529) : jade rond pour les premiers pas, or rond pour la régularité,
+ * or carré pour la maîtrise, jade carré pour la découverte, hanko carré pour les parties contre des joueurs ; la
+ * première victoire garde son hanko rond.
+ */
 const SCEAUX: Record<BadgeId, { ton: 'jade' | 'or' | 'hanko'; forme: 'rond' | 'carre' }> = {
   'premiere-partie': { ton: 'jade', forme: 'rond' },
   'premier-probleme': { ton: 'jade', forme: 'rond' },
+  'premiere-lecon': { ton: 'jade', forme: 'rond' },
+  'premiere-course': { ton: 'jade', forme: 'rond' },
   'victoire-pomme': { ton: 'hanko', forme: 'rond' },
+  'serie-7': { ton: 'or', forme: 'rond' },
+  'serie-30': { ton: 'or', forme: 'rond' },
+  'objectif-semaine': { ton: 'or', forme: 'rond' },
   'palier-debutant': { ton: 'or', forme: 'carre' },
   'dix-problemes': { ton: 'or', forme: 'carre' },
+  'cinquante-problemes': { ton: 'or', forme: 'carre' },
   'palier-novice': { ton: 'or', forme: 'carre' },
-  'serie-7': { ton: 'or', forme: 'rond' },
+  'chapitre-bases': { ton: 'or', forme: 'carre' },
+  'serie-theme': { ton: 'or', forme: 'carre' },
+  'erreur-maitrisee': { ton: 'or', forme: 'carre' },
+  'trois-adversaires': { ton: 'or', forme: 'carre' },
+  'goban-13': { ton: 'jade', forme: 'carre' },
+  'goban-19': { ton: 'jade', forme: 'carre' },
+  'premiere-revue': { ton: 'jade', forme: 'carre' },
+  'premiere-en-ligne': { ton: 'hanko', forme: 'carre' },
+  'victoire-classee': { ton: 'hanko', forme: 'carre' },
 };
+
+/** Petit goban (grille 4 × 4) gravé sous un chiffre : la taille du plateau. */
+const grille = <path d="M12 12h24M12 20h24M12 28h24M12 36h24M12 12v24M20 12v24M28 12v24M36 12v24" className="s-ligne" />;
 
 /** Motif gravé de chaque sceau, dans la grille 48 × 48 (zone utile 10–38). */
 const MOTIFS: Record<BadgeId, ReactNode> = {
@@ -116,6 +137,78 @@ const MOTIFS: Record<BadgeId, ReactNode> = {
     <path d="M24.5 9c.7 4 6.6 6.6 6.6 13.3A7.5 7.5 0 0 1 24 30a7.5 7.5 0 0 1-7.5-7.7c0-3.4 1.7-5.3 3.4-6.7 0 2.4 1 4 2.5 4.6-.8-4.2.6-8.4 2.1-11.2Z" className="s-plein" />
     <text x="24" y="27" className="s-texte s-texte-flamme">7</text>
   </>,
+  // #529. Première leçon : le livre ouvert, la pierre noire posée au-dessus.
+  'premiere-lecon': <>
+    <path d="M11 18.5c4.5-2 9-1.6 13 1V35c-4-2.4-8.5-2.8-13-1Z" className="s-pierre-b" />
+    <path d="M37 18.5c-4.5-2-9-1.6-13 1V35c4-2.4 8.5-2.8 13-1Z" className="s-pierre-b" />
+    <circle cx="24" cy="12.5" r="4.2" className="s-pierre-n" />
+  </>,
+  // Première course : le chronomètre de la course, aiguille sur la troisième minute.
+  'premiere-course': <>
+    <path d="M21 12.5h6" className="s-trait" strokeWidth="2.6" />
+    <circle cx="24" cy="26" r="10.5" className="s-pierre-b" />
+    <path d="M24 26v-6.5M24 26h5.5" className="s-trait" strokeWidth="2.2" />
+  </>,
+  // 30 jours de série : la même flamme, le chiffre dedans.
+  'serie-30': <>
+    <path d="M24.5 9c.7 4 6.6 6.6 6.6 13.3A7.5 7.5 0 0 1 24 30a7.5 7.5 0 0 1-7.5-7.7c0-3.4 1.7-5.3 3.4-6.7 0 2.4 1 4 2.5 4.6-.8-4.2.6-8.4 2.1-11.2Z" className="s-plein" />
+    <text x="24" y="27" className="s-texte s-texte-flamme">30</text>
+  </>,
+  // Objectif de la semaine : la cible, une pierre noire au centre.
+  'objectif-semaine': <>
+    <circle cx="24" cy="24" r="12" className="s-pierre-b" />
+    <circle cx="24" cy="24" r="7" className="s-cible" />
+    <circle cx="24" cy="24" r="3.6" className="s-pierre-n" />
+  </>,
+  // 50 problèmes : le chiffre, et les deux pierres (comme « 10 problèmes »).
+  'cinquante-problemes': <>
+    <text x="24" y="27" className="s-texte">50</text>
+    <circle cx="19" cy="35.5" r="2.8" className="s-pierre-n" /><circle cx="29" cy="35.5" r="2.8" className="s-pierre-b" />
+  </>,
+  // Les bases : le fanion du chemin des leçons, planté sur deux pierres.
+  'chapitre-bases': <>
+    <path d="M19 33V11.5" className="s-trait" strokeWidth="2.2" />
+    <path d="M19 12.5 33 17l-14 4.5Z" className="s-plein" />
+    <circle cx="16" cy="34" r="4" className="s-pierre-n" /><circle cx="25" cy="34" r="4" className="s-pierre-b" />
+  </>,
+  // 5 d'affilée : trois pierres qui montent une à une, sur une marche.
+  'serie-theme': <>
+    <path d="M12 36h8v-8h8v-8h8" className="s-ligne" />
+    <circle cx="16" cy="31" r="4.2" className="s-pierre-n" /><circle cx="24" cy="23" r="4.2" className="s-pierre-b" />
+    <circle cx="32" cy="15" r="4.2" className="s-pierre-n" />
+  </>,
+  // Erreur maîtrisée : la pierre juste, et la flèche qui revient (on a rejoué).
+  'erreur-maitrisee': <>
+    <path d="M13.5 20.5A11.5 11.5 0 0 1 33.5 15" className="s-trait" strokeWidth="1.8" />
+    <path d="M34.5 10.5v5h-5" className="s-trait" strokeWidth="1.8" />
+    <circle cx="24" cy="27" r="8.5" className="s-pierre-b" />
+    <path d="M20.6 27.3 23 29.6 27.6 24.6" className="s-coche" />
+  </>,
+  // Trois adversaires : la couronne au-dessus de trois pierres.
+  'trois-adversaires': <>
+    <path d="M16 21 17.5 11.5l4 4 2.5-5.5 2.5 5.5 4-4L32 21Z" className="s-plein" />
+    <circle cx="14" cy="30.5" r="5" className="s-pierre-n" /><circle cx="24" cy="30.5" r="5" className="s-pierre-b" />
+    <circle cx="34" cy="30.5" r="5" className="s-pierre-n" />
+  </>,
+  // Goban 13 × 13 et 19 × 19 : le chiffre sur un coin de grille.
+  'goban-13': <>{grille}<text x="24" y="30" className="s-texte">13</text></>,
+  'goban-19': <>{grille}<text x="24" y="30" className="s-texte">19</text></>,
+  // Première revue : la loupe sur une pierre.
+  'premiere-revue': <>
+    <path d="M27.5 27.5 36 36" className="s-trait" strokeWidth="3.6" />
+    <circle cx="21" cy="21" r="9" className="s-pierre-b" />
+    <circle cx="21" cy="21" r="4" className="s-pierre-n" />
+  </>,
+  // Première partie en ligne : deux pierres, de part et d'autre, reliées par un fil.
+  'premiere-en-ligne': <>
+    <path d="M17.5 27.5C21 17 27 31 30.5 20.5" className="s-cible" />
+    <circle cx="14.5" cy="31" r="5.5" className="s-pierre-n" /><circle cx="33.5" cy="17" r="5.5" className="s-pierre-b" />
+  </>,
+  // Victoire classée : la couronne posée sur son socle.
+  'victoire-classee': <>
+    <path d="M12.5 31 14.5 15l6 6 3.5-9 3.5 9 6-6 2 16Z" className="s-plein" />
+    <path d="M12.5 35.5h23" className="s-trait" strokeWidth="2.6" />
+  </>,
 };
 
 export function SceauBadge({ id, obtenu, taille = 52 }: { id: BadgeId; obtenu: boolean; taille?: number }) {
@@ -139,6 +232,10 @@ export function SceauBadge({ id, obtenu, taille = 52 }: { id: BadgeId; obtenu: b
 export function VitrineBadges({ liste, nouveaux = [] }: { liste: Badge[]; nouveaux?: readonly string[] }) {
   const n = liste.filter(b => b.obtenu).length;
   const [choisi, setChoisi] = useState<BadgeId | null>(null);
+  // #529 : 21 badges. Repliée, une rangée de 6 sceaux (vitrineRepliee) et « +N » qui ouvre le reste.
+  const [tous, setTous] = useState(false);
+  const visibles = tous ? liste : vitrineRepliee(liste, nouveaux);
+  const repliable = visibles.length < liste.length || tous;
   const b = (choisi && liste.find(x => x.id === choisi))
     || liste.find(x => x.obtenu && nouveaux.includes(x.id)) || null;
   const prochain = liste.find(x => !x.obtenu);
@@ -153,7 +250,7 @@ export function VitrineBadges({ liste, nouveaux = [] }: { liste: Badge[]; nouvea
         <span className="sr-only">{t('vitrine.titre', { n, total: liste.length })}</span>
       </h2>
       <ul className="vitrine-grille">
-        {liste.map((x, i) => (
+        {visibles.map((x, i) => (
           <li key={x.id} className={`${x.obtenu ? 'obtenu' : 'a-gagner'}${x.obtenu && nouveaux.includes(x.id) ? ' nouveau' : ''}`} data-badge={x.id}
             style={{ '--rang': i } as CSSProperties}>
             <button type="button" className="badge-bouton" aria-pressed={choisi === x.id}
@@ -163,6 +260,17 @@ export function VitrineBadges({ liste, nouveaux = [] }: { liste: Badge[]; nouvea
             </button>
           </li>
         ))}
+        {/* #529 : le dernier rond de la grille ouvre ou replie la vitrine (« +15 » : badges cachés). Il prend la place
+            d'un sceau, pas une ligne de plus : le Profil tient toujours sans défiler (#50). */}
+        {repliable && (
+          <li className="vitrine-plus">
+            <button type="button" className="badge-bouton vitrine-tous" aria-expanded={tous}
+              aria-label={tous ? t('vitrine.moins') : t('vitrine.tous', { n: liste.length })}
+              onClick={() => { setTous(x => !x); setChoisi(null); }}>
+              <span aria-hidden="true">{tous ? '−' : `+${liste.length - visibles.length}`}</span>
+            </button>
+          </li>
+        )}
       </ul>
       <p className="vitrine-detail" aria-live="polite">{fr(detail)}</p>
     </section>

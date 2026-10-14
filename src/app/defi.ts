@@ -1,4 +1,5 @@
 // « Un défi par jour » (issue #199) : le Go du jour, une leçon terminée ou la Révision du jour font vivre la série.
+// #529 : une partie terminée aussi (plus de 10 coups, celles qui rapportent de l'XP : xp.ts).
 // Logique pure, sans React. Branchement sur l'appareil : defiAppareil.ts.
 //
 // HYPOTHÈSE À TESTER EN A/B (docs/data/tableaux-de-bord.md, section 3, « Série : un défi par jour ») :
@@ -9,12 +10,15 @@
 // (colonnes de `profiles`, calculées par la base) ; aucune migration ici. L'écran affiche la plus longue des deux.
 import type { Serie } from './goDuJour';
 
-/** Vrai : un défi par jour (Go du jour, leçon ou révision). Faux : seul le Go du jour compte (règle d'avant #199). */
+/**
+ * Vrai : un défi par jour (Go du jour, leçon, révision ou, depuis #529, partie terminée de plus de 10 coups).
+ * Faux : seul le Go du jour compte (règle d'avant #199).
+ */
 export const SERIE_UN_DEFI = true;
 
-export type Defi = 'go_du_jour' | 'lecon' | 'revision';
+export type Defi = 'go_du_jour' | 'lecon' | 'revision' | 'partie';
 
-/** Ce défi fait-il vivre la série ? Le Go du jour toujours ; la leçon et la révision seulement avec `SERIE_UN_DEFI`. */
+/** Ce défi fait-il vivre la série ? Le Go du jour toujours ; leçon, révision et partie seulement avec `SERIE_UN_DEFI`. */
 export function compteDansSerie(defi: Defi, unDefi: boolean = SERIE_UN_DEFI): boolean {
   return defi === 'go_du_jour' || unDefi;
 }

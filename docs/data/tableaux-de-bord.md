@@ -658,7 +658,7 @@ Limites : une série perdue n'est visible **que si le joueur revient** faire un 
 
 ## 8. Tests A/B prêts à lancer (#222)
 
-Trois changements de la nuit ont un interrupteur dans le code. Ils sont aujourd'hui **allumés pour tout le monde** : le bras « témoin » de chaque test rend l'ancien comportement.
+Trois changements de la nuit ont un interrupteur dans le code, et #529 en ajoute un quatrième (8.4). Ils sont aujourd'hui **allumés pour tout le monde** : le bras « témoin » de chaque test rend l'ancien comportement.
 
 ### Ce qui vaut pour les trois
 
@@ -680,7 +680,7 @@ Une seule métrique principale par test, fixée avant le lancement. Durée fixé
 
 ### 8.1 `SERIE_UN_DEFI` : un défi par jour fait vivre la série
 
-- **Interrupteur** : `SERIE_UN_DEFI` dans `src/app/defi.ts` (vrai : Go du jour, leçon terminée ou Révision du jour ; faux : seul le Go du jour, règle d'avant #199).
+- **Interrupteur** : `SERIE_UN_DEFI` dans `src/app/defi.ts` (vrai : Go du jour, leçon terminée, Révision du jour ou, depuis #529, partie terminée de plus de 10 coups, contre l'ordi ou en ligne ; faux : seul le Go du jour, règle d'avant #199).
 - **Hypothèse** : si n'importe quel défi du jour fait vivre la série, plus de nouveaux joueurs reviennent à J7, sans changer l'action proposée (chez Duolingo, n'importe quelle leçon entretient la série).
 - **Population et unité** : nouveaux joueurs `complet`, tirés 50/50 à leur premier jour, par appareil.
 - **Métrique principale** : J7, jour exact (requête de la section 3, filtrée par variante).
@@ -730,6 +730,23 @@ Une seule métrique principale par test, fixée avant le lancement. Durée fixé
 
 - **Durée** : temps d'inclusion + 1 jour. Pour +5 points : 32 semaines à 100 nouveaux consentants par semaine, 4 semaines à 1 000, 2 semaines entières à 5 000. Au trafic actuel, impossible.
 - **Décision** : si J1 monte d'au moins 3 points sans falaise à la 4e partie, garder le komi 0,5, puis tester le nombre de parties (2, 3 ou 5). Si les victoires montent mais pas J1, le komi ne fait pas revenir : le garder pour le plaisir et chercher ailleurs le levier de J1. Si la 4e partie s'effondre, étaler la remontée (par exemple 0,5, puis 3,5, puis 6,5).
+
+### 8.4 `XP_COURSE` : la course aux problèmes rapporte de l'XP (#529)
+
+- **Interrupteur** : `XP_COURSE` dans `src/app/xp.ts` (15 aujourd'hui : la première course du jour avec au moins un problème juste rapporte +15 XP ; 0 : la course ne rapporte rien, règle d'avant #529). Montant discutable : 15 est le prix d'une partie terminée, pour 3 minutes d'effort. À tester aussi à 10.
+- **Hypothèse** : un gain visible à la fin de la course fait revenir à la course le lendemain, et la course devient une porte vers la série et les problèmes, sans ferme à XP (une seule course payée par jour).
+- **Population et unité** : joueurs `complet` qui ouvrent la course, tirés 50/50 à leur première course, par appareil.
+- **Métrique principale** : part des joueurs qui finissent une course deux jours différents dans leurs 7 premiers jours (`course_terminee`, jours distincts).
+- **Garde-fous** : `probleme_resolu` par joueur actif (la course ne doit pas remplacer les problèmes « Continuer », qui font monter la cote) ; `go_du_jour_resolu` par actif ; J7 ; nombre de courses par joueur et par jour (une hausse forte au-delà de la première signalerait la course jouée pour l'XP, ce que la règle « une fois par jour » empêche).
+- **Taille** (valeur de départ supposée : 20 % rejouent la course un autre jour) :
+
+| Écart à détecter | Par bras | Total |
+|---|---|---|
+| +5 points (20 → 25 %) | 1 094 | 2 188 |
+| +3 points (20 → 23 %) | 2 940 | 5 880 |
+
+- **Durée** : temps d'inclusion + 7 jours. Au trafic actuel, impossible ; avec 500 joueurs `complet` par semaine qui ouvrent la course, 5 semaines pour +5 points.
+- **Décision** : si la métrique monte sans baisse de `probleme_resolu`, garder 15. Si elle ne bouge pas, garder la règle pour l'équité (chaque effort compte) mais ne plus la citer comme levier. Si `probleme_resolu` baisse de plus de 10 %, passer à 10 ou revenir à 0.
 
 ## 9. Entonnoir de la première visite : compteurs anonymes (#437)
 

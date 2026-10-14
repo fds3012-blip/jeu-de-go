@@ -13,6 +13,9 @@ import { fr } from '../ui/typo';
 import { playFail, playIllegal, playStone, playSuccess } from '../ui/sound';
 import { hapticFail, hapticIllegal, hapticStone, hapticSuccess } from '../ui/haptics';
 import { writeLocal } from './hooks';
+import { crediterCourse, type Gain } from './xp';
+import { PastilleXp } from '../ui/PastilleXp';
+import { mouvementsReduits } from '../ui/defilement';
 import {
   DUREE_COURSE, ERREURS_MAX, MEILLEUR_COURSE_KEY, apresCourse, commencer, dureeSecondes, formatTemps, lireMeilleurCourse,
   palierAnnonce, problemeEnCours, repondre, restant, texteCourse, tirerCourse, verifierTemps, type EtatCourse
@@ -48,6 +51,8 @@ export function Course({ liste, cote, exclure, confirmTouch, onExit }: {
   const [etat, setEtat] = useState<EtatCourse | null>(null);
   const [meilleur, setMeilleur] = useState(lireMeilleurCourse);
   const [nouveau, setNouveau] = useState(false);
+  // #529 : XP de la course (la première course du jour avec au moins un problème juste), affichée sur l'écran de fin.
+  const [xp, setXp] = useState<Gain | null>(null);
   // Numéro de course : remonte le plateau et remet les marques à zéro à chaque « Rejouer ».
   const [manche, setManche] = useState(0);
 
@@ -55,6 +60,7 @@ export function Course({ liste, cote, exclure, confirmTouch, onExit }: {
     const ordre = tirerCourse(liste, cote, { exclure });
     setEtat(commencer(ordre, Date.now()));
     setNouveau(false);
+    setXp(null);
     setManche(n => n + 1);
     setPhase('course');
     window.scrollTo({ top: 0 });
@@ -71,6 +77,7 @@ export function Course({ liste, cote, exclure, confirmTouch, onExit }: {
     setMeilleur(r.meilleur);
     setNouveau(r.nouveau);
     track(EVENTS.courseTerminee, { score: e.score, erreurs: e.erreurs, duree: dureeSecondes(e, Date.now()), raison: e.fin?.raison ?? 'temps' });
+    setXp(crediterCourse(e.score));
     setPhase('fin');
     window.scrollTo({ top: 0 });
   }, [manche]);
@@ -79,7 +86,7 @@ export function Course({ liste, cote, exclure, confirmTouch, onExit }: {
     return <Consigne meilleur={meilleur} onCommencer={lancer} onExit={onExit} />;
   }
   if (phase === 'fin') {
-    return <Fin etat={etat} meilleur={meilleur} nouveau={nouveau} onRejouer={lancer} onExit={onExit} />;
+    return <Fin etat={etat} meilleur={meilleur} nouveau={nouveau} xp={xp} onRejouer={lancer} onExit={onExit} />;
   }
   return <EnCourse key={manche} etat={etat} setEtat={setEtat} liste={liste} confirmTouch={confirmTouch} onFin={terminer} onExit={onExit} />;
 }
@@ -249,8 +256,8 @@ export function ChronoCourse({ taille }: { taille: number }) {
 }
 
 /** Écran de fin : la raison, le score, le meilleur score ; « Rejouer » en action principale, « Partager » à côté. */
-function Fin({ etat, meilleur, nouveau, onRejouer, onExit }: {
-  etat: EtatCourse; meilleur: number; nouveau: boolean; onRejouer: () => void; onExit: () => void;
+function Fin({ etat, meilleur, nouveau, xp, onRejouer, onExit }: {
+  etat: EtatCourse; meilleur: number; nouveau: boolean; xp: Gain | null; onRejouer: () => void; onExit: () => void;
 }) {
   const raison = etat.fin?.raison ?? 'temps';
   return (
@@ -265,6 +272,8 @@ function Fin({ etat, meilleur, nouveau, onRejouer, onExit }: {
         {nouveau
           ? <p className="course-nouveau" role="status">{fr(t('course.fin.nouveau'))}</p>
           : meilleur > 0 && <p className="course-meilleur" data-meilleur={meilleur}>{fr(t('course.fin.meilleur', { meilleur }))}</p>}
+        {/* #529 : l'XP se lit à sa place (classe fin-xp : la pastille flottante ne la répète pas). */}
+        <div className="fin-xp course-xp" role="status" aria-live="polite">{xp && <PastilleXp points={xp.points} bonus={xp.bonus} anime={!mouvementsReduits()} />}</div>
       </div>
       <button type="button" className="cta" onClick={onRejouer}>{t('course.rejouer')}</button>
       <PartagerCourse score={etat.score} meilleur={meilleur} />

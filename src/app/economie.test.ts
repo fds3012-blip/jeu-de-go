@@ -7,7 +7,8 @@
 import { describe, expect, it } from 'vitest';
 import { LESSONS } from '../content/lessons';
 import { ALL_PUZZLES } from '../content/puzzles';
-import { appliquer, niveauDe, recompensesDebloquees, sourceXpProbleme, type Premiere, type SourceXp, premiereDe } from './xp';
+import { SANS_PREMIERE, XP_COURSE, appliquer, niveauDe, recompensesDebloquees, sourceXpProbleme, type Premiere, type SourceXp, premiereDe } from './xp';
+import { SERIE_UN_DEFI } from './defi';
 import { apresReussite, reconcilier, RESERVE_VIDE, type Reserve } from './gel';
 import { problemeDuNumero, type Serie } from './goDuJour';
 import { apresRevision, aFaire, ETAT_VIDE, revisionDuJour, revisionFaite, synchroniser, type EtatRevision } from './revision';
@@ -38,7 +39,19 @@ export interface Profil {
   coteDepart?: number;
   /** Adversaire des parties : Pomme par défaut ; un joueur placé joue l'adversaire conseillé (#283). */
   adversaire?: string;
+  /** #529 : courses aux problèmes par jour (au moins un problème juste à chaque fois). */
+  courses?: number;
+  /** #529 : le joueur fait-il le Go du jour et la révision ? (vrai par défaut ; faux pour le joueur qui ne fait que jouer). */
+  defis?: boolean;
 }
+
+/**
+ * Règles comparées (#529). `AVANT` : la course ne rapporte rien et une partie ne fait pas vivre la série (main du 13/10).
+ * `APRES` : course +15 une fois par jour (`XP_COURSE`), partie terminée = défi du jour (`SERIE_UN_DEFI`).
+ */
+export interface Regles { course: number; partieSerie: boolean }
+export const AVANT: Regles = { course: 0, partieSerie: false };
+export const APRES: Regles = { course: XP_COURSE, partieSerie: SERIE_UN_DEFI };
 
 /** « 10 min par jour » : Go du jour, révision, 2 problèmes, puis une leçon un jour sur deux, sinon une partie. */
 export const DIX_MIN: Profil = { nom: '10 min/jour', problemes: 2, lecons: 0.5, pratique: false, parties: 1, victoireSur: 3, force: { depart: 350, parJour: 10 } };
@@ -52,7 +65,15 @@ export const DIX_MIN_SEMAINE: Profil = { ...DIX_MIN, nom: '10 min, 5 j/7', absen
  */
 export const CLUB: Profil = {
   nom: 'club, 20 min/jour', problemes: 4, lecons: 0, pratique: false, parties: 1, victoireSur: 2,
-  force: { depart: 1000, parJour: 3 }, coteDepart: 950, adversaire: 'renard',
+  force: { depart: 1000, parJour: 3 }, coteDepart: 950, adversaire: 'renard', courses: 1,
+};
+/**
+ * « Joueur de parties » (#529) : ne fait que jouer. Deux parties contre l'ordi par jour (une sur deux gagnée), une course,
+ * jamais le Go du jour ni la révision, absent le week-end. C'est le joueur que la règle d'avant laissait sans série.
+ */
+export const JOUEUR: Profil = {
+  nom: 'joueur de parties, 5 j/7', problemes: 0, lecons: 0, pratique: false, parties: 2, victoireSur: 2,
+  force: { depart: 500, parJour: 5 }, courses: 1, defis: false, absences: [6, 7, 13, 14, 20, 21, 27, 28],
 };
 
 /** Tirage pseudo-aléatoire reproductible (mulberry32) : la simulation donne toujours les mêmes chiffres. */
@@ -84,8 +105,8 @@ export interface Releve {
  * difficulté ; sinon, une fois sur deux il est trouvé avec l'aide (réussi, XP, cote requalifiée), l'autre fois
  * « Vu » (aide jusqu'à la réponse, #197) : ni XP ni palier, il reste à réussir. La révision est réussie du premier coup.
  */
-export function simuler(p: Profil, jours = 30): Releve[] {
-  let xp = 0, lecons = 0, parties = 0, victoires = 0, record = 0;
+export function simuler(p: Profil, jours = 30, regles: Regles = APRES): Releve[] {
+  let xp = 0, lecons = 0, parties = 0, victoires = 0, record = 0, courses = 0;
   let serie: Serie | null = null, reserve: Reserve = RESERVE_VIDE, revision: EtatRevision = ETAT_VIDE;
   let cote: EtatCote = { ...ETAT_INITIAL, cote: p.coteDepart ?? ETAT_INITIAL.cote };
   const premieres = new Set<Premiere>(), reussis = new Set<string>(), vus = new Set<string>(), gagnes: string[] = [];
@@ -95,9 +116,9 @@ export function simuler(p: Profil, jours = 30): Releve[] {
   let force = p.force.depart;
 
   const gagner = (source: SourceXp) => {
-    const cat = premiereDe(source);
-    const g = appliquer(xp, source, !premieres.has(cat));
-    premieres.add(cat);
+    const cat = premiereDe(source), avecBonus = !SANS_PREMIERE.has(source) && !premieres.has(cat);
+    const g = appliquer(xp, source, avecBonus);
+    if (avecBonus) premieres.add(cat);
     xp = g.apres;
     duJour[source] = (duJour[source] ?? 0) + g.points;
   };
@@ -122,7 +143,10 @@ export function simuler(p: Profil, jours = 30): Releve[] {
     let goDuJourSansXp = false;
     const b = reconcilier(serie, reserve, numero);
     serie = b.serie; reserve = b.reserve;
-    if (!p.absences?.includes(numero)) {
+    if (!p.absences?.includes(numero) && p.defis === false) {
+      force += p.force.parJour;
+    }
+    if (!p.absences?.includes(numero) && p.defis !== false) {
       // 1. Go du jour : série toujours ; XP une fois par jour, même s'il était déjà réussi (#233, P1, règle de Puzzles.tsx).
       force += p.force.parJour;
       const gdj = problemeDuNumero(PROBLEMES, numero)!;
@@ -152,12 +176,33 @@ export function simuler(p: Profil, jours = 30): Releve[] {
         const gagne = parties === 2 || parties % p.victoireSur === 0;
         if (gagne) victoires++;
         gagner(gagne ? 'victoire' : 'partie');
+        if (regles.partieSerie) defi(numero);
+      }
+    }
+    if (!p.absences?.includes(numero)) {
+      // #529 : le joueur qui ne fait que jouer (pas de Go du jour ni de révision).
+      if (p.defis === false) for (let i = 0; i < p.parties; i++) {
+        parties++;
+        const gagne = parties === 2 || parties % p.victoireSur === 0;
+        if (gagne) victoires++;
+        gagner(gagne ? 'victoire' : 'partie');
+        if (regles.partieSerie) defi(numero);
+      }
+      // #529 : course aux problèmes, payée une fois par jour.
+      for (let i = 0; i < (p.courses ?? 0); i++) {
+        courses++;
+        if (i === 0 && regles.course > 0) { const g = appliquer(xp, 'course'); xp = g.apres; duJour.course = (duJour.course ?? 0) + g.points; }
       }
     }
     const s = serie as Serie | null;
     const vivante = s && numero - s.dernier <= 1 ? s.jours : 0;
     const ps = paliers(PROBLEMES, reussis);
-    const liste = badges({ reussis: reussis.size, serie: vivante, record, parties, bilan: { [p.adversaire ?? 'pomme']: { v: victoires, d: parties - victoires } }, paliers: ps }, gagnes);
+    // #529 : badges élargis. Les leçons suivent l'ordre du chemin (les 7 premières font le chapitre « Les bases ») ;
+    // les parties sont en 9 × 9 ; ni revue, ni série par thème, ni erreur maîtrisée, ni partie en ligne dans ce modèle.
+    const liste = badges({
+      reussis: reussis.size, serie: vivante, record, parties, bilan: { [p.adversaire ?? 'pomme']: { v: victoires, d: parties - victoires } }, paliers: ps,
+      lecons, chapitres: lecons >= 7 ? ['c1'] : [], course: courses > 0 ? 3 : 0, tailles: parties > 0 ? [9] : [],
+    }, gagnes);
     for (const x of liste) if (x.obtenu && !gagnes.includes(x.id)) gagnes.push(x.id);
     releves.push({
       jour: numero, xp, niveau: niveauDe(xp).niveau, badges: gagnes.length, serie: vivante, record, gels: reserve.gels,
@@ -168,7 +213,7 @@ export function simuler(p: Profil, jours = 30): Releve[] {
 }
 
 const resume = (r: Releve) =>
-  `J${String(r.jour).padStart(2)} · ${String(r.xp).padStart(4)} XP · niv. ${String(r.niveau).padStart(2)} · ${r.badges}/7 badges · série ${String(r.serie).padStart(2)} (gels ${r.gels}) · ${String(r.reussis).padStart(3)} pb (${r.vus} vus) · ${r.lecons}/${LESSONS.length} leçons · ${r.parties} parties`;
+  `J${String(r.jour).padStart(2)} · ${String(r.xp).padStart(4)} XP · niv. ${String(r.niveau).padStart(2)} · ${r.badges}/21 badges · série ${String(r.serie).padStart(2)} (gels ${r.gels}) · ${String(r.reussis).padStart(3)} pb (${r.vus} vus) · ${r.lecons}/${LESSONS.length} leçons · ${r.parties} parties`;
 
 describe('économie de progression : simulation sur 30 jours (#233)', () => {
   const profils = [DIX_MIN, TRENTE_MIN, DIX_MIN_SEMAINE, CLUB];
@@ -241,5 +286,60 @@ describe('économie de progression : simulation sur 30 jours (#233)', () => {
   it('30 minutes par jour : le joueur assidu ne dépasse pas le plafond de la courbe en un mois', () => {
     const r = resultats.get(TRENTE_MIN.nom)!;
     expect(r[29].niveau).toBeLessThan(15);
+  });
+});
+
+describe('#529 : chaque effort compte, et il reste à gagner après J14', () => {
+  const profils = [DIX_MIN, TRENTE_MIN, DIX_MIN_SEMAINE, CLUB, JOUEUR];
+  /** XP moyenne par semaine sur 4 semaines (J1 à J28). */
+  const parSemaine = (r: Releve[]) => Math.round(r[27].xp / 4);
+
+  it('affiche l’XP par semaine avant et après, les jours des récompenses 10, 12 et 15 sur 90 jours et les badges', () => {
+    for (const p of profils) {
+      const avant = simuler(p, 30, AVANT), apres = simuler(p, 30, APRES), long = simuler(p, 90, APRES);
+      const jours = [8, 10, 12, 15].map(n => long.find(x => x.niveau >= n)?.jour ?? '—');
+      const fin = long[long.length - 1];
+      console.log(`${p.nom} : ${parSemaine(avant)} → ${parSemaine(apres)} XP/semaine (+${Math.round(100 * (parSemaine(apres) / parSemaine(avant) - 1))} %) ; `
+        + `record J30 ${avant[29].record} → ${apres[29].record} ; niv. 8/10/12/15 : J${jours.join(', J')} ; badges J30 ${apres[29].badges}, J90 ${fin.badges}/21`
+        + ` ; dernier badge J${fin.gagnes.length ? long.find(x => x.badges === fin.badges)!.jour : '—'}`);
+    }
+  });
+
+  it('l’équilibrage tient : rien ne change sans course, et la course ajoute au plus 7 × 15 XP par semaine (moins de 15 %)', () => {
+    for (const p of [DIX_MIN, TRENTE_MIN, DIX_MIN_SEMAINE, CLUB]) {
+      const avant = parSemaine(simuler(p, 30, AVANT)), apres = parSemaine(simuler(p, 30, APRES));
+      if (!p.courses) expect(apres, p.nom).toBe(avant);
+      expect(apres - avant, p.nom).toBeLessThanOrEqual(7 * XP_COURSE);
+      expect(apres / avant, p.nom).toBeLessThan(1.15);
+    }
+  });
+
+  it('la course rapporte au plus 15 XP par jour, quel que soit le nombre de courses', () => {
+    const r = simuler({ ...CLUB, courses: 10 }, 30, APRES);
+    for (const x of r) expect(x.duJour.course ?? 0).toBeLessThanOrEqual(XP_COURSE);
+  });
+
+  it('le joueur qui ne fait que jouer a enfin une série (et un gel), sans ruiner la courbe', () => {
+    const avant = simuler(JOUEUR, 30, AVANT), apres = simuler(JOUEUR, 30, APRES);
+    expect(avant[29].record).toBe(0);
+    expect(apres[29].record).toBeGreaterThanOrEqual(5);
+    expect(apres[29].niveau).toBeLessThan(12);
+  });
+
+  it('après le niveau 8, une récompense reste à gagner au deuxième mois pour tous les joueurs types', () => {
+    for (const p of profils) {
+      const long = simuler(p, 90, APRES);
+      const j10 = long.find(x => x.niveau >= 10)?.jour;
+      expect(j10, p.nom).toBeDefined();
+      // Personne n'a tout débloqué en deux semaines : le niveau 15 arrive après J21 même à 30 minutes par jour.
+      const j15 = long.find(x => x.niveau >= 15)?.jour ?? Infinity;
+      expect(j15, p.nom).toBeGreaterThan(21);
+    }
+  });
+
+  it('les badges s’étalent : à 10 minutes par jour, il en reste à gagner après J14', () => {
+    const r = simuler(DIX_MIN, 90, APRES);
+    expect(r[13].badges).toBeLessThan(r[89].badges);
+    expect(r[89].badges).toBeLessThan(21);
   });
 });
