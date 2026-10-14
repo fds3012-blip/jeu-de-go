@@ -264,6 +264,12 @@ function motif(id: string, W: string, C: string): ReactElement {
       <circle cx="70" cy="56" r="10" fill={C} stroke={W} strokeWidth="2.6" />
       <path d="M44 56H56M50 34V44" stroke={W} strokeWidth="3" strokeLinecap="round" fill="none" />
     </>);
+    // Les yeux dans la course : deux yeux face à face, et la flèche du dehors.
+    case 'l40': return (<>
+      <circle cx="30" cy="58" r="10" fill="none" stroke={W} strokeWidth="3" />
+      <circle cx="70" cy="58" r="10" fill={C} stroke={W} strokeWidth="2.6" />
+      <path d="M50 26V44M42 36 50 44 58 36" stroke={W} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+    </>);
     default: return <circle cx="50" cy="50" r="14" fill={W} />;
   }
 }

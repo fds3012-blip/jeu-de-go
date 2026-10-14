@@ -43,9 +43,10 @@ export const ACQUIS: Record<string, string> = {
   l37: 'Tu reconnais deux points miai : si Blanc en prend un, tu prends l’autre.',
   l38: 'Tu ne suis pas une petite menace : tu joues ailleurs, plus gros.',
   l39: 'Dans une course, tu bouches le dehors d’abord, la liberté commune en dernier.',
+  l40: 'Dans une course, ton œil se bouche en dernier : tu bouches le dehors d’abord.',
 };
 
-const IDS = ['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7', 'l8', 'l9', 'l10', 'l11', 'l12', 'l13', 'l14', 'l15', 'l16', 'l17', 'l18', 'l19', 'l20', 'l21', 'l22', 'l23', 'l24', 'l25', 'l26', 'l27', 'l29', 'l30', 'l31', 'l32', 'l33', 'l34', 'l35', 'l36', 'l37', 'l38', 'l39'] as const;
+const IDS = ['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7', 'l8', 'l9', 'l10', 'l11', 'l12', 'l13', 'l14', 'l15', 'l16', 'l17', 'l18', 'l19', 'l20', 'l21', 'l22', 'l23', 'l24', 'l25', 'l26', 'l27', 'l29', 'l30', 'l31', 'l32', 'l33', 'l34', 'l35', 'l36', 'l37', 'l38', 'l39', 'l40'] as const;
 const connu = (id: string): id is (typeof IDS)[number] => (IDS as readonly string[]).includes(id);
 
 /** Phrase de fin d'une leçon dans la langue de l'interface (#167) ; une phrase générale si la leçon n'en a pas. */

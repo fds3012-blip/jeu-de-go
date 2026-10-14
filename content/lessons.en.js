@@ -423,5 +423,18 @@ export const LESSONS_EN = {
     { text: 'Your turn: capture these white stones in the race.',
       ok: 'Outside first, then E1: you capture the whole group.', no: 'Look for White’s liberty far from your group.',
       refus: ['Shared liberty: now you are in atari, White captures at J2.'] }
+  ] },
+  l40: { title: 'Eyes in a race', desc: 'An eye is filled last', steps: [
+    { text: 'Your eye at B1: White can only fill it last.',
+      geste: { no: 'Tap the empty point surrounded by your group.' } },
+    { text: 'One eye each: first fill White’s outside liberty, the green point.' },
+    { text: 'And if White plays first, who wins?', choices: ['You', 'White'],
+      ok: 'White: it fills A2, and you are the one captured.', no: 'White fills A2 first: you keep your eye, White keeps its eye and J2.' },
+    { text: 'Your turn: one eye each, two outside liberties. Win the race.',
+      ok: 'J2, then J1: its eye at G1 will be filled last.', no: 'Fill a White liberty, on the side where your stone holds.',
+      refus: ['Your stone at J1 has one liberty: White captures it at J2.', 'That’s your own liberty: you no longer win the race.', 'You fill your own eye: White wins the race.'] },
+    { text: 'White has an eye, you don’t. Win the race.',
+      ok: 'White only has its eye left: fill the shared liberty right away.', no: 'White has no outside liberty. Look for the one you share.',
+      refus: ['That’s your own liberty: you no longer win the race.'] }
   ] }
 };

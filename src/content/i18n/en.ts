@@ -1237,6 +1237,7 @@ export const en = {
   'acquis.l37': 'You spot two miai points: if White takes one, you take the other.',
   'acquis.l38': 'You don’t follow a small threat: you play elsewhere, bigger.',
   'acquis.l39': 'In a race, you fill the outside first, the shared liberty last.',
+  'acquis.l40': 'In a race, your eye is filled last: you fill the outside first.',
   'acquis.defaut': 'One more lesson in your pocket.',
   'lecteur.progression': 'Lesson progress',
   'lecteur.lireExplication': 'Read the explanation',

@@ -61,7 +61,7 @@ function ouverts(pos: Position): number[] {
 }
 
 const LENT = 60_000;
-const IDS = ['l37', 'l38', 'l39'];
+const IDS = ['l37', 'l38', 'l39', 'l40'];
 
 describe('leçons 37 et suivantes : place dans le programme (#539)', () => {
   it('chaque leçon a 4 à 6 étapes, sa phrase de fin et sa série de pratique', () => {
@@ -75,7 +75,7 @@ describe('leçons 37 et suivantes : place dans le programme (#539)', () => {
   it('les points miai ferment « Vie et mort », jouer ailleurs « Fin de partie » ; l’ordre du chemin suit les chapitres', () => {
     const c = Object.fromEntries(CHAPITRES.map(x => [x.id, x]));
     expect(c.c5.lecons.map(l => l.id)).toEqual(['l15', 'l16', 'l22', 'l23', 'l32', 'l33', 'l38']);
-    expect(c.c3.lecons.map(l => l.id)).toEqual(['l9', 'l10', 'l11', 'l26', 'l39']);
+    expect(c.c3.lecons.map(l => l.id)).toEqual(['l9', 'l10', 'l11', 'l26', 'l39', 'l40']);
     expect(c.c4.lecons.map(l => l.id)).toEqual(['l12', 'l13', 'l14', 'l17', 'l24', 'l25', 'l37']);
     expect(LESSONS.map(l => l.id)).toEqual(CHAPITRES.flatMap(x => x.lecons.map(l => l.id)));
   });
@@ -293,5 +293,75 @@ describe('leçon 39 : les libertés communes', () => {
     const e1 = ok(play(pos, at('E1')));
     expect(labels(groupAt(e1.board, N, H2).liberties)).toEqual(['J2']);
     expect(evaluerCourse(e1, H2, C2, z)).toBe(-1);
+  });
+});
+
+describe('leçon 40 : les yeux dans la course', () => {
+  const Y = step<Info>('l40', 0).rows;
+  const zoneDe = (pos: Position, a: number, b: number) =>
+    [...new Set([...groupAt(pos.board, N, a).liberties, ...groupAt(pos.board, N, b).liberties])].sort((x, y) => x - y);
+  /** Coups de Noir (zone et passe) qui gagnent la course à coup sûr, sans ko. */
+  const gagnent = (pos: Position, a: number, b: number) => {
+    const z = zoneDe(pos, a, b);
+    return labels([...z, -1].filter(m => issueCourse(pos, m, a, b, z) === 1));
+  };
+  const C2 = at('C2'), G2 = at('G2');
+  const libs = (pos: Position, l: string) => labels(groupAt(pos.board, N, at(l)).liberties);
+
+  it('les zones sont fermées ; les yeux et les libertés annoncés', () => {
+    for (const rows of [Y, step<Move>('l40', 3).rows, step<Move>('l40', 4).rows]) {
+      const pos = avec(rows, 1);
+      expect(defautsCourse(pos, C2, G2, zoneDe(pos, C2, G2))).toEqual([]);
+    }
+    expect(libs(avec(Y, 1), 'C2')).toEqual(['A2', 'B1']);
+    expect(libs(avec(Y, 1), 'G2')).toEqual(['H1', 'J2']);
+    const q = avec(step<Move>('l40', 3).rows, 1);
+    expect(libs(q, 'C2')).toEqual(['A1', 'A2', 'D1']);
+    expect(libs(q, 'G2')).toEqual(['G1', 'J1', 'J2']);
+    const c = avec(step<Move>('l40', 4).rows, 1);
+    expect(libs(c, 'C2')).toEqual(['A1', 'A2', 'F1']);
+    expect(libs(c, 'G2')).toEqual(['F1', 'H1']);
+    // Les yeux : B1, D1 pour Noir ; H1, G1 pour Blanc (points vides entourés d'une seule couleur).
+    for (const [rows, l, c0] of [[Y, 'B1', 1], [Y, 'H1', 2], [step<Move>('l40', 3).rows, 'D1', 1], [step<Move>('l40', 3).rows, 'G1', 2], [step<Move>('l40', 4).rows, 'H1', 2]] as const) {
+      const pos = avec([...rows], 1);
+      expect(neighbors(N)[at(l)].every(r => pos.board[r] === c0), l).toBe(true);
+    }
+  });
+
+  it('l40.1 : le geste touche l’œil B1 ; la démonstration compte les libertés noires', () => {
+    expect(step<Info>('l40', 0).geste).toMatchObject({ touche: ['B1'] });
+    expect(labels(images(step<Info>('l40', 0)).at(-1)!.libs)).toEqual(['A2', 'B1']);
+  });
+
+  it('l40.2 et l40.3 : J2 seul gagne ; J2, A2, H1 prend le groupe blanc ; Blanc au trait gagne en A2', () => {
+    const pos = avec(Y, 1), z = zoneDe(pos, C2, G2);
+    expect(gagnent(pos, C2, G2)).toEqual(['J2']);
+    expect(libs(suite(pos, ['J2']), 'G2')).toEqual(['H1']);
+    const fin = suite(pos, ['J2', 'A2', 'H1']);
+    expect(fin.board[G2]).toBe(0);
+    expect(images(step<Info>('l40', 1)).at(-1)!.board).toEqual(fin.board);
+    const w = avec(Y, 2);
+    expect(evaluerCourse(w, C2, G2, z)).toBe(-1);
+    expect(issueCourse(w, at('A2'), C2, G2, z)).toBe(-1);
+    const q = step<Quiz>('l40', 2);
+    expect(q.choices[q.answer]).toBe('Blanc');
+  });
+
+  it('l40.4 : J2 seul gagne ; J1 se fait prendre en J2 ; A1, A2 et D1 ne gagnent pas, D1 perd', () => {
+    const m = step<Move>('l40', 3);
+    const pos = avec(m.rows, 1), z = zoneDe(pos, C2, G2);
+    expect(gagnent(pos, C2, G2)).toEqual(m.accept);
+    expect(libs(suite(pos, ['J1']), 'J1')).toEqual(['J2']);
+    expect(suite(pos, ['J1', 'J2']).board[at('J1')]).toBe(0);
+    for (const l of ['J1', 'A1', 'A2']) expect(issueCourse(pos, at(l), C2, G2, z), l).not.toBe(1);
+    expect(issueCourse(pos, at('D1'), C2, G2, z)).toBe(-1);
+  });
+
+  it('l40.5 : F1, la liberté commune, seul gagne : Blanc est aussitôt en atari ; A1 et A2 ne gagnent pas', () => {
+    const m = step<Move>('l40', 4);
+    const pos = avec(m.rows, 1), z = zoneDe(pos, C2, G2);
+    expect(gagnent(pos, C2, G2)).toEqual(m.accept);
+    expect(libs(suite(pos, ['F1']), 'G2')).toEqual(['H1']);
+    for (const l of ['A1', 'A2']) expect(issueCourse(pos, at(l), C2, G2, z), l).not.toBe(1);
   });
 });

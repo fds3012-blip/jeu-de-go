@@ -192,11 +192,18 @@ const L_AILLEURS_R = L_AILLEURS.map((_, y) => L_AILLEURS.map(r => r[y]).join('')
 const L_COMMUNE = [...V.slice(0, 6), 'OOOOXXXXX', '.XXXOOOO.', 'XXXX.OOOO'];
 const L_COMMUNE_Q = [...V.slice(0, 6), 'OOOOXXXXX', '..XXOOOO.', 'XXXX.OOO.'];
 const L_COMMUNE_M = L_COMMUNE.map(r => [...r].reverse().join(''));
+// Les yeux dans la course : un œil chacun (B1 pour Noir, H1 pour Blanc) et une liberté dehors (A2, J2). Un œil se bouche
+// en dernier : qui bouche d'abord le dehors de l'autre gagne. `Q` : un œil chacun (D1, G1) et deux libertés dehors ; J1
+// d'abord laisse une pierre en atari. `C` : Blanc a un œil (H1), Noir aucun, et plus aucune liberté de Blanc dehors : la
+// liberté commune F1 se bouche tout de suite.
+const L_YEUX_COURSE = [...V.slice(0, 6), 'OOOOOXXXX', '.XXXXOOO.', 'X.XXXOO.O'];
+const L_YEUX_COURSE_Q = [...V.slice(0, 6), 'OOOOOXXXX', '.XXXXOOO.', '.XX.XO.O.'];
+const L_YEUX_COURSE_C = [...V.slice(0, 6), 'OOOOOXXXX', '.XXXXOOOO', '.XXXX.O.O'];
 export const CHAPITRES = [
   { id: 'c1', titre: 'Les bases', intro: 'Sept leçons courtes pour jouer ta première partie.', fin: 'Tu connais les règles du go.', lecons: ['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7'] },
   // Chapitre en cours d'écriture (`complet: false`) : sa dernière leçon ne ferme pas encore le chapitre.
   { id: 'c2', titre: 'L’ouverture', intro: 'Où poser tes premières pierres.', lecons: ['l8', 'l27', 'l29', 'l30', 'l31'], complet: false },
-  { id: 'c3', titre: 'Capturer et sauver', intro: 'Des pièges pour prendre plus de pierres.', lecons: ['l9', 'l10', 'l11', 'l26', 'l39'], complet: false },
+  { id: 'c3', titre: 'Capturer et sauver', intro: 'Des pièges pour prendre plus de pierres.', lecons: ['l9', 'l10', 'l11', 'l26', 'l39', 'l40'], complet: false },
   { id: 'c4', titre: 'Vie et mort', intro: 'Quand un groupe vit, quand il meurt.', lecons: ['l12', 'l13', 'l14', 'l17', 'l24', 'l25', 'l37'], complet: false },
   { id: 'c5', titre: 'Fin de partie et comptage', intro: 'Finir proprement, puis compter juste.', lecons: ['l15', 'l16', 'l22', 'l23', 'l32', 'l33', 'l38'], complet: false },
   { id: 'c6', titre: 'Formes et tesuji', intro: 'Les bonnes formes et les coups malins du go.', lecons: ['l18', 'l19', 'l20', 'l21', 'l34', 'l35', 'l36'], complet: false }
@@ -496,6 +503,29 @@ export const LESSONS = [
       text: 'À toi : prends ces pierres blanches dans la course.',
       ok: 'Dehors d’abord, puis E1 : tu prends tout le groupe.', no: 'Cherche la liberté de Blanc loin de ton groupe.',
       refus: [{ points: ['E1'], no: 'Liberté commune : te voilà en atari, Blanc prend en J2.' }] }
+  ] },
+  { id: 'l40', title: 'Les yeux dans la course', desc: 'L’œil se bouche en dernier', steps: [
+    { kind: 'info', rows: L_YEUX_COURSE, geste: { touche: ['B1'], no: 'Touche le point vide entouré par ton groupe.' },
+      demo: [{ libs: 'C2' }],
+      text: 'Ton œil B1 : Blanc ne peut le boucher qu’en dernier.' },
+    { kind: 'info', rows: L_YEUX_COURSE, geste: { pose: 'J2' },
+      demo: [{ pose: 'J2', couleur: 'B' }, { pose: 'A2', couleur: 'W' }, { pose: 'H1', couleur: 'B' }],
+      text: 'Un œil chacun : bouche d’abord son dehors, au point vert.' },
+    { kind: 'quiz', rows: L_YEUX_COURSE,
+      text: 'Et si Blanc joue d’abord, qui gagne ?', choices: ['Toi', 'Blanc'], answer: 1,
+      ok: 'Blanc : il bouche A2, et c’est toi qui es pris.', no: 'Blanc bouche A2 le premier : il te reste ton œil, lui son œil et J2.' },
+    { kind: 'move', rows: L_YEUX_COURSE_Q, accept: ['J2'],
+      text: 'À toi : un œil chacun, deux libertés dehors. Gagne la course.',
+      ok: 'J2, puis J1 : son œil G1 se bouchera en dernier.', no: 'Bouche une liberté de Blanc, du côté où ta pierre tient.',
+      refus: [
+        { points: ['J1'], no: 'Ta pierre J1 n’a qu’une liberté : Blanc la prend en J2.' },
+        { points: ['A2', 'A1'], no: 'C’est ta propre liberté : tu ne gagnes plus la course.' },
+        { points: ['D1'], no: 'Tu bouches ton œil : Blanc gagne la course.' }
+      ] },
+    { kind: 'move', rows: L_YEUX_COURSE_C, accept: ['F1'],
+      text: 'Blanc a un œil, pas toi. Gagne la course.',
+      ok: 'Blanc n’a plus que son œil : la liberté commune se bouche tout de suite.', no: 'Blanc n’a plus de liberté dehors. Cherche celle que vous partagez.',
+      refus: [{ points: ['A2', 'A1'], no: 'C’est ta propre liberté : tu ne gagnes plus la course.' }] }
   ] },
   { id: 'l12', title: 'Le faux œil', desc: 'Un œil qui ne compte pas', steps: [
     { kind: 'info', rows: L_FAUX, geste: { touche: ['D1', 'E1'], no: 'Touche une des deux pierres noires de droite.' },
