@@ -6,7 +6,8 @@ import { join } from 'node:path';
 import { gzipSync } from 'node:zlib';
 import { describe, expect, it } from 'vitest';
 import { reecrire, SITE } from '../apercus';
-import { chargerDemo, demoMinifiee, donneesStructurees, ecrireReferencement, lienApp, pageHtml, robots, sitemap, url } from './pages';
+import { chargerDemo, demoMinifiee, donneesStructurees, ecrireReferencement, lienApp, pageHtml, pageMentions, robots, sitemap, url } from './pages';
+import { ADRESSE_MENTIONS, MENTIONS, champsACompleter } from '../../src/content/mentionsLegales';
 import { COMMUN, PAGES } from './textes';
 import { LECONS_INDEX } from '../../src/content/leconsIndex.gen';
 import { ALL_PUZZLES } from '../../src/content/puzzles';
@@ -185,11 +186,49 @@ describe('sitemap, robots.txt et vercel.json', () => {
     const d = mkdtempSync(join(tmpdir(), 'referencement-'));
     try {
       const ecrits = await ecrireReferencement(d);
-      expect(ecrits.sort()).toEqual([...PAGES.map(p => `${p.chemin}/index.html`), 'robots.txt', 'sitemap.xml'].sort());
+      expect(ecrits.sort()).toEqual([...PAGES.map(p => `${p.chemin}/index.html`), 'robots.txt', 'sitemap.xml',
+        'mentions-legales/index.html', 'en/legal-notice/index.html'].sort());
       // Sans dist/assets : pas de @font-face, les polices système prennent le relais.
       expect(readFileSync(join(d, 'apprendre-le-go/index.html'), 'utf8')).not.toContain('@font-face');
     } finally {
       rmSync(d, { recursive: true, force: true });
+    }
+  });
+});
+
+// #530 : mentions légales, page statique FR et EN, même texte que l'écran de l'app ; liées depuis le pied de chaque page.
+describe('mentions légales (#530)', () => {
+  it('le pied de chaque page mène aux mentions légales de sa langue', () => {
+    for (const p of PAGES) {
+      expect(html[p.chemin]).toContain(`<a href="${ADRESSE_MENTIONS[p.langue]}">${COMMUN[p.langue].mentionsLegales}</a>`);
+    }
+  });
+
+  it('une page par langue : titre, sections, hébergeurs et régions, liens vers la confidentialité et l’autre langue', () => {
+    for (const l of ['fr', 'en'] as const) {
+      const h = pageMentions(l, options.polices);
+      expect(h).toContain(`<html lang="${l}">`);
+      expect(h).toContain(`<h1>${MENTIONS[l].titre}</h1>`);
+      for (const s of MENTIONS[l].sections) expect(h).toContain(`id="${s.id}-titre"`);
+      expect(h).toMatch(/Vercel Inc\./);
+      expect(h).toMatch(/Supabase Inc\./);
+      expect(h).toMatch(/eu-west-3/);
+      expect(h).toContain(`href="${ADRESSE_MENTIONS[l === 'fr' ? 'en' : 'fr']}"`);
+      expect(h).toContain(l === 'fr' ? 'href="/confidentialite"' : 'href="/confidentialite?lang=en"');
+      // Aucune démo ni JS de l'app : une page de texte.
+      expect(h).not.toContain('demo-textes');
+    }
+  });
+
+  it('chaque champ à compléter est surligné, étiqueté, et la page reste hors index tant qu’il en reste', () => {
+    for (const l of ['fr', 'en'] as const) {
+      const h = pageMentions(l, options.polices);
+      const champs = champsACompleter(l);
+      expect(champs.length).toBeGreaterThan(5);
+      expect(h.match(/<mark class="a-completer">/g)).toHaveLength(champs.length);
+      expect(h).toContain(`${MENTIONS[l].aCompleter} :`);
+      expect(h).not.toContain('{{');
+      expect(h).toContain('<meta name="robots" content="noindex">');
     }
   });
 });

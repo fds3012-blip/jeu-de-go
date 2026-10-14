@@ -12,6 +12,7 @@ import { chercherMots } from '../app/glossaire';
 import type { Ouverture } from '../app/ouvrirAide';
 import { Board, type BoardMarks } from './Board';
 import { fr } from './typo';
+import { ADRESSE_MENTIONS, tdon } from '../content/i18n/donnees';
 import './aide.css';
 
 interface Props {
@@ -139,6 +140,8 @@ function Questions() {
           </li>
         ))}
       </ul>
+      {/* #530 : qui publie et héberge l'app (page statique, même texte que dans le Profil). */}
+      <p className="aide-intro aide-mentions"><a href={ADRESSE_MENTIONS[langue()]}>{tdon('donnees.mentions')}</a></p>
     </>
   );
 }

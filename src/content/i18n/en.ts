@@ -1334,7 +1334,7 @@ export const en = {
   'conditions.duree.telephoneTexte': 'until you clear the site’s data or delete the app.',
   'conditions.droits': 'Your rights',
   'conditions.droits.1': 'Change your mind anytime with the switches at the top of the page.',
-  'conditions.droits.2': 'You can ask to see, correct or erase your data. We reply within a month.',
+  'conditions.droits.2': 'Download a copy of your data with “My data”, at the top. To correct or erase it, ask us: we reply within a month.',
   'conditions.droits.3': 'Under 15? Create your account with a parent.',
   'conditions.droits.4': 'A problem? You can also contact the CNIL, the French data protection authority.',
   'conditions.contact': 'Contact: coming soon',
