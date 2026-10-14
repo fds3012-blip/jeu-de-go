@@ -74,14 +74,13 @@ export default function Retours({ onRetour, depuis }: { onRetour: () => void; de
       </div>
       <p className="muted small">{fr(tret('intro'))}</p>
 
-      <fieldset ref={refConseil} className="retours-question" aria-describedby={erreurConseil ? `${id}-erreur-conseil` : undefined}
-        aria-required="true">
+      <fieldset ref={refConseil} className="retours-question" aria-describedby={erreurConseil ? `${id}-erreur-conseil` : undefined}>
         <legend>{fr(tret('conseil.question'))}</legend>
         {erreurConseil && <p id={`${id}-erreur-conseil`} className="small retours-erreur" role="alert">{fr(tret('erreur.conseil'))}</p>}
         <div className="retours-choix-ligne">
           {CONSEILS.map(c => (
             <label key={c} className="retours-choix">
-              <input type="radio" name={`${id}-conseil`} value={c} checked={conseil === c} aria-invalid={erreurConseil || undefined}
+              <input type="radio" name={`${id}-conseil`} value={c} checked={conseil === c} required aria-invalid={erreurConseil || undefined}
                 onChange={() => { setConseil(c); if (erreurConseil) setErreur(null); }} />
               <span>{tret(`conseil.${c}`)}</span>
             </label>
