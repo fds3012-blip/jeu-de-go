@@ -10,8 +10,9 @@ import { avancerJusqua, ouvrirDepuisApprendre, surMoment } from './decouverte';
 
 const ECRANS = [[320, 568], [390, 844], [412, 915]] as const;
 
-async function aucunBoutonRecouvert(page: Page, ecran: string) {
-  const fautes = await page.evaluate(async () => {
+/** `dans` : sélecteur d'une boîte de dialogue modale ouverte (#528) ; seuls ses boutons comptent, le reste est inerte. */
+async function aucunBoutonRecouvert(page: Page, ecran: string, dans?: string) {
+  const fautes = await page.evaluate(async dans => {
     const image = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
     /** Le premier ancêtre (ou l'élément) en position fixe ou collante. */
     const fixe = (el: Element | null) => {
@@ -23,12 +24,13 @@ async function aucunBoutonRecouvert(page: Page, ecran: string) {
     };
     const boutons = [...document.querySelectorAll<HTMLElement>('button, a[href], [role="button"]')].filter(b => {
       const r = b.getBoundingClientRect(), s = getComputedStyle(b);
-      return r.width > 1 && r.height > 1 && s.visibility !== 'hidden' && !b.closest('[aria-hidden="true"], [inert], .sr-only');
+      return r.width > 1 && r.height > 1 && s.visibility !== 'hidden' && !b.closest('[aria-hidden="true"], [inert], .sr-only') && (!dans || !!b.closest(dans));
     });
     const out: string[] = [];
     for (const b of boutons) {
       if (!b.isConnected) continue;
-      if (!fixe(b)) { b.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'instant' }); await image(); }
+      // Dans une boîte de dialogue (fixe elle-même), chaque bouton est amené au milieu de sa zone qui défile.
+      if (!fixe(b) || (dans && b.matches(':not(.feuille-corps > .btn.primary)'))) { b.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'instant' }); await image(); }
       const r = b.getBoundingClientRect();
       const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
       if (cx < 0 || cy < 0 || cx > innerWidth || cy > innerHeight) continue;
@@ -42,7 +44,7 @@ async function aucunBoutonRecouvert(page: Page, ecran: string) {
     }
     window.scrollTo({ top: 0, behavior: 'instant' });
     return out;
-  });
+  }, dans);
   expect(fautes, `${ecran} : boutons recouverts par un élément fixe`).toEqual([]);
   const debord = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(debord, `${ecran} : défilement horizontal`).toBeLessThanOrEqual(0);
@@ -139,6 +141,16 @@ for (const [l, h] of ECRANS) {
       await page.locator('.decouverte .cta').click();
       await expect(page.getByTestId('fin-decouverte')).toBeVisible();
       await aucunBoutonRecouvert(page, `découverte, fin ${taille}`);
+    });
+
+    // #528 : la feuille « Changer » avec les « Réglages de la partie » ouverts : rien sous son bouton collant.
+    test(`feuille « Changer », réglages de la partie ouverts (${taille})`, async ({ page }) => {
+      await page.goto('/');
+      await page.getByRole('button', { name: 'Changer' }).click();
+      await page.getByTestId('reglages-partie-ouvrir').click();
+      await page.getByRole('button', { name: 'Une pierre de handicap en plus' }).click();
+      await expect(page.getByRole('button', { name: 'Revenir aux réglages habituels' })).toBeVisible();
+      await aucunBoutonRecouvert(page, `feuille « Changer », réglages ${taille}`, 'dialog[open]');
     });
 
     // #521 : l'invitation à partager l'app (3e partie finie, visite de plus d'une minute) ne recouvre rien, et rien ne

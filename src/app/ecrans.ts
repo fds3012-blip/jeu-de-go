@@ -65,6 +65,8 @@ const direct = charger(() => import('./Direct'));
 const lentes = charger(() => import('./Lentes'));
 // #429 : le carrousel des adversaires ne sert qu'à la feuille « Changer » : hors du JS initial.
 const carrousel = charger(() => import('../ui/Carrousel'));
+// #528 : « Réglages de la partie » (handicap, komi, comptage), groupe replié de la feuille « Changer », avec ses styles.
+const reglagesPartie = charger(() => import('../ui/ReglagesPartie'));
 // #364 : partie partagée par lien (`/partie#JETON`), ouverte seulement par un lien : pas de préchargement.
 const partagee = charger(() => import('./PartiePartagee'));
 // #469 : séance « Révisions du jour », ouverte depuis la carte de l'accueil.
@@ -97,6 +99,7 @@ export const Direct = ecran(direct, 'Direct');
 export const VeilleFile = ecran(direct, 'VeilleFile');
 export const Lentes = ecran(lentes, 'Lentes');
 export const CarrouselAdversaires = ecran(carrousel, 'CarrouselAdversaires');
+export const ReglagesPartie = ecran(reglagesPartie, 'ReglagesPartie');
 export const PartiePartagee = ecran(partagee, 'PartiePartagee');
 export const SeanceRevisions = ecran(revisions, 'SeanceRevisions');
 export const IntroRegles = ecran(intro, 'IntroRegles');
@@ -122,7 +125,7 @@ export function prechargerIntro(): void {
 
 /** Télécharge tous les écrans en tâche de fond. */
 export function prechargerEcrans(): void {
-  for (const f of [partie, problemes, lecons, profil, serie, placement, defis, compte, direct, lentes, carrousel, intro, decouverte]) f().catch(() => {});
+  for (const f of [partie, problemes, lecons, profil, serie, placement, defis, compte, direct, lentes, carrousel, reglagesPartie, intro, decouverte]) f().catch(() => {});
 }
 
 // Moment « après le premier écran » : src/premierEcran.ts (partagé avec PostHog, #325).

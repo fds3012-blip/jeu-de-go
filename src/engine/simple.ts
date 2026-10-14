@@ -15,10 +15,16 @@ export { isEye };
 // Adversaires de l'échelle (#513) : dans src/engine/adversaires.ts, sans le moteur, pour l'accueil.
 export { OPPONENTS, opponent } from './adversaires';
 export type { KataGoLevel, Opponent, OpponentId, Style } from './adversaires';
+import type { Rules } from '../go/score';
 import { opponent, type Opponent, type OpponentId } from './adversaires';
 
 export interface EngineOptions {
   komi?: number; seed?: number; timeMs?: number; playouts?: number;
+  /**
+   * #528 : règle de comptage vue par KataGo pour choisir son coup. Absente : sa règle historique (chinoise), inchangée
+   * pour l'équilibrage des parties par défaut. Voir `reglesMoteur` (src/engine/index.ts).
+   */
+  rules?: Rules;
   /**
    * Premières parties (#185, voir `accommodant` dans src/app/equilibrage.ts) : quand le joueur passe, l'ordi passe aussi,
    * même s'il pourrait encore grappiller quelques points. Seule exception (#235) : une brèche dans **sa** frontière
