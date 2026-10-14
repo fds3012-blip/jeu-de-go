@@ -171,7 +171,7 @@ Ces données sont écrites dans le stockage local (`localStorage`) de ton naviga
 - placement « Je sais déjà jouer » : `placement_commence`, `placement_termine` (niveau estimé en kyu), `placement_saute` (étape où tu l'as passé) ;
 - revue : `revue_ouverte`, `revue_rejouer`, `import_sgf_commence`, `import_sgf_reussi`, `import_sgf_erreur` (partie importée : source — fichier, texte collé ou lien OGS —, taille du fichier, nombre de coups, taille du plateau, handicap, raison d'un refus ; jamais les noms, les coups ni le numéro de la partie OGS) ;
 - Go du jour et série : `go_du_jour_resolu`, `go_du_jour_partage`, `arrivee_par_partage`, `gel_gagne`, `gel_utilise`, `serie_perdue` ;
-- progression : `xp_gagne`, `niveau_atteint` ;
+- progression : `xp_gagne`, `niveau_atteint`, `badge_gagne` (le badge obtenu, rien d'autre) ;
 - installation : `installation_proposee`, `installation_acceptee` ;
 - rappel du Go du jour : `rappel_propose` (carte montrée), `rappel_accepte` (moment choisi), `rappel_refuse` (« Non merci » ou refus du navigateur), `rappel_ouvert` (notification touchée) ;
 - compte : `essai_limite_atteinte` (raison : parties d'essai jouées, leçon ou problème réservé au compte…), `lien_connexion_envoye`, `compte_methode` (moyen touché sur l'écran de compte ou dans Mon compte : Google, Apple, Facebook ou code par e-mail, et si la page est ouverte dans le navigateur d'une app comme Messenger), `compte_cree` (code, lien de l'e-mail, Google, Apple ou Facebook), `pseudo_choisi` ; jamais l'e-mail ni le pseudo ;
