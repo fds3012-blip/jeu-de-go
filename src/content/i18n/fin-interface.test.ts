@@ -108,7 +108,7 @@ const ORIGINAUX: [Cle, string, boolean?][] = [
   ['conditions.duree.telephoneTexte', 'jusqu’à ce que tu effaces les données du site ou l’app.'],
   ['conditions.droits', 'Tes droits'],
   ['conditions.droits.1', 'Change d’avis quand tu veux avec les interrupteurs en haut de la page.'],
-  ['conditions.droits.2', 'Tu peux demander à voir, corriger ou effacer tes données. On répond sous un mois.'],
+  ['conditions.droits.2', `Télécharge une copie de tes données avec «${F}Mes données${F}», en haut. Pour les corriger ou les effacer, demande-le-nous${F}: on répond sous un mois.`, true],
   ['conditions.droits.3', `Moins de 15 ans${F}? Crée ton compte avec un parent.`, true],
   ['conditions.droits.4', `Un souci${F}? Tu peux aussi saisir la CNIL.`, true],
   ['conditions.contact', `Contact${F}: bientôt disponible`, true],

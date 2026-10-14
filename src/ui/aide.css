@@ -85,3 +85,6 @@ html:has(dialog.aide[open]) { overflow: hidden; }
 .aide-mot .aide-schema .board .coord { font-size: 19px; }
 /* #523 : « Revoir les règles en jouant », en tête des règles. */
 .aide-revoir-regles { width: 100%; margin: 0 0 var(--space-3); }
+/* #530 : lien « Mentions légales » sous les questions fréquentes, cible de 44 px. */
+.aide-mentions { margin-top: var(--space-4); }
+.aide-mentions a { display: inline-flex; align-items: center; min-height: var(--cible-min); color: var(--accent-texte); font-weight: var(--fw-bold); }

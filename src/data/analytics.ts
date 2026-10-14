@@ -231,6 +231,9 @@ export const EVENTS = {
   revisionElement: 'revision_element',
   revisionSeanceTerminee: 'revision_seance_terminee',
   revisionSeanceQuittee: 'revision_seance_quittee',
+  // Mes données (#530) : « Télécharger mes données » touché. `compte` (vrai : données du compte lues sur le serveur),
+  // `resultat` (ok, limite : plafond de 3 par heure, serveur, hors_ligne). Jamais le contenu du fichier ni sa taille.
+  donneesTelechargees: 'donnees_telechargees',
 } as const;
 export type AnalyticsEvent = (typeof EVENTS)[keyof typeof EVENTS];
 export type Props = Record<string, string | number | boolean | null | undefined>;
