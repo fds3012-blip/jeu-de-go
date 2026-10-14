@@ -410,5 +410,18 @@ export const LESSONS_EN = {
     { text: 'White pushes at J5. Do you answer, or play elsewhere?',
       ok: 'Elsewhere: you capture two stones, and the threat stays small.', no: 'The threat is worth one point. Look for something bigger.',
       refus: ['You block one point, and White connects at A5: three less.'] }
+  ] },
+  l39: { title: 'Shared liberties', desc: 'Outside first, the middle last', steps: [
+    { text: 'Shared liberty (yours and White’s): tap it.',
+      geste: { no: 'Tap the empty point touching both your group and White’s.' } },
+    { text: 'First fill White’s outside liberty, at the green point.' },
+    { text: 'And if you fill E1 first, who wins?', choices: ['You', 'White'],
+      ok: 'White: E1 takes a liberty from you too. White captures at A2.', no: 'E1 is your liberty too: you put yourself in atari, White captures at A2.' },
+    { text: 'Your turn: win the race. Start from the outside.',
+      ok: 'Outside first: the shared liberty comes last.', no: 'Fill a White liberty that doesn’t touch your group.',
+      refus: ['Shared liberty: you lose one too, and White wins.', 'That’s your own liberty: White wins the race.'] },
+    { text: 'Your turn: capture these white stones in the race.',
+      ok: 'Outside first, then E1: you capture the whole group.', no: 'Look for White’s liberty far from your group.',
+      refus: ['Shared liberty: now you are in atari, White captures at J2.'] }
   ] }
 };

@@ -149,6 +149,8 @@ export const THEMES_DE_LECON: Readonly<Record<string, readonly Theme[]>> = {
   l37: ['vie-mort'],
   // #539 : jouer ailleurs (l38).
   l38: ['fin-de-partie'],
+  // #539 : les libertés communes (l39).
+  l39: ['semeai'],
 };
 
 /**

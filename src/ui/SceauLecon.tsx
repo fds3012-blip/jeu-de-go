@@ -258,6 +258,12 @@ function motif(id: string, W: string, C: string): ReactElement {
       <path d="M40 52Q50 30 64 32M58 26 64 32 58 38" stroke={W} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
       <circle cx="68" cy="58" r="10" fill={C} stroke={W} strokeWidth="2.6" />
     </>);
+    // Les libertés communes : deux pierres face à face, le point qu'elles se partagent au milieu.
+    case 'l39': return (<>
+      <circle cx="30" cy="56" r="10" fill={W} />
+      <circle cx="70" cy="56" r="10" fill={C} stroke={W} strokeWidth="2.6" />
+      <path d="M44 56H56M50 34V44" stroke={W} strokeWidth="3" strokeLinecap="round" fill="none" />
+    </>);
     default: return <circle cx="50" cy="50" r="14" fill={W} />;
   }
 }

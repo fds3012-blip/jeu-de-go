@@ -39,6 +39,16 @@ export function defautsCourse(pos: Position, a: number, b: number, zone: readonl
     if (ga.has(p) || gb.has(p)) { if (dehors > 0) out.push(`chaîne ${ga.has(p) ? 'a' : 'b'} : liberté hors de la zone`); }
     else if (dehors === 1) out.push(`chaîne en ${p} : une seule liberté hors de la zone`);
   }
+  // Une liberté de `a` (ou de `b`) qui touche aussi une chaîne sûre de la même couleur : y jouer relierait la chaîne au
+  // dehors, et la course ne se lirait plus dans la zone.
+  for (const z of zone) for (const [g, c] of [[ga, pos.board[a]], [gb, pos.board[b]]] as const) {
+    if (!nb[z].some(r => g.has(r))) continue;
+    for (const r of nb[z]) {
+      if (pos.board[r] !== c || g.has(r)) continue;
+      const h = groupAt(pos.board, pos.size, r);
+      if ([...h.liberties].some(l => !dans.has(l))) out.push(`point ${z} : relie ${c === pos.board[a] ? 'a' : 'b'} à une chaîne du dehors`);
+    }
+  }
   return out;
 }
 

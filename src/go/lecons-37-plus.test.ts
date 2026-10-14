@@ -3,6 +3,8 @@
 // démonstration montre ce que dit son texte, chaque chiffre est recompté.
 // - Vie et mort (miai) : preuve exhaustive de src/go/preuve-vie-mort.ts en zone fermée (vérifiée par defautsDeZone ;
 //   un ko n'est jamais compté comme une preuve). Un coup de Noir hors de la zone vaut une passe : la passe est jugée.
+// - Course aux libertés (libertés communes) : recherche exacte de src/go/preuve-course.ts en zone fermée (vérifiée par
+//   defautsCourse ; prise = gagné ou perdu, double passe, ko ou profondeur = non résolu, jamais une preuve).
 // - Fin de partie (jouer ailleurs) : minimax exact de src/go/preuve-fin-de-partie.ts (élagage alpha-bêta, bornes basse et
 //   haute égales, sinon aucune preuve) sur les endroits encore ouverts, en comptage par surfaces ; les chiffres annoncés
 //   au joueur sont recomptés en règle japonaise (score() de src/go/score.ts) sur les suites montrées.
@@ -16,6 +18,8 @@ import { score } from './score';
 import { meilleursCoups, valeursDesCoups } from './preuve-fin-de-partie';
 import { fromLabel, toLabel } from './coords';
 import { coupsGagnants, defautsDeZone, evaluer, yeuxDuGroupe } from './preuve-vie-mort';
+import { defautsCourse, evaluerCourse, issueCourse } from './preuve-course';
+import { groupAt } from './rules';
 
 const N = 9;
 const at = (l: string) => fromLabel(l, N);
@@ -57,7 +61,7 @@ function ouverts(pos: Position): number[] {
 }
 
 const LENT = 60_000;
-const IDS = ['l37', 'l38'];
+const IDS = ['l37', 'l38', 'l39'];
 
 describe('leçons 37 et suivantes : place dans le programme (#539)', () => {
   it('chaque leçon a 4 à 6 étapes, sa phrase de fin et sa série de pratique', () => {
@@ -71,6 +75,7 @@ describe('leçons 37 et suivantes : place dans le programme (#539)', () => {
   it('les points miai ferment « Vie et mort », jouer ailleurs « Fin de partie » ; l’ordre du chemin suit les chapitres', () => {
     const c = Object.fromEntries(CHAPITRES.map(x => [x.id, x]));
     expect(c.c5.lecons.map(l => l.id)).toEqual(['l15', 'l16', 'l22', 'l23', 'l32', 'l33', 'l38']);
+    expect(c.c3.lecons.map(l => l.id)).toEqual(['l9', 'l10', 'l11', 'l26', 'l39']);
     expect(c.c4.lecons.map(l => l.id)).toEqual(['l12', 'l13', 'l14', 'l17', 'l24', 'l25', 'l37']);
     expect(LESSONS.map(l => l.id)).toEqual(CHAPITRES.flatMap(x => x.lecons.map(l => l.id)));
   });
@@ -217,5 +222,76 @@ describe('leçon 38 : jouer ailleurs (tenuki)', () => {
     expect(images(step<Info>('l38', 1)).at(-1)!.board).toEqual(suite(pos, ['D1', 'E9']).board);
     const q = step<Quiz>('l38', 2);
     expect(q.choices[q.answer]).toBe(String(japonais(suite(pos, ['E9', 'D1', 'C1'])) - japonais(suite(pos, ['D1', 'E9']))));
+  });
+});
+
+describe('leçon 39 : les libertés communes', () => {
+  const C = step<Info>('l39', 0).rows;
+  /** Zone d'une course : les libertés des deux chaînes (pas d'œil : chaque point vide touche les deux couleurs). */
+  const zoneDe = (pos: Position, a: number, b: number) =>
+    [...new Set([...groupAt(pos.board, N, a).liberties, ...groupAt(pos.board, N, b).liberties])].sort((x, y) => x - y);
+  /** Coups de Noir (zone et passe) qui gagnent la course à coup sûr, sans ko. */
+  const gagnent = (pos: Position, a: number, b: number) => {
+    const z = zoneDe(pos, a, b);
+    return labels([...z, -1].filter(m => issueCourse(pos, m, a, b, z) === 1));
+  };
+  const B2 = at('B2'), G2 = at('G2'), C2 = at('C2');
+
+  it('les zones sont fermées ; une seule liberté commune, E1 ; aucun œil', () => {
+    for (const [rows, a, b] of [[C, B2, G2], [step<Move>('l39', 3).rows, C2, G2], [step<Move>('l39', 4).rows, at('H2'), at('C2')]] as const) {
+      const pos = avec([...rows], 1), z = zoneDe(pos, a, b);
+      expect(defautsCourse(pos, a, b, z)).toEqual([]);
+      const la = groupAt(pos.board, N, a).liberties, lb = groupAt(pos.board, N, b).liberties;
+      expect(labels([...la].filter(l => lb.has(l)))).toEqual(['E1']);
+    }
+    const pos = avec(C, 1);
+    expect(labels(groupAt(pos.board, N, B2).liberties)).toEqual(['A2', 'E1']);
+    expect(labels(groupAt(pos.board, N, G2).liberties)).toEqual(['E1', 'J2']);
+  });
+
+  it('l39.1 : le geste touche E1 ; la démonstration compte les libertés des deux groupes', () => {
+    const s = step<Info>('l39', 0);
+    expect(s.geste).toMatchObject({ touche: ['E1'] });
+    const im = images(s);
+    expect(labels(im.at(-1)!.libs)).toEqual(['E1', 'J2']);
+  });
+
+  it('l39.2 : J2 seul gagne ; la démonstration J2, A2, E1 prend tout le groupe blanc ; Blanc au trait gagne', () => {
+    const pos = avec(C, 1);
+    expect(gagnent(pos, B2, G2)).toEqual(['J2']);
+    const fin = suite(pos, ['J2', 'A2', 'E1']);
+    expect(fin.board[G2]).toBe(0);
+    expect(fin.captures[1]).toBe(8);
+    expect(images(step<Info>('l39', 1)).at(-1)!.board).toEqual(fin.board);
+    const z = zoneDe(pos, B2, G2);
+    expect(evaluerCourse(avec(C, 2), B2, G2, z)).toBe(-1);
+  });
+
+  it('l39.3 : E1 d’abord met Noir en atari ; Blanc prend en A2', () => {
+    const pos = avec(C, 1), z = zoneDe(pos, B2, G2);
+    const e1 = ok(play(pos, at('E1')));
+    expect(labels(groupAt(e1.board, N, B2).liberties)).toEqual(['A2']);
+    expect(evaluerCourse(e1, B2, G2, z)).toBe(-1);
+    expect(suite(pos, ['E1', 'A2']).board[B2]).toBe(0);
+    const q = step<Quiz>('l39', 2);
+    expect(q.choices[q.answer]).toBe('Blanc');
+  });
+
+  it('l39.4 : deux libertés dehors chacun ; J1 et J2 gagnent, exactement ; E1, A2 et B2 perdent', () => {
+    const m = step<Move>('l39', 3);
+    const pos = avec(m.rows, 1), z = zoneDe(pos, C2, G2);
+    expect(gagnent(pos, C2, G2)).toEqual([...m.accept].sort());
+    for (const l of m.refus!.flatMap(r => r.points)) expect(issueCourse(pos, at(l), C2, G2, z), l).toBe(-1);
+    expect(issueCourse(pos, -1, C2, G2, z)).toBe(-1);
+  });
+
+  it('l39.5 : la première course en miroir ; A2 seul gagne ; E1 met Noir en atari et Blanc prend en J2', () => {
+    const m = step<Move>('l39', 4);
+    expect(m.rows).toEqual(C.map(r => [...r].reverse().join('')));
+    const pos = avec(m.rows, 1), H2 = at('H2'), z = zoneDe(pos, H2, C2);
+    expect(gagnent(pos, H2, C2)).toEqual(m.accept);
+    const e1 = ok(play(pos, at('E1')));
+    expect(labels(groupAt(e1.board, N, H2).liberties)).toEqual(['J2']);
+    expect(evaluerCourse(e1, H2, C2, z)).toBe(-1);
   });
 });

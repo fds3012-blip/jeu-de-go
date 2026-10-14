@@ -100,4 +100,6 @@ export const MOTIFS: Record<string, Motif> = {
   l37: { coin: true, noir: [[1, 2], [2, 2], [3, 2], [1, 3], [3, 3]], or: [[2, 3]], jade: [[0, 2], [0, 3]] },
   // Jouer ailleurs : la pierre blanche qui avance en bas, et la prise (jade) ailleurs.
   l38: { coin: true, noir: [[0, 1], [1, 1], [2, 2], [1, 3]], blanc: [[2, 3], [3, 2], [1, 0]], jade: [[2, 0]] },
+  // Les libertés communes : deux groupes face à face, la liberté commune (or) et le dehors à boucher (jade).
+  l39: { coin: true, noir: [[0, 2], [1, 2], [0, 3]], blanc: [[2, 2], [3, 2], [2, 3]], or: [[1, 3]], jade: [[3, 3]] },
 };

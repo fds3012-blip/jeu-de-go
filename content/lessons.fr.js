@@ -186,11 +186,17 @@ const L_MIAI_M = [...V.slice(0, 6), '..OOOOOOO', '..OXXXXX.', '..OX.X.O.'];
 const L_AILLEURS = ['.XOO.O...', '.XXXXO...', ...Array(5).fill('...XO....'), 'XXXXOOOOO', '....O....'];
 const L_AILLEURS_Q = [...L_AILLEURS].reverse();
 const L_AILLEURS_R = L_AILLEURS.map((_, y) => L_AILLEURS.map(r => r[y]).join(''));
+// Les libertés communes : ni œil ni liberté en trop. Chaque groupe a une liberté dehors (A2 pour Noir, J2 pour Blanc) et
+// une liberté commune, E1. Qui bouche d'abord le dehors de l'autre gagne ; boucher E1 retire aussi une liberté à soi.
+// `Q` : deux libertés dehors chacun (A2-B2, J1-J2), E1 commune ; `M` : la première course en miroir.
+const L_COMMUNE = [...V.slice(0, 6), 'OOOOXXXXX', '.XXXOOOO.', 'XXXX.OOOO'];
+const L_COMMUNE_Q = [...V.slice(0, 6), 'OOOOXXXXX', '..XXOOOO.', 'XXXX.OOO.'];
+const L_COMMUNE_M = L_COMMUNE.map(r => [...r].reverse().join(''));
 export const CHAPITRES = [
   { id: 'c1', titre: 'Les bases', intro: 'Sept leçons courtes pour jouer ta première partie.', fin: 'Tu connais les règles du go.', lecons: ['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7'] },
   // Chapitre en cours d'écriture (`complet: false`) : sa dernière leçon ne ferme pas encore le chapitre.
   { id: 'c2', titre: 'L’ouverture', intro: 'Où poser tes premières pierres.', lecons: ['l8', 'l27', 'l29', 'l30', 'l31'], complet: false },
-  { id: 'c3', titre: 'Capturer et sauver', intro: 'Des pièges pour prendre plus de pierres.', lecons: ['l9', 'l10', 'l11', 'l26'], complet: false },
+  { id: 'c3', titre: 'Capturer et sauver', intro: 'Des pièges pour prendre plus de pierres.', lecons: ['l9', 'l10', 'l11', 'l26', 'l39'], complet: false },
   { id: 'c4', titre: 'Vie et mort', intro: 'Quand un groupe vit, quand il meurt.', lecons: ['l12', 'l13', 'l14', 'l17', 'l24', 'l25', 'l37'], complet: false },
   { id: 'c5', titre: 'Fin de partie et comptage', intro: 'Finir proprement, puis compter juste.', lecons: ['l15', 'l16', 'l22', 'l23', 'l32', 'l33', 'l38'], complet: false },
   { id: 'c6', titre: 'Formes et tesuji', intro: 'Les bonnes formes et les coups malins du go.', lecons: ['l18', 'l19', 'l20', 'l21', 'l34', 'l35', 'l36'], complet: false }
@@ -468,6 +474,28 @@ export const LESSONS = [
         { points: ['G1'], no: 'Liberté commune : tu te mets en atari, Blanc prend en J1.' },
         { points: ['J1'], no: 'Tu bouches ton œil : Blanc prend en G1.' }
       ] }
+  ] },
+  { id: 'l39', title: 'Les libertés communes', desc: 'Le dehors d’abord, le milieu en dernier', steps: [
+    { kind: 'info', rows: L_COMMUNE, geste: { touche: ['E1'], no: 'Touche le point vide qui touche ton groupe et celui de Blanc.' },
+      demo: [{ libs: 'B2' }, { libs: 'G2' }],
+      text: 'Liberté commune (à toi et à Blanc) : touche-la.' },
+    { kind: 'info', rows: L_COMMUNE, geste: { pose: 'J2' },
+      demo: [{ pose: 'J2', couleur: 'B' }, { pose: 'A2', couleur: 'W' }, { pose: 'E1', couleur: 'B' }],
+      text: 'Bouche d’abord sa liberté du dehors, au point vert.' },
+    { kind: 'quiz', rows: L_COMMUNE,
+      text: 'Et si tu bouches E1 d’abord, qui gagne ?', choices: ['Toi', 'Blanc'], answer: 1,
+      ok: 'Blanc : E1 t’enlève aussi une liberté. Il prend en A2.', no: 'E1 est aussi ta liberté : tu te mets en atari, Blanc prend en A2.' },
+    { kind: 'move', rows: L_COMMUNE_Q, accept: ['J1', 'J2'],
+      text: 'À toi : gagne la course. Commence par le dehors.',
+      ok: 'Le dehors d’abord : la liberté commune servira en dernier.', no: 'Bouche une liberté de Blanc qui ne touche pas ton groupe.',
+      refus: [
+        { points: ['E1'], no: 'Liberté commune : tu en perds une aussi, et Blanc gagne.' },
+        { points: ['A2', 'B2'], no: 'C’est ta propre liberté : Blanc gagne la course.' }
+      ] },
+    { kind: 'move', rows: L_COMMUNE_M, accept: ['A2'],
+      text: 'À toi : prends ces pierres blanches dans la course.',
+      ok: 'Dehors d’abord, puis E1 : tu prends tout le groupe.', no: 'Cherche la liberté de Blanc loin de ton groupe.',
+      refus: [{ points: ['E1'], no: 'Liberté commune : te voilà en atari, Blanc prend en J2.' }] }
   ] },
   { id: 'l12', title: 'Le faux œil', desc: 'Un œil qui ne compte pas', steps: [
     { kind: 'info', rows: L_FAUX, geste: { touche: ['D1', 'E1'], no: 'Touche une des deux pierres noires de droite.' },

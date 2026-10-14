@@ -984,6 +984,7 @@ export const frEcrans = {
   'acquis.l35': 'Tu coupes au premier rang les pierres qui veulent passer dessous.',
   'acquis.l37': 'Tu reconnais deux points miai : si Blanc en prend un, tu prends l’autre.',
   'acquis.l38': 'Tu ne suis pas une petite menace : tu joues ailleurs, plus gros.',
+  'acquis.l39': 'Dans une course, tu bouches le dehors d’abord, la liberté commune en dernier.',
   'acquis.defaut': 'Une leçon de plus dans ta poche.',
   'lecteur.progression': 'Progression de la leçon',
   // #290 : sur un écran bas, l'explication du verdict est repliée pour laisser voir le plateau.
