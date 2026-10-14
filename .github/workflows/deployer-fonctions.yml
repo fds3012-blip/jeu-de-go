@@ -67,12 +67,16 @@ jobs:
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         # Chaque dossier de supabase/functions est une fonction (sauf les dossiers partagés, préfixés par « _ »).
+        # Un fichier `.sans-jwt` dans le dossier : fonction appelée par pg_cron avec son propre secret (envoyer-rappels,
+        # alerte-signalements, #531), déployée sans vérification du JWT ; sinon la vérification reste active.
         run: |
           for dossier in supabase/functions/*/; do
             nom="$(basename "$dossier")"
             case "$nom" in _*) continue ;; esac
-            echo "Déploiement de $nom"
-            supabase functions deploy "$nom" --project-ref "$PROJET_SUPABASE"
+            options=""
+            [ -f "$dossier/.sans-jwt" ] && options="--no-verify-jwt"
+            echo "Déploiement de $nom $options"
+            supabase functions deploy "$nom" --project-ref "$PROJET_SUPABASE" $options
           done
       # Vérification après déploiement : la fonction répond avec la version du contrat du dépôt.
       # Facultative : ne tourne que si la variable (non secrète) SUPABASE_PUBLISHABLE_KEY est définie.

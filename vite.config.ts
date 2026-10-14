@@ -7,6 +7,7 @@ import { prechargerAnglais } from './outils/prechargerAnglais';
 import { pagesApercu } from './outils/apercus';
 import { pagesReferencement } from './outils/referencement/pages';
 import { pluginsSentry, sourcemapVite } from './outils/sentrySourcemaps';
+import { entetesSecurite } from './outils/csp';
 
 // Plugin Sentry (#474) : chargé seulement avec SENTRY_AUTH_TOKEN (Vercel) ; sinon, liste vide.
 const sentry = await pluginsSentry(process.env);
@@ -17,7 +18,9 @@ export default defineConfig({
   // pagesApercu : une page d'aperçu (Open Graph) par lien court partagé, copie de dist/index.html (#285, #364).
   // pagesReferencement : pages statiques indexées (/apprendre-le-go…), sitemap.xml et robots.txt, sans le JS de l'app (#472).
   // pluginsSentry (#474) : avec SENTRY_AUTH_TOKEN seulement (Vercel), envoie les source maps à Sentry puis les efface de dist/.
-  plugins: [react(), precacheSw(), prechargerAnglais(), pagesApercu(), pagesReferencement(), ...sentry],
+  // entetesSecurite (#531) : balise CSP (empreintes des scripts en ligne) dans chaque page de dist/, après les autres ;
+  // `vite preview` sert les en-têtes de sécurité de vercel.json (outils/csp.ts).
+  plugins: [react(), precacheSw(), prechargerAnglais(), pagesApercu(), pagesReferencement(), ...sentry, entetesSecurite()],
   build: {
     // Source maps « cachées » (#474) : produites seulement pour Sentry (jeton présent), jamais référencées ni publiées.
     sourcemap: sourcemapVite(process.env),

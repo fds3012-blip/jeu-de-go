@@ -1171,6 +1171,8 @@ export const frEcrans = {
   'connexion.envoyer': 'Recevoir mon code',
   'connexion.sansMotDePasse': 'Pas de mot de passe : on t’envoie un code par e-mail.',
   'connexion.code.titre': 'Entre ton code',
+  'connexion.captcha.aria': 'Vérification anti-robot',
+  'connexion.captcha.attente': 'Vérification anti-robot en cours. Réessaie dans un instant.',
   'connexion.code.texte': 'On t’a envoyé un code à {n} chiffres à {email}.',
   'connexion.code.label': 'Code à {n} chiffres',
   'connexion.code.valider': 'Valider',

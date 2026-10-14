@@ -8,6 +8,7 @@
 // Écran : src/app/Lentes.tsx (chargé à la demande) ; la partie se joue dans DefiPartie (src/app/Defis.tsx).
 import { CODE_COMPTE_REQUIS, CODE_PSEUDO_REQUIS } from './compteRequis';
 import { CODE_PLAFOND_LENTES } from './abandons';
+import { CODE_SUSPENDU } from './suspension';
 import { mesDefis, type EtatDefi } from './defi';
 import type { Db } from './supabase';
 
@@ -24,13 +25,14 @@ export const CODE_LIMITE_LENTES = 'JGL10';
  * Refus connus, traduits par l'écran. `miseAJour` : le serveur n'a pas encore la migration. `plafond` (#442) : plafond
  * réduit après des parties laissées expirer (JGL11).
  */
-export type RefusLente = 'compte' | 'limite' | 'plafond' | 'miseAJour' | 'serveur';
+export type RefusLente = 'compte' | 'limite' | 'plafond' | 'miseAJour' | 'suspendu' | 'serveur';
 
 export function refusLente(erreur: unknown): RefusLente {
   const code = (erreur as { code?: unknown } | null | undefined)?.code;
   if (code === CODE_COMPTE_REQUIS || code === CODE_PSEUDO_REQUIS) return 'compte';
   if (code === CODE_LIMITE_LENTES) return 'limite';
   if (code === CODE_PLAFOND_LENTES) return 'plafond';
+  if (code === CODE_SUSPENDU) return 'suspendu';
   if (code === 'PGRST202' || code === 'PGRST205' || code === '42P01') return 'miseAJour';
   return 'serveur';
 }
