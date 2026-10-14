@@ -2,6 +2,7 @@
 // indépendant du lot A (src/go/lecteurs-lot-a.ts, celui des preuves), et chaque phrase ne dit que des faits.
 import { describe, expect, it } from 'vitest';
 import LOT_A from '../content/lots/a-capture';
+import LOT_N from '../content/lots/n-debutants';
 import { BASE_PUZZLES, PUZZLES_16 } from '../content/puzzles';
 import { parsePuzzles, startOf, type Puzzle } from '../data/puzzles';
 import { fromLabel, toLabel } from '../go/coords';
@@ -93,6 +94,14 @@ describe('comprendre un coup faux (prendre)', () => {
       const r = play(pos, f) as Position;
       if (whiteFails(r, marked, k)) expect(comprendreErreur(p, f, compteur()), toLabel(f, 9)).toBeNull();
     }
+  });
+
+  it('n06 : la réponse jouée est celle dont parle le texte du problème (« Blanc s’allonge en B1 »), prouvée', () => {
+    const p = parsePuzzles(LOT_N).find(x => x.id === 'n06')!;
+    expect(p.refutation).toContain('Blanc s');
+    const e = comprendreErreur(p, at('D3'), compteur())!;
+    expect(toLabel(e.reponse, 9)).toBe('B1');
+    expect(e.phrase.startsWith('Blanc se relie en B1.') || e.phrase.startsWith('Blanc répond en B1.')).toBe(true);
   });
 
   it('budget épuisé : rien n’est affirmé', () => {

@@ -11,7 +11,7 @@
 // Si le problème n'est pas de ce type (vie et mort, fin de partie…), ou si la lecture dépasse son budget, rien n'est
 // calculé : le lecteur garde le comportement d'avant (#197, #237), le texte relu du problème.
 import { groupAt, play, type Color, type Position } from '../go/rules';
-import { toLabel } from '../go/coords';
+import { fromLabel, toLabel } from '../go/coords';
 import {
   attaquantPrend, compteur, coupsAvantPrise, coupsPourPrendre, defenseurEchoue, ordreDefense, prise, BUDGET_LECTURE, DELAI_LECTURE, K_ECHELLE, type Compteur
 } from '../go/lecture-capture';
@@ -101,9 +101,28 @@ export interface ErreurComprise {
 
 const nomCouleur = (c: Color) => t(c === 1 ? 'erreur.noir' : 'erreur.blanc');
 
-/** Les bonnes réponses d'abord (« le point clé de ton adversaire est ton point clé »), puis l'ordre naturel. */
+/**
+ * Points que le texte relu du problème fait jouer à l'adversaire : ceux qui suivent son nom (« Blanc s'allonge en B1 »).
+ * Essayés en premier, pour que le plateau montre la réponse dont parle le texte quand elle est prouvée.
+ */
+export function pointsDuTexte(pz: Puzzle, adv: Color): number[] {
+  const texte = pz.refutation;
+  if (!texte) return [];
+  const i = texte.indexOf(nomCouleur(adv));
+  if (i < 0) return [];
+  const out: number[] = [];
+  for (const m of texte.slice(i).matchAll(/\b([A-HJ-T])(1[0-9]|[1-9])\b/g)) {
+    try { out.push(fromLabel(m[0], pz.size)); } catch { /* hors du plateau : ignoré */ }
+  }
+  return out;
+}
+
+/**
+ * Ordre des réponses essayées : celles que nomme le texte du problème, puis les bonnes réponses (« le point clé de ton
+ * adversaire est ton point clé »), puis l'ordre naturel. Seules les réponses prouvées sont gardées.
+ */
 const candidats = (pos: Position, pz: Puzzle, ordre: number[]) =>
-  [...new Set([...pz.answers, ...ordre])].filter(m => m >= 0 && !pos.board[m]);
+  [...new Set([...pointsDuTexte(pz, pos.toPlay), ...pz.answers, ...ordre])].filter(m => m >= 0 && !pos.board[m]);
 
 /**
  * Comprendre un coup faux (#549) : la réponse de l'adversaire qui le réfute, prouvée par le lecteur exact, et sa phrase.

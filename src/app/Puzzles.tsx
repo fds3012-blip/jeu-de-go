@@ -285,8 +285,10 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
         surtitre={enSerie ? <SurtitreTheme serie={enSerie} affilee={etatThemes[enSerie]?.affilee ?? 0} record={recordTheme} /> : undefined}
         // #521 : un record de série par thème est un moment fort : invitation discrète à partager l'app (règle et plafond :
         // src/app/partageApp.ts).
+        annonce={versTheme && enSerie
+          ? <p className="theme-maitrise-fete" role="status"><SceauLecon id="p1" taille={22} />{fr(tr('themes.maitriseFete', { theme: tr(`themes.nom.${enSerie}`) }))}</p>
+          : undefined}
         invitation={versTheme && enSerie ? <>
-          <p className="theme-maitrise-fete" role="status"><SceauLecon id="p1" taille={22} />{fr(tr('themes.maitriseFete', { theme: tr(`themes.nom.${enSerie}`) }))}</p>
           {nextPz && <button type="button" className="lien theme-continuer" onClick={() => { setMaitriseVenue(null); setOpenId(nextPz.id); window.scrollTo({ top: 0 }); }}>
             {tr('themes.continuer', { theme: tr(`themes.nom.${enSerie}`) })}</button>}
         </> : enSerie && recordTheme ? <InviterApp depuis="record" /> : undefined}
@@ -701,7 +703,7 @@ type Cadre = { pos: Position; legende: string; croix?: number; zone?: number[] }
 /** Temps pendant lequel la réponse de l'adversaire reste sur le plateau après une erreur (#237, N6). */
 const DUREE_ERREUR = 2200;
 
-export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPremierEssai, onEssai, onAttempt, onSolved, onNext, onExit, onSolutionVue, onErreurComprise, onSolutionComplete, retour, surtitre, suivant, exercice = true, signaler, invitation }: {
+export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPremierEssai, onEssai, onAttempt, onSolved, onNext, onExit, onSolutionVue, onErreurComprise, onSolutionComplete, retour, surtitre, suivant, exercice = true, signaler, invitation, annonce }: {
   puzzle: Puzzle; rang: number; duJour?: DuJourInfo; confirmTouch: boolean; rated: boolean;
   /** Chaque essai joué (coup légal), réussi ou non (#369 : essais du Go du jour comptés par le serveur). */
   onEssai?: (ok: boolean) => void;
@@ -725,6 +727,8 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
   signaler?: ReactNode;
   /** #521 : invitation discrète à partager l'app, sous la réussite (nouveau record d'une série par thème). */
   invitation?: ReactNode;
+  /** #549 : annonce d'un moment fort (thème maîtrisé), juste au-dessus de l'action principale de la réussite. */
+  annonce?: ReactNode;
 }) {
   // #236 (N2) : un problème est un exercice ; aucune fête ne se pose sur sa consigne (l'XP se lit dans la feuille).
   useExercice(exercice);
@@ -1003,7 +1007,7 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
             </div>
             {duJour.amis}
           </>
-        : <>{suivantBtn}<button className="lien" onClick={showLine}>{tr('pb.voirSuite')}</button>{invitation}</>)}>
+        : <>{annonce}{suivantBtn}<button className="lien" onClick={showLine}>{tr('pb.voirSuite')}</button>{invitation}</>)}>
         <p>{fr(answer.text)}</p><XpEnLigne anime={duJour?.celebrer ?? true} />
         {/* #214 : la série se lit sur la réussite (« 3 jours de série · À demain ») ; aux jalons 3, 7, 30, une petite fête. */}
         {duJour && duJour.archive === undefined && serieVisible && <SerieDuJour jours={duJour.serie} jalon={duJour.jalon} celebrer={duJour.celebrer} />}
