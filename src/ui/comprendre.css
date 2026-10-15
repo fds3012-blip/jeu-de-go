@@ -1,0 +1,28 @@
+/* #549 : comprendre son erreur, solution complète coup par coup, maîtrise par thème. Chargée avec l'écran des
+   problèmes (import de src/app/Puzzles.tsx), jamais dans le CSS initial (budget : scripts/budget-bundle.mjs). */
+
+/* Solution complète : « Coup précédent » à plat, « Coup suivant » en relief tant qu'il reste des coups. */
+.solution-pas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); }
+.solution-pas .btn, .solution-pas .cta { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 48px;
+  padding: 0 var(--space-2); font-size: var(--fs-s); white-space: nowrap; }
+.solution-pas .cta { position: static; transform: none; width: auto; }
+.solution-pas svg { flex: none; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+@media (prefers-reduced-motion: no-preference) { .solution-pas .cta:active { transform: translateY(var(--relief)); } }
+.solution-etape { margin: 0 0 2px; color: var(--muted); font-size: var(--fs-legende); font-weight: var(--fw-bold);
+  font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+
+/* Maîtrise d'un thème : une barre fine posée au pied de la vignette, sous le nom (elle n'ajoute aucune hauteur : la page
+   reste sous deux écrans à 320 px, e2e/problemes-par-theme.spec.ts) ; maîtrisé, la barre laisse place au mot. */
+.theme-carte { position: relative; }
+.theme-maitrise { position: absolute; left: calc(var(--space-2) + 32px + var(--space-2)); right: var(--space-3); bottom: 5px; height: 4px;
+  border-radius: var(--radius-pill); background: var(--surface-2); overflow: hidden; }
+.theme-maitrise > i { display: block; height: 100%; width: var(--part, 0%); border-radius: inherit; background: var(--accent); }
+.theme-maitrise-mot { color: var(--accent-texte, var(--accent)); font-size: var(--fs-legende); font-weight: var(--fw-bold); line-height: 1.25; }
+
+/* Thème maîtrisé à l'instant, sur la feuille de réussite : une ligne, et « Thème suivant » en relief au-dessus. */
+.theme-maitrise-fete { display: flex; align-items: center; gap: 8px; margin: 0; font-weight: var(--fw-bold); }
+.theme-maitrise-fete svg { flex: none; }
+.verdict-actions .theme-continuer { justify-self: center; }
+
+/* Erreur comprise : la phrase de faits, sous le verdict, en gras discret (ce qui vient de se passer sur le plateau). */
+.erreur-comprise { margin: 4px 0 0; font-size: var(--fs-s); font-weight: var(--fw-bold); line-height: 1.35; }

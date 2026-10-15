@@ -113,6 +113,14 @@ export const EVENTS = {
   // Problèmes par thème (#471) : une série ouverte (`theme` : capturer, sauver, vie-mort, relier-couper, fin-de-partie,
   // tesuji). Les premiers essais d'une série portent `theme` dans `probleme_termine`. Jamais le record ni les réussites.
   themeOuvert: 'theme_ouvert',
+  // Expérience des problèmes (#549). `erreur_comprise` : un coup faux a reçu une réponse prouvée par le lecteur exact
+  // (`probleme`, `but` : prendre ou sauver, `du_jour`). `solution_complete` : la solution coup par coup s'ouvre
+  // (`probleme`, `coups`, `apres_echec`). `theme_maitrise` : une série par thème atteint l'objectif de maîtrise
+  // (`theme`). `theme_suivant` : « Thème suivant » touché (`de`, `vers`). Jamais le coup joué ni la position.
+  erreurComprise: 'erreur_comprise',
+  solutionComplete: 'solution_complete',
+  themeMaitrise: 'theme_maitrise',
+  themeSuivant: 'theme_suivant',
   // « Je sais déjà jouer » (#283) : placement commencé, terminé (`kyu`, null si tout raté), passé (`etape` : 0 à 3).
   placementCommence: 'placement_commence',
   placementTermine: 'placement_termine',

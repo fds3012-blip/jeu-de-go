@@ -1,10 +1,12 @@
 // Problèmes par thème (#471) : les vignettes des séries dans l'écran Problèmes, et le compteur « d'affilée » du lecteur.
 // Actions secondaires, à plat : l'action en relief reste le Go du jour, ou « Problème suivant » une fois le Go du jour fait.
 // Aucune cote n'est affichée (décision #137) : seulement les réussites d'affilée et le record de chaque série.
+import type { CSSProperties } from 'react';
 import { MiniGoban } from './MiniGoban';
 import { fr } from './typo';
 import { t } from '../content/i18n/secondaires';
 import type { EtatSeriesThemes, SerieTheme } from '../app/seriesThemes';
+import type { Maitrise } from '../app/maitriseThemes';
 import './themes.css';
 
 /**
@@ -26,8 +28,10 @@ const MOTIFS: Record<SerieTheme, string[]> = {
   tesuji: ['.....', '.X...', '..TX.', '.X...', '.....'],
 };
 
-export function VignettesThemes({ series, etat, onOuvrir }: {
+export function VignettesThemes({ series, etat, onOuvrir, maitrise }: {
   series: readonly SerieTheme[]; etat: EtatSeriesThemes; onOuvrir: (s: SerieTheme) => void;
+  /** #549 : maîtrise de chaque série (barre fine sous le nom, « Maîtrisé » une fois l'objectif atteint). */
+  maitrise?: Partial<Record<SerieTheme, Maitrise>>;
 }) {
   if (!series.length) return null;
   return (
@@ -38,6 +42,7 @@ export function VignettesThemes({ series, etat, onOuvrir }: {
       <ul className="themes-grille">
         {series.map(s => {
           const record = etat[s]?.record ?? 0;
+          const m = maitrise?.[s];
           return (
             <li key={s}>
               {/* #268 (WCAG 2.5.3) : le nom accessible est le texte visible, le nom de la série d'abord. */}
@@ -45,7 +50,14 @@ export function VignettesThemes({ series, etat, onOuvrir }: {
                 <span className="theme-motif" aria-hidden="true"><MiniGoban rows={MOTIFS[s]} /></span>
                 <span className="theme-nom">
                   <b>{t(`themes.nom.${s}`)}</b>
-                  {record > 0 && <span className="theme-record">{fr(t('themes.record', { n: record }))}</span>}
+                  {m?.maitrise
+                    ? <span className="theme-maitrise-mot" data-maitrise="">{t('themes.maitrise')}</span>
+                    : record > 0 && <span className="theme-record">{fr(t('themes.record', { n: record }))}</span>}
+                  {/* #549 : la barre vise un objectif fixe (MAITRISE_CIBLE), jamais le total de la série (#137). */}
+                  {m && !m.maitrise && (
+                    <span className="theme-maitrise" role="img" aria-label={fr(t('themes.maitriseAria', { n: m.reussis, cible: m.cible }))}
+                      style={{ '--part': `${Math.round((m.reussis / m.cible) * 100)}%` } as CSSProperties}><i /></span>
+                  )}
                 </span>
               </button>
             </li>
