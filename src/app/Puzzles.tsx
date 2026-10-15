@@ -352,7 +352,7 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
           if (estDuJour && gain.palier && repriseDeLeconFaite(open)) noterRediteAppareil(open.id);
         }}
         onSolutionVue={essais => track(EVENTS.solutionVue, { probleme: open.id, du_jour: estDuJour, essais })}
-        onErreurComprise={() => { const b = butDe(open); if (b) track(EVENTS.erreurComprise, { probleme: open.id, but: b.type, du_jour: estDuJour }); }}
+        onErreurComprise={but => track(EVENTS.erreurComprise, { probleme: open.id, but, du_jour: estDuJour })}
         onSolutionComplete={(coups, apresEchec) => track(EVENTS.solutionComplete, { probleme: open.id, coups, apres_echec: apresEchec })}
         onNext={versTheme && enSerie ? () => {
           track(EVENTS.themeSuivant, { de: enSerie, vers: versTheme });
@@ -714,7 +714,7 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
   /** La réponse vient d'être montrée (#197). */
   onSolutionVue?: (essais: number) => void;
   /** #549 : un coup faux a reçu sa réponse prouvée par le lecteur exact. */
-  onErreurComprise?: () => void;
+  onErreurComprise?: (but: ErreurComprise['but']) => void;
   /** #549 : la solution complète s'ouvre (`coups` : bon coup et défenses compris). */
   onSolutionComplete?: (coups: number, apresEchec: boolean) => void;
   /** Série de fin de leçon (#200) : libellé du retour (« Retour au chemin ») et surtitre (« Entraînement » et ses points). */
@@ -787,7 +787,7 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
     // #549 : la réponse de l'adversaire est prouvée par le lecteur exact, et sa phrase ne dit que des faits.
     const comprise = ok ? null : comprendreErreur(puzzle, p);
     if (!ok) derniereErreur.current = comprise;
-    if (comprise) onErreurComprise?.();
+    if (comprise) onErreurComprise?.(comprise.but);
     setAnswer({ kind: r.kind, p, text: ok ? (puzzle.pourquoi?.bravos[p] ?? puzzle.explanation ?? tr('pb.bonCoup')) : (puzzle.refutation ?? tr('pb.pasTout')), n, comprise });
     window.clearTimeout(timer.current);
     if (ok) { setApercu(null); setBoard(r.after.board); onSolved(tries + 1, aide); }

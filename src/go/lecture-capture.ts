@@ -23,7 +23,11 @@ export const DELAI_LECTURE = 40;
 /** K_MAX : coups de l'attaquant au plus ; au-delà, on ne lit pas (la phrase reste celle du problème). */
 export const K_MAX = 5;
 
-export interface Compteur { reste: number; fin: number }
+/**
+ * `maitre` (#554, lectures hors ligne) : camp qui n'est jamais tenu par la règle du ko (il reprend aussitôt, menaces sans
+ * fin). Une réfutation lue avec le joueur maître du ko ne dépend d'aucun ko : il les gagne tous et échoue quand même.
+ */
+export interface Compteur { reste: number; fin: number; maitre?: Color }
 const maintenant = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 /** `ms` : délai de lecture ; `Infinity` pour une lecture sans limite de temps (tests, preuves hors ligne). */
 export const compteur = (budget = BUDGET_LECTURE, ms = DELAI_LECTURE): Compteur => ({ reste: budget, fin: maintenant() + ms });
@@ -32,7 +36,7 @@ export const compteur = (budget = BUDGET_LECTURE, ms = DELAI_LECTURE): Compteur 
 const legal = (pos: Position, m: number, c: Compteur): Position | null => {
   // Le temps n'est relu que tous les 256 coups : la lecture du temps coûte plus cher qu'un coup.
   if ((--c.reste & 255) === 0 && maintenant() > c.fin) c.reste = -1;
-  const r = play(pos, m);
+  const r = play(c.maitre === pos.toPlay && pos.ko !== -1 ? { ...pos, ko: -1 } : pos, m);
   return typeof r === 'string' ? null : r;
 };
 
