@@ -15,6 +15,8 @@ import { fromLabel, toLabel } from '../go/coords';
 import {
   attaquantPrend, compteur, coupsAvantPrise, coupsPourPrendre, defenseurEchoue, ordreDefense, prise, BUDGET_LECTURE, DELAI_LECTURE, K_ECHELLE, K_MAX, type Compteur
 } from '../go/lecture-capture';
+import { aDeuxYeux, fauxOeilCree } from '../go/faits-vie-mort';
+import { REFUTATIONS_LOCALES } from '../go/refutations-locales.gen';
 import { startOf, type Puzzle } from '../data/puzzles';
 import { t } from '../content/i18n/secondaires';
 import { THEME_DU_PROBLEME } from '../content/themes';
@@ -53,7 +55,7 @@ const prises = (avant: Position, apres: Position, c: Color) => {
  * État des pierres marquées encore sur le plateau, en une phrase : leurs libertés (la plus petite, et si elles diffèrent
  * d'une chaîne à l'autre). Fait lu sur le plateau.
  */
-function etatCibles(pos: Position, cibles: readonly number[]): { phrase: string; min: number } {
+function etatCibles(pos: Position, cibles: readonly number[], sien = false): { phrase: string; min: number } {
   const vues = new Set<number>(), libs: number[] = [];
   for (const c of cibles) {
     if (!pos.board[c] || vues.has(c)) continue;
@@ -62,7 +64,9 @@ function etatCibles(pos: Position, cibles: readonly number[]): { phrase: string;
     libs.push(g.liberties.size);
   }
   const min = Math.min(...libs);
-  const cle = libs.length === 1 ? (vues.size === 1 ? 'erreur.libertes.pierre' : 'erreur.libertes.groupe')
+  // #554 : pierres marquées des deux camps (course aux libertés) : « son groupe marqué », sans ambiguïté.
+  const cle = sien && libs.length === 1 ? 'erreur.libertes.sien'
+    : libs.length === 1 ? (vues.size === 1 ? 'erreur.libertes.pierre' : 'erreur.libertes.groupe')
     : libs.every(l => l === min) ? 'erreur.libertes.chacun' : 'erreur.libertes.auMoins';
   return { phrase: t(cle, { n: min }), min };
 }
@@ -104,6 +108,8 @@ export interface ErreurComprise {
   pos: Position;
   /** Une phrase courte, faite de faits lus sur le plateau. */
   phrase: string;
+  /** Ce que tu devais faire (mesures) : sauver tes pierres (vivre, seki) ou prendre les siennes (tuer, course). */
+  but: 'prendre' | 'sauver';
 }
 
 const nomCouleur = (c: Color) => t(c === 1 ? 'erreur.noir' : 'erreur.blanc');
@@ -112,24 +118,40 @@ const nomCouleur = (c: Color) => t(c === 1 ? 'erreur.noir' : 'erreur.blanc');
  * Points que le texte relu du problème fait jouer à l'adversaire : ceux qui suivent son nom (« Blanc s'allonge en B1 »).
  * Essayés en premier, pour que le plateau montre la réponse dont parle le texte quand elle est prouvée.
  */
-export function pointsDuTexte(pz: Puzzle, adv: Color): number[] {
-  const texte = pz.refutation;
+export function pointsDuTexte(pz: Puzzle, adv: Color, faux = -1): number[] {
+  return repliquesDuTexte(pz.refutation, nomCouleur(adv), faux, pz.size);
+}
+
+const POINT = '[A-HJ-T](?:1[0-9]|[1-9])';
+/** Réplique réservée à certaines erreurs : « ou D1 si tu as joué E1 ou C1 », « or D1 if you played E1 or C1 ». */
+const CONDITION = new RegExp(`\\b(?:ou (${POINT}) si tu as joué|or (${POINT}) if you played) (${POINT}(?:(?: ou | or )${POINT})*)\\b`, 'g');
+
+/**
+ * #554 : points que le texte `texte` fait jouer à l'adversaire (nommé `adv`) après le coup faux `faux`. La réplique
+ * réservée à cette erreur d'abord (« Blanc joue G1, ou D1 si tu as joué E1 » : D1 après E1), puis les points cités
+ * après son nom, sans ceux des répliques réservées (aux autres erreurs) ni les coups qu'elles citent.
+ */
+export function repliquesDuTexte(texte: string | null, adv: string, faux: number, size: number): number[] {
   if (!texte) return [];
-  const i = texte.indexOf(nomCouleur(adv));
+  const i = texte.indexOf(adv);
   if (i < 0) return [];
-  const out: number[] = [];
-  for (const m of texte.slice(i).matchAll(/\b([A-HJ-T])(1[0-9]|[1-9])\b/g)) {
-    try { out.push(fromLabel(m[0], pz.size)); } catch { /* hors du plateau : ignoré */ }
+  const suite = texte.slice(i), out: number[] = [];
+  const lire = (l: string) => { try { const p = fromLabel(l, size); if (p >= 0) out.push(p); } catch { /* hors du plateau : ignoré */ } };
+  for (const m of suite.matchAll(CONDITION)) {
+    const si = m[3].split(/ ou | or /);
+    if (faux >= 0 && si.some(l => { try { return fromLabel(l, size) === faux; } catch { return false; } })) lire(m[1] ?? m[2]);
   }
-  return out;
+  for (const m of suite.replace(CONDITION, '').matchAll(new RegExp(`\\b${POINT}\\b`, 'g'))) lire(m[0]);
+  return [...new Set(out)];
 }
 
 /**
  * Ordre des réponses essayées : celles que nomme le texte du problème, puis les bonnes réponses (« le point clé de ton
  * adversaire est ton point clé »), puis l'ordre naturel. Seules les réponses prouvées sont gardées.
  */
-const candidats = (pos: Position, pz: Puzzle, ordre: number[]) =>
-  [...new Set([...pointsDuTexte(pz, pos.toPlay), ...pz.answers, ...ordre])].filter(m => m >= 0 && !pos.board[m]);
+const candidats = (pos: Position, pz: Puzzle, ordre: number[], local = false) =>
+  [...new Set([...pointsDuTexte(pz, pos.toPlay, pos.lastMove ?? -1), ...pz.answers, ...(local ? ordre.slice(0, ordre.indexOf(-1)) : ordre)])]
+    .filter(m => m >= 0 && !pos.board[m]);
 
 /**
  * Comprendre un coup faux (#549) : la réponse de l'adversaire qui le réfute, prouvée par le lecteur exact, et sa phrase.
@@ -137,7 +159,19 @@ const candidats = (pos: Position, pz: Puzzle, ordre: number[]) =>
  * la lecture dépasse son budget : le lecteur garde alors le texte du problème.
  */
 export function comprendreErreur(pz: Puzzle, faux: number, c: Compteur = compteur()): ErreurComprise | null {
-  const but = butDe(pz);
+  if (pz.answers.includes(faux)) return null;
+  // #554 : vie et mort, seki, course aux libertés : réplique prouvée hors ligne, figée dans refutations-locales.gen.ts.
+  // Ce fichier fait foi pour ses problèmes : rien n'y est relu en direct (la lecture hors ligne va plus loin).
+  if (REFUTATIONS_LOCALES[pz.id]) return erreurFigee(pz, faux);
+  return comprendreParCapture(pz, faux, c);
+}
+
+/**
+ * Lecture de capture (#549) : réponse prouvée par le lecteur exact de capture, ou null. En direct dans l'app (borne de
+ * temps), et hors ligne pour figer les réfutations (#554, sans borne de temps, joueur maître du ko). `local` : réponses
+ * au contact seulement (texte, bonnes réponses, libertés des pierres marquées et leurs voisins), jamais un coup loin.
+ */
+export function comprendreParCapture(pz: Puzzle, faux: number, c: Compteur, local = false, but = butDe(pz)): ErreurComprise | null {
   if (!but || pz.answers.includes(faux)) return null;
   const depart = startOf(pz).pos;
   const apresFaux = joue(depart, faux);
@@ -147,13 +181,13 @@ export function comprendreErreur(pz: Puzzle, faux: number, c: Compteur = compteu
     // Combien de coups te restait-il avec le bon coup ? Le faux doit les avoir perdus.
     const k = coupsDuBonCoup(pz, depart, but.cibles, c);
     if (k === null || prise(apresFaux, but.cibles, adv)) return null;
-    for (const m of candidats(apresFaux, pz, ordreDefense(apresFaux, but.cibles))) {
+    for (const m of candidats(apresFaux, pz, ordreDefense(apresFaux, but.cibles), local)) {
       const r = joue(apresFaux, m);
       if (!r) continue;
       const v = attaquantPrend(r, but.cibles, k, c);
       if (v === null) return null;
       if (v) continue;
-      return { faux, reponse: m, apresFaux, pos: r, phrase: phrasePrendre(apresFaux, r, m, but.cibles, adv) };
+      return { faux, reponse: m, apresFaux, pos: r, phrase: phrasePrendre(apresFaux, r, m, but.cibles, adv), but: but.type };
     }
     return null;
   }
@@ -166,28 +200,89 @@ export function comprendreErreur(pz: Puzzle, faux: number, c: Compteur = compteu
   // La réponse que nomme le texte du problème d'abord, si elle gagne aussi, même moins vite (« Blanc joue F5 : ta pierre
   // reste en atari ») : le plateau montre alors ce que dit le texte.
   const kMax = echelle ? K_ECHELLE : K_MAX;
-  for (const m of pointsDuTexte(pz, adv)) {
+  for (const m of pointsDuTexte(pz, adv, faux)) {
     const r = apresFaux.board[m] ? null : joue(apresFaux, m);
     if (!r || defenseurEchoue(r, but.cibles, kMax - 1, c, echelle) !== true) continue;
-    const phrase = t(prise(r, but.cibles, moi) ? 'erreur.sauver.prise' : 'erreur.sauver.perdue', { couleur: nomCouleur(adv), point: toLabel(m, pz.size) });
-    return { faux, reponse: m, apresFaux, pos: r, phrase };
+    return { faux, reponse: m, apresFaux, pos: r, phrase: phraseSauver(r, m, but.cibles, moi, adv), but: but.type };
   }
-  for (const m of candidats(apresFaux, pz, ordreDefense(apresFaux, but.cibles))) {
+  for (const m of candidats(apresFaux, pz, ordreDefense(apresFaux, but.cibles), local)) {
     const r = joue(apresFaux, m);
     if (!r) continue;
     const v = defenseurEchoue(r, but.cibles, k - 1, c, echelle);
     if (v === null) return null;
     if (!v) continue;
-    const phrase = t(prise(r, but.cibles, moi) ? 'erreur.sauver.prise' : 'erreur.sauver.perdue', { couleur: nomCouleur(adv), point: toLabel(m, pz.size) });
-    return { faux, reponse: m, apresFaux, pos: r, phrase };
+    return { faux, reponse: m, apresFaux, pos: r, phrase: phraseSauver(r, m, but.cibles, moi, adv), but: but.type };
   }
   return null;
 }
 
-function phrasePrendre(avant: Position, apres: Position, m: number, cibles: readonly number[], adv: Color): string {
+const PREUVE_DU_CODE = { m: 'mort', y: 'sansYeux', v: 'vit', i: 'imprenable', c: 'course', p: 'prendre', s: 'sauver' } as const;
+/** Preuve d'une réplique figée (src/go/refutation-locale.ts) : ce qui est sûr après elle, quoi que tu joues. */
+export type PreuveFigee = (typeof PREUVE_DU_CODE)[keyof typeof PREUVE_DU_CODE];
+
+/**
+ * #554 : réplique figée hors ligne (src/go/refutations-locales.gen.ts, outils/refutationsLocales.ts) au coup faux
+ * `faux` : `undefined` si le problème n'en a pas, `null` si rien n'est prouvé pour ce coup. `cible` : ton groupe
+ * (vivre, course) ou le sien (tuer).
+ */
+export function repliqueFigee(pz: Puzzle, faux: number): { reponse: number; preuve: PreuveFigee; cible: number } | null | undefined {
+  const r = REFUTATIONS_LOCALES[pz.id];
+  if (!r) return undefined;
+  const code = r.sauf?.[toLabel(faux, pz.size)] ?? r.defaut;
+  const preuve = PREUVE_DU_CODE[code.slice(-1) as keyof typeof PREUVE_DU_CODE];
+  if (!preuve) return null;
+  const cible = r.cible ?? r.a;
+  return { reponse: fromLabel(code.slice(0, -1), pz.size), preuve, cible: cible ? fromLabel(cible, pz.size) : -1 };
+}
+
+/** Coup faux expliqué par une réplique figée, ou null (pas de réplique figée, ou position qui ne correspond plus). */
+function erreurFigee(pz: Puzzle, faux: number): ErreurComprise | null {
+  const f = repliqueFigee(pz, faux);
+  if (!f) return null;
+  const apresFaux = joue(startOf(pz).pos, faux);
+  const r = apresFaux && !apresFaux.board[f.reponse] ? joue(apresFaux, f.reponse) : null;
+  if (!apresFaux || !r) return null;
+  const adv = apresFaux.toPlay, { marked } = startOf(pz);
+  // Lecture de capture figée : même phrase qu'en direct (#549).
+  if (f.preuve === 'prendre') {
+    // Course où les deux camps sont marqués : les pierres à prendre sont les siennes.
+    const siennes = marked.filter(p => apresFaux.board[p] === adv), sien = siennes.length < marked.length;
+    return { faux, reponse: f.reponse, apresFaux, pos: r, phrase: phrasePrendre(apresFaux, r, f.reponse, siennes, adv, sien), but: 'prendre' };
+  }
+  if (f.preuve === 'sauver') return { faux, reponse: f.reponse, apresFaux, pos: r, phrase: phraseSauver(r, f.reponse, marked, pz.toPlay, adv), but: 'sauver' };
+  const sauver = f.preuve === 'mort' || f.preuve === 'sansYeux';
+  return { faux, reponse: f.reponse, apresFaux, pos: r, phrase: phraseLocale(pz, apresFaux, r, f.reponse, f.preuve, f.cible), but: sauver ? 'sauver' : 'prendre' };
+}
+
+/**
+ * Phrase d'une réplique figée : le geste (faits lus sur le plateau : prise, faux œil, point que tu devais jouer), puis
+ * l'issue que la preuve garantit. Rien d'autre.
+ */
+function phraseLocale(pz: Puzzle, avant: Position, apres: Position, m: number, preuve: Exclude<PreuveFigee, 'prendre' | 'sauver'>, cible: number): string {
+  const adv = avant.toPlay, moi = pz.toPlay, couleur = nomCouleur(adv), point = toLabel(m, pz.size);
+  const n = prises(avant, apres, moi);
+  const oeil = preuve === 'mort' || preuve === 'sansYeux' ? fauxOeilCree(avant, apres, cible) : -1;
+  const geste = n > 0 ? t('erreur.prendre.prise', { couleur, point, n })
+    : oeil >= 0 ? t('erreur.vm.fauxOeil', { couleur, point, oeil: toLabel(oeil, pz.size) })
+    : pz.answers.includes(m) ? t('erreur.vm.pointCle', { couleur, point })
+    : t('erreur.vm.joue', { couleur, point });
+  const pris = apres.board[cible] !== avant.board[cible];
+  const issue = preuve === 'mort' ? t(pris ? 'erreur.vm.pris' : 'erreur.vm.mort')
+    : preuve === 'sansYeux' ? t('erreur.vm.sansYeux')
+    : preuve === 'vit' ? t(aDeuxYeux(apres, cible) ? 'erreur.vm.deuxYeux' : 'erreur.vm.vit')
+    : preuve === 'imprenable' ? t('erreur.vm.imprenable')
+    : t(pris ? 'erreur.vm.coursePris' : 'erreur.vm.course');
+  return `${geste} ${issue}`;
+}
+
+function phraseSauver(apres: Position, m: number, cibles: readonly number[], moi: Color, adv: Color): string {
+  return t(prise(apres, cibles, moi) ? 'erreur.sauver.prise' : 'erreur.sauver.perdue', { couleur: nomCouleur(adv), point: toLabel(m, apres.size) });
+}
+
+function phrasePrendre(avant: Position, apres: Position, m: number, cibles: readonly number[], adv: Color, sien = false): string {
   const point = toLabel(m, apres.size), couleur = nomCouleur(adv);
   const n = prises(avant, apres, (3 - adv) as Color);
-  const etat = etatCibles(apres, cibles).phrase;
+  const etat = etatCibles(apres, cibles, sien).phrase;
   const geste = n > 0 ? t('erreur.prendre.prise', { couleur, point, n })
     : relie(avant, apres, m, cibles) ? t('erreur.prendre.relie', { couleur, point })
     : t('erreur.prendre.repond', { couleur, point });
