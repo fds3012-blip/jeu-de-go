@@ -206,7 +206,7 @@ const L_YEUX_COURSE_C = [...V.slice(0, 6), 'OOOOOXXXX', '.XXXXOOOO', '.XXXX.O.O'
 // blanche s'ouvre en F5, point neutre ; `Q` : une autre partie finie, la dame en E6.
 const L_CHINE_DAME = L_COMPTE.map((r, i) => (i === 4 ? '....X.O..' : r));
 const L_CHINE_Q = ['...XO....', '...XO....', '...XO....', '...X.O...', '...XO....', '...XO....', '...XO....', '...XO....', '...XO....'];
-// Lire l'échelle : ta pierre E5 est en atari, prise dans une échelle (celle de la leçon 3, couleurs inversées).
+// Lire l'échelle (après le filet, qui montre déjà une échelle cassée) : ta pierre E5 est en atari, prise dans une échelle (celle de la leçon 3, couleurs inversées).
 // `CASSE` : ta pierre F2 est sur le chemin ; `Q` : la première position en miroir ; `T` : l'échelle noire de la leçon 3,
 // commencée (atari D5), avec deux pierres blanches, G2 sur le chemin et J3 à côté.
 const L_COURIR = [...V.slice(0, 3), '....O....', '...OSO...', '...O.....', ...V.slice(0, 3)];
@@ -241,11 +241,15 @@ const L_KO0 = ['X.XXOOO.O', 'XXXXOOOOO', 'XXXXOOOOO', 'XXXXOOO.O', 'XXX.XOOOO', 
 const L_KO_PRIS = L_KO0.map((r, i) => (i === 4 ? 'XXXO.OOOO' : r));
 const L_KO_M = L_KO_PRIS.map(r => [...r].reverse().join(''));
 const L_KO_FIN = L_KO_PRIS.map((r, i) => (i === 4 ? 'XXX.XOOOO' : i === 8 ? 'XXXOOOOOO' : r));
+// Le handicap (#547) : les pierres d'avance de Noir, sur les hoshi du 9 × 9, dans l'ordre de l'appli (handicapPoints de
+// src/go/rules.ts) : G7 et C3, puis G3 et C7, puis le centre E5. Blanc joue ensuite, avec un komi de 0,5.
+const L_HANDI_2 = ['.........', '.........', '......X..', '.........', '.........', '.........', '..X......', '.........', '.........'];
+const L_HANDI_4 = ['.........', '.........', '..X...X..', '.........', '.........', '.........', '..X...X..', '.........', '.........'];
 export const CHAPITRES = [
   { id: 'c1', titre: 'Les bases', intro: 'Sept leçons courtes pour jouer ta première partie.', fin: 'Tu connais les règles du go.', lecons: ['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7'] },
   // Chapitre en cours d'écriture (`complet: false`) : sa dernière leçon ne ferme pas encore le chapitre.
-  { id: 'c2', titre: 'L’ouverture', intro: 'Où poser tes premières pierres.', lecons: ['l8', 'l27', 'l29', 'l30', 'l31'], complet: false },
-  { id: 'c3', titre: 'Capturer et sauver', intro: 'Des pièges pour prendre plus de pierres.', lecons: ['l42', 'l9', 'l10', 'l11', 'l26', 'l39', 'l40'], complet: false },
+  { id: 'c2', titre: 'L’ouverture', intro: 'Où poser tes premières pierres.', lecons: ['l8', 'l46', 'l27', 'l29', 'l30', 'l31'], complet: false },
+  { id: 'c3', titre: 'Capturer et sauver', intro: 'Des pièges pour prendre plus de pierres.', lecons: ['l9', 'l42', 'l10', 'l11', 'l26', 'l39', 'l40'], complet: false },
   { id: 'c4', titre: 'Vie et mort', intro: 'Quand un groupe vit, quand il meurt.', lecons: ['l12', 'l13', 'l14', 'l17', 'l24', 'l44', 'l25', 'l37'], complet: false },
   { id: 'c5', titre: 'Fin de partie et comptage', intro: 'Finir proprement, puis compter juste.', lecons: ['l15', 'l16', 'l41', 'l22', 'l23', 'l32', 'l33', 'l38', 'l45'], complet: false },
   { id: 'c6', titre: 'Formes et tesuji', intro: 'Les bonnes formes et les coups malins du go.', lecons: ['l18', 'l43', 'l19', 'l20', 'l21', 'l34', 'l35', 'l36'], complet: false }
@@ -391,6 +395,19 @@ export const LESSONS = [
         { points: lignes12(['F3', 'G2', 'G4', 'H3', 'F7', 'G6', 'G8', 'H7', 'B3', 'C2', 'C4', 'D3', 'B7', 'C6', 'C8', 'D7']), ...BAS }
       ] }
   ] },
+  { id: 'l46', title: 'Le handicap', desc: 'Des pierres d’avance pour jouer à égalité', steps: [
+    { kind: 'info', rows: V, geste: { pose: 'G7' }, demo: [{ pose: 'G7', couleur: 'B' }, { pose: 'C3', couleur: 'B' }],
+      text: 'Handicap (pierres d’avance) : pose la première au point vert, un hoshi (point étoile).' },
+    { kind: 'quiz', rows: L_HANDI_2,
+      text: 'Deux pierres de handicap posées. Qui joue le coup suivant ?', choices: ['Noir', 'Blanc'], answer: 1,
+      ok: 'Blanc : tes pierres d’avance comptent comme tes premiers coups.', no: 'Noir a déjà posé ses pierres d’avance : à Blanc de jouer.' },
+    { kind: 'touche', rows: L_HANDI_4, accept: ['E5'],
+      text: 'Quatre coins pris. Touche le point de la cinquième pierre.',
+      ok: 'Oui, E5 : le hoshi du centre.', no: 'Les coins sont pris. Il reste un hoshi, au centre.' },
+    { kind: 'quiz', rows: L_HANDI_2,
+      text: 'Partie à handicap : combien de komi pour Blanc ?', choices: ['0,5', '6,5', '7,5'], answer: 0,
+      ok: '0,5 : juste de quoi éviter l’égalité. Noir a déjà son avance.', no: 'Noir a déjà son avance en pierres : le komi est réduit à 0,5.' }
+  ] },
   { id: 'l27', title: 'Attaquer et défendre', desc: 'La route du centre', steps: [
     { kind: 'info', rows: L_FAIBLE, geste: { pose: 'F4' }, demo: [{ pose: 'F4', couleur: 'B' }],
       text: 'Pierre faible (seule chez l’adversaire) : ferme-lui le centre au point vert.' },
@@ -471,6 +488,18 @@ export const LESSONS = [
         { points: ['F4'], no: 'Trop loin : Blanc coupe tes pierres, ou glisse dessous.' }
       ] }
   ] },
+  { id: 'l9', title: 'Le filet', desc: 'Enfermer une pierre sans la toucher', steps: [
+    { kind: 'info', rows: L_FILET, geste: { pose: 'E6' },
+      demo: [{ pose: 'E6', couleur: 'B' }, { libs: 'E5' }, { pose: 'D5', couleur: 'W' }, { pose: 'D4', couleur: 'B' }, { pose: 'D6', couleur: 'W' }, { pose: 'C6', couleur: 'B' }, { pose: 'D7', couleur: 'W' }],
+      text: 'Atari au point vert ? Elle fuit vers une pierre blanche : sauvée.' },
+    { kind: 'info', rows: L_FILET, geste: { pose: 'D6' },
+      demo: [{ pose: 'D6', couleur: 'B' }, { libs: 'E5' }, { pose: 'D5', couleur: 'W' }, { pose: 'D4', couleur: 'B' }, { pose: 'E6', couleur: 'W' }, { pose: 'F6', couleur: 'B' }],
+      text: 'Filet (geta) : ferme ses sorties au point vert, sans la toucher.' },
+    { kind: 'move', rows: L_FILET_Q, accept: ['F4', 'G4', 'F3'],
+      text: 'À toi : prends la pierre marquée dans un filet.',
+      ok: 'Filet ! Elle a encore deux libertés, mais plus aucune sortie.', no: 'Ne la touche pas : ferme de loin ses deux sorties.',
+      refus: [{ points: ['F5', 'E4'], no: 'En atari, elle s’allonge et l’échelle casse : elle s’échappe.' }] }
+  ] },
   { id: 'l42', title: 'Lire l’échelle', desc: 'Courir, ou laisser la pierre', steps: [
     { kind: 'info', rows: L_COURIR, geste: { pose: 'E4' }, demo: COURIR_1,
       text: 'Ta pierre marquée est en atari. Cours au point vert, pour voir.' },
@@ -484,18 +513,6 @@ export const LESSONS = [
     { kind: 'touche', rows: L_ECHELLE_T, accept: ['G2'],
       text: 'Ton échelle échoue : touche la pierre blanche qui la casse.',
       ok: 'G2 : la pierre marquée la rejoint en zigzag, et s’échappe.', no: 'Suis le zigzag depuis la pierre marquée, vers le bas à droite.' }
-  ] },
-  { id: 'l9', title: 'Le filet', desc: 'Enfermer une pierre sans la toucher', steps: [
-    { kind: 'info', rows: L_FILET, geste: { pose: 'E6' },
-      demo: [{ pose: 'E6', couleur: 'B' }, { libs: 'E5' }, { pose: 'D5', couleur: 'W' }, { pose: 'D4', couleur: 'B' }, { pose: 'D6', couleur: 'W' }, { pose: 'C6', couleur: 'B' }, { pose: 'D7', couleur: 'W' }],
-      text: 'Atari au point vert ? Elle fuit vers une pierre blanche : sauvée.' },
-    { kind: 'info', rows: L_FILET, geste: { pose: 'D6' },
-      demo: [{ pose: 'D6', couleur: 'B' }, { libs: 'E5' }, { pose: 'D5', couleur: 'W' }, { pose: 'D4', couleur: 'B' }, { pose: 'E6', couleur: 'W' }, { pose: 'F6', couleur: 'B' }],
-      text: 'Filet (geta) : ferme ses sorties au point vert, sans la toucher.' },
-    { kind: 'move', rows: L_FILET_Q, accept: ['F4', 'G4', 'F3'],
-      text: 'À toi : prends la pierre marquée dans un filet.',
-      ok: 'Filet ! Elle a encore deux libertés, mais plus aucune sortie.', no: 'Ne la touche pas : ferme de loin ses deux sorties.',
-      refus: [{ points: ['F5', 'E4'], no: 'En atari, elle s’allonge et l’échelle casse : elle s’échappe.' }] }
   ] },
   { id: 'l10', title: 'La prise en retour', desc: 'Donner une pierre pour en prendre trois', steps: [
     { kind: 'info', rows: L_RETOUR, geste: { pose: 'J5' },

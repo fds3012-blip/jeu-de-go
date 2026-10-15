@@ -301,6 +301,14 @@ function motif(id: string, W: string, C: string): ReactElement {
       <path d="M72 60Q50 76 28 60M34 66 28 60 36 56" stroke={W} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
       <circle cx="50" cy="50" r="7" fill={C} stroke={W} strokeWidth="2.6" />
     </>);
+    // Le handicap : quatre pierres aux coins d'un carré, et la cinquième au centre.
+    case 'l46': return (<>
+      <circle cx="32" cy="32" r="7" fill={W} />
+      <circle cx="68" cy="32" r="7" fill={W} />
+      <circle cx="32" cy="68" r="7" fill={W} />
+      <circle cx="68" cy="68" r="7" fill={W} />
+      <circle cx="50" cy="50" r="8" fill={C} stroke={W} strokeWidth="2.6" />
+    </>);
     default: return <circle cx="50" cy="50" r="14" fill={W} />;
   }
 }

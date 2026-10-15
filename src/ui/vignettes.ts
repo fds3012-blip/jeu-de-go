@@ -114,4 +114,6 @@ export const MOTIFS: Record<string, Motif> = {
   l44: { coin: true, noir: [[1, 2], [2, 2], [3, 2]], blanc: [[0, 1], [1, 1], [2, 1], [3, 1], [0, 2], [0, 3]], jade: [[2, 3]] },
   // Les menaces de ko : le ko (jade, point interdit) et l'atari ailleurs, en or.
   l45: { noir: [[0, 1], [1, 0], [1, 2], [3, 3]], blanc: [[2, 1], [1, 1], [2, 0], [2, 2], [2, 3]], or: [[3, 2]] },
+  // Le handicap : quatre pierres noires sur les hoshi, le centre en jade.
+  l46: { noir: [[0, 0], [3, 0], [0, 3], [3, 3]], jade: [[1, 1]], or: [[2, 2]] },
 };

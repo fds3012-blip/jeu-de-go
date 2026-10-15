@@ -44,14 +44,15 @@ export const ACQUIS: Record<string, string> = {
   l38: 'Tu ne suis pas une petite menace : tu joues ailleurs, plus gros.',
   l39: 'Dans une course, tu bouches le dehors d’abord, la liberté commune en dernier.',
   l40: 'Dans une course, ton œil se bouche en dernier : tu bouches le dehors d’abord.',
-  l41: 'Tu sais compter en règle chinoise : territoire, pierres, et la dame qui rapporte.',
+  l41: 'Tu comptes en règle chinoise : territoire, pierres, et la dame qui rapporte.',
   l42: 'Tu lis une échelle avant de courir : sans pierre sur le chemin, tu laisses.',
   l43: 'Tu évites le triangle vide : en ligne, tes pierres gardent plus de libertés.',
-  l45: 'Tu sais gagner un ko : une menace qui oblige Blanc à répondre, puis tu reprends.',
+  l45: 'Tu gagnes un ko : une menace qui oblige Blanc à répondre, puis tu reprends.',
+  l46: 'Tu joues avec un handicap : pierres sur les hoshi, Blanc commence, komi 0,5.',
   l44: 'Au deuxième rang, tu sais compter : six meurent, huit vivent.',
 };
 
-const IDS = ['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7', 'l8', 'l9', 'l10', 'l11', 'l12', 'l13', 'l14', 'l15', 'l16', 'l17', 'l18', 'l19', 'l20', 'l21', 'l22', 'l23', 'l24', 'l25', 'l26', 'l27', 'l29', 'l30', 'l31', 'l32', 'l33', 'l34', 'l35', 'l36', 'l37', 'l38', 'l39', 'l40', 'l41', 'l42', 'l43', 'l44', 'l45'] as const;
+const IDS = ['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7', 'l8', 'l9', 'l10', 'l11', 'l12', 'l13', 'l14', 'l15', 'l16', 'l17', 'l18', 'l19', 'l20', 'l21', 'l22', 'l23', 'l24', 'l25', 'l26', 'l27', 'l29', 'l30', 'l31', 'l32', 'l33', 'l34', 'l35', 'l36', 'l37', 'l38', 'l39', 'l40', 'l41', 'l42', 'l43', 'l44', 'l45', 'l46'] as const;
 const connu = (id: string): id is (typeof IDS)[number] => (IDS as readonly string[]).includes(id);
 
 /** Phrase de fin d'une leçon dans la langue de l'interface (#167) ; une phrase générale si la leçon n'en a pas. */

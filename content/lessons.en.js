@@ -490,5 +490,14 @@ export const LESSONS_EN = {
       refus: ['Forbidden: White just captured. First play a threat elsewhere.'] },
     { text: 'You retook. White has no threat left: end the ko.',
       ok: 'Connected: White can no longer retake. The ko is yours.', no: 'Fill the point where White would retake your stone at E5.' }
+  ] },
+  l46: { title: 'Handicap', desc: 'Stones ahead, for an even game', steps: [
+    { text: 'Handicap (stones ahead): place the first one at the green point, a hoshi (star point).' },
+    { text: 'Two handicap stones placed. Who plays next?', choices: ['Black', 'White'],
+      ok: 'White: your stones ahead count as your first moves.', no: 'Black has already placed its stones ahead: White plays.' },
+    { text: 'Four corners taken. Tap the point of the fifth stone.',
+      ok: 'Yes, E5: the center hoshi.', no: 'The corners are taken. One hoshi is left, in the center.' },
+    { text: 'Handicap game: how much komi does White get?', choices: ['0.5', '6.5', '7.5'],
+      ok: '0.5: just enough to avoid a tie. Black already has its lead.', no: 'Black already has its lead in stones: komi is reduced to 0.5.' }
   ] }
 };

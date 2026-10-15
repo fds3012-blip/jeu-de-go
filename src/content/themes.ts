@@ -165,6 +165,8 @@ export const THEMES_DE_LECON: Readonly<Record<string, readonly Theme[]>> = {
   l44: ['vie-mort'],
   // #547 : les menaces de ko (l45), la série du ko.
   l45: ['ko'],
+  // #547 : le handicap (l46), la série d'ouverture (où poser ses premières pierres).
+  l46: ['ouverture'],
 };
 
 /**

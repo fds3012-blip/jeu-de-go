@@ -160,7 +160,7 @@ export const MOTS: Mot[] = [
   { id: 'pierresMortes', lecon: 'l15', schema: MORTS },
   { id: 'komi', lecon: 'l7' },
   { id: 'passe', lecon: 'l7' },
-  { id: 'handicap', schema: { rows: ['.........', '.........', '..X...X..', '.........', '....X....', '.........', '..X...X..', '.........', '.........'], preuves: [{ hoshi: ['C3', 'G3', 'C7', 'G7', 'E5'] }] } },
+  { id: 'handicap', lecon: 'l46', schema: { rows: ['.........', '.........', '..X...X..', '.........', '....X....', '.........', '..X...X..', '.........', '.........'], preuves: [{ hoshi: ['C3', 'G3', 'C7', 'G7', 'E5'] }] } },
   { id: 'hoshi', schema: { rows: Array<string>(9).fill('.........'), libs: ['C3', 'G3', 'C7', 'G7', 'E5'], preuves: [{ hoshi: ['C3', 'G3', 'C7', 'G7', 'E5'] }] } },
   { id: 'kyuDan' },
   { id: 'doubleAtari', lecon: 'l3', schema: { rows: ['.....', '.XOX.', '...OX', '.....', '.....'], coup: 'C3', preuves: [{ doubleAtari: 'C3' }] } },

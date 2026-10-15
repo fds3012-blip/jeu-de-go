@@ -19,7 +19,8 @@ import { imagesDemo, mots } from '../content/demo';
 import { ACQUIS } from '../content/acquis';
 import { THEMES_DE_LECON } from '../content/themes';
 import { fromRows } from './position';
-import { groupAt, isLegal, neighbors, play, type Position } from './rules';
+import { groupAt, handicapPoints, isLegal, neighbors, newPosition, play, type Position } from './rules';
+import { KOMI_HANDICAP, komiDeLaPartie } from '../app/reglagesPartie';
 import { score } from './score';
 import { meilleursCoups, valeursDesCoups } from './preuve-fin-de-partie';
 import { fromLabel, toLabel } from './coords';
@@ -63,7 +64,7 @@ function ouverts(pos: Position): number[] {
 }
 
 const LENT = 60_000;
-const IDS = ['l41', 'l42', 'l43', 'l44', 'l45'];
+const IDS = ['l41', 'l42', 'l43', 'l44', 'l45', 'l46'];
 
 describe('leçons 41 et suivantes : place dans le programme (#547)', () => {
   it('chaque leçon a 4 à 6 étapes, sa phrase de fin et sa série de pratique', () => {
@@ -76,12 +77,14 @@ describe('leçons 41 et suivantes : place dans le programme (#547)', () => {
   });
   it('chaque leçon est à sa place dans son chapitre ; l’ordre du chemin suit les chapitres', () => {
     const c = Object.fromEntries(CHAPITRES.map(x => [x.id, x.lecons.map(l => l.id)]));
-    // Lire l'échelle ouvre « Capturer et sauver », avant le filet qui s'en sert.
-    expect(c.c3.slice(0, 2)).toEqual(['l42', 'l9']);
+    // Lire l'échelle suit le filet, qui montre déjà une échelle cassée par une pierre sur le chemin.
+    expect(c.c3.slice(0, 3)).toEqual(['l9', 'l42', 'l10']);
     // Le deuxième rang suit « Agrandir ou réduire » (le bord de l'espace), avant les groupes du coin.
     expect(c.c4.slice(4, 7)).toEqual(['l24', 'l44', 'l25']);
     // Compter en règle chinoise suit « Compter une partie ».
     expect(c.c5.slice(0, 3)).toEqual(['l15', 'l16', 'l41']);
+    // Le handicap suit les premiers coups : où poser ses pierres d'avance.
+    expect(c.c2.slice(0, 2)).toEqual(['l8', 'l46']);
     // Les menaces de ko ferment « Fin de partie » : elles comparent la menace et le ko, comme jouer ailleurs (l38).
     expect(c.c5.slice(-2)).toEqual(['l38', 'l45']);
     // Le triangle vide suit les bonnes formes.
@@ -457,4 +460,36 @@ describe('leçon 45 : les menaces de ko', () => {
     expect(isLegal(w, at('D5'))).toBe(true);
     expect(ok(play(w, at('D5'))).board[at('E5')]).toBe(0);
   }, LENT);
+});
+
+describe('leçon 46 : le handicap', () => {
+  const hoshi = (n: number) => handicapPoints(9, n).map(p => lab(p));
+
+  it('l46.1 : les deux premières pierres de handicap de l’appli sont G7 puis C3, des hoshi ; la démonstration les pose dans cet ordre', () => {
+    expect(hoshi(2)).toEqual(['G7', 'C3']);
+    const s = step<Info>('l46', 0);
+    expect(s.demo!.map(t => ('pose' in t ? t.pose : ''))).toEqual(hoshi(2));
+    expect(images(s).at(-1)!.board).toEqual(avec(step<Quiz>('l46', 1).rows).board);
+  });
+
+  it('l46.2 : après les pierres de handicap, Blanc joue (règles du moteur)', () => {
+    const pos = newPosition(9, handicapPoints(9, 2));
+    expect(pos.board).toEqual(avec(step<Quiz>('l46', 1).rows).board);
+    expect(pos.toPlay).toBe(2);
+    const q = step<Quiz>('l46', 1);
+    expect(q.choices[q.answer]).toBe('Blanc');
+  });
+
+  it('l46.3 : quatre pierres prennent les quatre coins ; la cinquième va au centre, E5', () => {
+    const t = step<Touche>('l46', 2);
+    expect(newPosition(9, handicapPoints(9, 4)).board).toEqual(avec(t.rows).board);
+    expect(hoshi(5).slice(4)).toEqual(t.accept);
+  });
+
+  it('l46.4 : avec un handicap, le komi de la partie est 0,5', () => {
+    expect(KOMI_HANDICAP).toBe(0.5);
+    for (const auto of [0.5, 6.5]) expect(komiDeLaPartie({ handicap: 2, komi: 'auto', regles: 'japanese' }, auto)).toBe(0.5);
+    const q = step<Quiz>('l46', 3);
+    expect(q.choices[q.answer]).toBe('0,5');
+  });
 });

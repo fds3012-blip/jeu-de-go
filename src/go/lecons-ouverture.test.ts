@@ -45,7 +45,8 @@ describe('leçons d’ouverture et de joseki : forme (#16)', () => {
   it('trois leçons, à la fin du chapitre de l’ouverture, après les leçons 8 et 27', () => {
     const c2 = CHAPITRES.find(c => c.id === 'c2')!;
     expect(c2.titre).toBe('L’ouverture');
-    expect(c2.lecons.map(l => l.id)).toEqual(['l8', 'l27', ...IDS]);
+    // #547 : le handicap (l46) s'intercale après la leçon 8, sans changer cet ordre.
+    expect(c2.lecons.map(l => l.id).filter(id => id !== 'l46')).toEqual(['l8', 'l27', ...IDS]);
     expect(IDS.map(id => lecon(id).taille)).toEqual([13, 19, 19]);
   });
   it('chaque leçon : 3 à 6 étapes, au plus une étape sans geste, et sa phrase de fin, son thème, sa fiche', () => {

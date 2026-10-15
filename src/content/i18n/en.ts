@@ -1254,6 +1254,7 @@ export const en = {
   'acquis.l43': 'You avoid the empty triangle: in a line, your stones keep more liberties.',
   'acquis.l44': 'On the second line, you know the count: six die, eight live.',
   'acquis.l45': 'You can win a ko: a threat White must answer, then you retake.',
+  'acquis.l46': 'You can play a handicap game: stones on the hoshi, White starts, komi 0.5.',
   'acquis.defaut': 'One more lesson in your pocket.',
   'lecteur.progression': 'Lesson progress',
   'lecteur.lireExplication': 'Read the explanation',
