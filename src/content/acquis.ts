@@ -50,9 +50,12 @@ export const ACQUIS: Record<string, string> = {
   l45: 'Tu gagnes un ko : une menace qui oblige Blanc à répondre, puis tu reprends.',
   l46: 'Tu joues avec un handicap : pierres sur les hoshi, Blanc commence, komi 0,5.',
   l44: 'Au deuxième rang, tu sais compter : six meurent, huit vivent.',
+  l47: 'Avec un mur, tu ne joues pas collé à lui : tu joues loin.',
+  l48: 'Tu relies ta coupe avant Blanc, et tu coupes la sienne.',
+  l49: 'Coin vide : tu envahis. Coins fermés : tu réduis par-dessus.',
 };
 
-const IDS = ['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7', 'l8', 'l9', 'l10', 'l11', 'l12', 'l13', 'l14', 'l15', 'l16', 'l17', 'l18', 'l19', 'l20', 'l21', 'l22', 'l23', 'l24', 'l25', 'l26', 'l27', 'l29', 'l30', 'l31', 'l32', 'l33', 'l34', 'l35', 'l36', 'l37', 'l38', 'l39', 'l40', 'l41', 'l42', 'l43', 'l44', 'l45', 'l46'] as const;
+const IDS = ['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7', 'l8', 'l9', 'l10', 'l11', 'l12', 'l13', 'l14', 'l15', 'l16', 'l17', 'l18', 'l19', 'l20', 'l21', 'l22', 'l23', 'l24', 'l25', 'l26', 'l27', 'l29', 'l30', 'l31', 'l32', 'l33', 'l34', 'l35', 'l36', 'l37', 'l38', 'l39', 'l40', 'l41', 'l42', 'l43', 'l44', 'l45', 'l46', 'l47', 'l48', 'l49'] as const;
 const connu = (id: string): id is (typeof IDS)[number] => (IDS as readonly string[]).includes(id);
 
 /** Phrase de fin d'une leçon dans la langue de l'interface (#167) ; une phrase générale si la leçon n'en a pas. */

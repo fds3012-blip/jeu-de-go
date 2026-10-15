@@ -88,9 +88,9 @@ les outils du dépôt.
 | Le triangle vide (formes faibles) | l18 enseigne les formes solides ; la forme faible la plus courante manque. | Oui, pour ce qui se compte : les libertés. |
 | Le deuxième rang (« six meurent, huit vivent ») | Vie et mort sur le bord, notion classique vers 15 kyu ; le chapitre « Vie et mort » n'a que des formes de coin et d'yeux. | Oui : preuve de vie et mort en zone fermée, sur 13 × 13. |
 | Le handicap | L'appli propose 2 à 9 pierres ; aucune leçon ne dit où elles vont, qui commence, quel komi. | Oui : `handicapPoints`, `newPosition`, réglages de l'appli. |
-| L'extension depuis une pierre ou un mur | Notion d'ouverture centrale (deux pierres : saut de trois ; mur : ne pas s'étendre trop près). | Non pour l'instant : jugement de stratégie, il faudrait de nouvelles positions KataGo figées (réseau absent du conteneur, voir 4). |
-| L'invasion et la réduction simples | Notion de milieu de partie. | Non : même raison. |
-| Couper et relier dans l'ouverture | Quand couper vaut la peine dépend de toute la position. | Non : même raison. |
+| L'extension depuis une pierre ou un mur | Notion d'ouverture centrale (deux pierres : saut de trois ; mur : ne pas s'étendre trop près). | Le mur : oui, par positions KataGo figées (#553, l47, voir 5). Depuis une pierre seule : aucune position nette trouvée (voir 4). |
+| L'invasion et la réduction simples | Notion de milieu de partie. | Oui, par positions KataGo figées (#553, l49). |
+| Couper et relier dans l'ouverture | Quand couper vaut la peine dépend de toute la position. | Oui, par positions KataGo figées (#553, l48). |
 | Le jeté (`l28`) | | Recherches de #16 sans forme lisible ; toujours en attente. |
 | Le double sente, le sente inverse | Fin de partie de club. | Recherches de #16 et #539 sans écart net. |
 
@@ -123,9 +123,41 @@ d'une leçon ratés à J+1, J+3, J+7 (retrieval practice + spaced practice), san
 
 | Leçon | Ce qui manque |
 | --- | --- |
-| L'extension (depuis une pierre, depuis un mur) | De nouvelles positions KataGo figées, sur le modèle de `src/go/preuves-katago.json` (8 symétries, seuils de `preuvesKataGo.ts`). Le réseau g170 n'est pas dans ce conteneur (`npm run fetch-model`), et TensorFlow natif est conseillé (sinon des heures de calcul). |
-| L'invasion et la réduction | Même chose, sur 13 × 13. |
-| Couper et relier dans l'ouverture | Même chose. |
+| L'extension depuis une pierre seule | Faite en #553 pour le mur (l47). Depuis une pierre seule, en 13 × 13, KataGo ne départage pas net les distances d'extension (écarts de moins d'un point, ou coups de coin préférés) : pas de leçon tant qu'aucune position ne donne MARGE. |
 | Une fausse menace de ko (menace trop petite) | Recherche menée pour l45 : aucune forme trouvée dans le temps imparti où un petit atari est ignoré dans les deux comptes, sans créer un second ko. |
 | Le triangle vide dans une course | Recherche aléatoire de courses où seul le prolongement droit gagne : trop lente dans le temps imparti ; la leçon s'en tient aux libertés, qui se comptent exactement. |
 | Le jeté, le double sente, le sente inverse | Voir `docs/produit/programme-apprentissage.md`. |
+
+## 5. Leçons 47 à 49 : l'ouverture prouvée par KataGo (#553)
+
+Ces notions ne se prouvent pas par une lecture exacte. La preuve passe par des positions KataGo figées, avec la méthode
+et l'outil des leçons 29 à 31 (#16) :
+
+- commande : `npm run fetch-model`, puis `TFJS_NODE_DIR=<dossier de @tensorflow/tfjs-node> npm run preuves-katago -- l47 l48 l49`
+  (`outils/preuvesKataGo.ts`, un seul processus, TensorFlow natif sur CPU, 40 minutes) ;
+- réseau : g170-b6c96-s175395328-d26788732, celui de l'appli (`public/reseaux/`) ; komi 6,5, règle japonaise ;
+  800 visites à la racine, 400 après chaque coup jugé ; quatre symétries du plateau analysées chacune à part ;
+- fixture : `src/go/preuves-katago.json` (10 positions ajoutées, les 18 anciennes inchangées) ;
+- seuils (`src/go/preuvesKataGo.ts`) : une réponse acceptée est à 1 point au plus du meilleur coup ; un coup refusé perd
+  au moins 2 points de plus que la moins bonne réponse (1 point dans chaque symétrie) ; une démonstration, 1,5 point ;
+- tests : le jugement commun est rejoué par `src/go/lecons-ouverture.test.ts` ; chaque affirmation propre aux textes
+  (« bien plus », « trop près », « sous le hoshi », « coupe », « séparées », « sur la 2e ligne ») par
+  `src/go/lecons-47-plus.test.ts`. Parcours : `e2e/lecons-47-plus.spec.ts` (l48 jouée en entier).
+
+Pendant la recherche (crible rapide : 2 symétries, 400 et 200 visites), plusieurs idées « évidentes » ont été
+rejetées par KataGo et ne sont pas enseignées : relier
+tout de suite après un regard sur une forme 3-4 (C1 : une autre réponse vaut 5 points de plus), couper un saut en
+diagonale (C2 : perd 3 points), réduire au centre un camp aux coins fermés (les épaules et les contacts valent plus),
+s'étendre de deux depuis une pierre seule sur le bord (les coups de coin valent 2 à 4 points de plus).
+
+Écarts : moyenne des quatre symétries, en points, par rapport au meilleur coup du plateau entier.
+
+| Leçon | Place | Idée | Preuve |
+| --- | --- | --- | --- |
+| **l47 Le mur** | « L'ouverture », après l31 | Avec un mur, on ne joue pas collé à lui : on joue loin, ici sous le hoshi blanc. | Démo K3 à 0,30 du meilleur (E11, hors du cadre). Question : K11 à 0,48, E11 (contre le mur) à 6,66, soit 6,2 de moins que K11 (au moins 5,7 dans chaque symétrie). Exercice en miroir : D3 (0,48) et C3 (0,42) acceptés ; refusés J3 −6,66, H3 −3,76, H4 −4,06, tous à deux pas du mur au plus. |
+| **l48 Couper et relier** | après l47 | Blanc vise le dernier point de liaison d'un keima (C5) : le prendre avant lui ; à l'envers, couper. | Relier : C5 et L5 sont chacun le meilleur coup ; refusés K4 −16,88 et J6 −10,77, réplique L5 de KataGo dans les quatre symétries (« Blanc coupe en L5 »), après laquelle il ne reste aucun point de liaison. Couper : C5 et L5 meilleurs ; refusés K4 −12,21 et J6 −6,42, réplique L5 partout. |
+| **l49 Envahir ou réduire** | après l48 | Un hoshi seul, coin vide : entrer dans le coin (san-san). Coins fermés : réduire par-dessus, pas dessous. | Invasion : C3 à 0,57 du meilleur (C4) ; exercice dans l'autre coin, L4 (0,03), L3 (0,62), K3 (0,64) acceptés, G2 (2e ligne, au milieu) −2,94, soit 2,3 de moins que K3. Réduction : G4 meilleur coup ; question en quart de tour, D7 meilleur, B8 (2e ligne) −4,45. |
+
+Rappel et révision : chaque leçon a sa série de pratique (`ouverture` pour l47 et l49, `relier-couper` pour l48) ;
+la révision espacée n'est pas changée. Le glossaire gagne quatre mots, reliés à leur leçon : mur, couper et relier,
+invasion, réduction.

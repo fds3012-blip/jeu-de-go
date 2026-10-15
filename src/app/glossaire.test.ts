@@ -114,6 +114,8 @@ const JARGON: [RegExp, IdMot][] = [
   [/\bfilet\b/i, 'filet'], [/prise en retour/i, 'priseEnRetour'], [/pierres? mortes?/i, 'pierresMortes'], [/\bdame\b|point neutre/i, 'dame'],
   [/suicide/i, 'suicide'], [/\bgroupes?\b/i, 'groupe'], [/point vital/i, 'pointVital'],
   [/san-san/i, 'sanSan'], [/komoku/i, 'komoku'], [/kakari/i, 'kakari'], [/\btsuke\b/i, 'tsuke'], [/kosumi/i, 'kosumi'], [/watari/i, 'watari'], [/tenuki/i, 'tenuki'], [/\bmiai\b/i, 'miai'],
+  // #553 : leçons 47 à 49.
+  [/\bmurs?\b/i, 'mur'], [/\bcoup(e|es|er|é|ées?)\b/i, 'couper'], [/invasion|envahi/i, 'invasion'], [/réduction|\bréduis\b/i, 'reduction'],
 ];
 
 describe('chaque mot du go employé dans l’interface a sa définition (#362)', () => {
