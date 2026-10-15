@@ -309,6 +309,24 @@ function motif(id: string, W: string, C: string): ReactElement {
       <circle cx="68" cy="68" r="7" fill={W} />
       <circle cx="50" cy="50" r="8" fill={C} stroke={W} strokeWidth="2.6" />
     </>);
+    // Le mur : trois pierres en colonne, et la flèche qui part loin d'elles.
+    case 'l47': return (<>
+      <g fill={W}><circle cx="32" cy="34" r="7" /><circle cx="32" cy="50" r="7" /><circle cx="32" cy="66" r="7" /></g>
+      <path d="M46 66H70M63 59 70 66 63 73" stroke={W} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+    </>);
+    // Couper et relier : deux pierres en diagonale, et le point qui les relie, creusé.
+    case 'l48': return (<>
+      <circle cx="36" cy="64" r="9" fill={W} />
+      <circle cx="64" cy="36" r="9" fill={W} />
+      <circle cx="36" cy="36" r="8" fill={C} stroke={W} strokeWidth="2.6" />
+      <path d="M48 52 52 48" stroke={W} strokeWidth="3" strokeLinecap="round" />
+    </>);
+    // Envahir ou réduire : l'angle du goban, une pierre qui entre au coin, une autre qui reste au-dessus.
+    case 'l49': return (<>
+      <path d="M26 24V76H78" stroke={W} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <circle cx="42" cy="62" r="8" fill={W} />
+      <circle cx="60" cy="34" r="8" fill={C} stroke={W} strokeWidth="2.6" />
+    </>);
     default: return <circle cx="50" cy="50" r="14" fill={W} />;
   }
 }
