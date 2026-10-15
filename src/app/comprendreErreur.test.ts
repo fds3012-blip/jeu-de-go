@@ -3,6 +3,8 @@
 import { describe, expect, it } from 'vitest';
 import LOT_A from '../content/lots/a-capture';
 import LOT_N from '../content/lots/n-debutants';
+import LOT_X from '../content/lots/x-ko-ouverture';
+import { refutation } from './aide';
 import { BASE_PUZZLES, PUZZLES_16 } from '../content/puzzles';
 import { parsePuzzles, startOf, type Puzzle } from '../data/puzzles';
 import { fromLabel, toLabel } from '../go/coords';
@@ -109,6 +111,20 @@ describe('comprendre un coup faux (prendre)', () => {
   });
   it('une bonne réponse n’a pas de réfutation', () => {
     expect(comprendreErreur(pz('a01'), at('E4'))).toBeNull();
+  });
+});
+
+describe('problèmes de ko : comportement d’avant (CI de #551)', () => {
+  it('x01, x02, x03 : pas de but lu, pas de réponse calculée ; la réponse au point clé de #237 reste', () => {
+    const lot = parsePuzzles(LOT_X);
+    for (const id of ['x01', 'x02', 'x03']) {
+      const p = lot.find(x => x.id === id)!;
+      expect(butDe(p), id).toBeNull();
+      expect(comprendreErreur(p, coupsFaux(p)[0], compteur()), id).toBeNull();
+      expect(solutionComplete(p, compteur()), id).toBeNull();
+    }
+    const x03 = lot.find(x => x.id === 'x03')!;
+    expect(toLabel(refutation(x03, at('C5'))!.reponse!, 9)).toBe('F5');
   });
 });
 

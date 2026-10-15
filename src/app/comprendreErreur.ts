@@ -13,16 +13,23 @@
 import { groupAt, play, type Color, type Position } from '../go/rules';
 import { fromLabel, toLabel } from '../go/coords';
 import {
-  attaquantPrend, compteur, coupsAvantPrise, coupsPourPrendre, defenseurEchoue, ordreDefense, prise, BUDGET_LECTURE, DELAI_LECTURE, K_ECHELLE, type Compteur
+  attaquantPrend, compteur, coupsAvantPrise, coupsPourPrendre, defenseurEchoue, ordreDefense, prise, BUDGET_LECTURE, DELAI_LECTURE, K_ECHELLE, K_MAX, type Compteur
 } from '../go/lecture-capture';
 import { startOf, type Puzzle } from '../data/puzzles';
 import { t } from '../content/i18n/secondaires';
+import { THEME_DU_PROBLEME } from '../content/themes';
 
 /** But lisible sur le plateau : prendre les pierres marquées de l'adversaire, ou sauver les tiennes. */
 export type But = { type: 'prendre' | 'sauver'; cibles: number[] };
 
-/** Le but d'un problème, d'après ses pierres marquées ; `null` s'il n'en a pas, ou des deux couleurs. */
+/**
+ * Le but d'un problème, d'après ses pierres marquées ; `null` s'il n'en a pas, s'il en a des deux couleurs, ou si c'est
+ * un problème de ko. Le ko (CI de #551) : le lecteur ne connaît que le ko simple, sans menaces de ko ailleurs ; « ta pierre
+ * ne peut plus être sauvée » pourrait y être faux dans une vraie partie. Ces problèmes gardent le comportement d'avant
+ * (#237 : réponse au point clé, texte relu du problème).
+ */
 export function butDe(pz: Puzzle): But | null {
+  if (THEME_DU_PROBLEME[pz.id] === 'ko') return null;
   const { pos, marked } = startOf(pz);
   if (!marked.length) return null;
   const couleurs = new Set(marked.map(m => pos.board[m]));
@@ -156,6 +163,15 @@ export function comprendreErreur(pz: Puzzle, faux: number, c: Compteur = compteu
   let k = coupsPourPrendre(apresFaux, but.cibles, c);
   if (k === null) { echelle = true; k = coupsPourPrendre(apresFaux, but.cibles, c, K_ECHELLE, true); }
   if (k === null) return null;
+  // La réponse que nomme le texte du problème d'abord, si elle gagne aussi, même moins vite (« Blanc joue F5 : ta pierre
+  // reste en atari ») : le plateau montre alors ce que dit le texte.
+  const kMax = echelle ? K_ECHELLE : K_MAX;
+  for (const m of pointsDuTexte(pz, adv)) {
+    const r = apresFaux.board[m] ? null : joue(apresFaux, m);
+    if (!r || defenseurEchoue(r, but.cibles, kMax - 1, c, echelle) !== true) continue;
+    const phrase = t(prise(r, but.cibles, moi) ? 'erreur.sauver.prise' : 'erreur.sauver.perdue', { couleur: nomCouleur(adv), point: toLabel(m, pz.size) });
+    return { faux, reponse: m, apresFaux, pos: r, phrase };
+  }
   for (const m of candidats(apresFaux, pz, ordreDefense(apresFaux, but.cibles))) {
     const r = joue(apresFaux, m);
     if (!r) continue;
