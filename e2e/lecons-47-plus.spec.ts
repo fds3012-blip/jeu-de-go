@@ -19,7 +19,7 @@ test('leçon 48, couper et relier, ouverte depuis le chemin et jouée en entier'
   await page.addInitScript(p => localStorage.setItem('go.lecons.v1', JSON.stringify(p)), AVANT);
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
-  await expect(page.getByRole('button', { name: `Leçon ${numero('l48')} : Couper et relier, prochaine étape` })).toBeAttached();
+  await expect(page.getByRole('button', { name: `Leçon ${numero('l48')} : Couper et relier, 13 × 13, prochaine étape` })).toBeAttached();
   await page.locator('.cta-chemin').click();
   await expect(page.getByRole('heading', { name: 'Couper et relier' })).toBeVisible();
   await expect(plateau(page, 13)).toHaveAttribute('data-fenetre');
