@@ -112,4 +112,6 @@ export const MOTIFS: Record<string, Motif> = {
   l43: { noir: [[1, 1], [2, 1], [2, 0]], or: [[1, 0]], jade: [[3, 1]] },
   // Le deuxième rang : des pierres noires sur la 2e ligne, Blanc au-dessus et au bout, le point vital en jade.
   l44: { coin: true, noir: [[1, 2], [2, 2], [3, 2]], blanc: [[0, 1], [1, 1], [2, 1], [3, 1], [0, 2], [0, 3]], jade: [[2, 3]] },
+  // Les menaces de ko : le ko (jade, point interdit) et l'atari ailleurs, en or.
+  l45: { noir: [[0, 1], [1, 0], [1, 2], [3, 3]], blanc: [[2, 1], [1, 1], [2, 0], [2, 2], [2, 3]], or: [[3, 2]] },
 };

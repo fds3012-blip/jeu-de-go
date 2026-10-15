@@ -38,6 +38,7 @@ export const LECONS_INDEX: readonly (readonly [id: string, titre: string, desc: 
   ["l32", "La valeur d’un coup", "Compter ce que chacun gagne", 4],
   ["l33", "Le sente avant le gote", "Même petit, le sente passe d’abord", 5],
   ["l38", "Jouer ailleurs", "Une petite menace peut attendre", 5],
+  ["l45", "Les menaces de ko", "Obliger Blanc à répondre, puis reprendre", 5],
   ["l18", "Les bonnes formes", "Bouche du tigre et bambou", 5],
   ["l43", "Le triangle vide", "Trois pierres en coin, une liberté perdue", 5],
   ["l19", "Les pierres qui coupent", "Prends celles qui séparent tes groupes", 4],
@@ -54,6 +55,6 @@ export const CHAPITRES_INDEX: readonly { id: string; titre: string; intro: strin
   { id: "c2", titre: "L’ouverture", intro: "Où poser tes premières pierres.", complet: false, lecons: ["l8","l27","l29","l30","l31"] },
   { id: "c3", titre: "Capturer et sauver", intro: "Des pièges pour prendre plus de pierres.", complet: false, lecons: ["l42","l9","l10","l11","l26","l39","l40"] },
   { id: "c4", titre: "Vie et mort", intro: "Quand un groupe vit, quand il meurt.", complet: false, lecons: ["l12","l13","l14","l17","l24","l44","l25","l37"] },
-  { id: "c5", titre: "Fin de partie et comptage", intro: "Finir proprement, puis compter juste.", complet: false, lecons: ["l15","l16","l41","l22","l23","l32","l33","l38"] },
+  { id: "c5", titre: "Fin de partie et comptage", intro: "Finir proprement, puis compter juste.", complet: false, lecons: ["l15","l16","l41","l22","l23","l32","l33","l38","l45"] },
   { id: "c6", titre: "Formes et tesuji", intro: "Les bonnes formes et les coups malins du go.", complet: false, lecons: ["l18","l43","l19","l20","l21","l34","l35","l36"] },
 ];

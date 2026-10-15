@@ -479,5 +479,16 @@ export const LESSONS_EN = {
       ok: 'No: answer White’s move, you live. Six die, eight live.', no: 'Eight stones have enough room: after any white move, you can live.' },
     { text: 'Your turn: kill these seven white stones on the second line.',
       ok: 'Taken at the end: White can no longer live.', no: 'Play on the first line, at one end, next to your stone.' }
+  ] },
+  l45: { title: 'Threats in a ko', desc: 'Make White answer, then retake', steps: [
+    { text: 'White takes the ko at D5. Retaking right away: forbidden.' },
+    { text: 'A ko threat (a move that must be answered): atari at the green point.' },
+    { text: 'After C1, what if White ends the ko instead of answering?', choices: ['You capture four stones', 'White loses nothing'],
+      ok: 'You capture four stones at H1: more than the ko. White must answer.', no: 'Its four stones are in atari: if White doesn’t connect at H1, you capture them.' },
+    { text: 'White just took the ko at F5. Find your threat.',
+      ok: 'Atari on four stones: White connects, then you retake the ko.', no: 'Look for an atari that White must answer.',
+      refus: ['Forbidden: White just captured. First play a threat elsewhere.'] },
+    { text: 'You retook. White has no threat left: end the ko.',
+      ok: 'Connected: White can no longer retake. The ko is yours.', no: 'Fill the point where White would retake your stone at E5.' }
   ] }
 };

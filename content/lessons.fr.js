@@ -233,13 +233,21 @@ const rang2 = (n, inverse = false) => {
   return inverse ? rows.map(r => [...r].reverse().map(c => ({ X: 'O', O: 'X' })[c] ?? c).join('')) : rows;
 };
 const CADRE_RANG2 = { coin: 'bas-gauche', cote: 10 };
+// Les menaces de ko : partie presque finie, chaque camp a ses deux yeux (B9 et B2, H9 et H6). Ta pierre E5 est en
+// atari : Blanc la prend en D5, c'est un ko. En bas, quatre pierres blanches (D1 à G1) n'ont que deux libertés : l'atari
+// C1 oblige Blanc à relier en H1. `KO` : après la prise blanche ; `M` : la même partie en miroir ; `FIN` : tu as repris,
+// Blanc n'a plus de menace et joue ailleurs.
+const L_KO0 = ['X.XXOOO.O', 'XXXXOOOOO', 'XXXXOOOOO', 'XXXXOOO.O', 'XXX.XOOOO', 'XXXXOOOOO', 'XXXXXXXOO', 'X.XXXXXOO', 'XX.OOOO.O'];
+const L_KO_PRIS = L_KO0.map((r, i) => (i === 4 ? 'XXXO.OOOO' : r));
+const L_KO_M = L_KO_PRIS.map(r => [...r].reverse().join(''));
+const L_KO_FIN = L_KO_PRIS.map((r, i) => (i === 4 ? 'XXX.XOOOO' : i === 8 ? 'XXXOOOOOO' : r));
 export const CHAPITRES = [
   { id: 'c1', titre: 'Les bases', intro: 'Sept leçons courtes pour jouer ta première partie.', fin: 'Tu connais les règles du go.', lecons: ['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7'] },
   // Chapitre en cours d'écriture (`complet: false`) : sa dernière leçon ne ferme pas encore le chapitre.
   { id: 'c2', titre: 'L’ouverture', intro: 'Où poser tes premières pierres.', lecons: ['l8', 'l27', 'l29', 'l30', 'l31'], complet: false },
   { id: 'c3', titre: 'Capturer et sauver', intro: 'Des pièges pour prendre plus de pierres.', lecons: ['l42', 'l9', 'l10', 'l11', 'l26', 'l39', 'l40'], complet: false },
   { id: 'c4', titre: 'Vie et mort', intro: 'Quand un groupe vit, quand il meurt.', lecons: ['l12', 'l13', 'l14', 'l17', 'l24', 'l44', 'l25', 'l37'], complet: false },
-  { id: 'c5', titre: 'Fin de partie et comptage', intro: 'Finir proprement, puis compter juste.', lecons: ['l15', 'l16', 'l41', 'l22', 'l23', 'l32', 'l33', 'l38'], complet: false },
+  { id: 'c5', titre: 'Fin de partie et comptage', intro: 'Finir proprement, puis compter juste.', lecons: ['l15', 'l16', 'l41', 'l22', 'l23', 'l32', 'l33', 'l38', 'l45'], complet: false },
   { id: 'c6', titre: 'Formes et tesuji', intro: 'Les bonnes formes et les coups malins du go.', lecons: ['l18', 'l43', 'l19', 'l20', 'l21', 'l34', 'l35', 'l36'], complet: false }
 ];
 export const LESSONS = [
@@ -843,6 +851,23 @@ export const LESSONS = [
       text: 'Blanc avance en J5. Réponds-tu, ou joues-tu ailleurs ?',
       ok: 'Ailleurs : tu prends deux pierres, et sa menace reste petite.', no: 'Sa menace vaut un point. Cherche plus gros.',
       refus: [{ points: ['J6'], no: 'Tu bloques un point, et Blanc relie en A5 : trois de moins.' }] }
+  ] },
+  { id: 'l45', title: 'Les menaces de ko', desc: 'Obliger Blanc à répondre, puis reprendre', steps: [
+    { kind: 'info', rows: L_KO0, demo: [{ pose: 'D5', couleur: 'W' }, { interdit: 'E5', couleur: 'B' }],
+      text: 'Blanc prend le ko en D5. Reprendre tout de suite : interdit.' },
+    { kind: 'info', rows: L_KO0, avant: [{ pose: 'D5', couleur: 'W' }], geste: { pose: 'C1' },
+      demo: [{ pose: 'C1', couleur: 'B' }, { atari: ['D1'] }, { pose: 'H1', couleur: 'W' }, { pose: 'E5', couleur: 'B' }],
+      text: 'Menace de ko (coup qui oblige à répondre) : atari au point vert.' },
+    { kind: 'quiz', rows: L_KO_PRIS,
+      text: 'Après C1, si Blanc ferme le ko au lieu de répondre ?', choices: ['Tu prends quatre pierres', 'Il ne perd rien'], answer: 0,
+      ok: 'Tu prends quatre pierres en H1 : plus que le ko. Blanc doit répondre.', no: 'Ses quatre pierres sont en atari : s’il ne relie pas en H1, tu les prends.' },
+    { kind: 'move', rows: L_KO_M, accept: ['G1'],
+      text: 'Blanc vient de prendre le ko en F5. Trouve ta menace.',
+      ok: 'Atari sur quatre pierres : Blanc relie, puis tu reprends le ko.', no: 'Cherche un atari qui oblige Blanc à répondre.',
+      refus: [{ points: ['E5'], no: 'Interdit : Blanc vient de prendre. Joue d’abord une menace ailleurs.' }] },
+    { kind: 'move', rows: L_KO_FIN, accept: ['D5'],
+      text: 'Tu as repris. Blanc n’a plus de menace : ferme le ko.',
+      ok: 'Relié : Blanc ne peut plus reprendre. Le ko est à toi.', no: 'Remplis le point où Blanc reprendrait ta pierre E5.' }
   ] },
   { id: 'l18', title: 'Les bonnes formes', desc: 'Bouche du tigre et bambou', steps: [
     { kind: 'touche', rows: L_COUPE, accept: ['D5'],

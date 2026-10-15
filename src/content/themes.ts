@@ -163,6 +163,8 @@ export const THEMES_DE_LECON: Readonly<Record<string, readonly Theme[]>> = {
   l42: ['echelle'],
   l43: ['relier-couper'],
   l44: ['vie-mort'],
+  // #547 : les menaces de ko (l45), la série du ko.
+  l45: ['ko'],
 };
 
 /**

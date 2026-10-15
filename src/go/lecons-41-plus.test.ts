@@ -9,6 +9,11 @@
 // - Le triangle vide (l43) : libertés comptées par le moteur, pour chaque coup qui prolonge les pierres marquées.
 // - Le deuxième rang (l44) : preuve exhaustive de vie et mort en zone fermée (src/go/preuve-vie-mort.ts, zone vérifiée
 //   par defautsDeZone ; un ko n'est jamais compté comme une preuve).
+// - Les menaces de ko (l45) : minimax exact de src/go/preuve-fin-de-partie.ts (ko simple du moteur, bornes basse et
+//   haute égales), en comptage par surfaces et en règle japonaise. Zone : tous les points vides sauf les yeux d'un seul
+//   point de chaque camp (B9, B2, H9, H6), plus les pierres qui peuvent être prises ; un coup dans son propre œil ne
+//   change aucun compte et, comme une passe, ne fait que lever l'interdit du ko (le test vérifie que les points laissés
+//   hors de la zone sont bien ces yeux).
 import { CHAPITRES, LESSONS, explicationRefus, type LessonStep } from '../content/lessons';
 import { imagesDemo, mots } from '../content/demo';
 import { ACQUIS } from '../content/acquis';
@@ -16,7 +21,7 @@ import { THEMES_DE_LECON } from '../content/themes';
 import { fromRows } from './position';
 import { groupAt, isLegal, neighbors, play, type Position } from './rules';
 import { score } from './score';
-import { meilleursCoups } from './preuve-fin-de-partie';
+import { meilleursCoups, valeursDesCoups } from './preuve-fin-de-partie';
 import { fromLabel, toLabel } from './coords';
 import { coupsGagnants, defautsDeZone, evaluer } from './preuve-vie-mort';
 import { canEscape, ladderWorks } from './tactics';
@@ -58,7 +63,7 @@ function ouverts(pos: Position): number[] {
 }
 
 const LENT = 60_000;
-const IDS = ['l41', 'l42', 'l43', 'l44'];
+const IDS = ['l41', 'l42', 'l43', 'l44', 'l45'];
 
 describe('leçons 41 et suivantes : place dans le programme (#547)', () => {
   it('chaque leçon a 4 à 6 étapes, sa phrase de fin et sa série de pratique', () => {
@@ -77,6 +82,8 @@ describe('leçons 41 et suivantes : place dans le programme (#547)', () => {
     expect(c.c4.slice(4, 7)).toEqual(['l24', 'l44', 'l25']);
     // Compter en règle chinoise suit « Compter une partie ».
     expect(c.c5.slice(0, 3)).toEqual(['l15', 'l16', 'l41']);
+    // Les menaces de ko ferment « Fin de partie » : elles comparent la menace et le ko, comme jouer ailleurs (l38).
+    expect(c.c5.slice(-2)).toEqual(['l38', 'l45']);
     // Le triangle vide suit les bonnes formes.
     expect(c.c6.slice(0, 3)).toEqual(['l18', 'l43', 'l19']);
     expect(LESSONS.map(l => l.id)).toEqual(CHAPITRES.flatMap(x => x.lecons.map(l => l.id)));
@@ -88,8 +95,8 @@ describe('leçons 41 et suivantes : place dans le programme (#547)', () => {
         if (s.kind === 'info' && s.geste && 'pose' in s.geste) expect(s.text, `${id}.${i + 1}`).toContain('point vert');
       });
       expect(lecon(id).steps.filter(s => s.kind === 'info' && !s.geste).length, id).toBeLessThanOrEqual(1);
-      // On pose ou on touche dès le premier écran.
-      const s0 = lecon(id).steps[0];
+      // On pose ou on touche dès le premier écran (l45 : la prise blanche se regarde, on pose à l'écran suivant).
+      const s0 = lecon(id).steps[id === 'l45' ? 1 : 0];
       expect(s0.kind === 'info' ? !!s0.geste : true, id).toBe(true);
     }
   });
@@ -363,5 +370,91 @@ describe('leçon 44 : le deuxième rang', () => {
     const { pos, cible, zone, n } = cas(m.rows, false);
     expect(n).toBe(7);
     expect(lb(coupsGagnants(pos, cible, zone, 'tuer'))).toEqual([...m.accept].sort());
+  }, LENT);
+});
+
+describe('leçon 45 : les menaces de ko', () => {
+  const K0 = step<Info>('l45', 0).rows;
+  const regles = ['chinese', 'japanese'] as const;
+  /**
+   * Zone de la preuve : tout point vide qui n'est pas un œil d'un seul point (ses voisins sont tous des pierres d'une
+   * même chaîne), plus les pierres qui peuvent être prises.
+   */
+  const zoneDe = (pos: Position, prenables: string[]) => {
+    const nb = neighbors(9);
+    const oeil = (p: number) => {
+      const chaine = pos.board[nb[p][0]] ? new Set(groupAt(pos.board, 9, nb[p][0]).stones) : new Set<number>();
+      return nb[p].every(q => chaine.has(q));
+    };
+    return [...new Set([...vides(pos).filter(p => !oeil(p)), ...prenables.map(l => at(l))])].sort((x, y) => x - y);
+  };
+  const yeuxHors = (pos: Position, zone: number[]) => labels(vides(pos).filter(p => !zone.includes(p)));
+  /** La position après la prise blanche en D5, avec l'interdit du ko (rejouée, pas recopiée). */
+  const apresPrise = (rows: string[], prise: string) => ok(play({ ...avec(rows), toPlay: 2 }, at(prise)));
+  const meilleurs = (pos: Position, zone: number[], regle: 'chinese' | 'japanese') => labels(meilleursCoups(pos, zone, { regle, profondeur: 20 }));
+  const PRENABLES = ['D5', 'E5', 'D1', 'E1', 'F1', 'G1'];
+
+  it('l45.1 : Blanc prend en D5 ; ta pierre E5 part ; la reprise immédiate est interdite (ko)', () => {
+    const p = apresPrise(K0, 'D5');
+    expect(p.board[at('E5')]).toBe(0);
+    expect(p.captures[2]).toBe(1);
+    expect(play(p, at('E5'))).toBe('ko');
+    expect(p.board).toEqual(avec(step<Quiz>('l45', 2).rows).board);
+    const im = images(step<Info>('l45', 0)).at(-1)!;
+    expect(im.interdit).toBe(at('E5'));
+  });
+
+  it('l45.2 : seuls les yeux restent hors de la zone ; Noir au trait : C1, l’atari, est le seul meilleur coup ; Blanc doit relier en H1 ; puis Noir reprend en E5', () => {
+    const p = apresPrise(K0, 'D5'), z = zoneDe(p, PRENABLES);
+    expect(yeuxHors(p, z)).toEqual(['B2', 'B9', 'H6', 'H9']);
+    for (const regle of regles) {
+      expect(meilleurs(p, z, regle), regle).toEqual(['C1']);
+      const c1 = ok(play(p, at('C1')));
+      expect(libs(c1, at('D1')).size).toBe(1);
+      expect(meilleurs(c1, z, regle), regle).toEqual(['H1']);
+      expect(meilleurs(ok(play(c1, at('H1'))), z, regle), regle).toEqual(['E5']);
+    }
+    const s = step<Info>('l45', 1), fin = images(s).at(-1)!;
+    expect(fin.board).toEqual(ok(play(ok(play(ok(play(p, at('C1'))), at('H1'))), at('E5'))).board);
+    expect(fin.board[at('D5')]).toBe(0);
+  }, LENT);
+
+  it('l45.3 : si Blanc ferme le ko au lieu de répondre, Noir prend quatre pierres en H1, et Blanc y perd plus (deux comptes)', () => {
+    const p = apresPrise(K0, 'D5'), z = zoneDe(p, PRENABLES), c1 = ok(play(p, at('C1')));
+    const ferme = ok(play(c1, at('E5')));
+    const prise = ok(play(ferme, at('H1')));
+    expect(prise.captures[1] - ferme.captures[1]).toBe(4);
+    for (const regle of regles) {
+      const v = valeursDesCoups(c1, z, { regle, profondeur: 19 });
+      // Valeur Noir moins Blanc : Blanc choisit le plus petit. Fermer le ko lui coûte plus que relier.
+      expect(v.get(at('E5'))!, regle).toBeGreaterThan(v.get(at('H1'))!);
+    }
+    const q = step<Quiz>('l45', 2);
+    expect(q.choices[q.answer]).toBe('Tu prends quatre pierres');
+  }, LENT);
+
+  it('l45.4 : la même partie en miroir, Blanc vient de prendre en F5 : G1 est le seul meilleur coup ; reprendre en E5 est interdit', () => {
+    const m = step<Move>('l45', 3);
+    expect(m.rows).toEqual(step<Quiz>('l45', 2).rows.map(r => [...r].reverse().join('')));
+    const avant = K0.map(r => [...r].reverse().join(''));
+    const p = apresPrise(avant, 'F5'), z = zoneDe(p, ['F5', 'E5', 'C1', 'D1', 'E1', 'F1']);
+    expect(p.board).toEqual(avec(m.rows).board);
+    expect(play(p, at('E5'))).toBe('ko');
+    expect(yeuxHors(p, z)).toEqual(['B6', 'B9', 'H2', 'H9']);
+    for (const regle of regles) expect(meilleurs(p, z, regle), regle).toEqual(m.accept);
+    expect(m.refus![0].points).toEqual(['E5']);
+  }, LENT);
+
+  it('l45.5 : tu as repris, Blanc a joué ailleurs : relier en D5 est le seul meilleur coup ; sinon Blanc reprend', () => {
+    const m = step<Move>('l45', 4);
+    const p = apresPrise(K0, 'D5');
+    const fin = ok(play(ok(play(ok(play(ok(play(p, at('C1'))), at('H1'))), at('E5'))), -1));
+    expect(fin.board).toEqual(avec(m.rows).board);
+    const z = zoneDe(fin, PRENABLES);
+    for (const regle of regles) expect(meilleurs(fin, z, regle), regle).toEqual(m.accept);
+    // Sans relier, Blanc peut reprendre en D5 : c'est encore un ko.
+    const w = ok(play(fin, -1));
+    expect(isLegal(w, at('D5'))).toBe(true);
+    expect(ok(play(w, at('D5'))).board[at('E5')]).toBe(0);
   }, LENT);
 });

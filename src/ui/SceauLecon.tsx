@@ -295,6 +295,12 @@ function motif(id: string, W: string, C: string): ReactElement {
       <circle cx="70" cy="48" r="7" fill={W} />
       <path d="M22 70H78" stroke={W} strokeWidth="3" strokeLinecap="round" fill="none" />
     </>);
+    // Les menaces de ko : deux flèches qui se répondent (prendre, reprendre), et l'éclair de la menace.
+    case 'l45': return (<>
+      <path d="M28 40Q50 24 72 40M66 34 72 40 64 44" stroke={W} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <path d="M72 60Q50 76 28 60M34 66 28 60 36 56" stroke={W} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <circle cx="50" cy="50" r="7" fill={C} stroke={W} strokeWidth="2.6" />
+    </>);
     default: return <circle cx="50" cy="50" r="14" fill={W} />;
   }
 }

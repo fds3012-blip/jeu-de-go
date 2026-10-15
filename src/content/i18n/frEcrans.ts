@@ -1003,6 +1003,7 @@ export const frEcrans = {
   'acquis.l42': 'Tu lis une échelle avant de courir : sans pierre sur le chemin, tu laisses.',
   'acquis.l43': 'Tu évites le triangle vide : en ligne, tes pierres gardent plus de libertés.',
   'acquis.l44': 'Au deuxième rang, tu sais compter : six meurent, huit vivent.',
+  'acquis.l45': 'Tu sais gagner un ko : une menace qui oblige Blanc à répondre, puis tu reprends.',
   'acquis.defaut': 'Une leçon de plus dans ta poche.',
   'lecteur.progression': 'Progression de la leçon',
   // #290 : sur un écran bas, l'explication du verdict est repliée pour laisser voir le plateau.
