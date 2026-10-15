@@ -149,9 +149,15 @@ export const PUZZLES_16: PuzzleRow[] = [
 // Lots de problèmes supplémentaires (issue #91) : un fichier par lot dans `lots/`, chacun avec
 // `export default` un tableau de PuzzleRow. Chargés automatiquement : ajouter un lot ne touche pas ce fichier.
 const LOTS = import.meta.glob<{ default: PuzzleRow[] }>('./lots/*.ts', { eager: true });
+/**
+ * Lettre du lot (`a`, `z`, `aa`…), tirée du nom du fichier. #548 : après le lot Z viennent AA, AB… ; trier d'abord par
+ * longueur de la lettre garde chaque nouveau lot à la fin (un tri alphabétique simple rangerait `aa-` entre `a-` et `b-`,
+ * et décalerait tous les jours du Go du jour déjà publiés).
+ */
+const lettreDuLot = (k: string) => /\/lots\/([a-z]+)-/.exec(k)?.[1] ?? '';
 export const LOT_PUZZLES: PuzzleRow[] = Object.keys(LOTS)
   .filter(k => !k.endsWith('.test.ts'))
-  .sort()
+  .sort((a, b) => lettreDuLot(a).length - lettreDuLot(b).length || (a < b ? -1 : a > b ? 1 : 0))
   .flatMap(k => LOTS[k].default);
 
 /**
