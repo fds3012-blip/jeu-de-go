@@ -1,4 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
+import { readFileSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { attendrePierre, jouer, plateau } from './plateau';
 
 // Issue #554 : en vie et mort, un coup faux reçoit la réplique prouvée de Blanc (figée hors ligne,
@@ -6,7 +9,18 @@ import { attendrePierre, jouer, plateau } from './plateau';
 
 const MIDI_PARIS = new Date('2026-09-27T12:00:00+02:00');
 
+// Tous les paliers ouverts : chaque problème de la banque est déjà réussi sur l'appareil, sauf ceux de ces tests.
+const CONTENU = fileURLToPath(new URL('../src/content', import.meta.url));
+const sources = [join(CONTENU, 'puzzles.ts'), ...readdirSync(join(CONTENU, 'lots')).filter(f => f.endsWith('.ts')).map(f => join(CONTENU, 'lots', f))];
+const IDS = sources.flatMap(f => [...readFileSync(f, 'utf8').matchAll(/id: ?'([^']+)', size:/g)].map(m => m[1]));
+
 async function ouvrirProbleme(page: Page, titre: RegExp) {
+  await page.addInitScript(ids => {
+    if (!localStorage.getItem('e2e.seme')) {
+      localStorage.setItem('go.problemes.v1', JSON.stringify(Object.fromEntries(ids.map(id => [id, true]))));
+      localStorage.setItem('e2e.seme', '1');
+    }
+  }, IDS.filter(id => id !== 'q01' && id !== 'q02'));
   await page.clock.setFixedTime(MIDI_PARIS);
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
@@ -17,7 +31,7 @@ async function ouvrirProbleme(page: Page, titre: RegExp) {
   await expect(plateau(page)).toBeVisible();
 }
 
-test('vivre (q01) : Blanc joue au point vital, C1 devient un faux œil, et ton groupe ne peut plus faire deux yeux', async ({ page }) => {
+test('vivre (q01) : Blanc joue en D2, C1 devient un faux œil, et ton groupe ne peut plus faire deux yeux', async ({ page }) => {
   await ouvrirProbleme(page, /^Problème \d+ : Rends ton œil vrai/);
   await jouer(page, 'G2');
   const comprise = page.locator('.verdict [data-erreur-comprise]');
