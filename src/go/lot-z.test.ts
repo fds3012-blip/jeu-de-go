@@ -172,10 +172,11 @@ describe('lot Z : identifiants, énoncés, thèmes, doublons, calendrier, migrat
     for (const p of all) expect(THEME_DU_PROBLEME[p.id], p.id).toBe(THEME[SPEC[p.id].famille]);
   });
 
-  it('le Go du jour garde son ordre : le lot Z, d’un seul tenant, vient juste après le lot Y et ferme le calendrier', () => {
-    const ids = LOT_Z.map(r => r.id);
-    expect(CALENDRIER_GO_DU_JOUR.slice(-ids.length)).toEqual(ids);
-    expect(CALENDRIER_GO_DU_JOUR.indexOf('z01')).toBe(CALENDRIER_GO_DU_JOUR.indexOf('y04') + 1);
+  it('le Go du jour garde son ordre : le lot Z, d’un seul tenant, vient juste après le lot Y, puis le lot AA (#548)', () => {
+    const ids = LOT_Z.map(r => r.id), debut = CALENDRIER_GO_DU_JOUR.indexOf('z01');
+    expect(CALENDRIER_GO_DU_JOUR.slice(debut, debut + ids.length)).toEqual(ids);
+    expect(debut).toBe(CALENDRIER_GO_DU_JOUR.indexOf('y04') + 1);
+    expect(CALENDRIER_GO_DU_JOUR[debut + ids.length]).toBe('aa01');
   });
 
   it('aucun doublon : ni identifiant, ni position (à une rotation ou un miroir près, marques ignorées)', () => {

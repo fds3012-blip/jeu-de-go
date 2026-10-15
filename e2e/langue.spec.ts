@@ -140,7 +140,9 @@ for (const largeur of [390, 320]) {
     // Un problème ouvert : en-tête, consigne, retour.
     await debutant.locator('[data-probleme]').first().click();
     await expect(page.getByRole('button', { name: 'Back to puzzles' })).toBeVisible();
-    await expect(page.locator('.lecteur-nom small')).toHaveText('Puzzle 1');
+    // Le premier problème « Beginner » est aussi le Go du jour certains jours (a01 le 15/10) : son en-tête est alors
+    // « Daily Go #N ». Les deux sont en anglais ; le test ne dépend pas de la date.
+    await expect(page.locator('.lecteur-nom small')).toHaveText(/^(Puzzle 1|Daily Go #\d+)$/);
     await expect(page.getByText(/You play (Black|White)\.$/)).toBeVisible();
     await sansDebordement(page);
     await sansCoupe(page, largeur);
