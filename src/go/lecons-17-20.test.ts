@@ -14,6 +14,8 @@ import { fromLabel, toLabel } from './coords';
 import { SANS_KO, attackerCaptures, captureEn } from './lecteurs-lot-n';
 import { coupsGagnants, defautsDeZone, evaluer, issueApres, yeuxDuGroupe } from './preuve-vie-mort';
 
+/** Leçons d'avant #547 (l1 à l40) : les leçons 41 et suivantes s'intercalent, sans changer cet ordre (src/go/lecons-41-plus.test.ts). */
+const avant547 = (ids: string[]) => ids.filter(id => Number(id.slice(1)) <= 40);
 const N = 9;
 const at = (l: string) => fromLabel(l, N);
 const lab = (p: number) => (p < 0 ? 'passe' : toLabel(p, N));
@@ -47,9 +49,9 @@ describe('leçons 17 à 20 : place dans le programme (#16)', () => {
   });
   it('l17 finit « Vie et mort » ; l18 à l20 forment « Formes et tesuji », chapitre en cours d’écriture', () => {
     const c = Object.fromEntries(CHAPITRES.map(x => [x.id, x]));
-    expect(c.c4.lecons.map(l => l.id).slice(0, 4)).toEqual(['l12', 'l13', 'l14', 'l17']);
+    expect(avant547(c.c4.lecons.map(l => l.id)).slice(0, 4)).toEqual(['l12', 'l13', 'l14', 'l17']);
     expect(c.c6.titre).toBe('Formes et tesuji');
-    expect(c.c6.lecons.map(l => l.id).slice(0, 3)).toEqual(['l18', 'l19', 'l20']);
+    expect(avant547(c.c6.lecons.map(l => l.id)).slice(0, 3)).toEqual(['l18', 'l19', 'l20']);
     expect(c.c6.complet).toBe(false);
     // L'ordre des leçons suit celui du chemin : la leçon suivante est toujours la suivante sur le chemin.
     expect(LESSONS.map(l => l.id)).toEqual(CHAPITRES.flatMap(x => x.lecons.map(l => l.id)));

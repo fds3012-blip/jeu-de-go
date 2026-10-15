@@ -104,4 +104,16 @@ export const MOTIFS: Record<string, Motif> = {
   l39: { coin: true, noir: [[0, 2], [1, 2], [0, 3]], blanc: [[2, 2], [3, 2], [2, 3]], or: [[1, 3]], jade: [[3, 3]] },
   // Les yeux dans la course : un œil de chaque côté (or), le dehors de Blanc à boucher (jade).
   l40: { coin: true, noir: [[0, 2], [1, 2], [1, 3]], blanc: [[2, 2], [3, 2], [3, 3]], or: [[0, 3], [2, 3]], jade: [[3, 1]] },
+  // Compter en règle chinoise : le territoire (or) et la dame à remplir (jade), entre les deux murs.
+  l41: { noir: [[1, 0], [1, 1], [1, 2], [1, 3]], blanc: [[2, 0], [3, 1], [2, 2], [2, 3]], jade: [[2, 1]], cases: { couleur: 'or', points: [[0, 0], [0, 1], [0, 2], [0, 3]] } },
+  // Lire l'échelle : la pierre noire en atari, l'escalier blanc, et la pierre noire sur le chemin (jade : où courir).
+  l42: { noir: [[1, 1], [3, 3]], blanc: [[1, 0], [0, 1], [2, 1], [1, 2]], jade: [[2, 2]] },
+  // Le triangle vide : trois pierres en coin, le coin vide cerclé d'or, la ligne droite en jade.
+  l43: { noir: [[1, 1], [2, 1], [2, 0]], or: [[1, 0]], jade: [[3, 1]] },
+  // Le deuxième rang : des pierres noires sur la 2e ligne, Blanc au-dessus et au bout, le point vital en jade.
+  l44: { coin: true, noir: [[1, 2], [2, 2], [3, 2]], blanc: [[0, 1], [1, 1], [2, 1], [3, 1], [0, 2], [0, 3]], jade: [[2, 3]] },
+  // Les menaces de ko : le ko (jade, point interdit) et l'atari ailleurs, en or.
+  l45: { noir: [[0, 1], [1, 0], [1, 2], [3, 3]], blanc: [[2, 1], [1, 1], [2, 0], [2, 2], [2, 3]], or: [[3, 2]] },
+  // Le handicap : quatre pierres noires sur les hoshi, le centre en jade.
+  l46: { noir: [[0, 0], [3, 0], [0, 3], [3, 3]], jade: [[1, 1]], or: [[2, 2]] },
 };

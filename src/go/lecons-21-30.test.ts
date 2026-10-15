@@ -20,6 +20,8 @@ import { AVEC_KO, SANS_KO, attackerCaptures, captureEn, defenderFails, sauveEn }
 import { meilleursCoups, valeurExacte, valeursDesCoups } from './preuve-fin-de-partie';
 import { coupsGagnants, defautsDeZone, evaluer, issueApres, yeuxDuGroupe } from './preuve-vie-mort';
 
+/** Leçons d'avant #547 (l1 à l40) : les leçons 41 et suivantes s'intercalent, sans changer cet ordre (src/go/lecons-41-plus.test.ts). */
+const avant547 = (ids: string[]) => ids.filter(id => Number(id.slice(1)) <= 40);
 const N = 9;
 const at = (l: string) => fromLabel(l, N);
 const lab = (p: number) => (p < 0 ? 'passe' : toLabel(p, N));
@@ -73,10 +75,10 @@ describe('leçons 21 à 30 : place dans le programme (#16)', () => {
   });
   it('sente et gote, puis le hane, prolongent « Fin de partie et comptage »', () => {
     const c = Object.fromEntries(CHAPITRES.map(x => [x.id, x]));
-    expect(c.c6.lecons.map(l => l.id).slice(0, 4)).toEqual(['l18', 'l19', 'l20', 'l21']);
-    expect(c.c3.lecons.map(l => l.id).slice(0, 4)).toEqual(['l9', 'l10', 'l11', 'l26']);
-    expect(c.c4.lecons.map(l => l.id).slice(0, 6)).toEqual(['l12', 'l13', 'l14', 'l17', 'l24', 'l25']);
-    expect(c.c5.lecons.map(l => l.id).slice(0, 4)).toEqual(['l15', 'l16', 'l22', 'l23']);
+    expect(avant547(c.c6.lecons.map(l => l.id)).slice(0, 4)).toEqual(['l18', 'l19', 'l20', 'l21']);
+    expect(avant547(c.c3.lecons.map(l => l.id)).slice(0, 4)).toEqual(['l9', 'l10', 'l11', 'l26']);
+    expect(avant547(c.c4.lecons.map(l => l.id)).slice(0, 6)).toEqual(['l12', 'l13', 'l14', 'l17', 'l24', 'l25']);
+    expect(avant547(c.c5.lecons.map(l => l.id)).slice(0, 4)).toEqual(['l15', 'l16', 'l22', 'l23']);
     expect(LESSONS.map(l => l.id)).toEqual(CHAPITRES.flatMap(x => x.lecons.map(l => l.id)));
   });
   it('chaque consigne tient en 12 mots ; chaque geste « pose » est sur le point vert ; au plus une étape sans geste', () => {

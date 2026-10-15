@@ -19,7 +19,8 @@
 .chapitre-compte { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 8px; min-height: 24px;
   font-size: var(--fs-legende); font-weight: var(--fw-bold); color: var(--muted); font-variant-numeric: tabular-nums; }
 /* Une mini-pierre par leçon : noire posée, cerclée de jade pour la prochaine, vide pour les autres. */
-.chapitre-pierres { display: inline-flex; gap: 5px; }
+/* #547 : huit leçons par chapitre ou plus : les mini-pierres passent à la ligne au lieu de déborder (zoom 200 %). */
+.chapitre-pierres { display: inline-flex; flex-wrap: wrap; gap: 5px; max-width: 100%; }
 .chapitre-pierres i { width: 10px; height: 10px; border-radius: 50%; box-sizing: border-box; border: 1.5px solid color-mix(in srgb, var(--text) 32%, transparent); }
 .chapitre-pierres .faite { border: 0; background: var(--matiere-noire); box-shadow: 0 0 0 1px var(--pierre-n-bord); }
 .chapitre-pierres .encours { border: 2px solid var(--accent-trait); }

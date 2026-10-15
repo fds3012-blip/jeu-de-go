@@ -270,6 +270,45 @@ function motif(id: string, W: string, C: string): ReactElement {
       <circle cx="70" cy="58" r="10" fill={C} stroke={W} strokeWidth="2.6" />
       <path d="M50 26V44M42 36 50 44 58 36" stroke={W} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
     </>);
+    // Compter en règle chinoise : une pierre et un carré de territoire, posés sur la même balance.
+    case 'l41': return (<>
+      <path d="M26 40H74M50 28V40" stroke={W} strokeWidth="3" strokeLinecap="round" fill="none" />
+      <circle cx="34" cy="60" r="9" fill={W} />
+      <rect x="57" y="51" width="18" height="18" rx="3" fill={C} stroke={W} strokeWidth="2.6" />
+    </>);
+    // Lire l'échelle : l'escalier qui descend, et la pierre qui l'arrête.
+    case 'l42': return (<>
+      <path d="M26 30H38V42H50V54H62" stroke={W} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <circle cx="68" cy="66" r="10" fill={C} stroke={W} strokeWidth="2.6" />
+    </>);
+    // Le triangle vide : trois pierres en coin, le coin vide en anneau.
+    case 'l43': return (<>
+      <circle cx="36" cy="64" r="9" fill={W} />
+      <circle cx="64" cy="64" r="9" fill={W} />
+      <circle cx="64" cy="36" r="9" fill={W} />
+      <circle cx="36" cy="36" r="8" fill="none" stroke={W} strokeWidth="3" />
+    </>);
+    // Le deuxième rang : une rangée de pierres au-dessus de la ligne du bord.
+    case 'l44': return (<>
+      <circle cx="30" cy="48" r="7" fill={W} />
+      <circle cx="50" cy="48" r="7" fill={W} />
+      <circle cx="70" cy="48" r="7" fill={W} />
+      <path d="M22 70H78" stroke={W} strokeWidth="3" strokeLinecap="round" fill="none" />
+    </>);
+    // Les menaces de ko : deux flèches qui se répondent (prendre, reprendre), et l'éclair de la menace.
+    case 'l45': return (<>
+      <path d="M28 40Q50 24 72 40M66 34 72 40 64 44" stroke={W} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <path d="M72 60Q50 76 28 60M34 66 28 60 36 56" stroke={W} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <circle cx="50" cy="50" r="7" fill={C} stroke={W} strokeWidth="2.6" />
+    </>);
+    // Le handicap : quatre pierres aux coins d'un carré, et la cinquième au centre.
+    case 'l46': return (<>
+      <circle cx="32" cy="32" r="7" fill={W} />
+      <circle cx="68" cy="32" r="7" fill={W} />
+      <circle cx="32" cy="68" r="7" fill={W} />
+      <circle cx="68" cy="68" r="7" fill={W} />
+      <circle cx="50" cy="50" r="8" fill={C} stroke={W} strokeWidth="2.6" />
+    </>);
     default: return <circle cx="50" cy="50" r="14" fill={W} />;
   }
 }

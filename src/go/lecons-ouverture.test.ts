@@ -45,7 +45,8 @@ describe('leçons d’ouverture et de joseki : forme (#16)', () => {
   it('trois leçons, à la fin du chapitre de l’ouverture, après les leçons 8 et 27', () => {
     const c2 = CHAPITRES.find(c => c.id === 'c2')!;
     expect(c2.titre).toBe('L’ouverture');
-    expect(c2.lecons.map(l => l.id)).toEqual(['l8', 'l27', ...IDS]);
+    // #547 : le handicap (l46) s'intercale après la leçon 8, sans changer cet ordre.
+    expect(c2.lecons.map(l => l.id).filter(id => id !== 'l46')).toEqual(['l8', 'l27', ...IDS]);
     expect(IDS.map(id => lecon(id).taille)).toEqual([13, 19, 19]);
   });
   it('chaque leçon : 3 à 6 étapes, au plus une étape sans geste, et sa phrase de fin, son thème, sa fiche', () => {
@@ -182,7 +183,7 @@ describe('positions jouables', () => {
       expect(new Set([...accept, ...refus]).size).toBe(accept.length + refus.length);
     }
   });
-  it('les leçons de grand plateau ne sont que ces trois-là', () => {
-    expect(LESSONS_FR.filter((l: Lesson) => (l.taille ?? 9) !== 9).map(l => l.id)).toEqual(IDS);
+  it('les leçons de grand plateau ne sont que ces trois-là (hors l44, prouvée exactement par src/go/lecons-41-plus.test.ts)', () => {
+    expect(LESSONS_FR.filter((l: Lesson) => (l.taille ?? 9) !== 9).map(l => l.id).filter(id => id !== 'l44')).toEqual(IDS);
   });
 });

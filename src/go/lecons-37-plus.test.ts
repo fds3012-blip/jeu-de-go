@@ -21,6 +21,8 @@ import { coupsGagnants, defautsDeZone, evaluer, yeuxDuGroupe } from './preuve-vi
 import { defautsCourse, evaluerCourse, issueCourse } from './preuve-course';
 import { groupAt } from './rules';
 
+/** Leçons d'avant #547 (l1 à l40) : les leçons 41 et suivantes s'intercalent, sans changer cet ordre (src/go/lecons-41-plus.test.ts). */
+const avant547 = (ids: string[]) => ids.filter(id => Number(id.slice(1)) <= 40);
 const N = 9;
 const at = (l: string) => fromLabel(l, N);
 const lab = (p: number) => (p < 0 ? 'passe' : toLabel(p, N));
@@ -74,9 +76,9 @@ describe('leçons 37 et suivantes : place dans le programme (#539)', () => {
   });
   it('les points miai ferment « Vie et mort », jouer ailleurs « Fin de partie » ; l’ordre du chemin suit les chapitres', () => {
     const c = Object.fromEntries(CHAPITRES.map(x => [x.id, x]));
-    expect(c.c5.lecons.map(l => l.id)).toEqual(['l15', 'l16', 'l22', 'l23', 'l32', 'l33', 'l38']);
-    expect(c.c3.lecons.map(l => l.id)).toEqual(['l9', 'l10', 'l11', 'l26', 'l39', 'l40']);
-    expect(c.c4.lecons.map(l => l.id)).toEqual(['l12', 'l13', 'l14', 'l17', 'l24', 'l25', 'l37']);
+    expect(avant547(c.c5.lecons.map(l => l.id))).toEqual(['l15', 'l16', 'l22', 'l23', 'l32', 'l33', 'l38']);
+    expect(avant547(c.c3.lecons.map(l => l.id))).toEqual(['l9', 'l10', 'l11', 'l26', 'l39', 'l40']);
+    expect(avant547(c.c4.lecons.map(l => l.id))).toEqual(['l12', 'l13', 'l14', 'l17', 'l24', 'l25', 'l37']);
     expect(LESSONS.map(l => l.id)).toEqual(CHAPITRES.flatMap(x => x.lecons.map(l => l.id)));
   });
   it('chaque consigne tient en 12 mots ; chaque geste « pose » est sur le point vert ; au plus une étape sans geste', () => {

@@ -62,7 +62,8 @@ describe('leçon 27 : place dans le programme (#16)', () => {
       expect(ACQUIS[id], id).toBeTruthy();
       expect(THEMES_DE_LECON[id]?.length, id).toBeGreaterThan(0);
     }
-    expect(CHAPITRES.find(c => c.id === 'c2')!.lecons.map(l => l.id).slice(0, 2)).toEqual(['l8', 'l27']);
+    // #547 : le handicap (l46) s'intercale entre les leçons 8 et 27.
+    expect(CHAPITRES.find(c => c.id === 'c2')!.lecons.map(l => l.id).filter(id => id !== 'l46').slice(0, 2)).toEqual(['l8', 'l27']);
     expect(LESSONS.map(l => l.id)).toEqual(CHAPITRES.flatMap(x => x.lecons.map(l => l.id)));
   });
   it('chaque consigne tient en 12 mots ; chaque geste « pose » est sur le point vert ; au plus une étape sans geste', () => {
