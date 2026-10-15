@@ -110,3 +110,55 @@ chaque coup noir de la solution (« Blanc ne peut plus sauver ses pierres dans l
 2. `probleme_ouvert`, pour lire l'entonnoir ouvert → premier essai → résolu.
 3. Une semaine après la mise en ligne : relire `theme_suivant` / `theme_maitrise` ; si moins de 30 %, essayer
    `MAITRISE_CIBLE` = 5.
+
+## 6. Vie et mort, seki et course aux libertés (#554)
+
+Suite de 2.4 et de 5.1 : la réponse prouvée au coup faux s'étend à toute la série « Vie et mort » (thèmes vie et mort,
+seki, course aux libertés). Aucune zone n'a été écrite à la main pour la vie et la mort : elle se déduit du plateau.
+
+### Comment c'est prouvé
+
+- **Zone** (`src/go/refutation-locale.ts`) : l'espace du groupe marqué, fermé par des pierres solides (deux libertés
+  dehors au moins) ou par le bord ; les pierres adverses enfermées en font partie. Une zone n'est utilisée que si elle
+  est fermée : chaînes du défenseur avec toutes leurs libertés dedans, aucun point vide qui touche le dehors, chaque
+  pierre qui peut être prise dans la zone. Course : les libertés des deux chaînes. Seules données déclarées : la chaîne
+  du joueur dans 17 courses où seule la chaîne blanche est marquée (`src/go/zones-problemes.ts`).
+- **Preuves**, après la réponse de l'adversaire, quoi que tu joues. Le ko ne compte jamais pour l'adversaire : soit
+  toute ligne qui crée un ko est coupée, soit c'est toi qui gagnes tous les ko. Une coupure (profondeur, répétition)
+  n'est jamais une preuve.
+
+| Preuve | Outil | Phrase (après le geste) |
+|---|---|---|
+| mort | `evaluer` = -1, ou `evaluerMaitre` = -1 (toi maître du ko) | « Ton groupe ne peut plus vivre : il sera pris. » |
+| sansYeux | `pasDeVie` (toi maître du ko), jamais en seki | « Ton groupe ne peut plus faire deux yeux. » |
+| vit | `evaluer` = +1, ou `evaluerMaitre` = +1 | « Son groupe vivra, quoi que tu joues. » ou, s'il a déjà deux yeux (Benson), « Son groupe a deux yeux : il est vivant. » |
+| imprenable | `survit` (toi maître du ko) | « Tu ne peux plus prendre son groupe. » |
+| course | `evaluerCourse` = -1 (ko coupé) | « Tu perds la course aux libertés : ton groupe sera pris. » |
+| prendre / sauver | lecteur de capture de #549, hors ligne, sans borne de temps, toi maître du ko, réponses au contact seulement | phrases de #549 (« Son groupe marqué a 2 libertés. » quand les deux camps sont marqués) |
+
+- **Geste**, lu sur le plateau : la prise (« Blanc prend 2 pierres en C1. »), le faux œil créé (une chaîne voisine
+  de l'œil n'a plus que lui pour liberté : « C1 devient un faux œil : Blanc peut y prendre tes pierres. »), le point
+  que tu devais jouer (la réponse est une des bonnes réponses), sinon « Blanc joue en D2. ».
+- **Texte relu** : la réplique qu'il nomme est essayée en premier, et celle qu'il réserve à une erreur (« ou D1 si tu
+  as joué E1 ») avant tout, pour cette erreur ; elle est jouée si elle est prouvée.
+
+### Performance
+
+La recherche complète prend jusqu'à 3 s par coup faux (u15) : elle est faite hors ligne (`npm run refutations-locales`,
+40 s) et figée dans `src/go/refutations-locales.gen.ts` (7 Ko, 1,9 Ko gzip), chargé avec l'écran des problèmes. Dans
+l'app, il ne reste qu'une lecture de faits sur le plateau. `outils/refutationsLocales.test.ts` vérifie l'empreinte des
+entrées (problèmes, lecteurs, zones, générateur) et revérifie chaque réplique sur la vraie position (25 s).
+
+### Couverture (chaque coup faux légal joué, `npx vite-node outils/couvertureRefutations.ts`)
+
+| | Avant (#549) | Après (#554) |
+|---|---|---|
+| Série Vie et mort | 2 008 / 6 181 (32,5 %) | **6 170 / 6 181 (99,8 %)** |
+| — thème vie et mort | 1 131 / 4 544 (24,9 %) | 4 536 / 4 544 (99,8 %) |
+| — thème course aux libertés | 569 / 1 269 (44,8 %) | 1 266 / 1 269 (99,8 %) |
+| — thème seki | 308 / 368 (83,7 %) | 368 / 368 (100 %) |
+| Temps d'une réfutation, série Vie et mort (95ᵉ centile) | 44,8 ms | 0,10 ms (max 8,4 ms) |
+| Toute la banque | 10 744 / 18 224 (59,0 %) | 14 906 / 18 224 (81,8 %) |
+
+Les 11 coups faux restants n'ont pas de réfutation sans ko, ou ouvrent la zone (un coup dehors qui menace un mur :
+aa05 H3 et J2) : le texte du problème reste seul. Les autres séries ne changent pas (lecture en direct de #549).
