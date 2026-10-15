@@ -999,6 +999,10 @@ export const frEcrans = {
   'acquis.l38': 'Tu ne suis pas une petite menace : tu joues ailleurs, plus gros.',
   'acquis.l39': 'Dans une course, tu bouches le dehors d’abord, la liberté commune en dernier.',
   'acquis.l40': 'Dans une course, ton œil se bouche en dernier : tu bouches le dehors d’abord.',
+  'acquis.l41': 'Tu sais compter en règle chinoise : territoire, pierres, et la dame qui rapporte.',
+  'acquis.l42': 'Tu lis une échelle avant de courir : sans pierre sur le chemin, tu laisses.',
+  'acquis.l43': 'Tu évites le triangle vide : en ligne, tes pierres gardent plus de libertés.',
+  'acquis.l44': 'Au deuxième rang, tu sais compter : six meurent, huit vivent.',
   'acquis.defaut': 'Une leçon de plus dans ta poche.',
   'lecteur.progression': 'Progression de la leçon',
   // #290 : sur un écran bas, l'explication du verdict est repliée pour laisser voir le plateau.

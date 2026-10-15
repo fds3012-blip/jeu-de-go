@@ -182,7 +182,7 @@ describe('positions jouables', () => {
       expect(new Set([...accept, ...refus]).size).toBe(accept.length + refus.length);
     }
   });
-  it('les leçons de grand plateau ne sont que ces trois-là', () => {
-    expect(LESSONS_FR.filter((l: Lesson) => (l.taille ?? 9) !== 9).map(l => l.id)).toEqual(IDS);
+  it('les leçons de grand plateau ne sont que ces trois-là (hors l44, prouvée exactement par src/go/lecons-41-plus.test.ts)', () => {
+    expect(LESSONS_FR.filter((l: Lesson) => (l.taille ?? 9) !== 9).map(l => l.id).filter(id => id !== 'l44')).toEqual(IDS);
   });
 });

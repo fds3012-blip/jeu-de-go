@@ -199,14 +199,48 @@ const L_COMMUNE_M = L_COMMUNE.map(r => [...r].reverse().join(''));
 const L_YEUX_COURSE = [...V.slice(0, 6), 'OOOOOXXXX', '.XXXXOOO.', 'X.XXXOO.O'];
 const L_YEUX_COURSE_Q = [...V.slice(0, 6), 'OOOOOXXXX', '.XXXXOOO.', '.XX.XO.O.'];
 const L_YEUX_COURSE_C = [...V.slice(0, 6), 'OOOOOXXXX', '.XXXXOOOO', '.XXXX.O.O'];
+// Leçons 41 et suivantes (#547, approfondir l'apprentissage). Chaque position, chaque réponse acceptée, chaque réfutation
+// et chaque chiffre est prouvé par src/go/lecons-41-plus.test.ts (score() du moteur, lecteur d'échelle de
+// src/go/tactics.ts, preuve de vie et mort en zone fermée, minimax exact de fin de partie).
+// Compter en règle chinoise : la partie de la leçon 7 (36 et 27 de territoire, 9 pierres chacun). `DAME` : la frontière
+// blanche s'ouvre en F5, point neutre ; `Q` : une autre partie finie, la dame en E6.
+const L_CHINE_DAME = L_COMPTE.map((r, i) => (i === 4 ? '....X.O..' : r));
+const L_CHINE_Q = ['...XO....', '...XO....', '...XO....', '...X.O...', '...XO....', '...XO....', '...XO....', '...XO....', '...XO....'];
+// Lire l'échelle : ta pierre E5 est en atari, prise dans une échelle (celle de la leçon 3, couleurs inversées).
+// `CASSE` : ta pierre F2 est sur le chemin ; `Q` : la première position en miroir ; `T` : l'échelle noire de la leçon 3,
+// commencée (atari D5), avec deux pierres blanches, G2 sur le chemin et J3 à côté.
+const L_COURIR = [...V.slice(0, 3), '....O....', '...OSO...', '...O.....', ...V.slice(0, 3)];
+const L_COURIR_CASSE = L_COURIR.map((r, i) => (i === 7 ? '.....X...' : r));
+const L_COURIR_Q = L_COURIR.map(r => [...r].reverse().join(''));
+const L_ECHELLE_T = [...V.slice(0, 3), '....X....', '...XTX...', '...X.....', '........O', '......O..', '.........'];
+const COURIR_1 = [{ pose: 'E4', couleur: 'B' }, { pose: 'E3', couleur: 'W' }, { pose: 'F4', couleur: 'B' }, { pose: 'G4', couleur: 'W' }, { pose: 'F3', couleur: 'B' }];
+const COURIR_2 = ['F2', 'G3', 'H3', 'G2', 'H2', 'G1', 'F1', 'H1', 'J1'].map((pose, i) => ({ pose, couleur: i % 2 ? 'B' : 'W' }));
+// Le triangle vide : deux pierres D5 et E5. Le coude (E6) gagne deux libertés, la ligne droite (F5) trois. `TRI` : le
+// triangle formé, le coin vide en D6 ; `Q` et `Q2` : allonger des pierres près de Blanc.
+const L_PAIRE = [...V.slice(0, 4), '...XX....', ...V.slice(0, 4)];
+const L_TRI = [...V.slice(0, 3), '....X....', '...XX....', ...V.slice(0, 4)];
+const L_TRI_Q = [...V.slice(0, 3), '...O.....', '..OSS....', ...V.slice(0, 4)];
+const L_TRI_Q2 = [...V.slice(0, 2), '......O..', '....OSO..', '....SS...', ...V.slice(0, 4)];
+// Le deuxième rang (13 × 13, coin bas gauche cadré sur 10 lignes) : n pierres sur la 2e ligne, fermées par Blanc au-dessus
+// et aux deux bouts (2e et 1re ligne). Six meurent, sept vivent si tu joues d'abord, huit vivent. `rang2(n, true)` : les
+// couleurs inversées et le dessin retourné de gauche à droite (coin bas droit).
+const rang2 = (n, inverse = false) => {
+  const g = Array.from({ length: 13 }, () => Array(13).fill('.'));
+  for (let x = 0; x <= n + 1; x++) g[10][x] = 'O';
+  for (let x = 1; x <= n; x++) g[11][x] = 'X';
+  g[11][0] = g[11][n + 1] = g[12][0] = g[12][n + 1] = 'O';
+  const rows = g.map(r => r.join(''));
+  return inverse ? rows.map(r => [...r].reverse().map(c => ({ X: 'O', O: 'X' })[c] ?? c).join('')) : rows;
+};
+const CADRE_RANG2 = { coin: 'bas-gauche', cote: 10 };
 export const CHAPITRES = [
   { id: 'c1', titre: 'Les bases', intro: 'Sept leçons courtes pour jouer ta première partie.', fin: 'Tu connais les règles du go.', lecons: ['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7'] },
   // Chapitre en cours d'écriture (`complet: false`) : sa dernière leçon ne ferme pas encore le chapitre.
   { id: 'c2', titre: 'L’ouverture', intro: 'Où poser tes premières pierres.', lecons: ['l8', 'l27', 'l29', 'l30', 'l31'], complet: false },
-  { id: 'c3', titre: 'Capturer et sauver', intro: 'Des pièges pour prendre plus de pierres.', lecons: ['l9', 'l10', 'l11', 'l26', 'l39', 'l40'], complet: false },
-  { id: 'c4', titre: 'Vie et mort', intro: 'Quand un groupe vit, quand il meurt.', lecons: ['l12', 'l13', 'l14', 'l17', 'l24', 'l25', 'l37'], complet: false },
-  { id: 'c5', titre: 'Fin de partie et comptage', intro: 'Finir proprement, puis compter juste.', lecons: ['l15', 'l16', 'l22', 'l23', 'l32', 'l33', 'l38'], complet: false },
-  { id: 'c6', titre: 'Formes et tesuji', intro: 'Les bonnes formes et les coups malins du go.', lecons: ['l18', 'l19', 'l20', 'l21', 'l34', 'l35', 'l36'], complet: false }
+  { id: 'c3', titre: 'Capturer et sauver', intro: 'Des pièges pour prendre plus de pierres.', lecons: ['l42', 'l9', 'l10', 'l11', 'l26', 'l39', 'l40'], complet: false },
+  { id: 'c4', titre: 'Vie et mort', intro: 'Quand un groupe vit, quand il meurt.', lecons: ['l12', 'l13', 'l14', 'l17', 'l24', 'l44', 'l25', 'l37'], complet: false },
+  { id: 'c5', titre: 'Fin de partie et comptage', intro: 'Finir proprement, puis compter juste.', lecons: ['l15', 'l16', 'l41', 'l22', 'l23', 'l32', 'l33', 'l38'], complet: false },
+  { id: 'c6', titre: 'Formes et tesuji', intro: 'Les bonnes formes et les coups malins du go.', lecons: ['l18', 'l43', 'l19', 'l20', 'l21', 'l34', 'l35', 'l36'], complet: false }
 ];
 export const LESSONS = [
   { id: 'l1', title: 'Libertés et capture', desc: 'La règle qui fait tout le jeu', steps: [
@@ -429,6 +463,20 @@ export const LESSONS = [
         { points: ['F4'], no: 'Trop loin : Blanc coupe tes pierres, ou glisse dessous.' }
       ] }
   ] },
+  { id: 'l42', title: 'Lire l’échelle', desc: 'Courir, ou laisser la pierre', steps: [
+    { kind: 'info', rows: L_COURIR, geste: { pose: 'E4' }, demo: COURIR_1,
+      text: 'Ta pierre marquée est en atari. Cours au point vert, pour voir.' },
+    { kind: 'info', rows: L_COURIR, avant: COURIR_1, demo: COURIR_2,
+      text: 'Blanc te pousse en zigzag jusqu’au bord. Huit pierres prises.' },
+    { kind: 'info', rows: L_COURIR_CASSE, geste: { pose: 'E4' }, demo: [...COURIR_1, { libs: 'F3' }],
+      text: 'Ta pierre F2 est sur le chemin. Cours au point vert.' },
+    { kind: 'quiz', rows: L_COURIR_Q,
+      text: 'Aucune de tes pierres sur le chemin. Cours-tu ?', choices: ['Oui', 'Non, je la laisse'], answer: 1,
+      ok: 'L’échelle marche jusqu’au bord : courir ferait perdre plus de pierres.', no: 'Sans pierre noire sur le chemin, Blanc te prend au bord.' },
+    { kind: 'touche', rows: L_ECHELLE_T, accept: ['G2'],
+      text: 'Ton échelle échoue : touche la pierre blanche qui la casse.',
+      ok: 'G2 : la pierre marquée la rejoint en zigzag, et s’échappe.', no: 'Suis le zigzag depuis la pierre marquée, vers le bas à droite.' }
+  ] },
   { id: 'l9', title: 'Le filet', desc: 'Enfermer une pierre sans la toucher', steps: [
     { kind: 'info', rows: L_FILET, geste: { pose: 'E6' },
       demo: [{ pose: 'E6', couleur: 'B' }, { libs: 'E5' }, { pose: 'D5', couleur: 'W' }, { pose: 'D4', couleur: 'B' }, { pose: 'D6', couleur: 'W' }, { pose: 'C6', couleur: 'B' }, { pose: 'D7', couleur: 'W' }],
@@ -613,6 +661,23 @@ export const LESSONS = [
       ok: 'Le bord de ton espace est à toi : deux yeux.', no: 'Prends le point vide au bord de ton espace, contre Blanc.',
       refus: [{ points: ['J9', 'J8', 'J6'], no: 'Dedans, tu remplis ton espace : Blanc prend J5.' }] }
   ] },
+  { id: 'l44', title: 'Le deuxième rang', desc: 'Six meurent, huit vivent', taille: 13, steps: [
+    { kind: 'info', rows: rang2(7), cadre: CADRE_RANG2, geste: { pose: 'E1' },
+      demo: [{ pose: 'E1', couleur: 'B' }, { zone: ['B1', 'C1', 'D1', 'F1', 'G1', 'H1'] }],
+      text: 'Sept pierres au deuxième rang : joue au point vert. Tu vis.' },
+    { kind: 'info', rows: rang2(7), cadre: CADRE_RANG2, geste: { touche: ['B1', 'H1'], no: 'Touche un bout du premier rang, contre Blanc.' },
+      demo: [{ pose: 'B1', couleur: 'W' }],
+      text: 'Si Blanc joue d’abord à un bout, tes sept pierres meurent.' },
+    { kind: 'quiz', rows: rang2(6), cadre: CADRE_RANG2,
+      text: 'Six pierres au deuxième rang. Peuvent-elles vivre ?', choices: ['Oui, si je joue', 'Non, jamais'], answer: 1,
+      ok: 'Non : six pierres au deuxième rang meurent, même si tu joues d’abord.', no: 'Même si tu joues d’abord, Blanc les tue.' },
+    { kind: 'quiz', rows: rang2(8), cadre: CADRE_RANG2,
+      text: 'Huit pierres. Blanc joue d’abord : peut-il les tuer ?', choices: ['Oui', 'Non'], answer: 1,
+      ok: 'Non : réponds à son coup, tu vis. Six meurent, huit vivent.', no: 'Huit pierres ont assez de place : après chaque coup blanc, tu peux vivre.' },
+    { kind: 'move', rows: rang2(7, true), cadre: { coin: 'bas-droite', cote: 10 }, accept: ['F1', 'M1'],
+      text: 'À toi : tue ces sept pierres blanches du deuxième rang.',
+      ok: 'Pris au bout : Blanc ne peut plus vivre.', no: 'Joue au premier rang, à un bout, contre ta pierre.' }
+  ] },
   { id: 'l25', title: 'Les groupes du coin', desc: 'Le point du coin, et le ko', steps: [
     { kind: 'info', rows: L_COIN, geste: { pose: 'A2' }, demo: [{ pose: 'A2', couleur: 'B' }, { yeux: ['A1', 'B1', 'D1'] }],
       text: 'Dans le coin, le point vert décide. Prends-le : deux yeux.' },
@@ -683,6 +748,22 @@ export const LESSONS = [
     { kind: 'quiz', rows: L_COMPTE_SANS,
       text: 'Noir 34, Blanc 34,5. Qui gagne ?', choices: ['Noir', 'Blanc', 'Égalité'], answer: 1,
       ok: 'Blanc, d’un demi-point. Le demi-point du komi évite les égalités.', no: '34,5 est plus grand que 34.' }
+  ] },
+  { id: 'l41', title: 'Compter en règle chinoise', desc: 'Les pierres comptent aussi', steps: [
+    { kind: 'info', rows: L_COMPTE, geste: { touche: ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'E7', 'E8', 'E9'], no: 'Touche une pierre noire, sur la frontière.' },
+      demo: [{ terr: 'B' }],
+      text: 'Règle chinoise : ton territoire, plus tes pierres. Touche une pierre.' },
+    { kind: 'quiz', rows: L_COMPTE, terr: true,
+      text: '36 points de territoire et 9 pierres. Combien pour Noir ?', choices: ['36', '45', '54'], answer: 1,
+      ok: '36 + 9 = 45. En règle chinoise, les prisonniers ne comptent pas.', no: 'Ajoute tes 9 pierres à tes 36 points de territoire.' },
+    { kind: 'quiz', rows: L_COMPTE, terr: true,
+      text: 'Blanc : 27 + 9 pierres + 7,5 de komi. Qui gagne ?', choices: ['Noir', 'Blanc'], answer: 0,
+      ok: 'Noir : 45 contre 43,5. En règle chinoise, le komi est de 7,5.', no: 'Blanc a 27 + 9 + 7,5 = 43,5. Noir en a 45.' },
+    { kind: 'info', rows: L_CHINE_DAME, geste: { pose: 'F5' }, demo: [{ pose: 'F5', couleur: 'B' }],
+      text: 'Une dame (point neutre) reste. Remplis-la au point vert : un point.' },
+    { kind: 'move', rows: L_CHINE_Q, accept: ['E6'],
+      text: 'À toi, en règle chinoise : joue le dernier point qui rapporte.',
+      ok: 'La dame te rapporte un point en chinois. En japonais, rien.', no: 'Cherche le point vide entre tes pierres et celles de Blanc.' }
   ] },
   { id: 'l22', title: 'Sente et gote', desc: 'Le coup qui oblige à répondre', steps: [
     { kind: 'info', rows: L_SENTE, geste: { pose: 'E2' }, demo: [{ pose: 'E2', couleur: 'B' }, { atari: ['E1'] }, { pose: 'F1', couleur: 'W' }],
@@ -779,6 +860,23 @@ export const LESSONS = [
     { kind: 'move', rows: L_BAMBOU_Q, accept: ['G5'],
       text: 'Blanc entre dans ton bambou. Relie tes pierres marquées.',
       ok: 'Relié : un bambou ne se coupe jamais.', no: 'Prends l’autre passage du bambou.' }
+  ] },
+  { id: 'l43', title: 'Le triangle vide', desc: 'Trois pierres en coin, une liberté perdue', steps: [
+    { kind: 'info', rows: L_PAIRE, geste: { pose: 'E6' }, demo: [{ pose: 'E6', couleur: 'B' }, { libs: 'E6' }],
+      text: 'Pose au point vert : trois pierres en coin. Compte leurs libertés.' },
+    { kind: 'info', rows: L_PAIRE, geste: { pose: 'F5' }, demo: [{ pose: 'F5', couleur: 'B' }, { libs: 'F5' }],
+      text: 'En ligne, au point vert : huit libertés au lieu de sept.' },
+    { kind: 'touche', rows: L_TRI, accept: ['D6'],
+      text: 'Triangle vide (trois pierres en coin, coin vide). Touche le coin vide.',
+      ok: 'Oui, D6. C’était déjà ta liberté : E6 n’y a rien gagné.', no: 'Cherche le point vide qui ferme le carré.' },
+    { kind: 'move', rows: L_TRI_Q, accept: ['F5'],
+      text: 'À toi : allonge tes pierres marquées. Garde le plus de libertés.',
+      ok: 'Six libertés. Un triangle vide n’en aurait que cinq.', no: 'Allonge-toi en ligne, loin des pierres blanches.',
+      refus: [{ points: ['D4', 'E4'], no: 'Triangle vide : cinq libertés au lieu de six.' }] },
+    { kind: 'move', rows: L_TRI_Q2, accept: ['D5'],
+      text: 'À toi : allonge encore tes pierres marquées, au mieux.',
+      ok: 'Sept libertés. Le triangle vide n’en donnerait que six.', no: 'Prolonge la ligne E5-F5, sans faire de coin.',
+      refus: [{ points: ['E4', 'F4'], no: 'Triangle vide : six libertés au lieu de sept.' }] }
   ] },
   { id: 'l19', title: 'Les pierres qui coupent', desc: 'Prends celles qui séparent tes groupes', steps: [
     { kind: 'info', rows: L_COUPANTE, geste: { pose: 'E5' }, demo: [{ libs: 'E6' }, { pose: 'E5', couleur: 'B' }],

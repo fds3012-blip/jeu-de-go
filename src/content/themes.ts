@@ -157,6 +157,12 @@ export const THEMES_DE_LECON: Readonly<Record<string, readonly Theme[]>> = {
   l39: ['semeai'],
   // #539 : les yeux dans la course (l40).
   l40: ['semeai'],
+  // #547 : compter en règle chinoise (l41) reprend la série de comptage ; lire l'échelle (l42), celle de l'échelle ;
+  // le triangle vide (l43), relier et couper (garder ses pierres solides) ; le deuxième rang (l44), vie et mort.
+  l41: ['comptage'],
+  l42: ['echelle'],
+  l43: ['relier-couper'],
+  l44: ['vie-mort'],
 };
 
 /**

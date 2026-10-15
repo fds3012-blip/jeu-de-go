@@ -18,6 +18,8 @@ import { score } from './score';
 import { meilleursCoups, valeursDesCoups } from './preuve-fin-de-partie';
 import { defautsConnexion, evaluerConnexion, issueConnexion } from './preuve-connexion';
 
+/** Leçons d'avant #547 (l1 à l40) : les leçons 41 et suivantes s'intercalent, sans changer cet ordre (src/go/lecons-41-plus.test.ts). */
+const avant547 = (ids: string[]) => ids.filter(id => Number(id.slice(1)) <= 40);
 const N = 9;
 const at = (l: string) => fromLabel(l, N);
 const lab = (p: number) => (p < 0 ? 'passe' : toLabel(p, N));
@@ -72,8 +74,8 @@ describe('leçons 32 et suivantes : place dans le programme (#16)', () => {
   });
   it('la valeur d’un coup et le sente avant le gote prolongent « Fin de partie et comptage », le watari « Formes et tesuji »', () => {
     const c = Object.fromEntries(CHAPITRES.map(x => [x.id, x]));
-    expect(c.c5.lecons.map(l => l.id).slice(0, 6)).toEqual(['l15', 'l16', 'l22', 'l23', 'l32', 'l33']);
-    expect(c.c6.lecons.map(l => l.id)).toEqual(['l18', 'l19', 'l20', 'l21', 'l34', 'l35', 'l36']);
+    expect(avant547(c.c5.lecons.map(l => l.id)).slice(0, 6)).toEqual(['l15', 'l16', 'l22', 'l23', 'l32', 'l33']);
+    expect(avant547(c.c6.lecons.map(l => l.id))).toEqual(['l18', 'l19', 'l20', 'l21', 'l34', 'l35', 'l36']);
     expect(LESSONS.map(l => l.id)).toEqual(CHAPITRES.flatMap(x => x.lecons.map(l => l.id)));
   });
   it('chaque consigne tient en 12 mots ; chaque geste « pose » est sur le point vert ; au plus une étape sans geste', () => {
