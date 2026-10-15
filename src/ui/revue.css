@@ -56,7 +56,7 @@
 .bilan-pierre { width: 14px; height: 14px; }
 .bilan-precision th, .bilan-precision td { height: 60px; }
 .bilan-precision th { color: var(--muted); font-weight: var(--fw-bold); }
-.bilan-score { display: inline-grid; place-items: center; min-width: 76px; min-height: 42px; padding: 0 var(--space-2); border-radius: 10px;
+.bilan-score { display: inline-grid; place-items: center; min-width: 76px; min-height: 42px; padding: 0 var(--space-2); border-radius: 10px; white-space: nowrap;
   background: var(--surface-2); color: var(--text); font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: var(--fs-xl); }
 /* Ta précision : en relief, papier sur encre (comme la case blanche de chess.com), sans cote ni rang. */
 .bilan-score-moi { background: var(--papier); color: var(--sumi); box-shadow: inset 0 0 0 1.5px var(--line); }
