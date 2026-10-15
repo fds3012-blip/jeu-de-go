@@ -436,5 +436,68 @@ export const LESSONS_EN = {
     { text: 'White has an eye, you don’t. Win the race.',
       ok: 'White only has its eye left: fill the shared liberty right away.', no: 'White has no outside liberty. Look for the one you share.',
       refus: ['That’s your own liberty: you no longer win the race.'] }
+  ] },
+  l41: { title: 'Counting by Chinese rules', desc: 'Your stones count too', steps: [
+    { text: 'Chinese rules: your territory, plus your stones. Tap a stone.',
+      geste: { no: 'Tap a black stone, on the border.' } },
+    { text: '36 points of territory and 9 stones. How many for Black?', choices: ['36', '45', '54'],
+      ok: '36 + 9 = 45. Under Chinese rules, prisoners don’t count.', no: 'Add your 9 stones to your 36 points of territory.' },
+    { text: 'White: 27 + 9 stones + 7.5 komi. Who wins?', choices: ['Black', 'White'],
+      ok: 'Black: 45 against 43.5. Under Chinese rules, komi is 7.5.', no: 'White has 27 + 9 + 7.5 = 43.5. Black has 45.' },
+    { text: 'A dame (neutral point) is left. Fill it at the green point: one point.' },
+    { text: 'Your turn, Chinese rules: play the last point that scores.',
+      ok: 'The dame gives you one point under Chinese rules. Under Japanese rules, nothing.', no: 'Look for the empty point between your stones and White’s.' }
+  ] },
+  l42: { title: 'Reading a ladder', desc: 'Run, or let the stone go', steps: [
+    { text: 'Your marked stone is in atari. Run at the green point.' },
+    { text: 'White pushes you in a zigzag to the edge. Eight stones captured.' },
+    { text: 'Your stone F2 is on the path. Run at the green point.' },
+    { text: 'None of your stones on the path. Do you run?', choices: ['Yes', 'No, I let it go'],
+      ok: 'The ladder works all the way to the edge: running would lose more stones.', no: 'With no black stone on the path, White captures you at the edge.' },
+    { text: 'Your ladder fails: tap the white stone that breaks it.',
+      ok: 'G2: the marked stone reaches it in a zigzag, and escapes.', no: 'Follow the zigzag from the marked stone, down and to the right.' }
+  ] },
+  l43: { title: 'The empty triangle', desc: 'Three stones in a bend, one liberty lost', steps: [
+    { text: 'Play the green point: three stones in a bend. Count their liberties.' },
+    { text: 'In a line, at the green point: eight liberties instead of seven.' },
+    { text: 'Empty triangle (three stones in a bend, corner empty). Tap the empty corner.',
+      ok: 'Yes, D6. It was already your liberty: E6 gained nothing there.', no: 'Find the empty point that would complete the block of four.' },
+    { text: 'Your turn: extend your marked stones. Keep the most liberties.',
+      ok: 'Six liberties. An empty triangle would only have five.', no: 'Extend in a line, away from the white stones.',
+      refus: ['Empty triangle: five liberties instead of six.'] },
+    { text: 'Your turn: extend your marked stones again, the best way.',
+      ok: 'Seven liberties. The empty triangle would only give six.', no: 'Continue the line E5-F5, without making a bend.',
+      refus: ['Empty triangle: six liberties instead of seven.'] }
+  ] },
+  l44: { title: 'The second line', desc: 'Six die, eight live', steps: [
+    { text: 'Seven stones on the second line: play the green point. You live.' },
+    { text: 'If White plays first at one end, your seven stones die.',
+      geste: { no: 'Tap one end of the first line, next to White.' } },
+    { text: 'Six stones on the second line. Can they live?', choices: ['Yes, if I play', 'No, never'],
+      ok: 'No: six stones on the second line die, even if you play first.', no: 'Even if you play first, White kills them.' },
+    { text: 'Eight stones. White plays first: can White kill them?', choices: ['Yes', 'No'],
+      ok: 'No: answer White’s move, you live. Six die, eight live.', no: 'Eight stones have enough room: after any white move, you can live.' },
+    { text: 'Your turn: kill these seven white stones on the second line.',
+      ok: 'Taken at the end: White can no longer live.', no: 'Play on the first line, at one end, next to your stone.' }
+  ] },
+  l45: { title: 'Threats in a ko', desc: 'Make White answer, then retake', steps: [
+    { text: 'White takes the ko at D5. Retaking right away: forbidden.' },
+    { text: 'A ko threat (a move that must be answered): atari at the green point.' },
+    { text: 'After C1, what if White ends the ko instead of answering?', choices: ['You capture four stones', 'White loses nothing'],
+      ok: 'You capture four stones at H1: more than the ko. White must answer.', no: 'Its four stones are in atari: if White doesn’t connect at H1, you capture them.' },
+    { text: 'White just took the ko at F5. Find your threat.',
+      ok: 'Atari on four stones: White connects, then you retake the ko.', no: 'Look for an atari that White must answer.',
+      refus: ['Forbidden: White just captured. First play a threat elsewhere.'] },
+    { text: 'You retook. White has no threat left: end the ko.',
+      ok: 'Connected: White can no longer retake. The ko is yours.', no: 'Fill the point where White would retake your stone at E5.' }
+  ] },
+  l46: { title: 'Handicap', desc: 'Stones ahead, for an even game', steps: [
+    { text: 'Handicap (stones ahead): place the first one at the green point, a hoshi (star point).' },
+    { text: 'Two handicap stones placed. Who plays next?', choices: ['Black', 'White'],
+      ok: 'White: your stones ahead count as your first moves.', no: 'Black has already placed its stones ahead: White plays.' },
+    { text: 'Four corners taken. Tap the point of the fifth stone.',
+      ok: 'Yes, E5: the center hoshi.', no: 'The corners are taken. One hoshi is left, in the center.' },
+    { text: 'Handicap game: how much komi does White get?', choices: ['0.5', '6.5', '7.5'],
+      ok: '0.5: just enough to avoid a tie. Black already has its lead.', no: 'Black already has its lead in stones: komi is reduced to 0.5.' }
   ] }
 };
