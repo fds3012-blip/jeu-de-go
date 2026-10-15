@@ -55,7 +55,7 @@ const prises = (avant: Position, apres: Position, c: Color) => {
  * État des pierres marquées encore sur le plateau, en une phrase : leurs libertés (la plus petite, et si elles diffèrent
  * d'une chaîne à l'autre). Fait lu sur le plateau.
  */
-function etatCibles(pos: Position, cibles: readonly number[]): { phrase: string; min: number } {
+function etatCibles(pos: Position, cibles: readonly number[], sien = false): { phrase: string; min: number } {
   const vues = new Set<number>(), libs: number[] = [];
   for (const c of cibles) {
     if (!pos.board[c] || vues.has(c)) continue;
@@ -64,7 +64,9 @@ function etatCibles(pos: Position, cibles: readonly number[]): { phrase: string;
     libs.push(g.liberties.size);
   }
   const min = Math.min(...libs);
-  const cle = libs.length === 1 ? (vues.size === 1 ? 'erreur.libertes.pierre' : 'erreur.libertes.groupe')
+  // #554 : pierres marquées des deux camps (course aux libertés) : « son groupe marqué », sans ambiguïté.
+  const cle = sien && libs.length === 1 ? 'erreur.libertes.sien'
+    : libs.length === 1 ? (vues.size === 1 ? 'erreur.libertes.pierre' : 'erreur.libertes.groupe')
     : libs.every(l => l === min) ? 'erreur.libertes.chacun' : 'erreur.libertes.auMoins';
   return { phrase: t(cle, { n: min }), min };
 }
@@ -169,8 +171,7 @@ export function comprendreErreur(pz: Puzzle, faux: number, c: Compteur = compteu
  * temps), et hors ligne pour figer les réfutations (#554, sans borne de temps, joueur maître du ko). `local` : réponses
  * au contact seulement (texte, bonnes réponses, libertés des pierres marquées et leurs voisins), jamais un coup loin.
  */
-export function comprendreParCapture(pz: Puzzle, faux: number, c: Compteur, local = false): ErreurComprise | null {
-  const but = butDe(pz);
+export function comprendreParCapture(pz: Puzzle, faux: number, c: Compteur, local = false, but = butDe(pz)): ErreurComprise | null {
   if (!but || pz.answers.includes(faux)) return null;
   const depart = startOf(pz).pos;
   const apresFaux = joue(depart, faux);
@@ -243,7 +244,11 @@ function erreurFigee(pz: Puzzle, faux: number): ErreurComprise | null {
   if (!apresFaux || !r) return null;
   const adv = apresFaux.toPlay, { marked } = startOf(pz);
   // Lecture de capture figée : même phrase qu'en direct (#549).
-  if (f.preuve === 'prendre') return { faux, reponse: f.reponse, apresFaux, pos: r, phrase: phrasePrendre(apresFaux, r, f.reponse, marked, adv), but: 'prendre' };
+  if (f.preuve === 'prendre') {
+    // Course où les deux camps sont marqués : les pierres à prendre sont les siennes.
+    const siennes = marked.filter(p => apresFaux.board[p] === adv), sien = siennes.length < marked.length;
+    return { faux, reponse: f.reponse, apresFaux, pos: r, phrase: phrasePrendre(apresFaux, r, f.reponse, siennes, adv, sien), but: 'prendre' };
+  }
   if (f.preuve === 'sauver') return { faux, reponse: f.reponse, apresFaux, pos: r, phrase: phraseSauver(r, f.reponse, marked, pz.toPlay, adv), but: 'sauver' };
   const sauver = f.preuve === 'mort' || f.preuve === 'sansYeux';
   return { faux, reponse: f.reponse, apresFaux, pos: r, phrase: phraseLocale(pz, apresFaux, r, f.reponse, f.preuve, f.cible), but: sauver ? 'sauver' : 'prendre' };
@@ -274,10 +279,10 @@ function phraseSauver(apres: Position, m: number, cibles: readonly number[], moi
   return t(prise(apres, cibles, moi) ? 'erreur.sauver.prise' : 'erreur.sauver.perdue', { couleur: nomCouleur(adv), point: toLabel(m, apres.size) });
 }
 
-function phrasePrendre(avant: Position, apres: Position, m: number, cibles: readonly number[], adv: Color): string {
+function phrasePrendre(avant: Position, apres: Position, m: number, cibles: readonly number[], adv: Color, sien = false): string {
   const point = toLabel(m, apres.size), couleur = nomCouleur(adv);
   const n = prises(avant, apres, (3 - adv) as Color);
-  const etat = etatCibles(apres, cibles).phrase;
+  const etat = etatCibles(apres, cibles, sien).phrase;
   const geste = n > 0 ? t('erreur.prendre.prise', { couleur, point, n })
     : relie(avant, apres, m, cibles) ? t('erreur.prendre.relie', { couleur, point })
     : t('erreur.prendre.repond', { couleur, point });

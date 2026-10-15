@@ -131,6 +131,38 @@ export interface OptionsPreuve {
   profondeur?: number;
   /** Ne cherche que cette preuve (revérification d'une réplique figée). */
   seulement?: PreuveLocale;
+  /**
+   * Mémoire partagée entre positions de même signature locale (`signatureLocale`) : un coup faux loin de la zone y
+   * laisse tout à l'identique, la recherche n'est faite qu'une fois.
+   */
+  memo?: Map<string, PreuveLocale | null>;
+}
+
+/**
+ * Signature locale d'une position pour une zone fermée : le camp au trait, le point de ko s'il est dans la zone, le
+ * contenu de la zone et de ses voisins, et, pour chaque chaîne qui y touche, si elle a une liberté hors de la zone.
+ *
+ * Deux positions de même signature ont la même issue pour toutes les recherches de ce module, si la zone est fermée
+ * (`defautsZone` ou `defautsZoneCourse` vides) : les coups ne se jouent que dans la zone ; une prise n'y retire que des
+ * pierres de la zone (les chaînes qui peuvent être prises y ont toutes leurs pierres) ; les libertés du dehors ne sont
+ * donc jamais remplies, et seule compte leur existence (prise, suicide) ; les yeux de Benson de la cible sont des points
+ * de la zone, entourés de chaînes qui touchent la zone et dont toutes les libertés y sont.
+ */
+export function signatureLocale(pos: Position, zone: readonly number[]): string {
+  const nb = neighbors(pos.size), dans = new Set(zone), bord = new Set(zone);
+  for (const z of zone) for (const r of nb[z]) bord.add(r);
+  const points = [...bord].sort((x, y) => x - y), dehors = new Map<number, boolean>();
+  let sig = `${pos.toPlay}|${dans.has(pos.ko) ? pos.ko : -1}|`;
+  for (const p of points) {
+    sig += pos.board[p];
+    if (!pos.board[p]) continue;
+    if (!dehors.has(p)) {
+      const g = groupAt(pos.board, pos.size, p), v = [...g.liberties].some(l => !dans.has(l));
+      g.stones.forEach(q => dehors.set(q, v));
+    }
+    sig += dehors.get(p) ? '+' : '-';
+  }
+  return sig;
 }
 
 /**
@@ -144,6 +176,15 @@ export function prouverLocale(r: Position, but: ButLocal, moi: Color, opts: Opti
   if (but.type === 'course' && r.board[but.a] !== moi) return essai('course') ? 'course' : null;
   if (but.type === 'vivre' && r.board[but.cible] !== moi) return essai('mort') ? 'mort' : null;
   if (!zoneFermee(r, but)) return null;
+  if (!opts.memo) return chercher(r, but, moi, opts);
+  const qui = but.type === 'course' ? `${but.a},${but.b}` : `${but.cible},${but.type === 'vivre' && but.seki}`;
+  const cle = `${but.type}|${qui}|${but.zone.join(',')}|${opts.seulement ?? ''}|${opts.profondeur ?? 30}|${signatureLocale(r, but.zone)}`;
+  if (!opts.memo.has(cle)) opts.memo.set(cle, chercher(r, but, moi, opts));
+  return opts.memo.get(cle)!;
+}
+
+function chercher(r: Position, but: ButLocal, moi: Color, opts: OptionsPreuve): PreuveLocale | null {
+  const essai = (p: PreuveLocale) => !opts.seulement || opts.seulement === p;
   const prof = { profondeur: opts.profondeur ?? 30 };
   if (but.type === 'course') return essai('course') && evaluerCourse(r, but.a, but.b, but.zone, prof) === -1 ? 'course' : null;
   const { cible, zone } = but;

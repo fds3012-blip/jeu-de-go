@@ -256,6 +256,7 @@ export const en = {
   'erreur.libertes.groupe': { one: 'The marked group has only one liberty left.', other: 'The marked group has {n} liberties.' },
   'erreur.libertes.chacun': { one: 'The marked stones have only one liberty left each.', other: 'The marked stones have {n} liberties each.' },
   'erreur.libertes.auMoins': { one: 'One of the marked stones has only one liberty left.', other: 'The marked stones have at least {n} liberties.' },
+  'erreur.libertes.sien': { one: 'Their marked group has only one liberty left.', other: 'Their marked group has {n} liberties.' },
   'erreur.sauver.prise': '{couleur} answers on {point} and captures your marked stone.',
   'erreur.sauver.perdue': '{couleur} answers on {point}. Your marked stone can no longer be saved.',
   'erreur.tonCoup': 'Your move',

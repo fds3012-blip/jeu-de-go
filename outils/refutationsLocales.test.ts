@@ -10,7 +10,9 @@ import { ALL_PUZZLES } from '../src/content/puzzles';
 import { parsePuzzles } from '../src/data/puzzles';
 import { fromLabel, toLabel } from '../src/go/coords';
 import { cederLaMain } from '../src/go/preuve-par-coup';
+import { prouverLocale, jouer, signatureLocale, type PreuveLocale } from '../src/go/refutation-locale';
 import { EMPREINTE, REFUTATIONS_LOCALES } from '../src/go/refutations-locales.gen';
+import { startOf } from '../src/data/puzzles';
 import {
   butApres, butLocal, coupsFaux, empreinteDe, genererRefutationsLocales, ordreRepliques, problemesLocaux, repliqueProuvee, repliqueTient,
 } from './refutationsLocales';
@@ -35,8 +37,7 @@ describe('réfutations figées (#554) : fichier à jour', () => {
   it.skipIf(MAJ)('chaque problème lu (vie et mort, seki, course aux libertés) a sa ligne, et rien d’autre', () => {
     const ids = problemesLocaux(tous).map(p => p.id);
     expect(Object.keys(REFUTATIONS_LOCALES).every(id => ids.includes(id))).toBe(true);
-    // Seul a14 (deux groupes marqués, course ouverte) n'a aucune lecture.
-    expect(ids.filter(id => !REFUTATIONS_LOCALES[id])).toEqual(['a14']);
+    expect(ids.filter(id => !REFUTATIONS_LOCALES[id])).toEqual([]);
   });
 });
 
@@ -46,12 +47,14 @@ describe.skipIf(MAJ)('réfutations figées (#554) : chaque réplique est prouvé
   for (const pz of problemesLocaux(tous).filter(p => REFUTATIONS_LOCALES[p.id])) {
     it(`${pz.id}`, () => {
       const r = REFUTATIONS_LOCALES[pz.id], faux = coupsFaux(pz), labels = new Set(faux.map(f => toLabel(f, pz.size)));
+      // Mémoire par signature locale (src/go/refutation-locale.ts, signatureLocale) : vérifiée plus bas.
+      const memo = new Map<string, PreuveLocale | null>();
       // Les exceptions sont des coups faux légaux.
       for (const k of Object.keys(r.sauf ?? {})) expect(labels.has(k), `${pz.id} ${k}`).toBe(true);
       for (const f of faux) {
         const code = r.sauf?.[toLabel(f, pz.size)] ?? r.defaut;
         if (!code) continue;
-        expect(repliqueTient(pz, f, code), `${pz.id} ${toLabel(f, pz.size)} → ${code}`).toBe(true);
+        expect(repliqueTient(pz, f, code, memo), `${pz.id} ${toLabel(f, pz.size)} → ${code}`).toBe(true);
       }
     }, 300_000);
   }
@@ -63,7 +66,7 @@ describe.skipIf(MAJ)('réfutations figées (#554) : la réplique nommée par le 
     const but = butLocal(pz);
     if (!but) continue;
     it(`${pz.id}`, () => {
-      const r = REFUTATIONS_LOCALES[pz.id];
+      const r = REFUTATIONS_LOCALES[pz.id], memo = new Map<string, PreuveLocale | null>();
       for (const f of coupsFaux(pz)) {
         const code = r.sauf?.[toLabel(f, pz.size)] ?? r.defaut, local = butApres(pz, but, f);
         if (!code || !local || 'mycvi'.indexOf(code.slice(-1)) < 0) continue;
@@ -71,8 +74,33 @@ describe.skipIf(MAJ)('réfutations figées (#554) : la réplique nommée par le 
         const premier = ordreRepliques(pz, local, f)[0];
         if (premier === undefined || premier === fromLabel(code.slice(0, -1), pz.size)) continue;
         // La réplique figée n'est pas la première essayée : la première n'est pas prouvée (revérifié).
-        expect(repliqueProuvee(pz, but, f)?.reponse, `${pz.id} ${toLabel(f, pz.size)}`).toBe(fromLabel(code.slice(0, -1), pz.size));
+        expect(repliqueProuvee(pz, but, f, memo)?.reponse, `${pz.id} ${toLabel(f, pz.size)}`).toBe(fromLabel(code.slice(0, -1), pz.size));
       }
+    }, 300_000);
+  }
+});
+
+describe.skipIf(MAJ)('réfutations figées (#554) : la mémoire par signature locale ne change aucune preuve', () => {
+  beforeEach(cederLaMain);
+  // Problèmes rapides de chaque genre : chaque coup faux et chaque réplique de la zone, avec et sans mémoire.
+  for (const id of ['m01', 'q01', 'q02', 'r01', 'z02', 'd10', 'aa04']) {
+    it(`${id} : même preuve, que la position ait été lue ou que sa signature l’ait déjà été`, () => {
+      const pz = tous.find(p => p.id === id)!, but = butLocal(pz)!, memo = new Map<string, PreuveLocale | null>();
+      const signatures = new Set<string>();
+      let essais = 0;
+      for (const f of coupsFaux(pz)) {
+        const local = butApres(pz, but, f), apresFaux = jouer(startOf(pz).pos, f)!;
+        if (!local) continue;
+        for (const m of local.zone) {
+          const r = apresFaux.board[m] ? null : jouer(apresFaux, m);
+          if (!r) continue;
+          essais++;
+          signatures.add(signatureLocale(r, local.zone));
+          expect(prouverLocale(r, local, pz.toPlay, { memo }), `${id} ${toLabel(f, 9)} ${toLabel(m, 9)}`).toBe(prouverLocale(r, local, pz.toPlay));
+        }
+      }
+      // La mémoire sert : bien moins de signatures que de positions.
+      expect(signatures.size).toBeLessThan(essais / 4);
     }, 300_000);
   }
 });

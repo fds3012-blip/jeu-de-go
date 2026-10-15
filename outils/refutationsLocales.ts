@@ -13,7 +13,7 @@ import {
   VIDES_MAX, defautsZone, defautsZoneCourse, jouer, prouverLocale, zoneDeCourse, zoneDuGroupe, zoneFermee, type ButLocal, type PreuveLocale,
 } from '../src/go/refutation-locale';
 import { LECTURES_DECLAREES } from '../src/go/zones-problemes';
-import { butDe, comprendreParCapture, repliquesDuTexte } from '../src/app/comprendreErreur';
+import { butDe, comprendreParCapture, repliquesDuTexte, type But } from '../src/app/comprendreErreur';
 
 /** Thèmes lus ici : la série « Vie et mort » (src/app/seriesThemes.ts). Le ko garde le comportement d'avant (#551). */
 export const THEMES_LOCAUX = new Set(['vie-mort', 'seki', 'semeai']);
@@ -74,6 +74,17 @@ export function ordreRepliques(pz: Puzzle, but: ButLocal, faux: number): number[
 }
 
 /**
+ * But de la lecture de capture : celui des pierres marquées (#549), ou, dans une course où les deux camps sont marqués,
+ * prendre les pierres marquées de l'adversaire.
+ */
+export function butCapture(pz: Puzzle): But | null {
+  const b = butDe(pz);
+  if (b || THEME_DU_PROBLEME[pz.id] !== 'semeai') return b;
+  const { pos, marked } = startOf(pz), siennes = marked.filter(m => pos.board[m] !== pz.toPlay);
+  return siennes.length && siennes.length < marked.length ? { type: 'prendre', cibles: siennes } : null;
+}
+
+/**
  * But local après le coup faux `faux` : le même si sa zone reste fermée ; sinon (un coup faux dehors a pris une liberté
  * à un mur), l'espace du groupe relu sur le nouveau plateau, s'il est fermé et que la zone n'était pas déclarée ; ou null.
  */
@@ -92,7 +103,7 @@ export function butApres(pz: Puzzle, but: ButLocal, faux: number): ButLocal | nu
  * Réplique prouvée au coup faux `faux`, ou null. La lecture locale d'abord (zone fermée) ; sinon (pas de zone, zone
  * ouverte par le coup faux, ou aucune réplique prouvée), la lecture de capture hors ligne.
  */
-export function repliqueProuvee(pz: Puzzle, but: ButLocal | null, faux: number): Replique | null {
+export function repliqueProuvee(pz: Puzzle, but: ButLocal | null, faux: number, memo?: Map<string, PreuveLocale | null>): Replique | null {
   const apresFaux = jouer(startOf(pz).pos, faux);
   if (!apresFaux) return null;
   const local = but && butApres(pz, but, faux);
@@ -100,11 +111,11 @@ export function repliqueProuvee(pz: Puzzle, but: ButLocal | null, faux: number):
     if (apresFaux.board[m]) continue;
     const r = jouer(apresFaux, m);
     if (!r) continue;
-    const preuve = prouverLocale(r, local, pz.toPlay);
+    const preuve = prouverLocale(r, local, pz.toPlay, { memo });
     if (preuve) return { reponse: m, preuve };
   }
-  const capture = butDe(pz);
-  const e = capture && comprendreParCapture(pz, faux, { reste: BUDGET_HORS_LIGNE, fin: Infinity, maitre: pz.toPlay }, true);
+  const capture = butCapture(pz);
+  const e = capture && comprendreParCapture(pz, faux, { reste: BUDGET_HORS_LIGNE, fin: Infinity, maitre: pz.toPlay }, true, capture);
   return capture && e ? { reponse: e.reponse, preuve: capture.type === 'prendre' ? 'prendre' : 'sauver' } : null;
 }
 
@@ -122,7 +133,8 @@ export function coder(pz: Puzzle, r: Replique | null): string {
 }
 
 export function refutationsDe(pz: Puzzle, but: ButLocal | null): RefutationsCodees {
-  const codes = new Map(coupsFaux(pz).map(f => [f, coder(pz, repliqueProuvee(pz, but, f))]));
+  const memo = new Map<string, PreuveLocale | null>();
+  const codes = new Map(coupsFaux(pz).map(f => [f, coder(pz, repliqueProuvee(pz, but, f, memo))]));
   const compte = new Map<string, number>();
   for (const c of codes.values()) compte.set(c, (compte.get(c) ?? 0) + 1);
   const defaut = [...compte].sort((x, y) => y[1] - x[1] || (x[0] < y[0] ? -1 : 1))[0]?.[0] ?? '';
@@ -134,7 +146,7 @@ export function refutationsDe(pz: Puzzle, but: ButLocal | null): RefutationsCode
 /** Ligne du fichier généré pour un problème. */
 export function ligne(pz: Puzzle, but: ButLocal | null, r: RefutationsCodees): string {
   const L = (m: number) => toLabel(m, pz.size);
-  const tete = !but ? `but: '${butDe(pz)?.type ?? 'aucun'}'`
+  const tete = !but ? `but: '${butCapture(pz)?.type ?? 'aucun'}'`
     : but.type === 'course' ? `but: 'course', a: '${L(but.a)}', b: '${L(but.b)}'` : `but: '${but.type}', cible: '${L(but.cible)}'`;
   const sauf = Object.entries(r.sauf).map(([k, v]) => `${k}: '${v}'`).join(', ');
   return `  ${pz.id}: { ${tete}, defaut: '${r.defaut}'${sauf ? `, sauf: { ${sauf} }` : ''} },`;
@@ -193,7 +205,7 @@ export async function genererRefutationsLocales(problemes: readonly Puzzle[], em
     const but = butLocal(pz);
     const r = refutationsDe(pz, but);
     await entre?.(pz.id);
-    if (!but && !butDe(pz)) continue;
+    if (!but && !butCapture(pz)) continue;
     lignes.push(ligne(pz, but, r));
   }
   return genererFichier(lignes, empreinte);
@@ -203,15 +215,16 @@ export async function genererRefutationsLocales(problemes: readonly Puzzle[], em
  * Revérifie une réplique figée sur la vraie position : la preuve codée tient (lecture locale), ou la lecture de capture
  * dit encore non (prendre) ou oui (sauver), le joueur maître du ko. Sert au test, indépendamment de l'ordre d'essai.
  */
-export function repliqueTient(pz: Puzzle, faux: number, code: string): boolean {
+export function repliqueTient(pz: Puzzle, faux: number, code: string, memo?: Map<string, PreuveLocale | null>): boolean {
   const lettre = code.slice(-1), reponse = fromLabel(code.slice(0, -1), pz.size);
   const apresFaux = jouer(startOf(pz).pos, faux), r = apresFaux && !apresFaux.board[reponse] ? jouer(apresFaux, reponse) : null;
   if (!r) return false;
   const preuve = (Object.keys(CODE_PREUVE) as Preuve[]).find(k => CODE_PREUVE[k] === lettre);
   if (preuve === 'prendre' || preuve === 'sauver') {
-    const e = comprendreParCapture(pz, faux, { reste: BUDGET_HORS_LIGNE, fin: Infinity, maitre: pz.toPlay }, true);
-    return !!e && e.reponse === reponse && butDe(pz)?.type === preuve;
+    const capture = butCapture(pz);
+    const e = capture && comprendreParCapture(pz, faux, { reste: BUDGET_HORS_LIGNE, fin: Infinity, maitre: pz.toPlay }, true, capture);
+    return !!e && e.reponse === reponse && capture?.type === preuve;
   }
   const but = butLocal(pz), local = but && butApres(pz, but, faux);
-  return !!preuve && !!local && prouverLocale(r, local, pz.toPlay, { seulement: preuve }) === preuve;
+  return !!preuve && !!local && prouverLocale(r, local, pz.toPlay, { seulement: preuve, memo }) === preuve;
 }

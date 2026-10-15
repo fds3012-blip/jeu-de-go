@@ -146,6 +146,7 @@ export const frEcrans = {
   'erreur.libertes.groupe': { one: 'Le groupe marqué n’a plus qu’une liberté.', other: 'Le groupe marqué a {n} libertés.' },
   'erreur.libertes.chacun': { one: 'Les pierres marquées n’ont plus qu’une liberté chacune.', other: 'Les pierres marquées ont {n} libertés chacune.' },
   'erreur.libertes.auMoins': { one: 'Une des pierres marquées n’a plus qu’une liberté.', other: 'Les pierres marquées ont au moins {n} libertés.' },
+  'erreur.libertes.sien': { one: 'Son groupe marqué n’a plus qu’une liberté.', other: 'Son groupe marqué a {n} libertés.' },
   'erreur.sauver.prise': '{couleur} répond en {point} et prend ta pierre marquée.',
   'erreur.sauver.perdue': '{couleur} répond en {point}. Ta pierre marquée ne peut plus être sauvée.',
   'erreur.tonCoup': 'Ton coup',

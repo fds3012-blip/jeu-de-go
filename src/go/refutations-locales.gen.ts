@@ -4,7 +4,7 @@
 // Preuves (src/go/refutation-locale.ts) : m mort, y sansYeux, v vit, i imprenable, c course ; lecture de capture
 // (src/go/lecture-capture.ts, hors ligne, toi maître du ko) : p prendre, s sauver. Vide : rien de prouvé.
 // prettier-ignore
-export const EMPREINTE = 'e6e326e7db57a227';
+export const EMPREINTE = 'bc13abb10b515cc0';
 export type ButCode = 'vivre' | 'tuer' | 'course' | 'prendre' | 'sauver' | 'aucun';
 export interface RefutationsLocales { but: ButCode; cible?: string; a?: string; b?: string; defaut: string; sauf?: Readonly<Record<string, string>> }
 export const REFUTATIONS_LOCALES: Readonly<Record<string, RefutationsLocales>> = {
@@ -15,6 +15,7 @@ export const REFUTATIONS_LOCALES: Readonly<Record<string, RefutationsLocales>> =
   q01: { but: 'vivre', cible: 'B2', defaut: 'D2y', sauf: { A1: 'D2m', C1: 'D2m' } },
   v3: { but: 'tuer', cible: 'C8', defaut: 'E9v' },
   w02: { but: 'sauver', defaut: 'B1s' },
+  a14: { but: 'prendre', defaut: 'C7p' },
   m03: { but: 'vivre', cible: 'C3', defaut: 'E1m' },
   m04: { but: 'tuer', cible: 'E8', defaut: 'F9v' },
   o03: { but: 'course', a: 'C2', b: 'D2', defaut: 'C1c', sauf: { B1: 'C1p', C1: 'B1p' } },
@@ -108,7 +109,7 @@ export const REFUTATIONS_LOCALES: Readonly<Record<string, RefutationsLocales>> =
   z11: { but: 'course', a: 'C2', b: 'F2', defaut: 'A2c', sauf: { A2: '' } },
   t06: { but: 'tuer', cible: 'A1', defaut: 'C1v' },
   u15: { but: 'vivre', cible: 'A1', defaut: 'D2m', sauf: { C2: 'D1m', D1: 'C2m' } },
-  z13: { but: 'course', a: 'C2', b: 'G2', defaut: 'F1c', sauf: { B1: 'J2c', F1: 'B1c', J1: '' } },
-  z14: { but: 'course', a: 'C2', b: 'F2', defaut: 'A2c', sauf: { A2: '', J1: '' } },
+  z13: { but: 'course', a: 'C2', b: 'G2', defaut: 'F1c', sauf: { B1: 'J2c', F1: 'B1c', J1: 'J2p' } },
+  z14: { but: 'course', a: 'C2', b: 'F2', defaut: 'A2c', sauf: { A2: 'J2p', J1: 'J2p' } },
   z15: { but: 'tuer', cible: 'A4', defaut: 'B2v', sauf: { A2: '', B1: '', C1: 'B1v' } },
 };

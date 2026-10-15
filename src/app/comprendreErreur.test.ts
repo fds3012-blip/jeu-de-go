@@ -240,6 +240,11 @@ describe('vie et mort, seki, course : réplique figée hors ligne (#554)', () =>
     expect(e.phrase.startsWith(fr('erreur.prendre.repond', { couleur: 'Blanc', point: toLabel(e.reponse, 9) }))).toBe(true);
   });
 
+  it('course où les deux camps sont marqués (a14, ouverte) : « son groupe marqué », sans ambiguïté', () => {
+    const e = comprendreErreur(p('a14'), at('J1'))!;
+    expect(e.phrase).toMatch(/^Blanc .* en [A-J]\d\. Son groupe marqué (a \d libertés|n’a plus qu’une liberté)\.$/);
+  });
+
   it('le fichier fait foi : aucune lecture en direct pour ses problèmes (même avec un budget nul)', () => {
     const vide = compteurBorne(0, 0);
     for (const id of ['m01', 'q01', 'z02', 'd05', 'w01']) {
@@ -247,8 +252,8 @@ describe('vie et mort, seki, course : réplique figée hors ligne (#554)', () =>
       expect(figee, id).toBeTruthy();
       expect(comprendreErreur(pb, f, vide)?.reponse, id).toBe(figee!.reponse);
     }
-    // Rien de prouvé pour ce coup : rien n'est dit (pas de lecture de secours).
-    expect(repliqueFigee(p('a14'), at('A1'))).toBeUndefined();
+    // Problème hors du fichier (ko) : pas de réplique figée.
+    expect(repliqueFigee(p('x01'), at('A1'))).toBeUndefined();
   });
 
   it('chaque réplique figée donne une phrase qui nomme le point joué, et la position suit la réplique', () => {

@@ -6,7 +6,7 @@ import { fromLabel, toLabel } from './coords';
 import { aDeuxYeux, fauxOeilCree, groupeDuJoueur } from './faits-vie-mort';
 import { evaluer } from './preuve-vie-mort';
 import {
-  defautsZone, defautsZoneCourse, jouer, prouverLocale, zoneDeCourse, zoneDuGroupe, zoneFermee, type ButLocal,
+  defautsZone, defautsZoneCourse, jouer, prouverLocale, signatureLocale, zoneDeCourse, zoneDuGroupe, zoneFermee, type ButLocal,
 } from './refutation-locale';
 import type { Position } from './rules';
 
@@ -147,5 +147,16 @@ describe('faits lus sur le plateau', () => {
   });
   it('deux yeux : faux sans pierre', () => {
     expect(aDeuxYeux(depart('q01').pos, at('E5'))).toBe(false);
+  });
+});
+
+describe('signature locale', () => {
+  it('un coup loin de la zone ne la change pas ; un coup au contact, si', () => {
+    const { pos, marked } = depart('m01');
+    const zone = zoneDuGroupe(pos, marked[0]);
+    const base = signatureLocale(seq(pos, 'passe', 'E1'), zone);
+    expect(signatureLocale(seq(pos, 'J9', 'E1'), zone)).toBe(base);
+    expect(signatureLocale(seq(pos, 'A9', 'E1'), zone)).toBe(base);
+    expect(signatureLocale(seq(pos, 'E1'), zone)).not.toBe(base);
   });
 });
