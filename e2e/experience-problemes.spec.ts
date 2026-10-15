@@ -93,12 +93,12 @@ test('maîtrise par thème : la barre se remplit, « Thème suivant » à la ma�
   await expect(plateau(page, r.taille)).toBeVisible();
   await jouer(page, r.coups[0], r.taille);
 
-  // Maîtrisé : une ligne de fête, « Thème suivant » en relief, « Continuer Capturer » en lien.
+  // Maîtrisé : une ligne de fête, « Thème suivant » en relief, « Rester sur Capturer » en lien.
   await expect(page.locator('.theme-maitrise-fete')).toHaveText('Capturer : thème maîtrisé !');
   const versSuivant = page.locator('.verdict').getByRole('button', { name: 'Thème suivant : Sauver' });
   await expect(versSuivant).toHaveClass(/\bcta\b/);
   await expect(page.locator('.verdict .cta')).toHaveCount(1);
-  await expect(page.locator('.verdict').getByRole('button', { name: 'Continuer Capturer' })).toBeVisible();
+  await expect(page.locator('.verdict').getByRole('button', { name: 'Rester sur Capturer' })).toBeVisible();
   await versSuivant.click();
   await expect(page.locator('.lecteur .lecteur-nom small').first()).toContainText('Sauver');
 

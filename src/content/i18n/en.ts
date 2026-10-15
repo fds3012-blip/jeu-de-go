@@ -469,7 +469,7 @@ export const en = {
   'themes.maitrise': 'Mastered',
   'themes.maitriseFete': '{theme}: theme mastered!',
   'themes.suivant': 'Next theme: {theme}',
-  'themes.continuer': 'Keep going with {theme}',
+  'themes.continuer': 'Stay on {theme}',
   // Puzzle rush (#287)
   'course.carte.titre': 'Rush: 3 minutes',
   'course.carte.texte': 'As many puzzles as you can. Your 3rd mistake ends the rush.',

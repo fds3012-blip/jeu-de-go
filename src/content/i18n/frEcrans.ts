@@ -323,7 +323,7 @@ export const frEcrans = {
   'themes.maitrise': 'Maîtrisé',
   'themes.maitriseFete': '{theme} : thème maîtrisé !',
   'themes.suivant': 'Thème suivant : {theme}',
-  'themes.continuer': 'Continuer {theme}',
+  'themes.continuer': 'Rester sur {theme}',
   // Course aux problèmes (#287, src/app/course.ts et src/app/CourseProblemes.tsx)
   'course.carte.titre': 'Course : 3 minutes',
   'course.carte.texte': 'Un maximum de problèmes. À la 3e erreur, la course s’arrête.',

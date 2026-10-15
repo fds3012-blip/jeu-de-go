@@ -76,7 +76,7 @@ J7 des joueurs de problèmes, problèmes par session.
    pierres marquées. ») au lieu d'inventer un coup.
 3. **Maîtrise par thème.** Barre fine au pied de chaque vignette (objectif `MAITRISE_CIBLE` = 6 problèmes différents
    réussis sans voir la réponse), « Maîtrisé » ensuite. Au moment où la série est maîtrisée : « Capturer : thème
-   maîtrisé ! », « Thème suivant : Sauver » en relief, « Continuer Capturer » en lien.
+   maîtrisé ! », « Thème suivant : Sauver » en relief, « Rester sur Capturer » en lien.
 
 ### Couverture mesurée sur la banque (250 problèmes, chaque coup faux légal joué)
 
