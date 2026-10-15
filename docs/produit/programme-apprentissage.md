@@ -149,6 +149,20 @@ réplique de chaque réfutation est rejouée ; z15 : A2 et B1 ne laissent qu'un 
 Parcours : `e2e/lecons-37-plus.spec.ts` (l39 jouée en entier, un mauvais choix au quiz, un coup refusé à chaque exercice ;
 390 px clair, 320 px sombre, zoom 200 % au doigt ; le chemin montre l37, l38 et l40 à leur place).
 
+## Leçons 41 à 46 (#547)
+
+Audit du programme et priorités : `docs/pedagogie/programme-2026-10.md`. Preuves : `src/go/lecons-41-plus.test.ts`.
+Parcours : `e2e/lecons-41-plus.spec.ts` (l45 jouée en entier depuis le chemin).
+
+| Leçon | Place | Méthode de preuve |
+| --- | --- | --- |
+| l41 Compter en règle chinoise | Fin de partie, après l16 | `score()` chinois (komi 7,5) et japonais ; la dame : minimax exact, seul meilleur coup en chinois, égal à la passe en japonais |
+| l42 Lire l'échelle | Capturer et sauver, après l9 | Lecteur d'échelle de `src/go/tactics.ts` : l'échelle marche après la fuite ; F2 sur le chemin la casse ; seule G2 casse l'échelle de l'exercice |
+| l43 Le triangle vide | Formes et tesuji, après l18 | Libertés comptées : 7 contre 8 ; réponses = le prolongement qui en garde le plus, refus = chaque triangle vide, une de moins |
+| l44 Le deuxième rang (13 × 13) | Vie et mort, après l24 | Preuve de vie et mort en zone fermée : 6 meurent, 7 vivent si Noir joue d'abord (B1, E1, H1), Blanc tue par les bouts (B1, H1), 8 vivent |
+| l45 Les menaces de ko | Fin de partie, après l38 | Minimax exact (ko simple, deux comptes) rejoué depuis la prise : menace, réponse, reprise, connexion, chacune seul meilleur coup |
+| l46 Le handicap | L'ouverture, après l8 | `handicapPoints`, `newPosition`, `KOMI_HANDICAP` |
+
 ## La suite prévue (vers 5 kyu, puis le premier dan)
 
 Écartées de ce palier, faute de preuve honnête ou de position lisible :
