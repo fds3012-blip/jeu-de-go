@@ -375,7 +375,10 @@ test('leçon 8 : bien commencer sur 9 × 9, du chemin à la fin de leçon', asyn
   await expect(page.getByTestId('confettis')).toHaveCount(0);
   await page.getByRole('button', { name: 'Retour au chemin' }).click();
   await expect(page.getByRole('button', { name: 'Leçon 8 : Les premiers coups, terminée' })).toBeVisible();
-  // #16 : « Attaquer et défendre » (l27) suit la leçon 8 dans le chapitre 2 ; elle devient la prochaine étape.
+  // #547 : « Le handicap » (l46) suit la leçon 8 dans le chapitre 2 ; elle devient la prochaine étape, avant
+  // « Attaquer et défendre » (l27, #16).
+  const l46 = LESSONS_FR.findIndex(l => l.id === 'l46') + 1;
+  await expect(page.getByRole('button', { name: `Leçon ${l46} : Le handicap, prochaine étape` })).toBeVisible();
   const l27 = LESSONS_FR.findIndex(l => l.id === 'l27') + 1;
-  await expect(page.getByRole('button', { name: `Leçon ${l27} : Attaquer et défendre, prochaine étape` })).toBeVisible();
+  expect(l27).toBe(l46 + 1);
 });
