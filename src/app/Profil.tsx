@@ -6,7 +6,7 @@
 import '../ui/amis.css';
 import '../ui/profil-ecran.css';
 import { Account } from './Account';
-import { Conditions } from './Confidentialite';
+import { Conditions } from './Conditions';
 import { MesDonnees } from './MesDonnees';
 import { MentionsLegales } from './MentionsLegales';
 import { MENTIONS } from '../content/mentionsLegales';
