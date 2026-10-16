@@ -59,6 +59,19 @@ export const CONTROLES: Controle[] = [
   { lecon: 'l31', etape: 1, type: 'demo' },
   { lecon: 'l31', etape: 2, type: 'exercice' },
   { lecon: 'l31', etape: 3, type: 'exercice' },
+  // #553 : l47 le mur (s'étendre loin de lui), l48 couper et relier, l49 envahir ou réduire (13 × 13 cadré).
+  // Affirmations propres à chaque texte : src/go/lecons-47-plus.test.ts.
+  { lecon: 'l47', etape: 0, type: 'demo' },
+  { lecon: 'l47', etape: 1, type: 'duel', meilleur: 'K11', pire: 'E11' },
+  { lecon: 'l47', etape: 2, type: 'exercice' },
+  { lecon: 'l48', etape: 0, type: 'demo' },
+  { lecon: 'l48', etape: 1, type: 'exercice' },
+  { lecon: 'l48', etape: 2, type: 'demo' },
+  { lecon: 'l48', etape: 3, type: 'exercice' },
+  { lecon: 'l49', etape: 0, type: 'demo' },
+  { lecon: 'l49', etape: 1, type: 'exercice' },
+  { lecon: 'l49', etape: 2, type: 'demo' },
+  { lecon: 'l49', etape: 3, type: 'duel', meilleur: 'D7', pire: 'B8' },
 ];
 
 /** Une position à analyser : `rows` (X noir, O blanc), le joueur au trait, et les coups à juger. */

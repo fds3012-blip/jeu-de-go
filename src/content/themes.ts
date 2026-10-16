@@ -191,6 +191,10 @@ export const THEMES_DE_LECON: Readonly<Record<string, readonly Theme[]>> = {
   l45: ['ko'],
   // #547 : le handicap (l46), la série d'ouverture (où poser ses premières pierres).
   l46: ['ouverture'],
+  // #553 : le mur (l47) et envahir ou réduire (l49), la série d'ouverture ; couper et relier (l48), relier et couper.
+  l47: ['ouverture'],
+  l48: ['relier-couper'],
+  l49: ['ouverture'],
 };
 
 /**

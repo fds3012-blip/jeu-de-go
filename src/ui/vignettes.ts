@@ -116,4 +116,10 @@ export const MOTIFS: Record<string, Motif> = {
   l45: { noir: [[0, 1], [1, 0], [1, 2], [3, 3]], blanc: [[2, 1], [1, 1], [2, 0], [2, 2], [2, 3]], or: [[3, 2]] },
   // Le handicap : quatre pierres noires sur les hoshi, le centre en jade.
   l46: { noir: [[0, 0], [3, 0], [0, 3], [3, 3]], jade: [[1, 1]], or: [[2, 2]] },
+  // Le mur : une colonne de pierres noires au bord gauche, le point à jouer loin d'elle (jade), près d'une pierre blanche.
+  l47: { coin: true, noir: [[0, 1], [0, 2], [0, 3]], blanc: [[3, 2]], jade: [[3, 3]] },
+  // Couper et relier : le keima noir, la pierre blanche qui vise la coupe, le point à relier en jade.
+  l48: { noir: [[1, 1], [2, 3]], blanc: [[2, 2], [3, 2]], jade: [[1, 2]] },
+  // Envahir ou réduire : le hoshi blanc, l'invasion au 3-3 en jade, la réduction par-dessus cerclée d'or.
+  l49: { coin: true, blanc: [[2, 1], [3, 2]], jade: [[1, 3]], or: [[1, 0]] },
 };

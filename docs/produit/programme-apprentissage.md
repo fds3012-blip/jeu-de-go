@@ -163,6 +163,18 @@ Parcours : `e2e/lecons-41-plus.spec.ts` (l45 jouée en entier depuis le chemin).
 | l45 Les menaces de ko | Fin de partie, après l38 | Minimax exact (ko simple, deux comptes) rejoué depuis la prise : menace, réponse, reprise, connexion, chacune seul meilleur coup |
 | l46 Le handicap | L'ouverture, après l8 | `handicapPoints`, `newPosition`, `KOMI_HANDICAP` |
 
+## Leçons 47 à 49 (#553)
+
+Positions KataGo figées (`src/go/preuves-katago.json`, réglages des leçons 29 à 31). Preuves :
+`src/go/lecons-47-plus.test.ts` et `src/go/lecons-ouverture.test.ts`. Détail et chiffres :
+`docs/pedagogie/programme-2026-10.md`, section 5. Parcours : `e2e/lecons-47-plus.spec.ts`.
+
+| Leçon | Place | Méthode de preuve |
+| --- | --- | --- |
+| l47 Le mur (13 × 13) | L'ouverture, après l31 | KataGo : K11 bat E11 (contre le mur) de 6,2 pts ; refus à deux pas du mur, 3,3 pts et plus derrière les réponses |
+| l48 Couper et relier (13 × 13) | après l47 | KataGo : le point de liaison est le meilleur coup ; le laisser perd 10 à 17 pts (relier), 6 à 12 pts (couper) ; réplique « en L5 » vérifiée |
+| l49 Envahir ou réduire (13 × 13) | après l48 | KataGo : entrer dans le coin vide à 0,6 pt du meilleur, G2 2,3 pts derrière ; réduire par-dessus, B8 4,5 pts derrière |
+
 ## La suite prévue (vers 5 kyu, puis le premier dan)
 
 Écartées de ce palier, faute de preuve honnête ou de position lisible :
