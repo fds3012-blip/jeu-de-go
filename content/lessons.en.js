@@ -142,6 +142,33 @@ export const LESSONS_EN = {
       ok: 'Good: your stones gain room on the side.', no: 'Go up along the left edge, without touching White.',
       refus: ['Too slow: White takes the side before you.', 'White cuts at D4: your stones are split.', 'Too far: White cuts your stones, or slides underneath.'] }
   ] },
+  l47: { title: 'The wall', desc: 'Extending far from your strong stones', steps: [
+    { text: 'This is your wall (stones in a row, facing the bottom). Play far: green point.' },
+    { text: 'Wall facing the top. For Black: E11, against the wall, or K11?', choices: ['E11', 'K11'],
+      ok: 'K11: far from the wall, your stone gains much more.', no: 'E11 gains much less: your wall is right next to it.' },
+    { text: 'Your turn: your wall is on the right. Play far from it.',
+      ok: 'Good: far from your wall, you go under the white hoshi.', no: 'Go far from your wall, under the white hoshi at D4.',
+      refus: ['Too close to your wall: you gain much less.'] }
+  ] },
+  l48: { title: 'Cutting and connecting', desc: 'Keep your stones together, split theirs', steps: [
+    { text: 'White aims at C5, which cuts (splits) your stones. Take it: green point.' },
+    { text: 'Your turn: White aims at your cut. Take it first.',
+      ok: 'Good: you took that point before White.', no: 'Look for the point that would cut your two stones.',
+      refus: ['White cuts at L5: your stones are split.'] },
+    { text: 'Reversed: now White has a cut. Cut at the green point.' },
+    { text: 'Your turn: split the two white stones.',
+      ok: 'Cut: the two white stones are split.', no: 'Look for the empty point between the two white stones.',
+      refus: ['White plays at L5: you missed the cut.'] }
+  ] },
+  l49: { title: 'Invade or reduce', desc: 'Go inside, or stay on top', steps: [
+    { text: 'Invasion (going inside White’s area): the corner is empty. Play the san-san (3-3 point), green point.' },
+    { text: 'Your turn: go into the other empty corner.',
+      ok: 'Good: you enter the corner, under or next to the hoshi.', no: 'Enter the corner, under or next to the hoshi at K4.',
+      refus: ['In the middle, on the 2nd line: you lose much more.'] },
+    { text: 'Reduction (shrinking White’s area from above): the corners are closed. Play the green point.' },
+    { text: 'For Black: D7, on top, or B8, underneath?', choices: ['D7', 'B8'],
+      ok: 'D7 gains much more: you stay on top.', no: 'B8, on the 2nd line inside White’s area, loses much more than D7.' }
+  ] },
   l9: { title: 'The net', desc: 'Trap a stone without touching it', steps: [
     { text: 'Atari at the green point? It runs to a white stone: safe.' },
     { text: 'Net (geta): close its exits at the green point, without touching it.' },

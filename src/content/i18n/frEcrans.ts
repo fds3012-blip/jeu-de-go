@@ -712,6 +712,15 @@ export const frEcrans = {
   'aide.mot.tenuki.def': 'Jouer ailleurs au lieu de répondre au dernier coup de l’adversaire. Bon quand sa menace est plus petite que ton coup.',
   'aide.mot.miai': 'Miai',
   'aide.mot.miai.def': 'Deux points qui se valent. Si l’adversaire en prend un, tu prends l’autre : inutile d’y jouer avant.',
+  // #553 : mots des leçons d'ouverture prouvées par KataGo (l47 à l49).
+  'aide.mot.mur': 'Mur',
+  'aide.mot.mur.def': 'Des pierres solides en ligne, tournées vers un côté du plateau. Tout près de lui, ton mur tient déjà la place : en général, joue plus loin.',
+  'aide.mot.couper': 'Couper, relier',
+  'aide.mot.couper.def': 'Couper : jouer au point qui sépare deux pierres adverses. Relier : jouer ce point avant l’adversaire, pour garder tes pierres ensemble.',
+  'aide.mot.invasion': 'Invasion',
+  'aide.mot.invasion.def': 'Entrer dans une zone que l’adversaire entoure, pour y faire des points. La plus simple : dans un coin, sous un hoshi seul.',
+  'aide.mot.reduction': 'Réduction',
+  'aide.mot.reduction.def': 'Rendre plus petite une zone adverse en jouant par-dessus, sans entrer dedans.',
   'profil.aideJeu': 'Aide',
   // Revue (src/app/Revue.tsx, src/app/revue.ts)
   'revue.retour': 'Retour au bilan',
@@ -1048,6 +1057,9 @@ export const frEcrans = {
   'acquis.l44': 'Au deuxième rang, tu sais compter : six meurent, huit vivent.',
   'acquis.l45': 'Tu gagnes un ko : une menace qui oblige Blanc à répondre, puis tu reprends.',
   'acquis.l46': 'Tu joues avec un handicap : pierres sur les hoshi, Blanc commence, komi 0,5.',
+  'acquis.l47': 'Avec un mur, tu ne joues pas collé à lui : tu joues loin.',
+  'acquis.l48': 'Tu relies ta coupe avant Blanc, et tu coupes la sienne.',
+  'acquis.l49': 'Coin vide : tu envahis. Coins fermés : tu réduis par-dessus.',
   'acquis.defaut': 'Une leçon de plus dans ta poche.',
   'lecteur.progression': 'Progression de la leçon',
   // #290 : sur un écran bas, l'explication du verdict est repliée pour laisser voir le plateau.

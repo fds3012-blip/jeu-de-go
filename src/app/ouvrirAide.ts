@@ -50,6 +50,8 @@ export const AIDE_DES_LECONS: Record<string, { fiche: Fiche; mot?: IdMot }> = {
   l37: { fiche: 'mots', mot: 'miai' },
   // #547 : compter en règle chinoise (l41) ouvre le comptage ; le handicap (l46), son mot.
   l41: { fiche: 'compter' }, l46: { fiche: 'mots', mot: 'handicap' },
+  // #553 : le mur (l47), couper et relier (l48), l'invasion (l49).
+  l47: { fiche: 'mots', mot: 'mur' }, l48: { fiche: 'mots', mot: 'couper' }, l49: { fiche: 'mots', mot: 'invasion' },
 };
 
 /** Fiche à ouvrir depuis une leçon ; les règles quand la leçon n'a pas de mot à elle (ouverture, par exemple). */
