@@ -16,6 +16,9 @@ export const LECONS_INDEX: readonly (readonly [id: string, titre: string, desc: 
   ["l29", "L’ouverture en 13 × 13", "Coins, puis bords, puis centre", 5, 13],
   ["l30", "Le san-san", "Quand Blanc entre sous ton hoshi", 4, 19],
   ["l31", "Le 3-4 et l’approche", "Le kakari et ses réponses", 4, 19],
+  ["l47", "Le mur", "S’étendre loin de ses pierres fortes", 3, 13],
+  ["l48", "Couper et relier", "Garder tes pierres ensemble, séparer les siennes", 4, 13],
+  ["l49", "Envahir ou réduire", "Entrer chez Blanc, ou rester par-dessus", 4, 13],
   ["l9", "Le filet", "Enfermer une pierre sans la toucher", 3],
   ["l42", "Lire l’échelle", "Courir, ou laisser la pierre", 5],
   ["l10", "La prise en retour", "Donner une pierre pour en prendre trois", 3],
@@ -53,7 +56,7 @@ export const LECONS_INDEX: readonly (readonly [id: string, titre: string, desc: 
 // prettier-ignore
 export const CHAPITRES_INDEX: readonly { id: string; titre: string; intro: string; fin?: string; complet: boolean; lecons: readonly string[] }[] = [
   { id: "c1", titre: "Les bases", intro: "Sept leçons courtes pour jouer ta première partie.", fin: "Tu connais les règles du go.", complet: true, lecons: ["l1","l2","l3","l4","l5","l6","l7"] },
-  { id: "c2", titre: "L’ouverture", intro: "Où poser tes premières pierres.", complet: false, lecons: ["l8","l46","l27","l29","l30","l31"] },
+  { id: "c2", titre: "L’ouverture", intro: "Où poser tes premières pierres.", complet: false, lecons: ["l8","l46","l27","l29","l30","l31","l47","l48","l49"] },
   { id: "c3", titre: "Capturer et sauver", intro: "Des pièges pour prendre plus de pierres.", complet: false, lecons: ["l9","l42","l10","l11","l26","l39","l40"] },
   { id: "c4", titre: "Vie et mort", intro: "Quand un groupe vit, quand il meurt.", complet: false, lecons: ["l12","l13","l14","l17","l24","l44","l25","l37"] },
   { id: "c5", titre: "Fin de partie et comptage", intro: "Finir proprement, puis compter juste.", complet: false, lecons: ["l15","l16","l41","l22","l23","l32","l33","l38","l45"] },

@@ -122,7 +122,10 @@
 }
 
 /* ---------- Une seule action, au bas de la colonne, sous le pouce ; sa place est réservée (rien ne saute) ---------- */
-.lecon-actions { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); min-height: calc(var(--cible-cta) + var(--relief)); margin-top: auto; }
+/* #559 : le bloc ne rétrécit pas sous son contenu (`flex: none`). Avant, avec « Revoir » sous l'action, il se tassait à sa
+   hauteur minimale et « Revoir » débordait sous la barre du bas en 320 × 568 (à moitié caché, le plateau déjà à son
+   plancher). Maintenant, le plateau cède d'abord, puis la page défile (#458) : « Revoir » reste atteignable. */
+.lecon-actions { display: flex; flex: none; flex-direction: column; align-items: center; gap: var(--space-1); min-height: calc(var(--cible-cta) + var(--relief)); margin-top: auto; }
 .lecteur-lecon .cta { position: static; transform: none; width: 100%; margin-bottom: var(--relief); }
 @media (prefers-reduced-motion: no-preference) {
   .lecteur-lecon .cta { animation: bulle-entre 200ms var(--ease) both; }

@@ -8,7 +8,7 @@
 // coup : t dans ton territoire, l chez lui, n dame, m pierre déjà morte prise ; « E3k » : la réplique prend un ko (sans
 // menace, tu y perds ; la phrase ne dit que le fait). Vide : rien de prouvé.
 // prettier-ignore
-export const EMPREINTE = '6b6d60c16389bbfd';
+export const EMPREINTE = '3227ef7b9412121a';
 export type ButCode = 'vivre' | 'tuer' | 'course' | 'prendre' | 'sauver' | 'fin' | 'aucun';
 export interface RefutationsLocales { but: ButCode; cible?: string; a?: string; b?: string; defaut: string; sauf?: Readonly<Record<string, string>> }
 export const REFUTATIONS_LOCALES: Readonly<Record<string, RefutationsLocales>> = {
@@ -107,6 +107,8 @@ export const REFUTATIONS_LOCALES: Readonly<Record<string, RefutationsLocales>> =
   v14: { but: 'vivre', cible: 'A2', defaut: 'C2m' },
   aa19: { but: 'tuer', cible: 'C7', defaut: 'D9v' },
   aa20: { but: 'tuer', cible: 'J4', defaut: 'J2v' },
+  ab01: { but: 'fin', defaut: 'C1f2l', sauf: { A9: 'C1f2t', B9: 'C1f2t', D9: 'C1f1', E9: 'D9k', A8: 'C1f2t', B8: 'C1f2t', C8: 'C1f2t', A7: 'C1f2t', B7: 'C1f2t', C7: 'C1f2t', A6: 'C1f2t', B6: 'C1f2t', C6: 'C1f2t', A5: 'C1f2t', B5: 'C1f2t', C5: 'C1f2t', A4: 'C1f2t', B4: 'C1f2t', C4: 'C1f2t', A2: 'C1f2', C2: 'C1f1', D2: 'C1f1', A1: 'E9f1', B1: 'E9f1', E1: 'D2f2l' } },
+  ab02: { but: 'vivre', cible: 'D3', defaut: 'B1m' },
   d12: { but: 'course', a: 'C2', b: 'B4', defaut: 'C1c', sauf: { A9: 'A1p', A7: 'A1p', A1: 'A2p', C1: 'E1c', E1: 'A1c' } },
   f12: { but: 'prendre', defaut: 'B5p' },
   i06: { but: 'tuer', cible: 'E2', defaut: 'E1v' },
@@ -116,25 +118,41 @@ export const REFUTATIONS_LOCALES: Readonly<Record<string, RefutationsLocales>> =
   z03: { but: 'vivre', cible: 'H8', defaut: 'J5m' },
   z04: { but: 'fin', defaut: 'E9f4l', sauf: { A9: 'E9f4t', A8: 'E9f4t', A7: 'E9f4t', B7: 'E9f4t', C7: 'E9f4t', A6: 'E9f4t', B6: 'E9f4t', C6: 'E9f4t', A5: 'E9f4t', B5: 'E9f4t', C5: 'E9f4t', A4: 'E9f4t', B4: 'E9f4t', C4: 'E9f4t', A3: 'E9f4t', B3: 'E9f4t', C3: 'E9f4t', A1: 'E9f4', B1: 'E9f4', C1: 'E9f3' } },
   i07: { but: 'tuer', cible: 'H2', defaut: 'B1v' },
+  ab03: { but: 'tuer', cible: 'C3', defaut: 'B1v' },
+  ab05: { but: 'fin', defaut: 'D2f2l', sauf: { A9: 'D2f2t', D9: 'D2f1n', A8: 'D2f2t', D8: 'D2f1n', A7: 'D2f2t', B7: 'D2f2t', C7: 'D2f2t', A6: 'D2f2t', B6: 'D2f2t', C6: 'D2f2t', A5: 'D2f2t', B5: 'D2f2t', C5: 'D2f2t', A4: 'D2f2t', B4: 'D2f2t', C4: 'D2f2t', A2: 'D2f2', B2: 'D2f2', C2: 'D2f1', A1: 'D2f2', B1: 'D2f2' } },
   d13: { but: 'course', a: 'G6', b: 'H6', defaut: 'G9c', sauf: { G9: 'C8c', J9: 'J8p', J3: 'G9p', J1: 'G9p' } },
   u12: { but: 'vivre', cible: 'A1', defaut: 'B2m' },
   v15: { but: 'tuer', cible: 'B1', defaut: 'D2v' },
   z05: { but: 'tuer', cible: 'A3', defaut: 'B1v' },
   z06: { but: 'course', a: 'C2', b: 'F2', defaut: 'A2c', sauf: { A2: 'B1c' } },
+  ab06: { but: 'tuer', cible: 'C3', defaut: 'A2v' },
+  ab07: { but: 'vivre', cible: 'E3', defaut: 'C2m' },
   i08: { but: 'tuer', cible: 'C1', defaut: 'E2v' },
   t05: { but: 'tuer', cible: 'B1', defaut: 'A2v' },
   u13: { but: 'vivre', cible: 'A1', defaut: 'C2m' },
   z07: { but: 'course', a: 'C2', b: 'F2', defaut: 'A2c', sauf: { A2: 'B1c' } },
   z08: { but: 'fin', defaut: 'F9f6l', sauf: { A9: 'F9f6t', A8: 'F9f6t', A7: 'F9f6t', B7: 'F9f6t', C7: 'F9f6t', D7: 'F9f6t', A6: 'F9f6t', B6: 'F9f6t', C6: 'F9f6t', A5: 'F9f6t', B5: 'F9f6t', C5: 'F9f6t', A4: 'F9f6t', B4: 'F9f6t', C4: 'F9f6t', A3: 'F9f6t', B3: 'F9f6t', C3: 'F9f6t', A1: 'F9f6', B1: 'F9f6', C1: 'F9f6', D1: 'F9f5' } },
   v16: { but: 'tuer', cible: 'B3', defaut: 'A3v' },
+  ab08: { but: 'vivre', cible: 'E3', defaut: 'B1m' },
+  ab10: { but: 'vivre', cible: 'D3', defaut: 'B1m', sauf: { B2: 'A1m', A1: 'B2m' } },
   z09: { but: 'tuer', cible: 'A3', defaut: 'B1v' },
   z10: { but: 'vivre', cible: 'B2', defaut: 'D1m' },
+  ab11: { but: 'tuer', cible: 'B3', defaut: 'A1v' },
+  ab12: { but: 'vivre', cible: 'E3', defaut: 'D1m' },
   u14: { but: 'tuer', cible: 'A9', defaut: 'E8v' },
   z11: { but: 'course', a: 'C2', b: 'F2', defaut: 'A2c', sauf: { A2: '' } },
   z12: { but: 'fin', defaut: 'E9f6l', sauf: { A7: 'E9f6t', B7: 'E9f6t', C7: 'E9f6t', A6: 'E9f6t', B6: 'E9f6t', C6: 'E9f6t', A5: 'E9f6t', B5: 'E9f6t', C5: 'E9f6t', A4: 'E9f6t', B4: 'E9f6t', C4: 'E9f6t', A3: 'E9f6t', B3: 'E9f6t', C3: 'E9f6t', E2: 'E9f5', A1: 'E9f6', B1: 'E9f6', C1: 'E9f6', D1: 'E9f5', F1: 'E9f2l' } },
+  ab13: { but: 'vivre', cible: 'E3', defaut: 'E1m' },
+  ab14: { but: 'tuer', cible: 'E3', defaut: 'C2v', sauf: { B1: 'C2i', D1: 'C2i' } },
   t06: { but: 'tuer', cible: 'A1', defaut: 'C1v' },
   u15: { but: 'vivre', cible: 'A1', defaut: 'D2m', sauf: { C2: 'D1m', D1: 'C2m' } },
   z13: { but: 'course', a: 'C2', b: 'G2', defaut: 'F1c', sauf: { B1: 'J2c', F1: 'B1c', J1: 'J2p' } },
+  ab16: { but: 'tuer', cible: 'D3', defaut: 'C1v' },
   z14: { but: 'course', a: 'C2', b: 'F2', defaut: 'A2c', sauf: { A2: 'J2p', J1: 'J2p' } },
+  ab17: { but: 'vivre', cible: 'D3', defaut: 'C1m' },
+  ab18: { but: 'vivre', cible: 'E3', defaut: 'C2m' },
   z15: { but: 'tuer', cible: 'A4', defaut: 'B2v', sauf: { A2: '', B1: '', C1: 'B1v' } },
+  ab19: { but: 'tuer', cible: 'F3', defaut: 'E1v' },
+  ab20: { but: 'tuer', cible: 'E3', defaut: 'D1v' },
+  ab21: { but: 'tuer', cible: 'E3', defaut: 'C1v', sauf: { D2: '', E2: '', D1: '', E1: '' } },
 };

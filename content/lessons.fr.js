@@ -144,6 +144,27 @@ const K34 = { X: ['Q4'], O: ['Q16', 'D16'] };
 const K34M = { X: ['D16'], O: ['Q16', 'Q4'] };
 const ajoute = (base, x = [], o = []) => plateau(19, { X: [...base.X, ...x], O: [...base.O, ...o] });
 const COLLEE = 'Collée à ta pierre, elle n’entoure presque rien de plus.';
+// Leçons 47 à 49 (#553) : l'extension depuis un mur, couper et relier, envahir ou réduire, en 13 × 13 cadré. Comme l29 à
+// l31, le jugement vient de KataGo (positions figées dans src/go/preuves-katago.json, rejouées sans le modèle) ; chaque
+// affirmation des textes est vérifiée par src/go/lecons-47-plus.test.ts. Les pierres hors du cadre règlent le reste du
+// plateau : le coup juste se joue dans la zone montrée.
+// Le mur : `MUR` mur noir D3-D5, C6-B7 face au bas, Blanc vit dans le coin ; le hoshi blanc K4 attend de l'autre côté.
+// `MUR_HAUT` la même position retournée de haut en bas (mur face au haut) ; `MUR_DROITE` retournée de gauche à droite.
+const MUR = { X: ['D3', 'D4', 'D5', 'C6', 'C7', 'B7', 'K10', 'G11'], O: ['C3', 'C4', 'B5', 'B6', 'D10', 'C11', 'K4', 'L7'] };
+const MUR_HAUT = { X: ['D11', 'D10', 'D9', 'C8', 'C7', 'B7', 'K4', 'G3'], O: ['C11', 'C10', 'B9', 'B8', 'D4', 'C3', 'K10', 'L7'] };
+const MUR_DROITE = { X: ['K3', 'K4', 'K5', 'L6', 'L7', 'M7', 'D10', 'G11'], O: ['L3', 'L4', 'M5', 'M6', 'K10', 'L11', 'D4', 'C7'] };
+// Couper et relier : `KEIMA` le saut de cavalier noir C4-D6 ; Blanc a déjà D5 et vise l'autre point de coupe, C5.
+// `KEIMA_B` les mêmes pierres, couleurs inversées : la coupe est à Blanc. `_D` : retournées de gauche à droite.
+const KEIMA = { X: ['C4', 'D6', 'K10', 'K4'], O: ['D5', 'E4', 'E5', 'D10', 'F3'] };
+const KEIMA_D = { X: ['L4', 'K6', 'D10', 'D4'], O: ['K5', 'J4', 'J5', 'K10', 'H3'] };
+const KEIMA_B = { X: KEIMA.O, O: KEIMA.X };
+const KEIMA_BD = { X: KEIMA_D.O, O: KEIMA_D.X };
+// Envahir ou réduire : `OUVERT` trois hoshi blancs en bas, coins vides dessous ; `FERME` coins blancs fermés (deux
+// pierres) et G3 entre eux ; `FERME_G` la même position tournée d'un quart de tour (le camp blanc à gauche).
+const OUVERT = { X: ['D10', 'K10', 'G10'], O: ['D4', 'K4', 'G4'] };
+const FERME = { X: ['D10', 'K10', 'G10', 'C7', 'L7'], O: ['C4', 'D3', 'L4', 'K3', 'G3'] };
+const FERME_G = { X: ['K10', 'K4', 'K7', 'G11', 'G3'], O: ['D11', 'C10', 'D3', 'C4', 'C7'] };
+const p13 = base => plateau(13, base);
 // Leçons 32 et suivantes (#16, palier vers 8 kyu) : fin de partie et tesuji. Chaque position, chaque réponse acceptée,
 // chaque réfutation et chaque chiffre est prouvé par src/go/lecons-32-plus.test.ts (minimax exact de fin de partie avec
 // élagage alpha-bêta, preuve de vie et mort en zone fermée, lecteur exact de capture).
@@ -248,7 +269,7 @@ const L_HANDI_4 = ['.........', '.........', '..X...X..', '.........', '........
 export const CHAPITRES = [
   { id: 'c1', titre: 'Les bases', intro: 'Sept leçons courtes pour jouer ta première partie.', fin: 'Tu connais les règles du go.', lecons: ['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7'] },
   // Chapitre en cours d'écriture (`complet: false`) : sa dernière leçon ne ferme pas encore le chapitre.
-  { id: 'c2', titre: 'L’ouverture', intro: 'Où poser tes premières pierres.', lecons: ['l8', 'l46', 'l27', 'l29', 'l30', 'l31'], complet: false },
+  { id: 'c2', titre: 'L’ouverture', intro: 'Où poser tes premières pierres.', lecons: ['l8', 'l46', 'l27', 'l29', 'l30', 'l31', 'l47', 'l48', 'l49'], complet: false },
   { id: 'c3', titre: 'Capturer et sauver', intro: 'Des pièges pour prendre plus de pierres.', lecons: ['l9', 'l42', 'l10', 'l11', 'l26', 'l39', 'l40'], complet: false },
   { id: 'c4', titre: 'Vie et mort', intro: 'Quand un groupe vit, quand il meurt.', lecons: ['l12', 'l13', 'l14', 'l17', 'l24', 'l44', 'l25', 'l37'], complet: false },
   { id: 'c5', titre: 'Fin de partie et comptage', intro: 'Finir proprement, puis compter juste.', lecons: ['l15', 'l16', 'l41', 'l22', 'l23', 'l32', 'l33', 'l38', 'l45'], complet: false },
@@ -487,6 +508,45 @@ export const LESSONS = [
         { points: ['E5'], no: 'Blanc coupe en D4 : tes pierres sont séparées.' },
         { points: ['F4'], no: 'Trop loin : Blanc coupe tes pierres, ou glisse dessous.' }
       ] }
+  ] },
+  { id: 'l47', title: 'Le mur', desc: 'S’étendre loin de ses pierres fortes', taille: 13, steps: [
+    { kind: 'info', rows: p13(MUR), cadre: { hautGauche: 'B10', cote: 10 }, geste: { pose: 'K3' },
+      demo: [{ pose: 'K3', couleur: 'B' }],
+      text: 'Voici ton mur (pierres en rang, face au bas). Joue loin : point vert.' },
+    { kind: 'quiz', rows: p13(MUR_HAUT), cadre: { hautGauche: 'B13', cote: 10 },
+      text: 'Mur face au haut. Pour Noir : E11, contre le mur, ou K11 ?', choices: ['E11', 'K11'], answer: 1,
+      ok: 'K11 : loin du mur, ta pierre rapporte bien plus.', no: 'E11 rapporte bien moins : ton mur est juste à côté.' },
+    { kind: 'move', rows: p13(MUR_DROITE), cadre: { hautGauche: 'C10', cote: 10 }, accept: ['D3', 'C3'],
+      text: 'À toi : ton mur est à droite. Joue loin de lui.',
+      ok: 'Bien : loin de ton mur, tu entres sous le hoshi blanc.', no: 'Va loin de ton mur, sous le hoshi blanc D4.',
+      refus: [{ points: ['J3', 'H3', 'H4'], no: 'Trop près de ton mur : tu gagnes bien moins.' }] }
+  ] },
+  { id: 'l48', title: 'Couper et relier', desc: 'Garder tes pierres ensemble, séparer les siennes', taille: 13, steps: [
+    { kind: 'info', rows: p13(KEIMA), cadre: 'bas-gauche', geste: { pose: 'C5' }, demo: [{ pose: 'C5', couleur: 'B' }],
+      text: 'Blanc vise C5, qui coupe (sépare) tes pierres. Prends-le : point vert.' },
+    { kind: 'move', rows: p13(KEIMA_D), cadre: 'bas-droite', accept: ['L5'],
+      text: 'À toi : Blanc vise ta coupe. Prends-la avant lui.',
+      ok: 'Bien : tu as pris ce point avant Blanc.', no: 'Cherche le point qui couperait tes deux pierres.',
+      refus: [{ points: ['K4', 'J6'], no: 'Blanc coupe en L5 : tes pierres sont séparées.' }] },
+    { kind: 'info', rows: p13(KEIMA_B), cadre: 'bas-gauche', geste: { pose: 'C5' }, demo: [{ pose: 'C5', couleur: 'B' }],
+      text: 'À l’envers : Blanc a une coupe. Coupe au point vert.' },
+    { kind: 'move', rows: p13(KEIMA_BD), cadre: 'bas-droite', accept: ['L5'],
+      text: 'À toi : sépare les deux pierres blanches.',
+      ok: 'Coupé : les deux pierres blanches sont séparées.', no: 'Cherche le point vide entre les deux pierres blanches.',
+      refus: [{ points: ['K4', 'J6'], no: 'Blanc joue en L5 : tu as laissé passer la coupe.' }] }
+  ] },
+  { id: 'l49', title: 'Envahir ou réduire', desc: 'Entrer chez Blanc, ou rester par-dessus', taille: 13, steps: [
+    { kind: 'info', rows: p13(OUVERT), cadre: 'bas-gauche', geste: { pose: 'C3' }, demo: [{ pose: 'C3', couleur: 'B' }],
+      text: 'Invasion (entrer chez Blanc) : son coin est vide. Entre au san-san (point 3-3), point vert.' },
+    { kind: 'move', rows: p13(OUVERT), cadre: 'bas-droite', accept: ['L3', 'L4', 'K3'],
+      text: 'À toi : entre dans l’autre coin vide.',
+      ok: 'Bien : tu entres dans le coin, sous son hoshi ou à côté.', no: 'Entre dans le coin, sous ou à côté du hoshi K4.',
+      refus: [{ points: ['G2'], no: 'Au milieu, sur la 2e ligne : tu perds bien plus.' }] },
+    { kind: 'info', rows: p13(FERME), cadre: 'bas-gauche', geste: { pose: 'G4' }, demo: [{ pose: 'G4', couleur: 'B' }],
+      text: 'Réduction (rapetisser sa zone par-dessus) : ses coins sont fermés. Pose au point vert.' },
+    { kind: 'quiz', rows: p13(FERME_G), cadre: { hautGauche: 'A10', cote: 8 },
+      text: 'Pour Noir : D7, par-dessus, ou B8, dessous ?', choices: ['D7', 'B8'], answer: 0,
+      ok: 'D7 rapporte bien plus : tu restes par-dessus.', no: 'B8, sur la 2e ligne chez Blanc, perd bien plus que D7.' }
   ] },
   { id: 'l9', title: 'Le filet', desc: 'Enfermer une pierre sans la toucher', steps: [
     { kind: 'info', rows: L_FILET, geste: { pose: 'E6' },

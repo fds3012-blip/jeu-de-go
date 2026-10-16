@@ -138,6 +138,7 @@ export const IDS_MOTS = [
   'territoire', 'dame', 'pierresMortes', 'komi', 'passe', 'handicap', 'hoshi', 'kyuDan',
   'doubleAtari', 'echelle', 'filet', 'priseEnRetour', 'semeai', 'hane', 'senteGote', 'tesuji', 'joseki',
   'sanSan', 'komoku', 'kakari', 'tsuke', 'kosumi', 'watari', 'tenuki', 'miai',
+  'mur', 'couper', 'invasion', 'reduction',
 ] as const;
 export type IdMot = (typeof IDS_MOTS)[number];
 
@@ -184,6 +185,11 @@ export const MOTS: Mot[] = [
   { id: 'tenuki', lecon: 'l38' },
   // #539 : les points miai (l37).
   { id: 'miai', lecon: 'l37' },
+  // #553 : l'ouverture prouvée par KataGo : le mur (l47), couper et relier (l48), envahir ou réduire (l49).
+  { id: 'mur', lecon: 'l47' },
+  { id: 'couper', lecon: 'l48' },
+  { id: 'invasion', lecon: 'l49' },
+  { id: 'reduction', lecon: 'l49' },
 ];
 
 /**
@@ -201,6 +207,7 @@ export const AUSSI: Record<'fr' | 'en', Partial<Record<IdMot, string[]>>> = {
     watari: ['relier par en dessous', 'premier rang'],
     tenuki: ["jouer ailleurs", "ne pas répondre"],
     miai: ["deux points", "se répondent"],
+    mur: ['épaisseur', 'atsumi'], couper: ['coupe', 'relier', 'point de coupe'], invasion: ['envahir', 'uchikomi'], reduction: ['réduire', 'keshi'],
   },
   en: {
     liberte: ['liberties'], groupe: ['chain', 'string'], prisonnier: ['capture', 'captures'],
@@ -212,6 +219,7 @@ export const AUSSI: Record<'fr' | 'en', Partial<Record<IdMot, string[]>>> = {
     watari: ['connect underneath', 'bridge', 'first line'],
     tenuki: ["play elsewhere", "ignore"],
     miai: ["two equal points", "either one"],
+    mur: ['thickness', 'atsumi'], couper: ['cutting', 'connect', 'cutting point'], invasion: ['invade', 'uchikomi'], reduction: ['reduce', 'keshi'],
   },
 };
 
