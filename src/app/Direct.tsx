@@ -241,7 +241,7 @@ function Choix({ params, onParams, erreur, onAccueil, onChercher, onFacon, aband
       <p className="muted small direct-classee">{fr(td('direct.classee'))}</p>
       {/* #571 (loi de Hick) : taille, temps et comptage repliés derrière leur résumé ; « Trouver un adversaire » est le seul choix. */}
       <ReglagesReplies ecran="direct" changer={td('direct.reglages.changer')} masquer={td('direct.reglages.masquer')}
-        resume={td('direct.reglages.resume', { taille: params.taille, nom: td(`direct.cadence.${params.cadence}`), cadence: texteCadence(params.cadence), regles: td(`direct.reglages.${params.regles}`) })}
+        resume={td('direct.reglages.resume', { taille: params.taille, nom: td(`direct.cadence.${params.cadence}`), cadence: texteCadence(params.cadence).replace(/ (min|s)\b/g, '\u00a0$1'), regles: td(`direct.reglages.${params.regles}`) })}
         aide={fr(td('direct.byoyomi', { s: c.periodeMs / 1000, n: c.periodes }))}>
         <Segment titre={td('direct.taille')} valeurs={TAILLES} valeur={params.taille} libelle={n => `${n} × ${n}`}
           onChoix={taille => onParams({ ...params, taille })} />
