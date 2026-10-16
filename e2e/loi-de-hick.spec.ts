@@ -249,3 +249,38 @@ test('revue et partage', async ({ browser, baseURL }) => {
   });
   await ctx.close();
 });
+
+// HICK_DOCS=<dossier relatif au dépôt> : captures des écrans modifiés par #571 (en ligne, partie lente, Profil), en
+// 390 × 844 et 320 × 568, sombre et clair, pour docs/ux/captures/hick/.
+test('captures des écrans modifiés', async ({ browser, baseURL }) => {
+  test.skip(!process.env.HICK_DOCS, 'HICK_DOCS non défini');
+  test.setTimeout(300_000);
+  const dossier = join(process.cwd(), process.env.HICK_DOCS!);
+  mkdirSync(dossier, { recursive: true });
+  for (const [largeur, hauteur] of [[390, 844], [320, 568]] as const) {
+    const serveur = fauxServeur();
+    const { ctx, page } = await telephone(browser, baseURL, serveur, HABITUE, { compte: true });
+    await page.setViewportSize({ width: largeur, height: hauteur });
+    const cap = async (nom: string) => {
+      for (const theme of ['dark', 'light'] as const) {
+        await page.emulateMedia({ colorScheme: theme, reducedMotion: 'reduce' });
+        await page.waitForTimeout(300);
+        await page.screenshot({ path: join(dossier, `${nom}-${largeur}-${theme === 'dark' ? 'sombre' : 'clair'}.jpg`), type: 'jpeg', quality: 60 });
+      }
+    };
+    await page.goto('/');
+    await choisirMode(page, 'en_ligne');
+    await expect(page.getByTestId('direct-choix')).toBeVisible();
+    await cap('apres-en-direct');
+    await page.getByTestId('bascule-en-ligne').getByRole('button', { name: 'Partie lente' }).click();
+    await expect(page.getByTestId('lentes')).toBeVisible();
+    await page.waitForTimeout(800);
+    await cap('apres-partie-lente');
+    await page.getByTestId('bascule-en-ligne').getByRole('button', { name: 'En direct' }).click();
+    await page.goto('/');
+    await nav(page, /^Profil$/).click();
+    await expect(page.getByRole('button', { name: /^Réglages/ })).toBeVisible();
+    await cap('apres-profil');
+    await ctx.close();
+  }
+});

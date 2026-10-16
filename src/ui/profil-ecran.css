@@ -46,7 +46,7 @@
 
 /* Vitrine (#214) : les sept sceaux sur une rangée (344 px en 390), sur deux au-delà ; chaque sceau est un bouton de 44 px.
    La ligne de détail dessous remplace les légendes coupées d'avant. */
-.profil .vitrine { margin-top: var(--space-3); }
+.profil .vitrine { margin-top: 9px; } /* #571 : 3 px rendus au bloc de l'app, plus bas (le Profil tient sans défiler). */
 .profil .vitrine-tete { display: flex; align-items: baseline; justify-content: space-between; margin: 0 0 var(--space-1); font-size: var(--fs-m); }
 .vitrine-compte { color: var(--muted); font-family: var(--font-texte, inherit); font-weight: var(--fw-bold); font-size: var(--fs-s); font-variant-numeric: tabular-nums; }
 /* Colonnes de 44 px réparties sur toute la largeur : la rangée s'aligne sur le compteur « 4/7 » ; en 320 px, 5 puis 2. */
@@ -157,3 +157,5 @@
 .profil-version { margin: var(--space-4) 0 0; text-align: center; font-size: var(--fs-s); color: var(--muted); }
 .profil-version button { min-height: 44px; min-width: 44px; padding: 0 var(--space-3); border: 0; background: none; color: inherit; font: inherit; }
 .profil-version [role='status']:not(:empty) { display: block; }
+/* #571 (loi de Hick) : les lignes de l'app et du compte, un bloc à part sous celles de ta progression. */
+.lignes.profil-groupe { margin-top: 6px; }

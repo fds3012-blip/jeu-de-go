@@ -361,6 +361,10 @@ function Menu({ onVue, settings, profil, serie, record = 0, parcours, placement,
           <DemiLigne icone="semaine" libelle={te('semaine.ligne')} valeur={te('semaine.ligneValeur', { n: atteints })} onClick={() => onVue('semaine')} testId="ligne-semaine" />
           <DemiLigne icone="stats" libelle={tk('stats.ligne')} valeur={tk('stats.ligneValeur')} testId="ligne-stats" onClick={() => onVue('stats')} />
         </div>
+      </div>
+      {/* #571 (loi de Hick) : dix lignes de même poids, rangées en deux blocs séparés : ta progression (au-dessus), puis
+          l'app et ton compte. Sans titre visible : le Profil tient toujours sans défiler en 390 × 844 ; le nom est lu. */}
+      <div className="lignes profil-groupe" role="group" aria-label={tk('profil.groupe.app')}>
         {/* #36 : rappel du Go du jour, dès que le rappel est configuré (clé publique VAPID). */}
         {clePubliqueVapid() !== '' && <LigneLien icone={<IconeReglage id="rappel" />} libelle={t('profil.rappel')} valeur={resumeRappel()} onClick={() => onVue('rappel')} />}
         {proposerInstallation && <LigneLien icone={<IconeReglage id="installer" />} libelle={t('profil.installer')} onClick={() => onVue('installer')} />}

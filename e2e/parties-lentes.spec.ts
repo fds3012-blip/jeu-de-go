@@ -63,6 +63,11 @@ test('parties lentes : recherche sur l’accueil, appariement, coups alternés, 
   await versLentes(ana);
   const ecran = ana.getByTestId('lentes');
   await expect(ecran.getByRole('heading', { name: 'Partie lente' })).toBeVisible();
+  // #571 (loi de Hick) : les réglages sont repliés derrière leur résumé ; le délai reste expliqué.
+  await expect(ecran.getByTestId('reglages-resume')).toHaveText('9 × 9 · 1 jour par coup');
+  await expect(ecran.getByText('Tu as 1 jour pour jouer chaque coup. Passé ce délai, tu perds au temps.')).toBeVisible();
+  await expect(ecran.getByRole('group', { name: 'Taille du plateau' })).toHaveCount(0);
+  await ecran.getByRole('button', { name: 'Changer' }).click();
   await expect(ecran.getByRole('group', { name: 'Taille du plateau' }).getByRole('button', { name: '9 × 9' })).toHaveAttribute('aria-pressed', 'true');
   await expect(ecran.getByRole('group', { name: 'Temps par coup' }).getByRole('button', { name: '1 jour' })).toHaveAttribute('aria-pressed', 'true');
   await expect(ecran.getByText('Tu as 1 jour pour jouer chaque coup. Passé ce délai, tu perds au temps.')).toBeVisible();
@@ -146,6 +151,7 @@ test('parties lentes : Blanc absent est prévenu « Adversaire trouvé » ; la r
   const serveur = fauxServeur();
   const ana = await telephone(browser, baseURL, serveur, { email: 'ana.320@exemple.test', pseudo: 'Ana', id: ANA }, { largeur: 320, sombre: true });
   await versLentes(ana);
+  await ana.getByRole('button', { name: 'Changer' }).click();
   await ana.getByRole('group', { name: 'Taille du plateau' }).getByRole('button', { name: '13 × 13' }).click();
   await ana.getByRole('group', { name: 'Temps par coup' }).getByRole('button', { name: '3 jours' }).click();
   await expect(ana.getByText('Tu as 3 jours pour jouer chaque coup. Passé ce délai, tu perds au temps.')).toBeVisible();
