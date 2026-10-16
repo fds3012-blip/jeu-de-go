@@ -95,12 +95,12 @@ dans l'accueil. Le module d'origine la réexporte : les écrans ne changent pas.
 | `src/app/coteEtat.ts` (`COTE_KEY`, `nettoyerCote`, #563) | `src/app/coteJoueur.ts` (Elo, choix du problème) |
 | `src/content/themesLecons.ts` (`THEMES_DE_LECON`, #563) | `src/content/themes.ts` (thème de chaque problème, `serieDeLecon`) |
 | `src/data/lectureProfil.ts` (`liveStreak`, #563) | `src/data/puzzles.ts` |
+| `src/app/revisionsDues.ts` (`compterDus`, clés, #563) | `src/app/revisionEspacee.ts` (calendrier, séances, écritures) |
 
 Pour trouver les suivants : un plugin `generateBundle` temporaire (hors du dépôt) qui écrit `chunk.modules` (taille
 rendue de chaque module par morceau), puis, pour chaque module du JS initial, les noms importés par des modules qui
 n'y sont pas. Restent candidats (16/10, après #563) : `src/data/analytics.ts` (réglages des SDK et
-`src/data/urlSensible.ts`, que `robustesse.ts` garde aussi), `src/app/revisionEspacee.ts` (≈ 0,4 Ko : `compterDus` en
-utilise l'essentiel), `src/app/xp.ts`, `src/app/semaine.ts`. `src/ui/Portrait.tsx` et `src/ui/Board.tsx` servent au
+`src/data/urlSensible.ts`, que `robustesse.ts` garde aussi), `src/app/xp.ts`, `src/app/semaine.ts`. `src/ui/Portrait.tsx` et `src/ui/Board.tsx` servent au
 premier affichage (portrait de l'adversaire, goban de l'accueil) ; `goDuJour.gen.ts` aussi (un encodage plus court des
 positions ne gagnerait que ≈ 0,3 Ko).
 
@@ -139,7 +139,8 @@ règles aux tests (`__moteurE2E`), ce qui ajoute ≈ 10 Ko. Le budget se lit sur
 
 ## Mesure du 16/10 (#563)
 
-Build normal (`npm run build`, celui de la CI), main du 16/10 (`533d5ad`). Poids gzip.
+Build normal (`npm run build`, celui de la CI), main du 16/10 (`533d5ad` ; 159,5 Ko et 25,5 Ko sur `84b1dcd`, après
+#566 et #568). Poids gzip.
 
 ### JS initial avant : 159,3 Ko (`index` 91,9 + `lib-react` 67,3)
 
@@ -174,16 +175,18 @@ l'ordre de la cascade : `board` 1,1 · `partie` 5,0 · `comptage` 0,3 · `fin` 2
 
 ### Ce qui a quitté le chargement initial
 
-| | avant | après |
+| | main (`84b1dcd`) | après #563 |
 | --- | --- | --- |
-| JS initial | 159,3 Ko | 149,3 Ko (`index` 81,6 + `lib-react` 67,3) |
+| JS initial | 159,5 Ko | 149,3 Ko (`index` 81,9 + `lib-react` 67,3) |
 | CSS initial | 25,5 Ko | 21,4 Ko |
-| Plus gros écran à la demande (`Profil-*.js`) | 24,5 Ko | 25,1 Ko (+ la page Conditions) |
+| Plus gros écran à la demande (`Profil-*.js`) | 25,3 Ko | 25,9 Ko (+ la page Conditions) |
 | Textes des écrans (`secondaires-*.js`) | 24,3 Ko | 27,1 Ko (+ 109 textes) |
 | Feuille du Profil (`Profil-*.css`) | 3,5 Ko | 4,4 Ko |
+| Plus gros morceau à la demande (TensorFlow.js, KataGo) | 227,3 Ko | inchangé |
 
 JS, par étape : synthèse des sons (−1,9 Ko), page Conditions et ses textes (−2,4), `liveStreak` (−1,0), état du rappel
-(−0,8), 68 textes des écrans (−1,7), série de fin de leçon (−1,5), état de la cote (−0,7).
+(−0,8), 68 textes des écrans (−1,7), série de fin de leçon (−1,5), état de la cote (−0,7), compte des révisions du
+jour (−0,3).
 
 CSS : `profil.css` et `course.css` gardent ce que le JS initial peut afficher, le reste passe dans `profil-ecran.css` et
 `course-ecran.css` ; `defis.css` pareil (`defis-ecran.css`), sauf `.defi-point` et `.defi-comptage` ; `amis.css`,
