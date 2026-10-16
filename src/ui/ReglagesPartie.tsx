@@ -1,7 +1,7 @@
 // #528 : « Réglages de la partie », groupe replié de la feuille « Changer » : handicap, komi, règle de comptage.
 // Chargé seulement quand le joueur ouvre le groupe (hors du JS et du CSS initiaux) ; les textes sont dans fr.ts
 // (clés `partie.reglages.*`) pour s'afficher sans attendre les textes des écrans secondaires.
-import { nombre, t } from '../content/i18n';
+import { nombre, t } from '../content/i18n/secondaires';
 import { fr } from './typo';
 import { KOMI_DEBUTANT, KOMI_NORMAL } from '../app/equilibrage';
 import { estDefaut, handicapVoisin, HANDICAPS, KOMI_HANDICAP, KOMIS, REGLAGES_DEFAUT, type ChoixKomi, type ReglagesPartie as Reglages } from '../app/reglagesPartie';

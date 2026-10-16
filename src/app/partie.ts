@@ -2,7 +2,7 @@
 import { groupAt, neighbors, type Color, type Position } from '../go/rules';
 import { toLabel } from '../go/coords';
 import { frontieresOuvertes, partieAvancee } from '../go/frontieres';
-import { nombre, t } from '../content/i18n';
+import { nombre, t } from '../content/i18n/secondaires';
 
 /** Avance arrondie au demi-point (le komi a souvent une demie). */
 export function arrondiDemi(n: number): number {

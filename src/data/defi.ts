@@ -13,7 +13,7 @@ import type { Tables } from './database.types';
 import type { Game } from './games';
 import type { Db } from './supabase';
 import { suivreLignes } from './tempsReel';
-import { t } from '../content/i18n';
+import { t } from '../content/i18n/secondaires';
 import { messageServeur } from '../content/i18n/refus';
 
 export type Defi = Tables<'defis'>;

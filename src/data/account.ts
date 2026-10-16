@@ -3,7 +3,7 @@ import type { Db } from './supabase';
 import { ORDRE_FOURNISSEURS, NOM_FOURNISSEUR, estFournisseur, type Fournisseur } from '../app/fournisseurs';
 import { usernameErrorFromDb, validateUsername } from './username';
 import { refusCaptcha } from './turnstile';
-import { langue, t } from '../content/i18n';
+import { langue, t } from '../content/i18n/secondaires';
 
 export type { Profile, Result } from './lectureProfil';
 import type { Profile, Result } from './lectureProfil';
