@@ -2,7 +2,7 @@
 import { ALL_PUZZLES } from '../content/puzzles';
 import { THEME_DU_PROBLEME } from '../content/themes';
 import { parsePuzzles, startOf, type Puzzle } from '../data/puzzles';
-import { butFin, butsDe, meilleuresFin, ordreRepliquesFin } from '../../outils/refutationsLocales';
+import { butFin, butsDe, ordreRepliquesFin } from '../../outils/refutationsLocales';
 import { fromLabel, toLabel } from './coords';
 import { cederLaMain } from './preuve-par-coup';
 import { coupsFin, defautsMorte, defautsZoneFin, estDame, faitDuFaux, jouer, repliqueFin, valeursDepart, zoneOuverte } from './refutation-fin';
@@ -28,26 +28,34 @@ function replique(p: Puzzle, l: string) {
 const LONG = 120_000;
 
 describe('fin de partie et comptage : chaque problème a un but sain, et la réponse est le seul meilleur coup', () => {
-  it('les 14 problèmes de fin de partie et de comptage ont un but ; aa01 (ko) aussi', () => {
-    expect(FIN).toHaveLength(14);
-    for (const p of [...FIN, pz('aa01')]) expect(butFin(p), p.id).not.toBeNull();
+  it('les 16 problèmes de fin de partie et de comptage (lots W, Y, Z, AA, AB) ont un but sain ; aa01 (ko) aussi', () => {
+    expect(FIN.map(p => p.id).sort()).toEqual(['aa03', 'ab01', 'ab05', 'w04', 'w05', 'w06', 'w07', 'w08', 'w09', 'y01', 'y02', 'y03', 'y04', 'z04', 'z08', 'z12']);
+    for (const p of [...FIN, pz('aa01')]) {
+      const but = butFin(p);
+      expect(but, p.id).not.toBeNull();
+      expect(defautsZoneFin(startOf(p).pos, but!), p.id).toEqual([]);
+    }
   });
 
+  // Une recherche par problème et par modèle de ko : jusqu'à 90 s chacune (ab01), un test chacune.
+  const MEILLEURE = new Map<string, number | null>();
   for (const p of FIN) {
-    it(`${p.id} : la réponse ${lab(p.answers[0])} est le seul coup qui atteint la meilleure valeur (maître du ko, et ko simple)`, () => {
-      const but = butFin(p)!, { pos } = startOf(p);
-      expect(defautsZoneFin(pos, but)).toEqual([]);
-      for (const maitre of [1, undefined] as const) {
-        const { valeurs, meilleure } = valeursDepart(pos, but, { maitre });
+    for (const maitre of [1, undefined] as const) {
+      const modele = maitre ? 'toi maître du ko' : 'ko simple';
+      it(`${p.id} (${modele}) : la réponse ${lab(p.answers[0])} est le seul coup qui atteint la meilleure valeur`, () => {
+        const { valeurs, meilleure } = valeursDepart(startOf(p).pos, butFin(p)!, { maitre });
         expect(meilleure).not.toBeNull();
+        MEILLEURE.set(`${p.id}${modele}`, meilleure);
         // w07 : la dame ne vaut rien, passer vaut autant que la remplir (vérifié par le lot W).
         const gagnants = [...valeurs].filter(([m, v]) => v === meilleure && (m >= 0 || p.id !== 'w07')).map(([m]) => m);
-        expect(labels(gagnants), `${p.id} maître ${maitre}`).toEqual(labels(p.answers));
-      }
-      const ref = meilleuresFin(p, but);
-      expect(ref.maitre).not.toBeNull();
-      expect(ref.maitre).toBe(ref.simple);
-    }, 120_000);
+        expect(labels(gagnants), `${p.id} ${modele}`).toEqual(labels(p.answers));
+        // La réponse du problème est la référence de la perte : même valeur, prouvée.
+        expect(valeurs.get(p.answers[0])).toBe(meilleure);
+      }, 300_000);
+    }
+    it(`${p.id} : même valeur du bon coup dans les deux modèles de ko (aucun ko ne décide)`, () => {
+      expect(MEILLEURE.get(`${p.id}toi maître du ko`)).toBe(MEILLEURE.get(`${p.id}ko simple`));
+    });
   }
 });
 
