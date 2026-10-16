@@ -2,7 +2,7 @@
 // Chaque coup faux légal de chaque problème est joué ; on compte ceux qui reçoivent une réponse prouvée, par série
 // (src/app/seriesThemes.ts) et par thème (src/content/themes.ts), et on mesure le temps de chaque appel, comme dans
 // l'app (lecture bornée à DELAI_LECTURE ms). « Avant » : la lecture de capture en direct seule (#549) ; « après » :
-// comprendreErreur, avec les réfutations figées (#554).
+// comprendreErreur, avec les réfutations figées (#554 : vie et mort ; #558 : fin de partie, comptage, ko).
 //
 //   npx vite-node outils/couvertureRefutations.ts
 import { ALL_PUZZLES } from '../src/content/puzzles';
@@ -42,4 +42,4 @@ function mesurer(nom: string, lire: (pz: Puzzle, f: number) => ErreurComprise | 
 }
 
 mesurer('Avant (#549 : lecture de capture en direct seule)', (pz, f) => comprendreParCapture(pz, f, compteur()));
-mesurer('Après (#554 : réfutations figées, puis lecture en direct pour les autres problèmes)', (pz, f) => comprendreErreur(pz, f));
+mesurer('Après (#554, #558 : réfutations figées, puis lecture en direct pour les autres problèmes)', (pz, f) => comprendreErreur(pz, f));

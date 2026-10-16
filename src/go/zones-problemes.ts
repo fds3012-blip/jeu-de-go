@@ -10,6 +10,11 @@ export interface LectureDeclaree {
   cible?: string;
   /** Points jouables (vides ou non) ; à défaut, l'espace du groupe cible, ou les libertés des deux chaînes. */
   zone?: readonly string[];
+  /**
+   * #558, fin de partie et comptage (src/go/refutation-fin.ts) : points de frontière jouables quand la région ouverte
+   * est trop grande pour être déduite (`zone`), et pierres mortes retirées au comptage (`mortes`, prouvées mortes).
+   */
+  fin?: { zone?: readonly string[]; mortes?: readonly string[] };
 }
 
 export const LECTURES_DECLAREES: Readonly<Record<string, LectureDeclaree>> = {
@@ -20,4 +25,13 @@ export const LECTURES_DECLAREES: Readonly<Record<string, LectureDeclaree>> = {
   f02: { course: 'G6' }, f08: { course: 'C1' }, f09: { course: 'C1' }, f10: { course: 'G2' }, f11: { course: 'C2' },
   f12: { course: 'C6' },
   o03: { course: 'C2' }, o10: { course: 'C2' }, v13: { course: 'E2' },
+  // #558, lot W (src/go/lot-w.test.ts, FIN) : la frontière ouverte donne sur tout le bas du plateau ; les points de
+  // frontière sont ceux de la preuve du lot. A9 (w06) et J9 (w08) sont les pierres mortes des énoncés.
+  w04: { fin: { zone: ['E5', 'E4', 'E3', 'D3', 'F3'] } },
+  w05: { fin: { zone: ['E7', 'E3', 'D3', 'C3'] } },
+  w06: { fin: { zone: ['F5', 'F4', 'F6', 'A8'], mortes: ['A9'] } },
+  w08: { fin: { zone: ['E6', 'F6'], mortes: ['J9'] } },
+  w09: { fin: { zone: ['G7', 'F7', 'B2', 'C1'] } },
+  // #558, lot AA (src/go/lot-aa.test.ts, SPEC) : E3 prend F3 (un ko), ce n'est pas un point ouvert ; F3 redevient jouable.
+  aa01: { fin: { zone: ['E9', 'E3', 'F3'] } },
 };

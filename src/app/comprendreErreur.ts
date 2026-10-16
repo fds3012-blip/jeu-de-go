@@ -24,14 +24,19 @@ import { THEME_DU_PROBLEME } from '../content/themes';
 /** But lisible sur le plateau : prendre les pierres marquées de l'adversaire, ou sauver les tiennes. */
 export type But = { type: 'prendre' | 'sauver'; cibles: number[] };
 
+/** Thèmes dont les pierres marquées montrent une pierre morte à ne pas prendre (#558) : jamais une cible de capture. */
+const THEMES_FIN = new Set(['fin-de-partie', 'comptage']);
+
 /**
- * Le but d'un problème, d'après ses pierres marquées ; `null` s'il n'en a pas, s'il en a des deux couleurs, ou si c'est
- * un problème de ko. Le ko (CI de #551) : le lecteur ne connaît que le ko simple, sans menaces de ko ailleurs ; « ta pierre
- * ne peut plus être sauvée » pourrait y être faux dans une vraie partie. Ces problèmes gardent le comportement d'avant
- * (#237 : réponse au point clé, texte relu du problème).
+ * Le but d'un problème, d'après ses pierres marquées ; `null` s'il n'en a pas, s'il en a des deux couleurs, si c'est un
+ * problème de fin de partie (la pierre marquée est morte : à laisser, #558), ou de ko sans `avecKo`. Le ko (CI de #551) :
+ * en direct, le lecteur ne connaît que le ko simple, sans menaces de ko ailleurs ; « ta pierre ne peut plus être sauvée »
+ * pourrait y être faux dans une vraie partie. Hors ligne (#558, `avecKo`), le joueur est maître du ko : la lecture tient
+ * quelle que soit la gestion des menaces, et ses répliques sont figées (src/go/refutations-locales.gen.ts).
  */
-export function butDe(pz: Puzzle): But | null {
-  if (THEME_DU_PROBLEME[pz.id] === 'ko') return null;
+export function butDe(pz: Puzzle, avecKo = false): But | null {
+  const theme = THEME_DU_PROBLEME[pz.id];
+  if ((theme === 'ko' && !avecKo) || (theme && THEMES_FIN.has(theme))) return null;
   const { pos, marked } = startOf(pz);
   if (!marked.length) return null;
   const couleurs = new Set(marked.map(m => pos.board[m]));
@@ -108,8 +113,11 @@ export interface ErreurComprise {
   pos: Position;
   /** Une phrase courte, faite de faits lus sur le plateau. */
   phrase: string;
-  /** Ce que tu devais faire (mesures) : sauver tes pierres (vivre, seki) ou prendre les siennes (tuer, course). */
-  but: 'prendre' | 'sauver';
+  /**
+   * Ce que tu devais faire (mesures) : sauver tes pierres (vivre, seki), prendre les siennes (tuer, course), ou
+   * compter (#558, fin de partie et comptage : la preuve est un compte de points).
+   */
+  but: 'prendre' | 'sauver' | 'points';
 }
 
 const nomCouleur = (c: Color) => t(c === 1 ? 'erreur.noir' : 'erreur.blanc');
@@ -216,23 +224,39 @@ export function comprendreParCapture(pz: Puzzle, faux: number, c: Compteur, loca
   return null;
 }
 
-const PREUVE_DU_CODE = { m: 'mort', y: 'sansYeux', v: 'vit', i: 'imprenable', c: 'course', p: 'prendre', s: 'sauver' } as const;
-/** Preuve d'une réplique figée (src/go/refutation-locale.ts) : ce qui est sûr après elle, quoi que tu joues. */
+const PREUVE_DU_CODE = { m: 'mort', y: 'sansYeux', v: 'vit', i: 'imprenable', c: 'course', p: 'prendre', s: 'sauver', f: 'fin', k: 'ko' } as const;
+/** Preuve d'une réplique figée (src/go/refutation-locale.ts, src/go/refutation-fin.ts) : ce qui est sûr après elle, quoi que tu joues. */
 export type PreuveFigee = (typeof PREUVE_DU_CODE)[keyof typeof PREUVE_DU_CODE];
+/** #558 : fait sur ton coup faux, lu sur le plateau de départ (fin de partie). */
+const FAIT_DU_CODE = { t: 'territoire', l: 'chezLui', n: 'dame', m: 'morte' } as const;
+export type FaitFigee = (typeof FAIT_DU_CODE)[keyof typeof FAIT_DU_CODE];
+
+export interface RepliqueFigee {
+  reponse: number;
+  preuve: PreuveFigee;
+  /** Ton groupe (vivre, course) ou le sien (tuer) ; -1 sinon. */
+  cible: number;
+  /** Fin de partie (#558) : points perdus au moins par rapport au bon coup, et le fait sur ton coup. */
+  perte?: number;
+  fait?: FaitFigee | null;
+}
+
+/** Code d'une réplique figée : « E1m », « F4f2m » (#558 : perte, puis fait), « E3k ». */
+const CODE = /^([A-HJ-T]\d{1,2})([a-z])(\d*)([a-z]?)$/;
 
 /**
  * #554 : réplique figée hors ligne (src/go/refutations-locales.gen.ts, outils/refutationsLocales.ts) au coup faux
- * `faux` : `undefined` si le problème n'en a pas, `null` si rien n'est prouvé pour ce coup. `cible` : ton groupe
- * (vivre, course) ou le sien (tuer).
+ * `faux` : `undefined` si le problème n'en a pas, `null` si rien n'est prouvé pour ce coup.
  */
-export function repliqueFigee(pz: Puzzle, faux: number): { reponse: number; preuve: PreuveFigee; cible: number } | null | undefined {
+export function repliqueFigee(pz: Puzzle, faux: number): RepliqueFigee | null | undefined {
   const r = REFUTATIONS_LOCALES[pz.id];
   if (!r) return undefined;
-  const code = r.sauf?.[toLabel(faux, pz.size)] ?? r.defaut;
-  const preuve = PREUVE_DU_CODE[code.slice(-1) as keyof typeof PREUVE_DU_CODE];
-  if (!preuve) return null;
+  const m = CODE.exec(r.sauf?.[toLabel(faux, pz.size)] ?? r.defaut);
+  const preuve = m && PREUVE_DU_CODE[m[2] as keyof typeof PREUVE_DU_CODE];
+  if (!m || !preuve) return null;
   const cible = r.cible ?? r.a;
-  return { reponse: fromLabel(code.slice(0, -1), pz.size), preuve, cible: cible ? fromLabel(cible, pz.size) : -1 };
+  const fin = m[3] ? { perte: Number(m[3]), fait: FAIT_DU_CODE[m[4] as keyof typeof FAIT_DU_CODE] ?? null } : {};
+  return { reponse: fromLabel(m[1], pz.size), preuve, cible: cible ? fromLabel(cible, pz.size) : -1, ...fin };
 }
 
 /** Coup faux expliqué par une réplique figée, ou null (pas de réplique figée, ou position qui ne correspond plus). */
@@ -250,8 +274,39 @@ function erreurFigee(pz: Puzzle, faux: number): ErreurComprise | null {
     return { faux, reponse: f.reponse, apresFaux, pos: r, phrase: phrasePrendre(apresFaux, r, f.reponse, siennes, adv, sien), but: 'prendre' };
   }
   if (f.preuve === 'sauver') return { faux, reponse: f.reponse, apresFaux, pos: r, phrase: phraseSauver(r, f.reponse, marked, pz.toPlay, adv), but: 'sauver' };
+  // #558 : fin de partie et comptage : la preuve est un compte de points ; ko : le fait seul.
+  if (f.preuve === 'fin' || f.preuve === 'ko') return { faux, reponse: f.reponse, apresFaux, pos: r, phrase: phraseFin(pz, faux, apresFaux, r, f), but: 'points' };
   const sauver = f.preuve === 'mort' || f.preuve === 'sansYeux';
   return { faux, reponse: f.reponse, apresFaux, pos: r, phrase: phraseLocale(pz, apresFaux, r, f.reponse, f.preuve, f.cible), but: sauver ? 'sauver' : 'prendre' };
+}
+
+/** Pierres de la couleur `c` retirées entre deux positions, en étiquettes (« A9 », « A9 et B9 »). */
+function pierresPrises(avant: Position, apres: Position, c: Color): string[] {
+  const out: string[] = [];
+  for (let i = 0; i < avant.board.length; i++) if (avant.board[i] === c && apres.board[i] !== c) out.push(toLabel(i, avant.size));
+  return out;
+}
+
+/**
+ * #558 : phrase d'une réplique de fin de partie. Le geste (prise, point que tu devais jouer, ou le point joué), le fait
+ * sur ton coup (dans ton territoire, chez lui, dame, pierre déjà morte prise), puis la perte prouvée : « Tu perds au
+ * moins N points par rapport au bon coup. » Un ko : « Blanc prend ta pierre en E3 : c’est un ko. Pour la reprendre, il
+ * te faut une menace ailleurs. » et rien d'autre (les menaces ne sont pas lues).
+ */
+function phraseFin(pz: Puzzle, faux: number, avant: Position, apres: Position, f: RepliqueFigee): string {
+  const adv = avant.toPlay, moi = pz.toPlay, couleur = nomCouleur(adv), point = toLabel(f.reponse, pz.size);
+  const depart = startOf(pz).pos, n = prises(avant, apres, moi);
+  if (f.preuve === 'ko') return t('erreur.ko.prise', { couleur, point });
+  const geste = n > 0 ? t('erreur.prendre.prise', { couleur, point, n })
+    : pz.answers.includes(f.reponse) ? t('erreur.vm.pointCle', { couleur, point })
+    : t('erreur.vm.joue', { couleur, point });
+  const tien = toLabel(faux, pz.size), mortes = pierresPrises(depart, avant, adv);
+  const fait = f.fait === 'territoire' ? t('erreur.fin.territoire', { point: tien })
+    : f.fait === 'chezLui' ? t('erreur.fin.chezLui', { point: tien, couleur })
+    : f.fait === 'dame' ? t('erreur.fin.dame', { point: tien })
+    : f.fait === 'morte' && mortes.length ? t('erreur.fin.morte', { n: mortes.length, pierres: mortes.join(t('erreur.fin.et')) })
+    : '';
+  return [geste, fait, t('erreur.fin.perte', { n: f.perte ?? 1 })].filter(Boolean).join(' ');
 }
 
 /**
@@ -276,7 +331,10 @@ function phraseLocale(pz: Puzzle, avant: Position, apres: Position, m: number, p
 }
 
 function phraseSauver(apres: Position, m: number, cibles: readonly number[], moi: Color, adv: Color): string {
-  return t(prise(apres, cibles, moi) ? 'erreur.sauver.prise' : 'erreur.sauver.perdue', { couleur: nomCouleur(adv), point: toLabel(m, apres.size) });
+  const couleur = nomCouleur(adv), point = toLabel(m, apres.size);
+  // #558 : la prise ouvre un ko (le moteur l'a noté) : le fait est dit, et la règle (une menace pour reprendre).
+  if (prise(apres, cibles, moi) && apres.ko !== -1) return t('erreur.ko.prise', { couleur, point });
+  return t(prise(apres, cibles, moi) ? 'erreur.sauver.prise' : 'erreur.sauver.perdue', { couleur, point });
 }
 
 function phrasePrendre(avant: Position, apres: Position, m: number, cibles: readonly number[], adv: Color, sien = false): string {

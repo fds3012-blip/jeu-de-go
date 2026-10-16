@@ -22,7 +22,7 @@ const LOT_AB: PuzzleRow[] = [
   {
     id: 'ab01', size: 9, difficulty: 1250, answers: ['C1'],
     setup: { rows: ['..X..O...', M, M, M, M, M, 'XXXXOOOO.', '.X..O..O.', '...O.....'], toPlay: 'B',
-      refutation: 'Pas tout à fait. Blanc joue C1 : il avance encore au premier rang, et tu perds au moins deux points de plus.' },
+      refutation: 'Pas tout à fait. Blanc garde l’avantage au premier rang : tu perds au moins un point par rapport au bon coup.' },
     title: 'Bloque la glissade',
     prompt: 'Blanc vient de glisser en D1, au premier rang, sous ton territoire. Il reste aussi deux points ouverts en haut. Joue le coup qui rapporte le plus.',
     explanation: 'Bravo ! C1 bloque la pierre D1 au contact : elle ne va pas plus loin. Bloquer en C2 laissait Blanc avancer en C1, et la place entre D9 et E9 vaut moins que cette glissade. Après C1, si Blanc prend D9, tu prends E9 ; s’il prend E9, tu prends D9.'
@@ -54,7 +54,7 @@ const LOT_AB: PuzzleRow[] = [
   {
     id: 'ab05', size: 9, difficulty: 1300, answers: ['D2'],
     setup: { rows: ['.XX.O....', '.XX.O....', M, M, M, M, 'XXXXOOOO.', '....O..O.', '..XO.....'], toPlay: 'B',
-      refutation: 'Pas tout à fait. Blanc joue D2 : sa pierre D1 est sauvée, elle entre dans ton coin, et tu perds au moins deux points de plus.' },
+      refutation: 'Pas tout à fait. Blanc garde sa pierre D1 dans ton coin : tu perds au moins un point par rapport au bon coup.' },
     title: 'L’atari qui bloque',
     prompt: 'Blanc vient de jouer D1, en hane sous ta pierre C1. Il reste aussi deux points ouverts en haut. Joue le coup qui rapporte le plus.',
     explanation: 'Bravo ! D2 met D1 en atari au contact : Blanc doit la sauver, et rien n’entre dans ton coin. Bloquer plus loin, en B2 ou en C2, laissait Blanc avancer et rapportait moins. En haut, si Blanc prend D9, tu prends D8 ; s’il prend D8, tu prends D9.'

@@ -115,17 +115,95 @@ describe('comprendre un coup faux (prendre)', () => {
   });
 });
 
-describe('problèmes de ko : comportement d’avant (CI de #551)', () => {
-  it('x01, x02, x03 : pas de but lu, pas de réponse calculée ; la réponse au point clé de #237 reste', () => {
+describe('problèmes de ko : rien en direct (CI de #551), répliques figées hors ligne, le joueur maître du ko (#558)', () => {
+  it('x01, x02, x03 : pas de but lu en direct, pas de solution complète ; la réponse au point clé de #237 reste disponible', () => {
     const lot = parsePuzzles(LOT_X);
     for (const id of ['x01', 'x02', 'x03']) {
       const p = lot.find(x => x.id === id)!;
       expect(butDe(p), id).toBeNull();
-      expect(comprendreErreur(p, coupsFaux(p)[0], compteur()), id).toBeNull();
+      expect(butDe(p, true), id).not.toBeNull();
       expect(solutionComplete(p, compteur()), id).toBeNull();
+      // Lecture en direct interdite : seule la réplique figée répond, même avec un budget nul.
+      expect(comprendreErreur(p, coupsFaux(p)[0], compteurBorne(0, 0)), id).not.toBeNull();
     }
     const x03 = lot.find(x => x.id === 'x03')!;
     expect(toLabel(refutation(x03, at('C5'))!.reponse!, 9)).toBe('F5');
+  });
+
+  it('x01 : Blanc relie la pierre marquée en C1 (le texte le dit) ; x03 : Blanc relie en F5, ta pierre est perdue', () => {
+    const lot = parsePuzzles(LOT_X), p = (id: string) => lot.find(x => x.id === id)!;
+    const x01 = comprendreErreur(p('x01'), at('A9'))!;
+    expect(toLabel(x01.reponse, 9)).toBe('C1');
+    // Reliée, la pierre marquée fait partie d'un groupe : la phrase le dit ainsi.
+    expect(x01.phrase).toMatch(/^Blanc se relie en C1\. Le groupe marqué a \d libertés\.$/);
+    const x03 = comprendreErreur(p('x03'), at('A1'))!;
+    expect(toLabel(x03.reponse, 9)).toBe('F5');
+    expect(x03.phrase).toBe(traduire('fr', 'erreur.sauver.perdue', { couleur: 'Blanc', point: 'F5' }));
+  });
+
+  it('x02 : la prise ouvre un ko : la phrase dit le fait et la règle, rien sur les menaces', () => {
+    const x02 = parsePuzzles(LOT_X).find(x => x.id === 'x02')!;
+    const e = comprendreErreur(x02, at('A1'))!;
+    expect(toLabel(e.reponse, 9)).toBe('E9');
+    expect(e.pos.ko).toBe(at('D9'));
+    expect(e.phrase).toBe(traduire('fr', 'erreur.ko.prise', { couleur: 'Blanc', point: 'E9' }));
+    expect(e.but).toBe('sauver');
+  });
+});
+
+describe('fin de partie, comptage, ko : la preuve est un compte de points (#558)', () => {
+  const lot = parsePuzzles(ALL_PUZZLES);
+  const p = (id: string) => lot.find(x => x.id === id)!;
+  const fr = (cle: Parameters<typeof traduire>[1], params?: Record<string, string | number>) =>
+    (traduire as (l: 'fr', c: typeof cle, p?: Record<string, string | number>) => string)('fr', cle, params);
+
+  it('la pierre marquée d’un problème de fin de partie est une pierre morte, pas une cible : aucun but de capture', () => {
+    expect(butDe(p('w06'))).toBeNull();
+    expect(butDe(p('w08'), true)).toBeNull();
+    expect(solutionComplete(p('w06'))).toBeNull();
+  });
+
+  it('y01 : reculer en C1 : Blanc joue D1 (le point à jouer), tu perds au moins un point ; chez toi, la pierre coûte un point de plus', () => {
+    const e = comprendreErreur(p('y01'), at('C1'))!;
+    expect(toLabel(e.reponse, 9)).toBe('D1');
+    expect(e.but).toBe('points');
+    expect(e.phrase).toBe(`${fr('erreur.vm.pointCle', { couleur: 'Blanc', point: 'D1' })} ${fr('erreur.fin.perte', { n: 1 })}`);
+    expect(comprendreErreur(p('y01'), at('A9'))!.phrase)
+      .toBe(`${fr('erreur.vm.pointCle', { couleur: 'Blanc', point: 'D1' })} ${fr('erreur.fin.territoire', { point: 'A9' })} ${fr('erreur.fin.perte', { n: 2 })}`);
+    expect(comprendreErreur(p('y01'), at('G9'))!.phrase).toContain(fr('erreur.fin.chezLui', { point: 'G9', couleur: 'Blanc' }));
+  });
+
+  it('w06 : prendre A9, déjà morte, coûte 2 points ; w05 : la dame E7 ne vaut rien', () => {
+    expect(comprendreErreur(p('w06'), at('A8'))!.phrase)
+      .toBe(`${fr('erreur.vm.pointCle', { couleur: 'Blanc', point: 'F4' })} ${fr('erreur.fin.morte', { n: 1, pierres: 'A9' })} ${fr('erreur.fin.perte', { n: 2 })}`);
+    expect(comprendreErreur(p('w05'), at('E7'))!.phrase)
+      .toBe(`${fr('erreur.vm.pointCle', { couleur: 'Blanc', point: 'E3' })} ${fr('erreur.fin.dame', { point: 'E7' })} ${fr('erreur.fin.perte', { n: 1 })}`);
+  });
+
+  it('y04 : E7 d’abord, Blanc sauve ses pierres en H6 : 2 points ; w09 : remplir le seki coûte 9 points', () => {
+    expect(comprendreErreur(p('y04'), at('E7'))!.phrase).toBe(`${fr('erreur.vm.pointCle', { couleur: 'Blanc', point: 'H6' })} ${fr('erreur.fin.perte', { n: 2 })}`);
+    expect(comprendreErreur(p('w09'), at('B2'))!.phrase).toBe(`${fr('erreur.vm.pointCle', { couleur: 'Blanc', point: 'G7' })} ${fr('erreur.fin.perte', { n: 9 })}`);
+  });
+
+  it('aa01 : E9 d’abord, Blanc prend F3 en E3 : un ko ; la phrase dit le fait et la règle, sans chiffre', () => {
+    const e = comprendreErreur(p('aa01'), at('E9'))!;
+    expect(toLabel(e.reponse, 9)).toBe('E3');
+    expect(e.pos.ko).toBe(at('F3'));
+    expect(e.phrase).toBe(fr('erreur.ko.prise', { couleur: 'Blanc', point: 'E3' }));
+    expect(e.but).toBe('points');
+  });
+
+  it('aa12, aa17, aa20 (vivre ou tuer par un ko) : la réplique est celle du texte, prouvée toi maître du ko', () => {
+    expect(comprendreErreur(p('aa12'), at('A9'))!.phrase).toBe(`${fr('erreur.vm.pointCle', { couleur: 'Blanc', point: 'B2' })} ${fr('erreur.vm.mort')}`);
+    expect(comprendreErreur(p('aa17'), at('A1'))!.phrase).toMatch(/^Blanc joue en J7, le point que tu devais jouer\. Son groupe (vivra, quoi que tu joues|a deux yeux : il est vivant)\.$/);
+    expect(toLabel(comprendreErreur(p('aa20'), at('A1'))!.reponse, 9)).toBe('J2');
+  });
+
+  it('un code de fin de partie se lit : réponse, perte, fait', () => {
+    expect(repliqueFigee(p('w06'), at('A8'))).toMatchObject({ preuve: 'fin', perte: 2, fait: 'morte' });
+    expect(repliqueFigee(p('y01'), at('C1'))).toMatchObject({ preuve: 'fin', perte: 1, fait: null });
+    expect(repliqueFigee(p('aa01'), at('E9'))).toMatchObject({ preuve: 'ko' });
+    expect(repliqueFigee(p('aa01'), at('E9'))!.perte).toBeUndefined();
   });
 });
 
@@ -252,8 +330,8 @@ describe('vie et mort, seki, course : réplique figée hors ligne (#554)', () =>
       expect(figee, id).toBeTruthy();
       expect(comprendreErreur(pb, f, vide)?.reponse, id).toBe(figee!.reponse);
     }
-    // Problème hors du fichier (ko) : pas de réplique figée.
-    expect(repliqueFigee(p('x01'), at('A1'))).toBeUndefined();
+    // Problème hors du fichier (ouverture) : pas de réplique figée.
+    expect(repliqueFigee(p('x04'), fromLabel('A1', 13))).toBeUndefined();
   });
 
   it('chaque réplique figée donne une phrase qui nomme le point joué, et la position suit la réplique', () => {

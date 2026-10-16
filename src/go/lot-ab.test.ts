@@ -220,7 +220,12 @@ describe('lot AB : identifiants, énoncés, thèmes, doublons, calendrier, migra
       if (s.famille === 'capture') expect(p.prompt, p.id).toContain(s.k === 3 ? 'trois coups' : 'deux coups');
       expect(p.explanation, p.id).toMatch(/^Bravo ! /);
       if (s.attendreTout) expect(p.refutation, p.id).toMatch(/^Pas tout à fait\. Blanc n’a même pas besoin de répondre/);
-      else {
+      else if (p.id === 'ab01' || p.id === 'ab05') {
+        // #558 : la meilleure réplique de Blanc dépend de l'erreur (après A1 ou B1, c'est E9 et pas C1), et la perte
+        // prouvée en règle japonaise est d'un point au moins : le texte ne nomme donc pas de réplique et dit « un point ».
+        expect(p.refutation, p.id).toMatch(/^Pas tout à fait\. Blanc garde /);
+        expect(p.refutation, p.id).toContain('tu perds au moins un point par rapport au bon coup.');
+      } else {
         expect(p.refutation, p.id).toMatch(/^Pas tout à fait\. Blanc joue [A-J]\d\b/);
         expect(p.refutation, p.id).toContain(`Blanc joue ${s.reponse}`);
       }
@@ -273,8 +278,24 @@ describe('lot AB : identifiants, énoncés, thèmes, doublons, calendrier, migra
     expect(sql).toMatch(/on conflict \(id\) do nothing/i);
     expect(sql.match(/\('ab\d\d', null, 9,/g)).toHaveLength(LOT_AB.length);
     const q = (s: string) => s.replace(/'/g, "''");
+    // #558 : le texte d'erreur de ab01 et ab05 a été corrigé ensuite (perte prouvée en règle japonaise : un point au
+    // moins, pas deux) par une migration de correction ; l'insertion garde l'ancien texte, la correction porte le nouveau.
+    const correction = readFileSync(resolve(__dirname, '../../supabase/migrations/20261016180000_textes_ab01_ab05.sql'), 'utf8');
     for (const row of LOT_AB) {
-      expect(sql).toContain(`('${row.id}', null, 9, '${q(JSON.stringify(row.setup))}', array[${row.answers.map(a => `'${a}'`).join(',')}], '${q(row.title!)}', '${q(row.prompt!)}', '${q(row.explanation!)}', ${row.difficulty})`);
+      const corrige = row.id === 'ab01' || row.id === 'ab05';
+      const ligne = `('${row.id}', null, 9, '${corrige ? '' : q(JSON.stringify(row.setup))}`;
+      expect(sql).toContain(corrige ? `('${row.id}', null, 9, '` : ligne);
+      if (!corrige) {
+        expect(sql).toContain(`${ligne}', array[${row.answers.map(a => `'${a}'`).join(',')}], '${q(row.title!)}', '${q(row.prompt!)}', '${q(row.explanation!)}', ${row.difficulty})`);
+        continue;
+      }
+      const { refutation, ...reste } = row.setup as { refutation?: string };
+      const debut = sql.indexOf(`('${row.id}', null, 9, '`);
+      const fin = sql.indexOf('\n', debut);
+      const insere = sql.slice(debut, fin);
+      expect(insere).toContain(`'${q(JSON.stringify(reste)).slice(0, -1)}`);
+      expect(insere).toContain(`array[${row.answers.map(a => `'${a}'`).join(',')}], '${q(row.title!)}', '${q(row.prompt!)}', '${q(row.explanation!)}', ${row.difficulty})`);
+      expect(correction).toContain(`to_jsonb('${q(refutation!)}'::text))\n  where id = '${row.id}' and owner_id is null;`);
     }
   });
 

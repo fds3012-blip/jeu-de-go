@@ -162,3 +162,67 @@ entrées (problèmes, lecteurs, zones, générateur) et revérifie chaque répli
 
 Les 11 coups faux restants n'ont pas de réfutation sans ko, ou ouvrent la zone (un coup dehors qui menace un mur :
 aa05 H3 et J2) : le texte du problème reste seul. Les autres séries ne changent pas (lecture en direct de #549).
+
+## 7. Fin de partie, comptage et ko (#558)
+
+Suite de la section 6 : la réponse prouvée au coup faux couvre la série « Fin de partie » (thèmes fin de partie et
+comptage, 14 problèmes des lots W, Y, Z et AA) et les 7 problèmes de ko, qui gardaient le « point clé » de #237 sans
+phrase prouvée (décision #549). Toujours la même règle : rien d'affirmé qui ne soit prouvé.
+
+### Fin de partie et comptage : la preuve est un compte de points (`src/go/refutation-fin.ts`)
+
+- **Zone** : les points encore ouverts (régions vides qui touchent les deux couleurs, pierres mortes retirées d'abord),
+  ou, quand la frontière ouvre sur tout un territoire (lot W), les points de frontière de la preuve du lot, déclarés dans
+  `src/go/zones-problemes.ts` avec les pierres mortes des énoncés (A9 de w06, J9 de w08, prouvées mortes par
+  `preuve-vie-mort.ts` quel que soit le camp au trait). Hors de la zone, chaque point vide est à quelqu'un, et chaque
+  chaîne a deux libertés (vérifié, sinon rien n'est lu).
+- **Recherche** : minimax exact (alpha-bêta, bornes basse et haute égales, sinon rien) à la manière du lot W : un camp ne
+  joue dans la zone que sur un point encore ouvert, pour prendre, ou pour sauver une chaîne en atari ; deux passes, on
+  compte en **règle japonaise** (celle des textes des problèmes). Une pierre jouée hors de la zone chez l'adversaire est
+  prisonnière, chez soi elle coûte son point, comme dans les lots. Le joueur est **maître du ko** : il reprend aussitôt,
+  menaces sans fin ; la perte prouvée tient donc quelle que soit la gestion des menaces.
+- **Phrase** : le geste (« Blanc prend 2 pierres en E9. », « Blanc joue en D1, le point que tu devais jouer. »), le fait
+  sur ton coup, lu sur le plateau de départ (« Ta pierre en A9 est dans ton territoire : elle te coûte un point. »,
+  « … est dans le territoire de Blanc. », « E7 est une dame (point neutre) : elle ne vaut rien. » seulement si le coup
+  vaut exactement la passe, « La pierre A9 était déjà morte : la prendre ne rapportait rien. »), puis la perte :
+  « Tu perds au moins N points par rapport au bon coup. », N étant l'écart exact du minimax avec le bon coup (y01 C1 :
+  1 ; y04 E7 : 2 ; w06 A8 : 2 ; z12 D1 : 5 ; w09 B2 : 9). Les chiffres recoupent ceux des textes des lots.
+- Les pierres marquées d'un problème de fin de partie (A9, J9) sont des pierres mortes à laisser, plus des cibles :
+  `butDe` ne lit plus ces problèmes comme des captures (avant, w06 avait une « solution complète » qui prenait A9).
+
+### Ko (`src/go/preuve-ko.ts`, lecture de capture, compte de points)
+
+| Problème | Preuve | Phrase |
+|---|---|---|
+| aa12 (vivre par un ko) | `mort` : `evaluerMaitre` = −1, toi maître du ko | « Blanc joue en B2, le point que tu devais jouer. Ton groupe ne peut plus vivre : il sera pris. » |
+| aa17, aa20 (tuer par un ko) | `vit` : `evaluerMaitre` = +1, toi maître du ko | « … Son groupe vivra, quoi que tu joues. » |
+| x01 (prendre le ko) | lecture de capture hors ligne, toi maître du ko | « Blanc se relie en C1. Le groupe marqué a 3 libertés. » |
+| x03 (le ko qui sauve) | lecture de capture : ta pierre est prise quoi que tu fasses, toi maître du ko | « Blanc répond en F5. Ta pierre marquée ne peut plus être sauvée. » |
+| x02 (fermer le ko) | la prise a lieu, et le moteur note le ko | « Blanc prend ta pierre en E9 : c'est un ko. Pour la reprendre, il te faut une menace ailleurs. » |
+| aa01 (fermer un ko en fin de partie) | toi maître du ko, E9 vaudrait **mieux** que E3 : rien de prouvé ainsi ; en ko simple pour les deux camps, E3 prend le ko et Noir perd | la même phrase factuelle, **sans chiffre** : la lecture sans menace finit la partie à la deuxième passe, ko pendant, et compterait un point de trop (2 au lieu de 1) |
+
+Les menaces de ko hors de la zone ne sont pas lues : dès qu'une affirmation en dépendrait, la phrase ne dit que le
+fait et la règle. **Aucun problème de ko ne reste à l'ancien comportement** : les 472 coups faux des 7 problèmes ont une
+réplique prouvée (celle que nomme le texte, à chaque fois).
+
+### Performance
+
+Tout est calculé hors ligne et figé dans `src/go/refutations-locales.gen.ts` (13 Ko, 3,1 Ko gzip ; `npm run
+refutations-locales`, 2 min) : la recherche de fin de partie prend jusqu'à 27 s par problème (y03). Dans l'app, il ne
+reste qu'une lecture de codes et de faits sur le plateau. `outils/refutationsLocales.test.ts` vérifie l'empreinte des
+entrées et revérifie chaque réplique (perte et fait compris) sur la vraie position ; `src/go/refutation-fin.test.ts`
+recoupe les chiffres des lots. L'événement `erreur_comprise` porte `but` = `points` pour ces répliques.
+
+### Couverture (chaque coup faux légal joué, `npx vite-node outils/couvertureRefutations.ts`)
+
+| | Avant (#554) | Après (#558) |
+|---|---|---|
+| Thème fin de partie | 0 / 588 (0 %) | **588 / 588 (100 %)** |
+| Thème comptage | 0 / 166 (0 %) | **166 / 166 (100 %)** |
+| Thème ko | 0 / 472 (0 %) | **472 / 472 (100 %)** |
+| Série Fin de partie, temps d'une réfutation (95ᵉ centile) | — | 0,09 ms (max 38 ms) |
+| Toute la banque | 14 907 / 18 224 (81,8 %) | **16 175 / 18 224 (88,8 %)** |
+
+Reste à 0 % le thème ouverture (807 coups faux, 5 problèmes en 13 × 13) : jugé par KataGo, hors de portée d'une preuve
+exacte. Les séries lues en direct (Capturer, Tesuji, Relier et couper) ne changent pas, à la mesure près (lecture bornée
+à 40 ms : quelques coups de plus ou de moins selon la charge de la machine).
