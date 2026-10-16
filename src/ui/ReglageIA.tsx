@@ -14,6 +14,9 @@ import { langue } from '../content/i18n';
 import { thl } from '../content/i18n/horsLigne';
 import { LigneIcone } from './Reglage';
 import { IconeReglage } from './IconesReglages';
+// #563 : titres de groupe (.lignes-titre), hors du CSS initial ; avant reglageIA.css, comme dans la feuille principale.
+import './amis.css';
+import './profil-ecran.css';
 import './reglageIA.css';
 
 /** « 2,1 » ou « 2.1 » : nombre de mégaoctets affiché, relu en nombre pour la barre. */

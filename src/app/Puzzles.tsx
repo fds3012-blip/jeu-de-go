@@ -25,6 +25,9 @@ import { gagnerXp, sourceXpProbleme } from './xp';
 import { texteReponseVue } from './reponseProbleme';
 import { aideSuivante, recompense, refutation, reponseVue, toucherApresErreur, type NiveauAide, type Refutation } from './aide';
 import { butDe, comprendreErreur, solutionComplete, type ErreurComprise } from './comprendreErreur';
+// #563 : carte d'entrée de la course, hors du CSS initial ; avant comprendre.css et apprendre.css, comme dans la
+// feuille principale.
+import '../ui/course-ecran.css';
 import '../ui/comprendre.css';
 import { prefersReducedMotion, readLocal, useOnline, writeLocal } from './hooks';
 import { usePreferences } from './settings';

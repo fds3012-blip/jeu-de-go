@@ -1,0 +1,159 @@
+/*
+ * Profil court (#50, #103, #214) : carte d'identité, statistiques, vitrine et sceaux des badges, thème du goban,
+ * Mon compte. Le Profil tient en 390 × 844 sans défiler : une carte d'identité, des lignes de 48 px, pas de paragraphe.
+ * #563 : chargée avec ses écrans (Profil, Account, Amis, ReglageIA, Vitrine, IconesReglages), hors du CSS initial.
+ * Les lignes, la page Conditions et le bandeau de consentement restent dans profil.css (JS initial), ainsi que
+ * les @keyframes et l'en-tête « Ton parcours » (.profil .profil-titre-ligne, que partager-app.css ajuste après elle).
+ */
+
+/* ---------- Carte d'identité ---------- */
+.identite { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); background: var(--surface); border-radius: var(--radius); }
+.identite .avatar, .identite .stone { width: 44px; height: 44px; flex: none; }
+.identite .avatar { font-size: var(--fs-display-s); background: var(--surface-2); }
+.identite-texte { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.identite-texte b { font-family: var(--font-titre); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre); font-size: var(--fs-xl); line-height: 1.15;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.identite-texte span { color: var(--muted); font-size: var(--fs-s); line-height: 1.35; }
+.identite-serie { display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px 6px 10px; border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--or) 16%, transparent); color: var(--recompense-texte);
+  font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: 1.05rem; line-height: 1; }
+.icone-reglage { display: block; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.icone-reglage .ir-plein { fill: currentColor; stroke: none; }
+/* Titre d'un groupe de réglages (#103). */
+.lignes-titre { margin: var(--space-4) 0 var(--space-2) var(--space-1); font-size: var(--fs-s); font-weight: var(--fw-bold); color: var(--muted); }
+.profil-reglages > .lignes-titre:first-child { margin-top: 0; }
+/* Pseudo long sous « Mon compte » : une ligne, coupée en fin (le pseudo entier est le titre de la sous-vue). */
+.ligne-demi-valeur.une-ligne { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; overflow-wrap: normal; }
+
+/* ---------- Profil vivant (issue #103) : statistiques et vitrine de badges ---------- */
+.identite { flex-wrap: wrap; row-gap: 6px; padding-block: 8px; }
+/* #121 : la règle .stats d'app.css (chargée après) remet ces statistiques en rangée flex ; au zoom 200 %,
+   les quatre ne tiennent pas sur une ligne : elles passent sur deux rangées au lieu d'élargir la carte. */
+.identite .stats { flex-wrap: wrap; min-width: 0; }
+/* #103 : chaque statistique est un anneau (piste et arc d'or quand il y a un total, médaillon sinon), le chiffre dessous. */
+.stat { display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center; }
+.stat .stat-anneau { display: block; width: 46px; height: 46px; margin-bottom: 2px; }
+.stat-anneau .an-piste { fill: color-mix(in srgb, var(--text) 6%, transparent); stroke: color-mix(in srgb, var(--muted) 38%, transparent); stroke-width: 3; }
+.stat-anneau .an-arc { fill: none; stroke: var(--recompense); stroke-width: 3; stroke-linecap: round; }
+.stat-anneau.medaillon .an-piste { stroke: var(--recompense); stroke-width: 2.4; fill: color-mix(in srgb, var(--recompense) 12%, transparent); }
+.stat-problemes .stat-anneau.medaillon .an-piste { stroke: var(--jade-bord); fill: color-mix(in srgb, var(--jade) 14%, transparent); }
+.stat b { font-family: var(--font-titre); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre); font-size: 1.4rem; line-height: 1; font-variant-numeric: tabular-nums; }
+.stat span { color: var(--muted); font-size: 11.5px; line-height: 1.15; }
+.p-noire { fill: var(--encre, #111); stroke: var(--papier); stroke-width: 1.2; }
+.p-blanche { fill: var(--papier); stroke: var(--encre, #111); stroke-width: 1.2; }
+.p-trait { fill: none; stroke: var(--jade-bord); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.p-or { fill: var(--or); stroke: var(--encre, #111); stroke-width: .8; stroke-linejoin: round; }
+
+/* Vitrine (#214) : les sept sceaux sur une rangée (344 px en 390), sur deux au-delà ; chaque sceau est un bouton de 44 px.
+   La ligne de détail dessous remplace les légendes coupées d'avant. */
+.profil .vitrine { margin-top: var(--space-3); }
+.profil .vitrine-tete { display: flex; align-items: baseline; justify-content: space-between; margin: 0 0 var(--space-1); font-size: var(--fs-m); }
+.vitrine-compte { color: var(--muted); font-family: var(--font-texte, inherit); font-weight: var(--fw-bold); font-size: var(--fs-s); font-variant-numeric: tabular-nums; }
+/* Colonnes de 44 px réparties sur toute la largeur : la rangée s'aligne sur le compteur « 4/7 » ; en 320 px, 5 puis 2. */
+.vitrine-grille { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 8px; }
+.badge-bouton { display: grid; place-items: center; width: var(--cible-min); height: var(--cible-min); padding: 0; border: 0; border-radius: 50%;
+  background: none; color: inherit; transition: transform 140ms cubic-bezier(.23, 1, .32, 1); }
+.badge-bouton:active { transform: scale(.94); }
+/* Badge touché : anneau jade autour du sceau (l'état se lit aussi par aria-pressed). */
+.badge-bouton[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent-bord); }
+.badge-bouton:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.vitrine-detail { margin: var(--space-1) 0 0; min-height: 2.7em; color: var(--muted); font-size: var(--fs-s); line-height: 1.35; }
+/* #529 : ouvrir ou replier la vitrine (21 badges). Un rond de 44 px à la suite des sceaux, « +15 » en toutes lettres. */
+.vitrine-tous span { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; border: 1.5px solid var(--line);
+  background: var(--surface); color: var(--text); font-weight: var(--fw-bold); font-size: var(--fs-s); font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: reduce) { .badge-bouton { transition: none; } .badge-bouton:active { transform: none; } }
+/* Gagné depuis la dernière visite : le sceau s'imprime une fois, comme un tampon (décalé de 60 ms par rang). */
+@media (prefers-reduced-motion: no-preference) {
+  .vitrine-grille .nouveau .sceau-badge { animation: badge-imprime 360ms cubic-bezier(.23, 1, .32, 1) calc(200ms + var(--rang, 0) * 60ms) both; }
+}
+
+/* Sceaux des badges (#103) : sept dessins différents. L'encre (jade, or, hanko) teinte le fond ; le motif est
+   en encre foncée (--s-encre), les détails clairs en papier (--s-papier). Éteint : fond de la tuile, pointillé, motif gris. */
+.sceau-badge { display: block; --s-encre: var(--encre-jade); --s-papier: var(--tampon-papier); filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .25)); }
+.sceau-badge.jade .b-fond { fill: var(--jade); stroke: var(--jade-bord); stroke-width: 1.5; }
+.sceau-badge.or .b-fond { fill: var(--or); stroke: var(--or-fonce); stroke-width: 1.5; }
+.sceau-badge.hanko .b-fond { fill: var(--hanko); stroke: var(--tampon-encre); stroke-width: 1.5; --s-encre: var(--tampon-papier); }
+.sceau-badge.hanko { --s-encre: var(--tampon-papier); --s-papier: var(--tampon-encre); }
+.sceau-badge .b-anneau { fill: none; stroke: var(--s-papier); stroke-width: 1.4; opacity: .8; }
+.sceau-badge .s-plein { fill: var(--s-encre); }
+.sceau-badge .s-clair { fill: var(--s-papier); }
+.sceau-badge .s-trait { fill: none; stroke: var(--s-encre); stroke-linecap: round; stroke-linejoin: round; }
+.sceau-badge .s-ligne { fill: none; stroke: var(--s-encre); stroke-width: 1.3; opacity: .7; }
+.sceau-badge .s-pierre-n { fill: var(--s-encre); stroke: var(--s-papier); stroke-width: 1.2; }
+.sceau-badge .s-pierre-b { fill: var(--s-papier); stroke: var(--s-encre); stroke-width: 1.2; }
+.sceau-badge .s-cible { fill: none; stroke: var(--s-encre); stroke-width: 1.6; stroke-dasharray: 2.6 2; }
+.sceau-badge .s-coche { fill: none; stroke: var(--s-encre); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.sceau-badge .s-pastille { fill: var(--jade); stroke: var(--tampon-papier); stroke-width: 1.4; }
+.sceau-badge .s-coche-pastille { fill: none; stroke: var(--encre-jade); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.sceau-badge .s-texte { fill: var(--s-encre); text-anchor: middle; font-family: var(--font-titre); font-weight: 800; font-size: 17px; letter-spacing: -.02em; }
+.sceau-badge .s-texte-flamme { fill: var(--s-papier); font-size: 11px; }
+/* À gagner : sceau en creux, pointillé, gris. Il se lit comme « pas encore » sans compter sur la couleur. */
+.sceau-badge.eteint { --s-encre: var(--muted); --s-papier: var(--surface); filter: none; }
+.sceau-badge.eteint .b-fond { fill: var(--surface); stroke: var(--muted); stroke-width: 1.2; stroke-dasharray: 3 3; }
+.sceau-badge.eteint .b-anneau { stroke: var(--muted); opacity: .3; }
+.sceau-badge.eteint .s-plein, .sceau-badge.eteint .s-pierre-n { opacity: .6; }
+/* Recette du 02/10 au soir (L10) : le chiffre d'un sceau à gagner (« 10 », « 7 ») est un texte. À 60 %, il tombait à
+   4,29:1 en clair ; à pleine encre, il passe AA en clair et en sombre (e2e/recette-soir-suite.spec.ts) et reste gris. */
+.sceau-badge.eteint .s-texte { opacity: 1; }
+/* Le « 7 » est en papier dans la flamme : la flamme garde sa pleine encre, sinon il tombe aussi sous 4,5:1. */
+.sceau-badge.eteint .s-plein:has(+ .s-texte-flamme) { opacity: 1; }
+.sceau-badge.eteint .s-clair, .sceau-badge.eteint .s-pierre-b { fill: color-mix(in srgb, var(--muted) 35%, var(--surface)); }
+.sceau-badge.eteint .s-pastille { fill: var(--surface-2); stroke: var(--muted); }
+.sceau-badge.eteint .s-coche-pastille { stroke: var(--muted); }
+
+/* ---------- Supprimer mon compte (#114) : discret, en bas de « Mon compte » ---------- */
+.btn-supprimer { display: block; width: 100%; min-height: 44px; margin-top: var(--space-4); padding: 0 var(--space-2);
+  background: none; border: 0; color: var(--danger-texte); font: inherit; font-size: var(--fs-s); font-weight: var(--fw-medium);
+  text-decoration: underline; text-underline-offset: 3px; }
+.btn.btn-danger { background: var(--bg); color: var(--danger-texte); border-color: var(--danger-texte); }
+.btn.btn-danger:disabled { opacity: .45; }
+
+/* ---------- Thème du goban (#109) : sept pastilles de 44 px depuis #529, sur une ou deux rangées ---------- */
+.ligne-goban { min-height: 48px; }
+.ligne-goban > .ligne-libelle { padding-block: 0; }
+.ligne-goban .pastilles { display: flex; gap: 4px; margin-left: auto; }
+/* #121 : au zoom 200 %, les quatre pastilles (188 px) passent sur deux rangées, alignées à droite. */
+.ligne-goban .pastilles { flex-wrap: wrap; justify-content: flex-end; min-width: 0; }
+.pastille-bois { position: relative; display: block; width: 32px; height: 32px; border-radius: 50%; overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .25); }
+/* Un trait de grille et une pierre blanche : on reconnaît le goban, pas seulement une couleur. */
+.pastille-ligne { position: absolute; left: 0; right: 0; top: 50%; height: 1.5px; margin-top: -.75px; }
+.pastille-pierre { position: absolute; z-index: 1; width: 14px; height: 14px; right: 5px; top: 9px; border-radius: 50%;
+  box-shadow: 0 1px 1.5px rgba(0, 0, 0, .45); }
+/* Choisi : anneau jade autour de la pastille (l'état ne dépend pas que de la couleur : aria-pressed + anneau épais). */
+.pastille[aria-pressed="true"] .pastille-bois { box-shadow: 0 0 0 2.5px var(--surface), 0 0 0 5px var(--accent-bord); }
+.pastille[aria-disabled="true"] .pastille-bois { filter: grayscale(.85) brightness(.9); opacity: .55; }
+/* #461 : « Niv. 3 » en 12 px gras (10 px se lisait mal), posé à cheval sur le bas de la pastille. */
+.pastille-niveau { position: absolute; bottom: -3px; left: 50%; transform: translateX(-50%); padding: 1px 5px; border-radius: var(--radius-pill);
+  background: var(--surface-2); color: var(--text); font-size: var(--fs-mini); font-weight: var(--fw-bold); line-height: 1.25; white-space: nowrap;
+  box-shadow: 0 0 0 1px var(--line); }
+@media (hover: hover) { .pastille:not([aria-disabled="true"]):hover .pastille-bois { transform: scale(1.06); } }
+.pastille:not([aria-disabled="true"]):active .pastille-bois { transform: scale(.94); }
+.pastille-bois { transition: transform 140ms cubic-bezier(.23, 1, .32, 1); }
+@media (prefers-reduced-motion: reduce) { .pastille-bois { transition: none; } .pastille .pastille-bois { transform: none !important; } }
+
+/* ---------- Ton parcours (#214) : la progression d'abord, les réglages derrière une ligne ---------- */
+.profil .profil-titre { margin: 0 0 var(--space-2); font-size: var(--fs-xl); }
+/* Barre de niveau dans la carte, pleine largeur sous le nom, entre deux filets. */
+.identite-niveau { flex: 1 0 100%; min-width: 0; padding-top: 6px; box-shadow: inset 0 1px 0 var(--line); }
+.identite-niveau .niveau { margin: 0; }
+/* Total discret à côté du compteur : « 3/7 ». */
+.stat b small { margin-left: 1px; color: var(--muted); font-family: var(--font-texte, inherit); font-size: .6em; font-weight: var(--fw-bold); letter-spacing: 0; }
+.stat span { text-wrap: balance; }
+/* Les lignes (Réglages, Installer, Compte, Conditions) juste après la vitrine. */
+.profil .vitrine + .lignes { margin-top: var(--space-2); }
+/* Quatre colonnes égales sur un iPhone ; au zoom 200 %, elles passent sur deux rangées (min-width). */
+.identite .stats { gap: 6px; }
+/* #214 : 56 px au moins, pour que les quatre tiennent aussi en 320 px ; au zoom 200 %, elles passent toujours sur deux rangées. */
+.identite .stats > .stat { flex: 1 1 0; min-width: 56px; align-content: start; }
+
+/* ---------- Invitation au compte (#214) : ce qui te suit, ce qui reste sur ce téléphone ---------- */
+.compte-garde { list-style: none; margin: var(--space-2) 0 0; padding: 0; display: grid; gap: 6px; font-size: var(--fs-s); line-height: 1.4; }
+.compte-garde li { display: flex; align-items: flex-start; gap: var(--space-2); }
+.compte-garde svg { flex: none; margin-top: 1px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.compte-garde-oui svg { color: var(--accent-texte); stroke-width: 2.4; }
+.compte-garde-ici { color: var(--muted); }
+/* #437 : version de l'app, discrète, en bas des réglages (7 touchers : appareil de l'équipe). */
+.profil-version { margin: var(--space-4) 0 0; text-align: center; font-size: var(--fs-s); color: var(--muted); }
+.profil-version button { min-height: 44px; min-width: 44px; padding: 0 var(--space-3); border: 0; background: none; color: inherit; font: inherit; }
+.profil-version [role='status']:not(:empty) { display: block; }

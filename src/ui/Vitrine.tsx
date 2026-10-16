@@ -1,5 +1,7 @@
 // Profil vivant (issue #103) : statistiques en anneaux et vitrine de badges, 21 sceaux dessinés (#529), tous différents.
 import { useState, type CSSProperties, type ReactNode } from 'react';
+// #563 : statistiques, vitrine et sceaux des badges (hors du CSS initial).
+import './profil-ecran.css';
 import { vitrineRepliee, type Badge, type BadgeId, type Stat } from '../app/vitrine';
 import { t } from '../content/i18n/secondaires';
 import { fr } from './typo';

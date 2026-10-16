@@ -1,6 +1,8 @@
 // Icônes des lignes du Profil et des Réglages (issue #103) : une famille, grille 24, trait 1,8 à bouts ronds.
 // Décoratives : chaque ligne porte son libellé en texte.
 import type { ReactNode } from 'react';
+// #563 : trait des icônes (.icone-reglage), hors du CSS initial.
+import './profil-ecran.css';
 
 export type IconeReglageId =
   | 'amis' | 'parties' | 'placement' | 'cote' | 'reglages' | 'importer' | 'rappel' | 'installer' | 'compte' | 'conditions'

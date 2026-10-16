@@ -23,7 +23,7 @@ describe('écrans chargés à la demande', () => {
   it('les styles des écrans restent dans la feuille principale (importés par main.tsx avant App)', () => {
     const main = lire('../main.tsx');
     const avantApp = main.slice(0, main.indexOf("import { App } from './app/App';"));
-    for (const [ecran, css] of [['Game', 'comptage'], ['Game', 'revue'], ['Learn', 'apprendre-partage'], ['Puzzles', 'course'], ['Placement', 'placement']]) {
+    for (const [ecran, css] of [['Game', 'revue'], ['Learn', 'apprendre-partage'], ['Puzzles', 'course'], ['Placement', 'placement']]) {
       expect(avantApp, `${ecran} : ${css}.css`).toContain(`import './ui/${css}.css';`);
     }
   });
@@ -37,6 +37,25 @@ describe('écrans chargés à la demande', () => {
     expect(lire('./Learn.tsx')).toContain("import '../ui/apprendre.css';");
     expect(lire('./Puzzles.tsx')).toContain("import '../ui/apprendre.css';");
     expect(lire('../ui/Lecteur.tsx')).toContain("import './apprendre.css';");
+  });
+
+  it('#563 : comptage, conseil et amis arrivent avec leurs écrans ; profil et course gardent ici ce que le JS initial affiche', () => {
+    const main = lire('../main.tsx');
+    for (const css of ['comptage', 'conseil', 'amis', 'profil-ecran', 'course-ecran']) expect(main, css).not.toContain(`import './ui/${css}.css';`);
+    expect(lire('./Game.tsx')).toContain("import '../ui/comptage.css';");
+    for (const f of ['../ui/BulleCoach.tsx', '../ui/ConseilMochi.tsx']) expect(lire(f), f).toContain("import './conseil.css';");
+    // Profil : amis.css puis profil-ecran.css, en tête (l'ordre qu'elles avaient dans la feuille principale).
+    const profil = lire('./Profil.tsx');
+    expect(profil.indexOf("import '../ui/amis.css';")).toBeGreaterThan(-1);
+    expect(profil.indexOf("import '../ui/amis.css';")).toBeLessThan(profil.indexOf("import '../ui/profil-ecran.css';"));
+    expect(profil.indexOf("import '../ui/profil-ecran.css';")).toBeLessThan(profil.indexOf("import '../ui/emulation.css';"));
+    for (const f of ['./Account.tsx', './Amis.tsx']) expect(lire(f), f).toContain("import '../ui/profil-ecran.css';");
+    for (const f of ['../ui/ReglageIA.tsx', '../ui/Vitrine.tsx', '../ui/IconesReglages.tsx']) expect(lire(f), f).toContain("import './profil-ecran.css';");
+    for (const f of ['./Puzzles.tsx', './CourseProblemes.tsx']) expect(lire(f), f).toContain("import '../ui/course-ecran.css';");
+    // profil.css reste dans app.css (lignes, Conditions, bandeau de consentement : JS initial).
+    expect(lire('../ui/app.css')).toContain("@import './profil.css';");
+    expect(lire('../ui/profil.css')).toMatch(/\.accord \{/);
+    expect(lire('../ui/profil.css')).not.toMatch(/\.vitrine-grille|\.identite \{/);
   });
 
   it('#538 : import.css arrive avec l’écran d’import (morceau du Profil), sans règle que app.css écrasait avant', () => {

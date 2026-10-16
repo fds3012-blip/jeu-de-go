@@ -3,6 +3,9 @@
 // - Sinon : demandes reçues (Accepter / Refuser), tes amis (« Défier » crée la partie sans lien, puis l'ouvre avec
 //   l'écran du défi #81), demandes envoyées (Annuler). Le champ d'ajout passe alors en bas, en action secondaire.
 // Données et règles : src/data/amis.ts (le serveur fait foi : supabase/migrations/20261002010100_amis.sql).
+// #563 : styles chargés avec l'écran (hors du CSS initial).
+import '../ui/amis.css';
+import '../ui/profil-ecran.css';
 import { useCallback, useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { defierAmi, demanderAmi, grouperAmis, repondreAmi, retirerAmi } from '../data/amis';
 import type { Db } from '../data/supabase';

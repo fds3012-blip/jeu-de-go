@@ -75,14 +75,6 @@ h2 { font-size: var(--fs-xl); font-weight: var(--fw-bold); line-height: var(--lh
 /* ---------- Barre de navigation : voir src/ui/nav.css (identité « deux pierres », #51) ---------- */
 /* ---------- Plateau : voir src/ui/board.css (goban v2) ---------- */
 
-
-/* ---------- Bandeaux joueurs : sans cadre, le joueur au trait est éclairé ---------- */
-.strip { display: flex; align-items: center; gap: 10px; padding: var(--space-2) var(--space-3); border-radius: var(--radius-s); margin: var(--space-2) 0; }
-.strip.active { background: var(--surface); }
-.strip.active::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--accent-trait); flex: none; margin-right: -2px; }
-.strip b { display: block; font-family: var(--font-titre); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre); font-size: var(--fs-l); line-height: 1.2; }
-.strip small { color: var(--muted); }
-.strip .caps { margin-left: auto; color: var(--muted); font-size: var(--fs-s); }
 .stone { width: 26px; height: 26px; border-radius: 50%; flex: 0 0 auto; }
 .stone.b { background: var(--matiere-noire); }
 .stone.w { background: var(--matiere-blanche); box-shadow: 0 0 0 1px rgba(0,0,0,.18); }
