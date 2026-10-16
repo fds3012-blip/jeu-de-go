@@ -36,7 +36,7 @@ import type { FaconEnLigne } from './BasculeEnLigne';
 import { EVENTS, secondsSinceOpen, track, trackOnce } from '../data/analytics';
 import { compterEtape } from '../data/compteurs';
 import { ecouterPremierGeste } from './premierGeste';
-import { estArriveeRappel, etatRappel } from './rappel';
+import { estArriveeRappel, etatRappel } from './rappelEtat';
 import { PARAM, PARAM_COURT, SERIE_KEY, numeroDuJour, numeroDuLien, problemeDuJour, type Serie } from './goDuJour';
 import { battu, BILAN_KEY, dejaAffronte, enregistrer, fin, finTropTot, komiDepuisUrl, lireBilan, type Bilan, type Issue, type StatsPartie } from './bilan';
 import { fr } from '../ui/typo';
