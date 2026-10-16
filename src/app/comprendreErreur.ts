@@ -24,14 +24,19 @@ import { THEME_DU_PROBLEME } from '../content/themes';
 /** But lisible sur le plateau : prendre les pierres marquées de l'adversaire, ou sauver les tiennes. */
 export type But = { type: 'prendre' | 'sauver'; cibles: number[] };
 
+/** Thèmes dont les pierres marquées montrent une pierre morte à ne pas prendre (#558) : jamais une cible de capture. */
+const THEMES_FIN = new Set(['fin-de-partie', 'comptage']);
+
 /**
- * Le but d'un problème, d'après ses pierres marquées ; `null` s'il n'en a pas, s'il en a des deux couleurs, ou si c'est
- * un problème de ko. Le ko (CI de #551) : le lecteur ne connaît que le ko simple, sans menaces de ko ailleurs ; « ta pierre
- * ne peut plus être sauvée » pourrait y être faux dans une vraie partie. Ces problèmes gardent le comportement d'avant
- * (#237 : réponse au point clé, texte relu du problème).
+ * Le but d'un problème, d'après ses pierres marquées ; `null` s'il n'en a pas, s'il en a des deux couleurs, si c'est un
+ * problème de fin de partie (la pierre marquée est morte : à laisser, #558), ou de ko sans `avecKo`. Le ko (CI de #551) :
+ * en direct, le lecteur ne connaît que le ko simple, sans menaces de ko ailleurs ; « ta pierre ne peut plus être sauvée »
+ * pourrait y être faux dans une vraie partie. Hors ligne (#558, `avecKo`), le joueur est maître du ko : la lecture tient
+ * quelle que soit la gestion des menaces, et ses répliques sont figées (src/go/refutations-locales.gen.ts).
  */
-export function butDe(pz: Puzzle): But | null {
-  if (THEME_DU_PROBLEME[pz.id] === 'ko') return null;
+export function butDe(pz: Puzzle, avecKo = false): But | null {
+  const theme = THEME_DU_PROBLEME[pz.id];
+  if ((theme === 'ko' && !avecKo) || (theme && THEMES_FIN.has(theme))) return null;
   const { pos, marked } = startOf(pz);
   if (!marked.length) return null;
   const couleurs = new Set(marked.map(m => pos.board[m]));

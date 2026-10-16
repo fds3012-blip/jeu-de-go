@@ -74,7 +74,7 @@ describe.skipIf(MAJ)('réfutations figées (#554) : la réplique nommée par le 
         const premier = ordreRepliques(pz, local, f)[0];
         if (premier === undefined || premier === fromLabel(code.slice(0, -1), pz.size)) continue;
         // La réplique figée n'est pas la première essayée : la première n'est pas prouvée (revérifié).
-        expect(repliqueProuvee(pz, but, f, memo)?.reponse, `${pz.id} ${toLabel(f, pz.size)}`).toBe(fromLabel(code.slice(0, -1), pz.size));
+        expect(repliqueProuvee(pz, { local: but, fin: null }, f, memo)?.reponse, `${pz.id} ${toLabel(f, pz.size)}`).toBe(fromLabel(code.slice(0, -1), pz.size));
       }
     }, 300_000);
   }
