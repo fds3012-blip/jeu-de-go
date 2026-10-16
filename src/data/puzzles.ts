@@ -8,6 +8,9 @@ import { localiserProbleme } from '../content/problemesLangue';
 import { fromRows } from '../go/position';
 import { play, type MoveError, type Position } from '../go/rules';
 import { fromLabel } from '../go/coords';
+import { liveStreak } from './lectureProfil';
+// #563 : liveStreak vit dans lectureProfil.ts (JS initial) ; réexportée ici pour les écrans et les tests.
+export { liveStreak };
 
 /** Colonnes utiles d'une ligne de `puzzles`. */
 export type PuzzleRow = Pick<Tables<'puzzles'>, 'id' | 'size' | 'answers' | 'title' | 'prompt' | 'explanation' | 'difficulty'> & { setup: Json };
@@ -156,19 +159,6 @@ export async function fetchPuzzleStats(db: Db, userId: string): Promise<Result<P
       attempted: [...new Set(rows.map(r => r.puzzle_id))]
     }
   };
-}
-
-/**
- * La série affichée retombe à 0 si le dernier problème réussi date d'avant-hier ou plus,
- * sauf si les gels en réserve couvrent tous les jours manqués : le serveur les consommera à la prochaine réussite
- * (même règle que gel.ts, issue #76).
- */
-export function liveStreak(days: number, last: string | null, now: Date, freezes = 0): number {
-  if (!last || days <= 0) return 0;
-  const [y, m, d] = last.split('-').map(Number);
-  const lastDay = Date.UTC(y, m - 1, d), today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
-  const manques = Math.round((today - lastDay) / 86_400_000) - 1;
-  return manques <= Math.max(0, freezes) ? days : 0;
 }
 
 /** Enregistre un essai et renvoie la nouvelle cote problèmes. */
