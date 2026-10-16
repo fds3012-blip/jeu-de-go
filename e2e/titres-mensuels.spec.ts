@@ -52,12 +52,19 @@ test('nouveau titre : fête une seule fois à l’ouverture, puis la ligne du Pr
   const ligne = page.getByTestId('ligne-titre');
   await expect(ligne).toContainText('Titre du mois dernier');
   await expect(ligne).toContainText('Expert du mois');
+  await expect(ligne).toContainText(new Intl.DateTimeFormat('fr-FR', { month: 'long', timeZone: 'UTC' }).format(new Date(`${mois.slice(0, 7)}-15T12:00:00Z`)).replace(/^./, c => c.toUpperCase()));
+  await expect(ligne).toHaveAccessibleName(/^Titre du mois dernier\s?: Expert du mois/);
   await expect(ligne).not.toContainText('Maître');
   await expect(ligne.locator('.sceau-titre[data-titre="expert"]')).toBeVisible();
-  await expect(page.getByRole('group', { name: /Titre du mois dernier : Expert du mois.*Top 5\s%/ })).toBeVisible();
+  // Le titre partage la ligne de « Ta cote » (à la place du placement) ; le toucher ouvre « Ta cote ».
+  await expect(ligne).toContainText(/Top 5\s% des joueurs actifs/);
+  expect((await ligne.boundingBox())!.height).toBeGreaterThanOrEqual(44);
   const { scroll, largeur } = await page.evaluate(() => ({ scroll: document.documentElement.scrollHeight, largeur: document.documentElement.scrollWidth }));
+  if (process.env.CAPTURE_561) await page.screenshot({ path: process.env.CAPTURE_561, fullPage: true });
   expect(largeur).toBeLessThanOrEqual(390);
   expect(scroll).toBeLessThanOrEqual(844);
+  await ligne.click();
+  await expect(page.getByRole('heading', { name: 'Ta cote' })).toBeVisible();
   await ctx.close();
 });
 
@@ -73,5 +80,7 @@ test('sans titre (garde-fou non atteint) : ni fête, ni ligne au Profil', async 
   await page.waitForTimeout(1000);
   await expect(page.getByTestId('ligne-titre')).toHaveCount(0);
   await expect(page.getByTestId('fete-titre')).toHaveCount(0);
+  // Sans titre, la ligne de « Ta cote » garde « Placement ».
+  await expect(page.getByRole('button', { name: /Placement/ })).toBeVisible();
   await ctx.close();
 });

@@ -4,12 +4,11 @@ import { langue, type Langue } from './index';
 import type { Titre } from '../../app/titres';
 
 const FR = {
-  'titres.ligne': 'Titre du mois dernier',
+  'titres.ligne': 'Titre du mois dernier :',
   'titres.maitre': 'Maître du mois',
   'titres.expert': 'Expert du mois',
   'titres.habitue': 'Habitué du mois',
-  'titres.valeur': '{titre} · {mois}',
-  'titres.aria': 'Titre du mois dernier : {titre}, en {mois}. Top {pourcent} % des joueurs actifs.',
+  'titres.detail': 'Top {pourcent} % des joueurs actifs.',
   'titres.fete': 'Nouveau titre : {titre} !',
   'titres.feteDetail': 'Top {pourcent} % des joueurs de {mois}. Bravo !',
   'titres.feteAria': '{titre} : top {pourcent} % des joueurs de {mois}. Toucher pour fermer.',
@@ -18,12 +17,11 @@ const FR = {
 export type CleTitres = keyof typeof FR;
 
 const EN: { readonly [K in CleTitres]: string } = {
-  'titres.ligne': 'Last month’s title',
+  'titres.ligne': 'Last month’s title:',
   'titres.maitre': 'Master of the month',
   'titres.expert': 'Expert of the month',
   'titres.habitue': 'Regular of the month',
-  'titres.valeur': '{titre} · {mois}',
-  'titres.aria': 'Last month’s title: {titre}, in {mois}. Top {pourcent}% of active players.',
+  'titres.detail': 'Top {pourcent}% of active players.',
   'titres.fete': 'New title: {titre}!',
   'titres.feteDetail': 'Top {pourcent}% of players in {mois}. Well done!',
   'titres.feteAria': '{titre}: top {pourcent}% of players in {mois}. Tap to close.',

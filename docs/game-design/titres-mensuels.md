@@ -27,7 +27,7 @@
 
 ## Ce qu'un joueur voit
 
-- **Son titre** : dans le Profil (compte complet), une ligne « Titre du mois dernier » avec le sceau du titre, son nom et le mois. La ligne n'existe que si le joueur a un titre le mois dernier : rien sous le garde-fou, rien sans titre.
+- **Son titre** : dans le Profil (compte complet), le « Titre du mois dernier » : le sceau du titre, son nom (« Expert du mois ») et le mois (« Septembre »). Il n'existe que si le joueur a un titre le mois dernier : rien sous le garde-fou, rien sans titre. Le Profil tient sans défiler en 390 × 844 : le titre est une **demi-ligne** qui partage la ligne de « Ta cote », à la place de « Placement » (un joueur titré a au moins 10 parties classées : l'estimation du placement n'a plus d'objet ; elle revient le mois où il n'a pas de titre). Le toucher ouvre « Ta cote ». Libellé court pour garder 48 px de haut ; le nom accessible commence par « Titre du mois dernier : » et finit par « Top 5 % des joueurs actifs. ».
 - **Une fête discrète, une fois** : à l'ouverture de l'app, une carte en haut de l'écran (« Nouveau titre : Expert du mois ! Top 5 % des joueurs de septembre. »), 5 s ou un toucher. Elle passe par la file des fêtes (`src/ui/fileFetes.ts`, genre `titre`) : jamais sur une consigne, après l'XP et le niveau. Immobile avec les mouvements réduits ou sans célébrations. Le repère `go.titre-fete.v1` (le mois fêté) l'empêche de revenir sur cet appareil.
 - **Les titres des autres** : seulement sur leur profil public (#560), par `titres_du_joueur(p_profile_id)` : mois et titre, mois publiés seulement, rien si l'un a bloqué l'autre. Pas de classement nominatif public : ni liste des titrés, ni rang, ni cote du mois.
 - Le sceau est un **sceau**, pas un portrait (règle Mochi #527) : ce n'est pas Mochi qui parle.
@@ -44,5 +44,5 @@ Mesure : `titre_obtenu` (le niveau seulement), `docs/data/plan-de-marquage.md`.
 ## Fichiers
 
 - Serveur : `supabase/migrations/20261016150000_titres_mensuels.sql`, test `supabase/tests/titres_mensuels.test.sql`.
-- App : `src/app/titres.ts` (logique pure), `src/data/titres.ts` (lecture), `src/ui/LigneTitre.tsx`, `src/ui/FeteTitre.tsx` (chargée à la demande), `src/ui/SceauTitre.tsx`, `src/ui/titres.css` (feuille à la demande), `src/content/i18n/titres.ts`.
+- App : `src/app/titres.ts` (logique pure), `src/data/titres.ts` (lecture), `src/ui/LigneTitre.tsx` (demi-ligne), `src/ui/FeteTitre.tsx` (chargée à la demande), `src/ui/SceauTitre.tsx`, `src/ui/titres.css` (feuille à la demande), `src/content/i18n/titres.ts`.
 - Tests : `src/app/titres.test.ts`, `e2e/titres-mensuels.spec.ts`.

@@ -6,10 +6,8 @@
 .sceau-titre { line-height: 0; display: inline-block; flex: none; }
 .sceau-titre > svg { display: block; }
 
-/* Ligne du Profil : même gabarit que les autres lignes (48 px), le sceau à la place de l'icône. Pas d'action. */
-.ligne-titre .sceau-titre { margin-block: 8px; }
-.ligne-titre .ligne-texte { gap: 1px; }
-.ligne-titre-valeur { color: var(--muted); font-size: var(--fs-s); line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Demi-ligne du Profil (gabarit .ligne-demi de profil.css, 48 px) : le sceau à la place de l'icône. */
+.ligne-titre .sceau-titre { margin-block: 2px; }
 
 /* Fête discrète : une carte en haut de l'écran, comme la fête de niveau (niveau.css), plus sobre. */
 .fete-titre { position: fixed; z-index: 60; left: 50%; top: calc(12px + env(safe-area-inset-top, 0px)); transform: translateX(-50%);
