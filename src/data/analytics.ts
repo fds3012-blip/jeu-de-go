@@ -86,6 +86,9 @@ export const EVENTS = {
   // #544 : badge obtenu (gagné sur le moment, ou constaté à l'ouverture du Profil), une fois par badge et par appareil.
   // Seule propriété : `badge`, l'identifiant du badge (`premiere-partie`, `serie-7`…).
   badgeGagne: 'badge_gagne',
+  // Titre mensuel (#561) montré à l'ouverture de l'app, une fois par titre sur l'appareil (src/ui/FeteTitre.tsx).
+  // `niveau` (`maitre`, `expert`, `habitue`) seulement : ni le mois, ni la cote, ni le rang.
+  titreObtenu: 'titre_obtenu',
   // Plan de marquage (issue #166). Chaque partie commencée (premier coup joué) : dénominateur du taux de parties finies.
   partieCommencee: 'partie_commencee',
   // #528 : partie interrompue contre l'ordi reprise depuis l'accueil (`adversaire`, `taille`, `coups`, `handicap`, `regles`,
@@ -147,6 +150,9 @@ export const EVENTS = {
   // rejoint la sienne), puis défi lancé depuis « Mes amis », sans lien. Jamais le pseudo ni la partie.
   amiAjoute: 'ami_ajoute',
   defiDepuisProfil: 'defi_depuis_profil',
+  // Profil public d'un joueur (#560) : écran « Profil de {pseudo} » ouvert (`depuis` : fin_partie, amis, demande, bilan,
+  // profil ; `lien` : aucun, envoyee, recue, amis, moi, ou indisponible). Jamais le pseudo.
+  profilPublicOuvert: 'profil_public_ouvert',
   // Conseil de Mochi (#80) : phrase demandée (`modele`, `aucun` si rien de sûr), puis retour « utile / pas utile » (`utile`).
   conseilDemande: 'conseil_demande',
   conseilNote: 'conseil_note',
@@ -188,6 +194,13 @@ export const EVENTS = {
   statistiquesOuvertes: 'statistiques_ouvertes',
   etudeOuverte: 'etude_ouverte',
   analyseDemandee: 'analyse_demandee',
+  // Étude avancée (#562) : variante créée (`taille`, `coup` : numéro du coup qui crée la variante, `variantes` : nombre
+  // de variantes de l'étude après), variante gérée (`action` : supprimer, promouvoir, ligne_principale), étude
+  // exportée en SGF depuis l'écran (`coups`, `variantes`, `commentaires` : vrai si le fichier en porte). Komi et règle :
+  // `reglage_change` avec `cle` = `etude_komi` ou `etude_regle`. Jamais la position, les coups ni les commentaires.
+  etudeVarianteCreee: 'etude_variante_creee',
+  etudeVarianteGeree: 'etude_variante_geree',
+  etudeExportee: 'etude_exportee',
   // Partager une partie (#364) : feuille « Partager » du bilan ouverte (`mode` : ordi, deux, import ; `compte` : lien et
   // défi possibles), partage fait (`objet` : lien, image, sgf, defi ; `moyen` : web_share, copie, manuel, telechargement),
   // échec (`objet`, `raison` : compte, pseudo, jour, plein, illisible, reseau, canvas), lien retiré (`mode`). L'arrivée de

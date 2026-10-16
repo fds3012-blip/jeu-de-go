@@ -1,0 +1,7 @@
+/* « Mes amis » (#560) : règles chargées avec l'écran seulement (amis.css est dans le CSS initial pour la ligne du Profil).
+   Le pseudo se touche et ouvre « Profil de {pseudo} » : même rendu que le texte, zone de 44 px sans bouger la ligne. */
+.ami-texte b { display: block; }
+.ami-nom { display: block; min-width: 0; max-width: 100%; min-height: var(--cible-min); margin: -10px 0; padding: 0; border: 0; background: none; color: var(--text);
+  font: inherit; text-align: left; border-radius: 8px; }
+.ami-nom:active { color: var(--accent-texte); }
+.ami-nom:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }

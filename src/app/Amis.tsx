@@ -18,14 +18,19 @@ import { ta } from '../content/i18n/amis';
 import { FeuilleSignaler } from '../ui/Securite';
 import { debloquer, mesBlocages, type Blocage } from '../data/securite';
 import { tsec } from '../content/i18n/securite';
+import { tp } from '../content/i18n/profilPublic';
+import '../ui/amis-liste.css';
 
 interface Props {
   db: Db | null;
   /** Partie créée par « Défier » : l'app l'ouvre avec l'écran du défi. */
   onDefi: (partieId: string) => void;
+  /** #560 : un pseudo touché ouvre « Profil de {pseudo} » (ami ou demande envoyée) ; `onProfilDemande` : depuis une demande reçue. */
+  onProfil?: (pseudo: string) => void;
+  onProfilDemande?: (pseudo: string) => void;
 }
 
-export function Amis({ db, onDefi }: Props) {
+export function Amis({ db, onDefi, onProfil, onProfilDemande }: Props) {
   const { liste, recharger, online } = useAmis(db, true);
   const [saisie, setSaisie] = useState('');
   const [envoi, setEnvoi] = useState(false);
@@ -156,7 +161,7 @@ export function Amis({ db, onDefi }: Props) {
             <li key={a.pseudo} className="ami">
               <div className="ami-ligne">
                 <Initiale pseudo={a.pseudo} />
-                <span className="ami-texte"><b>{a.pseudo}</b></span>
+                <Nom pseudo={a.pseudo} onProfil={onProfilDemande} />
                 <span className="ami-actions">
                   <BoutonSignaler pseudo={a.pseudo} disabled={occupe !== null} onClick={() => setASignaler(a.pseudo)} />
                   <button type="button" className="lien ami-discret" disabled={occupe !== null} aria-label={ta('amis.refuserAria', { pseudo: a.pseudo })}
@@ -177,7 +182,7 @@ export function Amis({ db, onDefi }: Props) {
             <li key={a.pseudo} className="ami">
               <div className="ami-ligne">
                 <Initiale pseudo={a.pseudo} />
-                <span className="ami-texte"><b>{a.pseudo}</b></span>
+                <Nom pseudo={a.pseudo} onProfil={onProfil} />
                 <span className="ami-actions">
                   <BoutonSignaler pseudo={a.pseudo} disabled={occupe !== null} onClick={() => setASignaler(a.pseudo)} />
                   <button type="button" className={`ami-retirer${aConfirmer === a.pseudo ? ' arme' : ''}`} disabled={occupe !== null}
@@ -205,7 +210,7 @@ export function Amis({ db, onDefi }: Props) {
             <li key={a.pseudo} className="ami">
               <div className="ami-ligne">
                 <Initiale pseudo={a.pseudo} />
-                <span className="ami-texte"><b>{a.pseudo}</b><small>{ta('amis.attente')}</small></span>
+                <Nom pseudo={a.pseudo} onProfil={onProfil} sous={ta('amis.attente')} />
                 <span className="ami-actions">
                   <button type="button" className="lien ami-discret" disabled={occupe !== null} aria-label={ta('amis.annulerAria', { pseudo: a.pseudo })}
                     onClick={() => agir(a.pseudo, () => retirerAmi(db, a.pseudo))}>{ta('amis.annuler')}</button>
@@ -259,6 +264,19 @@ function BoutonSignaler({ pseudo, disabled, onClick }: { pseudo: string; disable
     <button type="button" className="ami-plus" disabled={disabled} aria-label={tsec('signaler.joueur', { nom: pseudo })} onClick={onClick} data-action="signaler">
       <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 14.5V2.5M4 3c2-1 3.7 1 5.7 0s3-.5 3-.5v5.4s-1 .7-3 1.4S6 8.3 4 9.3" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
     </button>
+  );
+}
+
+/** #560 : le pseudo, et un toucher ouvre son profil public quand l'écran le permet (44 px, sans bouger la ligne). */
+function Nom({ pseudo, sous, onProfil }: { pseudo: string; sous?: string; onProfil?: (pseudo: string) => void }) {
+  const nom = <b>{pseudo}</b>;
+  return (
+    <span className="ami-texte">
+      {onProfil
+        ? <button type="button" className="ami-nom" aria-label={tp('joueur.ouvrir', { pseudo })} onClick={() => onProfil(pseudo)}>{nom}</button>
+        : nom}
+      {sous && <small>{sous}</small>}
+    </span>
   );
 }
 

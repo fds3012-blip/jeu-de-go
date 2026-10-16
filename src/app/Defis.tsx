@@ -38,6 +38,7 @@ import type { Sens } from './connexionBascule';
 import type { EtatCompte } from './essai';
 import '../ui/compte.css';
 import { fr } from '../ui/typo';
+import { tp } from '../content/i18n/profilPublic';
 import { langue, nombre, t } from '../content/i18n/secondaires';
 // #364 : lien court (`mochi-go.app/defi#…`), avec sa page d'aperçu.
 import { originePartage } from './partage';
@@ -306,6 +307,8 @@ interface PartieProps {
   onAutre: () => void;
   /** #440 : fin d'une partie lente, « Nouvelle partie lente » (sans elle : `onAutre`). */
   onAutreLente?: () => void;
+  /** #560 : « Voir le profil de {pseudo} » dans le bilan de la partie (pseudo de l'ami connu, compte complet). */
+  onProfil?: (pseudo: string) => void;
 }
 
 /**
@@ -313,7 +316,7 @@ interface PartieProps {
  * bandeau, le ruban des coups avec le « ? » de l'aide (#390), Mochi sous ton bandeau, « Passer » en bouton plein et
  * « Abandonner » rangé dans le menu « Plus ».
  */
-export function DefiPartie({ db, partieId, userId, anonyme, pseudo = null, confirmTouch, reglages, celebrer, onRetour, onAutre, onAutreLente }: PartieProps) {
+export function DefiPartie({ db, partieId, userId, anonyme, pseudo = null, confirmTouch, reglages, celebrer, onRetour, onAutre, onAutreLente, onProfil }: PartieProps) {
   const prefs = usePreferences(); // #365 : coordonnées et dernier coup
   const online = useOnline();
   const [etat, setEtat] = useState<{ etat: 'chargement' } | { etat: 'erreur'; message: string } | { etat: 'pret'; d: EtatDefi }>({ etat: 'chargement' });
@@ -573,6 +576,8 @@ export function DefiPartie({ db, partieId, userId, anonyme, pseudo = null, confi
             {partie.rated && userId && !anonyme && <GainCote db={db} gameId={partie.id} userId={userId} celebrer={celebrer} />}
             <button type="button" className="btn primary defis-cta" onClick={lente ? onAutreLente ?? onAutre : onAutre}>{lente ? tl('lente.autre') : t('defi.autre')}</button>
             {revue && <button type="button" className="lien" onClick={() => { setEnRevue(true); window.scrollTo?.({ top: 0 }); }}>{t('fin.revoir')}</button>}
+            {/* #560 : le profil de l'ami ou de l'adversaire (pseudo connu), pour l'ajouter ou le défier de nouveau. */}
+            {onProfil && nomAmi && !anonyme && <button type="button" className="lien" data-testid="fin-profil" onClick={() => onProfil(nomAmi)}>{tp('joueur.ouvrir', { pseudo: nomAmi })}</button>}
             <button type="button" className="lien" onClick={onRetour}>{t('defi.retourAccueil')}</button>
             {echanges.liensFin}
             {partie.rated && userId && !anonyme && <VocabulaireGrade />}

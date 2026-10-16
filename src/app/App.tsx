@@ -18,7 +18,8 @@ import { CRAN_DEPART, cranDuNiveau, niveauGuide, OPPONENTS, type OpponentId } fr
 import { reseauEnCache } from '../engine/katago/cacheReseau';
 import { bandeauReseau, proposerRepli, REPLI_HORS_LIGNE } from './horsLigne';
 import { ConsentModal } from './Confidentialite';
-import type { VueProfil } from './Profil';
+import type { JoueurVu, VueProfil } from './Profil';
+import type { DepuisProfil } from './ProfilPublic';
 import type { Lesson } from '../content/lessons';
 import { langue, t } from '../content/i18n';
 import { jamaisJoue, proprietesArrivee } from './arriveePartage';
@@ -88,6 +89,8 @@ const FeuilleAide = lazy(() => import('../ui/Aide'));
 const RepliHorsLigne = lazy(() => import('../ui/RepliHorsLigne'));
 // #369 : bilan de la semaine passée, sur l'accueil, une fois par semaine ; chargé seulement ce jour-là.
 const CarteBilanSemaine = lazy(() => import('../ui/BilanSemaine').then(m => ({ default: m.BilanSemaine })));
+// #561 : fête d'un nouveau titre mensuel, chargée à l'ouverture pour un compte complet seulement (hors JS et CSS initiaux).
+const FeteTitre = lazy(() => import('../ui/FeteTitre'));
 
 // #433 : problèmes complets chargés à la demande (placement, série de fin de leçon) ; l'accueil lit le Go du jour léger.
 const problemesLocaux = () => import('../content/problemesLocaux').then(m => m.PROBLEMES_LOCAUX);
@@ -444,6 +447,8 @@ export function App() {
   const [jourAnnonce] = useState(() => lireJourAnnonce(readLocal<unknown>(ANNONCE_DU_JOUR_KEY, null)));
   // #369 : bilan de la semaine passée, lu une fois à l'ouverture (la carte le marque vu dès qu'elle s'affiche).
   const [bilanPasse, setBilanPasse] = useState(() => bilanAMontrer(etatSemaine()));
+  // #560 : « Profil de {pseudo} » (pile des profils ouverts), dans l'onglet Profil. Jamais sans compte complet.
+  const [joueurVu, setJoueurVu] = useState<JoueurVu | null>(null);
   const appel = appelSecondaire({
     jour: numeroJour, parties: parties.n, duJourFait, annonce: annonceAccueil, jourAnnonce, semaine: bilanPasse !== null,
     installation: estMomentRetour(ouverture) && doitProposer({ plateforme, etat: etatInstall, moment: 'retour', enPartie: false }),
@@ -670,6 +675,10 @@ export function App() {
     setSeanceRevisions(false); // #469
     setDecouverte(false); // #524
   };
+  /** #560 : depuis un écran hors du Profil (fin d'une partie en ligne, accueil), l'onglet Profil s'ouvre sur ce joueur. */
+  // La pile des profils et le retour sont gérés par le Profil (chargé à la demande) : rien de plus dans le JS initial.
+  // Une pile ancienne n'est jamais relue : chaque ouverture hors d'un profil la remplace.
+  const voirJoueur = (depuis: DepuisProfil) => etat === 'complet' ? (pseudo: string) => { go('profil'); setJoueurVu({ pseudos: [pseudo], depuis, retour: 'menu' }); setVueProfil('joueur'); } : undefined;
 
   // Reprise de l'action demandée, dès que le compte est complet ; `compte_cree` quand un compte sans pseudo apparaît.
   const executer = useRef<(r: Reprise) => void>(() => {});
@@ -833,7 +842,9 @@ export function App() {
         // #442 : attente après des parties quittées : l'IA la plus proche de la cote, sans rester dans la file.
         onOrdi={(contre, demande) => { setDirect(false); setDirectRejoint(null); lancer('ordi', contre, { contre, demande, depuis: Date.now(), veille: false }); }}
         celebrer={settings.celebrations} onAccueil={() => { setDirect(false); setDirectRejoint(null); window.scrollTo({ top: 0 }); }}
-        onFacon={changerFacon} onPlein={setDirectPlein} />
+        onFacon={changerFacon} onPlein={setDirectPlein}
+        // #560 : le profil de l'adversaire, depuis le bilan de la partie.
+        onProfil={voirJoueur('fin_partie')} />
       : null;
   } else if (enLente) {
     screen = supabase && compteId
@@ -848,7 +859,9 @@ export function App() {
   } else if (enDefi && defi.vue === 'partie' && supabase) {
     screen = <DefiPartie key={defi.id} db={supabase} partieId={defi.id} userId={session?.user.id} anonyme={estAnonyme(session)} pseudo={pseudo ?? null} confirmTouch={settings.confirmTouch} reglages={{ modifier: set }} celebrer={settings.celebrations}
       onRetour={quitterDefi} onAutre={() => { setDefi({ vue: 'liste' }); window.scrollTo({ top: 0 }); }}
-      onAutreLente={() => { setDefi(null); setDirect(false); setLente(true); window.scrollTo({ top: 0 }); }} />;
+      onAutreLente={() => { setDefi(null); setDirect(false); setLente(true); window.scrollTo({ top: 0 }); }}
+      // #560 : le profil de l'ami ou de l'adversaire, depuis le bilan de la partie (compte complet seulement).
+      onProfil={voirJoueur('fin_partie')} />;
   } else if (enDefi && defi.vue === 'arrivee') {
     screen = <DefiArrivee key={defi.jeton} db={supabase} jeton={defi.jeton} inviteur={defi.inviteur} compte={COMPTES ? etat : 'aucun'} onPartie={ouvrirDefiPartie} onAccueil={quitterDefi} />;
   } else if (enDefi) {
@@ -972,7 +985,9 @@ export function App() {
         db: supabase, compte: etat === 'complet', demandes: demandesAmis,
         onCompte: () => { garde({ quoi: 'en_ligne' }, { quoi: 'amis' }); },
         onDefi: id => { setVueProfil('menu'); setTab('jouer'); setPlaying(false); setDefi({ vue: 'partie', id }); window.scrollTo({ top: 0 }); },
-      } : undefined} />;
+      } : undefined}
+      // #560 : profil public d'un joueur, depuis « Mes amis », une demande ou « Ta semaine ».
+      joueur={{ vu: joueurVu, changer: setJoueurVu }} />;
   } else {
     const numero = numeroJour;
     const daily = duJour;
@@ -1013,7 +1028,8 @@ export function App() {
         installation={appel === 'installation' ? <ProposerInstallation moment="retour" /> : null}
         semaine={appel === 'semaine' && bilanPasse ? (
           <Suspense fallback={null}>
-            <CarteBilanSemaine semaine={bilanPasse} db={etat === 'complet' ? supabase : null} onFermer={() => setBilanPasse(null)} />
+            <CarteBilanSemaine semaine={bilanPasse} db={etat === 'complet' ? supabase : null} onFermer={() => setBilanPasse(null)}
+              onProfil={voirJoueur('bilan')} />
           </Suspense>
         ) : null}
         // Accueil v3 : un défi d'un ami où c'est ton tour passe en premier dans « Aujourd'hui ».
@@ -1143,6 +1159,7 @@ export function App() {
       </main>
       <FeteNiveau celebrer={settings.celebrations} ecran={`${tab}|${playing}|${lessonId ?? ''}|${serie3 ? 'serie' : ''}|${vueProfil}|${decouverte ? 'decouverte' : ''}`} />
       <AnnonceXp celebrer={settings.celebrations} />
+      {etat === 'complet' && supabase && compteId && <Suspense fallback={null}><FeteTitre db={supabase} userId={compteId} celebrer={settings.celebrations} /></Suspense>}
       {/* Pendant une partie, comme chez chess.com : pas de barre de navigation, « ‹ » ramène à l'accueil. */}
       {!enPartie && !ecranPlein && <BarreNav actif={tab} pastilles={pastilles}
         onChoisir={o => { const e = aFaire.find(x => x.pastille && x.onglet === o); if (e) ouvrirAFaire(e, 'onglet'); go(o); }} />}

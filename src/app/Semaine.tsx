@@ -29,7 +29,7 @@ function Etoile() {
  * `db` : service et compte complet (pseudo), sinon null. `actions` : où mène chaque objectif (partie, problèmes,
  * « Mes parties » pour rejouer ses erreurs depuis la revue).
  */
-export function Semaine({ db, actions }: { db: Db | null; actions: Record<Objectif, () => void> }) {
+export function Semaine({ db, actions, onProfil }: { db: Db | null; actions: Record<Objectif, () => void>; onProfil?: (pseudo: string) => void }) {
   const etat = useMemo(() => etatSemaine(), []);
   const s = etat.courante;
   const { serveur, recharger } = useBilanServeur(db, false);
@@ -74,7 +74,7 @@ export function Semaine({ db, actions }: { db: Db | null; actions: Record<Object
         <h3 id="semaine-bilan-titre">{te('semaine.depuisLundi')}</h3>
         <StatsSemaine compte={s.compte} />
         <div>
-          {serveur.etat === 'pret' && <PhrasesSemaine bilan={serveur.bilan} />}
+          {serveur.etat === 'pret' && <PhrasesSemaine bilan={serveur.bilan} onProfil={onProfil} />}
           {serveur.etat === 'chargement' && <p className="muted small" aria-busy="true">{te('semaine.serveur.chargement')}</p>}
           {serveur.etat === 'horsLigne' && <p className="muted small" role="status">{te('semaine.serveur.horsLigne')}</p>}
           {serveur.etat === 'sansCompte' && <p className="muted small">{fr(te('semaine.serveur.sansCompte'))}</p>}
