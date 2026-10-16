@@ -1,0 +1,10 @@
+(;GM[1]FF[4]CA[UTF-8]AP[CGoban:3]ST[2]
+RU[Chinese]SZ[19]HA[2]KM[0.50]TM[1800]OT[5x30 byo-yomi]
+PW[Sensei]PB[Eleve]WR[3d]BR[5k]DT[2026-09-30]PC[KGS]
+AB[pd][dp]PL[W]
+C[Partie à 2 pierres de handicap.]
+;W[dd]WL[1795.2];B[pp]BL[1790.1]
+;W[fc]C[Approche du coin.]
+(;B[cf];W[cc]
+;B[jd])
+(;B[qf]C[Plus calme : Noir prend le côté.];W[nc];B[pb]))

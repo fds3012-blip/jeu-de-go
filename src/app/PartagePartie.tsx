@@ -11,6 +11,8 @@
 // jeton, la partie ni le pseudo.
 // Étude (#449, `etude`) : la même feuille depuis l'écran d'étude, sans « Défier un ami » : lien (`partager_etude`, même
 // adresse `mochi-go.app/partie#JETON`), image de la position (fin de la variante), fichier SGF. Mesure : `mode` = `etude`.
+// #562 : le lien et l'image portent la ligne principale seule (copie réduite par `sgfPublic` : coups, komi, règle,
+// handicap, ni nom ni commentaire) ; le fichier SGF de l'étude garde ses variantes et ses commentaires.
 import { useEffect, useId, useRef, useState } from 'react';
 import type { Color } from '../go/rules';
 import { positionsDepuisSgf } from './revue';
@@ -46,6 +48,7 @@ const CLES_ETUDE: Partial<Record<ClePartage, ClePartage>> = {
   'partage.titre': 'etude.titre', 'partage.lienAide': 'etude.lienAide', 'partage.image': 'etude.image', 'partage.compte': 'etude.compte',
   'partage.prive': 'etude.prive', 'partage.priveFait': 'etude.priveFait', 'partage.erreur.jour': 'etude.erreur.jour',
   'partage.erreur.plein': 'etude.erreur.plein', 'partage.erreur.illisible': 'etude.erreur.illisible', 'partage.titreLien': 'etude.titreLien',
+  'partage.sgfAide': 'etude.sgfAide',
 };
 
 type Etat = { quoi: 'repos' } | { quoi: 'cours'; objet: Objet } | { quoi: 'fait'; objet: Objet; moyen: Moyen | 'annule'; lien?: string }
@@ -176,8 +179,9 @@ export function PartagePartie({ sgf, joueur, adversaire, coup, mode, onFermer }:
   async function fichierSgf() {
     if (occupe) return;
     // La partie seule (coups, taille, komi, règles, handicap, résultat) et le nom des deux camps : ni commentaire ni date.
+    // L'étude (#562) : le fichier entier, variantes et commentaires du joueur compris (aucun nom, aucune date dedans).
     let texte = sgf;
-    try { texte = etude ? sgfPublic(sgf).sgf : sgfAvecCamps(sgfPublic(sgf).sgf, camps()); } catch { /* SGF illisible : le fichier tel quel */ }
+    try { texte = etude ? sgf : sgfAvecCamps(sgfPublic(sgf).sgf, camps()); } catch { /* SGF illisible : le fichier tel quel */ }
     const fichier = new File([texte], nomFichierSgf(etude ? 'etude' : adv, new Date()), { type: 'application/x-go-sgf' });
     const url = URL.createObjectURL(fichier);
     const a = document.createElement('a');
@@ -249,7 +253,7 @@ export function PartagePartie({ sgf, joueur, adversaire, coup, mode, onFermer }:
           {compte && enLigne && choix('lien', 'partage.lien', tx('partage.lienAide'), () => { void lien(); })}
           {choix('image', etude ? 'etude.image' : 'partage.image', etude ? tp(coup > 0 ? 'etude.imageAide' : 'etude.imageAideDebut')
             : coup > 0 ? tp('partage.imageAide', { coup }) : tp('partage.imageAideDebut'), () => { void image(); })}
-          {choix('sgf', 'partage.sgf', tp('partage.sgfAide'), () => { void fichierSgf(); })}
+          {choix('sgf', 'partage.sgf', tx('partage.sgfAide'), () => { void fichierSgf(); })}
           {!etude && compte && enLigne && choix('defi', 'partage.defi', tp('partage.defiAide'), () => { void defi(); })}
         </ul>
         {!enLigne && <p className="partage-note">{fr(tp('partage.horsLigne'))}</p>}

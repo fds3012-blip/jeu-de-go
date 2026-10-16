@@ -1,0 +1,49 @@
+/* #562 : étude avancée (arbre de variantes, komi et règle). Feuille chargée avec l'écran d'étude seulement (jamais dans
+   le CSS initial). Couleurs et tailles : jetons de tokens.css, clairs et sombres ; cibles de 44 px au moins. */
+
+/* Dock : « Analyser » encadré des flèches ‹ › (secondaires, même hauteur que l'action principale). */
+.etude-dock-nav { grid-template-columns: var(--cible-cta) minmax(0, 1fr) var(--cible-cta); align-items: stretch; }
+.etude-nav { min-height: var(--cible-cta); min-width: var(--cible-bouton); padding: 0; display: inline-flex; align-items: center; justify-content: center;
+  border: 1.5px solid var(--line); color: var(--text); }
+.etude-nav svg { display: block; }
+/* Très petit écran (zoom 200 %) : les flèches sur une rangée au-dessus d'« Analyser », qui garde toute la largeur. */
+@media (max-width: 300px) {
+  .etude-dock-nav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .etude-dock-nav .cta { grid-column: 1 / -1; order: 1; }
+  .etude-dock-nav .etude-nav { min-height: var(--cible-bouton); }
+  .etude:has(.etude-dock-nav) { padding-bottom: calc(var(--cible-cta) + var(--cible-bouton) + var(--relief) + var(--space-6, 32px)); }
+}
+
+/* Variantes au coup montré : des puces, la branche suivie en relief. */
+.etude-variantes { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); }
+.etude-variantes-libelle { font-size: var(--fs-s); color: var(--muted); margin-right: var(--space-1); }
+.etude-puce { min-height: var(--cible-min, 44px); min-width: var(--cible-min, 44px); display: inline-flex; align-items: center; gap: var(--space-1);
+  padding: 0 var(--space-3); border-radius: 999px; border: 2px solid var(--line); background: var(--surface); color: var(--text);
+  font: inherit; font-size: var(--fs-s); white-space: nowrap; }
+.etude-puce:active { background: var(--surface-2); }
+.etude-puce[aria-pressed="true"] { border-color: var(--accent-texte); background: var(--surface-2); font-weight: var(--fw-bold); }
+.etude-puce .stone { box-shadow: 0 0 0 1px color-mix(in srgb, var(--text) 40%, transparent); }
+
+/* Gestion de la variante montrée : trois boutons secondaires, sur plusieurs lignes si besoin. */
+.etude-gestion { display: flex; flex-wrap: wrap; gap: var(--space-1); justify-content: center; }
+.etude-gestion .btn { padding: 0 var(--space-3); white-space: normal; line-height: 1.2; }
+.etude-gestion .etude-supprimer { color: var(--danger-texte); }
+
+/* Commentaire lu dans un SGF : du texte, sauts de ligne gardés. */
+.etude-note { display: grid; gap: var(--space-1); padding: var(--space-2) var(--space-3); border-radius: var(--radius); background: var(--surface);
+  border-left: 3px solid var(--line); }
+.etude-note p { white-space: pre-line; overflow-wrap: anywhere; font-size: var(--fs-s); }
+.etude-note .etude-note-libelle { color: var(--muted); font-size: var(--fs-xs); font-weight: var(--fw-bold); }
+
+/* « Komi 6,5 · règle japonaise » : replié, un résumé de 44 px. */
+.etude-reglages { border-radius: var(--radius); background: var(--surface); }
+.etude-reglages summary { min-height: var(--cible-bouton); display: flex; align-items: center; padding: 0 var(--space-3); cursor: pointer;
+  font-weight: var(--fw-bold); font-size: var(--fs-s); border-radius: var(--radius); }
+.etude-reglages summary:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.etude-reglages-corps { display: grid; gap: var(--space-2); padding: 0 var(--space-3) var(--space-3); }
+.etude-reglages-titre { font-weight: var(--fw-bold); font-size: var(--fs-s); }
+.etude-reglages .etude-seg { flex-wrap: wrap; }
+.etude-komi { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+.etude-komi-libre { align-items: center; }
+.etude-komi-libre button { font-size: var(--fs-l); font-weight: var(--fw-bold); }
+.etude-komi-libre output { min-width: 3.5em; text-align: center; font-variant-numeric: tabular-nums; font-weight: var(--fw-bold); }
