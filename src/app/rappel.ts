@@ -10,34 +10,9 @@
 import type { Db } from '../data/supabase';
 import { detecterPlateforme, type Plateforme } from './installation';
 import { t } from '../content/i18n';
-
-/** Choix du joueur sur cet appareil. Préférence d'interface ; l'abonnement lui-même est sur le serveur. */
-export const RAPPEL_KEY = 'go.rappel.v1';
-
-export type MomentRappel = 'matin' | 'midi' | 'soir';
-export const MOMENTS: readonly MomentRappel[] = ['matin', 'midi', 'soir'];
-/** Heure locale de chaque moment : la même que `heure_rappel` dans la migration abonnements_rappel. */
-export const HEURES: Record<MomentRappel, number> = { matin: 9, midi: 12, soir: 18 };
-
-export interface EtatRappel {
-  /** La proposition de fin de partie : jamais montrée (null), montrée, refusée (définitif) ou acceptée. */
-  proposition: 'proposee' | 'refusee' | 'acceptee' | null;
-  /** Rappel allumé sur cet appareil. */
-  actif: boolean;
-  moment: MomentRappel;
-}
-export const ETAT_INITIAL: EtatRappel = { proposition: null, actif: false, moment: 'soir' };
-
-/** Relit l'état en tolérant les valeurs abîmées. */
-export function lireEtatRappel(brut: unknown): EtatRappel {
-  if (typeof brut !== 'object' || brut === null) return ETAT_INITIAL;
-  const b = brut as Partial<EtatRappel>;
-  return {
-    proposition: b.proposition === 'proposee' || b.proposition === 'refusee' || b.proposition === 'acceptee' ? b.proposition : null,
-    actif: b.actif === true,
-    moment: MOMENTS.includes(b.moment as MomentRappel) ? (b.moment as MomentRappel) : 'soir',
-  };
-}
+// #563 : état local du rappel et arrivée par la notification dans rappelEtat.ts (JS initial), réexportés ici.
+import { RAPPEL_KEY, etatRappel, type EtatRappel, type MomentRappel } from './rappelEtat';
+export { ETAT_INITIAL, HEURES, MOMENTS, RAPPEL_KEY, estArriveeRappel, etatRappel, lireEtatRappel, type EtatRappel, type MomentRappel } from './rappelEtat';
 
 /**
  * Ce que l'appareil permet :
@@ -82,18 +57,12 @@ export function fuseauAppareil(): string {
   try { return Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Paris'; } catch { return 'Europe/Paris'; }
 }
 
-/** L'adresse vient d'un rappel touché (`?rappel=1`) : lu une fois au chargement. */
-export const estArriveeRappel = (search: string): boolean => new URLSearchParams(search).get('rappel') === '1';
-
 // ---------- Navigateur ----------
 
 function lire(k: string): string | null {
   try { return localStorage.getItem(k); } catch { return null; }
 }
 
-export function etatRappel(): EtatRappel {
-  try { return lireEtatRappel(JSON.parse(lire(RAPPEL_KEY) ?? 'null')); } catch { return ETAT_INITIAL; }
-}
 export function noterRappel(patch: Partial<EtatRappel>): EtatRappel {
   const e = { ...etatRappel(), ...patch };
   try { localStorage.setItem(RAPPEL_KEY, JSON.stringify(e)); } catch { /* stockage indisponible : sans conséquence grave */ }

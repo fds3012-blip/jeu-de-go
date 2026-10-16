@@ -4,7 +4,7 @@ import { CreerCompte, DefiArrivee, DefiPartie, DefisEcran, Direct, Game, LearnHo
 import { DECOUVERTE_KEY, etatDecouverte } from './decouverteEtat';
 import { SeanceRevisions, prechargerRevisions } from './ecrans';
 import { IntroRegles, prechargerIntro } from './ecrans';
-import { ERREURS_KEY, EVENEMENT_REVISIONS, REVISIONS_KEY, compterDus } from './revisionEspacee';
+import { ERREURS_KEY, EVENEMENT_REVISIONS, REVISIONS_KEY, compterDus } from './revisionsDues';
 // #16 : l'accueil ne lit que l'index léger des leçons ; leur contenu arrive avec les écrans Apprendre et leçon.
 import { CHAPITRES, LESSONS } from '../content/leconsResume';
 import { LESSONS_KEY, readLocal, writeLocal, useGelsServeur, useLessonProgress, useOnline, useProfil, usePseudo, useSerie, useSession } from './hooks';
@@ -26,7 +26,7 @@ import { jamaisJoue, proprietesArrivee } from './arriveePartage';
 import { fenetreVisible, useConsentement } from './consentement';
 import { accueil, adversaireOuvert, echelle, introBut, INTRO_KEY, OUVERTS_D_OFFICE, PARTIES_KEY, type Parties } from './home';
 import { PLACEMENT_KEY, chapitreConseille, coteApresPlacement, leconDeLAccueil, lirePlacement, ouvertsApresPlacement, proposerPlacement, type Placement as ResultatPlacement } from './placement';
-import { COTE_KEY } from './coteJoueur';
+import { COTE_KEY } from './coteEtat';
 import { Accueil } from './Accueil';
 import { modesAccueil, type Depuis, type Mode } from './modes';
 import { abonnerPierre, accueilEpure, lireRepere, pierreDejaPosee } from './premierePierre';
@@ -37,7 +37,7 @@ import type { FaconEnLigne } from './BasculeEnLigne';
 import { EVENTS, secondsSinceOpen, track, trackOnce } from '../data/analytics';
 import { compterEtape } from '../data/compteurs';
 import { ecouterPremierGeste } from './premierGeste';
-import { estArriveeRappel, etatRappel } from './rappel';
+import { estArriveeRappel, etatRappel } from './rappelEtat';
 import { PARAM, PARAM_COURT, SERIE_KEY, numeroDuJour, numeroDuLien, problemeDuJour, type Serie } from './goDuJour';
 import { battu, BILAN_KEY, dejaAffronte, enregistrer, fin, finTropTot, komiDepuisUrl, lireBilan, type Bilan, type Issue, type StatsPartie } from './bilan';
 import { fr } from '../ui/typo';
@@ -60,8 +60,8 @@ import { useExercice } from '../ui/celebrations';
 import { ProposerInstallation, usePlateformeInstallation } from '../ui/ProposerInstallation';
 import { doitProposer, estMomentRetour, etatInstallation, noterOuverture } from './installation';
 import { ANNONCE_DU_JOUR_KEY, appelSecondaire, etatTuile, lireJourAnnonce } from './appelsAccueil';
-import { TAILLE_SERIE, THEMES_DE_LECON, serieDeLecon } from '../content/themes';
-import { estRedite } from '../content/redites';
+// #563 : la série de fin de leçon (src/content/themes.ts, redites.ts) arrive quand on la demande ; ici, les thèmes seulement.
+import { THEMES_DE_LECON } from '../content/themesLecons';
 import type { Puzzle } from '../data/puzzles';
 import { compteDe, estAnonyme } from '../data/defiLien';
 import { INVITEUR_AU_CHARGEMENT, JETON_AU_CHARGEMENT, ecouterJetonDefi } from './adresseDefi';
@@ -954,13 +954,14 @@ export function App() {
         ouvrir: () => {
           if (!garde({ quoi: 'probleme' })) return;
           // #16 : la leçon complète (ses positions) vient du contenu des leçons, déjà chargé avec l'écran de la leçon.
-          void Promise.all([problemesLocaux(), import('../content/lessons')]).then(([problemes, { LESSONS: completes }]) => {
-            const complete = completes.find(l => l.id === lesson.id)!;
-            const s = serieDeLecon(lesson.id, problemes, new Set(Object.keys(readLocal<Record<string, true>>(SOLVED_KEY, {}))),
-              // #237 : pas le même exercice que l'étape de leçon qui vient d'être jouée.
-              TAILLE_SERIE, p => estRedite(p, complete));
-            if (s.length) { setSerie3(s); setLessonId(null); window.scrollTo({ top: 0 }); }
-          }).catch(() => { /* morceau introuvable (hors ligne sans cache) : on reste sur la fin de leçon */ });
+          void Promise.all([problemesLocaux(), import('../content/lessons'), import('../content/themes'), import('../content/redites')])
+            .then(([problemes, { LESSONS: completes }, { serieDeLecon, TAILLE_SERIE }, { estRedite }]) => {
+              const complete = completes.find(l => l.id === lesson.id)!;
+              const s = serieDeLecon(lesson.id, problemes, new Set(Object.keys(readLocal<Record<string, true>>(SOLVED_KEY, {}))),
+                // #237 : pas le même exercice que l'étape de leçon qui vient d'être jouée.
+                TAILLE_SERIE, p => estRedite(p, complete));
+              if (s.length) { setSerie3(s); setLessonId(null); window.scrollTo({ top: 0 }); }
+            }).catch(() => { /* morceau introuvable (hors ligne sans cache) : on reste sur la fin de leçon */ });
         },
       } : undefined}
       jouer={{ nom: premier.nom, lancer: () => { setLessonId(null); setTab('jouer'); lancer('ordi', premier.id); } }} />;

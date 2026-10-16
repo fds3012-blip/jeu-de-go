@@ -18,10 +18,12 @@ export const BUDGETS = {
   // gzip ; 260 Ko le 29/09 après découpage par écran (314 Ko avant), 230 Ko le 30/09 sans l'anglais (#325),
   // 249 Ko le 02/10 ; 193 Ko avec supabase-js chargé à la demande (#401) : budget à 200 Ko, ≈ 7 Ko de marge.
   // 199,4 Ko le 04/10, puis ≈ 156 Ko avec le Go du jour léger et les textes des écrans secondaires à part (#433) :
-  // budget abaissé à 175 Ko (objectif de #433), ≈ 19 Ko de marge.
-  jsInitial: 175 * KO,
+  // budget abaissé à 175 Ko (objectif de #433), ≈ 19 Ko de marge. 159,3 Ko le 16/10, 149,3 Ko après #563 (sons,
+  // page Conditions, textes des écrans, série de fin de leçon, cote et rappel hors du JS initial) : budget à 150 Ko.
+  jsInitial: 150 * KO,
   // gzip ; 22 Ko le 29/09, 29,0 Ko le 04/10, ≈ 24 Ko avec apprendre.css chargée avec ses écrans (#433) : budget à 26 Ko.
-  cssInitial: 26 * KO,
+  // 25,5 Ko le 16/10, 21,4 Ko après #563 (Profil, course, défis, amis, conseil et comptage avec leurs écrans) : 22 Ko.
+  cssInitial: 22 * KO,
   polices: 80 * KO, // woff2 (déjà compressé) ; 70 Ko le 29/09
   morceauAlaDemande: 60 * KO, // gzip, chaque écran chargé à la demande
 };

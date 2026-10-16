@@ -24,6 +24,8 @@ import { tl, type CleLente } from '../content/i18n/lente';
 import { t } from '../content/i18n/secondaires';
 import { fr } from '../ui/typo';
 import '../ui/defis.css';
+// #563 : le reste des styles des défis, hors du CSS initial (avant direct.css, comme dans la feuille principale).
+import '../ui/defis-ecran.css';
 import '../ui/direct.css';
 
 const TAILLES: readonly TailleLente[] = [9, 13, 19];

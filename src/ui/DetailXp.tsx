@@ -1,5 +1,5 @@
 // #509 (lot L1, n° 2) : ce qui compose le total d'XP de la carte de fin, en une ligne courte sous la pastille.
-import { t } from '../content/i18n';
+import { t } from '../content/i18n/secondaires';
 import { fr } from './typo';
 import type { XpSeance } from './xpSeance';
 

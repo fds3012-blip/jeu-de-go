@@ -1,8 +1,12 @@
 // Onglet Profil (issue #50) : tient sans défiler.
 // #214 : « Ton parcours » d'abord (niveau et XP, record, leçons, adversaires battus, problèmes réussis, vitrine) ;
 // les réglages passent derrière une ligne « Réglages » (sous-vue), comme chez chess.com ; ligne « Installer l'app ».
+// #563 : styles du Profil et de « Mes amis », hors du CSS initial ; en premier, dans l'ordre qu'ils avaient dans la
+// feuille principale (amis.css puis profil-ecran.css), avant les feuilles des sous-vues.
+import '../ui/amis.css';
+import '../ui/profil-ecran.css';
 import { Account } from './Account';
-import { Conditions } from './Confidentialite';
+import { Conditions } from './Conditions';
 import { MesDonnees } from './MesDonnees';
 import { MentionsLegales } from './MentionsLegales';
 import { MENTIONS } from '../content/mentionsLegales';

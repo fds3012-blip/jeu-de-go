@@ -44,6 +44,8 @@ import { nombre, t } from '../content/i18n/secondaires';
 import { fr } from '../ui/typo';
 import { tp } from '../content/i18n/profilPublic';
 import '../ui/defis.css';
+// #563 : le reste des styles des défis, hors du CSS initial (avant direct.css, comme dans la feuille principale).
+import '../ui/defis-ecran.css';
 import '../ui/direct.css';
 
 import { BasculeEnLigne, type FaconEnLigne } from './BasculeEnLigne';

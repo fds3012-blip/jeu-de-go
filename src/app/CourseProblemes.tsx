@@ -21,6 +21,8 @@ import {
   palierAnnonce, problemeEnCours, repondre, restant, texteCourse, tirerCourse, verifierTemps, type EtatCourse
 } from './course';
 import '../ui/course.css';
+// #563 : consigne, course et résultats (hors du CSS initial).
+import '../ui/course-ecran.css';
 
 /** Temps pendant lequel la marque juste ou fausse reste sur le plateau avant le problème suivant. */
 const DUREE_RETOUR_JUSTE = 450;

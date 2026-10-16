@@ -19,6 +19,8 @@ import { IconeReglage } from '../ui/IconesReglages';
 import { tdon } from '../content/i18n/donnees';
 import { t } from '../content/i18n/secondaires';
 import '../ui/compte.css';
+// #563 : carte d'identité, « Supprimer mon compte », ce qui te suit (hors du CSS initial).
+import '../ui/profil-ecran.css';
 
 const field: CSSProperties = {
   width: '100%', minHeight: 46, padding: '0 14px', borderRadius: 12, border: '1.5px solid var(--line)',

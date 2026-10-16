@@ -2,7 +2,7 @@
 // 3 à 24 caractères, lettres sans accent, chiffres, « _ » et « - ». L'unicité (sans tenir compte
 // des majuscules) est garantie par la base : voir usernameErrorFromDb.
 
-import { t } from '../content/i18n';
+import { t } from '../content/i18n/secondaires';
 
 /** Refus du serveur : le pseudo contient un mot interdit (supabase/migrations/20261014001100_moderation.sql). */
 export const CODE_PSEUDO_INTERDIT = 'JGP02';

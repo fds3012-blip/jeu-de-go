@@ -10,7 +10,7 @@
 // 4. Adversaire conseillé : le plus fort de l'échelle dont le rang (en kyu) n'est pas au-dessus du tien. Une première
 //    partie à ta hauteur, un peu en dessous plutôt qu'au-dessus.
 // Tout raté : pas de kyu annoncé, on renvoie vers la leçon 1, sans message d'échec.
-import { COTE_DEPART, nettoyerCote, type EtatCote } from './coteJoueur';
+import { COTE_DEPART, nettoyerCote, type EtatCote } from './coteEtat';
 
 /** Clé de stockage local du résultat (citée dans la politique de confidentialité). */
 export const PLACEMENT_KEY = 'go.placement.v1';

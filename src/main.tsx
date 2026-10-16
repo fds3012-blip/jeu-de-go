@@ -7,12 +7,13 @@ import { createRoot } from 'react-dom/client';
 // Styles des écrans chargés à la demande (src/app/ecrans.ts) : importés ici, avant App et dans l'ordre
 // d'origine, pour qu'ils restent dans la feuille principale, à la même place qu'avant (rendu identique).
 // Un nouvel écran peut importer sa propre feuille : elle arrivera avec son code.
+// #563 : comptage.css, conseil.css et amis.css arrivent avec leurs écrans ; profil-ecran.css, course-ecran.css et
+// defis-ecran.css aussi (la part de profil.css, course.css et defis.css que le JS initial n'affiche pas).
+// Détail : docs/architecture/chargement-initial.md.
 import './ui/board.css';
 import './ui/partie.css';
-import './ui/comptage.css';
 import './ui/fin.css';
 import './ui/installation.css';
-import './ui/conseil.css';
 import './ui/revue.css';
 // #433 : apprendre.css arrive avec les écrans Apprendre et Problèmes ; ses règles partagées restent ici, à sa place.
 import './ui/apprendre-partage.css';
@@ -23,7 +24,6 @@ import './ui/niveau.css';
 import './ui/placement.css';
 import './ui/defis.css';
 import './ui/compte.css';
-import './ui/amis.css';
 import { App } from './app/App';
 import { apresPremierEcran, prechargerEcrans, prechargerPartie, rechargerPourNouvelleVersion } from './app/ecrans';
 // Polices auto-hébergées (@fontsource, sous-ensemble latin) : avant les styles qui les utilisent.
