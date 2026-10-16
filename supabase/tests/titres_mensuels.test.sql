@@ -96,7 +96,7 @@ select pg_temp.egal((select titre from public.titres_joueurs where mois = '2025-
 select pg_temp.egal((select titre from public.titres_joueurs where mois = '2025-09-01' and user_id = pg_temp.j(208)), 'habitue', 'rang 53 : dernier habitué');
 select pg_temp.egal((select count(*)::int from public.titres_joueurs where mois = '2025-09-01' and user_id = pg_temp.j(207)), 0, 'rang 54 : rien');
 -- Cote de FIN de mois (la dernière du mois, pas la meilleure : les parties précédentes étaient à 3000) et parties du mois.
-select pg_temp.egal((select cote || '/' || parties from public.titres_joueurs where mois = '2025-09-01' and user_id = pg_temp.j(260)), '1700/11', 'cote de fin de mois et parties');
+select pg_temp.egal((select cote || '/' || parties from public.titres_joueurs where mois = '2025-09-01' and user_id = pg_temp.j(260)), '1700/12', 'cote de fin de mois et parties (260 % 3 = 2 : 12 parties)');
 -- Hors compte : 9 parties, problèmes, parties d'octobre, sans pseudo, 10e partie après minuit le 1er octobre.
 select pg_temp.egal((select count(*)::int from public.titres_joueurs where user_id in (pg_temp.j(270), pg_temp.j(281), pg_temp.j(282), pg_temp.j(299), pg_temp.j(283))), 0,
   'inactifs, problèmes, autre mois, sans pseudo, partie après minuit : aucun titre');
@@ -161,6 +161,7 @@ set local role authenticated;
 select pg_temp.egal((select count(*)::int from public.titres_du_joueur(pg_temp.j(258))), 1, 'ses propres titres malgré un blocage émis');
 reset role;
 -- Sans session, en session anonyme, sans pseudo : refusé.
+select set_config('request.jwt.claims', '{"role": "authenticated"}', true);
 set local role authenticated;
 select pg_temp.doit_refuser($$select * from public.titres_du_joueur(pg_temp.j(258))$$, 'JGC01');
 reset role;

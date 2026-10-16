@@ -113,6 +113,15 @@ begin
 
   delete from public.titres_joueurs where mois = v_mois;
 
+  -- Le mois d'abord, non publié (le compteur seul) : c'est tout ce qui reste sous le garde-fou. Les titres s'y
+  -- rattachent ensuite (clé étrangère), et le mois n'est publié qu'une fois les seuils connus.
+  insert into public.titres_mois as m (mois, actifs, publie, calcule_le)
+    values (v_mois, v_actifs, false, now())
+    on conflict (mois) do update
+      set actifs = excluded.actifs, publie = false,
+          seuil_maitre = null, seuil_expert = null, seuil_habitue = null,
+          n_maitre = 0, n_expert = 0, n_habitue = 0, calcule_le = now();
+
   if v_actifs >= v_min_actifs then
     -- Coupures sur la distribution réelle : ceil(1 %), ceil(5 %), ceil(20 %) des actifs ; ex æquo : même titre.
     insert into public.titres_joueurs (mois, user_id, titre, cote, parties)
@@ -134,22 +143,13 @@ begin
     -- Un palier vide (aucun expert parce que les ex æquo du haut l'ont absorbé) garde la coupure du palier au-dessus.
     v_resume.seuil_expert := coalesce(v_resume.seuil_expert, v_resume.seuil_maitre);
     v_resume.seuil_habitue := coalesce(v_resume.seuil_habitue, v_resume.seuil_expert);
-    insert into public.titres_mois as m (mois, actifs, publie, seuil_maitre, seuil_expert, seuil_habitue, n_maitre, n_expert, n_habitue, calcule_le)
-      values (v_mois, v_actifs, true, v_resume.seuil_maitre, v_resume.seuil_expert, v_resume.seuil_habitue,
-              v_resume.n_maitre, v_resume.n_expert, v_resume.n_habitue, now())
-      on conflict (mois) do update
-        set actifs = excluded.actifs, publie = true,
-            seuil_maitre = excluded.seuil_maitre, seuil_expert = excluded.seuil_expert, seuil_habitue = excluded.seuil_habitue,
-            n_maitre = excluded.n_maitre, n_expert = excluded.n_expert, n_habitue = excluded.n_habitue, calcule_le = now();
-  else
-    -- Garde-fou : trop peu d'actifs pour une distribution qui veuille dire quelque chose. Le compteur seul.
-    insert into public.titres_mois as m (mois, actifs, publie, calcule_le)
-      values (v_mois, v_actifs, false, now())
-      on conflict (mois) do update
-        set actifs = excluded.actifs, publie = false,
-            seuil_maitre = null, seuil_expert = null, seuil_habitue = null,
-            n_maitre = 0, n_expert = 0, n_habitue = 0, calcule_le = now();
+    update public.titres_mois
+      set publie = true, seuil_maitre = v_resume.seuil_maitre, seuil_expert = v_resume.seuil_expert,
+          seuil_habitue = v_resume.seuil_habitue, n_maitre = v_resume.n_maitre, n_expert = v_resume.n_expert,
+          n_habitue = v_resume.n_habitue
+      where mois = v_mois;
   end if;
+  -- Sinon (garde-fou : trop peu d'actifs pour une distribution qui veuille dire quelque chose) : le compteur seul.
 
   drop table pg_temp.titres_actifs;
   return (select to_jsonb(m) - 'calcule_le' from public.titres_mois m where m.mois = v_mois);
