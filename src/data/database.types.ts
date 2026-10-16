@@ -1283,6 +1283,86 @@ export type Database = {
           },
         ]
       }
+      // #561 : titres mensuels. Lus par leur seul titulaire (RLS) ; écrits par calculer_titres_mensuels seule.
+      titres_joueurs: {
+        Row: {
+          cote: number
+          mois: string
+          parties: number
+          titre: string
+          user_id: string
+        }
+        Insert: {
+          cote: number
+          mois: string
+          parties: number
+          titre: string
+          user_id: string
+        }
+        Update: {
+          cote?: number
+          mois?: string
+          parties?: number
+          titre?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "titres_joueurs_mois_fkey"
+            columns: ["mois"]
+            isOneToOne: false
+            referencedRelation: "titres_mois"
+            referencedColumns: ["mois"]
+          },
+          {
+            foreignKeyName: "titres_joueurs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      // #561 : table d'équipe (RLS sans politique) : actifs du mois, garde-fou, seuils calculés.
+      titres_mois: {
+        Row: {
+          actifs: number
+          calcule_le: string
+          mois: string
+          n_expert: number
+          n_habitue: number
+          n_maitre: number
+          publie: boolean
+          seuil_expert: number | null
+          seuil_habitue: number | null
+          seuil_maitre: number | null
+        }
+        Insert: {
+          actifs: number
+          calcule_le?: string
+          mois: string
+          n_expert?: number
+          n_habitue?: number
+          n_maitre?: number
+          publie?: boolean
+          seuil_expert?: number | null
+          seuil_habitue?: number | null
+          seuil_maitre?: number | null
+        }
+        Update: {
+          actifs?: number
+          calcule_le?: string
+          mois?: string
+          n_expert?: number
+          n_habitue?: number
+          n_maitre?: number
+          publie?: boolean
+          seuil_expert?: number | null
+          seuil_habitue?: number | null
+          seuil_maitre?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       leaderboard: {
@@ -1345,6 +1425,8 @@ export type Database = {
           periodes: number
         }[]
       }
+      // #561 : titres du mois écoulé (pg_cron, clé service seulement).
+      calculer_titres_mensuels: { Args: { p_mois?: string }; Returns: Json }
       chercher_partie_lente: {
         Args: { p_delai_jours?: number; p_size?: number }
         Returns: string
@@ -1610,6 +1692,11 @@ export type Database = {
           p_version?: string
         }
         Returns: boolean
+      }
+      // #561 : titres d'un joueur (mois publiés), pour le profil public (#560).
+      titres_du_joueur: {
+        Args: { p_profile_id: string }
+        Returns: { mois: string; titre: string }[]
       }
       victoire_au_temps: { Args: { p_partie: string }; Returns: string }
     }

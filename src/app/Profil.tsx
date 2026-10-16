@@ -59,6 +59,7 @@ import '../ui/club.css';
 import { noterReglage } from './reglagesDates';
 import { BoutonPartagerApp } from '../ui/PartagerApp';
 import { ReglageIA } from '../ui/ReglageIA';
+import { LigneTitre } from '../ui/LigneTitre';
 
 // Joueur de club (#368, #372) : sous-écrans chargés à la demande, hors du morceau du Profil.
 const MesStatistiques = lazy(() => import('./Statistiques'));
@@ -307,6 +308,8 @@ function Menu({ onVue, settings, profil, serie, record = 0, parcours, placement,
         ) : onPlacement && (placement?.fait && placement.kyu !== null
           ? <LigneLien icone={<IconeReglage id="placement" />} libelle={t('placement.profil')} valeur={t('placement.profilValeur', { kyu: placement.kyu, date: dateCourte(placement.date) })} onClick={onPlacement} />
           : <LigneLien icone={<IconeReglage id="placement" />} libelle={t(placement?.fait ? 'placement.profilRefaire' : 'placement.profilFaire')} onClick={onPlacement} />)}
+        {/* #561 : titre du mois dernier (sceau, nom, mois), seulement s'il y en a un : rien sous le garde-fou des 200 actifs. */}
+        {amis?.compte && userId && <LigneTitre db={amis.db} userId={userId} />}
         {/* #368 : « Statistiques » ; #369 : « Ta semaine » : les deux lectures de ta progression partagent une ligne (deux
             moitiés) ; « Réglages » rejoint « Mon compte » plus bas : le Profil tient toujours sans défiler en 390 × 844.
             #372 : « Étudier une position » est dans « Mes parties », à côté de « Analyser une partie jouée ailleurs ». */}

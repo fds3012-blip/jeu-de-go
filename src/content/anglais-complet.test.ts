@@ -16,6 +16,7 @@ import { CATALOGUE_LENTE } from './i18n/lente';
 import { CATALOGUE_PARTAGE } from './i18n/partage';
 import { CATALOGUE_SECURITE } from './i18n/securite';
 import { CATALOGUE_RETOURS } from './i18n/retours';
+import { CATALOGUE_TITRES } from './i18n/titres';
 import { CATALOGUE_REFUS, messageServeur } from './i18n/refus';
 import { LESSONS_FR, CHAPITRES } from './lessons';
 import { CHAPITRES_EN, LESSONS_EN } from '../../content/lessons.en.js';
@@ -44,6 +45,8 @@ const CATALOGUES: [string, Brut, Brut][] = [
   ['securite', CATALOGUE_SECURITE.fr, CATALOGUE_SECURITE.en],
   // #537 : formulaire de retours en 3 questions.
   ['retours', CATALOGUE_RETOURS.fr, CATALOGUE_RETOURS.en],
+  // #561 : titres mensuels.
+  ['titres', CATALOGUE_TITRES.fr, CATALOGUE_TITRES.en],
   ['refus du serveur', CATALOGUE_REFUS.fr, CATALOGUE_REFUS.en],
   // #524 : partie de découverte (scénario prouvé par src/content/decouverte.test.ts).
   ['découverte', DECOUVERTE_FR, DECOUVERTE_EN],
