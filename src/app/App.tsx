@@ -25,7 +25,7 @@ import { jamaisJoue, proprietesArrivee } from './arriveePartage';
 import { fenetreVisible, useConsentement } from './consentement';
 import { accueil, adversaireOuvert, echelle, introBut, INTRO_KEY, OUVERTS_D_OFFICE, PARTIES_KEY, type Parties } from './home';
 import { PLACEMENT_KEY, chapitreConseille, coteApresPlacement, leconDeLAccueil, lirePlacement, ouvertsApresPlacement, proposerPlacement, type Placement as ResultatPlacement } from './placement';
-import { COTE_KEY } from './coteJoueur';
+import { COTE_KEY } from './coteEtat';
 import { Accueil } from './Accueil';
 import { modesAccueil, type Depuis, type Mode } from './modes';
 import { abonnerPierre, accueilEpure, lireRepere, pierreDejaPosee } from './premierePierre';
