@@ -134,7 +134,8 @@ export function FeuilleDire({ ouvert, onFermer, onDire, nom, restants, envoi, co
 
 /** Ce qu'on signale depuis l'écran : un joueur (sa partie ou son pseudo), un problème, ou « Nous écrire ». */
 export type Cible =
-  | { type: 'joueur'; nom: string; partie?: string; pseudo?: string; depuis: 'partie' | 'amis' }
+  // #560 : `profil`, depuis « Profil de {pseudo} ».
+  | { type: 'joueur'; nom: string; partie?: string; pseudo?: string; depuis: 'partie' | 'amis' | 'profil' }
   | { type: 'probleme'; probleme: string }
   | { type: 'ecrire' };
 
