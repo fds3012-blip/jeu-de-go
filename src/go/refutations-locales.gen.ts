@@ -4,7 +4,7 @@
 // Preuves (src/go/refutation-locale.ts) : m mort, y sansYeux, v vit, i imprenable, c course ; lecture de capture
 // (src/go/lecture-capture.ts, hors ligne, toi maître du ko) : p prendre, s sauver. Vide : rien de prouvé.
 // prettier-ignore
-export const EMPREINTE = 'bc13abb10b515cc0';
+export const EMPREINTE = 'a5c8e9eb1b6af363';
 export type ButCode = 'vivre' | 'tuer' | 'course' | 'prendre' | 'sauver' | 'aucun';
 export interface RefutationsLocales { but: ButCode; cible?: string; a?: string; b?: string; defaut: string; sauf?: Readonly<Record<string, string>> }
 export const REFUTATIONS_LOCALES: Readonly<Record<string, RefutationsLocales>> = {
@@ -85,6 +85,7 @@ export const REFUTATIONS_LOCALES: Readonly<Record<string, RefutationsLocales>> =
   u10: { but: 'tuer', cible: 'J9', defaut: 'H8v' },
   v14: { but: 'vivre', cible: 'A2', defaut: 'C2m' },
   aa19: { but: 'tuer', cible: 'C7', defaut: 'D9v' },
+  ab02: { but: 'vivre', cible: 'D3', defaut: 'B1m' },
   d12: { but: 'course', a: 'C2', b: 'B4', defaut: 'C1c', sauf: { A9: 'A1p', A7: 'A1p', A1: 'A2p', C1: 'E1c', E1: 'A1c' } },
   f12: { but: 'prendre', defaut: 'B5p' },
   i06: { but: 'tuer', cible: 'E2', defaut: 'E1v' },
@@ -93,23 +94,35 @@ export const REFUTATIONS_LOCALES: Readonly<Record<string, RefutationsLocales>> =
   u11: { but: 'tuer', cible: 'J9', defaut: 'J6v' },
   z03: { but: 'vivre', cible: 'H8', defaut: 'J5m' },
   i07: { but: 'tuer', cible: 'H2', defaut: 'B1v' },
+  ab03: { but: 'tuer', cible: 'C3', defaut: 'B1v' },
   d13: { but: 'course', a: 'G6', b: 'H6', defaut: 'G9c', sauf: { G9: 'C8c', J9: 'J8p', J3: 'G9p', J1: 'G9p' } },
   u12: { but: 'vivre', cible: 'A1', defaut: 'B2m' },
   v15: { but: 'tuer', cible: 'B1', defaut: 'D2v' },
   z05: { but: 'tuer', cible: 'A3', defaut: 'B1v' },
   z06: { but: 'course', a: 'C2', b: 'F2', defaut: 'A2c', sauf: { A2: 'B1c' } },
+  ab06: { but: 'tuer', cible: 'C3', defaut: 'A2v' },
+  ab07: { but: 'vivre', cible: 'E3', defaut: 'C2m' },
   i08: { but: 'tuer', cible: 'C1', defaut: 'E2v' },
   t05: { but: 'tuer', cible: 'B1', defaut: 'A2v' },
   u13: { but: 'vivre', cible: 'A1', defaut: 'C2m' },
   z07: { but: 'course', a: 'C2', b: 'F2', defaut: 'A2c', sauf: { A2: 'B1c' } },
   v16: { but: 'tuer', cible: 'B3', defaut: 'A3v' },
+  ab10: { but: 'vivre', cible: 'D3', defaut: 'B1m', sauf: { B2: 'A1m', A1: 'B2m' } },
   z09: { but: 'tuer', cible: 'A3', defaut: 'B1v' },
   z10: { but: 'vivre', cible: 'B2', defaut: 'D1m' },
+  ab11: { but: 'tuer', cible: 'B3', defaut: 'A1v' },
+  ab12: { but: 'vivre', cible: 'E3', defaut: 'D1m' },
   u14: { but: 'tuer', cible: 'A9', defaut: 'E8v' },
   z11: { but: 'course', a: 'C2', b: 'F2', defaut: 'A2c', sauf: { A2: '' } },
+  ab13: { but: 'vivre', cible: 'E3', defaut: 'E1m' },
   t06: { but: 'tuer', cible: 'A1', defaut: 'C1v' },
   u15: { but: 'vivre', cible: 'A1', defaut: 'D2m', sauf: { C2: 'D1m', D1: 'C2m' } },
   z13: { but: 'course', a: 'C2', b: 'G2', defaut: 'F1c', sauf: { B1: 'J2c', F1: 'B1c', J1: 'J2p' } },
+  ab16: { but: 'tuer', cible: 'D3', defaut: 'C1v' },
   z14: { but: 'course', a: 'C2', b: 'F2', defaut: 'A2c', sauf: { A2: 'J2p', J1: 'J2p' } },
+  ab17: { but: 'vivre', cible: 'D3', defaut: 'C1m' },
   z15: { but: 'tuer', cible: 'A4', defaut: 'B2v', sauf: { A2: '', B1: '', C1: 'B1v' } },
+  ab19: { but: 'tuer', cible: 'F3', defaut: 'E1v' },
+  ab20: { but: 'tuer', cible: 'E3', defaut: 'D1v' },
+  ab21: { but: 'tuer', cible: 'E3', defaut: 'C1v', sauf: { D2: '', E2: '', D1: '', E1: '' } },
 };

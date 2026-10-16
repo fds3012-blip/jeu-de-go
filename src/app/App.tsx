@@ -890,7 +890,7 @@ export function App() {
           intro={playing === 'guidee' ? <Bubble voix="coach">{t('guidee.bulle')}</Bubble> : playing === 'ordi' && (intro || reglage.annonce) ? <Bubble voix="coach">{intro ? introBut(adv.nom) : t('partie.bulle', { nom: adv.nom })}{reglage.annonce && <><br /><span className="annonce-komi">{reglage.annonce}</span></>}</Bubble> : undefined}
           onExit={() => { setIntro(false); setPlaying(false); setResultat(null); setRepli(null); }}
           onImporter={() => { if (!garde({ quoi: 'import' }, { quoi: 'importer' })) return; setPlaying(false); setResultat(null); setTab('profil'); setVueProfil('importer'); window.scrollTo({ top: 0 }); }}
-          onResult={onResult} fin={finEcran} celebrer={settings.celebrations} aide={aideActive(settings.aide, adv.id)} portrait={playing === 'ordi' ? <Sceau id={adv.id} taille={44} /> : undefined}
+          onResult={onResult} onRestart={() => setPartieFinie(false)} fin={finEcran} celebrer={settings.celebrations} aide={aideActive(settings.aide, adv.id)} portrait={playing === 'ordi' ? <Sceau id={adv.id} taille={44} /> : undefined}
           reglages={{ son: settings.sound, modifier: set }}
           // Coach Mochi (#470) : contre l'IA de l'échelle seulement, 10 premières parties par défaut.
           coach={playing === 'ordi' ? coachActif(settings.coach, parties.n) : undefined}
