@@ -89,6 +89,8 @@ const FeuilleAide = lazy(() => import('../ui/Aide'));
 const RepliHorsLigne = lazy(() => import('../ui/RepliHorsLigne'));
 // #369 : bilan de la semaine passée, sur l'accueil, une fois par semaine ; chargé seulement ce jour-là.
 const CarteBilanSemaine = lazy(() => import('../ui/BilanSemaine').then(m => ({ default: m.BilanSemaine })));
+// #561 : fête d'un nouveau titre mensuel, chargée à l'ouverture pour un compte complet seulement (hors JS et CSS initiaux).
+const FeteTitre = lazy(() => import('../ui/FeteTitre'));
 
 // #433 : problèmes complets chargés à la demande (placement, série de fin de leçon) ; l'accueil lit le Go du jour léger.
 const problemesLocaux = () => import('../content/problemesLocaux').then(m => m.PROBLEMES_LOCAUX);
@@ -1156,6 +1158,7 @@ export function App() {
       </main>
       <FeteNiveau celebrer={settings.celebrations} ecran={`${tab}|${playing}|${lessonId ?? ''}|${serie3 ? 'serie' : ''}|${vueProfil}|${decouverte ? 'decouverte' : ''}`} />
       <AnnonceXp celebrer={settings.celebrations} />
+      {etat === 'complet' && supabase && compteId && <Suspense fallback={null}><FeteTitre db={supabase} userId={compteId} celebrer={settings.celebrations} /></Suspense>}
       {/* Pendant une partie, comme chez chess.com : pas de barre de navigation, « ‹ » ramène à l'accueil. */}
       {!enPartie && !ecranPlein && <BarreNav actif={tab} pastilles={pastilles}
         onChoisir={o => { const e = aFaire.find(x => x.pastille && x.onglet === o); if (e) ouvrirAFaire(e, 'onglet'); go(o); }} />}

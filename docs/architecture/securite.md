@@ -87,3 +87,13 @@ Note : avec la protection active, Supabase exige aussi un jeton pour toute nouve
 **Rien n'a été changé** : couper les connexions anonymes est irréversible pour les sessions en cours (défis commencés avec une session sans compte), et la décision revient à Florian. L'app n'en crée plus depuis #343 ; les dernières sont effacées 60 jours après leur dernière activité (`purger_anonymes_inactifs`).
 
 Quand Florian le décide : Supabase → Authentication → Sign In / Providers → **Allow anonymous sign-ins** : désactivé. Effet : plus aucune nouvelle session anonyme (aucune n'est demandée par l'app) ; les sessions en cours restent valides jusqu'à expiration de leur jeton de rafraîchissement, puis ne peuvent plus être renouvelées : leurs défis en cours sont perdus pour ces joueurs. Pour limiter la perte, attendre que `select count(*) from auth.users where is_anonymous and last_sign_in_at > now() - interval '60 days'` soit proche de zéro.
+
+## 6. Titres mensuels (#561, migration `20261016150000_titres_mensuels.sql`)
+
+À appliquer à la main, après relecture. Rien n'est modifié ni supprimé dans les tables existantes.
+
+- `calculer_titres_mensuels(p_mois)` : `security definer`, `search_path` vide, **fermée à l'app** (anon et authenticated) ; seuls pg_cron (tâche `titres-mensuels`, le 1er du mois à 1 h 17 UTC, programmée seulement si pg_cron existe) et la clé service l'appellent. Elle lit `rating_history` (écrite par `apply_game_rating` seule) : le client ne peut pas fabriquer de parties pour se titrer.
+- `titres_joueurs` : RLS, une politique de lecture « Chacun lit ses titres », aucune écriture pour l'app. `titres_mois` : table d'équipe, RLS sans politique (avis Supabase voulu, comme `retours`).
+- `titres_du_joueur(p_profile_id)` : pour le profil public (#560). `authenticated` seulement, compte avec pseudo exigé (JGC01, JGP01), mois publiés seulement, rien en cas de blocage dans un sens ou dans l'autre (`est_bloque`), ni cote ni rang. Aucun droit pour anon.
+- Garde-fou : sous 200 joueurs actifs, aucune ligne dans `titres_joueurs` : rien à lire, rien à afficher.
+- Après application : relancer l'audit de sécurité Supabase (advisors) ; attendu : deux avis « RLS sans politique » connus (`titres_mois` et les tables d'équipe existantes).

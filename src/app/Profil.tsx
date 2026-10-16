@@ -61,6 +61,8 @@ import '../ui/club.css';
 import { noterReglage } from './reglagesDates';
 import { BoutonPartagerApp } from '../ui/PartagerApp';
 import { ReglageIA } from '../ui/ReglageIA';
+import { DemiLigneTitre } from '../ui/LigneTitre';
+import { useTitreDuMoisDernier } from '../data/titres';
 
 // Joueur de club (#368, #372) : sous-écrans chargés à la demande, hors du morceau du Profil.
 const MesStatistiques = lazy(() => import('./Statistiques'));
@@ -291,6 +293,8 @@ function Menu({ onVue, settings, profil, serie, record = 0, parcours, placement,
   const atteints = useMemo(() => nombreAtteints(etatSemaine().courante), []);
   // #363 : feuille « Nous écrire » (bug, idée, autre).
   const [ecrire, setEcrire] = useState(false);
+  // #561 : titre du mois dernier (rien sans titre, rien sous le garde-fou des 200 joueurs actifs).
+  const titre = useTitreDuMoisDernier(amis?.compte ? amis.db : null, userId);
   return (
     <div className="profil">
       {/* #362 : « Aide » à droite du titre, sans prendre de hauteur (le Profil tient sans défiler en 390 × 844). */}
@@ -335,9 +339,13 @@ function Menu({ onVue, settings, profil, serie, record = 0, parcours, placement,
             <DemiLigne icone="cote" libelle={tc('cote.ligne')} testId="ligne-cote"
               valeur={!profil.parties && !profil.depart ? tc('cote.ligneDepart') : `${grade(profil.cote)} · ${texteCote(profil.cote, profil.provisoire ?? true)}`}
               onClick={() => onVue('cote')} />
-            <DemiLigne icone="placement" libelle={placement?.fait && placement.kyu !== null ? t('placement.profil') : tc('cote.lignePlacement')}
-              valeur={placement?.fait && placement.kyu !== null ? t('placement.profilValeur', { kyu: placement.kyu, date: dateCourte(placement.date) }) : undefined}
-              onClick={onPlacement} />
+            {/* #561 : avec un titre le mois dernier, il prend la place du placement (10 parties classées au moins : le
+                placement n'a plus d'objet) ; le Profil tient toujours sans défiler. Le toucher ouvre « Ta cote ». */}
+            {titre ? <DemiLigneTitre titre={titre} onClick={() => onVue('cote')} /> : (
+              <DemiLigne icone="placement" libelle={placement?.fait && placement.kyu !== null ? t('placement.profil') : tc('cote.lignePlacement')}
+                valeur={placement?.fait && placement.kyu !== null ? t('placement.profilValeur', { kyu: placement.kyu, date: dateCourte(placement.date) }) : undefined}
+                onClick={onPlacement} />
+            )}
           </div>
         ) : onPlacement && (placement?.fait && placement.kyu !== null
           ? <LigneLien icone={<IconeReglage id="placement" />} libelle={t('placement.profil')} valeur={t('placement.profilValeur', { kyu: placement.kyu, date: dateCourte(placement.date) })} onClick={onPlacement} />

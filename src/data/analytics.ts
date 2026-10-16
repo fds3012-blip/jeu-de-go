@@ -86,6 +86,9 @@ export const EVENTS = {
   // #544 : badge obtenu (gagné sur le moment, ou constaté à l'ouverture du Profil), une fois par badge et par appareil.
   // Seule propriété : `badge`, l'identifiant du badge (`premiere-partie`, `serie-7`…).
   badgeGagne: 'badge_gagne',
+  // Titre mensuel (#561) montré à l'ouverture de l'app, une fois par titre sur l'appareil (src/ui/FeteTitre.tsx).
+  // `niveau` (`maitre`, `expert`, `habitue`) seulement : ni le mois, ni la cote, ni le rang.
+  titreObtenu: 'titre_obtenu',
   // Plan de marquage (issue #166). Chaque partie commencée (premier coup joué) : dénominateur du taux de parties finies.
   partieCommencee: 'partie_commencee',
   // #528 : partie interrompue contre l'ordi reprise depuis l'accueil (`adversaire`, `taille`, `coups`, `handicap`, `regles`,

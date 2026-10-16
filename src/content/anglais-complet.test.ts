@@ -16,6 +16,7 @@ import { CATALOGUE_LENTE } from './i18n/lente';
 import { CATALOGUE_PARTAGE } from './i18n/partage';
 import { CATALOGUE_SECURITE } from './i18n/securite';
 import { CATALOGUE_RETOURS } from './i18n/retours';
+import { CATALOGUE_TITRES } from './i18n/titres';
 import { CATALOGUE_JOUEUR } from './i18n/profilPublic';
 import { CATALOGUE_REFUS, messageServeur } from './i18n/refus';
 import { LESSONS_FR, CHAPITRES } from './lessons';
@@ -45,6 +46,8 @@ const CATALOGUES: [string, Brut, Brut][] = [
   ['securite', CATALOGUE_SECURITE.fr, CATALOGUE_SECURITE.en],
   // #537 : formulaire de retours en 3 questions.
   ['retours', CATALOGUE_RETOURS.fr, CATALOGUE_RETOURS.en],
+  // #561 : titres mensuels.
+  ['titres', CATALOGUE_TITRES.fr, CATALOGUE_TITRES.en],
   // #560 : profil public d'un joueur.
   ['profil public', CATALOGUE_JOUEUR.fr, CATALOGUE_JOUEUR.en],
   ['refus du serveur', CATALOGUE_REFUS.fr, CATALOGUE_REFUS.en],

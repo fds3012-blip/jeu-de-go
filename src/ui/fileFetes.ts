@@ -9,6 +9,8 @@
 export type Fete =
   | { genre: 'xp'; points: number; bonus: number }
   | { genre: 'niveau'; niveau: number }
+  // Titre mensuel (#561) : à l'ouverture de l'app, une fois par titre ; après l'XP et le niveau, avant les propositions.
+  | { genre: 'titre' }
   | { genre: 'installation' }
   // Proposition du rappel quotidien (#36) : fin de partie, après l'XP et le niveau.
   | { genre: 'rappel' }
@@ -30,7 +32,7 @@ export interface EtatFile {
 export const FILE_VIDE: EtatFile = { actif: null, attente: [], exercice: false, enLigne: null };
 
 /** Ordre de passage : l'XP d'abord (le gain de l'action), puis le niveau (le jalon), puis l'installation. */
-const RANG: Record<Genre, number> = { xp: 0, niveau: 1, installation: 2, rappel: 3, partage: 4 };
+const RANG: Record<Genre, number> = { xp: 0, niveau: 1, titre: 2, installation: 3, rappel: 4, partage: 5 };
 
 function trier(f: Fete[]): Fete[] {
   return f.map((x, i) => [x, i] as const).sort((a, b) => RANG[a[0].genre] - RANG[b[0].genre] || a[1] - b[1]).map(([x]) => x);

@@ -48,6 +48,8 @@ import { fusionner, nettoyer } from '../src/app/reglagesCompte';
 // Modération (#531) : `suspendus` (identifiants de comptes suspendus) : files, défis, amis et messages refusés avec
 // JGU01 (détail : fin de la suspension), comme supabase/migrations/20261014001100_moderation.sql ; pseudos interdits
 // (`pseudo_autorise`, refus JGP02 à l'enregistrement) sur une courte liste d'exemples (la vraie liste est au serveur).
+// Titres mensuels (#561) : `titres_joueurs` (mois, titre), lue par son seul titulaire ; un test y sème le résultat de
+// la tâche pg_cron (`titres`). Le calcul (joueurs actifs, seuils, garde-fou des 200) reste au serveur.
 
 export const SUPABASE = 'https://supabase.e2e.test';
 export const CODE = '123456';
@@ -86,6 +88,8 @@ export function fauxServeur() {
   /** Parties partagées par lien (#364) : jeton, propriétaire, SGF minimal, camp, adversaire, moment clé. */
   const partagees: Ligne[] = [];
   const ratingHistory: Ligne[] = [];
+  /** Titres mensuels (#561), comme `public.titres_joueurs` : écrits par le test (la tâche pg_cron), lus par leur seul titulaire. */
+  const titres: Ligne[] = [];
   const file: { user: string; taille: number; cadence: string; regles: string; depuis: number }[] = [];
   const pendules: Ligne[] = [];
   let nDirect = 0;
@@ -966,7 +970,7 @@ export function fauxServeur() {
     if (chemin.startsWith('/rest/v1/')) {
       const table = chemin.slice('/rest/v1/'.length);
       let lignes: Ligne[] = table === 'games' ? games : table === 'defis' ? defis : table === 'profiles' ? profiles : table === 'file_lente' ? fileLente
-        : table === 'notifications' ? notifications : table === 'parties_perso' ? partiesPerso : table === 'rating_history' ? ratingHistory : [];
+        : table === 'notifications' ? notifications : table === 'parties_perso' ? partiesPerso : table === 'rating_history' ? ratingHistory : table === 'titres_joueurs' ? titres : [];
       for (const [cle, val] of url.searchParams) {
         if (val.startsWith('eq.')) lignes = lignes.filter(l => String(l[cle]) === val.slice(3));
         if (val.startsWith('neq.')) lignes = lignes.filter(l => String(l[cle]) !== val.slice(4));
@@ -981,7 +985,7 @@ export function fauxServeur() {
       if (table === 'profiles' && !u) return json({ code: '42501', message: 'permission denied for table profiles' }, 401);
       if (table === 'parties_perso') lignes = lignes.filter(l => !!u && !u.anonyme && l.user_id === u.id)
         .sort((a, b) => Date.parse(String(b.joue_le)) - Date.parse(String(a.joue_le)));
-      else if (table === 'rating_history' || table === 'file_lente') lignes = lignes.filter(l => !!u && l.user_id === u.id);
+      else if (table === 'rating_history' || table === 'file_lente' || table === 'titres_joueurs') lignes = lignes.filter(l => !!u && l.user_id === u.id);
       else if (table !== 'profiles') lignes = lignes.filter(l => !u ? false : [l.black_id, l.white_id, l.createur_id, l.invite_id, l.destinataire_id].includes(u.id));
       if (req.method() !== 'GET') return json(table === 'lesson_progress' ? [] : {});
       const objet = (req.headers()['accept'] ?? '').includes('vnd.pgrst.object');
@@ -1017,7 +1021,7 @@ export function fauxServeur() {
   function figerTempsReel() { for (const a of abonnes) a.fige = true; }
   /** Canaux rejoints sur une connexion qui marche, dont le sujet commence par `prefixe` (`defi-`, `direct-`). */
   const canauxActifs = (prefixe: string) => [...abonnes].filter(a => !a.fige).flatMap(a => [...a.canaux.keys()]).filter(t => t.startsWith(`realtime:${prefixe}`)).length;
-  return { traiter, brancherTempsReel, notifier, fileLente, tacheLentes, avancerHorloge, abandons, noterAbandon, ralentirLectures, figerTempsReel, canauxActifs, pousses, pousserPartie, appels, games, defis, notifications, partiesPerso, partagees, profiles, ratingHistory, emailsEnvoyes, sessionAnonyme, file, pendules,
+  return { traiter, brancherTempsReel, notifier, fileLente, tacheLentes, avancerHorloge, abandons, noterAbandon, ralentirLectures, figerTempsReel, canauxActifs, pousses, pousserPartie, appels, games, defis, notifications, partiesPerso, partagees, profiles, ratingHistory, titres, emailsEnvoyes, sessionAnonyme, file, pendules,
     compteExistant, compteGoogle, compteSocial, relierIdentite, liaison, utilisateur, sessionCompte, autorisations, amities,
     signalements, blocages, messagesPartie, goDuJour, rappels, reglages, suspendus };
 }
