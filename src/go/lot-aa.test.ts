@@ -230,9 +230,10 @@ describe('lot AA : identifiants, énoncés, thèmes, doublons, calendrier, migra
     expect(n('fin-de-partie')).toBeGreaterThanOrEqual(1);
   });
 
-  it('le Go du jour garde son ordre : les jours déjà publiés ne changent pas, et le lot AA, d’un seul tenant, ferme le calendrier', () => {
-    const ids = LOT_AA.map(r => r.id);
-    expect(CALENDRIER_GO_DU_JOUR.slice(-ids.length)).toEqual(ids);
+  it('le Go du jour garde son ordre : les jours déjà publiés ne changent pas, le lot AA vient d’un seul tenant après le lot Z, puis le lot AB (#557)', () => {
+    const ids = LOT_AA.map(r => r.id), debut = CALENDRIER_GO_DU_JOUR.indexOf('aa01');
+    expect(CALENDRIER_GO_DU_JOUR.slice(debut, debut + ids.length)).toEqual(ids);
+    expect(CALENDRIER_GO_DU_JOUR[debut + ids.length]).toBe('ab01');
     // Le tri des fichiers range « aa- » après « z- », et non entre « a- » et « b- » (src/content/puzzles.ts) : tout ce qui
     // précède le lot AA garde sa place, et le lot Z reste juste avant lui.
     expect(CALENDRIER_GO_DU_JOUR.indexOf('aa01')).toBe(CALENDRIER_GO_DU_JOUR.indexOf('z15') + 1);
