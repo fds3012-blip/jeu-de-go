@@ -4,7 +4,7 @@ import { CreerCompte, DefiArrivee, DefiPartie, DefisEcran, Direct, Game, LearnHo
 import { DECOUVERTE_KEY, etatDecouverte } from './decouverteEtat';
 import { SeanceRevisions, prechargerRevisions } from './ecrans';
 import { IntroRegles, prechargerIntro } from './ecrans';
-import { ERREURS_KEY, EVENEMENT_REVISIONS, REVISIONS_KEY, compterDus } from './revisionEspacee';
+import { ERREURS_KEY, EVENEMENT_REVISIONS, REVISIONS_KEY, compterDus } from './revisionsDues';
 // #16 : l'accueil ne lit que l'index léger des leçons ; leur contenu arrive avec les écrans Apprendre et leçon.
 import { CHAPITRES, LESSONS } from '../content/leconsResume';
 import { LESSONS_KEY, readLocal, writeLocal, useGelsServeur, useLessonProgress, useOnline, useProfil, usePseudo, useSerie, useSession } from './hooks';
