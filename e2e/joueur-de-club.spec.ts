@@ -295,11 +295,11 @@ test.describe('#372 Étudier une position', () => {
 
     await outils.getByRole('button', { name: 'Jouer' }).click();
     await jouer(page, 'D5');
-    // #460 : « 1 coup », au singulier.
-    await expect(page.getByTestId('etude-consigne')).toHaveText('Variante : 1 coup.');
+    // #562 : « Coup 1 sur 1. » (« variante » désigne maintenant une autre suite, voir e2e/etude-variantes.spec.ts).
+    await expect(page.getByTestId('etude-consigne')).toHaveText('Coup 1 sur 1.');
     await jouer(page, 'F4');
     await expect(svg.locator('[data-numero]')).toHaveCount(2);
-    await expect(page.getByTestId('etude-consigne')).toHaveText('Variante : 2 coups.');
+    await expect(page.getByTestId('etude-consigne')).toHaveText('Coup 2 sur 2.');
     // 390 × 844 : Annuler et Revenir se touchent sans défiler, au-dessus du goban et du bouton « Analyser ».
     await page.evaluate(() => window.scrollTo(0, 0));
     const cta = (await page.locator('.cta').boundingBox())!;
