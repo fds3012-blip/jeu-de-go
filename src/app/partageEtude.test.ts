@@ -1,7 +1,7 @@
 // Partager une étude (#449) : SGF accepté par le serveur, relu à l'identique, appels au serveur, copie ouverte, image.
 import { readFileSync } from 'node:fs';
 import { describe, expect, it, vi } from 'vitest';
-import { etudeDepuisSgf, etudeVersSgf, etudeVide, jouerVariante, poser, type Etude } from '../go/etude';
+import { allerA, avecDepart, coupsJoues, etudeDepuisSgf, etudeVersSgf, etudeVide, jouerVariante, poser, regler, type Etude } from '../go/etude';
 import { lirePartiePartagee, publierEtude } from '../data/partage';
 import type { Db } from '../data/supabase';
 import { sgfPublic } from './partage';
@@ -39,7 +39,7 @@ describe('étude réduite au partage', () => {
       expect(pub.coups).toBe(3);
     }
     // Position seule, sans variante : acceptée. Goban vide : refusé (rien à étudier).
-    expect(etudeAccepteeParLeServeur(sgfPublic(etudeVersSgf({ ...exemple(), variante: [] })).sgf, 9)).toBe(true);
+    expect(etudeAccepteeParLeServeur(sgfPublic(etudeVersSgf(avecDepart(exemple(), {}))).sgf, 9)).toBe(true);
     expect(etudeAccepteeParLeServeur(sgfPublic(etudeVersSgf(etudeVide(9))).sgf, 9)).toBe(false);
   });
 
@@ -48,7 +48,32 @@ describe('étude réduite au partage', () => {
     const relue = etudeDepuisSgf(sgfPublic(etudeVersSgf(e)).sgf)!;
     expect(Array.from(relue.depart)).toEqual(Array.from(e.depart));
     expect(relue.trait).toBe(2);
-    expect(relue.variante).toEqual([40, 41, 49]);
+    expect(coupsJoues(relue)).toEqual([40, 41, 49]);
+  });
+
+  it('#562 : une étude avec variantes et commentaires part par lien en copie réduite : ligne principale, komi, règle, handicap', () => {
+    // Position de handicap (pierres noires seules, Blanc au trait), komi 0,5, règle chinoise, une variante, un commentaire.
+    let e: Etude = etudeVide(9);
+    for (const p of [20, 60]) e = poser(e, p, 'noir') as Etude;
+    e = regler({ ...e, trait: 2 }, { komi: 0.5, regles: 'chinese' });
+    for (const p of [40, 41, 49]) e = jouerVariante(e, p) as Etude;
+    e = jouerVariante(allerA(e, 1), 30) as Etude; // variante au coup 2
+    e = { ...e, note: 'Mon idée ] secrète' };
+    const complet = etudeVersSgf(e);
+    expect(complet).toContain('(;B[');
+    expect(complet).toContain('C[Mon idée \\] secrète]');
+    const pub = sgfPublic(complet);
+    expect(etudeAccepteeParLeServeur(pub.sgf, pub.taille), pub.sgf).toBe(true);
+    expect(pub.sgf).toMatch(/KM\[0\.5\]RU\[Chinese\]HA\[2\]/);
+    expect(pub.sgf).not.toMatch(/C\[|\(;B|secrète/);
+    expect(pub.coups).toBe(3);
+    // L'ami relit la ligne principale, avec le komi, la règle et le handicap.
+    const copie = etudeDepuisSgf(pub.sgf)!;
+    expect(coupsJoues(copie)).toEqual([40, 41, 49]);
+    expect([copie.komi, copie.regles, copie.trait]).toEqual([0.5, 'chinese', 2]);
+    // Le serveur accepterait aussi les parenthèses des variantes (`sgf_partageable` les ignore), mais pas un commentaire :
+    // le lien porte donc la copie réduite, et le fichier SGF l'étude entière.
+    expect(etudeAccepteeParLeServeur(complet, 9)).toBe(false);
   });
 });
 

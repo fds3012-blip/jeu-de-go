@@ -188,6 +188,13 @@ export const EVENTS = {
   statistiquesOuvertes: 'statistiques_ouvertes',
   etudeOuverte: 'etude_ouverte',
   analyseDemandee: 'analyse_demandee',
+  // Étude avancée (#562) : variante créée (`taille`, `coup` : numéro du coup qui crée la variante, `variantes` : nombre
+  // de variantes de l'étude après), variante gérée (`action` : supprimer, promouvoir, ligne_principale), étude
+  // exportée en SGF depuis l'écran (`coups`, `variantes`, `commentaires` : vrai si le fichier en porte). Komi et règle :
+  // `reglage_change` avec `cle` = `etude_komi` ou `etude_regle`. Jamais la position, les coups ni les commentaires.
+  etudeVarianteCreee: 'etude_variante_creee',
+  etudeVarianteGeree: 'etude_variante_geree',
+  etudeExportee: 'etude_exportee',
   // Partager une partie (#364) : feuille « Partager » du bilan ouverte (`mode` : ordi, deux, import ; `compte` : lien et
   // défi possibles), partage fait (`objet` : lien, image, sgf, defi ; `moyen` : web_share, copie, manuel, telechargement),
   // échec (`objet`, `raison` : compte, pseudo, jour, plein, illisible, reseau, canvas), lien retiré (`mode`). L'arrivée de
