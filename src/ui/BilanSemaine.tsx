@@ -3,12 +3,13 @@
 // - `BilanSemaine` : la carte de l'accueil, au premier passage d'une nouvelle semaine, une seule fois (semaine.ts) ;
 // - `StatsSemaine`, `PhrasesSemaine`, `useBilanServeur` : repris par « Ta semaine » (src/app/Semaine.tsx).
 // Chargé à la demande : rien dans le JS initial.
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { bilanSemaine, type BilanServeur } from '../data/emulation';
 import type { Db } from '../data/supabase';
 import { EVENTS, track } from '../data/analytics';
 import { te } from '../content/i18n/emulation';
 import { texteEcart } from '../content/i18n/cote';
+import { tp } from '../content/i18n/profilPublic';
 import { useOnline } from '../app/hooks';
 import { noterBilanVu, type Compteur, type Semaine } from '../app/semaine';
 import { Mochi } from './Mochi';
@@ -49,16 +50,27 @@ export function StatsSemaine({ compte }: { compte: Semaine['compte'] }) {
   );
 }
 
-/** Phrases tirées du serveur : amis battus ou affrontés, cote de la semaine. Rien à dire : rien. */
-export function PhrasesSemaine({ bilan }: { bilan: BilanServeur }) {
+/**
+ * Phrases tirées du serveur : amis battus ou affrontés, cote de la semaine. Rien à dire : rien.
+ * #560 : avec `onProfil`, le pseudo de l'ami se touche et ouvre « Profil de {pseudo} ».
+ */
+export function PhrasesSemaine({ bilan, onProfil }: { bilan: BilanServeur; onProfil?: (pseudo: string) => void }) {
   const phrases = [
-    ...bilan.amis.map(a => ({ cle: `ami-${a.pseudo}`, texte: a.victoires > 0
+    ...bilan.amis.map(a => ({ cle: `ami-${a.pseudo}`, pseudo: a.pseudo, texte: a.victoires > 0
       ? te('semaine.amis.battu', { pseudo: a.pseudo, n: a.victoires })
       : te('semaine.amis.joue', { pseudo: a.pseudo, n: a.victoires + a.defaites }), or: a.victoires > 0 })),
-    ...(bilan.partiesClassees > 0 ? [{ cle: 'cote', texte: te('semaine.cote', { ecart: texteEcart(bilan.coteEcart) }), or: bilan.coteEcart > 0 }] : []),
+    ...(bilan.partiesClassees > 0 ? [{ cle: 'cote', pseudo: null, texte: te('semaine.cote', { ecart: texteEcart(bilan.coteEcart) }), or: bilan.coteEcart > 0 }] : []),
   ];
   if (!phrases.length) return null;
-  return <ul className="semaine-phrases" data-testid="phrases-semaine">{phrases.map(p => <li key={p.cle} className={p.or ? 'or' : undefined}>{fr(p.texte)}</li>)}</ul>;
+  const rendu = (p: { pseudo: string | null; texte: string }): ReactNode => {
+    const t = fr(p.texte);
+    if (!onProfil || !p.pseudo) return t;
+    const i = t.indexOf(p.pseudo);
+    if (i < 0) return t;
+    const pseudo = p.pseudo;
+    return <>{t.slice(0, i)}<button type="button" className="semaine-nom" aria-label={tp('joueur.ouvrir', { pseudo })} onClick={() => onProfil(pseudo)}>{pseudo}</button>{t.slice(i + pseudo.length)}</>;
+  };
+  return <ul className="semaine-phrases" data-testid="phrases-semaine">{phrases.map(p => <li key={p.cle} className={p.or ? 'or' : undefined}>{rendu(p)}</li>)}</ul>;
 }
 
 /**
@@ -66,7 +78,7 @@ export function PhrasesSemaine({ bilan }: { bilan: BilanServeur }) {
  * les tuiles, elle peut être sous le pli) : elle ne revient pas avant la semaine suivante ; « Fermer » la retire tout
  * de suite. Une action discrète : le bouton principal de l'accueil reste seul en relief.
  */
-export function BilanSemaine({ semaine, db, onFermer }: { semaine: Semaine; db: Db | null; onFermer: () => void }) {
+export function BilanSemaine({ semaine, db, onFermer, onProfil }: { semaine: Semaine; db: Db | null; onFermer: () => void; onProfil?: (pseudo: string) => void }) {
   const { serveur } = useBilanServeur(db, true);
   const note = useRef(false);
   const ref = useRef<HTMLElement>(null);
@@ -95,7 +107,7 @@ export function BilanSemaine({ semaine, db, onFermer }: { semaine: Semaine; db: 
       </div>
       <p>{fr(te('bilan.mochi'))}</p>
       <StatsSemaine compte={semaine.compte} />
-      {serveur.etat === 'pret' && <PhrasesSemaine bilan={serveur.bilan} />}
+      {serveur.etat === 'pret' && <PhrasesSemaine bilan={serveur.bilan} onProfil={onProfil} />}
       <p className="muted small">{te('bilan.objectifs', { n: semaine.atteints.length })}</p>
     </section>
   );

@@ -28,6 +28,7 @@ import { fusionner, nettoyer } from '../src/app/reglagesCompte';
 // de la partie (`defis.delai_coup`), perte au temps constatée au coup, à la lecture (`victoire_au_temps`) et par
 // `tacheLentes()` (la tâche pg_cron), sur une horloge du serveur qu'un test avance (`avancerHorloge`). Classée :
 // ±162 ; annulée sans cote si personne n'a vraiment joué.
+// Profil public (#560) : `profil_public` (null pour un inconnu ou un blocage, parties classées, lien d'amitié).
 // Sécurité (#363, #373) : `signaler`, `bloquer_joueur`, `debloquer_joueur`, `mes_blocages`, `dire_en_partie` (mêmes
 // règles et mêmes codes que supabase/migrations/20261005220100_securite_signalements.sql, sauf la fin de partie depuis
 // plus de 10 minutes) ; les INSERT de `messages_partie` sont poussés aux deux joueurs, sauf à celui qui a bloqué
@@ -47,6 +48,8 @@ import { fusionner, nettoyer } from '../src/app/reglagesCompte';
 // Modération (#531) : `suspendus` (identifiants de comptes suspendus) : files, défis, amis et messages refusés avec
 // JGU01 (détail : fin de la suspension), comme supabase/migrations/20261014001100_moderation.sql ; pseudos interdits
 // (`pseudo_autorise`, refus JGP02 à l'enregistrement) sur une courte liste d'exemples (la vraie liste est au serveur).
+// Titres mensuels (#561) : `titres_joueurs` (mois, titre), lue par son seul titulaire ; un test y sème le résultat de
+// la tâche pg_cron (`titres`). Le calcul (joueurs actifs, seuils, garde-fou des 200) reste au serveur.
 
 export const SUPABASE = 'https://supabase.e2e.test';
 export const CODE = '123456';
@@ -85,6 +88,8 @@ export function fauxServeur() {
   /** Parties partagées par lien (#364) : jeton, propriétaire, SGF minimal, camp, adversaire, moment clé. */
   const partagees: Ligne[] = [];
   const ratingHistory: Ligne[] = [];
+  /** Titres mensuels (#561), comme `public.titres_joueurs` : écrits par le test (la tâche pg_cron), lus par leur seul titulaire. */
+  const titres: Ligne[] = [];
   const file: { user: string; taille: number; cadence: string; regles: string; depuis: number }[] = [];
   const pendules: Ligne[] = [];
   let nDirect = 0;
@@ -594,6 +599,32 @@ export function fauxServeur() {
       return json({ parties: h.length, meilleure_cote: meilleure ? meilleure.rating : null, meilleure_cote_le: meilleure ? String(meilleure.created_at).slice(0, 10) : null,
         serie_victoires: record, serie_en_cours: serie });
     }
+    // Profil public (#560) : comme `profil_public` (supabase/migrations/20261016120000_profil_public.sql) : null pour un
+    // pseudo inconnu ou si l'un bloque l'autre ; adversaire par pseudo seulement sans blocage avec le demandeur.
+    if (chemin === '/rest/v1/rpc/profil_public') {
+      const refus = (code: string) => json({ code, message: code, details: null, hint: null }, 400);
+      if (!u || u.anonyme) return refus('JGC01');
+      if (!profiles.find(x => x.id === u.id)?.username) return refus('JGP01');
+      const corps = (req.postDataJSON() ?? {}) as { p_pseudo?: string };
+      const cible = profiles.find(x => String(x.username ?? '').toLowerCase() === String(corps.p_pseudo ?? '').trim().toLowerCase());
+      if (!cible || (cible.id !== u.id && estBloque(u.id, String(cible.id)))) return json(null);
+      const lui = String(cible.id);
+      const f = amities.find(x => (x.de === u.id && x.a === lui) || (x.de === lui && x.a === u.id));
+      const lien = lui === u.id ? 'moi' : !f ? 'aucun' : f.etat === 'accepted' ? 'amis' : f.de === u.id ? 'envoyee' : 'recue';
+      const classees = games.filter(g => g.status === 'finished' && g.rated && !g.bot_id && g.black_id && g.white_id && (g.black_id === lui || g.white_id === lui))
+        .sort((a, b) => String(b.updated_at ?? '').localeCompare(String(a.updated_at ?? '')));
+      const parties = classees.slice(0, 5).map(g => {
+        const adv = g.black_id === lui ? String(g.white_id) : String(g.black_id);
+        const pseudoAdv = profiles.find(x => x.id === adv)?.username;
+        const r = String(g.result ?? '');
+        return {
+          adversaire: adv === u.id ? pseudoAdv : !pseudoAdv || estBloque(u.id, adv) ? null : pseudoAdv, toi: adv === u.id,
+          gagnee: r.startsWith('B+') ? g.black_id === lui : r.startsWith('W+') ? g.white_id === lui : null,
+          le: String(g.updated_at ?? new Date().toISOString()).slice(0, 10), taille: g.size, couleur: g.black_id === lui ? 'noir' : 'blanc',
+        };
+      });
+      return json({ pseudo: cible.username, cote: Math.round(Number(cible.rating ?? 800)), provisoire: cible.cote_provisoire === true, parties_classees: classees.length, lien, parties });
+    }
     if (chemin === '/rest/v1/rpc/marquer_notifications_lues') {
       if (!u) return json({ message: 'Connexion requise' }, 401);
       const { p_partie, p_type } = req.postDataJSON() as { p_partie?: string; p_type?: string };
@@ -939,7 +970,7 @@ export function fauxServeur() {
     if (chemin.startsWith('/rest/v1/')) {
       const table = chemin.slice('/rest/v1/'.length);
       let lignes: Ligne[] = table === 'games' ? games : table === 'defis' ? defis : table === 'profiles' ? profiles : table === 'file_lente' ? fileLente
-        : table === 'notifications' ? notifications : table === 'parties_perso' ? partiesPerso : table === 'rating_history' ? ratingHistory : [];
+        : table === 'notifications' ? notifications : table === 'parties_perso' ? partiesPerso : table === 'rating_history' ? ratingHistory : table === 'titres_joueurs' ? titres : [];
       for (const [cle, val] of url.searchParams) {
         if (val.startsWith('eq.')) lignes = lignes.filter(l => String(l[cle]) === val.slice(3));
         if (val.startsWith('neq.')) lignes = lignes.filter(l => String(l[cle]) !== val.slice(4));
@@ -954,7 +985,7 @@ export function fauxServeur() {
       if (table === 'profiles' && !u) return json({ code: '42501', message: 'permission denied for table profiles' }, 401);
       if (table === 'parties_perso') lignes = lignes.filter(l => !!u && !u.anonyme && l.user_id === u.id)
         .sort((a, b) => Date.parse(String(b.joue_le)) - Date.parse(String(a.joue_le)));
-      else if (table === 'rating_history' || table === 'file_lente') lignes = lignes.filter(l => !!u && l.user_id === u.id);
+      else if (table === 'rating_history' || table === 'file_lente' || table === 'titres_joueurs') lignes = lignes.filter(l => !!u && l.user_id === u.id);
       else if (table !== 'profiles') lignes = lignes.filter(l => !u ? false : [l.black_id, l.white_id, l.createur_id, l.invite_id, l.destinataire_id].includes(u.id));
       if (req.method() !== 'GET') return json(table === 'lesson_progress' ? [] : {});
       const objet = (req.headers()['accept'] ?? '').includes('vnd.pgrst.object');
@@ -990,7 +1021,7 @@ export function fauxServeur() {
   function figerTempsReel() { for (const a of abonnes) a.fige = true; }
   /** Canaux rejoints sur une connexion qui marche, dont le sujet commence par `prefixe` (`defi-`, `direct-`). */
   const canauxActifs = (prefixe: string) => [...abonnes].filter(a => !a.fige).flatMap(a => [...a.canaux.keys()]).filter(t => t.startsWith(`realtime:${prefixe}`)).length;
-  return { traiter, brancherTempsReel, notifier, fileLente, tacheLentes, avancerHorloge, abandons, noterAbandon, ralentirLectures, figerTempsReel, canauxActifs, pousses, pousserPartie, appels, games, defis, notifications, partiesPerso, partagees, profiles, ratingHistory, emailsEnvoyes, sessionAnonyme, file, pendules,
+  return { traiter, brancherTempsReel, notifier, fileLente, tacheLentes, avancerHorloge, abandons, noterAbandon, ralentirLectures, figerTempsReel, canauxActifs, pousses, pousserPartie, appels, games, defis, notifications, partiesPerso, partagees, profiles, ratingHistory, titres, emailsEnvoyes, sessionAnonyme, file, pendules,
     compteExistant, compteGoogle, compteSocial, relierIdentite, liaison, utilisateur, sessionCompte, autorisations, amities,
     signalements, blocages, messagesPartie, goDuJour, rappels, reglages, suspendus };
 }

@@ -49,6 +49,8 @@ import type { ProfilJoueur } from './hooks';
 import { Semaine } from './Semaine';
 import { etatSemaine, nombreAtteints } from './semaine';
 import { te } from '../content/i18n/emulation';
+import { tp } from '../content/i18n/profilPublic';
+import type { DepuisProfil } from './ProfilPublic';
 import '../ui/emulation.css';
 import { FeuilleSignaler } from '../ui/Securite';
 import { tsec } from '../content/i18n/securite';
@@ -59,10 +61,14 @@ import '../ui/club.css';
 import { noterReglage } from './reglagesDates';
 import { BoutonPartagerApp } from '../ui/PartagerApp';
 import { ReglageIA } from '../ui/ReglageIA';
+import { DemiLigneTitre } from '../ui/LigneTitre';
+import { useTitreDuMoisDernier } from '../data/titres';
 
 // Joueur de club (#368, #372) : sous-écrans chargés à la demande, hors du morceau du Profil.
 const MesStatistiques = lazy(() => import('./Statistiques'));
 const Etude = lazy(() => import('./Etude'));
+// #560 : « Profil de {pseudo} », chargé à la demande.
+const ProfilPublic = lazy(() => import('./ProfilPublic'));
 
 const SOLVED_KEY = 'go.problemes.v1';
 
@@ -91,7 +97,12 @@ function useDonnees(serie: number, record: number, parcours: Parcours) {
 
 export type VueProfil = 'menu' | 'reglages' | 'installer' | 'rappel' | 'compte' | 'conditions' | 'importer' | 'parties' | 'amis' | 'cote' | 'stats' | 'etude' | 'semaine'
   // #530 : « Mes données » (export) et « Mentions légales », ouvertes depuis Conditions et confidentialité ou Mon compte.
-  | 'donnees' | 'mentions';
+  | 'donnees' | 'mentions'
+  // #560 : « Profil de {pseudo} » (le joueur regardé est dans `joueur`).
+  | 'joueur';
+
+/** #560 : profils publics ouverts, le dernier au-dessus ; `retour` : la vue où « Retour » ramène quand la pile est vide. */
+export interface JoueurVu { pseudos: string[]; depuis: DepuisProfil; retour: VueProfil }
 
 // Libellés traduits (#167) : calculés à l'affichage, dans la langue de l'interface.
 const themes = () => [
@@ -136,6 +147,8 @@ interface Props {
    * sinon, et partie créée par « Défier ». Absent sans service de compte : pas de ligne.
    */
   amis?: { db: Db; compte: boolean; demandes: number; onCompte: () => void; onDefi: (partieId: string) => void };
+  /** #560 : profils publics ouverts (vue `joueur`), gardés par l'app pour s'ouvrir aussi depuis une partie ou l'accueil. */
+  joueur?: { vu: JoueurVu | null; changer: (vu: JoueurVu | null) => void };
   /** « Mes parties » (#358) : état vide, « Joue ta première partie ». */
   onJouer?: () => void;
   /** « Mes parties » : défis par lien terminés, lus dans Supabase pour la session ouverte. */
@@ -155,9 +168,33 @@ function SousVue({ id, titre, onRetour, children }: { id: string; titre: string;
   );
 }
 
-export function Profil({ vue, onVue, settings, set, profil, serie, record = 0, parcours, placement, onPlacement, onJouer, db, userId, amis, onProfilChange, onProblemes }: Props) {
+export function Profil({ vue, onVue, settings, set, profil, serie, record = 0, parcours, placement, onPlacement, onJouer, db, userId, amis, joueur, onProfilChange, onProblemes }: Props) {
   const origine = useRef<VueProfil>('conditions');
   const retour = () => { onVue('menu'); window.scrollTo({ top: 0 }); };
+  // #560 : « Profil de {pseudo} », avec un compte complet seulement. Depuis « Mes amis » ou « Ta semaine », on y revient.
+  const vu = joueur?.vu ?? null;
+  const pseudoVu = vu?.pseudos.at(-1);
+  /** Ouvre un profil public ; depuis un autre profil, il s'empile (« Retour » ramène au précédent). */
+  const ouvrirUn = (p: string, depuis: DepuisProfil, retourVers: VueProfil) => {
+    joueur?.changer(vu && depuis === 'profil' ? { ...vu, pseudos: [...vu.pseudos, p] } : { pseudos: [p], depuis, retour: retourVers });
+    onVue('joueur'); window.scrollTo({ top: 0 });
+  };
+  const retourJoueur = () => {
+    if (vu && vu.pseudos.length > 1) joueur?.changer({ ...vu, pseudos: vu.pseudos.slice(0, -1) });
+    else { joueur?.changer(null); onVue(vu?.retour ?? 'menu'); }
+    window.scrollTo({ top: 0 });
+  };
+  if (vue === 'joueur' && amis?.compte && vu && pseudoVu) {
+    return (
+      <SousVue id="joueur-titre" titre={tp('joueur.titre', { pseudo: pseudoVu })} onRetour={retourJoueur}>
+        <Suspense fallback={<p className="muted small" aria-busy="true">{tp('joueur.chargement')}</p>}>
+          <ProfilPublic key={pseudoVu} db={amis.db} pseudo={pseudoVu} depuis={vu.depuis} onDefi={amis.onDefi}
+            onProfil={p => ouvrirUn(p, 'profil', vu.retour)} />
+        </Suspense>
+      </SousVue>
+    );
+  }
+  const ouvrirJoueur = (depuis: DepuisProfil, retourVers: VueProfil) => (joueur && amis?.compte ? (p: string) => ouvrirUn(p, depuis, retourVers) : undefined);
   // #358 : toutes les parties terminées, et leur revue.
   // #286 : « Analyser une partie » est dans « Mes parties » depuis #358 (le Profil tient sans défiler) ; on y revient.
   if (vue === 'parties') return <MesParties onRetour={retour} onJouer={onJouer ?? retour} onImporter={() => onVue('importer')} onEtudier={() => onVue('etude')} db={db} userId={userId} confirmTouch={settings.confirmTouch} />;
@@ -182,7 +219,7 @@ export function Profil({ vue, onVue, settings, set, profil, serie, record = 0, p
   // #286 : analyser une partie jouée ailleurs (SGF), action secondaire du Profil.
   if (vue === 'importer') return <ImportSgf onRetour={() => { onVue('parties'); window.scrollTo({ top: 0 }); }} pseudo={profil?.pseudo} confirmTouch={settings.confirmTouch} />;
   if (vue === 'amis' && amis?.compte) {
-    return <SousVue id="amis-titre" titre={t('amis.titre')} onRetour={retour}><Amis db={amis.db} onDefi={amis.onDefi} /></SousVue>;
+    return <SousVue id="amis-titre" titre={t('amis.titre')} onRetour={retour}><Amis db={amis.db} onDefi={amis.onDefi} onProfil={ouvrirJoueur('amis', 'amis')} onProfilDemande={ouvrirJoueur('demande', 'amis')} /></SousVue>;
   }
   // #417 : ta cote de jeu (parties classées entre humains), sa courbe de 30 jours et le point de départ.
   if (vue === 'cote' && amis?.compte && userId) {
@@ -192,7 +229,7 @@ export function Profil({ vue, onVue, settings, set, profil, serie, record = 0, p
   if (vue === 'semaine') {
     return (
       <SousVue id="semaine-titre" titre={te('semaine.titre')} onRetour={retour}>
-        <Semaine db={amis?.compte ? amis.db : null}
+        <Semaine db={amis?.compte ? amis.db : null} onProfil={ouvrirJoueur('bilan', 'semaine')}
           actions={{ parties: onJouer ?? retour, problemes: onProblemes ?? retour, erreurs: () => { onVue('parties'); window.scrollTo({ top: 0 }); } }} />
       </SousVue>
     );
@@ -256,6 +293,8 @@ function Menu({ onVue, settings, profil, serie, record = 0, parcours, placement,
   const atteints = useMemo(() => nombreAtteints(etatSemaine().courante), []);
   // #363 : feuille « Nous écrire » (bug, idée, autre).
   const [ecrire, setEcrire] = useState(false);
+  // #561 : titre du mois dernier (rien sans titre, rien sous le garde-fou des 200 joueurs actifs).
+  const titre = useTitreDuMoisDernier(amis?.compte ? amis.db : null, userId);
   return (
     <div className="profil">
       {/* #362 : « Aide » à droite du titre, sans prendre de hauteur (le Profil tient sans défiler en 390 × 844). */}
@@ -300,9 +339,13 @@ function Menu({ onVue, settings, profil, serie, record = 0, parcours, placement,
             <DemiLigne icone="cote" libelle={tc('cote.ligne')} testId="ligne-cote"
               valeur={!profil.parties && !profil.depart ? tc('cote.ligneDepart') : `${grade(profil.cote)} · ${texteCote(profil.cote, profil.provisoire ?? true)}`}
               onClick={() => onVue('cote')} />
-            <DemiLigne icone="placement" libelle={placement?.fait && placement.kyu !== null ? t('placement.profil') : tc('cote.lignePlacement')}
-              valeur={placement?.fait && placement.kyu !== null ? t('placement.profilValeur', { kyu: placement.kyu, date: dateCourte(placement.date) }) : undefined}
-              onClick={onPlacement} />
+            {/* #561 : avec un titre le mois dernier, il prend la place du placement (10 parties classées au moins : le
+                placement n'a plus d'objet) ; le Profil tient toujours sans défiler. Le toucher ouvre « Ta cote ». */}
+            {titre ? <DemiLigneTitre titre={titre} onClick={() => onVue('cote')} /> : (
+              <DemiLigne icone="placement" libelle={placement?.fait && placement.kyu !== null ? t('placement.profil') : tc('cote.lignePlacement')}
+                valeur={placement?.fait && placement.kyu !== null ? t('placement.profilValeur', { kyu: placement.kyu, date: dateCourte(placement.date) }) : undefined}
+                onClick={onPlacement} />
+            )}
           </div>
         ) : onPlacement && (placement?.fait && placement.kyu !== null
           ? <LigneLien icone={<IconeReglage id="placement" />} libelle={t('placement.profil')} valeur={t('placement.profilValeur', { kyu: placement.kyu, date: dateCourte(placement.date) })} onClick={onPlacement} />

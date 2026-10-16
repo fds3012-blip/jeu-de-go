@@ -42,6 +42,7 @@ import { texteAdversaire } from '../content/i18n/cote';
 import { td, type CleDirect } from '../content/i18n/direct';
 import { nombre, t } from '../content/i18n/secondaires';
 import { fr } from '../ui/typo';
+import { tp } from '../content/i18n/profilPublic';
 import '../ui/defis.css';
 import '../ui/direct.css';
 
@@ -85,10 +86,12 @@ interface Props {
    * la barre du bas, comme pour toute partie ; le choix et l'attente les gardent (docs/ux/navigation.md).
    */
   onPlein?: (plein: boolean) => void;
+  /** #560 : « Voir le profil de {pseudo} » dans le bilan de la partie. Absent (compte incomplet) : pas de lien. */
+  onProfil?: (pseudo: string) => void;
 }
 
 /** « Un humain, maintenant » : du choix de la partie jusqu'au bilan. */
-export function Direct({ db, userId, cote, onRepli, partieInitiale, confirmTouch, reglages, celebrer, onAccueil, onFacon, onOrdi, onPlein }: Props) {
+export function Direct({ db, userId, cote, onRepli, partieInitiale, confirmTouch, reglages, celebrer, onAccueil, onFacon, onOrdi, onPlein, onProfil }: Props) {
   // #436 : la file par défaut d'abord (9 × 9, normale, japonais), quelle que soit la taille choisie pour l'ordi.
   // #365 : le temps de jeu proposé d'abord vient des Réglages (« normale » par défaut, celle de la file par défaut).
   const { cadence: cadenceReglee } = usePreferences();
@@ -130,7 +133,7 @@ export function Direct({ db, userId, cote, onRepli, partieInitiale, confirmTouch
 
   if (vue.vue === 'partie') {
     return <DirectPartie key={vue.id} db={db} partieId={vue.id} userId={userId} attenteS={vue.attenteS} demande={vue.demande} confirmTouch={confirmTouch}
-      reglages={reglages} celebrer={celebrer} onAccueil={onAccueil}
+      reglages={reglages} celebrer={celebrer} onAccueil={onAccueil} onProfil={onProfil}
       onRejouer={p => { if (p) setParams(p); setErreur(null); setVue({ vue: 'attente', depuis: Date.now() }); window.scrollTo?.({ top: 0 }); }} />;
   }
   if (vue.vue === 'attente') {
@@ -379,9 +382,11 @@ interface PartieProps {
   onAccueil: () => void;
   /** « Rejouer » : nouvelle recherche, avec la taille, le temps et le comptage de cette partie. */
   onRejouer: (p: Params | null) => void;
+  /** #560 : « Voir le profil de {pseudo} » dans le bilan. */
+  onProfil?: (pseudo: string) => void;
 }
 
-function DirectPartie({ db, partieId, userId, demande, confirmTouch, reglages, celebrer, onAccueil, onRejouer }: PartieProps) {
+function DirectPartie({ db, partieId, userId, demande, confirmTouch, reglages, celebrer, onAccueil, onRejouer, onProfil }: PartieProps) {
   const prefs = usePreferences(); // #365 : coordonnées et dernier coup
   const online = useOnline();
   const [partie, setPartie] = useState<Game | null>(null);
@@ -630,6 +635,8 @@ function DirectPartie({ db, partieId, userId, demande, confirmTouch, reglages, c
             <button type="button" className="btn primary defis-cta"
               onClick={() => onRejouer({ taille: partie.size as Taille, cadence, regles: rules })}>{td('direct.rejouer')}</button>
             {revue && <button type="button" className="lien" onClick={() => { setEnRevue(true); window.scrollTo?.({ top: 0 }); }}>{td('direct.revoir')}</button>}
+            {/* #560 : le profil de l'adversaire (pseudo connu), pour l'ajouter en ami. */}
+            {onProfil && nomLui && <button type="button" className="lien" data-testid="fin-profil" onClick={() => onProfil(nomLui)}>{tp('joueur.ouvrir', { pseudo: nomLui })}</button>}
             <button type="button" className="lien" onClick={onAccueil}>{td('direct.accueil')}</button>
             {echanges.liensFin}
             {v.phase === 'fini' && partie.rated && <VocabulaireGrade />}

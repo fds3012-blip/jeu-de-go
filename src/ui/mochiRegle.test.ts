@@ -22,6 +22,7 @@ const REGLE: Record<string, Usage> = {
   'src/app/Learn.tsx': { sceau: 1, portrait: 0, pourquoi: 'chemin des leçons : aide pour choisir la suite (la leçon elle-même a le portrait)' },
   'src/app/Lentes.tsx': { sceau: 1, portrait: 0, pourquoi: 'parties lentes : recherche en cours' },
   'src/app/PartiePartagee.tsx': { sceau: 4, portrait: 0, pourquoi: 'lien partagé : chargement, introuvable, aide pour revoir les coups' },
+  'src/app/ProfilPublic.tsx': { sceau: 1, portrait: 0, pourquoi: 'profil public (#560) : « Ce joueur n’est pas disponible » (état vide d’interface)' },
   'src/app/QuestionGo.tsx': { sceau: 1, portrait: 0, pourquoi: 'premier lancement : « Tu connais le go ? » (accueil)' },
   'src/app/VeilleFile.tsx': { sceau: 2, portrait: 0, pourquoi: 'en ligne : attente dans la file' },
   'src/ui/BilanSemaine.tsx': { sceau: 1, portrait: 0, pourquoi: 'carte de l’accueil (la semaine), pas une partie' },
