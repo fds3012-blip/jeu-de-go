@@ -1,7 +1,7 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { themeGoban, type IdThemeGoban, type ThemeGoban } from '../ui/boardArt';
 import { lireXp, niveauDe, themeDebloque } from './xp';
-import { installAudioUnlock, setSoundEnabled } from '../ui/sound';
+import { installAudioUnlock, setSoundEnabled } from '../ui/sonContexte';
 import { setHapticsEnabled } from '../ui/haptics';
 import { noterReglage } from './reglagesDates';
 import type { ReglageAide } from './aideMochi';

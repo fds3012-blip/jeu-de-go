@@ -3,6 +3,11 @@
 // + quelques résonances sinusoïdales amorties, non harmoniques (le bois qui sonne) + un « toc » grave (le plateau).
 // Le contexte audio est créé ou repris au premier geste (exigence des navigateurs, surtout Safari iOS).
 
+// #563 : contexte audio, déverrouillage au premier geste et réglage « Sons » dans sonContexte.ts (JS initial) ;
+// la synthèse reste ici, chargée avec les écrans qui jouent un son.
+import { audio, sortie } from './sonContexte';
+export { installAudioUnlock, setSoundEnabled, soundEnabled, unlockAudio } from './sonContexte';
+
 export type SoundName = 'pose' | 'poseAdverse' | 'capture' | 'atari' | 'interdit' | 'victoire' | 'defaite' | 'niveau' | 'badge' | 'reussite' | 'echec';
 
 /** Panoramique d'un coup selon sa colonne : de −0,15 (colonne A) à +0,15 (dernière colonne). */
@@ -49,104 +54,8 @@ const CLAQUEMENTS: { modes: [number, number, number][]; choc: number; toc: numbe
   { modes: [[1120, 0.5, 0.031], [1760, 0.2, 0.02], [2980, 0.15, 0.011]], choc: 3150, toc: 182 },
 ];
 
-let ctx: AudioContext | null = null;
-let master: GainNode | null = null;
-let enabled = true;
 let lastVariant = -1;
 const last = new Map<string, number>();
-
-type Ctor = typeof AudioContext;
-function audioCtor(): Ctor | null {
-  if (typeof window === 'undefined') return null;
-  const w = window as unknown as { AudioContext?: Ctor; webkitAudioContext?: Ctor };
-  return w.AudioContext ?? w.webkitAudioContext ?? null;
-}
-
-/** Contexte audio prêt à jouer, ou null (sons coupés, navigateur sans Web Audio, contexte encore bloqué). */
-function audio(): AudioContext | null {
-  if (!enabled) return null;
-  try {
-    if (!ctx) {
-      const A = audioCtor();
-      if (!A) return null;
-      ctx = new A();
-      const comp = ctx.createDynamicsCompressor(); // évite la saturation quand plusieurs sons se superposent
-      comp.threshold.value = -10; comp.knee.value = 8; comp.ratio.value = 4;
-      master = ctx.createGain();
-      master.gain.value = 0.9;
-      master.connect(comp).connect(ctx.destination);
-    }
-    if (ctx.state === 'suspended') void ctx.resume().catch(() => undefined);
-    return ctx;
-  } catch {
-    return null;
-  }
-}
-
-/**
- * iPhone en mode silencieux : par défaut, Safari classe le son Web Audio comme « ambiant » et le coupe.
- * On demande la catégorie « lecture » (Safari 16.4+ : navigator.audioSession), et, pour les versions plus
- * anciennes, on joue une fois un court silence dans un élément <audio>, qui fait basculer la page en lecture.
- */
-let sessionPrete = false;
-function sessionLecture(): void {
-  if (sessionPrete || typeof navigator === 'undefined') return;
-  sessionPrete = true;
-  const nav = navigator as Navigator & { audioSession?: { type: string } };
-  try {
-    if (nav.audioSession) { nav.audioSession.type = 'playback'; return; }
-  } catch { /* ignoré */ }
-  try {
-    const el = new Audio(SILENCE_WAV);
-    el.setAttribute('playsinline', '');
-    void el.play().catch(() => undefined);
-  } catch { /* ignoré */ }
-}
-
-/** Un dixième de seconde de silence en WAV (8 kHz, 8 bits, mono). */
-const SILENCE_WAV = (() => {
-  const n = 800, b = new Uint8Array(44 + n), v = new DataView(b.buffer);
-  const txt = (o: number, t: string) => { for (let i = 0; i < t.length; i++) b[o + i] = t.charCodeAt(i); };
-  txt(0, 'RIFF'); v.setUint32(4, 36 + n, true); txt(8, 'WAVE'); txt(12, 'fmt ');
-  v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true); v.setUint32(24, 8000, true);
-  v.setUint32(28, 8000, true); v.setUint16(32, 1, true); v.setUint16(34, 8, true); txt(36, 'data'); v.setUint32(40, n, true);
-  b.fill(128, 44);
-  let bin = ''; for (const x of b) bin += String.fromCharCode(x);
-  return 'data:audio/wav;base64,' + (typeof btoa === 'function' ? btoa(bin) : '');
-})();
-
-/** À appeler au premier geste : crée ou reprend le contexte audio. */
-export function unlockAudio(): void {
-  if (!enabled) return;
-  sessionLecture();
-  const a = audio();
-  if (!a) return;
-  try { // Safari iOS : jouer un tampon silencieux dans le geste débloque la sortie.
-    const s = a.createBufferSource();
-    s.buffer = a.createBuffer(1, 1, a.sampleRate);
-    s.connect(a.destination);
-    s.start();
-  } catch { /* ignoré */ }
-}
-
-let unlockInstalled = false;
-/** Installe (une fois) l'écoute du premier geste pour débloquer le son. */
-export function installAudioUnlock(): void {
-  if (unlockInstalled || typeof window === 'undefined') return;
-  unlockInstalled = true;
-  const once = () => {
-    unlockAudio();
-    if (ctx && ctx.state === 'running') for (const e of ['pointerdown', 'keydown', 'touchend'] as const) window.removeEventListener(e, once, true);
-  };
-  for (const e of ['pointerdown', 'keydown', 'touchend'] as const) window.addEventListener(e, once, true);
-}
-
-/** Réglage « Sons » du Profil. */
-export function setSoundEnabled(on: boolean): void {
-  enabled = on;
-  if (!on && ctx && ctx.state === 'running') void ctx.suspend().catch(() => undefined);
-}
-export function soundEnabled(): boolean { return enabled; }
 
 // ---------- Briques de synthèse (tout contexte, y compris OfflineAudioContext pour l'analyse) ----------
 
@@ -309,7 +218,7 @@ export const synth = {
 function start(name: SoundName): AudioContext | null {
   const a = audio();
   // Un contexte encore « suspended » (reprise en cours dans ce même geste) joue dès qu'il repart.
-  if (!a || !master || a.state === 'closed') return null;
+  if (!a || !sortie() || a.state === 'closed') return null;
   if (!shouldPlay(last, name, performance.now())) return null;
   return a;
 }
@@ -321,25 +230,25 @@ export function playStone(p: number, size: number, adverse = false): void {
   let v = Math.floor(Math.random() * 4);
   if (v === lastVariant) v = (v + 1) % 4; // jamais deux fois le même claquement de suite
   lastVariant = v;
-  synth.pose(a, master!, a.currentTime + 0.004, v, pitchFactor(Math.random()), adverse, panFor(p % size, size),
+  synth.pose(a, sortie()!, a.currentTime + 0.004, v, pitchFactor(Math.random()), adverse, panFor(p % size, size),
     geste(Math.random(), Math.random(), Math.random()));
 }
 /** Pierres prises qui tombent sur le tas : 1, 2, ou 3 et plus. Suit le claquement de la pose. */
-export function playCapture(n: number): void { const a = start('capture'); if (a) synth.capture(a, master!, a.currentTime + 0.09, n); }
+export function playCapture(n: number): void { const a = start('capture'); if (a) synth.capture(a, sortie()!, a.currentTime + 0.09, n); }
 /** Atari sur un de tes groupes : deux notes douces. */
-export function playAtari(): void { const a = start('atari'); if (a) synth.atari(a, master!, a.currentTime + 0.1); }
+export function playAtari(): void { const a = start('atari'); if (a) synth.atari(a, sortie()!, a.currentTime + 0.1); }
 /** Coup interdit : « tok » sourd. */
-export function playIllegal(): void { const a = start('interdit'); if (a) synth.interdit(a, master!, a.currentTime + 0.004); }
+export function playIllegal(): void { const a = start('interdit'); if (a) synth.interdit(a, sortie()!, a.currentTime + 0.004); }
 /** Victoire : petit carillon montant. */
-export function playVictory(): void { const a = start('victoire'); if (a) synth.victoire(a, master!, a.currentTime + 0.05); }
+export function playVictory(): void { const a = start('victoire'); if (a) synth.victoire(a, sortie()!, a.currentTime + 0.05); }
 /** Défaite contre l'ordi : deux notes douces qui descendent. */
-export function playDefeat(): void { const a = start('defaite'); if (a) synth.defaite(a, master!, a.currentTime + 0.05); }
+export function playDefeat(): void { const a = start('defaite'); if (a) synth.defaite(a, sortie()!, a.currentTime + 0.05); }
 /** Nouveau niveau : trois lames de bois montantes et une cloche. */
-export function playLevel(): void { const a = start('niveau'); if (a) synth.niveau(a, master!, a.currentTime + 0.05); }
+export function playLevel(): void { const a = start('niveau'); if (a) synth.niveau(a, sortie()!, a.currentTime + 0.05); }
 /** Badge ou sceau obtenu : « toc » du sceau puis une cloche. */
-export function playBadge(): void { const a = start('badge'); if (a) synth.badge(a, master!, a.currentTime + 0.05); }
+export function playBadge(): void { const a = start('badge'); if (a) synth.badge(a, sortie()!, a.currentTime + 0.05); }
 /** Problème ou exercice réussi : deux notes montantes (après le claquement de la pierre). */
-export function playSuccess(): void { const a = start('reussite'); if (a) synth.reussite(a, master!, a.currentTime + 0.14); }
+export function playSuccess(): void { const a = start('reussite'); if (a) synth.reussite(a, sortie()!, a.currentTime + 0.14); }
 /** Problème ou exercice raté : une note qui descend. */
-export function playFail(): void { const a = start('echec'); if (a) synth.echec(a, master!, a.currentTime + 0.14); }
+export function playFail(): void { const a = start('echec'); if (a) synth.echec(a, sortie()!, a.currentTime + 0.14); }
 

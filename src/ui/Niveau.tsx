@@ -5,9 +5,12 @@ import { mouvementsReduits } from './defilement';
 import { terminerFete, useFile } from './celebrations';
 import { fr } from './typo';
 import { t } from '../content/i18n';
-import { playLevel } from './sound';
 import { hapticLevel } from './haptics';
 import './niveau.css';
+
+// #563 : la synthèse des sons (src/ui/sound.ts) n'est pas dans le JS initial ; elle est d'ordinaire déjà chargée
+// (partie, leçon, problèmes) quand un niveau est atteint.
+const jouerNiveau = () => { void import('./sound').then(m => m.playLevel()).catch(() => undefined); };
 
 /** XP de l'appareil, mis à jour à chaque gain. */
 function useXp(): number {
@@ -70,7 +73,7 @@ export function FeteNiveau({ celebrer, ecran }: { celebrer: boolean; ecran?: str
   useEffect(() => {
     if (niveau === null) return;
     // #165 : lames de bois montantes, quand la carte arrive.
-    const son = avecSon.current ? window.setTimeout(() => { playLevel(); hapticLevel(); }, 120) : undefined;
+    const son = avecSon.current ? window.setTimeout(() => { jouerNiveau(); hapticLevel(); }, 120) : undefined;
     const fin = window.setTimeout(() => terminerFete('niveau'), DUREE_MS);
     return () => { window.clearTimeout(son); window.clearTimeout(fin); };
   }, [niveau]);
@@ -101,7 +104,7 @@ export function NiveauAtteint({ niveau, celebrer, action, onAction }: { niveau: 
     bouton.current?.focus({ preventScroll: true });
     window.scrollTo({ top: 0 });
     if (!celebrer) return;
-    const son = window.setTimeout(() => { playLevel(); hapticLevel(); }, 120);
+    const son = window.setTimeout(() => { jouerNiveau(); hapticLevel(); }, 120);
     return () => window.clearTimeout(son);
   }, [celebrer]);
   const anime = celebrer && !mouvementsReduits();
