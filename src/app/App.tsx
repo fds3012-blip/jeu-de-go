@@ -447,18 +447,6 @@ export function App() {
   const [bilanPasse, setBilanPasse] = useState(() => bilanAMontrer(etatSemaine()));
   // #560 : « Profil de {pseudo} » (pile des profils ouverts), dans l'onglet Profil. Jamais sans compte complet.
   const [joueurVu, setJoueurVu] = useState<JoueurVu | null>(null);
-  const ouvrirJoueur = useCallback((pseudo: string, depuis: DepuisProfil, retour: VueProfil = 'menu') => {
-    setJoueurVu(j => (j && depuis === 'profil' ? { ...j, pseudos: [...j.pseudos, pseudo] } : { pseudos: [pseudo], depuis, retour }));
-    setVueProfil('joueur');
-    window.scrollTo({ top: 0 });
-  }, []);
-  const retourJoueur = () => {
-    setJoueurVu(j => {
-      if (!j || j.pseudos.length <= 1) { setVueProfil(j?.retour ?? 'menu'); return null; }
-      return { ...j, pseudos: j.pseudos.slice(0, -1) };
-    });
-    window.scrollTo({ top: 0 });
-  };
   const appel = appelSecondaire({
     jour: numeroJour, parties: parties.n, duJourFait, annonce: annonceAccueil, jourAnnonce, semaine: bilanPasse !== null,
     installation: estMomentRetour(ouverture) && doitProposer({ plateforme, etat: etatInstall, moment: 'retour', enPartie: false }),
@@ -681,12 +669,14 @@ export function App() {
     setDuJourDirect(false);
     setIntroRegles(null); // #523
     if (t === 'problemes' && tab === 'problemes') setRacineProblemes(n => n + 1);
-    setDefi(null); setDirect(false); setLente(false); setRepli(null); setEcranCompte(null); setAnnonceGel(null); setRetourSerie(null); setEnPlacement(false); setTab(t); setPlaying(false); setLessonId(null); setSerie3(null); setVueProfil('menu'); setJoueurVu(null); setPartagee(null); window.scrollTo({ top: 0 });
+    setDefi(null); setDirect(false); setLente(false); setRepli(null); setEcranCompte(null); setAnnonceGel(null); setRetourSerie(null); setEnPlacement(false); setTab(t); setPlaying(false); setLessonId(null); setSerie3(null); setVueProfil('menu'); setPartagee(null); window.scrollTo({ top: 0 });
     setSeanceRevisions(false); // #469
     setDecouverte(false); // #524
   };
   /** #560 : depuis un écran hors du Profil (fin d'une partie en ligne, accueil), l'onglet Profil s'ouvre sur ce joueur. */
-  const voirJoueur = (pseudo: string, depuis: DepuisProfil) => { go('profil'); ouvrirJoueur(pseudo, depuis, 'menu'); };
+  // La pile des profils et le retour sont gérés par le Profil (chargé à la demande) : rien de plus dans le JS initial.
+  // Une pile ancienne n'est jamais relue : chaque ouverture hors d'un profil la remplace.
+  const voirJoueur = (depuis: DepuisProfil) => etat === 'complet' ? (pseudo: string) => { go('profil'); setJoueurVu({ pseudos: [pseudo], depuis, retour: 'menu' }); setVueProfil('joueur'); } : undefined;
 
   // Reprise de l'action demandée, dès que le compte est complet ; `compte_cree` quand un compte sans pseudo apparaît.
   const executer = useRef<(r: Reprise) => void>(() => {});
@@ -852,7 +842,7 @@ export function App() {
         celebrer={settings.celebrations} onAccueil={() => { setDirect(false); setDirectRejoint(null); window.scrollTo({ top: 0 }); }}
         onFacon={changerFacon} onPlein={setDirectPlein}
         // #560 : le profil de l'adversaire, depuis le bilan de la partie.
-        onProfil={etat === 'complet' ? p => voirJoueur(p, 'fin_partie') : undefined} />
+        onProfil={voirJoueur('fin_partie')} />
       : null;
   } else if (enLente) {
     screen = supabase && compteId
@@ -869,7 +859,7 @@ export function App() {
       onRetour={quitterDefi} onAutre={() => { setDefi({ vue: 'liste' }); window.scrollTo({ top: 0 }); }}
       onAutreLente={() => { setDefi(null); setDirect(false); setLente(true); window.scrollTo({ top: 0 }); }}
       // #560 : le profil de l'ami ou de l'adversaire, depuis le bilan de la partie (compte complet seulement).
-      onProfil={etat === 'complet' ? p => voirJoueur(p, 'fin_partie') : undefined} />;
+      onProfil={voirJoueur('fin_partie')} />;
   } else if (enDefi && defi.vue === 'arrivee') {
     screen = <DefiArrivee key={defi.jeton} db={supabase} jeton={defi.jeton} inviteur={defi.inviteur} compte={COMPTES ? etat : 'aucun'} onPartie={ouvrirDefiPartie} onAccueil={quitterDefi} />;
   } else if (enDefi) {
@@ -991,10 +981,10 @@ export function App() {
       amis={supabase ? {
         db: supabase, compte: etat === 'complet', demandes: demandesAmis,
         onCompte: () => { garde({ quoi: 'en_ligne' }, { quoi: 'amis' }); },
-        onDefi: id => { setVueProfil('menu'); setJoueurVu(null); setTab('jouer'); setPlaying(false); setDefi({ vue: 'partie', id }); window.scrollTo({ top: 0 }); },
+        onDefi: id => { setVueProfil('menu'); setTab('jouer'); setPlaying(false); setDefi({ vue: 'partie', id }); window.scrollTo({ top: 0 }); },
       } : undefined}
       // #560 : profil public d'un joueur, depuis « Mes amis », une demande ou « Ta semaine ».
-      joueur={{ vu: joueurVu, ouvrir: ouvrirJoueur, retour: retourJoueur }} />;
+      joueur={{ vu: joueurVu, changer: setJoueurVu }} />;
   } else {
     const numero = numeroJour;
     const daily = duJour;
@@ -1036,7 +1026,7 @@ export function App() {
         semaine={appel === 'semaine' && bilanPasse ? (
           <Suspense fallback={null}>
             <CarteBilanSemaine semaine={bilanPasse} db={etat === 'complet' ? supabase : null} onFermer={() => setBilanPasse(null)}
-              onProfil={etat === 'complet' ? p => voirJoueur(p, 'bilan') : undefined} />
+              onProfil={voirJoueur('bilan')} />
           </Suspense>
         ) : null}
         // Accueil v3 : un défi d'un ami où c'est ton tour passe en premier dans « Aujourd'hui ».

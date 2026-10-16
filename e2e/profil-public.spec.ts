@@ -142,6 +142,17 @@ test('demande reçue : « Accepter » en action principale ; joueur bloqué : «
   await expect(parties.nth(3)).toContainText('contre un joueur');
   expect(await a.page.getByTestId('profil-public').innerText()).not.toContain('Denis');
   await capture(a.page, 'profil-amie-320-sombre');
+
+  // Un lien d'amitié resté avec Denis (comme avant le blocage) : son profil ne s'ouvre pas, sans dire pourquoi.
+  serveur.amities.push({ de: '00000000-0000-4000-8000-0000000000d4', a: ALICE, etat: 'accepted', le: new Date().toISOString() });
+  await a.page.getByRole('button', { name: 'Retour' }).click();
+  await a.page.getByRole('button', { name: 'Retour' }).click();
+  await a.page.getByRole('button', { name: 'Voir le profil de Denis' }).click();
+  await expect(a.page.getByTestId('joueur-indisponible')).toContainText('Ce joueur n’est pas disponible.');
+  await expect(a.page.getByTestId('joueur-indisponible')).not.toContainText(/bloqu/i);
+  await expect(a.page.locator('.btn.primary')).toHaveCount(0);
+  await sansDefilementLateral(a.page, 320);
+  await capture(a.page, 'profil-indisponible-320-sombre');
   expect(a.erreurs).toEqual([]);
   await a.ctx.close();
 });

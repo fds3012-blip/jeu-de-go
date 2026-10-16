@@ -23,7 +23,8 @@
 .joueur-bande { grid-column: 1 / -1; display: flex; gap: 8px; margin-top: 2px; }
 .joueur-bande .stone { width: 22px; height: 22px; }
 .joueur-bande .stone.gagnee { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--accent-trait); }
-.joueur-bande .stone.perdue { opacity: .55; }
+/* Défaite : pierre éteinte, mais toujours détourée (une pierre blanche à demi transparente disparaissait sur le papier). */
+.joueur-bande .stone.perdue { opacity: .55; box-shadow: 0 0 0 1.5px var(--line); }
 .joueur-bande .stone.w.gagnee { box-shadow: 0 0 0 1px rgba(0, 0, 0, .18), 0 0 0 2px var(--surface), 0 0 0 4px var(--accent-trait); }
 
 /* ---------- L'action avec ce joueur ---------- */

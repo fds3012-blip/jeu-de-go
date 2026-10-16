@@ -145,8 +145,8 @@ interface Props {
    * sinon, et partie créée par « Défier ». Absent sans service de compte : pas de ligne.
    */
   amis?: { db: Db; compte: boolean; demandes: number; onCompte: () => void; onDefi: (partieId: string) => void };
-  /** #560 : profil public ouvert (vue `joueur`), et comment en ouvrir un autre ou revenir. */
-  joueur?: { vu: JoueurVu | null; ouvrir: (pseudo: string, depuis: DepuisProfil, retour: VueProfil) => void; retour: () => void };
+  /** #560 : profils publics ouverts (vue `joueur`), gardés par l'app pour s'ouvrir aussi depuis une partie ou l'accueil. */
+  joueur?: { vu: JoueurVu | null; changer: (vu: JoueurVu | null) => void };
   /** « Mes parties » (#358) : état vide, « Joue ta première partie ». */
   onJouer?: () => void;
   /** « Mes parties » : défis par lien terminés, lus dans Supabase pour la session ouverte. */
@@ -170,18 +170,29 @@ export function Profil({ vue, onVue, settings, set, profil, serie, record = 0, p
   const origine = useRef<VueProfil>('conditions');
   const retour = () => { onVue('menu'); window.scrollTo({ top: 0 }); };
   // #560 : « Profil de {pseudo} », avec un compte complet seulement. Depuis « Mes amis » ou « Ta semaine », on y revient.
-  const pseudoVu = joueur?.vu?.pseudos.at(-1);
-  if (vue === 'joueur' && amis?.compte && joueur && pseudoVu) {
+  const vu = joueur?.vu ?? null;
+  const pseudoVu = vu?.pseudos.at(-1);
+  /** Ouvre un profil public ; depuis un autre profil, il s'empile (« Retour » ramène au précédent). */
+  const ouvrirUn = (p: string, depuis: DepuisProfil, retourVers: VueProfil) => {
+    joueur?.changer(vu && depuis === 'profil' ? { ...vu, pseudos: [...vu.pseudos, p] } : { pseudos: [p], depuis, retour: retourVers });
+    onVue('joueur'); window.scrollTo({ top: 0 });
+  };
+  const retourJoueur = () => {
+    if (vu && vu.pseudos.length > 1) joueur?.changer({ ...vu, pseudos: vu.pseudos.slice(0, -1) });
+    else { joueur?.changer(null); onVue(vu?.retour ?? 'menu'); }
+    window.scrollTo({ top: 0 });
+  };
+  if (vue === 'joueur' && amis?.compte && vu && pseudoVu) {
     return (
-      <SousVue id="joueur-titre" titre={tp('joueur.titre', { pseudo: pseudoVu })} onRetour={joueur.retour}>
+      <SousVue id="joueur-titre" titre={tp('joueur.titre', { pseudo: pseudoVu })} onRetour={retourJoueur}>
         <Suspense fallback={<p className="muted small" aria-busy="true">{tp('joueur.chargement')}</p>}>
-          <ProfilPublic key={pseudoVu} db={amis.db} pseudo={pseudoVu} depuis={joueur.vu!.depuis} onDefi={amis.onDefi}
-            onProfil={p => joueur.ouvrir(p, 'profil', joueur.vu!.retour)} />
+          <ProfilPublic key={pseudoVu} db={amis.db} pseudo={pseudoVu} depuis={vu.depuis} onDefi={amis.onDefi}
+            onProfil={p => ouvrirUn(p, 'profil', vu.retour)} />
         </Suspense>
       </SousVue>
     );
   }
-  const ouvrirJoueur = (depuis: DepuisProfil, retourVers: VueProfil) => (joueur && amis?.compte ? (p: string) => joueur.ouvrir(p, depuis, retourVers) : undefined);
+  const ouvrirJoueur = (depuis: DepuisProfil, retourVers: VueProfil) => (joueur && amis?.compte ? (p: string) => ouvrirUn(p, depuis, retourVers) : undefined);
   // #358 : toutes les parties terminées, et leur revue.
   // #286 : « Analyser une partie » est dans « Mes parties » depuis #358 (le Profil tient sans défiler) ; on y revient.
   if (vue === 'parties') return <MesParties onRetour={retour} onJouer={onJouer ?? retour} onImporter={() => onVue('importer')} onEtudier={() => onVue('etude')} db={db} userId={userId} confirmTouch={settings.confirmTouch} />;
