@@ -700,18 +700,20 @@ export async function meilleurCoup(pos: Position, komi: number): Promise<Conseil
  * `katago: false`, et l'écran propose le téléchargement (`preparerKataGo`). Une seule recherche par appel (batterie).
  * `lead` : avance de Noir, komi compris ; `coups` : les meilleurs coups pour le joueur au trait, du meilleur au moins
  * bon, avec ses chances de gain (0 à 1) et son avance en points.
+ * #562 : `komi` est le komi compté (compensation du handicap comprise en chinois, `reglagesAnalyse` de src/go/etude.ts)
+ * et `regles` la règle de comptage choisie dans l'étude, donnée à KataGo (sans elle, sa règle historique).
  */
 export type AnalyseEtude =
   | { katago: false }
   | { katago: true; lead: number; coups: { move: number; winrate: number | null; lead: number }[] };
-export async function analyseEtude(pos: Position, komi: number, visites = 96): Promise<AnalyseEtude> {
+export async function analyseEtude(pos: Position, komi: number, visites = 96, regles?: Rules): Promise<AnalyseEtude> {
   let k = kataGoRevue() ?? null;
   if ((!k || k.info.state !== 'pret') && (await reseauEnCache())) {
     k = getKataGo();
     try { await k?.start?.(); } catch { /* KataGo indisponible */ }
   }
   if (!k || k.info.state !== 'pret') return { katago: false };
-  const a = await analyserGarde(k, pos, { komi, visits: visites, timeMs: visites * 30, maxMoves: 6 });
+  const a = await analyserGarde(k, pos, { komi, visits: visites, timeMs: visites * 30, maxMoves: 6, ...(regles ? { regles } : {}) });
   return {
     katago: true,
     lead: pos.toPlay === 1 ? a.lead : -a.lead,

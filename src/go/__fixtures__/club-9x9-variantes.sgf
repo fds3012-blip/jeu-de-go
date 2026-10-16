@@ -1,0 +1,11 @@
+(;GM[1]FF[4]CA[UTF-8]AP[Sabaki:0.52.2]KM[7]SZ[9]DT[2026-10-12]
+GN[Club du jeudi]PB[Ana]PW[Léo]RU[Japanese]
+C[Partie du club, commentée après coup.
+Les crochets s'échappent : a\[1\] et l'antislash : \\ fin.]
+;B[ee]C[Le centre : classique en 9 × 9.]
+;W[gc]
+(;B[gd];W[fc]
+(;B[hc];W[hb];B[ec]C[Coupe-t-on ici ?]LB[eb:A][fb:B];W[eb];B[db])
+(;B[fd]C[Plus solide.];W[ed];B[hb]C[Variante dans la \
+variante.]))
+(;B[cg]C[Une autre idée : le coin.];W[gg];B[]C[Noir passe pour voir.];W[tt]))
