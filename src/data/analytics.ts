@@ -117,7 +117,8 @@ export const EVENTS = {
   // tesuji). Les premiers essais d'une série portent `theme` dans `probleme_termine`. Jamais le record ni les réussites.
   themeOuvert: 'theme_ouvert',
   // Expérience des problèmes (#549). `erreur_comprise` : un coup faux a reçu une réponse prouvée par le lecteur exact
-  // (`probleme`, `but` : prendre ou sauver, `du_jour`). `solution_complete` : la solution coup par coup s'ouvre
+  // (`probleme`, `but` : prendre, sauver, ou points depuis #558 (fin de partie, comptage, ko : un compte de points),
+  // `du_jour`). `solution_complete` : la solution coup par coup s'ouvre
   // (`probleme`, `coups`, `apres_echec`). `theme_maitrise` : une série par thème atteint l'objectif de maîtrise
   // (`theme`). `theme_suivant` : « Thème suivant » touché (`de`, `vers`). Jamais le coup joué ni la position.
   erreurComprise: 'erreur_comprise',

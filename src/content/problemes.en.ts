@@ -1622,7 +1622,7 @@ export const PROBLEMES_EN: Record<string, TexteProbleme> = {
     title: 'Block the slide',
     prompt: 'White has just slid to D1, on the first line, under your territory. There are also two open points at the top. Play the move worth the most.',
     explanation: 'Well done! C1 blocks the D1 stone on contact: it goes no further. Blocking at C2 let White move on to C1, and the space between D9 and E9 is worth less than this slide. After C1, if White takes D9, you take E9; if White takes E9, you take D9.',
-    refutation: 'Not quite. White plays C1: it moves on along the first line, and you lose at least two more points.',
+    refutation: 'Not quite. White keeps the edge on the first line: you lose at least one point compared with the right move.',
   },
   ab02: {
     title: 'The corner eye first',
@@ -1646,7 +1646,7 @@ export const PROBLEMES_EN: Record<string, TexteProbleme> = {
     title: 'The atari that blocks',
     prompt: 'White has just played D1, a hane under your C1 stone. There are also two open points at the top. Play the move worth the most.',
     explanation: 'Well done! D2 puts D1 in atari on contact: White must save it, and nothing gets into your corner. Blocking further away, at B2 or C2, let White move in and was worth less. At the top, if White takes D9, you take D8; if White takes D8, you take D9.',
-    refutation: 'Not quite. White plays D2: its D1 stone is saved, it gets into your corner, and you lose at least two more points.',
+    refutation: 'Not quite. White keeps its D1 stone in your corner: you lose at least one point compared with the right move.',
   },
   ab06: {
     title: 'The point on the edge',
