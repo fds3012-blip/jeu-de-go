@@ -28,6 +28,7 @@ import { fusionner, nettoyer } from '../src/app/reglagesCompte';
 // de la partie (`defis.delai_coup`), perte au temps constatée au coup, à la lecture (`victoire_au_temps`) et par
 // `tacheLentes()` (la tâche pg_cron), sur une horloge du serveur qu'un test avance (`avancerHorloge`). Classée :
 // ±162 ; annulée sans cote si personne n'a vraiment joué.
+// Profil public (#560) : `profil_public` (null pour un inconnu ou un blocage, parties classées, lien d'amitié).
 // Sécurité (#363, #373) : `signaler`, `bloquer_joueur`, `debloquer_joueur`, `mes_blocages`, `dire_en_partie` (mêmes
 // règles et mêmes codes que supabase/migrations/20261005220100_securite_signalements.sql, sauf la fin de partie depuis
 // plus de 10 minutes) ; les INSERT de `messages_partie` sont poussés aux deux joueurs, sauf à celui qui a bloqué
@@ -593,6 +594,32 @@ export function fauxServeur() {
       }
       return json({ parties: h.length, meilleure_cote: meilleure ? meilleure.rating : null, meilleure_cote_le: meilleure ? String(meilleure.created_at).slice(0, 10) : null,
         serie_victoires: record, serie_en_cours: serie });
+    }
+    // Profil public (#560) : comme `profil_public` (supabase/migrations/20261016120000_profil_public.sql) : null pour un
+    // pseudo inconnu ou si l'un bloque l'autre ; adversaire par pseudo seulement sans blocage avec le demandeur.
+    if (chemin === '/rest/v1/rpc/profil_public') {
+      const refus = (code: string) => json({ code, message: code, details: null, hint: null }, 400);
+      if (!u || u.anonyme) return refus('JGC01');
+      if (!profiles.find(x => x.id === u.id)?.username) return refus('JGP01');
+      const corps = (req.postDataJSON() ?? {}) as { p_pseudo?: string };
+      const cible = profiles.find(x => String(x.username ?? '').toLowerCase() === String(corps.p_pseudo ?? '').trim().toLowerCase());
+      if (!cible || (cible.id !== u.id && estBloque(u.id, String(cible.id)))) return json(null);
+      const lui = String(cible.id);
+      const f = amities.find(x => (x.de === u.id && x.a === lui) || (x.de === lui && x.a === u.id));
+      const lien = lui === u.id ? 'moi' : !f ? 'aucun' : f.etat === 'accepted' ? 'amis' : f.de === u.id ? 'envoyee' : 'recue';
+      const classees = games.filter(g => g.status === 'finished' && g.rated && !g.bot_id && g.black_id && g.white_id && (g.black_id === lui || g.white_id === lui))
+        .sort((a, b) => String(b.updated_at ?? '').localeCompare(String(a.updated_at ?? '')));
+      const parties = classees.slice(0, 5).map(g => {
+        const adv = g.black_id === lui ? String(g.white_id) : String(g.black_id);
+        const pseudoAdv = profiles.find(x => x.id === adv)?.username;
+        const r = String(g.result ?? '');
+        return {
+          adversaire: adv === u.id ? pseudoAdv : !pseudoAdv || estBloque(u.id, adv) ? null : pseudoAdv, toi: adv === u.id,
+          gagnee: r.startsWith('B+') ? g.black_id === lui : r.startsWith('W+') ? g.white_id === lui : null,
+          le: String(g.updated_at ?? new Date().toISOString()).slice(0, 10), taille: g.size, couleur: g.black_id === lui ? 'noir' : 'blanc',
+        };
+      });
+      return json({ pseudo: cible.username, cote: Math.round(Number(cible.rating ?? 800)), provisoire: cible.cote_provisoire === true, parties_classees: classees.length, lien, parties });
     }
     if (chemin === '/rest/v1/rpc/marquer_notifications_lues') {
       if (!u) return json({ message: 'Connexion requise' }, 401);

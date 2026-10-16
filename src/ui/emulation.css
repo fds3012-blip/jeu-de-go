@@ -41,6 +41,12 @@
   .amis-jour-rappel:active { transform: scale(.97); }
 }
 
+/* #560 : dans une phrase du bilan, le pseudo d'un ami se touche (profil public) : même texte, zone de 44 px. */
+.semaine-nom { display: inline-block; min-height: var(--cible-min); margin: -12px -4px; padding: 0 4px; border: 0; background: none; color: inherit;
+  font: inherit; font-weight: var(--fw-bold); text-decoration: underline; text-decoration-color: var(--accent-trait); text-underline-offset: 3px; border-radius: 8px; }
+.semaine-nom:active { color: var(--accent-texte); }
+.semaine-nom:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+
 /* ---------- Ta semaine (Profil) ---------- */
 .semaine { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-4); }
 .semaine > * { min-width: 0; }
