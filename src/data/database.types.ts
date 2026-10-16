@@ -1651,6 +1651,8 @@ export type Database = {
       pendule_direct: { Args: { p_partie: string }; Returns: Json }
       play_move: { Args: { p_game: string; p_move: string }; Returns: string }
       preparer_rattachement: { Args: never; Returns: string }
+      // #560 : profil public d'un joueur par son pseudo exact (null : inconnu ou blocage).
+      profil_public: { Args: { p_pseudo: string }; Returns: Json }
       pseudo_autorise: { Args: { p_pseudo: string }; Returns: boolean }
       purger_securite: { Args: never; Returns: undefined }
       quitter_file_attente: { Args: never; Returns: string }

@@ -150,6 +150,9 @@ export const EVENTS = {
   // rejoint la sienne), puis défi lancé depuis « Mes amis », sans lien. Jamais le pseudo ni la partie.
   amiAjoute: 'ami_ajoute',
   defiDepuisProfil: 'defi_depuis_profil',
+  // Profil public d'un joueur (#560) : écran « Profil de {pseudo} » ouvert (`depuis` : fin_partie, amis, demande, bilan,
+  // profil ; `lien` : aucun, envoyee, recue, amis, moi, ou indisponible). Jamais le pseudo.
+  profilPublicOuvert: 'profil_public_ouvert',
   // Conseil de Mochi (#80) : phrase demandée (`modele`, `aucun` si rien de sûr), puis retour « utile / pas utile » (`utile`).
   conseilDemande: 'conseil_demande',
   conseilNote: 'conseil_note',
