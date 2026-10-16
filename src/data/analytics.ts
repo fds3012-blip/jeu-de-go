@@ -187,6 +187,8 @@ export const EVENTS = {
   // Modes de l'accueil (#429) : `mode` (en_ligne, ordi, ami, deux, guidee, decouverte : #524), `depuis` (bouton, plateau, tuile, plus,
   // feuille : bouton de « Changer »), `principal` (le mode était l'action principale de l'accueil).
   modeChoisi: 'mode_choisi',
+  // #571 (loi de Hick) : options repliées ouvertes par « Changer » (`ecran` : direct, lente : réglages de la partie en ligne).
+  plusOuvert: 'plus_ouvert',
   // Joueur de club (#365, #368, #372). Réglage changé (`cle` : nom du réglage, `valeur` : nouvelle valeur, jamais rien
   // de personnel) ; « Mes statistiques » ouvert (`revues`, `parties` : nombres sur l'appareil, `compte`) ; « Étudier une
   // position » ouvert (`taille`, `reprise` : étude gardée retrouvée) ; analyse demandée (`taille`, `pierres`,

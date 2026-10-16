@@ -37,9 +37,8 @@ async function repliAccepte(ana: Page, serveur: FauxServeur): Promise<string> {
   await choisirMode(ana, 'en_ligne');
   const choix = ana.getByTestId('direct-choix');
   // File par défaut : 9 × 9, normal, japonais (#436), même si l'accueil était réglé autrement.
-  await expect(choix.getByRole('button', { name: '9 × 9' })).toHaveAttribute('aria-pressed', 'true');
-  await expect(choix.getByRole('button', { name: /Normal/ })).toHaveAttribute('aria-pressed', 'true');
-  await expect(choix.getByRole('button', { name: 'Japonais' })).toHaveAttribute('aria-pressed', 'true');
+  // #571 (loi de Hick) : les réglages sont repliés ; le résumé dit les valeurs par défaut.
+  await expect(choix.getByTestId('reglages-resume')).toHaveText('9 × 9 · Normal, 10 min + 3 × 30 s · comptage japonais');
   await choix.getByRole('button', { name: 'Trouver un adversaire' }).click();
   await expect(ana.getByText('Je cherche quelqu’un de ton niveau…')).toBeVisible();
   // Rien avant 25 s : 23 s plus tard (horloge de la page avancée d'un coup), toujours pas de proposition…
