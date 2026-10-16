@@ -18,7 +18,8 @@ import { CRAN_DEPART, cranDuNiveau, niveauGuide, OPPONENTS, type OpponentId } fr
 import { reseauEnCache } from '../engine/katago/cacheReseau';
 import { bandeauReseau, proposerRepli, REPLI_HORS_LIGNE } from './horsLigne';
 import { ConsentModal } from './Confidentialite';
-import type { VueProfil } from './Profil';
+import type { JoueurVu, VueProfil } from './Profil';
+import type { DepuisProfil } from './ProfilPublic';
 import type { Lesson } from '../content/lessons';
 import { langue, t } from '../content/i18n';
 import { jamaisJoue, proprietesArrivee } from './arriveePartage';
@@ -444,6 +445,20 @@ export function App() {
   const [jourAnnonce] = useState(() => lireJourAnnonce(readLocal<unknown>(ANNONCE_DU_JOUR_KEY, null)));
   // #369 : bilan de la semaine passée, lu une fois à l'ouverture (la carte le marque vu dès qu'elle s'affiche).
   const [bilanPasse, setBilanPasse] = useState(() => bilanAMontrer(etatSemaine()));
+  // #560 : « Profil de {pseudo} » (pile des profils ouverts), dans l'onglet Profil. Jamais sans compte complet.
+  const [joueurVu, setJoueurVu] = useState<JoueurVu | null>(null);
+  const ouvrirJoueur = useCallback((pseudo: string, depuis: DepuisProfil, retour: VueProfil = 'menu') => {
+    setJoueurVu(j => (j && depuis === 'profil' ? { ...j, pseudos: [...j.pseudos, pseudo] } : { pseudos: [pseudo], depuis, retour }));
+    setVueProfil('joueur');
+    window.scrollTo({ top: 0 });
+  }, []);
+  const retourJoueur = () => {
+    setJoueurVu(j => {
+      if (!j || j.pseudos.length <= 1) { setVueProfil(j?.retour ?? 'menu'); return null; }
+      return { ...j, pseudos: j.pseudos.slice(0, -1) };
+    });
+    window.scrollTo({ top: 0 });
+  };
   const appel = appelSecondaire({
     jour: numeroJour, parties: parties.n, duJourFait, annonce: annonceAccueil, jourAnnonce, semaine: bilanPasse !== null,
     installation: estMomentRetour(ouverture) && doitProposer({ plateforme, etat: etatInstall, moment: 'retour', enPartie: false }),
@@ -666,10 +681,12 @@ export function App() {
     setDuJourDirect(false);
     setIntroRegles(null); // #523
     if (t === 'problemes' && tab === 'problemes') setRacineProblemes(n => n + 1);
-    setDefi(null); setDirect(false); setLente(false); setRepli(null); setEcranCompte(null); setAnnonceGel(null); setRetourSerie(null); setEnPlacement(false); setTab(t); setPlaying(false); setLessonId(null); setSerie3(null); setVueProfil('menu'); setPartagee(null); window.scrollTo({ top: 0 });
+    setDefi(null); setDirect(false); setLente(false); setRepli(null); setEcranCompte(null); setAnnonceGel(null); setRetourSerie(null); setEnPlacement(false); setTab(t); setPlaying(false); setLessonId(null); setSerie3(null); setVueProfil('menu'); setJoueurVu(null); setPartagee(null); window.scrollTo({ top: 0 });
     setSeanceRevisions(false); // #469
     setDecouverte(false); // #524
   };
+  /** #560 : depuis un écran hors du Profil (fin d'une partie en ligne, accueil), l'onglet Profil s'ouvre sur ce joueur. */
+  const voirJoueur = (pseudo: string, depuis: DepuisProfil) => { go('profil'); ouvrirJoueur(pseudo, depuis, 'menu'); };
 
   // Reprise de l'action demandée, dès que le compte est complet ; `compte_cree` quand un compte sans pseudo apparaît.
   const executer = useRef<(r: Reprise) => void>(() => {});
@@ -833,7 +850,9 @@ export function App() {
         // #442 : attente après des parties quittées : l'IA la plus proche de la cote, sans rester dans la file.
         onOrdi={(contre, demande) => { setDirect(false); setDirectRejoint(null); lancer('ordi', contre, { contre, demande, depuis: Date.now(), veille: false }); }}
         celebrer={settings.celebrations} onAccueil={() => { setDirect(false); setDirectRejoint(null); window.scrollTo({ top: 0 }); }}
-        onFacon={changerFacon} onPlein={setDirectPlein} />
+        onFacon={changerFacon} onPlein={setDirectPlein}
+        // #560 : le profil de l'adversaire, depuis le bilan de la partie.
+        onProfil={etat === 'complet' ? p => voirJoueur(p, 'fin_partie') : undefined} />
       : null;
   } else if (enLente) {
     screen = supabase && compteId
@@ -848,7 +867,9 @@ export function App() {
   } else if (enDefi && defi.vue === 'partie' && supabase) {
     screen = <DefiPartie key={defi.id} db={supabase} partieId={defi.id} userId={session?.user.id} anonyme={estAnonyme(session)} pseudo={pseudo ?? null} confirmTouch={settings.confirmTouch} reglages={{ modifier: set }} celebrer={settings.celebrations}
       onRetour={quitterDefi} onAutre={() => { setDefi({ vue: 'liste' }); window.scrollTo({ top: 0 }); }}
-      onAutreLente={() => { setDefi(null); setDirect(false); setLente(true); window.scrollTo({ top: 0 }); }} />;
+      onAutreLente={() => { setDefi(null); setDirect(false); setLente(true); window.scrollTo({ top: 0 }); }}
+      // #560 : le profil de l'ami ou de l'adversaire, depuis le bilan de la partie (compte complet seulement).
+      onProfil={etat === 'complet' ? p => voirJoueur(p, 'fin_partie') : undefined} />;
   } else if (enDefi && defi.vue === 'arrivee') {
     screen = <DefiArrivee key={defi.jeton} db={supabase} jeton={defi.jeton} inviteur={defi.inviteur} compte={COMPTES ? etat : 'aucun'} onPartie={ouvrirDefiPartie} onAccueil={quitterDefi} />;
   } else if (enDefi) {
@@ -970,8 +991,10 @@ export function App() {
       amis={supabase ? {
         db: supabase, compte: etat === 'complet', demandes: demandesAmis,
         onCompte: () => { garde({ quoi: 'en_ligne' }, { quoi: 'amis' }); },
-        onDefi: id => { setVueProfil('menu'); setTab('jouer'); setPlaying(false); setDefi({ vue: 'partie', id }); window.scrollTo({ top: 0 }); },
-      } : undefined} />;
+        onDefi: id => { setVueProfil('menu'); setJoueurVu(null); setTab('jouer'); setPlaying(false); setDefi({ vue: 'partie', id }); window.scrollTo({ top: 0 }); },
+      } : undefined}
+      // #560 : profil public d'un joueur, depuis « Mes amis », une demande ou « Ta semaine ».
+      joueur={{ vu: joueurVu, ouvrir: ouvrirJoueur, retour: retourJoueur }} />;
   } else {
     const numero = numeroJour;
     const daily = duJour;
@@ -1012,7 +1035,8 @@ export function App() {
         installation={appel === 'installation' ? <ProposerInstallation moment="retour" /> : null}
         semaine={appel === 'semaine' && bilanPasse ? (
           <Suspense fallback={null}>
-            <CarteBilanSemaine semaine={bilanPasse} db={etat === 'complet' ? supabase : null} onFermer={() => setBilanPasse(null)} />
+            <CarteBilanSemaine semaine={bilanPasse} db={etat === 'complet' ? supabase : null} onFermer={() => setBilanPasse(null)}
+              onProfil={etat === 'complet' ? p => voirJoueur(p, 'bilan') : undefined} />
           </Suspense>
         ) : null}
         // Accueil v3 : un défi d'un ami où c'est ton tour passe en premier dans « Aujourd'hui ».

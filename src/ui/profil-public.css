@@ -1,0 +1,78 @@
+/* « Profil de {pseudo} » (#560). Chargée avec l'écran (à la demande) : hors du CSS initial. Rôles du thème seulement
+   (tokens.css) : les deux modes suivent, contraste AA vérifié par tokens.test.ts.
+   Un seul bouton en relief : l'action avec ce joueur (Défier, Demander en ami, Accepter). Le reste est calme.
+   L'élément qui marque : la bande des cinq dernières parties, cinq pierres de sa couleur, cerclées de jade pour une
+   victoire, ternes pour une défaite, comme un bol de pierres après la partie. */
+
+.joueur { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-4); }
+.joueur > * { min-width: 0; }
+
+/* ---------- Carte d'identité ---------- */
+.joueur-carte { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: var(--space-2) var(--space-3); align-items: center;
+  padding: var(--space-4); background: var(--surface); border-radius: var(--radius); }
+.joueur-initiale { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; background: var(--surface-2);
+  font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: var(--fs-display-s); letter-spacing: var(--tracking-titre); }
+.joueur-texte { min-width: 0; display: grid; gap: 2px; }
+.joueur-pseudo { margin: 0; font-family: var(--font-titre); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre);
+  font-size: var(--fs-xl); line-height: 1.15; overflow-wrap: anywhere; }
+.joueur-cote { margin: 0; color: var(--text); font-weight: var(--fw-medium); font-variant-numeric: tabular-nums; }
+.joueur-cote .joueur-grade { font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: var(--fs-l); letter-spacing: var(--tracking-titre); }
+.joueur-cote .joueur-cote-nombre { color: var(--muted); font-size: var(--fs-s); margin-left: 8px; }
+.joueur-classees { margin: 0; color: var(--muted); font-size: var(--fs-s); }
+/* La bande des pierres : grille entière, sous la carte d'identité. */
+.joueur-bande { grid-column: 1 / -1; display: flex; gap: 8px; margin-top: 2px; }
+.joueur-bande .stone { width: 22px; height: 22px; }
+.joueur-bande .stone.gagnee { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--accent-trait); }
+.joueur-bande .stone.perdue { opacity: .55; }
+.joueur-bande .stone.w.gagnee { box-shadow: 0 0 0 1px rgba(0, 0, 0, .18), 0 0 0 2px var(--surface), 0 0 0 4px var(--accent-trait); }
+
+/* ---------- L'action avec ce joueur ---------- */
+.joueur-action { display: grid; gap: var(--space-2); }
+.joueur-action .btn.primary { width: 100%; min-height: var(--cible-cta); font-size: var(--fs-cta); }
+.joueur-action-etat { margin: 0; color: var(--muted); line-height: 1.45; text-wrap: pretty; }
+.joueur-action-etat.ok { color: var(--accent-texte); font-weight: var(--fw-medium); }
+.joueur-action-etat.erreur { color: var(--danger-texte); font-weight: var(--fw-medium); }
+.joueur-action-ligne { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+.joueur-action-ligne .btn.primary { flex: 1 1 10em; width: auto; }
+.lien.joueur-secondaire { color: var(--muted); font-weight: var(--fw-medium); }
+.joueur-action > .lien.joueur-secondaire { justify-self: start; margin-left: -12px; }
+.joueur-regle { margin: 0; color: var(--muted); font-size: var(--fs-s); line-height: 1.4; text-wrap: pretty; }
+
+/* ---------- Dernières parties classées ---------- */
+.joueur-parties h3 { margin: 0 0 var(--space-2) var(--space-1); font-size: var(--fs-s); font-weight: var(--fw-bold); color: var(--muted); }
+.joueur-liste { list-style: none; margin: 0; padding: 0; background: var(--surface); border-radius: var(--radius); overflow: hidden; }
+.joueur-partie { display: flex; align-items: center; gap: var(--space-3); min-height: 56px; padding: 6px var(--space-4); }
+.joueur-partie + .joueur-partie { box-shadow: inset 0 1px 0 var(--line); }
+.joueur-partie .stone { width: 18px; height: 18px; }
+.joueur-partie-texte { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.joueur-partie-resultat { font-weight: var(--fw-bold); }
+.joueur-partie.gagnee .joueur-partie-resultat { color: var(--accent-texte); }
+.joueur-partie-contre { color: var(--muted); font-size: var(--fs-s); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* L'adversaire se touche : son profil s'ouvre. Même hauteur que la ligne, sans bouger le texte. */
+.joueur-partie-contre .lien { min-height: var(--cible-min); padding: 0 4px; margin: -12px -4px; color: var(--text); font-weight: var(--fw-bold); font-size: var(--fs-s); border-radius: 8px; }
+.joueur-partie-meta { flex: none; text-align: right; color: var(--muted); font-size: var(--fs-s); line-height: 1.3; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.joueur-partie-meta span { display: block; }
+.joueur-aucune { margin: 0; padding: var(--space-3) var(--space-4); background: var(--surface); border-radius: var(--radius); color: var(--muted); }
+
+/* ---------- États : chargement, indisponible, erreur ---------- */
+.joueur-etat { display: grid; justify-items: center; gap: var(--space-2); padding: var(--space-5) var(--space-3); text-align: center; }
+.joueur-etat p { margin: 0; text-wrap: pretty; max-width: 26em; }
+.joueur-etat-titre { font-family: var(--font-titre); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre); font-size: var(--fs-xl); line-height: var(--lh-titre); }
+.joueur-etat .muted { line-height: 1.45; }
+
+/* Signaler ou bloquer : au bout, discret. */
+.lien.joueur-signaler { justify-self: start; margin-left: -12px; color: var(--muted); font-weight: var(--fw-medium); }
+
+@media (prefers-reduced-motion: no-preference) {
+  /* La carte se pose, les pierres arrivent les unes après les autres : une seule entrée, à l'ouverture. */
+  .joueur-carte { animation: joueur-pose 220ms var(--ease) both; }
+  .joueur-bande .stone { animation: joueur-pierre 260ms var(--ease) both; animation-delay: calc(120ms + var(--i, 0) * 45ms); }
+  @keyframes joueur-pose { from { opacity: 0; transform: translateY(6px); } }
+  @keyframes joueur-pierre { from { opacity: 0; transform: scale(.6); } }
+}
+
+@media (max-width: 359px) {
+  .joueur-carte { grid-template-columns: 48px minmax(0, 1fr); padding: var(--space-3); }
+  .joueur-initiale { width: 48px; height: 48px; font-size: var(--fs-xl); }
+  .joueur-partie { padding-left: var(--space-3); padding-right: var(--space-3); }
+}
