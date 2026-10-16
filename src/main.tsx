@@ -7,8 +7,9 @@ import { createRoot } from 'react-dom/client';
 // Styles des écrans chargés à la demande (src/app/ecrans.ts) : importés ici, avant App et dans l'ordre
 // d'origine, pour qu'ils restent dans la feuille principale, à la même place qu'avant (rendu identique).
 // Un nouvel écran peut importer sa propre feuille : elle arrivera avec son code.
-// #563 : comptage.css, conseil.css et amis.css arrivent avec leurs écrans ; profil-ecran.css et course-ecran.css aussi (la part de
-// profil.css et de course.css que le JS initial n'affiche pas). Détail : docs/architecture/chargement-initial.md.
+// #563 : comptage.css, conseil.css et amis.css arrivent avec leurs écrans ; profil-ecran.css, course-ecran.css et
+// defis-ecran.css aussi (la part de profil.css, course.css et defis.css que le JS initial n'affiche pas).
+// Détail : docs/architecture/chargement-initial.md.
 import './ui/board.css';
 import './ui/partie.css';
 import './ui/fin.css';

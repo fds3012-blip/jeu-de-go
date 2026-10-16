@@ -1,72 +1,21 @@
 /* Défi par lien (#81) : écran « Défier un ami », arrivée par le lien, partie en différé.
-   Tokens seulement (tokens.css) : les deux thèmes suivent sans règle de plus. */
+   Tokens seulement (tokens.css) : les deux thèmes suivent sans règle de plus.
+   #563 : ici, ce qui reste dans la feuille principale (App.tsx l'importe) ; le reste est dans defis-ecran.css,
+   chargée avec Defis, Direct et Lentes. Restent ici .defi-point (lente-point, dans direct.css, passe après elle) et
+   .defi-comptage (ses boutons « btn primary » : .btn.primary d'app.css passe après elle). */
 
 .defis { display: grid; gap: var(--space-3); padding-top: var(--space-2); }
-.defis-tete { display: grid; justify-items: center; gap: var(--space-2); text-align: center; padding: var(--space-4) var(--space-2) 0; }
-.defis-tete p { margin: 0; }
-.defis-pierres { display: flex; }
-.defis-pierres .stone { width: 44px; height: 44px; }
-.defis-pierres .stone + .stone { margin-left: -6px; }
-.defis-intro { font-family: var(--font-titre); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre);
-  font-size: var(--fs-l); line-height: var(--lh-titre); text-wrap: balance; max-width: 22em; }
 .defis .muted.small { text-wrap: pretty; max-width: 30em; }
-
-/* L'action principale de l'écran, dans le flux (pas le .cta fixe de l'accueil). */
-.btn.primary.defis-cta { width: 100%; min-height: var(--cible-cta); font-size: var(--fs-cta); }
-.defi-erreur { margin: 0; color: var(--danger-texte); }
-
-/* Lien créé : lisible, sélectionnable, jamais plus large que l'écran. */
-.defi-lien { display: grid; gap: var(--space-2); }
-.defi-lien-texte { width: 100%; min-width: 0; min-height: var(--cible-min); box-sizing: border-box; padding: 0 12px; border-radius: var(--radius-s);
-  border: 1.5px solid var(--line); background: var(--bg); color: var(--text); font: inherit; font-size: var(--fs-s);
-  text-overflow: ellipsis; }
-
-/* Parties en cours contre des amis. */
-.defis-liste h2 { font-size: var(--fs-m); margin: var(--space-2) 0 var(--space-2); }
-.defis-liste ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
-.defi-ligne { width: 100%; min-height: 60px; display: flex; align-items: center; gap: var(--space-2); text-align: left;
-  background: var(--surface); color: var(--text); border: 0; border-radius: var(--radius-xs); padding: 10px 14px; font: inherit; }
-.defis-liste li:first-child .defi-ligne { border-top-left-radius: var(--radius); border-top-right-radius: var(--radius); }
-.defis-liste li:last-child .defi-ligne { border-bottom-left-radius: var(--radius); border-bottom-right-radius: var(--radius); }
-.defi-ligne-texte { flex: 1; min-width: 0; display: grid; gap: 2px; }
-.defi-ligne-texte b { font-weight: var(--fw-bold); }
-/* #400 : le pseudo de l'ami en titre de la ligne, la date du défi à droite, en retrait. Un pseudo long est coupé (… ). */
-.defi-ligne-haut { display: flex; align-items: baseline; gap: var(--space-2); min-width: 0; }
-.defi-ligne-nom { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.defi-ligne-date { flex: none; margin-left: auto; color: var(--muted); font-size: var(--fs-s); font-variant-numeric: tabular-nums; }
-.defi-ligne-texte small { color: var(--muted); font-size: var(--fs-s); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.defi-ligne.a-moi small { color: var(--text); }
 .defi-point { flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--accent-trait); }
-.defi-chevron { flex: none; color: var(--muted); font-size: 24px; line-height: 1; }
-@media (hover: hover) and (pointer: fine) { .defi-ligne:hover { background: var(--surface-2); } }
-.defi-ligne:active { background: var(--surface-2); }
-
-/* Partie en différé : même grammaire que l'écran de partie (partie.css). */
-.defi-partie .defi-charge { display: grid; gap: var(--space-3); margin-top: var(--space-6); text-align: center; }
-.defi-bas { display: grid; gap: var(--space-2); }
-.defi-bas .coach { margin-top: 0; }
-.defi-rappel { margin: 0 2px; }
 /* #393 : sur un écran bas (iPhone SE), la règle des 3 jours passait sous la barre d'actions ; Mochi dit déjà le temps qui reste. */
-@media (max-height: 700px) { .defi-rappel { display: none; } }
-.defi-bas .comptage { margin: 0 2px; }
 .defi-comptage { display: flex; gap: var(--space-2); }
 .defi-comptage .btn { flex: 1 1 0; min-width: 0; min-height: var(--cible-bouton); line-height: 1.2; }
 .defi-comptage .btn:not(.primary) { box-shadow: inset 0 0 0 1.5px var(--line); }
-.defi-fin { display: grid; gap: var(--space-2); justify-items: center; text-align: center; }
-.defi-fin-titre { margin: 0; font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: var(--fs-xl); line-height: var(--lh-titre); text-wrap: balance; }
 
 /* Carte « Garde ta partie » : arrive après le premier coup, sans pousser brusquement le plateau. */
 @media (prefers-reduced-motion: no-preference) {
-  .defi-inscription { animation: defi-apparait 220ms var(--ease) both; }
   @keyframes defi-apparait { from { opacity: 0; transform: translateY(8px); } }
 }
 
 /* En-tête de l'accueil : flamme et gel à droite. #429 : « Défier un ami » est devenu la tuile « Un ami » (accueil.css). */
 .entete-droite { display: inline-flex; align-items: center; gap: var(--space-2); min-width: 0; }
-
-/* Audit du 02/10 (n° 2) : état vide de « Tes parties contre tes amis ». Tuile en pointillés (direction v2 : ce qui viendra
-   plus tard), un bout de goban et une phrase ; aucune action de plus. */
-.defis-vide-tuile { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3); border-radius: var(--radius);
-  border: 1.5px dashed color-mix(in srgb, var(--text) 28%, transparent); }
-.defis-vide-tuile p { margin: 0; line-height: 1.45; color: var(--text); text-wrap: pretty; }
-.defis-vide-goban { flex: none; width: 76px; height: 76px; border-radius: 8px; box-shadow: 0 6px 12px -6px rgba(0, 0, 0, .45); }

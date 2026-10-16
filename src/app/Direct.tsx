@@ -43,6 +43,8 @@ import { td, type CleDirect } from '../content/i18n/direct';
 import { nombre, t } from '../content/i18n/secondaires';
 import { fr } from '../ui/typo';
 import '../ui/defis.css';
+// #563 : le reste des styles des défis, hors du CSS initial (avant direct.css, comme dans la feuille principale).
+import '../ui/defis-ecran.css';
 import '../ui/direct.css';
 
 import { BasculeEnLigne, type FaconEnLigne } from './BasculeEnLigne';

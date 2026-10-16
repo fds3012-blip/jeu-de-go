@@ -42,6 +42,8 @@ import { langue, nombre, t } from '../content/i18n/secondaires';
 // #364 : lien court (`mochi-go.app/defi#…`), avec sa page d'aperçu.
 import { originePartage } from './partage';
 import '../ui/defis.css';
+// #563 : le reste des styles des défis, hors du CSS initial (avant direct.css, comme dans la feuille principale).
+import '../ui/defis-ecran.css';
 import { joursDuDelai } from '../data/lente';
 import { tl } from '../content/i18n/lente';
 import { useEchanges } from './echanges';
