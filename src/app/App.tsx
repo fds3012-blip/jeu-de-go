@@ -59,8 +59,8 @@ import { useExercice } from '../ui/celebrations';
 import { ProposerInstallation, usePlateformeInstallation } from '../ui/ProposerInstallation';
 import { doitProposer, estMomentRetour, etatInstallation, noterOuverture } from './installation';
 import { ANNONCE_DU_JOUR_KEY, appelSecondaire, etatTuile, lireJourAnnonce } from './appelsAccueil';
-import { TAILLE_SERIE, THEMES_DE_LECON, serieDeLecon } from '../content/themes';
-import { estRedite } from '../content/redites';
+// #563 : la série de fin de leçon (src/content/themes.ts, redites.ts) arrive quand on la demande ; ici, les thèmes seulement.
+import { THEMES_DE_LECON } from '../content/themesLecons';
 import type { Puzzle } from '../data/puzzles';
 import { compteDe, estAnonyme } from '../data/defiLien';
 import { INVITEUR_AU_CHARGEMENT, JETON_AU_CHARGEMENT, ecouterJetonDefi } from './adresseDefi';
@@ -941,13 +941,14 @@ export function App() {
         ouvrir: () => {
           if (!garde({ quoi: 'probleme' })) return;
           // #16 : la leçon complète (ses positions) vient du contenu des leçons, déjà chargé avec l'écran de la leçon.
-          void Promise.all([problemesLocaux(), import('../content/lessons')]).then(([problemes, { LESSONS: completes }]) => {
-            const complete = completes.find(l => l.id === lesson.id)!;
-            const s = serieDeLecon(lesson.id, problemes, new Set(Object.keys(readLocal<Record<string, true>>(SOLVED_KEY, {}))),
-              // #237 : pas le même exercice que l'étape de leçon qui vient d'être jouée.
-              TAILLE_SERIE, p => estRedite(p, complete));
-            if (s.length) { setSerie3(s); setLessonId(null); window.scrollTo({ top: 0 }); }
-          }).catch(() => { /* morceau introuvable (hors ligne sans cache) : on reste sur la fin de leçon */ });
+          void Promise.all([problemesLocaux(), import('../content/lessons'), import('../content/themes'), import('../content/redites')])
+            .then(([problemes, { LESSONS: completes }, { serieDeLecon, TAILLE_SERIE }, { estRedite }]) => {
+              const complete = completes.find(l => l.id === lesson.id)!;
+              const s = serieDeLecon(lesson.id, problemes, new Set(Object.keys(readLocal<Record<string, true>>(SOLVED_KEY, {}))),
+                // #237 : pas le même exercice que l'étape de leçon qui vient d'être jouée.
+                TAILLE_SERIE, p => estRedite(p, complete));
+              if (s.length) { setSerie3(s); setLessonId(null); window.scrollTo({ top: 0 }); }
+            }).catch(() => { /* morceau introuvable (hors ligne sans cache) : on reste sur la fin de leçon */ });
         },
       } : undefined}
       jouer={{ nom: premier.nom, lancer: () => { setLessonId(null); setTab('jouer'); lancer('ordi', premier.id); } }} />;
