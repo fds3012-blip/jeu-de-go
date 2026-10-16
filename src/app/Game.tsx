@@ -69,6 +69,11 @@ interface Props {
   /** « Analyser une autre partie » (#286) : ouvre l'import SGF du Profil, depuis la revue. */
   onImporter?: () => void;
   onResult?: (winner: 0 | 1 | 2, stats: StatsPartie) => void;
+  /**
+   * #559 : une nouvelle partie commence sur le même écran (« Rejouer » de l'écran de fin, « Rejouer d'ici » de la revue).
+   * L'écran parent redevient un exercice : aucune fête (XP, niveau) ne se pose sur le plateau avant la fin de celle-ci.
+   */
+  onRestart?: () => void;
   fin?: { bilan: ReactNode; mochi: ReactNode; action: ReactNode; onAccueil: () => void };
   /** Réglage « Célébrations » : carillon, vibration et confettis après une victoire. */
   celebrer?: boolean;
@@ -107,7 +112,7 @@ interface Props {
   garder?: (partie: { sgf: string; coups: number } | null) => void;
 }
 
-export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, onResult, fin, aiKomi = komi, portrait, celebrer = true, aide = true, avantage = true, accommodant = false, guidee, onImporter, reglages, coach, comptageSur = false, regles = 'japanese', handicap = 0, reprise: partieReprise, garder }: Props) {
+export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, onResult, onRestart, fin, aiKomi = komi, portrait, celebrer = true, aide = true, avantage = true, accommodant = false, guidee, onImporter, reglages, coach, comptageSur = false, regles = 'japanese', handicap = 0, reprise: partieReprise, garder }: Props) {
   // #365 : coordonnées et marque du dernier coup, selon les Réglages.
   const prefs = usePreferences();
   // #528 : position de départ, pierres de handicap comprises (Blanc commence alors).
@@ -541,6 +546,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     token.current++; atarisSubis.current = 0; setIndicesUtilises(0); setQuiMeneUtilises(0); setQuiMene(null); setConseilsUtilises(0); setConseilVu(null);
     reprise.current = h.length > 1;
     setHistory(h); resume(); setResigned(0); setThinking(false); setRelecture(null); setSgf(null);
+    onRestart?.();
     setMsg(tr(h.length > 1 ? (ai ? 'partie.reprise.ordi' : 'partie.reprise.deux') : ai ? 'partie.nouvelle.ordi' : 'partie.nouvelle.deux'));
   }
   function restart() {
@@ -548,6 +554,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     token.current++; atarisSubis.current = 0; setIndicesUtilises(0); setQuiMeneUtilises(0); setQuiMene(null); setConseilsUtilises(0); setConseilVu(null);
     reprise.current = false;
     setHistory([depart()]); resume(); setResigned(0); setThinking(false); setRelecture(null);
+    onRestart?.();
     setMsg(handicap >= 2 ? messageDebut() : tr(ai ? 'partie.nouvelle.ordi' : 'partie.nouvelle.deux'));
   }
 
