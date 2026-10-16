@@ -1,6 +1,6 @@
 # Cote Mochi : cote de jeu et grades (issue #417)
 
-Étape 1 : une cote visible, calculée par le serveur, traduite en grade kyu/dan. Étape 2 (plus tard, issue séparée) : des titres mensuels.
+Étape 1 : une cote visible, calculée par le serveur, traduite en grade kyu/dan. Étape 2 : des titres mensuels (#561, `docs/game-design/titres-mensuels.md`).
 
 ## Règles
 

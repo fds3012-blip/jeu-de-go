@@ -72,7 +72,33 @@ revoke all on public.titres_joueurs from public, anon;
 revoke insert, update, delete, truncate, references, trigger on public.titres_joueurs from authenticated;
 grant select on public.titres_joueurs to authenticated;
 
--- 3. Calcul d'un mois. Sans argument : le mois civil de Paris qui vient de finir. Rejouable : le mois est recalculé
+-- 3. Joueurs actifs d'une période (interne) : cote de fin de période (dernière ligne `game`), parties classées de la
+--    période, rang par cote décroissante (`rank()` : les ex æquo partagent le rang). Comptes sans pseudo exclus.
+create or replace function public.titres_actifs_du_mois(p_debut timestamptz, p_fin timestamptz, p_min_parties integer)
+returns table (user_id uuid, cote integer, parties integer, rang bigint)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  with lignes as (
+    select h.user_id, h.rating,
+           row_number() over (partition by h.user_id order by h.created_at desc, h.id desc) as rang_date,
+           count(*) over (partition by h.user_id) as parties
+      from public.rating_history h
+      join public.profiles p on p.id = h.user_id
+      where h.kind = 'game' and h.created_at >= p_debut and h.created_at < p_fin
+        and p.username is not null
+  )
+  select l.user_id, l.rating, l.parties::integer, rank() over (order by l.rating desc)
+    from lignes l
+    where l.rang_date = 1 and l.parties >= p_min_parties;
+$$;
+comment on function public.titres_actifs_du_mois(timestamptz, timestamptz, integer) is
+  'Issue #561 : joueurs actifs d''une période (parties classées, cote de fin de période, rang). Interne à calculer_titres_mensuels.';
+revoke execute on function public.titres_actifs_du_mois(timestamptz, timestamptz, integer) from public, anon, authenticated, service_role;
+
+-- 4. Calcul d'un mois. Sans argument : le mois civil de Paris qui vient de finir. Rejouable : le mois est recalculé
 --    (titres du mois effacés puis réécrits). Refuse un mois pas encore fini (22023).
 create or replace function public.calculer_titres_mensuels(p_mois date default null)
 returns jsonb
@@ -94,22 +120,7 @@ begin
     raise exception 'Le mois % n''est pas fini', to_char(v_mois, 'YYYY-MM') using errcode = '22023';
   end if;
 
-  -- Joueurs actifs du mois : cote de fin de mois (dernière ligne `game` du mois) et nombre de parties classées.
-  create temp table titres_actifs on commit drop as
-    with lignes as (
-      select h.user_id, h.rating,
-             row_number() over (partition by h.user_id order by h.created_at desc, h.id desc) as rang_date,
-             count(*) over (partition by h.user_id) as parties
-        from public.rating_history h
-        join public.profiles p on p.id = h.user_id
-        where h.kind = 'game' and h.created_at >= v_debut and h.created_at < v_fin
-          and p.username is not null
-    )
-    select user_id, rating as cote, parties::integer as parties,
-           rank() over (order by rating desc) as rang
-      from lignes
-      where rang_date = 1 and parties >= v_min_parties;
-  select count(*) into v_actifs from pg_temp.titres_actifs;
+  select count(*) into v_actifs from public.titres_actifs_du_mois(v_debut, v_fin, v_min_parties);
 
   delete from public.titres_joueurs where mois = v_mois;
 
@@ -130,7 +141,7 @@ begin
                   when a.rang <= ceil(v_actifs * 0.05) then 'expert'
                   else 'habitue' end,
              a.cote, a.parties
-        from pg_temp.titres_actifs a
+        from public.titres_actifs_du_mois(v_debut, v_fin, v_min_parties) a
         where a.rang <= ceil(v_actifs * 0.20);
     select count(*) filter (where titre = 'maitre') as n_maitre,
            count(*) filter (where titre = 'expert') as n_expert,
@@ -151,7 +162,6 @@ begin
   end if;
   -- Sinon (garde-fou : trop peu d'actifs pour une distribution qui veuille dire quelque chose) : le compteur seul.
 
-  drop table pg_temp.titres_actifs;
   return (select to_jsonb(m) - 'calcule_le' from public.titres_mois m where m.mois = v_mois);
 end;
 $$;
@@ -160,7 +170,7 @@ comment on function public.calculer_titres_mensuels(date) is
 revoke execute on function public.calculer_titres_mensuels(date) from public, anon, authenticated;
 grant execute on function public.calculer_titres_mensuels(date) to service_role;
 
--- 4. Titres d'un joueur, pour le profil public (#560) : mois et titre, mois publiés seulement, du plus récent au plus
+-- 5. Titres d'un joueur, pour le profil public (#560) : mois et titre, mois publiés seulement, du plus récent au plus
 --    ancien. Compte avec pseudo exigé ; rien si l'un des deux a bloqué l'autre (comme un joueur inconnu).
 create or replace function public.titres_du_joueur(p_profile_id uuid)
 returns table (mois date, titre text)
@@ -189,7 +199,7 @@ comment on function public.titres_du_joueur(uuid) is
 revoke execute on function public.titres_du_joueur(uuid) from public, anon;
 grant execute on function public.titres_du_joueur(uuid) to authenticated;
 
--- 5. Tâche : le 1er de chaque mois à 1 h 17 UTC (2 h 17 ou 3 h 17 à Paris : le mois de Paris est fini), comme
+-- 6. Tâche : le 1er de chaque mois à 1 h 17 UTC (2 h 17 ou 3 h 17 à Paris : le mois de Paris est fini), comme
 --    `purger-retours` (20261014150000_retours_joueurs.sql). La fonction choisit elle-même le mois de Paris écoulé.
 do $cron$
 begin

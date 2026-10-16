@@ -189,7 +189,10 @@ select pg_temp.egal((select bool_and(relrowsecurity) from pg_class where oid in 
 select pg_temp.egal((select count(*)::int from pg_policies where tablename = 'titres_mois'), 0, 'titres_mois : aucune politique');
 select pg_temp.egal((select string_agg(cmd, ',') from pg_policies where tablename = 'titres_joueurs'), 'SELECT', 'titres_joueurs : lecture seule');
 select pg_temp.egal((select bool_and(prosecdef and proconfig[1] = 'search_path=""') from pg_proc
-  where oid in ('public.calculer_titres_mensuels(date)'::regprocedure, 'public.titres_du_joueur(uuid)'::regprocedure)), true, 'security definer, search_path vide');
+  where oid in ('public.calculer_titres_mensuels(date)'::regprocedure, 'public.titres_du_joueur(uuid)'::regprocedure,
+                'public.titres_actifs_du_mois(timestamptz, timestamptz, integer)'::regprocedure)), true, 'security definer, search_path vide');
+select pg_temp.egal(has_function_privilege('authenticated', 'public.titres_actifs_du_mois(timestamptz, timestamptz, integer)', 'execute')
+  or has_function_privilege('anon', 'public.titres_actifs_du_mois(timestamptz, timestamptz, integer)', 'execute'), false, 'contrôle interne fermé');
 select pg_temp.egal(has_function_privilege('authenticated', 'public.calculer_titres_mensuels(date)', 'execute'), false, 'authenticated ne calcule pas');
 select pg_temp.egal(has_function_privilege('anon', 'public.calculer_titres_mensuels(date)', 'execute'), false, 'anon ne calcule pas');
 select pg_temp.egal(has_function_privilege('service_role', 'public.calculer_titres_mensuels(date)', 'execute'), true, 'clé service calcule');
