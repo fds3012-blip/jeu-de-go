@@ -58,6 +58,10 @@
 .bilan-precision th { color: var(--muted); font-weight: var(--fw-bold); }
 .bilan-score { display: inline-grid; place-items: center; min-width: 76px; min-height: 42px; padding: 0 var(--space-2); border-radius: 10px; white-space: nowrap;
   background: var(--surface-2); color: var(--text); font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: var(--fs-xl); }
+/* #559 : « 100 % » sur une ligne (nowrap). Police doublée (réglage système) : la case ne pousse plus le tableau au-delà
+   de l'écran (la fenêtre mobile s'élargissait et « Rejouer mes erreurs » n'était plus touchable) : le chiffre plafonne
+   à 7vw (27 px à 390 px, encore plus gros qu'en taille normale) ; en dessous de 286 px, les règles des petits écrans priment. */
+.bilan-score { font-size: min(var(--fs-xl), 7vw); }
 /* Ta précision : en relief, papier sur encre (comme la case blanche de chess.com), sans cote ni rang. */
 .bilan-score-moi { background: var(--papier); color: var(--sumi); box-shadow: inset 0 0 0 1.5px var(--line); }
 .revue-table-note { display: flex; align-items: center; gap: 10px; }
