@@ -287,7 +287,8 @@ test('leçon 7 : compter les points, jusqu’à « Chapitre terminé »', async 
   await expect(page.getByText(/fermer tes frontières/)).toBeVisible();
   await page.getByRole('button', { name: 'Retour au chemin' }).click();
   await expect(page.getByRole('button', { name: 'Leçon 7 : Compter les points, terminée' })).toBeVisible();
-  await expect(page.getByText('Chapitre terminé. Tu connais les règles du go !')).toBeVisible();
+  // #602 : sur le chemin, le tampon d'or ; la phrase de fin du chapitre est dite par l'écran de fin de leçon.
+  await expect(page.getByRole('img', { name: 'Chapitre terminé : Les bases' })).toBeVisible();
 });
 
 test('captures de la leçon 7 (390 × 844, sombre)', async ({ page }) => {
@@ -325,7 +326,7 @@ test('leçon 8 : bien commencer sur 9 × 9, du chemin à la fin de leçon', asyn
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
   // Les bases finies ; le chapitre 2 s'ouvre sous elles, la leçon 8 est la prochaine étape.
-  await expect(page.getByText('Chapitre terminé. Tu connais les règles du go !')).toBeVisible();
+  await expect(page.getByRole('img', { name: 'Chapitre terminé : Les bases' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'L’ouverture' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Leçon 8 : Les premiers coups, prochaine étape' })).toBeVisible();
   await expect(page.locator('.cta')).toHaveCount(1);
