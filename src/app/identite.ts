@@ -6,7 +6,7 @@ export interface Identite {
   /** Initiale du pseudo, ou null : on montre alors une pierre noire. */
   initiale: string | null;
   nom: string;
-  /** Ligne sous le nom. */
+  /** Ligne sous le nom ; vide avec un compte (#592 : la progression gardée se dit une fois, à la création du compte). */
   detail: string;
   /** Série de jours, affichée seulement si elle vaut au moins 1. */
   serie: number;
@@ -18,7 +18,7 @@ export function identite(profil: { pseudo: string | null; cote: number } | null,
   if (!profil) return { initiale: null, nom: t('profil.invite'), detail: t('profil.inviteDetail'), serie: Math.max(0, Math.floor(serie)) };
   const nom = profil.pseudo?.trim() || t('profil.sansPseudo');
   const initiale = profil.pseudo?.trim() ? [...profil.pseudo.trim()][0].toUpperCase() : null;
-  return { initiale, nom, detail: t('profil.connecteDetail'), serie: Math.max(0, Math.floor(serie)) };
+  return { initiale, nom, detail: '', serie: Math.max(0, Math.floor(serie)) };
 }
 
 /** Texte lisible de la série (« 1 jour », « 12 jours »). */
