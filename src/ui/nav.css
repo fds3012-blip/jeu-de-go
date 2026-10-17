@@ -93,8 +93,6 @@ html:has(.nav) { scroll-padding-bottom: calc(max(var(--nav-h), 3.75rem) + env(sa
 @keyframes orbite { to { transform: rotate(360deg); } }
 @keyframes allume { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
 
-/* ---------- Ornement de titre de section : le logo en petit, devant le titre ---------- */
+/* ---------- Titre de section (le glaçon du gel peut s'y poser à droite) ----------
+   #602 : plus d'ornement devant le titre (le logo en petit répétait la marque sans rien dire). */
 .titre-pierres { display: flex; align-items: center; gap: 8px; }
-.titre-pierres::before { content: ""; flex: none; width: 11px; height: 11px; border-radius: 50%; margin-right: 5px;
-  background: var(--matiere-noire);
-  box-shadow: 0 0 0 1px var(--pierre-n-bord), 5px 0 0 -1px var(--papier), 5px 0 0 0 rgba(60, 40, 15, .28); }

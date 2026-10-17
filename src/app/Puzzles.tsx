@@ -459,7 +459,7 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
             Dessous, la carte « Continuer » : le prochain problème, voilé, et une seule action. */}
         {enCours && (
           <div className={`palier-en-cours${enCours.complet ? ' complet' : ''}`} data-palier-en-cours={enCours.id} data-reussis={enCours.reussis}>
-            <Paysage id={enCours.id} />
+            {/* #602 : ici, le nom du palier seul ; le paysage reste dans « Tous les problèmes », où il fête le palier complet. */}
             <div className="palier-en-cours-texte">
               {/* #592 : le nom du palier seul ; son rang en kyu se lit dans « Tous les problèmes ». */}
               <div className="palier-nom">
