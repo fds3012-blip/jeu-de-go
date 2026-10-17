@@ -104,7 +104,7 @@ test('import SGF : coller, choisir son camp, revue, rejouer une erreur', async (
   await analyser.click();
 
   // La revue s'ouvre sur la partie importée ; elle est gardée sur l'appareil comme la dernière revue.
-  await expect(page.getByRole('heading', { level: 2, name: 'Revoir ma partie' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 2, name: 'Revoir la partie' })).toBeVisible();
   await expect(page.locator('.revue-analyse')).toHaveCount(0, { timeout: 30_000 });
   const gardee = await page.evaluate(() => JSON.parse(localStorage.getItem('go.revue.v1') ?? 'null'));
   expect(gardee).toMatchObject({ importee: true, joueur: 1, adversaire: 'Takumi88' });
@@ -124,7 +124,7 @@ test('import SGF : coller, choisir son camp, revue, rejouer une erreur', async (
   await attendrePierre(page, 'F4', 'noir');
   await expect(page.getByText(/Bravo/)).toBeVisible();
   await page.getByRole('button', { name: 'Retour à la revue' }).last().click();
-  await expect(page.getByRole('heading', { level: 2, name: 'Revoir ma partie' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 2, name: 'Revoir la partie' })).toBeVisible();
 
   // « ‹ » ramène au résumé, puis à l'import, qui propose de revoir la dernière partie importée.
   await page.getByRole('button', { name: 'Retour au résumé' }).click();
@@ -185,7 +185,7 @@ test('import SGF : fichier 19 × 19 → revue ouverte sur le moment clé → « 
   await page.getByRole('button', { name: 'Analyser la partie' }).click();
 
   // Analyse finie : le bilan, puis le parcours ; le moment clé (coup 3, K10) en fait partie.
-  await expect(page.getByRole('heading', { level: 2, name: 'Revoir ma partie' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 2, name: 'Revoir la partie' })).toBeVisible();
   await expect(page.locator('.revue-analyse')).toHaveCount(0, { timeout: 60_000 });
   await demarrerParcours(page, 3);
   await expect(page.getByText('Coup 3 sur 16')).toBeVisible();
@@ -200,7 +200,7 @@ test('import SGF : fichier 19 × 19 → revue ouverte sur le moment clé → « 
   await jouer(page, 'Q4', 19);
   await expect(page.getByText(/Bravo/)).toBeVisible();
   await page.getByRole('button', { name: 'Retour à la revue' }).last().click();
-  await expect(page.getByRole('heading', { level: 2, name: 'Revoir ma partie' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 2, name: 'Revoir la partie' })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
 
   expect(erreursPage).toEqual([]);

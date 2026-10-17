@@ -46,7 +46,7 @@ test('séance des révisions du jour : la carte, deux éléments, le bilan, le c
   // Une seule action principale : la carte est une tuile secondaire du groupe « Aujourd'hui ».
   const carte = page.getByTestId('tuile-revisions');
   await expect(carte).toBeVisible();
-  await expect(carte).toHaveAccessibleName(/Révisions du jour \(2\)/);
+  await expect(carte).toHaveAccessibleName(/Révisions \(2\)/);
   await expect(page.locator('.tuiles').getByTestId('tuile-revisions')).toHaveCount(1);
   await expect(page.locator('.cta')).toHaveCount(1);
   await expect(carte).not.toHaveClass(/tuile-avant/);
@@ -57,7 +57,7 @@ test('séance des révisions du jour : la carte, deux éléments, le bilan, le c
   // 1. L'erreur de partie (à retard égal, elle passe avant le problème). Trouvée du premier coup.
   await expect(page.getByText('Révision 1 sur 2')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Ta partie contre Pomme, coup 14' })).toBeVisible();
-  await expect(page).toHaveTitle(/Révisions du jour/);
+  await expect(page).toHaveTitle(/^Révisions · /);
   await jouer(page, 'E3');
   await expect(page.getByText('Bravo, c’est le coup de KataGo !')).toBeVisible();
   await page.getByRole('button', { name: 'Révision suivante' }).click();

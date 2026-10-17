@@ -223,7 +223,7 @@ for (const [largeur, hauteur] of TAILLES) {
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(largeur);
 
     // L4 : la courbe « Qui mène » de la revue.
-    await page.getByRole('button', { name: 'Revoir ma partie' }).click();
+    await page.getByRole('button', { name: 'Revoir la partie' }).click();
     await expect(page.locator('.revue-analyse')).toHaveCount(0, { timeout: 90_000 });
     await page.locator('.revue-courbe').scrollIntoViewIfNeeded();
     await photo(page, 'l4-revue');

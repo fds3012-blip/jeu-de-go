@@ -29,7 +29,7 @@ const T = {
   nonMerci: /^(Non merci|No thanks)$/, premiere: /^(Joue ta première partie|Play your first game)/,
   apprendre: /^(Apprendre|Learn)$/, problemes: /^(Problèmes|Puzzles)$/, profil: /^(Profil|Profile)$/, jouer: /^(Jouer|Play)$/,
   passer: /^(Passer|Pass)$/, passeGroupe: /^(Passer maintenant\s?\?|Pass now\?)$/, valider: /^(Valider le score|Confirm score)$/,
-  resultat: /^(Voir le résultat|See the result)$/, retourBilan: /^(Retour au bilan|Back to results)$/, revoir: /^(Revoir ma partie|Review my game)$/, accueil: /^(Accueil|Home)$/,
+  resultat: /^(Voir le résultat|See the result)$/, retourBilan: /^(Retour au bilan|Back to results)$/, revoir: /^(Revoir la partie|Review the game)$/, accueil: /^(Accueil|Home)$/,
   commencer: /^(Commencer|Start)$/, continuer: /^(Continuer|Continue)$/, terminer: /^(Terminer la leçon|Finish the lesson)$/,
   retourChemin: /^(Retour au chemin|Back to the path)$/, plus: /^(Plus|More)$/, abandonner: /^(Abandonner|Resign)$/, confirmer: /^(Confirmer|Confirm)/,
   email: /^(Ton adresse e-mail|Your email address)$/, age: /^(J’ai 15\s+ans ou plus|I’m 15 or older)/, code: /^(Code à 6 chiffres|6-digit code)$/,
