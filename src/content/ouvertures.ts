@@ -25,7 +25,9 @@ export const OUVERTURES: readonly Ouverture[] = [
   { id: 'n9-centre', taille: 9, sgf: '(;SZ[9];B[ee];W[ce];B[df];W[cf];B[dd])',
     erreurs: [{ coup: 0, c: 'bh', reponse: 'fd', perte: 7 }, { coup: 2, c: 'cg', reponse: 'df', perte: 2 }, { coup: 4, c: 'cd', reponse: 'dd', perte: 3 }] },
   { id: 'n9-coin', taille: 9, sgf: '(;SZ[9];B[df];W[fd];B[ff];W[dd])',
-    erreurs: [{ coup: 0, c: 'ch', reponse: 'fd', perte: 3 }, { coup: 2, c: 'eh', reponse: 'cd', perte: 3 }] },
+    erreurs: [{ coup: 0, c: 'ch', reponse: 'fd', perte: 3 }, { coup: 2, c: 'eh', reponse: 'cd', perte: 3 }],
+    // Le 3-3 (C3) en premier coup : écarté, il perd plus de 1,5 point (docs/pedagogie/repertoire-ouvertures-2026-10.md).
+    ecartes: [{ coup: 0, c: 'cg' }] },
   // 19 × 19 : fuseki
   { id: 'g-coins', taille: 19, sgf: '(;SZ[19];B[pd];W[dp];B[pp];W[dd])',
     erreurs: [{ coup: 0, c: 'jj', perte: 4 }, { coup: 2, c: 'jj', perte: 3 }] },

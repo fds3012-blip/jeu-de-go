@@ -31,6 +31,11 @@ export interface Ouverture {
    * est réglé, l'écran le dit (« … peut jouer ailleurs »).
    */
   ailleurs?: boolean;
+  /**
+   * Coups écartés, jamais montrés : jugés et figés avec la séquence, pour que la note pédagogique cite une mesure
+   * prouvée (src/go/ouvertures.test.ts : ils perdent plus que TOLERANCE_DEMO).
+   */
+  ecartes?: { coup: number; c: string }[];
 }
 
 export interface CoupLu { couleur: Color; point: number }

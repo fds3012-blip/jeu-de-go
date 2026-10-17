@@ -90,8 +90,6 @@ const RepliHorsLigne = lazy(() => import('../ui/RepliHorsLigne'));
 const CarteBilanSemaine = lazy(() => import('../ui/BilanSemaine').then(m => ({ default: m.BilanSemaine })));
 // #561 : fête d'un nouveau titre mensuel, chargée à l'ouverture pour un compte complet seulement (hors JS et CSS initiaux).
 const FeteTitre = lazy(() => import('../ui/FeteTitre'));
-// #591 : répertoire d'ouvertures, ouvert depuis Apprendre.
-const EcranOuvertures = lazy(() => import('./Ouvertures'));
 
 // #433 : problèmes complets chargés à la demande (placement, série de fin de leçon) ; l'accueil lit le Go du jour léger.
 const problemesLocaux = () => import('../content/problemesLocaux').then(m => m.PROBLEMES_LOCAUX);
@@ -221,7 +219,6 @@ export function App() {
   const [adversaire, setAdversaire] = useStored<OpponentId>('go.adversaire.v1', 'pomme');
   const [lessonId, setLessonId] = useState<string | null>(null);
   const [leconEssai, setLeconEssai] = useState<Lesson | null>(null);
-  const [ouvertures, setOuvertures] = useState(false);
   // #524 : partie de découverte ouverte (Apprendre, modes de l'accueil), et d'où ; 'intro' (#523) : après l'introduction des règles, sa fin ramène à l'accueil.
   const [decouverte, setDecouverte] = useState<false | OrigineDecouverte>(false);
   useEffect(() => {
@@ -579,6 +576,7 @@ export function App() {
   /**
    * Partie guidée contre Mochi (#79) : hors de l'échelle, sans effet sur le bilan ni sur les parties à komi réduit.
    * Mochi repart du cran de la partie guidée précédente ; la première fois, de la force de l'adversaire choisi.
+   * #589 : lancée depuis Apprendre ; la partie se joue dans l'onglet Jouer et sa sortie ramène à Apprendre.
    */
   function lancerGuidee() {
     if (!garde({ quoi: 'partie' }, { quoi: 'guidee' })) return;
@@ -592,7 +590,7 @@ export function App() {
     setResultat(null);
     setPartieFinie(false);
     setPartie(partie + 1);
-    setPlaying('guidee');
+    setPlaying('guidee'); setTab('jouer');
     window.scrollTo({ top: 0 });
   }
 
@@ -655,7 +653,7 @@ export function App() {
       bilan: <>{t('guidee.fin')}</>,
       mochi: null,
       action: <button type="button" className="cta" onClick={lancerGuidee}>{t('guidee.rejouer')}</button>,
-      onAccueil: () => { setPlaying(false); window.scrollTo({ top: 0 }); },
+      onAccueil: () => { setPlaying(false); setTab('apprendre'); window.scrollTo({ top: 0 }); }, // #589
     };
   }
   if (playing === 'ordi' && resultat) {
@@ -916,7 +914,7 @@ export function App() {
           opponent={playing === 'ordi' ? adv : playing === 'guidee' ? mochiGuide : undefined}
           guidee={playing === 'guidee' ? { depart: departGuide, onCran: setCranGuide } : undefined}
           intro={playing === 'guidee' ? <Bubble voix="coach">{t('guidee.bulle')}</Bubble> : playing === 'ordi' && (intro || reglage.annonce) ? <Bubble voix="coach">{intro ? introBut(adv.nom) : t('partie.bulle', { nom: adv.nom })}{reglage.annonce && <><br /><span className="annonce-komi">{reglage.annonce}</span></>}</Bubble> : undefined}
-          onExit={() => { setIntro(false); setPlaying(false); setResultat(null); setRepli(null); }}
+          onExit={() => { if (playing === 'guidee') setTab('apprendre'); setIntro(false); setPlaying(false); setResultat(null); setRepli(null); }}
           onImporter={() => { if (!garde({ quoi: 'import' }, { quoi: 'importer' })) return; setPlaying(false); setResultat(null); setTab('profil'); setVueProfil('importer'); window.scrollTo({ top: 0 }); }}
           onResult={onResult} onRestart={() => setPartieFinie(false)} fin={finEcran} celebrer={settings.celebrations} aide={aideActive(settings.aide, adv.id)} portrait={playing === 'ordi' ? <Sceau id={adv.id} taille={44} /> : undefined}
           reglages={{ son: settings.sound, modifier: set }}
@@ -961,8 +959,6 @@ export function App() {
       }}
       onJouer={id => { setEnPlacement(false); lancer('ordi', id); }}
       onLecons={ouvrirLeconsConseillees} />;
-  } else if (tab === 'apprendre' && ouvertures) {
-    screen = <EcranOuvertures onExit={() => setOuvertures(false)} />;
   } else if (tab === 'apprendre' && leconEssai) {
     screen = <LessonPlayer key={leconEssai.id} lesson={leconEssai} lecon={leconEssai} start={0} confirmTouch={settings.confirmTouch} celebrer={false}
       onProgress={() => {}} onExit={() => { setLeconEssai(null); window.scrollTo({ top: 0 }); }} />;
@@ -994,8 +990,9 @@ export function App() {
       } : undefined}
       jouer={{ nom: premier.nom, lancer: () => { setLessonId(null); setTab('jouer'); lancer('ordi', premier.id); } }} />;
   } else if (tab === 'apprendre') {
-    screen = <LearnHome progress={progress} onOpen={ouvrirLecon} sync={syncState} onRegles={() => ouvrirIntro('complete', 'apprendre')} onOuvertures={() => setOuvertures(true)}
+    screen = <LearnHome progress={progress} onOpen={ouvrirLecon} sync={syncState} onRegles={() => ouvrirIntro('complete', 'apprendre')}
       decouverte={{ etat: etatDecouverte(readLocal<unknown>(DECOUVERTE_KEY, null)), ouvrir: () => ouvrirDecouverte() }}
+      onGuidee={() => { track(EVENTS.modeChoisi, { mode: 'guidee', depuis: 'apprendre' satisfies Depuis, principal: false }); lancerGuidee(); }}
       compteRequis={rang => !decider({ quoi: 'lecon', rang }, etat, terminees, COMPTES).ok} />;
   } else if (tab === 'problemes') {
     screen = <Puzzles db={supabase} userId={compteId} sessionLoading={session === undefined} confirmTouch={settings.confirmTouch} onCompte={() => go('profil')}
@@ -1026,7 +1023,6 @@ export function App() {
       track(EVENTS.modeChoisi, { mode: m, depuis, principal: m === modes.principal });
       if (m === 'ordi') lancer('ordi');
       else if (m === 'deux') lancer('deux');
-      else if (m === 'guidee') lancerGuidee();
       else if (m === 'decouverte') ouvrirDecouverte();
       // « Un humain, maintenant » (#360), avec un compte et un pseudo (sinon « Crée ton compte », puis reprise).
       // #440 : « En direct » ou « Partie lente », selon le dernier choix (mémorisé).

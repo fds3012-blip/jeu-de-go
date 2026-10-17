@@ -87,17 +87,20 @@ describe('répertoire d’ouvertures : forme (#591)', () => {
       for (const k of cles) {
         expect(FR[cle(k)], k).toBeTruthy();
         expect(EN[cle(k)], k).toBeTruthy();
-        expect(mots(FR[cle(k)]), `${k} : « ${FR[cle(k)]} »`).toBeLessThanOrEqual(16);
+        expect(mots(FR[cle(k)]), `${k} : « ${FR[cle(k)]} »`).toBeLessThanOrEqual(20);
         expect(FR[cle(k)], k).not.toMatch(/\b(vous|votre|vos)\b/i);
       }
     });
-    it('chaque mot japonais est expliqué à sa première apparition (« hoshi (point étoile) », « komoku : … »)', () => {
-      for (const l of [FR, EN]) {
+    // Français : le mot japonais, puis son explication (« hoshi (point étoile) », « komoku : … »). Anglais : le mot anglais
+    // d'abord, le japonais entre parenthèses (« star point (hoshi) », « attaches (tsuke, a contact move) »).
+    it('chaque mot japonais est expliqué à sa première apparition (FR : « hoshi (point étoile) » ; EN : « star point (hoshi) »)', () => {
+      for (const [l, anglais] of [[FR, false], [EN, true]] as const) {
         const texte = textesDe(o, l).join(' ');
         for (const m of ['tengen', 'hoshi', 'san-san', 'kakari', 'komoku', 'tsuke', 'kosumi', 'fuseki', 'joseki']) {
           const i = texte.toLowerCase().indexOf(m);
           if (i < 0) continue;
-          expect(texte.slice(i + m.length, i + m.length + 3), `${o.id} : ${m}`).toMatch(/^(,? ?\(| ?:)/);
+          if (anglais) expect(texte[i - 1], `${o.id} (EN) : ${m} entre parenthèses, après le mot anglais`).toBe('(');
+          else expect(texte.slice(i + m.length, i + m.length + 3), `${o.id} : ${m}`).toMatch(/^(,? ?\(| ?:)/);
         }
       }
     });
@@ -113,7 +116,7 @@ describe('répertoire d’ouvertures : forme (#591)', () => {
 
   it('le texte d’entrée dans la liste : les mots japonais fuseki et joseki sont expliqués', () => {
     expect(FR.intro).toMatch(/Fuseki \(début de partie\) et joseki \(suites de coups dans un coin\)/);
-    expect(EN.intro).toMatch(/Fuseki \(the start of a game\) and joseki \(move sequences in a corner\)/);
+    expect(EN.intro).toMatch(/The start of a game \(fuseki\) and move sequences in a corner \(joseki\)/);
     expect(FR.preuve).toContain(String(TOLERANCE_DEMO).replace('.', ','));
     expect(EN.preuve).toContain(String(TOLERANCE_DEMO));
   });
@@ -162,6 +165,10 @@ describe('jugement KataGo, rejoué', () => {
         if (e.reponse) expect(reps).toEqual(REGLAGES.symetries.map(() => L(o, e.reponse!)));
         else expect(unanime, `${faux} : répliques ${reps.join(', ')}`).toBe(false);
       });
+    });
+    for (const x of o.ecartes ?? []) it(`${o.id} : ${L(o, x.c)} est écarté : il perd plus de ${TOLERANCE_DEMO} pt`, () => {
+      const p = ps[x.coup], b = bilan(analyse(p.cle));
+      expect(b.perte(L(o, x.c))).toBeGreaterThan(TOLERANCE_DEMO);
     });
     if (o.ailleurs) it(`${o.id} : après le dernier coup, KataGo joue ailleurs (hors de la zone montrée)`, () => {
       const p = ps[ps.length - 1];

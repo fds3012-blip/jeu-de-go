@@ -10,8 +10,10 @@ courante est réfutée par KataGo.
   `src/content/i18n/ouvertures.ts`, lecture du SGF dans `src/go/ouvertures.ts`.
 - Lignes de départ : les bases classiques enseignées aux débutants (le centre en 9 × 9 ; coins, puis bords, puis centre ;
   approche et invasion du hoshi ; approche du komoku). Chaque ligne a ensuite été passée au crible de KataGo coup par coup ;
-  aucune n'est reprise d'un livre sans ce contrôle. Là où KataGo préfère une autre suite que la ligne classique, c'est sa
-  suite qui est montrée, ou la ligne est retirée.
+  aucune n'est reprise d'un livre sans ce contrôle. Chaque coup montré est à 1,5 point au plus du meilleur coup de
+  KataGo, mais tous ne sont pas son premier choix : par exemple le tengen E5 en 9 × 9 (0,2 point du meilleur), le bord
+  Q10 (0,7), l'approche F3 (0,86) et le blocage C3 après le glissement (0,8). Une ligne qui ne passe pas le seuil est
+  retirée.
 - Outil : le même que les leçons d'ouverture l29 à l31 et l47 à l49 (#16, #553), sans second système.
   `outils/preuvesKataGo.ts` a un mode `ouvertures` ; `src/go/preuvesKataGo.ts` dit quoi juger (`positionsDOuverture`).
 - Commande : `npm run fetch-model`, puis
@@ -34,6 +36,13 @@ courante est réfutée par KataGo.
   symétries ; si elles ne sont pas d'accord, aucune réplique n'est montrée.
 - **« … peut jouer ailleurs »** n'est dit que si la réplique de KataGo après le dernier coup est hors du coin montré,
   dans chaque symétrie.
+
+## Relecture du professeur de go
+
+Corrections de texte sans nouvelle preuve : le tsuke du komoku se colle côté coin (D3 est à côté de E3, pas dessous) ;
+Blanc se redresse en E4 ; F2 contre l'approche : Blanc coupe en E3 ; B5 « protège peu » (et non « rien ») ; C2 sous le
+3-3 : coupée, Blanc garde le bas ; la phrase de preuve ne couvre que les coups de la séquence ; en anglais, le mot
+anglais d'abord et le japonais entre parenthèses.
 
 ## Le premier lot : 8 entrées
 
@@ -58,9 +67,11 @@ le dit.
 
 Crible rapide (2 symétries, 400 puis 200 visites) avant les preuves complètes :
 
-- **Le 3-3 comme premier coup en 9 × 9** (C3) : 1,9 point de moins que le meilleur coup. Il ne passe pas le seuil de
-  1,5 ; il n'est pas non plus assez mauvais (moins de 2 points de plus que le 4-4) pour être montré comme erreur. Le
-  9 × 9 n'enseigne que le centre et le 4-4. Le 3-4 (C4, D3) passe (1,1) mais n'apporte rien de plus au premier lot.
+- **Le 3-3 comme premier coup en 9 × 9** (C3) : 2,05 points de moins que le meilleur coup, mesure figée dans les
+  preuves (`ecartes` de l'entrée « Les quatre coins », vérifiée par `src/go/ouvertures.test.ts`). Il ne passe pas le
+  seuil de 1,5 ; il n'est pas non plus assez mauvais (1,7 point de plus que le 4-4, sous la marge de 2) pour être montré
+  comme erreur. Le 9 × 9 n'enseigne que le centre et le 4-4. Le 3-4 (C4, D3) passe au crible (1,1) mais n'apporte rien
+  de plus au premier lot.
 - **Le glissement au 3-3 après l'approche du hoshi** (C3 de Blanc après F3 et D6) : 1,7 point de moins que le meilleur.
   Le glissement montré est celui que KataGo garde : D2, sur la 2e ligne (0,4).
 - **Le glissement au 3-3 après une pince** (F3, H3, puis C3) : 1,9 point. La pince n'est pas montrée (la suite que
@@ -78,5 +89,5 @@ Crible rapide (2 symétries, 400 puis 200 visites) avant les preuves complètes 
 ## Ce qui reste
 
 - Un lot 2 : la pince du hoshi, le komoku et sa fermeture, le 13 × 13.
-- Placer la ligne « Ouvertures » dans le chapitre « L'ouverture » plutôt qu'en bas du chemin, une fois #589 et #590
-  fusionnés (ils modifient `Learn.tsx` en parallèle ; l'ajout de #591 y est volontairement réduit à une ligne).
+- La ligne « Ouvertures » est en tête du chapitre « L'ouverture » ; l'écran s'ouvre depuis le chunk d'Apprendre, sans
+  état dans `App.tsx` (JS initial inchangé).
