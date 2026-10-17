@@ -101,7 +101,22 @@ export const TAILLE_SERIE = 3;
 export function serieDeLecon<T extends { id: string; difficulty: number }>(
   lecon: string, liste: readonly T[], reussis: ReadonlySet<string>, n = TAILLE_SERIE, redite: (p: T) => boolean = () => false,
 ): T[] {
-  const themes = THEMES_DE_LECON[lecon] ?? [];
+  return serieDeThemes(THEMES_DE_LECON[lecon] ?? [], liste, reussis, n, redite);
+}
+
+/**
+ * #590 : « S'entraîner sur ce thème », depuis la page d'un thème d'Apprendre : la même série que la fin de leçon
+ * (les plus faciles non réussis d'abord), sur ce seul thème. Chaque thème a au moins 3 problèmes (themes.test.ts).
+ */
+export function serieDeTheme<T extends { id: string; difficulty: number }>(
+  theme: Theme, liste: readonly T[], reussis: ReadonlySet<string>, n = TAILLE_SERIE,
+): T[] {
+  return serieDeThemes([theme], liste, reussis, n);
+}
+
+function serieDeThemes<T extends { id: string; difficulty: number }>(
+  themes: readonly Theme[], liste: readonly T[], reussis: ReadonlySet<string>, n: number, redite: (p: T) => boolean = () => false,
+): T[] {
   const facile = (a: T, b: T) => a.difficulty - b.difficulty || a.id.localeCompare(b.id);
   const files = themes.map(t => {
     const du = liste.filter(p => THEME_DU_PROBLEME[p.id] === t).sort(facile);
