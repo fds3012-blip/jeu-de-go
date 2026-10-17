@@ -20,8 +20,9 @@ test('jour 1 sans compte : la série vaut 1 partout (accueil, Problèmes, Profil
   await page.getByRole('button', { name: 'Retour aux problèmes' }).first().click();
 
   // Écran Problèmes : la flamme, comme pour un joueur connecté, et l'invitation habituelle (pas encore le jour 3).
-  await expect(page.locator('.palmares-serie')).toContainText('1');
-  await expect(page.locator('.palmares-serie')).toContainText('jour de série');
+  await expect(page.getByTestId('serie-problemes')).toContainText('1');
+  // #620 : la série est une pastille près du Go du jour ; son nom complet est dans l'aria-label.
+  await expect(page.getByTestId('serie-problemes')).toHaveAttribute('aria-label', /^Série de 1 jour\./);
   await expect(page.getByRole('button', { name: 'Créer mon compte' })).toBeVisible();
   await expect(page.getByText('Avec un compte, ta série et tes leçons te suivent.')).toHaveCount(0);
 
@@ -51,7 +52,7 @@ test('3e jour de série sans compte : invitation discrète à créer un compte',
 
   await expect(page.getByRole('img', { name: 'Série de 3 jours' })).toBeVisible();
   await nav(page, 'Problèmes');
-  await expect(page.locator('.palmares-serie')).toContainText('3');
+  await expect(page.getByTestId('serie-problemes')).toContainText('3');
   await expect(page.getByText('Avec un compte, ta série et tes leçons te suivent.')).toBeVisible();
   await page.getByRole('button', { name: 'Créer mon compte' }).click();
   await expect(page.getByRole('navigation').getByRole('button', { name: 'Profil' })).toHaveAttribute('aria-current', 'page');

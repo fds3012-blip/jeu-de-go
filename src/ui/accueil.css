@@ -161,16 +161,16 @@
 .tuile-revisions-icone { display: grid; place-items: center; flex: none; width: 44px; height: 44px; border-radius: 8px; background: var(--surface-2); color: var(--accent-texte); }
 
 /* ---------- Série de jours (en haut à droite) ---------- */
-.top .serie { display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px 6px 10px; border-radius: var(--radius-pill);
+.serie { display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px 6px 10px; border-radius: var(--radius-pill);
   background: color-mix(in srgb, var(--or) 16%, transparent); color: var(--recompense-texte);
   font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: 1.05rem; line-height: 1; }
 /* #213 : flamme creuse tant que le Go du jour d'aujourd'hui reste à faire, pleine après. */
-.top .serie .flamme-corps { fill: currentColor; stroke: currentColor; stroke-width: 1.3; stroke-linejoin: round; transform-origin: 50% 90%; }
-.top .serie.creuse { background: transparent; box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--or) 55%, transparent); }
-.top .serie.creuse .flamme-corps { fill: transparent; }
+.serie .flamme-corps { fill: currentColor; stroke: currentColor; stroke-width: 1.3; stroke-linejoin: round; transform-origin: 50% 90%; }
+.serie.creuse { background: transparent; box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--or) 55%, transparent); }
+.serie.creuse .flamme-corps { fill: transparent; }
 /* Allumage (une fois par jour, au retour sur l'accueil) : la flamme se remplit et monte d'un cran. Mouvements réduits : rien ne bouge. */
 @media (prefers-reduced-motion: no-preference) {
-  .top .serie.allumage .flamme-corps { animation: flamme-allumage var(--duree-recompense) var(--ease) both; }
+  .serie.allumage .flamme-corps { animation: flamme-allumage var(--duree-recompense) var(--ease) both; }
 }
 @keyframes flamme-allumage {
   0% { fill: transparent; transform: scale(.9); }

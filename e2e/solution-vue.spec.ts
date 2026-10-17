@@ -84,8 +84,9 @@ test('Go du jour vu : pas de partage ni d’XP, mais la série du jour tient', a
   expect(await page.evaluate(() => localStorage.getItem('go.xp.v1'))).toBeNull();
 
   await page.getByRole('button', { name: 'Retour aux problèmes' }).first().click();
-  await expect(page.locator('.tampon-reussi')).toHaveText('Vu');
-  await expect(page.locator('.palmares-serie')).toContainText('1');
+  // #620 : le Go du jour fait devient une tuile ; son état se lit dessous (« Vu » quand la réponse a été montrée).
+  await expect(page.locator('[data-du-jour-fait] small')).toHaveText('Vu');
+  await expect(page.getByTestId('serie-problemes')).toContainText('1');
   const debord = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(debord).toBeLessThanOrEqual(0);
 });
