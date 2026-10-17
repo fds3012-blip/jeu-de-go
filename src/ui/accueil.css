@@ -81,21 +81,22 @@
 /* Au trait (pas de fond, pas de relief) : des choix secondaires, distincts des cartes pleines d'« Aujourd'hui ». */
 .accueil .cta-sceau .icone-mode { flex: none; width: 28px; height: 28px; }
 .modes { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 5.5rem), 1fr)); gap: 8px; margin-top: calc(var(--space-2) + var(--relief)); }
-.mode { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: var(--cible-min); padding: 8px 6px 9px;
+/* #592 : une ligne par tuile (pictogramme et nom), sans détail : les tuiles cèdent leur hauteur au goban. */
+.mode { position: relative; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 2px 6px; min-height: var(--cible-bouton); padding: 6px;
   border: 0; border-radius: var(--radius); background: none; color: var(--text); font: inherit; text-align: center; box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--text) 22%, transparent); }
 .mode b { font-family: var(--font-titre); font-weight: var(--fw-bold); font-size: var(--fs-s); line-height: 1.2; }
-.mode small { color: var(--muted); font-size: var(--fs-legende); line-height: 1.25; overflow-wrap: anywhere; text-wrap: balance; }
+/* Hors ligne seulement : la raison, sous le nom. */
+.mode small { flex-basis: 100%; color: var(--muted); font-size: var(--fs-legende); line-height: 1.25; }
 .mode-icone { display: inline-flex; align-items: center; justify-content: center; flex: none; color: var(--accent-texte); }
-.mode .mode-icone { height: 26px; margin-bottom: 3px; }
+.mode .mode-icone { height: 24px; }
 .mode-pierres .stone { width: 18px; height: 18px; }
 .mode-pierres .stone + .stone { margin-left: -5px; }
 .mode:active, .plus-mode:active { background: var(--surface-2); }
 @media (hover: hover) and (pointer: fine) { .mode:hover { background: var(--surface); } .plus-mode:hover { background: var(--surface-2); } }
 /* Un ami attend ton coup : point d'or et « À toi de jouer », comme la tuile du défi. */
 .mode.a-jouer::after { content: ""; position: absolute; top: 8px; right: 8px; width: 9px; height: 9px; border-radius: 50%; background: var(--or); }
-.mode.a-jouer small { color: var(--recompense-texte); font-weight: var(--fw-bold); }
-/* Petite hauteur (iPhone SE) : pictogrammes et détails cèdent leur place, les noms restent (le détail reste lu par le lecteur d’écran). */
-@media (max-height: 640px) { .mode .mode-icone, .mode small { display: none; } .mode { padding-block: 6px; } }
+/* Petite hauteur (iPhone SE) : les pictogrammes cèdent leur place, les noms restent. */
+@media (max-height: 640px) { .mode .mode-icone { display: none; } }
 /* Partie en ligne en action principale : deux pierres et le grade à la place du portrait de l'adversaire. */
 .classee-pierres { display: inline-flex; flex: none; width: 48px; height: 48px; align-items: center; justify-content: center; border-radius: 50%; background: var(--surface-2); }
 .classee-pierres .stone { width: 20px; height: 20px; }
@@ -138,7 +139,6 @@
 .mini-plateau { width: 44px; height: 44px; flex: none; border-radius: 6px; box-shadow: 0 3px 8px -4px rgba(0, 0, 0, .5); }
 
 /* ---------- « Aujourd'hui » (accueil v3) : la bonne chose à faire en premier, sur toute la largeur ---------- */
-.tuiles-titre { grid-column: 1 / -1; margin: 0 0 -2px; color: var(--muted); font-size: var(--fs-legende); font-weight: var(--fw-bold); }
 .tuile-avant { grid-column: 1 / -1; min-height: 80px; padding: 10px 14px; gap: 10px 14px; background: var(--surface); border: 0; flex-wrap: wrap; }
 /* Le texte prend la place libre ; quand elle manque (zoom 200 %, 195 px), la pastille passe à la ligne au lieu de déborder. */
 .tuile-avant > span:not([class]) { flex: 1 1 7rem; min-width: 0; }

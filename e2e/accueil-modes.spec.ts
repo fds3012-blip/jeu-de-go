@@ -94,7 +94,8 @@ test('premier lancement, première pierre posée : « Joue ta première partie �
   const tuiles = page.getByTestId('modes').getByRole('button');
   await expect(tuiles).toHaveCount(3);
   await expect(tuiles.nth(0)).toHaveAccessibleName(/^En ligne\s: Partie classée, 15ᵉ\skyu · 1500\s\?$/);
-  await expect(tuiles.nth(0)).toContainText(/15ᵉ\skyu · 1500\s\?/);
+  // #592 : la tuile n'écrit plus que son nom ; grade et cote restent dans son nom accessible.
+  await expect(tuiles.nth(0)).toHaveText('En ligne');
   await expect(tuiles.nth(1)).toHaveAccessibleName('Défier un ami');
   await expect(tuiles.nth(2)).toHaveAccessibleName(/^Plus de façons de jouer/);
   await expect(tuiles.nth(2)).toHaveAttribute('aria-haspopup', 'dialog');
@@ -116,10 +117,11 @@ for (const [qui, stockage, adversaire] of [['débutant', DEBUTANT, 'Pomme'], ['c
   const classee = page.getByTestId('classee');
   await expect(classee.getByRole('heading', { level: 2 })).toHaveText(/^15ᵉ\skyu$/);
   await expect(classee.getByTestId('classee-cote')).toHaveText(/^1500\s\?$/);
-  await expect(classee).toContainText('Ta cote bouge à chaque partie.');
+  await expect(classee).toContainText('Contre un humain de ton niveau.');
   const ordi = page.getByTestId('mode-ordi');
-  await expect(ordi).toContainText('Contre l’ordi');
-  await expect(ordi).toContainText(adversaire);
+  await expect(ordi).toHaveText('L’ordi');
+  // #592 : le nom de l'adversaire n'est plus écrit sur la tuile ; son sceau la marque, et le lecteur d'écran le lit.
+  await expect(ordi).toHaveAccessibleName(new RegExp(adversaire));
   await sansDefiler(page, 'mode-ordi');
   await ordi.click();
   await expect(plateau(page)).toBeVisible();
@@ -130,7 +132,7 @@ for (const [qui, stockage, adversaire] of [['débutant', DEBUTANT, 'Pomme'], ['c
 test('sans compte, dès la première partie : « Jouer en ligne » passe par « Crée ton compte », puis reprend', async ({ browser, baseURL }) => {
   const page = await telephone(browser, baseURL, DEBUTANT, { compte: false });
   await expect(page.locator('.cta')).toHaveText('Jouer en ligne');
-  await expect(page.getByTestId('classee')).toContainText('Ton compte garde ta cote.');
+  await expect(page.getByTestId('classee')).toContainText('Contre un humain de ton niveau.');
   await page.locator('.cta').click();
   await expect(page.getByTestId('creer-compte')).toHaveAttribute('data-raison', 'en_ligne');
   // Code par e-mail, pseudo : la partie en ligne reprend d'elle-même (choix de la cadence).

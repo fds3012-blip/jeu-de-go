@@ -58,7 +58,7 @@ for (const taille of TAILLES) {
       await expect(page.getByTestId('barre-niveau')).toHaveCount(0);
       await expect(page.getByText(/kyu/)).toHaveCount(0);
       await expect(page.getByTestId('etat-du-jour')).toHaveCount(0);
-      await expect(page.locator('.tuiles-titre')).toHaveCount(0);
+      await expect(page.getByRole('group', { name: 'Aujourd’hui' })).toHaveCount(0);
       // « Je sais déjà jouer » : un lien discret (pas un bouton plein), 44 px, sous le bouton.
       const lien = page.getByRole('button', { name: 'Je sais déjà jouer' });
       await expect(lien).toBeVisible();
@@ -101,7 +101,8 @@ for (const theme of THEMES) {
     // Le niveau se montre dès qu'il y a de l'XP.
     await expect(page.getByTestId('barre-niveau')).toContainText(/40\s\/\s100\sXP/);
     const tuiles = page.locator('.tuiles .tuile');
-    await expect(page.locator('.tuiles-titre')).toHaveText('Aujourd’hui');
+    // #592 : « Aujourd'hui » n'est plus écrit ; le groupe garde ce nom pour le lecteur d'écran.
+    await expect(page.getByRole('group', { name: 'Aujourd’hui' })).toBeVisible();
     await expect(tuiles.first()).toHaveClass(/tuile-probleme/);
     await expect(tuiles.first()).toHaveClass(/tuile-avant/);
     await expect(tuiles.first().getByTestId('etat-du-jour')).toHaveText('À faire');
