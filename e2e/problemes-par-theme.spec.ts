@@ -50,6 +50,10 @@ test('séries par thème : vignettes à plat, réussites d’affilée et record'
   for (const nom of ['Capturer', 'Sauver', 'Vie et mort', 'Relier et couper', 'Fin de partie', 'Tesuji']) {
     await expect(page.getByRole('button', { name: new RegExp(`^${nom}`) })).toBeVisible();
   }
+  // #614 : chaque carte dit ce qu'on y apprend ; le tesuji s'explique sur sa carte, plus de phrase sous le titre.
+  await expect(page.locator('.theme-carte[data-theme="tesuji"]')).toHaveAccessibleDescription('Le coup malin qui change tout.');
+  await expect(page.locator('.theme-desc')).toHaveCount(6);
+  await expect(page.locator('.themes > p')).toHaveCount(0);
   await expect(page.locator('.problemes .cta')).toHaveCount(1);
   for (const box of await cartes.evaluateAll(els => els.map(e => e.getBoundingClientRect().height))) expect(box).toBeGreaterThanOrEqual(44);
   const { sw, cw } = await page.evaluate(() => ({ sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth }));
@@ -120,7 +124,9 @@ test('série Fin de partie : ouverte, dans le thème, réussie', async ({ page }
   expect(['fin-de-partie', 'comptage']).toContain(THEME_DU_PROBLEME[second]);
 });
 
-// Page courte (au plus deux écrans, comme e2e/problemes.spec.ts), avec des records sur toutes les vignettes.
+// Page courte, avec des records sur toutes les vignettes. #614 : chaque vignette a sa ligne de description, sur toute la
+// largeur (une colonne sur téléphone) : sans record, la page reste sous deux écrans (e2e/problemes.spec.ts) ; avec un
+// record partout, elle en déborde d'au plus 160 px.
 for (const largeur of [390, 320]) {
   for (const theme of ['dark', 'light'] as const) {
     test(`${largeur} px, ${theme === 'dark' ? 'sombre' : 'clair'} : les vignettes gardent la page sous deux écrans`, async ({ page }) => {
@@ -129,7 +135,7 @@ for (const largeur of [390, 320]) {
         ['capturer', 'sauver', 'vie-mort', 'relier-couper', 'fin-de-partie', 'tesuji'].map(s => [s, { affilee: 0, record: 12 }])))));
       await ouvrirProblemes(page);
       await page.emulateMedia({ colorScheme: theme, reducedMotion: 'reduce' });
-      expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeLessThanOrEqual(2 * 844 - 80);
+      expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeLessThanOrEqual(2 * 844 + 160);
       const { sw, cw } = await page.evaluate(() => ({ sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth }));
       expect(sw).toBeLessThanOrEqual(cw);
       for (const h of await page.locator('.theme-carte').evaluateAll(els => els.map(e => e.getBoundingClientRect().height))) expect(h).toBeGreaterThanOrEqual(44);
