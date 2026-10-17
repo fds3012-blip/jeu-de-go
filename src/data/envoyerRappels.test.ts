@@ -3,14 +3,14 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it, vi } from 'vitest';
 import {
-  autorise, chargeDuJour, envoyerRappels, estDisparu, TAILLE_LOT, TEXTES, URL_RAPPEL, type Abonnement, type Deps,
+  autorise, chargeDuJour, endpointAutorise, envoyerRappels, estDisparu, TAILLE_LOT, TEXTES, URL_RAPPEL, type Abonnement, type Deps,
 } from '../../supabase/functions/envoyer-rappels/logique';
 
 const racine = fileURLToPath(new URL('../../', import.meta.url));
 const lire = (f: string) => readFileSync(racine + f, 'utf8');
 
 const abo = (i: number, langue = 'fr'): Abonnement => ({
-  id: `id-${i}`, endpoint: `https://push.exemple.test/${i}`, p256dh: 'p'.repeat(87), auth: 'a'.repeat(22), langue, jour: '2026-10-01',
+  id: `id-${i}`, endpoint: `https://fcm.googleapis.com/fcm/send/${i}`, p256dh: 'p'.repeat(87), auth: 'a'.repeat(22), langue, jour: '2026-10-01',
 });
 
 function deps(dus: Abonnement[], statut: (a: Abonnement) => number | Error = () => 201) {
@@ -73,6 +73,31 @@ describe('envoyerRappels', () => {
   it('la base en erreur fait échouer la fonction (la tâche le verra dans ses journaux)', async () => {
     const d: Deps = { reclamer: async () => { throw new Error('base'); }, envoyer: async () => ({ statut: 201 }), supprimer: async () => {} };
     await expect(envoyerRappels(d)).rejects.toThrow('base');
+  });
+
+  // #578 : l'adresse vient du navigateur du joueur, donc du client. Sans liste blanche, la fonction enverrait des
+  // requêtes POST vers n'importe quel hôte (SSRF aveugle depuis l'infrastructure Supabase).
+  it('n’envoie que vers les services de notification connus, sans supprimer l’abonnement refusé', async () => {
+    const piege = { ...abo(9), endpoint: 'https://169.254.169.254.nip.io/latest' };
+    const { d, envois } = deps([abo(1), piege]);
+    expect(await envoyerRappels(d)).toEqual({ dus: 2, envoyes: 1, supprimes: 0, echecs: 1 });
+    expect(envois.map(e => e.a.id)).toEqual(['id-1']);
+    expect(d.supprimer).not.toHaveBeenCalled();
+  });
+
+  it('liste blanche des services de notification (Chrome, Firefox, Safari, Edge)', () => {
+    for (const ok of [
+      'https://fcm.googleapis.com/fcm/send/abc', 'https://fcm.googleapis.com/wp/abc', 'https://android.googleapis.com/gcm/send/abc',
+      'https://updates.push.services.mozilla.com/wpush/v2/abc', 'https://web.push.apple.com/QAbc',
+      'https://wns2-par02p.notify.windows.com/w/?token=abc',
+    ]) expect(endpointAutorise(ok), ok).toBe(true);
+    for (const non of [
+      'http://fcm.googleapis.com/fcm/send/abc', 'https://fcm.googleapis.com.evil.test/x', 'https://evil.test/fcm.googleapis.com/',
+      'https://fcm.googleapis.com@evil.test/x', 'https://user:pw@fcm.googleapis.com/x', 'https://fcm.googleapis.com:8443/x',
+      'https://localhost/x', 'https://127.0.0.1/x', 'https://[::1]/x', 'https://169.254.169.254/latest', 'https://notify.windows.com.evil.test/',
+      'https://evilpush.services.mozilla.com.evil.test/', 'https://xjvsalkvpgcjrznznxoi.supabase.co/rest/v1/', 'pas une adresse', '',
+      'https://' + 'a'.repeat(1100) + '.fcm.googleapis.com/',
+    ]) expect(endpointAutorise(non), non).toBe(false);
   });
 
   it('404 et 410 seulement sont des abonnements disparus', () => {

@@ -62,7 +62,7 @@ export function chargeDuJour(langue: string, jour: string): ChargeRappel {
   return { titre, texte, url: URL_RAPPEL, tag: TAG_RAPPEL };
 }
 
-/** Réponse du service de notification ; `statut` 0 : erreur réseau. */
+/** Réponse du service de notification ; `statut` 0 : erreur réseau, -1 : adresse refusée (#578). */
 export interface ResultatEnvoi { statut: number }
 
 export interface Deps {
@@ -82,13 +82,30 @@ export const estDisparu = (statut: number): boolean => statut === 404 || statut 
 /** Envois par lots, pour ne pas ouvrir des milliers de connexions d'un coup. */
 export const TAILLE_LOT = 50;
 
+/**
+ * Services de notification des navigateurs (#578). L'adresse d'un abonnement vient du client : sans cette liste,
+ * la fonction enverrait des requêtes POST vers l'hôte de son choix (SSRF aveugle). Même liste que la contrainte
+ * `abonnements_rappel_service_connu` (migration 20261017090000_durcissement_578.sql).
+ * Chrome, Opera, Samsung Internet : FCM ; Firefox : Mozilla ; Safari : Apple ; Edge : WNS.
+ */
+const HOTES_PUSH = /^(?:fcm\.googleapis\.com|android\.googleapis\.com|(?:[a-z0-9-]+\.)*push\.services\.mozilla\.com|web\.push\.apple\.com|[a-z0-9-]+\.notify\.windows\.com)$/;
+
+/** Adresse d'abonnement acceptée : https, hôte de la liste, sans identifiants ni port, 1 024 caractères au plus. */
+export function endpointAutorise(endpoint: string): boolean {
+  if (endpoint.length > 1024) return false;
+  let u: URL;
+  try { u = new URL(endpoint); } catch { return false; }
+  return u.protocol === 'https:' && !u.username && !u.password && !u.port && HOTES_PUSH.test(u.hostname);
+}
+
 export async function envoyerRappels(deps: Deps): Promise<Bilan> {
   const dus = await deps.reclamer();
   const bilan: Bilan = { dus: dus.length, envoyes: 0, supprimes: 0, echecs: 0 };
   const disparus: string[] = [];
   for (let i = 0; i < dus.length; i += TAILLE_LOT) {
     const lot = dus.slice(i, i + TAILLE_LOT);
-    const resultats = await Promise.all(lot.map(a =>
+    // Adresse hors liste : rien n'est envoyé, compté en échec ; l'abonnement n'est pas supprimé (l'équipe le voit).
+    const resultats = await Promise.all(lot.map(a => !endpointAutorise(a.endpoint) ? { statut: -1 } :
       deps.envoyer(a, JSON.stringify(chargeDuJour(a.langue, a.jour))).catch((): ResultatEnvoi => ({ statut: 0 }))));
     resultats.forEach(({ statut }, j) => {
       if (statut >= 200 && statut < 300) bilan.envoyes++;
