@@ -351,9 +351,6 @@ export function relancerKataGo(): void {
   k?.relancer?.();
 }
 
-/** Démarre le chargement de KataGo en avance (téléchargement du réseau, choix du backend). */
-export function preloadKataGo(): void { getKataGo()?.start?.().catch(() => {}); }
-
 /** Analyse de secours sans réseau : coup du moteur simple et propriété tirée des simulations. */
 async function simpleAnalysis(pos: Position, o: AnalyzeOptions): Promise<Analysis> {
   const t0 = Date.now(), komi = o.komi ?? 6.5;
