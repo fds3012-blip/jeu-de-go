@@ -193,15 +193,30 @@ describe('retour du système (#606)', () => {
     expect(sorties).toEqual(['‹ reglages']);
   });
 
-  it('une entrée dont l’état a été effacé (bibliothèque) reste un retour', async () => {
+  it('fragment vidé par supabase-js au retour d’un fournisseur (`#`, nouvelle entrée) : pas un retour', async () => {
+    const r = brancher();
+    pile = ['jouer'];
+    dom.boutonRetour = () => { sorties.push('‹ compte'); };
+    await r.verifier();
+    expect(h.state).toMatchObject({ garde: true, mochiNav: 1 });
+    h.pushState(null);
+    w.emettre('popstate', { state: null });
+    await vider();
+    expect(sorties).toEqual([]);
+    expect(h.entrees[2].state).toMatchObject({ mochiNav: 2, garde: false });
+    expect(h.state).toMatchObject({ garde: true, mochiNav: 3 });
+  });
+
+  it('retrait de la garde : jamais pendant un départ de la page (navigation interrompue)', async () => {
     const r = brancher();
     ouvrirEcran('reglages');
     await r.verifier();
-    h.entrees[0] = { state: null };
-    await retourSysteme();
-    expect(sorties).toEqual(['‹ reglages']);
-    expect(h.entrees[0].state).toMatchObject({ mochiNav: 0 });
-    expect(h.i).toBe(0);
+    expect(h.i).toBe(1);
+    dom.boutonRetour!();
+    r.verifier();
+    w.emettre('beforeunload', {});
+    await vider();
+    expect(h.i).toBe(1);
   });
 
   it('rechargement sur une garde : l’entrée devient celle de l’app', async () => {

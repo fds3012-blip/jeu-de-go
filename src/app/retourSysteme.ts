@@ -117,6 +117,13 @@ export function brancherRetourSysteme(lire: () => Branchement, h: History = hist
   let enAttente = 0;
   /** Lien `#defi=` ou `#partie=` en cours : la garde attend que son écouteur (`hashchange`) ait nettoyé l'adresse. */
   let lien = false;
+  /**
+   * Retrait de la garde prévu (racine de Jouer atteinte). Il attend un peu, et jamais pendant un départ de la page :
+   * notre `history.back()`, asynchrone, interromprait une navigation lancée entre-temps (fournisseur de connexion,
+   * lien, rechargement).
+   */
+  let retrait = false;
+  let depart = 0;
   try { h.replaceState({ ...etat(), [MARQUE]: 0, garde: false }, ''); } catch { /* historique indisponible */ }
 
   const besoin = () => lire().horsRacine() || document.querySelector(SELECTEUR) !== null;
@@ -125,38 +132,44 @@ export function brancherRetourSysteme(lire: () => Branchement, h: History = hist
     try { h.pushState({ [MARQUE]: rang + 1, garde: true }, ''); rang++; garde = true; } catch { /* trop d'appels : ignoré */ }
   };
 
+  const parti = () => Date.now() - depart < 5000;
+
   function verifier() {
     if (enAttente > 0 || lien) return;
     const b2 = besoin();
     if (b2 && !garde) poser();
-    else if (!b2 && garde) { enAttente++; h.back(); }
+    else if (!b2 && garde && !retrait) {
+      retrait = true;
+      w.setTimeout(() => {
+        retrait = false;
+        if (enAttente > 0 || lien || !garde || parti() || besoin()) return;
+        enAttente++; h.back();
+      }, 300);
+    }
   }
+
+  const surDepart = () => { depart = Date.now(); };
 
   let prevu = 0;
   const plusTard = () => { if (!prevu) prevu = w.requestAnimationFrame(() => { prevu = 0; verifier(); }); };
 
   function surPopstate(e: PopStateEvent) {
     const s = (e.state && typeof e.state === 'object' ? e.state : {}) as EtatHistorique;
-    let n = typeof s.mochiNav === 'number' ? s.mochiNav : null;
+    const n = typeof s.mochiNav === 'number' ? s.mochiNav : null;
     if (enAttente > 0) {
       enAttente--;
       rang = n ?? rang; garde = !!s.garde;
       plusTard();
       return;
     }
-    if (n === null && !/^#./.test(w.location.hash)) {
-      // Entrée sans marque ni fragment : une bibliothèque a remplacé l'état (`replaceState(null)`). C'est un retour vers
-      // l'entrée d'en dessous ; elle reprend sa marque.
-      n = Math.max(0, rang - 1);
-      try { h.replaceState({ ...s, [MARQUE]: n, garde: false }, ''); } catch { /* ignoré */ }
-    }
     if (n === null) {
-      // Entrée qui n'est pas à nous, en avant : lien de défi ou de partie ouvert dans l'onglet (`#defi=`, `#partie=`).
-      // Elle devient l'entrée de l'app ; l'écran du lien la reçoit par `hashchange`.
-      // La garde n'est posée qu'après `hashchange` : sinon l'entrée du lien garderait son fragment, et y revenir
-      // rouvrirait le lien.
-      rang++; garde = false; lien = true;
+      // Entrée qui n'est pas à nous, toujours en avant (une entrée d'avant porte notre marque) : lien de défi ou de
+      // partie ouvert dans l'onglet (`#defi=`, `#partie=`), ou fragment vidé par supabase-js au retour d'un
+      // fournisseur (`#`). Elle devient l'entrée de l'app. Avec un fragment, la garde attend `hashchange` : l'écouteur
+      // du lien nettoie d'abord l'adresse, sinon y revenir rouvrirait le lien.
+      rang++; garde = false; lien = /^#./.test(w.location.hash);
       try { h.replaceState({ ...s, [MARQUE]: rang, garde: false }, ''); } catch { /* ignoré */ }
+      if (!lien) plusTard();
       return;
     }
     const enArriere = n < rang;
@@ -192,6 +205,7 @@ export function brancherRetourSysteme(lire: () => Branchement, h: History = hist
   observateur.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['open', 'aria-expanded'] });
   w.addEventListener('popstate', surPopstate);
   w.addEventListener('hashchange', surFragment);
+  w.addEventListener('beforeunload', surDepart);
   w.addEventListener('keydown', surTouche);
   verifier();
   return {
@@ -200,6 +214,7 @@ export function brancherRetourSysteme(lire: () => Branchement, h: History = hist
       observateur.disconnect();
       w.removeEventListener('popstate', surPopstate);
       w.removeEventListener('hashchange', surFragment);
+      w.removeEventListener('beforeunload', surDepart);
       w.removeEventListener('keydown', surTouche);
       if (prevu) w.cancelAnimationFrame(prevu);
     },
