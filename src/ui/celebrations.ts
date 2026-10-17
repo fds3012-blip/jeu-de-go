@@ -50,11 +50,6 @@ export function compterExercice(delta: 1 | -1) {
   pause = setTimeout(() => { pause = undefined; poser(avancer(etat)); }, PAUSE_APRES_EXERCICE_MS);
 }
 
-/** Pour les tests : file vide, aucun exercice. */
-export function _reinitialiserFile() {
-  clearTimeout(pause); pause = undefined; exercices = 0; poser(FILE_VIDE);
-}
-
 // Les gains entrent dans la file : l'XP d'abord, puis le niveau franchi.
 if (typeof window !== 'undefined') {
   abonnerXp(g => {

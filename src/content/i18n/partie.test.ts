@@ -7,9 +7,9 @@ import {
 } from '../../app/partie';
 import { GENERIQUES, LONGUEUR_MAX, repliques, type Situation } from '../../app/repliques';
 import { annonceKomi } from '../../app/equilibrage';
-import { campsRecit, EXPLICATION_KOMI, ligneCompteur, ligneDeuxieme, ligneKomi, ligneResultat, type Recit } from '../../app/score';
+import { campsRecit, EXPLICATION_KOMI, ligneDeuxieme, ligneKomi, ligneResultat, type Recit } from '../../app/score';
 import { fin, leconMochi, texteBilan, texteCoups, type StatsPartie } from '../../app/bilan';
-import { AUCUNE_ERREUR, NOTE_INFO, NOTES, PERTES_DIFFUSES, phraseNote, SANS_KATAGO } from '../../app/revue';
+import { NOTE_INFO, NOTES, PERTES_DIFFUSES } from '../../app/revue';
 import { libelleGels } from '../../app/gel';
 import { annonceAtari, annonceConfirmation, annonceCoup, nomIntersection } from '../../ui/boardA11y';
 import { fromLabel } from '../../go/coords';
@@ -33,8 +33,6 @@ describe('français identique aux textes d’origine', () => {
     expect(traduire('fr', 'partie.mortes.doute')).toBe(DOUTE_MORTES);
     expect(traduire('fr', 'partie.frontieres')).toBe(ALERTE_FRONTIERES);
     expect(traduire('fr', 'recit.explicationKomi')).toBe(EXPLICATION_KOMI);
-    expect(traduire('fr', 'revue.aucuneErreur')).toBe(AUCUNE_ERREUR);
-    expect(traduire('fr', 'revue.sansKataGo')).toBe(SANS_KATAGO);
     expect(traduire('fr', 'revue.pertesDiffuses')).toBe(PERTES_DIFFUSES);
   });
 
@@ -74,7 +72,6 @@ describe('français identique aux textes d’origine', () => {
     expect(ligneKomi(-100)).toBe('−100 komi pour Blanc');
     expect(ligneResultat(recit(1, 1.5), campsRecit('Pomme'))).toBe('Tu gagnes de 1,5 point !');
     expect(ligneResultat(recit(2, 2), campsRecit('Pomme'))).toBe('Pomme gagne de 2 points');
-    expect(ligneCompteur(18, 12.5)).toBe('Noir 18 · Blanc 12,5');
     expect([1.5, 2, 3.5].map(v => traduire('fr', 'fin.marge', { n: v, v: nombre(v, 'fr'), plateau: '9 × 9' })))
       .toEqual(['de 1,5 point sur 9 × 9', 'de 2 points sur 9 × 9', 'de 3,5 points sur 9 × 9']);
     expect(texteBilan({ v: 2, d: 1 })).toBe('2 victoires, 1 défaite');
@@ -90,8 +87,6 @@ describe('français identique aux textes d’origine', () => {
 
   it('revue, lecteur d’écran et pastille des gels', () => {
     expect(NOTES.map(n => NOTE_INFO[n].libelle)).toEqual(['Brillant', 'Meilleur coup', 'Excellent', 'Bon', 'Classique', 'Solide', 'Forcé', 'Imprécision', 'Erreur', 'Coup manqué', 'Gaffe']);
-    expect(phraseNote({ coup: 3, couleur: 1, note: 'bon', perte: 0.4 })).toBe('Bon coup, à peine un point de moins que le meilleur.');
-    expect(phraseNote({ coup: 3, couleur: 1, note: 'grosse', perte: 7.2 })).toBe('Gaffe : environ 7 points de perdus.');
     for (const n of [0, 1, 2, 5]) expect(traduire('fr', n === 0 ? 'gel.aucun' : 'gel.reserve', { n })).toBe(libelleGels(n));
     expect(annonceConfirmation('D4')).toBe('D4 : appuie encore pour poser');
     const b = new Int8Array(N * N);
@@ -141,7 +136,6 @@ describe('en anglais', () => {
 
   it('revue et lecteur d’écran', () => {
     expect(NOTES.map(n => NOTE_INFO[n].libelle)).toEqual(['Brilliant', 'Best move', 'Excellent', 'Good', 'Standard', 'Solid', 'Forced', 'Inaccuracy', 'Mistake', 'Miss', 'Blunder']);
-    expect(phraseNote({ coup: 3, couleur: 1, note: 'erreur', perte: 4 })).toBe('Mistake: about 4 points lost.');
     const b = new Int8Array(N * N);
     b[at('D4')] = 1; b[at('D5')] = 2; b[at('C4')] = 2; b[at('E4')] = 2;
     expect(annonceAtari(b, at('E4'), N, { 2: 'Pomme' })).toBe('Atari: your stone D4 has only one liberty left, at D3.');

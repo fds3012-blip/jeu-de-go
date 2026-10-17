@@ -227,6 +227,5 @@ export const AUSSI: Record<'fr' | 'en', Partial<Record<IdMot, string[]>>> = {
 
 /** Questions sur l'appli (pas sur le go) : compte, série, gel, hors ligne, clavier (#116), suppression du compte. Textes seuls. */
 export const IDS_QUESTIONS = ['compte', 'serie', 'gel', 'horsLigne', 'clavier', 'supprimer'] as const;
-export type IdQuestion = (typeof IDS_QUESTIONS)[number];
 
 export type Fiche = 'regles' | 'compter' | 'mots' | 'questions';

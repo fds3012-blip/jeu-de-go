@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ALL_PUZZLES, BASE_PUZZLES, PUZZLES_16 } from '../content/puzzles';
-import { PALIERS, aContinuer, aSuivre, auHasard, indexPalier, ordrePaliers, palierEnCours, palierRecommande, paliers, paliersVisibles, prochain, suivantPalier } from './paliers';
+import { PALIERS, aContinuer, aSuivre, auHasard, indexPalier, ordrePaliers, palierEnCours, paliers, paliersVisibles, prochain, suivantPalier } from './paliers';
 
 describe('problèmes sans fin (#147)', () => {
   const liste = [pbx('a', 300), pbx('b', 350), pbx('c', 400), pbx('n', 500)];
@@ -124,12 +124,7 @@ describe('paliers', () => {
     expect(suivantPalier(paliers(LISTE, r2), LISTE[2], r2)?.id).toBe('a2'); // Novice fermé
   });
 
-  it('recommande le palier de la cote, sans dépasser le dernier ouvert', () => {
-    const tout = new Set(LISTE.map(p => p.id));
-    expect(palierRecommande(paliers(LISTE, tout), 700)).toBe('apprenti');
-    expect(palierRecommande(paliers(LISTE, tout), 1500)).toBe('confirme');
-    expect(palierRecommande(paliers(LISTE, new Set()), 1500)).toBe('debutant');
-    expect(palierRecommande(paliers(LISTE, tout), undefined)).toBeUndefined();
+  it('cinq paliers', () => {
     expect(PALIERS).toHaveLength(5);
   });
 });

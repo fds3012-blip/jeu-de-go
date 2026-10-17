@@ -6,7 +6,6 @@ type Pattern = number | number[];
 let actif = true;
 /** Réglage « Vibrations » du Profil, séparé du son (#165). */
 export function setHapticsEnabled(on: boolean): void { actif = on; }
-export function hapticsEnabled(): boolean { return actif; }
 
 export function vibrate(pattern: Pattern): boolean {
   if (!actif) return false;

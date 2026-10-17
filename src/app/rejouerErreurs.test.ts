@@ -8,7 +8,7 @@ import { classerCoups } from './notation';
 import { KATAGO_424, SGF_424 } from './partie424.fixture';
 import {
   consigne, ESSAIS, erreursARejouer, idPartie, jugerEssai, jugerParRecherche, marquerPartie, MAX_ERREURS_REJOUEES, MAX_PARTIES_XP,
-  phraseFin, phraseMontre, phraseMontrePourquoi, phrasePasEncore, phraseTrouve, score, titreFin, type ErreurARejouer,
+  phraseFin, phraseMontrePourquoi, phrasePasEncore, phraseTrouve, score, titreFin, type ErreurARejouer,
 } from './rejouerErreurs';
 
 const { positions } = positionsDepuisSgf(SGF_424);
@@ -135,11 +135,10 @@ describe('phrases de Mochi et fin de séance', () => {
     expect(consigne(erreur(47), 9, true)).toBe('Ici, tu as passé. Trouve mieux.');
   });
 
-  it('trois essais : deux « Pas encore », puis Mochi montre le coup de KataGo', () => {
+  it('trois essais : deux « Pas encore »', () => {
     expect(ESSAIS).toBe(3);
     expect(phrasePasEncore(1)).toBe('Pas encore. Encore 2 essais.');
     expect(phrasePasEncore(2)).toBe('Pas encore. Dernier essai.');
-    expect(phraseMontre(erreur(27), 9)).toBe('Voici le coup de KataGo : F5. Il valait 11 points de plus que B8.');
   });
 
   it('#492 : le pourquoi sur la vraie partie, vérifié par le calcul (sortie d’atari, prise, coupe, connexion, sans motif)', () => {

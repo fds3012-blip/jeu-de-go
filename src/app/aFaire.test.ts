@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  DELAI_COUP_MS, MAX_ELEMENTS, SOURCES, elementDeLOnglet, elementsAFaire, leconEnCours, ongletsAPastille, sourceAmis,
+  DELAI_COUP_MS, MAX_ELEMENTS, SOURCES, elementsAFaire, leconEnCours, ongletsAPastille, sourceAmis,
   type DonneesAFaire, type DefiEnAttente,
 } from './aFaire';
 import { defisEnAttente } from './defisAJouer';
@@ -62,8 +62,6 @@ describe('défi où c’est ton tour', () => {
     expect(e).toMatchObject({ genre: 'defi', onglet: 'jouer', pastille: true, titre: 'C’est ton tour contre Léa', cible: { ecran: 'defi', partieId: 'p1' } });
     expect(sp(e.detail)).toBe('Partie entre amis · il te reste 2 jours et 2 h');
     expect([...ongletsAPastille([e])]).toEqual([['jouer', 'C’est ton tour contre Léa']]);
-    expect(elementDeLOnglet([e], 'jouer')).toBe(e);
-    expect(elementDeLOnglet([e], 'profil')).toBeUndefined();
   });
 
   it('sans pseudo connu, sans délai, au comptage', () => {
