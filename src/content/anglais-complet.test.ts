@@ -19,6 +19,8 @@ import { CATALOGUE_RETOURS } from './i18n/retours';
 import { CATALOGUE_TITRES } from './i18n/titres';
 import { CATALOGUE_JOUEUR } from './i18n/profilPublic';
 import { CATALOGUE_REFUS, messageServeur } from './i18n/refus';
+import { CATALOGUE_OUVERTURES } from './i18n/ouvertures';
+import { CATALOGUE_ENTREE_OUVERTURES } from './i18n/ouverturesEntree';
 import { LESSONS_FR, CHAPITRES } from './lessons';
 import { CHAPITRES_EN, LESSONS_EN } from '../../content/lessons.en.js';
 import { ALL_PUZZLES } from './puzzles';
@@ -51,6 +53,9 @@ const CATALOGUES: [string, Brut, Brut][] = [
   // #560 : profil public d'un joueur.
   ['profil public', CATALOGUE_JOUEUR.fr, CATALOGUE_JOUEUR.en],
   ['refus du serveur', CATALOGUE_REFUS.fr, CATALOGUE_REFUS.en],
+  // #591 : répertoire d'ouvertures (entrées prouvées par src/go/ouvertures.test.ts).
+  ['ouvertures', CATALOGUE_OUVERTURES.fr, CATALOGUE_OUVERTURES.en],
+  ['ouvertures (ligne d’Apprendre)', CATALOGUE_ENTREE_OUVERTURES.fr, CATALOGUE_ENTREE_OUVERTURES.en],
   // #524 : partie de découverte (scénario prouvé par src/content/decouverte.test.ts).
   ['découverte', DECOUVERTE_FR, DECOUVERTE_EN],
 ];

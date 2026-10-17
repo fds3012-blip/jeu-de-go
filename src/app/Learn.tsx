@@ -1,6 +1,6 @@
 // Onglet Apprendre (issues #40, #54 ; chemin v3) : chemin des leçons en courbe, chapitres illustrés, carte de la prochaine leçon.
 // Le lecteur de leçon et la fin de leçon sont dans Lecon.tsx (recette du 30/09, R2) ; ré-exportés ici pour src/app/ecrans.ts.
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { Suspense, lazy, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { CHAPITRES, LESSONS, type Chapitre } from '../content/lessons';
 import { Bubble } from '../ui/Mochi';
 import { Sceau } from '../ui/Sceau';
@@ -14,7 +14,11 @@ import { readLocal, writeLocal, type SyncState } from './hooks';
 import { FETES_KEY, boutonChemin, chapitresAFeter, chapitresAVenir, colonne, courbe, dureeMinutes, etapes, type Ancre, type Etape, type Progression } from './apprendre';
 import { t } from '../content/i18n/secondaires';
 import type { EtatDecouverte } from './decouverteEtat';
+import { EntreeOuvertures } from '../ui/EntreeOuvertures';
 import '../ui/apprendre.css';
+
+/** #591 : répertoire d'ouvertures, ouvert depuis le chapitre « L'ouverture », chargé à la demande. */
+const EcranOuvertures = lazy(() => import('./Ouvertures'));
 
 export { LessonPlayer, POSE_MS } from './Lecon';
 
@@ -55,6 +59,7 @@ export function LearnHome({ progress, onOpen, sync = 'local', compteRequis = () 
   const iEnCours = liste.findIndex(e => e.etat === 'encours');
   const bouton = boutonChemin(LESSONS, progress);
   const carte = useRef<HTMLLIElement | HTMLDivElement>(null);
+  const [ouvertures, setOuvertures] = useState(false);
   // #121 : sous 390 px, les écarts horizontaux du chemin sont mis à l'échelle de l'écran ; à 390 px et plus, k = 1.
   const [k, setK] = useState(() => Math.min(1, window.innerWidth / 390));
   useEffect(() => {
@@ -85,12 +90,15 @@ export function LearnHome({ progress, onOpen, sync = 'local', compteRequis = () 
     {onTheme && <RangeeThemes themes={themesAvecLecons(LESSONS, progress)} onTheme={onTheme} />}
   </>;
 
+  // #591 : au retour, le chemin revient sur la ligne « Ouvertures ».
+  if (ouvertures) return <Suspense fallback={null}><EcranOuvertures onExit={() => { setOuvertures(false); requestAnimationFrame(() => document.querySelector('[data-testid="entree-ouvertures"]')?.scrollIntoView({ block: 'center' })); }} /></Suspense>;
+
   return (
     <div className="apprendre">
       {/* #228 : un chemin par chapitre, l'un sous l'autre ; une seule carte en relief, celle de la prochaine leçon. */}
       {CHAPITRES.map((c, i) => (
         <CheminChapitre key={c.id} chapitre={c} liste={liste.filter(e => c.lecons.includes(e.lecon))} k={k}
-          entree={i === 0 ? <>{decouverte && <CarteDecouverte {...decouverte} />}{onGuidee && <CarteGuidee ouvrir={onGuidee} />}</> : null}
+          entree={i === 0 ? <>{decouverte && <CarteDecouverte {...decouverte} />}{onGuidee && <CarteGuidee ouvrir={onGuidee} />}</> : c.id === 'c2' ? <EntreeOuvertures onOpen={() => setOuvertures(true)} /> : null}
           carte={iEnCours >= 0 && c.lecons.includes(liste[iEnCours].lecon) ? prochaine : null}
           fete={fete === c.id} onFeteFinie={() => setFete(null)} onOpen={onOpen} compteRequis={compteRequis}
           regles={c === CHAPITRES[0] ? onRegles : undefined} />

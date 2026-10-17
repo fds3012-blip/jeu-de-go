@@ -12,8 +12,9 @@
 // n'est retenu que si toutes le jugent de la même façon.
 import { fromRows } from './position';
 import { play, type Position } from './rules';
-import { fromLabel, toLabel } from './coords';
+import { fromLabel, fromSgf, toLabel } from './coords';
 import type { Lesson, LessonStep } from '../content/lessons';
+import { lireOuverture, positionsOuverture, type Ouverture } from './ouvertures';
 
 export const REGLAGES = {
   modele: 'g170-b6c96-s175395328-d26788732',
@@ -114,6 +115,18 @@ export function positionsDe(l: Lesson, c: Controle): APosition[] {
     pos = r;
   }
   return out;
+}
+
+/**
+ * #591 : positions à analyser pour une entrée du répertoire d'ouvertures (src/content/ouvertures.ts) : avant chaque
+ * coup de la séquence, avec sa couleur au trait, le coup lui-même et les erreurs courantes qui le remplacent.
+ */
+export function positionsDOuverture(o: Ouverture): APosition[] {
+  const lue = lireOuverture(o), positions = positionsOuverture(lue), n = o.taille;
+  return lue.coups.map((c, i) => aPos(versRows(positions[i]), c.couleur, [
+    toLabel(c.point, n),
+    ...[...o.erreurs, ...(o.ecartes ?? [])].filter(e => e.coup === i).map(e => toLabel(fromSgf(e.c, n), n)),
+  ]));
 }
 
 // ---- Symétries -------------------------------------------------------------------------------------------------

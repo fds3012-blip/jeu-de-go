@@ -1,0 +1,13 @@
+/* #591 : ligne « Ouvertures » d'Apprendre (src/ui/EntreeOuvertures.tsx). Discrète : pas de relief, une ligne touchable
+   de 44 px au moins. Couleurs : jetons de tokens.css (sombre et clair). */
+.entree-ouvertures { display: flex; align-items: center; gap: var(--space-3); width: 100%; min-height: var(--cible-min); margin: 0 0 var(--space-4);
+  padding: var(--space-2) var(--space-3); border: 0; border-radius: var(--radius); background: var(--surface); color: var(--text); text-align: left; cursor: pointer; }
+.entree-ouvertures > span { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.entree-ouvertures b { font-weight: var(--fw-bold); }
+.entree-ouvertures small { color: var(--muted); font-size: var(--fs-s); line-height: 1.35; }
+.entree-ouvertures svg { flex: none; }
+.entree-ouvertures .eo-lignes, .entree-ouvertures .eo-chevron path { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.entree-ouvertures .eo-lignes { stroke-opacity: .55; }
+.entree-ouvertures .eo-noire { fill: currentColor; }
+.entree-ouvertures .eo-blanche { fill: var(--bg); stroke: currentColor; stroke-width: 1.4; }
+.entree-ouvertures:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }

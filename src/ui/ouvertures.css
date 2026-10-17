@@ -1,0 +1,50 @@
+/*
+ * Répertoire d'ouvertures (#591). Chargé avec l'écran (src/app/Ouvertures.tsx), jamais dans le CSS initial.
+ * Liste : choix de la taille (deux boutons), puis une tuile par ouverture. Lecteur : la grammaire du lecteur de leçon
+ * (lecon.css : barre, plateau souple, parole), puis les actions : « Suivant » en relief, « Précédent » à côté,
+ * « Voir l'erreur courante » en lien. Couleurs : jetons de tokens.css (sombre et clair). Cibles de 44 px au moins.
+ */
+
+/* ---------- Liste ---------- */
+.ouvertures { display: flex; flex-direction: column; gap: var(--space-3); padding-bottom: var(--space-4); }
+.ouvertures .ecran-tete { margin-bottom: 0; }
+.ouv-intro, .ouv-preuve { margin: 0; color: var(--muted); font-size: var(--fs-s); line-height: 1.45; }
+.ouv-preuve { margin-top: var(--space-1); }
+.ouv-tailles { display: flex; gap: 4px; padding: 4px; border-radius: 999px; background: var(--surface); align-self: flex-start; }
+.ouv-taille { min-height: var(--cible-min); min-width: 88px; padding: 0 var(--space-4); border: 0; border-radius: 999px; background: none;
+  color: var(--text); font-weight: var(--fw-bold); font-size: var(--fs-s); cursor: pointer; }
+.ouv-taille[aria-pressed='true'] { background: var(--accent); color: var(--on-accent); }
+.ouv-liste { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+.ouv-carte { display: flex; align-items: center; gap: var(--space-3); width: 100%; min-height: var(--cible-min); padding: var(--space-3);
+  border: 0; border-radius: var(--radius); background: var(--surface); color: var(--text); text-align: left; cursor: pointer; }
+.ouv-mini { flex: none; display: block; width: 64px; height: 64px; border-radius: var(--radius-s, 8px); box-shadow: 0 2px 6px -3px rgba(0, 0, 0, .5); }
+.ouv-carte-texte { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.ouv-carte-texte b { font-family: var(--font-titre); font-size: var(--fs-l); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre); line-height: 1.15; }
+.ouv-carte-texte small { color: var(--muted); font-size: var(--fs-s); line-height: 1.35; overflow-wrap: break-word; }
+.ouv-carte-coups { color: var(--muted); font-size: var(--fs-legende); font-weight: var(--fw-bold); }
+.ouv-carte:focus-visible, .ouv-taille:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+/* ---------- Lecteur ---------- */
+.ouv-lecteur .ecran-tete { margin-bottom: 0; }
+.ouv-etat { flex: none; margin: 0; min-height: 1.4em; color: var(--muted); font-size: var(--fs-s); font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; }
+.ouv-etat-erreur { color: var(--text); }
+.ouv-parole { flex: none; margin: 0; display: block; }
+.ouv-parole p { margin: 0; padding: 10px 14px; background: var(--surface); border-radius: var(--radius); line-height: 1.4; }
+.ouv-parole p + p { margin-top: 4px; }
+.ouv-parole .ouv-aide { color: var(--muted); font-size: var(--fs-s); }
+/* L'erreur : un filet de couleur à gauche (pas la couleur seule : le titre « Erreur courante » le dit aussi). */
+.ouv-parole-erreur p:first-child { border-left: 4px solid var(--danger); }
+.ouv-perte { font-weight: var(--fw-bold); }
+.ouv-actions { flex: none; display: flex; flex-direction: column; align-items: stretch; gap: var(--space-1); margin-top: auto; }
+.ouv-nav { display: flex; gap: var(--space-2); }
+.ouv-nav .btn, .ouv-actions > .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: var(--cible-bouton, 48px); }
+.ouv-nav .ouv-precedent { flex: 0 1 40%; }
+.ouv-nav .ouv-principal { flex: 1 1 60%; }
+.ouv-actions > .ouv-principal { min-height: var(--cible-cta, 52px); }
+.ouv-actions svg { flex: none; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.ouv-actions .lien { align-self: center; min-height: var(--cible-min); text-decoration: underline; text-underline-offset: 3px; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .ouv-carte { transition: transform var(--duree-rapide, 120ms) var(--ease, ease-out); }
+  .ouv-carte:active { transform: scale(.98); }
+}
