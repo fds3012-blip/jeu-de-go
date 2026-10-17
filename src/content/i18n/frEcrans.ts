@@ -1327,7 +1327,7 @@ export const frEcrans = {
   // #583 : compte sans preuve d'accord (créé avant, ou conditions changées) : la même case, montrée une fois.
   'conditions.accord.titre': 'Une case à cocher',
   'conditions.accord.texte': 'Coche-la pour continuer à jouer en ligne.',
-  'conditions.accord.valider': 'Continuer',
+  'conditions.accord.valider': 'Valider',
   'conditions.accord.aide': 'Coche la case pour jouer en ligne.',
   // Amis (#359) : écran « Mes amis » du Profil. Les textes qui disent « défier » restent sous `defi.` (vocabulaire.test.ts).
   'amis.titre': 'Mes amis',

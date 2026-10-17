@@ -32,3 +32,9 @@ export function apresRefus(voie: Voie, raison: 'pris' | 'inconnu' | undefined): 
 
 /** La case d'âge et des conditions n'est demandée qu'à la création d'un compte (liaison comprise). */
 export const demandeAge = (sens: Sens) => sens === 'creer';
+
+/**
+ * #583 : le joueur a coché la case, sur l'écran de création (liaison comprise) ; ou il l'avait cochée avant que son
+ * adresse, déjà prise, fasse passer l'écran en connexion (`bascule`). Son accord est alors à garder sur le serveur.
+ */
+export const accordDonne = (age: boolean, sens: Sens, bascule = false) => age && (demandeAge(sens) || bascule);

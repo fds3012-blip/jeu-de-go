@@ -51,7 +51,7 @@ export function lireRetour(brut: string | null, maintenant = Date.now()): Retour
     const defi = d && typeof d === 'object' && typeof d.jeton === 'string' ? { jeton: d.jeton, inviteur: typeof d.inviteur === 'string' ? d.inviteur : null } : null;
     const action: ActionSociale = o.action === 'liaison' || o.action === 'ajout' ? o.action : 'connexion';
     return { raison: typeof o.raison === 'string' ? o.raison : null, reprise, defi, profil: o.profil === true,
-      fournisseur: estFournisseur(o.fournisseur) ? o.fournisseur : 'google', action, conditions: o.conditions === true };
+      fournisseur: estFournisseur(o.fournisseur) ? o.fournisseur : 'google', action, ...(o.conditions === true && { conditions: true }) };
   } catch { return null; }
 }
 

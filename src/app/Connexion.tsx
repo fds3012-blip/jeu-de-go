@@ -18,7 +18,7 @@ import { garderMonCompte } from '../data/defi';
 import { isEmail } from '../data/username';
 import { EVENTS, track } from '../data/analytics';
 import { noterConnexionParCode } from './entonnoir';
-import { apresRefus, demandeAge, typeCode, voieEnvoi, type Sens, type Voie } from './connexionBascule';
+import { accordDonne, apresRefus, demandeAge, typeCode, voieEnvoi, type Sens, type Voie } from './connexionBascule';
 import { fr } from '../ui/typo';
 import { BoutonsFournisseurs } from '../ui/BoutonFournisseur';
 import { garderRetour, lireAnnonce, oublierAnnonce, type Annonce } from './connexionGoogle';
@@ -157,7 +157,7 @@ export function ConnexionCode({ db, mode = 'connexion', envoyer, moment = 'profi
     track(EVENTS.compteMethode, { methode: f, navigateur_integre: contexte.integre });
     const retour = `${window.location.origin}/`;
     // #583 : la case cochée part avec la note d'aller-retour ; au retour, App.tsx fait garder l'accord par le serveur.
-    const conditions = !versCompteExistant && demandeAge(sens) && age;
+    const conditions = !versCompteExistant && accordDonne(age, sens);
     if (anonyme && sens === 'creer' && !versCompteExistant) {
       garderRetour(undefined, undefined, { fournisseur: f, action: 'liaison', conditions });
       const r = await lierSociale(db, f, retour);
@@ -179,7 +179,7 @@ export function ConnexionCode({ db, mode = 'connexion', envoyer, moment = 'profi
     setBusy(true); setError('');
     // #583 : case cochée (création, liaison, ou adresse déjà prise après la case) : l'accord est noté AVANT que la
     // session s'ouvre (App.tsx la voit dès verifyOtp), puis envoyé au serveur par App.tsx (preuveConditions.ts).
-    const accord = age && (demandeAge(sens) || bascule);
+    const accord = accordDonne(age, sens, bascule);
     if (accord) noterAccord();
     const r = await verifierCode(db, email, valeur, typeCode(voie));
     setBusy(false);

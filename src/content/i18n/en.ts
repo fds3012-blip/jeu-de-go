@@ -1726,7 +1726,7 @@ export const en = {
   'compte.pseudo.conseil': 'Everyone can see your nickname. Don’t use your real name.',
   'conditions.accord.titre': 'One box to tick',
   'conditions.accord.texte': 'Tick it to keep playing online.',
-  'conditions.accord.valider': 'Continue',
+  'conditions.accord.valider': 'Confirm',
   'conditions.accord.aide': 'Tick the box to play online.',
   // Friends (#359).
   'amis.titre': 'My friends',
