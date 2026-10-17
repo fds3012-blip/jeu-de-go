@@ -50,7 +50,7 @@
 .fin-mochi p { margin: 0; }
 .fin-mochi .lien { margin-left: -12px; min-height: var(--cible-min); }
 
-/* Un seul bouton en relief, avec le sceau de l'adversaire proposé. */
+/* Un seul bouton en relief ; #602 : le sceau seulement pour un nouvel adversaire proposé. */
 /* Le bouton reste près de la leçon de Mochi ; la hauteur libre va au-dessus du sceau, qui laisse voir plus de plateau. */
 .fin-action { width: 100%; margin-top: clamp(var(--space-5), 5vh, 44px); }
 .fin .cta { position: static; transform: none; width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; }

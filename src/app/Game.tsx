@@ -129,6 +129,8 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   const [dead, setDead] = useState<Set<number>>(new Set());
   // #486 : fixé au début de la partie (le compteur de parties finies change à la fin de celle-ci).
   const [sur] = useState(() => !!ai && comptageSur);
+  // #602 : « prisonniers » s'écrit sous les couvercles pendant la toute première partie seulement (aucune partie finie).
+  const [premierePartie] = useState(() => readLocal<Parties>(PARTIES_KEY, { n: 0 }).n === 0);
   const [fantome, setFantome] = useState(-1);
   const [msg, setMsg] = useState(() => repriseLue ? tr('partie.reprise.encours') : messageDebut());
   /** Phrase du début de partie : avec un handicap, Blanc commence, et on le dit (#528). */
@@ -588,7 +590,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
         portrait={c === 2 && ai && guidee ? <PortraitMochi taille={44} decoratif />
           : c === 2 && ai ? <Portrait id={ai.id} taille={44} humeur={humeur.h} decoratif signature={false} />
           : c === 2 && portrait ? portrait : <Avatar couleur={c} initiale={initiale} />}
-        replique={c === 2 ? replique : null} avant={c === 2 ? retour : undefined} gain={gain} />
+        replique={c === 2 ? replique : null} avant={c === 2 ? retour : undefined} gain={gain} legende={premierePartie} />
     );
   };
 
