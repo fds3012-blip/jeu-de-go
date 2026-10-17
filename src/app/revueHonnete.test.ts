@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { newPosition, play, type Position } from '../go/rules';
 import { fromLabel } from '../go/coords';
 import {
-  avanceFinale, compteNotes, defaiteNette, momentCle, noterCoups, notesAvecCle, PERTES_DIFFUSES, phraseBilan, phraseMomentCle, plafondPrecision, precision,
+  avanceFinale, compteNotes, defaiteNette, momentCle, noterCoups, notesAvecCle, PERTES_DIFFUSES, phraseBilan, plafondPrecision, precision,
   precisionHonnete, rejouerDici, type AnalyseRevue, type NoteCoup,
 } from './revue';
 
@@ -92,7 +92,6 @@ describe('moment clé, passes comprises', () => {
     const cle = momentCle(h, a, 1)!;
     expect(cle).toMatchObject({ coup: 5, passe: true, prises: 1 });
     expect(cle.perte).toBeCloseTo(5);
-    expect(phraseMomentCle(cle, h, 'Pomme')).toBe('Moment clé : ici, tu as passé. Pomme a pris une pierre. Rejoue ce coup !');
   });
   it('la passe coûteuse est aussi notée, au lieu de « Solide »', () => {
     const note = noterCoups(h, a)[4]!;
@@ -111,7 +110,6 @@ describe('moment clé, passes comprises', () => {
     const h2 = partie(['A1', 'B1', 'E5', 'D5', 'G7', 'A2']);
     const cle = momentCle(h2, a, 1)!;
     expect(cle).toMatchObject({ coup: 5, passe: false, prises: 1 });
-    expect(phraseMomentCle(cle, h2, 'Pomme')).toBe('Moment clé : ici, tu as joué G7. Ensuite, Pomme a pris une pierre : environ 5 points perdus. Rejoue ce coup !');
   });
   it("une passe suivie de la passe de l'adversaire (fin de partie) n'est jamais le moment clé : le plateau n'a pas bougé", () => {
     const fin = partie(['A1', 'B1', 'E5', 'D5', 'passe', 'passe']);

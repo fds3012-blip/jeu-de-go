@@ -36,9 +36,6 @@ export const fr = {
   'titre.revisions': 'Révisions du jour',
   'titre.decouverte': 'Partie de découverte',
 
-  // En-tête (App.tsx)
-  'entete.apprendre': 'Le chemin des leçons',
-
   // Accueil (#40, #119) : réplique de l'adversaire, action principale, tuiles, feuille « Changer »
   'accueil.cta.premiere': 'Joue ta première partie',
   'accueil.cta.premiereNom': 'Joue ta première partie contre {nom}',

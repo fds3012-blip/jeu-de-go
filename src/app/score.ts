@@ -147,8 +147,3 @@ export function ligneResultat(r: Recit, c: Camps = campsRecit()): string {
   if (r.gagnant === 1 && c.toi) return t('recit.tuGagnes', marge);
   return t('recit.gagne', { ...marge, nom: r.gagnant === 1 ? c.noir : c.blanc });
 }
-
-/** Compteur : « Noir 18 · Blanc 12 ». */
-export function ligneCompteur(noir: number, blanc: number): string {
-  return t('recit.compteur', { noir: nombre(noir), blanc: nombre(blanc) });
-}

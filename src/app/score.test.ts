@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { ARRIVEE_JETON, campsRecit, DUREE_CARRE, DUREE_RECIT, etatRecit, jetonsEtape, ligneCompteur, ligneDeuxieme, ligneKomi, ligneResultat, ligneTerritoire, PAUSE_LECTURE, recitScore, TEMPS, totauxEtapes } from './score';
+import { ARRIVEE_JETON, campsRecit, DUREE_CARRE, DUREE_RECIT, etatRecit, jetonsEtape, ligneDeuxieme, ligneKomi, ligneResultat, ligneTerritoire, PAUSE_LECTURE, recitScore, TEMPS, totauxEtapes } from './score';
 import { choisirLangue } from '../content/i18n';
 import { score } from '../go/score';
 import { fromRows } from '../go/position';
@@ -92,10 +92,9 @@ describe('récit du score (#78)', () => {
     expect(etatRecit(r, 0)).toEqual({ etape: 1, noir: 0, blanc: 0 });
   });
 
-  it('textes : komi, compteur, égalité', () => {
+  it('textes : komi, égalité', () => {
     expect(ligneKomi(6.5)).toBe('+6,5 komi pour Blanc');
     expect(ligneKomi(-100)).toBe('−100 komi pour Blanc');
-    expect(ligneCompteur(18, 12.5)).toBe('Noir 18 · Blanc 12,5');
     const vide = fromRows(Array.from({ length: 9 }, () => '.'.repeat(9))).pos;
     const r = recitScore(vide, 0);
     expect(r.gagnant).toBe(0);

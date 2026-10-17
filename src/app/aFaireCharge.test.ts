@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { chargerDefis } from './aFaireCharge';
+import { chargerAFaire } from './aFaireCharge';
 import type { Db } from '../data/supabase';
 
 // #367 (serveur) : une partie où c'est ton tour est « nouvelle » tant que sa notification n'est pas lue.
@@ -29,14 +29,14 @@ function db(notifications: { data: unknown; error: unknown }): Db {
   return { from: (t: string) => requete(tables[t]) } as unknown as Db;
 }
 
-describe('chargerDefis', () => {
+describe('chargerAFaire : défis', () => {
   it('nouveau : seulement la partie dont la notification attend', async () => {
-    const l = await chargerDefis(db({ data: [{ id: 1, type: 'tour', partie_id: P2, creee_le: '' }], error: null }), MOI, new Map());
+    const l = (await chargerAFaire(db({ data: [{ id: 1, type: 'tour', partie_id: P2, creee_le: '' }], error: null }), MOI, new Map())).defis;
     expect(l.map(x => [x.partieId, x.adversaire, x.nouveau])).toEqual([[P1, 'Léa', false], [P2, 'Léa', true]]);
   });
 
   it('notifications illisibles (serveur sans la table) : `nouveau` absent, la pastille reste allumée', async () => {
-    const l = await chargerDefis(db({ data: null, error: { message: 'relation does not exist' } }), MOI, new Map());
+    const l = (await chargerAFaire(db({ data: null, error: { message: 'relation does not exist' } }), MOI, new Map())).defis;
     expect(l).toHaveLength(2);
     for (const x of l) expect('nouveau' in x).toBe(false);
   });
