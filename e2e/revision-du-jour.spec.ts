@@ -29,7 +29,7 @@ test('révision du jour : un problème déjà réussi revient à J+1, on le refa
   await nav(page, 'Problèmes');
 
   // Sous le Go du jour, une seule carte : le prochain exercice, sans total.
-  await expect(page.getByRole('heading', { name: 'Révision du jour' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Révisions', exact: true })).toBeVisible();
   await expect(page.getByText('Pour garder ta série, fais chaque jour le Go du jour, une leçon ou une révision.')).toBeVisible();
   const carte = page.getByRole('button', { name: /^Réviser : / });
   await expect(carte).toHaveCount(1);
@@ -65,14 +65,14 @@ test('révision du jour : un problème déjà réussi revient à J+1, on le refa
   await page.reload();
   await nav(page, 'Problèmes');
   await expect(page.getByRole('heading', { name: 'Go du jour', exact: false }).first()).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Révision du jour' })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Révisions', exact: true })).toHaveCount(0);
 });
 
 test('rien à réviser : pas de section (joueur neuf)', async ({ page }) => {
   await page.goto('/');
   await nav(page, 'Problèmes');
   await expect(page.getByRole('heading', { name: /Go du jour/ })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Révision du jour' })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Révisions', exact: true })).toHaveCount(0);
 });
 
 test('un défi par jour : une leçon terminée fait vivre la série, sans cocher le Go du jour', async ({ page }) => {
@@ -102,7 +102,7 @@ async function lendemain(page: Page) {
   await page.clock.setFixedTime(J2);
   await page.goto('/');
   await nav(page, 'Problèmes');
-  await expect(page.getByRole('heading', { name: 'Révision du jour' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Révisions', exact: true })).toBeVisible();
   const carte = page.getByRole('button', { name: 'Réviser : Capture la pierre' });
   await expect(carte).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
@@ -149,7 +149,7 @@ test('Go du jour réussi après la leçon 1 : redite, il saute J+1 (#237 inchang
   await page.goto('/');
   await nav(page, 'Problèmes');
   await expect(page.getByRole('heading', { name: /Go du jour/ })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Révision du jour' })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Révisions', exact: true })).toHaveCount(0);
 });
 
 // Captures (docs/design/v2/captures/revision-*.png) : `CAPTURES=1 npx playwright test e2e/revision-du-jour.spec.ts`.
@@ -161,7 +161,7 @@ test('captures de la révision du jour, sombre et clair', async ({ page }) => {
     const nom = theme === 'dark' ? 'sombre' : 'clair';
     await page.goto('/');
     await nav(page, 'Problèmes');
-    const titre = page.getByRole('heading', { name: 'Révision du jour' });
+    const titre = page.getByRole('heading', { name: 'Révisions', exact: true });
     await titre.scrollIntoViewIfNeeded();
     await page.evaluate(() => window.scrollBy(0, -120));
     await page.screenshot({ path: `docs/design/v2/captures/revision-${nom}.png` });

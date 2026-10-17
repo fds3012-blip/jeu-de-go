@@ -33,7 +33,7 @@ for (const [largeur, hauteur] of [[390, 844], [320, 568]] as const) {
     await jouer(page, 'E5');
     await expect(passer).toBeEnabled({ timeout: 10_000 });
     await passerJusquAuScore(page);
-    await page.getByRole('button', { name: 'Revoir ma partie' }).click();
+    await page.getByRole('button', { name: 'Revoir la partie' }).click();
     const moi = page.locator('.bilan-score-moi');
     await expect(moi).toHaveText(/100\s%/, { timeout: 60_000 });
     expect(await lignes(page, '.bilan-score-moi'), '« 100 % » sur deux lignes').toBe(1);

@@ -127,7 +127,7 @@ test('déjà joueur : « Revois-la avec Mochi » ouvre la revue complète, sans 
   const cta = b.page.locator('.cta');
   await expect(cta).toHaveText('Revois-la avec Mochi');
   await cta.click();
-  await expect(b.page.getByRole('heading', { level: 2, name: 'Revoir ma partie' })).toBeVisible();
+  await expect(b.page.getByRole('heading', { level: 2, name: 'Revoir la partie' })).toBeVisible();
   await expect(b.page.getByRole('button', { name: 'Partager', exact: true })).toHaveCount(0);
   await b.ctx.close();
 });

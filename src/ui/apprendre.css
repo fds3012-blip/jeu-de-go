@@ -525,22 +525,10 @@
   .lien-deplier { transition: transform var(--duree-rapide) var(--ease); }
 }
 
-/* #590 : « Par thème », sous la carte de la prochaine leçon. Secondaire : des puces plates qui défilent de côté,
-   sans relief (le seul relief reste « Reprendre »). Le fond couvre la route du chemin, qui passe dessous. */
-.par-theme { position: relative; margin: var(--space-4) calc(-1 * var(--gouttiere)) 0; padding: var(--space-1) 0; background: var(--bg); }
-.par-theme h3 { margin: 0 var(--gouttiere) var(--space-2); font-size: var(--fs-s); font-weight: var(--fw-bold); color: var(--muted); letter-spacing: .02em; }
-.par-theme ul { list-style: none; margin: 0; padding: 0 var(--gouttiere) 2px; display: flex; gap: var(--space-2); overflow-x: auto;
-  scroll-snap-type: x proximity; scroll-padding-inline: var(--gouttiere); scrollbar-width: none; overscroll-behavior-x: contain; }
-.par-theme ul::-webkit-scrollbar { display: none; }
-.par-theme li { flex: none; scroll-snap-align: start; }
-.puce-theme { display: inline-flex; align-items: center; gap: 8px; min-height: var(--cible-min); padding: 0 14px; border: 1.5px solid var(--line);
-  border-radius: 999px; background: var(--surface); color: var(--text); font: inherit; font-weight: var(--fw-bold); font-size: var(--fs-m); white-space: nowrap; cursor: pointer; }
-.puce-theme[data-fini] { border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); }
-.puce-theme:focus-visible { outline: 3px solid var(--accent-trait); outline-offset: 2px; }
-@media (prefers-reduced-motion: no-preference) {
-  .puce-theme { transition: transform var(--duree-rapide) var(--ease); }
-  .puce-theme:active { transform: scale(.96); }
-}
+/* #590, #614 : « Par thème », sous la carte de la prochaine leçon : la grille de Problèmes (src/ui/themes.css), à plat
+   (le seul relief reste « Reprendre »). Le fond couvre la route du chemin, qui passe dessous. */
+.par-theme { position: relative; margin-top: var(--space-5); padding: var(--space-1) 0; background: var(--bg);
+  box-shadow: 0 0 0 var(--space-2) var(--bg); }
 
 /* #590 : page d'un thème (src/app/ThemeLecons.tsx). La place sous la liste laisse voir la dernière leçon au-dessus
    du bouton « S'entraîner », posé comme les autres actions principales au-dessus de la barre du bas. */

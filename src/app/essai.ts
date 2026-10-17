@@ -29,8 +29,11 @@ export type Acces =
   | { quoi: 'defi' }
   | { quoi: 'en_ligne' };
 
-/** Pourquoi l'écran « Crée ton compte » s'ouvre : c'est aussi la propriété `raison` de `essai_limite_atteinte`. */
-export type Raison = 'parties' | 'lecons' | 'problemes' | 'placement' | 'import' | 'defi' | 'en_ligne';
+/**
+ * Pourquoi l'écran « Crée ton compte » s'ouvre : c'est aussi la propriété `raison` de `essai_limite_atteinte`.
+ * `serie` : lien « Créer mon compte » de Problèmes, sans limite atteinte (#604, A9 : même mot, même écran).
+ */
+export type Raison = 'parties' | 'lecons' | 'problemes' | 'placement' | 'import' | 'defi' | 'en_ligne' | 'serie';
 
 /** État du compte du joueur. `sans_pseudo` : connecté, mais le pseudo n'est pas encore choisi. */
 export type EtatCompte = 'chargement' | 'aucun' | 'anonyme' | 'sans_pseudo' | 'complet';
