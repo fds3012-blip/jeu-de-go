@@ -189,7 +189,8 @@ function MenuPlus({ actions, label, reglages }: { actions: Action[]; label: stri
   useEffect(() => {
     if (!ouvert) return;
     feuille.current?.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus();
-    const clavier = (e: KeyboardEvent) => { if (e.key === 'Escape') { setOuvert(false); bouton.current?.focus(); } };
+    // #606 : Échap ferme le menu, sans faire aussi le retour de l'écran.
+    const clavier = (e: KeyboardEvent) => { if (e.key === 'Escape') { e.preventDefault(); setOuvert(false); bouton.current?.focus(); } };
     const dehors = (e: PointerEvent) => {
       if (e.target instanceof Node && (feuille.current?.contains(e.target) || bouton.current?.contains(e.target))) return;
       setOuvert(false);

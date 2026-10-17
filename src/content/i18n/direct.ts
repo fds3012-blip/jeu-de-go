@@ -84,6 +84,11 @@ const FR = {
   'direct.rejouer': 'Rejouer',
   'direct.revoir': 'Revoir la partie',
   'direct.accueil': 'Retour à l’accueil',
+  // #606 : « ‹ » ou retour du système pendant une partie en direct : la pendule continue, on demande d'abord.
+  'direct.quitter.avertir': 'Tu quittes la partie ? Ta pendule continue. Si tu ne reviens pas, elle compte comme quittée.',
+  'direct.quitter.confirmer': 'Quitter',
+  'direct.quitter.continuer': 'Jouer encore',
+  'direct.quitter.aria': 'Quitter la partie en direct ?',
   // #442 : parties quittées à répétition. Dit sans reproche, avec l'heure du retour et une seule action.
   'direct.erreur.attente': 'Tu as quitté plusieurs parties. Attends un peu avant de rejouer en direct.',
   'direct.abandons.titre': 'Tu as quitté plusieurs parties.',
@@ -176,6 +181,10 @@ const EN: { readonly [K in CleDirect]: string } = {
   'direct.rejouer': 'Play again',
   'direct.revoir': 'Review the game',
   'direct.accueil': 'Back to home',
+  'direct.quitter.avertir': 'Leave the game? Your clock keeps running. If you don’t come back, it counts as left.',
+  'direct.quitter.confirmer': 'Leave',
+  'direct.quitter.continuer': 'Play on',
+  'direct.quitter.aria': 'Leave the live game?',
   'direct.erreur.attente': 'You left several games. Wait a little before playing live again.',
   'direct.abandons.titre': 'You left several games.',
   'direct.abandons.rejouer': 'You can play live again in {temps}.',
