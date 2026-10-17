@@ -138,8 +138,8 @@ for (const largeur of [390, 320]) test(`?lang=en : toute l’interface en anglai
   await recit.getByRole('button', { name: 'See the result' }).click();
   await expect(page.getByRole('heading', { level: 2, name: 'Victory' })).toBeVisible();
   await sansFrancais(page, 'fin de partie');
-  await page.getByRole('button', { name: 'Review my game' }).click();
-  await expect(page.getByRole('heading', { level: 2, name: 'Review my game' })).toBeVisible();
+  await page.getByRole('button', { name: 'Review the game' }).click();
+  await expect(page.getByRole('heading', { level: 2, name: 'Review the game' })).toBeVisible();
   await expect(page.locator('.revue-analyse')).toHaveCount(0, { timeout: 30_000 });
   await sansFrancais(page, 'revue');
 
@@ -174,7 +174,7 @@ for (const largeur of [390, 320]) test(`?lang=en : toute l’interface en anglai
 
   // Profil, Réglages, Compte, Conditions (toutes les sections ouvertes).
   await nav.getByRole('button', { name: 'Profile' }).click();
-  await expect(page.getByRole('heading', { name: 'Your journey' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Profile', exact: true })).toBeVisible();
   await sansFrancais(page, 'Profil');
   await page.getByRole('button', { name: /^Settings/ }).click();
   await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible();

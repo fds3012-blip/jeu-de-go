@@ -7,7 +7,7 @@ for (const theme of ['dark', 'light'] as const) {
     await page.addInitScript(t => localStorage.setItem('go.settings.v1', JSON.stringify({ theme: t })), theme);
     await page.goto('/');
     await page.getByRole('navigation').getByRole('button', { name: 'Profil' }).click();
-    await expect(page.getByRole('heading', { name: 'Ton parcours' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Profil', exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: /^Réglages/ })).toBeVisible();
     await expect(page.getByRole('button', { name: /^Mon compte/ })).toBeVisible();
 
@@ -25,7 +25,7 @@ for (const theme of ['dark', 'light'] as const) {
   });
 }
 
-test('Ton parcours : niveau et XP, record, leçons, adversaires battus, problèmes réussis sans total, vitrine', async ({ page }) => {
+test('Profil : niveau et XP, record, leçons, adversaires battus, problèmes réussis sans total, vitrine', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.addInitScript(() => {
     if (sessionStorage.getItem('parcours-pret')) return;
@@ -60,7 +60,7 @@ test('Ton parcours : niveau et XP, record, leçons, adversaires battus, problèm
   const nav = (await page.getByRole('navigation').boundingBox())!;
   for (const el of [carte, stats, page.getByRole('region', { name: /^Badges/ }), page.getByRole('button', { name: /^Réglages/ })]) {
     const b = (await el.boundingBox())!;
-    expect(b.y + b.height, 'Ton parcours tient au premier écran').toBeLessThanOrEqual(nav.y);
+    expect(b.y + b.height, 'le Profil tient au premier écran').toBeLessThanOrEqual(nav.y);
   }
   for (const b of await page.locator('.profil .lignes button').all()) expect((await b.boundingBox())!.height).toBeGreaterThanOrEqual(44);
 });
@@ -104,19 +104,19 @@ test('réglages en lignes : thème segmenté, interrupteurs, cibles de 44 px', a
 
   // Retour ramène à « Ton parcours » ; « Mon compte » ouvre une sous-vue, Retour ramène au Profil.
   await page.getByRole('button', { name: 'Retour' }).click();
-  await expect(page.getByRole('heading', { name: 'Ton parcours' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Profil', exact: true })).toBeVisible();
   await page.getByRole('button', { name: /^Mon compte/ }).click();
   await expect(page.getByRole('heading', { name: 'Mon compte' })).toBeVisible();
   await page.getByRole('button', { name: 'Retour' }).click();
-  await expect(page.getByRole('heading', { name: 'Ton parcours' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Profil', exact: true })).toBeVisible();
 });
 
-test('changer d’onglet referme les réglages : le Profil rouvre sur Ton parcours', async ({ page }) => {
+test('changer d’onglet referme les réglages : le Profil rouvre sur son menu', async ({ page }) => {
   await page.goto('/');
   const onglet = (n: string) => page.getByRole('navigation').getByRole('button', { name: n });
   await onglet('Profil').click();
   await page.getByRole('button', { name: /^Réglages/ }).click();
   await onglet('Jouer').click();
   await onglet('Profil').click();
-  await expect(page.getByRole('heading', { name: 'Ton parcours' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Profil', exact: true })).toBeVisible();
 });
