@@ -5,11 +5,11 @@ const retour: ContexteModes = { comptes: true, enLigne: true, premierLancement: 
 
 describe('modes de l’accueil (#429, #432)', () => {
   it('dès le début, la partie en ligne classée est l’action principale ; l’ordi est la première tuile', () => {
-    expect(modesAccueil(retour)).toEqual({ principal: 'en_ligne', tuiles: ['ordi', 'ami'], plus: ['deux', 'guidee', 'decouverte'] });
+    expect(modesAccueil(retour)).toEqual({ principal: 'en_ligne', tuiles: ['ordi', 'ami'], plus: ['deux', 'decouverte'] });
   });
 
   it('tout premier lancement : l’écran « Joue ta première partie » garde l’ordi, la partie en ligne est la première tuile', () => {
-    expect(modesAccueil({ ...retour, premierLancement: true })).toEqual({ principal: 'ordi', tuiles: ['en_ligne', 'ami'], plus: ['deux', 'guidee', 'decouverte'] });
+    expect(modesAccueil({ ...retour, premierLancement: true })).toEqual({ principal: 'ordi', tuiles: ['en_ligne', 'ami'], plus: ['deux', 'decouverte'] });
   });
 
   it('hors ligne, l’ordi reprend l’action principale (la partie en ligne reste une tuile)', () => {
@@ -18,8 +18,15 @@ describe('modes de l’accueil (#429, #432)', () => {
     expect(m.tuiles).toContain('en_ligne');
   });
 
-  it('sans comptes : l’ordi en action principale, ni en ligne ni ami, les trois autres modes en tuiles, sans « Plus »', () => {
-    expect(modesAccueil({ ...retour, comptes: false })).toEqual({ principal: 'ordi', tuiles: ['deux', 'guidee', 'decouverte'], plus: [] });
+  it('sans comptes : l’ordi en action principale, ni en ligne ni ami, les deux autres modes en tuiles, sans « Plus »', () => {
+    expect(modesAccueil({ ...retour, comptes: false })).toEqual({ principal: 'ordi', tuiles: ['deux', 'decouverte'], plus: [] });
+  });
+
+  it('#589 : la partie guidée n’est plus sur l’accueil (elle est dans Apprendre), dans aucun contexte', () => {
+    for (const comptes of [true, false]) for (const enLigne of [true, false]) for (const premierLancement of [true, false]) {
+      const m = modesAccueil({ comptes, enLigne, premierLancement });
+      expect([m.principal, ...m.tuiles, ...m.plus] as string[]).not.toContain('guidee');
+    }
   });
 
   it('chaque mode est joignable en 1 toucher (bouton ou tuile) ou 2 (« Plus »), une seule fois, dans tous les contextes', () => {

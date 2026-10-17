@@ -3,6 +3,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { CHAPITRES, LESSONS, type Chapitre } from '../content/lessons';
 import { Bubble } from '../ui/Mochi';
+import { Sceau } from '../ui/Sceau';
 import { VignetteLecon } from '../ui/VignetteLecon';
 import { Confettis } from '../ui/Confettis';
 import { fr } from '../ui/typo';
@@ -36,12 +37,14 @@ function phraseMochi(liste: Etape[], iEnCours: number): string {
  * `compteRequis` (#343) : vrai si la leçon de ce rang (0 = leçon 1) demande un compte. Sans compte, les leçons 1 à 3 sont libres ;
  * les suivantes restent touchables, portent le verrou « compte », et `onOpen` ouvre la création de compte (garde d'App.tsx).
  */
-export function LearnHome({ progress, onOpen, sync = 'local', compteRequis = () => false, decouverte, onRegles }: {
+export function LearnHome({ progress, onOpen, sync = 'local', compteRequis = () => false, decouverte, onRegles, onGuidee }: {
   progress: Progression; onOpen: (id: string) => void; sync?: SyncState; compteRequis?: (rang: number) => boolean;
   /** #524 : la partie de découverte, en tête du chapitre « Les bases » (état gardé sur l'appareil, ouverture). */
   decouverte?: { etat: EtatDecouverte; ouvrir: () => void };
   /** #523 : « Revoir les règles » (l'introduction interactive), en tête de « Les bases », avant la partie de découverte. */
   onRegles?: () => void;
+  /** #589 : la partie guidée contre Mochi, sous la partie de découverte. */
+  onGuidee?: () => void;
 }) {
   const liste = etapes(LESSONS, progress);
   const iEnCours = liste.findIndex(e => e.etat === 'encours');
@@ -81,7 +84,7 @@ export function LearnHome({ progress, onOpen, sync = 'local', compteRequis = () 
       {/* #228 : un chemin par chapitre, l'un sous l'autre ; une seule carte en relief, celle de la prochaine leçon. */}
       {CHAPITRES.map((c, i) => (
         <CheminChapitre key={c.id} chapitre={c} liste={liste.filter(e => c.lecons.includes(e.lecon))} k={k}
-          entree={i === 0 && decouverte ? <CarteDecouverte {...decouverte} /> : null}
+          entree={i === 0 ? <>{decouverte && <CarteDecouverte {...decouverte} />}{onGuidee && <CarteGuidee ouvrir={onGuidee} />}</> : null}
           carte={iEnCours >= 0 && c.lecons.includes(liste[iEnCours].lecon) ? prochaine : null}
           fete={fete === c.id} onFeteFinie={() => setFete(null)} onOpen={onOpen} compteRequis={compteRequis}
           regles={c === CHAPITRES[0] ? onRegles : undefined} />
@@ -165,6 +168,23 @@ function CarteDecouverte({ etat, ouvrir }: { etat: EtatDecouverte; ouvrir: () =>
         <small>{fr(t('apprendre.decouverte.texte'))}</small>
       </span>
       <span className="carte-decouverte-etat" aria-hidden="true">{etat === 'finie' && <Coche />}{verbe}</span>
+    </button>
+  );
+}
+
+/**
+ * #589 : la partie guidée contre Mochi (un entraînement : Mochi règle sa force), venue de l'accueil Jouer. Même tuile
+ * secondaire que la partie de découverte, juste dessous ; le sceau de Mochi à la place du coin de goban.
+ */
+function CarteGuidee({ ouvrir }: { ouvrir: () => void }) {
+  return (
+    <button type="button" className="carte-decouverte carte-guidee" data-testid="carte-guidee" onClick={ouvrir} aria-label={fr(t('apprendre.guidee.aria'))}>
+      <Sceau id="mochi" taille={48} className="carte-decouverte-goban" />
+      <span className="carte-decouverte-texte" aria-hidden="true">
+        <b>{t('apprendre.guidee')}</b>
+        <small>{fr(t('apprendre.guidee.texte'))}</small>
+      </span>
+      <span className="carte-decouverte-etat" aria-hidden="true">{t('apprendre.decouverte.nouvelle')}</span>
     </button>
   );
 }

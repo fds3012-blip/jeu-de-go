@@ -462,7 +462,7 @@ function useDialogue(ref: RefObject<HTMLDialogElement | null>, ouvert: boolean) 
   }, [ref, ouvert]);
 }
 
-/** Pictogrammes des modes, au trait (24 × 24, couleur du texte) ; l'ordi et la partie guidée prennent un sceau. */
+/** Pictogrammes des modes, au trait (24 × 24, couleur du texte) ; l'ordi prend le sceau de son adversaire. */
 function IconeMode({ mode }: { mode: Mode | 'plus' }) {
   const trait = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round' } as const;
   return (
@@ -523,7 +523,7 @@ function TuileMode({ mode, p }: { mode: Mode; p: Props }) {
   }
   return (
     <button type="button" className="mode" data-testid={`mode-${mode}`} onClick={choisir} aria-label={t(TEXTES_MODE[mode].nom)}>
-      <span className="mode-icone" aria-hidden="true">{mode === 'guidee' ? <Sceau id="mochi" taille={26} /> : <IconeMode mode={mode} />}</span>
+      <span className="mode-icone" aria-hidden="true"><IconeMode mode={mode} /></span>
       <b>{t(TEXTES_MODE[mode].court)}</b><small>{t(TEXTES_MODE[mode].detail)}</small>
     </button>
   );
@@ -532,13 +532,12 @@ function TuileMode({ mode, p }: { mode: Mode; p: Props }) {
 /** Textes des modes rangés en tuile simple ou sous « Plus » : nom complet (lu), nom court, détail, phrase de la feuille. */
 const TEXTES_MODE = {
   deux: { nom: 'accueil.deux', court: 'mode.deux', detail: 'mode.deux.detail', texte: 'mode.deux.texte' },
-  guidee: { nom: 'accueil.guidee', court: 'mode.guidee', detail: 'mode.guidee.detail', texte: 'mode.guidee.texte' },
   decouverte: { nom: 'accueil.decouverte', court: 'mode.decouverte', detail: 'mode.decouverte.detail', texte: 'mode.decouverte.texte' },
 } as const satisfies Record<string, Record<'nom' | 'court' | 'detail' | 'texte', Parameters<typeof t>[0]>>;
 type ModeSimple = keyof typeof TEXTES_MODE;
 const estSimple = (m: Mode): m is ModeSimple => m in TEXTES_MODE;
 
-/** Feuille « Plus » : les modes qui ne tiennent pas dans la rangée (à deux, partie guidée, découverte), une ligne chacun. */
+/** Feuille « Plus » : les modes qui ne tiennent pas dans la rangée (à deux, découverte), une ligne chacun. #589 : la partie guidée est dans Apprendre. */
 function FeuillePlus({ modes, ouvert, setOuvert, onMode }: { modes: Mode[]; ouvert: boolean; setOuvert: (o: boolean) => void; onMode: Props['onMode'] }) {
   const ref = useRef<HTMLDialogElement>(null);
   useDialogue(ref, ouvert);
@@ -555,7 +554,7 @@ function FeuillePlus({ modes, ouvert, setOuvert, onMode }: { modes: Mode[]; ouve
             {modes.filter(estSimple).map(m => (
               <li key={m}>
                 <button type="button" className="plus-mode" onClick={() => { setOuvert(false); onMode(m, 'plus'); }}>
-                  <span className="mode-icone" aria-hidden="true">{m === 'guidee' ? <Sceau id="mochi" taille={30} /> : <IconeMode mode={m} />}</span>
+                  <span className="mode-icone" aria-hidden="true"><IconeMode mode={m} /></span>
                   <span>
                     <b>{t(TEXTES_MODE[m].nom)}</b>
                     <small>{t(TEXTES_MODE[m].texte)}</small>

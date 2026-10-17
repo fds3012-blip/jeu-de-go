@@ -572,7 +572,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   // #268 : quitter une partie en cours (au moins un coup, pas finie) la perd ; Mochi demande d'abord, avec la bulle du passe.
   // Sans coup joué, ou partie finie (l'écran de fin a son propre retour), on sort tout de suite.
   const quitterDemandeConfirmation = phase !== 'end' && history.length > debutJoueur;
-  const retourAccueil = <button ref={retourRef} type="button" className="retour" onClick={() => (quitterDemandeConfirmation ? setDemandeQuitter(true) : onExit())} aria-label={tr('partie.retourAccueil')}>‹</button>;
+  const retourAccueil = <button ref={retourRef} type="button" className="retour" onClick={() => (quitterDemandeConfirmation ? setDemandeQuitter(true) : onExit())} aria-label={tr(guidee ? 'partie.retourApprendre' : 'partie.retourAccueil')}>‹</button>;
   // En relecture, on montre la position `q` et « ‹ » ramène au bilan.
   const bandeau = (c: 1 | 2, q: Position = pos, retour: ReactNode = retourAccueil, actif = phase === 'play' && q.toPlay === c, gain: { n: number; k: number } | null = null) => {
     let sousTitre: string;
@@ -709,6 +709,8 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
         action={fin?.action ?? <button type="button" className="cta" onClick={restart}>{tr('fin.rejouer')}</button>}
         onRevoir={n > 0 ? () => setRelecture(1) : undefined}
         onAccueil={fin?.onAccueil ?? onExit}
+        // #589 : la partie guidée se lance depuis Apprendre et y ramène.
+        libelleRetour={guidee ? tr('nav.apprendre') : undefined}
         confettis={celebrer && gagne}
         // Une seule proposition par écran : l'installation après la première victoire, sinon le rappel quotidien (#36).
         apres={<>

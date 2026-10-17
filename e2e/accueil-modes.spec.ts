@@ -13,7 +13,7 @@ import { plateau } from './plateau';
 
 const ANA = '00000000-0000-4000-8000-0000000000c1';
 const HOTE = 'https://posthog-e2e.test';
-type Mode = 'en_ligne' | 'ordi' | 'ami' | 'deux' | 'guidee' | 'decouverte';
+type Mode = 'en_ligne' | 'ordi' | 'ami' | 'deux' | 'decouverte';
 
 /** Premier lancement : aucune partie, aucune leçon finie, mais une première pierre posée (#487). */
 const NOUVEAU = { 'go.premiere-pierre.v1': 'true' };
@@ -55,15 +55,14 @@ async function atteindre(page: Page, mode: Mode): Promise<number> {
   const tuile = page.getByTestId(`mode-${mode}`);
   if (await tuile.count()) { await tuile.click(); return 1; }
   await page.getByTestId('mode-plus').click();
-  const nom = mode === 'deux' ? /^Jouer à deux sur ce téléphone/ : mode === 'decouverte' ? /^Partie de découverte avec Mochi/ : /^Partie guidée contre Mochi/;
+  const nom = mode === 'deux' ? /^Jouer à deux sur ce téléphone/ : /^Partie de découverte avec Mochi/;
   await page.getByRole('dialog', { name: 'Autres façons de jouer' }).getByRole('button', { name: nom }).click();
   return 2;
 }
 
 /** Ce que montre chaque mode une fois atteint. */
 async function arrive(page: Page, mode: Mode) {
-  if (mode === 'ordi' || mode === 'deux' || mode === 'guidee') await expect(plateau(page)).toBeVisible();
-  if (mode === 'guidee') await expect(page.getByText(/^Partie guidée : Mochi règle sa force/)).toBeVisible();
+  if (mode === 'ordi' || mode === 'deux') await expect(plateau(page)).toBeVisible();
   if (mode === 'deux') await expect(page.getByText(/Noir commence/)).toBeVisible();
   if (mode === 'en_ligne') await expect(page.getByTestId('direct-choix')).toBeVisible();
   if (mode === 'ami') await expect(page.getByRole('heading', { level: 2, name: 'Défier un ami' })).toBeVisible();
@@ -73,14 +72,14 @@ async function arrive(page: Page, mode: Mode) {
 test('chaque mode en 1 ou 2 touchers depuis l’accueil, sans défiler (premier lancement, débutant, confirmé)', async ({ browser, baseURL }) => {
   test.setTimeout(120_000);
   for (const [qui, stockage, principal] of [['premier lancement après la première pierre', NOUVEAU, 'ordi'], ['débutant', DEBUTANT, 'en_ligne'], ['confirmé', CONFIRME, 'en_ligne']] as const) {
-    for (const mode of ['ordi', 'en_ligne', 'ami', 'deux', 'guidee', 'decouverte'] as const) {
+    for (const mode of ['ordi', 'en_ligne', 'ami', 'deux', 'decouverte'] as const) {
       const page = await telephone(browser, baseURL, stockage);
       await expect(page.locator('.cta'), qui).toHaveAttribute('data-mode', principal);
       // Rangée des modes : visible sans défiler, sous le bouton principal ; pas de « Défier un ami » en double dans l'en-tête.
       for (const id of ['modes', 'mode-plus']) await sansDefiler(page, id);
       await expect(page.locator('header button')).toHaveCount(0);
       const touchers = await atteindre(page, mode);
-      expect(touchers, `${qui} : ${mode}`).toBeLessThanOrEqual(mode === 'deux' || mode === 'guidee' || mode === 'decouverte' ? 2 : 1);
+      expect(touchers, `${qui} : ${mode}`).toBeLessThanOrEqual(mode === 'deux' || mode === 'decouverte' ? 2 : 1);
       await arrive(page, mode);
       await page.context().close();
     }
