@@ -200,12 +200,6 @@ async function simpleMove(pos: Position, lvl: Opponent, opts: EngineOptions): Pr
   return (await simpleMoveDetail(pos, lvl, opts)).move;
 }
 
-/** Pierres mortes proposées à l'entrée du comptage, calculées sans bloquer l'interface. */
-export async function proposeDead(pos: Position): Promise<number[]> {
-  const r = await demander(ask, { kind: 'dead', pos }, delaiComptage(pos.size));
-  return r?.dead ?? later(() => deadStones(pos));
-}
-
 /**
  * Comptage automatique (#117) : pierres mortes et groupes incertains. Simulations dans le Worker, plus l'avis
  * de KataGo s'il est déjà chargé (on ne télécharge rien pour ça) : un désaccord rend le groupe incertain.
@@ -350,9 +344,6 @@ export function relancerKataGo(): void {
   const k = kataGoRevue() ?? getKataGo();
   k?.relancer?.();
 }
-
-/** Démarre le chargement de KataGo en avance (téléchargement du réseau, choix du backend). */
-export function preloadKataGo(): void { getKataGo()?.start?.().catch(() => {}); }
 
 /** Analyse de secours sans réseau : coup du moteur simple et propriété tirée des simulations. */
 async function simpleAnalysis(pos: Position, o: AnalyzeOptions): Promise<Analysis> {

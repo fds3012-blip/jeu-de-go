@@ -1,7 +1,7 @@
 import { BASE_PUZZLES } from '../content/puzzles';
 import { fromLabel } from '../go/coords';
 import { groupAt } from '../go/rules';
-import { checkAnswer, liveStreak, parsePuzzle, parsePuzzles, puzzleOfDay, solutionFrames, startOf, type Puzzle, type PuzzleRow } from './puzzles';
+import { checkAnswer, liveStreak, parsePuzzle, parsePuzzles, solutionFrames, startOf, type Puzzle, type PuzzleRow } from './puzzles';
 
 const all = parsePuzzles(BASE_PUZZLES);
 const pz = (id: string) => all.find(p => p.id === id)!;
@@ -88,13 +88,6 @@ describe('suite et problème du jour', () => {
     const frames = solutionFrames(pz('b1'));
     expect(frames).toHaveLength(2);
     expect(frames[1].lastMove).toBe(at(pz('b1'), 'E5'));
-  });
-  it('le problème du jour est stable dans la journée et change le lendemain', () => {
-    const a = puzzleOfDay(all, new Date(2026, 8, 27, 8)), b = puzzleOfDay(all, new Date(2026, 8, 27, 23));
-    const c = puzzleOfDay(all, new Date(2026, 8, 28, 8));
-    expect(a).toBe(b);
-    expect(c).not.toBe(a);
-    expect(puzzleOfDay([], new Date())).toBeUndefined();
   });
   it('la série retombe à 0 après un jour sans problème', () => {
     const now = new Date(2026, 8, 27, 12);

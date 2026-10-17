@@ -119,17 +119,6 @@ export function aSuivre<T extends { id: string }>(ps: Palier<T>[], courant: T, r
 }
 
 /**
- * Palier recommandé pour un joueur connecté, selon sa cote : celui dont les problèmes ont sa difficulté,
- * sans dépasser le palier ouvert le plus avancé. `undefined` sans cote.
- */
-export function palierRecommande<T>(ps: Palier<T>[], cote: number | undefined): PalierId | undefined {
-  if (cote === undefined || !Number.isFinite(cote)) return undefined;
-  let i = indexPalier(cote);
-  while (i > 0 && !ps[i]?.ouvert) i--;
-  return ps[i]?.id;
-}
-
-/**
  * Palier en cours (issue #196) : le palier ouvert le plus avancé qui reste à finir (celui de « Continuer »),
  * sinon le dernier palier ouvert non vide. C'est le seul palier montré sur l'écran Problèmes.
  */

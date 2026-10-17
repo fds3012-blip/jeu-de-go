@@ -146,12 +146,6 @@ export function phrasePasEncore(essais: number): string {
   return `${t('rejeu.pasEncore')} ${reste <= 1 ? t('rejeu.dernierEssai') : t('rejeu.essaisRestants', { n: reste })}`;
 }
 
-/** Phrase quand Mochi montre le coup : « Voici le coup de KataGo : F5. Il valait 11 points de plus que B8. » */
-export function phraseMontre(e: ErreurARejouer, size: number): string {
-  const point = toLabel(e.meilleur, size), lieu = e.joue < 0 ? t('rejeu.taPasse') : toLabel(e.joue, size);
-  return `${t('rejeu.voici', { point })} ${t('rejeu.valait', { pts: pts(e.perte), lieu })}`;
-}
-
 /**
  * #492 : quand Mochi montre le coup (pierre fantôme, croix sur le coup joué), il dit pourquoi : l'explication vérifiée
  * par le calcul (src/app/pourquoi.ts), qui nomme le coup, puis l'écart chiffré. Sans écart connu, « Voici le coup de

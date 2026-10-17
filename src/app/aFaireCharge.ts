@@ -17,14 +17,7 @@ export { ecouterNotifications } from '../data/notifications';
  * (profils publics). `pseudos` garde les pseudos déjà lus d'une lecture à l'autre. Erreur : liste vide.
  * `nouveau` : une notification attend pour la partie (#367). Notifications illisibles (serveur plus ancien que
  * l'app, réseau) : `nouveau` reste absent et la pastille s'allume comme avant.
- */
-export async function chargerDefis(db: Db, userId: string, pseudos: Map<string, string | null>): Promise<DefiEnAttente[]> {
-  return (await chargerAFaire(db, userId, pseudos)).defis;
-}
-
-/**
- * Défis où c'est au joueur d'agir (`chargerDefis`) et, #369, rappel du Go du jour d'un ami en attente aujourd'hui,
- * lus en une fois (une seule lecture des notifications).
+ * Et, #369, rappel du Go du jour d'un ami en attente aujourd'hui, lus en une fois (une seule lecture des notifications).
  */
 export async function chargerAFaire(db: Db, userId: string, pseudos: Map<string, string | null>): Promise<{ defis: DefiEnAttente[]; rappelGoDuJour: boolean }> {
   const [r, n] = await Promise.all([mesDefis(db, userId), notificationsEnAttente(db, userId)]);

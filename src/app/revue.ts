@@ -4,7 +4,6 @@
 import { groupAt, isLegal, neighbors, newPosition, play, type Color, type Position } from '../go/rules';
 import { readSgf, writeSgf } from '../go/sgf';
 import { compensationHandicap, handicapDe, type Rules } from '../go/score';
-import { toLabel } from '../go/coords';
 import { initialPosition } from '../go/replay';
 import type { AnalyseRevue } from '../engine';
 import { nombre, t } from '../content/i18n/secondaires';
@@ -62,36 +61,7 @@ export function positionsDepuisSgf(sgf: string): { positions: Position[]; komi: 
   return { positions, komi: g.komi + compensationHandicap(g.rules, handicap), komiSgf: g.komi, rules: g.rules, handicap, resultat: g.result };
 }
 
-export interface Erreur {
-  /** Numéro du coup fautif (1 = premier coup) : il mène de la position `coup - 1` à la position `coup`. */
-  coup: number;
-  /** Points perdus par ce coup (> 0). */
-  perte: number;
-}
-
-/**
- * Les `n` plus grosses erreurs de `joueur` : les plus fortes chutes de son avance après un de ses coups.
- * `avances[i]` : avance de Noir (points, komi compris) dans la position i ; `null` si inconnue.
- * Une chute de moins de `seuil` points (1 par défaut) n'est pas une erreur : c'est du bruit de l'estimation. Triées de la plus grosse à la plus petite.
- */
-export function grossesErreurs(positions: Position[], avances: (number | null)[], joueur: Color | null, n = 3, seuil = 1): Erreur[] {
-  const out: Erreur[] = [];
-  for (let i = 1; i < positions.length && i < avances.length; i++) {
-    const avant = avances[i - 1], apres = avances[i], c = positions[i - 1].toPlay;
-    if (avant == null || apres == null || (joueur && c !== joueur)) continue;
-    const perte = c === 1 ? avant - apres : apres - avant;
-    if (perte >= seuil) out.push({ coup: i, perte });
-  }
-  return out.sort((a, b) => b.perte - a.perte || a.coup - b.coup).slice(0, n);
-}
-
 const pts = (n: number) => t('revue.points', { n: Math.max(1, Math.round(n)) });
-
-// Constantes de ce fichier : le texte français d'origine (tests) ; l'écran passe par `t` (#167).
-/** Message de Mochi quand aucune erreur ne dépasse le seuil. */
-export const AUCUNE_ERREUR = 'Aucune grosse erreur. Bien joué !';
-/** Ligne discrète quand KataGo n'est pas disponible : pas de meilleur coup montré. Sans nom d'adversaire inconnu du débutant (#237). */
-export const SANS_KATAGO = 'Pour voir le meilleur coup, affronte un adversaire plus fort.';
 
 /**
  * Vrai si on peut montrer `move` comme meilleur coup à un débutant. On ne montre rien plutôt qu'un conseil douteux :
@@ -107,21 +77,6 @@ export function conseilFiable(pos: Position, move: number | null | undefined, ga
   for (const c of pos.board) if (c) pierres++;
   const bord = x === 0 || y === 0 || x === n - 1 || y === n - 1;
   return !(bord && pierres < (n * n) / 3);
-}
-
-/**
- * Phrase de Mochi pour une erreur : courte, au tutoiement, sans jargon. Elle décrit l'erreur, sans coordonnée ;
- * `meilleur` (coup conseillé, déjà validé par conseilFiable) ajoute « Essaie plutôt D4, la pierre verte. ».
- */
-export function phraseErreur(e: Erreur, positions: Position[], meilleur: number | null): string {
-  const avant = positions[e.coup - 1], apres = positions[e.coup], size = avant.size;
-  const joue = apres.lastMove ?? -1, adv = (3 - avant.toPlay) as Color;
-  const perdues = positions[e.coup + 1] ? positions[e.coup + 1].captures[adv] - apres.captures[adv] : 0;
-  let constat: string;
-  if (joue < 0) constat = t('revue.passeTot');
-  else if (perdues > 0) constat = t('revue.captureApres', { n: perdues, pts: pts(e.perte) });
-  else constat = t('revue.perdu', { pts: pts(e.perte) });
-  return meilleur != null && meilleur >= 0 ? t('revue.essaie', { constat, point: toLabel(meilleur, size) }) : constat;
 }
 
 /**
@@ -218,23 +173,6 @@ const PARTIE_JOUEE = 15;
 
 /** Analyse d'une position pour la revue (moteur : `analyseRevue`). `lead` : avance de Noir, komi compris. */
 export type { AnalyseRevue };
-
-/** Ce que dit Mochi de la note du coup affiché, après « Tu joues E5. ». */
-export function phraseNote(n: NoteCoup): string {
-  switch (n.note) {
-    case 'brillant': return t('note.phrase.brillant');
-    case 'meilleur': return t('note.phrase.meilleur');
-    case 'excellent': return t('note.phrase.excellent');
-    case 'bon': return t('note.phrase.bon', { pts: n.perte < 1 ? t('revue.unPoint') : pts(n.perte) });
-    case 'classique': return t('note.phrase.classique');
-    case 'solide': return t('note.phrase.solide');
-    case 'force': return t('note.phrase.force');
-    case 'manque': return t('note.phrase.manque', { pts: pts(n.perte) });
-    case 'imprecision': return t('note.phrase.imprecision', { pts: pts(n.perte) });
-    case 'erreur': return t('note.phrase.erreur', { pts: pts(n.perte) });
-    case 'grosse': return t('note.phrase.grosse', { pts: pts(n.perte) });
-  }
-}
 
 export interface NoteCoup {
   /** Numéro du coup (1 = premier coup). */
@@ -595,20 +533,6 @@ export function notesAvecCle(notes: (NoteCoup | null)[], cle: MomentCle | null, 
   const out = notes.slice();
   out[k] = { ...n, note, perte };
   return out;
-}
-
-/** Phrase de Mochi sur le moment clé, au tutoiement. `adversaire` : nom de l'ordi ; sans lui, partie à deux. */
-export function phraseMomentCle(cle: MomentCle, positions: Position[], adversaire?: string): string {
-  const avant = positions[cle.coup - 1], c = avant.toPlay, joue = positions[cle.coup].lastMove ?? -1;
-  const lui = adversaire ?? t(c === 1 ? 'camp.blanc' : 'camp.noir');
-  const qui = adversaire ? t('cle.quiToi') : t('cle.quiCamp', { camp: t(c === 1 ? 'camp.noir' : 'camp.blanc') });
-  const prises = t('cle.prises', { n: cle.prises });
-  const fin = adversaire ? ` ${t('cle.rejoue')}` : '';
-  if (cle.passe && cle.prises > 0) return t('cle.passePrise', { qui, lui, prises, fin });
-  if (cle.passe) return t('cle.passeTot', { qui, lui, pts: pts(cle.perte), fin });
-  const lieu = toLabel(joue, avant.size);
-  if (cle.prises > 0) return t('cle.jouePrise', { qui, lieu, lui, prises, pts: pts(cle.perte), fin });
-  return t('cle.joue', { qui, lieu, pts: pts(cle.perte), fin });
 }
 
 /** Après une défaite nette sans erreur isolée notée : jamais « aucune erreur ». */

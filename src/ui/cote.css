@@ -44,5 +44,3 @@
 .cote-gain.anime .cote-gain-grade.monte { animation: cote-grade-monte var(--duree-recompense, 400ms) var(--ease, ease-out) both; }
 @keyframes cote-grade-monte { from { opacity: 0; transform: translateY(6px) scale(.96); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .cote-gain.anime .cote-gain-grade.monte { animation: none; } }
-
-.adversaire-cote { color: var(--muted); }
