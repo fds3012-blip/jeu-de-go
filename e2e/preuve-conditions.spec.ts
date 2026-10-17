@@ -7,6 +7,8 @@ import { VERSION_CONDITIONS } from '../src/data/conditions';
 // soit cochée. Supabase simulé : e2e/fauxSupabase.ts.
 
 const ANA = '00000000-0000-4000-8000-000000000583';
+/** Lectures de la version acceptée (`mon_profil` … `select=conditions_version`). */
+const lecturesPreuve = (s: FauxServeur) => s.appels.filter(a => a.includes('/rest/v1/rpc/mon_profil') && a.includes('conditions_version')).length;
 const accords = (s: FauxServeur) => s.appels.filter(a => a.startsWith('POST /rest/v1/rpc/accepter_conditions')).length;
 
 async function telephone(browser: Browser, baseURL: string | undefined, serveur: FauxServeur, stockage: Record<string, string>): Promise<Page> {
@@ -25,17 +27,21 @@ test('création du compte par code : l’accord est gardé par le serveur, une s
   await page.locator('.cta').click();
   await expect(page.getByTestId('creer-compte')).toBeVisible();
   await creerCompte(page, 'nouvelle@exemple.test', 'Nina');
+  // Pseudo enregistré : la 4e partie demandée démarre (l'écran du pseudo s'en va).
+  await expect(page.getByTestId('pseudo-obligatoire')).toHaveCount(0);
   await expect.poll(() => accords(serveur)).toBe(1);
   const profil = serveur.profiles.find(p => p.username === 'Nina')!;
   expect(profil.conditions_version).toBe(VERSION_CONDITIONS);
   expect(profil.conditions_acceptees_le).toBeTruthy();
-  expect(await page.evaluate(() => localStorage.getItem('go.conditions-a-envoyer.v1'))).toBeNull();
+  // La note de l'appareil s'efface à la réponse du serveur, un peu après la requête : on l'attend.
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('go.conditions-a-envoyer.v1'))).toBeNull();
   await expect(page.getByTestId('accord-conditions')).toHaveCount(0);
 
-  // Ouverture suivante : la preuve est là, rien n'est renvoyé, la case n'est pas remontrée.
+  // Ouverture suivante : la preuve est relue (mon_profil), rien n'est renvoyé, la case n'est pas remontrée.
+  const lectures = lecturesPreuve(serveur);
   await page.reload();
-  await expect(page.getByTestId('modes')).toBeVisible();
-  await page.waitForTimeout(500);
+  // Ce qui s'affiche après la reprise (partie ou accueil) ne compte pas ici : on attend la relecture de la preuve.
+  await expect.poll(() => lecturesPreuve(serveur)).toBeGreaterThan(lectures);
   expect(accords(serveur)).toBe(1);
   await expect(page.getByTestId('accord-conditions')).toHaveCount(0);
 });
@@ -78,9 +84,10 @@ test('compte existant sans preuve : la case s’affiche une fois, le jeu en lign
   expect(serveur.profiles.find(p => p.id === ANA)!.conditions_version).toBe(VERSION_CONDITIONS);
 
   // Ouverture suivante : plus de case.
+  const lectures = lecturesPreuve(serveur);
   await page.reload();
   await expect(page.getByTestId('modes')).toBeVisible();
-  await page.waitForTimeout(500);
+  await expect.poll(() => lecturesPreuve(serveur)).toBeGreaterThan(lectures);
   await expect(ecran).toHaveCount(0);
   expect(accords(serveur)).toBe(1);
 });
