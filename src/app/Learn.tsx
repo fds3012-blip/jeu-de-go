@@ -10,6 +10,7 @@ import { readLocal, writeLocal, type SyncState } from './hooks';
 import { FETES_KEY, boutonChemin, chapitresAFeter, chapitresAVenir, colonne, courbe, dureeMinutes, etapes, type Ancre, type Etape, type Progression } from './apprendre';
 import { t } from '../content/i18n/secondaires';
 import type { EtatDecouverte } from './decouverteEtat';
+import { EntreeOuvertures } from '../ui/EntreeOuvertures';
 import '../ui/apprendre.css';
 
 export { LessonPlayer, POSE_MS } from './Lecon';
@@ -36,12 +37,14 @@ function phraseMochi(liste: Etape[], iEnCours: number): string {
  * `compteRequis` (#343) : vrai si la leçon de ce rang (0 = leçon 1) demande un compte. Sans compte, les leçons 1 à 3 sont libres ;
  * les suivantes restent touchables, portent le verrou « compte », et `onOpen` ouvre la création de compte (garde d'App.tsx).
  */
-export function LearnHome({ progress, onOpen, sync = 'local', compteRequis = () => false, decouverte, onRegles }: {
+export function LearnHome({ progress, onOpen, sync = 'local', compteRequis = () => false, decouverte, onRegles, onOuvertures }: {
   progress: Progression; onOpen: (id: string) => void; sync?: SyncState; compteRequis?: (rang: number) => boolean;
   /** #524 : la partie de découverte, en tête du chapitre « Les bases » (état gardé sur l'appareil, ouverture). */
   decouverte?: { etat: EtatDecouverte; ouvrir: () => void };
   /** #523 : « Revoir les règles » (l'introduction interactive), en tête de « Les bases », avant la partie de découverte. */
   onRegles?: () => void;
+  /** #591 : le répertoire d'ouvertures (une ligne discrète, après les chapitres). */
+  onOuvertures?: () => void;
 }) {
   const liste = etapes(LESSONS, progress);
   const iEnCours = liste.findIndex(e => e.etat === 'encours');
@@ -88,6 +91,8 @@ export function LearnHome({ progress, onOpen, sync = 'local', compteRequis = () 
       ))}
 
       {iEnCours < 0 && <div className="chemin-fini">{prochaine}</div>}
+
+      {onOuvertures && <EntreeOuvertures onOpen={onOuvertures} />}
 
       <section className="a-venir" aria-labelledby="a-venir-titre">
         <h2 id="a-venir-titre" className="titre-pierres">{t('apprendre.bientot')}</h2>

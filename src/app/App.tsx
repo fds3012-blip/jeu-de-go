@@ -90,6 +90,8 @@ const RepliHorsLigne = lazy(() => import('../ui/RepliHorsLigne'));
 const CarteBilanSemaine = lazy(() => import('../ui/BilanSemaine').then(m => ({ default: m.BilanSemaine })));
 // #561 : fête d'un nouveau titre mensuel, chargée à l'ouverture pour un compte complet seulement (hors JS et CSS initiaux).
 const FeteTitre = lazy(() => import('../ui/FeteTitre'));
+// #591 : répertoire d'ouvertures, ouvert depuis Apprendre.
+const EcranOuvertures = lazy(() => import('./Ouvertures'));
 
 // #433 : problèmes complets chargés à la demande (placement, série de fin de leçon) ; l'accueil lit le Go du jour léger.
 const problemesLocaux = () => import('../content/problemesLocaux').then(m => m.PROBLEMES_LOCAUX);
@@ -219,6 +221,7 @@ export function App() {
   const [adversaire, setAdversaire] = useStored<OpponentId>('go.adversaire.v1', 'pomme');
   const [lessonId, setLessonId] = useState<string | null>(null);
   const [leconEssai, setLeconEssai] = useState<Lesson | null>(null);
+  const [ouvertures, setOuvertures] = useState(false);
   // #524 : partie de découverte ouverte (Apprendre, modes de l'accueil), et d'où ; 'intro' (#523) : après l'introduction des règles, sa fin ramène à l'accueil.
   const [decouverte, setDecouverte] = useState<false | OrigineDecouverte>(false);
   useEffect(() => {
@@ -958,6 +961,8 @@ export function App() {
       }}
       onJouer={id => { setEnPlacement(false); lancer('ordi', id); }}
       onLecons={ouvrirLeconsConseillees} />;
+  } else if (tab === 'apprendre' && ouvertures) {
+    screen = <EcranOuvertures onExit={() => setOuvertures(false)} />;
   } else if (tab === 'apprendre' && leconEssai) {
     screen = <LessonPlayer key={leconEssai.id} lesson={leconEssai} lecon={leconEssai} start={0} confirmTouch={settings.confirmTouch} celebrer={false}
       onProgress={() => {}} onExit={() => { setLeconEssai(null); window.scrollTo({ top: 0 }); }} />;
@@ -989,7 +994,7 @@ export function App() {
       } : undefined}
       jouer={{ nom: premier.nom, lancer: () => { setLessonId(null); setTab('jouer'); lancer('ordi', premier.id); } }} />;
   } else if (tab === 'apprendre') {
-    screen = <LearnHome progress={progress} onOpen={ouvrirLecon} sync={syncState} onRegles={() => ouvrirIntro('complete', 'apprendre')}
+    screen = <LearnHome progress={progress} onOpen={ouvrirLecon} sync={syncState} onRegles={() => ouvrirIntro('complete', 'apprendre')} onOuvertures={() => setOuvertures(true)}
       decouverte={{ etat: etatDecouverte(readLocal<unknown>(DECOUVERTE_KEY, null)), ouvrir: () => ouvrirDecouverte() }}
       compteRequis={rang => !decider({ quoi: 'lecon', rang }, etat, terminees, COMPTES).ok} />;
   } else if (tab === 'problemes') {
