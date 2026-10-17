@@ -29,7 +29,7 @@ import { accueil, adversaireOuvert, echelle, introBut, INTRO_KEY, OUVERTS_D_OFFI
 import { PLACEMENT_KEY, chapitreConseille, coteApresPlacement, leconDeLAccueil, lirePlacement, ouvertsApresPlacement, proposerPlacement, type Placement as ResultatPlacement } from './placement';
 import { COTE_KEY } from './coteEtat';
 import { Accueil } from './Accueil';
-import { modesAccueil, type Depuis, type Mode } from './modes';
+import { etapeDeLancement, modesAccueil, type Depuis, type Lancement, type Mode } from './modes';
 import { abonnerPierre, accueilEpure, lireRepere, pierreDejaPosee } from './premierePierre';
 import { CONNAIT_GO_KEY, doitDemander, lireReponse, ongletApresDecouverte, suiteDe, type ChoixGo, type DepuisIntro, type OrigineDecouverte, type VersionIntro } from './connaitGo';
 import { QuestionGo } from './QuestionGo';
@@ -51,7 +51,7 @@ import { serieAffichee } from './serieLocale';
 import { messageGel } from './gel';
 import { goDuJourFaitAppareil } from './defiAppareil';
 import { BarreNav, type Onglet } from '../ui/IconesNav';
-import { BarreNiveau, FeteNiveau } from '../ui/Niveau';
+import { FeteNiveau } from '../ui/Niveau';
 import { annonceKomi, comptageSurActif, equilibrage, KOMI_NORMAL, partiesOrdi, rendrePartieOrdi, type Equilibrage } from './equilibrage';
 import { estDefaut, HANDICAP_EXPLIQUE_KEY as HANDICAP_KEY, komiDeLaPartie, lireReglagesPartie, REGLAGES_PARTIE_KEY, type ReglagesPartie } from './reglagesPartie';
 import { garderPartieEnCours, lirePartieEnCoursAppareil, oublierPartieEnCours } from './partieEnCours';
@@ -303,8 +303,9 @@ export function App() {
   const [intro, setIntro] = useState(false); // bulle « but du jeu » au-dessus du plateau
   // Équilibrage de la partie contre l'ordi en cours (#160) et son annonce du komi par Mochi.
   const [reglage, setReglage] = useState<Equilibrage & { annonce: string | null }>({ komi: KOMI_NORMAL, avantage: true, annonce: null });
-  const [reglages, setReglages] = useState(false);
-  // #528 : réglages avancés (handicap, komi, comptage) choisis dans la feuille « Changer » ; ceux de la partie en cours,
+  // #613 : feuille de lancement ouverte (l'ordi, à deux) : taille, adversaire, réglages, puis « Jouer ».
+  const [lancement, setLancement] = useState<Lancement | null>(null);
+  // #528 : réglages avancés (handicap, komi, comptage) choisis dans la feuille de lancement ; ceux de la partie en cours,
   // et la partie interrompue à reprendre (SGF et taille).
   const [reglagesPartieBrut, setReglagesPartie] = useStored<unknown>(REGLAGES_PARTIE_KEY, null);
   const reglagesPartie = lireReglagesPartie(reglagesPartieBrut);
@@ -568,7 +569,7 @@ export function App() {
     // Une nouvelle partie contre l'ordi remplace la partie interrompue (une seule partie gardée à la fois).
     if (mode === 'ordi') oublierPartieEnCours();
     setParties({ n: parties.n + 1, dernier: mode === 'ordi' ? contre : parties.dernier, ordi: rang + (mode === 'ordi' ? 1 : 0) });
-    setReglages(false);
+    setLancement(null);
     setResultat(null);
     setPartieFinie(false);
     setPartie(partie + 1);
@@ -589,7 +590,7 @@ export function App() {
     setReglage({ komi: KOMI_NORMAL, avantage: true, accommodant: true, annonce: null });
     setPartieReglee({ regles: 'japanese', handicap: 0 });
     setParties({ ...parties, n: parties.n + 1 });
-    setReglages(false);
+    setLancement(null);
     setResultat(null);
     setPartieFinie(false);
     setPartie(partie + 1);
@@ -610,7 +611,7 @@ export function App() {
     setAdversaire(p.adversaire as OpponentId);
     setReglage({ komi: p.aiKomi, avantage: p.avantage, accommodant: p.accommodant, annonce: null });
     setPartieReglee({ regles: p.regles, handicap: p.handicap, reprise: p.sgf, taille: p.taille });
-    setReglages(false); setResultat(null); setPartieFinie(false); setPartie(partie + 1); setPlaying('ordi');
+    setLancement(null); setResultat(null); setPartieFinie(false); setPartie(partie + 1); setPlaying('ordi');
     window.scrollTo({ top: 0 });
   }
 
@@ -863,7 +864,7 @@ export function App() {
   } else if (enDirect) {
     screen = supabase && compteId
       ? <Direct db={supabase} userId={compteId} confirmTouch={settings.confirmTouch} reglages={{ modifier: set }}
-        cote={profil?.cote ?? null} partieInitiale={directRejoint}
+        cote={profil?.cote ?? null} provisoire={profil?.provisoire} partieInitiale={directRejoint}
         // #436 : au bout de 25 s, partie contre l'IA en attendant ; la file est gardée par la bande VeilleFile.
         onRepli={(contre, demande, depuis) => { setDirect(false); setDirectRejoint(null); lancer('ordi', contre, { contre, demande, depuis, veille: true }); }}
         // #442 : attente après des parties quittées : l'IA la plus proche de la cote, sans rester dans la file.
@@ -876,6 +877,7 @@ export function App() {
   } else if (enLente) {
     screen = supabase && compteId
       ? <Lentes db={supabase} userId={compteId} onFacon={changerFacon} onPartie={ouvrirDefiPartie}
+        niveau={profil ? { cote: profil.cote, provisoire: profil.provisoire } : null}
         onAccueil={() => { setLente(false); window.scrollTo({ top: 0 }); }} />
       : null;
   } else if (enPartagee && partagee !== null) {
@@ -1023,12 +1025,15 @@ export function App() {
   } else {
     const numero = numeroJour;
     const daily = duJour;
-    const rangLecon = leconConseillee ? LESSONS.indexOf(leconConseillee) + 1 : 0;
     // #429 : tous les modes en 1 toucher (ou 2 par « Plus ») ; #432 : la partie en ligne classée en action principale dès le début.
     const modes = modesAccueil({ comptes: COMPTES, enLigne: online, premierLancement: home.nouveau });
     const choisirMode = (m: Mode, depuis: Depuis) => {
       track(EVENTS.modeChoisi, { mode: m, depuis, principal: m === modes.principal });
-      if (m === 'ordi') lancer('ordi');
+      // #613 : la taille (et l'adversaire) se choisit au moment de jouer, dans la feuille de lancement ; avant la toute
+      // première partie, rien à choisir : la partie part tout de suite.
+      const etape = etapeDeLancement(m, { premierePartie: parties.n === 0 });
+      if (etape) setLancement(etape);
+      else if (m === 'ordi') lancer('ordi');
       else if (m === 'deux') lancer('deux');
       else if (m === 'decouverte') ouvrirDecouverte();
       // « Un humain, maintenant » (#360), avec un compte et un pseudo (sinon « Crée ton compte », puis reprise).
@@ -1045,14 +1050,13 @@ export function App() {
         } }}
         reprise={partieEnCours && !epure ? { id: partieEnCours.adversaire as OpponentId, nom: OPPONENTS.find(o => o.id === partieEnCours.adversaire)?.nom ?? '',
           taille: partieEnCours.taille, coups: partieEnCours.coups, ouvrir: reprendre } : undefined}
-        reglages={reglages} setReglages={setReglages} onTaille={n => set({ size: n })} onChoisir={setAdversaire}
-        modes={modes} onMode={choisirMode} compte={etat === 'complet'} defisAJouer={defisAJouer} horsLigne={!online}
-        cote={etat === 'complet' && profil ? { cote: profil.cote, provisoire: profil.provisoire } : null}
+        lancement={lancement} setLancement={setLancement} onJouer={m => lancer(m)} onTaille={n => set({ size: n })} onChoisir={setAdversaire}
+        modes={modes} onMode={choisirMode} defisAJouer={defisAJouer} horsLigne={!online}
         probleme={daily && { numero, titre: daily.title, rows: daily.rows, reussi: duJourFait, etat: etatTuile(appel, duJourFait) }}
         // #367 : « Aujourd'hui » est la liste « À faire » ; un toucher sur un élément en attente est mesuré.
         // Recette du 02/10 (S7) : Go du jour à faire → ouvert directement.
         onProbleme={() => { mesurerAccueil('serie', 'goDuJour'); go('problemes'); if (!duJourFait) setDuJourDirect(true); }}
-        lecon={leconConseillee && { rang: rangLecon, total: LESSONS.length, titre: leconConseillee.title }}
+        lecon={leconConseillee && { titre: leconConseillee.title }}
         onLecon={() => { mesurerAccueil('lecon'); if (leconConseillee) { const id = leconConseillee.id; go('apprendre'); ouvrirLecon(id); } else go('apprendre'); }}
         // Un seul appel à la fois (#236, N4) : pas de carte d'installation le jour où Mochi fait une annonce ;
         // quand elle se montre, la pastille « À faire » s'efface.
@@ -1179,8 +1183,8 @@ export function App() {
         {serieVisible && retourSerie !== null && annonceGel === null && !enPartie && !ecranPlein && (tab === 'jouer' || tab === 'problemes') && (
           <p className="gel-annonce retour-serie" role="status" data-testid="retour-serie"><Mochi size={30} />{fr(retourSerie)}</p>
         )}
-        {/* Accueil v3 : pas de « Niveau 1 · 0 / 100 XP » avant le premier gain ; le Profil, lui, la montre toujours. */}
-        {accueilVisible && <BarreNiveau sansXpMasquee />}
+        {/* #613 : plus de barre de niveau sur l'accueil : le niveau et l'XP vivent dans le Profil et dans la fête de fin
+            (pastille « +N XP », « Niveau N ! »), quand de l'XP est gagnée. */}
         {/* Nouvelle version prête : jamais pendant une partie (ordi, à deux, guidée, défi). */}
         <InviteMiseAJour visible={!enPartie} />
         {bandeau && <BandeauHorsLigne ou={bandeau} />}

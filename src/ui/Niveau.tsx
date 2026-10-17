@@ -1,6 +1,7 @@
-// Progression (issue #109) : barre de niveau de l'accueil et célébration de niveau franchi.
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
-import { abonnerXp, libelleRecompense, lireXp, niveauDe, prochaineRecompense, recompenseDuNiveau } from '../app/xp';
+// Progression (issue #109) : célébration de niveau franchi. #613 : la barre de niveau, qui ne sert plus que dans le
+// Profil, est dans src/ui/BarreNiveau.tsx (hors du JS initial).
+import { useEffect, useRef } from 'react';
+import { libelleRecompense, recompenseDuNiveau } from '../app/xp';
 import { mouvementsReduits } from './defilement';
 import { terminerFete, useFile } from './celebrations';
 import { fr } from './typo';
@@ -11,42 +12,6 @@ import './niveau.css';
 // #563 : la synthèse des sons (src/ui/sound.ts) n'est pas dans le JS initial ; elle est d'ordinaire déjà chargée
 // (partie, leçon, problèmes) quand un niveau est atteint.
 const jouerNiveau = () => { void import('./sound').then(m => m.playLevel()).catch(() => undefined); };
-
-/** XP de l'appareil, mis à jour à chaque gain. */
-function useXp(): number {
-  const [xp, setXp] = useState(lireXp);
-  useEffect(() => abonnerXp(g => setXp(g.apres)), []);
-  return xp;
-}
-
-/**
- * Barre compacte : « Niveau 3 · 140 / 155 XP », une pierre qui avance sur une ligne du goban.
- * `sansXpMasquee` (accueil v3) : rien tant qu'il n'y a pas d'XP, pour ne pas montrer « Niveau 1 · 0 / 100 XP »
- * à un nouveau joueur avant sa première partie ; le Profil la montre toujours.
- */
-export function BarreNiveau({ sansXpMasquee = false }: { sansXpMasquee?: boolean } = {}) {
-  const xp = useXp();
-  const { niveau, dans, besoin } = niveauDe(xp);
-  if (sansXpMasquee && xp <= 0) return null;
-  const part = Math.min(100, (dans / besoin) * 100);
-  const suivante = prochaineRecompense(niveau);
-  return (
-    <div className="niveau" data-testid="barre-niveau">
-      <p className="niveau-texte">
-        <b>{t('niveau.barre', { niveau })}</b>
-        <span>{t('niveau.xp', { dans, besoin })}</span>
-      </p>
-      <div className="niveau-piste" role="progressbar" aria-label={t('niveau.aria', { niveau })} aria-valuemin={0} aria-valuemax={besoin} aria-valuenow={dans}
-        aria-valuetext={t('niveau.valeur', { dans, besoin, suivant: niveau + 1 })}
-        // #509 (L4) : la part faite en variable CSS, que la ligne et la pierre suivent par transform (niveau.css).
-        style={{ '--p': part / 100 } as CSSProperties}>
-        <span className="niveau-plein" />
-        <span className="niveau-rail"><span className="niveau-pierre" /></span>
-      </div>
-      {suivante && <p className="niveau-suite">{fr(t('niveau.suite', { niveau: suivante.niveau, recompense: libelleRecompense(suivante) }))}</p>}
-    </div>
-  );
-}
 
 const DUREE_MS = 3200;
 

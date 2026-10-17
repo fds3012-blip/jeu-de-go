@@ -166,6 +166,28 @@ export function VocabulaireGrade() {
   return voir ? <p className="cote-vocabulaire small" data-testid="cote-vocabulaire">{fr(tc('cote.vocabulaire'))}</p> : null;
 }
 
+/**
+ * #613 : ton grade et ta cote, au lancement d'une partie classée (en direct, partie lente) : c'est là qu'ils servent,
+ * « contre quelqu'un de ton niveau ». Plus sur l'accueil. Le kyu est expliqué la première fois (comme au Profil) ;
+ * le « ? » de la cote provisoire est lu en entier par le lecteur d'écran.
+ */
+export function TonNiveau({ cote, provisoire, phrase }: { cote: number; provisoire: boolean; phrase: string }) {
+  const g = grade(cote);
+  return (
+    <div className="ton-niveau" data-testid="ton-niveau">
+      <span className="ton-niveau-pierres" aria-hidden="true"><span className="stone b" /><span className="stone w" /></span>
+      <div>
+        <p className="ton-niveau-grade">
+          <span className="sr-only">{tc(provisoire ? 'cote.ariaProvisoire' : 'cote.aria', { cote: Math.round(cote), grade: g })}</span>
+          <b aria-hidden="true">{g}</b>{' '}<span className="ton-niveau-cote" aria-hidden="true" data-testid="ton-niveau-cote">{texteCote(cote, provisoire)}</span>
+        </p>
+        <p className="ton-niveau-phrase">{fr(phrase)}</p>
+      </div>
+      <VocabulaireGrade />
+    </div>
+  );
+}
+
 /** Lit le gain d'une partie classée ; le serveur peut mettre un instant à le compter : quelques relectures. */
 function useGain(db: Db, gameId: string, userId: string): GainPartie | null | undefined {
   const [gain, setGain] = useState<GainPartie | null | undefined>(undefined);

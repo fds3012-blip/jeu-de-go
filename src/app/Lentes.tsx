@@ -24,6 +24,8 @@ import { tl, type CleLente } from '../content/i18n/lente';
 import { t } from '../content/i18n/secondaires';
 import { fr } from '../ui/typo';
 import { ReglagesReplies } from '../ui/ReglagesReplies';
+import { TonNiveau } from '../ui/Cote';
+import { ecrireTailleEnLigne, lireTailleEnLigne } from './tailleEnLigne';
 import '../ui/defis.css';
 // #563 : le reste des styles des défis, hors du CSS initial (avant direct.css, comme dans la feuille principale).
 import '../ui/defis-ecran.css';
@@ -46,13 +48,17 @@ interface Props {
   /** « En direct » choisi dans la bascule. */
   onFacon: (f: FaconEnLigne) => void;
   onAccueil: () => void;
+  /** #613 : ton grade et ta cote, montrés au lancement de la partie classée (plus sur l'accueil). */
+  niveau?: { cote: number; provisoire: boolean } | null;
 }
 
 type Etat = { etat: 'chargement' } | { etat: 'pret'; recherche: RechercheLente | null; lignes: LigneLente[]; pseudos: Pseudos };
 
-export function Lentes({ db, userId, onPartie, onFacon, onAccueil }: Props) {
+export function Lentes({ db, userId, onPartie, onFacon, onAccueil, niveau }: Props) {
   const online = useOnline();
-  const [taille, setTaille] = useState<TailleLente>(LENTE_DEFAUT.taille);
+  // #613 : le dernier choix de taille en ligne déjà coché ; sinon la file par défaut.
+  const [taille, setTailleBrute] = useState<TailleLente>(() => lireTailleEnLigne() ?? LENTE_DEFAUT.taille);
+  const setTaille = (n: TailleLente) => { setTailleBrute(n); ecrireTailleEnLigne(n); };
   const [delai, setDelai] = useState<DelaiJours>(LENTE_DEFAUT.delai);
   const [etat, setEtat] = useState<Etat>({ etat: 'chargement' });
   const [erreur, setErreur] = useState<string | null>(null);
@@ -151,7 +157,7 @@ export function Lentes({ db, userId, onPartie, onFacon, onAccueil }: Props) {
   } else {
     haut = (
       <>
-        <p className="direct-intro">{fr(tl('lente.intro'))}</p>
+        {niveau ? <TonNiveau cote={niveau.cote} provisoire={niveau.provisoire} phrase={tl('lente.intro')} /> : <p className="direct-intro">{fr(tl('lente.intro'))}</p>}
         <p className="muted small direct-classee">{fr(tl('lente.classee'))}</p>
         {/* #571 (loi de Hick) : taille et délai repliés derrière leur résumé ; « Trouver un adversaire » est le seul choix. */}
         <ReglagesReplies ecran="lente" changer={tl('lente.reglages.changer')} masquer={tl('lente.reglages.masquer')}
