@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ALL_PUZZLES } from './puzzles';
 import { LESSONS } from './lessons';
-import { OUVERT_DEBUTANT, THEME_DU_PROBLEME, THEMES, THEMES_DE_LECON, TAILLE_SERIE, serieDeLecon, themeDe } from './themes';
+import { OUVERT_DEBUTANT, THEME_DU_PROBLEME, THEMES, THEMES_DE_LECON, TAILLE_SERIE, serieDeLecon, serieDeTheme, themeDe } from './themes';
 import { traduire } from './i18n';
 
 describe('thèmes des problèmes (#200)', () => {
@@ -67,6 +67,13 @@ describe('série de fin de leçon', () => {
   it('complète avec les plus faciles déjà réussis', () => {
     expect(serieDeLecon('l1', liste, new Set(['a01', 'a02', 'a03'])).map(p => p.id)).toEqual(['a06', 'a01', 'a02']);
     expect(serieDeLecon('l1', liste, new Set(['a01', 'a02', 'a03', 'a06'])).map(p => p.id)).toEqual(['a01', 'a02', 'a03']);
+  });
+
+  it('#590 : série d’un seul thème (« S’entraîner sur ce thème »), mêmes règles que la fin de leçon', () => {
+    expect(serieDeTheme('capture', liste, new Set()).map(p => p.id)).toEqual(['a01', 'a02', 'a03']);
+    expect(serieDeTheme('capture', liste, new Set(['a01', 'a02', 'a03'])).map(p => p.id)).toEqual(['a06', 'a01', 'a02']);
+    expect(serieDeTheme('echelle', liste, new Set()).map(p => p.id)).toEqual(['i09', 'k03']);
+    expect(serieDeTheme('seki', liste, new Set())).toEqual([]);
   });
 
   it('leçon 3 : un problème de chaque piège', () => {

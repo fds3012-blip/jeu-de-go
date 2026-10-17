@@ -77,6 +77,8 @@ const revisions = charger(() => import('./SeanceRevisions'));
 const intro = charger(() => import('./IntroRegles'));
 // #524 : partie de découverte, avec ses styles (lecon.css, decouverte.css) et son scénario.
 const decouverte = charger(() => import('./PartieDecouverte'));
+// #590 : page d'un thème, ouverte depuis « Par thème » d'Apprendre.
+const theme = charger(() => import('./ThemeLecons'));
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function ecran<M, K extends keyof M>(importer: () => Promise<M>, nom: K): M[K] extends ComponentType<any> ? M[K] : never {
@@ -107,6 +109,7 @@ export const PartiePartagee = ecran(partagee, 'PartiePartagee');
 export const SeanceRevisions = ecran(revisions, 'SeanceRevisions');
 export const IntroRegles = ecran(intro, 'IntroRegles');
 export const PartieDecouverte = ecran(decouverte, 'PartieDecouverte');
+export const ThemeLecons = ecran(theme, 'ThemeLecons');
 
 /**
  * La partie est l'action principale de l'accueil : son code part tout de suite (≈ 20 Ko gzip avec la revue),
@@ -128,7 +131,7 @@ export function prechargerIntro(): void {
 
 /** Télécharge tous les écrans en tâche de fond. */
 export function prechargerEcrans(): void {
-  for (const f of [partie, problemes, lecons, profil, serie, placement, defis, compte, direct, lentes, carrousel, reglagesPartie, intro, decouverte]) f().catch(() => {});
+  for (const f of [partie, problemes, lecons, profil, serie, placement, defis, compte, direct, lentes, carrousel, reglagesPartie, intro, decouverte, theme]) f().catch(() => {});
 }
 
 // Moment « après le premier écran » : src/premierEcran.ts (partagé avec PostHog, #325).

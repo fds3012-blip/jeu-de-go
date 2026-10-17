@@ -17,6 +17,8 @@ describe('écrans chargés à la demande', () => {
       const cle = (src: string) => src.match(new RegExp(`${nom} = '([^']+)'`))?.[1];
       expect(cle(lire('./App.tsx')), nom).toBeDefined();
       expect(cle(lire('./App.tsx')), nom).toBe(cle(lire('./Puzzles.tsx')));
+      // #590 : la page d'un thème lit les problèmes réussis pour choisir sa série.
+      if (nom === 'SOLVED_KEY') expect(cle(lire('./ThemeLecons.tsx')), nom).toBe(cle(lire('./Puzzles.tsx')));
     }
   });
 

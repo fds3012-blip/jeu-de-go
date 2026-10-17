@@ -4,6 +4,9 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperti
 import { CHAPITRES, LESSONS, type Chapitre } from '../content/lessons';
 import { Bubble } from '../ui/Mochi';
 import { Sceau } from '../ui/Sceau';
+import { RangeeThemes } from '../ui/RangeeThemes';
+import { themesAvecLecons } from './themesApprendre';
+import type { Theme } from '../content/themesLecons';
 import { VignetteLecon } from '../ui/VignetteLecon';
 import { Confettis } from '../ui/Confettis';
 import { fr } from '../ui/typo';
@@ -37,7 +40,7 @@ function phraseMochi(liste: Etape[], iEnCours: number): string {
  * `compteRequis` (#343) : vrai si la leçon de ce rang (0 = leçon 1) demande un compte. Sans compte, les leçons 1 à 3 sont libres ;
  * les suivantes restent touchables, portent le verrou « compte », et `onOpen` ouvre la création de compte (garde d'App.tsx).
  */
-export function LearnHome({ progress, onOpen, sync = 'local', compteRequis = () => false, decouverte, onRegles, onGuidee }: {
+export function LearnHome({ progress, onOpen, sync = 'local', compteRequis = () => false, decouverte, onRegles, onGuidee, onTheme }: {
   progress: Progression; onOpen: (id: string) => void; sync?: SyncState; compteRequis?: (rang: number) => boolean;
   /** #524 : la partie de découverte, en tête du chapitre « Les bases » (état gardé sur l'appareil, ouverture). */
   decouverte?: { etat: EtatDecouverte; ouvrir: () => void };
@@ -45,6 +48,8 @@ export function LearnHome({ progress, onOpen, sync = 'local', compteRequis = () 
   onRegles?: () => void;
   /** #589 : la partie guidée contre Mochi, sous la partie de découverte. */
   onGuidee?: () => void;
+  /** #590 : « Par thème », sous la carte de la prochaine leçon ; ouvre la page du thème. */
+  onTheme?: (theme: Theme) => void;
 }) {
   const liste = etapes(LESSONS, progress);
   const iEnCours = liste.findIndex(e => e.etat === 'encours');
@@ -75,9 +80,10 @@ export function LearnHome({ progress, onOpen, sync = 'local', compteRequis = () 
     if (r.bottom > bas) window.scrollBy({ top: Math.max(0, Math.min(r.top - 88, r.bottom - bas)), behavior: 'instant' as ScrollBehavior });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const prochaine = bouton && (
+  const prochaine = bouton && <>
     <CarteProchaine refCarte={carte} etape={iEnCours >= 0 ? liste[iEnCours] : liste[0]} bouton={bouton} mochi={phraseMochi(liste, iEnCours)} onOpen={onOpen} compteRequis={compteRequis} />
-  );
+    {onTheme && <RangeeThemes themes={themesAvecLecons(LESSONS, progress)} onTheme={onTheme} />}
+  </>;
 
   return (
     <div className="apprendre">
