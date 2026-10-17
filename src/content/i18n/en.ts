@@ -1724,6 +1724,10 @@ export const en = {
   'compte.age.moins15': 'Under 15?',
   'compte.age.moins15Detail': 'Show this screen to a parent. If they agree, tick the box together. You can also keep trying without an account: nothing leaves your phone.',
   'compte.pseudo.conseil': 'Everyone can see your nickname. Don’t use your real name.',
+  'conditions.accord.titre': 'One box to tick',
+  'conditions.accord.texte': 'Tick it to keep playing online.',
+  'conditions.accord.valider': 'Continue',
+  'conditions.accord.aide': 'Tick the box to play online.',
   // Friends (#359).
   'amis.titre': 'My friends',
   'amis.profil.demandes': { one: '{n} request', other: '{n} requests' },
