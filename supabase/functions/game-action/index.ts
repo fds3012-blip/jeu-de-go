@@ -6,7 +6,7 @@
 // La clé service (SUPABASE_SERVICE_ROLE_KEY) est fournie par l'environnement Supabase : elle n'est jamais dans le dépôt.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { defiMoveArgs, parseActionRequest, planAction, type GameRow } from './go/server.ts';
-import { defiCoup, parseDefiCoupRequest, type DefiCoupDeps } from './go/defi-action.ts';
+import { defiCoup, parseDefiCoupRequest, refusDepuisSql, type DefiCoupDeps } from './go/defi-action.ts';
 import { estDemandeVersion, reponseVersion } from './go/contrat.ts';
 
 const CORS = {
@@ -111,7 +111,12 @@ Deno.serve(async (req: Request) => {
       p_game: action.gameId, p_user: userId, p_moves: plan.expect.moves, p_dead: plan.expect.dead_stones ?? '',
       p_result: plan.result, p_black: plan.black, p_white: plan.white
     });
-    if (error) return refuse(409, 'conflit', error.message);
+    // #578 : jamais le message SQL brut au client (noms de tables, de contraintes). Les refus métier sont déjà
+    // vérifiés par planAction : ce qui reste ici est une course entre deux actions, d'où « conflit ».
+    if (error) {
+      console.error('finish_game_by_score', error.code, error.message);
+      return refuse(409, 'conflit', 'La partie a changé entre-temps. Recharge-la.');
+    }
     return json(200, { ok: true, result, black: plan.black, white: plan.white });
   }
 
@@ -123,7 +128,12 @@ Deno.serve(async (req: Request) => {
     if (defiError) return refuse(500, 'lecture', 'Impossible de lire la partie.');
     if (defi) {
       const { data: r, error } = await admin.rpc('jouer_coup_defi', defiArgs);
-      if (error) return refuse(409, 'conflit', error.message);
+      // #578 : codes traduits comme pour l'action defi_coup, sans le message SQL brut.
+      if (error) {
+        console.error('jouer_coup_defi', error.code, error.message);
+        const refus = refusDepuisSql({ code: error.code, message: error.message });
+        return json(refus.status, refus.body);
+      }
       if (!r?.ok) return refuse(409, 'temps', `Temps écoulé : la partie est finie (${r?.resultat ?? ''}).`);
       const { data: after } = await admin.from('games').select(COLUMNS).eq('id', action.gameId).maybeSingle();
       return json(200, { ok: true, game: after ?? { moves: r.coups }, dateLimite: r.date_limite });
