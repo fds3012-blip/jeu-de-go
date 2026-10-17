@@ -173,9 +173,9 @@ for (const c of CAS) {
       await page.addInitScript(() => localStorage.setItem('go.lecons.v1', JSON.stringify({ l1: 6, l2: 6, l3: 8, l4: 5, l5: 5, l6: 6, l7: 4 })));
       await page.goto('/');
       await onglet(page, 'Apprendre').click();
-      await expect(page.locator('[data-chapitre="c1"] .gue li')).toHaveCount(7);
+      await expect(page.locator('[data-chapitre="c1"] .gue li.pas')).toHaveCount(7);
       // #16 : le chapitre 2 grandit (l8, puis l27…) : autant de pierres que de leçons.
-      await expect(page.locator('[data-chapitre="c2"] .gue li')).toHaveCount(CHAPITRES.find(x => x.id === 'c2')!.lecons.length);
+      await expect(page.locator('[data-chapitre="c2"] .gue li.pas')).toHaveCount(CHAPITRES.find(x => x.id === 'c2')!.lecons.length);
       await sansDebord(page, 'Apprendre (7 leçons)');
       const cta = page.getByRole('button', { name: 'Reprendre la leçon : Compter les points' });
       await boutonLibre(cta, 'Apprendre (leçon 7)');
