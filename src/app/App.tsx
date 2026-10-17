@@ -1128,7 +1128,7 @@ export function App() {
     track(EVENTS.revisionCarteVue, { n: revisionsDues });
   }, [accueilVisible, revisionsDues, home.nouveau]);
   useEffect(() => { document.title = titreDocument; }, [titreDocument]);
-  // #606 (N1, A7) : le retour du système fait ce que fait « ‹ » (src/app/retourSysteme.ts, chargé après le premier écran).
+  // #606 (N1, A7) : le retour du système fait ce que fait « ‹ » (src/app/retourSysteme.ts, hors du JS initial).
   const lectureRetour = useRef<Branchement>(null!);
   lectureRetour.current = {
     horsRacine: () => !accueilVisible,
@@ -1146,11 +1146,12 @@ export function App() {
   const retourSysteme = useRef<{ verifier: () => void } | null>(null);
   useEffect(() => {
     let vivant = true, arreter = () => {};
-    apresPremierEcran(() => void import('./retourSysteme').then(m => {
+    // Chargé tout de suite, en parallèle du premier écran : un retour juste après l'ouverture ne ferme pas l'app.
+    void import('./retourSysteme').then(m => {
       if (!vivant) return;
       const r = m.brancherRetourSysteme(() => lectureRetour.current);
       retourSysteme.current = r; arreter = r.arreter;
-    }, () => { /* hors ligne sans le module : le retour reste celui du système */ }));
+    }, () => { /* hors ligne sans le module : le retour reste celui du système */ });
     return () => { vivant = false; arreter(); retourSysteme.current = null; };
   }, []);
   useEffect(() => { retourSysteme.current?.verifier(); });

@@ -211,3 +211,21 @@ test('#465 : le titre de l’onglet suit l’écran', async ({ page }) => {
   await lancerADeux(page);
   await expect(page).toHaveTitle('Partie à deux · Mochi Go');
 });
+
+// #606 (A7) : les onglets n'empilent pas d'entrées d'historique. Après Apprendre, Problèmes puis Profil, un seul retour
+// du système ramène à Jouer ; le suivant sortirait de l'app.
+test('#606 : après plusieurs onglets, un retour du système ramène à Jouer', async ({ page }) => {
+  await page.goto('/');
+  await expect.poll(() => page.evaluate(() => typeof (history.state as { mochiNav?: number } | null)?.mochiNav)).toBe('number');
+  const nav = page.getByRole('navigation', { name: 'Navigation principale' });
+  for (const nom of ['Apprendre', 'Problèmes', 'Profil']) {
+    await nav.getByRole('button', { name: nom }).click();
+    await expect(nav.getByRole('button', { name: nom })).toHaveAttribute('aria-current', 'page');
+  }
+  const longueur = await page.evaluate(() => history.length);
+  await page.goBack();
+  await expect(nav.getByRole('button', { name: 'Jouer' })).toHaveAttribute('aria-current', 'page');
+  await expect(page.locator('main.app-home .cta').first()).toBeVisible();
+  expect(await page.evaluate(() => history.length)).toBeLessThanOrEqual(longueur);
+  await expect.poll(() => page.evaluate(() => (history.state as { garde?: boolean } | null)?.garde ?? false)).toBe(false);
+});

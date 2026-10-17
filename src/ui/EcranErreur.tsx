@@ -23,7 +23,8 @@ export function EcranErreur({ categorie, horsLigne, onReessayer, onAccueil }: Pr
       <p className="ecran-erreur-mot muted">{t('erreur.mochi')}</p>
       <div className="ecran-erreur-actions">
         <button type="button" className="btn primary" onClick={onReessayer}>{t('erreur.reessayer')}</button>
-        {onAccueil && <button type="button" className="lien" onClick={onAccueil}>{t('erreur.accueil')}</button>}
+        {/* #606 : `data-retour` : le retour du système fait cette sortie (src/app/retourSysteme.ts). */}
+        {onAccueil && <button type="button" className="lien" data-retour onClick={onAccueil}>{t('erreur.accueil')}</button>}
       </div>
     </section>
   );
