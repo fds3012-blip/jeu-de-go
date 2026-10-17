@@ -11,6 +11,7 @@
 //    (AccordConditions.tsx) ; tant qu'elle n'est pas cochée, le jeu en ligne reste fermé (côté client, App.tsx).
 import type { Db } from '../data/supabase';
 import { VERSION_CONDITIONS, accepterConditions, conditionsAJour } from '../data/conditions';
+import { lireMonProfil } from '../data/lectureProfil';
 
 /** Accord donné sur cet appareil, pas encore gardé par le serveur. Valeur : `1` (session pas encore vue) ou l'identifiant du compte. */
 export const CLE_ACCORD = 'go.conditions-a-envoyer.v1';
@@ -54,9 +55,10 @@ export async function verifierPreuve(db: Db, userId: string, auRetour = false, s
   if (auRetour) noterAccord(userId, s);
   let version: string | null | undefined;
   try {
-    const { data, error } = await db.rpc('mon_profil').select('conditions_version').maybeSingle();
-    if (error || !data) return accordEnAttente(userId, s) ? envoyer(db, userId, s) : 'inconnu';
-    version = data.conditions_version;
+    // #584 : même lecture de `mon_profil()` que l'accueil (lecture partagée), pas un appel de plus.
+    const r = await lireMonProfil(db, userId);
+    if (!r.ok || !r.value) return accordEnAttente(userId, s) ? envoyer(db, userId, s) : 'inconnu';
+    version = r.value.conditions_version;
   } catch { return 'inconnu'; }
   if (conditionsAJour({ conditions_version: version ?? null })) { oublierAccord(s); return 'ok'; }
   return accordEnAttente(userId, s) ? envoyer(db, userId, s) : 'demander';
