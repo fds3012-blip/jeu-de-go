@@ -20,7 +20,12 @@ function noter(cle: string, id: string) {
   writeLocal(cle, { ...readLocal<Record<string, true>>(cle, {}), [id]: true });
 }
 
-export function SeriePratique({ problemes, confirmTouch, celebrer = true, onFin }: { problemes: Puzzle[]; confirmTouch: boolean; celebrer?: boolean; onFin: () => void }) {
+export function SeriePratique({ problemes, confirmTouch, celebrer = true, onFin, versTheme = false }: {
+  problemes: Puzzle[]; confirmTouch: boolean; celebrer?: boolean; onFin: () => void;
+  /** #590 : série lancée depuis la page d'un thème, qui y ramène (« Retour au thème »). */
+  versTheme?: boolean;
+}) {
+  const retour = t(versTheme ? 'apprendre.theme.retour' : 'lecon.retourChemin');
   const [i, setI] = useState(0);
   // #236 (N2), suite de #250 (M9) : une fête à la fois. Tant que la feuille « Bravo » est là, le problème reste un
   // exercice (l'XP se lit dans la feuille, rien d'autre ne se pose sur la consigne). Un niveau franchi pendant la
@@ -29,7 +34,7 @@ export function SeriePratique({ problemes, confirmTouch, celebrer = true, onFin 
   const pz = problemes[i];
   if (!pz) return null;
   if (niveau !== null) {
-    return <NiveauAtteint niveau={niveau} celebrer={celebrer} action={t('lecon.retourChemin')} onAction={onFin} />;
+    return <NiveauAtteint niveau={niveau} celebrer={celebrer} action={retour} onAction={onFin} />;
   }
   const quitter = () => {
     const n = niveauEnAttente(lireFile());
@@ -43,7 +48,7 @@ export function SeriePratique({ problemes, confirmTouch, celebrer = true, onFin 
       <PuzzlePlayer key={pz.id} puzzle={pz} rang={i + 1} confirmTouch={confirmTouch}
         // R2 (recette du 30/09) : « Entraînement » et des points de progression, aucun chiffre à l'écran.
         surtitre={<span className="serie-surtitre">{t('serie.entrainement')}<Etapes total={problemes.length} faites={i} label={t('serie.progression')} /></span>}
-        retour={t('lecon.retourChemin')}
+        retour={retour}
         rated={false} onAttempt={async () => null}
         onSolved={(_essais, aide) => {
           const gain = recompense(aide, false);

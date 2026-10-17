@@ -517,3 +517,45 @@
 }
 /* #589 : la partie guidée, juste sous la partie de découverte (même tuile) : deux façons de jouer avec Mochi, groupées. */
 .carte-guidee { margin-top: calc(var(--space-2) - var(--space-4)); }
+
+/* #590 : « Par thème », sous la carte de la prochaine leçon. Secondaire : des puces plates qui défilent de côté,
+   sans relief (le seul relief reste « Reprendre »). Le fond couvre la route du chemin, qui passe dessous. */
+.par-theme { position: relative; margin: var(--space-4) calc(-1 * var(--gouttiere)) 0; padding: var(--space-1) 0; background: var(--bg); }
+.par-theme h3 { margin: 0 var(--gouttiere) var(--space-2); font-size: var(--fs-s); font-weight: var(--fw-bold); color: var(--muted); letter-spacing: .02em; }
+.par-theme ul { list-style: none; margin: 0; padding: 0 var(--gouttiere) 2px; display: flex; gap: var(--space-2); overflow-x: auto;
+  scroll-snap-type: x proximity; scroll-padding-inline: var(--gouttiere); scrollbar-width: none; overscroll-behavior-x: contain; }
+.par-theme ul::-webkit-scrollbar { display: none; }
+.par-theme li { flex: none; scroll-snap-align: start; }
+.puce-theme { display: inline-flex; align-items: center; gap: 8px; min-height: var(--cible-min); padding: 0 14px; border: 1.5px solid var(--line);
+  border-radius: 999px; background: var(--surface); color: var(--text); font: inherit; font-weight: var(--fw-bold); font-size: var(--fs-m); white-space: nowrap; cursor: pointer; }
+.puce-theme small { color: var(--muted); font-size: var(--fs-s); font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; }
+.puce-theme[data-fini] { border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); }
+.puce-theme[data-fini] small { color: var(--accent-texte); }
+.puce-theme:focus-visible { outline: 3px solid var(--accent-trait); outline-offset: 2px; }
+@media (prefers-reduced-motion: no-preference) {
+  .puce-theme { transition: transform var(--duree-rapide) var(--ease); }
+  .puce-theme:active { transform: scale(.96); }
+}
+
+/* #590 : page d'un thème (src/app/ThemeLecons.tsx). La place sous la liste laisse voir la dernière leçon au-dessus
+   du bouton « S'entraîner », posé comme les autres actions principales au-dessus de la barre du bas. */
+.theme-lecons { padding-bottom: var(--space-4); }
+.theme-lecons-texte { margin: 0 0 var(--space-4); font-size: var(--fs-m); line-height: 1.45; }
+.theme-lecons-sous { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-2); margin: 0 0 var(--space-2);
+  font-size: var(--fs-s); font-weight: var(--fw-bold); color: var(--muted); }
+.theme-lecons-liste { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+.theme-lecon { display: flex; align-items: center; gap: var(--space-3); width: 100%; min-height: var(--cible-min); padding: var(--space-3);
+  border: 0; border-radius: var(--radius); background: var(--surface); color: var(--text); text-align: left; font: inherit; cursor: pointer; }
+.theme-lecon .vignette-lecon, .theme-lecon > :first-child { flex: none; }
+.theme-lecon-texte { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.theme-lecon-texte b { font-size: var(--fs-m); line-height: 1.2; }
+.theme-lecon-texte small { color: var(--muted); font-size: var(--fs-s); line-height: 1.35; overflow-wrap: break-word; }
+.theme-lecon-etat { flex: none; display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px;
+  background: var(--surface-2); color: var(--text); font-size: var(--fs-s); font-weight: var(--fw-bold); }
+.theme-lecon[data-faite] .theme-lecon-etat { background: color-mix(in srgb, var(--accent) 16%, transparent); }
+.theme-lecon-etat svg { width: 14px; height: 14px; fill: none; stroke: var(--accent-trait); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.theme-lecons .notice { margin-top: var(--space-4); }
+@media (prefers-reduced-motion: no-preference) {
+  .theme-lecon { transition: transform var(--duree-rapide) var(--ease); }
+  .theme-lecon:active { transform: scale(.98); }
+}

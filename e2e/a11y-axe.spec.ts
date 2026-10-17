@@ -486,3 +486,14 @@ test('axe : partie de découverte (#524) : Apprendre, consigne, erreur, frontiè
   await expect(page.getByTestId('fin-decouverte')).toBeVisible();
   await verifier(page, 'Découverte : fin');
 });
+
+test('axe : « Par thème » d’Apprendre (#590) et la page d’un thème', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('go.lecons.v1', JSON.stringify({ l1: 99 })));
+  await page.goto('/');
+  await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
+  await page.getByTestId('par-theme').scrollIntoViewIfNeeded();
+  await verifier(page, 'Apprendre, rangée « Par thème »');
+  await page.getByTestId('par-theme').getByRole('button', { name: /^Capture :/ }).click();
+  await expect(page.getByRole('heading', { level: 2, name: 'Capture' })).toBeVisible();
+  await verifier(page, 'Page du thème Capture');
+});
