@@ -26,8 +26,7 @@ for (const theme of ['dark', 'light'] as const) {
       localStorage.setItem('go.parties.v1', JSON.stringify({ n: 4, ordi: 4 }));
     });
     await page.goto('/');
-    await page.getByRole('button', { name: /contre Pomme$/ }).first().click();
-    await passerLancement(page);
+    await passerLancement(page, () => page.getByRole('button', { name: /contre Pomme$/ }).first().click());
     const portrait = page.locator('.joueur [data-portrait="pomme"]');
     await expect(portrait).toHaveAttribute('data-humeur', 'neutre');
     await expect(page.locator('.coach [data-portrait="mochi"]')).toBeVisible();

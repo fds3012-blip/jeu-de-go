@@ -115,8 +115,7 @@ test.describe('N7 : « Passer » à part des aides', () => {
       await preparer(page, theme);
       await semer(page, { 'go.parties.v1': JSON.stringify({ n: 3, dernier: 'pomme', ordi: 3 }), 'go.intro-but.v1': 'true' });
       await page.goto('/');
-      await page.locator('.cta-sceau').click();
-      await passerLancement(page);
+      await passerLancement(page, () => page.locator('.cta-sceau').click());
       const barre = page.getByRole('toolbar', { name: 'Actions de la partie' });
       await expect(barre).toBeVisible();
       const passer = barre.getByRole('button', { name: 'Passer' });

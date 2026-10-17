@@ -37,7 +37,10 @@ export function CarrouselAdversaires<I extends SceauId>({ cartes, choisi, onChoi
   const [nouveau, setNouveau] = useState(false);
   // #584 : l'adversaire choisi joue avec KataGo : son réseau se télécharge en fond, pour que son premier coup n'attende
   // pas 3,8 Mo (jamais en économie de données ni en 2G : src/engine/katago/prechargement.ts). Moteur chargé à la demande.
+  // #613 : la feuille de lancement s'ouvre aussi hors ligne (l'ordi marche sans réseau) : pas d'essai de téléchargement
+  // voué à l'échec ; la feuille « … a besoin de l'IA » propose la suite au moment de jouer.
   useEffect(() => {
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
     if (OPPONENTS.find(o => o.id === choisi)?.katago) void import('../engine').then(m => m.prechargerPourAdversaire(), () => {});
   }, [choisi]);
 

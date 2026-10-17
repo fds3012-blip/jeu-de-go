@@ -1052,7 +1052,7 @@ export function App() {
         } }}
         reprise={partieEnCours && !epure ? { id: partieEnCours.adversaire as OpponentId, nom: OPPONENTS.find(o => o.id === partieEnCours.adversaire)?.nom ?? '',
           taille: partieEnCours.taille, coups: partieEnCours.coups, ouvrir: reprendre } : undefined}
-        lancement={lancement} setLancement={setLancement} onJouer={m => lancer(m)} onTaille={n => set({ size: n })} onChoisir={setAdversaire}
+        lancement={lancement} setLancement={setLancement} onJouer={m => { setLancement(null); lancer(m); }} onTaille={n => set({ size: n })} onChoisir={setAdversaire}
         modes={modes} onMode={choisirMode} defisAJouer={defisAJouer} horsLigne={!online}
         probleme={daily && { numero, titre: daily.title, rows: daily.rows, reussi: duJourFait, etat: etatTuile(appel, duJourFait) }}
         // #367 : « Aujourd'hui » est la liste « À faire » ; un toucher sur un élément en attente est mesuré.

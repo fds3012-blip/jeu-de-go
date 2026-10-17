@@ -284,14 +284,18 @@ export async function passerJusquAuScore(page: Page): Promise<void> {
 export async function toucherCta(page: Page, geste: 'click' | 'tap' = 'click'): Promise<void> {
   const cta = page.locator('.cta');
   const mode = await cta.getAttribute('data-mode');
+  // Lu avant le toucher : lancer une partie compte déjà une partie de plus sur l'appareil.
+  const feuille = (mode === 'ordi' || mode === 'deux') && await feuilleAttendue(page);
   await (geste === 'tap' ? cta.tap() : cta.click());
-  if ((mode === 'ordi' || mode === 'deux') && await feuilleAttendue(page)) await jouerDepuisLancement(page);
+  if (feuille) await jouerDepuisLancement(page);
 }
 
 /**
- * #613 : après un toucher sur l'accueil qui lance l'ordi ou à deux (tuile, goban, bouton nommé), passe la feuille de
- * lancement si elle s'ouvre (une partie a déjà été lancée ou jouée sur l'appareil). Sans elle, ne fait rien.
+ * #613 : fait le geste qui lance l'ordi ou à deux depuis l'accueil (tuile, goban, bouton nommé), puis passe la feuille
+ * de lancement si elle s'ouvre (une partie déjà lancée ou jouée sur l'appareil, lu avant le geste). Sinon, rien de plus.
  */
-export async function passerLancement(page: Page): Promise<void> {
-  if (await feuilleAttendue(page)) await jouerDepuisLancement(page);
+export async function passerLancement(page: Page, geste: () => Promise<void>): Promise<void> {
+  const feuille = await feuilleAttendue(page);
+  await geste();
+  if (feuille) await jouerDepuisLancement(page);
 }
