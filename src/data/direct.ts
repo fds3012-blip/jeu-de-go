@@ -12,6 +12,7 @@ import { CODE_SUSPENDU } from './suspension';
 import { attenteDuRefus, CODE_ATTENTE_ABANDONS, type AttenteDirect } from './abandons';
 import type { Game } from './games';
 import type { Db } from './supabase';
+import { invaliderProfil } from './lectureProfil';
 import { suivreLignes } from './tempsReel';
 import { lireEtatDirect, penduleApresCoup, type Cadence, type EtatDirect } from '../go/pendule';
 
@@ -167,5 +168,6 @@ export function fusionnerEtatPartie(e: EtatDirect, ligne: Record<string, unknown
 export async function abandonnerDirect(db: Db, partieId: string): Promise<Result<string, RefusDirect>> {
   const { data, error } = await db.rpc('resign_game', { p_game: partieId });
   if (error || !data) return refus(error);
+  invaliderProfil(); // #584
   return { ok: true, value: data };
 }

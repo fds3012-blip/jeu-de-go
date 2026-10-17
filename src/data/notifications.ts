@@ -8,6 +8,7 @@
 // - « déjà vu » : une notification en attente allume la pastille ; ouvrir la partie la marque lue (src/data/defi.ts).
 import type { Result } from './account';
 import type { Db } from './supabase';
+import { invaliderAFaire } from './fraicheurAFaire';
 
 // #369 : `go_du_jour`, un ami te rappelle le Go du jour (sans partie).
 export const TYPES_NOTIFICATION = ['tour', 'comptage', 'fin', 'ami', 'go_du_jour'] as const;
@@ -57,6 +58,7 @@ export function rappelGoDuJour(liste: readonly NotificationEnAttente[], aujourdh
 export async function marquerLues(db: Db, cible: { partieId?: string; type?: TypeNotification } = {}): Promise<Result<number>> {
   // Un argument absent (undefined, retiré du JSON) prend la valeur par défaut du serveur : null, « toutes ».
   const { data, error } = await db.rpc('marquer_notifications_lues', { p_partie: cible.partieId, p_type: cible.type });
+  invaliderAFaire(); // #584
   if (error) return { ok: false, error: error.message };
   return { ok: true, value: data ?? 0 };
 }

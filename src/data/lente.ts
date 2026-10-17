@@ -11,6 +11,7 @@ import { CODE_PLAFOND_LENTES } from './abandons';
 import { CODE_SUSPENDU } from './suspension';
 import { mesDefis, type EtatDefi } from './defi';
 import type { Db } from './supabase';
+import { invaliderAFaire } from './fraicheurAFaire';
 
 export type TailleLente = 9 | 13 | 19;
 export type DelaiJours = 1 | 2 | 3;
@@ -64,6 +65,7 @@ export function lireLigneRecherche(l: Record<string, unknown> | null | undefined
  */
 export async function chercherPartieLente(db: Db, taille: TailleLente, delai: DelaiJours): Promise<Result<string | null>> {
   const { data, error } = await db.rpc('chercher_partie_lente', { p_size: taille, p_delai_jours: delai });
+  invaliderAFaire(); // #584
   if (error) return refus(error);
   return { ok: true, value: data ?? null };
 }
@@ -71,6 +73,7 @@ export async function chercherPartieLente(db: Db, taille: TailleLente, delai: De
 /** Annule la recherche, ou efface « adversaire trouvé ». Renvoie la partie trouvée pendant l'attente, ou null. */
 export async function quitterFileLente(db: Db): Promise<Result<string | null>> {
   const { data, error } = await db.rpc('quitter_file_lente');
+  invaliderAFaire(); // #584
   if (error) return refus(error);
   return { ok: true, value: data ?? null };
 }

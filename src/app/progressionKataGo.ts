@@ -28,3 +28,32 @@ export function useProgressionKataGo(actif: boolean): ProgressionAffichee | null
   }, [actif]);
   return p;
 }
+
+/** #584 : pas de la progression dans la bulle de Mochi (zone lue par les lecteurs d'écran) : un demi-mégaoctet. */
+const PAS_BULLE = 500_000;
+
+/**
+ * #584 : l'IA se prépare-t-elle pour le coup de l'ordi ? `null` si KataGo n'est pas en train de démarrer (prêt, inactif,
+ * indisponible) ; sinon la progression du téléchargement par pas d'un demi-mégaoctet (la bulle est une zone `aria-live` :
+ * une annonce toutes les 3 s environ en 3G, pas toutes les demi-secondes), ou `{}` pendant le cache et le démarrage.
+ */
+export function preparationIA(i: KataGoInfo, l: 'fr' | 'en' = 'fr'): ProgressionAffichee | Record<string, never> | null {
+  if (i.state !== 'chargement') return null;
+  const p = i.progression;
+  return progressionAffichee(p ? { ...i, progression: { ...p, recu: p.recu - (p.recu % PAS_BULLE) } } : i, l) ?? {};
+}
+
+/** Suit la préparation de KataGo tant que `actif` (l'ordi, qui joue avec KataGo, doit jouer). Un rendu par dixième de Mo. */
+export function usePreparationIA(actif: boolean): ProgressionAffichee | Record<string, never> | null {
+  const [p, setP] = useState<ProgressionAffichee | Record<string, never> | null>(null);
+  useEffect(() => {
+    if (!actif) { setP(null); return; }
+    let cle = '';
+    return ecouterKataGo(i => {
+      const a = preparationIA(i, langue());
+      const k = a === null ? '' : 'recu' in a ? `${a.recu}/${a.total}` : '…';
+      if (k !== cle) { cle = k; setP(a); }
+    });
+  }, [actif]);
+  return p;
+}

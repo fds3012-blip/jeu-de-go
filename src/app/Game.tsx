@@ -15,7 +15,9 @@ import { fr } from '../ui/typo';
 import { nombre as virgule, t as tr } from '../content/i18n/secondaires';
 import { readLocal, useProfil } from './hooks';
 import { PARTIES_KEY, type Parties } from './home';
-import { prechargerApresPartie } from '../engine';
+import { OPPONENTS, prechargerApresPartie, prechargerPourAdversaire, preloadKataGo } from '../engine';
+import { DELAI_PRECHARGEMENT_MS } from '../engine/katago/prechargement';
+import { usePreparationIA } from './progressionKataGo';
 import { usePreferences, useStored } from './settings';
 import { carteTerritoire, conseilPasser, passerEnEvidence, coupsJoues, descriptionIndices, descriptionQuiMene, DUREE_QUI_MENE, indicesRestants, INDICES_PAR_PARTIE, libelleAvantage, libelleCoup, messageAtari, messageIndice, metEnAtari, nouveauxAtari, partNoir, phraseQuiMene, QUI_MENE_PAR_PARTIE, quiMeneDisponible, quiMeneRestants } from './partie';
 import { messageComptage, modeComptage } from './partie';
@@ -139,6 +141,8 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   const [resignArmAt, setResignArmAt] = useState<number | null>(null);
   const [resigned, setResigned] = useState<0 | 1 | 2>(0);
   const [thinking, setThinking] = useState(false);
+  // #584 : « L'IA n'a pas pu se charger » déjà dit dans cette partie.
+  const sansIADit = useRef(false);
   const [finding, setFinding] = useState(false);
   const [shake, setShake] = useState<{ p: number; n: number } | null>(null); // coup interdit : la pierre fantôme tremble
   const [replique, setReplique] = useState<{ texte: string; n: number } | null>(null);
@@ -287,7 +291,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
     const passesJoueur = history.filter((h, i) => i > 0 && h.lastMove === -1 && h.toPlay === 2).length;
     // #474 : moteur en échec (exception, Worker tombé) : coup de secours, la partie ne reste jamais bloquée.
     bestMoveExplique(pos, guidee ? niveauGuide(force.current.cran) : ai.id, { komi: aiKomiMoteur, accommodant, passesJoueur, ...(reglesIa ? { rules: reglesIa } : {}) })
-      .catch((e: unknown) => coupDeSecours(pos, e)).then(async ({ move: m, raison }) => {
+      .catch((e: unknown) => coupDeSecours(pos, e)).then(async ({ move: m, raison, ...coup }) => {
       const wait = cible - (Date.now() - t0);
       if (wait > 0) await new Promise(r => setTimeout(r, wait));
       if (t !== token.current) return;
@@ -306,6 +310,12 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
         if (metEnAtari(r, m)) { playAtari(); hapticAtari(); }
         const alerte = cap ? null : alerteAtari(pos, r, 1, history.length + 1);
         if (alerte) atarisSubis.current++;
+        // #584 : KataGo n'a pas pu démarrer : ce coup vient du moteur simple, et on le dit (une fois par partie).
+        if ('sansIA' in coup && coup.sansIA && !sansIADit.current) {
+          sansIADit.current = true;
+          setMsg(tr('partie.sansIA', { nom: ai.nom, point: toLabel(m, size) }));
+          return;
+        }
         // Pomme joue après ta passe (#185) : Mochi dit pourquoi, en une phrase (#187).
         const continue_ = pos.lastMove === -1 && raison ? messageContinue(ai.nom, raison) : null;
         const c = cap || alerte || continue_ ? null : conseilPasser(ai.nom, aide, false, r.board);
@@ -594,6 +604,19 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   // #475 : la revue est la suite la plus probable. Préchargement discret du réseau KataGo, seulement si les règles
   // de src/engine/katago/prechargement.ts le permettent (pas à la première partie, pas en données mobiles). Ajout isolé.
   useEffect(() => { if (phase === 'end') void prechargerApresPartie(readLocal<Parties>(PARTIES_KEY, { n: 0 }).n); }, [phase]);
+  // #584 : contre un adversaire qui joue avec KataGo, le chargement commence dès l'ouverture de la partie : le réseau
+  // se télécharge (ou se lit du cache) pendant que le joueur choisit son premier coup.
+  useEffect(() => { if (ai?.katago) preloadKataGo(); }, [ai?.katago]);
+  // #584 : victoire contre l'adversaire qui précède le premier adversaire KataGo : « Affronter Bambou » va suivre. Le
+  // réseau se télécharge en fond après le récit du score (jamais en économie de données ni en 2G : prechargement.ts).
+  useEffect(() => {
+    if (phase !== 'end' || !ai || ai.katago || (resigned ? 3 - resigned : sc.winner) !== 1) return;
+    if (!OPPONENTS[OPPONENTS.findIndex(o => o.id === ai.id) + 1]?.katago) return;
+    const t = setTimeout(() => void prechargerPourAdversaire(), DELAI_PRECHARGEMENT_MS);
+    return () => clearTimeout(t);
+  }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
+  // #584 : l'ordi joue avec KataGo, qui démarre encore (téléchargement du réseau) : « L'IA se prépare… 2,1 / 3,8 Mo ».
+  const preparation = usePreparationIA(phase === 'play' && thinking && !!ai?.katago);
   // Progression (issue #109) : la partie terminée rapporte de l'XP, une victoire contre l'ordi davantage
   // (au moins 10 coups : un abandon immédiat ne rapporte rien ; une partie reprise depuis la revue, rien : #233, P5).
   // L'XP est acquise dès que le résultat est connu (#233, P4) : si le joueur quitte pendant le récit du score,
@@ -714,7 +737,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   // #466 : premier toucher au doigt pendant les premiers coups : Mochi dit qu'il faut toucher encore (la pierre fantôme
   // n'est pas une pierre refusée). Plus loin dans la partie, le geste est connu : la phrase du coup reste.
   const aideFantome = fantome >= 0 && phase === 'play' && myTurn && !pense && history.length - 1 < COUPS_AIDE_FANTOME;
-  const messageCoach = pense && ai ? tr('partie.reflechit', { nom: ai.nom }) : aideFantome ? tr('partie.toucheEncore', { point: toLabel(fantome, size) }) : msg;
+  const messageCoach = pense && ai ? (preparation ? ('recu' in preparation ? tr('partie.iaPrepare', preparation) : tr('partie.iaPrepareSans')) : tr('partie.reflechit', { nom: ai.nom })) : aideFantome ? tr('partie.toucheEncore', { point: toLabel(fantome, size) }) : msg;
   const quitter = demandeQuitter && quitterDemandeConfirmation;
   const avertissementPasse = phase === 'play' && myTurn && avertiPasse === history.length && !quitter;
   // #487 (P10) : « Passer » sans fond plein tant que la partie n'est pas mûre (src/app/partie.ts, passerDiscret).

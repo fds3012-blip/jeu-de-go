@@ -24,9 +24,9 @@ function serveur(version: string | null = null, opts: { profilIllisible?: boolea
   const rpc = vi.fn((nom: string, args?: { p_version: string }) => {
     if (nom === 'accepter_conditions') return accepter(nom, args!);
     if (nom === 'mon_profil') {
-      return { select: () => ({ maybeSingle: async () => opts.profilIllisible
+      return { maybeSingle: async () => opts.profilIllisible
         ? { data: null, error: { message: 'Failed to fetch' } }
-        : { data: { conditions_version: etat.version }, error: null } }) };
+        : { data: { conditions_version: etat.version }, error: null } };
     }
     throw new Error(`appel inattendu : ${nom}`);
   });

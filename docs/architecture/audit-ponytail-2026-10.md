@@ -243,3 +243,93 @@ d'acceptation des conditions (1), puis la première partie contre Bambou en 3G (
 
 **Pas vérifié :** Safari et un vrai iPhone (Chromium seulement) ; le vrai Supabase (faux serveur de `e2e/`) ;
 la suite e2e complète (seulement les parcours des écrans touchés) ; `supabase/` et `src/go` hors tests.
+
+## #584 : les trois corrections (constats 2 et 9)
+
+Mesures : `node scripts/mesurer-parcours.mjs --h2 --runs 3` (CPU 4×, Fast 3G, 390 × 844, HTTP/2, médiane de 3 ;
+passages entre parenthèses), « avant » = `main` (`de7e736`), « après » = cette branche. Requêtes : faux Supabase,
+`e2e/requetes-accueil.spec.ts` (compte connecté ; « avant » mesuré sur `main` avec `MESURE_AVANT=1`). Ce document et
+l'outil de mesure viennent de #577 (PR #582, pas encore fusionnée) : repris tels quels, cette section ajoutée.
+
+### 1. Premier coup contre Bambou en 3G, réseau pas encore en cache
+
+**Cause.** `KataGoClient.analyze` attend le démarrage de KataGo au plus `initWaitMs` = 15 s, puis lève « KataGo pas
+encore prêt » ; `bestMoveExplique` attrape l'erreur et joue le coup du moteur simple, sans rien dire à l'écran (la
+bulle dit « Bambou réfléchit… »). En Fast 3G, le réseau (3,83 Mo) et TensorFlow.js (≈ 1,2 Mo) mettent ≈ 24 s : le
+délai de 15 s tombe à chaque fois (15 s + ≈ 1 s de moteur simple = 16 s). Rien n'était préchargé : le préchargement
+de #475 ne part qu'en fin de partie, à partir de la 2e, et jamais en données mobiles (`type: 'cellular'`), donc
+jamais en 3G.
+
+**Correction.**
+- `bestMoveExplique` attend le démarrage de KataGo (`start`, borné par `DELAI_DEMARRAGE_MS` = 120 s du client) au lieu
+  des 15 s. S'il échoue (réseau coupé, appareil), le coup du moteur simple est marqué `sansIA` et Mochi le dit, une
+  fois par partie : « Sans l'IA (pas chargée), Bambou joue E7. »
+- Pendant l'attente, la bulle de Mochi dit « L'IA se prépare… 2,0 / 3,8 Mo » (pas de 0,5 Mo : la bulle est une zone
+  `aria-live`), puis « L'IA se prépare… » pendant le démarrage. Texte seul, dans la bulle existante ; l'animation
+  d'attente est celle de « réfléchit » (mouvements réduits déjà respectés).
+- KataGo démarre dès l'ouverture d'une partie contre un adversaire KataGo (le téléchargement avance pendant le premier
+  coup du joueur).
+- Préchargement « à l'approche de Bambou » (`prechargerPourAdversaire`) : quand Bambou (ou plus fort) est choisi dans
+  « Changer », et 3 s après une victoire contre Caillou. Règles de #475 sauf deux : la première partie et les données
+  mobiles ne bloquent plus (le joueur va en avoir besoin) ; l'économie de données (`saveData`) et la 2G bloquent
+  toujours, comme une page cachée. Hors ligne : rien ne change (#538 propose Caillou avant la partie).
+- Placé dans les morceaux chargés à la demande (partie, carrousel), pas dans `App.tsx` : JS initial inchangé.
+
+| Parcours (HTTP/2) | avant | après |
+| --- | --- | --- |
+| Toucher « Jouer » tout de suite, premier coup → réponse de Bambou | 16 040 ms (16 024-16 123), **0/3 coups de KataGo**, rien à l'écran | 26 713 ms (26 362-26 990), **3/3 KataGo** ; « L'IA se prépare » après 413 ms |
+| Bambou choisi dans « Changer », 20 s sur la feuille, puis le premier coup | 16 046 ms (16 007-16 068), 0/3 KataGo | **5 653 ms** (5 320-5 774), 3/3 KataGo ; « L'IA se prépare » après 223 ms |
+| Même chose, réseau en cache | 3 115 ms | 3 187 ms (bruit) |
+| Accueil : bouton principal | 2 712 ms | 2 730 ms (bruit) |
+
+Le cas « tout de suite » est plus long (le coup est celui de Bambou, pas celui du moteur simple) : le téléchargement de
+≈ 5 Mo à 180 Ko/s ne descend pas sous ≈ 24 s. Il est visible, avec la progression, au lieu de 16 s muettes. Le cas
+courant (Bambou choisi, ou débloqué après une victoire, puis quelques secondes ailleurs) passe de 16 s à 5,7 s, avec
+le vrai Bambou. À décider si 27 s restent trop : jouer le moteur simple *en le disant* tant que KataGo charge (réponse
+immédiate, mais Bambou plus faible sur ses premiers coups, et l'échelle compterait une victoire contre un Bambou affaibli).
+
+### 2. `mon_profil` lu 4 fois à l'ouverture de l'accueil
+
+**Cause.** Quatre crochets lisaient la même ligne, chacun pour soi : `useProfil` et `usePseudo` (`fetchProfile`, à
+l'identique), `useSerie` (`fetchStreak`) et `useGelsServeur` (`fetchGels`), plus `useProfil` de l'écran de partie.
+
+**Correction.** `lireMonProfil` (`src/data/lectureProfil.ts`) : une lecture partagée, clé = client, compte et `cle` de
+relecture de l'appelant (le pseudo qui vient d'être choisi force une relecture), gardée 30 s au plus, oubliée en cas
+d'erreur et après chaque écriture qui change le profil (`invaliderProfil` : pseudo, départ de la cote, problème, coup
+ou abandon de partie ; la série importée de l'appareil fait relire `useSerie`). Un écran qui vient d'écrire relit par
+`fetchProfile`, jamais par la lecture partagée (le risque relevé par #577). `fetchStreak` et `fetchGels` supprimés.
+
+| Ouverture de l'accueil, compte connecté | avant | après |
+| --- | --- | --- |
+| Appels `mon_profil` | 4 | **1** (2 quand la série de l'appareil est envoyée au serveur, pour relire après l'écriture) |
+
+### 3. « À faire » relu à chaque changement d'onglet
+
+**Cause.** `useAFaire` relisait défis, notifications et recherche lente à chaque changement de `cle` (onglet, vue), et
+`useDemandesAmis` relisait `mes_amis` de même : 4 requêtes par onglet.
+
+**Correction.** Une lecture gardée 60 s par compte (`chargerAFaireFrais`, `src/app/aFaireCharge.ts`, chargé à la
+demande), demandes d'ami comprises (`useDemandesAmis` supprimé, ses demandes lues avec le reste). Relue avant la minute
+si : notification en temps réel, retour sur l'app, minuterie d'une minute, retour d'une partie, `relire()`, erreur, ou
+écriture du joueur qui change « À faire » (`invaliderAFaire`, `src/data/fraicheurAFaire.ts` : défi créé, rejoint, joué
+ou abandonné, notifications lues, demande d'ami, recherche lente).
+
+| Compte connecté | avant | après |
+| --- | --- | --- |
+| Requêtes « À faire » à l'ouverture | 4 | 4 |
+| Requêtes « À faire » sur 5 changements d'onglet en une minute | **20** | **0** |
+| Changement d'onglet juste après une demande d'ami | 4 | 4 (relu, comme voulu) |
+
+### Garde-fous et budget
+
+- Vitest : `src/engine/premierCoupKataGo.test.ts` (attente du démarrage au-delà de 15 s, repli annoncé, règles du
+  préchargement), `src/data/lectureProfil.test.ts`, `src/app/aFaireFrais.test.ts`.
+- Playwright : `e2e/bambou-premier-coup.spec.ts`, `e2e/requetes-accueil.spec.ts`.
+- JS initial : 149,3 Ko (152 837 o, 22 o de moins que `main` après la fusion de #577 : 152 859 o). CSS initial inchangé (21,4 Ko).
+
+### Journal
+
+| Idée | Mesure | Verdict |
+| --- | --- | --- |
+| Préchargement depuis l'accueil (`App.tsx`) quand le bouton principal propose Bambou | +209 o gzip de JS initial | déplacé dans le carrousel et la fin de partie (morceaux à la demande) |
+| `useDemandesAmis` avec sa propre fraîcheur | +≈ 130 o de JS initial | fusionné dans la lecture de « À faire » (−22 o au total) |

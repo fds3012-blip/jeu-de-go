@@ -7,6 +7,7 @@
 import type { Result } from './account';
 import { CODE_COMPTE_REQUIS, CODE_PSEUDO_REQUIS } from './compteRequis';
 import type { Db } from './supabase';
+import { invaliderAFaire } from './fraicheurAFaire';
 import { t } from '../content/i18n';
 import { ta } from '../content/i18n/amis';
 
@@ -93,6 +94,7 @@ export async function demanderAmi(db: Db, brut: string): Promise<Result<'envoyee
   const pseudo = pseudoSaisi(brut);
   if (!pseudo) return { ok: false, error: ta('amis.erreur.introuvable') };
   const { data, error } = await db.rpc('demander_ami', { p_pseudo: pseudo });
+  invaliderAFaire(); // #584
   if (error || (data !== 'envoyee' && data !== 'amis')) return echec(error);
   return { ok: true, value: data };
 }
@@ -100,6 +102,7 @@ export async function demanderAmi(db: Db, brut: string): Promise<Result<'envoyee
 /** Accepte ou refuse une demande reçue. Un refus n'est pas annoncé à l'autre joueur. */
 export async function repondreAmi(db: Db, pseudo: string, accepter: boolean): Promise<Result<'amis' | 'refusee'>> {
   const { data, error } = await db.rpc('repondre_ami', { p_pseudo: pseudo, p_accepter: accepter });
+  invaliderAFaire(); // #584
   if (error || (data !== 'amis' && data !== 'refusee')) return echec(error);
   return { ok: true, value: data };
 }
@@ -107,6 +110,7 @@ export async function repondreAmi(db: Db, pseudo: string, accepter: boolean): Pr
 /** Retire un ami, ou annule une demande envoyée. */
 export async function retirerAmi(db: Db, pseudo: string): Promise<Result<null>> {
   const { error } = await db.rpc('retirer_ami', { p_pseudo: pseudo });
+  invaliderAFaire(); // #584
   if (error) return echec(error);
   return { ok: true, value: null };
 }
@@ -117,6 +121,7 @@ export async function retirerAmi(db: Db, pseudo: string): Promise<Result<null>> 
  */
 export async function defierAmi(db: Db, pseudo: string): Promise<Result<string>> {
   const { data, error } = await db.rpc('defier_ami', { p_pseudo: pseudo });
+  invaliderAFaire(); // #584
   if (error || typeof data !== 'string' || !data) return echec(error);
   return { ok: true, value: data };
 }

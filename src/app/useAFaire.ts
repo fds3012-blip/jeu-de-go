@@ -19,15 +19,18 @@ export const RELECTURE_MS = 60_000;
 const AUCUNE: ReadonlyMap<Onglet, string> = new Map();
 const AUCUN: DefiEnAttente[] = [];
 
-export interface EntreeAFaire extends Omit<DonneesAFaire, 'defis' | 'leconEnCours'> {
+export interface EntreeAFaire extends Omit<DonneesAFaire, 'defis' | 'leconEnCours' | 'demandesAmis'> {
+  /** #359 : compte complet, qui a des amis : ses demandes reçues sont lues avec le reste (#584). */
+  amis: boolean;
   lecons: readonly { id: string; title: string; steps: readonly unknown[] }[];
   progres: Readonly<Record<string, number>>;
 }
 
 /**
- * Ce qui attend le joueur. Les défis sont relus à chaque changement de `cle` (écran affiché), au retour sur l'app,
- * toutes les minutes tant qu'elle est visible, et à chaque notification du joueur (temps réel, sous la RLS, #367).
- * Rien sans session, hors ligne ou inactif (pendant une partie) pour les défis.
+ * Ce qui attend le joueur. Les défis sont relus au retour sur l'app, toutes les minutes tant qu'elle est visible, à
+ * chaque notification du joueur (temps réel, sous la RLS, #367) et au retour d'une partie. #584 : à un changement de
+ * `cle` (écran affiché), seulement si la lecture gardée a plus d'une minute ou si « À faire » a changé depuis
+ * (src/app/aFaireCharge.ts). Rien sans session, hors ligne ou inactif (pendant une partie) pour les défis.
  */
 export function useAFaire(db: Db | null, userId: string | undefined, cle: string, actif: boolean, entree: EntreeAFaire): {
   defis: DefiEnAttente[]; elements: ElementAFaire[]; pastilles: ReadonlyMap<Onglet, string>;
@@ -35,6 +38,8 @@ export function useAFaire(db: Db | null, userId: string | undefined, cle: string
   rappelGoDuJour: boolean;
   /** #440 : recherche de partie lente en cours, ou adversaire trouvé pendant l'absence. */
   recherche: RechercheLente | null;
+  /** #359 : demandes d'ami reçues (pastille du Profil, « Mes amis »). */
+  demandesAmis: number;
   /** Relit tout de suite (après l'annulation d'une recherche, par exemple). */
   relire: () => void;
 } {
@@ -44,8 +49,11 @@ export function useAFaire(db: Db | null, userId: string | undefined, cle: string
   // #369 : rappel du Go du jour d'un ami, lu avec les défis.
   const [rappel, setRappel] = useState(false);
   const [recherche, setRecherche] = useState<RechercheLente | null>(null);
+  const [demandes, setDemandes] = useState(0);
   const [tic, setTic] = useState(0);
   const pseudos = useRef(new Map<string, string | null>());
+  // #584 : la prochaine lecture passe outre la lecture gardée (première, retour d'une partie, relecture demandée).
+  const forcer = useRef(true);
 
   useEffect(() => {
     let vivant = true;
@@ -56,7 +64,7 @@ export function useAFaire(db: Db | null, userId: string | undefined, cle: string
   // Relecture : retour sur l'app, minuterie, temps réel.
   useEffect(() => {
     if (!mod || !db || !userId || !online || !actif) return;
-    const relire = () => { if (document.visibilityState !== 'hidden') setTic(n => n + 1); };
+    const relire = () => { if (document.visibilityState !== 'hidden') { forcer.current = true; setTic(n => n + 1); } };
     document.addEventListener('visibilitychange', relire);
     const id = setInterval(relire, RELECTURE_MS);
     // Temps réel : la file de notifications du joueur seul (filtre et RLS, #367), pas toute la table `games`, que la
@@ -73,17 +81,20 @@ export function useAFaire(db: Db | null, userId: string | undefined, cle: string
   }, [mod, db, userId, online, actif]);
 
   useEffect(() => {
+    if (!actif) forcer.current = true;
     if (!mod || !db || !userId || !online || !actif) return;
     let vivant = true;
-    mod.chargerAFaire(db, userId, pseudos.current).then(l => { if (vivant) { setDefis(l.defis); setRappel(l.rappelGoDuJour); } },
-      () => { if (vivant) { setDefis([]); setRappel(false); } });
-    mod.chargerRecherche(db, userId).then(r => { if (vivant) setRecherche(r); }, () => { if (vivant) setRecherche(null); });
+    mod.chargerAFaireFrais(db, userId, pseudos.current, entree.amis, forcer.current).then(l => {
+      if (vivant) { setDefis(l.defis); setRappel(l.rappelGoDuJour); setRecherche(l.recherche); setDemandes(l.demandesAmis); }
+    }, () => { if (vivant) { setDefis([]); setRappel(false); setRecherche(null); setDemandes(0); } });
+    forcer.current = false;
     return () => { vivant = false; };
-  }, [mod, db, userId, online, actif, cle, tic]);
+  }, [mod, db, userId, online, actif, cle, tic, entree.amis]);
 
   const liste = userId && online ? defis : AUCUN;
   const rappelGoDuJour = !!userId && online && rappel;
-  const { lecons, progres, premier, serie, duJourFait, goDuJour, demandesAmis } = entree;
+  const { lecons, progres, premier, serie, duJourFait, goDuJour } = entree;
+  const demandesAmis = userId && online && entree.amis ? demandes : 0;
   const titreDuJour = goDuJour?.titre, numero = goDuJour?.numero;
   const elements = useMemo(() => mod ? mod.elementsAFaire({
     premier, defis: liste, serie, duJourFait, demandesAmis, rappelGoDuJour,
@@ -91,6 +102,6 @@ export function useAFaire(db: Db | null, userId: string | undefined, cle: string
     leconEnCours: mod.leconEnCours(lecons, progres),
   }) : [], [mod, premier, liste, serie, duJourFait, demandesAmis, rappelGoDuJour, numero, titreDuJour, lecons, progres]);
   const pastilles = useMemo(() => mod ? mod.ongletsAPastille(elements) : AUCUNE, [mod, elements]);
-  const relire = useCallback(() => setTic(n => n + 1), []);
-  return { defis: liste, elements, pastilles, rappelGoDuJour, recherche: userId && online ? recherche : null, relire };
+  const relire = useCallback(() => { forcer.current = true; setTic(n => n + 1); }, []);
+  return { defis: liste, elements, pastilles, rappelGoDuJour, recherche: userId && online ? recherche : null, demandesAmis, relire };
 }

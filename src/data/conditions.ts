@@ -13,6 +13,7 @@
 import type { Profile, Result } from './account';
 import type { Db } from './supabase';
 import { t } from '../content/i18n';
+import { invaliderProfil } from './lectureProfil';
 
 /**
  * Version des conditions en vigueur : date (AAAA-MM-JJ) de la dernière mise à jour de docs/juridique/cgu.md.
@@ -37,6 +38,7 @@ export function conditionsAJour(profile: Pick<Profile, 'conditions_version'> | n
 export async function accepterConditions(db: Db, version = VERSION_CONDITIONS): Promise<Result<Date>> {
   if (!versionValide(version)) return { ok: false, error: t('erreur.serveur') };
   const { data, error } = await db.rpc('accepter_conditions', { p_version: version });
+  invaliderProfil(); // #584 : la version acceptée fait partie du profil
   if (error) return { ok: false, error: t('erreur.serveur') };
   const date = new Date(data);
   if (Number.isNaN(date.getTime())) return { ok: false, error: t('erreur.serveur') };
