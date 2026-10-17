@@ -50,6 +50,9 @@ test('joueur connecté : un seul `mon_profil` à l’ouverture, « À faire » p
   await page.getByRole('textbox', { name: 'Pseudo de ton ami' }).fill('Bruno');
   await page.getByRole('button', { name: 'Ajouter' }).click();
   await expect(page.getByText(/Bruno/).first()).toBeVisible();
+  // L'écran « Mes amis » relit sa liste après la demande : on la laisse finir.
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(1000);
   const apresDemande = serveur.appels.length;
   await onglet(page, 'Jouer');
   expect(compter(serveur, apresDemande, /rpc\/mes_amis/)).toBe(1);
