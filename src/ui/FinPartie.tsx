@@ -30,13 +30,15 @@ interface Props {
   action: ReactNode;
   onRevoir?: () => void;
   onAccueil: () => void;
+  /** Texte du lien de retour (« Accueil » par défaut ; « Apprendre » pour la partie guidée, #589). */
+  libelleRetour?: string;
   /** Confettis (victoire, réglage « Célébrations » activé). Jamais avec les mouvements réduits. */
   confettis?: boolean;
   /** Sous les liens, discret : proposition d'installer l'app après une première victoire (#178). */
   apres?: ReactNode;
 }
 
-export function FinPartie({ fond, sceau, tampon, titre, marge, texteMarge, sousTitre, bilan, mochi, action, onRevoir, onAccueil, confettis = false, apres }: Props) {
+export function FinPartie({ fond, sceau, tampon, titre, marge, texteMarge, sousTitre, bilan, mochi, action, onRevoir, onAccueil, libelleRetour, confettis = false, apres }: Props) {
   const [reduit] = useState(mouvementsReduits);
   const titreRef = useRef<HTMLHeadingElement>(null);
   const sceauRef = useRef<HTMLDivElement>(null);
@@ -97,7 +99,7 @@ export function FinPartie({ fond, sceau, tampon, titre, marge, texteMarge, sousT
         <div className="fin-action">{action}</div>
         <div className="fin-liens">
           {onRevoir && <button type="button" className="lien" onClick={onRevoir}>{t('fin.revoir')}</button>}
-          <button type="button" className="lien lien-discret" onClick={onAccueil}>{t('fin.accueil')}</button>
+          <button type="button" className="lien lien-discret" onClick={onAccueil}>{libelleRetour ?? t('fin.accueil')}</button>
         </div>
         {apres}
       </div>

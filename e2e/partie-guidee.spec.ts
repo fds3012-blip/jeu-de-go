@@ -1,15 +1,15 @@
 import { expect, test } from '@playwright/test';
-import { attendreReponse, choisirMode, coupsJoues, jouer, passerJusquAuScore, plateau } from './plateau';
+import { attendreReponse, coupsJoues, jouer, lancerGuidee, passerJusquAuScore, plateau } from './plateau';
 
 // Issue #79 : partie guidée contre Mochi, hors de l'échelle des adversaires. Mochi règle sa force tous les 10 coups
 // (logique testée dans src/engine/guidee.test.ts). Ici : on lance la partie, on dépasse le 10e coup (premier réglage),
 // on la termine, et le bilan des adversaires ne bouge pas.
 
-test('partie guidée : lancée depuis l’accueil (#429), jouée au-delà du 10e coup, terminée sans toucher au bilan', async ({ page }) => {
+test('partie guidée : lancée depuis Apprendre (#589), jouée au-delà du 10e coup, terminée sans toucher au bilan', async ({ page }) => {
   const erreurs: string[] = [];
   page.on('pageerror', e => erreurs.push(e.message));
   await page.goto('/');
-  await choisirMode(page, 'guidee');
+  await lancerGuidee(page);
   await expect(plateau(page)).toBeVisible();
   await expect(page.getByText('Partie guidée : Mochi règle sa force pour que la partie reste serrée. Tu as Noir.')).toBeVisible();
 
@@ -32,6 +32,9 @@ test('partie guidée : lancée depuis l’accueil (#429), jouée au-delà du 10e
   // Sans effet sur le bilan des adversaires ; le cran de Mochi est gardé pour la partie guidée suivante.
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('go.bilan.v1') || '{}'))).toEqual({});
   expect(await page.evaluate(() => localStorage.getItem('go.guidee.v1'))).toMatch(/^\d+$/);
+  // #589 : lancée depuis Apprendre, elle y ramène.
+  await page.locator('.fin').getByRole('button', { name: 'Apprendre', exact: true }).click();
+  await expect(page.getByTestId('carte-guidee')).toBeVisible();
   expect(erreurs).toEqual([]);
 });
 
@@ -40,7 +43,7 @@ test('partie guidée : lancée depuis l’accueil (#429), jouée au-delà du 10e
 test('partie guidée : le portrait est celui de Mochi, sans tampon « battue » à la fin', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/?komi=-100');
-  await choisirMode(page, 'guidee');
+  await lancerGuidee(page);
   await expect(plateau(page)).toBeVisible();
   await expect(page.locator('[data-portrait="pomme"]')).toHaveCount(0);
   await expect(page.locator('[data-portrait="mochi"]:not(.coach-portrait)').first()).toBeVisible();
@@ -52,4 +55,33 @@ test('partie guidée : le portrait est celui de Mochi, sans tampon « battue » 
   await expect(page.locator('[data-portrait="pomme"]')).toHaveCount(0);
   await expect(page.locator('[data-portrait="mochi"]:not(.coach-portrait)').first()).toBeVisible();
   await expect(page.getByText(/^BATTUE?$/)).toHaveCount(0);
+});
+
+// #589 : la partie guidée a quitté l'accueil Jouer pour Apprendre, sous la partie de découverte, dans le même style.
+test('partie guidée : dans Apprendre sous la partie de découverte, plus sur l’accueil ; « ‹ » ramène à Apprendre', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  await page.evaluate(() => { localStorage.setItem('go.premiere-pierre.v1', 'true'); window.dispatchEvent(new Event('go:premiere-pierre')); });
+  await page.getByTestId('modes').waitFor();
+  await expect(page.getByRole('button', { name: /guidée/i })).toHaveCount(0);
+  if (await page.getByTestId('mode-plus').count()) {
+    await page.getByTestId('mode-plus').click();
+    await expect(page.getByRole('dialog', { name: 'Autres façons de jouer' }).getByRole('button', { name: /guidée/i })).toHaveCount(0);
+    await page.keyboard.press('Escape');
+  }
+  await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
+  const decouverte = page.getByTestId('carte-decouverte'), guidee = page.getByTestId('carte-guidee');
+  await expect(guidee).toHaveAccessibleName(/^Partie guidée contre Mochi : il règle sa force/);
+  const [d, g] = [(await decouverte.boundingBox())!, (await guidee.boundingBox())!];
+  expect(g.y, 'juste sous la découverte').toBeGreaterThan(d.y + d.height - 1);
+  expect(g.y - (d.y + d.height)).toBeLessThan(24);
+  expect(g.height).toBeGreaterThanOrEqual(44);
+  expect(Math.round(g.width)).toBe(Math.round(d.width));
+  // Une seule action en relief : « Reprendre » ou « Commencer » de la carte de leçon.
+  await expect(page.locator('.apprendre .cta')).toHaveCount(1);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  await guidee.click();
+  await expect(plateau(page)).toBeVisible();
+  await page.getByRole('button', { name: 'Retour à Apprendre' }).click();
+  await expect(guidee).toBeVisible();
 });

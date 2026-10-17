@@ -84,7 +84,6 @@ export const fr = {
   'accueil.kyu': 'Le kyu, c’est le grade au go : plus le nombre est petit, plus ton adversaire est fort.',
   'accueil.deux': 'Jouer à deux sur ce téléphone',
   // Partie guidée (#79) : Mochi règle sa force tous les 10 coups pour garder la partie serrée.
-  'accueil.guidee': 'Partie guidée contre Mochi',
   'accueil.decouverte': 'Partie de découverte avec Mochi',
   // Modes de jeu de l'accueil (#429) : une rangée de tuiles sous le bouton, « Plus » pour le reste.
   'accueil.plateauSeul': 'Plateau {taille} × {taille}',
@@ -101,9 +100,6 @@ export const fr = {
   'mode.deux': 'À deux',
   'mode.deux.detail': 'Sur ce téléphone',
   'mode.deux.texte': 'Chacun son tour, sur le même écran.',
-  'mode.guidee': 'Guidée',
-  'mode.guidee.detail': 'Avec Mochi',
-  'mode.guidee.texte': 'Mochi règle sa force pour que la partie reste serrée.',
   'mode.decouverte': 'Découverte',
   'mode.decouverte.detail': 'Partie commentée',
   'mode.decouverte.texte': 'Une vraie partie où Mochi t’explique chaque idée du go.',
