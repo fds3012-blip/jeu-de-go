@@ -2,10 +2,15 @@
 import { ALL_PUZZLES } from '../content/puzzles';
 import { THEME_DU_PROBLEME } from '../content/themes';
 import { parsePuzzles, startOf, type Puzzle } from '../data/puzzles';
-import { butFin, butsDe, ordreRepliquesFin } from '../../outils/refutationsLocales';
+import { butFin, meilleuresFin, ordreRepliquesFin } from '../../outils/refutationsLocales';
+import { REFERENCES_FIN, butsFiges } from '../../outils/referencesFin';
 import { fromLabel, toLabel } from './coords';
 import { cederLaMain } from './preuve-par-coup';
-import { coupsFin, defautsMorte, defautsZoneFin, estDame, faitDuFaux, jouer, repliqueFin, valeursDepart, zoneOuverte } from './refutation-fin';
+import {
+  coupsFin, coupsLegaux, defautsMorte, defautsZoneFin, estDame, faitDuFaux, jouer, proprietaires, repliqueFin, valeurApres, valeursDepart, zoneOuverte,
+  type ButFin, type OptionsFinProuvee,
+} from './refutation-fin';
+import type { Position } from './rules';
 
 beforeEach(cederLaMain);
 
@@ -16,9 +21,26 @@ const lab = (m: number) => (m < 0 ? 'passe' : toLabel(m, 9));
 const labels = (ps: Iterable<number>) => [...ps].map(lab).sort();
 const FIN = tous.filter(p => ['fin-de-partie', 'comptage'].includes(THEME_DU_PROBLEME[p.id] ?? ''));
 
-/** Buts et valeurs de référence d'un problème, calculés une fois (quelques secondes chacun). */
-const BUTS = new Map<string, ReturnType<typeof butsDe>>();
-const buts = (p: Puzzle) => { if (!BUTS.has(p.id)) BUTS.set(p.id, butsDe(p)); return BUTS.get(p.id)!; };
+/** Buts et valeurs de référence d'un problème : références figées (outils/referencesFin.ts), prouvées plus bas. */
+const buts = butsFiges;
+
+/**
+ * valeursDepart (src/go/refutation-fin.ts), coup par coup, en rendant la main entre deux coups (#586) : d'un seul bloc,
+ * ab01 occupe le processus près de deux minutes ; au-delà de 60 s, un message de Vitest resté sans réponse échoue
+ * (« Timeout calling onTaskUpdate »). Même calcul : vérifié plus bas sur les problèmes rapides.
+ */
+async function valeursDepartCedant(pos: Position, but: ButFin, opts: OptionsFinProuvee) {
+  const owner = proprietaires(pos, but), signe = pos.toPlay === 1 ? 1 : -1;
+  const valeurs = new Map<number, number | null>();
+  let meilleure: number | null = null;
+  for (const m of coupsLegaux(pos)) {
+    await cederLaMain();
+    const v = valeurApres(pos, but, m, owner, opts);
+    valeurs.set(m, v === null ? null : v * signe);
+    if (v !== null && (meilleure === null || v * signe > meilleure)) meilleure = v * signe;
+  }
+  return { valeurs, meilleure };
+}
 
 /** Réplique au coup faux `l`, dans l'ordre d'essai du générateur (texte, bonnes réponses, zone). */
 function replique(p: Puzzle, l: string) {
@@ -37,14 +59,19 @@ describe('fin de partie et comptage : chaque problème a un but sain, et la rép
     }
   });
 
-  // Une recherche par problème et par modèle de ko : jusqu'à 90 s chacune (ab01), un test chacune.
+  // Une recherche par problème et par modèle de ko : jusqu'à 90 s chacune (ab01), un test chacune, la main rendue à
+  // chaque coup. Elle prouve aussi les références figées (outils/referencesFin.ts) : celles de meilleuresFin.
   const MEILLEURE = new Map<string, number | null>();
   for (const p of FIN) {
-    for (const maitre of [1, undefined] as const) {
+    for (const maitre of [p.toPlay, undefined] as const) {
       const modele = maitre ? 'toi maître du ko' : 'ko simple';
-      it(`${p.id} (${modele}) : la réponse ${lab(p.answers[0])} est le seul coup qui atteint la meilleure valeur`, () => {
-        const { valeurs, meilleure } = valeursDepart(startOf(p).pos, butFin(p)!, { maitre });
+      it(`${p.id} (${modele}) : la réponse ${lab(p.answers[0])} est le seul coup qui atteint la meilleure valeur`, async () => {
+        const { valeurs, meilleure } = await valeursDepartCedant(startOf(p).pos, butFin(p)!, { maitre });
         expect(meilleure).not.toBeNull();
+        // Référence figée : le bon coup (il atteint la meilleure valeur, vérifié ci-dessous), et la passe toi maître du ko.
+        const ref = REFERENCES_FIN[p.id];
+        expect(ref?.[maitre ? 'maitre' : 'simple'], `${p.id} ${modele} : outils/referencesFin.ts`).toBe(meilleure);
+        if (maitre) expect(ref?.passe, `${p.id} passe : outils/referencesFin.ts`).toBe(valeurs.get(-1) ?? null);
         MEILLEURE.set(`${p.id}${modele}`, meilleure);
         // w07 : la dame ne vaut rien, passer vaut autant que la remplir (vérifié par le lot W).
         const gagnants = [...valeurs].filter(([m, v]) => v === meilleure && (m >= 0 || p.id !== 'w07')).map(([m]) => m);
@@ -57,6 +84,15 @@ describe('fin de partie et comptage : chaque problème a un but sain, et la rép
       expect(MEILLEURE.get(`${p.id}toi maître du ko`)).toBe(MEILLEURE.get(`${p.id}ko simple`));
     });
   }
+
+  // #586 : le calcul coup par coup est celui de valeursDepart, et les références celles de meilleuresFin (problèmes rapides).
+  it('valeursDepart et meilleuresFin : mêmes valeurs que le calcul coup par coup et que les références figées (w04, y01, z12, w07)', async () => {
+    for (const id of ['w04', 'y01', 'z12', 'w07']) {
+      const p = pz(id), { pos } = startOf(p), but = butFin(p)!;
+      for (const maitre of [p.toPlay, undefined]) expect(await valeursDepartCedant(pos, but, { maitre }), id).toEqual(valeursDepart(pos, but, { maitre }));
+      expect(meilleuresFin(p, but), id).toEqual(REFERENCES_FIN[id]);
+    }
+  }, LONG);
 });
 
 describe('fin de partie : les pertes sont celles des textes des lots (règle japonaise)', () => {
