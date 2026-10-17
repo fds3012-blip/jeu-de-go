@@ -8,7 +8,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Board } from '../ui/Board';
 import { Mochi } from '../ui/Mochi';
-import { Avatar, Bandeau, BarreActions, Coach, Icone, Interrupteur, ListeCoups } from '../ui/Partie';
+import { Avatar, Bandeau, BarreActions, ChoixMochi, Coach, Icone, Interrupteur, ListeCoups } from '../ui/Partie';
 import { BoutonAide } from '../ui/BoutonAide';
 import { BoutonRetour, EnteteEcran } from '../ui/BoutonRetour';
 import { ReglagesReplies } from '../ui/ReglagesReplies';
@@ -407,6 +407,8 @@ function DirectPartie({ db, partieId, userId, demande, confirmTouch, reglages, c
   const [abandon, setAbandon] = useState(false);
   const [mortes, setMortes] = useState<Set<number> | null>(null);
   const [enRevue, setEnRevue] = useState(false);
+  // #606 : « Quitter la partie ? » (la pendule continue), demandé par « ‹ » ou par le retour du système.
+  const [quitter, setQuitter] = useState(false);
   const [nomLui, setNomLui] = useState<string | null>(null);
   const [coteLui, setCoteLui] = useState<{ cote: number; provisoire: boolean } | null>(null);
   const lecture = useRef(0);
@@ -612,7 +614,7 @@ function DirectPartie({ db, partieId, userId, demande, confirmTouch, reglages, c
 
   return (
     <div className={`partie defi-partie direct-partie phase-${v.phase}`} data-phase={v.phase} data-testid="direct-partie">
-      {bandeau(lui, retour)}
+      {bandeau(lui, fini ? retour : <BoutonRetour label={td('direct.retour')} onClick={() => setQuitter(true)} />)}
       <ListeCoups coups={coups} apres={<BoutonAide depuis="partie" fiche={enComptage ? 'compter' : 'regles'} className="ruban-aide" />} />
       <div className="partie-plateau">
         <Board lieu="en_ligne" size={partie.size} board={v.pos.board} toPlay={v.pos.toPlay} confirmTouch={confirmTouch}
@@ -622,7 +624,10 @@ function DirectPartie({ db, partieId, userId, demande, confirmTouch, reglages, c
       </div>
       {bandeau(moi)}
       <div className="partie-mochi">
-        <Coach cle={message} attente={envoi}>{fr(message)}</Coach>
+        {quitter && !fini
+          ? <ChoixMochi nom="quitter" focus question={fr(td('direct.quitter.avertir'))} aria={td('direct.quitter.aria')}
+            agir={{ label: td('direct.quitter.confirmer'), onClick: onAccueil }} rester={{ label: td('direct.quitter.continuer'), onClick: () => setQuitter(false) }} />
+          : <Coach cle={message} attente={envoi}>{fr(message)}</Coach>}
       </div>
       <div className="defi-bas">
         {autresReglages && <p className="muted small direct-reglages" data-testid="direct-reglages">{fr(td('direct.reglagesAutre', { taille: partie.size, cadence: texteCadence(cadence) }))}</p>}
