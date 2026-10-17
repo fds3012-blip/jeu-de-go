@@ -93,13 +93,6 @@ export function texteBilan(b: { v: number; d: number }): string {
   return `${t('bilan.victoires', { n: b.v })}, ${t('bilan.defaites', { n: b.d })}`;
 }
 
-/** Début de la phrase de bilan : « 34 coups, 3 pierres capturées. » */
-export function texteCoups(coups: number, captures: number): string {
-  const c = coups ? t('bilan.coups', { n: coups }) : t('bilan.aucunCoup');
-  const p = captures ? t('bilan.pierresCapturees', { n: captures }) : t('bilan.aucunePierre');
-  return `${c}, ${p}.`;
-}
-
 /**
  * Leçon que Mochi tire de la partie, avec ce qu'on sait sans analyse : captures, atari subis, écart, abandon.
  * Victoire : ce qui a marché, puis l'adversaire suivant. Défaite : ton encourageant et, si c'est utile, une leçon.
@@ -142,7 +135,8 @@ export function fin(adv: Adv, issue: Issue, stats: StatsPartie, bilan: Bilan, li
     ...(lecon ? { lecon } : {}),
     cta: s ? t('bilan.defier', { nom: s.nom }) : t('bilan.rejouerContre', { nom: adv.nom }),
     cible: s ? s.id : adv.id,
-    bilan: { texte: t('bilan.tonBilan', { coups: texteCoups(stats.coups, stats.capturesMoi), nom: adv.nom }), gras: texteBilan(b) },
+    // #592 (E7) : plus « 34 coups, 3 pierres capturées » en tête ; la partie se relit dans « Revoir ma partie ».
+    bilan: { texte: t('bilan.tonBilan', { nom: adv.nom }), gras: texteBilan(b) },
   };
 }
 

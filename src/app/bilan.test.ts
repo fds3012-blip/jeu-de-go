@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { battu, enregistrer, fin, finTropTot, PIERRES_PLATEAU_VIDE, komiDepuisUrl, leconMochi, lireBilan, suivant, texteBilan, texteCoups, type Bilan, type StatsPartie } from './bilan';
+import { battu, enregistrer, fin, finTropTot, PIERRES_PLATEAU_VIDE, komiDepuisUrl, leconMochi, lireBilan, suivant, texteBilan, type Bilan, type StatsPartie } from './bilan';
 import { OPPONENTS } from '../engine';
 
 const [pomme, caillou] = OPPONENTS;
@@ -40,7 +40,7 @@ describe('écran de fin', () => {
     expect(f.cible).toBe('caillou');
     expect(f.mochi).toContain("Caillou t’attend");
     expect(f.lecon).toBeUndefined();
-    expect(`${f.bilan.texte}${f.bilan.gras}.`).toBe('34 coups, 3 pierres capturées. Ton bilan contre Pomme : 1 victoire.');
+    expect(`${f.bilan.texte}${f.bilan.gras}.`).toBe('Ton bilan contre Pomme : 1 victoire.');
   });
 
   it('victoires répétées : le bilan compte', () => {
@@ -70,9 +70,7 @@ describe('écran de fin', () => {
 });
 
 describe('phrases du bilan', () => {
-  it('accorde coups et pierres', () => {
-    expect(texteCoups(1, 1)).toBe('1 coup, 1 pierre capturée.');
-    expect(texteCoups(0, 0)).toBe('Aucun coup joué, aucune pierre capturée.');
+  it('accorde victoires et défaites', () => {
     expect(texteBilan({ v: 0, d: 2 })).toBe('2 défaites');
     expect(texteBilan({ v: 1, d: 0 })).toBe('1 victoire');
   });

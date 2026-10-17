@@ -1,6 +1,7 @@
 import { Suspense, lazy, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 // Écrans chargés à la demande (perf, #323) : seul l'accueil est dans le JS initial.
-import { AccordConditions, CreerCompte, DefiArrivee, DefiPartie, DefisEcran, Direct, Game, LearnHome, Lentes, LessonPlayer, PartieDecouverte, PartiePartagee, Placement, Profil, PseudoObligatoire, Puzzles, SeriePratique, VeilleFile, apresPremierEcran } from './ecrans';
+import { AccordConditions, CreerCompte, DefiArrivee, DefiPartie, DefisEcran, Direct, Game, LearnHome, Lentes, LessonPlayer, PartieDecouverte, PartiePartagee, Placement, Profil, PseudoObligatoire, Puzzles, SeriePratique, ThemeLecons, VeilleFile, apresPremierEcran } from './ecrans';
+import type { Theme } from '../content/themesLecons';
 import { DECOUVERTE_KEY, etatDecouverte } from './decouverteEtat';
 import { SeanceRevisions, prechargerRevisions } from './ecrans';
 import { IntroRegles, prechargerIntro } from './ecrans';
@@ -221,6 +222,8 @@ export function App() {
   const [leconEssai, setLeconEssai] = useState<Lesson | null>(null);
   // #524 : partie de découverte ouverte (Apprendre, modes de l'accueil), et d'où ; 'intro' (#523) : après l'introduction des règles, sa fin ramène à l'accueil.
   const [decouverte, setDecouverte] = useState<false | OrigineDecouverte>(false);
+  // #590 : page d'un thème ouverte depuis « Par thème » d'Apprendre ; leçons et série du thème y ramènent.
+  const [themeVu, setThemeVu] = useState<Theme | null>(null);
   useEffect(() => {
     if (!(import.meta.env.VITE_E2E || import.meta.env.DEV) || !LECON_ESSAI) return;
     void import('../../content/lessons.essai.js').then(m => {
@@ -688,7 +691,7 @@ export function App() {
     setIntroRegles(null); // #523
     if (t === 'problemes' && tab === 'problemes') setRacineProblemes(n => n + 1);
     setDefi(null); setDirect(false); setLente(false); setRepli(null); setEcranCompte(null); setAnnonceGel(null); setRetourSerie(null); setEnPlacement(false); setTab(t); setPlaying(false); setLessonId(null); setSerie3(null); setVueProfil('menu'); setPartagee(null); window.scrollTo({ top: 0 });
-    setSeanceRevisions(false); // #469
+    setSeanceRevisions(false); setThemeVu(null); // #469, #590
     setDecouverte(false); // #524
   };
   /** #560 : depuis un écran hors du Profil (fin d'une partie en ligne, accueil), l'onglet Profil s'ouvre sur ce joueur. */
@@ -963,7 +966,7 @@ export function App() {
     screen = <LessonPlayer key={leconEssai.id} lesson={leconEssai} lecon={leconEssai} start={0} confirmTouch={settings.confirmTouch} celebrer={false}
       onProgress={() => {}} onExit={() => { setLeconEssai(null); window.scrollTo({ top: 0 }); }} />;
   } else if (tab === 'apprendre' && serie3) {
-    screen = <SeriePratique problemes={serie3} confirmTouch={settings.confirmTouch} celebrer={settings.celebrations} onFin={() => { setSerie3(null); window.scrollTo({ top: 0 }); }} />;
+    screen = <SeriePratique problemes={serie3} confirmTouch={settings.confirmTouch} celebrer={settings.celebrations} versTheme={!!themeVu} onFin={() => { setSerie3(null); window.scrollTo({ top: 0 }); }} />;
   } else if (tab === 'apprendre' && lesson) {
     const leconSuivante = LESSONS[LESSONS.indexOf(lesson) + 1];
     // Fin de leçon (#200) : 3 problèmes du thème, et en fin de chapitre une partie contre le premier adversaire.
@@ -989,9 +992,13 @@ export function App() {
         },
       } : undefined}
       jouer={{ nom: premier.nom, lancer: () => { setLessonId(null); setTab('jouer'); lancer('ordi', premier.id); } }} />;
+  } else if (tab === 'apprendre' && themeVu) {
+    screen = <ThemeLecons theme={themeVu} progress={progress} onOpen={ouvrirLecon} onRetour={() => { setThemeVu(null); window.scrollTo({ top: 0 }); }}
+      onSerie={s => { if (garde({ quoi: 'probleme' })) { setSerie3(s); window.scrollTo({ top: 0 }); } }} />;
   } else if (tab === 'apprendre') {
     screen = <LearnHome progress={progress} onOpen={ouvrirLecon} sync={syncState} onRegles={() => ouvrirIntro('complete', 'apprendre')}
       decouverte={{ etat: etatDecouverte(readLocal<unknown>(DECOUVERTE_KEY, null)), ouvrir: () => ouvrirDecouverte() }}
+      onTheme={th => { setThemeVu(th); window.scrollTo({ top: 0 }); }}
       onGuidee={() => { track(EVENTS.modeChoisi, { mode: 'guidee', depuis: 'apprendre' satisfies Depuis, principal: false }); lancerGuidee(); }}
       compteRequis={rang => !decider({ quoi: 'lecon', rang }, etat, terminees, COMPTES).ok} />;
   } else if (tab === 'problemes') {
@@ -1097,7 +1104,7 @@ export function App() {
       : enDefi ? { quoi: defi.vue === 'partie' ? 'enLigne' : 'defi' }
         : tab === 'jouer' && playing ? { quoi: 'partie', contre: playing === 'deux' ? null : playing === 'guidee' ? mochiGuide.nom : adv.nom, guidee: playing === 'guidee' }
           : tab === 'jouer' ? (enPlacement ? { quoi: 'placement' } : seanceRevisions ? { quoi: 'revisions' } : { quoi: 'accueil' })
-            : tab === 'apprendre' && leconOuverte && !serie3 ? { quoi: 'lecon', titre: leconOuverte.title }
+            : tab === 'apprendre' && (leconOuverte || themeVu) && !serie3 ? { quoi: 'lecon', titre: leconOuverte ? leconOuverte.title : t(`theme.${themeVu!}`) }
               : { quoi: 'onglet', onglet: tab };
   const titreDocument = titreEcran(ecranTitre);
   // #538 : bandeau hors ligne : sur l'accueil (ce qui marche), sur les écrans qui ont besoin du réseau ; mesuré une fois par session.

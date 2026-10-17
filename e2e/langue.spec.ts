@@ -232,7 +232,8 @@ test('appareil en français (fr-FR) : l\'app reste en français, choix « Franç
   const nav = page.getByRole('navigation', { name: 'Navigation principale' });
   for (const nom of ['Jouer', 'Apprendre', 'Problèmes', 'Profil']) await expect(nav.getByRole('button', { name: nom })).toBeVisible();
   await nav.getByRole('button', { name: 'Profil' }).click();
-  await expect(page.getByRole('button', { name: /^Réglages/ })).toContainText('Thème, sons…');
+  // #592 : la ligne « Réglages » n'a plus de détail.
+  await expect(page.getByRole('button', { name: /^Réglages/ })).toHaveText('Réglages');
   await page.getByRole('button', { name: /^Réglages/ }).click();
   await expect(page.getByRole('group', { name: 'Langue' }).getByRole('button', { name: 'Français' })).toHaveAttribute('aria-pressed', 'true');
   expect(await page.evaluate(() => localStorage.getItem('go.langue.v1'))).toBeNull();
@@ -415,7 +416,7 @@ for (const largeur of [390, 320]) {
     await expect(page.getByRole('heading', { level: 2, name: 'Victory' })).toBeVisible();
     await expect(page.locator('.fin-marge .sr-only')).toHaveText(/^by [\d.]+ points? on 9 × 9$/);
     await expect(page.locator('.fin-tampon')).toHaveText('BEATEN');
-    await expect(page.locator('.fin-bilan')).toHaveText(/^(\d+ moves?|No moves played), (\d+ stones? captured|no stones captured)\. Your record vs Pomme: 1 win\.$/);
+    await expect(page.locator('.fin-bilan')).toHaveText(/^Your record vs Pomme: 1 win\.$/);
     await expect(page.locator('.fin-action .cta')).toHaveText(/Challenge Caillou$/);
     for (const nom of ['Review my game', 'Home']) await expect(page.getByRole('button', { name: nom, exact: true })).toBeVisible();
     await expect(page.getByText(/Victoire|Revoir ma partie|Accueil|Défier|Ton bilan|coups?,/)).toHaveCount(0);
