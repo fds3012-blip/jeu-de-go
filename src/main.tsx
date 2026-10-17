@@ -35,6 +35,7 @@ import { chargementUrgent, chargerSupabase } from './data/client';
 import { choisirLangue, langue } from './content/i18n';
 import { ecouterInstallation } from './app/installation';
 import { LimiteErreur } from './app/LimiteErreur';
+import { numeroDuLien } from './app/goDuJour';
 
 // Langue de l'interface (#167) : `<html lang>` suit la langue choisie au chargement.
 choisirLangue(langue());
@@ -70,7 +71,8 @@ createRoot(document.getElementById('root')!).render(
 // retour de connexion, lien de défi ou de partie partagée), sinon après le premier écran, avec les autres écrans.
 if (JETON_AU_CHARGEMENT !== null || PARTIE_AU_CHARGEMENT !== null || chargementUrgent()) void chargerSupabase();
 
-prechargerPartie();
+// #577 : un lien du Go du jour ouvre les Problèmes ; la partie attend les autres écrans (≈ 0,4 s de gagné sur 3G).
+if (numeroDuLien(location.search) === null) prechargerPartie();
 // Après le premier écran et ses polices (sinon, sur un réseau lent, ils se disputent la bande passante) :
 // le service worker met l'app en cache et les autres écrans se téléchargent quand le navigateur est libre.
 apresPremierEcran(() => {
