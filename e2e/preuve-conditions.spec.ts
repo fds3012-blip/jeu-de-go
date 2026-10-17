@@ -84,3 +84,24 @@ test('compte existant sans preuve : la case s’affiche une fois, le jeu en lign
   await expect(ecran).toHaveCount(0);
   expect(accords(serveur)).toBe(1);
 });
+
+test('création du compte avec Google : la case gardée dans la note d’aller-retour, l’accord envoyé au retour', async ({ browser, baseURL }) => {
+  const serveur = fauxServeur();
+  serveur.compteGoogle({ email: 'gina.google@exemple.test', nom: 'Gina' });
+  const page = await telephone(browser, baseURL, serveur, { 'e2e.google': '1', 'go.essai.v1': JSON.stringify({ terminees: 3, suivi: true }) });
+  await page.goto('/');
+  await page.locator('.cta').click();
+  const ecran = page.getByTestId('creer-compte');
+  await ecran.getByRole('checkbox').check();
+  await ecran.getByRole('button', { name: 'Continuer avec Google' }).click();
+  await expect(page.getByTestId('pseudo-obligatoire')).toBeVisible();
+  await expect.poll(() => accords(serveur)).toBe(1);
+  expect(serveur.profiles.find(p => p.username === null && p.conditions_version === VERSION_CONDITIONS)).toBeTruthy();
+  // Pseudo choisi : pas de case remontrée, pas de second envoi.
+  await page.getByRole('textbox', { name: 'Pseudo' }).fill('Gina_go');
+  await expect(page.getByText('Gina_go est libre.')).toBeVisible();
+  await page.getByRole('button', { name: 'C’est mon pseudo' }).click();
+  await expect(page.getByTestId('pseudo-obligatoire')).toHaveCount(0);
+  await expect(page.getByTestId('accord-conditions')).toHaveCount(0);
+  expect(accords(serveur)).toBe(1);
+});
