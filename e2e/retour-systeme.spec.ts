@@ -22,8 +22,14 @@ async function ouvrir(page: Page, adresse = '/') {
   await expect.poll(() => page.evaluate(() => typeof (history.state as { mochiNav?: number } | null)?.mochiNav)).toBe('number');
 }
 
-/** Le retour du système (bouton ou geste d'Android, retour du navigateur). */
-const retour = (page: Page) => page.goBack();
+/**
+ * Le retour du système (bouton ou geste d'Android, retour du navigateur). La garde est posée à l'image qui suit
+ * l'ouverture d'un écran ; un doigt n'est jamais plus rapide, Playwright si : on l'attend.
+ */
+async function retour(page: Page) {
+  await expect.poll(() => page.evaluate(() => (history.state as { garde?: boolean } | null)?.garde ?? false)).toBe(true);
+  await page.goBack();
+}
 
 test('Réglages : retour au Profil, puis à Jouer, puis le système sort', async ({ page }) => {
   await ouvrir(page);
@@ -49,6 +55,7 @@ test('deux retours rapides : un « ‹ » chacun, sans sortir de l’app', async
   await onglet(page, 'Profil').click();
   await page.getByRole('button', { name: 'Réglages', exact: true }).click();
   await expect(page.getByRole('heading', { level: 2, name: 'Réglages' })).toBeVisible();
+  await expect.poll(() => page.evaluate(() => (history.state as { garde?: boolean } | null)?.garde ?? false)).toBe(true);
   await page.evaluate(() => { history.back(); setTimeout(() => history.back(), 30); });
   await racineJouer(page);
   expect(page.url()).toMatch(/^http:\/\/localhost:\d+\/$/);
@@ -143,6 +150,7 @@ test('rechargement au milieu d’une pile : l’app repart sur Jouer, sans garde
   await expect(page.getByRole('heading', { level: 2, name: 'Réglages' })).toBeVisible();
   await page.reload();
   await racineJouer(page);
+  await expect.poll(() => page.evaluate(() => typeof (history.state as { mochiNav?: number } | null)?.mochiNav)).toBe('number');
   await onglet(page, 'Problèmes').click();
   await retour(page);
   await racineJouer(page);

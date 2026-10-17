@@ -25,6 +25,7 @@ class Fenetre {
   requestAnimationFrame(f: () => void) { file.push(f); return file.length; }
   cancelAnimationFrame() {}
   setTimeout(f: () => void) { file.push(f); return 0; }
+  location = { hash: '' };
 }
 
 /** Historique du navigateur : `back` est asynchrone, comme le vrai ; avant la première entrée, l'app est quittée. */
@@ -45,7 +46,11 @@ class Historique {
     });
   }
   /** Lien `#defi=` ouvert dans l'onglet : nouvelle entrée sans état, puis `popstate`. */
-  lien() { this.pushState(null); this.w.emettre('popstate', { state: null }); }
+  /** Comme le navigateur : `popstate`, puis `hashchange`, où l'app retire le fragment de l'adresse. */
+  lien() {
+    this.w.location.hash = '#defi=abc'; this.pushState(null); this.w.emettre('popstate', { state: null });
+    this.w.location.hash = ''; this.w.emettre('hashchange', {});
+  }
 }
 
 /** Document : une fenêtre `<dialog>` ouverte et un bouton « ‹ », ou rien. */
@@ -186,6 +191,17 @@ describe('retour du système (#606)', () => {
     expect(h.state).toMatchObject({ garde: true, mochiNav: 3 });
     await retourSysteme();
     expect(sorties).toEqual(['‹ reglages']);
+  });
+
+  it('une entrée dont l’état a été effacé (bibliothèque) reste un retour', async () => {
+    const r = brancher();
+    ouvrirEcran('reglages');
+    await r.verifier();
+    h.entrees[0] = { state: null };
+    await retourSysteme();
+    expect(sorties).toEqual(['‹ reglages']);
+    expect(h.entrees[0].state).toMatchObject({ mochiNav: 0 });
+    expect(h.i).toBe(0);
   });
 
   it('rechargement sur une garde : l’entrée devient celle de l’app', async () => {

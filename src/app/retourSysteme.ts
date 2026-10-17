@@ -1,6 +1,6 @@
 // Retour du système (#606, lot N1 ; règle A7 de DESIGN.md) : le bouton ou le geste retour d'Android, le retour du
-// navigateur, le geste d'iOS (Safari) et Échap font ce que fait « ‹ » sur l'écran affiché. Chargé après le premier
-// écran (budget du JS initial) : App.tsx ne garde que deux fonctions de lecture.
+// navigateur, le geste d'iOS (Safari) et Échap font ce que fait « ‹ » sur l'écran affiché. Morceau à part, chargé
+// dès le montage d'App.tsx, hors du JS initial (budget) : App.tsx ne garde que trois fonctions de lecture.
 //
 // Historique : une seule entrée « garde » au-dessus de l'entrée de l'app, tant que l'écran n'est pas la racine de
 // Jouer. Le retour du système la consomme (`popstate`) : on la repose aussitôt (un second retour rapide ne fait pas
@@ -115,6 +115,8 @@ export function brancherRetourSysteme(lire: () => Branchement, h: History = hist
   let garde = false;
   /** Retours lancés par nous (retrait de la garde) : leur `popstate` n'est pas un retour du joueur. */
   let enAttente = 0;
+  /** Lien `#defi=` ou `#partie=` en cours : la garde attend que son écouteur (`hashchange`) ait nettoyé l'adresse. */
+  let lien = false;
   try { h.replaceState({ ...etat(), [MARQUE]: 0, garde: false }, ''); } catch { /* historique indisponible */ }
 
   const besoin = () => lire().horsRacine() || document.querySelector(SELECTEUR) !== null;
@@ -124,7 +126,7 @@ export function brancherRetourSysteme(lire: () => Branchement, h: History = hist
   };
 
   function verifier() {
-    if (enAttente > 0) return;
+    if (enAttente > 0 || lien) return;
     const b2 = besoin();
     if (b2 && !garde) poser();
     else if (!b2 && garde) { enAttente++; h.back(); }
@@ -135,19 +137,26 @@ export function brancherRetourSysteme(lire: () => Branchement, h: History = hist
 
   function surPopstate(e: PopStateEvent) {
     const s = (e.state && typeof e.state === 'object' ? e.state : {}) as EtatHistorique;
-    const n = typeof s.mochiNav === 'number' ? s.mochiNav : null;
+    let n = typeof s.mochiNav === 'number' ? s.mochiNav : null;
     if (enAttente > 0) {
       enAttente--;
       rang = n ?? rang; garde = !!s.garde;
       plusTard();
       return;
     }
+    if (n === null && !/^#./.test(w.location.hash)) {
+      // Entrée sans marque ni fragment : une bibliothèque a remplacé l'état (`replaceState(null)`). C'est un retour vers
+      // l'entrée d'en dessous ; elle reprend sa marque.
+      n = Math.max(0, rang - 1);
+      try { h.replaceState({ ...s, [MARQUE]: n, garde: false }, ''); } catch { /* ignoré */ }
+    }
     if (n === null) {
       // Entrée qui n'est pas à nous, en avant : lien de défi ou de partie ouvert dans l'onglet (`#defi=`, `#partie=`).
       // Elle devient l'entrée de l'app ; l'écran du lien la reçoit par `hashchange`.
-      rang++; garde = false;
+      // La garde n'est posée qu'après `hashchange` : sinon l'entrée du lien garderait son fragment, et y revenir
+      // rouvrirait le lien.
+      rang++; garde = false; lien = true;
       try { h.replaceState({ ...s, [MARQUE]: rang, garde: false }, ''); } catch { /* ignoré */ }
-      plusTard();
       return;
     }
     const enArriere = n < rang;
@@ -160,6 +169,8 @@ export function brancherRetourSysteme(lire: () => Branchement, h: History = hist
     faireRetour(lire());
     plusTard();
   }
+
+  const surFragment = () => { if (lien) { lien = false; plusTard(); } };
 
   function surTouche(e: KeyboardEvent) {
     if (e.key !== 'Escape' || e.defaultPrevented || e.repeat) return;
@@ -180,6 +191,7 @@ export function brancherRetourSysteme(lire: () => Branchement, h: History = hist
   const observateur = new MutationObserver(plusTard);
   observateur.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['open', 'aria-expanded'] });
   w.addEventListener('popstate', surPopstate);
+  w.addEventListener('hashchange', surFragment);
   w.addEventListener('keydown', surTouche);
   verifier();
   return {
@@ -187,6 +199,7 @@ export function brancherRetourSysteme(lire: () => Branchement, h: History = hist
     arreter: () => {
       observateur.disconnect();
       w.removeEventListener('popstate', surPopstate);
+      w.removeEventListener('hashchange', surFragment);
       w.removeEventListener('keydown', surTouche);
       if (prevu) w.cancelAnimationFrame(prevu);
     },
