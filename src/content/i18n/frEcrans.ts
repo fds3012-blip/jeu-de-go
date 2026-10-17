@@ -326,7 +326,7 @@ export const frEcrans = {
   'themes.nom.tesuji': 'Tesuji',
   // #614 : une ligne sous le nom de chaque carte de thème (Apprendre et Problèmes) : ce qu'on y apprend, 8 mots au plus,
   // en version courte des textes de la page du thème (apprendre.theme.texte.*). Le terme de go est expliqué sur sa carte.
-  'themes.desc.capture': 'Prends les pierres qui n’ont plus de liberté.',
+  'themes.desc.capture': 'Bouche la dernière liberté pour prendre la pierre.',
   'themes.desc.atari': 'Une seule liberté : attaque, ou sauve ta pierre.',
   'themes.desc.double-atari': 'Un coup menace deux groupes à la fois.',
   'themes.desc.bord': 'Pousse les pierres adverses vers le bord.',
@@ -336,7 +336,7 @@ export const frEcrans = {
   'themes.desc.vie-mort': 'Deux yeux (points vides entourés) : ton groupe vit.',
   'themes.desc.semeai': 'Deux groupes s’entourent : le premier à capturer gagne.',
   'themes.desc.prise-en-retour': 'Donne une pierre exprès, puis reprends-en plus.',
-  'themes.desc.seki': 'Deux groupes partagent leurs libertés : les deux vivent.',
+  'themes.desc.seki': 'Personne ne peut attaquer : les deux groupes vivent.',
   'themes.desc.fin-de-partie': 'Ferme tes frontières, puis passe ton tour.',
   'themes.desc.comptage': 'Compte tes points vides entourés et tes prisonniers.',
   'themes.desc.ko': 'Une prise qui pourrait se répéter sans fin.',

@@ -26,7 +26,7 @@ for (const theme of ['light', 'dark'] as const) {
     expect(await cartes.evaluateAll(els => els.map(e => e.getAttribute('data-theme')))).toEqual(['capture', 'atari', 'double-atari', 'bord', 'echelle', 'ko']);
     // Nom accessible : le nom, puis l'état ; la ligne de description décrit la carte.
     await expect(cartes.first()).toHaveAccessibleName(/^Capture, 1 leçon faite sur \d+$/);
-    await expect(cartes.first()).toHaveAccessibleDescription('Prends les pierres qui n’ont plus de liberté.');
+    await expect(cartes.first()).toHaveAccessibleDescription('Bouche la dernière liberté pour prendre la pierre.');
     await expect(cartes.nth(1)).toHaveAccessibleName('Atari, Maîtrisé');
     await expect(cartes.nth(1).locator('.theme-maitrise-mot')).toHaveText('Maîtrisé');
     await expect(cartes.nth(1).locator('.theme-maitrise')).toHaveCount(0);
