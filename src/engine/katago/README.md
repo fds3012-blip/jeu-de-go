@@ -19,7 +19,7 @@ Il n'y a aucun coût serveur : le calcul se fait sur l'appareil du joueur.
 | `fakeNet.ts` | Petit réseau factice au bon format, pour les tests |
 
 L'API publique est dans `src/engine/index.ts` : `bestMove(position, niveau)`, `analyze(position, options)`,
-`ownership(position)`, `preloadKataGo()`, `kataGoInfo()`, `ecouterKataGo(f)` (état et progression du téléchargement),
+`ownership(position)`, `kataGoInfo()`, `ecouterKataGo(f)` (état et progression du téléchargement),
 `prechargerApresPartie(partiesLancees)` (préchargement discret, #475).
 
 ## Réseau

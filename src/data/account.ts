@@ -24,7 +24,6 @@ export async function sendMagicLink(db: Db, email: string, captcha?: string | nu
   if (error) return { ok: false, error: messageEnvoi(error) };
   return { ok: true, value: null };
 }
-export const envoyerCode = sendMagicLink;
 
 /**
  * Langue des e-mails de connexion (#473) : les modèles Supabase (supabase/auth/modeles) écrivent en anglais si

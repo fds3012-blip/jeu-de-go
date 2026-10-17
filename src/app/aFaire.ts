@@ -151,11 +151,6 @@ export function ongletsAPastille(elements: readonly ElementAFaire[]): ReadonlyMa
   return m;
 }
 
-/** Premier élément à pastille d'un onglet (pour la mesure d'un toucher sur l'onglet). */
-export function elementDeLOnglet(elements: readonly ElementAFaire[], onglet: Onglet): ElementAFaire | undefined {
-  return elements.find(e => e.pastille && e.onglet === onglet);
-}
-
 /** Lecture tolérante de la progression des leçons : la première commencée et pas finie, dans l'ordre du chemin. */
 export function leconEnCours<L extends { id: string; title: string; steps: readonly unknown[] }>(
   lecons: readonly L[], progres: Readonly<Record<string, number>>,

@@ -44,12 +44,10 @@ const ORIGINAUX: [Cle, string, boolean?][] = [
   ['compte.supprimer.definitif', 'Supprimer définitivement'],
   ['compte.annuler', 'Annuler'],
   ['compte.emailInvalide', 'Entre une adresse e-mail valide.'],
-  ['compte.regardeEmails', 'Regarde tes e-mails'],
   ['compte.changerAdresse', 'Changer d’adresse'],
   ['compte.creer', 'Crée ton compte'],
   ['compte.email', 'Ton adresse e-mail'],
   ['compte.envoi', 'Envoi…'],
-  ['compte.recevoirLien', 'Recevoir mon lien'],
   ['compte.nouveauPseudo', 'Ton nouveau pseudo'],
   ['compte.choisisPseudo', 'Choisis ton pseudo'],
   ['compte.pseudo', 'Pseudo'],
@@ -128,9 +126,6 @@ describe('français identique aux textes d’origine', () => {
     expect(boutonChemin(LESSONS, tout)).toMatchObject({ verbe: 'Revoir' });
     expect(finDeLecon(LESSONS, 'l1').titre).toBe('Leçon terminée');
     expect(finDeLecon(LESSONS, LESSONS[LESSONS.length - 1].id).titre).toBe('Chapitre terminé');
-    // `${faites} leçon${faites > 1 ? 's' : ''} faite${faites > 1 ? 's' : ''} sur ${total}. Continue !`
-    expect([1, 2, 6].map(n => traduire('fr', 'apprendre.bases.progres', { n, total: 7 })))
-      .toEqual(['1 leçon faite sur 7. Continue !', '2 leçons faites sur 7. Continue !', '6 leçons faites sur 7. Continue !']);
     expect(traduire('fr', 'apprendre.pas', { rang: 2, titre: 'Atari', etat: traduire('fr', 'apprendre.pas.faite') })).toBe('Leçon 2 : Atari, terminée');
     expect(traduire('fr', 'apprendre.pas', { rang: 3, titre: 'Ko', etat: traduire('fr', 'apprendre.pas.encours') })).toBe('Leçon 3 : Ko, prochaine étape');
     expect(traduire('fr', 'apprendre.pas', { rang: 4, titre: 'Ko', etat: '' })).toBe('Leçon 4 : Ko');
@@ -155,7 +150,6 @@ describe('français identique aux textes d’origine', () => {
 
   it('compte : textes avec variables', () => {
     expect(traduire('fr', 'compte.supprimer.tape', { mot: motSuppression() })).toBe('Pour confirmer, tape SUPPRIMER');
-    expect(traduire('fr', 'compte.lienEnvoye', { email: 'a@b.fr' })).toBe('On t’a envoyé un lien à a@b.fr. Ouvre-le sur ce téléphone pour te connecter.');
     expect(typo(traduire('fr', 'compte.pseudoAide', { min: 3, max: 24 }))).toBe(`C’est le nom que verront les autres joueurs. De 3 à 24 caractères${F}: lettres, chiffres, _ et -.`);
     expect(validateUsername('ab')).toEqual({ ok: false, error: 'Au moins 3 caractères.' });
     expect(validateUsername('a'.repeat(25))).toEqual({ ok: false, error: '24 caractères au maximum.' });
@@ -193,7 +187,6 @@ describe('en anglais', () => {
     expect(boutonChemin(LESSONS, {})).toEqual({ texte: 'Start', verbe: 'Start', id: 'l1' });
     expect(boutonChemin(LESSONS, { l1: 1 })).toMatchObject({ verbe: 'Resume', texte: 'Resume the lesson: Libertés et capture' });
     expect(finDeLecon(LESSONS, 'l1').titre).toBe('Lesson complete');
-    expect(traduire('en', 'apprendre.bases.progres', { n: 1, total: 7 })).toBe('1 of 7 lessons done. Keep going!');
     expect(traduire('en', 'lecteur.etapes', { n: 2, total: 5 })).toBe('2 of 5 steps done');
     expect([1, 2].map(n => traduire('en', 'lecon.libertes', { n }))).toEqual(['1 liberty', '2 liberties']);
     expect([0, 1, 2].map(n => traduire('en', 'lecon.point', { n }))).toEqual(['points', 'point', 'points']);

@@ -57,11 +57,6 @@ export function lireEssai(raw: unknown): Essai {
   return r?.suivi === true ? { terminees, suivi: true } : { terminees };
 }
 
-/** Une partie de plus terminée (l'essai d'entrée n'est pas modifié). */
-export function noterPartieTerminee(e: Essai, bilan: Bilan = {}): Essai {
-  return noterFinDePartie(e, bilan, true);
-}
-
 /**
  * Fin d'une partie. `compte` faux : partie finie sur un plateau presque vide (#251), qui ne consomme pas une partie
  * d'essai. Recette du 02/10 au soir : le bilan contre l'ordi enregistre quand même cette partie ; tant que le compteur
@@ -81,9 +76,6 @@ export function partiesTerminees(e: Essai, bilan: Bilan): number {
   const duBilan = Object.values(bilan).reduce((s, b) => s + b.v + b.d, 0);
   return Math.max(e.terminees, duBilan);
 }
-
-/** Parties d'essai qu'il reste (jamais négatif). */
-export const partiesRestantes = (terminees: number) => Math.max(0, PARTIES_ESSAI - terminees);
 
 /** Ce qui est libre sans compte, quel que soit le compte. */
 export function libreSansCompte(a: Acces, terminees: number): boolean {

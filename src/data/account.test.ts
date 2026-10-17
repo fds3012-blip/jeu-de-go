@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { Db } from './supabase';
-import { codeComplet, confirmationValide, connexionSociale, deleteMyAccount, envoyerCode, lierSociale, moyensDuCompte, nettoyerCode, pseudoDisponible, retirerMoyen, verifierCode } from './account';
+import { codeComplet, confirmationValide, connexionSociale, deleteMyAccount, lierSociale, moyensDuCompte, nettoyerCode, pseudoDisponible, retirerMoyen, sendMagicLink, verifierCode } from './account';
 
 function clientSimule(rpcError: { message: string } | null) {
   const rpc = vi.fn().mockResolvedValue({ data: null, error: rpcError });
@@ -76,7 +76,7 @@ describe('connexion par code (#343)', () => {
   it('l’e-mail garde le lien comme second moyen (redirection) et crée le compte au besoin', async () => {
     const c = auth();
     vi.stubGlobal('window', { location: { origin: 'https://go.exemple' } });
-    await envoyerCode(c.db, ' ami@exemple.test ');
+    await sendMagicLink(c.db, ' ami@exemple.test ');
     vi.unstubAllGlobals();
     expect(c.signInWithOtp).toHaveBeenCalledWith({ email: 'ami@exemple.test', options: { emailRedirectTo: 'https://go.exemple', shouldCreateUser: true, data: { langue: 'fr' } } });
   });

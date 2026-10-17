@@ -113,13 +113,6 @@ export function solutionFrames(pz: Puzzle): Position[] {
   return frames;
 }
 
-/** Problème du jour : le même pour tout le monde un jour donné (date locale), il change à minuit. */
-export function puzzleOfDay<T>(list: T[], date: Date): T | undefined {
-  if (!list.length) return undefined;
-  const day = Math.floor(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / 86_400_000);
-  return list[((day % list.length) + list.length) % list.length];
-}
-
 export const ILLEGAL_TEXT: Record<MoveError, string> = {
   occupe: 'Il y a déjà une pierre ici.',
   ko: 'Interdit à cause du ko : tu ne peux pas reprendre tout de suite.',

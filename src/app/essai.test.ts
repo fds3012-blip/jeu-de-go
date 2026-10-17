@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  LECONS_ESSAI, PARTIES_ESSAI, decider, etatCompte, libreSansCompte, lireEssai, noterFinDePartie, noterPartieTerminee, partiesRestantes, partiesTerminees,
+  LECONS_ESSAI, PARTIES_ESSAI, decider, etatCompte, libreSansCompte, lireEssai, noterFinDePartie, partiesTerminees,
 } from './essai';
 
 describe('essai sans compte (#343)', () => {
@@ -50,14 +50,12 @@ describe('essai sans compte (#343)', () => {
     expect(lireEssai({ terminees: 'x' })).toEqual({ terminees: 0 });
     expect(lireEssai({ terminees: -4 })).toEqual({ terminees: 0 });
     expect(lireEssai({ terminees: 2.7 })).toEqual({ terminees: 2 });
-    const e = noterPartieTerminee(noterPartieTerminee({ terminees: 0 }));
+    const e = noterFinDePartie(noterFinDePartie({ terminees: 0 }, {}, true), {}, true);
     expect(e).toEqual({ terminees: 2, suivi: true });
     expect(partiesTerminees(e, {})).toBe(2);
     expect(partiesTerminees({ terminees: 0 }, { pomme: { v: 2, d: 3 } })).toBe(5);
     expect(lireEssai({ terminees: 2, suivi: true })).toEqual({ terminees: 2, suivi: true });
     expect(lireEssai({ terminees: 2, suivi: 'oui' })).toEqual({ terminees: 2 });
-    expect(partiesRestantes(1)).toBe(2);
-    expect(partiesRestantes(7)).toBe(0);
   });
 
   it('recette du 02/10 : une partie finie sur un plateau presque vide ne consomme pas l’essai, même si le bilan la garde', () => {

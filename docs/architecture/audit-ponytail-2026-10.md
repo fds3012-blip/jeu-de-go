@@ -325,7 +325,7 @@ ou abandonné, notifications lues, demande d'ami, recherche lente).
 - Vitest : `src/engine/premierCoupKataGo.test.ts` (attente du démarrage au-delà de 15 s, repli annoncé, règles du
   préchargement), `src/data/lectureProfil.test.ts`, `src/app/aFaireFrais.test.ts`.
 - Playwright : `e2e/bambou-premier-coup.spec.ts`, `e2e/requetes-accueil.spec.ts`.
-- JS initial : 149,3 Ko (152 847 o, 24 o de moins que `main`). CSS initial inchangé (21,4 Ko).
+- JS initial : 149,3 Ko (152 837 o, 24 o de moins que `main` après la fusion de #577). CSS initial inchangé (21,4 Ko).
 
 ### Journal
 
