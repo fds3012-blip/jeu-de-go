@@ -6,7 +6,7 @@ import { SCENARIO } from '../src/content/decouverte';
 import { faireMoment, surMoment } from './decouverte';
 import { brancher, fauxServeur } from './fauxSupabase';
 import { mesurer, type Mesure } from './mesures';
-import { abandonner, attendrePierre, jouer, jouerSuite, lancerADeux, passer, passerJusquAuScore, plateau, toucher } from './plateau';
+import { abandonner, attendrePierre, jouer, jouerSuite, lancerADeux, passer, passerJusquAuScore, plateau, toucher, toucherCta } from './plateau';
 import { ouvrirRevue, preparerRevue } from './revueFactice';
 
 // #559 : parcours d'un nouveau joueur (docs/qa/parcours-nouveau-2026-10.md), rejoué comme Florian sur iPhone en navigation
@@ -276,7 +276,7 @@ for (const cfg of CONFIGS) {
     if (cfg.langue === 'fr') await etape('06-partie-pomme', mesures, cfg, null as unknown as Page, async () => {
       const { ctx, page } = await ouvrir(REPONDU(baseURL!, cfg));
       await page.goto('/?komi=-100');
-      await page.locator('.cta').click();
+      await toucherCta(page);
       await expect(plateau(page)).toBeVisible();
       await capturer(page, cfg, '06a-partie-debut', mesures);
       for (const c of ['E5', 'C3', 'G7']) {
@@ -315,12 +315,12 @@ for (const cfg of CONFIGS) {
       page.on('pageerror', e => erreursJs.push(`${cfg.largeur} ${cfg.langue} : ${e.message}`));
       await page.goto('/');
       await capturer(page, cfg, '07a-accueil-comptes', mesures);
-      await page.locator('.cta').click();
+      await toucherCta(page);
       await expect(plateau(page)).toBeVisible();
       await abandonner(page);
       await expect(page.locator('.cta')).toBeVisible();
       await capturer(page, cfg, '07b-abandon-3e-partie', mesures);
-      await page.locator('.cta').click();
+      await toucherCta(page);
       await expect(page.getByTestId('creer-compte')).toBeVisible();
       await capturer(page, cfg, '07c-creer-compte', mesures);
       await capturer(page, cfg, '07d-creer-compte-page', mesures, { pleine: true });

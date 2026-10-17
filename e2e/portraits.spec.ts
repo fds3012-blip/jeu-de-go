@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { ouvrirLancementOrdi, passerLancement } from './plateau';
 
 // Issue #102 : captures 390 × 844 de l'accueil et du choix de l'adversaire, en sombre et en clair.
 for (const theme of ['dark', 'light'] as const) {
@@ -10,7 +11,7 @@ for (const theme of ['dark', 'light'] as const) {
     await page.goto('/');
     await expect(page.locator('.adversaire [data-portrait]')).toBeVisible();
     await page.screenshot({ path: `docs/design/v2/captures/accueil-portrait-${theme}.png` });
-    await page.getByRole('button', { name: 'Changer' }).click();
+    await ouvrirLancementOrdi(page);
     await expect(page.locator('.choix-vedette [data-portrait]')).toBeVisible();
     await page.screenshot({ path: `docs/design/v2/captures/adversaires-${theme}.png` });
   });
@@ -26,6 +27,7 @@ for (const theme of ['dark', 'light'] as const) {
     });
     await page.goto('/');
     await page.getByRole('button', { name: /contre Pomme$/ }).first().click();
+    await passerLancement(page);
     const portrait = page.locator('.joueur [data-portrait="pomme"]');
     await expect(portrait).toHaveAttribute('data-humeur', 'neutre');
     await expect(page.locator('.coach [data-portrait="mochi"]')).toBeVisible();

@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
-import { jouer, ouvrirPlus, plateau } from './plateau';
+import { jouer, ouvrirPlus, plateau, toucherCta } from './plateau';
 import { fromLabel } from '../src/go/coords';
 
 // Coach Mochi pendant les parties contre l'IA (#470). Les coups de Pomme sont écrits d'avance (`window.__coupsOrdi`,
@@ -19,7 +19,7 @@ async function preparer(page: Page, stockage: Record<string, string> = {}) {
     for (const [k, v] of Object.entries(stockage)) localStorage.setItem(k, v);
   }, { coups: ORDI, stockage });
   await page.goto('/');
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await expect(plateau(page)).toBeVisible();
 }
 

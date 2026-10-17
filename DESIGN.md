@@ -421,6 +421,8 @@ Le but : le regard tombe d'abord sur l'action principale (ou sur le goban quand 
 
 Audit d'épure (#592) : `docs/ux/epure-2026-10.md`. Il applique ces règles sans en changer les seuils, et donne le tableau avant / après de chaque écran (blocs, plus grand groupe, phrases, lignes de détail, chiffres). Sur l'accueil : E5, E6 et E9 (tuiles de mode sans ligne de détail, détail gardé dans l'`aria-label` ; « Aujourd'hui » devenu le nom du groupe pour le lecteur d'écran ; bulle de la partie classée en une phrase ; promesse de Mochi seulement avant la première pierre), et E2 (le réglage « Plateau 9 × 9 » rangé sous l'adversaire, dans le même bloc : 6 blocs → 5). Dans Problèmes : E4, E6, E7, E8 et E13.
 
+Ouverture de Jouer (#613, retour de Florian : « à l'ouverture, le niveau ne sert à rien ») : un réglage ou un chiffre qui ne sert qu'au moment de lancer une partie s'affiche à ce moment-là, pas à l'ouverture. Le niveau et l'XP vivent dans le Profil et la fête de fin ; le grade et la cote, sur l'écran de lancement d'une partie classée, sa fin et le Profil ; la taille du plateau, dans la feuille de lancement (`LancementPartie.tsx`, l'ordi et à deux) ou l'écran de lancement en ligne, le dernier choix déjà coché. Avant la toute première partie, aucune étape. Captures : `docs/ux/captures/jouer-613/`.
+
 Ce qu'on garde quand même : le libellé visible de chaque onglet et de chaque action (l'icône seule ne suffit pas), la phrase qui explique un mot du go là où il apparaît (atari, ko, komi, byo-yomi), et les états (à faire, fait, verrouillé) qui ne reposent jamais sur la couleur seule.
 
 ## Architecture

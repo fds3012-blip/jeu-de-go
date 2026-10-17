@@ -1031,7 +1031,7 @@ export function App() {
       track(EVENTS.modeChoisi, { mode: m, depuis, principal: m === modes.principal });
       // #613 : la taille (et l'adversaire) se choisit au moment de jouer, dans la feuille de lancement ; avant la toute
       // première partie, rien à choisir : la partie part tout de suite.
-      const etape = etapeDeLancement(m, { premierePartie: parties.n === 0 });
+      const etape = etapeDeLancement(m, { premierePartie: parties.n === 0 && Object.keys(bilan).length === 0 });
       if (etape) setLancement(etape);
       else if (m === 'ordi') lancer('ordi');
       else if (m === 'deux') lancer('deux');

@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { jouer, plateau } from './plateau';
+import { jouer, plateau, toucherCta } from './plateau';
 import { ouvrirRevue, preparerRevue } from './revueFactice';
 
 // « Rejouer mes erreurs » (#428) : bilan → « Rejouer mes erreurs (2) » → chaque erreur, de la plus grave à la moins
@@ -106,7 +106,7 @@ for (const theme of ['light', 'dark'] as const) {
     const gardees = await page.evaluate(() => JSON.parse(localStorage.getItem('go.erreurs.v1') ?? '[]'));
     expect(gardees).toHaveLength(1);
     expect(gardees[0]).toMatchObject({ coup: 9, rates: 1 });
-    await page.locator('.cta').click();
+    await toucherCta(page);
 
     // 2. D6, un Coup manqué : E3, le coup de KataGo, du premier coup.
     await expect(page.locator('.revue-compteur')).toHaveText('2 sur 2');
@@ -118,7 +118,7 @@ for (const theme of ['light', 'dark'] as const) {
     await expect(plateau(page).locator('g[data-pierre][data-point="E3"]')).toHaveCount(1);
     await expect(page.locator('.cta')).toHaveText('Voir mon résultat');
     await capture(page, `3-trouve-${s}`);
-    await page.locator('.cta').click();
+    await toucherCta(page);
 
     // 3. La fin : « 1 sur 2 trouvée », une pastille par erreur, l'XP, et une petite fête (mouvements non réduits).
     await expect(page.getByRole('heading', { level: 3 })).toHaveText('1 sur 2 trouvée');
@@ -141,13 +141,13 @@ for (const theme of ['light', 'dark'] as const) {
     await capture(page, `4-fin-${s}`);
 
     // Retour au bilan ; une deuxième séance sur la même partie ne rapporte plus d'XP.
-    await page.locator('.cta').click();
+    await toucherCta(page);
     await expect(page.getByRole('button', { name: 'Rejouer mes erreurs (2)' })).toBeVisible();
     const xp = await page.evaluate(() => Number(localStorage.getItem('go.xp.v1')));
     await page.getByRole('button', { name: 'Rejouer mes erreurs (2)' }).click();
     for (let i = 0; i < 2; i++) {
       await page.getByRole('button', { name: 'Montre-moi le coup' }).click();
-      await page.locator('.cta').click();
+      await toucherCta(page);
     }
     await expect(page.getByRole('heading', { level: 3 })).toHaveText('0 sur 2 trouvée');
     await expect(page.getByText('L’XP de cette partie est déjà comptée.')).toBeVisible();
@@ -175,10 +175,10 @@ for (const c of PETITS) {
     await expect(plateau(page).locator('[data-meilleur]')).toHaveCount(1);
     await sansDebord(page, `${c.nom}, coup montré`);
     await ctaLibre(page, `${c.nom}, coup montré`);
-    await page.locator('.cta').click();
+    await toucherCta(page);
     await jouer(page, 'E3');
     await expect(page.locator('.cta')).toHaveText('Voir mon résultat');
-    await page.locator('.cta').click();
+    await toucherCta(page);
     await expect(page.getByRole('heading', { level: 3 })).toHaveText('1 sur 2 trouvée');
     // Mouvements réduits : pas de confettis, le résultat est là d'emblée.
     await expect(page.getByTestId('confettis')).toHaveCount(0);

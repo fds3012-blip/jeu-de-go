@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { jouer, passerJusquAuScore, plateau } from './plateau';
+import { jouer, ouvrirLancementOrdi, passerJusquAuScore, plateau, toucherCta } from './plateau';
 import { demarrerParcours, ouvrirRevue, preparerRevue } from './revueFactice';
 import { avancerJusqua, ouvrirDepuisApprendre, surMoment } from './decouverte';
 
@@ -146,7 +146,7 @@ for (const [l, h] of ECRANS) {
     // #528 : la feuille « Changer » avec les « Réglages de la partie » ouverts : rien sous son bouton collant.
     test(`feuille « Changer », réglages de la partie ouverts (${taille})`, async ({ page }) => {
       await page.goto('/');
-      await page.getByRole('button', { name: 'Changer' }).click();
+      await ouvrirLancementOrdi(page);
       await page.getByTestId('reglages-partie-ouvrir').click();
       await page.getByRole('button', { name: 'Une pierre de handicap en plus' }).click();
       await expect(page.getByRole('button', { name: 'Revenir aux réglages habituels' })).toBeVisible();
@@ -167,7 +167,7 @@ for (const [l, h] of ECRANS) {
         localStorage.setItem('go.lecons.v1', JSON.stringify({ l1: 5 }));
       });
       await page.goto('/?komi=-100');
-      await page.locator('.cta').click();
+      await toucherCta(page);
       await passerJusquAuScore(page);
       await expect(page.getByTestId('inviter-app')).toBeVisible({ timeout: 15_000 });
       await aucunBoutonRecouvert(page, `victoire et invitation ${taille}`);
@@ -197,7 +197,7 @@ for (const [l, h] of ECRANS) {
       await page.reload();
       await expect(page.getByTestId('bandeau-hors-ligne')).toBeVisible();
       await aucunBoutonRecouvert(page, `accueil hors ligne ${taille}`);
-      await page.locator('.cta').click();
+      await toucherCta(page);
       await expect(page.getByTestId('repli-hors-ligne')).toBeVisible();
       await aucunBoutonRecouvert(page, `feuille de repli ${taille}`, 'dialog[open]');
       await page.getByRole('button', { name: 'Plus tard' }).click();

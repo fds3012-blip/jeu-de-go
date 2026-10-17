@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { boutonPasser, coupsJoues, finDePartie, jouer, passer, plateau } from './plateau';
+import { boutonPasser, coupsJoues, finDePartie, jouer, passer, plateau, toucherCta } from './plateau';
 import { ouvrirRevue, preparerRevue } from './revueFactice';
 
 // #498 : iOS peut tuer un Worker sans événement `error`. Ici, chaque Worker est remplacé par un faux qui ne répond
@@ -27,7 +27,7 @@ test('partie contre Pomme avec un Worker qui ne répond plus : l’ordi joue qua
   page.on('pageerror', e => erreurs.push(e.message));
   await workersBloques(page);
   await page.goto('/');
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await expect(plateau(page)).toBeVisible();
   for (const l of ['E5', 'C3', 'G7']) {
     const libre = await plateau(page).locator(`g[data-pierre][data-point="${l}"]`).count() === 0;

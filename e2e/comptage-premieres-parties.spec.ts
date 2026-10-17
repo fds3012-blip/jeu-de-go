@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { boutonPasser, choisirMode, coupsJoues, jouer, passer, plateau } from './plateau';
+import { boutonPasser, choisirMode, coupsJoues, jouer, passer, plateau, toucherCta } from './plateau';
 import { fromLabel } from '../src/go/coords';
 
 // Comptage sûr des 3 premières parties (#486). Les coups de Pomme sont écrits d'avance (`window.__coupsOrdi`, build
@@ -42,7 +42,7 @@ for (const theme of ['light', 'dark'] as const) {
     test.setTimeout(120_000);
     await page.emulateMedia({ colorScheme: theme });
     await preparer(page, {});
-    await page.locator('.cta').click();
+    await toucherCta(page);
     await jouerJusquAuComptage(page);
     // Récit direct, sans « Valider le score » : le groupe blanc est grisé, la phrase de Mochi l'explique.
     const aside = page.locator('.comptage-auto');
@@ -64,7 +64,7 @@ test('première partie, mouvements réduits : même comptage sûr, récit imméd
   test.setTimeout(120_000);
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await preparer(page, {});
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await jouerJusquAuComptage(page);
   await expect(page.locator('.comptage-auto')).toContainText(PHRASE, { timeout: 15_000 });
   // Mouvements réduits : les totaux sont là d'emblée (Noir : 26 + 5 prisonniers ; voir le récit).

@@ -169,6 +169,11 @@ test('parties lentes : Blanc absent est prévenu « Adversaire trouvé » ; la r
 
   // Adversaire trouvé pendant l'absence, Ana en Blanc (ce n'est pas à elle) : la tuile « Adversaire trouvé ! » ouvre la partie.
   await versLentes(ana);
+  // #613 : le dernier choix de taille revient ; Ana repasse au 9 × 9, la taille que Bob cherche.
+  await ana.getByRole('button', { name: 'Changer' }).click();
+  const tailles = ana.getByRole('group', { name: 'Taille du plateau' });
+  await expect(tailles.getByRole('button', { name: '13 × 13' })).toHaveAttribute('aria-pressed', 'true');
+  await tailles.getByRole('button', { name: '9 × 9' }).click();
   await ana.getByRole('button', { name: 'Trouver un adversaire' }).click();
   await expect(ana.getByTestId('lente-recherche')).toBeVisible();
   await ana.getByTestId('lentes').getByRole('button', { name: 'Retour' }).click();

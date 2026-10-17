@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { attendrePierre, jouer } from './plateau';
+import { attendrePierre, jouer, passerLancement } from './plateau';
 
 // Issue #236 : une fête à la fois (N2), un appel à la fois sur l'accueil (N4), « Passer » à part des aides (N7).
 // Horloge figée le 27 septembre 2026 à midi, heure de Paris : Go du jour n° 1, le problème b1 (réponse E5).
@@ -116,6 +116,7 @@ test.describe('N7 : « Passer » à part des aides', () => {
       await semer(page, { 'go.parties.v1': JSON.stringify({ n: 3, dernier: 'pomme', ordi: 3 }), 'go.intro-but.v1': 'true' });
       await page.goto('/');
       await page.locator('.cta-sceau').click();
+      await passerLancement(page);
       const barre = page.getByRole('toolbar', { name: 'Actions de la partie' });
       await expect(barre).toBeVisible();
       const passer = barre.getByRole('button', { name: 'Passer' });

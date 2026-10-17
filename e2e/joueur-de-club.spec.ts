@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { expect, test, type Browser, type Page } from '@playwright/test';
 import { brancher, fauxServeur } from './fauxSupabase';
-import { jouer, plateau } from './plateau';
+import { jouer, plateau, toucherCta } from './plateau';
 import { demarrerParcours, ouvrirRevue, preparerRevue } from './revueFactice';
 
 // Joueur de club (décision de Florian du 05/10) :
@@ -223,7 +223,7 @@ test.describe('#368 Mes statistiques', () => {
       const { largeur } = await page.evaluate(() => ({ largeur: document.documentElement.scrollWidth }));
       expect(largeur).toBeLessThanOrEqual(390);
       await capture(page, `stats-${sombre ? 'sombre' : 'clair'}`);
-      await page.locator('.cta').click();
+      await toucherCta(page);
       await expect(page.getByRole('heading', { name: 'Mes parties' })).toBeVisible();
       await ctx.close();
     });

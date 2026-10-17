@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { abandonner, passerJusquAuScore } from './plateau';
+import { abandonner, ouvrirLancementOrdi, passerJusquAuScore, toucherCta } from './plateau';
 
 // Issue #22 puis #40 (phase 5) : écran de fin contre l'ordi, bilan gardé en localStorage (go.bilan.v1), adversaire suivant,
 // tampon « BATTUE », célébration et relecture. Pour une victoire déterministe, on ouvre l'appli avec `?komi=-100`
@@ -14,7 +14,7 @@ test('victoire contre Pomme : tampon, confettis, Caillou en un geste, bilan gard
   const erreurs: string[] = [];
   page.on('pageerror', (e) => erreurs.push(e.message));
   await page.goto('/?komi=-100');
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await expect(page.locator('svg.board[aria-label="Plateau de go 9 × 9"]')).toBeVisible();
   await passerJusquAuComptage(page);
 
@@ -48,7 +48,7 @@ test('victoire contre Pomme : tampon, confettis, Caillou en un geste, bilan gard
   expect(await bilan(page)).toEqual({ pomme: { v: 1, d: 0 } });
   // Caillou était le dernier adversaire choisi : l'accueil le propose.
   await expect(page.getByRole('heading', { level: 2, name: 'Caillou' })).toBeVisible();
-  await page.getByRole('button', { name: 'Changer' }).click();
+  await ouvrirLancementOrdi(page);
   await expect(page.getByRole('button', { name: 'Pomme, 20 kyu, battue', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Caillou, 16 kyu', exact: true })).toBeVisible();
   // Caillou n'est pas encore battu : Bambou reste verrouillé.
@@ -64,7 +64,7 @@ test('célébrations coupées dans Profil : victoire sans confettis', async ({ p
   await celebrations.click();
   await expect(celebrations).toHaveAttribute('aria-checked', 'false');
   await page.getByRole('button', { name: 'Jouer' }).click();
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await passerJusquAuComptage(page);
   await expect(page.getByRole('heading', { level: 2, name: 'Victoire' })).toBeVisible();
   // Le tampon reste (c'est l'information « tu l'as battue ») ; la fête, non.
@@ -77,7 +77,7 @@ test.describe('mouvements réduits', () => {
   test.use({ reducedMotion: 'reduce' });
   test('état final direct, sans confettis', async ({ page }) => {
     await page.goto('/?komi=-100');
-    await page.locator('.cta').click();
+    await toucherCta(page);
     await passerJusquAuComptage(page);
     await expect(page.getByRole('heading', { level: 2, name: 'Victoire' })).toBeVisible();
     // L'écart est affiché d'emblée à sa valeur finale.
@@ -94,7 +94,7 @@ test('défaite par abandon : pas de tampon ni de fête, Mochi encourage et propo
   const erreurs: string[] = [];
   page.on('pageerror', (e) => erreurs.push(e.message));
   await page.goto('/');
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await expect(page.locator('svg.board[aria-label="Plateau de go 9 × 9"]')).toBeVisible();
   await abandonner(page);
 
@@ -114,7 +114,7 @@ test('défaite par abandon : pas de tampon ni de fête, Mochi encourage et propo
 
   // Pas encore battue : aucune marque dans le carrousel.
   await page.goto('/');
-  await page.getByRole('button', { name: 'Changer' }).click();
+  await ouvrirLancementOrdi(page);
   await expect(page.getByRole('button', { name: 'Pomme, 20 kyu', exact: true })).toBeVisible();
   expect(erreurs).toEqual([]);
 });

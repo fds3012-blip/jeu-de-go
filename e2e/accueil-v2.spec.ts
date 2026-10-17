@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { plateau } from './plateau';
+import { ouvrirLancementOrdi, plateau } from './plateau';
 
 // Issue #40, phase 4 : accueil v2 (goban d'accueil qui se touche) et carrousel des adversaires.
 
@@ -22,7 +22,7 @@ test("toucher le goban d'accueil lance la partie contre l'adversaire choisi", as
 
 test('le carrousel ne laisse pas choisir un adversaire verrouillé', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Changer' }).click();
+  await ouvrirLancementOrdi(page);
   const feuille = page.getByRole('dialog', { name: 'Ton adversaire' });
   const carrousel = feuille.getByRole('list', { name: /Adversaires/ });
   await expect(carrousel.getByRole('button')).toHaveCount(9);
@@ -56,7 +56,7 @@ test('battre Caillou ouvre Bambou, et un choix verrouillé retombe sur l’adver
   await page.goto('/');
   // Tigre est verrouillé : l'accueil propose Bambou, le premier adversaire ouvert pas encore battu.
   await expect(page.getByRole('heading', { level: 2, name: 'Bambou' })).toBeVisible();
-  await page.getByRole('button', { name: 'Changer' }).click();
+  await ouvrirLancementOrdi(page);
   const carrousel = page.getByRole('list', { name: /Adversaires/ });
   await expect(carrousel.getByRole('button', { name: 'Caillou, 16 kyu, battu', exact: true })).toBeVisible();
   await expect(carrousel.getByRole('button', { name: 'Bambou, 13 kyu', exact: true })).toBeVisible();
@@ -68,7 +68,7 @@ test('pas de défilement horizontal à 390 px, carrousel ouvert compris', async 
   await page.goto('/');
   const debord = () => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(await debord()).toBeLessThanOrEqual(0);
-  await page.getByRole('button', { name: 'Changer' }).click();
+  await ouvrirLancementOrdi(page);
   const carrousel = page.getByRole('list', { name: /Adversaires/ });
   await expect(carrousel).toBeVisible();
   expect(await debord()).toBeLessThanOrEqual(0);
@@ -90,7 +90,7 @@ test('les tuiles mènent au problème du jour et à la leçon suivante', async (
   await expect(page.getByRole('button', { name: 'Retour aux problèmes' })).toBeVisible();
 
   await page.getByRole('navigation').getByRole('button', { name: 'Jouer' }).click();
-  await page.getByRole('button', { name: /^Leçon 1 sur \d+/ }).click();
+  await page.getByRole('button', { name: /^Leçon Libertés et capture/ }).click();
   await expect(page.getByRole('navigation').getByRole('button', { name: 'Apprendre' })).toHaveAttribute('aria-current', 'page');
   await expect(page.getByRole('button', { name: 'Retour au chemin' })).toBeVisible();
 });

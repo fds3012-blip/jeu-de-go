@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { expect, test, type BrowserContext, type Page } from '@playwright/test';
-import { attendrePierre, jouer, passerJusquAuScore, pierres, plateau } from './plateau';
+import { attendrePierre, jouer, ouvrirLancementOrdi, passerJusquAuScore, pierres, plateau, toucherCta } from './plateau';
 import { brancher, fauxServeur } from './fauxSupabase';
 
 // #538 (reprend #366) : hors ligne clair et IA prête. Après une première visite, sans réseau :
@@ -92,7 +92,7 @@ test('accueil hors ligne avec les comptes : bandeau, « En ligne » et « Un ami
   // Aucun débordement à 390 px.
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0);
 
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await expect(plateau(page)).toBeVisible();
   await expect(page.getByTestId('repli-hors-ligne')).toHaveCount(0);
   // Pas de bandeau pendant la partie : elle marche sans réseau.
@@ -118,7 +118,7 @@ test('#528 hors ligne : une partie interrompue contre Pomme se reprend où elle 
   await stocker(page, DEJA_JOUE);
   await page.goto('/');
   await attendreServiceWorker(page);
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await expect(plateau(page)).toBeVisible();
   await jouer(page, 'C3');
   await expect(pierres(page, 'blanc')).toHaveCount(1, { timeout: 10_000 });
@@ -143,7 +143,7 @@ test('Bambou hors ligne sans l’IA : Caillou ou « Plus tard » ; avec l’IA t
   await rouvrirHorsLigne(page, context);
   await expect(page.locator('.cta')).toHaveAccessibleName(/contre Bambou$/);
 
-  await page.locator('.cta').click();
+  await toucherCta(page);
   const feuille = page.getByTestId('repli-hors-ligne');
   await expect(feuille).toBeVisible();
   await expect(feuille.getByRole('heading', { name: 'Bambou a besoin de l’IA' })).toBeVisible();
@@ -152,7 +152,7 @@ test('Bambou hors ligne sans l’IA : Caillou ou « Plus tard » ; avec l’IA t
   await expect(page.locator('.cta')).toHaveAccessibleName(/contre Bambou$/);
   expect(reseau.v).toBe(0);
 
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await page.getByTestId('repli-hors-ligne').getByRole('button', { name: 'Jouer contre Caillou' }).click();
   await expect(plateau(page)).toBeVisible();
   await expect(page.locator('.joueur[data-joueur="Caillou"]')).toBeVisible();
@@ -165,7 +165,7 @@ test('Bambou hors ligne sans l’IA : Caillou ou « Plus tard » ; avec l’IA t
   await expect(page.getByTestId('reglage-ia')).toHaveAttribute('data-etat', 'prete', { timeout: 30_000 });
   await context.setOffline(true);
   await NAV(page).getByRole('button', { name: 'Jouer' }).click();
-  await page.getByRole('button', { name: 'Changer' }).click();
+  await ouvrirLancementOrdi(page);
   await page.getByRole('dialog').getByRole('button', { name: /^Bambou/ }).first().click();
   await page.getByRole('dialog').getByRole('button', { name: /contre Bambou$/ }).click();
   await expect(plateau(page)).toBeVisible();

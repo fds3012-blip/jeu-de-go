@@ -35,7 +35,7 @@ test("première ouverture : l'accueil s'affiche en moins de 3 secondes", async (
   // Dès qu'une pierre est posée (repère de l'appareil), les deux tuiles : problème du jour et leçon suivante.
   await page.evaluate(() => { localStorage.setItem('go.premiere-pierre.v1', 'true'); window.dispatchEvent(new Event('go:premiere-pierre')); });
   await expect(page.getByRole('button', { name: /^Go du jour n°\s\d+/ })).toBeVisible();
-  await expect(page.getByRole('button', { name: /^Leçon 1 sur \d+/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Leçon Libertés et capture/ })).toBeVisible();
   // Pas de défilement horizontal sur un écran de téléphone.
   const debord = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(debord).toBeLessThanOrEqual(0);

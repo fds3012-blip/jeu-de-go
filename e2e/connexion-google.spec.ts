@@ -1,6 +1,6 @@
 import { expect, test, type Browser, type Page } from '@playwright/test';
 import { brancher, fauxServeur, JETON, PARTIE, type FauxServeur } from './fauxSupabase';
-import { plateau } from './plateau';
+import { plateau, toucherCta } from './plateau';
 
 // #354 : « Continuer avec Google » (docs/growth/connexion-google-apple.md, phase 1). Supabase simulé
 // (e2e/fauxSupabase.ts) : `/auth/v1/authorize` renvoie aussitôt vers l'app avec la session dans le fragment.
@@ -38,7 +38,7 @@ test('Google : case d’âge, aller-retour, pseudo jamais pré-rempli, puis la p
   const erreurs: string[] = [];
   page.on('pageerror', e => erreurs.push(e.message));
   await page.goto('/');
-  await page.locator('.cta').click();
+  await toucherCta(page);
   const ecran = page.getByTestId('creer-compte');
   const google = ecran.getByRole('button', { name: 'Continuer avec Google' });
   await expect(google).toBeVisible();
@@ -118,7 +118,7 @@ test('compte existant (même e-mail) : Google connecte directement, sans écran 
   serveur.compteGoogle({ email: 'fds@exemple.test', nom: 'Florian D.' });
   const { ctx, page } = await telephone(browser, baseURL, serveur, { stockage: { 'go.essai.v1': JSON.stringify({ terminees: 3 }) } });
   await page.goto('/');
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await page.getByTestId('creer-compte').getByRole('button', { name: 'J’ai déjà un compte' }).click();
   // Connexion : pas de case d'âge, Google tout de suite.
   await expect(page.getByRole('checkbox')).toHaveCount(0);
@@ -133,7 +133,7 @@ test('Google annulé : retour sur « Crée ton compte » avec une phrase claire'
   serveur.compteGoogle({ email: 'x@exemple.test', nom: 'X', annule: true });
   const { ctx, page } = await telephone(browser, baseURL, serveur, { stockage: { 'go.essai.v1': JSON.stringify({ terminees: 3 }) } });
   await page.goto('/');
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await page.getByRole('checkbox').check();
   await page.getByRole('button', { name: 'Continuer avec Google' }).click();
   await expect(page.getByTestId('creer-compte')).toHaveAttribute('data-raison', 'parties');
@@ -146,7 +146,7 @@ test('Messenger sur iPhone : pas de Google, le code en action principale, la con
   const serveur = fauxServeur();
   const { ctx, page } = await telephone(browser, baseURL, serveur, { userAgent: UA_MESSENGER_IOS, stockage: { 'go.essai.v1': JSON.stringify({ terminees: 3 }) } });
   await page.goto('/');
-  await page.locator('.cta').click();
+  await toucherCta(page);
   const ecran = page.getByTestId('creer-compte');
   await expect(ecran.getByRole('button', { name: 'Recevoir mon code' })).toHaveClass(/primary/);
   await expect(page.getByTestId('bouton-google')).toHaveCount(0);
@@ -161,7 +161,7 @@ test('Messenger sur Android : pas de Google, lien pour ouvrir dans Chrome (angla
   const serveur = fauxServeur();
   const { ctx, page } = await telephone(browser, baseURL, serveur, { largeur: 320, locale: 'en-US', userAgent: UA_MESSENGER_ANDROID, stockage: { 'go.essai.v1': JSON.stringify({ terminees: 3 }) } });
   await page.goto('/?lang=en');
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await expect(page.getByTestId('bouton-google')).toHaveCount(0);
   const lien = page.getByRole('link', { name: 'Prefer Google? Open the game in Chrome.' });
   await expect(lien).toHaveAttribute('href', /^intent:\/\/localhost:\d+\/\?lang=en#Intent;scheme=http;package=com\.android\.chrome;S\.browser_fallback_url=/);
@@ -174,7 +174,7 @@ test('sans VITE_AUTH_GOOGLE : aucun bouton Google ni aide', async ({ browser, ba
   const serveur = fauxServeur();
   const { ctx, page } = await telephone(browser, baseURL, serveur, { google: false, userAgent: UA_MESSENGER_IOS, stockage: { 'go.essai.v1': JSON.stringify({ terminees: 3 }) } });
   await page.goto('/');
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await expect(page.getByRole('button', { name: 'Recevoir mon code' })).toBeVisible();
   await expect(page.getByTestId('bouton-google')).toHaveCount(0);
   await expect(page.getByTestId('aide-navigateur')).toHaveCount(0);

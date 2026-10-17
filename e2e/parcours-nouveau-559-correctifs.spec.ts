@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { jouer, passerJusquAuScore, plateau, toucher } from './plateau';
+import { jouer, passerJusquAuScore, plateau, toucher, toucherCta } from './plateau';
 
 // #559 : correctifs du parcours du nouveau joueur (docs/qa/parcours-nouveau-2026-10.md), un test par défaut corrigé.
 // Le bug « Rejouer » et la fête de niveau a son propre fichier : e2e/rejouer-fete-559.spec.ts.
@@ -26,7 +26,7 @@ for (const [largeur, hauteur] of [[390, 844], [320, 568]] as const) {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     // Partie courte gagnée (paramètre de test ?komi=-100) : sans KataGo, Mochi note 100 % au joueur.
     await page.goto('/?komi=-100');
-    await page.locator('.cta').click();
+    await toucherCta(page);
     await expect(plateau(page)).toBeVisible();
     const passer = page.getByRole('button', { name: 'Passer' });
     await expect(passer).toBeEnabled({ timeout: 10_000 });

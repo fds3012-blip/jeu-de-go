@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { passer, passerJusquAuScore } from './plateau';
+import { passer, passerJusquAuScore, toucherCta } from './plateau';
 
 // Issue #21 puis #117 : fin de partie contre Pomme. Après deux passes, les pierres mortes sont marquées
 // automatiquement et on voit directement le récit du score, puis le résultat, sans rien toucher.
@@ -7,7 +7,7 @@ test('fin de partie contre Pomme : deux passes, récit du score direct, puis le 
   const erreurs: string[] = [];
   page.on('pageerror', (e) => erreurs.push(e.message));
   await page.goto('/');
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await expect(page.locator('svg.board[aria-label="Plateau de go 9 × 9"]')).toBeVisible();
 
   // Plateau vide : Noir passe, Pomme (qui mène grâce au komi) passe aussi. Rien d'incertain : pas de phase manuelle.
@@ -33,7 +33,7 @@ test('fin de partie contre Pomme : deux passes, récit du score direct, puis le 
 test('passes sur un plateau vide : Mochi explique le komi, pas « perdu de peu »', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' }); // écart affiché tout de suite, sans décompte
   await page.goto('/');
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await expect(page.locator('svg.board[aria-label="Plateau de go 9 × 9"]')).toBeVisible();
   await passer(page);
   await expect(page.getByRole('heading', { level: 2, name: 'Défaite' })).toBeVisible({ timeout: 15_000 });
@@ -52,7 +52,7 @@ test('passes sur un plateau vide : Mochi explique le komi, pas « perdu de peu �
 
 test('« Corriger les pierres mortes » ouvre la phase manuelle, puis « Valider le score »', async ({ page }) => {
   await page.goto('/');
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await passer(page);
   await page.getByRole('button', { name: 'Corriger les pierres mortes' }).click({ timeout: 10_000 });
   await expect(page.locator('.recit')).toHaveCount(0);
@@ -63,7 +63,7 @@ test('« Corriger les pierres mortes » ouvre la phase manuelle, puis « Valider
 
 test('victoire forcée (?komi=-100) : sceau de Pomme tamponné « BATTUE », « Défier Caillou » avec son sceau', async ({ page }) => {
   await page.goto('/?komi=-100');
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await passerJusquAuScore(page);
   await expect(page.getByRole('heading', { level: 2, name: 'Victoire' })).toBeVisible();
   await expect(page.locator('.fin-sceau .fin-tampon')).toHaveText('BATTUE');

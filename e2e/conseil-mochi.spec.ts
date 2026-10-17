@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { jouer, plateau } from './plateau';
+import { jouer, plateau, toucherCta } from './plateau';
 
 // Conseil de Mochi (#80) : partie → conseil → phrase dans la bulle (annoncée) et zone montrée par un calque posé sur le plateau.
 // Sans KataGo (premier test) : les modèles qui ne demandent que les règles. Avec KataGo simulé (second test, même
@@ -13,7 +13,7 @@ test('partie contre Pomme : le conseil de Mochi montre une phrase et la zone, pu
   const erreurs: string[] = [];
   page.on('pageerror', (e) => erreurs.push(e.message));
   await page.goto('/');
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await expect(plateau(page)).toBeVisible();
   await jouer(page, 'E5');
   await expect(page.getByText(/Pomme (joue|capture|passe)/)).toBeVisible({ timeout: 10_000 });
@@ -76,7 +76,7 @@ test('KataGo simulé : « Protège ta zone », zone et point montrés par le cal
   page.on('pageerror', (e) => erreurs.push(e.message));
   await kataGoFactice(page);
   await page.goto('/');
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await expect(plateau(page)).toBeVisible();
   await jouer(page, 'G7');
   await expect(page.getByText(/Pomme (joue|capture|passe)/)).toBeVisible({ timeout: 10_000 });

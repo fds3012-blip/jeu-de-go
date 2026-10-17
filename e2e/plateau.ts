@@ -82,11 +82,60 @@ export async function choisirMode(page: Page, mode: 'en_ligne' | 'ordi' | 'ami' 
     await page.evaluate(() => { localStorage.setItem('go.premiere-pierre.v1', 'true'); window.dispatchEvent(new Event('go:premiere-pierre')); });
   }
   if (mode !== 'ordi' || !(await principal.count())) await page.getByTestId('modes').waitFor();
-  if (await principal.count()) return principal.click();
-  if (await tuile.count()) return tuile.click();
-  await page.getByTestId('mode-plus').click();
-  const nom = mode === 'deux' ? 'Jouer à deux sur ce téléphone' : 'Partie de découverte avec Mochi';
-  await page.getByRole('dialog', { name: 'Autres façons de jouer' }).getByRole('button', { name: new RegExp('^' + nom) }).click();
+  // #613 : l'ordi et à deux ouvrent la feuille de lancement (sauf avant la toute première partie) : « Jouer » la passe.
+  const lancement = (mode === 'ordi' || mode === 'deux') && await feuilleAttendue(page);
+  if (await principal.count()) await principal.click();
+  else if (await tuile.count()) await tuile.click();
+  else {
+    await page.getByTestId('mode-plus').click();
+    const nom = mode === 'deux' ? 'Jouer à deux sur ce téléphone' : 'Partie de découverte avec Mochi';
+    await page.getByRole('dialog', { name: 'Autres façons de jouer' }).getByRole('button', { name: new RegExp('^' + nom) }).click();
+  }
+  if (lancement) await jouerDepuisLancement(page);
+}
+
+/** #613 : la feuille de lancement (l'ordi, à deux) s'ouvre dès qu'une partie a déjà été lancée ou jouée sur l'appareil. */
+async function feuilleAttendue(page: Page): Promise<boolean> {
+  return page.evaluate(() => {
+    const lire = (k: string) => { try { return JSON.parse(localStorage.getItem(k) ?? 'null'); } catch { return null; } };
+    return (lire('go.parties.v1')?.n ?? 0) > 0 || Object.keys(lire('go.bilan.v1') ?? {}).length > 0;
+  });
+}
+
+/** #613 : feuille de lancement ouverte ; renvoie la feuille (taille, adversaire, « Jouer »). */
+export function feuilleLancement(page: Page): Locator {
+  return page.locator('dialog[data-testid="feuille-lancement"][open]');
+}
+
+/** #613 : dans la feuille de lancement, choisit la taille du plateau (facultatif) puis touche « Jouer ». */
+export async function jouerDepuisLancement(page: Page, taille?: 9 | 13 | 19): Promise<void> {
+  const feuille = feuilleLancement(page);
+  await expect(feuille).toBeVisible();
+  if (taille) await feuille.getByRole('group', { name: /^(Taille du plateau|Board size)$/ }).getByRole('button', { name: `${taille} × ${taille}` }).click();
+  await feuille.getByTestId('lancement-jouer').click();
+}
+
+/**
+ * #613 : la taille du plateau ne se choisit plus sur l'accueil. Depuis l'accueil, ouvre la feuille de lancement contre
+ * l'ordi (tuile « L'ordi », ou le bouton principal s'il porte l'ordi ; au premier lancement, « Changer ») et coche la
+ * taille, sans lancer la partie. La feuille reste ouverte.
+ */
+export async function ouvrirLancementOrdi(page: Page, taille?: 9 | 13 | 19): Promise<Locator> {
+  await page.locator('.cta').waitFor();
+  const changer = page.locator('.reglage-premier').getByRole('button', { name: /^(Changer|Change)$/ });
+  if (await changer.count()) await changer.click();
+  else {
+    if (await page.locator('.accueil[data-epure]').count()) {
+      await page.evaluate(() => { localStorage.setItem('go.premiere-pierre.v1', 'true'); window.dispatchEvent(new Event('go:premiere-pierre')); });
+    }
+    const principal = page.locator('.cta[data-mode="ordi"]');
+    if (await principal.count()) await principal.click();
+    else await page.getByTestId('mode-ordi').click();
+  }
+  const feuille = feuilleLancement(page);
+  await expect(feuille).toBeVisible();
+  if (taille) await feuille.getByRole('group', { name: /^(Taille du plateau|Board size)$/ }).getByRole('button', { name: `${taille} × ${taille}` }).click();
+  return feuille;
 }
 
 /** #589 : la partie guidée contre Mochi se lance depuis Apprendre (carte sous la partie de découverte), plus depuis l'accueil. */
@@ -217,4 +266,24 @@ export async function passerJusquAuScore(page: Page): Promise<void> {
   await expect(fin.first()).toBeVisible({ timeout: 10_000 });
   const valider = page.getByRole('button', { name: 'Valider le score' });
   if (await valider.isVisible()) await valider.click();
+}
+
+/**
+ * #613 : touche le bouton principal (`.cta`). Sur l'accueil, s'il lance l'ordi ou à deux et qu'une partie a déjà été
+ * lancée ou jouée sur l'appareil, la feuille de lancement s'ouvre : « Jouer » la passe, avec le dernier choix.
+ * Ailleurs (fin de partie, découverte…), un toucher ordinaire.
+ */
+export async function toucherCta(page: Page, geste: 'click' | 'tap' = 'click'): Promise<void> {
+  const cta = page.locator('.cta');
+  const mode = await cta.getAttribute('data-mode');
+  await (geste === 'tap' ? cta.tap() : cta.click());
+  if ((mode === 'ordi' || mode === 'deux') && await feuilleAttendue(page)) await jouerDepuisLancement(page);
+}
+
+/**
+ * #613 : après un toucher sur l'accueil qui lance l'ordi ou à deux (tuile, goban, bouton nommé), passe la feuille de
+ * lancement si elle s'ouvre (une partie a déjà été lancée ou jouée sur l'appareil). Sans elle, ne fait rien.
+ */
+export async function passerLancement(page: Page): Promise<void> {
+  if (await feuilleAttendue(page)) await jouerDepuisLancement(page);
 }

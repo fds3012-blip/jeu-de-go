@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { jouerSuite, message, partieADeux, passer, plateau } from './plateau';
+import { jouerSuite, message, partieADeux, passer, plateau, toucherCta } from './plateau';
 
 // Issue #159, partie écran. Position avancée jouée à deux : murs noir en D et blanc en F, la colonne E reste ouverte.
 // 21 pierres (un quart du plateau) : la partie est « avancée ».
@@ -46,7 +46,7 @@ test("au comptage, la barre d'avantage affiche le score réel", async ({ page })
     localStorage.setItem('go.intro-but.v1', 'true');
   });
   await page.goto('/');
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await expect(plateau(page)).toBeVisible();
   // Plateau vide : deux passes, puis « Corriger les pierres mortes » ouvre le comptage (la barre reste à l'écran).
   await passer(page);

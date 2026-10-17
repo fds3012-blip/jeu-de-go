@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { passer } from './plateau';
+import { passer, toucherCta } from './plateau';
 
 // Issue #160 : les 3 premières parties contre l'ordi se jouent avec un komi de 0,5, annoncé par Mochi,
 // et la barre d'avantage est cachée pendant la toute première. Le score final compte bien ce komi annoncé.
@@ -7,7 +7,7 @@ test('première partie : komi 0,5 annoncé et expliqué, pas de barre d’avanta
   const erreurs: string[] = [];
   page.on('pageerror', (e) => erreurs.push(e.message));
   await page.goto('/');
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await expect(page.locator('svg.board[aria-label="Plateau de go 9 × 9"]')).toBeVisible();
 
   // Mochi dit le but, puis explique le komi en une phrase.
@@ -28,7 +28,7 @@ test('première partie : komi 0,5 annoncé et expliqué, pas de barre d’avanta
 
   // #251 : cette partie finie sur un plateau vide ne compte pas parmi les 3 parties à komi réduit.
   // La partie suivante est encore la « première » : komi 0,5 expliqué, sans barre d'avantage. Le but n'est pas redit.
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await expect(annonce).toHaveText(/^Le komi\s: des points donnés à Blanc, qui joue en second\. Pour tes premières parties, il est de 0,5\.$/);
   await expect(page.getByText(/Le but\s: entourer/)).toHaveCount(0);
   await expect(page.locator('.avantage')).toHaveCount(0);
@@ -44,7 +44,7 @@ test('deuxième partie (après une vraie première partie) : rappel court du kom
     localStorage.setItem('go.intro-but.v1', 'true');
   });
   await page.reload();
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await expect(page.locator('.annonce-komi')).toHaveText('Cette partie encore, le komi est de 0,5 point.');
   await expect(page.getByRole('img', { name: /^Avantage estimé : (Noir \+|Blanc \+|À égalité)/ })).toBeVisible({ timeout: 10_000 });
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('go.parties.v1') ?? '{}').ordi)).toBe(2);
@@ -57,7 +57,7 @@ test('quatrième partie : le komi habituel (6,5) revient, et Mochi le dit', asyn
     localStorage.setItem('go.intro-but.v1', 'true');
   });
   await page.reload();
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await expect(page.locator('.annonce-komi')).toHaveText('Le komi passe à 6,5 points, sa valeur habituelle.');
   await passer(page);
   await expect(page.locator('.recit')).toContainText('+6,5 komi pour Pomme', { timeout: 10_000 });

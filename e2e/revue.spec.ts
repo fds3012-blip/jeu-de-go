@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { jouer, passerJusquAuScore, plateau } from './plateau';
+import { jouer, passerJusquAuScore, plateau, toucherCta } from './plateau';
 import { COTE_JOUEUR_FORT, demarrerParcours } from './revueFactice';
 
 // Issue #34 : revue d'une partie terminée. `?komi=-100` (paramètre de test, voir src/app/bilan.ts) donne une fin
@@ -13,7 +13,7 @@ const passerJusquAuComptage = passerJusquAuScore;
 /** Partie courte contre Pomme : quelques coups, puis deux passes. `komi` : -100 pour gagner, 100 pour perdre. */
 async function partieCourte(page: Page, coups: string[], komi = -100) {
   await page.goto(`/?komi=${komi}`);
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await expect(plateau(page)).toBeVisible();
   const passer = page.getByRole('button', { name: 'Passer' });
   for (const c of coups) {
