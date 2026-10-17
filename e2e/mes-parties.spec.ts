@@ -77,7 +77,7 @@ test('trois parties contre l’ordi : toutes dans « Mes parties », avec le bon
   // Chaque partie ouvre la revue, coup par coup, puis « ‹ » ramène à la liste.
   for (let i = 0; i < 3; i++) {
     await lignes.nth(i).click();
-    await expect(page.getByRole('heading', { level: 2, name: 'Revoir ma partie' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 2, name: 'Revoir la partie' })).toBeVisible();
     // Revue v3 (#405) : le bilan, puis « Démarrer le bilan » et le parcours.
     await demarrerParcours(page, 1);
     await expect(page.getByText(/Coup 1 sur \d+/)).toBeVisible();
@@ -107,7 +107,7 @@ test('la dernière partie gardée par une version d’avant #358 (à deux) appar
   await expect(ligne).toHaveCount(1);
   await expect(ligne).toHaveAccessibleName('Partie à deux. Blanc gagne de 3,5 points. Il y a 2 jours, plateau 9 × 9.');
   await ligne.click();
-  await expect(page.getByRole('heading', { level: 2, name: 'Revoir ma partie' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 2, name: 'Revoir la partie' })).toBeVisible();
   await demarrerParcours(page, 1);
   await expect(page.getByText(/Coup 1 sur 3/)).toBeVisible();
 });
@@ -147,7 +147,7 @@ test('un défi par lien terminé, lu sur le serveur, rejoint la liste et ouvre l
   expect(serveur.appels.filter(a => a.startsWith('GET /rest/v1/profiles') && a.includes('username') && a.includes('in.'))).toHaveLength(1);
   if (process.env.CAPTURES_400) await page.screenshot({ path: `${process.env.CAPTURES_400}/mes-parties-390-clair.jpg`, type: 'jpeg', quality: 80 });
   await lignes.first().click();
-  await expect(page.getByRole('heading', { level: 2, name: 'Revoir ma partie' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 2, name: 'Revoir la partie' })).toBeVisible();
   await demarrerParcours(page, 1);
   await expect(page.getByText(/Coup 1 sur 3/)).toBeVisible();
   // Le joueur a Blanc : le premier coup est celui de son ami (Noir), et c'est Blanc qu'on suit dans le bilan.

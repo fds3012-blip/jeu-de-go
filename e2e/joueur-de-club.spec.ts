@@ -120,7 +120,7 @@ test.describe('#365 réglages du plateau et du rythme', () => {
     await ouvrirReglages(page);
     await page.getByRole('switch', { name: /^Montrer la série/ }).click();
     await page.getByRole('button', { name: 'Retour' }).click();
-    await expect(page.getByRole('heading', { name: 'Ton parcours' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Profil', exact: true })).toBeVisible();
     await expect(page.locator('.identite-serie')).toHaveCount(0);
     await expect(page.getByRole('list', { name: 'Tes statistiques' })).not.toContainText(/série|record/);
     await expect(page.getByRole('button', { name: /7 jours de série/ })).toHaveCount(0);
@@ -136,7 +136,7 @@ test.describe('#365 réglages du plateau et du rythme', () => {
 });
 
 test.describe('#365 et #368 : la revue', () => {
-  test('numéros des coups en revue, puis la revue nourrit « Mes statistiques »', async ({ page }) => {
+  test('numéros des coups en revue, puis la revue nourrit « Statistiques »', async ({ page }) => {
     test.setTimeout(150_000);
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await preparerRevue(page);
@@ -156,14 +156,14 @@ test.describe('#365 et #368 : la revue', () => {
     await page.goto('/');
     await nav(page, 'Profil');
     await page.getByTestId('ligne-stats').click();
-    await expect(page.getByRole('heading', { name: 'Mes statistiques' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Statistiques', exact: true })).toBeVisible();
     await expect(page.getByTestId('stats-precision')).toHaveText(/^\d{1,3}\s%$/);
     await expect(page.getByText('Sur ta dernière partie revue avec KataGo.')).toBeVisible();
     await expect(page.locator('.mstats-phases li')).toHaveCount(3);
   });
 });
 
-test.describe('#368 Mes statistiques', () => {
+test.describe('#368 Statistiques', () => {
   async function telephone(browser: Browser, baseURL: string | undefined, sombre: boolean, largeur = 390) {
     const serveur = fauxServeur();
     const MOI = '00000000-0000-4000-8000-0000000000a1';
@@ -205,7 +205,7 @@ test.describe('#368 Mes statistiques', () => {
       // Le Profil tient toujours sans défiler.
       expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeLessThanOrEqual(844);
       await ligne.click();
-      await expect(page.getByRole('heading', { name: 'Mes statistiques' })).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'Statistiques', exact: true })).toBeVisible();
       // Mochi : la phase où tu te trompes le plus, en une phrase.
       await expect(page.locator('.mstats-bulle')).toHaveText(/surtout en milieu de partie/);
       await expect(page.getByTestId('stats-cote')).toContainText('1520');
@@ -261,7 +261,7 @@ test.describe('#368 Mes statistiques', () => {
     await nav(page, 'Profil');
     await page.getByTestId('ligne-stats').click();
     await expect(page.getByTestId('stats-cote')).toContainText('1520');
-    const titre = page.getByRole('heading', { name: 'Mes statistiques' });
+    const titre = page.getByRole('heading', { name: 'Statistiques', exact: true });
     expect(await titre.evaluate(h => h.scrollWidth <= h.clientWidth)).toBe(true);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(195);
     await ctx.close();
