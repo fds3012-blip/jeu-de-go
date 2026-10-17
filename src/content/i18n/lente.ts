@@ -16,6 +16,9 @@ const FR = {
   'lente.delai.jours': '{n} j',
   'lente.delai.aide': 'Tu as {delai} pour jouer chaque coup. Passé ce délai, tu perds au temps.',
   'lente.chercher': 'Trouver un adversaire',
+  // #571 (loi de Hick) : réglages repliés derrière leur résumé (« 9 × 9 · 1 jour par coup »).
+  'lente.reglages.changer': 'Changer',
+  'lente.reglages.masquer': 'Masquer',
   'lente.recherche.titre': 'Je te cherche un adversaire de ton niveau.',
   'lente.recherche.texte': 'Ça peut prendre du temps. Tu verras la partie sur l’accueil dès qu’elle commence.',
   'lente.recherche.rappel': '{taille} × {taille} · {delai} par coup',
@@ -66,6 +69,8 @@ const EN: { readonly [K in CleLente]: string } = {
   'lente.delai.jours': '{n} d',
   'lente.delai.aide': 'You have {delai} to play each move. After that, you lose on time.',
   'lente.chercher': 'Find an opponent',
+  'lente.reglages.changer': 'Change',
+  'lente.reglages.masquer': 'Hide',
   'lente.recherche.titre': 'I’m looking for an opponent at your level.',
   'lente.recherche.texte': 'It can take a while. The game shows up on the home screen as soon as it starts.',
   'lente.recherche.rappel': '{taille} × {taille} · {delai} per move',

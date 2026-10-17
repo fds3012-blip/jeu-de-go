@@ -58,8 +58,14 @@ test('deux comptes se trouvent en moins de 10 s et jouent jusqu’au score ; « 
   await ouvrirDirect(ana);
   const choix = ana.getByTestId('direct-choix');
   await expect(choix.getByRole('heading', { name: 'Un humain, maintenant' })).toBeVisible();
+  // #571 (loi de Hick) : taille, temps et comptage repliés derrière leur résumé ; le byo-yomi reste expliqué.
+  await expect(choix.getByTestId('reglages-resume')).toHaveText('9 × 9 · Normal, 10 min + 3 × 30 s · comptage japonais');
+  await expect(choix.getByText(/c’est le byo-yomi/)).toBeVisible();
+  await expect(choix.getByRole('button', { name: /Normal\s*10 min \+ 3 × 30 s/ })).toHaveCount(0);
+  await choix.getByRole('button', { name: 'Changer' }).click();
   await expect(choix.getByRole('button', { name: /Normal\s*10 min \+ 3 × 30 s/ })).toHaveAttribute('aria-pressed', 'true');
   await expect(choix.getByText(/c’est le byo-yomi/)).toBeVisible();
+  await choix.getByRole('button', { name: 'Masquer' }).click();
   await expect(choix.locator('.btn.primary')).toHaveCount(1);
   if (CAPTURES) await ana.screenshot({ path: `${CAPTURES}/direct-choix.jpg`, type: 'jpeg', quality: 60 });
 
@@ -126,6 +132,7 @@ test('attente annulée : retour au choix, la file est vide', async ({ browser, b
   const serveur = fauxServeur();
   const ana = await telephone(browser, baseURL, serveur, { email: 'ana@exemple.test', pseudo: 'Ana', id: ANA });
   await ouvrirDirect(ana);
+  await ana.getByRole('button', { name: 'Changer' }).click();
   await ana.getByRole('button', { name: '13 × 13' }).click();
   await ana.getByRole('button', { name: /Rapide/ }).click();
   await ana.getByRole('button', { name: 'Trouver un adversaire' }).click();
@@ -134,7 +141,8 @@ test('attente annulée : retour au choix, la file est vide', async ({ browser, b
   expect(serveur.file[0]).toMatchObject({ taille: 13, cadence: 'rapide', regles: 'japanese' });
   await ana.getByRole('button', { name: 'Annuler' }).click();
   await expect(ana.getByTestId('direct-choix')).toBeVisible();
-  await expect(ana.getByRole('button', { name: '13 × 13' })).toHaveAttribute('aria-pressed', 'true');
+  // Le choix est gardé : le résumé le dit (les réglages se replient au retour).
+  await expect(ana.getByTestId('reglages-resume')).toContainText('13 × 13 · Rapide, 5 min + 3 × 20 s');
   expect(serveur.file).toHaveLength(0);
 });
 

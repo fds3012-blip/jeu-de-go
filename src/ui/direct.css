@@ -94,3 +94,10 @@
 .direct-delai-temps { font-size: 1.125rem; font-variant-numeric: tabular-nums; }
 /* #460 : prévenu avant de chercher, dans un encadré calme juste au-dessus du bouton (en petit gris, on ne le lisait pas). */
 .direct-prevenir { margin: 0; text-wrap: pretty; }
+/* #571 (loi de Hick) : réglages de la partie en ligne repliés derrière leur résumé (src/ui/ReglagesReplies.tsx). */
+.reglages-replies { display: grid; gap: 6px; min-width: 0; }
+.reglages-replies-tete { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 4px 4px 4px 14px; border-radius: 16px; background: var(--surface); }
+.reglages-replies-resume { flex: 1 1 9rem; margin: 0; min-width: 0; overflow-wrap: anywhere; font-weight: 700; text-wrap: pretty; }
+.reglages-replies-tete .lien { flex: none; min-height: 44px; min-width: 44px; padding: 0 10px; }
+.reglages-replies > p { margin: 0; text-wrap: pretty; }
+.reglages-replies-corps { display: grid; gap: 16px; padding-top: 6px; }
