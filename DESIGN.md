@@ -446,6 +446,26 @@ Vocabulaire. **Racine** : l'écran qu'ouvre un onglet. **Activité** : un écran
 
 Ce que ces règles ne changent pas : les écrans de compte bloquants (« Choisis ton pseudo », accord aux conditions) gardent une seule action ; les arrivées par lien (défi, partie partagée, Go du jour, rappel) ouvrent directement leur écran ; la règle d'en-tête de `docs/ux/navigation.md` reste valable hors activités. La règle 3 de ce document (leçon et problème gardent la barre du bas) est remplacée par A5 dès que Florian a validé la décision F3.
 
+## Principes de Florian
+
+Retours de Florian du 17/10 : trop d'informations par écran (#592) ; niveau, XP, taille du plateau, grade et cote montrés à l'ouverture de Jouer alors qu'ils ne servent qu'au lancement d'une partie (#613) ; thèmes d'Apprendre voulus en grille de cartes, comme « Par thème » de Problèmes (#614) ; puis « faire de même sur le reste : l'application doit être responsive et la plus visuelle possible » (#615). Les règles ci-dessous généralisent ces retours. Elles complètent E1 à E14 et A1 à A12 sans les répéter : quand une règle existe déjà, P renvoie vers elle. Audit et plan : `docs/ux/visuel-responsive-2026-10.md`.
+
+Chaque règle se vérifie sur les captures de `e2e/visuel-responsive-captures.spec.ts` (7 tailles : 360, 390, 430, 768 × 1024, 1024 × 768, 1440 × 900 et 844 × 390), en sombre, plus le clair à 390.
+
+| # | Règle | Comment on vérifie |
+|---|---|---|
+| P1 | **Une information n'apparaît qu'au moment où elle sert une décision.** Niveau et XP au Profil et dans la fête de niveau ; taille du plateau, grade et cote au lancement de la partie qui les utilise (feuille « Changer », partie classée, fin de partie). Un zéro ou un « ? » ne s'affiche pas : c'est une décision qui n'existe pas encore. Prolonge E7 et E12. | Pour chaque chiffre ou réglage visible au premier regard, nommer la décision qu'il sert **sur cet écran**. Sans réponse, il va à l'écran où elle se prend. |
+| P2 | **Un choix entre 3 éléments de même nature ou plus se montre en cartes visuelles**, pas en lignes de texte. Une carte = un visuel (mini-goban, portrait, motif, paysage), un nom sur une ligne, un état (« Maîtrisé », barre de progression, cadenas, sceau). Pas de description sous le nom (E6) : elle vient à l'écran suivant. Modèle : `.theme-carte` de `src/ui/SeriesThemes.tsx` (« Par thème » de Problèmes). | Aucune liste de choix où un nom est suivi de plus d'une ligne de texte. Chaque carte a un visuel venu du code. |
+| P3 | **Le go se montre avant de se dire.** Une notion qui se dessine (pierre, groupe, liberté, coup, ouverture) s'appuie sur un visuel existant : `MiniGoban`, `MOTIFS` des thèmes, `Board`, `Paysage`, `Portrait`, `Sceau`, `ChronoCourse`. Un visuel nouveau est dit dans la PR et suit `illustration-style` ou `personnages-go`. | Compter les phrases qui décrivent une position sans la montrer : 0. |
+| P4 | **Une phrase sous un groupe vaut pour tout le groupe.** Un mot du go qui ne concerne qu'un élément s'explique dans cet élément (au toucher, dans sa page, ou dans son `aria-label`), pas dans une phrase posée sur le groupe. Prolonge E9. | Contre-exemple relevé : « Le tesuji, c'est le coup malin qui change tout. » sous les 6 thèmes. |
+| P5 | **Un écran tient sans défilement inutile.** Une activité (partie, leçon, problème, course, revue, fin) ne défile jamais, à aucune des 7 tailles : le goban rapetisse avant. Une racine ou un écran de tâche tient en une hauteur à 390 × 844, sauf une liste longue (grille, historique, chemin) rangée **après** l'action principale. Un vide de plus de 96 px qui ne sépare rien est un défaut (Layout, « Espace blanc »). | `scrollHeight ≤ innerHeight` pour les activités ; pour les autres, la liste longue est le seul contenu sous la ligne de flottaison. |
+| P6 | **L'action principale reste en vue.** Si l'écran défile, l'action principale est fixée en bas (`.cta`) ou elle est la première carte, et rien d'autre ne prend son relief quand elle sort de l'écran. Prolonge E1. | Faire défiler jusqu'en bas : à chaque position, un seul relief, ou aucun seulement si l'action est déjà faite. |
+| P7 | **Le secondaire reste secondaire.** Les cartes secondaires d'un écran ont toutes le même traitement (`--surface`, sans bordure, même taille de visuel et de titre). Aucune n'a une bordure, un titre ou un visuel plus fort que la carte de l'action principale. Un chiffre de récompense hors fête ne dépasse pas `--fs-2xl`. Prolonge E11 et E13. | Vision floutée de la capture : la zone la plus forte est l'action principale ou le goban. |
+| P8 | **Une mise en page par classe de largeur**, pas une colonne de téléphone étirée. Moins de 600 px : colonne unique, barre du bas. De 600 à 1023 px : contenu jusqu'à `--largeur-contenu` (720 px), grilles à 3 colonnes au moins, texte courant à `--mesure` (36rem, 70 signes environ). 1024 px et plus : barre latérale à gauche, contenu jusqu'à 1080 px, activités en deux zones (goban à gauche à la hauteur de l'écran, panneau à droite). Téléphone en paysage (hauteur de moins de 480 px) : activités en deux zones aussi. Le goban vaut toujours `min(largeur disponible, hauteur disponible)` et n'est jamais coupé. | Aux 7 tailles : pas de défilement horizontal, goban entier visible, une ligne de texte de 75 signes au plus, barre de navigation à sa place. |
+| P9 | **Rien ne passe sous la barre d'état.** La zone sûre du haut reste couverte par le fond quand la page défile, comme elle l'est en haut de page (`env(safe-area-inset-top)`). | Sur iPhone, faire défiler chaque racine : l'heure ne se pose sur aucun dessin. |
+
+Ce qu'on garde quand même : les règles E et A ; les libellés visibles (une carte n'est jamais une icône seule) ; l'explication d'un mot du go là où il apparaît pour la première fois (CLAUDE.md, règle 5), dans la carte ou la page qui le porte.
+
 ## Do's and Don'ts
 
 ### Do
@@ -475,7 +495,7 @@ Ce que ces règles ne changent pas : les écrans de compte bloquants (« Choisis
 ### Cibles
 - **Référence** : 390 × 844 (iPhone 12 à 15). Les captures de revue et les maquettes Figma sont à cette taille.
 - **Plancher** : 320 × 568 (iPhone SE) sans défilement horizontal ; aucun débord à 195 px de large ni à 200 % de texte.
-- **Plafond** : la colonne s'arrête à 560 px et se centre.
+- **Plafond** : la colonne s'arrête à 560 px et se centre. C'est l'état actuel ; la cible par classe de largeur est P8 (tablette, ordinateur, téléphone en paysage), mise en place par les lots V de `docs/ux/visuel-responsive-2026-10.md`.
 
 ### Points de rupture réellement utilisés
 | Requête | Ce qui change |
