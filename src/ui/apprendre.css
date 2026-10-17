@@ -354,7 +354,7 @@
   border-radius: var(--radius-pill); background: var(--text); color: var(--bg); font-size: var(--fs-s); font-weight: var(--fw-bold); letter-spacing: 0; }
 /* #293 : une seule erreur reste une vignette, comme les autres problèmes, au lieu d'un grand plateau pleine largeur. */
 .mes-erreurs .grille-pb { grid-template-columns: repeat(auto-fill, minmax(min(100%, 8rem), 1fr)); }
-.mes-erreurs-ecran { position: fixed; inset: 0; z-index: 30; background: var(--bg); overflow-y: auto; overscroll-behavior: contain; }
+.mes-erreurs-ecran { position: fixed; inset: 0; z-index: 30; background: var(--halo) no-repeat, var(--bg); overflow-y: auto; overscroll-behavior: contain; }
 .mes-erreurs-contenu { max-width: var(--largeur-max); margin: 0 auto;
   padding: calc(var(--space-3) + env(safe-area-inset-top, 0px)) var(--gouttiere) calc(var(--space-6) + env(safe-area-inset-bottom, 0px)); }
 /* Problèmes par paliers (issue #93). */

@@ -488,7 +488,7 @@ Ce que ces règles ne changent pas : les écrans de compte bloquants (« Choisis
 | `hover: hover` et `pointer: fine` | Survol, seulement à la souris. |
 
 ### Zones sûres
-`env(safe-area-inset-top)` sur `body`, `env(safe-area-inset-bottom)` sous la barre du bas, la barre d'actions, le bouton fixe et les feuilles. `scroll-padding-bottom` garde un élément focalisé au-dessus de la barre (WCAG 2.4.11).
+`env(safe-area-inset-top)` sur `body`, par la variable `--zone-haut`, et une bande fixe de même fond (`body::before`) qui couvre la barre d'état quand la page défile (#618) ; `env(safe-area-inset-bottom)` sous la barre du bas, la barre d'actions, le bouton fixe et les feuilles. `scroll-padding-bottom` garde un élément focalisé au-dessus de la barre (WCAG 2.4.11).
 
 ### Stratégie
 On ne cache pas l'action principale : on réduit d'abord le vide, puis les détails (E6), puis la taille du goban, qui suit la place restante. Le Profil doit tenir sans défiler en 390 × 844 (vérifié par les tests).
