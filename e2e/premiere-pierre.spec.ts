@@ -13,7 +13,7 @@ test('première pierre en deux touches, accueil sans défilement', async ({ page
   await expect(cta).toHaveAccessibleName('Joue ta première partie contre Pomme');
   await expect(page.getByText(/Apprends le go en jouant\s: je t’explique chaque coup\./)).toBeVisible();
   await expect(page.getByRole('heading', { level: 2, name: 'Pomme' })).toBeVisible();
-  await expect(page.getByText(/Ton premier adversaire, sur 9\s×\s9/)).toBeVisible();
+  await expect(page.getByText('Ton premier adversaire', { exact: true })).toBeVisible();
   // Rien à lire avant la première pierre : ni niveau, ni XP, ni explication du kyu.
   await expect(page.getByTestId('barre-niveau')).toHaveCount(0);
   await expect(page.getByText(/kyu/)).toHaveCount(0);
@@ -76,7 +76,8 @@ test('« Changer » ouvre le choix de l’adversaire et de la taille', async ({ 
   await feuille.getByRole('button', { name: 'Fermer' }).click();
   await expect(feuille).toBeHidden();
   await expect(page.getByRole('heading', { level: 2, name: 'Caillou' })).toBeVisible();
-  await expect(page.getByText(/Ton premier adversaire, sur 13\s×\s13/)).toBeVisible();
+  // #592 : la taille ne s'écrit plus sous l'adversaire ; le goban d'accueil la montre.
+  await expect(page.getByTestId('plateau-accueil').locator('svg.board')).toHaveAttribute('aria-label', 'Plateau de go 13 × 13');
   await expect(page.locator('.cta')).toHaveText('Joue ta première partie');
   await expect(page.locator('.cta')).toHaveAccessibleName('Joue ta première partie contre Caillou');
 });

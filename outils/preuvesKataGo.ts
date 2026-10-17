@@ -4,6 +4,9 @@
 //   npm run fetch-model
 //   npm run preuves-katago            (toutes les leçons contrôlées)
 //   npm run preuves-katago -- l30     (une leçon ; les analyses déjà figées et toujours valables sont gardées)
+//   npm run preuves-katago -- ouvertures [h-sansan…]
+//                                     (#591 : le répertoire d'ouvertures, src/content/ouvertures.ts, figé à part dans
+//                                     src/go/preuves-ouvertures.json ; mêmes réglages, même format)
 //
 // TensorFlow natif conseillé (sinon des heures) : @tensorflow/tfjs-node, installé dans le projet
 // (`npm i --no-save @tensorflow/tfjs-node`) ou dans un dossier à part désigné par TFJS_NODE_DIR.
@@ -15,10 +18,14 @@ import { LESSONS_FR } from '../src/content/lessons';
 import { fromRows } from '../src/go/position';
 import { play } from '../src/go/rules';
 import { fromLabel } from '../src/go/coords';
-import { CONTROLES, REGLAGES, cleDe, etiquette, inverser, positionsDe, rowsSym, temoins, transformer, type Analyse, type APosition, type Preuves } from '../src/go/preuvesKataGo';
+import { OUVERTURES } from '../src/content/ouvertures';
+import {
+  CONTROLES, REGLAGES, cleDe, etiquette, inverser, positionsDe, positionsDOuverture, rowsSym, temoins, transformer, type Analyse, type APosition, type Preuves,
+} from '../src/go/preuvesKataGo';
 
 const MODELE = fileURLToPath(new URL(`../public/models/${REGLAGES.modele}.bin.gz`, import.meta.url));
-const FIXTURE = fileURLToPath(new URL('../src/go/preuves-katago.json', import.meta.url));
+const OUV = process.argv.includes('ouvertures');
+const FIXTURE = fileURLToPath(new URL(OUV ? '../src/go/preuves-ouvertures.json' : '../src/go/preuves-katago.json', import.meta.url));
 
 async function tensorflow() {
   const dir = process.env.TFJS_NODE_DIR;
@@ -80,30 +87,46 @@ async function apres(p: APosition, l: string, k: number) {
   return { avance: +(-a.lead).toFixed(2), replique: etiquette(rep < 0 ? -1 : inverser(rep, n, k), n) };
 }
 
-const filtre = process.argv.slice(2).filter(a => /^l\d+$/.test(a));
+/** Analyse une position (racine dans chaque symétrie, puis chaque coup à juger et les témoins), et l'enregistre. */
+async function analyser(p: APosition, nom: string) {
+  const a: Analyse = preuves.positions[p.cle] ?? { rows: p.rows, trait: p.trait, racines: [], coups: {}, repliques: {} };
+  if (a.racines.length !== REGLAGES.symetries.length) a.racines = [];
+  for (const k of REGLAGES.symetries) if (!a.racines.some(r => r.sym === k)) a.racines.push(await racine(p, k));
+  for (const m of [...new Set([...p.coups, ...temoins(a)])]) {
+    if (a.coups[m]?.length === REGLAGES.symetries.length && a.repliques?.[m]?.length === REGLAGES.symetries.length) continue;
+    a.coups[m] = []; a.repliques ??= {}; a.repliques[m] = [];
+    for (const k of REGLAGES.symetries) { const r = await apres(p, m, k); a.coups[m].push(r.avance); a.repliques[m].push(r.replique); }
+    console.log(`${nom} ${p.trait === 1 ? 'Noir' : 'Blanc'} ${m} : ${a.coups[m].join(' ')} (${((Date.now() - t0) / 60000).toFixed(1)} min)`);
+  }
+  preuves.positions[cleDe(p.rows, p.trait)] = a;
+  enregistrer();
+}
+
 const t0 = Date.now();
-for (const c of CONTROLES) {
-  if (filtre.length && !filtre.includes(c.lecon)) continue;
-  const l = LESSONS_FR.find(x => x.id === c.lecon);
-  if (!l) throw new Error(`${c.lecon} : leçon absente`);
-  for (const p of positionsDe(l, c)) {
-    const a: Analyse = preuves.positions[p.cle] ?? { rows: p.rows, trait: p.trait, racines: [], coups: {}, repliques: {} };
-    if (a.racines.length !== REGLAGES.symetries.length) a.racines = [];
-    for (const k of REGLAGES.symetries) if (!a.racines.some(r => r.sym === k)) a.racines.push(await racine(p, k));
-    for (const m of [...new Set([...p.coups, ...temoins(a)])]) {
-      if (a.coups[m]?.length === REGLAGES.symetries.length && a.repliques?.[m]?.length === REGLAGES.symetries.length) continue;
-      a.coups[m] = []; a.repliques ??= {}; a.repliques[m] = [];
-      for (const k of REGLAGES.symetries) { const r = await apres(p, m, k); a.coups[m].push(r.avance); a.repliques[m].push(r.replique); }
-      console.log(`${c.lecon}.${c.etape + 1} ${p.trait === 1 ? 'Noir' : 'Blanc'} ${m} : ${a.coups[m].join(' ')} (${((Date.now() - t0) / 60000).toFixed(1)} min)`);
-    }
-    preuves.positions[cleDe(p.rows, p.trait)] = a;
+if (OUV) {
+  const ids = process.argv.slice(2).filter(a => a !== 'ouvertures' && !a.startsWith('-'));
+  for (const o of OUVERTURES) {
+    if (ids.length && !ids.includes(o.id)) continue;
+    for (const [i, p] of positionsDOuverture(o).entries()) await analyser(p, `${o.id}.${i + 1}`);
+  }
+  if (!ids.length) {
+    const utiles = new Set(OUVERTURES.flatMap(o => positionsDOuverture(o).map(p => p.cle)));
     enregistrer();
+    enregistrer(Object.keys(preuves.positions).filter(k => !utiles.has(k)));
+  }
+} else {
+  const filtre = process.argv.slice(2).filter(a => /^l\d+$/.test(a));
+  for (const c of CONTROLES) {
+    if (filtre.length && !filtre.includes(c.lecon)) continue;
+    const l = LESSONS_FR.find(x => x.id === c.lecon);
+    if (!l) throw new Error(`${c.lecon} : leçon absente`);
+    for (const p of positionsDe(l, c)) await analyser(p, `${c.lecon}.${c.etape + 1}`);
+  }
+  // Les positions qui ne servent plus à aucune leçon sont retirées (toutes les leçons contrôlées sont relues).
+  if (!filtre.length) {
+    const utiles = new Set(CONTROLES.flatMap(c => positionsDe(LESSONS_FR.find(x => x.id === c.lecon)!, c).map(p => p.cle)));
+    enregistrer();
+    enregistrer(Object.keys(preuves.positions).filter(k => !utiles.has(k)));
   }
 }
-// Les positions qui ne servent plus à aucune leçon sont retirées (toutes les leçons contrôlées sont relues).
-if (!filtre.length) {
-  const utiles = new Set(CONTROLES.flatMap(c => positionsDe(LESSONS_FR.find(x => x.id === c.lecon)!, c).map(p => p.cle)));
-  enregistrer();
-  enregistrer(Object.keys(preuves.positions).filter(k => !utiles.has(k)));
-}
-console.log(`Preuves KataGo figées dans src/go/preuves-katago.json (${((Date.now() - t0) / 60000).toFixed(1)} min).`);
+console.log(`Preuves KataGo figées dans ${OUV ? 'src/go/preuves-ouvertures.json' : 'src/go/preuves-katago.json'} (${((Date.now() - t0) / 60000).toFixed(1)} min).`);
