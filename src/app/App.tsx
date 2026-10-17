@@ -68,6 +68,7 @@ import { compteDe, estAnonyme } from '../data/defiLien';
 import { INVITEUR_AU_CHARGEMENT, JETON_AU_CHARGEMENT, ecouterJetonDefi } from './adresseDefi';
 import { PARTIE_AU_CHARGEMENT, ecouterJetonPartie } from './adressePartie';
 import { deposerCopieEtude } from './copieEtude';
+import type { Branchement } from './retourSysteme';
 import { ESSAI_KEY, decider, etatCompte, lireEssai, noterFinDePartie, partiesTerminees, type Acces, type EtatCompte, type Raison } from './essai';
 import { compteVientDEtreCree, moyenConnexion, noterConnexionPar } from './entonnoir';
 import { aRattacher, annoncer, definirRetour, prendreRetour } from './connexionGoogle';
@@ -1135,6 +1136,33 @@ export function App() {
     track(EVENTS.revisionCarteVue, { n: revisionsDues });
   }, [accueilVisible, revisionsDues, home.nouveau]);
   useEffect(() => { document.title = titreDocument; }, [titreDocument]);
+  // #606 (N1, A7) : le retour du système fait ce que fait « ‹ » (src/app/retourSysteme.ts, hors du JS initial).
+  const lectureRetour = useRef<Branchement>(null!);
+  lectureRetour.current = {
+    horsRacine: () => !accueilVisible,
+    // Sans bouton « ‹ » : placement (rien d'enregistré, A11), arrivée d'un défi, partie partagée ; racine d'un autre onglet : Jouer.
+    repli: () => {
+      if (pseudoAChoisir || accordAMontrer) return;
+      if (tab === 'jouer' && enPlacement) { setEnPlacement(false); window.scrollTo({ top: 0 }); }
+      else if (enDefi && defi.vue === 'arrivee') quitterDefi();
+      else if (enPartagee) { setPartagee(null); window.scrollTo({ top: 0 }); }
+      else if (!accueilVisible) go('jouer');
+    },
+    // Lu par src/app/retourSysteme.ts (`ecranDe`) pour l'événement `retour_systeme`.
+    etat: () => [ecranTitre, tab, vueProfil, !!aide, !!serie3, !!themeVu, directPlein, reglages, !!introRegles && !playing],
+  };
+  const retourSysteme = useRef<{ verifier: () => void } | null>(null);
+  useEffect(() => {
+    let vivant = true, arreter = () => {};
+    // Chargé tout de suite, en parallèle du premier écran : un retour juste après l'ouverture ne ferme pas l'app.
+    void import('./retourSysteme').then(m => {
+      if (!vivant) return;
+      const r = m.brancherRetourSysteme(() => lectureRetour.current);
+      retourSysteme.current = r; arreter = r.arreter;
+    }, () => { /* hors ligne sans le module : le retour reste celui du système */ });
+    return () => { vivant = false; arreter(); retourSysteme.current = null; };
+  }, []);
+  useEffect(() => { retourSysteme.current?.verifier(); });
   // Accueil v3 : `premier_ecran_vu`, une fois, quand l'accueil est affiché et utilisable (page chargée, polices prêtes).
   // `nouveau` : tout premier lancement sur l'appareil (aucune partie, aucun retour). Dénominateur des 60 premières secondes.
   const ecranVu = useRef(false);

@@ -57,6 +57,20 @@ test.describe('écran manquant', () => {
     await expect(page.getByRole('heading', { name: 'Ton parcours' })).toBeVisible();
   });
 
+  test('#606 : sur l’écran d’erreur, le retour du système ramène à l’accueil (comme « Retour à l’accueil »)', async ({ page }) => {
+    await page.addInitScript(k => sessionStorage.setItem(k, String(Date.now())), RECHARGE_KEY);
+    await page.route(/\/assets\/Profil-[\w-]+\.js(\?.*)?$/, r => r.abort('failed'));
+    await page.goto('/');
+    await expect.poll(() => page.evaluate(() => typeof (history.state as { mochiNav?: number } | null)?.mochiNav)).toBe('number');
+    await NAV(page).getByRole('button', { name: 'Profil' }).click();
+    const erreur = page.getByTestId('ecran-erreur');
+    await expect(erreur).toBeVisible({ timeout: 20_000 });
+    await page.goBack();
+    await expect(erreur).toHaveCount(0);
+    await expect(page.locator('.cta')).toBeVisible();
+    await expect(NAV(page).getByRole('button', { name: 'Jouer' })).toHaveAttribute('aria-current', 'page');
+  });
+
   test('en anglais, l’écran d’erreur parle anglais', async ({ page }) => {
     await page.addInitScript(k => sessionStorage.setItem(k, String(Date.now())), RECHARGE_KEY);
     await page.route(/\/assets\/Profil-[\w-]+\.js(\?.*)?$/, r => r.abort('failed'));
