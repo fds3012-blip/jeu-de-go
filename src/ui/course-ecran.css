@@ -22,7 +22,6 @@
 .course-carte-texte b { font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: var(--fs-l); letter-spacing: var(--tracking-titre); line-height: 1.2; }
 .course-carte-texte small { color: var(--muted); font-size: var(--fs-legende); line-height: 1.3; }
 .course-carte-meilleur { color: var(--text); font-weight: var(--fw-bold); }
-.course-carte > svg:last-child { flex: none; color: var(--muted); }
 .course-en-cours { padding-bottom: var(--space-4); }
 
 .course-consigne .course-picto { display: block; margin: var(--space-4) auto var(--space-2); color: var(--danger-texte); }
