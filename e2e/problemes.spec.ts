@@ -64,7 +64,8 @@ test('problèmes sans compte : erreur, bonne réponse, suite et problème suivan
   const lecteur = page.locator('.lecteur');
   await expect(lecteur).toHaveAttribute('data-probleme', /.+/);
   await expect(lecteur).not.toHaveAttribute('data-probleme', 'b1');
-  await expect(lecteur.locator('.lecteur-tete .difficulte')).toHaveText(/Facile/);
+  // #592 : la difficulté ne s'affiche plus dans le lecteur ; elle reste lisible sur l'attribut (1 cran : « Facile »).
+  await expect(lecteur).toHaveAttribute('data-difficulte', '1');
 
   // Le problème réussi reste coché après rechargement.
   await page.reload();

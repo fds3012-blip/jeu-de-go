@@ -76,7 +76,7 @@ for (const largeur of [390, 320]) {
 
     // Accueil d'un nouveau joueur (v3) : promesse de Mochi, adversaire nommé sans rang, action principale, tuiles.
     await expect(page.getByText('Learn Go by playing: I’ll explain every move.')).toBeVisible();
-    await expect(page.getByText(/Your first opponent, on 9\s×\s9/)).toBeVisible();
+    await expect(page.getByText('Your first opponent', { exact: true })).toBeVisible();
     await expect(page.getByText(/kyu/)).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Change' })).toBeVisible();
     const cta = page.getByRole('button', { name: 'Play your first game against Pomme' });
@@ -113,13 +113,11 @@ for (const largeur of [390, 320]) {
     await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: 'Puzzles' }).click();
     await expect(page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: 'Puzzles' })).toHaveAttribute('aria-current', 'page');
     await expect(page.getByRole('heading', { name: /^Daily Go #\d+$/ })).toBeVisible();
-    await expect(page.getByText('The same puzzle for everyone, today.')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Solve the Daily Go' })).toHaveText('Solve');
-    await expect(page.getByText(/^(Black|White) to play$/).first()).toBeVisible();
     await expect(page.getByText('Create your account to keep your streak and solved puzzles on all your devices.')).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Puzzles', exact: true })).toBeVisible();
-    await expect(page.locator('[data-palier-en-cours]')).toContainText('Your tier');
-    await expect(page.locator('[data-palier-en-cours]')).toContainText('30 to 25 kyu');
+    // #592 : le palier en cours n'a plus que son nom (le rang en kyu est dans « All puzzles »).
+    await expect(page.locator('[data-palier-en-cours] h3')).toHaveText('Beginner');
     await expect(page.getByText(/Problème|Résoudre|Palier|verrouillé/)).toHaveCount(0);
     await sansDebordement(page);
     await sansCoupe(page, largeur);

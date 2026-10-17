@@ -419,7 +419,7 @@ Le but : le regard tombe d'abord sur l'action principale (ou sur le goban quand 
 | E13 | **Un seul personnage mis en avant**, une seule image forte (le goban d'abord). | Compter portraits et illustrations de plus de 44 px. |
 | E14 | **Retirer avant d'ajouter.** Une PR qui ajoute un bloc au premier regard dit lequel elle retire, ou pourquoi aucun. | Revue de PR. |
 
-Cohérence avec l'audit d'épure (#592, `docs/ux/epure-2026-10.md`, en cours sur la branche `epure-592-a`) : ses premiers changements sur l'accueil appliquent E5, E6 et E9. Les tuiles de mode perdent leur ligne de détail (gardée dans l'`aria-label`), le titre visible « Aujourd'hui » devient le nom du groupe pour le lecteur d'écran, la bulle de la partie classée passe à une phrase, et la promesse de Mochi ne parle plus qu'avant la première pierre. Quand ce document d'audit paraît, ses seuils priment ; mets ce tableau à jour.
+Audit d'épure (#592) : `docs/ux/epure-2026-10.md`. Il applique ces règles sans en changer les seuils, et donne le tableau avant / après de chaque écran (blocs, plus grand groupe, phrases, lignes de détail, chiffres). Sur l'accueil : E5, E6 et E9 (tuiles de mode sans ligne de détail, détail gardé dans l'`aria-label` ; « Aujourd'hui » devenu le nom du groupe pour le lecteur d'écran ; bulle de la partie classée en une phrase ; promesse de Mochi seulement avant la première pierre), et E2 (le réglage « Plateau 9 × 9 » rangé sous l'adversaire, dans le même bloc : 6 blocs → 5). Dans Problèmes : E4, E6, E7, E8 et E13.
 
 Ce qu'on garde quand même : le libellé visible de chaque onglet et de chaque action (l'icône seule ne suffit pas), la phrase qui explique un mot du go là où il apparaît (atari, ko, komi, byo-yomi), et les états (à faire, fait, verrouillé) qui ne reposent jamais sur la couleur seule.
 
@@ -534,4 +534,4 @@ On ne cache pas l'action principale : on réduit d'abord le vide, puis les déta
 - `docs/design/encre-et-jade.md` cite un bandeau `.strip` ; dans le code, le bandeau joueur est `.joueur` (`partie.css`).
 - Il reste des hex et des tailles de police en dur dans des feuilles d'écran (audit #509) et des alias v1 dans les styles en ligne.
 - Les durées de pose (140 ms sur le goban) et de quelques animations d'écran sont écrites en dur, sans jeton.
-- Les seuils de l'Épure (E2, E3, E4) sont fixés ici ; `docs/ux/epure-2026-10.md` (#592) pourra les affiner.
+- Les seuils de l'Épure (E2, E3, E4) sont fixés ici ; l'audit #592 les a appliqués sans les changer. Deux tensions restent à trancher par Florian : grade et cote affichés ensemble sur l'accueil (E7, E8, décision #432), et les modes « En ligne » et « Un ami » visibles avant la première partie finie (E2, décision #429).

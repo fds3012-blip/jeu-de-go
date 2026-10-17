@@ -86,7 +86,14 @@ export function BilanSemaine({ semaine, db, onFermer, onProfil }: { semaine: Sem
   useEffect(() => {
     const el = ref.current;
     if (!el || typeof IntersectionObserver === 'undefined') { setVue(true); return; }
-    const io = new IntersectionObserver(([e]) => { if (e?.isIntersecting) { setVue(true); io.disconnect(); } }, { threshold: 0.5 });
+    // #592 : « vue » = lisible presque entière (90 %), au-dessus de la barre du bas fixe. Avec l'accueil épuré (tuiles
+    // plus basses), la carte remontait à moitié au-dessus de la barre au premier affichage : marquée vue avec seulement
+    // son titre lisible, elle ne revenait plus. Plus haute que la place visible (zoom 200 %), 90 % de cette place suffit.
+    const barre = Math.ceil(document.querySelector('nav.nav')?.getBoundingClientRect().height ?? 0);
+    const io = new IntersectionObserver(([e]) => {
+      const lisible = Math.min(e?.boundingClientRect.height ?? 0, e?.rootBounds?.height ?? Infinity) * 0.9;
+      if (e?.isIntersecting && e.intersectionRect.height >= lisible) { setVue(true); io.disconnect(); }
+    }, { threshold: [0, 0.25, 0.5, 0.75, 0.9, 1], rootMargin: `0px 0px -${barre}px 0px` });
     io.observe(el);
     return () => io.disconnect();
   }, []);

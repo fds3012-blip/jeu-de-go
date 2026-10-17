@@ -150,7 +150,8 @@ export function Accueil(p: Props) {
     <div className={`accueil${premier ? ' accueil-premier' : ''}${revele ? ' accueil-revele' : ''}`} data-premier={premier || undefined} data-epure={epure || undefined}>
       {/* Premier lancement : la promesse, en une phrase, par Mochi. Elle porte la classe de la réplique (`scene-bulle`) :
           c'est la seule voix de l'écran, et elle invite à la même action que le bouton. */}
-      {premier && (
+      {/* #592 : la promesse ne parle qu'avant la première pierre ; ensuite, elle a fait son travail. */}
+      {premier && epure && (
         <div className="promesse" data-testid="promesse">
           <Mochi size={40} />
           <p className="scene-bulle">{textes.bulle}</p>
@@ -174,7 +175,7 @@ export function Accueil(p: Props) {
           <Portrait id={adv.id} taille={32} decoratif signature={false} />
           <div className="reglage-contre">
             <h2>{adv.nom}</h2>
-            <span>{fr(t('accueil.contre', { role: t('accueil.premierAdversaire'), taille }))}</span>
+            <span>{t('accueil.premierAdversaire')}</span>
           </div>
           <button className="lien" aria-haspopup="dialog" aria-expanded={p.reglages} onClick={() => p.setReglages(true)}>{t('accueil.changer')}</button>
         </div>
@@ -189,7 +190,7 @@ export function Accueil(p: Props) {
                   <h2>{p.cote ? texteGradeDe(p.cote.cote) : t('accueil.classee.titre')}</h2>
                   {p.cote && <span data-testid="classee-cote">{texteCote(p.cote)}</span>}
                 </div>
-                <p className="scene-bulle">{fr(t(p.compte ? 'accueil.classee.bulle' : 'accueil.classee.sansCompte'))}</p>
+                <p className="scene-bulle">{t('accueil.classee.bulle')}</p>
               </div>
             </div>
           ) : (
@@ -228,7 +229,7 @@ export function Accueil(p: Props) {
             <button type="button" className="mode" data-testid="mode-plus" aria-haspopup="dialog" aria-expanded={plusOuvert}
               aria-label={t('mode.plus.aria')} onClick={() => setPlusOuvert(true)}>
               <span className="mode-icone" aria-hidden="true"><IconeMode mode="plus" /></span>
-              <b>{t('mode.plus')}</b><small>{t('mode.plus.detail')}</small>
+              <b>{t('mode.plus')}</b>
             </button>
           )}
         </div>
@@ -239,8 +240,8 @@ export function Accueil(p: Props) {
 
         {/* Aujourd'hui : la bonne chose à faire en premier, mise en avant ; les autres tuiles suivent. */}
         {(tuiles.length > 0 || revisions) && (
-          <div className={`tuiles${enAvant ? ' tuiles-jour' : ''}`}>
-            {enAvant && <p className="tuiles-titre">{t('accueil.aujourdhui')}</p>}
+          // #592 : plus de titre visible « Aujourd'hui » ; le groupe garde son nom pour le lecteur d'écran.
+          <div className={`tuiles${enAvant ? ' tuiles-jour' : ''}`} role={enAvant ? 'group' : undefined} aria-label={enAvant ? t('accueil.aujourdhui') : undefined}>
             {tuiles.map(tu => <Tuile key={tu.genre} tuile={tu} p={p} etat={etat} defis={defis} />)}
             {/* #469 : jamais en avant (une seule action principale) ; elle suit les tuiles du jour. */}
             {revisions && <TuileRevisions r={revisions} />}
@@ -499,7 +500,6 @@ function TuileMode({ mode, p }: { mode: Mode; p: Props }) {
         aria-label={`${t('mode.enLigne')} : ${aJouer ? t('mode.enLigne.aJouer') : t('mode.enLigne.detail')}${cote ? `, ${cote}` : ''}`}>
         <span className="mode-icone" aria-hidden="true"><IconeMode mode="en_ligne" /></span>
         <b>{t('mode.enLigne')}</b>
-        <small>{aJouer ? t('mode.enLigne.aJouer') : cote ?? t('mode.enLigne.detail')}</small>
       </button>
     );
   }
@@ -507,7 +507,7 @@ function TuileMode({ mode, p }: { mode: Mode; p: Props }) {
     return (
       <button type="button" className="mode" data-testid="mode-ordi" aria-label={`${t('mode.ordi')} : ${p.textes.ctaNom}`} onClick={choisir}>
         <span className="mode-icone" aria-hidden="true"><Sceau id={p.adv.id} taille={26} /></span>
-        <b>{t('mode.ordi')}</b><small>{p.adv.nom}</small>
+        <b>{t('mode.ordi')}</b>
       </button>
     );
   }
@@ -517,23 +517,23 @@ function TuileMode({ mode, p }: { mode: Mode; p: Props }) {
       <button type="button" className={`mode${n ? ' a-jouer' : ''}`} data-testid="mode-ami" onClick={choisir}
         aria-label={n ? t('defi.accueil.aJouer', { n }) : t('defi.accueil.lien')}>
         <span className="mode-icone mode-pierres" aria-hidden="true"><span className="stone b" /><span className="stone w" /></span>
-        <b>{t('mode.ami')}</b><small>{n ? t('defi.accueil.tuileEtat') : t('mode.ami.detail')}</small>
+        <b>{t('mode.ami')}</b>
       </button>
     );
   }
   return (
     <button type="button" className="mode" data-testid={`mode-${mode}`} onClick={choisir} aria-label={t(TEXTES_MODE[mode].nom)}>
       <span className="mode-icone" aria-hidden="true"><IconeMode mode={mode} /></span>
-      <b>{t(TEXTES_MODE[mode].court)}</b><small>{t(TEXTES_MODE[mode].detail)}</small>
+      <b>{t(TEXTES_MODE[mode].court)}</b>
     </button>
   );
 }
 
 /** Textes des modes rangés en tuile simple ou sous « Plus » : nom complet (lu), nom court, détail, phrase de la feuille. */
 const TEXTES_MODE = {
-  deux: { nom: 'accueil.deux', court: 'mode.deux', detail: 'mode.deux.detail', texte: 'mode.deux.texte' },
-  decouverte: { nom: 'accueil.decouverte', court: 'mode.decouverte', detail: 'mode.decouverte.detail', texte: 'mode.decouverte.texte' },
-} as const satisfies Record<string, Record<'nom' | 'court' | 'detail' | 'texte', Parameters<typeof t>[0]>>;
+  deux: { nom: 'accueil.deux', court: 'mode.deux', texte: 'mode.deux.texte' },
+  decouverte: { nom: 'accueil.decouverte', court: 'mode.decouverte', texte: 'mode.decouverte.texte' },
+} as const satisfies Record<string, Record<'nom' | 'court' | 'texte', Parameters<typeof t>[0]>>;
 type ModeSimple = keyof typeof TEXTES_MODE;
 const estSimple = (m: Mode): m is ModeSimple => m in TEXTES_MODE;
 
