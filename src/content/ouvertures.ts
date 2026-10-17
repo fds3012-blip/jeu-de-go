@@ -23,22 +23,22 @@ const KOMOKU = 'AB[pp]AW[pd][dd]';
 export const OUVERTURES: readonly Ouverture[] = [
   // 9 × 9
   { id: 'n9-centre', taille: 9, sgf: '(;SZ[9];B[ee];W[ce];B[df];W[cf];B[dd])',
-    erreurs: [{ coup: 0, c: 'bh', perte: 0 }, { coup: 2, c: 'cg', perte: 0 }, { coup: 4, c: 'cd', perte: 0 }] },
+    erreurs: [{ coup: 0, c: 'bh', reponse: 'fd', perte: 7 }, { coup: 2, c: 'cg', reponse: 'df', perte: 2 }, { coup: 4, c: 'cd', reponse: 'dd', perte: 3 }] },
   { id: 'n9-coin', taille: 9, sgf: '(;SZ[9];B[df];W[fd];B[ff];W[dd])',
-    erreurs: [{ coup: 0, c: 'ch', perte: 0 }, { coup: 2, c: 'eh', perte: 0 }] },
+    erreurs: [{ coup: 0, c: 'ch', reponse: 'fd', perte: 3 }, { coup: 2, c: 'eh', reponse: 'cd', perte: 3 }] },
   // 19 × 19 : fuseki
   { id: 'g-coins', taille: 19, sgf: '(;SZ[19];B[pd];W[dp];B[pp];W[dd])',
-    erreurs: [{ coup: 0, c: 'jj', perte: 0 }, { coup: 2, c: 'jj', perte: 0 }] },
+    erreurs: [{ coup: 0, c: 'jj', perte: 4 }, { coup: 2, c: 'jj', perte: 3 }] },
   { id: 'g-bords', taille: 19, sgf: '(;SZ[19]AB[pd][pp]AW[dp][dd];B[pj])',
-    erreurs: [{ coup: 0, c: 'jj', perte: 0 }] },
+    erreurs: [{ coup: 0, c: 'jj', perte: 2 }] },
   // 19 × 19 : joseki du hoshi
   { id: 'h-approche', taille: 19, cadre: 'bas-gauche', sgf: `(;SZ[19]${HOSHI};W[fq];B[dn];W[dr];B[cq];W[iq])`,
-    erreurs: [{ coup: 1, c: 'ep', perte: 0 }, { coup: 1, c: 'fr', perte: 0 }] },
+    erreurs: [{ coup: 1, c: 'fr', reponse: 'eq', perte: 2 }], ailleurs: true },
   { id: 'h-sansan', taille: 19, cadre: 'bas-gauche', sgf: `(;SZ[19]${HOSHI};W[cq];B[cp];W[dq];B[ep];W[fq])`,
-    erreurs: [{ coup: 1, c: 'do', perte: 0 }, { coup: 1, c: 'cr', perte: 0 }] },
+    erreurs: [{ coup: 1, c: 'do', reponse: 'dq', perte: 3 }, { coup: 1, c: 'cr', reponse: 'dq', perte: 4 }], ailleurs: true },
   // 19 × 19 : joseki du komoku
   { id: 'k-tsuke', taille: 19, cadre: 'bas-gauche', sgf: `(;SZ[19]${KOMOKU};B[cp];W[eq];B[dq];W[ep];B[dn])`,
-    erreurs: [{ coup: 2, c: 'cq', perte: 0 }, { coup: 4, c: 'eo', perte: 0 }] },
+    erreurs: [{ coup: 2, c: 'cq', perte: 4 }, { coup: 4, c: 'eo', reponse: 'dp', perte: 9 }] },
   { id: 'k-kosumi', taille: 19, cadre: 'bas-gauche', sgf: `(;SZ[19]${KOMOKU};B[cp];W[eq];B[do];W[hq])`,
-    erreurs: [{ coup: 2, c: 'bo', perte: 0 }] },
+    erreurs: [{ coup: 2, c: 'bo', perte: 4 }] },
 ];

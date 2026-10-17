@@ -101,7 +101,7 @@ function LecteurOuverture({ o, onExit }: { o: Ouverture; onExit: () => void }) {
       <p className="ouv-etat" aria-hidden={!coup && !e}>
         {e ? <b className="ouv-etat-erreur">{tou('erreurTitre')}</b>
           : coup ? <>{tou('progression', { n: i, total: n })} · {tou('joue', { camp: camp(coup.couleur), point: toLabel(coup.point, taille) })}</>
-            : ' '}
+            : '\u00A0'}
       </p>
       <div className="lecteur-plateau">
         <div className="plateau-cadre">

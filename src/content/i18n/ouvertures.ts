@@ -82,8 +82,7 @@ const FR = {
   'o.h-approche.c3': 'Blanc glisse sous ton hoshi, sur la 2e ligne.',
   'o.h-approche.c4': 'Noir bloque en C3 : il ferme l’entrée du coin.',
   'o.h-approche.c5': 'Blanc s’étend sur le bord bas : ses pierres ont de la place.',
-  'o.h-approche.e1': 'E4, collée à ton hoshi : Blanc glisse en D2, sous ton coin.',
-  'o.h-approche.e2': 'F2, sous sa pierre : Blanc répond en E3 et t’enferme dans le coin.',
+  'o.h-approche.e1': 'F2, sous sa pierre : Blanc répond en E3 et t’enferme dans le coin.',
 
   // 19 × 19 : hoshi, l'invasion au 3-3
   'o.h-sansan.nom': 'Hoshi : l’invasion au 3-3',
@@ -187,8 +186,7 @@ const EN: { readonly [K in CleOuvertures]: string } = {
   'o.h-approche.c3': 'White slides under your hoshi, on the 2nd line.',
   'o.h-approche.c4': 'Black blocks at C3: it closes the way into the corner.',
   'o.h-approche.c5': 'White extends along the bottom side: its stones have room.',
-  'o.h-approche.e1': 'E4, stuck to your hoshi: White slides in at D2, under your corner.',
-  'o.h-approche.e2': 'F2, under its stone: White answers at E3 and shuts you in the corner.',
+  'o.h-approche.e1': 'F2, under its stone: White answers at E3 and shuts you in the corner.',
 
   'o.h-sansan.nom': 'Hoshi: the 3-3 invasion',
   'o.h-sansan.idee': 'White goes in under your hoshi (star point), at san-san (the 3-3 point). Block it and build a wall.',
