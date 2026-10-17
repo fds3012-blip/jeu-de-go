@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { brancher, fauxServeur } from './fauxSupabase';
-import { choisirMode, jouer, ouvrirPlus, passerJusquAuScore, plateau } from './plateau';
+import { choisirMode, deplierAvecMochi, jouer, ouvrirPlus, passerJusquAuScore, plateau } from './plateau';
 import { GO_DU_JOUR } from '../src/content/goDuJour.gen';
 import { demarrerParcours, ouvrirRevue, preparerRevue } from './revueFactice';
 import { avancerJusqua, ouvrirDepuisApprendre, surMoment } from './decouverte';
@@ -469,6 +469,7 @@ test('axe : partie de découverte (#524) : Apprendre, consigne, erreur, frontiè
   test.setTimeout(180_000);
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
+  await deplierAvecMochi(page);
   await expect(page.getByTestId('carte-decouverte')).toBeVisible();
   await verifier(page, 'Apprendre avec la découverte');
   await ouvrirDepuisApprendre(page);
