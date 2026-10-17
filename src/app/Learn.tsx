@@ -5,7 +5,7 @@
 import { Suspense, lazy, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { CHAPITRES, LESSONS, type Chapitre } from '../content/lessons';
 import { Bubble } from '../ui/Mochi';
-import { RangeeThemes } from '../ui/RangeeThemes';
+import { ThemesApprendre } from '../ui/ThemesApprendre';
 import { themesAvecLecons } from './themesApprendre';
 import type { Theme } from '../content/themesLecons';
 import { VignetteLecon } from '../ui/VignetteLecon';
@@ -96,7 +96,7 @@ export function LearnHome({ progress, onOpen, sync = 'local', compteRequis = () 
 
   const prochaine = bouton && <>
     <CarteProchaine refCarte={carte} etape={iEnCours >= 0 ? liste[iEnCours] : liste[0]} bouton={bouton} mochi={phraseMochi(liste, iEnCours)} onOpen={onOpen} compteRequis={compteRequis} />
-    {onTheme && <RangeeThemes themes={themesAvecLecons(LESSONS, progress)} onTheme={onTheme} />}
+    {onTheme && <ThemesApprendre themes={themesAvecLecons(LESSONS, progress)} onTheme={onTheme} />}
   </>;
 
   // #591 : au retour, le chemin revient sur la ligne « Ouvertures ».

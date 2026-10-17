@@ -99,7 +99,7 @@ test('une partie jouée sur le téléphone A (essai, puis compte) se retrouve su
   }
   // Une partie venue de A s'ouvre dans la revue.
   await lignes.nth(2).click();
-  await expect(b.page.getByRole('heading', { level: 2, name: 'Revoir ma partie' })).toBeVisible();
+  await expect(b.page.getByRole('heading', { level: 2, name: 'Revoir la partie' })).toBeVisible();
   await b.page.getByRole('button', { name: 'Retour à mes parties' }).click();
   // La partie de B part sur le compte ; celles de A ne sont pas renvoyées.
   await expect.poll(() => serveur.partiesPerso.length, { timeout: 10_000 }).toBe(3);
