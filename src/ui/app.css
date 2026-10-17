@@ -3,10 +3,17 @@
 @import './nav.css';
 @import './profil.css';
 *, *::before, *::after { box-sizing: border-box; }
+/* Zone sûre du haut (barre d'état, encoche). Une variable pour que les tests la simulent : Chromium n'a pas d'encoche (#618). */
+:root { --zone-haut: env(safe-area-inset-top, 0px); }
 html { background: var(--bg); }
 /* Halo de lampe : fixé en haut du document, il défile avec la page (pas de repeint au défilement). */
 body { margin: 0; background: var(--halo) no-repeat, var(--bg); color: var(--text); font-family: var(--font-ui); font-size: var(--fs-base); line-height: var(--lh-base);
-  -webkit-font-smoothing: antialiased; padding-top: env(safe-area-inset-top, 0px); min-height: 100vh; }
+  -webkit-font-smoothing: antialiased; padding-top: var(--zone-haut); min-height: 100vh; }
+/* P9 (#618) : la marge du haut part avec le défilement ; cette bande fixe garde la barre d'état sur le fond.
+   Même fond que body, posé au même endroit : invisible en haut de page. Au-dessus des écrans plein écran (z 30)
+   et des confettis (z 40), sous les fêtes annoncées (z 59-60, posées sous la zone) et les feuilles (couche du haut). */
+body::before { content: ""; position: fixed; z-index: 50; top: 0; left: 0; right: 0; height: var(--zone-haut);
+  background: var(--halo) no-repeat, var(--bg); pointer-events: none; }
 button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .app { max-width: var(--largeur-max); margin: 0 auto; padding: var(--space-3) var(--gouttiere) calc(150px + env(safe-area-inset-bottom, 0px)); }
