@@ -344,6 +344,7 @@ Lumière : `--halo`, un dégradé radial doré en haut de `body` (11 % d'or en s
 ### Tuiles et choix
 - **`.card`** : `--surface`, rayon 16 px, `padding: 14px 16px`, sans bordure.
 - **`.tuile`** (accueil, « Aujourd'hui ») : hauteur 68 px au moins, titre Bricolage 700 en 16 px, détail en `--muted` 13 px, vignette (mini-goban 44 ou 60 px) à gauche.
+- **`.tuile-pb`** (Problèmes, #620) : tuile secondaire à plat, sans bordure, 64 px au moins, visuel de 40 px (mini-goban, chrono), titre Bricolage 700 en `--fs-m`, détail en `--muted`. Groupées dans `.tuiles-pb`. Une seule carte d'action en tête de Problèmes : le Go du jour à faire, puis « Problème suivant » ; l'autre devient une tuile.
 - **`.mode`** (autres façons de jouer) : au trait, sans fond, icône en `--accent-texte`, nom en Bricolage 700 14 px. Un point d'or de 9 px quand un ami attend ton coup.
 - **`.seg`** (choix exclusif) : rail `--surface`, rayon 12 px ; le choix actif est une pastille inversée (`--text` sur `--bg`), 44 px de haut. Jamais pour deux bascules indépendantes.
 - **`.feedback`, `.notice`** : une teinte mêlée à la surface (`color-mix`, jade 16 %, hanko 16 % ou or 12 %), rayon 12 px, sans liseré.
@@ -351,7 +352,7 @@ Lumière : `--halo`, un dégradé radial doré en haut de `body` (11 % d'or en s
 ### Pastilles et badges
 - **Pastille XP** (`PastilleXp`, `.pastille-xp`) : fond or, texte `--encre-jade`, pilule, chiffre Bricolage 800. Annoncée en haut, au-dessus de tout (z-index 59), ne capte aucun toucher.
 - **État du Go du jour** (`.tuile-etat`) : pilule dans le coin, « À faire » sur or, « Fait » cerné de jade sur `--surface-2`.
-- **Série** (`.serie`) : pilule or à 16 %, flamme creuse tant que le Go du jour reste à faire, pleine après.
+- **Série** (`.serie`) : pilule or à 16 %, flamme creuse tant que le Go du jour reste à faire, pleine après. En haut de l'accueil, et à côté du Go du jour dans Problèmes (#620).
 - **Badges du Profil** (`.badge-bouton`) : rond de 44 px ; choisi : double anneau `--bg` puis `--accent-bord`.
 - **Pastille d'onglet** : point `--accent-trait` de 10 px sur l'icône, liseré de la couleur de la barre.
 

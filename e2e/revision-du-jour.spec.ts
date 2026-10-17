@@ -46,7 +46,7 @@ test('révision du jour : un problème déjà réussi revient à J+1, on le refa
 
   // Révision faite : un seul mot, la série de l'appareil vaut 1, le Go du jour reste à faire.
   await expect(page.getByText('Révision faite. D’autres problèmes reviendront demain.')).toBeVisible();
-  await expect(page.locator('.palmares-serie')).toContainText('1');
+  await expect(page.getByTestId('serie-problemes')).toContainText('1');
   await expect(page.getByRole('button', { name: /^Résoudre/ })).toBeVisible();
 
   // Calendrier : réussi du premier coup, prochaine échéance J+3 (base 4, étape 1).
@@ -88,7 +88,7 @@ test('un défi par jour : une leçon terminée fait vivre la série, sans cocher
   await nav(page, 'Jouer');
   await expect(page.getByRole('img', { name: 'Série de 1 jour' })).toBeVisible();
   await nav(page, 'Problèmes');
-  await expect(page.locator('.palmares-serie')).toContainText('1');
+  await expect(page.getByTestId('serie-problemes')).toContainText('1');
   // Le Go du jour n'est pas coché : « Résoudre » reste l'action principale.
   await expect(page.getByRole('button', { name: /^Résoudre/ })).toBeVisible();
 });

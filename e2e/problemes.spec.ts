@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { marquerGoDuJourFait } from './goDuJourFait';
 import { attendrePierre, jouer, plateau } from './plateau';
 
 // Issue #11 : problèmes sans connexion (copie locale des problèmes de base).
@@ -12,7 +13,9 @@ test('problèmes sans compte : erreur, bonne réponse, suite et problème suivan
   // Issue #196 : un écran, une action. Le Go du jour, un seul « Problème suivant », le palier en cours ; pas de grille ni de cadenas.
   await expect(page.getByRole('button', { name: 'Résoudre le Go du jour' })).toBeVisible();
   await expect(page.getByRole('button', { name: /^Problème suivant / })).toHaveCount(1);
-  await expect(page.locator('[data-palier-en-cours="debutant"]')).toContainText('Débutant');
+  // #620 : tant que le Go du jour reste à faire, « Problème suivant » est une tuile à plat, sans relief.
+  await expect(page.locator('.tuiles-pb').getByRole('button', { name: /^Problème suivant / })).toBeVisible();
+  await expect(page.locator('.cta')).toHaveCount(1);
   await expect(page.getByRole('button', { name: /^Problème \d+ : / })).toHaveCount(0);
   await expect(page.locator('svg.cadenas')).toHaveCount(0);
   // Le Go du jour passe avant l'invitation à se connecter.
@@ -68,8 +71,13 @@ test('problèmes sans compte : erreur, bonne réponse, suite et problème suivan
   await expect(lecteur).toHaveAttribute('data-difficulte', '1');
 
   // Le problème réussi reste coché après rechargement.
+  // #620 : le palier se lit sur la carte « Problème suivant », en tête une fois le Go du jour fait.
   await page.reload();
   await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
+  await marquerGoDuJourFait(page);
+  await page.reload();
+  await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
+  await expect(page.locator('[data-palier-en-cours="debutant"] h3')).toHaveText('Débutant');
   // Le palier en cours dit « N réussis », sans total.
   await expect(page.locator('[data-palier-en-cours]')).toContainText(/\d+\sréussis?/);
   await expect(page.locator('[data-palier-en-cours]').getByText(/\d+\s\/\s\d+/)).toHaveCount(0);
