@@ -88,6 +88,8 @@ export const frEcrans = {
   'pb.aide.apres': ' quand il ne lui reste qu’une liberté.',
   'pb.continuer': 'Problème suivant',
   'pb.tous': 'Tous les problèmes',
+  /** #602 : titre de la section sous le Go du jour ; « Problèmes » est maintenant le titre de l'écran. */
+  'pb.entrainement': 'Entraînement',
   'pb.verrouille': 'verrouillé',
   'pb.reussi': 'réussi',
   'pb.palierComplet': 'Palier complet',
