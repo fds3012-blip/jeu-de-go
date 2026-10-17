@@ -8,7 +8,8 @@ import { VERSION_CONDITIONS } from '../src/data/conditions';
 
 const ANA = '00000000-0000-4000-8000-000000000583';
 /** Lectures de la version acceptée (`mon_profil` … `select=conditions_version`). */
-const lecturesPreuve = (s: FauxServeur) => s.appels.filter(a => a.includes('/rest/v1/rpc/mon_profil') && a.includes('conditions_version')).length;
+// #584 : la preuve se lit dans la lecture partagée de `mon_profil` (toutes colonnes), pas dans un appel à part.
+const lecturesPreuve = (s: FauxServeur) => s.appels.filter(a => a.includes('/rest/v1/rpc/mon_profil')).length;
 const accords = (s: FauxServeur) => s.appels.filter(a => a.startsWith('POST /rest/v1/rpc/accepter_conditions')).length;
 
 async function telephone(browser: Browser, baseURL: string | undefined, serveur: FauxServeur, stockage: Record<string, string>): Promise<Page> {
