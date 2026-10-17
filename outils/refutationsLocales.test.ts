@@ -14,8 +14,11 @@ import { prouverLocale, jouer, signatureLocale, type PreuveLocale } from '../src
 import { EMPREINTE, REFUTATIONS_LOCALES } from '../src/go/refutations-locales.gen';
 import { startOf } from '../src/data/puzzles';
 import {
-  butApres, butsDe, coupsFaux, decoder, empreinteDe, genererRefutationsLocales, ordreRepliques, ordreRepliquesFin, problemesLocaux, repliqueProuvee, repliqueTient,
+  butApres, butFin, butLocal, butsDe, coupsFaux, decoder, empreinteDe, genererRefutationsLocales, meilleuresFin, ordreRepliques, ordreRepliquesFin, problemesLocaux, repliqueProuvee,
+  repliqueTient,
 } from './refutationsLocales';
+import { REFERENCES_FIN, butsFiges } from './referencesFin';
+import { THEME_DU_PROBLEME } from '../src/content/themes';
 
 const FICHIER = new URL('../src/go/refutations-locales.gen.ts', import.meta.url);
 const RACINE = new URL('../', import.meta.url);
@@ -54,17 +57,34 @@ describe('réfutations figées (#554) : fichier à jour', () => {
   });
 });
 
-// La revérification relit chaque preuve : plusieurs minutes au total, un test par problème.
+// #586 : les références de fin de partie sont figées (outils/referencesFin.ts) : sinon chaque test recalculait meilleuresFin
+// (ab01 : près de deux minutes d'un seul bloc). Celles de fin de partie et de comptage sont prouvées par
+// src/go/refutation-fin.test.ts ; les autres ici.
+describe.skipIf(MAJ)('réfutations figées (#586) : références de fin de partie', () => {
+  const avecFin = problemesLocaux(tous).filter(p => !butLocal(p) && butFin(p));
+  it('une référence figée par problème lu par compte de points, et rien d’autre', () => {
+    expect(Object.keys(REFERENCES_FIN).sort()).toEqual(avecFin.map(p => p.id).sort());
+  });
+  for (const pz of avecFin.filter(p => !['fin-de-partie', 'comptage'].includes(THEME_DU_PROBLEME[p.id] ?? ''))) {
+    it(`${pz.id} (${THEME_DU_PROBLEME[pz.id]}) : la référence figée est celle de meilleuresFin`, () => {
+      expect(meilleuresFin(pz, butFin(pz)!)).toEqual(REFERENCES_FIN[pz.id]);
+    }, 300_000);
+  }
+});
+
+// La revérification relit chaque preuve : plusieurs minutes au total, un test par problème, la main rendue à la boucle
+// d'événements entre deux coups faux (#586 : jamais un calcul de plus de quelques secondes d'un seul bloc).
 describe.skipIf(MAJ)('réfutations figées (#554, #558) : chaque réplique est prouvée sur la vraie position', () => {
   beforeEach(cederLaMain);
   for (const pz of problemesLocaux(tous).filter(p => REFUTATIONS_LOCALES[p.id])) {
-    it(`${pz.id}`, () => {
+    it(`${pz.id}`, async () => {
       const r = REFUTATIONS_LOCALES[pz.id], faux = coupsFaux(pz), labels = new Set(faux.map(f => toLabel(f, pz.size)));
       // Mémoire par signature locale (src/go/refutation-locale.ts, signatureLocale) : vérifiée plus bas.
-      const memo = new Map<string, PreuveLocale | null>(), buts = butsDe(pz);
+      const memo = new Map<string, PreuveLocale | null>(), buts = butsFiges(pz);
       // Les exceptions sont des coups faux légaux.
       for (const k of Object.keys(r.sauf ?? {})) expect(labels.has(k), `${pz.id} ${k}`).toBe(true);
       for (const f of faux) {
+        await cederLaMain();
         const code = r.sauf?.[toLabel(f, pz.size)] ?? r.defaut;
         if (!code) continue;
         expect(repliqueTient(pz, f, code, memo, buts), `${pz.id} ${toLabel(f, pz.size)} → ${code}`).toBe(true);
@@ -75,12 +95,14 @@ describe.skipIf(MAJ)('réfutations figées (#554, #558) : chaque réplique est p
 
 describe.skipIf(MAJ)('réfutations figées (#554, #558) : la réplique nommée par le texte est jouée quand elle est prouvée', () => {
   beforeEach(cederLaMain);
+  // Buts lus à la collecte : sans recherche (références figées) ; butsDe y calculait meilleuresFin de chaque problème.
   for (const pz of problemesLocaux(tous).filter(p => REFUTATIONS_LOCALES[p.id])) {
-    const buts = butsDe(pz);
+    const buts = butsFiges(pz);
     if (!buts.local && !buts.fin) continue;
-    it(`${pz.id}`, () => {
+    it(`${pz.id}`, async () => {
       const r = REFUTATIONS_LOCALES[pz.id], memo = new Map<string, PreuveLocale | null>();
       for (const f of coupsFaux(pz)) {
+        await cederLaMain();
         const d = decoder(r.sauf?.[toLabel(f, pz.size)] ?? r.defaut, pz.size);
         if (!d || d.preuve === 'prendre' || d.preuve === 'sauver') continue;
         // Premier point essayé : celui du texte s'il y en a un dans la zone (sinon une bonne réponse ou un point de la zone).

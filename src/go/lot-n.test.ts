@@ -17,7 +17,7 @@ import { avantMiseAJour } from './miseAJourTextes';
 import { plainKey, symmetries } from './lecteurs-lot-e';
 import { AVEC_KO, SANS_KO, attackerCaptures, captureEn, defenderFails, legal, sauveEn } from './lecteurs-lot-n';
 import { cederLaMain, preuveParCoup } from './preuve-par-coup';
-import { groupAt, play, type Position } from './rules';
+import { groupAt, neighbors, play, type Position } from './rules';
 
 // Recette du 28/09 (#195) : longues preuves synchrones, voir cederLaMain (preuve-par-coup.ts).
 beforeEach(cederLaMain);
@@ -301,8 +301,32 @@ describe('lot N : les suites des explications', () => {
 describe('lot N : n18 à l’horizon de quatre coups', () => {
   const p = pz('n18'), { pos, marked } = startOf(p);
   for (const [nom, o] of [['avec ko', AVEC_KO], ['sans ko', SANS_KO]] as const) {
-    it(`après C1, Blanc ne prend aucune pierre marquée en quatre coups (${nom})`, () => {
-      expect(sauveEn(pos, at('C1'), marked, 4, o)).toBe(true);
+    // sauveEn(pos, C1, marked, 4) d'un seul bloc : 45 s sur un poste, plus d'une minute en CI (#586 : au-delà de 60 s,
+    // « Timeout calling onTaskUpdate »), presque tout après Blanc B1 (sans ko). Même preuve, découpée, la main rendue
+    // entre deux morceaux (2 s au plus) : quel que soit le coup blanc légal, aucune pierre marquée n'est prise et Noir a
+    // une réponse (coup légal ou passe) après laquelle Blanc ne prend rien en trois coups. Les réponses sont essayées
+    // dans l'ordre du lecteur (libertés des cibles et leurs voisins, la passe, le reste) : l'ordre ne change pas la
+    // preuve, seulement sa durée.
+    // Puis le calcul de sauveEn (coup légal, cibles en place, !attackerCaptures) sur la même mémoire : chaque réponse
+    // y est déjà lue, il ne refait rien.
+    it(`après C1, Blanc ne prend aucune pierre marquée en quatre coups (${nom})`, async () => {
+      const apresC1 = legal(pos, at('C1'), o)!, memo = new Map<string, boolean>();
+      expect(apresC1).not.toBeNull();
+      expect(marked.every(t => apresC1.board[t] === 1)).toBe(true);
+      for (const w of [...Array(81).keys(), -1]) {
+        const r = legal(apresC1, w, o);
+        if (!r) continue;
+        expect(marked.every(t => r.board[t] === 1), `Blanc ${label(w)} prend`).toBe(true);
+        const ordre = marked.flatMap(t => [...groupAt(r.board, 9, t).liberties].flatMap(l => [l, ...neighbors(9)[l]]));
+        let defense: number | undefined;
+        for (const b of new Set([...ordre, -1, ...Array(81).keys()])) {
+          await cederLaMain();
+          const rb = legal(r, b, o);
+          if (rb && !attackerCaptures(rb, marked, 3, o, memo)) { defense = b; break; }
+        }
+        expect(defense, `Blanc ${label(w)} : aucune défense noire`).toBeDefined();
+      }
+      expect(attackerCaptures(apresC1, marked, 4, o, memo)).toBe(false);
     }, 300_000);
   }
 });

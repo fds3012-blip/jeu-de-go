@@ -26,8 +26,9 @@ export function preuveParCoup(id: string, pos: Position, answers: readonly numbe
 }
 
 /**
- * Rend la main à la boucle d'événements entre deux tests (à passer à `beforeEach`). Vitest enchaîne les tests
- * synchrones sans traiter les messages échangés avec le processus principal : une suite de preuves de plus de 60 s au
- * total suffit à déclencher « Timeout calling onTaskUpdate » sur une machine chargée, même si chaque test est court.
+ * Rend la main à la boucle d'événements (à passer à `beforeEach`, ou à attendre entre deux morceaux d'un long calcul).
+ * Vitest enchaîne les tests synchrones sans lire les réponses du processus principal ; un message resté plus de 60 s
+ * sans réponse lue échoue (« Timeout calling onTaskUpdate »). Ce qui compte est le plus long bloc sans rendre la main :
+ * au-delà de 30 s, outils/boucleLibre.setup.ts fait échouer le test (#586).
  */
 export const cederLaMain = (): Promise<void> => new Promise(r => setImmediate(r));
