@@ -672,9 +672,11 @@ export function App() {
           {lecon && <button type="button" className="lien" onClick={() => { setPlaying(false); setResultat(null); setTab('apprendre'); ouvrirLecon(lecon.id); }}>{t('fin.ouvrirLecon')}</button>}
         </>
       ),
+      // #602 (E11, E13) : contre le même adversaire, son grand portrait est juste au-dessus ; le sceau dans le bouton jade ne
+      // reste que pour présenter un nouveau visage (« Défier Caillou » après une victoire).
       action: (
         <button type="button" className="cta" onClick={() => lancer('ordi', f.cible as OpponentId)}>
-          <Sceau id={f.cible as OpponentId} taille={30} />{f.cta}
+          {f.cible !== adv.id && <Sceau id={f.cible as OpponentId} taille={30} />}{f.cta}
         </button>
       ),
       onAccueil: () => { setPlaying(false); setResultat(null); setIntro(false); setRepli(null); window.scrollTo({ top: 0 }); },
