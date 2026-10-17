@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import type { Db } from '../data/supabase';
 import { sessionProbable } from '../data/client';
-import { fetchGels, fetchProfile, fetchStreak } from '../data/lectureProfil';
+import { invaliderProfil, liveStreak, lireMonProfil } from '../data/lectureProfil';
 import { importerSerieAppareil, serieAEnvoyer } from '../data/serieServeur';
 import { LANCEMENT, SERIE_KEY, numeroDuJour } from './goDuJour';
 import { cleanProgress, mergeProgress, supabaseProgressStore, syncProgress, type Progress } from '../data/progress';
@@ -93,11 +93,12 @@ export function useSerie(db: Db | null, userId: string | undefined): number {
     if (!db || !userId || !online) { setSerie(0); return; }
     let alive = true;
     // À la connexion, la série de l'appareil est d'abord envoyée au serveur (issue #176), puis la série du serveur est lue.
-    // Un échec de l'envoi n'empêche pas la lecture.
+    // Un échec de l'envoi n'empêche pas la lecture. #584 : lecture partagée du profil ; relue si l'envoi a écrit.
     importerSerieAppareil(db, serieAEnvoyer(readLocal<unknown>(SERIE_KEY, null), numeroDuJour(new Date()), LANCEMENT))
-      .catch(() => null)
-      .then(() => fetchStreak(db, userId))
-      .then(r => { if (alive) setSerie(r.ok ? r.value : 0); }, () => { if (alive) setSerie(0); });
+      .then(r => { if (r.ok && r.value !== null) invaliderProfil(); }, () => null)
+      .then(() => lireMonProfil(db, userId))
+      .then(r => { if (alive) setSerie(r.ok && r.value ? liveStreak(r.value.streak_days, r.value.streak_last, new Date(), r.value.streak_freezes) : 0); },
+        () => { if (alive) setSerie(0); });
     return () => { alive = false; };
   }, [db, userId, online]);
   return serie;
@@ -113,7 +114,8 @@ export function useGelsServeur(db: Db | null, userId: string | undefined): numbe
   useEffect(() => {
     if (!db || !userId || !online) { setGels(null); return; }
     let alive = true;
-    fetchGels(db, userId).then(r => { if (alive) setGels(r.ok ? r.value : null); }, () => { if (alive) setGels(null); });
+    // #584 : lecture partagée du profil (une seule pour l'accueil).
+    lireMonProfil(db, userId).then(r => { if (alive) setGels(r.ok ? r.value?.streak_freezes ?? 0 : null); }, () => { if (alive) setGels(null); });
     return () => { alive = false; };
   }, [db, userId, online]);
   return gels;
@@ -139,7 +141,8 @@ export function useProfil(db: Db | null, cle = 0): ProfilJoueur | null {
   useEffect(() => {
     if (!db || !userId) return;
     let alive = true;
-    fetchProfile(db, userId).then(r => {
+    // #584 : lecture partagée avec usePseudo, useSerie et useGelsServeur (src/data/lectureProfil.ts).
+    lireMonProfil(db, userId, cle).then(r => {
       if (!alive || !r.ok || !r.value) return;
       const p = r.value;
       setProfil({ id: userId, pseudo: p.username, cote: p.rating, provisoire: p.cote_provisoire !== false, parties: p.cote_parties ?? 0, depart: p.cote_depart ?? null });
@@ -162,7 +165,7 @@ export function usePseudo(db: Db | null, userId: string | undefined, cle = 0): s
   useEffect(() => {
     if (!db || !userId || !online) return;
     let alive = true;
-    fetchProfile(db, userId).then(r => {
+    lireMonProfil(db, userId, cle).then(r => {
       // Pas de ligne de profil (création en cours côté serveur) : comme un compte sans pseudo.
       if (alive && r.ok) setLu({ id: userId, pseudo: r.value?.username ?? null });
     }, () => {});

@@ -58,8 +58,6 @@ const ORIGINAUX: [Cle, string, boolean?][] = [
   ['erreur.tropDEssais', 'Trop d’essais. Attends une minute et réessaie.'],
   ['erreur.envoiLien', 'Impossible d’envoyer le lien. Vérifie ton adresse.'],
   ['erreur.profil', 'Impossible de charger ton profil.'],
-  ['erreur.serie', 'Impossible de charger ta série.'],
-  ['erreur.gels', 'Impossible de charger tes gels.'],
   ['erreur.suppression', 'La suppression n’a pas abouti. Ton compte est intact. Réessaie dans un moment.'],
   ['erreur.serveur', 'Impossible de joindre le serveur. Vérifie ta connexion et réessaie.'],
   ['erreur.progression', 'Impossible de charger ta progression.'],

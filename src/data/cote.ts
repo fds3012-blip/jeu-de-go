@@ -5,6 +5,7 @@
 import type { Result } from './account';
 import { CODE_COMPTE_REQUIS, CODE_PSEUDO_REQUIS } from './compteRequis';
 import type { Db } from './supabase';
+import { invaliderProfil } from './lectureProfil';
 import type { Depart } from '../go/cote';
 
 export interface MaCote {
@@ -104,5 +105,6 @@ export async function choisirDepart(db: Db, depart: Depart, kyu?: number): Promi
   // `p_kyu` absent (undefined, non envoyé) hors « Je joue en club ».
   const { data, error } = await db.rpc('choisir_depart_cote', { p_depart: depart, p_kyu: depart === 'club' ? kyu : undefined });
   if (error || typeof data !== 'number') return { ok: false, error: refusDepart(error) };
+  invaliderProfil(); // #584
   return { ok: true, value: data };
 }

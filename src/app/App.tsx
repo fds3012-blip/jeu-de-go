@@ -16,7 +16,6 @@ import { Bubble } from '../ui/Mochi';
 import { Sceau } from '../ui/Sceau';
 import { CRAN_DEPART, cranDuNiveau, niveauGuide, OPPONENTS, type OpponentId } from '../engine';
 import { reseauEnCache } from '../engine/katago/cacheReseau';
-import { premierEcran } from '../premierEcran';
 import { bandeauReseau, proposerRepli, REPLI_HORS_LIGNE } from './horsLigne';
 import { ConsentModal } from './Confidentialite';
 import type { JoueurVu, VueProfil } from './Profil';
@@ -73,7 +72,6 @@ import { compteVientDEtreCree, moyenConnexion, noterConnexionPar } from './enton
 import { aRattacher, annoncer, definirRetour, prendreRetour } from './connexionGoogle';
 import { incidentRetour } from './fournisseurs';
 import { useAFaire } from './useAFaire';
-import { useDemandesAmis } from './demandesAmis';
 import type { ElementAFaire } from './aFaire';
 import { LimiteErreur } from './LimiteErreur';
 import { BandeauHorsLigne, InviteMiseAJour } from '../ui/Bandeaux';
@@ -94,8 +92,6 @@ const CarteBilanSemaine = lazy(() => import('../ui/BilanSemaine').then(m => ({ d
 const FeteTitre = lazy(() => import('../ui/FeteTitre'));
 
 // #433 : problèmes complets chargés à la demande (placement, série de fin de leçon) ; l'accueil lit le Go du jour léger.
-/** #584 : délai avant le préchargement de KataGo à l'approche de son adversaire (accueil affiché, récit du score lu). */
-const DELAI_APPROCHE_MS = 3000;
 const problemesLocaux = () => import('../content/problemesLocaux').then(m => m.PROBLEMES_LOCAUX);
 // Problèmes résolus et vus sur l'appareil : mêmes clés que SOLVED_KEY et VUS_KEY de Puzzles.tsx (vérifié par ecrans.test.ts),
 // recopiée ici pour que l'accueil n'embarque pas l'écran des problèmes.
@@ -388,13 +384,12 @@ export function App() {
   // Profil (issue #50) : sous-vue ouverte, et fenêtre de consentement fermée avec Échap pendant cette session.
   const [vueProfil, setVueProfil] = useState<VueProfil>(PAGE_CONFIDENTIALITE ? 'conditions'
     : RETOUR_GOOGLE?.profil && !ECRAN_COMPTE_AU_RETOUR && !DEFI_AU_RETOUR ? 'compte' : 'menu');
-  // #359 : demandes d'ami reçues (`mes_amis()`), relues à chaque changement d'écran : pastille du Profil et « À faire ».
-  const demandesAmis = useDemandesAmis(supabase, !!compteId && !playing, `${tab}|${vueProfil}`);
-  const { defis: aJouerEnLigne, elements: aFaire, pastilles, rappelGoDuJour, recherche: rechercheLente, relire: relireAFaire } = useAFaire(supabase, session?.user.id,
-    `${tab}|${defi?.vue ?? ''}|${enPlacement}|${lessonId ?? ''}|${lente}`, !playing && defi?.vue !== 'partie', {
+  // #359 : demandes d'ami reçues (`mes_amis()`), lues avec « À faire » (#584) : pastille du Profil et « À faire ».
+  const { defis: aJouerEnLigne, elements: aFaire, pastilles, rappelGoDuJour, recherche: rechercheLente, demandesAmis, relire: relireAFaire } = useAFaire(supabase, session?.user.id,
+    `${tab}|${vueProfil}|${defi?.vue ?? ''}|${enPlacement}|${lessonId ?? ''}|${lente}`, !playing && defi?.vue !== 'partie', {
       // #365 : série masquée, pas de « Garde ta série » (le Go du jour reste proposé, calmement).
       premier: home.nouveau, serie: settings.serieVisible ? serie : 0, duJourFait, goDuJour: duJour ? { numero: numeroJour, titre: duJour.title } : null,
-      lecons: LESSONS, progres: progress, demandesAmis,
+      lecons: LESSONS, progres: progress, amis: !!compteId,
     });
   // #440 : défis d'amis d'un côté (tuile « Un ami »), parties lentes de l'autre (« À toi de jouer (N) », point d'or).
   const defisEnAttente = aJouerEnLigne.filter(x => !x.lente);
@@ -643,10 +638,8 @@ export function App() {
       onAccueil: () => { setPlaying(false); window.scrollTo({ top: 0 }); },
     };
   }
-  let cibleFin: string | null = null;
   if (playing === 'ordi' && resultat) {
     const f = fin(adv, resultat.issue, resultat.stats, bilan, OPPONENTS);
-    cibleFin = f.cible;
     const coupure = f.bilan.texte.indexOf('. ');
     const lecon = f.lecon ? LESSONS.find(l => l.id === f.lecon) : undefined;
     finEcran = {
@@ -763,19 +756,6 @@ export function App() {
     void reseauEnCache().then(v => { if (vivant) setIaHorsLigne(v); });
     return () => { vivant = false; };
   }, [online]);
-  // #584 : l'adversaire que le joueur va affronter (accueil, ou « Affronter Bambou » en fin de partie) joue avec KataGo :
-  // le réseau se télécharge en fond (src/engine/katago/prechargement.ts : jamais en économie de données ni en 2G), pour
-  // que son premier coup n'attende pas 3,8 Mo. Après le premier écran et le récit du score ; moteur chargé à la demande.
-  const approche = cibleFin ?? (!playing && tab === 'jouer' ? adv.id : null);
-  const approcheKataGo = !!OPPONENTS.find(o => o.id === approche)?.katago;
-  useEffect(() => {
-    if (!approcheKataGo || !online) return;
-    let fini = false;
-    const t = setTimeout(() => {
-      void premierEcran().then(() => (fini ? undefined : import('../engine'))).then(m => { if (!fini) void m?.prechargerPourAdversaire(); }, () => { /* hors ligne : plus tard */ });
-    }, DELAI_APPROCHE_MS);
-    return () => { fini = true; clearTimeout(t); };
-  }, [approcheKataGo, online]);
   // #469 : avec un compte, la file de révision espacée se synchronise entre ses appareils (le plus récent gagne, élément
   // par élément). Module chargé à la demande, après le premier écran ; arrêté à la déconnexion. Sans compte : l'appareil.
   useEffect(() => {

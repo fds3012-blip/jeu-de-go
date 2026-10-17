@@ -18,22 +18,28 @@ export async function fetchProfile(db: Db, _userId: string): Promise<Result<Prof
 }
 
 /**
- * Série de jours du joueur connecté (profil `streak_days`, `streak_last`), telle qu'affichée :
- * 0 si le dernier jour joué date d'avant-hier ou plus (même règle que l'onglet Problèmes).
+ * #584 : lecture partagée de `mon_profil()` pour les crochets de l'app (pseudo, cote, série, gels : src/app/hooks.ts).
+ * À l'ouverture de l'accueil, quatre crochets lisaient la même ligne (quatre appels, dont deux identiques) : ils
+ * partagent maintenant une seule lecture. Clé : le client `db`, le compte et la `cle` de relecture de l'appelant (une
+ * `cle` plus grande que celle de la lecture gardée force une relecture : pseudo qui vient d'être choisi). Gardée
+ * `FRAICHEUR_PROFIL_MS` au plus, oubliée en cas d'erreur et après chaque écriture qui change le profil
+ * (`invaliderProfil` : pseudo, départ de la cote, problème, série, coup ou abandon d'une partie classée).
+ * Après sa propre écriture, un écran relit par `fetchProfile`, jamais par cette lecture.
  */
-export async function fetchStreak(db: Db, _userId: string, now = new Date()): Promise<Result<number>> {
-  const { data, error } = await db.rpc('mon_profil').select('streak_days, streak_last, streak_freezes').maybeSingle();
-  if (error) return { ok: false, error: t('erreur.serie') };
-  if (!data) return { ok: true, value: 0 };
-  return { ok: true, value: liveStreak(data.streak_days, data.streak_last, now, data.streak_freezes) };
+export const FRAICHEUR_PROFIL_MS = 30_000;
+let partage: { db: Db; userId: string; cle: number; t: number; p: Promise<Result<Profile | null>> } | null = null;
+
+export function lireMonProfil(db: Db, userId: string, cle = 0, maintenant = Date.now()): Promise<Result<Profile | null>> {
+  const g = partage;
+  if (g && g.db === db && g.userId === userId && cle <= g.cle && maintenant - g.t < FRAICHEUR_PROFIL_MS) return g.p;
+  const e = (partage = { db, userId, cle, t: maintenant, p: fetchProfile(db, userId) });
+  const oublier = () => { if (partage === e) partage = null; };
+  e.p.then(r => { if (!r.ok) oublier(); }, oublier);
+  return e.p;
 }
 
-/** Gels de série en réserve du joueur connecté (profil `streak_freezes`, écrit par le serveur seul ; issue #76). */
-export async function fetchGels(db: Db, _userId: string): Promise<Result<number>> {
-  const { data, error } = await db.rpc('mon_profil').select('streak_freezes').maybeSingle();
-  if (error) return { ok: false, error: t('erreur.gels') };
-  return { ok: true, value: data?.streak_freezes ?? 0 };
-}
+/** #584 : le profil vient de changer (ou va changer côté serveur) : la prochaine lecture partagée relit. */
+export function invaliderProfil(): void { partage = null; }
 
 /**
  * La série affichée retombe à 0 si le dernier problème réussi date d'avant-hier ou plus,

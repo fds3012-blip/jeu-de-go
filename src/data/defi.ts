@@ -12,6 +12,8 @@ import { adresseDejaPrise, donneesLangue, type EchecEnvoi, type Result } from '.
 import type { Tables } from './database.types';
 import type { Game } from './games';
 import type { Db } from './supabase';
+import { invaliderProfil } from './lectureProfil';
+import { invaliderAFaire } from './fraicheurAFaire';
 import { suivreLignes } from './tempsReel';
 import { t } from '../content/i18n/secondaires';
 import { messageServeur } from '../content/i18n/refus';
@@ -44,6 +46,7 @@ export async function creerDefi(db: Db): Promise<Result<{ partieId: string; jeto
   const session = await exigerCompte(db);
   if (!session.ok) return session;
   const { data, error } = await db.rpc('creer_defi');
+  invaliderAFaire(); // #584
   const ligne = data?.[0];
   if (estSuspendu(error)) return echec(t('defi.erreur.suspendu'));
   if (error || !ligne) return echec(error?.message);
@@ -56,6 +59,7 @@ export async function ouvrirDefi(db: Db, jeton: string): Promise<Result<{ partie
   const session = await exigerCompte(db);
   if (!session.ok) return session;
   const { data, error } = await db.rpc('rejoindre_defi', { p_jeton: jeton });
+  invaliderAFaire(); // #584
   // #363 : l'un des deux a bloqué l'autre. Le même refus dans les deux sens : le joueur bloqué n'en sait pas plus.
   if (error?.code === 'JGB01') return echec(t('defi.erreur.indisponible'));
   // #531 : compte suspendu par l'équipe.
@@ -99,8 +103,10 @@ async function corpsErreur(error: unknown): Promise<{ error?: unknown; message?:
  */
 export async function jouerCoupDefi(db: Db, partieId: string, coup: string): Promise<Result<Partial<Game> | null>> {
   const { data, error } = await db.functions.invoke<ReponseCoup>('game-action', { body: { action: 'defi_coup', game_id: partieId, move: coup } });
+  invaliderAFaire(); // #584
   if (error) return echec(messageRefus(await corpsErreur(error)));
   if (!data || data.ok !== true) return echec(messageRefus(data as { error?: string; message?: string } | null));
+  invaliderProfil(); // #584 : une fin de partie classée change la cote
   return { ok: true, value: data.game ?? null };
 }
 
@@ -126,6 +132,7 @@ export async function lireDefi(db: Db, partieId: string): Promise<Result<EtatDef
     db.from('defis').select('*').eq('partie_id', partieId).maybeSingle(),
     Promise.resolve(db.rpc('marquer_notifications_lues', { p_partie: partieId, p_type: undefined })).catch(() => null)
   ]);
+  invaliderAFaire(); // #584 : notifications de la partie lues
   if (partie.error || defi.error || !partie.data || !defi.data) return echec(partie.error?.message ?? defi.error?.message);
   return { ok: true, value: { partie: partie.data, defi: defi.data, resultat: temps.data ?? partie.data.result } };
 }
@@ -182,7 +189,9 @@ export function abonnerDefi(db: Db, partieId: string, suivi: SuiviDefi): () => v
 /** Abandonne le défi (autorisé sans compte pour un défi). Renvoie le résultat (`W+R` ou `B+R`). */
 export async function abandonnerDefi(db: Db, partieId: string): Promise<Result<string>> {
   const { data, error } = await db.rpc('resign_game', { p_game: partieId });
+  invaliderAFaire(); // #584
   if (error || !data) return echec(error?.message);
+  invaliderProfil(); // #584
   return { ok: true, value: data };
 }
 

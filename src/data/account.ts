@@ -7,7 +7,7 @@ import { langue, t } from '../content/i18n/secondaires';
 
 export type { Profile, Result } from './lectureProfil';
 import type { Profile, Result } from './lectureProfil';
-import { fetchProfile } from './lectureProfil';
+import { fetchProfile, invaliderProfil } from './lectureProfil';
 
 /**
  * Envoie l'e-mail de connexion (crée le compte s'il n'existe pas). Depuis #343, il porte un code à 6 chiffres
@@ -195,8 +195,8 @@ export async function pseudoDisponible(db: Db, pseudo: string, userId?: string):
 /** #531 : pseudo refusé par le serveur (mot interdit), dit pendant la saisie. */
 export type PseudoInterdit = { ok: false; error: string; raison: 'interdit' };
 
-// Lecture du profil, de la série et des gels : dans ./lectureProfil.ts, lue par l'accueil sans le reste de ce fichier (#513).
-export { fetchGels, fetchProfile, fetchStreak } from './lectureProfil';
+// Lecture du profil : dans ./lectureProfil.ts, lue par l'accueil sans le reste de ce fichier (#513 ; lecture partagée : #584).
+export { fetchProfile } from './lectureProfil';
 
 /** Enregistre le pseudo. La base vérifie à nouveau le format et l'unicité. */
 export async function saveUsername(db: Db, userId: string, raw: string): Promise<Result<Profile>> {
@@ -205,6 +205,7 @@ export async function saveUsername(db: Db, userId: string, raw: string): Promise
   // D4 (#530) : pas de `select('*')` en retour (colonnes privées fermées) : le profil est relu par mon_profil().
   const { error } = await db.from('profiles').update({ username: check.value }).eq('id', userId);
   if (error) return { ok: false, error: usernameErrorFromDb(error.code) };
+  invaliderProfil(); // #584
   const relu = await fetchProfile(db, userId);
   if (!relu.ok || !relu.value) return { ok: false, error: usernameErrorFromDb(undefined) };
   return { ok: true, value: relu.value };

@@ -1,4 +1,4 @@
-// Liste des amis (issue #359) pour l'écran « Mes amis » (Amis.tsx). Pastille et « À faire » : demandesAmis.ts.
+// Liste des amis (issue #359) pour l'écran « Mes amis » (Amis.tsx). Pastille et « À faire » : useAFaire.ts (#584).
 import { useCallback, useEffect, useState } from 'react';
 import { mesAmis, type Ami } from '../data/amis';
 import type { Db } from '../data/supabase';

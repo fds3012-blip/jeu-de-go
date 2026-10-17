@@ -6,6 +6,7 @@ import type { Result } from './account';
 import { t } from '../content/i18n';
 import { messageServeur } from '../content/i18n/refus';
 import type { Db } from './supabase';
+import { invaliderProfil } from './lectureProfil';
 
 export type Game = Tables<'games'>;
 
@@ -44,6 +45,7 @@ export async function gameAction(db: Db, body: GameAction): Promise<Result<GameA
   const { data, error } = await db.functions.invoke<GameActionResponse>('game-action', { body });
   if (error) return { ok: false, error: await errorMessage(error) };
   if (!data || !data.ok) return { ok: false, error: data ? messageServeur(data.error, data.message) : FALLBACK() };
+  invaliderProfil(); // #584 : une fin de partie classée change la cote
   return { ok: true, value: data };
 }
 

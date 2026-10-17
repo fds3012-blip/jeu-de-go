@@ -8,7 +8,7 @@ import { localiserProbleme } from '../content/problemesLangue';
 import { fromRows } from '../go/position';
 import { play, type MoveError, type Position } from '../go/rules';
 import { fromLabel } from '../go/coords';
-import { liveStreak } from './lectureProfil';
+import { invaliderProfil, liveStreak } from './lectureProfil';
 // #563 : liveStreak vit dans lectureProfil.ts (JS initial) ; réexportée ici pour les écrans et les tests.
 export { liveStreak };
 
@@ -165,5 +165,6 @@ export async function fetchPuzzleStats(db: Db, userId: string): Promise<Result<P
 export async function recordPuzzleAttempt(db: Db, puzzleId: string, solved: boolean): Promise<Result<number>> {
   const { data, error } = await db.rpc('record_puzzle_attempt', { p_puzzle: puzzleId, p_solved: solved });
   if (error || typeof data !== 'number') return { ok: false, error: t('erreur.essai') };
+  invaliderProfil(); // #584 : cote des problèmes, série, gels
   return { ok: true, value: data };
 }

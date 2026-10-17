@@ -1357,8 +1357,6 @@ export const en = {
   'erreur.tropDEssais': 'Too many tries. Wait a minute and try again.',
   'erreur.envoiLien': 'Couldn’t send the link. Check your address.',
   'erreur.profil': 'Couldn’t load your profile.',
-  'erreur.serie': 'Couldn’t load your streak.',
-  'erreur.gels': 'Couldn’t load your freezes.',
   'erreur.suppression': 'Deletion didn’t go through. Your account is intact. Try again in a moment.',
   'erreur.serveur': 'Can’t reach the server. Check your connection and try again.',
   'serveur.miseAJour': 'Server update in progress. Try again in a few minutes.',

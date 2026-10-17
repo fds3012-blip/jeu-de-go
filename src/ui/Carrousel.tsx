@@ -2,7 +2,8 @@
 // puis les 9 adversaires groupés par palier (les 3 encres des sceaux), en vignettes rondes.
 // Les verrouillés restent visibles (grisés, cadenas) mais ne se choisissent pas : un message dit qui battre d'abord.
 // Les battus portent une couronne et le tampon « BATTU ».
-import { useRef, useState, type KeyboardEvent } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
+import { OPPONENTS } from '../engine/adversaires';
 import { Couronne, Portrait, palierDe, type PortraitId } from './Portrait';
 import { battuAccorde, type SceauId } from './sceaux';
 import { fr } from './typo';
@@ -34,6 +35,11 @@ export function CarrouselAdversaires<I extends SceauId>({ cartes, choisi, onChoi
   const actuel = cartes.find(c => c.id === choisi) ?? cartes[0];
   // #509 (L4, n° 22) : l'adversaire montré à l'ouverture ne s'anime pas ; seul un nouveau choix fait entrer le portrait.
   const [nouveau, setNouveau] = useState(false);
+  // #584 : l'adversaire choisi joue avec KataGo : son réseau se télécharge en fond, pour que son premier coup n'attende
+  // pas 3,8 Mo (jamais en économie de données ni en 2G : src/engine/katago/prechargement.ts). Moteur chargé à la demande.
+  useEffect(() => {
+    if (OPPONENTS.find(o => o.id === choisi)?.katago) void import('../engine').then(m => m.prechargerPourAdversaire(), () => {});
+  }, [choisi]);
 
   function toucher(c: CarteAdversaire<I>) {
     if (!c.ouvert) { setMessage(fr(t('carrousel.verrou', { requis: c.requis ?? t('carrousel.precedent'), nom: c.nom }))); return; }

@@ -15,7 +15,8 @@ import { fr } from '../ui/typo';
 import { nombre as virgule, t as tr } from '../content/i18n/secondaires';
 import { readLocal, useProfil } from './hooks';
 import { PARTIES_KEY, type Parties } from './home';
-import { prechargerApresPartie, preloadKataGo } from '../engine';
+import { OPPONENTS, prechargerApresPartie, prechargerPourAdversaire, preloadKataGo } from '../engine';
+import { DELAI_PRECHARGEMENT_MS } from '../engine/katago/prechargement';
 import { usePreparationIA } from './progressionKataGo';
 import { usePreferences, useStored } from './settings';
 import { carteTerritoire, conseilPasser, passerEnEvidence, coupsJoues, descriptionIndices, descriptionQuiMene, DUREE_QUI_MENE, indicesRestants, INDICES_PAR_PARTIE, libelleAvantage, libelleCoup, messageAtari, messageIndice, metEnAtari, nouveauxAtari, partNoir, phraseQuiMene, QUI_MENE_PAR_PARTIE, quiMeneDisponible, quiMeneRestants } from './partie';
@@ -606,6 +607,14 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   // #584 : contre un adversaire qui joue avec KataGo, le chargement commence dès l'ouverture de la partie : le réseau
   // se télécharge (ou se lit du cache) pendant que le joueur choisit son premier coup.
   useEffect(() => { if (ai?.katago) preloadKataGo(); }, [ai?.katago]);
+  // #584 : victoire contre l'adversaire qui précède le premier adversaire KataGo : « Affronter Bambou » va suivre. Le
+  // réseau se télécharge en fond après le récit du score (jamais en économie de données ni en 2G : prechargement.ts).
+  useEffect(() => {
+    if (phase !== 'end' || !ai || ai.katago || (resigned ? 3 - resigned : sc.winner) !== 1) return;
+    if (!OPPONENTS[OPPONENTS.findIndex(o => o.id === ai.id) + 1]?.katago) return;
+    const t = setTimeout(() => void prechargerPourAdversaire(), DELAI_PRECHARGEMENT_MS);
+    return () => clearTimeout(t);
+  }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
   // #584 : l'ordi joue avec KataGo, qui démarre encore (téléchargement du réseau) : « L'IA se prépare… 2,1 / 3,8 Mo ».
   const preparation = usePreparationIA(phase === 'play' && thinking && !!ai?.katago);
   // Progression (issue #109) : la partie terminée rapporte de l'XP, une victoire contre l'ordi davantage
