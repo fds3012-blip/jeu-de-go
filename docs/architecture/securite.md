@@ -97,3 +97,7 @@ Quand Florian le décide : Supabase → Authentication → Sign In / Providers �
 - `titres_du_joueur(p_profile_id)` : pour le profil public (#560). `authenticated` seulement, compte avec pseudo exigé (JGC01, JGP01), mois publiés seulement, rien en cas de blocage dans un sens ou dans l'autre (`est_bloque`), ni cote ni rang. Aucun droit pour anon.
 - Garde-fou : sous 200 joueurs actifs, aucune ligne dans `titres_joueurs` : rien à lire, rien à afficher.
 - Après application : relancer l'audit de sécurité Supabase (advisors) ; attendu : deux avis « RLS sans politique » connus (`titres_mois` et les tables d'équipe existantes).
+
+## 7. Revue d'octobre 2026 (#578)
+
+Modèle de menace, constats, risques acceptés et ce qui reste à faire : `docs/architecture/modele-menace-2026-10.md`. Migration `20261017090000_durcissement_578.sql` (à appliquer à la main, **après** `20261001000100_abonnements_rappel.sql`) : plus aucun droit d'écriture pour `anon`, droits sans politique retirés à `authenticated`, adresse du rappel limitée aux services de notification des navigateurs, verrou dans `creer_defi`. Aucune donnée touchée.
