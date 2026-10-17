@@ -325,11 +325,11 @@ ou abandonné, notifications lues, demande d'ami, recherche lente).
 - Vitest : `src/engine/premierCoupKataGo.test.ts` (attente du démarrage au-delà de 15 s, repli annoncé, règles du
   préchargement), `src/data/lectureProfil.test.ts`, `src/app/aFaireFrais.test.ts`.
 - Playwright : `e2e/bambou-premier-coup.spec.ts`, `e2e/requetes-accueil.spec.ts`.
-- JS initial : 149,3 Ko (152 837 o, 24 o de moins que `main` après la fusion de #577). CSS initial inchangé (21,4 Ko).
+- JS initial : 149,3 Ko (152 837 o, 22 o de moins que `main` après la fusion de #577 : 152 859 o). CSS initial inchangé (21,4 Ko).
 
 ### Journal
 
 | Idée | Mesure | Verdict |
 | --- | --- | --- |
 | Préchargement depuis l'accueil (`App.tsx`) quand le bouton principal propose Bambou | +209 o gzip de JS initial | déplacé dans le carrousel et la fin de partie (morceaux à la demande) |
-| `useDemandesAmis` avec sa propre fraîcheur | +≈ 130 o de JS initial | fusionné dans la lecture de « À faire » (−24 o au total) |
+| `useDemandesAmis` avec sa propre fraîcheur | +≈ 130 o de JS initial | fusionné dans la lecture de « À faire » (−22 o au total) |
