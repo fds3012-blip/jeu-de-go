@@ -31,7 +31,9 @@ test('5 réussites d’affilée : le 6e problème est « Moyen », sans cote aff
     expect(id).toBeTruthy();
     expect(vus).not.toContain(id);
     vus.push(id!);
-    await expect(lecteur.locator('.lecteur-tete .difficulte')).toHaveText(/Facile/);
+    // #592 : « Facile » (1 cran) ; tant qu'elle ne change pas, la difficulté ne s'affiche pas dans l'en-tête.
+    await expect(lecteur).toHaveAttribute('data-difficulte', '1');
+    await expect(lecteur.locator('.lecteur-tete .difficulte')).toHaveCount(0);
     const r = REPONSES.get(id!)!;
     await expect(plateau(page, r.taille)).toBeVisible();
     await jouer(page, r.coup, r.taille);
@@ -42,6 +44,8 @@ test('5 réussites d’affilée : le 6e problème est « Moyen », sans cote aff
     await verdict.getByRole('button', { name: 'Problème suivant' }).click();
     await expect(lecteur).not.toHaveAttribute('data-probleme', id!);
   }
+  // La montée se voit au moment où elle arrive : « Moyen » s'affiche dans l'en-tête du 6e problème.
+  await expect(lecteur).toHaveAttribute('data-difficulte', '2');
   await expect(lecteur.locator('.lecteur-tete .difficulte')).toHaveText(/Moyen/);
 
   // La cote vit sur l'appareil, sous la clé citée dans la politique de confidentialité.

@@ -260,6 +260,16 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   };
   const open = list.find(p => p.id === openId) ?? (daily && openId === daily.id ? daily : pzArchive && openId === pzArchive.id ? pzArchive : undefined);
   const duJourOuvert = !!open && (open.id === daily?.id || archive !== null);
+  // #592 : pendant un problème, la difficulté se tait (elle a servi à le choisir), sauf quand elle change d'un problème
+  // au suivant (« Moyen » après des « Facile », #284) : un repère de progrès au moment où il arrive (DESIGN.md, E7).
+  const chaineRef = useRef<{ id: string; avant: number | null } | null>(null);
+  if (!open) chaineRef.current = null;
+  else if (chaineRef.current?.id !== open.id) {
+    const prec = chaineRef.current ? list.find(p => p.id === chaineRef.current!.id) : undefined;
+    chaineRef.current = { id: open.id, avant: prec ? niveau(prec.difficulty).crans : null };
+  }
+  const avant = chaineRef.current?.avant ?? null;
+  const difficulteChange = !!open && avant !== null && avant !== niveau(open.difficulty).crans;
   // Un problème ouvert hors Go du jour devient la référence du prochain choix (jamais deux fois de suite, pas de saut).
   useEffect(() => {
     if (open && !duJourOuvert) majCote(c => ouvrir(c, open));
@@ -284,7 +294,7 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
     // #549 : la série vient d'être maîtrisée : « Thème suivant » devient l'action principale, la série continue en lien.
     const versTheme = enSerie && maitriseVenue === enSerie ? themeSuivant(enSerie, series, maitrise) : null;
     return (
-      <PuzzlePlayer key={`${open.id}${enArchive ? '-archive' : ''}`} puzzle={open} rang={ordre.indexOf(open) + 1} confirmTouch={confirmTouch}
+      <PuzzlePlayer key={`${open.id}${enArchive ? '-archive' : ''}`} puzzle={open} rang={ordre.indexOf(open) + 1} confirmTouch={confirmTouch} difficulte={difficulteChange}
         surtitre={enSerie ? <SurtitreTheme serie={enSerie} affilee={etatThemes[enSerie]?.affilee ?? 0} record={recordTheme} /> : undefined}
         // #521 : un record de série par thème est un moment fort : invitation discrète à partager l'app (règle et plafond :
         // src/app/partageApp.ts).
@@ -429,7 +439,6 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
       {daily && (
         <section aria-labelledby="jour-titre">
           <h2 id="jour-titre" className="titre-pierres">{tr('accueil.goDuJour')} <span className="numero-du-jour">{tr('pb.numero', { numero })}</span><Glacon gels={stats ? stats.freezes : gels} /></h2>
-          <p className="muted small bases-aide">{tr('pb.duJourAide')}</p>
           <DuJour pz={daily} reussi={duJourReussi} vu={!!vus[daily.id] && !solved.has(daily.id)} onOpen={() => setOpenId(daily.id)} />
         </section>
       )}
@@ -452,10 +461,9 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
           <div className={`palier-en-cours${enCours.complet ? ' complet' : ''}`} data-palier-en-cours={enCours.id} data-reussis={enCours.reussis}>
             <Paysage id={enCours.id} />
             <div className="palier-en-cours-texte">
+              {/* #592 : le nom du palier seul ; son rang en kyu se lit dans « Tous les problèmes ». */}
               <div className="palier-nom">
-                <small className="palier-surtitre">{tr('pb.tonPalier')}</small>
                 <h3>{tr(`palier.${enCours.id}.nom`)}</h3>
-                <small>{tr(`palier.${enCours.id}.kyu`)}</small>
               </div>
               <div className="palier-etat">
                 {enCours.complet && <span className="palier-sceau" role="img" aria-label={tr('pb.palierComplet')}><SceauLecon id={`p${enCours.rang}`} taille={40} /></span>}
@@ -471,12 +479,12 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
         <VignettesThemes series={series} etat={etatThemes} onOuvrir={ouvrirSerie} maitrise={maitrise} />
         <button className="lien lien-tous" onClick={() => { if (essai) { essai(); return; } setTous(true); window.scrollTo({ top: 0 }); }}>
           {tr('pb.tous')}
-          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path d="m9 5 7 7-7 7" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
         </button>
       </section>
 
       {/* Aucune cote affichée (décision de Florian, #137) : la cote problèmes existe sur le serveur, invisible. */}
-      {connecte && stats ? (
+      {/* #592 : la série ne s'affiche qu'à partir d'un jour ; un zéro en or n'encourage personne. */}
+      {connecte && stats ? (serie > 0 &&
         <div className="palmares">
           <div className="palmares-serie">
             <span className="chiffre"><Flamme taille={30} />{serie}</span>
@@ -485,8 +493,6 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
         </div>
       ) : connecte && statsError ? (
         <p className="notice" role="alert">{statsError} <button className="lien" onClick={() => setRetry(n => n + 1)}>{tr('pb.reessayer')}</button></p>
-      ) : connecte && online ? (
-        <div className="palmares" aria-busy="true"><div className="palmares-serie"><span className="sr-only">{tr('pb.chargementSerie')}</span><span className="chiffre attente" /><span className="legende">{tr('pb.serieLegende', { n: 2 })}</span></div></div>
       ) : !connecte && serie > 0 ? (
         // Sans compte, la série de l'appareil s'affiche comme pour un joueur connecté (issue #161).
         <div className="palmares palmares-invite">
@@ -521,9 +527,9 @@ function Continuer({ pz, principal, onOpen }: { pz: Puzzle; principal: boolean; 
   return (
     <div className="continuer-carte">
       <span className="continuer-goban" aria-hidden="true" onClick={onOpen}><MiniGoban rows={pz.rows} /></span>
+      {/* #592 : la difficulté seule ; qui joue se lit dans la consigne du problème. */}
       <div className="continuer-corps">
-        <p className="continuer-aide">{fr(tr('pb.continuerAide'))}</p>
-        <p className="continuer-infos"><Difficulte d={pz.difficulty} /><span className="muted">{tr(pz.toPlay === 1 ? 'pb.joue.1' : 'pb.joue.2')}</span></p>
+        <p className="continuer-infos"><Difficulte d={pz.difficulty} /></p>
       </div>
       <button type="button" className={principal ? 'cta continuer' : 'btn continuer'} onClick={onOpen}>
         {tr('pb.continuer')} <span className="continuer-titre">{pz.title}</span>
@@ -600,12 +606,12 @@ function CarteCourse({ onOpen }: { onOpen: () => void }) {
   const [meilleur] = useState(lireMeilleurCourse);
   return (
     <button type="button" className="course-carte" onClick={onOpen} data-course="">
-      <ChronoCourse taille={56} />
+      <ChronoCourse taille={40} />
       <span className="course-carte-texte">
         <b>{fr(tr('course.carte.titre'))}</b>
-        <small>{fr(tr('course.carte.texte'))}{meilleur > 0 && <> <span className="course-carte-meilleur">{fr(tr('course.carte.meilleur', { meilleur }))}</span></>}</small>
+        {/* #592 : les règles se lisent sur la consigne de la course, avant de partir ; ici, le record s'il existe. */}
+        {meilleur > 0 && <small><span className="course-carte-meilleur">{fr(tr('course.carte.meilleur', { meilleur }))}</span></small>}
       </span>
-      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="m9 5 7 7-7 7" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
     </button>
   );
 }
@@ -633,7 +639,7 @@ function DuJour({ pz, reussi, vu, onOpen }: { pz: Puzzle; reussi: boolean; vu: b
       </div>
       <div className="du-jour-corps">
         <h3>{pz.title}</h3>
-        <p><Difficulte d={pz.difficulty} /> <span className="muted">{tr(pz.toPlay === 1 ? 'pb.joue.1' : 'pb.joue.2')}</span></p>
+        <p><Difficulte d={pz.difficulty} /></p>
         <button className={reussi ? 'btn du-jour-refaire' : 'cta'} aria-label={tr(reussi ? 'pb.refaireAria' : 'pb.resoudreAria')} onClick={onOpen}>{tr(reussi ? 'pb.refaire' : 'pb.resoudre')}</button>
       </div>
     </div>
@@ -706,7 +712,7 @@ type Cadre = { pos: Position; legende: string; croix?: number; zone?: number[] }
 /** Temps pendant lequel la réponse de l'adversaire reste sur le plateau après une erreur (#237, N6). */
 const DUREE_ERREUR = 2200;
 
-export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPremierEssai, onEssai, onAttempt, onSolved, onNext, onExit, onSolutionVue, onErreurComprise, onSolutionComplete, retour, surtitre, suivant, exercice = true, signaler, invitation, annonce }: {
+export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPremierEssai, onEssai, onAttempt, onSolved, onNext, onExit, onSolutionVue, onErreurComprise, onSolutionComplete, retour, surtitre, suivant, exercice = true, signaler, invitation, annonce, difficulte = true }: {
   puzzle: Puzzle; rang: number; duJour?: DuJourInfo; confirmTouch: boolean; rated: boolean;
   /** Chaque essai joué (coup légal), réussi ou non (#369 : essais du Go du jour comptés par le serveur). */
   onEssai?: (ok: boolean) => void;
@@ -732,6 +738,8 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
   invitation?: ReactNode;
   /** #549 : annonce d'un moment fort (thème maîtrisé), juste au-dessus de l'action principale de la réussite. */
   annonce?: ReactNode;
+  /** #592 : difficulté dans l'en-tête (vrai par défaut ; l'onglet Problèmes ne la montre que quand elle change). */
+  difficulte?: boolean;
 }) {
   // #236 (N2) : un problème est un exercice ; aucune fête ne se pose sur sa consigne (l'XP se lit dans la feuille).
   useExercice(exercice);
@@ -1027,7 +1035,7 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
   }
 
   return (
-    <div className="lecteur" data-probleme={puzzle.id} data-serre={estSerre(puzzle.size) || undefined}>
+    <div className="lecteur" data-probleme={puzzle.id} data-difficulte={niveau(puzzle.difficulty).crans} data-serre={estSerre(puzzle.size) || undefined}>
       <div className="lecteur-tete">
         <Retour label={retour ?? tr('pb.retour')} onClick={onExit} />
         {/* Passe design #509 : la difficulté rejoint la ligne fine du surtitre ; le titre garde toute la largeur entre le
@@ -1037,7 +1045,9 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
             {duJour
               ? <small className="entete-du-jour">{tr('accueil.goDuJour')} <b className="numero-du-jour">{tr('pb.numero', { numero: duJour.numero })}</b></small>
               : <small>{surtitre ?? tr('pb.probleme', { n: rang })}</small>}
-            <Difficulte d={puzzle.difficulty} />
+            {/* #592 : dans l'onglet Problèmes, la difficulté ne s'affiche que quand elle change d'un problème au suivant
+                (data-difficulte la garde toujours pour les tests). Ailleurs (entraînement d'une leçon), inchangé. */}
+            {difficulte && <Difficulte d={puzzle.difficulty} />}
           </div>
           <h2>{puzzle.title}</h2>
         </div>
