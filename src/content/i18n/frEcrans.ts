@@ -32,7 +32,7 @@ export const frEcrans = {
   'compte.promesse': 'Ta série et tes leçons te suivent sur tous tes appareils, et tu joues en ligne.',
   'compte.resteIci': 'Le reste (niveau, XP, badges, gels) reste sur ce téléphone.',
   // Profil « Ton parcours » (#214) : la progression d'abord, les réglages derrière une ligne.
-  'profil.parcours': 'Ton parcours',
+  'profil.parcours': 'Profil',
   'profil.installer': 'Installer l’app',
   'profil.recordLegende': { one: 'jour, ta série record', other: 'jours, ta série record' },
   'profil.sansPseudo': 'Sans pseudo',
@@ -209,7 +209,7 @@ export const frEcrans = {
   // Mes erreurs (#77) : section des Problèmes et problèmes tirés de tes parties
   'erreurs.titre': 'Tes erreurs à rejouer',
   // #469 : séance « Révisions du jour » (5 exercices au plus), ouverte depuis l'accueil.
-  'seance.titre': 'Révisions du jour',
+  'seance.titre': 'Révisions',
   'seance.surtitre': 'Révision {n} sur {total}',
   'seance.retour': 'Retour à l’accueil',
   'seance.suivant': 'Révision suivante',
@@ -304,7 +304,7 @@ export const frEcrans = {
   'pq.zoneCarres': 'Les carrés montrent cette zone.',
 
   // Révision du jour (#199) : problèmes déjà réussis, repris à J+1, J+3, J+7. Ce qui garde la série : docs/design/vocabulaire.md
-  'revision.titre': 'Révision du jour',
+  'revision.titre': 'Révisions',
   'revision.aide': 'Refaire un problème réussi t’aide à le retenir.',
   'revision.ouvrirAria': 'Réviser : {titre}',
   'revision.dejaReussi': 'Déjà réussi · refais-le sans aide',
@@ -583,7 +583,7 @@ export const frEcrans = {
   'fin.komiCompris': 'sur {plateau}, komi compris',
   'fin.bilanDeux': { one: '{n} coup sur {plateau}. Captures : Noir {noir}, Blanc {blanc}.', other: '{n} coups sur {plateau}. Captures : Noir {noir}, Blanc {blanc}.' },
   'fin.rejouer': 'Rejouer',
-  'fin.revoir': 'Revoir ma partie',
+  'fin.revoir': 'Revoir la partie',
   'fin.accueil': 'Accueil',
   // Aide du joueur (#362) : règles en 5 cartes, « Comment on compte ? », glossaire. Positions : src/content/aide.ts,
   // vérifiées par src/go/aide.test.ts. Une phrase qui cite un point (« Ici, Noir prend en D3 ») dit ce que le moteur vérifie.
@@ -1082,9 +1082,9 @@ export const frEcrans = {
   'serveur.miseAJour': 'Mise à jour du serveur en cours. Réessaie dans quelques minutes.',
   'partie.continue': '{nom} continue : {raison}.',
   'placement.intro': 'Trois problèmes pour trouver ton niveau. Un seul essai chacun, sans indice.',
-  'placement.etape': 'Placement, {n} sur {total}',
+  'placement.etape': 'Problème {n} sur {total}',
   'placement.passer': 'Passer',
-  'placement.passerAria': 'Passer le placement',
+  'placement.passerAria': 'Passer les 3 problèmes',
   'placement.juste': 'Bien vu !',
   'placement.rate': 'Ce n’était pas ça. Ce n’est pas grave, on passe au suivant.',
   'placement.suivant': 'Problème suivant',
@@ -1105,8 +1105,8 @@ export const frEcrans = {
   'placement.lecon1': 'Commence la leçon 1',
   'placement.profil': 'Niveau estimé',
   'placement.profilValeur': '{kyu} kyu, le {date}',
-  'placement.profilFaire': 'Faire le placement',
-  'placement.profilRefaire': 'Refaire le placement',
+  'placement.profilFaire': 'Ton niveau de départ',
+  'placement.profilRefaire': 'Ton niveau de départ',
   // Import d'une partie SGF (#286) : Profil ou revue, action secondaire.
   'import.titre': 'Analyser une partie',
   'import.intro': 'Tu joues sur OGS, Fox ou KGS ? Importe ta partie : fichier SGF, texte ou lien OGS. KataGo la relit avec toi.',
@@ -1258,6 +1258,7 @@ export const frEcrans = {
   'creer.raison.lecons': 'Les 3 premières leçons sont libres. Crée ton compte pour la suite.',
   'creer.raison.problemes': 'Le Go du jour reste libre. Crée ton compte pour les autres problèmes.',
   'creer.raison.placement': 'Crée ton compte pour trouver ton niveau.',
+  'creer.raison.serie': 'Crée ton compte pour garder ta série et tes problèmes réussis sur tous tes appareils.',
   'creer.raison.import': 'Crée ton compte pour lire tes propres parties.',
   'creer.raison.defi': 'Pour défier un ami, il te faut un compte et un pseudo : ton ami saura qui le défie.',
   'creer.raison.en_ligne': 'Pour jouer en ligne, il te faut un compte et un pseudo.',

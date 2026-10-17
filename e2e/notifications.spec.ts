@@ -101,7 +101,7 @@ test('« Aujourd’hui » sous l’action principale est la liste « À faire »
 
   // Le Profil n'a pas de ligne de plus : il tient toujours sans défiler.
   await nav(page).getByRole('button', { name: /^Profil/ }).click();
-  await expect(page.getByRole('heading', { name: 'Ton parcours' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Profil', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: /^À faire/ })).toHaveCount(0);
 
   // Retour à l'accueil par l'onglet à pastille, puis un toucher : la partie.

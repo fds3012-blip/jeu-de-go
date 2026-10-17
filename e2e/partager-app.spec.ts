@@ -105,7 +105,7 @@ test.describe('Profil : « Partager Mochi Go », toujours là', () => {
     const b = (await ligne(page).boundingBox())!;
     expect(b.width).toBeGreaterThanOrEqual(44);
     expect(b.height).toBeGreaterThanOrEqual(44);
-    const titre = (await page.getByRole('heading', { name: 'Ton parcours' }).boundingBox())!;
+    const titre = (await page.getByRole('heading', { name: 'Profil', exact: true }).boundingBox())!;
     const aide = (await page.getByRole('button', { name: 'Aide' }).boundingBox())!;
     expect(Math.abs(titre.y + titre.height / 2 - (b.y + b.height / 2))).toBeLessThan(8);
     expect(b.x + b.width).toBeLessThanOrEqual(aide.x + 1);

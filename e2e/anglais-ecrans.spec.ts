@@ -127,7 +127,7 @@ for (const largeur of [390, 320]) test(`écrans clés en anglais à ${largeur} p
 
   // Profil et réglages.
   await nav.getByRole('button', { name: 'Profile' }).click();
-  await expect(page.getByRole('heading', { name: 'Your journey' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Profile', exact: true })).toBeVisible();
   await verifier(page, 'profil', largeur);
   await page.getByRole('button', { name: /^Settings/ }).click();
   await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible();
