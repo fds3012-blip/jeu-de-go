@@ -31,7 +31,7 @@ const capture = async (page: Page, nom: string) => {
 const ouvrirProfil = async (page: Page) => {
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: /^Profil/ }).click();
-  await expect(page.getByRole('heading', { name: 'Profil', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Ton parcours' })).toBeVisible();
 };
 
 for (const sombre of [false, true]) {

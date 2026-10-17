@@ -150,7 +150,7 @@ for (const sombre of [false, true]) {
       stockage: { 'go.semaine.v1': JSON.stringify({ courante: semaine(lundiParis(), { parties: 3, problemes: 2, goDuJour: 1 }, ['parties']), precedente: null, bilanVu: null }) } });
     await page.goto('/');
     await nav(page).getByRole('button', { name: /^Profil/ }).click();
-    await expect(page.getByRole('heading', { name: 'Profil', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Ton parcours' })).toBeVisible();
     const ligne = page.getByTestId('ligne-semaine');
     await expect(ligne).toContainText('1 / 3 objectifs');
     // Une ligne de plus : le Profil tient toujours sans défiler, sans débordement.

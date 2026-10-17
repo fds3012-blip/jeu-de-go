@@ -27,7 +27,7 @@ test('après une visite, l\'app se rouvre hors ligne et tous ses écrans s\'ouvr
   await nav.getByRole('button', { name: 'Problèmes' }).click();
   await expect(page.getByRole('heading', { name: /^Go du jour n°\s\d+$/ })).toBeVisible();
   await nav.getByRole('button', { name: 'Profil' }).click();
-  await expect(page.getByRole('heading', { name: 'Profil', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Ton parcours' })).toBeVisible();
   await nav.getByRole('button', { name: 'Jouer' }).click();
   await lancerADeux(page);
   await expect(page.getByRole('grid', { name: /Plateau de go/ })).toBeVisible();
