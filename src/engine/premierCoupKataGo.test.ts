@@ -45,9 +45,9 @@ describe('premier coup contre Bambou, réseau pas encore en cache (#584)', () =>
     const r = await bestMoveExplique(newPosition(9), 'bambou', { seed: 1 });
     expect(r.move).toBe(COUP);
     expect(r.sansIA).toBeUndefined();
-    // Ce que l'écran affiche pendant l'attente : « L'IA se prépare… », puis « 2,1 / 3,8 Mo ».
+    // Ce que l'écran affiche pendant l'attente : « L'IA se prépare… », puis « 2,0 / 3,8 Mo » (2,1 Mo reçus : pas de 0,5 Mo).
     expect(vus).toContainEqual({});
-    expect(vus).toContainEqual({ recu: '2,1', total: '3,8' });
+    expect(vus).toContainEqual({ recu: '2,0', total: '3,8' });
     expect(preparationIA(c.info)).toBeNull();
   });
 

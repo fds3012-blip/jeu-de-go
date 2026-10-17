@@ -619,7 +619,7 @@ export const en = {
   'partie.reflechit': '{nom} is thinking…',
   'partie.iaPrepare': 'The AI is getting ready… {recu} / {total} MB',
   'partie.iaPrepareSans': 'The AI is getting ready…',
-  'partie.sansIA': 'The AI couldn’t load. {nom} plays {point} in simple mode.',
+  'partie.sansIA': 'Without the AI (it didn’t load), {nom} plays {point}.',
   'partie.toucheEncore': 'Tap again to place your stone on {point}.',
   'partie.reprend': 'Back to the game.',
   'partie.retourAccueil': 'Back to home',

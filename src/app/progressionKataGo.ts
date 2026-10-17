@@ -29,13 +29,18 @@ export function useProgressionKataGo(actif: boolean): ProgressionAffichee | null
   return p;
 }
 
+/** #584 : pas de la progression dans la bulle de Mochi (zone lue par les lecteurs d'écran) : un demi-mégaoctet. */
+const PAS_BULLE = 500_000;
+
 /**
  * #584 : l'IA se prépare-t-elle pour le coup de l'ordi ? `null` si KataGo n'est pas en train de démarrer (prêt, inactif,
- * indisponible) ; sinon la progression du téléchargement, ou `{}` pendant la lecture du cache et le démarrage.
+ * indisponible) ; sinon la progression du téléchargement par pas d'un demi-mégaoctet (la bulle est une zone `aria-live` :
+ * une annonce toutes les 3 s environ en 3G, pas toutes les demi-secondes), ou `{}` pendant le cache et le démarrage.
  */
 export function preparationIA(i: KataGoInfo, l: 'fr' | 'en' = 'fr'): ProgressionAffichee | Record<string, never> | null {
   if (i.state !== 'chargement') return null;
-  return progressionAffichee(i, l) ?? {};
+  const p = i.progression;
+  return progressionAffichee(p ? { ...i, progression: { ...p, recu: p.recu - (p.recu % PAS_BULLE) } } : i, l) ?? {};
 }
 
 /** Suit la préparation de KataGo tant que `actif` (l'ordi, qui joue avec KataGo, doit jouer). Un rendu par dixième de Mo. */

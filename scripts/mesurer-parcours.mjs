@@ -30,7 +30,8 @@ const RUNS = Number(opt('runs', 3));
 const DIST = opt('dist', 'dist');
 const KATAGO = !args.includes('--sans-katago');
 const H2 = args.includes('--h2');
-// #584 : temps passé sur l'accueil (Bambou proposé) avant de toucher « Jouer » au premier passage sans cache.
+// #584 : au premier passage sans cache, Bambou est choisi dans « Changer » (carrousel des adversaires, qui précharge
+// KataGo), puis le joueur reste ce temps (ms) sur la feuille avant de la fermer et de toucher « Jouer ».
 const ATTENTE_ACCUEIL = Number(opt('attente-accueil', 0));
 const URL0 = `${H2 ? 'https' : 'http'}://localhost:${PORT}`;
 const RESEAU = { offline: false, latency: 562.5, downloadThroughput: (1.44 * 1024 * 1024) / 8, uploadThroughput: (675 * 1024) / 8 };
@@ -150,14 +151,19 @@ async function probleme(browser) {
 }
 
 async function katago(browser) {
-  const ctx = await contexte(browser, { 'go.bilan.v1': JSON.stringify({ pomme: { v: 1, d: 0 }, caillou: { v: 1, d: 0 } }), 'go.adversaire.v1': '"bambou"',
+  const ctx = await contexte(browser, { 'go.bilan.v1': JSON.stringify({ pomme: { v: 1, d: 0 }, caillou: { v: 1, d: 0 } }), 'go.adversaire.v1': ATTENTE_ACCUEIL ? '"caillou"' : '"bambou"',
     'go.parties.v1': JSON.stringify({ n: 5 }), 'go.historique.v1': JSON.stringify([{ id: 'mesure', date: new Date(Date.now() - 3_600_000).toISOString(), sgf: SGF, mode: 'ordi', taille: 9, joueur: 1, adversaire: 'Pomme', resultat: 'B+1.5' }]) });
   try {
     const coupBambou = async (attente = 0) => {
       const { pg, urls, repli } = await page(ctx);
       await pg.goto(URL0, { waitUntil: 'commit' });
       await pg.waitForFunction(() => window.__perf.cta !== null, null, { timeout: 60_000 });
-      if (attente) await pg.waitForTimeout(attente);
+      if (attente) {
+        await pg.getByRole('button', { name: 'Changer' }).click();
+        await pg.getByRole('list', { name: /Adversaires/ }).getByRole('button', { name: /^Bambou,/ }).click();
+        await pg.waitForTimeout(attente);
+        await pg.keyboard.press('Escape');
+      }
       await pg.locator(CTA).click();
       await pg.locator(PLATEAU).first().waitFor({ state: 'visible', timeout: 60_000 });
       await pg.waitForTimeout(1000);
@@ -244,7 +250,7 @@ try {
   console.log(`Problème par lien, plateau affiché : ${tout(P, r => r.lien)} ; ${lt(P, r => r.lienB)}`);
   console.log(`Onglet Problèmes → plateau : ${tout(P, r => r.onglet)} ; ${lt(P, r => r.ongletB)}`);
   if (KATAGO) {
-    console.log(`Premier coup → réponse de Bambou (KataGo), rien en cache${ATTENTE_ACCUEIL ? `, ${ATTENTE_ACCUEIL} ms sur l'accueil avant « Jouer »` : ''} : ${tout(K, r => r.froid.ms)} ; ${K.filter(r => r.froid.katago).length}/${K.length} coups de KataGo ; « L'IA se prépare » affiché après ${tout(K, r => r.froid.prepare)} ; réseau ${K.map(r => r.froid.reseau ? `${(r.froid.reseau.octets / 1e6).toFixed(2)} Mo en ${r.froid.reseau.s?.toFixed(1)} s` : 'non demandé').join(', ')} ; ${lt(K, r => r.froid.b)}`);
+    console.log(`Premier coup → réponse de Bambou (KataGo), rien en cache${ATTENTE_ACCUEIL ? `, Bambou choisi dans « Changer » ${ATTENTE_ACCUEIL} ms avant « Jouer »` : ''} : ${tout(K, r => r.froid.ms)} ; ${K.filter(r => r.froid.katago).length}/${K.length} coups de KataGo ; « L'IA se prépare » affiché après ${tout(K, r => r.froid.prepare)} ; réseau ${K.map(r => r.froid.reseau ? `${(r.froid.reseau.octets / 1e6).toFixed(2)} Mo en ${r.froid.reseau.s?.toFixed(1)} s` : 'non demandé').join(', ')} ; ${lt(K, r => r.froid.b)}`);
     console.log(`Même chose, réseau en cache : ${tout(K, r => r.cache.ms)} ; ${K.filter(r => r.cache.katago).length}/${K.length} coups de KataGo ; réseau ${K.map(r => (r.cache.reseau ? `${r.cache.reseau.octets} o` : 'non demandé')).join(', ')} ; ${lt(K, r => r.cache.b)}`);
     console.log(`Revue (réseau en cache) : écran ${tout(K, r => r.revue)} · KataGo prêt ${tout(K, r => r.revuePrete)} ; ${lt(K, r => r.revueB)}`);
   }
