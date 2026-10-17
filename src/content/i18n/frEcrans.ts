@@ -466,6 +466,10 @@ export const frEcrans = {
   'partie.titreAria': 'Partie contre {nom}',
   'partie.titreAriaDeux': 'Partie à deux',
   'partie.reflechit': '{nom} réfléchit…',
+  // #584 : l'ordi joue avec KataGo, qui se télécharge encore (première fois sur l'appareil).
+  'partie.iaPrepare': 'L’IA se prépare… {recu} / {total} Mo',
+  'partie.iaPrepareSans': 'L’IA se prépare…',
+  'partie.sansIA': 'L’IA n’a pas pu se charger. {nom} joue {point} en version simple.',
   'partie.toucheEncore': 'Touche encore pour poser ta pierre en {point}.',
   'partie.reprend': 'La partie reprend.',
   // Écran de partie : bandeaux, barre d'actions, comptage

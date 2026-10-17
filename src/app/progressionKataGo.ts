@@ -28,3 +28,27 @@ export function useProgressionKataGo(actif: boolean): ProgressionAffichee | null
   }, [actif]);
   return p;
 }
+
+/**
+ * #584 : l'IA se prépare-t-elle pour le coup de l'ordi ? `null` si KataGo n'est pas en train de démarrer (prêt, inactif,
+ * indisponible) ; sinon la progression du téléchargement, ou `{}` pendant la lecture du cache et le démarrage.
+ */
+export function preparationIA(i: KataGoInfo, l: 'fr' | 'en' = 'fr'): ProgressionAffichee | Record<string, never> | null {
+  if (i.state !== 'chargement') return null;
+  return progressionAffichee(i, l) ?? {};
+}
+
+/** Suit la préparation de KataGo tant que `actif` (l'ordi, qui joue avec KataGo, doit jouer). Un rendu par dixième de Mo. */
+export function usePreparationIA(actif: boolean): ProgressionAffichee | Record<string, never> | null {
+  const [p, setP] = useState<ProgressionAffichee | Record<string, never> | null>(null);
+  useEffect(() => {
+    if (!actif) { setP(null); return; }
+    let cle = '';
+    return ecouterKataGo(i => {
+      const a = preparationIA(i, langue());
+      const k = a === null ? '' : 'recu' in a ? `${a.recu}/${a.total}` : '…';
+      if (k !== cle) { cle = k; setP(a); }
+    });
+  }, [actif]);
+  return p;
+}

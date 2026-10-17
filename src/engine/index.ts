@@ -351,8 +351,11 @@ export function relancerKataGo(): void {
   k?.relancer?.();
 }
 
-/** Démarre le chargement de KataGo en avance (téléchargement du réseau, choix du backend). */
-export function preloadKataGo(): void { getKataGo()?.start?.().catch(() => {}); }
+/**
+ * Démarre le chargement de KataGo en avance (téléchargement du réseau, choix du backend). #584 : appelé à l'ouverture
+ * d'une partie contre un adversaire qui joue avec KataGo, pour que le téléchargement avance pendant le premier coup.
+ */
+export function preloadKataGo(): void { if (telechargementPermis()) getKataGo()?.start?.().catch(() => {}); }
 
 /** Analyse de secours sans réseau : coup du moteur simple et propriété tirée des simulations. */
 async function simpleAnalysis(pos: Position, o: AnalyzeOptions): Promise<Analysis> {
@@ -409,7 +412,9 @@ export async function bestMove(pos: Position, niveau: OpponentId | Opponent, opt
  * `raison.texte` (« il reste une frontière à fermer en E4 », « il reste 3 points à prendre en E4 ») peut être affiché
  * par l'écran. `opts.accommodant` (3 premières parties) : l'ordi passe dès que les frontières sont fermées.
  */
-export async function bestMoveExplique(pos: Position, niveau: OpponentId | Opponent, opts: EngineOptions = {}): Promise<CoupExplique> {
+/** #584 : `sansIA` : l'adversaire joue avec KataGo, mais KataGo n'a pas pu démarrer ; ce coup vient du moteur simple. */
+export type CoupOrdi = CoupExplique & { sansIA?: true };
+export async function bestMoveExplique(pos: Position, niveau: OpponentId | Opponent, opts: EngineOptions = {}): Promise<CoupOrdi> {
   // Tests de bout en bout seulement (build VITE_E2E ; la condition disparaît en production) : coups de l'ordi écrits
   // d'avance dans `window.__coupsOrdi` (index y * N + x), joués dans l'ordre tant qu'ils sont légaux (e2e/coach-mochi.spec.ts).
   if (import.meta.env.VITE_E2E && typeof window !== 'undefined') {
@@ -422,6 +427,11 @@ export async function bestMoveExplique(pos: Position, niveau: OpponentId | Oppon
   const k = lvl.katago ? getKataGo() : null;
   if (lvl.katago && k) {
     try {
+      // #584 : KataGo pas encore prêt (réseau à télécharger, 3,8 Mo) : on attend son démarrage, progression affichée par
+      // l'écran (« L'IA se prépare… »). Avant, le client rendait la main après 15 s et ce coup venait du moteur simple
+      // sans le dire. L'attente est bornée par le client (DELAI_DEMARRAGE_MS) ; un échec passe au repli ci-dessous.
+      // KataGo abandonné (#498, `indisponible`) : pas de redémarrage ici, `analyze` échoue vite.
+      if (k.info.state === 'inactif' || k.info.state === 'chargement') await k.start?.();
       // Plafond de 1,8 s par coup : l'objectif est une réponse en moins de 2 s.
       const a = await analyserGarde(k, pos, { komi: opts.komi ?? 6.5, visits: lvl.katago.visits, timeMs: opts.timeMs ?? 1800, ...(opts.rules ? { regles: opts.rules } : {}) });
       // Graine fixée (tests) : tirage reproductible. Sinon, vrai hasard.
@@ -433,9 +443,11 @@ export async function bestMoveExplique(pos: Position, niveau: OpponentId | Oppon
       if (!warned) { warned = true; console.warn('KataGo indisponible, repli sur le moteur simple :', e instanceof Error ? e.message : e); }
     }
   }
+  const sansIA = !!lvl.katago && coup === null;
   if (coup === null) coup = await simpleMoveDetail(pos, lvl, opts);
   // Garde-fou : un coup illégal devient une passe.
-  return isLegalMove(pos, coup.move) ? coup : { move: -1, raison: null };
+  const r: CoupOrdi = isLegalMove(pos, coup.move) ? coup : { move: -1, raison: null };
+  return sansIA ? { ...r, sansIA: true } : r;
 }
 
 /** Politique de passe appliquée au coup choisi par KataGo (#159, #185). Mêmes règles que `chooseMoveDetail`. */
@@ -642,6 +654,29 @@ export function prechargerApresPartie(partiesLancees: number, delaiMs = DELAI_PR
   });
 }
 
+let prechargementAdversaireTente = false;
+
+/**
+ * #584 : préchargement discret à l'approche d'un adversaire qui joue avec KataGo (accueil ou échelle qui le proposent,
+ * après une victoire contre le précédent) : même règles que `prechargerApresPartie`, sauf la première partie et les
+ * données mobiles (src/engine/katago/prechargement.ts). L'économie de données et la 2G bloquent toujours.
+ * Une seule tentative par session.
+ */
+export async function prechargerPourAdversaire(): Promise<DecisionPrechargement> {
+  if (prechargementAdversaireTente) return { ok: false, raison: 'deja-en-route' };
+  const k = getKataGo();
+  if (!k?.precharger) return { ok: false, raison: 'deja-en-route' };
+  const d = decisionPrechargement({
+    partiesLancees: 0, connexion: connexion(), enCache: await reseauEnCache(), etat: k.info.state, pourAdversaire: true,
+    visible: typeof document === 'undefined' || document.visibilityState !== 'hidden',
+  });
+  // Page cachée : une prochaine occasion pourra réessayer. Sinon, une seule fois.
+  if (d.ok || d.raison !== 'arriere-plan') prechargementAdversaireTente = true;
+  // Build de test : jamais de téléchargement que le test n'a pas demandé.
+  if (d.ok && telechargementPermis()) void k.precharger();
+  return d;
+}
+
 /**
  * #538 : « Télécharger l'IA maintenant » (Réglages). Le joueur l'a demandé : aucune des règles du préchargement discret
  * (données mobiles, première partie) ne s'applique. Met le réseau et le code de TensorFlow.js en cache, sans démarrer
@@ -671,7 +706,7 @@ export async function libererIA(): Promise<boolean> {
 }
 
 /** Tests seulement : permet une nouvelle tentative de préchargement. */
-export function _reinitialiserPrechargement() { prechargementTente = false; }
+export function _reinitialiserPrechargement() { prechargementTente = false; prechargementAdversaireTente = false; }
 
 /**
  * Conseil de KataGo pour la revue d'une partie (issue #34). Jamais le moteur simple : ses conseils sont trop peu sûrs

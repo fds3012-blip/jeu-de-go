@@ -7,6 +7,9 @@
 // - le navigateur ne signale ni l'économie de données (`saveData`), ni une connexion mobile (`type: 'cellular'`),
 //   ni une connexion très lente (`effectiveType` 2g) ; s'il ne dit rien (Safari, Firefox), le préchargement est permis ;
 // - la page est visible, le réseau n'est pas déjà en cache et KataGo n'est pas déjà en route.
+// #584 : à l'approche d'un adversaire qui joue avec KataGo (Bambou et plus fort, choisi sur l'accueil ou l'échelle),
+// le joueur va en avoir besoin de toute façon : la première partie et les données mobiles ne bloquent plus (sinon, en
+// 3G, son premier coup attendait le téléchargement). L'économie de données et la 2G bloquent toujours.
 // Une seule fois par session. Le préchargement ne démarre pas KataGo : il met le fichier en cache et le code de
 // TensorFlow.js dans le cache du service worker, sans toucher au GPU.
 import { BACKEND_ORDER, type Backend } from './loader';
@@ -23,6 +26,8 @@ export interface ContextePrechargement {
   enCache: boolean;
   etat: KataGoState;
   visible: boolean;
+  /** #584 : l'adversaire proposé joue avec KataGo : ni la première partie ni les données mobiles ne bloquent. */
+  pourAdversaire?: boolean;
 }
 
 export type RaisonSansPrechargement = 'premier-lancement' | 'economie-donnees' | 'reseau-mobile' | 'connexion-lente' | 'deja-en-cache' | 'deja-en-route' | 'arriere-plan';
@@ -36,10 +41,10 @@ export const DELAI_PRECHARGEMENT_MS = 3000;
 export function decisionPrechargement(c: ContextePrechargement): DecisionPrechargement {
   if (c.etat !== 'inactif') return { ok: false, raison: 'deja-en-route' };
   if (c.enCache) return { ok: false, raison: 'deja-en-cache' };
-  if (c.partiesLancees < PARTIES_MIN_PRECHARGEMENT) return { ok: false, raison: 'premier-lancement' };
+  if (!c.pourAdversaire && c.partiesLancees < PARTIES_MIN_PRECHARGEMENT) return { ok: false, raison: 'premier-lancement' };
   const n = c.connexion;
   if (n?.saveData) return { ok: false, raison: 'economie-donnees' };
-  if (n?.type === 'cellular') return { ok: false, raison: 'reseau-mobile' };
+  if (!c.pourAdversaire && n?.type === 'cellular') return { ok: false, raison: 'reseau-mobile' };
   if (n?.effectiveType === '2g' || n?.effectiveType === 'slow-2g') return { ok: false, raison: 'connexion-lente' };
   if (!c.visible) return { ok: false, raison: 'arriere-plan' };
   return { ok: true };
