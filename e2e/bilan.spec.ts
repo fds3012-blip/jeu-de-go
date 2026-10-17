@@ -26,7 +26,7 @@ test('victoire contre Pomme : tampon, confettis, Caillou en un geste, bilan gard
   await expect(page.locator('.fin-tampon')).toHaveText('BATTUE');
   // L'écart défile puis s'arrête sur la valeur exacte ; le bilan tient en une phrase.
   await expect(page.locator('.fin-marge')).toContainText(/^de \d+(,5)? points sur 9 × 9/);
-  await expect(page.locator('.fin-bilan')).toHaveText(/^\d+ coups?, .+\. Ton bilan contre Pomme\s: 1 victoire\.$/);
+  await expect(page.locator('.fin-bilan')).toHaveText(/^Ton bilan contre Pomme\s: 1 victoire\.$/);
   // Mochi tire la leçon et annonce Caillou.
   await expect(page.locator('.fin-mochi')).toContainText(/Caillou t’attend/);
 

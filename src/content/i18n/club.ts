@@ -32,7 +32,6 @@ const FR = {
   // ---------- #368 : Mes statistiques ----------
   'stats.ligne': 'Statistiques',
   // #465 : court, pour tenir sur une ligne en 390 px (il était coupé par « … », et passe maintenant à la ligne).
-  'stats.ligneValeur': 'Précision, erreurs',
   'stats.titre': 'Mes statistiques',
   'stats.chargement': 'Lecture de tes parties en ligne…',
   'stats.horsLigne': 'Hors ligne : seules les parties de ce téléphone comptent.',
@@ -181,7 +180,6 @@ const EN: { readonly [K in CleClub]: string } = {
   'reglages.serieAide': 'Flame, record and celebrations. Off, your streak keeps counting, hidden.',
 
   'stats.ligne': 'Statistics',
-  'stats.ligneValeur': 'Accuracy, mistakes',
   'stats.titre': 'My statistics',
   'stats.chargement': 'Reading your online games…',
   'stats.horsLigne': 'Offline: only the games on this phone count.',

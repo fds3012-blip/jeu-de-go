@@ -299,6 +299,7 @@ function Menu({ onVue, settings, profil, serie, record = 0, parcours, placement,
   const [ecrire, setEcrire] = useState(false);
   // #561 : titre du mois dernier (rien sans titre, rien sous le garde-fou des 200 joueurs actifs).
   const titre = useTitreDuMoisDernier(amis?.compte ? amis.db : null, userId);
+  const sousNom = serieVisible && inviterCompte(!!profil, id.serie) ? t('serie.invitation') : id.detail;
   return (
     <div className="profil">
       {/* #362 : « Aide » à droite du titre, sans prendre de hauteur (le Profil tient sans défiler en 390 × 844). */}
@@ -314,7 +315,8 @@ function Menu({ onVue, settings, profil, serie, record = 0, parcours, placement,
         <div className="identite-texte">
           <b>{id.nom}</b>
           {/* #161 : au 3e jour de série sans compte, la ligne sous « Invité » propose le compte ; l'action reste « Mon compte ». */}
-          <span>{serieVisible && inviterCompte(!!profil, id.serie) ? t('serie.invitation') : id.detail}</span>
+          {/* #592 : avec un compte, plus de ligne sous le nom (E6). */}
+          {sousNom && <span>{sousNom}</span>}
         </div>
         {id.serie > 0 && <span className="identite-serie" role="img" aria-label={t('profil.serieAria', { jours: texteSerie(id.serie) })}>
           <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false"><path d="M8.6 1.2c.4 2.3 3.9 3.9 3.9 7.9A4.5 4.5 0 0 1 8 13.8a4.5 4.5 0 0 1-4.5-4.6c0-2 1-3.2 2-4 0 1.4.6 2.4 1.5 2.7C6.6 5.6 7.4 3 8.6 1.2Z" fill="currentColor" /></svg>{entier(id.serie)}
@@ -358,8 +360,8 @@ function Menu({ onVue, settings, profil, serie, record = 0, parcours, placement,
             moitiés) ; « Réglages » rejoint « Mon compte » plus bas : le Profil tient toujours sans défiler en 390 × 844.
             #372 : « Étudier une position » est dans « Mes parties », à côté de « Analyser une partie jouée ailleurs ». */}
         <div className="ligne ligne-double">
-          <DemiLigne icone="semaine" libelle={te('semaine.ligne')} valeur={te('semaine.ligneValeur', { n: atteints })} onClick={() => onVue('semaine')} testId="ligne-semaine" />
-          <DemiLigne icone="stats" libelle={tk('stats.ligne')} valeur={tk('stats.ligneValeur')} testId="ligne-stats" onClick={() => onVue('stats')} />
+          <DemiLigne icone="semaine" libelle={te('semaine.ligne')} valeur={atteints > 0 ? te('semaine.ligneValeur', { n: atteints }) : undefined} onClick={() => onVue('semaine')} testId="ligne-semaine" />
+          <DemiLigne icone="stats" libelle={tk('stats.ligne')} testId="ligne-stats" onClick={() => onVue('stats')} />
         </div>
       </div>
       {/* #571 (loi de Hick) : dix lignes de même poids, rangées en deux blocs séparés : ta progression (au-dessus), puis
@@ -370,14 +372,14 @@ function Menu({ onVue, settings, profil, serie, record = 0, parcours, placement,
         {proposerInstallation && <LigneLien icone={<IconeReglage id="installer" />} libelle={t('profil.installer')} onClick={() => onVue('installer')} />}
         {/* #369 : « Réglages » et « Mon compte » partagent une ligne (deux moitiés, ce qui te concerne toi et l'app). */}
         <div className="ligne ligne-double">
-          <DemiLigne icone="reglages" libelle={t('profil.reglages')} valeur={t('profil.reglagesResume')} onClick={() => onVue('reglages')} />
+          <DemiLigne icone="reglages" libelle={t('profil.reglages')} onClick={() => onVue('reglages')} />
           {/* #509 (L2, constat 23) : un pseudo long tient sur une ligne, coupé en fin (« … ») et non au milieu d'un mot. */}
           <DemiLigne icone="compte" libelle={t('profil.compte')} valeur={profil?.pseudo ?? (profil ? undefined : t('profil.seConnecter'))} uneLigne={!!profil?.pseudo} onClick={() => onVue('compte')} />
         </div>
         {/* #363 : « Nous écrire » partage la ligne des conditions (deux moitiés) : le Profil tient toujours sans défiler. */}
         {amis ? (
           <div className="ligne ligne-double">
-            <DemiLigne icone="ecrire" libelle={tsec('signaler.ecrire')} valeur={tsec('signaler.ecrireDetail')} testId="ligne-ecrire" onClick={() => setEcrire(true)} />
+            <DemiLigne icone="ecrire" libelle={tsec('signaler.ecrire')} testId="ligne-ecrire" onClick={() => setEcrire(true)} />
             <DemiLigne icone="conditions" libelle={t('profil.conditions')} onClick={() => onVue('conditions')} />
           </div>
         ) : <LigneLien icone={<IconeReglage id="conditions" />} libelle={t('profil.conditions')} onClick={() => onVue('conditions')} />}

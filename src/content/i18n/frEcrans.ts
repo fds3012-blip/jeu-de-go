@@ -29,12 +29,10 @@ export const frEcrans = {
   'vitrine.detailObtenu': 'Badge gagné : {nom}',
   'vitrine.detailAGagner': '{nom} : {condition}',
   // Joueur connecté (#214) : pas de cote dans le Profil, on dit ce qui est gardé
-  'profil.connecteDetail': 'Progression gardée sur ton compte.',
   'compte.promesse': 'Ta série et tes leçons te suivent sur tous tes appareils, et tu joues en ligne.',
   'compte.resteIci': 'Le reste (niveau, XP, badges, gels) reste sur ce téléphone.',
   // Profil « Ton parcours » (#214) : la progression d'abord, les réglages derrière une ligne.
   'profil.parcours': 'Ton parcours',
-  'profil.reglagesResume': 'Thème, sons…',
   'profil.installer': 'Installer l’app',
   'profil.recordLegende': { one: 'jour, ta série record', other: 'jours, ta série record' },
   'profil.sansPseudo': 'Sans pseudo',
