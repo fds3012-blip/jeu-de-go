@@ -1,0 +1,7 @@
+{
+  "browser": {
+    "browserName": "chromium",
+    "launchOptions": { "executablePath": "/opt/pw-browsers/chromium", "headless": true },
+    "contextOptions": { "viewport": { "width": 390, "height": 844 }, "deviceScaleFactor": 2, "isMobile": true, "hasTouch": true, "locale": "fr-FR" }
+  }
+}
