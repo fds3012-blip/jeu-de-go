@@ -423,6 +423,29 @@ Audit d'épure (#592) : `docs/ux/epure-2026-10.md`. Il applique ces règles sans
 
 Ce qu'on garde quand même : le libellé visible de chaque onglet et de chaque action (l'icône seule ne suffit pas), la phrase qui explique un mot du go là où il apparaît (atari, ko, komi, byo-yomi), et les états (à faire, fait, verrouillé) qui ne reposent jamais sur la couleur seule.
 
+## Architecture
+
+Demande de Florian, 17/10 (#601) : « une architecture de pages logiques et qui restent simples pour les users ». Inventaire, problèmes, carte cible et plan en lots : `docs/ux/architecture-pages-2026-10.md`. Ces règles décrivent la **cible** : les lots N0 à N8 de ce document les font passer au vert une à une ; une PR qui touche la navigation dit lesquelles elle respecte.
+
+Vocabulaire. **Racine** : l'écran qu'ouvre un onglet. **Activité** : un écran où l'on joue ou s'exerce (partie, leçon, problème, série, course, séance de révisions, partie de découverte, introduction des règles, placement), avec sa fin et sa revue. **Feuille** : un `<dialog>` posé par-dessus l'écran (`.feuille`). **Raccourci** : un accès à une chose depuis un autre endroit que sa maison.
+
+| # | Règle | Comment on vérifie |
+|---|---|---|
+| A1 | **Quatre onglets, un rôle chacun**, dans cet ordre : Jouer (jouer une partie), Apprendre (comprendre : leçons, thèmes, ouvertures, découverte, guidée), Problèmes (s'entraîner : Go du jour, révisions, course, séries), Profil (toi : progrès, parties passées, amis, réglages, compte). Un nouvel écran va dans l'onglet dont le rôle le décrit. | Relire la phrase de rôle avant d'ajouter un écran ; la PR la cite. |
+| A2 | **Une chose, une maison.** Chaque écran a un seul onglet parent. | Tableau « Une maison pour chaque chose » du document d'architecture, tenu à jour. |
+| A3 | **Un raccourci au plus** par chose hors de sa maison, et il est contextuel (Aujourd'hui, une fin de partie, l'aide). Un raccourci ouvre l'activité ou une feuille **par-dessus**, sans changer d'onglet. Les chiffres de résumé du Profil (série, leçons, badges) ne sont pas des raccourcis. | Chercher `setTab(` et `go(` hors de la barre du bas : aucun appel ne doit suivre un toucher dans un écran. |
+| A4 | **Profondeur 2 au plus** depuis la racine d'un onglet, hors activité. Un profil ouvert depuis un profil remplace le premier, il ne s'empile pas. | Compter les « ‹ » nécessaires pour revenir à la racine : 2 au plus. |
+| A5 | **Une activité prend tout l'écran** : ni en-tête de l'app ni barre du bas. Une seule sortie, en haut à gauche (`BoutonRetour`), avec confirmation si l'on perd quelque chose. | Sur la capture d'une activité : pas de `.nav`, un seul `.retour`. |
+| A6 | **La sortie ramène là d'où l'on vient** : l'écran exact d'origine, défilement compris, pas une racine fixe. Lancée depuis Apprendre, une partie revient à Apprendre ; ouverte depuis une fin de partie, une leçon revient à la fin de partie. | Test e2e par porte d'entrée : ouvrir, sortir, comparer l'écran à celui d'avant. |
+| A7 | **Le retour du système fait ce que fait « ‹ ».** Android (bouton, geste), geste iOS, retour du navigateur et Échap : même effet, même confirmation. Une feuille ouverte se ferme d'abord. À la racine d'Apprendre, de Problèmes ou du Profil, retour à Jouer ; à la racine de Jouer seulement, l'app peut se fermer. | `page.goBack()` dans `e2e/retour-systeme.spec.ts` sur chaque famille d'écran. |
+| A8 | **Chaque onglet garde sa pile** quand on en change : leçon, problème, sous-vue, défilement. Toucher l'onglet déjà actif ramène à sa racine. | Ouvrir un écran, changer d'onglet, revenir : le même écran est là. |
+| A9 | **Un nom par chose**, le même dans le bouton qui y mène, le titre de l'écran, le titre du document (`titreEcran.ts`) et l'onglet. Un même libellé mène toujours au même écran. | Tableau « Noms » du document d'architecture ; test Vitest titre ↔ libellé. |
+| A10 | **L'onglet actif dit toujours où l'on est.** Il ne change que par un toucher sur la barre du bas, ou par une arrivée de l'extérieur (lien, notification). | Relever `aria-current="page"` avant et après chaque toucher dans un écran. |
+| A11 | **Pas d'impasse** : chaque écran a une sortie qui n'enregistre rien. « Passer », « Plus tard » ou « Abandonner » sont des choix en plus de la sortie, jamais à sa place. | Chaque écran a un `.retour` ou une croix ; l'action de sortie n'écrit rien dans `localStorage`. |
+| A12 | **Une feuille ne mène pas à une autre feuille**, et ne change pas d'onglet. Ce qui demande plus qu'une feuille devient un écran. | Revue de PR. |
+
+Ce que ces règles ne changent pas : les écrans de compte bloquants (« Choisis ton pseudo », accord aux conditions) gardent une seule action ; les arrivées par lien (défi, partie partagée, Go du jour, rappel) ouvrent directement leur écran ; la règle d'en-tête de `docs/ux/navigation.md` reste valable hors activités. La règle 3 de ce document (leçon et problème gardent la barre du bas) est remplacée par A5 dès que Florian a validé la décision F3.
+
 ## Do's and Don'ts
 
 ### Do
