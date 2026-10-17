@@ -66,6 +66,9 @@
 
 .reglage { display: flex; flex-wrap: wrap; align-items: center; /* #121 */ justify-content: space-between; gap: var(--space-3); min-height: var(--cible-min); margin: 6px -12px var(--space-2) 0; }
 .reglage .lien { padding: 0 12px; }
+/* #592 (E2, E10) : le réglage se range sous l'adversaire, dans le même bloc, en texte secondaire. */
+.adversaire + .reglage { margin-top: -6px; }
+.reglage > span { color: var(--muted); }
 
 /* Bouton principal dans le flux (plus fixé en bas) : le goban, lui, prend la hauteur libre. */
 .accueil .cta { position: static; transform: none; width: 100%; font-size: var(--fs-l); padding: 0 var(--space-3); text-wrap: balance; }
