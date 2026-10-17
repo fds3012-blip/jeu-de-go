@@ -39,10 +39,12 @@ interface BandeauProps {
   pendule?: ReactNode;
   /** Message ou émote reçu en partie entre humains (#373), à la place de la réplique, près du nom. */
   bulle?: ReactNode;
+  /** #602 : le mot « prisonniers » sous le couvercle, seulement pendant la toute première partie ; ensuite le chiffre suffit (le nombre reste lu). */
+  legende?: boolean;
 }
 
 /** Bandeau d'un joueur : portrait, nom, rang, réplique éventuelle et couvercle. */
-export function Bandeau({ nom, sousTitre, portrait, actif, captures, pierresPrises, replique, avant, gain, pendule, bulle }: BandeauProps) {
+export function Bandeau({ nom, sousTitre, portrait, actif, captures, pierresPrises, replique, avant, gain, pendule, bulle, legende = false }: BandeauProps) {
   return (
     <div className={`joueur${actif ? ' active' : ''}`} data-joueur={nom}>
       {avant}
@@ -58,7 +60,7 @@ export function Bandeau({ nom, sousTitre, portrait, actif, captures, pierresPris
       {pendule}
       <span className="couvercle-zone">
         <Couvercle n={captures} pierres={pierresPrises} />
-        <small className="couvercle-legende" aria-hidden="true">{t('partie.prisonniers')}</small>
+        {legende && <small className="couvercle-legende" aria-hidden="true">{t('partie.prisonniers')}</small>}
         {/* Décoratif : la phrase de Mochi dit déjà combien de pierres tu as prises. */}
         {gain && <span key={gain.k} className="gain-capture" aria-hidden="true">+{gain.n}</span>}
       </span>
@@ -88,7 +90,6 @@ export function ListeCoups({ coups, courant = coups.length - 1, apres }: { coups
   }, [coups.length, courant]);
   return (
     <div className="coups-ruban">
-      <span className="coups-titre" aria-hidden="true">{t('partie.coupsJoues')}</span>
       <ol ref={ref} className="coups" aria-label={t('partie.coupsJoues')}>
         {coups.length === 0 && <li className="vide">{t('bilan.aucunCoup')}</li>}
         {coups.map((m, i) => (
@@ -264,12 +265,13 @@ export function BarreActions({ actions, label, menu }: { actions: Action[]; labe
 /**
  * Indices restants (#35) : une pastille avec le nombre, posée sur le coin de l'icône (v3 : lisible d'un coup d'œil,
  * à la place des trois mini-pierres). Purement visuelle : le nombre est dit par la description accessible du bouton.
+ * #602 (E7) : la pastille n'apparaît qu'une fois un jeton utilisé ; « 3 sur 3 » ne change aucune décision.
  */
 export function CompteurIndices({ restants, total = 3, children }: { restants: number; total?: number; children: ReactNode }) {
   return (
     <span className="compteur-indices" data-restants={restants} data-total={total}>
       {children}
-      <b className="compteur-badge" aria-hidden="true">{restants}</b>
+      {restants < total && <b className="compteur-badge" aria-hidden="true">{restants}</b>}
     </span>
   );
 }

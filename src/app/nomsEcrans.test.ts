@@ -16,7 +16,7 @@ const LANGUES = {
 
 /** [chose, titre de l'écran (et du document), libellés qui y mènent ou le nomment]. `{n}` : compteur ajouté au nom. */
 const NOMS: [string, string, string[]][] = [
-  ['Profil', 'nav.profil', ['profil.parcours']],
+  // #611 : l'en-tête de l'onglet dit « Profil » ; « Ton parcours » nomme la section de progression, pas l'écran.
   ['Révisions', 'titre.revisions', ['accueil.revisions.titre', 'seance.titre', 'revision.titre']],
   ['Revoir la partie', 'direct.revoir', ['fin.revoir']],
   ['Statistiques', 'stats.titre', ['stats.ligne']],
@@ -49,10 +49,10 @@ describe('un nom par chose (#604, A9)', () => {
   it('les anciens noms ont disparu des textes', () => {
     const fr = Object.values(LANGUES.fr).filter((v): v is string => typeof v === 'string').join('\n');
     const anglais = Object.values(LANGUES.en).filter((v): v is string => typeof v === 'string').join('\n');
-    for (const ancien of ['Révisions du jour', 'Révision du jour', 'Ton parcours', 'Revoir ma partie', 'Mes statistiques', 'Faire le placement']) {
+    for (const ancien of ['Révisions du jour', 'Révision du jour', 'Revoir ma partie', 'Mes statistiques', 'Faire le placement']) {
       expect(fr).not.toContain(ancien);
     }
-    for (const ancien of ['Today’s reviews', 'Daily review', 'Your journey', 'Review my game', 'My statistics', 'Take the placement']) {
+    for (const ancien of ['Today’s reviews', 'Daily review', 'Review my game', 'My statistics', 'Take the placement']) {
       expect(anglais).not.toContain(ancien);
     }
   });

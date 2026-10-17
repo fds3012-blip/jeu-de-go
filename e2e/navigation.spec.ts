@@ -53,19 +53,24 @@ test('navigation entre les onglets Jouer, Apprendre, Problèmes et Profil', asyn
   await onglet('Apprendre').click();
   await expect(onglet('Apprendre')).toHaveAttribute('aria-current', 'page');
   await expect(onglet('Jouer')).not.toHaveAttribute('aria-current', 'page');
-  // #509 (L2) : l'en-tête ne répète plus le nom de l'onglet ; le chemin des leçons se reconnaît à son contenu.
+  // #602 : la marque « Mochi Go » sur Jouer seulement ; ailleurs, l'en-tête dit le nom de l'écran.
+  await expect(page.getByRole('heading', { level: 1, name: 'Apprendre' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Mochi Go' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: /^Leçon 1 :/ })).toBeVisible();
 
   await onglet('Problèmes').click();
   await expect(onglet('Problèmes')).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByRole('heading', { level: 1, name: 'Problèmes' })).toBeVisible();
   await expect(page.getByRole('heading', { name: /^Go du jour n°\s\d+$/ })).toBeVisible();
 
   await onglet('Profil').click();
   await expect(onglet('Profil')).toHaveAttribute('aria-current', 'page');
-  await expect(page.getByRole('heading', { name: 'Profil', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Profil' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Ton parcours' })).toBeVisible();
 
   await onglet('Jouer').click();
   await expect(onglet('Jouer')).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByRole('heading', { level: 1, name: 'Mochi Go' })).toBeVisible();
   await expect(page.locator('.cta')).toBeVisible();
 });
 

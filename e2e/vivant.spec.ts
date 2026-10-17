@@ -75,7 +75,7 @@ for (const theme of ['dark', 'light'] as const) {
       const nom = theme === 'dark' ? 'sombre' : 'clair';
       await page.waitForTimeout(1200);
       await debutant.scrollIntoViewIfNeeded();
-      await page.getByRole('heading', { name: 'Problèmes', level: 2 }).evaluate(e => e.scrollIntoView());
+      await page.getByRole('heading', { name: 'Entraînement', level: 2 }).evaluate(e => e.scrollIntoView());
       await page.screenshot({ path: `docs/design/v2/captures/vivant-problemes-${nom}.png` });
       await page.getByRole('navigation').getByRole('button', { name: 'Profil' }).click();
       await page.screenshot({ path: `docs/design/v2/captures/vivant-profil-${nom}.png` });

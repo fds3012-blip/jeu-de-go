@@ -99,5 +99,6 @@ test('fin de la leçon 3, toutes les autres faites : fin de chapitre, et un prob
   await expect(page.locator('.serie-pratique')).toHaveAttribute('data-rang', '1');
   // Le retour du lecteur ramène au chemin.
   await page.getByRole('button', { name: 'Retour au chemin' }).first().click();
-  await expect(page.getByText('Chapitre terminé. Tu connais les règles du go !')).toBeVisible();
+  // #602 : sur le chemin, le chapitre fini se lit au tampon d'or (la phrase de fin est sur l'écran de fin de leçon).
+  await expect(page.getByRole('img', { name: 'Chapitre terminé : Les bases' })).toBeVisible();
 });
