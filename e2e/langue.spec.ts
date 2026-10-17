@@ -32,11 +32,11 @@ for (const largeur of [390, 320]) {
     await sansDebordement(page);
 
     await nav.getByRole('button', { name: 'Profile' }).click();
-    await expect(page.getByRole('heading', { name: 'Your journey' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Profile', exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: /^My account/ })).toContainText('Sign in');
     await expect(page.getByRole('button', { name: 'Terms and privacy' })).toBeVisible();
     await expect(page.getByText('Guest', { exact: true })).toBeVisible();
-    await expect(page.getByText(/Ton parcours|Réglages/)).toHaveCount(0);
+    await expect(page.getByText(/^Profil$|Réglages/)).toHaveCount(0);
     await sansDebordement(page);
     await page.screenshot({ path: `docs/localisation/captures/profil-en-${largeur}.png` });
     // #214 : les réglages derrière leur ligne.
@@ -155,7 +155,7 @@ test('sans paramètre, une interface française reste en français', async ({ pa
   await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
   const nav = page.getByRole('navigation', { name: 'Navigation principale' });
   await nav.getByRole('button', { name: 'Profil' }).click();
-  await expect(page.getByRole('heading', { name: 'Ton parcours' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Profil', exact: true })).toBeVisible();
   await page.getByRole('button', { name: /^Réglages/ }).click();
   await expect(page.getByRole('heading', { name: 'Réglages' })).toBeVisible();
   await expect(page.getByRole('switch', { name: /^Confirmer au doigt/ })).toBeVisible();
@@ -423,15 +423,15 @@ for (const largeur of [390, 320]) {
     await expect(page.locator('.fin-tampon')).toHaveText('BEATEN');
     await expect(page.locator('.fin-bilan')).toHaveText(/^Your record vs Pomme: 1 win\.$/);
     await expect(page.locator('.fin-action .cta')).toHaveText(/Challenge Caillou$/);
-    for (const nom of ['Review my game', 'Home']) await expect(page.getByRole('button', { name: nom, exact: true })).toBeVisible();
+    for (const nom of ['Review the game', 'Home']) await expect(page.getByRole('button', { name: nom, exact: true })).toBeVisible();
     await expect(page.getByText(/Victoire|Revoir ma partie|Accueil|Défier|Ton bilan|coups?,/)).toHaveCount(0);
     await sansDebordement(page);
     await sansCoupePartie(page, largeur);
     await page.screenshot({ path: `docs/localisation/captures/fin-en-${largeur}.png` });
 
     // Revue v3 (#405) : attente (proverbe), bilan (précision, notes), puis le parcours.
-    await page.getByRole('button', { name: 'Review my game' }).click();
-    await expect(page.getByRole('heading', { level: 2, name: 'Review my game' })).toBeVisible();
+    await page.getByRole('button', { name: 'Review the game' }).click();
+    await expect(page.getByRole('heading', { level: 2, name: 'Review the game' })).toBeVisible();
     await expect(page.locator('.revue-analyse')).toHaveCount(0, { timeout: 30_000 });
     await expect(page.getByRole('img', { name: 'Lead graph: Black at the bottom, White at the top' })).toBeVisible();
     const table = page.getByRole('table', { name: 'Your moves, by rating' });

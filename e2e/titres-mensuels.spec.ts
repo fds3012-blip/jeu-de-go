@@ -75,12 +75,12 @@ test('sans titre (garde-fou non atteint) : ni fête, ni ligne au Profil', async 
   const { ctx, page } = await telephone(browser, baseURL, serveur);
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: /^Profil/ }).click();
-  await expect(page.getByRole('heading', { name: 'Ton parcours' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Profil', exact: true })).toBeVisible();
   await expect(page.getByTestId('ligne-cote')).toBeVisible();
   await page.waitForTimeout(1000);
   await expect(page.getByTestId('ligne-titre')).toHaveCount(0);
   await expect(page.getByTestId('fete-titre')).toHaveCount(0);
   // Sans titre, la ligne de « Ta cote » garde « Placement ».
-  await expect(page.getByRole('button', { name: /Placement/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Ton niveau de départ/ })).toBeVisible();
   await ctx.close();
 });

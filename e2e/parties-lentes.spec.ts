@@ -130,7 +130,7 @@ test('parties lentes : recherche sur l’accueil, appariement, coups alternés, 
   expect(serveur.ratingHistory.filter(r => r.kind === 'game')).toHaveLength(2);
   const fin = ana.locator('.defi-fin');
   await expect(fin.locator('.btn.primary')).toHaveText('Nouvelle partie lente');
-  await expect(fin.getByRole('button', { name: 'Revoir ma partie' })).toBeVisible();
+  await expect(fin.getByRole('button', { name: 'Revoir la partie' })).toBeVisible();
   await sansDebord(ana, 'bilan 390 px');
   if (CAPTURES) await ana.screenshot({ path: `${CAPTURES}/lentes-bilan.jpg`, type: 'jpeg', quality: 60 });
 

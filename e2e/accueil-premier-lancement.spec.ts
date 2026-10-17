@@ -144,7 +144,7 @@ for (const theme of THEMES) {
     await page.emulateMedia({ colorScheme: theme, reducedMotion: 'reduce' });
     await page.goto('/');
     await page.getByRole('button', { name: 'Je sais déjà jouer' }).click();
-    await expect(page.getByText('Placement, 1 sur 3')).toBeVisible();
+    await expect(page.getByText('Problème 1 sur 3')).toBeVisible();
     await expect(page.locator('.placement-reperes i')).toHaveCount(3);
     await expect(page.locator('.placement-reperes i.fait')).toHaveCount(1);
     await page.screenshot({ path: `${DOSSIER}/placement-1-${nomTheme(theme)}.png` });

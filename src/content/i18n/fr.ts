@@ -33,7 +33,7 @@ export const fr = {
   'titre.partagee': 'Partie partagée',
   'titre.placement': 'Ton niveau de départ',
   'titre.compte': 'Ton compte',
-  'titre.revisions': 'Révisions du jour',
+  'titre.revisions': 'Révisions',
   'titre.decouverte': 'Partie de découverte',
 
   // Accueil (#40, #119) : réplique de l'adversaire, action principale, tuiles, feuille « Changer »
@@ -47,7 +47,7 @@ export const fr = {
   'accueil.aujourdhui': 'Aujourd’hui',
   'accueil.leconSuivante': 'Leçon suivante',
   // #469 : révision espacée, carte secondaire dans « Aujourd'hui ».
-  'accueil.revisions.titre': 'Révisions du jour ({n})',
+  'accueil.revisions.titre': 'Révisions ({n})',
   'accueil.revisions.detail': 'Erreurs et problèmes ratés',
   'accueil.bulle.lecons': { one: 'Bravo pour ta première leçon ! On passe à une vraie partie ?', other: 'Bravo pour tes {n} leçons ! On passe à une vraie partie ?' },
   'accueil.bulle.rejouer': 'Te revoilà ! On rejoue sur le {plateau} ?',
@@ -95,6 +95,8 @@ export const fr = {
   'mode.ami': 'Un ami',
   'mode.deux': 'À deux',
   'mode.deux.texte': 'Chacun son tour, sur le même écran.',
+  // #604 : nom court de la tuile (le nom entier, « Partie de découverte avec Mochi », est son nom accessible et la ligne de
+  // « Plus ») ; en entier, la tuile passait sur deux lignes à 390 px, à côté de « À deux » sur une. La tuile part avec F1.
   'mode.decouverte': 'Découverte',
   'mode.decouverte.texte': 'Une vraie partie où Mochi t’explique chaque idée du go.',
   'mode.plus': 'Plus',

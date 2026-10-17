@@ -47,7 +47,7 @@ test('revue : rejoue ton erreur, un coup raté revient demain, un coup à moins 
   await passerJusquAuScore(page);
   await expect(page.getByRole('heading', { level: 2, name: 'Victoire' })).toBeVisible();
 
-  await page.getByRole('button', { name: 'Revoir ma partie' }).click();
+  await page.getByRole('button', { name: 'Revoir la partie' }).click();
   // Revue v3 (#405) : le parcours commence par la Gaffe du coup 1 ; « Suivant » reste l'action principale,
   // « Rejoue cette erreur » est proposé à côté, et le bon coup reste caché.
   await demarrerParcours(page, 1, 30_000);
@@ -82,7 +82,7 @@ test('revue : rejoue ton erreur, un coup raté revient demain, un coup à moins 
   await attendrePierre(page, 'F4', 'noir');
   await expect(page.getByText(/Bravo\s!\sKataGo range ce coup parmi les meilleurs\./)).toBeVisible();
   await page.getByRole('button', { name: 'Retour à la revue' }).last().click();
-  await expect(page.getByRole('heading', { level: 2, name: 'Revoir ma partie' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 2, name: 'Revoir la partie' })).toBeVisible();
 
   // Après l'essai, le parcours montre le bon coup : pierre verte, « Mieux : D4 ».
   await expect(page.locator('[data-meilleur]')).toHaveCount(1);
@@ -106,7 +106,7 @@ test("revue : le bon coup n'est pas visible avant l'essai, « Voir le bon coup �
   await jouer(page, 'E5');
   await expect(page.getByRole('button', { name: 'Passer' })).toBeEnabled({ timeout: 10_000 });
   await passerJusquAuScore(page);
-  await page.getByRole('button', { name: 'Revoir ma partie' }).click();
+  await page.getByRole('button', { name: 'Revoir la partie' }).click();
   await demarrerParcours(page, 1, 30_000);
   await expect(page.getByRole('button', { name: 'Rejoue cette erreur' })).toBeVisible({ timeout: 10_000 });
   // L'erreur est décrite, la réponse non : ni pierre verte, ni coordonnée du bon coup.
@@ -139,7 +139,7 @@ test('captures de « Rejoue cette erreur », sombre et clair', async ({ page }) 
     await jouer(page, 'E5');
     await expect(page.getByRole('button', { name: 'Passer' })).toBeEnabled({ timeout: 10_000 });
     await passerJusquAuScore(page);
-    await page.getByRole('button', { name: 'Revoir ma partie' }).click();
+    await page.getByRole('button', { name: 'Revoir la partie' }).click();
     await demarrerParcours(page, 1, 30_000);
     await page.getByRole('button', { name: 'Voir le bon coup' }).scrollIntoViewIfNeeded();
     await page.screenshot({ path: `docs/design/v2/captures/rejoue-erreur-bouton-${nom}.png` });

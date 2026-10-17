@@ -33,7 +33,7 @@ test('victoire contre Pomme : tampon, confettis, Caillou en un geste, bilan gard
   const cta = page.locator('.cta');
   await expect(cta).toHaveCount(1);
   await expect(cta).toHaveText('Défier Caillou');
-  await expect(page.getByRole('button', { name: 'Revoir ma partie' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Revoir la partie' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Accueil', exact: true })).toBeVisible();
   expect(await bilan(page)).toEqual({ pomme: { v: 1, d: 0 } });
   // Pas de défilement horizontal à 390 px.

@@ -181,7 +181,7 @@ if (RETOUR_GOOGLE) {
     try { history.replaceState(history.state, '', location.pathname); } catch { /* adresse inchangée */ }
   } else if (action !== 'ajout') noterConnexionPar(fournisseur);
 }
-const RAISONS: readonly Raison[] = ['parties', 'lecons', 'problemes', 'placement', 'import', 'defi', 'en_ligne'];
+const RAISONS: readonly Raison[] = ['parties', 'lecons', 'problemes', 'placement', 'import', 'defi', 'en_ligne', 'serie'];
 const ECRAN_COMPTE_AU_RETOUR = RETOUR_GOOGLE?.raison && (RAISONS as readonly string[]).includes(RETOUR_GOOGLE.raison)
   ? { raison: RETOUR_GOOGLE.raison as Raison, reprise: RETOUR_GOOGLE.reprise as Reprise | null } : null;
 const DEFI_AU_RETOUR = LIEN_DEFI === null && RETOUR_GOOGLE?.defi ? RETOUR_GOOGLE.defi : null;
@@ -501,6 +501,14 @@ export function App() {
     setEcranCompte({ raison: d.raison, reprise });
     window.scrollTo({ top: 0 });
     return false;
+  }
+
+  /** #604 (A9) : « Créer mon compte » de Problèmes ouvre l'écran de compte, comme partout ; sans comptes, le Profil. */
+  function ouvrirCompte() {
+    if (!COMPTES) { go('profil'); return; }
+    void chargerSupabase();
+    setEcranCompte({ raison: 'serie', reprise: null });
+    window.scrollTo({ top: 0 });
   }
 
   /** Ouvre une leçon, si l'essai le permet (leçons 1 à 3 sans compte). */
@@ -1006,7 +1014,7 @@ export function App() {
       onGuidee={() => { track(EVENTS.modeChoisi, { mode: 'guidee', depuis: 'apprendre' satisfies Depuis, principal: false }); lancerGuidee(); }}
       compteRequis={rang => !decider({ quoi: 'lecon', rang }, etat, terminees, COMPTES).ok} />;
   } else if (tab === 'problemes') {
-    screen = <Puzzles db={supabase} userId={compteId} sessionLoading={session === undefined} confirmTouch={settings.confirmTouch} onCompte={() => go('profil')}
+    screen = <Puzzles db={supabase} userId={compteId} sessionLoading={session === undefined} confirmTouch={settings.confirmTouch} onCompte={ouvrirCompte}
       essai={decider({ quoi: 'probleme' }, etat, terminees, COMPTES).ok ? undefined : () => { garde({ quoi: 'probleme' }, { quoi: 'problemes' }); }}
       lien={LIEN_DU_JOUR} depuisRappel={ARRIVEE_RAPPEL || duJourDirect} onDuJour={setDuJourOuvert} celebrer={settings.celebrations} racine={racineProblemes} rappelAmi={rappelGoDuJour}
       onApprendre={versLecon1 && LESSONS[0] ? () => { setVersLecon1(false); go('apprendre'); setLessonId(LESSONS[0].id); } : undefined} />;

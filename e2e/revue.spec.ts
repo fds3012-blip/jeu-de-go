@@ -38,8 +38,8 @@ test("fin de partie, bilan, revue coup par coup, puis rejouer d'ici", async ({ p
   expect(gardee.adversaire).toBe('pomme');
   expect(gardee.sgf).toMatch(/^\(;GM\[1\]FF\[4\].*SZ\[9\].*;B\[ee\]/);
 
-  await page.getByRole('button', { name: 'Revoir ma partie' }).click();
-  await expect(page.getByRole('heading', { level: 2, name: 'Revoir ma partie' })).toBeVisible();
+  await page.getByRole('button', { name: 'Revoir la partie' }).click();
+  await expect(page.getByRole('heading', { level: 2, name: 'Revoir la partie' })).toBeVisible();
   // Le bilan : une seule action en relief, « Démarrer le bilan ».
   await expect(page.getByRole('button', { name: 'Démarrer le bilan' })).toBeVisible({ timeout: 60_000 });
   await expect(page.locator('.cta')).toHaveCount(1);
@@ -67,12 +67,12 @@ test("fin de partie, bilan, revue coup par coup, puis rejouer d'ici", async ({ p
   await page.getByRole('button', { name: 'Retour au résumé' }).click();
   await page.getByRole('button', { name: 'Retour au bilan' }).click();
   await expect(page.getByRole('heading', { level: 2, name: 'Victoire' })).toBeVisible();
-  await page.getByRole('button', { name: 'Revoir ma partie' }).click();
+  await page.getByRole('button', { name: 'Revoir la partie' }).click();
 
   // Rejouer d’ici au coup 1 : c'est à Pomme, donc on reprend avant E5, Noir au trait.
   await demarrerParcours(page, 1);
   await page.getByRole('button', { name: 'Rejouer d’ici' }).click();
-  await expect(page.getByRole('heading', { level: 2, name: 'Revoir ma partie' })).toHaveCount(0);
+  await expect(page.getByRole('heading', { level: 2, name: 'Revoir la partie' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Passer' })).toBeEnabled();
   await expect(plateau(page).locator('g[data-pierre]')).toHaveCount(0);
   expect(erreurs).toEqual([]);
@@ -80,7 +80,7 @@ test("fin de partie, bilan, revue coup par coup, puis rejouer d'ici", async ({ p
 
 test("rejouer d'ici garde les coups joués jusqu'à la position choisie", async ({ page }) => {
   await partieCourte(page, ['E5']);
-  await page.getByRole('button', { name: 'Revoir ma partie' }).click();
+  await page.getByRole('button', { name: 'Revoir la partie' }).click();
   // Coup 2 : E5 puis la réponse de Pomme ; on reprend juste avant la réponse, avec E5 sur le plateau.
   await demarrerParcours(page, 2);
   await expect(page.getByText(/Coup 2 sur \d+/)).toBeVisible();
@@ -95,7 +95,7 @@ test('la revue note le coup affiché et montre la précision des deux joueurs', 
   // #527 : notes détaillées (joueur de 10 kyu) ; en 3 catégories pour un débutant, voir e2e/decisions-527.spec.ts.
   await page.addInitScript(c => localStorage.setItem('go.cote-joueur.v1', JSON.stringify(c)), COTE_JOUEUR_FORT);
   await partieCourte(page, ['E5', 'C3', 'G7']);
-  await page.getByRole('button', { name: 'Revoir ma partie' }).click();
+  await page.getByRole('button', { name: 'Revoir la partie' }).click();
   await expect(page.getByRole('button', { name: 'Démarrer le bilan' })).toBeVisible({ timeout: 60_000 });
 
   // Bilan : précision des deux joueurs, tableau des notes, phrase de Mochi.
@@ -124,7 +124,7 @@ test('la revue note le coup affiché et montre la précision des deux joueurs', 
 // Issue #186 : revue honnête. Après une lourde défaite (komi de 100), ni précision flatteuse ni « aucune erreur ».
 test('défaite lourde : précision plafonnée et bilan sans félicitations', async ({ page }) => {
   await partieCourte(page, ['E5', 'C3'], 100);
-  await page.getByRole('button', { name: 'Revoir ma partie' }).click();
+  await page.getByRole('button', { name: 'Revoir la partie' }).click();
   await expect(page.getByRole('button', { name: 'Démarrer le bilan' })).toBeVisible({ timeout: 60_000 });
   const texte = ((await page.getByRole('row', { name: /^Précision/ }).textContent()) ?? '').replace(/\s/g, ' ');
   expect(Number(/Précision\s*(\d+)/.exec(texte)?.[1])).toBeLessThanOrEqual(50);
@@ -144,7 +144,7 @@ test("le parcours passe par le moment clé, et rejoue d'ici sans partie vide", a
   let trouve = false;
   for (let essai = 0; essai < 3 && !trouve; essai++) {
     await partieCourte(page, ['E5', 'A1', 'A9', 'J1', 'J9']);
-    await page.getByRole('button', { name: 'Revoir ma partie' }).click();
+    await page.getByRole('button', { name: 'Revoir la partie' }).click();
     await demarrerParcours(page);
     for (let k = 0; k < 14 && !(await cle.count()) && (await suivant.count()); k++) await suivant.click();
     trouve = (await cle.count()) > 0;

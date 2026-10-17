@@ -56,8 +56,8 @@ for (const theme of ['dark', 'light'] as const) {
     const vus: string[] = [];
     for (let i = 1; i <= 3; i++) {
       await expect(page.locator('.placement')).toHaveAttribute('data-rang', String(i));
-      await expect(page.getByText(`Placement, ${i} sur 3`)).toBeVisible();
-      const passer = page.getByRole('button', { name: 'Passer le placement' });
+      await expect(page.getByText(`Problème ${i} sur 3`)).toBeVisible();
+      const passer = page.getByRole('button', { name: 'Passer les 3 problèmes' });
       expect((await passer.boundingBox())!.height).toBeGreaterThanOrEqual(44);
       vus.push(await repondre(page, true));
       await page.locator('.verdict .cta').click();
@@ -129,7 +129,7 @@ test('le joueur passe le placement : retour à l’accueil, le lien ne revient p
   await page.locator('.verdict .cta').click();
   await expect(page.locator('.placement')).toHaveAttribute('data-rang', '2');
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
-  await page.getByRole('button', { name: 'Passer le placement' }).click();
+  await page.getByRole('button', { name: 'Passer les 3 problèmes' }).click();
 
   // Retour à l'accueil, une seule action principale, plus de lien ; aucun niveau enregistré.
   await expect(page.locator('.accueil')).toBeVisible();
@@ -138,5 +138,5 @@ test('le joueur passe le placement : retour à l’accueil, le lien ne revient p
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('go.placement.v1') ?? 'null'))).toMatchObject({ fait: false, saute: true });
   // Le Profil propose de le faire plus tard.
   await page.getByRole('navigation').getByRole('button', { name: 'Profil' }).click();
-  await expect(page.getByRole('button', { name: 'Faire le placement' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Ton niveau de départ', exact: true })).toBeVisible();
 });

@@ -73,7 +73,7 @@ const T = {
   jamais: /^(Jamais joué|Never played)$/, unPeu: /^(Un peu|A little)$/, saisJouer: /^(Je sais jouer|I know how to play)$/,
   saisDeja: /^(Je sais déjà jouer|I already know how to play)$/, jouerMochi: /^(Jouer avec Mochi|Play with Mochi)$/,
   voirIndice: /^(Voir un indice|Show a hint)$/, voirPourquoi: /^(Voir pourquoi|Show me why)$/, voirReponse: /^(Voir la réponse|Show the answer)$/,
-  revoir: /^(Revoir ma partie|Review my game)$/, demarrerBilan: /^(Démarrer le bilan|Start review)$/, rejouerErreurs: /^(Rejouer mes erreurs|Replay my mistakes)/,
+  revoir: /^(Revoir la partie|Review the game)$/, demarrerBilan: /^(Démarrer le bilan|Start review)$/, rejouerErreurs: /^(Rejouer mes erreurs|Replay my mistakes)/,
   conditions: /^(Conditions et confidentialité|Terms and privacy)$/, mentions: /^(Mentions légales|Legal notice)$/, aide: /^(Aide|Help)$/,
   questions: /^(Questions|FAQ)$/, tousProblemes: /^(Tous les problèmes|All puzzles)$/, suivant: /^(Problème suivant|Next puzzle)$/,
   valider: /^(Valider le score|Confirm score)$/, rejouer: /^(Rejouer|Play again)/,

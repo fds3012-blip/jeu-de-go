@@ -493,8 +493,10 @@ test('axe : « Par thème » d’Apprendre (#590) et la page d’un thème', asy
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
   await page.getByTestId('par-theme').scrollIntoViewIfNeeded();
-  await verifier(page, 'Apprendre, rangée « Par thème »');
-  await page.getByTestId('par-theme').getByRole('button', { name: /^Capture :/ }).click();
+  // #614 : la grille de cartes, dépliée (tous les thèmes).
+  await page.getByRole('button', { name: 'Tous les thèmes' }).click();
+  await verifier(page, 'Apprendre, grille « Par thème »');
+  await page.getByTestId('par-theme').getByRole('button', { name: /^Capture,/ }).click();
   await expect(page.getByRole('heading', { level: 2, name: 'Capture' })).toBeVisible();
   await verifier(page, 'Page du thème Capture');
 });
