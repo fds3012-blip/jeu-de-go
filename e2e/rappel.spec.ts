@@ -1,5 +1,6 @@
 import { gunzipSync } from 'node:zlib';
 import { expect, test, type Page, type Request, type Route } from '@playwright/test';
+import { VERSION_CONDITIONS } from '../src/data/conditions';
 import { choisirMode, passer } from './plateau';
 
 // Issue #36 : rappel quotidien du Go du jour par notification web.
@@ -44,7 +45,9 @@ function fauxServeur() {
     if (url.pathname === '/rest/v1/rpc/enregistrer_abonnement_rappel') return json('bbbbbbbb-0000-4000-8000-000000000009');
     // D4 (#530) : son profil entier se lit par mon_profil (colonnes privées fermées sur la table).
     if (url.pathname === '/rest/v1/profiles' || url.pathname === '/rest/v1/rpc/mon_profil') {
-      const ligne = { id: JOUEUR, username: 'Alice', rating: 800, puzzle_rating: 800, streak_days: 0, streak_last: null, gels: 0 };
+      // #583 : compte qui a déjà accepté les conditions en vigueur (sinon la case remonte par-dessus l'accueil).
+      const ligne = { id: JOUEUR, username: 'Alice', rating: 800, puzzle_rating: 800, streak_days: 0, streak_last: null, gels: 0,
+        conditions_version: VERSION_CONDITIONS, conditions_acceptees_le: '2026-10-01T00:00:00Z' };
       return json((req.headers()['accept'] ?? '').includes('vnd.pgrst.object') ? ligne : [ligne]);
     }
     if (url.pathname.startsWith('/rest/v1/rpc/')) return json(null);

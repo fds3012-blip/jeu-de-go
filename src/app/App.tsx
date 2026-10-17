@@ -1,6 +1,6 @@
 import { Suspense, lazy, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 // Écrans chargés à la demande (perf, #323) : seul l'accueil est dans le JS initial.
-import { CreerCompte, DefiArrivee, DefiPartie, DefisEcran, Direct, Game, LearnHome, Lentes, LessonPlayer, PartieDecouverte, PartiePartagee, Placement, Profil, PseudoObligatoire, Puzzles, SeriePratique, VeilleFile, apresPremierEcran } from './ecrans';
+import { AccordConditions, CreerCompte, DefiArrivee, DefiPartie, DefisEcran, Direct, Game, LearnHome, Lentes, LessonPlayer, PartieDecouverte, PartiePartagee, Placement, Profil, PseudoObligatoire, Puzzles, SeriePratique, VeilleFile, apresPremierEcran } from './ecrans';
 import { DECOUVERTE_KEY, etatDecouverte } from './decouverteEtat';
 import { SeanceRevisions, prechargerRevisions } from './ecrans';
 import { IntroRegles, prechargerIntro } from './ecrans';
@@ -185,6 +185,8 @@ const RAISONS: readonly Raison[] = ['parties', 'lecons', 'problemes', 'placement
 const ECRAN_COMPTE_AU_RETOUR = RETOUR_GOOGLE?.raison && (RAISONS as readonly string[]).includes(RETOUR_GOOGLE.raison)
   ? { raison: RETOUR_GOOGLE.raison as Raison, reprise: RETOUR_GOOGLE.reprise as Reprise | null } : null;
 const DEFI_AU_RETOUR = LIEN_DEFI === null && RETOUR_GOOGLE?.defi ? RETOUR_GOOGLE.defi : null;
+// #583 : la case des conditions était cochée avant de partir chez le fournisseur : l'accord est à garder (une fois).
+let accordAuRetour = !!RETOUR_GOOGLE?.conditions && !ERREUR_GOOGLE;
 
 // Politique de confidentialité publique (#354) : `/confidentialite` ouvre la page « Conditions et confidentialité »
 // (Google la demande pour son écran de consentement). Réécriture vers l'app : vercel.json.
@@ -467,12 +469,27 @@ export function App() {
   const essai = lireEssai(essaiBrut);
   const terminees = partiesTerminees(essai, bilan);
   const [ecranCompte, setEcranCompte] = useState<{ raison: Raison; reprise: Reprise | null } | null>(ECRAN_COMPTE_AU_RETOUR);
+  // #583 : preuve de l'accord aux conditions (src/app/preuveConditions.ts, chargé à la demande), vérifiée à chaque
+  // ouverture connectée. `demander` : la case est remontrée une fois ; le jeu en ligne reste fermé tant qu'elle ne l'est pas.
+  const [accord, setAccord] = useState<string>();
+  const [voirAccord, setVoirAccord] = useState<Reprise | true | null>(null);
+  useEffect(() => {
+    if (!client || !compteId) return;
+    let vivant = true;
+    const auRetour = accordAuRetour;
+    accordAuRetour = false;
+    import('./preuveConditions').then(m => m.verifierPreuve(client, compteId, auRetour)).then(e => {
+      if (vivant) { setAccord(e); if (e === 'demander') setVoirAccord(true); }
+    }, () => {});
+    return () => { vivant = false; };
+  }, [client, compteId]);
 
   /**
    * Garde de l'essai (#343) : vrai si le joueur peut faire `a`. Sinon, l'écran « Crée ton compte » s'ouvre, et
    * `reprise` sera faite dès que le compte est complet (e-mail vérifié et pseudo choisi).
    */
   function garde(a: Acces, reprise: Reprise | null = null): boolean {
+    if (accord === 'demander' && etat === 'complet' && (a.quoi === 'en_ligne' || a.quoi === 'defi')) { setVoirAccord(reprise ?? true); return false; }
     const d = decider(a, etat, terminees, COMPTES);
     if (d.ok) return true;
     if (!COMPTES) return false;
@@ -817,7 +834,10 @@ export function App() {
   const quitterDefi = () => { setDefi(null); window.scrollTo({ top: 0 }); };
   // #343 : pseudo obligatoire juste après la première connexion, avant tout le reste ; puis « Crée ton compte ».
   const pseudoAChoisir = !!supabase && etat === 'sans_pseudo' && !!compteId;
-  const ecranPlein = pseudoAChoisir || ecranCompte !== null;
+  // #583 : la case des conditions, pas en pleine partie ni pendant la lecture des conditions ; arrivée par un lien de défi : tout de suite.
+  const accordAMontrer = !pseudoAChoisir && !!supabase && !!compteId && etat === 'complet' && accord === 'demander'
+    && (defi?.vue === 'arrivee' || (voirAccord !== null && !enPartie && !(tab === 'profil' && vueProfil === 'conditions')));
+  const ecranPlein = pseudoAChoisir || accordAMontrer || ecranCompte !== null;
   // Bandeau « Tu es hors ligne » : seulement là où le réseau sert (défi par lien, en ligne, compte, amis, cote).
   // #538 : le reste du Profil (parcours, réglages, l'IA) marche hors ligne : pas de bandeau qui dirait le contraire.
   const ecranReseau = enDefi || enDirect || enLente || enPartagee || ecranPlein
@@ -827,6 +847,11 @@ export function App() {
     screen = <PseudoObligatoire db={supabase} userId={compteId}
       onChoisi={p => { setPseudoChoisi({ id: compteId, pseudo: p }); setClePseudo(n => n + 1); }}
       onDeconnecter={() => { void supabase?.auth.signOut(); }} />;
+  } else if (accordAMontrer && supabase && compteId) {
+    screen = <AccordConditions db={supabase} userId={compteId}
+      onFait={() => { const r = voirAccord; setAccord('ok'); setVoirAccord(null); if (r && r !== true) executer.current(r); }}
+      onPlusTard={() => { setVoirAccord(null); if (defi?.vue === 'arrivee') quitterDefi(); }}
+      onConditions={() => { go('profil'); setVueProfil('conditions'); }} />;
   } else if ((ecranCompte || enDefi || enDirect || enLente || enPartagee) && client === undefined) {
     // Client Supabase pas encore là (#401, chargé dès l'ouverture d'un lien de défi) : comme un écran à la demande.
     screen = null;

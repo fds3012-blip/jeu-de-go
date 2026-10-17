@@ -25,6 +25,8 @@ export interface RetourConnexion {
   /** Fournisseur choisi (null : note d'avant #411, c'était Google). */
   fournisseur?: Fournisseur | null;
   action?: ActionSociale;
+  /** #583 : la case d'âge et des conditions était cochée avant de partir. */
+  conditions?: boolean;
 }
 
 let courant: RetourConnexion = { raison: null, reprise: null, defi: null, profil: false };
@@ -33,7 +35,7 @@ export function definirRetour(r: RetourConnexion): void { courant = r; }
 
 /** Écrit la note juste avant de partir. */
 export function garderRetour(stockage: Pick<Storage, 'setItem'> | null = sessionStorageSur(), maintenant = Date.now(),
-  quoi: { fournisseur: Fournisseur; action: ActionSociale } = { fournisseur: 'google', action: 'connexion' }): void {
+  quoi: { fournisseur: Fournisseur; action: ActionSociale; conditions?: boolean } = { fournisseur: 'google', action: 'connexion' }): void {
   try { stockage?.setItem(RETOUR_CONNEXION_KEY, JSON.stringify({ ...courant, ...quoi, quand: maintenant })); } catch { /* pas de stockage : retour à l'accueil */ }
 }
 
@@ -49,7 +51,7 @@ export function lireRetour(brut: string | null, maintenant = Date.now()): Retour
     const defi = d && typeof d === 'object' && typeof d.jeton === 'string' ? { jeton: d.jeton, inviteur: typeof d.inviteur === 'string' ? d.inviteur : null } : null;
     const action: ActionSociale = o.action === 'liaison' || o.action === 'ajout' ? o.action : 'connexion';
     return { raison: typeof o.raison === 'string' ? o.raison : null, reprise, defi, profil: o.profil === true,
-      fournisseur: estFournisseur(o.fournisseur) ? o.fournisseur : 'google', action };
+      fournisseur: estFournisseur(o.fournisseur) ? o.fournisseur : 'google', action, ...(o.conditions === true && { conditions: true }) };
   } catch { return null; }
 }
 
