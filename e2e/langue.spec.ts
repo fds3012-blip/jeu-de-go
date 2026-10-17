@@ -93,7 +93,8 @@ for (const largeur of [390, 320]) {
     await expect(page.locator('header').getByText('Mochi Go', { exact: true })).toBeVisible();
     await expect(page.getByText(/Joue|Plateau|Changer|Go du jour/)).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Play a friend on this phone' })).toContainText('Two players');
-    await expect(page.getByRole('button', { name: 'Guided game against Mochi' })).toContainText('Guided');
+    // #589 : la partie guidée est dans Apprendre (Learn), plus sur l'accueil.
+    await expect(page.getByRole('button', { name: /^Guided game/ })).toHaveCount(0);
     await sansDebordement(page);
     await sansCoupe(page, largeur);
     await page.screenshot({ path: `docs/localisation/captures/accueil-en-${largeur}.png` });

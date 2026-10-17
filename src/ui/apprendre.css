@@ -515,3 +515,5 @@
   .carte-decouverte { transition: transform var(--duree-rapide) var(--ease); }
   .carte-decouverte:active { transform: scale(.98); }
 }
+/* #589 : la partie guidée, juste sous la partie de découverte (même tuile) : deux façons de jouer avec Mochi, groupées. */
+.carte-guidee { margin-top: calc(var(--space-2) - var(--space-4)); }

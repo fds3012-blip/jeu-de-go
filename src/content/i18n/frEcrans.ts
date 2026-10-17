@@ -467,6 +467,7 @@ export const frEcrans = {
   'partie.reprend': 'La partie reprend.',
   // Écran de partie : bandeaux, barre d'actions, comptage
   'partie.retourAccueil': "Retour à l'accueil",
+  'partie.retourApprendre': 'Retour à Apprendre',
   'partie.komi': 'komi {komi}',
   'partie.joueEnPremier': 'joue en premier',
   'partie.handicapCourt': 'handicap {n}',
@@ -959,6 +960,10 @@ export const frEcrans = {
   'apprendre.decouverte.finie': 'Rejouer',
   'apprendre.decouverte.aria': 'Partie de découverte : une vraie partie contre Mochi, commentée. {etat}',
   'apprendre.decouverte.faite': 'Faite',
+  // #589 : la partie guidée contre Mochi, sous la partie de découverte (elle a quitté l'accueil Jouer).
+  'apprendre.guidee': 'Partie guidée',
+  'apprendre.guidee.texte': 'Contre Mochi. Il règle sa force pour que la partie reste serrée.',
+  'apprendre.guidee.aria': 'Partie guidée contre Mochi : il règle sa force pour que la partie reste serrée. Jouer',
   'apprendre.pas.compte': ', avec un compte',
   'apprendre.compte': 'Avec un compte',
   // #454 : leçon sur un grand plateau, annoncée sous son titre.
