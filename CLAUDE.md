@@ -26,3 +26,4 @@ Attirer un très grand nombre de joueurs, débutants compris. Chaque écran doit
 ## Conventions de code
 - Coordonnées internes : index `y * N + x` (y depuis le haut). Coordonnées affichées : lettres A à T sans I, lignes numérotées depuis le bas. Stockage des coups : SGF (2 lettres, `tt` = passe).
 - Dossiers : `src/app` (écrans), `src/ui` (composants), `src/go` (règles, SGF, comptage), `src/engine` (KataGo), `src/data` (Supabase), `src/content` (leçons).
+- Avant de toucher un écran : lire DESIGN.md.

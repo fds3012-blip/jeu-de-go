@@ -12,3 +12,6 @@ blob-report
 
 # Réseau KataGo téléchargé par npm run fetch-model (jamais commité)
 public/models/
+
+# Sorties de playwright-cli (instantanés, captures, journaux) : jamais commitées (#593)
+.playwright-cli/

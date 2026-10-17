@@ -95,3 +95,13 @@ Copiées telles quelles, sauf :
 - OmniRoute : passerelle qui détient les clés d'API et route Claude Code vers d'autres fournisseurs ; risque de sécurité et de conditions d'utilisation.
 - Graphify : demande un paquet Python, des crochets `PreToolUse` et modifie `CLAUDE.md` ; à réévaluer seulement sur décision de Florian.
 - « dots » : annonce d'OpenAI, pas une skill. L99, OODA, « artifacts » : des formules de prompt, pas des skills installables.
+
+## Outils design du 17/10 (#593, reel envoyé par Florian)
+
+| Élément | Origine | Licence | Décision |
+|---|---|---|---|
+| `playwright-cli` | [microsoft/playwright-cli](https://github.com/microsoft/playwright-cli) (commit `b85c7a7`) | Apache 2.0 | **Ajoutée.** Un agent pilote l'app comme un joueur (toucher, remplir, instantané d'accessibilité, capture) sans écrire de spec : audits d'écran et captures avant/après. Version figée `@playwright/cli@0.1.22` lancée par `npx`, sans dépendance ajoutée ; config `.playwright/cli.config.json` (Chromium préinstallé, 390×844, français). Règles Mochi Go en tête du `SKILL.md`. Revient sur le refus du 28/09 : Playwright Test reste l'outil des tests, `playwright-cli` sert à explorer |
+| `redesign-skill` | [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill) v2.0.0 (commit `f624f37`) | MIT | **Mise à jour** (navigation repliable accessible : nom visible pour les lecteurs d'écran, cibles de 44 px) |
+| `taste-skill` v2 | idem | MIT | **Pas installée pour l'app.** Dossier de 1,8 Mo (photos, polices, scripts) pensé pour les sites vitrines primés ; ses règles maison (pas de palette crème, pas de pastilles…) contredisent Encre & Jade. À reprendre pour un futur site vitrine. La version installée reste en place |
+| `web-design-guidelines` | [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills) | MIT | Déjà installée (27/09) |
+| `awesome-design-md` | [VoltAgent/awesome-design-md](https://github.com/VoltAgent/awesome-design-md) | MIT | **Idée reprise, fichiers non copiés.** Ses fiches décrivent le style d'autres marques ; on ne copie pas une autre marque. On écrit à la place notre propre `DESIGN.md` à la racine, dans le même format, à partir d'Encre & Jade : une seule fiche que tout agent lit avant de toucher un écran |
