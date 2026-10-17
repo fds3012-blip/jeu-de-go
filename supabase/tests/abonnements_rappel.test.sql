@@ -65,35 +65,35 @@ update public.profiles set username = 'Chloe' where id = 'cccccccc-0000-4000-800
 -- 1. Visiteur sans connexion : aucun droit.
 set local role anon;
 select pg_temp.doit_refuser('select * from public.abonnements_rappel', 'permission denied');
-select pg_temp.doit_refuser(format('select public.enregistrer_abonnement_rappel(''https://push.exemple.test/1'', %L, %L, ''soir'', ''Europe/Paris'', ''fr'')', :cle, :sec), 'permission denied');
+select pg_temp.doit_refuser(format('select public.enregistrer_abonnement_rappel(''https://fcm.googleapis.com/fcm/send/1'', %L, %L, ''soir'', ''Europe/Paris'', ''fr'')', :cle, :sec), 'permission denied');
 reset role;
 
 set local role authenticated;
 -- 2. Anonyme (défi par lien) : refusé, par la fonction comme par la table.
 select pg_temp.connecte(:bruno, true);
-select pg_temp.doit_refuser(format('select public.enregistrer_abonnement_rappel(''https://push.exemple.test/b'', %L, %L, ''soir'', ''Europe/Paris'', ''fr'')', :cle, :sec), 'Crée ton compte');
-select pg_temp.doit_refuser(format('insert into public.abonnements_rappel (user_id, endpoint, p256dh, auth) values (%L, ''https://push.exemple.test/b'', %L, %L)', :bruno, :cle, :sec), 'permission denied');
+select pg_temp.doit_refuser(format('select public.enregistrer_abonnement_rappel(''https://fcm.googleapis.com/fcm/send/b'', %L, %L, ''soir'', ''Europe/Paris'', ''fr'')', :cle, :sec), 'Crée ton compte');
+select pg_temp.doit_refuser(format('insert into public.abonnements_rappel (user_id, endpoint, p256dh, auth) values (%L, ''https://fcm.googleapis.com/fcm/send/b'', %L, %L)', :bruno, :cle, :sec), 'permission denied');
 -- Compte sans pseudo : refusé (#343).
 select pg_temp.connecte(:denis);
-select pg_temp.doit_refuser(format('select public.enregistrer_abonnement_rappel(''https://push.exemple.test/d'', %L, %L, ''soir'', ''Europe/Paris'', ''fr'')', :cle, :sec), 'Choisis ton pseudo');
+select pg_temp.doit_refuser(format('select public.enregistrer_abonnement_rappel(''https://fcm.googleapis.com/fcm/send/d'', %L, %L, ''soir'', ''Europe/Paris'', ''fr'')', :cle, :sec), 'Choisis ton pseudo');
 -- Jeton sans utilisateur : refusé.
 select pg_temp.deconnecte();
-select pg_temp.doit_refuser(format('select public.enregistrer_abonnement_rappel(''https://push.exemple.test/x'', %L, %L, ''soir'', ''Europe/Paris'', ''fr'')', :cle, :sec), 'Crée ton compte');
+select pg_temp.doit_refuser(format('select public.enregistrer_abonnement_rappel(''https://fcm.googleapis.com/fcm/send/x'', %L, %L, ''soir'', ''Europe/Paris'', ''fr'')', :cle, :sec), 'Crée ton compte');
 
 -- 3. Alice s'abonne (téléphone, le soir) ; Chloé aussi (le matin, à Montréal).
 select pg_temp.connecte(:alice);
-select public.enregistrer_abonnement_rappel('https://push.exemple.test/alice', :cle, :sec, 'soir', 'Europe/Paris', 'fr') as abo_alice \gset
+select public.enregistrer_abonnement_rappel('https://fcm.googleapis.com/fcm/send/alice', :cle, :sec, 'soir', 'Europe/Paris', 'fr') as abo_alice \gset
 select pg_temp.connecte(:chloe);
-select public.enregistrer_abonnement_rappel('https://push.exemple.test/chloe', :cle, :sec, 'matin', 'America/Montreal', 'en') as abo_chloe \gset
+select public.enregistrer_abonnement_rappel('https://fcm.googleapis.com/fcm/send/chloe', :cle, :sec, 'matin', 'America/Montreal', 'en') as abo_chloe \gset
 -- Fuseau inconnu : Paris.
-select public.enregistrer_abonnement_rappel('https://push.exemple.test/chloe-2', :cle, :sec, 'midi', 'Mars/Olympus', 'fr') as abo_chloe2 \gset
+select public.enregistrer_abonnement_rappel('https://fcm.googleapis.com/fcm/send/chloe-2', :cle, :sec, 'midi', 'Mars/Olympus', 'fr') as abo_chloe2 \gset
 reset role;
 select pg_temp.egal((select fuseau from public.abonnements_rappel where id = :'abo_chloe2'), 'Europe/Paris', 'fuseau inconnu : Paris');
 select pg_temp.egal((select user_id from public.abonnements_rappel where id = :'abo_alice'), :alice::uuid, 'abonnement lié au compte');
 -- Valeurs hors liste refusées.
 set local role authenticated;
 select pg_temp.connecte(:alice);
-select pg_temp.doit_refuser(format('select public.enregistrer_abonnement_rappel(''https://push.exemple.test/alice'', %L, %L, ''nuit'', ''Europe/Paris'', ''fr'')', :cle, :sec), 'check constraint');
+select pg_temp.doit_refuser(format('select public.enregistrer_abonnement_rappel(''https://fcm.googleapis.com/fcm/send/alice'', %L, %L, ''nuit'', ''Europe/Paris'', ''fr'')', :cle, :sec), 'check constraint');
 select pg_temp.doit_refuser(format('select public.enregistrer_abonnement_rappel(''http://push.exemple.test/alice'', %L, %L, ''soir'', ''Europe/Paris'', ''fr'')', :cle, :sec), 'check constraint');
 
 -- 4. Chacun ne voit, ne modifie et ne supprime que les siens.
@@ -103,10 +103,10 @@ select pg_temp.egal(pg_temp.lignes(format('delete from public.abonnements_rappel
 select pg_temp.egal(pg_temp.lignes(format('update public.abonnements_rappel set moment = ''midi'' where id = %L', :'abo_alice')), 1::bigint, 'Alice change son moment');
 select pg_temp.doit_refuser(format('update public.abonnements_rappel set dernier_envoi = ''2000-01-01'' where id = %L', :'abo_alice'), 'permission denied');
 select pg_temp.doit_refuser(format('update public.abonnements_rappel set user_id = %L where id = %L', :chloe, :'abo_alice'), 'permission denied');
-select pg_temp.doit_refuser(format('insert into public.abonnements_rappel (user_id, endpoint, p256dh, auth) values (%L, ''https://push.exemple.test/z'', %L, %L)', :alice, :cle, :sec), 'permission denied');
+select pg_temp.doit_refuser(format('insert into public.abonnements_rappel (user_id, endpoint, p256dh, auth) values (%L, ''https://fcm.googleapis.com/fcm/send/z'', %L, %L)', :alice, :cle, :sec), 'permission denied');
 select pg_temp.doit_refuser('select * from public.reclamer_rappels()', 'permission denied');
 select pg_temp.connecte(:alice);
-select public.enregistrer_abonnement_rappel('https://push.exemple.test/alice', :cle, :sec, 'soir', 'Europe/Paris', 'fr');
+select public.enregistrer_abonnement_rappel('https://fcm.googleapis.com/fcm/send/alice', :cle, :sec, 'soir', 'Europe/Paris', 'fr');
 select pg_temp.egal((select count(*) from public.abonnements_rappel), 1::bigint, 'réinscription : même ligne, pas de doublon');
 reset role;
 
@@ -138,15 +138,15 @@ reset role;
 -- 6. Un appareil qui change de compte change de propriétaire et repart de zéro.
 set local role authenticated;
 select pg_temp.connecte(:chloe);
-select public.enregistrer_abonnement_rappel('https://push.exemple.test/alice', :cle, :sec, 'matin', 'Europe/Paris', 'fr');
+select public.enregistrer_abonnement_rappel('https://fcm.googleapis.com/fcm/send/alice', :cle, :sec, 'matin', 'Europe/Paris', 'fr');
 reset role;
-select pg_temp.egal((select user_id from public.abonnements_rappel where endpoint = 'https://push.exemple.test/alice'), :chloe::uuid, 'appareil repris par Chloé');
-select pg_temp.egal((select dernier_envoi from public.abonnements_rappel where endpoint = 'https://push.exemple.test/alice'), null::date, 'dernier envoi effacé');
+select pg_temp.egal((select user_id from public.abonnements_rappel where endpoint = 'https://fcm.googleapis.com/fcm/send/alice'), :chloe::uuid, 'appareil repris par Chloé');
+select pg_temp.egal((select dernier_envoi from public.abonnements_rappel where endpoint = 'https://fcm.googleapis.com/fcm/send/alice'), null::date, 'dernier envoi effacé');
 
 -- 7. 20 appareils au plus par compte.
 set local role authenticated;
 select pg_temp.connecte(:alice);
-select count(*) from (select public.enregistrer_abonnement_rappel('https://push.exemple.test/a' || i, :cle, :sec, 'soir', 'Europe/Paris', 'fr')
+select count(*) from (select public.enregistrer_abonnement_rappel('https://fcm.googleapis.com/fcm/send/a' || i, :cle, :sec, 'soir', 'Europe/Paris', 'fr')
   from generate_series(1, 25) i) s;
 select pg_temp.egal((select count(*) from public.abonnements_rappel), 20::bigint, '20 appareils au plus');
 reset role;

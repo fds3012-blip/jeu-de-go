@@ -11,6 +11,7 @@ import { Mochi } from '../ui/Mochi';
 import { Avatar, Bandeau, BarreActions, Coach, Icone, Interrupteur, ListeCoups } from '../ui/Partie';
 import { BoutonAide } from '../ui/BoutonAide';
 import { BoutonRetour, EnteteEcran } from '../ui/BoutonRetour';
+import { ReglagesReplies } from '../ui/ReglagesReplies';
 import { GainCote, VocabulaireGrade } from '../ui/Cote';
 import { fromSgf, toSgf } from '../go/coords';
 import { groupAt } from '../go/rules';
@@ -238,19 +239,24 @@ function Choix({ params, onParams, erreur, onAccueil, onChercher, onFacon, aband
       {onFacon && <BasculeEnLigne valeur="direct" onChoix={onFacon} />}
       <p className="direct-intro">{fr(td('direct.intro'))}</p>
       <p className="muted small direct-classee">{fr(td('direct.classee'))}</p>
-      <Segment titre={td('direct.taille')} valeurs={TAILLES} valeur={params.taille} libelle={n => `${n} × ${n}`}
-        onChoix={taille => onParams({ ...params, taille })} />
-      <Segment titre={td('direct.cadence')} valeurs={CADENCES_ORDRE} valeur={params.cadence}
-        libelle={k => (
-          <span className="direct-cadence"><b>{td(`direct.cadence.${k}`)}</b>
-            {/* « 10 min » et « + 3 × 30 s » ne se coupent pas au milieu. */}
-            <small>{texteCadence(k).split(' + ').map((m, i) => <span key={i}>{i ? ' + ' : ''}<span className="insecable">{m}</span></span>)}</small>
-          </span>
-        )}
-        onChoix={cadence => onParams({ ...params, cadence })}
-        aide={fr(td('direct.byoyomi', { s: c.periodeMs / 1000, n: c.periodes }))} />
-      <Segment titre={td('direct.comptage')} valeurs={REGLES} valeur={params.regles} libelle={r => td(`direct.comptage.${r}`)}
-        onChoix={regles => onParams({ ...params, regles })} aide={fr(td(`direct.comptage.aide.${params.regles}`))} />
+      {/* #571 (loi de Hick) : taille, temps et comptage repliés derrière leur résumé ; « Trouver un adversaire » est le seul choix. */}
+      <ReglagesReplies ecran="direct" changer={td('direct.reglages.changer')} masquer={td('direct.reglages.masquer')}
+        resume={td('direct.reglages.resume', { taille: params.taille, nom: td(`direct.cadence.${params.cadence}`), cadence: texteCadence(params.cadence).replace(/ (min|s)\b/g, '\u00a0$1'), regles: td(`direct.reglages.${params.regles}`) })}
+        aide={fr(td('direct.byoyomi', { s: c.periodeMs / 1000, n: c.periodes }))}>
+        <Segment titre={td('direct.taille')} valeurs={TAILLES} valeur={params.taille} libelle={n => `${n} × ${n}`}
+          onChoix={taille => onParams({ ...params, taille })} />
+        <Segment titre={td('direct.cadence')} valeurs={CADENCES_ORDRE} valeur={params.cadence}
+          libelle={k => (
+            <span className="direct-cadence"><b>{td(`direct.cadence.${k}`)}</b>
+              {/* « 10 min » et « + 3 × 30 s » ne se coupent pas au milieu. */}
+              <small>{texteCadence(k).split(' + ').map((m, i) => <span key={i}>{i ? ' + ' : ''}<span className="insecable">{m}</span></span>)}</small>
+            </span>
+          )}
+          onChoix={cadence => onParams({ ...params, cadence })}
+          aide={fr(td('direct.byoyomi', { s: c.periodeMs / 1000, n: c.periodes }))} />
+        <Segment titre={td('direct.comptage')} valeurs={REGLES} valeur={params.regles} libelle={r => td(`direct.comptage.${r}`)}
+          onChoix={regles => onParams({ ...params, regles })} aide={fr(td(`direct.comptage.aide.${params.regles}`))} />
+      </ReglagesReplies>
       {!online && <p className="card small" role="status">{fr(td('direct.horsLigne'))}</p>}
       {prochain && <p className="card small direct-prevenir" data-testid="direct-prevenir">{fr(td('direct.abandons.prevenir', { delai: texteDelai(prochain) }))}</p>}
       {erreur && <p className="small defi-erreur" role="alert">{fr(erreur)}</p>}

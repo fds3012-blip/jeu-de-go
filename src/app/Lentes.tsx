@@ -23,6 +23,7 @@ import { texteDelai } from './defiAmi';
 import { tl, type CleLente } from '../content/i18n/lente';
 import { t } from '../content/i18n/secondaires';
 import { fr } from '../ui/typo';
+import { ReglagesReplies } from '../ui/ReglagesReplies';
 import '../ui/defis.css';
 // #563 : le reste des styles des défis, hors du CSS initial (avant direct.css, comme dans la feuille principale).
 import '../ui/defis-ecran.css';
@@ -152,9 +153,13 @@ export function Lentes({ db, userId, onPartie, onFacon, onAccueil }: Props) {
       <>
         <p className="direct-intro">{fr(tl('lente.intro'))}</p>
         <p className="muted small direct-classee">{fr(tl('lente.classee'))}</p>
-        <Segment titre={tl('lente.taille')} valeurs={TAILLES} valeur={taille} libelle={n => `${n} × ${n}`} onChoix={setTaille} />
-        <Segment titre={tl('lente.delai')} valeurs={DELAIS} valeur={delai} libelle={jours} onChoix={setDelai}
-          aide={fr(tl('lente.delai.aide', { delai: jours(delai) }))} />
+        {/* #571 (loi de Hick) : taille et délai repliés derrière leur résumé ; « Trouver un adversaire » est le seul choix. */}
+        <ReglagesReplies ecran="lente" changer={tl('lente.reglages.changer')} masquer={tl('lente.reglages.masquer')}
+          resume={tl('lente.recherche.rappel', { taille, delai: jours(delai) })} aide={fr(tl('lente.delai.aide', { delai: jours(delai) }))}>
+          <Segment titre={tl('lente.taille')} valeurs={TAILLES} valeur={taille} libelle={n => `${n} × ${n}`} onChoix={setTaille} />
+          <Segment titre={tl('lente.delai')} valeurs={DELAIS} valeur={delai} libelle={jours} onChoix={setDelai}
+            aide={fr(tl('lente.delai.aide', { delai: jours(delai) }))} />
+        </ReglagesReplies>
         {limite && <p className="card small" role="status" data-testid="lente-limite">{fr(tl(reduit ? 'lente.plafond' : 'lente.limite', { n: plafond }))}</p>}
         {!limite && reduit && <p className="muted small" data-testid="lente-plafond">{fr(tl('lente.plafond.info', { n: plafond }))}</p>}
         {!reduit && abandons?.lentesExpirees === 1 && <p className="muted small" data-testid="lente-prevenir">{fr(tl('lente.plafond.prevenir'))}</p>}

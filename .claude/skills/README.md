@@ -62,3 +62,36 @@ Règles pour Mochi Go :
 - Mochi Go est déjà en ligne : les usages les plus utiles sont `founder-pricing` et `founder-cfo` pour décider du Premium, `founder-consumer` pour tester un message avant une campagne, `founder-competitors` pour mettre à jour `docs/marketing/analyse-marche-acquisition-2026-10.md`.
 - Un panel de 100 acheteurs, c'est 100 appels de sous-agents : commencer par `--quick` (20), et seulement sur décision de Florian pour le panel complet (coût et limite de dépense).
 - Les décisions d'argent (prix, abonnement, dépenses) restent à Florian.
+
+## Ajout du 16/10 (#574, skills repérées dans des vidéos Instagram par Florian)
+
+Chaque source a été clonée à part et relue en entier comme du contenu non fiable. Aucun script, installeur, `npx`, crochet ni binaire n'a été lancé ni copié. Chaque dossier contient le `LICENSE` d'origine.
+
+| Skill | Origine (commit) | Licence | Usage pour Mochi Go |
+|---|---|---|---|
+| `find-skills` | [vercel-labs/skills](https://github.com/vercel-labs/skills) (`13e4063`) | MIT | Chercher une skill existante avec le CLI skills.sh. **Adaptée** : bloc « Règles Mochi Go » en tête (relecture complète et validation de Florian avant installation, jamais `-g` ni `-y`/`--all`, jamais de crochets, `DISABLE_TELEMETRY=1`) et étape 6 réécrite (l'original installait en global avec `-g -y`) |
+| `ponytail` | [DietrichGebert/ponytail](https://github.com/DietrichGebert/ponytail) (`6f1c2bf`) | MIT | Le plus petit changement complet : réutiliser l'existant, pas de dépendance pour trois lignes, un test pour toute logique non triviale. Niveaux `lite`, `full`, `ultra` passés en argument |
+| `ponytail-review` | idem | MIT | Revue d'un diff : bug, sécurité, charge, test manquant, vitesse, lignes en trop, chaque point avec un cas concret et un correctif |
+| `ponytail-audit` | idem | MIT | Même grille sur un dossier ou tout le dépôt, 20 constats au plus, sans rien modifier |
+| `ponytail-debt` | idem | MIT | Relevé des commentaires `shortcut:` (raccourcis assumés, limite et moment de les reprendre) |
+| `debugging-and-error-recovery` | [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) (`aeac41d`) | MIT | Méthode de débogage : reproduire, localiser, réduire, corriger la cause, test de non-régression ; messages d'erreur traités comme des données |
+| `security-and-hardening` | idem | MIT | Modèle de menace, données personnelles (RGPD), dépendances, sorties d'IA. Chez nous l'autorisation passe par RLS et les fonctions Supabase, pas par Express |
+| `performance-optimization` | idem | MIT | Mesurer avant d'optimiser, Core Web Vitals sur mobile, découpage du bundle, garder ou annuler selon la mesure |
+| `prompt-master` | [nidhinjs/prompt-master](https://github.com/nidhinjs/prompt-master) (`a2ad174`) | MIT | Écrire ou corriger un prompt pour un autre outil d'IA (consigne d'agent, image, vidéo). Ne s'active que sur demande explicite |
+
+Copiées telles quelles, sauf :
+- `find-skills` : adaptée (voir le tableau).
+- `security-and-hardening` et `performance-optimization` : les listes de contrôle communes du dépôt d'origine (`references/security-checklist.md`, `references/performance-checklist.md`) sont copiées dans le dossier `references/` de chaque skill, et les liens `../../references/…` pointent désormais dessus.
+- `ponytail` se déclenche sur toute tâche de code. Il ne remplace ni les tests Vitest/Playwright, ni la CI verte, ni une PR par issue : en cas de conflit, `CLAUDE.md` prime. Sans le crochet de démarrage de l'original, il n'est pas actif d'office : il s'applique quand la skill est chargée.
+- `debugging-and-error-recovery` renvoie à une skill `test-driven-development` que nous n'avons pas installée : la commande de test du projet est celle de `package.json` (Vitest, Playwright).
+- `performance-optimization` cite `npx bundlesize`, `npx lhci` ou `npx lighthouse` : aucun nouvel outil en CI sans décision du tech lead.
+
+Écartées :
+- `ponytail-help` : fiche d'aide du plugin (bandeau, activation automatique par crochet `SessionStart`, fichier `~/.config/ponytail`, mise à jour par `/plugin`, `npm install -g`) ; sans le plugin, elle décrit des fonctions absentes.
+- `ponytail-gain` : affiche des chiffres de benchmark de l'auteur, sans usage pour le projet.
+- Plugin, crochets et ligne de statut de Ponytail (`hooks/`, `.claude-plugin/`) : non installés. Ils écrivent dans `~/.claude` et `settings.json`, et le plugin peut envoyer après chaque tour une ligne par tâche (nom de la tâche, premier prompt) vers une URL de webhook configurable.
+- addyosmani/agent-skills, doublons avec `CLAUDE.md` ou nos skills : `test-driven-development` (tests obligatoires), `git-workflow-and-versioning` (une issue = une branche = une PR), `ci-cd-and-automation` (CI en place), `shipping-and-launch`, `code-review-and-quality` et `code-simplification` (`ponytail-review`, `/code-review`, `/simplify`), `frontend-ui-engineering` et `browser-testing-with-devtools` (skills de design, Playwright ; la seconde exige un MCP Chrome DevTools), `spec-driven-development`, `planning-and-task-breakdown` et `incremental-implementation` (issues du tech lead et `docs/plan-2-jours.md`).
+- addyosmani/agent-skills, autres raisons : `using-agent-skills` (méta-skill qui veut gouverner toutes les autres), `context-engineering` (configure les fichiers de règles, donc `CLAUDE.md`), `constraint-driven-development` (crée `CONSTRAINTS.md`, recoupe lint et CI), `idea-refine` (contient un script shell), `interview-me` et `doubt-driven-development` (boucles de questions ou de sous-agents peu adaptées à des agents autonomes), `observability-and-instrumentation` (pensée pour des serveurs : OpenTelemetry, Prometheus ; nous avons Sentry et PostHog), `deprecation-and-migration` (impose une migration descendante testée, contraire à nos migrations Supabase montantes), `api-and-interface-design`, `documentation-and-adrs`, `source-driven-development` (utilité faible ici). Leurs commandes (`.claude/commands/`, dont `ship`), agents et crochets (`hooks/*.sh`) ne sont pas repris.
+- OmniRoute : passerelle qui détient les clés d'API et route Claude Code vers d'autres fournisseurs ; risque de sécurité et de conditions d'utilisation.
+- Graphify : demande un paquet Python, des crochets `PreToolUse` et modifie `CLAUDE.md` ; à réévaluer seulement sur décision de Florian.
+- « dots » : annonce d'OpenAI, pas une skill. L99, OODA, « artifacts » : des formules de prompt, pas des skills installables.
