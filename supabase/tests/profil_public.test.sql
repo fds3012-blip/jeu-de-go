@@ -143,7 +143,7 @@ select pg_temp.egal(pg_temp.parties(public.profil_public('Bruno')),
   'parties : la plus récente d''abord, résultat vu de Bruno, Chloé (sans pseudo) = un joueur');
 select pg_temp.egal(public.profil_public('Bruno') -> 'parties' -> 0 ->> 'toi', 'true', 'Alice est l''adversaire de la première partie');
 select pg_temp.egal(public.profil_public('Bruno') -> 'parties' -> 2 ->> 'toi', 'false', 'Eve n''est pas Alice');
-select pg_temp.egal(public.profil_public('Bruno') -> 'parties' -> 0 ->> 'le', to_char(now() - interval '1 hour', 'YYYY-MM-DD'), 'date de la partie');
+select pg_temp.egal(public.profil_public('Bruno') -> 'parties' -> 0 ->> 'le', to_char((now() - interval '1 hour') at time zone 'Europe/Paris', 'YYYY-MM-DD'), 'date de la partie (jour de Paris, comme la fonction)');
 -- Les clés rendues, et rien d'autre.
 select pg_temp.egal((select string_agg(k, ',' order by k) from jsonb_object_keys(public.profil_public('Bruno')) k),
   'cote,lien,parties,parties_classees,provisoire,pseudo', 'clés du profil');

@@ -170,6 +170,9 @@ export const EVENTS = {
   // Aide du joueur (#362) : `fiche` (`regles`, `compter`, `mots`, `questions`), `mot` (mot du glossaire ouvert d'emblée, sinon vide),
   // `depuis` (`profil`, `lecon`, `probleme`, `partie`, `clavier`). Aucun texte cherché n'est envoyé.
   aideOuverte: 'aide_ouverte',
+  // #606 (N1) : retour du système (Android, navigateur, geste d'iOS, Échap) traité comme « ‹ ». `ecran` : identifiant
+  // de l'écran quitté ou de la feuille fermée (`src/app/navigation.ts`, type `Ecran`).
+  retourSysteme: 'retour_systeme',
   // Partie en direct contre un humain (#360) : adversaire trouvé (`taille`, `cadence`, `regles`, `attente_s` : délai
   // d'appariement), puis partie finie (`taille`, `cadence`, `issue` : victoire, defaite, egalite, annulee ;
   // `raison` : points, abandon, temps, annulee ; `coups`). Jamais la partie ni l'adversaire.
