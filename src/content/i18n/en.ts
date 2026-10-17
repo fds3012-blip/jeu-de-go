@@ -184,6 +184,7 @@ export const en = {
   'pb.aide.apres': ' when it has only one liberty left.',
   'pb.continuer': 'Next puzzle',
   'pb.tous': 'All puzzles',
+  'pb.entrainement': 'Practice',
   'pb.verrouille': 'locked',
   'pb.reussi': 'solved',
   'pb.palierComplet': 'Tier complete',

@@ -454,7 +454,7 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
 
       {/* Un seul « Problème suivant », le palier en cours sans total, la grille derrière un lien discret (#196). */}
       <section aria-labelledby="paliers-titre">
-        <h2 id="paliers-titre" className="titre-pierres">{tr('nav.problemes')}</h2>
+        <h2 id="paliers-titre" className="titre-pierres">{tr('pb.entrainement')}</h2>
         {/* #103 : le palier en cours est un paysage (le pied de la montagne, la pente, la crête…), jamais un total.
             Dessous, la carte « Continuer » : le prochain problème, voilé, et une seule action. */}
         {enCours && (

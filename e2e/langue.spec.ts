@@ -115,7 +115,9 @@ for (const largeur of [390, 320]) {
     await expect(page.getByRole('heading', { name: /^Daily Go #\d+$/ })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Solve the Daily Go' })).toHaveText('Solve');
     await expect(page.getByText('Create your account to keep your streak and solved puzzles on all your devices.')).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Puzzles', exact: true })).toBeVisible();
+    // #602 : « Puzzles » est le titre de l'écran ; la section sous le Go du jour s'appelle « Practice ».
+    await expect(page.getByRole('heading', { level: 1, name: 'Puzzles', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 2, name: 'Practice', exact: true })).toBeVisible();
     // #592 : le palier en cours n'a plus que son nom (le rang en kyu est dans « All puzzles »).
     await expect(page.locator('[data-palier-en-cours] h3')).toHaveText('Beginner');
     await expect(page.getByText(/Problème|Résoudre|Palier|verrouillé/)).toHaveCount(0);
