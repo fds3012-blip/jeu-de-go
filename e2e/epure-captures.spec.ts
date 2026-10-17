@@ -7,6 +7,7 @@ import { abandonner, choisirMode, jouer, plateau } from './plateau';
 // Épure des écrans (#592, docs/ux/epure-2026-10.md) : captures des écrans principaux en 390 × 844, sombre et clair,
 // pour comparer avant et après. Lancement manuel seulement :
 // EPURE=docs/ux/captures/epure-avant npx playwright test epure-captures --workers 1
+// Vague 2 (#602) : même spec, dossiers docs/ux/captures/epure2-avant et epure2-apres ; 04c et 04d montrent le chemin plus bas.
 // (le dossier est relatif au dépôt ; les PNG sont pris en densité 1 pour rester légers).
 
 const DOSSIER = process.env.EPURE;
@@ -47,6 +48,11 @@ async function cap(page: Page, nom: string) {
   await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'reduce' });
 }
 const nav = (page: Page, nom: RegExp) => page.getByRole('navigation').getByRole('button', { name: nom });
+/** #602 : défile pour mettre l'élément en haut de l'écran, sous l'en-tête. */
+async function enHaut(page: Page, selecteur: string) {
+  await page.locator(selecteur).first().evaluate(el => window.scrollBy({ top: el.getBoundingClientRect().top - 72, behavior: 'instant' as ScrollBehavior }));
+  await page.waitForTimeout(300);
+}
 
 test('nouveau joueur', async ({ browser, baseURL }) => {
   test.setTimeout(240_000);
@@ -63,6 +69,8 @@ test('nouveau joueur', async ({ browser, baseURL }) => {
   await nav(b.page, /^Apprendre$/).click();
   await expect(b.page.locator('.cta').first()).toBeVisible();
   await cap(b.page, '04b-apprendre-nouveau');
+  await enHaut(b.page, '[data-chapitre="c1"] .gue > ol > li:nth-child(4)');
+  await cap(b.page, '04c-apprendre-nouveau-suite');
   await b.ctx.close();
 });
 
@@ -78,6 +86,8 @@ test('joueur habitué', async ({ browser, baseURL }) => {
   await nav(page, /^Apprendre$/).click();
   await expect(page.locator('.cta').first()).toBeVisible();
   await cap(page, '04-apprendre-habitue');
+  await enHaut(page, '[data-chapitre="c2"]');
+  await cap(page, '04d-apprendre-chapitre-ouverture');
 
   await nav(page, /^Problèmes$/).click();
   await expect(page.locator('.themes')).toBeVisible();

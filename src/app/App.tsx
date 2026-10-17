@@ -1154,10 +1154,12 @@ export function App() {
     <>
       <main className={`app${accueilVisible ? ' app-home' : ''}${enPartie ? ' app-partie' : ''}`}>
         {!enPartie && !ecranPlein && <header className="top">
-          {/* Marque (#416) : « Mochi » posé sur « Go », pour garder l'emprise de l'ancien titre ; la flamme et le gel tiennent à 320 px. */}
-          <h1 className="marque"><span className="marque-mochi">Mochi</span>{' '}<span className="marque-go">Go</span></h1>
-          {/* #509 (L2, constat 6) : hors accueil, plus le nom de l'onglet à droite : la barre du bas le dit déjà. Un écran
-              de tâche a sa barre « ‹ titre », qui remplace ce logo (app.css). */}
+          {/* Marque (#416) : « Mochi » posé sur « Go », pour garder l'emprise de l'ancien titre ; la flamme et le gel tiennent à 320 px.
+              #602 : la marque sur Jouer seulement ; ailleurs, le nom de l'écran, en petit (comme chess.com). Un écran de tâche
+              a sa barre « ‹ titre », qui remplace cet en-tête (app.css). */}
+          {tab === 'jouer'
+            ? <h1 className="marque"><span className="marque-mochi">Mochi</span>{' '}<span className="marque-go">Go</span></h1>
+            : <h1 className="titre-onglet">{t(`nav.${tab}`)}</h1>}
           {accueilVisible && (
             <span className="entete-droite">
               {/* #429 : « Défier un ami » a quitté l'en-tête pour la tuile « Un ami », sous le bouton principal. */}
