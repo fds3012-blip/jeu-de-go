@@ -88,6 +88,8 @@ export const frEcrans = {
   'pb.aide.apres': ' quand il ne lui reste qu’une liberté.',
   'pb.continuer': 'Problème suivant',
   'pb.tous': 'Tous les problèmes',
+  /** #602 : titre de la section sous le Go du jour ; « Problèmes » est maintenant le titre de l'écran. */
+  'pb.entrainement': 'Entraînement',
   'pb.verrouille': 'verrouillé',
   'pb.reussi': 'réussi',
   'pb.palierComplet': 'Palier complet',
@@ -923,8 +925,6 @@ export const frEcrans = {
   'apprendre.synchro.ok': 'Progression enregistrée sur ton compte.',
   'apprendre.synchro.error': 'Hors ligne : ta progression est gardée ici et partira plus tard.',
   // Titre, intro et phrase de fin de chaque chapitre : contenu (content/lessons.fr.js), traduit avec les leçons.
-  'apprendre.chapitre.termine': 'Chapitre terminé.',
-  'apprendre.chapitre.suite': 'Tout est fait. La suite arrive bientôt.',
   'apprendre.pas': 'Leçon {rang} : {titre}{etat}',
   'apprendre.pas.faite': ', terminée',
   'apprendre.pas.encours': ', prochaine étape',
@@ -943,11 +943,13 @@ export const frEcrans = {
   'apprendre.fin.lecon': 'Leçon terminée',
   'apprendre.fin.chapitre': 'Chapitre terminé',
   // Chemin v3 : chapitres illustrés, carte de la prochaine leçon, Mochi, fête de chapitre.
-  'apprendre.chapitre.lecons': { one: '{n} leçon', other: '{n} leçons' },
   'apprendre.chapitre.avancee': '{n} sur {total}',
+  'apprendre.chapitre.aria': { one: '{n} leçon faite sur {total}', other: '{n} leçons faites sur {total}' },
+  'apprendre.compte.suite': 'La suite s’ouvre avec un compte',
+  'apprendre.avecMochi': 'Jouer avec Mochi',
   'apprendre.duree': 'Environ {n} min',
   'apprendre.decouverte': 'Partie de découverte',
-  'apprendre.decouverte.texte': 'Une vraie partie contre Mochi, commentée : les 15 notions du go, une à une.',
+  'apprendre.decouverte.texte': 'Une vraie partie, commentée notion par notion.',
   'apprendre.decouverte.nouvelle': 'Jouer',
   'apprendre.decouverte.encours': 'Reprendre',
   'apprendre.decouverte.finie': 'Rejouer',
@@ -955,7 +957,7 @@ export const frEcrans = {
   'apprendre.decouverte.faite': 'Faite',
   // #589 : la partie guidée contre Mochi, sous la partie de découverte (elle a quitté l'accueil Jouer).
   'apprendre.guidee': 'Partie guidée',
-  'apprendre.guidee.texte': 'Contre Mochi. Il règle sa force pour que la partie reste serrée.',
+  'apprendre.guidee.texte': 'Mochi ajuste sa force à la tienne.',
   'apprendre.guidee.aria': 'Partie guidée contre Mochi : il règle sa force pour que la partie reste serrée. Jouer',
   // #590 : « Par thème » sous la carte de la prochaine leçon, et la page d'un thème (src/app/ThemeLecons.tsx).
   'apprendre.themes.titre': 'Par thème',
@@ -985,9 +987,7 @@ export const frEcrans = {
   'apprendre.compte': 'Avec un compte',
   // #454 : leçon sur un grand plateau, annoncée sous son titre.
   'apprendre.taille': '{n} × {n}',
-  'apprendre.mochi.debut': 'On commence ici. Deux minutes, et tu sais déjà capturer.',
-  'apprendre.mochi.reprendre': 'Tu l’avais commencée. On la finit ensemble ?',
-  'apprendre.mochi.suite': 'Bien joué ! Voici la suite.',
+  'apprendre.mochi.debut': 'On commence ici.',
   'apprendre.mochi.fini': 'Tu as tout fait. Reviens quand tu veux revoir une leçon.',
   'apprendre.fete.titre': 'Chapitre terminé',
   'apprendre.fete.aria': 'Chapitre terminé : {titre}',
@@ -1396,7 +1396,6 @@ export const frEcrans = {
   'intro.fin.retour': 'Retour',
   // « Revoir les règles » : en tête de « Les bases » (Apprendre) et dans l'aide.
   'apprendre.revoirRegles': 'Revoir les règles',
-  'apprendre.revoirReglesDetail': '8 gestes, 2 minutes',
   'aide.revoirRegles': 'Revoir les règles en jouant',
 
   // Page « Conditions et confidentialité » (src/app/Conditions.tsx, #50, #485 ; dans fr.ts jusqu'à #563).

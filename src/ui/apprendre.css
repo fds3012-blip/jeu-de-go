@@ -6,18 +6,12 @@
  * Un seul élément en relief par écran : le bouton principal.
  */
 
-/* ---------- Chapitre : emblème en kaya, titre, compte des leçons ---------- */
+/* ---------- Chapitre : le titre et une mini-pierre par leçon (épure #602 : ni emblème, ni phrase, ni compte écrit) ---------- */
 .chapitre-chemin + .chapitre-chemin { margin-top: var(--space-8); }
-.chapitre { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: var(--space-3); align-items: center; margin: 2px 0 var(--space-4); }
+.chapitre { margin: 2px 0 var(--space-4); }
 .chapitre > * { min-width: 0; overflow-wrap: anywhere; }
-.chapitre-embleme { grid-row: 1 / 4; align-self: start; margin-top: 2px; }
 .chapitre h2 { margin: 0; font-size: var(--fs-2xl); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre); line-height: 1.05; text-wrap: balance; }
-.chapitre p { margin: 3px 0 0; color: var(--muted); font-size: var(--fs-s); line-height: 1.35; }
-/* #523 : « Revoir les règles », sous l'en-tête de « Les bases », sur toute la largeur. */
-.chapitre-regles { grid-column: 1 / -1; justify-self: start; display: inline-flex; align-items: baseline; flex-wrap: wrap; gap: 0 8px; margin-top: var(--space-3); text-align: left; }
-.chapitre-regles small { color: var(--muted); font-weight: var(--fw-medium); font-size: var(--fs-s); }
-.chapitre-compte { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 8px; min-height: 24px;
-  font-size: var(--fs-legende); font-weight: var(--fw-bold); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chapitre-compte { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 8px; min-height: 24px; }
 /* Une mini-pierre par leçon : noire posée, cerclée de jade pour la prochaine, vide pour les autres. */
 /* #547 : huit leçons par chapitre ou plus : les mini-pierres passent à la ligne au lieu de déborder (zoom 200 %). */
 .chapitre-pierres { display: inline-flex; flex-wrap: wrap; gap: 5px; max-width: 100%; }
@@ -97,8 +91,7 @@
 .prochaine-carte .pas-texte { align-items: flex-start; }
 .prochaine-carte .pas-texte b { font-size: var(--fs-xl); letter-spacing: var(--tracking-titre); }
 .prochaine-carte .pas-texte small { font-size: var(--fs-corps-s); margin-top: 3px; }
-.prochaine-duree { display: inline-flex; align-items: center; gap: 5px; margin-top: 8px; font-size: var(--fs-legende); font-weight: var(--fw-bold); color: var(--accent-texte); }
-.prochaine-duree svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.prochaine-duree { display: block; margin-top: 8px; font-size: var(--fs-legende); font-weight: var(--fw-bold); color: var(--muted); }
 .apprendre .cta-chemin { position: static; transform: none; width: 100%; margin: var(--space-4) 0 var(--relief);
   padding-inline: clamp(6px, 6%, var(--space-6)); overflow-wrap: anywhere; } /* #121 : reste lisible au zoom 200 % */
 .chemin-fini { margin: var(--space-6) 0; }
@@ -381,7 +374,6 @@
 
 /* ---------- Palier en cours (#196, illustré pour #103) : le paysage, le nom, puis la carte « Continuer » ---------- */
 .palier-en-cours { margin-top: var(--space-2); border-radius: var(--radius); background: var(--surface); overflow: hidden; }
-.palier-en-cours .paysage { height: 92px; }
 .palier-en-cours-texte { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-3); padding: var(--space-2) var(--space-4) var(--space-3); }
 .palier-en-cours .palier-compte, .palier-tete .palier-compte { margin: 0; flex: none; }
 .palier-etat { display: flex; align-items: center; gap: var(--space-2); flex: none; }
@@ -494,29 +486,29 @@
 .placement .lecteur-mochi .bubble { margin-bottom: 8px; }
 .placement .lecteur-mochi .bubble p { font-size: var(--fs-corps-s); line-height: 1.4; padding: 8px 12px; }
 
-/* ---------- #524 : la partie de découverte, en tête du chapitre « Les bases » ----------
-   Tuile secondaire, sans relief (la seule action en relief de l'écran reste la prochaine leçon) : un coin de goban, le
-   nom et la promesse, puis ce que fait le toucher. Toute la tuile se touche (bien plus de 44 px de haut). */
-.carte-decouverte { display: flex; align-items: center; gap: var(--space-3); width: 100%; min-height: var(--cible-min); margin: 0 0 var(--space-4);
+/* ---------- #602 : liens discrets à la fin d'un chapitre (jouer avec Mochi, revoir les règles, ouvertures) ----------
+   Sous le chemin, sans fond ni relief : la seule action en relief reste la prochaine leçon. 44 px de haut chacun. */
+.chapitre-suite { position: relative; display: flex; flex-direction: column; align-items: flex-start; margin: var(--space-4) 0 0;
+  padding-top: var(--space-2); background: var(--bg); } /* le fond couvre la fin de la route du chemin */
+.lien-chapitre { display: inline-flex; align-items: center; gap: 6px; margin-left: -12px; text-align: left; }
+.lien-deplier { flex: none; fill: none; stroke: var(--muted); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.lien-chapitre[aria-expanded="true"] .lien-deplier { transform: rotate(180deg); }
+.avec-mochi { align-self: stretch; display: flex; flex-direction: column; gap: var(--space-2); margin: var(--space-1) 0 var(--space-3); }
+/* #524, #589 : la partie de découverte et la partie guidée, une ligne chacune : le nom, une phrase, le verbe. */
+.carte-decouverte { display: flex; align-items: center; gap: var(--space-3); width: 100%; min-height: var(--cible-min); margin: 0;
   padding: var(--space-3); border: 0; border-radius: var(--radius); background: var(--surface); color: var(--text); text-align: left; cursor: pointer; }
-.carte-decouverte-goban { flex: none; }
-.carte-decouverte .goban-bois { fill: var(--kaya); }
-.carte-decouverte .goban-ligne { stroke: #3A2912; stroke-opacity: .5; stroke-width: 1.4; fill: none; }
-.carte-decouverte .goban-noire { fill: #151716; }
-.carte-decouverte .goban-blanche { fill: #F3EDE3; stroke: rgba(58, 41, 18, .45); stroke-width: 1; }
 .carte-decouverte-texte { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.carte-decouverte-texte b { font-family: var(--font-titre); font-size: var(--fs-l); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre); line-height: 1.15; }
+.carte-decouverte-texte b { font-weight: var(--fw-bold); font-size: var(--fs-m); line-height: 1.2; }
 .carte-decouverte-texte small { color: var(--muted); font-size: var(--fs-s); line-height: 1.35; overflow-wrap: break-word; }
 .carte-decouverte-etat { flex: none; display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; border-radius: 999px;
   background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--text); font-weight: var(--fw-bold); font-size: var(--fs-s); }
 .carte-decouverte-etat svg { width: 16px; height: 16px; fill: none; stroke: var(--accent-trait); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
-@media (max-width: 359px) { .carte-decouverte-goban { width: 40px; height: 40px; } .carte-decouverte-etat { padding-inline: 10px; } }
+@media (max-width: 359px) { .carte-decouverte-etat { padding-inline: 10px; } }
 @media (prefers-reduced-motion: no-preference) {
   .carte-decouverte { transition: transform var(--duree-rapide) var(--ease); }
   .carte-decouverte:active { transform: scale(.98); }
+  .lien-deplier { transition: transform var(--duree-rapide) var(--ease); }
 }
-/* #589 : la partie guidée, juste sous la partie de découverte (même tuile) : deux façons de jouer avec Mochi, groupées. */
-.carte-guidee { margin-top: calc(var(--space-2) - var(--space-4)); }
 
 /* #590 : « Par thème », sous la carte de la prochaine leçon. Secondaire : des puces plates qui défilent de côté,
    sans relief (le seul relief reste « Reprendre »). Le fond couvre la route du chemin, qui passe dessous. */
@@ -528,9 +520,7 @@
 .par-theme li { flex: none; scroll-snap-align: start; }
 .puce-theme { display: inline-flex; align-items: center; gap: 8px; min-height: var(--cible-min); padding: 0 14px; border: 1.5px solid var(--line);
   border-radius: 999px; background: var(--surface); color: var(--text); font: inherit; font-weight: var(--fw-bold); font-size: var(--fs-m); white-space: nowrap; cursor: pointer; }
-.puce-theme small { color: var(--muted); font-size: var(--fs-s); font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; }
 .puce-theme[data-fini] { border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); }
-.puce-theme[data-fini] small { color: var(--accent-texte); }
 .puce-theme:focus-visible { outline: 3px solid var(--accent-trait); outline-offset: 2px; }
 @media (prefers-reduced-motion: no-preference) {
   .puce-theme { transition: transform var(--duree-rapide) var(--ease); }

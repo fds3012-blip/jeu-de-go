@@ -20,7 +20,7 @@ const REGLE: Record<string, Usage> = {
   'src/app/Accueil.tsx': { sceau: 2, portrait: 0, pourquoi: 'accueil : annonce de Mochi, icône du chemin (#589 : la partie guidée est dans Apprendre)' },
   'src/app/CreerCompte.tsx': { sceau: 2, portrait: 0, pourquoi: 'création de compte : confirmation, aide' },
   'src/app/Direct.tsx': { sceau: 2, portrait: 0, pourquoi: 'en ligne : attente, délai après abandons' },
-  'src/app/Learn.tsx': { sceau: 2, portrait: 0, pourquoi: 'chemin des leçons : aide pour choisir la suite, icône de la partie guidée (#589) ; la leçon elle-même a le portrait' },
+  'src/app/Learn.tsx': { sceau: 1, portrait: 0, pourquoi: 'chemin des leçons : Mochi présente la première leçon et la fin du chemin (#602 : plus d’icône sur la partie guidée) ; la leçon elle-même a le portrait' },
   'src/app/Lentes.tsx': { sceau: 1, portrait: 0, pourquoi: 'parties lentes : recherche en cours' },
   'src/app/PartiePartagee.tsx': { sceau: 4, portrait: 0, pourquoi: 'lien partagé : chargement, introuvable, aide pour revoir les coups' },
   'src/app/ProfilPublic.tsx': { sceau: 1, portrait: 0, pourquoi: 'profil public (#560) : « Ce joueur n’est pas disponible » (état vide d’interface)' },

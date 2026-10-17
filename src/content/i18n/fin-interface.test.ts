@@ -21,8 +21,6 @@ const ORIGINAUX: [Cle, string, boolean?][] = [
   ['apprendre.synchro.sync', 'Synchronisation de ta progression…'],
   ['apprendre.synchro.ok', 'Progression enregistrée sur ton compte.'],
   ['apprendre.synchro.error', 'Hors ligne : ta progression est gardée ici et partira plus tard.'],
-  ['apprendre.chapitre.termine', 'Chapitre terminé.'],
-  ['apprendre.chapitre.suite', 'Tout est fait. La suite arrive bientôt.'],
   ['apprendre.bientot', 'Bientôt'],
   ['apprendre.bientot.texte', 'Un autre chapitre est en préparation, et de nouvelles leçons jusqu’au premier dan.'],
   ['lecon.terminer', 'Terminer la leçon'],

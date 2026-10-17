@@ -18,12 +18,11 @@
 .lecteur-lecon::after { content: ''; flex: none; height: calc(max(var(--nav-h), 3.75rem) + env(safe-area-inset-bottom, 0px)); }
 .lecteur-lecon:has(.verdict) { padding-bottom: 0; }
 @media (min-height: 760px) { .lecteur-lecon { --mochi: 96px; } }
-/* Barre (passe design #509, point 9) : retour, sceau de la leçon, puis le bloc du nom, comme l'en-tête d'un problème :
+/* Barre (passe design #509, point 9 ; #602 : sans le sceau, qui reste la récompense de la fin) : retour, puis le bloc du nom, comme l'en-tête d'un problème :
    la ligne fine au-dessus (les points d'étapes), le titre dessous, à l'encre du texte. Les points ne prennent plus la
    largeur du titre : il tient sur une ligne à 390 px (« Libertés et capture ») et sur deux au plus à 320 px, jamais
    coupé (#362). Le « ? » de l'aide ferme la barre. */
 .lecteur-lecon .lecteur-tete { margin-bottom: 0; }
-.lecteur-lecon .lecteur-sceau { flex: none; }
 .lecteur-nom-lecon { display: flex; flex-direction: column; gap: var(--space-1); }
 .lecteur-nom-lecon .etapes { min-height: 0; gap: 5px; padding: 0; }
 .lecteur-nom-lecon .etapes span { width: 7px; height: 7px; }
@@ -32,8 +31,6 @@
 .lecteur-lecon .lecteur-titre > span { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden;
   text-wrap: balance; overflow-wrap: break-word; hyphens: manual; }
 .lecteur-lecon .lecteur-tete .bouton-aide { margin-right: -10px; }
-/* Écran étroit (320 px) : le sceau s'efface pour laisser la place au titre. */
-@media (max-width: 359px) { .lecteur-lecon .lecteur-sceau { display: none; } }
 
 /* Le plateau : carré de côté min(largeur, hauteur libre) grâce à une requête de conteneur. Plancher de 200 px : en dessous,
    la page défile. Plafond : sa largeur (la colonne, gouttières déduites) ; la place en trop passe sous la bulle de Mochi. */
