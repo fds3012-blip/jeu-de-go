@@ -183,7 +183,7 @@ test.describe('#293 : le lendemain, les erreurs à rejouer', () => {
       await expect(erreurs).toBeVisible();
       const [jour, probs, rejouer] = await Promise.all([
         page.locator('#jour-titre').boundingBox(),
-        page.getByRole('heading', { level: 2, name: 'Problèmes' }).boundingBox(),
+        page.getByRole('heading', { level: 2, name: 'Entraînement' }).boundingBox(),
         page.getByRole('button', { name: /^Rejouer : Ta partie contre Pomme/ }).boundingBox(),
       ]);
       // Juste sous le Go du jour, avant la liste des problèmes (et donc avant « Tous les problèmes »).

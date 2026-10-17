@@ -213,7 +213,6 @@ export function LessonPlayer({ lesson: { id: leconId }, start, confirmTouch, pro
         <Retour label={parcours?.retour ?? t('lecon.retourChemin')} onClick={onExit} />
         {/* Passe design #509 (point 9) : même grammaire que l'en-tête d'un problème, la ligne fine (les points d'étapes)
             au-dessus du titre, qui garde ainsi toute la largeur et l'encre du texte. */}
-        <SceauLecon id={lesson.id} taille={32} className="lecteur-sceau" />
         <div className="lecteur-nom lecteur-nom-lecon">
           <Etapes total={lesson.steps.length} faites={faites} />
           <h2 className="lecteur-titre"><span>{fr(lesson.title)}</span></h2>

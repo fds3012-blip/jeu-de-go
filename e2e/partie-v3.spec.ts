@@ -39,8 +39,8 @@ for (const [w, h] of TAILLES) {
       expect(box.height).toBeGreaterThanOrEqual(44);
       expect(await b.locator('span').last().evaluate(e => e.getBoundingClientRect().height)).toBeLessThan(24);
     }
-    // Le compteur d'indices : « 3 » lisible, et le nombre dit par la description.
-    await expect(barre.getByRole('button', { name: 'Indice' }).locator('.compteur-badge')).toHaveText('3');
+    // Le compteur d'indices (#602) : pas de pastille tant qu'aucun jeton n'est utilisé ; le nombre est dit par la description.
+    await expect(barre.getByRole('button', { name: 'Indice' }).locator('.compteur-badge')).toHaveCount(0);
     await expect(barre.getByRole('button', { name: 'Indice' })).toHaveAttribute('aria-description', '3 indices restants');
 
     // Mochi est posé juste sous ton bandeau : pas de trou.

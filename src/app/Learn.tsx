@@ -1,9 +1,10 @@
-// Onglet Apprendre (issues #40, #54 ; chemin v3) : chemin des leçons en courbe, chapitres illustrés, carte de la prochaine leçon.
+// Onglet Apprendre (issues #40, #54 ; chemin v3 ; épure #602) : chemin des leçons en courbe, carte de la prochaine leçon.
+// Épure #602 : la carte de la prochaine leçon est le seul bloc qui parle ; le chemin montre les titres seuls, et ce qui
+// est secondaire (jouer avec Mochi, revoir les règles, ouvertures) se range en liens discrets à la fin de son chapitre.
 // Le lecteur de leçon et la fin de leçon sont dans Lecon.tsx (recette du 30/09, R2) ; ré-exportés ici pour src/app/ecrans.ts.
 import { Suspense, lazy, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { CHAPITRES, LESSONS, type Chapitre } from '../content/lessons';
 import { Bubble } from '../ui/Mochi';
-import { Sceau } from '../ui/Sceau';
 import { RangeeThemes } from '../ui/RangeeThemes';
 import { themesAvecLecons } from './themesApprendre';
 import type { Theme } from '../content/themesLecons';
@@ -31,14 +32,18 @@ const PAS_X = 92;
 const Coche = () => <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12.5 10 17l9-10" /></svg>;
 /** Verrou « compte » (#343) : une silhouette, pas un cadenas de progression ; la leçon reste touchable et mène à la création de compte. */
 const Compte = () => <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="8.5" r="3.5" /><path d="M5.5 19.5a6.5 6.5 0 0 1 13 0" /></svg>;
-const Horloge = () => <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3.5 2" /></svg>;
 
-/** Ce que dit Mochi sur la carte de la prochaine leçon : commencer, reprendre, continuer, ou tout est fait. */
-function phraseMochi(liste: Etape[], iEnCours: number): string {
+/**
+ * Ce que dit Mochi au-dessus de la carte de la prochaine leçon (#602, E5) : seulement quand il a quelque chose de neuf
+ * à dire, au tout début du chemin et quand tout est fait. Sinon, le bouton (« Commencer », « Reprendre ») suffit.
+ */
+function phraseMochi(liste: Etape[], iEnCours: number): string | null {
   if (iEnCours < 0) return t('apprendre.mochi.fini');
-  if (liste[iEnCours].faites > 0) return t('apprendre.mochi.reprendre');
-  return t(iEnCours === 0 ? 'apprendre.mochi.debut' : 'apprendre.mochi.suite');
+  return iEnCours === 0 && liste[0].faites === 0 ? t('apprendre.mochi.debut') : null;
 }
+
+/** #602 : « Jouer avec Mochi » reste ouvert au retour d'une partie (l'écran Apprendre est remonté à chaque visite). */
+let mochiDeplie = false;
 
 /**
  * `compteRequis` (#343) : vrai si la leçon de ce rang (0 = leçon 1) demande un compte. Sans compte, les leçons 1 à 3 sont libres ;
@@ -85,6 +90,10 @@ export function LearnHome({ progress, onOpen, sync = 'local', compteRequis = () 
     if (r.bottom > bas) window.scrollBy({ top: Math.max(0, Math.min(r.top - 88, r.bottom - bas)), behavior: 'instant' as ScrollBehavior });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // #343, #602 : « avec un compte » une seule fois sur le chemin, à la première leçon qu'il ouvre (la carte, si c'est elle).
+  const premierCompte = liste.find(e => e.etat !== 'faite' && compteRequis(e.rang - 1));
+  const rangCompte = premierCompte && premierCompte.etat !== 'encours' ? premierCompte.rang : -1;
+
   const prochaine = bouton && <>
     <CarteProchaine refCarte={carte} etape={iEnCours >= 0 ? liste[iEnCours] : liste[0]} bouton={bouton} mochi={phraseMochi(liste, iEnCours)} onOpen={onOpen} compteRequis={compteRequis} />
     {onTheme && <RangeeThemes themes={themesAvecLecons(LESSONS, progress)} onTheme={onTheme} />}
@@ -97,11 +106,11 @@ export function LearnHome({ progress, onOpen, sync = 'local', compteRequis = () 
     <div className="apprendre">
       {/* #228 : un chemin par chapitre, l'un sous l'autre ; une seule carte en relief, celle de la prochaine leçon. */}
       {CHAPITRES.map((c, i) => (
-        <CheminChapitre key={c.id} chapitre={c} liste={liste.filter(e => c.lecons.includes(e.lecon))} k={k}
-          entree={i === 0 ? <>{decouverte && <CarteDecouverte {...decouverte} />}{onGuidee && <CarteGuidee ouvrir={onGuidee} />}</> : c.id === 'c2' ? <EntreeOuvertures onOpen={() => setOuvertures(true)} /> : null}
+        <CheminChapitre key={c.id} chapitre={c} liste={liste.filter(e => c.lecons.includes(e.lecon))} k={k} rangCompte={rangCompte}
+          suite={i === 0 ? <SuiteBases decouverte={decouverte} onGuidee={onGuidee} onRegles={onRegles} />
+            : c.id === 'c2' ? <EntreeOuvertures onOpen={() => setOuvertures(true)} /> : null}
           carte={iEnCours >= 0 && c.lecons.includes(liste[iEnCours].lecon) ? prochaine : null}
-          fete={fete === c.id} onFeteFinie={() => setFete(null)} onOpen={onOpen} compteRequis={compteRequis}
-          regles={c === CHAPITRES[0] ? onRegles : undefined} />
+          fete={fete === c.id} onFeteFinie={() => setFete(null)} onOpen={onOpen} compteRequis={compteRequis} />
       ))}
 
       {iEnCours < 0 && <div className="chemin-fini">{prochaine}</div>}
@@ -124,26 +133,26 @@ function nomPas(e: Etape, compte = false): string {
   return t('apprendre.pas', { rang: e.rang, titre: e.lecon.title + taille, etat });
 }
 
-/** #454 : « 19 × 19 » sous le titre d'une leçon sur un grand plateau ; rien pour le 9 × 9. */
+/** #454 : « 19 × 19 » sous le titre de la prochaine leçon, sur un grand plateau ; rien pour le 9 × 9 (sur le chemin : nom accessible seulement). */
 const MentionTaille = ({ taille }: { taille?: number }) =>
   taille && taille !== 9 ? <span className="pas-taille" data-taille={taille}>{t('apprendre.taille', { n: taille })}</span> : null;
 
-/**
- * Carte de la prochaine leçon : Mochi la présente, la vignette et le titre disent de quoi il s'agit,
- * la promesse et la durée donnent envie, et le seul bouton en relief de l'écran l'ouvre.
- */
-/** Mention visible sous une leçon qui demande un compte. */
-const MentionCompte = () => <span className="pas-compte"><Compte />{t('apprendre.compte')}</span>;
+/** Mention visible sous une leçon qui demande un compte : « Avec un compte » sur la carte, « La suite s'ouvre… » sur le chemin. */
+const MentionCompte = ({ texte = t('apprendre.compte') }: { texte?: string }) => <span className="pas-compte"><Compte />{texte}</span>;
 
+/**
+ * Carte de la prochaine leçon : la vignette et le titre disent de quoi il s'agit, la promesse et la durée donnent envie,
+ * et le seul bouton en relief de l'écran l'ouvre. Mochi ne la présente qu'au début et à la fin du chemin.
+ */
 function CarteProchaine({ etape, bouton, mochi, onOpen, refCarte, compteRequis }: {
-  etape: Etape; bouton: NonNullable<ReturnType<typeof boutonChemin>>; mochi: string; onOpen: (id: string) => void;
+  etape: Etape; bouton: NonNullable<ReturnType<typeof boutonChemin>>; mochi: string | null; onOpen: (id: string) => void;
   compteRequis: (rang: number) => boolean;
   refCarte: React.RefObject<HTMLLIElement | HTMLDivElement | null>;
 }) {
   const l = etape.lecon, compte = compteRequis(etape.rang - 1);
   return (
     <div className="prochaine" ref={refCarte as React.RefObject<HTMLDivElement>} data-testid="prochaine-lecon">
-      <Bubble voix="interface">{fr(mochi)}</Bubble>
+      {mochi && <Bubble voix="interface">{fr(mochi)}</Bubble>}
       <div className="prochaine-carte">
         <button className="pas-bouton" data-etat={etape.etat} data-compte={compte || undefined} aria-label={nomPas(etape, compte)} onClick={() => onOpen(l.id)}>
           <span className="pas-texte" aria-hidden="true">
@@ -152,7 +161,7 @@ function CarteProchaine({ etape, bouton, mochi, onOpen, refCarte, compteRequis }
               <b>{fr(l.title)}</b>
               <small>{fr(l.desc)}</small>
               <MentionTaille taille={l.taille} />
-              <span className="prochaine-duree"><Horloge />{t('apprendre.duree', { n: dureeMinutes(l.steps.length) })}</span>
+              <span className="prochaine-duree">{t('apprendre.duree', { n: dureeMinutes(l.steps.length) })}</span>
               {compte && <MentionCompte />}
             </span>
           </span>
@@ -164,19 +173,38 @@ function CarteProchaine({ etape, bouton, mochi, onOpen, refCarte, compteRequis }
 }
 
 /**
- * #524 : la partie de découverte, en tête des bases. Tuile secondaire (une seule action en relief par écran : la
- * prochaine leçon) : un coin de goban, le nom, la promesse, et ce que fait le toucher (jouer, reprendre, rejouer).
+ * #602 : fin du chapitre « Les bases ». Deux liens discrets au lieu de deux tuiles et d'un bouton en tête du chapitre :
+ * « Jouer avec Mochi » déplie les deux parties avec lui (découverte #524, guidée #589), puis « Revoir les règles » (#523).
  */
+function SuiteBases({ decouverte, onGuidee, onRegles }: { decouverte?: { etat: EtatDecouverte; ouvrir: () => void }; onGuidee?: () => void; onRegles?: () => void }) {
+  // Une partie de découverte en cours se reprend d'un toucher : la liste s'ouvre d'elle-même.
+  const [deplie, setDeplie] = useState(() => mochiDeplie || decouverte?.etat === 'encours');
+  const basculer = () => { mochiDeplie = !deplie; setDeplie(mochiDeplie); };
+  if (!decouverte && !onGuidee && !onRegles) return null;
+  return (
+    <div className="chapitre-suite">
+      {(decouverte || onGuidee) && <>
+        <button type="button" className="lien lien-chapitre" aria-expanded={deplie} aria-controls="jouer-avec-mochi" data-testid="jouer-avec-mochi" onClick={basculer}>
+          {t('apprendre.avecMochi')}<svg className="lien-deplier" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6" /></svg>
+        </button>
+        {deplie && (
+          <div id="jouer-avec-mochi" className="avec-mochi" role="group" aria-label={t('apprendre.avecMochi')}>
+            {decouverte && <CarteDecouverte {...decouverte} />}
+            {onGuidee && <CarteGuidee ouvrir={onGuidee} />}
+          </div>
+        )}
+      </>}
+      {onRegles && <button type="button" className="lien lien-chapitre" data-testid="revoir-regles" onClick={onRegles}>{t('apprendre.revoirRegles')}</button>}
+    </div>
+  );
+}
+
+/** #524 : la partie de découverte (jouer, reprendre, rejouer). Une ligne secondaire : le nom, une phrase, le verbe. */
 function CarteDecouverte({ etat, ouvrir }: { etat: EtatDecouverte; ouvrir: () => void }) {
   const verbe = t(`apprendre.decouverte.${etat}`);
   return (
     <button type="button" className="carte-decouverte" data-etat={etat} data-testid="carte-decouverte" onClick={ouvrir}
       aria-label={fr(t('apprendre.decouverte.aria', { etat: etat === 'finie' ? `${t('apprendre.decouverte.faite')}. ${verbe}` : verbe }))}>
-      <svg className="carte-decouverte-goban" viewBox="0 0 48 48" width="48" height="48" aria-hidden="true" focusable="false">
-        <rect x="1" y="1" width="46" height="46" rx="8" className="goban-bois" />
-        <path d="M10 1v46M24 1v46M38 1v46M1 10h46M1 24h46M1 38h46" className="goban-ligne" />
-        <circle cx="24" cy="24" r="6.5" className="goban-noire" /><circle cx="10" cy="24" r="6.5" className="goban-blanche" />
-      </svg>
       <span className="carte-decouverte-texte" aria-hidden="true">
         <b>{t('apprendre.decouverte')}</b>
         <small>{fr(t('apprendre.decouverte.texte'))}</small>
@@ -186,14 +214,10 @@ function CarteDecouverte({ etat, ouvrir }: { etat: EtatDecouverte; ouvrir: () =>
   );
 }
 
-/**
- * #589 : la partie guidée contre Mochi (un entraînement : Mochi règle sa force), venue de l'accueil Jouer. Même tuile
- * secondaire que la partie de découverte, juste dessous ; le sceau de Mochi à la place du coin de goban.
- */
+/** #589 : la partie guidée contre Mochi (Mochi règle sa force), juste sous la découverte, même ligne. */
 function CarteGuidee({ ouvrir }: { ouvrir: () => void }) {
   return (
     <button type="button" className="carte-decouverte carte-guidee" data-testid="carte-guidee" onClick={ouvrir} aria-label={fr(t('apprendre.guidee.aria'))}>
-      <Sceau id="mochi" taille={48} className="carte-decouverte-goban" />
       <span className="carte-decouverte-texte" aria-hidden="true">
         <b>{t('apprendre.guidee')}</b>
         <small>{fr(t('apprendre.guidee.texte'))}</small>
@@ -203,21 +227,14 @@ function CarteGuidee({ ouvrir }: { ouvrir: () => void }) {
   );
 }
 
-/** Phrase sous le titre d'un chapitre : son intro, ou la fin (« la suite arrive » pour un chapitre en cours d'écriture). */
-function phraseChapitre(c: Chapitre, faites: number): string {
-  if (faites < c.lecons.length) return c.intro;
-  // Titre, intro et phrase de fin du chapitre : contenu des leçons (content/lessons.fr.js), traduit avec elles.
-  return c.complet ? `${t('apprendre.chapitre.termine')}${c.fin ? ` ${c.fin.replace(/\.$/, ' !')}` : ''}` : t('apprendre.chapitre.suite');
-}
-
-/** Chemin d'un chapitre : en-tête illustré, puis ses pierres sur une courbe, la prochaine leçon en carte. */
-function CheminChapitre({ chapitre, liste, k, carte, fete, onFeteFinie, onOpen, compteRequis, entree, regles }: {
+/** Chemin d'un chapitre : en-tête (titre et mini-pierres), ses pierres sur une courbe, la prochaine leçon en carte. */
+function CheminChapitre({ chapitre, liste, k, carte, fete, onFeteFinie, onOpen, compteRequis, suite, rangCompte }: {
   chapitre: Chapitre; liste: Etape[]; k: number; carte: ReactNode; fete: boolean; onFeteFinie: () => void; onOpen: (id: string) => void;
-  /** #524 : ce qui se pose entre l'en-tête du chapitre et son chemin (la partie de découverte, pour « Les bases »). */
-  entree?: ReactNode;
+  /** #602 : les liens discrets posés sous le chemin (jouer avec Mochi et les règles pour « Les bases », les ouvertures). */
+  suite?: ReactNode;
   compteRequis: (rang: number) => boolean;
-  /** #523 : « Revoir les règles », dans l'en-tête de « Les bases » (donc avant `entree`). */
-  regles?: () => void;
+  /** #602 : rang de la seule leçon du chemin qui porte la mention « La suite s'ouvre avec un compte » (−1 : aucune). */
+  rangCompte: number;
 }) {
   const iEnCours = liste.findIndex(e => e.etat === 'encours');
   const faites = liste.filter(e => e.etat === 'faite').length;
@@ -267,25 +284,14 @@ function CheminChapitre({ chapitre, liste, k, carte, fete, onFeteFinie, onOpen, 
 
   return (
     <section className={`chapitre-chemin${fini ? ' chapitre-fini' : ''}`} data-chapitre={chapitre.id} data-fete={fete || undefined} aria-labelledby={`chapitre-${chapitre.id}`}>
+      {/* #602 : titre et mini-pierres seulement ; le compte des leçons est lu par le lecteur d'écran. */}
       <header className="chapitre">
-        <span ref={embleme} className="chapitre-embleme"><VignetteLecon id={chapitre.lecons[chapitre.lecons.length - 1]?.id ?? 'l1'} taille={52} /></span>
         <h2 id={`chapitre-${chapitre.id}`}>{fr(chapitre.titre)}</h2>
-        <p>{fr(phraseChapitre(chapitre, faites))}</p>
         <div className="chapitre-compte">
-          <span className="chapitre-pierres" aria-hidden="true">{liste.map(e => <i key={e.lecon.id} className={e.etat} />)}</span>
-          {fini && chapitre.complet
-            ? <span className="chapitre-fete" role="img" aria-label={fr(t('apprendre.fete.aria', { titre: chapitre.titre }))}><Coche />{t('apprendre.fete.titre')}</span>
-            : <span>{faites > 0 ? t('apprendre.chapitre.avancee', { n: faites, total: n }) : t('apprendre.chapitre.lecons', { n })}</span>}
+          <span ref={embleme} className="chapitre-pierres" role="img" aria-label={t('apprendre.chapitre.aria', { n: faites, total: n })}>{liste.map(e => <i key={e.lecon.id} className={e.etat} />)}</span>
+          {fini && chapitre.complet && <span className="chapitre-fete" role="img" aria-label={fr(t('apprendre.fete.aria', { titre: chapitre.titre }))}><Coche />{t('apprendre.fete.titre')}</span>}
         </div>
-        {/* #523 : l'introduction interactive des règles, à revoir quand on veut (secondaire : la carte de la leçon reste l'action). */}
-        {regles && (
-          <button type="button" className="btn chapitre-regles" data-testid="revoir-regles" onClick={regles}>
-            {t('apprendre.revoirRegles')}<small>{t('apprendre.revoirReglesDetail')}</small>
-          </button>
-        )}
       </header>
-
-      {entree}
 
       <div className="gue">
         <svg className="gue-trace" width="1" height={ancres.hauteur} aria-hidden="true" focusable="false">
@@ -299,7 +305,7 @@ function CheminChapitre({ chapitre, liste, k, carte, fete, onFeteFinie, onOpen, 
             const col = k < 1 ? Math.sign(colonne(i)) : colonne(i), droite = col > 0;
             const style = { '--x': `${Math.round(col * PAS_X * k)}px` } as CSSProperties;
             // À venir : pierre grise, toujours touchable (on peut sauter une leçon). Seul le compte (#343) verrouille.
-            const avenir = e.etat === 'avenir', compte = e.etat !== 'faite' && compteRequis(e.rang - 1);
+            const compte = e.etat !== 'faite' && compteRequis(e.rang - 1);
             return (
               <li key={e.lecon.id} className={`pas pas-${e.etat} ${droite ? 'a-droite' : 'a-gauche'}`} style={style}>
                 <button className="pas-bouton" data-etat={e.etat} data-compte={compte || undefined} aria-label={nomPas(e, compte)} onClick={() => onOpen(e.lecon.id)}>
@@ -307,9 +313,9 @@ function CheminChapitre({ chapitre, liste, k, carte, fete, onFeteFinie, onOpen, 
                     {e.etat === 'faite' && <span className="pierre-coche"><Coche /></span>}
                     {compte && <span className="pierre-compte"><Compte /></span>}
                   </span>
+                  {/* #602 : le titre seul ; la promesse, la taille et la durée sont sur la carte de la prochaine leçon. */}
                   <span className="pas-texte" aria-hidden="true">
-                    <VignetteLecon id={e.lecon.id} taille={44} pale={avenir} />
-                    <span><b>{fr(e.lecon.title)}</b><small>{fr(e.lecon.desc)}</small><MentionTaille taille={e.lecon.taille} />{compte && <MentionCompte />}</span>
+                    <span><b>{fr(e.lecon.title)}</b>{e.rang === rangCompte && <MentionCompte texte={t('apprendre.compte.suite')} />}</span>
                   </span>
                 </button>
               </li>
@@ -317,6 +323,7 @@ function CheminChapitre({ chapitre, liste, k, carte, fete, onFeteFinie, onOpen, 
           })}
         </ol>
       </div>
+      {suite}
       {gerbe && <Confettis origine={gerbe} onFin={() => { setGerbe(null); onFeteFinie(); }} />}
     </section>
   );

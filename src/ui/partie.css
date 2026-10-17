@@ -93,8 +93,6 @@
 
 /* ---------- Liste des coups : un ruban discret sous l'adversaire, avec son titre (v3) ---------- */
 .coups-ruban { display: flex; align-items: center; gap: var(--space-2); margin: -2px 2px 6px; min-height: 26px; }
-.coups-titre { flex: none; color: var(--muted); font-size: var(--fs-xs); font-weight: var(--fw-medium); }
-.coups-ruban:has(.vide) .coups-titre { display: none; }
 /* #362 : le « ? » de l'aide au bout du ruban. Cible de 44 px, mais marges négatives : le ruban garde ses 26 px,
    le plateau ne bouge pas et le bandeau de l'adversaire garde toute sa largeur. */
 .coups-ruban .ruban-aide { margin: -9px -10px -9px -4px; }
