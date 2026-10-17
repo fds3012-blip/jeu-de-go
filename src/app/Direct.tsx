@@ -13,7 +13,6 @@ import { BoutonAide } from '../ui/BoutonAide';
 import { BoutonRetour, EnteteEcran } from '../ui/BoutonRetour';
 import { ReglagesReplies } from '../ui/ReglagesReplies';
 import { GainCote, TonNiveau, VocabulaireGrade } from '../ui/Cote';
-import { ecrireTailleEnLigne, lireTailleEnLigne } from './tailleEnLigne';
 import { fromSgf, toSgf } from '../go/coords';
 import { groupAt } from '../go/rules';
 import { score } from '../go/score';
@@ -101,8 +100,9 @@ export function Direct({ db, userId, cote, provisoire = true, onRepli, partieIni
   // #436 : la file par défaut d'abord (9 × 9, normale, japonais), quelle que soit la taille choisie pour l'ordi.
   // #365 : le temps de jeu proposé d'abord vient des Réglages (« normale » par défaut, celle de la file par défaut).
   const { cadence: cadenceReglee } = usePreferences();
-  // #613 : la dernière taille choisie en ligne est déjà cochée ; sans choix, la file par défaut.
-  const [params, setParams] = useState<Params>(partieInitiale?.demande ?? { ...PARAMS_DEFAUT, cadence: cadenceReglee, taille: lireTailleEnLigne() ?? PARAMS_DEFAUT.taille });
+  // #613 : la taille n'est pas retenue en ligne : 9 × 9 coché à chaque fois, une seule file fréquentée (#436) ;
+  // 13 ou 19 se choisissent ici, au lancement.
+  const [params, setParams] = useState<Params>(partieInitiale?.demande ?? { ...PARAMS_DEFAUT, cadence: cadenceReglee });
   const [vue, setVue] = useState<Vue>(partieInitiale ? { vue: 'partie', id: partieInitiale.id, attenteS: null, demande: partieInitiale.demande } : { vue: 'choix' });
   // Avant la peinture : l'en-tête et la barre du bas ne clignotent pas au passage du choix à la partie.
   const plein = vue.vue === 'partie';
@@ -252,7 +252,7 @@ function Choix({ params, onParams, erreur, onAccueil, onChercher, onFacon, aband
         resume={td('direct.reglages.resume', { taille: params.taille, nom: td(`direct.cadence.${params.cadence}`), cadence: texteCadence(params.cadence).replace(/ (min|s)\b/g, '\u00a0$1'), regles: td(`direct.reglages.${params.regles}`) })}
         aide={fr(td('direct.byoyomi', { s: c.periodeMs / 1000, n: c.periodes }))}>
         <Segment titre={td('direct.taille')} valeurs={TAILLES} valeur={params.taille} libelle={n => `${n} × ${n}`}
-          onChoix={taille => { ecrireTailleEnLigne(taille); onParams({ ...params, taille }); }} />
+          onChoix={taille => onParams({ ...params, taille })} />
         <Segment titre={td('direct.cadence')} valeurs={CADENCES_ORDRE} valeur={params.cadence}
           libelle={k => (
             <span className="direct-cadence"><b>{td(`direct.cadence.${k}`)}</b>

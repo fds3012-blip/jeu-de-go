@@ -1,6 +1,8 @@
 // Modes de jeu de l'accueil (issues #429 et #432). Logique pure, sans React.
 //
-// Tous les modes se joignent en 1 toucher depuis l'accueil, ou en 2 par « Plus », sans défiler :
+// Tous les modes se joignent en 1 toucher depuis l'accueil, ou en 2 par « Plus », sans défiler. #613 : « joindre » veut
+// dire arriver sur l'étape de lancement du mode (feuille de l'ordi ou d'à deux, écran en ligne, écran des défis) ; son
+// bouton « Jouer » est le toucher suivant.
 // - une seule action principale : la partie en ligne classée dès le début (#432 : celle qui crée l'émulation,
 //   cote, grade, « +14 »). Sans compte, elle passe par « Crée ton compte », puis reprend. L'ordi ne reprend la place
 //   que hors ligne, sans comptes (Supabase absent), ou au tout premier lancement, qui a son propre écran

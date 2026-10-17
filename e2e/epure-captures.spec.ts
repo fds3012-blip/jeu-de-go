@@ -123,8 +123,16 @@ test('joueur habitué', async ({ browser, baseURL }) => {
 });
 
 // #613 : l'ouverture de Jouer (habitué et nouveau) et l'étape de lancement (l'ordi, en ligne), avant et après.
-// EPURE=docs/ux/captures/jouer-613/avant npx playwright test epure-captures -g "jouer 613" --workers 1
+// EPURE=docs/ux/captures/jouer-613/apres npx playwright test epure-captures -g "jouer 613" --workers 1
+// Gardées dans le dépôt : la version sombre seulement, en JPEG qualité 72 (30 à 40 Ko chacune).
 test('jouer 613', async ({ browser, baseURL }) => {
+  const cap = async (page: Page, nom: string) => {
+    const dossier = join(process.cwd(), DOSSIER!);
+    mkdirSync(dossier, { recursive: true });
+    await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'reduce' });
+    await page.waitForTimeout(350);
+    await page.screenshot({ path: join(dossier, `${nom}-sombre.jpg`), type: 'jpeg', quality: 72 });
+  };
   test.setTimeout(240_000);
   const serveur = fauxServeur();
   const a = await telephone(browser, baseURL, serveur, {});

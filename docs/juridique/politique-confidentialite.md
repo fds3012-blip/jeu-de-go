@@ -72,7 +72,6 @@ Ces données sont écrites dans le stockage local (`localStorage`) de ton naviga
 | Problèmes par thème | `go.series-themes.v1` | Pour chaque série par thème (capturer, sauver, vie et mort…) : tes réussites du premier coup d'affilée et ton record (deux nombres), pour les afficher dans l'écran Problèmes (#471) |
 | Moteur d'analyse | `go.katago.backend.v1` | La technique de calcul qui a marché pour l'IA d'analyse sur cet appareil (WebGPU, WebGL ou processeur) et sa date, gardée 30 jours pour démarrer plus vite la revue suivante (#475). Aucune donnée de partie |
 | Cote de jeu | `go.cote-vocabulaire.v1` | « Déjà vu » pour la phrase qui explique kyu et dan (#417), pour ne la montrer qu'une fois |
-| Partie en ligne | `go.enligne.taille.v1` | Dernière taille de plateau choisie pour une partie en ligne (#613), déjà cochée la fois suivante |
 | Niveau de départ | `go.placement.v1` | Résultat du placement « Je sais déjà jouer » (#283) : niveau estimé en kyu, cote de départ, adversaire conseillé et date ; ou seulement « passé » et la date |
 | Révision espacée | `go.revision.v1` | Pour chaque problème réussi : jour de référence et prochaine échéance (J+1, J+3, J+7) |
 | Révisions du jour (#469) | `go.revisions.v1` | Pour chaque problème raté au premier essai (300 au plus) : marche atteinte (J+1, J+3, J+7, J+14, J+30 ou acquis), jour du prochain passage, nombre d'échecs, date du dernier changement ; pour chaque erreur de partie acquise (100 au plus) : son empreinte et la date ; le jour de la dernière séance qui a rapporté de l'XP |

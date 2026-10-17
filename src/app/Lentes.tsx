@@ -25,7 +25,6 @@ import { t } from '../content/i18n/secondaires';
 import { fr } from '../ui/typo';
 import { ReglagesReplies } from '../ui/ReglagesReplies';
 import { TonNiveau } from '../ui/Cote';
-import { ecrireTailleEnLigne, lireTailleEnLigne } from './tailleEnLigne';
 import '../ui/defis.css';
 // #563 : le reste des styles des défis, hors du CSS initial (avant direct.css, comme dans la feuille principale).
 import '../ui/defis-ecran.css';
@@ -56,9 +55,8 @@ type Etat = { etat: 'chargement' } | { etat: 'pret'; recherche: RechercheLente |
 
 export function Lentes({ db, userId, onPartie, onFacon, onAccueil, niveau }: Props) {
   const online = useOnline();
-  // #613 : le dernier choix de taille en ligne déjà coché ; sinon la file par défaut.
-  const [taille, setTailleBrute] = useState<TailleLente>(() => lireTailleEnLigne() ?? LENTE_DEFAUT.taille);
-  const setTaille = (n: TailleLente) => { setTailleBrute(n); ecrireTailleEnLigne(n); };
+  // #613 : en ligne, 9 × 9 coché à chaque fois (une seule file fréquentée, #436) ; 13 ou 19 se choisissent ici.
+  const [taille, setTaille] = useState<TailleLente>(LENTE_DEFAUT.taille);
   const [delai, setDelai] = useState<DelaiJours>(LENTE_DEFAUT.delai);
   const [etat, setEtat] = useState<Etat>({ etat: 'chargement' });
   const [erreur, setErreur] = useState<string | null>(null);
