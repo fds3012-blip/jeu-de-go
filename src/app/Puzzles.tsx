@@ -260,6 +260,16 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   };
   const open = list.find(p => p.id === openId) ?? (daily && openId === daily.id ? daily : pzArchive && openId === pzArchive.id ? pzArchive : undefined);
   const duJourOuvert = !!open && (open.id === daily?.id || archive !== null);
+  // #592 : pendant un problème, la difficulté se tait (elle a servi à le choisir), sauf quand elle change d'un problème
+  // au suivant (« Moyen » après des « Facile », #284) : un repère de progrès au moment où il arrive (DESIGN.md, E7).
+  const chaineRef = useRef<{ id: string; avant: number | null } | null>(null);
+  if (!open) chaineRef.current = null;
+  else if (chaineRef.current?.id !== open.id) {
+    const prec = chaineRef.current ? list.find(p => p.id === chaineRef.current!.id) : undefined;
+    chaineRef.current = { id: open.id, avant: prec ? niveau(prec.difficulty).crans : null };
+  }
+  const avant = chaineRef.current?.avant ?? null;
+  const difficulteChange = !!open && avant !== null && avant !== niveau(open.difficulty).crans;
   // Un problème ouvert hors Go du jour devient la référence du prochain choix (jamais deux fois de suite, pas de saut).
   useEffect(() => {
     if (open && !duJourOuvert) majCote(c => ouvrir(c, open));
@@ -284,7 +294,7 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
     // #549 : la série vient d'être maîtrisée : « Thème suivant » devient l'action principale, la série continue en lien.
     const versTheme = enSerie && maitriseVenue === enSerie ? themeSuivant(enSerie, series, maitrise) : null;
     return (
-      <PuzzlePlayer key={`${open.id}${enArchive ? '-archive' : ''}`} puzzle={open} rang={ordre.indexOf(open) + 1} confirmTouch={confirmTouch} difficulte={false}
+      <PuzzlePlayer key={`${open.id}${enArchive ? '-archive' : ''}`} puzzle={open} rang={ordre.indexOf(open) + 1} confirmTouch={confirmTouch} difficulte={difficulteChange}
         surtitre={enSerie ? <SurtitreTheme serie={enSerie} affilee={etatThemes[enSerie]?.affilee ?? 0} record={recordTheme} /> : undefined}
         // #521 : un record de série par thème est un moment fort : invitation discrète à partager l'app (règle et plafond :
         // src/app/partageApp.ts).
@@ -728,7 +738,7 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
   invitation?: ReactNode;
   /** #549 : annonce d'un moment fort (thème maîtrisé), juste au-dessus de l'action principale de la réussite. */
   annonce?: ReactNode;
-  /** #592 : difficulté dans l'en-tête (vrai par défaut ; l'onglet Problèmes la tait pendant le problème). */
+  /** #592 : difficulté dans l'en-tête (vrai par défaut ; l'onglet Problèmes ne la montre que quand elle change). */
   difficulte?: boolean;
 }) {
   // #236 (N2) : un problème est un exercice ; aucune fête ne se pose sur sa consigne (l'XP se lit dans la feuille).
@@ -1035,8 +1045,8 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
             {duJour
               ? <small className="entete-du-jour">{tr('accueil.goDuJour')} <b className="numero-du-jour">{tr('pb.numero', { numero: duJour.numero })}</b></small>
               : <small>{surtitre ?? tr('pb.probleme', { n: rang })}</small>}
-            {/* #592 : dans l'onglet Problèmes, la difficulté a servi à choisir le problème ; pendant qu'on le résout, elle
-                ne s'affiche plus (data-difficulte la garde pour les tests). Ailleurs (entraînement d'une leçon), inchangé. */}
+            {/* #592 : dans l'onglet Problèmes, la difficulté ne s'affiche que quand elle change d'un problème au suivant
+                (data-difficulte la garde toujours pour les tests). Ailleurs (entraînement d'une leçon), inchangé. */}
             {difficulte && <Difficulte d={puzzle.difficulty} />}
           </div>
           <h2>{puzzle.title}</h2>
