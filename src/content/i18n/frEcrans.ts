@@ -1270,6 +1270,11 @@ export const frEcrans = {
   'compte.age.moins15': 'Tu as moins de 15 ans ?',
   'compte.age.moins15Detail': 'Montre cet écran à un parent. S’il est d’accord, coche la case avec lui. Tu peux aussi continuer l’essai sans compte : rien ne quitte ton téléphone.',
   'compte.pseudo.conseil': 'Ton pseudo est visible par tous. Évite ton vrai nom.',
+  // #583 : compte sans preuve d'accord (créé avant, ou conditions changées) : la même case, montrée une fois.
+  'conditions.accord.titre': 'Une case à cocher',
+  'conditions.accord.texte': 'Coche-la pour continuer à jouer en ligne.',
+  'conditions.accord.valider': 'Valider',
+  'conditions.accord.aide': 'Coche la case pour jouer en ligne.',
   // Amis (#359) : écran « Mes amis » du Profil. Les textes qui disent « défier » restent sous `defi.` (vocabulaire.test.ts).
   'amis.titre': 'Mes amis',
   'amis.profil.demandes': { one: '{n} demande', other: '{n} demandes' },

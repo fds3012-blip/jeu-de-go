@@ -18,10 +18,11 @@ import { garderMonCompte } from '../data/defi';
 import { isEmail } from '../data/username';
 import { EVENTS, track } from '../data/analytics';
 import { noterConnexionParCode } from './entonnoir';
-import { apresRefus, demandeAge, typeCode, voieEnvoi, type Sens, type Voie } from './connexionBascule';
+import { accordDonne, apresRefus, demandeAge, typeCode, voieEnvoi, type Sens, type Voie } from './connexionBascule';
 import { fr } from '../ui/typo';
 import { BoutonsFournisseurs } from '../ui/BoutonFournisseur';
 import { garderRetour, lireAnnonce, oublierAnnonce, type Annonce } from './connexionGoogle';
+import { annulerAccordProvisoire, noterAccord } from './preuveConditions';
 import { NOM_FOURNISSEUR, fournisseursActifs, fournisseursVisibles, listeNoms, messageIncident, type Fournisseur } from './fournisseurs';
 import { aideNavigateur, contexteActuel, lienChrome } from './navigateurIntegre';
 import { t } from '../content/i18n/secondaires';
@@ -155,8 +156,10 @@ export function ConnexionCode({ db, mode = 'connexion', envoyer, moment = 'profi
     setError(''); setVers(f);
     track(EVENTS.compteMethode, { methode: f, navigateur_integre: contexte.integre });
     const retour = `${window.location.origin}/`;
+    // #583 : la case cochée part avec la note d'aller-retour ; au retour, App.tsx fait garder l'accord par le serveur.
+    const conditions = !versCompteExistant && accordDonne(age, sens);
     if (anonyme && sens === 'creer' && !versCompteExistant) {
-      garderRetour(undefined, undefined, { fournisseur: f, action: 'liaison' });
+      garderRetour(undefined, undefined, { fournisseur: f, action: 'liaison', conditions });
       const r = await lierSociale(db, f, retour);
       if (r.ok) return; // le navigateur part chez le fournisseur : le bouton reste « Connexion avec… »
       if (!('raison' in r) || r.raison !== 'fermee') { setVers(null); setError(r.error); return; }
@@ -165,7 +168,7 @@ export function ConnexionCode({ db, mode = 'connexion', envoyer, moment = 'profi
       const code = await preparerRattachement(db);
       if (code.ok) garderCodeRattachement(code.value);
     }
-    garderRetour(undefined, undefined, { fournisseur: f, action: 'connexion' });
+    garderRetour(undefined, undefined, { fournisseur: f, action: 'connexion', conditions });
     const r = await connexionSociale(db, f, retour);
     if (!r.ok) { setVers(null); setError(r.error); }
   }
@@ -174,9 +177,13 @@ export function ConnexionCode({ db, mode = 'connexion', envoyer, moment = 'profi
     if (busy) return;
     if (!codeComplet(valeur)) { setError(t('connexion.code.incomplet', { n: LONGUEUR_CODE })); return; }
     setBusy(true); setError('');
+    // #583 : case cochée (création, liaison, ou adresse déjà prise après la case) : l'accord est noté AVANT que la
+    // session s'ouvre (App.tsx la voit dès verifyOtp), puis envoyé au serveur par App.tsx (preuveConditions.ts).
+    const accord = accordDonne(age, sens, bascule);
+    if (accord) noterAccord();
     const r = await verifierCode(db, email, valeur, typeCode(voie));
     setBusy(false);
-    if (!r.ok) { setError(r.error); return; }
+    if (!r.ok) { if (accord) annulerAccordProvisoire(); setError(r.error); return; }
     noterConnexionParCode();
     onConnecte?.();
   }
@@ -285,7 +292,7 @@ export function ConnexionCode({ db, mode = 'connexion', envoyer, moment = 'profi
  * Case d'âge et d'acceptation des conditions (#343), jamais cochée d'avance. Texte de l'agent juridique
  * (docs/juridique/compte-obligatoire.md, section 3, option A) : une seule case, déclarative, sans date de naissance.
  */
-function CaseAge({ id, coche, onChange, onConditions }: { id: string; coche: boolean; onChange: (v: boolean) => void; onConditions?: () => void }) {
+export function CaseAge({ id, coche, onChange, onConditions }: { id: string; coche: boolean; onChange: (v: boolean) => void; onConditions?: () => void }) {
   const [moins15, setMoins15] = useState(false);
   // Repères du texte traduit, remplacés par les deux noms (caractères à usage privé, jamais dans un texte).
   const [avant, entre, apres] = t('compte.age.case', { conditions: '\uE000', confidentialite: '\uE001' }).split(/[\uE000\uE001]/);

@@ -1,6 +1,7 @@
 import type { BrowserContext, Page, Route, WebSocketRoute } from '@playwright/test';
 import { parseActionRequest, planAction, type GameRow } from '../src/go/server';
 import { fusionner, nettoyer } from '../src/app/reglagesCompte';
+import { VERSION_CONDITIONS } from '../src/data/conditions';
 
 // Supabase simulé par interception réseau, partagé par les parcours du compte (#343) et du défi par lien (#81).
 // Le build de test lit l'adresse simulée dans le stockage local (`e2e.supabase`, voir src/data/supabase.ts).
@@ -50,6 +51,10 @@ import { fusionner, nettoyer } from '../src/app/reglagesCompte';
 // (`pseudo_autorise`, refus JGP02 à l'enregistrement) sur une courte liste d'exemples (la vraie liste est au serveur).
 // Titres mensuels (#561) : `titres_joueurs` (mois, titre), lue par son seul titulaire ; un test y sème le résultat de
 // la tâche pg_cron (`titres`). Le calcul (joueurs actifs, seuils, garde-fou des 200) reste au serveur.
+// Preuve de l'accord aux conditions (#583) : `accepter_conditions` (vrai compte seulement, JGC01 sinon ; même version :
+// première date gardée), comme supabase/migrations/20261002000100_preuve_conditions.sql. Un compte posé par
+// `compteExistant`, ou par un test sans les colonnes de la preuve, a déjà accepté la version en vigueur ; un compte né par
+// le faux serveur part sans preuve ; un test met `conditions_version: null` pour simuler un compte d'avant #583.
 
 export const SUPABASE = 'https://supabase.e2e.test';
 export const CODE = '123456';
@@ -68,6 +73,11 @@ interface Abonne {
   fige?: boolean;
   canaux: Map<string, { joinRef: string; filtres: { id: number; event: string; table?: string; filter?: string }[]; jeton?: string }>;
 }
+
+/** #583 : preuve d'accord d'un compte déjà là. Un compte qui naît par le faux serveur (code, fournisseur, session sans
+ * compte) part SANS preuve, comme en production : l'app l'envoie (case cochée) ou remontre la case. */
+const PREUVE = { conditions_version: VERSION_CONDITIONS, conditions_acceptees_le: '2026-10-01T00:00:00Z' };
+const SANS_PREUVE = { conditions_version: null, conditions_acceptees_le: null };
 
 export function fauxServeur() {
   const jetons = new Map<string, Utilisateur>();
@@ -235,7 +245,7 @@ export function fauxServeur() {
   /** Ancienne session anonyme d'un défi (#81) : à poser dans le stockage du navigateur. */
   function sessionAnonyme(id = '00000000-0000-4000-8000-0000000000aa') {
     const u: Utilisateur = { id, anonyme: true };
-    profiles.push({ id, username: null, rating: 1500, streak_days: 0, streak_last: null, streak_freezes: 0 });
+    profiles.push({ id, username: null, rating: 1500, streak_days: 0, streak_last: null, streak_freezes: 0, ...SANS_PREUVE });
     return session(u);
   }
 
@@ -395,7 +405,7 @@ export function fauxServeur() {
             v = { id: `00000000-0000-4000-8000-0000000000${provider === 'apple' ? '9a' : provider === 'facebook' ? '9f' : '99'}`,
               anonyme: false, email: social.email, identites: [] };
             parEmail.set(social.email, v);
-            profiles.push({ id: v.id, username: null, rating: 1500, streak_days: 0, streak_last: null, streak_freezes: 0 });
+            profiles.push({ id: v.id, username: null, rating: 1500, streak_days: 0, streak_last: null, streak_freezes: 0, ...SANS_PREUVE });
           }
           if (!deja) { v.identites = [...(v.identites ?? []), identite(provider, social.email)]; parIdentite.set(cle, v); }
           v.nom = social.nom;
@@ -441,7 +451,7 @@ export function fauxServeur() {
       if (!v) {
         v = { id: `00000000-0000-4000-8000-${String(parEmail.size + 1).padStart(12, '0')}`, anonyme: false, email, identites: [identite('email', email)] };
         parEmail.set(email, v);
-        profiles.push({ id: v.id, username: null, rating: 1500, streak_days: 0, streak_last: null, streak_freezes: 0 });
+        profiles.push({ id: v.id, username: null, rating: 1500, streak_days: 0, streak_last: null, streak_freezes: 0, ...SANS_PREUVE });
       }
       return json(session(v));
     }
@@ -899,7 +909,8 @@ export function fauxServeur() {
     }
     // D4 (#530) : son profil entier, pour le joueur connecté seul.
     if (chemin === '/rest/v1/rpc/mon_profil') {
-      const miens = u ? profiles.filter(x => x.id === u.id) : [];
+      // #583 : un profil posé par un test sans les colonnes de la preuve a déjà accepté ; `null` explicite : sans preuve.
+      const miens = (u ? profiles.filter(x => x.id === u.id) : []).map(x => 'conditions_version' in x ? x : { ...x, ...PREUVE });
       const objet = (req.headers()['accept'] ?? '').includes('vnd.pgrst.object');
       return json(objet ? miens[0] ?? null : miens);
     }
@@ -916,6 +927,16 @@ export function fauxServeur() {
         parties_en_ligne: games.filter(g => g.black_id === u.id || g.white_id === u.id).map(g => ({ id: g.id, taille: g.size, resultat: g.result ?? null })),
         parties_enregistrees: partiesPerso.filter(x => x.user_id === u.id).map(x => ({ ...x, user_id: undefined })),
       });
+    }
+    if (chemin === '/rest/v1/rpc/accepter_conditions') {
+      if (!u || u.anonyme) return json({ code: 'JGC01', message: 'Crée ton compte pour accepter les conditions' }, 400);
+      const { p_version } = req.postDataJSON() as { p_version: string };
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(p_version)) return json({ code: '22023', message: 'Version des conditions invalide' }, 400);
+      const moi = profiles.find(x => x.id === u.id);
+      if (moi && !('conditions_version' in moi)) Object.assign(moi, PREUVE);
+      if (!moi) return json({ code: 'P0002', message: 'Profil introuvable' }, 400);
+      if (moi.conditions_version !== p_version) Object.assign(moi, { conditions_version: p_version, conditions_acceptees_le: new Date().toISOString() });
+      return json(moi.conditions_acceptees_le);
     }
     if (chemin.startsWith('/rest/v1/rpc/')) return json(null);
     if (chemin === '/functions/v1/game-action') {
@@ -997,7 +1018,7 @@ export function fauxServeur() {
   function compteExistant(email: string, pseudo: string | null, id = '00000000-0000-4000-8000-0000000000ee') {
     const v: Utilisateur = { id, anonyme: false, email, identites: [identite('email', email)] };
     parEmail.set(email, v);
-    profiles.push({ id, username: pseudo, rating: 1500, streak_days: 0, streak_last: null, streak_freezes: 0 });
+    profiles.push({ id, username: pseudo, rating: 1500, streak_days: 0, streak_last: null, streak_freezes: 0, ...PREUVE });
     return v;
   }
   /** Compte Google que « Continuer avec Google » renverra (#354) ; `annule` : le joueur annule chez Google. */

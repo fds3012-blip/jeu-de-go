@@ -16,6 +16,7 @@ type Usage = { sceau: number; portrait: number; pourquoi: string };
 
 const REGLE: Record<string, Usage> = {
   // ---------- Sceau seul : messages d'interface ----------
+  'src/app/AccordConditions.tsx': { sceau: 1, portrait: 0, pourquoi: 'case des conditions remontrée à un compte sans preuve (#583) : interface' },
   'src/app/Accueil.tsx': { sceau: 4, portrait: 0, pourquoi: 'accueil : annonce de Mochi, icônes du chemin et de la partie guidée' },
   'src/app/CreerCompte.tsx': { sceau: 2, portrait: 0, pourquoi: 'création de compte : confirmation, aide' },
   'src/app/Direct.tsx': { sceau: 2, portrait: 0, pourquoi: 'en ligne : attente, délai après abandons' },

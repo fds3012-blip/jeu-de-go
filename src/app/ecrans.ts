@@ -60,6 +60,8 @@ const profil = charger(() => import('./Profil'));
 const placement = charger(() => import('./Placement'));
 const defis = charger(() => import('./Defis'));
 const compte = charger(() => import('./CreerCompte'));
+// #583 : la case des conditions pour un compte sans preuve d'accord.
+const accord = charger(() => import('./AccordConditions'));
 const direct = charger(() => import('./Direct'));
 // #440 : parties lentes (la partie elle-même se joue dans l'écran du défi).
 const lentes = charger(() => import('./Lentes'));
@@ -94,6 +96,7 @@ export const DefiArrivee = ecran(defis, 'DefiArrivee');
 export const DefiPartie = ecran(defis, 'DefiPartie');
 export const CreerCompte = ecran(compte, 'CreerCompte');
 export const PseudoObligatoire = ecran(compte, 'PseudoObligatoire');
+export const AccordConditions = ecran(accord, 'AccordConditions');
 export const Direct = ecran(direct, 'Direct');
 // #436 : la bande « Je cherche toujours un joueur » pendant la partie contre l'IA, avec l'écran du direct.
 export const VeilleFile = ecran(direct, 'VeilleFile');

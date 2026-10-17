@@ -49,11 +49,14 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     // Textes anglais chargés à la demande dans l'app (#325) : enregistrés d'office pour les tests.
-    setupFiles: ['./src/content/anglais.setup.ts'],
+    // boucleLibre (#586) : un test qui occupe la boucle d'événements plus de 30 s d'un seul bloc échoue, avec son nom.
+    setupFiles: ['./src/content/anglais.setup.ts', './outils/boucleLibre.setup.ts'],
+    // #586 : en CI, résumé lisible dans la page du job (erreurs hors test, tests lents, plus longs blocs).
+    reporters: process.env.GITHUB_STEP_SUMMARY ? ['default', 'github-actions', './outils/resumeCi.ts'] : ['default'],
     // Les tests Playwright (e2e/) ne passent pas par Vitest.
     exclude: [...configDefaults.exclude, 'e2e/**', '.claude/**'],
-    // #407 : un cœur reste au processus principal. Sinon, quand les tests lourds (moteur, preuves des lots) prennent
-    // tous les cœurs, il ne répond plus aux workers (« Timeout calling onTaskUpdate ») et un run vert échoue.
+    // #407 : un cœur reste au processus principal, qui répond ainsi vite aux workers. La vraie cause de « Timeout
+    // calling onTaskUpdate » était un calcul synchrone de plus de 60 s dans un worker (#586, outils/boucleLibre.setup.ts).
     maxWorkers: Math.max(1, availableParallelism() - 1),
     // tokens.test.ts et IconesNav.test.tsx lisent le CSS des tokens et de la barre de navigation.
     css: { include: [/tokens\.css/, /nav\.css/] },
