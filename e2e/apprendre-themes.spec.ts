@@ -60,6 +60,7 @@ for (const theme of ['light', 'dark'] as const) {
 test('« Par thème » à 600 px : deux colonnes', async ({ page }) => {
   await page.setViewportSize({ width: 600, height: 900 });
   await apprendre(page, { l1: 99 });
+  await expect(page.getByTestId('par-theme').locator('.theme-carte')).toHaveCount(6);
   const xs = new Set(await page.getByTestId('par-theme').locator('.theme-carte').evaluateAll(els => els.map(e => Math.round(e.getBoundingClientRect().x))));
   expect(xs.size).toBe(2);
 });

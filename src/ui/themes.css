@@ -4,9 +4,9 @@
 .themes { margin-top: var(--space-5); }
 .themes h3 { margin: 0; font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: var(--fs-l); letter-spacing: var(--tracking-titre); }
 .themes-grille { list-style: none; margin: var(--space-3) 0 0; padding: 0; display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr)); gap: var(--space-2); }
-@media (max-width: 359px) { .themes { margin-top: var(--space-4); } .themes-grille { gap: 6px; } }
-.theme-carte { display: flex; align-items: center; gap: var(--space-3); width: 100%; height: 100%; min-height: var(--cible-min); padding: 10px var(--space-3) 10px 10px;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr)); gap: 6px; }
+@media (max-width: 359px) { .themes { margin-top: var(--space-4); } }
+.theme-carte { display: flex; align-items: center; gap: var(--space-3); width: 100%; height: 100%; min-height: var(--cible-min); padding: 6px var(--space-3) 6px var(--space-2);
   background: var(--surface); color: var(--text); border: 1.5px solid var(--line); border-radius: var(--radius-s);
   text-align: left; font: inherit; cursor: pointer; transition: background-color var(--duree-rapide) var(--ease); }
 .theme-carte:active { background: var(--surface-2); }
@@ -31,7 +31,7 @@
 @starting-style { .theme-revele { opacity: 0; transform: translateY(-4px); } }
 @media (prefers-reduced-motion: reduce) { .theme-revele, .themes-plus svg { transition: none; } }
 /* Le record se lit en or, à côté de la barre : un record de ce mode, jamais un total (#137). */
-.theme-record { color: var(--recompense-texte); font-size: var(--fs-legende); font-weight: var(--fw-bold); line-height: 1.25;
+.theme-record { color: var(--recompense-texte); font-size: var(--fs-legende); font-weight: var(--fw-bold); line-height: 1;
   font-variant-numeric: tabular-nums; }
 
 /* Lecteur : « Capturer » puis la pastille des réussites d'affilée, chiffres à chasse fixe (rien ne bouge). */

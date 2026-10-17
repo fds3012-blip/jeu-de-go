@@ -41,14 +41,14 @@ export function GrilleThemes({ titre, cartes, motMaitrise, onOuvrir, pli, classN
         {montrees.map((c, i) => (
           <li key={c.cle} className={replie && i >= pli.visibles ? 'theme-revele' : undefined}>
             {/* Nom accessible : le nom visible d'abord (WCAG 2.5.3), puis l'état ; la ligne de description le décrit. */}
-            <button type="button" className="theme-carte" data-theme={c.cle} data-maitrise={c.maitrise || undefined} onClick={() => onOuvrir(c.cle)}
+            <button type="button" className="theme-carte" data-theme={c.cle} onClick={() => onOuvrir(c.cle)}
               aria-label={(c.maitrise ? [c.nom, motMaitrise] : [c.nom, c.record, c.partAria]).filter((x): x is string => !!x).map(x => fr(x)).join(', ')} aria-describedby={`${id}-${c.cle}`}>
               <span className="theme-motif" aria-hidden="true">{c.motif}</span>
               <span className="theme-nom">
                 <b>{fr(c.nom)}</b>
                 <span className="theme-desc" id={`${id}-${c.cle}`}>{fr(c.description)}</span>
                 {c.maitrise
-                  ? <span className="theme-maitrise-mot">{motMaitrise}</span>
+                  ? <span className="theme-maitrise-mot" data-maitrise="">{motMaitrise}</span>
                   : (
                     <span className="theme-etat">
                       <span className="theme-maitrise" role="img" aria-label={fr(c.partAria)}
