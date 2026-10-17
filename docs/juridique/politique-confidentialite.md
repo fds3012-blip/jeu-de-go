@@ -165,6 +165,7 @@ Ces données sont écrites dans le stockage local (`localStorage`) de ton naviga
 - modes de jeu : `mode_choisi` (mode choisi sur l'accueil — en ligne, ordi, ami, à deux, découverte — ou partie guidée lancée depuis Apprendre, et d'où : bouton principal, tuile, « Plus », Apprendre), `plus_ouvert` (réglages repliés de la partie en ligne ouverts par « Changer », et sur quel écran : en direct ou partie lente) ;
 - conseil de Mochi : `conseil_demande` (type de conseil donné, numéro du coup, temps de calcul), `conseil_note` (conseil jugé utile ou non) ;
 - aide : `aide_ouverte` (rubrique ouverte, mot du glossaire ouvert d'emblée, écran d'où elle est ouverte ; jamais le texte cherché) ;
+- navigation : `retour_systeme` (bouton ou geste retour du téléphone, retour du navigateur ou touche Échap : l'écran quitté, jamais ce qu'il contenait) ;
 - leçons : `lecon_commencee`, `lecon_terminee` ;
 - premier lancement et règles (#523) : `connait_go` (ta réponse à « Tu connais le go ? » : jamais joué, un peu, je sais jouer, ou plus tard), `intro_regles_etape` (écran de l'introduction des règles affiché), `intro_regles_finie` (fin atteinte, et combien d'écrans passés par « Je sais »), `intro_regles_quittee` (écran où tu l'as quittée) ; ces trois-là disent aussi la version (complète ou rappel express) et d'où elle est ouverte (accueil, Apprendre, aide) ;
 - partie de découverte : `decouverte_etape`, `decouverte_finie`, `decouverte_quittee` (la notion atteinte ou quittée, jamais un coup) ;

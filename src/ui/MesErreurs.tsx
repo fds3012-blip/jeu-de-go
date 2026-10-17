@@ -29,7 +29,8 @@ export function MesErreurs({ confirmTouch, Lecteur }: { confirmTouch: boolean; L
   useEffect(() => {
     if (!ouvert) return;
     window.scrollTo?.({ top: 0 });
-    const echap = (e: KeyboardEvent) => { if (e.key === 'Escape') setOuvert(null); };
+    // #606 : la touche est prise ici ; le retour du système (Échap) ne fait pas un second retour.
+    const echap = (e: KeyboardEvent) => { if (e.key === 'Escape') { e.preventDefault(); setOuvert(null); } };
     window.addEventListener('keydown', echap);
     return () => window.removeEventListener('keydown', echap);
   }, [ouvert]);
