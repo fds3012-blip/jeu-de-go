@@ -47,6 +47,9 @@ import { tp } from '../content/i18n/profilPublic';
 import '../ui/defis.css';
 // #563 : le reste des styles des défis, hors du CSS initial (avant direct.css, comme dans la feuille principale).
 import '../ui/defis-ecran.css';
+// #670 : en paysage et sur grand écran, la partie en deux zones (goban à gauche, panneau à droite).
+import '../ui/paysage.css';
+import '../ui/paysage-en-ligne.css';
 import '../ui/direct.css';
 
 import { BasculeEnLigne, type FaconEnLigne } from './BasculeEnLigne';

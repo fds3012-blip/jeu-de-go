@@ -1052,6 +1052,12 @@ export type FauxServeur = ReturnType<typeof fauxServeur>;
 
 /** Branche un contexte de navigateur (un téléphone) sur le faux serveur, avec un stockage local de départ. */
 export async function brancher(context: BrowserContext, serveur: FauxServeur, stockage: Record<string, string> = {}): Promise<Page> {
+  await brancherContexte(context, serveur, stockage);
+  return context.newPage();
+}
+
+/** #670 : comme `brancher`, pour un contexte qui a déjà sa page (celle d'un test) : elle est branchée à sa prochaine navigation. */
+export async function brancherContexte(context: BrowserContext, serveur: FauxServeur, stockage: Record<string, string> = {}): Promise<void> {
   await context.addInitScript(({ adresse, stockage }) => {
     if (sessionStorage.getItem('e2e.init')) return; // une seule fois : les rechargements gardent l'état
     sessionStorage.setItem('e2e.init', '1');
@@ -1065,7 +1071,6 @@ export async function brancher(context: BrowserContext, serveur: FauxServeur, st
   });
   await context.route(`${SUPABASE}/**`, route => serveur.traiter(route));
   await context.routeWebSocket(/\/realtime\/v1\/websocket/, ws => serveur.brancherTempsReel(ws));
-  return context.newPage();
 }
 
 /** Crée un compte par le code reçu par e-mail, puis choisit le pseudo. */

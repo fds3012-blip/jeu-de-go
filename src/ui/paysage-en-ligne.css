@@ -1,0 +1,51 @@
+/*
+ * P8 (#670, suite du lot V6 #649) : les parties en ligne (défis, parties lentes, en direct : .defi-partie) en deux zones,
+ * en paysage et sur grand écran. Le gabarit commun (goban à gauche à la hauteur de l'écran, panneau à droite, tailles
+ * --v6-*) est dans paysage.css ; ici, le panneau de ces parties, rangé autrement que celui de Game : leurs fins, leur
+ * comptage et leur attente vivent dans .defi-bas, sous ton bandeau. En portrait, rien ne change.
+ * Chargée avec Defis et Direct, jamais dans la feuille initiale.
+ *
+ * Panneau, de haut en bas : l'adversaire, les coups, la place libre, Mochi, toi, puis .defi-bas (score du comptage,
+ * renvoi du lien, fin de partie) et la barre d'actions. Le panneau finit par l'action principale : « Passer » en jeu,
+ * « Proposer ce compte » au comptage, « Renvoyer le lien » en attente, « Rejouer » ou « Une autre partie » à la fin.
+ */
+@media (orientation: landscape) and (min-width: 600px) {
+  .app.app-partie .defi-partie:not(.defi-partie-charge) { grid-template-rows: auto auto 1fr auto auto auto auto; row-gap: 0; }
+  .app.app-partie .defi-partie:not(.defi-partie-charge)::before { display: none; }
+  .app.app-partie .defi-partie:not(.defi-partie-charge) > * { grid-column: 2; }
+  .app.app-partie .defi-partie:not(.defi-partie-charge) > .joueur:first-child { grid-row: 1; }
+  .app.app-partie .defi-partie:not(.defi-partie-charge) > .coups-ruban { grid-row: 2; }
+  .app.app-partie .defi-partie:not(.defi-partie-charge) > .partie-plateau { grid-column: 1; grid-row: 1 / -1; width: var(--v6-goban); margin: 0; align-self: start; }
+  .app.app-partie .defi-partie:not(.defi-partie-charge) > .partie-souffle { display: none; }
+  /* Mochi juste au-dessus de toi, comme contre l'ordi (paysage.css) : sa bulle se pose sur son bas et monte dans la place
+     libre ; « Quitter la partie ? » (en direct) aussi, sans rien pousser. */
+  .app.app-partie .defi-partie:not(.defi-partie-charge) > .partie-mochi { grid-row: 4; align-self: end; position: relative; display: block;
+    margin-top: var(--space-2); min-height: calc(2 * 1.4 * var(--fs-corps-s) + 20px); }
+  .app.app-partie .defi-partie:not(.defi-partie-charge) > .partie-mochi::after { display: none; }
+  .app.app-partie .defi-partie:not(.defi-partie-charge) > .partie-mochi > .coach { box-shadow: none; }
+  .app.app-partie .defi-partie:not(.defi-partie-charge) > .partie-mochi > .coach-avertir { position: absolute; left: 0; right: 0; bottom: 0; z-index: 4; }
+  .app.app-partie .defi-partie:not(.defi-partie-charge) > .partie-plateau ~ .joueur { grid-row: 5; }
+  .app.app-partie .defi-partie:not(.defi-partie-charge) > .defi-bas { grid-row: 6; }
+  .app.app-partie .defi-partie:not(.defi-partie-charge) > .defi-bas:not(:empty) { margin-top: var(--space-2); }
+  /* Les barres (actions, comptage) ne sont plus fixées en bas de l'écran : elles ferment le panneau, à plat. */
+  .app.app-partie .defi-partie:not(.defi-partie-charge) > .actions { grid-row: 7; }
+  .app.app-partie .defi-partie:not(.defi-partie-charge) > .actions,
+  .app.app-partie .defi-partie:not(.defi-partie-charge) > .defi-bas > .barre-comptage { position: relative; left: auto; right: auto; bottom: auto;
+    z-index: 20; margin-top: var(--space-2); padding: 0; background: none; border-top: 0; }
+  /* Panneau de 20 à 24rem : un libellé long (« Proposer ce compte », texte agrandi) passe à la ligne au lieu de déborder. */
+  .app.app-partie .defi-partie:not(.defi-partie-charge) > .defi-bas > .barre-comptage > .btn { flex: 1 1 0; min-width: 0; white-space: normal;
+    line-height: var(--lh-titre); text-wrap: balance; }
+  .app.app-partie .defi-partie:not(.defi-partie-charge) > .defi-bas > .barre-comptage > .btn.primary { flex-grow: 1.5; }
+  /* Fin : la phrase de Mochi redit le titre de la fin (E8) ; elle laisse sa place au résultat et à « Rejouer ». */
+  .app.app-partie .defi-partie:is(.phase-fini, .phase-annulee) > .partie-mochi { display: none; }
+  /* Les liens de la fin (revoir, profil, accueil, dire, signaler) se suivent en ligne sous le bouton principal. */
+  .app.app-partie .defi-partie .defi-fin { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 var(--space-4); }
+  .app.app-partie .defi-partie .defi-fin > :not(.lien, .echanges-fin) { flex: 1 0 100%; }
+  .app.app-partie .defi-partie .defi-fin > :not(.lien, .echanges-fin) + :not(.lien, .echanges-fin) { margin-top: var(--space-2); }
+  .app.app-partie .defi-partie .defi-fin > .defis-cta { margin-bottom: var(--space-1); }
+  .app.app-partie .defi-partie .defi-fin > .echanges-fin { gap: 0 var(--space-4); }
+  /* Téléphone tourné : à la fin, le ruban des coups laisse sa place au résultat (« Revoir la partie » les montre tous). */
+  @media (max-height: 480px) {
+    .app.app-partie .defi-partie:is(.phase-fini, .phase-annulee) > .coups-ruban { display: none; }
+  }
+}
