@@ -1130,7 +1130,7 @@ export const LESSONS = [
       text: 'À savoir : l’IA préfère ici fermer le coin, au point vert.' },
     { kind: 'move', rows: p19(['Q16', 'Q3', 'R9'], ['D4', 'D16', 'Q4']), accept: ['R4'],
       text: 'Tsuke (coup au contact) de Blanc en Q4. Bloque-le côté coin.',
-      ok: 'Bien : le hane (coup en diagonale contre lui) R4, comme KataGo.', no: 'Joue contre sa pierre, côté coin, en diagonale de Q3.',
+      ok: 'Bien : le hane (coup en diagonale contre lui) R4, côté coin.', no: 'Joue contre sa pierre, côté coin, en diagonale de Q3.',
       refus: [{ points: ['R5'], no: 'R5 : Blanc tire en R4, environ 4 points de moins.' }] }
   ] },
   { id: 'l54', title: 'La kosumi de Shusaku', desc: 'Le coup qu’il disait toujours bon', taille: 19, steps: [
@@ -1169,7 +1169,7 @@ export const LESSONS = [
     { kind: 'move', rows: p19(['Q16', 'Q4', 'C3'], ['D4', 'D16', 'C4']), cadre: 'bas-gauche', accept: ['D3'],
       text: 'Blanc bloque en haut. À toi : rampe vers la droite.',
       ok: 'Bien : ta pierre avance sous son hoshi (point étoile).', no: 'Avance d’un pas vers la droite, sur la 3e ligne.',
-      refus: [{ points: ['D2', 'B4'], no: 'Blanc ferme en D3 : environ 4 points de moins (KataGo).' }] },
+      refus: [{ points: ['D2', 'B4'], no: 'Blanc ferme en D3 : environ 3 points de moins (KataGo).' }] },
     { kind: 'info', rows: p19(['Q16', 'Q4', 'C3', 'D3'], ['D4', 'D16', 'C4']), cadre: 'bas-gauche', demo: [{ pose: 'E4', couleur: 'W' }],
       text: 'Blanc s’allonge en E4 : son mur grandit.' },
     { kind: 'move', rows: p19(['Q16', 'Q4', 'C3', 'D3'], ['D4', 'D16', 'C4', 'E4']), cadre: 'bas-gauche', accept: ['F3', 'F2'],

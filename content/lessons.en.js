@@ -566,7 +566,7 @@ export const LESSONS_EN = {
       refus: ['K10, the center: about 2 points less (KataGo).'] },
     { text: 'Good to know: the AI prefers closing the corner here, green point.' },
     { text: 'White’s contact move (tsuke) at Q4. Block it on the corner side.',
-      ok: 'Good: the bend around it (hane) at R4, like KataGo.', no: 'Play against White’s stone, corner side, diagonal to Q3.',
+      ok: 'Good: the bend around it (hane) at R4, on the corner side.', no: 'Play against White’s stone, corner side, diagonal to Q3.',
       refus: ['R5: White pulls back at R4, about 4 points less.'] }
   ] },
   l54: { title: 'Shusaku’s diagonal move', desc: 'The move he called always good', steps: [
@@ -592,7 +592,7 @@ export const LESSONS_EN = {
     { text: 'Like AlphaGo (2017): go into the 3-3 point (san-san), green point.' },
     { text: 'White blocks from above. Your turn: crawl to the right.',
       ok: 'Good: your stone moves along under White’s star point (hoshi).', no: 'Move one step to the right, on the 3rd line.',
-      refus: ['White closes at D3: about 4 points less (KataGo).'] },
+      refus: ['White closes at D3: about 3 points less (KataGo).'] },
     { text: 'White extends to E4: its wall grows.' },
     { text: 'Your turn: move along the bottom, without touching White.',
       ok: 'Good: your group takes its place along the bottom.', no: 'Move to the right, on the 3rd or the 2nd line.',

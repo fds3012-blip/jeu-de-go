@@ -35,7 +35,7 @@ export const OUVERTURES: readonly Ouverture[] = [
   // #672 : ouvertures célèbres (docs/pedagogie/ouvertures-celebres-2026-10.md), chacune enseignée par une leçon.
   // Le sanrensei (trois hoshi), puis la réponse moderne de Blanc : le san-san tout de suite, bloqué côté moyo.
   { id: 'g-sanrensei', taille: 19, sgf: '(;SZ[19];B[pd];W[dp];B[pp];W[dd];B[pj];W[qq];B[qp])', lecon: 'l51',
-    erreurs: [{ coup: 4, c: 'jj', perte: 2 }, { coup: 6, c: 'jj', perte: 4 }, { coup: 6, c: 'qr', perte: 4 }],
+    erreurs: [{ coup: 4, c: 'jj', perte: 2 }, { coup: 6, c: 'jj', reponse: 'qp', perte: 4 }, { coup: 6, c: 'qr', reponse: 'pq', perte: 4 }],
     // P3 (bloquer de loin) : 1,9 point de plus que R4, sous la marge : écarté (note pédagogique).
     ecartes: [{ coup: 6, c: 'oq' }] },
   // Le shin-fuseki de 1933 : le san-san en premier coup, puis un hoshi ; le tengen (Go Seigen) est jugé en erreur.
@@ -43,9 +43,9 @@ export const OUVERTURES: readonly Ouverture[] = [
     erreurs: [{ coup: 0, c: 'jj', perte: 3 }, { coup: 4, c: 'jj', perte: 3 }] },
   // Le fuseki chinois (bas) : hoshi, komoku, pierre du bord sur la 3e ligne ; la tsuke de Blanc au 4-4, et le hane.
   { id: 'g-chinois', taille: 19, sgf: '(;SZ[19];B[pd];W[dp];B[pq];W[dd];B[qk];W[pp];B[qp])', lecon: 'l53',
-    erreurs: [{ coup: 4, c: 'jj', perte: 2 }, { coup: 6, c: 'qo', perte: 4 }],
-    // Le chinois haut : la pierre du bord sur la 4e ligne.
-    variantes: [{ coup: 4, c: 'pk' }] },
+    erreurs: [{ coup: 4, c: 'jj', reponse: 'qo', perte: 2 }, { coup: 6, c: 'qo', reponse: 'qp', perte: 4 }],
+    // Le chinois haut : la pierre du bord sur la 4e ligne ; Q5, fermer le coin, le meilleur coup de KataGo (montré par l53).
+    variantes: [{ coup: 4, c: 'pk' }, { coup: 4, c: 'po' }] },
   { id: 'g-bords', taille: 19, sgf: '(;SZ[19]AB[pd][pp]AW[dp][dd];B[pj])',
     erreurs: [{ coup: 0, c: 'jj', perte: 2 }] },
   // 19 × 19 : joseki du hoshi
@@ -57,7 +57,7 @@ export const OUVERTURES: readonly Ouverture[] = [
   // Doublon de h-sansan pour la liste : absent du répertoire.
   { id: 'h-sansan-noir', taille: 19, cadre: 'bas-gauche', sgf: '(;SZ[19]AB[pd][pp]AW[dp][dd];B[cq];W[cp];B[dq];W[ep];B[fq])',
     lecon: 'l56', repertoire: false, ailleurs: true,
-    erreurs: [{ coup: 2, c: 'dr', perte: 4 }, { coup: 2, c: 'bp', perte: 4 }, { coup: 4, c: 'gq', perte: 6 }],
+    erreurs: [{ coup: 2, c: 'dr', reponse: 'dq', perte: 3 }, { coup: 2, c: 'bp', reponse: 'dq', perte: 3 }, { coup: 4, c: 'gq', reponse: 'eq', perte: 6 }],
     // L'approche F3 au lieu du san-san ; F2 au lieu de F3 pour finir.
     variantes: [{ coup: 0, c: 'fq' }, { coup: 4, c: 'fr' }] },
   // 19 × 19 : joseki du komoku

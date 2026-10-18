@@ -9,8 +9,8 @@
 // - un exercice demande le coup noir de la ligne ; il accepte ce coup et ses variantes, rien d'autre ; chaque coup
 //   refusé est une erreur prouvée, son coût cité est le sien, la réplique citée est celle de KataGo ;
 // - un quiz de coordonnées oppose le coup de la ligne à une erreur prouvée ;
-// - les affirmations propres aux textes (« l'IA répond au san-san », « l'IA préfère fermer le coin », « comme KataGo »,
-//   « joue ailleurs », « K10 au premier coup ») sont rejouées depuis la fixture ;
+// - les affirmations propres aux textes (« l'IA répond au san-san », « l'IA préfère fermer le coin », « joue ailleurs »,
+//   « K10 au premier coup ») sont rejouées depuis la fixture ;
 // - les textes FR et EN : chaque mot japonais expliqué à sa première apparition dans la leçon.
 import preuvesJson from './preuves-ouvertures.json';
 import { LESSONS_FR, TRADUCTIONS, type Lesson, type LessonStep } from '../content/lessons';
@@ -45,7 +45,7 @@ function placer(l: Lesson, s: LessonStep): { o: Ouverture; j: number } {
 const coupDe = (o: Ouverture, j: number) => { const c = lireOuverture(o).coups[j]; return { l: toLabel(c.point, o.taille), couleur: c.couleur }; };
 const variantes = (o: Ouverture, j: number) => (o.variantes ?? []).filter(v => v.coup === j).map(v => L(o, v.c));
 const erreurs = (o: Ouverture, j: number) => o.erreurs.filter(e => e.coup === j);
-const coutCite = (texte: string) => Number(texte.match(/environ (\d+) points?/)?.[1] ?? NaN);
+const coutCite = (texte: string) => Number(texte.match(/environ (\d+) points?/i)?.[1] ?? NaN);
 
 describe('ouvertures célèbres (#672) : sept leçons dans le thème « Ouverture »', () => {
   it('l50 à l56 publiées, en 19 × 19, chacune reliée à au moins une ligne prouvée du répertoire', () => {
@@ -117,9 +117,6 @@ describe('affirmations des textes, rejouées depuis la fixture', () => {
     expect(b.meilleur).toBe('Q5');
     expect(b.perte('R9')).toBeGreaterThan(0);
     expect(b.perte('R9')).toBeLessThanOrEqual(TOLERANCE_DEMO);
-  });
-  it('l53 : « le hane R4, comme KataGo » : R4 est le meilleur coup jugé contre la tsuke Q4', () => {
-    expect(bilan(analyse(o('g-chinois'), 6)).meilleur).toBe('R4');
   });
   it('l55 et l56 : « joue ailleurs » : la ligne dit `ailleurs` (vérifié dans chaque symétrie par ouvertures.test.ts)', () => {
     expect(o('h-approche').ailleurs).toBe(true);
