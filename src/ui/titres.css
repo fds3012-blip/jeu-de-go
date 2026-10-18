@@ -8,7 +8,7 @@
 
 
 /* Fête discrète : une carte en haut de l'écran, comme la fête de niveau (niveau.css), plus sobre. */
-.fete-titre { position: fixed; z-index: 60; left: 50%; top: calc(12px + env(safe-area-inset-top, 0px)); transform: translateX(-50%);
+.fete-titre { position: fixed; z-index: 60; left: calc(50% + var(--nav-gauche) / 2); top: calc(12px + env(safe-area-inset-top, 0px)); transform: translateX(-50%);
   width: min(360px, calc(100vw - 32px)); }
 .fete-titre button { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 64px; padding: 10px 16px; text-align: left;
   background: var(--surface); color: var(--text); border: 1.5px solid var(--recompense); border-radius: var(--radius);
