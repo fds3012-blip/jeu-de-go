@@ -17,6 +17,11 @@ body::before { content: ""; position: fixed; z-index: 50; top: 0; left: 0; right
 button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .app { max-width: var(--largeur-max); margin: 0 auto; padding: var(--space-3) var(--gouttiere) calc(150px + env(safe-area-inset-bottom, 0px)); }
+/* P8 (#629, lot V7) : la colonne suit la classe de largeur ; une ligne de texte reste à --mesure. Jouer et les activités
+   (un goban qu'on touche) gardent 560 px : leur goban attend les lots V5, V6 et V10. */
+@media (min-width: 600px) { .app { max-width: var(--largeur-contenu); } .app p { max-width: var(--mesure); } }
+@media (min-width: 1024px) { .app { max-width: var(--largeur-large); } .app :is(.btn.primary, .cta) { max-width: var(--largeur-max); } }
+.app:is(.app-home, .app-partie, :has(.board-wrap):not(:has(.du-jour, .reglages-apercu))) { max-width: var(--largeur-max); }
 
 /* ---------- Titres : Bricolage Grotesque, serrée ---------- */
 h1, h2, .big { font-family: var(--font-titre); letter-spacing: var(--tracking-titre); }

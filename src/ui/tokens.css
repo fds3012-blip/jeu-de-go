@@ -140,7 +140,10 @@
   --nav-h: 60px;          /* barre de navigation */
   --icone-nav: 28px;      /* icônes de la barre de navigation */
   --icone-attente: 22px;  /* indicateur « deux pierres qui tournent » */
-  --largeur-max: 560px;   /* colonne de contenu */
+  --largeur-max: 560px;   /* colonne de lecture (téléphone, feuilles, activités) */
+  --largeur-contenu: 720px; /* P8 : contenu de 600 à 1023 px de large (#629) */
+  --largeur-large: 1080px;  /* P8 : contenu à partir de 1024 px */
+  --mesure: 65ch;           /* P8 : une ligne de texte courant, 65 signes (en unités de la police du texte) */
   --maquette-l: 390px;    /* largeur des maquettes mobiles */
   --maquette-h: 844px;
 

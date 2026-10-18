@@ -137,7 +137,7 @@ Règles :
 ### Espacements, rayons, tailles
 - Espacements (grille de 4 px) : `--space-1` 4, `--space-2` 8, `--space-3` 12, `--space-4` 16, `--space-5` 20, `--space-6` 24, `--space-8` 32, `--space-10` 40, `--gouttiere` 16.
 - Rayons : `--radius-xs` 4 (coin de la bulle côté personnage, jointure des tuiles groupées), `--radius-plateau` 10, `--radius-s` 12 (segments, retours), `--radius-bouton` 16, `--radius` 16 (tuiles), `--radius-pill` 999.
-- Tailles : `--cible-min` 44, `--cible-bouton` 48, `--cible-cta` 56, `--nav-h` 60, `--relief` 5, `--largeur-max` 560, `--maquette-l` 390, `--maquette-h` 844.
+- Tailles : `--cible-min` 44, `--cible-bouton` 48, `--cible-cta` 56, `--nav-h` 60, `--relief` 5, `--largeur-max` 560, `--largeur-contenu` 720, `--largeur-large` 1080, `--mesure` 65ch, `--maquette-l` 390, `--maquette-h` 844.
 
 ### Mouvement
 - `--duree-rapide` 100ms (appui).
