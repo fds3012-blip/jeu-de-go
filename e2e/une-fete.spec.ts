@@ -36,7 +36,7 @@ for (const theme of ['clair', 'sombre'] as const) {
     await expect(carte).toHaveCount(0);
     await expect(page.locator('.annonce-xp [data-testid="pastille-xp"]')).toHaveCount(0);
     // Après la feuille : le niveau a son écran à lui, seul (plus de feuille, plus de problème, plus de pastille).
-    await page.locator('.verdict').getByRole('button', { name: 'Retour au chemin' }).click();
+    await page.locator('.verdict').getByRole('button', { name: 'Retour à Apprendre' }).click();
     await expect(ecranNiveau.getByRole('heading', { name: /Niveau\s2/ })).toBeVisible();
     await expect(page.locator('.verdict')).toHaveCount(0);
     await expect(page.locator('.serie-pratique')).toHaveCount(0);
@@ -44,21 +44,21 @@ for (const theme of ['clair', 'sombre'] as const) {
     await expect(carte).toHaveCount(0);
     await expect(page.getByTestId('pastille-xp')).toHaveCount(0);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
-    const bouton = ecranNiveau.getByRole('button', { name: 'Retour au chemin' });
+    const bouton = ecranNiveau.getByRole('button', { name: 'Retour à Apprendre' });
     expect((await bouton.boundingBox())!.height).toBeGreaterThanOrEqual(44);
     await page.screenshot({ path: `docs/design/v2/captures/une-chose-a-la-fois/niveau-fin-de-serie-${theme}.png` });
-    // Puis le chemin, sans carte de niveau répétée.
+    // Puis le sommaire d'Apprendre, sans carte de niveau répétée.
     await bouton.click();
-    await expect(page.getByRole('heading', { level: 2, name: 'Les bases' })).toBeVisible();
+    await expect(page.getByTestId('prochaine-lecon')).toBeVisible();
     await page.waitForTimeout(800);
     await expect(carte).toHaveCount(0);
   });
 }
 
-test('N2 : sans niveau franchi, la série finie ramène droit au chemin', async ({ page }) => {
+test('N2 : sans niveau franchi, la série finie ramène droit au sommaire d’Apprendre', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await finirSerie(page, 0);
-  await page.locator('.verdict').getByRole('button', { name: 'Retour au chemin' }).click();
-  await expect(page.getByRole('heading', { level: 2, name: 'Les bases' })).toBeVisible();
+  await page.locator('.verdict').getByRole('button', { name: 'Retour à Apprendre' }).click();
+  await expect(page.getByTestId('prochaine-lecon')).toBeVisible();
   await expect(page.getByTestId('niveau-atteint')).toHaveCount(0);
 });

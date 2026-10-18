@@ -7,7 +7,7 @@ import { ACQUIS } from '../src/content/acquis';
 // Issue #539 (leçons 37 et suivantes, vers 5 kyu), sur le chemin Apprendre, sans changer l'écran.
 // La leçon 39 (les libertés communes) se joue du début à la fin : un mauvais choix au quiz, un coup refusé à chaque
 // exercice ; 390 px en clair, 320 px en sombre, puis au zoom 200 % (195 px, polices bloquées) entièrement au doigt.
-// Le chemin montre aussi les leçons 37, 38 et 40 à leur place. Positions et réponses prouvées par
+// Les leçons 37, 38 et 40 sont dans la page de leur thème (#652). Positions et réponses prouvées par
 // src/go/lecons-37-plus.test.ts. Captures : seulement si CAPTURES_LECONS_37 donne un dossier (aucune capture versionnée).
 
 const norm = (s: string) => s.replace(/[\u00A0\u202F\s]+/g, ' ').trim();
@@ -37,12 +37,9 @@ async function l39(page: Page, auDoigt: boolean, ecran: (n: string) => Promise<v
   await page.addInitScript(p => localStorage.setItem('go.lecons.v1', JSON.stringify(p)), AVANT);
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
-  // Le chemin : les libertés communes suivent la course avec un œil ; les trois autres leçons sont à leur place.
-  await expect(page.getByRole('button', { name: `Leçon ${numero('l26')} : La course avec un œil, terminée` })).toBeAttached();
+  // #652 : le sommaire d'Apprendre ; la carte de la prochaine leçon ouvre la leçon.
   await expect(page.getByRole('button', { name: `Leçon ${numero('l39')} : Les libertés communes, prochaine étape` })).toBeAttached();
-  for (const [id, titre] of [['l40', 'Les yeux dans la course'], ['l37', 'Les points miai'], ['l38', 'Jouer ailleurs']]) {
-    await expect(page.getByRole('button', { name: new RegExp(`^Leçon ${numero(id)} : ${titre}`) })).toBeAttached();
-  }
+  // Les leçons 37, 38 et 40 s'ouvrent depuis leur thème : src/app/themesApprendre.test.ts le vérifie pour chaque leçon.
   await sansDebordement(page, 'chemin');
   await page.locator('.cta-chemin').scrollIntoViewIfNeeded();
   await ecran('0-chemin');

@@ -30,14 +30,6 @@
 .theme-maitrise { flex: 1; height: 4px; border-radius: var(--radius-pill); background: var(--surface-2); overflow: hidden; }
 .theme-maitrise > i { display: block; height: 100%; width: var(--part, 0%); border-radius: inherit; background: var(--accent); }
 .theme-maitrise-mot { margin-top: 2px; color: var(--accent-texte, var(--accent)); font-size: var(--fs-legende); font-weight: var(--fw-bold); line-height: 1.25; }
-/* « Tous les thèmes » (Apprendre) : un lien qui déplie la suite ; les cartes ajoutées se posent en fondu. */
-.themes-plus { display: inline-flex; align-items: center; gap: 6px; margin: var(--space-2) 0 0 -12px; }
-.themes-plus svg { flex: none; fill: none; stroke: var(--muted); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round;
-  transition: transform var(--duree) var(--ease); }
-.themes-plus[aria-expanded="true"] svg { transform: rotate(180deg); }
-.theme-revele { transition: opacity var(--duree) var(--ease), transform var(--duree) var(--ease); }
-@starting-style { .theme-revele { opacity: 0; transform: translateY(-4px); } }
-@media (prefers-reduced-motion: reduce) { .theme-revele, .themes-plus svg { transition: none; } }
 /* Le record se lit en or, à côté de la barre : un record de ce mode, jamais un total (#137). */
 .theme-record { color: var(--recompense-texte); font-size: var(--fs-legende); font-weight: var(--fw-bold); line-height: 1;
   font-variant-numeric: tabular-nums; }

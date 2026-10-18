@@ -1,6 +1,6 @@
 import { Suspense, lazy, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 // Écrans chargés à la demande (perf, #323) : seul l'accueil est dans le JS initial.
-import { AccordConditions, CreerCompte, DefiArrivee, DefiPartie, DefisEcran, Direct, Game, LearnHome, Lentes, LessonPlayer, PartieDecouverte, PartiePartagee, Placement, Profil, PseudoObligatoire, Puzzles, SeriePratique, ThemeLecons, VeilleFile, apresPremierEcran } from './ecrans';
+import { AccordConditions, CreerCompte, DefiArrivee, DefiPartie, DefisEcran, Direct, Game, JouerAvecMochi, LearnHome, Lentes, LessonPlayer, PartieDecouverte, PartiePartagee, Placement, Profil, PseudoObligatoire, Puzzles, SeriePratique, ThemeLecons, VeilleFile, apresPremierEcran } from './ecrans';
 import type { Theme } from '../content/themesLecons';
 import { DECOUVERTE_KEY, etatDecouverte } from './decouverteEtat';
 import { SeanceRevisions, prechargerRevisions } from './ecrans';
@@ -241,6 +241,8 @@ export function App() {
   const [decouverte, setDecouverte] = useState<false | OrigineDecouverte>(false);
   // #590 : page d'un thème ouverte depuis « Par thème » d'Apprendre ; leçons et série du thème y ramènent.
   const [themeVu, setThemeVu] = useState<Theme | null>(null);
+  // #652 (A13) : détail « Jouer avec Mochi » ouvert depuis le sommaire d'Apprendre ; la découverte et la guidée y ramènent.
+  const [avecMochi, setAvecMochi] = useState(false);
   useEffect(() => {
     if (!(import.meta.env.VITE_E2E || import.meta.env.DEV) || !LECON_ESSAI) return;
     void import('../../content/lessons.essai.js').then(m => {
@@ -551,6 +553,9 @@ export function App() {
   }
 
   /** Ouvre une leçon, si l'essai le permet (leçons 1 à 3 sans compte). Hors d'Apprendre, par-dessus l'écran (#640). */
+  /** #343 : vrai si la leçon de ce rang (0 = leçon 1) demande un compte (carte de la prochaine leçon, page d'un thème). */
+  const compteRequisLecon = (rang: number) => !decider({ quoi: 'lecon', rang }, etat, terminees, COMPTES).ok;
+
   function ouvrirLecon(id: string) {
     const rang = LESSONS.findIndex(l => l.id === id);
     if (!garde({ quoi: 'lecon', rang: rang < 0 ? 0 : rang }, { quoi: 'lecon', id })) return;
@@ -751,7 +756,7 @@ export function App() {
     setIntroRegles(null); // #523
     if (t === 'problemes' && tab === 'problemes') setRacineProblemes(n => n + 1);
     setPoses([]); setDefi(null); setDirect(false); setLente(false); setRepli(null); setEcranCompte(null); setAnnonceGel(null); setRetourSerie(null); setEnPlacement(false); setTab(t); setPlaying(false); setLessonId(null); setSerie3(null); setVueProfil('menu'); setPartagee(null); window.scrollTo({ top: 0 });
-    setSeanceRevisions(false); setThemeVu(null); // #469, #590
+    setSeanceRevisions(false); setThemeVu(null); setAvecMochi(false); // #469, #590, #652
     setDecouverte(false); // #524
   };
   /**
@@ -1074,15 +1079,23 @@ export function App() {
       // #640 : la partie se pose sur la fin de leçon, que sa sortie retrouve.
       jouer={{ nom: premier.nom, lancer: () => lancer('ordi', premier.id) }} />;
   } else if (tab === 'apprendre' && themeVu) {
-    screen = <ThemeLecons theme={themeVu} progress={progress} onOpen={ouvrirLecon} onRetour={() => { setThemeVu(null); window.scrollTo({ top: 0 }); }}
+    screen = <ThemeLecons theme={themeVu} progress={progress} onOpen={ouvrirLecon} onRetour={() => setThemeVu(null)}
+      compteRequis={compteRequisLecon}
       onSerie={s => { if (garde({ quoi: 'probleme' })) { par('apprendre', undefined, true); setSerie3(s); window.scrollTo({ top: 0 }); } }} />;
+  } else if (tab === 'apprendre' && avecMochi) {
+    screen = <JouerAvecMochi onRetour={() => setAvecMochi(false)}
+      decouverte={{ etat: etatDecouverte(readLocal<unknown>(DECOUVERTE_KEY, null)), ouvrir: () => {
+        // #647 : `mode_choisi` la note toujours, comme la partie guidée (contrôle de la décision F1).
+        track(EVENTS.modeChoisi, { mode: 'decouverte', depuis: 'apprendre' satisfies Depuis, principal: false }); ouvrirDecouverte();
+      } }}
+      onGuidee={() => { track(EVENTS.modeChoisi, { mode: 'guidee', depuis: 'apprendre' satisfies Depuis, principal: false }); lancerGuidee(); }} />;
   } else if (tab === 'apprendre') {
+    // #652 (A13) : un sommaire ; chaque entrée ouvre son détail par-dessus (page du thème, Jouer avec Mochi), « ‹ » y ramène
+    // (le sommaire retrouve son défilement et l'entrée touchée : Learn.tsx).
     screen = <LearnHome progress={progress} onOpen={ouvrirLecon} sync={syncState} onRegles={() => ouvrirIntro('complete', 'apprendre')}
-      // #647 : `mode_choisi` la note toujours, comme la partie guidée (contrôle de la décision F1).
-      decouverte={{ etat: etatDecouverte(readLocal<unknown>(DECOUVERTE_KEY, null)), ouvrir: () => { track(EVENTS.modeChoisi, { mode: 'decouverte', depuis: 'apprendre' satisfies Depuis, principal: false }); ouvrirDecouverte(); } }}
-      onTheme={th => { setThemeVu(th); window.scrollTo({ top: 0 }); }}
-      onGuidee={() => { track(EVENTS.modeChoisi, { mode: 'guidee', depuis: 'apprendre' satisfies Depuis, principal: false }); lancerGuidee(); }}
-      compteRequis={rang => !decider({ quoi: 'lecon', rang }, etat, terminees, COMPTES).ok} />;
+      onMochi={() => setAvecMochi(true)}
+      onTheme={setThemeVu}
+      compteRequis={compteRequisLecon} />;
   } else if (tab === 'problemes') {
     activite = activitePb;
     screen = <Puzzles retour={retourPose} db={supabase} userId={compteId} sessionLoading={session === undefined} confirmTouch={settings.confirmTouch} onCompte={ouvrirCompte}

@@ -69,7 +69,7 @@ test('nouveau joueur', async ({ browser, baseURL }) => {
   await nav(b.page, /^Apprendre$/).click();
   await expect(b.page.locator('.cta').first()).toBeVisible();
   await cap(b.page, '04b-apprendre-nouveau');
-  await enHaut(b.page, '[data-chapitre="c1"] .gue > ol > li:nth-child(4)');
+  await enHaut(b.page, '[data-testid="par-theme"]');
   await cap(b.page, '04c-apprendre-nouveau-suite');
   await b.ctx.close();
 });
@@ -86,8 +86,8 @@ test('joueur habitué', async ({ browser, baseURL }) => {
   await nav(page, /^Apprendre$/).click();
   await expect(page.locator('.cta').first()).toBeVisible();
   await cap(page, '04-apprendre-habitue');
-  await enHaut(page, '[data-chapitre="c2"]');
-  await cap(page, '04d-apprendre-chapitre-ouverture');
+  await enHaut(page, '[data-testid="par-theme"]');
+  await cap(page, '04d-apprendre-par-theme');
 
   await nav(page, /^Problèmes$/).click();
   await expect(page.getByTestId('problemes-sommaire')).toBeVisible();

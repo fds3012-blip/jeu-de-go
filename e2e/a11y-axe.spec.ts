@@ -2,7 +2,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { ouvrirTous } from './problemes';
 import { brancher, fauxServeur } from './fauxSupabase';
-import { choisirMode, deplierAvecMochi, jouer, ouvrirLancementOrdi, ouvrirPlus, passerJusquAuScore, plateau, toucherCta } from './plateau';
+import { choisirMode, ouvrirAvecMochi, jouer, ouvrirLancementOrdi, ouvrirPlus, passerJusquAuScore, plateau, toucherCta } from './plateau';
 import { GO_DU_JOUR } from '../src/content/goDuJour.gen';
 import { demarrerParcours, ouvrirRevue, preparerRevue } from './revueFactice';
 import { avancerJusqua, ouvrirDepuisApprendre, surMoment } from './decouverte';
@@ -472,9 +472,9 @@ test('axe : partie de découverte (#524) : Apprendre, consigne, erreur, frontiè
   test.setTimeout(180_000);
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
-  await deplierAvecMochi(page);
+  await ouvrirAvecMochi(page);
   await expect(page.getByTestId('carte-decouverte')).toBeVisible();
-  await verifier(page, 'Apprendre avec la découverte');
+  await verifier(page, 'Apprendre, Jouer avec Mochi');
   await ouvrirDepuisApprendre(page);
   await verifier(page, 'Découverte : consigne');
   await jouer(page, 'A1');
@@ -496,9 +496,8 @@ test('axe : « Par thème » d’Apprendre (#590) et la page d’un thème', asy
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
   await page.getByTestId('par-theme').scrollIntoViewIfNeeded();
-  // #614 : la grille de cartes, dépliée (tous les thèmes).
-  await page.getByRole('button', { name: 'Tous les thèmes' }).click();
-  await verifier(page, 'Apprendre, grille « Par thème »');
+  // #652 : le sommaire, ses entrées et la grille de tous les thèmes (sans pli).
+  await verifier(page, 'Apprendre, sommaire et grille « Par thème »');
   await page.getByTestId('par-theme').getByRole('button', { name: /^Capture,/ }).click();
   await expect(page.getByRole('heading', { level: 2, name: 'Capture' })).toBeVisible();
   await verifier(page, 'Page du thème Capture');

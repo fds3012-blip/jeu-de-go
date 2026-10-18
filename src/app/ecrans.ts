@@ -90,6 +90,7 @@ function ecran<M, K extends keyof M>(importer: () => Promise<M>, nom: K): M[K] e
 
 export const Game = ecran(partie, 'Game');
 export const LearnHome = ecran(lecons, 'LearnHome');
+export const JouerAvecMochi = ecran(lecons, 'JouerAvecMochi');
 export const LessonPlayer = ecran(lecons, 'LessonPlayer');
 export const Puzzles = ecran(problemes, 'Puzzles');
 export const SeriePratique = ecran(serie, 'SeriePratique');

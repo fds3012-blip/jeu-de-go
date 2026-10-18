@@ -70,7 +70,7 @@ async function etape(nom: string, mesures: Mesure[], cfg: Cfg, page: Page, f: ()
 const T = {
   nonMerci: /^(Non merci|No thanks)$/, continuer: /^(Continuer|Continue)$/, terminer: /^(Terminer|Finish)$/,
   apprendre: /^(Apprendre|Learn)$/, problemes: /^(Problèmes|Puzzles)$/, profil: /^(Profil|Profile)$/, jouer: /^(Jouer|Play)$/,
-  commencer: /^(Commencer|Start)$/, terminerLecon: /^(Terminer la leçon|Finish the lesson)$/, retourChemin: /^(Retour au chemin|Back to the path)/,
+  commencer: /^(Commencer|Start)$/, terminerLecon: /^(Terminer la leçon|Finish the lesson)$/, retourChemin: /^(Retour à Apprendre|Back to Learn)/,
   jamais: /^(Jamais joué|Never played)$/, unPeu: /^(Un peu|A little)$/, saisJouer: /^(Je sais jouer|I know how to play)$/,
   saisDeja: /^(Je sais déjà jouer|I already know how to play)$/, jouerMochi: /^(Jouer avec Mochi|Play with Mochi)$/,
   voirIndice: /^(Voir un indice|Show a hint)$/, voirPourquoi: /^(Voir pourquoi|Show me why)$/, voirReponse: /^(Voir la réponse|Show the answer)$/,

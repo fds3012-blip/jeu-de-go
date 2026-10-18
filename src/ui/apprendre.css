@@ -2,92 +2,45 @@
  * Apprendre et Problèmes (issue #40, phase 6 ; direction docs/design/v2/direction.md).
  * Chargée avec ces écrans (#433 : hors de la feuille principale). Une règle qui sert aussi ailleurs va dans
  * apprendre-partage.css, importée par src/main.tsx à la place qu'avait cette feuille.
- * Le chemin de pierres de gué est la seule image forte de l'onglet Apprendre ; le goban du problème du jour, celle de Problèmes.
+ * Apprendre est un sommaire (#652) : la carte de la prochaine leçon porte sa vignette ; le goban du problème du jour est l'image de Problèmes.
  * Un seul élément en relief par écran : le bouton principal.
  */
 
-/* ---------- Chapitre : le titre et une mini-pierre par leçon (épure #602 : ni emblème, ni phrase, ni compte écrit) ---------- */
-.chapitre-chemin + .chapitre-chemin { margin-top: var(--space-8); }
-.chapitre { margin: 2px 0 var(--space-4); }
-.chapitre > * { min-width: 0; overflow-wrap: anywhere; }
-.chapitre h2 { margin: 0; font-size: var(--fs-2xl); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre); line-height: 1.05; text-wrap: balance; }
-.chapitre-compte { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 8px; min-height: 24px; }
-/* Une mini-pierre par leçon : noire posée, cerclée de jade pour la prochaine, vide pour les autres. */
-/* #547 : huit leçons par chapitre ou plus : les mini-pierres passent à la ligne au lieu de déborder (zoom 200 %). */
-.chapitre-pierres { display: inline-flex; flex-wrap: wrap; gap: 5px; max-width: 100%; }
-.chapitre-pierres i { width: 10px; height: 10px; border-radius: 50%; box-sizing: border-box; border: 1.5px solid color-mix(in srgb, var(--text) 32%, transparent); }
-.chapitre-pierres .faite { border: 0; background: var(--matiere-noire); box-shadow: 0 0 0 1px var(--pierre-n-bord); }
-.chapitre-pierres .encours { border: 2px solid var(--accent-trait); }
-/* Chapitre terminé : le tampon d'or, la couleur des récompenses. */
+/* ---------- #652 : Apprendre est un sommaire (A13) ----------
+   La carte de la prochaine leçon (seul relief), trois entrées (src/ui/Sommaire.tsx), puis la grille des thèmes. */
+/* Chapitre terminé (#200) : le tampon d'or, la couleur des récompenses, en tête du sommaire pour la visite qui le fête. */
+.chapitre-annonce { margin: 0 0 var(--space-3); }
 .chapitre-fete { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px 3px 7px; border-radius: var(--radius-pill);
   background: var(--recompense); color: var(--on-accent); font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: var(--fs-legende); letter-spacing: 0; }
 .chapitre-fete svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 3.2; stroke-linecap: round; stroke-linejoin: round; }
+/* Les confettis de la fête de chapitre : au-dessus de tout, sans prendre de toucher. */
+.chapitre-annonce .confettis { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 40; pointer-events: none; }
 
-/* ---------- Le chemin : des pierres sur une courbe à l'encre, or là où tu es passé ---------- */
-/*
- * Chaque leçon est une pierre. Faite : ardoise pleine, cochée en jade. Prochaine : la carte de Mochi, avec le seul
- * bouton en relief de l'écran. À venir : une pierre grise avec un petit cadenas. La courbe relie les pierres
- * comme un sentier ; elle est dorée jusqu'à la prochaine leçon.
- */
-.gue { --pierre: 56px; position: relative; }
-.gue ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 26px; }
-.gue-trace { position: absolute; left: 50%; top: 0; overflow: visible; pointer-events: none; }
-.gue-trace path { fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-width: 4px; }
-.gue-route { stroke: color-mix(in srgb, var(--text) 20%, transparent); }
-.gue-parcouru { stroke: var(--or); }
-
-.pas { position: relative; }
-.pas-encours { margin: 4px 0; }
-/* Une rangée : la pierre à sa colonne (--x depuis le milieu), le texte en face, du côté libre. */
+/* La prochaine leçon : sa vignette et son texte (le bouton qui ouvre la leçon), puis le seul bouton en relief. */
 .pas-bouton { display: flex; align-items: center; gap: 12px; width: 100%; background: none; border: 0; padding: 0; color: inherit;
-  text-align: left; border-radius: var(--radius); min-height: var(--pierre); }
-.a-gauche .pas-bouton { padding-left: calc(50% + var(--x) - var(--pierre) / 2); }
-.a-droite .pas-bouton { flex-direction: row-reverse; text-align: right; padding-right: calc(50% - var(--x) - var(--pierre) / 2); }
+  text-align: left; border-radius: var(--radius); }
 .pas-texte { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; }
-.a-droite .pas-texte { flex-direction: row-reverse; }
 /* #121 : au zoom 200 %, les mots longs passent à la ligne au lieu de sortir de l’écran. */
-/* break-word et non anywhere : la colonne ne rétrécit pas sous la largeur d'un mot (« Technique / s » à 320 px). */
 .pas-texte > * { min-width: 0; overflow-wrap: break-word; }
 .pas-texte b { display: block; font-family: var(--font-titre); font-weight: var(--fw-bold); letter-spacing: -0.01em; font-size: var(--fs-l); line-height: 1.2; text-wrap: balance; }
 .pas-texte small { display: block; text-wrap: balance; color: var(--muted); font-size: var(--fs-s); line-height: 1.3; margin-top: 2px; }
-.pas-avenir .pas-texte b { color: var(--muted); }
 
 /* Vignette (.vignette, .vignette > svg) : apprendre-partage.css (#433), aussi lue par le carrousel de l'accueil. */
 .vignette-pale { box-shadow: none; }
 .vignette-pale > svg { opacity: .5; filter: saturate(.25); }
 
-/* Les pierres. Faite : l'ardoise du goban (Board.tsx). À venir : un galet gris, pas encore joué. */
-.pierre-gue { position: relative; flex: none; width: var(--pierre); height: var(--pierre); border-radius: 50%; }
-.pas-faite .pierre-gue {
-  background: radial-gradient(circle at 34% 26%, rgba(255, 255, 255, .34), rgba(255, 255, 255, 0) 24%),
-    radial-gradient(72% 72% at 36% 30%, #5b5f5d, #2e3130 18%, #151716 55%, #050606);
-  box-shadow: 0 0 0 1px var(--pierre-n-bord), 0 7px 10px -5px rgba(0, 0, 0, .6), 0 1px 2px rgba(0, 0, 0, .35); }
-.pas-avenir .pierre-gue {
-  background: radial-gradient(circle at 34% 26%, rgba(255, 255, 255, .18), rgba(255, 255, 255, 0) 26%),
-    radial-gradient(72% 72% at 36% 30%, color-mix(in srgb, var(--surface-2) 70%, var(--text)), var(--surface-2) 55%, color-mix(in srgb, var(--surface-2) 82%, #000));
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 12%, transparent); }
-/* Pastille de la pierre : coche jade (faite) ou silhouette « compte » (#343), cerclée du fond pour se détacher. */
-.pierre-coche, .pierre-compte { position: absolute; right: 0; bottom: 0; display: grid; place-items: center; border-radius: 50%; box-shadow: 0 0 0 2.5px var(--bg); }
-.pierre-coche { width: 22px; height: 22px; background: var(--jade); }
-.pierre-coche svg { width: 12px; height: 12px; fill: none; stroke: var(--encre-jade); stroke-width: 3.2; stroke-linecap: round; stroke-linejoin: round; }
-.pierre-compte { width: 22px; height: 22px; background: var(--text); color: var(--bg); }
-.pierre-compte svg, .pas-compte svg { fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
-.pierre-compte svg { width: 13px; height: 13px; }
-/* Mention sous le titre : le mot dit le verrou, l'icône seule ne suffit pas. */
+/* Mention « Avec un compte » (#343, src/ui/MentionCompte.tsx) : le mot dit le verrou, l'icône seule ne suffit pas. */
 .pas-compte { display: flex; width: fit-content; align-items: center; gap: 4px; margin-top: 4px; padding: 1px 8px 1px 5px; border-radius: var(--radius-pill);
   background: var(--surface-2); color: var(--text); font-size: var(--fs-legende); font-weight: var(--fw-bold); line-height: 1.5; }
-.pas-compte svg { width: 13px; height: 13px; flex: none; }
-.a-droite .pas-compte { margin-left: auto; }
+.pas-compte svg { width: 13px; height: 13px; flex: none; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
 /* #454 : taille d'un grand plateau (« 19 × 19 ») sous le titre ; texte plein, pas de couleur seule. */
 .pas-taille { display: block; width: fit-content; margin-top: 4px; padding: 0 8px; border-radius: var(--radius-pill); border: 1px solid var(--line);
   color: var(--text); font-size: var(--fs-legende); font-weight: var(--fw-bold); line-height: 1.5; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.a-droite .pas-taille { margin-left: auto; }
 
-/* ---------- La prochaine leçon : Mochi la présente, une carte, le seul bouton en relief ---------- */
 .prochaine .bubble { margin: 0 0 var(--space-2); }
 .prochaine-carte { position: relative; padding: var(--space-4); border-radius: var(--radius); background: var(--surface);
   box-shadow: 0 14px 30px -20px rgba(0, 0, 0, .65); }
-.prochaine-carte .pas-bouton { padding: 0; gap: var(--space-3); align-items: flex-start; min-height: 0; }
+.prochaine-carte .pas-bouton { gap: var(--space-3); align-items: flex-start; }
 .prochaine-carte .pas-texte { align-items: flex-start; }
 .prochaine-carte .pas-texte b { font-size: var(--fs-xl); letter-spacing: var(--tracking-titre); }
 .prochaine-carte .pas-texte small { font-size: var(--fs-corps-s); margin-top: 3px; }
@@ -100,53 +53,21 @@
   .prochaine-carte { display: grid; grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem); align-items: center; gap: var(--space-6); }
   .apprendre .cta-chemin { margin: 0 0 var(--relief); }
 }
-.chemin-fini { margin: var(--space-6) 0; }
-
-/* Écrans étroits (320 à 389 px) : écarts et titres un peu plus serrés, pour qu'un mot ne se coupe jamais. */
-@media (max-width: 389px) {
-  .gue .pas-bouton { gap: 8px; }
-  .gue .pas-texte { gap: 8px; }
-  .gue .pas:not(.pas-encours) .pas-texte b { font-size: var(--fs-m); }
-}
-/* #121 : sous 320 px (zoom 200 %), le texte passe sous la pierre, sur toute la largeur de la rangée. */
+/* #121 : sous 320 px (zoom 200 %), la carte se resserre. */
 @media (max-width: 319px) {
-  .pas-bouton, .a-droite .pas-bouton { flex-direction: column; align-items: flex-start; gap: 6px; }
-  .a-droite .pas-bouton { align-items: flex-end; }
-  .pas-texte { max-width: 100%; padding: 2px 4px; border-radius: var(--radius-xs); background: var(--bg); }
-  .pas-texte > * { overflow-wrap: break-word; hyphens: auto; }
-  .pas-texte b { font-size: var(--fs-m); }
-  .pas-texte small { font-size: var(--fs-legende); }
-  .prochaine-carte .pas-bouton { flex-direction: row; }
   .prochaine-carte { padding: var(--space-3); }
-  .prochaine-carte .pas-texte { background: none; padding: 0; }
+  .pas-texte b { font-size: var(--fs-m); }
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  /* Appui : la pierre s'enfonce un peu (transition, donc interruptible), le bouton de toute sa tranche. */
-  .pierre-gue, .vignette { transition: transform 160ms var(--ease); }
-  .pas-bouton:not(:disabled):active .pierre-gue, .pas-bouton:active .vignette { transform: scale(.96); }
+  /* Appui : la vignette s'enfonce un peu (transition, donc interruptible), le bouton de toute sa tranche. */
+  .vignette { transition: transform 160ms var(--ease); }
+  .pas-bouton:active .vignette { transform: scale(.96); }
   .apprendre .cta-chemin:active { transform: translateY(var(--relief)); box-shadow: none; }
-  /* Fête de chapitre : le tampon d'or se pose d'un coup, les mini-pierres suivent ; les confettis viennent de Confettis.tsx. */
+  /* Fête de chapitre : le tampon d'or se pose d'un coup ; les confettis viennent de Confettis.tsx. */
   [data-fete] .chapitre-fete { animation: tampon-chapitre 480ms 120ms cubic-bezier(.34, 1.56, .64, 1) both; }
-  [data-fete] .chapitre-pierres .faite { animation: pierre-saute 360ms cubic-bezier(.2, .8, .3, 1.2) both; }
-  [data-fete] .chapitre-pierres i:nth-child(2) { animation-delay: 40ms; } [data-fete] .chapitre-pierres i:nth-child(3) { animation-delay: 80ms; }
-  [data-fete] .chapitre-pierres i:nth-child(4) { animation-delay: 120ms; } [data-fete] .chapitre-pierres i:nth-child(5) { animation-delay: 160ms; }
-  [data-fete] .chapitre-pierres i:nth-child(6) { animation-delay: 200ms; } [data-fete] .chapitre-pierres i:nth-child(7) { animation-delay: 240ms; }
 }
 @keyframes tampon-chapitre { from { transform: scale(1.35) rotate(-6deg); opacity: 0; } to { transform: none; opacity: 1; } }
-@keyframes pierre-saute { 50% { transform: translateY(-4px); } }
-/* Les confettis de la fête de chapitre : au-dessus de tout, sans prendre de toucher. */
-.chapitre-chemin .confettis { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 40; pointer-events: none; }
-
-/* ---------- Chapitres à venir : discrets, sans promesse de date ---------- */
-.a-venir { margin-top: var(--space-8); color: var(--muted); }
-.a-venir h2 { margin: 0 0 4px; font-size: var(--fs-l); color: var(--muted); }
-.a-venir p { margin: 0 0 10px; font-size: var(--fs-s); }
-.a-venir ul { position: relative; list-style: none; margin: 0; padding: 0; }
-.a-venir ul::before { content: ""; position: absolute; left: 10px; top: 14px; bottom: 14px; border-left: 2px dotted color-mix(in srgb, var(--text) 20%, transparent); }
-.a-venir li { position: relative; display: flex; align-items: center; gap: 14px; min-height: 36px; font-size: var(--fs-corps-s); }
-.a-venir li::before { content: ""; flex: none; width: 22px; height: 22px; border-radius: 50%; background: var(--bg);
-  border: 1.5px dashed color-mix(in srgb, var(--text) 32%, transparent); }
 
 /* ---------- État de synchronisation : une ligne discrète, un point de couleur ---------- */
 .synchro { display: flex; gap: 8px; align-items: baseline; margin: var(--space-6) 0 0; color: var(--muted); font-size: var(--fs-legende); line-height: 1.4; }
@@ -475,14 +396,8 @@
 .placement .lecteur-mochi .bubble { margin-bottom: 8px; }
 .placement .lecteur-mochi .bubble p { font-size: var(--fs-corps-s); line-height: 1.4; padding: 8px 12px; }
 
-/* ---------- #602 : liens discrets à la fin d'un chapitre (jouer avec Mochi, revoir les règles, ouvertures) ----------
-   Sous le chemin, sans fond ni relief : la seule action en relief reste la prochaine leçon. 44 px de haut chacun. */
-.chapitre-suite { position: relative; display: flex; flex-direction: column; align-items: flex-start; margin: var(--space-4) 0 0;
-  padding-top: var(--space-2); background: var(--bg); } /* le fond couvre la fin de la route du chemin */
-.lien-chapitre { display: inline-flex; align-items: center; gap: 6px; margin-left: -12px; text-align: left; }
-.lien-deplier { flex: none; fill: none; stroke: var(--muted); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
-.lien-chapitre[aria-expanded="true"] .lien-deplier { transform: rotate(180deg); }
-.avec-mochi { align-self: stretch; display: flex; flex-direction: column; gap: var(--space-2); margin: var(--space-1) 0 var(--space-3); }
+/* ---------- #652 : détail « Jouer avec Mochi » (A13) : la partie de découverte et la partie guidée ---------- */
+.avec-mochi { display: flex; flex-direction: column; gap: var(--space-2); }
 /* #524, #589 : la partie de découverte et la partie guidée, une ligne chacune : le nom, une phrase, le verbe. */
 .carte-decouverte { display: flex; align-items: center; gap: var(--space-3); width: 100%; min-height: var(--cible-min); margin: 0;
   padding: var(--space-3); border: 0; border-radius: var(--radius); background: var(--surface); color: var(--text); text-align: left; cursor: pointer; }
@@ -496,13 +411,7 @@
 @media (prefers-reduced-motion: no-preference) {
   .carte-decouverte { transition: transform var(--duree-rapide) var(--ease); }
   .carte-decouverte:active { transform: scale(.98); }
-  .lien-deplier { transition: transform var(--duree-rapide) var(--ease); }
 }
-
-/* #590, #614 : « Par thème », sous la carte de la prochaine leçon : la grille de Problèmes (src/ui/themes.css), à plat
-   (le seul relief reste « Reprendre »). Le fond couvre la route du chemin, qui passe dessous. */
-.par-theme { position: relative; margin-top: var(--space-5); padding: var(--space-1) 0; background: var(--bg);
-  box-shadow: 0 0 0 var(--space-2) var(--bg); }
 
 /* #590 : page d'un thème (src/app/ThemeLecons.tsx). La place sous la liste laisse voir la dernière leçon au-dessus
    du bouton « S'entraîner », posé comme les autres actions principales au-dessus de la barre du bas. */

@@ -949,7 +949,7 @@ export const frEcrans = {
   'lecon.jouerContre': 'Joue contre {nom}',
   'lecon.suivante': 'Leçon suivante',
   'lecon.suivanteTitre': 'Leçon suivante : {titre}',
-  'lecon.retourChemin': 'Retour au chemin',
+  'lecon.retourChemin': 'Retour à Apprendre',
   'serie.entrainement': 'Entraînement',
   'serie.progression': "Progression de l'entraînement",
 
@@ -964,10 +964,6 @@ export const frEcrans = {
   'apprendre.pas': 'Leçon {rang} : {titre}{etat}',
   'apprendre.pas.faite': ', terminée',
   'apprendre.pas.encours': ', prochaine étape',
-  'apprendre.bientot': 'Bientôt',
-  'apprendre.bientot.texte': 'Un autre chapitre est en préparation, et de nouvelles leçons jusqu’au premier dan.',
-  'apprendre.avenir.3': 'Formes et tesuji, les coups astucieux',
-  'apprendre.avenir.4': 'Ouverture en 19\u00A0×\u00A019',
   'apprendre.revoir': 'Revoir',
   'apprendre.revoirTitre': 'Revoir : {titre}',
   // « Continuer » : seulement l'étape suivante dans une leçon (docs/design/vocabulaire.md).
@@ -980,8 +976,7 @@ export const frEcrans = {
   'apprendre.fin.chapitre': 'Chapitre terminé',
   // Chemin v3 : chapitres illustrés, carte de la prochaine leçon, Mochi, fête de chapitre.
   'apprendre.chapitre.avancee': '{n} sur {total}',
-  'apprendre.chapitre.aria': { one: '{n} leçon faite sur {total}', other: '{n} leçons faites sur {total}' },
-  'apprendre.compte.suite': 'La suite s’ouvre avec un compte',
+  'apprendre.aussi': 'Pour apprendre autrement',
   'apprendre.avecMochi': 'Jouer avec Mochi',
   'apprendre.duree': 'Environ {n} min',
   'apprendre.decouverte': 'Partie de découverte',
@@ -999,10 +994,7 @@ export const frEcrans = {
   'apprendre.themes.titre': 'Par thème',
   // #614 : la barre de chaque carte de thème, et le pli des thèmes après les six premiers.
   'apprendre.themes.barre': { one: '{n} leçon faite sur {total}', other: '{n} leçons faites sur {total}' },
-  'apprendre.themes.tous': 'Tous les thèmes',
   'apprendre.theme.lecons': 'Les leçons',
-  'apprendre.theme.faite': 'Faite',
-  'apprendre.theme.afaire': 'À faire',
   'apprendre.theme.entrainer': 'S’entraîner sur ce thème',
   'apprendre.theme.retour': 'Retour au thème',
   'apprendre.theme.horsLigne': 'Les problèmes ne sont pas encore sur ton téléphone. Reconnecte-toi, puis réessaie.',

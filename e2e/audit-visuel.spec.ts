@@ -62,7 +62,7 @@ const T = {
   dejaCompte: /^(J’ai déjà un compte|I already have an account)$/, creerCompte: /^(Créer un compte|Create an account)$/,
   monPseudo: /^(C’est mon pseudo|That’s my username)$/, pseudo: /^(Pseudo|Username)$/, email: /^(Ton adresse e-mail|Your email address)$/,
   partieDu: /^(Partie du|Game of)/, quitterCourse: /^(Quitter la course|Leave the rush)$/, suivant: /^(Problème suivant|Next puzzle)$/,
-  retourChemin: /^(Retour au chemin|Back to the path)$/,
+  retourChemin: /^(Retour à Apprendre|Back to Learn)$/,
 };
 
 const nav = (page: Page, nom: RegExp) => page.getByRole('navigation').getByRole('button', { name: nom });

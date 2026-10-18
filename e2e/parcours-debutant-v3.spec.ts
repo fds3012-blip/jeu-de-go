@@ -33,7 +33,7 @@ const T = {
   passer: /^(Passer|Pass)$/, passeGroupe: /^(Passer maintenant\s?\?|Pass now\?)$/, valider: /^(Valider le score|Confirm score)$/,
   resultat: /^(Voir le résultat|See the result)$/, retourBilan: /^(Retour au bilan|Back to results)$/, revoir: /^(Revoir la partie|Review the game)$/, accueil: /^(Accueil|Home)$/,
   commencer: /^(Commencer|Start)$/, continuer: /^(Continuer|Continue)$/, terminer: /^(Terminer la leçon|Finish the lesson)$/,
-  retourChemin: /^(Retour au chemin|Back to the path)$/, plus: /^(Plus|More)$/, abandonner: /^(Abandonner|Resign)$/, confirmer: /^(Confirmer|Confirm)/,
+  retourChemin: /^(Retour à Apprendre|Back to Learn)$/, plus: /^(Plus|More)$/, abandonner: /^(Abandonner|Resign)$/, confirmer: /^(Confirmer|Confirm)/,
   email: /^(Ton adresse e-mail|Your email address)$/, age: /^(J’ai 15\s+ans ou plus|I’m 15 or older)/, code: /^(Code à 6 chiffres|6-digit code)$/,
   recevoir: /^(Recevoir mon code|Get my code)$/, pseudo: /^(Pseudo|Username)$/, monPseudo: /^(C’est mon pseudo|That’s my username)$/,
   aide: /^(Aide : règles et mots du go|Help: rules and Go words)$/, feuilleAide: /^(Aide|Help)$/, mots: /^(Mots|Words)$/,
