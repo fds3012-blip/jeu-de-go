@@ -93,11 +93,12 @@ for (const [largeur, hauteur, theme] of [[390, 844, 'light'], [320, 568, 'dark']
     }
 
     // Fin de la série : retour au chemin (un niveau franchi a d'abord son écran à lui).
-    await page.locator('.verdict').getByRole('button', { name: 'Retour au chemin' }).click();
+    await page.locator('.verdict').getByRole('button', { name: 'Retour à Apprendre' }).click();
     const niveau = page.getByTestId('niveau-atteint');
-    const chemin = page.getByRole('button', { name: `Leçon ${numero('l14')} : Le seki, terminée` });
+    // #652 : le sommaire d'Apprendre (la carte de la prochaine leçon).
+    const chemin = page.getByTestId('prochaine-lecon');
     await expect(niveau.or(chemin).first()).toBeAttached();
-    if (await niveau.count()) await niveau.getByRole('button', { name: 'Retour au chemin' }).click();
+    if (await niveau.count()) await niveau.getByRole('button', { name: 'Retour à Apprendre' }).click();
     await expect(chemin).toBeAttached();
     const reussis = await page.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('go.problemes.v1') ?? '{}')));
     expect(reussis.sort()).toEqual(['w01', 'w02', 'w03']);

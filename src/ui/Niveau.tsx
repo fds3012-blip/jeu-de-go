@@ -25,7 +25,7 @@ export function FeteNiveau({ celebrer, ecran }: { celebrer: boolean; ecran?: str
   // partie) et vient après la pastille d'XP, jamais en même temps.
   const file = useFile();
   const niveau = file.actif?.genre === 'niveau' ? file.actif.niveau : null;
-  // Changement d'écran pendant la fête (« Retour au chemin », autre onglet) : la carte se ferme, elle ne couvre pas
+  // Changement d'écran pendant la fête (« Retour à Apprendre », autre onglet) : la carte se ferme, elle ne couvre pas
   // le titre du nouvel écran (recette du 28/09, R6). Le premier rendu ne compte pas.
   const ecranVu = useRef(ecran);
   useEffect(() => {

@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { leconDuTheme } from './apprendre';
 import { jouer } from './plateau';
 import { LESSONS_FR, type LessonStep } from '../src/content/lessons';
 import { ACQUIS } from '../src/content/acquis';
@@ -36,12 +37,8 @@ for (const [largeur, hauteur, theme] of [[390, 844, 'light'], [320, 568, 'dark']
     await page.goto('/');
     await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
 
-    // Le chemin : la leçon 17 finit « Vie et mort », le chapitre « Formes et tesuji » a ses trois leçons.
-    await expect(page.getByRole('heading', { name: 'Formes et tesuji' })).toBeAttached();
-    await expect(page.getByRole('button', { name: `Leçon ${numero('l17')} : Les formes d’yeux, terminée` })).toBeAttached();
-    await expect(page.getByRole('button', { name: `Leçon ${numero('l18')} : Les bonnes formes, terminée` })).toBeAttached();
+    // #652 : le sommaire d'Apprendre ; la carte de la prochaine leçon ouvre la leçon.
     await expect(page.getByRole('button', { name: `Leçon ${numero('l20')} : Relier et mourir, prochaine étape` })).toBeAttached();
-    await expect(page.locator('.a-venir li')).toHaveText(['Ouverture en 19 × 19']);
     await sansDebordement(page, 'chemin');
     await page.locator('.cta-chemin').scrollIntoViewIfNeeded();
     await photo('0-chemin');

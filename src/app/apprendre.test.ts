@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CHAPITRES, LESSONS } from '../content/lessons';
 import { ACQUIS, acquis } from '../content/acquis';
-import { CHAPITRES_A_VENIR, FETES_KEY, boutonChemin, chapitresAFeter, colonne, courbe, dureeMinutes, etapes, finDeLecon, titreCourt, type Progression } from './apprendre';
+import { FETES_KEY, boutonChemin, chapitresAFeter, dureeMinutes, etapes, finDeLecon, nomLecon, titreCourt, type Progression } from './apprendre';
 
 const plein = (id: string) => LESSONS.find(l => l.id === id)!.steps.length;
 
@@ -54,20 +54,12 @@ describe('boutonChemin', () => {
   });
 });
 
-describe('courbe : le sentier qui serpente entre les pierres', () => {
-  it('les colonnes alternent de gauche à droite, jamais deux fois du même côté', () => {
-    for (let i = 1; i < 12; i++) expect(Math.sign(colonne(i))).toBe(-Math.sign(colonne(i - 1)));
-    for (let i = 0; i < 12; i++) { expect(Math.abs(colonne(i))).toBeGreaterThanOrEqual(0.6); expect(Math.abs(colonne(i))).toBeLessThanOrEqual(1); }
-  });
-  it('passe par chaque ancre avec un arc en S (tangentes verticales), vide avec moins de deux points', () => {
-    expect(courbe([])).toBe('');
-    expect(courbe([{ x: 0, y: 10 }])).toBe('');
-    const d = courbe([{ x: -92, y: 28 }, { x: 92, y: 120 }, { x: 0, y: 260 }]);
-    expect(d).toBe('M-92 28C-92 74 92 74 92 120C92 190 0 190 0 260');
-    expect(d.match(/C/g)).toHaveLength(2);
-  });
-  it('deux ancres alignées sont reliées en droite ligne (haut et bas de la carte)', () => {
-    expect(courbe([{ x: 0, y: 0 }, { x: 0, y: 200 }])).toBe('M0 0L0 200');
+describe('nomLecon : nom accessible d’une leçon (carte, page d’un thème)', () => {
+  it('rang, titre, état, puis le verrou du compte', () => {
+    const [l1, , , l4] = etapes(LESSONS, { l1: 99 });
+    expect(nomLecon(l1)).toBe('Leçon 1 : Libertés et capture, terminée');
+    expect(nomLecon(etapes(LESSONS, {})[0])).toBe('Leçon 1 : Libertés et capture, prochaine étape');
+    expect(nomLecon(l4, true)).toBe('Leçon 4 : Le ko, avec un compte');
   });
 });
 
@@ -128,10 +120,5 @@ describe('textes', () => {
       expect(acquis(l.id).length).toBeLessThan(80);
     }
     expect(acquis('inconnue')).toBeTruthy();
-  });
-  it('un chapitre annoncé (« Formes et tesuji » est ouvert depuis le 05/10), sans majuscules d’étiquette ni « A · B », et aucun déjà ouvert sur le chemin (#16)', () => {
-    expect(CHAPITRES_A_VENIR).toHaveLength(1);
-    for (const c of CHAPITRES_A_VENIR) expect(CHAPITRES.map(x => x.titre)).not.toContain(c);
-    for (const c of CHAPITRES_A_VENIR) { expect(c).not.toMatch(/·/); expect(c).not.toBe(c.toUpperCase()); }
   });
 });

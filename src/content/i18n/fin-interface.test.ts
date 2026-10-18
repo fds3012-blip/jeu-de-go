@@ -2,7 +2,7 @@
 // Le français reste strictement identique aux textes d'origine (recopiés ici), l'anglais suit le glossaire.
 import { LESSONS } from '../lessons';
 import { ACQUIS, acquis } from '../acquis';
-import { CHAPITRES_A_VENIR, boutonChemin, chapitresAVenir, finDeLecon } from '../../app/apprendre';
+import { boutonChemin, finDeLecon } from '../../app/apprendre';
 import { messageGel } from '../../app/gel';
 import { messageContinue } from '../../app/rythme';
 import { raisonFrontiere, raisonPoints } from '../../engine/simple';
@@ -21,10 +21,8 @@ const ORIGINAUX: [Cle, string, boolean?][] = [
   ['apprendre.synchro.sync', 'Synchronisation de ta progression…'],
   ['apprendre.synchro.ok', 'Progression enregistrée sur ton compte.'],
   ['apprendre.synchro.error', 'Hors ligne : ta progression est gardée ici et partira plus tard.'],
-  ['apprendre.bientot', 'Bientôt'],
-  ['apprendre.bientot.texte', 'Un autre chapitre est en préparation, et de nouvelles leçons jusqu’au premier dan.'],
   ['lecon.terminer', 'Terminer la leçon'],
-  ['lecon.retourChemin', 'Retour au chemin'],
+  ['lecon.retourChemin', 'Retour à Apprendre'],
   ['lecon.taReponse', 'Ta réponse'],
   ['lecon.poseVert', 'Pose ta pierre sur le point vert.'],
   ['lecteur.progression', 'Progression de la leçon'],
@@ -117,7 +115,6 @@ describe('français identique aux textes d’origine', () => {
   });
 
   it('chemin des leçons, bouton principal et fin de leçon', () => {
-    expect(chapitresAVenir()).toEqual(CHAPITRES_A_VENIR);
     expect(boutonChemin(LESSONS, {})).toEqual({ texte: 'Commencer', verbe: 'Commencer', id: 'l1' });
     expect(boutonChemin(LESSONS, { l1: 1 })!.texte).toBe(`Reprendre la leçon : ${'Libertés et capture'}`);
     const tout = Object.fromEntries(LESSONS.map(l => [l.id, plein(l.id)]));
@@ -181,7 +178,6 @@ describe('en anglais', () => {
   });
 
   it('chemin, lecteur et fin de leçon', () => {
-    expect(chapitresAVenir()).toEqual(['Opening on 19\u00A0×\u00A019']);
     expect(boutonChemin(LESSONS, {})).toEqual({ texte: 'Start', verbe: 'Start', id: 'l1' });
     expect(boutonChemin(LESSONS, { l1: 1 })).toMatchObject({ verbe: 'Resume', texte: 'Resume the lesson: Libertés et capture' });
     expect(finDeLecon(LESSONS, 'l1').titre).toBe('Lesson complete');

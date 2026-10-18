@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { attendreReponse, coupsJoues, deplierAvecMochi, jouer, lancerGuidee, passerJusquAuScore, plateau } from './plateau';
+import { attendreReponse, coupsJoues, ouvrirAvecMochi, jouer, lancerGuidee, passerJusquAuScore, plateau } from './plateau';
 
 // Issue #79 : partie guidée contre Mochi, hors de l'échelle des adversaires. Mochi règle sa force tous les 10 coups
 // (logique testée dans src/engine/guidee.test.ts). Ici : on lance la partie, on dépasse le 10e coup (premier réglage),
@@ -59,7 +59,7 @@ test('partie guidée : le portrait est celui de Mochi, sans tampon « battue » 
 });
 
 // #589 : la partie guidée a quitté l'accueil Jouer pour Apprendre, sous la partie de découverte, dans le même style.
-// #602 : toutes deux sous « Jouer avec Mochi », à la fin du chapitre « Les bases ».
+// #652 : toutes deux dans le détail « Jouer avec Mochi » du sommaire d’Apprendre.
 test('partie guidée : dans Apprendre sous la partie de découverte, plus sur l’accueil ; « ‹ » ramène à Apprendre', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
@@ -72,8 +72,8 @@ test('partie guidée : dans Apprendre sous la partie de découverte, plus sur l�
     await page.keyboard.press('Escape');
   }
   await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
-  // #602 : les deux parties avec Mochi sont rangées sous « Jouer avec Mochi », à la fin du chapitre « Les bases ».
-  await deplierAvecMochi(page);
+  // #652 : les deux parties avec Mochi sont le détail de l'entrée « Jouer avec Mochi » du sommaire d'Apprendre.
+  await ouvrirAvecMochi(page);
   const decouverte = page.getByTestId('carte-decouverte'), guidee = page.getByTestId('carte-guidee');
   await expect(guidee).toHaveAccessibleName(/^Partie guidée contre Mochi : il règle sa force/);
   const [d, g] = [(await decouverte.boundingBox())!, (await guidee.boundingBox())!];
@@ -81,8 +81,8 @@ test('partie guidée : dans Apprendre sous la partie de découverte, plus sur l�
   expect(g.y - (d.y + d.height)).toBeLessThan(24);
   expect(g.height).toBeGreaterThanOrEqual(44);
   expect(Math.round(g.width)).toBe(Math.round(d.width));
-  // Une seule action en relief : « Reprendre » ou « Commencer » de la carte de leçon.
-  await expect(page.locator('.apprendre .cta')).toHaveCount(1);
+  // Deux choix de même poids, à plat : aucun relief dans ce détail (E1 : un au plus).
+  await expect(page.locator('.apprendre .cta')).toHaveCount(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   await guidee.click();
   await expect(plateau(page)).toBeVisible();

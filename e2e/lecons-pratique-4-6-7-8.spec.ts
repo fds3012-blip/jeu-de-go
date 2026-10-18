@@ -104,11 +104,12 @@ for (const [largeur, hauteur, theme] of [[390, 844, 'light'], [320, 568, 'dark']
       await resoudre(page, id, faux[id], 9, photo, rang === 2 ? ['erreur'] : []);
       if (rang < 3) await page.getByRole('button', { name: 'Problème suivant' }).click();
     }
-    await page.locator('.verdict').getByRole('button', { name: 'Retour au chemin' }).click();
+    await page.locator('.verdict').getByRole('button', { name: 'Retour à Apprendre' }).click();
     const niveau = page.getByTestId('niveau-atteint');
-    const chemin = page.getByRole('button', { name: /^Leçon 7 : Compter les points, terminée/ });
+    // #652 : de retour sur le sommaire d'Apprendre (la carte de la prochaine leçon).
+    const chemin = page.getByTestId('prochaine-lecon');
     await expect(niveau.or(chemin).first()).toBeAttached();
-    if (await niveau.count()) await niveau.getByRole('button', { name: 'Retour au chemin' }).click();
+    if (await niveau.count()) await niveau.getByRole('button', { name: 'Retour à Apprendre' }).click();
     await expect(chemin).toBeAttached();
     const reussis = await page.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('go.problemes.v1') ?? '{}')));
     expect(reussis.sort()).toEqual(['w04', 'w05', 'w07']);
@@ -142,7 +143,7 @@ for (const [largeur, hauteur, theme] of [[390, 844, 'light'], [320, 568, 'dark']
       if (rang < 3) await page.getByRole('button', { name: 'Problème suivant' }).click();
     }
     // Le ko : Blanc ne peut pas reprendre en E5 tout de suite (le lecteur ne propose plus de coup, la série est finie).
-    await expect(page.locator('.verdict').getByRole('button', { name: 'Retour au chemin' })).toBeVisible();
+    await expect(page.locator('.verdict').getByRole('button', { name: 'Retour à Apprendre' })).toBeVisible();
   });
 
   test(`leçon 8 finie, puis 3 problèmes d’ouverture en 13 × 13, à ${largeur} px (${theme === 'light' ? 'clair' : 'sombre'})`, async ({ page }) => {

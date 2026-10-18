@@ -51,7 +51,7 @@ interface PlayerProps {
   celebrer?: boolean;
   onProgress: (steps: number) => void;
   onExit: () => void;
-  /** #640 : libellé de la sortie quand la leçon est posée hors d'Apprendre (« Retour ») ; sinon « Retour au chemin ». */
+  /** #640 : libellé de la sortie quand la leçon est posée hors d'Apprendre (« Retour ») ; sinon « Retour à Apprendre ». */
   retour?: string;
   /** Ouvre la leçon suivante ; absent pour la dernière. */
   onNext?: () => void;

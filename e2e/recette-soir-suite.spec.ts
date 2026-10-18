@@ -53,11 +53,11 @@ for (const [largeur, hauteur] of TAILLES) {
     await expect(suivante).toHaveClass(/\blien\b/);
     expect((await suivante.boundingBox())!.height).toBeGreaterThanOrEqual(44);
     // Tout tient au-dessus de la barre, sans défiler.
-    const bas = (await page.getByRole('button', { name: 'Retour au chemin' }).boundingBox())!;
+    const bas = (await page.getByRole('button', { name: 'Retour à Apprendre' }).boundingBox())!;
     expect(bas.y + bas.height).toBeLessThanOrEqual(await hautNav(page));
   });
 
-  test(`lot X, fin de chapitre (${largeur}) : « Retour au chemin » au-dessus de la barre`, async ({ page }) => {
+  test(`lot X, fin de chapitre (${largeur}) : « Retour à Apprendre » au-dessus de la barre`, async ({ page }) => {
     await preparer(page, largeur, hauteur, { l1: 6, l2: 6, l3: 8, l4: 5, l5: 5, l6: 6, l7: 5 });
     await page.addInitScript(() => localStorage.setItem('go.settings.v1', JSON.stringify({ celebrations: false })));
     await page.goto('/');

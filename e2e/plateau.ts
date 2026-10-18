@@ -138,18 +138,17 @@ export async function ouvrirLancementOrdi(page: Page, taille?: 9 | 13 | 19): Pro
   return feuille;
 }
 
-/** #589 : la partie guidée contre Mochi se lance depuis Apprendre (carte sous la partie de découverte), plus depuis l'accueil. */
+/** #589, #652 : la partie guidée contre Mochi se lance depuis Apprendre › Jouer avec Mochi, plus depuis l'accueil. */
 export async function lancerGuidee(page: Page): Promise<void> {
   await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
-  await deplierAvecMochi(page);
+  await ouvrirAvecMochi(page);
   await page.getByRole('button', { name: /^Partie guidée contre Mochi/ }).click();
 }
 
-/** #602 : dans Apprendre, déplie « Jouer avec Mochi » (fin du chapitre « Les bases ») s'il est replié. */
-export async function deplierAvecMochi(page: Page): Promise<void> {
-  const lien = page.getByTestId('jouer-avec-mochi');
-  if ((await lien.getAttribute('aria-expanded')) !== 'true') await lien.click();
-  await page.locator('#jouer-avec-mochi').waitFor();
+/** #652 : depuis le sommaire d'Apprendre, ouvre le détail « Jouer avec Mochi » (découverte et guidée), s'il n'est pas déjà ouvert. */
+export async function ouvrirAvecMochi(page: Page): Promise<void> {
+  if (!(await page.locator('.avec-mochi-ecran').isVisible())) await page.getByTestId('jouer-avec-mochi').click();
+  await page.locator('.avec-mochi-ecran').waitFor();
 }
 
 /** Depuis l'accueil déjà affiché : « Jouer à deux sur ce téléphone » (tuile, ou « Plus » avec les comptes ; #429). */

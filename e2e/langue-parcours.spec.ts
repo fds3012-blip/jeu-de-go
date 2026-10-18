@@ -150,7 +150,7 @@ for (const largeur of [390, 320]) test(`?lang=en : toute l’interface en anglai
   await sansFrancais(page, 'Apprendre');
   await page.screenshot({ path: `docs/localisation/captures/apprendre-en-${largeur}.png` });
   await page.locator('.cta-chemin').click();
-  await expect(page.getByRole('button', { name: 'Back to the path' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Back to Learn' })).toBeVisible();
   await expect(page.getByRole('progressbar', { name: 'Lesson progress' })).toHaveAttribute('aria-valuetext', /^0 of \d+ steps done$/);
   await sansFrancais(page, 'leçon');
   await page.screenshot({ path: `docs/localisation/captures/lecon-en-${largeur}.png` });
@@ -159,7 +159,7 @@ for (const largeur of [390, 320]) test(`?lang=en : toute l’interface en anglai
     await continuer.click();
     await sansFrancais(page, 'leçon, étape 2');
   }
-  await page.getByRole('button', { name: 'Back to the path' }).click();
+  await page.getByRole('button', { name: 'Back to Learn' }).click();
 
   // Problèmes : l'écran, puis un problème et une mauvaise réponse.
   await nav.getByRole('button', { name: 'Puzzles' }).click();
