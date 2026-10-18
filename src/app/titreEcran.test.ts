@@ -19,7 +19,7 @@ describe('titre de l’onglet du navigateur (#465)', () => {
     expect(titreEcran({ quoi: 'direct' })).toBe('En direct · Mochi Go');
     expect(titreEcran({ quoi: 'lente' })).toBe('Partie lente · Mochi Go');
     expect(titreEcran({ quoi: 'defi' })).toBe('Défier un ami · Mochi Go');
-    expect(titreEcran({ quoi: 'revisions' })).toBe('Révisions · Mochi Go');
+    expect(titreEcran({ quoi: 'revisions' })).toBe('Rejouer tes erreurs · Mochi Go');
     expect(titreEcran({ quoi: 'placement' })).toBe('Ton niveau de départ · Mochi Go');
     expect(titreEcran({ quoi: 'decouverte' })).toBe('Partie de découverte · Mochi Go');
   });
