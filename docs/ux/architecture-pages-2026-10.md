@@ -388,3 +388,31 @@ Décision F3 validée par Florian : les activités passent en plein écran, sans
 | Séance de révisions | tuile « Révisions » de l'accueil | « ‹ » « Retour à l'accueil » | l'accueil, au même endroit | non : chaque réponse est notée tout de suite |
 
 La partie garde sa confirmation (« Quitter la partie ? ») : c'est la seule activité où quitter fait perdre quelque chose.
+
+## 13. Sommaire puis détail (A13 ; #652, #653, #654)
+
+Retour de Florian, 18/10, captures de chess.com à l'appui : Apprendre, Problèmes et le Profil montrent trop de choses à la fois. Le modèle : une racine qui est un **sommaire** (peu d'entrées, chacune avec son icône), puis un **détail** qui s'ouvre par-dessus avec « ‹ ». Règle A13 de `DESIGN.md`, composant `src/ui/Sommaire.tsx`.
+
+Méthode (skills `information-architecture`, `navigation-patterns`, `hicks-law`, `serial-position-effect`, `jakobs-law`) :
+- **Hick** : on compte les choix de même poids au premier regard ; 4 au plus par groupe (E3).
+- **Position dans la liste** : l'action principale en premier (primauté) ; la liste longue en dernier (P5), pour que le reste ne se perde pas sous elle.
+- **Jakob** : le joueur de go en ligne connaît chess.com ; on reprend sa forme (une ligne = une icône et un nom, sans chevron décoratif) plutôt que d'en inventer une. On n'en reprend pas le « Passez Premium ».
+- **Profondeur** : un détail ne contient pas de second sommaire (A4).
+
+### 13.1 Apprendre (#652)
+
+Captures (sombre, 390 × 844) : `captures/sommaires/apprendre-390-avant.jpg`, `apprendre-390-apres.jpg`, et en clair `apprendre-390-clair-apres.jpg`.
+
+| | Avant | Après |
+|---|---|---|
+| Premier regard (390 × 844) | Chapitre « Les bases » (titre, 7 mini-pierres), 3 pierres du chemin, la carte « Reprendre », le début de « Par thème » | La carte « Reprendre » (seul relief), trois entrées (Ouvertures, Jouer avec Mochi, Revoir les règles), le début de « Par thème » |
+| Blocs (E2) | 4, plus 6 chapitres et « Bientôt » en défilant (page de 5 660 px à 390 px) | 3 ; page de 1 800 px |
+| Accès à une leçon qui n'est pas la prochaine | sa pierre sur le chemin | la page de son thème (toutes les 48 leçons y sont : `src/app/themesApprendre.test.ts`) |
+| Thèmes | 6, puis « Tous les thèmes » | les 15, sans pli |
+| Jouer avec Mochi | lien qui déplie deux cartes à la fin des « Bases » | entrée du sommaire, puis un détail avec la découverte et la guidée |
+
+Ordre retenu : carte, entrées, grille. Florian citait la grille avant la liste ; mais la grille de 15 thèmes est la seule liste longue (≈ 1 000 px) : posée avant les trois entrées, elle les pousserait à 1 400 px de haut, sous trois écrans de défilement (P5 et effet de position : le milieu d'une longue page est oublié). Les entrées tiennent en 200 px juste sous la carte.
+
+Pas de pli sur la grille : il cachait 9 thèmes sur 15, donc la moitié des leçons, maintenant que le chemin ne les montre plus. Une colonne d'entrées toutes semblables (visuel, nom, une ligne) se parcourt du regard, dans l'ordre où les leçons font découvrir chaque thème.
+
+Ce qui ne change pas : l'accès aux leçons (#343 : sans compte, « Avec un compte » après la leçon 3, la leçon reste touchable et ouvre la création de compte), écrit dans la page du thème ; la fin de leçon et de chapitre (Lecon.tsx), les badges et l'XP ; la fête de fin de chapitre, qui se joue en tête du sommaire à la première visite qui la mérite (tampon d'or et confettis). Ce qui disparaît : le chemin, les en-têtes de chapitre (et leur tampon permanent), « Bientôt ».

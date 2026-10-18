@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { leconDuTheme } from './apprendre';
 import { jouer } from './plateau';
 // Textes anglais : chargés à la demande dans l'app (#325), enregistrés ici pour `localiser(…, 'en')`.
 import '../src/content/anglais.setup';
@@ -36,14 +37,9 @@ for (const [largeur, hauteur, theme] of [[390, 844, 'light'], [320, 568, 'dark']
     await page.goto('/');
     await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
 
-    // Le chemin : le nouveau chapitre et ses leçons ; « Bientôt » n'annonce plus que deux chapitres.
-    await expect(page.getByRole('heading', { name: 'Fin de partie et comptage' })).toBeAttached();
-    await expect(page.getByRole('button', { name: `Leçon ${numero('l13')} : Le point vital, terminée` })).toBeAttached();
-    await expect(page.getByRole('button', { name: `Leçon ${numero('l14')} : Le seki, prochaine étape` })).toBeAttached();
+    // #652 : le sommaire d'Apprendre ; la carte de la prochaine leçon ouvre la leçon.
     // #16 (05/10) : les formes d'yeux (leçon 17) finissent « Vie et mort » ; compter une partie est 17e sur le chemin.
-    await expect(page.getByRole('button', { name: `Leçon ${numero('l16')} : Compter une partie` })).toBeAttached();
     // #16 (05/10) : « Formes et tesuji » a commencé (leçons 18 à 20) ; il ne reste que l'ouverture en 19 × 19.
-    await expect(page.locator('.a-venir li')).toHaveText(['Ouverture en 19\u00A0×\u00A019']);
     await sansDebordement(page, 'chemin');
     await page.locator('.cta-chemin').scrollIntoViewIfNeeded();
     await photo('0-chemin');
@@ -111,8 +107,9 @@ for (const [largeur, hauteur, theme] of [[390, 844, 'light'], [320, 568, 'dark']
     await expect(page.getByText(norm(ACQUIS.l14))).toBeVisible();
     await sansDebordement(page, 'fin de leçon');
     await photo('6-fin');
-    await page.getByRole('button', { name: 'Retour au chemin' }).click();
-    await expect(page.getByRole('button', { name: `Leçon ${numero('l14')} : Le seki, terminée` })).toBeAttached();
+    await page.getByRole('button', { name: 'Retour à Apprendre' }).click();
+    // #652 : plus de chemin ; la leçon finie se lit dans la page de son thème.
+    await expect(await leconDuTheme(page, 'Seki', `Leçon ${numero('l14')} : Le seki, terminée`)).toHaveAttribute('data-etat', 'faite');
   });
 }
 
@@ -123,7 +120,6 @@ test('?lang=en, 320 px : le chapitre « Fin de partie et comptage » et la leço
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/?lang=en');
   await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: 'Learn' }).click();
-  await expect(page.getByRole('heading', { name: 'Endgame and counting' })).toBeAttached();
   await sansDebordement(page, 'chemin en anglais');
   await page.locator('.cta-chemin').click();
   const l15 = localiser(LESSONS_FR.find(l => l.id === 'l15')!, 'en');

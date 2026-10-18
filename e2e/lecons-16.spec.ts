@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { leconDuTheme } from './apprendre';
 import { jouer } from './plateau';
 // Textes anglais : chargés à la demande dans l'app (#325), enregistrés ici pour `localiser(…, 'en')`.
 import '../src/content/anglais.setup';
@@ -35,13 +36,9 @@ for (const largeur of [390, 320]) {
     await page.goto('/');
     await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
 
-    // Le chemin : les nouveaux chapitres, leurs leçons ; « Bientôt » n'annonce plus que deux chapitres (#16, leçons 13 à 16).
-    await expect(page.getByRole('heading', { name: 'Capturer et sauver' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Vie et mort' })).toBeVisible();
-    await expect(page.getByRole('button', { name: `Leçon ${numero('l9')} : Le filet, terminée` })).toBeAttached();
+    // #652 : le sommaire d'Apprendre ; la carte de la prochaine leçon ouvre la leçon.
     await expect(page.getByRole('button', { name: `Leçon ${numero('l12')} : Le faux œil, prochaine étape` })).toBeAttached();
     // #16 (05/10) : « Formes et tesuji » a commencé (leçons 18 à 20) ; il ne reste que l'ouverture en 19 × 19.
-    await expect(page.locator('.a-venir li')).toHaveText(['Ouverture en 19\u00A0×\u00A019']);
     await sansDebordement(page, 'chemin');
     await page.locator('.cta-chemin').click();
 
@@ -102,8 +99,9 @@ for (const largeur of [390, 320]) {
     await expect(page.getByRole('heading', { name: 'Leçon terminée' })).toBeVisible();
     await expect(page.getByText(norm(ACQUIS.l12))).toBeVisible();
     await sansDebordement(page, 'fin de leçon');
-    await page.getByRole('button', { name: 'Retour au chemin' }).click();
-    await expect(page.getByRole('button', { name: `Leçon ${numero('l12')} : Le faux œil, terminée` })).toBeAttached();
+    await page.getByRole('button', { name: 'Retour à Apprendre' }).click();
+    // #652 : plus de chemin ; la leçon finie se lit dans la page de son thème.
+    await expect(await leconDuTheme(page, 'Vie et mort', `Leçon ${numero('l12')} : Le faux œil, terminée`)).toHaveAttribute('data-etat', 'faite');
   });
 }
 
@@ -115,8 +113,6 @@ test('?lang=en, 320 px : les nouveaux chapitres et la leçon 9 s’affichent en 
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/?lang=en');
   await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: 'Learn' }).click();
-  await expect(page.getByRole('heading', { name: 'Capturing and saving' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Life and death' })).toBeVisible();
   await sansDebordement(page, 'chemin en anglais');
   await page.locator('.cta-chemin').click();
   const l9 = localiser(LESSONS_FR.find(l => l.id === 'l9')!, 'en');

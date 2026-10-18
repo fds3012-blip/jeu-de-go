@@ -1,17 +1,18 @@
 import { expect, test } from '@playwright/test';
 import { jouer } from './plateau';
+import { leconDuTheme } from './apprendre';
 import { LESSONS_FR } from '../src/content/lessons';
 
-// Issue #40, phase 6 : chemin de pierres de gué, lecteur de leçon et fin de leçon.
+// Issue #40, phase 6 : lecteur de leçon et fin de leçon ; #652 : Apprendre est un sommaire (la carte de la prochaine leçon).
 
-test('terminer la leçon 1 affiche la fin de leçon, puis la pierre 1 est cochée sur le chemin', async ({ page }) => {
+test('terminer la leçon 1 affiche la fin de leçon, puis la carte passe à la leçon 2 et la leçon 1 est faite dans son thème', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
 
-  // Chemin neuf : la leçon 1 est la prochaine étape, le bouton principal dit « Commencer ».
+  // Rien de fait : la leçon 1 est la prochaine étape, le bouton principal dit « Commencer ». Plus de « Bientôt » (#652).
   await expect(page.getByRole('button', { name: 'Leçon 1 : Libertés et capture, prochaine étape' })).toBeVisible();
-  await expect(page.getByText('Bientôt')).toBeVisible();
+  await expect(page.getByText('Bientôt')).toHaveCount(0);
   const debord = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(debord).toBeLessThanOrEqual(0);
   await page.getByRole('button', { name: 'Commencer' }).click();
@@ -65,17 +66,18 @@ test('terminer la leçon 1 affiche la fin de leçon, puis la pierre 1 est coché
   await expect(page.getByTestId('confettis')).toHaveCount(0);
   await expect(page.getByText(/Tu sais compter les libertés/)).toBeVisible();
   await expect(page.getByRole('button', { name: 'Leçon suivante' })).toBeVisible();
-  await page.getByRole('button', { name: 'Retour au chemin' }).click();
+  await page.getByRole('button', { name: 'Retour à Apprendre' }).click();
 
-  const pierre1 = page.getByRole('button', { name: 'Leçon 1 : Libertés et capture, terminée' });
-  await expect(pierre1).toBeVisible();
-  await expect(pierre1).toHaveAttribute('data-etat', 'faite');
   await expect(page.getByRole('button', { name: /^Leçon 2 : .*, prochaine étape$/ })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Commencer la leçon : Atari' })).toBeVisible();
   // Un seul bouton en relief : sous la leçon en cours, il n'affiche que le verbe.
   await expect(page.locator('.cta')).toHaveCount(1);
   await expect(page.getByRole('button', { name: 'Commencer la leçon : Atari' })).toHaveText('Commencer');
-  await expect(page.getByRole('button', { name: /^Leçon 3 : / })).toHaveAttribute('data-etat', 'avenir');
+  // La leçon 1 est faite dans la page de son thème ; la 3 reste à venir dans le sien.
+  const l1 = await leconDuTheme(page, 'Capture', 'Leçon 1 : Libertés et capture, terminée');
+  await expect(l1).toHaveAttribute('data-etat', 'faite');
+  await page.getByRole('button', { name: 'Retour à Apprendre' }).click();
+  await expect(await leconDuTheme(page, 'Double atari', /^Leçon 3 : /)).toHaveAttribute('data-etat', 'avenir');
 });
 
 test('dernière leçon : « Chapitre terminé », confettis, sauf si les célébrations sont coupées', async ({ page }) => {
@@ -91,7 +93,7 @@ test('dernière leçon : « Chapitre terminé », confettis, sauf si les céléb
     await page.locator('.choix').getByRole('button', { name: '39', exact: true }).click();
     await page.getByRole('button', { name: 'Terminer la leçon' }).click();
     await expect(page.getByRole('heading', { name: 'Chapitre terminé' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Retour au chemin' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Retour à Apprendre' })).toBeVisible();
     if (celebrations) await expect(page.getByTestId('confettis')).toBeAttached();
     else { await page.waitForTimeout(800); await expect(page.getByTestId('confettis')).toHaveCount(0); }
   }
@@ -285,9 +287,9 @@ test('leçon 7 : compter les points, jusqu’à « Chapitre terminé »', async 
   await page.getByRole('button', { name: 'Terminer la leçon' }).click();
   await expect(page.getByRole('heading', { name: 'Chapitre terminé' })).toBeVisible();
   await expect(page.getByText(/fermer tes frontières/)).toBeVisible();
-  await page.getByRole('button', { name: 'Retour au chemin' }).click();
-  await expect(page.getByRole('button', { name: 'Leçon 7 : Compter les points, terminée' })).toBeVisible();
-  // #602 : sur le chemin, le tampon d'or ; la phrase de fin du chapitre est dite par l'écran de fin de leçon.
+  await page.getByRole('button', { name: 'Retour à Apprendre' }).click();
+  await expect(page.getByRole('button', { name: 'Leçon 8 : Les premiers coups, prochaine étape' })).toBeVisible();
+  // #652 : en tête du sommaire, le tampon d'or ; la phrase de fin du chapitre est dite par l'écran de fin de leçon.
   await expect(page.getByRole('img', { name: 'Chapitre terminé : Les bases' })).toBeVisible();
 });
 
@@ -320,14 +322,13 @@ test('captures de la leçon 7 (390 × 844, sombre)', async ({ page }) => {
 });
 
 // Issue #228 : chapitre 2, leçon 8. Coins, bords, centre ; ne pas coller ; s'étendre ; la première ligne rapporte peu.
-test('leçon 8 : bien commencer sur 9 × 9, du chemin à la fin de leçon', async ({ page }) => {
+test('leçon 8 : bien commencer sur 9 × 9, du sommaire à la fin de leçon', async ({ page }) => {
   await page.addInitScript(p => localStorage.setItem('go.lecons.v1', JSON.stringify(p)), { ...AVANT_L7, l7: 6 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
-  // Les bases finies ; le chapitre 2 s'ouvre sous elles, la leçon 8 est la prochaine étape.
+  // Les bases finies : le tampon d'or en tête du sommaire, la leçon 8 est la prochaine étape.
   await expect(page.getByRole('img', { name: 'Chapitre terminé : Les bases' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'L’ouverture' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Leçon 8 : Les premiers coups, prochaine étape' })).toBeVisible();
   await expect(page.locator('.cta')).toHaveCount(1);
   await page.getByRole('button', { name: 'Commencer la leçon : Les premiers coups' }).click();
@@ -374,8 +375,7 @@ test('leçon 8 : bien commencer sur 9 × 9, du chemin à la fin de leçon', asyn
   await expect(page.locator('.fin-lecon .cta')).toHaveCount(1);
   await expect(page.getByRole('button', { name: 'Joue contre Pomme' })).toHaveCount(0);
   await expect(page.getByTestId('confettis')).toHaveCount(0);
-  await page.getByRole('button', { name: 'Retour au chemin' }).click();
-  await expect(page.getByRole('button', { name: 'Leçon 8 : Les premiers coups, terminée' })).toBeVisible();
+  await page.getByRole('button', { name: 'Retour à Apprendre' }).click();
   // #547 : « Le handicap » (l46) suit la leçon 8 dans le chapitre 2 ; elle devient la prochaine étape, avant
   // « Attaquer et défendre » (l27, #16).
   const l46 = LESSONS_FR.findIndex(l => l.id === 'l46') + 1;

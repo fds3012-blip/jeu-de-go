@@ -1,7 +1,7 @@
 import { expect, test, type Browser, type Page } from '@playwright/test';
 import { SCENARIO } from '../src/content/decouverte';
 import { brancher, fauxServeur, JETON, PARTIE, type FauxServeur } from './fauxSupabase';
-import { abandonner, deplierAvecMochi, passer, plateau, toucherCta } from './plateau';
+import { abandonner, ouvrirAvecMochi, passer, plateau, toucherCta } from './plateau';
 import { faireMoment } from './decouverte';
 
 // #640 (lot N4, règles A3, A6 et A10 de DESIGN.md) : plus aucun changement d'onglet sous le joueur. Les 12 chemins de
@@ -205,7 +205,7 @@ test('8. découverte lancée d’Apprendre : sa fin ramène à Apprendre ; Jouer
   await expect(page.getByTestId('mode-decouverte')).toHaveCount(0);
   await expect(page.getByTestId('mode-plus')).toHaveCount(0);
   await nav(page).getByRole('button', { name: 'Apprendre' }).click();
-  await deplierAvecMochi(page);
+  await ouvrirAvecMochi(page);
   await page.getByTestId('carte-decouverte').click();
   await expect(page.locator('.decouverte')).toBeVisible();
   await pleinEcran(page);
@@ -288,7 +288,7 @@ test('10. fin de chapitre › « Joue contre Pomme » : la sortie de la partie r
   await retourSysteme(page);
   await expect(page.getByRole('heading', { name: 'Chapitre terminé' })).toBeVisible();
   await pleinEcran(page);
-  await page.getByRole('button', { name: 'Retour au chemin' }).click();
+  await page.getByRole('button', { name: 'Retour à Apprendre' }).click();
   await allume(page, 'Apprendre');
   expect(erreurs).toEqual([]);
   await ctx.close();
