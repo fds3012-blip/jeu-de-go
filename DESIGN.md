@@ -355,6 +355,7 @@ Lumière : `--halo`, un dégradé radial doré en haut de `body` (11 % d'or en s
 - **Pastille XP** (`PastilleXp`, `.pastille-xp`) : fond or, texte `--encre-jade`, pilule, chiffre Bricolage 800. Annoncée en haut, au-dessus de tout (z-index 59), ne capte aucun toucher.
 - **État du Go du jour** (`.tuile-etat`) : pilule dans le coin, « À faire » sur or, « Fait » cerné de jade sur `--surface-2`.
 - **Série** (`.serie`) : pilule or à 16 %, flamme creuse tant que le Go du jour reste à faire, pleine après. En haut de l'accueil, et à côté du Go du jour dans Problèmes (#620).
+- **Leçon faite** (page d'un thème, #627) : le sceau de la leçon (`SceauLecon`, 32 px) à droite de la ligne, sans pastille texte ; l'état reste dans le nom accessible. En clair, le sceau est assombri (`brightness(.78)`) pour garder 3:1 sur `--surface`.
 - **Badges du Profil** (`.badge-bouton`) : rond de 44 px ; choisi : double anneau `--bg` puis `--accent-bord`.
 - **Pastille d'onglet** : point `--accent-trait` de 10 px sur l'icône, liseré de la couleur de la barre.
 
