@@ -284,7 +284,7 @@ Grille de 4 px, vérifiée par `tokens.test.ts` : `--space-1` 4, `--space-2` 8, 
 ### En-tête et barre du bas (`docs/ux/navigation.md`)
 | Famille d'écran | En-tête | Barre du bas |
 |---|---|---|
-| Accueil, Apprendre, Problèmes, Profil | Logo « Mochi Go » | Oui |
+| Accueil, Apprendre, Problèmes, Profil | Logo « Mochi Go » | Oui (latérale à partir de 1024 px) |
 | Écran de tâche (en ligne, défi, revue, réglages, sous-vues du Profil) | Barre « ‹ titre » (`EnteteEcran`, `BoutonRetour.tsx`) | Oui |
 | Leçon, problème | Barre du lecteur | Oui |
 | Partie (ordi, à deux, en ligne) et sa fin, sa revue | Aucun : plein écran | Non |
@@ -378,6 +378,7 @@ Lumière : `--halo`, un dégradé radial doré en haut de `body` (11 % d'or en s
 
 ### Navigation et feuilles
 - **Barre du bas** (`.nav`, `IconesNav.tsx`) : `--barre`, 60 px, icônes de 28 px. Inactif : encre `--muted`, pierres à plat. Actif : pierres en matière, libellé 700 en `--text`, une pièce d'accent et un point de 5 px de la couleur de l'onglet, `aria-current="page"`.
+- **Barre latérale** (même `.nav`, à partir de 1024 px, #648) : à gauche, `--rail-l` (88 px) de large, filet `--line` à droite ; les quatre onglets dans le même ordre, en colonne, 72 px de haut, libellé sous l'icône. Même nom accessible, même `aria-current`. Ce qui se posait au-dessus de la barre du bas passe par `--nav-bas` (place prise en bas, 0 avec la barre latérale) et `--nav-gauche` (place prise à gauche) : bouton fixe, `.dock`, bandeau de consentement, verdict, pastille XP, fêtes. Absente pendant une partie et sur les écrans plein écran, comme la barre du bas.
 - **Feuille** (`.feuille`, `<dialog>`) : monte du bas, `--surface`, rayon haut 22 px, `max-height: 92dvh`, voile `--voile`.
 
 ### Attente et célébration
@@ -504,7 +505,7 @@ Ce qu'on garde quand même : les règles E et A ; les libellés visibles (une ca
 ### Cibles
 - **Référence** : 390 × 844 (iPhone 12 à 15). Les captures de revue et les maquettes Figma sont à cette taille.
 - **Plancher** : 320 × 568 (iPhone SE) sans défilement horizontal ; aucun débord à 195 px de large ni à 200 % de texte.
-- **Plafond** : le contenu s'arrête à 720 px de 600 à 1023 px de large, à 1080 px au-delà (#629, lot V7) ; Jouer et les activités restent à 560 px. Le reste de P8 (barre latérale, activités en deux zones, téléphone en paysage) vient avec les lots V de `docs/ux/visuel-responsive-2026-10.md`.
+- **Plafond** : le contenu s'arrête à 720 px de 600 à 1023 px de large, à 1080 px au-delà (#629, lot V7) ; Jouer et les activités restent à 560 px. La barre latérale est là à partir de 1024 px (#648, lot V8). Le reste de P8 (activités en deux zones, téléphone en paysage) vient avec les lots V de `docs/ux/visuel-responsive-2026-10.md`.
 
 ### Points de rupture réellement utilisés
 | Requête | Ce qui change |
@@ -513,7 +514,7 @@ Ce qu'on garde quand même : les règles E et A ; les libellés visibles (une ca
 | `max-height: 640px` / `700px` / `600px` | Petite hauteur : les pictogrammes et les détails des modes cèdent leur place, les noms restent. |
 | `min-height: 760px` | Écran haut : Mochi plus grand dans la leçon (88 ou 96 px) et bulle en `--fs-l`. |
 | `min-width: 600px` | Large : le contenu passe à 720 px, le texte courant à `--mesure` ; Go du jour en deux zones (goban, problème) ; le plateau de la partie et le fond de la fin ne débordent plus la gouttière. |
-| `min-width: 1024px` | Très large : le contenu passe à 1080 px ; carte de la prochaine leçon en deux zones ; bouton principal dans le flux plafonné à 560 px. |
+| `min-width: 1024px` | Très large : barre latérale à gauche (#648, `nav.css`), contenu à sa droite jusqu'à 1080 px ; carte de la prochaine leçon en deux zones ; bouton principal dans le flux plafonné à 560 px. Au zoom 200 %, 1440 px valent 720 : la barre du bas revient. |
 | `min-width: 600px` (grilles, #630) | Vignettes de Tous les problèmes en `minmax(7rem, 1fr)` ; Statistiques en deux colonnes. |
 | `min-width: 1024px` (grilles, #630) | Profil : identité à gauche, menu à droite, badges sur toute la largeur ; Réglages : aperçu du goban fixe à gauche, groupes en deux colonnes. |
 | `@container (max-width: 5.4em)` sur un onglet | Libellé court (« Appr. », « Probl. ») au zoom 200 % ; le nom entier reste lu. |

@@ -138,6 +138,9 @@
   --cible-bouton: 48px;   /* bouton secondaire */
   --cible-cta: 56px;      /* bouton principal */
   --nav-h: 60px;          /* barre de navigation */
+  --rail-l: 88px;         /* P8 : barre latérale, à partir de 1024 px (#648) */
+  --nav-bas: max(var(--nav-h), 3.75rem); /* place prise en bas par la barre ; 0 quand elle passe à gauche (nav.css) */
+  --nav-gauche: 0px;      /* place prise à gauche par la barre latérale */
   --icone-nav: 28px;      /* icônes de la barre de navigation */
   --icone-attente: 22px;  /* indicateur « deux pierres qui tournent » */
   --largeur-max: 560px;   /* colonne de lecture (téléphone, feuilles, activités) */
