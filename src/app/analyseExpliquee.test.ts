@@ -87,8 +87,8 @@ describe('les phrases', () => {
   it('initiative : gote et sente expliqués, la suite de KataGo citée', () => {
     const x = ex({ avant: position(['C5', 'G5'], ['E5']), joue: 'G3', bon: 'C3', perte: 3, pvBon: [L('C3'), L('D3'), L('G7')], pvRiposte: [L('C7')] });
     expect(textesExplication(x, N, { adv: 'Blanc' })).toMatchObject({
-      erreur: 'Ton coup est gote (un coup qui n’oblige pas l’adversaire à répondre) : Blanc joue tout de suite ailleurs, en C7.',
-      meilleur: 'C3 est sente (un coup qui oblige l’adversaire à répondre) : Blanc répond en D3, puis tu joues ailleurs, en G7.',
+      erreur: 'Selon KataGo, ton coup est gote (un coup qui n’oblige pas l’adversaire à répondre) : Blanc joue tout de suite ailleurs, en C7.',
+      meilleur: 'Selon KataGo, C3 est sente (un coup qui oblige l’adversaire à répondre) : Blanc répond en D3, puis tu joues ailleurs, en G7.',
       termes: ['gote', 'sente'],
     });
   });
@@ -99,6 +99,18 @@ describe('les phrases', () => {
       erreur: 'Blanc répond en E4 et coupe tes pierres (couper, c’est séparer des pierres) : elles sont séparées.',
       meilleur: 'E4 prend le point de coupe : tes pierres restent ensemble.',
     });
+  });
+
+  it('coupe parée par un atari : on dit seulement que la coupe se mettrait en atari, jamais qu’elle « ne marche plus »', () => {
+    // Noir D4 et E5, Blanc D5. Avec F4, une coupe blanche en E4 n'aurait qu'une liberté (E3).
+    const x = ex({ avant: position(['D4', 'E5'], ['D5']), joue: 'H8', bon: 'F4', perte: 4, pvBon: [L('F4')], pvRiposte: [L('E4')], ownBon: propriete({ D4: 0.7, E5: 0.7 }), ownJoue: propriete({ D4: 0.1, E5: 0.1 }) });
+    expect(textesExplication(x, N, { adv: 'Blanc' })).toEqual({
+      erreur: 'Blanc répond en E4 et coupe tes pierres (couper, c’est séparer des pierres) : elles sont séparées.',
+      meilleur: 'Après F4, si Blanc coupe en E4, il se met en atari (une seule liberté).',
+      termes: ['couper', 'atari'],
+    });
+    choisirLangue('en');
+    expect(textesExplication(x, N, { adv: 'White', gloses: new Set() }).meilleur).toBe('After F4, if White cuts at E4, they put themselves in atari.');
   });
 
   it('chaque clé existe en anglais, avec les mêmes variables', () => {

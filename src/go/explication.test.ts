@@ -149,6 +149,15 @@ describe('coupe permise', () => {
     const x = expliquerErreur(entree({ ...base, avant: position(['D4', 'E5'], []), ownBon: propriete({ D4: 0.7, E5: 0.7 }), ownJoue: propriete({ D4: 0.1, E5: 0.1 }) }))!;
     expect(x.faits.find(f => f.type === 'coupe')).toBeUndefined();
   });
+  it('le bon coup F4 pare la coupe par un atari : Blanc en E4 n’aurait plus qu’une liberté (E3)', () => {
+    const x = expliquerErreur(entree({ ...base, bon: 'F4', pvBon: [L('F4')], ownBon: propriete({ D4: 0.7, E5: 0.7 }), ownJoue: propriete({ D4: 0.1, E5: 0.1 }) }))!;
+    expect(x.faits[0]).toMatchObject({ type: 'coupe', point: L('E4'), parade: 'atari' });
+  });
+  it('une coupe qui se met elle-même en atari n’est pas une coupe (Blanc E4 prendrait une liberté de trop)', () => {
+    // Noir F4 en plus : après H8, Blanc E4 n'a qu'une liberté (E3) : ce n'est pas une coupe, on ne la dit pas.
+    const x = expliquerErreur(entree({ ...base, avant: position(['D4', 'E5', 'F4'], ['D5']), bon: 'E3', pvBon: [L('E3')], ownBon: propriete({ D4: 0.7, E5: 0.7 }), ownJoue: propriete({ D4: 0.1, E5: 0.1 }) }))!;
+    expect(x.faits.find(f => f.type === 'coupe')).toBeUndefined();
+  });
   it('un « bon coup » qui ne pare pas la coupe (B8) : on ne dit pas que la coupe est la raison', () => {
     const x = expliquerErreur(entree({ ...base, bon: 'B8', pvBon: [L('B8')], ownBon: propriete({ D4: 0.7, E5: 0.7 }), ownJoue: propriete({ D4: 0.1, E5: 0.1 }) }))!;
     expect(x.faits.find(f => f.type === 'coupe')).toBeUndefined();
