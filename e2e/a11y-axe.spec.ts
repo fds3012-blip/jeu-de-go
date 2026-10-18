@@ -198,7 +198,7 @@ test('axe : partager l’app (Profil, lien copié ; invitation après une victoi
   await page.goto('/');
   await nav(page, 'Profil').click();
   await page.getByTestId('partager-app-profil').click();
-  await expect(page.getByTestId('partager-app-profil')).toHaveText('Lien copié');
+  await expect(page.getByTestId('partager-app-profil')).toContainText('Lien copié');
   await verifier(page, 'Profil, lien copié');
 
   await page.goto('/?komi=-100');

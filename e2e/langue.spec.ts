@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { ouvrirNiveauBadges } from './profil';
 import { jouer, ouvrirLancementOrdi } from './plateau';
 
 // Issue #167 : `?lang=en` traduit la barre du bas et le Profil, sans débordement à 390 et 320 px.
@@ -309,6 +310,7 @@ for (const largeur of [390, 320]) {
 
     // Profil complet : statistiques, badges, thèmes du goban.
     await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: 'Profile' }).click();
+    await ouvrirNiveauBadges(page);
     const stats = page.getByRole('list', { name: 'Your stats' });
     for (const legende of ['day streak', 'lessons done', 'opponent beaten', 'puzzles solved']) await expect(stats.getByText(legende, { exact: true })).toBeVisible();
     const vitrine = page.getByRole('region', { name: /^Badges, \d+ of 21$/ });

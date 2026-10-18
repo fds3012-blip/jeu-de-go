@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { ouvrirNiveauBadges } from './profil';
 
 // Issue #103 : Problèmes et Profil moins fades. Paliers illustrés, sceau jade, fête du palier complet,
 // statistiques et vitrine de badges. Avec CAPTURES=1, enregistre les captures 390 × 844 de docs/design/v2/captures.
@@ -29,6 +30,7 @@ test('profil vivant : statistiques et badges déduits des données locales, sans
   });
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Profil' }).click();
+  await ouvrirNiveauBadges(page);
   const stats = page.getByRole('list', { name: 'Tes statistiques' });
   await expect(stats.getByText('3', { exact: true })).toBeVisible();
   await expect(stats.getByText('problèmes réussis')).toBeVisible();

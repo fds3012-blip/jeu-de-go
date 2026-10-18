@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { ouvrirNiveauBadges } from './profil';
 import { attendrePierre, attendreReponse, jouer, jouerSuite, partieADeux, passer, toucherCta } from './plateau';
 
 // Issue #207 : corrections de la recette du 28/09 (docs/qa/recette-2026-09-28.md sur la branche recette-nuit).
@@ -160,6 +161,7 @@ test.describe('R5 : 320 × 640', () => {
 test('Vitrine : chaque badge se touche et dit sa condition entière (#214)', async ({ page }) => {
   await page.goto('/');
   await nav(page).getByRole('button', { name: 'Profil' }).click();
+  await ouvrirNiveauBadges(page);
   const vitrine = page.getByRole('region', { name: /^Badges/ });
   // #529 : 21 badges ; repliée, la vitrine en montre 4 à gagner. On l'ouvre, puis chaque sceau (et le bouton) fait 44 px.
   await vitrine.getByRole('button', { name: 'Voir les 21 badges' }).click();

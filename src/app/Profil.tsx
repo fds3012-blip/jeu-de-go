@@ -350,7 +350,7 @@ function Menu({ onVue, settings, profil, serie, placement, onPlacement, userId, 
       etat: amis?.compte && profil
         ? titre ? etatTitre(titre)
           : !profil.parties && !profil.depart ? { texte: tc('cote.ligneDepart') }
-          : { texte: grade(profil.cote), aria: `${grade(profil.cote)} · ${texteCote(profil.cote, profil.provisoire ?? true)}` }
+          : { texte: `${grade(profil.cote)} · ${texteCote(profil.cote, profil.provisoire ?? true)}` }
         : placement?.fait && placement.kyu !== null ? { texte: t('placement.profilValeur', { kyu: placement.kyu, date: dateCourte(placement.date) }) } : undefined,
     } satisfies EntreeSommaire] : []),
     { cle: 'stats', nom: tk('stats.ligne'), visuel: icone('stats'), testId: 'ligne-stats', onOuvrir: () => onVue('stats') },

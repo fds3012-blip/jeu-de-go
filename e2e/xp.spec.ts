@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { ouvrirNiveauBadges } from './profil';
 import { attendrePierre, jouer } from './plateau';
 
 // Issue #109 : XP, niveaux et récompenses. Un problème réussi fait avancer la barre de niveau de l'accueil.
@@ -39,6 +40,7 @@ test("un problème réussi fait monter l'XP du Profil", async ({ page }) => {
   await expect(page.locator('.cta-sceau')).toBeInViewport();
   await expect(barre).toHaveCount(0);
   await nav(page).getByRole('button', { name: 'Profil' }).click();
+  await ouvrirNiveauBadges(page);
   await expect(barre).toContainText(/Niveau\s1/);
   await expect(barre).toContainText(/40\s\/\s100\sXP/);
   await expect(barre).toContainText('Kaya clair');
@@ -64,6 +66,7 @@ test('un niveau franchi est célébré après le problème, seul, sans couvrir l
   // #613 : la fête a dit le progrès ; le détail est dans le Profil.
   await expect(page.getByTestId('barre-niveau')).toHaveCount(0);
   await nav(page).getByRole('button', { name: 'Profil' }).click();
+  await ouvrirNiveauBadges(page);
   await expect(page.getByTestId('barre-niveau')).toContainText(/30\s\/\s125\sXP/);
 });
 

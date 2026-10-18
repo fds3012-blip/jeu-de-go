@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { ouvrirNiveauBadges } from './profil';
 
 // Issue #212 : rien de gagné ne se perd. Une série de 7 jours, puis 3 jours d'absence sans gel.
 // Horloge figée en heure de Paris : le Go du jour n° 7 tombe le 03/10/2026, le n° 11 le 07/10/2026.
@@ -18,6 +19,7 @@ test('série de 7 jours perdue : record gardé, badge conservé, Mochi accueille
   await page.evaluate(() => localStorage.setItem('go.go-du-jour.v1', JSON.stringify({ dernier: 7, jours: 7 })));
   await page.reload();
   await nav(page, 'Profil');
+  await ouvrirNiveauBadges(page);
   await expect(page.locator('[data-badge="serie-7"]')).toHaveClass(/\bobtenu\b/);
   expect(await stockage(page, 'go.badges.v1')).toContain('serie-7');
   expect(await stockage(page, 'go.serie-record.v1')).toMatchObject({ record: 7 });
@@ -34,6 +36,7 @@ test('série de 7 jours perdue : record gardé, badge conservé, Mochi accueille
 
   // Profil : le record à la place de « 0 jour de série », et le badge toujours là.
   await nav(page, 'Profil');
+  await ouvrirNiveauBadges(page);
   await expect(page.getByText('jours, ta série record')).toBeVisible();
   await expect(page.getByText(/^jours? de série$/)).toHaveCount(0);
   await expect(page.locator('[data-badge="serie-7"]')).toHaveClass(/\bobtenu\b/);
