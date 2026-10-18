@@ -1141,10 +1141,8 @@ export const frEcrans = {
   'placement.basesTexte': 'La leçon 1 te montre les règles en quelques minutes. Tu joueras juste après.',
   'placement.programme': 'Tes trois premières leçons',
   'placement.lecon1': 'Commence la leçon 1',
-  'placement.profil': 'Niveau estimé',
   'placement.profilValeur': '{kyu} kyu, le {date}',
   'placement.profilFaire': 'Ton niveau de départ',
-  'placement.profilRefaire': 'Ton niveau de départ',
   // Import d'une partie SGF (#286) : Profil ou revue, action secondaire.
   'import.titre': 'Analyser une partie',
   'import.intro': 'Tu joues sur OGS, Fox ou KGS ? Importe ta partie : fichier SGF, texte ou lien OGS. KataGo la relit avec toi.',

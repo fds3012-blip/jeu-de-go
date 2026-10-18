@@ -99,8 +99,8 @@ test('axe : réglages de la partie (feuille « Changer ») et tuile « Reprendre
   await verifier(page, 'Accueil avec « Reprendre ta partie »');
 });
 
-test('axe : accueil d’un joueur qui revient (Aujourd’hui) et feuille « Plus » des modes', async ({ context }) => {
-  // Les modes en ligne (et donc « Plus ») n'existent qu'avec un serveur : Supabase simulé.
+test('axe : accueil d’un joueur qui revient (Aujourd’hui) et ses tuiles de modes', async ({ context }) => {
+  // Les modes en ligne n'existent qu'avec un serveur : Supabase simulé. #647 : plus de feuille « Plus ».
   const page = await brancher(context, fauxServeur(), {
     'go.parties.v1': JSON.stringify({ n: 3, dernier: 'pomme', ordi: 3 }),
     'go.bilan.v1': JSON.stringify({ pomme: { v: 1, d: 2 } }),
@@ -109,10 +109,8 @@ test('axe : accueil d’un joueur qui revient (Aujourd’hui) et feuille « Plus
   });
   await page.goto('/');
   await expect(page.locator('.cta')).toBeVisible();
+  await expect(page.getByTestId('mode-deux')).toBeVisible();
   await verifier(page, 'Accueil (joueur qui revient)');
-  await page.getByTestId('mode-plus').click();
-  await expect(page.getByRole('dialog')).toBeVisible();
-  await verifier(page, 'Feuille « Plus » des modes');
 });
 
 test('axe : partie contre l’ordi (début, menu Plus, coups joués), récit du score et fin de partie', async ({ page }) => {

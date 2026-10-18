@@ -276,7 +276,7 @@ Grille de 4 px, vérifiée par `tokens.test.ts` : `--space-1` 4, `--space-2` 8, 
 
 ### Colonne et cadre
 - Colonne unique centrée, `max-width: var(--largeur-max)` (560 px) sous 600 px de large. Les maquettes sont en 390 × 844 (`--maquette-l`, `--maquette-h`).
-- À partir de 600 px, `.app` va jusqu'à `--largeur-contenu` (720 px), puis `--largeur-large` (1080 px) à partir de 1024 px ; un paragraphe s'arrête à `--mesure` (65 signes) et un bouton principal dans le flux à 560 px. Jouer et les activités (un goban qu'on touche) gardent 560 px jusqu'aux lots V5, V6 et V10 (#629, lot V7).
+- À partir de 600 px, `.app` va jusqu'à `--largeur-contenu` (720 px), puis `--largeur-large` (1080 px) à partir de 1024 px ; un paragraphe s'arrête à `--mesure` (65 signes) et un bouton principal dans le flux à 560 px. Les activités (un goban qu'on touche) gardent 560 px jusqu'aux lots V5 et V6 (#629, lot V7). Jouer, en paysage à partir de 600 px de large, passe en deux zones (#648, lot V10) : le goban à gauche, à la hauteur de l'écran, et le bloc d'action (bouton, modes, tuiles du jour) à droite, de 18 à 22,5rem, aligné sur le haut du goban ; en portrait, la colonne de 560 px ne change pas.
 - `.app` : `padding: 12px 16px`, plus 150 px en bas pour le bouton fixe et la barre.
 - Le bouton principal seul (`.cta`) est fixé en bas, au-dessus de la barre : `bottom: calc(74px + var(--relief) + env(safe-area-inset-bottom))`, largeur `min(528px, 100% − 32px)`. Avec des actions secondaires, il vit dans `.dock` (grille, écart `8px + relief`).
 - En partie, le plateau déborde la gouttière (`margin: 0 calc(4px − var(--gouttiere))`) : il prend presque toute la largeur.
@@ -284,7 +284,7 @@ Grille de 4 px, vérifiée par `tokens.test.ts` : `--space-1` 4, `--space-2` 8, 
 ### En-tête et barre du bas (`docs/ux/navigation.md`)
 | Famille d'écran | En-tête | Barre du bas |
 |---|---|---|
-| Accueil, Apprendre, Problèmes, Profil | Logo « Mochi Go » | Oui |
+| Accueil, Apprendre, Problèmes, Profil | Logo « Mochi Go » | Oui (latérale à partir de 1024 px) |
 | Écran de tâche (en ligne, défi, revue, réglages, sous-vues du Profil) | Barre « ‹ titre » (`EnteteEcran`, `BoutonRetour.tsx`) | Oui |
 | Leçon, problème | Barre du lecteur | Oui |
 | Partie (ordi, à deux, en ligne) et sa fin, sa revue | Aucun : plein écran | Non |
@@ -379,6 +379,7 @@ Lumière : `--halo`, un dégradé radial doré en haut de `body` (11 % d'or en s
 
 ### Navigation et feuilles
 - **Barre du bas** (`.nav`, `IconesNav.tsx`) : `--barre`, 60 px, icônes de 28 px. Inactif : encre `--muted`, pierres à plat. Actif : pierres en matière, libellé 700 en `--text`, une pièce d'accent et un point de 5 px de la couleur de l'onglet, `aria-current="page"`.
+- **Barre latérale** (même `.nav`, à partir de 1024 px, #648) : à gauche, `--rail-l` (88 px) de large, filet `--line` à droite ; les quatre onglets dans le même ordre, en colonne, 72 px de haut, libellé sous l'icône. Même nom accessible, même `aria-current`. Ce qui se posait au-dessus de la barre du bas passe par `--nav-bas` (place prise en bas, 0 avec la barre latérale) et `--nav-gauche` (place prise à gauche) : bouton fixe, `.dock`, bandeau de consentement, verdict, pastille XP, fêtes. Absente pendant une partie et sur les écrans plein écran, comme la barre du bas.
 - **Feuille** (`.feuille`, `<dialog>`) : monte du bas, `--surface`, rayon haut 22 px, `max-height: 92dvh`, voile `--voile`.
 
 ### Attente et célébration
@@ -427,7 +428,7 @@ Le but : le regard tombe d'abord sur l'action principale (ou sur le goban quand 
 
 Audit d'épure (#592) : `docs/ux/epure-2026-10.md`. Il applique ces règles sans en changer les seuils, et donne le tableau avant / après de chaque écran (blocs, plus grand groupe, phrases, lignes de détail, chiffres). Sur l'accueil : E5, E6 et E9 (tuiles de mode sans ligne de détail, détail gardé dans l'`aria-label` ; « Aujourd'hui » devenu le nom du groupe pour le lecteur d'écran ; bulle de la partie classée en une phrase ; promesse de Mochi seulement avant la première pierre), et E2 (le réglage « Plateau 9 × 9 » rangé sous l'adversaire, dans le même bloc : 6 blocs → 5). Dans Problèmes : E4, E6, E7, E8 et E13.
 
-Ouverture de Jouer (#613, retour de Florian : « à l'ouverture, le niveau ne sert à rien ») : un réglage ou un chiffre qui ne sert qu'au moment de lancer une partie s'affiche à ce moment-là, pas à l'ouverture. Le niveau et l'XP vivent dans le Profil et la fête de fin ; le grade et la cote, sur l'écran de lancement d'une partie classée, sa fin et le Profil ; la taille du plateau, dans la feuille de lancement (`LancementPartie.tsx`, l'ordi et à deux, dernier choix déjà coché) ou l'écran de lancement en ligne (9 × 9 coché à chaque fois, pour garder une seule file fréquentée, décision #436 ; 13 et 19 s'y choisissent). Avant la toute première partie, aucune étape. Règle #429 mise à jour (décision de Florian, #613) : tous les modes se **joignent** en 1 toucher, ou 2 par « Plus » ; l'arrivée sur l'étape de lancement du mode (feuille de l'ordi ou d'à deux, écran en ligne, écran des défis) compte comme l'arrivée, et son bouton « Jouer » est le toucher suivant. Captures : `docs/ux/captures/jouer-613/`.
+Ouverture de Jouer (#613, retour de Florian : « à l'ouverture, le niveau ne sert à rien ») : un réglage ou un chiffre qui ne sert qu'au moment de lancer une partie s'affiche à ce moment-là, pas à l'ouverture. Le niveau et l'XP vivent dans le Profil et la fête de fin ; le grade et la cote, sur l'écran de lancement d'une partie classée, sa fin et le Profil ; la taille du plateau, dans la feuille de lancement (`LancementPartie.tsx`, l'ordi et à deux, dernier choix déjà coché) ou l'écran de lancement en ligne (9 × 9 coché à chaque fois, pour garder une seule file fréquentée, décision #436 ; 13 et 19 s'y choisissent). Avant la toute première partie, aucune étape. Règle #429 mise à jour (décision de Florian, #613) : tous les modes se **joignent** en 1 toucher, ou 2 par « Plus » ; l'arrivée sur l'étape de lancement du mode (feuille de l'ordi ou d'à deux, écran en ligne, écran des défis) compte comme l'arrivée, et son bouton « Jouer » est le toucher suivant. Captures : `docs/ux/captures/jouer-613/`. #647 (décision F1) : la partie de découverte a quitté Jouer pour Apprendre (fin de « Les bases », et fin de l'introduction des règles) ; il reste quatre modes, qui tiennent tous en 1 toucher (le bouton et trois tuiles, L'ordi ou En ligne, Un ami, À deux) : la feuille « Plus » a disparu.
 
 Ce qu'on garde quand même : le libellé visible de chaque onglet et de chaque action (l'icône seule ne suffit pas), la phrase qui explique un mot du go là où il apparaît (atari, ko, komi, byo-yomi), et les états (à faire, fait, verrouillé) qui ne reposent jamais sur la couleur seule.
 
@@ -506,7 +507,7 @@ Ce qu'on garde quand même : les règles E et A ; les libellés visibles (une ca
 ### Cibles
 - **Référence** : 390 × 844 (iPhone 12 à 15). Les captures de revue et les maquettes Figma sont à cette taille.
 - **Plancher** : 320 × 568 (iPhone SE) sans défilement horizontal ; aucun débord à 195 px de large ni à 200 % de texte.
-- **Plafond** : le contenu s'arrête à 720 px de 600 à 1023 px de large, à 1080 px au-delà (#629, lot V7) ; Jouer et les activités restent à 560 px. Le reste de P8 (barre latérale, activités en deux zones, téléphone en paysage) vient avec les lots V de `docs/ux/visuel-responsive-2026-10.md`.
+- **Plafond** : le contenu s'arrête à 720 px de 600 à 1023 px de large, à 1080 px au-delà (#629, lot V7) ; Les activités restent à 560 px ; Jouer passe en deux zones en paysage (#648). La barre latérale est là à partir de 1024 px (#648, lot V8). Le reste de P8 (activités en deux zones, téléphone en paysage) vient avec les lots V de `docs/ux/visuel-responsive-2026-10.md`.
 
 ### Points de rupture réellement utilisés
 | Requête | Ce qui change |
@@ -515,8 +516,9 @@ Ce qu'on garde quand même : les règles E et A ; les libellés visibles (une ca
 | `max-height: 640px` / `700px` / `600px` | Petite hauteur : les pictogrammes et les détails des modes cèdent leur place, les noms restent. |
 | `min-height: 760px` | Écran haut : Mochi plus grand dans la leçon (88 ou 96 px) et bulle en `--fs-l`. |
 | `min-width: 600px` | Large : le contenu passe à 720 px, le texte courant à `--mesure` ; Go du jour en deux zones (goban, problème) ; le plateau de la partie et le fond de la fin ne débordent plus la gouttière. |
-| `min-width: 1024px` | Très large : le contenu passe à 1080 px ; carte de la prochaine leçon en deux zones ; bouton principal dans le flux plafonné à 560 px. |
+| `min-width: 1024px` | Très large : barre latérale à gauche (#648, `nav.css`), contenu à sa droite jusqu'à 1080 px ; carte de la prochaine leçon en deux zones ; bouton principal dans le flux plafonné à 560 px. Au zoom 200 %, 1440 px valent 720 : la barre du bas revient. |
 | `min-width: 600px` (grilles, #630) | Vignettes de Tous les problèmes en `minmax(7rem, 1fr)` ; Statistiques en deux colonnes. |
+| `orientation: landscape` et `min-width: 600px` | Jouer en deux zones (#648, lot V10) : goban à gauche (1024 × 768 : 520 px au lieu de 314 ; 1440 × 900 : 664 au lieu de 506 ; 844 × 390 : 244 au lieu de 168), bloc d'action à droite. |
 | `min-width: 1024px` (grilles, #630) | Profil : identité à gauche, menu à droite, badges sur toute la largeur ; Réglages : aperçu du goban fixe à gauche, groupes en deux colonnes. |
 | `@container (max-width: 5.4em)` sur un onglet | Libellé court (« Appr. », « Probl. ») au zoom 200 % ; le nom entier reste lu. |
 | `hover: hover` et `pointer: fine` | Survol, seulement à la souris. |

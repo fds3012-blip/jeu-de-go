@@ -19,6 +19,13 @@ describe('barre de niveau (n° 16)', () => {
     expect(html).toContain('niveau-rail');
   });
 
+  it('#647 (P1) : pas de « 0 / 100 XP » sans XP ; le compte apparaît avec le premier XP', () => {
+    vi.stubGlobal('localStorage', { getItem: () => null, setItem: () => {} });
+    expect(renderToStaticMarkup(<BarreNiveau />)).not.toMatch(/\d\s\/\s100\sXP/);
+    vi.stubGlobal('localStorage', { getItem: () => '40', setItem: () => {} });
+    expect(renderToStaticMarkup(<BarreNiveau />)).toMatch(/40\s\/\s100\sXP/);
+  });
+
   it('anime transform seulement, et rien avec les mouvements réduits', () => {
     const s = css('./niveau.css');
     expect(s).not.toMatch(/transition:\s*(width|left)/);

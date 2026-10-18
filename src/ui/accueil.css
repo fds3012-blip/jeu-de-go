@@ -19,7 +19,7 @@
 
 /* ---------- Mise en page : une colonne qui remplit l'écran au-dessus de la barre de navigation ---------- */
 .app.app-home { display: flex; flex-direction: column; min-height: calc(100dvh - env(safe-area-inset-top, 0px));
-  padding-bottom: calc(max(var(--nav-h), 3.75rem) + var(--space-3) + env(safe-area-inset-bottom, 0px)); } /* #121 : 3.75rem = 60 px en taille normale ; suit la barre du bas quand le texte est agrandi */
+  padding-bottom: calc(var(--nav-bas) + var(--space-3) + env(safe-area-inset-bottom, 0px)); } /* #121 : 3.75rem = 60 px en taille normale ; suit la barre du bas quand le texte est agrandi */
 .app-home .top { margin-bottom: var(--space-3); }
 .accueil { flex: 1; display: flex; flex-direction: column; container-type: inline-size; }
 
@@ -94,19 +94,12 @@
 .mode .mode-icone { height: 24px; }
 .mode-pierres .stone { width: 18px; height: 18px; }
 .mode-pierres .stone + .stone { margin-left: -5px; }
-.mode:active, .plus-mode:active { background: var(--surface-2); }
-@media (hover: hover) and (pointer: fine) { .mode:hover { background: var(--surface); } .plus-mode:hover { background: var(--surface-2); } }
+.mode:active { background: var(--surface-2); }
+@media (hover: hover) and (pointer: fine) { .mode:hover { background: var(--surface); } }
 /* Un ami attend ton coup : point d'or et « À toi de jouer », comme la tuile du défi. */
 .mode.a-jouer::after { content: ""; position: absolute; top: 8px; right: 8px; width: 9px; height: 9px; border-radius: 50%; background: var(--or); }
 /* Petite hauteur (iPhone SE) : les pictogrammes cèdent leur place, les noms restent. */
 @media (max-height: 640px) { .mode .mode-icone { display: none; } }
-/* Feuille « Plus » : une ligne par mode, nom et phrase. */
-.plus-liste { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
-.plus-mode { display: flex; align-items: center; gap: 14px; width: 100%; min-height: 64px; padding: 10px 14px; border: 0; border-radius: var(--radius);
-  background: var(--bg); color: var(--text); font: inherit; text-align: left; }
-.plus-mode .mode-icone { width: 44px; height: 44px; border-radius: 50%; background: var(--surface-2); }
-.plus-mode b { display: block; font-family: var(--font-titre); font-weight: var(--fw-bold); font-size: var(--fs-m); line-height: 1.2; }
-.plus-mode small { display: block; margin-top: 2px; color: var(--muted); font-size: var(--fs-s); line-height: 1.35; }
 
 /* ---------- Deux tuiles de nature différente ---------- */
 .tuiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 9.5rem), 1fr)); /* #121 : une colonne quand la place manque */ gap: 10px; margin-top: calc(var(--space-3) + var(--relief)); }
@@ -305,10 +298,10 @@
    qui suit la place restante, rapetisse. Le bandeau lui-même n'est pas touché (profil.css). Écrans bas : le bandeau
    couvre la barre du bas ; ailleurs, il se pose au-dessus d'elle. */
 html:has(.accord[open]) .app.app-home {
-  padding-bottom: calc(max(var(--nav-h), 3.75rem) + var(--space-2) + var(--accord-h, 160px) + var(--space-2) + env(safe-area-inset-bottom, 0px)); }
+  padding-bottom: calc(var(--nav-bas) + var(--space-2) + var(--accord-h, 160px) + var(--space-2) + env(safe-area-inset-bottom, 0px)); }
 @media (max-height: 640px) {
   html:has(.accord[open]) .app.app-home {
-    padding-bottom: calc(max(max(var(--nav-h), 3.75rem) + var(--space-3), var(--accord-h, 160px) + var(--space-2)) + env(safe-area-inset-bottom, 0px)); }
+    padding-bottom: calc(max(var(--nav-bas) + var(--space-3), var(--accord-h, 160px) + var(--space-2)) + env(safe-area-inset-bottom, 0px)); }
 }
 /* #509 (L4, n° 12) : en 320 × 568 et en 375 × 667, le goban gardait son plancher (168 ou 200 px) et « Je sais déjà
    jouer » passait sous le bandeau (on n'en voyait que le soulignement). Tant que le bandeau est ouvert, le plancher du
@@ -316,3 +309,19 @@ html:has(.accord[open]) .app.app-home {
    change (le goban a déjà plus que son plancher). Il retrouve sa taille dès le choix fait. */
 html:has(.accord[open]) .scene { min-height: 120px; }
 .tuiles-lentes-erreur { grid-column: 1 / -1; margin: 0; } /* #498 : annulation hors ligne */
+
+/* ---------- P8 (#648, lot V10) : Jouer en deux zones, sur grand écran et en paysage ---------- */
+/* Le goban à gauche, à la hauteur de l'écran ; le bloc d'action (bouton, modes, tuiles du jour) à droite, aligné sur le
+   haut du goban. En portrait (téléphone, tablette), la colonne ne change pas : le goban y est déjà plus grand. */
+.app.app-home { max-width: var(--largeur-max); }
+@media (orientation: landscape) and (min-width: 600px) {
+  .app.app-home { max-width: var(--largeur-large); }
+  /* Hauteur du goban : l'écran, moins l'en-tête (4.625rem : marge, marque, marge) et la barre du bas quand elle y est.
+     Sa colonne n'est jamais plus large que lui : goban et panneau restent côte à côte, centrés. */
+  .accueil { --scene-h: calc(100dvh - var(--zone-haut) - 4.625rem - var(--nav-bas) - var(--space-3) - env(safe-area-inset-bottom, 0px));
+    display: grid; grid-template: repeat(10, auto) 1fr / minmax(0, var(--scene-h)) minmax(18rem, 22.5rem); justify-content: center; column-gap: var(--space-6); }
+  .accueil > * { grid-column: 2; }
+  .accueil > .scene { grid-column: 1; grid-row: 1 / -1; max-height: var(--scene-h); }
+  .accueil > .scene + * { margin-top: 0; }
+  .accueil .tuiles { grid-template-columns: 1fr; }
+}

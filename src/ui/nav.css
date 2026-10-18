@@ -5,7 +5,7 @@
 
 /* ---------- Barre de navigation ---------- */
 /* #121 (WCAG 2.4.11) : un élément amené à l’écran (focus clavier, zoom 200 %) s’arrête au-dessus de la barre du bas. */
-html:has(.nav) { scroll-padding-bottom: calc(max(var(--nav-h), 3.75rem) + env(safe-area-inset-bottom, 0px)); }
+html:has(.nav) { scroll-padding-bottom: calc(var(--nav-bas) + env(safe-area-inset-bottom, 0px)); }
 .nav { position: fixed; left: 0; right: 0; bottom: 0; display: flex; justify-content: center; background: var(--barre); border-top: 1px solid var(--line);
   padding-bottom: env(safe-area-inset-bottom, 0px); z-index: 20; }
 .nav .onglet { flex: 1; max-width: 180px; min-width: var(--cible-min); min-height: var(--nav-h); border: 0; background: none; color: var(--muted);
@@ -31,6 +31,18 @@ html:has(.nav) { scroll-padding-bottom: calc(max(var(--nav-h), 3.75rem) + env(sa
 .onglet-problemes { --onglet: var(--onglet-problemes); }
 .onglet-profil { --onglet: var(--onglet-profil); }
 .onglet[aria-current="page"] .onglet-point { opacity: 1; background: var(--onglet); }
+/* P8 (#648, lot V8) : à partir de 1024 px, la même barre passe à gauche, onglets en colonne, libellé sous l'icône.
+   Le contenu se place à droite ; ce qui se posait au-dessus de la barre (bouton fixe, bandeaux) descend en bas
+   (--nav-bas à 0) et se centre dans le contenu (--nav-gauche). Au zoom 200 %, 1440 px font 720 : la barre du bas revient.
+   Sans barre (partie, écrans plein écran), rien ne bouge. */
+@media (min-width: 1024px) {
+  :root:has(.nav) { --nav-bas: 0px; --nav-gauche: var(--rail-l); }
+  body { padding-left: var(--nav-gauche); }
+  .nav { top: 0; right: auto; width: var(--rail-l); flex-direction: column; justify-content: flex-start; gap: var(--space-2);
+    border-top: 0; border-right: 1px solid var(--line); padding: calc(var(--zone-haut) + var(--space-4)) 0 0; }
+  .nav .onglet { flex: none; min-height: 72px; }
+  @media (hover: hover) { .nav .onglet:hover { color: var(--text); } }
+}
 /* Pastille « quelque chose t'attend » (#367) : point jade sur l'icône, liseré de la couleur de la barre.
    Jade foncé en clair (--accent-trait) : contraste non textuel de 3:1 au moins sur la barre, dans les deux thèmes. */
 .onglet-icone { position: relative; display: block; flex: none; }

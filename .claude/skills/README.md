@@ -105,3 +105,17 @@ Copiées telles quelles, sauf :
 | `taste-skill` v2 | idem | MIT | **Pas installée pour l'app.** Dossier de 1,8 Mo (photos, polices, scripts) pensé pour les sites vitrines primés ; ses règles maison (pas de palette crème, pas de pastilles…) contredisent Encre & Jade. À reprendre pour un futur site vitrine. La version installée reste en place |
 | `web-design-guidelines` | [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills) | MIT | Déjà installée (27/09) |
 | `awesome-design-md` | [VoltAgent/awesome-design-md](https://github.com/VoltAgent/awesome-design-md) | MIT | **Idée reprise, fichiers non copiés.** Ses fiches décrivent le style d'autres marques ; on ne copie pas une autre marque. On écrit à la place notre propre `DESIGN.md` à la racine, dans le même format, à partir d'Encre & Jade : une seule fiche que tout agent lit avant de toucher un écran |
+
+## Architecture d'information, 18/10 (#650, demande de Florian)
+
+Copiées telles quelles depuis [Owl-Listener/designer-skills](https://github.com/Owl-Listener/designer-skills) (MIT, commit `9a6930c`), avec la `LICENSE` dans chaque dossier. Texte seul : ni script ni réseau.
+
+| Skill | Usage pour Mochi Go |
+|---|---|
+| `information-architecture` | Carte des écrans, rubriques, libellés, profondeur : à lire avant de créer ou déplacer un écran |
+| `navigation-patterns` | Choisir le motif : onglets, sommaire (hub) puis détail, hiérarchie, feuille |
+| `user-flow-diagram` | Tracer un parcours écran par écran, avec ses embranchements et ses sorties |
+| `card-sort-analysis` | Regrouper les rubriques d'après les tris de cartes des joueurs (à mener avec la communauté) |
+| `hicks-law`, `millers-law`, `jakobs-law`, `serial-position-effect`, `von-restorff-effect` | Peu de choix à la fois, regroupés ; les conventions des apps connues (chess.com) ; le plus important en premier ou en dernier ; une seule chose qui ressort |
+
+Les règles du projet priment : DESIGN.md (E, A, P), docs/ux/architecture-pages-2026-10.md.

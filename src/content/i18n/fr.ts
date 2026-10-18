@@ -82,7 +82,6 @@ export const fr = {
   'accueil.kyu': 'Le kyu, c’est le grade au go : plus le nombre est petit, plus ton adversaire est fort.',
   'accueil.deux': 'Jouer à deux sur ce téléphone',
   // Partie guidée (#79) : Mochi règle sa force tous les 10 coups pour garder la partie serrée.
-  'accueil.decouverte': 'Partie de découverte avec Mochi',
   // Modes de jeu de l'accueil (#429) : une rangée de tuiles sous le bouton, « Plus » pour le reste.
   'accueil.cta.enLigne': 'Jouer en ligne',
   'accueil.cta.enLigneNom': 'Jouer en ligne, partie classée',
@@ -94,14 +93,8 @@ export const fr = {
   'mode.ordi': 'L’ordi',
   'mode.ami': 'Un ami',
   'mode.deux': 'À deux',
-  'mode.deux.texte': 'Chacun son tour, sur le même écran.',
   // #604 : nom court de la tuile (le nom entier, « Partie de découverte avec Mochi », est son nom accessible et la ligne de
   // « Plus ») ; en entier, la tuile passait sur deux lignes à 390 px, à côté de « À deux » sur une. La tuile part avec F1.
-  'mode.decouverte': 'Découverte',
-  'mode.decouverte.texte': 'Une vraie partie où Mochi t’explique chaque idée du go.',
-  'mode.plus': 'Plus',
-  'mode.plus.aria': 'Plus de façons de jouer : à deux, partie de découverte',
-  'mode.plus.titre': 'Autres façons de jouer',
   'guidee.bulle': 'Partie guidée : Mochi règle sa force pour que la partie reste serrée. Tu as Noir.',
   'guidee.fin': 'Partie guidée : elle ne compte pas dans ton bilan.',
   'guidee.rejouer': 'Rejouer contre Mochi',

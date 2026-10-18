@@ -89,7 +89,9 @@ export function BilanSemaine({ semaine, db, onFermer, onProfil }: { semaine: Sem
     // #592 : « vue » = lisible presque entière (90 %), au-dessus de la barre du bas fixe. Avec l'accueil épuré (tuiles
     // plus basses), la carte remontait à moitié au-dessus de la barre au premier affichage : marquée vue avec seulement
     // son titre lisible, elle ne revenait plus. Plus haute que la place visible (zoom 200 %), 90 % de cette place suffit.
-    const barre = Math.ceil(document.querySelector('nav.nav')?.getBoundingClientRect().height ?? 0);
+    // #648 : la barre latérale (1024 px et plus) ne couvre pas le bas de l'écran.
+    const nav = document.querySelector('nav.nav')?.getBoundingClientRect();
+    const barre = nav && nav.width > nav.height ? Math.ceil(nav.height) : 0;
     const io = new IntersectionObserver(([e]) => {
       const lisible = Math.min(e?.boundingClientRect.height ?? 0, e?.rootBounds?.height ?? Infinity) * 0.9;
       if (e?.isIntersecting && e.intersectionRect.height >= lisible) { setVue(true); io.disconnect(); }
