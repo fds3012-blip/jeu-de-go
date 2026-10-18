@@ -1,0 +1,87 @@
+/* « Compter une photo » (#655). Chargée avec l'écran (src/app/PhotoScore.tsx), hors du CSS initial. Une action en relief
+   par étape (le bouton fixé en bas), le reste à plat. Rôles de tokens.css seulement. */
+.photo-score { padding-bottom: calc(var(--cible-cta) + var(--space-8)); }
+.ps-texte { margin: var(--space-3) 2px 0; color: var(--text); font-size: var(--fs-base); line-height: var(--lh-base); display: flex; align-items: center; gap: var(--space-2); }
+.ps-aide { margin: var(--space-2) 2px 0; color: var(--muted); font-size: var(--fs-s); line-height: 1.45; }
+.ps-erreur { margin: var(--space-2) 2px 0; color: var(--danger-texte); font-weight: var(--fw-bold); font-size: var(--fs-s); line-height: 1.4; }
+.ps-attente { display: flex; align-items: center; gap: var(--space-2); margin: var(--space-3) 2px 0; color: var(--muted); font-size: var(--fs-s); }
+.ps-lien { display: block; margin: var(--space-2) auto 0; }
+.ps-galerie { display: flex; align-items: center; justify-content: center; width: fit-content; margin: var(--space-3) auto 0; cursor: pointer; }
+.ps-galerie:focus-within, .ps-cta-fichier:focus-within { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+/* Le bouton principal de la première étape est un libellé de champ fichier : même allure que .cta. */
+.ps-cta-fichier { display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.ps-cta-fichier[aria-disabled="true"] { pointer-events: none; }
+
+/* Viseur de la première étape : le goban d'exemple entre quatre coins de cadrage. */
+.ps-visee { position: relative; width: min(220px, 60%); margin: var(--space-2) auto var(--space-1); padding: 14px; }
+.ps-visee::before, .ps-visee::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+  background:
+    linear-gradient(var(--accent-trait), var(--accent-trait)) top left / 22px 3px no-repeat,
+    linear-gradient(var(--accent-trait), var(--accent-trait)) top left / 3px 22px no-repeat,
+    linear-gradient(var(--accent-trait), var(--accent-trait)) top right / 22px 3px no-repeat,
+    linear-gradient(var(--accent-trait), var(--accent-trait)) top right / 3px 22px no-repeat; }
+.ps-visee::after { transform: scaleY(-1); }
+
+/* Photo et coins. La photo tient en largeur et en hauteur ; la grille projetée se pose dessus. */
+.ps-tailles { margin: 0 0 var(--space-3); }
+.ps-tailles button { font-variant-numeric: tabular-nums; }
+.ps-photo { position: relative; width: min(100%, calc(52dvh * var(--ps-ratio, 1.33))); margin: 0 auto; border-radius: var(--radius-s);
+  background: var(--surface); touch-action: none; user-select: none; -webkit-user-select: none; }
+.ps-toile { display: block; width: 100%; height: 100%; border-radius: var(--radius-s); }
+.ps-grille { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.ps-grille line, .ps-cadre { stroke: var(--accent); stroke-width: 1.5px; vector-effect: non-scaling-stroke; fill: none; }
+.ps-grille line { stroke-opacity: .8; }
+.ps-cadre { stroke-width: 2.5px; }
+/* Coin : cible de 44 px ; le repère visible est un anneau jade avec un point au centre. */
+.ps-coin { position: absolute; width: var(--cible-min); height: var(--cible-min); margin: calc(var(--cible-min) / -2) 0 0 calc(var(--cible-min) / -2);
+  padding: 0; border: 0; border-radius: 50%; background: transparent; touch-action: none; cursor: grab; display: grid; place-items: center; }
+.ps-coin span { width: 26px; height: 26px; border-radius: 50%; border: 3px solid var(--accent); background: color-mix(in srgb, var(--bg) 35%, transparent);
+  box-shadow: 0 0 0 1.5px var(--bg); position: relative; }
+.ps-coin span::after { content: ""; position: absolute; left: 50%; top: 50%; width: 4px; height: 4px; margin: -2px 0 0 -2px; border-radius: 50%; background: var(--accent); }
+.ps-coin:active { cursor: grabbing; }
+.ps-coin:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.ps-coin:disabled { cursor: default; }
+.ps-loupe { position: absolute; top: var(--space-2); left: var(--space-2); width: 112px; height: 112px; border-radius: 50%; pointer-events: none;
+  border: 3px solid var(--accent); box-shadow: 0 6px 18px -8px rgba(0, 0, 0, .55); background: var(--surface); }
+.ps-loupe.a-droite { left: auto; right: var(--space-2); }
+
+/* Plateau lu : il prend la largeur, comme en partie. */
+.ps-plateau { margin: 0 auto; width: min(100%, 52dvh); }
+.ps-plateau-score { width: min(100%, 40dvh); }
+
+/* Règle, komi, prisonniers. */
+.ps-regles { margin: 0 0 var(--space-1); }
+.ps-compteur { display: grid; grid-template-columns: 1fr var(--cible-min) 4.5rem var(--cible-min); align-items: center; gap: var(--space-2); margin-top: var(--space-4); }
+.ps-compteur-libelle { display: flex; align-items: center; gap: var(--space-2); font-weight: var(--fw-bold); min-width: 0; }
+.ps-compteur-libelle .stone { width: 20px; height: 20px; }
+.ps-pas { width: var(--cible-min); height: var(--cible-min); border: 0; border-radius: var(--radius-s); background: var(--surface); color: var(--text);
+  font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: var(--fs-xl); line-height: 1; }
+.ps-pas:active { background: var(--surface-2); }
+.ps-pas:disabled { color: var(--muted); }
+.ps-pas:focus-visible, .ps-valeur:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.ps-valeur { display: block; box-sizing: border-box; width: 100%; min-height: var(--cible-min); padding: 0 var(--space-1); border: 1.5px solid var(--line);
+  border-radius: var(--radius-s); background: var(--surface); color: var(--text); text-align: center; line-height: calc(var(--cible-min) - 3px);
+  font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: var(--fs-l); font-variant-numeric: tabular-nums; -moz-appearance: textfield; appearance: textfield; }
+.ps-valeur::-webkit-inner-spin-button, .ps-valeur::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.ps-prisonniers { border: 0; margin: var(--space-4) 0 0; padding: 0; min-width: 0; }
+.ps-prisonniers legend { padding: 0; font-family: var(--font-titre); font-weight: 700; font-size: var(--fs-l); }
+.ps-prisonniers .ps-compteur { margin-top: var(--space-2); }
+
+/* Score expliqué : la phrase, puis chaque terme, une colonne par camp. */
+.ps-resultat { margin: var(--space-3) 0 var(--space-2); text-align: center; font-family: var(--font-titre); font-weight: var(--fw-titre);
+  font-size: var(--fs-2xl); line-height: var(--lh-titre); letter-spacing: var(--tracking-titre); }
+.ps-detail { width: 100%; border-collapse: separate; border-spacing: 0; background: var(--surface); border-radius: var(--radius); overflow: hidden;
+  font-variant-numeric: tabular-nums; }
+.ps-detail th, .ps-detail td { padding: var(--space-2) var(--space-3); text-align: right; font-size: var(--fs-base); }
+.ps-detail thead th { font-weight: var(--fw-bold); }
+.ps-detail thead th .stone { width: 14px; height: 14px; display: inline-block; vertical-align: -2px; margin-right: 6px; }
+.ps-detail tbody th, .ps-detail tfoot th { text-align: left; font-weight: var(--fw-regular); color: var(--muted); }
+.ps-detail tfoot th, .ps-detail tfoot td { border-top: 1.5px solid var(--line); font-weight: var(--fw-bold); color: var(--text); }
+.ps-notes { margin: var(--space-3) 2px 0; padding: 0; list-style: none; color: var(--muted); font-size: var(--fs-s); line-height: 1.45; }
+.ps-notes li + li { margin-top: var(--space-1); }
+
+@media (max-width: 359px) {
+  .ps-compteur { grid-template-columns: 1fr var(--cible-min) 3.5rem var(--cible-min); gap: var(--space-1); }
+  .ps-resultat { font-size: var(--fs-xl); }
+}

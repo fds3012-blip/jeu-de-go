@@ -54,6 +54,7 @@ import { Semaine } from './Semaine';
 import { etatSemaine, nombreAtteints } from './semaine';
 import { te } from '../content/i18n/emulation';
 import { tp } from '../content/i18n/profilPublic';
+import { tph } from '../content/i18n/photoScore';
 import type { DepuisProfil } from './ProfilPublic';
 import '../ui/emulation.css';
 import { FeuilleSignaler } from '../ui/Securite';
@@ -73,6 +74,8 @@ const MesStatistiques = lazy(() => import('./Statistiques'));
 const Etude = lazy(() => import('./Etude'));
 // #560 : « Profil de {pseudo} », chargé à la demande.
 const ProfilPublic = lazy(() => import('./ProfilPublic'));
+// #655 : « Compter une photo » (photo d'un vrai goban, lue sur l'appareil), chargé à la demande avec ses textes.
+const PhotoScore = lazy(() => import('./PhotoScore'));
 
 const SOLVED_KEY = 'go.problemes.v1';
 
@@ -103,7 +106,9 @@ export type VueProfil = 'menu' | 'reglages' | 'installer' | 'rappel' | 'compte' 
   // #530 : « Mes données » (export) et « Mentions légales », ouvertes depuis Conditions et confidentialité ou Mon compte.
   | 'donnees' | 'mentions'
   // #560 : « Profil de {pseudo} » (le joueur regardé est dans `joueur`).
-  | 'joueur';
+  | 'joueur'
+  // #655 : « Compter une photo ».
+  | 'photo';
 
 /** #560 : profils publics ouverts, le dernier au-dessus ; `retour` : la vue où « Retour » ramène quand la pile est vide. */
 export interface JoueurVu { pseudos: string[]; depuis: DepuisProfil; retour: VueProfil }
@@ -257,6 +262,14 @@ export function Profil({ vue, onVue, settings, set, profil, serie, record = 0, p
       </SousVue>
     );
   }
+  // #655 : le score d'un vrai goban pris en photo. Écran plein (sa propre barre « ‹ »), chargé à la demande.
+  if (vue === 'photo') {
+    return (
+      <Suspense fallback={<p className="muted" aria-busy="true">…</p>}>
+        <PhotoScore onRetour={retour} />
+      </Suspense>
+    );
+  }
   if (vue === 'compte') return <SousVue id="compte-titre" titre={t('profil.compte')} onRetour={retour}><Account onMesDonnees={() => ouvrir('donnees')} /></SousVue>;
   if (vue === 'reglages') return <SousVue id="reglages-titre" titre={t('profil.reglages')} onRetour={retour}><Reglages settings={settings} set={set} /></SousVue>;
   if (vue === 'rappel') {
@@ -369,6 +382,8 @@ function Menu({ onVue, settings, profil, serie, record = 0, parcours, placement,
       {/* #571 (loi de Hick) : dix lignes de même poids, rangées en deux blocs séparés : ta progression (au-dessus), puis
           l'app et ton compte. Sans titre visible : le Profil tient toujours sans défiler en 390 × 844 ; le nom est lu. */}
       <div className="lignes profil-groupe" role="group" aria-label={tk('profil.groupe.app')}>
+        {/* #655 : entrée provisoire, en attendant le sommaire « Plus » du Profil (#654) qui l'accueillera. */}
+        <LigneLien icone={<IconeReglage id="photo" />} libelle={tph('ligne')} onClick={() => onVue('photo')} />
         {/* #36 : rappel du Go du jour, dès que le rappel est configuré (clé publique VAPID). */}
         {clePubliqueVapid() !== '' && <LigneLien icone={<IconeReglage id="rappel" />} libelle={t('profil.rappel')} valeur={resumeRappel()} onClick={() => onVue('rappel')} />}
         {proposerInstallation && <LigneLien icone={<IconeReglage id="installer" />} libelle={t('profil.installer')} onClick={() => onVue('installer')} />}

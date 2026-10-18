@@ -22,7 +22,7 @@ const INVENTAIRE: Record<Ecran, 0> = {
   intro_regles: 0, partie_decouverte: 0, partie_guidee: 0, lecon: 0, serie_lecon: 0, theme: 0, ouvertures: 0, ouverture: 0,
   probleme: 0, course: 0, series_theme: 0, serie_theme: 0, tous_problemes: 0,
   mes_parties: 0, importer: 0, etude: 0, amis: 0, joueur: 0, cote: 0, semaine: 0, stats: 0, rappel: 0, installer: 0, reglages: 0,
-  compte: 0, donnees: 0, mentions: 0, conditions: 0,
+  compte: 0, donnees: 0, mentions: 0, conditions: 0, photo: 0,
   creer_compte: 0, pseudo: 0, accord_conditions: 0, aide: 0, feuille_partager: 0, feuille_ecrire: 0, feuille_partage_partie: 0,
   repli_hors_ligne: 0, consentement: 0,
 };
@@ -36,7 +36,7 @@ describe('navigation : inventaire des écrans (#605)', () => {
 
   it('chaque écran a une seule maison, ou se pose par-dessus (A2)', () => {
     const maisons = Object.fromEntries(TOUS.map(e => [e, ongletDe(e)]));
-    expect(TOUS).toHaveLength(57);
+    expect(TOUS).toHaveLength(58); // #655 : « Compter une photo » (photo, maison Profil).
     // Identifiants stables, aussi valeurs de la propriété `ecran` du suivi : minuscules et tirets bas.
     for (const e of TOUS) expect(e).toMatch(/^[a-z]+(_[a-z]+)*$/);
     expect(maisons).toMatchObject({
@@ -44,7 +44,7 @@ describe('navigation : inventaire des écrans (#605)', () => {
       feuille_changer: 'jouer', partie_ordi: 'jouer', placement: 'jouer', seance_revisions: 'jouer', partie_partagee: 'jouer',
       partie_guidee: 'apprendre', partie_decouverte: 'apprendre', intro_regles: 'apprendre', lecon: 'apprendre', ouverture: 'apprendre',
       probleme: 'problemes', course: 'problemes', tous_problemes: 'problemes',
-      reglages: 'profil', joueur: 'profil', mentions: 'profil', conditions: 'profil',
+      reglages: 'profil', joueur: 'profil', mentions: 'profil', conditions: 'profil', photo: 'profil',
       creer_compte: null, pseudo: null, accord_conditions: null, aide: null, consentement: null, repli_hors_ligne: null,
     });
   });

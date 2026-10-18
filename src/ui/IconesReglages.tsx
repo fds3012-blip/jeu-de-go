@@ -13,7 +13,9 @@ export type IconeReglageId =
   // #369 : « Ta semaine ».
   | 'semaine'
   // #538 : « L'IA sur ton téléphone ».
-  | 'ia';
+  | 'ia'
+  // #655 : « Compter une photo ».
+  | 'photo';
 
 const TRACES: Record<IconeReglageId, ReactNode> = {
   // Enveloppe : « Nous écrire » (#363).
@@ -47,6 +49,8 @@ const TRACES: Record<IconeReglageId, ReactNode> = {
   // Une page de calendrier cochée : tes objectifs de la semaine (#369).
   semaine: <><rect x="3.5" y="5" width="17" height="15.5" rx="2.5" /><path d="M3.5 9.5h17M8 3v4M16 3v4" /><path d="m9 15 2.2 2.2L15.5 13" /></>,
   aide: <><path d="M5 5.5h14v10H11l-4.5 3.5V15.5H5Z" /><circle cx="9.5" cy="10.5" r="1" className="ir-plein" /><circle cx="14.5" cy="10.5" r="1" className="ir-plein" /></>,  // Joueur de club (#365, #368, #372).
+  // Un appareil photo dont l'objectif est une pierre : compter une photo du goban (#655).
+  photo: <><path d="M3.5 8.5h4L9 6h6l1.5 2.5h4v11h-17Z" /><circle cx="12" cy="13.8" r="3.4" className="ir-plein" /></>,
   // Trois barres qui montent : tes statistiques.
   stats: <><path d="M5 20V13M12 20V8M19 20V4" /><path d="M3.5 20.5h17" /></>,
   // Une pierre et un crayon sur un coin de goban : étudier une position.
