@@ -724,6 +724,47 @@ export async function meilleurCoup(pos: Position, komi: number): Promise<Conseil
 }
 
 /**
+ * #673 : analyse d'une erreur de la revue, pour la montrer et l'expliquer (src/go/explication.ts). Deux recherches de
+ * `VISITES_ERREUR` visites, KataGo seulement (jamais le moteur simple ; chargé s'il l'est déjà ou si son réseau est en
+ * cache, comme `meilleurCoup`) :
+ * - `avant` (position avant l'erreur) : le meilleur coup, son avance pour le joueur au trait, ses visites, sa variante
+ *   principale et la propriété après lui ;
+ * - `apres` (position après l'erreur) : la réponse de l'adversaire (variante principale, visites) et la propriété.
+ * La propriété va de -1 (Blanc) à +1 (Noir). Les mêmes réglages servent aux analyses figées des tests
+ * (outils/explicationsKataGo.ts).
+ */
+export const VISITES_ERREUR = 64;
+export type AnalyseErreur =
+  | { katago: false }
+  | {
+    katago: true; move: number | null; lead: number; visites: number; pv?: number[]; ownBon?: Float32Array;
+    riposte?: { pv?: number[]; visites: number }; ownJoue?: Float32Array;
+  };
+export async function analyseErreur(avant: Position, apres: Position, komi: number, regles?: Rules): Promise<AnalyseErreur> {
+  let k = kataGoRevue() ?? null;
+  if ((!k || k.info.state !== 'pret') && (await reseauEnCache())) {
+    k = getKataGo();
+    try { await k?.start?.(); } catch { /* KataGo indisponible */ }
+  }
+  if (!k || k.info.state !== 'pret') return { katago: false };
+  try {
+    const opts = { komi, visits: VISITES_ERREUR, timeMs: VISITES_ERREUR * 40, maxMoves: 6, ...(regles ? { regles } : {}) };
+    const a = await analyserGarde(k, avant, opts);
+    const b = a.moves[0];
+    if (!b) return { katago: true, move: null, lead: a.lead, visites: 0 };
+    // Sans la seconde recherche, le bon coup reste montré ; l'explication se contente de ce qui est sûr.
+    const r = await analyserGarde(k, apres, opts).catch(() => null);
+    const top = r?.moves[0];
+    return {
+      katago: true, move: b.move, lead: b.lead, visites: b.visits,
+      ...(b.pv ? { pv: b.pv } : {}), ...(a.ownershipApres ? { ownBon: a.ownershipApres } : {}),
+      ...(top ? { riposte: { visites: top.visits, ...(top.pv ? { pv: top.pv } : {}) } } : {}),
+      ...(r?.ownership ? { ownJoue: r.ownership } : {}),
+    };
+  } catch { return { katago: false }; }
+}
+
+/**
  * Analyse d'une position posée à la main (#372, « Étudier une position »). KataGo seulement, jamais le moteur simple :
  * ses conseils sont trop peu sûrs. KataGo est démarré s'il est en mémoire ou si son réseau est en cache ; sinon
  * `katago: false`, et l'écran propose le téléchargement (`preparerKataGo`). Une seule recherche par appel (batterie).
