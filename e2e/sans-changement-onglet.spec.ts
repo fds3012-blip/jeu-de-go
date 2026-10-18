@@ -221,6 +221,8 @@ test.describe('9. une leçon ouverte hors d’Apprendre se pose par-dessus et y 
     await allume(page, 'Jouer');
     await fleche(page).click();
     await expect(page.locator('main.app-home .tuile-lecon')).toBeVisible();
+    // Le focus revient sur la tuile qui a ouvert la leçon.
+    await expect(page.locator('.tuile-lecon')).toBeFocused();
     await allume(page, 'Jouer');
     expect(erreurs).toEqual([]);
     await ctx.close();

@@ -203,9 +203,9 @@ type Reprise = { quoi: 'ordi'; contre: OpponentId } | { quoi: 'deux' } | { quoi:
 /**
  * #640 (N4, A3, A6, A10) : écran posé par-dessus un autre onglet. `onglet` : celui d'où l'on vient (il reste allumé dans
  * la barre du bas) ; `maison` : l'onglet où vit l'écran posé ; `el` : l'écran d'origine, gardé monté et caché, retrouvé
- * tel quel à la sortie (défilement `y` compris) ; `rendre` : ce qu'il faut remettre pour le revoir (écran de compte).
+ * tel quel à la sortie (défilement `y` et focus `f` compris) ; `rendre` : ce qu'il faut remettre pour le revoir (écran de compte).
  */
-interface Pose { onglet: Tab; maison: Tab; el: ReactNode; y: number; rendre?: () => void }
+interface Pose { onglet: Tab; maison: Tab; el: ReactNode; y: number; f: Element | null; rendre?: () => void }
 
 /** Réglages de la file d'attente du direct (#360, #436). */
 interface DemandeDirect { taille: 9 | 13 | 19; cadence: 'rapide' | 'normale' | 'lente'; regles: 'japanese' | 'chinese' }
@@ -221,7 +221,7 @@ export function App() {
   // #640 : écrans posés par-dessus (le dernier en haut) ; l'écran affiché, pour le garder sous le suivant.
   const [poses, setPoses] = useState<Pose[]>([]);
   const ecran = useRef<ReactNode>(null);
-  const defiler = useRef<number | null>(null);
+  const defiler = useRef<Pose | null>(null);
   const [duJourOuvert, setDuJourOuvert] = useState(false);
   // #285 : après le Go du jour ouvert par le lien, une seule action pour qui n'a jamais joué : la leçon 1.
   const [versLecon1, setVersLecon1] = useState(NOUVEAU_PAR_LIEN);
@@ -531,7 +531,7 @@ export function App() {
   function par(maison: Tab, rendre?: () => void) {
     if (maison === tab && !rendre) return;
     if (poses.some(p => p.onglet === maison)) { go(maison); return; }
-    setPoses([...poses, { onglet: tab, maison, el: ecran.current, y: window.scrollY, rendre }]); setTab(maison);
+    setPoses([...poses, { onglet: tab, maison, el: ecran.current, y: window.scrollY, f: document.activeElement, rendre }]); setTab(maison);
   }
 
   /** « Conditions et confidentialité » par-dessus l'écran (compte, accord, consentement) ; « ‹ » y ramène. */
@@ -1158,7 +1158,7 @@ export function App() {
   // l'écran d'origine, et son onglet. Pendant le rendu, pour que la racine ne s'affiche pas une image. Un changement
   // d'onglet venu d'ailleurs (barre du bas, lien) défait la pile.
   const haut = poses[poses.length - 1];
-  const fermerPose = (p: Pose) => { setPoses(poses.slice(0, -1)); setTab(p.onglet); p.rendre?.(); defiler.current = p.y; };
+  const fermerPose = (p: Pose) => { setPoses(poses.slice(0, -1)); setTab(p.onglet); p.rendre?.(); defiler.current = p; };
   if (haut && tab !== haut.maison) setPoses([]);
   else if (haut && (tab === 'jouer' ? accueilVisible : tab === 'apprendre' ? !lesson && !serie3 : vueProfil === 'menu' || vueProfil === 'parties')) fermerPose(haut);
   const ongletVu = poses[0]?.onglet ?? tab;
@@ -1193,7 +1193,8 @@ export function App() {
   }, [accueilVisible, revisionsDues, home.nouveau]);
   useEffect(() => { document.title = titreDocument; }, [titreDocument]);
   // #640 (A6) : l'écran d'origine retrouvé, à l'endroit où on l'avait laissé.
-  useLayoutEffect(() => { if (defiler.current !== null) window.scrollTo(0, defiler.current); defiler.current = null; });
+  // Le focus revient sur ce qui a ouvert l'écran posé (clavier, lecteur d'écran).
+  useLayoutEffect(() => { const p = defiler.current; defiler.current = null; if (p) { window.scrollTo(0, p.y); (p.f as HTMLElement | null)?.focus?.({ preventScroll: true }); } });
   // #606 (N1, A7) : le retour du système fait ce que fait « ‹ » (src/app/retourSysteme.ts, hors du JS initial).
   const lectureRetour = useRef<Branchement>(null!);
   lectureRetour.current = {
