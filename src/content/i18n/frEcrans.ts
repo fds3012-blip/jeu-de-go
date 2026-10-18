@@ -1424,7 +1424,8 @@ export const frEcrans = {
   'intro.terminer': 'Terminer',
   'intro.fin.titre': 'Tu connais les règles !',
   'intro.fin.texte': 'Maintenant, une vraie partie avec Mochi : il t’aide à chaque coup.',
-  'intro.fin.jouer': 'Jouer avec Mochi',
+  // #677 (A9) : le bouton dit ce qu'il ouvre, comme en version express ; « Jouer avec Mochi » nomme l'entrée d'Apprendre.
+  'intro.fin.jouer': 'Partie de découverte avec Mochi',
   'intro.fin.expressTitre': 'Les règles, c’est bon !',
   'intro.fin.expressTexte': 'Une partie de découverte avec Mochi, ou tout de suite contre {nom} ?',
   'intro.fin.decouverte': 'Partie de découverte avec Mochi',

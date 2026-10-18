@@ -241,7 +241,8 @@ test.describe('les trois réponses', () => {
     await expect(page.getByRole('heading', { name: 'Tu connais les règles !' })).toBeFocused();
     await expect(page.locator('.cta')).toHaveCount(1);
     await capture(page, 'intro-fin-clair');
-    await page.getByRole('button', { name: 'Jouer avec Mochi' }).click();
+    // #677 (A9) : le bouton dit ce qu'il ouvre ; « Jouer avec Mochi » reste le nom de l'entrée d'Apprendre.
+    await page.getByRole('button', { name: 'Partie de découverte avec Mochi', exact: true }).click();
     await surMoment(page, SCENARIO[0].id);
     expect(await page.title()).toContain('Partie de découverte');
     await capture(page, 'decouverte-apres-intro-clair');

@@ -46,6 +46,9 @@ describe('un nom par chose (#604, A9)', () => {
       const nom = LANGUES[l]['titre.decouverte'] as string;
       expect(LANGUES[l]['apprendre.decouverte']).toBe(nom);
       expect((LANGUES[l]['intro.fin.decouverte'] as string).startsWith(nom)).toBe(true);
+      // #677 : la version complète aussi ; elle disait « Jouer avec Mochi », le nom de l'entrée d'Apprendre.
+      expect((LANGUES[l]['intro.fin.jouer'] as string).startsWith(nom), 'intro.fin.jouer').toBe(true);
+      expect(LANGUES[l]['intro.fin.jouer']).not.toBe(LANGUES[l]['apprendre.avecMochi']);
     }
   });
 
