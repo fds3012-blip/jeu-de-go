@@ -20,7 +20,7 @@ const NOMS: [string, string, string[]][] = [
   ['Révisions', 'titre.revisions', ['accueil.revisions.titre', 'seance.titre', 'revision.titre']],
   ['Revoir la partie', 'direct.revoir', ['fin.revoir']],
   ['Statistiques', 'stats.titre', ['stats.ligne']],
-  ['Ton niveau de départ', 'titre.placement', ['placement.titre', 'placement.profilFaire', 'placement.profilRefaire', 'cote.lignePlacement']],
+  ['Ton niveau de départ', 'titre.placement', ['placement.titre', 'placement.profilFaire']],
   // La tuile de l'accueil garde son nom court (« Découverte ») : son nom accessible commence par le nom entier.
   ['Partie de découverte', 'titre.decouverte', []],
   ['Partie guidée', 'titre.guidee', []],
@@ -40,9 +40,11 @@ describe('un nom par chose (#604, A9)', () => {
     });
   }
 
-  it('la partie de découverte : le nom accessible de la tuile et la ligne de « Plus » commencent par son nom', () => {
+  it('la partie de découverte : la carte d’Apprendre et le bouton de fin de l’introduction commencent par son nom (#647 : plus de tuile sur l’accueil)', () => {
     for (const l of ['fr', 'en'] as const) {
-      expect((LANGUES[l]['accueil.decouverte'] as string).startsWith(LANGUES[l]['titre.decouverte'] as string)).toBe(true);
+      const nom = LANGUES[l]['titre.decouverte'] as string;
+      expect(LANGUES[l]['apprendre.decouverte']).toBe(nom);
+      expect((LANGUES[l]['intro.fin.decouverte'] as string).startsWith(nom)).toBe(true);
     }
   });
 
@@ -57,13 +59,11 @@ describe('un nom par chose (#604, A9)', () => {
     }
   });
 
-  it('« Plus » ne cite plus la partie guidée, partie dans Apprendre (#589)', () => {
+  it('#647 : la feuille « Plus » de l’accueil a disparu, ses textes aussi', () => {
     for (const l of ['fr', 'en'] as const) {
-      const aria = LANGUES[l]['mode.plus.aria'] as string;
-      expect(aria).not.toMatch(/guid/i);
-      // Le nom accessible commence par le texte visible (WCAG 2.5.3).
-      expect(aria.startsWith(LANGUES[l]['mode.plus'] as string)).toBe(true);
+      for (const cle of ['mode.plus', 'mode.plus.aria', 'mode.plus.titre', 'mode.decouverte', 'mode.decouverte.texte', 'mode.deux.texte', 'accueil.decouverte']) {
+        expect(Object.keys(LANGUES[l]), cle).not.toContain(cle);
+      }
     }
-    expect(Object.keys(LANGUES.fr)).not.toContain('mode.plus.detail');
   });
 });

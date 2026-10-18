@@ -24,6 +24,16 @@ for (const theme of ['dark', 'light'] as const) {
   });
 }
 
+// #647 (P1) : pas de « 0 / 100 XP » avant le premier XP ; la barre et le niveau restent (#654 : dans « Niveau et badges »).
+test('Profil sans XP : ni « 0 / 100 XP » ni chiffre à zéro, la barre de niveau reste', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('navigation').getByRole('button', { name: 'Profil' }).click();
+  await page.getByTestId('ligne-niveau').click();
+  const barre = page.getByTestId('barre-niveau');
+  await expect(barre.getByRole('progressbar', { name: 'Niveau 1' })).toBeVisible();
+  await expect(barre).not.toContainText(/XP/);
+});
+
 test('Niveau et badges : niveau et XP, record, leçons, adversaires battus, problèmes réussis sans total, vitrine', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.addInitScript(() => {

@@ -41,7 +41,7 @@ for (const sombre of [false, true]) {
     serveur.profiles.find(p => p.id === MOI)!.rating = 800;
     await ouvrirProfil(page);
 
-    // La ligne « Ta cote » partage la ligne du placement : le Profil tient toujours sans défiler.
+    // #647 (F4) : une ligne « Ta cote » pleine largeur ; le niveau de départ (placement) vit dedans. Le Profil tient sans défiler.
     const ligne = page.getByTestId('ligne-cote');
     await expect(ligne).toContainText('Ta cote');
     await expect(ligne).toContainText('Choisis ton départ');

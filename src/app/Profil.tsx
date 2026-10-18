@@ -232,8 +232,19 @@ export function Profil({ vue, onVue, settings, set, profil, serie, record = 0, p
     return <SousVue id="amis-titre" titre={t('amis.titre')} onRetour={retour}><Amis db={amis.db} onDefi={amis.onDefi} onProfil={ouvrirJoueur('amis', 'amis')} onProfilDemande={ouvrirJoueur('demande', 'amis')} /></SousVue>;
   }
   // #417 : ta cote de jeu (parties classées entre humains), sa courbe de 30 jours et le point de départ.
-  if (vue === 'cote' && amis?.compte && userId) {
-    return <SousVue id="cote-titre" titre={tc('cote.titre')} onRetour={retour}><CarteCote db={amis.db} userId={userId} onChange={onProfilChange} /></SousVue>;
+  // #647 (F4) : le niveau de départ (placement, #283) y vit aussi : une seule maison, avec ou sans compte.
+  if (vue === 'cote' && ((amis?.compte && userId) || onPlacement)) {
+    return (
+      <SousVue id="cote-titre" titre={tc('cote.titre')} onRetour={retour}>
+        {amis?.compte && userId && <CarteCote db={amis.db} userId={userId} onChange={onProfilChange} />}
+        {onPlacement && (
+          <div className="lignes cote-niveau-depart">
+            <LigneLien icone={<IconeReglage id="placement" />} libelle={t('placement.profilFaire')} onClick={onPlacement}
+              valeur={placement?.fait && placement.kyu !== null ? t('placement.profilValeur', { kyu: placement.kyu, date: dateCourte(placement.date) }) : undefined} />
+          </div>
+        )}
+      </SousVue>
+    );
   }
   // #369 : tes objectifs de la semaine et ce que tu as fait depuis lundi (avec un compte : tes amis battus, ta cote).
   if (vue === 'semaine') {
@@ -305,7 +316,7 @@ function dateCourte(iso: string): string {
 /**
  * #654 (A13, modèle : l'écran « Plus » de chess.com) : le Profil est un sommaire. En haut, une carte d'identité compacte
  * (pseudo, niveau, série) ; dessous, des rubriques groupées sous de petits titres, chacune ouvre son détail. Groupes
- * choisis par tri de cartes (docs/ux/architecture-pages-2026-10.md, § 13) : ta progression, tes parties et tes amis,
+ * choisis par tri de cartes (docs/ux/architecture-pages-2026-10.md, § 14) : ta progression, tes parties et tes amis,
  * les réglages, le compte, l'aide. Aucun deuxième niveau de rubriques (A4).
  */
 function Menu({ onVue, settings, profil, serie, placement, onPlacement, userId, amis, donnees }: Omit<Props, 'vue'> & { donnees: ReturnType<typeof useDonnees> }) {
@@ -332,17 +343,16 @@ function Menu({ onVue, settings, profil, serie, placement, onPlacement, userId, 
     { cle: 'niveau', nom: t('profil.niveauBadges'), visuel: icone('celebrations'), testId: 'ligne-niveau', onOuvrir: () => onVue('niveau'),
       // P1 : aucun zéro ; un badge gagné depuis la dernière visite se dit en or.
       etat: donnees.nouveaux.length ? { texte: t('profil.badgeNouveau'), ton: 'or' } : badgesObtenus > 0 ? { texte: String(badgesObtenus), aria: t('vitrine.titre', { n: badgesObtenus, total: donnees.badges.length }) } : undefined },
-    // #417 : avec un compte complet, « Ta cote » (le niveau de départ s'y choisit) ; #561 : son titre du mois, s'il en a un.
-    ...(amis?.compte && profil ? [{
+    // #417 : « Ta cote » ; #647 (F4) : le niveau de départ (#283) s'y choisit, avec ou sans compte. #561 : le titre du mois
+    // dernier, s'il y en a un, en est le visuel et l'état. Sans compte : le kyu estimé et sa date.
+    ...((amis?.compte && profil) || onPlacement ? [{
       cle: 'cote', nom: tc('cote.ligne'), visuel: titre ? <VisuelTitre titre={titre} /> : icone('cote'), testId: 'ligne-cote', onOuvrir: () => onVue('cote'),
-      etat: titre ? etatTitre(titre) : !profil.parties && !profil.depart ? undefined : { texte: grade(profil.cote), aria: `${grade(profil.cote)}, ${texteCote(profil.cote, profil.provisoire ?? true)}` },
-    } satisfies EntreeSommaire]
-    // #283 : sans compte, le niveau de départ (le kyu estimé, s'il existe, en état court).
-      : onPlacement ? [{
-        cle: 'placement', nom: t(placement?.fait && placement.kyu !== null ? 'placement.profil' : placement?.fait ? 'placement.profilRefaire' : 'placement.profilFaire'),
-        visuel: icone('placement'), testId: 'ligne-placement', onOuvrir: onPlacement,
-        etat: placement?.fait && placement.kyu !== null ? { texte: t('placement.profilValeur', { kyu: placement.kyu, date: dateCourte(placement.date) }) } : undefined,
-      } satisfies EntreeSommaire] : []),
+      etat: amis?.compte && profil
+        ? titre ? etatTitre(titre)
+          : !profil.parties && !profil.depart ? { texte: tc('cote.ligneDepart') }
+          : { texte: grade(profil.cote), aria: `${grade(profil.cote)} · ${texteCote(profil.cote, profil.provisoire ?? true)}` }
+        : placement?.fait && placement.kyu !== null ? { texte: t('placement.profilValeur', { kyu: placement.kyu, date: dateCourte(placement.date) }) } : undefined,
+    } satisfies EntreeSommaire] : []),
     { cle: 'stats', nom: tk('stats.ligne'), visuel: icone('stats'), testId: 'ligne-stats', onOuvrir: () => onVue('stats') },
     { cle: 'semaine', nom: te('semaine.ligne'), visuel: icone('semaine'), testId: 'ligne-semaine', onOuvrir: () => onVue('semaine'),
       etat: atteints > 0 ? { texte: `${atteints} / 3`, aria: te('semaine.ligneValeur', { n: atteints }) } : undefined },

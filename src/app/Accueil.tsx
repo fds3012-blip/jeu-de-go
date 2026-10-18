@@ -4,14 +4,15 @@
 // sans son rang : rien à lire avant la première pierre (modèles : premier écran de chess.com et de Duolingo).
 // Retours : l'adversaire parle, le bouton propose la partie, et sous lui « Aujourd'hui » met en avant la bonne
 // chose à faire (défi où c'est ton tour, Go du jour à faire, leçon suivante ; src/app/aujourdhui.ts).
-// #429 : tous les modes de jeu en 1 toucher, ou 2 par « Plus » : une rangée de tuiles sous le bouton (src/app/modes.ts).
+// #429 : tous les modes de jeu en 1 toucher : une rangée de tuiles sous le bouton (src/app/modes.ts). #647 : la partie
+// de découverte vit dans Apprendre ; L'ordi (ou En ligne), Un ami et À deux tiennent seuls, sans feuille « Plus ».
 // #432 : la partie en ligne classée en action principale dès le début (cote et grade visibles) ; l'ordi est une tuile.
 // #487 : avant la toute première pierre posée (`epure`, src/app/premierePierre.ts), ni tuiles de modes ni cartes
 // secondaires : la promesse, le goban, l'adversaire, le bouton et « Je sais déjà jouer ». Tout revient dès la première pierre.
 // #509 (L4) : le mot « kyu » expliqué dans la feuille « Ton adversaire », là où l'on choisit un adversaire par son grade.
 // #613 : l'ouverture va droit à l'action. Ni niveau ni XP (Profil, fin de partie), ni grade ni cote (lancement d'une
 // partie classée, sa fin, Profil), ni taille du plateau : elle se choisit en lançant la partie (src/app/LancementPartie.tsx).
-import { Suspense, useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
+import { Suspense, useEffect, useState, type ReactNode } from 'react';
 import { Board } from '../ui/Board';
 import { Sceau } from '../ui/Sceau';
 import { Portrait } from '../ui/Portrait';
@@ -65,9 +66,9 @@ interface Props {
   onJouer: (m: Lancement) => void;
   onTaille: (t: Taille) => void;
   onChoisir: (id: Opponent['id']) => void;
-  /** #429 : action principale, tuiles et « Plus » (src/app/modes.ts). */
+  /** #429 : action principale et tuiles (src/app/modes.ts). */
   modes: ModesAccueil;
-  /** Un mode choisi, et d'où (bouton, goban, tuile, « Plus ») : mesuré par `mode_choisi`. */
+  /** Un mode choisi, et d'où (bouton, goban, tuile) : mesuré par `mode_choisi`. */
   onMode: (mode: Mode, depuis: Depuis) => void;
   /** Défis d'amis où c'est ton tour : la tuile « Un ami » le dit. */
   defisAJouer?: number;
@@ -135,7 +136,6 @@ export function Accueil(p: Props) {
   const lentesAJouer = p.lentes?.aJouer ?? 0;
   const cta = enLigne ? t('accueil.cta.enLigne') : textes.cta;
   const revisions = !premier && p.revisions && p.revisions.n > 0 ? p.revisions : undefined;
-  const [plusOuvert, setPlusOuvert] = useState(false);
   // #613 : la feuille de lancement, chargée à la première ouverture, reste montée ensuite (sa sortie est animée).
   const [dernier, setDernier] = useState<Lancement | null>(null);
   useEffect(() => { if (p.lancement) setDernier(p.lancement); }, [p.lancement]);
@@ -201,16 +201,9 @@ export function Accueil(p: Props) {
 
       {/* #487 : avant la première pierre, rien d'autre à choisir que la partie (et « Je sais déjà jouer »). */}
       {!epure && <>
-        {/* #429 : les autres modes, en un toucher ; « Plus » pour le reste. Toujours dans le même ordre. */}
+        {/* #429 : les autres modes, en un toucher, toujours dans le même ordre. */}
         <div className="modes" data-testid="modes">
           {p.modes.tuiles.map(m => <TuileMode key={m} mode={m} p={p} />)}
-          {p.modes.plus.length > 0 && (
-            <button type="button" className="mode" data-testid="mode-plus" aria-haspopup="dialog" aria-expanded={plusOuvert}
-              aria-label={t('mode.plus.aria')} onClick={() => setPlusOuvert(true)}>
-              <span className="mode-icone" aria-hidden="true"><IconeMode mode="plus" /></span>
-              <b>{t('mode.plus')}</b>
-            </button>
-          )}
         </div>
 
         {p.reprise && <TuileReprendre r={p.reprise} />}
@@ -238,7 +231,6 @@ export function Accueil(p: Props) {
             reglagesPartie={p.reglagesPartie} />
         </Suspense>
       )}
-      {!epure && p.modes.plus.length > 0 && <FeuillePlus modes={p.modes.plus} ouvert={plusOuvert} setOuvert={setPlusOuvert} onMode={p.onMode} />}
     </div>
   );
 }
@@ -379,26 +371,13 @@ function TuileRevisions({ r }: { r: { n: number; ouvrir: () => void } }) {
   );
 }
 
-/** Ouvre ou ferme une boîte de dialogue modale native selon `ouvert`. */
-function useDialogue(ref: RefObject<HTMLDialogElement | null>, ouvert: boolean) {
-  useEffect(() => {
-    const d = ref.current;
-    if (!d) return;
-    if (ouvert && !d.open) d.showModal?.();
-    if (!ouvert && d.open) d.close();
-  }, [ref, ouvert]);
-}
-
 /** Pictogrammes des modes, au trait (24 × 24, couleur du texte) ; l'ordi prend le sceau de son adversaire. */
-function IconeMode({ mode }: { mode: Mode | 'plus' }) {
+function IconeMode({ mode }: { mode: 'en_ligne' | 'deux' }) {
   const trait = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round' } as const;
   return (
     <svg viewBox="0 0 24 24" width="24" height="24" focusable="false" aria-hidden="true" className="icone-mode">
       {mode === 'en_ligne' && <><circle cx="12" cy="12" r="8.5" {...trait} /><path d="M3.5 12h17M12 3.5c-2.6 2.4-3.6 5.2-3.6 8.5s1 6.1 3.6 8.5M12 3.5c2.6 2.4 3.6 5.2 3.6 8.5s-1 6.1-3.6 8.5" {...trait} /></>}
       {mode === 'deux' && <><rect x="6.5" y="2.5" width="11" height="19" rx="2.5" {...trait} /><circle cx="12" cy="8.5" r="2" fill="currentColor" /><circle cx="12" cy="15.5" r="2" {...trait} /></>}
-      {mode === 'plus' && <g fill="currentColor"><circle cx="5.5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="18.5" cy="12" r="2" /></g>}
-      {/* #524 : un coin de goban, une pierre noire et une blanche : la partie de découverte. */}
-      {mode === 'decouverte' && <><path d="M4 8h16M4 16h16M8 4v16M16 4v16" {...trait} /><circle cx="8" cy="8" r="3.2" fill="currentColor" /><circle cx="16" cy="16" r="3.2" {...trait} fill="var(--bg)" /></>}
     </svg>
   );
 }
@@ -447,49 +426,9 @@ function TuileMode({ mode, p }: { mode: Mode; p: Props }) {
     );
   }
   return (
-    <button type="button" className="mode" data-testid={`mode-${mode}`} onClick={choisir} aria-label={t(TEXTES_MODE[mode].nom)}>
-      <span className="mode-icone" aria-hidden="true"><IconeMode mode={mode} /></span>
-      <b>{t(TEXTES_MODE[mode].court)}</b>
+    <button type="button" className="mode" data-testid="mode-deux" onClick={choisir} aria-label={t('accueil.deux')}>
+      <span className="mode-icone" aria-hidden="true"><IconeMode mode="deux" /></span>
+      <b>{t('mode.deux')}</b>
     </button>
-  );
-}
-
-/** Textes des modes rangés en tuile simple ou sous « Plus » : nom complet (lu), nom court, détail, phrase de la feuille. */
-const TEXTES_MODE = {
-  deux: { nom: 'accueil.deux', court: 'mode.deux', texte: 'mode.deux.texte' },
-  decouverte: { nom: 'accueil.decouverte', court: 'mode.decouverte', texte: 'mode.decouverte.texte' },
-} as const satisfies Record<string, Record<'nom' | 'court' | 'texte', Parameters<typeof t>[0]>>;
-type ModeSimple = keyof typeof TEXTES_MODE;
-const estSimple = (m: Mode): m is ModeSimple => m in TEXTES_MODE;
-
-/** Feuille « Plus » : les modes qui ne tiennent pas dans la rangée (à deux, découverte), une ligne chacun. #589 : la partie guidée est dans Apprendre. */
-function FeuillePlus({ modes, ouvert, setOuvert, onMode }: { modes: Mode[]; ouvert: boolean; setOuvert: (o: boolean) => void; onMode: Props['onMode'] }) {
-  const ref = useRef<HTMLDialogElement>(null);
-  useDialogue(ref, ouvert);
-  return (
-    <dialog ref={ref} className="feuille" aria-labelledby="plus-titre" data-testid="feuille-plus" onClose={() => setOuvert(false)}
-      onClick={e => { if (e.target === ref.current) setOuvert(false); }}>
-      {ouvert && (
-        <div className="feuille-corps">
-          <div className="feuille-tete">
-            <h2 id="plus-titre">{t('mode.plus.titre')}</h2>
-            <button className="lien" onClick={() => setOuvert(false)}>{t('accueil.fermer')}</button>
-          </div>
-          <ul className="plus-liste">
-            {modes.filter(estSimple).map(m => (
-              <li key={m}>
-                <button type="button" className="plus-mode" onClick={() => { setOuvert(false); onMode(m, 'plus'); }}>
-                  <span className="mode-icone" aria-hidden="true"><IconeMode mode={m} /></span>
-                  <span>
-                    <b>{t(TEXTES_MODE[m].nom)}</b>
-                    <small>{t(TEXTES_MODE[m].texte)}</small>
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </dialog>
   );
 }

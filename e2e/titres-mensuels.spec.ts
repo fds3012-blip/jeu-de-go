@@ -56,7 +56,7 @@ test('nouveau titre : fête une seule fois à l’ouverture, puis la ligne du Pr
   await expect(ligne).toHaveAccessibleName(/^Titre du mois dernier\s?: Expert du mois/);
   await expect(ligne).not.toContainText('Maître');
   await expect(ligne.locator('.sceau-titre[data-titre="expert"]')).toBeVisible();
-  // Le titre partage la ligne de « Ta cote » (à la place du placement) ; le toucher ouvre « Ta cote ».
+  // Le titre partage la ligne de « Ta cote » ; le toucher ouvre « Ta cote ».
   await expect(ligne).toContainText(/Top 5\s% des joueurs actifs/);
   expect((await ligne.boundingBox())!.height).toBeGreaterThanOrEqual(44);
   const { scroll, largeur } = await page.evaluate(() => ({ scroll: document.documentElement.scrollHeight, largeur: document.documentElement.scrollWidth }));
@@ -80,7 +80,9 @@ test('sans titre (garde-fou non atteint) : ni fête, ni ligne au Profil', async 
   await page.waitForTimeout(1000);
   await expect(page.getByTestId('ligne-titre')).toHaveCount(0);
   await expect(page.getByTestId('fete-titre')).toHaveCount(0);
-  // Sans titre, la ligne de « Ta cote » garde « Placement ».
+  // #647 (F4) : sans titre, « Ta cote » occupe toute la ligne ; le niveau de départ est dedans.
+  await expect(page.getByRole('button', { name: /Ton niveau de départ/ })).toHaveCount(0);
+  await page.getByTestId('ligne-cote').click();
   await expect(page.getByRole('button', { name: /Ton niveau de départ/ })).toBeVisible();
   await ctx.close();
 });
