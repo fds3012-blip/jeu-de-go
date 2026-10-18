@@ -25,6 +25,8 @@ const NOMS: [string, string, string[]][] = [
   // La tuile de l'accueil garde son nom court (« Découverte ») : son nom accessible commence par le nom entier.
   ['Partie de découverte', 'titre.decouverte', []],
   ['Partie guidée', 'titre.guidee', []],
+  // #669 : le détail d'Apprendre qui propose la découverte et la partie guidée ; son entrée du sommaire porte le même nom.
+  ['Jouer avec Mochi', 'titre.avecMochi', ['apprendre.avecMochi']],
 ];
 
 describe('un nom par chose (#604, A9)', () => {

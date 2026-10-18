@@ -91,6 +91,7 @@ export const en = {
   'titre.compte': 'Your account',
   'titre.revisions': 'Replay your mistakes',
   'titre.decouverte': 'Discovery game',
+  'titre.avecMochi': 'Play with Mochi',
 
   'accueil.cta.premiere': 'Play your first game',
   'accueil.cta.premiereNom': 'Play your first game against {nom}',
@@ -121,8 +122,6 @@ export const en = {
   'accueil.changer': 'Change',
   'accueil.goDuJour': 'Daily Go',
   'accueil.leconCourte': 'Lesson',
-  'accueil.leconsTerminees': 'All lessons done',
-  'accueil.revoirChemin': 'Review the path',
   'accueil.tonAdversaire': 'Your opponent',
   'accueil.fermer': 'Close',
   'accueil.taillePlateau': 'Board size',
