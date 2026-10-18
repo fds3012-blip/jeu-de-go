@@ -4,7 +4,6 @@ import { attendrePierre, jouer } from './plateau';
 // Issue #213 : la flamme dit l'état du jour ; Pomme accueille selon le jour.
 // Horloge figée en heure de Paris. Le Go du jour n° 7 (03/10/2026) est le problème b1 (réponse E5).
 const JOUR_7 = new Date('2026-10-03T08:10:00+02:00');
-const nav = (page: Page, nom: string) => page.getByRole('navigation').getByRole('button', { name: nom }).click();
 const bulle = (page: Page) => page.locator('.scene-bulle');
 
 async function semer(page: Page, donnees: Record<string, unknown>) {
@@ -37,8 +36,8 @@ test('flamme creuse et tuile « À faire », puis flamme pleine et « Fait » ap
   await jouer(page, 'E5');
   await attendrePierre(page, 'E5', 'noir');
 
-  // Retour à l'accueil : la flamme s'allume (une fois) et la tuile dit « Fait ».
-  await nav(page, 'Jouer');
+  // Retour à l'accueil (#646 : la sortie du problème, posé sur l'accueil) : la flamme s'allume (une fois), la tuile dit « Fait ».
+  await page.getByRole('button', { name: 'Retour', exact: true }).click();
   await expect(flamme).toHaveAttribute('data-etat', 'pleine');
   await expect(flamme).toHaveText('7');
   await expect(flamme).toHaveClass(/allumage/);

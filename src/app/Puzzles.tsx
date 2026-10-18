@@ -4,7 +4,7 @@
 // entrées de même poids : Go du jour, Rejouer tes erreurs, Course aux problèmes, Par thème. Chacune ouvre son détail.
 import { LienSignalerProbleme } from '../ui/Securite';
 import { BoutonAide } from '../ui/BoutonAide';
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import type { Db } from '../data/supabase';
 import { ALL_PUZZLES } from '../content/puzzles';
 import {
@@ -19,6 +19,7 @@ import { estSerre } from '../ui/plateauSerre';
 import { centreVertical } from '../ui/cadrage';
 import { C, M, viewBoxOf } from '../ui/boardArt';
 import { ParoleMochi, Retour, Verdict } from '../ui/Lecteur';
+import { useTitreFocus } from '../ui/titreFocus';
 import { Reflexion } from '../ui/Reflexion';
 import { fr } from '../ui/typo';
 import { playBadge, playFail, playIllegal, playStone, playSuccess } from '../ui/sound';
@@ -100,6 +101,10 @@ interface Props {
    * espacée #469). `n` : éléments dus aujourd'hui ; `ouvrir` lance la séance (App.tsx, SeanceRevisions).
    */
   erreurs?: { n: number; ouvrir: () => void };
+  /** #646 (A5) : un problème ou la course sont ouverts : App.tsx passe en plein écran, sans barre du bas. */
+  onActivite?: (actif: boolean) => void;
+  /** #646 : libellé de la sortie d'un problème posé hors de Problèmes (« Retour ») ; sinon « Retour aux problèmes ». */
+  retour?: string;
 }
 
 /** Flamme de la série de jours, en or ; creuse ou pleine selon la classe de la pastille (#213). */
@@ -123,7 +128,7 @@ function Difficulte({ d }: { d: number }) {
 }
 
 /** Onglet Problèmes : problème du jour, problèmes de base, cote problèmes et série de jours. */
-export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, lien = null, onDuJour, celebrer = true, racine = 0, onApprendre, essai, depuisRappel = false, rappelAmi = false, erreurs }: Props) {
+export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, lien = null, onDuJour, celebrer = true, racine = 0, onApprendre, essai, depuisRappel = false, rappelAmi = false, onActivite, retour, erreurs }: Props) {
   /** Ouvre un problème ; hors Go du jour pendant l'essai sans compte, c'est « Crée ton compte » qui s'ouvre (#343). */
   const ouvrirProbleme = (id: string) => { if (essai && id !== daily?.id) essai(); else setOpenId(id); };
   // Go du jour (issue #75) : le même pour tous, choisi dans la liste publique des problèmes de base, en heure de Paris.
@@ -283,6 +288,28 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
     onDuJour?.(duJourOuvert);
   }, [duJourOuvert, onDuJour]);
   useEffect(() => () => onDuJour?.(false), [onDuJour]);
+  // #646 (A5, A6) : un problème ou la course prennent tout l'écran. À leur sortie, la liste revient là où on l'avait
+  // laissée : même défilement, focus sur ce qui les a ouverts (retrouvé par son texte, la liste ayant été remontée).
+  const actif = !!open || course;
+  const vue = useRef({ y: 0, f: '', actif: false });
+  if (actif && !vue.current.actif) vue.current = { ...vue.current, f: document.activeElement?.textContent ?? '', actif: true };
+  useLayoutEffect(() => {
+    if (actif) return;
+    const f = () => { vue.current.y = window.scrollY; };
+    window.addEventListener('scroll', f, { passive: true });
+    return () => window.removeEventListener('scroll', f);
+  }, [actif]);
+  useLayoutEffect(() => {
+    onActivite?.(actif);
+    const v = vue.current;
+    if (actif || !v.actif) return;
+    v.actif = false;
+    window.scrollTo(0, v.y);
+    const b = [...document.querySelectorAll<HTMLElement>('.problemes button')].find(x => v.f && x.textContent === v.f) ?? document.querySelector<HTMLElement>('.problemes h2');
+    if (b?.tagName === 'H2') b.tabIndex = -1;
+    b?.focus({ preventScroll: true });
+  }, [actif, onActivite]);
+  useEffect(() => () => onActivite?.(false), [onActivite]);
 
   if (open) {
     // Go du jour d'un autre jour (lien partagé ancien) : ni série ni XP du jour ; ensuite, celui d'aujourd'hui.
@@ -299,7 +326,7 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
     // #549 : la série vient d'être maîtrisée : « Thème suivant » devient l'action principale, la série continue en lien.
     const versTheme = enSerie && maitriseVenue === enSerie ? themeSuivant(enSerie, series, maitrise) : null;
     return (
-      <PuzzlePlayer key={`${open.id}${enArchive ? '-archive' : ''}`} puzzle={open} rang={ordre.indexOf(open) + 1} confirmTouch={confirmTouch} difficulte={difficulteChange}
+      <PuzzlePlayer key={`${open.id}${enArchive ? '-archive' : ''}`} retour={retour} puzzle={open} rang={ordre.indexOf(open) + 1} confirmTouch={confirmTouch} difficulte={difficulteChange}
         surtitre={enSerie ? <SurtitreTheme serie={enSerie} affilee={etatThemes[enSerie]?.affilee ?? 0} record={recordTheme} /> : undefined}
         // #521 : un record de série par thème est un moment fort : invitation discrète à partager l'app (règle et plafond :
         // src/app/partageApp.ts).
@@ -755,6 +782,7 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
 }) {
   // #236 (N2) : un problème est un exercice ; aucune fête ne se pose sur sa consigne (l'XP se lit dans la feuille).
   useExercice(exercice);
+  const titre = useTitreFocus();
   // #365 : « Montrer la série » éteint, pas de série sur la réussite du Go du jour ni dans le partage.
   const { serieVisible } = usePreferences();
   const start = useMemo(() => startOf(puzzle), [puzzle]);
@@ -1061,7 +1089,7 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
                 (data-difficulte la garde toujours pour les tests). Ailleurs (entraînement d'une leçon), inchangé. */}
             {difficulte && <Difficulte d={puzzle.difficulty} />}
           </div>
-          <h2>{puzzle.title}</h2>
+          <h2 ref={titre} tabIndex={-1}>{puzzle.title}</h2>
         </div>
         {/* #362 : « ? » ouvre les mots du go (atari, échelle, œil…) sans quitter le problème. */}
         <BoutonAide depuis="probleme" fiche="mots" />

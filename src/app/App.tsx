@@ -205,7 +205,7 @@ type Reprise = { quoi: 'ordi'; contre: OpponentId } | { quoi: 'deux' } | { quoi:
  * la barre du bas) ; `maison` : l'onglet où vit l'écran posé ; `el` : l'écran d'origine, gardé monté et caché, retrouvé
  * tel quel à la sortie (défilement `y` et focus `f` compris) ; `rendre` : ce qu'il faut remettre pour le revoir (écran de compte).
  */
-interface Pose { onglet: Tab; maison: Tab; el: ReactNode; y: number; f: Element | null; rendre?: () => void }
+interface Pose { onglet: Tab; maison: Tab; el: ReactNode; y: number; f: Element | null; rendre?: () => void; a?: boolean; t?: string | null }
 
 /** Réglages de la file d'attente du direct (#360, #436). */
 interface DemandeDirect { taille: 9 | 13 | 19; cadence: 'rapide' | 'normale' | 'lente'; regles: 'japanese' | 'chinese' }
@@ -223,6 +223,11 @@ export function App() {
   const ecran = useRef<ReactNode>(null);
   const defiler = useRef<Pose | null>(null);
   const [duJourOuvert, setDuJourOuvert] = useState(false);
+  // #646 : un problème ou une course ouverts dans Problèmes (plein écran, sans barre du bas).
+  const [activitePb, setActivitePb] = useState(false);
+  // #646 : Go du jour posé par-dessus l'accueil : sa pose se ferme quand le problème, vu ouvert, se ferme.
+  const pbVu = useRef(false);
+  if (activitePb) pbVu.current = true;
   // #285 : après le Go du jour ouvert par le lien, une seule action pour qui n'a jamais joué : la leçon 1.
   const [versLecon1, setVersLecon1] = useState(NOUVEAU_PAR_LIEN);
   useEffect(noterArrivee, []);
@@ -332,6 +337,8 @@ export function App() {
   const [enPlacement, setEnPlacement] = useState(false);
   // #469 : séance « Révisions du jour » ouverte, et éléments dus (recomptés après chaque essai et à chaque écran).
   const [seanceRevisions, setSeanceRevisions] = useState(false);
+  // #653 : la séance « Rejouer tes erreurs », posée sur Jouer depuis l'accueil, a été vue : sa fin défait la pose.
+  if (seanceRevisions) pbVu.current = true;
   const [cleRevisions, setCleRevisions] = useState(0);
   useEffect(() => {
     const f = () => setCleRevisions(n => n + 1);
@@ -525,13 +532,17 @@ export function App() {
 
   /**
    * #640 (N4) : ouvre un écran de l'onglet `maison` par-dessus l'écran affiché, sans changer l'onglet allumé (A3, A10) ;
-   * sa sortie y ramène (A6). À appeler avant de poser l'état de l'écran ouvert. Même onglet : rien à faire. Un onglet déjà
-   * sous la pile : on y revient d'abord, comme par la barre du bas (deux écrans du même onglet ne tiennent pas ensemble).
+   * sa sortie y ramène (A6). À appeler avant de poser l'état de l'écran ouvert. Même onglet : rien à faire, sauf pour une
+   * activité (`a`, #646 : plein écran) hors d'une autre : l'écran d'origine n'est pas gardé (un seul écran du même onglet
+   * à la fois), mais sa sortie le retrouve à la même place, focus sur ce qui l'a ouverte (retrouvé par son texte).
+   * Un onglet déjà sous la pile : on y revient d'abord, comme par la barre du bas.
    */
-  function par(maison: Tab, rendre?: () => void) {
-    if (maison === tab && !rendre) return;
-    if (poses.some(p => p.onglet === maison)) { go(maison); return; }
-    setPoses([...poses, { onglet: tab, maison, el: ecran.current, y: window.scrollY, f: document.activeElement, rendre }]); setTab(maison);
+  function par(maison: Tab, rendre?: () => void, a?: boolean) {
+    if (maison === tab && !rendre && (!a || activite)) return;
+    if (maison !== tab && poses.some(p => p.onglet === maison)) { go(maison); return; }
+    const f = document.activeElement, a2 = maison === tab;
+    pbVu.current = false;
+    setPoses([...poses, { onglet: tab, maison, el: a2 ? null : ecran.current, y: window.scrollY, f, t: f?.textContent, rendre, a: a2 }]); setTab(maison);
   }
 
   /** « Conditions et confidentialité » par-dessus l'écran (compte, accord, consentement) ; « ‹ » y ramène. */
@@ -543,7 +554,7 @@ export function App() {
   function ouvrirLecon(id: string) {
     const rang = LESSONS.findIndex(l => l.id === id);
     if (!garde({ quoi: 'lecon', rang: rang < 0 ? 0 : rang }, { quoi: 'lecon', id })) return;
-    par('apprendre'); setLessonId(id); window.scrollTo({ top: 0 });
+    par('apprendre', undefined, true); setLessonId(id); window.scrollTo({ top: 0 });
   }
 
   /**
@@ -552,7 +563,7 @@ export function App() {
    * Mochi », « Partie de découverte avec Mochi »). #647 (F1) : elle a quitté l'accueil. Sa fin ramène là où l'on était.
    */
   function ouvrirDecouverte(apresIntro = false) {
-    setPlaying(false); setLessonId(null); setSerie3(null); setEnPlacement(false); setSeanceRevisions(false); setIntroRegles(null);
+    par(tab, undefined, true); setPlaying(false); setLessonId(null); setSerie3(null); setEnPlacement(false); setSeanceRevisions(false); setIntroRegles(null);
     setDecouverte(apresIntro ? 'intro' : 'chemin'); window.scrollTo({ top: 0 });
   }
 
@@ -564,7 +575,7 @@ export function App() {
   function ouvrirPlacement() {
     if (!garde({ quoi: 'placement' }, { quoi: 'placement' })) return;
     track(EVENTS.placementCommence, { refait: placement !== null });
-    par('jouer'); setEnPlacement(true); setPlaying(false);
+    par('jouer', undefined, true); setEnPlacement(true); setPlaying(false);
     window.scrollTo({ top: 0 });
   }
 
@@ -662,7 +673,7 @@ export function App() {
 
   /** #523 : ouvre l'introduction des règles (complète ou express), depuis l'accueil, Apprendre ou l'aide. */
   function ouvrirIntro(version: VersionIntro, depuis: DepuisIntro) {
-    setLessonId(null); setSerie3(null); setIntroRegles({ version, depuis }); window.scrollTo({ top: 0 });
+    par(tab, undefined, true); setLessonId(null); setSerie3(null); setIntroRegles({ version, depuis }); window.scrollTo({ top: 0 });
   }
 
   /** Réponse à « Tu connais le go ? » : gardée sur l'appareil (sauf « Plus tard »), puis l'écran qui lui va. */
@@ -897,7 +908,9 @@ export function App() {
   const ecranReseau = enDefi || enDirect || enLente || enPartagee || ecranPlein
     || (tab === 'profil' && (vueProfil === 'compte' || vueProfil === 'amis' || vueProfil === 'cote'));
   // #640 : un écran posé par-dessus un autre onglet dit « Retour » (il ne ramène pas au chemin, mais d'où l'on vient).
-  const retourPose = poses.length ? t('profil.retour') : undefined;
+  const retourPose = poses.some(p => !p.a) ? t('profil.retour') : undefined;
+  // #646 (N2, A5) : activité affichée (leçon, problème, découverte, règles, placement, révisions) : plein écran, sans barre du bas.
+  let activite = false;
   let screen;
   if (pseudoAChoisir && supabase && compteId) {
     screen = <PseudoObligatoire db={supabase} userId={compteId}
@@ -952,6 +965,7 @@ export function App() {
   } else if (enDefi) {
     screen = <DefisEcran db={supabase} userId={session === undefined ? undefined : session?.user.id ?? null} pseudo={pseudo ?? null} onPartie={ouvrirDefiPartie} onRetour={quitterDefi} />;
   } else if (introRegles && !playing) {
+    activite = true;
     // #523 : introduction des règles. Sortie : là où elle a été ouverte (accueil, Apprendre, aide).
     screen = <IntroRegles key={`${introRegles.version}-${introRegles.depuis}`} version={introRegles.version} depuis={introRegles.depuis} confirmTouch={settings.confirmTouch}
       onDecouverte={() => ouvrirDecouverte(true)}
@@ -994,15 +1008,18 @@ export function App() {
       </>
     );
   } else if (decouverte) {
+    activite = true;
     // #640 : la fin et « ‹ » ramènent là où l'on était, sans changer d'onglet (avant : la fin menait à Apprendre).
     const fermer = () => { setDecouverte(false); window.scrollTo({ top: 0 }); };
     screen = <PartieDecouverte onFin={fermer} onQuitter={fermer} />;
   } else if (seanceRevisions) {
+    activite = true;
     // #469 : séance « Rejouer tes erreurs » (5 éléments au plus). #653 : sa maison est Problèmes (entrée du sommaire) ;
     // la tuile de l'accueil la pose par-dessus Jouer, et sa fin y ramène.
     screen = <SeanceRevisions confirmTouch={settings.confirmTouch} celebrer={settings.celebrations} compte={!!compteId}
       onFin={() => { setSeanceRevisions(false); window.scrollTo({ top: 0 }); }} />;
   } else if (tab === 'jouer' && enPlacement) {
+    activite = true;
     screen = <Placement adversaires={OPPONENTS} confirmTouch={settings.confirmTouch}
       chapitre={kyu => CHAPITRES[chapitreConseille(kyu, CHAPITRES.length)]?.titre ?? ''}
       onTermine={({ bilan: b, adversaire: a }) => {
@@ -1019,14 +1036,18 @@ export function App() {
         track(EVENTS.placementSaute, { etape });
         setEnPlacement(false); window.scrollTo({ top: 0 });
       }}
+      onQuitter={() => { setEnPlacement(false); window.scrollTo({ top: 0 }); }}
       onJouer={id => { setEnPlacement(false); lancer('ordi', id); }}
       onLecons={ouvrirLeconsConseillees} />;
   } else if (tab === 'apprendre' && leconEssai) {
+    activite = true;
     screen = <LessonPlayer key={leconEssai.id} lesson={leconEssai} lecon={leconEssai} start={0} confirmTouch={settings.confirmTouch} celebrer={false}
       onProgress={() => {}} onExit={() => { setLeconEssai(null); window.scrollTo({ top: 0 }); }} />;
   } else if (tab === 'apprendre' && serie3) {
+    activite = true;
     screen = <SeriePratique problemes={serie3} confirmTouch={settings.confirmTouch} celebrer={settings.celebrations} versTheme={!!themeVu} retour={retourPose} onFin={() => { setSerie3(null); window.scrollTo({ top: 0 }); }} />;
   } else if (tab === 'apprendre' && lesson) {
+    activite = true;
     const leconSuivante = LESSONS[LESSONS.indexOf(lesson) + 1];
     // Fin de leçon (#200) : 3 problèmes du thème, et en fin de chapitre une partie contre le premier adversaire.
     const themes = THEMES_DE_LECON[lesson.id] ?? [];
@@ -1054,7 +1075,7 @@ export function App() {
       jouer={{ nom: premier.nom, lancer: () => lancer('ordi', premier.id) }} />;
   } else if (tab === 'apprendre' && themeVu) {
     screen = <ThemeLecons theme={themeVu} progress={progress} onOpen={ouvrirLecon} onRetour={() => { setThemeVu(null); window.scrollTo({ top: 0 }); }}
-      onSerie={s => { if (garde({ quoi: 'probleme' })) { setSerie3(s); window.scrollTo({ top: 0 }); } }} />;
+      onSerie={s => { if (garde({ quoi: 'probleme' })) { par('apprendre', undefined, true); setSerie3(s); window.scrollTo({ top: 0 }); } }} />;
   } else if (tab === 'apprendre') {
     screen = <LearnHome progress={progress} onOpen={ouvrirLecon} sync={syncState} onRegles={() => ouvrirIntro('complete', 'apprendre')}
       // #647 : `mode_choisi` la note toujours, comme la partie guidée (contrôle de la décision F1).
@@ -1063,9 +1084,10 @@ export function App() {
       onGuidee={() => { track(EVENTS.modeChoisi, { mode: 'guidee', depuis: 'apprendre' satisfies Depuis, principal: false }); lancerGuidee(); }}
       compteRequis={rang => !decider({ quoi: 'lecon', rang }, etat, terminees, COMPTES).ok} />;
   } else if (tab === 'problemes') {
-    screen = <Puzzles db={supabase} userId={compteId} sessionLoading={session === undefined} confirmTouch={settings.confirmTouch} onCompte={ouvrirCompte}
+    activite = activitePb;
+    screen = <Puzzles retour={retourPose} db={supabase} userId={compteId} sessionLoading={session === undefined} confirmTouch={settings.confirmTouch} onCompte={ouvrirCompte}
       essai={decider({ quoi: 'probleme' }, etat, terminees, COMPTES).ok ? undefined : () => { garde({ quoi: 'probleme' }, { quoi: 'problemes' }); }}
-      lien={LIEN_DU_JOUR} depuisRappel={ARRIVEE_RAPPEL || duJourDirect} onDuJour={setDuJourOuvert} celebrer={settings.celebrations} racine={racineProblemes} rappelAmi={rappelGoDuJour}
+      lien={LIEN_DU_JOUR} depuisRappel={ARRIVEE_RAPPEL || duJourDirect} onDuJour={setDuJourOuvert} onActivite={setActivitePb} celebrer={settings.celebrations} racine={racineProblemes} rappelAmi={rappelGoDuJour}
       onApprendre={versLecon1 && LESSONS[0] ? () => { setVersLecon1(false); ouvrirLecon(LESSONS[0].id); } : undefined}
       erreurs={{ n: revisionsDues, ouvrir: ouvrirErreurs }} />;
   } else if (tab === 'profil') {
@@ -1115,7 +1137,8 @@ export function App() {
         probleme={daily && { numero, titre: daily.title, rows: daily.rows, reussi: duJourFait, etat: etatTuile(appel, duJourFait) }}
         // #367 : « Aujourd'hui » est la liste « À faire » ; un toucher sur un élément en attente est mesuré.
         // Recette du 02/10 (S7) : Go du jour à faire → ouvert directement.
-        onProbleme={() => { mesurerAccueil('serie', 'goDuJour'); go('problemes'); if (!duJourFait) setDuJourDirect(true); }}
+        // #646 : à faire, le Go du jour se pose sur l'accueil (activité), et sa sortie y ramène ; fait, l'onglet Problèmes.
+        onProbleme={() => { mesurerAccueil('serie', 'goDuJour'); if (duJourFait) go('problemes'); else { par('problemes'); setDuJourDirect(true); } }}
         lecon={leconConseillee && { titre: leconConseillee.title }}
         onLecon={() => { mesurerAccueil('lecon'); if (leconConseillee) ouvrirLecon(leconConseillee.id); else go('apprendre'); }}
         // Un seul appel à la fois (#236, N4) : pas de carte d'installation le jour où Mochi fait une annonce ;
@@ -1167,8 +1190,10 @@ export function App() {
   const haut = poses[poses.length - 1];
   const fermerPose = (p: Pose) => { setPoses(poses.slice(0, -1)); setTab(p.onglet); p.rendre?.(); defiler.current = p; };
   if (haut && tab !== haut.maison) setPoses([]);
-  else if (haut && (tab === 'jouer' ? accueilVisible : tab === 'apprendre' ? !lesson && !serie3 : tab === 'problemes' ? !seanceRevisions : vueProfil === 'menu' || vueProfil === 'parties')) fermerPose(haut);
+  else if (haut && (haut.a ? !activite && !enPartie && !ecranPlein : tab === 'jouer' ? accueilVisible : tab === 'apprendre' ? !lesson && !serie3 : tab === 'problemes' ? pbVu.current && !activitePb && !seanceRevisions : vueProfil === 'menu' || vueProfil === 'parties')) fermerPose(haut);
   const ongletVu = poses[0]?.onglet ?? tab;
+  const caches = poses.filter(p => !p.a);
+  const plein = enPartie || ecranPlein || activite;
   const horsAide = playing || enPlacement || defi !== null || direct || decouverte || !!introRegles;
   // #465 (WCAG 2.4.2) : le titre de l'onglet du navigateur suit l'écran affiché.
   const leconOuverte = leconEssai ?? lesson;
@@ -1202,16 +1227,21 @@ export function App() {
   useEffect(() => { document.title = titreDocument; }, [titreDocument]);
   // #640 (A6) : l'écran d'origine retrouvé, à l'endroit où on l'avait laissé.
   // Le focus revient sur ce qui a ouvert l'écran posé (clavier, lecteur d'écran).
-  useLayoutEffect(() => { const p = defiler.current; defiler.current = null; if (p) { window.scrollTo(0, p.y); (p.f as HTMLElement | null)?.focus?.({ preventScroll: true }); } });
+  useLayoutEffect(() => {
+    const p = defiler.current; defiler.current = null;
+    if (!p) return;
+    window.scrollTo(0, p.y);
+    const f = p.f?.isConnected ? p.f : [...document.querySelectorAll('.calque:last-child button')].find(b => p.t && b.textContent === p.t);
+    (f as HTMLElement | undefined)?.focus({ preventScroll: true });
+  });
   // #606 (N1, A7) : le retour du système fait ce que fait « ‹ » (src/app/retourSysteme.ts, hors du JS initial).
   const lectureRetour = useRef<Branchement>(null!);
   lectureRetour.current = {
     horsRacine: () => !accueilVisible,
-    // Sans bouton « ‹ » : placement (rien d'enregistré, A11), arrivée d'un défi, partie partagée ; racine d'un autre onglet : Jouer.
+    // Sans bouton « ‹ » : arrivée d'un défi, partie partagée ; racine d'un autre onglet : Jouer.
     repli: () => {
       if (pseudoAChoisir || accordAMontrer) return;
-      if (tab === 'jouer' && enPlacement) { setEnPlacement(false); window.scrollTo({ top: 0 }); }
-      else if (enDefi && defi.vue === 'arrivee') quitterDefi();
+      if (enDefi && defi.vue === 'arrivee') quitterDefi();
       else if (enPartagee) { setPartagee(null); window.scrollTo({ top: 0 }); }
       // #640 : écran posé sans « ‹ » à l'écran (son morceau se charge encore) : retour à l'écran d'origine.
       else if (haut) { setPlaying(false); fermerPose(haut); }
@@ -1260,8 +1290,8 @@ export function App() {
   }, [allumage]);
   return (
     <>
-      <main className={`app${accueilVisible ? ' app-home' : ''}${enPartie ? ' app-partie' : ''}`}>
-        {!enPartie && !ecranPlein && <header className="top">
+      <main className={`app${accueilVisible ? ' app-home' : ''}${enPartie ? ' app-partie' : ''}${activite ? ' app-activite' : ''}`}>
+        {!plein && <header className="top">
           {/* Marque (#416) : « Mochi » posé sur « Go », pour garder l'emprise de l'ancien titre ; la flamme et le gel tiennent à 320 px.
               #602 : la marque sur Jouer seulement ; ailleurs, le nom de l'écran, en petit (comme chess.com). Un écran de tâche
               a sa barre « ‹ titre », qui remplace cet en-tête (app.css). */}
@@ -1282,11 +1312,11 @@ export function App() {
           )}
         </header>}
         {/* #461 : sans en-tête (partie, fin de partie, écrans de compte), le titre de l'app reste pour les lecteurs d'écran. */}
-        {(enPartie || ecranPlein) && <h1 className="sr-only">Mochi Go</h1>}
-        {serieVisible && annonceGel !== null && !enPartie && !ecranPlein && (tab === 'jouer' || tab === 'problemes') && (
+        {plein && <h1 className="sr-only">Mochi Go</h1>}
+        {serieVisible && annonceGel !== null && !plein && (tab === 'jouer' || tab === 'problemes') && (
           <p className="gel-annonce" role="status"><Mochi size={30} />{fr(messageGel(annonceGel))}</p>
         )}
-        {serieVisible && retourSerie !== null && annonceGel === null && !enPartie && !ecranPlein && (tab === 'jouer' || tab === 'problemes') && (
+        {serieVisible && retourSerie !== null && annonceGel === null && !plein && (tab === 'jouer' || tab === 'problemes') && (
           <p className="gel-annonce retour-serie" role="status" data-testid="retour-serie"><Mochi size={30} />{fr(retourSerie)}</p>
         )}
         {/* #613 : plus de barre de niveau sur l'accueil : le niveau et l'XP vivent dans le Profil et dans la fête de fin
@@ -1296,14 +1326,14 @@ export function App() {
         {bandeau && <BandeauHorsLigne ou={bandeau} />}
         <LimiteErreur origine="ecran" onAccueil={versAccueil}>
           {/* #640 : les écrans d'origine restent montés, cachés, sous l'écran posé ; chacun garde sa place dans l'arbre. */}
-          {[...poses.map(p => p.el), screen].map((el, i) => <div key={i} className="calque" hidden={i < poses.length}><Suspense fallback={null}>{el}</Suspense></div>)}
+          {[...caches.map(p => p.el), screen].map((el, i) => <div key={i} className="calque" hidden={i < caches.length}><Suspense fallback={null}>{el}</Suspense></div>)}
         </LimiteErreur>
       </main>
       <FeteNiveau celebrer={settings.celebrations} ecran={`${tab}|${playing}|${lessonId ?? ''}|${serie3 ? 'serie' : ''}|${vueProfil}|${decouverte ? 'decouverte' : ''}`} />
       <AnnonceXp celebrer={settings.celebrations} />
       {etat === 'complet' && supabase && compteId && <Suspense fallback={null}><FeteTitre db={supabase} userId={compteId} celebrer={settings.celebrations} /></Suspense>}
-      {/* Pendant une partie, comme chez chess.com : pas de barre de navigation, « ‹ » ramène à l'accueil. */}
-      {!enPartie && !ecranPlein && <BarreNav actif={ongletVu} pastilles={pastilles}
+      {/* Pendant une partie ou une activité, comme chez chess.com : pas de barre de navigation, « ‹ » ramène d'où l'on vient. */}
+      {!plein && <BarreNav actif={ongletVu} pastilles={pastilles}
         onChoisir={o => { const e = aFaire.find(x => x.pastille && x.onglet === o); if (e) ouvrirAFaire(e, 'onglet'); go(o); }} />}
       {repliHorsLigne && (
         <Suspense fallback={null}>

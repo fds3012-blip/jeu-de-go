@@ -192,10 +192,16 @@
    rester visible au-dessus d'elle. */
 .app:has(.lecteur-mochi) { padding-bottom: calc(var(--nav-h) + var(--space-2) + env(safe-area-inset-bottom, 0px)); }
 .lecteur:has(> .lecteur-mochi) { --mochi: 72px; display: flex; flex-direction: column;
-  min-height: calc(100dvh - var(--space-2) - var(--nav-h) - var(--space-2) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); }
+  min-height: calc(100dvh - var(--space-2) - var(--nav-h) - var(--space-2) - var(--plateau-reserve, 0px) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); }
 @media (min-height: 760px) { .lecteur:has(> .lecteur-mochi) { --mochi: 88px; } }
 @media (max-width: 359px) { .lecteur:has(> .lecteur-mochi) { --mochi: 52px; } }
-.lecteur-mochi { flex: 1 0 auto; display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) 0 var(--space-2); }
+/* #646 (V5) : le plateau prend la place libre, min(largeur, hauteur) : il déborde la gouttière sur téléphone (4 px du
+   bord, comme la partie), et rapetisse quand l'écran est bas, la tête, Mochi et la marge du bas déduits (120 px et
+   --mochi, plus --plateau-reserve pour ce qui s'ajoute au-dessus, comme les étapes des révisions). Mochi se pose dessous. */
+.lecteur:has(> .lecteur-mochi) > .board-wrap { align-self: center; width: min(calc(100% + 2 * var(--gouttiere) - 8px),
+  calc(100dvh - 120px - var(--mochi) - var(--plateau-reserve, 0px) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px))); }
+@media (min-width: 600px) { .lecteur:has(> .lecteur-mochi) > .board-wrap { max-width: 100%; } }
+.lecteur-mochi { flex: none; display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) 0 var(--space-2); }
 .lecteur:has(.verdict) .lecteur-mochi { flex-grow: 0; align-items: flex-start; }
 /* Réussite : la feuille (bravo, XP, suite) est haute et la consigne n'a plus d'objet ; Mochi s'efface au lieu de dépasser
    à moitié de derrière la feuille. Il reste là après une erreur, au-dessus de la feuille (plus courte). */
@@ -207,8 +213,6 @@
 /* Écran bas (320 × 568) : Mochi plus petit et texte un cran plus petit, pour que la consigne tienne au-dessus de la barre. */
 @media (max-height: 640px) {
   .lecteur:has(> .lecteur-mochi) { --mochi: 44px; }
-  /* Le plateau garde presque toute la largeur, mais laisse 300 px à la tête, à Mochi et à la barre. */
-  .lecteur:has(> .lecteur-mochi) > .board-wrap { width: min(100%, calc(100dvh - 300px)); margin-inline: auto; }
   .lecteur-mochi { padding: 6px 0 0; }
   .lecteur-mochi .bubble p { font-size: var(--fs-s); line-height: 1.35; padding: 7px 12px; }
   .lecteur:has(> .lecteur-mochi) > .notice { margin-block: 0 var(--space-1); padding-block: 6px; font-size: var(--fs-s); }

@@ -19,7 +19,8 @@ import { validerDefi } from './defiAppareil';
 import { Mochi } from '../ui/Mochi';
 import { PortraitMochi } from '../ui/Portrait';
 import { Confettis } from '../ui/Confettis';
-import { Etapes } from '../ui/Lecteur';
+import { Etapes, Retour } from '../ui/Lecteur';
+import { useTitreFocus } from '../ui/titreFocus';
 import { marquerXpVue, useExercice } from '../ui/celebrations';
 import { DetailXp } from '../ui/DetailXp';
 import { type XpSeance, useXpSeance } from '../ui/xpSeance';
@@ -191,10 +192,11 @@ export function SeanceRevisions({ confirmTouch, celebrer, compte, onFin }: Props
 }
 
 function Tete({ onRetour }: { onRetour: () => void }) {
+  const titre = useTitreFocus();
   return (
     <header className="revue-tete">
-      <button type="button" className="retour" onClick={onRetour} aria-label={t('seance.retour')}>‹</button>
-      <h2>{t('seance.titre')}</h2>
+      <Retour label={t('seance.retour')} onClick={onRetour} />
+      <h2 ref={titre} tabIndex={-1}>{t('seance.titre')}</h2>
     </header>
   );
 }
