@@ -9,7 +9,8 @@ import { plateau } from './plateau';
 // - un seul relief d'action principale au plus (E1 : `--ombre-relief`, « le bouton principal, et rien d'autre ») ;
 // - une activité ne défile pas (P5) ;
 // - la barre de navigation à sa place (P8, #648) : en bas sous 1024 px, à gauche au-delà, contenu et bouton fixe à sa droite ;
-//   aucune barre pendant une partie.
+//   aucune barre pendant une partie ;
+// - Jouer (#648, lot V10) : en paysage, le goban à côté du bouton principal, au moins aussi grand qu'avant ; en portrait, au-dessus.
 // On ne vérifie que ce qui est vrai aujourd'hui. Ce qui est cassé est dans CONNU, avec le lot qui le corrige :
 // le contrôle y est sauté, et un `test.fixme` le nomme. Un lot qui corrige un cas le retire de CONNU.
 
@@ -109,6 +110,7 @@ async function mesurer(page: Page) {
     };
     return {
       nav: boite(document.querySelector('nav.nav')),
+      cta: boite(document.querySelector('.accueil .cta')),
       app: boite(document.querySelector('main.app')),
       fixes: [...document.querySelectorAll('.cta, .dock')].filter((e) => getComputedStyle(e).position === 'fixed').map(boite).filter((b) => b !== null),
       debord: d.scrollWidth - d.clientWidth,
@@ -149,6 +151,14 @@ for (const t of TAILLES) {
               expect(g.g >= 0 && g.h >= 0 && g.d <= m.vue.l && g.b <= m.vue.bas, `goban dans le cadre ${info}`).toBe(true);
             }
           }
+        }
+        // P8 (#648, lot V10) : Jouer en deux zones en paysage ; goban plus grand qu'avant le lot (1024 : 314 px, 1440 : 506, 844 × 390 : 168).
+        if (e.nom === 'Jouer') {
+          const g = m.gobans[0];
+          if (t.l > t.h) {
+            expect(m.cta!.g >= g.d && m.cta!.h >= g.h - 1 && m.cta!.h < g.b, `goban à côté du bouton ${info}`).toBe(true);
+            expect(g.d - g.g, `taille du goban de Jouer ${info}`).toBeGreaterThanOrEqual({ '1024': 314, '1440': 506, '844x390': 168 }[t.nom as string] ?? 0);
+          } else expect(m.cta!.h, `bouton sous le goban ${info}`).toBeGreaterThanOrEqual(g.b);
         }
         // P8 (#648, lot V8) : barre latérale à partir de 1024 px, barre du bas en dessous ; pas de barre en partie.
         if (e.nom === 'Partie') expect(m.nav, `pas de barre en partie ${info}`).toBeNull();

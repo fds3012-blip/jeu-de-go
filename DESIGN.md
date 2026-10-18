@@ -276,7 +276,7 @@ Grille de 4 px, vérifiée par `tokens.test.ts` : `--space-1` 4, `--space-2` 8, 
 
 ### Colonne et cadre
 - Colonne unique centrée, `max-width: var(--largeur-max)` (560 px) sous 600 px de large. Les maquettes sont en 390 × 844 (`--maquette-l`, `--maquette-h`).
-- À partir de 600 px, `.app` va jusqu'à `--largeur-contenu` (720 px), puis `--largeur-large` (1080 px) à partir de 1024 px ; un paragraphe s'arrête à `--mesure` (65 signes) et un bouton principal dans le flux à 560 px. Jouer et les activités (un goban qu'on touche) gardent 560 px jusqu'aux lots V5, V6 et V10 (#629, lot V7).
+- À partir de 600 px, `.app` va jusqu'à `--largeur-contenu` (720 px), puis `--largeur-large` (1080 px) à partir de 1024 px ; un paragraphe s'arrête à `--mesure` (65 signes) et un bouton principal dans le flux à 560 px. Les activités (un goban qu'on touche) gardent 560 px jusqu'aux lots V5 et V6 (#629, lot V7). Jouer, en paysage à partir de 600 px de large, passe en deux zones (#648, lot V10) : le goban à gauche, à la hauteur de l'écran, et le bloc d'action (bouton, modes, tuiles du jour) à droite, de 18 à 22,5rem, aligné sur le haut du goban ; en portrait, la colonne de 560 px ne change pas.
 - `.app` : `padding: 12px 16px`, plus 150 px en bas pour le bouton fixe et la barre.
 - Le bouton principal seul (`.cta`) est fixé en bas, au-dessus de la barre : `bottom: calc(74px + var(--relief) + env(safe-area-inset-bottom))`, largeur `min(528px, 100% − 32px)`. Avec des actions secondaires, il vit dans `.dock` (grille, écart `8px + relief`).
 - En partie, le plateau déborde la gouttière (`margin: 0 calc(4px − var(--gouttiere))`) : il prend presque toute la largeur.
@@ -505,7 +505,7 @@ Ce qu'on garde quand même : les règles E et A ; les libellés visibles (une ca
 ### Cibles
 - **Référence** : 390 × 844 (iPhone 12 à 15). Les captures de revue et les maquettes Figma sont à cette taille.
 - **Plancher** : 320 × 568 (iPhone SE) sans défilement horizontal ; aucun débord à 195 px de large ni à 200 % de texte.
-- **Plafond** : le contenu s'arrête à 720 px de 600 à 1023 px de large, à 1080 px au-delà (#629, lot V7) ; Jouer et les activités restent à 560 px. La barre latérale est là à partir de 1024 px (#648, lot V8). Le reste de P8 (activités en deux zones, téléphone en paysage) vient avec les lots V de `docs/ux/visuel-responsive-2026-10.md`.
+- **Plafond** : le contenu s'arrête à 720 px de 600 à 1023 px de large, à 1080 px au-delà (#629, lot V7) ; Les activités restent à 560 px ; Jouer passe en deux zones en paysage (#648). La barre latérale est là à partir de 1024 px (#648, lot V8). Le reste de P8 (activités en deux zones, téléphone en paysage) vient avec les lots V de `docs/ux/visuel-responsive-2026-10.md`.
 
 ### Points de rupture réellement utilisés
 | Requête | Ce qui change |
@@ -516,6 +516,7 @@ Ce qu'on garde quand même : les règles E et A ; les libellés visibles (une ca
 | `min-width: 600px` | Large : le contenu passe à 720 px, le texte courant à `--mesure` ; Go du jour en deux zones (goban, problème) ; le plateau de la partie et le fond de la fin ne débordent plus la gouttière. |
 | `min-width: 1024px` | Très large : barre latérale à gauche (#648, `nav.css`), contenu à sa droite jusqu'à 1080 px ; carte de la prochaine leçon en deux zones ; bouton principal dans le flux plafonné à 560 px. Au zoom 200 %, 1440 px valent 720 : la barre du bas revient. |
 | `min-width: 600px` (grilles, #630) | Vignettes de Tous les problèmes en `minmax(7rem, 1fr)` ; Statistiques en deux colonnes. |
+| `orientation: landscape` et `min-width: 600px` | Jouer en deux zones (#648, lot V10) : goban à gauche (1024 × 768 : 520 px au lieu de 314 ; 1440 × 900 : 664 au lieu de 506 ; 844 × 390 : 244 au lieu de 168), bloc d'action à droite. |
 | `min-width: 1024px` (grilles, #630) | Profil : identité à gauche, menu à droite, badges sur toute la largeur ; Réglages : aperçu du goban fixe à gauche, groupes en deux colonnes. |
 | `@container (max-width: 5.4em)` sur un onglet | Libellé court (« Appr. », « Probl. ») au zoom 200 % ; le nom entier reste lu. |
 | `hover: hover` et `pointer: fine` | Survol, seulement à la souris. |
