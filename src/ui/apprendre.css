@@ -94,6 +94,12 @@
 .prochaine-duree { display: block; margin-top: 8px; font-size: var(--fs-legende); font-weight: var(--fw-bold); color: var(--muted); }
 .apprendre .cta-chemin { position: static; transform: none; width: 100%; margin: var(--space-4) 0 var(--relief);
   padding-inline: clamp(6px, 6%, var(--space-6)); overflow-wrap: anywhere; } /* #121 : reste lisible au zoom 200 % */
+/* P8 (#629) : à partir de 1024 px, la carte s'étire sur 1080 px ; le bouton passe à droite de la leçon au lieu de
+   courir sur toute la largeur. */
+@media (min-width: 1024px) {
+  .prochaine-carte { display: grid; grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem); align-items: center; gap: var(--space-6); }
+  .apprendre .cta-chemin { margin: 0 0 var(--relief); }
+}
 .chemin-fini { margin: var(--space-6) 0; }
 
 /* Écrans étroits (320 à 389 px) : écarts et titres un peu plus serrés, pour qu'un mot ne se coupe jamais. */
@@ -299,10 +305,17 @@
 
 /* ---------- Problème du jour mis en scène ---------- */
 .du-jour { background: var(--surface); border-radius: var(--radius); overflow: hidden; }
-.du-jour-plateau { position: relative; height: 188px; overflow: hidden; container-type: inline-size; cursor: pointer;
+.du-jour-plateau { --fenetre: 188px; position: relative; height: var(--fenetre); overflow: hidden; container-type: inline-size; cursor: pointer;
   -webkit-mask-image: linear-gradient(#000 72%, transparent); mask-image: linear-gradient(#000 72%, transparent); }
 /* Goban entier (carré, 100cqw de haut), décalé pour que les pierres soient au milieu de la fenêtre, sans montrer le vide au-dessus ou en dessous. */
-.du-jour-cadre { position: absolute; left: 0; right: 0; top: clamp(calc(188px - 100cqw), calc(94px - var(--f) * 100cqw), 0px); }
+.du-jour-cadre { position: absolute; left: 0; right: 0; top: clamp(calc(var(--fenetre) - 100cqw), calc(var(--fenetre) / 2 - var(--f) * 100cqw), 0px); }
+/* P8 (#629) : dès 600 px, le goban à gauche et le problème à droite : le goban garde l'échelle du téléphone au lieu
+   de s'étirer sur toute la largeur, et « Résoudre » ne court plus sur 1000 px. */
+@media (min-width: 600px) {
+  .du-jour { display: grid; grid-template-columns: minmax(0, 3fr) minmax(15rem, 2fr); align-items: center; }
+  .du-jour-plateau { --fenetre: 224px; -webkit-mask-image: linear-gradient(90deg, #000 78%, transparent); mask-image: linear-gradient(90deg, #000 78%, transparent); }
+  .du-jour-corps { padding: var(--space-4); }
+}
 .du-jour-cadre .board-wrap { border-radius: 0; box-shadow: none; margin: 0; }
 .du-jour-corps { padding: 2px var(--space-4) var(--space-4); }
 .du-jour-corps h3 { margin: 0; font-family: var(--font-titre); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre); font-size: var(--fs-2xl); line-height: 1.1; }
