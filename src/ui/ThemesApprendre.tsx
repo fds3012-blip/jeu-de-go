@@ -15,7 +15,7 @@ export const THEMES_VISIBLES = 6;
 export function ThemesApprendre({ themes, onTheme }: { themes: readonly ThemeApprendre[]; onTheme: (theme: Theme) => void }) {
   const cartes = themes.map((x): CarteTheme => ({
     cle: x.theme, nom: t(`theme.${x.theme}`), description: t(`themes.desc.${x.theme}`),
-    motif: <VignetteLecon id={x.vignette} taille={44} />,
+    motif: <VignetteLecon id={x.vignette} taille={40} />,
     maitrise: x.faites === x.lecons.length, part: x.faites / x.lecons.length,
     partAria: t('apprendre.themes.barre', { n: x.faites, total: x.lecons.length }),
   }));
