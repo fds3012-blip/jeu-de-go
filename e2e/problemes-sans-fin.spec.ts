@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { ouvrirTous } from './problemes';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -37,7 +38,7 @@ test('tout résolu : « Problème suivant » de la liste ouvre un problème, et 
   // Retour à la liste, puis le problème b1 : la bonne réponse est E5.
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
-  await page.getByRole('button', { name: 'Tous les problèmes' }).click();
+  await ouvrirTous(page);
   await page.getByRole('button', { name: /^Problème \d+ : Capture la pierre/ }).click();
   await jouer(page, 'E5');
   await expect(page.getByText('Bravo, c’est le bon coup !')).toBeVisible();

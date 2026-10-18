@@ -2,7 +2,7 @@
 // src/app/Learn.tsx). Chaque carte : une miniature, le nom, une ligne qui dit ce qu'on y apprend, puis l'état :
 // « Maîtrisé », ou une barre fine. Actions secondaires, à plat : l'action en relief de l'écran reste ailleurs.
 // Une colonne sur téléphone (la ligne de description ne tient pas dans une demi-largeur), puis 2, 3 et plus quand la place
-// le permet (#625, P8). Cartes à plat, sans bordure, comme les tuiles d’Entraînement (.tuile-pb).
+// le permet (#625, P8). Cartes à plat, sans bordure, comme les entrées des sommaires (.sommaire-entree, #653).
 import { useId, type CSSProperties, type ReactNode } from 'react';
 import { fr } from './typo';
 import './themes.css';

@@ -120,6 +120,9 @@ export const frEcrans = {
   'pb.aide.apres': ' quand il ne lui reste qu’une liberté.',
   'pb.continuer': 'Problème suivant',
   'pb.tous': 'Tous les problèmes',
+  'pb.sommaire.nom': 'S’entraîner',
+  'pb.sommaire.course': 'Course aux problèmes',
+  'pb.sommaire.record': 'Record {n}',
   /** #602 : titre de la section sous le Go du jour ; « Problèmes » est maintenant le titre de l'écran. */
   'pb.entrainement': 'Entraînement',
   'pb.verrouille': 'verrouillé',
@@ -239,11 +242,12 @@ export const frEcrans = {
   'carrousel.verrouille': 'verrouillé',
 
   // Mes erreurs (#77) : section des Problèmes et problèmes tirés de tes parties
-  'erreurs.titre': 'Tes erreurs à rejouer',
+  'erreurs.titre': 'Rejouer tes erreurs',
   // #469 : séance « Révisions du jour » (5 exercices au plus), ouverte depuis l'accueil.
-  'seance.titre': 'Révisions',
+  'seance.titre': 'Rejouer tes erreurs',
   'seance.surtitre': 'Révision {n} sur {total}',
-  'seance.retour': 'Retour à l’accueil',
+  'seance.retour': 'Retour',
+  'seance.fini': 'Terminer',
   'seance.suivant': 'Révision suivante',
   'seance.terminer': 'Voir mon bilan',
   'seance.progresAria': 'Révision {n} sur {total}',
@@ -257,8 +261,6 @@ export const frEcrans = {
   'seance.trouve': 'Trouvé du premier coup',
   'seance.rate': 'À revoir demain',
   'erreurs.compteurAria': '{n} à rejouer',
-  'erreurs.aide': 'Des positions de tes parties. Trouve le coup que KataGo conseillait.',
-  'erreurs.rejouerAria': 'Rejouer : {titre}',
   'erreurs.titreContre': 'Ta partie contre {adversaire}, coup {coup}',
   'erreurs.titreDeux': 'Ta partie à deux, coup {coup}',
   'erreurs.consigneMieux': 'Trouve mieux que ton coup.',
@@ -336,13 +338,7 @@ export const frEcrans = {
   'pq.zoneCarres': 'Les carrés montrent cette zone.',
 
   // Révision du jour (#199) : problèmes déjà réussis, repris à J+1, J+3, J+7. Ce qui garde la série : docs/design/vocabulaire.md
-  'revision.titre': 'Révisions',
-  'revision.aide': 'Refaire un problème réussi t’aide à le retenir.',
-  'revision.ouvrirAria': 'Réviser : {titre}',
-  'revision.dejaReussi': 'Déjà réussi · refais-le sans aide',
-  'revision.dejaVu': 'Vu avec la réponse · trouve-le seul',
   'revision.faite': 'Révision faite. D’autres problèmes reviendront demain.',
-  'revision.serie': 'Pour garder ta série, fais chaque jour le Go du jour, une leçon ou une révision.',
   // Arrivée par un lien partagé, pour qui n'a jamais joué (#285)
   'arrivee.premierCoup': 'Premier coup au go ? Touche le plateau.',
   'arrivee.apprendre': 'Apprends à jouer en 2 minutes',

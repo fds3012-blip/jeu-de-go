@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { ouvrirTous } from './problemes';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -24,8 +25,8 @@ test('y01 : reculer en C1, Blanc avance en D1, et la phrase dit la perte (un poi
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
-  await expect(page.locator('.themes')).toBeVisible();
-  await page.getByRole('button', { name: 'Tous les problèmes' }).click();
+  await expect(page.getByTestId('problemes-sommaire')).toBeVisible();
+  await ouvrirTous(page);
   await page.getByRole('button', { name: /^Problème \d+ : Bloque au premier rang/ }).click();
   await expect(plateau(page)).toBeVisible();
 

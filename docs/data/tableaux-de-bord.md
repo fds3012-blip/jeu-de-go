@@ -141,17 +141,17 @@ SELECT
     toDate(toTimeZone(timestamp, 'Europe/Paris')) AS jour,
     uniqIf(person_id, event = 'go_du_jour_resolu') AS go_du_jour,
     uniqIf(person_id, event = 'lecon_terminee') AS lecon,
-    uniqIf(person_id, event = 'revision_faite') AS revision,
+    uniqIf(person_id, event = 'revision_seance_terminee') AS revision,
     uniq(person_id) AS joueurs_avec_un_defi
 FROM events
-WHERE event IN ('go_du_jour_resolu', 'lecon_terminee', 'revision_faite')
+WHERE event IN ('go_du_jour_resolu', 'lecon_terminee', 'revision_seance_terminee')
   AND timestamp >= now() - INTERVAL 30 DAY
   AND properties.environnement = 'production'
 GROUP BY jour
 ORDER BY jour DESC
 ```
 
-Réussite des révisions (indicateur d'appui) : `sum(du_premier_coup) / sum(exercices)` sur `revision_faite`.
+Réussite des révisions (indicateur d'appui) : `sum(reussis) / sum(elements)` sur `revision_seance_terminee` (#653 : la séance « Rejouer tes erreurs » remplace la Révision du jour et son `revision_faite`).
 
 ## 4. Parties terminées par joueur actif et par semaine (cible : 5)
 
@@ -480,13 +480,13 @@ SELECT
     toDate(toTimeZone(timestamp, 'Europe/Paris')) AS jour,
     count() AS revisions_faites,
     uniq(person_id) AS joueurs,
-    sum(toFloat(properties.exercices)) AS exercices,
-    sum(toFloat(properties.du_premier_coup)) AS du_premier_coup,
+    sum(toFloat(properties.elements)) AS exercices,
+    sum(toFloat(properties.reussis)) AS du_premier_coup,
     round(100 * du_premier_coup / nullIf(exercices, 0), 1) AS reussite_premier_coup_pct,
     countIf(properties.compte_serie = true) AS comptees_dans_la_serie
 FROM events
 WHERE timestamp >= now() - INTERVAL 30 DAY
-  AND event = 'revision_faite'
+  AND event = 'revision_seance_terminee'
   AND properties.environnement = 'production'
 GROUP BY jour
 ORDER BY jour DESC
@@ -498,7 +498,7 @@ Part des joueurs actifs (`complet`) qui font la révision, par semaine :
 SELECT
     toStartOfWeek(toTimeZone(timestamp, 'Europe/Paris'), 1) AS semaine,
     uniq(person_id) AS actifs,
-    uniqIf(person_id, event = 'revision_faite') AS reviseurs,
+    uniqIf(person_id, event = 'revision_seance_terminee') AS reviseurs,
     round(100 * reviseurs / nullIf(actifs, 0), 1) AS reviseurs_pct
 FROM events
 WHERE timestamp >= now() - INTERVAL 8 WEEK
@@ -577,7 +577,7 @@ FROM (
         ) AS precedente
     FROM events
     WHERE timestamp >= now() - INTERVAL 120 DAY
-      AND event IN ('go_du_jour_resolu', 'revision_faite')
+      AND event IN ('go_du_jour_resolu', 'revision_seance_terminee')
       AND properties.environnement = 'production'
       AND properties.mesure = 'complet'
 )
@@ -644,7 +644,7 @@ FROM (
     SELECT
         person_id,
         max(toDate(toTimeZone(timestamp, 'Europe/Paris'))) AS dernier,
-        maxIf(toInt(properties.serie), event IN ('go_du_jour_resolu', 'revision_faite')) AS meilleure_serie
+        maxIf(toInt(properties.serie), event IN ('go_du_jour_resolu', 'revision_seance_terminee')) AS meilleure_serie
     FROM events
     WHERE timestamp >= now() - INTERVAL 120 DAY
       AND NOT startsWith(event, '$')

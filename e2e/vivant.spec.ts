@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { ouvrirNiveauBadges } from './profil';
+import { ouvrirTous } from './problemes';
 
 // Issue #103 : Problèmes et Profil moins fades. Paliers illustrés, sceau jade, fête du palier complet,
 // statistiques et vitrine de badges. Avec CAPTURES=1, enregistre les captures 390 × 844 de docs/design/v2/captures.
@@ -17,7 +18,7 @@ async function preparer(page: Page, theme: 'dark' | 'light', donnees: Record<str
 async function idsDebutant(page: Page) {
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
-  await page.getByRole('button', { name: 'Tous les problèmes' }).click();
+  await ouvrirTous(page);
   await expect(page.getByRole('group', { name: /^Débutant/ })).toBeVisible();
   return page.getByRole('group', { name: /^Débutant/ }).locator('[data-probleme]').evaluateAll(els => els.map(e => e.getAttribute('data-probleme')!));
 }
@@ -64,7 +65,7 @@ for (const theme of ['dark', 'light'] as const) {
     }, [theme, Object.fromEntries([...ids.map(id => [id, true]), ['b3', true]])] as const);
     await page.reload();
     await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
-    await page.getByRole('button', { name: 'Tous les problèmes' }).click();
+    await ouvrirTous(page);
 
     const debutant = page.getByRole('group', { name: /^Débutant/ });
     await expect(debutant.getByRole('img', { name: 'Palier complet' })).toBeVisible();

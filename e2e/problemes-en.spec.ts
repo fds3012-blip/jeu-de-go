@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { ouvrirTous } from './problemes';
 import { attendrePierre, jouer, plateau } from './plateau';
 import { PROBLEMES_EN } from '../src/content/problemes.en';
 
@@ -34,7 +35,7 @@ for (const largeur of [390, 320]) test(`?lang=en : Go du jour et problème de la
   // Un problème de la liste : a01, le premier du palier Débutant. Erreur (réfutation), puis réussite (explication).
   await page.goto('/?lang=en');
   await page.getByRole('navigation').getByRole('button', { name: 'Puzzles' }).click();
-  await page.getByRole('button', { name: 'All puzzles' }).click();
+  await ouvrirTous(page);
   await page.getByRole('group', { name: 'Beginner' }).locator('[data-probleme="a01"]').click();
   await expect(page.getByRole('heading', { name: PROBLEMES_EN.a01.title })).toBeVisible();
   await expect(page.getByText(PROBLEMES_EN.a01.prompt)).toBeVisible();
@@ -60,7 +61,7 @@ test('sans ?lang : le Go du jour et les problèmes restent en français', async 
 
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
-  await page.getByRole('button', { name: 'Tous les problèmes' }).click();
+  await ouvrirTous(page);
   await page.getByRole('group', { name: /^Débutant/ }).locator('[data-probleme="a01"]').click();
   await expect(page.getByRole('heading', { name: 'Première capture' })).toBeVisible();
   await expect(page.getByText('Capture tout de suite la pierre blanche marquée.')).toBeVisible();

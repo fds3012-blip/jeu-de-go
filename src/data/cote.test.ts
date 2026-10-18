@@ -109,7 +109,7 @@ describe('textes de la cote', () => {
 
 describe('problèmes et leçons : jamais la cote de jeu (#137)', () => {
   it('ni l’écran Problèmes ni les leçons n’importent la cote de jeu', () => {
-    for (const f of ['app/Puzzles.tsx', 'app/Lecon.tsx', 'app/Learn.tsx', 'ui/RevisionDuJour.tsx', 'ui/MesErreurs.tsx']) {
+    for (const f of ['app/Puzzles.tsx', 'app/Lecon.tsx', 'app/Learn.tsx']) {
       const src = readFileSync(resolve(__dirname, '..', f), 'utf8');
       expect(src, f).not.toMatch(/i18n\/cote'|ui\/Cote'|data\/cote'|go\/cote'/);
     }

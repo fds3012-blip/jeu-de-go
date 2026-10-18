@@ -40,7 +40,7 @@ test('Page du thème Capture', async ({ page }) => {
 test('Consigne de la course', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Problèmes', exact: true }).click();
-  await page.locator('.course-carte').click();
+  await page.getByTestId('entree-course').click();
   await expect(page.locator('.course-consigne')).toBeVisible();
   await capture(page, 'course-consigne');
 });

@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { ouvrirTous } from './problemes';
 import { leconDuTheme } from './apprendre';
 import { brancher, CODE, fauxServeur } from './fauxSupabase';
 import { abandonner, plateau, toucherCta } from './plateau';
@@ -119,7 +120,7 @@ test('leçon 4 et problèmes : compte demandé ; le Go du jour reste libre (320 
   // Go du jour : libre.
   await expect(page.getByRole('heading', { name: /Go du jour/ })).toBeVisible();
   // « Tous les problèmes » : compte.
-  await page.getByRole('button', { name: 'Tous les problèmes' }).click();
+  await ouvrirTous(page);
   await expect(page.getByTestId('creer-compte')).toHaveAttribute('data-raison', 'problemes');
   await expect(page.getByText('Le Go du jour reste libre. Crée ton compte pour les autres problèmes.')).toBeVisible();
   await sansDefilementHorizontal(page);
