@@ -205,7 +205,7 @@ type Reprise = { quoi: 'ordi'; contre: OpponentId } | { quoi: 'deux' } | { quoi:
  * la barre du bas) ; `maison` : l'onglet où vit l'écran posé ; `el` : l'écran d'origine, gardé monté et caché, retrouvé
  * tel quel à la sortie (défilement `y` et focus `f` compris) ; `rendre` : ce qu'il faut remettre pour le revoir (écran de compte).
  */
-interface Pose { onglet: Tab; maison: Tab; el: ReactNode; y: number; f: Element | null; rendre?: () => void; a?: boolean }
+interface Pose { onglet: Tab; maison: Tab; el: ReactNode; y: number; f: Element | null; rendre?: () => void; a?: boolean; t?: string | null }
 
 /** Réglages de la file d'attente du direct (#360, #436). */
 interface DemandeDirect { taille: 9 | 13 | 19; cadence: 'rapide' | 'normale' | 'lente'; regles: 'japanese' | 'chinese' }
@@ -528,13 +528,15 @@ export function App() {
   /**
    * #640 (N4) : ouvre un écran de l'onglet `maison` par-dessus l'écran affiché, sans changer l'onglet allumé (A3, A10) ;
    * sa sortie y ramène (A6). À appeler avant de poser l'état de l'écran ouvert. Même onglet : rien à faire, sauf pour une
-   * activité (`a`, #646 : plein écran) hors d'une autre, posée sur l'écran d'origine, qu'elle retrouve à sa sortie
-   * (défilement et focus compris). Un onglet déjà sous la pile : on y revient d'abord, comme par la barre du bas.
+   * activité (`a`, #646 : plein écran) hors d'une autre : l'écran d'origine n'est pas gardé (un seul écran du même onglet
+   * à la fois), mais sa sortie le retrouve à la même place, focus sur ce qui l'a ouverte (retrouvé par son texte).
+   * Un onglet déjà sous la pile : on y revient d'abord, comme par la barre du bas.
    */
   function par(maison: Tab, rendre?: () => void, a?: boolean) {
     if (maison === tab && !rendre && (!a || activite)) return;
     if (maison !== tab && poses.some(p => p.onglet === maison)) { go(maison); return; }
-    setPoses([...poses, { onglet: tab, maison, el: ecran.current, y: window.scrollY, f: document.activeElement, rendre, a: maison === tab }]); setTab(maison);
+    const f = document.activeElement, a2 = maison === tab;
+    setPoses([...poses, { onglet: tab, maison, el: a2 ? null : ecran.current, y: window.scrollY, f, t: f?.textContent, rendre, a: a2 }]); setTab(maison);
   }
 
   /** « Conditions et confidentialité » par-dessus l'écran (compte, accord, consentement) ; « ‹ » y ramène. */
@@ -895,7 +897,7 @@ export function App() {
   const ecranReseau = enDefi || enDirect || enLente || enPartagee || ecranPlein
     || (tab === 'profil' && (vueProfil === 'compte' || vueProfil === 'amis' || vueProfil === 'cote'));
   // #640 : un écran posé par-dessus un autre onglet dit « Retour » (il ne ramène pas au chemin, mais d'où l'on vient).
-  const retourPose = poses.length ? t('profil.retour') : undefined;
+  const retourPose = poses.some(p => !p.a) ? t('profil.retour') : undefined;
   // #646 (N2, A5) : activité affichée (leçon, problème, découverte, règles, placement, révisions) : plein écran, sans barre du bas.
   let activite = false;
   let screen;
@@ -1176,6 +1178,7 @@ export function App() {
   if (haut && tab !== haut.maison) setPoses([]);
   else if (haut && (haut.a ? !activite && !enPartie && !ecranPlein : tab === 'jouer' ? accueilVisible : tab === 'apprendre' ? !lesson && !serie3 : vueProfil === 'menu' || vueProfil === 'parties')) fermerPose(haut);
   const ongletVu = poses[0]?.onglet ?? tab;
+  const caches = poses.filter(p => !p.a);
   const plein = enPartie || ecranPlein || activite;
   const horsAide = playing || enPlacement || defi !== null || direct || decouverte || !!introRegles;
   // #465 (WCAG 2.4.2) : le titre de l'onglet du navigateur suit l'écran affiché.
@@ -1209,7 +1212,13 @@ export function App() {
   useEffect(() => { document.title = titreDocument; }, [titreDocument]);
   // #640 (A6) : l'écran d'origine retrouvé, à l'endroit où on l'avait laissé.
   // Le focus revient sur ce qui a ouvert l'écran posé (clavier, lecteur d'écran).
-  useLayoutEffect(() => { const p = defiler.current; defiler.current = null; if (p) { window.scrollTo(0, p.y); (p.f as HTMLElement | null)?.focus?.({ preventScroll: true }); } });
+  useLayoutEffect(() => {
+    const p = defiler.current; defiler.current = null;
+    if (!p) return;
+    window.scrollTo(0, p.y);
+    const f = p.f?.isConnected ? p.f : [...document.querySelectorAll('.calque:last-child button')].find(b => p.t && b.textContent === p.t);
+    (f as HTMLElement | undefined)?.focus({ preventScroll: true });
+  });
   // #606 (N1, A7) : le retour du système fait ce que fait « ‹ » (src/app/retourSysteme.ts, hors du JS initial).
   const lectureRetour = useRef<Branchement>(null!);
   lectureRetour.current = {
@@ -1302,7 +1311,7 @@ export function App() {
         {bandeau && <BandeauHorsLigne ou={bandeau} />}
         <LimiteErreur origine="ecran" onAccueil={versAccueil}>
           {/* #640 : les écrans d'origine restent montés, cachés, sous l'écran posé ; chacun garde sa place dans l'arbre. */}
-          {[...poses.map(p => p.el), screen].map((el, i) => <div key={i} className="calque" hidden={i < poses.length}><Suspense fallback={null}>{el}</Suspense></div>)}
+          {[...caches.map(p => p.el), screen].map((el, i) => <div key={i} className="calque" hidden={i < caches.length}><Suspense fallback={null}>{el}</Suspense></div>)}
         </LimiteErreur>
       </main>
       <FeteNiveau celebrer={settings.celebrations} ecran={`${tab}|${playing}|${lessonId ?? ''}|${serie3 ? 'serie' : ''}|${vueProfil}|${decouverte ? 'decouverte' : ''}`} />

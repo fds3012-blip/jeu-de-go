@@ -8,9 +8,12 @@ export const barre = (page: Page): Locator => page.getByRole('navigation');
 
 /** Sort des activités ouvertes (« ‹ » de l'écran affiché) jusqu'à retrouver la barre du bas. */
 export async function sortirActivite(page: Page): Promise<void> {
-  for (let i = 0; i < 4 && !(await barre(page).isVisible()); i++) {
-    const retour = page.locator('.calque:not([hidden]) .retour').last();
-    if (!(await retour.isVisible())) break;
+  // « ‹ », ou, sur la fin d'une leçon, son lien « Retour au chemin ».
+  const retour = page.locator('.calque:not([hidden]) :is(.retour, .fin-actions [data-action="chemin"])').last();
+  for (let i = 0; i < 4; i++) {
+    // L'écran peut encore se charger : on attend la barre ou une sortie.
+    await expect(barre(page).or(retour).first()).toBeVisible();
+    if (await barre(page).isVisible()) break;
     await retour.click();
   }
   await expect(barre(page)).toBeVisible();

@@ -1,11 +1,13 @@
 import { expect, test, type Page } from '@playwright/test';
+import { onglet } from './onglet';
 import { attendrePierre, jouer } from './plateau';
 
 // Issue #199 : Révision du jour (problèmes déjà réussis, repris à J+1, J+3, J+7) et série « un défi par jour ».
 // Horloge figée à midi, heure de Paris : le 01/10/2026 est le Go du jour n° 5. Le problème b1 (réponse E5) a été
 // réussi la veille (n° 4) : il revient aujourd'hui, à J+1.
 const JOUR_5 = new Date('2026-10-01T12:00:00+02:00');
-const nav = (page: Page, nom: string) => page.getByRole('navigation').getByRole('button', { name: nom }).click();
+// #646 : une leçon ou un problème sont en plein écran ; on en sort par « ‹ » avant de changer d'onglet.
+const nav = (page: Page, nom: string) => onglet(page, nom);
 
 async function preremplir(page: Page) {
   await page.addInitScript(() => {
