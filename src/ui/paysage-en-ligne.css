@@ -47,5 +47,11 @@
   /* Téléphone tourné : à la fin, le ruban des coups laisse sa place au résultat (« Revoir la partie » les montre tous). */
   @media (max-height: 480px) {
     .app.app-partie .defi-partie:is(.phase-fini, .phase-annulee) > .coups-ruban { display: none; }
+    /* Ton bandeau (couleur, komi, prisonniers) ne sert plus une fois la partie finie : le résultat prend sa place. Titre
+       et liens resserrés (les liens gardent 44 px de haut) : la fin tient aussi avec une police de repli plus large. */
+    .app.app-partie .defi-partie:is(.phase-fini, .phase-annulee) > .partie-plateau ~ .joueur { display: none; }
+    .app.app-partie .defi-partie .defi-fin-titre { font-size: var(--fs-l); }
+    .app.app-partie .defi-partie .defi-fin :is(.lien, .echanges-fin .lien) { font-size: var(--fs-s); padding-inline: var(--space-1); }
+    .app.app-partie .defi-partie .defi-fin, .app.app-partie .defi-partie .defi-fin > .echanges-fin { column-gap: var(--space-3); }
   }
 }
