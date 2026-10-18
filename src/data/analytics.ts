@@ -187,8 +187,9 @@ export const EVENTS = {
   // l'adversaire.
   partieLenteCommencee: 'partie_lente_commencee',
   partieLenteTerminee: 'partie_lente_terminee',
-  // Modes de l'accueil (#429) : `mode` (en_ligne, ordi, ami, deux, guidee, decouverte : #524), `depuis` (bouton, plateau, tuile, plus,
-  // feuille : bouton de « Changer »), `principal` (le mode était l'action principale de l'accueil).
+  // Modes de l'accueil (#429) : `mode` (en_ligne, ordi, ami, deux, guidee, decouverte : #524), `depuis` (bouton, plateau, tuile,
+  // feuille : bouton de « Changer », apprendre : guidée et découverte, #589 et #647 ; plus : feuille retirée par #647),
+  // `principal` (le mode était l'action principale de l'accueil).
   modeChoisi: 'mode_choisi',
   // #571 (loi de Hick) : options repliées ouvertes par « Changer » (`ecran` : direct, lente : réglages de la partie en ligne).
   plusOuvert: 'plus_ouvert',
