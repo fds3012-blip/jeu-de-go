@@ -7,7 +7,10 @@ import { plateau } from './plateau';
 // - le goban entier dans le cadre, barres fixées du bas déduites (Jouer et les activités : partie, leçon, problème) ;
 // - dans une activité, un goban d'au moins 260 px (plancher du 9 × 9, décision #527) ;
 // - un seul relief d'action principale au plus (E1 : `--ombre-relief`, « le bouton principal, et rien d'autre ») ;
-// - une activité ne défile pas (P5).
+// - une activité ne défile pas (P5) ;
+// - la barre de navigation à sa place (P8, #648) : en bas sous 1024 px, à gauche au-delà, contenu et bouton fixe à sa droite ;
+//   aucune barre pendant une partie ;
+// - Jouer (#648, lot V10) : en paysage, le goban à côté du bouton principal, au moins aussi grand qu'avant ; en portrait, au-dessus.
 // On ne vérifie que ce qui est vrai aujourd'hui. Ce qui est cassé est dans CONNU, avec le lot qui le corrige :
 // le contrôle y est sauté, et un `test.fixme` le nomme. Un lot qui corrige un cas le retire de CONNU.
 
@@ -98,7 +101,16 @@ async function mesurer(page: Page) {
     });
     const bas = Math.min(innerHeight, ...barres.map((e) => e.getBoundingClientRect().top));
     const d = document.documentElement;
+    const boite = (e: Element | null) => {
+      if (!e || !visible(e)) return null;
+      const b = e.getBoundingClientRect();
+      return { g: Math.round(b.left), d: Math.round(b.right), h: Math.round(b.top), b: Math.round(b.bottom) };
+    };
     return {
+      nav: boite(document.querySelector('nav.nav')),
+      cta: boite(document.querySelector('.accueil .cta')),
+      app: boite(document.querySelector('main.app')),
+      fixes: [...document.querySelectorAll('.cta, .dock')].filter((e) => getComputedStyle(e).position === 'fixed').map(boite).filter((b) => b !== null),
       debord: d.scrollWidth - d.clientWidth,
       defilement: d.scrollHeight - innerHeight,
       reliefs: [...document.querySelectorAll('body *')].filter((e) => getComputedStyle(e).boxShadow === relief && visible(e))
@@ -138,6 +150,26 @@ for (const t of TAILLES) {
             }
           }
         }
+        // P8 (#648, lot V10) : Jouer en deux zones en paysage ; goban plus grand qu'avant le lot (1024 : 314 px, 1440 : 506, 844 × 390 : 168).
+        if (e.nom === 'Jouer') {
+          const g = m.gobans[0];
+          if (t.l > t.h) {
+            expect(m.cta!.g >= g.d && m.cta!.h >= g.h - 1 && m.cta!.h < g.b, `goban à côté du bouton ${info}`).toBe(true);
+            expect(g.d - g.g, `taille du goban de Jouer ${info}`).toBeGreaterThanOrEqual({ '1024': 314, '1440': 506, '844x390': 168 }[t.nom as string] ?? 0);
+          } else expect(m.cta!.h, `bouton sous le goban ${info}`).toBeGreaterThanOrEqual(g.b);
+        }
+        // P8 (#648, lot V8) : barre latérale à partir de 1024 px, barre du bas en dessous ; pas de barre en partie.
+        if (e.nom === 'Partie') expect(m.nav, `pas de barre en partie ${info}`).toBeNull();
+        else if (m.nav) {
+          if (t.l >= 1024) {
+            expect(m.nav.g === 0 && m.nav.h <= 0 && m.nav.b >= m.vue.h - 1 && m.nav.d - m.nav.g <= 96, `barre latérale ${info}`).toBe(true);
+            expect(m.app!.g, `contenu à droite de la barre ${info}`).toBeGreaterThanOrEqual(m.nav.d);
+            for (const f of m.fixes) expect(f.g >= m.nav.d && f.b <= m.vue.h, `bouton fixe à droite de la barre ${info}`).toBe(true);
+          } else {
+            expect(m.nav.g === 0 && m.nav.d === m.vue.l && m.nav.b === m.vue.h, `barre du bas ${info}`).toBe(true);
+            for (const f of m.fixes) expect(f.b, `bouton fixe au-dessus de la barre ${info}`).toBeLessThanOrEqual(m.nav.h);
+          }
+        } else if (!e.activite) throw new Error(`barre de navigation absente ${info}`);
         if (e.activite) {
           if (!connu('taille')) for (const g of m.gobans) expect(Math.min(g.d - g.g, g.b - g.h), `taille du goban ${info}`).toBeGreaterThanOrEqual(260);
           if (!connu('defilement')) expect(m.defilement, `défilement ${info}`).toBeLessThanOrEqual(1);
@@ -151,3 +183,31 @@ for (const t of TAILLES) {
     }
   });
 }
+
+// #648 (lot V8) : la barre latérale reste la même navigation (nom, quatre onglets, ordre, onglet actif) et se pilote au clavier.
+test.describe('barre latérale à 1440', () => {
+  test.use({ viewport: { width: 1440, height: 900 }, isMobile: false, hasTouch: false, deviceScaleFactor: 1 });
+  test('même navigation, au clavier', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/');
+    const nav = page.getByRole('navigation', { name: 'Navigation principale' });
+    const onglets = nav.getByRole('button');
+    await expect(onglets).toHaveCount(4);
+    for (const [i, nom] of ['Jouer', 'Apprendre', 'Problèmes', 'Profil'].entries()) {
+      await expect(onglets.nth(i)).toHaveAccessibleName(nom);
+      await expect(onglets.nth(i).getByText(nom, { exact: true })).toBeVisible();
+    }
+    await expect(nav.getByRole('button', { name: 'Jouer' })).toHaveAttribute('aria-current', 'page');
+    // Chaque onglet a sa cible de 44 px au moins, libellé visible sous l'icône.
+    for (const b of await nav.getByRole('button').all()) {
+      const r = (await b.boundingBox())!;
+      expect(Math.min(r.width, r.height)).toBeGreaterThanOrEqual(44);
+    }
+    await nav.getByRole('button', { name: 'Apprendre' }).focus();
+    await page.keyboard.press('Tab');
+    await expect(nav.getByRole('button', { name: 'Problèmes' })).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(nav.getByRole('button', { name: 'Problèmes' })).toHaveAttribute('aria-current', 'page');
+    await expect(nav.getByRole('button', { name: 'Jouer' })).not.toHaveAttribute('aria-current', 'page');
+  });
+});
