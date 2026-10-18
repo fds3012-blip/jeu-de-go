@@ -14,7 +14,8 @@ const lignes = (page: Page, sel: string) => page.locator(sel).first().evaluate(e
 async function sousLaBarre(page: Page, sel: string) {
   return page.locator(sel).first().evaluate((el: HTMLElement) => {
     el.scrollIntoView({ block: 'nearest', behavior: 'instant' });
-    const b = el.getBoundingClientRect(); const nav = document.querySelector('nav')!.getBoundingClientRect();
+    // #646 : la leçon est en plein écran ; sans barre, la limite est le bas de l'écran.
+    const b = el.getBoundingClientRect(); const n = document.querySelector('nav'); const nav = { top: n ? n.getBoundingClientRect().top : innerHeight };
     const d = document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2);
     return { bas: Math.round(b.bottom), haut: Math.round(b.top), nav: Math.round(nav.top), libre: !!d && el.contains(d) };
   });
@@ -42,7 +43,7 @@ for (const [largeur, hauteur] of [[390, 844], [320, 568]] as const) {
   });
 }
 
-test('P-2 : 320 × 568, leçon 1 : « Revoir » n’est pas caché sous la barre du bas, « Continuer » reste visible sans défiler', async ({ page }) => {
+test('P-2 : 320 × 568, leçon 1 : « Revoir » visible sans défiler (#646 : plus de barre du bas), « Continuer » aussi', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 568 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
@@ -52,7 +53,7 @@ test('P-2 : 320 × 568, leçon 1 : « Revoir » n’est pas caché sous la barre
   const cta = page.getByRole('button', { name: 'Continuer' });
   await expect(cta).toBeVisible();
   // L'action principale, entière au-dessus de la barre, sans défiler.
-  const c = await cta.evaluate(el => { const b = el.getBoundingClientRect(); return { bas: Math.round(b.bottom), nav: Math.round(document.querySelector('nav')!.getBoundingClientRect().top), scroll: window.scrollY }; });
+  const c = await cta.evaluate(el => { const b = el.getBoundingClientRect(); return { bas: Math.round(b.bottom), nav: Math.round(document.querySelector('nav')?.getBoundingClientRect().top ?? innerHeight), scroll: window.scrollY }; });
   expect(c.scroll).toBe(0);
   expect(c.bas).toBeLessThanOrEqual(c.nav + 1);
   // « Revoir » : entier au-dessus de la barre (après l'avoir fait défiler s'il le faut), et touchable en son centre.
@@ -62,7 +63,7 @@ test('P-2 : 320 × 568, leçon 1 : « Revoir » n’est pas caché sous la barre
   expect(r.bas - r.haut).toBeGreaterThanOrEqual(44);
 });
 
-test('P-2 bis : 320 × 568, règles en 8 gestes : « Revoir » au-dessus de la barre', async ({ browser, baseURL }) => {
+test('P-2 bis : 320 × 568, règles en 8 gestes : « Revoir » visible sans défiler', async ({ browser, baseURL }) => {
   const ctx = await browser.newContext({ viewport: { width: 320, height: 568 }, isMobile: true, hasTouch: true, reducedMotion: 'reduce',
     storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }] }] } });
   const page = await ctx.newPage();

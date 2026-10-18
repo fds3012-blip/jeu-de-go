@@ -21,6 +21,9 @@ async function allume(page: Page, nom: string) {
   await expect(nav(page).locator('[aria-current="page"]')).toHaveCount(1);
 }
 
+/** #646 (A5) : une activité (leçon, problème, découverte, placement…) est en plein écran, sans barre du bas. */
+const pleinEcran = (page: Page) => expect(nav(page)).toHaveCount(0);
+
 /** Le retour du système (Android, navigateur) : la garde d'historique est posée à l'image qui suit l'ouverture. */
 async function retourSysteme(page: Page) {
   await expect.poll(() => page.evaluate(() => (history.state as { garde?: boolean } | null)?.garde ?? false)).toBe(true);
@@ -63,7 +66,7 @@ test('1. placement depuis le Profil : le Profil reste allumé, « Passer » ram�
   await page.getByRole('button', { name: 'Ton niveau de départ' }).click();
   const passer = page.getByRole('button', { name: 'Passer les 3 problèmes' });
   await expect(passer).toBeVisible();
-  await allume(page, 'Profil');
+  await pleinEcran(page);
   await passer.click();
   await expect(page.getByRole('heading', { name: 'Ta cote' })).toBeVisible();
   await allume(page, 'Profil');
@@ -205,7 +208,7 @@ test('8. découverte lancée d’Apprendre : sa fin ramène à Apprendre ; Jouer
   await deplierAvecMochi(page);
   await page.getByTestId('carte-decouverte').click();
   await expect(page.locator('.decouverte')).toBeVisible();
-  await allume(page, 'Apprendre');
+  await pleinEcran(page);
   await faireMoment(page, dernier);
   await page.getByTestId('fin-decouverte').getByRole('button', { name: 'Continuer' }).click();
   await expect(page.getByTestId('carte-decouverte')).toBeVisible();
@@ -220,7 +223,7 @@ test.describe('9. une leçon ouverte hors d’Apprendre se pose par-dessus et y 
     await page.goto('/');
     await page.locator('.tuile-lecon').click();
     await expect(plateau(page)).toBeVisible();
-    await allume(page, 'Jouer');
+    await pleinEcran(page);
     await fleche(page).click();
     await expect(page.locator('main.app-home .tuile-lecon')).toBeVisible();
     // Le focus revient sur la tuile qui a ouvert la leçon.
@@ -240,11 +243,13 @@ test.describe('9. une leçon ouverte hors d’Apprendre se pose par-dessus et y 
     await page.getByRole('button', { name: /^Aide/ }).first().click();
     await page.locator('dialog.aide[open]').getByRole('button', { name: /^Rejoue la leçon/ }).first().click();
     await expect(page.locator('.lecteur-lecon')).toBeVisible();
-    await allume(page, 'Problèmes');
+    await pleinEcran(page);
     await retourSysteme(page);
     await expect(page.locator('.lecteur-lecon')).toHaveCount(0);
     await expect(titre).toHaveText(nom);
     await expect(page.getByRole('button', { name: 'Retour aux problèmes' })).toBeVisible();
+    await pleinEcran(page);
+    await page.getByRole('button', { name: 'Retour aux problèmes' }).click();
     await allume(page, 'Problèmes');
     expect(erreurs).toEqual([]);
     await ctx.close();
@@ -259,7 +264,7 @@ test.describe('9. une leçon ouverte hors d’Apprendre se pose par-dessus et y 
     await expect(page.getByRole('heading', { level: 2, name: 'Défaite' })).toBeVisible({ timeout: 15_000 });
     await page.getByRole('button', { name: 'Ouvrir la leçon' }).click();
     await expect(page.locator('.lecteur-lecon')).toBeVisible();
-    await allume(page, 'Jouer');
+    await pleinEcran(page);
     await page.locator('.lecteur-lecon').getByRole('button', { name: 'Retour', exact: true }).click();
     await expect(page.getByRole('heading', { level: 2, name: 'Défaite' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Ouvrir la leçon' })).toBeVisible();
@@ -282,6 +287,8 @@ test('10. fin de chapitre › « Joue contre Pomme » : la sortie de la partie r
   await expect(nav(page)).toHaveCount(0);
   await retourSysteme(page);
   await expect(page.getByRole('heading', { name: 'Chapitre terminé' })).toBeVisible();
+  await pleinEcran(page);
+  await page.getByRole('button', { name: 'Retour au chemin' }).click();
   await allume(page, 'Apprendre');
   expect(erreurs).toEqual([]);
   await ctx.close();

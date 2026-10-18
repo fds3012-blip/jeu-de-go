@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { basLibre } from './onglet';
 import { attendrePierre, jouer } from './plateau';
 
 // Issue #214 : la série se lit sur la feuille de réussite du Go du jour (« 4 jours de série · À demain »),
@@ -54,9 +55,9 @@ for (const largeur of [390, 320]) {
       await expect(serie(page)).toContainText(/À\sdemain/);
       await expect(serie(page)).not.toHaveClass(/\banime\b/);
       await expect(page.getByTestId('confettis')).toHaveCount(0);
-      // Le titre du jalon et le bouton principal restent à l'écran, au-dessus de la barre du bas.
+      // Le titre du jalon et le bouton principal restent à l'écran (#646 : le problème est en plein écran, sans barre).
       const titre = (await page.locator('.jalon-titre').boundingBox())!;
-      const nav = (await page.getByRole('navigation').boundingBox())!;
+      const nav = { y: await basLibre(page) };
       expect(titre.y).toBeGreaterThanOrEqual(0);
       expect(titre.y + titre.height).toBeLessThanOrEqual(nav.y);
       const cta = (await page.locator('.verdict .cta').boundingBox())!;
