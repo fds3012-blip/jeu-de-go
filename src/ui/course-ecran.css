@@ -2,12 +2,7 @@
    #563 : chargée avec Puzzles.tsx et CourseProblemes.tsx, hors du CSS initial ; course.css garde le reste,
    dont les @keyframes (course-saut, course-pastille, course-entree). */
 
-/* ---------- Carte d'entrée (action secondaire : ni or, ni relief) ---------- */
-.course-carte { display: flex; align-items: center; gap: var(--space-3); width: 100%; min-height: 64px; margin-top: var(--space-4);
-  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4); background: var(--surface); color: var(--text);
-  border: 1.5px solid var(--line); border-radius: var(--radius); text-align: left; font: inherit; cursor: pointer; }
-.course-carte:active { background: var(--surface-2); }
-.course-carte .chrono-course { flex: none; }
+/* ---------- Tuile d'entrée (action secondaire : ni or, ni relief, ni bordure ; #620) : .tuile-pb, apprendre.css ---------- */
 /* Chronomètre dessiné (#103) : cadran en papier, arc hanko des trois minutes, aiguille d'encre. */
 .chrono-course { display: block; overflow: visible; }
 .chrono-course .ch-cadran { fill: var(--surface-2); stroke: var(--text); stroke-width: 2; }
@@ -18,9 +13,6 @@
 .chrono-course .ch-aiguille { fill: none; stroke: var(--text); stroke-width: 2.2; stroke-linecap: round; }
 .chrono-course .ch-axe { fill: var(--danger-texte); }
 .course-consigne .chrono-course { margin: var(--space-4) auto var(--space-2); }
-.course-carte-texte { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.course-carte-texte b { font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: var(--fs-l); letter-spacing: var(--tracking-titre); line-height: 1.2; }
-.course-carte-texte small { color: var(--muted); font-size: var(--fs-legende); line-height: 1.3; }
 .course-carte-meilleur { color: var(--text); font-weight: var(--fw-bold); }
 .course-en-cours { padding-bottom: var(--space-4); }
 

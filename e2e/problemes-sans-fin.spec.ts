@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { marquerGoDuJourFait } from './goDuJourFait';
 import { jouer, plateau } from './plateau';
 
 // Identifiants de tous les problèmes, lus dans les sources (import.meta.glob n'existe pas côté Playwright).
@@ -17,6 +18,10 @@ test('tout résolu : « Problème suivant » de la liste ouvre un problème, et 
   const tous = Object.fromEntries(ALL_PUZZLES.map(p => [p.id, true]));
   await page.addInitScript(v => localStorage.setItem('go.problemes.v1', JSON.stringify(v)), tous);
   await page.goto('/');
+  await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
+  // #620 : le Go du jour fait, la carte « Problème suivant » et son palier passent en tête.
+  await marquerGoDuJourFait(page);
+  await page.reload();
   await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
 
   const continuer = page.getByRole('button', { name: /^Problème suivant / });

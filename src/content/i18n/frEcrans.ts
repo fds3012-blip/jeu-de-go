@@ -107,8 +107,6 @@ export const frEcrans = {
   'pb.tuJoues.2': 'Tu joues Blanc.',
   'pb.resoudre': 'Résoudre',
   'pb.resoudreAria': 'Résoudre le Go du jour',
-  'pb.refaire': 'Refaire',
-  'pb.refaireAria': 'Refaire le Go du jour',
   'pb.partager': 'Partager',
   'pb.copie': 'Copié !',
   'pb.copieAnnonce': 'Texte copié. Colle-le dans un message.',

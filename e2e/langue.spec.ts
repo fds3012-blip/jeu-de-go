@@ -118,8 +118,8 @@ for (const largeur of [390, 320]) {
     // #602 : « Puzzles » est le titre de l'écran ; la section sous le Go du jour s'appelle « Practice ».
     await expect(page.getByRole('heading', { level: 1, name: 'Puzzles', exact: true })).toBeVisible();
     await expect(page.getByRole('heading', { level: 2, name: 'Practice', exact: true })).toBeVisible();
-    // #592 : le palier en cours n'a plus que son nom (le rang en kyu est dans « All puzzles »).
-    await expect(page.locator('[data-palier-en-cours] h3')).toHaveText('Beginner');
+    // #620 : tant que le Go du jour reste à faire, « Next puzzle » est une tuile (le palier vient avec la carte, ensuite).
+    await expect(page.locator('.tuiles-pb').getByRole('button', { name: /^Next puzzle / })).toBeVisible();
     await expect(page.getByText(/Problème|Résoudre|Palier|verrouillé/)).toHaveCount(0);
     await sansDebordement(page);
     await sansCoupe(page, largeur);

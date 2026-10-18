@@ -202,8 +202,6 @@ export const en = {
   'pb.tuJoues.2': 'You play White.',
   'pb.resoudre': 'Solve',
   'pb.resoudreAria': 'Solve the Daily Go',
-  'pb.refaire': 'Play again',
-  'pb.refaireAria': 'Play the Daily Go again',
   'pb.partager': 'Share',
   'pb.copie': 'Copied!',
   'pb.copieAnnonce': 'Text copied. Paste it into a message.',

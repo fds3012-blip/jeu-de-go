@@ -95,11 +95,11 @@ interface Props {
   rappelAmi?: boolean;
 }
 
-/** Flamme de la série de jours, en or. */
+/** Flamme de la série de jours, en or ; creuse ou pleine selon la classe de la pastille (#213). */
 function Flamme({ taille = 22 }: { taille?: number }) {
   return (
     <svg viewBox="0 0 16 16" width={taille} height={taille} aria-hidden="true" focusable="false">
-      <path d="M8.6 1.2c.4 2.3 3.9 3.9 3.9 7.9A4.5 4.5 0 0 1 8 13.8a4.5 4.5 0 0 1-4.5-4.6c0-2 1-3.2 2-4 0 1.4.6 2.4 1.5 2.7C6.6 5.6 7.4 3 8.6 1.2Z" fill="currentColor" />
+      <path className="flamme-corps" d="M8.6 1.2c.4 2.3 3.9 3.9 3.9 7.9A4.5 4.5 0 0 1 8 13.8a4.5 4.5 0 0 1-4.5-4.6c0-2 1-3.2 2-4 0 1.4.6 2.4 1.5 2.7C6.6 5.6 7.4 3 8.6 1.2Z" fill="currentColor" />
     </svg>
   );
 }
@@ -121,6 +121,8 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   const ouvrirProbleme = (id: string) => { if (essai && id !== daily?.id) essai(); else setOpenId(id); };
   // Go du jour (issue #75) : le même pour tous, choisi dans la liste publique des problèmes de base, en heure de Paris.
   const [numero] = useState(() => numeroDuJour(new Date()));
+  // #620 : « Montrer la série » éteint, la pastille de série disparaît aussi de Problèmes (#365).
+  const { serieVisible } = usePreferences();
   const daily = problemeDuNumero(LOCAL_PUZZLES, numero);
   const [serieDuJour, setSerieDuJour] = useState<Serie | null>(() => readLocal<Serie | null>(SERIE_KEY, null));
   // Série protégée (issue #76) : gels en réserve, et gel gagné à l'instant (micro-célébration).
@@ -432,49 +434,49 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   }
 
   const enCours = palierEnCours(tiers);
+  // #620 (V1) : une seule carte d'action en tête, le Go du jour tant qu'il n'est pas fait, « Problème suivant » ensuite ;
+  // l'autre devient une tuile, groupée avec la course. La série est une pastille près du Go du jour (F-e).
+  const pastille = serieVisible && serie > 0 ? <PastilleSerie jours={serie} fait={duJourReussi} /> : null;
+  const ouvrirSuivant = () => { if (prochainPz) ouvrirProbleme(prochainPz.id); };
+  const ouvrirCourse = () => { if (essai) { essai(); return; } setCourse(true); window.scrollTo({ top: 0 }); };
+  const numeroDuJourVu = <span className="numero-du-jour">{tr('pb.numero', { numero })}</span>;
   return (
     <div className="problemes">
       {notices}
 
-      {daily && (
+      {daily && !duJourFait ? (
         <section aria-labelledby="jour-titre">
-          <h2 id="jour-titre" className="titre-pierres">{tr('accueil.goDuJour')} <span className="numero-du-jour">{tr('pb.numero', { numero })}</span><Glacon gels={stats ? stats.freezes : gels} /></h2>
-          <DuJour pz={daily} reussi={duJourReussi} vu={!!vus[daily.id] && !solved.has(daily.id)} onOpen={() => setOpenId(daily.id)} />
+          <div className="jour-tete">
+            <h2 id="jour-titre" className="titre-pierres">{tr('accueil.goDuJour')} {numeroDuJourVu}<Glacon gels={stats ? stats.freezes : gels} /></h2>
+            {pastille}
+          </div>
+          <DuJour pz={daily} onOpen={() => setOpenId(daily.id)} />
+        </section>
+      ) : (
+        <section aria-labelledby="paliers-titre">
+          <h2 id="paliers-titre" className="titre-pierres">{tr('pb.entrainement')}</h2>
+          {prochainPz && <CarteSuivant pz={prochainPz} palier={enCours} onOpen={ouvrirSuivant} />}
         </section>
       )}
 
-      {/* #293 : les erreurs dues aujourd'hui viennent juste sous le Go du jour (la revue promet « Cette position
-          reviendra dans Problèmes »). La section n'existe que s'il y en a ; ses vignettes restent des actions
-          secondaires : l'action en relief reste le Go du jour, ou « Problème suivant » une fois le Go du jour fait. */}
+      {/* #293 : les erreurs dues aujourd'hui viennent juste sous la carte d'action (la revue promet « Cette position
+          reviendra dans Problèmes »). La section n'existe que s'il y en a ; ses vignettes restent des actions secondaires. */}
       {!essai && <MesErreurs confirmTouch={confirmTouch} Lecteur={PuzzlePlayer} />}
 
       {/* Révision du jour (#199) : problèmes déjà réussis, repris à J+1, J+3, J+7. Depuis #251 (M2), aussi ceux
           vus avec la réponse : « Retente-le plus tard » (pb.vuTexte), c'est la révision qui le repropose. */}
       {!essai && <RevisionDuJour liste={list} reussis={reussisRevision} vus={vusSeuls} confirmTouch={confirmTouch} Lecteur={PuzzlePlayer} onSerie={setSerieDuJour} />}
 
-      {/* Un seul « Problème suivant », le palier en cours sans total, la grille derrière un lien discret (#196). */}
-      <section aria-labelledby="paliers-titre">
-        <h2 id="paliers-titre" className="titre-pierres">{tr('pb.entrainement')}</h2>
-        {/* #103 : le palier en cours est un paysage (le pied de la montagne, la pente, la crête…), jamais un total.
-            Dessous, la carte « Continuer » : le prochain problème, voilé, et une seule action. */}
-        {enCours && (
-          <div className={`palier-en-cours${enCours.complet ? ' complet' : ''}`} data-palier-en-cours={enCours.id} data-reussis={enCours.reussis}>
-            {/* #602 : ici, le nom du palier seul ; le paysage reste dans « Tous les problèmes », où il fête le palier complet. */}
-            <div className="palier-en-cours-texte">
-              {/* #592 : le nom du palier seul ; son rang en kyu se lit dans « Tous les problèmes ». */}
-              <div className="palier-nom">
-                <h3>{tr(`palier.${enCours.id}.nom`)}</h3>
-              </div>
-              <div className="palier-etat">
-                {enCours.complet && <span className="palier-sceau" role="img" aria-label={tr('pb.palierComplet')}><SceauLecon id={`p${enCours.rang}`} taille={40} /></span>}
-                {enCours.reussis > 0 && <p className="palier-compte">{tr('pb.reussis', { n: enCours.reussis })}</p>}
-              </div>
-            </div>
-            {prochainPz && <Continuer pz={prochainPz} principal={duJourFait} onOpen={() => ouvrirProbleme(prochainPz.id)} />}
-          </div>
-        )}
-        {!enCours && prochainPz && <Continuer pz={prochainPz} principal={duJourFait} onOpen={() => ouvrirProbleme(prochainPz.id)} />}
-        <CarteCourse onOpen={() => { if (essai) { essai(); return; } setCourse(true); window.scrollTo({ top: 0 }); }} />
+      <section aria-labelledby={duJourFait ? undefined : 'paliers-titre'}>
+        {!duJourFait && <h2 id="paliers-titre" className="titre-pierres">{tr('pb.entrainement')}</h2>}
+        {/* #620 (F-f) : tuiles à plat, de même poids, groupées ; jamais plus fortes que la carte d'action. */}
+        <div className="tuiles-pb">
+          {daily && duJourFait
+            ? <TuileDuJour pz={daily} numero={numeroDuJourVu} gels={<Glacon gels={stats ? stats.freezes : gels} />} pastille={pastille}
+                vu={!!vus[daily.id] && !solved.has(daily.id)} onOpen={() => setOpenId(daily.id)} />
+            : prochainPz && <TuileSuivant pz={prochainPz} onOpen={ouvrirSuivant} />}
+          <CarteCourse onOpen={ouvrirCourse} />
+        </div>
         {/* #471 : séries par thème, à plat ; seulement celles qui ont assez de problèmes. */}
         <VignettesThemes series={series} etat={etatThemes} onOuvrir={ouvrirSerie} maitrise={maitrise} />
         <button className="lien lien-tous" onClick={() => { if (essai) { essai(); return; } setTous(true); window.scrollTo({ top: 0 }); }}>
@@ -483,33 +485,14 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
       </section>
 
       {/* Aucune cote affichée (décision de Florian, #137) : la cote problèmes existe sur le serveur, invisible. */}
-      {/* #592 : la série ne s'affiche qu'à partir d'un jour ; un zéro en or n'encourage personne. */}
-      {connecte && stats ? (serie > 0 &&
-        <div className="palmares">
-          <div className="palmares-serie">
-            <span className="chiffre"><Flamme taille={30} />{serie}</span>
-            <span className="legende">{tr('pb.serieLegende', { n: serie })}</span>
-          </div>
-        </div>
-      ) : connecte && statsError ? (
+      {connecte && statsError ? (
         <p className="notice" role="alert">{statsError} <button className="lien" onClick={() => setRetry(n => n + 1)}>{tr('pb.reessayer')}</button></p>
-      ) : !connecte && serie > 0 ? (
-        // Sans compte, la série de l'appareil s'affiche comme pour un joueur connecté (issue #161).
-        <div className="palmares palmares-invite">
-          <div className="invitation">
-            {inviterCompte(false, serie)
-              ? <p>{fr(tr('serie.invitation'))}</p>
-              : <p>{fr(tr('pb.invitation.avant'))}<b>{tr('pb.invitation.mot')}</b>{fr(tr('pb.invitationCourte.apres'))}</p>}
-            {onCompte && <button className="lien" onClick={onCompte}>{tr('pb.creerCompte')}</button>}
-          </div>
-          <div className="palmares-serie">
-            <span className="chiffre"><Flamme taille={30} />{serie}</span>
-            <span className="legende">{tr('pb.serieLegende', { n: serie })}</span>
-          </div>
-        </div>
       ) : !connecte ? (
         <div className="invitation">
-          <p>{fr(tr('pb.invitation.avant'))}<b>{tr('pb.invitation.mot')}</b>{fr(tr('pb.invitation.apres'))}</p>
+          {/* Sans compte, la série de l'appareil a sa pastille près du Go du jour (#161, #620) ; ici, l'invitation seule. */}
+          {serie > 0 && inviterCompte(false, serie)
+            ? <p>{fr(tr('serie.invitation'))}</p>
+            : <p>{fr(tr('pb.invitation.avant'))}<b>{tr('pb.invitation.mot')}</b>{fr(tr(serie > 0 ? 'pb.invitationCourte.apres' : 'pb.invitation.apres'))}</p>}
           {/* Recette du 02/10 au soir (L8) : depuis #343, partout « Crée ton compte ». */}
           {onCompte && <button className="lien" onClick={onCompte}>{tr('pb.creerCompte')}</button>}
         </div>
@@ -518,27 +501,73 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   );
 }
 
+/** Série de jours (#620) : pastille or près du Go du jour ; flamme creuse tant qu'il reste à faire, pleine après (#213). */
+function PastilleSerie({ jours, fait }: { jours: number; fait: boolean }) {
+  return (
+    <span className={`serie ${fait ? 'pleine' : 'creuse'}`} role="img" data-testid="serie-problemes"
+      aria-label={tr(fait ? 'entete.flammeFaite' : 'entete.flammeAFaire', { jours: tr('profil.jours', { n: jours }) })}>
+      <Flamme taille={16} />{jours}
+    </span>
+  );
+}
+
 /**
- * Carte « Continuer » (#103) : le prochain problème, voilé (on devine la position sans la lire), sa difficulté,
- * qui joue, et une seule action. En relief quand le Go du jour est fait ; à plat sinon, le Go du jour reste l'action.
+ * Carte « Problème suivant », action principale une fois le Go du jour fait (#103, #620) : le prochain problème, voilé
+ * (on devine la position sans la lire) ; à côté, le palier, ses réussites et la difficulté ; dessous, le bouton en relief.
  * #268 (WCAG 2.5.3) : pas d'aria-label ; le nom accessible du bouton est son texte visible, verbe d'abord.
  */
-function Continuer({ pz, principal, onOpen }: { pz: Puzzle; principal: boolean; onOpen: () => void }) {
+function CarteSuivant({ pz, palier, onOpen }: { pz: Puzzle; palier: ReturnType<typeof palierEnCours>; onOpen: () => void }) {
   return (
-    <div className="continuer-carte">
-      <span className="continuer-goban" aria-hidden="true" onClick={onOpen}><MiniGoban rows={pz.rows} /></span>
-      {/* #592 : la difficulté seule ; qui joue se lit dans la consigne du problème. */}
-      <div className="continuer-corps">
-        <p className="continuer-infos"><Difficulte d={pz.difficulty} /></p>
+    <div className={`palier-en-cours${palier?.complet ? ' complet' : ''}`} data-palier-en-cours={palier?.id} data-reussis={palier?.reussis}>
+      <div className="continuer-carte">
+        <span className="continuer-goban" aria-hidden="true" onClick={onOpen}><MiniGoban rows={pz.rows} /></span>
+        <div className="continuer-corps">
+          {/* #592 : le nom du palier seul ; son rang en kyu se lit dans « Tous les problèmes ». */}
+          {palier && <h3 className="palier-nom">{tr(`palier.${palier.id}.nom`)}
+            {palier.complet && <span className="palier-sceau" role="img" aria-label={tr('pb.palierComplet')}><SceauLecon id={`p${palier.rang}`} taille={28} /></span>}</h3>}
+          {palier && palier.reussis > 0 && <p className="palier-compte">{tr('pb.reussis', { n: palier.reussis })}</p>}
+          <p className="continuer-infos"><Difficulte d={pz.difficulty} /></p>
+        </div>
+        <button type="button" className="cta continuer" onClick={onOpen}>
+          {tr('pb.continuer')} <span className="continuer-titre">{pz.title}</span>
+        </button>
       </div>
-      <button type="button" className={principal ? 'cta continuer' : 'btn continuer'} onClick={onOpen}>
-        {tr('pb.continuer')} <span className="continuer-titre">{pz.title}</span>
-      </button>
     </div>
   );
 }
 
-/** Sceau de réussite d'une miniature (#103) : un vrai tampon jade, carré arrondi, coche en papier. */
+/** « Problème suivant » en tuile, tant que le Go du jour reste l'action principale (#620). */
+function TuileSuivant({ pz, onOpen }: { pz: Puzzle; onOpen: () => void }) {
+  return (
+    <button type="button" className="tuile-pb continuer" onClick={onOpen}>
+      <span className="tuile-pb-visuel continuer-goban" aria-hidden="true"><MiniGoban rows={pz.rows} /></span>
+      <span className="tuile-pb-texte">
+        <b>{tr('pb.continuer')}</b>
+        <span className="continuer-titre">{pz.title}</span>
+      </span>
+    </button>
+  );
+}
+
+/** Le Go du jour fait, en tuile (#620) : sa position, son numéro, son état ; la pastille de série à côté. */
+function TuileDuJour({ pz, numero, gels, pastille, vu, onOpen }: {
+  pz: Puzzle; numero: ReactNode; gels: ReactNode; pastille: ReactNode; vu: boolean; onOpen: () => void;
+}) {
+  return (
+    <div className="tuile-pb du-jour-tuile" data-du-jour-fait="">
+      <button type="button" className="tuile-pb-bouton" onClick={onOpen}>
+        <span className="tuile-pb-visuel" aria-hidden="true"><MiniGoban rows={pz.rows} /></span>
+        <span className="tuile-pb-texte">
+          <b id="jour-titre">{tr('accueil.goDuJour')} {numero}</b>
+          <small>{tr(vu ? 'pb.tamponVu' : 'pb.tampon')}</small>
+        </span>
+      </button>
+      {gels}
+      {pastille}
+    </div>
+  );
+}
+
 function SceauReussi() {
   return (
     <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false">
@@ -599,15 +628,15 @@ function PalierVue({ t, ordre, solved, vus, onOpen, fete }: {
 }
 
 /**
- * Entrée de la course (#287) : une carte secondaire, sans or ni relief. Le Go du jour et « Problème suivant » restent
- * les actions principales. Le meilleur score est un record de ce mode, jamais un total de problèmes (#137).
+ * Entrée de la course (#287) : une tuile secondaire, sans or, sans relief ni bordure (#620, F-f). Le Go du jour ou
+ * « Problème suivant » reste l'action principale. Le meilleur score est un record de ce mode, jamais un total de problèmes (#137).
  */
 function CarteCourse({ onOpen }: { onOpen: () => void }) {
   const [meilleur] = useState(lireMeilleurCourse);
   return (
-    <button type="button" className="course-carte" onClick={onOpen} data-course="">
-      <ChronoCourse taille={40} />
-      <span className="course-carte-texte">
+    <button type="button" className="tuile-pb course-carte" onClick={onOpen} data-course="">
+      <span className="tuile-pb-visuel"><ChronoCourse taille={32} /></span>
+      <span className="tuile-pb-texte course-carte-texte">
         <b>{fr(tr('course.carte.titre'))}</b>
         {/* #592 : les règles se lisent sur la consigne de la course, avant de partir ; ici, le record s'il existe. */}
         {meilleur > 0 && <small><span className="course-carte-meilleur">{fr(tr('course.carte.meilleur', { meilleur }))}</span></small>}
@@ -625,22 +654,22 @@ function Cadenas() {
   );
 }
 
-/** Problème du jour : la vraie position sur le goban, recadrée sur les pierres, et le bouton « Résoudre » en relief. */
-function DuJour({ pz, reussi, vu, onOpen }: { pz: Puzzle; reussi: boolean; vu: boolean; onOpen: () => void }) {
+/** Problème du jour, à faire : la vraie position sur le goban, recadrée sur les pierres, et « Résoudre » en relief.
+ * Une fois fait, il devient une tuile (TuileDuJour, #620). */
+function DuJour({ pz, onOpen }: { pz: Puzzle; onOpen: () => void }) {
   const start = useMemo(() => startOf(pz), [pz]);
   const vb = viewBoxOf(pz.size);
   // Hauteur du centre des pierres, en fraction de la largeur de l'image du goban (qui est carrée).
   const f = (M + centreVertical(pz.rows) * C - vb.min) / vb.span;
   return (
-    <div className={`du-jour${reussi ? ' reussi' : ''}`}>
+    <div className="du-jour">
       <div className="du-jour-plateau" aria-hidden="true" onClick={onOpen} style={{ '--f': f } as CSSProperties}>
         <div className="du-jour-cadre"><Board size={pz.size} board={start.pos.board} marks={{ targets: start.marked }} /></div>
-        {reussi && <span className={`tampon-reussi${vu ? ' tampon-vu' : ''}`}>{tr(vu ? 'pb.tamponVu' : 'pb.tampon')}</span>}
       </div>
       <div className="du-jour-corps">
         <h3>{pz.title}</h3>
         <p><Difficulte d={pz.difficulty} /></p>
-        <button className={reussi ? 'btn du-jour-refaire' : 'cta'} aria-label={tr(reussi ? 'pb.refaireAria' : 'pb.resoudreAria')} onClick={onOpen}>{tr(reussi ? 'pb.refaire' : 'pb.resoudre')}</button>
+        <button className="cta" aria-label={tr('pb.resoudreAria')} onClick={onOpen}>{tr('pb.resoudre')}</button>
       </div>
     </div>
   );
