@@ -23,6 +23,11 @@ for (const theme of ['dark', 'light'] as const) {
       await simulerEncoche(page);
       // Le contenu commence sous la zone sûre, en haut de page.
       expect(await page.evaluate(() => parseFloat(getComputedStyle(document.body).paddingTop))).toBe(ENCOCHE);
+      // #643 : l'écran se charge à la demande (React.lazy, Suspense sans repli ; Problèmes passe aussi par
+      // « problemes-chargement »). Tant qu'il n'est pas monté, la page fait juste la hauteur de la fenêtre et
+      // scrollTo(0, 240) reste à 0. On attend que la page soit assez haute pour défiler de 240 px.
+      await expect.poll(() => page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight)).toBeGreaterThanOrEqual(240);
+
       await page.evaluate(() => window.scrollTo(0, 0));
       const enHaut = await bande(page);
 
