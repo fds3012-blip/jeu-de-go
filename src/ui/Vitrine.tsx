@@ -248,7 +248,8 @@ export function VitrineBadges({ liste, nouveaux = [] }: { liste: Badge[]; nouvea
     <section className="vitrine" aria-labelledby="vitrine-titre">
       <h2 id="vitrine-titre" className="vitrine-tete">
         <span aria-hidden="true">{t('vitrine.titreVisible')}</span>
-        <span className="vitrine-compte" aria-hidden="true">{n}/{liste.length}</span>
+        {/* #631 (P1) : pas de « 0/21 » ; le compte vient avec le premier badge (le lecteur d'écran l'entend toujours). */}
+        {n > 0 && <span className="vitrine-compte" aria-hidden="true">{n}/{liste.length}</span>}
         <span className="sr-only">{t('vitrine.titre', { n, total: liste.length })}</span>
       </h2>
       <ul className="vitrine-grille">

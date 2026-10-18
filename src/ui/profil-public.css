@@ -37,7 +37,6 @@
 .joueur-action-ligne .btn.primary { flex: 1 1 10em; width: auto; }
 .lien.joueur-secondaire { color: var(--muted); font-weight: var(--fw-medium); }
 .joueur-action > .lien.joueur-secondaire { justify-self: start; margin-left: -12px; }
-.joueur-regle { margin: 0; color: var(--muted); font-size: var(--fs-s); line-height: 1.4; text-wrap: pretty; }
 
 /* ---------- Dernières parties classées ---------- */
 .joueur-parties h3 { margin: 0 0 var(--space-2) var(--space-1); font-size: var(--fs-s); font-weight: var(--fw-bold); color: var(--muted); }

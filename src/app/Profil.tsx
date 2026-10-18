@@ -299,6 +299,7 @@ function Menu({ onVue, settings, profil, serie, record = 0, parcours, placement,
   const [ecrire, setEcrire] = useState(false);
   // #561 : titre du mois dernier (rien sans titre, rien sous le garde-fou des 200 joueurs actifs).
   const titre = useTitreDuMoisDernier(amis?.compte ? amis.db : null, userId);
+  const statsVues = donnees.stats.filter(s => s.valeur > 0 && (serieVisible || s.id !== 'record'));
   const sousNom = serieVisible && inviterCompte(!!profil, id.serie) ? t('serie.invitation') : id.detail;
   return (
     <div className="profil">
@@ -322,7 +323,8 @@ function Menu({ onVue, settings, profil, serie, record = 0, parcours, placement,
           <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false"><path d="M8.6 1.2c.4 2.3 3.9 3.9 3.9 7.9A4.5 4.5 0 0 1 8 13.8a4.5 4.5 0 0 1-4.5-4.6c0-2 1-3.2 2-4 0 1.4.6 2.4 1.5 2.7C6.6 5.6 7.4 3 8.6 1.2Z" fill="currentColor" /></svg>{entier(id.serie)}
         </span>}
         <div className="identite-niveau"><BarreNiveau /></div>
-        <Statistiques stats={serieVisible ? donnees.stats : donnees.stats.filter(s => s.id !== 'record')} />
+        {/* #631 (P1) : pas de chiffre à zéro (« 0 jour de série », « 0 problème réussi ») ; chacun arrive avec le premier. */}
+        {statsVues.length > 0 && <Statistiques stats={statsVues} />}
       </section>
       <VitrineBadges liste={serieVisible ? donnees.badges : donnees.badges.filter(b => !BADGES_SERIE.has(b.id))} nouveaux={donnees.nouveaux} />
 

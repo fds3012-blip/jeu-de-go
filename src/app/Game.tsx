@@ -706,7 +706,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
         marge={abandon || egalite ? null : sc.margin}
         texteMarge={v => tr('fin.marge', { n: v, v: virgule(v), plateau })}
         sousTitre={abandon ? tr('fin.parAbandon') : tr('fin.komiCompris', { plateau })}
-        bilan={fin?.bilan ?? bilanDeux}
+        bilan={fin ? fin.bilan : bilanDeux}
         mochi={fin?.mochi}
         action={fin?.action ?? <button type="button" className="cta" onClick={restart}>{tr('fin.rejouer')}</button>}
         onRevoir={n > 0 ? () => setRelecture(1) : undefined}

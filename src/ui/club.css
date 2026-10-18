@@ -21,7 +21,12 @@
 
 .mstats-courbe { margin: 0; display: grid; gap: var(--space-1); }
 .mstats-courbe-cadre { position: relative; }
-.mstats-courbe svg { width: 100%; height: 88px; display: block; background: var(--bg); border-radius: var(--radius-s); }
+.mstats-courbe svg, svg.mstats-fantome { width: 100%; height: 88px; display: block; background: var(--bg); border-radius: var(--radius-s); }
+/* #631 : visuels fantômes des états vides (courbe en pointillés, jauge et barres vides) : « bientôt ici », sans chiffre. */
+svg.mstats-fantome { height: 64px; }
+.mstats-fantome .mstats-courbe-ligne { stroke: var(--muted); stroke-dasharray: 3 6; }
+.mstats-fantome-jauge { display: block; height: 10px; border-radius: 5px; background: var(--surface-2); }
+.mstats-phases.mstats-fantome .mstats-phase-nom { color: var(--muted); }
 .mstats-courbe-ligne { fill: none; stroke: var(--courbe-ligne); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
 .mstats-courbe-point { position: absolute; width: 9px; height: 9px; margin: -4.5px 0 0 -4.5px; border-radius: 50%; background: var(--courbe-curseur); }
 .mstats-courbe-borne { position: absolute; left: var(--space-2); font-size: var(--fs-xs); color: var(--muted); font-variant-numeric: tabular-nums; }

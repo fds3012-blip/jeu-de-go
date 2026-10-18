@@ -16,6 +16,28 @@ type Taille = 9 | 13 | 19;
 
 const AIDE_TAILLE = { 9: 'accueil.aideTaille.9', 13: 'accueil.aideTaille.13', 19: 'accueil.aideTaille.19' } as const satisfies Record<Taille, string>;
 
+/** #631 (P1) : la phrase sur le kyu, à la première ouverture contre l'ordi seulement (marquée vue dès qu'elle est montrée). */
+const KYU_VU = 'go.lancement-kyu.v1';
+function kyuAVoir(): boolean {
+  try { return localStorage.getItem(KYU_VU) === null; } catch { return true; }
+}
+function kyuVu(): void {
+  try { localStorage.setItem(KYU_VU, '1'); } catch { /* stockage bloqué : la phrase reviendra, sans gêne */ }
+}
+
+/** #631 (P2, P3) : chaque taille se montre par sa grille, avant son nom : 9 lignes espacées, 19 serrées. */
+function GrilleTaille({ n }: { n: Taille }) {
+  const lignes = Array.from({ length: n }, (_, i) => i + 1);
+  return (
+    <svg className="grille-taille" viewBox={`0 0 ${n + 1} ${n + 1}`} aria-hidden="true" focusable="false">
+      <rect width={n + 1} height={n + 1} rx={n / 9} style={{ fill: 'var(--kaya)' }} />
+      <g style={{ stroke: 'var(--grille)' }} strokeWidth={0.9} vectorEffect="non-scaling-stroke">
+        {lignes.map(i => <path key={i} d={`M1 ${i}H${n}M${i} 1V${n}`} vectorEffect="non-scaling-stroke" />)}
+      </g>
+    </svg>
+  );
+}
+
 export interface ReglagesAvances {
   valeur: ValeurReglages;
   changer: (r: ValeurReglages, cle: 'handicap' | 'komi' | 'regles' | 'retablir') => void;
@@ -55,6 +77,10 @@ export function FeuilleLancement({ mode, dernier, fermer, adv, cartes, taille, o
   const [avances, setAvances] = useState(false);
   useEffect(() => { if (!ouvert) setAvances(false); }, [ouvert]);
   const ordi = (mode ?? dernier) === 'ordi';
+  // #631 : décidé à l'ouverture (une fois par ouverture), pas à chaque rendu.
+  const [kyu, setKyu] = useState({ ouvert: false, voir: false });
+  if (ouvert !== kyu.ouvert) setKyu({ ouvert, voir: ouvert && ordi && kyuAVoir() });
+  useEffect(() => { if (kyu.voir) kyuVu(); }, [kyu.voir]);
   const rp = reglagesPartie?.valeur;
   const resume = ordi && rp && !estDefaut(rp) ? t('partie.reglages.resume', {
     h: rp.handicap >= 2 ? rp.handicap : t('partie.reglages.handicap.aucun').toLowerCase(),
@@ -77,13 +103,14 @@ export function FeuilleLancement({ mode, dernier, fermer, adv, cartes, taille, o
           <div className="feuille-taille" role="group" aria-labelledby="feuille-taille-titre" aria-describedby="feuille-taille-aide">
             <h3 id="feuille-taille-titre">{t('accueil.taillePlateau')}</h3>
             <div className="seg">
-              {([9, 13, 19] as const).map(n => <button key={n} aria-pressed={taille === n} onClick={() => onTaille(n)}>{n} × {n}</button>)}
+              {([9, 13, 19] as const).map(n => <button key={n} aria-pressed={taille === n} onClick={() => onTaille(n)}><GrilleTaille n={n} />{n} × {n}</button>)}
             </div>
             <p id="feuille-taille-aide" className="muted small">{t(AIDE_TAILLE[taille])}</p>
           </div>
           {ordi && <>
-            {/* #509 (L4, n° 10) : les adversaires se choisissent par leur grade (« 20 kyu ») ; le mot est expliqué juste avant. */}
-            <p className="feuille-kyu muted small" data-testid="feuille-kyu">{fr(t('accueil.kyu'))}</p>
+            {/* #509 (L4, n° 10) : les adversaires se choisissent par leur grade (« 20 kyu ») ; le mot est expliqué juste avant,
+                la première fois (#631, P1) : ensuite, la phrase ne sert plus la décision. */}
+            {kyu.voir && <p className="feuille-kyu muted small" data-testid="feuille-kyu">{fr(t('accueil.kyu'))}</p>}
             <Suspense fallback={<div className="carrousel-attente" aria-busy="true" />}>
               <CarrouselAdversaires cartes={cartes} choisi={adv.id} onChoisir={onChoisir} legende={t(`adv.${adv.id}.description`)} />
             </Suspense>

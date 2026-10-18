@@ -45,7 +45,7 @@ const FR = {
   'stats.cote.titre': 'Ta cote',
   'stats.cote.periode': 'Tes 90 derniers jours',
   'stats.cote.aria': 'Ta cote sur 90 jours : de {debut} à {fin}, entre {min} et {max}.',
-  'stats.cote.vide': 'Ta courbe apparaît après ta première partie classée en ligne.',
+  'stats.cote.vide': 'Ta cote apparaît après ta première partie classée en ligne.',
   'stats.cote.sansCompte': 'Ta cote se lit avec un compte, après tes parties classées en ligne.',
   'stats.cote.regle': 'Seules les parties classées contre d’autres joueurs comptent.',
   'stats.precision.titre': 'Précision moyenne',
@@ -76,7 +76,6 @@ const FR = {
   'stats.bilan.mode.guidee': 'Avec Mochi',
   'stats.bilan.mode.defi': 'Entre amis',
   'stats.bilan.mode.enLigne': 'En ligne, classées',
-  'stats.bilan.vide': 'Aucune partie terminée pour l’instant.',
   'stats.bilan.pourcent': '{p} %',
 
   // ---------- #372 : Étudier une position ----------
@@ -193,7 +192,7 @@ const EN: { readonly [K in CleClub]: string } = {
   'stats.cote.titre': 'Your rating',
   'stats.cote.periode': 'Your last 90 days',
   'stats.cote.aria': 'Your rating over 90 days: from {debut} to {fin}, between {min} and {max}.',
-  'stats.cote.vide': 'Your curve shows up after your first rated online game.',
+  'stats.cote.vide': 'Your rating shows up after your first rated online game.',
   'stats.cote.sansCompte': 'Your rating needs an account and rated online games.',
   'stats.cote.regle': 'Only rated games against other players count.',
   'stats.precision.titre': 'Average accuracy',
@@ -224,7 +223,6 @@ const EN: { readonly [K in CleClub]: string } = {
   'stats.bilan.mode.guidee': 'With Mochi',
   'stats.bilan.mode.defi': 'With friends',
   'stats.bilan.mode.enLigne': 'Online, rated',
-  'stats.bilan.vide': 'No finished game yet.',
   'stats.bilan.pourcent': '{p}%',
 
   'etude.titre': 'Study a position',
