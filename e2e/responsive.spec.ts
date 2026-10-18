@@ -1,5 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
-import { plateau } from './plateau';
+import { ouvrirDepuisApprendre } from './decouverte';
+import { passerJusquAuScore, plateau, toucherCta } from './plateau';
+import { demarrerParcours } from './revueFactice';
 
 // #619 (lot V0) : garde-fou responsive (docs/ux/visuel-responsive-2026-10.md, principes P5, P6 et P8 de DESIGN.md).
 // Les écrans principaux aux 7 tailles de l'audit, pour un joueur neuf. Pour chacun :
@@ -11,6 +13,7 @@ import { plateau } from './plateau';
 // - la barre de navigation à sa place (P8, #648) : en bas sous 1024 px, à gauche au-delà, contenu et bouton fixe à sa droite ;
 //   aucune barre pendant une partie ;
 // - Jouer (#648, lot V10) : en paysage, le goban à côté du bouton principal, au moins aussi grand qu'avant ; en portrait, au-dessus.
+// - #649 (lot V6) : en paysage, chaque activité en deux zones, le goban à gauche à la hauteur de l'écran, le panneau à droite.
 // On ne vérifie que ce qui est vrai aujourd'hui. Ce qui est cassé est dans CONNU, avec le lot qui le corrige :
 // le contrôle y est sauté, et un `test.fixme` le nomme. Un lot qui corrige un cas le retire de CONNU.
 
@@ -24,7 +27,7 @@ const TAILLES = [
   { nom: '1440', l: 1440, h: 900, mobile: false },
 ] as const;
 
-type Controle = 'debord' | 'goban' | 'taille' | 'relief' | 'defilement';
+type Controle = 'debord' | 'goban' | 'taille' | 'relief' | 'defilement' | 'deuxZones';
 type Ecran = { nom: string; activite: boolean; ouvrir: (page: Page) => Promise<void> };
 
 const onglet = (page: Page, nom: string) => page.getByRole('navigation').getByRole('button', { name: nom, exact: true }).click();
@@ -62,6 +65,55 @@ const ECRANS: Ecran[] = [
     await page.getByRole('button', { name: /^Problème suivant / }).click();
     await expect(plateau(page).first()).toBeVisible();
   } },
+  // #649 (lot V6) : les autres activités à goban (fin, revue, course, découverte, règles, placement, révisions).
+  { nom: 'Fin de partie', activite: true, ouvrir: async (page) => {
+    await page.goto('/?komi=-100');
+    await toucherCta(page);
+    await expect(plateau(page)).toBeVisible();
+    await passerJusquAuScore(page);
+    await expect(page.getByRole('heading', { level: 2, name: 'Victoire' })).toBeVisible({ timeout: 15_000 });
+  } },
+  { nom: 'Revue', activite: true, ouvrir: async (page) => {
+    await page.goto('/?komi=-100');
+    await toucherCta(page);
+    await expect(plateau(page)).toBeVisible();
+    await passerJusquAuScore(page);
+    await page.getByRole('button', { name: 'Revoir la partie' }).click({ timeout: 15_000 });
+    await demarrerParcours(page);
+    await expect(plateau(page)).toBeVisible();
+  } },
+  { nom: 'Course', activite: true, ouvrir: async (page) => {
+    await page.goto('/');
+    await onglet(page, 'Problèmes');
+    await page.locator('[data-course]').click();
+    await page.getByRole('button', { name: 'C’est parti' }).click();
+    await expect(page.locator('.course-en-cours .board-wrap')).toBeVisible();
+  } },
+  { nom: 'Découverte', activite: true, ouvrir: async (page) => {
+    await page.goto('/');
+    await ouvrirDepuisApprendre(page);
+    await expect(page.locator('.decouverte .board-wrap')).toBeVisible();
+  } },
+  { nom: 'Règles', activite: true, ouvrir: async (page) => {
+    await page.goto('/');
+    await onglet(page, 'Apprendre');
+    await page.getByTestId('revoir-regles').click();
+    await expect(plateau(page, 7)).toBeVisible();
+  } },
+  { nom: 'Placement', activite: true, ouvrir: async (page) => {
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Je sais déjà jouer' }).click();
+    await expect(page.locator('.placement .board-wrap')).toBeVisible();
+  } },
+  { nom: 'Révisions', activite: true, ouvrir: async (page) => {
+    await page.addInitScript(() => {
+      localStorage.setItem('go.parties.v1', JSON.stringify({ n: 1, dernier: 'pomme', ordi: 1 }));
+      localStorage.setItem('go.revisions.v1', JSON.stringify({ problemes: { b1: { etape: 0, prochain: '2026-01-01', echecs: 1, maj: 1 } }, acquises: {} }));
+    });
+    await page.goto('/');
+    await page.getByTestId('tuile-revisions').click();
+    await expect(page.locator('.seance-revisions .board-wrap, .lecteur .board-wrap').first()).toBeVisible();
+  } },
   { nom: 'Profil', activite: false, ouvrir: async (page) => {
     await page.goto('/');
     await onglet(page, 'Profil');
@@ -71,12 +123,12 @@ const ECRANS: Ecran[] = [
 
 // Connu, à corriger par un lot du plan : « taille/écran/contrôle » → lot.
 const CONNU: Record<string, string> = {
-  // Téléphone en paysage : goban sous la barre d'actions, activités qui défilent, gobans trop petits (captures 11 et 12).
-  '844x390/Partie/goban': 'lot V6',
-  '844x390/Partie/defilement': 'lot V6',
-  '844x390/Leçon/taille': 'lot V6',
-  '844x390/Leçon/defilement': 'lot V6',
-  '844x390/Problème/taille': 'lot V6',
+  // #649 : la revue coup par coup défile en portrait (la courbe et la barre « Suivant » sous le goban). Hors lot V6,
+  // qui ne touche pas au portrait ; en paysage, elle ne défile plus.
+  '360/Revue/defilement': 'revue en portrait',
+  '390/Revue/defilement': 'revue en portrait',
+  '430/Revue/defilement': 'revue en portrait',
+  '768/Revue/defilement': 'revue en portrait',
 };
 
 /** Mesures de la vue : débordement, gobans, reliefs, défilement. */
@@ -120,6 +172,16 @@ async function mesurer(page: Page) {
         return { g: Math.round(b.left), d: Math.round(b.right), h: Math.round(b.top), b: Math.round(b.bottom) };
       }),
       vue: { l: innerWidth, h: innerHeight, bas: Math.round(bas) },
+      // #649 : ce qui est posé à droite du premier goban (titres, textes, boutons) : le panneau des deux zones.
+      aDroite: (() => {
+        const g = [...document.querySelectorAll('.board-wrap')].find(visible);
+        if (!g) return 0;
+        const d = g.getBoundingClientRect().right;
+        return [...document.querySelectorAll('button, h2, p')].filter((e) => {
+          const b = e.getBoundingClientRect();
+          return visible(e) && b.left >= d - 1 && b.top < innerHeight;
+        }).length;
+      })(),
     };
   });
 }
@@ -173,6 +235,13 @@ for (const t of TAILLES) {
         if (e.activite) {
           if (!connu('taille')) for (const g of m.gobans) expect(Math.min(g.d - g.g, g.b - g.h), `taille du goban ${info}`).toBeGreaterThanOrEqual(260);
           if (!connu('defilement')) expect(m.defilement, `défilement ${info}`).toBeLessThanOrEqual(1);
+          // P8 (#649, lot V6) : en paysage, deux zones. Le goban à gauche, à la hauteur de l'écran (ou de la largeur
+          // que lui laisse le panneau), et le panneau à sa droite.
+          if (t.l > t.h && !connu('deuxZones')) {
+            const g = m.gobans[0];
+            expect(m.aDroite, `panneau à droite du goban ${info}`).toBeGreaterThan(0);
+            expect(g.b - g.h, `goban à la hauteur de l'écran ${info}`).toBeGreaterThanOrEqual(Math.round(0.8 * Math.min(m.vue.h, 0.65 * m.vue.l)));
+          }
         }
       });
     }

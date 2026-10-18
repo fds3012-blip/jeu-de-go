@@ -1,0 +1,122 @@
+/*
+ * P8 (#649, lot V6) : les activités à goban en deux zones, en paysage (téléphone tourné, tablette en paysage, ordinateur).
+ * Le goban à gauche, à la hauteur de l'écran ; le panneau à droite (titre, bandeaux, Mochi, actions). En portrait, rien
+ * ne change. Même requête que Jouer (accueil.css, #648) : paysage, 600 px de large au moins.
+ *
+ * Chargée avec les écrans d'activité (Game, lecteurs de leçon et de problème, course), jamais dans la feuille initiale.
+ * Elle ne s'applique qu'à une activité affichée (.app-activite, .app-partie) dont l'écran visible a un goban :
+ * la fin de leçon, l'attente et le bilan de la revue, les écrans de fin de séance gardent leur colonne.
+ *
+ * Tailles (--v6-*, posées sur .app) :
+ * - hauteur utile : l'écran, moins 8 px en haut et en bas et les zones sûres ;
+ * - panneau : la place que laisse un goban à pleine hauteur, entre 20rem (la barre d'actions de la partie y tient)
+ *   et 24rem ;
+ * - goban : min(hauteur utile, largeur moins le panneau), jamais coupé.
+ * À 844 × 390 : goban de 374 px, panneau de 384 ; à 1024 × 768 : 648 et 320 ; à 1440 × 900 : 884 et 384.
+ */
+@media (orientation: landscape) and (min-width: 600px) {
+  .app:is(.app-activite, .app-partie):has(> .calque:not([hidden]) :is(.partie, .fin, .revue-parcours, .revue-rejeu, .lecteur-lecon, .lecteur > .lecteur-mochi, .course-en-cours)) {
+    /* La colonne de 560 px des activités (app.css) devient toute la largeur : les deux zones s'y centrent. */
+    max-width: none !important;
+    padding: var(--space-2) var(--v6-droite) calc(var(--space-2) + env(safe-area-inset-bottom, 0px)) var(--v6-gauche);
+  }
+  /* Les révisions posent leurs points de séance au-dessus du problème : le goban leur laisse leur place. */
+  .app-activite .seance-en-cours { --v6-reserve: 16px; }
+  .app:is(.app-activite, .app-partie), .app-activite .seance-en-cours {
+    --v6-gauche: max(var(--gouttiere), env(safe-area-inset-left, 0px));
+    --v6-droite: max(var(--gouttiere), env(safe-area-inset-right, 0px));
+    --v6-gap: var(--space-6);
+    /* 6 px de plus pour la tranche du bois sous le goban (board.css). */
+    --v6-haut: calc(100dvh - var(--zone-haut) - 2 * var(--space-2) - 6px - var(--v6-reserve, 0px) - env(safe-area-inset-bottom, 0px));
+    --v6-panneau: clamp(20rem, calc(100vw - var(--v6-haut) - var(--v6-gap) - var(--v6-gauche) - var(--v6-droite)), 24rem);
+    --v6-goban: min(var(--v6-haut), calc(100vw - var(--v6-panneau) - var(--v6-gap) - var(--v6-gauche) - var(--v6-droite)));
+  }
+
+  /* ---------- Gabarit commun : goban en colonne 1 sur toutes les rangées, le reste en colonne 2 ---------- */
+  /* La dernière rangée est souple (1fr) : la hauteur du goban s'y loge, les rangées du panneau gardent leur hauteur. */
+  :is(.app-activite, .app-partie) :is(.partie, .fin, .revue-parcours, .revue-rejeu, .lecteur-lecon, .lecteur:has(> .lecteur-mochi), .course-en-cours) {
+    display: grid; grid-template-columns: var(--v6-goban) var(--v6-panneau); grid-auto-rows: auto; column-gap: var(--v6-gap);
+    justify-content: center; align-content: start; align-items: start;
+    min-height: var(--v6-goban); height: auto; padding-bottom: 0; gap: var(--space-2) var(--v6-gap);
+    /* Écran plus large que haut de peu (1024 × 768) : le goban suit la largeur ; l'ensemble se centre dans la hauteur. */
+    margin-top: calc((var(--v6-haut) - var(--v6-goban)) / 2);
+  }
+  /* Filet de sécurité : si le panneau dépasse la hauteur (texte très long, zoom), la page défile et le goban reste
+     entier à l'écran. */
+  :is(.app-activite, .app-partie) :is(.partie > .partie-plateau, .fin > .fin-fond, :is(.revue-parcours, .revue-rejeu) > .revue-plateau,
+    .lecteur-lecon > .lecteur-plateau, .lecteur:has(> .lecteur-mochi) > .board-wrap, .course-en-cours > .course-plateau) { position: sticky; top: var(--space-2); }
+
+  /* ---------- Partie (Game, défis, en direct) ---------- */
+  /* Panneau : l'adversaire en haut, les coups et l'avantage dessous ; Mochi, toi et la barre d'actions en bas, comme
+     de l'autre côté d'une table (Lichess). La barre d'actions n'est plus fixée en bas de l'écran : elle ferme le panneau. */
+  .app.app-partie .partie { grid-template-rows: auto auto auto 1fr auto auto auto; row-gap: 0; }
+  .app.app-partie .partie::before { display: none; }
+  .app.app-partie .partie > * { grid-column: 2; }
+  .app.app-partie .partie > .partie-plateau { grid-column: 1; grid-row: 1 / -1; width: var(--v6-goban); margin: 0; align-self: start; }
+  .app.app-partie .partie > .partie-souffle { display: none; }
+  .app.app-partie .partie > .partie-plateau ~ .joueur { grid-row: 6; }
+  .app.app-partie .partie > .partie-mochi { grid-row: 5; position: relative; margin-top: var(--space-2); min-height: 0; }
+  /* Bulles posées sur le bas de la colonne en portrait (écran bas) : ici, dans la zone de Mochi, à leur place. */
+  .app.app-partie .partie > .partie-mochi > :is(.coach-intro, .coach-avertir) { position: static; }
+  .app.app-partie .partie > .partie-mochi > .coach { box-shadow: none; }
+  .app.app-partie .partie > .comptage { grid-row: 5; align-self: end; margin-bottom: var(--space-2); }
+  .app.app-partie .partie > :is(.actions, .barre-comptage) { grid-row: 7; position: relative; left: auto; right: auto; bottom: auto; z-index: 20;
+    margin-top: var(--space-2); padding: 0; background: none; border-top: 0; }
+  .app.app-partie .partie > .barre-comptage > .btn { flex: 1 1 0; }
+  .app.app-partie .partie > .actions.actions-groupees { justify-content: space-between; }
+
+  /* ---------- Fin de partie et récit du score : le goban final à gauche, sans voile ; le résultat à droite ---------- */
+  .app.app-partie .fin { grid-template-rows: 1fr; }
+  .app.app-partie .fin > .fin-fond { grid-column: 1; grid-row: 1; width: var(--v6-goban); margin: 0; }
+  .app.app-partie .fin > .fin-fond > .fin-voile { display: none; }
+  .app.app-partie .fin > :is(.fin-feuille, .recit-feuille) { grid-column: 2; grid-row: 1; align-self: stretch; margin: 0; justify-content: center; }
+  .app.app-partie .fin > .fin-feuille > .fin-sceau { margin-top: 0; }
+  .app.app-partie .fin .fin-action { margin-top: var(--space-4); }
+  .app.app-partie .recit-auto { position: relative; }
+  /* « Corriger les pierres mortes » : sous le récit, au bas du panneau. */
+  .app.app-partie .recit-auto > .comptage-auto { position: absolute; bottom: 0; right: calc((100% - var(--v6-goban) - var(--v6-gap) - var(--v6-panneau)) / 2);
+    width: var(--v6-panneau); margin: 0; }
+
+  /* ---------- Revue coup par coup et « Rejoue cette erreur » ---------- */
+  .app.app-partie :is(.revue-parcours, .revue-rejeu) { grid-template-rows: repeat(7, auto) 1fr auto; row-gap: var(--space-3); }
+  .app.app-partie :is(.revue-parcours, .revue-rejeu) > * { grid-column: 2; }
+  .app.app-partie :is(.revue-parcours, .revue-rejeu) > .revue-plateau { grid-column: 1; grid-row: 1 / -1; width: var(--v6-goban); margin: 0; }
+  .app.app-partie :is(.revue-parcours, .revue-rejeu) > :is(.dock, .revue-probleme) { grid-row: -2; }
+  /* La barre du bas de la revue ferme le panneau, à plat (plus de fond fixé sur toute la largeur). */
+  .app.app-partie :is(.revue-parcours, .revue-rejeu) > .dock { position: static; transform: none; left: auto; bottom: auto; width: auto; }
+  .app.app-partie :is(.revue-parcours, .revue-rejeu) > .dock::before { display: none; }
+  /* Téléphone tourné : la courbe et sa légende cèdent leur place (la liste des coups mène aussi à chaque coup). */
+  @media (max-height: 520px) {
+    .app.app-partie .revue-parcours { row-gap: var(--space-2); }
+    .app.app-partie .revue-parcours > :is(.revue-courbe, .revue-courbe-legende) { display: none; }
+  }
+
+  /* ---------- Leçon, introduction des règles, découverte ---------- */
+  .app.app-activite .lecteur-lecon { grid-template-rows: repeat(4, auto) 1fr auto; height: auto; }
+  .app.app-activite .lecteur-lecon::after { display: none; }
+  .app.app-activite .lecteur-lecon > * { grid-column: 2; }
+  .app.app-activite .lecteur-lecon > .lecteur-plateau { grid-column: 1; grid-row: 1 / -1; width: var(--v6-goban); height: var(--v6-goban);
+    max-height: none; min-height: 0; margin: 0; }
+  .app.app-activite .lecteur-lecon > .lecon-actions { grid-row: -2; margin-top: 0; align-self: end; }
+
+  /* ---------- Problème, Go du jour, entraînement, placement, révisions ---------- */
+  .app.app-activite .lecteur:has(> .lecteur-mochi) { grid-template-rows: repeat(5, auto) 1fr; }
+  .app.app-activite .lecteur:has(> .lecteur-mochi) > * { grid-column: 2; }
+  .app.app-activite .lecteur:has(> .lecteur-mochi) > .board-wrap { grid-column: 1; grid-row: 1 / -1; width: var(--v6-goban); margin: 0; }
+  /* Le verdict suit Mochi dans le panneau, à plat : il ne couvre plus le goban. Son action ferme le panneau. */
+  .app.app-activite .lecteur:has(> .lecteur-mochi) > .verdict { position: relative; left: auto; right: auto; bottom: auto; grid-row: -2;
+    align-self: stretch; display: flex; flex-direction: column; row-gap: var(--space-3);
+    margin: var(--space-2) 0 0; padding: 14px var(--space-4) var(--space-4); border-radius: var(--radius); box-shadow: none; }
+  .app.app-activite .lecteur:has(> .lecteur-mochi) > .verdict > .verdict-actions { margin-top: auto; }
+  :root:has(.app-activite .lecteur > .verdict) { scroll-padding-bottom: 0; }
+
+  /* Révisions : les points de la séance au-dessus du panneau, au bord de son titre. */
+  .app.app-activite .seance-en-cours > .etapes { width: calc(var(--v6-goban) + var(--v6-gap) + var(--v6-panneau)); margin-inline: auto;
+    padding-left: calc(var(--v6-goban) + var(--v6-gap)); justify-content: flex-start; }
+
+  /* ---------- Course ---------- */
+  .app.app-activite .course-en-cours { grid-template-rows: repeat(5, auto) 1fr; }
+  .app.app-activite .course-en-cours > * { grid-column: 2; }
+  .app.app-activite .course-en-cours > .course-plateau { grid-column: 1; grid-row: 1 / -1; width: var(--v6-goban); }
+  .app.app-activite .course-en-cours > .bubble { margin-top: var(--space-2); }
+}

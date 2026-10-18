@@ -23,6 +23,7 @@ import { carteTerritoire, conseilPasser, passerEnEvidence, coupsJoues, descripti
 import { messageComptage, modeComptage } from './partie';
 import { avanceBarre, avertirAvantPasse, frontieresAuPasse, frontieresVisibles, passerDiscret, type AlerteFrontieres } from './partie';
 import '../ui/comptage.css';
+import '../ui/paysage.css';
 import { BoutonAide } from '../ui/BoutonAide';
 import { choisirReplique, DUREE_REPLIQUE, type Situation } from './repliques';
 import { FinPartie } from '../ui/FinPartie';
