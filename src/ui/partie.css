@@ -33,8 +33,9 @@
 /* Pendant une partie : pas d'en-tête ni de barre de navigation, place à la barre d'actions. */
 .app.app-partie { padding-top: var(--space-1); padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
 /* #646 (A5) : une activité (leçon, problème, course, découverte, règles, placement, révisions) aussi, sans barre d'actions :
-   rien à réserver pour la barre du bas (--nav-h à 0 pour les feuilles des activités) ; bouton fixe et dock posés en bas. */
-.app.app-activite { --nav-h: 0px; padding-bottom: calc(var(--cible-cta) + var(--relief) + 2 * var(--space-4) + env(safe-area-inset-bottom, 0px)); }
+   rien à réserver pour la barre du bas (--nav-h et --nav-bas à 0, verdict compris) ; bouton fixe et dock posés en bas. */
+:root:has(.app-activite) { --nav-h: 0px; --nav-bas: 0px; }
+.app.app-activite { padding-bottom: calc(var(--cible-cta) + var(--relief) + 2 * var(--space-4) + env(safe-area-inset-bottom, 0px)); }
 .app:is(.app-partie, .app-activite) .dock { bottom: calc(var(--space-4) + env(safe-area-inset-bottom, 0px)); }
 .app-partie > .calque > .cta, .app-partie .partie > .cta, .app-activite .cta { bottom: calc(var(--space-4) + var(--relief) + env(safe-area-inset-bottom, 0px)); }
 
