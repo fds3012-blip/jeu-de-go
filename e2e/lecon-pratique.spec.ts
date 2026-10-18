@@ -76,7 +76,8 @@ test('fin de chapitre : « Joue contre Pomme » en action principale, qui lance 
   await expect(page.getByRole('button', { name: 'Retour au chemin' })).toHaveClass(/\blien\b/);
   await jouerPomme.click();
   await expect(page.locator('main.app-partie')).toBeVisible();
-  await expect(page.getByText(/Pomme/).first()).toBeVisible();
+  // #640 : la fin de leçon reste montée, cachée, sous la partie (sa sortie la retrouve).
+  await expect(page.getByText(/Pomme/).filter({ visible: true }).first()).toBeVisible();
 });
 
 test('fin de la leçon 3, toutes les autres faites : fin de chapitre, et un problème de chaque piège', async ({ page }) => {

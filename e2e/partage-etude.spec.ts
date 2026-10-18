@@ -133,7 +133,8 @@ test('partager une étude → l’ami ouvre le lien sans compte → « Étudie-l
   for (const [l, c] of [['C3', 'noir'], ['G7', 'noir'], ['C7', 'noir'], ['G3', 'blanc'], ['E5', 'blanc'], ['D5', 'noir'], ['F4', 'blanc']]) {
     await expect(goban.locator(`[data-point="${l}"][data-pierre="${c}"]`)).toHaveCount(1);
   }
-  await expect(b.page.locator('.cta')).toHaveText('Analyser');
+  // #640 : la partie partagée reste montée, cachée, sous l'étude (« ‹ » la retrouve) : seul le bouton visible compte.
+  await expect(b.page.locator('.cta:visible')).toHaveText('Analyser');
   await expect.poll(() => b.page.evaluate(() => localStorage.getItem('go.etude.v1') ?? '')).toContain(';B[de];W[ff]');
   // Revenir : la position posée par Ana, intacte.
   await b.page.getByRole('button', { name: 'Revenir' }).click();

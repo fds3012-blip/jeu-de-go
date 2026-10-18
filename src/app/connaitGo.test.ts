@@ -1,5 +1,5 @@
 // #523 : « Tu connais le go ? » : quand la poser, où mène chaque réponse, ce qui est gardé sur l'appareil.
-import { CONNAIT_GO_KEY, doitDemander, lireReponse, ongletApresDecouverte, REPONSES, suiteDe } from './connaitGo';
+import { CONNAIT_GO_KEY, doitDemander, lireReponse, REPONSES, suiteDe } from './connaitGo';
 import { accueilEpure } from './premierePierre';
 import { readFileSync } from 'node:fs';
 
@@ -29,14 +29,13 @@ describe('routage selon la réponse', () => {
     expect(suiteDe('sait')).toEqual({ ecran: 'accueil' });
   });
 
-  it('fin de l’introduction → partie de découverte (#524) ; sa fin ramène à l’accueil (au chemin si ouverte d’Apprendre)', () => {
-    expect(ongletApresDecouverte('intro')).toBe('jouer');
-    expect(ongletApresDecouverte('chemin')).toBe('apprendre');
+  it('fin de l’introduction → partie de découverte (#524) ; sa fin ramène là où l’on était, sans changer d’onglet (#640)', () => {
     const app = readFileSync(new URL('./App.tsx', import.meta.url), 'utf8');
     // La fin de l'introduction (« Jouer avec Mochi », « Partie de découverte avec Mochi ») ouvre la vraie partie de découverte.
     expect(app).toContain('onDecouverte={() => ouvrirDecouverte(true)}');
     expect(app).toMatch(/function ouvrirDecouverte\(apresIntro = false\) \{[^}]*setDecouverte\(apresIntro \? 'intro' : 'chemin'\)/);
     expect(app).not.toMatch(/function ouvrirDecouverte[^}]*lancerGuidee/);
+    expect(app).toContain('<PartieDecouverte onFin={fermer} onQuitter={fermer} />');
   });
 });
 

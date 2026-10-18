@@ -347,3 +347,24 @@ Ce qui n'est **pas** demandé : supprimer un mode de jeu, une leçon, un problè
 
 - Aucune modification de code applicatif : `docs/ux/architecture-pages-2026-10.md`, `docs/ux/captures/architecture/` (12 JPEG, 444 Ko), la section « Architecture » de `DESIGN.md` et quatre entrées de `docs/ux/base-de-connaissances.md` (Boucle de jeu).
 - Les règles A1 à A12 de `DESIGN.md` reprennent la carte cible ; chaque lot dit lesquelles il fait passer au vert.
+
+## 10. Suivi : lot N4 (#640)
+
+Mécanisme : `par(maison)` dans `App.tsx` pose l'écran par-dessus l'écran courant (pile `poses`). L'onglet allumé reste celui d'origine (A10), l'écran d'origine reste monté et caché (`.calque[hidden]`), et la sortie le retrouve tel quel, défilement et focus compris (A6). La pile se défait quand l'écran posé revient à la racine de sa maison (« ‹ », fin, retour du système) ; un toucher sur la barre du bas ou un lien la vide. Test : `e2e/sans-changement-onglet.spec.ts`, un test par chemin.
+
+| # | Chemin | Avant | Après |
+|---|---|---|---|
+| 1 | Profil › placement | Jouer s'allume ; sortie vers Jouer | Profil reste allumé ; « Passer » ou retour : le Profil |
+| 2 | Mes amis › Défier | partie dans Jouer ; sortie vers l'accueil | partie plein écran ; « ‹ » : Mes amis |
+| 3 | Profil de X › Défier | idem | « ‹ » : le profil de X |
+| 4 | fin de partie en ligne › profil de X | bascule dans Profil ; « Retour » : menu du Profil | Jouer reste allumé ; « Retour » : le bilan, intact |
+| 5 | carte de la semaine › profil de X | bascule dans Profil | Jouer reste allumé ; retour : l'accueil |
+| 6 | partie partagée › Étudie-la | bascule dans Profil ; « ‹ » : Mes parties | Jouer reste allumé ; « ‹ » : la partie partagée |
+| 7 | revue d'une partie › Analyser une autre partie | bascule dans Profil ; partie perdue | Jouer reste allumé ; « ‹ » : la revue, intacte |
+| 8 | découverte lancée de Jouer | fin dans Apprendre | fin à l'endroit d'origine |
+| 9 | leçon depuis l'accueil, l'aide, la fin de partie, le placement, le lien du Go du jour | bascule dans Apprendre ; sortie : le chemin | onglet d'origine allumé ; « Retour » : l'écran d'origine (problème ouvert, écran de fin, bilan du placement) |
+| 10 | fin de chapitre › Joue contre Pomme | partie dans Jouer ; sortie : l'accueil | sortie : la fin de leçon |
+| 11 | Ta semaine › Jouer une partie | partie dans Jouer ; sortie : l'accueil | sortie : Ta semaine |
+| 12 | Crée ton compte (ou accord, consentement) › Conditions | bascule dans Profil ; l'écran de compte est perdu | onglet d'origine allumé ; « ‹ » : l'écran de compte, saisie comprise |
+
+Hors des 12 et laissés tels quels (raccourcis vers Problèmes) : tuile « Go du jour » de l'accueil, Ta semaine › « Faire un problème ». Défier depuis un profil ouvert par-dessus Jouer (chemins 4 et 5) revient à l'accueil de Jouer, pas au profil : deux écrans du même onglet dans une pile demandent N3.

@@ -70,6 +70,8 @@ interface Props {
   size: number; komi: number; confirmTouch: boolean; onExit: () => void; opponent?: Opponent; intro?: ReactNode;
   /** « Analyser une autre partie » (#286) : ouvre l'import SGF du Profil, depuis la revue. */
   onImporter?: () => void;
+  /** #640 : nom du « ‹ » quand la partie est posée hors de Jouer (« Retour ») ; sinon « Retour à l'accueil ». */
+  retour?: string;
   onResult?: (winner: 0 | 1 | 2, stats: StatsPartie) => void;
   /**
    * #559 : une nouvelle partie commence sur le même écran (« Rejouer » de l'écran de fin, « Rejouer d'ici » de la revue).
@@ -114,7 +116,7 @@ interface Props {
   garder?: (partie: { sgf: string; coups: number } | null) => void;
 }
 
-export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, onResult, onRestart, fin, aiKomi = komi, portrait, celebrer = true, aide = true, avantage = true, accommodant = false, guidee, onImporter, reglages, coach, comptageSur = false, regles = 'japanese', handicap = 0, reprise: partieReprise, garder }: Props) {
+export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, onResult, onRestart, fin, aiKomi = komi, portrait, celebrer = true, aide = true, avantage = true, accommodant = false, guidee, onImporter, retour, reglages, coach, comptageSur = false, regles = 'japanese', handicap = 0, reprise: partieReprise, garder }: Props) {
   // #365 : coordonnées et marque du dernier coup, selon les Réglages.
   const prefs = usePreferences();
   // #528 : position de départ, pierres de handicap comprises (Blanc commence alors).
@@ -574,7 +576,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   // #268 : quitter une partie en cours (au moins un coup, pas finie) la perd ; Mochi demande d'abord, avec la bulle du passe.
   // Sans coup joué, ou partie finie (l'écran de fin a son propre retour), on sort tout de suite.
   const quitterDemandeConfirmation = phase !== 'end' && history.length > debutJoueur;
-  const retourAccueil = <button ref={retourRef} type="button" className="retour" onClick={() => (quitterDemandeConfirmation ? setDemandeQuitter(true) : onExit())} aria-label={tr(guidee ? 'partie.retourApprendre' : 'partie.retourAccueil')}>‹</button>;
+  const retourAccueil = <button ref={retourRef} type="button" className="retour" onClick={() => (quitterDemandeConfirmation ? setDemandeQuitter(true) : onExit())} aria-label={retour ?? tr(guidee ? 'partie.retourApprendre' : 'partie.retourAccueil')}>‹</button>;
   // En relecture, on montre la position `q` et « ‹ » ramène au bilan.
   const bandeau = (c: 1 | 2, q: Position = pos, retour: ReactNode = retourAccueil, actif = phase === 'play' && q.toPlay === c, gain: { n: number; k: number } | null = null) => {
     let sousTitre: string;
