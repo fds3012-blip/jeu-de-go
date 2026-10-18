@@ -36,6 +36,11 @@ async function ouvrirCourse(page: Page) {
   await expect(page.locator('.problemes .cta')).toHaveCount(1);
   await carte.click();
   await expect(page.getByRole('heading', { name: /Course/ })).toBeVisible();
+  // #627 (V12) : trois règles, chacune une icône et quelques mots ; une seule action en relief.
+  const regles = page.locator('.course-regles li');
+  await expect(regles).toHaveText(['Résous le plus de problèmes possible.', 'Un essai par problème, sans indice.', /^3e erreur\s:\sfin de la course\.$/]);
+  for (const li of await regles.all()) await expect(li.locator('svg[aria-hidden="true"]')).toHaveCount(1);
+  await expect(page.locator('.course-consigne .cta')).toHaveCount(1);
   await page.getByRole('button', { name: 'C’est parti' }).click();
   await expect(page.locator('.course-en-cours')).toBeVisible();
 }

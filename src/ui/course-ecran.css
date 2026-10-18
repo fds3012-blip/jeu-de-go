@@ -17,11 +17,13 @@
 .course-en-cours { padding-bottom: var(--space-4); }
 
 .course-consigne .course-picto { display: block; margin: var(--space-4) auto var(--space-2); color: var(--danger-texte); }
-.course-regles { list-style: none; margin: var(--space-4) 0 0; padding: 0; display: grid; gap: var(--space-2); }
-.course-regles li { position: relative; padding: var(--space-3) var(--space-4) var(--space-3) calc(var(--space-4) + 18px);
-  background: var(--surface); border-radius: var(--radius-s); font-size: var(--fs-m); line-height: 1.35; }
-.course-regles li::before { content: ""; position: absolute; left: var(--space-4); top: calc(var(--space-3) + .5em); width: 8px; height: 8px;
-  border-radius: 50%; background: var(--danger-texte); }
+/* #627 (V12) : trois règles, chacune une icône au trait dans un rond et quelques mots ; une liste, pas une pile de tuiles. */
+.course-regles { list-style: none; margin: var(--space-5) 0 0; padding: 0; display: grid; gap: var(--space-3); }
+.course-regles li { display: flex; align-items: center; gap: var(--space-3); min-height: var(--cible-min);
+  font-size: var(--fs-m); font-weight: var(--fw-bold); line-height: 1.3; }
+.course-regles svg { flex: none; box-sizing: content-box; padding: 8px; border-radius: 50%; background: var(--surface);
+  fill: none; stroke: var(--text); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.course-regles [data-regle="course.regles.3"] svg { stroke: var(--danger-texte); }
 .course-meilleur { margin: var(--space-4) 0 0; text-align: center; color: var(--muted); font-weight: var(--fw-bold); }
 
 /* Bandeau : minuteur à gauche, pastilles au centre, score à droite. Chiffres à chasse fixe : rien ne bouge. */

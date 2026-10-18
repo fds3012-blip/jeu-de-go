@@ -41,6 +41,10 @@ for (const theme of ['light', 'dark'] as const) {
     // Une seule action en relief ; les cartes sont à plat ; une colonne sur téléphone, sans défilement de côté.
     await expect(page.locator('.apprendre .cta')).toHaveCount(1);
     expect(await cartes.first().evaluate(b => getComputedStyle(b).boxShadow)).toBe('none');
+    // #625 : à plat, sans bordure, comme les tuiles d'Entraînement ; groupées en un bloc (2 px d'écart).
+    expect(await cartes.evaluateAll(els => els.map(e => getComputedStyle(e).borderTopWidth))).toEqual(Array(6).fill('0px'));
+    const ys = await cartes.evaluateAll(els => els.map(e => { const r = e.getBoundingClientRect(); return { top: r.top, bottom: r.bottom }; }));
+    expect(Math.round(ys[1].top - ys[0].bottom)).toBe(2);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
     const xs = new Set(await cartes.evaluateAll(els => els.map(e => Math.round(e.getBoundingClientRect().x))));
     expect(xs.size).toBe(1);
@@ -63,6 +67,9 @@ test('« Par thème » à 600 px : deux colonnes', async ({ page }) => {
   await expect(page.getByTestId('par-theme').locator('.theme-carte')).toHaveCount(6);
   const xs = new Set(await page.getByTestId('par-theme').locator('.theme-carte').evaluateAll(els => els.map(e => Math.round(e.getBoundingClientRect().x))));
   expect(xs.size).toBe(2);
+  // #625 : sur plusieurs colonnes, des cartes séparées, toutes arrondies, toujours sans bordure.
+  expect(await page.getByTestId('par-theme').locator('.theme-carte').evaluateAll(els => els.map(e => getComputedStyle(e).borderTopWidth + ' ' + getComputedStyle(e).borderBottomLeftRadius)))
+    .toEqual(Array(6).fill('0px 16px'));
 });
 
 test('page d’un thème : notion expliquée, leçons avec leur état, une leçon s’ouvre et y ramène', async ({ page }) => {
@@ -74,6 +81,11 @@ test('page d’un thème : notion expliquée, leçons avec leur état, une leço
   expect(await lecons.count()).toBeGreaterThanOrEqual(2);
   await expect(lecons.first()).toHaveAccessibleName(/^Libertés et capture, Faite$/);
   await expect(lecons.nth(1)).toHaveAccessibleName(/, À faire$/);
+  // #627 (V12) : la leçon faite porte son sceau ; plus de pastille texte « Faite » ni « À faire ».
+  await expect(lecons.first().locator('.sceau-lecon[data-lecon]')).toHaveCount(1);
+  await expect(lecons.nth(1).locator('.sceau-lecon')).toHaveCount(0);
+  await expect(page.locator('.theme-lecon-etat')).toHaveCount(0);
+  await expect(page.locator('.theme-lecons').getByText(/^(Faite|À faire)$/)).toHaveCount(0);
   for (const b of await lecons.all()) expect((await b.boundingBox())!.height).toBeGreaterThanOrEqual(44);
   await expect(page.locator('.cta')).toHaveCount(1);
   await expect(page.locator('.cta')).toHaveText('S’entraîner sur ce thème');

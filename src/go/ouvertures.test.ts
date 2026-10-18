@@ -82,13 +82,22 @@ describe('répertoire d’ouvertures : forme (#591)', () => {
     });
     it('textes FR et EN : nom, idée, une phrase par coup, une par erreur ; courts, tutoiement', () => {
       const n = lue.coups.length;
-      const cles = [`o.${o.id}.nom`, `o.${o.id}.idee`, ...Array.from({ length: n }, (_, i) => `o.${o.id}.c${i + 1}`), ...o.erreurs.map((_, j) => `o.${o.id}.e${j + 1}`)];
+      const cles = [`o.${o.id}.nom`, `o.${o.id}.idee`, `o.${o.id}.ligne`, ...Array.from({ length: n }, (_, i) => `o.${o.id}.c${i + 1}`), ...o.erreurs.map((_, j) => `o.${o.id}.e${j + 1}`)];
       expect(Object.keys(FR).filter(k => k.startsWith(`o.${o.id}.`)).sort()).toEqual([...cles].sort());
       for (const k of cles) {
         expect(FR[cle(k)], k).toBeTruthy();
         expect(EN[cle(k)], k).toBeTruthy();
         expect(mots(FR[cle(k)]), `${k} : « ${FR[cle(k)]} »`).toBeLessThanOrEqual(20);
         expect(FR[cle(k)], k).not.toMatch(/\b(vous|votre|vos)\b/i);
+      }
+    });
+    // #626 : la ligne de la carte, dans la liste. Courte (10 mots au plus), sans mot japonais (il s’explique dans
+    // l’ouverture), et reprise de l’idée ou d’un coup de l’entrée : aucun conseil nouveau sans preuve (relu pour #626).
+    it('la ligne de la carte : courte, sans mot japonais, extraite d’un texte relu de l’entrée', () => {
+      for (const l of [FR, EN]) {
+        const ligne = l[cle(`o.${o.id}.ligne`)];
+        expect(mots(ligne), ligne).toBeLessThanOrEqual(10);
+        expect(ligne, o.id).not.toMatch(/tengen|hoshi|san-san|kakari|komoku|tsuke|kosumi|fuseki|joseki/i);
       }
     });
     // Français : le mot japonais, puis son explication (« hoshi (point étoile) », « komoku : … »). Anglais : le mot anglais
@@ -114,9 +123,7 @@ describe('répertoire d’ouvertures : forme (#591)', () => {
     });
   });
 
-  it('le texte d’entrée dans la liste : les mots japonais fuseki et joseki sont expliqués', () => {
-    expect(FR.intro).toMatch(/Fuseki \(début de partie\) et joseki \(suites de coups dans un coin\)/);
-    expect(EN.intro).toMatch(/The start of a game \(fuseki\) and move sequences in a corner \(joseki\)/);
+  it('la preuve KataGo, au départ de chaque ouverture, cite la tolérance des séquences', () => {
     expect(FR.preuve).toContain(String(TOLERANCE_DEMO).replace('.', ','));
     expect(EN.preuve).toContain(String(TOLERANCE_DEMO));
   });
