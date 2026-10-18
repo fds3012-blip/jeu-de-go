@@ -10,7 +10,7 @@
 // entrées périmées après un rechargement, désaccord avec une pile tenue ailleurs.
 //
 // Ce que fait un retour, dans l'ordre (le premier qui s'applique) :
-// 1. une fenêtre `<dialog>` ouverte (feuille, Aide, consentement…) : fermée comme par Échap (`cancel`, puis `close`) ;
+// 1. une fenêtre `<dialog>` modale ouverte (feuille, Aide, partage…) : fermée comme par Échap (`cancel`, puis `close`) ;
 // 2. une question « Quitter la partie ? » (ou « Passer ? ») : « Continuer » ; un menu déroulant ouvert : refermé ;
 // 3. le bouton « ‹ » de l'écran (`.retour`, ou `[data-retour]`) : touché, confirmation comprise ;
 // 4. sinon `repli` (App.tsx) : sortie sans bouton « ‹ » (placement, arrivée d'un défi), ou retour à Jouer depuis la
@@ -73,13 +73,24 @@ function dernier(selecteur: string): HTMLElement | null {
 /** Menu déroulant ouvert (menu « Plus » de la partie). */
 const MENU = '[data-action="plus"][aria-expanded="true"]';
 const BOUTON = '.retour, [data-retour]';
-/** Une fenêtre ouverte, une question en attente, un menu ouvert ou un bouton « ‹ » : il y a quelque chose à fermer. */
-const SELECTEUR = `dialog[open], [data-choix] .coach-choix, ${MENU}, ${BOUTON}`;
+/** Une question en attente, un menu ouvert ou un bouton « ‹ » : il y a quelque chose à fermer (fenêtres à part). */
+const SELECTEUR = `[data-choix] .coach-choix, ${MENU}, ${BOUTON}`;
+
+/**
+ * Fenêtres modales ouvertes (feuilles, Aide, partage : `showModal()`). Un bandeau non modal (`show()`, comme celui du
+ * consentement) n'en est pas une : il ne bloque pas l'écran, le retour du système ne le ferme pas et ne pose pas de
+ * garde pour lui. Sinon, à la racine de Jouer, sa réponse retirait une garde par `history.back()`, qui pouvait
+ * interrompre un rechargement lancé au même moment (#638).
+ */
+function modales(): HTMLDialogElement[] {
+  return [...document.querySelectorAll<HTMLDialogElement>('dialog[open]')].filter(d => {
+    try { return d.matches(':modal'); } catch { return true; /* navigateur sans `:modal` */ }
+  });
+}
 
 /** Fait un retour : ferme ou quitte ce qui est au-dessus (voir l'ordre en tête de fichier). */
 export function faireRetour(b: Pick<Branchement, 'repli'>): void {
-  const fenetres = document.querySelectorAll<HTMLDialogElement>('dialog[open]');
-  const fenetre = fenetres[fenetres.length - 1];
+  const fenetre = modales().pop();
   if (fenetre) {
     // Comme Échap : une fenêtre qui refuse `cancel` (écran bloquant) reste ouverte.
     if (fenetre.dispatchEvent(new Event('cancel', { cancelable: true }))) fenetre.close();
@@ -126,7 +137,7 @@ export function brancherRetourSysteme(lire: () => Branchement, h: History = hist
   let depart = 0;
   try { h.replaceState({ ...etat(), [MARQUE]: 0, garde: false }, ''); } catch { /* historique indisponible */ }
 
-  const besoin = () => lire().horsRacine() || document.querySelector(SELECTEUR) !== null;
+  const besoin = () => lire().horsRacine() || modales().length > 0 || document.querySelector(SELECTEUR) !== null;
 
   const poser = () => {
     try { h.pushState({ [MARQUE]: rang + 1, garde: true }, ''); rang++; garde = true; } catch { /* trop d'appels : ignoré */ }
@@ -188,7 +199,7 @@ export function brancherRetourSysteme(lire: () => Branchement, h: History = hist
   function surTouche(e: KeyboardEvent) {
     if (e.key !== 'Escape' || e.defaultPrevented || e.repeat) return;
     // Une fenêtre ouverte se ferme d'elle-même (Échap natif) ; un champ de saisie garde sa touche.
-    if (document.querySelector('dialog[open]')) return;
+    if (modales().length) return;
     const cible = e.target as HTMLElement | null;
     if (cible && (cible.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(cible.tagName))) return;
     // Après les autres écouteurs (menu de la partie, révision ouverte) : s'ils ont pris la touche, rien de plus.

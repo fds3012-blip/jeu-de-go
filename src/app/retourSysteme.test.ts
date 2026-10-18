@@ -55,14 +55,14 @@ class Historique {
 
 /** Document : une fenêtre `<dialog>` ouverte et un bouton « ‹ », ou rien. */
 const dom = {
-  fenetre: null as null | { cancel: boolean; fermee: boolean },
+  /** `modale: false` : bandeau ouvert par `show()` (consentement). */
+  fenetre: null as null | { cancel: boolean; fermee: boolean; modale?: boolean },
   boutonRetour: null as null | (() => void),
 };
 function element(clic?: () => void) { return { getClientRects: () => [1], click: clic ?? (() => {}) }; }
 const documentFaux = {
   body: {},
   querySelector(sel: string) {
-    if (sel.includes('dialog[open]') && dom.fenetre && !dom.fenetre.fermee) return {};
     if (sel.includes('.retour') && dom.boutonRetour) return {};
     return null;
   },
@@ -70,7 +70,7 @@ const documentFaux = {
     if (sel === 'dialog[open]') {
       const f = dom.fenetre;
       if (!f || f.fermee) return [];
-      return [{ dispatchEvent: () => !f.cancel, close: () => { f.fermee = true; } }];
+      return [{ dispatchEvent: () => !f.cancel, close: () => { f.fermee = true; }, matches: (m: string) => m === ':modal' && f.modale !== false }];
     }
     if (sel.startsWith('.retour') && dom.boutonRetour) return [element(dom.boutonRetour)];
     return [];
@@ -217,6 +217,26 @@ describe('retour du système (#606)', () => {
     w.emettre('beforeunload', {});
     await vider();
     expect(h.i).toBe(1);
+  });
+
+  it('bandeau non modal à la racine de Jouer (consentement) : ni garde ni retrait, le retour le laisse (#638)', async () => {
+    const r = brancher();
+    dom.fenetre = { cancel: false, fermee: false, modale: false };
+    await r.verifier();
+    expect(h.length).toBe(1);
+    expect(h.state).toMatchObject({ garde: false });
+    // Réponse au bandeau : rien à retirer, donc aucun `history.back()` qui couperait un rechargement.
+    dom.fenetre.fermee = true;
+    await r.verifier();
+    expect(h.length).toBe(1);
+    expect(h.i).toBe(0);
+    // Sur un autre écran, le retour ne ferme pas le bandeau : il fait « ‹ ».
+    dom.fenetre = { cancel: false, fermee: false, modale: false };
+    ouvrirEcran('reglages');
+    await r.verifier();
+    await retourSysteme();
+    expect(dom.fenetre.fermee).toBe(false);
+    expect(sorties).toEqual(['‹ reglages']);
   });
 
   it('rechargement sur une garde : l’entrée devient celle de l’app', async () => {
