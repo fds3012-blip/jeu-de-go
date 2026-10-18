@@ -1413,10 +1413,8 @@ export const en = {
   'placement.basesTexte': 'Lesson 1 shows you the rules in a few minutes. You’ll play right after.',
   'placement.programme': 'Your first three lessons',
   'placement.lecon1': 'Start lesson 1',
-  'placement.profil': 'Estimated level',
   'placement.profilValeur': '{kyu} kyu, on {date}',
   'placement.profilFaire': 'Your starting level',
-  'placement.profilRefaire': 'Your starting level',
   // Nom accessible d'un portrait selon son humeur (src/ui/Portrait.tsx)
   'portrait.content': '{nom}, happy',
   'portrait.surpris': '{nom}, surprised',

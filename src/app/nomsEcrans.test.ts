@@ -20,7 +20,7 @@ const NOMS: [string, string, string[]][] = [
   ['Révisions', 'titre.revisions', ['accueil.revisions.titre', 'seance.titre', 'revision.titre']],
   ['Revoir la partie', 'direct.revoir', ['fin.revoir']],
   ['Statistiques', 'stats.titre', ['stats.ligne']],
-  ['Ton niveau de départ', 'titre.placement', ['placement.titre', 'placement.profilFaire', 'placement.profilRefaire', 'cote.lignePlacement']],
+  ['Ton niveau de départ', 'titre.placement', ['placement.titre', 'placement.profilFaire']],
   // La tuile de l'accueil garde son nom court (« Découverte ») : son nom accessible commence par le nom entier.
   ['Partie de découverte', 'titre.decouverte', []],
   ['Partie guidée', 'titre.guidee', []],
