@@ -68,6 +68,7 @@ export const frEcrans = {
   'profil.aideEntree': 'Aide sur le jeu',
   'profil.rubrique.progression': 'Ta progression',
   'profil.rubrique.social': 'Tes parties et tes amis',
+  'profil.rubrique.app': 'L’app',
   'profil.rubrique.compte': 'Compte',
   'profil.rubrique.aide': 'Aide',
   'profil.groupe.apparence': 'Apparence',
@@ -1346,6 +1347,7 @@ export const frEcrans = {
   // Amis (#359) : écran « Mes amis » du Profil. Les textes qui disent « défier » restent sous `defi.` (vocabulaire.test.ts).
   'amis.titre': 'Mes amis',
   'amis.profil.demandes': { one: '{n} demande', other: '{n} demandes' },
+  'amis.profil.sansCompte': 'Avec un compte',
   // Historique de mes parties (#358, src/app/MesParties.tsx, src/app/historique.ts)
   'defi.revueRetour': 'Retour au défi',
   'historique.titre': 'Mes parties',

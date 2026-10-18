@@ -317,7 +317,7 @@ function dateCourte(iso: string): string {
  * #654 (A13, modèle : l'écran « Plus » de chess.com) : le Profil est un sommaire. En haut, une carte d'identité compacte
  * (pseudo, niveau, série) ; dessous, des rubriques groupées sous de petits titres, chacune ouvre son détail. Groupes
  * choisis par tri de cartes (docs/ux/architecture-pages-2026-10.md, § 14) : ta progression, tes parties et tes amis,
- * les réglages, le compte, l'aide. Aucun deuxième niveau de rubriques (A4).
+ * l'app (réglages), le compte, l'aide. Aucun deuxième niveau de rubriques (A4).
  */
 function Menu({ onVue, settings, profil, serie, placement, onPlacement, userId, amis, donnees }: Omit<Props, 'vue'> & { donnees: ReturnType<typeof useDonnees> }) {
   // #365 : « Montrer la série » éteint, ni flamme, ni record, ni badge de série ; la série continue d'être comptée.
@@ -355,14 +355,15 @@ function Menu({ onVue, settings, profil, serie, placement, onPlacement, userId, 
     } satisfies EntreeSommaire] : []),
     { cle: 'stats', nom: tk('stats.ligne'), visuel: icone('stats'), testId: 'ligne-stats', onOuvrir: () => onVue('stats') },
     { cle: 'semaine', nom: te('semaine.ligne'), visuel: icone('semaine'), testId: 'ligne-semaine', onOuvrir: () => onVue('semaine'),
-      etat: atteints > 0 ? { texte: `${atteints} / 3`, aria: te('semaine.ligneValeur', { n: atteints }) } : undefined },
+      etat: atteints > 0 ? { texte: te('semaine.ligneValeur', { n: atteints }) } : undefined },
   ];
   const social: EntreeSommaire[] = [
     { cle: 'parties', nom: t('historique.titre'), visuel: icone('parties'), testId: 'ligne-parties', onOuvrir: () => onVue('parties'),
-      etat: nParties ? { texte: String(nParties), aria: t('historique.profilResume', { n: nParties }) } : undefined },
+      etat: nParties ? { texte: t('historique.profilResume', { n: nParties }) } : undefined },
     ...(amis ? [{
       cle: 'amis', nom: t('amis.titre'), visuel: icone('amis'), testId: 'ligne-amis', onOuvrir: () => (amis.compte ? onVue('amis') : amis.onCompte()),
-      etat: amis.compte && demandes > 0 ? { texte: String(demandes), ton: 'or', aria: t('amis.profil.demandes', { n: demandes }) } : undefined,
+      // #359 : une demande reçue se dit en or ; sans compte, la ligne dit qu'il en faut un (elle ouvre sa création).
+      etat: !amis.compte ? { texte: t('amis.profil.sansCompte') } : demandes > 0 ? { texte: t('amis.profil.demandes', { n: demandes }), ton: 'or' } : undefined,
     } satisfies EntreeSommaire] : []),
   ];
   const reglages: EntreeSommaire[] = [
@@ -405,7 +406,7 @@ function Menu({ onVue, settings, profil, serie, placement, onPlacement, userId, 
       <div className="profil-rubriques">
         <Sommaire titre={t('profil.rubrique.progression')} entrees={progression} testId="rubrique-progression" />
         <Sommaire titre={t('profil.rubrique.social')} entrees={social} testId="rubrique-social" />
-        <Sommaire titre={t('profil.reglages')} entrees={reglages} testId="rubrique-reglages" />
+        <Sommaire titre={t('profil.rubrique.app')} entrees={reglages} testId="rubrique-reglages" />
         <Sommaire titre={t('profil.rubrique.compte')} entrees={compte} testId="rubrique-compte" />
         <Sommaire titre={t('profil.rubrique.aide')} entrees={aide} testId="rubrique-aide" />
       </div>

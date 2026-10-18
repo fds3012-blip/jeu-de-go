@@ -41,13 +41,13 @@ for (const sombre of [false, true]) {
     serveur.profiles.find(p => p.id === MOI)!.rating = 800;
     await ouvrirProfil(page);
 
-    // #647 (F4) : une ligne « Ta cote » pleine largeur ; le niveau de départ (placement) vit dedans. Le Profil tient sans défiler.
+    // #647 (F4) : une ligne « Ta cote » pleine largeur ; le niveau de départ (placement) vit dedans.
     const ligne = page.getByTestId('ligne-cote');
     await expect(ligne).toContainText('Ta cote');
     await expect(ligne).toContainText('Choisis ton départ');
     expect((await ligne.boundingBox())!.height).toBeGreaterThanOrEqual(44);
-    const { scroll, largeur } = await page.evaluate(() => ({ scroll: document.documentElement.scrollHeight, largeur: document.documentElement.scrollWidth }));
-    expect(scroll).toBeLessThanOrEqual(844);
+    const largeur = await page.evaluate(() => document.documentElement.scrollWidth);
+    // #654 : le Profil est un sommaire qui défile ; on vérifie seulement l'absence de défilement de côté.
     expect(largeur).toBeLessThanOrEqual(390);
     await capture(page, `profil-ligne-${sombre ? 'sombre' : 'clair'}`);
 

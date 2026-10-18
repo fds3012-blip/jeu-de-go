@@ -153,9 +153,7 @@ for (const sombre of [false, true]) {
     await expect(page.getByRole('heading', { name: 'Ta progression' })).toBeVisible();
     const ligne = page.getByTestId('ligne-semaine');
     await expect(ligne).toContainText('1 / 3 objectifs');
-    // Une ligne de plus : le Profil tient toujours sans défiler, sans débordement.
-    const { scroll } = await page.evaluate(() => ({ scroll: document.documentElement.scrollHeight }));
-    expect(scroll).toBeLessThanOrEqual(844);
+    // #654 : une ligne de la rubrique « Ta progression », sans débordement.
     await sansDebordement(page);
     await capture(page, `profil-ligne-semaine-${sombre ? 'sombre' : 'clair'}`);
 

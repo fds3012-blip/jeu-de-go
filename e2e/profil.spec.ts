@@ -9,7 +9,7 @@ for (const theme of ['dark', 'light'] as const) {
     await page.getByRole('navigation').getByRole('button', { name: 'Profil' }).click();
     await expect(page.getByRole('heading', { name: 'Profil', exact: true })).toBeVisible();
     const titres = page.locator('.profil-sommaire .sommaire-titre');
-    await expect(titres).toHaveText(['Ta progression', 'Tes parties et tes amis', 'Réglages', 'Compte', 'Aide']);
+    await expect(titres).toHaveText(['Ta progression', 'Tes parties et tes amis', 'L’app', 'Compte', 'Aide']);
     // E3 : quatre lignes au plus par rubrique ; aucune action en relief.
     for (const r of await page.locator('.profil-sommaire .sommaire').all()) expect(await r.locator('.sommaire-entree').count()).toBeLessThanOrEqual(4);
     await expect(page.locator('.profil .cta')).toHaveCount(0);
@@ -74,7 +74,7 @@ test('Niveau et badges : niveau et XP, record, leçons, adversaires battus, prob
   await expect(page.getByTestId('ligne-niveau')).toBeVisible();
   await page.reload();
   await page.getByRole('navigation').getByRole('button', { name: 'Profil' }).click();
-  await expect(page.getByTestId('ligne-niveau')).toHaveAccessibleName(/^Niveau et badges, \d+$/);
+  await expect(page.getByTestId('ligne-niveau')).toHaveAccessibleName(/^Niveau et badges, Badges, \d+ sur 21$/);
 });
 
 test('réglages en lignes : thème segmenté, interrupteurs, cibles de 44 px', async ({ page }) => {

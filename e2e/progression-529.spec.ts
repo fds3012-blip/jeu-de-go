@@ -152,6 +152,7 @@ test('niveau 10 : la fête annonce le goban « Cerisier », qui se choisit dans 
   await page.getByRole('navigation').getByRole('button', { name: 'Profil' }).click();
   await ouvrirNiveauBadges(page);
   await expect(page.getByTestId('barre-niveau')).toContainText(/Niveau\s10/);
+  await page.locator('.retour').first().click();
   await page.getByRole('button', { name: /^Réglages/ }).click();
   const goban = page.getByRole('group', { name: 'Goban' });
   const cerisier = goban.getByRole('button', { name: 'Cerisier', exact: true });

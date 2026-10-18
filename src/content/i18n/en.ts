@@ -44,6 +44,7 @@ export const en = {
   'profil.aideEntree': 'Help with the game',
   'profil.rubrique.progression': 'Your progress',
   'profil.rubrique.social': 'Your games and friends',
+  'profil.rubrique.app': 'The app',
   'profil.rubrique.compte': 'Account',
   'profil.rubrique.aide': 'Help',
   'profil.groupe.apparence': 'Appearance',
@@ -1687,6 +1688,7 @@ export const en = {
   // Friends (#359).
   'amis.titre': 'My friends',
   'amis.profil.demandes': { one: '{n} request', other: '{n} requests' },
+  'amis.profil.sansCompte': 'With an account',
   // My games (#358)
   'defi.revueRetour': 'Back to the challenge',
   'historique.titre': 'My games',

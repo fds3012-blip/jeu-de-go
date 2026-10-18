@@ -133,7 +133,7 @@ test('feuille « Changer » : le retour la ferme, l’accueil reste', async ({ p
 test('Aide : le retour ferme la feuille, le Profil reste', async ({ page }) => {
   await ouvrir(page);
   await onglet(page, 'Profil').click();
-  await page.getByRole('button', { name: 'Aide', exact: true }).click();
+  await page.getByRole('button', { name: 'Aide sur le jeu', exact: true }).click();
   const aide = page.locator('dialog.aide[open]');
   await expect(aide).toBeVisible();
   await retour(page);
