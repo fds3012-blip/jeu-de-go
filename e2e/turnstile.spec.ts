@@ -18,7 +18,7 @@ function fauxTurnstile(muet = false) {
     remove: function () {} };`;
 }
 
-async function ecranCompte(browser: Browser, baseURL: string | undefined, serveur: FauxServeur, cle: string | null, muet = false) {
+async function ecranCompte(browser: Browser, baseURL: string | undefined, serveur: FauxServeur, cle: string | null, muet = false, horloge = false) {
   const ctx = await browser.newContext({
     viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, locale: 'fr-FR', baseURL, colorScheme: 'dark',
     storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }, { name: 'go.connait-go.v1', value: '"sait"' }] }] },
@@ -33,6 +33,8 @@ async function ecranCompte(browser: Browser, baseURL: string | undefined, serveu
   page.on('console', m => { if (/Content Security Policy|Refused to/i.test(m.text())) violations.push(m.text()); });
   const otp: Record<string, unknown>[] = [];
   page.on('request', (r: Request) => { if (/\/auth\/v1\/otp(\?|$)/.test(r.url()) && r.method() === 'POST') otp.push(r.postDataJSON()); });
+  // Horloge simulée installée avant l'ouverture : installée après, le minuteur déjà armé du compte à rebours resterait réel.
+  if (horloge) await page.clock.install();
   await page.goto('/');
   await toucherCta(page);
   await expect(page.getByRole('heading', { name: 'Crée ton compte' })).toBeVisible();
@@ -57,9 +59,8 @@ test('sans clé : ni script de Cloudflare, ni widget, la demande de code part sa
 });
 
 test('avec clé : un jeton par envoi (code, puis renvoi), sous la CSP, et le compte se crée', async ({ browser, baseURL }) => {
-  test.setTimeout(120_000);
   const serveur = fauxServeur();
-  const { page, scripts, violations, otp } = await ecranCompte(browser, baseURL, serveur, '1x00000000000000000000AA');
+  const { page, scripts, violations, otp } = await ecranCompte(browser, baseURL, serveur, '1x00000000000000000000AA', false, true);
   const widget = page.getByTestId('captcha');
   await expect(widget).toHaveAttribute('aria-label', 'Vérification anti-robot');
   await expect(widget).toContainText('Turnstile w1');
@@ -67,9 +68,9 @@ test('avec clé : un jeton par envoi (code, puis renvoi), sous la CSP, et le com
   await expect(page.getByLabel('Code à 6 chiffres')).toBeVisible();
   expect(scripts).toEqual([SCRIPT]);
   expect(otp[0].gotrue_meta_security).toEqual({ captcha_token: 'jeton-e2e-1' });
-  // Renvoi (après le délai d'une minute) : un nouveau widget, un nouveau jeton.
-  await page.clock.install();
-  await page.clock.fastForward('01:05');
+  // Renvoi (après le délai d'une minute) : un nouveau widget, un nouveau jeton. #642 : le compte à rebours est une chaîne
+  // de minuteurs d'une seconde réarmée après chaque rendu ; `fastForward` n'en sautait qu'un, la minute passait en vrai.
+  for (let s = 0; s <= 60; s++) await page.clock.runFor(1000);
   await page.getByRole('button', { name: 'Renvoyer le code' }).click();
   await expect.poll(() => otp.length).toBe(2);
   expect((otp[1].gotrue_meta_security as { captcha_token: string }).captcha_token).toMatch(/^jeton-e2e-[2-9]$/);
