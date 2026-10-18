@@ -314,7 +314,7 @@ Lumière : `--halo`, un dégradé radial doré en haut de `body` (11 % d'or en s
 |---|---|---|
 | `--radius-xs` | 4px | Coin de la bulle côté personnage, jointure de deux tuiles groupées |
 | `--radius-plateau` | 10px | Goban |
-| `--radius-s` | 12px | Choix segmentés, champs, retours, vignettes de thème |
+| `--radius-s` | 12px | Choix segmentés, champs, retours |
 | `--radius-bouton` | 16px | Boutons principal et secondaire |
 | `--radius` | 16px | Tuiles |
 | `--radius-feuille` | 22px | Haut des feuilles qui montent du bas |
@@ -346,6 +346,7 @@ Lumière : `--halo`, un dégradé radial doré en haut de `body` (11 % d'or en s
 - **`.tuile`** (accueil, « Aujourd'hui ») : hauteur 68 px au moins, titre Bricolage 700 en 16 px, détail en `--muted` 13 px, vignette (mini-goban 44 ou 60 px) à gauche.
 - **`.tuile-pb`** (Problèmes, #620) : tuile secondaire à plat, sans bordure, 64 px au moins, visuel de 40 px (mini-goban, chrono), titre Bricolage 700 en `--fs-m`, détail en `--muted`. Groupées dans `.tuiles-pb`. Une seule carte d'action en tête de Problèmes : le Go du jour à faire, puis « Problème suivant » ; l'autre devient une tuile.
 - **`.ouv-carte`** (Ouvertures, #626) : carte visuelle à plat, en grille (`auto-fill` de 9,5rem : 2 colonnes à 390, une au zoom 200 %). Le mini-goban de la position après la séquence, dans la zone que montre le lecteur (`MiniGoban fenetre`), puis le nom et une ligne courte ; l'idée complète, le nombre de coups et la preuve KataGo sont dans l'écran de l'ouverture. Taille du plateau en `.seg`.
+- **`.theme-carte`** (« Par thème » d'Apprendre et de Problèmes, `GrilleThemes`, #625) : même traitement que `.tuile-pb` (à plat, sans bordure, 64 px, visuel de 40 px, titre Bricolage 700), plus une ligne de description et l'état (barre ou « Maîtrisé »). Une colonne groupée en un bloc sur téléphone ; dès que la grille a 30rem, cartes séparées en `auto-fill` de 13,5rem (2 colonnes dans 560 px, 3 dans 720, P8).
 - **`.mode`** (autres façons de jouer) : au trait, sans fond, icône en `--accent-texte`, nom en Bricolage 700 14 px. Un point d'or de 9 px quand un ami attend ton coup.
 - **`.seg`** (choix exclusif) : rail `--surface`, rayon 12 px ; le choix actif est une pastille inversée (`--text` sur `--bg`), 44 px de haut. Jamais pour deux bascules indépendantes.
 - **`.feedback`, `.notice`** : une teinte mêlée à la surface (`color-mix`, jade 16 %, hanko 16 % ou or 12 %), rayon 12 px, sans liseré.
