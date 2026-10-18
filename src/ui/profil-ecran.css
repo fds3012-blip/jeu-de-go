@@ -159,3 +159,21 @@
 .profil-version [role='status']:not(:empty) { display: block; }
 /* #571 (loi de Hick) : les lignes de l'app et du compte, un bloc à part sous celles de ta progression. */
 .lignes.profil-groupe { margin-top: 6px; }
+
+/* ---------- Grand écran (#630, lot V9, P8) ---------- */
+@media (min-width: 1024px) {
+  /* Profil : la carte d'identité à gauche, le menu à droite ; les badges sur toute la largeur, dessous. */
+  .profil:not(.profil-reglages) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--space-6); align-items: start; }
+  .profil > .profil-titre-ligne, .profil > .vitrine { grid-column: 1 / -1; }
+  .profil > .identite { grid-column: 1; grid-row: 2 / span 2; }
+  .profil > .lignes { grid-column: 2; grid-row: 2; }
+  .profil > .lignes.profil-groupe { grid-row: 3; }
+  .profil .vitrine { margin-top: var(--space-4); }
+  /* Réglages : l'aperçu reste en vue à gauche ; les groupes en deux colonnes, sans couper un groupe. */
+  .profil-reglages { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: var(--space-6); align-items: start; }
+  .profil-reglages > .reglages-apercu { position: sticky; top: calc(var(--zone-haut) + var(--space-4)); }
+  .reglages-groupes { columns: 2; column-gap: var(--space-4); }
+  .reglages-groupe { break-inside: avoid; padding-bottom: var(--space-4); }
+  .reglages-groupe > .lignes-titre { margin-top: 0; }
+  .profil-reglages > .profil-version { grid-column: 2; }
+}

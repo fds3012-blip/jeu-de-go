@@ -417,44 +417,59 @@ function Reglages({ settings, set }: Pick<Props, 'settings' | 'set'>) {
   return (
     <div className="profil profil-reglages">
       <ApercuPlateau settings={settings} />
-      <h3 className="lignes-titre">{t('profil.groupe.apparence')}</h3>
-      <div className="lignes">
-        <LigneLangue />
-        <LigneChoix icone={<IconeReglage id="theme" />} libelle={t('profil.theme')} options={themes()} valeur={settings.theme} onChange={v => regler('theme', v)} />
-        <LigneGoban />
-      </div>
-      <h3 className="lignes-titre">{tk('reglages.groupe.plateau')}</h3>
-      <div className="lignes">
-        <LigneInterrupteur icone={<IconeReglage id="coordonnees" />} libelle={tk('reglages.coordonnees')} aide={tk('reglages.coordonneesAide')} actif={settings.coordonnees} onChange={v => regler('coordonnees', v)} />
-        <LigneInterrupteur icone={<IconeReglage id="dernier" />} libelle={tk('reglages.dernierCoup')} aide={tk('reglages.dernierCoupAide')} actif={settings.dernierCoup} onChange={v => regler('dernierCoup', v)} />
-        <LigneInterrupteur icone={<IconeReglage id="numeros" />} libelle={tk('reglages.numeros')} aide={tk('reglages.numerosAide')} actif={settings.numerosRevue} onChange={v => regler('numerosRevue', v)} />
-      </div>
-      <h3 className="lignes-titre">{t('profil.groupe.jeu')}</h3>
-      <div className="lignes">
-        <LigneInterrupteur icone={<IconeReglage id="confirmer" />} libelle={t('profil.confirmer')} aide={t('profil.confirmerAide')} actif={settings.confirmTouch} onChange={v => regler('confirmTouch', v)} />
-        <LigneChoix icone={<IconeReglage id="aide" />} libelle={t('profil.aide')} options={aides()} valeur={settings.aide} onChange={a => regler('aide', a)} />
-        <LigneChoix icone={<IconeReglage id="aide" />} libelle={t('profil.coach')} options={coachs()} valeur={settings.coach}
-          onChange={c => { regler('coach', c); track(c === 'non' ? EVENTS.coachCoupe : EVENTS.coachActive, { depuis: 'reglages', valeur: c }); }} />
-      </div>
-      {/* #538 : l'IA sur le téléphone, prête pour le hors ligne (état, téléchargement, place libérée). */}
-      <ReglageIA />
-      <h3 className="lignes-titre">{tk('reglages.groupe.rythme')}</h3>
-      <div className="lignes">
-        <LigneCadence valeur={settings.cadence} onChange={c => regler('cadence', c)} />
-      </div>
-      <h3 className="lignes-titre">{tk('reglages.groupe.progression')}</h3>
-      <div className="lignes">
-        <LigneInterrupteur icone={<IconeReglage id="serie" />} libelle={tk('reglages.serie')} aide={tk('reglages.serieAide')} actif={settings.serieVisible} onChange={v => regler('serieVisible', v)} />
-      </div>
-      <h3 className="lignes-titre">{t('profil.groupe.sons')}</h3>
-      <div className="lignes">
-        {/* #509 (L2, constat 8) : deux réglages indépendants, donc deux interrupteurs (plus un faux choix segmenté).
-            #165 : un aperçu à l'allumage, le claquement de pierre ou une petite vibration. */}
-        <LigneInterrupteur icone={<IconeReglage id="sons" />} libelle={t('profil.sons')} actif={settings.sound}
-          onChange={v => { regler('sound', v); if (v) setTimeout(() => playStone(40, 9), 0); }} />
-        <LigneInterrupteur icone={<IconeReglage id="vibrations" />} libelle={t('profil.vibrations')} actif={settings.vibrations}
-          onChange={v => { regler('vibrations', v); if (v) setTimeout(hapticStone, 0); }} />
-        <LigneInterrupteur icone={<IconeReglage id="celebrations" />} libelle={t('profil.celebrations')} aide={t('profil.celebrationsAide')} actif={settings.celebrations} onChange={v => regler('celebrations', v)} />
+      {/* #630 (V9) : un groupe par titre ; à partir de 1024 px, l'aperçu reste à gauche et les groupes vont en deux colonnes. */}
+      <div className="reglages-groupes">
+        <div className="reglages-groupe">
+          <h3 className="lignes-titre">{t('profil.groupe.apparence')}</h3>
+          <div className="lignes">
+            <LigneLangue />
+            <LigneChoix icone={<IconeReglage id="theme" />} libelle={t('profil.theme')} options={themes()} valeur={settings.theme} onChange={v => regler('theme', v)} />
+            <LigneGoban />
+          </div>
+        </div>
+        <div className="reglages-groupe">
+          <h3 className="lignes-titre">{tk('reglages.groupe.plateau')}</h3>
+          <div className="lignes">
+            <LigneInterrupteur icone={<IconeReglage id="coordonnees" />} libelle={tk('reglages.coordonnees')} aide={tk('reglages.coordonneesAide')} actif={settings.coordonnees} onChange={v => regler('coordonnees', v)} />
+            <LigneInterrupteur icone={<IconeReglage id="dernier" />} libelle={tk('reglages.dernierCoup')} aide={tk('reglages.dernierCoupAide')} actif={settings.dernierCoup} onChange={v => regler('dernierCoup', v)} />
+            <LigneInterrupteur icone={<IconeReglage id="numeros" />} libelle={tk('reglages.numeros')} aide={tk('reglages.numerosAide')} actif={settings.numerosRevue} onChange={v => regler('numerosRevue', v)} />
+          </div>
+        </div>
+        <div className="reglages-groupe">
+          <h3 className="lignes-titre">{t('profil.groupe.jeu')}</h3>
+          <div className="lignes">
+            <LigneInterrupteur icone={<IconeReglage id="confirmer" />} libelle={t('profil.confirmer')} aide={t('profil.confirmerAide')} actif={settings.confirmTouch} onChange={v => regler('confirmTouch', v)} />
+            <LigneChoix icone={<IconeReglage id="aide" />} libelle={t('profil.aide')} options={aides()} valeur={settings.aide} onChange={a => regler('aide', a)} />
+            <LigneChoix icone={<IconeReglage id="aide" />} libelle={t('profil.coach')} options={coachs()} valeur={settings.coach}
+              onChange={c => { regler('coach', c); track(c === 'non' ? EVENTS.coachCoupe : EVENTS.coachActive, { depuis: 'reglages', valeur: c }); }} />
+          </div>
+          {/* #538 : l'IA sur le téléphone, prête pour le hors ligne (état, téléchargement, place libérée). */}
+          <ReglageIA />
+        </div>
+        <div className="reglages-groupe">
+          <h3 className="lignes-titre">{tk('reglages.groupe.rythme')}</h3>
+          <div className="lignes">
+            <LigneCadence valeur={settings.cadence} onChange={c => regler('cadence', c)} />
+          </div>
+        </div>
+        <div className="reglages-groupe">
+          <h3 className="lignes-titre">{tk('reglages.groupe.progression')}</h3>
+          <div className="lignes">
+            <LigneInterrupteur icone={<IconeReglage id="serie" />} libelle={tk('reglages.serie')} aide={tk('reglages.serieAide')} actif={settings.serieVisible} onChange={v => regler('serieVisible', v)} />
+          </div>
+        </div>
+        <div className="reglages-groupe">
+          <h3 className="lignes-titre">{t('profil.groupe.sons')}</h3>
+          <div className="lignes">
+            {/* #509 (L2, constat 8) : deux réglages indépendants, donc deux interrupteurs (plus un faux choix segmenté).
+                #165 : un aperçu à l'allumage, le claquement de pierre ou une petite vibration. */}
+            <LigneInterrupteur icone={<IconeReglage id="sons" />} libelle={t('profil.sons')} actif={settings.sound}
+              onChange={v => { regler('sound', v); if (v) setTimeout(() => playStone(40, 9), 0); }} />
+            <LigneInterrupteur icone={<IconeReglage id="vibrations" />} libelle={t('profil.vibrations')} actif={settings.vibrations}
+              onChange={v => { regler('vibrations', v); if (v) setTimeout(hapticStone, 0); }} />
+            <LigneInterrupteur icone={<IconeReglage id="celebrations" />} libelle={t('profil.celebrations')} aide={t('profil.celebrationsAide')} actif={settings.celebrations} onChange={v => regler('celebrations', v)} />
+          </div>
+        </div>
       </div>
       <LigneVersion />
     </div>
