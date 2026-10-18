@@ -1,0 +1,23 @@
+import { expect, type Locator, type Page } from '@playwright/test';
+
+// #646 (lot N2, règle A5) : une activité (leçon, problème, course, découverte, règles, placement, révisions) prend tout
+// l'écran, sans barre du bas. Un parcours qui veut changer d'onglet en sort d'abord par sa seule sortie, « ‹ ».
+
+/** La barre du bas. */
+export const barre = (page: Page): Locator => page.getByRole('navigation');
+
+/** Sort des activités ouvertes (« ‹ » de l'écran affiché) jusqu'à retrouver la barre du bas. */
+export async function sortirActivite(page: Page): Promise<void> {
+  for (let i = 0; i < 4 && !(await barre(page).isVisible()); i++) {
+    const retour = page.locator('.calque:not([hidden]) .retour').last();
+    if (!(await retour.isVisible())) break;
+    await retour.click();
+  }
+  await expect(barre(page)).toBeVisible();
+}
+
+/** Touche l'onglet `nom` de la barre du bas, après être sorti de l'activité en cours s'il y en a une. */
+export async function onglet(page: Page, nom: string | RegExp, options: { exact?: boolean } = {}): Promise<void> {
+  await sortirActivite(page);
+  await barre(page).getByRole('button', { name: nom, exact: options.exact }).click();
+}

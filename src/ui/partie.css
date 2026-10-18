@@ -32,8 +32,11 @@
 }
 /* Pendant une partie : pas d'en-tête ni de barre de navigation, place à la barre d'actions. */
 .app.app-partie { padding-top: var(--space-1); padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
-.app-partie .dock { bottom: calc(var(--space-4) + env(safe-area-inset-bottom, 0px)); }
-.app-partie > .calque > .cta, .app-partie .partie > .cta { bottom: calc(var(--space-4) + var(--relief) + env(safe-area-inset-bottom, 0px)); }
+/* #646 (A5) : une activité (leçon, problème, course, découverte, règles, placement, révisions) aussi, sans barre d'actions :
+   rien à réserver pour la barre du bas (--nav-h à 0 pour les feuilles des activités) ; bouton fixe et dock posés en bas. */
+.app.app-activite { --nav-h: 0px; padding-bottom: calc(var(--cible-cta) + var(--relief) + 2 * var(--space-4) + env(safe-area-inset-bottom, 0px)); }
+.app:is(.app-partie, .app-activite) .dock { bottom: calc(var(--space-4) + env(safe-area-inset-bottom, 0px)); }
+.app-partie > .calque > .cta, .app-partie .partie > .cta, .app-activite .cta { bottom: calc(var(--space-4) + var(--relief) + env(safe-area-inset-bottom, 0px)); }
 
 /* ---------- Bandeaux des joueurs ---------- */
 .joueur { display: flex; align-items: center; gap: 10px; min-height: 60px; padding: 6px 0; }
@@ -132,6 +135,11 @@
   .qui-mene-phrase { animation: go-fondu 150ms var(--ease) both; }
 }
 @media (min-width: 600px) { .partie-plateau { margin: 0; } }
+/* #646 (V5) : tablette en paysage, ordinateur. Le plateau suit la hauteur libre (bandeaux, Mochi, barre d'actions déduits) :
+   la partie ne défile plus. Les téléphones en paysage (moins de 701 px de haut) gardent leurs règles (lot V6). */
+@media (min-width: 600px) and (min-height: 701px) {
+  .partie > .partie-plateau { align-self: center; width: clamp(min(260px, 100%), calc(100dvh - 350px), 100%); }
+}
 /* Petits écrans (iPhone SE, 667 px) : le plateau cède un peu de largeur pour que la barre du coach tienne au-dessus
    de la barre d'actions (explication du comptage, indice). Plancher de 280 px. Issue #85. */
 @media (max-height: 700px) {

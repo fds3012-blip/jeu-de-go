@@ -161,3 +161,11 @@ Chacune a une recommandation ; aucune n'est appliquée sans son accord.
 
 - Aucune modification de code applicatif. Fichiers : `DESIGN.md` (section « Principes de Florian », renvoi dans « Responsive »), ce document, `docs/ux/captures/visuel-responsive/` (13 PNG réduits et postérisés, 516 Ko), `e2e/visuel-responsive-captures.spec.ts` (sauté sans `VISUEL`), deux entrées dans `docs/ux/base-de-connaissances.md`.
 - Spec lancé aux 7 tailles : 154 vues, aucun échec, aucun débordement horizontal.
+
+## 9. Suivi : lot V5 (#646, avec N2)
+
+- Activités sans barre du bas (N2) : 60 px rendus au goban et à Mochi ; `.app-activite` met `--nav-h` à 0 et pose bouton fixe et dock sur le bas.
+- Problème, placement, révisions : le goban vaut `min(largeur, hauteur libre)` (`apprendre.css`) et déborde la gouttière sur téléphone (4 px du bord, comme la partie) ; Mochi se pose juste dessous, plus de vide entre eux (capture 03). Leçon, découverte, règles : même débord sur téléphone (`lecon.css`).
+- Partie, 600 px de large et plus de 700 px de haut : le plateau suit la hauteur libre (`partie.css`) ; à 1024 × 768, la page ne défile plus (cas « 1024/Partie/defilement » retiré de `CONNU`, `e2e/responsive.spec.ts`).
+- Le paysage téléphone (V6) n'est pas traité : ses cas restent dans `CONNU`. Le problème y gagne en taille (226 px au lieu de 90) sans y passer le plancher de 260 px.
+- Captures avant / après, sombre, 390 × 844 et 1024 × 768 : `docs/ux/captures/plein-ecran-646/`.
