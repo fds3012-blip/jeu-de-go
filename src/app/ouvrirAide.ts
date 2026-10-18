@@ -52,6 +52,8 @@ export const AIDE_DES_LECONS: Record<string, { fiche: Fiche; mot?: IdMot }> = {
   l41: { fiche: 'compter' }, l46: { fiche: 'mots', mot: 'handicap' },
   // #553 : le mur (l47), couper et relier (l48), l'invasion (l49).
   l47: { fiche: 'mots', mot: 'mur' }, l48: { fiche: 'mots', mot: 'couper' }, l49: { fiche: 'mots', mot: 'invasion' },
+  // #672 : le nirensei (l50), le sanrensei (l51), le tengen du shin-fuseki (l52), le fuseki chinois (l53).
+  l50: { fiche: 'mots', mot: 'nirensei' }, l51: { fiche: 'mots', mot: 'sanrensei' }, l52: { fiche: 'mots', mot: 'tengen' }, l53: { fiche: 'mots', mot: 'fuseki' },
 };
 
 /** Fiche à ouvrir depuis une leçon ; les règles quand la leçon n'a pas de mot à elle (ouverture, par exemple). */
