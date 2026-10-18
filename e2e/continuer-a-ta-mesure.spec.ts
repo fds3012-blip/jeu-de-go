@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { versProblemeSuivant } from './problemes';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -22,6 +23,7 @@ test('5 réussites d’affilée : le 6e problème est « Moyen », sans cote aff
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
+  await versProblemeSuivant(page);
   await page.getByRole('button', { name: /^Problème suivant / }).click();
 
   const lecteur = page.locator('.lecteur');
@@ -79,6 +81,7 @@ test('un indice ne change pas la cote ; trouvé seul après un échec, elle remo
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
+  await versProblemeSuivant(page);
   await page.getByRole('button', { name: /^Problème suivant / }).click();
   const lecteur = page.locator('.lecteur');
   const verdict = page.locator('.verdict');
@@ -123,6 +126,7 @@ for (const { lang, mot, onglet, suivant } of [
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto(`/?lang=${lang}`);
     await page.getByRole('navigation').getByRole('button', { name: onglet }).click();
+    await versProblemeSuivant(page);
     await expect(page.getByRole('button', { name: suivant })).toBeVisible();
     expect(await page.locator('body').innerText()).not.toMatch(mot);
 

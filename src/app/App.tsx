@@ -339,6 +339,8 @@ export function App() {
   const [enPlacement, setEnPlacement] = useState(false);
   // #469 : séance « Révisions du jour » ouverte, et éléments dus (recomptés après chaque essai et à chaque écran).
   const [seanceRevisions, setSeanceRevisions] = useState(false);
+  // #653 : la séance « Rejouer tes erreurs », posée sur Jouer depuis l'accueil, a été vue : sa fin défait la pose.
+  if (seanceRevisions) pbVu.current = true;
   const [cleRevisions, setCleRevisions] = useState(0);
   useEffect(() => {
     const f = () => setCleRevisions(n => n + 1);
@@ -568,6 +570,11 @@ export function App() {
   function ouvrirDecouverte(apresIntro = false) {
     par(tab, undefined, true); setPlaying(false); setLessonId(null); setSerie3(null); setEnPlacement(false); setSeanceRevisions(false); setIntroRegles(null);
     setDecouverte(apresIntro ? 'intro' : 'chemin'); window.scrollTo({ top: 0 });
+  }
+
+  /** #653 : « Rejouer tes erreurs », dans Problèmes ; depuis la tuile de l'accueil, posée par-dessus Jouer (A3). */
+  function ouvrirErreurs() {
+    par('problemes'); setSeanceRevisions(true); window.scrollTo({ top: 0 });
   }
 
   function ouvrirPlacement() {
@@ -1010,9 +1017,10 @@ export function App() {
     // #640 : la fin et « ‹ » ramènent là où l'on était, sans changer d'onglet (avant : la fin menait à Apprendre).
     const fermer = () => { setDecouverte(false); window.scrollTo({ top: 0 }); };
     screen = <PartieDecouverte onFin={fermer} onQuitter={fermer} />;
-  } else if (tab === 'jouer' && seanceRevisions) {
+  } else if (seanceRevisions) {
     activite = true;
-    // #469 : séance « Révisions du jour » (5 éléments au plus), ouverte depuis la carte de l'accueil.
+    // #469 : séance « Rejouer tes erreurs » (5 éléments au plus). #653 : sa maison est Problèmes (entrée du sommaire) ;
+    // la tuile de l'accueil la pose par-dessus Jouer, et sa fin y ramène.
     screen = <SeanceRevisions confirmTouch={settings.confirmTouch} celebrer={settings.celebrations} compte={!!compteId}
       onFin={() => { setSeanceRevisions(false); window.scrollTo({ top: 0 }); }} />;
   } else if (tab === 'jouer' && enPlacement) {
@@ -1093,7 +1101,8 @@ export function App() {
     screen = <Puzzles retour={retourPose} db={supabase} userId={compteId} sessionLoading={session === undefined} confirmTouch={settings.confirmTouch} onCompte={ouvrirCompte}
       essai={decider({ quoi: 'probleme' }, etat, terminees, COMPTES).ok ? undefined : () => { garde({ quoi: 'probleme' }, { quoi: 'problemes' }); }}
       lien={LIEN_DU_JOUR} depuisRappel={ARRIVEE_RAPPEL || duJourDirect} onDuJour={setDuJourOuvert} onActivite={setActivitePb} celebrer={settings.celebrations} racine={racineProblemes} rappelAmi={rappelGoDuJour}
-      onApprendre={versLecon1 && LESSONS[0] ? () => { setVersLecon1(false); ouvrirLecon(LESSONS[0].id); } : undefined} />;
+      onApprendre={versLecon1 && LESSONS[0] ? () => { setVersLecon1(false); ouvrirLecon(LESSONS[0].id); } : undefined}
+      erreurs={{ n: revisionsDues, ouvrir: ouvrirErreurs }} />;
   } else if (tab === 'profil') {
     screen = <Profil vue={vueProfil} onVue={v => { if (v === 'importer' && !garde({ quoi: 'import' }, { quoi: 'importer' })) return; setVueProfil(v); }} settings={settings} set={set} profil={profil} serie={serie} record={recordSerie}
       parcours={{ lecons: { faites: done, total: LESSONS.length }, adversaires: OPPONENTS.length }}
@@ -1164,7 +1173,7 @@ export function App() {
         } } : undefined}
         onPlacement={proposerPlacement(parties.n, placement, ouverture.retours) ? ouvrirPlacement : undefined}
         // #469 : « Révisions du jour (N) », carte secondaire dans « Aujourd'hui » (jamais au premier lancement).
-        revisions={revisionsDues > 0 && !home.nouveau ? { n: revisionsDues, ouvrir: () => { par('jouer', undefined, true); setSeanceRevisions(true); window.scrollTo({ top: 0 }); } } : undefined}
+        revisions={revisionsDues > 0 && !home.nouveau ? { n: revisionsDues, ouvrir: ouvrirErreurs } : undefined}
         // #440 : parties lentes où c'est à toi (« À toi de jouer (N) », point d'or) et recherche en cours.
         lentes={COMPTES && etat === 'complet' ? {
           aJouer: lentesEnAttente.length,
@@ -1194,7 +1203,7 @@ export function App() {
   const haut = poses[poses.length - 1];
   const fermerPose = (p: Pose) => { setPoses(poses.slice(0, -1)); setTab(p.onglet); p.rendre?.(); defiler.current = p; };
   if (haut && tab !== haut.maison) setPoses([]);
-  else if (haut && (haut.a ? !activite && !enPartie && !ecranPlein : tab === 'jouer' ? accueilVisible : tab === 'apprendre' ? !lesson && !serie3 : tab === 'problemes' ? pbVu.current && !activitePb : vueProfil === 'menu' || vueProfil === 'parties')) fermerPose(haut);
+  else if (haut && (haut.a ? !activite && !enPartie && !ecranPlein : tab === 'jouer' ? accueilVisible : tab === 'apprendre' ? !lesson && !serie3 : tab === 'problemes' ? pbVu.current && !activitePb && !seanceRevisions : vueProfil === 'menu' || vueProfil === 'parties')) fermerPose(haut);
   const ongletVu = poses[0]?.onglet ?? tab;
   const caches = poses.filter(p => !p.a);
   const plein = enPartie || ecranPlein || activite;
@@ -1206,7 +1215,8 @@ export function App() {
     : enDirect ? { quoi: 'direct' } : enLente ? { quoi: 'lente' } : enPartagee ? { quoi: 'partagee' } : decouverte && !enPartie ? { quoi: 'decouverte' }
       : enDefi ? { quoi: defi.vue === 'partie' ? 'enLigne' : 'defi' }
         : tab === 'jouer' && playing ? { quoi: 'partie', contre: playing === 'deux' ? null : playing === 'guidee' ? mochiGuide.nom : adv.nom, guidee: playing === 'guidee' }
-          : tab === 'jouer' ? (enPlacement ? { quoi: 'placement' } : seanceRevisions ? { quoi: 'revisions' } : { quoi: 'accueil' })
+          : seanceRevisions ? { quoi: 'revisions' }
+          : tab === 'jouer' ? (enPlacement ? { quoi: 'placement' } : { quoi: 'accueil' })
             : tab === 'apprendre' && (leconOuverte || themeVu) && !serie3 ? { quoi: 'lecon', titre: leconOuverte ? leconOuverte.title : t(`theme.${themeVu!}`) }
               : { quoi: 'onglet', onglet: tab };
   const titreDocument = titreEcran(ecranTitre);

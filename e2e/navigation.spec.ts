@@ -2,6 +2,7 @@ import { expect, test, type Browser, type Page } from '@playwright/test';
 import { onglet } from './onglet';
 import { brancher, fauxServeur, type FauxServeur } from './fauxSupabase';
 import { choisirMode, lancerADeux } from './plateau';
+import { versProblemeSuivant } from './problemes';
 
 // Issue #7 : première ouverture et navigation entre les onglets (viewport iPhone 390 × 844).
 
@@ -252,6 +253,7 @@ test('#646 : leçon, problème et placement en plein écran, une seule sortie ve
 
   // Problème : plein écran ; le retour du système ramène à la liste.
   await nav.getByRole('button', { name: 'Problèmes' }).click();
+  await versProblemeSuivant(page);
   await page.getByRole('button', { name: /^Problème suivant / }).click();
   await expect(page.locator('.lecteur h2')).toBeFocused();
   await expect(nav).toHaveCount(0);

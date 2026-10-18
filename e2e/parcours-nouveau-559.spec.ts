@@ -1,4 +1,5 @@
 import { expect, test, type Browser, type Page } from '@playwright/test';
+import { ouvrirParTheme } from './problemes';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -231,7 +232,7 @@ for (const cfg of CONFIGS) {
       await page.clock.setFixedTime(MIDI_PARIS);
       await page.goto('/');
       await nav(page).getByRole('button', { name: T.problemes }).click();
-      await expect(page.locator('.themes')).toBeVisible();
+      await expect(page.getByTestId('problemes-sommaire')).toBeVisible();
       await capturer(page, cfg, '05a-problemes', mesures);
       await capturer(page, cfg, '05b-problemes-page', mesures, { pleine: true });
       await page.locator('.problemes .cta').click();
@@ -263,8 +264,9 @@ for (const cfg of CONFIGS) {
       await expect(b.page.locator('.verdict')).toBeVisible();
       await capturer(b.page, cfg, '05j-go-du-jour-reussi', mesures);
       await b.page.getByRole('button', { name: /^(Retour aux problèmes|Back to puzzles)$/ }).first().click();
-      await expect(b.page.locator('.themes')).toBeVisible();
+      await expect(b.page.getByTestId('problemes-sommaire')).toBeVisible();
       await capturer(b.page, cfg, '05k-problemes-apres', mesures);
+      await ouvrirParTheme(b.page);
       // Série « Capturer » : la barre de maîtrise en tête, et une vignette ouverte.
       await b.page.getByRole('button', { name: /^(Capturer|Capture)/ }).click();
       await expect(plateau(b.page)).toBeVisible();

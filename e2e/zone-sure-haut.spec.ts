@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { ouvrirTous } from './problemes';
 
 // #618 (lot V3, principe P9) : rien ne passe sous la barre d'état quand la page défile.
 // Chromium n'a pas d'encoche : env(safe-area-inset-top) y vaut 0. On simule celle d'un iPhone 12 à 15 (47 px)
@@ -20,6 +21,9 @@ for (const theme of ['dark', 'light'] as const) {
       await page.emulateMedia({ colorScheme: theme, reducedMotion: 'reduce' });
       await page.goto('/');
       await page.getByRole('navigation').getByRole('button', { name: onglet }).click();
+      // #653 : la racine de Problèmes est un sommaire court, qui défile à peine. On vérifie la zone sûre sur son
+      // détail le plus long, « Tous les problèmes » (même page, même zone du haut).
+      if (onglet === 'Problèmes') await ouvrirTous(page);
       await simulerEncoche(page);
       // Le contenu commence sous la zone sûre, en haut de page.
       expect(await page.evaluate(() => parseFloat(getComputedStyle(document.body).paddingTop))).toBe(ENCOCHE);

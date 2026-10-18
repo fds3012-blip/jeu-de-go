@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { ouvrirParTheme } from './problemes';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -24,6 +25,8 @@ async function ouvrirProblemes(page: Page) {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
+  // #653 : les séries sont dans le détail « Par thème » du sommaire.
+  await ouvrirParTheme(page);
   await expect(page.locator('.themes')).toBeVisible();
 }
 
@@ -44,7 +47,7 @@ async function rater(page: Page, id: string) {
 test('séries par thème : vignettes à plat, réussites d’affilée et record', async ({ page }) => {
   await ouvrirProblemes(page);
 
-  // Six séries : la fin de partie a ses 8 problèmes depuis le lot Y (#500). Le Go du jour reste la seule action en relief.
+  // Six séries : la fin de partie a ses 8 problèmes depuis le lot Y (#500). Détail « Par thème » : aucun relief.
   const cartes = page.locator('.theme-carte');
   await expect(cartes).toHaveCount(6);
   for (const nom of ['Capturer', 'Sauver', 'Vie et mort', 'Relier et couper', 'Fin de partie', 'Tesuji']) {
@@ -54,7 +57,7 @@ test('séries par thème : vignettes à plat, réussites d’affilée et record'
   await expect(page.locator('.theme-carte[data-theme="tesuji"]')).toHaveAccessibleDescription('Le coup malin qui change tout.');
   await expect(page.locator('.theme-desc')).toHaveCount(6);
   await expect(page.locator('.themes > p')).toHaveCount(0);
-  await expect(page.locator('.problemes .cta')).toHaveCount(1);
+  await expect(page.locator('.problemes .cta')).toHaveCount(0);
   for (const box of await cartes.evaluateAll(els => els.map(e => e.getBoundingClientRect().height))) expect(box).toBeGreaterThanOrEqual(44);
   const { sw, cw } = await page.evaluate(() => ({ sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth }));
   expect(sw).toBeLessThanOrEqual(cw);
@@ -85,6 +88,7 @@ test('séries par thème : vignettes à plat, réussites d’affilée et record'
 
   // Retour à la liste : la vignette garde le record, sur l'appareil (clé citée dans la politique de confidentialité).
   await page.getByRole('button', { name: 'Retour aux problèmes' }).first().click();
+  // #653 : on revient dans « Par thème », d'où la série a été ouverte.
   await expect(page.getByRole('button', { name: /^Capturer/ })).toContainText('Record : 1');
   await expect(page.getByRole('button', { name: /^Sauver/ })).not.toContainText('Record');
   const etat = await page.evaluate(() => JSON.parse(localStorage.getItem('go.series-themes.v1') ?? 'null'));

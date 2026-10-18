@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { versProblemeSuivant } from './problemes';
 import { ouvrirDepuisApprendre } from './decouverte';
 import { passerJusquAuScore, plateau, toucherCta } from './plateau';
 import { demarrerParcours } from './revueFactice';
@@ -62,6 +63,7 @@ const ECRANS: Ecran[] = [
   { nom: 'Problème', activite: true, ouvrir: async (page) => {
     await page.goto('/');
     await onglet(page, 'Problèmes');
+    await versProblemeSuivant(page);
     await page.getByRole('button', { name: /^Problème suivant / }).click();
     await expect(plateau(page).first()).toBeVisible();
   } },
@@ -85,7 +87,7 @@ const ECRANS: Ecran[] = [
   { nom: 'Course', activite: true, ouvrir: async (page) => {
     await page.goto('/');
     await onglet(page, 'Problèmes');
-    await page.locator('[data-course]').click();
+    await page.getByTestId('entree-course').click();
     await page.getByRole('button', { name: 'C’est parti' }).click();
     await expect(page.locator('.course-en-cours .board-wrap')).toBeVisible();
   } },

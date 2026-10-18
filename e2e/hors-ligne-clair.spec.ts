@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { expect, test, type BrowserContext, type Page } from '@playwright/test';
+import { ouvrirTous } from './problemes';
 import { attendrePierre, jouer, ouvrirLancementOrdi, passerJusquAuScore, pierres, plateau, toucherCta } from './plateau';
 import { brancher, fauxServeur } from './fauxSupabase';
 
@@ -106,7 +107,7 @@ test('hors ligne : un problème se joue jusqu’au « Bravo »', async ({ page, 
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await rouvrirHorsLigne(page, context);
   await NAV(page).getByRole('button', { name: 'Problèmes' }).click();
-  await page.getByRole('button', { name: 'Tous les problèmes' }).click();
+  await ouvrirTous(page);
   await page.getByRole('button', { name: /^Problème \d+ : Capture la pierre/ }).click();
   await expect(plateau(page)).toBeVisible();
   await jouer(page, 'E5');

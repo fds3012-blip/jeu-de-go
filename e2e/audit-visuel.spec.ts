@@ -226,7 +226,7 @@ for (const cfg of CONFIGS) {
     await E('15-course', async () => {
       await page.goto('/');
       await nav(page, T.problemes).click();
-      await page.locator('[data-course]').click();
+      await page.getByTestId('entree-course').click();
       await expect(page.getByRole('button', { name: T.cestParti })).toBeVisible();
       await cap('15-course-regles');
       await page.getByRole('button', { name: T.cestParti }).click();

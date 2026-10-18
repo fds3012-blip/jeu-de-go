@@ -109,7 +109,6 @@ export const EVENTS = {
   // Aide graduée des problèmes (#197) : la réponse a été montrée après un échec (le problème devient « Vu », pas « Réussi »).
   solutionVue: 'solution_vue',
   // Révision du jour (#199) : les exercices du jour (problèmes déjà réussis, repris à J+1, J+3, J+7) sont tous faits.
-  revisionFaite: 'revision_faite',
   // Course aux problèmes (#287) : fin d'une course (score, erreurs, durée, raison) et partage du score.
   courseTerminee: 'course_terminee',
   coursePartagee: 'course_partagee',

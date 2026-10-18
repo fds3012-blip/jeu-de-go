@@ -223,7 +223,7 @@
 /* #620 : la série en pastille à côté du titre du Go du jour (F-e) ; la flamme et ses états viennent de accueil.css (.serie). */
 .jour-tete { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); margin: var(--space-4) 0 10px; }
 .problemes .jour-tete h2 { margin: 0; }
-.jour-tete .serie, .du-jour-tuile .serie { flex: none; font-size: var(--fs-m); padding: 5px 10px 5px 8px; }
+.jour-tete .serie { flex: none; font-size: var(--fs-m); padding: 5px 10px 5px 8px; }
 /* Chargement : l'emplacement du problème du jour, avec les deux pierres qui tournent (nav.css). */
 .problemes-chargement { height: 420px; border-radius: var(--radius); background: color-mix(in srgb, var(--surface) 60%, var(--bg));
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-3); color: var(--muted); font-size: var(--fs-s); }
@@ -257,7 +257,7 @@
 .bases-aide { margin: 0 0 var(--space-4); }
 .grille-pb { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr)); /* #121 */ gap: 20px 14px; }
 /* #630 (V9) : dès 600 px, des vignettes de 7rem : 5 colonnes à 720 px, 8 à 1080. Téléphone : #647 ci-dessous. */
-@media (min-width: 600px) { .grille-pb, .mes-erreurs .grille-pb { grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr)); } }
+@media (min-width: 600px) { .grille-pb { grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr)); } }
 .grille-pb button { display: flex; flex-direction: column; align-items: stretch; gap: 4px; width: 100%; background: none; border: 0; padding: 0; text-align: left; border-radius: var(--radius-s); }
 .grille-goban { position: relative; display: block; margin-bottom: 6px; }
 /* .mini-goban : apprendre-partage.css (#433), aussi lue par l'accueil et le Profil. */
@@ -288,14 +288,6 @@
 /* #250 (M8) : chaque lien reste sur une ligne ; faute de place (320 px), ils s'empilent au lieu de se couper. */
 .liens-du-jour .lien { white-space: nowrap; }
 
-/* ---------- Tes erreurs à rejouer (issue #77) ---------- */
-.mes-erreurs-compteur { display: inline-flex; align-items: center; justify-content: center; min-width: 28px; height: 28px; padding: 0 8px;
-  border-radius: var(--radius-pill); background: var(--text); color: var(--bg); font-size: var(--fs-s); font-weight: var(--fw-bold); letter-spacing: 0; }
-/* #293 : une seule erreur reste une vignette, comme les autres problèmes, au lieu d'un grand plateau pleine largeur. */
-.mes-erreurs .grille-pb { grid-template-columns: repeat(auto-fill, minmax(min(100%, 8rem), 1fr)); }
-.mes-erreurs-ecran { position: fixed; inset: 0; z-index: 30; background: var(--halo) no-repeat, var(--bg); overflow-y: auto; overscroll-behavior: contain; }
-.mes-erreurs-contenu { max-width: var(--largeur-max); margin: 0 auto;
-  padding: calc(var(--space-3) + env(safe-area-inset-top, 0px)) var(--gouttiere) calc(var(--space-6) + env(safe-area-inset-bottom, 0px)); }
 /* Problèmes par paliers (issue #93). */
 /* Recette du 28/09 matin (#247) : le verbe « Problème suivant » ne passe jamais sur deux lignes.
    Recette du 02/10 au soir (#393, L2) : le titre, coupé même à 390 px (« Deux pierres d'un c… »), passe sous le verbe,
@@ -348,30 +340,6 @@
   .continuer-carte { grid-template-columns: 64px 1fr; }
   .continuer-goban { width: 64px; height: 64px; }
 }
-/* ---------- Tuiles secondaires de Problèmes (#620, F-f) : à plat, sans bordure, même visuel et même titre ;
-   groupées en un bloc (coins intérieurs de 4 px, 2 px d'écart), jamais plus fortes que la carte d'action. ---------- */
-.tuiles-pb { display: grid; gap: 2px; margin-top: var(--space-4); }
-.tuile-pb { display: flex; align-items: center; gap: var(--space-3); width: 100%; min-height: 64px; margin: 0;
-  padding: var(--space-2) var(--space-4); background: var(--surface); color: var(--text); border: 0; border-radius: var(--radius-xs);
-  text-align: left; font: inherit; cursor: pointer; }
-.tuiles-pb > :first-child { border-top-left-radius: var(--radius); border-top-right-radius: var(--radius); }
-.tuiles-pb > :last-child { border-bottom-left-radius: var(--radius); border-bottom-right-radius: var(--radius); }
-.tuile-pb:active, .tuile-pb-bouton:active { background: var(--surface-2); }
-.tuile-pb-visuel { flex: none; display: grid; place-items: center; width: 40px; height: 40px; }
-.tuile-pb-visuel .mini-goban { width: 40px; height: 40px; border-radius: var(--radius-xs); box-shadow: 0 2px 0 var(--bois-tranche); }
-/* « Problème suivant » en tuile : le mini-goban reste voilé, comme sur la carte. */
-.tuile-pb .continuer-goban { width: 40px; height: 40px; border-radius: var(--radius-xs); box-shadow: 0 2px 0 var(--bois-tranche); }
-.tuile-pb .continuer-goban .mini-goban { box-shadow: none; border-radius: 0; }
-.tuile-pb-texte { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.tuile-pb-texte b { font-family: var(--font-titre); font-weight: var(--fw-bold); font-size: var(--fs-m); letter-spacing: var(--tracking-titre); line-height: 1.2; }
-.tuile-pb-texte b .numero-du-jour { font-weight: inherit; }
-.tuile-pb-texte small, .tuile-pb .continuer-titre { color: var(--muted); font-size: var(--fs-legende); font-weight: var(--fw-medium); line-height: 1.3; }
-.tuile-pb.continuer { flex-direction: row; justify-content: flex-start; white-space: normal; line-height: inherit; }
-/* Go du jour fait : la tuile porte le bouton (toute la largeur utile), le gel et la pastille de série à droite. */
-.du-jour-tuile { cursor: default; padding: 0 var(--space-3) 0 0; }
-.tuile-pb-bouton { flex: 1; min-width: 0; align-self: stretch; display: flex; align-items: center; gap: var(--space-3); min-height: 64px; margin: 0;
-  padding: var(--space-2) 0 var(--space-2) var(--space-4); background: none; border: 0; border-radius: inherit; color: inherit; text-align: left; font: inherit; cursor: pointer; }
-.du-jour-tuile .glacon { flex: none; }
 .lien-tous { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; margin: var(--space-2) 0 0 -12px; }
 .tous-tete { display: flex; align-items: center; gap: 4px; margin: var(--space-2) 0 var(--space-3) -10px; }
 /* #433 : .palier h3 (accueil.css, carrousel) suivait cette feuille et l'emportait sur .palier-nom h3 : rendu gardé. */
@@ -421,27 +389,6 @@
 @keyframes sceau-pose { 0% { transform: scale(1.4) rotate(-10deg); opacity: 0; } 60% { opacity: 1; } 100% { transform: none; } }
 @keyframes drapeau-flotte { 50% { transform: scaleX(.75) skewY(-8deg); } }
 @keyframes or-lueur { 0% { box-shadow: inset 0 0 0 2px transparent; } 40% { box-shadow: inset 0 0 0 2px var(--or); } 100% { box-shadow: inset 0 0 0 2px transparent; } }
-
-/* ---------- Révision du jour (issue #199) : une seule carte, le prochain exercice, sans total ---------- */
-.revision-carte { display: flex; align-items: center; gap: var(--space-3); width: 100%; min-height: 88px; padding: var(--space-3); border: 0; border-radius: var(--radius);
-  background: var(--surface); color: var(--text); text-align: left; font: inherit; cursor: pointer; }
-.revision-carte:active { background: color-mix(in srgb, var(--surface) 85%, var(--text)); }
-.revision-goban { flex: none; width: 64px; }
-.revision-goban .mini-goban { border-radius: var(--radius-plateau); box-shadow: 0 2px 0 var(--bois-tranche); }
-.revision-texte { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
-.revision-texte b { font-family: var(--font-titre); font-weight: var(--fw-bold); font-size: var(--fs-m); line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.revision-texte small { color: var(--muted); font-size: var(--fs-s); }
-.revision-fleche { flex: none; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; color: var(--muted); }
-/* Retour tactile : la carte s'enfonce un peu, vite en entrée, doux en sortie ; rien si les mouvements sont réduits. */
-@media (prefers-reduced-motion: no-preference) {
-  .revision-carte { transition: transform 160ms cubic-bezier(.23, 1, .32, 1); }
-  .revision-carte:active { transform: scale(.98); transition-duration: 80ms; }
-}
-.revision-faite { display: flex; align-items: center; gap: var(--space-3); margin: 0; padding: var(--space-3) var(--space-4); border-radius: var(--radius); background: var(--surface); font-weight: var(--fw-bold); }
-.revision-faite svg { flex: none; }
-.revision-faite .rv-fond { fill: var(--jade); stroke: var(--jade-bord); stroke-width: 1.5; }
-.revision-faite .rv-coche { fill: none; stroke: var(--encre-jade); stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round; }
-.revision-serie { margin: var(--space-2) 0 0; }
 
 /* #433 : cette feuille arrive après la feuille principale. placement.css la suivait et l'emportait à spécificité
    égale sur l'en-tête et la bulle de Mochi du placement (même lecteur) : on le redit ici, rendu inchangé. */

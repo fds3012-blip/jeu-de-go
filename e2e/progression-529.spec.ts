@@ -59,7 +59,7 @@ test('course : la première course du jour avec un problème juste rapporte +15 
   await page.clock.install({ time: MIDI_PARIS });
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
-  await page.locator('[data-course]').click();
+  await page.getByTestId('entree-course').click();
   await page.getByRole('button', { name: 'C’est parti' }).click();
   await expect(course(page)).toBeVisible();
 

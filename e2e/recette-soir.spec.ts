@@ -6,7 +6,7 @@ import { attendrePierre, jouer, ouvrirLancementOrdi, plateau } from './plateau';
 // #290 (S3) : en 320 × 640, le verdict d'un problème de vie et mort ne cache plus le coup gagnant ni les yeux.
 // #291 (S4) : le petit tampon « BATTUE » passe le contraste AA (4,5:1).
 // #292 (S5) : « Copié ! » n'agrandit plus le verdict.
-// #293 (S6) : le lendemain, « Tes erreurs à rejouer » vient juste sous le Go du jour.
+// #293 (S6) : le lendemain, les erreurs à rejouer viennent juste sous le Go du jour (#653 : entrée « Rejouer tes erreurs »).
 
 const SCHEMAS = ['light', 'dark'] as const;
 
@@ -179,21 +179,13 @@ test.describe('#293 : le lendemain, les erreurs à rejouer', () => {
       }, ERREUR);
       await page.goto('/');
       await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
-      const erreurs = page.getByRole('heading', { level: 2, name: /Tes erreurs à rejouer/ });
+      // #653 : « Rejouer tes erreurs » est la deuxième entrée du sommaire, juste sous le Go du jour, avec son nombre.
+      const erreurs = page.getByTestId('entree-erreurs');
       await expect(erreurs).toBeVisible();
-      const [jour, probs, rejouer] = await Promise.all([
-        page.locator('#jour-titre').boundingBox(),
-        page.getByRole('heading', { level: 2, name: 'Entraînement' }).boundingBox(),
-        page.getByRole('button', { name: /^Rejouer : Ta partie contre Pomme/ }).boundingBox(),
-      ]);
-      // Juste sous le Go du jour, avant la liste des problèmes (et donc avant « Tous les problèmes »).
-      const e = (await erreurs.boundingBox())!;
-      expect(e.y).toBeGreaterThan(jour!.y);
-      expect(e.y).toBeLessThan(probs!.y);
-      const revision = page.getByRole('heading', { level: 2, name: /Révision du jour/ });
-      if (await revision.count()) expect(e.y).toBeLessThan((await revision.boundingBox())!.y);
-      // Une vignette, comme les autres problèmes, et pas un grand plateau pleine largeur.
-      expect(rejouer!.width).toBeLessThan(largeur * 0.6);
+      await expect(erreurs).toHaveAccessibleName('Rejouer tes erreurs, 1 à rejouer');
+      const e = (await erreurs.boundingBox())!, jour = (await page.getByTestId('entree-du-jour').boundingBox())!;
+      expect(e.y).toBeGreaterThan(jour.y);
+      expect(e.height).toBeGreaterThanOrEqual(44);
       // Une seule action en relief : le Go du jour.
       await expect(page.locator('.problemes .cta:visible')).toHaveCount(1);
       await expect(page.locator('.problemes .cta')).toHaveText('Résoudre');

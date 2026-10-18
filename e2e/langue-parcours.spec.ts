@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { ouvrirTous } from './problemes';
 import { jouer } from './plateau';
 import { readdirSync, readFileSync } from 'node:fs';
 // Textes anglais : chargés à la demande dans l'app (#325), enregistrés ici pour `localiser(…, 'en')`.
@@ -165,7 +166,7 @@ for (const largeur of [390, 320]) test(`?lang=en : toute l’interface en anglai
   await nav.getByRole('button', { name: 'Puzzles' }).click();
   await expect(page.getByRole('heading', { name: /^Daily Go #\d+$/ })).toBeVisible();
   await sansFrancais(page, 'Problèmes');
-  await page.getByRole('button', { name: 'All puzzles' }).click();
+  await ouvrirTous(page);
   await sansFrancais(page, 'tous les problèmes');
   await page.getByRole('group', { name: 'Beginner' }).locator('[data-probleme]').first().click();
   await expect(page.getByRole('button', { name: 'Back to puzzles' })).toBeVisible();

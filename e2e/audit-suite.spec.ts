@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { marquerGoDuJourFait } from './goDuJourFait';
 import { abandonner, attendrePierre, jouer, partieADeux, plateau } from './plateau';
 
 // Issue #268 : suite de l'audit Web Interface Guidelines (docs/design/audit-web-guidelines-2026-09-28.md),
@@ -67,6 +68,10 @@ test.describe('point 1 : quitter une partie en cours', () => {
 
 test('point 2 : le nom accessible de « Problème suivant » est son texte visible (WCAG 2.5.3)', async ({ page }) => {
   await page.goto('/');
+  await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
+  // #653 : « Problème suivant » est la carte du haut une fois le Go du jour fait.
+  await marquerGoDuJourFait(page);
+  await page.reload();
   await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
   const bouton = page.locator('button.continuer');
   await expect(bouton).toBeVisible();
