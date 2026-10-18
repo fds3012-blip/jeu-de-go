@@ -102,6 +102,8 @@ test('défaite par abandon : pas de tampon ni de fête, Mochi encourage et propo
   await expect(page.locator('.fin-marge')).toHaveText('par abandon');
   await expect(page.locator('.fin-tampon')).toHaveCount(0);
   await expect(page.locator('.fin-mochi')).toContainText(/Tu as abandonné tôt/);
+  // #631 (P1, E7) : pas de « 1 défaite » ; le bilan revient avec une victoire (le compte reste dans Statistiques).
+  await expect(page.locator('.fin-bilan')).toHaveCount(0);
   await page.waitForTimeout(800);
   await expect(page.locator('canvas')).toHaveCount(0);
   const cta = page.locator('.cta');

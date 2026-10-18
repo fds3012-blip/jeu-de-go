@@ -67,7 +67,6 @@
 .ami-retirer:active { background: var(--surface-2); }
 
 .ami-erreur { margin: 0; padding: 0 var(--space-4) var(--space-2) calc(var(--space-4) + 36px + var(--space-3)); color: var(--danger-texte); }
-.amis-regle { margin: var(--space-2) var(--space-1) 0; line-height: 1.4; text-wrap: pretty; }
 
 /* Petits écrans : les pierres de « Défier » cèdent leur place au texte. */
 @media (max-width: 359px) {

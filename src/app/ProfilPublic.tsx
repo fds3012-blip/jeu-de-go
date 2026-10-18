@@ -147,7 +147,8 @@ export function ProfilPublic({ db, pseudo, depuis, onDefi, onProfil }: Props) {
         {p.lien === 'amis' && (
           <>
             <button type="button" className="btn primary" disabled={bloque} aria-busy={occupe} onClick={defier}>{tp(occupe ? 'defi.joueur.creation' : 'defi.joueur.defier', { pseudo: nom })}</button>
-            {etatTexte ?? <p className="joueur-regle">{fr(tp('defi.joueur.regle'))}</p>}
+            {/* #631 (P1) : la règle du défi se dit dans la partie, avant ton premier coup (Defis.tsx), plus sous le bouton. */}
+            {etatTexte}
           </>
         )}
         {p.lien === 'aucun' && (
