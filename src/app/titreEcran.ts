@@ -9,7 +9,7 @@ export type EcranTitre =
   | { quoi: 'onglet'; onglet: Exclude<Onglet, 'jouer'> }
   | { quoi: 'lecon'; titre: string }
   | { quoi: 'partie'; contre: string | null; guidee?: boolean }
-  | { quoi: 'direct' | 'lente' | 'enLigne' | 'defi' | 'partagee' | 'placement' | 'compte' | 'revisions' | 'decouverte' };
+  | { quoi: 'direct' | 'lente' | 'enLigne' | 'defi' | 'partagee' | 'placement' | 'compte' | 'revisions' | 'decouverte' | 'avecMochi' };
 
 /** Nom de l'écran, sans le nom de l'app. */
 function nom(e: Exclude<EcranTitre, { quoi: 'accueil' }>): string {
@@ -26,6 +26,7 @@ function nom(e: Exclude<EcranTitre, { quoi: 'accueil' }>): string {
     case 'compte': return t('titre.compte');
     case 'revisions': return t('titre.revisions');
     case 'decouverte': return t('titre.decouverte');
+    case 'avecMochi': return t('titre.avecMochi');
   }
 }
 

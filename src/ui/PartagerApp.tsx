@@ -5,49 +5,16 @@
 // Règle de l'invitation : src/app/partageApp.ts (jamais avant la 2e partie finie, ni dans la première minute, au plus
 // une fois par semaine). Elle reste une action secondaire : jamais en relief, l'action principale de l'écran ne change pas.
 // Mesure : `app_partagee` (`depuis`, `methode`, `abandon`), `app_partage_proposee` (`depuis`). Aucune donnée personnelle.
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useState } from 'react';
 import { EVENTS, secondsSinceOpen, track } from '../data/analytics';
-import { partagerApp, type EtatPartageApp as Etat } from '../app/envoiApp';
-import { langue } from '../content/i18n';
 import { tp } from '../content/i18n/partage';
 import { readLocal, writeLocal } from '../app/hooks';
 import { PARTIES_KEY, type Parties } from '../app/home';
-import { INVITATION_APP_KEY, doitInviter, lienApp, lireDerniere, type DepuisPartage, type MomentFort } from '../app/partageApp';
+import { INVITATION_APP_KEY, doitInviter, lireDerniere, type MomentFort } from '../app/partageApp';
 import { useFile, useTour } from './celebrations';
+import { usePartage } from './usePartageApp';
 import { fr } from './typo';
 import './partager-app.css';
-
-/** Partage et son état (« Lien copié » 2 s, ou lien à copier à la main). */
-function usePartage(depuis: DepuisPartage) {
-  const [etat, setEtat] = useState<Etat>('');
-  const encours = useRef(false);
-  useEffect(() => {
-    if (etat !== 'copie') return;
-    const id = window.setTimeout(() => setEtat(''), 2000);
-    return () => window.clearTimeout(id);
-  }, [etat]);
-  const lancer = async () => {
-    if (encours.current) return;
-    encours.current = true;
-    try { setEtat(await partagerApp(depuis)); } finally { encours.current = false; }
-  };
-  return { etat, lancer };
-}
-
-/** Zone lue par le lecteur d'écran (toujours présente : seul son texte change), et le lien si la copie a échoué. */
-function Retour({ etat }: { etat: Etat }) {
-  return (
-    <>
-      <p className="sr-only" role="status" aria-live="polite">{etat === 'copie' ? fr(tp('app.copieAnnonce')) : ''}</p>
-      {etat === 'manuel' && (
-        <div className="partager-app-manuel" role="alert">
-          <p>{fr(tp('app.copierManuel'))}</p>
-          <input readOnly value={lienApp(langue())} aria-label={tp('app.lienAria')} onFocus={e => e.currentTarget.select()} />
-        </div>
-      )}
-    </>
-  );
-}
 
 const IconePartager = ({ coche = false }: { coche?: boolean }) => (
   <svg className="partager-app-icone" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false">
@@ -55,22 +22,12 @@ const IconePartager = ({ coche = false }: { coche?: boolean }) => (
   </svg>
 );
 
-/**
- * « Partager Mochi Go » du Profil (#521) : depuis #654, une entrée de la rubrique « Aide » du sommaire (A13). Une action
- * directe : feuille du téléphone, sinon « Lien copié » 2 s. `retour` : la zone lue par le lecteur d'écran (toujours
- * présente) et le lien à copier à la main si la copie a échoué ; à poser sous la liste.
- */
-export function usePartageProfil(): { copie: boolean; lancer: () => void; retour: ReactNode } {
-  const { etat, lancer } = usePartage('profil');
-  return { copie: etat === 'copie', lancer: () => void lancer(), retour: <Retour etat={etat} /> };
-}
-
 /** Icône de partage (une flèche qui sort d'une boîte), cochée une fois le lien copié. */
 export const IconePartagerApp = IconePartager;
 
 /** Invitation discrète : une phrase et un bouton secondaire. Montrée une fois (le repère est posé à l'affichage). */
 function Invitation({ depuis }: { depuis: MomentFort }) {
-  const { etat, lancer } = usePartage(depuis);
+  const { etat, lancer, retour } = usePartage(depuis);
   useEffect(() => {
     writeLocal(INVITATION_APP_KEY, Date.now());
     track(EVENTS.appPartageProposee, { depuis });
@@ -82,7 +39,7 @@ function Invitation({ depuis }: { depuis: MomentFort }) {
       <button type="button" className={`btn partager-app-bouton${copie ? ' copie' : ''}`} onClick={() => void lancer()}>
         <IconePartager coche={copie} />{copie ? tp('app.copie') : tp('app.bouton')}
       </button>
-      <Retour etat={etat} />
+      {retour}
     </aside>
   );
 }

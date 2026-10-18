@@ -35,6 +35,7 @@ export const fr = {
   'titre.compte': 'Ton compte',
   'titre.revisions': 'Rejouer tes erreurs',
   'titre.decouverte': 'Partie de découverte',
+  'titre.avecMochi': 'Jouer avec Mochi',
 
   // Accueil (#40, #119) : réplique de l'adversaire, action principale, tuiles, feuille « Changer »
   'accueil.cta.premiere': 'Joue ta première partie',
@@ -70,8 +71,6 @@ export const fr = {
   'accueil.goDuJour': 'Go du jour',
   // #613 (E7) : la tuile dit quoi faire, sans « 1 sur 48 ».
   'accueil.leconCourte': 'Leçon',
-  'accueil.leconsTerminees': 'Leçons terminées',
-  'accueil.revoirChemin': 'Revoir le chemin',
   'accueil.tonAdversaire': 'Ton adversaire',
   'accueil.fermer': 'Fermer',
   'accueil.taillePlateau': 'Taille du plateau',

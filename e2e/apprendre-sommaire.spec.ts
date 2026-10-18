@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { brancher, fauxServeur } from './fauxSupabase';
 import { leconDuTheme, ongletApprendre } from './apprendre';
+import { lancerGuidee } from './plateau';
 
 // Apprendre en sommaire (#652, règle A13 de DESIGN.md ; remplace le chemin v3 en zigzag). Au premier regard : la carte de
 // la prochaine leçon (seul relief), trois entrées (Ouvertures, Jouer avec Mochi, Revoir les règles), puis la grille de tous
@@ -71,9 +72,24 @@ test('Jouer avec Mochi : un détail avec la partie de découverte et la partie g
   await expect(page.getByRole('heading', { name: 'Jouer avec Mochi' })).toBeVisible();
   await expect(page.getByTestId('carte-decouverte')).toBeVisible();
   await expect(page.getByTestId('carte-guidee')).toBeVisible();
+  // #669 (A9) : le titre du document nomme le détail, plus l'onglet (« Apprendre »).
+  await expect(page).toHaveTitle('Jouer avec Mochi · Mochi Go');
   await page.goBack();
   await expect(page.getByTestId('prochaine-lecon')).toBeVisible();
   await expect(page.getByTestId('jouer-avec-mochi')).toBeFocused();
+  await expect(page).toHaveTitle('Apprendre · Mochi Go');
+});
+
+test('#669 : chaque partie de « Jouer avec Mochi » porte son nom dans le titre du document', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await ouvrir(page, DEUX);
+  await page.getByTestId('jouer-avec-mochi').click();
+  await page.getByTestId('carte-decouverte').click();
+  await expect(page).toHaveTitle('Partie de découverte · Mochi Go');
+  await page.goto('/');
+  await lancerGuidee(page);
+  await expect(page.locator('.partie')).toBeVisible();
+  await expect(page).toHaveTitle('Partie guidée · Mochi Go');
 });
 
 test('chapitre fini : tampon d’or et confettis en tête du sommaire, une seule fois', async ({ page }) => {

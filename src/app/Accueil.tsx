@@ -74,7 +74,7 @@ interface Props {
   defisAJouer?: number;
   probleme?: TuileProbleme;
   onProbleme: () => void;
-  /** Leçon suivante ; absente quand tout le chemin est fait. */
+  /** Leçon suivante ; absente quand toutes les leçons conseillées sont finies (pas de tuile). */
   lecon?: TuileLecon;
   onLecon: () => void;
   defis?: TuileDefis;
@@ -336,13 +336,15 @@ function Tuile({ tuile, p, etat, defis }: { tuile: TuileDuJour; p: Props; etat: 
       </button>
     );
   }
+  // #669 : la tuile n'existe qu'avec une leçon conseillée (ordreDuJour) ; toutes finies, rien à faire ici aujourd'hui.
+  if (!p.lecon) return null;
   return (
     <button className={`tuile tuile-lecon${avant}`} onClick={p.onLecon}>
       {tuile.enAvant && <span className="tuile-chemin" aria-hidden="true"><Sceau id="mochi" taille={36} /></span>}
       <span>
-        {/* #613 (E7) : plus de « 1 sur 48 » : le chemin le montre dans Apprendre, l'accueil dit seulement quoi faire. */}
-        <small>{p.lecon ? t('accueil.leconCourte') : t('accueil.leconsTerminees')}</small>
-        <b>{p.lecon?.titre ?? t('accueil.revoirChemin')}</b>
+        {/* #613 (E7) : pas de « 1 sur 48 » : l'accueil dit seulement quoi faire. */}
+        <small>{t('accueil.leconCourte')}</small>
+        <b>{p.lecon.titre}</b>
       </span>
       {tuile.enAvant && <em className="tuile-etat" aria-hidden="true">{t('accueil.leconSuivante')}</em>}
     </button>
