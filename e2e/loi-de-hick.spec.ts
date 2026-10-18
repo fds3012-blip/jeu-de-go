@@ -165,12 +165,6 @@ test('joueur habitué', async ({ browser, baseURL }) => {
     }
     await page.keyboard.press('Escape');
   });
-  await etape('06-feuille-plus', page, async () => {
-    await page.goto('/');
-    await page.getByTestId('mode-plus').click();
-    await expect(page.getByRole('dialog')).toBeVisible();
-    await mesurer(page, '06-feuille-plus');
-  });
   await etape('07-apprendre', page, async () => {
     await page.goto('/');
     await nav(page, /^Apprendre$/).click();

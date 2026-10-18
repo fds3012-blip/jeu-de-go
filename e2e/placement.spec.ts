@@ -98,8 +98,14 @@ for (const theme of ['dark', 'light'] as const) {
     await expect(carte).toContainText(/^Leçon/);
     await expect(carte).not.toContainText('Libertés et capture');
     await expect(page.getByText(/\d+ kyu/).filter({ hasText: /environ/ })).toHaveCount(0);
+    // #647 (F4) : une seule maison, « Ta cote » : sa ligne montre le kyu estimé ; dedans, « Ton niveau de départ » se refait.
     await page.getByRole('navigation').getByRole('button', { name: 'Profil' }).click();
-    await expect(page.getByRole('button', { name: /Niveau estimé.*8 kyu, le \d\d\/\d\d/ })).toBeVisible();
+    const ligne = page.getByTestId('ligne-cote');
+    await expect(ligne).toHaveAccessibleName(/^Ta cote.*8 kyu, le \d\d\/\d\d/);
+    await expect(page.getByRole('button', { name: /^Ton niveau de départ/ })).toHaveCount(0);
+    await ligne.click();
+    await expect(page.getByRole('heading', { name: 'Ta cote' })).toBeVisible();
+    await expect(page.getByRole('button', { name: /^Ton niveau de départ.*8 kyu, le \d\d\/\d\d/ })).toBeVisible();
   });
 }
 
@@ -136,7 +142,9 @@ test('le joueur passe le placement : retour à l’accueil, le lien ne revient p
   await expect(page.locator('.cta')).toHaveCount(1);
   await expect(page.getByRole('button', { name: 'Je sais déjà jouer' })).toHaveCount(0);
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('go.placement.v1') ?? 'null'))).toMatchObject({ fait: false, saute: true });
-  // Le Profil propose de le faire plus tard.
+  // Le Profil propose de le faire plus tard, dans « Ta cote » (#647, F4).
   await page.getByRole('navigation').getByRole('button', { name: 'Profil' }).click();
+  await page.getByTestId('ligne-cote').click();
   await expect(page.getByRole('button', { name: 'Ton niveau de départ', exact: true })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
 });

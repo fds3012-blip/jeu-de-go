@@ -94,19 +94,12 @@
 .mode .mode-icone { height: 24px; }
 .mode-pierres .stone { width: 18px; height: 18px; }
 .mode-pierres .stone + .stone { margin-left: -5px; }
-.mode:active, .plus-mode:active { background: var(--surface-2); }
-@media (hover: hover) and (pointer: fine) { .mode:hover { background: var(--surface); } .plus-mode:hover { background: var(--surface-2); } }
+.mode:active { background: var(--surface-2); }
+@media (hover: hover) and (pointer: fine) { .mode:hover { background: var(--surface); } }
 /* Un ami attend ton coup : point d'or et « À toi de jouer », comme la tuile du défi. */
 .mode.a-jouer::after { content: ""; position: absolute; top: 8px; right: 8px; width: 9px; height: 9px; border-radius: 50%; background: var(--or); }
 /* Petite hauteur (iPhone SE) : les pictogrammes cèdent leur place, les noms restent. */
 @media (max-height: 640px) { .mode .mode-icone { display: none; } }
-/* Feuille « Plus » : une ligne par mode, nom et phrase. */
-.plus-liste { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
-.plus-mode { display: flex; align-items: center; gap: 14px; width: 100%; min-height: 64px; padding: 10px 14px; border: 0; border-radius: var(--radius);
-  background: var(--bg); color: var(--text); font: inherit; text-align: left; }
-.plus-mode .mode-icone { width: 44px; height: 44px; border-radius: 50%; background: var(--surface-2); }
-.plus-mode b { display: block; font-family: var(--font-titre); font-weight: var(--fw-bold); font-size: var(--fs-m); line-height: 1.2; }
-.plus-mode small { display: block; margin-top: 2px; color: var(--muted); font-size: var(--fs-s); line-height: 1.35; }
 
 /* ---------- Deux tuiles de nature différente ---------- */
 .tuiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 9.5rem), 1fr)); /* #121 : une colonne quand la place manque */ gap: 10px; margin-top: calc(var(--space-3) + var(--relief)); }

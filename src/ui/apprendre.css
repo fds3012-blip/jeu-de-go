@@ -331,13 +331,20 @@
 /* ---------- Grille des problèmes de base : la position est l'image ---------- */
 .bases-aide { margin: 0 0 var(--space-4); }
 .grille-pb { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr)); /* #121 */ gap: 20px 14px; }
-/* #630 (V9) : dès 600 px, des vignettes de 7rem : 5 colonnes à 720 px, 8 à 1080 (le téléphone garde 8rem, décision F-P5). */
+/* #630 (V9) : dès 600 px, des vignettes de 7rem : 5 colonnes à 720 px, 8 à 1080. Téléphone : #647 ci-dessous. */
 @media (min-width: 600px) { .grille-pb, .mes-erreurs .grille-pb { grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr)); } }
 .grille-pb button { display: flex; flex-direction: column; align-items: stretch; gap: 4px; width: 100%; background: none; border: 0; padding: 0; text-align: left; border-radius: var(--radius-s); }
 .grille-goban { position: relative; display: block; margin-bottom: 6px; }
 /* .mini-goban : apprendre-partage.css (#433), aussi lue par l'accueil et le Profil. */
 .grille-pb b { font-family: var(--font-titre); font-weight: var(--fw-bold); letter-spacing: -0.01em; font-size: var(--fs-m); line-height: 1.2; }
 .grille-pb button:active .mini-goban { transform: scale(.98); }
+/* #647 (décision F-P5) : sur téléphone, « Tous les problèmes » passe à 3 vignettes par ligne (110 px à 390 px). En dessous
+   de 340 px de contenu (320 px, zoom 200 %), la grille repasse à 2, puis 1 colonne : la position reste lisible. */
+@media (max-width: 599px) {
+  .problemes-tous .grille-pb { grid-template-columns: repeat(auto-fill, minmax(min(100%, 6.25rem), 1fr)); gap: var(--space-4) 10px; }
+  .problemes-tous .grille-pb b { font-size: var(--fs-s); }
+  .problemes-tous .grille-pb .difficulte { gap: 4px; font-size: var(--fs-legende); }
+}
 .pastille-ok { position: absolute; right: -6px; top: -6px; width: 30px; height: 30px; padding: 5px; border-radius: 50%; background: var(--accent); color: var(--on-accent); box-shadow: 0 0 0 3px var(--bg); }
 /* #197 : problème vu (résolu après la réponse) : une étiquette discrète, pas le sceau de réussite. */
 .pastille-vu { position: absolute; right: 6px; top: 6px; padding: 2px 8px; border-radius: var(--radius-pill); background: var(--surface); color: var(--text); font-size: var(--fs-legende); font-weight: var(--fw-bold); }
@@ -446,6 +453,8 @@
 .palier .palier-nom h3 { margin: 0 0 2px; font-size: var(--fs-s); font-weight: var(--fw-bold); }
 .problemes-tous .palier h3 { color: var(--text); text-transform: none; letter-spacing: var(--tracking-titre); font-size: var(--fs-xl); }
 .problemes .tous-tete h2 { margin: 0; font-family: var(--font-titre); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre); font-size: var(--fs-2xl); }
+/* #647 : au zoom 200 % (195 px), « problèmes » ne tenait pas à côté du retour : le titre se coupe plutôt que de déborder. */
+.problemes .tous-tete h2 { min-width: 0; hyphens: auto; overflow-wrap: anywhere; }
 .problemes-tous .palier-prochain h3 { display: flex; align-items: center; gap: 6px; margin: 0 0 var(--space-2); font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: var(--fs-xl); color: var(--muted); }
 .palier-prochain .palier-verrou { margin: 0; }
 .palier { margin-top: var(--space-6); }
