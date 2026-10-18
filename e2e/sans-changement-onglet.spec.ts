@@ -1,7 +1,7 @@
 import { expect, test, type Browser, type Page } from '@playwright/test';
 import { SCENARIO } from '../src/content/decouverte';
 import { brancher, fauxServeur, JETON, PARTIE, type FauxServeur } from './fauxSupabase';
-import { abandonner, passer, plateau, toucherCta } from './plateau';
+import { abandonner, deplierAvecMochi, passer, plateau, toucherCta } from './plateau';
 import { faireMoment } from './decouverte';
 
 // #640 (lot N4, règles A3, A6 et A10 de DESIGN.md) : plus aucun changement d'onglet sous le joueur. Les 12 chemins de
@@ -191,23 +191,23 @@ test('7. « Analyser une autre partie » depuis la revue : Jouer reste allumé, 
   await ctx.close();
 });
 
-test('8. découverte lancée de Jouer : sa fin ramène à Jouer, pas à Apprendre', async ({ browser, baseURL }) => {
+// #647 (décision F1) : la découverte a quitté Jouer ; elle se lance d'Apprendre (sa maison) et y revient.
+test('8. découverte lancée d’Apprendre : sa fin ramène à Apprendre ; Jouer ne la propose plus', async ({ browser, baseURL }) => {
   const dernier = SCENARIO.length - 1;
   const { ctx, page, erreurs } = await telephone(browser, baseURL, { stockage: { 'go.decouverte.v1': JSON.stringify({ etape: dernier, fini: false }) } });
   await page.goto('/');
   await page.getByTestId('modes').waitFor();
-  const tuile = page.getByTestId('mode-decouverte');
-  if (await tuile.count()) await tuile.click();
-  else {
-    await page.getByTestId('mode-plus').click();
-    await page.getByRole('dialog', { name: 'Autres façons de jouer' }).getByRole('button', { name: /^Partie de découverte avec Mochi/ }).click();
-  }
+  await expect(page.getByTestId('mode-decouverte')).toHaveCount(0);
+  await expect(page.getByTestId('mode-plus')).toHaveCount(0);
+  await nav(page).getByRole('button', { name: 'Apprendre' }).click();
+  await deplierAvecMochi(page);
+  await page.getByTestId('carte-decouverte').click();
   await expect(page.locator('.decouverte')).toBeVisible();
-  await allume(page, 'Jouer');
+  await allume(page, 'Apprendre');
   await faireMoment(page, dernier);
   await page.getByTestId('fin-decouverte').getByRole('button', { name: 'Continuer' }).click();
-  await expect(page.locator('main.app-home .cta').first()).toBeVisible();
-  await allume(page, 'Jouer');
+  await expect(page.getByTestId('carte-decouverte')).toBeVisible();
+  await allume(page, 'Apprendre');
   expect(erreurs).toEqual([]);
   await ctx.close();
 });
