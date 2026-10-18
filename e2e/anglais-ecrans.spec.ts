@@ -2,6 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { jouer, plateau } from './plateau';
+import { ouvrirParTheme } from './problemes';
 import { fromLabel } from '../src/go/coords';
 
 // Version anglaise complète (#473) : les écrans clés en anglais (accueil, partie avec une bulle du coach Mochi, bilan,
@@ -111,14 +112,16 @@ for (const largeur of [390, 320]) test(`écrans clés en anglais à ${largeur} p
   await nav.getByRole('button', { name: 'Learn' }).click();
   await verifier(page, 'apprendre', largeur);
   await page.locator('.cta-chemin').click();
-  await expect(page.getByRole('button', { name: 'Back to the path' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Back to Learn' })).toBeVisible();
   await verifier(page, 'lecon', largeur);
-  await page.getByRole('button', { name: 'Back to the path' }).click();
+  await page.getByRole('button', { name: 'Back to Learn' }).click();
 
-  // Problèmes : l'écran (Go du jour, thèmes), puis un problème.
+  // Problèmes (#653) : le sommaire (Go du jour, quatre entrées), le détail « By theme », puis un problème.
   await nav.getByRole('button', { name: 'Puzzles' }).click();
   await expect(page.getByRole('heading', { name: /^Daily Go #\d+$/ })).toBeVisible();
   await verifier(page, 'problemes', largeur);
+  await ouvrirParTheme(page);
+  await verifier(page, 'problemes-par-theme', largeur);
   await page.getByRole('button', { name: 'All puzzles' }).click();
   await page.getByRole('group', { name: 'Beginner' }).locator('[data-probleme]').first().click();
   await expect(page.getByRole('button', { name: 'Back to puzzles' })).toBeVisible();

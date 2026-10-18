@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { ouvrirParTheme } from './problemes';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -255,6 +256,7 @@ test('record d’une série par thème : un bouton secondaire de plus dans la fe
   await page.addInitScript(() => localStorage.setItem('go.series-themes.v1', JSON.stringify({ capturer: { affilee: 1, record: 1 } })));
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
+  await ouvrirParTheme(page);
   await page.getByRole('button', { name: /^Capturer/ }).click();
   const id = (await page.locator('.lecteur').getAttribute('data-probleme'))!;
   const r = REPONSES.get(id)!;

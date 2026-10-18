@@ -367,8 +367,69 @@ Mécanisme : `par(maison)` dans `App.tsx` pose l'écran par-dessus l'écran cour
 | 11 | Ta semaine › Jouer une partie | partie dans Jouer ; sortie : l'accueil | sortie : Ta semaine |
 | 12 | Crée ton compte (ou accord, consentement) › Conditions | bascule dans Profil ; l'écran de compte est perdu | onglet d'origine allumé ; « ‹ » : l'écran de compte, saisie comprise |
 
-Hors des 12 et laissés tels quels (raccourcis vers Problèmes) : tuile « Go du jour » de l'accueil, Ta semaine › « Faire un problème ». Défier depuis un profil ouvert par-dessus Jouer (chemins 4 et 5) revient à l'accueil de Jouer, pas au profil : deux écrans du même onglet dans une pile demandent N3.
+Hors des 12 et laissés tels quels (raccourcis vers Problèmes) : tuile « Go du jour » de l'accueil (posée sur l'accueil depuis #646 quand il reste à faire), Ta semaine › « Faire un problème ». Défier depuis un profil ouvert par-dessus Jouer (chemins 4 et 5) revient à l'accueil de Jouer, pas au profil : deux écrans du même onglet dans une pile demandent N3.
 
 ## 11. Suivi : lot N5a (#647)
 
 Décision F1 appliquée. La partie de découverte n'a plus que deux portes : sa maison, Apprendre (« Jouer avec Mochi », fin du chapitre « Les bases », que suit « Revoir les règles »), et la fin de l'introduction des règles (« Jouer avec Mochi » après « Jamais joué », « Partie de découverte avec Mochi » après « Un peu »). Sur Jouer, il reste quatre modes : le bouton et trois tuiles (L'ordi ou En ligne, Un ami, À deux), tous en 1 toucher ; la feuille « Plus » et ses textes ont disparu. Sans comptes, « À deux » est la seule tuile. `mode_choisi { mode: 'decouverte', depuis: 'apprendre' }` est envoyé depuis la carte d'Apprendre, pour le contrôle de F1. Premiers pas inchangés : la question « Tu connais le go ? » mène toujours « Jamais joué » et « Un peu » à l'introduction, dont la fin ouvre la découverte ; « Je sais jouer » garde « Je sais déjà jouer » (placement). Une partie lancée depuis « Jouer avec Mochi » revient sur ce groupe déplié (A6), même s'il s'était ouvert seul (découverte en cours). Captures : `docs/ux/captures/maison-647/`.
+
+## 12. Suivi : lot N2 (#646)
+
+Décision F3 validée par Florian : les activités passent en plein écran, sans barre du bas (A5), avec une seule sortie, « ‹ » en haut à gauche, qui ramène à l'écran d'origine (A6). Le retour du système touche ce même bouton (A7, `src/app/retourSysteme.ts`). Mécanisme : `par(maison, rendre, a)` de N4, étendu aux activités ouvertes dans leur propre onglet (`a`) : un seul écran du même onglet à la fois, l'écran d'origine est remonté à la sortie, au même défilement, focus sur le bouton qui avait ouvert l'activité (retrouvé par son texte) ; ouverte depuis un autre onglet, l'activité garde la pose de N4 (écran d'origine monté et caché). Dans Problèmes, le problème et la course sont tenus par `Puzzles.tsx`, qui le signale (`onActivite`) et retrouve lui-même le défilement et le bouton d'origine. À l'entrée, le focus va au titre de l'activité (`src/ui/titreFocus.ts`).
+
+| Activité | Ouverte depuis | Sortie (nom accessible) | Ramène à | Confirmation |
+|---|---|---|---|---|
+| Leçon (et sa série de 3 problèmes) | chemin ou page d'un thème (Apprendre) ; « Leçon n » de l'accueil, aide, fin de partie, placement, lien du Go du jour (N4) | « ‹ » « Retour au chemin », ou « Retour » quand elle est posée hors d'Apprendre | le chemin ou la page du thème, au même endroit ; sinon l'écran d'origine | non : l'étape atteinte est gardée |
+| Problème (Go du jour, suivant, série par thème, grille) | Problèmes ; lien, rappel ; tuile « Go du jour » de l'accueil (à faire : posé sur l'accueil, Jouer reste dessous) | « ‹ » « Retour aux problèmes » ; « Retour » depuis l'accueil | la liste, même défilement, bouton d'origine focalisé ; l'accueil | non : l'essai est noté au premier coup |
+| Course | Problèmes | « ‹ » « Retour aux problèmes », « Quitter la course » pendant | la liste | non (le lien du bas de la fin, doublon de « ‹ », est retiré) |
+| Partie de découverte | Apprendre ; fin de l'introduction des règles | « ‹ » « Quitter » | Apprendre, au même endroit ; ou l'écran d'où venait l'introduction | non : le moment atteint est gardé |
+| Introduction des règles | « Tu connais le go ? » (accueil), « Revoir les règles » (Apprendre), aide | « ‹ » « Quitter » pendant ; « ‹ » « Retour » à la fin (le lien « Retour » du bas, doublon, est retiré ; avant, la fin ouverte depuis l'accueil n'avait aucune sortie) | l'écran d'origine | non |
+| Placement (« Ton niveau de départ ») | « Je sais déjà jouer » (accueil), Profil | « ‹ » « Retour » (nouveau : rien n'est enregistré, le placement reste proposé) ; « Passer » reste pendant les problèmes | l'accueil ou le Profil | non : 3 problèmes, rien d'acquis à perdre |
+| Séance de révisions | tuile « Révisions » de l'accueil | « ‹ » « Retour à l'accueil » | l'accueil, au même endroit | non : chaque réponse est notée tout de suite |
+
+La partie garde sa confirmation (« Quitter la partie ? ») : c'est la seule activité où quitter fait perdre quelque chose.
+
+## 13. Sommaire puis détail (A13 ; #652, #653, #654)
+
+Retour de Florian, 18/10, captures de chess.com à l'appui : Apprendre, Problèmes et le Profil montrent trop de choses à la fois. Le modèle : une racine qui est un **sommaire** (peu d'entrées, chacune avec son icône), puis un **détail** qui s'ouvre par-dessus avec « ‹ ». Règle A13 de `DESIGN.md`, composant `src/ui/Sommaire.tsx`.
+
+Méthode (skills `information-architecture`, `navigation-patterns`, `hicks-law`, `serial-position-effect`, `jakobs-law`) :
+- **Hick** : on compte les choix de même poids au premier regard ; 4 au plus par groupe (E3).
+- **Position dans la liste** : l'action principale en premier (primauté) ; la liste longue en dernier (P5), pour que le reste ne se perde pas sous elle.
+- **Jakob** : le joueur de go en ligne connaît chess.com ; on reprend sa forme (une ligne = une icône et un nom, sans chevron décoratif) plutôt que d'en inventer une. On n'en reprend pas le « Passez Premium ».
+- **Profondeur** : un détail ne contient pas de second sommaire (A4).
+
+### 13.1 Apprendre (#652)
+
+Captures (sombre, 390 × 844) : `captures/sommaires/apprendre-390-avant.jpg`, `apprendre-390-apres.jpg`, et en clair `apprendre-390-clair-apres.jpg`.
+
+| | Avant | Après |
+|---|---|---|
+| Premier regard (390 × 844) | Chapitre « Les bases » (titre, 7 mini-pierres), 3 pierres du chemin, la carte « Reprendre », le début de « Par thème » | La carte « Reprendre » (seul relief), trois entrées (Ouvertures, Jouer avec Mochi, Revoir les règles), le début de « Par thème » |
+| Blocs (E2) | 4, plus 6 chapitres et « Bientôt » en défilant (page de 5 660 px à 390 px) | 3 ; page de 1 800 px |
+| Accès à une leçon qui n'est pas la prochaine | sa pierre sur le chemin | la page de son thème (toutes les 48 leçons y sont : `src/app/themesApprendre.test.ts`) |
+| Thèmes | 6, puis « Tous les thèmes » | les 15, sans pli |
+| Jouer avec Mochi | lien qui déplie deux cartes à la fin des « Bases » | entrée du sommaire, puis un détail avec la découverte et la guidée |
+
+Ordre retenu : carte, entrées, grille. Florian citait la grille avant la liste ; mais la grille de 15 thèmes est la seule liste longue (≈ 1 000 px) : posée avant les trois entrées, elle les pousserait à 1 400 px de haut, sous trois écrans de défilement (P5 et effet de position : le milieu d'une longue page est oublié). Les entrées tiennent en 200 px juste sous la carte.
+
+Pas de pli sur la grille : il cachait 9 thèmes sur 15, donc la moitié des leçons, maintenant que le chemin ne les montre plus. Une colonne d'entrées toutes semblables (visuel, nom, une ligne) se parcourt du regard, dans l'ordre où les leçons font découvrir chaque thème.
+
+Ce qui ne change pas : l'accès aux leçons (#343 : sans compte, « Avec un compte » après la leçon 3, la leçon reste touchable et ouvre la création de compte), écrit dans la page du thème ; la fin de leçon et de chapitre (Lecon.tsx), les badges et l'XP ; la fête de fin de chapitre, qui se joue en tête du sommaire à la première visite qui la mérite (tampon d'or et confettis). Ce qui disparaît : le chemin, les en-têtes de chapitre (et leur tampon permanent), « Bientôt ».
+
+## 14. Problèmes en sommaire (#653, règle A13)
+
+Captures (sombre, 390 × 844) : `captures/sommaires/problemes-390-avant.jpg`, `problemes-390-apres.jpg`, et en clair `problemes-390-clair-apres.jpg`.
+
+Retour de Florian, 18/10 : « il y a trop ; la partie révision peut être enlevée. On devrait avoir les propositions, puis ensuite si on clique dessus aller sur les différentes pages. » Modèle : l'onglet Problèmes de chess.com (une image en haut, quatre grandes lignes, un bouton principal).
+
+| | Avant | Après |
+|---|---|---|
+| Premier regard (390 × 844) | Go du jour (carte), « Entraînement » (Problème suivant, Course), puis selon les jours « Tes erreurs à rejouer » et « Révisions » | Go du jour à faire (carte et « Résoudre »), ou « Problème suivant » ; puis quatre entrées : Go du jour, Rejouer tes erreurs, Course aux problèmes, Par thème |
+| Plus grand groupe (E3) | 6 thèmes + 2 tuiles + vignettes d'erreurs et de révision | 4 entrées |
+| Révisions | trois maisons : séance « Révisions » (Jouer), sections « Tes erreurs à rejouer » et « Révisions » (Problèmes) | une seule : « Rejouer tes erreurs », entrée de Problèmes, qui ouvre la séance (erreurs de partie et problèmes ratés, révision espacée #469). La tuile de l'accueil reste un raccourci (A3) : elle pose la séance par-dessus Jouer, sans changer d'onglet |
+| Par thème, Tous les problèmes | sur la racine | détail « Par thème » : la grille des séries, puis le lien « Tous les problèmes » (profondeur 2) |
+
+Chaque entrée porte un état court, jamais un zéro (P1) : « À faire » en or ou « Réussi » / « Vu » pour le Go du jour, le nombre d'erreurs dues en or, le record de la course. La série reste une pastille discrète dans l'en-tête de la carte du haut.
+
+Ce qui disparaît : la carte « Révisions » (#199, problèmes déjà réussis repris à J+1, J+3, J+7). Depuis #529, la séance de révision espacée fait déjà vivre la série à sa place ; les problèmes ratés au premier essai y entrent toujours (#469). Le nom « Révisions » laisse la place à « Rejouer tes erreurs » partout (A9), y compris sur la tuile de l'accueil (texte seulement).

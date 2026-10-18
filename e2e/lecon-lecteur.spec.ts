@@ -15,13 +15,14 @@ async function tientDansLecran(page: Page, ecran: string) {
   expect(m.haut, `défilement vertical : ${ecran}`).toBeLessThanOrEqual(m.vue + 1);
 }
 
-/** L'élément est entier à l'écran, au-dessus de la barre de navigation. */
+/** L'élément est entier à l'écran. #646 : la leçon est en plein écran, sans barre du bas. */
 async function visibleAuDessusDeLaNav(page: Page, selecteur: string) {
   const r = await page.locator(selecteur).first().boundingBox();
-  const nav = await page.getByRole('navigation').boundingBox();
+  await expect(page.getByRole('navigation')).toHaveCount(0);
+  const bas = await page.evaluate(() => innerHeight);
   expect(r, selecteur).not.toBeNull();
   expect(r!.y).toBeGreaterThanOrEqual(0);
-  expect(r!.y + r!.height).toBeLessThanOrEqual(nav!.y + 1);
+  expect(r!.y + r!.height).toBeLessThanOrEqual(bas + 1);
 }
 
 for (const [largeur, hauteur] of [[390, 844], [320, 568]] as const) {
@@ -115,9 +116,9 @@ for (const [largeur, hauteur] of [[390, 844], [320, 568]] as const) {
         await expect(page.locator('.verdict-juste')).toBeVisible();
         if (rang < 3) await page.getByRole('button', { name: 'Problème suivant' }).click();
       }
-      await page.locator('.verdict').getByRole('button', { name: 'Retour au chemin' }).click();
+      await page.locator('.verdict').getByRole('button', { name: 'Retour à Apprendre' }).click();
       // 100 XP : le niveau 2, sur son écran à lui, puis le chemin.
-      await page.getByTestId('niveau-atteint').getByRole('button', { name: 'Retour au chemin' }).click();
+      await page.getByTestId('niveau-atteint').getByRole('button', { name: 'Retour à Apprendre' }).click();
       await expect(page.getByRole('button', { name: 'Commencer la leçon : Atari' })).toBeVisible();
 
       // Le halo ne revient pas : la leçon 2 s'ouvre sans guidage.

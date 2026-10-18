@@ -1,8 +1,8 @@
-/* Course aux problèmes (issue #287) : carte d'entrée dans l'onglet Problèmes, consigne, course, résultats.
+/* Course aux problèmes (issue #287) : entrée du sommaire de Problèmes, consigne, course, résultats.
    #563 : chargée avec Puzzles.tsx et CourseProblemes.tsx, hors du CSS initial ; course.css garde le reste,
    dont les @keyframes (course-saut, course-pastille, course-entree). */
 
-/* ---------- Tuile d'entrée (action secondaire : ni or, ni relief, ni bordure ; #620) : .tuile-pb, apprendre.css ---------- */
+/* ---------- Entrée « Course aux problèmes » : une ligne du sommaire de Problèmes (#653, src/ui/Sommaire.tsx) ---------- */
 /* Chronomètre dessiné (#103) : cadran en papier, arc hanko des trois minutes, aiguille d'encre. */
 .chrono-course { display: block; overflow: visible; }
 .chrono-course .ch-cadran { fill: var(--surface-2); stroke: var(--text); stroke-width: 2; }
@@ -13,7 +13,6 @@
 .chrono-course .ch-aiguille { fill: none; stroke: var(--text); stroke-width: 2.2; stroke-linecap: round; }
 .chrono-course .ch-axe { fill: var(--danger-texte); }
 .course-consigne .chrono-course { margin: var(--space-4) auto var(--space-2); }
-.course-carte-meilleur { color: var(--text); font-weight: var(--fw-bold); }
 .course-en-cours { padding-bottom: var(--space-4); }
 
 .course-consigne .course-picto { display: block; margin: var(--space-4) auto var(--space-2); color: var(--danger-texte); }
@@ -57,7 +56,6 @@
 .course-resultat-legende { margin-top: var(--space-1); color: var(--muted); font-size: var(--fs-l); font-weight: var(--fw-bold); }
 .course-nouveau { margin: var(--space-4) 0 0; padding: var(--space-2) var(--space-4); border-radius: var(--radius-pill);
   background: var(--recompense); color: var(--encre-jade); font-weight: var(--fw-bold); }
-.course-retour { display: block; margin: var(--space-2) auto 0; }
 
 /* ---------- Mouvement (seulement sans préférence de mouvements réduits) ---------- */
 @media (prefers-reduced-motion: no-preference) {

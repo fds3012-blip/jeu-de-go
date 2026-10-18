@@ -6,6 +6,7 @@ import { etatsPoints } from '../app/lecon';
 import { mouvementsReduits, pasSansCoupure } from './defilement';
 import { PortraitMochi, type HumeurMochi } from './Portrait';
 import './apprendre.css';
+import './paysage.css';
 
 /** Bouton retour, rond, en haut à gauche. Le libellé dit où il mène. Le bouton unique de l'app (#509, L2). */
 export { BoutonRetour as Retour } from './BoutonRetour';
@@ -115,7 +116,14 @@ function aReplier(verdict: HTMLDivElement | null): boolean {
   if (!verdict || !plateau || !texte) return false;
   const ligne = parseFloat(getComputedStyle(texte).lineHeight) || 22;
   if (texte.offsetHeight <= ligne * 3.5) return false;
+  // #649 (V6) : en deux zones, la feuille est à côté du plateau ; elle ne se replie que si elle sort de l'écran.
+  if (aCote(verdict, plateau)) return verdict.getBoundingClientRect().bottom > window.innerHeight;
   return plateau.offsetHeight + 2 * MARGE > hautDeLaFeuille(verdict);
+}
+
+/** #649 (V6) : la feuille est posée à côté du plateau (deux zones, paysage.css), pas dessous : elle ne le cache jamais. */
+function aCote(verdict: HTMLElement, plateau: HTMLElement): boolean {
+  return verdict.getBoundingClientRect().left >= plateau.getBoundingClientRect().right - 1;
 }
 
 /**
@@ -135,6 +143,7 @@ function devoilerPlateau(verdict: HTMLDivElement | null) {
   // Lot X (#398) : la feuille suit le plateau dans la colonne (apprendre.css) tant que tout tient dans l'écran. Sinon
   // (longue explication, Go du jour avec sa note), elle repasse fixée sur la barre, et la page défile comme avant.
   delete lecteur.dataset.feuille;
+  if (aCote(verdict, plateau)) return;
   if (getComputedStyle(verdict).position === 'sticky' && document.documentElement.scrollHeight > window.innerHeight + 1) {
     lecteur.dataset.feuille = 'fixe';
   }

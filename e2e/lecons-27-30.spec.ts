@@ -35,9 +35,7 @@ for (const [largeur, hauteur, theme] of [[390, 844, 'light'], [320, 568, 'dark']
     await page.goto('/');
     await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
 
-    // Le chemin : la leçon 27 suit « Les premiers coups », dans « L’ouverture ».
-    await expect(page.getByRole('heading', { name: 'L’ouverture' })).toBeAttached();
-    await expect(page.getByRole('button', { name: `Leçon ${numero('l8')} : Les premiers coups, terminée` })).toBeAttached();
+    // #652 : le sommaire d'Apprendre ; la carte de la prochaine leçon ouvre la leçon.
     await expect(page.getByRole('button', { name: `Leçon ${numero('l27')} : Attaquer et défendre, prochaine étape` })).toBeAttached();
     await sansDebordement(page, 'chemin');
     await page.locator('.cta-chemin').scrollIntoViewIfNeeded();

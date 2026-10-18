@@ -1,16 +1,16 @@
 import { expect, type Page } from '@playwright/test';
 import { SCENARIO } from '../src/content/decouverte';
-import { deplierAvecMochi, jouer } from './plateau';
+import { ouvrirAvecMochi, jouer } from './plateau';
 
 // Partie de découverte (#524) : aides des parcours. Le scénario lui-même (src/content/decouverte.ts) dit quoi jouer.
 
 /** L'écran de la découverte, sur le moment `id` (attribut data-etape). */
 export const surMoment = (page: Page, id: string) => expect(page.locator(`.decouverte[data-etape="${id}"]`)).toBeVisible();
 
-/** Ouvre la découverte depuis Apprendre (« Jouer avec Mochi », à la fin du chapitre « Les bases », #602). */
+/** Ouvre la découverte depuis Apprendre › Jouer avec Mochi (#652). */
 export async function ouvrirDepuisApprendre(page: Page): Promise<void> {
   await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
-  await deplierAvecMochi(page);
+  await ouvrirAvecMochi(page);
   await page.getByTestId('carte-decouverte').click();
   await expect(page.locator('.decouverte')).toBeVisible();
 }

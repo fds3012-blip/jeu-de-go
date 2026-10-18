@@ -62,7 +62,7 @@ const T = {
   dejaCompte: /^(J’ai déjà un compte|I already have an account)$/, creerCompte: /^(Créer un compte|Create an account)$/,
   monPseudo: /^(C’est mon pseudo|That’s my username)$/, pseudo: /^(Pseudo|Username)$/, email: /^(Ton adresse e-mail|Your email address)$/,
   partieDu: /^(Partie du|Game of)/, quitterCourse: /^(Quitter la course|Leave the rush)$/, suivant: /^(Problème suivant|Next puzzle)$/,
-  retourChemin: /^(Retour au chemin|Back to the path)$/,
+  retourChemin: /^(Retour à Apprendre|Back to Learn)$/,
 };
 
 const nav = (page: Page, nom: RegExp) => page.getByRole('navigation').getByRole('button', { name: nom });
@@ -226,7 +226,7 @@ for (const cfg of CONFIGS) {
     await E('15-course', async () => {
       await page.goto('/');
       await nav(page, T.problemes).click();
-      await page.locator('[data-course]').click();
+      await page.getByTestId('entree-course').click();
       await expect(page.getByRole('button', { name: T.cestParti })).toBeVisible();
       await cap('15-course-regles');
       await page.getByRole('button', { name: T.cestParti }).click();

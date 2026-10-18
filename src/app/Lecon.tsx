@@ -12,6 +12,7 @@ import { PortraitMochi } from '../ui/Portrait';
 import { SceauLecon } from '../ui/SceauLecon';
 import { Confettis } from '../ui/Confettis';
 import { Etapes, Marque, Retour } from '../ui/Lecteur';
+import { useTitreFocus } from '../ui/titreFocus';
 import { NiveauAtteint } from '../ui/Niveau';
 import { XpEnLigne } from '../ui/PastilleXp';
 import { InviterApp } from '../ui/PartagerApp';
@@ -51,7 +52,7 @@ interface PlayerProps {
   celebrer?: boolean;
   onProgress: (steps: number) => void;
   onExit: () => void;
-  /** #640 : libellé de la sortie quand la leçon est posée hors d'Apprendre (« Retour ») ; sinon « Retour au chemin ». */
+  /** #640 : libellé de la sortie quand la leçon est posée hors d'Apprendre (« Retour ») ; sinon « Retour à Apprendre ». */
   retour?: string;
   /** Ouvre la leçon suivante ; absent pour la dernière. */
   onNext?: () => void;
@@ -79,6 +80,7 @@ export function LessonPlayer({ lesson: { id: leconId }, start, confirmTouch, pro
   // #236 (N2) : la leçon entière, écran de fin compris, est un exercice : l'XP se lit sur l'écran de fin,
   // la fête de niveau attend qu'on le quitte (FinLecon lui donne alors son écran à lui).
   useExercice(true);
+  const titre = useTitreFocus();
   const step = lesson.steps[idx];
   const { pos, marked } = useMemo(() => fromRows(step.rows), [step]);
   // #454 : 9, 13 ou 19 lignes (celles de la position), et la zone montrée si l'étape est cadrée.
@@ -217,7 +219,7 @@ export function LessonPlayer({ lesson: { id: leconId }, start, confirmTouch, pro
             au-dessus du titre, qui garde ainsi toute la largeur et l'encre du texte. */}
         <div className="lecteur-nom lecteur-nom-lecon">
           <Etapes total={lesson.steps.length} faites={faites} />
-          <h2 className="lecteur-titre"><span>{fr(lesson.title)}</span></h2>
+          <h2 className="lecteur-titre" ref={titre} tabIndex={-1}><span>{fr(lesson.title)}</span></h2>
         </div>
         {/* #362 : « ? » ouvre l'aide sur le mot que la leçon enseigne, sans quitter la leçon. */}
         <BoutonAide depuis="lecon" {...ficheDeLecon(lesson.id)} />

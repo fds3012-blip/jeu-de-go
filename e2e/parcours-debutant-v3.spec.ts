@@ -1,4 +1,6 @@
 import { expect, test, type Browser, type Page } from '@playwright/test';
+import { ouvrirTous } from './problemes';
+import { sortirActivite } from './onglet';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { brancher, CODE, fauxServeur, type FauxServeur } from './fauxSupabase';
@@ -31,7 +33,7 @@ const T = {
   passer: /^(Passer|Pass)$/, passeGroupe: /^(Passer maintenant\s?\?|Pass now\?)$/, valider: /^(Valider le score|Confirm score)$/,
   resultat: /^(Voir le résultat|See the result)$/, retourBilan: /^(Retour au bilan|Back to results)$/, revoir: /^(Revoir la partie|Review the game)$/, accueil: /^(Accueil|Home)$/,
   commencer: /^(Commencer|Start)$/, continuer: /^(Continuer|Continue)$/, terminer: /^(Terminer la leçon|Finish the lesson)$/,
-  retourChemin: /^(Retour au chemin|Back to the path)$/, plus: /^(Plus|More)$/, abandonner: /^(Abandonner|Resign)$/, confirmer: /^(Confirmer|Confirm)/,
+  retourChemin: /^(Retour à Apprendre|Back to Learn)$/, plus: /^(Plus|More)$/, abandonner: /^(Abandonner|Resign)$/, confirmer: /^(Confirmer|Confirm)/,
   email: /^(Ton adresse e-mail|Your email address)$/, age: /^(J’ai 15\s+ans ou plus|I’m 15 or older)/, code: /^(Code à 6 chiffres|6-digit code)$/,
   recevoir: /^(Recevoir mon code|Get my code)$/, pseudo: /^(Pseudo|Username)$/, monPseudo: /^(C’est mon pseudo|That’s my username)$/,
   aide: /^(Aide : règles et mots du go|Help: rules and Go words)$/, feuilleAide: /^(Aide|Help)$/, mots: /^(Mots|Words)$/,
@@ -66,8 +68,11 @@ function verificateur(cfg: Config, mesures: Mesure[]) {
 }
 
 // #391 : un onglet avec un point jade ajoute la raison à son nom (« Problèmes, Garde ta série de 1 jour »).
-const nav = (page: Page, nom: RegExp) => page.getByRole('navigation')
-  .getByRole('button', { name: new RegExp(nom.source.replace(/\$$/, '(,|$)'), nom.flags) });
+// #646 : une activité est en plein écran ; on en sort d'abord par « ‹ » (sortirActivite).
+const nav = (page: Page, nom: RegExp) => ({ click: async () => {
+  await sortirActivite(page);
+  await page.getByRole('navigation').getByRole('button', { name: new RegExp(nom.source.replace(/\$$/, '(,|$)'), nom.flags) }).click();
+} });
 const barre = (page: Page) => page.getByRole('toolbar').first();
 const boutonPasser = (page: Page) => barre(page).getByRole('button', { name: T.passer });
 const fin = (page: Page) => page.locator('.recit, .barre-comptage').filter({ visible: true });
@@ -220,7 +225,8 @@ for (const cfg of CONFIGS) {
     // La tuile « À faire » ouvre le Go du jour lui-même.
     await page.locator('.tuile-probleme').click();
     await expect(plateau(page)).toBeVisible();
-    await expect(page.getByText(/^(Go du jour|Daily Go)/).first()).toBeVisible();
+    // #646 : le Go du jour se pose sur l'accueil, gardé caché dessous : on lit l'écran affiché.
+    await expect(page.locator('.calque:not([hidden])').getByText(/^(Go du jour|Daily Go)/).first()).toBeVisible();
     await voir(page, '11-go-du-jour');
     await page.goto('/?go-du-jour=1');
     await expect(plateau(page)).toBeVisible();
@@ -255,7 +261,7 @@ for (const cfg of CONFIGS) {
 
     // 7. Un problème (compte complet : plus de limite).
     await nav(page, T.problemes).click();
-    await page.getByRole('button', { name: T.tous }).click();
+    await ouvrirTous(page);
     await page.getByRole('button', { name: T.probleme }).first().click();
     await expect(plateau(page)).toBeVisible();
     await voir(page, '17-probleme');

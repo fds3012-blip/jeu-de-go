@@ -1,4 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
+import { ouvrirTous } from './problemes';
+import { leconDuTheme } from './apprendre';
 import { brancher, CODE, fauxServeur } from './fauxSupabase';
 import { abandonner, plateau, toucherCta } from './plateau';
 
@@ -118,7 +120,7 @@ test('leçon 4 et problèmes : compte demandé ; le Go du jour reste libre (320 
   // Go du jour : libre.
   await expect(page.getByRole('heading', { name: /Go du jour/ })).toBeVisible();
   // « Tous les problèmes » : compte.
-  await page.getByRole('button', { name: 'Tous les problèmes' }).click();
+  await ouvrirTous(page);
   await expect(page.getByTestId('creer-compte')).toHaveAttribute('data-raison', 'problemes');
   await expect(page.getByText('Le Go du jour reste libre. Crée ton compte pour les autres problèmes.')).toBeVisible();
   await sansDefilementHorizontal(page);
@@ -128,14 +130,15 @@ test('leçon 4 et problèmes : compte demandé ; le Go du jour reste libre (320 
   await expect(page.getByRole('navigation')).toBeVisible();
 
   // Apprendre : la leçon 4 demande un compte.
+  // #652 : depuis la page de son thème (le sommaire n'a que la prochaine leçon).
   await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
-  const lecon4 = page.getByRole('button', { name: /^Leçon 4 :/ });
-  await lecon4.scrollIntoViewIfNeeded();
+  const lecon4 = await leconDuTheme(page, 'Ko', /^Leçon 4 :/);
   await lecon4.click();
   await expect(page.getByTestId('creer-compte')).toHaveAttribute('data-raison', 'lecons');
   await page.getByRole('button', { name: 'Retour' }).click();
+  await page.getByRole('button', { name: 'Retour à Apprendre' }).click();
   // Les leçons 1 à 3 restent libres.
-  await page.getByRole('button', { name: /^Leçon 3 :/ }).click();
+  await (await leconDuTheme(page, 'Double atari', /^Leçon 3 :/)).click();
   await expect(page.getByTestId('creer-compte')).toHaveCount(0);
   await expect(page.getByRole('progressbar', { name: 'Progression de la leçon' })).toBeVisible();
   expect(serveur.appels).not.toContain('POST /auth/v1/signup');

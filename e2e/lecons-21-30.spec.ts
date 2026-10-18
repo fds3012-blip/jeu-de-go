@@ -36,11 +36,7 @@ for (const [largeur, hauteur, theme] of [[390, 844, 'light'], [320, 568, 'dark']
     await page.goto('/');
     await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
 
-    // Le chemin : les nouvelles leçons sont rangées dans leurs chapitres ; la 21 ferme « Formes et tesuji ».
-    await expect(page.getByRole('heading', { name: 'Formes et tesuji' })).toBeAttached();
-    await expect(page.getByRole('button', { name: `Leçon ${numero('l26')} : La course avec un œil, terminée` })).toBeAttached();
-    await expect(page.getByRole('button', { name: `Leçon ${numero('l25')} : Les groupes du coin, terminée` })).toBeAttached();
-    await expect(page.getByRole('button', { name: `Leçon ${numero('l23')} : Le hane au premier rang, terminée` })).toBeAttached();
+    // #652 : le sommaire d'Apprendre ; la carte de la prochaine leçon ouvre la leçon.
     await expect(page.getByRole('button', { name: `Leçon ${numero('l21')} : Le manque de libertés, prochaine étape` })).toBeAttached();
     await sansDebordement(page, 'chemin');
     await page.locator('.cta-chemin').scrollIntoViewIfNeeded();

@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { ouvrirTous } from './problemes';
 import { attendrePierre, jouer, pierres, plateau } from './plateau';
 
 // Issue #197 : après un échec, l'aide vient par marches (indice, réfutation, réponse).
@@ -49,7 +50,7 @@ test('problème vu : indice, réfutation, réponse, puis « Vu » sans XP ni pal
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
-  await page.getByRole('button', { name: 'Tous les problèmes' }).click();
+  await ouvrirTous(page);
   await page.getByRole('button', { name: /^Problème \d+ : Capture la pierre/ }).click();
 
   await aideComplete(page);
@@ -84,8 +85,8 @@ test('Go du jour vu : pas de partage ni d’XP, mais la série du jour tient', a
   expect(await page.evaluate(() => localStorage.getItem('go.xp.v1'))).toBeNull();
 
   await page.getByRole('button', { name: 'Retour aux problèmes' }).first().click();
-  // #620 : le Go du jour fait devient une tuile ; son état se lit dessous (« Vu » quand la réponse a été montrée).
-  await expect(page.locator('[data-du-jour-fait] small')).toHaveText('Vu');
+  // #620, #653 : le Go du jour fait reste une entrée du sommaire ; son état (« Vu » quand la réponse a été montrée).
+  await expect(page.getByTestId('entree-du-jour').locator('.sommaire-etat')).toHaveText('Vu');
   await expect(page.getByTestId('serie-problemes')).toContainText('1');
   const debord = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(debord).toBeLessThanOrEqual(0);

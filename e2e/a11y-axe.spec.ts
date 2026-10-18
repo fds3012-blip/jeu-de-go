@@ -1,7 +1,8 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
+import { ouvrirTous } from './problemes';
 import { brancher, fauxServeur } from './fauxSupabase';
-import { choisirMode, deplierAvecMochi, jouer, ouvrirLancementOrdi, ouvrirPlus, passerJusquAuScore, plateau, toucherCta } from './plateau';
+import { choisirMode, ouvrirAvecMochi, jouer, ouvrirLancementOrdi, ouvrirPlus, passerJusquAuScore, plateau, toucherCta } from './plateau';
 import { GO_DU_JOUR } from '../src/content/goDuJour.gen';
 import { demarrerParcours, ouvrirRevue, preparerRevue } from './revueFactice';
 import { avancerJusqua, ouvrirDepuisApprendre, surMoment } from './decouverte';
@@ -163,10 +164,14 @@ test('axe : Apprendre, leçon 1 (étape interactive) et fin de leçon', async ({
 test('axe : Problèmes, un problème et son verdict, Go du jour', async ({ page }) => {
   await page.goto('/');
   await nav(page, 'Problèmes').click();
-  await expect(page.getByRole('button', { name: 'Tous les problèmes' })).toBeVisible();
+  await expect(page.getByTestId('problemes-sommaire')).toBeVisible();
   await verifier(page, 'Problèmes');
+  // #653 : le détail « Par thème » (séries et lien « Tous les problèmes »).
+  await page.getByTestId('entree-par-theme').click();
+  await expect(page.getByRole('button', { name: 'Tous les problèmes' })).toBeVisible();
+  await verifier(page, 'Problèmes, Par thème');
 
-  await page.getByRole('button', { name: 'Tous les problèmes' }).click();
+  await ouvrirTous(page);
   await expect(page.getByRole('button', { name: /^Problème \d+/ }).first()).toBeVisible();
   await verifier(page, 'Tous les problèmes');
   await page.getByRole('button', { name: /^Problème \d+/ }).first().click();
@@ -467,9 +472,9 @@ test('axe : partie de découverte (#524) : Apprendre, consigne, erreur, frontiè
   test.setTimeout(180_000);
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
-  await deplierAvecMochi(page);
+  await ouvrirAvecMochi(page);
   await expect(page.getByTestId('carte-decouverte')).toBeVisible();
-  await verifier(page, 'Apprendre avec la découverte');
+  await verifier(page, 'Apprendre, Jouer avec Mochi');
   await ouvrirDepuisApprendre(page);
   await verifier(page, 'Découverte : consigne');
   await jouer(page, 'A1');
@@ -491,9 +496,8 @@ test('axe : « Par thème » d’Apprendre (#590) et la page d’un thème', asy
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
   await page.getByTestId('par-theme').scrollIntoViewIfNeeded();
-  // #614 : la grille de cartes, dépliée (tous les thèmes).
-  await page.getByRole('button', { name: 'Tous les thèmes' }).click();
-  await verifier(page, 'Apprendre, grille « Par thème »');
+  // #652 : le sommaire, ses entrées et la grille de tous les thèmes (sans pli).
+  await verifier(page, 'Apprendre, sommaire et grille « Par thème »');
   await page.getByTestId('par-theme').getByRole('button', { name: /^Capture,/ }).click();
   await expect(page.getByRole('heading', { level: 2, name: 'Capture' })).toBeVisible();
   await verifier(page, 'Page du thème Capture');

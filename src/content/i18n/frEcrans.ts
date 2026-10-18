@@ -113,6 +113,9 @@ export const frEcrans = {
   'pb.aide.apres': ' quand il ne lui reste qu’une liberté.',
   'pb.continuer': 'Problème suivant',
   'pb.tous': 'Tous les problèmes',
+  'pb.sommaire.nom': 'S’entraîner',
+  'pb.sommaire.course': 'Course aux problèmes',
+  'pb.sommaire.record': 'Record {n}',
   /** #602 : titre de la section sous le Go du jour ; « Problèmes » est maintenant le titre de l'écran. */
   'pb.entrainement': 'Entraînement',
   'pb.verrouille': 'verrouillé',
@@ -232,11 +235,12 @@ export const frEcrans = {
   'carrousel.verrouille': 'verrouillé',
 
   // Mes erreurs (#77) : section des Problèmes et problèmes tirés de tes parties
-  'erreurs.titre': 'Tes erreurs à rejouer',
+  'erreurs.titre': 'Rejouer tes erreurs',
   // #469 : séance « Révisions du jour » (5 exercices au plus), ouverte depuis l'accueil.
-  'seance.titre': 'Révisions',
+  'seance.titre': 'Rejouer tes erreurs',
   'seance.surtitre': 'Révision {n} sur {total}',
-  'seance.retour': 'Retour à l’accueil',
+  'seance.retour': 'Retour',
+  'seance.fini': 'Terminer',
   'seance.suivant': 'Révision suivante',
   'seance.terminer': 'Voir mon bilan',
   'seance.progresAria': 'Révision {n} sur {total}',
@@ -250,8 +254,6 @@ export const frEcrans = {
   'seance.trouve': 'Trouvé du premier coup',
   'seance.rate': 'À revoir demain',
   'erreurs.compteurAria': '{n} à rejouer',
-  'erreurs.aide': 'Des positions de tes parties. Trouve le coup que KataGo conseillait.',
-  'erreurs.rejouerAria': 'Rejouer : {titre}',
   'erreurs.titreContre': 'Ta partie contre {adversaire}, coup {coup}',
   'erreurs.titreDeux': 'Ta partie à deux, coup {coup}',
   'erreurs.consigneMieux': 'Trouve mieux que ton coup.',
@@ -329,13 +331,7 @@ export const frEcrans = {
   'pq.zoneCarres': 'Les carrés montrent cette zone.',
 
   // Révision du jour (#199) : problèmes déjà réussis, repris à J+1, J+3, J+7. Ce qui garde la série : docs/design/vocabulaire.md
-  'revision.titre': 'Révisions',
-  'revision.aide': 'Refaire un problème réussi t’aide à le retenir.',
-  'revision.ouvrirAria': 'Réviser : {titre}',
-  'revision.dejaReussi': 'Déjà réussi · refais-le sans aide',
-  'revision.dejaVu': 'Vu avec la réponse · trouve-le seul',
   'revision.faite': 'Révision faite. D’autres problèmes reviendront demain.',
-  'revision.serie': 'Pour garder ta série, fais chaque jour le Go du jour, une leçon ou une révision.',
   // Arrivée par un lien partagé, pour qui n'a jamais joué (#285)
   'arrivee.premierCoup': 'Premier coup au go ? Touche le plateau.',
   'arrivee.apprendre': 'Apprends à jouer en 2 minutes',
@@ -953,7 +949,7 @@ export const frEcrans = {
   'lecon.jouerContre': 'Joue contre {nom}',
   'lecon.suivante': 'Leçon suivante',
   'lecon.suivanteTitre': 'Leçon suivante : {titre}',
-  'lecon.retourChemin': 'Retour au chemin',
+  'lecon.retourChemin': 'Retour à Apprendre',
   'serie.entrainement': 'Entraînement',
   'serie.progression': "Progression de l'entraînement",
 
@@ -968,10 +964,6 @@ export const frEcrans = {
   'apprendre.pas': 'Leçon {rang} : {titre}{etat}',
   'apprendre.pas.faite': ', terminée',
   'apprendre.pas.encours': ', prochaine étape',
-  'apprendre.bientot': 'Bientôt',
-  'apprendre.bientot.texte': 'Un autre chapitre est en préparation, et de nouvelles leçons jusqu’au premier dan.',
-  'apprendre.avenir.3': 'Formes et tesuji, les coups astucieux',
-  'apprendre.avenir.4': 'Ouverture en 19\u00A0×\u00A019',
   'apprendre.revoir': 'Revoir',
   'apprendre.revoirTitre': 'Revoir : {titre}',
   // « Continuer » : seulement l'étape suivante dans une leçon (docs/design/vocabulaire.md).
@@ -984,8 +976,7 @@ export const frEcrans = {
   'apprendre.fin.chapitre': 'Chapitre terminé',
   // Chemin v3 : chapitres illustrés, carte de la prochaine leçon, Mochi, fête de chapitre.
   'apprendre.chapitre.avancee': '{n} sur {total}',
-  'apprendre.chapitre.aria': { one: '{n} leçon faite sur {total}', other: '{n} leçons faites sur {total}' },
-  'apprendre.compte.suite': 'La suite s’ouvre avec un compte',
+  'apprendre.aussi': 'Pour apprendre autrement',
   'apprendre.avecMochi': 'Jouer avec Mochi',
   'apprendre.duree': 'Environ {n} min',
   'apprendre.decouverte': 'Partie de découverte',
@@ -1003,10 +994,7 @@ export const frEcrans = {
   'apprendre.themes.titre': 'Par thème',
   // #614 : la barre de chaque carte de thème, et le pli des thèmes après les six premiers.
   'apprendre.themes.barre': { one: '{n} leçon faite sur {total}', other: '{n} leçons faites sur {total}' },
-  'apprendre.themes.tous': 'Tous les thèmes',
   'apprendre.theme.lecons': 'Les leçons',
-  'apprendre.theme.faite': 'Faite',
-  'apprendre.theme.afaire': 'À faire',
   'apprendre.theme.entrainer': 'S’entraîner sur ce thème',
   'apprendre.theme.retour': 'Retour au thème',
   'apprendre.theme.horsLigne': 'Les problèmes ne sont pas encore sur ton téléphone. Reconnecte-toi, puis réessaie.',
@@ -1127,6 +1115,8 @@ export const frEcrans = {
   'placement.etape': 'Problème {n} sur {total}',
   'placement.passer': 'Passer',
   'placement.passerAria': 'Passer les 3 problèmes',
+  // #646 : « ‹ », sortie sans rien enregistrer (le placement reste proposé).
+  'placement.retour': 'Retour',
   'placement.juste': 'Bien vu !',
   'placement.rate': 'Ce n’était pas ça. Ce n’est pas grave, on passe au suivant.',
   'placement.suivant': 'Problème suivant',

@@ -107,25 +107,25 @@ test('M9 : fin de la pratique, « Niveau 2 ! » ne couvre pas le titre du chemin
     if (rang < 3) await page.getByRole('button', { name: 'Problème suivant' }).click();
   }
   // La série est finie. #236 (N2) : le niveau n'arrive plus sur la feuille de réussite, mais sur son propre écran,
-  // entre la feuille et le chemin (e2e/une-fete.spec.ts). Ici : rien ne couvre le chemin ensuite.
-  await page.locator('.verdict').getByRole('button', { name: 'Retour au chemin' }).click();
+  // entre la feuille et Apprendre (e2e/une-fete.spec.ts). Ici : rien ne couvre le sommaire ensuite.
+  await page.locator('.verdict').getByRole('button', { name: 'Retour à Apprendre' }).click();
   const ecranNiveau = page.getByTestId('niveau-atteint');
   await expect(ecranNiveau).toContainText(/Niveau\s2/);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
-  const retour = ecranNiveau.getByRole('button', { name: 'Retour au chemin' });
+  const retour = ecranNiveau.getByRole('button', { name: 'Retour à Apprendre' });
   expect((await retour.boundingBox())!.y + 44).toBeLessThanOrEqual(640);
   await retour.click();
-  const titre = page.getByRole('heading', { level: 2, name: 'Les bases' });
+  const titre = page.getByTestId('prochaine-lecon');
   await expect(titre).toBeVisible();
-  // Pendant 4 s (la carte dure 3,2 s), jamais de carte sur le titre du chemin.
+  // Pendant 4 s (la carte dure 3,2 s), jamais de carte sur le titre de la prochaine leçon (#652 : plus de chemin).
   const fin = Date.now() + 4000;
   while (Date.now() < fin) {
     const couvre = await page.evaluate(() => {
       const c = document.querySelector('[data-testid="fete-niveau"]')?.getBoundingClientRect();
-      const t = [...document.querySelectorAll('h2')].find((h) => h.textContent === 'Les bases')?.getBoundingClientRect();
+      const t = document.querySelector('[data-testid="prochaine-lecon"] .pas-texte b')?.getBoundingClientRect();
       return !!c && !!t && c.bottom > t.top && t.bottom > c.top;
     });
-    expect(couvre, 'la carte « Niveau 2 ! » couvre « Les bases »').toBe(false);
+    expect(couvre, 'la carte « Niveau 2 ! » couvre le titre de la prochaine leçon').toBe(false);
     await page.waitForTimeout(100);
   }
 });

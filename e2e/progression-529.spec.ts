@@ -59,7 +59,7 @@ test('course : la première course du jour avec un problème juste rapporte +15 
   await page.clock.install({ time: MIDI_PARIS });
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
-  await page.locator('[data-course]').click();
+  await page.getByTestId('entree-course').click();
   await page.getByRole('button', { name: 'C’est parti' }).click();
   await expect(course(page)).toBeVisible();
 
@@ -137,7 +137,8 @@ test('niveau 10 : la fête annonce le goban « Cerisier », qui se choisit dans 
   await attendrePierre(page, 'E5', 'noir');
   await expect(page.locator('.verdict').getByTestId('pastille-xp')).toContainText(/\+40\sXP/);
   await page.waitForTimeout(800);
-  await page.getByRole('navigation', { name: 'Navigation principale' }).getByRole('button', { name: 'Jouer' }).click();
+  // #646 : la sortie du problème (plein écran) ; la fête attendait la fin de l'exercice.
+  await page.getByRole('button', { name: 'Retour aux problèmes' }).click();
   const fete = page.getByTestId('fete-niveau');
   await expect(fete).toBeVisible();
   await expect(fete).toContainText(/Niveau\s10/);

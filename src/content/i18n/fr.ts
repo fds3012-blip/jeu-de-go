@@ -33,7 +33,7 @@ export const fr = {
   'titre.partagee': 'Partie partagée',
   'titre.placement': 'Ton niveau de départ',
   'titre.compte': 'Ton compte',
-  'titre.revisions': 'Révisions',
+  'titre.revisions': 'Rejouer tes erreurs',
   'titre.decouverte': 'Partie de découverte',
 
   // Accueil (#40, #119) : réplique de l'adversaire, action principale, tuiles, feuille « Changer »
@@ -47,7 +47,7 @@ export const fr = {
   'accueil.aujourdhui': 'Aujourd’hui',
   'accueil.leconSuivante': 'Leçon suivante',
   // #469 : révision espacée, carte secondaire dans « Aujourd'hui ».
-  'accueil.revisions.titre': 'Révisions ({n})',
+  'accueil.revisions.titre': 'Rejouer tes erreurs ({n})',
   'accueil.revisions.detail': 'Erreurs et problèmes ratés',
   'accueil.bulle.lecons': { one: 'Bravo pour ta première leçon ! On passe à une vraie partie ?', other: 'Bravo pour tes {n} leçons ! On passe à une vraie partie ?' },
   'accueil.bulle.rejouer': 'Te revoilà ! On rejoue sur le {plateau} ?',

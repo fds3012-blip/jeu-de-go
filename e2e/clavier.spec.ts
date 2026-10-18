@@ -176,12 +176,17 @@ test('curseur caché à la souris (:focus-visible), montré dès une flèche', a
   await toucherCta(page);
   const curseur = grille(page).locator('[data-curseur]');
   // Un clic pose la pierre et donne le focus au plateau, sans anneau jade.
+  const avant = await coupsJoues(page).count();
   await jouer(page, 'C3');
   await attendrePierre(page, 'C3', 'noir');
   await expect(grille(page)).toBeFocused();
   await expect(curseur).toHaveCount(0);
+  // #662 : Pomme répond de 60 à 250 ms après la pierre. Sa réponse, annoncée après la case, est la dernière annonce
+  // de la zone polie : on l'attend avant la flèche, sinon « Pomme a joué … » peut remplacer la case avant la lecture.
+  expect(await attendreReponse(page, avant)).toBe(false);
+  await expect(annonce(page)).toHaveText(/^Pomme a joué /);
   // Une flèche montre le curseur, et la case est annoncée.
   await page.keyboard.press('ArrowLeft');
-  await expect(curseur).toHaveCount(1);
-  await expect(annonce(page)).toHaveText(/^[A-J][1-9], (vide|pierre)/);
+  await expect(curseur).toHaveAttribute('data-curseur', 'D5');
+  await expect(annonce(page)).toHaveText(/^D5, (vide|pierre)/);
 });

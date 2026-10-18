@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { ouvrirTous, versProblemeSuivant } from './problemes';
 import { marquerGoDuJourFait } from './goDuJourFait';
 import { attendrePierre, jouer, plateau } from './plateau';
 
@@ -10,11 +11,10 @@ test('problèmes sans compte : erreur, bonne réponse, suite et problème suivan
   await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
 
   await expect(page.getByRole('heading', { name: /^Go du jour n°\s\d+$/ })).toBeVisible();
-  // Issue #196 : un écran, une action. Le Go du jour, un seul « Problème suivant », le palier en cours ; pas de grille ni de cadenas.
+  // Issue #196 : un écran, une action. #653 : le Go du jour en tête, puis le sommaire ; pas de grille ni de cadenas.
   await expect(page.getByRole('button', { name: 'Résoudre le Go du jour' })).toBeVisible();
-  await expect(page.getByRole('button', { name: /^Problème suivant / })).toHaveCount(1);
-  // #620 : tant que le Go du jour reste à faire, « Problème suivant » est une tuile à plat, sans relief.
-  await expect(page.locator('.tuiles-pb').getByRole('button', { name: /^Problème suivant / })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'S’entraîner' }).getByRole('button'))
+    .toHaveText(['Go du jourÀ faire', 'Rejouer tes erreurs', 'Course aux problèmes', 'Par thème']);
   await expect(page.locator('.cta')).toHaveCount(1);
   await expect(page.getByRole('button', { name: /^Problème \d+ : / })).toHaveCount(0);
   await expect(page.locator('svg.cadenas')).toHaveCount(0);
@@ -28,7 +28,7 @@ test('problèmes sans compte : erreur, bonne réponse, suite et problème suivan
   expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeLessThanOrEqual(2 * 844);
 
   // La grille est derrière un lien discret : les paliers ouverts seulement (le premier, pour un joueur neuf).
-  await page.getByRole('button', { name: 'Tous les problèmes' }).click();
+  await ouvrirTous(page);
   const miniatures = await page.getByRole('button', { name: /^Problème \d+ : / }).count();
   expect(miniatures).toBeGreaterThan(0);
   expect(miniatures).toBe(await page.getByRole('group', { name: /^Débutant/ }).locator('[data-probleme]').count());
@@ -81,7 +81,7 @@ test('problèmes sans compte : erreur, bonne réponse, suite et problème suivan
   // Le palier en cours dit « N réussis », sans total.
   await expect(page.locator('[data-palier-en-cours]')).toContainText(/\d+\sréussis?/);
   await expect(page.locator('[data-palier-en-cours]').getByText(/\d+\s\/\s\d+/)).toHaveCount(0);
-  await page.getByRole('button', { name: 'Tous les problèmes' }).click();
+  await ouvrirTous(page);
   await expect(page.getByRole('button', { name: /^Problème \d+ : Capture la pierre, réussi/ })).toBeVisible();
 });
 
@@ -93,7 +93,7 @@ test('paliers : Novice verrouillé, puis ouvert après les réussites', async ({
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
-  await page.getByRole('button', { name: 'Tous les problèmes' }).click();
+  await ouvrirTous(page);
   const debutant = page.getByRole('group', { name: /^Débutant/ });
   const ids = await debutant.locator('[data-probleme]').evaluateAll(els => els.map(e => e.getAttribute('data-probleme')!));
   expect(ids).toContain('b4');
@@ -102,8 +102,9 @@ test('paliers : Novice verrouillé, puis ouvert après les réussites', async ({
   await page.evaluate(v => localStorage.setItem('go.problemes.v1', JSON.stringify(v)), avant);
   await page.reload();
   await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
+  await versProblemeSuivant(page);
   await expect(page.getByRole('button', { name: /^Problème suivant / })).toBeVisible();
-  await page.getByRole('button', { name: 'Tous les problèmes' }).click();
+  await ouvrirTous(page);
 
   const novice = page.getByRole('group', { name: /^Novice/ });
   await expect(debutant).toHaveAttribute('data-reussis', String(seuil - 1));
@@ -140,7 +141,7 @@ test('paliers : Novice verrouillé, puis ouvert après les réussites', async ({
 test('problème : la réfutation se montre après l’erreur, puis on rejoue directement', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
-  await page.getByRole('button', { name: 'Tous les problèmes' }).click();
+  await ouvrirTous(page);
   await page.getByRole('button', { name: /^Problème \d+ : Capture la pierre/ }).click();
   await expect(plateau(page)).toBeVisible();
 

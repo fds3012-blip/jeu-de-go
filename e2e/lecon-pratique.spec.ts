@@ -19,7 +19,7 @@ test('fin de la leçon 1 : 3 problèmes de capture enchaînés, puis retour au c
   await expect(pratique).toHaveClass(/\bcta\b/);
   await expect(page.locator('.fin-lecon .cta')).toHaveCount(1);
   await expect(page.getByRole('button', { name: 'Leçon suivante' })).toHaveClass(/\blien\b/);
-  await expect(page.getByRole('button', { name: 'Retour au chemin' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Retour à Apprendre' })).toBeVisible();
   const cible = await pratique.boundingBox();
   expect(cible!.height).toBeGreaterThanOrEqual(44);
   await pratique.click();
@@ -39,11 +39,11 @@ test('fin de la leçon 1 : 3 problèmes de capture enchaînés, puis retour au c
   // Fin de la série. #233 (C8) : leçon 1 (30 + 20 première fois) et 3 problèmes (10 + 20 première fois, puis 10 et 10)
   // font 100 XP : le niveau 2 tombe à la fin de la première leçon et de son entraînement. Il a son écran à lui (#236),
   // entre la feuille « Bravo » et le chemin, où la leçon 2 attend.
-  await page.locator('.verdict').getByRole('button', { name: 'Retour au chemin' }).click();
+  await page.locator('.verdict').getByRole('button', { name: 'Retour à Apprendre' }).click();
   const ecranNiveau = page.getByTestId('niveau-atteint');
   await expect(ecranNiveau.getByRole('heading', { name: /Niveau\s2/ })).toBeVisible();
   expect(await page.evaluate(() => localStorage.getItem('go.xp.v1'))).toBe('100');
-  await ecranNiveau.getByRole('button', { name: 'Retour au chemin' }).click();
+  await ecranNiveau.getByRole('button', { name: 'Retour à Apprendre' }).click();
   await expect(page.getByRole('button', { name: 'Commencer la leçon : Atari' })).toBeVisible();
   const reussis = await page.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('go.problemes.v1') ?? '{}')));
   expect(reussis.sort()).toEqual(['a02', 'a03', 'n02']);
@@ -73,7 +73,7 @@ test('fin de chapitre : « Joue contre Pomme » en action principale, qui lance 
   // #16, lot X : la leçon 7 a sa série (fin de partie et comptage), mais en fin de chapitre elle reste un lien
   // secondaire (#220) : Pomme garde seul le relief.
   await expect(page.getByRole('button', { name: /^Entraîne-toi\s:\s3 problèmes sur ce thème, Finir la partie, Compter$/ })).toHaveClass(/\blien\b/);
-  await expect(page.getByRole('button', { name: 'Retour au chemin' })).toHaveClass(/\blien\b/);
+  await expect(page.getByRole('button', { name: 'Retour à Apprendre' })).toHaveClass(/\blien\b/);
   await jouerPomme.click();
   await expect(page.locator('main.app-partie')).toBeVisible();
   // #640 : la fin de leçon reste montée, cachée, sous la partie (sa sortie la retrouve).
@@ -99,7 +99,7 @@ test('fin de la leçon 3, toutes les autres faites : fin de chapitre, et un prob
   await expect(page.locator('.serie-pratique')).toHaveAttribute('data-serie', 'c1 n06 i09');
   await expect(page.locator('.serie-pratique')).toHaveAttribute('data-rang', '1');
   // Le retour du lecteur ramène au chemin.
-  await page.getByRole('button', { name: 'Retour au chemin' }).first().click();
+  await page.getByRole('button', { name: 'Retour à Apprendre' }).first().click();
   // #602 : sur le chemin, le chapitre fini se lit au tampon d'or (la phrase de fin est sur l'écran de fin de leçon).
   await expect(page.getByRole('img', { name: 'Chapitre terminé : Les bases' })).toBeVisible();
 });

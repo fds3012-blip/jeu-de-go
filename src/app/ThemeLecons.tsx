@@ -2,7 +2,10 @@
 // Le nom du thème, une phrase qui explique la notion, les leçons du thème (le sceau de la leçon quand elle est faite,
 // #627), et une seule action en relief :
 // « S'entraîner sur ce thème », la série de 3 problèmes de la fin de leçon (SeriePratique), restreinte à ce thème.
-// Aucun nouveau contenu de go : les leçons viennent du chemin, les problèmes de la banque (src/content/themes.ts).
+// Aucun nouveau contenu de go : les leçons viennent du programme, les problèmes de la banque (src/content/themes.ts).
+// #652 : c'est désormais la seule porte vers une leçon qui n'est pas la prochaine. Chaque ligne garde l'accès d'avant
+// (#343) : sans compte, une leçon après la 3e porte le verrou « Avec un compte », reste touchable, et `onOpen` ouvre la
+// création de compte ; son nom accessible dit son rang dans le programme et son état (« Leçon 4 : Le ko, avec un compte »).
 import { useState } from 'react';
 import { LESSONS } from '../content/lessons';
 import type { Theme } from '../content/themesLecons';
@@ -13,19 +16,24 @@ import { VignetteLecon } from '../ui/VignetteLecon';
 import { fr } from '../ui/typo';
 import { readLocal } from './hooks';
 import { leconsDuTheme } from './themesApprendre';
+import { etapes, nomLecon } from './apprendre';
+import { MentionCompte } from '../ui/MentionCompte';
 import { t } from '../content/i18n/secondaires';
 import '../ui/apprendre.css';
 
 /** Problèmes réussis sur l'appareil : même clé que SOLVED_KEY de Puzzles.tsx (vérifié par ecrans.test.ts). */
 const SOLVED_KEY = 'go.problemes.v1';
 
-export function ThemeLecons({ theme, progress, onOpen, onRetour, onSerie }: {
+export function ThemeLecons({ theme, progress, onOpen, onRetour, onSerie, compteRequis = () => false }: {
   theme: Theme; progress: Record<string, number>;
+  /** #343 : vrai si la leçon de ce rang (0 = leçon 1) demande un compte (même règle que la carte de la prochaine leçon). */
+  compteRequis?: (rang: number) => boolean;
   onOpen: (id: string) => void; onRetour: () => void;
   /** La série est prête : App vérifie le compte (essai sans compte, #343) puis l'ouvre. */
   onSerie: (problemes: Puzzle[]) => void;
 }) {
   const lecons = leconsDuTheme(theme, LESSONS);
+  const etape = new Map(etapes(LESSONS, progress).map(e => [e.lecon.id, e]));
   const faites = lecons.filter(l => (progress[l.id] ?? 0) >= l.steps.length).length;
   const nom = t(`theme.${theme}`);
   const [etat, setEtat] = useState<'pret' | 'charge' | 'erreur'>('pret');
@@ -52,13 +60,13 @@ export function ThemeLecons({ theme, progress, onOpen, onRetour, onSerie }: {
         </h3>
         <ul className="theme-lecons-liste">
           {lecons.map(l => {
-            const faite = (progress[l.id] ?? 0) >= l.steps.length;
+            const e = etape.get(l.id)!, faite = e.etat === 'faite', compte = !faite && compteRequis(e.rang - 1);
             return (
               <li key={l.id}>
-                <button type="button" className="theme-lecon" data-faite={faite || undefined} onClick={() => onOpen(l.id)}
-                  aria-label={`${fr(l.title)}, ${t(faite ? 'apprendre.theme.faite' : 'apprendre.theme.afaire')}`}>
+                <button type="button" className="theme-lecon" data-faite={faite || undefined} data-etat={e.etat} data-compte={compte || undefined}
+                  onClick={() => onOpen(l.id)} aria-label={fr(nomLecon(e, compte))}>
                   <VignetteLecon id={l.id} taille={44} pale={!(progress[l.id] ?? 0)} />
-                  <span className="theme-lecon-texte" aria-hidden="true"><b>{fr(l.title)}</b><small>{fr(l.desc)}</small></span>
+                  <span className="theme-lecon-texte" aria-hidden="true"><b>{fr(l.title)}</b><small>{fr(l.desc)}</small>{compte && <MentionCompte />}</span>
                   {/* #627 (V12, P2) : une leçon faite porte son sceau, comme à la fin de la leçon ; plus de pastille texte.
                       L'état se lit aussi dans le nom accessible (« Faite », « À faire »), jamais par la couleur seule. */}
                   {faite && <SceauLecon id={l.id} taille={32} className="theme-lecon-sceau" />}

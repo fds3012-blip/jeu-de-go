@@ -1,4 +1,5 @@
 import { mkdirSync } from 'node:fs';
+import { onglet } from './onglet';
 import { join } from 'node:path';
 import { gunzipSync } from 'node:zlib';
 import AxeBuilder from '@axe-core/playwright';
@@ -316,13 +317,13 @@ test.describe('les trois réponses', () => {
 test.describe('« Revoir les règles »', () => {
   test.use({ reducedMotion: 'reduce' });
 
-  test('en tête de « Les bases » (Apprendre), et dans l’aide ; « Retour » ramène là d’où l’on vient', async ({ page }) => {
+  test('dans le sommaire d’Apprendre, et dans l’aide ; « Retour » ramène là d’où l’on vient', async ({ page }) => {
     await page.goto('/');
     await page.getByRole('navigation').getByRole('button', { name: /Apprendre/ }).click();
     const lien = page.getByTestId('revoir-regles');
     await expect(lien).toHaveText(/Revoir les règles/);
-    // En tête du chapitre « Les bases », avant sa première leçon.
-    expect(await lien.evaluate(b => b.closest('[data-chapitre]')?.getAttribute('data-chapitre'))).toBe('c1');
+    // #652 : une entrée du sommaire, avec Ouvertures et Jouer avec Mochi.
+    await expect(lien).toHaveAttribute('data-entree', 'regles');
     await lien.click();
     await expect(page.locator('.lecteur-titre')).toHaveText('Les règles du go');
     await expect(plateau(page, 7)).toBeVisible();
@@ -367,8 +368,8 @@ test.describe('mesure', () => {
       await page.getByTestId('je-sais').click();
     }
     await expect(page.getByTestId('fin-intro')).toBeVisible();
-    // Puis « Revoir les règles » depuis Apprendre, quitté au 1er écran.
-    await page.getByRole('navigation').getByRole('button', { name: /Apprendre/ }).click();
+    // Puis « Revoir les règles » depuis Apprendre, quitté au 1er écran (#646 : on sort d'abord de la fin, plein écran).
+    await onglet(page, /Apprendre/);
     await page.getByTestId('revoir-regles').click();
     await expect(plateau(page, 7)).toBeVisible();
     await page.getByRole('button', { name: 'Quitter' }).click();

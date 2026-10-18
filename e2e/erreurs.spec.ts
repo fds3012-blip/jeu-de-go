@@ -1,8 +1,9 @@
 import { expect, test, type Page } from '@playwright/test';
-import { attendrePierre, jouer, plateau } from './plateau';
+import { attendrePierre, jouer } from './plateau';
 
-// Issue #77 : « Tes erreurs à rejouer ». Le localStorage est prérempli avec une erreur de partie (position avant
-// le coup, Noir au trait, meilleur coup de KataGo E3 = index 6 * 9 + 4). On la rejoue : réussie, la section disparaît.
+// Issue #77, #653 : « Rejouer tes erreurs ». Le localStorage est prérempli avec une erreur de partie (position avant
+// le coup, Noir au trait, meilleur coup de KataGo E3 = index 6 * 9 + 4). On la rejoue dans la séance : réussie, le
+// nombre disparaît de l'entrée du sommaire.
 
 const ROWS = ['.........', '.........', '..O...X..', '.........', '....X....', '.........', '..X...O..', '.........', '.........'];
 const ERREUR = {
@@ -21,67 +22,46 @@ async function ouvrirProblemes(page: Page) {
   await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
 }
 
-test('erreur à rejouer : la section apparaît, on résout, elle disparaît', async ({ page }) => {
+test('erreur à rejouer : l’entrée dit 1, la séance la rejoue, le nombre disparaît', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await preremplir(page);
   await ouvrirProblemes(page);
 
-  const section = page.getByRole('heading', { name: /Tes erreurs à rejouer/ });
-  await expect(section).toBeVisible();
-  await expect(page.locator('.mes-erreurs-compteur')).toBeVisible();
-  await expect(page.locator('.mes-erreurs-compteur .sr-only')).toHaveText('1 à rejouer');
-
-  await page.getByRole('button', { name: 'Rejouer : Ta partie contre Pomme, coup 14' }).click();
-  await expect(page.getByRole('dialog')).toBeVisible();
+  // #653 : « Rejouer tes erreurs », entrée du sommaire ; le nombre d'erreurs dues aujourd'hui, en pastille.
+  const entree = page.getByTestId('entree-erreurs');
+  await expect(entree).toHaveAccessibleName('Rejouer tes erreurs, 1 à rejouer');
+  await expect(entree.locator('.sommaire-etat')).toHaveText('1');
+  await entree.click();
+  await expect(page.getByRole('heading', { name: 'Ta partie contre Pomme, coup 14' })).toBeVisible();
   await expect(page.getByText(/seul le coup de KataGo est accepté/)).toBeVisible();
 
   await jouer(page, 'E3');
   await expect(page.getByText('Bravo, c’est le coup de KataGo !')).toBeVisible();
   await attendrePierre(page, 'E3', 'noir');
+  await page.getByRole('button', { name: 'Voir mon bilan' }).click();
+  await page.getByRole('button', { name: 'Terminer' }).click();
 
-  await page.getByRole('button', { name: 'Retour aux problèmes' }).first().click();
-  await expect(page.getByRole('dialog')).toHaveCount(0);
-  await expect(section).toHaveCount(0);
-  await expect(page.getByRole('heading', { name: 'Entraînement', level: 2 })).toBeVisible();
+  await expect(page.getByTestId('problemes-sommaire')).toBeVisible();
+  await expect(page.getByTestId('entree-erreurs')).toHaveAccessibleName('Rejouer tes erreurs');
+  await expect(page.getByTestId('entree-erreurs').locator('.sommaire-etat')).toHaveCount(0);
 
   // Après rechargement, elle ne revient pas.
   await page.reload();
   await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
-  await expect(page.getByRole('heading', { name: 'Entraînement', level: 2 })).toBeVisible();
-  await expect(section).toHaveCount(0);
+  await expect(page.getByTestId('entree-erreurs')).toHaveAccessibleName('Rejouer tes erreurs');
 });
 
 test('erreur ratée : elle revient le lendemain', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await preremplir(page);
   await ouvrirProblemes(page);
-  await page.getByRole('button', { name: 'Rejouer : Ta partie contre Pomme, coup 14' }).click();
+  await page.getByTestId('entree-erreurs').click();
   await jouer(page, 'A1');
   await expect(page.getByText('Pas celui-là. Cherche encore.')).toBeVisible();
-  await page.getByRole('button', { name: 'Retour aux problèmes' }).first().click();
-  await expect(page.getByRole('heading', { name: /Tes erreurs à rejouer/ })).toHaveCount(0);
+  await page.goBack();
+  await expect(page.getByTestId('problemes-sommaire')).toBeVisible();
   const gardees = await page.evaluate(() => JSON.parse(localStorage.getItem('go.erreurs.v1') ?? '[]'));
   expect(gardees).toHaveLength(1);
-  expect(gardees[0].rates).toBe(1);
   const demain = await page.evaluate(() => { const d = new Date(); d.setDate(d.getDate() + 1); return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-'); });
   expect(gardees[0].prochain).toBe(demain);
-});
-
-// Captures (docs/design/v2/captures/erreurs-*.png) : `CAPTURES=1 npx playwright test e2e/erreurs.spec.ts`.
-test('captures des erreurs à rejouer, sombre et clair', async ({ page }) => {
-  test.skip(!process.env.CAPTURES, 'captures à la demande');
-  await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.addInitScript(e => localStorage.setItem('go.erreurs.v1', JSON.stringify([e, { ...e, id: 'erreur-2', coup: 22, adversaire: 'Bambou' }])), ERREUR);
-  for (const theme of ['dark', 'light'] as const) {
-    await page.emulateMedia({ colorScheme: theme, reducedMotion: 'reduce' });
-    const nom = theme === 'dark' ? 'sombre' : 'clair';
-    await ouvrirProblemes(page);
-    const titre = page.getByRole('heading', { name: /Tes erreurs à rejouer/ });
-    await titre.scrollIntoViewIfNeeded();
-    await page.evaluate(() => window.scrollBy(0, -16));
-    await page.screenshot({ path: `docs/design/v2/captures/erreurs-section-${nom}.png` });
-    await page.getByRole('button', { name: 'Rejouer : Ta partie contre Pomme, coup 14' }).click();
-    await expect(plateau(page)).toBeVisible();
-    await page.screenshot({ path: `docs/design/v2/captures/erreurs-probleme-${nom}.png` });
-  }
 });

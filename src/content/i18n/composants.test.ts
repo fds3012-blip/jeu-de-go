@@ -47,7 +47,6 @@ describe('français identique aux textes d’origine', () => {
     expect(titreErreur({ coup: 3 })).toBe('Ta partie à deux, coup 3');
     expect(consigneErreur({ reponses: [1, 2] })).toBe('Trouve mieux que ton coup.');
     expect(consigneErreur({ reponses: [1] })).toBe('Trouve mieux que ton coup : seul le coup de KataGo est accepté.');
-    expect(traduire('fr', 'erreurs.aide')).toBe('Des positions de tes parties. Trouve le coup que KataGo conseillait.');
   });
 
   it('texte partagé du Go du jour', () => {

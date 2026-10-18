@@ -5,7 +5,8 @@ import { useMemo, useRef, useState } from 'react';
 import type { Puzzle } from '../data/puzzles';
 import { checkAnswer, startOf } from '../data/puzzles';
 import { Board } from '../ui/Board';
-import { ParoleMochi, Verdict } from '../ui/Lecteur';
+import { ParoleMochi, Retour, Verdict } from '../ui/Lecteur';
+import { useTitreFocus } from '../ui/titreFocus';
 import { Sceau } from '../ui/Sceau';
 import { Portrait, PortraitMochi } from '../ui/Portrait';
 import { SceauLecon } from '../ui/SceauLecon';
@@ -32,6 +33,8 @@ interface Props {
   onTermine: (fin: Fin) => void;
   /** Passé avant la fin ; `etape` : problèmes déjà joués. */
   onPasser: (etape: number) => void;
+  /** #646 (A11) : « ‹ », la sortie qui n'enregistre rien (« plus tard ») ; le placement reste proposé. */
+  onQuitter: () => void;
   onJouer: (id: Opponent['id']) => void;
   onLecons: (kyu: number | null) => void;
 }
@@ -42,7 +45,7 @@ export function Placement(p: Props) {
   const problemes = p.problemes ?? PROBLEMES_LOCAUX;
   const pz = useMemo(() => (essais.length < NB_PROBLEMES ? choisirPlacement(problemes, essais) : undefined), [problemes, essais]);
 
-  if (fin) return <Resultat fin={fin} chapitre={p.chapitre(fin.bilan.kyu)} onJouer={() => p.onJouer(fin.adversaire.id)} onLecons={() => p.onLecons(fin.bilan.kyu)} />;
+  if (fin) return <Resultat fin={fin} chapitre={p.chapitre(fin.bilan.kyu)} onJouer={() => p.onJouer(fin.adversaire.id)} onLecons={() => p.onLecons(fin.bilan.kyu)} onQuitter={p.onQuitter} />;
   if (!pz) return null;
 
   const suivant = (e: Essai) => {
@@ -58,13 +61,14 @@ export function Placement(p: Props) {
 
   return (
     <ProblemePlacement key={pz.id} puzzle={pz} rang={essais.length + 1} confirmTouch={p.confirmTouch}
-      dernier={essais.length + 1 === NB_PROBLEMES} onPasser={() => p.onPasser(essais.length)} onSuivant={suivant} />
+      dernier={essais.length + 1 === NB_PROBLEMES} onPasser={() => p.onPasser(essais.length)} onQuitter={p.onQuitter} onSuivant={suivant} />
   );
 }
 
-function ProblemePlacement({ puzzle, rang, confirmTouch, dernier, onPasser, onSuivant }: {
-  puzzle: Puzzle; rang: number; confirmTouch: boolean; dernier: boolean; onPasser: () => void; onSuivant: (e: Essai) => void;
+function ProblemePlacement({ puzzle, rang, confirmTouch, dernier, onPasser, onQuitter, onSuivant }: {
+  puzzle: Puzzle; rang: number; confirmTouch: boolean; dernier: boolean; onPasser: () => void; onQuitter: () => void; onSuivant: (e: Essai) => void;
 }) {
+  const titre = useTitreFocus();
   const start = useMemo(() => startOf(puzzle), [puzzle]);
   const [board, setBoard] = useState(start.pos.board);
   const [coup, setCoup] = useState<{ p: number; ok: boolean } | null>(null);
@@ -89,6 +93,7 @@ function ProblemePlacement({ puzzle, rang, confirmTouch, dernier, onPasser, onSu
   return (
     <div className="lecteur placement" data-probleme={puzzle.id} data-rang={rang}>
       <div className="lecteur-tete placement-tete">
+        <Retour label={t('placement.retour')} onClick={onQuitter} />
         <div className="lecteur-nom">
           <small className="placement-etape">
             {t('placement.etape', { n: rang, total: NB_PROBLEMES })}
@@ -97,7 +102,7 @@ function ProblemePlacement({ puzzle, rang, confirmTouch, dernier, onPasser, onSu
               {Array.from({ length: NB_PROBLEMES }, (_, i) => <i key={i} className={i < rang ? 'fait' : undefined} />)}
             </span>
           </small>
-          <h2>{puzzle.title}</h2>
+          <h2 ref={titre} tabIndex={-1}>{puzzle.title}</h2>
         </div>
         <button type="button" className="lien placement-passer" aria-label={t('placement.passerAria')} onClick={onPasser}>{t('placement.passer')}</button>
       </div>
@@ -138,14 +143,17 @@ function EchelleKyu({ kyu, adversaire }: { kyu: number; adversaire: Opponent }) 
   );
 }
 
-function Resultat({ fin, chapitre, onJouer, onLecons }: { fin: Fin; chapitre: string; onJouer: () => void; onLecons: () => void }) {
+function Resultat({ fin, chapitre, onJouer, onLecons, onQuitter }: { fin: Fin; chapitre: string; onJouer: () => void; onLecons: () => void; onQuitter: () => void }) {
   const { bilan, adversaire } = fin;
+  const titre = useTitreFocus();
+  // #646 : la seule sortie, comme pendant les problèmes ; le niveau est déjà gardé.
+  const sortie = <div className="lecteur-tete placement-fin-tete"><Retour label={t('placement.retour')} onClick={onQuitter} /></div>;
   if (bilan.kyu === null) {
     // Tout raté : pas de niveau annoncé, pas de reproche. La leçon 1, puis la partie.
     return (
-      <section className="placement-fin" aria-labelledby="placement-titre" data-testid="placement-fin">
+      <>{sortie}<section className="placement-fin" aria-labelledby="placement-titre" data-testid="placement-fin">
         <PortraitMochi humeur="content" taille={88} decoratif className="placement-mochi" />
-        <h2 id="placement-titre">{t('placement.basesTitre')}</h2>
+        <h2 id="placement-titre" ref={titre} tabIndex={-1}>{t('placement.basesTitre')}</h2>
         <p className="placement-phrase">{fr(t('placement.basesTexte'))}</p>
         {/* Audit du 02/10 (n° 2) : ce qui attend, plutôt qu'un écran aux deux tiers vide. Trois sceaux, trois titres. */}
         <div className="placement-programme">
@@ -155,13 +163,13 @@ function Resultat({ fin, chapitre, onJouer, onLecons }: { fin: Fin; chapitre: st
           </ol>
         </div>
         <button type="button" className="cta" onClick={onLecons}>{t('placement.lecon1')}</button>
-      </section>
+      </section></>
     );
   }
   return (
-    <section className="placement-fin" aria-labelledby="placement-titre" data-testid="placement-fin" data-kyu={bilan.kyu}>
+    <>{sortie}<section className="placement-fin" aria-labelledby="placement-titre" data-testid="placement-fin" data-kyu={bilan.kyu}>
       <p className="placement-surtitre">{t('placement.titre')}</p>
-      <h2 id="placement-titre" className="placement-kyu">{fr(t('placement.kyu', { kyu: bilan.kyu }))}</h2>
+      <h2 id="placement-titre" className="placement-kyu" ref={titre} tabIndex={-1}>{fr(t('placement.kyu', { kyu: bilan.kyu }))}</h2>
       <p className="placement-explique">{fr(t('placement.kyuExplique'))}</p>
       <EchelleKyu kyu={bilan.kyu} adversaire={adversaire} />
       <div className="placement-adversaire">
@@ -172,6 +180,6 @@ function Resultat({ fin, chapitre, onJouer, onLecons }: { fin: Fin; chapitre: st
         <Sceau id={adversaire.id} taille={30} />{t('placement.jouerContre', { nom: adversaire.nom })}
       </button>
       <button type="button" className="lien placement-lecons" onClick={onLecons}>{fr(t('placement.chapitre', { titre: chapitre }))}</button>
-    </section>
+    </section></>
   );
 }

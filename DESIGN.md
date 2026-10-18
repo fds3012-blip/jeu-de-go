@@ -276,7 +276,7 @@ Grille de 4 px, vérifiée par `tokens.test.ts` : `--space-1` 4, `--space-2` 8, 
 
 ### Colonne et cadre
 - Colonne unique centrée, `max-width: var(--largeur-max)` (560 px) sous 600 px de large. Les maquettes sont en 390 × 844 (`--maquette-l`, `--maquette-h`).
-- À partir de 600 px, `.app` va jusqu'à `--largeur-contenu` (720 px), puis `--largeur-large` (1080 px) à partir de 1024 px ; un paragraphe s'arrête à `--mesure` (65 signes) et un bouton principal dans le flux à 560 px. Jouer et les activités (un goban qu'on touche) gardent 560 px jusqu'aux lots V5, V6 et V10 (#629, lot V7).
+- À partir de 600 px, `.app` va jusqu'à `--largeur-contenu` (720 px), puis `--largeur-large` (1080 px) à partir de 1024 px ; un paragraphe s'arrête à `--mesure` (65 signes) et un bouton principal dans le flux à 560 px. Les activités (un goban qu'on touche) gardent 560 px en portrait (#629, lot V7) ; en paysage, elles passent en deux zones (#649, lot V6, ci-dessous). Jouer, en paysage à partir de 600 px de large, passe en deux zones (#648, lot V10) : le goban à gauche, à la hauteur de l'écran, et le bloc d'action (bouton, modes, tuiles du jour) à droite, de 18 à 22,5rem, aligné sur le haut du goban ; en portrait, la colonne de 560 px ne change pas. Les activités à goban (partie, fin, revue, leçon, règles, découverte, problème, placement, révisions, course), dans la même requête, passent aussi en deux zones (#649, lot V6, `src/ui/paysage.css`, chargée avec leurs écrans) : le goban à gauche vaut `min(hauteur utile, largeur moins le panneau)`, le panneau à droite fait de 20 à 24rem et se termine par l'action (barre d'actions, verdict, « Suivant ») ; les parties en ligne gardent leur colonne pour l'instant.
 - `.app` : `padding: 12px 16px`, plus 150 px en bas pour le bouton fixe et la barre.
 - Le bouton principal seul (`.cta`) est fixé en bas, au-dessus de la barre : `bottom: calc(74px + var(--relief) + env(safe-area-inset-bottom))`, largeur `min(528px, 100% − 32px)`. Avec des actions secondaires, il vit dans `.dock` (grille, écart `8px + relief`).
 - En partie, le plateau déborde la gouttière (`margin: 0 calc(4px − var(--gouttiere))`) : il prend presque toute la largeur.
@@ -284,9 +284,9 @@ Grille de 4 px, vérifiée par `tokens.test.ts` : `--space-1` 4, `--space-2` 8, 
 ### En-tête et barre du bas (`docs/ux/navigation.md`)
 | Famille d'écran | En-tête | Barre du bas |
 |---|---|---|
-| Accueil, Apprendre, Problèmes, Profil | Logo « Mochi Go » | Oui |
+| Accueil, Apprendre, Problèmes, Profil | Logo « Mochi Go » | Oui (latérale à partir de 1024 px) |
 | Écran de tâche (en ligne, défi, revue, réglages, sous-vues du Profil) | Barre « ‹ titre » (`EnteteEcran`, `BoutonRetour.tsx`) | Oui |
-| Leçon, problème | Barre du lecteur | Oui |
+| Activité : leçon, problème, course, découverte, règles, placement, révisions (#646) | Barre du lecteur, « ‹ » seule sortie | Non |
 | Partie (ordi, à deux, en ligne) et sa fin, sa revue | Aucun : plein écran | Non |
 | Compte bloquant | Aucun, une seule action | Non |
 
@@ -345,9 +345,10 @@ Lumière : `--halo`, un dégradé radial doré en haut de `body` (11 % d'or en s
 ### Tuiles et choix
 - **`.card`** : `--surface`, rayon 16 px, `padding: 14px 16px`, sans bordure.
 - **`.tuile`** (accueil, « Aujourd'hui ») : hauteur 68 px au moins, titre Bricolage 700 en 16 px, détail en `--muted` 13 px, vignette (mini-goban 44 ou 60 px) à gauche.
-- **`.tuile-pb`** (Problèmes, #620) : tuile secondaire à plat, sans bordure, 64 px au moins, visuel de 40 px (mini-goban, chrono), titre Bricolage 700 en `--fs-m`, détail en `--muted`. Groupées dans `.tuiles-pb`. Une seule carte d'action en tête de Problèmes : le Go du jour à faire, puis « Problème suivant » ; l'autre devient une tuile.
+- **Problèmes** (#620, #653) : une seule carte d'action en tête, le Go du jour à faire, puis « Problème suivant » ; dessous, le sommaire de quatre entrées `.sommaire-entree` (Go du jour, Rejouer tes erreurs, Course aux problèmes, Par thème), qui remplace les tuiles `.tuile-pb`.
 - **`.ouv-carte`** (Ouvertures, #626) : carte visuelle à plat, en grille (`auto-fill` de 9,5rem : 2 colonnes à 390, une au zoom 200 %). Le mini-goban de la position après la séquence, dans la zone que montre le lecteur (`MiniGoban fenetre`), puis le nom et une ligne courte ; l'idée complète, le nombre de coups et la preuve KataGo sont dans l'écran de l'ouverture. Taille du plateau en `.seg`.
-- **`.theme-carte`** (« Par thème » d'Apprendre et de Problèmes, `GrilleThemes`, #625) : même traitement que `.tuile-pb` (à plat, sans bordure, 64 px, visuel de 40 px, titre Bricolage 700), plus une ligne de description et l'état (barre ou « Maîtrisé »). Une colonne groupée en un bloc sur téléphone ; dès que la grille a 30rem, cartes séparées en `auto-fill` de 13,5rem (2 colonnes dans 560 px, 3 dans 720, P8).
+- **`.theme-carte`** (« Par thème » d'Apprendre et de Problèmes, `GrilleThemes`, #625) : même traitement que `.sommaire-entree` (à plat, sans bordure, 64 px, visuel de 40 px, titre Bricolage 700), plus une ligne de description et l'état (barre ou « Maîtrisé »). Une colonne groupée en un bloc sur téléphone ; dès que la grille a 30rem, cartes séparées en `auto-fill` de 13,5rem (2 colonnes dans 560 px, 3 dans 720, P8).
+- **`.sommaire-entree`** (`Sommaire`, règle A13, #652) : entrée d'un sommaire, même traitement que `.theme-carte` (à plat, 64 px, visuel de 40 px, nom Bricolage 700 en `--fs-m`), sans ligne de description (E6 : elle est dans le détail). Un état court à droite, en pilule : or (`--or`, texte `--on-accent`) pour ce qui attend le joueur, `--surface-2` sinon. Groupées en un bloc sur téléphone, en cartes séparées dès 36rem. Un petit titre de groupe (`--muted`, 14 px, 700) seulement quand plusieurs groupes se suivent (Profil).
 - **`.mode`** (autres façons de jouer) : au trait, sans fond, icône en `--accent-texte`, nom en Bricolage 700 14 px. Un point d'or de 9 px quand un ami attend ton coup.
 - **`.seg`** (choix exclusif) : rail `--surface`, rayon 12 px ; le choix actif est une pastille inversée (`--text` sur `--bg`), 44 px de haut. Jamais pour deux bascules indépendantes.
 - **`.feedback`, `.notice`** : une teinte mêlée à la surface (`color-mix`, jade 16 %, hanko 16 % ou or 12 %), rayon 12 px, sans liseré.
@@ -378,6 +379,7 @@ Lumière : `--halo`, un dégradé radial doré en haut de `body` (11 % d'or en s
 
 ### Navigation et feuilles
 - **Barre du bas** (`.nav`, `IconesNav.tsx`) : `--barre`, 60 px, icônes de 28 px. Inactif : encre `--muted`, pierres à plat. Actif : pierres en matière, libellé 700 en `--text`, une pièce d'accent et un point de 5 px de la couleur de l'onglet, `aria-current="page"`.
+- **Barre latérale** (même `.nav`, à partir de 1024 px, #648) : à gauche, `--rail-l` (88 px) de large, filet `--line` à droite ; les quatre onglets dans le même ordre, en colonne, 72 px de haut, libellé sous l'icône. Même nom accessible, même `aria-current`. Ce qui se posait au-dessus de la barre du bas passe par `--nav-bas` (place prise en bas, 0 avec la barre latérale) et `--nav-gauche` (place prise à gauche) : bouton fixe, `.dock`, bandeau de consentement, verdict, pastille XP, fêtes. Absente pendant une partie et sur les écrans plein écran, comme la barre du bas.
 - **Feuille** (`.feuille`, `<dialog>`) : monte du bas, `--surface`, rayon haut 22 px, `max-height: 92dvh`, voile `--voile`.
 
 ### Attente et célébration
@@ -438,7 +440,7 @@ Vocabulaire. **Racine** : l'écran qu'ouvre un onglet. **Activité** : un écran
 
 | # | Règle | Comment on vérifie |
 |---|---|---|
-| A1 | **Quatre onglets, un rôle chacun**, dans cet ordre : Jouer (jouer une partie), Apprendre (comprendre : leçons, thèmes, ouvertures, découverte, guidée), Problèmes (s'entraîner : Go du jour, révisions, course, séries), Profil (toi : progrès, parties passées, amis, réglages, compte). Un nouvel écran va dans l'onglet dont le rôle le décrit. | Relire la phrase de rôle avant d'ajouter un écran ; la PR la cite. |
+| A1 | **Quatre onglets, un rôle chacun**, dans cet ordre : Jouer (jouer une partie), Apprendre (comprendre : leçons, thèmes, ouvertures, découverte, guidée), Problèmes (s'entraîner : Go du jour, Rejouer tes erreurs, course, séries), Profil (toi : progrès, parties passées, amis, réglages, compte). Un nouvel écran va dans l'onglet dont le rôle le décrit. | Relire la phrase de rôle avant d'ajouter un écran ; la PR la cite. |
 | A2 | **Une chose, une maison.** Chaque écran a un seul onglet parent. | Tableau « Une maison pour chaque chose » du document d'architecture, tenu à jour. |
 | A3 | **Un raccourci au plus** par chose hors de sa maison, et il est contextuel (Aujourd'hui, une fin de partie, l'aide). Un raccourci ouvre l'activité ou une feuille **par-dessus**, sans changer d'onglet. Les chiffres de résumé du Profil (série, leçons, badges) ne sont pas des raccourcis. | Chercher `setTab(` et `go(` hors de la barre du bas : aucun appel ne doit suivre un toucher dans un écran. |
 | A4 | **Profondeur 2 au plus** depuis la racine d'un onglet, hors activité. Un profil ouvert depuis un profil remplace le premier, il ne s'empile pas. | Compter les « ‹ » nécessaires pour revenir à la racine : 2 au plus. |
@@ -450,8 +452,9 @@ Vocabulaire. **Racine** : l'écran qu'ouvre un onglet. **Activité** : un écran
 | A10 | **L'onglet actif dit toujours où l'on est.** Il ne change que par un toucher sur la barre du bas, ou par une arrivée de l'extérieur (lien, notification). | Relever `aria-current="page"` avant et après chaque toucher dans un écran. |
 | A11 | **Pas d'impasse** : chaque écran a une sortie qui n'enregistre rien. « Passer », « Plus tard » ou « Abandonner » sont des choix en plus de la sortie, jamais à sa place. | Chaque écran a un `.retour` ou une croix ; l'action de sortie n'écrit rien dans `localStorage`. |
 | A12 | **Une feuille ne mène pas à une autre feuille**, et ne change pas d'onglet. Ce qui demande plus qu'une feuille devient un écran. | Revue de PR. |
+| A13 | **Sommaire puis détail** (hub-and-spoke). La racine d'Apprendre, de Problèmes et du Profil est un sommaire : la carte de l'action principale s'il y en a une, puis peu d'entrées (4 de même poids au plus par groupe, E3), chacune avec son visuel (mini-goban, icône, portrait), son nom sur une ligne et au plus un état court (« À faire », un nombre). Le contenu vit dans le détail, qui s'ouvre par-dessus avec « ‹ » (`EnteteEcran`) ; « ‹ » et le retour du système ramènent au sommaire, à l'entrée touchée (focus et défilement, A6). Pas de deuxième niveau d'entrées (A4). Modèle : les onglets Problèmes et « Plus » de chess.com (Florian, 18/10). Composant : `Sommaire` (`src/ui/Sommaire.tsx`). | Capture 390 × 844 de chaque racine : une carte au plus en relief, des groupes de 4 entrées au plus ; chaque entrée est un bouton dont le nom accessible commence par son nom visible ; `page.goBack()` depuis un détail retrouve l'entrée focalisée. |
 
-Ce que ces règles ne changent pas : les écrans de compte bloquants (« Choisis ton pseudo », accord aux conditions) gardent une seule action ; les arrivées par lien (défi, partie partagée, Go du jour, rappel) ouvrent directement leur écran ; la règle d'en-tête de `docs/ux/navigation.md` reste valable hors activités. La règle 3 de ce document (leçon et problème gardent la barre du bas) est remplacée par A5 dès que Florian a validé la décision F3.
+Ce que ces règles ne changent pas : les écrans de compte bloquants (« Choisis ton pseudo », accord aux conditions) gardent une seule action ; les arrivées par lien (défi, partie partagée, Go du jour, rappel) ouvrent directement leur écran ; la règle d'en-tête de `docs/ux/navigation.md` reste valable hors activités. Décision F3 validée par Florian : A5 et A6 s'appliquent à toutes les activités depuis #646 (lot N2) ; l'ancienne règle 3 de `navigation.md` (leçon et problème gardent la barre du bas) est inversée.
 
 ## Principes de Florian
 
@@ -504,7 +507,7 @@ Ce qu'on garde quand même : les règles E et A ; les libellés visibles (une ca
 ### Cibles
 - **Référence** : 390 × 844 (iPhone 12 à 15). Les captures de revue et les maquettes Figma sont à cette taille.
 - **Plancher** : 320 × 568 (iPhone SE) sans défilement horizontal ; aucun débord à 195 px de large ni à 200 % de texte.
-- **Plafond** : le contenu s'arrête à 720 px de 600 à 1023 px de large, à 1080 px au-delà (#629, lot V7) ; Jouer et les activités restent à 560 px. Le reste de P8 (barre latérale, activités en deux zones, téléphone en paysage) vient avec les lots V de `docs/ux/visuel-responsive-2026-10.md`.
+- **Plafond** : le contenu s'arrête à 720 px de 600 à 1023 px de large, à 1080 px au-delà (#629, lot V7) ; les activités restent à 560 px en portrait ; Jouer (#648) et les activités à goban (#649) passent en deux zones en paysage, téléphone tourné compris. La barre latérale est là à partir de 1024 px (#648, lot V8), cachée en activité.
 
 ### Points de rupture réellement utilisés
 | Requête | Ce qui change |
@@ -513,8 +516,10 @@ Ce qu'on garde quand même : les règles E et A ; les libellés visibles (une ca
 | `max-height: 640px` / `700px` / `600px` | Petite hauteur : les pictogrammes et les détails des modes cèdent leur place, les noms restent. |
 | `min-height: 760px` | Écran haut : Mochi plus grand dans la leçon (88 ou 96 px) et bulle en `--fs-l`. |
 | `min-width: 600px` | Large : le contenu passe à 720 px, le texte courant à `--mesure` ; Go du jour en deux zones (goban, problème) ; le plateau de la partie et le fond de la fin ne débordent plus la gouttière. |
-| `min-width: 1024px` | Très large : le contenu passe à 1080 px ; carte de la prochaine leçon en deux zones ; bouton principal dans le flux plafonné à 560 px. |
+| `min-width: 1024px` | Très large : barre latérale à gauche (#648, `nav.css`), contenu à sa droite jusqu'à 1080 px ; carte de la prochaine leçon en deux zones ; bouton principal dans le flux plafonné à 560 px. Au zoom 200 %, 1440 px valent 720 : la barre du bas revient. |
 | `min-width: 600px` (grilles, #630) | Vignettes de Tous les problèmes en `minmax(7rem, 1fr)` ; Statistiques en deux colonnes. |
+| `orientation: landscape` et `min-width: 600px` (activités, #649) | Activités à goban en deux zones (lot V6) : goban de la partie à 844 × 390 : 368 px au lieu de 260 (coupé) ; 1024 × 768 : 648 au lieu de 418 ; 1440 × 900 : 878 au lieu de 528. Sous 520 px de haut, la revue range sa courbe ; sous 480 px, la fin resserre sceau et titre. |
+| `orientation: landscape` et `min-width: 600px` | Jouer en deux zones (#648, lot V10) : goban à gauche (1024 × 768 : 520 px au lieu de 314 ; 1440 × 900 : 664 au lieu de 506 ; 844 × 390 : 244 au lieu de 168), bloc d'action à droite. |
 | `min-width: 1024px` (grilles, #630) | Profil : identité à gauche, menu à droite, badges sur toute la largeur ; Réglages : aperçu du goban fixe à gauche, groupes en deux colonnes. |
 | `@container (max-width: 5.4em)` sur un onglet | Libellé court (« Appr. », « Probl. ») au zoom 200 % ; le nom entier reste lu. |
 | `hover: hover` et `pointer: fine` | Survol, seulement à la souris. |

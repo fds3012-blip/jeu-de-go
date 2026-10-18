@@ -38,7 +38,6 @@ async function ouvrir(page: Page, id: string, titre: string) {
   await page.addInitScript(p => localStorage.setItem('go.lecons.v1', JSON.stringify(p)), avant(id));
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
-  await expect(page.getByRole('heading', { name: 'L’ouverture' })).toBeAttached();
   await page.locator('.cta-chemin').scrollIntoViewIfNeeded();
   await page.locator('.cta-chemin').click();
   await expect(page.getByRole('heading', { name: titre })).toBeVisible();

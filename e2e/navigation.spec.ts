@@ -1,6 +1,8 @@
 import { expect, test, type Browser, type Page } from '@playwright/test';
+import { onglet } from './onglet';
 import { brancher, fauxServeur, type FauxServeur } from './fauxSupabase';
 import { choisirMode, lancerADeux } from './plateau';
+import { versProblemeSuivant } from './problemes';
 
 // Issue #7 : première ouverture et navigation entre les onglets (viewport iPhone 390 × 844).
 
@@ -203,7 +205,8 @@ test('#465 : le titre de l’onglet suit l’écran', async ({ page }) => {
   await page.getByRole('button', { name: /^Leçon 1 :/ }).first().click();
   await expect(page).toHaveTitle(/^.+ · Mochi Go$/);
   await expect(page).not.toHaveTitle('Apprendre · Mochi Go');
-  await nav.getByRole('button', { name: 'Problèmes' }).click();
+  // #646 : la leçon est en plein écran ; on en sort par « ‹ » avant de changer d'onglet.
+  await onglet(page, 'Problèmes');
   await expect(page).toHaveTitle('Problèmes · Mochi Go');
   await nav.getByRole('button', { name: 'Profil' }).click();
   await expect(page).toHaveTitle('Profil · Mochi Go');
@@ -228,4 +231,44 @@ test('#606 : après plusieurs onglets, un retour du système ramène à Jouer', 
   await expect(page.locator('main.app-home .cta').first()).toBeVisible();
   expect(await page.evaluate(() => history.length)).toBeLessThanOrEqual(longueur);
   await expect.poll(() => page.evaluate(() => (history.state as { garde?: boolean } | null)?.garde ?? false)).toBe(false);
+});
+
+// #646 (lot N2, A5, A6, A7, A11) : une activité prend tout l'écran, sans barre du bas ; « ‹ », sa seule sortie, ramène
+// à l'écran d'origine (focus compris), et le retour du système fait de même.
+test('#646 : leçon, problème et placement en plein écran, une seule sortie vers l’écran d’origine', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/');
+  const nav = page.getByRole('navigation', { name: 'Navigation principale' });
+  const sorties = page.locator('.calque:not([hidden]) .retour');
+
+  // Leçon depuis le chemin : focus sur son titre à l'entrée, sur « Commencer » au retour.
+  await nav.getByRole('button', { name: 'Apprendre' }).click();
+  await page.getByRole('button', { name: 'Commencer' }).click();
+  await expect(page.locator('.lecteur-titre')).toBeFocused();
+  await expect(nav).toHaveCount(0);
+  await expect(sorties).toHaveCount(1);
+  await page.getByRole('button', { name: 'Retour à Apprendre' }).click();
+  await expect(nav.getByRole('button', { name: 'Apprendre' })).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByRole('button', { name: 'Commencer' })).toBeFocused();
+
+  // Problème : plein écran ; le retour du système ramène à la liste.
+  await nav.getByRole('button', { name: 'Problèmes' }).click();
+  await versProblemeSuivant(page);
+  await page.getByRole('button', { name: /^Problème suivant / }).click();
+  await expect(page.locator('.lecteur h2')).toBeFocused();
+  await expect(nav).toHaveCount(0);
+  await expect(sorties).toHaveCount(1);
+  await page.goBack();
+  await expect(nav.getByRole('button', { name: 'Problèmes' })).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByRole('button', { name: /^Problème suivant / })).toBeVisible();
+
+  // Placement : « ‹ » en plus de « Passer » ; il ne note rien, le lien de l'accueil reste.
+  await nav.getByRole('button', { name: 'Jouer' }).click();
+  await page.getByRole('button', { name: 'Je sais déjà jouer' }).click();
+  await expect(nav).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Passer les 3 problèmes' })).toBeVisible();
+  await page.getByRole('button', { name: 'Retour', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Je sais déjà jouer' })).toBeVisible();
+  await expect(nav).toBeVisible();
+  expect(await page.evaluate(() => localStorage.getItem('go.placement.v1'))).toBeNull();
 });

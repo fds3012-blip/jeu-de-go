@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { ouvrirTous } from './problemes';
 import { jouer } from './plateau';
 
 // #492 : « Rejouer mes erreurs », pourquoi la bonne réponse est la bonne. Deux erreurs gardées sur l'appareil :
@@ -186,7 +187,7 @@ test('#497 : une erreur gardée avant #497 (sans faits de KataGo) s’explique c
 async function reponseClassique(page: Page) {
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
-  await page.getByRole('button', { name: 'Tous les problèmes' }).click();
+  await ouvrirTous(page);
   await page.getByRole('button', { name: /^Problème \d+ : Première capture/ }).click();
   await jouer(page, 'A1');
   await page.getByRole('button', { name: 'Voir un indice' }).click();
