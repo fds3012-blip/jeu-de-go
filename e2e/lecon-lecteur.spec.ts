@@ -15,13 +15,14 @@ async function tientDansLecran(page: Page, ecran: string) {
   expect(m.haut, `défilement vertical : ${ecran}`).toBeLessThanOrEqual(m.vue + 1);
 }
 
-/** L'élément est entier à l'écran, au-dessus de la barre de navigation. */
+/** L'élément est entier à l'écran. #646 : la leçon est en plein écran, sans barre du bas. */
 async function visibleAuDessusDeLaNav(page: Page, selecteur: string) {
   const r = await page.locator(selecteur).first().boundingBox();
-  const nav = await page.getByRole('navigation').boundingBox();
+  await expect(page.getByRole('navigation')).toHaveCount(0);
+  const bas = await page.evaluate(() => innerHeight);
   expect(r, selecteur).not.toBeNull();
   expect(r!.y).toBeGreaterThanOrEqual(0);
-  expect(r!.y + r!.height).toBeLessThanOrEqual(nav!.y + 1);
+  expect(r!.y + r!.height).toBeLessThanOrEqual(bas + 1);
 }
 
 for (const [largeur, hauteur] of [[390, 844], [320, 568]] as const) {

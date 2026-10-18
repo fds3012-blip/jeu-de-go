@@ -77,8 +77,6 @@ const CONNU: Record<string, string> = {
   '844x390/Leçon/taille': 'lot V6',
   '844x390/Leçon/defilement': 'lot V6',
   '844x390/Problème/taille': 'lot V6',
-  // Tablette en paysage : la partie défile, ton bandeau passe sous la barre d'actions (capture 07).
-  '1024/Partie/defilement': 'lot V5',
 };
 
 /** Mesures de la vue : débordement, gobans, reliefs, défilement. */

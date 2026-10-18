@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { basLibre } from './onglet';
 import { attendrePierre, fantome, plateau, point } from './plateau';
 
 // Issue #400 : plateaux 13 × 13 à 320 px. Le lot X (#398) a apporté les premiers problèmes 13 × 13 (x04 à x08), qui
@@ -53,9 +54,9 @@ for (const [largeur, hauteur, theme] of [[320, 568, 'dark'], [320, 568, 'light']
     expect(pas).toBeGreaterThanOrEqual(largeur === 320 ? 20 : 25);
     const debord = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     expect(debord).toBeLessThanOrEqual(0);
-    // La consigne de Mochi reste au-dessus de la barre de navigation.
+    // La consigne de Mochi reste à l'écran (#646 : le problème est en plein écran, sans barre du bas).
     const bulle = (await page.locator('.lecteur-mochi .bubble').boundingBox())!;
-    const nav = (await page.getByRole('navigation').boundingBox())!;
+    const nav = { y: await basLibre(page) };
     expect(bulle.y + bulle.height).toBeLessThanOrEqual(nav.y);
 
     // 1re touche, à 6 px de D10 (doigt imprécis, moins d'une demi-case) : pierre fantôme et visée, rien n'est joué.

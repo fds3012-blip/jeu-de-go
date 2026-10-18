@@ -11,6 +11,7 @@
 // `intro_regles_quittee` si l'on sort avant.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { LessonPlayer } from './Lecon';
+import { Retour } from '../ui/Lecteur';
 import { leconIntro } from '../content/introRegles';
 import type { DepuisIntro, VersionIntro } from './connaitGo';
 import { PortraitMochi } from '../ui/Portrait';
@@ -27,7 +28,7 @@ interface Props {
   onDecouverte: () => void;
   /** Rappel express : partie contre le premier adversaire de l'échelle. */
   contre: { nom: string; lancer: () => void };
-  /** Sortie avant la fin, ou « Retour » à la fin d'une introduction ouverte depuis Apprendre ou l'aide. */
+  /** Sortie : « Quitter » pendant l'introduction, « ‹ » à sa fin (#646) ; là où elle a été ouverte. */
   onQuitter: () => void;
 }
 
@@ -39,7 +40,7 @@ export function IntroRegles({ version, depuis, confirmTouch, onDecouverte, contr
   // `parcours` et non `version` : `version` est ajoutée à chaque événement (commit de l'app).
   const mesure = { parcours: version, depuis };
 
-  if (fini) return <FinIntro version={version} depuis={depuis} onDecouverte={onDecouverte} contre={contre} onRetour={onQuitter} />;
+  if (fini) return <FinIntro version={version} onDecouverte={onDecouverte} contre={contre} onRetour={onQuitter} />;
   return (
     <LessonPlayer key={lecon.id} lesson={lecon} lecon={lecon} start={0} confirmTouch={confirmTouch} celebrer={false}
       onProgress={() => {}}
@@ -58,11 +59,13 @@ export function IntroRegles({ version, depuis, confirmTouch, onDecouverte, contr
  * Fin de l'introduction : Mochi, fier ; les 8 notions posées sur une rangée de goban (la dernière cerclée d'or) ; une
  * seule action en relief. Reprend la mise en page et le mouvement de la fin de leçon (lecon.css), mouvements réduits compris.
  */
-function FinIntro({ version, depuis, onDecouverte, contre, onRetour }: { version: VersionIntro; depuis: DepuisIntro; onDecouverte: () => void; contre: Props['contre']; onRetour: () => void }) {
+function FinIntro({ version, onDecouverte, contre, onRetour }: { version: VersionIntro; onDecouverte: () => void; contre: Props['contre']; onRetour: () => void }) {
   const titre = useRef<HTMLHeadingElement>(null);
   useEffect(() => { titre.current?.focus({ preventScroll: true }); }, []);
   const express = version === 'express';
-  return (
+  return (<>
+    {/* #646 : la seule sortie, en haut à gauche, comme pendant l'introduction : là où elle a été ouverte. */}
+    <div className="lecteur-tete"><Retour label={t('intro.fin.retour')} onClick={onRetour} /></div>
     <div className="lecteur fin-lecon fin-intro" data-testid="fin-intro">
       <div className="fin-sceau"><PortraitMochi humeur="fier" taille={96} decoratif /></div>
       <ol className="fin-gue" aria-hidden="true">
@@ -73,9 +76,7 @@ function FinIntro({ version, depuis, onDecouverte, contre, onRetour }: { version
       <div className="fin-actions">
         <button type="button" className="cta" data-action="decouverte" onClick={onDecouverte}>{t(express ? 'intro.fin.decouverte' : 'intro.fin.jouer')}</button>
         {express && <button type="button" className="lien" data-action="contre" onClick={contre.lancer}>{t('intro.fin.contre', { nom: contre.nom })}</button>}
-        {/* Ouverte depuis Apprendre ou l'aide (« Revoir les règles ») : on peut aussi revenir là où l'on était. */}
-        {depuis !== 'accueil' && <button type="button" className="lien" data-action="retour" onClick={onRetour}>{t('intro.fin.retour')}</button>}
       </div>
     </div>
-  );
+  </>);
 }

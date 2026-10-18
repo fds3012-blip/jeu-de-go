@@ -57,7 +57,6 @@
 .course-resultat-legende { margin-top: var(--space-1); color: var(--muted); font-size: var(--fs-l); font-weight: var(--fw-bold); }
 .course-nouveau { margin: var(--space-4) 0 0; padding: var(--space-2) var(--space-4); border-radius: var(--radius-pill);
   background: var(--recompense); color: var(--encre-jade); font-weight: var(--fw-bold); }
-.course-retour { display: block; margin: var(--space-2) auto 0; }
 
 /* ---------- Mouvement (seulement sans préférence de mouvements réduits) ---------- */
 @media (prefers-reduced-motion: no-preference) {

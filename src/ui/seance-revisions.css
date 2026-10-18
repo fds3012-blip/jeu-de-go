@@ -2,6 +2,8 @@
    « Rejouer mes erreurs » (rejouer-erreurs.css) font l'essentiel ; ici, seulement les points de la séance et l'échelle
    des intervalles. Aucun mouvement propre : les pastilles de fin s'animent déjà (mouvements réduits respectés). */
 .seance-en-cours > .etapes { justify-content: center; min-height: 24px; margin: 0 0 calc(-1 * var(--space-2)); }
+/* #646 : les étapes des révisions s'ajoutent au-dessus du problème : le plateau leur laisse leur place (apprendre.css). */
+.seance-en-cours { --plateau-reserve: 16px; }
 
 .seance-echelle { display: grid; gap: var(--space-2); width: 100%; margin-top: var(--space-2); }
 /* Cinq marches reliées par un trait : J+1 → J+30. Elles passent à la ligne au zoom 200 % ou à 320 px. */

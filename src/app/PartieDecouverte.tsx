@@ -15,6 +15,7 @@ import { Board, type BoardMarks } from '../ui/Board';
 import { C, M, vueDe } from '../ui/boardArt';
 import { PortraitMochi, type HumeurMochi } from '../ui/Portrait';
 import { Marque, Retour } from '../ui/Lecteur';
+import { useTitreFocus } from '../ui/titreFocus';
 import { Confettis } from '../ui/Confettis';
 import { XpEnLigne } from '../ui/PastilleXp';
 import { useExercice } from '../ui/celebrations';
@@ -56,6 +57,7 @@ export function PartieDecouverte({ onFin, onQuitter }: { onFin: () => void; onQu
   // Comme une leçon (#236) : toute la partie, écran de fin compris, est un exercice. L'XP se lit sur l'écran de fin ;
   // la fête d'un niveau franchi attend qu'on le quitte.
   useExercice(true);
+  const titre = useTitreFocus();
   const m = SCENARIO[i];
   const { pos, dernier } = useMemo(() => positionAvant(i), [i]);
 
@@ -207,7 +209,7 @@ export function PartieDecouverte({ onFin, onQuitter }: { onFin: () => void; onQu
             <span className="decouverte-barre" aria-hidden="true"><i style={{ width: `${(n / total) * 100}%` }} /></span>
             <small data-testid="decouverte-notions">{td('ecran.notions', { n, total })}</small>
           </div>
-          <h2 className="lecteur-titre"><span>{td(`notion.${notion}` as CleDecouverte)}</span></h2>
+          <h2 className="lecteur-titre" ref={titre} tabIndex={-1}><span>{td(`notion.${notion}` as CleDecouverte)}</span></h2>
         </div>
       </div>
 

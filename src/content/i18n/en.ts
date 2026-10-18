@@ -1388,6 +1388,7 @@ export const en = {
   'placement.etape': 'Puzzle {n} of {total}',
   'placement.passer': 'Skip',
   'placement.passerAria': 'Skip the 3 puzzles',
+  'placement.retour': 'Back',
   'placement.juste': 'Well spotted!',
   'placement.rate': 'That wasn’t it. No problem, on to the next one.',
   'placement.suivant': 'Next puzzle',
