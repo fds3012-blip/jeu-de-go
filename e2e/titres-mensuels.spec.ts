@@ -47,22 +47,17 @@ test('nouveau titre : fête une seule fois à l’ouverture, puis la ligne du Pr
   await page.waitForTimeout(1500);
   await expect(page.getByTestId('fete-titre')).toHaveCount(0);
 
-  // Profil : la ligne « Titre du mois dernier », son sceau ; jamais le titre d'un autre ; le Profil tient sans défiler.
+  // #654 : le titre est le visuel (son sceau) et l'état de l'entrée « Ta cote » du sommaire ; jamais le titre d'un autre.
   await page.getByRole('navigation').getByRole('button', { name: /^Profil/ }).click();
-  const ligne = page.getByTestId('ligne-titre');
-  await expect(ligne).toContainText('Titre du mois dernier');
+  const ligne = page.getByTestId('ligne-cote');
   await expect(ligne).toContainText('Expert du mois');
-  await expect(ligne).toContainText(new Intl.DateTimeFormat('fr-FR', { month: 'long', timeZone: 'UTC' }).format(new Date(`${mois.slice(0, 7)}-15T12:00:00Z`)).replace(/^./, c => c.toUpperCase()));
-  await expect(ligne).toHaveAccessibleName(/^Titre du mois dernier\s?: Expert du mois/);
+  const moisNom = new Intl.DateTimeFormat('fr-FR', { month: 'long', timeZone: 'UTC' }).format(new Date(`${mois.slice(0, 7)}-15T12:00:00Z`));
+  await expect(ligne).toHaveAccessibleName(new RegExp(`^Ta cote, Titre du mois dernier\\s?: Expert du mois, ${moisNom}\\. Top 5\\s% des joueurs actifs\\.$`));
   await expect(ligne).not.toContainText('Maître');
   await expect(ligne.locator('.sceau-titre[data-titre="expert"]')).toBeVisible();
-  // Le titre partage la ligne de « Ta cote » ; le toucher ouvre « Ta cote ».
-  await expect(ligne).toContainText(/Top 5\s% des joueurs actifs/);
   expect((await ligne.boundingBox())!.height).toBeGreaterThanOrEqual(44);
-  const { scroll, largeur } = await page.evaluate(() => ({ scroll: document.documentElement.scrollHeight, largeur: document.documentElement.scrollWidth }));
   if (process.env.CAPTURE_561) await page.screenshot({ path: process.env.CAPTURE_561, fullPage: true });
-  expect(largeur).toBeLessThanOrEqual(390);
-  expect(scroll).toBeLessThanOrEqual(844);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   await ligne.click();
   await expect(page.getByRole('heading', { name: 'Ta cote' })).toBeVisible();
   await ctx.close();
@@ -78,9 +73,9 @@ test('sans titre (garde-fou non atteint) : ni fête, ni ligne au Profil', async 
   await expect(page.getByRole('heading', { name: 'Profil', exact: true })).toBeVisible();
   await expect(page.getByTestId('ligne-cote')).toBeVisible();
   await page.waitForTimeout(1000);
-  await expect(page.getByTestId('ligne-titre')).toHaveCount(0);
+  await expect(page.getByTestId('ligne-cote').locator('.sceau-titre')).toHaveCount(0);
   await expect(page.getByTestId('fete-titre')).toHaveCount(0);
-  // #647 (F4) : sans titre, « Ta cote » occupe toute la ligne ; le niveau de départ est dedans.
+  // #647 (F4) : le niveau de départ est dans « Ta cote ».
   await expect(page.getByRole('button', { name: /Ton niveau de départ/ })).toHaveCount(0);
   await page.getByTestId('ligne-cote').click();
   await expect(page.getByRole('button', { name: /Ton niveau de départ/ })).toBeVisible();

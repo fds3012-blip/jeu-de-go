@@ -5,7 +5,7 @@
 // Règle de l'invitation : src/app/partageApp.ts (jamais avant la 2e partie finie, ni dans la première minute, au plus
 // une fois par semaine). Elle reste une action secondaire : jamais en relief, l'action principale de l'écran ne change pas.
 // Mesure : `app_partagee` (`depuis`, `methode`, `abandon`), `app_partage_proposee` (`depuis`). Aucune donnée personnelle.
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { EVENTS, secondsSinceOpen, track } from '../data/analytics';
 import { partagerApp, type EtatPartageApp as Etat } from '../app/envoiApp';
 import { langue } from '../content/i18n';
@@ -56,24 +56,17 @@ const IconePartager = ({ coche = false }: { coche?: boolean }) => (
 );
 
 /**
- * « Partager Mochi Go » du Profil, à droite du titre, à côté de « Aide » : toujours là, sans prendre de hauteur (le
- * Profil tient sans défiler en 390 × 844). Une action directe : feuille du téléphone, sinon « Lien copié » 2 s.
- * Sous 360 px, l'icône seule (le nom accessible reste « Partager Mochi Go »).
+ * « Partager Mochi Go » du Profil (#521) : depuis #654, une entrée de la rubrique « Aide » du sommaire (A13). Une action
+ * directe : feuille du téléphone, sinon « Lien copié » 2 s. `retour` : la zone lue par le lecteur d'écran (toujours
+ * présente) et le lien à copier à la main si la copie a échoué ; à poser sous la liste.
  */
-export function BoutonPartagerApp() {
+export function usePartageProfil(): { copie: boolean; lancer: () => void; retour: ReactNode } {
   const { etat, lancer } = usePartage('profil');
-  const copie = etat === 'copie';
-  return (
-    <>
-      <button type="button" className={`partager-app-profil${copie ? ' copie' : ''}`} data-testid="partager-app-profil"
-        aria-label={tp('app.ligne')} onClick={() => void lancer()}>
-        <IconePartager coche={copie} />
-        <span className="partager-app-profil-texte" aria-hidden="true">{copie ? tp('app.copie') : tp('app.court')}</span>
-      </button>
-      <Retour etat={etat} />
-    </>
-  );
+  return { copie: etat === 'copie', lancer: () => void lancer(), retour: <Retour etat={etat} /> };
 }
+
+/** Icône de partage (une flèche qui sort d'une boîte), cochée une fois le lien copié. */
+export const IconePartagerApp = IconePartager;
 
 /** Invitation discrète : une phrase et un bouton secondaire. Montrée une fois (le repère est posé à l'affichage). */
 function Invitation({ depuis }: { depuis: MomentFort }) {

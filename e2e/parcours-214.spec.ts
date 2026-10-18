@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { ouvrirNiveauBadges } from './profil';
 import { basLibre } from './onglet';
 import { attendrePierre, jouer } from './plateau';
 
@@ -119,6 +120,7 @@ test('Profil : aucune cote, la vitrine dit le prochain badge et un badge touché
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Profil' }).click();
   await expect(page.getByRole('main').getByText(/\bCote\b/)).toHaveCount(0);
+  await ouvrirNiveauBadges(page);
   const vitrine = page.getByRole('region', { name: 'Badges, 2 sur 21' });
   await expect(vitrine.getByRole('heading')).toContainText('Tes badges');
   const detail = vitrine.locator('.vitrine-detail');
@@ -139,11 +141,15 @@ test('Profil : un badge gagné depuis la dernière visite est annoncé dans la v
   await page.goto('/');
   const profil = page.getByRole('navigation').getByRole('button', { name: 'Profil' });
   await profil.click();
+  // #654 : la ligne « Niveau et badges » dit « Nouveau » ; la vitrine, dans son détail, imprime le badge une fois.
+  await expect(page.getByTestId('ligne-niveau')).toHaveAccessibleName('Niveau et badges, Nouveau');
+  await ouvrirNiveauBadges(page);
   const vitrine = page.getByRole('region', { name: /^Badges/ });
   await expect(vitrine.locator('.vitrine-detail')).toHaveText('Badge gagné : Première partie');
   await expect(vitrine.locator('li.nouveau')).toHaveCount(1);
   await page.reload();
   await profil.click();
+  await ouvrirNiveauBadges(page);
   await expect(vitrine.locator('li.nouveau')).toHaveCount(0);
   await expect(vitrine.locator('.vitrine-detail')).toHaveText(/^Prochain badge/);
 });

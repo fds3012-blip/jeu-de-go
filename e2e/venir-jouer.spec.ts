@@ -89,7 +89,7 @@ test('retours en 3 questions : depuis l’aide, question 1 obligatoire, envoi sa
 
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Profil' }).click();
-  await page.getByRole('button', { name: 'Aide', exact: true }).click();
+  await page.getByRole('button', { name: 'Aide sur le jeu', exact: true }).click();
   const aide = page.locator('dialog.aide');
   await aide.getByRole('tab', { name: 'Questions' }).click();
   // Contact visible, en lien.

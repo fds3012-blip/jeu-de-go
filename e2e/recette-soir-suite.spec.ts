@@ -1,4 +1,5 @@
 import { expect, test, type Browser, type Page } from '@playwright/test';
+import { ouvrirNiveauBadges } from './profil';
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { brancher, fauxServeur } from './fauxSupabase';
@@ -250,6 +251,7 @@ for (const [largeur, hauteur] of TAILLES) {
     await preparer(page, largeur, hauteur);
     await page.goto('/');
     await page.getByRole('navigation').getByRole('button', { name: /^Profil/ }).click();
+    await ouvrirNiveauBadges(page);
     const vitrine = page.locator('.vitrine');
     await vitrine.scrollIntoViewIfNeeded();
     await photo(page, 'l10-badges');

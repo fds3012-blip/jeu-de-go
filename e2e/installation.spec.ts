@@ -101,7 +101,7 @@ test.describe('iPhone, Safari', () => {
     await expect(carte(page)).toContainText(/Sur l.écran d.accueil/);
     await expect(carte(page).getByRole('button', { name: 'Plus tard' })).toHaveCount(0);
     await page.getByRole('button', { name: 'Retour' }).click();
-    await expect(page.getByRole('heading', { name: 'Ton parcours' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Ta progression' })).toBeVisible();
   });
 
   test('montrée une fois sans réponse : elle ne revient pas sur l’accueil', async ({ page }) => {
@@ -144,7 +144,7 @@ test.describe('iPhone, Safari', () => {
     await expect(page.locator('.cta')).toBeVisible();
     await expect(carte(page)).toHaveCount(0);
     await ongletProfil(page).click();
-    await expect(page.getByRole('heading', { name: 'Ton parcours' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Ta progression' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Installer l’app' })).toHaveCount(0);
   });
 });
@@ -173,7 +173,7 @@ test('Chrome : l’invite capturée s’ouvre sur « Installer », et l’accept
   expect(await page.evaluate(() => localStorage.getItem('go.installation.v1'))).toBe('acceptee');
   // Installée : plus de ligne dans le Profil.
   await ongletProfil(page).click();
-  await expect(page.getByRole('heading', { name: 'Ton parcours' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Ta progression' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Installer l’app' })).toHaveCount(0);
 });
 
@@ -198,7 +198,7 @@ test('Chrome : « Installer l’app » depuis le Profil ouvre l’invite', async
   await page.getByRole('button', { name: 'Installer l’app' }).click();
   await page.getByRole('complementary', { name: 'Garde Mochi Go sous la main' }).getByRole('button', { name: 'Installer' }).click();
   // Refusée dans l'invite : retour au Profil, sans repère « refusée » posé (c'est le joueur qui l'avait demandée).
-  await expect(page.getByRole('heading', { name: 'Ton parcours' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Ta progression' })).toBeVisible();
   expect(await page.evaluate(() => (window as unknown as { __invites: number }).__invites)).toBe(1);
   expect(await page.evaluate(() => localStorage.getItem('go.installation.v1'))).toBeNull();
 });
@@ -210,6 +210,6 @@ test('navigateur sans installation possible : rien, ni carte ni ligne dans le Pr
   await expect(page.locator('.cta')).toBeVisible();
   await expect(carte(page)).toHaveCount(0);
   await ongletProfil(page).click();
-  await expect(page.getByRole('heading', { name: 'Ton parcours' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Ta progression' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Installer l’app' })).toHaveCount(0);
 });

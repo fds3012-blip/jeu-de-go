@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { ouvrirNiveauBadges } from './profil';
 import { ouvrirTous } from './problemes';
 import { jouer, ouvrirLancementOrdi } from './plateau';
 
@@ -282,6 +283,7 @@ for (const largeur of [390, 320]) {
     await expect(page.locator('.cta')).toBeVisible();
     await expect(barre).toHaveCount(0);
     await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: 'Profile' }).click();
+    await ouvrirNiveauBadges(page);
     await expect(barre).toContainText(/^Level\u00A01/);
     await expect(barre).toContainText(/\d+\u00A0\/\u00A0\d+\u00A0XP/);
     await expect(barre.getByRole('progressbar', { name: 'Level 1' })).toHaveAttribute('aria-valuetext', /^\d+ of \d+ XP to level 2$/);
@@ -308,6 +310,7 @@ for (const largeur of [390, 320]) {
 
     // Profil complet : statistiques, badges, thèmes du goban.
     await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: 'Profile' }).click();
+    await ouvrirNiveauBadges(page);
     const stats = page.getByRole('list', { name: 'Your stats' });
     for (const legende of ['day streak', 'lessons done', 'opponent beaten', 'puzzles solved']) await expect(stats.getByText(legende, { exact: true })).toBeVisible();
     const vitrine = page.getByRole('region', { name: /^Badges, \d+ of 21$/ });
@@ -318,6 +321,8 @@ for (const largeur of [390, 320]) {
     await expect(page.getByText(/problèmes|victoires|Première partie|Réussis/)).toHaveCount(0);
     await sansDebordement(page);
     await sansCoupeComposants(page, largeur);
+    // #654 : retour au sommaire du Profil, puis « Settings ».
+    await page.locator('.retour').first().click();
     await page.getByRole('button', { name: /^Settings/ }).click();
     const goban = page.getByRole('group', { name: 'Board' });
     await expect(goban.getByRole('button', { name: 'Kaya', exact: true })).toBeVisible();

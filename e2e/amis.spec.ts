@@ -165,7 +165,7 @@ test('« Mes amis » à 320 px, mode sombre : lisible, cibles de 44 px, sans dé
   await a.ctx.close();
 });
 
-test('avec un compte et une demande reçue, le Profil tient sur un écran de 390 × 844 ; « À faire » mène aux amis', async ({ browser, baseURL }) => {
+test('avec un compte et une demande reçue, « Mes amis » le dit en or (#654 : le Profil défile, jamais de côté)', async ({ browser, baseURL }) => {
   const serveur = fauxServeur();
   const a = await telephone(browser, baseURL, serveur, serveur.sessionCompte('alice@exemple.test', 'Alice', ALICE));
   serveur.compteExistant('bruno@exemple.test', 'Bruno', BRUNO);
@@ -178,9 +178,8 @@ test('avec un compte et une demande reçue, le Profil tient sur un écran de 390
   await expect(a.page.getByRole('button', { name: /^Mes amis/ })).toContainText('1 demande');
   await expect(a.page.getByRole('button', { name: /^Mes parties/ })).toBeVisible();
   await capture(a.page, 'profil-amis-390-clair');
-  const { scroll, largeur } = await a.page.evaluate(() => ({ scroll: document.documentElement.scrollHeight, largeur: document.documentElement.scrollWidth }));
-  expect(scroll).toBeLessThanOrEqual(844);
-  expect(largeur).toBeLessThanOrEqual(390);
+  await expect(a.page.getByRole('button', { name: /^Mes amis/ }).locator('.sommaire-etat')).toHaveAttribute('data-ton', 'or');
+  expect(await a.page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   await a.ctx.close();
 });
 

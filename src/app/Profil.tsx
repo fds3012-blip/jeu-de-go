@@ -46,7 +46,6 @@ import { ReglageRappel } from '../ui/ProposerRappel';
 import { LANGUES, langue, memoriserChoixLangue, t, type Langue } from '../content/i18n/secondaires';
 import type { Placement } from './placement';
 import { Amis } from './Amis';
-import { BoutonAide } from '../ui/BoutonAide';
 import { CarteCote } from '../ui/Cote';
 import { grade, tc, texteCote } from '../content/i18n/cote';
 import type { ProfilJoueur } from './hooks';
@@ -63,9 +62,13 @@ import { Board } from '../ui/Board';
 import { CADENCES_ORDRE, CADENCES } from '../go/pendule';
 import '../ui/club.css';
 import { noterReglage } from './reglagesDates';
-import { BoutonPartagerApp } from '../ui/PartagerApp';
+import { IconePartagerApp, usePartageProfil } from '../ui/PartagerApp';
+import { tp as tpartage } from '../content/i18n/partage';
 import { ReglageIA } from '../ui/ReglageIA';
-import { DemiLigneTitre } from '../ui/LigneTitre';
+import { VisuelTitre, etatTitre } from '../ui/LigneTitre';
+import { Sommaire, type EntreeSommaire } from '../ui/Sommaire';
+import { ouvrirAide } from './ouvrirAide';
+import { niveauDe as niveauXp } from './xp';
 import { useTitreDuMoisDernier } from '../data/titres';
 
 // Joueur de club (#368, #372) : sous-écrans chargés à la demande, hors du morceau du Profil.
@@ -99,7 +102,7 @@ function useDonnees(serie: number, record: number, parcours: Parcours) {
   return donnees;
 }
 
-export type VueProfil = 'menu' | 'reglages' | 'installer' | 'rappel' | 'compte' | 'conditions' | 'importer' | 'parties' | 'amis' | 'cote' | 'stats' | 'etude' | 'semaine'
+export type VueProfil = 'menu' | 'niveau' | 'reglages' | 'installer' | 'rappel' | 'compte' | 'conditions' | 'importer' | 'parties' | 'amis' | 'cote' | 'stats' | 'etude' | 'semaine'
   // #530 : « Mes données » (export) et « Mentions légales », ouvertes depuis Conditions et confidentialité ou Mon compte.
   | 'donnees' | 'mentions'
   // #560 : « Profil de {pseudo} » (le joueur regardé est dans `joueur`).
@@ -174,6 +177,9 @@ function SousVue({ id, titre, onRetour, children }: { id: string; titre: string;
 
 export function Profil({ vue, onVue, settings, set, profil, serie, record = 0, parcours, placement, onPlacement, onJouer, db, userId, amis, joueur, onProfilChange, onProblemes }: Props) {
   const origine = useRef<VueProfil>('conditions');
+  // #654 : chiffres et badges lus une fois par visite du Profil, avant le sommaire : les badges gagnés depuis la dernière
+  // visite sont notés (#544) et gardés comme « nouveaux » jusqu'au détail « Niveau et badges », qui les imprime.
+  const donnees = useDonnees(serie, record, parcours);
   const retour = () => { onVue('menu'); window.scrollTo({ top: 0 }); };
   // #560 : « Profil de {pseudo} », avec un compte complet seulement. Depuis « Mes amis » ou « Ta semaine », on y revient.
   const vu = joueur?.vu ?? null;
@@ -204,7 +210,7 @@ export function Profil({ vue, onVue, settings, set, profil, serie, record = 0, p
   if (vue === 'parties') return <MesParties onRetour={retour} onJouer={onJouer ?? retour} onImporter={() => onVue('importer')} onEtudier={() => onVue('etude')} db={db} userId={userId} confirmTouch={settings.confirmTouch} />;
   // #530 : « Mes données » et « Mentions légales » reviennent là d'où on les a ouvertes (Conditions ou Mon compte).
   const ouvrir = (v: VueProfil) => { if (vue !== 'donnees' && vue !== 'mentions') origine.current = vue; onVue(v); window.scrollTo({ top: 0 }); };
-  const revenir = () => { onVue(origine.current === 'compte' ? 'compte' : 'conditions'); window.scrollTo({ top: 0 }); };
+  const revenir = () => { onVue(origine.current === 'compte' || origine.current === 'menu' ? origine.current : 'conditions'); window.scrollTo({ top: 0 }); };
   if (vue === 'conditions') {
     return (
       <Conditions onRetour={retour}
@@ -268,6 +274,19 @@ export function Profil({ vue, onVue, settings, set, profil, serie, record = 0, p
       </SousVue>
     );
   }
+  // #654 : « Niveau et badges » : le niveau et l'XP, les chiffres de ton parcours, la vitrine des badges.
+  if (vue === 'niveau') {
+    const statsVues = donnees.stats.filter(x => x.valeur > 0 && (settings.serieVisible || x.id !== 'record'));
+    return (
+      <SousVue id="niveau-titre" titre={t('profil.niveauBadges')} onRetour={retour}>
+        <div className="profil-niveau">
+          <BarreNiveau />
+          {statsVues.length > 0 && <Statistiques stats={statsVues} />}
+        </div>
+        <VitrineBadges liste={settings.serieVisible ? donnees.badges : donnees.badges.filter(b => !BADGES_SERIE.has(b.id))} nouveaux={donnees.nouveaux} />
+      </SousVue>
+    );
+  }
   if (vue === 'compte') return <SousVue id="compte-titre" titre={t('profil.compte')} onRetour={retour}><Account onMesDonnees={() => ouvrir('donnees')} /></SousVue>;
   if (vue === 'reglages') return <SousVue id="reglages-titre" titre={t('profil.reglages')} onRetour={retour}><Reglages settings={settings} set={set} /></SousVue>;
   if (vue === 'rappel') {
@@ -285,7 +304,7 @@ export function Profil({ vue, onVue, settings, set, profil, serie, record = 0, p
     );
   }
 
-  return <Menu onVue={onVue} settings={settings} set={set} profil={profil} serie={serie} record={record} parcours={parcours} placement={placement} onPlacement={onPlacement} userId={userId} amis={amis} />;
+  return <Menu onVue={v => (v === 'donnees' ? ouvrir(v) : onVue(v))} settings={settings} set={set} profil={profil} serie={serie} record={record} parcours={parcours} placement={placement} onPlacement={onPlacement} userId={userId} amis={amis} donnees={donnees} />;
 }
 
 /** Date courte du placement (« 28/09 »), dans la langue de l'interface. */
@@ -294,15 +313,19 @@ function dateCourte(iso: string): string {
   return Number.isNaN(d.getTime()) ? iso : d.toLocaleDateString(langue() === 'en' ? 'en-GB' : 'fr-FR', { day: '2-digit', month: '2-digit' });
 }
 
-function Menu({ onVue, settings, profil, serie, record = 0, parcours, placement, onPlacement, userId, amis }: Omit<Props, 'vue'>) {
+/**
+ * #654 (A13, modèle : l'écran « Plus » de chess.com) : le Profil est un sommaire. En haut, une carte d'identité compacte
+ * (pseudo, niveau, série) ; dessous, des rubriques groupées sous de petits titres, chacune ouvre son détail. Groupes
+ * choisis par tri de cartes (docs/ux/architecture-pages-2026-10.md, § 14) : ta progression, tes parties et tes amis,
+ * l'app (réglages), le compte, l'aide. Aucun deuxième niveau de rubriques (A4).
+ */
+function Menu({ onVue, settings, profil, serie, placement, onPlacement, userId, amis, donnees }: Omit<Props, 'vue'> & { donnees: ReturnType<typeof useDonnees> }) {
   // #365 : « Montrer la série » éteint, ni flamme, ni record, ni badge de série ; la série continue d'être comptée.
   const serieVisible = settings.serieVisible;
   const id = identite(profil, serieVisible ? serie : 0);
   const nParties = useMemo(() => historiqueAppareil().length, []);
-  const valeurParties = nParties ? t('historique.profilResume', { n: nParties }) : userId ? undefined : t('historique.profilVide');
   // #359 : demandes d'ami reçues (lues par l'app, aussi pour la pastille de l'onglet).
   const demandes = amis?.demandes ?? 0;
-  const donnees = useDonnees(serie, record, parcours);
   // Ligne « Installer l'app » (#214) : tant que l'app est installable ici et pas installée.
   const proposerInstallation = installable(usePlateformeInstallation(), etatInstallation());
   const atteints = useMemo(() => nombreAtteints(etatSemaine().courante), []);
@@ -310,105 +333,86 @@ function Menu({ onVue, settings, profil, serie, record = 0, parcours, placement,
   const [ecrire, setEcrire] = useState(false);
   // #561 : titre du mois dernier (rien sans titre, rien sous le garde-fou des 200 joueurs actifs).
   const titre = useTitreDuMoisDernier(amis?.compte ? amis.db : null, userId);
-  const statsVues = donnees.stats.filter(s => s.valeur > 0 && (serieVisible || s.id !== 'record'));
+  const partage = usePartageProfil();
   const sousNom = serieVisible && inviterCompte(!!profil, id.serie) ? t('serie.invitation') : id.detail;
+  const { niveau } = niveauXp(lireXp());
+  const badgesObtenus = donnees.badges.filter(b => b.obtenu && (serieVisible || !BADGES_SERIE.has(b.id))).length;
+  const icone = (i: IconeReglageId) => <IconeReglage id={i} taille={26} />;
+
+  const progression: EntreeSommaire[] = [
+    { cle: 'niveau', nom: t('profil.niveauBadges'), visuel: icone('celebrations'), testId: 'ligne-niveau', onOuvrir: () => onVue('niveau'),
+      // P1 : aucun zéro ; un badge gagné depuis la dernière visite se dit en or.
+      etat: donnees.nouveaux.length ? { texte: t('profil.badgeNouveau'), ton: 'or' } : badgesObtenus > 0 ? { texte: String(badgesObtenus), aria: t('vitrine.titre', { n: badgesObtenus, total: donnees.badges.length }) } : undefined },
+    // #417 : « Ta cote » ; #647 (F4) : le niveau de départ (#283) s'y choisit, avec ou sans compte. #561 : le titre du mois
+    // dernier, s'il y en a un, en est le visuel et l'état. Sans compte : le kyu estimé et sa date.
+    ...((amis?.compte && profil) || onPlacement ? [{
+      cle: 'cote', nom: tc('cote.ligne'), visuel: titre ? <VisuelTitre titre={titre} /> : icone('cote'), testId: 'ligne-cote', onOuvrir: () => onVue('cote'),
+      etat: amis?.compte && profil
+        ? titre ? etatTitre(titre)
+          : !profil.parties && !profil.depart ? { texte: tc('cote.ligneDepart') }
+          : { texte: `${grade(profil.cote)} · ${texteCote(profil.cote, profil.provisoire ?? true)}` }
+        : placement?.fait && placement.kyu !== null ? { texte: t('placement.profilValeur', { kyu: placement.kyu, date: dateCourte(placement.date) }) } : undefined,
+    } satisfies EntreeSommaire] : []),
+    { cle: 'stats', nom: tk('stats.ligne'), visuel: icone('stats'), testId: 'ligne-stats', onOuvrir: () => onVue('stats') },
+    { cle: 'semaine', nom: te('semaine.ligne'), visuel: icone('semaine'), testId: 'ligne-semaine', onOuvrir: () => onVue('semaine'),
+      etat: atteints > 0 ? { texte: te('semaine.ligneValeur', { n: atteints }) } : undefined },
+  ];
+  const social: EntreeSommaire[] = [
+    { cle: 'parties', nom: t('historique.titre'), visuel: icone('parties'), testId: 'ligne-parties', onOuvrir: () => onVue('parties'),
+      etat: nParties ? { texte: t('historique.profilResume', { n: nParties }) } : undefined },
+    ...(amis ? [{
+      cle: 'amis', nom: t('amis.titre'), visuel: icone('amis'), testId: 'ligne-amis', onOuvrir: () => (amis.compte ? onVue('amis') : amis.onCompte()),
+      // #359 : une demande reçue se dit en or ; sans compte, la ligne dit qu'il en faut un (elle ouvre sa création).
+      etat: !amis.compte ? { texte: t('amis.profil.sansCompte') } : demandes > 0 ? { texte: t('amis.profil.demandes', { n: demandes }), ton: 'or' } : undefined,
+    } satisfies EntreeSommaire] : []),
+  ];
+  const reglages: EntreeSommaire[] = [
+    { cle: 'reglages', nom: t('profil.reglages'), visuel: icone('reglages'), testId: 'ligne-reglages', onOuvrir: () => onVue('reglages') },
+    // #36 : rappel du Go du jour, dès que le rappel est configuré (clé publique VAPID).
+    ...(clePubliqueVapid() !== '' ? [{ cle: 'rappel', nom: t('profil.rappel'), visuel: icone('rappel'), onOuvrir: () => onVue('rappel'), etat: { texte: resumeRappel() } } satisfies EntreeSommaire] : []),
+    ...(proposerInstallation ? [{ cle: 'installer', nom: t('profil.installer'), visuel: icone('installer'), onOuvrir: () => onVue('installer') } satisfies EntreeSommaire] : []),
+  ];
+  const compte: EntreeSommaire[] = [
+    // #509 (L2, constat 23) : un pseudo long tient sur une ligne, coupé en fin (« … ») et non au milieu d'un mot.
+    { cle: 'compte', nom: t('profil.compte'), visuel: icone('compte'), testId: 'ligne-compte', onOuvrir: () => onVue('compte'),
+      etat: profil ? undefined : { texte: t('profil.seConnecter') } },
+    { cle: 'donnees', nom: tdon('donnees.ligne'), visuel: icone('donnees'), testId: 'ligne-donnees', onOuvrir: () => onVue('donnees') },
+    { cle: 'conditions', nom: t('profil.conditions'), visuel: icone('conditions'), testId: 'ligne-conditions', onOuvrir: () => onVue('conditions') },
+  ];
+  const aide: EntreeSommaire[] = [
+    { cle: 'aide', nom: t('profil.aideEntree'), visuel: icone('question'), testId: 'ligne-aide', onOuvrir: () => ouvrirAide({ depuis: 'profil', fiche: 'regles' }) },
+    // #363 : « Nous écrire » (bug, idée, autre), dans une feuille.
+    ...(amis ? [{ cle: 'ecrire', nom: tsec('signaler.ecrire'), visuel: icone('ecrire'), testId: 'ligne-ecrire', onOuvrir: () => setEcrire(true) } satisfies EntreeSommaire] : []),
+    // #521 : « Partager Mochi Go » : feuille du téléphone, sinon « Lien copié » 2 s.
+    { cle: 'partager', nom: tpartage('app.ligne'), visuel: <IconePartagerApp coche={partage.copie} />, testId: 'partager-app-profil', onOuvrir: partage.lancer,
+      etat: partage.copie ? { texte: tpartage('app.copie') } : undefined },
+  ];
+
   return (
-    <div className="profil">
-      {/* #362 : « Aide » à droite du titre, sans prendre de hauteur (le Profil tient sans défiler en 390 × 844). */}
-      <div className="profil-titre-ligne">
-        <h2 className="profil-titre">{t('profil.parcours')}</h2>
-        {/* #521 : « Partager Mochi Go », toujours là, à côté de « Aide » (même place sans hauteur : le Profil tient sans
-            défiler). Feuille du téléphone, sinon lien copié. */}
-        <BoutonPartagerApp />
-        <BoutonAide depuis="profil" fiche="regles" libelle={t('profil.aideJeu')} />
-      </div>
-      <section className="identite" aria-label={t('profil.aria')}>
+    <div className="profil profil-sommaire">
+      {/* Carte d'identité compacte : l'initiale, le pseudo, le niveau ; la série en or quand elle compte. */}
+      <section className="identite identite-compacte" aria-label={t('profil.aria')}>
         {id.initiale ? <span className="avatar" aria-hidden="true">{id.initiale}</span> : <span className="stone b" aria-hidden="true" />}
         <div className="identite-texte">
           <b>{id.nom}</b>
-          {/* #161 : au 3e jour de série sans compte, la ligne sous « Invité » propose le compte ; l'action reste « Mon compte ». */}
-          {/* #592 : avec un compte, plus de ligne sous le nom (E6). */}
+          <span className="identite-niveau-court">{t('niveau.barre', { niveau })}</span>
+          {/* #161 : au 3e jour de série sans compte, la ligne sous « Invité » propose le compte. */}
           {sousNom && <span>{sousNom}</span>}
         </div>
         {id.serie > 0 && <span className="identite-serie" role="img" aria-label={t('profil.serieAria', { jours: texteSerie(id.serie) })}>
           <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false"><path d="M8.6 1.2c.4 2.3 3.9 3.9 3.9 7.9A4.5 4.5 0 0 1 8 13.8a4.5 4.5 0 0 1-4.5-4.6c0-2 1-3.2 2-4 0 1.4.6 2.4 1.5 2.7C6.6 5.6 7.4 3 8.6 1.2Z" fill="currentColor" /></svg>{entier(id.serie)}
         </span>}
-        <div className="identite-niveau"><BarreNiveau /></div>
-        {/* #631 (P1) : pas de chiffre à zéro (« 0 jour de série », « 0 problème réussi ») ; chacun arrive avec le premier. */}
-        {statsVues.length > 0 && <Statistiques stats={statsVues} />}
       </section>
-      <VitrineBadges liste={serieVisible ? donnees.badges : donnees.badges.filter(b => !BADGES_SERIE.has(b.id))} nouveaux={donnees.nouveaux} />
-
-      <div className="lignes">
-        {/* #358 : tes parties passées, en tête : c'est la ligne qu'on rouvre le plus. « Analyser une partie » (#286) y est.
-            #359 : « Mes amis » partage cette ligne (deux moitiés) : le Profil tient toujours sans défiler en 390 × 844. */}
-        {amis ? (
-          <div className="ligne ligne-double">
-            <DemiLigne icone="parties" libelle={t('historique.titre')} valeur={valeurParties} onClick={() => onVue('parties')} />
-            <DemiLigne icone="amis" libelle={t('amis.titre')}
-              valeur={!amis.compte ? t('amis.profil.sansCompte')
-                : demandes > 0 ? <span className="amis-demandes"><span className="amis-point" aria-hidden="true" />{t('amis.profil.demandes', { n: demandes })}</span> : undefined}
-              onClick={() => (amis.compte ? onVue('amis') : amis.onCompte())} />
-          </div>
-        ) : <LigneLien icone={<IconeReglage id="parties" />} libelle={t('historique.titre')} valeur={valeurParties} onClick={() => onVue('parties')} />}
-        {/* #417 : « Ta cote » ; #647 (F4) : le niveau de départ (#283, placement) s'y est fondu : la ligne l'ouvre, et
-            « Ton niveau de départ » s'y refait. Sans compte, la ligne montre le kyu estimé et sa date. */}
-        {amis?.compte && profil ? (() => {
-          const valeur = !profil.parties && !profil.depart ? tc('cote.ligneDepart') : `${grade(profil.cote)} · ${texteCote(profil.cote, profil.provisoire ?? true)}`;
-          // #561 : avec un titre le mois dernier, il partage la ligne (deux moitiés) ; son toucher ouvre aussi « Ta cote ».
-          return titre ? (
-            <div className="ligne ligne-double">
-              <DemiLigne icone="cote" libelle={tc('cote.ligne')} testId="ligne-cote" valeur={valeur} onClick={() => onVue('cote')} />
-              <DemiLigneTitre titre={titre} onClick={() => onVue('cote')} />
-            </div>
-          ) : <LigneLien icone={<IconeReglage id="cote" />} libelle={tc('cote.ligne')} valeur={valeur} testId="ligne-cote" onClick={() => onVue('cote')} />;
-        })() : onPlacement && (
-          <LigneLien icone={<IconeReglage id="cote" />} libelle={tc('cote.ligne')} testId="ligne-cote" onClick={() => onVue('cote')}
-            valeur={placement?.fait && placement.kyu !== null ? t('placement.profilValeur', { kyu: placement.kyu, date: dateCourte(placement.date) }) : undefined} />
-        )}
-        {/* #368 : « Statistiques » ; #369 : « Ta semaine » : les deux lectures de ta progression partagent une ligne (deux
-            moitiés) ; « Réglages » rejoint « Mon compte » plus bas : le Profil tient toujours sans défiler en 390 × 844.
-            #372 : « Étudier une position » est dans « Mes parties », à côté de « Analyser une partie jouée ailleurs ». */}
-        <div className="ligne ligne-double">
-          <DemiLigne icone="semaine" libelle={te('semaine.ligne')} valeur={atteints > 0 ? te('semaine.ligneValeur', { n: atteints }) : undefined} onClick={() => onVue('semaine')} testId="ligne-semaine" />
-          <DemiLigne icone="stats" libelle={tk('stats.ligne')} testId="ligne-stats" onClick={() => onVue('stats')} />
-        </div>
+      <div className="profil-rubriques">
+        <Sommaire titre={t('profil.rubrique.progression')} entrees={progression} testId="rubrique-progression" />
+        <Sommaire titre={t('profil.rubrique.social')} entrees={social} testId="rubrique-social" />
+        <Sommaire titre={t('profil.rubrique.app')} entrees={reglages} testId="rubrique-reglages" />
+        <Sommaire titre={t('profil.rubrique.compte')} entrees={compte} testId="rubrique-compte" />
+        <Sommaire titre={t('profil.rubrique.aide')} entrees={aide} testId="rubrique-aide" />
       </div>
-      {/* #571 (loi de Hick) : dix lignes de même poids, rangées en deux blocs séparés : ta progression (au-dessus), puis
-          l'app et ton compte. Sans titre visible : le Profil tient toujours sans défiler en 390 × 844 ; le nom est lu. */}
-      <div className="lignes profil-groupe" role="group" aria-label={tk('profil.groupe.app')}>
-        {/* #36 : rappel du Go du jour, dès que le rappel est configuré (clé publique VAPID). */}
-        {clePubliqueVapid() !== '' && <LigneLien icone={<IconeReglage id="rappel" />} libelle={t('profil.rappel')} valeur={resumeRappel()} onClick={() => onVue('rappel')} />}
-        {proposerInstallation && <LigneLien icone={<IconeReglage id="installer" />} libelle={t('profil.installer')} onClick={() => onVue('installer')} />}
-        {/* #369 : « Réglages » et « Mon compte » partagent une ligne (deux moitiés, ce qui te concerne toi et l'app). */}
-        <div className="ligne ligne-double">
-          <DemiLigne icone="reglages" libelle={t('profil.reglages')} onClick={() => onVue('reglages')} />
-          {/* #509 (L2, constat 23) : un pseudo long tient sur une ligne, coupé en fin (« … ») et non au milieu d'un mot. */}
-          <DemiLigne icone="compte" libelle={t('profil.compte')} valeur={profil?.pseudo ?? (profil ? undefined : t('profil.seConnecter'))} uneLigne={!!profil?.pseudo} onClick={() => onVue('compte')} />
-        </div>
-        {/* #363 : « Nous écrire » partage la ligne des conditions (deux moitiés) : le Profil tient toujours sans défiler. */}
-        {amis ? (
-          <div className="ligne ligne-double">
-            <DemiLigne icone="ecrire" libelle={tsec('signaler.ecrire')} testId="ligne-ecrire" onClick={() => setEcrire(true)} />
-            <DemiLigne icone="conditions" libelle={t('profil.conditions')} onClick={() => onVue('conditions')} />
-          </div>
-        ) : <LigneLien icone={<IconeReglage id="conditions" />} libelle={t('profil.conditions')} onClick={() => onVue('conditions')} />}
-      </div>
+      {partage.retour}
       {amis && <FeuilleSignaler db={amis.db} ouvert={ecrire} onFermer={() => setEcrire(false)} cible={{ type: 'ecrire' }} compte={amis.compte} onCompte={amis.onCompte} />}
     </div>
-  );
-}
-
-/** Moitié d'une ligne du Profil (#359) : icône, libellé, valeur dessous, 48 px de haut. */
-function DemiLigne({ icone, libelle, valeur, onClick, testId, uneLigne }: { icone: IconeReglageId; libelle: string; valeur?: ReactNode; onClick: () => void; testId?: string; uneLigne?: boolean }) {
-  return (
-    <button type="button" className="ligne-demi" onClick={onClick} data-testid={testId}>
-      <LigneIcone><IconeReglage id={icone} /></LigneIcone>
-      <span className="ligne-demi-texte">
-        <span className="ligne-libelle">{libelle}</span>
-        {valeur && <span className={`ligne-demi-valeur${uneLigne ? ' une-ligne' : ''}`}>{valeur}</span>}
-      </span>
-    </button>
   );
 }
 

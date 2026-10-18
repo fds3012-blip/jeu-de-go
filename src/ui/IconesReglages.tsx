@@ -13,7 +13,9 @@ export type IconeReglageId =
   // #369 : « Ta semaine ».
   | 'semaine'
   // #538 : « L'IA sur ton téléphone ».
-  | 'ia';
+  | 'ia'
+  // #654 : « Mes données » et « Aide » dans le sommaire du Profil.
+  | 'donnees' | 'question';
 
 const TRACES: Record<IconeReglageId, ReactNode> = {
   // Enveloppe : « Nous écrire » (#363).
@@ -61,6 +63,10 @@ const TRACES: Record<IconeReglageId, ReactNode> = {
   cadence: <><path d="M6.5 3.5h11M6.5 20.5h11M7.5 3.5c0 5 9 5 9 8.5s-9 3.5-9 8.5M16.5 3.5c0 5-9 5-9 8.5" /></>,
   // Une puce et son cœur plein : l'IA, sur le téléphone (#538).
   ia: <><rect x="6.5" y="6.5" width="11" height="11" rx="2.2" /><path d="M9.5 3v3.5M14.5 3v3.5M9.5 17.5V21M14.5 17.5V21M3 9.5h3.5M3 14.5h3.5M17.5 9.5H21M17.5 14.5H21" /><circle cx="12" cy="12" r="2.2" className="ir-plein" /></>,
+  // Une page et sa flèche qui descend : tes données, à emporter (#654).
+  donnees: <><path d="M6.5 3.5h7l4 4v13h-11Z" /><path d="M13.5 3.5v4h4" /><path d="M12 10.5v6M9.5 14 12 16.5l2.5-2.5" /></>,
+  // Un point d'interrogation dans un rond : l'aide sur le jeu (#654).
+  question: <><circle cx="12" cy="12" r="9" /><path d="M9.4 9.3a2.7 2.7 0 0 1 5.2.9c0 1.8-2.6 2.2-2.6 3.9" /><circle cx="12" cy="17.1" r="1.1" className="ir-plein" /></>,
   // La flamme de la série.
   serie: <><path d="M12.6 3c.6 3.2 5.4 5.4 5.4 10.8A6.1 6.1 0 0 1 12 20a6.1 6.1 0 0 1-6-6.3c0-2.7 1.4-4.4 2.7-5.4 0 1.9.8 3.3 2 3.7C10 9.2 11 5.7 12.6 3Z" /></>,
 };

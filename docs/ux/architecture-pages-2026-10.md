@@ -433,3 +433,43 @@ Retour de Florian, 18/10 : « il y a trop ; la partie révision peut être enlev
 Chaque entrée porte un état court, jamais un zéro (P1) : « À faire » en or ou « Réussi » / « Vu » pour le Go du jour, le nombre d'erreurs dues en or, le record de la course. La série reste une pastille discrète dans l'en-tête de la carte du haut.
 
 Ce qui disparaît : la carte « Révisions » (#199, problèmes déjà réussis repris à J+1, J+3, J+7). Depuis #529, la séance de révision espacée fait déjà vivre la série à sa place ; les problèmes ratés au premier essai y entrent toujours (#469). Le nom « Révisions » laisse la place à « Rejouer tes erreurs » partout (A9), y compris sur la tuile de l'accueil (texte seulement).
+
+## 15. Le Profil en sommaire (#654, règle A13)
+
+Retour de Florian, 18/10 : « beaucoup d'information. Tu pourrais mettre un Plus comme chess.com, puis comme pour Problèmes des thématiques cliquables qui donnent accès à plus de détail. » Modèle : l'écran « Plus » de chess.com, une liste de rubriques (icône et nom) rangées sous de petits titres.
+
+### 14.1 Avant, après
+
+Captures (sombre) : `captures/sommaires/profil-390-avant.jpg`, `profil-390-apres.jpg`, `profil-1024-avant.jpg`, `profil-1024-apres.jpg` ; en clair, `profil-390-clair-apres.jpg`.
+
+| | Avant | Après |
+|---|---|---|
+| En haut | « Ton parcours », Partager, Aide ; carte d'identité avec la barre de niveau et 3 à 4 anneaux de chiffres ; vitrine de 6 badges et « +15 » | Carte d'identité compacte : initiale, pseudo, « Niveau N », série en or |
+| Rubriques | 10 à 12 lignes, souvent coupées en deux moitiés (« ligne double ») pour tenir sans défiler, en deux blocs sans titre | 5 rubriques titrées (Ta progression, Tes parties et tes amis, L'app, Compte, Aide), 1 à 4 lignes chacune, une ligne par chose |
+| Plus grand groupe (E3) | 12 choix de même poids, plus 7 badges touchables | 4 |
+| Profondeur (A4) | Mon compte › Mes données › Mentions (3) | Mes données à la racine du Profil (1) ; Mentions légales reste en bas de Mes données (2) |
+| Défilement à 390 × 844 | aucun (la contrainte « tient sans défiler » imposait les demi-lignes) | oui, une liste titrée ; la carte d'identité et « Ta progression » sont au premier regard |
+
+### 14.2 Le tri des rubriques
+
+Méthode (skills `card-sort-analysis` et `information-architecture`) : un tri fermé fait à la place des joueurs, **sans participants**. Les 15 cartes sont les écrans du Profil ; les catégories partent du rôle de l'onglet (A1 : « toi : progrès, parties passées, amis, réglages, compte ») et des mots de chess.com, Lichess et Duolingo, que nos joueurs connaissent (Jakob). Chaque carte va dans la catégorie qui répond à la question que se pose le joueur en la cherchant.
+
+| Rubrique | Question du joueur | Cartes |
+|---|---|---|
+| Ta progression | « Où j'en suis ? » | Niveau et badges, Ta cote (ou Ton niveau de départ, sans compte), Statistiques, Ta semaine |
+| Tes parties et tes amis | « Avec qui, contre qui j'ai joué ? » | Mes parties, Mes amis |
+| L'app | « Comment régler l'app ? » | Réglages, Rappel du Go du jour, Installer l'app (selon l'appareil) |
+| Compte | « Mes informations » | Mon compte, Mes données, Conditions et confidentialité |
+| Aide | « J'ai un souci, une idée » | Aide sur le jeu, Nous écrire, Partager Mochi Go |
+
+Cartes ambiguës, et le choix fait :
+- **Mes parties** : progression ou social ? Rangée avec les amis (demande de Florian) : on y rouvre une partie jouée contre quelqu'un ; « Statistiques » garde la lecture chiffrée de ces parties dans « Ta progression ».
+- **Ta semaine** : objectifs de la semaine, donc progression, pas social, même si elle cite les amis battus.
+- **Niveau et badges** : deux cartes devenues une. Le niveau vient de l'XP, les badges de jalons ; les deux sont des récompenses qu'on regarde ensemble, et la rubrique garde ainsi 4 entrées (E3). L'XP et la vitrine complète sont dans le détail.
+- **Rappel du Go du jour** : réglage d'une notification, donc « L'app », avec Réglages. La rubrique ne s'appelle pas « Réglages » : son titre répéterait sa première ligne (E8) (c'était déjà la cible N6).
+- **Partager Mochi Go** : rangé dans « Aide » avec « Nous écrire » (on parle de l'app à quelqu'un), comme chez chess.com (« Inviter des amis » sous « Aide et support »).
+- **Ton niveau de départ** : avec un compte, il se choisit dans « Ta cote » (#647) ; sans compte, il prend la place de « Ta cote ». Une seule maison à la fois.
+
+Ordre : « Ta progression » d'abord (primauté : c'est la raison de venir dans le Profil), « Aide » en dernier (convention de fin de liste, effet de récence). Rien de payant : le « Passez Premium » de chess.com n'est pas repris.
+
+À valider : un test d'arbre (tree test) avec 10 à 15 joueurs, trois tâches (« trouve tes badges », « change la taille du goban », « télécharge tes données ») ; un taux de réussite au premier clic sous 80 % sur une tâche demande de revoir sa rubrique.

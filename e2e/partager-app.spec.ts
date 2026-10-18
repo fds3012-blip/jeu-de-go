@@ -59,18 +59,10 @@ test.describe('Profil : « Partager Mochi Go », toujours là', () => {
     await page.getByRole('navigation').getByRole('button', { name: 'Profil' }).click();
     await expect(ligne(page)).toBeVisible();
     await expect(ligne(page)).toHaveAccessibleName('Partager Mochi Go');
-    await expect(ligne(page)).toHaveText('Partager');
-    const b = (await ligne(page).boundingBox())!;
-    expect(b.height).toBeGreaterThanOrEqual(44);
-    expect(b.width).toBeGreaterThanOrEqual(44);
-    // À droite du titre, sur la même ligne que « Aide » : aucune hauteur prise.
-    const aide = (await page.getByRole('button', { name: 'Aide' }).boundingBox())!;
-    expect(Math.abs(aide.y - b.y)).toBeLessThan(4);
-    expect(b.x + b.width).toBeLessThanOrEqual(aide.x + 1);
-    // Le Profil tient toujours sans défiler en 390 × 844, et le dernier lien reste au-dessus de la barre.
-    expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeLessThanOrEqual(844);
-    const conditions = (await page.getByRole('button', { name: 'Conditions et confidentialité' }).boundingBox())!;
-    expect(conditions.y + conditions.height).toBeLessThanOrEqual((await page.getByRole('navigation').boundingBox())!.y);
+    await expect(ligne(page)).toHaveText('Partager Mochi Go');
+    // #654 : une ligne de la rubrique « Aide » du sommaire, avec « Aide sur le jeu » et « Nous écrire ».
+    await expect(page.getByTestId('rubrique-aide').getByTestId('partager-app-profil')).toBeVisible();
+    expect((await ligne(page).boundingBox())!.height).toBeGreaterThanOrEqual(48);
     await capture(page, 'profil-ligne-sombre-390');
 
     await ligne(page).click();
@@ -78,7 +70,7 @@ test.describe('Profil : « Partager Mochi Go », toujours là', () => {
       title: 'Mochi Go', url: 'https://mochi-go.app',
       text: 'Je joue au go sur Mochi Go : c’est gratuit, sans pub, et on apprend en jouant, même débutant. Viens essayer !',
     }]);
-    await expect(ligne(page)).toHaveText('Partager');
+    await expect(ligne(page)).toHaveText('Partager Mochi Go');
   });
 
   test('sans feuille native : « Lien copié » dans le bouton, annoncé au lecteur d’écran, texte et lien copiés', async ({ page, context }) => {
@@ -90,27 +82,22 @@ test.describe('Profil : « Partager Mochi Go », toujours là', () => {
     await ligne(page).click();
     await expect(ligne(page)).toContainText('Lien copié');
     await expect(page.locator('.profil [role="status"]').filter({ hasText: 'Lien copié. Colle-le dans un message.' })).toHaveCount(1);
-    await expect(ligne(page)).toHaveAccessibleName('Partager Mochi Go');
+    await expect(ligne(page)).toHaveAccessibleName(/^Partager Mochi Go/);
     expect(await page.evaluate(() => navigator.clipboard.readText()))
       .toBe('Je joue au go sur Mochi Go : c’est gratuit, sans pub, et on apprend en jouant, même débutant. Viens essayer ! https://mochi-go.app');
     await capture(page, 'profil-lien-copie-clair-390');
     // La confirmation est courte : la ligne redevient elle-même.
-    await expect(ligne(page)).toHaveText('Partager', { timeout: 4000 });
+    await expect(ligne(page)).toHaveText('Partager Mochi Go', { timeout: 4000 });
   });
 
-  test('320 px : l’icône seule, le titre et « Aide » tiennent sur leur ligne, rien ne déborde', async ({ page }) => {
+  test('320 px : la ligne tient, rien ne déborde', async ({ page }) => {
     await page.setViewportSize({ width: 320, height: 568 });
     await page.goto('/');
     await page.getByRole('navigation').getByRole('button', { name: 'Profil' }).click();
     await expect(ligne(page)).toHaveAccessibleName('Partager Mochi Go');
     const b = (await ligne(page).boundingBox())!;
-    expect(b.width).toBeGreaterThanOrEqual(44);
-    expect(b.height).toBeGreaterThanOrEqual(44);
-    const titre = (await page.getByRole('heading', { name: 'Ton parcours' }).boundingBox())!;
-    const aide = (await page.getByRole('button', { name: 'Aide' }).boundingBox())!;
-    expect(Math.abs(titre.y + titre.height / 2 - (b.y + b.height / 2))).toBeLessThan(8);
-    expect(b.x + b.width).toBeLessThanOrEqual(aide.x + 1);
-    expect(aide.x + aide.width).toBeLessThanOrEqual(320);
+    expect(b.height).toBeGreaterThanOrEqual(48);
+    expect(b.x + b.width).toBeLessThanOrEqual(320);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
     await capture(page, 'profil-320-sombre');
   });
@@ -120,7 +107,7 @@ test.describe('Profil : « Partager Mochi Go », toujours là', () => {
     await page.goto('/?lang=en');
     await page.getByRole('navigation').getByRole('button', { name: 'Profile' }).click();
     await expect(ligne(page)).toHaveAccessibleName('Share Mochi Go');
-    await expect(ligne(page)).toHaveText('Share');
+    await expect(ligne(page)).toHaveText('Share Mochi Go');
     await ligne(page).click();
     await expect.poll(() => partages(page)).toEqual([{
       title: 'Mochi Go', url: 'https://mochi-go.app/en',

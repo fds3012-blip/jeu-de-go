@@ -65,8 +65,6 @@
 .ami-plus:active { background: var(--surface-2); }
 .ami-plus:disabled { opacity: .45; }
 
-/* Profil : « Nous écrire » à côté des conditions (la ligne double garde le Profil sans défilement). */
-.ligne-demi.ligne-ecrire { min-width: 0; }
 
 /* Problèmes : « Cette réponse me semble fausse », discret, sous le verdict. */
 .signaler-probleme { display: flex; justify-content: center; }

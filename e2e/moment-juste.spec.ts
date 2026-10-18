@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { ouvrirLancementOrdi } from './plateau';
+import { ouvrirNiveauBadges } from './profil';
 
 // #631 (lot V11, principe P1 de DESIGN.md) : une information n'apparaît qu'au moment où elle sert une décision.
 // Ce qui disparaît revient quand il sert : la phrase du kyu à la première ouverture, la cote après une partie classée,
@@ -58,6 +59,12 @@ test('Profil : pas de chiffre à zéro, chacun revient avec le premier', async (
   });
   await page.goto('/');
   await nav(page, 'Profil');
+  // #654 : le sommaire n'affiche aucun compteur à zéro (pas de « 0 parties », « 0 / 3 », « 0 » badge)…
+  await expect(page.getByTestId('ligne-niveau')).toBeVisible();
+  await expect(page.locator('.sommaire-etat').filter({ hasText: /(^|\D)0(\D|$)/ })).toHaveCount(0);
+  await expect(page.getByText(/^0$/)).toHaveCount(0);
+  // … et les chiffres du parcours, dans « Niveau et badges », ne montrent que ceux qui existent.
+  await ouvrirNiveauBadges(page);
   const stats = page.getByRole('list', { name: 'Tes statistiques' });
   await expect(stats.getByRole('listitem')).toHaveCount(1);
   await expect(stats).toContainText(/leçon finie/);
@@ -66,6 +73,7 @@ test('Profil : pas de chiffre à zéro, chacun revient avec le premier', async (
   await page.evaluate(() => localStorage.setItem('go.problemes.v1', JSON.stringify({ b1: true })));
   await page.reload();
   await nav(page, 'Profil');
+  await ouvrirNiveauBadges(page);
   await expect(stats.getByRole('listitem')).toHaveCount(2);
   await expect(stats).toContainText(/1\s*problème réussi/);
 });
