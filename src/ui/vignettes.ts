@@ -122,7 +122,6 @@ export const MOTIFS: Record<string, Motif> = {
   l48: { noir: [[1, 1], [2, 3]], blanc: [[2, 2], [3, 2]], jade: [[1, 2]] },
   // Envahir ou réduire : le hoshi blanc, l'invasion au 3-3 en jade, la réduction par-dessus cerclée d'or.
   l49: { coin: true, blanc: [[2, 1], [3, 2]], jade: [[1, 3]], or: [[1, 0]] },
-<<<<<<< HEAD
   // #672, ouvertures célèbres. Le nirensei : deux étoiles noires sur le bord droit, un coin blanc en face.
   l50: { noir: [[3, 0], [3, 3]], blanc: [[0, 3]] },
   // Le sanrensei : trois pierres noires sur le bord droit, deux coins blancs en face.
@@ -137,11 +136,9 @@ export const MOTIFS: Record<string, Motif> = {
   l55: { coin: true, noir: [[2, 1]], blanc: [[3, 3]], jade: [[2, 0]] },
   // Le san-san d'AlphaGo : la pierre noire sous le hoshi blanc, la suite en jade.
   l56: { coin: true, blanc: [[2, 1]], noir: [[1, 2]], jade: [[2, 2]] },
-=======
   // #671 : vignette propre au thème « Double atari » (carte de la grille des thèmes) ; la leçon 3 montre l'échelle.
   // Problème v06 « Deux atari à la fois » (src/content/lots/v-captures-lecons.ts, prouvé par src/go/lot-v.test.ts), sans
   // rien enlever : la fenêtre C à F, lignes 6 à 3, contient toutes ses pierres. Le jade, E5, est le coup qui met D5 et
   // E4 en atari à la fois (dernières libertés C5 et E3, vides dans la fenêtre). Vérifié par src/go/vignette-double-atari.test.ts.
   'theme-double-atari': { noir: [[1, 0], [1, 2], [3, 2]], blanc: [[1, 1], [2, 2]], jade: [[2, 1]] },
->>>>>>> origin/main
 };
