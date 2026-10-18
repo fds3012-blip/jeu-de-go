@@ -125,7 +125,7 @@ export function positionsDOuverture(o: Ouverture): APosition[] {
   const lue = lireOuverture(o), positions = positionsOuverture(lue), n = o.taille;
   return lue.coups.map((c, i) => aPos(versRows(positions[i]), c.couleur, [
     toLabel(c.point, n),
-    ...[...o.erreurs, ...(o.ecartes ?? [])].filter(e => e.coup === i).map(e => toLabel(fromSgf(e.c, n), n)),
+    ...[...o.erreurs, ...(o.ecartes ?? []), ...(o.variantes ?? [])].filter(e => e.coup === i).map(e => toLabel(fromSgf(e.c, n), n)),
   ]));
 }
 

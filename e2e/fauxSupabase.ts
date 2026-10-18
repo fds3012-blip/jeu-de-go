@@ -586,7 +586,7 @@ export function fauxServeur() {
         return json('envoye');
       }
       if (nom === 'bilan_semaine') {
-        const lundi = (() => { const d = new Date(); d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7)); return d.toISOString().slice(0, 10); })();
+        const lundi = (() => { const j = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Paris', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date()); const d = new Date(`${j}T00:00:00Z`); d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7)); return d.toISOString().slice(0, 10); })(); // heure de Paris, comme l'app
         const parties = games.filter(g => g.status === 'finished' && !g.bot_id && g.black_id && g.white_id && (g.black_id === u.id || g.white_id === u.id));
         const gagne = (g: Ligne) => (String(g.result).startsWith('B+') && g.black_id === u.id) || (String(g.result).startsWith('W+') && g.white_id === u.id);
         const amis = amisDe(u.id).flatMap(id => {
