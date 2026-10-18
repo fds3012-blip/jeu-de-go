@@ -17,6 +17,7 @@ import { LESSONS_FR, TRADUCTIONS, type Lesson, type LessonStep } from '../conten
 import { OUVERTURES } from '../content/ouvertures';
 import { THEMES_DE_LECON } from '../content/themesLecons';
 import { fromRows } from './position';
+import { fenetreDe, visible } from '../content/cadreLecon';
 import { fromSgf, toLabel } from './coords';
 import { lireOuverture, positionsOuverture, type Ouverture } from './ouvertures';
 import { TOLERANCE_DEMO, bilan, positionsDOuverture, type Analyse, type Preuves } from './preuvesKataGo';
@@ -117,6 +118,19 @@ describe('affirmations des textes, rejouées depuis la fixture', () => {
     expect(b.meilleur).toBe('Q5');
     expect(b.perte('R9')).toBeGreaterThan(0);
     expect(b.perte('R9')).toBeLessThanOrEqual(TOLERANCE_DEMO);
+  });
+  it('l55 : « KataGo jouerait même ailleurs » : au saut D6, le meilleur coup jugé est hors du coin montré', () => {
+    const h = o('h-approche'), m = bilan(analyse(h, 1)).meilleur;
+    expect(visible(m, 19, fenetreDe(h.cadre, 19))).toBe(false);
+  });
+  it('l51 : « jouer ailleurs vaut presque autant » : un coup hors du coin bas droit est à 0,5 point au plus de R4', () => {
+    const b = bilan(analyse(o('g-sanrensei'), 6));
+    expect(b.meilleur).toBe('R4');
+    const ailleurs = Object.keys(b.moy).filter(l => !/^[N-T]\d$/.test(l));
+    expect(Math.min(...ailleurs.map(l => b.perte(l)))).toBeLessThanOrEqual(0.5);
+  });
+  it('l53 : « le chinois reste jouable : environ 1 point de moins » (R9 face à Q5)', () => {
+    expect(Math.round(bilan(analyse(o('g-chinois'), 4)).perte('R9'))).toBe(1);
   });
   it('l55 et l56 : « joue ailleurs » : la ligne dit `ailleurs` (vérifié dans chaque symétrie par ouvertures.test.ts)', () => {
     expect(o('h-approche').ailleurs).toBe(true);

@@ -530,7 +530,7 @@ export const LESSONS_EN = {
   ] },
   // #672 : les ouvertures célèbres (l50 à l56).
   l50: { title: 'The two-star opening', desc: 'Two star points on the same side', steps: [
-    { text: 'Two-star opening (nirensei, “two stars in a row”, 1930s): place your star point (hoshi) on the green point.' },
+    { text: 'Two-star opening (nirensei, “two stars in a row”, popular since the 1930s): place your star point (hoshi) on the green point.' },
     { text: 'Your turn: the second star, on the same side as Q16.',
       ok: 'Two-star opening: two star points on the right side, and that side between them.', no: 'Look for the other star point on the right side, at the bottom.',
       refus: ['K10, the center point (tengen): about 3 points less for KataGo.'] },
@@ -539,40 +539,40 @@ export const LESSONS_EN = {
       ok: 'Yes: ni, two; ren, in a row; sei, stars.', no: 'Two (ni) stars (sei) in a row (ren): the nirensei.' }
   ] },
   l51: { title: 'The three-star opening', desc: 'Three star points on one side', steps: [
-    { text: 'Three-star opening (sanrensei, “three stars in a row”, born in 1933; Takemiya made it famous): play on the green point.' },
+    { text: 'Three-star opening (sanrensei, “three stars in a row”, played as early as 1933; Takemiya, a Japanese master, made it famous): play on the green point.' },
     { text: 'The AI answers by going straight into the 3-3 point (san-san).' },
     { text: 'Your turn: block it on the side of your framework (moyo, your large area).',
-      ok: 'Good: blocked toward Q10, your wall faces your framework.', no: 'Block above White’s stone, toward your Q10 stone.',
-      refus: ['R2, from below: White gets out at Q3, about 4 points less.', 'K10: you let White be, White goes up at R4. About 4 points less.'] },
+      ok: 'Good: blocked toward Q10, your wall faces your framework. Playing elsewhere is nearly as good for KataGo.', no: 'Block above White’s stone, toward your Q10 stone.',
+      refus: ['R2, from below: White gets out at Q3, about 4 points less.', 'K10, in the center: White goes up at R4. About 4 points less.'] },
     { text: 'To make the three-star opening: Q10 or K10?', choices: ['Q10', 'K10'],
       ok: 'Q10: the third star, on the side. K10 costs about 2 points.', no: 'K10, the center, costs about 2 points (KataGo).' }
   ] },
   l52: { title: 'The shin-fuseki', desc: 'The new opening of 1933', steps: [
-    { text: 'New opening (shin-fuseki): play the 3-3 point (san-san) like Go Seigen, green point.' },
+    { text: 'New opening (shin-fuseki, by Go Seigen, a Chinese-born genius, and Kitani, 1933): play the 3-3 point (san-san) like Go Seigen, green point.' },
     { text: 'Your turn: then a star point (hoshi), in the top left.',
-      ok: 'Good: two corners, taken fast: corners first.', no: 'Place your stone on the star point in the top left.' },
+      ok: 'Good: two corners, taken fast. Corners first, without closing them.', no: 'Place your stone on the star point in the top left.' },
     { text: 'Approach (kakari): approach White’s D3 corner from above.',
       ok: 'Good: you approach the corner before White closes it.', no: 'Approach the D3 corner from above, without touching it.',
       refus: ['K10, Go Seigen’s center point (tengen): about 3 points less here.'] },
     { text: 'First move: R17 (san-san) or K10 (tengen)?', choices: ['R17', 'K10'],
-      ok: 'R17. Go Seigen also dared the center point; KataGo prefers a corner.', no: 'As a first move, K10 costs about 3 points (KataGo).' }
+      ok: 'R17. Go Seigen also dared the center point; KataGo prefers a corner.', no: 'As a first move, K10: about 3 points less than R17 (KataGo).' }
   ] },
   l53: { title: 'The Chinese opening', desc: 'Two corners, then the side, fast', steps: [
-    { text: 'Chen Zude’s Chinese opening (fuseki): a star point (hoshi) on the green point.' },
-    { text: 'Your turn: a 3-4 point (komoku), bottom right.',
+    { text: 'The Chinese opening (fuseki; made famous by Chen Zude, a Chinese champion): a star point (hoshi), green point.' },
+    { text: 'Your turn: 3-4 point (komoku) bottom right, 3rd line from the bottom.',
       ok: 'Good: Q3 faces the right side.', no: 'The Chinese komoku: Q3, 4th line from the right, 3rd from the bottom.' },
     { text: 'Your turn: the stone on the right side, between your two corners.',
       ok: 'Good: three stones, and the whole right side in view.', no: 'The Chinese opening is played on the right side: R9, or Q9 higher.',
       refus: ['K10, the center: about 2 points less (KataGo).'] },
-    { text: 'Good to know: the AI prefers closing the corner here, green point.' },
+    { text: 'Good to know: the AI prefers enclosing the corner (enclosure), green point (the Chinese opening stays playable: about 1 point less).' },
     { text: 'White’s contact move (tsuke) at Q4. Block it on the corner side.',
-      ok: 'Good: the bend around it (hane) at R4, on the corner side.', no: 'Play against White’s stone, corner side, diagonal to Q3.',
-      refus: ['R5: White pulls back at R4, about 4 points less.'] }
+      ok: 'Good: the bend at R4 (hane: diagonal from your stone, touching White’s), corner side.', no: 'Play against White’s stone, corner side, diagonal to Q3.',
+      refus: ['R5: White extends to R4, into your corner. About 4 points less.'] }
   ] },
-  l54: { title: 'Shusaku’s diagonal move', desc: 'The move he called always good', steps: [
-    { text: '3-4 point (komoku; Shusaku, 1840s): play on the green point.' },
+  l54: { title: 'Shusaku’s kosumi', desc: 'The move he called always good', steps: [
+    { text: '3-4 point (komoku; Shusaku’s favorite corner, nineteenth century): play on the green point.' },
     { text: 'White’s approach (kakari). Your turn: Shusaku’s diagonal move (kosumi).',
-      ok: 'Shusaku called it always good: KataGo rates it good too.', no: 'One diagonal step from C4, up and to the right.',
+      ok: 'Shusaku is said to have called it always good; KataGo rates it good here too.', no: 'One diagonal step from C4, up and to the right.',
       refus: ['B5, on the 2nd line: about 4 points less (KataGo).'] },
     { text: 'White extends along the bottom: each takes a side.' },
     { text: 'The diagonal step from C4 to D5 is called…', choices: ['The kosumi', 'The tsuke', 'The kakari'],
@@ -581,7 +581,7 @@ export const LESSONS_EN = {
   l55: { title: 'The star point approach', desc: 'Answering when White comes close', steps: [
     { text: 'Approach (kakari): White comes near your star point (hoshi) D4.' },
     { text: 'Your turn: jump one space upward, from D4.',
-      ok: 'Good: the one-space jump, solid, toward your D10 stone.', no: 'Jump one space upward, from your star point.',
+      ok: 'Good: the one-space jump, solid, toward your D10 stone. KataGo would even play elsewhere.', no: 'Jump one space upward: leave D5 empty.',
       refus: ['F2: White cuts at E3, about 2 points less.'] },
     { text: 'White slides to D2, under your star point, toward the corner.' },
     { text: 'Your turn: block its way into the corner.',
@@ -589,7 +589,7 @@ export const LESSONS_EN = {
     { text: 'White extends to J3. The corner is settled: play elsewhere.' }
   ] },
   l56: { title: 'AlphaGo’s early invasion', desc: 'Going into the 3-3 point from the start', steps: [
-    { text: 'Like AlphaGo (2017): go into the 3-3 point (san-san), green point.' },
+    { text: 'Like AlphaGo (2016-2017): invade at the 3-3 point (san-san), green point.' },
     { text: 'White blocks from above. Your turn: crawl to the right.',
       ok: 'Good: your stone moves along under White’s star point (hoshi).', no: 'Move one step to the right, on the 3rd line.',
       refus: ['White closes at D3: about 3 points less (KataGo).'] },

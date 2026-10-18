@@ -15,11 +15,18 @@ export interface ThemeApprendre {
    * #614 : leçon dont la vignette illustre le thème sur sa carte. La première leçon du thème dont la vignette n'illustre
    * pas déjà un thème placé avant lui : la leçon 3 sert trois thèmes, la leçon 6 deux ; sans cette règle, plusieurs
    * cartes voisines auraient le même dessin. Aucune position nouvelle : ce sont les vignettes du chemin (src/ui/vignettes.ts).
+   * #671 : sauf pour un thème de VIGNETTE_DE_THEME, qui a sa propre vignette (une position tirée d'un problème vérifié).
    */
   vignette: string;
 }
 
-const finie = (l: LeconCourte, progression: Readonly<Record<string, number>>) => (progression[l.id] ?? 0) >= l.steps.length;
+/**
+ * #671 : vignette propre à un thème (clé de MOTIFS, src/ui/vignettes.ts), quand aucune vignette de ses leçons ne le
+ * montre : le double atari n'a que la leçon 3, dont la vignette dessine l'échelle.
+ */
+export const VIGNETTE_DE_THEME: Readonly<Partial<Record<Theme, string>>> = { 'double-atari': 'theme-double-atari' };
+
+const finie =(l: LeconCourte, progression: Readonly<Record<string, number>>) => (progression[l.id] ?? 0) >= l.steps.length;
 
 /**
  * Thèmes qui ont au moins une leçon dans `lecons` (le chemin publié), dans l'ordre de leur première leçon :
@@ -37,7 +44,11 @@ export function themesAvecLecons(lecons: readonly LeconCourte[], progression: Re
   }
   const themes = [...parTheme.values()], prises = new Set<string>();
   for (const x of themes) {
-    x.vignette = x.lecons.find(id => !prises.has(id)) ?? x.lecons[0];
+    // #671 : un thème qui a sa propre vignette (le double atari : la leçon 3 dessine l'échelle) la prend, et sa première
+    // leçon reste écartée : l'échelle de la leçon 3 n'irait pas mieux au bord.
+    const propre = VIGNETTE_DE_THEME[x.theme];
+    if (propre) prises.add(x.lecons[0]);
+    x.vignette = propre ?? x.lecons.find(id => !prises.has(id)) ?? x.lecons[0];
     prises.add(x.vignette);
   }
   return themes;
