@@ -375,6 +375,8 @@ Décision F1 appliquée. La partie de découverte n'a plus que deux portes : sa 
 
 ## 13. Problèmes en sommaire (#653, règle A13)
 
+Captures (sombre, 390 × 844) : `captures/sommaires/problemes-390-avant.jpg`, `problemes-390-apres.jpg`, et en clair `problemes-390-clair-apres.jpg`.
+
 Retour de Florian, 18/10 : « il y a trop ; la partie révision peut être enlevée. On devrait avoir les propositions, puis ensuite si on clique dessus aller sur les différentes pages. » Modèle : l'onglet Problèmes de chess.com (une image en haut, quatre grandes lignes, un bouton principal).
 
 | | Avant | Après |

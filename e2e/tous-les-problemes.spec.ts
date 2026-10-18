@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { ouvrirTous as versTous } from './problemes';
 
 // #647 (décision F-P5) : sur téléphone, « Tous les problèmes » montre 3 vignettes par ligne (110 px à 390 px), lisibles,
 // chacune une cible de 44 px au moins, sans défilement horizontal. Plus étroit (320 px, zoom 200 %) : moins de colonnes.
@@ -8,7 +9,7 @@ async function ouvrirTous(page: Page, largeur: number, hauteur = 844) {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
-  await page.getByRole('button', { name: 'Tous les problèmes' }).click();
+  await versTous(page);
   await expect(page.getByRole('heading', { name: 'Tous les problèmes' })).toBeVisible();
 }
 
