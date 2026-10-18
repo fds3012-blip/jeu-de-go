@@ -20,7 +20,6 @@ const REGLE: Record<string, Usage> = {
   'src/app/Accueil.tsx': { sceau: 2, portrait: 0, pourquoi: 'accueil : annonce de Mochi, icône du chemin (#589 : la partie guidée est dans Apprendre)' },
   'src/app/CreerCompte.tsx': { sceau: 2, portrait: 0, pourquoi: 'création de compte : confirmation, aide' },
   'src/app/Direct.tsx': { sceau: 2, portrait: 0, pourquoi: 'en ligne : attente, délai après abandons' },
-  'src/app/Learn.tsx': { sceau: 1, portrait: 0, pourquoi: 'chemin des leçons : Mochi présente la première leçon et la fin du chemin (#602 : plus d’icône sur la partie guidée) ; la leçon elle-même a le portrait' },
   'src/app/Lentes.tsx': { sceau: 1, portrait: 0, pourquoi: 'parties lentes : recherche en cours' },
   'src/app/PartiePartagee.tsx': { sceau: 4, portrait: 0, pourquoi: 'lien partagé : chargement, introuvable, aide pour revoir les coups' },
   'src/app/ProfilPublic.tsx': { sceau: 1, portrait: 0, pourquoi: 'profil public (#560) : « Ce joueur n’est pas disponible » (état vide d’interface)' },
@@ -31,6 +30,7 @@ const REGLE: Record<string, Usage> = {
   'src/ui/Retours.tsx': { sceau: 1, portrait: 0, pourquoi: 'ton avis en 3 questions : « Merci ! » (confirmation)' },
   // ---------- Portrait seul : Mochi parle de ta partie ou de ton exercice ----------
   'src/app/CourseProblemes.tsx': { sceau: 0, portrait: 1, pourquoi: 'problèmes : énoncé' },
+  'src/app/Learn.tsx': { sceau: 1, portrait: 1, pourquoi: 'sommaire d’Apprendre (#652) : le sceau quand Mochi présente la première leçon et la fin ; le portrait de 40 px sur l’entrée « Jouer avec Mochi », où Mochi est l’adversaire (comme dans la partie guidée)' },
   'src/app/Game.tsx': { sceau: 0, portrait: 3, pourquoi: 'partie guidée (Mochi joue Blanc), fin de partie guidée, bouton « Conseil »' },
   'src/app/IntroRegles.tsx': { sceau: 0, portrait: 1, pourquoi: 'introduction des règles' },
   'src/app/Lecon.tsx': { sceau: 0, portrait: 1, pourquoi: 'leçon' },

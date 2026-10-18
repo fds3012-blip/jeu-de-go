@@ -111,9 +111,9 @@ for (const largeur of [390, 320]) test(`écrans clés en anglais à ${largeur} p
   await nav.getByRole('button', { name: 'Learn' }).click();
   await verifier(page, 'apprendre', largeur);
   await page.locator('.cta-chemin').click();
-  await expect(page.getByRole('button', { name: 'Back to the path' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Back to Learn' })).toBeVisible();
   await verifier(page, 'lecon', largeur);
-  await page.getByRole('button', { name: 'Back to the path' }).click();
+  await page.getByRole('button', { name: 'Back to Learn' }).click();
 
   // Problèmes : l'écran (Go du jour, thèmes), puis un problème.
   await nav.getByRole('button', { name: 'Puzzles' }).click();

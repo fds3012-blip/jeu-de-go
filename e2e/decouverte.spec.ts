@@ -1,10 +1,10 @@
 import { expect, test, type Page } from '@playwright/test';
 import { SCENARIO } from '../src/content/decouverte';
-import { attendrePierre, jouer, pierres, plateau } from './plateau';
+import { attendrePierre, jouer, ouvrirAvecMochi, pierres, plateau } from './plateau';
 import { avancerJusqua, faireMoment, ouvrirDepuisApprendre, surMoment } from './decouverte';
 
 // #524 : partie guidée de découverte. Parcours complet depuis Apprendre, avec de bons et de mauvais coups (Mochi
-// explique, le joueur rejoue, rien ne bloque), reprise après un rechargement, et fin qui mène au chemin des leçons.
+// explique, le joueur rejoue, rien ne bloque), reprise après un rechargement, et fin qui ramène à « Jouer avec Mochi ».
 // CAPTURES_DIR=… : enregistre les captures des moments clés (revue de design), hors CI.
 
 const bulle = (page: Page) => page.locator('.decouverte .mochi-bulle');
@@ -138,7 +138,7 @@ for (const largeur of [390, 320] as const) {
     await capture(page, '15-resultat');
     await page.locator('.decouverte .cta').click();
 
-    // Fin : victoire, XP d'une leçon, une seule action ; la suite mène au chemin des leçons.
+    // Fin : victoire, XP d'une leçon, une seule action ; la suite ramène à « Jouer avec Mochi ».
     await expect(page.getByRole('heading', { name: 'Victoire !'.replace(' !', ' !') })).toBeVisible();
     await expect(page.getByTestId('fin-decouverte').locator('.xp-en-ligne')).toContainText('XP');
     await expect(page.locator('.cta')).toHaveCount(1);
@@ -150,13 +150,14 @@ for (const largeur of [390, 320] as const) {
   });
 }
 
-test('reprise après un rechargement : même moment, même position, Mochi le dit ; « Quitter » ramène au chemin', async ({ page }) => {
+test('reprise après un rechargement : même moment, même position, Mochi le dit ; « Quitter » ramène à Jouer avec Mochi', async ({ page }) => {
   await page.goto('/');
   await ouvrirDepuisApprendre(page);
   for (let i = 0; i < 3; i++) await faireMoment(page, i);
   await surMoment(page, 'capture');
   await page.reload();
   await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
+  await ouvrirAvecMochi(page);
   await expect(page.getByTestId('carte-decouverte')).toHaveAttribute('data-etat', 'encours');
   await expect(page.getByTestId('carte-decouverte')).toContainText('Reprendre');
   await page.getByTestId('carte-decouverte').click();

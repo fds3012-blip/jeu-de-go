@@ -29,7 +29,7 @@ for (const largeur of [390, 320]) {
     await page.goto('/?lang=en');
     await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: 'Learn' }).click();
     await expect(page.getByText(EN.desc)).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'The basics' })).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Other ways to learn' })).toBeVisible();
     await sansDebordement(page, 'chemin');
     await page.locator('.cta-chemin').click();
     await expect(page.getByRole('heading', { name: EN.title })).toBeVisible();
@@ -59,7 +59,7 @@ test('sans ?lang : la leçon 1 reste en français, identique à avant', async ({
   await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
   await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
   await expect(page.getByText(FR.desc)).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Les bases' })).toBeVisible();
+  await expect(page.getByTestId('prochaine-lecon')).toBeVisible();
   await page.locator('.cta-chemin').click();
   await expect(page.getByRole('heading', { name: 'Libertés et capture' })).toBeVisible();
   await expect(page.locator('.bubble p')).toHaveText(norm(FR.steps[0].text));

@@ -4,7 +4,7 @@
 // (le h1 « Mochi Go » reste pour les lecteurs d'écran) dès qu'une barre `.ecran-tete` est affichée.
 import type { ReactNode } from 'react';
 
-/** Rond de 44 px avec un chevron, en haut à gauche. `label` : nom accessible (« Retour », « Retour au chemin »). */
+/** Rond de 44 px avec un chevron, en haut à gauche. `label` : nom accessible (« Retour », « Retour à Apprendre »). */
 export function BoutonRetour({ label, onClick }: { label: string; onClick: () => void }) {
   return (
     <button type="button" className="retour" aria-label={label} onClick={onClick}>

@@ -37,9 +37,7 @@ async function l34(page: Page, auDoigt: boolean, ecran: (n: string) => Promise<v
   await page.addInitScript(p => localStorage.setItem('go.lecons.v1', JSON.stringify(p)), AVANT);
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
-  // Le chemin : la valeur d'un coup et le sente avant le gote ferment « Fin de partie », le watari suit le manque de libertés.
-  await expect(page.getByRole('button', { name: `Leçon ${numero('l32')} : La valeur d’un coup, terminée` })).toBeAttached();
-  await expect(page.getByRole('button', { name: `Leçon ${numero('l33')} : Le sente avant le gote, terminée` })).toBeAttached();
+  // #652 : le sommaire d'Apprendre ; la carte de la prochaine leçon ouvre la leçon.
   await expect(page.getByRole('button', { name: `Leçon ${numero('l34')} : Relier par en dessous, prochaine étape` })).toBeAttached();
   await sansDebordement(page, 'chemin');
   await page.locator('.cta-chemin').scrollIntoViewIfNeeded();

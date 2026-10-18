@@ -3,7 +3,7 @@
 // « Maîtrisé », ou une barre fine. Actions secondaires, à plat : l'action en relief de l'écran reste ailleurs.
 // Une colonne sur téléphone (la ligne de description ne tient pas dans une demi-largeur), puis 2, 3 et plus quand la place
 // le permet (#625, P8). Cartes à plat, sans bordure, comme les tuiles d’Entraînement (.tuile-pb).
-import { useId, useState, type CSSProperties, type ReactNode } from 'react';
+import { useId, type CSSProperties, type ReactNode } from 'react';
 import { fr } from './typo';
 import './themes.css';
 
@@ -24,23 +24,18 @@ export interface CarteTheme {
   record?: string;
 }
 
-export function GrilleThemes({ titre, cartes, motMaitrise, onOuvrir, pli, className, testId }: {
+export function GrilleThemes({ titre, cartes, motMaitrise, onOuvrir, className, testId }: {
   titre: string; cartes: readonly CarteTheme[]; motMaitrise: string; onOuvrir: (cle: string) => void;
-  /** Ne montrer que les `visibles` premières cartes, et les autres derrière « libelle ». */
-  pli?: { visibles: number; libelle: string };
   className?: string; testId?: string;
 }) {
   const id = useId();
-  const [ouvert, setOuvert] = useState(false);
   if (!cartes.length) return null;
-  const replie = !!pli && cartes.length > pli.visibles;
-  const montrees = replie && !ouvert ? cartes.slice(0, pli.visibles) : cartes;
   return (
     <section className={['themes', className].filter(Boolean).join(' ')} aria-labelledby={`${id}-t`} data-testid={testId}>
       <h3 id={`${id}-t`}>{titre}</h3>
-      <ul className="themes-grille" id={`${id}-l`}>
-        {montrees.map((c, i) => (
-          <li key={c.cle} className={replie && i >= pli.visibles ? 'theme-revele' : undefined}>
+      <ul className="themes-grille">
+        {cartes.map(c => (
+          <li key={c.cle}>
             {/* Nom accessible : le nom visible d'abord (WCAG 2.5.3), puis l'état ; la ligne de description le décrit. */}
             <button type="button" className="theme-carte" data-theme={c.cle} onClick={() => onOuvrir(c.cle)}
               aria-label={(c.maitrise ? [c.nom, motMaitrise] : [c.nom, c.record, c.partAria]).filter((x): x is string => !!x).map(x => fr(x)).join(', ')} aria-describedby={`${id}-${c.cle}`}>
@@ -62,12 +57,6 @@ export function GrilleThemes({ titre, cartes, motMaitrise, onOuvrir, pli, classN
           </li>
         ))}
       </ul>
-      {replie && (
-        <button type="button" className="lien themes-plus" aria-expanded={ouvert} aria-controls={`${id}-l`} onClick={() => setOuvert(o => !o)}>
-          {pli.libelle}
-          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6" /></svg>
-        </button>
-      )}
     </section>
   );
 }

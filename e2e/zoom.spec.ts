@@ -1,5 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { CHAPITRES, LESSONS_FR, type LessonStep } from '../src/content/lessons';
+import { LESSONS_FR, type LessonStep } from '../src/content/lessons';
 import { jouer, toucherCta } from './plateau';
 import { motsEntiers, toucherAction } from './lecteur';
 
@@ -53,21 +53,21 @@ async function boutonLibre(bouton: Locator, ecran: string) {
 }
 
 /**
- * #169 : chemin d'Apprendre lisible. Les rangées (pierre, titre, description, bouton) ne se chevauchent pas,
- * et aucun texte du chemin n'est recouvert : au milieu de chaque ligne de texte, l'élément visible est
+ * #169, #652 : sommaire d'Apprendre lisible. Les blocs (carte de la prochaine leçon, entrées, cartes des thèmes) ne se
+ * chevauchent pas, et aucun de leurs textes n'est recouvert : au milieu de chaque ligne de texte, l'élément visible est
  * celui qui porte le texte (ou un de ses enfants), jamais une autre rangée, le bouton ou la barre du bas.
  */
 async function cheminLisible(page: Page, ecran: string) {
   const r = await page.evaluate(async () => {
     const soucis: string[] = [];
-    const rangees = [...document.querySelectorAll<HTMLElement>('.gue .pas')];
+    const rangees = [...document.querySelectorAll<HTMLElement>('.apprendre .prochaine-carte, .apprendre .sommaire-entree, .apprendre .theme-carte')];
     const boites = rangees.map(li => li.getBoundingClientRect()).map(b => ({ top: b.top + scrollY, bottom: b.bottom + scrollY }));
     const ordre = boites.map((b, i) => ({ ...b, i })).sort((a, b) => a.top - b.top);
     for (let j = 1; j < ordre.length; j++) {
       if (ordre[j].top < ordre[j - 1].bottom - 0.5) soucis.push(`rangées ${ordre[j - 1].i + 1} et ${ordre[j].i + 1} se chevauchent (${Math.round(ordre[j - 1].bottom - ordre[j].top)} px)`);
     }
-    // Chaque ligne de texte du chemin, amenée au milieu de l'écran (la barre du bas ne compte pas).
-    const porteurs = [...document.querySelectorAll<HTMLElement>('.gue .pas-texte b, .gue .pas-texte small, .gue .cta-chemin')];
+    // Chaque ligne de texte du sommaire, amenée au milieu de l'écran (la barre du bas ne compte pas).
+    const porteurs = [...document.querySelectorAll<HTMLElement>('.prochaine .pas-texte b, .prochaine .pas-texte small, .cta-chemin, .sommaire-nom, .theme-nom b, .theme-desc')];
     for (const el of porteurs) {
       for (const n of el.childNodes) {
         if (n.nodeType !== Node.TEXT_NODE || !n.textContent?.trim()) continue;
@@ -88,8 +88,8 @@ async function cheminLisible(page: Page, ecran: string) {
     window.scrollTo(0, 0);
     return { soucis, n: rangees.length };
   });
-  expect(r.n, `${ecran} : chemin introuvable`).toBeGreaterThan(0);
-  expect(r.soucis, `${ecran} : chemin illisible`).toEqual([]);
+  expect(r.n, `${ecran} : sommaire introuvable`).toBeGreaterThan(0);
+  expect(r.soucis, `${ecran} : sommaire illisible`).toEqual([]);
 }
 
 /**
@@ -167,34 +167,21 @@ for (const c of CAS) {
       await retourDansLEcran(page, 'Leçon 1');
     });
 
-    // #177 : sept leçons dans « Les bases » ; la septième et ses choix longs tiennent dans la largeur.
-    // #228 : le chapitre 2 (leçon 8) suit, sous la leçon 7 et son bouton.
-    test('chemin de sept leçons et leçon 7 sans défilement horizontal', async ({ page }) => {
+    // #177 : la leçon 7 et ses choix longs tiennent dans la largeur ; #652 : elle s'ouvre de la carte du sommaire.
+    test('Apprendre et leçon 7 sans défilement horizontal', async ({ page }) => {
       await page.addInitScript(() => localStorage.setItem('go.lecons.v1', JSON.stringify({ l1: 6, l2: 6, l3: 8, l4: 5, l5: 5, l6: 6, l7: 4 })));
       await page.goto('/');
       await onglet(page, 'Apprendre').click();
-      await expect(page.locator('[data-chapitre="c1"] .gue li.pas')).toHaveCount(7);
-      // #16 : le chapitre 2 grandit (l8, puis l27…) : autant de pierres que de leçons.
-      await expect(page.locator('[data-chapitre="c2"] .gue li.pas')).toHaveCount(CHAPITRES.find(x => x.id === 'c2')!.lecons.length);
-      await sansDebord(page, 'Apprendre (7 leçons)');
+      await expect(page.getByTestId('par-theme').locator('.theme-carte')).toHaveCount(15);
+      await sansDebord(page, 'Apprendre');
       const cta = page.getByRole('button', { name: 'Reprendre la leçon : Compter les points' });
       await boutonLibre(cta, 'Apprendre (leçon 7)');
-      const pierre = page.getByRole('button', { name: 'Leçon 7 : Compter les points, prochaine étape' });
-      const b = (await pierre.boundingBox())!;
-      expect(b.x, 'pierre 7 coupée à gauche').toBeGreaterThanOrEqual(0);
-      expect(b.x + b.width, 'pierre 7 coupée à droite').toBeLessThanOrEqual(c.largeur + 1);
-      // Le bouton de la dernière leçon ne mord pas sur « Bientôt » (après la mesure des rangées, qui peut suivre d'un rendu).
-      await expect.poll(async () => {
-        const bas = (await cta.boundingBox())!, bientot = (await page.getByRole('heading', { name: 'Bientôt' }).boundingBox())!;
-        return bientot.y - (bas.y + bas.height);
-      }, { message: 'bouton de la leçon 7 sur « Bientôt »' }).toBeGreaterThanOrEqual(0);
-      await expect.poll(async () => {
-        const bas = (await cta.boundingBox())!, chap2 = (await page.getByRole('heading', { name: 'L’ouverture' }).boundingBox())!;
-        return chap2.y - (bas.y + bas.height);
-      }, { message: 'bouton de la leçon 7 sur le chapitre 2' }).toBeGreaterThanOrEqual(0);
-      // #232 : aussi avec la police doublée (les rangées 2/3, 3/4 et 6/7 du chapitre 1 se chevauchaient).
+      const carte = page.getByRole('button', { name: 'Leçon 7 : Compter les points, prochaine étape' });
+      const b = (await carte.boundingBox())!;
+      expect(b.x, 'carte de la leçon 7 coupée à gauche').toBeGreaterThanOrEqual(0);
+      expect(b.x + b.width, 'carte de la leçon 7 coupée à droite').toBeLessThanOrEqual(c.largeur + 1);
       await page.evaluate(() => document.fonts.ready);
-      await cheminLisible(page, 'Apprendre (2 chapitres)');
+      await cheminLisible(page, 'Apprendre');
       await cta.click();
       for (const n of ['Je passe', 'Chez moi', 'Chez Blanc']) {
         const choix = page.locator('.choix').getByRole('button', { name: n, exact: true });
@@ -251,12 +238,12 @@ const PROGRESSIONS: Record<string, Record<string, number>> = {
   'dernière leçon en cours': { l1: 99, l2: 99, l3: 99, l4: 99, l5: 99 },
   fini: { l1: 99, l2: 99, l3: 99, l4: 99, l5: 99, l6: 99 },
 };
-// #232 : et à 390 px avec la police doublée, où la pierre est dessinée jusqu'à 110 px sous sa ligne.
+// #232 : et à 390 px avec la police doublée.
 for (const [largeur, hauteur, police] of [[195, 422, false], [320, 640, false], [390, 844, false], [390, 844, true]] as const) {
-  test.describe(`chemin d’Apprendre à ${largeur} px${police ? ', police doublée' : ''}`, () => {
+  test.describe(`sommaire d’Apprendre à ${largeur} px${police ? ', police doublée' : ''}`, () => {
     test.use({ viewport: { width: largeur, height: hauteur } });
     for (const [nom, p] of Object.entries(PROGRESSIONS)) {
-      test(`${nom} : rangées sans chevauchement, textes non recouverts`, async ({ page }) => {
+      test(`${nom} : blocs sans chevauchement, textes non recouverts`, async ({ page }) => {
         await page.addInitScript(v => localStorage.setItem('go.lecons.v1', v), JSON.stringify(p));
         if (police) await page.addInitScript(() => {
           document.addEventListener('DOMContentLoaded', () => { document.documentElement.style.fontSize = '200%'; });

@@ -246,7 +246,7 @@ test('#646 : leçon, problème et placement en plein écran, une seule sortie ve
   await expect(page.locator('.lecteur-titre')).toBeFocused();
   await expect(nav).toHaveCount(0);
   await expect(sorties).toHaveCount(1);
-  await page.getByRole('button', { name: 'Retour au chemin' }).click();
+  await page.getByRole('button', { name: 'Retour à Apprendre' }).click();
   await expect(nav.getByRole('button', { name: 'Apprendre' })).toHaveAttribute('aria-current', 'page');
   await expect(page.getByRole('button', { name: 'Commencer' })).toBeFocused();
 

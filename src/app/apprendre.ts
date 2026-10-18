@@ -24,6 +24,16 @@ export function etapes(lecons: Lesson[], progression: Progression): Etape[] {
   });
 }
 
+/**
+ * Nom accessible d'une leçon (carte de la prochaine leçon, page d'un thème) : rang, titre, taille si ce n'est pas un
+ * 9 × 9, état, et « avec un compte » si elle en demande un (« Leçon 4 : Le ko, avec un compte »).
+ */
+export function nomLecon(e: Etape, compte = false): string {
+  const etat = (e.etat === 'faite' ? t('apprendre.pas.faite') : e.etat === 'encours' ? t('apprendre.pas.encours') : '') + (compte ? t('apprendre.pas.compte') : '');
+  const taille = e.lecon.taille && e.lecon.taille !== 9 ? `, ${t('apprendre.taille', { n: e.lecon.taille })}` : '';
+  return t('apprendre.pas', { rang: e.rang, titre: e.lecon.title + taille, etat });
+}
+
 /** Titre court d'une leçon, pour un bouton : la partie avant « : » (« Atari : attaquer et se sauver » donne « Atari »). */
 export function titreCourt(titre: string): string {
   return titre.split(/\s*:\s*/)[0];
@@ -73,31 +83,6 @@ export function actionsFin({ chapitre, pratique, suivante, jouer }: { chapitre: 
   return { principale, liens };
 }
 
-/** Point d'ancrage d'une pierre du chemin : x compté depuis le milieu de l'écran, y depuis le haut du chapitre. */
-export interface Ancre { x: number; y: number }
-
-/**
- * Colonne de chaque pierre du chemin, en « pas » depuis le milieu (négatif à gauche) : le chemin serpente,
- * jamais deux pierres de suite du même côté, et laisse en face la place d'un titre.
- */
-export const COLONNES = [-1, 1, -0.6, 1, -1, 0.6];
-export const colonne = (i: number): number => COLONNES[i % COLONNES.length];
-
-/**
- * Tracé SVG d'une courbe lisse qui passe par chaque ancre, de haut en bas : entre deux pierres, un arc en S
- * (tangentes verticales), comme un sentier qui serpente. Vide avec moins de deux points.
- */
-export function courbe(points: readonly Ancre[]): string {
-  if (points.length < 2) return '';
-  const r = (n: number) => Math.round(n * 10) / 10;
-  let d = `M${r(points[0].x)} ${r(points[0].y)}`;
-  for (let i = 1; i < points.length; i++) {
-    const a = points[i - 1], b = points[i], my = (a.y + b.y) / 2;
-    d += a.x === b.x ? `L${r(b.x)} ${r(b.y)}` : `C${r(a.x)} ${r(my)} ${r(b.x)} ${r(my)} ${r(b.x)} ${r(b.y)}`;
-  }
-  return d;
-}
-
 /** Durée annoncée d'une leçon, en minutes : une vingtaine de secondes par étape, jamais moins d'une minute. */
 export function dureeMinutes(etapes: number): number {
   return Math.max(1, Math.round(etapes * 0.3));
@@ -112,11 +97,3 @@ export function chapitresAFeter(chapitres: { id: string; complet: boolean; lecon
     .filter(c => c.complet && c.lecons.length > 0 && c.lecons.every(l => (progression[l.id] ?? 0) >= l.steps.length) && !fetes.includes(c.id))
     .map(c => c.id);
 }
-
-/** Chapitres du programme (issue #16) annoncés, pas encore commencés (« Formes et tesuji » a ses trois premières leçons). */
-export const CHAPITRES_A_VENIR = [
-  'Ouverture en 19\u00A0×\u00A019',
-];
-
-/** Chapitres à venir dans la langue de l'interface (#167) ; en français, les textes ci-dessus (vérifié par un test). */
-export const chapitresAVenir = (): string[] => ([4] as const).map(i => t(`apprendre.avenir.${i}`));

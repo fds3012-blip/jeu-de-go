@@ -782,7 +782,7 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
   onErreurComprise?: (but: ErreurComprise['but']) => void;
   /** #549 : la solution complète s'ouvre (`coups` : bon coup et défenses compris). */
   onSolutionComplete?: (coups: number, apresEchec: boolean) => void;
-  /** Série de fin de leçon (#200) : libellé du retour (« Retour au chemin ») et surtitre (« Entraînement » et ses points). */
+  /** Série de fin de leçon (#200) : libellé du retour (« Retour à Apprendre ») et surtitre (« Entraînement » et ses points). */
   retour?: string; surtitre?: ReactNode;
   /** #469 : libellé du bouton qui mène à la suite (« Révision suivante », « Voir mon bilan ») ; « Problème suivant » sinon. */
   suivant?: string;
