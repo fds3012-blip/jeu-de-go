@@ -1,14 +1,16 @@
 // Miniature d'un problème : la zone où sont les pierres, sur un bout de kaya (issue #40, phase 6).
 // Les lignes qui ne sont pas un bord du plateau débordent de la fenêtre : on voit que le plateau continue.
-import { useId, useMemo } from 'react';
-import { cadrage } from './cadrage';
+import { useId } from 'react';
+import { cadrage, type Fenetre } from './cadrage';
 
 const PAS = 10;
 
-export function MiniGoban({ rows, className }: { rows: string[]; className?: string }) {
+/** `fenetre` : la zone à montrer, si elle est imposée (une ouverture montre la zone de son lecteur) ; sinon, les pierres. */
+export function MiniGoban({ rows, className, fenetre }: { rows: string[]; className?: string; fenetre?: Fenetre }) {
   const id = useId().replace(/[^a-zA-Z0-9_-]/g, '');
   const n = rows.length;
-  const { x, y, k } = useMemo(() => cadrage(rows), [rows]);
+  // Sans mémo (#626) : le cadrage parcourt au plus 361 points.
+  const { x, y, k } = fenetre ?? cadrage(rows);
   const cote = k * PAS;
   const o = PAS / 2; // première intersection
   const fin = o + (k - 1) * PAS;

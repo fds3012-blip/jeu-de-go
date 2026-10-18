@@ -2,7 +2,8 @@
 // « Ouvertures » (chargé à la demande). Règles : phrases courtes, tutoiement, mot japonais expliqué la première fois
 // dans chaque entrée. Les entrées elles-mêmes (SGF, erreurs) : src/content/ouvertures.ts.
 //
-// Clés d'une entrée : `o.<id>.nom`, `o.<id>.idee`, `o.<id>.c<n>` (le n-ième coup, à partir de 1), `o.<id>.e<n>` (la
+// Clés d'une entrée : `o.<id>.nom`, `o.<id>.idee`, `o.<id>.ligne` (la ligne de la carte, #626 : un extrait de l'idée ou du
+// premier coup, sans mot japonais), `o.<id>.c<n>` (le n-ième coup, à partir de 1), `o.<id>.e<n>` (la
 // n-ième erreur courante). Une réplique citée « en D4 » est celle de KataGo, dans chaque symétrie
 // (src/go/ouvertures.test.ts).
 import { langue, type Langue } from './index';
@@ -10,17 +11,13 @@ import { langue, type Langue } from './index';
 const FR = {
   // Liste
   'titre': 'Ouvertures',
-  'intro': 'Fuseki (début de partie) et joseki (suites de coups dans un coin). Choisis une ouverture.',
   'taille.9': '9 × 9',
   'taille.19': '19 × 19',
   'tailles': 'Taille du plateau',
   'preuve': 'Chaque coup de la séquence est vérifié par KataGo : il perd 1,5 point au plus face au meilleur coup.',
   'retourApprendre': 'Retour à Apprendre',
   'retourListe': 'Retour aux ouvertures',
-  'coups': '{n} coups',
-  'coups.un': '1 coup',
   // Lecteur
-  'depart': 'Touche « Suivant » pour voir le premier coup.',
   'precedent': 'Précédent',
   'suivant': 'Suivant',
   'progression': 'Coup {n} sur {total}',
@@ -39,6 +36,7 @@ const FR = {
   // 9 × 9 : le centre
   'o.n9-centre.nom': 'Le centre d’abord',
   'o.n9-centre.idee': 'En 9 × 9, le tengen (le point central) regarde les quatre coins à la fois.',
+  'o.n9-centre.ligne': 'Le point central regarde les quatre coins.',
   'o.n9-centre.c1': 'Noir joue au tengen, le point central. De là, il regarde tous les coins.',
   'o.n9-centre.c2': 'Blanc s’installe à gauche, sur la 3e ligne.',
   'o.n9-centre.c3': 'Noir descend en diagonale, entre Blanc et le bas.',
@@ -51,6 +49,7 @@ const FR = {
   // 9 × 9 : le 4-4
   'o.n9-coin.nom': 'Les quatre coins en 9 × 9',
   'o.n9-coin.idee': 'Le 4-4 : 4e ligne depuis deux bords (en 9 × 9, ce n’est pas le point étoile). Assez haut pour regarder le centre.',
+  'o.n9-coin.ligne': 'Le 4-4, assez haut pour regarder le centre.',
   'o.n9-coin.c1': 'Noir joue au 4-4 : 4e ligne depuis le bas et depuis la gauche.',
   'o.n9-coin.c2': 'Blanc prend le 4-4 d’en face, en diagonale.',
   'o.n9-coin.c3': 'Noir prend le 4-4 en bas à droite.',
@@ -61,6 +60,7 @@ const FR = {
   // 19 × 19 : les coins d'abord
   'o.g-coins.nom': 'Les coins d’abord',
   'o.g-coins.idee': 'Dans un coin, deux bords t’aident à entourer des points. Puis les bords, puis le centre.',
+  'o.g-coins.ligne': 'Puis les bords, puis le centre.',
   'o.g-coins.c1': 'Noir prend un coin, au hoshi (point étoile, le 4-4).',
   'o.g-coins.c2': 'Blanc prend un coin lui aussi.',
   'o.g-coins.c3': 'Noir prend un deuxième coin.',
@@ -71,12 +71,14 @@ const FR = {
   // 19 × 19 : puis les bords
   'o.g-bords.nom': 'Puis les bords',
   'o.g-bords.idee': 'Les quatre coins sont pris. Le bord vient ensuite : il vaut plus que le centre.',
+  'o.g-bords.ligne': 'Les quatre coins sont pris.',
   'o.g-bords.c1': 'Noir se place sur le bord droit, entre ses deux coins.',
   'o.g-bords.e1': 'K10, le centre : sans bord, il faut bien plus de pierres pour entourer des points.',
 
   // 19 × 19 : hoshi, approche et glissement
   'o.h-approche.nom': 'Hoshi : l’approche',
   'o.h-approche.idee': 'Ton hoshi (point étoile) est seul dans son coin. Blanc vient près de lui : un kakari (approche).',
+  'o.h-approche.ligne': 'Blanc approche ton point étoile.',
   'o.h-approche.c1': 'Blanc approche ton hoshi par le bas.',
   'o.h-approche.c2': 'Noir saute d’un pas vers le haut, vers sa pierre D10.',
   'o.h-approche.c3': 'Blanc glisse sous ton hoshi, sur la 2e ligne.',
@@ -87,6 +89,7 @@ const FR = {
   // 19 × 19 : hoshi, l'invasion au 3-3
   'o.h-sansan.nom': 'Hoshi : l’invasion au 3-3',
   'o.h-sansan.idee': 'Blanc entre sous ton hoshi (point étoile), au san-san (point 3-3). Bloque-le et bâtis un mur.',
+  'o.h-sansan.ligne': 'Blanc entre sous ton point étoile.',
   'o.h-sansan.c1': 'Blanc entre au san-san (point 3-3), sous ton hoshi.',
   'o.h-sansan.c2': 'Noir bloque du côté de sa pierre D10.',
   'o.h-sansan.c3': 'Blanc rampe vers la droite, sur la 3e ligne.',
@@ -98,6 +101,7 @@ const FR = {
   // 19 × 19 : komoku, l'approche et le tsuke
   'o.k-tsuke.nom': 'Komoku : le tsuke',
   'o.k-tsuke.idee': 'Le komoku : 3e ligne d’un bord, 4e de l’autre. Blanc approche, tu te colles à sa pierre, côté coin.',
+  'o.k-tsuke.ligne': 'Blanc approche, tu te colles à sa pierre, côté coin.',
   'o.k-tsuke.c1': 'Noir joue un komoku : 3e ligne d’un bord, 4e de l’autre.',
   'o.k-tsuke.c2': 'Blanc approche par le bas : kakari (approche).',
   'o.k-tsuke.c3': 'Tsuke (coup au contact) : Noir se colle à sa pierre, côté coin.',
@@ -109,6 +113,7 @@ const FR = {
   // 19 × 19 : komoku, le kosumi
   'o.k-kosumi.nom': 'Komoku : le kosumi',
   'o.k-kosumi.idee': 'Le komoku : 3e ligne d’un bord, 4e de l’autre. Contre l’approche, un pas en diagonale.',
+  'o.k-kosumi.ligne': 'Contre l’approche, un pas en diagonale.',
   'o.k-kosumi.c1': 'Noir joue un komoku : 3e ligne d’un bord, 4e de l’autre.',
   'o.k-kosumi.c2': 'Blanc approche par le bas : kakari (approche).',
   'o.k-kosumi.c3': 'Kosumi (un pas en diagonale) : Noir renforce son coin vers le haut.',
@@ -120,16 +125,12 @@ export type CleOuvertures = keyof typeof FR;
 
 const EN: { readonly [K in CleOuvertures]: string } = {
   'titre': 'Openings',
-  'intro': 'The start of a game (fuseki) and move sequences in a corner (joseki). Pick an opening.',
   'taille.9': '9 × 9',
   'taille.19': '19 × 19',
   'tailles': 'Board size',
   'preuve': 'Every move in the sequence is checked by KataGo: it loses 1.5 points at most against the best move.',
   'retourApprendre': 'Back to Learn',
   'retourListe': 'Back to openings',
-  'coups': '{n} moves',
-  'coups.un': '1 move',
-  'depart': 'Tap “Next” to see the first move.',
   'precedent': 'Previous',
   'suivant': 'Next',
   'progression': 'Move {n} of {total}',
@@ -147,6 +148,7 @@ const EN: { readonly [K in CleOuvertures]: string } = {
 
   'o.n9-centre.nom': 'The center first',
   'o.n9-centre.idee': 'On 9 × 9, the center point (tengen) looks at all four corners at once.',
+  'o.n9-centre.ligne': 'The center point looks at all four corners.',
   'o.n9-centre.c1': 'Black plays the center point. From there, it looks at every corner.',
   'o.n9-centre.c2': 'White settles on the left, on the 3rd line.',
   'o.n9-centre.c3': 'Black steps down diagonally, between White and the bottom.',
@@ -158,6 +160,7 @@ const EN: { readonly [K in CleOuvertures]: string } = {
 
   'o.n9-coin.nom': 'The four corners on 9 × 9',
   'o.n9-coin.idee': 'The 4-4: 4th line from two edges (on 9 × 9, it is not the star point). High enough to watch the center.',
+  'o.n9-coin.ligne': 'The 4-4: high enough to watch the center.',
   'o.n9-coin.c1': 'Black plays the 4-4: 4th line from the bottom and from the left.',
   'o.n9-coin.c2': 'White takes the opposite 4-4, diagonally.',
   'o.n9-coin.c3': 'Black takes the bottom right 4-4.',
@@ -167,6 +170,7 @@ const EN: { readonly [K in CleOuvertures]: string } = {
 
   'o.g-coins.nom': 'Corners first',
   'o.g-coins.idee': 'In a corner, two edges help you surround points. Then the sides, then the center.',
+  'o.g-coins.ligne': 'Then the sides, then the center.',
   'o.g-coins.c1': 'Black takes a corner, on the star point (hoshi), the 4-4.',
   'o.g-coins.c2': 'White takes a corner too.',
   'o.g-coins.c3': 'Black takes a second corner.',
@@ -176,11 +180,13 @@ const EN: { readonly [K in CleOuvertures]: string } = {
 
   'o.g-bords.nom': 'Then the sides',
   'o.g-bords.idee': 'All four corners are taken. The side comes next: it is worth more than the center.',
+  'o.g-bords.ligne': 'All four corners are taken.',
   'o.g-bords.c1': 'Black plays on the right side, between its two corners.',
   'o.g-bords.e1': 'K10, the center: with no edge, you need many more stones to surround points.',
 
   'o.h-approche.nom': 'Star point: the approach',
   'o.h-approche.idee': 'Your star point (hoshi) is alone in its corner. White comes close to it: an approach (kakari).',
+  'o.h-approche.ligne': 'White approaches your star point.',
   'o.h-approche.c1': 'White approaches your star point from below.',
   'o.h-approche.c2': 'Black jumps one space up, toward its stone at D10.',
   'o.h-approche.c3': 'White slides under your hoshi, on the 2nd line.',
@@ -190,6 +196,7 @@ const EN: { readonly [K in CleOuvertures]: string } = {
 
   'o.h-sansan.nom': 'Star point: the 3-3 invasion',
   'o.h-sansan.idee': 'White goes in under your star point (hoshi), at the 3-3 point (san-san). Block it and build a wall.',
+  'o.h-sansan.ligne': 'White goes in under your star point.',
   'o.h-sansan.c1': 'White goes in at the 3-3 point, under your star point.',
   'o.h-sansan.c2': 'Black blocks on the side of its stone at D10.',
   'o.h-sansan.c3': 'White crawls to the right, on the 3rd line.',
@@ -200,6 +207,7 @@ const EN: { readonly [K in CleOuvertures]: string } = {
 
   'o.k-tsuke.nom': '3-4 point: the attachment',
   'o.k-tsuke.idee': 'The 3-4 point (komoku): 3rd line from one edge, 4th from the other. White approaches, you attach on the corner side.',
+  'o.k-tsuke.ligne': 'White approaches, you attach on the corner side.',
   'o.k-tsuke.c1': 'Black plays a 3-4 point: 3rd line from one edge, 4th from the other.',
   'o.k-tsuke.c2': 'White makes an approach (kakari) from below.',
   'o.k-tsuke.c3': 'Black attaches (tsuke, a contact move) on the corner side of its stone.',
@@ -210,6 +218,7 @@ const EN: { readonly [K in CleOuvertures]: string } = {
 
   'o.k-kosumi.nom': '3-4 point: the diagonal move',
   'o.k-kosumi.idee': 'The 3-4 point (komoku): 3rd line from one edge, 4th from the other. Against the approach, one diagonal step.',
+  'o.k-kosumi.ligne': 'Against the approach, one diagonal step.',
   'o.k-kosumi.c1': 'Black plays a 3-4 point: 3rd line from one edge, 4th from the other.',
   'o.k-kosumi.c2': 'White makes an approach (kakari) from below.',
   'o.k-kosumi.c3': 'One diagonal step (kosumi): Black makes its corner stronger, upward.',

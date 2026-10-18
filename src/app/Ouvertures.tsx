@@ -28,33 +28,31 @@ export default function Ouvertures({ onExit }: { onExit: () => void }) {
   return (
     <div className="ouvertures" data-testid="ouvertures">
       <EnteteEcran titre={tou('titre')} retour={tou('retourApprendre')} onRetour={onExit} />
-      <p className="ouv-intro">{fr(tou('intro'))}</p>
-      <div className="ouv-tailles" role="group" aria-label={tou('tailles')}>
+      {/* #626 (V4) : un choix exclusif ordinaire (.seg), à plat : l'écran n'a pas d'action principale en relief (E1). */}
+      <div className="seg ouv-tailles" role="group" aria-label={tou('tailles')}>
         {([9, 19] as const).map(n => (
-          <button key={n} type="button" className="ouv-taille" aria-pressed={taille === n} onClick={() => setTaille(n)}>{tou(n === 9 ? 'taille.9' : 'taille.19')}</button>
+          <button key={n} type="button" aria-pressed={taille === n} onClick={() => setTaille(n)}>{tou(n === 9 ? 'taille.9' : 'taille.19')}</button>
         ))}
       </div>
-      <ul className="ouv-liste">
+      {/* #626 (V4, P2) : des cartes visuelles. La position après la séquence (les vrais coups), le nom, une ligne.
+          L'idée complète, le nombre de coups et la preuve KataGo viennent dans l'écran de l'ouverture. */}
+      <ul className="ouv-liste" aria-label={tou(taille === 9 ? 'taille.9' : 'taille.19')}>
         {liste.map(o => {
           const lue = lireOuverture(o), fin = positionsOuverture(lue).at(-1)!;
-          const f = fenetreDe(o.cadre, o.taille);
-          // Miniature : la zone montrée (le coin), ou tout le plateau.
-          const rows = lignes(fin).map((r, y) => (f && (y < f.y || y >= f.y + f.k) ? '.'.repeat(r.length) : f ? `${'.'.repeat(f.x)}${r.slice(f.x, f.x + f.k)}`.padEnd(r.length, '.') : r));
+          // Miniature : la position finale, dans la zone que montre le lecteur (le coin), ou sur tout le plateau.
+          const f = fenetreDe(o.cadre, o.taille) ?? { x: 0, y: 0, k: o.taille };
           return (
             <li key={o.id}>
-              <button type="button" className="ouv-carte" data-id={o.id} onClick={() => { setChoisie(o); window.scrollTo({ top: 0 }); }}>
-                <MiniGoban rows={rows} className="ouv-mini" />
-                <span className="ouv-carte-texte">
-                  <b>{fr(tou(k(`o.${o.id}.nom`)))}</b>
-                  <small>{fr(tou(k(`o.${o.id}.idee`)))}</small>
-                  <span className="ouv-carte-coups">{lue.coups.length === 1 ? tou('coups.un') : tou('coups', { n: lue.coups.length })}</span>
-                </span>
+              <button type="button" className="ouv-carte" data-id={o.id} aria-labelledby={`ouv-${o.id}-nom`} aria-describedby={`ouv-${o.id}-ligne`}
+                onClick={() => { setChoisie(o); window.scrollTo({ top: 0 }); }}>
+                <MiniGoban rows={lignes(fin)} fenetre={f} className="ouv-mini" />
+                <b id={`ouv-${o.id}-nom`}>{fr(tou(k(`o.${o.id}.nom`)))}</b>
+                <small id={`ouv-${o.id}-ligne`}>{fr(tou(k(`o.${o.id}.ligne`)))}</small>
               </button>
             </li>
           );
         })}
       </ul>
-      <p className="ouv-preuve">{fr(tou('preuve'))}</p>
     </div>
   );
 }
@@ -111,7 +109,8 @@ function LecteurOuverture({ o, onExit }: { o: Ouverture; onExit: () => void }) {
       <div key={`${i}-${erreur}`} className={`bubble ouv-parole${e ? ' ouv-parole-erreur' : ''}`} role="status" aria-live="polite" data-testid="ouverture-texte">
         <p>{fr(texte)}</p>
         {e && <p className="ouv-perte">{fr(tou('perte', { pts: e.perte }))}</p>}
-        {!e && i === 0 && <p className="ouv-aide">{fr(tou('depart'))}</p>}
+        {/* #626 : la preuve KataGo, au départ de la séquence (elle quittait le bas de la liste). */}
+        {!e && i === 0 && <p className="ouv-aide">{fr(tou('preuve'))}</p>}
         {fin && o.ailleurs && <p>{fr(tou('ailleurs', { camp: camp((3 - lue.coups[n - 1].couleur) as 1 | 2) }))}</p>}
         {fin && <p className="ouv-aide">{fr(tou('fin'))}</p>}
       </div>

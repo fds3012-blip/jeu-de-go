@@ -1,21 +1,29 @@
-/* « Par thème » (#471, #614) : grille partagée par Problèmes et Apprendre (src/ui/GrilleThemes.tsx). Vignettes à plat
-   (actions secondaires). Chaque carte a une ligne de description : une colonne sur téléphone, où la miniature à gauche
-   laisse toute la largeur au texte ; deux colonnes dès que chacune garde 15rem (colonne de 560 px, pas au zoom 200 %). */
-.themes { margin-top: var(--space-5); }
+/* « Par thème » (#471, #614, #625) : grille partagée par Problèmes et Apprendre (src/ui/GrilleThemes.tsx). Cartes à plat,
+   sans bordure, comme les tuiles d'Entraînement (.tuile-pb, #620) : même fond, même vignette de 40 px, même titre.
+   Une colonne sur téléphone, groupée en un bloc (coins intérieurs de 4 px, 2 px d'écart), pour que la ligne de description
+   tienne à côté de la vignette ; dès que la grille a 30rem, des cartes séparées sur 2 colonnes, puis 3 et plus (P8, § 5.4
+   de docs/ux/visuel-responsive-2026-10.md). En rem : au zoom 200 %, on reste sur une colonne. */
+.themes { margin-top: var(--space-5); container-type: inline-size; }
 .themes h3 { margin: 0; font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: var(--fs-l); letter-spacing: var(--tracking-titre); }
-.themes-grille { list-style: none; margin: var(--space-3) 0 0; padding: 0; display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr)); gap: 6px; }
+.themes-grille { list-style: none; margin: var(--space-3) 0 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px; }
 @media (max-width: 359px) { .themes { margin-top: var(--space-4); } }
-.theme-carte { display: flex; align-items: center; gap: var(--space-3); width: 100%; height: 100%; min-height: var(--cible-min); padding: 6px var(--space-3) 6px var(--space-2);
-  background: var(--surface); color: var(--text); border: 1.5px solid var(--line); border-radius: var(--radius-s);
-  text-align: left; font: inherit; cursor: pointer; transition: background-color var(--duree-rapide) var(--ease); }
+.theme-carte { display: flex; align-items: center; gap: var(--space-3); width: 100%; height: 100%; min-height: 64px; margin: 0;
+  padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
+  background: var(--surface); color: var(--text); border: 0; border-radius: var(--radius-xs);
+  text-align: left; font: inherit; cursor: pointer; }
+.themes-grille > li:first-child > .theme-carte { border-top-left-radius: var(--radius); border-top-right-radius: var(--radius); }
+.themes-grille > li:last-child > .theme-carte { border-bottom-left-radius: var(--radius); border-bottom-right-radius: var(--radius); }
+@container (min-width: 30rem) {
+  .themes-grille { grid-template-columns: repeat(auto-fill, minmax(13.5rem, 1fr)); gap: var(--space-2); }
+  .themes-grille > li > .theme-carte { border-radius: var(--radius); }
+}
 .theme-carte:active { background: var(--surface-2); }
 .theme-carte:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
-.theme-motif { flex: none; width: 44px; }
+.theme-motif { flex: none; width: 40px; }
 .theme-motif .mini-goban { display: block; border-radius: var(--radius-xs); box-shadow: 0 2px 0 var(--bois-tranche); }
 .theme-motif .vignette { display: block; }
 .theme-nom { display: flex; flex-direction: column; flex: 1; min-width: 0; }
-.theme-nom b { font-size: var(--fs-m); line-height: 1.2; overflow-wrap: anywhere; }
+.theme-nom b { font-family: var(--font-titre); font-weight: var(--fw-bold); font-size: var(--fs-m); letter-spacing: var(--tracking-titre); line-height: 1.2; overflow-wrap: anywhere; }
 .theme-desc { margin-top: 2px; color: var(--muted); font-size: var(--fs-legende); line-height: 1.3; overflow-wrap: anywhere; text-wrap: pretty; }
 /* L'état, sous la description : la barre fine vers la maîtrise (et le record d'une série), ou le mot « Maîtrisé ». */
 .theme-etat { display: flex; align-items: center; gap: var(--space-2); margin-top: 6px; }

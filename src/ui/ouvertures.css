@@ -1,28 +1,28 @@
 /*
  * Répertoire d'ouvertures (#591). Chargé avec l'écran (src/app/Ouvertures.tsx), jamais dans le CSS initial.
- * Liste : choix de la taille (deux boutons), puis une tuile par ouverture. Lecteur : la grammaire du lecteur de leçon
- * (lecon.css : barre, plateau souple, parole), puis les actions : « Suivant » en relief, « Précédent » à côté,
- * « Voir l'erreur courante » en lien. Couleurs : jetons de tokens.css (sombre et clair). Cibles de 44 px au moins.
+ * Liste (#626, V4) : le choix de la taille en .seg (à plat : pas d'action en relief sur cet écran, E1), puis une grille
+ * de cartes visuelles (P2) : la position après la séquence en mini-goban, le nom, une ligne. Deux colonnes sur téléphone,
+ * plus dès que la place le permet (P8, § 5.4 de docs/ux/visuel-responsive-2026-10.md) ; une seule au zoom 200 %.
+ * Lecteur : la grammaire du lecteur de leçon (lecon.css : barre, plateau souple, parole), puis les actions : « Suivant »
+ * en relief, « Précédent » à côté, « Voir l'erreur courante » en lien. Couleurs : jetons de tokens.css (sombre et clair). Cibles de 44 px au moins.
  */
 
 /* ---------- Liste ---------- */
 .ouvertures { display: flex; flex-direction: column; gap: var(--space-3); padding-bottom: var(--space-4); }
 .ouvertures .ecran-tete { margin-bottom: 0; }
-.ouv-intro, .ouv-preuve { margin: 0; color: var(--muted); font-size: var(--fs-s); line-height: 1.45; }
-.ouv-preuve { margin-top: var(--space-1); }
-.ouv-tailles { display: flex; gap: 4px; padding: 4px; border-radius: 999px; background: var(--surface); align-self: flex-start; }
-.ouv-taille { min-height: var(--cible-min); min-width: 88px; padding: 0 var(--space-4); border: 0; border-radius: 999px; background: none;
-  color: var(--text); font-weight: var(--fw-bold); font-size: var(--fs-s); cursor: pointer; }
-.ouv-taille[aria-pressed='true'] { background: var(--accent); color: var(--on-accent); }
-.ouv-liste { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
-.ouv-carte { display: flex; align-items: center; gap: var(--space-3); width: 100%; min-height: var(--cible-min); padding: var(--space-3);
-  border: 0; border-radius: var(--radius); background: var(--surface); color: var(--text); text-align: left; cursor: pointer; }
-.ouv-mini { flex: none; display: block; width: 64px; height: 64px; border-radius: var(--radius-s, 8px); box-shadow: 0 2px 6px -3px rgba(0, 0, 0, .5); }
-.ouv-carte-texte { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.ouv-carte-texte b { font-family: var(--font-titre); font-size: var(--fs-l); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre); line-height: 1.15; }
-.ouv-carte-texte small { color: var(--muted); font-size: var(--fs-s); line-height: 1.35; overflow-wrap: break-word; }
-.ouv-carte-coups { color: var(--muted); font-size: var(--fs-legende); font-weight: var(--fw-bold); }
-.ouv-carte:focus-visible, .ouv-taille:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.ouv-tailles { flex: none; }
+.ouv-liste { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 9.5rem), 1fr));
+  gap: var(--space-2); }
+.ouv-carte { display: flex; flex-direction: column; align-items: stretch; gap: 2px; width: 100%; height: 100%; min-height: var(--cible-min);
+  margin: 0; padding: var(--space-3) var(--space-3) var(--space-4); border: 0; border-radius: var(--radius); background: var(--surface);
+  color: var(--text); text-align: left; font: inherit; cursor: pointer; }
+.ouv-mini { flex: none; display: block; width: 100%; height: auto; aspect-ratio: 1; margin-bottom: var(--space-2);
+  border-radius: var(--radius-s); box-shadow: 0 3px 0 var(--bois-tranche); }
+.ouv-carte b { font-family: var(--font-titre); font-size: var(--fs-m); font-weight: var(--fw-bold); letter-spacing: var(--tracking-titre);
+  line-height: 1.2; overflow-wrap: anywhere; }
+.ouv-carte small { color: var(--muted); font-size: var(--fs-legende); line-height: 1.3; overflow-wrap: anywhere; text-wrap: pretty; }
+.ouv-carte:active { background: var(--surface-2); }
+.ouv-carte:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 
 /* ---------- Lecteur ---------- */
 .ouv-lecteur .ecran-tete { margin-bottom: 0; }
@@ -45,6 +45,6 @@
 .ouv-actions .lien { align-self: center; min-height: var(--cible-min); text-decoration: underline; text-underline-offset: 3px; }
 
 @media (prefers-reduced-motion: no-preference) {
-  .ouv-carte { transition: transform var(--duree-rapide, 120ms) var(--ease, ease-out); }
+  .ouv-carte { transition: transform var(--duree-rapide) var(--ease); }
   .ouv-carte:active { transform: scale(.98); }
 }
