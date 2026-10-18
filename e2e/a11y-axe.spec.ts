@@ -500,3 +500,15 @@ test('axe : « Par thème » d’Apprendre (#590) et la page d’un thème', asy
   await expect(page.getByRole('heading', { level: 2, name: 'Capture' })).toBeVisible();
   await verifier(page, 'Page du thème Capture');
 });
+
+test('axe : Ouvertures (#626), la liste en cartes et le départ d’une ouverture', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
+  await page.getByTestId('entree-ouvertures').click();
+  await page.getByRole('button', { name: '19 × 19', exact: true }).click();
+  await expect(page.locator('.ouv-carte[data-id="h-sansan"]')).toBeVisible();
+  await verifier(page, 'Ouvertures, liste 19 × 19');
+  await page.locator('.ouv-carte[data-id="h-sansan"]').click();
+  await expect(page.getByTestId('ouverture')).toBeVisible();
+  await verifier(page, 'Ouverture, départ');
+});

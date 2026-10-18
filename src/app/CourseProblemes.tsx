@@ -93,7 +93,21 @@ export function Course({ liste, cote, exclure, confirmTouch, onExit }: {
   return <EnCourse key={manche} etat={etat} setEtat={setEtat} liste={liste} confirmTouch={confirmTouch} onFin={terminer} onExit={onExit} />;
 }
 
-/** Consigne : 4 règles courtes, le meilleur score s'il existe, et une seule action, « C'est parti ». */
+/**
+ * #627 (V12) : les trois règles de la course, chacune une icône et quelques mots. La durée est dans le titre et sur le
+ * chronomètre ; « de plus en plus durs » décrivait la course sans en être une règle : retiré. Icônes au trait, décoratives.
+ */
+const REGLES = [
+  // Le plus de problèmes possible : une pile de problèmes.
+  ['course.regles.1', <><rect x="3.5" y="8.5" width="12" height="12" rx="2" /><path d="M8.5 4.5h10a2 2 0 0 1 2 2v10" /><path d="M9.5 11.5v6M6.5 14.5h6" /></>],
+  // Un essai, sans indice : une cible.
+  ['course.regles.2', <><circle cx="12" cy="12" r="8.5" /><circle cx="12" cy="12" r="4" /><circle cx="12" cy="12" r=".8" fill="currentColor" /></>],
+  // La 3e erreur arrête la course : les trois pastilles d'erreur du bandeau, barrées.
+  ['course.regles.3', <><circle cx="4.5" cy="12" r="3.4" /><circle cx="12" cy="12" r="3.4" /><circle cx="19.5" cy="12" r="3.4" />
+    <path d="M3.2 10.7l2.6 2.6M5.8 10.7l-2.6 2.6M10.7 10.7l2.6 2.6M13.3 10.7l-2.6 2.6M18.2 10.7l2.6 2.6M20.8 10.7l-2.6 2.6" /></>],
+] as const;
+
+/** Consigne : 3 règles courtes en icônes, le meilleur score s'il existe, et une seule action, « C'est parti ». */
 function Consigne({ meilleur, onCommencer, onExit }: { meilleur: number; onCommencer: () => void; onExit: () => void }) {
   return (
     <div className="course course-consigne">
@@ -103,7 +117,12 @@ function Consigne({ meilleur, onCommencer, onExit }: { meilleur: number; onComme
       </div>
       <ChronoCourse taille={96} />
       <ul className="course-regles">
-        {(['course.regles.1', 'course.regles.2', 'course.regles.3', 'course.regles.4'] as const).map(k => <li key={k}>{fr(t(k))}</li>)}
+        {REGLES.map(([k, icone]) => (
+          <li key={k} data-regle={k}>
+            <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" focusable="false">{icone}</svg>
+            {fr(t(k))}
+          </li>
+        ))}
       </ul>
       {meilleur > 0 && <p className="course-meilleur">{fr(t('course.fin.meilleur', { meilleur }))}</p>}
       <button type="button" className="cta" onClick={onCommencer}>{t('course.commencer')}</button>
