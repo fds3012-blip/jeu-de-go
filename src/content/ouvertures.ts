@@ -35,7 +35,9 @@ export const OUVERTURES: readonly Ouverture[] = [
   // #672 : ouvertures célèbres (docs/pedagogie/ouvertures-celebres-2026-10.md), chacune enseignée par une leçon.
   // Le sanrensei (trois hoshi), puis la réponse moderne de Blanc : le san-san tout de suite, bloqué côté moyo.
   { id: 'g-sanrensei', taille: 19, sgf: '(;SZ[19];B[pd];W[dp];B[pp];W[dd];B[pj];W[qq];B[qp])', lecon: 'l51',
-    erreurs: [{ coup: 4, c: 'jj', perte: 2 }, { coup: 6, c: 'oq', perte: 2 }] },
+    erreurs: [{ coup: 4, c: 'jj', perte: 2 }, { coup: 6, c: 'jj', perte: 4 }, { coup: 6, c: 'qr', perte: 4 }],
+    // P3 (bloquer de loin) : 1,9 point de plus que R4, sous la marge : écarté (note pédagogique).
+    ecartes: [{ coup: 6, c: 'oq' }] },
   // Le shin-fuseki de 1933 : le san-san en premier coup, puis un hoshi ; le tengen (Go Seigen) est jugé en erreur.
   { id: 'g-shin', taille: 19, sgf: '(;SZ[19];B[qc];W[dq];B[dd];W[pq];B[do])', lecon: 'l52',
     erreurs: [{ coup: 0, c: 'jj', perte: 3 }, { coup: 4, c: 'jj', perte: 3 }] },

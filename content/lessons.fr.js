@@ -266,6 +266,14 @@ const L_KO_FIN = L_KO_PRIS.map((r, i) => (i === 4 ? 'XXX.XOOOO' : i === 8 ? 'XXX
 // src/go/rules.ts) : G7 et C3, puis G3 et C7, puis le centre E5. Blanc joue ensuite, avec un komi de 0,5.
 const L_HANDI_2 = ['.........', '.........', '......X..', '.........', '.........', '.........', '..X......', '.........', '.........'];
 const L_HANDI_4 = ['.........', '.........', '..X...X..', '.........', '.........', '.........', '..X...X..', '.........', '.........'];
+// Leçons 50 à 56 (#672) : les ouvertures célèbres, en 19 × 19. Chaque position est une position d'une ligne prouvée du
+// répertoire (src/content/ouvertures.ts, champ `lecon`) ; chaque coup montré ou accepté, chaque erreur refusée, son coût et
+// la réplique citée viennent des analyses KataGo figées (src/go/preuves-ouvertures.json). Correspondance vérifiée par
+// src/go/ouvertures-celebres.test.ts. Sources et choix : docs/pedagogie/ouvertures-celebres-2026-10.md.
+const p19 = (X = [], O = []) => plateau(19, { X, O });
+// Le hoshi et son approche (ligne h-approche) : Noir D16, D4, D10 ; Blanc Q4, Q16. Le komoku (k-kosumi) : Noir Q4 ; Blanc Q16, D16.
+const HOSHI_X = ['D16', 'D4', 'D10'], HOSHI_O = ['Q4', 'Q16'];
+const KOMOKU_X = ['Q4'], KOMOKU_O = ['Q16', 'D16'];
 export const CHAPITRES = [
   { id: 'c1', titre: 'Les bases', intro: 'Sept leçons courtes pour jouer ta première partie.', fin: 'Tu connais les règles du go.', lecons: ['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7'] },
   // Chapitre en cours d'écriture (`complet: false`) : sa dernière leçon ne ferme pas encore le chapitre.
@@ -273,7 +281,9 @@ export const CHAPITRES = [
   { id: 'c3', titre: 'Capturer et sauver', intro: 'Des pièges pour prendre plus de pierres.', lecons: ['l9', 'l42', 'l10', 'l11', 'l26', 'l39', 'l40'], complet: false },
   { id: 'c4', titre: 'Vie et mort', intro: 'Quand un groupe vit, quand il meurt.', lecons: ['l12', 'l13', 'l14', 'l17', 'l24', 'l44', 'l25', 'l37'], complet: false },
   { id: 'c5', titre: 'Fin de partie et comptage', intro: 'Finir proprement, puis compter juste.', lecons: ['l15', 'l16', 'l41', 'l22', 'l23', 'l32', 'l33', 'l38', 'l45'], complet: false },
-  { id: 'c6', titre: 'Formes et tesuji', intro: 'Les bonnes formes et les coups malins du go.', lecons: ['l18', 'l43', 'l19', 'l20', 'l21', 'l34', 'l35', 'l36'], complet: false }
+  { id: 'c6', titre: 'Formes et tesuji', intro: 'Les bonnes formes et les coups malins du go.', lecons: ['l18', 'l43', 'l19', 'l20', 'l21', 'l34', 'l35', 'l36'], complet: false },
+  // #672 : en dernier, après les bases du milieu de partie ; les leçons s'ouvrent aussi depuis le thème « Ouverture ».
+  { id: 'c7', titre: 'Les ouvertures célèbres', intro: 'Les ouvertures des grands joueurs, vérifiées par KataGo.', lecons: ['l50', 'l51', 'l52', 'l53', 'l54', 'l55', 'l56'], complet: false }
 ];
 export const LESSONS = [
   { id: 'l1', title: 'Libertés et capture', desc: 'La règle qui fait tout le jeu', steps: [
@@ -1062,5 +1072,111 @@ export const LESSONS = [
       text: 'À toi : empêche Blanc de passer sous ta pierre.',
       ok: 'Coupé : relier le mettrait en atari, prendre finit en prise en retour.', no: 'Coupe au premier rang, au bout des pierres blanches.',
       refus: [{ points: ['E1', 'G1'], no: 'Blanc prend H1 : tu ne coupes plus sans ko.' }] }
+  ] },
+  { id: 'l50', title: 'Le nirensei', desc: 'Deux étoiles du même côté', taille: 19, steps: [
+    { kind: 'info', rows: p19(), geste: { pose: 'Q16' }, demo: [{ pose: 'Q16', couleur: 'B' }, { pose: 'D4', couleur: 'W' }],
+      text: 'Nirensei (« deux étoiles alignées », années 1930) : pose ton hoshi (point étoile) au point vert.' },
+    { kind: 'move', rows: p19(['Q16'], ['D4']), accept: ['Q4'],
+      text: 'À toi : la deuxième étoile, sur le même bord que Q16.',
+      ok: 'Nirensei : deux hoshi sur le bord droit, et ce bord entre eux.', no: 'Cherche l’autre hoshi du bord droit, en bas.',
+      refus: [{ points: ['K10'], no: 'K10, le tengen (point central) : environ 3 points de moins pour KataGo.' }] },
+    { kind: 'info', rows: p19(['Q16', 'Q4'], ['D4']), demo: [{ pose: 'D16', couleur: 'W' }],
+      text: 'Blanc prend le dernier coin. Entre tes deux étoiles : ton bord.' },
+    { kind: 'quiz', rows: p19(['Q16', 'Q4'], ['D4', 'D16']),
+      text: 'Deux étoiles du même côté : comment s’appelle cette ouverture ?', choices: ['Nirensei', 'Sanrensei', 'San-san'], answer: 0,
+      ok: 'Oui : ni, deux ; ren, alignées ; sei, étoiles.', no: 'Deux (ni) étoiles (sei) alignées (ren) : le nirensei.' }
+  ] },
+  { id: 'l51', title: 'Le sanrensei', desc: 'Trois étoiles sur un bord', taille: 19, steps: [
+    { kind: 'info', rows: p19(['Q16', 'Q4'], ['D4', 'D16']), geste: { pose: 'Q10' }, demo: [{ pose: 'Q10', couleur: 'B' }],
+      text: 'Sanrensei (« trois étoiles alignées », né en 1933 ; Takemiya l’a rendu célèbre) : pose au point vert.' },
+    { kind: 'info', rows: p19(['Q16', 'Q4', 'Q10'], ['D4', 'D16']), demo: [{ pose: 'R3', couleur: 'W' }],
+      text: 'L’IA répond en entrant tout de suite au san-san (point 3-3).' },
+    { kind: 'move', rows: p19(['Q16', 'Q4', 'Q10'], ['D4', 'D16', 'R3']), accept: ['R4'],
+      text: 'À toi : bloque-le du côté de ton moyo (ta grande zone).',
+      ok: 'Bien : bloqué vers Q10, ton mur regarde ton moyo.', no: 'Bloque au-dessus de sa pierre, vers ta pierre Q10.',
+      refus: [
+        { points: ['R2'], no: 'R2, par en dessous : Blanc sort en Q3, environ 4 points de moins.' },
+        { points: ['K10'], no: 'K10 : tu le laisses faire, Blanc monte en R4. Environ 4 points de moins.' }
+      ] },
+    { kind: 'quiz', rows: p19(['Q16', 'Q4'], ['D4', 'D16']),
+      text: 'Pour faire le sanrensei : Q10 ou K10 ?', choices: ['Q10', 'K10'], answer: 0,
+      ok: 'Q10 : la troisième étoile, sur le bord. K10 coûte environ 2 points.', no: 'K10, le centre, coûte environ 2 points (KataGo).' }
+  ] },
+  { id: 'l52', title: 'Le shin-fuseki', desc: 'La nouvelle ouverture de 1933', taille: 19, steps: [
+    { kind: 'info', rows: p19(), geste: { pose: 'R17' }, demo: [{ pose: 'R17', couleur: 'B' }, { pose: 'D3', couleur: 'W' }],
+      text: 'Shin-fuseki (« nouvelle ouverture ») : comme Go Seigen, san-san (point 3-3) au point vert.' },
+    { kind: 'move', rows: p19(['R17'], ['D3']), accept: ['D16'],
+      text: 'À toi : puis un hoshi (point étoile), en haut à gauche.',
+      ok: 'Bien : un san-san, un hoshi. Les coins d’abord, et vite.', no: 'Pose ta pierre sur le hoshi en haut à gauche.' },
+    { kind: 'move', rows: p19(['R17', 'D16'], ['D3', 'Q3']), accept: ['D5'],
+      text: 'Kakari (approche) : approche son coin D3 par le haut.',
+      ok: 'Bien : tu approches son coin avant qu’il le ferme.', no: 'Approche le coin D3 par le haut, sans le toucher.',
+      refus: [{ points: ['K10'], no: 'K10, le tengen (point central) de Go Seigen : environ 3 points de moins ici.' }] },
+    { kind: 'quiz', rows: p19(),
+      text: 'Premier coup : R17 (san-san) ou K10 (tengen) ?', choices: ['R17', 'K10'], answer: 0,
+      ok: 'R17. Go Seigen osa aussi le tengen ; KataGo lui préfère un coin.', no: 'Au premier coup, K10 coûte environ 3 points (KataGo).' }
+  ] },
+  { id: 'l53', title: 'Le fuseki chinois', desc: 'Deux coins, puis vite le bord', taille: 19, steps: [
+    { kind: 'info', rows: p19(), geste: { pose: 'Q16' }, demo: [{ pose: 'Q16', couleur: 'B' }, { pose: 'D4', couleur: 'W' }],
+      text: 'Le fuseki (ouverture) chinois de Chen Zude : un hoshi (point étoile) au point vert.' },
+    { kind: 'move', rows: p19(['Q16'], ['D4']), accept: ['Q3'],
+      text: 'À toi : un komoku (3e ligne d’un bord, 4e de l’autre) en bas à droite.',
+      ok: 'Bien : Q3 est tourné vers le bord droit.', no: 'Le komoku du chinois : Q3, 4e ligne depuis la droite, 3e depuis le bas.' },
+    { kind: 'move', rows: p19(['Q16', 'Q3'], ['D4', 'D16']), accept: ['R9', 'Q9'],
+      text: 'À toi : la pierre du bord droit, entre tes deux coins.',
+      ok: 'Bien : trois pierres, et tout le bord droit en vue.', no: 'Le chinois se joue sur le bord droit : R9, ou Q9 plus haut.',
+      refus: [{ points: ['K10'], no: 'K10, le centre : environ 2 points de moins (KataGo).' }] },
+    { kind: 'info', rows: p19(['Q16', 'Q3'], ['D4', 'D16']), geste: { pose: 'Q5' }, demo: [{ pose: 'Q5', couleur: 'B' }],
+      text: 'À savoir : l’IA préfère ici fermer le coin, au point vert.' },
+    { kind: 'move', rows: p19(['Q16', 'Q3', 'R9'], ['D4', 'D16', 'Q4']), accept: ['R4'],
+      text: 'Tsuke (coup au contact) de Blanc en Q4. Bloque-le côté coin.',
+      ok: 'Bien : le hane (coup en diagonale contre lui) R4, comme KataGo.', no: 'Joue contre sa pierre, côté coin, en diagonale de Q3.',
+      refus: [{ points: ['R5'], no: 'R5 : Blanc tire en R4, environ 4 points de moins.' }] }
+  ] },
+  { id: 'l54', title: 'La kosumi de Shusaku', desc: 'Le coup qu’il disait toujours bon', taille: 19, steps: [
+    { kind: 'info', rows: p19(KOMOKU_X, KOMOKU_O), cadre: 'bas-gauche', geste: { pose: 'C4' },
+      demo: [{ pose: 'C4', couleur: 'B' }, { pose: 'E3', couleur: 'W' }],
+      text: 'Komoku (3e ligne d’un bord, 4e de l’autre ; Shusaku, années 1840) : pose au point vert.' },
+    { kind: 'move', rows: p19([...KOMOKU_X, 'C4'], [...KOMOKU_O, 'E3']), cadre: 'bas-gauche', accept: ['D5'],
+      text: 'Kakari (approche) de Blanc. À toi : la kosumi (pas en diagonale) de Shusaku.',
+      ok: 'Shusaku la disait toujours bonne : KataGo la juge bonne aussi.', no: 'Un pas en diagonale depuis C4, vers le haut à droite.',
+      refus: [{ points: ['B5'], no: 'B5, sur la 2e ligne : environ 4 points de moins (KataGo).' }] },
+    { kind: 'info', rows: p19([...KOMOKU_X, 'C4', 'D5'], [...KOMOKU_O, 'E3']), cadre: 'bas-gauche', demo: [{ pose: 'H3', couleur: 'W' }],
+      text: 'Blanc s’étend sur le bas : chacun son côté.' },
+    { kind: 'quiz', rows: p19([...KOMOKU_X, 'C4', 'D5'], [...KOMOKU_O, 'E3', 'H3']), cadre: 'bas-gauche',
+      text: 'Le pas en diagonale de C4 à D5 s’appelle…', choices: ['Kosumi', 'Tsuke', 'Kakari'], answer: 0,
+      ok: 'Oui : la kosumi, un pas en diagonale.', no: 'Tsuke (coller) et kakari (approcher) ; le pas en diagonale : kosumi.' }
+  ] },
+  { id: 'l55', title: 'L’approche du hoshi', desc: 'Répondre quand Blanc s’approche', taille: 19, steps: [
+    { kind: 'info', rows: p19(HOSHI_X, HOSHI_O), cadre: 'bas-gauche', demo: [{ pose: 'F3', couleur: 'W' }],
+      text: 'Kakari (approche) : Blanc vient près de ton hoshi (point étoile) D4.' },
+    { kind: 'move', rows: p19(HOSHI_X, [...HOSHI_O, 'F3']), cadre: 'bas-gauche', accept: ['D6'],
+      text: 'À toi : saute d’un pas vers le haut, depuis D4.',
+      ok: 'Bien : le saut d’un pas, solide, vers ta pierre D10.', no: 'Saute d’un pas vers le haut, depuis ton hoshi.',
+      refus: [{ points: ['F2'], no: 'F2 : Blanc coupe en E3, environ 2 points de moins.' }] },
+    { kind: 'info', rows: p19([...HOSHI_X, 'D6'], [...HOSHI_O, 'F3']), cadre: 'bas-gauche', demo: [{ pose: 'D2', couleur: 'W' }],
+      text: 'Blanc glisse en D2, sous ton hoshi, vers le coin.' },
+    { kind: 'move', rows: p19([...HOSHI_X, 'D6'], [...HOSHI_O, 'F3', 'D2']), cadre: 'bas-gauche', accept: ['C3'],
+      text: 'À toi : barre-lui la route du coin.',
+      ok: 'Bien : le coin reste à toi.', no: 'Barre la route du coin, sur la 3e ligne.' },
+    { kind: 'info', rows: p19([...HOSHI_X, 'D6', 'C3'], [...HOSHI_O, 'F3', 'D2']), cadre: 'bas-gauche', demo: [{ pose: 'J3', couleur: 'W' }],
+      text: 'Blanc s’étend en J3. Le coin est réglé : joue ailleurs.' }
+  ] },
+  { id: 'l56', title: 'Le san-san d’AlphaGo', desc: 'Entrer au 3-3 dès le début', taille: 19, steps: [
+    { kind: 'info', rows: p19(['Q16', 'Q4'], ['D4', 'D16']), cadre: 'bas-gauche', geste: { pose: 'C3' },
+      demo: [{ pose: 'C3', couleur: 'B' }, { pose: 'C4', couleur: 'W' }],
+      text: 'Comme AlphaGo (2017) : entre au san-san (point 3-3), point vert.' },
+    { kind: 'move', rows: p19(['Q16', 'Q4', 'C3'], ['D4', 'D16', 'C4']), cadre: 'bas-gauche', accept: ['D3'],
+      text: 'Blanc bloque en haut. À toi : rampe vers la droite.',
+      ok: 'Bien : ta pierre avance sous son hoshi (point étoile).', no: 'Avance d’un pas vers la droite, sur la 3e ligne.',
+      refus: [{ points: ['D2', 'B4'], no: 'Blanc ferme en D3 : environ 4 points de moins (KataGo).' }] },
+    { kind: 'info', rows: p19(['Q16', 'Q4', 'C3', 'D3'], ['D4', 'D16', 'C4']), cadre: 'bas-gauche', demo: [{ pose: 'E4', couleur: 'W' }],
+      text: 'Blanc s’allonge en E4 : son mur grandit.' },
+    { kind: 'move', rows: p19(['Q16', 'Q4', 'C3', 'D3'], ['D4', 'D16', 'C4', 'E4']), cadre: 'bas-gauche', accept: ['F3', 'F2'],
+      text: 'À toi : avance le long du bas, sans toucher Blanc.',
+      ok: 'Bien : ton groupe prend sa place sur le bas.', no: 'Avance vers la droite, sur la 3e ou la 2e ligne.',
+      refus: [{ points: ['G3'], no: 'G3, trop loin : Blanc coupe en E3, environ 6 points de moins.' }] },
+    { kind: 'info', rows: p19(['Q16', 'Q4', 'C3', 'D3', 'F3'], ['D4', 'D16', 'C4', 'E4']), cadre: 'bas-gauche',
+      text: 'Autrefois, ce san-san passait pour trop tôt. Ici, Blanc joue ailleurs.' }
   ] }
 ];

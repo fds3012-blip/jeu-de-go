@@ -122,4 +122,18 @@ export const MOTIFS: Record<string, Motif> = {
   l48: { noir: [[1, 1], [2, 3]], blanc: [[2, 2], [3, 2]], jade: [[1, 2]] },
   // Envahir ou réduire : le hoshi blanc, l'invasion au 3-3 en jade, la réduction par-dessus cerclée d'or.
   l49: { coin: true, blanc: [[2, 1], [3, 2]], jade: [[1, 3]], or: [[1, 0]] },
+  // #672, ouvertures célèbres. Le nirensei : deux étoiles noires sur le bord droit, un coin blanc en face.
+  l50: { noir: [[3, 0], [3, 3]], blanc: [[0, 3]] },
+  // Le sanrensei : trois pierres noires sur le bord droit, deux coins blancs en face.
+  l51: { noir: [[3, 0], [3, 1], [3, 3]], blanc: [[0, 0], [0, 3]] },
+  // Le shin-fuseki : le san-san noir dans le coin, et le tengen au loin, cerclé d'or.
+  l52: { coin: true, noir: [[1, 2]], or: [[3, 0]] },
+  // Le fuseki chinois : un hoshi, un komoku et la pierre du bord, à droite ; un coin blanc à gauche.
+  l53: { noir: [[3, 0], [2, 3], [3, 2]], blanc: [[0, 0]] },
+  // La kosumi de Shusaku : le komoku noir, l'approche blanche, le pas en diagonale en jade.
+  l54: { coin: true, noir: [[1, 1]], blanc: [[3, 2]], jade: [[2, 0]] },
+  // L'approche du hoshi : le hoshi noir, l'approche blanche, le saut d'un pas en jade.
+  l55: { coin: true, noir: [[2, 1]], blanc: [[3, 3]], jade: [[2, 0]] },
+  // Le san-san d'AlphaGo : la pierre noire sous le hoshi blanc, la suite en jade.
+  l56: { coin: true, blanc: [[2, 1]], noir: [[1, 2]], jade: [[2, 2]] },
 };
