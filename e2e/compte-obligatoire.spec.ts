@@ -164,3 +164,35 @@ test('code à 6 chiffres : champ, renvoi et retour à l’adresse (320 px, clair
   expect(serveur.emailsEnvoyes).toEqual([{ email: 'ami@exemple.test', type: 'email' }]);
   await ctx.close();
 });
+
+test('#642 : code rempli pendant un renvoi lent : vérifié dès la fin du renvoi, ni ignoré ni effacé', async ({ browser, baseURL }) => {
+  const serveur = fauxServeur();
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, locale: 'fr-FR', baseURL,
+    storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }, { name: 'go.connait-go.v1', value: '"sait"' }] }] } });
+  const page = await brancher(ctx, serveur, { 'go.essai.v1': JSON.stringify({ terminees: 3 }) });
+  // Horloge simulée avant l'ouverture : le compte à rebours du renvoi (60 s) se saute vraiment.
+  await page.clock.install();
+  await page.goto('/');
+  await toucherCta(page);
+  await page.getByLabel('Ton adresse e-mail').fill('lent@exemple.test');
+  await page.getByRole('checkbox').check();
+  await page.getByRole('button', { name: 'Recevoir mon code' }).click();
+  const champ = page.getByLabel('Code à 6 chiffres');
+  await expect(champ).toBeVisible();
+  // Renvoi lent : la réponse du serveur attend que le code soit rempli (code du premier e-mail, rempli par le téléphone).
+  let lacher!: () => void;
+  const tenue = new Promise<void>(r => { lacher = r; });
+  let renvoi = false;
+  await page.route(/\/auth\/v1\/otp(\?|$)/, async route => { renvoi = true; await tenue; return route.fallback(); });
+  // Le compte à rebours est une chaîne de minuteurs d'une seconde, réarmée après chaque rendu : on avance seconde par
+  // seconde (`fastForward` ne déclencherait que le premier).
+  for (let s = 0; s <= 60; s++) await page.clock.runFor(1000);
+  await page.getByRole('button', { name: 'Renvoyer le code' }).click();
+  await expect.poll(() => renvoi).toBe(true);
+  await expect(page.locator('.connexion-cta')).toHaveAttribute('aria-busy', 'true');
+  await champ.fill(CODE);
+  lacher();
+  await expect(page.getByTestId('pseudo-obligatoire')).toBeVisible();
+  expect(serveur.emailsEnvoyes).toHaveLength(2);
+  await ctx.close();
+});
