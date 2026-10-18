@@ -1,4 +1,5 @@
 import { expect, test, type Browser, type Locator, type Page } from '@playwright/test';
+import { ouvrirTous } from './problemes';
 import { brancher, fauxServeur, type FauxServeur } from './fauxSupabase';
 import { choisirMode, jouer, ouvrirPlus } from './plateau';
 
@@ -215,7 +216,7 @@ test('« Cette réponse me semble fausse » : le signalement arrive avec l’ide
   const serveur = fauxServeur();
   const ana = await telephone(browser, baseURL, serveur, { email: 'ana@exemple.test', pseudo: 'Ana', id: ANA });
   await ana.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
-  await ana.getByRole('button', { name: 'Tous les problèmes' }).click();
+  await ouvrirTous(ana);
   await ana.getByRole('button', { name: /^Problème \d+ : Capture la pierre/ }).click();
   const lecteur = ana.locator('.lecteur');
   const id = await lecteur.getAttribute('data-probleme');

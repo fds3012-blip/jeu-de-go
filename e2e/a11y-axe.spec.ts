@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
+import { ouvrirTous } from './problemes';
 import { brancher, fauxServeur } from './fauxSupabase';
 import { choisirMode, deplierAvecMochi, jouer, ouvrirLancementOrdi, ouvrirPlus, passerJusquAuScore, plateau, toucherCta } from './plateau';
 import { GO_DU_JOUR } from '../src/content/goDuJour.gen';
@@ -168,7 +169,7 @@ test('axe : Problèmes, un problème et son verdict, Go du jour', async ({ page 
   await expect(page.getByRole('button', { name: 'Tous les problèmes' })).toBeVisible();
   await verifier(page, 'Problèmes');
 
-  await page.getByRole('button', { name: 'Tous les problèmes' }).click();
+  await ouvrirTous(page);
   await expect(page.getByRole('button', { name: /^Problème \d+/ }).first()).toBeVisible();
   await verifier(page, 'Tous les problèmes');
   await page.getByRole('button', { name: /^Problème \d+/ }).first().click();

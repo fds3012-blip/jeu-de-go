@@ -1,4 +1,4 @@
-// Séance « Révisions du jour » (#469), ouverte depuis la carte de l'accueil. 5 éléments au plus, les plus en retard
+// Séance « Rejouer tes erreurs » (#469 ; #653 : sa seule maison est l'entrée de Problèmes, la tuile de l'accueil y mène). 5 éléments au plus, les plus en retard
 // d'abord : erreurs de partie (« Tes erreurs à rejouer », « Rejouer mes erreurs ») et problèmes ratés au premier essai.
 // Chaque élément se joue dans le lecteur de problème existant (PuzzlePlayer) ; seul le premier essai compte :
 // réussi, il monte d'une marche (J+3, J+7, J+14, J+30) ; raté, il revient demain (src/app/revisionEspacee.ts).
@@ -127,7 +127,7 @@ export function SeanceRevisions({ confirmTouch, celebrer, compte, onFin }: Props
           <p className="rejeu-fin-phrase">{fr(t('seance.vide'))}</p>
         </section>
         <div className="dock revue-dock">
-          <button type="button" className="cta" onClick={onFin}>{t('seance.retour')}</button>
+          <button type="button" className="cta" onClick={onFin}>{t('seance.fini')}</button>
         </div>
       </div>
     );
@@ -162,7 +162,7 @@ export function SeanceRevisions({ confirmTouch, celebrer, compte, onFin }: Props
         </section>
         {gerbe && <Confettis duree={1200} onFin={() => setGerbe(false)} />}
         <div className="dock revue-dock">
-          <button type="button" className="cta" onClick={onFin}>{t('seance.retour')}</button>
+          <button type="button" className="cta" onClick={onFin}>{t('seance.fini')}</button>
         </div>
       </div>
     );

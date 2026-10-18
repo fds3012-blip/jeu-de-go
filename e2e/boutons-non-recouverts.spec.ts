@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { ouvrirTous } from './problemes';
 import { jouer, ouvrirLancementOrdi, passerJusquAuScore, plateau, toucherCta } from './plateau';
 import { demarrerParcours, ouvrirRevue, preparerRevue } from './revueFactice';
 import { avancerJusqua, ouvrirDepuisApprendre, surMoment } from './decouverte';
@@ -91,7 +92,7 @@ for (const [l, h] of ECRANS) {
       await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
       await expect(page.getByRole('button', { name: 'Résoudre le Go du jour' })).toBeVisible();
       await aucunBoutonRecouvert(page, `problèmes ${taille}`);
-      await page.getByRole('button', { name: 'Tous les problèmes' }).click();
+      await ouvrirTous(page);
       await page.getByRole('button', { name: /^Problème \d+ : Capture la pierre/ }).click();
       await expect(plateau(page)).toBeVisible();
       await jouer(page, 'A1');

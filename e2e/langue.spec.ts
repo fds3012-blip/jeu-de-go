@@ -115,11 +115,9 @@ for (const largeur of [390, 320]) {
     await expect(page.getByRole('heading', { name: /^Daily Go #\d+$/ })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Solve the Daily Go' })).toHaveText('Solve');
     await expect(page.getByText('Create your account to keep your streak and solved puzzles on all your devices.')).toBeVisible();
-    // #602 : « Puzzles » est le titre de l'écran ; la section sous le Go du jour s'appelle « Practice ».
+    // #602 : « Puzzles » est le titre de l'écran ; #653 : le sommaire sous le Go du jour s'appelle « Practice ».
     await expect(page.getByRole('heading', { level: 1, name: 'Puzzles', exact: true })).toBeVisible();
-    await expect(page.getByRole('heading', { level: 2, name: 'Practice', exact: true })).toBeVisible();
-    // #620 : tant que le Go du jour reste à faire, « Next puzzle » est une tuile (le palier vient avec la carte, ensuite).
-    await expect(page.locator('.tuiles-pb').getByRole('button', { name: /^Next puzzle / })).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Practice' }).getByRole('button')).toHaveText(['Daily GoTo do', 'Replay your mistakes', 'Puzzle rush', 'By theme']);
     await expect(page.getByText(/Problème|Résoudre|Palier|verrouillé/)).toHaveCount(0);
     await sansDebordement(page);
     await sansCoupe(page, largeur);

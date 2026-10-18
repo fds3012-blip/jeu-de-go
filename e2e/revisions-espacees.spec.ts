@@ -1,8 +1,9 @@
 import { expect, test, type Page } from '@playwright/test';
+import { ouvrirTous } from './problemes';
 import { jouer } from './plateau';
 
 // Issue #469 : révision espacée. Un joueur qui revient a une erreur de partie (« Tes erreurs à rejouer », réponse E3)
-// et un problème raté au premier essai (b1, réponse E5), tous deux dus. Sur l'accueil, la carte « Révisions du jour (2) »
+// et un problème raté au premier essai (b1, réponse E5), tous deux dus. Sur l'accueil, la carte « Rejouer tes erreurs (2) »
 // est secondaire, dans « Aujourd'hui » ; la séance les enchaîne ; réussi, l'élément passe à J+3 ; raté, il revient demain.
 
 const ROWS = ['.........', '.........', '..O...X..', '.........', '....X....', '.........', '..X...O..', '.........', '.........'];
@@ -46,7 +47,7 @@ test('séance des révisions du jour : la carte, deux éléments, le bilan, le c
   // Une seule action principale : la carte est une tuile secondaire du groupe « Aujourd'hui ».
   const carte = page.getByTestId('tuile-revisions');
   await expect(carte).toBeVisible();
-  await expect(carte).toHaveAccessibleName(/Révisions \(2\)/);
+  await expect(carte).toHaveAccessibleName(/Rejouer tes erreurs \(2\)/);
   await expect(page.locator('.tuiles').getByTestId('tuile-revisions')).toHaveCount(1);
   await expect(page.locator('.cta')).toHaveCount(1);
   await expect(carte).not.toHaveClass(/tuile-avant/);
@@ -57,7 +58,7 @@ test('séance des révisions du jour : la carte, deux éléments, le bilan, le c
   // 1. L'erreur de partie (à retard égal, elle passe avant le problème). Trouvée du premier coup.
   await expect(page.getByText('Révision 1 sur 2')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Ta partie contre Pomme, coup 14' })).toBeVisible();
-  await expect(page).toHaveTitle(/^Révisions · /);
+  await expect(page).toHaveTitle(/^Rejouer tes erreurs · /);
   await jouer(page, 'E3');
   await expect(page.getByText('Bravo, c’est le coup de KataGo !')).toBeVisible();
   await page.getByRole('button', { name: 'Révision suivante' }).click();
@@ -82,8 +83,10 @@ test('séance des révisions du jour : la carte, deux éléments, le bilan, le c
   const etat = await page.evaluate(() => JSON.parse(localStorage.getItem('go.revisions.v1') ?? 'null'));
   expect(etat.problemes.b1).toMatchObject({ etape: 0, echecs: 2, prochain: await dansJours(page, 1) });
 
-  // Retour à l'accueil : plus rien à revoir aujourd'hui, la carte disparaît.
-  await page.getByRole('button', { name: 'Retour à l’accueil' }).last().click();
+  // #653 : la séance vit dans Problèmes, posée par-dessus Jouer : « Terminer » ramène à l'accueil, qui n'a pas changé
+  // d'onglet ; plus rien à revoir aujourd'hui, la carte disparaît.
+  await expect(page.getByRole('navigation').getByRole('button', { name: 'Jouer' })).toHaveAttribute('aria-current', 'page');
+  await page.getByRole('button', { name: 'Terminer' }).last().click();
   await expect(page.locator('.cta')).toBeVisible();
   await expect(page.getByTestId('tuile-revisions')).toHaveCount(0);
 
@@ -94,11 +97,26 @@ test('séance des révisions du jour : la carte, deux éléments, le bilan, le c
 test('un problème raté au premier essai dans l’onglet Problèmes entre dans la file (J+1)', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
-  await page.getByRole('button', { name: /Tous les problèmes/ }).click();
+  await ouvrirTous(page);
   await page.locator('button[data-probleme="b1"]').click();
   await jouer(page, 'A1');
   const etat = await page.evaluate(() => JSON.parse(localStorage.getItem('go.revisions.v1') ?? 'null'));
   expect(etat.problemes.b1).toMatchObject({ etape: 0, echecs: 1, prochain: await dansJours(page, 1) });
+});
+
+test('#653 : dans Problèmes, « Rejouer tes erreurs (2) » ouvre la séance, qui ramène au sommaire', async ({ page }) => {
+  await preremplir(page);
+  await page.goto('/');
+  await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
+  const entree = page.getByTestId('entree-erreurs');
+  await expect(entree).toHaveAccessibleName('Rejouer tes erreurs, 2 à rejouer');
+  await entree.click();
+  await expect(page.getByText('Révision 1 sur 2')).toBeVisible();
+  await expect(page.getByRole('navigation').getByRole('button', { name: 'Problèmes' })).toHaveAttribute('aria-current', 'page');
+  // « ‹ » (ou le retour du système) : sortie sans rien enregistrer, retour au sommaire, sur l'entrée.
+  await page.goBack();
+  await expect(page.getByTestId('problemes-sommaire')).toBeVisible();
+  await expect(page.getByTestId('entree-erreurs')).toHaveAccessibleName('Rejouer tes erreurs, 2 à rejouer');
 });
 
 test('premier lancement : pas de carte de révisions', async ({ page }) => {

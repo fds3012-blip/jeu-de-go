@@ -1,5 +1,5 @@
 /* « Par thème » (#471, #614, #625) : grille partagée par Problèmes et Apprendre (src/ui/GrilleThemes.tsx). Cartes à plat,
-   sans bordure, comme les tuiles d'Entraînement (.tuile-pb, #620) : même fond, même vignette de 40 px, même titre.
+   sans bordure, comme les entrées des sommaires (.sommaire-entree, A13) : même fond, même vignette de 40 px, même titre.
    Une colonne sur téléphone, groupée en un bloc (coins intérieurs de 4 px, 2 px d'écart), pour que la ligne de description
    tienne à côté de la vignette ; dès que la grille a 30rem, des cartes séparées sur 2 colonnes, puis 3 et plus (P8, § 5.4
    de docs/ux/visuel-responsive-2026-10.md). En rem : au zoom 200 %, on reste sur une colonne. */

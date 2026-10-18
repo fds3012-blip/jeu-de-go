@@ -90,7 +90,7 @@ test('joueur habitué', async ({ browser, baseURL }) => {
   await cap(page, '04d-apprendre-chapitre-ouverture');
 
   await nav(page, /^Problèmes$/).click();
-  await expect(page.locator('.themes')).toBeVisible();
+  await expect(page.getByTestId('problemes-sommaire')).toBeVisible();
   await page.waitForTimeout(800);
   await cap(page, '05-problemes-liste');
   await page.locator('.cta').first().click();

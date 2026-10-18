@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { ouvrirTous } from './problemes';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -25,8 +26,8 @@ async function ouvrirProbleme(page: Page, titre: RegExp) {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
-  await expect(page.locator('.themes')).toBeVisible();
-  await page.getByRole('button', { name: 'Tous les problèmes' }).click();
+  await expect(page.getByTestId('problemes-sommaire')).toBeVisible();
+  await ouvrirTous(page);
   await page.getByRole('button', { name: titre }).click();
   await expect(plateau(page)).toBeVisible();
 }

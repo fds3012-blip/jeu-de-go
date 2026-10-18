@@ -17,7 +17,8 @@ const LANGUES = {
 /** [chose, titre de l'écran (et du document), libellés qui y mènent ou le nomment]. `{n}` : compteur ajouté au nom. */
 const NOMS: [string, string, string[]][] = [
   // #611 : l'en-tête de l'onglet dit « Profil » ; « Ton parcours » nomme la section de progression, pas l'écran.
-  ['Révisions', 'titre.revisions', ['accueil.revisions.titre', 'seance.titre', 'revision.titre']],
+  // #653 : les révisions ont une seule maison et un seul nom, « Rejouer tes erreurs » (entrée de Problèmes, séance, tuile de l'accueil).
+  ['Rejouer tes erreurs', 'titre.revisions', ['accueil.revisions.titre', 'seance.titre', 'erreurs.titre']],
   ['Revoir la partie', 'direct.revoir', ['fin.revoir']],
   ['Statistiques', 'stats.titre', ['stats.ligne']],
   ['Ton niveau de départ', 'titre.placement', ['placement.titre', 'placement.profilFaire', 'placement.profilRefaire', 'cote.lignePlacement']],

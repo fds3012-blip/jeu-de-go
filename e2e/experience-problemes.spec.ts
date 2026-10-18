@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { ouvrirParTheme, ouvrirTous } from './problemes';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -19,12 +20,12 @@ async function ouvrirProblemes(page: Page) {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
-  await expect(page.locator('.themes')).toBeVisible();
+  await expect(page.getByTestId('problemes-sommaire')).toBeVisible();
 }
 
 test('coup faux : la réponse prouvée de Blanc est jouée et dite ; puis la solution complète, coup par coup', async ({ page }) => {
   await ouvrirProblemes(page);
-  await page.getByRole('button', { name: 'Tous les problèmes' }).click();
+  await ouvrirTous(page);
   await page.getByRole('button', { name: /^Problème \d+ : Deux chemins dans le coin/ }).click();
   await expect(plateau(page)).toBeVisible();
 
@@ -81,6 +82,7 @@ test('maîtrise par thème : la barre se remplit, « Thème suivant » à la ma�
     }
   }, capture.slice(0, 5));
   await ouvrirProblemes(page);
+  await ouvrirParTheme(page);
 
   const carte = page.locator('.theme-carte[data-theme="capturer"]');
   await expect(carte.locator('.theme-maitrise')).toHaveAttribute('aria-label', /^5 problèmes réussis sur 6/);

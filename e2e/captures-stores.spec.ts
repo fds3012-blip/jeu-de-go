@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { ouvrirParTheme } from './problemes';
 import { mkdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -131,6 +132,7 @@ for (const langue of LANGUES) {
       await preparer(page);
       await page.goto(adresse(langue));
       await page.getByRole('navigation').getByRole('button', { name: T[langue].problemes }).click();
+      await ouvrirParTheme(page);
       await expect(page.locator('.theme-carte')).toHaveCount(5);
       // Les thèmes en haut de l'écran, sous la course de 3 minutes (le Go du jour, au-dessus, serait coupé).
       await page.evaluate(() => {

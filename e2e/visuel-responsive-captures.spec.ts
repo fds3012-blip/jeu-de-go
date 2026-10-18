@@ -1,6 +1,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect, test, type Browser, type Page } from '@playwright/test';
+import { ouvrirTous } from './problemes';
 import { brancher, fauxServeur, type FauxServeur } from './fauxSupabase';
 import { abandonner, choisirMode, jouer, plateau } from './plateau';
 
@@ -172,11 +173,11 @@ for (const t of TAILLES) {
     await etape(page, t, 'problemes', async () => {
       await page.goto('/');
       await nav(page, /^Problèmes$/).click();
-      await expect(page.locator('.themes')).toBeVisible();
+      await expect(page.getByTestId('problemes-sommaire')).toBeVisible();
       await page.waitForTimeout(800);
       await cap(page, t, '20-problemes', clair);
-      // La carte « Problème suivant » et la grille « Par thème », comme sur la capture de Florian.
-      await page.locator('.palier-en-cours, .continuer-carte').first().evaluate(e => e.scrollIntoView({ block: 'start' }));
+      // #653 : le sommaire, défilé jusqu'à ses entrées.
+      await page.getByTestId('problemes-sommaire').evaluate(e => e.scrollIntoView({ block: 'start' }));
       await page.waitForTimeout(300);
       await cap(page, t, '21-problemes-defile', clair);
       await page.evaluate(() => window.scrollTo(0, 0));
@@ -190,7 +191,7 @@ for (const t of TAILLES) {
     await etape(page, t, 'course', async () => {
       await page.goto('/');
       await nav(page, /^Problèmes$/).click();
-      await page.locator('.course-carte').click();
+      await page.getByTestId('entree-course').click();
       await expect(page.getByRole('heading', { name: /Course/ })).toBeVisible();
       await cap(page, t, '23-course-consigne');
       await page.getByRole('button', { name: 'C’est parti' }).click();
@@ -200,7 +201,7 @@ for (const t of TAILLES) {
     await etape(page, t, 'tous', async () => {
       await page.goto('/');
       await nav(page, /^Problèmes$/).click();
-      await page.getByRole('button', { name: 'Tous les problèmes' }).click();
+      await ouvrirTous(page);
       await expect(page.getByRole('heading', { name: 'Tous les problèmes' })).toBeVisible();
       await cap(page, t, '25-tous-les-problemes', clair);
     });

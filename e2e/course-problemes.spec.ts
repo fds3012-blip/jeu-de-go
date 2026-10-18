@@ -29,8 +29,8 @@ async function preparer(page: Page, meilleur?: number) {
 async function ouvrirCourse(page: Page) {
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
-  // Carte secondaire : la seule action en relief reste le Go du jour (ou « Problème suivant »).
-  const carte = page.locator('[data-course]');
+  // #653 : une entrée du sommaire ; la seule action en relief reste le Go du jour (ou « Problème suivant »).
+  const carte = page.getByTestId('entree-course');
   await expect(carte).toBeVisible();
   await expect(carte).not.toHaveClass(/\bcta\b/);
   await expect(page.locator('.problemes .cta')).toHaveCount(1);

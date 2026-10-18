@@ -1,6 +1,7 @@
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
+import { ouvrirParTheme } from './problemes';
 
 // Lot V2 (#625) : captures de la grille « Par thème » à 390 × 844, en sombre, dans Apprendre et dans Problèmes
 // (docs/ux/captures/visuel-responsive/v2/). Lancement manuel seulement :
@@ -41,6 +42,7 @@ test('Apprendre, grille « Par thème »', async ({ page }) => {
 test('Problèmes, grille « Par thème »', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Problèmes', exact: true }).click();
+  await ouvrirParTheme(page);
   await expect(page.locator('.theme-carte')).toHaveCount(6);
   await capture(page, 'problemes-themes');
 });

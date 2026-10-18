@@ -368,3 +368,18 @@ Mécanisme : `par(maison)` dans `App.tsx` pose l'écran par-dessus l'écran cour
 | 12 | Crée ton compte (ou accord, consentement) › Conditions | bascule dans Profil ; l'écran de compte est perdu | onglet d'origine allumé ; « ‹ » : l'écran de compte, saisie comprise |
 
 Hors des 12 et laissés tels quels (raccourcis vers Problèmes) : tuile « Go du jour » de l'accueil, Ta semaine › « Faire un problème ». Défier depuis un profil ouvert par-dessus Jouer (chemins 4 et 5) revient à l'accueil de Jouer, pas au profil : deux écrans du même onglet dans une pile demandent N3.
+
+## 12. Problèmes en sommaire (#653, règle A13)
+
+Retour de Florian, 18/10 : « il y a trop ; la partie révision peut être enlevée. On devrait avoir les propositions, puis ensuite si on clique dessus aller sur les différentes pages. » Modèle : l'onglet Problèmes de chess.com (une image en haut, quatre grandes lignes, un bouton principal).
+
+| | Avant | Après |
+|---|---|---|
+| Premier regard (390 × 844) | Go du jour (carte), « Entraînement » (Problème suivant, Course), puis selon les jours « Tes erreurs à rejouer » et « Révisions » | Go du jour à faire (carte et « Résoudre »), ou « Problème suivant » ; puis quatre entrées : Go du jour, Rejouer tes erreurs, Course aux problèmes, Par thème |
+| Plus grand groupe (E3) | 6 thèmes + 2 tuiles + vignettes d'erreurs et de révision | 4 entrées |
+| Révisions | trois maisons : séance « Révisions » (Jouer), sections « Tes erreurs à rejouer » et « Révisions » (Problèmes) | une seule : « Rejouer tes erreurs », entrée de Problèmes, qui ouvre la séance (erreurs de partie et problèmes ratés, révision espacée #469). La tuile de l'accueil reste un raccourci (A3) : elle pose la séance par-dessus Jouer, sans changer d'onglet |
+| Par thème, Tous les problèmes | sur la racine | détail « Par thème » : la grille des séries, puis le lien « Tous les problèmes » (profondeur 2) |
+
+Chaque entrée porte un état court, jamais un zéro (P1) : « À faire » en or ou « Réussi » / « Vu » pour le Go du jour, le nombre d'erreurs dues en or, le record de la course. La série reste une pastille discrète dans l'en-tête de la carte du haut.
+
+Ce qui disparaît : la carte « Révisions » (#199, problèmes déjà réussis repris à J+1, J+3, J+7). Depuis #529, la séance de révision espacée fait déjà vivre la série à sa place ; les problèmes ratés au premier essai y entrent toujours (#469). Le nom « Révisions » laisse la place à « Rejouer tes erreurs » partout (A9), y compris sur la tuile de l'accueil (texte seulement).

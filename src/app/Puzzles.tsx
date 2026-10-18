@@ -1,4 +1,7 @@
 // Onglet Problèmes (issue #40, phase 6) : cote et série, problème du jour mis en scène, grille des problèmes de base.
+// #653 (règle A13 de DESIGN.md, modèle : l'onglet Problèmes de chess.com) : la racine est un sommaire. En tête, la carte
+// de l'action principale (le Go du jour s'il est à faire, sinon le problème suivant, logique de V1 #620) ; dessous, quatre
+// entrées de même poids : Go du jour, Rejouer tes erreurs, Course aux problèmes, Par thème. Chacune ouvre son détail.
 import { LienSignalerProbleme } from '../ui/Securite';
 import { BoutonAide } from '../ui/BoutonAide';
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
@@ -35,7 +38,6 @@ import { niveau, prochainAMesure } from './problemes';
 import { aContinuer, aSuivre, ordrePaliers, palierEnCours, paliers, paliersVisibles, type Palier } from './paliers';
 import { SceauLecon } from '../ui/SceauLecon';
 import { aFeter, FETES_KEY } from './fetesPaliers';
-import { MesErreurs } from '../ui/MesErreurs';
 import { SerieDuJour } from '../ui/SerieDuJour';
 import { jalonFranchi, type Jalon } from './jalonsSerie';
 import { SERIE_KEY, numeroDuJour, problemeDuNumero, serieVivante, textePartage, type Serie } from './goDuJour';
@@ -44,9 +46,7 @@ import { Glacon, PierreGivree } from '../ui/Glacon';
 import { lireReserveAppareil } from './gelAppareil';
 import { inviterCompte, serieAffichee } from './serieLocale';
 import { goDuJourFaitAppareil, validerDefi } from './defiAppareil';
-import { RevisionDuJour } from '../ui/RevisionDuJour';
-import { problemesSuivis } from './revisionEspacee';
-import { lireEtatAppareil, noterProblemeRate } from './revisionsAppareil';
+import { noterProblemeRate } from './revisionsAppareil';
 import { noterRediteAppareil, repriseDeLeconFaite, suivreEnRevisionAppareil } from './rediteAppareil';
 // `t` désigne déjà un palier dans ce fichier : la traduction s'appelle `tr` (#167).
 import { t as tr } from '../content/i18n/secondaires';
@@ -62,6 +62,8 @@ import { SERIES_THEMES_KEY, nettoyerSeries, noterSerie, prochainDeSerie, serieDe
 import { maitrises, themeSuivant, vientDeMaitriser } from './maitriseThemes';
 import { SurtitreTheme, VignettesThemes } from '../ui/SeriesThemes';
 import { InviterApp } from '../ui/PartagerApp';
+import { Sommaire, type EntreeSommaire } from '../ui/Sommaire';
+import { EnteteEcran } from '../ui/BoutonRetour';
 
 const LOCAL_PUZZLES = parsePuzzles(ALL_PUZZLES);
 export const SOLVED_KEY = 'go.problemes.v1';
@@ -93,6 +95,11 @@ interface Props {
   essai?: () => void;
   /** #369 : un ami a rappelé le Go du jour (notification en attente) ; mesuré avec la réussite (`apres_rappel`). */
   rappelAmi?: boolean;
+  /**
+   * #653 : « Rejouer tes erreurs », la seule maison des révisions (erreurs de tes parties et problèmes ratés, révision
+   * espacée #469). `n` : éléments dus aujourd'hui ; `ouvrir` lance la séance (App.tsx, SeanceRevisions).
+   */
+  erreurs?: { n: number; ouvrir: () => void };
 }
 
 /** Flamme de la série de jours, en or ; creuse ou pleine selon la classe de la pastille (#213). */
@@ -116,7 +123,7 @@ function Difficulte({ d }: { d: number }) {
 }
 
 /** Onglet Problèmes : problème du jour, problèmes de base, cote problèmes et série de jours. */
-export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, lien = null, onDuJour, celebrer = true, racine = 0, onApprendre, essai, depuisRappel = false, rappelAmi = false }: Props) {
+export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, lien = null, onDuJour, celebrer = true, racine = 0, onApprendre, essai, depuisRappel = false, rappelAmi = false, erreurs }: Props) {
   /** Ouvre un problème ; hors Go du jour pendant l'essai sans compte, c'est « Crée ton compte » qui s'ouvre (#343). */
   const ouvrirProbleme = (id: string) => { if (essai && id !== daily?.id) essai(); else setOpenId(id); };
   // Go du jour (issue #75) : le même pour tous, choisi dans la liste publique des problèmes de base, en heure de Paris.
@@ -147,6 +154,8 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   const [tous, setTous] = useState(false);
   // Course aux problèmes (#287) : consigne, course et fin, à la place de la liste.
   const [course, setCourse] = useState(false);
+  // #653 : détail « Par thème » (grille des séries et « Tous les problèmes »), ouvert depuis le sommaire.
+  const [parTheme, setParTheme] = useState(false);
   // Problèmes par thème (#471) : série ouverte, réussites d'affilée et record de chaque série (sur l'appareil).
   const [serieTheme, setSerieTheme] = useState<SerieTheme | null>(null);
   const [etatThemes, setEtatThemes] = useState<EtatSeriesThemes>(() => nettoyerSeries(readLocal<unknown>(SERIES_THEMES_KEY, null)));
@@ -168,7 +177,7 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   useEffect(() => {
     if (racineVue.current === racine) return;
     racineVue.current = racine;
-    setOpenId(null); setTous(false); setCourse(false); setSerieTheme(null); setMaitriseVenue(null);
+    setOpenId(null); setTous(false); setCourse(false); setParTheme(false); setSerieTheme(null); setMaitriseVenue(null);
   }, [racine]);
 
   // Problèmes : la base pour un joueur connecté (RLS), la copie locale sinon.
@@ -209,14 +218,8 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   const markVu = useCallback((id: string) => {
     setVus(prev => { const next = { ...prev, [id]: true as const }; writeLocal(VUS_KEY, next); return next; });
   }, []);
-  // Révision du jour (#251, M2) : les problèmes réussis et ceux vus avec la réponse ; ces derniers à part, pour le libellé.
-  const vusSeuls = useMemo(() => new Set(Object.keys(vus).filter(id => !solved.has(id))), [vus, solved]);
-  const aReviser = useMemo(() => new Set([...solved, ...vusSeuls]), [solved, vusSeuls]);
-  // #469 : un problème raté au premier essai est suivi par la révision espacée (« Révisions du jour ») : la Révision
-  // du jour (#199) ne le prend pas en plus. Relu au retour à la liste (`openId`).
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- relecture voulue à chaque retour à la liste
-  const suivisFile = useMemo(() => problemesSuivis(lireEtatAppareil()), [openId]);
-  const reussisRevision = useMemo(() => new Set([...aReviser].filter(id => !suivisFile.has(id))), [aReviser, suivisFile]);
+  // Problèmes déjà réussis ou vus avec la réponse (#251) : « Problème suivant » et les séries ne les reproposent pas.
+  const aReviser = useMemo(() => new Set([...solved, ...Object.keys(vus)]), [solved, vus]);
 
   const tiers = useMemo(() => paliers(list, solved), [list, solved]);
   // Palier complet : une micro-fête en or, une seule fois par palier (réglage Célébrations et mouvements réduits respectés).
@@ -434,12 +437,56 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   }
 
   const enCours = palierEnCours(tiers);
-  // #620 (V1) : une seule carte d'action en tête, le Go du jour tant qu'il n'est pas fait, « Problème suivant » ensuite ;
-  // l'autre devient une tuile, groupée avec la course. La série est une pastille près du Go du jour (F-e).
+  // #620 (V1) : une seule carte d'action en tête, le Go du jour tant qu'il n'est pas fait, le problème suivant ensuite.
+  // La série est une pastille discrète dans l'en-tête de cette carte (F-e).
   const pastille = serieVisible && serie > 0 ? <PastilleSerie jours={serie} fait={duJourReussi} /> : null;
+  const glacon = <Glacon gels={stats ? stats.freezes : gels} />;
   const ouvrirSuivant = () => { if (prochainPz) ouvrirProbleme(prochainPz.id); };
+  // #653 (A13, A6) : un détail se ferme sur le sommaire, le focus revient à l'entrée qui l'a ouvert.
+  const revenir = (cle: string) => requestAnimationFrame(() => document.querySelector<HTMLElement>(`.problemes [data-entree="${cle}"]`)?.focus({ preventScroll: true }));
   const ouvrirCourse = () => { if (essai) { essai(); return; } setCourse(true); window.scrollTo({ top: 0 }); };
   const numeroDuJourVu = <span className="numero-du-jour">{tr('pb.numero', { numero })}</span>;
+
+  // #653 : détail « Par thème » : les séries par thème (#471), puis « Tous les problèmes » (#196).
+  if (parTheme) {
+    return (
+      <div className="problemes problemes-par-theme">
+        <EnteteEcran titre={tr('themes.titre')} retour={tr('pb.retour')} onRetour={() => { setParTheme(false); window.scrollTo({ top: 0 }); revenir('theme'); }} />
+        {notices}
+        <VignettesThemes series={series} etat={etatThemes} onOuvrir={ouvrirSerie} maitrise={maitrise} />
+        <button className="lien lien-tous" onClick={() => { if (essai) { essai(); return; } setTous(true); window.scrollTo({ top: 0 }); }}>
+          {tr('pb.tous')}
+        </button>
+      </div>
+    );
+  }
+
+  const nErreurs = erreurs?.n ?? 0;
+  // Record de la course (#287), relu à chaque retour au sommaire : une course vient peut-être de le battre.
+  const meilleurCourse = lireMeilleurCourse();
+  const entrees: EntreeSommaire[] = [
+    ...(daily ? [{
+      cle: 'du-jour', nom: tr('accueil.goDuJour'), visuel: <MiniGoban rows={daily.rows} />, testId: 'entree-du-jour',
+      etat: duJourReussi ? { texte: tr(vus[daily.id] && !solved.has(daily.id) ? 'pb.tamponVu' : 'pb.tampon') } : { texte: tr('accueil.aFaire'), ton: 'or' as const },
+      onOuvrir: () => setOpenId(daily.id),
+    }] : []),
+    ...(erreurs ? [{
+      cle: 'erreurs', nom: tr('erreurs.titre'), visuel: <MiniGoban rows={MOTIF_ERREUR} />, testId: 'entree-erreurs',
+      // P1 : aucun zéro affiché ; le nombre d'erreurs dues aujourd'hui, en or (elles attendent le joueur).
+      etat: nErreurs > 0 ? { texte: String(nErreurs), ton: 'or' as const, aria: tr('erreurs.compteurAria', { n: nErreurs }) } : undefined,
+      onOuvrir: () => { if (essai) { essai(); return; } erreurs.ouvrir(); },
+    }] : []),
+    {
+      cle: 'course', nom: tr('pb.sommaire.course'), visuel: <ChronoCourse taille={32} />, testId: 'entree-course',
+      etat: meilleurCourse > 0 ? { texte: tr('pb.sommaire.record', { n: meilleurCourse }), aria: tr('course.carte.meilleur', { meilleur: meilleurCourse }) } : undefined,
+      onOuvrir: ouvrirCourse,
+    },
+    {
+      cle: 'theme', nom: tr('themes.titre'), visuel: <MiniGoban rows={MOTIF_THEMES} />, testId: 'entree-par-theme',
+      onOuvrir: () => { setParTheme(true); window.scrollTo({ top: 0 }); },
+    },
+  ];
+
   return (
     <div className="problemes">
       {notices}
@@ -447,42 +494,23 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
       {daily && !duJourFait ? (
         <section aria-labelledby="jour-titre">
           <div className="jour-tete">
-            <h2 id="jour-titre" className="titre-pierres">{tr('accueil.goDuJour')} {numeroDuJourVu}<Glacon gels={stats ? stats.freezes : gels} /></h2>
+            <h2 id="jour-titre" className="titre-pierres">{tr('accueil.goDuJour')} {numeroDuJourVu}{glacon}</h2>
             {pastille}
           </div>
           <DuJour pz={daily} onOpen={() => setOpenId(daily.id)} />
         </section>
-      ) : (
+      ) : prochainPz && (
         <section aria-labelledby="paliers-titre">
-          <h2 id="paliers-titre" className="titre-pierres">{tr('pb.entrainement')}</h2>
-          {prochainPz && <CarteSuivant pz={prochainPz} palier={enCours} onOpen={ouvrirSuivant} />}
+          <div className="jour-tete">
+            <h2 id="paliers-titre" className="titre-pierres">{tr('pb.entrainement')}</h2>
+            {daily && glacon}{daily && pastille}
+          </div>
+          <CarteSuivant pz={prochainPz} palier={enCours} onOpen={ouvrirSuivant} />
         </section>
       )}
 
-      {/* #293 : les erreurs dues aujourd'hui viennent juste sous la carte d'action (la revue promet « Cette position
-          reviendra dans Problèmes »). La section n'existe que s'il y en a ; ses vignettes restent des actions secondaires. */}
-      {!essai && <MesErreurs confirmTouch={confirmTouch} Lecteur={PuzzlePlayer} />}
-
-      {/* Révision du jour (#199) : problèmes déjà réussis, repris à J+1, J+3, J+7. Depuis #251 (M2), aussi ceux
-          vus avec la réponse : « Retente-le plus tard » (pb.vuTexte), c'est la révision qui le repropose. */}
-      {!essai && <RevisionDuJour liste={list} reussis={reussisRevision} vus={vusSeuls} confirmTouch={confirmTouch} Lecteur={PuzzlePlayer} onSerie={setSerieDuJour} />}
-
-      <section aria-labelledby={duJourFait ? undefined : 'paliers-titre'}>
-        {!duJourFait && <h2 id="paliers-titre" className="titre-pierres">{tr('pb.entrainement')}</h2>}
-        {/* #620 (F-f) : tuiles à plat, de même poids, groupées ; jamais plus fortes que la carte d'action. */}
-        <div className="tuiles-pb">
-          {daily && duJourFait
-            ? <TuileDuJour pz={daily} numero={numeroDuJourVu} gels={<Glacon gels={stats ? stats.freezes : gels} />} pastille={pastille}
-                vu={!!vus[daily.id] && !solved.has(daily.id)} onOpen={() => setOpenId(daily.id)} />
-            : prochainPz && <TuileSuivant pz={prochainPz} onOpen={ouvrirSuivant} />}
-          <CarteCourse onOpen={ouvrirCourse} />
-        </div>
-        {/* #471 : séries par thème, à plat ; seulement celles qui ont assez de problèmes. */}
-        <VignettesThemes series={series} etat={etatThemes} onOuvrir={ouvrirSerie} maitrise={maitrise} />
-        <button className="lien lien-tous" onClick={() => { if (essai) { essai(); return; } setTous(true); window.scrollTo({ top: 0 }); }}>
-          {tr('pb.tous')}
-        </button>
-      </section>
+      {/* #653 : quatre entrées de même poids, à plat ; le seul relief reste la carte du dessus. */}
+      <Sommaire entrees={entrees} nom={tr('pb.sommaire.nom')} className="problemes-sommaire" testId="problemes-sommaire" />
 
       {/* Aucune cote affichée (décision de Florian, #137) : la cote problèmes existe sur le serveur, invisible. */}
       {connecte && statsError ? (
@@ -500,6 +528,10 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
     </div>
   );
 }
+
+/** #653 : visuels des entrées « Rejouer tes erreurs » (ta pierre, marquée, prise dans un filet) et « Par thème ». */
+const MOTIF_ERREUR = ['.....', '..O..', '.OSO.', '.....', '.....'];
+const MOTIF_THEMES = ['.....', '.X...', '..TX.', '.X...', '.....'];
 
 /** Série de jours (#620) : pastille or près du Go du jour ; flamme creuse tant qu'il reste à faire, pleine après (#213). */
 function PastilleSerie({ jours, fait }: { jours: number; fait: boolean }) {
@@ -532,38 +564,6 @@ function CarteSuivant({ pz, palier, onOpen }: { pz: Puzzle; palier: ReturnType<t
           {tr('pb.continuer')} <span className="continuer-titre">{pz.title}</span>
         </button>
       </div>
-    </div>
-  );
-}
-
-/** « Problème suivant » en tuile, tant que le Go du jour reste l'action principale (#620). */
-function TuileSuivant({ pz, onOpen }: { pz: Puzzle; onOpen: () => void }) {
-  return (
-    <button type="button" className="tuile-pb continuer" onClick={onOpen}>
-      <span className="tuile-pb-visuel continuer-goban" aria-hidden="true"><MiniGoban rows={pz.rows} /></span>
-      <span className="tuile-pb-texte">
-        <b>{tr('pb.continuer')}</b>
-        <span className="continuer-titre">{pz.title}</span>
-      </span>
-    </button>
-  );
-}
-
-/** Le Go du jour fait, en tuile (#620) : sa position, son numéro, son état ; la pastille de série à côté. */
-function TuileDuJour({ pz, numero, gels, pastille, vu, onOpen }: {
-  pz: Puzzle; numero: ReactNode; gels: ReactNode; pastille: ReactNode; vu: boolean; onOpen: () => void;
-}) {
-  return (
-    <div className="tuile-pb du-jour-tuile" data-du-jour-fait="">
-      <button type="button" className="tuile-pb-bouton" onClick={onOpen}>
-        <span className="tuile-pb-visuel" aria-hidden="true"><MiniGoban rows={pz.rows} /></span>
-        <span className="tuile-pb-texte">
-          <b id="jour-titre">{tr('accueil.goDuJour')} {numero}</b>
-          <small>{tr(vu ? 'pb.tamponVu' : 'pb.tampon')}</small>
-        </span>
-      </button>
-      {gels}
-      {pastille}
     </div>
   );
 }
@@ -627,23 +627,6 @@ function PalierVue({ t, ordre, solved, vus, onOpen, fete }: {
   );
 }
 
-/**
- * Entrée de la course (#287) : une tuile secondaire, sans or, sans relief ni bordure (#620, F-f). Le Go du jour ou
- * « Problème suivant » reste l'action principale. Le meilleur score est un record de ce mode, jamais un total de problèmes (#137).
- */
-function CarteCourse({ onOpen }: { onOpen: () => void }) {
-  const [meilleur] = useState(lireMeilleurCourse);
-  return (
-    <button type="button" className="tuile-pb course-carte" onClick={onOpen} data-course="">
-      <span className="tuile-pb-visuel"><ChronoCourse taille={32} /></span>
-      <span className="tuile-pb-texte course-carte-texte">
-        <b>{fr(tr('course.carte.titre'))}</b>
-        {/* #592 : les règles se lisent sur la consigne de la course, avant de partir ; ici, le record s'il existe. */}
-        {meilleur > 0 && <small><span className="course-carte-meilleur">{fr(tr('course.carte.meilleur', { meilleur }))}</span></small>}
-      </span>
-    </button>
-  );
-}
 
 function Cadenas() {
   return (
