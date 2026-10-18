@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { onglet } from './onglet';
 import { boutonPasser, choisirMode, coupsJoues, jouer, passer, plateau, toucher, toucherCta } from './plateau';
 import { GO_DU_JOUR } from '../src/content/goDuJour.gen';
 
@@ -90,7 +91,7 @@ test('la pierre fantôme seule ne compte pas ; une pierre posée en leçon compl
   expect(await page.evaluate(() => localStorage.getItem('go.premiere-pierre.v1'))).toBeNull();
   await jouer(page, 'E5');
   await expect(page.locator('.lecteur-plateau')).toHaveAttribute('data-demo', 'finie');
-  await page.getByRole('navigation').getByRole('button', { name: 'Jouer' }).click();
+  await onglet(page, 'Jouer'); // #646 : la leçon est en plein écran, on en sort d'abord
   await accueilComplet(page);
   // Le tout premier lancement reste « première partie » contre Pomme (pas de partie jouée, #432 inchangé).
   await expect(page.locator('.cta')).toHaveAttribute('data-mode', 'ordi');

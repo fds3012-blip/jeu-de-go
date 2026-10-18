@@ -286,7 +286,7 @@ Grille de 4 px, vérifiée par `tokens.test.ts` : `--space-1` 4, `--space-2` 8, 
 |---|---|---|
 | Accueil, Apprendre, Problèmes, Profil | Logo « Mochi Go » | Oui (latérale à partir de 1024 px) |
 | Écran de tâche (en ligne, défi, revue, réglages, sous-vues du Profil) | Barre « ‹ titre » (`EnteteEcran`, `BoutonRetour.tsx`) | Oui |
-| Leçon, problème | Barre du lecteur | Oui |
+| Activité : leçon, problème, course, découverte, règles, placement, révisions (#646) | Barre du lecteur, « ‹ » seule sortie | Non |
 | Partie (ordi, à deux, en ligne) et sa fin, sa revue | Aucun : plein écran | Non |
 | Compte bloquant | Aucun, une seule action | Non |
 
@@ -452,7 +452,7 @@ Vocabulaire. **Racine** : l'écran qu'ouvre un onglet. **Activité** : un écran
 | A11 | **Pas d'impasse** : chaque écran a une sortie qui n'enregistre rien. « Passer », « Plus tard » ou « Abandonner » sont des choix en plus de la sortie, jamais à sa place. | Chaque écran a un `.retour` ou une croix ; l'action de sortie n'écrit rien dans `localStorage`. |
 | A12 | **Une feuille ne mène pas à une autre feuille**, et ne change pas d'onglet. Ce qui demande plus qu'une feuille devient un écran. | Revue de PR. |
 
-Ce que ces règles ne changent pas : les écrans de compte bloquants (« Choisis ton pseudo », accord aux conditions) gardent une seule action ; les arrivées par lien (défi, partie partagée, Go du jour, rappel) ouvrent directement leur écran ; la règle d'en-tête de `docs/ux/navigation.md` reste valable hors activités. La règle 3 de ce document (leçon et problème gardent la barre du bas) est remplacée par A5 dès que Florian a validé la décision F3.
+Ce que ces règles ne changent pas : les écrans de compte bloquants (« Choisis ton pseudo », accord aux conditions) gardent une seule action ; les arrivées par lien (défi, partie partagée, Go du jour, rappel) ouvrent directement leur écran ; la règle d'en-tête de `docs/ux/navigation.md` reste valable hors activités. Décision F3 validée par Florian : A5 et A6 s'appliquent à toutes les activités depuis #646 (lot N2) ; l'ancienne règle 3 de `navigation.md` (leçon et problème gardent la barre du bas) est inversée.
 
 ## Principes de Florian
 

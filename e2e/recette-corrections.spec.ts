@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { attendrePierre, attendreReponse, jouer, jouerSuite, partieADeux, passer, toucherCta } from './plateau';
+import { onglet } from './onglet';
 
 // Issue #207 : corrections de la recette du 28/09 (docs/qa/recette-2026-09-28.md sur la branche recette-nuit).
 // Chaque défaut est vérifié à la taille d'écran où il a été vu.
@@ -89,7 +90,8 @@ test.describe('R3, R6 : 320 × 640', () => {
     // Pendant le problème, rien sur la consigne.
     await page.waitForTimeout(800);
     await expect(fete).toHaveCount(0);
-    await nav(page).getByRole('button', { name: 'Apprendre' }).click();
+    // #646 : le problème est en plein écran ; on en sort par « ‹ », puis on change d'onglet.
+    await onglet(page, 'Apprendre');
     await expect(fete).toContainText(/Niveau\s2/);
     await nav(page).getByRole('button', { name: 'Problèmes' }).click();
     // Bien avant les 3,2 s de la carte.
@@ -106,18 +108,21 @@ test.describe('R3, R6 : 320 × 640', () => {
   });
 });
 
-test('R4 : toucher l’onglet Problèmes pendant un problème ramène à la liste, sans rouvrir le Go du jour', async ({ page }) => {
+// #646 : le problème est en plein écran, sans barre du bas ; sa seule sortie, « ‹ », ramène à la liste.
+test('R4 : la sortie d’un problème ramène à la liste, sans rouvrir le Go du jour', async ({ page }) => {
   await page.clock.setFixedTime(MIDI_PARIS);
   await page.goto('/?go-du-jour=1'); // arrivée par un lien partagé : le Go du jour s'ouvre
   await expect(page.getByRole('heading', { level: 2, name: 'Capture la pierre' })).toBeVisible();
-  await nav(page).getByRole('button', { name: 'Problèmes' }).click();
+  await expect(nav(page)).toHaveCount(0);
+  await page.getByRole('button', { name: 'Retour aux problèmes' }).click();
   await expect(page.getByRole('heading', { level: 2, name: 'Capture la pierre' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: /Go du jour/ }).first()).toBeVisible();
   // Un autre problème ouvert depuis la liste : même geste, même retour.
   await page.getByRole('button', { name: /Go du jour/ }).first().click();
   await expect(page.getByRole('heading', { level: 2, name: 'Capture la pierre' })).toBeVisible();
-  await nav(page).getByRole('button', { name: 'Problèmes' }).click();
+  await page.getByRole('button', { name: 'Retour aux problèmes' }).click();
   await expect(page.getByRole('heading', { level: 2, name: 'Capture la pierre' })).toHaveCount(0);
+  await expect(nav(page)).toBeVisible();
 });
 
 test.describe('R5 : 320 × 640', () => {
