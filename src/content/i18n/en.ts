@@ -1339,7 +1339,7 @@ export const en = {
   'conditions.intro': 'No ads. Your data is never sold.',
   'conditions.garde': 'What we keep',
   'conditions.garde.telephone': 'On your phone:',
-  'conditions.garde.telephoneTexte': 'your settings, your progress and your games. The computer works out its moves here, with no server.',
+  'conditions.garde.telephoneTexte': 'your settings, your progress and your games. The computer works out its moves here, with no server. A board photo you count is read here, then forgotten, never sent or kept.',
   'conditions.garde.compte': 'If you create an account:',
   'conditions.garde.compteTexte': 'your email, username, rating, streak, progress, badges and games (online, against the computer, imported), so you find them on all your devices. Stored by Supabase, in Paris.',
   'conditions.garde.defi': 'A friend challenges you, no account:',

@@ -19,6 +19,10 @@ for (const theme of ['dark', 'light'] as const) {
     const nav = (await page.getByRole('navigation').boundingBox())!;
     const progression = (await page.getByTestId('rubrique-progression').boundingBox())!;
     expect(progression.y + progression.height).toBeLessThanOrEqual(nav.y);
+    // #655 : « Compter une photo » suit « Mes parties » (« Mes amis » vient après, avec le serveur) : une autre façon de
+    // finir une partie, jouée sur un vrai goban.
+    expect(await page.getByTestId('rubrique-social').locator('.sommaire-entree').evaluateAll(es => es.map(e => (e as HTMLElement).dataset.entree).slice(0, 2)))
+      .toEqual(['parties', 'photo']);
     // Mes données a quitté le troisième niveau (A4) : une ligne de la rubrique « Compte ».
     await expect(page.getByTestId('rubrique-compte').getByRole('button')).toHaveText(['Mon compteSe connecter', 'Mes données', 'Conditions et confidentialité']);
   });

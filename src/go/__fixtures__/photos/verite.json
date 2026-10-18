@@ -1,0 +1,246 @@
+{
+  "synth-19-dessus.png": {
+    "description": "19 × 19 vu presque de dessus, lumière égale",
+    "source": "synthétique : outils/photosSynthetiques.ts",
+    "licence": "MIT (comme le projet)",
+    "taille": 19,
+    "coins": [
+      [
+        141.7,
+        51.7
+      ],
+      [
+        634.3,
+        39.1
+      ],
+      [
+        645.8,
+        523.7
+      ],
+      [
+        156.9,
+        541.2
+      ]
+    ],
+    "plateau": [
+      ".XO.O.X.XX..OOX..X.",
+      ".....XXXX.....XXX.X",
+      "O.XX...X....OXXX...",
+      "....O....OOO.X..O.O",
+      ".O.X.O..O..........",
+      "....X..OOXX.XXO....",
+      "...OOXO.O...X....X.",
+      ".OO.O.XOOO.X.X.X...",
+      ".O.....OO.O...XXX.X",
+      "XXX...X.OO........X",
+      "..XX.XXXO.X......X.",
+      "XX.X...O...X...XXX.",
+      "XXOX...X.OXX...O..O",
+      "X.O.......X.....XO.",
+      "X..O......XX.X..X.O",
+      "X......XX...OX.....",
+      "X.X...X..OX.OO...OO",
+      ".X......X.X......O.",
+      ".X..XX.O..XX.OOO.OO"
+    ]
+  },
+  "synth-19-biais-lampe.png": {
+    "description": "19 × 19 de biais, lampe orangée d’un côté, pierres qui débordent",
+    "source": "synthétique : outils/photosSynthetiques.ts",
+    "licence": "MIT (comme le projet)",
+    "taille": 19,
+    "coins": [
+      [
+        190.4,
+        89.9
+      ],
+      [
+        563.2,
+        82.5
+      ],
+      [
+        650.3,
+        504.4
+      ],
+      [
+        138.1,
+        518.1
+      ]
+    ],
+    "plateau": [
+      "..OO...O.O...O...OX",
+      ".....X..OOO..OOX.O.",
+      "O.XX....O...X.OO..O",
+      "O.O.X......X.......",
+      "X.O.O.O.X...O...X.O",
+      ".X..O.X....XO...X..",
+      "...XX.X.X...XXXX.OX",
+      "..O......X......X.X",
+      "O...OOX..O..OO...O.",
+      "....X...X.X.....OOO",
+      "XX..XX...XXO.O....O",
+      "...OOO...X.O.O...X.",
+      ".X.OO...XXXOO.X..X.",
+      "X...O....XOO....X..",
+      "XXX...XO...X..X...O",
+      ".XXOO.X...X.O.X.X.O",
+      "XXX..O...X.....XX..",
+      "...XX..X..O..X..XOX",
+      ".O..X..X..OO..OOOOO"
+    ]
+  },
+  "synth-19-jour-flou.png": {
+    "description": "19 × 19, lumière du jour bleutée, photo un peu floue et bruitée",
+    "source": "synthétique : outils/photosSynthetiques.ts",
+    "licence": "MIT (comme le projet)",
+    "taille": 19,
+    "coins": [
+      [
+        199,
+        67
+      ],
+      [
+        608.5,
+        76
+      ],
+      [
+        649.6,
+        517.5
+      ],
+      [
+        135.3,
+        513.1
+      ]
+    ],
+    "plateau": [
+      "O...O.OOO.XX..X....",
+      "O..O.......OOO.OOO.",
+      ".OO.X...O....OO..O.",
+      "........O...OO...O.",
+      "OO..X..X.XXX.OX..X.",
+      ".OO.XX.XO...O.X....",
+      "X.O....OO...O......",
+      "X.O.XX.............",
+      "..........XX..O....",
+      ".OO....OO.OXOOOXXX.",
+      "O.OO.X....O.O....X.",
+      "X...O....X.XOOOO.X.",
+      ".....XX..X.X.O.O..X",
+      "..O..X.....XX.OO.XX",
+      "X..XXXOO..XXXXXO...",
+      "X.XXXX...OO...O..OX",
+      "O...X..OOO.X...OOO.",
+      "O.......O..X...X..X",
+      "X.OOO....OO...O.O.."
+    ]
+  },
+  "synth-13-ombre.png": {
+    "description": "13 × 13, une moitié dans l’ombre",
+    "source": "synthétique : outils/photosSynthetiques.ts",
+    "licence": "MIT (comme le projet)",
+    "taille": 13,
+    "coins": [
+      [
+        217.6,
+        73.1
+      ],
+      [
+        615.2,
+        73.2
+      ],
+      [
+        665.4,
+        514.5
+      ],
+      [
+        169.4,
+        526.2
+      ]
+    ],
+    "plateau": [
+      ".O........OOO",
+      ".OXOOXXX.O...",
+      "..XOO..X.O.XX",
+      "O.X.O.X...X..",
+      "O...O...XX.OO",
+      "..OOOOX...OX.",
+      ".OX..XX.O....",
+      "X..X.O....OXX",
+      ".....X.X.....",
+      "XX...XX....OO",
+      "..O...XO.X..X",
+      "...X..XO....X",
+      ".....X..X..X."
+    ]
+  },
+  "synth-9-dense.png": {
+    "description": "9 × 9 très rempli",
+    "source": "synthétique : outils/photosSynthetiques.ts",
+    "licence": "MIT (comme le projet)",
+    "taille": 9,
+    "coins": [
+      [
+        184.9,
+        93.2
+      ],
+      [
+        564.4,
+        87.8
+      ],
+      [
+        634.5,
+        517.5
+      ],
+      [
+        141.5,
+        521.2
+      ]
+    ],
+    "plateau": [
+      ".XXX.OXX.",
+      "XXXXX.XXO",
+      "...XXO.OO",
+      "XXXXXXXO.",
+      "XX.OXOXOO",
+      ".XOO.XXXO",
+      "..X.XXXXO",
+      "X.XOOXXXX",
+      ".X.O.X.OX"
+    ]
+  },
+  "synth-9-reflet.png": {
+    "description": "9 × 9 avec un reflet de lampe sur le bois (cas limite)",
+    "source": "synthétique : outils/photosSynthetiques.ts",
+    "licence": "MIT (comme le projet)",
+    "taille": 9,
+    "coins": [
+      [
+        215.4,
+        59
+      ],
+      [
+        643.7,
+        77.2
+      ],
+      [
+        654.8,
+        540.8
+      ],
+      [
+        165.1,
+        518
+      ]
+    ],
+    "plateau": [
+      "..O......",
+      "..O..XX.X",
+      "..O....XX",
+      ".X.XO.X..",
+      ".X..O....",
+      "..OOO.OX.",
+      "..X.OOO.O",
+      "..OO.O.X.",
+      "X....OOO."
+    ]
+  }
+}

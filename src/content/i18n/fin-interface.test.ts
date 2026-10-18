@@ -75,7 +75,8 @@ const ORIGINAUX: [Cle, string, boolean?][] = [
   ['conditions.intro', 'Pas de pub. Tes données ne sont jamais vendues.'],
   ['conditions.garde', 'Ce qu’on garde'],
   ['conditions.garde.telephone', `Sur ton téléphone${F}:`, true],
-  ['conditions.garde.telephoneTexte', 'tes réglages, ta progression et tes parties. L’ordi calcule ses coups ici, sans serveur.'],
+  // #655 : la photo du goban (« Compter une photo ») est lue sur l'appareil, jamais envoyée ni gardée.
+  ['conditions.garde.telephoneTexte', 'tes réglages, ta progression et tes parties. L’ordi calcule ses coups ici, sans serveur. Une photo de goban à compter est lue ici, puis oubliée, jamais envoyée ni gardée.'],
   ['conditions.garde.compte', `Si tu crées un compte${F}:`, true],
   // #223 (29/09) : texte réaligné sur la politique de confidentialité (série, progression, défi sans compte, prestataires).
   ['conditions.garde.compteTexte', 'ton e-mail, ton pseudo, ta cote, ta série, ta progression, tes badges et tes parties (en ligne, contre l’ordi, importées), pour les retrouver sur tous tes appareils. Chez Supabase, à Paris.'],

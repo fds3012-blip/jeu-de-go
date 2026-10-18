@@ -18,6 +18,7 @@ import { CATALOGUE_SECURITE } from './i18n/securite';
 import { CATALOGUE_RETOURS } from './i18n/retours';
 import { CATALOGUE_TITRES } from './i18n/titres';
 import { CATALOGUE_JOUEUR } from './i18n/profilPublic';
+import { CATALOGUE_PHOTO } from './i18n/photoScore';
 import { CATALOGUE_REFUS, messageServeur } from './i18n/refus';
 import { CATALOGUE_OUVERTURES } from './i18n/ouvertures';
 import { CATALOGUE_ENTREE_OUVERTURES } from './i18n/ouverturesEntree';
@@ -52,6 +53,8 @@ const CATALOGUES: [string, Brut, Brut][] = [
   ['titres', CATALOGUE_TITRES.fr, CATALOGUE_TITRES.en],
   // #560 : profil public d'un joueur.
   ['profil public', CATALOGUE_JOUEUR.fr, CATALOGUE_JOUEUR.en],
+  // #655 : compter une photo du goban.
+  ['compter une photo', CATALOGUE_PHOTO.fr, CATALOGUE_PHOTO.en],
   ['refus du serveur', CATALOGUE_REFUS.fr, CATALOGUE_REFUS.en],
   // #591 : répertoire d'ouvertures (entrées prouvées par src/go/ouvertures.test.ts).
   ['ouvertures', CATALOGUE_OUVERTURES.fr, CATALOGUE_OUVERTURES.en],

@@ -1443,7 +1443,7 @@ export const frEcrans = {
   'conditions.intro': 'Pas de pub. Tes données ne sont jamais vendues.',
   'conditions.garde': 'Ce qu’on garde',
   'conditions.garde.telephone': 'Sur ton téléphone :',
-  'conditions.garde.telephoneTexte': 'tes réglages, ta progression et tes parties. L’ordi calcule ses coups ici, sans serveur.',
+  'conditions.garde.telephoneTexte': 'tes réglages, ta progression et tes parties. L’ordi calcule ses coups ici, sans serveur. Une photo de goban à compter est lue ici, puis oubliée, jamais envoyée ni gardée.',
   'conditions.garde.compte': 'Si tu crées un compte :',
   'conditions.garde.compteTexte': 'ton e-mail, ton pseudo, ta cote, ta série, ta progression, tes badges et tes parties (en ligne, contre l’ordi, importées), pour les retrouver sur tous tes appareils. Chez Supabase, à Paris.',
   'conditions.garde.defi': 'Un ami te défie, sans compte :',

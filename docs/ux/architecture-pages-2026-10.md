@@ -457,13 +457,14 @@ Méthode (skills `card-sort-analysis` et `information-architecture`) : un tri fe
 | Rubrique | Question du joueur | Cartes |
 |---|---|---|
 | Ta progression | « Où j'en suis ? » | Niveau et badges, Ta cote (ou Ton niveau de départ, sans compte), Statistiques, Ta semaine |
-| Tes parties et tes amis | « Avec qui, contre qui j'ai joué ? » | Mes parties, Mes amis |
+| Tes parties et tes amis | « Avec qui, contre qui j'ai joué ? » | Mes parties, Compter une photo (#655), Mes amis |
 | L'app | « Comment régler l'app ? » | Réglages, Rappel du Go du jour, Installer l'app (selon l'appareil) |
 | Compte | « Mes informations » | Mon compte, Mes données, Conditions et confidentialité |
 | Aide | « J'ai un souci, une idée » | Aide sur le jeu, Nous écrire, Partager Mochi Go |
 
 Cartes ambiguës, et le choix fait :
 - **Mes parties** : progression ou social ? Rangée avec les amis (demande de Florian) : on y rouvre une partie jouée contre quelqu'un ; « Statistiques » garde la lecture chiffrée de ces parties dans « Ta progression ».
+- **Compter une photo** (#655, ajoutée après le tri) : outil ou partie ? Rangée juste après « Mes parties » : on l'ouvre au bout d'une partie jouée sur un vrai goban, pour en avoir le score, comme on importe une partie jouée ailleurs depuis « Mes parties ». Un groupe à part (« Sur un vrai goban ») n'aurait eu qu'une ligne sous son titre ; « L'app » répond à « comment régler l'app ? », pas à « qui a gagné ? ». La rubrique passe à 3 entrées (E3).
 - **Ta semaine** : objectifs de la semaine, donc progression, pas social, même si elle cite les amis battus.
 - **Niveau et badges** : deux cartes devenues une. Le niveau vient de l'XP, les badges de jalons ; les deux sont des récompenses qu'on regarde ensemble, et la rubrique garde ainsi 4 entrées (E3). L'XP et la vitrine complète sont dans le détail.
 - **Rappel du Go du jour** : réglage d'une notification, donc « L'app », avec Réglages. La rubrique ne s'appelle pas « Réglages » : son titre répéterait sa première ligne (E8) (c'était déjà la cible N6).

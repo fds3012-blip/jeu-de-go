@@ -37,7 +37,9 @@ export type EcranProblemes = 'probleme' | 'course' | 'series_theme' | 'serie_the
 /** Écrans de l'onglet Profil. */
 export type EcranProfil =
   | 'mes_parties' | 'importer' | 'etude' | 'amis' | 'joueur' | 'cote' | 'semaine' | 'stats'
-  | 'rappel' | 'installer' | 'reglages' | 'compte' | 'donnees' | 'mentions' | 'conditions';
+  | 'rappel' | 'installer' | 'reglages' | 'compte' | 'donnees' | 'mentions' | 'conditions'
+  // #655 : « Compter une photo ».
+  | 'photo';
 
 /** Par-dessus tout : écrans de compte et feuilles communes, posés sur l'onglet courant. */
 export type EcranDessus =
@@ -79,7 +81,7 @@ export const BLOQUANTS: ReadonlySet<Ecran> = new Set<Ecran>(['pseudo', 'accord_c
 const MAISONS: Readonly<Record<Exclude<Onglet, 'jouer'>, readonly Ecran[]>> = {
   apprendre: ['intro_regles', 'partie_decouverte', 'partie_guidee', 'lecon', 'serie_lecon', 'theme', 'ouvertures', 'ouverture'],
   problemes: ['probleme', 'course', 'series_theme', 'serie_theme', 'tous_problemes'],
-  profil: ['mes_parties', 'importer', 'etude', 'amis', 'joueur', 'cote', 'semaine', 'stats', 'rappel', 'installer', 'reglages', 'compte', 'donnees', 'mentions', 'conditions'],
+  profil: ['mes_parties', 'importer', 'etude', 'amis', 'joueur', 'cote', 'semaine', 'stats', 'rappel', 'installer', 'reglages', 'compte', 'donnees', 'mentions', 'conditions', 'photo'],
 };
 
 /** Par-dessus tout : sans maison, posés sur l'onglet courant. */

@@ -53,6 +53,7 @@ import { Semaine } from './Semaine';
 import { etatSemaine, nombreAtteints } from './semaine';
 import { te } from '../content/i18n/emulation';
 import { tp } from '../content/i18n/profilPublic';
+import { tph } from '../content/i18n/photoScore';
 import type { DepuisProfil } from './ProfilPublic';
 import '../ui/emulation.css';
 import { FeuilleSignaler } from '../ui/Securite';
@@ -76,6 +77,8 @@ const MesStatistiques = lazy(() => import('./Statistiques'));
 const Etude = lazy(() => import('./Etude'));
 // #560 : « Profil de {pseudo} », chargé à la demande.
 const ProfilPublic = lazy(() => import('./ProfilPublic'));
+// #655 : « Compter une photo » (photo d'un vrai goban, lue sur l'appareil), chargé à la demande avec ses textes.
+const PhotoScore = lazy(() => import('./PhotoScore'));
 
 const SOLVED_KEY = 'go.problemes.v1';
 
@@ -106,7 +109,9 @@ export type VueProfil = 'menu' | 'niveau' | 'reglages' | 'installer' | 'rappel' 
   // #530 : « Mes données » (export) et « Mentions légales », ouvertes depuis Conditions et confidentialité ou Mon compte.
   | 'donnees' | 'mentions'
   // #560 : « Profil de {pseudo} » (le joueur regardé est dans `joueur`).
-  | 'joueur';
+  | 'joueur'
+  // #655 : « Compter une photo ».
+  | 'photo';
 
 /** #560 : profils publics ouverts, le dernier au-dessus ; `retour` : la vue où « Retour » ramène quand la pile est vide. */
 export interface JoueurVu { pseudos: string[]; depuis: DepuisProfil; retour: VueProfil }
@@ -274,6 +279,14 @@ export function Profil({ vue, onVue, settings, set, profil, serie, record = 0, p
       </SousVue>
     );
   }
+  // #655 : le score d'un vrai goban pris en photo. Écran plein (sa propre barre « ‹ »), chargé à la demande.
+  if (vue === 'photo') {
+    return (
+      <Suspense fallback={<p className="muted" aria-busy="true">…</p>}>
+        <PhotoScore onRetour={retour} />
+      </Suspense>
+    );
+  }
   // #654 : « Niveau et badges » : le niveau et l'XP, les chiffres de ton parcours, la vitrine des badges.
   if (vue === 'niveau') {
     const statsVues = donnees.stats.filter(x => x.valeur > 0 && (settings.serieVisible || x.id !== 'record'));
@@ -360,6 +373,9 @@ function Menu({ onVue, settings, profil, serie, placement, onPlacement, userId, 
   const social: EntreeSommaire[] = [
     { cle: 'parties', nom: t('historique.titre'), visuel: icone('parties'), testId: 'ligne-parties', onOuvrir: () => onVue('parties'),
       etat: nParties ? { texte: t('historique.profilResume', { n: nParties }) } : undefined },
+    // #655 : « Compter une photo » : le score d'une partie jouée sur un vrai goban. Juste après « Mes parties » : c'est
+    // une autre façon de finir une partie, comme l'import d'une partie jouée ailleurs (tri de cartes, doc d'architecture).
+    { cle: 'photo', nom: tph('ligne'), visuel: icone('photo'), testId: 'ligne-photo', onOuvrir: () => onVue('photo') },
     ...(amis ? [{
       cle: 'amis', nom: t('amis.titre'), visuel: icone('amis'), testId: 'ligne-amis', onOuvrir: () => (amis.compte ? onVue('amis') : amis.onCompte()),
       // #359 : une demande reçue se dit en or ; sans compte, la ligne dit qu'il en faut un (elle ouvre sa création).

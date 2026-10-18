@@ -189,3 +189,23 @@ describe('mes données, profils et mentions légales (#530)', () => {
     expect(partieJoueurs).toContain('/mentions-legales/');
   });
 });
+
+// #655 : « Compter une photo ». La politique promet que la photo reste sur l'appareil, n'est ni envoyée ni gardée ; le
+// code de l'écran et de la lecture ne doit donc rien envoyer, rien écrire dans le stockage, et ne rien mesurer.
+describe('politique de confidentialité : la photo du goban reste sur l’appareil (#655)', () => {
+  const fichiersPhoto = code.filter(({ f }) => /^src\/(app\/(PhotoScore\.tsx|photoLecture\.ts)|go\/photo\/(?!.*Node\.ts$)[^/]+\.ts|go\/comptagePhoto\.ts|content\/i18n\/photoScore\.ts)$/.test(f));
+  it('la politique le dit aux joueurs (en bref, section 3.1, mineurs)', () => {
+    expect(entre(politique, '## 2. ', '## 3. ')).toMatch(/Compter une photo.*sur ton appareil.*ni envoyée, ni gardée/s);
+    expect(entre(politique, '### 3.1 ', '### 3.2 ')).toMatch(/Compter une photo.*jamais envoyée.*jamais gardée/s);
+    expect(entre(politique, '## 5. ', '## 6. ')).toMatch(/photo.*goban.*ni envoyée ni gardée/s);
+  });
+  it('le code de l’écran et de la lecture n’envoie rien, n’écrit rien sur l’appareil et ne mesure rien', () => {
+    expect(fichiersPhoto.map(x => x.f).sort()).toEqual(expect.arrayContaining(['src/app/PhotoScore.tsx', 'src/app/photoLecture.ts', 'src/go/photo/photo.worker.ts', 'src/go/photo/reconnaissance.ts']));
+    for (const { f, texte } of fichiersPhoto) {
+      const sansCommentaires = texte.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
+      for (const interdit of [/\bfetch\(/, /XMLHttpRequest/, /sendBeacon/, /WebSocket/, /localStorage/, /sessionStorage/, /indexedDB/, /caches\./, /\btrack(Once)?\(/, /supabase/i, /posthog/i, /captureError|Sentry/]) {
+        expect(sansCommentaires, `${f} : ${interdit}`).not.toMatch(interdit);
+      }
+    }
+  });
+});
