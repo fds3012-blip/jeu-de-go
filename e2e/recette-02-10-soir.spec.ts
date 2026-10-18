@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { brancher, fauxServeur } from './fauxSupabase';
-import { attendrePierre, jouer, jouerSuite, message, partieADeux, passer } from './plateau';
+import { attendrePierre, jouer, jouerSuite, message, partieADeux, passer, toucherCta } from './plateau';
 
 // Correctifs de la recette du 02/10 au soir (docs/qa/recette-2026-10-02-soir.md), un test par défaut corrigé.
 
@@ -52,7 +52,7 @@ test('R-S5 : « Tu as moins de 15 ans ? » s’aligne sur le texte de la case d�
     storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }, { name: 'go.connait-go.v1', value: '"sait"' }] }] } });
   const page = await brancher(ctx, fauxServeur(), { 'go.essai.v1': JSON.stringify({ terminees: 3 }) });
   await page.goto('/');
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await expect(page.getByTestId('creer-compte')).toBeVisible();
   const texteCase = await largeurTexte(page, '.case-age-ligne label');
   const texteLien = await largeurTexte(page, '.case-age-moins15');

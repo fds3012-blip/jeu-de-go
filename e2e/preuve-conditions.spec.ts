@@ -1,4 +1,5 @@
 import { expect, test, type Browser, type Page } from '@playwright/test';
+import { toucherCta } from './plateau';
 import { brancher, creerCompte, fauxServeur, type FauxServeur } from './fauxSupabase';
 import { VERSION_CONDITIONS } from '../src/data/conditions';
 
@@ -25,7 +26,7 @@ test('création du compte par code : l’accord est gardé par le serveur, une s
   // Essai fini : la prochaine partie ouvre « Crée ton compte ».
   const page = await telephone(browser, baseURL, serveur, { 'go.essai.v1': JSON.stringify({ terminees: 3, suivi: true }) });
   await page.goto('/');
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await expect(page.getByTestId('creer-compte')).toBeVisible();
   await creerCompte(page, 'nouvelle@exemple.test', 'Nina');
   // Pseudo enregistré : la 4e partie demandée démarre (l'écran du pseudo s'en va).
@@ -98,7 +99,7 @@ test('création du compte avec Google : la case gardée dans la note d’aller-r
   serveur.compteGoogle({ email: 'gina.google@exemple.test', nom: 'Gina' });
   const page = await telephone(browser, baseURL, serveur, { 'e2e.google': '1', 'go.essai.v1': JSON.stringify({ terminees: 3, suivi: true }) });
   await page.goto('/');
-  await page.locator('.cta').click();
+  await toucherCta(page);
   const ecran = page.getByTestId('creer-compte');
   await ecran.getByRole('checkbox').check();
   await ecran.getByRole('button', { name: 'Continuer avec Google' }).click();

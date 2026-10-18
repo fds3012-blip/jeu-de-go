@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { bandeau, couvercle, jouer, jouerSuite, message, ouvrirPlus, partieADeux, plateau } from './plateau';
+import { bandeau, couvercle, jouer, jouerSuite, message, ouvrirPlus, partieADeux, plateau, toucherCta } from './plateau';
 
 // Issue #40, phase 3 : écran de partie (grammaire de chess.com) à 390 × 844.
 
@@ -65,7 +65,7 @@ test("contre l'ordi : barre d'avantage après le premier coup, indice entouré",
   // La barre est cachée pendant la toute première partie (#160) : on joue ici la deuxième.
   await page.evaluate(() => localStorage.setItem('go.parties.v1', JSON.stringify({ n: 1, ordi: 1 })));
   await page.reload();
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await expect(plateau(page)).toBeVisible();
   await expect(page.getByRole('navigation', { name: 'Navigation principale' })).toHaveCount(0);
 

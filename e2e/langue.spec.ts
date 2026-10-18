@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { jouer } from './plateau';
+import { jouer, ouvrirLancementOrdi } from './plateau';
 
 // Issue #167 : `?lang=en` traduit la barre du bas et le Profil, sans débordement à 390 et 320 px.
 
@@ -89,7 +89,7 @@ for (const largeur of [390, 320]) {
     await sansCoupe(page, largeur);
     await page.evaluate(() => { localStorage.setItem('go.premiere-pierre.v1', 'true'); window.dispatchEvent(new Event('go:premiere-pierre')); });
     await expect(page.getByRole('button', { name: /^Daily Go #\d+/ })).toBeVisible();
-    await expect(page.getByRole('button', { name: /^Lesson 1 of \d+/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /^Lesson / })).toBeVisible();
     await expect(page.locator('header').getByText('Mochi Go', { exact: true })).toBeVisible();
     await expect(page.getByText(/Joue|Plateau|Changer|Go du jour/)).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Play a friend on this phone' })).toContainText('Two players');
@@ -275,8 +275,11 @@ for (const largeur of [390, 320]) {
     }, ERREUR);
     await page.goto('/?lang=en');
 
-    // Accueil avec la barre de niveau.
+    // #613 : accueil sans barre de niveau ; elle est dans le Profil (vérifiée en anglais plus bas).
     const barre = page.getByTestId('barre-niveau');
+    await expect(page.locator('.cta')).toBeVisible();
+    await expect(barre).toHaveCount(0);
+    await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: 'Profile' }).click();
     await expect(barre).toContainText(/^Level\u00A01/);
     await expect(barre).toContainText(/\d+\u00A0\/\u00A0\d+\u00A0XP/);
     await expect(barre.getByRole('progressbar', { name: 'Level 1' })).toHaveAttribute('aria-valuetext', /^\d+ of \d+ XP to level 2$/);
@@ -284,10 +287,10 @@ for (const largeur of [390, 320]) {
     await expect(page.getByText(/Niveau|goban «/)).toHaveCount(0);
     await sansDebordement(page);
     await sansCoupeComposants(page, largeur);
-    await page.screenshot({ path: `docs/localisation/captures/accueil-xp-en-${largeur}.png` });
+    await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: 'Play' }).click();
 
-    // Carrousel des adversaires : paliers, battus, verrouillés.
-    await page.getByRole('button', { name: 'Change' }).click();
+    // Carrousel des adversaires (feuille de lancement contre l'ordi, #613) : paliers, battus, verrouillés.
+    await ouvrirLancementOrdi(page);
     const feuille = page.getByRole('dialog', { name: 'Your opponent' });
     const liste = feuille.getByRole('list', { name: 'Opponents, from easiest to strongest' });
     for (const titre of ['First steps', 'Getting tougher', 'The masters']) await expect(liste.getByRole('heading', { name: titre })).toBeVisible();

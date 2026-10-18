@@ -1,12 +1,12 @@
 import { expect, test, type Page } from '@playwright/test';
-import { jouer, ouvrirPlus, plateau } from './plateau';
+import { jouer, ouvrirPlus, plateau, toucherCta } from './plateau';
 
 // Audit web du 28/09, points 3 et 4 : annonces de la partie lues par le lecteur d'écran.
 // Les zones existent dès l'ouverture et seul leur texte change.
 
 async function partieContreOrdi(page: Page) {
   await page.goto('/');
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await expect(plateau(page)).toBeVisible();
 }
 

@@ -1,6 +1,6 @@
 import { expect, test, type Browser, type Page, type Request } from '@playwright/test';
 import { brancher, CODE, fauxServeur, type FauxServeur } from './fauxSupabase';
-import { abandonner, choisirMode, jouer, plateau } from './plateau';
+import { abandonner, choisirMode, jouer, plateau, toucherCta } from './plateau';
 
 // #437 : compteurs anonymes de la première visite (src/data/compteurs.ts, fonction `compter_etape`). Supabase est
 // simulé (e2e/fauxSupabase.ts) ; on lit les appels `compter_etape` envoyés par chaque téléphone.
@@ -62,7 +62,7 @@ test('première session : chaque étape comptée une seule fois, sans session ni
   await expect.poll(() => etapes(envois)).toEqual(['premier_ecran']);
 
   // 2. Premier geste (le toucher du bouton), partie ouverte, plateau touché, première pierre, puis première partie finie.
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await expect(plateau(page)).toBeVisible();
   await expect.poll(() => etapes(envois)).toEqual(['premier_ecran', 'premier_geste', 'partie_ouverte']);
   await jouer(page, 'E5');
@@ -146,7 +146,7 @@ for (const equipe of [true, false]) {
     // Le paramètre quitte l'adresse ; le drapeau est posé.
     expect(new URL(page.url()).search).toBe('?lang=fr');
     expect(await page.evaluate(() => localStorage.getItem('go.equipe.v1'))).toBe(equipe ? '1' : null);
-    await page.locator('.cta').click();
+    await toucherCta(page);
     await jouer(page, 'E5');
     await abandonner(page);
     if (!equipe) {
@@ -170,7 +170,7 @@ test('navigateur piloté (navigator.webdriver) : rien n’est compté ni posé s
   await page.goto('/');
   expect(await page.evaluate(() => navigator.webdriver)).toBe(true);
   await expect(page.locator('.cta')).toHaveText('Joue ta première partie');
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await expect(plateau(page)).toBeVisible();
   await jouer(page, 'E5');
   await page.waitForTimeout(1500);

@@ -38,7 +38,7 @@ import { noterBadges } from './badgesGagnes';
 import { ALL_PUZZLES } from '../content/puzzles';
 import { parsePuzzles } from '../data/puzzles';
 import { Statistiques, VitrineBadges } from '../ui/Vitrine';
-import { BarreNiveau } from '../ui/Niveau';
+import { BarreNiveau } from '../ui/BarreNiveau';
 import { ProposerInstallation, usePlateformeInstallation } from '../ui/ProposerInstallation';
 import { etatInstallation, installable } from './installation';
 import { clePubliqueVapid, resumeRappel } from './rappel';

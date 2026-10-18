@@ -1,6 +1,6 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { fromLabel, toLabel } from '../src/go/coords';
-import { attendrePierre, attendreReponse, boutonPasser, coupsJoues, jouer, pierres } from './plateau';
+import { attendrePierre, attendreReponse, boutonPasser, coupsJoues, feuilleLancement, jouer, pierres, toucherCta } from './plateau';
 
 // Issue #116 : une partie contre Pomme jouée uniquement au clavier, annonces du lecteur d'écran comprises.
 
@@ -150,6 +150,11 @@ test('curseur clavier : visible en mode sombre et clair, sans animation si les m
     await page.goto('/');
     await tabulerVers(page, page.locator('.cta'));
     await page.keyboard.press('Enter');
+    // #613 : au second tour, une partie a déjà été lancée : la feuille de lancement s'ouvre, « Jouer » au clavier.
+    if (colorScheme === 'light') {
+      await tabulerVers(page, feuilleLancement(page).getByTestId('lancement-jouer'));
+      await page.keyboard.press('Enter');
+    }
     await tabulerVers(page, grille(page));
     await page.keyboard.press('ArrowLeft');
     const curseur = grille(page).locator('[data-curseur]');
@@ -168,7 +173,7 @@ test('curseur clavier : visible en mode sombre et clair, sans animation si les m
 test('curseur caché à la souris (:focus-visible), montré dès une flèche', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
-  await page.locator('.cta').click();
+  await toucherCta(page);
   const curseur = grille(page).locator('[data-curseur]');
   // Un clic pose la pierre et donne le focus au plateau, sans anneau jade.
   await jouer(page, 'C3');

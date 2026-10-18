@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { modesAccueil, ORDRE_MODES, type ContexteModes } from './modes';
+import { etapeDeLancement, modesAccueil, ORDRE_MODES, type ContexteModes } from './modes';
 
 const retour: ContexteModes = { comptes: true, enLigne: true, premierLancement: false };
 
@@ -36,6 +36,25 @@ describe('modes de l’accueil (#429, #432)', () => {
       expect(new Set(tous).size).toBe(tous.length);
       expect(tous.sort()).toEqual(ORDRE_MODES.filter(x => comptes || (x !== 'en_ligne' && x !== 'ami')).sort());
       expect(m.tuiles.length + (m.plus.length ? 1 : 0)).toBeLessThanOrEqual(3);
+    }
+  });
+});
+
+describe('étape de lancement (#613)', () => {
+  it('l’ordi et à deux ouvrent la feuille de lancement', () => {
+    expect(etapeDeLancement('ordi', { premierePartie: false })).toBe('ordi');
+    expect(etapeDeLancement('deux', { premierePartie: false })).toBe('deux');
+  });
+
+  it('avant la toute première partie, aucune étape : la partie part tout de suite', () => {
+    expect(etapeDeLancement('ordi', { premierePartie: true })).toBeNull();
+    expect(etapeDeLancement('deux', { premierePartie: true })).toBeNull();
+  });
+
+  it('en ligne, un ami et la découverte gardent leur écran : pas de feuille en plus', () => {
+    for (const m of ['en_ligne', 'ami', 'decouverte'] as const) {
+      expect(etapeDeLancement(m, { premierePartie: false })).toBeNull();
+      expect(etapeDeLancement(m, { premierePartie: true })).toBeNull();
     }
   });
 });

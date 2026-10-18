@@ -20,11 +20,11 @@ async function resoudreGoDuJour(page: Page) {
   await attendrePierre(page, 'E5', 'noir');
 }
 
-test("un problème réussi fait monter l'XP sur l'accueil", async ({ page }) => {
+test("un problème réussi fait monter l'XP du Profil", async ({ page }) => {
   await preparer(page);
   await page.goto('/');
   const barre = page.getByTestId('barre-niveau');
-  // Accueil v3 : sans XP, pas de barre (rien à lire avant la première pierre) ; elle arrive avec le premier gain.
+  // #613 : jamais de barre de niveau sur l'accueil ; elle vit dans le Profil.
   await expect(page.locator('.cta')).toBeVisible();
   await expect(barre).toHaveCount(0);
 
@@ -36,13 +36,13 @@ test("un problème réussi fait monter l'XP sur l'accueil", async ({ page }) => 
   await expect(pastille).toContainText('dont +20 première fois');
   await page.screenshot({ path: 'docs/design/v2/captures/xp-pastille.png' });
   await nav(page).getByRole('button', { name: 'Jouer' }).click();
+  await expect(page.locator('.cta-sceau')).toBeInViewport();
+  await expect(barre).toHaveCount(0);
+  await nav(page).getByRole('button', { name: 'Profil' }).click();
   await expect(barre).toContainText(/Niveau\s1/);
   await expect(barre).toContainText(/40\s\/\s100\sXP/);
   await expect(barre).toContainText('Kaya clair');
   await expect(page.getByRole('progressbar', { name: 'Niveau 1' })).toHaveAttribute('aria-valuenow', '40');
-  // L'action principale reste visible sans défiler.
-  await expect(page.locator('.cta-sceau')).toBeInViewport();
-  await page.screenshot({ path: 'docs/design/v2/captures/xp-accueil.png' });
 });
 
 test('un niveau franchi est célébré après le problème, seul, sans couvrir la consigne (#236)', async ({ page }) => {
@@ -61,6 +61,9 @@ test('un niveau franchi est célébré après le problème, seul, sans couvrir l
   await page.screenshot({ path: 'docs/design/v2/captures/xp-celebration.png' });
   await fete.getByRole('button').click();
   await expect(fete).toHaveCount(0);
+  // #613 : la fête a dit le progrès ; le détail est dans le Profil.
+  await expect(page.getByTestId('barre-niveau')).toHaveCount(0);
+  await nav(page).getByRole('button', { name: 'Profil' }).click();
   await expect(page.getByTestId('barre-niveau')).toContainText(/30\s\/\s125\sXP/);
 });
 

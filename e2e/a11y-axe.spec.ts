@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { brancher, fauxServeur } from './fauxSupabase';
-import { choisirMode, deplierAvecMochi, jouer, ouvrirPlus, passerJusquAuScore, plateau } from './plateau';
+import { choisirMode, deplierAvecMochi, jouer, ouvrirLancementOrdi, ouvrirPlus, passerJusquAuScore, plateau, toucherCta } from './plateau';
 import { GO_DU_JOUR } from '../src/content/goDuJour.gen';
 import { demarrerParcours, ouvrirRevue, preparerRevue } from './revueFactice';
 import { avancerJusqua, ouvrirDepuisApprendre, surMoment } from './decouverte';
@@ -66,7 +66,7 @@ test.describe('premier lancement', () => {
     await expect(page.locator('.cta')).toBeVisible();
     await verifier(page, 'Accueil (premier lancement)');
 
-    await page.getByRole('button', { name: 'Changer' }).click();
+    await ouvrirLancementOrdi(page);
     await expect(page.getByRole('dialog')).toBeVisible();
     await verifier(page, 'Feuille « Ton adversaire »');
   });
@@ -82,7 +82,7 @@ test('axe : réglages de la partie (feuille « Changer ») et tuile « Reprendre
     localStorage.setItem('go.premiere-pierre.v1', 'true');
   });
   await page.reload();
-  await page.getByRole('button', { name: 'Changer' }).click();
+  await ouvrirLancementOrdi(page);
   await page.getByTestId('reglages-partie-ouvrir').click();
   await page.getByRole('button', { name: 'Une pierre de handicap en plus' }).click();
   await expect(page.getByTestId('rp-handicap-valeur')).toHaveText('2 pierres');
@@ -116,7 +116,7 @@ test('axe : accueil d’un joueur qui revient (Aujourd’hui) et feuille « Plus
 
 test('axe : partie contre l’ordi (début, menu Plus, coups joués), récit du score et fin de partie', async ({ page }) => {
   await page.goto('/?komi=-100');
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await expect(plateau(page)).toBeVisible();
   await verifier(page, 'Partie, début');
 
@@ -148,7 +148,7 @@ test('axe : Apprendre, leçon 1 (étape interactive) et fin de leçon', async ({
   await expect(page.getByRole('button', { name: /^Leçon 1 :/ })).toBeVisible();
   await verifier(page, 'Apprendre, chemin des leçons');
 
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await expect(page.locator('.lecteur-plateau')).toBeVisible();
   await verifier(page, 'Leçon 1, début');
 
@@ -204,7 +204,7 @@ test('axe : partager l’app (Profil, lien copié ; invitation après une victoi
   await verifier(page, 'Profil, lien copié');
 
   await page.goto('/?komi=-100');
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await passerJusquAuScore(page);
   await expect(page.getByTestId('inviter-app')).toBeVisible({ timeout: 15_000 });
   await verifier(page, 'Fin de partie, invitation à partager');
@@ -254,7 +254,7 @@ test('axe : hors ligne (accueil, repli vers Caillou) et l’IA sur ton télépho
   await page.reload();
   await expect(page.getByTestId('mode-en_ligne')).toHaveAttribute('aria-disabled', 'true');
   await verifier(page, 'Accueil hors ligne');
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await expect(page.getByTestId('repli-hors-ligne')).toBeVisible();
   await verifier(page, 'Feuille « Bambou a besoin de l’IA »');
   await page.getByRole('button', { name: 'Plus tard' }).click();
@@ -277,7 +277,7 @@ test('axe : créer un compte, connexion, code, pseudo, Mon compte connecté', as
   // Trois parties d'essai jouées : la suivante demande un compte.
   const page = await brancher(ctx, serveur, { 'go.essai.v1': JSON.stringify({ terminees: 3 }) });
   await page.goto('/');
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await expect(page.getByTestId('creer-compte')).toBeVisible();
   await verifier(page, 'Créer un compte');
 
@@ -370,7 +370,7 @@ test.describe('zoom 200 % (195 px CSS), polices web bloquées', () => {
 
   test('partie : la barre d’actions passe sur deux rangées, cibles de 44 px, rien hors de l’écran', async ({ page }) => {
     await page.goto('/');
-    await page.locator('.cta').click();
+    await toucherCta(page);
     await expect(plateau(page)).toBeVisible();
     const boutons = page.getByRole('toolbar', { name: 'Actions de la partie' }).getByRole('button');
     await expect(boutons.first()).toBeVisible();

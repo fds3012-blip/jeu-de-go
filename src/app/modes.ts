@@ -1,6 +1,8 @@
 // Modes de jeu de l'accueil (issues #429 et #432). Logique pure, sans React.
 //
-// Tous les modes se joignent en 1 toucher depuis l'accueil, ou en 2 par « Plus », sans défiler :
+// Tous les modes se joignent en 1 toucher depuis l'accueil, ou en 2 par « Plus », sans défiler. #613 : « joindre » veut
+// dire arriver sur l'étape de lancement du mode (feuille de l'ordi ou d'à deux, écran en ligne, écran des défis) ; son
+// bouton « Jouer » est le toucher suivant.
 // - une seule action principale : la partie en ligne classée dès le début (#432 : celle qui crée l'émulation,
 //   cote, grade, « +14 »). Sans compte, elle passe par « Crée ton compte », puis reprend. L'ordi ne reprend la place
 //   que hors ligne, sans comptes (Supabase absent), ou au tout premier lancement, qui a son propre écran
@@ -45,4 +47,20 @@ export function modesAccueil(c: ContexteModes): ModesAccueil {
   const autres = dispo.filter(m => m !== principal);
   if (autres.length <= TUILES_MAX) return { principal, tuiles: autres, plus: [] };
   return { principal, tuiles: autres.slice(0, TUILES_MAX - 1), plus: autres.slice(TUILES_MAX - 1) };
+}
+
+/** #613 : modes dont la partie se règle sur l'appareil, dans la feuille de lancement (src/app/LancementPartie.tsx). */
+export type Lancement = 'ordi' | 'deux';
+
+/**
+ * #613 : la taille du plateau (et l'adversaire, contre l'ordi) se choisit au moment de jouer, plus sur l'accueil.
+ * - L'ordi et à deux ouvrent la feuille de lancement, avec le dernier choix déjà coché.
+ * - En ligne et un ami ont déjà leur écran de lancement (choix repliés, « Trouver un adversaire », « Créer un lien ») :
+ *   pas de feuille en plus.
+ * - Avant la toute première partie, aucune étape : le débutant n'a encore rien à choisir, il joue avec la valeur par
+ *   défaut (Pomme, 9 × 9), comme avant.
+ */
+export function etapeDeLancement(mode: Mode, c: { premierePartie: boolean }): Lancement | null {
+  if (mode !== 'ordi' && mode !== 'deux') return null;
+  return c.premierePartie ? null : mode;
 }

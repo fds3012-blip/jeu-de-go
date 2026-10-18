@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { feuilleLancement, jouerDepuisLancement } from './plateau';
 
 // Issue #23 : un nouveau joueur pose sa première pierre en 2 touches depuis l'ouverture.
 test('première pierre en deux touches, accueil sans défilement', async ({ page }) => {
@@ -51,7 +52,14 @@ test('première pierre en deux touches, accueil sans défilement', async ({ page
   // #213 : la réplique de Pomme change selon le jour ; ce n'est plus celle du premier lancement.
   await expect(page.locator('.scene-bulle')).not.toHaveText(/On joue ensemble/);
   await expect(page.locator('.scene-bulle')).toHaveText(/\S/);
+  // #613 : une partie a été lancée : la feuille de lancement s'ouvre, 9 × 9 et Pomme déjà choisis ; « Jouer » lance.
   await page.locator('.cta').click();
+  const feuille = feuilleLancement(page);
+  await expect(feuille.getByRole('button', { name: '9 × 9' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(feuille.getByRole('button', { name: 'Pomme, 20 kyu' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(feuille.getByTestId('lancement-jouer')).toHaveText('Jouer contre Pomme');
+  await jouerDepuisLancement(page);
+  await expect(page.locator('.app-partie')).toBeVisible();
   await expect(plateau).toBeVisible();
   await expect(page.getByText(/Le but\s: entourer/)).toHaveCount(0);
   expect(erreurs).toEqual([]);

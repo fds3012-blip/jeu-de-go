@@ -66,13 +66,13 @@
 
 .reglage { display: flex; flex-wrap: wrap; align-items: center; /* #121 */ justify-content: space-between; gap: var(--space-3); min-height: var(--cible-min); margin: 6px -12px var(--space-2) 0; }
 .reglage .lien { padding: 0 12px; }
-/* #592 (E2, E10) : le réglage se range sous l'adversaire, dans le même bloc, en texte secondaire. */
-.adversaire + .reglage { margin-top: -6px; }
 .reglage > span { color: var(--muted); }
 
 /* Bouton principal dans le flux (plus fixé en bas) : le goban, lui, prend la hauteur libre. */
 .accueil .cta { position: static; transform: none; width: 100%; font-size: var(--fs-l); padding: 0 var(--space-3); text-wrap: balance; }
 .accueil .cta.court { font-size: var(--fs-cta); }
+/* #613 : en ligne, rien entre le goban et le bouton : un vide qui les sépare, sans les éloigner. */
+.scene + .cta { margin-top: var(--space-4); }
 /* Le sceau de l'adversaire dans le bouton, comme « Défier Caillou » en fin de partie : le nom n'a plus besoin d'être écrit. */
 .accueil .cta-sceau { display: flex; align-items: center; justify-content: center; gap: 10px; }  /* #121 : pas de nowrap, le libellé passe à la ligne au zoom 200 % */
 .accueil .cta-sceau .sceau { flex: none; filter: drop-shadow(0 1px 0 rgba(7, 35, 26, .35)); }
@@ -100,10 +100,6 @@
 .mode.a-jouer::after { content: ""; position: absolute; top: 8px; right: 8px; width: 9px; height: 9px; border-radius: 50%; background: var(--or); }
 /* Petite hauteur (iPhone SE) : les pictogrammes cèdent leur place, les noms restent. */
 @media (max-height: 640px) { .mode .mode-icone { display: none; } }
-/* Partie en ligne en action principale : deux pierres et le grade à la place du portrait de l'adversaire. */
-.classee-pierres { display: inline-flex; flex: none; width: 48px; height: 48px; align-items: center; justify-content: center; border-radius: 50%; background: var(--surface-2); }
-.classee-pierres .stone { width: 20px; height: 20px; }
-.classee-pierres .stone + .stone { margin-left: -6px; }
 /* Feuille « Plus » : une ligne par mode, nom et phrase. */
 .plus-liste { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .plus-mode { display: flex; align-items: center; gap: 14px; width: 100%; min-height: 64px; padding: 10px 14px; border: 0; border-radius: var(--radius);

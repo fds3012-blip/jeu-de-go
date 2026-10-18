@@ -65,7 +65,9 @@ const accord = charger(() => import('./AccordConditions'));
 const direct = charger(() => import('./Direct'));
 // #440 : parties lentes (la partie elle-même se joue dans l'écran du défi).
 const lentes = charger(() => import('./Lentes'));
-// #429 : le carrousel des adversaires ne sert qu'à la feuille « Changer » : hors du JS initial.
+// #613 : feuille de lancement (l'ordi, à deux), l'ancienne feuille « Changer » de l'accueil : hors du JS initial.
+const lancement = charger(() => import('./LancementPartie'));
+// #429 : le carrousel des adversaires ne sert qu'à la feuille de lancement : hors du JS initial.
 const carrousel = charger(() => import('../ui/Carrousel'));
 // #528 : « Réglages de la partie » (handicap, komi, comptage), groupe replié de la feuille « Changer », avec ses styles.
 const reglagesPartie = charger(() => import('../ui/ReglagesPartie'));
@@ -103,6 +105,7 @@ export const Direct = ecran(direct, 'Direct');
 // #436 : la bande « Je cherche toujours un joueur » pendant la partie contre l'IA, avec l'écran du direct.
 export const VeilleFile = ecran(direct, 'VeilleFile');
 export const Lentes = ecran(lentes, 'Lentes');
+export const FeuilleLancement = ecran(lancement, 'FeuilleLancement');
 export const CarrouselAdversaires = ecran(carrousel, 'CarrouselAdversaires');
 export const ReglagesPartie = ecran(reglagesPartie, 'ReglagesPartie');
 export const PartiePartagee = ecran(partagee, 'PartiePartagee');
@@ -131,7 +134,7 @@ export function prechargerIntro(): void {
 
 /** Télécharge tous les écrans en tâche de fond. */
 export function prechargerEcrans(): void {
-  for (const f of [partie, problemes, lecons, profil, serie, placement, defis, compte, direct, lentes, carrousel, reglagesPartie, intro, decouverte, theme]) f().catch(() => {});
+  for (const f of [partie, problemes, lecons, profil, serie, placement, defis, compte, direct, lentes, lancement, carrousel, reglagesPartie, intro, decouverte, theme]) f().catch(() => {});
 }
 
 // Moment « après le premier écran » : src/premierEcran.ts (partagé avec PostHog, #325).

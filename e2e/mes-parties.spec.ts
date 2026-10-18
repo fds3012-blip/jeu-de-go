@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { abandonner, jouer, passerJusquAuScore, plateau } from './plateau';
+import { abandonner, jouer, passerJusquAuScore, plateau, toucherCta } from './plateau';
 import { brancher, fauxServeur, JETON, PARTIE } from './fauxSupabase';
 import { demarrerParcours } from './revueFactice';
 
@@ -18,7 +18,7 @@ async function ouvrirMesParties(page: Page) {
 /** Partie courte contre Pomme : un coup, la réponse de Pomme, puis abandon. */
 async function partieAbandonnee(page: Page) {
   await page.getByRole('navigation').getByRole('button', { name: 'Jouer' }).click();
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await expect(plateau(page)).toBeVisible();
   const passer = page.getByRole('button', { name: 'Passer' });
   await expect(passer).toBeEnabled({ timeout: 10_000 });
@@ -50,7 +50,7 @@ test('trois parties contre l’ordi : toutes dans « Mes parties », avec le bon
 
   // Troisième partie gagnée aux points (`?komi=-100`, paramètre de test : Noir gagne en passant).
   await page.goto('/?komi=-100');
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await expect(plateau(page)).toBeVisible();
   await expect(page.getByRole('button', { name: 'Passer' })).toBeEnabled({ timeout: 10_000 });
   await jouer(page, 'E5');

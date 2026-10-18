@@ -94,8 +94,9 @@ for (const theme of ['dark', 'light'] as const) {
     await expect(page.locator('.cta')).toHaveText('Jouer contre Renard');
     // #308 : la carte « Leçon » suit le chapitre conseillé (L’ouverture), pas la leçon 1 des débutants.
     const carte = page.locator('.tuile-lecon');
-    await expect(carte).toContainText(/Leçon \d+ sur \d+/);
-    await expect(carte).not.toContainText('Leçon 1 sur');
+    // #613 : la tuile ne dit plus « n sur 48 » ; c'est le titre qui montre qu'on n'est pas à la leçon 1.
+    await expect(carte).toContainText(/^Leçon/);
+    await expect(carte).not.toContainText('Libertés et capture');
     await expect(page.getByText(/\d+ kyu/).filter({ hasText: /environ/ })).toHaveCount(0);
     await page.getByRole('navigation').getByRole('button', { name: 'Profil' }).click();
     await expect(page.getByRole('button', { name: /Niveau estimé.*8 kyu, le \d\d\/\d\d/ })).toBeVisible();

@@ -1,7 +1,7 @@
 import { gunzipSync } from 'node:zlib';
 import { expect, test, type Browser, type Page, type Request } from '@playwright/test';
 import { brancher, CODE, fauxServeur, type FauxServeur } from './fauxSupabase';
-import { plateau } from './plateau';
+import { feuilleLancement, jouerDepuisLancement, plateau, toucherCta } from './plateau';
 
 // Issue #429 : tous les modes de jeu se joignent depuis l'accueil en 1 toucher (bouton principal ou tuile), ou en 2
 // par « Plus », sans défiler. #432 : la partie en ligne classée est l'action principale dès le début, cote et grade
@@ -10,6 +10,9 @@ import { plateau } from './plateau';
 // #487 : avant la toute première pierre posée sur l'appareil, l'accueil n'a que « Joue ta première partie » (tuiles
 // cachées, e2e/premier-ecran.spec.ts). Le « premier lancement » de ces parcours a déjà posé une pierre (leçon 1 ouverte,
 // pas finie) : c'est l'écran où les tuiles apparaissent pour la première fois.
+// #613 : un mode se joint en touchant son bouton ou sa tuile ; l'ordi et à deux s'ouvrent alors sur leur feuille de
+// lancement (taille, adversaire, « Jouer »), dès qu'une partie a été jouée, comme « Jouer en ligne » sur son écran.
+// Le grade et la cote ont quitté l'accueil pour l'écran de lancement de la partie classée.
 
 const ANA = '00000000-0000-4000-8000-0000000000c1';
 const HOTE = 'https://posthog-e2e.test';
@@ -60,8 +63,12 @@ async function atteindre(page: Page, mode: Mode): Promise<number> {
   return 2;
 }
 
-/** Ce que montre chaque mode une fois atteint. */
-async function arrive(page: Page, mode: Mode) {
+/**
+ * Ce que montre chaque mode une fois atteint. #613 : l'ordi et à deux s'ouvrent sur leur feuille de lancement quand une
+ * partie a déjà été jouée (`lancement`) ; son seul bouton, « Jouer », lance la partie.
+ */
+async function arrive(page: Page, mode: Mode, lancement: boolean) {
+  if ((mode === 'ordi' || mode === 'deux') && lancement) await jouerDepuisLancement(page);
   if (mode === 'ordi' || mode === 'deux') await expect(plateau(page)).toBeVisible();
   if (mode === 'deux') await expect(page.getByText(/Noir commence/)).toBeVisible();
   if (mode === 'en_ligne') await expect(page.getByTestId('direct-choix')).toBeVisible();
@@ -80,7 +87,7 @@ test('chaque mode en 1 ou 2 touchers depuis l’accueil, sans défiler (premier 
       await expect(page.locator('header button')).toHaveCount(0);
       const touchers = await atteindre(page, mode);
       expect(touchers, `${qui} : ${mode}`).toBeLessThanOrEqual(mode === 'deux' || mode === 'decouverte' ? 2 : 1);
-      await arrive(page, mode);
+      await arrive(page, mode, stockage !== NOUVEAU);
       await page.context().close();
     }
   }
@@ -92,8 +99,8 @@ test('premier lancement, première pierre posée : « Joue ta première partie �
   await expect(page.locator('.cta')).toHaveAttribute('data-mode', 'ordi');
   const tuiles = page.getByTestId('modes').getByRole('button');
   await expect(tuiles).toHaveCount(3);
-  await expect(tuiles.nth(0)).toHaveAccessibleName(/^En ligne\s: Partie classée, 15ᵉ\skyu · 1500\s\?$/);
-  // #592 : la tuile n'écrit plus que son nom ; grade et cote restent dans son nom accessible.
+  // #613 : ni grade ni cote sur l'accueil, même dans le nom accessible : ils attendent le lancement de la partie classée.
+  await expect(tuiles.nth(0)).toHaveAccessibleName(/^En ligne\s: Partie classée$/);
   await expect(tuiles.nth(0)).toHaveText('En ligne');
   await expect(tuiles.nth(1)).toHaveAccessibleName('Défier un ami');
   await expect(tuiles.nth(2)).toHaveAccessibleName(/^Plus de façons de jouer/);
@@ -101,28 +108,39 @@ test('premier lancement, première pierre posée : « Joue ta première partie �
   // Une seule action principale : les tuiles sont au trait, sans relief.
   await expect(page.locator('.cta')).toHaveCount(1);
   for (let i = 0; i < 3; i++) expect(await tuiles.nth(i).evaluate(b => getComputedStyle(b).boxShadow)).not.toContain('0px 5px 0px');
-  // « Changer » ne sert plus qu'à l'adversaire et à la taille.
+  // Au premier lancement, « Changer » (sous Pomme) ouvre la feuille de lancement : adversaire et taille seulement.
   await page.getByRole('button', { name: 'Changer' }).click();
   const feuille = page.getByRole('dialog', { name: 'Ton adversaire' });
   await expect(feuille.getByRole('button', { name: /à deux|guidée|humain/i })).toHaveCount(0);
   await page.context().close();
 });
 
-for (const [qui, stockage, adversaire] of [['débutant', DEBUTANT, 'Pomme'], ['confirmé', CONFIRME, 'Caillou']] as const) test(`${qui} : « Jouer en ligne » en action principale, grade et cote visibles, l’ordi et l’ami juste à côté`, async ({ browser, baseURL }) => {
+for (const [qui, stockage, adversaire] of [['débutant', DEBUTANT, 'Pomme'], ['confirmé', CONFIRME, 'Caillou']] as const) test(`${qui} : « Jouer en ligne » en action principale, grade et cote au lancement, l’ordi et l’ami juste à côté`, async ({ browser, baseURL }) => {
   const page = await telephone(browser, baseURL, stockage);
   const cta = page.locator('.cta');
   await expect(cta).toHaveText('Jouer en ligne');
   await expect(cta).toHaveAccessibleName('Jouer en ligne, partie classée');
-  const classee = page.getByTestId('classee');
-  await expect(classee.getByRole('heading', { level: 2 })).toHaveText(/^15ᵉ\skyu$/);
-  await expect(classee.getByTestId('classee-cote')).toHaveText(/^1500\s\?$/);
-  await expect(classee).toContainText('Contre un humain de ton niveau.');
+  // #613 : à l'ouverture, ni grade, ni cote, ni taille, ni niveau.
+  await expect(page.locator('main')).not.toContainText(/kyu|1500|9 × 9|XP/);
+  await expect(page.getByTestId('barre-niveau')).toHaveCount(0);
+  // Ils se montrent au lancement de la partie classée, là où ils servent.
+  await cta.click();
+  const niveau = page.getByTestId('direct-choix').getByTestId('ton-niveau');
+  await expect(niveau).toContainText(/15ᵉ\skyu/);
+  await expect(niveau.getByTestId('ton-niveau-cote')).toHaveText(/^1500\s\?$/);
+  await expect(niveau).toContainText('Joue en direct contre quelqu’un de ton niveau.');
+  await expect(niveau.getByText(/^Ta cote provisoire\s: 1500, 15ᵉ\skyu\.$/)).toHaveCount(1);
+  await page.getByRole('button', { name: /^Retour/ }).first().click();
+  await expect(page.getByTestId('modes')).toBeVisible();
   const ordi = page.getByTestId('mode-ordi');
   await expect(ordi).toHaveText('L’ordi');
   // #592 : le nom de l'adversaire n'est plus écrit sur la tuile ; son sceau la marque, et le lecteur d'écran le lit.
   await expect(ordi).toHaveAccessibleName(new RegExp(adversaire));
   await sansDefiler(page, 'mode-ordi');
   await ordi.click();
+  // #613 : la feuille de lancement, avec la taille du dernier choix déjà cochée.
+  await expect(feuilleLancement(page).getByRole('button', { name: '9 × 9' })).toHaveAttribute('aria-pressed', 'true');
+  await jouerDepuisLancement(page);
   await expect(plateau(page)).toBeVisible();
   await expect(page.getByText(new RegExp(adversaire)).first()).toBeVisible();
   await page.context().close();
@@ -131,8 +149,7 @@ for (const [qui, stockage, adversaire] of [['débutant', DEBUTANT, 'Pomme'], ['c
 test('sans compte, dès la première partie : « Jouer en ligne » passe par « Crée ton compte », puis reprend', async ({ browser, baseURL }) => {
   const page = await telephone(browser, baseURL, DEBUTANT, { compte: false });
   await expect(page.locator('.cta')).toHaveText('Jouer en ligne');
-  await expect(page.getByTestId('classee')).toContainText('Contre un humain de ton niveau.');
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await expect(page.getByTestId('creer-compte')).toHaveAttribute('data-raison', 'en_ligne');
   // Code par e-mail, pseudo : la partie en ligne reprend d'elle-même (choix de la cadence).
   await page.getByLabel('Ton adresse e-mail').fill('nouveau@exemple.test');

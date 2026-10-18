@@ -1,5 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { attendrePierre, jouer, plateau, point } from './plateau';
+import { attendrePierre, jouer, plateau, point, toucherCta } from './plateau';
 
 // Issue #250 : petits écrans (320 × 640), suite de la recette du matin du 28/09 (docs/qa/recette-2026-09-28-matin.md).
 // M5 : le verdict « Bravo » du Go du jour ne cache plus la pierre gagnante.
@@ -55,7 +55,7 @@ test('M5 : le verdict « Bravo » laisse voir la pierre gagnante et le bas du pl
 
 test('M6 : la bulle de Mochi (but et komi) ne recouvre pas le plateau au premier coup', async ({ page }) => {
   await page.goto('/');
-  await page.locator('.cta').click();
+  await toucherCta(page);
   const intro = page.locator('.coach-intro');
   await expect(page.locator('.annonce-komi')).toContainText('Le komi');
   const [bulle, jeu, barre] = await Promise.all([
@@ -137,7 +137,7 @@ test.describe('très petite hauteur (320 × 568)', () => {
 
   test('M6 : la bulle de Mochi (but et komi) tient sous le plateau, texte entier, sans défiler', async ({ page }) => {
     await page.goto('/');
-    await page.locator('.cta').click();
+    await toucherCta(page);
     const intro = page.locator('.coach-intro');
     const texte = intro.locator('p');
     const komi = page.locator('.annonce-komi');
@@ -176,7 +176,7 @@ for (const largeur of [320, 360] as const) {
     await page.setViewportSize({ width: largeur, height: 640 });
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/');
-    await page.locator('.cta').click();
+    await toucherCta(page);
     await expect(plateau(page)).toBeVisible();
     await jouer(page, 'E5');
     const barre = page.getByRole('toolbar', { name: 'Actions de la partie' });

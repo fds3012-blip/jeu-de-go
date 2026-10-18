@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { toucherCta } from './plateau';
 
 // Accueil v3 (branche accueil-premier-lancement-v3) : les 60 premières secondes d'un nouveau joueur.
 // Premier lancement : promesse en une phrase (Mochi), goban, une seule action « Joue ta première partie »,
@@ -75,7 +76,7 @@ for (const taille of TAILLES) {
 test('première partie en 1 tap : le bouton ouvre la partie, Mochi explique, la première pierre se pose', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
-  await page.locator('.cta').tap();
+  await toucherCta(page, 'tap');
   const plateau = page.locator('svg.board[aria-label="Plateau de go 9 × 9"]');
   await expect(plateau).toBeVisible();
   await expect(page.getByText(/Le but\s: entourer plus de territoire que Pomme/)).toBeVisible();
@@ -98,8 +99,8 @@ for (const theme of THEMES) {
     await page.goto('/');
 
     await expect(page.locator('.cta')).toHaveText('Rejouer contre Pomme');
-    // Le niveau se montre dès qu'il y a de l'XP.
-    await expect(page.getByTestId('barre-niveau')).toContainText(/40\s\/\s100\sXP/);
+    // #613 : à l'ouverture, le niveau ne sert à rien : il vit dans le Profil et dans la fête de fin, même avec de l'XP.
+    await expect(page.getByTestId('barre-niveau')).toHaveCount(0);
     const tuiles = page.locator('.tuiles .tuile');
     // #592 : « Aujourd'hui » n'est plus écrit ; le groupe garde ce nom pour le lecteur d'écran.
     await expect(page.getByRole('group', { name: 'Aujourd’hui' })).toBeVisible();
