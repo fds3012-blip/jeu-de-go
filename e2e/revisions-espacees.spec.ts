@@ -83,11 +83,12 @@ test('séance des révisions du jour : la carte, deux éléments, le bilan, le c
   const etat = await page.evaluate(() => JSON.parse(localStorage.getItem('go.revisions.v1') ?? 'null'));
   expect(etat.problemes.b1).toMatchObject({ etape: 0, echecs: 2, prochain: await dansJours(page, 1) });
 
-  // #653 : la séance vit dans Problèmes, posée par-dessus Jouer : « Terminer » ramène à l'accueil, qui n'a pas changé
-  // d'onglet ; plus rien à revoir aujourd'hui, la carte disparaît.
-  await expect(page.getByRole('navigation').getByRole('button', { name: 'Jouer' })).toHaveAttribute('aria-current', 'page');
+  // #653 : la séance vit dans Problèmes, posée par-dessus Jouer en plein écran (#646, sans barre du bas) : « Terminer »
+  // ramène à l'accueil, Jouer toujours allumé ; plus rien à revoir aujourd'hui, la carte disparaît.
+  await expect(page.getByRole('navigation')).toHaveCount(0);
   await page.getByRole('button', { name: 'Terminer' }).last().click();
   await expect(page.locator('.cta')).toBeVisible();
+  await expect(page.getByRole('navigation').getByRole('button', { name: 'Jouer' })).toHaveAttribute('aria-current', 'page');
   await expect(page.getByTestId('tuile-revisions')).toHaveCount(0);
 
   // Une deuxième séance le même jour ne rapporterait plus d'XP : l'XP du jour est notée.
@@ -112,10 +113,11 @@ test('#653 : dans Problèmes, « Rejouer tes erreurs (2) » ouvre la séance, qu
   await expect(entree).toHaveAccessibleName('Rejouer tes erreurs, 2 à rejouer');
   await entree.click();
   await expect(page.getByText('Révision 1 sur 2')).toBeVisible();
-  await expect(page.getByRole('navigation').getByRole('button', { name: 'Problèmes' })).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByRole('navigation')).toHaveCount(0);
   // « ‹ » (ou le retour du système) : sortie sans rien enregistrer, retour au sommaire, sur l'entrée.
   await page.goBack();
   await expect(page.getByTestId('problemes-sommaire')).toBeVisible();
+  await expect(page.getByRole('navigation').getByRole('button', { name: 'Problèmes' })).toHaveAttribute('aria-current', 'page');
   await expect(page.getByTestId('entree-erreurs')).toHaveAccessibleName('Rejouer tes erreurs, 2 à rejouer');
 });
 
