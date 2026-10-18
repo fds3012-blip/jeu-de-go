@@ -95,10 +95,10 @@ test('R-S7 : la tuile « Go du jour · À faire » ouvre le problème lui-même 
   await page.locator('.tuile-probleme').click();
   await expect(page.getByRole('grid', { name: /^Plateau de go/ }).or(page.getByRole('img', { name: /^Plateau de go/ }))).toBeVisible();
   await expect(page.getByText(new RegExp(`^Go du jour n°\\s${numeroDuJour()}$`))).toBeVisible();
-  // Le retour mène à la liste, et l'onglet Problèmes, touché ensuite, ne rouvre pas le problème.
-  await page.getByRole('button', { name: 'Retour aux problèmes' }).click();
-  await expect(page.getByRole('button', { name: 'Résoudre le Go du jour' })).toBeVisible();
-  await page.getByRole('navigation').getByRole('button', { name: 'Jouer' }).click();
+  // #646 : le problème est posé sur l'accueil ; sa sortie, « Retour », y ramène. L'onglet Problèmes, touché ensuite,
+  // ne rouvre pas le problème.
+  await page.getByRole('button', { name: 'Retour', exact: true }).click();
+  await expect(page.locator('.tuile-probleme')).toBeVisible();
   await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
   await expect(page.getByRole('button', { name: 'Résoudre le Go du jour' })).toBeVisible();
 
