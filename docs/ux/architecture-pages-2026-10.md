@@ -381,6 +381,8 @@ Méthode (skills `information-architecture`, `navigation-patterns`, `hicks-law`,
 
 ### 11.1 Apprendre (#652)
 
+Captures (sombre, 390 × 844) : `captures/sommaires/apprendre-390-avant.jpg`, `apprendre-390-apres.jpg`, et en clair `apprendre-390-clair-apres.jpg`.
+
 | | Avant | Après |
 |---|---|---|
 | Premier regard (390 × 844) | Chapitre « Les bases » (titre, 7 mini-pierres), 3 pierres du chemin, la carte « Reprendre », le début de « Par thème » | La carte « Reprendre » (seul relief), trois entrées (Ouvertures, Jouer avec Mochi, Revoir les règles), le début de « Par thème » |

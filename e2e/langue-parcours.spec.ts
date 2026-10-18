@@ -143,10 +143,10 @@ for (const largeur of [390, 320]) test(`?lang=en : toute l’interface en anglai
   await expect(page.locator('.revue-analyse')).toHaveCount(0, { timeout: 30_000 });
   await sansFrancais(page, 'revue');
 
-  // Apprendre : le chemin, puis la première leçon.
+  // Apprendre : le sommaire (#652), puis la première leçon.
   await page.goto('/?lang=en');
   await nav.getByRole('button', { name: 'Learn' }).click();
-  await expect(page.getByRole('heading', { name: 'Coming soon' })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Other ways to learn' })).toBeVisible();
   await sansFrancais(page, 'Apprendre');
   await page.screenshot({ path: `docs/localisation/captures/apprendre-en-${largeur}.png` });
   await page.locator('.cta-chemin').click();

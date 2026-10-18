@@ -545,27 +545,6 @@ export function App() {
   /** #343 : vrai si la leçon de ce rang (0 = leçon 1) demande un compte (carte de la prochaine leçon, page d'un thème). */
   const compteRequisLecon = (rang: number) => !decider({ quoi: 'lecon', rang }, etat, terminees, COMPTES).ok;
 
-  /**
-   * #652 (A13, A6) : un détail ouvert depuis le sommaire d'un onglet (page d'un thème, Jouer avec Mochi). On retient où
-   * en était le sommaire et ce qui avait le focus ; « ‹ » (ou le retour du système, qui le touche) y ramène.
-   */
-  const sommaireQuitte = useRef<{ y: number; f: Element | null } | null>(null);
-  function ouvrirDetail() {
-    sommaireQuitte.current = { y: window.scrollY, f: document.activeElement };
-    window.scrollTo({ top: 0 });
-  }
-  function revenirAuSommaire() {
-    const q = sommaireQuitte.current;
-    sommaireQuitte.current = null;
-    requestAnimationFrame(() => {
-      window.scrollTo(0, q?.y ?? 0);
-      // Le sommaire est remonté : on retrouve l'entrée touchée par son nom accessible.
-      const nom = (q?.f as HTMLElement | null)?.getAttribute?.('aria-label');
-      const cible = nom ? [...document.querySelectorAll<HTMLElement>('main button[aria-label]')].find(b => b.getAttribute('aria-label') === nom) : null;
-      cible?.focus({ preventScroll: true });
-    });
-  }
-
   function ouvrirLecon(id: string) {
     const rang = LESSONS.findIndex(l => l.id === id);
     if (!garde({ quoi: 'lecon', rang: rang < 0 ? 0 : rang }, { quoi: 'lecon', id })) return;
@@ -1073,18 +1052,19 @@ export function App() {
       // #640 : la partie se pose sur la fin de leçon, que sa sortie retrouve.
       jouer={{ nom: premier.nom, lancer: () => lancer('ordi', premier.id) }} />;
   } else if (tab === 'apprendre' && themeVu) {
-    screen = <ThemeLecons theme={themeVu} progress={progress} onOpen={ouvrirLecon} onRetour={() => { setThemeVu(null); revenirAuSommaire(); }}
+    screen = <ThemeLecons theme={themeVu} progress={progress} onOpen={ouvrirLecon} onRetour={() => setThemeVu(null)}
       compteRequis={compteRequisLecon}
       onSerie={s => { if (garde({ quoi: 'probleme' })) { setSerie3(s); window.scrollTo({ top: 0 }); } }} />;
   } else if (tab === 'apprendre' && avecMochi) {
-    screen = <JouerAvecMochi onRetour={() => { setAvecMochi(false); revenirAuSommaire(); }}
+    screen = <JouerAvecMochi onRetour={() => setAvecMochi(false)}
       decouverte={{ etat: etatDecouverte(readLocal<unknown>(DECOUVERTE_KEY, null)), ouvrir: () => ouvrirDecouverte() }}
       onGuidee={() => { track(EVENTS.modeChoisi, { mode: 'guidee', depuis: 'apprendre' satisfies Depuis, principal: false }); lancerGuidee(); }} />;
   } else if (tab === 'apprendre') {
-    // #652 (A13) : un sommaire ; chaque entrée ouvre son détail par-dessus (page du thème, Jouer avec Mochi), « ‹ » y ramène.
+    // #652 (A13) : un sommaire ; chaque entrée ouvre son détail par-dessus (page du thème, Jouer avec Mochi), « ‹ » y ramène
+    // (le sommaire retrouve son défilement et l'entrée touchée : Learn.tsx).
     screen = <LearnHome progress={progress} onOpen={ouvrirLecon} sync={syncState} onRegles={() => ouvrirIntro('complete', 'apprendre')}
-      onMochi={() => { ouvrirDetail(); setAvecMochi(true); }}
-      onTheme={th => { ouvrirDetail(); setThemeVu(th); }}
+      onMochi={() => setAvecMochi(true)}
+      onTheme={setThemeVu}
       compteRequis={compteRequisLecon} />;
   } else if (tab === 'problemes') {
     screen = <Puzzles db={supabase} userId={compteId} sessionLoading={session === undefined} confirmTouch={settings.confirmTouch} onCompte={ouvrirCompte}

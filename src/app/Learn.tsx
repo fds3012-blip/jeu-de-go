@@ -4,7 +4,7 @@
 // entrées au même format (Ouvertures, Jouer avec Mochi, Revoir les règles) ; enfin la grille de tous les thèmes, la seule
 // liste longue, rangée en dernier (P5). Chaque leçon s'ouvre depuis la page de son thème (ThemeLecons) : un test le
 // vérifie pour les 48 (src/app/themesApprendre.test.ts). Le lecteur de leçon et sa fin sont dans Lecon.tsx.
-import { Suspense, lazy, useEffect, useRef, useState } from 'react';
+import { Suspense, lazy, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { CHAPITRES, LESSONS } from '../content/lessons';
 import { Bubble } from '../ui/Mochi';
 import { ThemesApprendre } from '../ui/ThemesApprendre';
@@ -49,6 +49,16 @@ function phraseMochi(liste: Etape[], iEnCours: number): string | null {
 }
 
 /**
+ * #652 (A13, A6) : où en était le sommaire quand un détail s'est ouvert (page d'un thème, Jouer avec Mochi) : son
+ * défilement et l'entrée touchée (un sélecteur). Le sommaire, remonté à la sortie du détail, y revient.
+ */
+let quitte: { y: number; entree: string } | null = null;
+function quitter(entree: string) {
+  quitte = { y: window.scrollY, entree };
+  window.scrollTo({ top: 0 });
+}
+
+/**
  * `compteRequis` (#343) : vrai si la leçon de ce rang (0 = leçon 1) demande un compte. Sans compte, les leçons 1 à 3 sont libres ;
  * les suivantes restent touchables, portent le verrou « compte », et `onOpen` ouvre la création de compte (garde d'App.tsx).
  */
@@ -65,6 +75,13 @@ export function LearnHome({ progress, onOpen, sync = 'local', compteRequis = () 
   const iEnCours = liste.findIndex(e => e.etat === 'encours');
   const bouton = boutonChemin(LESSONS, progress);
   const [ouvertures, setOuvertures] = useState(false);
+  useLayoutEffect(() => {
+    const q = quitte;
+    quitte = null;
+    if (!q) return;
+    window.scrollTo(0, q.y);
+    document.querySelector<HTMLElement>(`.apprendre ${q.entree}`)?.focus({ preventScroll: true });
+  }, []);
 
   // Fête de fin de chapitre (#200) : une seule fois par chapitre, mémorisée sur l'appareil. Plus d'en-tête de chapitre
   // (#652) : le tampon d'or se pose en tête du sommaire, au-dessus de la prochaine leçon, pour cette visite.
@@ -79,7 +96,8 @@ export function LearnHome({ progress, onOpen, sync = 'local', compteRequis = () 
   const entrees = [
     { cle: 'ouvertures', nom: tentree('titre'), aria: `${tentree('titre')}. ${tentree('texte')}`, visuel: <MiniGoban rows={COIN} />, testId: 'entree-ouvertures',
       onOuvrir: () => { window.scrollTo({ top: 0 }); setOuvertures(true); } },
-    ...(onMochi ? [{ cle: 'mochi', nom: t('apprendre.avecMochi'), visuel: <PortraitMochi taille={40} decoratif />, testId: 'jouer-avec-mochi', onOuvrir: onMochi }] : []),
+    ...(onMochi ? [{ cle: 'mochi', nom: t('apprendre.avecMochi'), visuel: <PortraitMochi taille={40} decoratif />, testId: 'jouer-avec-mochi',
+      onOuvrir: () => { quitter('[data-entree="mochi"]'); onMochi(); } }] : []),
     ...(onRegles ? [{ cle: 'regles', nom: t('apprendre.revoirRegles'), visuel: <MiniGoban rows={REGLES} />, testId: 'revoir-regles', onOuvrir: onRegles }] : []),
   ];
 
@@ -88,7 +106,7 @@ export function LearnHome({ progress, onOpen, sync = 'local', compteRequis = () 
       {fete && <FeteChapitre id={fete} />}
       {bouton && <CarteProchaine etape={iEnCours >= 0 ? liste[iEnCours] : liste[0]} bouton={bouton} mochi={phraseMochi(liste, iEnCours)} onOpen={onOpen} compteRequis={compteRequis} />}
       <Sommaire entrees={entrees} nom={t('apprendre.aussi')} className="apprendre-entrees" testId="apprendre-entrees" />
-      {onTheme && <ThemesApprendre themes={themesAvecLecons(LESSONS, progress)} onTheme={onTheme} />}
+      {onTheme && <ThemesApprendre themes={themesAvecLecons(LESSONS, progress)} onTheme={th => { quitter(`.theme-carte[data-theme="${th}"]`); onTheme(th); }} />}
       <p className={`synchro synchro-${sync}`} role="status" aria-busy={sync === 'sync'}>{texteSynchro(sync)}</p>
     </div>
   );

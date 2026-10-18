@@ -1,5 +1,4 @@
 import { expect, test, type Page } from '@playwright/test';
-import { leconDuTheme } from './apprendre';
 import { jouer } from './plateau';
 import { LESSONS_FR, type LessonStep } from '../src/content/lessons';
 import { ACQUIS } from '../src/content/acquis';
