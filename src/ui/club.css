@@ -94,3 +94,9 @@
 .mp-parties-importer.mp-parties-etude { margin-top: 0; }
 /* Zoom 200 % (≈ 195 px de large) : les quatre outils passent sur deux rangées, sans défilement de côté. */
 @media (max-width: 300px) { .etude-outils { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* Statistiques (#630, lot V9, P8) : dès 600 px, les cartes en deux colonnes ; Mochi et les états sur toute la largeur. */
+@media (min-width: 600px) {
+  .mstats { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+  .mstats > :not(.mstats-carte) { grid-column: 1 / -1; }
+}
