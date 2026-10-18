@@ -10,7 +10,7 @@ vi.mock('../data/analytics', async orig => ({ ...(await orig<typeof import('../d
 const { DELAI_INVITATION_MS, INVITATION_APP_KEY, doitInviter, lienApp, lireDerniere } = await import('./partageApp');
 const { traduirePartage } = await import('../content/i18n/partage');
 const { partagerApp } = await import('./envoiApp');
-const { usePartageProfil } = await import('../ui/PartagerApp');
+const { usePartageProfil } = await import('../ui/usePartageApp');
 const { EVENTS } = await import('../data/analytics');
 
 const JOUR = 24 * 3600 * 1000;
