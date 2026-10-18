@@ -136,13 +136,13 @@
 }
 
 /* Feuille de verdict : posée sur la barre de navigation, pleine largeur, contenu dans la colonne. */
-.verdict { position: fixed; left: 0; right: 0; bottom: calc(var(--nav-h) + 1px + env(safe-area-inset-bottom, 0px)); z-index: 15;
+.verdict { position: fixed; left: var(--nav-gauche); right: 0; bottom: calc(var(--nav-bas) + 1px + env(safe-area-inset-bottom, 0px)); z-index: 15;
   padding: 14px max(var(--gouttiere), calc((100% - var(--largeur-max)) / 2 + var(--gouttiere))) 16px;
   background: var(--surface); border-radius: var(--radius-feuille) var(--radius-feuille) 0 0; box-shadow: 0 -12px 28px -14px rgba(0, 0, 0, .55); }
 /* #268 (WCAG 2.4.11) : feuille ouverte, un élément amené à l'écran par le focus s'arrête au-dessus d'elle, pas dessous.
    --verdict-h-page est posée sur <html> par Verdict (Lecteur.tsx) ; 240 px tant qu'elle n'est pas mesurée.
    `:root` et non `html` : cette règle l'emporte sur `html:has(.nav)` (nav.css), quel que soit l'ordre des feuilles. */
-:root:has(.verdict) { scroll-padding-bottom: calc(max(var(--nav-h), 3.75rem) + 1px + env(safe-area-inset-bottom, 0px) + var(--verdict-h-page, 240px)); }
+:root:has(.verdict) { scroll-padding-bottom: calc(var(--nav-bas) + 1px + env(safe-area-inset-bottom, 0px) + var(--verdict-h-page, 240px)); }
 .verdict-juste { background: color-mix(in srgb, var(--jade) 15%, var(--surface)); }
 .verdict-revoir { background: color-mix(in srgb, var(--hanko) 14%, var(--surface)); }
 .verdict-texte { display: flex; gap: 12px; align-items: flex-start; }
@@ -212,7 +212,7 @@
 /* #620 : en bas de Problèmes, la phrase puis le lien, alignés à gauche ; la page s'arrête au-dessus de la barre du bas (F-e). */
 .problemes > .invitation { flex-direction: column; align-items: flex-start; gap: 0; margin-top: var(--space-3); }
 .problemes > .invitation .lien { margin: 0 0 0 -12px; }
-.app:has(> .problemes:not(.problemes-tous)) { padding-bottom: calc(max(var(--nav-h), 3.75rem) + var(--space-4) + env(safe-area-inset-bottom, 0px)); }
+.app:has(> .problemes:not(.problemes-tous)) { padding-bottom: calc(var(--nav-bas) + var(--space-4) + env(safe-area-inset-bottom, 0px)); }
 
 .problemes h2 { margin: var(--space-6) 0 10px; }
 .problemes section:first-of-type h2 { margin-top: var(--space-4); }

@@ -17,12 +17,12 @@ body::before { content: ""; position: fixed; z-index: 50; top: 0; left: 0; right
 button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .app { max-width: var(--largeur-max); margin: 0 auto; padding: var(--space-3) var(--gouttiere) calc(150px + env(safe-area-inset-bottom, 0px)); }
-/* P8 (#629, lot V7) : la colonne suit la classe de largeur ; une ligne de texte reste à --mesure. Jouer et les activités
-   (un goban qu'on touche) gardent 560 px : leur goban attend les lots V5, V6 et V10. */
+/* P8 (#629, lot V7) : la colonne suit la classe de largeur ; une ligne de texte reste à --mesure. Les activités
+   (un goban qu'on touche) gardent 560 px : leur goban attend les lots V5 et V6. Jouer : accueil.css (#648, lot V10). */
 @media (min-width: 600px) { .app { max-width: var(--largeur-contenu); } .app p { max-width: var(--mesure); } }
 @media (min-width: 1024px) { .app { max-width: var(--largeur-large); } .app :is(.btn.primary, .cta) { max-width: var(--largeur-max); } }
 /* #640 : seul le calque visible compte (un écran d'origine caché reste monté dessous). */
-.app:is(.app-home, .app-partie, :has(> .calque:not([hidden]) .board-wrap):not(:has(> .calque:not([hidden]) :is(.du-jour, .reglages-apercu)))) { max-width: var(--largeur-max); }
+.app:is(.app-partie, :has(> .calque:not([hidden]) .board-wrap):not(:has(> .calque:not([hidden]) :is(.du-jour, .reglages-apercu, .accueil)))) { max-width: var(--largeur-max); }
 
 /* ---------- Titres : Bricolage Grotesque, serrée ---------- */
 h1, h2, .big { font-family: var(--font-titre); letter-spacing: var(--tracking-titre); }
@@ -56,7 +56,7 @@ h2 { font-size: var(--fs-xl); font-weight: var(--fw-bold); line-height: var(--lh
 .cta, .btn.primary { background: var(--accent); color: var(--on-accent); border: 0; border-radius: var(--radius-bouton); min-height: var(--cible-cta);
   font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: var(--fs-cta); letter-spacing: -0.01em; line-height: 1.15;
   padding: 0 var(--space-4); box-shadow: var(--ombre-relief); }
-.cta { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(74px + var(--relief) + env(safe-area-inset-bottom, 0px)); width: min(528px, calc(100% - 32px)); z-index: 10; }
+.cta { position: fixed; left: calc(50% + var(--nav-gauche) / 2); transform: translateX(-50%); bottom: calc(var(--nav-bas) + 14px + var(--relief) + env(safe-area-inset-bottom, 0px)); width: min(528px, calc(100% - 32px)); z-index: 10; }
 .btn.primary { border-color: transparent; }
 @media (prefers-reduced-motion: no-preference) {
   .cta, .btn { transition: transform var(--duree-rapide) var(--ease), box-shadow var(--duree-rapide) var(--ease), background-color var(--duree-rapide); }
@@ -132,7 +132,7 @@ td:first-child, th:first-child { text-align: left; }
 /* Accueil : voir src/ui/accueil.css (issue #40, phase 4). */
 .lien { background: none; border: 0; color: var(--text); font-weight: var(--fw-bold); min-height: var(--cible-min); min-width: var(--cible-min); padding: 0 12px; border-radius: 10px;
   text-decoration: underline; text-decoration-color: var(--accent-trait); text-decoration-thickness: 2px; text-underline-offset: 5px; }
-.dock { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(74px + env(safe-area-inset-bottom, 0px)); width: min(528px, calc(100% - 32px)); display: grid; gap: calc(var(--space-2) + var(--relief)); z-index: 10; }
+.dock { position: fixed; left: calc(50% + var(--nav-gauche) / 2); transform: translateX(-50%); bottom: calc(var(--nav-bas) + 14px + env(safe-area-inset-bottom, 0px)); width: min(528px, calc(100% - 32px)); display: grid; gap: calc(var(--space-2) + var(--relief)); z-index: 10; }
 .dock .cta { position: static; transform: none; width: 100%; font-size: var(--fs-l); padding: 0 12px; }
 .dock .row .btn { padding: 0 10px; line-height: 1.2; }
 .battu { color: var(--accent-texte); font-weight: var(--fw-bold); }
