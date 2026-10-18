@@ -82,16 +82,13 @@ export interface Fin {
   cta: string;
   /** Adversaire de la prochaine partie proposée par l'action principale. */
   cible: string;
-  /** Bilan en une phrase : le début, puis la partie mise en valeur (« 1 victoire »). */
-  bilan: { texte: string; gras: string };
+  /**
+   * Bilan en une phrase : le début, puis la partie mise en valeur (« 1 victoire »). #631 (P1, E7) : seulement après une
+   * victoire, quand il fête un progrès ; un compteur de défaites n'aide pas à rejouer (il reste dans Statistiques).
+   */
+  bilan: { texte: string; gras: string } | null;
 }
 
-/** Bilan contre un adversaire : « 1 victoire », « 2 victoires, 1 défaite », « 1 défaite ». */
-export function texteBilan(b: { v: number; d: number }): string {
-  if (!b.d) return t('bilan.victoires', { n: b.v });
-  if (!b.v) return t('bilan.defaites', { n: b.d });
-  return `${t('bilan.victoires', { n: b.v })}, ${t('bilan.defaites', { n: b.d })}`;
-}
 
 /**
  * Leçon que Mochi tire de la partie, avec ce qu'on sait sans analyse : captures, atari subis, écart, abandon.
@@ -136,7 +133,7 @@ export function fin(adv: Adv, issue: Issue, stats: StatsPartie, bilan: Bilan, li
     cta: s ? t('bilan.defier', { nom: s.nom }) : t('bilan.rejouerContre', { nom: adv.nom }),
     cible: s ? s.id : adv.id,
     // #592 (E7) : plus « 34 coups, 3 pierres capturées » en tête ; la partie se relit dans « Revoir ma partie ».
-    bilan: { texte: t('bilan.tonBilan', { nom: adv.nom }), gras: texteBilan(b) },
+    bilan: issue === 'victoire' && b.v > 0 ? { texte: t('bilan.tonBilan', { nom: adv.nom }), gras: t('bilan.victoires', { n: b.v }) } : null,
   };
 }
 

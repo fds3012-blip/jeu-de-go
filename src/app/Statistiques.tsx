@@ -10,7 +10,7 @@ import { Mochi } from '../ui/Mochi';
 import { PortraitMochi } from '../ui/Portrait';
 import { fr } from '../ui/typo';
 import { tk, nombreClub } from '../content/i18n/club';
-import { grade, texteCote } from '../content/i18n/cote';
+import { grade, tc, texteCote } from '../content/i18n/cote';
 import { EVENTS, track } from '../data/analytics';
 import { chargerDonneesCote, type DonneesCote } from '../data/statsJoueur';
 import { mesDefis } from '../data/defi';
@@ -86,7 +86,7 @@ export function MesStatistiques({ db = null, userId, onRevoir }: Props) {
         </div>
       )}
 
-      <CourbeCote donnees={cote} compte={!!userId} />
+      <CourbeCote donnees={cote} compte={!!userId} lue={etat === 'pret'} />
 
       <section className="mstats-carte" aria-labelledby="mstats-precision">
         <h3 id="mstats-precision">{tk('stats.precision.titre')}</h3>
@@ -96,7 +96,11 @@ export function MesStatistiques({ db = null, userId, onRevoir }: Props) {
             <p className="muted small">{tk(precision.parties > 1 ? 'stats.precision.detail' : 'stats.precision.detail1', { n: precision.parties })}</p>
             <p className="muted small">{fr(tk('stats.precision.aide'))}</p>
           </>
-        ) : <p className="muted small">{fr(tk('stats.precision.vide'))}</p>}
+        ) : <>
+          {/* #631 : une jauge vide dit « bientôt ici » ; une phrase dit comment la remplir. */}
+          <span className="mstats-fantome-jauge" aria-hidden="true" />
+          <p className="muted small">{fr(tk('stats.precision.vide'))}</p>
+        </>}
       </section>
 
       <section className="mstats-carte" aria-labelledby="mstats-phases">
@@ -107,13 +111,19 @@ export function MesStatistiques({ db = null, userId, onRevoir }: Props) {
             <Phases valeurs={erreurs} faible={faible} />
             <p className="muted small">{fr(tk('stats.phases.aide'))}</p>
           </>
-        ) : <p className="muted small">{fr(tk('stats.phases.vide'))}</p>}
+        ) : <>
+          <Phases valeurs={null} faible={null} />
+          <p className="muted small">{fr(tk('stats.phases.vide'))}</p>
+        </>}
       </section>
 
-      <section className="mstats-carte" aria-labelledby="mstats-bilan">
-        <h3 id="mstats-bilan">{tk('stats.bilan.titre')}</h3>
-        {bilan.total ? <TablesBilan bilan={bilan} /> : <p className="muted small">{tk('stats.bilan.vide')}</p>}
-      </section>
+      {/* #631 (P1) : pas de section vide ; le bilan arrive avec ta première partie terminée. */}
+      {bilan.total > 0 && (
+        <section className="mstats-carte" aria-labelledby="mstats-bilan">
+          <h3 id="mstats-bilan">{tk('stats.bilan.titre')}</h3>
+          <TablesBilan bilan={bilan} />
+        </section>
+      )}
 
       <div className="dock mstats-dock">
         <button type="button" className="cta" onClick={onRevoir}>{tk('stats.cta')}</button>
@@ -122,22 +132,39 @@ export function MesStatistiques({ db = null, userId, onRevoir }: Props) {
   );
 }
 
-/** Courbe de la cote sur 90 jours, ses bornes écrites en clair et une phrase pour le lecteur d'écran. */
-function CourbeCote({ donnees, compte }: { donnees: DonneesCote | null; compte: boolean }) {
+/** Courbe grise, sans chiffre : la place de la courbe tant qu'il n'y a rien à tracer (#631). */
+function CourbeFantome() {
+  return (
+    <div className="mstats-courbe-cadre" aria-hidden="true">
+      <svg viewBox="0 0 300 88" preserveAspectRatio="none" className="mstats-fantome">
+        <path d="M8 62C60 58 80 40 130 46S220 30 292 24" className="mstats-courbe-ligne" vectorEffect="non-scaling-stroke" />
+      </svg>
+    </div>
+  );
+}
+
+/**
+ * Courbe de la cote sur 90 jours, ses bornes écrites en clair et une phrase pour le lecteur d'écran.
+ * #631 (P1, décision F-P6) : ni cote ni grade avant une partie classée (un « 1500 ? » ne sert aucune décision) : une
+ * courbe fantôme et une phrase. Le « ? » d'une cote provisoire est expliqué à côté, jamais seul.
+ * `lue` : les données du compte sont arrivées (sinon, la courbe fantôme seule, sans phrase qui changerait aussitôt).
+ */
+function CourbeCote({ donnees, compte, lue }: { donnees: DonneesCote | null; compte: boolean; lue: boolean }) {
   const L = 300, H = 88, M = 8;
   const contenu = (() => {
-    if (!compte) return <p className="muted small">{fr(tk('stats.cote.sansCompte'))}</p>;
-    if (!donnees?.cote) return null;
-    const actuelle = donnees.cote.cote;
+    if (!compte) return <><CourbeFantome /><p className="muted small">{fr(tk('stats.cote.sansCompte'))}</p></>;
+    if (!donnees?.cote || !donnees.classees.length) return <><CourbeFantome />{lue && <p className="muted small">{fr(tk('stats.cote.vide'))}</p>}</>;
+    const actuelle = donnees.cote.cote, provisoire = donnees.cote.provisoire;
     const valeurs = [...donnees.courbe.map(p => p.cote)];
     if (!valeurs.length || valeurs[valeurs.length - 1] !== actuelle) valeurs.push(actuelle);
     const tete = (
       <p className="mstats-cote-chiffre" data-testid="stats-cote">
-        <span className="mstats-grand">{texteCote(actuelle, donnees.cote.provisoire)}</span>
+        <span className="mstats-grand">{texteCote(actuelle, provisoire)}</span>
         <span className="mstats-cote-grade">{grade(actuelle)}</span>
       </p>
     );
-    if (valeurs.length < 2) return <>{tete}<p className="muted small">{fr(tk('stats.cote.vide'))}</p></>;
+    const regle = <p className="muted small">{fr(provisoire ? tc('cote.provisoire') : tk('stats.cote.regle'))}</p>;
+    if (valeurs.length < 2) return <>{tete}<CourbeFantome />{regle}</>;
     const { d, x, y } = traceCourbe(valeurs, L, H, M);
     const min = Math.min(...valeurs), max = Math.max(...valeurs);
     return (
@@ -156,6 +183,7 @@ function CourbeCote({ donnees, compte }: { donnees: DonneesCote | null; compte: 
             <span className="mstats-courbe-borne bas" aria-hidden="true">{min}</span>
           </div>
         </figure>
+        {regle}
       </>
     );
   })();
@@ -163,13 +191,20 @@ function CourbeCote({ donnees, compte }: { donnees: DonneesCote | null; compte: 
     <section className="mstats-carte" aria-labelledby="mstats-cote-titre">
       <h3 id="mstats-cote-titre">{tk('stats.cote.titre')}</h3>
       {contenu}
-      {compte && <p className="muted small">{fr(tk('stats.cote.regle'))}</p>}
     </section>
   );
 }
 
-/** Erreurs par phase : trois barres, la phase la plus faible en couleur ; les valeurs sont écrites en clair. */
-function Phases({ valeurs, faible }: { valeurs: Record<Phase, number>; faible: Phase | null }) {
+/**
+ * Erreurs par phase : trois barres, la phase la plus faible en couleur ; les valeurs sont écrites en clair.
+ * Sans revue (`valeurs` nul, #631) : les trois noms et leurs barres vides, sans chiffre, cachés au lecteur d'écran.
+ */
+function Phases({ valeurs, faible }: { valeurs: Record<Phase, number> | null; faible: Phase | null }) {
+  if (!valeurs) return (
+    <ul className="mstats-phases mstats-fantome" aria-hidden="true">
+      {PHASES.map(p => <li key={p}><span className="mstats-phase-nom">{tk(`stats.phases.${p}`)}</span><span className="mstats-phase-barre" /></li>)}
+    </ul>
+  );
   const max = Math.max(1, ...PHASES.map(p => valeurs[p]));
   return (
     <ul className="mstats-phases">

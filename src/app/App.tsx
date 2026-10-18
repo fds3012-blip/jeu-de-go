@@ -671,11 +671,12 @@ export function App() {
   }
   if (playing === 'ordi' && resultat) {
     const f = fin(adv, resultat.issue, resultat.stats, bilan, OPPONENTS);
-    const coupure = f.bilan.texte.indexOf('. ');
+
     const lecon = f.lecon ? LESSONS.find(l => l.id === f.lecon) : undefined;
     finEcran = {
       // Deux phrases, deux lignes : les statistiques, puis le bilan contre cet adversaire (issue #57).
-      bilan: <>{fr(f.bilan.texte.slice(0, coupure + 1))}{coupure > 0 && <br />}{fr(f.bilan.texte.slice(coupure + 1))}<b className={resultat.issue === 'victoire' ? 'or' : undefined}>{f.bilan.gras}</b>.</>,
+      // #631 : le bilan seulement après une victoire (« Ton bilan contre Pomme : 2 victoires. ») ; sinon, rien.
+      bilan: f.bilan && <>{fr(f.bilan.texte)}<b className="or">{f.bilan.gras}</b>.</>,
       mochi: (
         <>
           <p>{fr(f.mochi)}</p>

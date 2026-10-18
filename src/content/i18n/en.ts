@@ -781,7 +781,6 @@ export const en = {
   'fin.accueil': 'Home',
   'fin.ouvrirLecon': 'Open the lesson',
   'bilan.victoires': { one: '{n} win', other: '{n} wins' },
-  'bilan.defaites': { one: '{n} loss', other: '{n} losses' },
   'bilan.aucunCoup': 'No moves played',
   'bilan.pierresCapturees': { one: '{n} stone captured', other: '{n} stones captured' },
   'bilan.tonBilan': 'Your record vs {nom}: ',

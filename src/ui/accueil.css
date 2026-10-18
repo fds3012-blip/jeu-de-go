@@ -215,6 +215,9 @@
 .feuille-taille h3 { flex: none; margin: 0; font-size: var(--fs-s); color: var(--muted); font-weight: var(--fw-bold); }
 .feuille-taille .seg { flex: 1 1 13rem; }
 .feuille-taille p { flex: 1 1 100%; }
+/* #631 : chaque taille avec sa grille (9 lignes espacées, 19 serrées) au-dessus de son nom. */
+.feuille-taille .seg button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding-block: 6px; }
+.grille-taille { width: 22px; height: 22px; flex: none; }
 
 /* Carrousel : défilement horizontal à accroche, qui déborde jusqu'aux bords de la feuille. */
 .carrousel { display: flex; gap: 2px; list-style: none; margin: 0 calc(-1 * var(--gouttiere)); padding: 6px var(--gouttiere) 8px;

@@ -22,8 +22,8 @@ interface Props {
   marge?: number | null;
   texteMarge?: (v: number) => string;
   sousTitre?: string;
-  /** Bilan en une phrase. */
-  bilan: ReactNode;
+  /** Bilan en une phrase ; rien quand il n'y a rien à fêter (#631). */
+  bilan?: ReactNode;
   /** Leçon de la partie par Mochi (texte et, au besoin, un lien vers une leçon). */
   mochi?: ReactNode;
   /** L'action principale : un seul bouton en relief. */
@@ -89,7 +89,7 @@ export function FinPartie({ fond, sceau, tampon, titre, marge, texteMarge, sousT
           </p>
         ) : sousTitre && <p className="fin-marge">{sousTitre}</p>}
         <div className="fin-xp" role="status" aria-live="polite">{xp && <PastilleXp points={xp.points} bonus={xp.bonus} anime={!reduit} />}</div>
-        <p className="fin-bilan">{bilan}</p>
+        {bilan && <p className="fin-bilan">{bilan}</p>}
         {mochi && (
           <div className="fin-mochi">
             <PortraitMochi taille={44} decoratif />

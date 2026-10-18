@@ -34,8 +34,9 @@ test('profil vivant : statistiques et badges déduits des données locales, sans
   await expect(stats.getByText('problèmes réussis')).toBeVisible();
   // #214 : Ton parcours. Pomme battue : 1 adversaire sur 9.
   await expect(stats.getByText('adversaire battu')).toBeVisible();
-  await expect(stats.getByText('leçon finie')).toBeVisible();
-  await expect(stats.getByText('jour de série')).toBeVisible();
+  // #631 (P1) : aucune leçon finie, aucune série : pas de « 0 leçon finie » ni de « 0 jour de série ».
+  await expect(stats.getByRole('listitem')).toHaveCount(2);
+  await expect(stats.getByText(/leçons? finies?|jours? de série/)).toHaveCount(0);
 
   const vitrine = page.getByRole('region', { name: /^Badges/ });
   await expect(vitrine.getByRole('button', { name: 'Pomme battue : obtenu' })).toBeVisible();

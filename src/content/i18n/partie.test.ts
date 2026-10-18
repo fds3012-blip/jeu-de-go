@@ -8,7 +8,7 @@ import {
 import { GENERIQUES, LONGUEUR_MAX, repliques, type Situation } from '../../app/repliques';
 import { annonceKomi } from '../../app/equilibrage';
 import { campsRecit, EXPLICATION_KOMI, ligneDeuxieme, ligneKomi, ligneResultat, type Recit } from '../../app/score';
-import { fin, leconMochi, texteBilan, type StatsPartie } from '../../app/bilan';
+import { fin, leconMochi, type StatsPartie } from '../../app/bilan';
 import { NOTE_INFO, NOTES, PERTES_DIFFUSES } from '../../app/revue';
 import { libelleGels } from '../../app/gel';
 import { annonceAtari, annonceConfirmation, annonceCoup, nomIntersection } from '../../ui/boardA11y';
@@ -74,7 +74,7 @@ describe('français identique aux textes d’origine', () => {
     expect(ligneResultat(recit(2, 2), campsRecit('Pomme'))).toBe('Pomme gagne de 2 points');
     expect([1.5, 2, 3.5].map(v => traduire('fr', 'fin.marge', { n: v, v: nombre(v, 'fr'), plateau: '9 × 9' })))
       .toEqual(['de 1,5 point sur 9 × 9', 'de 2 points sur 9 × 9', 'de 3,5 points sur 9 × 9']);
-    expect(texteBilan({ v: 2, d: 1 })).toBe('2 victoires, 1 défaite');
+    expect(fin(LISTE[0], 'victoire', stats, { pomme: { v: 2, d: 1 } }, LISTE).bilan?.gras).toBe('2 victoires');
     expect(fin(LISTE[0], 'victoire', stats, { pomme: { v: 1, d: 0 } }, LISTE)).toEqual({
       mochi: "Tes 3 captures ont fait la différence. Caillou t’attend : prêt ?", cta: 'Défier Caillou', cible: 'caillou',
       bilan: { texte: 'Ton bilan contre Pomme : ', gras: '1 victoire' },
@@ -129,7 +129,7 @@ describe('en anglais', () => {
       mochi: 'Your 3 captures made the difference. Caillou is waiting for you: ready?', cta: 'Challenge Caillou',
       bilan: { texte: 'Your record vs Pomme: ', gras: '1 win' },
     });
-    expect(texteBilan({ v: 0, d: 2 })).toBe('2 losses');
+    expect(fin(LISTE[0], 'defaite', stats, { pomme: { v: 0, d: 2 } }, LISTE).bilan).toBeNull();
   });
 
   it('revue et lecteur d’écran', () => {

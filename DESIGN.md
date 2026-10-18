@@ -471,6 +471,8 @@ Chaque règle se vérifie sur les captures de `e2e/visuel-responsive-captures.sp
 | P8 | **Une mise en page par classe de largeur**, pas une colonne de téléphone étirée. Moins de 600 px : colonne unique, barre du bas. De 600 à 1023 px : contenu jusqu'à `--largeur-contenu` (720 px), grilles à 3 colonnes au moins, texte courant à `--mesure` (36rem, 70 signes environ). 1024 px et plus : barre latérale à gauche, contenu jusqu'à 1080 px, activités en deux zones (goban à gauche à la hauteur de l'écran, panneau à droite). Téléphone en paysage (hauteur de moins de 480 px) : activités en deux zones aussi. Le goban vaut toujours `min(largeur disponible, hauteur disponible)` et n'est jamais coupé. | Aux 7 tailles : pas de défilement horizontal, goban entier visible, une ligne de texte de 75 signes au plus, barre de navigation à sa place. |
 | P9 | **Rien ne passe sous la barre d'état.** La zone sûre du haut reste couverte par le fond quand la page défile, comme elle l'est en haut de page (`env(safe-area-inset-top)`). | Sur iPhone, faire défiler chaque racine : l'heure ne se pose sur aucun dessin. |
 
+Appliqué hors Jouer par #631 (lot V11) : Statistiques sans cote ni grade avant une partie classée (courbe fantôme et une phrase), le « ? » d'une cote provisoire toujours expliqué, pas de section Bilan vide ; Profil sans chiffre à zéro ni « 0/21 » ; fin de partie sans compteur de défaites (le bilan revient avec une victoire) ; règle du défi dite dans la partie, plus sous Mes amis ni sous « Défier » ; feuille de lancement avec la phrase du kyu à la première ouverture seulement et une grille par taille de plateau.
+
 Ce qu'on garde quand même : les règles E et A ; les libellés visibles (une carte n'est jamais une icône seule) ; l'explication d'un mot du go là où il apparaît pour la première fois (CLAUDE.md, règle 5), dans la carte ou la page qui le porte.
 
 ## Do's and Don'ts
@@ -512,6 +514,8 @@ Ce qu'on garde quand même : les règles E et A ; les libellés visibles (une ca
 | `min-height: 760px` | Écran haut : Mochi plus grand dans la leçon (88 ou 96 px) et bulle en `--fs-l`. |
 | `min-width: 600px` | Large : le contenu passe à 720 px, le texte courant à `--mesure` ; Go du jour en deux zones (goban, problème) ; le plateau de la partie et le fond de la fin ne débordent plus la gouttière. |
 | `min-width: 1024px` | Très large : le contenu passe à 1080 px ; carte de la prochaine leçon en deux zones ; bouton principal dans le flux plafonné à 560 px. |
+| `min-width: 600px` (grilles, #630) | Vignettes de Tous les problèmes en `minmax(7rem, 1fr)` ; Statistiques en deux colonnes. |
+| `min-width: 1024px` (grilles, #630) | Profil : identité à gauche, menu à droite, badges sur toute la largeur ; Réglages : aperçu du goban fixe à gauche, groupes en deux colonnes. |
 | `@container (max-width: 5.4em)` sur un onglet | Libellé court (« Appr. », « Probl. ») au zoom 200 % ; le nom entier reste lu. |
 | `hover: hover` et `pointer: fine` | Survol, seulement à la souris. |
 

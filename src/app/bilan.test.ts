@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { battu, enregistrer, fin, finTropTot, PIERRES_PLATEAU_VIDE, komiDepuisUrl, leconMochi, lireBilan, suivant, texteBilan, type Bilan, type StatsPartie } from './bilan';
+import { battu, enregistrer, fin, finTropTot, PIERRES_PLATEAU_VIDE, komiDepuisUrl, leconMochi, lireBilan, suivant, type Bilan, type StatsPartie } from './bilan';
 import { OPPONENTS } from '../engine';
 
 const [pomme, caillou] = OPPONENTS;
@@ -40,11 +40,12 @@ describe('écran de fin', () => {
     expect(f.cible).toBe('caillou');
     expect(f.mochi).toContain("Caillou t’attend");
     expect(f.lecon).toBeUndefined();
-    expect(`${f.bilan.texte}${f.bilan.gras}.`).toBe('Ton bilan contre Pomme : 1 victoire.');
+    expect(`${f.bilan?.texte}${f.bilan?.gras}.`).toBe('Ton bilan contre Pomme : 1 victoire.');
   });
 
   it('victoires répétées : le bilan compte', () => {
-    expect(fin(pomme, 'victoire', stats(), { pomme: { v: 3, d: 1 } }, OPPONENTS).bilan.gras).toBe('3 victoires, 1 défaite');
+    // #631 : le bilan fête les victoires ; le compteur de défaites n'est plus à la fin de partie.
+    expect(fin(pomme, 'victoire', stats(), { pomme: { v: 3, d: 1 } }, OPPONENTS).bilan?.gras).toBe('3 victoires');
   });
 
   it('victoire contre le dernier adversaire : on rejoue contre lui', () => {
@@ -59,20 +60,14 @@ describe('écran de fin', () => {
     const f = fin(caillou, 'defaite', stats({ abandon: true, coups: 3, marge: 0 }), { caillou: { v: 0, d: 1 } }, OPPONENTS);
     expect(f.cta).toBe('Rejouer contre Caillou');
     expect(f.cible).toBe('caillou');
-    expect(f.bilan.gras).toBe('1 défaite');
+    // #631 : après une défaite, pas de bilan (un compteur de défaites n'aide pas à rejouer).
+    expect(f.bilan).toBeNull();
   });
 
   it('égalité : rejouer contre le même adversaire, pas de suivant', () => {
     const f = fin(pomme, 'egalite', stats({ marge: 0 }), {}, OPPONENTS);
     expect(f.cta).toBe('Rejouer contre Pomme');
     expect(f.mochi).toContain('Égalité');
-  });
-});
-
-describe('phrases du bilan', () => {
-  it('accorde victoires et défaites', () => {
-    expect(texteBilan({ v: 0, d: 2 })).toBe('2 défaites');
-    expect(texteBilan({ v: 1, d: 0 })).toBe('1 victoire');
   });
 });
 

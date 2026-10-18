@@ -122,7 +122,8 @@ test.describe('#365 réglages du plateau et du rythme', () => {
     await page.getByRole('button', { name: 'Retour' }).click();
     await expect(page.getByRole('heading', { name: 'Profil', exact: true })).toBeVisible();
     await expect(page.locator('.identite-serie')).toHaveCount(0);
-    await expect(page.getByRole('list', { name: 'Tes statistiques' })).not.toContainText(/série|record/);
+    // #631 : la liste n'a plus de chiffre à zéro ; elle peut être absente, jamais avec la série.
+    await expect(page.getByRole('list', { name: 'Tes statistiques' }).filter({ hasText: /série|record/ })).toHaveCount(0);
     await expect(page.getByRole('button', { name: /7 jours de série/ })).toHaveCount(0);
 
     await nav(page, 'Jouer');

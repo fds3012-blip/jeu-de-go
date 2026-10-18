@@ -270,6 +270,9 @@ for (const largeur of [390, 320]) {
       localStorage.setItem('go.parties.v1', JSON.stringify({ n: 3, ordi: 3, dernier: 'pomme' }));
       localStorage.setItem('go.bilan.v1', JSON.stringify({ pomme: { v: 2, d: 1 } }));
       localStorage.setItem('go.problemes.v1', JSON.stringify({ b1: true, b3: true, b4: true }));
+      // #631 : le Profil ne montre plus un chiffre à zéro ; une série d'un jour et deux leçons pour voir les quatre légendes.
+      localStorage.setItem('go.serie-record.v1', JSON.stringify({ record: 1, perdue: null }));
+      localStorage.setItem('go.lecons.v1', JSON.stringify({ l1: 6, l2: 6 }));
       localStorage.setItem('go.intro-but.v1', 'true');
       localStorage.setItem('go.erreurs.v1', JSON.stringify([e]));
     }, ERREUR);

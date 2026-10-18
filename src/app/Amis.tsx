@@ -177,7 +177,9 @@ export function Amis({ db, onDefi, onProfil, onProfilDemande }: Props) {
       )}
 
       {groupes.ami.length > 0 && (
-        <Groupe titre={ta('amis.liste.titre')} id="amis-liste" pied={<p className="muted small amis-regle">{fr(ta('defi.amis.regle'))}</p>}>
+        // #631 (P1) : la règle du défi (9 × 9, 3 jours par coup) ne s'écrit plus sous la liste : elle est dans le nom du bouton
+        // « Défier », puis dite dans la partie, avant ton premier coup (Defis.tsx, defi.rappelDelai).
+        <Groupe titre={ta('amis.liste.titre')} id="amis-liste">
           {groupes.ami.map(a => (
             <li key={a.pseudo} className="ami">
               <div className="ami-ligne">
@@ -248,12 +250,11 @@ export function Amis({ db, onDefi, onProfil, onProfilDemande }: Props) {
   );
 }
 
-function Groupe({ titre, id, pied, children }: { titre: string; id: string; pied?: ReactNode; children: ReactNode }) {
+function Groupe({ titre, id, children }: { titre: string; id: string; children: ReactNode }) {
   return (
     <section className="amis-groupe" aria-labelledby={id}>
       <h3 id={id} className="lignes-titre">{titre}</h3>
       <ul className="amis-liste">{children}</ul>
-      {pied}
     </section>
   );
 }

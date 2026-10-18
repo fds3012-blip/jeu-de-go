@@ -203,7 +203,6 @@ export const fr = {
   'accueil.reprise.aria': { one: 'Reprendre ta partie contre {nom}, {taille} × {taille}, {n} coup joué', other: 'Reprendre ta partie contre {nom}, {taille} × {taille}, {n} coups joués' },
   'fin.ouvrirLecon': 'Ouvrir la leçon',
   'bilan.victoires': { one: '{n} victoire', other: '{n} victoires' },
-  'bilan.defaites': { one: '{n} défaite', other: '{n} défaites' },
   'bilan.aucunCoup': 'Aucun coup joué',
   'bilan.pierresCapturees': { one: '{n} pierre capturée', other: '{n} pierres capturées' },
   'bilan.tonBilan': 'Ton bilan contre {nom} : ',
