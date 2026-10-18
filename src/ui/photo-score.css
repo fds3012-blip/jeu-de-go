@@ -42,13 +42,13 @@
 .ps-coin:active { cursor: grabbing; }
 .ps-coin:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .ps-coin:disabled { cursor: default; }
-.ps-loupe { position: absolute; top: var(--space-2); left: var(--space-2); width: 112px; height: 112px; border-radius: 50%; pointer-events: none;
+.ps-loupe { position: absolute; top: var(--space-2); left: calc(50% - 56px); width: 112px; height: 112px; border-radius: 50%; pointer-events: none;
   border: 3px solid var(--accent); box-shadow: 0 6px 18px -8px rgba(0, 0, 0, .55); background: var(--surface); }
-.ps-loupe.a-droite { left: auto; right: var(--space-2); }
+.ps-loupe.en-bas { top: auto; bottom: var(--space-2); }
 
 /* Plateau lu : il prend la largeur, comme en partie. */
 .ps-plateau { margin: 0 auto; width: min(100%, 52dvh); }
-.ps-plateau-score { width: min(100%, 40dvh); }
+.ps-plateau-score { width: min(100%, 30dvh); }
 
 /* Règle, komi, prisonniers. */
 .ps-regles { margin: 0 0 var(--space-1); }
@@ -69,11 +69,11 @@
 .ps-prisonniers .ps-compteur { margin-top: var(--space-2); }
 
 /* Score expliqué : la phrase, puis chaque terme, une colonne par camp. */
-.ps-resultat { margin: var(--space-3) 0 var(--space-2); text-align: center; font-family: var(--font-titre); font-weight: var(--fw-titre);
+.ps-resultat { margin: var(--space-2) 0 var(--space-2); text-align: center; font-family: var(--font-titre); font-weight: var(--fw-titre);
   font-size: var(--fs-2xl); line-height: var(--lh-titre); letter-spacing: var(--tracking-titre); }
 .ps-detail { width: 100%; border-collapse: separate; border-spacing: 0; background: var(--surface); border-radius: var(--radius); overflow: hidden;
   font-variant-numeric: tabular-nums; }
-.ps-detail th, .ps-detail td { padding: var(--space-2) var(--space-3); text-align: right; font-size: var(--fs-base); }
+.ps-detail th, .ps-detail td { padding: 6px var(--space-3); text-align: right; font-size: var(--fs-base); }
 .ps-detail thead th { font-weight: var(--fw-bold); }
 .ps-detail thead th .stone { width: 14px; height: 14px; display: inline-block; vertical-align: -2px; margin-right: 6px; }
 .ps-detail tbody th, .ps-detail tfoot th { text-align: left; font-weight: var(--fw-regular); color: var(--muted); }

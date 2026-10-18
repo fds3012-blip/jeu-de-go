@@ -19,6 +19,8 @@ import { appliquer, homographieGrille, quadrilatereValide, type Coins, type Poin
 import { coinsParDefaut } from '../go/photo/coins';
 import { groupAt, newPosition } from '../go/rules';
 import type { Rules } from '../go/score';
+// Le moteur est déjà dans le JS initial (App.tsx) : l'importer ici n'ajoute rien.
+import { proposeComptage } from '../engine';
 import { creerLecteur, ouvrirPhoto, type Lecteur, type PhotoOuverte } from './photoLecture';
 
 type Etape = 'photo' | 'coins' | 'lecture' | 'pierres' | 'mortes' | 'regle' | 'score';
@@ -126,7 +128,7 @@ export default function PhotoScore({ onRetour }: { onRetour: () => void }) {
     const pos = newPosition(taille);
     pos.board.set(plateau);
     const delai = new Promise<null>(resolve => setTimeout(() => resolve(null), DELAI_MORTES_MS));
-    const calcul = import('../engine').then(m => m.proposeComptage(pos, KOMI_USUEL.japanese)).catch(() => null);
+    const calcul = proposeComptage(pos, KOMI_USUEL.japanese).catch(() => null);
     void Promise.race([calcul, delai]).then(r => {
       if (t !== jeton.current) return;
       if (!r) { setEstimation('echec'); return; }
@@ -423,7 +425,8 @@ function EditeurCoins({ photo, coins, taille, onCoins, desactive, aideId }: {
     deplacer(k, { x: coins[k].x + d[0] * s, y: coins[k].y + d[1] * s });
   }
 
-  const loupeADroite = actif !== null && coins[actif].x < W / 2 && coins[actif].y < H / 2;
+  // Loupe au milieu du bord opposé au coin déplacé : elle ne cache jamais un coin.
+  const loupeEnBas = actif !== null && coins[actif].y < H / 2;
   return (
     <div className="ps-photo" ref={boite} style={{ aspectRatio: `${W} / ${H}`, ['--ps-ratio' as string]: W / H }}>
       <canvas ref={toile} className="ps-toile" role="img" aria-label={tph('coins.photoAria')} />
@@ -439,7 +442,7 @@ function EditeurCoins({ photo, coins, taille, onCoins, desactive, aideId }: {
           <span aria-hidden="true" />
         </button>
       ))}
-      {actif !== null && <canvas ref={loupe} className={`ps-loupe${loupeADroite ? ' a-droite' : ''}`} aria-label={tph('coins.loupe')} role="img" />}
+      {actif !== null && <canvas ref={loupe} className={`ps-loupe${loupeEnBas ? ' en-bas' : ''}`} aria-label={tph('coins.loupe')} role="img" />}
     </div>
   );
 }
