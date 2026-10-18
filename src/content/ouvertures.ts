@@ -29,18 +29,39 @@ export const OUVERTURES: readonly Ouverture[] = [
     // Le 3-3 (C3) en premier coup : écarté, il perd plus de 1,5 point (docs/pedagogie/repertoire-ouvertures-2026-10.md).
     ecartes: [{ coup: 0, c: 'cg' }] },
   // 19 × 19 : fuseki
-  { id: 'g-coins', taille: 19, sgf: '(;SZ[19];B[pd];W[dp];B[pp];W[dd])',
+  // #672 : Noir Q16 et Q4, deux hoshi du même côté : le nirensei (leçon l50).
+  { id: 'g-coins', taille: 19, sgf: '(;SZ[19];B[pd];W[dp];B[pp];W[dd])', lecon: 'l50',
     erreurs: [{ coup: 0, c: 'jj', perte: 4 }, { coup: 2, c: 'jj', perte: 3 }] },
+  // #672 : ouvertures célèbres (docs/pedagogie/ouvertures-celebres-2026-10.md), chacune enseignée par une leçon.
+  // Le sanrensei (trois hoshi), puis la réponse moderne de Blanc : le san-san tout de suite, bloqué côté moyo.
+  { id: 'g-sanrensei', taille: 19, sgf: '(;SZ[19];B[pd];W[dp];B[pp];W[dd];B[pj];W[qq];B[qp])', lecon: 'l51',
+    erreurs: [{ coup: 4, c: 'jj', perte: 2 }, { coup: 6, c: 'oq', perte: 2 }] },
+  // Le shin-fuseki de 1933 : le san-san en premier coup, puis un hoshi ; le tengen (Go Seigen) est jugé en erreur.
+  { id: 'g-shin', taille: 19, sgf: '(;SZ[19];B[qc];W[dq];B[dd];W[pq];B[do])', lecon: 'l52',
+    erreurs: [{ coup: 0, c: 'jj', perte: 3 }, { coup: 4, c: 'jj', perte: 3 }] },
+  // Le fuseki chinois (bas) : hoshi, komoku, pierre du bord sur la 3e ligne ; la tsuke de Blanc au 4-4, et le hane.
+  { id: 'g-chinois', taille: 19, sgf: '(;SZ[19];B[pd];W[dp];B[pq];W[dd];B[qk];W[pp];B[qp])', lecon: 'l53',
+    erreurs: [{ coup: 4, c: 'jj', perte: 2 }, { coup: 6, c: 'qo', perte: 4 }],
+    // Le chinois haut : la pierre du bord sur la 4e ligne.
+    variantes: [{ coup: 4, c: 'pk' }] },
   { id: 'g-bords', taille: 19, sgf: '(;SZ[19]AB[pd][pp]AW[dp][dd];B[pj])',
     erreurs: [{ coup: 0, c: 'jj', perte: 2 }] },
   // 19 × 19 : joseki du hoshi
-  { id: 'h-approche', taille: 19, cadre: 'bas-gauche', sgf: `(;SZ[19]${HOSHI};W[fq];B[dn];W[dr];B[cq];W[iq])`,
+  { id: 'h-approche', taille: 19, cadre: 'bas-gauche', sgf: `(;SZ[19]${HOSHI};W[fq];B[dn];W[dr];B[cq];W[iq])`, lecon: 'l55',
     erreurs: [{ coup: 1, c: 'fr', reponse: 'eq', perte: 2 }], ailleurs: true },
-  { id: 'h-sansan', taille: 19, cadre: 'bas-gauche', sgf: `(;SZ[19]${HOSHI};W[cq];B[cp];W[dq];B[ep];W[fq])`,
+  { id: 'h-sansan', taille: 19, cadre: 'bas-gauche', sgf: `(;SZ[19]${HOSHI};W[cq];B[cp];W[dq];B[ep];W[fq])`, lecon: 'l56',
     erreurs: [{ coup: 1, c: 'do', reponse: 'dq', perte: 3 }, { coup: 1, c: 'cr', reponse: 'dq', perte: 4 }], ailleurs: true },
+  // #672 : le même san-san, Noir entre (leçon l56, l'élève joue Noir) : au 5e coup de la partie, comme AlphaGo.
+  // Doublon de h-sansan pour la liste : absent du répertoire.
+  { id: 'h-sansan-noir', taille: 19, cadre: 'bas-gauche', sgf: '(;SZ[19]AB[pd][pp]AW[dp][dd];B[cq];W[cp];B[dq];W[ep];B[fq])',
+    lecon: 'l56', repertoire: false, ailleurs: true,
+    erreurs: [{ coup: 2, c: 'dr', perte: 4 }, { coup: 2, c: 'bp', perte: 4 }, { coup: 4, c: 'gq', perte: 6 }],
+    // L'approche F3 au lieu du san-san ; F2 au lieu de F3 pour finir.
+    variantes: [{ coup: 0, c: 'fq' }, { coup: 4, c: 'fr' }] },
   // 19 × 19 : joseki du komoku
   { id: 'k-tsuke', taille: 19, cadre: 'bas-gauche', sgf: `(;SZ[19]${KOMOKU};B[cp];W[eq];B[dq];W[ep];B[dn])`,
     erreurs: [{ coup: 2, c: 'cq', perte: 4 }, { coup: 4, c: 'eo', reponse: 'dp', perte: 9 }] },
-  { id: 'k-kosumi', taille: 19, cadre: 'bas-gauche', sgf: `(;SZ[19]${KOMOKU};B[cp];W[eq];B[do];W[hq])`,
+  // #672 : la kosumi D5 est celle de Shusaku (leçon l54).
+  { id: 'k-kosumi', taille: 19, cadre: 'bas-gauche', sgf: `(;SZ[19]${KOMOKU};B[cp];W[eq];B[do];W[hq])`, lecon: 'l54',
     erreurs: [{ coup: 2, c: 'bo', perte: 4 }] },
 ];
