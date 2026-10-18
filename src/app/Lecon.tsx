@@ -51,6 +51,8 @@ interface PlayerProps {
   celebrer?: boolean;
   onProgress: (steps: number) => void;
   onExit: () => void;
+  /** #640 : libellé de la sortie quand la leçon est posée hors d'Apprendre (« Retour ») ; sinon « Retour au chemin ». */
+  retour?: string;
   /** Ouvre la leçon suivante ; absent pour la dernière. */
   onNext?: () => void;
   /** Fin de leçon (#200) : série de 3 problèmes du thème de la leçon (`themes` : leurs noms) ; absente si la leçon n'a pas de thème. */
@@ -67,7 +69,7 @@ interface PlayerProps {
   parcours?: { retour: string; terminer: string; passer?: { libelle: string; aria: string }; onEtape: (i: number) => void; onFin: (passees: number) => void };
 }
 
-export function LessonPlayer({ lesson: { id: leconId }, start, confirmTouch, progress = {}, celebrer = true, onProgress, onExit, onNext, pratique, jouer, lecon, parcours }: PlayerProps) {
+export function LessonPlayer({ lesson: { id: leconId }, start, confirmTouch, progress = {}, celebrer = true, onProgress, onExit, retour, onNext, pratique, jouer, lecon, parcours }: PlayerProps) {
   const lesson = lecon ?? LESSONS.find(l => l.id === leconId)!;
   const [idx, setIdx] = useState(Math.min(start, lesson.steps.length - 1));
   const [answer, setAnswer] = useState<{ ok: boolean; p?: number; after?: Position; choice?: number; n: number } | null>(null);
@@ -175,7 +177,7 @@ export function LessonPlayer({ lesson: { id: leconId }, start, confirmTouch, pro
   }
 
   if (fini) {
-    return <FinLecon lesson={lesson} progress={{ ...progress, [lesson.id]: lesson.steps.length }} celebrer={celebrer} onNext={onNext} onExit={onExit} pratique={pratique} jouer={jouer} />;
+    return <FinLecon lesson={lesson} progress={{ ...progress, [lesson.id]: lesson.steps.length }} celebrer={celebrer} onNext={onNext} onExit={onExit} retour={retour} pratique={pratique} jouer={jouer} />;
   }
 
   const img = images ? images[Math.min(temps, images.length - 1)] : null;
@@ -210,7 +212,7 @@ export function LessonPlayer({ lesson: { id: leconId }, start, confirmTouch, pro
   return (
     <div className="lecteur lecteur-lecon" data-moment={moment}>
       <div className="lecteur-tete">
-        <Retour label={parcours?.retour ?? t('lecon.retourChemin')} onClick={onExit} />
+        <Retour label={parcours?.retour ?? retour ?? t('lecon.retourChemin')} onClick={onExit} />
         {/* Passe design #509 (point 9) : même grammaire que l'en-tête d'un problème, la ligne fine (les points d'étapes)
             au-dessus du titre, qui garde ainsi toute la largeur et l'encre du texte. */}
         <div className="lecteur-nom lecteur-nom-lecon">
@@ -316,8 +318,8 @@ export const POSE_MS = 460;
  * l'XP gagnée se lit sur place, puis une seule action en relief ; le lien de la leçon suivante la nomme.
  * Célébration modeste ; carillon et confettis seulement pour la dernière leçon.
  */
-function FinLecon({ lesson, progress, celebrer, onNext, onExit, pratique, jouer }: {
-  lesson: Lesson; progress: Progression; celebrer: boolean; onNext?: () => void; onExit: () => void;
+function FinLecon({ lesson, progress, celebrer, onNext, onExit, retour, pratique, jouer }: {
+  lesson: Lesson; progress: Progression; celebrer: boolean; onNext?: () => void; onExit: () => void; retour?: string;
   pratique?: PlayerProps['pratique']; jouer?: PlayerProps['jouer'];
 }) {
   // #228 : tout se compte dans le chapitre de la leçon. Un chapitre en cours d'écriture ne se ferme pas encore.
@@ -351,7 +353,7 @@ function FinLecon({ lesson, progress, celebrer, onNext, onExit, pratique, jouer 
       const l = suivante ? t('lecon.suivanteTitre', { titre: titreCourt(suivante.title) }) : t('lecon.suivante');
       return <button key={a} {...props} onClick={puis(l, onNext)}>{fr(l)}</button>;
     }
-    const l = t('lecon.retourChemin');
+    const l = retour ?? t('lecon.retourChemin');
     return <button key={a} {...props} onClick={puis(l, onExit)}>{l}</button>;
   };
   const [reduit] = useState(prefersReducedMotion);

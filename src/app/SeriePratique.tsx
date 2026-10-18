@@ -20,12 +20,14 @@ function noter(cle: string, id: string) {
   writeLocal(cle, { ...readLocal<Record<string, true>>(cle, {}), [id]: true });
 }
 
-export function SeriePratique({ problemes, confirmTouch, celebrer = true, onFin, versTheme = false }: {
+export function SeriePratique({ problemes, confirmTouch, celebrer = true, onFin, versTheme = false, retour: libelle }: {
   problemes: Puzzle[]; confirmTouch: boolean; celebrer?: boolean; onFin: () => void;
   /** #590 : série lancée depuis la page d'un thème, qui y ramène (« Retour au thème »). */
   versTheme?: boolean;
+  /** #640 : série d'une leçon posée hors d'Apprendre : « Retour », vers l'écran d'origine. */
+  retour?: string;
 }) {
-  const retour = t(versTheme ? 'apprendre.theme.retour' : 'lecon.retourChemin');
+  const retour = libelle ?? t(versTheme ? 'apprendre.theme.retour' : 'lecon.retourChemin');
   const [i, setI] = useState(0);
   // #236 (N2), suite de #250 (M9) : une fête à la fois. Tant que la feuille « Bravo » est là, le problème reste un
   // exercice (l'XP se lit dans la feuille, rien d'autre ne se pose sur la consigne). Un niveau franchi pendant la

@@ -91,6 +91,8 @@ test('les tuiles mènent au problème du jour et à la leçon suivante', async (
 
   await page.getByRole('navigation').getByRole('button', { name: 'Jouer' }).click();
   await page.getByRole('button', { name: /^Leçon Libertés et capture/ }).click();
-  await expect(page.getByRole('navigation').getByRole('button', { name: 'Apprendre' })).toHaveAttribute('aria-current', 'page');
-  await expect(page.getByRole('button', { name: 'Retour au chemin' })).toBeVisible();
+  // #640 (N4) : la leçon s'ouvre par-dessus Jouer, qui reste allumé ; « Retour » ramène à l'accueil.
+  await expect(page.getByRole('navigation').getByRole('button', { name: 'Jouer' })).toHaveAttribute('aria-current', 'page');
+  await page.getByRole('button', { name: 'Retour', exact: true }).click();
+  await expect(page.getByRole('button', { name: /^Leçon Libertés et capture/ })).toBeVisible();
 });
