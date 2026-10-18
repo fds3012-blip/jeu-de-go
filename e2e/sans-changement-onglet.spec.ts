@@ -54,22 +54,24 @@ function amies(serveur: FauxServeur) {
   return serveur.sessionCompte('alice@exemple.test', 'Alice', ALICE);
 }
 
-test('1. placement depuis le Profil : le Profil reste allumé, « Passer » ramène au Profil', async ({ browser, baseURL }) => {
+// #647 (F4) : le niveau de départ vit dans « Ta cote » ; « Passer » et le retour du système y ramènent.
+test('1. placement depuis le Profil : le Profil reste allumé, « Passer » ramène à « Ta cote »', async ({ browser, baseURL }) => {
   const { ctx, page, erreurs } = await telephone(browser, baseURL);
   await page.goto('/');
   await onglet(page, 'Profil').click();
+  await page.getByTestId('ligne-cote').click();
   await page.getByRole('button', { name: 'Ton niveau de départ' }).click();
   const passer = page.getByRole('button', { name: 'Passer les 3 problèmes' });
   await expect(passer).toBeVisible();
   await allume(page, 'Profil');
   await passer.click();
-  await expect(page.getByRole('heading', { name: 'Ton parcours' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Ta cote' })).toBeVisible();
   await allume(page, 'Profil');
   // Le retour du système aussi (placement rouvert : rien n'est enregistré par la sortie).
-  await page.getByRole('button', { name: /^(Ton niveau de départ|Refaire)/ }).first().click();
+  await page.getByRole('button', { name: /^Ton niveau de départ/ }).click();
   await expect(passer).toBeVisible();
   await retourSysteme(page);
-  await expect(page.getByRole('heading', { name: 'Ton parcours' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Ta cote' })).toBeVisible();
   await allume(page, 'Profil');
   expect(erreurs).toEqual([]);
   await ctx.close();
