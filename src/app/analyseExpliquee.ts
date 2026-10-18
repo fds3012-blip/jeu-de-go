@@ -4,7 +4,7 @@
 // apparition dans la revue (`glosesDesErreurs`).
 import { toLabel } from '../go/coords';
 import type { Color, Position } from '../go/rules';
-import type { Explication, Fait, Ligne } from '../go/explication';
+import { SEUILS, type Explication, type Fait, type Ligne } from '../go/explication';
 import { ta } from '../content/i18n/analyse';
 
 /** Mots du go expliqués entre parenthèses la première fois qu'ils apparaissent. */
@@ -97,10 +97,15 @@ export function textesExplication(x: Explication, size: number, o: OptionsTextes
   const g = (t: Terme) => { if (dites.has(t)) return false; dites.add(t); return gloses.has(t); };
   const bon = toLabel(x.bon, size);
   const termes = [...new Set(x.faits.flatMap(termesDe))];
+  if (x.positionnel && x.riposte === x.bon) {
+    // Le coup de l'adversaire juste après le tien est le bon coup : un point clé pour les deux camps (fait lu dans la suite).
+    return { erreur: ta('erreur.pointCommun', { adv: o.adv, bon, pts: pts(x.perte) }), meilleur: ta('bon.pointCommun', { bon, adv: o.adv }), termes };
+  }
   if (x.positionnel) {
     const debut = x.riposte != null ? `${ta('erreur.riposte', { adv: o.adv, point: toLabel(x.riposte, size) })} ` : '';
     return {
-      erreur: debut + ta(x.calme ? 'erreur.positionnelCalme' : 'erreur.positionnel', { bon, pts: pts(x.perte) }),
+      // Au-delà de SEUILS.positionnelMax, sans calme vérifié, on ne prétend même pas que la raison est positionnelle.
+      erreur: debut + ta(x.calme ? 'erreur.positionnelCalme' : x.perte < SEUILS.positionnelMax ? 'erreur.positionnel' : 'erreur.inexplique', { bon, pts: pts(x.perte) }),
       meilleur: ta('bon.general', { bon, pts: pts(x.perte) }),
       termes,
     };

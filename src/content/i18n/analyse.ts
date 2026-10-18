@@ -49,7 +49,9 @@ const FR = {
   'erreur.initiative': 'Ton coup est gote{glose} : {adv} joue tout de suite ailleurs, en {point}.',
   'erreur.positionnel': 'KataGo préfère {bon}, d’environ {pts} ; la raison est surtout positionnelle.',
   'erreur.positionnelCalme': 'KataGo préfère {bon}, d’environ {pts}. Rien n’est pris et aucun groupe ne change de sort : la raison est surtout positionnelle.',
+  'erreur.inexplique': 'KataGo préfère {bon}, d’environ {pts}. Je ne trouve pas de raison simple et sûre : regarde les deux suites.',
   'erreur.riposte': '{adv} répond en {point}.',
+  'erreur.pointCommun': '{adv} répond en {bon} : c’est justement le coup que KataGo préférait pour toi, d’environ {pts}.',
 
   // Pourquoi le bon coup est meilleur.
   'bon.perdues': { one: 'Avec {bon}, cette pierre n’est pas prise.', other: 'Avec {bon}, ces {n} pierres ne sont pas prises.' },
@@ -63,6 +65,7 @@ const FR = {
   'bon.territoire': 'Avec {bon}, tu gagnes environ {pts} {zone}.',
   'bon.initiative': '{bon} est sente{glose} : {adv} répond en {reponse}, puis tu joues ailleurs, en {ailleurs}.',
   'bon.general': 'KataGo préfère {bon} : environ {pts} de plus que ton coup.',
+  'bon.pointCommun': '{bon} est un point clé pour les deux camps : {adv} l’a pris juste après ton coup.',
 
   // Zones.
   'zone.coinHautGauche': 'dans le coin en haut à gauche',
@@ -126,7 +129,9 @@ const EN: { readonly [K in CleAnalyse]: Texte } = {
   'erreur.initiative': 'Your move is gote{glose}: {adv} plays elsewhere right away, at {point}.',
   'erreur.positionnel': 'KataGo prefers {bon}, by about {pts}; the reason is mostly positional.',
   'erreur.positionnelCalme': 'KataGo prefers {bon}, by about {pts}. Nothing is captured and no group changes fate: the reason is mostly positional.',
+  'erreur.inexplique': 'KataGo prefers {bon}, by about {pts}. I can’t find a simple, safe reason: look at both lines.',
   'erreur.riposte': '{adv} answers at {point}.',
+  'erreur.pointCommun': '{adv} answers at {bon}: exactly the move KataGo preferred for you, by about {pts}.',
 
   'bon.perdues': { one: 'With {bon}, this stone isn’t captured.', other: 'With {bon}, these {n} stones aren’t captured.' },
   'bon.manquee.immediate': { one: '{bon} captures a stone right away.', other: '{bon} captures {n} stones right away.' },
@@ -139,6 +144,7 @@ const EN: { readonly [K in CleAnalyse]: Texte } = {
   'bon.territoire': 'With {bon}, you gain about {pts} {zone}.',
   'bon.initiative': '{bon} is sente{glose}: {adv} answers at {reponse}, then you play elsewhere, at {ailleurs}.',
   'bon.general': 'KataGo prefers {bon}: about {pts} more than your move.',
+  'bon.pointCommun': '{bon} is a key point for both sides: {adv} took it right after your move.',
 
   'zone.coinHautGauche': 'in the top left corner',
   'zone.coinHautDroite': 'in the top right corner',

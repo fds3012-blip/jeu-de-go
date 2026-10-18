@@ -17,6 +17,8 @@
 // - coupe          : la réponse de l'adversaire coupe tes pierres (séparation vérifiée par les règles), ce qui leur
 //                    coûte de la propriété ; le bon coup empêche cette coupe ;
 // - territoire     : l'écart de propriété se concentre dans une zone (coin, bord, centre, sinon un quart ou une moitié) ;
+//                    la zone porte au moins la moitié des points perdus, sans les dépasser (moins 2 points par pierre
+//                    déjà dite par une autre raison) ;
 // - initiative     : selon la suite de KataGo, après le bon coup l'adversaire répond sur place puis tu joues ailleurs
 //                    (sente), alors qu'après ton coup il joue ailleurs tout de suite (ton coup était gote).
 import { groupAt, neighbors, play, type Color, type Position } from './rules';
@@ -33,24 +35,24 @@ export const SEUILS = {
   sure: 0.6,
   /** Propriété moyenne qui confirme une prise de la suite (pierres prises : au plus -0,3 ; sauvées : au moins +0,3). */
   confirme: 0.3,
-  /** Au-dessus de cette propriété, une pierre est encore « sûre » : en dessous, elle n'est plus sûre de vivre. */
+  /** Au-dessus de cette propriété moyenne, un groupe est encore « sûr » : en dessous, il n'est plus sûr de vivre. */
   incertain: 0.2,
-  /** Groupe : écart moyen minimal de propriété entre les deux suites, par pierre. */
+  /** Groupe : écart moyen minimal de propriété entre les deux suites, par pierre du groupe. */
   ecartGroupe: 0.8,
   /** Coupe : perte moyenne de propriété des pierres coupées pour dire que la coupe compte. */
   ecartCoupe: 0.4,
-  /** Zone : gain minimal (points), part minimale du gain total, et marge au-delà des points perdus. */
+  /** Zone : gain minimal (points), part minimale du gain total et des points perdus, et marge au-delà des points perdus. */
   zoneMin: 2,
   zonePart: 0.5,
   zonePartPrecise: 0.7,
   zoneMarge: 2,
+  /** Sans raison sûre, au-delà de cette perte on ne dit plus « surtout positionnelle » (sauf calme vérifié). */
+  positionnelMax: 5,
   /** Gain d'une intersection à partir duquel elle est marquée d'un carré sur le plateau. */
   carre: 0.25,
   /** Initiative : réponse « sur place » à au plus 2 intersections, coup « ailleurs » à au moins 4. */
   local: 2,
   ailleurs: 4,
-  /** Une seconde raison n'est gardée que si elle pèse au moins 40 % de la première. */
-  secondePart: 0.4,
 } as const;
 
 /** Ligne comparée : ta suite (ton coup, puis la réponse de KataGo) ou celle du bon coup. */
@@ -194,14 +196,20 @@ const memeChaine = (pos: Position, pierres: number[]) => {
 };
 
 /**
- * Regroupe des pierres proches (côte à côte, en diagonale, ou à un saut sur une ligne avec un point vide entre deux) :
- * un « groupe » au sens du joueur, pas seulement une chaîne. Groupes triés du plus grand au plus petit.
+ * Regroupe des pierres proches de même couleur : côte à côte, en diagonale (sauf si l'adversaire occupe les deux
+ * points qui les séparent : c'est une coupe), ou à un saut sur une ligne avec un point vide entre deux. Un « groupe »
+ * au sens du joueur, pas seulement une chaîne. Groupes triés du plus grand au plus petit.
  */
 export function regrouper(pos: Position, pierres: readonly number[]): number[][] {
   const size = pos.size, reste = new Set(pierres), out: number[][] = [];
   const proches = (a: number, b: number) => {
-    const dx = Math.abs((a % size) - (b % size)), dy = Math.abs(Math.floor(a / size) - Math.floor(b / size));
-    if (dx <= 1 && dy <= 1) return true;
+    const ax = a % size, ay = Math.floor(a / size), bx = b % size, by = Math.floor(b / size);
+    const dx = Math.abs(ax - bx), dy = Math.abs(ay - by);
+    if (dx + dy === 1) return true;
+    if (dx === 1 && dy === 1) {
+      const c = pos.board[a], o = c === 1 ? 2 : 1;
+      return !(pos.board[ay * size + bx] === o && pos.board[by * size + ax] === o);
+    }
     if ((dx === 2 && dy === 0) || (dx === 0 && dy === 2)) return pos.board[(a + b) / 2] === 0;
     return false;
   };
@@ -256,10 +264,11 @@ export function dansLieu(p: number, size: number, l: Lieu): boolean {
 /**
  * Zone où se fait l'écart de propriété sur les intersections vides (gain de ton point de vue, `d[p]`). Le lieu le plus
  * précis d'abord (coin, bord, centre), puis un quart, puis une moitié : on garde le premier niveau où un lieu porte au
- * moins 70 % du gain total, sinon le premier où il en porte au moins 50 %. Toujours : gain ≥ 2 points et pas plus que
- * les points perdus + 2 (pas de « 10 points dans le coin » pour une erreur de 3 points).
+ * moins 70 % du gain total, sinon le premier où il en porte au moins 50 %. Toujours : gain ≥ 2 points, et entre
+ * `bornes.min` et `bornes.max` (la zone explique une bonne part de la perte, sans jamais la dépasser de beaucoup :
+ * ni « 10 points dans le coin » pour une erreur de 3 points, ni « 2 points » pour une erreur de 10).
  */
-export function zoneDe(avant: Position, d: Float64Array, perte: number, exclus: ReadonlySet<number>): { lieu: Lieu; gain: number; total: number; points: number[] } | null {
+export function zoneDe(avant: Position, d: Float64Array, bornes: { min: number; max: number }, exclus: ReadonlySet<number>): { lieu: Lieu; gain: number; total: number; points: number[] } | null {
   const n = avant.board.length, size = avant.size;
   let total = 0;
   for (let p = 0; p < n; p++) if (avant.board[p] === 0 && !exclus.has(p)) total += d[p];
@@ -269,7 +278,7 @@ export function zoneDe(avant: Position, d: Float64Array, perte: number, exclus: 
     for (let p = 0; p < n; p++) if (avant.board[p] === 0 && !exclus.has(p) && dansLieu(p, size, l)) g += d[p];
     return g;
   };
-  const dicible = (g: number, part: number) => g >= SEUILS.zoneMin && g >= part * total && g <= perte + SEUILS.zoneMarge;
+  const dicible = (g: number, part: number) => g >= SEUILS.zoneMin && g >= part * total && g >= bornes.min && g <= bornes.max;
   for (const part of [SEUILS.zonePartPrecise, SEUILS.zonePart]) {
     for (const niveau of [LIEUX_PRECIS, LIEUX_QUARTS, LIEUX_MOITIES]) {
       let choix: { lieu: Lieu; gain: number } | null = null;
@@ -319,6 +328,9 @@ function paradeDe(pb: Position, bon: number, r: number, c: Color, reps: number[]
 }
 
 // ---------- Le générateur ----------
+
+/** Familles de raisons, de la plus concrète à la moins concrète. */
+const RANG: Record<Fait['type'], number> = { pierresPerdues: 0, priseManquee: 0, coupe: 1, groupe: 1, groupeTue: 1, territoire: 2, initiative: 3 };
 
 /**
  * Explique l'erreur `joue` face au bon coup `bon` (voir l'en-tête du fichier). `null` si rien n'est à expliquer :
@@ -379,25 +391,28 @@ export function expliquerErreur(e: Entree): Explication | null {
     break;
   }
 
-  // 3. Groupes : pierres à toi vivantes après le bon coup, mortes ou incertaines après ton coup (et l'inverse chez lui).
+  // 3. Groupes : un groupe à toi (au moins 2 pierres), vivant après le bon coup, mort ou incertain après ton coup ; et
+  //    l'inverse chez lui. Moyennes sur tout le groupe : on parle du groupe entier, jamais d'une partie choisie.
   if (avecPropriete) {
-    const tiennes: number[] = [], siennes: number[] = [];
-    for (let p = 0; p < n; p++) {
-      if (dejaDites.has(p) || p === bon || p === joue) continue;
-      if (avant.board[p] === c && b(p) >= SEUILS.sure && j(p) <= SEUILS.incertain && b(p) - j(p) >= SEUILS.ecartGroupe) tiennes.push(p);
-      if (avant.board[p] === o && b(p) >= SEUILS.sure && j(p) <= SEUILS.incertain && b(p) - j(p) >= SEUILS.ecartGroupe) siennes.push(p);
-    }
-    const g = regrouper(avant, tiennes).find(x => x.length >= 2);
+    const groupesDe = (camp: Color) => {
+      const pierres: number[] = [];
+      for (let p = 0; p < n; p++) if (avant.board[p] === camp) pierres.push(p);
+      return regrouper(avant, pierres).filter(g => g.length >= 2 && !g.some(p => dejaDites.has(p)));
+    };
+    const bascule = (g: number[]) => {
+      const mb = moyenne(g.map(b)), mj = moyenne(g.map(j));
+      return mb >= SEUILS.sure && mj <= SEUILS.incertain && mb - mj >= SEUILS.ecartGroupe ? { mj, poids: g.reduce((a, p) => a + b(p) - j(p), 0) } : null;
+    };
+    const meilleur = (camp: Color) => groupesDe(camp).map(g => ({ g, x: bascule(g) })).filter(v => v.x).sort((u, v) => v.x!.poids - u.x!.poids)[0];
+    const g = meilleur(c);
     if (g) {
-      const etat = g.every(p => j(p) <= -SEUILS.sure) ? 'mort' : 'faible';
-      faits.push({ type: 'groupe', pierres: g, etat, poids: g.reduce((a, p) => a + b(p) - j(p), 0), visuel: { ligne: 'joue', etape: suiteJoue.coups.length - 1, pierres: g } });
-      g.forEach(p => dejaDites.add(p));
+      faits.push({ type: 'groupe', pierres: g.g, etat: g.x!.mj <= -SEUILS.sure ? 'mort' : 'faible', poids: g.x!.poids, visuel: { ligne: 'joue', etape: suiteJoue.coups.length - 1, pierres: g.g } });
+      g.g.forEach(p => dejaDites.add(p));
     }
-    const h = regrouper(avant, siennes).find(x => x.length >= 2);
+    const h = meilleur(o);
     if (h) {
-      const apresJoue = h.every(p => j(p) <= -SEUILS.sure) ? 'vit' : 'incertain';
-      faits.push({ type: 'groupeTue', pierres: h, apresJoue, poids: h.reduce((a, p) => a + b(p) - j(p), 0), visuel: { ligne: 'bon', etape: suiteBon.coups.length - 1, pierres: h } });
-      h.forEach(p => dejaDites.add(p));
+      faits.push({ type: 'groupeTue', pierres: h.g, apresJoue: h.x!.mj <= -SEUILS.sure ? 'vit' : 'incertain', poids: h.x!.poids, visuel: { ligne: 'bon', etape: suiteBon.coups.length - 1, pierres: h.g } });
+      h.g.forEach(p => dejaDites.add(p));
     }
   }
 
@@ -417,11 +432,17 @@ export function expliquerErreur(e: Entree): Explication | null {
     }
   }
 
-  // 5. Territoire : l'écart de propriété sur les points vides, concentré dans une zone.
+  // 5. Territoire : l'écart de propriété sur les points vides, concentré dans une zone. Les pierres déjà dites
+  //    (prises, groupes, coupe) comptent 2 points chacune dans la perte : la zone ne peut dire que le reste.
   if (avecPropriete) {
     const d = new Float64Array(n);
     for (let p = 0; p < n; p++) d[p] = b(p) - j(p);
-    const z = zoneDe(avant, d, e.perte, new Set([bon, joue, ...dejaDites]));
+    const pierresDites = new Set(faits.flatMap(f => ('pierres' in f ? f.pierres : [])));
+    // Avec d'autres raisons, pas de marge : la zone et les pierres ensemble ne dépassent pas les points perdus. La zone
+    // porte au moins la moitié de ce qui reste à expliquer.
+    const reste = e.perte - 2 * pierresDites.size;
+    const bornes = pierresDites.size ? { min: SEUILS.zonePart * reste, max: reste } : { min: SEUILS.zonePart * e.perte, max: e.perte + SEUILS.zoneMarge };
+    const z = zoneDe(avant, d, bornes, new Set([bon, joue, ...dejaDites, ...pierresDites]));
     if (z) faits.push({ type: 'territoire', lieu: z.lieu, gain: z.gain, points: z.points, poids: z.gain, visuel: { ligne: 'bon', etape: 0, pierres: [], zone: z.points } });
   }
 
@@ -435,10 +456,10 @@ export function expliquerErreur(e: Entree): Explication | null {
     if (sente && gote) initiative = { type: 'initiative', reponse: B[1], ailleurs: B[2], ailleursLui: J[1], poids: 0, visuel: { ligne: 'bon', etape: 2, pierres: [] } };
   }
 
-  // Les plus fortes d'abord ; une seconde raison seulement si elle pèse assez ; l'initiative en appoint.
-  faits.sort((x, y) => y.poids - x.poids);
-  const gardes = faits.slice(0, 1);
-  if (faits[1] && faits[1].poids >= SEUILS.secondePart * faits[0].poids) gardes.push(faits[1]);
+  // Deux raisons au plus : les plus concrètes d'abord (prises, puis coupe et groupes, puis zone), les plus lourdes
+  // d'abord dans chaque famille ; l'initiative en appoint.
+  faits.sort((x, y) => RANG[x.type] - RANG[y.type] || y.poids - x.poids);
+  const gardes = faits.slice(0, 2);
   if (initiative && gardes.length < 2) gardes.push(initiative);
 
   // « Calme » vérifié : aucune prise dans les deux suites, aucune pierre qui change de camp.

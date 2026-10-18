@@ -23,7 +23,7 @@ function propriete(valeurs: Record<string, number> = {}, fond = 0) {
   for (const [k, v] of Object.entries(valeurs)) o[L(k)] = v;
   return o;
 }
-const entree = (e: Partial<Entree> & Pick<Entree, 'avant'> & { joue: string | number; bon: string }): Entree => ({
+const entree = (e: Omit<Partial<Entree>, 'joue' | 'bon'> & Pick<Entree, 'avant'> & { joue: string | number; bon: string }): Entree => ({
   perte: 5, visitesBon: 40, visitesRiposte: 40, ...e,
   joue: typeof e.joue === 'number' ? e.joue : L(e.joue), bon: L(e.bon),
 });
@@ -139,7 +139,7 @@ describe('coupe permise', () => {
   it('la bonne raison : la coupe, et le bon coup occupe le point de coupe', () => {
     const x = expliquerErreur(entree({ ...base, ownBon: propriete({ D4: 0.7, E5: 0.7 }), ownJoue: propriete({ D4: 0.1, E5: 0.1 }) }))!;
     expect(x.faits[0]).toMatchObject({ type: 'coupe', point: L('E4'), parade: 'occupe' });
-    expect(Ls(x.faits[0].pierres)).toEqual(['E5', 'D4']);
+    expect(Ls(x.faits[0].visuel.pierres)).toEqual(['E5', 'D4']);
   });
   it('une coupe qui ne coûte rien (propriété inchangée) n’est pas une raison', () => {
     const x = expliquerErreur(entree({ ...base, ownBon: propriete({ D4: 0.7, E5: 0.7 }), ownJoue: propriete({ D4: 0.6, E5: 0.6 }) }))!;
@@ -175,6 +175,11 @@ describe('territoire', () => {
   it('jamais plus que les points perdus + 2 : 4,8 points dans le coin pour une erreur de 1,5 point, rien', () => {
     const { bon, joue } = coin();
     const x = expliquerErreur(entree({ avant, joue: 'E5', bon: 'D2', perte: 1.5, ownBon: bon, ownJoue: joue }))!;
+    expect(x.faits.find(f => f.type === 'territoire')).toBeUndefined();
+  });
+  it('une zone qui n’explique qu’une petite part de la perte (4,8 points sur 12) n’est pas dite', () => {
+    const { bon, joue } = coin();
+    const x = expliquerErreur(entree({ avant, joue: 'E5', bon: 'D2', perte: 12, ownBon: bon, ownJoue: joue }))!;
     expect(x.faits.find(f => f.type === 'territoire')).toBeUndefined();
   });
   it('écart réparti sur tout le plateau : pas de zone, et la raison positionnelle est dite « calme »', () => {
@@ -216,12 +221,13 @@ describe('une ou deux raisons, les plus fortes', () => {
     const x = expliquerErreur(entree({ avant, joue: 'H8', bon: 'E3', perte: 7, pvBon: [L('E3')], pvRiposte: [L('E3')], ownBon: bon, ownJoue: joue }))!;
     expect(x.faits.map(f => f.type)).toEqual(['pierresPerdues', 'territoire']);
   });
-  it('une seconde raison trop faible (moins de 40 % de la première) n’est pas dite', () => {
-    const avant = position(['E5', 'E4', 'B2'], ['D5', 'F5', 'E6', 'D4', 'F4']);
-    const bon = propriete({ E5: 0.9, E4: 0.9 }), joue = propriete({ E5: -0.9, E4: -0.9 });
-    // 2 points du coin seulement, sous le seuil de zone : rien
-    const x = expliquerErreur(entree({ avant, joue: 'H8', bon: 'E3', perte: 7, pvBon: [L('E3')], pvRiposte: [L('E3')], ownBon: bon, ownJoue: joue }))!;
-    expect(x.faits.map(f => f.type)).toEqual(['pierresPerdues']);
+  it('trois raisons possibles : on garde les deux plus concrètes (les prises avant la zone)', () => {
+    // Noir E5-E4 en atari ; Blanc C7 en atari aussi (B7, C8, D7 noirs) : le bon coup E3 sauve, la suite du bon coup prend C7.
+    const avant = position(['E5', 'E4', 'B7', 'C8', 'D7'], ['D5', 'F5', 'E6', 'D4', 'F4', 'C7']);
+    const bon = propriete({ E5: 0.9, E4: 0.9, C7: 0.9 }), joue = propriete({ E5: -0.9, E4: -0.9, C7: -0.5 });
+    for (const k of ['A1', 'A2', 'A3', 'B1', 'B2', 'B3', 'C1', 'C2', 'C3']) { bon[L(k)] = 0.5; joue[L(k)] = 0.1; }
+    const x = expliquerErreur(entree({ avant, joue: 'H8', bon: 'E3', perte: 12, pvBon: [L('E3'), L('H2'), L('C6')], pvRiposte: [L('E3')], ownBon: bon, ownJoue: joue }))!;
+    expect(x.faits.map(f => f.type)).toEqual(['pierresPerdues', 'priseManquee']);
   });
 });
 
@@ -273,6 +279,6 @@ describe('outils', () => {
     expect(distance(L('C3'), L('D4'), 9)).toBe(1);
   });
   it('zoneDe : total négatif ou nul, pas de zone', () => {
-    expect(zoneDe(position([], []), new Float64Array(81).fill(-0.1), 5, new Set())).toBeNull();
+    expect(zoneDe(position([], []), new Float64Array(81).fill(-0.1), { min: 0, max: 5 }, new Set())).toBeNull();
   });
 });
