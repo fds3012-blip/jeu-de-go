@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { ouvrirNiveauBadges } from './profil';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -106,6 +107,7 @@ test('badges : 21 sceaux, vitrine repliée, un badge de #529 gagné s’imprime 
   });
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Profil' }).click();
+  await ouvrirNiveauBadges(page);
   const vitrine = page.getByRole('region', { name: 'Badges, 2 sur 21' });
   await expect(vitrine.getByRole('button', { name: 'Première course : obtenu' })).toBeVisible();
   await expect(vitrine.getByRole('button', { name: 'Objectif de la semaine : obtenu' })).toBeVisible();
@@ -149,7 +151,9 @@ test('niveau 10 : la fête annonce le goban « Cerisier », qui se choisit dans 
   // #613 : la barre de niveau est dans le Profil.
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Profil' }).click();
+  await ouvrirNiveauBadges(page);
   await expect(page.getByTestId('barre-niveau')).toContainText(/Niveau\s10/);
+  await page.locator('.retour').first().click();
   await page.getByRole('button', { name: /^Réglages/ }).click();
   const goban = page.getByRole('group', { name: 'Goban' });
   const cerisier = goban.getByRole('button', { name: 'Cerisier', exact: true });

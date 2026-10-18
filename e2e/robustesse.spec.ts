@@ -54,7 +54,7 @@ test.describe('écran manquant', () => {
     await erreur.getByRole('button', { name: 'Réessayer' }).click();
     await expect(page.locator('.cta')).toBeVisible();
     await NAV(page).getByRole('button', { name: 'Profil' }).click();
-    await expect(page.getByRole('heading', { name: 'Ton parcours' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Ta progression' })).toBeVisible();
   });
 
   test('#606 : sur l’écran d’erreur, le retour du système ramène à l’accueil (comme « Retour à l’accueil »)', async ({ page }) => {
@@ -98,7 +98,7 @@ test('hors ligne : bandeau « ce qui marche » sur l’accueil, rien dans Appren
   await expect(bandeau).toContainText('Tu peux jouer contre l’ordi, faire les leçons et les problèmes.');
   // Le Profil (parcours, réglages, l'IA) marche hors ligne : pas de bandeau qui dirait le contraire.
   await NAV(page).getByRole('button', { name: 'Profil' }).click();
-  await expect(page.getByRole('heading', { name: 'Ton parcours' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Ta progression' })).toBeVisible();
   await expect(bandeau).toHaveCount(0);
   // Apprendre marche hors ligne : pas de bandeau.
   await NAV(page).getByRole('button', { name: 'Apprendre' }).click();

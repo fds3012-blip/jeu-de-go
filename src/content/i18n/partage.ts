@@ -96,7 +96,6 @@ const FR = {
   'vueEtude.introuvable': 'Cette étude n’est plus disponible.',
   // Partager l'app elle-même (#521) : ligne du Profil, invitation discrète aux moments forts, texte envoyé.
   'app.ligne': 'Partager Mochi Go',
-  'app.court': 'Partager',
   'app.titre': 'Mochi Go',
   'app.texte': 'Je joue au go sur Mochi Go : c’est gratuit, sans pub, et on apprend en jouant, même débutant. Viens essayer !',
   'app.invitation': 'Ça te plaît ? Fais découvrir le go à un ami.',
@@ -198,7 +197,6 @@ const EN: { readonly [K in keyof typeof FR]: string } = {
   'vueEtude.etudier': 'Study it with Mochi',
   'vueEtude.introuvable': 'This study is no longer available.',
   'app.ligne': 'Share Mochi Go',
-  'app.court': 'Share',
   'app.titre': 'Mochi Go',
   'app.texte': 'I play go on Mochi Go: it’s free, no ads, and you learn by playing, even as a beginner. Come and try it!',
   'app.invitation': 'Enjoying it? Show a friend the game of go.',

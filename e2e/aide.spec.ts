@@ -89,7 +89,7 @@ test('depuis le comptage : un toucher ouvre « Comment on compte ? », un touche
 test('questions fréquentes : compte, série, gel, hors ligne, clavier, supprimer mon compte', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Profil' }).click();
-  await page.getByRole('button', { name: 'Aide', exact: true }).click();
+  await page.getByRole('button', { name: 'Aide sur le jeu', exact: true }).click();
   const aide = feuille(page);
   await aide.getByRole('tab', { name: 'Questions' }).click();
   const questions = aide.locator('[data-question]');
@@ -120,7 +120,7 @@ test('depuis le Profil : 5 cartes de règles, le comptage, puis une leçon ; Éc
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Profil' }).click();
-  const ligne = page.getByRole('button', { name: 'Aide', exact: true });
+  const ligne = page.getByRole('button', { name: 'Aide sur le jeu', exact: true });
   await ligne.click();
   const aide = feuille(page);
   await expect(aide).toBeVisible();
@@ -178,7 +178,7 @@ for (const [largeur, hauteur] of [[390, 844], [320, 568]] as const) {
       await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: theme });
       await page.goto('/');
       await page.getByRole('navigation').getByRole('button', { name: 'Profil' }).click();
-      await page.getByRole('button', { name: 'Aide', exact: true }).click();
+      await page.getByRole('button', { name: 'Aide sur le jeu', exact: true }).click();
       const aide = feuille(page);
       for (const onglet of ['Règles', 'Compter', 'Mots']) {
         await aide.getByRole('tab', { name: onglet }).click();
@@ -201,7 +201,7 @@ for (const [largeur, hauteur] of [[390, 844], [320, 568]] as const) {
 test('en anglais : Help, Go words, et « ko » trouve Ko', async ({ page }) => {
   await page.goto('/?lang=en');
   await page.getByRole('navigation').getByRole('button', { name: 'Profile' }).click();
-  await page.getByRole('button', { name: 'Help', exact: true }).click();
+  await page.getByRole('button', { name: 'Help with the game', exact: true }).click();
   const aide = feuille(page);
   await expect(aide.getByRole('heading', { name: 'Help' })).toBeVisible();
   await aide.getByRole('tab', { name: 'Words' }).click();

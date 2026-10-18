@@ -29,7 +29,10 @@ test('Compter une photo : de la photo au score expliqué, en japonais puis en ch
   await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: 'dark' });
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Profil' }).click();
-  await page.getByRole('button', { name: 'Compter une photo' }).click();
+  // #655 : une ligne du sommaire du Profil, dans « Tes parties et tes amis », juste après « Mes parties ».
+  const entree = page.getByTestId('rubrique-social').getByRole('button', { name: 'Compter une photo' });
+  await expect(page.getByTestId('rubrique-social').locator('.sommaire-entree').nth(1)).toHaveAttribute('data-entree', 'photo');
+  await entree.click();
 
   // Étape 1 : la permission est expliquée avant le bouton qui la demande.
   await expect(page.getByRole('heading', { name: 'Compter une photo' })).toBeVisible();
@@ -95,6 +98,8 @@ test('Compter une photo : de la photo au score expliqué, en japonais puis en ch
   // « ‹ » remonte d'une étape à la fois, puis ramène au Profil.
   for (let i = 0; i < 6; i++) await page.locator('.retour').first().click();
   await expect(page.getByRole('heading', { name: 'Profil', exact: true })).toBeVisible();
+  await expect(entree).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
 });
 
 test('Compter une photo : japonais, les prisonniers saisis comptent', async ({ page }) => {

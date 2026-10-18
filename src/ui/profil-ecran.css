@@ -3,7 +3,7 @@
  * Mon compte. Le Profil tient en 390 × 844 sans défiler : une carte d'identité, des lignes de 48 px, pas de paragraphe.
  * #563 : chargée avec ses écrans (Profil, Account, Amis, ReglageIA, Vitrine, IconesReglages), hors du CSS initial.
  * Les lignes, la page Conditions et le bandeau de consentement restent dans profil.css (JS initial), ainsi que
- * les @keyframes et l'en-tête « Ton parcours » (.profil .profil-titre-ligne, que partager-app.css ajuste après elle).
+ * les @keyframes.
  */
 
 /* ---------- Carte d'identité ---------- */
@@ -22,14 +22,8 @@
 /* Titre d'un groupe de réglages (#103). */
 .lignes-titre { margin: var(--space-4) 0 var(--space-2) var(--space-1); font-size: var(--fs-s); font-weight: var(--fw-bold); color: var(--muted); }
 .profil-reglages > .lignes-titre:first-child { margin-top: 0; }
-/* Pseudo long sous « Mon compte » : une ligne, coupée en fin (le pseudo entier est le titre de la sous-vue). */
-.ligne-demi-valeur.une-ligne { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; overflow-wrap: normal; }
 
 /* ---------- Profil vivant (issue #103) : statistiques et vitrine de badges ---------- */
-.identite { flex-wrap: wrap; row-gap: 6px; padding-block: 8px; }
-/* #121 : la règle .stats d'app.css (chargée après) remet ces statistiques en rangée flex ; au zoom 200 %,
-   les quatre ne tiennent pas sur une ligne : elles passent sur deux rangées au lieu d'élargir la carte. */
-.identite .stats { flex-wrap: wrap; min-width: 0; }
 /* #103 : chaque statistique est un anneau (piste et arc d'or quand il y a un total, médaillon sinon), le chiffre dessous. */
 .stat { display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center; }
 .stat .stat-anneau { display: block; width: 46px; height: 46px; margin-bottom: 2px; }
@@ -46,8 +40,7 @@
 
 /* Vitrine (#214) : les sept sceaux sur une rangée (344 px en 390), sur deux au-delà ; chaque sceau est un bouton de 44 px.
    La ligne de détail dessous remplace les légendes coupées d'avant. */
-.profil .vitrine { margin-top: 9px; } /* #571 : 3 px rendus au bloc de l'app, plus bas (le Profil tient sans défiler). */
-.profil .vitrine-tete { display: flex; align-items: baseline; justify-content: space-between; margin: 0 0 var(--space-1); font-size: var(--fs-m); }
+.vitrine-tete { display: flex; align-items: baseline; justify-content: space-between; margin: 0 0 var(--space-1); font-size: var(--fs-m); }
 .vitrine-compte { color: var(--muted); font-family: var(--font-texte, inherit); font-weight: var(--fw-bold); font-size: var(--fs-s); font-variant-numeric: tabular-nums; }
 /* Colonnes de 44 px réparties sur toute la largeur : la rangée s'aligne sur le compteur « 4/7 » ; en 320 px, 5 puis 2. */
 .vitrine-grille { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 8px; }
@@ -132,20 +125,9 @@
 .pastille-bois { transition: transform 140ms cubic-bezier(.23, 1, .32, 1); }
 @media (prefers-reduced-motion: reduce) { .pastille-bois { transition: none; } .pastille .pastille-bois { transform: none !important; } }
 
-/* ---------- Ton parcours (#214) : la progression d'abord, les réglages derrière une ligne ---------- */
-.profil .profil-titre { margin: 0 0 var(--space-2); font-size: var(--fs-xl); }
-/* Barre de niveau dans la carte, pleine largeur sous le nom, entre deux filets. */
-.identite-niveau { flex: 1 0 100%; min-width: 0; padding-top: 6px; box-shadow: inset 0 1px 0 var(--line); }
-.identite-niveau .niveau { margin: 0; }
 /* Total discret à côté du compteur : « 3/7 ». */
 .stat b small { margin-left: 1px; color: var(--muted); font-family: var(--font-texte, inherit); font-size: .6em; font-weight: var(--fw-bold); letter-spacing: 0; }
 .stat span { text-wrap: balance; }
-/* Les lignes (Réglages, Installer, Compte, Conditions) juste après la vitrine. */
-.profil .vitrine + .lignes { margin-top: var(--space-2); }
-/* Quatre colonnes égales sur un iPhone ; au zoom 200 %, elles passent sur deux rangées (min-width). */
-.identite .stats { gap: 6px; }
-/* #214 : 56 px au moins, pour que les quatre tiennent aussi en 320 px ; au zoom 200 %, elles passent toujours sur deux rangées. */
-.identite .stats > .stat { flex: 1 1 0; min-width: 56px; align-content: start; }
 
 /* ---------- Invitation au compte (#214) : ce qui te suit, ce qui reste sur ce téléphone ---------- */
 .compte-garde { list-style: none; margin: var(--space-2) 0 0; padding: 0; display: grid; gap: 6px; font-size: var(--fs-s); line-height: 1.4; }
@@ -157,18 +139,11 @@
 .profil-version { margin: var(--space-4) 0 0; text-align: center; font-size: var(--fs-s); color: var(--muted); }
 .profil-version button { min-height: 44px; min-width: 44px; padding: 0 var(--space-3); border: 0; background: none; color: inherit; font: inherit; }
 .profil-version [role='status']:not(:empty) { display: block; }
-/* #571 (loi de Hick) : les lignes de l'app et du compte, un bloc à part sous celles de ta progression. */
-.lignes.profil-groupe { margin-top: 6px; }
 
 /* ---------- Grand écran (#630, lot V9, P8) ---------- */
 @media (min-width: 1024px) {
-  /* Profil : la carte d'identité à gauche, le menu à droite ; les badges sur toute la largeur, dessous. */
-  .profil:not(.profil-reglages) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--space-6); align-items: start; }
-  .profil > .profil-titre-ligne, .profil > .vitrine { grid-column: 1 / -1; }
-  .profil > .identite { grid-column: 1; grid-row: 2 / span 2; }
-  .profil > .lignes { grid-column: 2; grid-row: 2; }
-  .profil > .lignes.profil-groupe { grid-row: 3; }
-  .profil .vitrine { margin-top: var(--space-4); }
+  /* #654 : le sommaire du Profil : l'identité sur toute la largeur, puis les rubriques en deux colonnes (P8). */
+  .profil-rubriques { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--space-6); align-items: start; }
   /* Réglages : l'aperçu reste en vue à gauche ; les groupes en deux colonnes, sans couper un groupe. */
   .profil-reglages { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: var(--space-6); align-items: start; }
   .profil-reglages > .reglages-apercu { position: sticky; top: calc(var(--zone-haut) + var(--space-4)); }
@@ -177,3 +152,27 @@
   .reglages-groupe > .lignes-titre { margin-top: 0; }
   .profil-reglages > .profil-version { grid-column: 2; }
 }
+
+/* ---------- #654 : le Profil en sommaire (A13, modèle : « Plus » de chess.com) ----------
+   Une carte d'identité compacte (initiale, pseudo, niveau, série), puis des rubriques groupées sous de petits titres
+   (src/ui/Sommaire.tsx). Des lignes de 56 px : plus serrées que les entrées d'Apprendre et de Problèmes, qui ont un
+   mini-goban, parce qu'il y en a davantage ; la cible tactile reste au-dessus de 48 px. */
+.identite-compacte { flex-wrap: nowrap; padding-block: var(--space-3); }
+.identite-compacte .identite-niveau-court { color: var(--recompense-texte); font-weight: var(--fw-bold); }
+.profil-sommaire .sommaire { margin-top: var(--space-5); }
+.profil-sommaire .sommaire-entree { min-height: 56px; padding-block: var(--space-1); }
+.profil-sommaire .sommaire-visuel { width: 32px; height: 32px; color: var(--text); }
+.profil-sommaire .sommaire-visuel .icone-reglage { width: 26px; height: 26px; }
+.profil-sommaire .sommaire-visuel .partager-app-icone { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.profil-sommaire .sommaire-nom { font-family: var(--font-ui); font-weight: var(--fw-medium); letter-spacing: 0; }
+/* Une rubrique reste une colonne : ses lignes se lisent de haut en bas, comme une liste de réglages. */
+.profil-sommaire .sommaire-liste { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+.profil-sommaire .sommaire-liste > li > .sommaire-entree { border-radius: var(--radius-xs); }
+.profil-sommaire .sommaire-liste > li:first-child > .sommaire-entree { border-top-left-radius: var(--radius); border-top-right-radius: var(--radius); }
+.profil-sommaire .sommaire-liste > li:last-child > .sommaire-entree { border-bottom-left-radius: var(--radius); border-bottom-right-radius: var(--radius); }
+/* Le détail « Niveau et badges » : la barre de niveau et les chiffres dans une carte, puis la vitrine. */
+.profil-niveau { padding: var(--space-3) var(--space-4); background: var(--surface); border-radius: var(--radius); }
+.profil-niveau .niveau { margin: 0; }
+.profil-niveau .stats { margin-top: var(--space-3); padding-top: var(--space-3); box-shadow: inset 0 1px 0 var(--line); flex-wrap: wrap; min-width: 0; gap: 6px; } /* #121 : deux rangées au zoom 200 % */
+.profil-niveau .stats > .stat { flex: 1 1 0; min-width: 56px; align-content: start; }
+.sous-vue .vitrine { margin-top: var(--space-5); }
