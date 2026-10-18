@@ -13,8 +13,9 @@
 /* #458 : la réserve du bas est le dernier élément de la colonne, pas le bas de page de .app. Au zoom 200 % (195 × 422),
    le plateau bute sur son plancher et la colonne déborde de sa hauteur : un débord ignore le padding du parent. La
    réserve, elle, déborde avec la colonne et compte dans la hauteur de la page : l'action reste atteignable en défilant.
-   #646 : plus de barre du bas pendant la leçon ; il ne reste que la marge et la zone sûre. */
-.lecteur-lecon::after { content: ''; flex: none; height: calc(var(--space-2) + env(safe-area-inset-bottom, 0px)); }
+   #646 : plus de barre du bas pendant une activité (--nav-bas à 0) : il ne reste que la marge et la zone sûre. Les
+   Ouvertures, qui gardent la barre, lui laissent sa place. */
+.lecteur-lecon::after { content: ''; flex: none; height: calc(max(var(--nav-bas), var(--space-2)) + env(safe-area-inset-bottom, 0px)); }
 .lecteur-lecon:has(.verdict) { padding-bottom: 0; }
 @media (min-height: 760px) { .lecteur-lecon { --mochi: 96px; } }
 /* Barre (passe design #509, point 9 ; #602 : sans le sceau, qui reste la récompense de la fin) : retour, puis le bloc du nom, comme l'en-tête d'un problème :

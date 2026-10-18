@@ -24,3 +24,14 @@ export async function onglet(page: Page, nom: string | RegExp, options: { exact?
   await sortirActivite(page);
   await barre(page).getByRole('button', { name: nom, exact: options.exact }).click();
 }
+
+/**
+ * Haut de la zone libre en bas de l'écran : le haut de la barre du bas, ou le bas de l'écran pendant une activité
+ * (#646 : plus de barre). L'intention « au-dessus de la barre » devient « visible sans défiler ».
+ */
+export async function basLibre(page: Page): Promise<number> {
+  return page.evaluate(() => {
+    const nav = document.querySelector('nav.nav');
+    return nav && nav.getClientRects().length ? nav.getBoundingClientRect().top : innerHeight;
+  });
+}

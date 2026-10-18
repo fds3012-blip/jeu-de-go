@@ -225,6 +225,9 @@ export function App() {
   const [duJourOuvert, setDuJourOuvert] = useState(false);
   // #646 : un problème ou une course ouverts dans Problèmes (plein écran, sans barre du bas).
   const [activitePb, setActivitePb] = useState(false);
+  // #646 : Go du jour posé par-dessus l'accueil : sa pose se ferme quand le problème, vu ouvert, se ferme.
+  const pbVu = useRef(false);
+  if (activitePb) pbVu.current = true;
   // #285 : après le Go du jour ouvert par le lien, une seule action pour qui n'a jamais joué : la leçon 1.
   const [versLecon1, setVersLecon1] = useState(NOUVEAU_PAR_LIEN);
   useEffect(noterArrivee, []);
@@ -536,6 +539,7 @@ export function App() {
     if (maison === tab && !rendre && (!a || activite)) return;
     if (maison !== tab && poses.some(p => p.onglet === maison)) { go(maison); return; }
     const f = document.activeElement, a2 = maison === tab;
+    pbVu.current = false;
     setPoses([...poses, { onglet: tab, maison, el: a2 ? null : ecran.current, y: window.scrollY, f, t: f?.textContent, rendre, a: a2 }]); setTab(maison);
   }
 
@@ -1073,7 +1077,7 @@ export function App() {
       compteRequis={rang => !decider({ quoi: 'lecon', rang }, etat, terminees, COMPTES).ok} />;
   } else if (tab === 'problemes') {
     activite = activitePb;
-    screen = <Puzzles db={supabase} userId={compteId} sessionLoading={session === undefined} confirmTouch={settings.confirmTouch} onCompte={ouvrirCompte}
+    screen = <Puzzles retour={retourPose} db={supabase} userId={compteId} sessionLoading={session === undefined} confirmTouch={settings.confirmTouch} onCompte={ouvrirCompte}
       essai={decider({ quoi: 'probleme' }, etat, terminees, COMPTES).ok ? undefined : () => { garde({ quoi: 'probleme' }, { quoi: 'problemes' }); }}
       lien={LIEN_DU_JOUR} depuisRappel={ARRIVEE_RAPPEL || duJourDirect} onDuJour={setDuJourOuvert} onActivite={setActivitePb} celebrer={settings.celebrations} racine={racineProblemes} rappelAmi={rappelGoDuJour}
       onApprendre={versLecon1 && LESSONS[0] ? () => { setVersLecon1(false); ouvrirLecon(LESSONS[0].id); } : undefined} />;
@@ -1124,7 +1128,8 @@ export function App() {
         probleme={daily && { numero, titre: daily.title, rows: daily.rows, reussi: duJourFait, etat: etatTuile(appel, duJourFait) }}
         // #367 : « Aujourd'hui » est la liste « À faire » ; un toucher sur un élément en attente est mesuré.
         // Recette du 02/10 (S7) : Go du jour à faire → ouvert directement.
-        onProbleme={() => { mesurerAccueil('serie', 'goDuJour'); go('problemes'); if (!duJourFait) setDuJourDirect(true); }}
+        // #646 : à faire, le Go du jour se pose sur l'accueil (activité), et sa sortie y ramène ; fait, l'onglet Problèmes.
+        onProbleme={() => { mesurerAccueil('serie', 'goDuJour'); if (duJourFait) go('problemes'); else { par('problemes'); setDuJourDirect(true); } }}
         lecon={leconConseillee && { titre: leconConseillee.title }}
         onLecon={() => { mesurerAccueil('lecon'); if (leconConseillee) ouvrirLecon(leconConseillee.id); else go('apprendre'); }}
         // Un seul appel à la fois (#236, N4) : pas de carte d'installation le jour où Mochi fait une annonce ;
@@ -1176,7 +1181,7 @@ export function App() {
   const haut = poses[poses.length - 1];
   const fermerPose = (p: Pose) => { setPoses(poses.slice(0, -1)); setTab(p.onglet); p.rendre?.(); defiler.current = p; };
   if (haut && tab !== haut.maison) setPoses([]);
-  else if (haut && (haut.a ? !activite && !enPartie && !ecranPlein : tab === 'jouer' ? accueilVisible : tab === 'apprendre' ? !lesson && !serie3 : vueProfil === 'menu' || vueProfil === 'parties')) fermerPose(haut);
+  else if (haut && (haut.a ? !activite && !enPartie && !ecranPlein : tab === 'jouer' ? accueilVisible : tab === 'apprendre' ? !lesson && !serie3 : tab === 'problemes' ? pbVu.current && !activitePb : vueProfil === 'menu' || vueProfil === 'parties')) fermerPose(haut);
   const ongletVu = poses[0]?.onglet ?? tab;
   const caches = poses.filter(p => !p.a);
   const plein = enPartie || ecranPlein || activite;

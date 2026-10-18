@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { basLibre } from './onglet';
 import { brancher, fauxServeur } from './fauxSupabase';
 import { ouvrirLancementOrdi, plateau, toucherCta } from './plateau';
 
@@ -22,20 +23,21 @@ for (const ecran of ECRANS) {
   test.describe(`${ecran.width} × ${ecran.height}`, () => {
     test.use({ viewport: ecran });
 
-    test('problème : plateau en tête sur la largeur, consigne de Mochi dessous, au-dessus de la barre', async ({ page }) => {
+    // #646 : le problème est en plein écran ; « au-dessus de la barre » devient « visible sans défiler ».
+    test('problème : plateau en tête sur la largeur, consigne de Mochi dessous, visible sans défiler', async ({ page }) => {
       await ouvrirGoDuJour(page);
       const p = await plateau(page).boundingBox();
       const mochi = page.locator('.lecteur-mochi');
       await expect(mochi).toContainText('Tu joues Noir');
       const m = await mochi.boundingBox();
-      const nav = await page.getByRole('navigation').boundingBox();
-      expect(p && m && nav).toBeTruthy();
+      const nav = { y: await basLibre(page) };
+      expect(p && m).toBeTruthy();
       // Le plateau prend presque toute la largeur ; la consigne est sous lui, entière, avant la barre de navigation.
       expect(p!.width).toBeGreaterThan(ecran.width * 0.8);
       expect(m!.y).toBeGreaterThanOrEqual(p!.y + p!.height - 1);
       expect(m!.y + m!.height).toBeLessThanOrEqual(nav!.y + 1);
-      // Plus de grand vide : entre la consigne et la barre, moins d'un tiers d'écran.
-      expect(nav!.y - (m!.y + m!.height)).toBeLessThan(ecran.height / 3);
+      // Plus de grand vide entre le plateau et la consigne (#646 : Mochi collé sous le plateau).
+      expect(m!.y - (p!.y + p!.height)).toBeLessThan(ecran.height / 10);
     });
   });
 }

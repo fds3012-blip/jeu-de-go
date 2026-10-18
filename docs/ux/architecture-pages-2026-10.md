@@ -367,7 +367,7 @@ Mécanisme : `par(maison)` dans `App.tsx` pose l'écran par-dessus l'écran cour
 | 11 | Ta semaine › Jouer une partie | partie dans Jouer ; sortie : l'accueil | sortie : Ta semaine |
 | 12 | Crée ton compte (ou accord, consentement) › Conditions | bascule dans Profil ; l'écran de compte est perdu | onglet d'origine allumé ; « ‹ » : l'écran de compte, saisie comprise |
 
-Hors des 12 et laissés tels quels (raccourcis vers Problèmes) : tuile « Go du jour » de l'accueil, Ta semaine › « Faire un problème ». Défier depuis un profil ouvert par-dessus Jouer (chemins 4 et 5) revient à l'accueil de Jouer, pas au profil : deux écrans du même onglet dans une pile demandent N3.
+Hors des 12 et laissés tels quels (raccourcis vers Problèmes) : tuile « Go du jour » de l'accueil (posée sur l'accueil depuis #646 quand il reste à faire), Ta semaine › « Faire un problème ». Défier depuis un profil ouvert par-dessus Jouer (chemins 4 et 5) revient à l'accueil de Jouer, pas au profil : deux écrans du même onglet dans une pile demandent N3.
 
 ## 11. Suivi : lot N5a (#647)
 
@@ -380,7 +380,7 @@ Décision F3 validée par Florian : les activités passent en plein écran, sans
 | Activité | Ouverte depuis | Sortie (nom accessible) | Ramène à | Confirmation |
 |---|---|---|---|---|
 | Leçon (et sa série de 3 problèmes) | chemin ou page d'un thème (Apprendre) ; « Leçon n » de l'accueil, aide, fin de partie, placement, lien du Go du jour (N4) | « ‹ » « Retour au chemin », ou « Retour » quand elle est posée hors d'Apprendre | le chemin ou la page du thème, au même endroit ; sinon l'écran d'origine | non : l'étape atteinte est gardée |
-| Problème (Go du jour, suivant, série par thème, grille) | Problèmes ; tuile « Go du jour » de l'accueil, lien, rappel | « ‹ » « Retour aux problèmes » | la liste, même défilement, bouton d'origine focalisé | non : l'essai est noté au premier coup |
+| Problème (Go du jour, suivant, série par thème, grille) | Problèmes ; lien, rappel ; tuile « Go du jour » de l'accueil (à faire : posé sur l'accueil, Jouer reste dessous) | « ‹ » « Retour aux problèmes » ; « Retour » depuis l'accueil | la liste, même défilement, bouton d'origine focalisé ; l'accueil | non : l'essai est noté au premier coup |
 | Course | Problèmes | « ‹ » « Retour aux problèmes », « Quitter la course » pendant | la liste | non (le lien du bas de la fin, doublon de « ‹ », est retiré) |
 | Partie de découverte | Apprendre ; fin de l'introduction des règles | « ‹ » « Quitter » | Apprendre, au même endroit ; ou l'écran d'où venait l'introduction | non : le moment atteint est gardé |
 | Introduction des règles | « Tu connais le go ? » (accueil), « Revoir les règles » (Apprendre), aide | « ‹ » « Quitter » pendant ; « ‹ » « Retour » à la fin (le lien « Retour » du bas, doublon, est retiré ; avant, la fin ouverte depuis l'accueil n'avait aucune sortie) | l'écran d'origine | non |
