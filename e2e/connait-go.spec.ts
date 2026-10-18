@@ -1,4 +1,5 @@
 import { mkdirSync } from 'node:fs';
+import { onglet } from './onglet';
 import { join } from 'node:path';
 import { gunzipSync } from 'node:zlib';
 import AxeBuilder from '@axe-core/playwright';
@@ -367,8 +368,8 @@ test.describe('mesure', () => {
       await page.getByTestId('je-sais').click();
     }
     await expect(page.getByTestId('fin-intro')).toBeVisible();
-    // Puis « Revoir les règles » depuis Apprendre, quitté au 1er écran.
-    await page.getByRole('navigation').getByRole('button', { name: /Apprendre/ }).click();
+    // Puis « Revoir les règles » depuis Apprendre, quitté au 1er écran (#646 : on sort d'abord de la fin, plein écran).
+    await onglet(page, /Apprendre/);
     await page.getByTestId('revoir-regles').click();
     await expect(plateau(page, 7)).toBeVisible();
     await page.getByRole('button', { name: 'Quitter' }).click();

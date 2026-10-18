@@ -139,7 +139,8 @@ test('niveau 10 : la fête annonce le goban « Cerisier », qui se choisit dans 
   await attendrePierre(page, 'E5', 'noir');
   await expect(page.locator('.verdict').getByTestId('pastille-xp')).toContainText(/\+40\sXP/);
   await page.waitForTimeout(800);
-  await page.getByRole('navigation', { name: 'Navigation principale' }).getByRole('button', { name: 'Jouer' }).click();
+  // #646 : la sortie du problème (plein écran) ; la fête attendait la fin de l'exercice.
+  await page.getByRole('button', { name: 'Retour aux problèmes' }).click();
   const fete = page.getByTestId('fete-niveau');
   await expect(fete).toBeVisible();
   await expect(fete).toContainText(/Niveau\s10/);

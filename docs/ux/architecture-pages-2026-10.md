@@ -367,13 +367,29 @@ Mécanisme : `par(maison)` dans `App.tsx` pose l'écran par-dessus l'écran cour
 | 11 | Ta semaine › Jouer une partie | partie dans Jouer ; sortie : l'accueil | sortie : Ta semaine |
 | 12 | Crée ton compte (ou accord, consentement) › Conditions | bascule dans Profil ; l'écran de compte est perdu | onglet d'origine allumé ; « ‹ » : l'écran de compte, saisie comprise |
 
-Hors des 12 et laissés tels quels (raccourcis vers Problèmes) : tuile « Go du jour » de l'accueil, Ta semaine › « Faire un problème ». Défier depuis un profil ouvert par-dessus Jouer (chemins 4 et 5) revient à l'accueil de Jouer, pas au profil : deux écrans du même onglet dans une pile demandent N3.
+Hors des 12 et laissés tels quels (raccourcis vers Problèmes) : tuile « Go du jour » de l'accueil (posée sur l'accueil depuis #646 quand il reste à faire), Ta semaine › « Faire un problème ». Défier depuis un profil ouvert par-dessus Jouer (chemins 4 et 5) revient à l'accueil de Jouer, pas au profil : deux écrans du même onglet dans une pile demandent N3.
 
 ## 11. Suivi : lot N5a (#647)
 
 Décision F1 appliquée. La partie de découverte n'a plus que deux portes : sa maison, Apprendre (« Jouer avec Mochi », fin du chapitre « Les bases », que suit « Revoir les règles »), et la fin de l'introduction des règles (« Jouer avec Mochi » après « Jamais joué », « Partie de découverte avec Mochi » après « Un peu »). Sur Jouer, il reste quatre modes : le bouton et trois tuiles (L'ordi ou En ligne, Un ami, À deux), tous en 1 toucher ; la feuille « Plus » et ses textes ont disparu. Sans comptes, « À deux » est la seule tuile. `mode_choisi { mode: 'decouverte', depuis: 'apprendre' }` est envoyé depuis la carte d'Apprendre, pour le contrôle de F1. Premiers pas inchangés : la question « Tu connais le go ? » mène toujours « Jamais joué » et « Un peu » à l'introduction, dont la fin ouvre la découverte ; « Je sais jouer » garde « Je sais déjà jouer » (placement). Une partie lancée depuis « Jouer avec Mochi » revient sur ce groupe déplié (A6), même s'il s'était ouvert seul (découverte en cours). Captures : `docs/ux/captures/maison-647/`.
 
-## 14. Le Profil en sommaire (#654, règle A13)
+## 12. Suivi : lot N2 (#646)
+
+Décision F3 validée par Florian : les activités passent en plein écran, sans barre du bas (A5), avec une seule sortie, « ‹ » en haut à gauche, qui ramène à l'écran d'origine (A6). Le retour du système touche ce même bouton (A7, `src/app/retourSysteme.ts`). Mécanisme : `par(maison, rendre, a)` de N4, étendu aux activités ouvertes dans leur propre onglet (`a`) : un seul écran du même onglet à la fois, l'écran d'origine est remonté à la sortie, au même défilement, focus sur le bouton qui avait ouvert l'activité (retrouvé par son texte) ; ouverte depuis un autre onglet, l'activité garde la pose de N4 (écran d'origine monté et caché). Dans Problèmes, le problème et la course sont tenus par `Puzzles.tsx`, qui le signale (`onActivite`) et retrouve lui-même le défilement et le bouton d'origine. À l'entrée, le focus va au titre de l'activité (`src/ui/titreFocus.ts`).
+
+| Activité | Ouverte depuis | Sortie (nom accessible) | Ramène à | Confirmation |
+|---|---|---|---|---|
+| Leçon (et sa série de 3 problèmes) | chemin ou page d'un thème (Apprendre) ; « Leçon n » de l'accueil, aide, fin de partie, placement, lien du Go du jour (N4) | « ‹ » « Retour au chemin », ou « Retour » quand elle est posée hors d'Apprendre | le chemin ou la page du thème, au même endroit ; sinon l'écran d'origine | non : l'étape atteinte est gardée |
+| Problème (Go du jour, suivant, série par thème, grille) | Problèmes ; lien, rappel ; tuile « Go du jour » de l'accueil (à faire : posé sur l'accueil, Jouer reste dessous) | « ‹ » « Retour aux problèmes » ; « Retour » depuis l'accueil | la liste, même défilement, bouton d'origine focalisé ; l'accueil | non : l'essai est noté au premier coup |
+| Course | Problèmes | « ‹ » « Retour aux problèmes », « Quitter la course » pendant | la liste | non (le lien du bas de la fin, doublon de « ‹ », est retiré) |
+| Partie de découverte | Apprendre ; fin de l'introduction des règles | « ‹ » « Quitter » | Apprendre, au même endroit ; ou l'écran d'où venait l'introduction | non : le moment atteint est gardé |
+| Introduction des règles | « Tu connais le go ? » (accueil), « Revoir les règles » (Apprendre), aide | « ‹ » « Quitter » pendant ; « ‹ » « Retour » à la fin (le lien « Retour » du bas, doublon, est retiré ; avant, la fin ouverte depuis l'accueil n'avait aucune sortie) | l'écran d'origine | non |
+| Placement (« Ton niveau de départ ») | « Je sais déjà jouer » (accueil), Profil | « ‹ » « Retour » (nouveau : rien n'est enregistré, le placement reste proposé) ; « Passer » reste pendant les problèmes | l'accueil ou le Profil | non : 3 problèmes, rien d'acquis à perdre |
+| Séance de révisions | tuile « Révisions » de l'accueil | « ‹ » « Retour à l'accueil » | l'accueil, au même endroit | non : chaque réponse est notée tout de suite |
+
+La partie garde sa confirmation (« Quitter la partie ? ») : c'est la seule activité où quitter fait perdre quelque chose.
+
+## 15. Le Profil en sommaire (#654, règle A13)
 
 Retour de Florian, 18/10 : « beaucoup d'information. Tu pourrais mettre un Plus comme chess.com, puis comme pour Problèmes des thématiques cliquables qui donnent accès à plus de détail. » Modèle : l'écran « Plus » de chess.com, une liste de rubriques (icône et nom) rangées sous de petits titres.
 

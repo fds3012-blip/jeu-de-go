@@ -1133,6 +1133,8 @@ export const frEcrans = {
   'placement.etape': 'Problème {n} sur {total}',
   'placement.passer': 'Passer',
   'placement.passerAria': 'Passer les 3 problèmes',
+  // #646 : « ‹ », sortie sans rien enregistrer (le placement reste proposé).
+  'placement.retour': 'Retour',
   'placement.juste': 'Bien vu !',
   'placement.rate': 'Ce n’était pas ça. Ce n’est pas grave, on passe au suivant.',
   'placement.suivant': 'Problème suivant',

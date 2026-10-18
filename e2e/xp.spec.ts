@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { ouvrirNiveauBadges } from './profil';
 import { attendrePierre, jouer } from './plateau';
+import { onglet } from './onglet';
 
 // Issue #109 : XP, niveaux et récompenses. Un problème réussi fait avancer la barre de niveau de l'accueil.
 // Horloge figée le 27 septembre 2026 à midi, heure de Paris : Go du jour n° 1, le problème b1 (réponse E5).
@@ -36,7 +37,8 @@ test("un problème réussi fait monter l'XP du Profil", async ({ page }) => {
   await expect(pastille).toContainText(/\+40\sXP/);
   await expect(pastille).toContainText('dont +20 première fois');
   await page.screenshot({ path: 'docs/design/v2/captures/xp-pastille.png' });
-  await nav(page).getByRole('button', { name: 'Jouer' }).click();
+  // #646 : le problème est en plein écran ; on en sort par « ‹ » avant de changer d'onglet.
+  await onglet(page, 'Jouer');
   await expect(page.locator('.cta-sceau')).toBeInViewport();
   await expect(barre).toHaveCount(0);
   await nav(page).getByRole('button', { name: 'Profil' }).click();
@@ -55,8 +57,8 @@ test('un niveau franchi est célébré après le problème, seul, sans couvrir l
   await expect(page.locator('.verdict').getByTestId('pastille-xp')).toContainText(/\+40\sXP/);
   await page.waitForTimeout(800);
   await expect(fete).toHaveCount(0);
-  // Retour à l'accueil : « Niveau 2 ! », seul à l'écran.
-  await nav(page).getByRole('button', { name: 'Jouer' }).click();
+  // Sortie du problème (#646 : sa seule sortie, « ‹ ») : « Niveau 2 ! », seul à l'écran.
+  await page.getByRole('button', { name: 'Retour aux problèmes' }).click();
   await expect(fete).toBeVisible();
   await expect(fete).toContainText(/Niveau\s2/);
   await expect(page.getByTestId('pastille-xp')).toHaveCount(0);

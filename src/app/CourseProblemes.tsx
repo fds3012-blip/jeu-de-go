@@ -8,6 +8,7 @@ import { Board } from '../ui/Board';
 import { Visee } from '../ui/Visee';
 import { estSerre } from '../ui/plateauSerre';
 import { Retour } from '../ui/Lecteur';
+import { useTitreFocus } from '../ui/titreFocus';
 import { Bubble } from '../ui/Mochi';
 import { fr } from '../ui/typo';
 import { playFail, playIllegal, playStone, playSuccess } from '../ui/sound';
@@ -109,11 +110,12 @@ const REGLES = [
 
 /** Consigne : 3 règles courtes en icônes, le meilleur score s'il existe, et une seule action, « C'est parti ». */
 function Consigne({ meilleur, onCommencer, onExit }: { meilleur: number; onCommencer: () => void; onExit: () => void }) {
+  const titre = useTitreFocus();
   return (
     <div className="course course-consigne">
       <div className="lecteur-tete">
         <Retour label={t('pb.retour')} onClick={onExit} />
-        <div className="lecteur-nom"><h2>{fr(t('course.carte.titre'))}</h2></div>
+        <div className="lecteur-nom"><h2 ref={titre} tabIndex={-1}>{fr(t('course.carte.titre'))}</h2></div>
       </div>
       <ChronoCourse taille={96} />
       <ul className="course-regles">
@@ -194,11 +196,12 @@ function EnCourse({ etat, setEtat, liste, confirmTouch, onFin, onExit }: {
 
   const reste = restant(etat, maintenant);
   const urgent = reste <= 10_000;
+  const titre = useTitreFocus();
   return (
     <div className="course course-en-cours" data-probleme={affiche}>
       <div className="lecteur-tete">
         <Retour label={t('course.quitter')} onClick={onExit} />
-        <div className="lecteur-nom"><h2>{t('course.titre')}</h2></div>
+        <div className="lecteur-nom"><h2 ref={titre} tabIndex={-1}>{t('course.titre')}</h2></div>
       </div>
       <div className="course-bandeau">
         <div className={`course-chrono${urgent ? ' urgent' : ''}`} role="timer" aria-live="off" aria-label={t('course.temps')}>
@@ -281,11 +284,12 @@ function Fin({ etat, meilleur, nouveau, xp, onRejouer, onExit }: {
   etat: EtatCourse; meilleur: number; nouveau: boolean; xp: Gain | null; onRejouer: () => void; onExit: () => void;
 }) {
   const raison = etat.fin?.raison ?? 'temps';
+  const titre = useTitreFocus();
   return (
     <div className="course course-fin" data-raison={raison}>
       <div className="lecteur-tete">
         <Retour label={t('pb.retour')} onClick={onExit} />
-        <div className="lecteur-nom"><h2>{fr(t(`course.fin.${raison}`))}</h2></div>
+        <div className="lecteur-nom"><h2 ref={titre} tabIndex={-1}>{fr(t(`course.fin.${raison}`))}</h2></div>
       </div>
       <div className="course-resultat">
         <span className="course-resultat-chiffre" data-score={etat.score}>{etat.score}</span>
@@ -298,7 +302,6 @@ function Fin({ etat, meilleur, nouveau, xp, onRejouer, onExit }: {
       </div>
       <button type="button" className="cta" onClick={onRejouer}>{t('course.rejouer')}</button>
       <PartagerCourse score={etat.score} meilleur={meilleur} />
-      <button type="button" className="lien course-retour" onClick={onExit}>{t('pb.retour')}</button>
     </div>
   );
 }

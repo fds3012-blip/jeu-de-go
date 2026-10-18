@@ -286,7 +286,7 @@ Grille de 4 px, vérifiée par `tokens.test.ts` : `--space-1` 4, `--space-2` 8, 
 |---|---|---|
 | Accueil, Apprendre, Problèmes, Profil | Logo « Mochi Go » | Oui (latérale à partir de 1024 px) |
 | Écran de tâche (en ligne, défi, revue, réglages, sous-vues du Profil) | Barre « ‹ titre » (`EnteteEcran`, `BoutonRetour.tsx`) | Oui |
-| Leçon, problème | Barre du lecteur | Oui |
+| Activité : leçon, problème, course, découverte, règles, placement, révisions (#646) | Barre du lecteur, « ‹ » seule sortie | Non |
 | Partie (ordi, à deux, en ligne) et sa fin, sa revue | Aucun : plein écran | Non |
 | Compte bloquant | Aucun, une seule action | Non |
 
@@ -454,7 +454,7 @@ Vocabulaire. **Racine** : l'écran qu'ouvre un onglet. **Activité** : un écran
 | A12 | **Une feuille ne mène pas à une autre feuille**, et ne change pas d'onglet. Ce qui demande plus qu'une feuille devient un écran. | Revue de PR. |
 | A13 | **Sommaire puis détail** (hub-and-spoke). La racine d'Apprendre, de Problèmes et du Profil est un sommaire : la carte de l'action principale s'il y en a une, puis peu d'entrées (4 de même poids au plus par groupe, E3), chacune avec son visuel (mini-goban, icône, portrait), son nom sur une ligne et au plus un état court (« À faire », un nombre). Le contenu vit dans le détail, qui s'ouvre par-dessus avec « ‹ » (`EnteteEcran`) ; « ‹ » et le retour du système ramènent au sommaire, à l'entrée touchée (focus et défilement, A6). Pas de deuxième niveau d'entrées (A4). Modèle : les onglets Problèmes et « Plus » de chess.com (Florian, 18/10). Composant : `Sommaire` (`src/ui/Sommaire.tsx`). | Capture 390 × 844 de chaque racine : une carte au plus en relief, des groupes de 4 entrées au plus ; chaque entrée est un bouton dont le nom accessible commence par son nom visible ; `page.goBack()` depuis un détail retrouve l'entrée focalisée. |
 
-Ce que ces règles ne changent pas : les écrans de compte bloquants (« Choisis ton pseudo », accord aux conditions) gardent une seule action ; les arrivées par lien (défi, partie partagée, Go du jour, rappel) ouvrent directement leur écran ; la règle d'en-tête de `docs/ux/navigation.md` reste valable hors activités. La règle 3 de ce document (leçon et problème gardent la barre du bas) est remplacée par A5 dès que Florian a validé la décision F3.
+Ce que ces règles ne changent pas : les écrans de compte bloquants (« Choisis ton pseudo », accord aux conditions) gardent une seule action ; les arrivées par lien (défi, partie partagée, Go du jour, rappel) ouvrent directement leur écran ; la règle d'en-tête de `docs/ux/navigation.md` reste valable hors activités. Décision F3 validée par Florian : A5 et A6 s'appliquent à toutes les activités depuis #646 (lot N2) ; l'ancienne règle 3 de `navigation.md` (leçon et problème gardent la barre du bas) est inversée.
 
 ## Principes de Florian
 
