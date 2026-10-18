@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { jouer, passerJusquAuScore, plateau } from './plateau';
+import { jouer, passerJusquAuScore, plateau, toucherCta } from './plateau';
 
 // Issue #521 : partager l'app elle-même. Ligne « Partager Mochi Go » toujours dans le Profil (feuille native, sinon
 // « Lien copié » annoncé au lecteur d'écran) ; invitation discrète après une victoire, une leçon finie ou un record,
@@ -133,7 +133,7 @@ test.describe('invitation après une victoire', () => {
   test('absente la première fois (1re partie finie), même passé la première minute', async ({ page }) => {
     await apresUneMinute(page);
     await page.goto('/?komi=-100');
-    await page.locator('.cta').click();
+    await toucherCta(page);
     await expect(plateau(page)).toBeVisible();
     await passerJusquAuScore(page);
     await expect(page.getByRole('heading', { level: 2, name: 'Victoire' })).toBeVisible({ timeout: 15_000 });
@@ -144,7 +144,7 @@ test.describe('invitation après une victoire', () => {
   test('absente dans la première minute de la visite', async ({ page }) => {
     await partiesFinies(page, 2);
     await page.goto('/?komi=-100');
-    await page.locator('.cta').click();
+    await toucherCta(page);
     await passerJusquAuScore(page);
     await expect(page.getByRole('heading', { level: 2, name: 'Victoire' })).toBeVisible({ timeout: 15_000 });
     await page.waitForTimeout(1500);
@@ -158,7 +158,7 @@ test.describe('invitation après une victoire', () => {
       await apresUneMinute(page);
       await partiesFinies(page, 2);
       await page.goto('/?komi=-100');
-      await page.locator('.cta').click();
+      await toucherCta(page);
       await expect(plateau(page)).toBeVisible();
       await jouer(page, 'E5');
       // Pendant la partie : jamais.
@@ -198,7 +198,7 @@ test.describe('invitation après une victoire', () => {
     await partiesFinies(page, 4);
     await page.addInitScript(() => localStorage.setItem('go.invitation-app.v1', String(Date.now() - 2 * 24 * 3600 * 1000)));
     await page.goto('/?komi=-100');
-    await page.locator('.cta').click();
+    await toucherCta(page);
     await passerJusquAuScore(page);
     await expect(page.getByRole('heading', { level: 2, name: 'Victoire' })).toBeVisible({ timeout: 15_000 });
     await page.waitForTimeout(2500);
@@ -210,7 +210,7 @@ test.describe('invitation après une victoire', () => {
     await apresUneMinute(page);
     await partiesFinies(page, 2);
     await page.goto('/?komi=-100');
-    await page.locator('.cta').click();
+    await toucherCta(page);
     await passerJusquAuScore(page);
     await expect(invitation(page)).toBeVisible({ timeout: 15_000 });
     await invitation(page).getByRole('button', { name: 'Partager Mochi Go' }).click();

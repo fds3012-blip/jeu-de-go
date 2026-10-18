@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { attendrePierre, attendreReponse, jouer, jouerSuite, partieADeux, passer } from './plateau';
+import { attendrePierre, attendreReponse, jouer, jouerSuite, partieADeux, passer, toucherCta } from './plateau';
 
 // Issue #207 : corrections de la recette du 28/09 (docs/qa/recette-2026-09-28.md sur la branche recette-nuit).
 // Chaque défaut est vérifié à la taille d'écran où il a été vu.
@@ -24,7 +24,7 @@ for (const [largeur, hauteur] of [[375, 667], [320, 640], [320, 568]] as const) 
     test.use({ viewport: { width: largeur, height: hauteur } });
     test('le but et le komi de Mochi se lisent sans défiler, au-dessus de la barre d’actions', async ({ page }) => {
       await page.goto('/');
-      await page.locator('.cta').click();
+      await toucherCta(page);
       const intro = page.locator('.coach-intro');
       await expect(intro).toContainText(/Le but\s: entourer plus de territoire que Pomme/);
       await expect(page.locator('.annonce-komi')).toContainText(/Le komi\s: des points donnés à Blanc/);
@@ -125,7 +125,7 @@ test.describe('R5 : 320 × 640', () => {
   test('la réplique de Pomme tient en entier, sans décaler le plateau', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/');
-    await page.locator('.cta').click();
+    await toucherCta(page);
     const plateau = page.locator('.partie-plateau');
     await expect(plateau).toBeVisible();
     const avant = (await plateau.boundingBox())!.y;

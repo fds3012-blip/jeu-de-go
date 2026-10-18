@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { brancher, CODE, fauxServeur } from './fauxSupabase';
-import { abandonner, plateau } from './plateau';
+import { abandonner, plateau, toucherCta } from './plateau';
 
 // #343 : compte obligatoire avec pseudo, essai limité sans compte (modèle chess.com), connexion par code à 6 chiffres.
 // Supabase est simulé (e2e/fauxSupabase.ts) : sans service de compte, l'essai n'est pas limité (src/app/essai.ts).
@@ -30,7 +30,7 @@ test('essai → 3e partie finie → « Crée ton compte » → code → pseudo �
   // Leçons 1 à 3 et Go du jour libres ; la leçon 4 demande un compte.
   await page.goto('/');
   // 3e partie : libre. On abandonne tout de suite : elle compte.
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await expect(plateau(page)).toBeVisible();
   await abandonner(page);
   await expect(page.locator('.cta')).toHaveText(/Rejouer contre Pomme/);
@@ -38,7 +38,7 @@ test('essai → 3e partie finie → « Crée ton compte » → code → pseudo �
   expect(await page.evaluate(() => localStorage.getItem('go.essai.v1'))).toBe('{"terminees":3,"suivi":true}');
 
   // 4e partie : l'essai est fini.
-  await page.locator('.cta').click();
+  await toucherCta(page);
   const ecran = page.getByTestId('creer-compte');
   await expect(ecran).toBeVisible();
   await expect(ecran).toHaveAttribute('data-raison', 'parties');
@@ -148,7 +148,7 @@ test('code à 6 chiffres : champ, renvoi et retour à l’adresse (320 px, clair
     colorScheme: 'light', storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }, { name: 'go.connait-go.v1', value: '"sait"' }] }] } });
   const page = await brancher(ctx, serveur, { 'go.essai.v1': JSON.stringify({ terminees: 3 }) });
   await page.goto('/');
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await page.getByLabel('Ton adresse e-mail').fill('pas-une-adresse');
   await page.getByRole('button', { name: 'Recevoir mon code' }).click({ force: true });
   await expect(page.getByText('Entre une adresse e-mail valide.')).toBeVisible();

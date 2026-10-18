@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { brancher, CODE, fauxServeur, JETON, PARTIE, type FauxServeur } from './fauxSupabase';
-import { plateau } from './plateau';
+import { plateau, toucherCta } from './plateau';
 
 // #353 : une adresse qui a déjà un compte ne bloque plus. Cas de Florian : une ancienne session anonyme (défi d'hier)
 // et un vrai compte. La liaison refusée bascule tout de suite en « Connecte-toi » (code `email`, sans créer de compte).
@@ -83,7 +83,7 @@ test('« J’ai déjà un compte » : adresse inconnue → message, puis compte 
   const ctx = await browser.newContext(options(baseURL, 320, 'fr-FR', 'dark'));
   const page = await brancher(ctx, serveur, { 'go.essai.v1': JSON.stringify({ terminees: 3 }) });
   await page.goto('/');
-  await page.locator('.cta').click();
+  await toucherCta(page);
   const ecran = page.getByTestId('creer-compte');
   await expect(page.getByRole('heading', { name: 'Crée ton compte' })).toBeVisible();
   await ecran.getByRole('button', { name: 'J’ai déjà un compte' }).click();

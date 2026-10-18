@@ -66,11 +66,10 @@ export const fr = {
   'entete.flammeAFaire': 'Série de {jours}. Go du jour à faire aujourd’hui.',
   'entete.flammeFaite': 'Série de {jours}. Go du jour fait aujourd’hui.',
   'accueil.introBut': 'Touche un croisement des lignes pour poser ta pierre. Le but : entourer plus de territoire que {nom}.',
-  'accueil.plateau': 'Plateau {taille} × {taille}, tu as Noir',
   'accueil.changer': 'Changer',
   'accueil.goDuJour': 'Go du jour',
-  'accueil.goDuJourNumero': 'Go du jour n° {numero}',
-  'accueil.lecon': 'Leçon {rang} sur {total}',
+  // #613 (E7) : la tuile dit quoi faire, sans « 1 sur 48 ».
+  'accueil.leconCourte': 'Leçon',
   'accueil.leconsTerminees': 'Leçons terminées',
   'accueil.revoirChemin': 'Revoir le chemin',
   'accueil.tonAdversaire': 'Ton adversaire',
@@ -85,11 +84,11 @@ export const fr = {
   // Partie guidée (#79) : Mochi règle sa force tous les 10 coups pour garder la partie serrée.
   'accueil.decouverte': 'Partie de découverte avec Mochi',
   // Modes de jeu de l'accueil (#429) : une rangée de tuiles sous le bouton, « Plus » pour le reste.
-  'accueil.plateauSeul': 'Plateau {taille} × {taille}',
   'accueil.cta.enLigne': 'Jouer en ligne',
   'accueil.cta.enLigneNom': 'Jouer en ligne, partie classée',
-  'accueil.classee.titre': 'Partie classée',
-  'accueil.classee.bulle': 'Contre un humain de ton niveau.',
+  // #613 : feuille de lancement à deux (src/app/LancementPartie.tsx) ; contre l'ordi, le bouton garde « Jouer contre X ».
+  'lancement.jouer': 'Jouer',
+  'lancement.deuxNom': 'Jouer à deux',
   'mode.enLigne': 'En ligne',
   'mode.enLigne.detail': 'Partie classée',
   'mode.ordi': 'L’ordi',

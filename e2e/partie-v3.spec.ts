@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { barreActions, jouer, ouvrirPlus, passerJusquAuScore, plateau } from './plateau';
+import { barreActions, jouer, ouvrirPlus, passerJusquAuScore, plateau, toucherCta } from './plateau';
 
 // Écran de partie v3 (branche partie-ecran-v3) : barre d'actions à trois aides, « Passer » et menu « Plus » ;
 // Mochi sous ton bandeau ; récit du score lisible en 320 × 568. Captures contre Pomme, conseil de Mochi affiché,
@@ -24,7 +24,7 @@ for (const [w, h] of TAILLES) {
     await page.setViewportSize({ width: w, height: h });
     await preparer(page, 'dark');
     await page.goto('/?komi=-100');
-    await page.locator('.cta').click();
+    await toucherCta(page);
     await expect(plateau(page)).toBeVisible();
 
     // La barre : Indice, Conseil, Qui mène ?, Passer, Plus. Chaque bouton tient dans l'écran, 44 px, libellé sur une ligne.
@@ -107,7 +107,7 @@ test('mouvements réduits : aucune animation sur les bandeaux ni le menu', async
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await preparer(page, 'light');
   await page.goto('/');
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await expect(plateau(page)).toBeVisible();
   expect(await page.locator('.joueur').first().evaluate(el => el.getAnimations({ subtree: true }).length)).toBe(0);
   const feuille = await ouvrirPlus(page);
@@ -131,7 +131,7 @@ for (const [w, h] of TAILLES) {
       await page.setViewportSize({ width: w, height: h });
       await preparer(page, theme);
       await page.goto('/');
-      await page.locator('.cta').click();
+      await toucherCta(page);
       await expect(plateau(page)).toBeVisible();
       await jouer(page, 'E5');
       await expect(page.getByText(/Pomme (joue|capture|passe)/)).toBeVisible({ timeout: 10_000 });
@@ -149,7 +149,7 @@ for (const [w, h] of TAILLES) {
       await preparer(page, theme);
       await page.emulateMedia({ reducedMotion: 'reduce' });
       await page.goto('/?komi=-100');
-      await page.locator('.cta').click();
+      await toucherCta(page);
       await expect(plateau(page)).toBeVisible();
       await jouer(page, 'E5');
       await expect(page.getByText(/Pomme (joue|capture|passe)/)).toBeVisible({ timeout: 10_000 });

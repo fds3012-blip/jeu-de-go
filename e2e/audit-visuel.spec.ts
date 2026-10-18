@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { brancher, CODE, fauxServeur, JETON } from './fauxSupabase';
 import { mesurer, type Mesure } from './mesures';
-import { jouer, plateau } from './plateau';
+import { jouer, plateau, toucherCta } from './plateau';
 
 // Audit visuel et d'usage du 2 octobre 2026 (docs/qa/audit-visuel-2026-10-02.md) : chaque écran de l'app, en 390 × 844
 // et 320 × 568, clair et sombre, français et anglais. Pour chaque écran : une capture par thème dans
@@ -140,7 +140,7 @@ for (const cfg of CONFIGS) {
     // 3. Partie contre Pomme : début (bulle de Mochi), milieu, score, fin, revue.
     await E('04-partie', async () => {
       await page.goto('/?komi=-100');
-      await page.locator('.cta').click();
+      await toucherCta(page);
       await expect(page.locator('.coach-intro')).toBeVisible();
       await cap('04-partie-debut');
       await jouer(page, 'E5');
@@ -171,7 +171,7 @@ for (const cfg of CONFIGS) {
       await expect(page.locator('.cta')).toBeVisible();
       await cap('09-apprendre');
       await cap('09b-apprendre-page', { pleine: true });
-      await page.locator('.cta').click();
+      await toucherCta(page);
       await expect(page.locator('.lecteur-plateau')).toBeVisible();
       await cap('10-lecon-debut');
       await jouer(page, 'E5');

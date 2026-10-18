@@ -121,3 +121,48 @@ test('joueur habitué', async ({ browser, baseURL }) => {
   await cap(page, '10-lecon');
   await ctx.close();
 });
+
+// #613 : l'ouverture de Jouer (habitué et nouveau) et l'étape de lancement (l'ordi, en ligne), avant et après.
+// EPURE=docs/ux/captures/jouer-613/apres npx playwright test epure-captures -g "jouer 613" --workers 1
+// Gardées dans le dépôt : la version sombre seulement, en JPEG qualité 72 (30 à 40 Ko chacune).
+test('jouer 613', async ({ browser, baseURL }) => {
+  const cap = async (page: Page, nom: string) => {
+    const dossier = join(process.cwd(), DOSSIER!);
+    mkdirSync(dossier, { recursive: true });
+    await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'reduce' });
+    await page.waitForTimeout(350);
+    await page.screenshot({ path: join(dossier, `${nom}-sombre.jpg`), type: 'jpeg', quality: 72 });
+  };
+  test.setTimeout(240_000);
+  const serveur = fauxServeur();
+  const a = await telephone(browser, baseURL, serveur, {});
+  await a.page.goto('/');
+  await expect(a.page.locator('.cta')).toBeVisible();
+  await cap(a.page, '01-jouer-nouveau-premier-lancement');
+  await a.ctx.close();
+  const b = await telephone(browser, baseURL, serveur, { 'go.premiere-pierre.v1': 'true' });
+  await b.page.goto('/');
+  await expect(b.page.getByTestId('modes')).toBeVisible();
+  await cap(b.page, '02-jouer-nouveau-apres-premiere-pierre');
+  await b.ctx.close();
+
+  const { ctx, page } = await telephone(browser, baseURL, serveur, { ...HABITUE, 'go.xp.v1': '480' }, true);
+  await page.goto('/');
+  await expect(page.getByTestId('modes')).toBeVisible();
+  await page.waitForTimeout(800);
+  await cap(page, '03-jouer-habitue');
+  // Étape de lancement contre l'ordi : la feuille (avant : « Changer » ; après : la tuile « L'ordi »).
+  const changer = page.getByRole('button', { name: 'Changer' });
+  if (await changer.count()) await changer.first().click();
+  else await page.getByTestId('mode-ordi').click();
+  await expect(page.getByRole('dialog', { name: 'Ton adversaire' })).toBeVisible();
+  await page.waitForTimeout(600);
+  await cap(page, '04-lancement-ordi');
+  await page.goto('/');
+  await expect(page.getByTestId('modes')).toBeVisible();
+  await page.locator('.cta[data-mode="en_ligne"]').click();
+  await expect(page.getByTestId('direct-choix')).toBeVisible();
+  await page.waitForTimeout(800);
+  await cap(page, '05-lancement-en-ligne');
+  await ctx.close();
+});

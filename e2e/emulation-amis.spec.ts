@@ -200,9 +200,7 @@ test('accueil : le bilan de la semaine passée se montre une fois, puis plus ava
     stockage: { 'go.semaine.v1': JSON.stringify({ courante: semaine(lundiParis(-1), { parties: 4, problemes: 7, goDuJour: 3 }, ['parties', 'problemes']), precedente: null, bilanVu: null }) } });
   await page.goto('/');
   const carte = page.getByTestId('bilan-semaine');
-  // Sous les tuiles : marqué vu seulement une fois à l'écran (un rechargement avant ne le perd pas).
-  await expect(carte).toBeAttached();
-  await page.reload();
+  // Sous les tuiles. #613 : l'accueil allégé la montre dès l'ouverture (elle est marquée vue une fois à l'écran).
   await carte.scrollIntoViewIfNeeded();
   await expect(carte).toBeVisible();
   await expect(carte).toContainText('Ta semaine passée');

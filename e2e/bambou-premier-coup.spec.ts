@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { expect, test, type Page, type Route } from '@playwright/test';
-import { jouer, message, pierres, plateau } from './plateau';
+import { jouer, message, ouvrirLancementOrdi, pierres, plateau, toucherCta } from './plateau';
 
 // #584 : premier coup contre Bambou (KataGo) sans le réseau en cache. Avant : 15 s d'attente muette, puis un coup du
 // moteur simple, sans le dire. Maintenant : « L'IA se prépare… » pendant le téléchargement, puis le coup de KataGo ;
@@ -62,7 +62,7 @@ test('réseau pas en cache : « L’IA se prépare… », puis le coup de KataGo
   const reseau = await servir(page, { retenir: true });
   await page.goto('/');
   await expect(page.locator('.cta')).toHaveAccessibleName(/contre Bambou$/);
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await expect(plateau(page)).toBeVisible();
   // Le téléchargement commence dès l'ouverture de la partie.
   await expect.poll(() => reseau.n.v).toBe(1);
@@ -83,7 +83,7 @@ test('KataGo ne peut pas démarrer (réseau introuvable) : Mochi dit que Bambou 
   await appareil(page, 'bambou');
   await servir(page, { refuser: true });
   await page.goto('/');
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await expect(plateau(page)).toBeVisible();
   await jouer(page, 'E5');
   await expect(pierres(page, 'blanc')).toHaveCount(1, { timeout: 30_000 });
@@ -99,7 +99,7 @@ test('Bambou choisi dans « Changer » : le réseau se précharge ; jamais en é
     await appareil(page, 'caillou', connexion);
     const reseau = await servir(page);
     await page.goto('/');
-    await page.getByRole('button', { name: 'Changer' }).click();
+    await ouvrirLancementOrdi(page);
     await page.getByRole('list', { name: /Adversaires/ }).getByRole('button', { name: /^Bambou,/ }).click();
     if (attendu) await expect.poll(() => reseau.n.v, { timeout: 15_000 }).toBe(1);
     else { await page.waitForTimeout(3000); expect(reseau.n.v).toBe(0); }

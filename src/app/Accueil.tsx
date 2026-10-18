@@ -9,6 +9,8 @@
 // #487 : avant la toute première pierre posée (`epure`, src/app/premierePierre.ts), ni tuiles de modes ni cartes
 // secondaires : la promesse, le goban, l'adversaire, le bouton et « Je sais déjà jouer ». Tout revient dès la première pierre.
 // #509 (L4) : le mot « kyu » expliqué dans la feuille « Ton adversaire », là où l'on choisit un adversaire par son grade.
+// #613 : l'ouverture va droit à l'action. Ni niveau ni XP (Profil, fin de partie), ni grade ni cote (lancement d'une
+// partie classée, sa fin, Profil), ni taille du plateau : elle se choisit en lançant la partie (src/app/LancementPartie.tsx).
 import { Suspense, useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { Board } from '../ui/Board';
 import { Sceau } from '../ui/Sceau';
@@ -16,15 +18,14 @@ import { Portrait } from '../ui/Portrait';
 import { Mochi } from '../ui/Mochi';
 import { MiniGoban } from '../ui/MiniGoban';
 import type { CarteAdversaire } from '../ui/Carrousel';
-import { CarrouselAdversaires, ReglagesPartie } from './ecrans';
-import { estDefaut, komiDeLaPartie, type ReglagesPartie as ValeurReglages } from './reglagesPartie';
+import { FeuilleLancement } from './ecrans';
+import type { ReglagesAvances } from './LancementPartie';
 import type { Opponent } from '../engine';
 import type { Accueil as TextesAccueil } from './home';
 import { ordreDuJour, type TuileDuJour } from './aujourdhui';
 import { fr } from '../ui/typo';
-import { langue, nombre, t } from '../content/i18n';
-import { gradeDe, texteGrade } from '../go/cote';
-import type { Depuis, Mode, ModesAccueil } from './modes';
+import { t } from '../content/i18n';
+import type { Depuis, Lancement, Mode, ModesAccueil } from './modes';
 import { besoinReseau } from './horsLigne';
 
 type Taille = 9 | 13 | 19;
@@ -33,7 +34,7 @@ type Taille = 9 | 13 | 19;
 export interface TuileProbleme { titre: string; reussi: boolean; rows: string[]; numero: number;
   /** Pastille d'état (#236, N4) : « Fait », « À faire », ou rien (premier lancement, autre appel à l'écran). */
   etat?: 'fait' | 'aFaire' | null }
-export interface TuileLecon { rang: number; total: number; titre: string }
+export interface TuileLecon { titre: string }
 /** Défis d'amis où c'est ton tour (#81) : la tuile passe en premier. */
 export interface TuileDefis { n: number; ouvrir: () => void;
   /** #367 : un seul défi en attente, adversaire connu : « Contre Léa » (la tuile ouvre alors la partie). */
@@ -57,18 +58,17 @@ interface Props {
   textes: TextesAccueil;
   taille: Taille;
   cartes: CarteAdversaire<Opponent['id']>[];
-  reglages: boolean;
-  setReglages: (ouvert: boolean) => void;
+  /** #613 : feuille de lancement ouverte (l'ordi, à deux), ou null. */
+  lancement: Lancement | null;
+  setLancement: (m: Lancement | null) => void;
+  /** Lance la partie choisie dans la feuille de lancement. */
+  onJouer: (m: Lancement) => void;
   onTaille: (t: Taille) => void;
   onChoisir: (id: Opponent['id']) => void;
   /** #429 : action principale, tuiles et « Plus » (src/app/modes.ts). */
   modes: ModesAccueil;
-  /** Un mode choisi, et d'où (bouton, goban, tuile, « Plus », feuille « Changer ») : mesuré par `mode_choisi`. */
+  /** Un mode choisi, et d'où (bouton, goban, tuile, « Plus ») : mesuré par `mode_choisi`. */
   onMode: (mode: Mode, depuis: Depuis) => void;
-  /** Cote du joueur connecté (partie en ligne) ; null sans compte ou tant qu'elle n'est pas lue. */
-  cote?: { cote: number; provisoire: boolean } | null;
-  /** Compte complet : la partie en ligne mène droit à la recherche (sinon, « Crée ton compte » d'abord). */
-  compte?: boolean;
   /** Défis d'amis où c'est ton tour : la tuile « Un ami » le dit. */
   defisAJouer?: number;
   probleme?: TuileProbleme;
@@ -88,8 +88,8 @@ interface Props {
   revisions?: { n: number; ouvrir: () => void };
   /** #487 : tout premier lancement, aucune pierre posée : une seule action, rien d'autre à choisir. */
   epure?: boolean;
-  /** #528 : « Réglages de la partie » (handicap, komi, comptage), groupe replié de la feuille « Changer ». */
-  reglagesPartie?: { valeur: ValeurReglages; changer: (r: ValeurReglages, cle: 'handicap' | 'komi' | 'regles' | 'retablir') => void; komiAuto: number };
+  /** #528 : « Réglages de la partie » (handicap, komi, comptage), groupe replié de la feuille de lancement. */
+  reglagesPartie?: ReglagesAvances;
   /** #528 : partie interrompue contre l'ordi : la tuile « Reprendre ta partie » (jamais au premier lancement épuré). */
   reprise?: TuileReprise;
   /** #538 : hors ligne, les tuiles qui ont besoin du réseau (en ligne, un ami, défis, parties lentes) sont grisées, avec la raison. */
@@ -121,11 +121,6 @@ const PLATEAU_PREMIER: Record<Taille, Int8Array> = (() => {
   };
   return { 9: scene(9), 13: scene(13), 19: scene(19) };
 })();
-/** Cote affichée : « 1200 », ou « 1200 ? » tant qu'elle est provisoire (même écriture que src/content/i18n/cote.ts, hors du JS initial). */
-const texteCote = (c: { cote: number; provisoire: boolean }) => `${Math.round(c.cote)}${c.provisoire ? (langue() === 'fr' ? '\u00a0?' : '?') : ''}`;
-const texteGradeDe = (cote: number) => texteGrade(gradeDe(cote), langue());
-
-const AIDE_TAILLE = { 9: 'accueil.aideTaille.9', 13: 'accueil.aideTaille.13', 19: 'accueil.aideTaille.19' } as const satisfies Record<Taille, string>;
 
 export function Accueil(p: Props) {
   const { adv, textes, taille } = p;
@@ -141,6 +136,9 @@ export function Accueil(p: Props) {
   const cta = enLigne ? t('accueil.cta.enLigne') : textes.cta;
   const revisions = !premier && p.revisions && p.revisions.n > 0 ? p.revisions : undefined;
   const [plusOuvert, setPlusOuvert] = useState(false);
+  // #613 : la feuille de lancement, chargée à la première ouverture, reste montée ensuite (sa sortie est animée).
+  const [dernier, setDernier] = useState<Lancement | null>(null);
+  useEffect(() => { if (p.lancement) setDernier(p.lancement); }, [p.lancement]);
   const epure = !!p.epure;
   // Lu une fois au montage : les tuiles révélées après la première pierre arrivent une seule fois en fondu.
   const [revele] = useState(() => !epure && vuEpure);
@@ -177,40 +175,21 @@ export function Accueil(p: Props) {
             <h2>{adv.nom}</h2>
             <span>{t('accueil.premierAdversaire')}</span>
           </div>
-          <button className="lien" aria-haspopup="dialog" aria-expanded={p.reglages} onClick={() => p.setReglages(true)}>{t('accueil.changer')}</button>
+          <button className="lien" aria-haspopup="dialog" aria-expanded={p.lancement === 'ordi'} onClick={() => p.setLancement('ordi')}>{t('accueil.changer')}</button>
         </div>
-      ) : (
-        <>
-          {enLigne ? (
-            // #429 : partie en ligne en action principale. Ce qui se joue (la cote) à la place de l'adversaire de l'ordi.
-            <div className="adversaire classee" data-testid="classee">
-              <span className="classee-pierres" aria-hidden="true"><span className="stone b" /><span className="stone w" /></span>
-              <div className="adversaire-texte">
-                <div className="adversaire-identite">
-                  <h2>{p.cote ? texteGradeDe(p.cote.cote) : t('accueil.classee.titre')}</h2>
-                  {p.cote && <span data-testid="classee-cote">{texteCote(p.cote)}</span>}
-                </div>
-                <p className="scene-bulle">{t('accueil.classee.bulle')}</p>
-              </div>
+      ) : enLigne ? null : (
+        // L'adversaire parle sous le plateau : sa bulle ne cache plus aucune ligne. #613 : en ligne, rien entre le goban
+        // et le bouton : le grade et la cote attendent l'écran de lancement de la partie classée.
+        <div className="adversaire">
+          <Portrait id={adv.id} taille={48} decoratif signature={false} />
+          <div className="adversaire-texte">
+            <div className="adversaire-identite">
+              <h2>{adv.nom}</h2>
+              <span>{adv.rang}</span>
             </div>
-          ) : (
-            // L'adversaire parle sous le plateau : sa bulle ne cache plus aucune ligne.
-            <div className="adversaire">
-              <Portrait id={adv.id} taille={48} decoratif signature={false} />
-              <div className="adversaire-texte">
-                <div className="adversaire-identite">
-                  <h2>{adv.nom}</h2>
-                  <span>{adv.rang}</span>
-                </div>
-                <p className="scene-bulle">{textes.bulle}</p>
-              </div>
-            </div>
-          )}
-          <div className="reglage">
-            <span>{t(enLigne ? 'accueil.plateauSeul' : 'accueil.plateau', { taille })}</span>
-            <button className="lien" aria-haspopup="dialog" aria-expanded={p.reglages} onClick={() => p.setReglages(true)}>{t('accueil.changer')}</button>
+            <p className="scene-bulle">{textes.bulle}</p>
           </div>
-        </>
+        </div>
       )}
 
       {/* Libellé court (« Jouer contre Pomme ») : taille pleine ; long (première partie) : un cran plus petit, sur une ligne. */}
@@ -252,7 +231,13 @@ export function Accueil(p: Props) {
         {p.installation}
       </>}
 
-      <Reglages {...p} />
+      {dernier && (
+        <Suspense fallback={null}>
+          <FeuilleLancement mode={p.lancement} dernier={dernier} fermer={() => p.setLancement(null)} adv={adv} cartes={p.cartes}
+            taille={taille} onTaille={p.onTaille} onChoisir={p.onChoisir} cta={textes.cta} ctaNom={textes.ctaNom} onJouer={p.onJouer}
+            reglagesPartie={p.reglagesPartie} />
+        </Suspense>
+      )}
       {!epure && p.modes.plus.length > 0 && <FeuillePlus modes={p.modes.plus} ouvert={plusOuvert} setOuvert={setPlusOuvert} onMode={p.onMode} />}
     </div>
   );
@@ -346,7 +331,8 @@ function Tuile({ tuile, p, etat, defis }: { tuile: TuileDuJour; p: Props; etat: 
           : t('accueil.tuileAriaSimple', { numero: pb.numero, titre: pb.titre })) : undefined}>
         {pb && <MiniGoban rows={pb.rows} className="mini-plateau" />}
         <span>
-          <small>{pb ? t('accueil.goDuJourNumero', { numero: pb.numero }) : t('accueil.goDuJour')}</small>
+          {/* #613 (E7) : le numéro du jour ne change pas le choix ; il reste dans le nom accessible. */}
+          <small>{t('accueil.goDuJour')}</small>
           <b>{pb?.titre ?? t('nav.problemes')}</b>
         </span>
         {pb && etat && (
@@ -362,7 +348,8 @@ function Tuile({ tuile, p, etat, defis }: { tuile: TuileDuJour; p: Props; etat: 
     <button className={`tuile tuile-lecon${avant}`} onClick={p.onLecon}>
       {tuile.enAvant && <span className="tuile-chemin" aria-hidden="true"><Sceau id="mochi" taille={36} /></span>}
       <span>
-        <small>{p.lecon ? t('accueil.lecon', { rang: p.lecon.rang, total: p.lecon.total }) : t('accueil.leconsTerminees')}</small>
+        {/* #613 (E7) : plus de « 1 sur 48 » : le chemin le montre dans Apprendre, l'accueil dit seulement quoi faire. */}
+        <small>{p.lecon ? t('accueil.leconCourte') : t('accueil.leconsTerminees')}</small>
         <b>{p.lecon?.titre ?? t('accueil.revoirChemin')}</b>
       </span>
       {tuile.enAvant && <em className="tuile-etat" aria-hidden="true">{t('accueil.leconSuivante')}</em>}
@@ -389,67 +376,6 @@ function TuileRevisions({ r }: { r: { n: number; ouvrir: () => void } }) {
         <small>{t('accueil.revisions.detail')}</small>
       </span>
     </button>
-  );
-}
-
-/** Feuille « Changer » : carrousel des adversaires et taille du plateau, dans une boîte de dialogue modale native. */
-function Reglages({ adv, cartes, taille, reglages, setReglages, onTaille, onChoisir, onMode, textes, reglagesPartie }: Props) {
-  const ref = useRef<HTMLDialogElement>(null);
-  useDialogue(ref, reglages);
-  // #528 : « Réglages de la partie », replié à chaque ouverture de la feuille : le débutant ne le voit pas.
-  const [avances, setAvances] = useState(false);
-  useEffect(() => { if (!reglages) setAvances(false); }, [reglages]);
-  const rp = reglagesPartie?.valeur;
-  const resume = rp && !estDefaut(rp) ? t('partie.reglages.resume', {
-    h: rp.handicap >= 2 ? rp.handicap : t('partie.reglages.handicap.aucun').toLowerCase(),
-    k: nombre(komiDeLaPartie(rp, reglagesPartie.komiAuto)),
-    r: t(`partie.reglages.regles.${rp.regles}`).toLowerCase(),
-  }) : null;
-
-  return (
-    <dialog ref={ref} className="feuille" aria-labelledby="feuille-titre" onClose={() => setReglages(false)}
-      // Un toucher sur le voile (hors de la feuille) la ferme.
-      onClick={e => { if (e.target === ref.current) setReglages(false); }}>
-      {reglages && (
-        <div className="feuille-corps">
-          <div className="feuille-tete">
-            <h2 id="feuille-titre">{t('accueil.tonAdversaire')}</h2>
-            <button className="lien" onClick={() => setReglages(false)}>{t('accueil.fermer')}</button>
-          </div>
-          {/* Audit du 02/10 (n° 5) : la taille du plateau passe en tête, sur une ligne. Elle restait cachée sous le bouton
-              collant, au premier affichage comme au bout de la liste, en 320 px. */}
-          <div className="feuille-taille" role="group" aria-labelledby="feuille-taille-titre" aria-describedby="feuille-taille-aide">
-            <h3 id="feuille-taille-titre">{t('accueil.taillePlateau')}</h3>
-            <div className="seg">
-              {([9, 13, 19] as const).map(n => <button key={n} aria-pressed={taille === n} onClick={() => onTaille(n)}>{n} × {n}</button>)}
-            </div>
-            <p id="feuille-taille-aide" className="muted small">{t(AIDE_TAILLE[taille])}</p>
-          </div>
-          {/* #509 (L4, n° 10) : les adversaires se choisissent par leur grade (« 20 kyu ») ; le mot est expliqué juste avant. */}
-          <p className="feuille-kyu muted small" data-testid="feuille-kyu">{fr(t('accueil.kyu'))}</p>
-          {/* #429 : chargé avec la feuille (préchargé après le premier écran) ; la place est gardée pendant l'attente. */}
-          <Suspense fallback={<div className="carrousel-attente" aria-busy="true" />}>
-            <CarrouselAdversaires cartes={cartes} choisi={adv.id} onChoisir={onChoisir} legende={t(`adv.${adv.id}.description`)} />
-          </Suspense>
-          {reglagesPartie && (
-            <div className="feuille-avances">
-              <button type="button" className="lien feuille-avances-bouton" aria-expanded={avances} aria-controls={avances ? 'reglages-partie' : undefined}
-                data-testid="reglages-partie-ouvrir" onClick={() => setAvances(o => !o)}>
-                {t('partie.reglages.titre')}<span aria-hidden="true">{avances ? ' ▴' : ' ▾'}</span>
-              </button>
-              {resume && <p className="muted small" data-testid="reglages-partie-resume">{fr(resume)}</p>}
-              {avances && (
-                <Suspense fallback={<p className="muted small" aria-busy="true">{t('partie.reglages.chargement')}</p>}>
-                  <ReglagesPartie valeur={reglagesPartie.valeur} onChange={reglagesPartie.changer} />
-                </Suspense>
-              )}
-            </div>
-          )}
-          {/* #429 : « Changer » ne sert plus qu'à choisir l'adversaire et la taille ; les modes sont sur l'accueil. */}
-          <button className="btn primary" aria-label={textes.ctaNom} onClick={() => onMode('ordi', 'feuille')}>{textes.cta}</button>
-        </div>
-      )}
-    </dialog>
   );
 }
 
@@ -493,11 +419,10 @@ function TuileMode({ mode, p }: { mode: Mode; p: Props }) {
     );
   }
   if (mode === 'en_ligne') {
-    const cote = p.cote && `${texteGradeDe(p.cote.cote)} · ${texteCote(p.cote)}`;
     const aJouer = p.lentes?.aJouer ?? 0;
     return (
       <button type="button" className={`mode${aJouer ? ' a-jouer' : ''}`} data-testid="mode-en_ligne" onClick={choisir}
-        aria-label={`${t('mode.enLigne')} : ${aJouer ? t('mode.enLigne.aJouer') : t('mode.enLigne.detail')}${cote ? `, ${cote}` : ''}`}>
+        aria-label={`${t('mode.enLigne')} : ${aJouer ? t('mode.enLigne.aJouer') : t('mode.enLigne.detail')}`}>
         <span className="mode-icone" aria-hidden="true"><IconeMode mode="en_ligne" /></span>
         <b>{t('mode.enLigne')}</b>
       </button>

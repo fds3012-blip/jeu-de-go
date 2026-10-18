@@ -1,11 +1,11 @@
 import { expect, test, type Page } from '@playwright/test';
-import { jouer, jouerSuite, partieADeux, plateau } from './plateau';
+import { jouer, jouerSuite, partieADeux, plateau, toucherCta } from './plateau';
 
 // « Qui mène ? » (#94) : un toucher montre la carte des territoires et une phrase pendant 3 s.
 
 async function partieContreOrdi(page: Page) {
   await page.goto('/');
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await expect(plateau(page)).toBeVisible();
   await jouer(page, 'E5');
   await expect(page.getByText(/Pomme (joue|capture|passe)/)).toBeVisible({ timeout: 10_000 });
@@ -48,7 +48,7 @@ test("l'action disparaît quand l'aide de Mochi est coupée", async ({ page }) =
     try { const s = JSON.parse(localStorage.getItem(k) ?? '{}'); localStorage.setItem(k, JSON.stringify({ ...s, aide: 'non' })); } catch { /* rien */ }
   });
   await page.goto('/');
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await expect(plateau(page)).toBeVisible();
   await expect(page.getByRole('button', { name: 'Indice' })).toBeVisible();
   await expect(bouton(page)).toHaveCount(0);

@@ -2,7 +2,7 @@
 // immobile à l'ouverture de la feuille, mot « kyu » expliqué. Rendu statique (node, sans DOM).
 import { readFileSync } from 'node:fs';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { BarreNiveau } from './Niveau';
+import { BarreNiveau } from './BarreNiveau';
 import { CarrouselAdversaires } from './Carrousel';
 import { traduire } from '../content/i18n/secondaires';
 

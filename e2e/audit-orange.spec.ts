@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { brancher, fauxServeur } from './fauxSupabase';
-import { plateau } from './plateau';
+import { ouvrirLancementOrdi, plateau, toucherCta } from './plateau';
 
 // Issue #382 : défauts 🟠 de l'audit visuel du 02/10 (docs/qa/audit-visuel-2026-10-02.md).
 // n° 1 : plus de vide sous le plateau d'un problème, la consigne de Mochi est dessous, visible au-dessus de la barre.
@@ -45,7 +45,7 @@ test.describe('320 × 568', () => {
 
   test('feuille des adversaires : la taille du plateau est visible et se change sans défiler', async ({ page }) => {
     await page.goto('/');
-    await page.getByRole('button', { name: 'Changer' }).click();
+    await ouvrirLancementOrdi(page);
     const feuille = page.getByRole('dialog');
     await expect(feuille).toBeVisible();
     // La feuille monte en 150 ms (accueil.css). Un clic pendant ce mouvement fait défiler la feuille par Playwright
@@ -69,7 +69,7 @@ test.describe('320 × 568', () => {
       storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }, { name: 'go.connait-go.v1', value: '"sait"' }] }] } });
     const page = await brancher(ctx, fauxServeur(), { 'go.essai.v1': JSON.stringify({ terminees: 3 }) });
     await page.goto('/');
-    await page.locator('.cta').click();
+    await toucherCta(page);
     await expect(page.getByTestId('creer-compte')).toBeVisible();
     const action = page.getByRole('button', { name: 'Recevoir mon code' });
     const b = await action.boundingBox();

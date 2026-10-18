@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { boutonPasser, choisirMode, coupsJoues, jouer, passer, plateau } from './plateau';
+import { boutonPasser, choisirMode, coupsJoues, jouer, passer, plateau, toucherCta } from './plateau';
 import { demarrerParcours, ouvrirRevue, preparerRevue } from './revueFactice';
 import { fromLabel } from '../src/go/coords';
 
@@ -52,7 +52,7 @@ for (const [l, h, plancher] of [[320, 568, 260], [375, 667, 327]] as const) {
 
     test(`première partie : bulle d'intro au portrait, sous le plateau (${l} × ${h})`, async ({ page }) => {
       await page.goto('/');
-      await page.locator('.cta').click();
+      await toucherCta(page);
       await expect(page.locator('.annonce-komi')).toBeVisible();
       expect((await plateau(page).boundingBox())!.width).toBeGreaterThanOrEqual(plancher);
       // Mochi parle de ta partie : son portrait, comme le coach qui suivra (#527).

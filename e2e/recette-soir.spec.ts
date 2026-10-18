@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { fromLabel } from '../src/go/coords';
-import { attendrePierre, jouer, plateau } from './plateau';
+import { attendrePierre, jouer, ouvrirLancementOrdi, plateau } from './plateau';
 
 // Recette du soir du 28/09 (docs/qa/recette-2026-09-28-soir.md, branche recette-soir) : défauts S3 à S6.
 // #290 (S3) : en 320 × 640, le verdict d'un problème de vie et mort ne cache plus le coup gagnant ni les yeux.
@@ -110,7 +110,7 @@ test.describe('#291 : tampon « BATTUE » de la feuille des adversaires', () => 
         localStorage.setItem('go.intro-but.v1', 'true');
       });
       await page.goto('/');
-      await page.getByRole('button', { name: 'Changer' }).click();
+      await ouvrirLancementOrdi(page);
       const tampon = page.getByRole('dialog').locator('.vignette-tampon').first();
       await expect(tampon).toHaveText('BATTUE');
       const { couleur, fond } = await tampon.evaluate(el => {
