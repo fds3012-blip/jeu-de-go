@@ -42,6 +42,7 @@
 .ouv-nav .ouv-principal { flex: 1 1 60%; }
 .ouv-actions > .ouv-principal { min-height: var(--cible-cta, 52px); }
 .ouv-actions svg { flex: none; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.ouv-liens { display: flex; flex-wrap: wrap; justify-content: center; column-gap: var(--space-5); }
 .ouv-actions .lien { align-self: center; min-height: var(--cible-min); text-decoration: underline; text-underline-offset: 3px; }
 
 @media (prefers-reduced-motion: no-preference) {

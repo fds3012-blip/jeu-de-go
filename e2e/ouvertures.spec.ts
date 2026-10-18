@@ -48,7 +48,7 @@ test('Apprendre → Ouvertures : avancer, reculer, voir l’erreur courante', as
   for (const b of await cartes.all()) expect((await b.boundingBox())!.height).toBeGreaterThanOrEqual(44);
   await page.getByRole('button', { name: '19 × 19', exact: true }).click();
   await expect(page.getByRole('button', { name: '19 × 19', exact: true })).toHaveAttribute('aria-pressed', 'true');
-  await expect(cartes).toHaveCount(OUVERTURES.filter(o => o.taille === 19).length);
+  await expect(cartes).toHaveCount(OUVERTURES.filter(o => o.taille === 19 && o.repertoire !== false).length);
 
   // L'invasion au 3-3 : jouée coup par coup.
   const o = OUVERTURES.find(x => x.id === 'h-sansan')!, lue = lireOuverture(o);

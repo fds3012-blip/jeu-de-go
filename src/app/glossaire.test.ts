@@ -116,6 +116,8 @@ const JARGON: [RegExp, IdMot][] = [
   [/san-san/i, 'sanSan'], [/komoku/i, 'komoku'], [/kakari/i, 'kakari'], [/\btsuke\b/i, 'tsuke'], [/kosumi/i, 'kosumi'], [/watari/i, 'watari'], [/tenuki/i, 'tenuki'], [/\bmiai\b/i, 'miai'],
   // #553 : leçons 47 à 49.
   [/\bmurs?\b/i, 'mur'], [/\bcoup(e|es|er|é|ées?)\b/i, 'couper'], [/invasion|envahi/i, 'invasion'], [/réduction|\bréduis\b/i, 'reduction'],
+  // #672 : les ouvertures célèbres.
+  [/fuseki/i, 'fuseki'], [/tengen/i, 'tengen'], [/\bmoyo\b/i, 'moyo'], [/nirensei/i, 'nirensei'], [/sanrensei/i, 'sanrensei'],
 ];
 
 describe('chaque mot du go employé dans l’interface a sa définition (#362)', () => {
