@@ -63,13 +63,13 @@ test('1. placement depuis le Profil : le Profil reste allumé, « Passer » ram�
   await expect(passer).toBeVisible();
   await allume(page, 'Profil');
   await passer.click();
-  await expect(page.getByRole('heading', { name: 'Ton parcours' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Ta progression' })).toBeVisible();
   await allume(page, 'Profil');
   // Le retour du système aussi (placement rouvert : rien n'est enregistré par la sortie).
   await page.getByRole('button', { name: /^(Ton niveau de départ|Refaire)/ }).first().click();
   await expect(passer).toBeVisible();
   await retourSysteme(page);
-  await expect(page.getByRole('heading', { name: 'Ton parcours' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Ta progression' })).toBeVisible();
   await allume(page, 'Profil');
   expect(erreurs).toEqual([]);
   await ctx.close();

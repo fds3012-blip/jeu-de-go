@@ -7,7 +7,6 @@ import { gradeDe, texteGrade } from '../../go/cote';
 
 const FR = {
   'cote.ligne': 'Ta cote',
-  'cote.ligneDepart': 'Choisis ton départ',
   'cote.lignePlacement': 'Ton niveau de départ',
   'cote.titre': 'Ta cote',
   'cote.aria': 'Ta cote : {cote}, {grade}.',
@@ -49,7 +48,6 @@ export type CleCote = keyof typeof FR;
 
 const EN: { readonly [K in CleCote]: string } = {
   'cote.ligne': 'Your rating',
-  'cote.ligneDepart': 'Pick your start',
   'cote.lignePlacement': 'Your starting level',
   'cote.titre': 'Your rating',
   'cote.aria': 'Your rating: {cote}, {grade}.',

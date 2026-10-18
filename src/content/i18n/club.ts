@@ -12,7 +12,6 @@ const FR = {
   'reglages.apercuAria': 'Aperçu : un goban 9 × 9 avec tes réglages.',
   'reglages.groupe.plateau': 'Plateau',
   // #571 (loi de Hick) : second groupe des lignes du Profil (réglages, compte, nous écrire, conditions).
-  'profil.groupe.app': 'L’app et ton compte',
   'reglages.groupe.rythme': 'Rythme',
   'reglages.groupe.progression': 'Progression',
   'reglages.coordonnees': 'Coordonnées',
@@ -161,7 +160,6 @@ const EN: { readonly [K in CleClub]: string } = {
   'reglages.apercu': 'Board preview',
   'reglages.apercuAria': 'Preview: a 9 × 9 board with your settings.',
   'reglages.groupe.plateau': 'Board',
-  'profil.groupe.app': 'App and account',
   'reglages.groupe.rythme': 'Pace',
   'reglages.groupe.progression': 'Progress',
   'reglages.coordonnees': 'Coordinates',

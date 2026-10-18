@@ -136,15 +136,5 @@ html:has(.accord[open]) body { padding-bottom: calc(var(--accord-h, 160px) + var
 .suppression b { color: var(--danger-texte); }
 .pastille { position: relative; display: grid; place-items: center; width: var(--cible-min); height: var(--cible-min); padding: 0;
   background: none; border: 0; border-radius: 50%; color: var(--text); }
-/* #362 : titre et bouton « Aide » sur une ligne ; le bouton (44 px) déborde en haut et en bas pour ne rien ajouter à la hauteur. */
-.profil .profil-titre-ligne { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); margin: 0 0 var(--space-2); }
-.profil .profil-titre-ligne .profil-titre { margin: 0; }
-.profil .profil-titre-ligne .bouton-aide { margin: -12px -14px -12px 0; }
-/* #461 : zoom 200 % avec polices de secours : le retrait de -14 px poussait « Aide » 10 px hors de l'écran. Le titre et
-   « Aide » passent l'un sous l'autre s'il le faut, sans retrait. */
-@media (max-width: 299px) {
-  .profil .profil-titre-ligne { flex-wrap: wrap; row-gap: 0; }
-  .profil .profil-titre-ligne .bouton-aide { margin: -6px 0; padding-inline: 8px; }
-}
 /* Carte d'installation demandée depuis le Profil : pas d'entrée retardée, le joueur l'a ouverte lui-même. */
 .installer.installer-demandee { margin-top: 0; animation: none; }

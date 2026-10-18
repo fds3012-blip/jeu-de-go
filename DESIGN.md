@@ -358,7 +358,7 @@ Lumière : `--halo`, un dégradé radial doré en haut de `body` (11 % d'or en s
 - **État du Go du jour** (`.tuile-etat`) : pilule dans le coin, « À faire » sur or, « Fait » cerné de jade sur `--surface-2`.
 - **Série** (`.serie`) : pilule or à 16 %, flamme creuse tant que le Go du jour reste à faire, pleine après. En haut de l'accueil, et à côté du Go du jour dans Problèmes (#620).
 - **Leçon faite** (page d'un thème, #627) : le sceau de la leçon (`SceauLecon`, 32 px) à droite de la ligne, sans pastille texte ; l'état reste dans le nom accessible. En clair, le sceau est assombri (`brightness(.78)`) pour garder 3:1 sur `--surface`.
-- **Badges du Profil** (`.badge-bouton`) : rond de 44 px ; choisi : double anneau `--bg` puis `--accent-bord`.
+- **Badges du Profil** (`.badge-bouton`, détail « Niveau et badges », #654) : rond de 44 px ; choisi : double anneau `--bg` puis `--accent-bord`.
 - **Pastille d'onglet** : point `--accent-trait` de 10 px sur l'icône, liseré de la couleur de la barre.
 
 ### Partie
@@ -517,7 +517,7 @@ Ce qu'on garde quand même : les règles E et A ; les libellés visibles (une ca
 | `min-width: 600px` | Large : le contenu passe à 720 px, le texte courant à `--mesure` ; Go du jour en deux zones (goban, problème) ; le plateau de la partie et le fond de la fin ne débordent plus la gouttière. |
 | `min-width: 1024px` | Très large : le contenu passe à 1080 px ; carte de la prochaine leçon en deux zones ; bouton principal dans le flux plafonné à 560 px. |
 | `min-width: 600px` (grilles, #630) | Vignettes de Tous les problèmes en `minmax(7rem, 1fr)` ; Statistiques en deux colonnes. |
-| `min-width: 1024px` (grilles, #630) | Profil : identité à gauche, menu à droite, badges sur toute la largeur ; Réglages : aperçu du goban fixe à gauche, groupes en deux colonnes. |
+| `min-width: 1024px` (grilles, #630, #654) | Profil : identité sur toute la largeur, rubriques du sommaire en deux colonnes ; Réglages : aperçu du goban fixe à gauche, groupes en deux colonnes. |
 | `@container (max-width: 5.4em)` sur un onglet | Libellé court (« Appr. », « Probl. ») au zoom 200 % ; le nom entier reste lu. |
 | `hover: hover` et `pointer: fine` | Survol, seulement à la souris. |
 
@@ -525,7 +525,7 @@ Ce qu'on garde quand même : les règles E et A ; les libellés visibles (une ca
 `env(safe-area-inset-top)` sur `body`, par la variable `--zone-haut`, et une bande fixe de même fond (`body::before`) qui couvre la barre d'état quand la page défile (#618) ; `env(safe-area-inset-bottom)` sous la barre du bas, la barre d'actions, le bouton fixe et les feuilles. `scroll-padding-bottom` garde un élément focalisé au-dessus de la barre (WCAG 2.4.11).
 
 ### Stratégie
-On ne cache pas l'action principale : on réduit d'abord le vide, puis les détails (E6), puis la taille du goban, qui suit la place restante. Le Profil doit tenir sans défiler en 390 × 844 (vérifié par les tests).
+On ne cache pas l'action principale : on réduit d'abord le vide, puis les détails (E6), puis la taille du goban, qui suit la place restante. Le Profil est un sommaire (A13, #654) : il défile, mais sa carte d'identité et la rubrique « Ta progression » sont au premier regard en 390 × 844.
 
 ## Contraintes du projet
 

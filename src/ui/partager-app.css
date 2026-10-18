@@ -26,21 +26,5 @@
 .verdict .partager-app > p { display: none; }
 .verdict .btn.partager-app-bouton { width: 100%; }
 
-/* Profil : « Partager » à droite du titre, avant « Aide », même pastille (sans fond, 44 px de haut, rien en relief). */
-.profil .profil-titre-ligne { flex-wrap: wrap; }
-.partager-app-profil { flex: none; margin: -12px 0 -12px auto; min-width: var(--cible-min); height: var(--cible-min);
-  display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 0 12px 0 10px; border: 0;
-  border-radius: var(--radius-pill); background: none; color: var(--text); font: inherit; font-size: var(--fs-s);
-  font-weight: var(--fw-bold); cursor: pointer; -webkit-tap-highlight-color: transparent; }
-.partager-app-profil .partager-app-icone { width: 20px; height: 20px; color: var(--muted); stroke-width: 2; }
-.partager-app-profil.copie .partager-app-icone { color: var(--accent-texte); }
-.partager-app-profil:hover .partager-app-icone { color: var(--text); }
-.partager-app-profil:active { background: var(--surface); }
-.partager-app-profil:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
-.profil .profil-titre-ligne .partager-app-profil + .bouton-aide { margin-left: 0; }
-.profil-titre-ligne .partager-app-manuel { flex-basis: 100%; margin-top: var(--space-2); }
-/* Petit écran : l'icône seule (le titre et « Aide » gardent leur place). */
-@media (max-width: 359px) {
-  .partager-app-profil { padding: 0; }
-  .partager-app-profil-texte { display: none; }
-}
+/* Profil (#654) : « Partager Mochi Go » est une entrée du sommaire ; sous la liste, le lien à copier si la copie a échoué. */
+.profil .partager-app-manuel { margin-top: var(--space-2); }

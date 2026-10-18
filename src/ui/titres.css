@@ -6,8 +6,6 @@
 .sceau-titre { line-height: 0; display: inline-block; flex: none; }
 .sceau-titre > svg { display: block; }
 
-/* Demi-ligne du Profil (gabarit .ligne-demi de profil.css, 48 px) : le sceau à la place de l'icône. */
-.ligne-titre .sceau-titre { margin-block: 2px; }
 
 /* Fête discrète : une carte en haut de l'écran, comme la fête de niveau (niveau.css), plus sobre. */
 .fete-titre { position: fixed; z-index: 60; left: 50%; top: calc(12px + env(safe-area-inset-top, 0px)); transform: translateX(-50%);

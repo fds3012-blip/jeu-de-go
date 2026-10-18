@@ -10,7 +10,7 @@ vi.mock('../data/analytics', async orig => ({ ...(await orig<typeof import('../d
 const { DELAI_INVITATION_MS, INVITATION_APP_KEY, doitInviter, lienApp, lireDerniere } = await import('./partageApp');
 const { traduirePartage } = await import('../content/i18n/partage');
 const { partagerApp } = await import('./envoiApp');
-const { BoutonPartagerApp } = await import('../ui/PartagerApp');
+const { usePartageProfil } = await import('../ui/PartagerApp');
 const { EVENTS } = await import('../data/analytics');
 
 const JOUR = 24 * 3600 * 1000;
@@ -125,15 +125,12 @@ describe('partage : feuille native, sinon copie', () => {
 });
 
 describe('« Partager Mochi Go » du Profil', () => {
-  it('un bouton (action directe) : nom accessible complet, mot visible court ; zone d’annonce présente et vide', () => {
-    const html = renderToStaticMarkup(<BoutonPartagerApp />);
-    expect(html).toMatch(/^<button type="button" class="partager-app-profil"[^>]*aria-label="Partager Mochi Go"/);
-    // Le mot visible est contenu dans le nom accessible (WCAG 2.5.3).
-    expect(html).toContain('>Partager</span>');
-    expect(html).toMatch(/<p class="sr-only" role="status" aria-live="polite"><\/p>/);
+  it('#654 : une entrée du sommaire ; la zone d’annonce est présente et vide', () => {
+    function Essai() { const p = usePartageProfil(); return <>{p.retour}</>; }
+    expect(renderToStaticMarkup(<Essai />)).toBe('<p class="sr-only" role="status" aria-live="polite"></p>');
   });
   it('libellés fr et en', () => {
-    expect(traduirePartage('fr', 'app.court')).toBe('Partager');
-    expect(traduirePartage('en', 'app.court')).toBe('Share');
+    expect(traduirePartage('fr', 'app.ligne')).toBe('Partager Mochi Go');
+    expect(traduirePartage('en', 'app.ligne')).toBe('Share Mochi Go');
   });
 });
