@@ -3,7 +3,7 @@ import { mkdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { brancher, fauxServeur, JETON, PARTIE } from './fauxSupabase';
-import { jouer, plateau } from './plateau';
+import { jouer, plateau, toucherCta } from './plateau';
 import { preparerRevue } from './revueFactice';
 import { fromLabel } from '../src/go/coords';
 
@@ -95,7 +95,7 @@ for (const langue of LANGUES) {
       // Nouveau joueur : un seul bouton à l'accueil, « Joue ta première partie » contre Pomme (src/app/Accueil.tsx).
       await preparer(page, {}, ordi(['F6', 'D6']));
       await page.goto(adresse(langue));
-      await page.locator('.cta').click();
+      await toucherCta(page);
       await expect(plateau(page)).toBeVisible();
       await coup(page, langue, 'D4', 'F6');
       await coup(page, langue, 'F4', 'D6');
@@ -107,7 +107,7 @@ for (const langue of LANGUES) {
       // Recette d'e2e/coach-mochi.spec.ts (#470) : Mochi signale la prise ratée en E4 et montre le point.
       await preparer(page, { 'go.parties.v1': { n: 1, dernier: 'pomme', ordi: 1 }, 'go.intro-but.v1': true }, ordi(['E5', 'J9', 'J8', 'J7', 'H9', 'H8']));
       await page.goto(adresse(langue));
-      await page.locator('.cta').click();
+      await toucherCta(page);
       await expect(plateau(page)).toBeVisible();
       for (const [noir, blanc] of [['D5', 'E5'], ['F5', 'J9'], ['E6', 'J8'], ['A9', 'J7']]) await coup(page, langue, noir, blanc);
       await expect(page.locator('[data-coach-bulle]')).toHaveText(langue === 'fr' ? /tu pouvais prendre une pierre en E4/ : /you could capture a stone at E4/);

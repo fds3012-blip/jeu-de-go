@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { attendrePierre, jouer, passerJusquAuScore } from './plateau';
+import { attendrePierre, jouer, passerJusquAuScore, toucherCta } from './plateau';
 
 // Issue #178 : proposer d'installer l'app au bon moment, une seule fois, refus mémorisé.
 // Issue #214 : plus au-dessus du plateau résolu du Go du jour ; sur l'accueil au 2e retour, et une ligne permanente dans le Profil.
@@ -120,7 +120,7 @@ test.describe('iPhone, Safari', () => {
     await commeSafari(page);
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/?komi=-100');
-    await page.locator('.cta').click();
+    await toucherCta(page);
     await expect(page.getByRole('button', { name: 'Passer' })).toBeVisible();
     await expect(carte(page)).toHaveCount(0);
     await passerJusquAuScore(page);

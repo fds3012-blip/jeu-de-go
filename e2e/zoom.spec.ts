@@ -1,6 +1,6 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { CHAPITRES, LESSONS_FR, type LessonStep } from '../src/content/lessons';
-import { jouer } from './plateau';
+import { jouer, toucherCta } from './plateau';
 import { motsEntiers, toucherAction } from './lecteur';
 
 // Issue #121 : zoom 200 % et reflow (WCAG 1.4.4 et 1.4.10).
@@ -208,7 +208,7 @@ for (const c of CAS) {
 
     test('partie contre l’ordinateur sans défilement horizontal', async ({ page }) => {
       await page.goto('/');
-      await page.locator('.cta').click();
+      await toucherCta(page);
       await expect(page.locator('.board, [role="grid"]').first()).toBeVisible();
       await sansDebord(page, 'Partie');
     });
@@ -221,7 +221,7 @@ for (const largeur of [320, 375, 390]) {
   test(`barre d’actions de la partie à ${largeur} px : libellés entiers`, async ({ page }) => {
     await page.setViewportSize({ width: largeur, height: 640 });
     await page.goto('/');
-    await page.locator('.cta').click();
+    await toucherCta(page);
     const barre = page.getByRole('toolbar', { name: 'Actions de la partie' });
     await expect(barre.getByRole('button', { name: 'Plus' })).toBeVisible();
     const boutons = await barre.getByRole('button').evaluateAll(bs => bs.map(b => {

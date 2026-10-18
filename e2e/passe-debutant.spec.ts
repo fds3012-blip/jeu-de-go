@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { attendreReponse, boutonPasser, coupsJoues, finDePartie, jouer, message, passer, plateau } from './plateau';
+import { attendreReponse, boutonPasser, coupsJoues, finDePartie, jouer, message, passer, plateau, toucherCta } from './plateau';
 
 // Issue #235 : le débutant passe tôt. Mochi prévient avant (sans bloquer), et pendant les premières parties
 // Pomme ne profite pas des passes : la partie se termine en 2 passes au plus.
@@ -24,7 +24,7 @@ test('passer trop tôt : Mochi prévient, « Jouer encore » reprend la main, «
   const erreurs: string[] = [];
   page.on('pageerror', (e) => erreurs.push(e.message));
   await page.goto('/');
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await expect(plateau(page)).toBeVisible();
   await jouerContrePomme(page, ['E5', 'C3', 'G7'], 2);
   const coups = await plateau(page).locator('g[data-pierre]').count();
@@ -64,7 +64,7 @@ test('passer trop tôt : Mochi prévient, « Jouer encore » reprend la main, «
 
 test('première partie : le joueur répond « Passer » deux fois, la partie se termine en 2 passes au plus', async ({ page }) => {
   await page.goto('/');
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await expect(plateau(page)).toBeVisible();
   // Une douzaine de coups chacun : la partie est « avancée », les frontières sont ouvertes partout.
   await jouerContrePomme(page, ['E5', 'C3', 'G7', 'C7', 'G3', 'D4', 'F6', 'D6', 'F4', 'B5', 'H5', 'E3', 'E7', 'C5', 'G5', 'B3', 'H7'], 11);

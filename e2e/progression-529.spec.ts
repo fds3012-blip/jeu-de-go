@@ -144,10 +144,11 @@ test('niveau 10 : la fête annonce le goban « Cerisier », qui se choisit dans 
   await expect(fete).toContainText('Tu débloques le goban « Cerisier ».');
   await fete.getByRole('button').click();
   await expect(fete).toHaveCount(0);
-  await expect(page.getByTestId('barre-niveau')).toContainText(/Niveau\s10/);
 
+  // #613 : la barre de niveau est dans le Profil.
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Profil' }).click();
+  await expect(page.getByTestId('barre-niveau')).toContainText(/Niveau\s10/);
   await page.getByRole('button', { name: /^Réglages/ }).click();
   const goban = page.getByRole('group', { name: 'Goban' });
   const cerisier = goban.getByRole('button', { name: 'Cerisier', exact: true });

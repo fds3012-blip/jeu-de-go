@@ -12,7 +12,7 @@ import { Avatar, Bandeau, BarreActions, ChoixMochi, Coach, Icone, Interrupteur, 
 import { BoutonAide } from '../ui/BoutonAide';
 import { BoutonRetour, EnteteEcran } from '../ui/BoutonRetour';
 import { ReglagesReplies } from '../ui/ReglagesReplies';
-import { GainCote, VocabulaireGrade } from '../ui/Cote';
+import { GainCote, TonNiveau, VocabulaireGrade } from '../ui/Cote';
 import { fromSgf, toSgf } from '../go/coords';
 import { groupAt } from '../go/rules';
 import { score } from '../go/score';
@@ -68,6 +68,8 @@ interface Props {
   userId: string;
   /** Cote du joueur (#417) : choisit l'IA du repli (#436). */
   cote?: number | null;
+  /** #613 : cote encore provisoire (« 800 ? »), montrée avec le grade au lancement de la partie classée. */
+  provisoire?: boolean;
   /**
    * #436 : partie contre l'IA en attendant, le joueur reste dans la file. Sans elle (tests), pas de repli proposé.
    * `depuis` : début de l'attente (heure du client), pour mesurer l'attente jusqu'à l'humain.
@@ -94,10 +96,12 @@ interface Props {
 }
 
 /** « Un humain, maintenant » : du choix de la partie jusqu'au bilan. */
-export function Direct({ db, userId, cote, onRepli, partieInitiale, confirmTouch, reglages, celebrer, onAccueil, onFacon, onOrdi, onPlein, onProfil }: Props) {
+export function Direct({ db, userId, cote, provisoire = true, onRepli, partieInitiale, confirmTouch, reglages, celebrer, onAccueil, onFacon, onOrdi, onPlein, onProfil }: Props) {
   // #436 : la file par défaut d'abord (9 × 9, normale, japonais), quelle que soit la taille choisie pour l'ordi.
   // #365 : le temps de jeu proposé d'abord vient des Réglages (« normale » par défaut, celle de la file par défaut).
   const { cadence: cadenceReglee } = usePreferences();
+  // #613 : la taille n'est pas retenue en ligne : 9 × 9 coché à chaque fois, une seule file fréquentée (#436) ;
+  // 13 ou 19 se choisissent ici, au lancement.
   const [params, setParams] = useState<Params>(partieInitiale?.demande ?? { ...PARAMS_DEFAUT, cadence: cadenceReglee });
   const [vue, setVue] = useState<Vue>(partieInitiale ? { vue: 'partie', id: partieInitiale.id, attenteS: null, demande: partieInitiale.demande } : { vue: 'choix' });
   // Avant la peinture : l'en-tête et la barre du bas ne clignotent pas au passage du choix à la partie.
@@ -147,6 +151,7 @@ export function Direct({ db, userId, cote, onRepli, partieInitiale, confirmTouch
   }
   const ordi = onOrdi ? adversaireDuRepli(OPPONENTS, cote) : null;
   return <Choix params={params} onParams={setParams} erreur={erreur} onAccueil={onAccueil} onFacon={onFacon}
+    niveau={typeof cote === 'number' ? { cote, provisoire } : null}
     abandons={abandons} attente={attente} ecartServeur={ecartServeur} onFinAttente={() => { setAttente(null); void relireAbandons(); }}
     ordi={ordi && onOrdi ? () => onOrdi(ordi.id, params) : null}
     onChercher={() => { setErreur(null); setVue({ vue: 'attente', depuis: Date.now() }); }} />;
@@ -208,8 +213,10 @@ function DelaiAbandons({ attente, abandons, ecartServeur, onFin, ordi }: {
   );
 }
 
-function Choix({ params, onParams, erreur, onAccueil, onChercher, onFacon, abandons, attente, ecartServeur, onFinAttente, ordi }: {
+function Choix({ params, onParams, erreur, onAccueil, onChercher, onFacon, abandons, attente, ecartServeur, onFinAttente, ordi, niveau }: {
   params: Params; onParams: (p: Params) => void; erreur: string | null; onAccueil: () => void; onChercher: () => void;
+  /** #613 : ton grade et ta cote (venus de l'accueil, qui ne les montre plus). */
+  niveau: { cote: number; provisoire: boolean } | null;
   onFacon?: (f: FaconEnLigne) => void;
   abandons: EtatAbandons | null; attente: (AttenteDirect & { depuis: 'ecran' | 'recherche' }) | null; ecartServeur: number; onFinAttente: () => void;
   ordi: (() => void) | null;
@@ -237,7 +244,8 @@ function Choix({ params, onParams, erreur, onAccueil, onChercher, onFacon, aband
     <div className="direct direct-choix" data-testid="direct-choix">
       <EnteteEcran titre={td('direct.titre')} retour={td('direct.retour')} onRetour={onAccueil} />
       {onFacon && <BasculeEnLigne valeur="direct" onChoix={onFacon} />}
-      <p className="direct-intro">{fr(td('direct.intro'))}</p>
+      {/* #613 : le grade et la cote se montrent ici, au lancement de la partie classée, là où ils servent. */}
+      {niveau ? <TonNiveau cote={niveau.cote} provisoire={niveau.provisoire} phrase={td('direct.intro')} /> : <p className="direct-intro">{fr(td('direct.intro'))}</p>}
       <p className="muted small direct-classee">{fr(td('direct.classee'))}</p>
       {/* #571 (loi de Hick) : taille, temps et comptage repliés derrière leur résumé ; « Trouver un adversaire » est le seul choix. */}
       <ReglagesReplies ecran="direct" changer={td('direct.reglages.changer')} masquer={td('direct.reglages.masquer')}

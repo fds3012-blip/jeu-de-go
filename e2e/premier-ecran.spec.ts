@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { boutonPasser, choisirMode, coupsJoues, jouer, passer, plateau, toucher } from './plateau';
+import { boutonPasser, choisirMode, coupsJoues, jouer, passer, plateau, toucher, toucherCta } from './plateau';
 import { GO_DU_JOUR } from '../src/content/goDuJour.gen';
 
 // #487 (rapport docs/ux/premieres-minutes-2026-10.md, P9, P10, P12).
@@ -25,7 +25,7 @@ async function accueilEpure(page: Page) {
   await expect(page.getByTestId('modes')).toHaveCount(0);
   await expect(page.locator('.tuile')).toHaveCount(0);
   await expect(page.getByRole('button', { name: /^Go du jour/ })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: /^Leçon 1 sur/ })).toHaveCount(0);
+  await expect(page.locator('.tuile-lecon')).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Je sais déjà jouer' })).toBeVisible();
 }
 
@@ -61,7 +61,7 @@ test('première pierre en partie, retour à l’accueil : il est complet', async
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
   await accueilEpure(page);
-  await page.locator('.cta').tap();
+  await toucherCta(page, 'tap');
   await expect(plateau(page)).toBeVisible();
   await expect(boutonPasser(page)).toBeEnabled({ timeout: 30_000 });
   // Au doigt : une première touche (pierre fantôme), puis la seconde pose la pierre.
@@ -148,7 +148,7 @@ test('« Passer » discret en 320 px : la barre tient, cible de 44 px', async ({
   await page.setViewportSize({ width: 320, height: 568 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
-  await page.locator('.cta').tap();
+  await toucherCta(page, 'tap');
   await expect(plateau(page)).toBeVisible();
   await expect(boutonPasser(page)).toBeEnabled({ timeout: 30_000 });
   await expect(boutonPasser(page)).toHaveClass(/\bdiscret\b/);

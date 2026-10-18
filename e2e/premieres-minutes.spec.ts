@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { brancher, fauxServeur } from './fauxSupabase';
-import { boutonPasser, choisirMode, coupsJoues, fantome, message, passer, passerJusquAuScore, plateau, point, toucher } from './plateau';
+import { boutonPasser, choisirMode, coupsJoues, fantome, message, passer, passerJusquAuScore, plateau, point, toucher, toucherCta } from './plateau';
 
 // #466 : les 5 premières minutes d'un débutant (docs/ux/premieres-minutes-2026-10.md). Un test par correction :
 // 1. la pierre fantôme du premier toucher dit « Touche encore » ; 2. la bulle d'entrée commence par le geste ;
@@ -22,7 +22,7 @@ const bulleIntro = (page: Page) => page.locator('.coach-intro:not([data-cache])'
 
 test('1. premier toucher : la pierre fantôme respire et Mochi dit de toucher encore ; la consigne s’efface ensuite', async ({ page }) => {
   await page.goto('/');
-  await page.locator('.cta').tap();
+  await toucherCta(page, 'tap');
   await expect(plateau(page)).toBeVisible();
   await expect(boutonPasser(page)).toBeEnabled({ timeout: 30_000 });
 
@@ -70,7 +70,7 @@ test('1. premier toucher : la pierre fantôme respire et Mochi dit de toucher en
 
 test('2. bulle d’entrée : le geste d’abord, le but ensuite, et peu de mots avant la première pierre', async ({ page }) => {
   await page.goto('/');
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await expect(plateau(page)).toBeVisible();
   const intro = bulleIntro(page);
   await expect(intro).toHaveText(/^Touche un croisement des lignes pour poser ta pierre\. Le but\s: entourer plus de territoire que Pomme\./);
@@ -102,7 +102,7 @@ test('3. comptage : sans pierre grisée, Mochi et la ligne du score ne parlent p
 test('4. fin de partie : un territoire à 0 est expliqué par Mochi, pas « perdu de peu »', async ({ page }) => {
   test.setTimeout(120_000);
   await page.goto('/');
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await expect(plateau(page)).toBeVisible();
   // Des pierres éparpillées qui ne ferment rien (le débutant type), puis il passe.
   for (const p of ['E5', 'C3', 'G7', 'C7', 'G3', 'E3', 'E7', 'C5', 'G5', 'E1', 'A5', 'J5']) {

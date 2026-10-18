@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { attendrePierre, jouer, passerJusquAuScore, plateau } from './plateau';
+import { attendrePierre, jouer, passerJusquAuScore, plateau, toucherCta } from './plateau';
 import { demarrerParcours } from './revueFactice';
 
 // Issue #77 : revue → « Rejoue cette erreur » → réussite. KataGo est remplacé par un analyseur factice
@@ -39,7 +39,7 @@ test('revue : rejoue ton erreur, un coup raté revient demain, un coup à moins 
 
   // Partie courte contre Pomme : E5, puis on passe jusqu'au score.
   await page.goto('/?komi=-100');
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await expect(plateau(page)).toBeVisible();
   await expect(page.getByRole('button', { name: 'Passer' })).toBeEnabled({ timeout: 10_000 });
   await jouer(page, 'E5');
@@ -101,7 +101,7 @@ test("revue : le bon coup n'est pas visible avant l'essai, « Voir le bon coup �
   await kataGoFactice(page);
 
   await page.goto('/?komi=-100');
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await expect(page.getByRole('button', { name: 'Passer' })).toBeEnabled({ timeout: 10_000 });
   await jouer(page, 'E5');
   await expect(page.getByRole('button', { name: 'Passer' })).toBeEnabled({ timeout: 10_000 });
@@ -134,7 +134,7 @@ test('captures de « Rejoue cette erreur », sombre et clair', async ({ page }) 
     await page.emulateMedia({ colorScheme: theme, reducedMotion: 'reduce' });
     const nom = theme === 'dark' ? 'sombre' : 'clair';
     await page.goto('/?komi=-100');
-    await page.locator('.cta').click();
+    await toucherCta(page);
     await expect(page.getByRole('button', { name: 'Passer' })).toBeEnabled({ timeout: 10_000 });
     await jouer(page, 'E5');
     await expect(page.getByRole('button', { name: 'Passer' })).toBeEnabled({ timeout: 10_000 });

@@ -169,6 +169,9 @@ test('parties lentes : Blanc absent est prévenu « Adversaire trouvé » ; la r
 
   // Adversaire trouvé pendant l'absence, Ana en Blanc (ce n'est pas à elle) : la tuile « Adversaire trouvé ! » ouvre la partie.
   await versLentes(ana);
+  // #613 : en ligne, la taille n'est pas retenue : 9 × 9 est de nouveau coché, la file de Bob.
+  await ana.getByRole('button', { name: 'Changer' }).click();
+  await expect(ana.getByRole('group', { name: 'Taille du plateau' }).getByRole('button', { name: '9 × 9' })).toHaveAttribute('aria-pressed', 'true');
   await ana.getByRole('button', { name: 'Trouver un adversaire' }).click();
   await expect(ana.getByTestId('lente-recherche')).toBeVisible();
   await ana.getByTestId('lentes').getByRole('button', { name: 'Retour' }).click();

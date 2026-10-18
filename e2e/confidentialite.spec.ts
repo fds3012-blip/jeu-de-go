@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { toucherCta } from './plateau';
 
 // Issue #12 : aucun suivi sans consentement. Issue #50 : une seule question au premier lancement, qui mène aux conditions.
 // #485 : bandeau bas non modal (parcours du premier écran : e2e/consentement-bandeau.spec.ts).
@@ -107,7 +108,7 @@ test('aucune requête de suivi sans consentement, conditions accessibles depuis 
   await expect(fenetre(page)).toBeHidden();
   // #523 : répondre à « Tu connais le go ? » n'envoie rien non plus sans consentement.
   await page.getByRole('button', { name: 'Je sais jouer' }).click();
-  await page.locator('.cta').click();
+  await toucherCta(page);
   const plateau = page.locator('svg.board[aria-label="Plateau de go 9 × 9"]');
   // L'écran de partie est chargé à la demande (#323) : on attend son plateau avant de le mesurer.
   await expect(page.getByRole('grid', { name: /Plateau de go/ })).toBeVisible();

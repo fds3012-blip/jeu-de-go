@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { attendrePierre, jouer, passerJusquAuScore, pierres, plateau } from './plateau';
+import { attendrePierre, jouer, ouvrirLancementOrdi, passerJusquAuScore, pierres, plateau, toucherCta } from './plateau';
 
 // #528 (reprend #361 et #15) : partie contre l'ordi complète. Les « Réglages de la partie » (handicap, komi, comptage)
 // sont repliés dans la feuille « Changer » ; une partie interrompue se reprend depuis l'accueil.
@@ -20,7 +20,7 @@ test('réglages repliés par défaut ; partie à 4 pierres en comptage chinois j
   const erreurs: string[] = [];
   page.on('pageerror', e => erreurs.push(e.message));
   await page.goto('/?komi=-100');
-  await page.getByRole('button', { name: 'Changer' }).click();
+  await ouvrirLancementOrdi(page);
   const feuille = page.getByRole('dialog');
   await expect(feuille).toBeVisible();
 
@@ -87,7 +87,7 @@ test('reprise : fermer l’onglet en pleine partie, rouvrir, « Reprendre ta par
   });
   await page.reload();
   await expect(page.getByTestId('tuile-reprise')).toHaveCount(0);
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await expect(plateau(page)).toBeVisible();
   const noires: string[] = [];
   for (const choix of [['C3', 'D3'], ['G7', 'F7', 'G6']]) {
@@ -129,7 +129,7 @@ test('reprise : fermer l’onglet en pleine partie, rouvrir, « Reprendre ta par
 
 test('réglages par défaut : la partie est celle d’avant (Noir commence, komi 0,5 annoncé), rien n’est écrit', async ({ page }) => {
   await page.goto('/');
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await expect(plateau(page)).toBeVisible();
   await expect(page.locator('.annonce-komi')).toHaveText(/^Le komi\s: des points donnés à Blanc, qui joue en second\. Pour tes premières parties, il est de 0,5\.$/);
   await expect(page.locator('g[data-pierre]')).toHaveCount(0);

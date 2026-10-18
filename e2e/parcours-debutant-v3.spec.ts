@@ -3,7 +3,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { brancher, CODE, fauxServeur, type FauxServeur } from './fauxSupabase';
 import { mesurer, type Mesure } from './mesures';
-import { choisirMode, jouer, plateau } from './plateau';
+import { choisirMode, jouer, plateau, toucherCta } from './plateau';
 
 // Parcours débutant v3 (recette du 02/10 au soir, docs/qa/recette-2026-10-02-soir.md) : les parcours clés d'un vrai
 // débutant enchaînés sur un même téléphone, Supabase simulé (e2e/fauxSupabase.ts), donc avec l'essai limité (#343).
@@ -174,7 +174,7 @@ for (const cfg of CONFIGS) {
     await voir(page, '02-accueil');
 
     // 2. Première pierre, puis la partie jusqu'au bout : comptage, score raconté, fin, revue.
-    await page.locator('.cta').click();
+    await toucherCta(page);
     await expect(plateau(page)).toBeVisible();
     await expect(boutonPasser(page)).toBeEnabled({ timeout: 30_000 });
     await jouer(page, 'E5');

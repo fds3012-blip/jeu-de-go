@@ -3,7 +3,7 @@ import { fromLabel, toLabel } from '../src/go/coords';
 import { newPosition, play, type Position } from '../src/go/rules';
 import { metEnAtari } from '../src/app/partie';
 import { BONUS_CAPTURE } from '../src/app/rythme';
-import { attendrePierre, attendreReponse, coupsJoues, jouer, message, plateau } from './plateau';
+import { attendrePierre, attendreReponse, coupsJoues, jouer, message, plateau, toucherCta } from './plateau';
 
 // Issue #187 : sensation en partie contre Pomme. Plateau stable au premier coup, capture du joueur fêtée.
 
@@ -68,7 +68,7 @@ async function lireJournal(page: Page): Promise<Etat[]> {
 
 test('le plateau ne bouge pas au premier coup, intro de Mochi comprise (±2 px)', async ({ page }) => {
   await page.goto('/');
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await expect(page.getByText(/Le but\s: entourer plus de territoire que Pomme/)).toBeVisible();
   const avant = await hautPlateau(page);
   await jouer(page, 'E5');
@@ -88,7 +88,7 @@ test('le plateau ne bouge pas au premier coup, sans intro (±2 px)', async ({ pa
     localStorage.setItem('go.intro-but.v1', 'true');
   });
   await page.reload();
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await expect(plateau(page)).toBeVisible();
   const avant = await hautPlateau(page);
   await jouer(page, 'E5');
@@ -104,7 +104,7 @@ for (const mouvement of ['no-preference', 'reduce'] as const) {
     await page.emulateMedia({ reducedMotion: mouvement, colorScheme: process.env.CAPTURE_THEME === 'light' ? 'light' : 'dark' });
     await ouvrirJournal(page);
     await page.goto('/');
-    await page.locator('.cta').click();
+    await toucherCta(page);
     await expect(plateau(page)).toBeVisible();
     let captureVue = false;
     for (let tour = 0; tour < 35 && !captureVue; tour++) {

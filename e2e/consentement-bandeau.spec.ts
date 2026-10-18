@@ -1,6 +1,7 @@
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
+import { toucherCta } from './plateau';
 import { mesurer } from './mesures';
 
 // #485 : au tout premier écran, le consentement est un bandeau bas compact et non modal.
@@ -77,7 +78,7 @@ test('« jouer » se touche sans répondre : la partie démarre, sans suivi, et 
   await page.setViewportSize({ width: 320, height: 568 });
   await page.goto('/');
   await expect(bandeau(page)).toBeVisible();
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await expect(page.getByRole('grid', { name: /Plateau de go/ })).toBeVisible();
   await expect(bandeau(page)).toBeHidden();
   expect(await page.evaluate(() => localStorage.getItem('go.consentement.v1'))).toBeNull();

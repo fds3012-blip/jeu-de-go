@@ -1,6 +1,6 @@
 import { expect, test, type Browser, type Locator, type Page } from '@playwright/test';
 import { brancher, fauxServeur, JETON, PARTIE, type FauxServeur } from './fauxSupabase';
-import { plateau } from './plateau';
+import { plateau, toucherCta } from './plateau';
 
 // #411 : Google, Apple, Facebook à côté du code par e-mail (docs/growth/connexion-sociale.md). Réseau simulé
 // (e2e/fauxSupabase.ts) : `/auth/v1/authorize` renvoie aussitôt vers l'app, session dans le fragment ou erreur ;
@@ -64,7 +64,7 @@ test('trois fournisseurs : même ordre, charte de chaque marque, 48 px, puis « 
   const serveur = fauxServeur();
   const { ctx, page, erreurs } = await telephone(browser, baseURL, serveur, { stockage: { ...TOUS, ...ESSAI_FINI } });
   await page.goto('/');
-  await page.locator('.cta').click();
+  await toucherCta(page);
   const ecran = page.getByTestId('creer-compte');
   const g = ecran.getByRole('button', { name: 'Continuer avec Google' });
   const a = ecran.getByRole('button', { name: 'Continuer avec Apple' });
@@ -123,7 +123,7 @@ test('Facebook de bout en bout : case d’âge, aller-retour, pseudo exigé et j
   serveur.compteSocial('facebook', { email: 'fanny@exemple.test', nom: 'Fanny Martin' });
   const { ctx, page, erreurs } = await telephone(browser, baseURL, serveur, { largeur: 320, sombre: true, stockage: { ...TOUS, ...ESSAI_FINI } });
   await page.goto('/');
-  await page.locator('.cta').click();
+  await toucherCta(page);
   const ecran = page.getByTestId('creer-compte');
   await expect(ecran.getByTestId('bouton-facebook')).toBeVisible();
   await sansDefilementHorizontal(page);
@@ -157,7 +157,7 @@ test('Apple annulé : retour sur « Crée ton compte », phrase claire, rien de 
   serveur.compteSocial('apple', { email: 'x@exemple.test', nom: 'X', annule: true });
   const { ctx, page } = await telephone(browser, baseURL, serveur, { stockage: { ...TOUS, ...ESSAI_FINI } });
   await page.goto('/');
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await page.getByRole('checkbox').check();
   await page.getByRole('button', { name: 'Continuer avec Apple' }).click();
   await expect(page.getByTestId('creer-compte')).toHaveAttribute('data-raison', 'parties');

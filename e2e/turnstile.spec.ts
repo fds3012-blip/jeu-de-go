@@ -1,4 +1,5 @@
 import { expect, test, type Browser, type Page, type Request } from '@playwright/test';
+import { toucherCta } from './plateau';
 import { brancher, CODE, fauxServeur, type FauxServeur } from './fauxSupabase';
 
 // Issue #531 : captcha Turnstile devant l'envoi du code. Sans clé (VITE_TURNSTILE_SITE_KEY absente) : aucun script de
@@ -33,7 +34,7 @@ async function ecranCompte(browser: Browser, baseURL: string | undefined, serveu
   const otp: Record<string, unknown>[] = [];
   page.on('request', (r: Request) => { if (/\/auth\/v1\/otp(\?|$)/.test(r.url()) && r.method() === 'POST') otp.push(r.postDataJSON()); });
   await page.goto('/');
-  await page.locator('.cta').click();
+  await toucherCta(page);
   await expect(page.getByRole('heading', { name: 'Crée ton compte' })).toBeVisible();
   return { page, scripts, violations, otp };
 }
