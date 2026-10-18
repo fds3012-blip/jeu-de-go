@@ -345,6 +345,7 @@ Lumière : `--halo`, un dégradé radial doré en haut de `body` (11 % d'or en s
 - **`.card`** : `--surface`, rayon 16 px, `padding: 14px 16px`, sans bordure.
 - **`.tuile`** (accueil, « Aujourd'hui ») : hauteur 68 px au moins, titre Bricolage 700 en 16 px, détail en `--muted` 13 px, vignette (mini-goban 44 ou 60 px) à gauche.
 - **`.tuile-pb`** (Problèmes, #620) : tuile secondaire à plat, sans bordure, 64 px au moins, visuel de 40 px (mini-goban, chrono), titre Bricolage 700 en `--fs-m`, détail en `--muted`. Groupées dans `.tuiles-pb`. Une seule carte d'action en tête de Problèmes : le Go du jour à faire, puis « Problème suivant » ; l'autre devient une tuile.
+- **`.ouv-carte`** (Ouvertures, #626) : carte visuelle à plat, en grille (`auto-fill` de 9,5rem : 2 colonnes à 390, une au zoom 200 %). Le mini-goban de la position après la séquence, dans la zone que montre le lecteur (`MiniGoban fenetre`), puis le nom et une ligne courte ; l'idée complète, le nombre de coups et la preuve KataGo sont dans l'écran de l'ouverture. Taille du plateau en `.seg`.
 - **`.mode`** (autres façons de jouer) : au trait, sans fond, icône en `--accent-texte`, nom en Bricolage 700 14 px. Un point d'or de 9 px quand un ami attend ton coup.
 - **`.seg`** (choix exclusif) : rail `--surface`, rayon 12 px ; le choix actif est une pastille inversée (`--text` sur `--bg`), 44 px de haut. Jamais pour deux bascules indépendantes.
 - **`.feedback`, `.notice`** : une teinte mêlée à la surface (`color-mix`, jade 16 %, hanko 16 % ou or 12 %), rayon 12 px, sans liseré.

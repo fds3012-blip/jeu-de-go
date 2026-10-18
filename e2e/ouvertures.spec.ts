@@ -28,8 +28,26 @@ test('Apprendre → Ouvertures : avancer, reculer, voir l’erreur courante', as
   await expect(page.getByRole('heading', { name: 'Ouvertures' })).toBeVisible();
   const cartes = page.locator('.ouv-carte');
   await expect(cartes).toHaveCount(OUVERTURES.filter(o => o.taille === 9).length);
-  await page.getByRole('button', { name: '19 × 19' }).click();
-  await expect(page.getByRole('button', { name: '19 × 19' })).toHaveAttribute('aria-pressed', 'true');
+  // #626 (V4) : des cartes visuelles (mini-goban de la position finale, nom, une ligne), sans compteur de coups ; le choix
+  // de la taille est un .seg à plat : aucun aplat jade ni relief sur cet écran (E1).
+  const premiere = cartes.first();
+  await expect(premiere.locator('svg.mini-goban')).toHaveCount(1);
+  await expect(premiere).toHaveAccessibleName(norm(FR['o.n9-centre.nom']));
+  await expect(premiere).toHaveAccessibleDescription(norm(FR['o.n9-centre.ligne']));
+  await expect(page.getByText(/\d+ coups?$/)).toHaveCount(0);
+  await expect(page.locator('.ouvertures .cta, .ouvertures .btn.primary')).toHaveCount(0);
+  const neuf = page.getByRole('button', { name: '9 × 9', exact: true });
+  await expect(neuf).toHaveAttribute('aria-pressed', 'true');
+  expect(await neuf.evaluate(b => getComputedStyle(b).boxShadow)).toBe('none');
+  expect(await neuf.evaluate(b => getComputedStyle(b).backgroundColor)).not.toBe(await page.evaluate(() => {
+    const t = document.createElement('i'); t.style.color = 'var(--accent)'; document.body.append(t); const c = getComputedStyle(t).color; t.remove(); return c;
+  }));
+  // Deux colonnes à 390, cibles de 44 px au moins.
+  const xs = new Set(await cartes.evaluateAll(els => els.map(e => Math.round(e.getBoundingClientRect().x))));
+  expect(xs.size).toBe(2);
+  for (const b of await cartes.all()) expect((await b.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  await page.getByRole('button', { name: '19 × 19', exact: true }).click();
+  await expect(page.getByRole('button', { name: '19 × 19', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await expect(cartes).toHaveCount(OUVERTURES.filter(o => o.taille === 19).length);
 
   // L'invasion au 3-3 : jouée coup par coup.
@@ -40,6 +58,8 @@ test('Apprendre → Ouvertures : avancer, reculer, voir l’erreur courante', as
   await expect(plateau(page, 19)).toHaveAttribute('data-fenetre');
   const texte = page.getByTestId('ouverture-texte');
   await expect(texte).toContainText(T('o.h-sansan.idee'));
+  // La preuve KataGo, au départ ; plus de phrase « Touche Suivant ».
+  await expect(texte).toContainText(T('preuve'));
   const suivant = page.getByTestId('ouverture-suivant');
   for (const [i, c] of lue.coups.entries()) {
     await suivant.click();
