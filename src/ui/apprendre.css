@@ -542,10 +542,11 @@
 .theme-lecon-texte { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .theme-lecon-texte b { font-size: var(--fs-m); line-height: 1.2; }
 .theme-lecon-texte small { color: var(--muted); font-size: var(--fs-s); line-height: 1.35; overflow-wrap: break-word; }
-.theme-lecon-etat { flex: none; display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px;
-  background: var(--surface-2); color: var(--text); font-size: var(--fs-s); font-weight: var(--fw-bold); }
-.theme-lecon[data-faite] .theme-lecon-etat { background: color-mix(in srgb, var(--accent) 16%, transparent); }
-.theme-lecon-etat svg { width: 14px; height: 14px; fill: none; stroke: var(--accent-trait); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+/* #627 : le sceau de la leçon faite, à droite, à la place de la pastille « Faite » (le sceau de fin de leçon, en petit). */
+.theme-lecon-sceau { margin-right: var(--space-1); }
+/* En clair, le jade du sceau sur --surface ne fait que 2:1 : un peu plus sombre, il passe 3:1 (WCAG 1.4.11). */
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .theme-lecon-sceau svg { filter: brightness(.78); } }
+:root[data-theme="light"] .theme-lecon-sceau svg { filter: brightness(.78); }
 .theme-lecons .notice { margin-top: var(--space-4); }
 @media (prefers-reduced-motion: no-preference) {
   .theme-lecon { transition: transform var(--duree-rapide) var(--ease); }

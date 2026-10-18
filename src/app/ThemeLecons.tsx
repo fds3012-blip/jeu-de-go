@@ -1,5 +1,6 @@
 // #590 : page d'un thème, ouverte depuis « Par thème » d'Apprendre (chargée à la demande, src/app/ecrans.ts).
-// Le nom du thème, une phrase qui explique la notion, les leçons du thème avec leur état, et une seule action en relief :
+// Le nom du thème, une phrase qui explique la notion, les leçons du thème (le sceau de la leçon quand elle est faite,
+// #627), et une seule action en relief :
 // « S'entraîner sur ce thème », la série de 3 problèmes de la fin de leçon (SeriePratique), restreinte à ce thème.
 // Aucun nouveau contenu de go : les leçons viennent du chemin, les problèmes de la banque (src/content/themes.ts).
 import { useState } from 'react';
@@ -7,6 +8,7 @@ import { LESSONS } from '../content/lessons';
 import type { Theme } from '../content/themesLecons';
 import type { Puzzle } from '../data/puzzles';
 import { EnteteEcran } from '../ui/BoutonRetour';
+import { SceauLecon } from '../ui/SceauLecon';
 import { VignetteLecon } from '../ui/VignetteLecon';
 import { fr } from '../ui/typo';
 import { readLocal } from './hooks';
@@ -16,8 +18,6 @@ import '../ui/apprendre.css';
 
 /** Problèmes réussis sur l'appareil : même clé que SOLVED_KEY de Puzzles.tsx (vérifié par ecrans.test.ts). */
 const SOLVED_KEY = 'go.problemes.v1';
-
-const Coche = () => <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12.5 10 17l9-10" /></svg>;
 
 export function ThemeLecons({ theme, progress, onOpen, onRetour, onSerie }: {
   theme: Theme; progress: Record<string, number>;
@@ -59,7 +59,9 @@ export function ThemeLecons({ theme, progress, onOpen, onRetour, onSerie }: {
                   aria-label={`${fr(l.title)}, ${t(faite ? 'apprendre.theme.faite' : 'apprendre.theme.afaire')}`}>
                   <VignetteLecon id={l.id} taille={44} pale={!(progress[l.id] ?? 0)} />
                   <span className="theme-lecon-texte" aria-hidden="true"><b>{fr(l.title)}</b><small>{fr(l.desc)}</small></span>
-                  <span className="theme-lecon-etat" aria-hidden="true">{faite && <Coche />}{t(faite ? 'apprendre.theme.faite' : 'apprendre.theme.afaire')}</span>
+                  {/* #627 (V12, P2) : une leçon faite porte son sceau, comme à la fin de la leçon ; plus de pastille texte.
+                      L'état se lit aussi dans le nom accessible (« Faite », « À faire »), jamais par la couleur seule. */}
+                  {faite && <SceauLecon id={l.id} taille={32} className="theme-lecon-sceau" />}
                 </button>
               </li>
             );

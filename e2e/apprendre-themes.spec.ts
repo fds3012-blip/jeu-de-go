@@ -74,6 +74,11 @@ test('page d’un thème : notion expliquée, leçons avec leur état, une leço
   expect(await lecons.count()).toBeGreaterThanOrEqual(2);
   await expect(lecons.first()).toHaveAccessibleName(/^Libertés et capture, Faite$/);
   await expect(lecons.nth(1)).toHaveAccessibleName(/, À faire$/);
+  // #627 (V12) : la leçon faite porte son sceau ; plus de pastille texte « Faite » ni « À faire ».
+  await expect(lecons.first().locator('.sceau-lecon[data-lecon]')).toHaveCount(1);
+  await expect(lecons.nth(1).locator('.sceau-lecon')).toHaveCount(0);
+  await expect(page.locator('.theme-lecon-etat')).toHaveCount(0);
+  await expect(page.locator('.theme-lecons').getByText(/^(Faite|À faire)$/)).toHaveCount(0);
   for (const b of await lecons.all()) expect((await b.boundingBox())!.height).toBeGreaterThanOrEqual(44);
   await expect(page.locator('.cta')).toHaveCount(1);
   await expect(page.locator('.cta')).toHaveText('S’entraîner sur ce thème');
