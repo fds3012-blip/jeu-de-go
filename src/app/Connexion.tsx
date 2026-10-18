@@ -102,6 +102,16 @@ export function ConnexionCode({ db, mode = 'connexion', envoyer, moment = 'profi
     return () => clearTimeout(tic);
   }, [attente]);
   useEffect(() => { if (etape === 'code') codeRef.current?.focus(); }, [etape]);
+  // #642 : code complet tapé, collé ou rempli par le téléphone pendant un renvoi : vérifié dès la fin de l'envoi.
+  // Avant, `verifier` sortait sans rien dire (busy) et la fin du renvoi effaçait le champ : le code était perdu.
+  const envoiEnCours = useRef(false);
+  const codeEnAttente = useRef<string | null>(null);
+  useEffect(() => {
+    if (busy || codeEnAttente.current === null) return;
+    const v = codeEnAttente.current;
+    codeEnAttente.current = null;
+    void verifier(v);
+  }, [busy]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function changerSens(s: Sens) {
     setSensLocal(s); setError(''); setBascule(false);
@@ -114,6 +124,7 @@ export function ConnexionCode({ db, mode = 'connexion', envoyer, moment = 'profi
   async function demander(v: Voie): Promise<boolean> {
     if (captcha && v !== 'liaison' && !jeton) { setError(t('connexion.captcha.attente')); return false; }
     setBusy(true); setError('');
+    envoiEnCours.current = true;
     let voieFaite = v;
     let r = await envoyerPar(v);
     // #353 : l'adresse a déjà un compte. Plus de blocage : on envoie tout de suite un code de connexion à ce compte.
@@ -125,6 +136,7 @@ export function ConnexionCode({ db, mode = 'connexion', envoyer, moment = 'profi
     }
     // #531 : le jeton a servi (ou a été refusé) : le widget en prépare un autre pour le prochain envoi.
     if (captcha) { setJeton(null); setCleCaptcha(n => n + 1); }
+    envoiEnCours.current = false;
     setBusy(false);
     if (!r.ok) { setError(r.error); return false; }
     setVoie(voieFaite);
@@ -174,7 +186,7 @@ export function ConnexionCode({ db, mode = 'connexion', envoyer, moment = 'profi
   }
 
   async function verifier(valeur: string) {
-    if (busy) return;
+    if (busy) { if (envoiEnCours.current && codeComplet(valeur)) codeEnAttente.current = valeur; return; }
     if (!codeComplet(valeur)) { setError(t('connexion.code.incomplet', { n: LONGUEUR_CODE })); return; }
     setBusy(true); setError('');
     // #583 : case cochée (création, liaison, ou adresse déjà prise après la case) : l'accord est noté AVANT que la
@@ -202,14 +214,18 @@ export function ConnexionCode({ db, mode = 'connexion', envoyer, moment = 'profi
             const v = nettoyerCode(e.target.value);
             setCode(v); setError('');
             // Code collé ou rempli par le clavier du téléphone : validé tout de suite, sans toucher le bouton.
-            if (codeComplet(v)) void verifier(v);
+            if (codeComplet(v)) void verifier(v); else codeEnAttente.current = null;
           }} />
         <p id={`${id}-erreur`} className="small connexion-erreur" role="alert">{error}</p>
         <button className="btn primary connexion-cta" type="submit" disabled={busy} aria-busy={busy}>{t(busy ? 'connexion.code.verification' : 'connexion.code.valider')}</button>
         {widget}
         <div className="connexion-liens">
           <button type="button" className="lien" disabled={busy || attente > 0}
-            onClick={async () => { if (await demander(voie)) { setInfo(t('connexion.code.renvoye')); setCode(''); } }}>
+            onClick={async () => {
+              // #642 : on n'efface que l'ancien code, pas celui tapé pendant le renvoi.
+              const avant = code;
+              if (await demander(voie)) { setInfo(t('connexion.code.renvoye')); setCode(c => c === avant ? '' : c); }
+            }}>
             {attente > 0 ? t('connexion.code.renvoyerDans', { s: attente }) : t('connexion.code.renvoyer')}
           </button>
           <button type="button" className="lien" onClick={() => { setEtape('email'); setError(''); setInfo(''); }}>{t('compte.changerAdresse')}</button>
