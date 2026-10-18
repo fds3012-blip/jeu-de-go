@@ -71,7 +71,7 @@ export async function attendrePierre(page: Page, label: string, couleur: 'noir' 
  * Depuis l'accueil déjà affiché, choisit un mode de jeu (#429) : le bouton principal s'il porte ce mode, sinon sa tuile,
  * sinon « Plus » puis la ligne du mode. Au plus deux touchers.
  */
-export async function choisirMode(page: Page, mode: 'en_ligne' | 'ordi' | 'ami' | 'deux' | 'decouverte'): Promise<void> {
+export async function choisirMode(page: Page, mode: 'en_ligne' | 'ordi' | 'ami' | 'deux'): Promise<void> {
   const principal = page.locator(`.cta[data-mode="${mode}"]`);
   const tuile = page.getByTestId(`mode-${mode}`);
   await page.locator('.cta').waitFor();
@@ -84,13 +84,9 @@ export async function choisirMode(page: Page, mode: 'en_ligne' | 'ordi' | 'ami' 
   if (mode !== 'ordi' || !(await principal.count())) await page.getByTestId('modes').waitFor();
   // #613 : l'ordi et à deux ouvrent la feuille de lancement (sauf avant la toute première partie) : « Jouer » la passe.
   const lancement = (mode === 'ordi' || mode === 'deux') && await feuilleAttendue(page);
+  // #647 : plus de feuille « Plus » : chaque mode est le bouton principal ou une tuile.
   if (await principal.count()) await principal.click();
-  else if (await tuile.count()) await tuile.click();
-  else {
-    await page.getByTestId('mode-plus').click();
-    const nom = mode === 'deux' ? 'Jouer à deux sur ce téléphone' : 'Partie de découverte avec Mochi';
-    await page.getByRole('dialog', { name: 'Autres façons de jouer' }).getByRole('button', { name: new RegExp('^' + nom) }).click();
-  }
+  else await tuile.click();
   if (lancement) await jouerDepuisLancement(page);
 }
 
@@ -151,7 +147,7 @@ export async function ouvrirAvecMochi(page: Page): Promise<void> {
   await page.locator('.avec-mochi-ecran').waitFor();
 }
 
-/** Depuis l'accueil déjà affiché : « Jouer à deux sur ce téléphone » (tuile, ou « Plus » avec les comptes ; #429). */
+/** Depuis l'accueil déjà affiché : « Jouer à deux sur ce téléphone » (tuile ; #429, #647). */
 export async function lancerADeux(page: Page): Promise<void> {
   await choisirMode(page, 'deux');
 }

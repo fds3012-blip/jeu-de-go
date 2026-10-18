@@ -339,7 +339,7 @@ Chacune a une recommandation ; aucune n'est appliquée sans son accord.
 - **F1. Retirer la partie de découverte de Jouer.** Elle reste dans Apprendre et à la fin de l'introduction des règles. Effet : la feuille « Plus » disparaît (les trois tuiles L'ordi, Un ami, À deux tiennent seules). Touche les décisions #429 et #432 (« tous les modes en 1 toucher, ou 2 par Plus ») et #524. Recommandation : **oui**. Contrôle : `mode_choisi { mode: 'decouverte' }` par `depuis` sur 30 jours, et `lecon_commencee` (la découverte ne doit pas disparaître pour les nouveaux : la fin de l'introduction l'ouvre toujours).
 - **F2. Fusionner les révisions en une seule « Révisions », dans Problèmes.** Aujourd'hui : une séance dans Jouer, deux sections dans Problèmes, deux noms presque identiques. La tuile de l'accueil reste comme raccourci. Touche #469 et #199. Recommandation : **oui**. Contrôle : séances finies par semaine.
 - **F3. Leçon, problème et autres activités en plein écran, sans barre du bas.** Cela inverse la règle 3 de `docs/ux/navigation.md` (#465 : « exercices courts, la barre reste »). Recommandation : **oui**, c'est la seule façon simple d'avoir une sortie unique et de ne plus perdre une leçon par un onglet touché. Contrôle : leçons finies / leçons commencées.
-- **F4. Placement fondu dans « Ta cote ».** La ligne « Faire le placement » quitte le menu du Profil ; « Je sais déjà jouer » reste sur l'accueil pour les nouveaux, « Refaire » vit dans « Ta cote ». Touche #283 et #417. Recommandation : **oui**, mais sans urgence (N6).
+- **F4. Placement fondu dans « Ta cote ».** La ligne « Faire le placement » quitte le menu du Profil ; « Je sais déjà jouer » reste sur l'accueil pour les nouveaux, « Refaire » vit dans « Ta cote ». Touche #283 et #417. Recommandation : **oui**, mais sans urgence (N6). **Fait par #647** : plus de ligne de placement au menu du Profil ; la ligne « Ta cote » (pleine largeur, ou partagée avec le titre du mois) ouvre « Ta cote », où « Ton niveau de départ » (kyu estimé et date) relance le placement. Sans compte, « Ta cote » ne montre que le niveau de départ, et sa ligne au menu dit le kyu estimé.
 
 Ce qui n'est **pas** demandé : supprimer un mode de jeu, une leçon, un problème ou un écran du Profil. Chaque fonction garde un accès, au même nombre de touchers ou à un de plus, sauf la découverte depuis Jouer (F1).
 
@@ -369,7 +369,11 @@ Mécanisme : `par(maison)` dans `App.tsx` pose l'écran par-dessus l'écran cour
 
 Hors des 12 et laissés tels quels (raccourcis vers Problèmes) : tuile « Go du jour » de l'accueil, Ta semaine › « Faire un problème ». Défier depuis un profil ouvert par-dessus Jouer (chemins 4 et 5) revient à l'accueil de Jouer, pas au profil : deux écrans du même onglet dans une pile demandent N3.
 
-## 11. Sommaire puis détail (A13 ; #652, #653, #654)
+## 11. Suivi : lot N5a (#647)
+
+Décision F1 appliquée. La partie de découverte n'a plus que deux portes : sa maison, Apprendre (« Jouer avec Mochi », fin du chapitre « Les bases », que suit « Revoir les règles »), et la fin de l'introduction des règles (« Jouer avec Mochi » après « Jamais joué », « Partie de découverte avec Mochi » après « Un peu »). Sur Jouer, il reste quatre modes : le bouton et trois tuiles (L'ordi ou En ligne, Un ami, À deux), tous en 1 toucher ; la feuille « Plus » et ses textes ont disparu. Sans comptes, « À deux » est la seule tuile. `mode_choisi { mode: 'decouverte', depuis: 'apprendre' }` est envoyé depuis la carte d'Apprendre, pour le contrôle de F1. Premiers pas inchangés : la question « Tu connais le go ? » mène toujours « Jamais joué » et « Un peu » à l'introduction, dont la fin ouvre la découverte ; « Je sais jouer » garde « Je sais déjà jouer » (placement). Une partie lancée depuis « Jouer avec Mochi » revient sur ce groupe déplié (A6), même s'il s'était ouvert seul (découverte en cours). Captures : `docs/ux/captures/maison-647/`.
+
+## 12. Sommaire puis détail (A13 ; #652, #653, #654)
 
 Retour de Florian, 18/10, captures de chess.com à l'appui : Apprendre, Problèmes et le Profil montrent trop de choses à la fois. Le modèle : une racine qui est un **sommaire** (peu d'entrées, chacune avec son icône), puis un **détail** qui s'ouvre par-dessus avec « ‹ ». Règle A13 de `DESIGN.md`, composant `src/ui/Sommaire.tsx`.
 
@@ -379,7 +383,7 @@ Méthode (skills `information-architecture`, `navigation-patterns`, `hicks-law`,
 - **Jakob** : le joueur de go en ligne connaît chess.com ; on reprend sa forme (une ligne = une icône et un nom, sans chevron décoratif) plutôt que d'en inventer une. On n'en reprend pas le « Passez Premium ».
 - **Profondeur** : un détail ne contient pas de second sommaire (A4).
 
-### 11.1 Apprendre (#652)
+### 12.1 Apprendre (#652)
 
 Captures (sombre, 390 × 844) : `captures/sommaires/apprendre-390-avant.jpg`, `apprendre-390-apres.jpg`, et en clair `apprendre-390-clair-apres.jpg`.
 

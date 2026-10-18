@@ -37,9 +37,9 @@ export function LigneChoix<T extends string>({ libelle, options, valeur, onChang
 }
 
 /** Ligne qui ouvre une sous-vue : libellé, valeur éventuelle, chevron. */
-export function LigneLien({ libelle, valeur, onClick, icone }: { libelle: string; valeur?: ReactNode; onClick: () => void; icone?: ReactNode }) {
+export function LigneLien({ libelle, valeur, onClick, icone, testId }: { libelle: string; valeur?: ReactNode; onClick: () => void; icone?: ReactNode; testId?: string }) {
   return (
-    <button type="button" className="ligne" onClick={onClick}>
+    <button type="button" className="ligne" onClick={onClick} data-testid={testId}>
       {icone && <LigneIcone>{icone}</LigneIcone>}
       <span className="ligne-libelle">{libelle}</span>
       {valeur && <span className="ligne-valeur">{valeur}</span>}

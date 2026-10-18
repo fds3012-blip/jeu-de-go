@@ -3,8 +3,8 @@ import { expect, test, type Browser, type Page, type Request } from '@playwright
 import { brancher, CODE, fauxServeur, type FauxServeur } from './fauxSupabase';
 import { feuilleLancement, jouerDepuisLancement, plateau, toucherCta } from './plateau';
 
-// Issue #429 : tous les modes de jeu se joignent depuis l'accueil en 1 toucher (bouton principal ou tuile), ou en 2
-// par « Plus », sans défiler. #432 : la partie en ligne classée est l'action principale dès le début, cote et grade
+// Issue #429 : tous les modes de jeu se joignent depuis l'accueil en 1 toucher (bouton principal ou tuile), sans
+// défiler (#647 : la partie de découverte vit dans Apprendre, la feuille « Plus » a disparu). #432 : la partie en ligne classée est l'action principale dès le début, cote et grade
 // visibles ; seul le tout premier lancement garde l'ordi (« Joue ta première partie »). Chaque choix envoie
 // `mode_choisi` { mode, depuis, principal }.
 // #487 : avant la toute première pierre posée sur l'appareil, l'accueil n'a que « Joue ta première partie » (tuiles
@@ -16,7 +16,7 @@ import { feuilleLancement, jouerDepuisLancement, plateau, toucherCta } from './p
 
 const ANA = '00000000-0000-4000-8000-0000000000c1';
 const HOTE = 'https://posthog-e2e.test';
-type Mode = 'en_ligne' | 'ordi' | 'ami' | 'deux' | 'decouverte';
+type Mode = 'en_ligne' | 'ordi' | 'ami' | 'deux';
 
 /** Premier lancement : aucune partie, aucune leçon finie, mais une première pierre posée (#487). */
 const NOUVEAU = { 'go.premiere-pierre.v1': 'true' };
@@ -55,12 +55,8 @@ async function sansDefiler(page: Page, testId: string) {
 async function atteindre(page: Page, mode: Mode): Promise<number> {
   const principal = page.locator(`.cta[data-mode="${mode}"]`);
   if (await principal.count()) { await principal.click(); return 1; }
-  const tuile = page.getByTestId(`mode-${mode}`);
-  if (await tuile.count()) { await tuile.click(); return 1; }
-  await page.getByTestId('mode-plus').click();
-  const nom = mode === 'deux' ? /^Jouer à deux sur ce téléphone/ : /^Partie de découverte avec Mochi/;
-  await page.getByRole('dialog', { name: 'Autres façons de jouer' }).getByRole('button', { name: nom }).click();
-  return 2;
+  await page.getByTestId(`mode-${mode}`).click();
+  return 1;
 }
 
 /**
@@ -73,27 +69,29 @@ async function arrive(page: Page, mode: Mode, lancement: boolean) {
   if (mode === 'deux') await expect(page.getByText(/Noir commence/)).toBeVisible();
   if (mode === 'en_ligne') await expect(page.getByTestId('direct-choix')).toBeVisible();
   if (mode === 'ami') await expect(page.getByRole('heading', { level: 2, name: 'Défier un ami' })).toBeVisible();
-  if (mode === 'decouverte') await expect(page.getByRole('heading', { level: 2, name: 'Poser une pierre' })).toBeVisible();
 }
 
-test('chaque mode en 1 ou 2 touchers depuis l’accueil, sans défiler (premier lancement, débutant, confirmé)', async ({ browser, baseURL }) => {
+test('chaque mode en 1 toucher depuis l’accueil, sans défiler (premier lancement, débutant, confirmé)', async ({ browser, baseURL }) => {
   test.setTimeout(120_000);
   for (const [qui, stockage, principal] of [['premier lancement après la première pierre', NOUVEAU, 'ordi'], ['débutant', DEBUTANT, 'en_ligne'], ['confirmé', CONFIRME, 'en_ligne']] as const) {
-    for (const mode of ['ordi', 'en_ligne', 'ami', 'deux', 'decouverte'] as const) {
+    for (const mode of ['ordi', 'en_ligne', 'ami', 'deux'] as const) {
       const page = await telephone(browser, baseURL, stockage);
       await expect(page.locator('.cta'), qui).toHaveAttribute('data-mode', principal);
       // Rangée des modes : visible sans défiler, sous le bouton principal ; pas de « Défier un ami » en double dans l'en-tête.
-      for (const id of ['modes', 'mode-plus']) await sansDefiler(page, id);
+      for (const id of ['modes', 'mode-deux']) await sansDefiler(page, id);
+      // #647 : ni feuille « Plus » ni partie de découverte sur l'accueil (elle vit dans Apprendre).
+      await expect(page.getByTestId('mode-plus')).toHaveCount(0);
+      await expect(page.getByTestId('mode-decouverte')).toHaveCount(0);
       await expect(page.locator('header button')).toHaveCount(0);
       const touchers = await atteindre(page, mode);
-      expect(touchers, `${qui} : ${mode}`).toBeLessThanOrEqual(mode === 'deux' || mode === 'decouverte' ? 2 : 1);
+      expect(touchers, `${qui} : ${mode}`).toBe(1);
       await arrive(page, mode, stockage !== NOUVEAU);
       await page.context().close();
     }
   }
 });
 
-test('premier lancement, première pierre posée : « Joue ta première partie » contre Pomme reste l’action principale, « En ligne » et « Un ami » juste dessous, « Plus » pour le reste', async ({ browser, baseURL }) => {
+test('premier lancement, première pierre posée : « Joue ta première partie » contre Pomme reste l’action principale, « En ligne », « Un ami » et « À deux » juste dessous', async ({ browser, baseURL }) => {
   const page = await telephone(browser, baseURL, NOUVEAU);
   await expect(page.locator('.cta')).toHaveText('Joue ta première partie');
   await expect(page.locator('.cta')).toHaveAttribute('data-mode', 'ordi');
@@ -103,8 +101,8 @@ test('premier lancement, première pierre posée : « Joue ta première partie �
   await expect(tuiles.nth(0)).toHaveAccessibleName(/^En ligne\s: Partie classée$/);
   await expect(tuiles.nth(0)).toHaveText('En ligne');
   await expect(tuiles.nth(1)).toHaveAccessibleName('Défier un ami');
-  await expect(tuiles.nth(2)).toHaveAccessibleName(/^Plus de façons de jouer/);
-  await expect(tuiles.nth(2)).toHaveAttribute('aria-haspopup', 'dialog');
+  await expect(tuiles.nth(2)).toHaveAccessibleName('Jouer à deux sur ce téléphone');
+  await expect(tuiles.nth(2)).toHaveText('À deux');
   // Une seule action principale : les tuiles sont au trait, sans relief.
   await expect(page.locator('.cta')).toHaveCount(1);
   for (let i = 0; i < 3; i++) expect(await tuiles.nth(i).evaluate(b => getComputedStyle(b).boxShadow)).not.toContain('0px 5px 0px');
@@ -171,7 +169,7 @@ for (const [largeur, hauteur] of [[320, 568], [390, 844]] as const) {
       expect(m.scroll).toBeLessThanOrEqual(m.vue);
       const [cta, nav] = await Promise.all([page.locator('.cta').boundingBox(), page.getByRole('navigation').boundingBox()]);
       expect(cta!.y + cta!.height).toBeLessThanOrEqual(nav!.y + 1);
-      for (const id of ['mode-ordi', 'mode-ami', 'mode-plus']) await sansDefiler(page, id);
+      for (const id of ['mode-ordi', 'mode-ami', 'mode-deux']) await sansDefiler(page, id);
       await page.context().close();
     });
   }

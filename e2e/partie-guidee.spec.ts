@@ -66,11 +66,6 @@ test('partie guidée : dans Apprendre sous la partie de découverte, plus sur l�
   await page.evaluate(() => { localStorage.setItem('go.premiere-pierre.v1', 'true'); window.dispatchEvent(new Event('go:premiere-pierre')); });
   await page.getByTestId('modes').waitFor();
   await expect(page.getByRole('button', { name: /guidée/i })).toHaveCount(0);
-  if (await page.getByTestId('mode-plus').count()) {
-    await page.getByTestId('mode-plus').click();
-    await expect(page.getByRole('dialog', { name: 'Autres façons de jouer' }).getByRole('button', { name: /guidée/i })).toHaveCount(0);
-    await page.keyboard.press('Escape');
-  }
   await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
   // #652 : les deux parties avec Mochi sont le détail de l'entrée « Jouer avec Mochi » du sommaire d'Apprendre.
   await ouvrirAvecMochi(page);

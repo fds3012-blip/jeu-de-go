@@ -553,8 +553,8 @@ export function App() {
 
   /**
    * #524 : partie de découverte, libre comme les premières leçons (aucun compte demandé). Seule porte vers elle, depuis
-   * Apprendre, l'accueil (mode « Découverte ») et la fin de l'introduction des règles (#523, `apresIntro` : « Jouer avec
-   * Mochi », « Partie de découverte avec Mochi »). Après l'introduction, sa fin ramène à l'accueil ; sinon au chemin.
+   * Apprendre (fin de « Les bases », sa maison) et la fin de l'introduction des règles (#523, `apresIntro` : « Jouer avec
+   * Mochi », « Partie de découverte avec Mochi »). #647 (F1) : elle a quitté l'accueil. Sa fin ramène là où l'on était.
    */
   function ouvrirDecouverte(apresIntro = false) {
     setPlaying(false); setLessonId(null); setSerie3(null); setEnPlacement(false); setSeanceRevisions(false); setIntroRegles(null);
@@ -1057,7 +1057,10 @@ export function App() {
       onSerie={s => { if (garde({ quoi: 'probleme' })) { setSerie3(s); window.scrollTo({ top: 0 }); } }} />;
   } else if (tab === 'apprendre' && avecMochi) {
     screen = <JouerAvecMochi onRetour={() => setAvecMochi(false)}
-      decouverte={{ etat: etatDecouverte(readLocal<unknown>(DECOUVERTE_KEY, null)), ouvrir: () => ouvrirDecouverte() }}
+      decouverte={{ etat: etatDecouverte(readLocal<unknown>(DECOUVERTE_KEY, null)), ouvrir: () => {
+        // #647 : `mode_choisi` la note toujours, comme la partie guidée (contrôle de la décision F1).
+        track(EVENTS.modeChoisi, { mode: 'decouverte', depuis: 'apprendre' satisfies Depuis, principal: false }); ouvrirDecouverte();
+      } }}
       onGuidee={() => { track(EVENTS.modeChoisi, { mode: 'guidee', depuis: 'apprendre' satisfies Depuis, principal: false }); lancerGuidee(); }} />;
   } else if (tab === 'apprendre') {
     // #652 (A13) : un sommaire ; chaque entrée ouvre son détail par-dessus (page du thème, Jouer avec Mochi), « ‹ » y ramène
@@ -1089,7 +1092,7 @@ export function App() {
   } else {
     const numero = numeroJour;
     const daily = duJour;
-    // #429 : tous les modes en 1 toucher (ou 2 par « Plus ») ; #432 : la partie en ligne classée en action principale dès le début.
+    // #429 : tous les modes en 1 toucher ; #432 : la partie en ligne classée en action principale dès le début.
     const modes = modesAccueil({ comptes: COMPTES, enLigne: online, premierLancement: home.nouveau });
     const choisirMode = (m: Mode, depuis: Depuis) => {
       track(EVENTS.modeChoisi, { mode: m, depuis, principal: m === modes.principal });
@@ -1099,7 +1102,6 @@ export function App() {
       if (etape) setLancement(etape);
       else if (m === 'ordi') lancer('ordi');
       else if (m === 'deux') lancer('deux');
-      else if (m === 'decouverte') ouvrirDecouverte();
       // « Un humain, maintenant » (#360), avec un compte et un pseudo (sinon « Crée ton compte », puis reprise).
       // #440 : « En direct » ou « Partie lente », selon le dernier choix (mémorisé).
       else if (m === 'en_ligne') { if (!garde({ quoi: 'en_ligne' }, { quoi: 'direct' })) return; ouvrirEnLigne(); }
