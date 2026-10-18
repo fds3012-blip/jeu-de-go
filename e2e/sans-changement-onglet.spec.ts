@@ -288,7 +288,7 @@ test('10. fin de chapitre › « Joue contre Pomme » : la sortie de la partie r
   await retourSysteme(page);
   await expect(page.getByRole('heading', { name: 'Chapitre terminé' })).toBeVisible();
   await pleinEcran(page);
-  await page.getByRole('button', { name: 'Retour au chemin' }).click();
+  await page.getByRole('button', { name: 'Retour à Apprendre' }).click();
   await allume(page, 'Apprendre');
   expect(erreurs).toEqual([]);
   await ctx.close();
