@@ -1,4 +1,4 @@
-import { Suspense, lazy, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 // Écrans chargés à la demande (perf, #323) : seul l'accueil est dans le JS initial.
 import { AccordConditions, CreerCompte, DefiArrivee, DefiPartie, DefisEcran, Direct, Game, LearnHome, Lentes, LessonPlayer, PartieDecouverte, PartiePartagee, Placement, Profil, PseudoObligatoire, Puzzles, SeriePratique, ThemeLecons, VeilleFile, apresPremierEcran } from './ecrans';
 import type { Theme } from '../content/themesLecons';
@@ -31,7 +31,7 @@ import { COTE_KEY } from './coteEtat';
 import { Accueil } from './Accueil';
 import { etapeDeLancement, modesAccueil, type Depuis, type Lancement, type Mode } from './modes';
 import { abonnerPierre, accueilEpure, lireRepere, pierreDejaPosee } from './premierePierre';
-import { CONNAIT_GO_KEY, doitDemander, lireReponse, ongletApresDecouverte, suiteDe, type ChoixGo, type DepuisIntro, type OrigineDecouverte, type VersionIntro } from './connaitGo';
+import { CONNAIT_GO_KEY, doitDemander, lireReponse, suiteDe, type ChoixGo, type DepuisIntro, type OrigineDecouverte, type VersionIntro } from './connaitGo';
 import { QuestionGo } from './QuestionGo';
 import { ecrireFaconEnLigne, lireFaconEnLigne } from './enLigne';
 import type { FaconEnLigne } from './BasculeEnLigne';
@@ -200,6 +200,13 @@ type VueDefi = { vue: 'liste' } | { vue: 'arrivee'; jeton: string; inviteur: str
 type Reprise = { quoi: 'ordi'; contre: OpponentId } | { quoi: 'deux' } | { quoi: 'guidee' } | { quoi: 'lecon'; id: string }
   | { quoi: 'defis' } | { quoi: 'placement' } | { quoi: 'importer' } | { quoi: 'problemes' } | { quoi: 'amis' } | { quoi: 'direct' };
 
+/**
+ * #640 (N4, A3, A6, A10) : écran posé par-dessus un autre onglet. `onglet` : celui d'où l'on vient (il reste allumé dans
+ * la barre du bas) ; `maison` : l'onglet où vit l'écran posé ; `el` : l'écran d'origine, gardé monté et caché, retrouvé
+ * tel quel à la sortie (défilement `y` compris) ; `rendre` : ce qu'il faut remettre pour le revoir (écran de compte).
+ */
+interface Pose { onglet: Tab; maison: Tab; el: ReactNode; y: number; rendre?: () => void }
+
 /** Réglages de la file d'attente du direct (#360, #436). */
 interface DemandeDirect { taille: 9 | 13 | 19; cadence: 'rapide' | 'normale' | 'lente'; regles: 'japanese' | 'chinese' }
 /**
@@ -211,6 +218,10 @@ interface Repli { contre: OpponentId; demande: DemandeDirect; depuis: number; ve
 export function App() {
   const [tab, setTab] = useState<Tab>(PAGE_CONFIDENTIALITE || (RETOUR_GOOGLE?.profil && !ECRAN_COMPTE_AU_RETOUR && !DEFI_AU_RETOUR) ? 'profil'
     : LIEN_DU_JOUR !== null || ARRIVEE_RAPPEL ? 'problemes' : 'jouer');
+  // #640 : écrans posés par-dessus (le dernier en haut) ; l'écran affiché, pour le garder sous le suivant.
+  const [poses, setPoses] = useState<Pose[]>([]);
+  const ecran = useRef<ReactNode>(null);
+  const defiler = useRef<number | null>(null);
   const [duJourOuvert, setDuJourOuvert] = useState(false);
   // #285 : après le Go du jour ouvert par le lien, une seule action pour qui n'a jamais joué : la leçon 1.
   const [versLecon1, setVersLecon1] = useState(NOUVEAU_PAR_LIEN);
@@ -286,11 +297,11 @@ export function App() {
   const { progress, state: syncState, record } = useLessonProgress(supabase, compteId);
   // Lien de défi ouvert alors que l'app est déjà ouverte (même onglet) : on part vers l'arrivée.
   useEffect(() => ecouterJetonDefi((jeton, inviteur) => {
-    setTab('jouer'); setPlaying(false); setLessonId(null); setEcranCompte(null); setDirect(false); setLente(false); setPartagee(null); setDefi({ vue: 'arrivee', jeton, inviteur }); window.scrollTo({ top: 0 });
+    setPoses([]); setTab('jouer'); setPlaying(false); setLessonId(null); setEcranCompte(null); setDirect(false); setLente(false); setPartagee(null); setDefi({ vue: 'arrivee', jeton, inviteur }); window.scrollTo({ top: 0 });
   }), []);
   // Lien de partie partagée ouvert alors que l'app est déjà ouverte (#364).
   useEffect(() => ecouterJetonPartie(jeton => {
-    setTab('jouer'); setPlaying(false); setLessonId(null); setEcranCompte(null); setDirect(false); setLente(false); setDefi(null); setNouveauPartagee(false); setPartagee(jeton); window.scrollTo({ top: 0 });
+    setPoses([]); setTab('jouer'); setPlaying(false); setLessonId(null); setEcranCompte(null); setDirect(false); setLente(false); setDefi(null); setNouveauPartagee(false); setPartagee(jeton); window.scrollTo({ top: 0 });
   }), []);
   const done = LESSONS.filter(l => (progress[l.id] ?? 0) >= l.steps.length).length;
   const lesson = LESSONS.find(l => l.id === lessonId);
@@ -512,11 +523,27 @@ export function App() {
     window.scrollTo({ top: 0 });
   }
 
-  /** Ouvre une leçon, si l'essai le permet (leçons 1 à 3 sans compte). */
+  /**
+   * #640 (N4) : ouvre un écran de l'onglet `maison` par-dessus l'écran affiché, sans changer l'onglet allumé (A3, A10) ;
+   * sa sortie y ramène (A6). À appeler avant de poser l'état de l'écran ouvert. Même onglet : rien à faire. Un onglet déjà
+   * sous la pile : on y revient d'abord, comme par la barre du bas (deux écrans du même onglet ne tiennent pas ensemble).
+   */
+  function par(maison: Tab, rendre?: () => void) {
+    if (maison === tab && !rendre) return;
+    if (poses.some(p => p.onglet === maison)) { go(maison); return; }
+    setPoses([...poses, { onglet: tab, maison, el: ecran.current, y: window.scrollY, rendre }]); setTab(maison);
+  }
+
+  /** « Conditions et confidentialité » par-dessus l'écran (compte, accord, consentement) ; « ‹ » y ramène. */
+  function ouvrirConditions(rendre?: () => void) {
+    par('profil', rendre); setVueProfil('conditions'); window.scrollTo({ top: 0 });
+  }
+
+  /** Ouvre une leçon, si l'essai le permet (leçons 1 à 3 sans compte). Hors d'Apprendre, par-dessus l'écran (#640). */
   function ouvrirLecon(id: string) {
     const rang = LESSONS.findIndex(l => l.id === id);
     if (!garde({ quoi: 'lecon', rang: rang < 0 ? 0 : rang }, { quoi: 'lecon', id })) return;
-    setTab('apprendre'); setLessonId(id); window.scrollTo({ top: 0 });
+    par('apprendre'); setLessonId(id); window.scrollTo({ top: 0 });
   }
 
   /**
@@ -532,17 +559,18 @@ export function App() {
   function ouvrirPlacement() {
     if (!garde({ quoi: 'placement' }, { quoi: 'placement' })) return;
     track(EVENTS.placementCommence, { refait: placement !== null });
-    setEnPlacement(true); setTab('jouer'); setPlaying(false); setLessonId(null); setSerie3(null);
+    par('jouer'); setEnPlacement(true); setPlaying(false);
     window.scrollTo({ top: 0 });
   }
 
-  /** Leçons conseillées après le placement : la première leçon pas encore faite du chapitre ; la leçon 1 si tout est raté. */
+  /**
+   * Leçons conseillées après le placement : la première leçon pas encore faite du chapitre ; la leçon 1 si tout est raté.
+   * #640 : la leçon se pose sur le bilan du placement, qu'elle retrouve à la sortie.
+   */
   function ouvrirLeconsConseillees(kyu: number | null) {
     const chapitre = CHAPITRES[chapitreConseille(kyu, CHAPITRES.length)];
     const l = kyu === null ? LESSONS[0] : chapitre?.lecons.find(x => (progress[x.id] ?? 0) < x.steps.length) ?? chapitre?.lecons[0];
-    setEnPlacement(false); setTab('apprendre');
     if (l) ouvrirLecon(l.id);
-    window.scrollTo({ top: 0 });
   }
 
   function lancer(mode: 'ordi' | 'deux', contre: OpponentId = adv.id, enAttente: Repli | null = null) {
@@ -552,6 +580,8 @@ export function App() {
       return;
     }
     if (!garde({ quoi: 'partie' }, mode === 'ordi' ? { quoi: 'ordi', contre } : { quoi: 'deux' })) return;
+    // #640 : lancée hors de Jouer (fin de leçon, Ta semaine, introduction des règles), la partie revient à son origine.
+    par('jouer');
     // #436 : une autre partie que celle du repli met fin à l'attente (la bande rend la place dans la file).
     setRepli(enAttente);
     // Première partie contre l'ordi : Mochi explique le but, une seule fois.
@@ -589,10 +619,11 @@ export function App() {
   /**
    * Partie guidée contre Mochi (#79) : hors de l'échelle, sans effet sur le bilan ni sur les parties à komi réduit.
    * Mochi repart du cran de la partie guidée précédente ; la première fois, de la force de l'adversaire choisi.
-   * #589 : lancée depuis Apprendre ; la partie se joue dans l'onglet Jouer et sa sortie ramène à Apprendre.
+   * #589 : lancée depuis Apprendre ; la partie se joue dans l'onglet Jouer et sa sortie ramène à Apprendre (#640 : pose).
    */
   function lancerGuidee() {
     if (!garde({ quoi: 'partie' }, { quoi: 'guidee' })) return;
+    par('jouer');
     const oppIndex = OPPONENTS.findIndex(o => o.id === adv.id);
     setDepartGuide(typeof cranGuide === 'number' && Number.isFinite(cranGuide) ? cranGuide : cranDuNiveau(Math.max(0, oppIndex)));
     setIntro(false);
@@ -603,7 +634,7 @@ export function App() {
     setResultat(null);
     setPartieFinie(false);
     setPartie(partie + 1);
-    setPlaying('guidee'); setTab('jouer');
+    setPlaying('guidee');
     window.scrollTo({ top: 0 });
   }
 
@@ -666,7 +697,7 @@ export function App() {
       bilan: <>{t('guidee.fin')}</>,
       mochi: null,
       action: <button type="button" className="cta" onClick={lancerGuidee}>{t('guidee.rejouer')}</button>,
-      onAccueil: () => { setPlaying(false); setTab('apprendre'); window.scrollTo({ top: 0 }); }, // #589
+      onAccueil: () => { setPlaying(false); window.scrollTo({ top: 0 }); }, // #589, #640 : la pose ramène à Apprendre
     };
   }
   if (playing === 'ordi' && resultat) {
@@ -680,7 +711,7 @@ export function App() {
       mochi: (
         <>
           <p>{fr(f.mochi)}</p>
-          {lecon && <button type="button" className="lien" onClick={() => { setPlaying(false); setResultat(null); setTab('apprendre'); ouvrirLecon(lecon.id); }}>{t('fin.ouvrirLecon')}</button>}
+          {lecon && <button type="button" className="lien" onClick={() => ouvrirLecon(lecon.id)}>{t('fin.ouvrirLecon')}</button>}
         </>
       ),
       // #602 (E11, E13) : contre le même adversaire, son grand portrait est juste au-dessus ; le sceau dans le bouton jade ne
@@ -703,14 +734,17 @@ export function App() {
     setDuJourDirect(false);
     setIntroRegles(null); // #523
     if (t === 'problemes' && tab === 'problemes') setRacineProblemes(n => n + 1);
-    setDefi(null); setDirect(false); setLente(false); setRepli(null); setEcranCompte(null); setAnnonceGel(null); setRetourSerie(null); setEnPlacement(false); setTab(t); setPlaying(false); setLessonId(null); setSerie3(null); setVueProfil('menu'); setPartagee(null); window.scrollTo({ top: 0 });
+    setPoses([]); setDefi(null); setDirect(false); setLente(false); setRepli(null); setEcranCompte(null); setAnnonceGel(null); setRetourSerie(null); setEnPlacement(false); setTab(t); setPlaying(false); setLessonId(null); setSerie3(null); setVueProfil('menu'); setPartagee(null); window.scrollTo({ top: 0 });
     setSeanceRevisions(false); setThemeVu(null); // #469, #590
     setDecouverte(false); // #524
   };
-  /** #560 : depuis un écran hors du Profil (fin d'une partie en ligne, accueil), l'onglet Profil s'ouvre sur ce joueur. */
+  /**
+   * #560 : depuis un écran hors du Profil (fin d'une partie en ligne, carte de la semaine), le profil d'un joueur.
+   * #640 : posé par-dessus ; « Retour » ramène au bilan ou à l'accueil, l'onglet allumé ne change pas.
+   */
   // La pile des profils et le retour sont gérés par le Profil (chargé à la demande) : rien de plus dans le JS initial.
   // Une pile ancienne n'est jamais relue : chaque ouverture hors d'un profil la remplace.
-  const voirJoueur = (depuis: DepuisProfil) => etat === 'complet' ? (pseudo: string) => { go('profil'); setJoueurVu({ pseudos: [pseudo], depuis, retour: 'menu' }); setVueProfil('joueur'); } : undefined;
+  const voirJoueur = (depuis: DepuisProfil) => etat === 'complet' ? (pseudo: string) => { par('profil'); setJoueurVu({ pseudos: [pseudo], depuis, retour: 'menu' }); setVueProfil('joueur'); } : undefined;
 
   // Reprise de l'action demandée, dès que le compte est complet ; `compte_cree` quand un compte sans pseudo apparaît.
   const executer = useRef<(r: Reprise) => void>(() => {});
@@ -719,10 +753,10 @@ export function App() {
     else if (r.quoi === 'deux') lancer('deux');
     else if (r.quoi === 'guidee') lancerGuidee();
     else if (r.quoi === 'lecon') ouvrirLecon(r.id);
-    else if (r.quoi === 'defis') { setTab('jouer'); setDefi({ vue: 'liste' }); }
+    else if (r.quoi === 'defis') { par('jouer'); setDefi({ vue: 'liste' }); }
     else if (r.quoi === 'placement') ouvrirPlacement();
-    else if (r.quoi === 'importer') { setTab('profil'); setVueProfil('importer'); }
-    else if (r.quoi === 'amis') { setTab('profil'); setVueProfil('amis'); }
+    else if (r.quoi === 'importer') { par('profil'); setVueProfil('importer'); }
+    else if (r.quoi === 'amis') { par('profil'); setVueProfil('amis'); }
     else if (r.quoi === 'direct') ouvrirEnLigne();
     else setTab('problemes');
   };
@@ -776,7 +810,7 @@ export function App() {
   // Robustesse (#325) : écran d'erreur à la place d'un écran blanc ; « Retour à l'accueil » change d'onglet sans recharger.
   const versAccueil = useCallback(() => {
     setIntroRegles(null); // #523
-    setDefi(null); setDirect(false); setLente(false); setRepli(null); setEcranCompte(null); setEnPlacement(false); setTab('jouer'); setPlaying(false); setLessonId(null); setSerie3(null); setVueProfil('menu'); setPartagee(null);
+    setPoses([]); setDefi(null); setDirect(false); setLente(false); setRepli(null); setEcranCompte(null); setEnPlacement(false); setTab('jouer'); setPlaying(false); setLessonId(null); setSerie3(null); setVueProfil('menu'); setPartagee(null);
     setSeanceRevisions(false); // #469
     window.scrollTo({ top: 0 });
   }, []);
@@ -836,7 +870,7 @@ export function App() {
       go('jouer');
       setDefi({ vue: 'partie', id: c.partieId });
     } else if (c.ecran === 'goDuJour') go('problemes');
-    else if (c.ecran === 'lecon') { go('apprendre'); ouvrirLecon(c.id); }
+    else if (c.ecran === 'lecon') ouvrirLecon(c.id); // #640 : par-dessus l'accueil
     // #359 : demandes d'ami reçues : l'écran « Mes amis » du Profil.
     else { go('profil'); if (etat === 'complet') setVueProfil('amis'); }
   }
@@ -857,6 +891,8 @@ export function App() {
   // #538 : le reste du Profil (parcours, réglages, l'IA) marche hors ligne : pas de bandeau qui dirait le contraire.
   const ecranReseau = enDefi || enDirect || enLente || enPartagee || ecranPlein
     || (tab === 'profil' && (vueProfil === 'compte' || vueProfil === 'amis' || vueProfil === 'cote'));
+  // #640 : un écran posé par-dessus un autre onglet dit « Retour » (il ne ramène pas au chemin, mais d'où l'on vient).
+  const retourPose = poses.length ? t('profil.retour') : undefined;
   let screen;
   if (pseudoAChoisir && supabase && compteId) {
     screen = <PseudoObligatoire db={supabase} userId={compteId}
@@ -866,13 +902,15 @@ export function App() {
     screen = <AccordConditions db={supabase} userId={compteId}
       onFait={() => { const r = voirAccord; setAccord('ok'); setVoirAccord(null); if (r && r !== true) executer.current(r); }}
       onPlusTard={() => { setVoirAccord(null); if (defi?.vue === 'arrivee') quitterDefi(); }}
-      onConditions={() => { go('profil'); setVueProfil('conditions'); }} />;
+      onConditions={() => ouvrirConditions()} />;
   } else if ((ecranCompte || enDefi || enDirect || enLente || enPartagee) && client === undefined) {
     // Client Supabase pas encore là (#401, chargé dès l'ouverture d'un lien de défi) : comme un écran à la demande.
     screen = null;
   } else if (ecranCompte && supabase) {
+    const c = ecranCompte;
     screen = <CreerCompte db={supabase} raison={ecranCompte.raison} anonyme={etat === 'anonyme'} onRetour={() => { setEcranCompte(null); window.scrollTo({ top: 0 }); }}
-      onConditions={() => { go('profil'); setVueProfil('conditions'); }} />;
+      // #640 : les conditions par-dessus l'écran de compte, qui revient à leur sortie (ce qui était saisi compris).
+      onConditions={() => { ouvrirConditions(() => setEcranCompte(c)); setEcranCompte(null); }} />;
   } else if (enDirect) {
     screen = supabase && compteId
       ? <Direct db={supabase} userId={compteId} confirmTouch={settings.confirmTouch} reglages={{ modifier: set }}
@@ -896,7 +934,8 @@ export function App() {
     screen = <PartiePartagee key={partagee} db={supabase} jeton={partagee} nouveau={nouveauPartagee} confirmTouch={settings.confirmTouch}
       onJouer={() => { setPartagee(null); lancer('ordi'); }} onAccueil={() => { setPartagee(null); window.scrollTo({ top: 0 }); }}
       // #449 : étude partagée, « Étudie-la avec Mochi » ouvre sa copie dans l'écran d'étude.
-      onEtudier={copie => { deposerCopieEtude(copie); go('profil'); setVueProfil('etude'); setEtudeRecue(true); }} />;
+      // #640 : l'étude se pose par-dessus la partie partagée, que « ‹ » retrouve.
+      onEtudier={copie => { deposerCopieEtude(copie); par('profil'); setVueProfil('etude'); setEtudeRecue(true); }} />;
   } else if (enDefi && defi.vue === 'partie' && supabase) {
     screen = <DefiPartie key={defi.id} db={supabase} partieId={defi.id} userId={session?.user.id} anonyme={estAnonyme(session)} pseudo={pseudo ?? null} confirmTouch={settings.confirmTouch} reglages={{ modifier: set }} celebrer={settings.celebrations}
       onRetour={quitterDefi} onAutre={() => { setDefi({ vue: 'liste' }); window.scrollTo({ top: 0 }); }}
@@ -911,7 +950,7 @@ export function App() {
     // #523 : introduction des règles. Sortie : là où elle a été ouverte (accueil, Apprendre, aide).
     screen = <IntroRegles key={`${introRegles.version}-${introRegles.depuis}`} version={introRegles.version} depuis={introRegles.depuis} confirmTouch={settings.confirmTouch}
       onDecouverte={() => ouvrirDecouverte(true)}
-      contre={{ nom: OPPONENTS[0].nom, lancer: () => { setIntroRegles(null); setTab('jouer'); lancer('ordi', OPPONENTS[0].id); } }}
+      contre={{ nom: OPPONENTS[0].nom, lancer: () => { setIntroRegles(null); lancer('ordi', OPPONENTS[0].id); } }}
       onQuitter={() => { setIntroRegles(null); window.scrollTo({ top: 0 }); }} />;
   } else if (enPartie) {
     const enRepli = playing === 'ordi' && repli !== null;
@@ -931,8 +970,9 @@ export function App() {
           opponent={playing === 'ordi' ? adv : playing === 'guidee' ? mochiGuide : undefined}
           guidee={playing === 'guidee' ? { depart: departGuide, onCran: setCranGuide } : undefined}
           intro={playing === 'guidee' ? <Bubble voix="coach">{t('guidee.bulle')}</Bubble> : playing === 'ordi' && (intro || reglage.annonce) ? <Bubble voix="coach">{intro ? introBut(adv.nom) : t('partie.bulle', { nom: adv.nom })}{reglage.annonce && <><br /><span className="annonce-komi">{reglage.annonce}</span></>}</Bubble> : undefined}
-          onExit={() => { if (playing === 'guidee') setTab('apprendre'); setIntro(false); setPlaying(false); setResultat(null); setRepli(null); }}
-          onImporter={() => { if (!garde({ quoi: 'import' }, { quoi: 'importer' })) return; setPlaying(false); setResultat(null); setTab('profil'); setVueProfil('importer'); window.scrollTo({ top: 0 }); }}
+          onExit={() => { setIntro(false); setPlaying(false); setResultat(null); setRepli(null); }} retour={playing === 'guidee' ? undefined : retourPose}
+          // #640 : l'analyse se pose par-dessus la revue de la partie, que « ‹ » retrouve.
+          onImporter={() => { if (!garde({ quoi: 'import' }, { quoi: 'importer' })) return; par('profil'); setVueProfil('importer'); window.scrollTo({ top: 0 }); }}
           onResult={onResult} onRestart={() => setPartieFinie(false)} fin={finEcran} celebrer={settings.celebrations} aide={aideActive(settings.aide, adv.id)} portrait={playing === 'ordi' ? <Sceau id={adv.id} taille={44} /> : undefined}
           reglages={{ son: settings.sound, modifier: set }}
           // Coach Mochi (#470) : contre l'IA de l'échelle seulement, 10 premières parties par défaut.
@@ -949,10 +989,9 @@ export function App() {
       </>
     );
   } else if (decouverte) {
-    // #524 : la fin mène au chemin des leçons (la suite naturelle) ; quitter ramène là où l'on était.
-    // #523 : ouverte à la fin de l'introduction des règles, sa fin ramène à l'accueil.
-    screen = <PartieDecouverte onFin={() => { const o = decouverte; setDecouverte(false); setTab(ongletApresDecouverte(o || 'chemin')); window.scrollTo({ top: 0 }); }}
-      onQuitter={() => { setDecouverte(false); window.scrollTo({ top: 0 }); }} />;
+    // #640 : la fin et « ‹ » ramènent là où l'on était, sans changer d'onglet (avant : la fin menait à Apprendre).
+    const fermer = () => { setDecouverte(false); window.scrollTo({ top: 0 }); };
+    screen = <PartieDecouverte onFin={fermer} onQuitter={fermer} />;
   } else if (tab === 'jouer' && seanceRevisions) {
     // #469 : séance « Révisions du jour » (5 éléments au plus), ouverte depuis la carte de l'accueil.
     screen = <SeanceRevisions confirmTouch={settings.confirmTouch} celebrer={settings.celebrations} compte={!!compteId}
@@ -980,13 +1019,13 @@ export function App() {
     screen = <LessonPlayer key={leconEssai.id} lesson={leconEssai} lecon={leconEssai} start={0} confirmTouch={settings.confirmTouch} celebrer={false}
       onProgress={() => {}} onExit={() => { setLeconEssai(null); window.scrollTo({ top: 0 }); }} />;
   } else if (tab === 'apprendre' && serie3) {
-    screen = <SeriePratique problemes={serie3} confirmTouch={settings.confirmTouch} celebrer={settings.celebrations} versTheme={!!themeVu} onFin={() => { setSerie3(null); window.scrollTo({ top: 0 }); }} />;
+    screen = <SeriePratique problemes={serie3} confirmTouch={settings.confirmTouch} celebrer={settings.celebrations} versTheme={!!themeVu} retour={retourPose} onFin={() => { setSerie3(null); window.scrollTo({ top: 0 }); }} />;
   } else if (tab === 'apprendre' && lesson) {
     const leconSuivante = LESSONS[LESSONS.indexOf(lesson) + 1];
     // Fin de leçon (#200) : 3 problèmes du thème, et en fin de chapitre une partie contre le premier adversaire.
     const themes = THEMES_DE_LECON[lesson.id] ?? [];
     const premier = OPPONENTS[0];
-    screen = <LessonPlayer key={lesson.id} lesson={lesson} start={(progress[lesson.id] ?? 0) % lesson.steps.length} confirmTouch={settings.confirmTouch}
+    screen = <LessonPlayer key={lesson.id} lesson={lesson} start={(progress[lesson.id] ?? 0) % lesson.steps.length} confirmTouch={settings.confirmTouch} retour={retourPose}
       progress={progress} celebrer={(settings as Partial<{ celebrations: boolean }>).celebrations !== false}
       onProgress={n => record(lesson.id, n)} onExit={() => { setLessonId(null); window.scrollTo({ top: 0 }); }}
       onNext={leconSuivante && (() => ouvrirLecon(leconSuivante.id))}
@@ -1005,7 +1044,8 @@ export function App() {
             }).catch(() => { /* morceau introuvable (hors ligne sans cache) : on reste sur la fin de leçon */ });
         },
       } : undefined}
-      jouer={{ nom: premier.nom, lancer: () => { setLessonId(null); setTab('jouer'); lancer('ordi', premier.id); } }} />;
+      // #640 : la partie se pose sur la fin de leçon, que sa sortie retrouve.
+      jouer={{ nom: premier.nom, lancer: () => lancer('ordi', premier.id) }} />;
   } else if (tab === 'apprendre' && themeVu) {
     screen = <ThemeLecons theme={themeVu} progress={progress} onOpen={ouvrirLecon} onRetour={() => { setThemeVu(null); window.scrollTo({ top: 0 }); }}
       onSerie={s => { if (garde({ quoi: 'probleme' })) { setSerie3(s); window.scrollTo({ top: 0 }); } }} />;
@@ -1019,18 +1059,19 @@ export function App() {
     screen = <Puzzles db={supabase} userId={compteId} sessionLoading={session === undefined} confirmTouch={settings.confirmTouch} onCompte={ouvrirCompte}
       essai={decider({ quoi: 'probleme' }, etat, terminees, COMPTES).ok ? undefined : () => { garde({ quoi: 'probleme' }, { quoi: 'problemes' }); }}
       lien={LIEN_DU_JOUR} depuisRappel={ARRIVEE_RAPPEL || duJourDirect} onDuJour={setDuJourOuvert} celebrer={settings.celebrations} racine={racineProblemes} rappelAmi={rappelGoDuJour}
-      onApprendre={versLecon1 && LESSONS[0] ? () => { setVersLecon1(false); go('apprendre'); setLessonId(LESSONS[0].id); } : undefined} />;
+      onApprendre={versLecon1 && LESSONS[0] ? () => { setVersLecon1(false); ouvrirLecon(LESSONS[0].id); } : undefined} />;
   } else if (tab === 'profil') {
     screen = <Profil vue={vueProfil} onVue={v => { if (v === 'importer' && !garde({ quoi: 'import' }, { quoi: 'importer' })) return; setVueProfil(v); }} settings={settings} set={set} profil={profil} serie={serie} record={recordSerie}
       parcours={{ lecons: { faites: done, total: LESSONS.length }, adversaires: OPPONENTS.length }}
       placement={placement} onPlacement={ouvrirPlacement}
-      onJouer={() => { go('jouer'); lancer('ordi'); }} db={supabase} userId={session?.user.id} onProfilChange={() => setClePseudo(c => c + 1)}
+      onJouer={() => lancer('ordi')} db={supabase} userId={session?.user.id} onProfilChange={() => setClePseudo(c => c + 1)}
       onProblemes={() => go('problemes')}
       // #359 : « Mes amis ». Sans compte complet, l'écran de compte s'ouvre puis revient ici ; « Défier » ouvre la partie.
       amis={supabase ? {
         db: supabase, compte: etat === 'complet', demandes: demandesAmis,
         onCompte: () => { garde({ quoi: 'en_ligne' }, { quoi: 'amis' }); },
-        onDefi: id => { setVueProfil('menu'); setTab('jouer'); setPlaying(false); setDefi({ vue: 'partie', id }); window.scrollTo({ top: 0 }); },
+        // #640 : la partie du défi se pose sur « Mes amis » ou le profil de l'ami, que sa sortie retrouve.
+        onDefi: id => { par('jouer'); setPlaying(false); setDefi({ vue: 'partie', id }); window.scrollTo({ top: 0 }); },
       } : undefined}
       // #560 : profil public d'un joueur, depuis « Mes amis », une demande ou « Ta semaine ».
       joueur={{ vu: joueurVu, changer: setJoueurVu }} />;
@@ -1069,7 +1110,7 @@ export function App() {
         // Recette du 02/10 (S7) : Go du jour à faire → ouvert directement.
         onProbleme={() => { mesurerAccueil('serie', 'goDuJour'); go('problemes'); if (!duJourFait) setDuJourDirect(true); }}
         lecon={leconConseillee && { titre: leconConseillee.title }}
-        onLecon={() => { mesurerAccueil('lecon'); if (leconConseillee) { const id = leconConseillee.id; go('apprendre'); ouvrirLecon(id); } else go('apprendre'); }}
+        onLecon={() => { mesurerAccueil('lecon'); if (leconConseillee) ouvrirLecon(leconConseillee.id); else go('apprendre'); }}
         // Un seul appel à la fois (#236, N4) : pas de carte d'installation le jour où Mochi fait une annonce ;
         // quand elle se montre, la pastille « À faire » s'efface.
         installation={appel === 'installation' ? <ProposerInstallation moment="retour" /> : null}
@@ -1112,6 +1153,16 @@ export function App() {
   }
 
   const accueilVisible = tab === 'jouer' && !playing && !enPlacement && !enDefi && !enDirect && !enLente && !enPartagee && !ecranPlein && !seanceRevisions && !decouverte && !introRegles;
+  ecran.current = screen;
+  // #640 : l'écran posé s'est fermé (« ‹ », fin, retour du système) quand sa maison revient à sa racine : on retrouve
+  // l'écran d'origine, et son onglet. Pendant le rendu, pour que la racine ne s'affiche pas une image. Un changement
+  // d'onglet venu d'ailleurs (barre du bas, lien) défait la pile.
+  const haut = poses[poses.length - 1];
+  const fermerPose = (p: Pose) => { setPoses(poses.slice(0, -1)); setTab(p.onglet); p.rendre?.(); defiler.current = p.y; };
+  if (haut && tab !== haut.maison) setPoses([]);
+  else if (haut && (tab === 'jouer' ? accueilVisible : tab === 'apprendre' ? !lesson && !serie3 : vueProfil === 'menu' || vueProfil === 'parties')) fermerPose(haut);
+  const ongletVu = poses[0]?.onglet ?? tab;
+  const horsAide = playing || enPlacement || defi !== null || direct || decouverte || !!introRegles;
   // #465 (WCAG 2.4.2) : le titre de l'onglet du navigateur suit l'écran affiché.
   const leconOuverte = leconEssai ?? lesson;
   const ecranTitre: EcranTitre = ecranPlein ? { quoi: 'compte' }
@@ -1141,6 +1192,8 @@ export function App() {
     track(EVENTS.revisionCarteVue, { n: revisionsDues });
   }, [accueilVisible, revisionsDues, home.nouveau]);
   useEffect(() => { document.title = titreDocument; }, [titreDocument]);
+  // #640 (A6) : l'écran d'origine retrouvé, à l'endroit où on l'avait laissé.
+  useLayoutEffect(() => { if (defiler.current !== null) window.scrollTo(0, defiler.current); defiler.current = null; });
   // #606 (N1, A7) : le retour du système fait ce que fait « ‹ » (src/app/retourSysteme.ts, hors du JS initial).
   const lectureRetour = useRef<Branchement>(null!);
   lectureRetour.current = {
@@ -1151,6 +1204,8 @@ export function App() {
       if (tab === 'jouer' && enPlacement) { setEnPlacement(false); window.scrollTo({ top: 0 }); }
       else if (enDefi && defi.vue === 'arrivee') quitterDefi();
       else if (enPartagee) { setPartagee(null); window.scrollTo({ top: 0 }); }
+      // #640 : écran posé sans « ‹ » à l'écran (son morceau se charge encore) : retour à l'écran d'origine.
+      else if (haut) { setPlaying(false); fermerPose(haut); }
       else if (!accueilVisible) go('jouer');
     },
     // Lu par src/app/retourSysteme.ts (`ecranDe`) pour l'événement `retour_systeme`.
@@ -1201,9 +1256,9 @@ export function App() {
           {/* Marque (#416) : « Mochi » posé sur « Go », pour garder l'emprise de l'ancien titre ; la flamme et le gel tiennent à 320 px.
               #602 : la marque sur Jouer seulement ; ailleurs, le nom de l'écran, en petit (comme chess.com). Un écran de tâche
               a sa barre « ‹ titre », qui remplace cet en-tête (app.css). */}
-          {tab === 'jouer'
+          {ongletVu === 'jouer'
             ? <h1 className="marque"><span className="marque-mochi">Mochi</span>{' '}<span className="marque-go">Go</span></h1>
-            : <h1 className="titre-onglet">{t(`nav.${tab}`)}</h1>}
+            : <h1 className="titre-onglet">{t(`nav.${ongletVu}`)}</h1>}
           {accueilVisible && (
             <span className="entete-droite">
               {/* #429 : « Défier un ami » a quitté l'en-tête pour la tuile « Un ami », sous le bouton principal. */}
@@ -1231,14 +1286,15 @@ export function App() {
         <InviteMiseAJour visible={!enPartie} />
         {bandeau && <BandeauHorsLigne ou={bandeau} />}
         <LimiteErreur origine="ecran" onAccueil={versAccueil}>
-          <Suspense fallback={null}>{screen}</Suspense>
+          {/* #640 : les écrans d'origine restent montés, cachés, sous l'écran posé ; chacun garde sa place dans l'arbre. */}
+          {[...poses.map(p => p.el), screen].map((el, i) => <div key={i} className="calque" hidden={i < poses.length}><Suspense fallback={null}>{el}</Suspense></div>)}
         </LimiteErreur>
       </main>
       <FeteNiveau celebrer={settings.celebrations} ecran={`${tab}|${playing}|${lessonId ?? ''}|${serie3 ? 'serie' : ''}|${vueProfil}|${decouverte ? 'decouverte' : ''}`} />
       <AnnonceXp celebrer={settings.celebrations} />
       {etat === 'complet' && supabase && compteId && <Suspense fallback={null}><FeteTitre db={supabase} userId={compteId} celebrer={settings.celebrations} /></Suspense>}
       {/* Pendant une partie, comme chez chess.com : pas de barre de navigation, « ‹ » ramène à l'accueil. */}
-      {!enPartie && !ecranPlein && <BarreNav actif={tab} pastilles={pastilles}
+      {!enPartie && !ecranPlein && <BarreNav actif={ongletVu} pastilles={pastilles}
         onChoisir={o => { const e = aFaire.find(x => x.pastille && x.onglet === o); if (e) ouvrirAFaire(e, 'onglet'); go(o); }} />}
       {repliHorsLigne && (
         <Suspense fallback={null}>
@@ -1249,14 +1305,14 @@ export function App() {
       )}
       {aide && (
         <Suspense fallback={null}>
-          {/* Depuis une partie, pas de lien vers une leçon : on ne quitte pas la partie depuis l'aide. */}
+          {/* Pendant une activité (partie, placement, découverte, introduction), pas de leçon depuis l'aide : on ne la quitte pas. */}
           <FeuilleAide key={aide.n} ouverture={aide} onFermer={() => setAide(null)} leconCourante={lessonId}
-            onLecon={playing || enPlacement || defi !== null || direct ? undefined : id => { setAide(null); ouvrirLecon(id); }}
-            onRegles={playing || enPlacement || defi !== null || direct ? undefined : () => { setAide(null); ouvrirIntro('complete', 'aide'); }} />
+            onLecon={horsAide ? undefined : id => { setAide(null); ouvrirLecon(id); }}
+            onRegles={horsAide ? undefined : () => { setAide(null); ouvrirIntro('complete', 'aide'); }} />
         </Suspense>
       )}
       <ConsentModal visible={fenetreVisible({ consent, ignoree: accordIgnore, enPartie: enPartie || enPartagee || (introRegles !== null && !playing) || (tab === 'problemes' && duJourOuvert) || (etudeRecue && tab === 'profil' && vueProfil === 'etude'), surConditions: tab === 'profil' && vueProfil === 'conditions' })}
-        onConditions={() => { go('profil'); setVueProfil('conditions'); }} onIgnorer={() => setAccordIgnore(true)} />
+        onConditions={() => ouvrirConditions()} onIgnorer={() => setAccordIgnore(true)} />
 
     </>
   );

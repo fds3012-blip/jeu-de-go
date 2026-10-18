@@ -587,13 +587,14 @@ export function fauxServeur() {
       }
       if (nom === 'bilan_semaine') {
         const lundi = (() => { const d = new Date(); d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7)); return d.toISOString().slice(0, 10); })();
-        if (corps.p_precedente) return json({ semaine: lundi, parties: 0, victoires: 0, parties_classees: 0, cote_ecart: 0, go_du_jour: 0, amis: [] });
         const parties = games.filter(g => g.status === 'finished' && !g.bot_id && g.black_id && g.white_id && (g.black_id === u.id || g.white_id === u.id));
         const gagne = (g: Ligne) => (String(g.result).startsWith('B+') && g.black_id === u.id) || (String(g.result).startsWith('W+') && g.white_id === u.id);
         const amis = amisDe(u.id).flatMap(id => {
           const contre = parties.filter(g => g.black_id === id || g.white_id === id);
           return contre.length ? [{ pseudo: String(profiles.find(x => x.id === id)?.username), victoires: contre.filter(gagne).length, defaites: contre.filter(g => !gagne(g)).length }] : [];
         }).sort((a, b) => b.victoires - a.victoires);
+        // Semaine passée : les amis affrontés (les parties simulées n'ont pas de date), sans les autres chiffres (#640).
+        if (corps.p_precedente) return json({ semaine: lundi, parties: 0, victoires: 0, parties_classees: 0, cote_ecart: 0, go_du_jour: 0, amis: amis.slice(0, 5) });
         const classees = ratingHistory.filter(h => h.user_id === u.id && h.kind === 'game');
         return json({ semaine: lundi, parties: parties.length, victoires: parties.filter(gagne).length, parties_classees: classees.length,
           cote_ecart: classees.reduce((s, h) => s + Number(h.ecart ?? 0), 0), go_du_jour: goDuJour.filter(g => g.user === u.id && g.etat !== 'en_cours').length, amis: amis.slice(0, 5) });

@@ -2,7 +2,7 @@
    Le goban final reste l'image de l'écran ; tout le reste tient en une colonne centrée, un seul bouton en relief. */
 
 /* Plein écran, sans barre d'actions : le bouton principal tombe sous le pouce. */
-.app.app-partie:has(> .fin) { padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom, 0px)); }
+.app.app-partie:has(> .calque > .fin) { padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom, 0px)); }
 .fin { position: relative; display: flex; flex-direction: column;
   min-height: calc(100dvh - var(--space-1) - var(--space-4) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); }
 
@@ -89,7 +89,7 @@
 @keyframes fin-coup { 0% { transform: none; } 40% { transform: translateY(2px) scale(.98); } 100% { transform: none; } }
 
 /* ---------- Récit du score (#78) : même plateau que la fin, sans voile (tout le goban se lit), le comptage dessous ---------- */
-.app.app-partie:has(> .recit) { padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom, 0px)); }
+.app.app-partie:has(> .calque > .recit) { padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom, 0px)); }
 .recit { cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .recit .fin-voile { opacity: 0; animation: none !important; }
 .recit-feuille { position: relative; flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; margin-top: var(--space-4); }

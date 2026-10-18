@@ -9,7 +9,7 @@
 // - Toucher la notification ouvre le Go du jour (`/?rappel=1`, public/sw.js) et envoie `rappel_ouvert`.
 import type { Db } from '../data/supabase';
 import { detecterPlateforme, type Plateforme } from './installation';
-import { t } from '../content/i18n';
+import { t } from '../content/i18n/secondaires';
 // #563 : état local du rappel et arrivée par la notification dans rappelEtat.ts (JS initial), réexportés ici.
 import { RAPPEL_KEY, etatRappel, type EtatRappel, type MomentRappel } from './rappelEtat';
 export { ETAT_INITIAL, HEURES, MOMENTS, RAPPEL_KEY, estArriveeRappel, etatRappel, lireEtatRappel, type EtatRappel, type MomentRappel } from './rappelEtat';

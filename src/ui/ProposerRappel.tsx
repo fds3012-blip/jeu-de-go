@@ -11,7 +11,7 @@ import {
   activerRappel, changerMoment, couperRappel, doitProposerRappel, etatRappel, MOMENTS, noterRappel, supportCourant,
   type MomentRappel, type Resultat,
 } from '../app/rappel';
-import { langue, t } from '../content/i18n';
+import { langue, t } from '../content/i18n/secondaires';
 import { useTour } from './celebrations';
 import { fr } from './typo';
 import { LigneInterrupteur } from './Reglage';

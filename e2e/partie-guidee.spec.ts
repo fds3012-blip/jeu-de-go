@@ -28,7 +28,8 @@ test('partie guidée : lancée depuis Apprendre (#589), jouée au-delà du 10e c
 
   await passerJusquAuScore(page);
   await expect(page.locator('.fin-bilan')).toContainText('Partie guidée : elle ne compte pas dans ton bilan.');
-  await expect(page.locator('.cta')).toHaveText('Rejouer contre Mochi');
+  // #640 : Apprendre reste monté, caché, sous la partie (sa sortie le retrouve) : seul le bouton visible compte.
+  await expect(page.locator('.cta:visible')).toHaveText('Rejouer contre Mochi');
   // Sans effet sur le bilan des adversaires ; le cran de Mochi est gardé pour la partie guidée suivante.
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('go.bilan.v1') || '{}'))).toEqual({});
   expect(await page.evaluate(() => localStorage.getItem('go.guidee.v1'))).toMatch(/^\d+$/);
