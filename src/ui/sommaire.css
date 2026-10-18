@@ -1,0 +1,32 @@
+/* A13 (DESIGN.md) : sommaire, puis détail (src/ui/Sommaire.tsx). Mêmes entrées à plat que « Par thème » (themes.css) :
+   fond --surface, sans bordure, groupées en un bloc (coins intérieurs de 4 px, 2 px d'écart), visuel de 40 px, nom en
+   Bricolage 700. 64 px de haut au moins (cible tactile largement au-dessus de 44 px). En rem : au zoom 200 %, le nom
+   passe à la ligne, l'état reste lisible. */
+.sommaire { margin-top: var(--space-5); container-type: inline-size; }
+.sommaire-titre { margin: 0 0 var(--space-2); color: var(--muted); font-family: var(--font-ui); font-weight: var(--fw-bold); font-size: var(--fs-s); letter-spacing: 0; }
+.sommaire-liste { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px; }
+.sommaire-entree { display: flex; align-items: center; gap: var(--space-3); width: 100%; height: 100%; min-height: 64px; margin: 0;
+  padding: var(--space-2) var(--space-4); background: var(--surface); color: var(--text); border: 0; border-radius: var(--radius-xs);
+  text-align: left; font: inherit; cursor: pointer; }
+.sommaire-liste > li:first-child > .sommaire-entree { border-top-left-radius: var(--radius); border-top-right-radius: var(--radius); }
+.sommaire-liste > li:last-child > .sommaire-entree { border-bottom-left-radius: var(--radius); border-bottom-right-radius: var(--radius); }
+@container (min-width: 36rem) {
+  .sommaire-liste { grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: var(--space-2); }
+  .sommaire-liste > li > .sommaire-entree { border-radius: var(--radius); }
+}
+.sommaire-entree:active { background: var(--surface-2); }
+.sommaire-entree:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+@media (hover: hover) and (pointer: fine) { .sommaire-entree:hover { background: var(--surface-2); } }
+.sommaire-visuel { flex: none; display: grid; place-items: center; width: 40px; height: 40px; color: var(--accent-texte); }
+.sommaire-visuel .mini-goban { display: block; width: 40px; border-radius: var(--radius-xs); box-shadow: 0 2px 0 var(--bois-tranche); }
+.sommaire-visuel > svg:not(.mini-goban) { width: 28px; height: 28px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.sommaire-nom { flex: 1; min-width: 0; font-family: var(--font-titre); font-weight: var(--fw-bold); font-size: var(--fs-m);
+  letter-spacing: var(--tracking-titre); line-height: 1.2; overflow-wrap: anywhere; }
+/* État court : une pilule. Or (« À faire ») pour ce qui attend le joueur, à plat sinon. Jamais la couleur seule : le mot. */
+.sommaire-etat { flex: none; max-width: 45%; padding: 3px 10px; border-radius: var(--radius-pill); background: var(--surface-2); color: var(--text);
+  font-size: var(--fs-mini); font-weight: var(--fw-bold); line-height: 1.3; text-align: center; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.sommaire-etat[data-ton="or"] { background: var(--or); color: var(--on-accent); }
+@media (prefers-reduced-motion: no-preference) {
+  .sommaire-entree { transition: transform var(--duree-rapide) var(--ease), background-color var(--duree-rapide) var(--ease); }
+  .sommaire-entree:active { transform: scale(.98); }
+}
