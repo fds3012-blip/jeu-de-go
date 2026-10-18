@@ -92,7 +92,7 @@ for (const largeur of [390, 320]) {
     await expect(page.getByRole('button', { name: /^Lesson / })).toBeVisible();
     await expect(page.locator('header').getByText('Mochi Go', { exact: true })).toBeVisible();
     await expect(page.getByText(/Joue|Plateau|Changer|Go du jour/)).toHaveCount(0);
-    await expect(page.getByRole('button', { name: 'Play a friend on this phone' })).toContainText('Two players');
+    await expect(page.getByRole('button', { name: 'Two players on this phone' })).toContainText('Two players');
     // #589 : la partie guidée est dans Apprendre (Learn), plus sur l'accueil.
     await expect(page.getByRole('button', { name: /^Guided game/ })).toHaveCount(0);
     await sansDebordement(page);
@@ -106,7 +106,7 @@ for (const largeur of [390, 320]) {
     await expect(feuille.getByRole('heading', { name: 'Board size' })).toBeVisible();
     await expect(feuille.getByText('Short games, perfect for learning.')).toBeVisible();
     // #429 : les modes sont sur l'accueil (tuiles), plus dans la feuille.
-    await expect(feuille.getByRole('button', { name: 'Play a friend on this phone' })).toHaveCount(0);
+    await expect(feuille.getByRole('button', { name: 'Two players on this phone' })).toHaveCount(0);
     await feuille.getByRole('button', { name: 'Close' }).click();
 
     // Problèmes : Go du jour, paliers, grille.

@@ -24,7 +24,8 @@ export function BarreNiveau() {
     <div className="niveau" data-testid="barre-niveau">
       <p className="niveau-texte">
         <b>{t('niveau.barre', { niveau })}</b>
-        <span>{t('niveau.xp', { dans, besoin })}</span>
+        {/* #647 (P1) : pas de « 0 / 100 XP » tant que le joueur n'a gagné aucun XP ; le compte arrive avec le premier. */}
+        {xp > 0 && <span>{t('niveau.xp', { dans, besoin })}</span>}
       </p>
       <div className="niveau-piste" role="progressbar" aria-label={t('niveau.aria', { niveau })} aria-valuemin={0} aria-valuemax={besoin} aria-valuenow={dans}
         aria-valuetext={t('niveau.valeur', { dans, besoin, suivant: niveau + 1 })}

@@ -231,8 +231,19 @@ export function Profil({ vue, onVue, settings, set, profil, serie, record = 0, p
     return <SousVue id="amis-titre" titre={t('amis.titre')} onRetour={retour}><Amis db={amis.db} onDefi={amis.onDefi} onProfil={ouvrirJoueur('amis', 'amis')} onProfilDemande={ouvrirJoueur('demande', 'amis')} /></SousVue>;
   }
   // #417 : ta cote de jeu (parties classées entre humains), sa courbe de 30 jours et le point de départ.
-  if (vue === 'cote' && amis?.compte && userId) {
-    return <SousVue id="cote-titre" titre={tc('cote.titre')} onRetour={retour}><CarteCote db={amis.db} userId={userId} onChange={onProfilChange} /></SousVue>;
+  // #647 (F4) : le niveau de départ (placement, #283) y vit aussi : une seule maison, avec ou sans compte.
+  if (vue === 'cote' && ((amis?.compte && userId) || onPlacement)) {
+    return (
+      <SousVue id="cote-titre" titre={tc('cote.titre')} onRetour={retour}>
+        {amis?.compte && userId && <CarteCote db={amis.db} userId={userId} onChange={onProfilChange} />}
+        {onPlacement && (
+          <div className="lignes cote-niveau-depart">
+            <LigneLien icone={<IconeReglage id="placement" />} libelle={t('placement.profilFaire')} onClick={onPlacement}
+              valeur={placement?.fait && placement.kyu !== null ? t('placement.profilValeur', { kyu: placement.kyu, date: dateCourte(placement.date) }) : undefined} />
+          </div>
+        )}
+      </SousVue>
+    );
   }
   // #369 : tes objectifs de la semaine et ce que tu as fait depuis lundi (avec un compte : tes amis battus, ta cote).
   if (vue === 'semaine') {
@@ -353,24 +364,21 @@ function Menu({ onVue, settings, profil, serie, record = 0, parcours, placement,
               onClick={() => (amis.compte ? onVue('amis') : amis.onCompte())} />
           </div>
         ) : <LigneLien icone={<IconeReglage id="parties" />} libelle={t('historique.titre')} valeur={valeurParties} onClick={() => onVue('parties')} />}
-        {/* #283 : le kyu estimé ne s'affiche qu'ici, sur une ligne, avec sa date ; la ligne relance le placement.
-            #417 : avec un compte complet, « Ta cote » partage cette ligne (deux moitiés) : le Profil tient toujours sans défiler. */}
-        {amis?.compte && profil && onPlacement ? (
-          <div className="ligne ligne-double">
-            <DemiLigne icone="cote" libelle={tc('cote.ligne')} testId="ligne-cote"
-              valeur={!profil.parties && !profil.depart ? tc('cote.ligneDepart') : `${grade(profil.cote)} · ${texteCote(profil.cote, profil.provisoire ?? true)}`}
-              onClick={() => onVue('cote')} />
-            {/* #561 : avec un titre le mois dernier, il prend la place du placement (10 parties classées au moins : le
-                placement n'a plus d'objet) ; le Profil tient toujours sans défiler. Le toucher ouvre « Ta cote ». */}
-            {titre ? <DemiLigneTitre titre={titre} onClick={() => onVue('cote')} /> : (
-              <DemiLigne icone="placement" libelle={placement?.fait && placement.kyu !== null ? t('placement.profil') : tc('cote.lignePlacement')}
-                valeur={placement?.fait && placement.kyu !== null ? t('placement.profilValeur', { kyu: placement.kyu, date: dateCourte(placement.date) }) : undefined}
-                onClick={onPlacement} />
-            )}
-          </div>
-        ) : onPlacement && (placement?.fait && placement.kyu !== null
-          ? <LigneLien icone={<IconeReglage id="placement" />} libelle={t('placement.profil')} valeur={t('placement.profilValeur', { kyu: placement.kyu, date: dateCourte(placement.date) })} onClick={onPlacement} />
-          : <LigneLien icone={<IconeReglage id="placement" />} libelle={t(placement?.fait ? 'placement.profilRefaire' : 'placement.profilFaire')} onClick={onPlacement} />)}
+        {/* #417 : « Ta cote » ; #647 (F4) : le niveau de départ (#283, placement) s'y est fondu : la ligne l'ouvre, et
+            « Ton niveau de départ » s'y refait. Sans compte, la ligne montre le kyu estimé et sa date. */}
+        {amis?.compte && profil ? (() => {
+          const valeur = !profil.parties && !profil.depart ? tc('cote.ligneDepart') : `${grade(profil.cote)} · ${texteCote(profil.cote, profil.provisoire ?? true)}`;
+          // #561 : avec un titre le mois dernier, il partage la ligne (deux moitiés) ; son toucher ouvre aussi « Ta cote ».
+          return titre ? (
+            <div className="ligne ligne-double">
+              <DemiLigne icone="cote" libelle={tc('cote.ligne')} testId="ligne-cote" valeur={valeur} onClick={() => onVue('cote')} />
+              <DemiLigneTitre titre={titre} onClick={() => onVue('cote')} />
+            </div>
+          ) : <LigneLien icone={<IconeReglage id="cote" />} libelle={tc('cote.ligne')} valeur={valeur} testId="ligne-cote" onClick={() => onVue('cote')} />;
+        })() : onPlacement && (
+          <LigneLien icone={<IconeReglage id="cote" />} libelle={tc('cote.ligne')} testId="ligne-cote" onClick={() => onVue('cote')}
+            valeur={placement?.fait && placement.kyu !== null ? t('placement.profilValeur', { kyu: placement.kyu, date: dateCourte(placement.date) }) : undefined} />
+        )}
         {/* #368 : « Statistiques » ; #369 : « Ta semaine » : les deux lectures de ta progression partagent une ligne (deux
             moitiés) ; « Réglages » rejoint « Mon compte » plus bas : le Profil tient toujours sans défiler en 390 × 844.
             #372 : « Étudier une position » est dans « Mes parties », à côté de « Analyser une partie jouée ailleurs ». */}

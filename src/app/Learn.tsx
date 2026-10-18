@@ -189,8 +189,9 @@ function SuiteBases({ decouverte, onGuidee, onRegles }: { decouverte?: { etat: E
         </button>
         {deplie && (
           <div id="jouer-avec-mochi" className="avec-mochi" role="group" aria-label={t('apprendre.avecMochi')}>
-            {decouverte && <CarteDecouverte {...decouverte} />}
-            {onGuidee && <CarteGuidee ouvrir={onGuidee} />}
+            {/* #647 (A6) : la partie lancée d'ici revient sur ce groupe déplié, même s'il s'était ouvert seul. */}
+            {decouverte && <CarteDecouverte etat={decouverte.etat} ouvrir={() => { mochiDeplie = true; decouverte.ouvrir(); }} />}
+            {onGuidee && <CarteGuidee ouvrir={() => { mochiDeplie = true; onGuidee(); }} />}
           </div>
         )}
       </>}
