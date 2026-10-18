@@ -142,7 +142,11 @@ test('5. profil d’un ami depuis la carte de la semaine : Jouer reste allumé, 
   const serveur = fauxServeur();
   const session = amies(serveur);
   serveur.games.push({ id: '44444444-4444-4444-8444-000000000001', black_id: ALICE, white_id: CHLOE, status: 'finished', result: 'B+R', rated: true, bot_id: null, size: 9, moves: '' });
-  const lundi = (() => { const d = new Date(); d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7) - 7); return d.toISOString().slice(0, 10); })();
+  // Lundi de la semaine passée, heure de Paris comme l'app (src/app/semaine.ts) : en UTC, le dimanche soir tombait sur la mauvaise semaine.
+  const lundi = (() => {
+    const jour = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Paris', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+    const d = new Date(`${jour}T00:00:00Z`); d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7) - 7); return d.toISOString().slice(0, 10);
+  })();
   const semaine = { courante: { lundi, compte: { parties: 4, problemes: 7, erreurs: 0, goDuJour: 3, lecons: 0 }, cibles: { parties: 3, problemes: 5, erreurs: 2 }, atteints: ['parties'] }, precedente: null, bilanVu: null };
   const { ctx, page, erreurs } = await telephone(browser, baseURL, { serveur, session, stockage: { 'go.semaine.v1': JSON.stringify(semaine) } });
   await page.goto('/');
