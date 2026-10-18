@@ -134,7 +134,7 @@ for (const largeur of [390, 320]) {
 
     // Le meilleur score s'affiche sur la carte, sans aucun total de problèmes.
     await page.getByRole('button', { name: 'Quitter la course' }).click();
-    await expect(page.locator('[data-course]')).toContainText('Ton meilleur');
+    await expect(page.getByTestId('entree-course')).toHaveAccessibleName(/Ton meilleur/);
     await expect(page.getByText(/\d+\s\/\s\d+/)).toHaveCount(0);
   });
 }

@@ -1,4 +1,5 @@
 import { expect, test, type Browser, type Page } from '@playwright/test';
+import { ouvrirTous } from './problemes';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { brancher, CODE, fauxServeur, type FauxServeur } from './fauxSupabase';
@@ -255,7 +256,7 @@ for (const cfg of CONFIGS) {
 
     // 7. Un problème (compte complet : plus de limite).
     await nav(page, T.problemes).click();
-    await page.getByRole('button', { name: T.tous }).click();
+    await ouvrirTous(page);
     await page.getByRole('button', { name: T.probleme }).first().click();
     await expect(plateau(page)).toBeVisible();
     await voir(page, '17-probleme');

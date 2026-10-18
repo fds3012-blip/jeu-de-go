@@ -87,7 +87,7 @@ test('maîtrise par thème : la barre se remplit, « Thème suivant » à la ma�
   const carte = page.locator('.theme-carte[data-theme="capturer"]');
   await expect(carte.locator('.theme-maitrise')).toHaveAttribute('aria-label', /^5 problèmes réussis sur 6/);
   await expect(page.locator('.theme-carte[data-theme="sauver"] .theme-maitrise')).toHaveAttribute('aria-label', /^0 problème réussi sur 6/);
-  await expect(page.locator('.problemes .cta')).toHaveCount(1);
+  await expect(page.locator('.problemes .cta')).toHaveCount(0); // #653 : le détail « Par thème » n'a pas de relief
 
   await carte.click();
   const id = (await page.locator('.lecteur').getAttribute('data-probleme'))!;

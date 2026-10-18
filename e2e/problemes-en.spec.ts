@@ -35,7 +35,7 @@ for (const largeur of [390, 320]) test(`?lang=en : Go du jour et problème de la
   // Un problème de la liste : a01, le premier du palier Débutant. Erreur (réfutation), puis réussite (explication).
   await page.goto('/?lang=en');
   await page.getByRole('navigation').getByRole('button', { name: 'Puzzles' }).click();
-  await page.getByRole('button', { name: 'All puzzles' }).click();
+  await ouvrirTous(page);
   await page.getByRole('group', { name: 'Beginner' }).locator('[data-probleme="a01"]').click();
   await expect(page.getByRole('heading', { name: PROBLEMES_EN.a01.title })).toBeVisible();
   await expect(page.getByText(PROBLEMES_EN.a01.prompt)).toBeVisible();

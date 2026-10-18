@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { ouvrirTous } from './problemes';
 import { jouer, ouvrirLancementOrdi } from './plateau';
 
 // Issue #167 : `?lang=en` traduit la barre du bas et le Profil, sans débordement à 390 et 320 px.
@@ -124,7 +125,7 @@ for (const largeur of [390, 320]) {
     await page.screenshot({ path: `docs/localisation/captures/problemes-en-${largeur}.png` });
 
     // « All puzzles » (#196) : la grille, et le prochain palier fermé en une ligne.
-    await page.getByRole('button', { name: 'All puzzles' }).click();
+    await ouvrirTous(page);
     await expect(page.getByText('From easiest to hardest. A stone is in atari when it has only one liberty left.')).toBeVisible();
     const debutant = page.getByRole('group', { name: 'Beginner' });
     await expect(debutant.getByText('30 to 25 kyu')).toBeVisible();
@@ -327,17 +328,15 @@ for (const largeur of [390, 320]) {
     await sansCoupeComposants(page, largeur);
     await page.screenshot({ path: `docs/localisation/captures/profil-complet-en-${largeur}.png` });
 
-    // Mes erreurs, dans les Problèmes.
+    // #653 : « Replay your mistakes », entrée du sommaire de Problèmes, qui ouvre la séance.
     await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: 'Puzzles' }).click();
-    await expect(page.getByRole('heading', { name: /^Your mistakes to replay/ })).toBeVisible();
-    await expect(page.getByText('Positions from your games. Find the move KataGo suggested.')).toBeVisible();
-    const erreur = page.getByRole('button', { name: 'Replay: Your game against Pomme, move 14' });
-    await expect(erreur).toContainText('Black to play');
-    await expect(page.getByText(/Tes erreurs|Ta partie|Noir joue/)).toHaveCount(0);
+    const entree = page.getByTestId('entree-erreurs');
+    await expect(entree).toHaveAccessibleName('Replay your mistakes, 1 to replay');
     await sansDebordement(page);
-    await sansCoupeComposants(page, largeur);
-    await erreur.click();
+    await entree.click();
+    await expect(page.getByRole('heading', { name: 'Your game against Pomme, move 14' })).toBeVisible();
     await expect(page.getByText('Find a better move than yours: only KataGo’s move counts.')).toBeVisible();
+    await expect(page.getByText(/Tes erreurs|Ta partie|Noir joue/)).toHaveCount(0);
   });
 }
 

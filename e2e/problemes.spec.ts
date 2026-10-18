@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { ouvrirTous } from './problemes';
+import { ouvrirTous, versProblemeSuivant } from './problemes';
 import { marquerGoDuJourFait } from './goDuJourFait';
 import { attendrePierre, jouer, plateau } from './plateau';
 
@@ -102,6 +102,7 @@ test('paliers : Novice verrouillé, puis ouvert après les réussites', async ({
   await page.evaluate(v => localStorage.setItem('go.problemes.v1', JSON.stringify(v)), avant);
   await page.reload();
   await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
+  await versProblemeSuivant(page);
   await expect(page.getByRole('button', { name: /^Problème suivant / })).toBeVisible();
   await ouvrirTous(page);
 

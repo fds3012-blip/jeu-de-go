@@ -1,4 +1,5 @@
 import { expect, test, type Browser, type Page } from '@playwright/test';
+import { versProblemeSuivant } from './problemes';
 import { brancher, fauxServeur, JETON, PARTIE, type FauxServeur } from './fauxSupabase';
 import { abandonner, attendrePierre, barreActions, ouvrirPlus, plateau } from './plateau';
 
@@ -110,6 +111,7 @@ for (const largeur of [390, 320] as const) {
       await page.emulateMedia({ colorScheme: sombre ? 'dark' : 'light', reducedMotion: 'reduce' });
       await page.goto('/');
       await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
+      await versProblemeSuivant(page);
       const bouton = page.locator('button.continuer');
       await expect(bouton).toBeVisible();
       const titre = bouton.locator('.continuer-titre');

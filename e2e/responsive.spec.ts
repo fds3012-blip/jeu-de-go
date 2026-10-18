@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { versProblemeSuivant } from './problemes';
 import { plateau } from './plateau';
 
 // #619 (lot V0) : garde-fou responsive (docs/ux/visuel-responsive-2026-10.md, principes P5, P6 et P8 de DESIGN.md).
@@ -56,6 +57,7 @@ const ECRANS: Ecran[] = [
   { nom: 'Problème', activite: true, ouvrir: async (page) => {
     await page.goto('/');
     await onglet(page, 'Problèmes');
+    await versProblemeSuivant(page);
     await page.getByRole('button', { name: /^Problème suivant / }).click();
     await expect(plateau(page).first()).toBeVisible();
   } },
