@@ -9,7 +9,8 @@
 // SEUILS. Sans fait sûr, l'explication le dit (`positionnel`) et n'invente rien.
 //
 // Faits gérés (voir docs/produit/analyse-expliquee-2026-10.md) :
-// - pierresPerdues : dans ta suite, l'adversaire prend des pierres à toi (atari ignoré, coup qui se met en atari, ou
+// - pierresPerdues : dans ta suite, l'adversaire prend des pierres à toi (atari ignoré : une liberté avant et après ton
+//   coup ; coup qui se met en atari ; ou
 //   prise plus loin dans la suite) ; avec le bon coup, elles ne sont pas prises et restent à toi ;
 // - priseManquee   : dans la suite du bon coup, tu prends des pierres adverses ; dans ta suite, elles restent à lui ;
 // - groupe         : un groupe à toi, vivant après le bon coup, est mort (ou n'est plus sûr de vivre) après ton coup ;
@@ -46,7 +47,7 @@ export const SEUILS = {
   zonePart: 0.5,
   zonePartPrecise: 0.7,
   zoneMarge: 2,
-  /** Sans raison sûre, au-delà de cette perte on ne dit plus « surtout positionnelle » (sauf calme vérifié). */
+  /** Sans raison sûre, au-delà de cette perte on renvoie aux deux suites sans chiffrer la comparaison (sauf calme vérifié). */
   positionnelMax: 5,
   /** Gain d'une intersection à partir duquel elle est marquée d'un carré sur le plateau. */
   carre: 0.25,
@@ -115,7 +116,7 @@ export interface Explication {
   riposte: number | null;
   /** Une ou deux raisons, la plus forte d'abord. Vide : aucune raison sûre. */
   faits: Fait[];
-  /** Aucune raison sûre : on dit seulement que la raison est surtout positionnelle. */
+  /** Aucune raison sûre : on dit seulement que KataGo préfère le bon coup, et de combien. */
   positionnel: boolean;
   /**
    * Vérifié : aucune pierre n'est prise dans les deux suites, et aucune pierre ne change de camp selon la propriété
@@ -368,7 +369,10 @@ export function expliquerErreur(e: Entree): Explication | null {
     if (ownJoue ? moyenne(x.pierres.map(j)) > -SEUILS.confirme : x.etape !== 1) continue;
     // Avec le bon coup, ces pierres restent à toi (propriété), quand elles étaient déjà là.
     if (anciennes.length && ownBon && moyenne(anciennes.map(b)) < SEUILS.confirme) continue;
+    // Atari ignoré : une seule liberté avant ton coup ET encore une seule après (ton coup ne les touche pas, et ne prend
+    // pas une pierre voisine qui leur redonnerait des libertés).
     const enAtari = anciennes.length === x.pierres.length && anciennes.every(p => groupAt(avant.board, size, p).liberties.size === 1)
+      && x.pierres.every(p => pj.board[p] === c && groupAt(pj.board, size, p).liberties.size === 1)
       && (joue < 0 || !x.pierres.some(p => groupAt(pj.board, size, p).stones.includes(joue)));
     const auto = joue >= 0 && x.pierres.includes(joue) && groupAt(pj.board, size, joue).liberties.size === 1;
     const cause = enAtari ? 'atari' : auto ? 'autoAtari' : 'suite';

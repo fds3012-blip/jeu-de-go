@@ -254,8 +254,10 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
     return () => { vivant = false; };
   }, [aConseiller, positions, komi]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // #673 : atari, sente, gote et couper ne sont expliqués qu'à leur première apparition dans la revue.
-  const gloses = useMemo(() => glosesDesErreurs(new Map(Object.entries(explications).filter((e): e is [string, Explication] => !!e[1]).map(([k, v]) => [Number(k), v]))), [explications]);
+  // #673 : atari, sente, gote et couper ne sont expliqués qu'à leur première apparition dans une explication ouverte
+  // (« Pourquoi ? ») : une explication jamais lue ne consomme pas la glose.
+  const [ouverts, setOuverts] = useState<ReadonlySet<number>>(() => new Set());
+  const gloses = useMemo(() => glosesDesErreurs(new Map([...ouverts].map(k => [k, explications[k]] as const).filter((e): e is readonly [number, Explication] => !!e[1]))), [explications, ouverts]);
 
   // Clavier, pendant le parcours : flèches gauche et droite (#673 : dans la suite de « Pourquoi ? » quand elle est ouverte).
   useEffect(() => {
@@ -592,7 +594,10 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
           {/* #673 : « Pourquoi ? » : l'explication se déplie dans la bulle ; « Fermer » la replie. */}
           {xpl && (
             <button type="button" className="lien revue-voir pourquoi-lien" aria-expanded={!!ouvert} aria-label={ouvert ? undefined : ta('pourquoi.aria', { bon: bonLabel })}
-              onClick={() => setPourquoi(ouvert ? null : { coup: i, ligne: 'joue', etape: 0 })}>{ta(ouvert ? 'fermer' : 'pourquoi')}</button>
+              onClick={() => {
+                if (!ouvert) { const c = note!.coup; setOuverts(s => (s.has(c) ? s : new Set(s).add(c))); }
+                setPourquoi(ouvert ? null : { coup: i, ligne: 'joue', etape: 0 });
+              }}>{ta(ouvert ? 'fermer' : 'pourquoi')}</button>
           )}
           {/* #503 : « Voir le bon coup » sous la phrase de Mochi qui invite à chercher, plus sous la bande des coups. */}
           {aTrouver && peutRejouer && (

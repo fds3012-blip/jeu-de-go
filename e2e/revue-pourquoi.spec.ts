@@ -101,7 +101,7 @@ for (const theme of ['dark', 'light'] as const) {
     // Le bon coup : sa suite, et ce qu'il garde. Clavier : flèche gauche sans effet à l'étape 1.
     await pq.getByRole('button', { name: 'Le bon coup' }).click();
     await expect(pq.getByRole('heading', { name: 'Pourquoi D4 est meilleur' })).toBeVisible();
-    await expect(pq).toContainText('Avec D4, ces 2 pierres ne sont pas prises.');
+    await expect(pq).toContainText('Avec D4, tes 2 pierres en D6 ne sont pas prises.');
     await expect(page.getByText('Coup 1 sur 2 de la suite')).toBeVisible();
     await expect(plateau(page).locator('g[data-point="D4"][data-pierre="noir"]')).toHaveCount(1);
     await page.keyboard.press('ArrowRight');

@@ -27,8 +27,18 @@ describe('les phrases', () => {
   it('atari ignoré : le fait, la glose d’atari à la première apparition, et ce que fait le bon coup', () => {
     expect(textesExplication(atari(), N, { adv: 'Pomme' })).toEqual({
       erreur: 'Tes 2 pierres en E5 étaient en atari (il ne leur restait qu’une liberté) et tu n’as pas répondu : Pomme les prend en E3.',
-      meilleur: 'Avec E3, ces 2 pierres ne sont pas prises.',
+      meilleur: 'Avec E3, tes 2 pierres en E5 ne sont pas prises.',
       termes: ['atari'],
+    });
+  });
+
+  it('auto-atari : le bon coup ne parle que des pierres déjà là (ta pierre jouée n’existe pas avec lui)', () => {
+    // Noir E2 (libertés D2, E1) ; Blanc C2, D3, E3, F2, D1. Noir D2 : la chaîne D2-E2 n'a plus que E1. Blanc prend en E1.
+    const x = ex({ avant: position(['E2'], ['C2', 'D3', 'E3', 'F2', 'D1']), joue: 'D2', bon: 'E1', perte: 4, pvBon: [L('E1')], pvRiposte: [L('E1')],
+      ownBon: propriete({ E2: 0.9 }), ownJoue: propriete({ D2: -0.9, E2: -0.9 }) });
+    expect(textesExplication(x, N, { adv: 'Blanc' })).toMatchObject({
+      erreur: 'Ton coup met tes 2 pierres en atari (une seule liberté) : Blanc les prend en E1.',
+      meilleur: 'Avec E1, ta pierre en E2 n’est pas prise.',
     });
   });
 
@@ -41,7 +51,7 @@ describe('les phrases', () => {
     choisirLangue('en');
     expect(textesExplication(atari(), N, { adv: 'White' })).toMatchObject({
       erreur: 'Your 2 stones at E5 were in atari (they had only one liberty left) and you didn’t answer: White captures them at E3.',
-      meilleur: 'With E3, these 2 stones aren’t captured.',
+      meilleur: 'With E3, your 2 stones at E5 aren’t captured.',
     });
   });
 
@@ -60,7 +70,7 @@ describe('les phrases', () => {
     // 8 × 0,8 = 6,4 points dans le coin, perte de 5,5 : « environ 6 points » (5,5 arrondi), jamais 6,4.
     expect(textesExplication(x, N, { adv: 'Blanc' })).toMatchObject({
       erreur: 'Tu perds environ 6 points dans le coin en bas à gauche.',
-      meilleur: 'Avec D2, tu gagnes environ 6 points dans le coin en bas à gauche.',
+      meilleur: 'Avec D2, tu as environ 6 points de plus dans le coin en bas à gauche.',
     });
   });
 
@@ -68,18 +78,18 @@ describe('les phrases', () => {
     const avant = position(['C3'], ['G7']);
     const calme = ex({ avant, joue: 'E5', bon: 'D4', perte: 2.4, pvRiposte: [L('C7')], ownBon: propriete({}, 0.1), ownJoue: propriete({}, 0.05) });
     expect(textesExplication(calme, N, { adv: 'Blanc' })).toEqual({
-      erreur: 'Blanc répond en C7. KataGo préfère D4, d’environ 2 points. Rien n’est pris et aucun groupe ne change de sort : la raison est surtout positionnelle.',
+      erreur: 'Blanc répond en C7. KataGo préfère D4, d’environ 2 points. Rien n’est pris et aucun groupe ne change de sort : c’est une question de placement.',
       meilleur: 'KataGo préfère D4 : environ 2 points de plus que ton coup.',
       termes: [],
     });
     const sansPropriete = ex({ avant, joue: 'E5', bon: 'D4', perte: 2.4 });
-    expect(textesExplication(sansPropriete, N, { adv: 'Blanc' }).erreur).toBe('KataGo préfère D4, d’environ 2 points ; la raison est surtout positionnelle.');
+    expect(textesExplication(sansPropriete, N, { adv: 'Blanc' }).erreur).toBe('KataGo préfère D4, d’environ 2 points. Compare les deux suites pour voir la différence.');
   });
 
   it('point commun : l’adversaire répond au point que KataGo conseillait', () => {
     const x = ex({ avant: position(['C3'], ['G7']), joue: 'E5', bon: 'D4', perte: 3.2, pvRiposte: [L('D4')] });
     expect(textesExplication(x, N, { adv: 'Blanc' })).toMatchObject({
-      erreur: 'Blanc répond en D4 : c’est justement le coup que KataGo préférait pour toi, d’environ 3 points.',
+      erreur: 'Blanc répond en D4 : c’est justement le coup que KataGo te conseillait (environ 3 points de mieux).',
       meilleur: 'D4 est un point clé pour les deux camps : Blanc l’a pris juste après ton coup.',
     });
   });
@@ -96,7 +106,7 @@ describe('les phrases', () => {
   it('coupe : la glose de « couper », puis la parade', () => {
     const x = ex({ avant: position(['D4', 'E5'], ['D5']), joue: 'H8', bon: 'E4', perte: 4, pvBon: [L('E4')], pvRiposte: [L('E4')], ownBon: propriete({ D4: 0.7, E5: 0.7 }), ownJoue: propriete({ D4: 0.1, E5: 0.1 }) });
     expect(textesExplication(x, N, { adv: 'Blanc' })).toMatchObject({
-      erreur: 'Blanc répond en E4 et coupe tes pierres (couper, c’est séparer des pierres) : elles sont séparées.',
+      erreur: 'Blanc répond en E4 et coupe tes pierres (couper : séparer des pierres pour qu’elles ne puissent plus se relier).',
       meilleur: 'E4 prend le point de coupe : tes pierres restent ensemble.',
     });
   });
@@ -105,12 +115,12 @@ describe('les phrases', () => {
     // Noir D4 et E5, Blanc D5. Avec F4, une coupe blanche en E4 n'aurait qu'une liberté (E3).
     const x = ex({ avant: position(['D4', 'E5'], ['D5']), joue: 'H8', bon: 'F4', perte: 4, pvBon: [L('F4')], pvRiposte: [L('E4')], ownBon: propriete({ D4: 0.7, E5: 0.7 }), ownJoue: propriete({ D4: 0.1, E5: 0.1 }) });
     expect(textesExplication(x, N, { adv: 'Blanc' })).toEqual({
-      erreur: 'Blanc répond en E4 et coupe tes pierres (couper, c’est séparer des pierres) : elles sont séparées.',
-      meilleur: 'Après F4, si Blanc coupe en E4, il se met en atari (une seule liberté).',
+      erreur: 'Blanc répond en E4 et coupe tes pierres (couper : séparer des pierres pour qu’elles ne puissent plus se relier).',
+      meilleur: 'Après F4, si Blanc coupe en E4, sa pierre est en atari (une seule liberté).',
       termes: ['couper', 'atari'],
     });
     choisirLangue('en');
-    expect(textesExplication(x, N, { adv: 'White', gloses: new Set() }).meilleur).toBe('After F4, if White cuts at E4, they put themselves in atari.');
+    expect(textesExplication(x, N, { adv: 'White', gloses: new Set() }).meilleur).toBe('After F4, if White cuts at E4, their stone is in atari.');
   });
 
   it('légende de la suite : une suite d’un seul coup ne promet pas de réponse de KataGo', () => {

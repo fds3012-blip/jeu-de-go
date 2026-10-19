@@ -57,7 +57,8 @@ function phraseErreur(f: Fait, x: Explication, size: number, adv: string, g: (t:
       if (f.cause === 'atari') return ta('erreur.manquee.atari', { ...v, glose: g('atari') ? ta(f.pierres.length === 1 ? 'glose.atari.one' : 'glose.atari.other') : '' });
       return ta(f.cause === 'immediate' ? 'erreur.manquee.immediate' : 'erreur.manquee.suite', v);
     }
-    case 'groupe': return ta(f.etat === 'mort' ? 'erreur.groupe.mort' : 'erreur.groupe.faible', { n: f.pierres.length, lieu: L(f.pierres[0]) });
+    // Sans nombre de pierres : le groupe est compté avant ton coup, qui peut s'y ajouter.
+    case 'groupe': return ta(f.etat === 'mort' ? 'erreur.groupe.mort' : 'erreur.groupe.faible', { lieu: L(f.pierres[0]) });
     case 'groupeTue': return ta(f.apresJoue === 'vit' ? 'erreur.groupeTue.vit' : 'erreur.groupeTue.incertain', { n: f.pierres.length, lieu: L(f.pierres[0]) });
     case 'coupe': return ta('erreur.coupe', { adv, point: L(f.point), glose: g('couper') ? ta('glose.couper') : '' });
     case 'territoire': return ta('erreur.territoire', { pts: ptsZone(f.gain, x.perte), zone: ta(`zone.${f.lieu}`) });
@@ -71,7 +72,8 @@ function phraseBon(f: Fait, x: Explication, size: number, adv: string, g: (t: Te
   switch (f.type) {
     case 'pierresPerdues': {
       const anciennes = f.pierres.filter(p => p !== x.joue);
-      return anciennes.length ? ta('bon.perdues', { bon, n: anciennes.length }) : null;
+      // Seules les pierres déjà là avant ton coup : avec le bon coup, ta pierre jouée n'existe pas.
+      return anciennes.length ? ta('bon.perdues', { bon, n: anciennes.length, lieu: L(anciennes[0]) }) : null;
     }
     case 'priseManquee':
       return f.etape === 0
@@ -89,8 +91,8 @@ function phraseBon(f: Fait, x: Explication, size: number, adv: string, g: (t: Te
 }
 
 /**
- * Les deux textes d'une explication. Sans raison sûre : on dit seulement que KataGo préfère le bon coup et de combien,
- * et que la raison est surtout positionnelle (« rien n'est pris… » seulement quand c'est vérifié).
+ * Les deux textes d'une explication. Sans raison sûre : on dit seulement que KataGo préfère le bon coup et de combien
+ * (« rien n'est pris…, c'est une question de placement » seulement quand c'est vérifié).
  */
 export function textesExplication(x: Explication, size: number, o: OptionsTextes): TextesExplication {
   const gloses = o.gloses ?? TOUS, dites = new Set<Terme>();
@@ -104,7 +106,7 @@ export function textesExplication(x: Explication, size: number, o: OptionsTextes
   if (x.positionnel) {
     const debut = x.riposte != null ? `${ta('erreur.riposte', { adv: o.adv, point: toLabel(x.riposte, size) })} ` : '';
     return {
-      // Au-delà de SEUILS.positionnelMax, sans calme vérifié, on ne prétend même pas que la raison est positionnelle.
+      // Au-delà de SEUILS.positionnelMax, sans calme vérifié : « je ne trouve pas de raison simple et sûre ».
       erreur: debut + ta(x.calme ? 'erreur.positionnelCalme' : x.perte < SEUILS.positionnelMax ? 'erreur.positionnel' : 'erreur.inexplique', { bon, pts: pts(x.perte) }),
       meilleur: ta('bon.general', { bon, pts: pts(x.perte) }),
       termes,
@@ -118,7 +120,8 @@ export function textesExplication(x: Explication, size: number, o: OptionsTextes
 
 /**
  * Mots à expliquer pour chaque erreur, dans l'ordre de la partie : un mot n'est expliqué qu'à sa première apparition.
- * `explications` : numéro du coup → explication.
+ * `explications` : numéro du coup → explication. La revue n'y met que les explications ouvertes (« Pourquoi ? ») :
+ * une explication jamais lue ne consomme pas la glose.
  */
 export function glosesDesErreurs(explications: ReadonlyMap<number, Explication>): Map<number, Set<Terme>> {
   const vus = new Set<Terme>(), out = new Map<number, Set<Terme>>();

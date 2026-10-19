@@ -75,6 +75,21 @@ describe('atari ignoré : Blanc prend tes pierres', () => {
   });
 });
 
+describe('ton coup prend une pierre voisine : ce n’est pas un atari ignoré', () => {
+  // Noir D5-E5-E4, une seule liberté (E3). Blanc D4 seul, en atari (liberté D3). Noir D3 prend D4 : sa chaîne regagne
+  // la liberté D4 (2 libertés : E3, D4). Blanc E3, Noir ailleurs, Blanc D4 prend les 3 pierres au coup 4 de la suite.
+  const avant = position(['D5', 'E5', 'E4', 'C4'], ['C5', 'D6', 'E6', 'F5', 'F4', 'D4']);
+  it('la prise est dite « dans la suite », jamais « tu n’as pas répondu à l’atari »', () => {
+    const x = expliquerErreur(entree({ avant, joue: 'D3', bon: 'E3', pvBon: [L('E3')], pvRiposte: [L('E3'), L('A9'), L('D4')],
+      ownBon: propriete({ D5: 0.9, E5: 0.9, E4: 0.9 }), ownJoue: propriete({ D5: -0.9, E5: -0.9, E4: -0.9 }) }))!;
+    // Les règles d'abord : D3 prend bien D4, et la chaîne noire a deux libertés après ton coup.
+    expect(x.suiteJoue.positions[0].board[L('D4')]).toBe(0);
+    expect(x.faits[0]).toMatchObject({ type: 'pierresPerdues', cause: 'suite', point: L('D4'), etape: 3 });
+    expect(Ls(x.faits[0].visuel.pierres)).toEqual(['D5', 'E5', 'E4']);
+    expect(x.faits.some(f => f.type === 'pierresPerdues' && f.cause === 'atari')).toBe(false);
+  });
+});
+
 describe('coup qui se met en atari', () => {
   // Blanc D2, F2, E3 : Noir joue E2, qui n'a plus qu'une liberté (E1). Blanc prend en E1.
   const avant = position([], ['D2', 'F2', 'E3']);

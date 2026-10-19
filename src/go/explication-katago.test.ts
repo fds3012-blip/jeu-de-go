@@ -1,7 +1,7 @@
 // #673 : le générateur d'explications face au vrai KataGo (réseau g170-b6c96), sans le réseau : les analyses sont
 // figées dans explications-katago.json par outils/explicationsKataGo.ts (mêmes réglages que `analyseErreur`).
 // 1. Positions dont la bonne raison est connue (explications-cas.ts) : la raison attendue sort en premier, aucune
-//    raison interdite n'apparaît ; la position ambiguë ne reçoit que « surtout positionnelle ».
+//    raison interdite n'apparaît ; la position ambiguë ne reçoit que « KataGo préfère … » (sans raison inventée).
 // 2. Deux vraies parties de Florian : des raisons vérifiées à la main sur le plateau (docs/produit/analyse-expliquee-2026-10.md),
 //    puis, pour chaque erreur, chaque fait est rejoué avec les règles (une prise annoncée est une prise jouée), et
 //    les phrases sont figées (instantané relu par écrit).
