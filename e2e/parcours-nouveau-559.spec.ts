@@ -72,7 +72,7 @@ const T = {
   apprendre: /^(Apprendre|Learn)$/, problemes: /^(Problèmes|Puzzles)$/, profil: /^(Profil|Profile)$/, jouer: /^(Jouer|Play)$/,
   commencer: /^(Commencer|Start)$/, terminerLecon: /^(Terminer la leçon|Finish the lesson)$/, retourChemin: /^(Retour à Apprendre|Back to Learn)/,
   jamais: /^(Jamais joué|Never played)$/, unPeu: /^(Un peu|A little)$/, saisJouer: /^(Je sais jouer|I know how to play)$/,
-  saisDeja: /^(Je sais déjà jouer|I already know how to play)$/, jouerMochi: /^(Jouer avec Mochi|Play with Mochi)$/,
+  saisDeja: /^(Je sais déjà jouer|I already know how to play)$/, decouverteMochi: /^(Partie de découverte avec Mochi|Discovery game with Mochi)$/,
   voirIndice: /^(Voir un indice|Show a hint)$/, voirPourquoi: /^(Voir pourquoi|Show me why)$/, voirReponse: /^(Voir la réponse|Show the answer)$/,
   revoir: /^(Revoir la partie|Review the game)$/, demarrerBilan: /^(Démarrer le bilan|Start review)$/, rejouerErreurs: /^(Rejouer mes erreurs|Replay my mistakes)/,
   conditions: /^(Conditions et confidentialité|Terms and privacy)$/, mentions: /^(Mentions légales|Legal notice)$/, aide: /^(Aide|Help)$/,
@@ -128,7 +128,7 @@ for (const cfg of CONFIGS) {
       await action(page, T.terminer).click();
       await expect(page.getByTestId('fin-intro')).toBeVisible();
       await capturer(page, cfg, '02l-regles-fin', mesures);
-      await page.getByRole('button', { name: T.jouerMochi }).click();
+      await page.getByRole('button', { name: T.decouverteMochi }).click();
       await surMoment(page, SCENARIO[0].id);
       await capturer(page, cfg, '02m-decouverte-1', mesures);
       // En anglais, les aides (faireMoment : « Passer ») parlent français : la découverte s'arrête avant le moment « mort » (une passe).

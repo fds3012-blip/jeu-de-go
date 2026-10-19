@@ -2,7 +2,7 @@
 //
 // 8 écrans très courts, joués par le lecteur des leçons (src/app/Lecon.tsx, même moteur d'étapes, mêmes styles), puis
 // un écran de fin qui n'a qu'une action principale :
-// - version complète (« Jamais joué », « Revoir les règles ») : « Jouer avec Mochi », la partie de découverte ;
+// - version complète (« Jamais joué », « Revoir les règles ») : « Partie de découverte avec Mochi » (#677, A9) ;
 // - version express (« Un peu ») : chaque écran se passe d'un toucher « Je sais » ; à la fin, « Partie de découverte avec
 //   Mochi » (action principale) ou « Jouer contre Pomme » (lien).
 // Contenu et preuves : src/content/introRegles.ts, src/go/introRegles.test.ts.
