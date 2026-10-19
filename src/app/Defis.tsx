@@ -45,6 +45,9 @@ import { originePartage } from './partage';
 import '../ui/defis.css';
 // #563 : le reste des styles des défis, hors du CSS initial (avant direct.css, comme dans la feuille principale).
 import '../ui/defis-ecran.css';
+// #670 : en paysage et sur grand écran, la partie en deux zones (goban à gauche, panneau à droite).
+import '../ui/paysage.css';
+import '../ui/paysage-en-ligne.css';
 import { joursDuDelai } from '../data/lente';
 import { tl } from '../content/i18n/lente';
 import { useEchanges } from './echanges';

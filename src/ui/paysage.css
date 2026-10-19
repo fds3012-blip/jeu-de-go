@@ -3,8 +3,10 @@
  * Le goban à gauche, à la hauteur de l'écran ; le panneau à droite (titre, bandeaux, Mochi, actions). En portrait, rien
  * ne change. Même requête que Jouer (accueil.css, #648) : paysage, 600 px de large au moins.
  *
- * Les parties en ligne (défis, en direct : .defi-partie, autre panneau) gardent leur colonne : lot à part.
- * Chargée avec les écrans d'activité (Game, lecteurs de leçon et de problème, course), jamais dans la feuille initiale.
+ * Les parties en ligne (défis, parties lentes, en direct : .defi-partie) prennent le même gabarit (#670) ; leur panneau,
+ * rangé autrement, est dans paysage-en-ligne.css. Leur écran de chargement (.defi-partie-charge, sans goban) garde sa colonne.
+ * Chargée avec les écrans d'activité (Game, lecteurs de leçon et de problème, course, défis, en direct), jamais dans la
+ * feuille initiale.
  * Elle ne s'applique qu'à une activité affichée (.app-activite, .app-partie) dont l'écran visible a un goban :
  * la fin de leçon, l'attente et le bilan de la revue, les écrans de fin de séance gardent leur colonne.
  *
@@ -16,7 +18,7 @@
  * À 844 × 390 : goban de 374 px, panneau de 384 ; à 1024 × 768 : 648 et 320 ; à 1440 × 900 : 884 et 384.
  */
 @media (orientation: landscape) and (min-width: 600px) {
-  .app:is(.app-activite, .app-partie):has(> .calque:not([hidden]) :is(.partie:not(.defi-partie), .fin, .revue-parcours, .revue-rejeu, .lecteur-lecon, .lecteur > .lecteur-mochi, .course-en-cours)) {
+  .app:is(.app-activite, .app-partie):has(> .calque:not([hidden]) :is(.partie:not(.defi-partie-charge), .fin, .revue-parcours, .revue-rejeu, .lecteur-lecon, .lecteur > .lecteur-mochi, .course-en-cours)) {
     /* La colonne de 560 px des activités (app.css) devient toute la largeur : les deux zones s'y centrent. */
     max-width: none !important;
     padding: var(--space-2) var(--v6-droite) calc(var(--space-2) + env(safe-area-inset-bottom, 0px)) var(--v6-gauche);
@@ -35,7 +37,7 @@
 
   /* ---------- Gabarit commun : goban en colonne 1 sur toutes les rangées, le reste en colonne 2 ---------- */
   /* La dernière rangée est souple (1fr) : la hauteur du goban s'y loge, les rangées du panneau gardent leur hauteur. */
-  :is(.app-activite, .app-partie) :is(.partie:not(.defi-partie), .fin, .revue-parcours, .revue-rejeu, .lecteur-lecon, .lecteur:has(> .lecteur-mochi), .course-en-cours) {
+  :is(.app-activite, .app-partie) :is(.partie:not(.defi-partie-charge), .fin, .revue-parcours, .revue-rejeu, .lecteur-lecon, .lecteur:has(> .lecteur-mochi), .course-en-cours) {
     display: grid; grid-template-columns: var(--v6-goban) var(--v6-panneau); grid-auto-rows: auto; column-gap: var(--v6-gap);
     justify-content: center; align-content: start; align-items: start;
     /* Hauteur définie (celle du goban) : la rangée souple prend exactement ce que le panneau laisse. */
@@ -45,7 +47,7 @@
   }
   /* Filet de sécurité : si le panneau dépasse la hauteur (texte très long, zoom), la page défile et le goban reste
      entier à l'écran. */
-  :is(.app-activite, .app-partie) :is(.partie:not(.defi-partie) > .partie-plateau, .fin > .fin-fond, :is(.revue-parcours, .revue-rejeu) > .revue-plateau,
+  :is(.app-activite, .app-partie) :is(.partie:not(.defi-partie-charge) > .partie-plateau, .fin > .fin-fond, :is(.revue-parcours, .revue-rejeu) > .revue-plateau,
     .lecteur-lecon > .lecteur-plateau, .lecteur:has(> .lecteur-mochi) > .board-wrap, .course-en-cours > .course-plateau) { position: sticky; top: var(--space-2); }
 
   /* ---------- Partie (Game, défis, en direct) ---------- */
