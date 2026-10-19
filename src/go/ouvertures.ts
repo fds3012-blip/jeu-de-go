@@ -36,6 +36,16 @@ export interface Ouverture {
    * prouvée (src/go/ouvertures.test.ts : ils perdent plus que TOLERANCE_DEMO).
    */
   ecartes?: { coup: number; c: string }[];
+  /**
+   * #672 : autres bons coups à la place d'un coup de la séquence (« le chinois haut », « F2 au lieu de F3 »). Jugés et
+   * figés avec la séquence ; chacun perd au plus TOLERANCE_DEMO, comme un coup montré (src/go/ouvertures.test.ts). Une
+   * leçon les accepte en plus du coup de la séquence.
+   */
+  variantes?: { coup: number; c: string }[];
+  /** #672 : leçon du chemin qui enseigne cette ouverture (le lecteur propose de la faire). */
+  lecon?: string;
+  /** #672 : `false` : ligne prouvée pour une leçon seulement, absente de la liste du répertoire (doublon d'une entrée). */
+  repertoire?: false;
 }
 
 export interface CoupLu { couleur: Color; point: number }

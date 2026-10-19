@@ -92,6 +92,12 @@ Principes :
 | hane | hane | |
 | tobi (saut d'une case) | one-space jump | |
 | keima (saut du cavalier) | knight's move | |
+| tengen (point central) | center point (tengen) | #672. |
+| nirensei (deux étoiles alignées) | two-star opening (nirensei) | #672, leçon l50. |
+| sanrensei (trois étoiles alignées) | three-star opening (sanrensei) | #672, leçon l51. |
+| shin-fuseki (nouvelle ouverture) | new opening (shin-fuseki) | #672, leçon l52 : Go Seigen et Kitani, 1933. |
+| fuseki chinois | Chinese opening | #672, leçon l53. |
+| kosumi de Shusaku | Shusaku's diagonal move (kosumi) | #672, leçon l54. |
 
 ## Niveaux et classement
 

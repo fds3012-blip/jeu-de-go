@@ -95,14 +95,16 @@ describe('chapitres (#228)', () => {
   it('chaque leçon est dans un seul chapitre, dans l’ordre du chemin', () => {
     expect(CHAPITRES.flatMap(c => c.lecons)).toEqual(LESSONS);
   });
-  it('« Les bases » (l1 à l7) est complet ; les chapitres 2 à 6 (ouverture, capturer et sauver, vie et mort, fin de partie, formes et tesuji) sont en cours d’écriture', () => {
+  it('« Les bases » (l1 à l7) est complet ; les chapitres 2 à 7 (ouverture, capturer et sauver, vie et mort, fin de partie, formes et tesuji, ouvertures célèbres) sont en cours d’écriture', () => {
     // Chaque chapitre commence par ses leçons d'origine ; les chapitres 2 à 6 grandissent au fil du programme (#16).
-    const debuts = [['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7'], ['l8'], ['l9', 'l10', 'l11'], ['l12', 'l13', 'l14', 'l17'], ['l15', 'l16'], ['l18', 'l19', 'l20']];
+    const debuts = [['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7'], ['l8'], ['l9', 'l10', 'l11'], ['l12', 'l13', 'l14', 'l17'], ['l15', 'l16'], ['l18', 'l19', 'l20'], []];
     // #547 : les leçons 41 et suivantes s'intercalent (l42 après le filet, l43 après les bonnes formes) sans changer cet ordre.
     const origine = (ids: string[]) => ids.filter(id => Number(id.slice(1)) <= 40);
     expect(CHAPITRES.map(c => origine(c.lecons.map(l => l.id)).slice(0, debuts[CHAPITRES.indexOf(c)].length))).toEqual(debuts);
     expect(CHAPITRES[0].lecons).toHaveLength(7);
-    expect(CHAPITRES.map(c => c.complet)).toEqual([true, false, false, false, false, false]);
+    expect(CHAPITRES.map(c => c.complet)).toEqual([true, false, false, false, false, false, false]);
+    // #672 : « Les ouvertures célèbres » (l50 à l56), en dernier.
+    expect(CHAPITRES.at(-1)!.lecons.map(l => l.id)).toEqual(['l50', 'l51', 'l52', 'l53', 'l54', 'l55', 'l56']);
     expect(CHAPITRES[0].titre).toBe('Les bases');
   });
   it('la leçon 7 finit « Les bases », pas le chemin : la leçon 8 est la prochaine étape', () => {
