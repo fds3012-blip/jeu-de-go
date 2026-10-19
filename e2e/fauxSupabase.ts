@@ -466,7 +466,10 @@ export function fauxServeur() {
         // #353 : l'adresse a déjà un compte, comme Supabase (422 `email_exists`).
         return json({ code: 422, error_code: 'email_exists', msg: 'A user with this email address has already been registered' }, 422);
       }
-      if (req.method() === 'PUT') { u.email = (req.postDataJSON() as { email?: string }).email; emailsEnvoyes.push({ email: u.email ?? '', type: 'email_change' }); }
+      // #676 : comme Supabase, l'adresse ne change que si le corps en donne une. `updateUser({ data })` seul (la langue
+      // des e-mails, #473, envoyée à chaque ouverture avec un compte) la gardait sinon `undefined`.
+      const nouvelle = req.method() === 'PUT' ? (req.postDataJSON() as { email?: string }).email : undefined;
+      if (nouvelle !== undefined) { u.email = nouvelle; emailsEnvoyes.push({ email: nouvelle, type: 'email_change' }); }
       return json({ ...userJson(u), new_email: u.email });
     }
     if (chemin === '/auth/v1/logout') return json({});
