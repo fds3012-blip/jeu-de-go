@@ -11,7 +11,11 @@
 // 5. « Partager » (#364, PartagePartie.tsx) : action secondaire du bilan ; la feuille arrive au premier toucher.
 // 6. #527 : jusqu'à 15 kyu (cote interne, jamais affichée), 3 catégories au lieu des notes détaillées : tableau, sceaux,
 //    titres du parcours (categoriesRevue.ts, où le regroupement est documenté).
-// Logique pure : revue.ts (notes de base, précision, moment clé), notation.ts (notes du go), parcours.ts (phrases).
+// 7. #673 : sur ton erreur, quand le bon coup est montré, « Pourquoi ? » ouvre l'explication : « Pourquoi c'est une
+//    erreur » (ta suite) et « Pourquoi D3 est meilleur » (la suite du bon coup), une ou deux raisons calculées
+//    (src/go/explication.ts), et la suite à rejouer coup par coup sur le plateau, à la place de la bande des coups.
+// Logique pure : revue.ts (notes de base, précision, moment clé), notation.ts (notes du go), parcours.ts (phrases),
+// analyseExpliquee.ts (phrases et plateau de « Pourquoi ? »).
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
 import { Board } from '../ui/Board';
 import { PortraitMochi } from '../ui/Portrait';
@@ -23,7 +27,10 @@ import { t as tr } from '../content/i18n/secondaires';
 import { mouvementsReduits } from '../ui/defilement';
 import { toLabel } from '../go/coords';
 import { play, type Color, type Position } from '../go/rules';
-import { analyseRevue, estMoteurBloque, meilleurCoup, preparerKataGo, reglesMoteur, relancerKataGo, type RaisonSansKataGo } from '../engine';
+import { analyseErreur, analyseRevue, estMoteurBloque, preparerKataGo, reglesMoteur, relancerKataGo, type RaisonSansKataGo } from '../engine';
+import { expliquerErreur, type Explication, type Ligne } from '../go/explication';
+import { carresDe, glosesDesErreurs, textesExplication, vueSuite } from './analyseExpliquee';
+import { ta } from '../content/i18n/analyse';
 import { captureError, EVENTS, track } from '../data/analytics';
 import {
   avanceFinale, avancesAffichees, candidatsBrillant, compteNotes, conseilFiable, courbe, courbeY, momentCle, NOTE_INFO, noterCoups, notesAvecCle,
@@ -41,6 +48,7 @@ import { usePreferences } from './settings';
 import { numerosDesCoups } from '../go/numeros';
 import { empreinte, erreursParPhaseDe, garderRevue } from './statsJoueur';
 import '../ui/revue.css';
+import '../ui/revue-pourquoi.css';
 import { tp } from '../content/i18n/partage';
 import { useProgressionKataGo } from './progressionKataGo';
 
@@ -94,6 +102,10 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
   const [uniques, setUniques] = useState<ReadonlySet<number>>(() => new Set());
   // Meilleur coup par erreur, seulement s'il est fiable (conseilFiable) ; `null` : rien à montrer.
   const [meilleurs, setMeilleurs] = useState<Record<number, number | null>>({});
+  // #673 : explication de chaque erreur dont le bon coup est montré (`null` : rien à expliquer), par numéro de coup.
+  const [explications, setExplications] = useState<Record<number, Explication | null>>({});
+  // #673 : « Pourquoi ? » ouvert sur le coup `coup` : la suite montrée et son étape.
+  const [pourquoi, setPourquoi] = useState<{ coup: number; ligne: Ligne; etape: number } | null>(null);
   // #364 : feuille « Partager » ouverte.
   const [partager, setPartager] = useState(false);
   // #527 : revue en 3 catégories jusqu'à 15 kyu. Lu une fois : la revue ne change pas de grille en cours de route.
@@ -212,32 +224,51 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
   }
 
   // Meilleur coup, seulement là où tu as perdu des points, et seulement avec KataGo : sans lui, aucun conseil (jamais de conseil faux).
+  // #673 : la même analyse (deux recherches, analyseErreur) donne de quoi expliquer l'erreur.
   useEffect(() => {
     if (!aConseiller.length) return;
     let vivant = true;
     (async () => {
       for (const coup of aConseiller) {
-        const avant = positions[coup - 1], c = avant.toPlay, apres = avances[coup];
-        let m: number | null = null;
+        const avant = positions[coup - 1], c = avant.toPlay, apres = avances[coup], joue = positions[coup].lastMove ?? -1;
+        let m: number | null = null, x: Explication | null = null;
         try {
-          const r = await meilleurCoup(avant, komi);
+          const r = await analyseErreur(avant, positions[coup], komi, regles);
           if (!vivant) return;
           if (!r.katago) return;
           // Gain du coup conseillé sur le coup joué, pour le joueur qui s'est trompé.
           const gain = apres == null ? 0 : r.lead - (c === 1 ? apres : -apres);
           m = conseilFiable(avant, r.move, gain) ? r.move : null;
+          if (m != null) {
+            x = expliquerErreur({
+              avant, joue, bon: m, perte: notes[coup - 1]?.perte ?? gain,
+              pvBon: r.pv, visitesBon: r.visites, ownBon: r.ownBon, pvRiposte: r.riposte?.pv, visitesRiposte: r.riposte?.visites, ownJoue: r.ownJoue,
+            });
+          }
         } catch { m = null; }
         if (!vivant) return;
         setMeilleurs(o => ({ ...o, [coup]: m }));
+        setExplications(o => ({ ...o, [coup]: x }));
       }
     })();
     return () => { vivant = false; };
   }, [aConseiller, positions, komi]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Clavier, pendant le parcours : flèches gauche et droite.
+  // #673 : atari, sente, gote et couper ne sont expliqués qu'à leur première apparition dans une explication ouverte
+  // (« Pourquoi ? ») : une explication jamais lue ne consomme pas la glose.
+  const [ouverts, setOuverts] = useState<ReadonlySet<number>>(() => new Set());
+  const gloses = useMemo(() => glosesDesErreurs(new Map([...ouverts].map(k => [k, explications[k]] as const).filter((e): e is readonly [number, Explication] => !!e[1]))), [explications, ouverts]);
+
+  // Clavier, pendant le parcours : flèches gauche et droite (#673 : dans la suite de « Pourquoi ? » quand elle est ouverte).
   useEffect(() => {
     if (etape !== 'parcours' || rejeu) return;
     const touche = (e: KeyboardEvent) => {
+      if (pourquoi?.coup === i) {
+        if (e.key === 'ArrowLeft') pas(-1);
+        else if (e.key === 'ArrowRight') pas(1);
+        else if (e.key === 'Escape') setPourquoi(null);
+        return;
+      }
       if (e.key === 'ArrowLeft') aller(i - 1);
       else if (e.key === 'ArrowRight') aller(i + 1);
     };
@@ -252,6 +283,15 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
   }, [i, etape]);
 
   function aller(k: number) { setI(Math.max(0, Math.min(n, k))); }
+  /** #673 : un coup de plus ou de moins dans la suite de « Pourquoi ? ». */
+  function pas(d: number) {
+    setPourquoi(p => {
+      const x = p && explications[p.coup];
+      if (!p || !x) return p;
+      const max = (p.ligne === 'joue' ? x.suiteJoue : x.suiteBon).coups.length - 1;
+      return { ...p, etape: Math.max(0, Math.min(max, p.etape + d)) };
+    });
+  }
   function demarrer(depuis?: number) {
     setI(depuis ?? cles[0] ?? Math.min(1, n));
     setEtape('parcours');
@@ -504,6 +544,13 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
   const marqueNote = vue && q.lastMove != null && q.lastMove >= 0
     ? { p: q.lastMove, ...NOTE_ENCRE[vue.sceau], symbole: NOTE_INFO[vue.sceau].symbole, libelle: vue.libelle, cle: i } : undefined;
   const nomAvance = avance && avance.valeur !== 0 ? (avance.valeur > 0 ? nomMoi : nomLui) : '';
+  // #673 : l'explication de ton erreur, seulement quand le bon coup est montré (jamais avant ton essai) et que c'est le même.
+  const expl = note && tienne && fantome != null ? explications[note.coup] ?? null : null;
+  const xpl = expl && expl.bon === fantome ? expl : null;
+  const ouvert = !!xpl && pourquoi?.coup === i ? pourquoi : null;
+  const textes = xpl ? textesExplication(xpl, size, { adv: note!.couleur === moi ? nomLui : nomMoi, gloses: gloses.get(note!.coup) }) : null;
+  const vueX = xpl && ouvert ? vueSuite(xpl, ouvert.ligne, ouvert.etape) : null;
+  const bonLabel = xpl ? toLabel(xpl.bon, size) : '';
 
   return (
     <div className="revue revue-parcours">
@@ -512,7 +559,17 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
       <div className="parcours-bulle revue-mochi" data-note={note?.note} aria-live="polite">
         <PortraitMochi taille={44} decoratif />
         <div key={i} className="parcours-texte">
-          {com ? (
+          {ouvert && textes ? (
+            <div className="pourquoi" data-testid="pourquoi">
+              <div className="seg pourquoi-onglets" role="group" aria-label={ta('onglets')}>
+                {(['joue', 'bon'] as const).map(l => (
+                  <button key={l} type="button" aria-pressed={ouvert.ligne === l} onClick={() => setPourquoi({ coup: i, ligne: l, etape: 0 })}>{ta(l === 'joue' ? 'onglet.joue' : 'onglet.bon')}</button>
+                ))}
+              </div>
+              <h3 className="pourquoi-titre">{fr(ouvert.ligne === 'joue' ? ta('titre.erreur') : ta('titre.meilleur', { bon: bonLabel }))}</h3>
+              <p className="parcours-detail pourquoi-texte">{fr(ouvert.ligne === 'joue' ? textes.erreur : textes.meilleur)}</p>
+            </div>
+          ) : com ? (
             <>
               <p className="parcours-titre">
                 {vue && <SceauNote note={vue.sceau} taille={22} />}
@@ -533,7 +590,15 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
               </p>
             </>
           ) : <p className="parcours-detail">{fr(i === 0 ? tr('parcours.debut') : tr('revue.etiquette', { c: i, lieu: (q.lastMove ?? -1) < 0 ? tr('coup.passe') : toLabel(q.lastMove!, size) }))}</p>}
-          {i > 0 && prochaine == null && <p className="parcours-fin">{fr(tr('parcours.fin'))}</p>}
+          {i > 0 && prochaine == null && !ouvert && <p className="parcours-fin">{fr(tr('parcours.fin'))}</p>}
+          {/* #673 : « Pourquoi ? » : l'explication se déplie dans la bulle ; « Fermer » la replie. */}
+          {xpl && (
+            <button type="button" className="lien revue-voir pourquoi-lien" aria-expanded={!!ouvert} aria-label={ouvert ? undefined : ta('pourquoi.aria', { bon: bonLabel })}
+              onClick={() => {
+                if (!ouvert) { const c = note!.coup; setOuverts(s => (s.has(c) ? s : new Set(s).add(c))); }
+                setPourquoi(ouvert ? null : { coup: i, ligne: 'joue', etape: 0 });
+              }}>{ta(ouvert ? 'fermer' : 'pourquoi')}</button>
+          )}
           {/* #503 : « Voir le bon coup » sous la phrase de Mochi qui invite à chercher, plus sous la bande des coups. */}
           {aTrouver && peutRejouer && (
             <button type="button" className="lien revue-voir" onClick={() => devoiler(note!.coup)}>{tr('revue.voirBonCoup')}</button>
@@ -542,10 +607,29 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
       </div>
 
       <div className="revue-plateau">
-        <Board size={size} board={q.board} marks={{ last: prefs.dernierCoup ? q.lastMove : null, meilleur: fantome ?? undefined, note: marqueNote }}
-          coordonnees={prefs.coordonnees} numeros={prefs.numerosRevue ? numerosDesCoups(positions, i) : null} />
+        {vueX ? (
+          // #673 : la suite de « Pourquoi ? », coups numérotés (1 : ton coup, ou le bon coup), pierres concernées entourées.
+          <Board size={size} board={vueX.pos.board} coordonnees={prefs.coordonnees} numeros={vueX.numeros}
+            marks={{
+              last: vueX.dernier >= 0 ? vueX.dernier : null, targets: vueX.cibles, mistake: vueX.croix ?? undefined,
+              owner: vueX.carres ? carresDe(vueX.carres, size, positions[i - 1].toPlay) : undefined, conseil: vueX.cadre ?? undefined,
+            }} />
+        ) : (
+          <Board size={size} board={q.board} marks={{ last: prefs.dernierCoup ? q.lastMove : null, meilleur: fantome ?? undefined, note: marqueNote }}
+            coordonnees={prefs.coordonnees} numeros={prefs.numerosRevue ? numerosDesCoups(positions, i) : null} />
+        )}
       </div>
 
+      {vueX && ouvert ? (
+        <div className="revue-nav pourquoi-nav">
+          <button type="button" className="btn revue-pas" onClick={() => pas(-1)} disabled={ouvert.etape <= 0} aria-label={ta('suite.precedent')}><Icone nom="precedent" /></button>
+          <p className="pourquoi-etape" aria-live="polite">
+            <b>{ta('suite.etape', { i: ouvert.etape + 1, n: vueX.longueur })}</b>
+            <span>{ta(ouvert.ligne === 'joue' ? 'suite.legende.joue' : 'suite.legende.bon', { n: vueX.longueur })}</span>
+          </p>
+          <button type="button" className="btn revue-pas" onClick={() => pas(1)} disabled={ouvert.etape >= vueX.longueur - 1} aria-label={ta('suite.suivant')}><Icone nom="suivant" /></button>
+        </div>
+      ) : (
       <div className="revue-nav">
         <button type="button" className="btn revue-pas" onClick={() => aller(i - 1)} disabled={i <= 0} aria-label={tr('parcours.coupPrecedent')}><Icone nom="precedent" /></button>
         <ol ref={liste} className="revue-coups" aria-label={tr('revue.coups')}>
@@ -568,15 +652,16 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
         </ol>
         <button type="button" className="btn revue-pas" onClick={() => aller(i + 1)} disabled={i >= n} aria-label={tr('parcours.coupSuivant')}><Icone nom="suivant" /></button>
       </div>
+      )}
 
-      {onRejouer && i > 0 && (
+      {onRejouer && i > 0 && !ouvert && (
         <div className="parcours-secondaires">
           <button type="button" className="btn revue-rejouer" onClick={rejouer}>{tr('revue.rejouer')}</button>
         </div>
       )}
 
-      <p className="revue-courbe-legende" aria-hidden="true">{fr(tr('revue.courbeLegende'))}</p>
-      {courbeSvg(k => aller(k))}
+      {!ouvert && <p className="revue-courbe-legende" aria-hidden="true">{fr(tr('revue.courbeLegende'))}</p>}
+      {!ouvert && courbeSvg(k => aller(k))}
 
       {/* #503 : « Rejoue cette erreur » rejoint « Suivant » dans la barre du bas : les deux se voient d'un coup d'œil, sans
           défiler ni se recouvrir. « Suivant » reste la seule action en relief. */}

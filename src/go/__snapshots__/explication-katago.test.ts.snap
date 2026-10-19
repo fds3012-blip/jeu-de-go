@@ -1,0 +1,119 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`relecture : les phrases générées sur les deux vraies parties (instantané relu) > en 1`] = `
+"florian-424 2 | Black answers at D6. KataGo prefers D4, by about 2 points. Nothing is captured and no group’s status changes: it’s about placement. | KataGo prefers D4: about 2 points more than your move.
+florian-424 3 | You lose about 2 points in the top right. | With D6, you have about 2 points more in the top right.
+florian-424 4 | You lose about 2 points in the top right corner. | With F6, you have about 2 points more in the top right corner.
+florian-424 6 | Black answers at E5. KataGo prefers F6, by about 6 points. Nothing is captured and no group’s status changes: it’s about placement. | KataGo prefers F6: about 6 points more than your move.
+florian-424 7 | You lose about 4 points on the right. | With E5, you have about 4 points more on the right.
+florian-424 8 | You lose about 4 points in the top right. | With F6, you have about 4 points more in the top right.
+florian-424 10 | You lose about 3 points on the right. | With F6, you have about 3 points more on the right.
+florian-424 11 | White answers at F6. KataGo prefers F5, by about 11 points. I can’t find a simple, safe reason: look at both lines. | KataGo prefers F5: about 11 points more than your move.
+florian-424 12 | Black answers at F5. KataGo prefers F6, by about 10 points. Nothing is captured and no group’s status changes: it’s about placement. | KataGo prefers F6: about 10 points more than your move.
+florian-424 13 | White answers at F6. KataGo prefers F5, by about 10 points. Nothing is captured and no group’s status changes: it’s about placement. | KataGo prefers F5: about 10 points more than your move.
+florian-424 14 | Black answers at F6: exactly the move KataGo recommended for you (about 17 points better). | F6 is a key point for both sides: Black took it right after your move.
+florian-424 15 | White answers at F6: exactly the move KataGo recommended for you (about 19 points better). | F6 is a key point for both sides: White took it right after your move.
+florian-424 16 | Black answers at F6: exactly the move KataGo recommended for you (about 17 points better). | F6 is a key point for both sides: Black took it right after your move.
+florian-424 17 | You lose about 9 points on the right. | With F6, you have about 9 points more on the right.
+florian-424 18 | Black answers at F5. KataGo prefers F6, by about 5 points. Nothing is captured and no group’s status changes: it’s about placement. | KataGo prefers F6: about 5 points more than your move.
+florian-424 19 | You lose about 4 points at the bottom. | With F5, you have about 4 points more at the bottom.
+florian-424 20 | Black answers at F5. KataGo prefers F6, by about 11 points. Nothing is captured and no group’s status changes: it’s about placement. | KataGo prefers F6: about 11 points more than your move.
+florian-424 21 | You lose about 4 points at the bottom. | With F5, you have about 4 points more at the bottom.
+florian-424 22 | Black answers at G7: exactly the move KataGo recommended for you (about 4 points better). | G7 is a key point for both sides: Black took it right after your move.
+florian-424 23 | After your move, your group at F8 may no longer live. You lose about 8 points in the top right. | With G7, this group lives, according to KataGo. With G7, you have about 8 points more in the top right.
+florian-424 24 | Their stone at E5 was in atari (it had only one liberty left): you could capture it. | F5 captures a stone right away.
+florian-424 25 | Your stone at E5 was in atari and you didn’t answer: White captures it at F5. | With F5, your stone at E5 isn’t captured.
+florian-424 26 | Their stone at E5 was in atari: you could capture it. | F5 captures a stone right away.
+florian-424 27 | After your move, your group at F6 dies, according to KataGo. You lose about 4 points in the bottom right. | With F5, this group lives, according to KataGo. With F5, you have about 4 points more in the bottom right.
+florian-424 28 | Your 8 stones at C8 were in atari and you didn’t answer: Black captures them at E8. Their stone at E5 was in atari: you could capture it. | With F5, your 8 stones at C8 aren’t captured. F5 captures a stone right away.
+florian-424 30 | You lose about 17 points on the right. | With G4, you have about 17 points more on the right.
+florian-424 31 | You lose about 12 points on the right. | With G4, you have about 12 points more on the right.
+florian-424 32 | You lose about 16 points on the right. | With G4, you have about 16 points more on the right.
+florian-424 33 | You lose about 12 points on the right. | With G4, you have about 12 points more on the right.
+florian-424 34 | You lose about 17 points on the right. | With G4, you have about 17 points more on the right.
+florian-424 35 | White answers at G4: exactly the move KataGo recommended for you (about 25 points better). | G4 is a key point for both sides: White took it right after your move.
+florian-424 36 | You lose about 16 points on the right. | With G4, you have about 16 points more on the right.
+florian-424 37 | After your move, their group of 6 stones at H9 can still escape. You lose about 6 points in the bottom right. | With G4, their group of 6 stones at H9 can no longer live, according to KataGo. With G4, you have about 6 points more in the bottom right.
+florian-424 38 | You lose about 10 points on the right. | With G4, you have about 10 points more on the right.
+florian-424 39 | You lose about 13 points on the right. | With G3, you have about 13 points more on the right.
+florian-424 40 | You lose about 8 points on the right. | With G4, you have about 8 points more on the right.
+florian-424 41 | After your move, their group of 3 stones at E4 can still escape. You lose about 16 points on the right. | With G3, their group of 3 stones at E4 can no longer live, according to KataGo. With G3, you have about 16 points more on the right.
+florian-424 42 | After your move, your group at E4 may no longer live. You lose about 14 points on the right. | With G4, this group lives, according to KataGo. With G4, you have about 14 points more on the right.
+florian-424 43 | You lose about 12 points in the bottom right. | With G3, you have about 12 points more in the bottom right.
+florian-424 44 | You lose about 13 points on the right. | With G4, you have about 13 points more on the right.
+florian-424 45 | White answers at G5: exactly the move KataGo recommended for you (about 26 points better). | G5 is a key point for both sides: White took it right after your move.
+florian-424 46 | You lose about 6 points on the right. | With G5, you have about 6 points more on the right.
+florian-424 47 | You lose about 5 points in the bottom right. | With G5, you have about 5 points more in the bottom right.
+florian-424 48 | You lose about 7 points on the right. | With G7, you have about 7 points more on the right.
+florian-takumi 3 | White answers at F6. KataGo prefers D6, by about 2 points. Nothing is captured and no group’s status changes: it’s about placement. | KataGo prefers D6: about 2 points more than your move.
+florian-takumi 6 | You lose about 2 points on the right side. | With F6, you have about 2 points more on the right side.
+florian-takumi 7 | You lose about 3 points on the top side. | With D6, you have about 3 points more on the top side.
+florian-takumi 8 | You lose about 3 points on the top side. | With E7, you have about 3 points more on the top side.
+florian-takumi 9 | You lose about 2 points on the top side. | With E7, you have about 2 points more on the top side.
+florian-takumi 13 | White answers at E2. KataGo prefers D2, by about 3 points. Nothing is captured and no group’s status changes: it’s about placement. | KataGo prefers D2: about 3 points more than your move.
+florian-takumi 14 | You lose about 3 points in the bottom left. | With E2, you have about 3 points more in the bottom left.
+florian-takumi 15 | You lose about 3 points at the bottom. | With D2, you have about 3 points more at the bottom.
+florian-takumi 16 | You lose about 6 points at the bottom. | With E2, you have about 6 points more at the bottom.
+florian-takumi 17 | You lose about 2 points on the bottom side. | With D2, you have about 2 points more on the bottom side.
+florian-takumi 18 | You lose about 2 points at the bottom. | With D2, you have about 2 points more at the bottom.
+florian-takumi 19 | You lose about 3 points at the bottom. | With D2, you have about 3 points more at the bottom."
+`;
+
+exports[`relecture : les phrases générées sur les deux vraies parties (instantané relu) > fr 1`] = `
+"florian-424 2 | Noir répond en D6. KataGo préfère D4, d’environ 2 points. Rien n’est pris et aucun groupe ne change de sort : c’est une question de placement. | KataGo préfère D4 : environ 2 points de plus que ton coup.
+florian-424 3 | Tu perds environ 2 points en haut à droite. | Avec D6, tu as environ 2 points de plus en haut à droite.
+florian-424 4 | Tu perds environ 2 points dans le coin en haut à droite. | Avec F6, tu as environ 2 points de plus dans le coin en haut à droite.
+florian-424 6 | Noir répond en E5. KataGo préfère F6, d’environ 6 points. Rien n’est pris et aucun groupe ne change de sort : c’est une question de placement. | KataGo préfère F6 : environ 6 points de plus que ton coup.
+florian-424 7 | Tu perds environ 4 points à droite. | Avec E5, tu as environ 4 points de plus à droite.
+florian-424 8 | Tu perds environ 4 points en haut à droite. | Avec F6, tu as environ 4 points de plus en haut à droite.
+florian-424 10 | Tu perds environ 3 points à droite. | Avec F6, tu as environ 3 points de plus à droite.
+florian-424 11 | Blanc répond en F6. KataGo préfère F5, d’environ 11 points. Je ne trouve pas de raison simple et sûre : regarde les deux suites. | KataGo préfère F5 : environ 11 points de plus que ton coup.
+florian-424 12 | Noir répond en F5. KataGo préfère F6, d’environ 10 points. Rien n’est pris et aucun groupe ne change de sort : c’est une question de placement. | KataGo préfère F6 : environ 10 points de plus que ton coup.
+florian-424 13 | Blanc répond en F6. KataGo préfère F5, d’environ 10 points. Rien n’est pris et aucun groupe ne change de sort : c’est une question de placement. | KataGo préfère F5 : environ 10 points de plus que ton coup.
+florian-424 14 | Noir répond en F6 : c’est justement le coup que KataGo te conseillait (environ 17 points de mieux). | F6 est un point clé pour les deux camps : Noir l’a pris juste après ton coup.
+florian-424 15 | Blanc répond en F6 : c’est justement le coup que KataGo te conseillait (environ 19 points de mieux). | F6 est un point clé pour les deux camps : Blanc l’a pris juste après ton coup.
+florian-424 16 | Noir répond en F6 : c’est justement le coup que KataGo te conseillait (environ 17 points de mieux). | F6 est un point clé pour les deux camps : Noir l’a pris juste après ton coup.
+florian-424 17 | Tu perds environ 9 points à droite. | Avec F6, tu as environ 9 points de plus à droite.
+florian-424 18 | Noir répond en F5. KataGo préfère F6, d’environ 5 points. Rien n’est pris et aucun groupe ne change de sort : c’est une question de placement. | KataGo préfère F6 : environ 5 points de plus que ton coup.
+florian-424 19 | Tu perds environ 4 points en bas. | Avec F5, tu as environ 4 points de plus en bas.
+florian-424 20 | Noir répond en F5. KataGo préfère F6, d’environ 11 points. Rien n’est pris et aucun groupe ne change de sort : c’est une question de placement. | KataGo préfère F6 : environ 11 points de plus que ton coup.
+florian-424 21 | Tu perds environ 4 points en bas. | Avec F5, tu as environ 4 points de plus en bas.
+florian-424 22 | Noir répond en G7 : c’est justement le coup que KataGo te conseillait (environ 4 points de mieux). | G7 est un point clé pour les deux camps : Noir l’a pris juste après ton coup.
+florian-424 23 | Après ton coup, ton groupe en F8 n’est plus sûr de vivre. Tu perds environ 8 points en haut à droite. | Avec G7, ce groupe vit, selon KataGo. Avec G7, tu as environ 8 points de plus en haut à droite.
+florian-424 24 | Sa pierre en E5 était en atari (il ne lui restait qu’une liberté) : tu pouvais la prendre. | F5 prend une pierre tout de suite.
+florian-424 25 | Ta pierre en E5 était en atari et tu n’as pas répondu : Blanc la prend en F5. | Avec F5, ta pierre en E5 n’est pas prise.
+florian-424 26 | Sa pierre en E5 était en atari : tu pouvais la prendre. | F5 prend une pierre tout de suite.
+florian-424 27 | Après ton coup, ton groupe en F6 meurt, selon KataGo. Tu perds environ 4 points en bas à droite. | Avec F5, ce groupe vit, selon KataGo. Avec F5, tu as environ 4 points de plus en bas à droite.
+florian-424 28 | Tes 8 pierres en C8 étaient en atari et tu n’as pas répondu : Noir les prend en E8. Sa pierre en E5 était en atari : tu pouvais la prendre. | Avec F5, tes 8 pierres en C8 ne sont pas prises. F5 prend une pierre tout de suite.
+florian-424 30 | Tu perds environ 17 points à droite. | Avec G4, tu as environ 17 points de plus à droite.
+florian-424 31 | Tu perds environ 12 points à droite. | Avec G4, tu as environ 12 points de plus à droite.
+florian-424 32 | Tu perds environ 16 points à droite. | Avec G4, tu as environ 16 points de plus à droite.
+florian-424 33 | Tu perds environ 12 points à droite. | Avec G4, tu as environ 12 points de plus à droite.
+florian-424 34 | Tu perds environ 17 points à droite. | Avec G4, tu as environ 17 points de plus à droite.
+florian-424 35 | Blanc répond en G4 : c’est justement le coup que KataGo te conseillait (environ 25 points de mieux). | G4 est un point clé pour les deux camps : Blanc l’a pris juste après ton coup.
+florian-424 36 | Tu perds environ 16 points à droite. | Avec G4, tu as environ 16 points de plus à droite.
+florian-424 37 | Après ton coup, son groupe de 6 pierres en H9 peut encore s’en sortir. Tu perds environ 6 points en bas à droite. | Avec G4, son groupe de 6 pierres en H9 ne peut plus vivre, selon KataGo. Avec G4, tu as environ 6 points de plus en bas à droite.
+florian-424 38 | Tu perds environ 10 points à droite. | Avec G4, tu as environ 10 points de plus à droite.
+florian-424 39 | Tu perds environ 13 points à droite. | Avec G3, tu as environ 13 points de plus à droite.
+florian-424 40 | Tu perds environ 8 points à droite. | Avec G4, tu as environ 8 points de plus à droite.
+florian-424 41 | Après ton coup, son groupe de 3 pierres en E4 peut encore s’en sortir. Tu perds environ 16 points à droite. | Avec G3, son groupe de 3 pierres en E4 ne peut plus vivre, selon KataGo. Avec G3, tu as environ 16 points de plus à droite.
+florian-424 42 | Après ton coup, ton groupe en E4 n’est plus sûr de vivre. Tu perds environ 14 points à droite. | Avec G4, ce groupe vit, selon KataGo. Avec G4, tu as environ 14 points de plus à droite.
+florian-424 43 | Tu perds environ 12 points en bas à droite. | Avec G3, tu as environ 12 points de plus en bas à droite.
+florian-424 44 | Tu perds environ 13 points à droite. | Avec G4, tu as environ 13 points de plus à droite.
+florian-424 45 | Blanc répond en G5 : c’est justement le coup que KataGo te conseillait (environ 26 points de mieux). | G5 est un point clé pour les deux camps : Blanc l’a pris juste après ton coup.
+florian-424 46 | Tu perds environ 6 points à droite. | Avec G5, tu as environ 6 points de plus à droite.
+florian-424 47 | Tu perds environ 5 points en bas à droite. | Avec G5, tu as environ 5 points de plus en bas à droite.
+florian-424 48 | Tu perds environ 7 points à droite. | Avec G7, tu as environ 7 points de plus à droite.
+florian-takumi 3 | Blanc répond en F6. KataGo préfère D6, d’environ 2 points. Rien n’est pris et aucun groupe ne change de sort : c’est une question de placement. | KataGo préfère D6 : environ 2 points de plus que ton coup.
+florian-takumi 6 | Tu perds environ 2 points sur le bord droit. | Avec F6, tu as environ 2 points de plus sur le bord droit.
+florian-takumi 7 | Tu perds environ 3 points sur le bord du haut. | Avec D6, tu as environ 3 points de plus sur le bord du haut.
+florian-takumi 8 | Tu perds environ 3 points sur le bord du haut. | Avec E7, tu as environ 3 points de plus sur le bord du haut.
+florian-takumi 9 | Tu perds environ 2 points sur le bord du haut. | Avec E7, tu as environ 2 points de plus sur le bord du haut.
+florian-takumi 13 | Blanc répond en E2. KataGo préfère D2, d’environ 3 points. Rien n’est pris et aucun groupe ne change de sort : c’est une question de placement. | KataGo préfère D2 : environ 3 points de plus que ton coup.
+florian-takumi 14 | Tu perds environ 3 points en bas à gauche. | Avec E2, tu as environ 3 points de plus en bas à gauche.
+florian-takumi 15 | Tu perds environ 3 points en bas. | Avec D2, tu as environ 3 points de plus en bas.
+florian-takumi 16 | Tu perds environ 6 points en bas. | Avec E2, tu as environ 6 points de plus en bas.
+florian-takumi 17 | Tu perds environ 2 points sur le bord du bas. | Avec D2, tu as environ 2 points de plus sur le bord du bas.
+florian-takumi 18 | Tu perds environ 2 points en bas. | Avec D2, tu as environ 2 points de plus en bas.
+florian-takumi 19 | Tu perds environ 3 points en bas. | Avec D2, tu as environ 3 points de plus en bas."
+`;
