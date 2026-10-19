@@ -113,6 +113,12 @@ describe('les phrases', () => {
     expect(textesExplication(x, N, { adv: 'White', gloses: new Set() }).meilleur).toBe('After F4, if White cuts at E4, they put themselves in atari.');
   });
 
+  it('légende de la suite : une suite d’un seul coup ne promet pas de réponse de KataGo', () => {
+    expect(traduireAnalyse('fr', 'suite.legende.joue', { n: 1 })).toBe('Ton coup seul : suite peu explorée.');
+    expect(traduireAnalyse('fr', 'suite.legende.joue', { n: 2 })).toBe('Ton coup, puis la suite de KataGo.');
+    expect(traduireAnalyse('en', 'suite.legende.joue', { n: 1 })).toBe('Your move only: line underexplored.');
+  });
+
   it('chaque clé existe en anglais, avec les mêmes variables', () => {
     const vars = (s: unknown) => [...JSON.stringify(s).matchAll(/\{(\w+)\}/g)].map(m => m[1]).sort();
     for (const k of Object.keys(CATALOGUE_ANALYSE.fr) as (keyof typeof CATALOGUE_ANALYSE.fr)[]) {

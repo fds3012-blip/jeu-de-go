@@ -1,4 +1,6 @@
+import { existsSync, readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
+import { SGF_424 } from '../src/app/partie424.fixture';
 import { plateau } from './plateau';
 import { COTE_JOUEUR_FORT, demarrerParcours, ouvrirRevue } from './revueFactice';
 
@@ -114,3 +116,62 @@ for (const theme of ['dark', 'light'] as const) {
     expect(erreurs).toEqual([]);
   });
 }
+
+// Avec le vrai réseau g170-b6c96 (public/models, `npm run fetch-model`), sur la vraie partie de Florian (#424, il a
+// Noir) : une vraie erreur, expliquée par une vraie analyse. La recherche du navigateur est bornée en temps : sous
+// charge, moins de visites, donc la phrase peut varier ; on vérifie seulement qu'une explication s'affiche, sans
+// erreur, et on imprime son texte exact. Captures (`CAPTURES=1`) : docs/produit/captures-673 (390 px, sombre).
+const MODELE = 'public/models/g170-b6c96-s175395328-d26788732.bin.gz';
+test('« Pourquoi ? » avec le vrai KataGo, sur une vraie erreur de la partie #424 (390 px, sombre)', async ({ page }) => {
+  test.skip(!existsSync(MODELE), 'réseau absent : npm run fetch-model');
+  test.setTimeout(900_000);
+  const erreurs: string[] = [];
+  page.on('pageerror', e => erreurs.push(e.message));
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await page.route('**/g170-b6c96-*.bin.gz', route => route.fulfill({
+    status: 200, body: readFileSync(MODELE), headers: { 'content-type': 'application/octet-stream', 'access-control-allow-origin': '*' },
+  }));
+  await page.addInitScript(({ sgf, cote }) => {
+    localStorage.setItem('go.cote-joueur.v1', JSON.stringify(cote));
+    localStorage.setItem('go.historique.v1', JSON.stringify([{
+      id: 'ami-424', date: new Date(Date.now() - 3_600_000).toISOString(), sgf, mode: 'defi', taille: 9, joueur: 1, adversaire: 'Ami', resultat: 'B+17.5',
+    }]));
+    (window as unknown as { __kataGoTelechargement: boolean }).__kataGoTelechargement = true;
+  }, { sgf: SGF_424, cote: COTE_JOUEUR_FORT });
+  const dossier = 'docs/produit/captures-673';
+  const capturer = async (nom: string) => { if (process.env.CAPTURES) await page.screenshot({ path: `${dossier}/${nom}.png` }); };
+
+  await ouvrirRevue(page);
+  await demarrerParcours(page, undefined, 600_000);
+  const bulle = page.locator('.parcours-bulle');
+  // Les coups clés de Florian que la revue conseille (erreurs de Noir) : D1 (coup 41, KataGo G3), puis d'autres.
+  let coup = 0;
+  const voir = bulle.getByRole('button', { name: 'Voir le bon coup' }), pourquoi = bulle.getByRole('button', { name: /^Pourquoi c’est une erreur, et pourquoi [A-J]\d est meilleur$/ });
+  for (const k of [41, 31, 33, 35, 11, 15, 17]) {
+    await page.getByRole('button', { name: new RegExp(`^Coup ${k},`) }).click();
+    // Le bon coup (et son explication) arrive après le bilan, une erreur après l'autre : on l'attend.
+    const vu = await expect(voir.or(pourquoi)).toBeVisible({ timeout: 120_000 }).then(() => true, () => false);
+    if (!vu) continue;
+    if (await voir.isVisible()) await voir.click();
+    if (await expect(pourquoi).toBeVisible({ timeout: 10_000 }).then(() => true, () => false)) { coup = k; break; }
+  }
+  expect(coup, 'aucune erreur expliquée').toBeGreaterThan(0);
+  await capturer('1-parcours-pourquoi');
+  await expect(pourquoi).toHaveText('Pourquoi ?');
+  await pourquoi.click();
+  const pq = page.getByTestId('pourquoi');
+  await expect(pq.getByRole('heading', { name: 'Pourquoi c’est une erreur' })).toBeVisible();
+  const erreur = await pq.locator('.pourquoi-texte').textContent();
+  expect(erreur?.trim().length).toBeGreaterThan(10);
+  await capturer('2-pourquoi-erreur');
+  const suivant = page.getByRole('button', { name: 'Coup suivant de la suite' });
+  while (await suivant.isEnabled()) await suivant.click();
+  await capturer('3-pourquoi-suite');
+  await pq.getByRole('button', { name: 'Le bon coup' }).click();
+  await expect(pq.getByRole('heading', { name: /^Pourquoi [A-J]\d est meilleur$/ })).toBeVisible();
+  const meilleur = await pq.locator('.pourquoi-texte').textContent();
+  await capturer('4-pourquoi-meilleur');
+  console.log(`#673 vrai KataGo, coup ${coup}\n  erreur : ${erreur}\n  meilleur : ${meilleur}`);
+  expect(erreurs).toEqual([]);
+});

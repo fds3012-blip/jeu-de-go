@@ -19,7 +19,7 @@ const FR = {
   'suite.etape': 'Coup {i} sur {n} de la suite',
   'suite.precedent': 'Coup précédent de la suite',
   'suite.suivant': 'Coup suivant de la suite',
-  'suite.legende.joue': { one: 'Ton coup, puis la réponse de KataGo.', other: 'Ton coup, puis la suite de KataGo.' },
+  'suite.legende.joue': { one: 'Ton coup seul : suite peu explorée.', other: 'Ton coup, puis la suite de KataGo.' },
   'suite.legende.bon': { one: 'Le bon coup.', other: 'Le bon coup, puis la suite de KataGo.' },
 
   'pts': { one: '{n} point', other: '{n} points' },
@@ -101,7 +101,7 @@ const EN: { readonly [K in CleAnalyse]: Texte } = {
   'suite.etape': 'Move {i} of {n} in the line',
   'suite.precedent': 'Previous move in the line',
   'suite.suivant': 'Next move in the line',
-  'suite.legende.joue': { one: 'Your move, then KataGo’s answer.', other: 'Your move, then KataGo’s line.' },
+  'suite.legende.joue': { one: 'Your move only: line underexplored.', other: 'Your move, then KataGo’s line.' },
   'suite.legende.bon': { one: 'The best move.', other: 'The best move, then KataGo’s line.' },
 
   'pts': { one: '{n} point', other: '{n} points' },

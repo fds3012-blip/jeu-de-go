@@ -91,6 +91,11 @@ ouvert, la bulle garde une ou deux phrases (E5) et l'écran perd deux blocs (cou
   variables, plateau de la suite (numéros, cibles, croix, zone).
 - `src/engine/analyseErreur.test.ts` : deux recherches, règle et komi transmis, repli sans la seconde recherche.
 - `e2e/revue-pourquoi.spec.ts` : parcours complet à 390 px, sombre et clair.
+- `e2e/revue-pourquoi.spec.ts`, avec le vrai réseau (sauté sans `public/models`) : la partie #424 revue dans Chromium
+  par le vrai KataGo, « Pourquoi ? » ouvert sur une vraie erreur de Florian (coup 41, D1 ; KataGo G3). Texte affiché,
+  identique à l'analyse figée : « Après ton coup, son groupe de 3 pierres en E4 peut encore s'en sortir. Tu perds
+  environ 16 points à droite. » / « G3 tue son groupe de 3 pierres en E4, selon KataGo. Avec G3, tu gagnes environ
+  16 points à droite. » Captures 390 × 844, sombre : `docs/produit/captures-673/`.
 
 ## 6. Relecture écrite (deux vraies parties)
 
@@ -144,3 +149,7 @@ c'est voulu, la règle prime sur la richesse.
 - Deux recherches de plus par erreur expliquée (environ 2 × 2,5 s sur un téléphone en WebGL), en arrière-plan après le
   bilan ; elles remplacent la recherche de `meilleurCoup`.
 - La relecture couvre deux vraies parties en 9 × 9 seulement.
+- Dans un navigateur sans GPU et chargé (conteneur de test, rendu CPU), la recherche bornée en temps (2,6 s) ne fait
+  que 2 à 5 visites : les deux PV ne sont alors pas lues (moins de 16 visites), la suite montrée se réduit au premier
+  coup, et seules les raisons tirées des règles et de la propriété restent. La légende le dit (« Ton coup seul : suite peu
+  explorée. ») au lieu d'annoncer une réponse absente.
