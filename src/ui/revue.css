@@ -121,14 +121,6 @@
 
 .revue-nav { display: flex; align-items: center; gap: var(--space-2); }
 
-/* #673 : « Pourquoi ? » dans la bulle : deux onglets (ta suite, celle du bon coup), un titre, une ou deux phrases. Sous le
-   goban, à la place de la bande des coups : l'étape de la suite, avec les mêmes boutons ‹ ›. */
-.pourquoi { display: grid; gap: var(--space-1); }
-.pourquoi-onglets { margin-bottom: 2px; }
-.pourquoi-titre { margin: 0; font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: var(--fs-m); line-height: 1.25; }
-.pourquoi-etape { flex: 1; min-width: 0; margin: 0; display: grid; gap: 2px; text-align: center; font-size: var(--fs-s); line-height: 1.3; font-variant-numeric: tabular-nums; }
-.pourquoi-etape span { color: var(--muted); }
-
 /* Bande des coups (issue #71) : défile horizontalement, chaque coup avec sa pierre et son sceau de note. */
 .revue-coups { flex: 1; min-width: 0; display: flex; gap: 4px; margin: 0; padding: 2px; list-style: none;
   overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none; -webkit-overflow-scrolling: touch;

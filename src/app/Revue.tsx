@@ -48,6 +48,7 @@ import { usePreferences } from './settings';
 import { numerosDesCoups } from '../go/numeros';
 import { empreinte, erreursParPhaseDe, garderRevue } from './statsJoueur';
 import '../ui/revue.css';
+import '../ui/revue-pourquoi.css';
 import { tp } from '../content/i18n/partage';
 import { useProgressionKataGo } from './progressionKataGo';
 
