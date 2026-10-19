@@ -1799,7 +1799,7 @@ export const en = {
   'intro.terminer': 'Finish',
   'intro.fin.titre': 'You know the rules!',
   'intro.fin.texte': 'Now a real game with Mochi: he helps you with every move.',
-  'intro.fin.jouer': 'Play with Mochi',
+  'intro.fin.jouer': 'Discovery game with Mochi',
   'intro.fin.expressTitre': 'Rules: done!',
   'intro.fin.expressTexte': 'A discovery game with Mochi, or straight to a game against {nom}?',
   'intro.fin.decouverte': 'Discovery game with Mochi',
