@@ -51,6 +51,13 @@ export const LECONS_INDEX: readonly (readonly [id: string, titre: string, desc: 
   ["l34", "Relier par en dessous", "Le watari, au premier rang", 4],
   ["l35", "Couper par en dessous", "Bloquer le premier rang", 4],
   ["l36", "Couper, puis reprendre", "La coupe au premier rang", 4],
+  ["l50", "Le nirensei", "Deux étoiles du même côté", 4, 19],
+  ["l51", "Le sanrensei", "Trois étoiles sur un bord", 4, 19],
+  ["l52", "Le shin-fuseki", "La nouvelle ouverture de 1933", 4, 19],
+  ["l53", "Le fuseki chinois", "Deux coins, puis vite le bord", 5, 19],
+  ["l54", "La kosumi de Shusaku", "Le coup qu’il disait toujours bon", 4, 19],
+  ["l55", "L’approche du hoshi", "Répondre quand Blanc s’approche", 5, 19],
+  ["l56", "Le san-san d’AlphaGo", "Entrer au 3-3 dès le début", 5, 19],
 ];
 
 // prettier-ignore
@@ -61,4 +68,5 @@ export const CHAPITRES_INDEX: readonly { id: string; titre: string; intro: strin
   { id: "c4", titre: "Vie et mort", intro: "Quand un groupe vit, quand il meurt.", complet: false, lecons: ["l12","l13","l14","l17","l24","l44","l25","l37"] },
   { id: "c5", titre: "Fin de partie et comptage", intro: "Finir proprement, puis compter juste.", complet: false, lecons: ["l15","l16","l41","l22","l23","l32","l33","l38","l45"] },
   { id: "c6", titre: "Formes et tesuji", intro: "Les bonnes formes et les coups malins du go.", complet: false, lecons: ["l18","l43","l19","l20","l21","l34","l35","l36"] },
+  { id: "c7", titre: "Les ouvertures célèbres", intro: "Les ouvertures des grands joueurs, vérifiées par KataGo.", complet: false, lecons: ["l50","l51","l52","l53","l54","l55","l56"] },
 ];

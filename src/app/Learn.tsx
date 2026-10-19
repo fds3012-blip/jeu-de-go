@@ -3,7 +3,7 @@
 // mentionner le Bientôt ») : un sommaire. En haut, la carte de la prochaine leçon, seule action en relief ; puis trois
 // entrées au même format (Ouvertures, Jouer avec Mochi, Revoir les règles) ; enfin la grille de tous les thèmes, la seule
 // liste longue, rangée en dernier (P5). Chaque leçon s'ouvre depuis la page de son thème (ThemeLecons) : un test le
-// vérifie pour les 48 (src/app/themesApprendre.test.ts). Le lecteur de leçon et sa fin sont dans Lecon.tsx.
+// vérifie pour les 55 (src/app/themesApprendre.test.ts). Le lecteur de leçon et sa fin sont dans Lecon.tsx.
 import { Suspense, lazy, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { CHAPITRES, LESSONS } from '../content/lessons';
 import { Bubble } from '../ui/Mochi';
@@ -91,7 +91,7 @@ export function LearnHome({ progress, onOpen, sync = 'local', compteRequis = () 
   }, [fete]);
 
   // #591 : au retour, le sommaire revient sur l'entrée « Ouvertures », focus compris (A6).
-  if (ouvertures) return <Suspense fallback={null}><EcranOuvertures onExit={() => { setOuvertures(false); requestAnimationFrame(() => { const e = document.querySelector<HTMLElement>('[data-testid="entree-ouvertures"]'); e?.scrollIntoView({ block: 'center' }); e?.focus({ preventScroll: true }); }); }} /></Suspense>;
+  if (ouvertures) return <Suspense fallback={null}><EcranOuvertures onLecon={id => { setOuvertures(false); onOpen(id); }} onExit={() => { setOuvertures(false); requestAnimationFrame(() => { const e = document.querySelector<HTMLElement>('[data-testid="entree-ouvertures"]'); e?.scrollIntoView({ block: 'center' }); e?.focus({ preventScroll: true }); }); }} /></Suspense>;
 
   const entrees = [
     { cle: 'ouvertures', nom: tentree('titre'), aria: `${tentree('titre')}. ${tentree('texte')}`, visuel: <MiniGoban rows={COIN} />, testId: 'entree-ouvertures',

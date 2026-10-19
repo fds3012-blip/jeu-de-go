@@ -1153,7 +1153,7 @@ export function App() {
         // #646 : à faire, le Go du jour se pose sur l'accueil (activité), et sa sortie y ramène ; fait, l'onglet Problèmes.
         onProbleme={() => { mesurerAccueil('serie', 'goDuJour'); if (duJourFait) go('problemes'); else { par('problemes'); setDuJourDirect(true); } }}
         lecon={leconConseillee && { titre: leconConseillee.title }}
-        onLecon={() => { mesurerAccueil('lecon'); if (leconConseillee) ouvrirLecon(leconConseillee.id); else go('apprendre'); }}
+        onLecon={() => { if (!leconConseillee) return; mesurerAccueil('lecon'); ouvrirLecon(leconConseillee.id); }}
         // Un seul appel à la fois (#236, N4) : pas de carte d'installation le jour où Mochi fait une annonce ;
         // quand elle se montre, la pastille « À faire » s'efface.
         installation={appel === 'installation' ? <ProposerInstallation moment="retour" /> : null}
@@ -1218,6 +1218,8 @@ export function App() {
           : seanceRevisions ? { quoi: 'revisions' }
           : tab === 'jouer' ? (enPlacement ? { quoi: 'placement' } : { quoi: 'accueil' })
             : tab === 'apprendre' && (leconOuverte || themeVu) && !serie3 ? { quoi: 'lecon', titre: leconOuverte ? leconOuverte.title : t(`theme.${themeVu!}`) }
+              // #669 (A9) : le détail « Jouer avec Mochi » porte son nom, pas celui de l'onglet.
+              : tab === 'apprendre' && avecMochi && !serie3 ? { quoi: 'avecMochi' }
               : { quoi: 'onglet', onglet: tab };
   const titreDocument = titreEcran(ecranTitre);
   // #538 : bandeau hors ligne : sur l'accueil (ce qui marche), sur les écrans qui ont besoin du réseau ; mesuré une fois par session.

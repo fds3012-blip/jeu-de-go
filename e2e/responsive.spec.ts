@@ -1,8 +1,9 @@
 import { expect, test, type Page } from '@playwright/test';
 import { versProblemeSuivant } from './problemes';
 import { ouvrirDepuisApprendre } from './decouverte';
-import { passerJusquAuScore, plateau, toucherCta } from './plateau';
+import { choisirMode, passerJusquAuScore, plateau, toucherCta } from './plateau';
 import { demarrerParcours } from './revueFactice';
+import { brancherContexte, fauxServeur, JETON, PARTIE } from './fauxSupabase';
 
 // #619 (lot V0) : garde-fou responsive (docs/ux/visuel-responsive-2026-10.md, principes P5, P6 et P8 de DESIGN.md).
 // Les écrans principaux aux 7 tailles de l'audit, pour un joueur neuf. Pour chacun :
@@ -15,6 +16,7 @@ import { demarrerParcours } from './revueFactice';
 //   aucune barre pendant une partie ;
 // - Jouer (#648, lot V10) : en paysage, le goban à côté du bouton principal, au moins aussi grand qu'avant ; en portrait, au-dessus.
 // - #649 (lot V6) : en paysage, chaque activité en deux zones, le goban à gauche à la hauteur de l'écran, le panneau à droite.
+//   #670 : les parties en ligne aussi (défi, partie lente, en direct, fin d'une partie classée), sur le faux serveur.
 // On ne vérifie que ce qui est vrai aujourd'hui. Ce qui est cassé est dans CONNU, avec le lot qui le corrige :
 // le contrôle y est sauté, et un `test.fixme` le nomme. Un lot qui corrige un cas le retire de CONNU.
 
@@ -30,6 +32,44 @@ const TAILLES = [
 
 type Controle = 'debord' | 'goban' | 'taille' | 'relief' | 'defilement' | 'deuxZones';
 type Ecran = { nom: string; activite: boolean; ouvrir: (page: Page) => Promise<void> };
+
+/** #670 : une partie en ligne, sur le faux serveur (e2e/fauxSupabase.ts), vue par « Florian » (Blanc), à son tour. */
+const MOI = '00000000-0000-4000-8000-0000000006a1';
+const AMI = '00000000-0000-4000-8000-0000000006b2';
+async function partieEnLigne(page: Page, quoi: 'defi' | 'lente' | 'fin' | 'direct') {
+  const s = fauxServeur();
+  s.profiles.push({ id: AMI, username: 'Lea_du_go', rating: 1500, streak_days: 0, streak_last: null, streak_freezes: 0 });
+  const fini = quoi === 'fin';
+  if (quoi === 'direct') {
+    s.games.push({ id: PARTIE, black_id: MOI, white_id: AMI, created_by: AMI, bot_id: null, size: 9, komi: 6.5, rules: 'japanese', handicap: 0, moves: 'eecc',
+      status: 'active', counting: false, dead_stones: null, dead_proposed_by: null, result: null, resumed_at: 0, prive: false, rated: true, updated_at: new Date().toISOString() });
+    s.pendules.push({ partie_id: PARTIE, cadence: 'normale', main_ms: 600000, periodes: 3, periode_ms: 30000, noir_ms: 500000, blanc_ms: 400000,
+      noir_periodes: 3, blanc_periodes: 3, trait_depuis: new Date().toISOString(), comptage_depuis: null, noir_vu_le: null, blanc_vu_le: null });
+  } else {
+    s.games.push({ id: PARTIE, white_id: MOI, black_id: AMI, created_by: MOI, size: 9, komi: 6.5, rules: 'japanese', handicap: 0, moves: fini ? 'eecggctttt' : 'eecggc',
+      status: fini ? 'finished' : 'active', counting: false, dead_stones: null, dead_proposed_by: null, result: fini ? 'W+R' : null, resumed_at: 0, prive: true,
+      rated: quoi !== 'defi', updated_at: new Date().toISOString() });
+    s.defis.push({ partie_id: PARTIE, jeton: JETON, createur_id: MOI, invite_id: AMI, delai_coup: quoi === 'defi' ? '3 days' : '1 day',
+      date_limite: new Date(Date.now() + 20 * 3_600_000).toISOString(), lien_expire_le: new Date(Date.now() + 7 * 864e5).toISOString(), cree_le: new Date().toISOString() });
+    // La fin la plus chargée : partie classée, « +162 » et le grade gagné.
+    if (fini) s.ratingHistory.push({ user_id: MOI, kind: 'game', game_id: PARTIE, rating: 962, ecart: 162, rd: 290, created_at: new Date().toISOString() });
+  }
+  await brancherContexte(page.context(), s, { 'sb-supabase-auth-token': JSON.stringify(s.sessionCompte('florian@exemple.test', 'Florian', MOI)),
+    'go.parties.v1': JSON.stringify({ n: 3 }) });
+  await page.goto('/');
+  if (quoi === 'defi') await page.getByTestId('tuile-defi').click();
+  else {
+    await choisirMode(page, 'en_ligne');
+    if (quoi !== 'direct') {
+      const lente = page.getByTestId('bascule-en-ligne').getByRole('button', { name: 'Partie lente' });
+      if ((await lente.getAttribute('aria-pressed')) !== 'true') await lente.click();
+      await page.locator('.defi-ligne').first().click();
+    }
+  }
+  await expect(plateau(page)).toBeVisible();
+  if (fini) await expect(page.getByTestId('cote-gain')).toBeVisible();
+  else await expect(page.getByRole('toolbar').getByRole('button', { name: 'Passer' })).toBeEnabled();
+}
 
 const onglet = (page: Page, nom: string) => page.getByRole('navigation').getByRole('button', { name: nom, exact: true }).click();
 
@@ -116,6 +156,11 @@ const ECRANS: Ecran[] = [
     await page.getByTestId('tuile-revisions').click();
     await expect(page.locator('.seance-revisions .board-wrap, .lecteur .board-wrap').first()).toBeVisible();
   } },
+  // #670 : les parties en ligne (.defi-partie), leur panneau rangé autrement que celui de la partie contre l'ordi.
+  { nom: 'Défi', activite: true, ouvrir: (page) => partieEnLigne(page, 'defi') },
+  { nom: 'Partie lente', activite: true, ouvrir: (page) => partieEnLigne(page, 'lente') },
+  { nom: 'En direct', activite: true, ouvrir: (page) => partieEnLigne(page, 'direct') },
+  { nom: 'Fin en ligne', activite: true, ouvrir: (page) => partieEnLigne(page, 'fin') },
   { nom: 'Profil', activite: false, ouvrir: async (page) => {
     await page.goto('/');
     await onglet(page, 'Profil');
@@ -131,6 +176,12 @@ const CONNU: Record<string, string> = {
   '390/Revue/defilement': 'revue en portrait',
   '430/Revue/defilement': 'revue en portrait',
   '768/Revue/defilement': 'revue en portrait',
+  // #670 : en portrait, la fin d'une partie en ligne (résultat, cote, liens) défile sous le goban, comme avant. Hors #670,
+  // qui ne touche pas au portrait ; en paysage, elle ne défile plus.
+  '360/Fin en ligne/defilement': 'fin en ligne en portrait',
+  '390/Fin en ligne/defilement': 'fin en ligne en portrait',
+  '430/Fin en ligne/defilement': 'fin en ligne en portrait',
+  '768/Fin en ligne/defilement': 'fin en ligne en portrait',
 };
 
 /** Mesures de la vue : débordement, gobans, reliefs, défilement. */

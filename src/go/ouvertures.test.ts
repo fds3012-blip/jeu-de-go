@@ -34,6 +34,7 @@ function ecart(a: Analyse, x: string, y: string) {
 }
 const L = (o: Ouverture, sgf: string) => toLabel(fromSgf(sgf, o.taille), o.taille);
 const cle = (k: string) => k as CleOuvertures;
+const toSgfDe = (o: Ouverture, p: number) => String.fromCharCode(97 + (p % o.taille), 97 + Math.floor(p / o.taille));
 const FR = CATALOGUE_OUVERTURES.fr, EN = CATALOGUE_OUVERTURES.en;
 /** Textes d'une entrée, dans l'ordre de lecture (sans le nom, qui est un titre). */
 const textesDe = (o: Ouverture, l: typeof FR) => {
@@ -43,9 +44,11 @@ const textesDe = (o: Ouverture, l: typeof FR) => {
 };
 
 describe('répertoire d’ouvertures : forme (#591)', () => {
-  it('8 à 12 entrées, identifiants uniques, en 9 × 9 et en 19 × 19', () => {
-    expect(OUVERTURES.length).toBeGreaterThanOrEqual(8);
-    expect(OUVERTURES.length).toBeLessThanOrEqual(12);
+  it('8 à 12 entrées dans la liste, identifiants uniques, en 9 × 9 et en 19 × 19', () => {
+    // #672 : une ligne prouvée pour une leçon seulement (`repertoire: false`) n'est pas dans la liste.
+    const liste = OUVERTURES.filter(o => o.repertoire !== false);
+    expect(liste.length).toBeGreaterThanOrEqual(8);
+    expect(liste.length).toBeLessThanOrEqual(12);
     expect(new Set(OUVERTURES.map(o => o.id)).size).toBe(OUVERTURES.length);
     expect([...new Set(OUVERTURES.map(o => o.taille))].sort((a, b) => a - b)).toEqual([9, 19]);
   });
@@ -97,7 +100,7 @@ describe('répertoire d’ouvertures : forme (#591)', () => {
       for (const l of [FR, EN]) {
         const ligne = l[cle(`o.${o.id}.ligne`)];
         expect(mots(ligne), ligne).toBeLessThanOrEqual(10);
-        expect(ligne, o.id).not.toMatch(/tengen|hoshi|san-san|kakari|komoku|tsuke|kosumi|fuseki|joseki/i);
+        expect(ligne, o.id).not.toMatch(/tengen|hoshi|san-san|kakari|komoku|tsuke|kosumi|fuseki|joseki|nirensei|sanrensei|moyo|hane/i);
       }
     });
     // Français : le mot japonais, puis son explication (« hoshi (point étoile) », « komoku : … »). Anglais : le mot anglais
@@ -105,9 +108,11 @@ describe('répertoire d’ouvertures : forme (#591)', () => {
     it('chaque mot japonais est expliqué à sa première apparition (FR : « hoshi (point étoile) » ; EN : « star point (hoshi) »)', () => {
       for (const [l, anglais] of [[FR, false], [EN, true]] as const) {
         const texte = textesDe(o, l).join(' ');
-        for (const m of ['tengen', 'hoshi', 'san-san', 'kakari', 'komoku', 'tsuke', 'kosumi', 'fuseki', 'joseki']) {
-          const i = texte.toLowerCase().indexOf(m);
-          if (i < 0) continue;
+        for (const m of ['tengen', 'hoshi', 'san-san', 'kakari', 'komoku', 'tsuke', 'kosumi', 'fuseki', 'shin-fuseki', 'joseki', 'nirensei', 'sanrensei', 'moyo', 'hane']) {
+          // #672 : le mot entier (« fuseki » n'est pas trouvé dans « shin-fuseki », qui a sa propre entrée).
+          const t = texte.toLowerCase().match(new RegExp(`(^|[^\\p{L}-])${m}(?![\\p{L}-])`, 'u'));
+          if (!t) continue;
+          const i = t.index! + t[1].length;
           if (anglais) expect(texte[i - 1], `${o.id} (EN) : ${m} entre parenthèses, après le mot anglais`).toBe('(');
           else expect(texte.slice(i + m.length, i + m.length + 3), `${o.id} : ${m}`).toMatch(/^(,? ?\(| ?:)/);
         }
@@ -172,6 +177,11 @@ describe('jugement KataGo, rejoué', () => {
         if (e.reponse) expect(reps).toEqual(REGLAGES.symetries.map(() => L(o, e.reponse!)));
         else expect(unanime, `${faux} : répliques ${reps.join(', ')}`).toBe(false);
       });
+    });
+    // #672 : une variante (autre bon coup, acceptée par une leçon) passe le même seuil qu'un coup de la séquence.
+    for (const v of o.variantes ?? []) it(`${o.id} : la variante ${L(o, v.c)} est à ${TOLERANCE_DEMO} pt au plus du meilleur coup`, () => {
+      expect(v.c).not.toBe(lue.coups[v.coup] && toSgfDe(o, lue.coups[v.coup].point));
+      expect(bilan(analyse(ps[v.coup].cle)).perte(L(o, v.c))).toBeLessThanOrEqual(TOLERANCE_DEMO);
     });
     for (const x of o.ecartes ?? []) it(`${o.id} : ${L(o, x.c)} est écarté : il perd plus de ${TOLERANCE_DEMO} pt`, () => {
       const p = ps[x.coup], b = bilan(analyse(p.cle));

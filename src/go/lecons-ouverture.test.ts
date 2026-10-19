@@ -184,8 +184,8 @@ describe('positions jouables', () => {
       expect(new Set([...accept, ...refus]).size).toBe(accept.length + refus.length);
     }
   });
-  it('les leçons de grand plateau d’avant #547 ne sont que ces trois-là (l44 : src/go/lecons-41-plus.test.ts ; l47 à l49 : src/go/lecons-47-plus.test.ts)', () => {
+  it('les leçons de grand plateau d’avant #547 ne sont que ces trois-là (l44 : src/go/lecons-41-plus.test.ts ; l47 à l49 : src/go/lecons-47-plus.test.ts ; l50 à l56 : src/go/ouvertures-celebres.test.ts)', () => {
     expect(LESSONS_FR.filter((l: Lesson) => (l.taille ?? 9) !== 9).map(l => l.id).filter(id => Number(id.slice(1)) <= 40)).toEqual(IDS);
-    expect(LESSONS_FR.filter((l: Lesson) => (l.taille ?? 9) !== 9).map(l => l.id).filter(id => Number(id.slice(1)) > 40)).toEqual(['l47', 'l48', 'l49', 'l44']);
+    expect(LESSONS_FR.filter((l: Lesson) => (l.taille ?? 9) !== 9).map(l => l.id).filter(id => Number(id.slice(1)) > 40)).toEqual(['l47', 'l48', 'l49', 'l44', 'l50', 'l51', 'l52', 'l53', 'l54', 'l55', 'l56']);
   });
 });

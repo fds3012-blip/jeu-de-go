@@ -31,7 +31,7 @@ describe('routage selon la réponse', () => {
 
   it('fin de l’introduction → partie de découverte (#524) ; sa fin ramène là où l’on était, sans changer d’onglet (#640)', () => {
     const app = readFileSync(new URL('./App.tsx', import.meta.url), 'utf8');
-    // La fin de l'introduction (« Jouer avec Mochi », « Partie de découverte avec Mochi ») ouvre la vraie partie de découverte.
+    // La fin de l'introduction (« Partie de découverte avec Mochi », #677) ouvre la vraie partie de découverte.
     expect(app).toContain('onDecouverte={() => ouvrirDecouverte(true)}');
     expect(app).toMatch(/function ouvrirDecouverte\(apresIntro = false\) \{[^}]*setDecouverte\(apresIntro \? 'intro' : 'chemin'\)/);
     expect(app).not.toMatch(/function ouvrirDecouverte[^}]*lancerGuidee/);

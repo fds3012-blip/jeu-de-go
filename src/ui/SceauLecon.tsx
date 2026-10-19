@@ -327,6 +327,45 @@ function motif(id: string, W: string, C: string): ReactElement {
       <circle cx="42" cy="62" r="8" fill={W} />
       <circle cx="60" cy="34" r="8" fill={C} stroke={W} strokeWidth="2.6" />
     </>);
+    // #672. Le nirensei : deux étoiles sur un bord.
+    case 'l50': return (<>
+      <path d="M62 24V76" stroke={W} strokeWidth="3" strokeLinecap="round" />
+      <circle cx="62" cy="34" r="8" fill={W} /><circle cx="62" cy="66" r="8" fill={W} />
+    </>);
+    // Le sanrensei : trois étoiles sur un bord.
+    case 'l51': return (<>
+      <path d="M58 22V78" stroke={W} strokeWidth="3" strokeLinecap="round" />
+      <circle cx="58" cy="30" r="7" fill={W} /><circle cx="58" cy="50" r="7" fill={W} /><circle cx="58" cy="70" r="7" fill={W} />
+    </>);
+    // Le shin-fuseki : le san-san dans l'angle, et le centre, creusé.
+    case 'l52': return (<>
+      <path d="M26 24V76H78" stroke={W} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <circle cx="38" cy="64" r="7" fill={W} />
+      <circle cx="62" cy="38" r="9" fill={C} stroke={W} strokeWidth="2.6" />
+    </>);
+    // Le fuseki chinois : un hoshi, un komoku, et la pierre du bord entre eux.
+    case 'l53': return (<>
+      <circle cx="62" cy="30" r="7" fill={W} /><circle cx="70" cy="52" r="6" fill={W} /><circle cx="60" cy="72" r="7" fill={W} />
+      <path d="M30 50H52" stroke={W} strokeWidth="3" strokeLinecap="round" />
+    </>);
+    // La kosumi de Shusaku : deux pierres en diagonale, et l'approche creusée.
+    case 'l54': return (<>
+      <circle cx="40" cy="62" r="9" fill={W} />
+      <circle cx="58" cy="44" r="9" fill={W} />
+      <circle cx="68" cy="70" r="7" fill={C} stroke={W} strokeWidth="2.6" />
+    </>);
+    // L'approche du hoshi : le hoshi, l'approche creusée, et le saut vers le haut.
+    case 'l55': return (<>
+      <circle cx="40" cy="64" r="9" fill={W} />
+      <circle cx="68" cy="66" r="7" fill={C} stroke={W} strokeWidth="2.6" />
+      <path d="M40 48V28M33 35 40 28 47 35" stroke={W} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+    </>);
+    // Le san-san d'AlphaGo : l'angle du goban, le hoshi creusé, la pierre qui entre dessous.
+    case 'l56': return (<>
+      <path d="M26 24V76H78" stroke={W} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <circle cx="54" cy="46" r="9" fill={C} stroke={W} strokeWidth="2.6" />
+      <circle cx="40" cy="62" r="7" fill={W} />
+    </>);
     default: return <circle cx="50" cy="50" r="14" fill={W} />;
   }
 }

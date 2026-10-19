@@ -139,6 +139,7 @@ export const IDS_MOTS = [
   'doubleAtari', 'echelle', 'filet', 'priseEnRetour', 'semeai', 'hane', 'senteGote', 'tesuji', 'joseki',
   'sanSan', 'komoku', 'kakari', 'tsuke', 'kosumi', 'watari', 'tenuki', 'miai',
   'mur', 'couper', 'invasion', 'reduction',
+  'fuseki', 'tengen', 'moyo', 'nirensei', 'sanrensei',
 ] as const;
 export type IdMot = (typeof IDS_MOTS)[number];
 
@@ -190,6 +191,12 @@ export const MOTS: Mot[] = [
   { id: 'couper', lecon: 'l48' },
   { id: 'invasion', lecon: 'l49' },
   { id: 'reduction', lecon: 'l49' },
+  // #672 : les ouvertures célèbres (l50 à l56).
+  { id: 'fuseki', lecon: 'l53' },
+  { id: 'tengen', lecon: 'l52' },
+  { id: 'moyo', lecon: 'l51' },
+  { id: 'nirensei', lecon: 'l50' },
+  { id: 'sanrensei', lecon: 'l51' },
 ];
 
 /**
@@ -208,6 +215,8 @@ export const AUSSI: Record<'fr' | 'en', Partial<Record<IdMot, string[]>>> = {
     tenuki: ["jouer ailleurs", "ne pas répondre"],
     miai: ["deux points", "se répondent"],
     mur: ['épaisseur', 'atsumi'], couper: ['coupe', 'relier', 'point de coupe'], invasion: ['envahir', 'uchikomi'], reduction: ['réduire', 'keshi'],
+    fuseki: ['ouverture', 'début de partie', 'shin-fuseki', 'chinois'], tengen: ['centre', 'point central'], moyo: ['grande zone', 'zone'],
+    nirensei: ['deux étoiles'], sanrensei: ['trois étoiles'],
   },
   en: {
     liberte: ['liberties'], groupe: ['chain', 'string'], prisonnier: ['capture', 'captures'],
@@ -220,6 +229,8 @@ export const AUSSI: Record<'fr' | 'en', Partial<Record<IdMot, string[]>>> = {
     tenuki: ["play elsewhere", "ignore"],
     miai: ["two equal points", "either one"],
     mur: ['thickness', 'atsumi'], couper: ['cutting', 'connect', 'cutting point'], invasion: ['invade', 'uchikomi'], reduction: ['reduce', 'keshi'],
+    fuseki: ['opening', 'whole-board opening', 'shin-fuseki', 'chinese'], tengen: ['center', 'center point'], moyo: ['framework', 'area'],
+    nirensei: ['two-star'], sanrensei: ['three-star'],
   },
 };
 

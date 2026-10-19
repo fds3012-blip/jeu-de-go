@@ -20,11 +20,13 @@ const k = (s: string) => s as CleOuvertures;
 const camp = (c: 1 | 2) => tou(c === 1 ? 'noir' : 'blanc');
 const lignes = (p: Position) => Array.from({ length: p.size }, (_, y) => Array.from({ length: p.size }, (_, x) => '.XO'[p.board[y * p.size + x]]).join(''));
 
-export default function Ouvertures({ onExit }: { onExit: () => void }) {
+/** `onLecon` (#672) : ouvre la leçon qui enseigne une entrée (champ `lecon`). */
+export default function Ouvertures({ onExit, onLecon }: { onExit: () => void; onLecon?: (id: string) => void }) {
   const [taille, setTaille] = useState<9 | 19>(9);
   const [choisie, setChoisie] = useState<Ouverture | null>(null);
-  if (choisie) return <LecteurOuverture key={choisie.id} o={choisie} onExit={() => { setChoisie(null); window.scrollTo({ top: 0 }); }} />;
-  const liste = OUVERTURES.filter(o => o.taille === taille);
+  if (choisie) return <LecteurOuverture key={choisie.id} o={choisie} onLecon={onLecon} onExit={() => { setChoisie(null); window.scrollTo({ top: 0 }); }} />;
+  // #672 : une ligne prouvée pour une leçon seulement (`repertoire: false`) n'est pas dans la liste.
+  const liste = OUVERTURES.filter(o => o.taille === taille && o.repertoire !== false);
   return (
     <div className="ouvertures" data-testid="ouvertures">
       <EnteteEcran titre={tou('titre')} retour={tou('retourApprendre')} onRetour={onExit} />
@@ -58,7 +60,7 @@ export default function Ouvertures({ onExit }: { onExit: () => void }) {
 }
 
 /** Lecteur d'une entrée : `i` coups joués (0 : le départ) ; `erreur` : rang de l'erreur montrée, ou null. */
-function LecteurOuverture({ o, onExit }: { o: Ouverture; onExit: () => void }) {
+function LecteurOuverture({ o, onExit, onLecon }: { o: Ouverture; onExit: () => void; onLecon?: (id: string) => void }) {
   const lue = useMemo(() => lireOuverture(o), [o]);
   const positions = useMemo(() => positionsOuverture(lue), [lue]);
   const [i, setI] = useState(0);
@@ -133,7 +135,13 @@ function LecteurOuverture({ o, onExit }: { o: Ouverture; onExit: () => void }) {
                 {tou('suivant')}<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="m9 5 7 7-7 7" /></svg>
               </button>}
           </div>
-          <button type="button" className="lien ouv-voir-erreur" data-testid="voir-erreur" onClick={voirErreur}>{tou('voirErreur')}</button>
+          {/* #672 : au départ et à la fin de la séquence, la leçon qui enseigne cette ouverture, à côté de l'erreur courante. */}
+          <div className="ouv-liens">
+            <button type="button" className="lien ouv-voir-erreur" data-testid="voir-erreur" onClick={voirErreur}>{tou('voirErreur')}</button>
+            {o.lecon && onLecon && (i === 0 || fin) && (
+              <button type="button" className="lien ouv-lecon" data-testid="ouverture-lecon" onClick={() => onLecon(o.lecon!)}>{tou('lecon')}</button>
+            )}
+          </div>
         </div>
       )}
     </div>

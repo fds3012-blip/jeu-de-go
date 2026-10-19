@@ -466,7 +466,10 @@ export function fauxServeur() {
         // #353 : l'adresse a déjà un compte, comme Supabase (422 `email_exists`).
         return json({ code: 422, error_code: 'email_exists', msg: 'A user with this email address has already been registered' }, 422);
       }
-      if (req.method() === 'PUT') { u.email = (req.postDataJSON() as { email?: string }).email; emailsEnvoyes.push({ email: u.email ?? '', type: 'email_change' }); }
+      // #676 : comme Supabase, l'adresse ne change que si le corps en donne une. `updateUser({ data })` seul (la langue
+      // des e-mails, #473, envoyée à chaque ouverture avec un compte) la gardait sinon `undefined`.
+      const nouvelle = req.method() === 'PUT' ? (req.postDataJSON() as { email?: string }).email : undefined;
+      if (nouvelle !== undefined) { u.email = nouvelle; emailsEnvoyes.push({ email: nouvelle, type: 'email_change' }); }
       return json({ ...userJson(u), new_email: u.email });
     }
     if (chemin === '/auth/v1/logout') return json({});
@@ -586,7 +589,7 @@ export function fauxServeur() {
         return json('envoye');
       }
       if (nom === 'bilan_semaine') {
-        const lundi = (() => { const d = new Date(); d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7)); return d.toISOString().slice(0, 10); })();
+        const lundi = (() => { const j = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Paris', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date()); const d = new Date(`${j}T00:00:00Z`); d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7)); return d.toISOString().slice(0, 10); })(); // heure de Paris, comme l'app
         const parties = games.filter(g => g.status === 'finished' && !g.bot_id && g.black_id && g.white_id && (g.black_id === u.id || g.white_id === u.id));
         const gagne = (g: Ligne) => (String(g.result).startsWith('B+') && g.black_id === u.id) || (String(g.result).startsWith('W+') && g.white_id === u.id);
         const amis = amisDe(u.id).flatMap(id => {
@@ -1052,6 +1055,12 @@ export type FauxServeur = ReturnType<typeof fauxServeur>;
 
 /** Branche un contexte de navigateur (un téléphone) sur le faux serveur, avec un stockage local de départ. */
 export async function brancher(context: BrowserContext, serveur: FauxServeur, stockage: Record<string, string> = {}): Promise<Page> {
+  await brancherContexte(context, serveur, stockage);
+  return context.newPage();
+}
+
+/** #670 : comme `brancher`, pour un contexte qui a déjà sa page (celle d'un test) : elle est branchée à sa prochaine navigation. */
+export async function brancherContexte(context: BrowserContext, serveur: FauxServeur, stockage: Record<string, string> = {}): Promise<void> {
   await context.addInitScript(({ adresse, stockage }) => {
     if (sessionStorage.getItem('e2e.init')) return; // une seule fois : les rechargements gardent l'état
     sessionStorage.setItem('e2e.init', '1');
@@ -1065,7 +1074,6 @@ export async function brancher(context: BrowserContext, serveur: FauxServeur, st
   });
   await context.route(`${SUPABASE}/**`, route => serveur.traiter(route));
   await context.routeWebSocket(/\/realtime\/v1\/websocket/, ws => serveur.brancherTempsReel(ws));
-  return context.newPage();
 }
 
 /** Crée un compte par le code reçu par e-mail, puis choisit le pseudo. */
