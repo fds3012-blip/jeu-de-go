@@ -123,4 +123,7 @@ export const THEMES_DE_LECON: Readonly<Record<string, readonly Theme[]>> = {
   l47: ['ouverture'],
   l48: ['relier-couper'],
   l49: ['ouverture'],
+  // #672 : les ouvertures célèbres (nirensei, sanrensei, shin-fuseki, chinois, kosumi de Shusaku, approche du hoshi,
+  // san-san d'AlphaGo), la série d'ouverture.
+  l50: ['ouverture'], l51: ['ouverture'], l52: ['ouverture'], l53: ['ouverture'], l54: ['ouverture'], l55: ['ouverture'], l56: ['ouverture'],
 };

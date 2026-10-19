@@ -73,11 +73,11 @@ describe('« Par thème » dans Apprendre (#590)', () => {
 });
 
 describe('#652 : sans chemin, chaque leçon reste accessible par un thème', () => {
-  it('les 48 leçons publiées sont dans la page d’au moins un thème de la grille, chacune une fois par thème', () => {
+  it('les 55 leçons publiées sont dans la page d’au moins un thème de la grille, chacune une fois par thème', () => {
     const grille = themesAvecLecons(LESSONS, {});
     const pages = grille.map(x => leconsDuTheme(x.theme, LESSONS).map(l => l.id));
     const atteintes = new Set(pages.flat());
-    expect(LESSONS.length).toBeGreaterThanOrEqual(48);
+    expect(LESSONS.length).toBeGreaterThanOrEqual(55);
     for (const l of LESSONS) expect(atteintes.has(l.id), `${l.id} (${l.title}) n’est dans aucun thème`).toBe(true);
     for (const p of pages) expect(new Set(p).size).toBe(p.length);
   });

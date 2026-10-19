@@ -22,6 +22,7 @@ describe('titre de l’onglet du navigateur (#465)', () => {
     expect(titreEcran({ quoi: 'revisions' })).toBe('Rejouer tes erreurs · Mochi Go');
     expect(titreEcran({ quoi: 'placement' })).toBe('Ton niveau de départ · Mochi Go');
     expect(titreEcran({ quoi: 'decouverte' })).toBe('Partie de découverte · Mochi Go');
+    expect(titreEcran({ quoi: 'avecMochi' })).toBe('Jouer avec Mochi · Mochi Go');
   });
 
   it('suit la langue de l’interface (sans l’anglais chargé, le français reste)', () => {
