@@ -1050,7 +1050,7 @@ export function App() {
       onProgress={() => {}} onExit={() => { setLeconEssai(null); window.scrollTo({ top: 0 }); }} />;
   } else if (tab === 'apprendre' && serie3) {
     activite = true;
-    screen = <SeriePratique problemes={serie3} confirmTouch={settings.confirmTouch} celebrer={settings.celebrations} versTheme={!!themeVu} retour={retourPose} onFin={() => { setSerie3(null); window.scrollTo({ top: 0 }); }} />;
+    screen = <SeriePratique problemes={serie3} confirmTouch={settings.confirmTouch} celebrer={settings.celebrations} theme={themeVu ?? undefined} retour={retourPose} onFin={() => { setSerie3(null); window.scrollTo({ top: 0 }); }} />;
   } else if (tab === 'apprendre' && lesson) {
     activite = true;
     const leconSuivante = LESSONS[LESSONS.indexOf(lesson) + 1];

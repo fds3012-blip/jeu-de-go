@@ -14,15 +14,18 @@ import { EnteteEcran } from '../ui/BoutonRetour';
 import { SceauLecon } from '../ui/SceauLecon';
 import { VignetteLecon } from '../ui/VignetteLecon';
 import { fr } from '../ui/typo';
-import { readLocal } from './hooks';
+import { readLocal, writeLocal } from './hooks';
 import { leconsDuTheme } from './themesApprendre';
 import { etapes, nomLecon } from './apprendre';
 import { MentionCompte } from '../ui/MentionCompte';
 import { t } from '../content/i18n/secondaires';
 import '../ui/apprendre.css';
 
-/** Problèmes réussis sur l'appareil : même clé que SOLVED_KEY de Puzzles.tsx (vérifié par ecrans.test.ts). */
+/** Problèmes réussis et vus sur l'appareil : mêmes clés que SOLVED_KEY et VUS_KEY de Puzzles.tsx (vérifié par ecrans.test.ts). */
 const SOLVED_KEY = 'go.problemes.v1';
+const VUS_KEY = 'go.problemes.vus.v1';
+/** #683 : problèmes déjà proposés par chaque thème, du plus ancien au plus récent (rotation de la série). */
+const PROPOSES_KEY = 'go.themes.proposes.v1';
 
 export function ThemeLecons({ theme, progress, onOpen, onRetour, onSerie, compteRequis = () => false }: {
   theme: Theme; progress: Record<string, number>;
@@ -41,8 +44,12 @@ export function ThemeLecons({ theme, progress, onOpen, onRetour, onSerie, compte
   const entrainer = () => {
     setEtat('charge');
     void Promise.all([import('../content/problemesLocaux'), import('../content/themes')])
-      .then(([{ PROBLEMES_LOCAUX }, { serieDeTheme }]) => {
-        const s = serieDeTheme(theme, PROBLEMES_LOCAUX, new Set(Object.keys(readLocal<Record<string, true>>(SOLVED_KEY, {}))));
+      .then(([{ PROBLEMES_LOCAUX }, { serieDeTheme, noterProposes }]) => {
+        const faits = new Set([SOLVED_KEY, VUS_KEY].flatMap(k => Object.keys(readLocal<Record<string, true>>(k, {}) ?? {})));
+        const tous = readLocal<Record<string, unknown>>(PROPOSES_KEY, {}) ?? {};
+        const proposes = Array.isArray(tous[theme]) ? (tous[theme] as unknown[]).filter((id): id is string => typeof id === 'string') : [];
+        const s = serieDeTheme(theme, PROBLEMES_LOCAUX, faits, undefined, proposes);
+        writeLocal(PROPOSES_KEY, { ...tous, [theme]: noterProposes(proposes, s.map(p => p.id)) });
         // Chaque thème a au moins 3 problèmes (src/content/themes.test.ts) : la série n'est jamais vide.
         setEtat('pret');
         onSerie(s);

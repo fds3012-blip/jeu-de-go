@@ -3,6 +3,7 @@
 // la cote n'est pas en jeu (comme pour « Mes erreurs »). À la fin, retour au chemin des leçons.
 import { useState } from 'react';
 import type { Puzzle } from '../data/puzzles';
+import type { Theme } from '../content/themesLecons';
 import { EVENTS, track } from '../data/analytics';
 import { PuzzlePlayer, SOLVED_KEY, VUS_KEY } from './Puzzles';
 import { readLocal, writeLocal } from './hooks';
@@ -20,14 +21,17 @@ function noter(cle: string, id: string) {
   writeLocal(cle, { ...readLocal<Record<string, true>>(cle, {}), [id]: true });
 }
 
-export function SeriePratique({ problemes, confirmTouch, celebrer = true, onFin, versTheme = false, retour: libelle }: {
+export function SeriePratique({ problemes, confirmTouch, celebrer = true, onFin, theme, retour: libelle }: {
   problemes: Puzzle[]; confirmTouch: boolean; celebrer?: boolean; onFin: () => void;
-  /** #590 : série lancée depuis la page d'un thème, qui y ramène (« Retour au thème »). */
-  versTheme?: boolean;
+  /**
+   * #590 : série lancée depuis la page d'un thème, qui y ramène (« Retour au thème »).
+   * #683 : le surtitre nomme le thème (« Entraînement · Ouverture ») : ce n'est pas une leçon de la liste.
+   */
+  theme?: Theme;
   /** #640 : série d'une leçon posée hors d'Apprendre : « Retour », vers l'écran d'origine. */
   retour?: string;
 }) {
-  const retour = libelle ?? t(versTheme ? 'apprendre.theme.retour' : 'lecon.retourChemin');
+  const retour = libelle ?? t(theme ? 'apprendre.theme.retour' : 'lecon.retourChemin');
   const [i, setI] = useState(0);
   // #236 (N2), suite de #250 (M9) : une fête à la fois. Tant que la feuille « Bravo » est là, le problème reste un
   // exercice (l'XP se lit dans la feuille, rien d'autre ne se pose sur la consigne). Un niveau franchi pendant la
@@ -49,7 +53,7 @@ export function SeriePratique({ problemes, confirmTouch, celebrer = true, onFin,
     <div className="serie-pratique" data-serie={problemes.map(p => p.id).join(' ')} data-rang={i + 1}>
       <PuzzlePlayer key={pz.id} puzzle={pz} rang={i + 1} confirmTouch={confirmTouch}
         // R2 (recette du 30/09) : « Entraînement » et des points de progression, aucun chiffre à l'écran.
-        surtitre={<span className="serie-surtitre">{t('serie.entrainement')}<Etapes total={problemes.length} faites={i} label={t('serie.progression')} /></span>}
+        surtitre={<span className="serie-surtitre">{theme ? t('serie.entrainementTheme', { theme: t(`theme.${theme}`) }) : t('serie.entrainement')}<Etapes total={problemes.length} faites={i} label={t('serie.progression')} /></span>}
         retour={retour}
         rated={false} onAttempt={async () => null}
         onSolved={(_essais, aide) => {
@@ -60,6 +64,10 @@ export function SeriePratique({ problemes, confirmTouch, celebrer = true, onFin,
           // #237 : déjà vu en leçon puis en pratique, il ne revient pas dès demain en révision.
           noterRediteAppareil(pz.id);
         }}
+        // #683 : réponse montrée, le problème est « Vu » (la série du thème ne le repropose pas en premier), et la
+        // feuille garde l'action vers la suite : la série ne s'arrête pas sur « Revoir la suite ».
+        onSolutionVue={() => noter(VUS_KEY, pz.id)}
+        passerApresReponse
         onNext={suivant}
         onExit={quitter} />
     </div>

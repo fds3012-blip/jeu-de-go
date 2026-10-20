@@ -106,12 +106,27 @@ export function serieDeLecon<T extends { id: string; difficulty: number }>(
 
 /**
  * #590 : « S'entraîner sur ce thème », depuis la page d'un thème d'Apprendre : la même série que la fin de leçon
- * (les plus faciles non réussis d'abord), sur ce seul thème. Chaque thème a au moins 3 problèmes (themes.test.ts).
+ * (les plus faciles non faits d'abord), sur ce seul thème. Chaque thème a au moins 3 problèmes (themes.test.ts).
+ *
+ * #683 : `faits` compte les problèmes réussis et vus (réponse montrée). `proposes` : les problèmes déjà proposés par ce
+ * thème, du plus ancien au plus récent (`noterProposes`). Ils passent après les autres, les plus anciens d'abord : un
+ * nouveau lancement ne recommence pas par le même problème, même si le premier n'a été ni réussi ni vu.
  */
 export function serieDeTheme<T extends { id: string; difficulty: number }>(
-  theme: Theme, liste: readonly T[], reussis: ReadonlySet<string>, n = TAILLE_SERIE,
+  theme: Theme, liste: readonly T[], faits: ReadonlySet<string>, n = TAILLE_SERIE, proposes: readonly string[] = [],
 ): T[] {
-  return serieDeThemes([theme], liste, reussis, n);
+  const age = new Map(proposes.map((id, i) => [id, i]));
+  const ordre = serieDeThemes([theme], liste, faits, Infinity);
+  const revus = ordre.filter(p => age.has(p.id)).sort((a, b) => age.get(a.id)! - age.get(b.id)!);
+  return [...ordre.filter(p => !age.has(p.id)), ...revus].slice(0, n);
+}
+
+/**
+ * #683 : met à jour les problèmes proposés d'un thème après une série. Le premier de la série devient le plus récent :
+ * même dans un thème de 3 problèmes, le lancement suivant commence par un autre.
+ */
+export function noterProposes(proposes: readonly string[], serie: readonly string[]): string[] {
+  return [...proposes.filter(id => !serie.includes(id)), ...serie.slice(1), ...serie.slice(0, 1)];
 }
 
 function serieDeThemes<T extends { id: string; difficulty: number }>(
