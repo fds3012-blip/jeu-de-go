@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ALL_PUZZLES } from './puzzles';
 import { LESSONS } from './lessons';
-import { OUVERT_DEBUTANT, THEME_DU_PROBLEME, THEMES, THEMES_DE_LECON, TAILLE_SERIE, serieDeLecon, serieDeTheme, themeDe } from './themes';
+import { OUVERT_DEBUTANT, THEME_DU_PROBLEME, THEMES, THEMES_DE_LECON, TAILLE_SERIE, serieDeLecon, serieDeTheme, noterProposes, themeDe } from './themes';
 import { traduire } from './i18n';
 
 describe('thèmes des problèmes (#200)', () => {
@@ -74,6 +74,45 @@ describe('série de fin de leçon', () => {
     expect(serieDeTheme('capture', liste, new Set(['a01', 'a02', 'a03'])).map(p => p.id)).toEqual(['a06', 'a01', 'a02']);
     expect(serieDeTheme('echelle', liste, new Set()).map(p => p.id)).toEqual(['i09', 'k03']);
     expect(serieDeTheme('seki', liste, new Set())).toEqual([]);
+  });
+
+  it('#683 : un nouveau lancement ne recommence jamais par le même problème (Ouverture, vraie banque)', () => {
+    const ids = (s: { id: string }[]) => s.map(p => p.id);
+    // Florian : x04 « Le coin libre » ni réussi ni vu (réponse montrée puis sortie) : avant, il revenait en tête à chaque fois.
+    let proposes: string[] = [];
+    const premiers: string[] = [];
+    for (let i = 0; i < 5; i++) {
+      const s = ids(serieDeTheme('ouverture', ALL_PUZZLES, new Set(), TAILLE_SERIE, proposes));
+      expect(s, `lancement ${i + 1}`).toHaveLength(3);
+      expect(new Set(s).size).toBe(3);
+      if (premiers.length) expect(s[0], `lancement ${i + 1}`).not.toBe(premiers[premiers.length - 1]);
+      premiers.push(s[0]);
+      proposes = noterProposes(proposes, s);
+    }
+    expect(premiers.slice(0, 2)).toEqual(['x04', 'x07']);
+    // Les jamais proposés passent d'abord, puis les plus anciens : x04 x05 x06, puis x07 x08 et x05.
+    expect(ids(serieDeTheme('ouverture', ALL_PUZZLES, new Set(), TAILLE_SERIE, noterProposes([], ['x04', 'x05', 'x06'])))).toEqual(['x07', 'x08', 'x05']);
+  });
+
+  it('#683 : les problèmes vus (réponse montrée) passent après les autres, comme les réussis', () => {
+    expect(serieDeTheme('ouverture', ALL_PUZZLES, new Set(['x04'])).map(p => p.id)).toEqual(['x05', 'x06', 'x07']);
+  });
+
+  it('#683 : thème de 3 problèmes, chaque lancement commence par un autre', () => {
+    const trois = [pb('w07', 300), pb('w08', 320), pb('w09', 340)];
+    let proposes: string[] = [];
+    const premiers: string[] = [];
+    for (let i = 0; i < 3; i++) {
+      const s = serieDeTheme('comptage', trois, new Set(), TAILLE_SERIE, proposes).map(p => p.id);
+      expect(s).toHaveLength(3);
+      premiers.push(s[0]);
+      proposes = noterProposes(proposes, s);
+    }
+    expect(premiers).toEqual(['w07', 'w08', 'w09']);
+  });
+
+  it('#683 : chaque thème a au moins 2 problèmes, donc la rotation change toujours le premier', () => {
+    for (const t of THEMES) expect(serieDeTheme(t, ALL_PUZZLES, new Set(), Infinity).length, t).toBeGreaterThanOrEqual(2);
   });
 
   it('leçon 3 : un problème de chaque piège', () => {

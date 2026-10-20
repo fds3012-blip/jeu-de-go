@@ -968,6 +968,7 @@ export const frEcrans = {
   'lecon.suivanteTitre': 'Leçon suivante : {titre}',
   'lecon.retourChemin': 'Retour à Apprendre',
   'serie.entrainement': 'Entraînement',
+  'serie.entrainementTheme': 'Entraînement · {theme}',
   'serie.progression': "Progression de l'entraînement",
 
   // Étape 5 (#167) : Apprendre, lecteur de leçon, compte, confidentialité, messages restants. Textes d'interface seulement :

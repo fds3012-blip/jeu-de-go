@@ -111,3 +111,37 @@ test('« S’entraîner sur ce thème » : 3 problèmes du thème, puis retour a
   await page.getByRole('button', { name: 'Retour au thème', exact: true }).click();
   await expect(page.getByRole('heading', { level: 2, name: 'Capture' })).toBeVisible();
 });
+
+// #683 (Florian) : Ouverture, la réponse montrée au 1er problème arrêtait la série (« Revoir la suite » seul), et le
+// lancement suivant reprenait « Le coin libre ». La série enchaîne ses 3 problèmes, puis un autre lancement en commence un autre.
+test('« S’entraîner sur ce thème » (Ouverture) : 3 problèmes même après « Voir la réponse », puis un autre départ', async ({ page }) => {
+  await apprendre(page, {});
+  const carte = page.getByTestId('par-theme').getByRole('button', { name: /^Ouverture,/ });
+  await carte.scrollIntoViewIfNeeded();
+  await carte.click();
+  await page.getByRole('button', { name: 'S’entraîner sur ce thème' }).click();
+  const serie = page.locator('.serie-pratique');
+  await expect(serie).toHaveAttribute('data-serie', 'x04 x05 x06');
+  // Le surtitre dit d'où vient l'exercice : un entraînement du thème, pas une leçon de la liste.
+  await expect(page.locator('.serie-surtitre')).toContainText('Entraînement · Ouverture');
+  // x04 : erreur, indice, erreur, pourquoi, puis la réponse.
+  await jouer(page, 'G7', 13);
+  await page.getByRole('button', { name: 'Voir un indice' }).click();
+  await jouer(page, 'G7', 13);
+  await page.getByRole('button', { name: 'Voir pourquoi' }).click();
+  await page.getByRole('button', { name: 'Voir la réponse' }).click();
+  await expect(page.locator('[data-pourquoi-probleme]')).toBeVisible();
+  await expect(page.locator('.rejoue-plateau')).toBeVisible();
+  await page.getByRole('button', { name: 'Problème suivant' }).click();
+  await expect(serie).toHaveAttribute('data-rang', '2');
+  await jouer(page, 'D4', 13);
+  await page.getByRole('button', { name: 'Problème suivant' }).click();
+  await expect(serie).toHaveAttribute('data-rang', '3');
+  await jouer(page, 'K4', 13);
+  await expect(page.locator('.verdict')).toBeVisible();
+  await page.locator('.verdict').getByRole('button', { name: 'Retour au thème' }).click();
+  await expect(page.getByRole('heading', { level: 2, name: 'Ouverture' })).toBeVisible();
+  // 2e lancement : x04 (vu) et x05, x06 (réussis) passent après les autres ; la série ne recommence pas par x04.
+  await page.getByRole('button', { name: 'S’entraîner sur ce thème' }).click();
+  await expect(serie).toHaveAttribute('data-serie', 'x07 x08 x05');
+});

@@ -751,7 +751,7 @@ type Cadre = { pos: Position; legende: string; croix?: number; zone?: number[] }
 /** Temps pendant lequel la réponse de l'adversaire reste sur le plateau après une erreur (#237, N6). */
 const DUREE_ERREUR = 2200;
 
-export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPremierEssai, onEssai, onAttempt, onSolved, onNext, onExit, onSolutionVue, onErreurComprise, onSolutionComplete, retour, surtitre, suivant, exercice = true, signaler, invitation, annonce, difficulte = true }: {
+export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPremierEssai, onEssai, onAttempt, onSolved, onNext, onExit, onSolutionVue, onErreurComprise, onSolutionComplete, retour, surtitre, suivant, exercice = true, signaler, invitation, annonce, difficulte = true, passerApresReponse = false }: {
   puzzle: Puzzle; rang: number; duJour?: DuJourInfo; confirmTouch: boolean; rated: boolean;
   /** Chaque essai joué (coup légal), réussi ou non (#369 : essais du Go du jour comptés par le serveur). */
   onEssai?: (ok: boolean) => void;
@@ -779,6 +779,11 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
   annonce?: ReactNode;
   /** #592 : difficulté dans l'en-tête (vrai par défaut ; l'onglet Problèmes ne la montre que quand elle change). */
   difficulte?: boolean;
+  /**
+   * #683 : série d'entraînement. La réponse montrée, la feuille garde l'action vers la suite (« Problème suivant », ou le
+   * retour au dernier problème) : la série ne s'arrête pas sur « Revoir la suite ». Le plateau reste rejouable.
+   */
+  passerApresReponse?: boolean;
 }) {
   // #236 (N2) : un problème est un exercice ; aucune fête ne se pose sur sa consigne (l'XP se lit dans la feuille).
   useExercice(exercice);
@@ -988,7 +993,7 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
             <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="m9 5 7 7-7 7" /></svg>
           </button>
         </div>
-        {fin && solvedNow && (apprendreBtn ?? suivantBtn)}
+        {fin && (solvedNow || passerApresReponse) && (apprendreBtn ?? suivantBtn)}
       </>}>
         <p className="solution-etape">{tr('solution.etape', { n: replay.frame, total: replay.total })}</p>
         <p data-solution-legende="">{fr(cadre.legende)}</p>
@@ -999,7 +1004,7 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
   } else if (replay) {
     verdict = (
       // #492 : la feuille se remesure à la fin de la suite (l'explication est plus longue que « Coup 1 sur 4 »).
-      <Verdict ton="neutre" cle={replayDone ? 'fin' : 'suite'} actions={solvedNow
+      <Verdict ton="neutre" cle={replayDone ? 'fin' : 'suite'} actions={solvedNow || (passerApresReponse && replayDone)
         ? <>{apprendreBtn ?? suivantBtn}<button className="lien" onClick={showLine} disabled={!replayDone}>{tr('pb.revoirSuite')}</button></>
         : <button className="lien" onClick={showLine} disabled={!replayDone}>{tr('pb.revoirSuite')}</button>}>
         {replayDone && puzzle.pourquoi ? <>
@@ -1010,7 +1015,10 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
           {cadre?.zone?.length ? <p className="muted small" data-zone="">{fr(tr('pq.zoneCarres'))}</p> : null}
         </> : replayDone && !solvedNow
           // #497 : réponse montrée d'un problème classique : pourquoi c'est la réponse (texte de solution, ou fait calculé).
-          ? <p data-pourquoi-probleme="">{fr(texteReponseVue(puzzle))}</p>
+          ? <>
+              <p data-pourquoi-probleme="">{fr(texteReponseVue(puzzle))}</p>
+              {passerApresReponse && <p className="muted small rejoue-plateau">{fr(tr('pb.rejouePlateau'))}</p>}
+            </>
           : <p>{replayDone ? tr('pb.suiteFinie') : cadre?.legende ? fr(cadre.legende) : tr('pb.suiteCoup', { n: replay.frame, total: replay.total })}</p>}
       </Verdict>
     );

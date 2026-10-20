@@ -1155,6 +1155,7 @@ export const en = {
   'lecon.suivanteTitre': 'Next lesson: {titre}',
   'lecon.retourChemin': 'Back to Learn',
   'serie.entrainement': 'Practice',
+  'serie.entrainementTheme': 'Practice · {theme}',
   'serie.progression': 'Practice progress',
   'theme.capture': 'Capture',
   'theme.atari': 'Atari',
