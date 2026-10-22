@@ -127,6 +127,12 @@ function Difficulte({ d }: { d: number }) {
   );
 }
 
+/**
+ * #685 (N3, A8) : liste ouverte (« Par thème », « Tous les problèmes ») quand l'écran s'est démonté (changement d'onglet),
+ * retrouvée au retour. L'onglet actif touché (`racine`) la referme.
+ */
+let listeGardee = { tous: false, parTheme: false };
+
 /** Onglet Problèmes : problème du jour, problèmes de base, cote problèmes et série de jours. */
 export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, lien = null, onDuJour, celebrer = true, racine = 0, onApprendre, essai, depuisRappel = false, rappelAmi = false, onActivite, retour, erreurs }: Props) {
   /** Ouvre un problème ; hors Go du jour pendant l'essai sans compte, c'est « Crée ton compte » qui s'ouvre (#343). */
@@ -156,11 +162,12 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   const [defiChange] = useState(() => lien !== null && archive === null && lien !== numero);
   const [retry, setRetry] = useState(0);
   // Liste « Tous les problèmes » ouverte (#196) ; on y revient après un problème ouvert depuis la grille.
-  const [tous, setTous] = useState(false);
+  const [tous, setTous] = useState(() => !lien && !depuisRappel && listeGardee.tous);
   // Course aux problèmes (#287) : consigne, course et fin, à la place de la liste.
   const [course, setCourse] = useState(false);
   // #653 : détail « Par thème » (grille des séries et « Tous les problèmes »), ouvert depuis le sommaire.
-  const [parTheme, setParTheme] = useState(false);
+  const [parTheme, setParTheme] = useState(() => !lien && !depuisRappel && listeGardee.parTheme);
+  useEffect(() => { listeGardee = { tous, parTheme }; }, [tous, parTheme]);
   // Problèmes par thème (#471) : série ouverte, réussites d'affilée et record de chaque série (sur l'appareil).
   const [serieTheme, setSerieTheme] = useState<SerieTheme | null>(null);
   const [etatThemes, setEtatThemes] = useState<EtatSeriesThemes>(() => nettoyerSeries(readLocal<unknown>(SERIES_THEMES_KEY, null)));

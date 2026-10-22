@@ -222,6 +222,11 @@ export function App() {
   const [poses, setPoses] = useState<Pose[]>([]);
   const ecran = useRef<ReactNode>(null);
   const defiler = useRef<Pose | null>(null);
+  // #685 (N3, A8) : défilement laissé par chaque onglet quitté (Apprendre, Problèmes, Profil), retrouvé au retour, et
+  // défilement à poser après un changement d'onglet. Ce que `go` lit au moment de l'appel (écrit à chaque rendu).
+  const defilements = useRef<Partial<Record<Tab, number>>>({});
+  const defilerOnglet = useRef<number | null>(null);
+  const vif = useRef<{ tab: Tab; poses: Pose[]; plein: boolean }>({ tab: 'jouer', poses: [], plein: false });
   const [duJourOuvert, setDuJourOuvert] = useState(false);
   // #646 : un problème ou une course ouverts dans Problèmes (plein écran, sans barre du bas).
   const [activitePb, setActivitePb] = useState(false);
@@ -243,6 +248,8 @@ export function App() {
   const [themeVu, setThemeVu] = useState<Theme | null>(null);
   // #652 (A13) : détail « Jouer avec Mochi » ouvert depuis le sommaire d'Apprendre ; la découverte et la guidée y ramènent.
   const [avecMochi, setAvecMochi] = useState(false);
+  // #685 (N3) : Ouvertures ouvertes depuis le sommaire d'Apprendre ; gardées quand on change d'onglet.
+  const [ouverturesVu, setOuverturesVu] = useState(false);
   useEffect(() => {
     if (!(import.meta.env.VITE_E2E || import.meta.env.DEV) || !LECON_ESSAI) return;
     void import('../../content/lessons.essai.js').then(m => {
@@ -441,7 +448,7 @@ export function App() {
   /** Depuis l'accueil : annule la recherche, ou ouvre la partie trouvée. */
   const quitterDepuisAccueil = useCallback((db: NonNullable<typeof supabase>) => {
     void quitterRecherche(db).then(id => { if (id) { go('jouer'); setDefi({ vue: 'partie', id }); } });
-  }, [quitterRecherche]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [quitterRecherche]);
   // Hors ligne : l'annulation est refaite d'elle-même au retour de la connexion.
   useEffect(() => {
     const db = supabase;
@@ -449,11 +456,13 @@ export function App() {
     return auRetourEnLigne(() => quitterDepuisAccueil(db));
   }, [quitterEchec, supabase, quitterDepuisAccueil]);
   // En quittant la page publique de la politique, l'adresse redevient celle de l'app.
+  // #685 : le Profil garde sa sous-vue quand on change d'onglet ; l'adresse suit l'écran affiché.
+  const surConditions = tab === 'profil' && vueProfil === 'conditions';
   useEffect(() => {
-    if (vueProfil !== 'conditions' && /^\/confidentialite\/?$/.test(location.pathname)) {
+    if (!surConditions && /^\/confidentialite\/?$/.test(location.pathname)) {
       try { history.replaceState(history.state, '', '/' + location.search); } catch { /* adresse inchangée */ }
     }
-  }, [vueProfil]);
+  }, [surConditions]);
   // Installation (#214) : proposée sur l'accueil à partir du 2e retour (jour d'ouverture distinct), une seule fois.
   const [ouverture] = useState(() => noterOuverture(numeroDuJour(new Date())));
   // #437 : compteur anonyme du premier écran (quel que soit l'écran : accueil, lien de défi…), au tout premier lancement.
@@ -543,6 +552,7 @@ export function App() {
     if (maison === tab && !rendre && (!a || activite)) return;
     if (maison !== tab && poses.some(p => p.onglet === maison)) { go(maison); return; }
     const f = document.activeElement, a2 = maison === tab;
+    if (!a2) delete defilements.current[maison]; // #685 : l'écran posé ne reprend pas le défilement gardé par sa maison
     pbVu.current = false;
     setPoses([...poses, { onglet: tab, maison, el: a2 ? null : ecran.current, y: window.scrollY, f, t: f?.textContent, rendre, a: a2 }]); setTab(maison);
   }
@@ -752,11 +762,28 @@ export function App() {
   // partagé ou un rappel, au lieu de la liste (un toucher de moins). Fait, elle mène à l'onglet Problèmes.
   const [duJourDirect, setDuJourDirect] = useState(false);
   const go = (t: Tab) => {
+    // Lu au moment de l'appel : `go` peut venir d'un rappel créé lors d'un rendu plus ancien.
+    const v = vif.current;
     setDuJourDirect(false);
     setIntroRegles(null); // #523
-    if (t === 'problemes' && tab === 'problemes') setRacineProblemes(n => n + 1);
-    setPoses([]); setDefi(null); setDirect(false); setLente(false); setRepli(null); setEcranCompte(null); setAnnonceGel(null); setRetourSerie(null); setEnPlacement(false); setTab(t); setPlaying(false); setLessonId(null); setSerie3(null); setVueProfil('menu'); setPartagee(null); window.scrollTo({ top: 0 });
-    setSeanceRevisions(false); setThemeVu(null); setAvecMochi(false); // #469, #590, #652
+    if (t === 'problemes' && v.tab === 'problemes') setRacineProblemes(n => n + 1);
+    // #685 (N3, A8) : l'onglet quitté garde sa page (thème, Jouer avec Mochi, Ouvertures, sous-vue du Profil, listes de
+    // Problèmes) et son défilement, sauf Jouer, une activité et un écran posé. Toucher l'onglet déjà actif ramène à sa
+    // racine (Problèmes : par `racineProblemes`).
+    const d = defilements.current;
+    const neuf = (o: Tab) => {
+      delete d[o];
+      if (o === 'apprendre') { setThemeVu(null); setAvecMochi(false); setOuverturesVu(false); } // #590, #652
+      else if (o === 'profil') setVueProfil('menu');
+    };
+    if (t === v.tab) neuf(t);
+    else if (v.tab !== 'jouer' && v.poses.length === 0 && !v.plein) d[v.tab] = window.scrollY;
+    else neuf(v.tab);
+    for (const p of v.poses) neuf(p.maison);
+    defilerOnglet.current = t !== v.tab ? d[t] ?? 0 : 0;
+    delete d[t];
+    setPoses([]); setDefi(null); setDirect(false); setLente(false); setRepli(null); setEcranCompte(null); setAnnonceGel(null); setRetourSerie(null); setEnPlacement(false); setTab(t); setPlaying(false); setLessonId(null); setSerie3(null); setPartagee(null);
+    setSeanceRevisions(false); // #469
     setDecouverte(false); // #524
   };
   /**
@@ -833,6 +860,7 @@ export function App() {
     setIntroRegles(null); // #523
     setPoses([]); setDefi(null); setDirect(false); setLente(false); setRepli(null); setEcranCompte(null); setEnPlacement(false); setTab('jouer'); setPlaying(false); setLessonId(null); setSerie3(null); setVueProfil('menu'); setPartagee(null);
     setSeanceRevisions(false); // #469
+    setThemeVu(null); setAvecMochi(false); setOuverturesVu(false); defilements.current = {}; // #685 : l'erreur venait peut-être d'une page gardée
     window.scrollTo({ top: 0 });
   }, []);
   const online = useOnline();
@@ -1094,7 +1122,7 @@ export function App() {
     // (le sommaire retrouve son défilement et l'entrée touchée : Learn.tsx).
     screen = <LearnHome progress={progress} onOpen={ouvrirLecon} sync={syncState} onRegles={() => ouvrirIntro('complete', 'apprendre')}
       onMochi={() => setAvecMochi(true)}
-      onTheme={setThemeVu}
+      onTheme={setThemeVu} ouvertures={ouverturesVu} onOuvertures={setOuverturesVu}
       compteRequis={compteRequisLecon} />;
   } else if (tab === 'problemes') {
     activite = activitePb;
@@ -1207,6 +1235,7 @@ export function App() {
   const ongletVu = poses[0]?.onglet ?? tab;
   const caches = poses.filter(p => !p.a);
   const plein = enPartie || ecranPlein || activite;
+  vif.current = { tab, poses, plein };
   const horsAide = playing || enPlacement || defi !== null || direct || decouverte || !!introRegles;
   // #465 (WCAG 2.4.2) : le titre de l'onglet du navigateur suit l'écran affiché.
   const leconOuverte = leconEssai ?? lesson;
@@ -1243,6 +1272,19 @@ export function App() {
   // #640 (A6) : l'écran d'origine retrouvé, à l'endroit où on l'avait laissé.
   // Le focus revient sur ce qui a ouvert l'écran posé (clavier, lecteur d'écran).
   useLayoutEffect(() => {
+    // #685 : l'onglet retrouvé, à son défilement (0 pour un onglet repris de sa racine). Un écran encore court (morceau
+    // ou données en route) est attendu quelques images, sans jamais reprendre la main une fois la hauteur atteinte.
+    const y = defilerOnglet.current; defilerOnglet.current = null;
+    if (y !== null) {
+      window.scrollTo(0, y);
+      let n = 0;
+      const encore = () => {
+        if (window.scrollY >= y - 1 || ++n > 30) return;
+        if (document.documentElement.scrollHeight - window.innerHeight >= y) { window.scrollTo(0, y); return; }
+        requestAnimationFrame(encore);
+      };
+      if (y > 0) requestAnimationFrame(encore);
+    }
     const p = defiler.current; defiler.current = null;
     if (!p) return;
     window.scrollTo(0, p.y);

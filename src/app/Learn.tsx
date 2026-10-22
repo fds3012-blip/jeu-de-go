@@ -62,7 +62,7 @@ function quitter(entree: string) {
  * `compteRequis` (#343) : vrai si la leçon de ce rang (0 = leçon 1) demande un compte. Sans compte, les leçons 1 à 3 sont libres ;
  * les suivantes restent touchables, portent le verrou « compte », et `onOpen` ouvre la création de compte (garde d'App.tsx).
  */
-export function LearnHome({ progress, onOpen, sync = 'local', compteRequis = () => false, onRegles, onMochi, onTheme }: {
+export function LearnHome({ progress, onOpen, sync = 'local', compteRequis = () => false, onRegles, onMochi, onTheme, ouvertures: ouvertesApp, onOuvertures }: {
   progress: Progression; onOpen: (id: string) => void; sync?: SyncState; compteRequis?: (rang: number) => boolean;
   /** #523 : « Revoir les règles » (l'introduction interactive). */
   onRegles?: () => void;
@@ -70,11 +70,15 @@ export function LearnHome({ progress, onOpen, sync = 'local', compteRequis = () 
   onMochi?: () => void;
   /** #590 : la grille « Par thème » ; ouvre la page du thème, d'où s'ouvrent ses leçons. */
   onTheme?: (theme: Theme) => void;
+  /** #685 (N3) : Ouvertures ouvertes, tenu par App.tsx pour survivre à un changement d'onglet. */
+  ouvertures?: boolean; onOuvertures?: (ouvertes: boolean) => void;
 }) {
   const liste = etapes(LESSONS, progress);
   const iEnCours = liste.findIndex(e => e.etat === 'encours');
   const bouton = boutonChemin(LESSONS, progress);
-  const [ouvertures, setOuvertures] = useState(false);
+  const [ouvertesIci, setOuvertesIci] = useState(false);
+  const ouvertures = ouvertesApp ?? ouvertesIci;
+  const setOuvertures = onOuvertures ?? setOuvertesIci;
   useLayoutEffect(() => {
     const q = quitte;
     quitte = null;
