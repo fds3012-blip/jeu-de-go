@@ -49,7 +49,8 @@ describe('leçons 13 à 16 : place dans le programme (#16)', () => {
     expect(c.c4.lecons.map(l => l.id).slice(0, 4)).toEqual(['l12', 'l13', 'l14', 'l17']);
     expect(c.c5.titre).toBe('Fin de partie et comptage');
     expect(c.c5.lecons.map(l => l.id).slice(0, 2)).toEqual(['l15', 'l16']);
-    expect([c.c4.complet, c.c5.complet]).toEqual([false, false]);
+    // #686 : chapitres complets.
+    expect([c.c4.complet, c.c5.complet]).toEqual([true, true]);
   });
   it('chaque consigne tient en 12 mots ; chaque geste « pose » est sur le point vert', () => {
     for (const id of IDS) lecon(id).steps.forEach((s, i) => {

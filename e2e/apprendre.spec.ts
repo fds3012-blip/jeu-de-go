@@ -367,7 +367,7 @@ test('leçon 8 : bien commencer sur 9 × 9, du sommaire à la fin de leçon', as
   await expect(page.getByText(/Bien étendu/)).toBeVisible();
   await page.getByRole('button', { name: 'Terminer la leçon' }).click();
 
-  // Chapitre en cours d'écriture : la leçon 8 ne le ferme pas, fin de leçon classique (pas de partie contre Pomme).
+  // La leçon 8 ne ferme pas « L'ouverture » : fin de leçon classique (pas de partie contre Pomme).
   // #16, lot X : sa série d'ouverture (13 × 13) y est l'action principale, comme pour les leçons 9 à 16.
   await expect(page.getByRole('heading', { name: 'Leçon terminée' })).toBeVisible();
   await expect(page.getByText(/coins, bords, puis centre/)).toBeVisible();

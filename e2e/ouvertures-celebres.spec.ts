@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { jouer, plateau } from './plateau';
-import { LESSONS_FR, type LessonStep } from '../src/content/lessons';
+import { CHAPITRES, LESSONS_FR, type LessonStep } from '../src/content/lessons';
 import { ACQUIS } from '../src/content/acquis';
 import { OUVERTURES } from '../src/content/ouvertures';
 import { CATALOGUE_OUVERTURES } from '../src/content/i18n/ouvertures';
@@ -79,8 +79,9 @@ test('leçon 56, le san-san d’AlphaGo, ouverte depuis le thème Ouverture et j
   await page.screenshot({ path: `${CAPTURES}/l56-fin-390-sombre.png` });
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   await continuer('Terminer la leçon');
-  await expect(page.getByRole('heading', { name: 'Leçon terminée' })).toBeVisible();
-  await expect(page.getByText(norm(ACQUIS.l56))).toBeVisible();
+  // #686 : l56 ferme « Les ouvertures célèbres », chapitre complet : « Chapitre terminé » et la phrase du chapitre.
+  await expect(page.getByRole('heading', { name: 'Chapitre terminé' })).toBeVisible();
+  await expect(page.locator('.fin-acquis')).toHaveText(`${norm(ACQUIS.l56)} ${CHAPITRES.at(-1)!.fin}`);
 });
 
 test('le répertoire mène à la leçon de son ouverture ; la ligne propre à une leçon n’est pas dans la liste', async ({ page }) => {
