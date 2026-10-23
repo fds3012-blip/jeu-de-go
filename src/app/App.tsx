@@ -62,7 +62,8 @@ import { ProposerInstallation, usePlateformeInstallation } from '../ui/ProposerI
 import { doitProposer, estMomentRetour, etatInstallation, noterOuverture } from './installation';
 import { ANNONCE_DU_JOUR_KEY, appelSecondaire, etatTuile, lireJourAnnonce } from './appelsAccueil';
 // #563 : la série de fin de leçon (src/content/themes.ts, redites.ts) arrive quand on la demande ; ici, les thèmes seulement.
-import { THEMES_DE_LECON } from '../content/themesLecons';
+import { THEMES, THEMES_DE_LECON } from '../content/themesLecons';
+import { cheminDe, lireAdresse, type Adresse } from './adresses';
 import type { Puzzle } from '../data/puzzles';
 import { compteDe, estAnonyme } from '../data/defiLien';
 import { INVITEUR_AU_CHARGEMENT, JETON_AU_CHARGEMENT, ecouterJetonDefi } from './adresseDefi';
@@ -193,6 +194,12 @@ let accordAuRetour = !!RETOUR_GOOGLE?.conditions && !ERREUR_GOOGLE;
 // (Google la demande pour son écran de consentement). Réécriture vers l'app : vercel.json.
 const PAGE_CONFIDENTIALITE = typeof location !== 'undefined' && /^\/confidentialite\/?$/.test(location.pathname);
 
+// #688 (N8) : l'adresse de l'écran (src/app/adresses.ts), lue au chargement : un rechargement ou un lien rouvre le même
+// écran. Un lien d'avant (Go du jour, rappel, défi, partie partagée, retour d'un fournisseur, politique) garde la main.
+const ADRESSE = typeof location !== 'undefined' && !PAGE_CONFIDENTIALITE && !RETOUR_GOOGLE && LIEN_DU_JOUR === null && !ARRIVEE_RAPPEL
+  && LIEN_DEFI === null && PARTIE_AU_CHARGEMENT === null ? lireAdresse(location.pathname, THEMES) : null;
+const LECON_DE_L_ADRESSE = ADRESSE?.lecon && LESSONS.some(l => l.id === ADRESSE.lecon) ? ADRESSE.lecon : null;
+
 /** Écran du défi par lien : liste et création, arrivée par le lien (avec le pseudo de qui invite), ou partie. */
 type VueDefi = { vue: 'liste' } | { vue: 'arrivee'; jeton: string; inviteur: string | null } | { vue: 'partie'; id: string };
 
@@ -216,7 +223,7 @@ interface DemandeDirect { taille: 9 | 13 | 19; cadence: 'rapide' | 'normale' | '
 interface Repli { contre: OpponentId; demande: DemandeDirect; depuis: number; veille: boolean }
 
 export function App() {
-  const [tab, setTab] = useState<Tab>(PAGE_CONFIDENTIALITE || (RETOUR_GOOGLE?.profil && !ECRAN_COMPTE_AU_RETOUR && !DEFI_AU_RETOUR) ? 'profil'
+  const [tab, setTab] = useState<Tab>(ADRESSE ? ADRESSE.onglet : PAGE_CONFIDENTIALITE || (RETOUR_GOOGLE?.profil && !ECRAN_COMPTE_AU_RETOUR && !DEFI_AU_RETOUR) ? 'profil'
     : LIEN_DU_JOUR !== null || ARRIVEE_RAPPEL ? 'problemes' : 'jouer');
   // #640 : écrans posés par-dessus (le dernier en haut) ; l'écran affiché, pour le garder sous le suivant.
   const [poses, setPoses] = useState<Pose[]>([]);
@@ -240,16 +247,20 @@ export function App() {
   const [settings, set] = useSettings();
   const [playing, setPlaying] = useState<false | 'ordi' | 'deux' | 'guidee'>(false);
   const [adversaire, setAdversaire] = useStored<OpponentId>('go.adversaire.v1', 'pomme');
-  const [lessonId, setLessonId] = useState<string | null>(null);
+  const [lessonId, setLessonId] = useState<string | null>(LECON_DE_L_ADRESSE);
   const [leconEssai, setLeconEssai] = useState<Lesson | null>(null);
   // #524 : partie de découverte ouverte (Apprendre, modes de l'accueil), et d'où ; 'intro' (#523) : après l'introduction des règles, sa fin ramène à l'accueil.
   const [decouverte, setDecouverte] = useState<false | OrigineDecouverte>(false);
   // #590 : page d'un thème ouverte depuis « Par thème » d'Apprendre ; leçons et série du thème y ramènent.
-  const [themeVu, setThemeVu] = useState<Theme | null>(null);
+  const [themeVu, setThemeVu] = useState<Theme | null>((ADRESSE?.theme as Theme | undefined) ?? null);
   // #652 (A13) : détail « Jouer avec Mochi » ouvert depuis le sommaire d'Apprendre ; la découverte et la guidée y ramènent.
-  const [avecMochi, setAvecMochi] = useState(false);
+  const [avecMochi, setAvecMochi] = useState(!!ADRESSE?.avecMochi);
   // #685 (N3) : Ouvertures ouvertes depuis le sommaire d'Apprendre ; gardées quand on change d'onglet.
-  const [ouverturesVu, setOuverturesVu] = useState(false);
+  const [ouverturesVu, setOuverturesVu] = useState(!!ADRESSE?.ouvertures);
+  // #688 : problème à ouvrir au chargement (`/problemes/<id>`), une fois ; problème ouvert, pour l'adresse.
+  const [pbAOuvrir, setPbAOuvrir] = useState(ADRESSE?.probleme ?? null);
+  const [pbOuvert, setPbOuvert] = useState<string | null>(null);
+  const surProbleme = useCallback((id: string | null) => { setPbOuvert(id); setPbAOuvrir(null); }, []);
   useEffect(() => {
     if (!(import.meta.env.VITE_E2E || import.meta.env.DEV) || !LECON_ESSAI) return;
     void import('../../content/lessons.essai.js').then(m => {
@@ -417,7 +428,7 @@ export function App() {
   // partie (l'écran du défi suit déjà la sienne en temps réel). Rien au tout premier lancement, sauf un ami qui attend.
   // Profil (issue #50) : sous-vue ouverte, et fenêtre de consentement fermée avec Échap pendant cette session.
   const [vueProfil, setVueProfil] = useState<VueProfil>(PAGE_CONFIDENTIALITE ? 'conditions'
-    : RETOUR_GOOGLE?.profil && !ECRAN_COMPTE_AU_RETOUR && !DEFI_AU_RETOUR ? 'compte' : 'menu');
+    : RETOUR_GOOGLE?.profil && !ECRAN_COMPTE_AU_RETOUR && !DEFI_AU_RETOUR ? 'compte' : (ADRESSE?.rubrique as VueProfil | undefined) ?? 'menu');
   // #359 : demandes d'ami reçues (`mes_amis()`), lues avec « À faire » (#584) : pastille du Profil et « À faire ».
   const { defis: aJouerEnLigne, elements: aFaire, pastilles, rappelGoDuJour, recherche: rechercheLente, demandesAmis, relire: relireAFaire } = useAFaire(supabase, session?.user.id,
     `${tab}|${vueProfil}|${defi?.vue ?? ''}|${enPlacement}|${lessonId ?? ''}|${lente}`, !playing && defi?.vue !== 'partie', {
@@ -1130,7 +1141,7 @@ export function App() {
       essai={decider({ quoi: 'probleme' }, etat, terminees, COMPTES).ok ? undefined : () => { garde({ quoi: 'probleme' }, { quoi: 'problemes' }); }}
       lien={LIEN_DU_JOUR} depuisRappel={ARRIVEE_RAPPEL || duJourDirect} onDuJour={setDuJourOuvert} onActivite={setActivitePb} celebrer={settings.celebrations} racine={racineProblemes} rappelAmi={rappelGoDuJour}
       onApprendre={versLecon1 && LESSONS[0] ? () => { setVersLecon1(false); ouvrirLecon(LESSONS[0].id); } : undefined}
-      erreurs={{ n: revisionsDues, ouvrir: ouvrirErreurs }} />;
+      erreurs={{ n: revisionsDues, ouvrir: ouvrirErreurs }} ouvrirId={pbAOuvrir} onOuvert={surProbleme} />;
   } else if (tab === 'profil') {
     screen = <Profil vue={vueProfil} onVue={v => { if (v === 'importer' && !garde({ quoi: 'import' }, { quoi: 'importer' })) return; setVueProfil(v); }} settings={settings} set={set} profil={profil} serie={serie} record={recordSerie}
       parcours={{ lecons: { faites: done, total: LESSONS.length }, adversaires: OPPONENTS.length }}
@@ -1251,6 +1262,26 @@ export function App() {
               : tab === 'apprendre' && avecMochi && !serie3 ? { quoi: 'avecMochi' }
               : { quoi: 'onglet', onglet: tab };
   const titreDocument = titreEcran(ecranTitre);
+  // #688 (N8) : l'adresse suit l'écran affiché, sans nouvelle entrée d'historique (le retour du système reste celui de
+  // retourSysteme.ts). Un fragment (jeton de défi ou de partie, retour d'un fournisseur, lien de connexion) est lu puis
+  // retiré par son module : on attend qu'il soit parti. La page publique de la politique garde son adresse.
+  const adresse: Adresse = tab === 'apprendre' ? { onglet: tab, lecon: lesson && !serie3 ? lesson.id : undefined, theme: themeVu ?? undefined, avecMochi, ouvertures: ouverturesVu }
+    : tab === 'problemes' ? { onglet: tab, probleme: pbOuvert ?? undefined }
+    : tab === 'profil' ? { onglet: tab, rubrique: vueProfil } : { onglet: 'jouer' };
+  const chemin = cheminDe(adresse);
+  const suivreAdresse = useRef(() => {});
+  suivreAdresse.current = () => {
+    if (location.hash || location.pathname === chemin || (surConditions && /^\/confidentialite\/?$/.test(location.pathname))) return;
+    try { history.replaceState(history.state, '', chemin + location.search); } catch { /* adresse inchangée */ }
+  };
+  useEffect(() => suivreAdresse.current());
+  // Une entrée d'historique retrouvée sans changement d'écran (garde retirée par retourSysteme.ts) garde son ancienne
+  // adresse : on la remet à celle de l'écran.
+  useEffect(() => {
+    const f = () => requestAnimationFrame(() => suivreAdresse.current());
+    window.addEventListener('popstate', f);
+    return () => window.removeEventListener('popstate', f);
+  }, []);
   // #538 : bandeau hors ligne : sur l'accueil (ce qui marche), sur les écrans qui ont besoin du réseau ; mesuré une fois par session.
   const bandeau = bandeauReseau({ enLigne: online, accueil: accueilVisible && !questionGo, ecranReseau });
   const horsLigneVu = useRef(false);

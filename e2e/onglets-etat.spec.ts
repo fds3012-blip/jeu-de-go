@@ -103,3 +103,66 @@ test('sous-vue du Profil → Jouer → Profil : Réglages est là ; Profil touch
   await expect(reglages).toBeHidden();
   await expect(page.getByRole('button', { name: /^Réglages/ })).toBeVisible();
 });
+
+// #688 (C6, N8) : une adresse par écran. Elle suit l'écran sans entrée d'historique en plus ; un rechargement ou un lien
+// rouvre le même écran.
+const chemin = (page: Page) => page.evaluate(() => location.pathname);
+
+test('recharger /apprendre/lecon/l5 ouvre la leçon 5 ; « ‹ » puis le retour du système ramènent à Apprendre puis à Jouer', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/apprendre/lecon/l5');
+  const titre = page.locator('.lecteur-lecon .lecteur-titre');
+  await expect(titre).toHaveText('Vivre et mourir');
+  await page.reload();
+  await expect(titre).toHaveText('Vivre et mourir');
+  expect(await chemin(page)).toBe('/apprendre/lecon/l5');
+  await page.locator('.lecteur-tete .retour').click();
+  await expect(page.getByTestId('par-theme')).toBeVisible();
+  await expect.poll(() => chemin(page)).toBe('/apprendre');
+  await page.goBack();
+  await expect(page.locator('.accueil')).toBeVisible();
+  await expect.poll(() => chemin(page)).toBe('/');
+});
+
+test('l’adresse suit l’écran : thème, Ouvertures, problème, rubrique du Profil ; chacun se rouvre au rechargement', async ({ page }) => {
+  await ouvrir(page);
+  await expect.poll(() => chemin(page)).toBe('/apprendre');
+  await page.getByTestId('par-theme').getByRole('button', { name: /^Capture,/ }).click();
+  await expect.poll(() => chemin(page)).toBe('/apprendre/capture');
+  await page.reload();
+  await expect(page.getByRole('heading', { level: 2, name: 'Capture' })).toBeVisible();
+  // Rechargée, la page du thème garde son retour : le sommaire, puis Jouer.
+  await page.goBack();
+  await expect(page.getByTestId('par-theme')).toBeVisible();
+  await expect.poll(() => chemin(page)).toBe('/apprendre');
+
+  const entree = page.getByTestId('entree-ouvertures');
+  await entree.scrollIntoViewIfNeeded();
+  await entree.click();
+  await expect.poll(() => chemin(page)).toBe('/apprendre/ouvertures');
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Ouvertures' })).toBeVisible();
+
+  await page.goto('/problemes/a01');
+  await expect(page.locator('.lecteur[data-probleme="a01"]')).toBeVisible();
+  await page.reload();
+  await expect(page.locator('.lecteur[data-probleme="a01"]')).toBeVisible();
+  await page.locator('.lecteur .retour').first().click();
+  await expect(barre(page)).toBeVisible();
+  await expect.poll(() => chemin(page)).toBe('/problemes');
+
+  await vers(page, 'Profil');
+  await page.getByRole('button', { name: /^Réglages/ }).click();
+  await expect.poll(() => chemin(page)).toBe('/profil/reglages');
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Réglages' })).toBeVisible();
+  await vers(page, 'Jouer');
+  await expect.poll(() => chemin(page)).toBe('/');
+});
+
+test('adresse inconnue sous /apprendre : l’app s’ouvre sur Jouer', async ({ page }) => {
+  await page.goto('/apprendre/inconnu');
+  await expect(page.locator('.accueil')).toBeVisible();
+  await expect.poll(() => chemin(page)).toBe('/');
+});

@@ -254,7 +254,10 @@ describe('sitemap, robots.txt et vercel.json', () => {
     for (const p of PAGES) expect(reecrire(`/${p.chemin}`, vercel.rewrites)).toBe(`/${p.chemin}/index.html`);
     expect(reecrire('/en', vercel.rewrites)).toBe('/en/index.html');
     expect(reecrire('/j/12', vercel.rewrites)).toBe('/j/12/index.html');
-    expect(reecrire('/apprendre', vercel.rewrites)).toBeNull();
+    // #688 (N8) : les adresses des écrans de l'app servent l'app ; les pages de référencement gardent la leur.
+    for (const c of ['/apprendre', '/apprendre/vie-mort', '/apprendre/lecon/l5', '/problemes/a01', '/profil/reglages']) expect(reecrire(c, vercel.rewrites), c).toBe('/index.html');
+    expect(reecrire('/apprendre-le-go', vercel.rewrites)).toBe('/apprendre-le-go/index.html');
+    expect(reecrire('/apprendre/lecon/l5/x', vercel.rewrites)).toBeNull();
   });
 
   it('écrit les pages, le sitemap et robots.txt', async () => {

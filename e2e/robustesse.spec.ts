@@ -47,14 +47,13 @@ test.describe('écran manquant', () => {
     await expect(erreur).toHaveCount(0);
     await expect(page.locator('.cta')).toBeVisible();
 
-    // Le réseau revient : « Réessayer » repart sur une page propre et le Profil s'ouvre.
+    // Le réseau revient : « Réessayer » repart sur une page propre, à l'adresse de l'écran (#688 : `/profil`) : le Profil s'ouvre.
     await page.unroute(/\/assets\/Profil-[\w-]+\.js(\?.*)?$/);
     await NAV(page).getByRole('button', { name: 'Profil' }).click();
     await expect(erreur).toBeVisible({ timeout: 20_000 });
     await erreur.getByRole('button', { name: 'Réessayer' }).click();
-    await expect(page.locator('.cta')).toBeVisible();
-    await NAV(page).getByRole('button', { name: 'Profil' }).click();
     await expect(page.getByRole('heading', { name: 'Ta progression' })).toBeVisible();
+    await expect(erreur).toHaveCount(0);
   });
 
   test('#606 : sur l’écran d’erreur, le retour du système ramène à l’accueil (comme « Retour à l’accueil »)', async ({ page }) => {
