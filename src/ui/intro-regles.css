@@ -42,3 +42,14 @@
   .lecteur-lecon:has(> .notion) .mochi-bulle .marque { display: none; }
   .lecteur-lecon:has(> .notion) .choix button { min-height: 48px; }
 }
+
+/* #715 : la fin après une victoire porte plus de choses (XP, série, deux ou trois actions) : elle se serre pour tenir sans
+   défiler, comme toute fin d'activité (épure P5). Le sceau de Mochi reste la seule image forte. */
+.fin-intro { padding-bottom: var(--space-2);
+  /* La barre (« Retour », 48 px) est au-dessus : sans elle, la fin dépassait la fenêtre de 52 px et défilait toujours. */
+  min-height: calc(100dvh - 92px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); }
+.fin-intro .fin-gue { margin: 10px 0 8px; }
+.fin-intro .fin-acquis { margin: 8px 0 8px; }
+.fin-intro .fin-gain { min-height: 28px; margin-bottom: 8px; }
+.fin-intro .fin-actions .lien { margin-top: var(--relief); }
+@media (max-height: 700px) { .fin-intro .fin-sceau .portrait { width: 72px !important; height: 72px !important; } }

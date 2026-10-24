@@ -7,6 +7,7 @@ import { expect, test, type Page, type Request } from '@playwright/test';
 import { mesurer } from './mesures';
 import { attendrePierre, jouer, plateau, toucher } from './plateau';
 import { faireMoment, surMoment } from './decouverte';
+import { gagnerLaMiniPartie } from './mini';
 import { SCENARIO } from '../src/content/decouverte';
 
 // #523 : au tout premier lancement, « Tu connais le go ? » avec Mochi et trois réponses de même poids, plus « Plus tard ».
@@ -277,9 +278,14 @@ test.describe('les trois réponses', () => {
     await expect(bulle(page)).toContainText('Noir gagne de 1,5 point');
     await action(page, 'Terminer').click();
 
+    // #715 : « Ta première partie », la mini-partie 5 × 5 contre Pomme, gagnée en suivant l'aide de Mochi.
+    await expect(page.locator('.lecteur-titre')).toHaveText('Ta première partie');
+    await capture(page, 'intro-mini-clair');
+    await gagnerLaMiniPartie(page);
+
     // Fin : une seule action, la partie de découverte (#524), au premier moment de son scénario.
     await expect(page.getByTestId('fin-intro')).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Tu connais les règles !' })).toBeFocused();
+    await expect(page.getByRole('heading', { name: 'Victoire !' })).toBeFocused();
     await expect(page.locator('.cta')).toHaveCount(1);
     await capture(page, 'intro-fin-clair');
     // #677 (A9) : le bouton dit ce qu'il ouvre ; « Jouer avec Mochi » reste le nom de l'entrée d'Apprendre.
@@ -315,8 +321,9 @@ test.describe('les trois réponses', () => {
       await expect(page.locator('.etapes')).toHaveAttribute('aria-valuenow', String(i - 1));
       await page.getByTestId('je-sais').click();
     }
+    await gagnerLaMiniPartie(page); // #715
     await expect(page.getByTestId('fin-intro')).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Les règles, c’est bon !' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Victoire !' })).toBeVisible();
     await expect(page.locator('.cta')).toHaveText('Partie de découverte avec Mochi');
     await capture(page, 'express-fin-320-clair');
     await page.getByRole('button', { name: 'Jouer contre Pomme' }).click();
@@ -334,6 +341,7 @@ test.describe('les trois réponses', () => {
       await expect(page.locator('.etapes')).toHaveAttribute('aria-valuenow', String(i - 1));
       await page.getByTestId('je-sais').click();
     }
+    await gagnerLaMiniPartie(page); // #715
     await page.getByRole('button', { name: 'Partie de découverte avec Mochi' }).click();
     await surMoment(page, SCENARIO[0].id);
     // Quitter ramène à l'accueil (là d'où l'on venait), sans reposer la question.
@@ -409,6 +417,7 @@ test.describe('mesure', () => {
       await expect(page.locator('.etapes')).toHaveAttribute('aria-valuenow', String(i - 1));
       await page.getByTestId('je-sais').click();
     }
+    await gagnerLaMiniPartie(page); // #715
     await expect(page.getByTestId('fin-intro')).toBeVisible();
     // Puis « Revoir les règles » depuis Apprendre, quitté au 1er écran (#646 : on sort d'abord de la fin, plein écran).
     await onglet(page, /Apprendre/);
@@ -422,6 +431,10 @@ test.describe('mesure', () => {
     const etapes = un('intro_regles_etape');
     expect(etapes.some(e => /"index":10/.test(e) && /"parcours":"express"/.test(e) && /"depuis":"accueil"/.test(e))).toBe(true);
     expect(un('intro_regles_finie').join()).toMatch(/"passees":10/);
+    // #715 : la mini-partie est mesurée (commencée, première capture, finie et gagnée à la première fois).
+    expect(un('mini_partie_commencee').join()).toMatch(/"rang":0/);
+    expect(un('mini_partie_finie').join()).toMatch(/"gagnee":true/);
+    expect(un('mini_partie_finie').join()).toMatch(/"premiere":true/);
     const quittee = un('intro_regles_quittee').join();
     expect(quittee).toMatch(/"index":1/);
     expect(quittee).toMatch(/"parcours":"complete"/);
