@@ -24,15 +24,17 @@ export interface CarteTheme {
   record?: string;
 }
 
-export function GrilleThemes({ titre, cartes, motMaitrise, onOuvrir, className, testId }: {
+export function GrilleThemes({ titre, cartes, motMaitrise, onOuvrir, className, testId, titreVisible = true }: {
   titre: string; cartes: readonly CarteTheme[]; motMaitrise: string; onOuvrir: (cle: string) => void;
   className?: string; testId?: string;
+  /** Faux quand l'écran porte déjà ce titre (#693, « Par thème » en double) : la section garde son nom pour les lecteurs d'écran. */
+  titreVisible?: boolean;
 }) {
   const id = useId();
   if (!cartes.length) return null;
   return (
-    <section className={['themes', className].filter(Boolean).join(' ')} aria-labelledby={`${id}-t`} data-testid={testId}>
-      <h3 id={`${id}-t`}>{titre}</h3>
+    <section className={['themes', className].filter(Boolean).join(' ')} aria-labelledby={titreVisible ? `${id}-t` : undefined} aria-label={titreVisible ? undefined : titre} data-testid={testId}>
+      {titreVisible && <h3 id={`${id}-t`}>{titre}</h3>}
       <ul className="themes-grille">
         {cartes.map(c => (
           <li key={c.cle}>

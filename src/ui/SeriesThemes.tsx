@@ -34,10 +34,12 @@ const DESCRIPTION = {
   'relier-couper': 'themes.desc.relier-couper', 'fin-de-partie': 'themes.desc.fin-de-partie', tesuji: 'themes.desc.tesuji',
 } as const satisfies Record<SerieTheme, string>;
 
-export function VignettesThemes({ series, etat, onOuvrir, maitrise }: {
+export function VignettesThemes({ series, etat, onOuvrir, maitrise, titreVisible }: {
   series: readonly SerieTheme[]; etat: EtatSeriesThemes; onOuvrir: (s: SerieTheme) => void;
   /** #549 : maîtrise de chaque série (barre fine sous le nom, « Maîtrisé » une fois l'objectif atteint). */
   maitrise?: Partial<Record<SerieTheme, Maitrise>>;
+  /** Faux quand l'écran porte déjà le titre « Par thème » (#693). */
+  titreVisible?: boolean;
 }) {
   // #614 : la grille est partagée avec Apprendre (GrilleThemes). Le tesuji s'explique sur sa carte (CLAUDE.md, règle 5).
   const cartes = series.map((s): CarteTheme => {
@@ -51,7 +53,7 @@ export function VignettesThemes({ series, etat, onOuvrir, maitrise }: {
       record: record > 0 ? t('themes.record', { n: record }) : undefined,
     };
   });
-  return <GrilleThemes titre={t('themes.titre')} cartes={cartes} motMaitrise={t('themes.maitrise')} onOuvrir={cle => onOuvrir(cle as SerieTheme)} />;
+  return <GrilleThemes titre={t('themes.titre')} cartes={cartes} motMaitrise={t('themes.maitrise')} titreVisible={titreVisible} onOuvrir={cle => onOuvrir(cle as SerieTheme)} />;
 }
 
 /**
