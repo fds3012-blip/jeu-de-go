@@ -276,14 +276,16 @@ const HOSHI_X = ['D16', 'D4', 'D10'], HOSHI_O = ['Q4', 'Q16'];
 const KOMOKU_X = ['Q4'], KOMOKU_O = ['Q16', 'D16'];
 export const CHAPITRES = [
   { id: 'c1', titre: 'Les bases', intro: 'Sept leçons courtes pour jouer ta première partie.', fin: 'Tu connais les règles du go.', lecons: ['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7'] },
-  // Chapitre en cours d'écriture (`complet: false`) : sa dernière leçon ne ferme pas encore le chapitre.
-  { id: 'c2', titre: 'L’ouverture', intro: 'Où poser tes premières pierres.', lecons: ['l8', 'l46', 'l27', 'l29', 'l30', 'l31', 'l47', 'l48', 'l49'], complet: false },
-  { id: 'c3', titre: 'Capturer et sauver', intro: 'Des pièges pour prendre plus de pierres.', lecons: ['l9', 'l42', 'l10', 'l11', 'l26', 'l39', 'l40'], complet: false },
-  { id: 'c4', titre: 'Vie et mort', intro: 'Quand un groupe vit, quand il meurt.', lecons: ['l12', 'l13', 'l14', 'l17', 'l24', 'l44', 'l25', 'l37'], complet: false },
-  { id: 'c5', titre: 'Fin de partie et comptage', intro: 'Finir proprement, puis compter juste.', lecons: ['l15', 'l16', 'l41', 'l22', 'l23', 'l32', 'l33', 'l38', 'l45'], complet: false },
-  { id: 'c6', titre: 'Formes et tesuji', intro: 'Les bonnes formes et les coups malins du go.', lecons: ['l18', 'l43', 'l19', 'l20', 'l21', 'l34', 'l35', 'l36'], complet: false },
+  // #686 : les sept chapitres sont complets (fête de fin, phrase `fin`). Un chapitre en cours d'écriture prendrait
+  // `complet: false` : sa dernière leçon ne le fermerait pas. Revue chapitre par chapitre et suites prévues :
+  // docs/pedagogie/programme-chapitres-2026-10.md.
+  { id: 'c2', titre: 'L’ouverture', intro: 'Où poser tes premières pierres.', fin: 'Tu sais où jouer en début de partie.', lecons: ['l8', 'l46', 'l27', 'l29', 'l30', 'l31', 'l47', 'l48', 'l49'] },
+  { id: 'c3', titre: 'Capturer et sauver', intro: 'Des pièges pour prendre plus de pierres.', fin: 'Tu connais les pièges de capture et les courses aux libertés.', lecons: ['l9', 'l42', 'l10', 'l11', 'l26', 'l39', 'l40'] },
+  { id: 'c4', titre: 'Vie et mort', intro: 'Quand un groupe vit, quand il meurt.', fin: 'Tu sais quand un groupe vit, et quand il meurt.', lecons: ['l12', 'l13', 'l14', 'l17', 'l24', 'l44', 'l25', 'l37'] },
+  { id: 'c5', titre: 'Fin de partie et comptage', intro: 'Finir proprement, puis compter juste.', fin: 'Tu sais finir une partie, puis la compter juste.', lecons: ['l15', 'l16', 'l41', 'l22', 'l23', 'l32', 'l33', 'l38', 'l45'] },
+  { id: 'c6', titre: 'Formes et tesuji', intro: 'Les bonnes formes et les coups malins du go.', fin: 'Tu reconnais les bonnes formes et les coups malins.', lecons: ['l18', 'l43', 'l19', 'l20', 'l21', 'l34', 'l35', 'l36'] },
   // #672 : en dernier, après les bases du milieu de partie ; les leçons s'ouvrent aussi depuis le thème « Ouverture ».
-  { id: 'c7', titre: 'Les ouvertures célèbres', intro: 'Les ouvertures des grands joueurs, vérifiées par KataGo.', lecons: ['l50', 'l51', 'l52', 'l53', 'l54', 'l55', 'l56'], complet: false }
+  { id: 'c7', titre: 'Les ouvertures célèbres', intro: 'Les ouvertures des grands joueurs, vérifiées par KataGo.', fin: 'Tu connais des ouvertures de grands joueurs.', lecons: ['l50', 'l51', 'l52', 'l53', 'l54', 'l55', 'l56'] }
 ];
 export const LESSONS = [
   { id: 'l1', title: 'Libertés et capture', desc: 'La règle qui fait tout le jeu', steps: [

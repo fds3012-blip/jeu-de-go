@@ -5,12 +5,12 @@
 // Chaque étape : { text, ok?, no?, choices?, geste: { no }?, refus: [no, …]? }, dans l'ordre des étapes françaises.
 export const CHAPITRES_EN = {
   c1: { titre: 'The basics', intro: 'Seven short lessons to play your first game.', fin: 'You know the rules of Go.' },
-  c2: { titre: 'The opening', intro: 'Where to place your first stones.' },
-  c3: { titre: 'Capturing and saving', intro: 'Traps to capture more stones.' },
-  c4: { titre: 'Life and death', intro: 'When a group lives, and when it dies.' },
-  c5: { titre: 'Endgame and counting', intro: 'Finish cleanly, then count right.' },
-  c6: { titre: 'Shape and tesuji', intro: 'Good shapes and the clever moves of Go.' },
-  c7: { titre: 'Famous openings', intro: 'The openings of great players, checked by KataGo.' }
+  c2: { titre: 'The opening', intro: 'Where to place your first stones.', fin: 'You know where to play early in the game.' },
+  c3: { titre: 'Capturing and saving', intro: 'Traps to capture more stones.', fin: 'You know capturing traps and capturing races.' },
+  c4: { titre: 'Life and death', intro: 'When a group lives, and when it dies.', fin: 'You know when a group lives, and when it dies.' },
+  c5: { titre: 'Endgame and counting', intro: 'Finish cleanly, then count right.', fin: 'You can finish a game, then count it right.' },
+  c6: { titre: 'Shape and tesuji', intro: 'Good shapes and the clever moves of Go.', fin: 'You know good shapes and clever moves.' },
+  c7: { titre: 'Famous openings', intro: 'The openings of great players, checked by KataGo.', fin: 'You know openings played by great players.' }
 };
 
 const COLLEE = 'Right next to White, your stone makes White stronger. Leave some space.';
