@@ -72,7 +72,8 @@ test('problèmes sans compte : erreur, bonne réponse, suite et problème suivan
 
   // Le problème réussi reste coché après rechargement.
   // #620 : le palier se lit sur la carte « Problème suivant », en tête une fois le Go du jour fait.
-  await page.reload();
+  // #688 (N8) : recharger sur un problème ouvert (`/problemes/<id>`) le rouvre ; on repart de l'accueil pour lire la liste.
+  await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
   await marquerGoDuJourFait(page);
   await page.reload();

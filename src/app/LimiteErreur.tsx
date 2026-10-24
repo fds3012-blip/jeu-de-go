@@ -8,7 +8,8 @@
  * (`chargement`, `reseau`, `rendu`) et son origine, sans donnée personnelle (message nettoyé par `beforeSend`).
  *
  * « Réessayer » : un écran chargé à la demande qui a échoué reste en échec dans React.lazy ; seule une nouvelle page
- * repart propre. On recharge donc (le service worker sert l'app depuis son cache même hors ligne : l'accueil revient).
+ * repart propre. On recharge donc : l'adresse de l'écran (#688) le rouvre ; hors ligne, le service worker sert l'app
+ * depuis son cache.
  */
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { captureError } from '../data/analytics';

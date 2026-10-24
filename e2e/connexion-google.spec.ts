@@ -191,7 +191,8 @@ for (const [locale, titre, google] of [['fr-FR', 'Conditions et confidentialité
     await expect(page.getByRole('dialog')).toHaveCount(0);
     await sansDefilementHorizontal(page);
     await page.locator('.retour').first().click();
-    await expect.poll(() => page.evaluate(() => location.pathname)).toBe('/');
+    // #688 (N8) : l'adresse redevient celle de l'écran affiché, le sommaire du Profil.
+    await expect.poll(() => page.evaluate(() => location.pathname)).toBe('/profil');
     await ctx.close();
   });
 }

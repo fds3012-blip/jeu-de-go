@@ -143,14 +143,22 @@ test('Aide : le retour ferme la feuille, le Profil reste', async ({ page }) => {
   await racineJouer(page);
 });
 
-test('rechargement au milieu d’une pile : l’app repart sur Jouer, sans garde en trop', async ({ page }) => {
+// #688 (N8) : l'adresse suit l'écran (`/profil/reglages`) ; le rechargement rouvre le même écran, et les retours
+// font toujours « ‹ » jusqu'à Jouer, sans garde en trop.
+test('rechargement au milieu d’une pile : le même écran, puis un « ‹ » par retour jusqu’à Jouer, sans garde en trop', async ({ page }) => {
   await ouvrir(page);
   await onglet(page, 'Profil').click();
   await page.getByRole('button', { name: 'Réglages', exact: true }).click();
-  await expect(page.getByRole('heading', { level: 2, name: 'Réglages' })).toBeVisible();
+  const reglages = page.getByRole('heading', { level: 2, name: 'Réglages' });
+  await expect(reglages).toBeVisible();
   await page.reload();
-  await racineJouer(page);
+  await expect(reglages).toBeVisible();
   await expect.poll(() => page.evaluate(() => typeof (history.state as { mochiNav?: number } | null)?.mochiNav)).toBe('number');
+  await retour(page);
+  await expect(reglages).toBeHidden();
+  await expect(onglet(page, 'Profil')).toHaveAttribute('aria-current', 'page');
+  await retour(page);
+  await racineJouer(page);
   await onglet(page, 'Problèmes').click();
   await retour(page);
   await racineJouer(page);
