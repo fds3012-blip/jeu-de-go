@@ -69,8 +69,9 @@ interface PlayerProps {
    * #523 : parcours hors du chemin (introduction des règles). Ni mesure de leçon, ni XP, ni défi du jour, ni écran de fin
    * de leçon : `onFin` reçoit le nombre d'écrans passés par « Je sais ». `onEtape` : écran affiché (index depuis 0).
    * `passer` : libellé du lien « Je sais », qui passe l'écran (rappel express) ; absent, aucun écran ne se passe.
+   * `mots` (#710) : le mot du go de chaque écran, en étiquette au-dessus de Mochi.
    */
-  parcours?: { retour: string; terminer: string; passer?: { libelle: string; aria: string }; onEtape: (i: number) => void; onFin: (passees: number) => void };
+  parcours?: { retour: string; terminer: string; passer?: { libelle: string; aria: string }; mots?: string[]; onEtape: (i: number) => void; onFin: (passees: number) => void };
 }
 
 export function LessonPlayer({ lesson: { id: leconId }, start, confirmTouch, progress = {}, celebrer = true, onProgress, onExit, retour, onNext, pratique, jouer, lecon, parcours }: PlayerProps) {
@@ -102,11 +103,19 @@ export function LessonPlayer({ lesson: { id: leconId }, start, confirmTouch, pro
   const pause = useMemo(() => (step.kind === 'info' && step.demo && step.geste ? imageDuGeste(step.rows, step.demo, step.avant, step.geste) : -1), [step]);
   const [gesteFait, setGesteFait] = useState(false);
   const [rate, setRate] = useState<{ p: number; n: number } | null>(null);
-  const attente = !!geste && !gesteFait;
+  /** Point du geste réussi (#710) : un anneau de jade s'ouvre dessus, comme sur une bonne réponse. */
+  const [gesteJuste, setGesteJuste] = useState<{ p: number; n: number } | null>(null);
+  const aFaire = !!geste && !gesteFait;
+  // #710 : `apres` : la démonstration se joue en entier avant de demander le geste (expliquer, puis faire).
+  const apres = !!geste && 'touche' in geste && !!geste.apres;
   const gesteA = useRef(0);
   const [reduit] = useState(prefersReducedMotion);
-  const limite = images ? (attente ? pause : images.length - 1) : 0;
+  const fin = images ? images.length - 1 : 0;
+  const limite = images ? (aFaire && !apres ? pause : fin) : 0;
   const [temps, setTemps] = useState(() => (reduit ? limite : 0));
+  const demoFinie = !images || temps >= fin;
+  // Le geste se demande quand il peut se faire : tout de suite, ou une fois la démonstration finie (`apres`).
+  const attente = aFaire && (!apres || demoFinie);
   useEffect(() => { setTemps(reduit ? limite : 0); }, [images, reduit]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!images || temps >= limite) return;
@@ -146,7 +155,7 @@ export function LessonPlayer({ lesson: { id: leconId }, start, confirmTouch, pro
       setSerieAllumee(avancementDuJour(avant, serie, numeroDuJour(new Date())));
       if ((progress[lesson.id] ?? 0) < lesson.steps.length) gagnerXp('lecon'); // une seule fois par leçon
       setFini(true);
-    } else { setIdx(idx + 1); setAnswer(null); setFaux([]); setGesteFait(false); setRate(null); }
+    } else { setIdx(idx + 1); setAnswer(null); setFaux([]); setGesteFait(false); setRate(null); setGesteJuste(null); }
     window.scrollTo({ top: 0 });
   }
   function repondre(ok: boolean, extra: { p?: number; after?: Position; choice?: number }) {
@@ -165,9 +174,9 @@ export function LessonPlayer({ lesson: { id: leconId }, start, confirmTouch, pro
     gesteA.current = Date.now();
     setRate(null);
     setGesteFait(true);
-    if ('pose' in geste) { playStone(p, n); hapticStone(); } else hapticStone();
-    const suite = 'pose' in geste ? pause + 1 : pause;
-    setTemps(reduit ? images.length - 1 : suite);
+    setGesteJuste(j => ({ p, n: (j?.n ?? 0) + 1 }));
+    if ('pose' in geste) { playStone(p, n); hapticStone(); } else if (step.kind === 'info' && step.fait) { playSuccess(); hapticSuccess(); } else hapticStone();
+    if (!apres) setTemps(reduit ? images.length - 1 : 'pose' in geste ? pause + 1 : pause);
   }
   function onPlay(p: number) {
     if (attente) { onGeste(p); return; }
@@ -190,12 +199,17 @@ export function LessonPlayer({ lesson: { id: leconId }, start, confirmTouch, pro
   }
 
   const img = images ? images[Math.min(temps, images.length - 1)] : null;
-  const demoFinie = !images || temps >= images.length - 1;
   const board = img ? img.board : answer?.ok && answer.after ? answer.after.board : pos.board;
-  const faites = idx + (answer?.ok ? 1 : 0);
+  // #710 : le point de progression s'allume dès le geste réussi (écrans qui disent `fait`), pas à l'écran suivant.
+  const gesteReussi = gesteFait && step.kind === 'info' && !!step.fait;
+  const faites = idx + (answer?.ok || gesteReussi ? 1 : 0);
   // En attente du geste « pose » : seul le point à jouer est vert (le compteur de libertés reste).
   const vert = attente && geste && 'pose' in geste ? [fromLabel(geste.pose, n)] : null;
-  const cta = <button className="cta" onClick={next}>{derniere ? parcours?.terminer ?? t('lecon.terminer') : t('apprendre.continuer')}</button>;
+  const libelleCta = derniere ? parcours?.terminer ?? t('lecon.terminer') : t('apprendre.continuer');
+  // #710 : « touches-en une » ne pose pas de pierre : dans l'introduction, un plateau lisible (7 × 7) répond à une seule touche,
+  // sans pierre fantôme ni seconde touche (la pose d'une pierre, elle, se confirme comme en partie).
+  const toucheSeule = !!parcours && lignesVisibles(n, fen) <= LIGNES_CONFORT && (step.kind === 'touche' || (attente && !!geste && 'touche' in geste));
+  const cta = <button className={parcours ? 'cta cta-appel' : 'cta'} onClick={next}>{libelleCta}</button>;
   const marks: BoardMarks = img
     ? { libs: vert ?? [...img.libs, ...img.yeux], targets: img.atari, mistake: attente && rate ? rate.p : img.interdit, last: img.derniere ?? null, ...territoire(img.terr, reduit, n),
         note: img.compteur ? { p: img.compteur.p, fond: JADE_COMPTEUR, texte: '#0B2A1D', symbole: String(img.compteur.n), libelle: t('lecon.libertes', { n: img.compteur.n }), cle: `${idx}-${temps}` } : undefined }
@@ -204,19 +218,25 @@ export function LessonPlayer({ lesson: { id: leconId }, start, confirmTouch, pro
 
   // Ce que Mochi dit, et avec quelle tête. Le geste raté et l'erreur se corrigent sur le plateau, sans bouton.
   const quizFaux = step.kind === 'quiz' && !!answer && !answer.ok;
-  const moment: Moment = attente && rate ? 'revoir' : answer ? (answer.ok ? 'juste' : 'revoir') : 'consigne';
-  const cle = attente && rate ? `geste-${rate.n}` : answer ? `reponse-${answer.n}` : `consigne-${idx}`;
+  const demande = attente && !!geste && 'touche' in geste ? geste.demande : undefined;
+  const moment: Moment = attente && rate ? 'revoir' : answer ? (answer.ok ? 'juste' : 'revoir') : gesteReussi ? 'juste' : 'consigne';
+  const cle = attente && rate ? `geste-${rate.n}` : answer ? `reponse-${answer.n}` : gesteReussi ? `fait-${idx}` : demande ? `demande-${idx}` : `consigne-${idx}`;
+  // La bulle décrit l'écran tel qu'il est (#710) : la consigne, puis la demande, puis ce qui vient de se passer.
   let parole: string;
   if (attente && rate && geste) parole = 'pose' in geste ? t('lecon.poseVert') : geste.no;
   else if (answer && step.kind !== 'info') {
     parole = answer.ok ? step.ok
       : t('lecon.essaieEncore', { no: step.kind === 'move' && answer.p != null ? explicationRefus(step, toLabel(answer.p, n)) : step.no });
-  } else parole = step.text;
+  } else if (gesteReussi && step.kind === 'info') parole = step.fait!;
+  else parole = demande ?? step.text;
   // Les verdicts d'un coup ou d'un point touché gardent leur nom de feuille (`verdict`) : les parcours e2e les lisent.
-  const verdict = !!answer && step.kind !== 'info' && !quizFaux;
-  const classeBulle = ['bubble', 'mochi-bulle', verdict && `verdict verdict-${answer!.ok ? 'juste' : 'revoir'}`, quizFaux && 'choix-aide'].filter(Boolean).join(' ');
-  // L'action principale, quand il y en a une : après une démonstration vue, ou une bonne réponse.
-  const action = step.kind === 'info' && !attente ? cta : answer?.ok && step.kind !== 'info' ? cta : null;
+  const verdict = (!!answer && step.kind !== 'info' && !quizFaux) || gesteReussi;
+  const juste = answer ? answer.ok : true;
+  const classeBulle = ['bubble', 'mochi-bulle', verdict && `verdict verdict-${juste ? 'juste' : 'revoir'}`, quizFaux && 'choix-aide'].filter(Boolean).join(' ');
+  // L'action principale, quand il y en a une : après une démonstration vue (geste fait), ou une bonne réponse.
+  const action = step.kind === 'info' && !aFaire ? cta : answer?.ok && step.kind !== 'info' ? cta : null;
+  // #710 : dans un parcours, la bulle dit où toucher ensuite, et le bouton le montre (anneau pulsé, pas en mouvements réduits).
+  const suite = !!parcours && !!action;
 
   return (
     <div className="lecteur lecteur-lecon" data-moment={moment}>
@@ -235,19 +255,26 @@ export function LessonPlayer({ lesson: { id: leconId }, start, confirmTouch, pro
       <div className={`lecteur-plateau${img?.atari.length ? ' demo-atari' : ''}`} data-demo={images ? (attente ? 'geste' : demoFinie ? 'finie' : 'en-cours') : undefined}
         onClick={images && !demoFinie && temps < limite ? () => { if (Date.now() - gesteA.current > 400) setTemps(limite); } : undefined}>
         <div className="plateau-cadre">
-          <Board lieu="lecon" size={n} fenetre={fen} board={board} interactive={attente || ((step.kind === 'move' || step.kind === 'touche') && !answer?.ok)} confirmTouch={confirmer}
+          <Board lieu="lecon" size={n} fenetre={fen} board={board} interactive={attente || ((step.kind === 'move' || step.kind === 'touche') && !answer?.ok)} confirmTouch={confirmer && !toucheSeule}
             toucher={step.kind === 'touche' || (attente && !!geste && 'touche' in geste)} stonesTappable={attente && !!geste && 'touche' in geste} onPlay={onPlay} marks={marks} />
-          <Halos guide={halo} juste={answer?.ok && answer.p != null ? { p: answer.p, n: answer.n } : null} reduit={reduit} size={n} fenetre={fen} />
+          <Halos guide={halo} juste={answer?.ok && answer.p != null ? { p: answer.p, n: answer.n } : gesteJuste} reduit={reduit} size={n} fenetre={fen} />
         </div>
       </div>
       {img?.terr && <Compteur cle={`${idx}-${temps}`} n={img.terr.points.length} reduit={reduit} />}
+      {/* #710 : le mot du go de l'écran, au-dessus de Mochi (introduction des règles). */}
+      {parcours?.mots?.[idx] && <p className="notion" data-testid="notion"><span>{t('intro.motDuGo')}</span><b>{parcours.mots[idx]}</b></p>}
 
       <div className="mochi-zone">
         <PortraitMochi humeur={humeurMochi(moment)} decoratif className="mochi-portrait" />
         <div key={cle} className={classeBulle} role="status" aria-live="polite">
-          {verdict && <Marque juste={answer!.ok} taille={26} />}
+          {verdict && !gesteReussi && <Marque juste={juste} taille={26} />}
           {quizFaux && <Marque juste={false} taille={26} />}
-          <p>{fr(parole)}</p>
+          {suite ? (
+            <div className="bulle-corps">
+              <p>{fr(parole)}</p>
+              <span className="bulle-suite" data-testid="bulle-suite">{t('intro.suite', { bouton: libelleCta })}</span>
+            </div>
+          ) : <p>{fr(parole)}</p>}
         </div>
       </div>
 

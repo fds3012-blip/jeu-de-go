@@ -159,8 +159,10 @@ test.describe('les trois réponses', () => {
     await expect(page.locator('.lecteur-titre')).toHaveText('Les règles du go');
     expect(await page.title()).toContain('Les règles du go');
 
-    // (a) Poser : mauvais point, aide ; puis le point vert, au doigt (pierre fantôme, puis seconde touche).
-    await expect(bulle(page)).toContainText('Noir commence, puis chacun son tour, sur les croisements');
+    // (a) Poser : le mot du go, la phrase qui explique (croisement, deux touches), mauvais point, aide ; puis le point vert.
+    await expect(page.getByTestId('notion')).toHaveText('Mot du goTour de jeu');
+    await expect(bulle(page)).toHaveText('Une pierre se pose sur un croisement des lignes. Noir commence : touche le point vert, puis touche-le encore.');
+    await expect(action(page, 'Continuer')).toHaveCount(0);
     await capture(page, 'intro-1-poser-clair');
     await jouer(page, 'A1', 7);
     await expect(bulle(page)).toHaveText('Pose ta pierre sur le point vert.');
@@ -169,32 +171,42 @@ test.describe('les trois réponses', () => {
     await toucher(page, 'D4', 7);
     await attendrePierre(page, 'D4', 'noir', 7);
     await attendrePierre(page, 'E5', 'blanc', 7);
+    // #710 : la bulle ne parle plus du point vert : elle dit ce qui vient de se passer, et où toucher ensuite.
+    await expect(bulle(page)).toContainText('Bien joué ! Chacun son tour');
+    await expect(bulle(page)).not.toContainText('point vert');
+    await expect(page.getByTestId('bulle-suite')).toHaveText('Touche « Continuer ».');
+    await expect(page.locator('.etapes')).toHaveAttribute('aria-valuenow', '1');
+    await capture(page, 'intro-1b-poser-fait-clair');
     await action(page, 'Continuer').click();
 
-    // (b) Libertés : une diagonale n'en est pas une.
-    await expect(bulle(page)).toContainText('sont ses libertés');
+    // (b) Libertés : montrées d'abord, demandées ensuite ; une diagonale n'en est pas une.
+    await expect(page.getByTestId('notion')).toHaveText('Mot du goLiberté');
+    await expect(page.locator('.lecteur-plateau')).toHaveAttribute('data-demo', 'geste');
+    await expect(bulle(page)).toContainText('Les libertés sont les croisements vides collés à une pierre : celle-ci en a 4. À toi : touches-en une.');
+    await expect(action(page, 'Continuer')).toHaveCount(0);
     await jouer(page, 'C5', 7);
     await expect(bulle(page)).toHaveText('Une liberté touche ta pierre par une ligne, pas en diagonale.');
     await jouer(page, 'D5', 7);
     await expect(page.locator('.lecteur-plateau')).toHaveAttribute('data-demo', 'finie');
+    await expect(bulle(page)).toContainText('Oui, c’est une liberté !');
     await capture(page, 'intro-2-libertes-clair');
     await action(page, 'Continuer').click();
 
     // (c) Capturer.
-    await expect(bulle(page)).toContainText('Capture la pierre blanche');
+    await expect(bulle(page)).toContainText('Pour capturer une pierre, on lui prend toutes ses libertés');
     await jouer(page, 'A1', 7);
-    await expect(bulle(page)).toContainText('Cherche le seul croisement vide collé à la pierre blanche. Essaie encore.');
+    await expect(bulle(page)).toContainText('Touche le point vert : c’est la dernière liberté de la pierre blanche. Essaie encore.');
     await jouer(page, 'D3', 7);
     await expect(bulle(page)).toContainText('Capturée ! Elle quitte le plateau et devient ton prisonnier.');
     await attendrePierre(page, 'D4', null, 7);
     await action(page, 'Continuer').click();
 
     // (d) Atari : se sauver.
-    await expect(bulle(page)).toContainText('c’est l’atari');
+    await expect(bulle(page)).toContainText('est en atari');
     await jouer(page, 'B2', 7);
     await expect(bulle(page)).toContainText('Joue collé à ta pierre marquée, sur son seul croisement vide.');
     await jouer(page, 'D3', 7);
-    await expect(bulle(page)).toContainText('Sauvée ! Collées, tes deux pierres partagent 3 libertés.');
+    await expect(bulle(page)).toContainText('Sauvée ! Collées, tes deux pierres partagent 3 libertés');
     await action(page, 'Continuer').click();
 
     // (e) Suicide interdit, sauf s'il capture : A1 est refusé et expliqué, G5 capture.
@@ -216,15 +228,18 @@ test.describe('les trois réponses', () => {
     await jouer(page, 'C4', 7);
     await attendrePierre(page, 'D4', null, 7);
     await expect(page.locator('.lecteur-plateau')).toHaveAttribute('data-demo', 'finie');
+    await expect(bulle(page)).toContainText('Blanc ne peut pas reprendre en D4 (la croix)');
     await capture(page, 'intro-6-ko-clair');
     await action(page, 'Continuer').click();
 
-    // (g) Territoire : un point blanc n'est pas à toi.
-    await expect(bulle(page)).toContainText('sont ton territoire');
+    // (g) Territoire : montré d'abord, puis demandé ; un point blanc n'est pas à toi.
+    await expect(page.locator('.lecteur-plateau')).toHaveAttribute('data-demo', 'geste');
+    await expect(bulle(page)).toContainText('sont ton territoire : chacun vaut 1 point. À toi : touches-en un.');
+    await expect(page.locator('.demo-compteur')).toHaveAttribute('data-compteur', '21');
     await jouer(page, 'F4', 7);
     await expect(bulle(page)).toHaveText('Ton territoire est du côté de tes pierres noires, à gauche.');
     await jouer(page, 'B4', 7);
-    await expect(page.locator('.demo-compteur')).toHaveAttribute('data-compteur', '21');
+    await expect(bulle(page)).toContainText('Oui, il est à toi !');
     await action(page, 'Continuer').click();
 
     // (h) Fin : on compte, komi compris.
@@ -262,11 +277,11 @@ test.describe('les trois réponses', () => {
     await reponse(page, 'Un peu').click();
     expect(await page.evaluate(() => localStorage.getItem('go.connait-go.v1'))).toBe('"un_peu"');
     await expect(page.locator('.lecteur-titre')).toHaveText('Rappel des règles');
-    await expect(bulle(page)).toHaveText(/^Chacun son tour, sur les croisements/);
+    await expect(bulle(page)).toContainText('Noir commence : touche le point vert');
     await capture(page, 'express-1-320-clair');
     // Écran 1 passé ; écran 2 fait (le bon geste) ; les six autres passés.
     await page.getByTestId('je-sais').click();
-    await expect(bulle(page)).toContainText('Libertés');
+    await expect(bulle(page)).toContainText('Elle a 4 libertés');
     await jouer(page, 'D5', 7);
     await expect(page.getByTestId('je-sais')).toHaveCount(0);
     await action(page, 'Continuer').click();

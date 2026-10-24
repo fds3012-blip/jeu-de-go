@@ -35,6 +35,14 @@ Règles communes : pas de fausse urgence, pas de perte punitive (la série est p
 
 **Garde-fous** : si la victoire devient trop facile (plus de 80 % des 3 premières parties gagnées contre Pomme), on garde 0,5 mais pour 2 parties seulement. Si la 4e partie (retour à 6,5) montre une chute nette des parties terminées, on étudie un komi intermédiaire (3,5) pour les parties 4 à 6.
 
+## Décision #710 : l'introduction des règles se joue comme une boucle de la minute
+
+**Constat** (test iPhone de Florian, 24/10) : la bulle de Mochi gardait sa consigne après le geste (« pose ta pierre au point vert » sans point vert), les libertés étaient demandées avant d'être montrées, aucun mot ne nommait la notion. Le joueur cherchait le bouton au lieu de jouer : la boucle de la minute (geste, réponse, geste) était cassée.
+
+**Décision** : expliquer, puis faire ; la bulle décrit toujours l'écran (avant, à toi, après) ; chaque geste réussi répond tout de suite (bulle jade, anneau sur le point, point de progression, son et vibration des préférences) ; « Continuer » est dit par la bulle et montré par un anneau qui s'allume deux fois ; un mot du go par écran. Parcours cible, preuves et suite (plateau, objectif, fin de partie, première mini-partie gagnée) : `docs/pedagogie/intro-regles-v2-2026-10.md`.
+
+**Indicateur** : `intro_regles_finie` ÷ `intro_regles_etape` (index 1), par écran (`index`), puis rétention J1. Pas de fausse urgence, pas de perte : un mauvais geste explique et se rejoue.
+
 ## Prochains réglages à instruire
 - Courbe des 9 adversaires : un nouveau joueur doit battre Pomme dans ses 3 premières parties et Caillou dans sa première semaine. Mesurée dans `equilibrage.md` (#179) : l'ordre est bon, mais Caillou → Bambou est un mur (proposition P1 : une part de hasard pour Bambou et Renard).
 - XP : le niveau 2 doit tomber pendant la première session (progrès offert, base UX).
