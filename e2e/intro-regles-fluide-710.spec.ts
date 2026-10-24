@@ -173,7 +173,7 @@ for (const [w, h] of [[390, 844], [320, 568]] as const) {
       await tient(page, w, `écran ${i + 1} fait`);
       await action(page, i === 9 ? 'Terminer' : 'Continuer').click();
     }
-    await expect(page.getByTestId('fin-intro')).toBeVisible();
+    await expect(page.locator('.mini-partie')).toBeVisible(); // #715 : la mini-partie suit les règles
     await ctx.close();
   });
 }
