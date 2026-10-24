@@ -14,9 +14,6 @@
 .identite-texte b { font-family: var(--font-titre); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre); font-size: var(--fs-xl); line-height: 1.15;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .identite-texte span { color: var(--muted); font-size: var(--fs-s); line-height: 1.35; }
-.identite-serie { display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px 6px 10px; border-radius: var(--radius-pill);
-  background: color-mix(in srgb, var(--or) 16%, transparent); color: var(--recompense-texte);
-  font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: 1.05rem; line-height: 1; }
 .icone-reglage { display: block; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .icone-reglage .ir-plein { fill: currentColor; stroke: none; }
 /* Titre d'un groupe de réglages (#103). */

@@ -49,7 +49,8 @@ import { annoncerPerte, messagePerte } from './serieRecord';
 import { VISITE_KEY, etatFlamme, lireVisite, visiter } from './flamme';
 import { serieAffichee } from './serieLocale';
 import { messageGel } from './gel';
-import { goDuJourFaitAppareil } from './defiAppareil';
+import { goDuJourFaitAppareil, serieGardeeAppareil } from './defiAppareil';
+import { PastilleSerie } from '../ui/PastilleSerie';
 import { BarreNav, type Onglet } from '../ui/IconesNav';
 import { FeteNiveau } from '../ui/Niveau';
 import { annonceKomi, comptageSurActif, equilibrage, KOMI_NORMAL, partiesOrdi, rendrePartieOrdi, type Equilibrage } from './equilibrage';
@@ -100,15 +101,6 @@ const problemesLocaux = () => import('../content/problemesLocaux').then(m => m.P
 // recopiée ici pour que l'accueil n'embarque pas l'écran des problèmes.
 const SOLVED_KEY = 'go.problemes.v1';
 const VUS_KEY = 'go.problemes.vus.v1';
-
-/** Flamme de la série de jours, en or. Creuse ou pleine selon la classe du parent (#213). */
-function Flamme() {
-  return (
-    <svg viewBox="0 0 16 16" width="18" height="18" aria-hidden="true" focusable="false">
-      <path className="flamme-corps" d="M8.6 1.2c.4 2.3 3.9 3.9 3.9 7.9A4.5 4.5 0 0 1 8 13.8a4.5 4.5 0 0 1-4.5-4.6c0-2 1-3.2 2-4 0 1.4.6 2.4 1.5 2.7C6.6 5.6 7.4 3 8.6 1.2Z" fill="currentColor" />
-    </svg>
-  );
-}
 
 // Komi : 6,5 (à deux), ou celui de l'équilibrage contre l'ordi (#160 : 0,5 pour les 3 premières parties).
 // Paramètre de test `?komi=` : il remplace le komi du comptage (l'ordi, lui, garde celui de l'équilibrage). Il ne sert
@@ -426,7 +418,9 @@ export function App() {
   // Introduction des règles ouverte (« Jamais joué », « Un peu », « Revoir les règles »), par-dessus l'onglet courant.
   const [introRegles, setIntroRegles] = useState<{ version: VersionIntro; depuis: DepuisIntro } | null>(null);
   useEffect(() => { if (questionGo) prechargerIntro(); }, [questionGo]);
-  const flamme = etatFlamme(serie, duJourFait);
+  // #U5 : la flamme est pleine dès que la série est gardée aujourd'hui, par le Go du jour ou par une leçon, une révision, une partie.
+  const gardee = duJourFait || serieGardeeAppareil(numeroJour);
+  const flamme = etatFlamme(serie, gardee);
   // #308 : après le placement, la carte « Leçon » suit le chapitre conseillé.
   const leconConseillee = leconDeLAccueil(LESSONS, CHAPITRES, progress, placement);
   // Notifications dans l'app (#367) : ce qui t'attend (défis où c'est ton tour, série, Go du jour, leçon en cours).
@@ -501,7 +495,7 @@ export function App() {
   // #560 : « Profil de {pseudo} » (pile des profils ouverts), dans l'onglet Profil. Jamais sans compte complet.
   const [joueurVu, setJoueurVu] = useState<JoueurVu | null>(null);
   const appel = appelSecondaire({
-    jour: numeroJour, parties: parties.n, duJourFait, annonce: annonceAccueil, jourAnnonce, semaine: bilanPasse !== null,
+    jour: numeroJour, parties: parties.n, duJourFait: gardee, annonce: annonceAccueil, jourAnnonce, semaine: bilanPasse !== null,
     installation: estMomentRetour(ouverture) && doitProposer({ plateforme, etat: etatInstall, moment: 'retour', enPartie: false }),
   });
   const [accordIgnore, setAccordIgnore] = useState(false);
@@ -1420,8 +1414,7 @@ export function App() {
               {/* #429 : « Défier un ami » a quitté l'en-tête pour la tuile « Un ami », sous le bouton principal. */}
               {serieVisible && (flamme !== null || gels > 0) && (
                 <span className="serie-groupe">
-                  {flamme !== null && <p className={`serie ${flamme}${allumage ? ' allumage' : ''}`} role="img" data-testid="flamme" data-etat={flamme}
-                    aria-label={t(flamme === 'pleine' ? 'entete.flammeFaite' : 'entete.flammeAFaire', { jours: t('profil.jours', { n: serie }) })}><Flamme />{serie}</p>}
+                  {flamme !== null && <PastilleSerie jours={serie} gardee={flamme === 'pleine'} testId="flamme" allumage={allumage} />}
                   <Glacon gels={gels} />
                 </span>
               )}

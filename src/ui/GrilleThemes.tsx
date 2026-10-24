@@ -24,11 +24,13 @@ export interface CarteTheme {
   record?: string;
 }
 
-export function GrilleThemes({ titre, cartes, motMaitrise, onOuvrir, className, testId, titreVisible = true }: {
+export function GrilleThemes({ titre, cartes, motMaitrise, onOuvrir, className, testId, titreVisible = true, epure = false }: {
   titre: string; cartes: readonly CarteTheme[]; motMaitrise: string; onOuvrir: (cle: string) => void;
   className?: string; testId?: string;
   /** Faux quand l'écran porte déjà ce titre (#693, « Par thème » en double) : la section garde son nom pour les lecteurs d'écran. */
   titreVisible?: boolean;
+  /** #U9 : à plat, sans la ligne de description (gardée pour le lecteur d'écran) ni barre à zéro : elle paraît dès qu'elle bouge. */
+  epure?: boolean;
 }) {
   const id = useId();
   if (!cartes.length) return null;
@@ -44,10 +46,10 @@ export function GrilleThemes({ titre, cartes, motMaitrise, onOuvrir, className, 
               <span className="theme-motif" aria-hidden="true">{c.motif}</span>
               <span className="theme-nom">
                 <b>{fr(c.nom)}</b>
-                <span className="theme-desc" id={`${id}-${c.cle}`}>{fr(c.description)}</span>
+                <span className={epure ? 'sr-only' : 'theme-desc'} id={`${id}-${c.cle}`}>{fr(c.description)}</span>
                 {c.maitrise
                   ? <span className="theme-maitrise-mot" data-maitrise="">{motMaitrise}</span>
-                  : (
+                  : (epure && c.part <= 0 && !c.record) ? null : (
                     <span className="theme-etat">
                       <span className="theme-maitrise" role="img" aria-label={fr(c.partAria)}
                         style={{ '--part': `${Math.round(Math.min(1, Math.max(0, c.part)) * 100)}%` } as CSSProperties}><i /></span>

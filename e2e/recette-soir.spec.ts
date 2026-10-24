@@ -179,12 +179,13 @@ test.describe('#293 : le lendemain, les erreurs à rejouer', () => {
       }, ERREUR);
       await page.goto('/');
       await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
-      // #653 : « Rejouer tes erreurs » est la deuxième entrée du sommaire, juste sous le Go du jour, avec son nombre.
+      // #653 : « Rejouer tes erreurs » est la première entrée du sommaire, juste sous la carte du Go du jour (#U10 : l'entrée du
+      // Go du jour n'est plus répétée tant qu'il est à faire), avec son nombre.
       const erreurs = page.getByTestId('entree-erreurs');
       await expect(erreurs).toBeVisible();
       await expect(erreurs).toHaveAccessibleName('Rejouer tes erreurs, 1 à rejouer');
-      const e = (await erreurs.boundingBox())!, jour = (await page.getByTestId('entree-du-jour').boundingBox())!;
-      expect(e.y).toBeGreaterThan(jour.y);
+      const e = (await erreurs.boundingBox())!, jour = (await page.locator('.problemes section').first().boundingBox())!;
+      expect(e.y).toBeGreaterThanOrEqual(jour.y + jour.height - 1);
       expect(e.height).toBeGreaterThanOrEqual(44);
       // Une seule action en relief : le Go du jour.
       await expect(page.locator('.problemes .cta:visible')).toHaveCount(1);

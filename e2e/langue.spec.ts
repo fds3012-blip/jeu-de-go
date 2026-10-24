@@ -119,7 +119,8 @@ for (const largeur of [390, 320]) {
     await expect(page.getByText('Create your account to keep your streak and solved puzzles on all your devices.')).toBeVisible();
     // #602 : « Puzzles » est le titre de l'écran ; #653 : le sommaire sous le Go du jour s'appelle « Practice ».
     await expect(page.getByRole('heading', { level: 1, name: 'Puzzles', exact: true })).toBeVisible();
-    await expect(page.getByRole('region', { name: 'Practice' }).getByRole('button')).toHaveText(['Daily GoTo do', 'Replay your mistakes', 'Puzzle rush', 'By theme']);
+    // #U10 : le Go du jour à faire n'a que sa carte ; le sommaire ne le répète pas.
+    await expect(page.getByRole('region', { name: 'Practice' }).getByRole('button')).toHaveText(['Replay your mistakes', 'Puzzle rush', 'By theme']);
     await expect(page.getByText(/Problème|Résoudre|Palier|verrouillé/)).toHaveCount(0);
     await sansDebordement(page);
     await sansCoupe(page, largeur);

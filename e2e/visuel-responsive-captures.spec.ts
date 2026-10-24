@@ -31,7 +31,7 @@ const CHLOE = '00000000-0000-4000-8000-0000000000c3';
 const HABITUE = {
   'go.premiere-pierre.v1': 'true',
   'go.parties.v1': JSON.stringify({ n: 6, dernier: 'caillou', ordi: 6 }), 'go.bilan.v1': JSON.stringify({ pomme: { v: 2, d: 1 }, caillou: { v: 0, d: 2 } }),
-  'go.adversaire.v1': JSON.stringify('caillou'), 'go.lecons.v1': JSON.stringify({ l1: 99, l2: 99, l3: 99 }),
+  'go.adversaire.v1': JSON.stringify('caillou'), 'go.lecons.v1': JSON.stringify({ l1: 99, l2: 99, l3: 99, l4: 99, l5: 99, l6: 99, l7: 99 }),
 };
 const MIDI_PARIS = new Date('2026-10-17T12:00:00+02:00');
 

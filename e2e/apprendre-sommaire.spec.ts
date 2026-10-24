@@ -4,7 +4,7 @@ import { leconDuTheme, ongletApprendre } from './apprendre';
 import { lancerGuidee } from './plateau';
 
 // Apprendre en sommaire (#652, règle A13 de DESIGN.md ; remplace le chemin v3 en zigzag). Au premier regard : la carte de
-// la prochaine leçon (seul relief), trois entrées (Ouvertures, Jouer avec Mochi, Revoir les règles), puis la grille de tous
+// la prochaine leçon (seul relief), deux entrées (Jouer avec Mochi, Revoir les règles ; Ouvertures vient avec le chapitre de l'ouverture, #U9), puis la grille de tous
 // les thèmes, sans pli ni « Bientôt ». Une leçon qui n'est pas la prochaine s'ouvre depuis la page de son thème, avec le
 // même accès qu'avant (#343 : compte après la leçon 3). La fête de fin de chapitre se joue en tête du sommaire.
 
@@ -23,7 +23,7 @@ async function sansDebord(page: Page) {
   expect(debord).toBeLessThanOrEqual(0);
 }
 
-test('premier lancement : la leçon 1 en carte, trois entrées, tous les thèmes, ni chemin ni « Bientôt »', async ({ page }) => {
+test('premier lancement : la leçon 1 en carte, deux entrées, tous les thèmes, ni chemin ni « Bientôt »', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await ouvrir(page, {});
   const carte = page.getByTestId('prochaine-lecon');
@@ -32,10 +32,14 @@ test('premier lancement : la leçon 1 en carte, trois entrées, tous les thèmes
   await expect(carte.getByText('Environ 2 min')).toBeVisible();
   await expect(page.locator('.cta')).toHaveCount(1);
   expect(await page.evaluate(() => window.scrollY)).toBe(0);
-  // Le sommaire : trois entrées au même format, chacune avec son visuel, dans un groupe nommé.
+  // Le sommaire : deux entrées au même format, chacune avec son visuel, dans un groupe nommé. #U9 : pas d'Ouvertures avant l'ouverture.
   const entrees = page.getByRole('region', { name: 'Pour apprendre autrement' });
-  await expect(entrees.getByRole('button')).toHaveText(['Ouvertures', 'Jouer avec Mochi', 'Revoir les règles']);
-  await expect(entrees.locator('.sommaire-visuel > *')).toHaveCount(3);
+  await expect(entrees.getByRole('button')).toHaveText(['Jouer avec Mochi', 'Revoir les règles']);
+  await expect(entrees.locator('.sommaire-visuel > *')).toHaveCount(2);
+  await expect(page.getByTestId('entree-ouvertures')).toHaveCount(0);
+  // #U9 : à plat, sans ligne de description ni barre à zéro (elle paraît dès qu'une leçon est faite).
+  await expect(page.locator('.theme-desc')).toHaveCount(0);
+  await expect(page.locator('.par-theme .theme-maitrise')).toHaveCount(0);
   // Tous les thèmes, sans pli.
   await expect(page.getByTestId('par-theme').getByRole('button')).toHaveCount(15);
   await expect(page.getByRole('button', { name: 'Tous les thèmes' })).toHaveCount(0);
@@ -45,6 +49,13 @@ test('premier lancement : la leçon 1 en carte, trois entrées, tous les thèmes
   await sansDebord(page);
   await page.getByRole('button', { name: 'Commencer' }).click();
   await expect(page.getByRole('heading', { name: 'Libertés et capture' })).toBeVisible();
+});
+
+test('#U9 : les bases faites, « Ouvertures » vient après la découverte et les règles', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await ouvrir(page, BASES);
+  const entrees = page.getByRole('region', { name: 'Pour apprendre autrement' });
+  await expect(entrees.getByRole('button')).toHaveText(['Jouer avec Mochi', 'Revoir les règles', 'Ouvertures']);
 });
 
 test('une leçon faite se rouvre depuis son thème ; « ‹ » ramène au thème, puis au sommaire, à sa place', async ({ page }) => {

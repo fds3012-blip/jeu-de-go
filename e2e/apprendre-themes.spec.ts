@@ -30,9 +30,9 @@ for (const theme of ['light', 'dark'] as const) {
     await expect(cartes.nth(1)).toHaveAccessibleName('Atari, Maîtrisé');
     await expect(cartes.nth(1).locator('.theme-maitrise-mot')).toHaveText('Maîtrisé');
     await expect(cartes.nth(1).locator('.theme-maitrise')).toHaveCount(0);
-    // Rien de fait : une barre vide, sans texte.
+    // Rien de fait : pas de barre à zéro (#U9, P1), seul le nom accessible dit l'état.
     await expect(cartes.nth(2)).toHaveAccessibleName('Double atari, 0 leçon faite sur 1');
-    expect(await cartes.nth(2).locator('.theme-maitrise > i').evaluate(i => i.getBoundingClientRect().width)).toBe(0);
+    await expect(cartes.nth(2).locator('.theme-maitrise')).toHaveCount(0);
     // Sous les entrées du sommaire (#652), proche d'elles.
     const carte = (await page.getByTestId('apprendre-entrees').boundingBox())!, r = (await grille.boundingBox())!;
     expect(r.y).toBeGreaterThan(carte.y + carte.height - 1);
