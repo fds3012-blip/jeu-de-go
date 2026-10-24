@@ -135,6 +135,7 @@ test('jouer 613', async ({ browser, baseURL }) => {
   };
   test.setTimeout(240_000);
   const serveur = fauxServeur();
+  serveur.fixerJoueursEnLigne(4); // #695 : du monde en ligne, « Jouer en ligne » est le bouton principal
   const a = await telephone(browser, baseURL, serveur, {});
   await a.page.goto('/');
   await expect(a.page.locator('.cta')).toBeVisible();

@@ -1,5 +1,6 @@
 // La flamme dit l'état du jour ; Pomme accueille selon le jour (issue #213). Dates simulées en heure de Paris.
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
+import { choisirLangue } from '../content/i18n';
 import { ABSENCE_MIN, estRetour, etatFlamme, lireVisite, repliqueDuJour, visiter } from './flamme';
 import { accueil, type Jour } from './home';
 import { numeroDuJour } from './goDuJour';
@@ -50,28 +51,46 @@ describe('visites et absence', () => {
   });
 });
 
-describe('bulle de Pomme selon le jour', () => {
+describe('bulle de l’adversaire selon le jour (#213, #695)', () => {
   it('déterministe : même jour, même réplique', () => {
     expect(repliqueDuJour(['a', 'b', 'c'], 7)).toBe(repliqueDuJour(['a', 'b', 'c'], 7));
     expect(repliqueDuJour(['a', 'b', 'c'], -1)).toBe('c');
     expect(accueil(joueur, 1, pomme, 9, jour(20)).bulle).toBe(accueil(joueur, 1, pomme, 9, jour(20)).bulle);
   });
 
-  it('varie d’un jour à l’autre (plusieurs répliques sur une semaine)', () => {
-    const semaine = new Set(Array.from({ length: 7 }, (_, i) => accueil(joueur, 1, pomme, 9, jour(10 + i)).bulle));
-    expect(semaine.size).toBeGreaterThanOrEqual(3);
+  it('#695 : la série en jeu, dite en une phrase qui compte le jour suivant', () => {
+    expect(accueil(joueur, 1, pomme, 9, jour(5, { serie: 6 })).bulle).toBe('Série de 6 jours. Un Go du jour et c’est 7.');
+    expect(accueil(joueur, 1, pomme, 9, jour(5, { serie: 1 })).bulle).toBe('Série de 1 jour. Un Go du jour et c’est 2.');
   });
 
-  it('ne propose pas le Go du jour à faire (le bouton dit « Rejouer », #236 N4), puis le félicite une fois fait', () => {
-    const tous = Array.from({ length: 8 }, (_, i) => accueil(joueur, 1, pomme, 9, jour(i)).bulle);
-    expect(tous.some(b => /Go du jour/.test(b))).toBe(false);
-    const faits = Array.from({ length: 8 }, (_, i) => accueil(joueur, 1, pomme, 9, jour(i, { duJourFait: true })).bulle);
-    expect(faits.some(b => /Bravo pour le Go du jour/.test(b))).toBe(true);
-    expect(faits.some(b => /Nouveau Go du jour/.test(b))).toBe(false);
+  it('#695 : sans série, un nouveau Go du jour ; fait, « À demain ! » (série ou non)', () => {
+    expect(accueil(joueur, 1, pomme, 9, jour(5)).bulle).toBe('Nouveau Go du jour.');
+    expect(accueil(joueur, 1, pomme, 9, jour(5, { serie: 0 })).bulle).toBe('Nouveau Go du jour.');
+    expect(accueil(joueur, 1, pomme, 9, jour(5, { duJourFait: true })).bulle).toMatch(/^Fait pour aujourd’hui\. À demain\s!$/);
+    expect(accueil(joueur, 1, pomme, 9, jour(5, { duJourFait: true, serie: 7 })).bulle).toMatch(/^Fait pour aujourd’hui\. À demain/);
+  });
+
+  it('#695 : la phrase d’état ne dépend ni de l’adversaire ni du « Rejouer » (quel que soit le mode du bouton)', () => {
+    const j = jour(9, { serie: 3 });
+    const a = accueil({ n: 3, dernier: 'pomme' }, 1, pomme, 9, j).bulle;
+    expect(accueil({ n: 3, dernier: 'pomme' }, 1, { id: 'caillou', nom: 'Caillou' }, 13, j).bulle).toBe(a);
+    expect(accueil({ n: 3, dernier: 'caillou' }, 1, { ...pomme, fini: false }, 9, j).bulle).toBe(a);
+  });
+
+  it('#695 : sans Go du jour connu, la bulle invite à la partie comme le bouton', () => {
+    expect(accueil(joueur, 1, pomme, 9, jour(5, { titreDuJour: undefined })).bulle).toMatch(/On rejoue/);
+  });
+
+  it('#695 : jamais de culpabilité ni de compte à rebours', () => {
+    for (let n = 0; n < 12; n++) for (const j of [jour(n), jour(n, { serie: n }), jour(n, { duJourFait: true, serie: n }), jour(n, { absence: 4 })]) {
+      const b = accueil(joueur, 1, pomme, 9, j).bulle;
+      expect(b).not.toMatch(/perd|perdre|risque|dernier|vite|heures?\b|minutes?\b|avant minuit|plus que|reste|oubli|triste|dommage|enfin/i);
+      expect(b).not.toMatch(/\d+\s*(h|min)\b/);
+    }
   });
 
   it('après une absence : un accueil chaleureux, jamais « Te revoilà ! On rejoue » de la veille, jamais de reproche', () => {
-    const retours = Array.from({ length: 6 }, (_, i) => accueil(joueur, 1, pomme, 9, jour(30 + i, { absence: 4 })).bulle);
+    const retours = Array.from({ length: 6 }, (_, i) => accueil(joueur, 1, pomme, 9, jour(30 + i, { absence: 4, serie: 5 })).bulle);
     expect(new Set(retours).size).toBe(3);
     for (const b of retours) {
       expect(b).not.toMatch(/On rejoue/);
@@ -80,7 +99,7 @@ describe('bulle de Pomme selon le jour', () => {
   });
 
   it('deux phrases au plus, et jamais une seconde action sur le plateau', () => {
-    for (let n = 0; n < 12; n++) for (const j of [jour(n), jour(n, { duJourFait: true }), jour(n, { absence: 5 })]) {
+    for (let n = 0; n < 12; n++) for (const j of [jour(n), jour(n, { serie: n }), jour(n, { duJourFait: true }), jour(n, { absence: 5 })]) {
       for (const dernier of ['pomme', 'caillou']) {
         const b = accueil({ n: 2, dernier }, 1, pomme, 9, j).bulle;
         expect(phrases(b)).toBeLessThanOrEqual(2);
@@ -91,5 +110,18 @@ describe('bulle de Pomme selon le jour', () => {
 
   it('nouveau joueur : la bulle de la première partie, même un jour de retour', () => {
     expect(accueil({ n: 0 }, 0, pomme, 9, jour(3, { absence: 5 })).bulle).toMatch(/^Apprends le go en jouant/);
+  });
+});
+
+describe('bulle de l’adversaire en anglais (#695 : parité avec le français)', () => {
+  afterEach(() => choisirLangue('fr'));
+  it('mêmes cas, mêmes phrases courtes', () => {
+    choisirLangue('en');
+    const ligne = (j: Partial<Jour>) => accueil(joueur, 1, pomme, 9, jour(5, j)).bulle;
+    expect(ligne({ serie: 6 })).toBe('6-day streak. One Daily Go and it’s 7.');
+    expect(ligne({ serie: 1 })).toBe('1-day streak. One Daily Go and it’s 2.');
+    expect(ligne({})).toBe('New Daily Go.');
+    expect(ligne({ duJourFait: true })).toBe('Done for today. See you tomorrow!');
+    for (const j of [{}, { serie: 3 }, { duJourFait: true }]) expect(phrases(ligne(j))).toBeLessThanOrEqual(2);
   });
 });
