@@ -40,12 +40,12 @@
 .connexion-liens { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 var(--space-2); margin-top: 4px; }
 .connexion-liens .lien:disabled { color: var(--muted); opacity: 1; }
 .connexion-info { margin: 0; text-align: center; color: var(--accent-texte); }
-.connexion-aide { margin: 4px 0 0; text-align: center; text-wrap: pretty; }
+.connexion-aide { margin: 4px 0 0; text-align: center; }
 /* #353 : « J'ai déjà un compte » / « Créer un compte », sous l'action principale, centré, jamais en bouton plein. */
 .connexion-sens { justify-self: center; margin-top: 2px; text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
 .connexion-bascule { margin: 0 0 4px; padding: 10px 12px; border-radius: 12px; background: var(--surface-2, var(--bg)); border: 1px solid var(--line);
   color: var(--text); text-wrap: pretty; }
-.connexion-partie { margin: 0 0 4px; text-wrap: pretty; }
+.connexion-partie { margin: 0 0 4px; }
 /* « Continuer avec Google / Apple / Facebook » (#354, #411) : couleurs de chaque charte, sombre par défaut comme l'app.
    Google : blanc + bord gris en clair, #131314 en sombre. Apple : noir en clair, blanc en sombre (HIG).
    Facebook : bleu #1877F2 partout ; texte blanc en gras de 19 px (grand texte : contraste AA 3:1 atteint, 4,2:1).
@@ -69,7 +69,7 @@
 .btn.btn-facebook, .btn.btn-facebook:active { background: #1877F2; color: #FFFFFF; border: 1px solid #1877F2; }
 /* Identité déjà reliée à un autre compte (#411) : explication, avertissement, puis « Se connecter à ce compte ». */
 .connexion-incident { display: grid; gap: 8px; padding: 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface-2, var(--bg)); }
-.connexion-incident p { margin: 0; text-wrap: pretty; }
+.connexion-incident p { margin: 0; }
 .connexion-incident .attention { color: var(--danger-texte); }
 .connexion-incident .btn.primary { width: 100%; min-height: 48px; font-size: var(--fs-m); }
 /* Mon compte : moyens de connexion (#411). */
@@ -85,7 +85,7 @@
 .connexion-ou::before, .connexion-ou::after { content: ''; flex: 1; height: 1px; background: var(--line); }
 /* Code par e-mail en second moyen : bouton à contour, jamais plein. */
 .connexion-cta.secondaire { background: transparent; border-color: var(--line); }
-.connexion-integre { margin: 4px 0 0; text-align: center; text-wrap: pretty; }
+.connexion-integre { margin: 4px 0 0; text-align: center; }
 .connexion-integre a { color: inherit; font-weight: var(--fw-bold); display: inline-flex; align-items: center; min-height: 44px; }
 
 .creer-gratuit { margin: 0; text-align: center; }
@@ -119,7 +119,7 @@
    côte (l'une sous l'autre si la place manque). */
 .case-age-liens { display: flex; flex-wrap: wrap; align-items: center; column-gap: var(--space-4); padding-left: 34px; }
 .case-age-liens .lien { padding-inline: 0; font-weight: var(--fw-medium); font-size: var(--fs-s); }
-.case-age-detail { margin: 0 0 4px 34px; text-wrap: pretty; }
+.case-age-detail { margin: 0 0 4px 34px; }
 .connexion-cta.inactif { opacity: .55; box-shadow: none; }
 
 /* Mon compte, connecté (audit du 02/10) : deux boutons empilés pleine largeur, puis ce que le compte garde. */

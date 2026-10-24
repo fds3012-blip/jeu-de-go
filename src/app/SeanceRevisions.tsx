@@ -28,6 +28,7 @@ import { mouvementsReduits } from '../ui/defilement';
 import { texteXp } from '../ui/gainXp';
 import { fr } from '../ui/typo';
 import { t } from '../content/i18n/secondaires';
+import '../ui/revue.css';
 import '../ui/rejouer-erreurs.css';
 import '../ui/seance-revisions.css';
 

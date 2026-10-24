@@ -23,6 +23,7 @@ import type { CopieEtude } from './copieEtude';
 import { texteResultat } from './imagePartie';
 import { useOnline } from './hooks';
 import { Revue } from './Revue';
+import '../ui/revue.css';
 import '../ui/partage.css';
 
 interface Props {

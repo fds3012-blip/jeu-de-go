@@ -32,6 +32,7 @@ import { garderErreurRatee } from './revisionsAppareil';
 import { readLocal, writeLocal } from './hooks';
 import { gagnerXp, noterActivite } from './xp';
 import { useSettings } from './settings';
+import '../ui/revue.css';
 import '../ui/rejouer-erreurs.css';
 
 interface Props {

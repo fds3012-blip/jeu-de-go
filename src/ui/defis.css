@@ -5,7 +5,7 @@
    .defi-comptage (ses boutons « btn primary » : .btn.primary d'app.css passe après elle). */
 
 .defis { display: grid; gap: var(--space-3); padding-top: var(--space-2); }
-.defis .muted.small { text-wrap: pretty; max-width: 30em; }
+.defis .muted.small { max-width: 30em; }
 .defi-point { flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--accent-trait); }
 /* #393 : sur un écran bas (iPhone SE), la règle des 3 jours passait sous la barre d'actions ; Mochi dit déjà le temps qui reste. */
 .defi-comptage { display: flex; gap: var(--space-2); }
