@@ -141,6 +141,11 @@ export const EVENTS = {
   introReglesEtape: 'intro_regles_etape',
   introReglesFinie: 'intro_regles_finie',
   introReglesQuittee: 'intro_regles_quittee',
+  // « Ta première partie » (#715), mini-partie 5 × 5 contre Pomme après les règles : commencée (`rang`, 0 la première),
+  // capture (`n` pierres prises, `coups`), finie (`gagnee`, `aides`, `coups`, `premiere` ; `abandon` si on la quitte).
+  miniPartieCommencee: 'mini_partie_commencee',
+  miniPartieCapture: 'mini_partie_capture',
+  miniPartieFinie: 'mini_partie_finie',
   // Import d'une partie SGF (#286). `source` : `fichier`, `texte` ou `ogs` (lien de partie OGS).
   // Commencé (bouton « Lire la partie » ou fichier choisi), réussi (`octets`, `coups`, `taille`, `handicap`), refusé (`raison`, `coup`).
   importSgfCommence: 'import_sgf_commence',

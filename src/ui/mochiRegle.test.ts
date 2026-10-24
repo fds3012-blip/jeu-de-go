@@ -34,6 +34,7 @@ const REGLE: Record<string, Usage> = {
   'src/app/Game.tsx': { sceau: 0, portrait: 3, pourquoi: 'partie guidée (Mochi joue Blanc), fin de partie guidée, bouton « Conseil »' },
   'src/app/IntroRegles.tsx': { sceau: 0, portrait: 1, pourquoi: 'introduction des règles' },
   'src/app/Lecon.tsx': { sceau: 0, portrait: 1, pourquoi: 'leçon' },
+  'src/app/MiniPartie.tsx': { sceau: 0, portrait: 1, pourquoi: 'ta première partie (#715) : la mini-partie 5 × 5 contre Pomme, Mochi parle de ton coup' },
   'src/app/PartieDecouverte.tsx': { sceau: 0, portrait: 2, pourquoi: 'partie de découverte, et sa fin' },
   'src/app/Placement.tsx': { sceau: 0, portrait: 1, pourquoi: 'placement : bilan de tes trois problèmes' },
   'src/app/RejouerErreurs.tsx': { sceau: 0, portrait: 2, pourquoi: 'Rejouer mes erreurs : consigne, bilan' },
