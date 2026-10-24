@@ -55,7 +55,10 @@ async function servirReseau(page: Page) {
 
 async function ouvrirReglages(page: Page) {
   await NAV(page).getByRole('button', { name: 'Profil' }).click();
-  await page.getByRole('button', { name: /^Réglages/ }).click();
+  // #685 (N3, A8) : le Profil retrouve la rubrique laissée ; sinon, son sommaire.
+  const ia = page.getByRole('heading', { name: 'L’IA sur ton téléphone' });
+  await expect(ia.or(page.getByRole('button', { name: /^Réglages/ })).first()).toBeVisible();
+  if (!(await ia.isVisible())) await page.getByRole('button', { name: /^Réglages/ }).click();
   await expect(page.getByRole('heading', { name: 'L’IA sur ton téléphone' })).toBeVisible();
 }
 
