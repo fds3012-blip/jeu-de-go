@@ -59,7 +59,7 @@ describe('français identique aux textes d’origine', () => {
   });
 
   it('annonce du komi', () => {
-    expect(annonceKomi(0, 0.5)).toBeNull();
+    expect(annonceKomi(0, 0.5)).toBe('Le komi\u202f: des points donnés à Blanc, qui joue en second. Pour tes premières parties, il est de 0,5.');
     expect(annonceKomi(1, 0.5)).toBe('Cette partie encore, le komi est de 0,5 point.');
     expect(annonceKomi(2, 0.5)).toBe('Dernière partie avec un komi de 0,5 point.');
     expect(annonceKomi(3, 6.5)).toBe('Le komi passe à 6,5 points, sa valeur habituelle.');
@@ -105,7 +105,7 @@ describe('en anglais', () => {
     expect(messageAtari(false)).toBe('Atari! Your group has only one liberty left. Save it or strike back.');
     expect([0, 1, 2].map(descriptionIndices)).toEqual(['No more hints this game', '1 hint left', '2 hints left']);
     expect([1, 2].map(descriptionQuiMene)).toEqual(['1 more time this game', '2 more times this game']);
-    expect(annonceKomi(1, 0.5)).toBe('This game too, komi is 0.5 points.');
+    expect(annonceKomi(0, 0.5)).toBe('Komi: points given to White, who plays second. For your first games, it’s 0.5.');
   });
 
   it('répliques : 15 caractères au plus, comme en français', () => {

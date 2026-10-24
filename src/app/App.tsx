@@ -1054,7 +1054,7 @@ export function App() {
         <Game key={`${playing === 'ordi' ? adv.id : playing}-${partie}`} size={enRepli ? repli.demande.taille : partieReglee.taille ?? settings.size} komi={komiCompte(reglage.komi)} aiKomi={reglage.komi} avantage={reglage.avantage} accommodant={reglage.accommodant} confirmTouch={settings.confirmTouch}
           opponent={playing === 'ordi' ? adv : playing === 'guidee' ? mochiGuide : undefined}
           guidee={playing === 'guidee' ? { depart: departGuide, onCran: setCranGuide } : undefined}
-          intro={playing === 'guidee' ? <Bubble voix="coach">{t('guidee.bulle')}</Bubble> : playing === 'ordi' && (intro || reglage.annonce) ? <Bubble voix="coach">{intro ? introBut() : t('partie.bulle', { nom: adv.nom })}{reglage.annonce && <><br /><span className="annonce-komi">{reglage.annonce}</span></>}</Bubble> : undefined}
+          intro={playing === 'guidee' ? <Bubble voix="coach">{t('guidee.bulle')}</Bubble> : playing === 'ordi' && (intro || reglage.annonce) ? <Bubble voix="coach">{intro ? introBut(adv.nom) : t('partie.bulle', { nom: adv.nom })}{reglage.annonce && <><br /><span className="annonce-komi">{reglage.annonce}</span></>}</Bubble> : undefined}
           onExit={() => { setIntro(false); setPlaying(false); setResultat(null); setRepli(null); }} retour={playing === 'guidee' ? undefined : retourPose}
           // #640 : l'analyse se pose par-dessus la revue de la partie, que « ‹ » retrouve.
           onImporter={() => { if (!garde({ quoi: 'import' }, { quoi: 'importer' })) return; par('profil'); setVueProfil('importer'); window.scrollTo({ top: 0 }); }}

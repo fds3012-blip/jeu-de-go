@@ -10,7 +10,8 @@ export const PARTIES_KEY = 'go.parties.v1';
 /** Bulle « but du jeu » affichée une seule fois, au début de la première partie contre l'ordi. */
 export const INTRO_KEY = 'go.intro-but.v1';
 
-export const introBut = () => fr(t('accueil.introBut'));
+export const introBut = (nom: string) =>
+  fr(t('accueil.introBut', { nom }));
 
 export interface Accueil {
   /** Réplique de l'adversaire, dans sa bulle sur le plateau d'accueil. */

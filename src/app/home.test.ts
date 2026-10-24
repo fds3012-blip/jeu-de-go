@@ -55,10 +55,12 @@ describe('accueil', () => {
     for (const a of [accueil({ n: 0 }, 0, pomme, 9), accueil({ n: 0 }, 1, pomme, 9), accueil({ n: 1, dernier: 'pomme' }, 0, pomme, 9), accueil({ n: 1 }, 0, caillou, 19)]) {
       expect(phrases(a.bulle)).toBeLessThanOrEqual(2);
     }
-    const but = introBut();
-    // #U7 : une phrase, le geste ; le but et le komi viennent plus tard (récit du score).
-    expect(but).toBe('Touche un croisement pour poser ta pierre.');
-    expect(phrases(but)).toBe(1);
+    const but = introBut('Pomme');
+    expect(but).toMatch(/territoire que Pomme/);
+    // #466 : le geste d'abord (« Touche… »), puis le but ; rien d'autre à lire avant la première pierre.
+    expect(but).toMatch(/^Touche un croisement des lignes pour poser ta pierre\./);
+    expect(phrases(but)).toBe(2);
+    expect(but.split(/\s+/).length).toBeLessThanOrEqual(20);
   });
 });
 
