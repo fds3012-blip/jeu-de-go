@@ -244,7 +244,7 @@ test('record d’une série par thème : un bouton secondaire de plus dans la fe
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
   await ouvrirParTheme(page);
-  await page.getByRole('button', { name: /^Capturer/ }).click();
+  await page.getByRole('button', { name: /^Capture/ }).click();
   const id = (await page.locator('.lecteur').getAttribute('data-probleme'))!;
   const r = REPONSES.get(id)!;
   await expect(plateau(page, r.taille)).toBeVisible();

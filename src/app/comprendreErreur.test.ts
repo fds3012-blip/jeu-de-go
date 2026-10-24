@@ -210,7 +210,7 @@ describe('fin de partie, comptage, ko : la preuve est un compte de points (#558)
 describe('comprendre un coup faux (sauver)', () => {
   it('b4 : ta pierre en atari, coup ailleurs : Blanc la prend, et la phrase le dit', () => {
     const e = comprendreErreur(pz('b4'), at('A9'), compteur())!;
-    expect(e.phrase).toBe(traduire('fr', 'erreur.sauver.prise', { couleur: 'Blanc', point: toLabel(e.reponse, 9) }));
+    expect(e.phrase).toBe(traduire('fr', 'erreur.sauver.prise', { couleur: 'Blanc', point: toLabel(e.reponse, 9), n: 1 }));
     expect(e.pos.board[at('D5')]).toBe(0);
   });
   it('« ne peut plus être sauvée » n’est dit que si la prise est prouvée quoi que tu joues', () => {

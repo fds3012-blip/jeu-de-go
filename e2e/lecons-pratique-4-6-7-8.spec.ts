@@ -12,7 +12,7 @@ import LOT_X from '../src/content/lots/x-ko-ouverture';
 // Règle de Florian : aucun total ni cote affichés pendant la série.
 // Captures (JPEG, 10 au total) : docs/design/captures/pratique-lecons-4-6-7-8.
 
-const norm = (s: string) => s.replace(/[\u00A0\u202F\s]+/g, ' ').trim();
+const norm = (s: string) => s.replace(/[\u00A0\u202F\s]+/g, ' ').replace(/(?<=\p{L})'(?=\p{L})/gu, '’').trim();
 const LOTS = [...LOT_W, ...LOT_X];
 const pb = (id: string) => LOTS.find(r => r.id === id)!;
 const refut = (id: string) => (pb(id).setup as { refutation: string }).refutation;

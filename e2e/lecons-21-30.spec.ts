@@ -8,7 +8,7 @@ import { ACQUIS } from '../src/content/acquis';
 // 320 px, en clair et en sombre. Positions et réponses prouvées par src/go/lecons-21-30.test.ts.
 // Captures : seulement si CAPTURES_LECONS_21_30 donne un dossier (aucune capture versionnée).
 
-const norm = (s: string) => s.replace(/[\u00A0\u202F\s]+/g, ' ').trim();
+const norm = (s: string) => s.replace(/[\u00A0\u202F\s]+/g, ' ').replace(/(?<=\p{L})'(?=\p{L})/gu, '’').trim();
 const L21 = LESSONS_FR.find(l => l.id === 'l21')!;
 const etape = <K extends LessonStep['kind']>(i: number) => L21.steps[i] as Extract<LessonStep, { kind: K }>;
 /** Rang d'une leçon sur le chemin. */
