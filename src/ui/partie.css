@@ -230,6 +230,13 @@
 .actions .icone-trait { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 /* Désactivé : encre brume sans voile d'opacité (contraste AA sur la barre, 7:1 en sombre, 6:1 en clair). */
 .actions button:disabled { color: var(--muted); cursor: default; }
+/* #722 : chaque action répond à l'appui : fond de la surface haute, icône un peu enfoncée (retour plus doux au relâchement). */
+.actions button { transition: background-color var(--duree-pose); }
+.actions button:not(:disabled):active { background: var(--surface-2); transition-duration: var(--duree-rapide); }
+@media (prefers-reduced-motion: no-preference) {
+  .actions .icone-action { transition: transform var(--duree-pose) var(--ease); }
+  .actions button:not(:disabled):active .icone-action { transform: scale(.92); transition-duration: var(--duree-rapide); }
+}
 .actions button.danger { color: var(--danger-texte); font-weight: var(--fw-bold); }
 /* #236 (N7) : deux familles. Les aides à gauche, les décisions à droite, séparées par un filet vertical.
    « Passer » (l'action qui finit la partie) est un bouton plein, cerné, en gras : il ne pèse pas comme « Qui mène ? ». */

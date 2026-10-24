@@ -333,7 +333,7 @@ Lumière : `--halo`, un dégradé radial doré en haut de `body` (11 % d'or en s
 ### Boutons
 **Bouton principal** (`.cta`, `.btn.primary`) : une seule action par écran.
 - Fond `--accent`, texte `--on-accent`, Bricolage 800 en 20 px, rayon 16 px, hauteur 56 px (`--cible-cta`), ombre `--ombre-relief`.
-- Appui : `translateY(5px)` et plus d'ombre, en 100 ms (`--duree-rapide`). Mouvements réduits : pas de déplacement, le fond passe à `--accent-press`.
+- Appui : `translateY(5px)` et plus d'ombre, en 100 ms (`--duree-rapide`) ; relâchement en 160 ms (`--duree-pose`), plus doux que l'appui. Mouvements réduits : pas de déplacement, le fond passe à `--accent-press`.
 - Pas encore utilisable : à plat, fond `--surface-2`, texte `--muted`, sans ombre (il ne doit pas ressembler à l'actif). Pendant un envoi (`aria-busy`), il garde sa couleur.
 - Sur l'accueil, il porte le sceau de l'adversaire (`.cta-sceau`) : « Jouer contre Pomme ».
 
@@ -366,7 +366,8 @@ Lumière : `--halo`, un dégradé radial doré en haut de `body` (11 % d'or en s
 - **Bandeau joueur** (`.joueur`, `src/ui/Partie.tsx`) : 60 px de haut, portrait 44 px, nom en Bricolage 800, sans cadre. Point « au trait » de 14 px en `--accent-trait`. Le joueur qui n'a pas le trait s'efface (opacité .78 sur le portrait et le nom). Couvercle des prises en pilule.
 - **Barre d'avantage** (`.avantage`) : 8 px, Blanc en haut, Noir en bas, la portion noire glisse en `translateX` (300 ms).
 - **Coach** (`.coach`) : `--surface`, rayon 16 px, 60 px de haut au moins, une phrase en 15 px.
-- **Barre d'actions** (`.actions`, `IconesActions.tsx`) : sur `--barre`, boutons de 64 px, 5 actions au plus, aides à gauche et décisions à droite séparées par un filet. Désactivé : encre `--muted`, sans voile d'opacité.
+- **Barre d'actions** (`.actions`, `IconesActions.tsx`) : sur `--barre`, boutons de 64 px, 5 actions au plus, aides à gauche et décisions à droite séparées par un filet. Désactivé : encre `--muted`, sans voile d'opacité. Appui (#722) : fond `--surface-2`, icône à `scale(.92)`.
+- **Bord de défilement** (#722, `app.css`) : sous un bouton fixe (`.cta` ou `.dock`, hors accueil), un dégradé de `transparent` à `--bg` efface le contenu qui défile au lieu de le couper net. Fonctionnel, pas décoratif ; il ne capte aucun toucher.
 - **Goban** (`Board.tsx`, `board.css`) : bois rendu une seule fois, pierres en symboles SVG, dernier coup marqué d'un anneau clair (sur noire) ou foncé (sur blanche), jamais en vermillon.
 
 ### Mochi et personnages (`.claude/skills/personnages-go`)
@@ -392,6 +393,8 @@ Lumière : `--halo`, un dégradé radial doré en haut de `body` (11 % d'or en s
 | Moment | Durée | Courbe |
 |---|---|---|
 | Appui sur un bouton | 100 ms (`--duree-rapide`) | `--ease` |
+| Relâchement d'un bouton (#722) | 160 ms (`--duree-pose`) | `--ease` |
+| Arrivée d'un écran (#722) | 160 ms, opacité de .35 à 1 | `--ease` |
 | Transition d'interface | 200 ms (`--duree`) | `--ease` `cubic-bezier(.2,.8,.2,1)` |
 | Pose d'une pierre (échelle 1,12 → 1) | 140 ms | `--ease-pose` `cubic-bezier(.2,.8,.3,1.2)` |
 | Onglet activé (1,15 → 1) | 160 ms (`--duree-pose`) | `--ease-pose` |

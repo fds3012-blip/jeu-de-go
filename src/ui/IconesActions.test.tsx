@@ -81,7 +81,9 @@ describe('états (partie.css)', () => {
     const libre = partieCss.slice(partieCss.indexOf('/* Appui'));
     const bloc = libre.slice(libre.indexOf('@media (prefers-reduced-motion: no-preference)'), libre.indexOf('@keyframes action-pose'));
     expect(bloc).toMatch(/:active \.icone-action \.pose \{ transform: translateY\([\d.]+px\) scale\(\.9\); \}/);
-    expect(partieCss).not.toMatch(/\.actions button[^{]*:active \{[^}]*background/);
+    // #722 : chaque bouton répond aussi à l'appui (fond de la surface haute, icône à scale(.92) sans mouvement réduit).
+    expect(partieCss).toMatch(/\.actions button:not\(:disabled\):active \{ background: var\(--surface-2\);/);
+    expect(partieCss).toMatch(/\.actions button:not\(:disabled\):active \.icone-action \{ transform: scale\(\.92\);/);
     expect(partieCss.match(/animation: action-pose/g)).toHaveLength(1);
     expect(bloc).toContain('animation: action-pose');
   });
