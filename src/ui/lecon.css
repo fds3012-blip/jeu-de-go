@@ -70,11 +70,10 @@
 @keyframes demo-atari { from { opacity: 1; } to { opacity: .15; } }
 
 /* ---------- Mochi parle : portrait, puis la bulle (consigne, bravo en jade, erreur douce en hanko) ---------- */
-/* Passe design #509 (point 9) : la bulle suit le plateau (12 px, gap compris) au lieu de flotter au milieu de la place
-   libre ; cette place passe sous elle, au-dessus de l'action, qui reste en bas sous le pouce (comme .partie-souffle). */
-.mochi-zone { flex: none; display: flex; gap: var(--space-3); align-items: center; }
-/* Écran bas (568 px) : le plateau y cède déjà de la hauteur ; il ne la perd pas pour ces 4 px. */
-@media (min-height: 641px) { .mochi-zone { margin-top: var(--space-1); } }
+/* #U11 : la bulle se pose en bas, au-dessus de l'action et de la zone sûre, sous le pouce ; le plateau reste en haut, à la
+   largeur de l'écran (il ne peut pas grandir : il est déjà à 98 % de la largeur). La place libre d'un écran haut est donc
+   entre les deux, et non plus un vide sous la bulle. Écran bas (568 px) : le plateau cède déjà de la hauteur, rien ne change. */
+.mochi-zone { flex: none; display: flex; gap: var(--space-3); align-items: center; margin-top: auto; }
 @media (min-height: 760px) { .lecteur-lecon .mochi-bulle p { font-size: var(--fs-l); } }
 .mochi-zone .mochi-portrait { flex: none; width: var(--mochi) !important; height: var(--mochi) !important; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, .22)); }
 .lecteur-lecon .mochi-bulle { position: static; flex: 1; min-width: 0; min-height: var(--mochi); display: flex; gap: 10px; align-items: center; margin: 0; padding: 10px 14px;

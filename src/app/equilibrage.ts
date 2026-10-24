@@ -62,7 +62,7 @@ export function equilibrage(rang: number): Equilibrage {
 
 /**
  * Phrase de Mochi au début de la partie, qui annonce le komi réellement compté (`komi`) :
- * - première partie : le mot est expliqué ;
+ * - première partie : rien (#U7 : le mot est expliqué au récit du score, une seule fois, pas avant la première pierre) ;
  * - parties 2 et 3 : un rappel, la dernière le dit ;
  * - quatrième partie : le komi habituel revient, et on le dit.
  * Rien sinon, ni quand le komi n'est pas celui de l'équilibrage (paramètre de test `?komi=`).
@@ -70,7 +70,7 @@ export function equilibrage(rang: number): Equilibrage {
 export function annonceKomi(rang: number, komi: number): string | null {
   if (komi === KOMI_DEBUTANT && rang < PARTIES_KOMI_DEBUTANT) {
     const k = nombre(KOMI_DEBUTANT);
-    if (rang === 0) return fr(t('komi.premiere', { k }));
+    if (rang === 0) return null;
     if (rang === PARTIES_KOMI_DEBUTANT - 1) return fr(t('komi.derniere', { k }));
     return fr(t('komi.encore', { k }));
   }

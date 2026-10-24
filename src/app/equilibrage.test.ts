@@ -54,8 +54,8 @@ describe('équilibrage des premières parties contre l’ordi (#160)', () => {
     expect(partiesOrdi({ n: Number.NaN })).toBe(0);
   });
 
-  it('annonce : le komi est expliqué la première fois, puis rappelé, puis son retour à 6,5 est dit', () => {
-    expect(annonceKomi(0, 0.5)).toBe(`Le komi\u202f: des points donnés à Blanc, qui joue en second. Pour tes premières parties, il est de 0,5.`);
+  it('annonce : rien avant la première pierre (le récit du score explique le komi), puis rappelé, puis son retour à 6,5 est dit', () => {
+    expect(annonceKomi(0, 0.5)).toBeNull();
     expect(annonceKomi(1, 0.5)).toBe('Cette partie encore, le komi est de 0,5 point.');
     expect(annonceKomi(2, 0.5)).toBe('Dernière partie avec un komi de 0,5 point.');
     expect(annonceKomi(3, 6.5)).toBe('Le komi passe à 6,5 points, sa valeur habituelle.');

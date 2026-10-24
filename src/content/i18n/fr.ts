@@ -67,7 +67,7 @@ export const fr = {
   'accueil.tuileAriaSimple': 'Go du jour n° {numero} : {titre}.',
   'entete.flammeAFaire': 'Série de {jours}. Go du jour à faire aujourd’hui.',
   'entete.flammeFaite': 'Série de {jours}. Go du jour fait aujourd’hui.',
-  'accueil.introBut': 'Touche un croisement des lignes pour poser ta pierre. Le but : entourer plus de territoire que {nom}.',
+  'accueil.introBut': 'Touche un croisement pour poser ta pierre.',
   'accueil.changer': 'Changer',
   'accueil.goDuJour': 'Go du jour',
   // #613 (E7) : la tuile dit quoi faire, sans « 1 sur 48 ».
@@ -175,7 +175,6 @@ export const fr = {
   // Aide de Mochi (src/app/partie.ts, mêmes textes que ses constantes, vérifié par un test)
   // #486 : comptage automatique sûr des 3 premières parties.
   // Annonce du komi (src/app/equilibrage.ts)
-  'komi.premiere': 'Le komi : des points donnés à Blanc, qui joue en second. Pour tes premières parties, il est de {k}.',
   'komi.derniere': 'Dernière partie avec un komi de {k} point.',
   'komi.encore': 'Cette partie encore, le komi est de {k} point.',
   'komi.normal': 'Le komi passe à {k} points, sa valeur habituelle.',
