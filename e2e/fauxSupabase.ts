@@ -90,6 +90,8 @@ export function fauxServeur() {
   const notifications: Ligne[] = [];
   const abonnes = new Set<Abonne>();
   let lenteur = 0;
+  /** Joueurs en ligne que renvoie `joueurs_en_ligne()` (#695) : 0 par défaut, `fixerJoueursEnLigne` pour un accueil « avec du monde ». */
+  let joueursEnLigne: number | null = 0;
   /** Événements temps réel poussés (#425) : `table:id` et l'heure d'envoi. */
   const pousses: { table: string; id: string; le: number }[] = [];
   let idNotif = 0;
@@ -738,6 +740,10 @@ export function fauxServeur() {
       ratingHistory.push({ user_id: u.id, kind: 'depart', rating: cote, rd: 350, ecart: null, game_id: null, created_at: new Date().toISOString() });
       return json(cote);
     }
+    // #695 : un nombre, sans aucun identifiant ; null : le serveur ne répond pas (erreur).
+    if (chemin === '/rest/v1/rpc/joueurs_en_ligne') {
+      return joueursEnLigne === null ? json({ code: 'PGRST202', message: 'Not found' }, 404) : json(joueursEnLigne);
+    }
     if (chemin === '/rest/v1/rpc/find_match') {
       const { p_size, p_cadence = 'normale', p_regles = 'japanese' } = req.postDataJSON() as { p_size: number; p_cadence?: string; p_regles?: string };
       if (!u || u.anonyme) return json({ code: 'JGC01', message: 'Crée ton compte' }, 400);
@@ -1042,11 +1048,12 @@ export function fauxServeur() {
   function sessionCompte(email: string, pseudo: string, id: string) { return session(compteExistant(email, pseudo, id)); }
   /** Relectures retardées de `ms` (#425) ; 0 : sans retard. */
   function ralentirLectures(ms: number) { lenteur = ms; }
+  function fixerJoueursEnLigne(n: number | null) { joueursEnLigne = n; }
   /** Connexions temps réel ouvertes à cet instant figées (#425) : un iPhone qui sort de veille. */
   function figerTempsReel() { for (const a of abonnes) a.fige = true; }
   /** Canaux rejoints sur une connexion qui marche, dont le sujet commence par `prefixe` (`defi-`, `direct-`). */
   const canauxActifs = (prefixe: string) => [...abonnes].filter(a => !a.fige).flatMap(a => [...a.canaux.keys()]).filter(t => t.startsWith(`realtime:${prefixe}`)).length;
-  return { traiter, brancherTempsReel, notifier, fileLente, tacheLentes, avancerHorloge, abandons, noterAbandon, ralentirLectures, figerTempsReel, canauxActifs, pousses, pousserPartie, appels, games, defis, notifications, partiesPerso, partagees, profiles, ratingHistory, titres, emailsEnvoyes, sessionAnonyme, file, pendules,
+  return { traiter, fixerJoueursEnLigne, brancherTempsReel, notifier, fileLente, tacheLentes, avancerHorloge, abandons, noterAbandon, ralentirLectures, figerTempsReel, canauxActifs, pousses, pousserPartie, appels, games, defis, notifications, partiesPerso, partagees, profiles, ratingHistory, titres, emailsEnvoyes, sessionAnonyme, file, pendules,
     compteExistant, compteGoogle, compteSocial, relierIdentite, liaison, utilisateur, sessionCompte, autorisations, amities,
     signalements, blocages, messagesPartie, goDuJour, rappels, reglages, suspendus };
 }
