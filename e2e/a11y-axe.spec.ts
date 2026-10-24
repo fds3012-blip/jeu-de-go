@@ -504,6 +504,8 @@ test('axe : « Par thème » d’Apprendre (#590) et la page d’un thème', asy
 });
 
 test('axe : Ouvertures (#626), la liste en cartes et le départ d’une ouverture', async ({ page }) => {
+  // #U9 : « Ouvertures » vient avec le chapitre de l'ouverture : le joueur a fini les bases.
+  await page.addInitScript(() => localStorage.setItem('go.lecons.v1', JSON.stringify({ l1: 99, l2: 99, l3: 99, l4: 99, l5: 99, l6: 99, l7: 99 })));
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
   await page.getByTestId('entree-ouvertures').click();

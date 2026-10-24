@@ -26,6 +26,8 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('Ouvertures : la liste, puis une ouverture', async ({ page }) => {
+  // #U9 : « Ouvertures » vient avec le chapitre de l'ouverture : les bases sont faites.
+  await page.addInitScript(() => localStorage.setItem('go.lecons.v1', JSON.stringify({ l1: 99, l2: 99, l3: 99, l4: 99, l5: 99, l6: 99, l7: 99 })));
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
   await page.getByTestId('entree-ouvertures').click();
