@@ -6,6 +6,8 @@ import { PortraitMochi } from './Portrait';
 import { Confettis } from './Confettis';
 import { mouvementsReduits, useDefilement } from './defilement';
 import { PastilleXp } from './PastilleXp';
+import { AdversaireOuvert, type Ouvre } from './AdversaireOuvert';
+import { Sceau } from './Sceau';
 import { terminerFete, useFile } from './celebrations';
 import { t } from '../content/i18n/secondaires';
 import './fin.css';
@@ -22,12 +24,19 @@ interface Props {
   marge?: number | null;
   texteMarge?: (v: number) => string;
   sousTitre?: string;
+  /** #U4 : la série du jour, dite une fois quand cette partie vient de l'allumer (« 2 jours de série · À demain »). */
+  serie?: ReactNode;
   /** Bilan en une phrase ; rien quand il n'y a rien à fêter (#631). */
   bilan?: ReactNode;
   /** Leçon de la partie par Mochi (texte et, au besoin, un lien vers une leçon). */
   mochi?: ReactNode;
   /** L'action principale : un seul bouton en relief. */
   action: ReactNode;
+  /**
+   * #U8 : la victoire vient d'ouvrir un nouvel adversaire. Le bouton principal passe d'abord par son écran
+   * (portrait dévoilé, une phrase), dont le bouton lance la partie.
+   */
+  ouvre?: Ouvre;
   onRevoir?: () => void;
   onAccueil: () => void;
   /** Texte du lien de retour (« Accueil » par défaut ; « Apprendre » pour la partie guidée, #589). */
@@ -38,12 +47,13 @@ interface Props {
   apres?: ReactNode;
 }
 
-export function FinPartie({ fond, sceau, tampon, titre, marge, texteMarge, sousTitre, bilan, mochi, action, onRevoir, onAccueil, libelleRetour, confettis = false, apres }: Props) {
+export function FinPartie({ fond, sceau, tampon, titre, marge, texteMarge, sousTitre, serie, bilan, mochi, action, ouvre, onRevoir, onAccueil, libelleRetour, confettis = false, apres }: Props) {
   const [reduit] = useState(mouvementsReduits);
   const titreRef = useRef<HTMLHeadingElement>(null);
   const sceauRef = useRef<HTMLDivElement>(null);
   const [gerbe, setGerbe] = useState<null | { x: number; y: number }>(null);
   const [gerbeFinie, setGerbeFinie] = useState(false);
+  const [ouvreVu, setOuvreVu] = useState(false);
   const v = useDefilement(marge ?? 0, 600, !reduit && marge != null);
   // Recette du 02/10 au soir (L5) : l'XP de la partie se posait en haut de l'écran, sur la ligne des lettres du plateau.
   // Elle se lit ici, sous le résultat, et y reste (l'annonce flottante s'efface quand cet écran est là : fin.css).
@@ -89,6 +99,7 @@ export function FinPartie({ fond, sceau, tampon, titre, marge, texteMarge, sousT
           </p>
         ) : sousTitre && <p className="fin-marge">{sousTitre}</p>}
         <div className="fin-xp" role="status" aria-live="polite">{xp && <PastilleXp points={xp.points} bonus={xp.bonus} anime={!reduit} />}</div>
+        {serie}
         {bilan && <p className="fin-bilan">{bilan}</p>}
         {mochi && (
           <div className="fin-mochi">
@@ -96,13 +107,18 @@ export function FinPartie({ fond, sceau, tampon, titre, marge, texteMarge, sousT
             <div>{mochi}</div>
           </div>
         )}
-        <div className="fin-action">{action}</div>
+        <div className="fin-action">
+          {ouvre
+            ? <button type="button" className="cta" onClick={() => setOuvreVu(true)}><Sceau id={ouvre.id} taille={30} />{ouvre.libelle}</button>
+            : action}
+        </div>
         <div className="fin-liens">
           {onRevoir && <button type="button" className="lien" onClick={onRevoir}>{t('fin.revoir')}</button>}
           <button type="button" className="lien lien-discret" onClick={onAccueil}>{libelleRetour ?? t('fin.accueil')}</button>
         </div>
         {apres}
       </div>
+      {ouvre && ouvreVu && <AdversaireOuvert ouvre={ouvre} celebrer={confettis} onPlusTard={() => setOuvreVu(false)} />}
       {gerbe && !gerbeFinie && <Confettis origine={gerbe} onFin={() => setGerbeFinie(true)} />}
     </section>
   );

@@ -9,6 +9,10 @@
 .serie-du-jour b { color: var(--recompense-texte); font-weight: var(--fw-bold); }
 .serie-du-jour-demain { color: var(--muted); }
 .serie-du-jour-demain::before { content: '·'; margin-right: 6px; }
+/* #U4 : sur les écrans de fin (partie, leçon), tout est centré. */
+.fin-feuille .serie-du-jour, .fin-lecon .serie-du-jour, .fin-feuille .jalon, .fin-lecon .jalon { justify-content: center; }
+.fin-lecon .serie-du-jour, .fin-lecon .jalon { margin: var(--space-3) 0 var(--space-4); }
+.fin-feuille .serie-du-jour, .fin-feuille .jalon { margin: var(--space-2) 0 0; }
 /* Petit écran et longue explication (#290) : la feuille se replie pour laisser voir le coup joué. La ligne de série
    se replie avec l'explication (toujours lue par le lecteur d'écran) ; un jalon, lui, reste à l'écran. */
 .verdict[data-compact] .serie-du-jour { position: absolute; width: 1px; height: 1px; margin: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }

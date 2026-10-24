@@ -1,0 +1,24 @@
+/* #U8 : écran de l'adversaire qui vient de s'ouvrir. Plein écran par-dessus la fin de partie, une seule action en relief. */
+.adversaire-ouvert { position: fixed; inset: 0; z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-3);
+  padding: var(--space-8) var(--gouttiere) calc(var(--space-6) + env(safe-area-inset-bottom, 0px)); text-align: center; background: var(--halo), var(--bg); overflow-y: auto; }
+.ouvert-cadre { position: relative; width: 160px; height: 160px; margin-bottom: var(--space-2); line-height: 0; filter: drop-shadow(0 12px 18px rgba(0, 0, 0, .35)); }
+/* Le voile reprend le cadre du portrait (22 % de 160 px) : sans animation, il est déjà parti. */
+.ouvert-voile { position: absolute; inset: 0; border-radius: 35px; background: var(--surface-2); opacity: 0; pointer-events: none; }
+.ouvert-cadenas { position: absolute; right: -6px; bottom: -6px; width: 40px; height: 40px; padding: 9px; border-radius: 50%; opacity: 0;
+  background: var(--surface-2); color: var(--text); box-shadow: 0 0 0 3px var(--bg); pointer-events: none; }
+.adversaire-ouvert h2 { margin: 0; font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: var(--fs-3xl); line-height: var(--lh-titre); letter-spacing: var(--tracking-titre); text-wrap: balance; }
+.adversaire-ouvert p { margin: 0 0 var(--space-4); max-width: 24ch; color: var(--muted); font-size: var(--fs-base); }
+.adversaire-ouvert .cta { position: static; transform: none; display: flex; align-items: center; justify-content: center; gap: 10px; width: min(100%, 360px); }
+.adversaire-ouvert .lien-discret { color: var(--muted); text-decoration-color: var(--line); }
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Le portrait est d'abord sous un voile avec son cadenas ; le voile se lève, le cadenas s'efface en rapetissant. */
+  .adversaire-ouvert.anime .ouvert-voile { animation: ouvert-voile 520ms var(--ease) 260ms both; }
+  .adversaire-ouvert.anime .ouvert-cadenas { animation: ouvert-cadenas 360ms var(--ease) 260ms both; }
+  .adversaire-ouvert.anime .ouvert-cadre { animation: ouvert-entree 240ms var(--ease) both; }
+  .adversaire-ouvert.anime h2, .adversaire-ouvert.anime p { animation: ouvert-texte 280ms var(--ease) 520ms both; }
+}
+@keyframes ouvert-voile { from { opacity: .72; } to { opacity: 0; } }
+@keyframes ouvert-cadenas { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(.5); } }
+@keyframes ouvert-entree { from { opacity: 0; transform: scale(.94); } to { opacity: 1; transform: none; } }
+@keyframes ouvert-texte { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
