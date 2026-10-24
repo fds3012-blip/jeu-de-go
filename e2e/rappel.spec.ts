@@ -159,7 +159,7 @@ test('après la première partie terminée : proposé une fois, heure simple, ac
   await carte(page).getByRole('button', { name: 'Me le rappeler' }).click();
   await expect(carte(page).getByRole('status')).toHaveText(/un rappel par jour, vers midi/);
   expect(await demandes(page)).toBe(1);
-  expect(await etat(page)).toEqual({ proposition: 'acceptee', actif: true, moment: 'midi' });
+  expect(await etat(page)).toEqual({ proposition: 'acceptee', actif: true, moment: 'midi', tours: false });
   // Inscription sur le serveur, pour ce compte : clé publique de 65 octets, fuseau et langue de l'appareil.
   expect(await page.evaluate(() => (window as unknown as { __cle: number }).__cle)).toBe(65);
   const inscription = serveur.appels.find(a => a.chemin.startsWith('/rest/v1/rpc/enregistrer_abonnement_rappel'));
@@ -181,10 +181,10 @@ test('après la première partie terminée : proposé une fois, heure simple, ac
   // Profil : la ligne dit le moment ; on le change, puis on coupe le rappel.
   await page.getByRole('button', { name: /accueil/i }).first().click();
   await ouvrirProfil(page);
-  const ligne = page.getByRole('button', { name: /Rappel du Go du jour/ });
+  const ligne = page.getByRole('button', { name: /^Rappels/ });
   await expect(ligne).toContainText('Midi');
   await ligne.click();
-  await expect(page.getByRole('heading', { level: 2, name: 'Rappel du Go du jour' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 2, name: 'Rappels' })).toBeVisible();
   const interrupteur = page.getByRole('switch', { name: /Un rappel chaque jour/ });
   await expect(interrupteur).toHaveAttribute('aria-checked', 'true');
   await page.getByRole('group', { name: 'Quand ?' }).getByRole('button', { name: 'Matin, 9 h' }).click();
@@ -197,7 +197,7 @@ test('après la première partie terminée : proposé une fois, heure simple, ac
   expect(await page.evaluate(() => (window as unknown as { __abonne: boolean }).__abonne)).toBe(false);
   await expect.poll(() => etat(page)).toMatchObject({ actif: false });
   await page.getByRole('button', { name: 'Retour' }).click();
-  await expect(page.getByRole('button', { name: /Rappel du Go du jour/ })).toContainText('Coupé');
+  await expect(page.getByRole('button', { name: /^Rappels/ })).toContainText('Coupé');
   expect(erreurs).toEqual([]);
 });
 
@@ -212,6 +212,68 @@ test('« Non merci » est définitif, et la permission du navigateur n’est jam
   await expect(page.locator('.fin-liens')).toBeVisible();
   await expect(carte(page)).toHaveCount(0);
   expect(await demandes(page)).toBe(0);
+});
+
+test('« À toi de jouer » (#699) : éteint par défaut, allumé au geste, coupé en un geste, indépendant du rappel du jour', async ({ page }) => {
+  const serveur = await preparer(page);
+  await page.goto('/');
+  await ouvrirProfil(page);
+  // Rien n'est allumé et la permission du navigateur n'a jamais été demandée.
+  expect(await demandes(page)).toBe(0);
+  const ligne = page.getByRole('button', { name: /^Rappels/ });
+  await expect(ligne).toContainText('Coupé');
+  await ligne.click();
+  const jour = page.getByRole('switch', { name: /Un rappel chaque jour/ });
+  const tours = page.getByRole('switch', { name: /^À toi de jouer/ });
+  await expect(jour).toHaveAttribute('aria-checked', 'false');
+  await expect(tours).toHaveAttribute('aria-checked', 'false');
+  await expect(tours).toContainText('Jamais la nuit');
+  expect((await tours.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  expect(await demandes(page)).toBe(0);
+  expect(serveur.appels.filter(a => a.chemin.includes('abonnements_rappel') || a.chemin.includes('enregistrer_abonnement_rappel'))).toEqual([]);
+
+  // Allumé au geste : permission demandée une fois, abonnement enregistré avec les tours seuls (le rappel du jour reste éteint).
+  await tours.click();
+  await expect(tours).toHaveAttribute('aria-checked', 'true');
+  await expect(jour).toHaveAttribute('aria-checked', 'false');
+  expect(await demandes(page)).toBe(1);
+  const inscription = serveur.appels.filter(a => a.chemin.startsWith('/rest/v1/rpc/enregistrer_abonnement_rappel')).at(-1);
+  expect(inscription?.corps).toMatchObject({ p_endpoint: 'https://push.exemple.test/abonnement-1', p_jour: null, p_tour: true, p_langue: 'fr' });
+  expect(await etat(page)).toMatchObject({ actif: false, tours: true });
+  await page.getByRole('button', { name: 'Retour' }).click();
+  await expect(page.getByRole('button', { name: /^Rappels/ })).toContainText('À toi de jouer');
+
+  // Le rappel du jour s'allume à côté, sans redemander la permission ; couper l'un garde l'abonnement pour l'autre.
+  await page.getByRole('button', { name: /^Rappels/ }).click();
+  await jour.click();
+  await expect(jour).toHaveAttribute('aria-checked', 'true');
+  expect(await demandes(page)).toBe(1);
+  expect(serveur.appels.filter(a => a.chemin.startsWith('/rest/v1/rpc/enregistrer_abonnement_rappel')).at(-1)?.corps).toMatchObject({ p_jour: true, p_tour: null });
+  await tours.click();
+  await expect(tours).toHaveAttribute('aria-checked', 'false');
+  expect(serveur.appels.filter(a => a.chemin.startsWith('/rest/v1/rpc/enregistrer_abonnement_rappel')).at(-1)?.corps).toMatchObject({ p_jour: null, p_tour: false });
+  expect(serveur.appels.some(a => a.methode === 'DELETE')).toBe(false);
+  expect(await page.evaluate(() => (window as unknown as { __abonne: boolean }).__abonne)).toBe(true);
+
+  // Tout couper : l'abonnement est supprimé du serveur et du navigateur.
+  await jour.click();
+  await expect(jour).toHaveAttribute('aria-checked', 'false');
+  await expect.poll(() => serveur.appels.some(a => a.methode === 'DELETE' && a.chemin.startsWith('/rest/v1/abonnements_rappel'))).toBe(true);
+  expect(await page.evaluate(() => (window as unknown as { __abonne: boolean }).__abonne)).toBe(false);
+  expect(await etat(page)).toMatchObject({ actif: false, tours: false });
+  // Mesure : allumé puis coupé.
+  await expect.poll(() => serveur.evenements.join('\n'), { timeout: 15_000 }).toMatch(/"event":"tours_coupe"/);
+  expect(serveur.evenements.join('\n')).toMatch(/"event":"tours_active"/);
+});
+
+test('« À toi de jouer » : refus du navigateur, rien d’allumé', async ({ page }) => {
+  await preparer(page, { reponse: 'denied' });
+  await page.goto('/');
+  await ouvrirProfil(page);
+  await page.getByRole('button', { name: /^Rappels/ }).click();
+  await page.getByRole('switch', { name: /^À toi de jouer/ }).click();
+  await expect(page.getByText(/bloque les notifications/).first()).toBeVisible();
+  expect((await etat(page))?.tours ?? false).toBe(false);
 });
 
 test('refus dans la fenêtre du navigateur : le joueur sait comment revenir dessus', async ({ page }) => {
@@ -229,7 +291,7 @@ test('sans compte : pas de proposition ; le Profil explique que le rappel demand
   await expect(carte(page)).toHaveCount(0);
   await page.goto('/');
   await ouvrirProfil(page);
-  await page.getByRole('button', { name: /Rappel du Go du jour/ }).click();
+  await page.getByRole('button', { name: /^Rappels/ }).click();
   await expect(page.getByText(/réservé aux joueurs avec un compte/)).toBeVisible();
   await expect(page.getByRole('button', { name: 'Mon compte' })).toBeVisible();
 });
@@ -242,7 +304,7 @@ test('rappel pas encore configuré (pas de clé VAPID) : ni proposition, ni lign
   await page.goto('/');
   await ouvrirProfil(page);
   await expect(page.getByRole('button', { name: 'Réglages' })).toBeVisible();
-  await expect(page.getByRole('button', { name: /Rappel du Go du jour/ })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /^Rappels/ })).toHaveCount(0);
 });
 
 test('la notification touchée ouvre le Go du jour, et l’adresse est nettoyée', async ({ page }) => {
@@ -267,7 +329,7 @@ test.describe('iPhone dans Safari', () => {
     await expect(carte(page)).toHaveCount(0);
     await page.goto('/');
     await ouvrirProfil(page);
-    await page.getByRole('button', { name: /Rappel du Go du jour/ }).click();
+    await page.getByRole('button', { name: /^Rappels/ }).click();
     await expect(page.getByText(/seulement dans l’app installée sur l’écran d’accueil/)).toBeVisible();
     await page.getByRole('button', { name: 'Installer l’app' }).click();
     await expect(page.getByRole('heading', { level: 2, name: 'Installer l’app' })).toBeVisible();

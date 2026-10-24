@@ -2,6 +2,9 @@
 // (src/data/envoyerRappels.test.ts) avec une base et un service d'envoi simulés. index.ts la branche sur Supabase
 // et sur la bibliothèque web-push.
 //
+// Deux familles d'envois, même fonction, mêmes garde-fous (#699) :
+// - le rappel quotidien du Go du jour (`reclamer_rappels`) ;
+// - « à toi de jouer » dans une partie lente classée (`reclamer_tours`).
 // Règles :
 // - la base choisit les rappels dus et les marque envoyés (`reclamer_rappels`) : un par jour au plus, jamais la nuit ;
 // - un abonnement que le service de notification dit disparu (404 ou 410) est supprimé ;
@@ -68,8 +71,8 @@ export interface ResultatEnvoi { statut: number }
 export interface Deps {
   /** `reclamer_rappels` : rappels dus maintenant, déjà marqués envoyés. */
   reclamer: () => Promise<Abonnement[]>;
-  /** Envoie une notification chiffrée (web-push). Ne lève pas : rend le statut HTTP. */
-  envoyer: (a: Abonnement, charge: string) => Promise<ResultatEnvoi>;
+  /** Envoie une notification chiffrée (web-push). Ne lève pas : rend le statut HTTP. `tag` : sujet du message (remplace un message en attente du même sujet). */
+  envoyer: (a: Abonnement, charge: string, tag: string) => Promise<ResultatEnvoi>;
   /** Supprime des abonnements disparus. */
   supprimer: (ids: string[]) => Promise<void>;
 }
@@ -98,26 +101,90 @@ export function endpointAutorise(endpoint: string): boolean {
   return u.protocol === 'https:' && !u.username && !u.password && !u.port && HOTES_PUSH.test(u.hostname);
 }
 
-export async function envoyerRappels(deps: Deps): Promise<Bilan> {
-  const dus = await deps.reclamer();
+/** Ce qu'il faut pour écrire à un appareil. */
+type Cible = Pick<Abonnement, 'id' | 'endpoint' | 'p256dh' | 'auth'>;
+
+/**
+ * Envoie par lots à chaque appareil dû, supprime les abonnements disparus. `contenu` rend la charge de chaque envoi.
+ * Adresse hors liste : rien n'est envoyé, compté en échec ; l'abonnement n'est pas supprimé (l'équipe le voit).
+ */
+async function diffuser<T extends Cible>(
+  dus: T[], contenu: (x: T) => ChargeRappel, envoyer: (x: T, charge: string, tag: string) => Promise<ResultatEnvoi>,
+  supprimer: (ids: string[]) => Promise<void>,
+): Promise<Bilan> {
   const bilan: Bilan = { dus: dus.length, envoyes: 0, supprimes: 0, echecs: 0 };
-  const disparus: string[] = [];
+  const disparus = new Set<string>();
   for (let i = 0; i < dus.length; i += TAILLE_LOT) {
     const lot = dus.slice(i, i + TAILLE_LOT);
-    // Adresse hors liste : rien n'est envoyé, compté en échec ; l'abonnement n'est pas supprimé (l'équipe le voit).
-    const resultats = await Promise.all(lot.map(a => !endpointAutorise(a.endpoint) ? { statut: -1 } :
-      deps.envoyer(a, JSON.stringify(chargeDuJour(a.langue, a.jour))).catch((): ResultatEnvoi => ({ statut: 0 }))));
+    const resultats = await Promise.all(lot.map(x => {
+      if (!endpointAutorise(x.endpoint)) return { statut: -1 };
+      const c = contenu(x);
+      return envoyer(x, JSON.stringify(c), c.tag).catch((): ResultatEnvoi => ({ statut: 0 }));
+    }));
     resultats.forEach(({ statut }, j) => {
       if (statut >= 200 && statut < 300) bilan.envoyes++;
-      else if (estDisparu(statut)) disparus.push(lot[j].id);
+      else if (estDisparu(statut)) disparus.add(lot[j].id);
       else bilan.echecs++;
     });
   }
-  if (disparus.length) {
-    await deps.supprimer(disparus);
-    bilan.supprimes = disparus.length;
+  if (disparus.size) {
+    await supprimer([...disparus]);
+    bilan.supprimes = disparus.size;
   }
   return bilan;
+}
+
+export async function envoyerRappels(deps: Deps): Promise<Bilan> {
+  return diffuser(await deps.reclamer(), a => chargeDuJour(a.langue, a.jour), deps.envoyer, deps.supprimer);
+}
+
+// ---------- « À toi de jouer » (#699) ----------
+
+/** Ligne rendue par `reclamer_tours` : un appareil à prévenir, pour une notification `tour` ou `comptage`. */
+export interface Tour extends Cible {
+  langue: string;
+  type: string;
+  partie_id: string;
+}
+
+export interface DepsTours {
+  reclamer: () => Promise<Tour[]>;
+  envoyer: (a: Tour, charge: string, tag: string) => Promise<ResultatEnvoi>;
+  supprimer: (ids: string[]) => Promise<void>;
+}
+
+/**
+ * Textes sobres : ni pseudo, ni adversaire, ni délai, ni compte à rebours, ni « vite » (public avec enfants). Le tour dit
+ * que l'adversaire a joué ; le comptage dit que des pierres mortes sont proposées. Aucun ne promet du temps : la partie
+ * lente a un délai par coup, qu'on ne contredit pas.
+ */
+export const TEXTES_TOUR: Record<Langue, Record<'tour' | 'comptage', { titre: string; texte: string }>> = {
+  fr: {
+    tour: { titre: 'À toi de jouer', texte: 'Ton adversaire a joué. La partie reprend à ton coup.' },
+    comptage: { titre: 'On compte la partie', texte: 'Ton adversaire propose les pierres mortes. Regarde si tu es d’accord.' },
+  },
+  en: {
+    tour: { titre: 'Your move', texte: 'Your opponent has played. The game is back to you.' },
+    comptage: { titre: 'Let’s count the game', texte: 'Your opponent suggests the dead stones. See if you agree.' },
+  },
+};
+
+export const TAG_TOUR = 'tour-';
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Adresse ouverte au toucher : la partie (`/?tour=<identifiant>`), ou l'accueil si l'identifiant est illisible. */
+export const urlTour = (partieId: string): string => (UUID.test(partieId) ? `/?tour=${partieId.toLowerCase()}` : '/');
+
+/** Étiquette de la partie (32 caractères au plus pour le sujet web-push) : un nouveau message de la même partie remplace l'ancien. */
+export const tagTour = (partieId: string): string => `${TAG_TOUR}${partieId.replace(/[^0-9a-f]/gi, '').slice(0, 12).toLowerCase()}`;
+
+export function chargeTour(t: Pick<Tour, 'langue' | 'type' | 'partie_id'>): ChargeRappel {
+  const { titre, texte } = TEXTES_TOUR[langueDe(t.langue)][t.type === 'comptage' ? 'comptage' : 'tour'];
+  return { titre, texte, url: urlTour(t.partie_id), tag: tagTour(t.partie_id) };
+}
+
+export async function envoyerTours(deps: DepsTours): Promise<Bilan> {
+  return diffuser(await deps.reclamer(), chargeTour, deps.envoyer, deps.supprimer);
 }
 
 /**

@@ -111,11 +111,12 @@ self.addEventListener('fetch', (event) => {
   }
 });
 
-/* Rappel quotidien du Go du jour (issue #36).
+/* Rappel quotidien du Go du jour (issue #36) et « à toi de jouer » des parties lentes (issue #699).
  * - `push` : la fonction serveur `envoyer-rappels` envoie { titre, texte, url, tag } (chiffré, clés VAPID).
  *   Même étiquette chaque jour : le rappel d'aujourd'hui remplace celui d'hier au lieu de s'empiler.
  *   Ni son ni vibration imposés, sans insistance (`requireInteraction` absent).
- * - `notificationclick` : ouvre le Go du jour (`/?rappel=1` ; l'app envoie alors `rappel_ouvert`). Si l'app est déjà
+ * - `notificationclick` : ouvre l'adresse portée par la notification, toujours de notre origine : le Go du jour
+ *   (`/?rappel=1` ; l'app envoie alors `rappel_ouvert`) ou la partie (`/?tour=<identifiant>`, #699). Si l'app est déjà
  *   ouverte, elle revient au premier plan sur cette adresse ; sinon une fenêtre s'ouvre.
  */
 const RAPPEL_DEFAUT = { titre: 'Le Go du jour est prêt', texte: 'Un petit problème de go t’attend.', url: '/?rappel=1', tag: 'rappel-du-jour' };

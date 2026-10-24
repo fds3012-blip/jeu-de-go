@@ -1,6 +1,8 @@
-// Fonction serveur `envoyer-rappels` (issue #36) : envoie le rappel quotidien du Go du jour par notification web.
+// Fonction serveur `envoyer-rappels` (issues #36 et #699) : envoie par notification web le rappel quotidien du Go du jour
+// et « à toi de jouer » des parties lentes.
 // Appelée chaque heure par pg_cron (supabase/planification/envoyer-rappels.sql), jamais par l'app.
-// POST, en-tête `Authorization: Bearer <RAPPELS_SECRET>`. Réponse : { ok, dus, envoyes, supprimes, echecs }.
+// POST, en-tête `Authorization: Bearer <RAPPELS_SECRET>`. Réponse : { ok, dus, envoyes, supprimes, echecs, tours: { dus, envoyes, supprimes, echecs } }.
+// Sans clés VAPID ni secret (rien posé par Florian) : refus 401 ou 500 « configuration », aucune notification, aucune ligne touchée.
 //
 // Variables d'environnement (secrets de la fonction, jamais dans le dépôt : docs/growth/rappel-quotidien.md) :
 // - VAPID_CLE_PUBLIQUE, VAPID_CLE_PRIVEE : paire de clés VAPID (la publique est aussi VITE_VAPID_PUBLIC_KEY côté app) ;
@@ -10,9 +12,9 @@
 // Déploiement sans vérification du JWT (`--no-verify-jwt`) : l'accès est contrôlé par RAPPELS_SECRET.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import webpush from 'npm:web-push@3.6.7';
-import { autorise, envoyerRappels, TAG_RAPPEL, type Abonnement, type Deps } from './logique.ts';
+import { autorise, envoyerRappels, envoyerTours, type Abonnement, type Bilan, type Deps, type DepsTours, type Tour } from './logique.ts';
 
-/** Un rappel non délivré dans l'heure est abandonné : pas de notification tardive, le soir ou la nuit. */
+/** Un message non délivré dans l'heure est abandonné : pas de notification tardive, le soir ou la nuit. */
 const TTL_SECONDES = 3600;
 
 const json = (status: number, body: unknown) =>
@@ -32,32 +34,42 @@ Deno.serve(async (req: Request) => {
   webpush.setVapidDetails(sujet, publique, privee);
   const admin = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
 
-  const deps: Deps = {
+  const envoyer = async (a: { endpoint: string; p256dh: string; auth: string }, charge: string, tag: string) => {
+    try {
+      const r = await webpush.sendNotification({ endpoint: a.endpoint, keys: { p256dh: a.p256dh, auth: a.auth } }, charge,
+        { TTL: TTL_SECONDES, urgency: 'normal', topic: tag });
+      return { statut: r.statusCode };
+    } catch (e) {
+      return { statut: typeof (e as { statusCode?: unknown }).statusCode === 'number' ? (e as { statusCode: number }).statusCode : 0 };
+    }
+  };
+  const supprimer = async (ids: string[]) => {
+    const { error } = await admin.from('abonnements_rappel').delete().in('id', ids);
+    if (error) throw new Error(error.message);
+  };
+  const rappels: Deps = {
     async reclamer() {
       const { data, error } = await admin.rpc('reclamer_rappels');
       if (error) throw new Error(error.message);
       return (data ?? []) as Abonnement[];
     },
-    async envoyer(a, charge) {
-      try {
-        const r = await webpush.sendNotification({ endpoint: a.endpoint, keys: { p256dh: a.p256dh, auth: a.auth } }, charge,
-          { TTL: TTL_SECONDES, urgency: 'normal', topic: TAG_RAPPEL });
-        return { statut: r.statusCode };
-      } catch (e) {
-        return { statut: typeof (e as { statusCode?: unknown }).statusCode === 'number' ? (e as { statusCode: number }).statusCode : 0 };
-      }
-    },
-    async supprimer(ids) {
-      const { error } = await admin.from('abonnements_rappel').delete().in('id', ids);
+    envoyer, supprimer,
+  };
+  const tours: DepsTours = {
+    async reclamer() {
+      const { data, error } = await admin.rpc('reclamer_tours');
       if (error) throw new Error(error.message);
+      return (data ?? []) as Tour[];
     },
+    envoyer, supprimer,
   };
 
-  try {
-    const bilan = await envoyerRappels(deps);
-    return json(200, { ok: true, ...bilan });
-  } catch (e) {
-    console.error('envoyer-rappels', e);
-    return json(500, { ok: false, error: 'envoi' });
-  }
+  // Les deux envois sont indépendants : l'échec de l'un n'empêche pas l'autre.
+  const essayer = async (nom: string, f: () => Promise<Bilan>): Promise<Bilan | null> => {
+    try { return await f(); } catch (e) { console.error(`envoyer-rappels (${nom})`, e); return null; }
+  };
+  const bilanRappels = await essayer('rappels', () => envoyerRappels(rappels));
+  const bilanTours = await essayer('tours', () => envoyerTours(tours));
+  if (!bilanRappels && !bilanTours) return json(500, { ok: false, error: 'envoi' });
+  return json(200, { ok: !!bilanRappels && !!bilanTours, ...(bilanRappels ?? { erreur_rappels: true }), tours: bilanTours ?? { erreur: true } });
 });
