@@ -72,9 +72,12 @@ export type Database = {
           endpoint: string
           fuseau: string
           id: string
+          jour: boolean
           langue: string
           moment: string
           p256dh: string
+          tour: boolean
+          tour_depuis: string | null
           user_id: string
         }
         Insert: {
@@ -84,9 +87,12 @@ export type Database = {
           endpoint: string
           fuseau?: string
           id?: string
+          jour?: boolean
           langue?: string
           moment?: string
           p256dh: string
+          tour?: boolean
+          tour_depuis?: string | null
           user_id?: string
         }
         Update: {
@@ -96,9 +102,12 @@ export type Database = {
           endpoint?: string
           fuseau?: string
           id?: string
+          jour?: boolean
           langue?: string
           moment?: string
           p256dh?: string
+          tour?: boolean
+          tour_depuis?: string | null
           user_id?: string
         }
         Relationships: []
@@ -675,6 +684,7 @@ export type Database = {
           id: number
           lue_le: string | null
           partie_id: string | null
+          poussee_le: string | null
           type: string
         }
         Insert: {
@@ -683,6 +693,7 @@ export type Database = {
           id?: never
           lue_le?: string | null
           partie_id?: string | null
+          poussee_le?: string | null
           type: string
         }
         Update: {
@@ -691,6 +702,7 @@ export type Database = {
           id?: never
           lue_le?: string | null
           partie_id?: string | null
+          poussee_le?: string | null
           type?: string
         }
         Relationships: [
@@ -1477,9 +1489,11 @@ export type Database = {
           p_auth: string
           p_endpoint: string
           p_fuseau: string
+          p_jour?: boolean
           p_langue: string
           p_moment: string
           p_p256dh: string
+          p_tour?: boolean
         }
         Returns: string
       }
@@ -1669,6 +1683,18 @@ export type Database = {
           jour: string
           langue: string
           p256dh: string
+        }[]
+      }
+      reclamer_tours: {
+        Args: { p_maintenant?: string }
+        Returns: {
+          auth: string
+          endpoint: string
+          id: string
+          langue: string
+          p256dh: string
+          partie_id: string
+          type: string
         }[]
       }
       record_puzzle_attempt: {

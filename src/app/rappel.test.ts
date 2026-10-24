@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import {
-  doitProposerRappel, estArriveeRappel, ETAT_INITIAL, HEURES, lireEtatRappel, MOMENTS, octetsBase64Url, support, type Capacites, type EtatRappel,
+  doitProposerRappel, estArriveeRappel, ETAT_INITIAL, HEURES, lireEtatRappel, MOMENTS, octetsBase64Url, partieDeNotification, support, type Capacites, type EtatRappel,
 } from './rappel';
 import { ajouter, avancer, FILE_VIDE, type Fete } from '../ui/fileFetes';
 import { URL_RAPPEL } from '../../supabase/functions/envoyer-rappels/logique';
@@ -71,11 +71,17 @@ describe('proposition en fin de partie', () => {
 
 describe('état gardé sur l’appareil', () => {
   it('relit un état valide, et tolère les valeurs abîmées', () => {
-    const e: EtatRappel = { proposition: 'acceptee', actif: true, moment: 'matin' };
+    const e: EtatRappel = { proposition: 'acceptee', actif: true, moment: 'matin', tours: true };
     expect(lireEtatRappel(JSON.parse(JSON.stringify(e)))).toEqual(e);
     expect(lireEtatRappel(null)).toEqual(ETAT_INITIAL);
     expect(lireEtatRappel('x')).toEqual(ETAT_INITIAL);
-    expect(lireEtatRappel({ proposition: 'peut-etre', actif: 'oui', moment: 'nuit' })).toEqual(ETAT_INITIAL);
+    expect(lireEtatRappel({ proposition: 'peut-etre', actif: 'oui', moment: 'nuit', tours: 'oui' })).toEqual(ETAT_INITIAL);
+  });
+  it('« à toi de jouer » est éteint par défaut, et seul un vrai « oui » l’allume (#699)', () => {
+    expect(ETAT_INITIAL.tours).toBe(false);
+    expect(lireEtatRappel({ actif: true, moment: 'soir' }).tours).toBe(false);
+    expect(lireEtatRappel({ tours: 1 }).tours).toBe(false);
+    expect(lireEtatRappel({ tours: true }).tours).toBe(true);
   });
 });
 
@@ -94,6 +100,12 @@ describe('arrivée par le rappel', () => {
     expect(estArriveeRappel(new URL(URL_RAPPEL, 'https://x.test').search)).toBe(true);
     expect(estArriveeRappel('?rappel=0')).toBe(false);
     expect(estArriveeRappel('?go-du-jour=3')).toBe(false);
+  });
+  it('reconnaît la partie ouverte par « à toi de jouer », rien d’autre (#699)', () => {
+    const id = '11111111-0000-4000-8000-0000000000aa';
+    expect(partieDeNotification(`?tour=${id}`)).toBe(id);
+    expect(partieDeNotification(`?tour=${id.toUpperCase()}`)).toBe(id);
+    for (const mauvais of ['', '?tour=', '?tour=1', `?tour=${id}x`, `?tour=//evil.test`, '?tour=<script>', '?rappel=1']) expect(partieDeNotification(mauvais), mauvais).toBeNull();
   });
   it('le service worker affiche le rappel et ouvre la même adresse, jamais une adresse extérieure', () => {
     const sw = lire('public/sw.js');

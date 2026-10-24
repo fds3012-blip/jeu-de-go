@@ -2,7 +2,7 @@
 
 Écart n° 1 de la veille du 29/09 : rien ne fait revenir un joueur qui n'ouvre pas l'app. Le rappel est une notification web (Web Push, clés VAPID), une par jour au plus, réservée aux joueurs avec un compte et un pseudo (#343, vérifié par le serveur avec `exiger_compte_avec_pseudo`).
 
-**Tout est dans le dépôt, rien n'est déployé ni activé.** Aucune dépense : Web Push est gratuit, la fonction tourne 24 fois par jour (720 appels par mois, loin des 500 000 de l'offre gratuite de Supabase), pg_cron et pg_net sont inclus.
+**Tout est dans le dépôt, rien n'est déployé ni activé.** Depuis #699, la même fonction envoie aussi « À toi de jouer » (parties lentes) : procédure courte de Florian, règles et limites dans `docs/ops/notifications-poussees.md`. Le Profil a une ligne « Rappels » avec deux interrupteurs indépendants, éteints par défaut. Aucune dépense : Web Push est gratuit, la fonction tourne 24 fois par jour (720 appels par mois, loin des 500 000 de l'offre gratuite de Supabase), pg_cron et pg_net sont inclus.
 
 ## Indicateurs qu'il doit faire bouger
 
@@ -22,7 +22,7 @@ Entonnoir PostHog à créer : `premiere_partie_terminee` → `rappel_propose` �
 - **Quand** : à la fin de sa première partie terminée **avec un compte**, une seule fois, sous « Rejouer » (l'action principale reste « Rejouer »). Jamais sur l'écran où la carte d'installation est déjà montrée, jamais pendant une partie. La carte attend son tour après l'XP et le niveau.
 - **Texte** : « Un rappel pour le Go du jour ? Une notification par jour, à l'heure que tu choisis. Jamais la nuit. Tu la coupes quand tu veux dans le Profil. » Trois choix : Matin 9 h, Midi, Soir 18 h (soir par défaut). « Me le rappeler » ou « Non merci ».
 - **Permission du navigateur** : demandée seulement au toucher de « Me le rappeler ». Refusée : message qui explique comment l'autoriser. « Non merci » et un refus du navigateur sont **définitifs** pour la proposition.
-- **Profil** : ligne « Rappel du Go du jour » (valeur : le moment, ou « Coupé »), visible dès que la clé publique VAPID est configurée. Interrupteur et moment. Sans compte : « réservé aux joueurs avec un compte » et « Mon compte ». iPhone ou iPad dans Safari : explication (l'app doit être installée sur l'écran d'accueil, iOS 16.4 et plus) et « Installer l'app ». Navigateur sans notification ou notifications bloquées : explication.
+- **Profil** : ligne « Rappels » (valeur : le moment, « À toi de jouer », « Activées » ou « Coupé »), visible dès que la clé publique VAPID est configurée. Interrupteur et moment. Sans compte : « réservé aux joueurs avec un compte » et « Mon compte ». iPhone ou iPad dans Safari : explication (l'app doit être installée sur l'écran d'accueil, iOS 16.4 et plus) et « Installer l'app ». Navigateur sans notification ou notifications bloquées : explication.
 - **La notification** : un titre et une phrase calmes, qui changent chaque jour (4 textes, français ou anglais). Toucher ouvre le Go du jour du jour (`/?rappel=1`) et envoie `rappel_ouvert`. Le rappel du jour remplace celui de la veille (même étiquette).
 
 ## Règles de sécurité et de respect (public avec enfants)
@@ -43,7 +43,8 @@ Entonnoir PostHog à créer : `premiere_partie_terminee` → `rappel_propose` �
 | `supabase/functions/envoyer-rappels/index.ts`, `logique.ts` | Fonction serveur : envoi chiffré (web-push), suppression des 404/410 |
 | `supabase/planification/envoyer-rappels.sql` | Tâche pg_cron + pg_net, créée **désactivée** ; hors des migrations |
 | `src/app/rappel.ts`, `src/ui/ProposerRappel.tsx`, `src/ui/rappel.css` | Logique et écrans côté app |
-| `public/sw.js` | Affiche la notification (`push`) et ouvre le Go du jour (`notificationclick`) |
+| `public/sw.js` | Affiche la notification (`push`) et ouvre le Go du jour ou la partie (`notificationclick`) |
+| `supabase/migrations/20261025090000_notification_a_toi_de_jouer.sql`, `supabase/tests/a_toi_de_jouer.test.sql` | #699 : interrupteurs `jour` et `tour` par appareil, `reclamer_tours` (clé service seulement) |
 | `e2e/rappel.spec.ts` | Parcours Playwright, Notification API et PushManager simulés |
 
 ## Étapes pour Florian (dans l'ordre)

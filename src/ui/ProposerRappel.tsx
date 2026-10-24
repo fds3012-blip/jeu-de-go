@@ -1,4 +1,5 @@
-// Rappel quotidien du Go du jour (issue #36) : la carte de fin de partie, et le réglage du Profil.
+// Rappel quotidien du Go du jour (issue #36) : la carte de fin de partie, et le réglage du Profil (Profil > Rappels).
+// #699 : le même réglage porte aussi « À toi de jouer » (parties lentes), un second interrupteur, éteint par défaut.
 // La carte se montre une seule fois (src/app/rappel.ts, doitProposerRappel), à son tour dans la file des célébrations
 // (après l'XP et le niveau). « Non merci » est définitif ; le Profil garde toujours le réglage.
 // La permission du navigateur n'est demandée qu'au toucher de « Me le rappeler » (Safari l'exige, et c'est plus honnête).
@@ -8,7 +9,7 @@ import { useSupabase } from '../data/client';
 import { compteDe } from '../data/defi';
 import { usePseudo, useSession } from '../app/hooks';
 import {
-  activerRappel, changerMoment, couperRappel, doitProposerRappel, etatRappel, MOMENTS, noterRappel, supportCourant,
+  activerRappel, activerTours, changerMoment, couperRappel, couperTours, doitProposerRappel, etatRappel, MOMENTS, noterRappel, supportCourant,
   type MomentRappel, type Resultat,
 } from '../app/rappel';
 import { langue, t } from '../content/i18n/secondaires';
@@ -115,7 +116,7 @@ export function ProposerRappel({ partieFinie, autreCarte }: { partieFinie: boole
 }
 
 /**
- * Réglage du Profil (sous-vue « Rappel du Go du jour »). `compte` : un vrai compte avec pseudo est connecté (#343).
+ * Réglage du Profil (sous-vue « Rappels »). `compte` : un vrai compte avec pseudo est connecté (#343).
  * Selon l'appareil : interrupteur et moment, ou une explication (compte, iPhone sans l'app installée, navigateur).
  */
 export function ReglageRappel({ compte, onCompte, onInstaller }: { compte: boolean; onCompte: () => void; onInstaller: () => void }) {
@@ -153,7 +154,25 @@ export function ReglageRappel({ compte, onCompte, onInstaller }: { compte: boole
       if (r === 'refuse_navigateur') { track(EVENTS.rappelRefuse, { raison: 'navigateur', source: 'profil' }); setSupport(supportCourant()); }
       setMessage(r === 'ok' ? null : messageDe(r));
     } else {
-      await couperRappel(db);
+      await couperRappel(db, langue());
+    }
+    setEtat(etatRappel());
+    setAttente(false);
+  }
+
+  /** #699 : « À toi de jouer ». La permission du navigateur est demandée ici, au geste du joueur, jamais avant. */
+  async function basculerTours(actif: boolean) {
+    if (!db) return;
+    setAttente(true);
+    setMessage(null);
+    if (actif) {
+      const r = await activerTours(db, etat.moment, langue());
+      if (r === 'ok') track(EVENTS.toursActive, { source: 'profil' });
+      if (r === 'refuse_navigateur') { track(EVENTS.toursRefuse, { raison: 'navigateur', source: 'profil' }); setSupport(supportCourant()); }
+      setMessage(r === 'ok' ? null : messageDe(r));
+    } else {
+      await couperTours(db, langue());
+      track(EVENTS.toursCoupe, { source: 'profil' });
     }
     setEtat(etatRappel());
     setAttente(false);
@@ -180,6 +199,11 @@ export function ReglageRappel({ compte, onCompte, onInstaller }: { compte: boole
           <ChoixMoment valeur={etat.moment} onChange={m => void choisir(m)} desactive={attente || support === 'bloque'} etiquette={t('rappel.moment')} />
         </div>
       </div>
+      {support !== 'bloque' && (
+        <div className="lignes">
+          <LigneInterrupteur libelle={t('rappel.tour.interrupteur')} aide={t('rappel.tour.aide')} actif={etat.tours} onChange={v => { if (!attente) void basculerTours(v); }} />
+        </div>
+      )}
       {message && message !== 'fait' && <p className="rappel-etat" role="status">{fr(message === 'bloque' ? t('rappel.bloque') : t('rappel.erreur'))}</p>}
     </div>
   );

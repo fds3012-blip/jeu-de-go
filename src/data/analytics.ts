@@ -106,6 +106,11 @@ export const EVENTS = {
   rappelAccepte: 'rappel_accepte',
   rappelRefuse: 'rappel_refuse',
   rappelOuvert: 'rappel_ouvert',
+  // « À toi de jouer » (#699, parties lentes) : réglage allumé ou coupé dans le Profil (`source`), refus du navigateur (`raison`).
+  // La notification touchée est `notification_ouverte` (`type` defi, `source` push). Jamais la partie ni l'adversaire.
+  toursActive: 'tours_active',
+  toursCoupe: 'tours_coupe',
+  toursRefuse: 'tours_refuse',
   // Aide graduée des problèmes (#197) : la réponse a été montrée après un échec (le problème devient « Vu », pas « Réussi »).
   solutionVue: 'solution_vue',
   // Révision du jour (#199) : les exercices du jour (problèmes déjà réussis, repris à J+1, J+3, J+7) sont tous faits.

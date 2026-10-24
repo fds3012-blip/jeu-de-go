@@ -71,7 +71,7 @@ Migration : `supabase/migrations/20261006150100_abandons_repetes.sql`. Règle du
 
 ## Hors périmètre, limites
 
-- Pas de rappel poussé ni d'e-mail (décision de Florian attendue) : le seul signal est l'accueil (tuiles, point d'or) et la notification dans l'app.
+- Pas d'e-mail. **Notification poussée « À toi de jouer »** (#699, décision de Florian du 22/10) : le joueur l'allume lui-même dans Profil > Rappels (éteinte par défaut), une par partie et par heure, trois par jour au plus, jamais la nuit, sans nom ni délai ; toucher la notification ouvre la partie. Sans elle, le signal reste l'accueil (tuiles, point d'or) et la notification dans l'app. Procédure : `docs/ops/notifications-poussees.md`.
 - `partie_lente_terminee` n'est envoyé que si le joueur voit la fin sur l'écran de la partie (une perte au temps constatée par la tâche pendant que personne ne regarde n'est pas mesurée côté client).
 
 ## Tests

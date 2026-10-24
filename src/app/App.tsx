@@ -38,7 +38,7 @@ import type { FaconEnLigne } from './BasculeEnLigne';
 import { EVENTS, secondsSinceOpen, track, trackOnce } from '../data/analytics';
 import { compterEtape } from '../data/compteurs';
 import { ecouterPremierGeste } from './premierGeste';
-import { estArriveeRappel, etatRappel } from './rappelEtat';
+import { estArriveeRappel, etatRappel, partieDeNotification } from './rappelEtat';
 import { PARAM, PARAM_COURT, SERIE_KEY, numeroDuJour, numeroDuLien, problemeDuJour, type Serie } from './goDuJour';
 import { battu, BILAN_KEY, dejaAffronte, enregistrer, fin, finTropTot, komiDepuisUrl, lireBilan, type Bilan, type Issue, type StatsPartie } from './bilan';
 import { fr } from '../ui/typo';
@@ -156,6 +156,10 @@ function noterRappelOuvert() {
     history.replaceState(history.state, '', url.pathname + url.search + url.hash);
   } catch { /* adresse inchangée : sans conséquence */ }
 }
+
+// « À toi de jouer » (issue #699) : la notification d'une partie lente touchée ouvre `/?tour=<identifiant de la partie>`
+// (public/sw.js). Lu une fois au chargement ; l'effet plus bas ouvre la partie dès que la session est connue.
+const ARRIVEE_TOUR = typeof location !== 'undefined' ? partieDeNotification(location.search) : null;
 
 // Défi par lien (issue #81) : `#defi=JETON` ouvre la partie proposée par un ami, sans compte. Le jeton est lu et retiré
 // de l'adresse par src/app/adresseDefi.ts, avant la mesure et tout événement (constat E14).
@@ -903,6 +907,22 @@ export function App() {
     if (e) track(EVENTS.notificationOuverte, { type: e.genre, source: 'accueil', attente_h: null });
   }
   const ouvrirDefiPartie = useCallback((id: string) => { setDefi({ vue: 'partie', id }); window.scrollTo({ top: 0 }); }, []);
+  // #699 : notification « à toi de jouer » touchée. Sans compte (session absente ou anonyme), on reste sur l'accueil.
+  const tourOuvert = useRef(false);
+  useEffect(() => {
+    if (!ARRIVEE_TOUR || tourOuvert.current || session === undefined) return;
+    tourOuvert.current = true;
+    try {
+      const url = new URL(location.href);
+      url.searchParams.delete('tour');
+      history.replaceState(history.state, '', url.pathname + url.search + url.hash);
+    } catch { /* adresse inchangée : sans conséquence */ }
+    if (!session || estAnonyme(session)) return;
+    track(EVENTS.notificationOuverte, { type: 'defi', source: 'push', attente_h: null });
+    go('jouer');
+    setDefi({ vue: 'partie', id: ARRIVEE_TOUR });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session]);
   const quitterDefi = () => { setDefi(null); window.scrollTo({ top: 0 }); };
   // #343 : pseudo obligatoire juste après la première connexion, avant tout le reste ; puis « Crée ton compte ».
   const pseudoAChoisir = !!supabase && etat === 'sans_pseudo' && !!compteId;
