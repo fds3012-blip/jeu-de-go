@@ -100,10 +100,14 @@ test('la revue note le coup affiché et montre la précision des deux joueurs', 
 
   // Bilan : précision des deux joueurs, tableau des notes, phrase de Mochi.
   const table = page.getByRole('table', { name: 'Tes coups, note par note' });
-  await expect(table.getByRole('row', { name: /^Précision \d+\s% \d+\s%$/ })).toBeVisible();
+  // #694 : ce build n'a pas KataGo (téléchargement bloqué) : pas de précision chiffrée (le moteur simple ne mesure pas
+  // tout), l'aveu que l'analyse n'a pas pu se faire, et de quoi réessayer.
+  await expect(table.getByRole('row', { name: /^Précision\s+–\s+–$/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Réessayer l’analyse' })).toBeVisible();
   await expect(table.getByRole('columnheader', { name: 'Toi' })).toBeVisible();
   await expect(table.getByRole('columnheader', { name: 'Pomme' })).toBeVisible();
   await expect(page.locator('.bilan-bulle')).not.toBeEmpty();
+  await expect(page.locator('.bilan-bulle')).not.toHaveText(/Aucune erreur|Partie correcte|Très belle|plus juste/);
 
   // Coup 1 : un sceau de note sur la pierre E5, et le même dans la bande des coups, avec son libellé lu à voix haute.
   await demarrerParcours(page, 1);
@@ -126,8 +130,8 @@ test('défaite lourde : précision plafonnée et bilan sans félicitations', asy
   await partieCourte(page, ['E5', 'C3'], 100);
   await page.getByRole('button', { name: 'Revoir la partie' }).click();
   await expect(page.getByRole('button', { name: 'Démarrer le bilan' })).toBeVisible({ timeout: 60_000 });
-  const texte = ((await page.getByRole('row', { name: /^Précision/ }).textContent()) ?? '').replace(/\s/g, ' ');
-  expect(Number(/Précision\s*(\d+)/.exec(texte)?.[1])).toBeLessThanOrEqual(50);
+  // Sans KataGo (ce build) : « – », jamais un chiffre flatteur ; avec KataGo la précision est plafonnée (revueHonnete.test.ts).
+  await expect(page.getByRole('row', { name: /^Précision\s+–\s+–$/ })).toBeVisible();
   await expect(page.getByText(/Aucune grosse erreur|Bien joué/)).toHaveCount(0);
   const phrase = page.locator('.bilan-bulle');
   await expect(phrase).toHaveText(/^Tu perds de \d/);

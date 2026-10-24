@@ -55,13 +55,19 @@ async function servirReseau(page: Page) {
 
 async function ouvrirReglages(page: Page) {
   await NAV(page).getByRole('button', { name: 'Profil' }).click();
-  await page.getByRole('button', { name: /^Réglages/ }).click();
+  // #685 (N3, A8) : le Profil retrouve la rubrique laissée ; sinon, son sommaire.
+  const ia = page.getByRole('heading', { name: 'L’IA sur ton téléphone' });
+  await expect(ia.or(page.getByRole('button', { name: /^Réglages/ })).first()).toBeVisible();
+  if (!(await ia.isVisible())) await page.getByRole('button', { name: /^Réglages/ }).click();
   await expect(page.getByRole('heading', { name: 'L’IA sur ton téléphone' })).toBeVisible();
 }
 
 test('accueil hors ligne avec les comptes : bandeau, « En ligne » et « Un ami » grisés avec la raison, Pomme jusqu’au score', async ({ context }) => {
   const erreurs: string[] = [];
-  const page = await brancher(context, fauxServeur(), DEJA_JOUE);
+  const serveur = fauxServeur();
+  // #695 : du monde en ligne (4 joueurs ou plus) : la partie classée est l'action principale ; sinon, l'ordi (accueil-modes.spec.ts).
+  serveur.fixerJoueursEnLigne(4);
+  const page = await brancher(context, serveur, DEJA_JOUE);
   page.on('pageerror', e => erreurs.push(e.message));
   await page.emulateMedia({ reducedMotion: 'reduce' });
   // En ligne : la partie classée est l'action principale, ses tuiles sont actives.

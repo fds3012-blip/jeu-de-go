@@ -10,7 +10,7 @@ import { ACQUIS } from '../src/content/acquis';
 // Positions et réponses prouvées par src/go/lecons-32-plus.test.ts. Captures : seulement si CAPTURES_LECONS_32 donne
 // un dossier (aucune capture versionnée).
 
-const norm = (s: string) => s.replace(/[\u00A0\u202F\s]+/g, ' ').trim();
+const norm = (s: string) => s.replace(/[\u00A0\u202F\s]+/g, ' ').replace(/(?<=\p{L})'(?=\p{L})/gu, '’').trim();
 const DOSSIER = process.env.CAPTURES_LECONS_32;
 const L34 = LESSONS_FR.find(l => l.id === 'l34')!;
 const etape = <K extends LessonStep['kind']>(i: number) => L34.steps[i] as Extract<LessonStep, { kind: K }>;

@@ -577,10 +577,22 @@ export function phraseBilan(notes: (NoteCoup | null)[], joueur: Color, adversair
     if (pire) return `${debut}${revoirPire(pire)}`;
     return `${debut}${t('revue.pertesDiffuses')}`;
   }
+  const avance = avanceDe(ctx.avanceNoir, joueur);
+  const perdu = avance != null && avance < 0;
+  // #694 : sans KataGo, le moteur simple ne voit pas tout. Ni « Partie correcte », ni « plus juste », ni « Aucune erreur » :
+  // seulement ce qui est sûr (une erreur trouvée, le moment clé), sinon l'aveu que l'analyse n'a pas pu se faire.
+  if (ctx.sansKataGo) {
+    const perte = perdu ? `${t('revue.bilan.tuPerds', { ecart: ecart(ctx.avanceNoir!) })} ` : '';
+    if (pire) return `${perte}${revoirPire(pire)}`;
+    if (cle) return `${perte}${t('revue.bilan.vaRevoir', { cite: citeCle(cle) })}`;
+    return `${perte}${t('revue.bilan.sansAnalyse')}`;
+  }
   const debut = brillant || `${moi >= 85 && !ctx.sansKataGo ? t('revue.bilan.tresBelle')
     : lui != null && moi > lui ? t('revue.bilan.plusJuste', { nom: adversaire ?? t('camp.blanc') })
     : moi >= 60 ? t('revue.bilan.correcte') : t('revue.bilan.difficile')} `;
   if (pire) return `${debut}${revoirPire(pire)}`;
   if (cle) return `${debut}${t('revue.bilan.vaRevoir', { cite: citeCle(cle) })}`;
+  // Une défaite ne se félicite pas, même de peu (#694).
+  if (perdu) return `${t('revue.bilan.tuPerds', { ecart: ecart(ctx.avanceNoir!) })} ${t('revue.pertesDiffuses')}`;
   return `${debut}${t('revue.bilan.aucuneErreur')}`;
 }

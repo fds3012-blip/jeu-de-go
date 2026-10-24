@@ -29,6 +29,7 @@ import { gagnerXp, sourceXpProbleme } from './xp';
 import { texteReponseVue } from './reponseProbleme';
 import { aideSuivante, recompense, refutation, reponseVue, toucherApresErreur, type NiveauAide, type Refutation } from './aide';
 import { butDe, comprendreErreur, solutionComplete, type ErreurComprise } from './comprendreErreur';
+import { refutationPour } from './refutationJuste';
 // #563 : carte d'entrée de la course, hors du CSS initial ; avant comprendre.css et apprendre.css, comme dans la
 // feuille principale.
 import '../ui/course-ecran.css';
@@ -127,6 +128,12 @@ function Difficulte({ d }: { d: number }) {
   );
 }
 
+/**
+ * #685 (N3, A8) : liste ouverte (« Par thème », « Tous les problèmes ») quand l'écran s'est démonté (changement d'onglet),
+ * retrouvée au retour. L'onglet actif touché (`racine`) la referme.
+ */
+let listeGardee = { tous: false, parTheme: false };
+
 /** Onglet Problèmes : problème du jour, problèmes de base, cote problèmes et série de jours. */
 export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, lien = null, onDuJour, celebrer = true, racine = 0, onApprendre, essai, depuisRappel = false, rappelAmi = false, onActivite, retour, erreurs }: Props) {
   /** Ouvre un problème ; hors Go du jour pendant l'essai sans compte, c'est « Crée ton compte » qui s'ouvre (#343). */
@@ -156,11 +163,12 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   const [defiChange] = useState(() => lien !== null && archive === null && lien !== numero);
   const [retry, setRetry] = useState(0);
   // Liste « Tous les problèmes » ouverte (#196) ; on y revient après un problème ouvert depuis la grille.
-  const [tous, setTous] = useState(false);
+  const [tous, setTous] = useState(() => !lien && !depuisRappel && listeGardee.tous);
   // Course aux problèmes (#287) : consigne, course et fin, à la place de la liste.
   const [course, setCourse] = useState(false);
   // #653 : détail « Par thème » (grille des séries et « Tous les problèmes »), ouvert depuis le sommaire.
-  const [parTheme, setParTheme] = useState(false);
+  const [parTheme, setParTheme] = useState(() => !lien && !depuisRappel && listeGardee.parTheme);
+  useEffect(() => { listeGardee = { tous, parTheme }; }, [tous, parTheme]);
   // Problèmes par thème (#471) : série ouverte, réussites d'affilée et record de chaque série (sur l'appareil).
   const [serieTheme, setSerieTheme] = useState<SerieTheme | null>(null);
   const [etatThemes, setEtatThemes] = useState<EtatSeriesThemes>(() => nettoyerSeries(readLocal<unknown>(SERIES_THEMES_KEY, null)));
@@ -480,7 +488,7 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
       <div className="problemes problemes-par-theme">
         <EnteteEcran titre={tr('themes.titre')} retour={tr('pb.retour')} onRetour={() => { setParTheme(false); window.scrollTo({ top: 0 }); revenir('theme'); }} />
         {notices}
-        <VignettesThemes series={series} etat={etatThemes} onOuvrir={ouvrirSerie} maitrise={maitrise} />
+        <VignettesThemes series={series} etat={etatThemes} onOuvrir={ouvrirSerie} maitrise={maitrise} titreVisible={false} />
         <button className="lien lien-tous" onClick={() => { if (essai) { essai(); return; } setTous(true); window.scrollTo({ top: 0 }); }}>
           {tr('pb.tous')}
         </button>
@@ -844,7 +852,7 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
     const comprise = ok ? null : comprendreErreur(puzzle, p);
     if (!ok) derniereErreur.current = comprise;
     if (comprise) onErreurComprise?.(comprise.but);
-    setAnswer({ kind: r.kind, p, text: ok ? (puzzle.pourquoi?.bravos[p] ?? puzzle.explanation ?? tr('pb.bonCoup')) : (puzzle.refutation ?? tr('pb.pasTout')), n, comprise });
+    setAnswer({ kind: r.kind, p, text: ok ? (puzzle.pourquoi?.bravos[p] ?? puzzle.explanation ?? tr('pb.bonCoup')) : (refutationPour(puzzle, p, comprise) ?? tr(puzzle.refutation ? 'pb.pasTout.autre' : 'pb.pasTout')), n, comprise });
     window.clearTimeout(timer.current);
     if (ok) { setApercu(null); setBoard(r.after.board); onSolved(tries + 1, aide); }
     else montrerErreur(p, r.after.board, comprise);
@@ -1028,7 +1036,8 @@ export function PuzzlePlayer({ puzzle, rang, duJour, confirmTouch, rated, onPrem
     // que si la réponse prouvée est bien une des bonnes réponses.
     const prouvee = derniereErreur.current && derniereErreur.current.reponse === refut.r.reponse ? derniereErreur.current : null;
     const cle = refut.r.reponse !== null && (!butDe(puzzle) || (prouvee && puzzle.answers.includes(prouvee.reponse)));
-    const texte = puzzle.refutation ?? (refut.r.reponse === null ? tr('pb.aide.refutationSeule') : cle ? tr(puzzle.toPlay === 1 ? 'pb.aide.refutation.1' : 'pb.aide.refutation.2') : null);
+    const fixe = dernierFaux.current === null ? puzzle.refutation : refutationPour(puzzle, dernierFaux.current, derniereErreur.current);
+    const texte = fixe ?? (refut.r.reponse === null ? tr('pb.aide.refutationSeule') : cle ? tr(puzzle.toPlay === 1 ? 'pb.aide.refutation.1' : 'pb.aide.refutation.2') : null);
     verdict = (
       <Verdict ton="neutre" actions={boutonAide}>
         {(!refut.vue || texte) && <p data-refutation="">{refut.vue ? fr(texte!) : tr('pb.aide.regarde')}</p>}

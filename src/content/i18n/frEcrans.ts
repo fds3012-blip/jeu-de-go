@@ -148,6 +148,7 @@ export const frEcrans = {
   'pb.copieImpossible': 'Copie impossible. Envoie ce lien :',
   'pb.bonCoup': 'Bravo, c’est le bon coup !',
   'pb.pasTout': 'Pas tout à fait. Essaie encore.',
+  'pb.pasTout.autre': 'Pas tout à fait. Ce n’est pas le bon coup : regarde l’indice, ou vois la réponse.',
   'pb.suivant': 'Problème suivant',
   'pb.retour': 'Retour aux problèmes',
   'pb.voirSuite': 'Voir la suite',
@@ -173,7 +174,7 @@ export const frEcrans = {
   'erreur.libertes.chacun': { one: 'Les pierres marquées n’ont plus qu’une liberté chacune.', other: 'Les pierres marquées ont {n} libertés chacune.' },
   'erreur.libertes.auMoins': { one: 'Une des pierres marquées n’a plus qu’une liberté.', other: 'Les pierres marquées ont au moins {n} libertés.' },
   'erreur.libertes.sien': { one: 'Son groupe marqué n’a plus qu’une liberté.', other: 'Son groupe marqué a {n} libertés.' },
-  'erreur.sauver.prise': '{couleur} répond en {point} et prend ta pierre marquée.',
+  'erreur.sauver.prise': { one: '{couleur} répond en {point} et prend ta pierre marquée.', other: '{couleur} répond en {point} et prend tes {n} pierres marquées.' },
   'erreur.sauver.perdue': '{couleur} répond en {point}. Ta pierre marquée ne peut plus être sauvée.',
   'erreur.tonCoup': 'Ton coup',
   // #554 : vie et mort, seki, course aux libertés. Le geste (faits lus sur le plateau), puis l'issue prouvée.
@@ -344,11 +345,11 @@ export const frEcrans = {
   'arrivee.apprendre': 'Apprends à jouer en 2 minutes',
   // Problèmes par thème (#471, src/app/seriesThemes.ts et src/ui/SeriesThemes.tsx)
   'themes.titre': 'Par thème',
-  'themes.nom.capturer': 'Capturer',
+  'themes.nom.capturer': 'Capture',
   'themes.nom.sauver': 'Sauver',
   'themes.nom.vie-mort': 'Vie et mort',
   'themes.nom.relier-couper': 'Relier et couper',
-  'themes.nom.fin-de-partie': 'Fin de partie',
+  'themes.nom.fin-de-partie': 'Finir la partie',
   'themes.nom.tesuji': 'Tesuji',
   // #614 : une ligne sous le nom de chaque carte de thème (Apprendre et Problèmes) : ce qu'on y apprend, 8 mots au plus,
   // en version courte des textes de la page du thème (apprendre.theme.texte.*). Le terme de go est expliqué sur sa carte.
@@ -863,6 +864,7 @@ export const frEcrans = {
   'revue.bilan.correcte': 'Partie correcte.',
   'revue.bilan.difficile': 'Partie difficile, ça arrive.',
   'revue.bilan.aucuneErreur': 'Aucune erreur, continue comme ça !',
+  'revue.bilan.sansAnalyse': 'L’analyse n’a pas pu se faire : je ne peux pas dire si tu as bien joué. Réessaie.',
 
   // Revue v3, « Bilan de la partie » (#405) : notes du go, écran de bilan, parcours des coups clés.
   'note.classique': 'Classique',
@@ -875,6 +877,7 @@ export const frEcrans = {
   // #498 : KataGo (ou le moteur) ne répond plus pendant la revue : jamais une barre qui n'avance plus.
   'bilan3.bloque': 'L’analyse ne répond plus. Ton téléphone a peut-être mis Mochi en pause.',
   'bilan3.reessayer': 'Réessayer',
+  'bilan3.reessayerAnalyse': 'Réessayer l’analyse',
   'bilan3.progression': 'Analyse de la partie',
   'bilan3.pourcent': '{p} %',
   'bilan3.proverbe': 'Proverbe du go',
@@ -1014,6 +1017,8 @@ export const frEcrans = {
   'apprendre.themes.barre': { one: '{n} leçon faite sur {total}', other: '{n} leçons faites sur {total}' },
   'apprendre.theme.lecons': 'Les leçons',
   'apprendre.theme.entrainer': 'S’entraîner sur ce thème',
+  'apprendre.theme.epuise': 'Tu as fait tous les problèmes de ce thème. Reviens plus tard ou essaie un autre thème.',
+  'apprendre.theme.refaire': 'Les refaire pour réviser',
   'apprendre.theme.retour': 'Retour au thème',
   'apprendre.theme.horsLigne': 'Les problèmes ne sont pas encore sur ton téléphone. Reconnecte-toi, puis réessaie.',
   'apprendre.theme.texte.capture': 'Une liberté, c’est un point vide juste à côté d’une pierre. Prends les pierres qui n’en ont plus.',

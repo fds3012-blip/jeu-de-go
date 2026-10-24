@@ -8,7 +8,7 @@ import LOT_W from '../src/content/lots/w-seki-fin-compte';
 // Règle de Florian : aucun total ni cote affichés pendant la série. À 390 px en clair et à 320 px en sombre.
 // Captures (JPEG) : docs/design/captures/lecons-pratique-14-16.
 
-const norm = (s: string) => s.replace(/[\u00A0\u202F\s]+/g, ' ').trim();
+const norm = (s: string) => s.replace(/[\u00A0\u202F\s]+/g, ' ').replace(/(?<=\p{L})'(?=\p{L})/gu, '’').trim();
 const L14 = LESSONS_FR.find(l => l.id === 'l14')!;
 const derniere = L14.steps.at(-1) as Extract<LessonStep, { kind: 'move' }>;
 /** Les leçons 1 à 13 faites, la leçon 14 arrêtée à sa dernière étape. */

@@ -7,6 +7,7 @@ import { importerSerieAppareil, serieAEnvoyer } from '../data/serieServeur';
 import { LANCEMENT, SERIE_KEY, numeroDuJour } from './goDuJour';
 import { cleanProgress, mergeProgress, supabaseProgressStore, syncProgress, type Progress } from '../data/progress';
 import { compteDe } from '../data/defiLien';
+import { compteurGarde, joueursEnLigne } from '../data/joueursEnLigne';
 
 /**
  * Session Supabase : undefined pendant le chargement, null sans connexion.
@@ -102,6 +103,22 @@ export function useSerie(db: Db | null, userId: string | undefined): number {
     return () => { alive = false; };
   }, [db, userId, online]);
   return serie;
+}
+
+/**
+ * #695 : joueurs en ligne en ce moment, pour l'action principale de l'accueil (src/app/modes.ts). null tant qu'on ne
+ * sait pas : sans comptes, hors ligne, pas de réponse, erreur. Lu à chaque retour à l'accueil (`actif`), gardé une minute.
+ */
+export function useJoueursEnLigne(db: Db | null, actif: boolean): number | null {
+  const online = useOnline();
+  const [n, setN] = useState<number | null>(() => compteurGarde());
+  useEffect(() => {
+    if (!db || !actif || !online) return;
+    let alive = true;
+    joueursEnLigne(db).then(v => { if (alive) setN(v); }, () => { if (alive) setN(null); });
+    return () => { alive = false; };
+  }, [db, actif, online]);
+  return db && online ? n : null;
 }
 
 /**

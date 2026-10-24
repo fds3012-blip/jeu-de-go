@@ -261,7 +261,7 @@ for (const [largeur, hauteur, police] of [[195, 422, false], [320, 640, false], 
 // #458 : le lecteur de leçons au zoom 200 % (195 px) et en 320 px, avec et sans les polices web (la CI n'a que la police
 // de repli, plus large). Chaque étape se joue, la bulle de Mochi ne coupe aucun mot, et « Continuer » se touche au doigt
 // au-dessus de la barre du bas (avant, à 195 px, il restait dessous même la page défilée tout en bas).
-const norme = (s: string) => s.replace(/[\u00A0\u202F\s]+/g, ' ').trim();
+const norme = (s: string) => s.replace(/[\u00A0\u202F\s]+/g, ' ').replace(/(?<=\p{L})'(?=\p{L})/gu, '’').trim();
 async function jouerEtape(page: Page, s: LessonStep, n: number) {
   const zone = page.locator('.lecteur-plateau');
   if (s.kind === 'info') {

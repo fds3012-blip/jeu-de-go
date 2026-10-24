@@ -41,12 +41,17 @@ export interface Jour {
   absence: number;
   duJourFait: boolean;
   titreDuJour?: string;
+  /** #695 : jours de série jusqu'ici (série vivante, avec le Go du jour d'aujourd'hui s'il est fait). 0 ou absent : pas de série. */
+  serie?: number;
 }
 
 /**
- * Réplique du joueur qui revient, choisie par jour (même jour, même réplique) :
- * - après une absence (3 jours ou plus) : un accueil chaleureux, sans reproche ;
- * - sinon, une rotation de répliques, dont une sur le Go du jour (à faire, ou fait).
+ * Phrase de la bulle du joueur qui revient (#695, U2) :
+ * - après une absence (3 jours ou plus) : un accueil chaleureux, sans reproche, choisi par jour ;
+ * - sinon, l'état du jour en une phrase, quel que soit le mode du bouton : la série en jeu (« Série de 6 jours. Un Go
+ *   du jour et c'est 7. »), un nouveau Go du jour, ou « Fait pour aujourd'hui. À demain ! ». Jamais de reproche ni de
+ *   compte à rebours. Le bouton dit déjà la partie (#236, N4) ; la bulle dit ce qui change d'un jour à l'autre.
+ * Sans Go du jour connu, la bulle invite à la partie, comme le bouton.
  */
 function bulleDuJour(jour: Jour, rejouer: boolean, plateau: string): string {
   if (estRetour(jour.absence)) {
@@ -56,15 +61,10 @@ function bulleDuJour(jour: Jour, rejouer: boolean, plateau: string): string {
       () => t('accueil.bulle.retour.2'),
     ], jour.numero)();
   }
-  // #236 (N4) : la bulle parle de la même chose que le bouton, la partie. Le Go du jour à faire reste sur sa tuile :
-  // Pomme n'y invite plus pendant que le bouton dit « Rejouer ». Fait, elle le salue et enchaîne sur la partie.
-  const duJour = jour.duJourFait
-    ? () => t('accueil.bulle.duJourFait', { plateau })
-    : () => t('accueil.bulle.jour', { plateau });
-  const lignes = rejouer
-    ? [() => t('accueil.bulle.rejouer', { plateau }), () => t('accueil.bulle.revanche'), duJour, () => t('accueil.bulle.jour', { plateau })]
-    : [() => t('accueil.bulle.jouer', { plateau }), duJour, () => t('accueil.bulle.jour', { plateau })];
-  return repliqueDuJour(lignes, jour.numero)();
+  if (jour.duJourFait) return t('accueil.etat.fait');
+  if (jour.titreDuJour === undefined) return t(rejouer ? 'accueil.bulle.rejouer' : 'accueil.bulle.jouer', { plateau });
+  const serie = Math.floor(jour.serie ?? 0);
+  return serie > 0 ? t('accueil.etat.serie', { n: serie, suivant: serie + 1 }) : t('accueil.etat.nouveau');
 }
 
 export function accueil(parties: Parties, lecons: number, adv: { id: string; nom: string; fini?: boolean }, taille: number, jour?: Jour): Accueil {

@@ -50,7 +50,7 @@ test('séries par thème : vignettes à plat, réussites d’affilée et record'
   // Six séries : la fin de partie a ses 8 problèmes depuis le lot Y (#500). Détail « Par thème » : aucun relief.
   const cartes = page.locator('.theme-carte');
   await expect(cartes).toHaveCount(6);
-  for (const nom of ['Capturer', 'Sauver', 'Vie et mort', 'Relier et couper', 'Fin de partie', 'Tesuji']) {
+  for (const nom of ['Capture', 'Sauver', 'Vie et mort', 'Relier et couper', 'Finir la partie', 'Tesuji']) {
     await expect(page.getByRole('button', { name: new RegExp(`^${nom}`) })).toBeVisible();
   }
   // #614 : chaque carte dit ce qu'on y apprend ; le tesuji s'explique sur sa carte, plus de phrase sous le titre.
@@ -63,8 +63,8 @@ test('séries par thème : vignettes à plat, réussites d’affilée et record'
   expect(sw).toBeLessThanOrEqual(cw);
 
   // Capturer : le premier problème est de la série, le compteur part de 0.
-  await page.getByRole('button', { name: /^Capturer/ }).click();
-  await expect(lecteur(page).locator('.lecteur-nom small')).toContainText('Capturer');
+  await page.getByRole('button', { name: /^Capture/ }).click();
+  await expect(lecteur(page).locator('.lecteur-nom small')).toContainText('Capture');
   await expect(affilee(page)).toHaveText(/^0 d’affilée/);
   const premier = (await lecteur(page).getAttribute('data-probleme'))!;
   expect(['capture', 'bord', 'atari']).toContain(THEME_DU_PROBLEME[premier]);
@@ -89,7 +89,7 @@ test('séries par thème : vignettes à plat, réussites d’affilée et record'
   // Retour à la liste : la vignette garde le record, sur l'appareil (clé citée dans la politique de confidentialité).
   await page.getByRole('button', { name: 'Retour aux problèmes' }).first().click();
   // #653 : on revient dans « Par thème », d'où la série a été ouverte.
-  await expect(page.getByRole('button', { name: /^Capturer/ })).toContainText('Record : 1');
+  await expect(page.getByRole('button', { name: /^Capture/ })).toContainText('Record : 1');
   await expect(page.getByRole('button', { name: /^Sauver/ })).not.toContainText('Record');
   const etat = await page.evaluate(() => JSON.parse(localStorage.getItem('go.series-themes.v1') ?? 'null'));
   expect(etat).toEqual({ capturer: { affilee: 0, record: 1 } });
@@ -113,8 +113,8 @@ test('nouveau record : la pastille le dit', async ({ page }) => {
 // #500 : la série « Fin de partie » s'ouvre, reste dans ses thèmes (finir la partie, compter) et se réussit.
 test('série Fin de partie : ouverte, dans le thème, réussie', async ({ page }) => {
   await ouvrirProblemes(page);
-  await page.getByRole('button', { name: /^Fin de partie/ }).click();
-  await expect(lecteur(page).locator('.lecteur-nom small')).toContainText('Fin de partie');
+  await page.getByRole('button', { name: /^Finir la partie/ }).click();
+  await expect(lecteur(page).locator('.lecteur-nom small')).toContainText('Finir la partie');
   await expect(affilee(page)).toHaveText(/^0 d’affilée/);
   const id = (await lecteur(page).getAttribute('data-probleme'))!;
   expect(['fin-de-partie', 'comptage']).toContain(THEME_DU_PROBLEME[id]);
@@ -157,7 +157,7 @@ test('captures de revue', async ({ page }) => {
     await page.emulateMedia({ colorScheme: theme, reducedMotion: 'reduce' });
     await page.locator('.themes').scrollIntoViewIfNeeded();
     await page.screenshot({ path: join(process.env.CAPTURES!, `themes-liste-${theme}.png`) });
-    await page.getByRole('button', { name: /^Capturer/ }).click();
+    await page.getByRole('button', { name: /^Capture/ }).click();
     await page.screenshot({ path: join(process.env.CAPTURES!, `themes-lecteur-${theme}.png`) });
   }
 });

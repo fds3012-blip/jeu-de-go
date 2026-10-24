@@ -1577,6 +1577,7 @@ export type Database = {
       }
       join_game: { Args: { p_code: string }; Returns: string }
       joueur_par_pseudo: { Args: { p_pseudo: string }; Returns: string }
+      joueurs_en_ligne: { Args: never; Returns: number }
       lente_apparier: {
         Args: { p_present: boolean; p_uid: string }
         Returns: string

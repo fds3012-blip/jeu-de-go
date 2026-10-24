@@ -30,6 +30,8 @@ test('flamme creuse et tuile « À faire », puis flamme pleine et « Fait » ap
   await expect(page.getByTestId('etat-du-jour')).toHaveText('À faire');
   const tuile = page.getByRole('button', { name: /^Go du jour n°\s7 : .+\. À faire\.$/ });
   await expect(tuile).toBeVisible();
+  // #695 (U2) : la bulle de l'adversaire dit l'état du jour : la série en jeu.
+  await expect(bulle(page)).toHaveText('Série de 6 jours. Un Go du jour et c’est 7.');
 
   // La tuile ouvre le Go du jour lui-même (recette du 02/10 au soir) ; on le résout.
   await tuile.click();
@@ -44,6 +46,7 @@ test('flamme creuse et tuile « À faire », puis flamme pleine et « Fait » ap
   await expect(flamme).not.toHaveClass(/allumage/);
   await expect(flamme).toHaveAccessibleName(/Go du jour fait aujourd’hui/);
   await expect(page.getByTestId('etat-du-jour')).toHaveText('Fait');
+  await expect(bulle(page)).toHaveText(/^Fait pour aujourd’hui\. À demain\s!$/);
 
   // Rechargement : toujours pleine, sans nouvel allumage.
   await page.reload();
@@ -51,18 +54,19 @@ test('flamme creuse et tuile « À faire », puis flamme pleine et « Fait » ap
   await expect(flamme).not.toHaveClass(/allumage/);
 });
 
-test('la bulle de Pomme change selon le jour, et après une absence', async ({ page }) => {
+test('la bulle de l’adversaire change selon le jour (la série en jeu), et après une absence', async ({ page }) => {
   const parties = { n: 3, dernier: 'pomme' };
   const textes: string[] = [];
   for (const [i, iso] of ['2026-10-03T09:00:00+02:00', '2026-10-04T09:00:00+02:00', '2026-10-05T09:00:00+02:00'].entries()) {
     await page.clock.setFixedTime(new Date(iso));
-    await semer(page, { 'go.parties.v1': parties, 'go.visite.v1': { jour: 6 + i, absence: 0 } });
+    // La veille a été réussie : la série compte un jour de plus chaque matin.
+    await semer(page, { 'go.parties.v1': parties, 'go.visite.v1': { jour: 6 + i, absence: 0 }, 'go.go-du-jour.v1': { dernier: 6 + i, jours: 6 + i } });
     textes.push((await bulle(page).textContent()) ?? '');
     // Même jour, même réplique au rechargement.
     await page.reload();
     await expect(bulle(page)).toHaveText(textes[i]);
   }
-  expect(new Set(textes).size).toBeGreaterThan(1);
+  expect(textes).toEqual(['Série de 6 jours. Un Go du jour et c’est 7.', 'Série de 7 jours. Un Go du jour et c’est 8.', 'Série de 8 jours. Un Go du jour et c’est 9.']);
 
   // Cinq jours sans venir : un accueil de retour, et il tient toute la journée.
   await page.clock.setFixedTime(new Date('2026-10-10T18:20:00+02:00'));
