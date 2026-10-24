@@ -101,7 +101,8 @@ test('parties lentes : recherche sur l’accueil, appariement, coups alternés, 
   await expect(ana.getByTestId('tuile-lente')).toContainText('À toi de jouer (1)', { timeout: 10_000 });
   await expect(ana.getByTestId('tuile-lente-trouvee')).toHaveCount(0);
   await expect(ana.getByTestId('tuile-lente-recherche')).toHaveCount(0);
-  await expect(ana.locator('.cta.a-jouer[data-mode="en_ligne"]')).toHaveCount(1);
+  // #695 : le point d'or suit « Jouer en ligne », bouton principal (du monde en ligne) ou tuile (accueil presque vide).
+  await expect(ana.locator('.cta.a-jouer[data-mode="en_ligne"], [data-testid="mode-en_ligne"].a-jouer')).toHaveCount(1);
   await sansDebord(ana, 'accueil 390 px');
   if (CAPTURES) await ana.screenshot({ path: `${CAPTURES}/lentes-accueil.jpg`, type: 'jpeg', quality: 60 });
   await ana.getByTestId('tuile-lente').click();

@@ -3,6 +3,7 @@
 import { describe, expect, it } from 'vitest';
 import { newPosition, play, type Position } from '../go/rules';
 import { fromLabel } from '../go/coords';
+import { traduire } from '../content/i18n/secondaires';
 import {
   avanceFinale, compteNotes, defaiteNette, momentCle, noterCoups, notesAvecCle, PERTES_DIFFUSES, phraseBilan, plafondPrecision, precision,
   precisionHonnete, rejouerDici, type AnalyseRevue, type NoteCoup,
@@ -179,5 +180,33 @@ describe('bilan honnête', () => {
   it('partie serrée perdue de 2,5 : pas de plafond, mais le moment clé remplace « aucune erreur »', () => {
     expect(phraseBilan(zero, 1, 'Pomme', { avanceNoir: -2.5, size: 9, cle: { coup: 12, perte: 4.2, passe: false, prises: 0 } }))
       .toBe("Très belle partie, tu as joué juste. Ton coup 12 t’a coûté 4 points : va le revoir.");
+  });
+});
+
+describe('bilan sans KataGo (#694) : jamais « aucune erreur », jamais de félicitations pour une défaite', () => {
+  const zero = Array.from({ length: 20 }, (_, k) => nc(2 * k + 1, 1, 0));
+  const interdit = /Aucune erreur|Partie correcte|Très belle|plus juste|No mistakes|decent game|Great game/;
+  it('rien trouvé : la phrase dit que l’analyse n’a pas pu se faire', () => {
+    const t = phraseBilan(zero, 1, 'Pomme', { avanceNoir: 1.5, size: 9, sansKataGo: true });
+    expect(t).toBe('L’analyse n’a pas pu se faire : je ne peux pas dire si tu as bien joué. Réessaie.');
+    expect(t).not.toMatch(interdit);
+  });
+  it('partie perdue de 0,5 point (W+0.5) : elle le dit, sans compliment', () => {
+    const t = phraseBilan(zero, 1, 'Pomme', { avanceNoir: -0.5, size: 9, sansKataGo: true });
+    expect(t).toBe('Tu perds de 0,5 point. L’analyse n’a pas pu se faire : je ne peux pas dire si tu as bien joué. Réessaie.');
+    expect(t).not.toMatch(interdit);
+  });
+  it('une erreur trouvée par le moteur simple reste citée', () => {
+    const n = [...zero, { coup: 43, couleur: 1, perte: 9, note: 'grosse' } as NoteCoup];
+    expect(phraseBilan(n, 1, 'Pomme', { avanceNoir: 3, size: 9, sansKataGo: true })).toBe('Ton coup 43 t’a coûté 9 points : va le revoir.');
+  });
+  it('en anglais aussi', () => {
+    expect(traduire('en', 'revue.bilan.sansAnalyse')).toMatch(/could not run/);
+    expect(traduire('en', 'bilan3.reessayerAnalyse')).toBeTruthy();
+  });
+  it('avec KataGo, une défaite sans erreur isolée n’est pas félicitée non plus', () => {
+    const t = phraseBilan(zero, 1, 'Pomme', { avanceNoir: -0.5, size: 9 });
+    expect(t).toBe(`Tu perds de 0,5 point. ${PERTES_DIFFUSES}`);
+    expect(t).not.toMatch(interdit);
   });
 });

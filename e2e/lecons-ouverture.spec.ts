@@ -9,7 +9,7 @@ import { ACQUIS } from '../src/content/acquis';
 // clair, 320 px en sombre, puis zoom 200 % (195 px) avec les polices web bloquées. Jugements prouvés par KataGo
 // (src/go/lecons-ouverture.test.ts). Captures : seulement si CAPTURES_LECONS_OUVERTURE donne un dossier.
 
-const norm = (s: string) => s.replace(/[\u00A0\u202F\s]+/g, ' ').trim();
+const norm = (s: string) => s.replace(/[\u00A0\u202F\s]+/g, ' ').replace(/(?<=\p{L})'(?=\p{L})/gu, '’').trim();
 const DOSSIER = process.env.CAPTURES_LECONS_OUVERTURE;
 /** Toutes les leçons avant `id` sur le chemin sont faites : le bouton du chemin ouvre `id`. */
 const avant = (id: string) => Object.fromEntries(LESSONS_FR.slice(0, LESSONS_FR.findIndex(l => l.id === id)).map(l => [l.id, l.steps.length]));

@@ -39,14 +39,16 @@ test.describe('N4 : un seul appel sur l’accueil', () => {
     });
   }
 
-  test('après la première partie : « À faire » revient, la bulle parle de la partie comme le bouton', async ({ page }) => {
+  test('après la première partie : « À faire » revient, la bulle dit l’état du jour sans inviter à une seconde action (#695)', async ({ page }) => {
     await preparer(page);
     // #309 : « Rejouer » suppose une partie finie contre Pomme (ici perdue).
     await semer(page, { 'go.parties.v1': JSON.stringify({ n: 1, dernier: 'pomme', ordi: 1 }), 'go.bilan.v1': JSON.stringify({ pomme: { v: 0, d: 1 } }) });
     await page.goto('/');
     await expect(page.locator('.cta-sceau')).toContainText('Rejouer contre Pomme');
     await expect(page.getByTestId('etat-du-jour')).toHaveText('À faire');
-    await expect(page.locator('.scene-bulle')).not.toContainText('Go du jour');
+    // #695 (U2) : la bulle dit l'état du jour en une phrase ; le bouton reste la seule invitation (la partie).
+    await expect(page.locator('.scene-bulle')).toHaveText('Nouveau Go du jour.');
+    await expect(page.locator('.scene-bulle')).not.toContainText(/touche|clique|ouvre/i);
   });
 
   test.describe('iPhone, Safari', () => {

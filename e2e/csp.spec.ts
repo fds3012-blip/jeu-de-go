@@ -109,7 +109,8 @@ test('liens courts, aperçus et pages de référencement (démo jouable) sans vi
   const g = await garder(page);
   // Lien court du Go du jour : le script en ligne de l'aperçu remet l'adresse en forme, puis l'app s'ouvre.
   await page.goto('/j/1');
-  await expect.poll(() => new URL(page.url()).pathname).toBe('/');
+  // #688 (N8) : puis l'adresse suit l'écran ouvert (le problème du jour, `/problemes/<id>`).
+  await expect.poll(() => new URL(page.url()).pathname).toMatch(/^\/(problemes\/[a-z0-9-]+)?$/);
   await page.waitForLoadState('networkidle');
   // Page de référencement : son propre script (démo), sans le JS de l'app.
   await page.goto('/apprendre-le-go');

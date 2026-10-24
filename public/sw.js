@@ -52,6 +52,9 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+/** Adresse d'un écran de l'app (même règle que `estCheminApp`, src/app/adresses.ts). */
+const estCheminApp = (chemin) => chemin === '/' || /^\/(apprendre|problemes|profil)(\/|$)/.test(chemin);
+
 function isStatic(url) {
   return immuable(url.pathname) || PRECACHE.has(url.pathname) || /\.(png|svg|webp|woff2?)$/.test(url.pathname);
 }
@@ -77,7 +80,10 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(req)
         .then((res) => {
-          if (res.ok) {
+          // #688 : seule la page de l'app (`/`, `/apprendre/…`, `/problemes/…`, `/profil/…`, src/app/adresses.ts) devient la
+          // copie hors ligne ; une page de référencement ou d'aperçu ne la remplace pas. Hors ligne, ces adresses
+          // reçoivent la page de l'app, qui rouvre l'écran.
+          if (res.ok && estCheminApp(url.pathname)) {
             const copy = res.clone();
             caches.open(CACHE).then((c) => c.put('/', copy));
           }

@@ -7,7 +7,7 @@ import { ACQUIS } from '../src/content/acquis';
 // jouée jusqu'au bout à 390 px, en 13 × 13 cadré : le point de coupe pris, un refus réfuté (« Blanc coupe en L5 »), puis
 // les rôles inversés (couper), un refus réfuté (« Blanc joue en L5 »). Jugements : src/go/lecons-47-plus.test.ts.
 
-const norm = (s: string) => s.replace(/[\u00a0\u202f\s]+/g, ' ').trim();
+const norm = (s: string) => s.replace(/[\u00a0\u202f\s]+/g, ' ').replace(/(?<=\p{L})'(?=\p{L})/gu, '’').trim();
 const L48 = LESSONS_FR.find(l => l.id === 'l48')!;
 const etape = <K extends LessonStep['kind']>(i: number) => L48.steps[i] as Extract<LessonStep, { kind: K }>;
 const numero = (id: string) => LESSONS_FR.findIndex(l => l.id === id) + 1;

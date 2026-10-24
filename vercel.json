@@ -2,6 +2,9 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     { "source": "/confidentialite", "destination": "/index.html" },
+    { "source": "/(apprendre|problemes|profil)", "destination": "/index.html" },
+    { "source": "/(apprendre|problemes|profil)/:a", "destination": "/index.html" },
+    { "source": "/(apprendre|problemes|profil)/:a/:b", "destination": "/index.html" },
     { "source": "/j/:n(\\d{1,6})", "destination": "/j/:n/index.html" },
     { "source": "/en/j/:n(\\d{1,6})", "destination": "/en/j/:n/index.html" },
     { "source": "/defi", "destination": "/defi/index.html" },

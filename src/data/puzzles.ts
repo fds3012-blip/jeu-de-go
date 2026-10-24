@@ -29,6 +29,8 @@ export interface Puzzle {
   explanation: string | null;
   /** Texte affiché après une erreur (`setup.refutation`), null s'il n'y en a pas. */
   refutation: string | null;
+  /** Texte français de `refutation` (le même en français) : sa portée est lue sur lui, quelle que soit la langue (#693). */
+  refutationFr?: string | null;
   difficulty: number;
   /** Problème tiré d'une erreur de partie (#492) : pourquoi la réponse est la bonne. */
   pourquoi?: PourquoiProbleme;
@@ -74,6 +76,7 @@ export function parsePuzzle(row: PuzzleRow): Puzzle | null {
       title: row.title ?? t('pb.titreDefaut'), prompt: row.prompt ?? t('pb.consigneDefaut'),
       explanation: row.explanation,
       refutation: typeof setup.refutation === 'string' && setup.refutation ? setup.refutation : null,
+      refutationFr: typeof setup.refutation === 'string' && setup.refutation ? setup.refutation : null,
       difficulty: row.difficulty
     }, langue());
   } catch {

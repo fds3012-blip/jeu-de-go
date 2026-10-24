@@ -7,7 +7,7 @@ import { ACQUIS } from '../src/content/acquis';
 // jusqu'au bout à 390 px : la prise blanche, la menace posée, un mauvais choix au quiz, la reprise immédiate refusée,
 // la menace trouvée, le ko fermé. Positions et réponses prouvées par src/go/lecons-41-plus.test.ts.
 
-const norm = (s: string) => s.replace(/[\u00A0\u202F\s]+/g, ' ').trim();
+const norm = (s: string) => s.replace(/[\u00A0\u202F\s]+/g, ' ').replace(/(?<=\p{L})'(?=\p{L})/gu, '’').trim();
 const L45 = LESSONS_FR.find(l => l.id === 'l45')!;
 const etape = <K extends LessonStep['kind']>(i: number) => L45.steps[i] as Extract<LessonStep, { kind: K }>;
 const numero = (id: string) => LESSONS_FR.findIndex(l => l.id === id) + 1;

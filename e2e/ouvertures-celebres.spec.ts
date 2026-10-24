@@ -10,7 +10,7 @@ import { CATALOGUE_OUVERTURES } from '../src/content/i18n/ouvertures';
 // par KataGo, puis la fin. Ensuite, le répertoire mène à la leçon de son ouverture. Preuves :
 // src/go/ouvertures-celebres.test.ts et src/go/ouvertures.test.ts.
 
-const norm = (s: string) => s.replace(/[\u00a0\u202f\s]+/g, ' ').trim();
+const norm = (s: string) => s.replace(/[\u00a0\u202f\s]+/g, ' ').replace(/(?<=\p{L})'(?=\p{L})/gu, '’').trim();
 const L56 = LESSONS_FR.find(l => l.id === 'l56')!;
 const etape = <K extends LessonStep['kind']>(i: number) => L56.steps[i] as Extract<LessonStep, { kind: K }>;
 const CAPTURES = 'docs/pedagogie/captures-672';
