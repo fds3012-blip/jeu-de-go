@@ -209,3 +209,7 @@ CSS : `profil.css` et `course.css` gardent ce que le JS initial peut afficher, l
    (les autres refusées) est identique aussi. Tirages (`Math.random`) fixés, propriétés triées avant comparaison
    (Chromium énumère les propriétés personnalisées dans un ordre variable).
 
+
+### Suivi du 24/10 (#719) : `revue.css` à la demande
+
+`revue.css` (15,5 Ko brut) n'est plus importé par `main.tsx` : `Revue`, `RejouerErreurs`, `SeanceRevisions` et `PartiePartagee` l'importent eux-mêmes, en premier. CSS initial : 21,75 Ko → 20,10 Ko (22 270 → 20 581 octets gzip). La cascade passait par l'ordre de `main.tsx` : trois règles de `revue.css` perdaient contre `app.css` (`border-color` des boutons de la revue, `gap` du dock double, `padding` de `.revue-pas`) ; elles sont retirées pour que le rendu reste celui qu'on voyait. Vérifié par le style calculé de chaque élément de 5 états (bilan, parcours, rejouer mes erreurs, séance de révisions, partie partagée) en sombre et en clair : aucune différence.

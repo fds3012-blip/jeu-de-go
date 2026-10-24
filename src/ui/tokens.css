@@ -92,8 +92,10 @@
   --fw-medium: 500;
   --fw-bold: 700;
   --fw-titre: 800;              /* titres, chiffres, bouton principal (Bricolage) */
-  --tracking-titre: -0.02em;    /* interlettrage des titres en Bricolage */
-  --fs-base: 16px;     /* corps de texte */
+  --tracking-titre: -0.02em;    /* interlettrage des titres en Bricolage (20 à 32 px) */
+  --tracking-grand: -0.035em;   /* grands chiffres et titres d'affichage (44 px et plus) : plus serrés */
+  --tracking-petit: .01em;      /* texte de 11 à 13 px : un peu plus d'air */
+  --fs-base: 1rem;     /* corps de texte, 16 px : suit la taille de texte choisie par le joueur */
   --fs-xs: .78rem;     /* 12,5 px : libellés de la barre de navigation */
   --fs-legende: .8125rem; /* 13 px : légendes (rang, sous-titre de tuile, bulle de réplique) */
   --fs-s: .88rem;      /* 14 px : texte secondaire */

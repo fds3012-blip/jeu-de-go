@@ -1,5 +1,5 @@
 /* #673 : feuille à part, chargée avec l'écran de revue (Revue.tsx, à la demande) : rien de plus dans le CSS initial
-   (revue.css est importé par main.tsx ; budget : scripts/budget-bundle.mjs). */
+   (revue.css arrive aussi avec ses écrans, depuis #719 ; budget : scripts/budget-bundle.mjs). */
 /* #673 : « Pourquoi ? » dans la bulle : deux onglets (ta suite, celle du bon coup), un titre, une ou deux phrases. Sous le
    goban, à la place de la bande des coups : l'étape de la suite, avec les mêmes boutons ‹ ›. */
 .pourquoi { display: grid; gap: var(--space-1); }

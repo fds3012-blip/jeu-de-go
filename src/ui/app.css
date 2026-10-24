@@ -5,16 +5,21 @@
 *, *::before, *::after { box-sizing: border-box; }
 /* Zone sûre du haut (barre d'état, encoche). Une variable pour que les tests la simulent : Chromium n'a pas d'encoche (#618). */
 :root { --zone-haut: env(safe-area-inset-top, 0px); }
-html { background: var(--bg); }
+/* Réponse au toucher (#719) : pas de halo gris d'iOS ni d'Android, pas de zoom au double toucher, et le « tirer pour actualiser »
+   d'Android ne recharge pas l'app au milieu d'une partie. */
+html { background: var(--bg); -webkit-tap-highlight-color: transparent; touch-action: manipulation; overscroll-behavior-y: contain; }
+/* Retours à la ligne : titres équilibrés, paragraphes sans mot seul en dernière ligne (une règle pour toute l'app). */
+h1, h2, h3 { text-wrap: balance; }
+p { text-wrap: pretty; }
 /* Halo de lampe : fixé en haut du document, il défile avec la page (pas de repeint au défilement). */
 body { margin: 0; background: var(--halo) no-repeat, var(--bg); color: var(--text); font-family: var(--font-ui); font-size: var(--fs-base); line-height: var(--lh-base);
-  -webkit-font-smoothing: antialiased; padding-top: var(--zone-haut); min-height: 100vh; }
+  -webkit-font-smoothing: antialiased; padding-top: var(--zone-haut); min-height: 100dvh; }
 /* P9 (#618) : la marge du haut part avec le défilement ; cette bande fixe garde la barre d'état sur le fond.
    Même fond que body, posé au même endroit : invisible en haut de page. Au-dessus des écrans plein écran (z 30)
    et des confettis (z 40), sous les fêtes annoncées (z 59-60, posées sous la zone) et les feuilles (couche du haut). */
 body::before { content: ""; position: fixed; z-index: 50; top: 0; left: 0; right: 0; height: var(--zone-haut);
   background: var(--halo) no-repeat, var(--bg); pointer-events: none; }
-button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+button { font: inherit; color: inherit; cursor: pointer; }
 button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .app { max-width: var(--largeur-max); margin: 0 auto; padding: var(--space-3) var(--gouttiere) calc(150px + env(safe-area-inset-bottom, 0px)); }
 /* P8 (#629, lot V7) : la colonne suit la classe de largeur ; une ligne de texte reste à --mesure. Les activités
@@ -122,7 +127,7 @@ td:first-child, th:first-child { text-align: left; }
 @media (hover: hover) { .retour:hover { background: var(--surface); } }
 .ecran-tete { display: flex; align-items: center; gap: var(--space-2); min-width: 0; min-height: var(--cible-min); margin: 0 0 var(--space-2); }
 .ecran-tete .ecran-titre { flex: 1; min-width: 0; margin: 0; font-family: var(--font-titre); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre);
-  font-size: var(--fs-xl); line-height: var(--lh-titre); overflow-wrap: break-word; text-wrap: balance; }
+  font-size: var(--fs-xl); line-height: var(--lh-titre); overflow-wrap: break-word; }
 /* Un écran de tâche a sa barre « ‹ titre » : elle remplace le logo, comme dans la leçon (docs/ux/navigation.md).
    Le h1 « Mochi Go » reste pour les lecteurs d'écran ; la barre du bas reste. */
 .app:has(.ecran-tete, .revue-tete, .lecteur-tete, .tous-tete) > .top { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden;

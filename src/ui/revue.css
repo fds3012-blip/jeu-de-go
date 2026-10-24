@@ -23,7 +23,7 @@
 /* #503 : deux actions dans la barre du bas, côte à côte (une seule ligne : la barre garde sa hauteur). « Suivant »,
    en relief, prend la plus grande part ; « Rejoue cette erreur » reste à plat, à sa hauteur, et passe sur deux lignes
    si l'écran est étroit plutôt que d'être coupé. */
-.revue-dock-double { grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); align-items: start; gap: var(--space-2); }
+.revue-dock-double { grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); align-items: start; }
 .revue-dock-double .revue-probleme { min-height: var(--cible-cta); padding: 0 var(--space-2); line-height: 1.2; text-wrap: balance;
   background: var(--surface); border-color: var(--line); }
 /* Fond de la barre : celui de toutes les barres de la revue (.revue-dock::before, plus haut). */
@@ -40,7 +40,6 @@
 .bilan-avance-texte b { color: var(--text); font-variant-numeric: tabular-nums; }
 .bilan-barre { height: 12px; border-radius: var(--radius-pill); background: var(--surface-2); overflow: hidden; box-shadow: inset 0 0 0 1px var(--line); }
 .bilan-barre span { display: block; height: 100%; border-radius: inherit; background: var(--accent); transform-origin: left center; }
-.revue-arret { border-color: var(--line); }
 
 /* ---------- 2. Le bilan ---------- */
 .bilan-coach { display: flex; align-items: flex-start; gap: var(--space-3); }
@@ -137,7 +136,7 @@
 .revue-coup-pierre.noire { background: radial-gradient(circle at 35% 30%, #5b5f5d, #151716 60%, #050606); box-shadow: 0 0 0 1px var(--pierre-n-bord); }
 .revue-coup-pierre.blanche { background: radial-gradient(circle at 38% 32%, #fff, #F3EEE3 55%, #BDB3A0); box-shadow: 0 0 0 1px var(--line); }
 .revue-coup-vide { width: 18px; height: 18px; flex: none; }
-.revue-pas { flex: none; width: var(--cible-bouton); min-height: var(--cible-bouton); padding: 0; display: grid; place-items: center; }
+.revue-pas { flex: none; width: var(--cible-bouton); min-height: var(--cible-bouton); display: grid; place-items: center; }
 /* #461 : chevrons au trait, de la couleur du texte (sans ces règles, un triangle noir plein, invisible en sombre). */
 .revue-pas svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 .revue-pas:disabled { opacity: .4; }
@@ -150,7 +149,7 @@
 .revue-mochi { display: flex; align-items: flex-start; gap: var(--space-3); padding: var(--space-3); border-radius: 14px; background: var(--surface); }
 .revue-mochi > p { margin: 0; font-size: var(--fs-corps-s); line-height: 1.4; }
 /* « Rejoue cette erreur » (issue #77) : action secondaire. */
-.revue-probleme { display: block; width: 100%; min-height: var(--cible-bouton); border-color: var(--line); }
+.revue-probleme { display: block; width: 100%; min-height: var(--cible-bouton); }
 .revue-rejeu .revue-probleme { margin-top: var(--space-2); }
 /* Rejeu réussi : la bulle de Mochi prend la bordure d'accent (le texte dit aussi « Bravo », pas la couleur seule). */
 .revue-rejeu-ok { box-shadow: inset 0 0 0 2px var(--accent); }
@@ -158,7 +157,7 @@
 .revue-note { margin: 0 2px; color: var(--muted); font-size: var(--fs-s); line-height: 1.35; }
 .revue-importer { display: block; margin: 0 auto; }
 /* #428 : avec des erreurs à rejouer, « Démarrer le bilan » passe en action secondaire, sous le tableau. */
-.bilan-parcours, .bilan-partager { display: block; width: 100%; min-height: var(--cible-bouton); border-color: var(--line); }
+.bilan-parcours, .bilan-partager { display: block; width: 100%; min-height: var(--cible-bouton); }
 /* #364 : « Partager », action secondaire, sous le tableau (et sous « Démarrer le bilan » s'il y est). */
 .bilan-partager { margin-top: var(--space-2); }
 

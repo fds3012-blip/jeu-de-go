@@ -237,7 +237,7 @@ Sources de vérité, par ordre : `src/ui/tokens.css` (valeurs), `src/ui/app.css`
 ## Typography
 
 ### Familles
-- **`--font-titre`** : Bricolage Grotesque (variable, 200 à 800), pour les titres, les chiffres et le bouton principal. Interlettrage `--tracking-titre` −0,02 em.
+- **`--font-titre`** : Bricolage Grotesque (variable, 200 à 800), pour les titres, les chiffres et le bouton principal. Interlettrage par taille (#719) : `--tracking-grand` −0,035 em (44 px et plus : « Victoire », grands chiffres), `--tracking-titre` −0,02 em (20 à 32 px), 0 pour le texte courant, `--tracking-petit` +0,01 em (11 à 13 px).
 - **`--font-ui`** : Zen Kaku Gothic New, en 400, 500 et 700, pour tout le reste.
 - Repli : `system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`.
 - Polices servies par l'app (`src/ui/fonts.css`, paquets `@fontsource`), sous-ensemble latin seulement : 4 fichiers `.woff2`, environ 70 Ko, budget 80 Ko. `font-display: swap`.
@@ -253,7 +253,7 @@ Sources de vérité, par ordre : `src/ui/tokens.css` (valeurs), `src/ui/app.css`
 | `--fs-display-s` | 22px | Proverbe de l'attente, titre de bulle forte |
 | `--fs-xl` / `--fs-cta` | 1.25rem (20 px) | Titres de section, bouton principal |
 | `--fs-l` | 1.1rem (17,6 px) | Choix, titres de tuile, CTA dans `.dock` |
-| `--fs-m` / `--fs-base` | 1rem / 16px | Texte courant |
+| `--fs-m` / `--fs-base` | 1rem | Texte courant (16 px ; `--fs-base` en `rem` depuis #719 : il suit la taille de texte du joueur) |
 | `--fs-corps-s` | .9375rem (15 px) | Bulles, coach, bilan |
 | `--fs-s` | .88rem (14 px) | Texte secondaire |
 | `--fs-legende` | .8125rem (13 px) | Légendes, sous-titre de tuile, réplique |
@@ -267,6 +267,7 @@ Graisses : `--fw-regular` 400, `--fw-medium` 500, `--fw-bold` 700, `--fw-titre` 
 - Pas de majuscules d'étiquette. Seule exception : « BATTUE », parce que c'est le texte d'un tampon.
 - Pas de libellés « A · B » ni de flèches « → ». Une phrase ou un mot.
 - Chiffres en `font-variant-numeric: tabular-nums` quand ils changent (scores, compteurs, records).
+- Retours à la ligne (#719) : une règle globale dans `app.css`, `text-wrap: balance` sur les titres (h1 à h3) et `pretty` sur les paragraphes ; ne pas la répéter feuille par feuille.
 - Typographie française : espaces fines insécables avant `? ! : ;` et dans « », avec `fr()` de `src/ui/typo.ts`. Signe moins « − », pas de tiret.
 
 ## Layout
@@ -538,7 +539,7 @@ On ne cache pas l'action principale : on réduit d'abord le vide, puis les déta
 - **Mouvements réduits** : chaque animation est sous `prefers-reduced-motion: no-preference`, ou s'annule sous `reduce`. Les jetons de durée passent à 0.
 - **Focus clavier** : `outline: 3px solid var(--focus)`, décalage 2 px, sur tout élément interactif.
 - **Aucune librairie d'interface** : ni kit de composants, ni bibliothèque d'icônes, ni framework CSS. Dépendances d'exécution : React, les deux polices, Supabase, TensorFlow.js, PostHog, Sentry.
-- **Budget initial** (`npm run build && npm run budget`, gzip) : JS initial 150 Ko (149,3 Ko le 16/10), CSS initial 22 Ko (21,4 Ko), polices 80 Ko, 60 Ko par écran chargé à la demande. Un nouvel écran charge sa feuille de style avec lui. Relever un budget est une décision à justifier dans la PR.
+- **Budget initial** (`npm run build && npm run budget`, gzip) : JS initial 150 Ko (149,8 Ko le 24/10), CSS initial 22 Ko (20,1 Ko le 24/10 : `revue.css` arrive avec ses écrans, #719), polices 80 Ko, 60 Ko par écran chargé à la demande. Un nouvel écran charge sa feuille de style avec lui. Relever un budget est une décision à justifier dans la PR.
 - **Langue** : français d'abord, puis anglais (`src/content/i18n/fr.ts`, `en.ts`) ; un texte n'est jamais écrit en dur dans un composant.
 
 ## Agent prompt guide

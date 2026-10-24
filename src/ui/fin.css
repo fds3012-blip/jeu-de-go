@@ -33,7 +33,7 @@
   color: var(--tampon-encre); background: var(--tampon-papier); border: 2.5px solid var(--tampon-encre); border-radius: 7px; padding: 6px 10px 5px;
   box-shadow: inset 0 0 0 2px var(--tampon-papier), inset 0 0 0 3px rgba(178, 53, 32, .35), 0 6px 14px -6px rgba(0, 0, 0, .5); }
 
-.fin-titre { margin: var(--space-4) 0 6px; font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: var(--fs-display-xl); line-height: 1; letter-spacing: -.035em; }
+.fin-titre { margin: var(--space-4) 0 6px; font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: var(--fs-display-xl); line-height: 1; letter-spacing: var(--tracking-grand); }
 .fin-titre:focus { outline: none; }
 .fin-marge { margin: 0; color: var(--muted); font-size: var(--fs-l); font-variant-numeric: tabular-nums; }
 /* L5 (recette du 02/10 au soir) : l'XP gagnée, à plat sous l'écart, à la place de l'annonce flottante qui couvrait les
@@ -90,7 +90,7 @@
 
 /* ---------- Récit du score (#78) : même plateau que la fin, sans voile (tout le goban se lit), le comptage dessous ---------- */
 .app.app-partie:has(> .calque > .recit) { padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom, 0px)); }
-.recit { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.recit { cursor: pointer; }
 .recit .fin-voile { opacity: 0; animation: none !important; }
 .recit-feuille { position: relative; flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; margin-top: var(--space-4); }
 /* Le récit se centre dans l'espace sous le goban (#118) : plus d'écran à moitié vide, le bouton reste sous le pouce. */
@@ -100,7 +100,7 @@
 .recit-compteur { display: flex; align-items: flex-end; justify-content: center; gap: var(--space-4); }
 .recit-compteur .camp { position: relative; display: flex; flex-direction: column; align-items: center; min-width: 4.6ch; }
 .recit-compteur .camp-nom { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: var(--fs-corps-s); font-weight: var(--fw-bold); }
-.recit-compteur b { font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: 52px; line-height: 1.05; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.recit-compteur b { font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: 52px; line-height: 1.05; letter-spacing: var(--tracking-grand); font-variant-numeric: tabular-nums; }
 .recit-point { color: var(--muted); font-size: var(--fs-3xl); line-height: 1; padding-bottom: 12px; }
 .recit-pierre { width: 14px; height: 14px; border-radius: 50%; }
 .recit-pierre.b { background: radial-gradient(circle at 35% 30%, #676b69, #151716 55%, #050606); box-shadow: 0 0 0 1px var(--line); }
