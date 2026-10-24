@@ -106,9 +106,12 @@ for (const cfg of CONFIGS) {
       await page.getByRole('dialog').getByRole('button', { name: T.nonMerci }).click();
       await capturer(page, cfg, '01b-question-seule', mesures);
 
-      // 2. « Jamais joué » : les 8 gestes, puis la découverte jusqu'au bout.
+      // 2. « Jamais joué » : les 10 gestes, puis la découverte jusqu'au bout.
       await page.getByRole('button', { name: T.jamais }).click();
       await expect(plateau(page, 7)).toBeVisible();
+      await capturer(page, cfg, '02-regles-0-plateau', mesures);
+      await toucher(page, 'C3', 7); // #712 : une lettre et un chiffre
+      await action(page, T.continuer).click();
       await capturer(page, cfg, '02a-regles-1-poser', mesures);
       await jouer(page, 'A1', 7); // mauvais geste : l'aide
       await capturer(page, cfg, '02b-regles-1-aide', mesures);
@@ -116,17 +119,19 @@ for (const cfg of CONFIGS) {
       await attendrePierre(page, 'E5', 'blanc', 7);
       await capturer(page, cfg, '02c-regles-1-fait', mesures);
       await action(page, T.continuer).click();
+      await expect(page.locator('.lecteur-plateau')).toHaveAttribute('data-demo', 'geste');
+      await jouer(page, 'B4', 7); await capturer(page, cfg, '02i-regles-3-objectif', mesures); await action(page, T.continuer).click();
       await expect(page.locator('.lecteur-plateau')).toHaveAttribute('data-demo', 'geste'); // #710 : montré d'abord, demandé ensuite
       await jouer(page, 'D5', 7); await capturer(page, cfg, '02d-regles-2-libertes', mesures); await action(page, T.continuer).click();
       await jouer(page, 'D3', 7); await capturer(page, cfg, '02e-regles-3-capture', mesures); await action(page, T.continuer).click();
       await jouer(page, 'D3', 7); await capturer(page, cfg, '02f-regles-4-atari', mesures); await action(page, T.continuer).click();
       await jouer(page, 'A1', 7); await capturer(page, cfg, '02g-regles-5-suicide', mesures); await jouer(page, 'G5', 7); await action(page, T.continuer).click();
       await jouer(page, 'C4', 7); await capturer(page, cfg, '02h-regles-6-ko', mesures); await action(page, T.continuer).click();
-      await expect(page.locator('.lecteur-plateau')).toHaveAttribute('data-demo', 'geste');
-      await jouer(page, 'B4', 7); await capturer(page, cfg, '02i-regles-7-territoire', mesures); await action(page, T.continuer).click();
-      await capturer(page, cfg, '02j-regles-8-compte', mesures);
+      await page.locator('.choix').getByRole('button', { name: /^(Je passe|I pass)$/ }).click();
+      await capturer(page, cfg, '02j-regles-9-passer', mesures); await action(page, T.continuer).click();
+      await capturer(page, cfg, '02j-regles-10-compte', mesures);
       await page.locator('.choix').getByRole('button', { name: /^(Noir|Black)$/ }).click();
-      await capturer(page, cfg, '02k-regles-8-reponse', mesures);
+      await capturer(page, cfg, '02k-regles-10-reponse', mesures);
       await action(page, T.terminer).click();
       await expect(page.getByTestId('fin-intro')).toBeVisible();
       await capturer(page, cfg, '02l-regles-fin', mesures);
@@ -155,7 +160,7 @@ for (const cfg of CONFIGS) {
       await page.goto('/');
       await page.getByRole('button', { name: T.unPeu }).click();
       await capturer(page, cfg, '01c-express-1', mesures);
-      for (let i = 1; i <= 8; i++) await page.getByTestId('je-sais').click();
+      for (let i = 1; i <= 10; i++) await page.getByTestId('je-sais').click();
       await expect(page.getByTestId('fin-intro')).toBeVisible();
       await capturer(page, cfg, '01d-express-fin', mesures);
       await ctx.close();

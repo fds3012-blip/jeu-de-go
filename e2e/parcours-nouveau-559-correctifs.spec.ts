@@ -66,13 +66,15 @@ test('P-2 : 320 × 568, leçon 1 : « Revoir » visible sans défiler (#646 : pl
   expect(r.bas - r.haut).toBeGreaterThanOrEqual(44);
 });
 
-test('P-2 bis : 320 × 568, règles en 8 gestes : « Revoir » visible sans défiler', async ({ browser, baseURL }) => {
+test('P-2 bis : 320 × 568, règles en 10 gestes : « Revoir » visible sans défiler', async ({ browser, baseURL }) => {
   const ctx = await browser.newContext({ viewport: { width: 320, height: 568 }, isMobile: true, hasTouch: true, reducedMotion: 'reduce',
     storageState: { cookies: [], origins: [{ origin: baseURL!, localStorage: [{ name: 'go.consentement.v1', value: 'refuse' }] }] } });
   const page = await ctx.newPage();
   await page.goto('/');
   await page.getByRole('button', { name: 'Jamais joué' }).click();
   await expect(plateau(page, 7)).toBeVisible();
+  await toucher(page, 'C3', 7); // écran 1 (plateau, #712)
+  await page.locator('.lecon-actions').getByRole('button', { name: 'Continuer' }).click();
   await toucher(page, 'D4', 7); await toucher(page, 'D4', 7);
   await expect(page.locator('.lecon-actions').getByRole('button', { name: 'Continuer' })).toBeVisible();
   const r = await sousLaBarre(page, '.lecon-actions .revoir');

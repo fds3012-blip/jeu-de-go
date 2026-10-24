@@ -2,7 +2,7 @@
 //
 // Posée sur l'accueil épuré (#487 : tout premier lancement, aucune pierre posée, voir src/app/premierePierre.ts), tant
 // qu'elle n'a pas de réponse. Trois réponses de même poids :
-// - « Jamais joué » → l'introduction interactive des règles (8 écrans, src/app/IntroRegles.tsx), puis la partie de
+// - « Jamais joué » → l'introduction interactive des règles (10 écrans, src/app/IntroRegles.tsx), puis la partie de
 //   découverte avec Mochi ;
 // - « Un peu » → le rappel express (les mêmes écrans, chacun passable d'un toucher « Je sais »), puis le choix entre la
 //   partie de découverte et une partie contre Pomme ;

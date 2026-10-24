@@ -21,17 +21,35 @@ async function ouvrir(browser: Browser, baseURL: string, o: { w?: number; h?: nu
   return { ctx, page };
 }
 
+/** Écran 1 (plateau, #712) : toucher C3, puis « Continuer ». */
+async function passerPlateau(page: Page) {
+  await toucher(page, 'C3', 7);
+  await action(page, 'Continuer').click();
+}
+
 /** Rien ne défile : l'écran de l'introduction tient dans la fenêtre (épure P5). */
 async function tient(page: Page, largeur: number, etat = '') {
-  // Le compte (écran 8, trois phrases et deux choix) défilait déjà à 320 × 568 avant #710 (603 px pour 568) : il est réécrit
-  // avec les écrans « objectif » et « fin de partie » (PR 2 de l'introduction v2).
   const m = await page.evaluate(() => ({ h: document.documentElement.scrollHeight, vh: innerHeight, w: document.documentElement.scrollWidth }));
-  if (!(m.vh < 600 && /^écran 8/.test(etat))) expect(m.h, `${etat} ${JSON.stringify(m)}`).toBeLessThanOrEqual(m.vh);
+  expect(m.h, `${etat} ${JSON.stringify(m)}`).toBeLessThanOrEqual(m.vh);
   expect(m.w).toBeLessThanOrEqual(largeur);
 }
 
-test('au doigt, avec les animations : poser, puis les libertés montrées avant d’être demandées', async ({ browser, baseURL }) => {
+test('au doigt, avec les animations : plateau, poser, puis les libertés montrées avant d’être demandées', async ({ browser, baseURL }) => {
   const { ctx, page } = await ouvrir(browser, baseURL!);
+
+  // Écran 1 : le plateau et ses lettres. Une touche répond, la colonne C et la ligne 3 s'allument.
+  await expect(page.getByTestId('notion')).toHaveText('Mot du goCroisement');
+  await expect(bulle(page)).toContainText('Touche C3.');
+  await expect(plateauDemo(page)).toHaveAttribute('data-demo', 'geste');
+  await toucher(page, 'E5', 7);
+  await expect(bulle(page)).toHaveText('Cherche la colonne C, en haut, puis la ligne 3, sur le côté.');
+  await toucher(page, 'C3', 7);
+  await expect(fantome(page, 7)).toHaveCount(0);
+  await expect(bulle(page)).toContainText('Oui, C3 : colonne C, ligne 3.');
+  await expect(page.locator('.etapes')).toHaveAttribute('aria-valuenow', '1');
+  await expect(action(page, 'Continuer')).toHaveClass(/cta-appel/);
+  await tient(page, 390);
+  await action(page, 'Continuer').click();
 
   // Écran 1 : le mot, la phrase qui explique, rien d'autre à toucher que le point vert.
   await expect(page.getByTestId('notion')).toHaveText('Mot du goTour de jeu');
@@ -46,14 +64,24 @@ test('au doigt, avec les animations : poser, puis les libertés montrées avant 
   await expect(bulle(page)).toContainText('Bien joué ! Chacun son tour');
   await expect(bulle(page)).not.toContainText('point vert');
   await expect(page.locator('.mochi-bulle')).toHaveClass(/verdict-juste/);
-  await expect(page.locator('.etapes')).toHaveAttribute('aria-valuenow', '1');
+  await expect(page.locator('.etapes')).toHaveAttribute('aria-valuenow', '2');
   await expect(page.getByTestId('bulle-suite')).toHaveText('Touche « Continuer ».');
   await expect(action(page, 'Continuer')).toHaveClass(/cta-appel/);
   await attendrePierre(page, 'E5', 'blanc', 7);
   await tient(page, 390);
   await action(page, 'Continuer').click();
 
-  // Écran 2 : la démonstration se joue d'abord (les libertés s'allument), rien à toucher encore.
+  // Écran 3 : le but, le territoire qui se colorie d'abord, puis la demande.
+  await expect(page.getByTestId('notion')).toHaveText('Mot du goTerritoire');
+  await expect(plateauDemo(page)).toHaveAttribute('data-demo', 'en-cours');
+  await expect(bulle(page)).toHaveText('Le but : entourer plus de territoire que l’autre. Ici, tes pierres entourent des croisements vides : ton territoire.');
+  await expect(plateauDemo(page)).toHaveAttribute('data-demo', 'geste', { timeout: 8000 });
+  await expect(bulle(page)).toContainText('À toi : touches-en un.');
+  await toucher(page, 'B4', 7);
+  await expect(bulle(page)).toContainText('Le but : entourer plus de territoire que Blanc');
+  await action(page, 'Continuer').click();
+
+  // Écran 4 : la démonstration se joue d'abord (les libertés s'allument), rien à toucher encore.
   await expect(page.getByTestId('notion')).toHaveText('Mot du goLiberté');
   await expect(plateauDemo(page)).toHaveAttribute('data-demo', 'en-cours');
   await expect(bulle(page)).toContainText('Regarde les libertés de cette pierre');
@@ -69,12 +97,12 @@ test('au doigt, avec les animations : poser, puis les libertés montrées avant 
   await toucher(page, 'D5', 7);
   await expect(fantome(page, 7)).toHaveCount(0);
   await expect(bulle(page)).toContainText('Oui, c’est une liberté !');
-  await expect(page.locator('.etapes')).toHaveAttribute('aria-valuenow', '2');
+  await expect(page.locator('.etapes')).toHaveAttribute('aria-valuenow', '4');
   await expect(page.getByTestId('bulle-suite')).toBeVisible();
   await tient(page, 390);
   await action(page, 'Continuer').click();
 
-  // Écran 3 : la capture ; le point vert est montré avant d'être demandé.
+  // Écran 5 : la capture ; le point vert est montré avant d'être demandé.
   await expect(page.getByTestId('notion')).toHaveText('Mot du goCapture');
   await expect(bulle(page)).toContainText('La blanche n’en a plus qu’une : joue sur le point vert.');
   await ctx.close();
@@ -84,6 +112,7 @@ for (const [w, h] of [[390, 844], [320, 568]] as const) {
   for (const theme of ['dark', 'light'] as const) {
     test(`${w} × ${h}, ${theme === 'dark' ? 'sombre' : 'clair'} : le mot du go, la bulle et le pointeur sont lisibles (axe), l’écran ne défile pas`, async ({ browser, baseURL }) => {
       const { ctx, page } = await ouvrir(browser, baseURL!, { w, h, theme, reduit: true });
+      await passerPlateau(page);
       await toucher(page, 'D4', 7); await toucher(page, 'D4', 7);
       await attendrePierre(page, 'E5', 'blanc', 7);
       await expect(page.getByTestId('bulle-suite')).toBeVisible();
@@ -99,11 +128,15 @@ for (const [w, h] of [[390, 844], [320, 568]] as const) {
 
 test('mouvements réduits : la démonstration est déjà finie, la demande s’affiche tout de suite avec sa définition', async ({ browser, baseURL }) => {
   const { ctx, page } = await ouvrir(browser, baseURL!, { reduit: true });
+  await passerPlateau(page);
   await toucher(page, 'D4', 7); await toucher(page, 'D4', 7);
   await attendrePierre(page, 'E5', 'blanc', 7);
   await action(page, 'Continuer').click();
   await expect(plateauDemo(page)).toHaveAttribute('data-demo', 'geste');
-  // Sans la phrase « Regarde… », la demande se suffit : elle définit la liberté.
+  // Sans la phrase « Regarde… », la demande se suffit : elle définit le territoire (puis la liberté).
+  await expect(bulle(page)).toContainText('Les croisements vides que tes pierres entourent sont ton territoire');
+  await toucher(page, 'B4', 7);
+  await action(page, 'Continuer').click();
   await expect(bulle(page)).toContainText('Les libertés sont les croisements vides collés à une pierre');
   await expect(page.locator('.cta-appel')).toHaveCount(0);
   await ctx.close();
@@ -112,27 +145,33 @@ test('mouvements réduits : la démonstration est déjà finie, la demande s’a
 for (const [w, h] of [[390, 844], [320, 568]] as const) {
   test(`${w} × ${h} : de l’écran 1 au dernier, chaque état tient sans défiler, avec son mot du go et sa bulle`, async ({ browser, baseURL }) => {
     const { ctx, page } = await ouvrir(browser, baseURL!, { w, h, reduit: true });
-    const mots = ['Tour de jeu', 'Liberté', 'Capture', 'Atari', 'Coup interdit', 'Ko', 'Territoire', 'Compte'];
+    const mots = ['Croisement', 'Tour de jeu', 'Territoire', 'Liberté', 'Capture', 'Atari', 'Coup interdit', 'Ko', 'Passer', 'Compte'];
     // Par écran : les coups joués (un faux d'abord s'il y en a un), puis « Continuer » (ou « Terminer »).
-    const gestes: string[][] = [['A1', 'D4'], ['C5', 'D5'], ['A1', 'D3'], ['B2', 'D3'], ['A1', 'G5'], ['D2', 'C4'], ['F4', 'B4'], []];
-    for (let i = 0; i < 8; i++) {
+    const gestes: string[][] = [['E5', 'C3'], ['A1', 'D4'], ['F4', 'B4'], ['C5', 'D5'], ['A1', 'D3'], ['B2', 'D3'], ['A1', 'G5'], ['D2', 'C4'], [], []];
+    for (let i = 0; i < 10; i++) {
       await expect(page.getByTestId('notion')).toHaveText(`Mot du go${mots[i]}`);
       await expect(page.locator('.etapes')).toHaveAttribute('aria-valuenow', String(i));
       await tient(page, w, `écran ${i + 1} avant`);
       for (const p of gestes[i]) {
-        if (i === 0 && p === 'D4') { await toucher(page, 'D4', 7); await toucher(page, 'D4', 7); } else await jouer(page, p, 7);
+        if (i === 0) await toucher(page, p, 7);
+        else if (i === 1 && p === 'D4') { await toucher(page, 'D4', 7); await toucher(page, 'D4', 7); } else await jouer(page, p, 7);
         await tient(page, w, `écran ${i + 1} après ${p}`);
       }
-      if (i === 7) {
+      if (i === 8) {
+        await page.locator('.choix').getByRole('button', { name: 'Je joue encore' }).click();
+        await tient(page, w, 'écran 9 mauvaise réponse');
+        await page.locator('.choix').getByRole('button', { name: 'Je passe' }).click();
+      }
+      if (i === 9) {
         await page.locator('.choix').getByRole('button', { name: 'Blanc' }).click();
-        await tient(page, w, 'écran 8 mauvaise réponse');
+        await tient(page, w, 'écran 10 mauvaise réponse');
         await page.locator('.choix').getByRole('button', { name: 'Noir' }).click();
       }
       // Chaque geste réussi allume le point de progression et dit où toucher.
       await expect(page.locator('.etapes')).toHaveAttribute('aria-valuenow', String(i + 1));
       await expect(page.getByTestId('bulle-suite')).toBeVisible();
       await tient(page, w, `écran ${i + 1} fait`);
-      await action(page, i === 7 ? 'Terminer' : 'Continuer').click();
+      await action(page, i === 9 ? 'Terminer' : 'Continuer').click();
     }
     await expect(page.getByTestId('fin-intro')).toBeVisible();
     await ctx.close();
