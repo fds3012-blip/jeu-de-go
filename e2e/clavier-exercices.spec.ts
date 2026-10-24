@@ -13,8 +13,11 @@ async function tabulerVersPlateau(page: Page): Promise<void> {
   await expect(grille(page)).toBeFocused();
 }
 
-/** Amène le curseur sur `label` aux flèches, puis pose la pierre (deux appuis : « Confirmer au doigt » est actif par défaut). */
-async function poser(page: Page, label: string, verbe = 'poser'): Promise<void> {
+/**
+ * Amène le curseur sur `label` aux flèches, puis pose la pierre (deux appuis : « Confirmer au doigt » est actif par défaut).
+ * `verbe: null` : une question « touche le point » (9 lignes au plus) répond dès le premier appui, sans annonce « appuie encore » (#713).
+ */
+async function poser(page: Page, label: string, verbe: string | null = 'poser'): Promise<void> {
   const curseur = grille(page).locator('[data-curseur]');
   const depart = fromLabel((await curseur.getAttribute('data-curseur'))!, 9), cible = fromLabel(label, 9);
   const dx = (cible % 9) - (depart % 9), dy = Math.floor(cible / 9) - Math.floor(depart / 9);
@@ -22,6 +25,7 @@ async function poser(page: Page, label: string, verbe = 'poser'): Promise<void> 
   for (let i = 0; i < Math.abs(dy); i++) await page.keyboard.press(dy > 0 ? 'ArrowDown' : 'ArrowUp');
   await expect(curseur).toHaveAttribute('data-curseur', label);
   await page.keyboard.press('Enter');
+  if (verbe === null) return;
   await expect(annonce(page)).toHaveText(`${label} : appuie encore pour ${verbe}`);
   await page.keyboard.press('Enter');
 }
@@ -75,12 +79,13 @@ test('leçon du ko : la question « touche le point » se répond au clavier', a
   await expect(page.getByText('Touche le point où Blanc ne peut pas reprendre.')).toBeVisible();
 
   await tabulerVersPlateau(page);
-  await poser(page, 'D4', 'choisir ce point');
+  await poser(page, 'D4', null);
+  await expect(annonce(page)).not.toContainText('appuie encore');
   await expect(page.getByText(/Essaie encore\./)).toBeVisible();
   // #198 : pas de « Réessayer » ; le plateau garde le focus, on choisit un autre point tout de suite.
   await expect(page.getByRole('button', { name: 'Réessayer' })).toHaveCount(0);
   await tabulerVersPlateau(page);
-  await poser(page, 'E5', 'choisir ce point');
+  await poser(page, 'E5', null);
   await expect(page.getByText(/^Oui, E5/)).toBeVisible();
 });
 
