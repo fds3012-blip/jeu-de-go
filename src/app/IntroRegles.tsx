@@ -1,6 +1,6 @@
 // Introduction interactive des règles (#523), chargée à la demande (src/app/ecrans.ts) : rien dans le JS initial.
 //
-// 8 écrans très courts (v2 #710 : expliquer, puis faire ; la bulle décrit toujours l'écran ; un mot du go par écran), joués par le lecteur des leçons (src/app/Lecon.tsx, même moteur d'étapes, mêmes styles), puis
+// 10 écrans très courts (v2 #710 : expliquer, puis faire ; la bulle décrit toujours l'écran ; un mot du go par écran), joués par le lecteur des leçons (src/app/Lecon.tsx, même moteur d'étapes, mêmes styles), puis
 // un écran de fin qui n'a qu'une action principale :
 // - version complète (« Jamais joué », « Revoir les règles ») : « Partie de découverte avec Mochi » (#677, A9) ;
 // - version express (« Un peu ») : chaque écran se passe d'un toucher « Je sais » ; à la fin, « Partie de découverte avec
@@ -59,7 +59,7 @@ export function IntroRegles({ version, depuis, confirmTouch, onDecouverte, contr
 }
 
 /**
- * Fin de l'introduction : Mochi, fier ; les 8 notions posées sur une rangée de goban (la dernière cerclée d'or) ; une
+ * Fin de l'introduction : Mochi, fier ; les 10 notions posées sur une rangée de goban (la dernière cerclée d'or) ; une
  * seule action en relief. Reprend la mise en page et le mouvement de la fin de leçon (lecon.css), mouvements réduits compris.
  */
 function FinIntro({ version, onDecouverte, contre, onRetour }: { version: VersionIntro; onDecouverte: () => void; contre: Props['contre']; onRetour: () => void }) {
@@ -72,7 +72,7 @@ function FinIntro({ version, onDecouverte, contre, onRetour }: { version: Versio
     <div className="lecteur fin-lecon fin-intro" data-testid="fin-intro">
       <div className="fin-sceau"><PortraitMochi humeur="fier" taille={96} decoratif /></div>
       <ol className="fin-gue" aria-hidden="true">
-        {Array.from({ length: 8 }, (_, i) => <li key={i} className={`faite${i === 7 ? ' juste-posee' : ''}`}><i /></li>)}
+        {Array.from({ length: 10 }, (_, i) => <li key={i} className={`faite${i === 9 ? ' juste-posee' : ''}`}><i /></li>)}
       </ol>
       <h2 className="fin-titre" ref={titre} tabIndex={-1}>{fr(t(express ? 'intro.fin.expressTitre' : 'intro.fin.titre'))}</h2>
       <p className="fin-acquis">{fr(express ? t('intro.fin.expressTexte', { nom: contre.nom }) : t('intro.fin.texte'))}</p>

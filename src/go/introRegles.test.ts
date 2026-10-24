@@ -1,7 +1,7 @@
 // #523 : preuve de l'introduction des règles (src/content/introRegles.ts). Chaque position est rejouée avec le moteur
 // de règles : libertés, captures, suicide interdit, ko interdit, score. Chaque chiffre et chaque coordonnée écrits dans
 // les phrases (français et anglais) sont recalculés ici : changer une position sans changer sa phrase fait échouer ce test.
-import { etapesIntro, KOMI_INTRO, LIBERTES_D4, leconIntro, motsIntro, NOTIONS, POSITIONS, PRISONNIERS, TERRITOIRE_NOIR } from '../content/introRegles';
+import { COLONNE_ET_LIGNE, CROISEMENT_NOM, ECRANS, etapesIntro, KOMI_INTRO, LIBERTES_D4, leconIntro, motsIntro, NOTIONS, POSITIONS, PRISONNIERS, TERRITOIRE_NOIR } from '../content/introRegles';
 import { imageDuGeste, imagesDemo } from '../content/demo';
 import { traduire, type Cle } from '../content/i18n/secondaires';
 import { KOMI_NORMAL } from '../app/equilibrage';
@@ -20,13 +20,17 @@ const vides = (pos: Position) => [...pos.board.keys()].filter(p => pos.board[p] 
 const coupsLegaux = (pos: Position) => vides(pos).flatMap(l => { const r = play(pos, at(l)); return typeof r === 'string' ? [] : [{ l, r }]; });
 const fr = (cle: string, v?: Record<string, string>) => traduire('fr', cle as Cle, v as never);
 const en = (cle: string, v?: Record<string, string>) => traduire('en', cle as Cle, v as never);
+/** L'écran d'une lettre (clé de ses textes), quelle que soit sa place dans le parcours. */
+const ecran = (l: typeof ECRANS[number], v: 'complete' | 'express' = 'complete') => etapesIntro(v)[ECRANS.indexOf(l)];
 
 describe('introduction des règles : forme', () => {
-  it('8 écrans, un par notion, sur un plateau 7 × 7, dans les deux versions', () => {
-    expect(NOTIONS).toHaveLength(8);
+  it('10 écrans, un par notion, sur un plateau 7 × 7, dans les deux versions', () => {
+    expect(NOTIONS).toHaveLength(10);
+    expect(ECRANS).toHaveLength(10);
+    expect(new Set(ECRANS).size).toBe(10);
     for (const v of ['complete', 'express'] as const) {
       const e = etapesIntro(v);
-      expect(e).toHaveLength(8);
+      expect(e).toHaveLength(10);
       for (const s of e) { expect(s.rows).toHaveLength(N); for (const r of s.rows) expect(r).toHaveLength(N); }
     }
   });
@@ -48,7 +52,7 @@ describe('introduction des règles : forme', () => {
 
   it('version express : mêmes positions, mêmes gestes et mêmes réponses ; phrases plus courtes', () => {
     const c = etapesIntro('complete'), x = etapesIntro('express');
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 10; i++) {
       expect(sansPhrases(x[i])).toEqual(sansPhrases(c[i]));
       expect(x[i].text.length, x[i].text).toBeLessThan(c[i].text.length);
       if (c[i].kind === 'info') {
@@ -60,20 +64,21 @@ describe('introduction des règles : forme', () => {
   });
 
   it('la pose se dit en une ou deux touches selon « Confirmer au doigt » (#710)', () => {
-    const [deux, une] = [etapesIntro('complete', true)[0], etapesIntro('complete', false)[0]];
+    const [deux, une] = [etapesIntro('complete', true)[1], etapesIntro('complete', false)[1]];
     expect(deux.text).toMatch(/touche-le encore/);
     expect(une.text).not.toMatch(/encore/);
-    expect(etapesIntro('express', true)[0].text).toMatch(/encore/);
-    expect(etapesIntro('express', false)[0].text).not.toMatch(/encore/);
+    expect(etapesIntro('express', true)[1].text).toMatch(/encore/);
+    expect(etapesIntro('express', false)[1].text).not.toMatch(/encore/);
   });
 
   it('chaque écran a un mot du go, tous différents, dans les deux langues (#710)', () => {
     const mots = motsIntro();
-    expect(mots).toHaveLength(8);
-    expect(new Set(mots).size).toBe(8);
+    expect(mots).toHaveLength(10);
+    expect(new Set(mots).size).toBe(10);
     for (const m of mots) expect(m.trim().length).toBeGreaterThan(0);
-    expect(mots.slice(0, 4)).toEqual(['Tour de jeu', 'Liberté', 'Capture', 'Atari']);
-    for (const l of ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']) expect(en(`intro.${l}.mot`)).toMatch(/\w/);
+    expect(mots.slice(0, 5)).toEqual(['Croisement', 'Tour de jeu', 'Territoire', 'Liberté', 'Capture']);
+    expect(mots.slice(5)).toEqual(['Atari', 'Coup interdit', 'Ko', 'Passer', 'Compte']);
+    for (const l of ECRANS) expect(en(`intro.${l}.mot`)).toMatch(/\w/);
     expect(en('intro.b.mot')).toBe('Liberty');
   });
 
@@ -115,7 +120,7 @@ describe('introduction des règles : chaque position prouvée par le moteur', ()
     const captures = coupsLegaux(pos).filter(c => c.r.captures[1] > 0).map(c => c.l);
     expect(captures).toEqual(['D3']);
     // #710 : le point vert montré avant la demande est cette dernière liberté (et rien d'autre).
-    const etape = etapesIntro('complete')[2];
+    const etape = ecran('c');
     expect(etape.kind === 'move' && etape.libs).toEqual(['D3']);
     const apres = ok(play(pos, at('D3')));
     expect(apres.board[at('D4')]).toBe(0);
@@ -151,7 +156,7 @@ describe('introduction des règles : chaque position prouvée par le moteur', ()
     expect(coupsLegaux(pos).filter(c => c.r.captures[1] > 0).map(c => c.l)).toEqual(['G5']);
     // A1 est le seul suicide de la position : le refus « en A1 » est le seul utile.
     expect(vides(pos).filter(l => play(pos, at(l)) === 'suicide')).toEqual(['A1']);
-    const etape = etapesIntro('complete')[4];
+    const etape = ecran('e');
     expect(etape.kind === 'move' && etape.refus?.[0].points).toEqual(['A1']);
   });
 
@@ -186,7 +191,7 @@ describe('introduction des règles : chaque position prouvée par le moteur', ()
     expect(s.white).toBe(21.5);
     expect(s.winner).toBe(1);
     expect(s.margin).toBe(1.5);
-    const quiz = etapesIntro('complete')[7];
+    const quiz = ecran('h');
     expect(quiz.kind).toBe('quiz');
     if (quiz.kind === 'quiz') expect(quiz.choices[quiz.answer]).toBe(fr('intro.h.noir'));
   });
@@ -202,9 +207,9 @@ describe('introduction des règles : chaque phrase dit ce que le moteur calcule'
       for (const n of [s.territory[1], PRISONNIERS.noir, s.black, s.territory[2], PRISONNIERS.blanc, KOMI_INTRO, s.white, s.margin]) {
         expect(okH, String(n)).toContain(dec(l, n));
       }
+      // La question donne les totaux à comparer : territoire, prisonniers et komi, recalculés par le moteur.
       for (const cle of ['intro.h.texte', 'intro.h.court']) {
-        expect(tr(cle)).toContain(dec(l, KOMI_INTRO));
-        expect(tr(cle)).toMatch(l === 'fr' ? /Noir 2, Blanc 1/ : /Black 2, White 1/);
+        for (const n of [s.territory[1], PRISONNIERS.noir, s.black, s.territory[2], PRISONNIERS.blanc, KOMI_INTRO]) expect(tr(cle), `${cle} ${n}`).toContain(dec(l, n));
       }
     });
 
@@ -223,7 +228,7 @@ describe('introduction des règles : chaque phrase dit ce que le moteur calcule'
       expect(tr('intro.g.texte')).toMatch(l === 'fr' ? /territoire/ : /territory/);
       expect(tr('intro.g.demande')).toMatch(l === 'fr' ? /sont ton territoire/ : /are your territory/);
       // Le komi : combien, à qui, pourquoi.
-      expect(tr('intro.h.texte')).toMatch(l === 'fr' ? /komi, car Noir a commencé/ : /komi because Black went first/);
+      expect(tr('intro.h.texte')).toMatch(l === 'fr' ? /komi \(compensation, car Noir a commencé\)/ : /komi \(compensation, because Black went first\)/);
     });
   }
 });
@@ -234,14 +239,14 @@ describe('introduction des règles : la bulle décrit toujours l’écran (#710)
 
   for (const [l, tr] of [['fr', fr], ['en', en]] as const) {
     it(`${l} : après le geste, aucune consigne périmée (point vert, « touche », « pose »)`, () => {
-      const peremptoire = l === 'fr' ? /point vert|touche|pose |joue sur/i : /green point|tap|place your|play on/i;
-      for (const cle of ['a', 'b', 'f', 'g']) {
+      const peremptoire = l === 'fr' ? /point vert|touche|pose ta|joue sur/i : /green point|tap|place your|play on/i;
+      for (const cle of ['a', 'b', 'f', 'g', 'i']) {
         for (const suffixe of ['fait', 'faitCourt']) expect(tr(`intro.${cle}.${suffixe}`), `${cle}.${suffixe}`).not.toMatch(peremptoire);
       }
     });
 
-    it(`${l} : deux phrases au plus par bulle sur les sept écrans de geste (épure E5)`, () => {
-      for (const cle of ['a', 'b', 'c', 'd', 'e', 'f', 'g']) {
+    it(`${l} : deux phrases au plus par bulle sur les neuf écrans de geste (épure E5)`, () => {
+      for (const cle of ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'i', 'j']) {
         for (const suffixe of ['texte', 'texteDirect', 'court', 'courtDirect', 'fait', 'faitCourt', 'demande', 'demandeCourt', 'ok', 'no', 'refus']) {
           let phrase: string;
           try { phrase = tr(`intro.${cle}.${suffixe}`); } catch { continue; }
@@ -279,7 +284,65 @@ describe('introduction des règles : la bulle décrit toujours l’écran (#710)
   });
 
   it('les libertés et le territoire se montrent avant d’être demandés : le geste attend la fin de la démonstration', () => {
-    const [b, g] = [etapesIntro('complete')[1], etapesIntro('complete')[6]];
+    const [b, g] = [ecran('b'), ecran('g')];
     for (const e of [b, g]) expect(e.kind === 'info' && e.geste && 'touche' in e.geste && e.geste.apres).toBe(true);
+  });
+});
+
+describe('introduction des règles v2 : plateau, objectif, fin de partie (#712)', () => {
+  it('(i) plateau : C3 est la colonne C (3e) et la ligne 3 depuis le bas ; la colonne et la ligne qui s’allument font 13 croisements', () => {
+    expect(CROISEMENT_NOM).toBe('C3');
+    const p = at('C3');
+    expect([p % N, Math.floor(p / N)]).toEqual([2, N - 3]); // colonne C = 3e à gauche ; ligne 3 = 3e depuis le bas
+    expect(toLabel(p, N)).toBe('C3');
+    expect(COLONNE_ET_LIGNE).toHaveLength(13);
+    expect(new Set(COLONNE_ET_LIGNE).size).toBe(13);
+    expect(COLONNE_ET_LIGNE).toContain('C3');
+    for (const l of COLONNE_ET_LIGNE) expect(l[0] === 'C' || l[1] === '3', l).toBe(true);
+    // Les lettres vont de A à G (7 colonnes, sans I) et les chiffres de 1 à 7, du bas vers le haut : A1 est en bas à gauche.
+    expect(at('A1')).toBe((N - 1) * N);
+    expect(at('G7')).toBe(N - 1);
+    const e = ecran('i');
+    expect(e.kind === 'info' && e.geste && 'touche' in e.geste && e.geste.touche).toEqual(['C3']);
+    // La démonstration allume exactement ces 13 croisements.
+    if (e.kind === 'info') {
+      const images = imagesDemo(e.rows, e.demo!);
+      expect([...images[images.length - 1].yeux].map(q => toLabel(q, N)).sort()).toEqual([...COLONNE_ET_LIGNE].sort());
+    }
+    for (const l of ['fr', 'en'] as const) for (const cle of ['i.texte', 'i.court', 'i.fait', 'i.faitCourt']) expect((l === 'fr' ? fr : en)(`intro.${cle}`), cle).toContain('C3');
+  });
+
+  it('(g) objectif : le territoire est montré en 3e écran, avant les libertés, et le but est dit', () => {
+    expect(ECRANS.indexOf('g')).toBe(2);
+    expect(ECRANS.indexOf('g')).toBeLessThan(ECRANS.indexOf('b'));
+    expect(fr('intro.g.texte')).toMatch(/entourer plus de territoire que l’autre/);
+    expect(en('intro.g.texte')).toMatch(/surround more territory than the other player/);
+    // Mouvements réduits : la phrase d'avant n'est jamais lue, le but se dit donc aussi une fois le geste fait.
+    expect(fr('intro.g.fait')).toMatch(/Le but : entourer plus de territoire que Blanc/);
+    expect(en('intro.g.fait')).toMatch(/The goal: surround more territory than White/);
+  });
+
+  it('(j) fin de partie : chaque zone est fermée (aucun croisement neutre), passer est permis, deux passes ne changent rien au score', () => {
+    const pos = depart(POSITIONS.fin);
+    const s = score(pos, 0, 'japanese');
+    const vide = vides(pos).length;
+    expect(s.territory[1] + s.territory[2]).toBe(vide); // tout croisement vide appartient à un camp : « chaque camp a fermé sa zone »
+    const un = ok(play(pos, -1)), deux = ok(play(un, -1));
+    expect(un.toPlay).toBe(2);
+    expect(deux.toPlay).toBe(1);
+    expect(deux.board).toEqual(pos.board);
+    expect(deux.captures).toEqual(pos.captures);
+    expect(score(deux, KOMI_INTRO, 'japanese').winner).toBe(score(pos, KOMI_INTRO, 'japanese').winner);
+    const q = ecran('j');
+    expect(q.kind).toBe('quiz');
+    if (q.kind === 'quiz') { expect(q.choices[q.answer]).toBe(fr('intro.j.passe')); expect(q.choices).toHaveLength(2); }
+    for (const [l, tr] of [['fr', fr], ['en', en]] as const) expect(tr('intro.j.ok'), l).toMatch(l === 'fr' ? /les deux joueurs passent de suite, la partie s’arrête/ : /both players pass in a row, the game ends/);
+  });
+
+  it('(h) compte : la question donne les totaux, et la réponse est le score du moteur (Noir 23 contre 21,5)', () => {
+    const s = score({ ...depart(POSITIONS.fin), captures: [0, PRISONNIERS.noir, PRISONNIERS.blanc] }, KOMI_INTRO, 'japanese');
+    expect([s.black, s.white, s.winner]).toEqual([23, 21.5, 1]);
+    expect(ECRANS.at(-1)).toBe('h');
+    expect(ECRANS.at(-2)).toBe('j');
   });
 });

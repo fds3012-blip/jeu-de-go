@@ -10,7 +10,7 @@ import { faireMoment, surMoment } from './decouverte';
 import { SCENARIO } from '../src/content/decouverte';
 
 // #523 : au tout premier lancement, « Tu connais le go ? » avec Mochi et trois réponses de même poids, plus « Plus tard ».
-// « Jamais joué » → introduction interactive des règles (8 écrans, un geste chacun, aide après un mauvais geste), puis la
+// « Jamais joué » → introduction interactive des règles (10 écrans, un geste chacun, aide après un mauvais geste), puis la
 // partie de découverte ; « Un peu » → rappel express (chaque écran passable par « Je sais »), puis découverte ou Pomme ;
 // « Je sais jouer » → l'accueil épuré d'avant (#487). La question vit avec le bandeau de consentement (#485) sans le
 // cacher ni être cachée. Captures facultatives : CAPTURES_523=<dossier>.
@@ -147,7 +147,7 @@ test.describe('les trois réponses', () => {
     await ctx.close();
   });
 
-  test('« Jamais joué » : les 8 écrans, chacun un mauvais geste (aide) puis le bon, puis la partie de découverte', async ({ browser, baseURL }) => {
+  test('« Jamais joué » : les 10 écrans, chacun un mauvais geste (aide) puis le bon, puis la partie de découverte', async ({ browser, baseURL }) => {
     const ctx = await browser.newContext({ ...SANS_REPONSE(baseURL!), viewport: { width: 390, height: 844 }, reducedMotion: 'reduce', hasTouch: true, isMobile: true });
     const page = await ctx.newPage();
     const erreurs: string[] = [];
@@ -158,6 +158,19 @@ test.describe('les trois réponses', () => {
     await expect(plateau(page, 7)).toBeVisible();
     await expect(page.locator('.lecteur-titre')).toHaveText('Les règles du go');
     expect(await page.title()).toContain('Les règles du go');
+
+    // (i) Plateau : une lettre et un chiffre ; un mauvais croisement aide, C3 allume sa colonne et sa ligne.
+    await expect(page.getByTestId('notion')).toHaveText('Mot du goCroisement');
+    await expect(bulle(page)).toContainText('Chaque croisement a un nom : sa colonne (lettre) et sa ligne (chiffre, compté depuis le bas). Touche C3.');
+    await expect(action(page, 'Continuer')).toHaveCount(0);
+    await capture(page, 'intro-0-plateau-clair');
+    await toucher(page, 'E5', 7);
+    await expect(bulle(page)).toHaveText('Cherche la colonne C, en haut, puis la ligne 3, sur le côté.');
+    await toucher(page, 'C3', 7); // une seule touche répond : pas de pierre fantôme (#710)
+    await expect(bulle(page)).toContainText('Oui, C3 : colonne C, ligne 3.');
+    await expect(page.locator('.board [data-fantome]')).toHaveCount(0);
+    await expect(page.locator('.etapes')).toHaveAttribute('aria-valuenow', '1');
+    await action(page, 'Continuer').click();
 
     // (a) Poser : le mot du go, la phrase qui explique (croisement, deux touches), mauvais point, aide ; puis le point vert.
     await expect(page.getByTestId('notion')).toHaveText('Mot du goTour de jeu');
@@ -175,8 +188,20 @@ test.describe('les trois réponses', () => {
     await expect(bulle(page)).toContainText('Bien joué ! Chacun son tour');
     await expect(bulle(page)).not.toContainText('point vert');
     await expect(page.getByTestId('bulle-suite')).toHaveText('Touche « Continuer ».');
-    await expect(page.locator('.etapes')).toHaveAttribute('aria-valuenow', '1');
+    await expect(page.locator('.etapes')).toHaveAttribute('aria-valuenow', '2');
     await capture(page, 'intro-1b-poser-fait-clair');
+    await action(page, 'Continuer').click();
+
+    // (g) Objectif : le but, le territoire montré d'abord, puis demandé ; un point blanc n'est pas à toi.
+    await expect(page.getByTestId('notion')).toHaveText('Mot du goTerritoire');
+    await expect(page.locator('.lecteur-plateau')).toHaveAttribute('data-demo', 'geste');
+    await expect(bulle(page)).toContainText('sont ton territoire : chacun vaut 1 point. À toi : touches-en un.');
+    await expect(page.locator('.demo-compteur')).toHaveAttribute('data-compteur', '21');
+    await jouer(page, 'F4', 7);
+    await expect(bulle(page)).toHaveText('Ton territoire est du côté de tes pierres noires, à gauche.');
+    await jouer(page, 'B4', 7);
+    await expect(bulle(page)).toContainText('Oui ! Le but : entourer plus de territoire que Blanc (14 points).');
+    await capture(page, 'intro-3-objectif-clair');
     await action(page, 'Continuer').click();
 
     // (b) Libertés : montrées d'abord, demandées ensuite ; une diagonale n'en est pas une.
@@ -232,21 +257,22 @@ test.describe('les trois réponses', () => {
     await capture(page, 'intro-6-ko-clair');
     await action(page, 'Continuer').click();
 
-    // (g) Territoire : montré d'abord, puis demandé ; un point blanc n'est pas à toi.
-    await expect(page.locator('.lecteur-plateau')).toHaveAttribute('data-demo', 'geste');
-    await expect(bulle(page)).toContainText('sont ton territoire : chacun vaut 1 point. À toi : touches-en un.');
-    await expect(page.locator('.demo-compteur')).toHaveAttribute('data-compteur', '21');
-    await jouer(page, 'F4', 7);
-    await expect(bulle(page)).toHaveText('Ton territoire est du côté de tes pierres noires, à gauche.');
-    await jouer(page, 'B4', 7);
-    await expect(bulle(page)).toContainText('Oui, il est à toi !');
+    // (j) Passer : quand les deux passent, la partie s'arrête.
+    await expect(page.getByTestId('notion')).toHaveText('Mot du goPasser');
+    await expect(bulle(page)).toContainText('Chaque camp a fermé sa zone. Quand tu ne vois plus de coup utile, que fais-tu ?');
+    await page.locator('.choix').getByRole('button', { name: 'Je joue encore' }).click();
+    await expect(bulle(page)).toContainText('Quand aucun coup n’est utile, on peut passer son tour.');
+    await page.locator('.choix').getByRole('button', { name: 'Je passe' }).click();
+    await expect(bulle(page)).toContainText('Quand les deux joueurs passent de suite, la partie s’arrête.');
+    await capture(page, 'intro-9-passer-clair');
     await action(page, 'Continuer').click();
 
-    // (h) Fin : on compte, komi compris.
-    await expect(bulle(page)).toContainText('6,5 points de komi, car Noir a commencé. Qui gagne');
+    // (h) Compte : les totaux, le komi expliqué, qui gagne.
+    await expect(page.getByTestId('notion')).toHaveText('Mot du goCompte');
+    await expect(bulle(page)).toContainText('6,5 de komi (compensation, car Noir a commencé). Qui gagne');
     await capture(page, 'intro-8-compte-clair');
     await page.locator('.choix').getByRole('button', { name: 'Blanc' }).click();
-    await expect(bulle(page)).toContainText('Compte les croisements coloriés');
+    await expect(bulle(page)).toContainText('Compare 23 à 14 + 1 + 6,5');
     await page.locator('.choix').getByRole('button', { name: 'Noir' }).click();
     await expect(bulle(page)).toContainText('Noir gagne de 1,5 point');
     await action(page, 'Terminer').click();
@@ -277,15 +303,15 @@ test.describe('les trois réponses', () => {
     await reponse(page, 'Un peu').click();
     expect(await page.evaluate(() => localStorage.getItem('go.connait-go.v1'))).toBe('"un_peu"');
     await expect(page.locator('.lecteur-titre')).toHaveText('Rappel des règles');
-    await expect(bulle(page)).toContainText('Noir commence : touche le point vert');
+    await expect(bulle(page)).toContainText('Un croisement : une lettre et un chiffre. Touche C3.');
     await capture(page, 'express-1-320-clair');
-    // Écran 1 passé ; écran 2 fait (le bon geste) ; les six autres passés.
-    await page.getByTestId('je-sais').click();
+    // Écrans 1 à 3 passés ; écran 4 (libertés) fait avec le bon geste ; les six autres passés.
+    for (let i = 1; i <= 3; i++) await page.getByTestId('je-sais').click();
     await expect(bulle(page)).toContainText('Elle a 4 libertés');
     await jouer(page, 'D5', 7);
     await expect(page.getByTestId('je-sais')).toHaveCount(0);
     await action(page, 'Continuer').click();
-    for (let i = 3; i <= 8; i++) {
+    for (let i = 5; i <= 10; i++) {
       await expect(page.locator('.etapes')).toHaveAttribute('aria-valuenow', String(i - 1));
       await page.getByTestId('je-sais').click();
     }
@@ -304,7 +330,7 @@ test.describe('les trois réponses', () => {
     const page = await ctx.newPage();
     await page.goto('/');
     await reponse(page, 'Un peu').click();
-    for (let i = 1; i <= 8; i++) {
+    for (let i = 1; i <= 10; i++) {
       await expect(page.locator('.etapes')).toHaveAttribute('aria-valuenow', String(i - 1));
       await page.getByTestId('je-sais').click();
     }
@@ -379,7 +405,7 @@ test.describe('mesure', () => {
     await page.goto('/');
     await reponse(page, 'Un peu').click();
     // Rappel express passé écran par écran, jusqu'à la fin.
-    for (let i = 1; i <= 8; i++) {
+    for (let i = 1; i <= 10; i++) {
       await expect(page.locator('.etapes')).toHaveAttribute('aria-valuenow', String(i - 1));
       await page.getByTestId('je-sais').click();
     }
@@ -394,8 +420,8 @@ test.describe('mesure', () => {
     const un = (nom: string) => evenements.filter(e => e.startsWith(`"event":"${nom}"`));
     expect(un('connait_go').join()).toMatch(/"reponse":"un_peu"/);
     const etapes = un('intro_regles_etape');
-    expect(etapes.some(e => /"index":8/.test(e) && /"parcours":"express"/.test(e) && /"depuis":"accueil"/.test(e))).toBe(true);
-    expect(un('intro_regles_finie').join()).toMatch(/"passees":8/);
+    expect(etapes.some(e => /"index":10/.test(e) && /"parcours":"express"/.test(e) && /"depuis":"accueil"/.test(e))).toBe(true);
+    expect(un('intro_regles_finie').join()).toMatch(/"passees":10/);
     const quittee = un('intro_regles_quittee').join();
     expect(quittee).toMatch(/"index":1/);
     expect(quittee).toMatch(/"parcours":"complete"/);
