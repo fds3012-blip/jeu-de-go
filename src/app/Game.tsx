@@ -49,7 +49,7 @@ const DUREE_HUMEUR = 1500;
 /** #466 : coups de la partie (les deux camps) pendant lesquels Mochi dit « Touche encore » sur la pierre fantôme. */
 const COUPS_AIDE_FANTOME = 6;
 import { battuAccorde } from '../ui/sceaux';
-import type { StatsPartie } from './bilan';
+import { BILAN_KEY, type StatsPartie } from './bilan';
 import { Revue } from './Revue';
 import { positionsDepuisSgf, resultatSgf, REVUE_KEY, sgfDepuisHistorique, type PartieGardee } from './revue';
 import { delaiReponse, messageContinue } from './rythme';
@@ -138,6 +138,8 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   const [sur] = useState(() => !!ai && comptageSur);
   // #602 : « prisonniers » s'écrit sous les couvercles pendant la toute première partie seulement (aucune partie finie).
   const [premierePartie] = useState(() => readLocal<Parties>(PARTIES_KEY, { n: 0 }).n === 0);
+  // #U7 : le rang (« 20 kyu ») ne dit rien avant une première victoire ; il vient quand l'échelle devient un enjeu.
+  const [rangMontre] = useState(() => Object.values(readLocal<Record<string, { v?: number }>>(BILAN_KEY, {})).some(b => (b?.v ?? 0) > 0));
   const [fantome, setFantome] = useState(-1);
   const [msg, setMsg] = useState(() => repriseLue ? tr('partie.reprise.encours') : messageDebut());
   /** Phrase du début de partie : avec un handicap, Blanc commence, et on le dit (#528). */
@@ -585,7 +587,7 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   // En relecture, on montre la position `q` et « ‹ » ramène au bilan.
   const bandeau = (c: 1 | 2, q: Position = pos, retour: ReactNode = retourAccueil, actif = phase === 'play' && q.toPlay === c, gain: { n: number; k: number } | null = null) => {
     let sousTitre: string;
-    if (c === 2) sousTitre = ai ? ai.rang : tr('partie.komi', { komi: virgule(komi) });
+    if (c === 2) sousTitre = ai ? (rangMontre ? ai.rang : '') : tr('partie.komi', { komi: virgule(komi) });
     // Contre l'IA, la cote de jeu n'apparaît pas : ces parties ne la font pas bouger (décision de Florian, #417).
     // #528 : avec un handicap, Noir ne joue pas en premier : le bandeau dit ses pierres d'avance.
     else if (hcp) sousTitre = ai ? `${camp(1)} · ${tr('partie.handicapCourt', { n: hcp })}` : tr('partie.handicapCourt', { n: hcp });
