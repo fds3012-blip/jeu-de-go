@@ -206,9 +206,10 @@ export function LessonPlayer({ lesson: { id: leconId }, start, confirmTouch, pro
   // En attente du geste « pose » : seul le point à jouer est vert (le compteur de libertés reste).
   const vert = attente && geste && 'pose' in geste ? [fromLabel(geste.pose, n)] : null;
   const libelleCta = derniere ? parcours?.terminer ?? t('lecon.terminer') : t('apprendre.continuer');
-  // #710 : « touches-en une » ne pose pas de pierre : dans l'introduction, un plateau lisible (7 × 7) répond à une seule touche,
-  // sans pierre fantôme ni seconde touche (la pose d'une pierre, elle, se confirme comme en partie).
-  const toucheSeule = !!parcours && lignesVisibles(n, fen) <= LIGNES_CONFORT && (step.kind === 'touche' || (attente && !!geste && 'touche' in geste));
+  // #710, #713 : « touche le point » ne pose pas de pierre : sur un plateau lisible (9 lignes au plus, `LIGNES_CONFORT`), une seule
+  // touche répond, sans pierre fantôme ni seconde touche (la pose d'une pierre, elle, se confirme comme en partie). Introduction
+  // et leçons. Sur un grand plateau, les points sont petits : la seconde touche reste demandée.
+  const toucheSeule = lignesVisibles(n, fen) <= LIGNES_CONFORT && (step.kind === 'touche' || (attente && !!geste && 'touche' in geste));
   const cta = <button className={parcours ? 'cta cta-appel' : 'cta'} onClick={next}>{libelleCta}</button>;
   const marks: BoardMarks = img
     ? { libs: vert ?? [...img.libs, ...img.yeux], targets: img.atari, mistake: attente && rate ? rate.p : img.interdit, last: img.derniere ?? null, ...territoire(img.terr, reduit, n),
