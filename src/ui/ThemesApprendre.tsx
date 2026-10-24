@@ -18,6 +18,6 @@ export function ThemesApprendre({ themes, onTheme }: { themes: readonly ThemeApp
     partAria: t('apprendre.themes.barre', { n: x.faites, total: x.lecons.length }),
   }));
   return (
-    <GrilleThemes titre={t('apprendre.themes.titre')} cartes={cartes} motMaitrise={t('themes.maitrise')} onOuvrir={cle => onTheme(cle as Theme)} className="par-theme" testId="par-theme" />
+    <GrilleThemes titre={t('apprendre.themes.titre')} cartes={cartes} motMaitrise={t('themes.maitrise')} onOuvrir={cle => onTheme(cle as Theme)} className="par-theme" testId="par-theme" epure />
   );
 }

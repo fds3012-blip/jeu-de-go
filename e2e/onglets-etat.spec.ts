@@ -13,7 +13,7 @@ async function ouvrir(page: Page) {
   await page.addInitScript(() => {
     if (sessionStorage.getItem('pose')) return;
     sessionStorage.setItem('pose', '1');
-    localStorage.setItem('go.lecons.v1', JSON.stringify({ l1: 99, l2: 99 }));
+    localStorage.setItem('go.lecons.v1', JSON.stringify({ l1: 99, l2: 99, l3: 99, l4: 99, l5: 99, l6: 99, l7: 99 }));
   });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: 'reduce' });

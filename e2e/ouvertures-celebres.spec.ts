@@ -16,6 +16,8 @@ const etape = <K extends LessonStep['kind']>(i: number) => L56.steps[i] as Extra
 const CAPTURES = 'docs/pedagogie/captures-672';
 
 async function apprendre(page: Page) {
+  // #U9 : « Ouvertures » n'apparaît qu'avec le chapitre de l'ouverture : les bases sont faites.
+  await page.addInitScript(() => localStorage.setItem('go.lecons.v1', JSON.stringify({ l1: 99, l2: 99, l3: 99, l4: 99, l5: 99, l6: 99, l7: 99 })));
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: 'dark' });
   await page.goto('/');

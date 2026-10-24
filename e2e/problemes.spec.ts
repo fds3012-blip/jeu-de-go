@@ -13,8 +13,10 @@ test('problèmes sans compte : erreur, bonne réponse, suite et problème suivan
   await expect(page.getByRole('heading', { name: /^Go du jour n°\s\d+$/ })).toBeVisible();
   // Issue #196 : un écran, une action. #653 : le Go du jour en tête, puis le sommaire ; pas de grille ni de cadenas.
   await expect(page.getByRole('button', { name: 'Résoudre le Go du jour' })).toBeVisible();
+  // #U10 : le Go du jour à faire n'a qu'une porte, la carte du dessus ; le sommaire n'en répète pas l'entrée.
   await expect(page.getByRole('region', { name: 'S’entraîner' }).getByRole('button'))
-    .toHaveText(['Go du jourÀ faire', 'Rejouer tes erreurs', 'Course aux problèmes', 'Par thème']);
+    .toHaveText(['Rejouer tes erreurs', 'Course aux problèmes', 'Par thème']);
+  await expect(page.getByTestId('entree-du-jour')).toHaveCount(0);
   await expect(page.locator('.cta')).toHaveCount(1);
   await expect(page.getByRole('button', { name: /^Problème \d+ : / })).toHaveCount(0);
   await expect(page.locator('svg.cadenas')).toHaveCount(0);

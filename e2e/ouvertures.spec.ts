@@ -13,6 +13,8 @@ const FR = CATALOGUE_OUVERTURES.fr;
 const T = (k: string) => norm(FR[k as CleOuvertures]);
 
 test('Apprendre → Ouvertures : avancer, reculer, voir l’erreur courante', async ({ page }) => {
+  // #U9 : « Ouvertures » n'apparaît qu'avec le chapitre de l'ouverture : les bases sont faites.
+  await page.addInitScript(() => localStorage.setItem('go.lecons.v1', JSON.stringify({ l1: 99, l2: 99, l3: 99, l4: 99, l5: 99, l6: 99, l7: 99 })));
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');

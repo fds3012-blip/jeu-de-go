@@ -12,6 +12,9 @@ export function goDuJourFaitAppareil(numero: number): boolean {
   return goDuJourFait(readLocal<Serie | null>(SERIE_KEY, null), lireFait(readLocal<unknown>(DU_JOUR_FAIT_KEY, null)), numero);
 }
 
+/** #U5 : la série est-elle gardée aujourd'hui (n° `numero`), par le Go du jour ou par n'importe quel autre défi ? */
+export const serieGardeeAppareil = (numero: number): boolean => readLocal<Serie | null>(SERIE_KEY, null)?.dernier === numero;
+
 /**
  * Un défi du jour vient d'être relevé : série de l'appareil (et gel gagné tous les 7 jours) si ce défi compte,
  * repère du Go du jour. Idempotent dans la journée : la série n'avance qu'une fois par jour.

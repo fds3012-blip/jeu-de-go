@@ -47,7 +47,8 @@ import '../ui/apprendre.css';
 import { Glacon, PierreGivree } from '../ui/Glacon';
 import { lireReserveAppareil } from './gelAppareil';
 import { inviterCompte, serieAffichee } from './serieLocale';
-import { goDuJourFaitAppareil, validerDefi } from './defiAppareil';
+import { goDuJourFaitAppareil, serieGardeeAppareil, validerDefi } from './defiAppareil';
+import { PastilleSerie } from '../ui/PastilleSerie';
 import { noterProblemeRate } from './revisionsAppareil';
 import { noterRediteAppareil, repriseDeLeconFaite, suivreEnRevisionAppareil } from './rediteAppareil';
 // `t` désigne déjà un palier dans ce fichier : la traduction s'appelle `tr` (#167).
@@ -109,15 +110,6 @@ interface Props {
   /** #688 (N8) : problème à ouvrir au montage (adresse `/problemes/<id>`), et problème ouvert, pour l'adresse. */
   ouvrirId?: string | null;
   onOuvert?: (id: string | null) => void;
-}
-
-/** Flamme de la série de jours, en or ; creuse ou pleine selon la classe de la pastille (#213). */
-function Flamme({ taille = 22 }: { taille?: number }) {
-  return (
-    <svg viewBox="0 0 16 16" width={taille} height={taille} aria-hidden="true" focusable="false">
-      <path className="flamme-corps" d="M8.6 1.2c.4 2.3 3.9 3.9 3.9 7.9A4.5 4.5 0 0 1 8 13.8a4.5 4.5 0 0 1-4.5-4.6c0-2 1-3.2 2-4 0 1.4.6 2.4 1.5 2.7C6.6 5.6 7.4 3 8.6 1.2Z" fill="currentColor" />
-    </svg>
-  );
 }
 
 /** Difficulté : trois petites pierres, pleines selon le niveau, et le mot. */
@@ -444,6 +436,8 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   // Une seule action en relief : le Go du jour tant qu'il n'est pas fait, « Problème suivant » ensuite.
   const duJourReussi = !!daily && goDuJourFaitAppareil(numero);
   const duJourFait = !daily || duJourReussi;
+  // #U5 : une leçon, une révision ou une partie a déjà gardé la série aujourd'hui : le Go du jour n'appelle plus (pas d'« À faire » en or).
+  const serieGardee = duJourReussi || serieGardeeAppareil(numero);
   // Série (issue #161) : celle de l'appareil sans compte, la plus longue des deux avec un compte.
   const serie = serieAffichee(connecte && stats ? stats.streak : null, serieDuJour, numero);
   const notices = <>
@@ -481,7 +475,7 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   const enCours = palierEnCours(tiers);
   // #620 (V1) : une seule carte d'action en tête, le Go du jour tant qu'il n'est pas fait, le problème suivant ensuite.
   // La série est une pastille discrète dans l'en-tête de cette carte (F-e).
-  const pastille = serieVisible && serie > 0 ? <PastilleSerie jours={serie} fait={duJourReussi} /> : null;
+  const pastille = serieVisible && serie > 0 ? <PastilleSerie jours={serie} gardee={serieGardee} testId="serie-problemes" /> : null;
   const glacon = <Glacon gels={stats ? stats.freezes : gels} />;
   const ouvrirSuivant = () => { if (prochainPz) ouvrirProbleme(prochainPz.id); };
   // #653 (A13, A6) : un détail se ferme sur le sommaire, le focus revient à l'entrée qui l'a ouvert.
@@ -507,9 +501,10 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   // Record de la course (#287), relu à chaque retour au sommaire : une course vient peut-être de le battre.
   const meilleurCourse = lireMeilleurCourse();
   const entrees: EntreeSommaire[] = [
-    ...(daily ? [{
+    // #U10 : tant que le Go du jour est à faire, la carte du dessus est sa seule porte ; l'entrée n'apparaît qu'une fois fait.
+    ...(daily && duJourReussi ? [{
       cle: 'du-jour', nom: tr('accueil.goDuJour'), visuel: <MiniGoban rows={daily.rows} />, testId: 'entree-du-jour',
-      etat: duJourReussi ? { texte: tr(vus[daily.id] && !solved.has(daily.id) ? 'pb.tamponVu' : 'pb.tampon') } : { texte: tr('accueil.aFaire'), ton: 'or' as const },
+      etat: { texte: tr(vus[daily.id] && !solved.has(daily.id) ? 'pb.tamponVu' : 'accueil.fait') },
       onOuvrir: () => setOpenId(daily.id),
     }] : []),
     ...(erreurs ? [{
@@ -574,16 +569,6 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
 /** #653 : visuels des entrées « Rejouer tes erreurs » (ta pierre, marquée, prise dans un filet) et « Par thème ». */
 const MOTIF_ERREUR = ['.....', '..O..', '.OSO.', '.....', '.....'];
 const MOTIF_THEMES = ['.....', '.X...', '..TX.', '.X...', '.....'];
-
-/** Série de jours (#620) : pastille or près du Go du jour ; flamme creuse tant qu'il reste à faire, pleine après (#213). */
-function PastilleSerie({ jours, fait }: { jours: number; fait: boolean }) {
-  return (
-    <span className={`serie ${fait ? 'pleine' : 'creuse'}`} role="img" data-testid="serie-problemes"
-      aria-label={tr(fait ? 'entete.flammeFaite' : 'entete.flammeAFaire', { jours: tr('profil.jours', { n: jours }) })}>
-      <Flamme taille={16} />{jours}
-    </span>
-  );
-}
 
 /**
  * Carte « Problème suivant », action principale une fois le Go du jour fait (#103, #620) : le prochain problème, voilé

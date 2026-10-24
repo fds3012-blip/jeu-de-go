@@ -97,12 +97,16 @@ export function LearnHome({ progress, onOpen, sync = 'local', compteRequis = () 
   // #591 : au retour, le sommaire revient sur l'entrée « Ouvertures », focus compris (A6).
   if (ouvertures) return <Suspense fallback={null}><EcranOuvertures onLecon={id => { setOuvertures(false); onOpen(id); }} onExit={() => { setOuvertures(false); requestAnimationFrame(() => { const e = document.querySelector<HTMLElement>('[data-testid="entree-ouvertures"]'); e?.scrollIntoView({ block: 'center' }); e?.focus({ preventScroll: true }); }); }} /></Suspense>;
 
+  // #U9 : un débutant voit d'abord la découverte et les règles ; « Ouvertures » vient avec le chapitre de l'ouverture (bases finies,
+  // ou une leçon d'un autre chapitre déjà commencée).
+  const bases = CHAPITRES[0].lecons;
+  const aLOuverture = bases.every(l => (progress[l.id] ?? 0) >= l.steps.length) || LESSONS.some(l => !bases.includes(l) && (progress[l.id] ?? 0) > 0);
   const entrees = [
-    { cle: 'ouvertures', nom: tentree('titre'), aria: `${tentree('titre')}. ${tentree('texte')}`, visuel: <MiniGoban rows={COIN} />, testId: 'entree-ouvertures',
-      onOuvrir: () => { window.scrollTo({ top: 0 }); setOuvertures(true); } },
     ...(onMochi ? [{ cle: 'mochi', nom: t('apprendre.avecMochi'), visuel: <PortraitMochi taille={40} decoratif />, testId: 'jouer-avec-mochi',
       onOuvrir: () => { quitter('[data-entree="mochi"]'); onMochi(); } }] : []),
     ...(onRegles ? [{ cle: 'regles', nom: t('apprendre.revoirRegles'), visuel: <MiniGoban rows={REGLES} />, testId: 'revoir-regles', onOuvrir: onRegles }] : []),
+    ...(aLOuverture ? [{ cle: 'ouvertures', nom: tentree('titre'), aria: `${tentree('titre')}. ${tentree('texte')}`, visuel: <MiniGoban rows={COIN} />, testId: 'entree-ouvertures',
+      onOuvrir: () => { window.scrollTo({ top: 0 }); setOuvertures(true); } }] : []),
   ];
 
   return (

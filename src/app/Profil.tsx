@@ -18,11 +18,13 @@ import type { Db } from '../data/supabase';
 import { choisirThemeGoban, useIdThemeGoban, type Settings } from './settings';
 import { lireXp, niveauDe, niveauRequis, themeDebloque } from './xp';
 import { ORDRE_THEMES, THEMES_GOBAN } from '../ui/boardArt';
-import { identite, texteSerie } from './identite';
+import { identite } from './identite';
+import { PastilleSerie } from '../ui/PastilleSerie';
+import { serieGardeeAppareil } from './defiAppareil';
+import { numeroDuJour } from './goDuJour';
 import { inviterCompte } from './serieLocale';
 import { LigneChoix, LigneIcone, LigneInterrupteur, LigneLien } from '../ui/Reglage';
 import { EnteteEcran } from '../ui/BoutonRetour';
-import { entier } from '../ui/entier';
 import { IconeReglage, type IconeReglageId } from '../ui/IconesReglages';
 import { hapticStone } from '../ui/haptics';
 import { playStone } from '../ui/sound';
@@ -416,9 +418,7 @@ function Menu({ onVue, settings, profil, serie, placement, onPlacement, userId, 
           {/* #161 : au 3e jour de série sans compte, la ligne sous « Invité » propose le compte. */}
           {sousNom && <span>{sousNom}</span>}
         </div>
-        {id.serie > 0 && <span className="identite-serie" role="img" aria-label={t('profil.serieAria', { jours: texteSerie(id.serie) })}>
-          <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false"><path d="M8.6 1.2c.4 2.3 3.9 3.9 3.9 7.9A4.5 4.5 0 0 1 8 13.8a4.5 4.5 0 0 1-4.5-4.6c0-2 1-3.2 2-4 0 1.4.6 2.4 1.5 2.7C6.6 5.6 7.4 3 8.6 1.2Z" fill="currentColor" /></svg>{entier(id.serie)}
-        </span>}
+        {id.serie > 0 && <PastilleSerie jours={id.serie} gardee={serieGardeeAppareil(numeroDuJour(new Date()))} testId="serie-profil" />}
       </section>
       <div className="profil-rubriques">
         <Sommaire titre={t('profil.rubrique.progression')} entrees={progression} testId="rubrique-progression" />
