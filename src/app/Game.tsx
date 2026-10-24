@@ -14,6 +14,8 @@ import { useSupabase } from '../data/client';
 import { fr } from '../ui/typo';
 import { nombre as virgule, t as tr } from '../content/i18n/secondaires';
 import { readLocal, useProfil } from './hooks';
+import { SERIE_KEY, numeroDuJour, type Serie } from './goDuJour';
+import { avancementDuJour } from './jalonsSerie';
 import { PARTIES_KEY, type Parties } from './home';
 import { OPPONENTS, prechargerApresPartie, prechargerPourAdversaire, preloadKataGo } from '../engine';
 import { DELAI_PRECHARGEMENT_MS } from '../engine/katago/prechargement';
@@ -27,6 +29,8 @@ import '../ui/paysage.css';
 import { BoutonAide } from '../ui/BoutonAide';
 import { choisirReplique, DUREE_REPLIQUE, type Situation } from './repliques';
 import { FinPartie } from '../ui/FinPartie';
+import type { Ouvre } from '../ui/AdversaireOuvert';
+import { SerieDuJour } from '../ui/SerieDuJour';
 import { ProposerInstallation } from '../ui/ProposerInstallation';
 import { InviterApp } from '../ui/PartagerApp';
 import { doitProposer, etatInstallation, noterVictoire, plateformeCourante } from './installation';
@@ -79,7 +83,7 @@ interface Props {
    * L'écran parent redevient un exercice : aucune fête (XP, niveau) ne se pose sur le plateau avant la fin de celle-ci.
    */
   onRestart?: () => void;
-  fin?: { bilan: ReactNode; mochi: ReactNode; action: ReactNode; onAccueil: () => void };
+  fin?: { bilan: ReactNode; mochi: ReactNode; action: ReactNode; onAccueil: () => void; ouvre?: Ouvre };
   /** Réglage « Célébrations » : carillon, vibration et confettis après une victoire. */
   celebrer?: boolean;
   /** Komi vu par l'ordi pour choisir ses coups ; par défaut `komi`. Sert au paramètre de test `?komi=` (voir bilan.ts). */
@@ -628,15 +632,21 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
   // elle est créditée à la sortie (#233, P4). Sinon elle arrive avec l'écran de fin, après le récit :
   // « +60 XP » ne doit pas dévoiler la victoire (recette du 28/09, R2).
   const xpEnAttente = useRef<SourceXp | null>(null);
+  // #U4 : cette partie vient-elle d'allumer la série du jour ? L'écran de fin le dit une fois (pas si une leçon l'avait déjà fait).
+  const [serieAllumee, setSerieAllumee] = useState<ReturnType<typeof avancementDuJour>>(null);
   useEffect(() => {
-    if (phase !== 'end') { xpEnAttente.current = null; return; }
+    if (phase !== 'end') { xpEnAttente.current = null; setSerieAllumee(null); return; }
     if (!recitFini) {
       xpEnAttente.current = sourceXpPartie({ coups: history.length - 1, contreOrdi: !!ai, gagne: (resigned ? 3 - resigned : sc.winner) === 1, reprise: reprise.current });
       return;
     }
     const s = xpEnAttente.current ?? sourceXpPartie({ coups: history.length - 1, contreOrdi: !!ai, gagne: (resigned ? 3 - resigned : sc.winner) === 1, reprise: reprise.current });
     xpEnAttente.current = null;
-    if (s) gagnerXp(s);
+    if (s) {
+      const avant = readLocal<Serie | null>(SERIE_KEY, null);
+      gagnerXp(s);
+      setSerieAllumee(avancementDuJour(avant, readLocal<Serie | null>(SERIE_KEY, null), numeroDuJour(new Date())));
+    }
   }, [phase, recitFini]); // eslint-disable-line react-hooks/exhaustive-deps
   // Sortie pendant le récit (écran quitté, app fermée ou rechargée) : le résultat est connu, l'XP est acquise.
   useEffect(() => {
@@ -709,8 +719,10 @@ export function Game({ size, komi, confirmTouch, onExit, opponent: ai, intro, on
         marge={abandon || egalite ? null : sc.margin}
         texteMarge={v => tr('fin.marge', { n: v, v: virgule(v), plateau })}
         sousTitre={abandon ? tr('fin.parAbandon') : tr('fin.komiCompris', { plateau })}
+        serie={serieAllumee && <SerieDuJour jours={serieAllumee.jours} jalon={serieAllumee.jalon} celebrer={celebrer && !gagne} />}
         bilan={fin ? fin.bilan : bilanDeux}
         mochi={fin?.mochi}
+        ouvre={fin?.ouvre}
         action={fin?.action ?? <button type="button" className="cta" onClick={restart}>{tr('fin.rejouer')}</button>}
         onRevoir={n > 0 ? () => setRelecture(1) : undefined}
         onAccueil={fin?.onAccueil ?? onExit}

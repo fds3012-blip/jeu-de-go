@@ -635,6 +635,9 @@ export const frEcrans = {
   'fin.rejouer': 'Rejouer',
   'fin.revoir': 'Revoir la partie',
   'fin.accueil': 'Accueil',
+  // #U8 : la victoire qui ouvre un nouvel adversaire a son écran (portrait qui se dévoile).
+  'fin.ouvert': '{nom} est ouvert',
+  'fin.ouvertPlusTard': 'Plus tard',
   // Aide du joueur (#362) : règles en 5 cartes, « Comment on compte ? », glossaire. Positions : src/content/aide.ts,
   // vérifiées par src/go/aide.test.ts. Une phrase qui cite un point (« Ici, Noir prend en D3 ») dit ce que le moteur vérifie.
   'aide.titre': 'Aide',
