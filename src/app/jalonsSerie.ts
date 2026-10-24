@@ -20,3 +20,13 @@ export function jalonFranchi(avant: Serie | null, apres: Serie | null, numero: n
   return estJalon(apres.jours) ? apres.jours : null;
 }
 
+
+/**
+ * #U4 : l'action qui s'achève (leçon, partie) vient-elle d'allumer la série d'aujourd'hui (n° `numero`) ? Alors la fin de
+ * l'action le dit une fois, comme la feuille du Go du jour : `jours` et le jalon éventuel. Série déjà allumée plus tôt
+ * dans la journée, ou action qui ne compte pas : rien, la ligne ne se répète pas.
+ */
+export function avancementDuJour(avant: Serie | null, apres: Serie | null, numero: number): { jours: number; jalon: Jalon | null } | null {
+  if (!apres || apres.dernier !== numero || avant?.dernier === numero) return null;
+  return { jours: apres.jours, jalon: estJalon(apres.jours) ? apres.jours : null };
+}

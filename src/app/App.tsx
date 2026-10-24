@@ -752,7 +752,13 @@ export function App() {
     const f = fin(adv, resultat.issue, resultat.stats, bilan, OPPONENTS);
 
     const lecon = f.lecon ? LESSONS.find(l => l.id === f.lecon) : undefined;
+    // #U8 : une première victoire sur cet adversaire qui ouvre le suivant (verrouillé jusque-là) a son écran.
+    const prochain = resultat.issue === 'victoire' ? OPPONENTS.find(o => o.id === f.cible && o.id !== adv.id) : undefined;
+    const ouvre = prochain && (bilan[adv.id]?.v ?? 0) === 1 && OPPONENTS.indexOf(prochain) >= ouverts
+      ? { id: prochain.id, nom: prochain.nom, libelle: f.cta, lancer: () => lancer('ordi', prochain.id) }
+      : undefined;
     finEcran = {
+      ouvre,
       // Deux phrases, deux lignes : les statistiques, puis le bilan contre cet adversaire (issue #57).
       // #631 : le bilan seulement après une victoire (« Ton bilan contre Pomme : 2 victoires. ») ; sinon, rien.
       bilan: f.bilan && <>{fr(f.bilan.texte)}<b className="or">{f.bilan.gras}</b>.</>,

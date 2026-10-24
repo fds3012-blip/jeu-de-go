@@ -775,6 +775,8 @@ export const en = {
   'fin.rejouer': 'Play again',
   'fin.revoir': 'Review the game',
   'fin.accueil': 'Home',
+  'fin.ouvert': '{nom} is unlocked',
+  'fin.ouvertPlusTard': 'Later',
   'fin.ouvrirLecon': 'Open the lesson',
   'bilan.victoires': { one: '{n} win', other: '{n} wins' },
   'bilan.aucunCoup': 'No moves played',

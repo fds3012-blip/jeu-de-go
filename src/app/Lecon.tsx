@@ -27,6 +27,9 @@ import { hapticFail, hapticStone, hapticSuccess, hapticVictory } from '../ui/hap
 import { EVENTS, track } from '../data/analytics';
 import { gagnerXp } from './xp';
 import { validerDefi } from './defiAppareil';
+import { SERIE_KEY, numeroDuJour, type Serie } from './goDuJour';
+import { avancementDuJour } from './jalonsSerie';
+import { SerieDuJour } from '../ui/SerieDuJour';
 import { actionsFin, etapes, finDeChapitre, finDeLecon, titreCourt, type ActionFin, type Progression } from './apprendre';
 import { GUIDE_KEY, doitGuider, humeurMochi, pointsGuide, type Moment } from './lecon';
 import { t } from '../content/i18n/secondaires';
@@ -77,6 +80,8 @@ export function LessonPlayer({ lesson: { id: leconId }, start, confirmTouch, pro
   /** Choix faux déjà touchés au quiz (#198) : ils restent marqués, les autres restent touchables. */
   const [faux, setFaux] = useState<number[]>([]);
   const [fini, setFini] = useState(false);
+  // #U4 : cette leçon vient-elle d'allumer la série du jour ? La fin de leçon le dit une fois.
+  const [serieAllumee, setSerieAllumee] = useState<ReturnType<typeof avancementDuJour>>(null);
   // #236 (N2) : la leçon entière, écran de fin compris, est un exercice : l'XP se lit sur l'écran de fin,
   // la fête de niveau attend qu'on le quitte (FinLecon lui donne alors son écran à lui).
   useExercice(true);
@@ -136,7 +141,9 @@ export function LessonPlayer({ lesson: { id: leconId }, start, confirmTouch, pro
     if (derniere && parcours) { parcours.onFin(passees.current); return; }
     if (derniere) {
       track(EVENTS.leconTerminee, { lecon: lesson.id, rang: LESSONS.indexOf(lesson) + 1 });
-      validerDefi('lecon'); // #199 : une leçon terminée est le défi du jour (série de l'appareil, SERIE_UN_DEFI)
+      const avant = readLocal<Serie | null>(SERIE_KEY, null);
+      const { serie } = validerDefi('lecon'); // #199 : une leçon terminée est le défi du jour (série de l'appareil, SERIE_UN_DEFI)
+      setSerieAllumee(avancementDuJour(avant, serie, numeroDuJour(new Date())));
       if ((progress[lesson.id] ?? 0) < lesson.steps.length) gagnerXp('lecon'); // une seule fois par leçon
       setFini(true);
     } else { setIdx(idx + 1); setAnswer(null); setFaux([]); setGesteFait(false); setRate(null); }
@@ -179,7 +186,7 @@ export function LessonPlayer({ lesson: { id: leconId }, start, confirmTouch, pro
   }
 
   if (fini) {
-    return <FinLecon lesson={lesson} progress={{ ...progress, [lesson.id]: lesson.steps.length }} celebrer={celebrer} onNext={onNext} onExit={onExit} retour={retour} pratique={pratique} jouer={jouer} />;
+    return <FinLecon lesson={lesson} progress={{ ...progress, [lesson.id]: lesson.steps.length }} celebrer={celebrer} serie={serieAllumee} onNext={onNext} onExit={onExit} retour={retour} pratique={pratique} jouer={jouer} />;
   }
 
   const img = images ? images[Math.min(temps, images.length - 1)] : null;
@@ -320,8 +327,8 @@ export const POSE_MS = 460;
  * l'XP gagnée se lit sur place, puis une seule action en relief ; le lien de la leçon suivante la nomme.
  * Célébration modeste ; carillon et confettis seulement pour la dernière leçon.
  */
-function FinLecon({ lesson, progress, celebrer, onNext, onExit, retour, pratique, jouer }: {
-  lesson: Lesson; progress: Progression; celebrer: boolean; onNext?: () => void; onExit: () => void; retour?: string;
+function FinLecon({ lesson, progress, celebrer, serie, onNext, onExit, retour, pratique, jouer }: {
+  lesson: Lesson; progress: Progression; celebrer: boolean; serie: ReturnType<typeof avancementDuJour>; onNext?: () => void; onExit: () => void; retour?: string;
   pratique?: PlayerProps['pratique']; jouer?: PlayerProps['jouer'];
 }) {
   // #228 : tout se compte dans le chapitre de la leçon. Un chapitre en cours d'écriture ne se ferme pas encore.
@@ -393,6 +400,7 @@ function FinLecon({ lesson, progress, celebrer, onNext, onExit, retour, pratique
       <h2 className="fin-titre" ref={titreRef} tabIndex={-1}>{titre}</h2>
       <p className="fin-acquis">{fr(acquis(lesson.id))}{chapitre && chap.fin && <> {fr(chap.fin)}</>}</p>
       <div className="fin-gain"><XpEnLigne anime={celebrer} /></div>
+      {serie && <SerieDuJour jours={serie.jours} jalon={serie.jalon} celebrer={celebrer && !fete} />}
       <div className="fin-actions">
         {bouton(principale, 'cta')}
         {liens.map(a => bouton(a, 'lien'))}
