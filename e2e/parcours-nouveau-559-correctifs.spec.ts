@@ -22,10 +22,10 @@ async function sousLaBarre(page: Page, sel: string) {
 }
 
 for (const [largeur, hauteur] of [[390, 844], [320, 568]] as const) {
-  test(`P-1 : revue sans KataGo, « 100 % » de précision tient sur une ligne (${largeur} px)`, async ({ page }) => {
+  test(`P-1 : revue sans KataGo, la précision « – » et le bouton de nouvel essai tiennent sur une ligne (${largeur} px)`, async ({ page }) => {
     await page.setViewportSize({ width: largeur, height: hauteur });
     await page.emulateMedia({ reducedMotion: 'reduce' });
-    // Partie courte gagnée (paramètre de test ?komi=-100) : sans KataGo, Mochi note 100 % au joueur.
+    // Partie courte gagnée (paramètre de test ?komi=-100) : sans KataGo (#694), pas de précision chiffrée, mais « – ».
     await page.goto('/?komi=-100');
     await toucherCta(page);
     await expect(plateau(page)).toBeVisible();
@@ -36,8 +36,11 @@ for (const [largeur, hauteur] of [[390, 844], [320, 568]] as const) {
     await passerJusquAuScore(page);
     await page.getByRole('button', { name: 'Revoir la partie' }).click();
     const moi = page.locator('.bilan-score-moi');
-    await expect(moi).toHaveText(/100\s%/, { timeout: 60_000 });
-    expect(await lignes(page, '.bilan-score-moi'), '« 100 % » sur deux lignes').toBe(1);
+    await expect(moi).toHaveText('–', { timeout: 60_000 });
+    expect(await lignes(page, '.bilan-score-moi'), 'précision sur deux lignes').toBe(1);
+    const retry = page.getByRole('button', { name: 'Réessayer l’analyse' });
+    await expect(retry).toBeVisible();
+    expect(await retry.evaluate(el => el.scrollWidth <= el.clientWidth + 1 && el.getBoundingClientRect().right <= innerWidth), 'bouton coupé').toBe(true);
     const b = (await moi.boundingBox())!;
     expect(b.height).toBeLessThan(56);
   });

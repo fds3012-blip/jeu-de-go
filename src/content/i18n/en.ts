@@ -1053,6 +1053,7 @@ export const en = {
   'revue.bilan.correcte': 'A decent game.',
   'revue.bilan.difficile': 'A tough game, it happens.',
   'revue.bilan.aucuneErreur': 'No mistakes, keep it up!',
+  'revue.bilan.sansAnalyse': 'The analysis could not run, so I can’t tell whether you played well. Try again.',
 
   // Game review v3 (#405)
   'note.classique': 'Standard',
@@ -1064,6 +1065,7 @@ export const en = {
   'bilan3.chargement': 'Mochi is reading your game…',
   'bilan3.bloque': 'The analysis stopped responding. Your phone may have paused Mochi.',
   'bilan3.reessayer': 'Try again',
+  'bilan3.reessayerAnalyse': 'Try the analysis again',
   'bilan3.progression': 'Game analysis',
   'bilan3.pourcent': '{p}%',
   'bilan3.proverbe': 'Go proverb',
@@ -1209,6 +1211,8 @@ export const en = {
   'apprendre.themes.barre': { one: '{n} lesson done out of {total}', other: '{n} lessons done out of {total}' },
   'apprendre.theme.lecons': 'Lessons',
   'apprendre.theme.entrainer': 'Practice this topic',
+  'apprendre.theme.epuise': 'You’ve done every problem in this topic. Come back later or try another topic.',
+  'apprendre.theme.refaire': 'Redo them to review',
   'apprendre.theme.retour': 'Back to topic',
   'apprendre.theme.horsLigne': 'The puzzles aren’t on your phone yet. Go back online, then try again.',
   'apprendre.theme.texte.capture': 'A liberty is an empty point right next to a stone. Take the stones that have none left.',
