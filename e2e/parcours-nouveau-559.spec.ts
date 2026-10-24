@@ -9,6 +9,7 @@ import { brancher, fauxServeur } from './fauxSupabase';
 import { mesurer, type Mesure } from './mesures';
 import { abandonner, attendrePierre, jouer, jouerSuite, lancerADeux, passer, passerJusquAuScore, plateau, toucher, toucherCta } from './plateau';
 import { ouvrirRevue, preparerRevue } from './revueFactice';
+import { gagnerLaMiniPartie } from './mini';
 
 // #559 : parcours d'un nouveau joueur (docs/qa/parcours-nouveau-2026-10.md), rejoué comme Florian sur iPhone en navigation
 // privée : première ouverture, règles en 8 gestes, découverte avec Mochi, placement, leçon 1, Go du jour (réussite,
@@ -133,6 +134,8 @@ for (const cfg of CONFIGS) {
       await page.locator('.choix').getByRole('button', { name: /^(Noir|Black)$/ }).click();
       await capturer(page, cfg, '02k-regles-10-reponse', mesures);
       await action(page, T.terminer).click();
+      await capturer(page, cfg, '02l-regles-mini', mesures);
+      await gagnerLaMiniPartie(page); // #715 : ta première partie, gagnée avec l'aide de Mochi
       await expect(page.getByTestId('fin-intro')).toBeVisible();
       await capturer(page, cfg, '02l-regles-fin', mesures);
       await page.getByRole('button', { name: T.decouverteMochi }).click();
@@ -161,6 +164,7 @@ for (const cfg of CONFIGS) {
       await page.getByRole('button', { name: T.unPeu }).click();
       await capturer(page, cfg, '01c-express-1', mesures);
       for (let i = 1; i <= 10; i++) await page.getByTestId('je-sais').click();
+      await gagnerLaMiniPartie(page);
       await expect(page.getByTestId('fin-intro')).toBeVisible();
       await capturer(page, cfg, '01d-express-fin', mesures);
       await ctx.close();
