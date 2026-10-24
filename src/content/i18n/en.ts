@@ -1577,8 +1577,12 @@ export const en = {
   'defi.refus.suicide': 'Illegal move: your stone would have no liberties left.',
   'defi.refus.ko': 'Illegal move under the ko rule: play elsewhere before taking back.',
   // Rappel quotidien du Go du jour (#36).
-  'profil.rappel': 'Daily Go puzzle reminder',
+  'profil.rappel': 'Reminders',
   'profil.rappelCoupe': 'Off',
+  'profil.rappelDeux': 'On',
+  'rappel.tour.court': 'Your move',
+  'rappel.tour.interrupteur': 'Your move',
+  'rappel.tour.aide': 'A notification when your opponent has played in a correspondence game. Never at night, three a day at most.',
   'rappel.titre': 'A reminder for the daily Go puzzle?',
   'rappel.texte': 'One notification a day, at the time you choose. Never at night. Turn it off anytime in your Profile.',
   'rappel.moment': 'When?',

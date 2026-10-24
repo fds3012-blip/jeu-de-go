@@ -7,6 +7,10 @@ export const frEcrans = {
 
   // Rappel du Go du jour (#36) : Profil et fin de partie seulement (#640 : hors du JS initial).
   'profil.rappelCoupe': 'Coupé',
+  'profil.rappelDeux': 'Activées',
+  'rappel.tour.court': 'À toi de jouer',
+  'rappel.tour.interrupteur': 'À toi de jouer',
+  'rappel.tour.aide': 'Une notification quand ton adversaire a joué dans une partie lente. Jamais la nuit, trois par jour au plus.',
   'rappel.titre': 'Un rappel pour le Go du jour ?',
   'rappel.texte': 'Une notification par jour, à l’heure que tu choisis. Jamais la nuit. Tu la coupes quand tu veux dans le Profil.',
   'rappel.moment': 'Quand ?',
@@ -1274,7 +1278,7 @@ export const frEcrans = {
   'compte.anonyme.titre': 'Tu joues sans compte',
   'compte.anonyme.texte': 'Ajoute ton e-mail pour garder tes parties contre tes amis. Pas de mot de passe.',
   // Rappel quotidien du Go du jour (#36).
-  'profil.rappel': 'Rappel du Go du jour',
+  'profil.rappel': 'Rappels',
   // Compte obligatoire avec pseudo, essai limité, connexion par code (#343).
   'connexion.envoyer': 'Recevoir mon code',
   'connexion.sansMotDePasse': 'Pas de mot de passe : on t’envoie un code par e-mail.',

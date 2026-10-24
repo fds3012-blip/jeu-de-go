@@ -3,7 +3,8 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it, vi } from 'vitest';
 import {
-  autorise, chargeDuJour, endpointAutorise, envoyerRappels, estDisparu, TAILLE_LOT, TEXTES, URL_RAPPEL, type Abonnement, type Deps,
+  autorise, chargeDuJour, chargeTour, endpointAutorise, envoyerRappels, envoyerTours, estDisparu, TAILLE_LOT, tagTour, TEXTES, TEXTES_TOUR,
+  URL_RAPPEL, urlTour, type Abonnement, type Deps, type DepsTours, type Tour,
 } from '../../supabase/functions/envoyer-rappels/logique';
 
 const racine = fileURLToPath(new URL('../../', import.meta.url));
@@ -160,5 +161,120 @@ describe('accès à la fonction', () => {
     expect(plan).not.toMatch(/eyJ[A-Za-z0-9_-]{10,}/);
     // Hors des migrations : rien ne s'active en appliquant les migrations.
     expect(plan).toMatch(/Ne pas placer dans supabase\/migrations/);
+  });
+});
+
+// ---------- « À toi de jouer » (#699) ----------
+// L'horaire (jamais la nuit, une par partie et par heure, trois par jour, fuseau de l'appareil, réglage coupé) est décidé
+// par `reclamer_tours` dans la base : supabase/tests/a_toi_de_jouer.test.sql. Ici : l'envoi, les textes, l'adresse ouverte
+// au toucher, et un test de contrat qui garde la migration et la fonction d'accord.
+const PARTIE = '11111111-0000-4000-8000-0000000000aa';
+const tour = (i: number, o: Partial<Tour> = {}): Tour => ({
+  id: `id-${i}`, endpoint: `https://fcm.googleapis.com/fcm/send/${i}`, p256dh: 'p'.repeat(87), auth: 'a'.repeat(22), langue: 'fr',
+  type: 'tour', partie_id: PARTIE, ...o,
+});
+
+function depsTours(dus: Tour[], statut: (t: Tour) => number | Error = () => 201) {
+  const envois: { t: Tour; charge: string; tag: string }[] = [];
+  const supprimes: string[][] = [];
+  const d: DepsTours = {
+    reclamer: vi.fn(async () => dus),
+    envoyer: vi.fn(async (t: Tour, charge: string, tag: string) => {
+      envois.push({ t, charge, tag });
+      const s = statut(t);
+      if (s instanceof Error) throw s;
+      return { statut: s };
+    }),
+    supprimer: vi.fn(async (ids: string[]) => { supprimes.push(ids); }),
+  };
+  return { d, envois, supprimes };
+}
+
+describe('envoyerTours', () => {
+  it('envoie « à toi de jouer » dans la langue de l’appareil, vers la bonne partie', async () => {
+    const { d, envois } = depsTours([tour(1), tour(2, { langue: 'en' }), tour(3, { type: 'comptage' })]);
+    expect(await envoyerTours(d)).toEqual({ dus: 3, envoyes: 3, supprimes: 0, echecs: 0 });
+    const [fr, en, comptage] = envois.map(e => JSON.parse(e.charge));
+    expect(fr).toMatchObject({ titre: 'À toi de jouer', url: `/?tour=${PARTIE}` });
+    expect(en.titre).toBe('Your move');
+    expect(comptage.titre).toBe('On compte la partie');
+    // Le sujet web-push est celui du message : une autre poussée de la même partie remplace l’ancienne.
+    expect(envois[0].tag).toBe(tagTour(PARTIE));
+    expect(envois[0].tag.length).toBeLessThanOrEqual(32);
+  });
+
+  it('ne met aucune donnée personnelle dans la notification : pas de pseudo, pas d’adresse, pas de clé', async () => {
+    const { d, envois } = depsTours([tour(1)]);
+    await envoyerTours(d);
+    const charge = JSON.parse(envois[0].charge);
+    expect(Object.keys(charge).sort()).toEqual(['tag', 'texte', 'titre', 'url']);
+    expect(envois[0].charge).not.toMatch(/fcm|push|Alice|pseudo|p{20}/);
+  });
+
+  it('supprime les abonnements disparus (404, 410) une seule fois chacun, garde les autres échecs', async () => {
+    // Deux poussées vers le même appareil : un seul abonnement à supprimer.
+    const { d, supprimes } = depsTours([tour(1), tour(1, { partie_id: '11111111-0000-4000-8000-0000000000bb' }), tour(3)], t => (t.id === 'id-1' ? 410 : t.id === 'id-3' ? 500 : 201));
+    expect(await envoyerTours(d)).toEqual({ dus: 3, envoyes: 0, supprimes: 1, echecs: 1 });
+    expect(supprimes).toEqual([['id-1']]);
+  });
+
+  it('une erreur réseau compte comme un échec, rien de dû ne fait rien, adresse hors liste jamais appelée', async () => {
+    const piege = tour(9, { endpoint: 'https://169.254.169.254.nip.io/latest' });
+    const { d, envois } = depsTours([tour(1), tour(2), piege], t => (t.id === 'id-1' ? new Error('réseau') : 201));
+    expect(await envoyerTours(d)).toEqual({ dus: 3, envoyes: 1, supprimes: 0, echecs: 2 });
+    expect(envois.map(e => e.t.id)).toEqual(['id-1', 'id-2']);
+    const vide = depsTours([]);
+    expect(await envoyerTours(vide.d)).toEqual({ dus: 0, envoyes: 0, supprimes: 0, echecs: 0 });
+    expect(vide.d.envoyer).not.toHaveBeenCalled();
+  });
+
+  it('la base en erreur fait échouer l’envoi (l’autre envoi de la fonction continue : index.ts)', async () => {
+    const d: DepsTours = { reclamer: async () => { throw new Error('base'); }, envoyer: async () => ({ statut: 201 }), supprimer: async () => {} };
+    await expect(envoyerTours(d)).rejects.toThrow('base');
+  });
+});
+
+describe('textes et adresse de « à toi de jouer »', () => {
+  it('sobres : sans fausse urgence, sans compte à rebours, sans nom, courts, en français et en anglais', () => {
+    const interdits = /vite|dépêche|dernière chance|perdre|perds|urgent|triste|manque|temps|délai|heure|jour|!|hurry|last chance|lose|losing|sad|miss|time|hour|day|left|🔥/i;
+    for (const l of ['fr', 'en'] as const) {
+      for (const k of ['tour', 'comptage'] as const) {
+        const { titre, texte } = TEXTES_TOUR[l][k];
+        expect(`${titre} ${texte}`, `${l}.${k}`).not.toMatch(interdits);
+        expect(titre.length).toBeLessThanOrEqual(40);
+        expect(texte.length).toBeLessThanOrEqual(80);
+      }
+    }
+    expect(chargeTour({ langue: 'de', type: 'autre', partie_id: PARTIE }).titre).toBe(TEXTES_TOUR.fr.tour.titre);
+  });
+
+  it('la notification ouvre la partie ; un identifiant illisible ouvre l’accueil', () => {
+    expect(urlTour(PARTIE)).toBe(`/?tour=${PARTIE}`);
+    expect(urlTour(PARTIE.toUpperCase())).toBe(`/?tour=${PARTIE}`);
+    for (const mauvais of ['', 'abc', `${PARTIE}&x=1`, `//evil.test/${PARTIE}`, '../../x']) expect(urlTour(mauvais)).toBe('/');
+  });
+});
+
+describe('contrat entre la migration et la fonction (#699)', () => {
+  const migration = lire('supabase/migrations/20261025090000_notification_a_toi_de_jouer.sql');
+  it('la base garde la nuit, l’heure et le plafond que la fonction suppose', () => {
+    // Jamais la nuit : 8 h à 20 h, pour « à toi de jouer » comme pour le rappel du jour.
+    expect(migration.match(/between 8 and 19/g)?.length).toBeGreaterThanOrEqual(3);
+    expect(migration).toMatch(/interval '1 hour'/);   // une par partie et par heure
+    expect(migration).toMatch(/interval '24 hours'\) <= 3/); // trois par 24 heures
+    expect(migration).toMatch(/interval '3 days'/);   // plus de poussée d’un vieux tour
+  });
+  it('seules les parties lentes classées, seulement après l’activation, seulement pour la clé service', () => {
+    expect(migration).toMatch(/g\.status = 'active' and g\.rated/);
+    expect(migration).toMatch(/n\.creee_le >= a\.tour_depuis/);
+    expect(migration).toMatch(/revoke all on function public\.reclamer_tours\(timestamptz\) from public, anon, authenticated;\s+grant execute on function public\.reclamer_tours\(timestamptz\) to service_role;/);
+    // Éteint par défaut.
+    expect(migration).toMatch(/add column tour boolean not null default false/);
+  });
+  it('la fonction appelle les deux réclamations de la base et n’embarque aucune clé', () => {
+    const index = lire('supabase/functions/envoyer-rappels/index.ts');
+    expect(index).toContain("rpc('reclamer_rappels')");
+    expect(index).toContain("rpc('reclamer_tours')");
+    expect(index).not.toMatch(/BEGIN PRIVATE|VAPID_CLE_PRIVEE\s*=\s*['"]/);
   });
 });

@@ -21,7 +21,7 @@ describe.skipIf(process.env.MAJ_INDEX_LECONS === '1')('index léger des leçons 
   it('en français : mêmes leçons (id, titre, description, nombre d’étapes) et mêmes chapitres que le contenu complet', () => {
     const resume = leconsResumees('fr');
     expect(resume.map(l => [l.id, l.title, l.desc, l.steps.length])).toEqual(LESSONS_FR.map(l => [l.id, l.title, l.desc, l.steps.length]));
-    const complets = CHAPITRES_SOURCE.map(c => ({ ...c, complet: c.complet !== false }));
+    const complets = CHAPITRES_SOURCE.map(c => ({ ...c, complet: (c as { complet?: boolean }).complet !== false }));
     expect(chapitresResumes('fr', resume).map(c => ({ ...c, lecons: c.lecons.map(l => l.id) })))
       .toEqual(complets.map(c => ({ id: c.id, titre: c.titre, intro: c.intro, ...(c.fin ? { fin: c.fin } : {}), complet: c.complet, lecons: c.lecons })));
   });

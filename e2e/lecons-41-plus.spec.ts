@@ -1,11 +1,12 @@
 import { expect, test } from '@playwright/test';
 import { jouer } from './plateau';
-import { LESSONS_FR, type LessonStep } from '../src/content/lessons';
+import { CHAPITRES, LESSONS_FR, type LessonStep } from '../src/content/lessons';
 import { ACQUIS } from '../src/content/acquis';
 
 // Issue #547 (leçons 41 et suivantes) : la leçon 45, les menaces de ko, ouverte depuis le chemin Apprendre et jouée
 // jusqu'au bout à 390 px : la prise blanche, la menace posée, un mauvais choix au quiz, la reprise immédiate refusée,
 // la menace trouvée, le ko fermé. Positions et réponses prouvées par src/go/lecons-41-plus.test.ts.
+// #686 : l45 ferme « Fin de partie et comptage », désormais complet : « Chapitre terminé », sa phrase, puis la fête.
 
 const norm = (s: string) => s.replace(/[\u00A0\u202F\s]+/g, ' ').replace(/(?<=\p{L})'(?=\p{L})/gu, '’').trim();
 const L45 = LESSONS_FR.find(l => l.id === 'l45')!;
@@ -17,6 +18,8 @@ test('leçon 45, les menaces de ko, ouverte depuis le chemin et jouée en entier
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.addInitScript(p => localStorage.setItem('go.lecons.v1', JSON.stringify(p)), AVANT);
+  // Les chapitres 1 à 4, finis par AVANT, sont déjà fêtés : la fête attendue au retour est celle du chapitre 5.
+  await page.addInitScript(() => localStorage.setItem('go.fetes-chapitres.v1', JSON.stringify(['c1', 'c2', 'c3', 'c4'])));
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Apprendre' }).click();
   await expect(page.getByRole('button', { name: `Leçon ${numero('l45')} : Les menaces de ko, prochaine étape` })).toBeAttached();
@@ -66,6 +69,10 @@ test('leçon 45, les menaces de ko, ouverte depuis le chemin et jouée en entier
   await expect(verdict).toContainText(norm(f.ok));
   await continuer('Terminer la leçon');
 
-  await expect(page.getByRole('heading', { name: 'Leçon terminée' })).toBeVisible();
-  await expect(page.getByText(norm(ACQUIS.l45))).toBeVisible();
+  const c5 = CHAPITRES.find(c => c.id === 'c5')!;
+  await expect(page.getByRole('heading', { name: 'Chapitre terminé' })).toBeVisible();
+  await expect(page.locator('.fin-acquis')).toHaveText(`${norm(ACQUIS.l45)} ${c5.fin}`);
+  await expect(page.getByRole('button', { name: 'Joue contre Pomme' })).toHaveClass(/\bcta\b/);
+  await page.getByRole('button', { name: 'Retour à Apprendre' }).click();
+  await expect(page.getByRole('img', { name: `Chapitre terminé : ${c5.titre}` })).toBeVisible();
 });

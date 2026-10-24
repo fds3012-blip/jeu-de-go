@@ -16,7 +16,8 @@ const norm = (s: string) => s.replace(/[\u00A0\u202F\s]+/g, ' ').replace(/(?<=\p
 const L12 = LESSONS_FR.find(l => l.id === 'l12')!;
 const etape = <K extends LessonStep['kind']>(i: number) => L12.steps[i] as Extract<LessonStep, { kind: K }>;
 /** Toutes les leçons avant la 12 déjà faites : le bouton du chemin ouvre la leçon 12. */
-const AVANT_L12 = Object.fromEntries(LESSONS_FR.filter(l => l.id !== 'l12').map(l => [l.id, l.steps.length]));
+// #686 : seulement celles d'avant ; avec toutes les autres, finir l12 fermerait « Vie et mort », désormais complet.
+const AVANT_L12 = Object.fromEntries(LESSONS_FR.slice(0, LESSONS_FR.findIndex(l => l.id === 'l12')).map(l => [l.id, l.steps.length]));
 
 /** Aucun défilement horizontal, et ni la bulle de Mochi ni le verdict ne coupent leur texte. */
 async function sansDebordement(page: Page, ecran: string) {
@@ -95,7 +96,7 @@ for (const largeur of [390, 320]) {
     await sansDebordement(page, 'étape 5');
     await page.getByRole('button', { name: 'Terminer la leçon' }).click();
 
-    // Fin : chapitre en cours d'écriture, donc « Leçon terminée », et ce que le joueur sait faire.
+    // Fin : l12 ne ferme pas « Vie et mort », donc « Leçon terminée », et ce que le joueur sait faire.
     await expect(page.getByRole('heading', { name: 'Leçon terminée' })).toBeVisible();
     await expect(page.getByText(norm(ACQUIS.l12))).toBeVisible();
     await sansDebordement(page, 'fin de leçon');

@@ -102,7 +102,7 @@ for (const [largeur, hauteur, theme] of [[390, 844, 'light'], [320, 568, 'dark']
     await photo('5-seki');
     await page.getByRole('button', { name: 'Terminer la leçon' }).click();
 
-    // Fin : chapitre en cours d'écriture, donc « Leçon terminée », et ce que le joueur sait faire.
+    // Fin : pas la dernière leçon du chapitre, donc « Leçon terminée », et ce que le joueur sait faire.
     await expect(page.getByRole('heading', { name: 'Leçon terminée' })).toBeVisible();
     await expect(page.getByText(norm(ACQUIS.l14))).toBeVisible();
     await sansDebordement(page, 'fin de leçon');

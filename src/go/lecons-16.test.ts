@@ -37,7 +37,7 @@ const posDe = (im: DemoImage, toPlay: 1 | 2): Position => ({ size: N, board: im.
 const cibles = (s: Move, c: 1 | 2) => { const { pos, marked } = fromRows(s.rows); return marked.filter(p => pos.board[p] === c); };
 
 describe('leçons 9 à 12 : place dans le programme (#16)', () => {
-  it('quatre leçons de 3 à 6 étapes, rangées dans deux nouveaux chapitres en cours d’écriture', () => {
+  it('quatre leçons de 3 à 6 étapes, rangées dans deux chapitres, complets depuis #686', () => {
     for (const id of ['l9', 'l10', 'l11', 'l12']) expect(lecon(id).steps.length).toBeGreaterThanOrEqual(3);
     for (const id of ['l9', 'l10', 'l11', 'l12']) expect(lecon(id).steps.length).toBeLessThanOrEqual(6);
     const c = Object.fromEntries(CHAPITRES.map(x => [x.id, x]));
@@ -46,7 +46,7 @@ describe('leçons 9 à 12 : place dans le programme (#16)', () => {
     expect(c.c4.titre).toBe('Vie et mort');
     // Le chapitre « Vie et mort » continue avec les leçons 13 et 14 (src/go/lecons-13-16.test.ts).
     expect(avant547(c.c4.lecons.map(l => l.id))[0]).toBe('l12');
-    expect([c.c3.complet, c.c4.complet]).toEqual([false, false]);
+    expect([c.c3.complet, c.c4.complet]).toEqual([true, true]); // #686
     for (const id of ['l9', 'l10', 'l11', 'l12']) expect(ACQUIS[id]).toBeTruthy();
   });
   it('vocabulaire expliqué à sa première apparition : filet (geta), semeai, faux œil, coin (diagonale)', () => {

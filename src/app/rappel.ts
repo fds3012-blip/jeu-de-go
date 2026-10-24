@@ -7,12 +7,15 @@
 // - iPhone et iPad : notifications web seulement dans l'app installée sur l'écran d'accueil (iOS 16.4 et plus). Dans Safari,
 //   on l'explique et on mène à « Installer l'app ».
 // - Toucher la notification ouvre le Go du jour (`/?rappel=1`, public/sw.js) et envoie `rappel_ouvert`.
+// - #699 : deuxième réglage indépendant, « À toi de jouer » (parties lentes classées). Même appareil, même abonnement,
+//   deux interrupteurs côté serveur (`jour`, `tour`). Éteint par défaut ; allumé seulement par le joueur, dans le Profil
+//   (la permission du navigateur est demandée à ce geste). Toucher la notification ouvre la partie (`/?tour=<id>`).
 import type { Db } from '../data/supabase';
 import { detecterPlateforme, type Plateforme } from './installation';
 import { t } from '../content/i18n/secondaires';
 // #563 : état local du rappel et arrivée par la notification dans rappelEtat.ts (JS initial), réexportés ici.
 import { RAPPEL_KEY, etatRappel, type EtatRappel, type MomentRappel } from './rappelEtat';
-export { ETAT_INITIAL, HEURES, MOMENTS, RAPPEL_KEY, estArriveeRappel, etatRappel, lireEtatRappel, type EtatRappel, type MomentRappel } from './rappelEtat';
+export { ETAT_INITIAL, HEURES, MOMENTS, RAPPEL_KEY, estArriveeRappel, etatRappel, lireEtatRappel, partieDeNotification, type EtatRappel, type MomentRappel } from './rappelEtat';
 
 /**
  * Ce que l'appareil permet :
@@ -108,8 +111,12 @@ async function enregistrement(): Promise<ServiceWorkerRegistration | null> {
 
 export type Resultat = 'ok' | 'refuse_navigateur' | 'erreur';
 
-/** Abonne l'appareil (ou met à jour son moment) et l'inscrit sur le serveur, pour le compte connecté. */
-async function inscrire(db: Db, moment: MomentRappel, langue: string): Promise<Resultat> {
+/**
+ * Abonne l'appareil (ou met à jour ses réglages) et l'inscrit sur le serveur, pour le compte connecté.
+ * `jour` et `tour` : nouvelle valeur de l'interrupteur, ou null pour garder celle du serveur (envoyé tel quel : un argument
+ * absent voudrait dire « allumé » pour p_jour ; les types générés ne connaissent pas null, d'où les conversions).
+ */
+async function inscrire(db: Db, moment: MomentRappel, langue: string, jour: boolean | null, tour: boolean | null): Promise<Resultat> {
   const reg = await enregistrement();
   if (!reg) return 'erreur';
   const sub = (await reg.pushManager.getSubscription())
@@ -118,6 +125,7 @@ async function inscrire(db: Db, moment: MomentRappel, langue: string): Promise<R
   if (!j.endpoint || !j.keys?.p256dh || !j.keys?.auth) return 'erreur';
   const { error } = await db.rpc('enregistrer_abonnement_rappel', {
     p_endpoint: j.endpoint, p_p256dh: j.keys.p256dh, p_auth: j.keys.auth, p_moment: moment, p_fuseau: fuseauAppareil(), p_langue: langue,
+    p_jour: jour as boolean, p_tour: tour as boolean,
   });
   return error ? 'erreur' : 'ok';
 }
@@ -130,7 +138,7 @@ export async function activerRappel(db: Db, moment: MomentRappel, langue: string
   try {
     const permission = Notification.permission === 'granted' ? 'granted' : await Notification.requestPermission();
     if (permission !== 'granted') return 'refuse_navigateur';
-    const r = await inscrire(db, moment, langue);
+    const r = await inscrire(db, moment, langue, true, null);
     if (r === 'ok') noterRappel({ actif: true, moment });
     return r;
   } catch {
@@ -141,7 +149,7 @@ export async function activerRappel(db: Db, moment: MomentRappel, langue: string
 /** Change le moment d'un rappel déjà allumé. */
 export async function changerMoment(db: Db, moment: MomentRappel, langue: string): Promise<Resultat> {
   try {
-    const r = await inscrire(db, moment, langue);
+    const r = await inscrire(db, moment, langue, true, null);
     if (r === 'ok') noterRappel({ moment });
     return r;
   } catch {
@@ -149,13 +157,27 @@ export async function changerMoment(db: Db, moment: MomentRappel, langue: string
   }
 }
 
-/** Coupe le rappel : l'abonnement est retiré du serveur et du navigateur. */
-export async function couperRappel(db: Db | null): Promise<Resultat> {
-  noterRappel({ actif: false });
+/**
+ * Éteint l'un des deux interrupteurs de cet appareil. Si l'autre est éteint aussi, l'abonnement est retiré du serveur et
+ * du navigateur ; sinon il reste, avec l'autre interrupteur seul. Désinscription en un geste, sans autre confirmation.
+ */
+async function eteindre(db: Db | null, quoi: 'jour' | 'tour', langue: string): Promise<Resultat> {
+  const reste = quoi === 'jour' ? etatRappel().tours : etatRappel().actif;
+  noterRappel(quoi === 'jour' ? { actif: false } : { tours: false });
   try {
     const reg = await enregistrement();
     const sub = await reg?.pushManager.getSubscription();
     if (!sub) return 'ok';
+    if (reste && db) {
+      const cles = sub.toJSON().keys;
+      const { error } = await db.rpc('enregistrer_abonnement_rappel', {
+        p_endpoint: sub.endpoint, p_p256dh: cles?.p256dh ?? '', p_auth: cles?.auth ?? '', p_moment: etatRappel().moment,
+        p_fuseau: fuseauAppareil(), p_langue: langue, p_jour: (quoi === 'jour' ? false : null) as boolean, p_tour: (quoi === 'tour' ? false : null) as boolean,
+      });
+      // Le serveur n'avait pas l'autre interrupteur allumé (états écartés) : la ligne est retirée, rien ne doit continuer à partir.
+      if (!error) return 'ok';
+      noterRappel({ actif: false, tours: false }); // l'abonnement entier part : l'autre réglage aussi
+    }
     const { error } = db ? await db.from('abonnements_rappel').delete().eq('endpoint', sub.endpoint) : { error: null };
     await sub.unsubscribe();
     return error ? 'erreur' : 'ok';
@@ -164,8 +186,27 @@ export async function couperRappel(db: Db | null): Promise<Resultat> {
   }
 }
 
-/** Valeur de la ligne du Profil : le moment choisi, ou « Coupé ». */
+/** Coupe le rappel du Go du jour (l'abonnement part avec lui s'il n'y a plus rien d'autre à envoyer). */
+export const couperRappel = (db: Db | null, langue = 'fr'): Promise<Resultat> => eteindre(db, 'jour', langue);
+
+/** #699 : allume « À toi de jouer ». Comme `activerRappel` : à la suite d'un geste, permission du navigateur demandée ici. */
+export async function activerTours(db: Db, moment: MomentRappel, langue: string): Promise<Resultat> {
+  try {
+    const permission = Notification.permission === 'granted' ? 'granted' : await Notification.requestPermission();
+    if (permission !== 'granted') return 'refuse_navigateur';
+    const r = await inscrire(db, moment, langue, null, true);
+    if (r === 'ok') noterRappel({ tours: true });
+    return r;
+  } catch {
+    return 'erreur';
+  }
+}
+
+/** #699 : coupe « À toi de jouer ». */
+export const couperTours = (db: Db | null, langue = 'fr'): Promise<Resultat> => eteindre(db, 'tour', langue);
+
+/** Valeur de la ligne du Profil : le moment du rappel, « À toi de jouer », les deux, ou « Coupé ». */
 export function resumeRappel(): string {
   const e = etatRappel();
-  return e.actif ? t(`rappel.${e.moment}`) : t('profil.rappelCoupe');
+  return e.actif && e.tours ? t('profil.rappelDeux') : e.actif ? t(`rappel.${e.moment}`) : e.tours ? t('rappel.tour.court') : t('profil.rappelCoupe');
 }
