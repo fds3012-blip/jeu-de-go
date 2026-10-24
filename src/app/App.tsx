@@ -8,7 +8,7 @@ import { IntroRegles, prechargerIntro } from './ecrans';
 import { ERREURS_KEY, EVENEMENT_REVISIONS, REVISIONS_KEY, compterDus } from './revisionsDues';
 // #16 : l'accueil ne lit que l'index léger des leçons ; leur contenu arrive avec les écrans Apprendre et leçon.
 import { CHAPITRES, LESSONS } from '../content/leconsResume';
-import { LESSONS_KEY, readLocal, writeLocal, useGelsServeur, useLessonProgress, useOnline, useProfil, usePseudo, useSerie, useSession } from './hooks';
+import { LESSONS_KEY, readLocal, writeLocal, useGelsServeur, useJoueursEnLigne, useLessonProgress, useOnline, useProfil, usePseudo, useSerie, useSession } from './hooks';
 import { auRetourEnLigne, tenterQuitter } from './quitterFile';
 import { COMPTES, chargerSupabase, useSupabase } from '../data/client';
 import { coachActif, useSettings, useStored } from './settings';
@@ -408,7 +408,9 @@ export function App() {
   // #309 : « Rejouer » seulement après une partie finie contre cet adversaire.
   // Accueil v3 : un bilan contre l'ordi (appareil d'avant le compteur de parties, ou compteur abîmé) suffit à dire
   // qu'il a déjà joué : pas d'accueil « premier lancement » pour lui.
-  const home = accueil({ ...parties, n: Math.max(parties.n, Object.keys(bilan).length > 0 ? 1 : 0) }, done, { ...adv, fini: dejaAffronte(bilan, adv.id) }, settings.size, { numero: numeroJour, absence, duJourFait, titreDuJour: duJour?.title });
+  const home = accueil({ ...parties, n: Math.max(parties.n, Object.keys(bilan).length > 0 ? 1 : 0) }, done, { ...adv, fini: dejaAffronte(bilan, adv.id) }, settings.size, { numero: numeroJour, absence, duJourFait, titreDuJour: duJour?.title, serie });
+  // #695 : joueurs en ligne, relus à chaque retour à l'accueil ; inconnu (null) : moins que le seuil, l'ordi reste principal.
+  const nbEnLigne = useJoueursEnLigne(COMPTES ? supabase : null, tab === 'jouer' && !playing);
   // #487 : tout premier lancement et aucune pierre posée (partie, leçon, problème, placement) : accueil épuré.
   const reperePierre = useSyncExternalStore(abonnerPierre, lireRepere, () => false);
   const epure = accueilEpure({ nouveau: home.nouveau,
@@ -1161,7 +1163,8 @@ export function App() {
     const numero = numeroJour;
     const daily = duJour;
     // #429 : tous les modes en 1 toucher ; #432 : la partie en ligne classée en action principale dès le début.
-    const modes = modesAccueil({ comptes: COMPTES, enLigne: online, premierLancement: home.nouveau });
+    // #695 (révise #432) : l'ordi reste l'action principale tant qu'il y a moins de joueurs en ligne que le seuil.
+    const modes = modesAccueil({ comptes: COMPTES, enLigne: online, premierLancement: home.nouveau, joueursEnLigne: nbEnLigne });
     const choisirMode = (m: Mode, depuis: Depuis) => {
       track(EVENTS.modeChoisi, { mode: m, depuis, principal: m === modes.principal });
       // #613 : la taille (et l'adversaire) se choisit au moment de jouer, dans la feuille de lancement ; avant la toute

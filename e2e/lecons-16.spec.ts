@@ -12,7 +12,7 @@ const numero = (id: string) => LESSONS_FR.findIndex(l => l.id === id) + 1;
 // La leçon 12 (le faux œil) se joue du début à la fin, avec une erreur à chaque question, à 390 et à 320 px.
 // Positions et réponses prouvées par src/go/lecons-16.test.ts.
 
-const norm = (s: string) => s.replace(/[\u00A0\u202F\s]+/g, ' ').trim();
+const norm = (s: string) => s.replace(/[\u00A0\u202F\s]+/g, ' ').replace(/(?<=\p{L})'(?=\p{L})/gu, '’').trim();
 const L12 = LESSONS_FR.find(l => l.id === 'l12')!;
 const etape = <K extends LessonStep['kind']>(i: number) => L12.steps[i] as Extract<LessonStep, { kind: K }>;
 /** Toutes les leçons avant la 12 déjà faites : le bouton du chemin ouvre la leçon 12. */

@@ -39,16 +39,22 @@ export function ThemeLecons({ theme, progress, onOpen, onRetour, onSerie, compte
   const etape = new Map(etapes(LESSONS, progress).map(e => [e.lecon.id, e]));
   const faites = lecons.filter(l => (progress[l.id] ?? 0) >= l.steps.length).length;
   const nom = t(`theme.${theme}`);
-  const [etat, setEtat] = useState<'pret' | 'charge' | 'erreur'>('pret');
+  const [etat, setEtat] = useState<'pret' | 'charge' | 'erreur' | 'epuise'>('pret');
 
-  const entrainer = () => {
+  /** `refaire` : le thème est épuisé (tout est fait ou vu) et le joueur choisit de réviser quand même (#694). */
+  const entrainer = (refaire = false) => {
     setEtat('charge');
     void Promise.all([import('../content/problemesLocaux'), import('../content/themes')])
       .then(([{ PROBLEMES_LOCAUX }, { serieDeTheme, noterProposes }]) => {
         const faits = new Set([SOLVED_KEY, VUS_KEY].flatMap(k => Object.keys(readLocal<Record<string, true>>(k, {}) ?? {})));
         const tous = readLocal<Record<string, unknown>>(PROPOSES_KEY, {}) ?? {};
         const proposes = Array.isArray(tous[theme]) ? (tous[theme] as unknown[]).filter((id): id is string => typeof id === 'string') : [];
-        const s = serieDeTheme(theme, PROBLEMES_LOCAUX, faits, undefined, proposes);
+        const complete = serieDeTheme(theme, PROBLEMES_LOCAUX, faits, undefined, proposes);
+        // #694 : jamais une série qui rejoue des problèmes déjà faits sans le dire. Les problèmes neufs d'abord et seuls ;
+        // s'il n'y en a plus, le thème est épuisé : on le dit, et le joueur peut réviser s'il le veut.
+        const neufs = complete.filter(p => !faits.has(p.id));
+        if (!refaire && neufs.length === 0) { setEtat('epuise'); return; }
+        const s = refaire ? complete : neufs;
         writeLocal(PROPOSES_KEY, { ...tous, [theme]: noterProposes(proposes, s.map(p => p.id)) });
         // Chaque thème a au moins 3 problèmes (src/content/themes.test.ts) : la série n'est jamais vide.
         setEtat('pret');
@@ -85,7 +91,13 @@ export function ThemeLecons({ theme, progress, onOpen, onRetour, onSerie, compte
       </section>
 
       {etat === 'erreur' && <p className="notice" role="alert">{fr(t('apprendre.theme.horsLigne'))}</p>}
-      <button type="button" className="cta theme-entrainer" aria-busy={etat === 'charge'} disabled={etat === 'charge'} onClick={entrainer}>
+      {etat === 'epuise' && (
+        <div className="notice" role="status" data-theme-epuise="">
+          <p>{fr(t('apprendre.theme.epuise'))}</p>
+          <button type="button" className="lien" onClick={() => entrainer(true)}>{t('apprendre.theme.refaire')}</button>
+        </div>
+      )}
+      <button type="button" className="cta theme-entrainer" aria-busy={etat === 'charge'} disabled={etat === 'charge'} onClick={() => entrainer()}>
         {t('apprendre.theme.entrainer')}
       </button>
     </div>

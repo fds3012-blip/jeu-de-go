@@ -10,7 +10,7 @@ import { ACQUIS } from '../src/content/acquis';
 // Les leçons 37, 38 et 40 sont dans la page de leur thème (#652). Positions et réponses prouvées par
 // src/go/lecons-37-plus.test.ts. Captures : seulement si CAPTURES_LECONS_37 donne un dossier (aucune capture versionnée).
 
-const norm = (s: string) => s.replace(/[\u00A0\u202F\s]+/g, ' ').trim();
+const norm = (s: string) => s.replace(/[\u00A0\u202F\s]+/g, ' ').replace(/(?<=\p{L})'(?=\p{L})/gu, '’').trim();
 const DOSSIER = process.env.CAPTURES_LECONS_37;
 const L39 = LESSONS_FR.find(l => l.id === 'l39')!;
 const etape = <K extends LessonStep['kind']>(i: number) => L39.steps[i] as Extract<LessonStep, { kind: K }>;

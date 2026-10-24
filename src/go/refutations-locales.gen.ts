@@ -8,7 +8,7 @@
 // coup : t dans ton territoire, l chez lui, n dame, m pierre déjà morte prise ; « E3k » : la réplique prend un ko (sans
 // menace, tu y perds ; la phrase ne dit que le fait). Vide : rien de prouvé.
 // prettier-ignore
-export const EMPREINTE = 'dbbe06985bea33c4';
+export const EMPREINTE = 'd96164bb0eecf418';
 export type ButCode = 'vivre' | 'tuer' | 'course' | 'prendre' | 'sauver' | 'fin' | 'aucun';
 export interface RefutationsLocales { but: ButCode; cible?: string; a?: string; b?: string; defaut: string; sauf?: Readonly<Record<string, string>> }
 export const REFUTATIONS_LOCALES: Readonly<Record<string, RefutationsLocales>> = {

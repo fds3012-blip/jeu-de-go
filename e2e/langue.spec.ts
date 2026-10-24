@@ -440,7 +440,11 @@ for (const largeur of [390, 320]) {
     await expect(page.locator('.revue-analyse')).toHaveCount(0, { timeout: 30_000 });
     await expect(page.getByRole('img', { name: 'Lead graph: Black at the bottom, White at the top' })).toBeVisible();
     const table = page.getByRole('table', { name: 'Your moves, by rating' });
-    await expect(table.getByRole('row', { name: /^Accuracy \d+%/ })).toBeVisible();
+    // #694 : ce build n'a pas KataGo : pas de précision chiffrée, l'aveu de Mochi en anglais, et de quoi réessayer.
+    await expect(table.getByRole('row', { name: /^Accuracy\s*–\s*–$/ })).toBeVisible();
+    await expect(page.locator('.bilan-bulle')).toHaveText(/analysis could not run|^You lose by/);
+    await expect(page.locator('.bilan-bulle')).not.toHaveText(/No mistakes|decent game|Great game|accurately/);
+    await expect(page.getByRole('button', { name: 'Try the analysis again' })).toBeVisible();
     await expect(table.locator('thead')).toContainText('You');
     await expect(page.getByText(/Meilleur|Erreur|Solide|Imprécision|Précision|Démarrer/)).toHaveCount(0);
     await sansDebordement(page);

@@ -57,9 +57,10 @@ export const fr = {
   'accueil.bulle.retour.0': 'Te revoilà ! On reprend en douceur ?',
   'accueil.bulle.retour.1': 'Ça fait plaisir de te revoir ! Une partie tranquille sur le {plateau} ?',
   'accueil.bulle.retour.2': 'Tu m’as manqué ! On se refait une petite partie ?',
-  'accueil.bulle.revanche': 'Prêt pour la revanche ? Cette fois, je me méfie.',
-  'accueil.bulle.jour': 'Une partie sur le {plateau} ? J’ai une idée à tester.',
-  'accueil.bulle.duJourFait': 'Bravo pour le Go du jour ! On enchaîne sur le {plateau} ?',
+  // #695 (U2) : l'état du jour, en une phrase, dans la bulle de l'adversaire. Jamais de reproche ni de compte à rebours.
+  'accueil.etat.serie': { one: 'Série de {n} jour. Un Go du jour et c’est {suivant}.', other: 'Série de {n} jours. Un Go du jour et c’est {suivant}.' },
+  'accueil.etat.nouveau': 'Nouveau Go du jour.',
+  'accueil.etat.fait': 'Fait pour aujourd’hui. À demain !',
   'accueil.aFaire': 'À faire',
   'accueil.fait': 'Fait',
   'accueil.tuileAria': 'Go du jour n° {numero} : {titre}. {etat}.',

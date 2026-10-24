@@ -64,7 +64,10 @@ async function ouvrirReglages(page: Page) {
 
 test('accueil hors ligne avec les comptes : bandeau, « En ligne » et « Un ami » grisés avec la raison, Pomme jusqu’au score', async ({ context }) => {
   const erreurs: string[] = [];
-  const page = await brancher(context, fauxServeur(), DEJA_JOUE);
+  const serveur = fauxServeur();
+  // #695 : du monde en ligne (4 joueurs ou plus) : la partie classée est l'action principale ; sinon, l'ordi (accueil-modes.spec.ts).
+  serveur.fixerJoueursEnLigne(4);
+  const page = await brancher(context, serveur, DEJA_JOUE);
   page.on('pageerror', e => erreurs.push(e.message));
   await page.emulateMedia({ reducedMotion: 'reduce' });
   // En ligne : la partie classée est l'action principale, ses tuiles sont actives.

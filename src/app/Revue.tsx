@@ -216,6 +216,15 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
     setEssai(e => e + 1);
   }
 
+  /** #694 : « Réessayer l'analyse » depuis un bilan sans KataGo : le moteur simple est écarté, tout est refait avec KataGo s'il répond. */
+  function reessayerAnalyse() {
+    faites.current = [];
+    arretee.current = false;
+    setArret(false);
+    setAnalyses([]);
+    reessayer();
+  }
+
   /** « Arrêter l'analyse » (#286) : la revue se contente des positions déjà analysées. */
   function arreter() {
     arretee.current = true;
@@ -452,7 +461,8 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
 
   // ---------- 2. Le bilan ----------
   if (etape === 'bilan') {
-    const precMoi = precisionHonnete(notes, moi, avanceNoir, size), precLui = precisionHonnete(notes, lui, avanceNoir, size);
+    // #694 : sans KataGo, la précision ne mesure rien (100 % partout) : « – », jamais un chiffre trompeur.
+    const precMoi = avecKataGo ? precisionHonnete(notes, moi, avanceNoir, size) : null, precLui = avecKataGo ? precisionHonnete(notes, lui, avanceNoir, size) : null;
     const cMoi = compteNotes(notes, moi), cLui = compteNotes(notes, lui);
     const lignes = lignesBilan(avecKataGo).filter(l => cMoi[l] + cLui[l] > 0 || (avecKataGo && l === 'brillant'));
     // #527 : les 3 catégories, toujours toutes les trois (un « – » dit aussi quelque chose), chacune avec sa définition.
@@ -499,8 +509,9 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
             ))}
           </tbody>
         </table>
-        <p className="revue-note bilan-aide">{fr(tr('bilan3.precisionAide'))}</p>
+        {avecKataGo && <p className="revue-note bilan-aide">{fr(tr('bilan3.precisionAide'))}</p>}
         {!avecKataGo && <p className="revue-note revue-sans-katago">{fr(tr(sansKataGo ? `bilan3.sansKataGo.${sansKataGo}` : 'bilan3.sansKataGo'))}</p>}
+        {!avecKataGo && <button type="button" className="btn revue-reessayer-analyse" onClick={reessayerAnalyse}>{tr('bilan3.reessayerAnalyse')}</button>}
         {arret && <p className="revue-note revue-arretee">{fr(tr('import.arretee'))}</p>}
         {aRejouer.length > 0 && <button type="button" className="btn bilan-parcours" onClick={() => demarrer()}>{tr('bilan3.demarrer')}</button>}
         {/* #364 : partager la partie (lien de la revue, image du moment clé, SGF, défi), en action secondaire. */}

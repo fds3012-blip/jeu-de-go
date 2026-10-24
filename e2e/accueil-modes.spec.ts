@@ -3,6 +3,9 @@ import { expect, test, type Browser, type Page, type Request } from '@playwright
 import { brancher, CODE, fauxServeur, type FauxServeur } from './fauxSupabase';
 import { feuilleLancement, jouerDepuisLancement, plateau, toucherCta } from './plateau';
 
+// #695 (décision de Florian, qui révise #432) : l'ordi, avec l'adversaire en cours et sa bulle, reste l'action principale
+// tant qu'il y a moins de SEUIL_EN_LIGNE (4) joueurs en ligne ; au seuil, « Jouer en ligne » redevient principal. « En
+// ligne » reste toujours une tuile. Le compteur vient de la fonction serveur `joueurs_en_ligne()` ; sans réponse : moins que le seuil.
 // Issue #429 : tous les modes de jeu se joignent depuis l'accueil en 1 toucher (bouton principal ou tuile), sans
 // défiler (#647 : la partie de découverte vit dans Apprendre, la feuille « Plus » a disparu). #432 : la partie en ligne classée est l'action principale dès le début, cote et grade
 // visibles ; seul le tout premier lancement garde l'ordi (« Joue ta première partie »). Chaque choix envoie
@@ -14,6 +17,8 @@ import { feuilleLancement, jouerDepuisLancement, plateau, toucherCta } from './p
 // lancement (taille, adversaire, « Jouer »), dès qu'une partie a été jouée, comme « Jouer en ligne » sur son écran.
 // Le grade et la cote ont quitté l'accueil pour l'écran de lancement de la partie classée.
 
+/** Seuil de src/app/modes.ts (SEUIL_EN_LIGNE) : l'ordi reste principal en dessous, « Jouer en ligne » le devient au seuil. */
+const SEUIL = 4;
 const ANA = '00000000-0000-4000-8000-0000000000c1';
 const HOTE = 'https://posthog-e2e.test';
 type Mode = 'en_ligne' | 'ordi' | 'ami' | 'deux';
@@ -28,8 +33,9 @@ const CONFIRME = {
   'go.adversaire.v1': JSON.stringify('caillou'), 'go.lecons.v1': JSON.stringify({ l1: 99, l2: 99, l3: 99 }),
 };
 
-async function telephone(browser: Browser, baseURL: string | undefined, stockage: Record<string, string>, o: { compte?: boolean; serveur?: FauxServeur; largeur?: number; hauteur?: number; sombre?: boolean } = {}): Promise<Page> {
+async function telephone(browser: Browser, baseURL: string | undefined, stockage: Record<string, string>, o: { compte?: boolean; joueurs?: number | null; maintenant?: Date; serveur?: FauxServeur; largeur?: number; hauteur?: number; sombre?: boolean } = {}): Promise<Page> {
   const serveur = o.serveur ?? fauxServeur();
+  serveur.fixerJoueursEnLigne(o.joueurs ?? 0);
   const ctx = await browser.newContext({
     viewport: { width: o.largeur ?? 390, height: o.hauteur ?? 844 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true, locale: 'fr-FR', baseURL,
     colorScheme: o.sombre ? 'dark' : 'light', reducedMotion: 'reduce',
@@ -38,6 +44,7 @@ async function telephone(browser: Browser, baseURL: string | undefined, stockage
   const s = { ...stockage };
   if (o.compte !== false) s['sb-supabase-auth-token'] = JSON.stringify(serveur.sessionCompte('ana@exemple.test', 'Ana', ANA));
   const page = await brancher(ctx, serveur, s);
+  if (o.maintenant) await page.clock.setFixedTime(o.maintenant);
   await page.goto('/');
   await expect(page.getByTestId('modes')).toBeVisible();
   return page;
@@ -71,11 +78,15 @@ async function arrive(page: Page, mode: Mode, lancement: boolean) {
   if (mode === 'ami') await expect(page.getByRole('heading', { level: 2, name: 'Défier un ami' })).toBeVisible();
 }
 
-test('chaque mode en 1 toucher depuis l’accueil, sans défiler (premier lancement, débutant, confirmé)', async ({ browser, baseURL }) => {
-  test.setTimeout(120_000);
-  for (const [qui, stockage, principal] of [['premier lancement après la première pierre', NOUVEAU, 'ordi'], ['débutant', DEBUTANT, 'en_ligne'], ['confirmé', CONFIRME, 'en_ligne']] as const) {
+test('chaque mode en 1 toucher depuis l’accueil, sans défiler (premier lancement, débutant, confirmé ; sous le seuil et au seuil)', async ({ browser, baseURL }) => {
+  test.setTimeout(240_000);
+  for (const [qui, stockage, joueurs, principal] of [
+    ['premier lancement après la première pierre', NOUVEAU, 0, 'ordi'], ['premier lancement, du monde en ligne', NOUVEAU, 10, 'ordi'],
+    ['débutant, personne en ligne', DEBUTANT, 0, 'ordi'], ['débutant, du monde en ligne', DEBUTANT, SEUIL, 'en_ligne'],
+    ['confirmé, personne en ligne', CONFIRME, 0, 'ordi'], ['confirmé, du monde en ligne', CONFIRME, SEUIL, 'en_ligne'],
+  ] as const) {
     for (const mode of ['ordi', 'en_ligne', 'ami', 'deux'] as const) {
-      const page = await telephone(browser, baseURL, stockage);
+      const page = await telephone(browser, baseURL, stockage, { joueurs });
       await expect(page.locator('.cta'), qui).toHaveAttribute('data-mode', principal);
       // Rangée des modes : visible sans défiler, sous le bouton principal ; pas de « Défier un ami » en double dans l'en-tête.
       for (const id of ['modes', 'mode-deux']) await sansDefiler(page, id);
@@ -113,13 +124,16 @@ test('premier lancement, première pierre posée : « Joue ta première partie �
   await page.context().close();
 });
 
-for (const [qui, stockage, adversaire] of [['débutant', DEBUTANT, 'Pomme'], ['confirmé', CONFIRME, 'Caillou']] as const) test(`${qui} : « Jouer en ligne » en action principale, grade et cote au lancement, l’ordi et l’ami juste à côté`, async ({ browser, baseURL }) => {
-  const page = await telephone(browser, baseURL, stockage);
+for (const [qui, stockage, adversaire] of [['débutant', DEBUTANT, 'Pomme'], ['confirmé', CONFIRME, 'Caillou']] as const) test(`${qui} : au seuil de joueurs en ligne, « Jouer en ligne » en action principale, grade et cote au lancement, l’ordi et l’ami juste à côté`, async ({ browser, baseURL }) => {
+  const page = await telephone(browser, baseURL, stockage, { joueurs: SEUIL });
   const cta = page.locator('.cta');
   await expect(cta).toHaveText('Jouer en ligne');
   await expect(cta).toHaveAccessibleName('Jouer en ligne, partie classée');
   // #613 : à l'ouverture, ni grade, ni cote, ni taille, ni niveau.
-  await expect(page.locator('main')).not.toContainText(/kyu|1500|9 × 9|XP/);
+  // (#695 : le rang de l'adversaire de l'ordi, sous sa bulle, n'est ni le grade ni la cote du joueur.)
+  await expect(page.locator('main')).not.toContainText(/1500|9 × 9|XP/);
+  await expect(cta).not.toContainText(/kyu/);
+  await expect(page.getByTestId('modes')).not.toContainText(/kyu/);
   await expect(page.getByTestId('barre-niveau')).toHaveCount(0);
   // Ils se montrent au lancement de la partie classée, là où ils servent.
   await cta.click();
@@ -145,7 +159,7 @@ for (const [qui, stockage, adversaire] of [['débutant', DEBUTANT, 'Pomme'], ['c
 });
 
 test('sans compte, dès la première partie : « Jouer en ligne » passe par « Crée ton compte », puis reprend', async ({ browser, baseURL }) => {
-  const page = await telephone(browser, baseURL, DEBUTANT, { compte: false });
+  const page = await telephone(browser, baseURL, DEBUTANT, { compte: false, joueurs: SEUIL });
   await expect(page.locator('.cta')).toHaveText('Jouer en ligne');
   await toucherCta(page);
   await expect(page.getByTestId('creer-compte')).toHaveAttribute('data-raison', 'en_ligne');
@@ -161,15 +175,79 @@ test('sans compte, dès la première partie : « Jouer en ligne » passe par « 
   await page.context().close();
 });
 
+for (const [qui, stockage, adversaire] of [['débutant', DEBUTANT, 'Pomme'], ['confirmé', CONFIRME, 'Caillou']] as const) test(`${qui} : personne en ligne, le bouton principal lance l’ordi, sa bulle dit l’état du jour, « En ligne » reste une tuile`, async ({ browser, baseURL }) => {
+  const page = await telephone(browser, baseURL, stockage, { joueurs: 0 });
+  const cta = page.locator('.cta');
+  await expect(cta).toHaveAttribute('data-mode', 'ordi');
+  await expect(cta).toHaveText(new RegExp(`^(Jouer|Rejouer) contre ${adversaire}$`));
+  // L'adversaire et sa bulle sont sous le goban ; la phrase d'état du jour (U2) ne parle ni de partie ni de compte à rebours.
+  await expect(page.locator('.adversaire h2')).toHaveText(adversaire);
+  await expect(page.locator('.adversaire .scene-bulle')).toHaveText(/^(Nouveau Go du jour\.|Série de \d+ jours?\. Un Go du jour et c’est \d+\.|Fait pour aujourd’hui\. À demain\s!)$/);
+  // « En ligne » reste joignable en un toucher, juste dessous, en première tuile.
+  const tuiles = page.getByTestId('modes').getByRole('button');
+  await expect(tuiles).toHaveCount(3);
+  await expect(tuiles.nth(0)).toHaveText('En ligne');
+  await sansDefiler(page, 'mode-en_ligne');
+  await page.getByTestId('mode-en_ligne').click();
+  await expect(page.getByTestId('direct-choix')).toBeVisible();
+  await page.getByRole('button', { name: /^Retour/ }).first().click();
+  // Le bouton principal lance une partie contre l'ordi (feuille de lancement, puis « Jouer »).
+  await toucherCta(page);
+  await expect(plateau(page)).toBeVisible();
+  await page.context().close();
+});
+
+test('le seuil : 3 joueurs en ligne, l’ordi ; 4, « Jouer en ligne » ; la bulle de l’adversaire reste là dans les deux cas', async ({ browser, baseURL }) => {
+  for (const [joueurs, principal] of [[SEUIL - 1, 'ordi'], [SEUIL, 'en_ligne']] as const) {
+    const page = await telephone(browser, baseURL, DEBUTANT, { joueurs });
+    await expect(page.locator('.cta')).toHaveAttribute('data-mode', principal);
+    await expect(page.locator('.adversaire .scene-bulle')).toBeVisible();
+    // Une seule action principale, et le mode qui n'est pas principal est une tuile.
+    await expect(page.locator('.cta')).toHaveCount(1);
+    await expect(page.getByTestId(`mode-${principal === 'ordi' ? 'en_ligne' : 'ordi'}`)).toBeVisible();
+    await expect(page.getByTestId(`mode-${principal}`)).toHaveCount(0);
+    await page.context().close();
+  }
+});
+
+test('compteur sans réponse (erreur du serveur) : on compte moins que le seuil, l’ordi reste principal', async ({ browser, baseURL }) => {
+  const page = await telephone(browser, baseURL, DEBUTANT, { joueurs: null });
+  await expect(page.locator('.cta')).toHaveAttribute('data-mode', 'ordi');
+  await expect(page.getByTestId('mode-en_ligne')).toBeVisible();
+  await page.context().close();
+});
+
+test('le compteur ne demande rien de personnel : un appel sans paramètre, une réponse qui est un nombre', async ({ browser, baseURL }) => {
+  const serveur = fauxServeur();
+  const page = await telephone(browser, baseURL, DEBUTANT, { serveur, joueurs: 7 });
+  await expect(page.locator('.cta')).toHaveAttribute('data-mode', 'en_ligne');
+  const appels = serveur.appels.filter(a => a.includes('/rpc/joueurs_en_ligne'));
+  expect(appels.length).toBeGreaterThan(0);
+  for (const a of appels) expect(a).toMatch(/^POST \/rest\/v1\/rpc\/joueurs_en_ligne$/);
+  await page.context().close();
+});
+
+test('phrase d’état du jour dans la bulle, quel que soit le mode du bouton (U2)', async ({ browser, baseURL }) => {
+  // Go du jour n° 7 (03/10/2026) : la série de 6 jours est en jeu.
+  const stockage = { ...CONFIRME, 'go.go-du-jour.v1': JSON.stringify({ dernier: 6, jours: 6 }), 'go.visite.v1': JSON.stringify({ jour: 6, absence: 0 }) };
+  for (const [joueurs, principal] of [[0, 'ordi'], [SEUIL, 'en_ligne']] as const) {
+    const page = await telephone(browser, baseURL, stockage, { joueurs, maintenant: new Date('2026-10-03T08:10:00+02:00') });
+    await expect(page.locator('.cta')).toHaveAttribute('data-mode', principal);
+    await expect(page.locator('.adversaire .scene-bulle')).toHaveText('Série de 6 jours. Un Go du jour et c’est 7.');
+    await page.context().close();
+  }
+});
+
 for (const [largeur, hauteur] of [[320, 568], [390, 844]] as const) {
-  for (const sombre of [false, true]) {
-    test(`rangée des modes en ${largeur} × ${hauteur} (${sombre ? 'sombre' : 'clair'}) : sans défilement horizontal, cibles de 44 px, bouton au-dessus de la barre`, async ({ browser, baseURL }) => {
-      const page = await telephone(browser, baseURL, CONFIRME, { largeur, hauteur, sombre });
+  for (const [sombre, joueurs] of [[false, 0], [true, 0], [false, SEUIL], [true, SEUIL]] as const) {
+    test(`rangée des modes en ${largeur} × ${hauteur} (${sombre ? 'sombre' : 'clair'}, ${joueurs ? 'du monde en ligne' : 'personne en ligne'}) : sans défilement horizontal, cibles de 44 px, bouton au-dessus de la barre`, async ({ browser, baseURL }) => {
+      const page = await telephone(browser, baseURL, CONFIRME, { largeur, hauteur, sombre, joueurs });
+      await expect(page.locator('.cta')).toHaveAttribute('data-mode', joueurs ? 'en_ligne' : 'ordi');
       const m = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, vue: innerWidth }));
       expect(m.scroll).toBeLessThanOrEqual(m.vue);
       const [cta, nav] = await Promise.all([page.locator('.cta').boundingBox(), page.getByRole('navigation').boundingBox()]);
       expect(cta!.y + cta!.height).toBeLessThanOrEqual(nav!.y + 1);
-      for (const id of ['mode-ordi', 'mode-ami', 'mode-deux']) await sansDefiler(page, id);
+      for (const id of [joueurs ? 'mode-ordi' : 'mode-en_ligne', 'mode-ami', 'mode-deux']) await sansDefiler(page, id);
       await page.context().close();
     });
   }

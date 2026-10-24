@@ -8,7 +8,7 @@ import { ACQUIS } from '../src/content/acquis';
 // Positions et réponses prouvées par src/go/lecons-27-30.test.ts (preuves KataGo figées).
 // Captures : seulement si CAPTURES_LECONS_27_30 donne un dossier (aucune capture versionnée).
 
-const norm = (s: string) => s.replace(/[\u00A0\u202F\s]+/g, ' ').trim();
+const norm = (s: string) => s.replace(/[\u00A0\u202F\s]+/g, ' ').replace(/(?<=\p{L})'(?=\p{L})/gu, '’').trim();
 const L27 = LESSONS_FR.find(l => l.id === 'l27')!;
 const etape = <K extends LessonStep['kind']>(i: number) => L27.steps[i] as Extract<LessonStep, { kind: K }>;
 const numero = (id: string) => LESSONS_FR.findIndex(l => l.id === id) + 1;

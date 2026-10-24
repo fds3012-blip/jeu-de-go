@@ -141,7 +141,21 @@ test('« S’entraîner sur ce thème » (Ouverture) : 3 problèmes même après
   await expect(page.locator('.verdict')).toBeVisible();
   await page.locator('.verdict').getByRole('button', { name: 'Retour au thème' }).click();
   await expect(page.getByRole('heading', { level: 2, name: 'Ouverture' })).toBeVisible();
-  // 2e lancement : x04 (vu) et x05, x06 (réussis) passent après les autres ; la série ne recommence pas par x04.
+  // 2e lancement : x04 (vu), x05 et x06 (réussis) ne reviennent pas sans le dire (#694) : seuls x07 et x08 sont neufs.
   await page.getByRole('button', { name: 'S’entraîner sur ce thème' }).click();
-  await expect(serie).toHaveAttribute('data-serie', 'x07 x08 x05');
+  await expect(serie).toHaveAttribute('data-serie', 'x07 x08');
+});
+
+// #694 (QA bug 4) : Compter n'a que 3 problèmes. Une fois faits, le thème le dit au lieu de les reproposer en boucle.
+test('« S’entraîner sur ce thème » (Compter) : thème épuisé, dit clairement, puis révision au choix', async ({ page }) => {
+  await page.addInitScript(() => { localStorage.setItem('go.problemes.v1', JSON.stringify({ w07: true, w08: true, w09: true })); });
+  await apprendre(page, {});
+  const carte = page.getByTestId('par-theme').getByRole('button', { name: /^Compter,/ });
+  await carte.scrollIntoViewIfNeeded();
+  await carte.click();
+  await page.getByRole('button', { name: 'S’entraîner sur ce thème' }).click();
+  await expect(page.locator('[data-theme-epuise]')).toContainText('Tu as fait tous les problèmes de ce thème. Reviens plus tard ou essaie un autre thème.');
+  await expect(page.locator('.serie-pratique')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Les refaire pour réviser' }).click();
+  await expect(page.locator('.serie-pratique')).toHaveAttribute('data-serie', /^w0[789] w0[789] w0[789]$/);
 });
