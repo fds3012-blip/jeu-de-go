@@ -48,8 +48,10 @@ const couleur = (c: 'B' | 'W') => (c === 'B' ? 1 : 2) as 1 | 2;
  * Geste de l'élève dans une démonstration (#198) : l'image attend qu'il agisse, puis la suite se joue.
  * - `pose` : l'élève pose lui-même la pierre de ce temps de la démonstration (toujours une pierre noire) ;
  * - `touche` : l'élève touche l'un de ces points (une pierre, un œil…) avant que la démonstration commence ; `no` l'aide s'il se trompe.
+ *   `apres` (#710) : la démonstration se joue d'abord en entier (libertés qui s'allument, territoire qui se colorie), puis
+ *   l'élève touche ; `demande` est alors ce que dit Mochi une fois la démonstration finie (expliquer, puis demander).
  */
-export type Geste = { pose: string } | { touche: string[]; no: string };
+export type Geste = { pose: string } | { touche: string[]; no: string; apres?: boolean; demande?: string };
 
 /** Suite des images d'une démonstration. L'image 0 est la position de départ. Lève une erreur sur un coup illégal. */
 export function imagesDemo(rows: string[], demo: DemoTemps[], avant: DemoTemps[] = []): DemoImage[] {

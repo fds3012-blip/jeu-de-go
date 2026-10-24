@@ -1,7 +1,7 @@
 // #523 : preuve de l'introduction des règles (src/content/introRegles.ts). Chaque position est rejouée avec le moteur
 // de règles : libertés, captures, suicide interdit, ko interdit, score. Chaque chiffre et chaque coordonnée écrits dans
 // les phrases (français et anglais) sont recalculés ici : changer une position sans changer sa phrase fait échouer ce test.
-import { etapesIntro, KOMI_INTRO, LIBERTES_D4, leconIntro, NOTIONS, POSITIONS, PRISONNIERS, TERRITOIRE_NOIR } from '../content/introRegles';
+import { etapesIntro, KOMI_INTRO, LIBERTES_D4, leconIntro, motsIntro, NOTIONS, POSITIONS, PRISONNIERS, TERRITOIRE_NOIR } from '../content/introRegles';
 import { imageDuGeste, imagesDemo } from '../content/demo';
 import { traduire, type Cle } from '../content/i18n/secondaires';
 import { KOMI_NORMAL } from '../app/equilibrage';
@@ -38,12 +38,43 @@ describe('introduction des règles : forme', () => {
     }
   });
 
-  it('version express : mêmes positions, mêmes gestes et mêmes réponses ; consignes plus courtes', () => {
+  /** Une étape sans ses phrases d'écran (avant, demande, après) : ce qui doit être identique dans les deux versions. */
+  const sansPhrases = (s: ReturnType<typeof etapesIntro>[number]) => {
+    const { text: _t, ...r } = s as typeof s & { fait?: string };
+    delete (r as { fait?: string }).fait;
+    if (r.kind === 'info' && r.geste && 'touche' in r.geste) r.geste = { ...r.geste, demande: '' };
+    return r;
+  };
+
+  it('version express : mêmes positions, mêmes gestes et mêmes réponses ; phrases plus courtes', () => {
     const c = etapesIntro('complete'), x = etapesIntro('express');
     for (let i = 0; i < 8; i++) {
-      expect({ ...x[i], text: '' }).toEqual({ ...c[i], text: '' });
+      expect(sansPhrases(x[i])).toEqual(sansPhrases(c[i]));
       expect(x[i].text.length, x[i].text).toBeLessThan(c[i].text.length);
+      if (c[i].kind === 'info') {
+        const [ci, xi] = [c[i], x[i]] as [typeof c[number] & { kind: 'info' }, typeof c[number] & { kind: 'info' }];
+        expect(xi.fait!.length, xi.fait).toBeLessThan(ci.fait!.length);
+        if (ci.geste && 'demande' in ci.geste) expect((xi.geste as { demande: string }).demande.length).toBeLessThan(ci.geste.demande!.length);
+      }
     }
+  });
+
+  it('la pose se dit en une ou deux touches selon « Confirmer au doigt » (#710)', () => {
+    const [deux, une] = [etapesIntro('complete', true)[0], etapesIntro('complete', false)[0]];
+    expect(deux.text).toMatch(/touche-le encore/);
+    expect(une.text).not.toMatch(/encore/);
+    expect(etapesIntro('express', true)[0].text).toMatch(/encore/);
+    expect(etapesIntro('express', false)[0].text).not.toMatch(/encore/);
+  });
+
+  it('chaque écran a un mot du go, tous différents, dans les deux langues (#710)', () => {
+    const mots = motsIntro();
+    expect(mots).toHaveLength(8);
+    expect(new Set(mots).size).toBe(8);
+    for (const m of mots) expect(m.trim().length).toBeGreaterThan(0);
+    expect(mots.slice(0, 4)).toEqual(['Tour de jeu', 'Liberté', 'Capture', 'Atari']);
+    for (const l of ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']) expect(en(`intro.${l}.mot`)).toMatch(/\w/);
+    expect(en('intro.b.mot')).toBe('Liberty');
   });
 
   it('les démonstrations se jouent et chaque geste attend sur la bonne image', () => {
@@ -83,6 +114,9 @@ describe('introduction des règles : chaque position prouvée par le moteur', ()
     expect(libs(pos, 'D4')).toEqual(['D3']);
     const captures = coupsLegaux(pos).filter(c => c.r.captures[1] > 0).map(c => c.l);
     expect(captures).toEqual(['D3']);
+    // #710 : le point vert montré avant la demande est cette dernière liberté (et rien d'autre).
+    const etape = etapesIntro('complete')[2];
+    expect(etape.kind === 'move' && etape.libs).toEqual(['D3']);
     const apres = ok(play(pos, at('D3')));
     expect(apres.board[at('D4')]).toBe(0);
     expect(apres.captures[1]).toBe(1);
@@ -182,12 +216,70 @@ describe('introduction des règles : chaque phrase dit ce que le moteur calcule'
 
     it(`${l} : le vocabulaire du go est expliqué la première fois (libertés, atari, prisonnier, ko, territoire, komi)`, () => {
       expect(tr('intro.b.texte')).toMatch(l === 'fr' ? /libertés/ : /liberties/);
+      expect(tr('intro.b.demande')).toMatch(l === 'fr' ? /libertés sont les croisements vides collés à une pierre/ : /Liberties are the empty intersections touching a stone/);
       expect(tr('intro.c.ok')).toMatch(l === 'fr' ? /prisonnier/ : /prisoner/);
       expect(tr('intro.d.texte')).toMatch(/atari/);
       expect(tr('intro.f.texte')).toMatch(/ko/);
       expect(tr('intro.g.texte')).toMatch(l === 'fr' ? /territoire/ : /territory/);
+      expect(tr('intro.g.demande')).toMatch(l === 'fr' ? /sont ton territoire/ : /are your territory/);
       // Le komi : combien, à qui, pourquoi.
       expect(tr('intro.h.texte')).toMatch(l === 'fr' ? /komi, car Noir a commencé/ : /komi because Black went first/);
     });
   }
+});
+
+describe('introduction des règles : la bulle décrit toujours l’écran (#710)', () => {
+  const sentences = (x: string) => x.split(/(?<=[.!?])\s+(?=\p{Lu})/u).length;
+  const infos = () => etapesIntro('complete').flatMap(s => (s.kind === 'info' ? [s] : []));
+
+  for (const [l, tr] of [['fr', fr], ['en', en]] as const) {
+    it(`${l} : après le geste, aucune consigne périmée (point vert, « touche », « pose »)`, () => {
+      const peremptoire = l === 'fr' ? /point vert|touche|pose |joue sur/i : /green point|tap|place your|play on/i;
+      for (const cle of ['a', 'b', 'f', 'g']) {
+        for (const suffixe of ['fait', 'faitCourt']) expect(tr(`intro.${cle}.${suffixe}`), `${cle}.${suffixe}`).not.toMatch(peremptoire);
+      }
+    });
+
+    it(`${l} : deux phrases au plus par bulle sur les sept écrans de geste (épure E5)`, () => {
+      for (const cle of ['a', 'b', 'c', 'd', 'e', 'f', 'g']) {
+        for (const suffixe of ['texte', 'texteDirect', 'court', 'courtDirect', 'fait', 'faitCourt', 'demande', 'demandeCourt', 'ok', 'no', 'refus']) {
+          let phrase: string;
+          try { phrase = tr(`intro.${cle}.${suffixe}`); } catch { continue; }
+          if (!phrase || phrase.startsWith('intro.')) continue;
+          expect(sentences(phrase), `${cle}.${suffixe} : ${phrase}`).toBeLessThanOrEqual(2);
+        }
+      }
+    });
+
+    it(`${l} : la pose et la sauvegarde disent ce que le moteur calcule (ko en D4, 14 points blancs, 4 libertés)`, () => {
+      expect(tr('intro.f.fait')).toContain('D4');
+      expect(tr('intro.f.faitCourt')).toContain('D4');
+      const s = score(depart(POSITIONS.fin), 0, 'japanese');
+      expect(tr('intro.g.fait')).toContain(String(s.territory[2]));
+      expect(tr('intro.b.demande')).toContain(String(LIBERTES_D4.length));
+      expect(tr('intro.b.demandeCourt')).toContain(String(LIBERTES_D4.length));
+    });
+
+    it(`${l} : le pointeur du bouton existe avec son libellé`, () => {
+      expect(tr('intro.suite', { bouton: l === 'fr' ? 'Continuer' : 'Continue' })).toContain(l === 'fr' ? 'Continuer' : 'Continue');
+    });
+  }
+
+  it('chaque écran de geste a sa phrase « après », et la demande après démonstration a sa phrase « à toi »', () => {
+    for (const s of infos()) {
+      expect(s.fait, s.text).toBeTruthy();
+      expect(s.fait).not.toBe(s.text);
+      if (s.geste && 'touche' in s.geste && s.geste.apres) {
+        expect(s.geste.demande, s.text).toBeTruthy();
+        expect(s.geste.demande).not.toBe(s.text);
+        // La démonstration finie montre bien ce qu'on demande de toucher.
+        expect(imagesDemo(s.rows, s.demo!).length).toBeGreaterThan(1);
+      }
+    }
+  });
+
+  it('les libertés et le territoire se montrent avant d’être demandés : le geste attend la fin de la démonstration', () => {
+    const [b, g] = [etapesIntro('complete')[1], etapesIntro('complete')[6]];
+    for (const e of [b, g]) expect(e.kind === 'info' && e.geste && 'touche' in e.geste && e.geste.apres).toBe(true);
+  });
 });

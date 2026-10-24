@@ -1,6 +1,6 @@
 // Introduction interactive des règles (#523), chargée à la demande (src/app/ecrans.ts) : rien dans le JS initial.
 //
-// 8 écrans très courts, joués par le lecteur des leçons (src/app/Lecon.tsx, même moteur d'étapes, mêmes styles), puis
+// 8 écrans très courts (v2 #710 : expliquer, puis faire ; la bulle décrit toujours l'écran ; un mot du go par écran), joués par le lecteur des leçons (src/app/Lecon.tsx, même moteur d'étapes, mêmes styles), puis
 // un écran de fin qui n'a qu'une action principale :
 // - version complète (« Jamais joué », « Revoir les règles ») : « Partie de découverte avec Mochi » (#677, A9) ;
 // - version express (« Un peu ») : chaque écran se passe d'un toucher « Je sais » ; à la fin, « Partie de découverte avec
@@ -12,7 +12,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { LessonPlayer } from './Lecon';
 import { Retour } from '../ui/Lecteur';
-import { leconIntro } from '../content/introRegles';
+import { leconIntro, motsIntro } from '../content/introRegles';
 import type { DepuisIntro, VersionIntro } from './connaitGo';
 import { PortraitMochi } from '../ui/Portrait';
 import { fr } from '../ui/typo';
@@ -33,7 +33,9 @@ interface Props {
 }
 
 export function IntroRegles({ version, depuis, confirmTouch, onDecouverte, contre, onQuitter }: Props) {
-  const lecon = useMemo(() => leconIntro(version), [version]);
+  // Écran de la pose : « touche, puis touche encore » seulement si « Confirmer au doigt » est actif (#710).
+  const lecon = useMemo(() => leconIntro(version, confirmTouch), [version, confirmTouch]);
+  const mots = useMemo(motsIntro, []);
   const [fini, setFini] = useState(false);
   const etape = useRef(0);
   const express = version === 'express';
@@ -49,6 +51,7 @@ export function IntroRegles({ version, depuis, confirmTouch, onDecouverte, contr
         retour: t('intro.quitter'),
         terminer: t('intro.terminer'),
         passer: express ? { libelle: t('intro.jeSais'), aria: t('intro.jeSaisAria') } : undefined,
+        mots,
         onEtape: i => { etape.current = i; track(EVENTS.introReglesEtape, { ...mesure, index: i + 1 }); },
         onFin: passees => { track(EVENTS.introReglesFinie, { ...mesure, passees }); setFini(true); window.scrollTo({ top: 0 }); },
       }} />

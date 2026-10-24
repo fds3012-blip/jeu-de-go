@@ -1,5 +1,5 @@
-// Introduction interactive des règles (#523) : 8 écrans très courts sur un petit plateau (7 × 7), un geste et une phrase
-// chacun. Même format d'étapes que les leçons (content/lessons.fr.js), joué par le même lecteur (src/app/Lecon.tsx) :
+// Introduction interactive des règles (#523, v2 #710) : 8 écrans très courts sur un petit plateau (7 × 7), un geste et une phrase
+// chacun (l'écran se décrit toujours tel qu'il est : avant, à toi, après). Même format d'étapes que les leçons (content/lessons.fr.js), joué par le même lecteur (src/app/Lecon.tsx) :
 // pas de nouveau moteur. Textes : clés `intro.*` de src/content/i18n (français et anglais).
 //
 // RÈGLE D'OR : chaque position, chaque geste accepté, chaque refus et chaque chiffre des phrases est rejoué avec le moteur
@@ -37,37 +37,52 @@ export const KOMI_INTRO = 6.5;
 
 /** Notions, dans l'ordre des écrans : leur clé de texte est `intro.<lettre>.*`. */
 export const NOTIONS = ['poser', 'libertes', 'capturer', 'atari', 'suicide', 'ko', 'territoire', 'fin'] as const;
-type Lettre = 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g' | 'h';
+const LETTRES = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'] as const;
+type Lettre = typeof LETTRES[number];
 
 /** Texte d'une clé `intro.*` (toutes sans variable). */
 const texte = (cle: string) => (t as unknown as (c: string) => string)(cle);
 
+/** Le mot du go que chaque écran enseigne (#710), en étiquette au-dessus de Mochi : `intro.<lettre>.mot`. */
+export const motsIntro = (): string[] => LETTRES.map(l => texte(`intro.${l}.mot`));
+
 /**
- * Étapes de l'introduction. Version express (« Un peu ») : mêmes positions et mêmes gestes, consignes plus courtes ;
+ * Étapes de l'introduction. Version express (« Un peu ») : mêmes positions et mêmes gestes, phrases plus courtes ;
  * chaque écran se passe aussi d'un toucher « Je sais » (src/app/IntroRegles.tsx).
+ *
+ * Principe (#710) : expliquer, puis faire, et la bulle décrit toujours l'écran tel qu'il est.
+ * - `text` : avant le geste ; `demande` (geste `apres`) : une fois la démonstration finie, la demande ; `fait` : une fois
+ *   le geste réussi. Un `fait` ne reprend jamais la consigne d'avant (src/go/introRegles.test.ts).
+ * - `confirmer` : « Confirmer au doigt » est actif, la pose se fait en deux touches ; l'écran de la pose le dit.
  */
-export function etapesIntro(version: VersionIntro): LessonStep[] {
-  const consigne = (l: Lettre) => texte(`intro.${l}.${version === 'express' ? 'court' : 'texte'}`);
+export function etapesIntro(version: VersionIntro, confirmer = true): LessonStep[] {
+  const express = version === 'express';
+  /** `texte` / `court`, `fait` / `faitCourt`, `demande` / `demandeCourt`. */
+  const dit = (l: Lettre, champ: 'texte' | 'fait' | 'demande') =>
+    texte(`intro.${l}.${express ? (champ === 'texte' ? 'court' : `${champ}Court`) : champ}`);
+  const pose = texte(`intro.a.${express ? 'court' : 'texte'}${confirmer ? '' : 'Direct'}`);
   return [
-    { kind: 'info', rows: POSITIONS.poser, demo: [{ pose: 'D4', couleur: 'B' }, { pose: 'E5', couleur: 'W' }], geste: { pose: 'D4' }, text: consigne('a') },
-    { kind: 'info', rows: POSITIONS.libertes, demo: [{ libs: 'D4' }], geste: { touche: LIBERTES_D4, no: texte('intro.b.no') }, text: consigne('b') },
-    { kind: 'move', rows: POSITIONS.capturer, accept: ['D3'], text: consigne('c'), ok: texte('intro.c.ok'), no: texte('intro.c.no') },
-    { kind: 'move', rows: POSITIONS.atari, accept: ['D3'], text: consigne('d'), ok: texte('intro.d.ok'), no: texte('intro.d.no') },
-    { kind: 'move', rows: POSITIONS.suicide, accept: ['G5'], text: consigne('e'), ok: texte('intro.e.ok'), no: texte('intro.e.no'),
+    { kind: 'info', rows: POSITIONS.poser, demo: [{ pose: 'D4', couleur: 'B' }, { pose: 'E5', couleur: 'W' }], geste: { pose: 'D4' }, text: pose, fait: dit('a', 'fait') },
+    { kind: 'info', rows: POSITIONS.libertes, demo: [{ libs: 'D4' }],
+      geste: { touche: LIBERTES_D4, no: texte('intro.b.no'), apres: true, demande: dit('b', 'demande') }, text: dit('b', 'texte'), fait: dit('b', 'fait') },
+    { kind: 'move', rows: POSITIONS.capturer, accept: ['D3'], libs: ['D3'], text: dit('c', 'texte'), ok: texte('intro.c.ok'), no: texte('intro.c.no') },
+    { kind: 'move', rows: POSITIONS.atari, accept: ['D3'], text: dit('d', 'texte'), ok: texte('intro.d.ok'), no: texte('intro.d.no') },
+    { kind: 'move', rows: POSITIONS.suicide, accept: ['G5'], text: dit('e', 'texte'), ok: texte('intro.e.ok'), no: texte('intro.e.no'),
       refus: [{ points: ['A1'], no: texte('intro.e.refus') }] },
-    { kind: 'info', rows: POSITIONS.ko, demo: [{ pose: 'C4', couleur: 'B' }, { interdit: 'D4', couleur: 'W' }], geste: { pose: 'C4' }, text: consigne('f') },
-    { kind: 'info', rows: POSITIONS.fin, demo: [{ terr: 'B' }], geste: { touche: TERRITOIRE_NOIR, no: texte('intro.g.no') }, text: consigne('g') },
+    { kind: 'info', rows: POSITIONS.ko, demo: [{ pose: 'C4', couleur: 'B' }, { interdit: 'D4', couleur: 'W' }], geste: { pose: 'C4' }, text: dit('f', 'texte'), fait: dit('f', 'fait') },
+    { kind: 'info', rows: POSITIONS.fin, demo: [{ terr: 'B' }],
+      geste: { touche: TERRITOIRE_NOIR, no: texte('intro.g.no'), apres: true, demande: dit('g', 'demande') }, text: dit('g', 'texte'), fait: dit('g', 'fait') },
     { kind: 'quiz', rows: POSITIONS.fin, terr: true, choices: [texte('intro.h.noir'), texte('intro.h.blanc')], answer: 0,
-      text: consigne('h'), ok: texte('intro.h.ok'), no: texte('intro.h.no') },
+      text: dit('h', 'texte'), ok: texte('intro.h.ok'), no: texte('intro.h.no') },
   ];
 }
 
 /** L'introduction, sous forme de leçon hors du chemin (jouée par le lecteur des leçons). */
-export function leconIntro(version: VersionIntro): Lesson {
+export function leconIntro(version: VersionIntro, confirmer = true): Lesson {
   return {
     id: version === 'express' ? 'intro-express' : 'intro-regles',
     title: texte(version === 'express' ? 'intro.titreExpress' : 'intro.titre'),
     desc: '',
-    steps: etapesIntro(version),
+    steps: etapesIntro(version, confirmer),
   };
 }

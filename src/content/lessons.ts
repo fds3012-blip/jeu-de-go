@@ -17,7 +17,8 @@ export type LessonStep = Plateau & (
   /** `demo` (issue #101) : temps joués un par un, animés, depuis `rows`. Sans ce champ, l'image est immobile. */
   /** `avant` : temps déjà vus à l'étape précédente, rejoués sans image (pour garder par exemple le point de ko). */
   /** `geste` (#198) : la démonstration attend que l'élève pose la pierre ou touche le point, puis se joue. */
-  | { kind: 'info'; rows: string[]; libs?: string[]; demo?: DemoTemps[]; avant?: DemoTemps[]; geste?: Geste; text: string }
+  /** `fait` (#710) : ce que dit Mochi dès que le geste est réussi (jamais la consigne d'avant) ; sans lui, le texte ne change pas. */
+  | { kind: 'info'; rows: string[]; libs?: string[]; demo?: DemoTemps[]; avant?: DemoTemps[]; geste?: Geste; text: string; fait?: string }
   /** `libs` : aide de l'étape « on fait ensemble », les libertés de la pierre marquée sont montrées. */
   /** `aide` (#177) : points verts de l'étape « on fait ensemble » qui ne sont pas des libertés (ex. le trou d'une frontière). */
   /** `refus` (#228) : réfutations des erreurs courantes ; le premier ensemble qui contient le coup donne son explication. */

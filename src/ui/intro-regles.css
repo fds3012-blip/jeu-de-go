@@ -3,3 +3,31 @@
 .fin-intro .fin-gue { --pas: 34px; }
 .fin-intro .fin-gue i { width: 28px; height: 28px; }
 .fin-intro .portrait { filter: drop-shadow(0 8px 14px rgba(0, 0, 0, .25)); }
+
+/* #710 : le mot du go de l'écran, juste au-dessus de Mochi (src/app/Lecon.tsx, `parcours.mots`). Une pastille : le mot en gras,
+   « Mot du go » en --muted devant (AA). Muette : rien à toucher, rien ne bouge. */
+.lecteur-lecon > .notion { flex: none; display: flex; align-items: baseline; gap: var(--space-2); align-self: flex-start; margin: 0; padding: 3px 12px;
+  border-radius: 999px; background: color-mix(in srgb, var(--accent) 16%, var(--surface)); font-size: var(--fs-s); line-height: 1.3; }
+.notion span { color: var(--muted); }
+.notion b { color: var(--text); font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: 1.05em; }
+
+/* La bulle dit où toucher ensuite (« Touche Continuer ») ; le bouton le montre : un anneau de jade qui s'allume deux fois
+   (opacité seule : un anneau qui grandirait ferait déborder la colonne). */
+.lecteur-lecon .bulle-corps { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.bulle-suite { color: var(--accent-texte); font-weight: var(--fw-titre); font-size: .95em; }
+.lecteur-lecon .cta-appel { position: relative; left: auto; bottom: auto; }
+.cta-appel::after { content: ''; position: absolute; inset: -4px; border-radius: calc(var(--radius-bouton) + 4px); border: 3px solid var(--accent-trait); opacity: 0; pointer-events: none; }
+@media (prefers-reduced-motion: no-preference) {
+  .cta-appel::after { animation: appel-cta 1100ms ease-in-out 350ms 2 both; }
+}
+@keyframes appel-cta { 0%, 100% { opacity: 0; } 40% { opacity: .95; } }
+
+/* Écran bas (iPhone SE, 320 × 568) : le goban cède déjà de la place ; la pastille et la bulle se serrent pour que rien ne défile. */
+@media (max-height: 640px) {
+  .lecteur-lecon > .notion { padding-block: 1px; margin-top: -4px; }
+  .lecteur-lecon:has(> .notion) .mochi-bulle { padding-block: 6px; }
+  .lecteur-lecon .bulle-corps { gap: 0; }
+  .bulle-suite { line-height: 1.25; }
+  .lecteur-lecon:has(> .notion) > .demo-compteur { font-size: var(--fs-m); line-height: 1.1; }
+  .lecteur-lecon:has(> .notion) > .demo-compteur b { font-size: 1.25rem; }
+}
