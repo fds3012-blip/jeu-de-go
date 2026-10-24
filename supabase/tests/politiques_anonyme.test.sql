@@ -85,13 +85,23 @@ reset role;
 --    revue lu par son seul jeton ; envoyer_retour depuis #537 : retours sans compte, sans rien de l'appelant) ; aucune fonction de cote ou de purge n'est exécutable par authenticated.
 select pg_temp.egal((select bool_and(p.proconfig[1] = 'search_path=""') from pg_proc p
   where p.pronamespace = 'public'::regnamespace and p.prosecdef), true, 'security definer : search_path vide');
+-- Depuis #704 : toutes les fonctions de public (pas seulement les security definer) ; pseudo_formes, assistant interne, est fermée.
 select pg_temp.egal((select string_agg(p.proname, ',' order by p.proname) from pg_proc p
-  where p.pronamespace = 'public'::regnamespace and p.prosecdef
+  where p.pronamespace = 'public'::regnamespace and p.prokind = 'f'
     and has_function_privilege('anon', p.oid, 'execute')), 'apercu_defi,compter_etape,envoyer_retour,joueurs_en_ligne,lire_partage,lire_partie_partagee', 'anon : apercu_defi, compter_etape, envoyer_retour, joueurs_en_ligne, lire_partage et lire_partie_partagee seulement');
 select pg_temp.egal((select bool_or(has_function_privilege('authenticated', p.oid, 'execute')) from pg_proc p
   where p.pronamespace = 'public'::regnamespace
     and p.proname in ('apply_game_rating', 'finish_game_by_score', 'jouer_coup_defi', 'play_move', 'purger_anonymes_inactifs',
                       'reclamer_rappels', 'exiger_compte_avec_pseudo', 'retirer_nom_et_photo')), false, 'fonctions internes fermées');
+select pg_temp.egal((select bool_or(has_function_privilege(r, 'public.pseudo_formes(text)', 'execute')) from unnest(array['anon', 'authenticated']) r),
+  false, '#704 : pseudo_formes fermée à anon et authenticated');
+select pg_temp.egal(has_function_privilege('postgres', 'public.pseudo_formes(text)', 'execute'), true, '#704 : pseudo_formes reste pour le propriétaire');
+-- pseudo_interdit (security definer) l'appelle encore : un pseudo interdit reste refusé, un pseudo ordinaire accepté.
+select pg_temp.egal(public.pseudo_interdit('c0nnard'), true, '#704 : pseudo_interdit appelle toujours pseudo_formes');
+select pg_temp.egal(public.pseudo_interdit('Alice'), false, '#704 : pseudo ordinaire accepté');
+-- Index de présence de joueurs_en_ligne (#695), pour que l'appel anonyme ne lise pas tout l'historique.
+select pg_temp.egal((select count(*) from pg_indexes where schemaname = 'public' and tablename = 'parties_direct'
+  and indexname in ('parties_direct_noir_vu_le', 'parties_direct_blanc_vu_le')), 2::bigint, '#704 : index de présence');
 select pg_temp.egal((select bool_and(relrowsecurity) from pg_class
   where relnamespace = 'public'::regnamespace and relkind = 'r'), true, 'RLS active sur chaque table');
 

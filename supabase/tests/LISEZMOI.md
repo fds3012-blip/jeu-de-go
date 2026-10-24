@@ -98,3 +98,5 @@ Rappel : les fonctions `security definer` appartiennent à `postgres`, qui conto
 Depuis #578, `abonnements_rappel.test.sql` utilise des adresses FCM (`https://fcm.googleapis.com/fcm/send/…`) au lieu de `push.exemple.test`.
 
 Depuis #530, `cote_glicko.test.sql` et `preuve_conditions.test.sql` lisent le départ de la cote et la preuve d'accord du joueur connecté par `mon_profil()` (colonnes privées).
+
+Depuis #704, `politiques_anonyme.test.sql` relève **toutes** les fonctions de `public` exécutables par anon (et plus seulement les `security definer`) : six, dont `joueurs_en_ligne`. `pseudo_formes` (assistant interne de `pseudo_interdit`) est fermée à anon et authenticated, et les deux index de présence de `parties_direct` (coût de `joueurs_en_ligne`) existent.
