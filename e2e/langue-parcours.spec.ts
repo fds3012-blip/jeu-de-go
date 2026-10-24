@@ -38,7 +38,7 @@ function textesProblemes(): string[] {
 const FRANCAIS = /\b(le|la|les|des|du|une|est|et|pour|avec|sans|ton|ta|tes|tu|toi|je|pas|sur|dans|qui|que|mon|mes|au|aux|ce|cette|leçons?|parties?|joue[rsz]?|jouer|problèmes?|coups?|pierres?|réglages|accueil|suivante?|continuer|terminer|revoir|compte|niveau|série|jours?|noir|blanc|retour|partout|encore)\b|[àâçéèêëîïôûùœ]/giu;
 const NOMS = ['Rivière', 'Français'];
 
-const norm = (s: string) => s.replace(/[\u00A0\u202F\s]+/g, ' ').trim();
+const norm = (s: string) => s.replace(/[\u00A0\u202F\s]+/g, ' ').replace(/(?<=\p{L})'(?=\p{L})/gu, '’').trim();
 
 /** Tous les textes de contenu, du plus long au plus court (un titre peut être dans une consigne). */
 const CONTENU: string[] = (() => {

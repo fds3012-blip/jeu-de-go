@@ -72,6 +72,23 @@ test('coup faux : la réponse prouvée de Blanc est jouée et dite ; puis la sol
   expect(sw).toBeLessThanOrEqual(cw);
 });
 
+// Issue #693 (QA bug 2 et 8) : le texte de l'erreur ne parle que du coup joué.
+test('coup faux loin du sujet : pas de texte écrit pour un autre coup, et la prise de deux pierres est dite au pluriel', async ({ page }) => {
+  await ouvrirProblemes(page);
+  await ouvrirTous(page);
+  await page.getByRole('button', { name: /^Problème \d+ : Sauve le plus gros/ }).click();
+  await expect(plateau(page)).toBeVisible();
+  await jouer(page, 'A9');
+  const verdict = page.locator('.verdict');
+  await expect(verdict).toContainText('Pas tout à fait');
+  await expect(verdict).toContainText('Ce n’est pas le bon coup');
+  await expect(verdict).not.toContainText('Tu sauves G2');
+  await expect(verdict.locator('[data-erreur-comprise]')).toContainText('Blanc répond en D4 et prend tes 2 pierres marquées.');
+  // Le coup que décrit le texte (G3 sauve G2, mais pas le groupe le plus gros) garde son texte.
+  await jouer(page, 'G3');
+  await expect(verdict).toContainText('Tu sauves G2, mais Blanc joue D4');
+});
+
 test('maîtrise par thème : la barre se remplit, « Thème suivant » à la maîtrise', async ({ page }) => {
   // Cinq problèmes de capture déjà réussis sur l'appareil : il en manque un pour maîtriser « Capturer ».
   const capture = Object.entries(THEME_DU_PROBLEME).filter(([, t]) => t === 'capture').map(([id]) => id);
@@ -96,11 +113,11 @@ test('maîtrise par thème : la barre se remplit, « Thème suivant » à la ma�
   await jouer(page, r.coups[0], r.taille);
 
   // Maîtrisé : une ligne de fête, « Thème suivant » en relief, « Rester sur Capturer » en lien.
-  await expect(page.locator('.theme-maitrise-fete')).toHaveText('Capturer : thème maîtrisé !');
+  await expect(page.locator('.theme-maitrise-fete')).toHaveText('Capture : thème maîtrisé !');
   const versSuivant = page.locator('.verdict').getByRole('button', { name: 'Thème suivant : Sauver' });
   await expect(versSuivant).toHaveClass(/\bcta\b/);
   await expect(page.locator('.verdict .cta')).toHaveCount(1);
-  await expect(page.locator('.verdict').getByRole('button', { name: 'Rester sur Capturer' })).toBeVisible();
+  await expect(page.locator('.verdict').getByRole('button', { name: 'Rester sur Capture' })).toBeVisible();
   await versSuivant.click();
   await expect(page.locator('.lecteur .lecteur-nom small').first()).toContainText('Sauver');
 

@@ -8,7 +8,7 @@ import { lireOuverture } from '../src/go/ouvertures';
 // Issue #591 : le répertoire d'ouvertures, ouvert depuis Apprendre à 390 × 844 : la liste par taille, une entrée jouée
 // coup par coup (avancer, reculer), puis l'erreur courante et son coût. Preuves KataGo : src/go/ouvertures.test.ts.
 
-const norm = (s: string) => s.replace(/[\u00a0\u202f\s]+/g, ' ').trim();
+const norm = (s: string) => s.replace(/[\u00a0\u202f\s]+/g, ' ').replace(/(?<=\p{L})'(?=\p{L})/gu, '’').trim();
 const FR = CATALOGUE_OUVERTURES.fr;
 const T = (k: string) => norm(FR[k as CleOuvertures]);
 
