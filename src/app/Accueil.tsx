@@ -6,7 +6,9 @@
 // chose à faire (défi où c'est ton tour, Go du jour à faire, leçon suivante ; src/app/aujourdhui.ts).
 // #429 : tous les modes de jeu en 1 toucher : une rangée de tuiles sous le bouton (src/app/modes.ts). #647 : la partie
 // de découverte vit dans Apprendre ; L'ordi (ou En ligne), Un ami et À deux tiennent seuls, sans feuille « Plus ».
-// #432 : la partie en ligne classée en action principale dès le début (cote et grade visibles) ; l'ordi est une tuile.
+// #432 : la partie en ligne classée en action principale (cote et grade visibles) ; l'ordi est une tuile. #695 (révise #432) :
+// l'ordi reste l'action principale tant qu'il y a moins de 4 joueurs en ligne (src/app/modes.ts), et l'adversaire parle
+// dans les deux cas : sa bulle dit l'état du jour.
 // #487 : avant la toute première pierre posée (`epure`, src/app/premierePierre.ts), ni tuiles de modes ni cartes
 // secondaires : la promesse, le goban, l'adversaire, le bouton et « Je sais déjà jouer ». Tout revient dès la première pierre.
 // #509 (L4) : le mot « kyu » expliqué dans la feuille « Ton adversaire », là où l'on choisit un adversaire par son grade.
@@ -177,9 +179,10 @@ export function Accueil(p: Props) {
           </div>
           <button className="lien" aria-haspopup="dialog" aria-expanded={p.lancement === 'ordi'} onClick={() => p.setLancement('ordi')}>{t('accueil.changer')}</button>
         </div>
-      ) : enLigne ? null : (
-        // L'adversaire parle sous le plateau : sa bulle ne cache plus aucune ligne. #613 : en ligne, rien entre le goban
-        // et le bouton : le grade et la cote attendent l'écran de lancement de la partie classée.
+      ) : (
+        // L'adversaire parle sous le plateau : sa bulle ne cache plus aucune ligne. #695 : quel que soit le mode du bouton,
+        // elle dit l'état du jour (série en jeu, nouveau Go du jour, fait) ; le grade et la cote attendent l'écran de
+        // lancement de la partie classée (#613).
         <div className="adversaire">
           <Portrait id={adv.id} taille={48} decoratif signature={false} />
           <div className="adversaire-texte">
