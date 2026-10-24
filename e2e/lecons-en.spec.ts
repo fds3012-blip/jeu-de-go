@@ -10,7 +10,7 @@ import { LESSONS_FR, localiser, type LessonStep } from '../src/content/lessons';
 const FR = LESSONS_FR[0];
 const EN = localiser(FR, 'en');
 const coup = EN.steps[3] as Extract<LessonStep, { kind: 'move' }>;
-const norm = (s: string) => s.replace(/[\u00A0\u202F\s]+/g, ' ').trim();
+const norm = (s: string) => s.replace(/[\u00A0\u202F\s]+/g, ' ').replace(/(?<=\p{L})'(?=\p{L})/gu, '’').trim();
 
 /** Aucun défilement horizontal, et la bulle de Mochi tient dans sa largeur. */
 async function sansDebordement(page: Page, ecran: string) {

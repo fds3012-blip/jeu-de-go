@@ -334,7 +334,9 @@ function phraseSauver(apres: Position, m: number, cibles: readonly number[], moi
   const couleur = nomCouleur(adv), point = toLabel(m, apres.size);
   // #558 : la prise ouvre un ko (le moteur l'a noté) : le fait est dit, et la règle (une menace pour reprendre).
   if (prise(apres, cibles, moi) && apres.ko !== -1) return t('erreur.ko.prise', { couleur, point });
-  return t(prise(apres, cibles, moi) ? 'erreur.sauver.prise' : 'erreur.sauver.perdue', { couleur, point });
+  // Pluriel (#693) : le nombre de pierres marquées prises, pas toujours une.
+  if (prise(apres, cibles, moi)) return t('erreur.sauver.prise', { couleur, point, n: cibles.filter(c => apres.board[c] !== moi).length });
+  return t('erreur.sauver.perdue', { couleur, point });
 }
 
 function phrasePrendre(avant: Position, apres: Position, m: number, cibles: readonly number[], adv: Color, sien = false): string {
