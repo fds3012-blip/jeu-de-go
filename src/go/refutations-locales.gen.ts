@@ -8,7 +8,7 @@
 // coup : t dans ton territoire, l chez lui, n dame, m pierre déjà morte prise ; « E3k » : la réplique prend un ko (sans
 // menace, tu y perds ; la phrase ne dit que le fait). Vide : rien de prouvé.
 // prettier-ignore
-export const EMPREINTE = 'd96164bb0eecf418';
+export const EMPREINTE = '7d22557023e8681e';
 export type ButCode = 'vivre' | 'tuer' | 'course' | 'prendre' | 'sauver' | 'fin' | 'aucun';
 export interface RefutationsLocales { but: ButCode; cible?: string; a?: string; b?: string; defaut: string; sauf?: Readonly<Record<string, string>> }
 export const REFUTATIONS_LOCALES: Readonly<Record<string, RefutationsLocales>> = {
@@ -52,12 +52,14 @@ export const REFUTATIONS_LOCALES: Readonly<Record<string, RefutationsLocales>> =
   y04: { but: 'fin', defaut: 'H6f3l', sauf: { A9: 'H6f3t', B9: 'H6f3t', C9: 'H6f3t', D9: 'H6f3t', F9: 'H6f3t', G9: 'H6f3t', H9: 'H6f3t', J9: 'H6f3t', A8: 'H6f3t', B8: 'H6f3t', C8: 'H6f3t', E8: 'H6f3', E7: 'H6f2', H5: 'H6f2', J5: 'H6f2' } },
   j06: { but: 'tuer', cible: 'B3', defaut: 'D3v' },
   aa01: { but: 'fin', defaut: 'E3k' },
+  ac01: { but: 'fin', defaut: 'E8f2t', sauf: { H9: 'E8f2l', J9: 'E8f2l', F8: 'E8f2', H8: 'E8f2l', J8: 'E8f2l', F6: 'E8f2l', G6: 'E8f2l', H6: 'E8f2l', J6: 'E8f2l', G4: 'E8f2l', H4: 'E8f2l', J4: 'E8f2l', H3: 'E8f2l', J3: 'E8f2l' } },
   d07: { but: 'prendre', defaut: 'D3p', sauf: { D3: 'D2p' } },
   q03: { but: 'tuer', cible: 'B2', defaut: 'G1v', sauf: { E1: 'D1v' } },
   j07: { but: 'vivre', cible: 'B2', defaut: 'E1m', sauf: { D1: 'B1m' } },
   j08: { but: 'tuer', cible: 'B2', defaut: 'G1v' },
   o10: { but: 'prendre', defaut: 'C1p', sauf: { C1: 'F1p', E1: 'F1p' } },
   aa03: { but: 'fin', defaut: 'D1f3l', sauf: { A9: 'D1f3t', B9: 'D1f3t', E9: 'D1f2n', A8: 'D1f3t', B8: 'D1f3t', D8: 'D1f2n', A7: 'D1f3t', B7: 'D1f3t', C7: 'D1f3t', A6: 'D1f3t', B6: 'D1f3t', C6: 'D1f3t', A5: 'D1f3t', B5: 'D1f3t', C5: 'D1f3t', A4: 'D1f3t', B4: 'D1f3t', C4: 'D1f3t', C1: 'E1f2', D1: 'E1f1', F1: 'D1f2', G1: 'D1f2' } },
+  ac02: { but: 'fin', defaut: 'E1f2t', sauf: { A9: 'E1f2l', B9: 'E1f2l', C9: 'E1f2l', A7: 'E1f2l', B7: 'E1f2l', C7: 'E1f2l', A6: 'E1f2l', B6: 'E1f2l', A5: 'E1f2l', B5: 'E1f2l', G5: 'E1f2m', A4: 'E1f2l', B4: 'E1f2l', A3: 'E1f2l', B3: 'E1f2l', C3: 'E1f2l', A1: 'E1f2l', B1: 'E1f2l', D1: 'E1f2' } },
   d08: { but: 'prendre', defaut: 'F9p', sauf: { F9: 'F8p' } },
   f09: { but: 'prendre', defaut: 'B5p' },
   m07: { but: 'tuer', cible: 'C2', defaut: 'B1v' },
@@ -66,17 +68,20 @@ export const REFUTATIONS_LOCALES: Readonly<Record<string, RefutationsLocales>> =
   aa04: { but: 'vivre', cible: 'G9', defaut: 'J7m' },
   aa05: { but: 'vivre', cible: 'H9', defaut: 'J5m', sauf: { J6: 'J5y', H3: '', J2: '' } },
   aa06: { but: 'vivre', cible: 'J3', defaut: 'H1y', sauf: { G2: 'H1m', H2: '', J2: 'H1m', F1: 'H2m', G1: 'H2m', J1: 'H2m' } },
+  ac03: { but: 'fin', defaut: 'F5f2t', sauf: { D5: 'F5f1n', C4: 'F5f1n', F4: 'F5f2', A3: 'F5f2l', H3: 'F5f2l', J3: 'F5f2l', A2: 'F5f2l', C2: 'F5f2l', D2: 'F5f2l', F2: 'F5f2l', H2: 'F5f2l', J2: 'F5f2l', C1: 'F5f2l', D1: 'F5f2l', F1: 'F5f2l', H1: 'F5f2l', J1: 'F5f2l' } },
   d09: { but: 'course', a: 'G2', b: 'H4', defaut: 'E1c', sauf: { J9: '', J7: '', E1: 'G1c' } },
   f10: { but: 'prendre', defaut: 'H5p' },
   j10: { but: 'tuer', cible: 'A3', defaut: 'E1v' },
   r05: { but: 'tuer', cible: 'C2', defaut: 'E1v' },
   j11: { but: 'tuer', cible: 'A3', defaut: 'A1v' },
   aa08: { but: 'vivre', cible: 'B7', defaut: 'C9m' },
+  ac04: { but: 'fin', defaut: 'E1f2t', sauf: { G9: 'E1f2l', H9: 'E1f2l', J9: 'E1f2l', H8: 'E1f2l', J8: 'E1f2l', H7: 'E1f2l', J7: 'E1f2l', F6: 'E1f1n', H5: 'E1f2l', J5: 'E1f2l', E4: 'E1f1n', G4: 'E1f2l', H4: 'E1f2l', J4: 'E1f2l', G3: 'E1f2l', H3: 'E1f2l', J3: 'E1f2l', F1: 'E1f2', H1: 'E1f2l', J1: 'E1f2l' } },
   d10: { but: 'course', a: 'C2', b: 'B4', defaut: 'E2c', sauf: { A9: 'E2p', A7: 'E2p', E2: 'E1c' } },
   f11: { but: 'prendre', defaut: 'B5p' },
   m08: { but: 'tuer', cible: 'E8', defaut: 'C8v' },
   aa09: { but: 'vivre', cible: 'C1', defaut: 'B3m' },
   aa10: { but: 'tuer', cible: 'C2', defaut: 'A3v' },
+  ac05: { but: 'fin', defaut: 'F5f2t', sauf: { F8: 'F5f1n', J7: 'F5f2l', G6: 'F5f1n', J6: 'F5f2l', F4: 'F5f2', H4: 'F5f2l', J4: 'F5f2l', F2: 'F5f2l', G2: 'F5f2l', H2: 'F5f2l', J2: 'F5f2l', F1: 'F5f2l', G1: 'F5f2l', H1: 'F5f2l', J1: 'F5f2l' } },
   m09: { but: 'tuer', cible: 'F8', defaut: 'D8v' },
   r06: { but: 'tuer', cible: 'B4', defaut: 'B2v' },
   aa11: { but: 'tuer', cible: 'A3', defaut: 'B2v' },

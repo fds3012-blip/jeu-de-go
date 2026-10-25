@@ -1,7 +1,7 @@
 // Go du jour léger (#433) : src/content/goDuJour.gen.ts suit src/content/puzzles.ts, et l'accueil voit exactement
 // le problème qu'il voyait avec la liste complète (même numéro, même titre, même position, en français et en anglais).
 import { readFileSync, writeFileSync } from 'node:fs';
-import { ALL_PUZZLES, CALENDRIER_GO_DU_JOUR } from '../src/content/puzzles';
+import { ALL_PUZZLES, CALENDRIER_GO_DU_JOUR, estGoDuJour } from '../src/content/puzzles';
 import { parsePuzzles } from '../src/data/puzzles';
 import { problemeDuJour, problemeDuNumero } from '../src/app/goDuJour';
 import { choisirLangue } from '../src/content/i18n';
@@ -23,7 +23,8 @@ describe.skipIf(process.env.MAJ_GO_DU_JOUR === '1')('Go du jour léger (#433) : 
   afterEach(() => choisirLangue('fr'));
   it.each(['fr', 'en'] as const)('même problème que la liste complète, jour après jour (%s)', l => {
     choisirLangue(l);
-    const complets = parsePuzzles(ALL_PUZZLES);
+    // #733 : la liste du Go du jour est celle du calendrier (les lots à la demande n'y sont pas), comme dans l'écran des problèmes.
+    const complets = parsePuzzles(ALL_PUZZLES).filter(p => estGoDuJour(p.id));
     for (let n = -3; n <= 2 * complets.length + 5; n++) {
       const complet = problemeDuNumero(complets, n);
       const leger = problemeDuJour(n);

@@ -6,7 +6,7 @@ import { LienSignalerProbleme } from '../ui/Securite';
 import { BoutonAide } from '../ui/BoutonAide';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import type { Db } from '../data/supabase';
-import { ALL_PUZZLES } from '../content/puzzles';
+import { ALL_PUZZLES, estGoDuJour } from '../content/puzzles';
 import {
   checkAnswer, fetchPuzzleStats, fetchPuzzles, parsePuzzles, recordPuzzleAttempt, solutionFrames, startOf,
   type Puzzle, type PuzzleStats
@@ -69,6 +69,8 @@ import { Sommaire, type EntreeSommaire } from '../ui/Sommaire';
 import { EnteteEcran } from '../ui/BoutonRetour';
 
 const LOCAL_PUZZLES = parsePuzzles(ALL_PUZZLES);
+/** #733 : les problèmes du Go du jour, les mêmes que la version légère de l'accueil (les lots à la demande n'en font pas partie). */
+const DU_JOUR = LOCAL_PUZZLES.filter(p => estGoDuJour(p.id));
 export const SOLVED_KEY = 'go.problemes.v1';
 /** Problèmes « vus » (#197) : résolus après avoir vu la réponse. Ni XP, ni palier. */
 export const VUS_KEY = 'go.problemes.vus.v1';
@@ -137,7 +139,7 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   const [numero] = useState(() => numeroDuJour(new Date()));
   // #620 : « Montrer la série » éteint, la pastille de série disparaît aussi de Problèmes (#365).
   const { serieVisible } = usePreferences();
-  const daily = problemeDuNumero(LOCAL_PUZZLES, numero);
+  const daily = problemeDuNumero(DU_JOUR, numero);
   const [serieDuJour, setSerieDuJour] = useState<Serie | null>(() => readLocal<Serie | null>(SERIE_KEY, null));
   // Série protégée (issue #76) : gels en réserve, et gel gagné à l'instant (micro-célébration).
   const [gels, setGels] = useState(() => lireReserveAppareil().gels);
@@ -153,7 +155,7 @@ export function Puzzles({ db, userId, sessionLoading, confirmTouch, onCompte, li
   // Lien partagé : un numéro passé ouvre ce Go du jour-là (archive), comme sur Wordle ; un numéro à venir (ou 0)
   // n'est pas encore sorti : on ouvre celui d'aujourd'hui, et on le dit.
   const [archive, setArchive] = useState<number | null>(() => (lien !== null && lien >= 1 && lien < numero ? lien : null));
-  const pzArchive = archive !== null ? problemeDuNumero(LOCAL_PUZZLES, archive) : undefined;
+  const pzArchive = archive !== null ? problemeDuNumero(DU_JOUR, archive) : undefined;
   const [openId, setOpenId] = useState<string | null>(() => (pzArchive ? pzArchive.id : (lien !== null || depuisRappel) && daily ? daily.id : ouvrirId));
   const [defiChange] = useState(() => lien !== null && archive === null && lien !== numero);
   const [retry, setRetry] = useState(0);

@@ -202,3 +202,13 @@ Taille du plateau : 286 en 9 × 9, 5 en 13 × 13. Difficulté de 300 à 1700.
   cadrés sur un coin demanderaient de brancher le plateau cadré (#454) sur l'écran des problèmes.
 - **Thème « tesuji »** : à créer dans `themes.ts` seulement avec l'écran des problèmes, qui affiche les thèmes ; en
   attendant, ab09 est rangé sous « capture » (relier et mourir, leçons 20 et 21) et ab15 sous « relier et couper ».
+
+## Après #733 (lot AC, chantier C4) : 296 problèmes
+
+Le thème « Compter » passe de 3 à 8 problèmes : le lot AC (`src/content/lots/ac-compter.ts`, ac01 à ac05, de 850 à 1050)
+ajoute quatre problèmes au palier 850-1049 et un au palier 1050-1249. Provenance, preuves et limites :
+`docs/pedagogie/problemes-club-2026-10.md`.
+
+| Thème | < 450 | 450-649 | 650-849 | 850-1049 | 1050-1249 | 1250-1449 | 1450-1649 | 1650-1849 | Total |
+|---|---|---|---|---|---|---|---|---|---|
+| comptage | 1 | 0 | 2 | 4 | 1 | 0 | 0 | 0 | 8 |

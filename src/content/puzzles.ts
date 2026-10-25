@@ -155,16 +155,32 @@ const LOTS = import.meta.glob<{ default: PuzzleRow[] }>('./lots/*.ts', { eager: 
  * et décalerait tous les jours du Go du jour déjà publiés).
  */
 const lettreDuLot = (k: string) => /\/lots\/([a-z]+)-/.exec(k)?.[1] ?? '';
-export const LOT_PUZZLES: PuzzleRow[] = Object.keys(LOTS)
+const LOTS_TRIES = Object.keys(LOTS)
   .filter(k => !k.endsWith('.test.ts'))
-  .sort((a, b) => lettreDuLot(a).length - lettreDuLot(b).length || (a < b ? -1 : a > b ? 1 : 0))
-  .flatMap(k => LOTS[k].default);
+  .sort((a, b) => lettreDuLot(a).length - lettreDuLot(b).length || (a < b ? -1 : a > b ? 1 : 0));
+export const LOT_PUZZLES: PuzzleRow[] = LOTS_TRIES.flatMap(k => LOTS[k].default);
 
 /**
- * Ordre du Go du jour (#75) : ordre d'arrivée, en ajout seulement. Un nouveau lot s'ajoute à la fin
- * et ne change donc pas les problèmes des jours déjà prévus (contrairement à un tri par id ou par difficulté).
+ * Dernier lot du Go du jour. #733 (chantier C4) : le Go du jour léger (src/content/goDuJour.gen.ts) est dans le JS
+ * initial, dont le budget est de 150 Ko gzip (149,9 Ko avant ce lot) ; chaque problème qu'on y ajoute coûte ≈ 0,04 Ko. Les
+ * lots suivants (AC et après) restent des problèmes à la demande : ils ne sont pas Go du jour, mais ils sont dans les
+ * séries, « à ta mesure » et « Tous les problèmes ». Les jours déjà publiés ne changent pas.
  */
-export const CALENDRIER_GO_DU_JOUR: readonly string[] = [...BASE_PUZZLES, ...PUZZLES_16, ...LOT_PUZZLES].map(p => p.id);
+export const DERNIER_LOT_DU_JOUR = 'ab';
+const dansLeCalendrier = (k: string) => lettreDuLot(k).length < 2 || lettreDuLot(k) <= DERNIER_LOT_DU_JOUR;
+
+/**
+ * Ordre du Go du jour (#75) : ordre d'arrivée, en ajout seulement, jusqu'au lot DERNIER_LOT_DU_JOUR. Un nouveau lot du
+ * calendrier s'ajoute à la fin et ne change donc pas les problèmes des jours déjà prévus (contrairement à un tri par id ou
+ * par difficulté).
+ */
+export const CALENDRIER_GO_DU_JOUR: readonly string[] = [
+  ...BASE_PUZZLES, ...PUZZLES_16, ...LOTS_TRIES.filter(dansLeCalendrier).flatMap(k => LOTS[k].default),
+].map(p => p.id);
+
+const DANS_LE_CALENDRIER = new Set(CALENDRIER_GO_DU_JOUR);
+/** Ce problème peut être le Go du jour (la liste du Go du jour est celle de l'accueil et celle de l'écran des problèmes). */
+export const estGoDuJour = (id: string): boolean => DANS_LE_CALENDRIER.has(id);
 
 /** Tous les problèmes, du plus facile au plus difficile (à difficulté égale, ordre d'identifiant). */
 export const ALL_PUZZLES: PuzzleRow[] = [...BASE_PUZZLES, ...PUZZLES_16, ...LOT_PUZZLES]

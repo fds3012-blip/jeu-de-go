@@ -26,6 +26,12 @@ export const REFERENCES_FIN: Readonly<Record<string, ReferencesFin>> = {
   z04: { maitre: -8, simple: -8, passe: -13 },
   z08: { maitre: -1, simple: -1, passe: -9 },
   z12: { maitre: -7, simple: -7, passe: -15 },
+  // #733, lot AC : le bon coup gagne d'un demi-point (7 contre le komi 6,5) ; la passe laisse Blanc gagner (6).
+  ac01: { maitre: 7, simple: 7, passe: 6 },
+  ac02: { maitre: 7, simple: 7, passe: 6 },
+  ac03: { maitre: 7, simple: 7, passe: 6 },
+  ac04: { maitre: 7, simple: 7, passe: 6 },
+  ac05: { maitre: 7, simple: 7, passe: 6 },
   aa01: { maitre: null, simple: -1, passe: 0 },
   aa03: { maitre: -6, simple: -6, passe: -8 },
   ab01: { maitre: -12, simple: -12, passe: -15 },
