@@ -60,9 +60,9 @@ describe('français identique aux textes d’origine', () => {
     expect(statistiques(vide, p0).map(s => s.legende)).toEqual(['jour de série', 'leçon finie', 'adversaire battu', 'problème réussi']);
     expect(statistiques({ ...vide, reussis: 1, serie: 1, parties: 1 }, p0).map(s => s.legende)).toEqual(['jour de série', 'leçon finie', 'adversaire battu', 'problème réussi']);
     expect(statistiques({ ...plein, serie: 7, bilan: { pomme: { v: 1, d: 0 }, caillou: { v: 2, d: 0 } } }, p2).map(s => s.legende)).toEqual(['jours, ta série record', 'leçons finies', 'adversaires battus', 'problèmes réussis']);
-    // Les sept badges d'origine gardent leurs textes ; #529 en ajoute quatorze (vitrine.test.ts).
+    // Les sept badges d'origine gardent leurs textes ; #529 en ajoute quatorze, #729 deux (vitrine.test.ts).
     const textes = badges(vide).map(b => [b.id, b.nom, b.condition]);
-    expect(textes).toHaveLength(21);
+    expect(textes).toHaveLength(23);
     for (const ligne of [
       ['premiere-partie', 'Première partie', 'Joue contre l’ordi.'],
       ['premier-probleme', 'Premier problème', 'Réussis un problème.'],

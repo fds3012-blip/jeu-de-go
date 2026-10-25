@@ -103,6 +103,8 @@ describe("pages d'aperçu des liens courts", () => {
     expect(r.get('/en')).toBe('/en/index.html');
     expect(r.get('/defi')).toBe('/defi/index.html');
     expect(r.get('/en/defi')).toBe('/en/defi/index.html');
+    expect(r.get('/i')).toBe('/i/index.html');
+    expect(r.get('/en/i')).toBe('/en/i/index.html');
     expect(r.get('/partie')).toBe('/partie/index.html');
     expect(r.get('/en/partie')).toBe('/en/partie/index.html');
     expect(r.get('/j/:n(\\d{1,6})')).toBe('/j/:n/index.html');
@@ -114,5 +116,8 @@ describe("pages d'aperçu des liens courts", () => {
     expect(reecrire('/j/abc', vercel.rewrites)).toBeNull();
     expect(reecrire('/defi', vercel.rewrites)).toBe('/defi/index.html');
     expect(reecrire('/defis', vercel.rewrites)).toBeNull();
+    expect(reecrire('/i', vercel.rewrites)).toBe('/i/index.html');
+    expect(reecrire('/en/i', vercel.rewrites)).toBe('/en/i/index.html');
+    expect(reecrire('/in', vercel.rewrites)).toBeNull();
   });
 });

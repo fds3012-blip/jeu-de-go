@@ -44,7 +44,7 @@ Paliers de niveau (`xp.ts`) : coût `min(1000, 100 × 1,25^(n−1))` arrondi à 
 
 Série de l'appareil (`defi.ts`, `gel.ts`, `serieRecord.ts`) : un défi par jour (Go du jour, leçon, révision, et depuis #529 partie terminée de plus de 10 coups). Un gel gagné à chaque multiple de 7 jours, 2 au plus. Un jour manqué consomme un gel ; s'il n'y en a pas assez, la série repart et les gels restent. Le record ne descend jamais. Côté serveur (joueur connecté), la série reste celle du seul Go du jour ; l'écran montre la plus longue des deux.
 
-Badges (`vitrine.ts`) : 21 depuis #529 (7 avant), gardés pour toujours une fois gagnés, mémorisés à l'ouverture du Profil ; trois se notent au moment où ils sont gagnés (`badgesGagnes.ts`).
+Badges (`vitrine.ts`) : 23 depuis #729 (21 depuis #529, 7 avant), gardés pour toujours une fois gagnés, mémorisés à l'ouverture du Profil ; cinq se notent au moment où ils sont gagnés (`badgesGagnes.ts`), dont « Parrain » et « Invité » (#729, voir 5.5).
 
 ## 2. Simulation sur 30 jours
 
@@ -133,13 +133,13 @@ Indicateurs visés (charte) : **J7** et **J30**, **5 parties terminées par acti
 | Séance « Révisions du jour » finie (#469) | +20 XP, **sans série** (oubli de #469) | +20 XP et défi du jour, comme l'ancienne carte | — | `revision_seance_terminee` |
 | Erreur maîtrisée dans la séance (dernière marche, J+30) | 0 | **+10 XP** (P12) | — | `erreur_maitrisee` |
 | Récompenses de niveau | 3, 5, 8 | **+ 10 Cerisier, 12 pierres Jade, 15 Kaya ancien** (contraste lignes et pierres ≥ 3:1, coordonnées ≥ 4,5:1, testés) | — | `niveau_atteint` (niveaux 10, 12, 15) |
-| Badges | 7 | **21**, en cinq familles | seuils nommés `SEUILS_BADGES` (`vitrine.ts`) | badges par actif à J30 (à instrumenter : voir 5.4) |
+| Badges | 7 | **23** (#729), en cinq familles | seuils nommés `SEUILS_BADGES` (`vitrine.ts`) | badges par actif à J30 (à instrumenter : voir 5.4) |
 
 Rien ne se perd, rien ne s'achète, aucun minuteur : la course payée « une fois par jour » n'est jamais annoncée comme une urgence (le texte ne dit pas « reviens demain »). La deuxième course du jour ne montre rien de négatif, seulement le score et le record.
 
-### 5.2 Badges (21)
+### 5.2 Badges (23)
 
-Ordre de la vitrine = ordre où un joueur type les rencontre ; repliée, elle montre les gagnés et les 4 suivants (« Voir les 21 badges » ouvre le reste) : jamais un mur de 17 sceaux gris.
+Ordre de la vitrine = ordre où un joueur type les rencontre ; repliée, elle montre les gagnés et les 4 suivants (« Voir les 23 badges » ouvre le reste) : jamais un mur de 17 sceaux gris.
 
 | Famille (sceau) | Badges | Condition |
 |---|---|---|
@@ -147,7 +147,7 @@ Ordre de la vitrine = ordre où un joueur type les rencontre ; repliée, elle mo
 | Régularité (or rond) | 7 jours de série, 30 jours de série, Objectif de la semaine | série (record) ; un objectif de la semaine atteint |
 | Maîtrise (or carré) | 10 problèmes, 50 problèmes, Palier Débutant, Palier Novice, Les bases, 5 d'affilée, Erreur maîtrisée, Trois adversaires | caps sans total (#137) ; chapitre « Les bases » fini ; 5 d'affilée dans une série « Par thème » ; une erreur sortie de la révision ; 3 adversaires différents battus |
 | Découverte (jade carré) | Goban 13 × 13, Goban 19 × 19, Première revue | une partie terminée sur ce plateau ; une partie revue avec l'analyse |
-| Avec les autres (hanko carré) | Première partie en ligne, Victoire classée | notés à la fin de la partie en ligne |
+| Avec les autres (hanko carré) | Première partie en ligne, Victoire classée, Parrain, Invité | notés à la fin de la partie en ligne ; Parrain et Invité (#729) : un ami arrivé par ton lien a joué sa première partie (le serveur décide) |
 
 Tous se déduisent de données déjà gardées sur l'appareil (aucune nouvelle clé, aucune migration) sauf trois, notés au moment où ils sont gagnés dans `go.badges.v1` : Objectif de la semaine, Première partie en ligne, Victoire classée. Les badges restent sur l'appareil, comme avant : la table `achievements` (RLS en place) n'est toujours pas alimentée ; la brancher serait une migration additive, pas utile tant que le Profil d'un autre joueur ne montre pas ses badges.
 
@@ -173,3 +173,16 @@ Lecture :
 - **Mesure des badges** : aucun événement `badge_gagne` n'existe (les badges se notent à l'ouverture du Profil). Pour lire « badges par actif à J30 », il faudra un événement (plan de marquage et politique de confidentialité). Pas fait ici pour ne pas ajouter d'événement sans tableau de bord.
 - **P3 (jour de grâce)**, **P6** (« Vu » réussi en révision), **P11** (badge de palier dépassé) : non traités par #529.
 - **Migration** `20261013224500_themes_goban_niveaux.sql` (liste blanche des décors synchronisés) : à appliquer avant ou avec la fusion. Sans elle, le décor choisi reste sur l'appareil, sans erreur.
+
+## 5.5 #729 : inviter un ami, cadeaux sans XP
+
+**Aucune source d'XP nouvelle** : l'économie ci-dessus (gains, courbe des niveaux, simulation à 30 jours) ne change pas. Un ami qui joue sa première partie par le lien d'un joueur ouvre, pour les deux, des décors qui existent déjà : le goban Cerisier (niveau 10 d'habitude) ; le parrain reçoit en plus les pierres Jade (niveau 12) à son 3e ami. Un badge chacun : Parrain, Invité (famille « Avec les autres »).
+
+| Règle | Valeur | Où |
+|---|---|---|
+| Récompense | cosmétique seulement, jamais d'XP, jamais d'avantage de jeu | `src/data/invitation.ts`, `themeDebloque` (`xp.ts`) |
+| Plafond | 5 amis validés par parrain ; un cadeau par invité | migration `20261026090000_invitations.sql` |
+| Vraie action | partie de 10 coups ou plus (comme `sourceXpPartie`), compte de moins de 30 jours | `valider_invitation` |
+| Niveau 10 et 12 | gardent leur sens : le décor déjà reçu n'est plus une récompense de niveau, la fête du niveau reste | `RECOMPENSES` (`xp.ts`) |
+
+Indicateur : `invitation_validee` par `invitation_partagee`. Périmètre game-designer touché par #729 : `vitrine.ts`, `Vitrine.tsx`, ce fichier ; à relire.

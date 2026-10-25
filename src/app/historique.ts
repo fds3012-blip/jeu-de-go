@@ -5,6 +5,7 @@
 // s'ajoutent à la liste à l'affichage ; ils ne sont pas recopiés sur l'appareil. Écran : src/app/MesParties.tsx.
 // Avec un compte, les parties de l'appareil sont aussi gardées sur le serveur (table `parties_perso`,
 // src/data/partiesPerso.ts) : elles s'ajoutent de même à l'affichage sur un autre appareil.
+import { readLocal } from './hooks';
 import { readSgf, writeSgf } from '../go/sgf';
 import { recordFromOnlineGame } from '../go/server';
 import type { Color } from '../go/rules';
@@ -98,7 +99,7 @@ export function lireHistorique(brut: unknown, revue?: PartieGardee | null): Part
 
 /** Lit une clé JSON de l'appareil ; `null` si absente, illisible ou si le stockage est indisponible. */
 function lireCle(cle: string): unknown {
-  try { return JSON.parse(localStorage.getItem(cle) ?? 'null'); } catch { return null; }
+  return readLocal<unknown>(cle, null);
 }
 
 /** Parties gardées sur l'appareil, la dernière partie de la revue comprise. */

@@ -17,7 +17,7 @@ export function lireBadges(brut: unknown): string[] {
  * (la semaine ne garde que la précédente), une partie en ligne finie, une victoire classée (elles vivent sur le serveur).
  * Le Profil les montre ensuite comme les autres, et les imprime une fois dans la vitrine.
  */
-export type BadgeDuMoment = 'objectif-semaine' | 'premiere-en-ligne' | 'victoire-classee';
+export type BadgeDuMoment = 'objectif-semaine' | 'premiere-en-ligne' | 'victoire-classee' | 'parrain' | 'invite';
 
 /**
  * Ajoute des badges à la liste gardée, et envoie `badge_gagne` (#544, identifiant du badge seulement) pour chacun de ceux

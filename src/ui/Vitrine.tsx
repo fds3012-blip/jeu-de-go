@@ -90,6 +90,8 @@ const SCEAUX: Record<BadgeId, { ton: 'jade' | 'or' | 'hanko'; forme: 'rond' | 'c
   'premiere-revue': { ton: 'jade', forme: 'carre' },
   'premiere-en-ligne': { ton: 'hanko', forme: 'carre' },
   'victoire-classee': { ton: 'hanko', forme: 'carre' },
+  parrain: { ton: 'hanko', forme: 'carre' },
+  invite: { ton: 'hanko', forme: 'carre' },
 };
 
 /** Petit goban (grille 4 × 4) gravé sous un chiffre : la taille du plateau. */
@@ -205,6 +207,18 @@ const MOTIFS: Record<BadgeId, ReactNode> = {
   'premiere-en-ligne': <>
     <path d="M17.5 27.5C21 17 27 31 30.5 20.5" className="s-cible" />
     <circle cx="14.5" cy="31" r="5.5" className="s-pierre-n" /><circle cx="33.5" cy="17" r="5.5" className="s-pierre-b" />
+  </>,
+  // Parrain (#729) : deux pierres blanches qui suivent la pierre noire, l'ami qu'on a amené.
+  parrain: <>
+    <circle cx="17" cy="29" r="6" className="s-pierre-n" />
+    <circle cx="30" cy="17" r="4.8" className="s-pierre-b" /><circle cx="33" cy="31" r="4.8" className="s-pierre-b" />
+    <path d="M22 26 26.5 20M23 31 28 31" className="s-cible" />
+  </>,
+  // Invité (#729) : une pierre blanche accueillie par une pierre noire, avec la coche.
+  invite: <>
+    <circle cx="19" cy="26" r="7" className="s-pierre-b" />
+    <circle cx="32" cy="16" r="4.6" className="s-pierre-n" />
+    <path d="M15.8 26.3 18.2 28.6 22.6 23.8" className="s-coche" />
   </>,
   // Victoire classée : la couronne posée sur son socle.
   'victoire-classee': <>

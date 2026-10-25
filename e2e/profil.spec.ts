@@ -78,7 +78,7 @@ test('Niveau et badges : niveau et XP, record, leçons, adversaires battus, prob
   await expect(page.getByTestId('ligne-niveau')).toBeVisible();
   await page.reload();
   await page.getByRole('navigation').getByRole('button', { name: 'Profil' }).click();
-  await expect(page.getByTestId('ligne-niveau')).toHaveAccessibleName(/^Niveau et badges, Badges, \d+ sur 21$/);
+  await expect(page.getByTestId('ligne-niveau')).toHaveAccessibleName(/^Niveau et badges, Badges, \d+ sur 23$/);
 });
 
 test('réglages en lignes : thème segmenté, interrupteurs, cibles de 44 px', async ({ page }) => {

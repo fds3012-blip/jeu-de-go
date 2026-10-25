@@ -25,16 +25,16 @@ describe('statistiques du profil', () => {
 });
 
 describe('badges', () => {
-  it('nouveau joueur : 21 badges (#529), tous grisés avec une condition', () => {
+  it('nouveau joueur : 23 badges (#529, #729), tous grisés avec une condition', () => {
     const b = badges(vide);
-    expect(b).toHaveLength(21);
+    expect(b).toHaveLength(23);
     expect(b.every(x => !x.obtenu && x.condition.length > 0)).toBe(true);
   });
   it('se déduisent des données locales, obtenus en premier', () => {
     const b = badges({ reussis: 10, serie: 7, parties: 2, bilan: { pomme: { v: 1, d: 0 } }, paliers: [{ id: 'debutant', complet: true }, { id: 'novice', complet: false }] });
     const obtenus = b.filter(x => x.obtenu).map(x => x.id);
     expect(obtenus).toEqual(['premiere-partie', 'premier-probleme', 'victoire-pomme', 'dix-problemes', 'serie-7', 'palier-debutant']);
-    expect(b[b.length - 1].id).toBe('serie-30');
+    expect(b[b.length - 1].id).toBe('invite');
   });
   it('#233 : une victoire contre un adversaire plus fort que Pomme donne aussi le badge (joueur placé, #283)', () => {
     expect(badges({ ...vide, bilan: { renard: { v: 1, d: 2 } } }).find(x => x.id === 'victoire-pomme')!.obtenu).toBe(true);

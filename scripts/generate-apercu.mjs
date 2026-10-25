@@ -83,6 +83,8 @@ const VARIANTES = {
   'apercu-en': { lang: 'en', h1: 'Can you find <em>the right move?</em>', p: 'One puzzle a day. Free, no account.', pastille: 'Play in 1 minute', pierres: DEBUT, cible: [4, 5] },
   'apercu-defi': { lang: 'fr', h1: 'Un ami te <em>défie au go</em>', p: 'Partie 9 × 9, 3 jours par coup. Gratuit.', pastille: 'Joue ton premier coup', pierres: FACE },
   'apercu-defi-en': { lang: 'en', h1: 'A friend <em>challenges you</em>', p: '9 × 9 game, 3 days per move. Free.', pastille: 'Play your first move', pierres: FACE },
+  'apercu-invitation': { lang: 'fr', h1: 'Un ami t’<em>invite</em>', p: 'Gratuit, sans pub.<br>Un cadeau pour vous deux.', pastille: 'Joue ta première pierre', pierres: FACE },
+  'apercu-invitation-en': { lang: 'en', h1: 'A friend <em>invites you</em>', p: 'Free, no ads.<br>A gift for you both.', pastille: 'Play your first stone', pierres: FACE },
   'apercu-partie': { lang: 'fr', h1: 'Une partie <em>à revoir</em>', p: 'Coup par coup, sans compte. Gratuit.', pastille: 'Ouvre la revue', pierres: FIN, cible: [4, 5] },
   'apercu-partie-en': { lang: 'en', h1: 'A game <em>to replay</em>', p: 'Move by move, no account. Free.', pastille: 'Open the review', pierres: FIN, cible: [4, 5] },
 };

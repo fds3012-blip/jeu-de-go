@@ -14,6 +14,7 @@ import { CATALOGUE_DIRECT } from './i18n/direct';
 import { CATALOGUE_EMULATION } from './i18n/emulation';
 import { CATALOGUE_LENTE } from './i18n/lente';
 import { CATALOGUE_PARTAGE } from './i18n/partage';
+import { CATALOGUE_INVITATION } from './i18n/invitation';
 import { CATALOGUE_SECURITE } from './i18n/securite';
 import { CATALOGUE_RETOURS } from './i18n/retours';
 import { CATALOGUE_TITRES } from './i18n/titres';
@@ -46,6 +47,8 @@ const CATALOGUES: [string, Brut, Brut][] = [
   ['emulation', CATALOGUE_EMULATION.fr, CATALOGUE_EMULATION.en],
   ['lente', CATALOGUE_LENTE.fr, CATALOGUE_LENTE.en],
   ['partage', CATALOGUE_PARTAGE.fr, CATALOGUE_PARTAGE.en],
+  // #729 : inviter un ami.
+  ['invitation', CATALOGUE_INVITATION.fr, CATALOGUE_INVITATION.en],
   ['securite', CATALOGUE_SECURITE.fr, CATALOGUE_SECURITE.en],
   // #537 : formulaire de retours en 3 questions.
   ['retours', CATALOGUE_RETOURS.fr, CATALOGUE_RETOURS.en],

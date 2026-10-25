@@ -162,6 +162,9 @@ export function synchroniser(db: Db, userId: string, parties: () => readonly Par
   const suite = (enCours ?? Promise.resolve(null)).catch(() => null).then(() => envoyer(db, userId, parties()));
   enCours = suite;
   void suite.finally(() => { if (enCours === suite) enCours = null; });
+  // #729 : un ami arrivé par un lien d'invitation : ses parties sont sur le serveur, qui juge s'il a joué pour de vrai.
+  // Rien à charger sans code gardé sur l'appareil.
+  void suite.then(() => { try { if (localStorage.getItem('go.invitation.v1')) void import('./invitation').then(m => m.validerInvitationGardee(db)).catch(() => undefined); } catch { /* stockage indisponible */ } }, () => undefined);
   return suite;
 }
 

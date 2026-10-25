@@ -1,0 +1,16 @@
+/* Inviter un ami (#729) : l'encart de « Mes amis », chargé à la demande. Jetons de tokens.css (clair et sombre), cibles de
+   44 px au moins, aucune animation (rien à réduire), tient à 320 px et au zoom 200 %. Un seul bouton : le partage. */
+.invitation { display: grid; gap: var(--space-2); margin-top: var(--space-2); }
+.invitation-titre { margin: 0; font-size: var(--fs-m); font-weight: var(--fw-bold); }
+.invitation-texte { margin: 0; color: var(--muted); font-size: var(--fs-s); line-height: 1.45; }
+.btn.invitation-bouton { width: 100%; min-height: var(--cible-min); display: inline-flex; align-items: center; justify-content: center;
+  gap: var(--space-2); padding: 0 var(--space-4); color: var(--text); white-space: normal; box-shadow: inset 0 0 0 1.5px var(--line); }
+.invitation-progres { margin: 0; font-weight: var(--fw-bold); }
+.invitation .muted { margin: 0; }
+.invitation-manuel p { margin: 0 0 var(--space-1); font-size: var(--fs-s); color: var(--muted); }
+.invitation-manuel input { width: 100%; min-width: 0; min-height: var(--cible-min); box-sizing: border-box; padding: 0 12px;
+  border-radius: var(--radius-s); border: 1.5px solid var(--line); background: var(--surface); color: var(--text); font: inherit; font-size: var(--fs-s); }
+.invitation-cadeaux h4 { margin: var(--space-2) 0 var(--space-1); font-size: var(--fs-s); color: var(--muted); font-weight: var(--fw-bold); }
+.invitation-cadeaux ul { margin: 0; padding-left: 1.2em; }
+.invitation-cadeaux li { line-height: 1.5; }
+.invitation-cadeaux p { margin: var(--space-1) 0 0; }

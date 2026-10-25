@@ -97,6 +97,12 @@ export function fauxServeur() {
   let idNotif = 0;
   let idFiltre = 0;
   const partiesPerso: Ligne[] = [];
+  // #729 : inviter un ami, comme 20261026090000_invitations.sql (sans l'âge du compte) : un code par joueur, validation
+  // après une partie de 10 coups ou plus (ordi ou guidée), jamais soi-même, 5 amis au plus, Cerisier puis Jade.
+  const codesInvitation = new Map<string, string>();
+  const invitations: { invite: string; parrain: string; rang: number }[] = [];
+  const cadeaux = new Map<string, string[]>();
+  const donner = (id: string, c: string) => { const l = cadeaux.get(id) ?? []; if (!l.includes(c)) cadeaux.set(id, [...l, c]); };
   /** Parties partagées par lien (#364) : jeton, propriétaire, SGF minimal, camp, adversaire, moment clé. */
   const partagees: Ligne[] = [];
   const ratingHistory: Ligne[] = [];
@@ -663,6 +669,27 @@ export function fauxServeur() {
       }
       return json(p_parties.map(l => l.cle));
     }
+    if (chemin === '/rest/v1/rpc/mon_invitation' || chemin === '/rest/v1/rpc/valider_invitation') {
+      if (!u || u.anonyme) return json({ code: 'JGC01', message: 'Crée ton compte' }, 400);
+      if (!profiles.find(x => x.id === u.id)?.username) return json({ code: 'JGP01', message: 'Choisis ton pseudo' }, 400);
+      if (chemin.endsWith('mon_invitation')) {
+        if (!codesInvitation.has(u.id)) codesInvitation.set(u.id, Buffer.from([...u.id].reverse().join('').padEnd(24, 'x')).toString('base64url').slice(0, 32));
+        return json([{ code: codesInvitation.get(u.id), amis: invitations.filter(i => i.parrain === u.id).length, plafond: 5, cadeaux: cadeaux.get(u.id) ?? [] }]);
+      }
+      const { p_code } = req.postDataJSON() as { p_code?: string };
+      const rendre = (statut: string) => json([{ statut, cadeaux: statut === 'validee' || statut === 'deja' ? cadeaux.get(u.id) ?? [] : [] }]);
+      if (invitations.some(i => i.invite === u.id)) return rendre('deja');
+      const parrain = [...codesInvitation].find(([, c]) => c === p_code)?.[0];
+      if (!parrain || parrain === u.id) return rendre('invalide');
+      const rang = invitations.filter(i => i.parrain === parrain).length + 1;
+      if (rang > 5) return rendre('complet');
+      const joue = partiesPerso.some(x => x.user_id === u.id && ['ordi', 'guidee'].includes(String(x.mode)) && (String(x.sgf).match(/;[BW]\[/g) ?? []).length >= 10);
+      if (!joue) return rendre('attente');
+      invitations.push({ invite: u.id, parrain, rang });
+      donner(u.id, 'cerisier');
+      if (rang === 1) donner(parrain, 'cerisier'); else if (rang === 3) donner(parrain, 'jade');
+      return rendre('validee');
+    }
     // #364 : partie partagée par lien, comme 20261005213100_parties_partagees.sql (sans plafonds) : compte avec pseudo,
     // SGF minimal (aucun nom, aucun commentaire), même partie = même jeton ; lecture sans compte par le seul jeton.
     if (chemin === '/rest/v1/rpc/partager_partie') {
@@ -1053,7 +1080,7 @@ export function fauxServeur() {
   function figerTempsReel() { for (const a of abonnes) a.fige = true; }
   /** Canaux rejoints sur une connexion qui marche, dont le sujet commence par `prefixe` (`defi-`, `direct-`). */
   const canauxActifs = (prefixe: string) => [...abonnes].filter(a => !a.fige).flatMap(a => [...a.canaux.keys()]).filter(t => t.startsWith(`realtime:${prefixe}`)).length;
-  return { traiter, fixerJoueursEnLigne, brancherTempsReel, notifier, fileLente, tacheLentes, avancerHorloge, abandons, noterAbandon, ralentirLectures, figerTempsReel, canauxActifs, pousses, pousserPartie, appels, games, defis, notifications, partiesPerso, partagees, profiles, ratingHistory, titres, emailsEnvoyes, sessionAnonyme, file, pendules,
+  return { traiter, fixerJoueursEnLigne, brancherTempsReel, notifier, fileLente, tacheLentes, avancerHorloge, abandons, noterAbandon, ralentirLectures, figerTempsReel, canauxActifs, pousses, pousserPartie, appels, games, defis, notifications, partiesPerso, invitations, cadeaux, partagees, profiles, ratingHistory, titres, emailsEnvoyes, sessionAnonyme, file, pendules,
     compteExistant, compteGoogle, compteSocial, relierIdentite, liaison, utilisateur, sessionCompte, autorisations, amities,
     signalements, blocages, messagesPartie, goDuJour, rappels, reglages, suspendus };
 }

@@ -9,6 +9,7 @@
 //
 // Bilan : au premier passage d'une nouvelle semaine, l'accueil montre une fois la semaine qui vient de finir
 // (src/ui/BilanSemaine.tsx), si elle a compté au moins une activité. Il ne revient pas avant la semaine suivante.
+import { readLocal } from './hooks';
 import { dateParis } from './goDuJour';
 
 export const SEMAINE_KEY = 'go.semaine.v1';
@@ -138,7 +139,7 @@ export const marquerBilanVu = (e: EtatSemaine, lundi: string): EtatSemaine => ({
 // --- Stockage sur l'appareil ---
 
 function lireBrut(): unknown {
-  try { return JSON.parse(localStorage.getItem(SEMAINE_KEY) ?? 'null'); } catch { return null; }
+  return readLocal<unknown>(SEMAINE_KEY, null);
 }
 function ecrire(e: EtatSemaine): void {
   try { localStorage.setItem(SEMAINE_KEY, JSON.stringify(e)); } catch { /* stockage indisponible : rien ne se perd à l'écran */ }

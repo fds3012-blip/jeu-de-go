@@ -121,11 +121,11 @@ test('Profil : aucune cote, la vitrine dit le prochain badge et un badge touché
   await page.getByRole('navigation').getByRole('button', { name: 'Profil' }).click();
   await expect(page.getByRole('main').getByText(/\bCote\b/)).toHaveCount(0);
   await ouvrirNiveauBadges(page);
-  const vitrine = page.getByRole('region', { name: 'Badges, 2 sur 21' });
+  const vitrine = page.getByRole('region', { name: 'Badges, 2 sur 23' });
   await expect(vitrine.getByRole('heading')).toContainText('Tes badges');
   const detail = vitrine.locator('.vitrine-detail');
   await expect(detail).toHaveText('Prochain badge : Premier problème. Réussis un problème.');
-  await vitrine.getByRole('button', { name: 'Voir les 21 badges' }).click(); // #529 : repliée, la série n'est pas dans les 4 suivants
+  await vitrine.getByRole('button', { name: 'Voir les 23 badges' }).click(); // #529 : repliée, la série n'est pas dans les 4 suivants
   await vitrine.getByRole('button', { name: '7 jours de série : à gagner. Garde ta série 7 jours.' }).click();
   await expect(detail).toHaveText('7 jours de série : Garde ta série 7 jours.');
   await vitrine.getByRole('button', { name: 'Pomme battue : obtenu' }).click();
