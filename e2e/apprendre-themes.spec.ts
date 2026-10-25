@@ -146,9 +146,13 @@ test('« S’entraîner sur ce thème » (Ouverture) : 3 problèmes même après
   await expect(serie).toHaveAttribute('data-serie', 'x07 x08');
 });
 
-// #694 (QA bug 4) : Compter n'a que 3 problèmes. Une fois faits, le thème le dit au lieu de les reproposer en boucle.
+// #694 (QA bug 4) : un thème dont tous les problèmes sont faits le dit au lieu de les reproposer en boucle. Compter est le
+// plus petit thème : 3 problèmes jusqu'au lot AC (#733), 8 depuis (ac01 à ac05, du palier Joueur de club).
 test('« S’entraîner sur ce thème » (Compter) : thème épuisé, dit clairement, puis révision au choix', async ({ page }) => {
-  await page.addInitScript(() => { localStorage.setItem('go.problemes.v1', JSON.stringify({ w07: true, w08: true, w09: true })); });
+  await page.addInitScript(() => {
+    const faits = ['w07', 'w08', 'w09', 'ac01', 'ac02', 'ac03', 'ac04', 'ac05'];
+    localStorage.setItem('go.problemes.v1', JSON.stringify(Object.fromEntries(faits.map(id => [id, true]))));
+  });
   await apprendre(page, {});
   const carte = page.getByTestId('par-theme').getByRole('button', { name: /^Compter,/ });
   await carte.scrollIntoViewIfNeeded();

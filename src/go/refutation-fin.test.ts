@@ -50,8 +50,8 @@ function replique(p: Puzzle, l: string) {
 const LONG = 120_000;
 
 describe('fin de partie et comptage : chaque problème a un but sain, et la réponse est le seul meilleur coup', () => {
-  it('les 16 problèmes de fin de partie et de comptage (lots W, Y, Z, AA, AB) ont un but sain ; aa01 (ko) aussi', () => {
-    expect(FIN.map(p => p.id).sort()).toEqual(['aa03', 'ab01', 'ab05', 'w04', 'w05', 'w06', 'w07', 'w08', 'w09', 'y01', 'y02', 'y03', 'y04', 'z04', 'z08', 'z12']);
+  it('les 21 problèmes de fin de partie et de comptage (lots W, Y, Z, AA, AB, AC) ont un but sain ; aa01 (ko) aussi', () => {
+    expect(FIN.map(p => p.id).sort()).toEqual(['aa03', 'ab01', 'ab05', 'ac01', 'ac02', 'ac03', 'ac04', 'ac05', 'w04', 'w05', 'w06', 'w07', 'w08', 'w09', 'y01', 'y02', 'y03', 'y04', 'z04', 'z08', 'z12']);
     for (const p of [...FIN, pz('aa01')]) {
       const but = butFin(p);
       expect(but, p.id).not.toBeNull();

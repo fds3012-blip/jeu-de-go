@@ -32,6 +32,12 @@ export const LECTURES_DECLAREES: Readonly<Record<string, LectureDeclaree>> = {
   w06: { fin: { zone: ['F5', 'F4', 'F6', 'A8'], mortes: ['A9'] } },
   w08: { fin: { zone: ['E6', 'F6'], mortes: ['J9'] } },
   w09: { fin: { zone: ['G7', 'F7', 'B2', 'C1'] } },
+  // #733, lot AC (src/go/lot-ac.test.ts) : les points de frontière (les deux de la paire et les dames) et les pierres mortes des énoncés.
+  ac01: { fin: { zone: ['E8', 'F8'] } },
+  ac02: { fin: { zone: ['E1', 'D1'], mortes: ['F5'] } },
+  ac03: { fin: { zone: ['C4', 'D5', 'F5', 'F4'], mortes: ['A1'] } },
+  ac04: { fin: { zone: ['E1', 'F1', 'E4', 'F6'] } },
+  ac05: { fin: { zone: ['F8', 'G6', 'F5', 'F4'], mortes: ['A3', 'H9'] } },
   // #558, lot AA (src/go/lot-aa.test.ts, SPEC) : E3 prend F3 (un ko), ce n'est pas un point ouvert ; F3 redevient jouable.
   aa01: { fin: { zone: ['E9', 'E3', 'F3'] } },
 };

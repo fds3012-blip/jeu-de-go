@@ -24,6 +24,7 @@
     "index-lecons": "MAJ_INDEX_LECONS=1 vitest run outils/leconsIndex.test.ts",
     "refutations-locales": "MAJ_REFUTATIONS_LOCALES=1 vitest run outils/refutationsLocales.test.ts",
     "preuves-katago": "vite-node outils/preuvesKataGo.ts",
+    "preuves-katago-problemes": "vite-node outils/preuvesKataGoProblemes.ts",
     "sync:functions": "node scripts/sync-functions.mjs"
   },
   "dependencies": {

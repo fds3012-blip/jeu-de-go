@@ -131,10 +131,10 @@ describe('lot Y : identifiants, énoncés, thème, série, doublons, calendrier,
     }
   });
 
-  it('la série « Fin de partie » réunit le lot W (finir, compter), ce lot, le lot Z (jouer ailleurs, #539), aa03 (#548) et ab01, ab05 (#557)', () => {
+  it('la série « Fin de partie » réunit le lot W (finir, compter), ce lot, le lot Z (jouer ailleurs, #539), aa03 (#548), ab01, ab05 (#557) et le lot AC (compter, #733)', () => {
     const banque = parsePuzzles(ALL_PUZZLES);
     expect(problemesDe(banque, 'fin-de-partie').map(p => p.id).sort())
-      .toEqual(['w04', 'w05', 'w06', 'w07', 'w08', 'w09', ...LOT_Y.map(r => r.id), 'z04', 'z08', 'z12', 'aa03', 'ab01', 'ab05'].sort());
+      .toEqual(['w04', 'w05', 'w06', 'w07', 'w08', 'w09', ...LOT_Y.map(r => r.id), 'z04', 'z08', 'z12', 'aa03', 'ab01', 'ab05', 'ac01', 'ac02', 'ac03', 'ac04', 'ac05'].sort());
     expect(problemesDe(banque, 'fin-de-partie').length).toBeGreaterThanOrEqual(MIN_PAR_SERIE);
     expect(seriesDisponibles(banque)).toContain('fin-de-partie');
   });

@@ -1744,4 +1744,35 @@ export const PROBLEMES_EN: Record<string, TexteProbleme> = {
     explanation: 'Well done! C1 is the only move that kills: it prevents both the corner eye and the ones on the right. If White plays D2, you answer D1; if White plays E2, you answer E1. White never makes two eyes.',
     refutation: 'Not quite. White plays C1: it makes two eyes, and you can no longer capture the group.',
   },
+  // Lot AC (#733) : comptage au demi-point, prisonniers et pierres mortes.
+  ac01: {
+    title: 'The half point to defend',
+    prompt: 'Komi: 6.5 points for White. Count both sides: you are ahead by half a point, but White can take it back in one move. Play it first.',
+    explanation: 'Well done! You have 21 points of territory, White 14 + 6.5 = 20.5: you win by half a point. If White played E8, F8 would become White’s territory: 15 + 6.5 = 21.5, and White would win. With E8, F8 belongs to nobody: it is a dame (neutral point).',
+    refutation: 'Not quite. White plays E8: F8 becomes White’s territory, and White wins.',
+  },
+  ac02: {
+    title: 'One more prisoner',
+    prompt: 'Komi: 6.5 points for White. The marked white stone is dead: it is a prisoner for you (worth 1 point). You are ahead by half a point: stop White from taking it back.',
+    explanation: 'Well done! You have 23 points of territory (including the dead stone’s point, once removed) + 1 prisoner = 24. White has 17 + 6.5 = 23.5: you win by half a point. If White played E1, D1 would become White’s territory, and White would win. With E1, D1 belongs to nobody: it is a dame (neutral point).',
+    refutation: 'Not quite. White plays E1: D1 becomes White’s territory, and White wins. The dead stone does not need to be captured: it is removed at the count.',
+  },
+  ac03: {
+    title: 'Black’s dead stone',
+    prompt: 'Komi: 6.5 points for White. Your marked stone is dead: it is a prisoner for White. You are ahead by half a point: stop White from taking it back.',
+    explanation: 'Well done! You have 23 points of territory. White has 15 points of territory (point A1 included, once your stone is removed) + 1 prisoner + 6.5 = 22.5: you win by half a point. If White played F5, F4 would become White’s territory, and White would win. C4 and D5 are dames (neutral points): filling them changes nothing.',
+    refutation: 'Not quite. White plays F5: F4 becomes White’s territory, and White wins. C4 and D5 are dames (neutral points): filling them changes nothing.',
+  },
+  ac04: {
+    title: 'Which point really counts?',
+    prompt: 'Komi: 6.5 points for White. Several points are still open, but only one changes the count. You are ahead by half a point: keep it.',
+    explanation: 'Well done! E4 and F6 are dames (neutral points): filling them changes no count. The point that counts is E1. If White played E1, F1 would become White’s territory, and White would win. With E1, you have 24 points, White 17 + 6.5 = 23.5: you win by half a point.',
+    refutation: 'Not quite. White plays E1: F1 becomes White’s territory, and White wins. Filling a dame (neutral point) changes nothing in the count.',
+  },
+  ac05: {
+    title: 'Two dead stones',
+    prompt: 'Komi: 6.5 points for White. The two marked stones are dead, one of each color. You are ahead by half a point: keep it.',
+    explanation: 'Well done! You have 21 points of territory (point A3 included, once the white stone is removed) + 1 prisoner = 22. White has 14 points of territory (point H9 included, once your stone is removed) + 1 prisoner + 6.5 = 21.5: you win by half a point. If White played F5, F4 would become White’s territory, and White would win. F8 and G6 are dames (neutral points).',
+    refutation: 'Not quite. White plays F5: F4 becomes White’s territory, and White wins. The dead stones do not need to be captured: they are removed at the count.',
+  },
 };

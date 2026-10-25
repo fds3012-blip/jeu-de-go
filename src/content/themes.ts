@@ -59,7 +59,9 @@ const PAR_THEME: Record<Theme, readonly string[]> = {
     'aa03',
     // Lot AB (#557) : bloquer la glissade au contact, l'atari qui bloque.
     'ab01', 'ab05'],
-  comptage: ['w07', 'w08', 'w09'],
+  comptage: ['w07', 'w08', 'w09',
+    // Lot AC (#733) : compter au demi-point, prisonniers et pierres mortes, pour le joueur de club.
+    'ac01', 'ac02', 'ac03', 'ac04', 'ac05'],
   // Lot X (#16) : les séries des leçons 4 (ko), 6 et 8 (ouverture).
   ko: ['x01', 'x02', 'x03',
     // Lot AA (#548) : fermer un ko en fin de partie, vivre ou tuer par un ko.
