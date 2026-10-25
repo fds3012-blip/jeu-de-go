@@ -177,3 +177,8 @@ Dans `docs/design/captures/apple-716/`, 390 × 844 sauf mention. Sombre sauf men
 
 - Aucun code de l'app modifié. Fichiers ajoutés : ce document, 20 captures `.jpg` (qualité 82), `e2e/passe-apple-captures.spec.ts` (ignoré sans `APPLE`).
 - Les mesures d'appui et de typographie ont été faites avec deux scripts jetables, non commités : leurs résultats sont dans les tableaux ci-dessus.
+
+## 10. Suivi du lot (b) (#722)
+
+- **Correction du constat 2.** Sur les 17 éléments sans retour (hors « Ko » et « Mon compte », déjà écartés : sous la barre du bas), 1 est un faux positif de plus (« Confirmer au doigt », même cause), 6 sont les pastilles de style du goban **verrouillées** (sans retour voulu : elles n'agissent pas) et 2 sont des choix déjà actifs. Il restait **8 vrais manques**, tous corrigés : les 5 boutons de la barre d'actions de la partie et les 3 choix `.seg` pas encore actifs. Re-mesure : 11 éléments sans retour, tous dans les cas ci-dessus (ou sous la barre du bas).
+- Valeurs finales : appui en `--duree-rapide` (100 ms), retour en `--duree-pose` (160 ms) ; fondu d'entrée des écrans de 160 ms, opacité de .35 à 1 (pas de 0 : un écran qui arrive ne part jamais du vide, et le plus grand élément visible reste un candidat de rendu) ; bord de défilement de `nav + 56 px + relief + 42 px` de haut (`.cta`) ou `nav + 124 px + relief + 42 px` (`.dock`).

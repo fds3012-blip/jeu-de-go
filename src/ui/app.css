@@ -64,7 +64,9 @@ h2 { font-size: var(--fs-xl); font-weight: var(--fw-bold); line-height: var(--lh
 .cta { position: fixed; left: calc(50% + var(--nav-gauche) / 2); transform: translateX(-50%); bottom: calc(var(--nav-bas) + 14px + var(--relief) + env(safe-area-inset-bottom, 0px)); width: min(528px, calc(100% - 32px)); z-index: 10; }
 .btn.primary { border-color: transparent; }
 @media (prefers-reduced-motion: no-preference) {
-  .cta, .btn { transition: transform var(--duree-rapide) var(--ease), box-shadow var(--duree-rapide) var(--ease), background-color var(--duree-rapide); }
+  /* Le bouton revient en --duree-pose ; à l'appui, il part en --duree-rapide : vif quand on décide, doux quand on lâche (#722). */
+  .cta, .btn { transition: transform var(--duree-pose) var(--ease), box-shadow var(--duree-pose) var(--ease), background-color var(--duree-pose); }
+  .cta:active, .btn:active { transition-duration: var(--duree-rapide); }
   /* À l'appui, le bouton s'enfonce de toute sa tranche. */
   .cta:active { transform: translate(-50%, var(--relief)); box-shadow: none; }
   .dock .cta:active, .btn.primary:active { transform: translateY(var(--relief)); box-shadow: none; }
@@ -86,7 +88,10 @@ h2 { font-size: var(--fs-xl); font-weight: var(--fw-bold); line-height: var(--lh
 .row { display: flex; gap: var(--space-2); }
 .row > * { flex: 1; }
 .seg { display: flex; gap: 2px; background: var(--surface); border-radius: var(--radius-s); padding: 3px; overflow: hidden; }
-.seg button { flex: 1; min-width: 0; border: 0; background: transparent; min-height: var(--cible-min); border-radius: 9px; color: var(--muted); font-weight: var(--fw-medium); }
+.seg button { flex: 1; min-width: 0; border: 0; background: transparent; min-height: var(--cible-min); border-radius: 9px; color: var(--muted); font-weight: var(--fw-medium);
+  transition: background-color var(--duree-pose), color var(--duree-pose); }
+/* Le choix pas encore actif réagit à l'appui (#722). */
+.seg button:not([aria-pressed="true"]):active { background: var(--surface-2); color: var(--text); transition-duration: var(--duree-rapide); }
 /* Choix actif : pastille inversée (texte sur fond), l'état se lit sans dépendre d'une nuance de gris. */
 .seg button[aria-pressed="true"] { background: var(--text); color: var(--bg); font-weight: var(--fw-bold); }
 
@@ -151,4 +156,14 @@ td:first-child, th:first-child { text-align: left; }
 .link { background: none; border: 0; padding: 0; min-height: var(--cible-min); color: var(--text); text-decoration: underline; text-decoration-color: var(--accent-trait); text-decoration-thickness: 2px; text-underline-offset: 3px; }
 /* #640 (N4) : un calque par écran ; l'écran d'origine reste monté, caché, sous l'écran posé par-dessus (App.tsx). */
 .calque { display: contents; }
+/* #722 : un écran qui arrive ne remplace pas l'autre d'un coup : fondu de 160 ms (opacité seule, de .35 à 1, pour ne jamais
+   partir d'un écran vide). :where() garde une spécificité nulle : un enfant qui a sa propre animation la garde. */
+@media (prefers-reduced-motion: no-preference) {
+  :where(.calque:not([hidden]) > *) { animation: calque-entree var(--duree-pose) var(--ease); }
+  @keyframes calque-entree { from { opacity: .35; } }
+}
+/* #722 : bord de défilement. Sous le bouton fixe, le contenu qui défile s'efface vers le fond au lieu d'être coupé net. Il ne capte aucun toucher. */
+body:has(.calque:not([hidden]) :is(.cta, .dock):not(.accueil *))::after { content: ""; position: fixed; z-index: 9; bottom: 0; left: var(--nav-gauche); right: 0; pointer-events: none;
+  height: calc(var(--nav-bas) + var(--cible-cta) + var(--relief) + 42px + env(safe-area-inset-bottom, 0px)); background: linear-gradient(transparent, var(--bg) 70%); }
+body:has(.calque:not([hidden]) .dock:not(.accueil *))::after { height: calc(var(--nav-bas) + 124px + var(--relief) + 42px + env(safe-area-inset-bottom, 0px)); }
 .calque[hidden] { display: none; }
