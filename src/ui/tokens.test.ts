@@ -118,6 +118,14 @@ describe('tokens Encre & Jade', () => {
     expect(dark['--radius-bouton']).toBe('16px');
   });
 
+  // #724 : le goban garde la même tranche de bois dans les deux modes ; son ombre portée est noire en sombre, teintée de
+  // brun en clair (la table est claire : une ombre noire y fait un halo gris).
+  it('donne au goban une ombre noire en sombre et teintée de brun en clair', () => {
+    expect(dark['--ombre-goban']).toMatch(/^0 4px 0 #6B3F16, .*rgba\(0, 0, 0, \.72\)/);
+    expect(light['--ombre-goban']).toMatch(/^0 4px 0 #6B3F16, .*rgba\(60, 40, 15, \.5\)/);
+    expect(light['--ombre-goban']).not.toContain('rgba(0, 0, 0');
+  });
+
   it('allume un halo de lampe doré dans les deux modes', () => {
     for (const theme of [dark, light]) expect(theme['--halo']).toMatch(/^radial-gradient\(.*rgba\(239, 184, 74/);
   });

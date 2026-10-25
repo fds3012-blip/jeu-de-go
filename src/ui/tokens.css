@@ -84,6 +84,8 @@
   --relief: 5px;
   --ombre-relief: 0 var(--relief) 0 var(--accent-bord), 0 14px 28px -12px rgba(60, 196, 142, .55);
   --ombre-plateau: 0 14px 28px -16px rgba(0, 0, 0, .7);
+  /* Goban posé sur la table : tranche de bois, ombre portée, contact. Sombre : noire. Clair : teintée de brun (la lampe est la même). */
+  --ombre-goban: 0 4px 0 #6B3F16, 0 20px 32px -10px rgba(0, 0, 0, .72), 0 2px 6px rgba(0, 0, 0, .35);
 
   /* ---------- Typographie ---------- */
   --font-ui: "Zen Kaku Gothic New", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -158,7 +160,7 @@
   --duree-recompense: 600ms;  /* obtention d'un badge ou d'une série */
   --ease: cubic-bezier(.2, .8, .2, 1);
   --ease-pose: cubic-bezier(.2, .8, .3, 1.2); /* pose d'une pierre : goban (board.css) et onglet activé */
-  --duree-pose: 160ms;        /* la pierre « tombe » dans l'onglet activé (1,15 → 1) */
+  --duree-pose: 160ms;        /* la pierre « tombe » : sur le goban (1,12 → 1) et dans l'onglet activé (1,15 → 1) */
   --duree-orbite: 1100ms;     /* un tour des deux pierres de l'indicateur d'attente */
 
   /* Courbe d'avantage de la revue (audit du 02/10) : Blanc en haut, Noir en bas, trait jade, curseur or. */
@@ -180,6 +182,7 @@
     --halo: radial-gradient(120% 420px at 50% -120px, rgba(239, 184, 74, .22), rgba(239, 184, 74, 0) 70%);
     --ombre-relief: 0 var(--relief) 0 var(--accent-bord), 0 14px 24px -14px rgba(30, 138, 95, .5);
     --ombre-plateau: 0 14px 28px -16px rgba(60, 40, 15, .45);
+    --ombre-goban: 0 4px 0 #6B3F16, 0 18px 28px -12px rgba(60, 40, 15, .5), 0 2px 5px rgba(60, 40, 15, .28);
     color-scheme: light;
   }
 }
@@ -194,6 +197,7 @@
   --halo: radial-gradient(120% 420px at 50% -120px, rgba(239, 184, 74, .22), rgba(239, 184, 74, 0) 70%);
   --ombre-relief: 0 var(--relief) 0 var(--accent-bord), 0 14px 24px -14px rgba(30, 138, 95, .5);
   --ombre-plateau: 0 14px 28px -16px rgba(60, 40, 15, .45);
+  --ombre-goban: 0 4px 0 #6B3F16, 0 18px 28px -12px rgba(60, 40, 15, .5), 0 2px 5px rgba(60, 40, 15, .28);
   color-scheme: light;
 }
 

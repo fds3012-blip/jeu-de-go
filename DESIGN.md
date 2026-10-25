@@ -303,7 +303,7 @@ Le vide sert à isoler l'action principale et le goban. Un vide qui ne sépare r
 | 0 (à plat) | Aucune ombre, aucune bordure | Tuiles, barres, bulles, boutons secondaires |
 | Trait | `inset 0 0 0 1.5px` de `--text` à 22 % | Tuiles de mode (choix secondaires « au trait ») |
 | Relief | `--ombre-relief` : `0 5px 0 var(--accent-bord), 0 14px 28px -12px rgba(60,196,142,.55)` (clair : `0 14px 24px -14px rgba(30,138,95,.5)`) | **Le bouton principal, et rien d'autre** |
-| Plateau | `.board-wrap` : `0 4px 0 #6B3F16, 0 20px 32px -10px rgba(0,0,0,.72), 0 2px 6px rgba(0,0,0,.35)`, chanfrein clair en `inset` | Le goban posé sur la table |
+| Plateau | `.board-wrap`, jeton `--ombre-goban` (#724). Sombre : `0 4px 0 #6B3F16, 0 20px 32px -10px rgba(0,0,0,.72), 0 2px 6px rgba(0,0,0,.35)`. Clair, teintée de brun : `0 4px 0 #6B3F16, 0 18px 28px -12px rgba(60,40,15,.5), 0 2px 5px rgba(60,40,15,.28)`. Chanfrein clair en `inset` | Le goban posé sur la table |
 | Plateau (jeton) | `--ombre-plateau` : `0 14px 28px -16px rgba(0,0,0,.7)` (clair `rgba(60,40,15,.45)`) | Plateaux secondaires |
 | Flottant | `0 6px 18px -8px rgba(0,0,0,.55)` | Pastille « +N XP » annoncée en haut |
 | Voile | `--voile` (.62), `--voile-fort` (.78) | Sous une feuille ou une fenêtre modale |
@@ -396,7 +396,7 @@ Lumière : `--halo`, un dégradé radial doré en haut de `body` (11 % d'or en s
 | Relâchement d'un bouton (#722) | 160 ms (`--duree-pose`) | `--ease` |
 | Arrivée d'un écran (#722) | 160 ms, opacité de .35 à 1 | `--ease` |
 | Transition d'interface | 200 ms (`--duree`) | `--ease` `cubic-bezier(.2,.8,.2,1)` |
-| Pose d'une pierre (échelle 1,12 → 1) | 140 ms | `--ease-pose` `cubic-bezier(.2,.8,.3,1.2)` |
+| Pose d'une pierre (échelle 1,12 → 1) | 160 ms (`--duree-pose`) | `--ease-pose` `cubic-bezier(.2,.8,.3,1.2)` |
 | Onglet activé (1,15 → 1) | 160 ms (`--duree-pose`) | `--ease-pose` |
 | Pierres prises / vers le couvercle | 220 ms / 280 ms, 30 ms de décalage | `--ease` |
 | Coup interdit (tremblement) | 300 ms | `ease-in-out` |
@@ -574,6 +574,6 @@ On ne cache pas l'action principale : on réduit d'abord le vide, puis les déta
 - Le Figma « Jeu de go : Encre & Jade » a encore des titres en Shippori Mincho sur les pages Composants et Écrans : le code fait foi.
 - `docs/design/encre-et-jade.md` cite un bandeau `.strip` ; dans le code, le bandeau joueur est `.joueur` (`partie.css`).
 - Il reste des hex et des tailles de police en dur dans des feuilles d'écran (audit #509) et des alias v1 dans les styles en ligne.
-- Les durées de pose (140 ms sur le goban) et de quelques animations d'écran sont écrites en dur, sans jeton.
+- Quelques durées d'animation d'écran (leçon, pastilles du Profil) sont écrites en dur, sans jeton. La pose de la pierre sur le goban suit `--duree-pose` depuis #724.
 - Les seuils de l'Épure (E2, E3, E4) sont fixés ici ; l'audit #592 les a appliqués sans les changer. Une tension reste à trancher par Florian : les modes « En ligne » et « Un ami » visibles avant la première partie finie (E2, décision #429). (Grade et cote ont quitté l'accueil avec #613.)
 - Un défi entre amis se joue toujours en 9 × 9 : l'écran des défis n'a pas de choix de taille, et en ajouter un demande un changement côté serveur (création du défi). Laissé tel quel par décision de Florian (#613).
