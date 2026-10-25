@@ -118,10 +118,10 @@ function phrases(id: string): string[] {
   const a = ATTENDU[id];
   switch (id) {
     case 'ac01': return [`Tu as ${a.terrN} points de territoire, Blanc ${a.terrB} + 6,5 = ${fr(a.blanc)}`, `${a.terrB + 1} + 6,5 = ${fr(a.blanc + 1)}`];
-    case 'ac02': return [`${a.terrN} points de territoire (la pierre morte comprise, une fois retirée) + 1 prisonnier = ${a.noir}`, `Blanc a ${a.terrB} + 6,5 = ${fr(a.blanc)}`];
-    case 'ac03': return [`Tu as ${a.terrN} points de territoire. Blanc a ${a.terrB} points de territoire (A1 comprise, une fois ta pierre retirée) + 1 prisonnier + 6,5 = ${fr(a.blanc)}`];
+    case 'ac02': return [`${a.terrN} points de territoire (avec le point de la pierre morte, une fois retirée) + 1 prisonnier = ${a.noir}`, `Blanc a ${a.terrB} + 6,5 = ${fr(a.blanc)}`];
+    case 'ac03': return [`Tu as ${a.terrN} points de territoire. Blanc a ${a.terrB} points de territoire (le point A1 compris, une fois ta pierre retirée) + 1 prisonnier + 6,5 = ${fr(a.blanc)}`];
     case 'ac04': return [`Avec E1, tu as ${a.noir} points, Blanc ${a.terrB} + 6,5 = ${fr(a.blanc)}`];
-    default: return [`${a.terrN} points de territoire (A3 comprise, une fois la pierre blanche retirée) + 1 prisonnier = ${a.noir}`, `Blanc a ${a.terrB} points de territoire (H9 comprise, une fois ta pierre retirée) + 1 prisonnier + 6,5 = ${fr(a.blanc)}`];
+    default: return [`${a.terrN} points de territoire (le point A3 compris, une fois la pierre blanche retirée) + 1 prisonnier = ${a.noir}`, `Blanc a ${a.terrB} points de territoire (le point H9 compris, une fois ta pierre retirée) + 1 prisonnier + 6,5 = ${fr(a.blanc)}`];
   }
 }
 
