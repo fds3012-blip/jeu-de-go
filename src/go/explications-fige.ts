@@ -3,7 +3,7 @@
 import type { Position } from './rules';
 import type { Entree } from './explication';
 
-/** Les deux recherches d'une erreur, comme `analyseErreur` (src/engine/index.ts). Propriétés arrondies au centième. */
+/** Les deux recherches d'une erreur, comme `analyseErreur` (src/engine/revueKataGo.ts). Propriétés arrondies au centième. */
 export interface FigeErreur {
   id: string;
   /** Vraies parties : numéro du coup, note et avance de Noir après le coup (revue à 32 visites). */

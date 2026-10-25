@@ -30,7 +30,11 @@ import {
   promouvoirVariante, prolonger, regler, reglagesAnalyse, suivant, supprimerVariante, tailleArbre, TAILLES_ETUDE, variantesIci,
   type Etude as EtatEtude, type Outil, type TailleEtude,
 } from '../go/etude';
-import { analyseEtude, preparerKataGo, type RaisonSansKataGo } from '../engine';
+import { preparerKataGo, type RaisonSansKataGo } from '../engine';
+import { analyseEtude, raisonRepliApprofondi } from '../engine/revueKataGo';
+// C8 (#732) : « Analyse approfondie », seulement si le joueur l'a téléchargée et activée (Réglages).
+import { approfondie } from '../engine/approfondie';
+import { thl } from '../content/i18n/horsLigne';
 import { EVENTS, track } from '../data/analytics';
 import { conseilFiable } from './revue';
 import { readLocal, writeLocal } from './hooks';
@@ -51,7 +55,7 @@ const MAX_HISTOIRE = 200;
 type Analyse =
   | { etat: 'attente' }
   | { etat: 'sans-katago'; raison: RaisonSansKataGo | null; telechargement: boolean }
-  | { etat: 'pret'; cle: string; lead: number; coups: { move: number; winrate: number | null; lead: number }[]; passe: boolean }
+  | { etat: 'pret'; cle: string; lead: number; coups: { move: number; winrate: number | null; lead: number }[]; passe: boolean; ap: 'utilisee' | 'trop-lent' | 'indisponible' | null }
   | { etat: 'erreur' };
 
 const OUTILS: readonly Outil[] = ['noir', 'blanc', 'effacer', 'jouer'];
@@ -173,6 +177,7 @@ export function Etude({ confirmTouch }: Props) {
   async function analyser() {
     if (enCours.current) return; // un appel par geste : jamais deux recherches en même temps
     enCours.current = true;
+    approfondie();
     const pour = { cle, pos, pierres: pierresPosees(etude), variante: etude.curseur, reglages };
     setAnalyse({ etat: 'attente' });
     try {
@@ -184,7 +189,7 @@ export function Etude({ confirmTouch }: Props) {
       }
       // Le filtre de la revue : jamais un coup illégal ni un coup de première ligne sans raison.
       const coups = a.coups.filter(c => conseilFiable(pour.pos, c.move, Infinity)).slice(0, CANDIDATS);
-      setAnalyse({ etat: 'pret', cle: pour.cle, lead: a.lead, coups, passe: a.coups[0]?.move === -1 });
+      setAnalyse({ etat: 'pret', cle: pour.cle, lead: a.lead, coups, passe: a.coups[0]?.move === -1, ap: a.approfondie ? 'utilisee' : raisonRepliApprofondi() });
       track(EVENTS.analyseDemandee, { taille: etude.size, pierres: pour.pierres, variante: pour.variante, katago: true, issue: 'ok' });
     } catch {
       setAnalyse({ etat: 'erreur' });
@@ -436,6 +441,7 @@ function Resultat({ analyse, resultat, camp, taille, onTelecharger, reglages }: 
           </ol>
         </>
       ) : <p className="small">{fr(tk(resultat.passe ? 'etude.resultat.passe' : 'etude.resultat.aucun'))}</p>}
+      {resultat.ap && <p className="small muted" data-testid="etude-approfondie" data-etat={resultat.ap}>{thl(resultat.ap === 'utilisee' ? 'ap.noteUtilisee' : resultat.ap === 'trop-lent' ? 'ap.noteTropLent' : 'ap.noteRepli')}</p>}
     </div>
   );
 }

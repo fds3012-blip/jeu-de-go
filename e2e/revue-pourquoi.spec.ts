@@ -6,7 +6,7 @@ import { COTE_JOUEUR_FORT, demarrerParcours, ouvrirRevue } from './revueFactice'
 
 // #673 : « Pourquoi ? » dans la revue. Partie fixe contre Pomme : au coup 11, tes pierres D6-D5 sont en atari (seule
 // liberté D4) et tu joues ailleurs (G7) ; Pomme les prend en D4. KataGo factice (build de test) : il préfère D4 et donne
-// sa suite et la propriété, comme le vrai (src/engine/index.ts, analyseErreur). Captures : `CAPTURES=1`
+// sa suite et la propriété, comme le vrai (src/engine/revueKataGo.ts, analyseErreur). Captures : `CAPTURES=1`
 // (docs/design/captures/revue-pourquoi-673).
 
 const DOSSIER = 'docs/design/captures/revue-pourquoi-673';

@@ -35,6 +35,28 @@ L'API publique est dans `src/engine/index.ts` : `bestMove(position, niveau)`, `a
   `real.test.ts`, `e2e/revue-katago.spec.ts` et les autres tests facultatifs.
 - Mesures avant/après et limites iOS : `docs/qa/katago-demarrage-475.md`.
 
+## Analyse approfondie (C8, #732)
+
+Un second réseau, plus fort, **téléchargé seulement si le joueur le demande** (Profil › Réglages, « Analyse approfondie »).
+Étude, mesures et décision : `docs/produit/analyse-forte-2026-10.md` (#728).
+
+- Réseau : `g170e-b10c128-s1141046784-d204142634`, 11 138 361 octets (11,1 Mo), 3 M de paramètres. Licence : MIT du dépôt
+  KataGo (le fichier est dans `cpp/tests/models/`, comme le b6c96). **Rien n'est dans notre dépôt ni chez Vercel** :
+  téléchargé depuis `raw.githubusercontent.com` (hôte déjà dans la CSP), empreinte SHA-256 vérifiée
+  (`1a8e05a4…8b04`), rangé dans le même cache `katago-reseaux-v1` sous l'adresse GitHub.
+- `approfondie.ts` : réglage (`go.katago.approfondie.v1`, désactivé par défaut), téléchargement annulable (le Worker est
+  arrêté), vitesse mesurée à l'exécution, replis. Chargé avec le Profil, la revue et l'étude, jamais dans le JS initial.
+- `revueKataGo.ts` (sorti de `index.ts` pour alléger le JS initial) : `analyseErreur` (analyse expliquée) et `analyseEtude`
+  essaient le réseau approfondi s'il est actif, sinon le petit. **Seuls usages** : ni l'IA de jeu, ni les preuves, ni la
+  notation de chaque coup de la revue, ni le conseil de Mochi.
+- Repli silencieux sur le b6c96 : désactivé, réseau absent du cache, démarrage ou recherche en échec, ou appareil trop
+  lent (plus de 120 ms par visite sur une recherche de 64 visites : jugement gardé 30 jours, « Réessayer » dans les
+  Réglages). La revue et l'étude le disent en une phrase.
+- Les instantanés d'explication (`src/go/explications-katago.json`) et `explication-katago.test.ts` restent ceux du
+  b6c96. En mode approfondi, les deux avances d'une erreur viennent du même réseau (`leadJoue`).
+- Temps : 1,6 à 1,95 fois le b6c96 par visite (tfjs-node, mesuré), 4 à 10 s pour 64 visites sur téléphone (estimé, à
+  confirmer sur appareils réels, recette C10). Plus de temps de recherche accordé (`FACTEUR_TEMPS` = 3).
+
 ## Repli
 
 Si le Worker, le backend ou le réseau manquent, `bestMove` joue avec le moteur simple (réglages de Caillou)

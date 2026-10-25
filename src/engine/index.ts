@@ -30,6 +30,7 @@ export { OPPONENTS, opponent, chooseMove, chooseMoveDetail, deadStones, ownershi
 // Réponse à la passe du joueur (#185) : seuil de points, gain d'un coup, raison affichable.
 export { SEUIL_POINTS, gainDuCoup };
 export type { CoupExplique, Raison };
+export type { AnalyseErreur, AnalyseEtude } from './revueKataGo';
 // Fin de partie (#159) : points encore à fermer, coup qui en ferme un, avance comptée comme au comptage.
 export { avanceEstimee, coupDeFermeture, frontieresOuvertes, mortesSelonPropriete, partieAvancee };
 // Délais maximaux des demandes au moteur (#498).
@@ -271,7 +272,7 @@ const MARGE_DEMARRAGE_MS = 20_000;
  * Worker relancé, nouvel essai une fois ; encore rien : KataGo est abandonné pour la session et `MoteurBloque` est levé.
  * Le filet extérieur (`sousDelai`) couvre aussi un remplaçant qui ignorerait `delaiMs` (tests).
  */
-async function analyserGarde(k: KataGoBackend, pos: Position, opts: AnalyzeOptions): Promise<Analysis> {
+export async function analyserGarde(k: KataGoBackend, pos: Position, opts: AnalyzeOptions): Promise<Analysis> {
   const delai = delaiAnalyse(opts, pos.size);
   for (let essai = 0; ; essai++) {
     const filet = delai + Math.round(echelleDelais() * (1000 + (k.info.state === 'pret' ? 0 : MARGE_DEMARRAGE_MS)));
@@ -302,7 +303,7 @@ const memoBackend = {
   },
 };
 
-function getKataGo(): KataGoBackend | null {
+export function getKataGo(): KataGoBackend | null {
   if (katago !== undefined) return katago;
   if (typeof Worker === 'undefined') return (katago = null);
   surveillerVeille();
@@ -325,7 +326,7 @@ export function setKataGo(k: KataGoBackend | null | undefined) { katago = k; }
  * les tests de bout en bout (e2e/rejoue-erreur.spec.ts) écrivent ainsi une analyse connue d'avance.
  * Le jeu contre l'ordi n'est pas touché. En production, la condition disparaît au build.
  */
-function kataGoRevue(): KataGoBackend | null | undefined {
+export function kataGoRevue(): KataGoBackend | null | undefined {
   if (import.meta.env.VITE_E2E && typeof window !== 'undefined') {
     const f = (window as unknown as { __kataGoFactice?: KataGoBackend }).__kataGoFactice;
     if (f) return f;
@@ -723,73 +724,7 @@ export async function meilleurCoup(pos: Position, komi: number): Promise<Conseil
   } catch { return { katago: false }; }
 }
 
-/**
- * #673 : analyse d'une erreur de la revue, pour la montrer et l'expliquer (src/go/explication.ts). Deux recherches de
- * `VISITES_ERREUR` visites, KataGo seulement (jamais le moteur simple ; chargé s'il l'est déjà ou si son réseau est en
- * cache, comme `meilleurCoup`) :
- * - `avant` (position avant l'erreur) : le meilleur coup, son avance pour le joueur au trait, ses visites, sa variante
- *   principale et la propriété après lui ;
- * - `apres` (position après l'erreur) : la réponse de l'adversaire (variante principale, visites) et la propriété.
- * La propriété va de -1 (Blanc) à +1 (Noir). Les mêmes réglages servent aux analyses figées des tests
- * (outils/explicationsKataGo.ts).
- */
-export const VISITES_ERREUR = 64;
-export type AnalyseErreur =
-  | { katago: false }
-  | {
-    katago: true; move: number | null; lead: number; visites: number; pv?: number[]; ownBon?: Float32Array;
-    riposte?: { pv?: number[]; visites: number }; ownJoue?: Float32Array;
-  };
-export async function analyseErreur(avant: Position, apres: Position, komi: number, regles?: Rules): Promise<AnalyseErreur> {
-  let k = kataGoRevue() ?? null;
-  if ((!k || k.info.state !== 'pret') && (await reseauEnCache())) {
-    k = getKataGo();
-    try { await k?.start?.(); } catch { /* KataGo indisponible */ }
-  }
-  if (!k || k.info.state !== 'pret') return { katago: false };
-  try {
-    const opts = { komi, visits: VISITES_ERREUR, timeMs: VISITES_ERREUR * 40, maxMoves: 6, ...(regles ? { regles } : {}) };
-    const a = await analyserGarde(k, avant, opts);
-    const b = a.moves[0];
-    if (!b) return { katago: true, move: null, lead: a.lead, visites: 0 };
-    // Sans la seconde recherche, le bon coup reste montré ; l'explication se contente de ce qui est sûr.
-    const r = await analyserGarde(k, apres, opts).catch(() => null);
-    const top = r?.moves[0];
-    return {
-      katago: true, move: b.move, lead: b.lead, visites: b.visits,
-      ...(b.pv ? { pv: b.pv } : {}), ...(a.ownershipApres ? { ownBon: a.ownershipApres } : {}),
-      ...(top ? { riposte: { visites: top.visits, ...(top.pv ? { pv: top.pv } : {}) } } : {}),
-      ...(r?.ownership ? { ownJoue: r.ownership } : {}),
-    };
-  } catch { return { katago: false }; }
-}
-
-/**
- * Analyse d'une position posée à la main (#372, « Étudier une position »). KataGo seulement, jamais le moteur simple :
- * ses conseils sont trop peu sûrs. KataGo est démarré s'il est en mémoire ou si son réseau est en cache ; sinon
- * `katago: false`, et l'écran propose le téléchargement (`preparerKataGo`). Une seule recherche par appel (batterie).
- * `lead` : avance de Noir, komi compris ; `coups` : les meilleurs coups pour le joueur au trait, du meilleur au moins
- * bon, avec ses chances de gain (0 à 1) et son avance en points.
- * #562 : `komi` est le komi compté (compensation du handicap comprise en chinois, `reglagesAnalyse` de src/go/etude.ts)
- * et `regles` la règle de comptage choisie dans l'étude, donnée à KataGo (sans elle, sa règle historique).
- */
-export type AnalyseEtude =
-  | { katago: false }
-  | { katago: true; lead: number; coups: { move: number; winrate: number | null; lead: number }[] };
-export async function analyseEtude(pos: Position, komi: number, visites = 96, regles?: Rules): Promise<AnalyseEtude> {
-  let k = kataGoRevue() ?? null;
-  if ((!k || k.info.state !== 'pret') && (await reseauEnCache())) {
-    k = getKataGo();
-    try { await k?.start?.(); } catch { /* KataGo indisponible */ }
-  }
-  if (!k || k.info.state !== 'pret') return { katago: false };
-  const a = await analyserGarde(k, pos, { komi, visits: visites, timeMs: visites * 30, maxMoves: 6, ...(regles ? { regles } : {}) });
-  return {
-    katago: true,
-    lead: pos.toPlay === 1 ? a.lead : -a.lead,
-    coups: a.moves.map(m => ({ move: m.move, winrate: typeof m.winrate === 'number' ? m.winrate : null, lead: m.lead })),
-  };
-}
+// #673 et #372 : analyseErreur et analyseEtude (revue et étude) sont dans src/engine/revueKataGo.ts (C8, #732) : hors du JS initial.
 
 /**
  * Analyse pour le Conseil de Mochi (#80) : ce que `conseil()` (src/engine/conseil.ts) attend de KataGo.

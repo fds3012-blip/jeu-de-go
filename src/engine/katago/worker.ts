@@ -43,10 +43,14 @@ function progression(id: number) {
   };
 }
 
+/** Taille du réseau approfondi (C8, #732, src/engine/approfondie.ts) : la progression reste juste sans `Content-Length`. */
+const OCTETS_APPROFONDI = 11_138_361;
+
 function telecharger(id: number, src: SourceReseau, signal?: AbortSignal) {
+  const approfondi = src.urls.some(u => u.includes('b10c128'));
   return loadModelBytes(src.urls, {
     fetch: (u, init) => fetch(u, init), caches: typeof caches !== 'undefined' ? caches : undefined,
-    onProgress: progression(id), sha256: src.sha256, telechargement: src.telechargement, signal, totalParDefaut: MODEL_OCTETS, totalDecompresse: MODEL_OCTETS_DECOMPRESSE,
+    onProgress: progression(id), sha256: src.sha256, telechargement: src.telechargement, signal, totalParDefaut: approfondi ? OCTETS_APPROFONDI : MODEL_OCTETS, totalDecompresse: approfondi ? 12_003_218 : MODEL_OCTETS_DECOMPRESSE,
   });
 }
 

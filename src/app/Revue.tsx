@@ -27,7 +27,11 @@ import { t as tr } from '../content/i18n/secondaires';
 import { mouvementsReduits } from '../ui/defilement';
 import { toLabel } from '../go/coords';
 import { play, type Color, type Position } from '../go/rules';
-import { analyseErreur, analyseRevue, estMoteurBloque, preparerKataGo, reglesMoteur, relancerKataGo, type RaisonSansKataGo } from '../engine';
+import { analyseRevue, estMoteurBloque, preparerKataGo, reglesMoteur, relancerKataGo, type RaisonSansKataGo } from '../engine';
+import { analyseErreur, raisonRepliApprofondi } from '../engine/revueKataGo';
+// C8 (#732) : « Analyse approfondie », seulement si le joueur l'a téléchargée et activée (Réglages).
+import { approfondie } from '../engine/approfondie';
+import { thl } from '../content/i18n/horsLigne';
 import { expliquerErreur, type Explication, type Ligne } from '../go/explication';
 import { carresDe, glosesDesErreurs, textesExplication, vueSuite } from './analyseExpliquee';
 import { ta } from '../content/i18n/analyse';
@@ -102,6 +106,8 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
   const [uniques, setUniques] = useState<ReadonlySet<number>>(() => new Set());
   // Meilleur coup par erreur, seulement s'il est fiable (conseilFiable) ; `null` : rien à montrer.
   const [meilleurs, setMeilleurs] = useState<Record<number, number | null>>({});
+  // C8 : quel réseau a expliqué les erreurs (l'approfondi, ou le petit parce que l'approfondi n'a pas pu servir).
+  const [noteAp, setNoteAp] = useState<'utilisee' | 'trop-lent' | 'indisponible' | null>(null);
   // #673 : explication de chaque erreur dont le bon coup est montré (`null` : rien à expliquer), par numéro de coup.
   const [explications, setExplications] = useState<Record<number, Explication | null>>({});
   // #673 : « Pourquoi ? » ouvert sur le coup `coup` : la suite montrée et son étape.
@@ -237,6 +243,7 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
   useEffect(() => {
     if (!aConseiller.length) return;
     let vivant = true;
+    approfondie();
     (async () => {
       for (const coup of aConseiller) {
         const avant = positions[coup - 1], c = avant.toPlay, apres = avances[coup], joue = positions[coup].lastMove ?? -1;
@@ -246,11 +253,14 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
           if (!vivant) return;
           if (!r.katago) return;
           // Gain du coup conseillé sur le coup joué, pour le joueur qui s'est trompé.
-          const gain = apres == null ? 0 : r.lead - (c === 1 ? apres : -apres);
+          // Approfondi : les deux avances viennent du même réseau (jamais mélangées avec celles du petit).
+          const gain = r.approfondie && r.leadJoue !== undefined ? r.lead - r.leadJoue : apres == null ? 0 : r.lead - (c === 1 ? apres : -apres);
+          const rr = r.approfondie ? null : raisonRepliApprofondi();
+          if (r.approfondie || rr) setNoteAp(r.approfondie ? 'utilisee' : rr);
           m = conseilFiable(avant, r.move, gain) ? r.move : null;
           if (m != null) {
             x = expliquerErreur({
-              avant, joue, bon: m, perte: notes[coup - 1]?.perte ?? gain,
+              avant, joue, bon: m, perte: r.approfondie ? gain : notes[coup - 1]?.perte ?? gain,
               pvBon: r.pv, visitesBon: r.visites, ownBon: r.ownBon, pvRiposte: r.riposte?.pv, visitesRiposte: r.riposte?.visites, ownJoue: r.ownJoue,
             });
           }
@@ -510,6 +520,7 @@ export function Revue({ sgf, joueur, adversaire, onRetour, onRejouer, confirmTou
           </tbody>
         </table>
         {avecKataGo && <p className="revue-note bilan-aide">{fr(tr('bilan3.precisionAide'))}</p>}
+        {noteAp && <p className="revue-note bilan-approfondi" data-testid="revue-approfondie" data-etat={noteAp}>{thl(noteAp === 'utilisee' ? 'ap.noteUtilisee' : noteAp === 'trop-lent' ? 'ap.noteTropLent' : 'ap.noteRepli')}</p>}
         {!avecKataGo && <p className="revue-note revue-sans-katago">{fr(tr(sansKataGo ? `bilan3.sansKataGo.${sansKataGo}` : 'bilan3.sansKataGo'))}</p>}
         {!avecKataGo && <button type="button" className="btn revue-reessayer-analyse" onClick={reessayerAnalyse}>{tr('bilan3.reessayerAnalyse')}</button>}
         {arret && <p className="revue-note revue-arretee">{fr(tr('import.arretee'))}</p>}
