@@ -6,7 +6,7 @@
   overflow: hidden; /* coins arrondis du bois ; les ombres ci-dessous restent visibles */
   background: var(--kaya-2);
   /* tranche foncée du plateau, puis ombre portée sur la table */
-  box-shadow: 0 4px 0 #6B3F16, 0 20px 32px -10px rgba(0, 0, 0, .72), 0 2px 6px rgba(0, 0, 0, .35);
+  box-shadow: var(--ombre-goban);
   margin-bottom: 5px;
 }
 /* Chanfrein : arête claire du bois, avec un léger assombrissement du bas. */
@@ -25,8 +25,8 @@
 
 @media (prefers-reduced-motion: no-preference) {
   /* Chute de la pierre : elle arrive un peu grande et se pose, son ombre grandit. */
-  .board .drop .corps { animation: go-chute 140ms var(--ease-pose) both; }
-  .board .drop .ombre { animation: go-ombre 140ms var(--ease-pose) both; }
+  .board .drop .corps { animation: go-chute var(--duree-pose) var(--ease-pose) both; }
+  .board .drop .ombre { animation: go-ombre var(--duree-pose) var(--ease-pose) both; }
   /* Pierres prises : elles rétrécissent et s'effacent, 30 ms de décalage entre elles (animation-delay en ligne).
      Courbe de sortie (ease-out) : la prise se voit dès la pose, jamais de ease-in sur une interaction (audit #60). */
   .board .partante { animation: go-prise 220ms var(--ease) both; }
