@@ -29,7 +29,7 @@ import { apresPremierEcran, prechargerEcrans, prechargerPartie, rechargerPourNou
 import './ui/fonts.css';
 import './ui/app.css';
 import { registerSW } from './registerSW';
-import { captureError, ecouterErreursAvantSentry, EVENTS, initAnalytics, lireEquipeDansAdresse, track } from './data/analytics';
+import { captureError, ecouterErreursAvantSentry, EVENTS, initAnalytics, lireEquipeDansAdresse, track, trackOnce } from './data/analytics';
 import { chargementUrgent, chargerSupabase } from './data/client';
 import { choisirLangue, langue } from './content/i18n';
 import { ecouterInstallation } from './app/installation';
@@ -46,6 +46,8 @@ initAnalytics();
 // Erreurs non attrapées avant que Sentry soit chargé : mises en file, envoyées dès son arrivée (avec accord seulement).
 ecouterErreursAvantSentry();
 track(EVENTS.appOuverte, { installee: window.matchMedia?.('(display-mode: standalone)').matches ?? false });
+// Lien d'invitation ouvert (#729) : index.html a posé l'attribut et gardé le code sur l'appareil.
+if (document.documentElement.hasAttribute('data-invitation')) trackOnce(EVENTS.invitationOuverte);
 // Vérification de Sentry : #erreur-test dans l'adresse envoie une erreur de test (seulement avec consentement).
 // Envoi explicite, à l'ouverture comme quand on ajoute #erreur-test à une page déjà ouverte (Safari ne recharge pas).
 function erreurDeTest() {

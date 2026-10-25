@@ -4,6 +4,7 @@ import { lireXp, niveauDe, themeDebloque } from './xp';
 import { installAudioUnlock, setSoundEnabled } from '../ui/sonContexte';
 import { setHapticsEnabled } from '../ui/haptics';
 import { noterReglage } from './reglagesDates';
+import { readLocal, writeLocal } from './hooks';
 import type { ReglageAide } from './aideMochi';
 import type { Cadence } from '../go/pendule';
 
@@ -113,10 +114,8 @@ export function useSettings(): [Settings, (patch: Partial<Settings>) => void] {
 }
 
 export function useStored<T>(key: string, initial: T): [T, (v: T) => void] {
-  const [v, setV] = useState<T>(() => {
-    try { const raw = localStorage.getItem(key); return raw ? (JSON.parse(raw) as T) : initial; } catch { return initial; }
-  });
-  return [v, next => { setV(next); try { localStorage.setItem(key, JSON.stringify(next)); } catch { /* ignoré */ } }];
+  const [v, setV] = useState<T>(() => readLocal<T>(key, initial));
+  return [v, next => { setV(next); writeLocal(key, next); }];
 }
 
 // --- Thème du goban (#109) : gardé sur l'appareil, appliqué seulement s'il est débloqué par le niveau. ---
@@ -124,15 +123,14 @@ export const THEME_GOBAN_KEY = 'go.themeGoban.v1';
 const abonnesTheme = new Set<() => void>();
 
 export function lireThemeGoban(): IdThemeGoban {
-  let id: string | null = null;
-  try { id = JSON.parse(localStorage.getItem(THEME_GOBAN_KEY) || 'null'); } catch { /* stockage indisponible */ }
-  const t = themeGoban(id);
+  const t = themeGoban(readLocal<string | null>(THEME_GOBAN_KEY, null));
   return themeDebloque(t.id, niveauDe(lireXp()).niveau) ? t.id : 'kaya';
 }
 
 /** Lit le décor choisi tel qu'il est gardé (sans le contrôle du niveau) : sert à la synchronisation (#448). */
 export function themeGobanGarde(): IdThemeGoban | null {
-  try { const id = JSON.parse(localStorage.getItem(THEME_GOBAN_KEY) || 'null') as unknown; return typeof id === 'string' ? themeGoban(id).id : null; } catch { return null; }
+  const id = readLocal<unknown>(THEME_GOBAN_KEY, null);
+  return typeof id === 'string' ? themeGoban(id).id : null;
 }
 
 /** Décor choisi dans le Profil. `noter` : faux quand il vient du serveur (#448), pour ne pas le dater de nouveau. */

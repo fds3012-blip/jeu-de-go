@@ -100,7 +100,8 @@ export const recompenseDuNiveau = (niveau: number) => RECOMPENSES.find(r => r.ni
 export const prochaineRecompense = (niveau: number) => RECOMPENSES.find(r => r.niveau > niveau);
 /** Niveau requis pour un thème du goban : 1 pour le kaya par défaut. */
 export const niveauRequis = (id: string) => RECOMPENSES.find(r => r.id === id)?.niveau ?? 1;
-export const themeDebloque = (id: string, niveau: number) => niveau >= niveauRequis(id);
+/** Décors offerts par une invitation (#729) : `go.cadeaux.v1`, écrit par src/data/invitation.ts, ouvre le goban ou les pierres sans le niveau. */
+export const themeDebloque = (id: string, niveau: number) => niveau >= niveauRequis(id) || String(readLocal('go.cadeaux.v1', '')).includes(id);
 export const recompensesDebloquees = (niveau: number) => RECOMPENSES.filter(r => r.niveau <= niveau);
 
 /**
@@ -152,19 +153,15 @@ export function sourceXpPartie(p: { coups: number; contreOrdi: boolean; gagne: b
 export const XP_KEY = 'go.xp.v1';
 
 export function lireXp(): number {
-  try {
-    const v = Number(JSON.parse(localStorage.getItem(XP_KEY) || '0'));
-    return Number.isFinite(v) && v > 0 ? Math.floor(v) : 0;
-  } catch { return 0; }
+  const v = Number(readLocal<unknown>(XP_KEY, 0));
+  return Number.isFinite(v) && v > 0 ? Math.floor(v) : 0;
 }
 
 export const PREMIERES_KEY = 'go.xp.premieres.v1';
 
 export function lirePremieres(): Set<Premiere> {
-  try {
-    const v: unknown = JSON.parse(localStorage.getItem(PREMIERES_KEY) || '[]');
-    return new Set(Array.isArray(v) ? v.filter((p): p is Premiere => typeof p === 'string' && p in BONUS_PREMIERE) : []);
-  } catch { return new Set(); }
+  const v = readLocal<unknown>(PREMIERES_KEY, []);
+  return new Set(Array.isArray(v) ? v.filter((p): p is Premiere => typeof p === 'string' && p in BONUS_PREMIERE) : []);
 }
 
 type Ecouteur = (g: Gain) => void;

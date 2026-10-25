@@ -168,10 +168,10 @@ test('Vitrine : chaque badge se touche et dit sa condition entière (#214)', asy
   await nav(page).getByRole('button', { name: 'Profil' }).click();
   await ouvrirNiveauBadges(page);
   const vitrine = page.getByRole('region', { name: /^Badges/ });
-  // #529 : 21 badges ; repliée, la vitrine en montre 4 à gagner. On l'ouvre, puis chaque sceau (et le bouton) fait 44 px.
-  await vitrine.getByRole('button', { name: 'Voir les 21 badges' }).click();
+  // #529 : 21 badges, 23 depuis #729 ; repliée, la vitrine en montre 4 à gagner. On l'ouvre, puis chaque sceau (et le bouton) fait 44 px.
+  await vitrine.getByRole('button', { name: 'Voir les 23 badges' }).click();
   const badges = vitrine.getByRole('button');
-  await expect(badges).toHaveCount(22);
+  await expect(badges).toHaveCount(24);
   for (const b of await badges.all()) {
     const box = (await b.boundingBox())!;
     expect(box.width).toBeGreaterThanOrEqual(44); expect(box.height).toBeGreaterThanOrEqual(44);

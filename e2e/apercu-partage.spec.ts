@@ -15,6 +15,9 @@ const PAGES: readonly (readonly [string, 'fr' | 'en', string, string])[] = [
   ['/en', 'en', '/en', 'apercu-accueil-en.png'],
   ['/defi', 'fr', '/defi', 'apercu-defi.png'],
   ['/en/defi', 'en', '/en/defi', 'apercu-defi-en.png'],
+  // Inviter un ami (#729) : `/i#CODE`.
+  ['/i', 'fr', '/i', 'apercu-invitation.png'],
+  ['/en/i', 'en', '/en/i', 'apercu-invitation-en.png'],
   // Partie partagée et étude partagée (#449) : le même lien `/partie#JETON`.
   ['/partie', 'fr', '/partie', 'apercu-partie.png'],
   ['/en/partie', 'en', '/en/partie', 'apercu-partie-en.png'],

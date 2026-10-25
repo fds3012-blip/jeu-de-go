@@ -5,3 +5,10 @@
   font: inherit; text-align: left; border-radius: 8px; }
 .ami-nom:active { color: var(--accent-texte); }
 .ami-nom:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+
+/* Inviter un ami (#729) : entrée discrète sous la liste (jamais sur l'accueil), 44 px au moins ; l'encart a sa propre feuille. */
+.amis-inviter { margin-top: var(--space-5); }
+.amis-inviter-entree { width: 100%; min-height: var(--cible-min); display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3);
+  padding: var(--space-2) var(--space-1); background: none; border: 0; border-top: 1px solid var(--line); color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.amis-inviter-entree small { color: var(--muted); font-size: var(--fs-s); }
+.amis-inviter-entree:focus-visible { outline: 2px solid var(--focus, currentColor); outline-offset: 2px; }

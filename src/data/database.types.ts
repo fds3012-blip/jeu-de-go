@@ -1636,6 +1636,15 @@ export type Database = {
           pseudo: string
         }[]
       }
+      // #729 : inviter un ami (migration 20261026090000_invitations.sql).
+      mon_invitation: {
+        Args: never
+        Returns: { amis: number; cadeaux: string[]; code: string; plafond: number }[]
+      }
+      valider_invitation: {
+        Args: { p_code: string }
+        Returns: { cadeaux: string[]; statut: string }[]
+      }
       mes_amis: {
         Args: never
         Returns: {

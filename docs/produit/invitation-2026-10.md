@@ -63,13 +63,14 @@ Limite connue, assumée : une partie contre l'ordi est jouée sur l'appareil ; l
 | Événement | Propriétés | Déclencheur | Indicateur |
 |---|---|---|---|
 | `invitation_partagee` | `methode` (`partage`, `copie`, `manuel`, `annule`) | « Partager mon lien » dans Mes amis | Parrains actifs par semaine ; taux de partage parmi les joueurs qui ouvrent « Mes amis » |
-| `invitation_ouverte` | `nouveau` (premier lancement sur l'appareil) | Lien `/i#CODE` ouvert, une fois par appareil | Ouvertures par partage |
-| `invitation_validee` | `rang` (1 à 5, rang de l'ami chez le parrain), `jours` (jours entre l'ouverture et la validation) | Réponse « validée » du serveur, côté invité | Conversion et délai ; rétention J7 des invités |
+| `invitation_ouverte` | aucune | Lien `/i#CODE` ouvert, une fois par appareil | Ouvertures par partage |
+| `invitation_validee` | `jours` (jours entre l'ouverture et la validation) | Réponse « validée » du serveur, côté invité | Conversion et délai ; rétention J7 des invités |
 
 ## 6. Technique
 
 - **Serveur (PR 1)** : migration `20261026090000_invitations.sql`. Tables `invitation_codes`, `invitations`, `cadeaux` (RLS sur chacune). Fonctions `mon_invitation()` (code, amis arrivés, plafond, cadeaux) et `valider_invitation(code)`, toutes deux réservées aux comptes avec pseudo. `exporter_mes_donnees` complétée. Tests : `supabase/tests/invitations.test.sql`.
-- **Client (PR 2)** : tout dans des morceaux à la demande (budget JS initial 149,9 / 150 Ko, CSS 20,36 / 22 Ko). Le lien est lu par le script en tête de `index.html` (zéro octet dans le JS initial). L'encart (`src/app/Invitation.tsx` et sa feuille de style) se charge quand on l'ouvre. La validation part de `src/data/partiesPerso.ts` (déjà à la demande) après la synchronisation des parties.
+- **Client (PR 2)** : tout en morceaux à la demande (budget JS initial 149,9 / 150 Ko, CSS 20,4 / 22 Ko). Le lien est lu par le script en tête de `index.html` (zéro octet dans le JS initial) : il garde le code dans `go.invitation.v1`, pose l'attribut `data-invitation` et remet l'adresse à `/`. L'encart (`src/app/Invitation.tsx`, `src/ui/invitation.css`, textes `src/content/i18n/invitation.ts`) se charge quand on ouvre « Inviter un ami » dans Mes amis. La validation part de `src/data/partiesPerso.ts` (déjà à la demande), après la synchronisation des parties, seulement si un code est gardé. Le cadeau reçu est noté dans `go.cadeaux.v1` ; `themeDebloque` (`xp.ts`) l'y lit. Dans le JS initial : trois noms d'événements, une ligne dans `main.tsx` et la lecture de `go.cadeaux.v1` (environ 80 octets), compensés par huit lectures de stockage dupliquées remplacées par `readLocal`.
+- **Badges** : « Parrain » (dès un ami arrivé, noté à l'ouverture de l'encart) et « Invité » (à la validation), famille « Avec les autres », notés sur l'appareil (`go.badges.v1`) comme les autres badges du moment. La vitrine passe à 23 badges (`docs/game-design/economie.md`, 5.5).
 - **Adresses** : `/i` et `/en/i` ajoutées à `vercel.json` et à `outils/apercus.ts` (page d'aperçu, comme `/defi`). Le service worker n'a pas à changer : hors ligne, toute navigation reçoit la page de l'appli, et `index.html` fait le reste.
 - **Navigation** : aucun nouvel écran de pile ; l'encart est une partie de « Mes amis » (`src/app/navigation.ts` inchangé).
 

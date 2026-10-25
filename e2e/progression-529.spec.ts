@@ -97,7 +97,7 @@ test('partie : une partie terminée de plus de 10 coups fait vivre la série du 
   expect(serie).toMatchObject({ jours: 1 });
 });
 
-test('badges : 21 sceaux, vitrine repliée, un badge de #529 gagné s’imprime une fois (#529)', async ({ page }) => {
+test('badges : 23 sceaux, vitrine repliée, un badge de #529 gagné s’imprime une fois (#529)', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.addInitScript(() => {
     if (localStorage.getItem('go.test.seme')) return;
@@ -108,19 +108,19 @@ test('badges : 21 sceaux, vitrine repliée, un badge de #529 gagné s’imprime 
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Profil' }).click();
   await ouvrirNiveauBadges(page);
-  const vitrine = page.getByRole('region', { name: 'Badges, 2 sur 21' });
+  const vitrine = page.getByRole('region', { name: 'Badges, 2 sur 23' });
   await expect(vitrine.getByRole('button', { name: 'Première course : obtenu' })).toBeVisible();
   await expect(vitrine.getByRole('button', { name: 'Objectif de la semaine : obtenu' })).toBeVisible();
   await expect(vitrine.locator('.vitrine-detail')).toHaveText('Badge gagné : Première course');
   await expect(vitrine.locator('li.nouveau')).toHaveCount(1);
   // Repliée : les 2 gagnés et les 4 suivants.
   await expect(vitrine.locator('li[data-badge]')).toHaveCount(6);
-  const tous = vitrine.getByRole('button', { name: 'Voir les 21 badges' });
-  await expect(tous).toHaveText('+15');
+  const tous = vitrine.getByRole('button', { name: 'Voir les 23 badges' });
+  await expect(tous).toHaveText('+17');
   await expect(tous).toHaveAttribute('aria-expanded', 'false');
   expect((await tous.boundingBox())!.height).toBeGreaterThanOrEqual(44);
   await tous.click();
-  await expect(vitrine.locator('li[data-badge]')).toHaveCount(21);
+  await expect(vitrine.locator('li[data-badge]')).toHaveCount(23);
   await expect(vitrine.getByRole('button', { name: 'Moins de badges' })).toHaveAttribute('aria-expanded', 'true');
   await vitrine.getByRole('button', { name: /^Victoire classée : à gagner/ }).click();
   await expect(vitrine.locator('.vitrine-detail')).toHaveText('Victoire classée : Gagne une partie classée en ligne.');

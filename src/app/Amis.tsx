@@ -6,7 +6,7 @@
 // #563 : styles chargés avec l'écran (hors du CSS initial).
 import '../ui/amis.css';
 import '../ui/profil-ecran.css';
-import { useCallback, useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { defierAmi, demanderAmi, grouperAmis, repondreAmi, retirerAmi } from '../data/amis';
 import type { Db } from '../data/supabase';
 import { marquerLues } from '../data/notifications';
@@ -20,6 +20,10 @@ import { debloquer, mesBlocages, type Blocage } from '../data/securite';
 import { tsec } from '../content/i18n/securite';
 import { tp } from '../content/i18n/profilPublic';
 import '../ui/amis-liste.css';
+import { ti } from '../content/i18n/invitation';
+
+// #729 : « Inviter un ami », encart à la demande (sa feuille de style arrive avec lui).
+const Invitation = lazy(() => import('./Invitation'));
 
 interface Props {
   db: Db | null;
@@ -34,6 +38,7 @@ export function Amis({ db, onDefi, onProfil, onProfilDemande }: Props) {
   const { liste, recharger, online } = useAmis(db, true);
   const [saisie, setSaisie] = useState('');
   const [envoi, setEnvoi] = useState(false);
+  const [inviter, setInviter] = useState(false);
   const [retour, setRetour] = useState<{ ok: boolean; texte: string } | null>(null);
   // Action en cours sur une ligne (une à la fois), erreur de la ligne, retrait à confirmer.
   const [occupe, setOccupe] = useState<string | null>(null);
@@ -243,6 +248,18 @@ export function Amis({ db, onDefi, onProfil, onProfilDemande }: Props) {
       )}
       {/* Avec des amis, la liste passe d'abord : ajouter devient une action secondaire, en bas. */}
       {!vide && liste.etat !== 'chargement' && formulaire}
+      {/* #729 : entrée discrète, en bas : pas d'invitation sur l'accueil (épure P1). L'encart ne se charge qu'à l'ouverture. */}
+      {db && liste.etat !== 'chargement' && (
+        <div className="amis-inviter">
+          <button type="button" className="amis-inviter-entree" aria-expanded={inviter} aria-controls="amis-inviter-encart" data-testid="inviter-entree"
+            onClick={() => setInviter(v => !v)}>
+            <span>{ti('inv.entree')}</span><small>{ti('inv.entreeAide')}</small>
+          </button>
+          <div id="amis-inviter-encart">
+            {inviter && <Suspense fallback={null}><Invitation db={db} online={online} /></Suspense>}
+          </div>
+        </div>
+      )}
       <FeuilleSignaler db={db} ouvert={aSignaler !== null} onFermer={() => setASignaler(null)} compte online={online}
         cible={{ type: 'joueur', nom: aSignaler ?? '', pseudo: aSignaler ?? '', depuis: 'amis' }}
         onBloque={() => { recharger(); chargerBlocages(); }} />

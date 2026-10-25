@@ -79,6 +79,8 @@ export const BADGES = [
   'dix-problemes', 'serie-7', 'goban-13', 'premiere-revue', 'chapitre-bases',
   'palier-debutant', 'objectif-semaine', 'serie-theme', 'trois-adversaires', 'premiere-en-ligne',
   'erreur-maitrisee', 'cinquante-problemes', 'palier-novice', 'goban-19', 'victoire-classee', 'serie-30',
+  // #729 : inviter un ami (cadeaux gratuits, jamais de l'XP). Au bout de la liste : ils ne passent pas devant le parcours.
+  'parrain', 'invite',
 ] as const;
 export type BadgeId = typeof BADGES[number];
 
@@ -90,7 +92,7 @@ export const FAMILLE: Record<BadgeId, FamilleBadge> = {
   'dix-problemes': 'maitrise', 'cinquante-problemes': 'maitrise', 'palier-debutant': 'maitrise', 'palier-novice': 'maitrise',
   'chapitre-bases': 'maitrise', 'serie-theme': 'maitrise', 'erreur-maitrisee': 'maitrise', 'trois-adversaires': 'maitrise',
   'goban-13': 'decouverte', 'goban-19': 'decouverte', 'premiere-revue': 'decouverte',
-  'premiere-en-ligne': 'social', 'victoire-classee': 'social',
+  'premiere-en-ligne': 'social', 'victoire-classee': 'social', 'parrain': 'social', 'invite': 'social',
 };
 
 /** Seuils des badges (#529), chacun visé par un indicateur de docs/game-design/economie.md, section 5. */
@@ -106,7 +108,7 @@ export const SEUILS_BADGES = {
 } as const;
 
 /** Badges qui ne se déduisent pas des données de l'appareil : ils s'écrivent au moment où ils sont gagnés (badgesGagnes.ts). */
-export const DU_MOMENT: ReadonlySet<BadgeId> = new Set<BadgeId>(['objectif-semaine', 'premiere-en-ligne', 'victoire-classee']);
+export const DU_MOMENT: ReadonlySet<BadgeId> = new Set<BadgeId>(['objectif-semaine', 'premiere-en-ligne', 'victoire-classee', 'parrain', 'invite']);
 
 /** Badges de la série : cachés avec elle quand « Montrer la série » est coupé (#365). */
 export const BADGES_SERIE: ReadonlySet<BadgeId> = new Set<BadgeId>(['serie-7', 'serie-30']);
@@ -142,6 +144,8 @@ export function obtenusDe(d: Donnees): Record<BadgeId, boolean> {
     'goban-19': (d.tailles ?? []).includes(19),
     'victoire-classee': false,
     'serie-30': record >= SEUILS_BADGES.serieLongue,
+    parrain: false,
+    invite: false,
   };
 }
 

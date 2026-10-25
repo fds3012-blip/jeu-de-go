@@ -8,6 +8,7 @@
 // - `/en` : l'accueil en anglais, même promesse que `/` (index.html) et même image avec Mochi, en anglais (#489) ;
 // - `/defi`, `/en/defi` : « Un ami te défie au go » (le jeton est dans le fragment : jamais lu par le serveur) ;
 // - `/partie`, `/en/partie` : « Une partie de go à revoir » ;
+// - `/i`, `/en/i` : « Un ami t'invite à jouer au go » (#729 ; le code est dans le fragment : jamais lu par le serveur) ;
 // - `/j/N`, `/en/j/N` : « Go du jour n° N », du jour J−30 au jour J+45 (date du build) ; au-delà, `404.html`, la même app
 //   avec l'aperçu général. Le problème n'est jamais lisible sur l'image (pas de spoiler) ;
 // - `404.html` : toute adresse inconnue ouvre l'app (aperçu général), au lieu de la page 404 de l'hébergeur.
@@ -54,6 +55,12 @@ export const APERCUS_FIXES: readonly Apercu[] = [
   { chemin: 'en/defi', langue: 'en', titre: 'A friend challenges you to a game of go', image: 'apercu-defi-en.png',
     description: '9 × 9 game, 3 days per move. Free: open the link and play your first move.',
     imageAlt: 'Two go stones face to face and the invitation: a friend challenges you.' },
+  { chemin: 'i', langue: 'fr', titre: 'Un ami t’invite à jouer au go', image: 'apercu-invitation.png',
+    description: 'Gratuit, sans pub. Ta première pierre en 1 minute, et un cadeau pour vous deux.',
+    imageAlt: 'Deux pierres de go côte à côte et l’invitation d’un ami.' },
+  { chemin: 'en/i', langue: 'en', titre: 'A friend invites you to play go', image: 'apercu-invitation-en.png',
+    description: 'Free, no ads. Your first stone in 1 minute, and a gift for you both.',
+    imageAlt: 'Two go stones side by side and a friend’s invitation.' },
   { chemin: 'partie', langue: 'fr', titre: 'Une partie de go à revoir', image: 'apercu-partie.png',
     description: 'Revois cette partie coup par coup, sans compte. Puis joue la tienne : c’est gratuit.',
     imageAlt: 'Un goban en fin de partie et l’invitation à la revoir.' },

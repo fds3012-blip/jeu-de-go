@@ -67,6 +67,10 @@ export const EVENTS = {
   goDuJourResolu: 'go_du_jour_resolu',
   goDuJourPartage: 'go_du_jour_partage',
   arriveeParPartage: 'arrivee_par_partage',
+  // Inviter un ami (#729) : lien partagé (`methode`), lien ouvert, invitation validée par le serveur (`jours` depuis l'ouverture).
+  invitationPartagee: 'invitation_partagee',
+  invitationOuverte: 'invitation_ouverte',
+  invitationValidee: 'invitation_validee',
   // « Rejoue tes erreurs » (issue #77) : une erreur de la revue rejouée comme problème (premier essai).
   // `source` : `revue` (« Rejoue cette erreur ») ou `problemes` (révision espacée, « Tes erreurs à rejouer »).
   erreurRejouee: 'erreur_rejouee',

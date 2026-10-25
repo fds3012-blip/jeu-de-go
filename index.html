@@ -18,8 +18,27 @@
         if (!brut) return '/' + r;
         return '/' + r + '#' + (brut.indexOf(m[3] + '=') === 0 ? brut : m[3] + '=' + brut);
       }
+      // Invitation d'un ami (#729) : `/i#CODE` (`/en/i#CODE`). Renvoie le code de 32 caractères, '' si le lien est abîmé, null
+      // si l'adresse n'est pas une invitation. Pure : testée par src/app/invitationLien.test.ts.
+      function codeInvitation(chemin, fragment) {
+        if (!/^\/(?:en\/)?i\/?$/.test(chemin)) return null;
+        var c = fragment.replace(/^#(?:invitation=)?/, '').split('&')[0];
+        return /^[A-Za-z0-9_-]{32}$/.test(c) ? c : '';
+      }
       (function () {
         try {
+          var i = codeInvitation(location.pathname, location.hash);
+          if (i !== null) {
+            // Le code reste sur l'appareil (le premier lien reçu gagne, 30 jours) ; l'adresse redevient `/`. Rien dans le JS de l'app.
+            if (i) {
+              var d = null;
+              try { d = JSON.parse(localStorage.getItem('go.invitation.v1')); } catch (e) { /* aucun code gardé */ }
+              if (!d || !(d.t > Date.now() - 2592000000)) localStorage.setItem('go.invitation.v1', JSON.stringify({ c: i, t: Date.now() }));
+              document.documentElement.setAttribute('data-invitation', '');
+            }
+            history.replaceState(history.state, '', '/' + location.search);
+            return;
+          }
           var a = adresseCourte(location.pathname, location.search, location.hash);
           if (a) history.replaceState(history.state, '', a);
         } catch (e) { /* adresse inchangée */ }
