@@ -184,3 +184,31 @@ test('fin sur le temps : annonces toutes les 30 s, puis écran de fin et partage
   // Sans spoiler : aucune coordonnée de coup.
   expect(copie.split('\n')[0]).not.toMatch(/\b[A-HJ-T]1?\d\b/);
 });
+
+// #726 (passe Apple, lot d) : sur téléphone en portrait, le goban de la course a la même largeur que celui des autres
+// activités (382 px à 390, débord de 4 px) et le groupe se centre dans la hauteur libre au lieu de laisser un grand
+// vide sous le goban ; la consigne se centre de la même façon entre l'en-tête et le bouton.
+test('portrait 390 × 844 : goban de 382 px, consigne et course centrées, pas de vide sous le goban', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await preparer(page);
+  await page.goto('/');
+  await page.getByRole('navigation').getByRole('button', { name: 'Problèmes' }).click();
+  await page.getByTestId('entree-course').click();
+  await expect(page.locator('.course-consigne')).toBeVisible();
+  const consigne = await page.evaluate(() => {
+    const haut = (s: string) => document.querySelector(s)!.getBoundingClientRect();
+    return { air: haut('.course-consigne .chrono-course').top - haut('.course-consigne .lecteur-tete').bottom, sous: haut('.course-consigne .cta').top - haut('.course-regles').bottom };
+  });
+  expect(consigne.air, 'consigne : de l’air sous l’en-tête').toBeGreaterThanOrEqual(24);
+  expect(consigne.sous, 'consigne : de l’air au-dessus du bouton').toBeGreaterThanOrEqual(24);
+  expect(consigne.sous, 'consigne : pas collée en haut').toBeLessThanOrEqual(consigne.air * 3);
+  await page.getByRole('button', { name: 'C’est parti' }).click();
+  await expect(page.locator('.course-en-cours')).toBeVisible();
+  const course = await page.evaluate(() => {
+    const haut = (s: string) => document.querySelector(s)!.getBoundingClientRect();
+    return { largeur: haut('.course-plateau .board-wrap').width, air: haut('.course-bandeau').top - haut('.course-en-cours .lecteur-tete').bottom, vide: innerHeight - haut('.course-plateau').bottom };
+  });
+  expect(Math.round(course.largeur), 'course : goban de 382 px').toBe(382);
+  expect(course.air, 'course : de l’air sous l’en-tête').toBeGreaterThanOrEqual(24);
+  expect(course.vide, 'course : le vide sous le goban reste raisonnable').toBeLessThanOrEqual(230);
+});
