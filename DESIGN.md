@@ -294,7 +294,7 @@ Grille de 4 px, vérifiée par `tokens.test.ts` : `--space-1` 4, `--space-2` 8, 
 La barre du bas a quatre onglets : Jouer, Apprendre, Problèmes, Profil. Deux écrans de la même famille suivent toujours la même règle.
 
 ### Espace blanc
-Le vide sert à isoler l'action principale et le goban. Un vide qui ne sépare rien est un défaut (l'audit #509 a relevé 150 px de vide sans intention dans la leçon) : soit le contenu remonte, soit le goban grandit.
+Le vide sert à isoler l'action principale et le goban. Un vide qui ne sépare rien est un défaut (l'audit #509 a relevé 150 px de vide sans intention dans la leçon) : soit le contenu remonte, soit le goban grandit. Un vide qui garde la place d'un élément à venir (le verdict d'un problème) ou qui sépare une liste courte du bouton ancré en bas n'en est pas un (#726). Sur un écran sans état qui change (consigne et course), le groupe se centre dans la hauteur libre, au-dessus de la zone du bouton.
 
 ## Elevation & Depth
 

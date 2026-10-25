@@ -48,6 +48,17 @@
 .course-bandeau:has(.urgent) + .course-barre span { background: var(--danger); }
 
 .course-plateau { position: relative; }
+/* #726 : comme les autres activités, le goban de la course déborde la gouttière sur téléphone (4 px du bord : 382 px à 390,
+   au lieu de 358), et le groupe se centre dans la hauteur libre au-dessus de la zone du bouton (donc un peu au-dessus du milieu de l'écran).
+   La consigne (aucun état qui change) et la course (bandeau de hauteur fixe) peuvent se centrer sans que rien ne saute ;
+   le lecteur de problème, lui, garde la place de son verdict en bas. Paysage : paysage.css. */
+@media (max-width: 599px) { .course-plateau { margin-inline: calc(var(--space-1) - var(--gouttiere)); } }
+@media (orientation: portrait) {
+  .course-en-cours, .course-consigne { display: flex; flex-direction: column;
+    min-height: calc(100dvh - var(--space-2) - var(--cible-cta) - var(--relief) - 2 * var(--space-4) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); }
+  .course-en-cours > .course-bandeau, .course-consigne > .chrono-course { margin-top: auto; }
+  .course-en-cours > .course-plateau, .course-consigne > .course-regles:not(:has(+ .course-meilleur)), .course-consigne > .course-meilleur { margin-bottom: auto; }
+}
 
 /* ---------- Fin ---------- */
 .course-resultat { display: flex; flex-direction: column; align-items: center; margin-top: var(--space-6); text-align: center; }

@@ -345,7 +345,7 @@
 /* #433 : .palier h3 (accueil.css, carrousel) suivait cette feuille et l'emportait sur .palier-nom h3 : rendu gardé. */
 .palier .palier-nom h3 { margin: 0 0 2px; font-size: var(--fs-s); font-weight: var(--fw-bold); }
 .problemes-tous .palier h3 { color: var(--text); text-transform: none; letter-spacing: var(--tracking-titre); font-size: var(--fs-xl); }
-.problemes .tous-tete h2 { margin: 0; font-family: var(--font-titre); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre); font-size: var(--fs-2xl); }
+.problemes .tous-tete h2 { margin: 0; font-family: var(--font-titre); font-weight: var(--fw-titre); letter-spacing: var(--tracking-titre); font-size: var(--fs-xl); } /* #726 : la taille de tous les titres de barre */
 /* #647 : au zoom 200 % (195 px), « problèmes » ne tenait pas à côté du retour : le titre se coupe plutôt que de déborder. */
 .problemes .tous-tete h2 { min-width: 0; hyphens: auto; overflow-wrap: anywhere; }
 .problemes-tous .palier-prochain h3 { display: flex; align-items: center; gap: 6px; margin: 0 0 var(--space-2); font-family: var(--font-titre); font-weight: var(--fw-titre); font-size: var(--fs-xl); color: var(--muted); }
