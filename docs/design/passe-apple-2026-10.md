@@ -182,3 +182,18 @@ Dans `docs/design/captures/apple-716/`, 390 × 844 sauf mention. Sombre sauf men
 
 - **Correction du constat 2.** Sur les 17 éléments sans retour (hors « Ko » et « Mon compte », déjà écartés : sous la barre du bas), 1 est un faux positif de plus (« Confirmer au doigt », même cause), 6 sont les pastilles de style du goban **verrouillées** (sans retour voulu : elles n'agissent pas) et 2 sont des choix déjà actifs. Il restait **8 vrais manques**, tous corrigés : les 5 boutons de la barre d'actions de la partie et les 3 choix `.seg` pas encore actifs. Re-mesure : 11 éléments sans retour, tous dans les cas ci-dessus (ou sous la barre du bas).
 - Valeurs finales : appui en `--duree-rapide` (100 ms), retour en `--duree-pose` (160 ms) ; fondu d'entrée des écrans de 160 ms, opacité de .35 à 1 (pas de 0 : un écran qui arrive ne part jamais du vide, et le plus grand élément visible reste un candidat de rendu) ; bord de défilement de `nav + 56 px + relief + 42 px` de haut (`.cta`) ou `nav + 124 px + relief + 42 px` (`.dock`).
+
+## 11. Suivi du lot (d) (#726)
+
+Mesure sur 390 × 844 (puis 360 × 780, 430 × 932, 320 × 568), avant le lot :
+
+| Écran | Vide mesuré | Verdict | Décision |
+|---|---|---|---|
+| Problème (lecteur) | 264 px sous Mochi avant la réponse | C'est la place du verdict : une fois la réponse donnée, la feuille « Pas tout à fait » ou « Juste » (244 px de haut, en haut à 600 px) la remplit. Centrer le groupe le ferait sauter à l'arrivée du verdict, et Mochi disparaît alors. | **Gardé tel quel.** Le constat 5 de l'audit confondait ce vide avec un vide sans intention. |
+| Course (consigne) | 350 px entre les règles et le bouton | Écran sans état : rien ne peut sauter. | Groupe centré dans la hauteur libre, au-dessus de la zone du bouton. |
+| Course (en cours) | 257 px sous le goban | Bandeau de hauteur fixe, pas de verdict. | Groupe centré (bandeau, barre, Mochi, goban). Écart : la hauteur de la bulle de Mochi varie d'un problème à l'autre, le groupe bouge alors de la moitié de cet écart (avant : le goban seul bougeait de tout l'écart). |
+| Page d'un thème | 310 px entre la liste et le bouton | Liste en haut, bouton ancré en bas (zone du pouce) : le vide sépare la liste de l'action. | **Gardé tel quel** ; une liste courte reste en haut d'écran, comme dans Réglages ou Profil. |
+| Ouvertures | 400 px sous deux cartes | Liste courte, sans bouton. Les cartes de 19 × 19 prennent la place dès qu'on les choisit. | **Gardé tel quel.** |
+
+- **Titre unique de barre (constat 9)** : « Tous les problèmes » passe de `--fs-2xl` (28,8 px) à `--fs-xl` (20 px), comme tous les autres titres de barre (`.ecran-titre`, `.lecteur-nom`, `.revue-tete`).
+- **Goban de la course (constat 10)** : 358 px → 382 px à 390 (débord de 4 px, comme les autres activités).
