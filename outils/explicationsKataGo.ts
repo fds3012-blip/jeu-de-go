@@ -6,7 +6,7 @@
 //   TFJS_NODE_DIR=… npx vite-node outils/explicationsKataGo.ts -- --voir  (affiche, n'écrit rien)
 //
 // 1. Positions dont la bonne explication est connue (src/go/explications-cas.ts) : l'erreur est jouée, puis deux
-//    recherches, comme `analyseErreur` (src/engine/index.ts) dans la revue.
+//    recherches, comme `analyseErreur` (src/engine/revueKataGo.ts) dans la revue.
 // 2. Vraies parties (PARTIES_RELUES) : chaque position est d'abord analysée comme dans la revue (`analyseRevue`,
 //    32 visites), les coups sont notés (`noterCoups`), puis chaque perte notée (imprécision, erreur, coup manqué, gaffe),
 //    des deux camps, reçoit les deux recherches de `analyseErreur`.
@@ -20,7 +20,7 @@ import { play, type Position } from '../src/go/rules';
 import { CAS_CONNUS, PARTIES_RELUES } from '../src/go/explications-cas';
 import { SGF_424 } from '../src/app/partie424.fixture';
 import { noterCoups, positionsDepuisSgf, type AnalyseRevue } from '../src/app/revue';
-import { VISITES_ERREUR } from '../src/engine/index';
+import { VISITES_ERREUR } from '../src/engine/revueKataGo';
 import type { FigeErreur, FigeExplications } from '../src/go/explications-fige';
 
 const MODELE_NOM = 'g170-b6c96-s175395328-d26788732';

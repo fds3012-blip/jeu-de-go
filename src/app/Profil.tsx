@@ -69,6 +69,7 @@ import { IconePartagerApp } from '../ui/PartagerApp';
 import { usePartageProfil } from '../ui/usePartageApp';
 import { tp as tpartage } from '../content/i18n/partage';
 import { ReglageIA } from '../ui/ReglageIA';
+import { ReglageApprofondie } from '../ui/ReglageApprofondie';
 import { VisuelTitre, etatTitre } from '../ui/LigneTitre';
 import { Sommaire, type EntreeSommaire } from '../ui/Sommaire';
 import { ouvrirAide } from './ouvrirAide';
@@ -474,6 +475,8 @@ function Reglages({ settings, set }: Pick<Props, 'settings' | 'set'>) {
           </div>
           {/* #538 : l'IA sur le téléphone, prête pour le hors ligne (état, téléchargement, place libérée). */}
           <ReglageIA />
+          {/* C8 (#732) : un réseau plus fort pour la revue et l'étude, téléchargé seulement sur demande. */}
+          <ReglageApprofondie />
         </div>
         <div className="reglages-groupe">
           <h3 className="lignes-titre">{tk('reglages.groupe.rythme')}</h3>
